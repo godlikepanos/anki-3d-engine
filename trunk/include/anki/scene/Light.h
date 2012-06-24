@@ -81,15 +81,15 @@ public:
 		specColor = x;
 	}
 
-	bool getShadow() const
+	bool getShadowEnabled() const
 	{
 		return shadow;
 	}
-	bool& getShadow()
+	bool& getShadowEnabled()
 	{
 		return shadow;
 	}
-	void setShadow(const bool x)
+	void setShadowEnabled(const bool x)
 	{
 		shadow = x;
 	}

@@ -1,20 +1,14 @@
 #include "anki/ui/UiFont.h"
-#include "anki/resource/Texture.h"
+#include "anki/resource/TextureResource.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
 #include "anki/ui/UiFtFontLoader.h"
-#include <GL/glew.h>
-#include <boost/foreach.hpp>
-
 
 namespace anki {
 
-
 //==============================================================================
-// create                                                                      =
-//==============================================================================
-void UiFont::create(const char* fontFilename, uint nominalWidth,
-	uint NominalHeight)
+void UiFont::create(const char* fontFilename, uint32_t nominalWidth,
+	uint32_t NominalHeight)
 {
 	FT_Vector ftSize = {nominalWidth, NominalHeight};
 	UiFtFontLoader ft(fontFilename, ftSize);
@@ -25,7 +19,7 @@ void UiFont::create(const char* fontFilename, uint nominalWidth,
 
 	// - Create glyphs
 	// - Get metrics
-	BOOST_FOREACH(const UiFtFontLoader::Glyph& ftGlyph, ft.getGlyphs())
+	for(const UiFtFontLoader::Glyph& ftGlyph : ft.getGlyphs())
 	{
 		// Create
 		glyphs.push_back(new Glyph);
@@ -42,17 +36,16 @@ void UiFont::create(const char* fontFilename, uint nominalWidth,
 			ftGlyph.getMetrics().horiAdvance);
 	}
 
-	//
 	// Calc texture matrices
 	//
 	int posX = 0;
 	int posY = 0;
 
 	// For all rows
-	for(uint i = 0; i < UiFtFontLoader::GLYPH_ROWS; i++)
+	for(uint32_t i = 0; i < UiFtFontLoader::GLYPH_ROWS; i++)
 	{
 		// For all columns
-		for(uint j = 0; j < UiFtFontLoader::GLYPH_COLUMNS; j++)
+		for(uint32_t j = 0; j < UiFtFontLoader::GLYPH_COLUMNS; j++)
 		{
 			Glyph& glyph = glyphs[i * UiFtFontLoader::GLYPH_COLUMNS + j];
 
@@ -80,7 +73,6 @@ void UiFont::create(const char* fontFilename, uint nominalWidth,
 		posY += ft.getLineHeight();
 	}
 
-	//
 	// Create the texture
 	//
 	Texture::Initializer tinit;
@@ -93,12 +85,9 @@ void UiFont::create(const char* fontFilename, uint nominalWidth,
 	tinit.mipmapping = false;
 	tinit.filteringType = Texture::TFT_NEAREST;
 	tinit.anisotropyLevel = 0;
-	tinit.dataCompression = Texture::DC_NONE;
+	tinit.repeat = false;
 
-	map.reset(new Texture());
-	map->create(tinit);
-	map->setRepeat(false);
+	map.reset(new Texture(tinit));
 }
 
-
-} // end namespace
+} // end namespace anki

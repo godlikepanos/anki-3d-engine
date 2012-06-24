@@ -5,6 +5,7 @@
 #include "anki/util/Singleton.h"
 #include <array>
 #include <mutex>
+#include <sstream> // For the macros
 
 namespace anki {
 

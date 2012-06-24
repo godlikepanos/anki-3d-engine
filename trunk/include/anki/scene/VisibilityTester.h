@@ -4,9 +4,7 @@
 #include <vector>
 #include <boost/range/iterator_range.hpp>
 
-
 namespace anki {
-
 
 class Camera;
 class Scene;
@@ -14,7 +12,6 @@ class SceneNode;
 class Frustumable;
 class Renderable;
 class Light;
-
 
 /// Its actually a container for visible entities
 class VisibilityInfo
@@ -42,7 +39,6 @@ private:
 	Lights lights;
 };
 
-
 /// Performs visibility determination tests and fills a few containers with the
 /// visible scene nodes
 class VisibilityTester
@@ -60,8 +56,6 @@ public:
 	static void test(Frustumable& cam, Scene& scene, VisibilityInfo& vinfo);
 };
 
-
 } // end namespace
-
 
 #endif

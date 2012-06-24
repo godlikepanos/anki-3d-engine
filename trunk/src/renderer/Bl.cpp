@@ -1,12 +1,11 @@
 #include "anki/renderer/Bl.h"
-#include "anki/renderer/RendererInitializer.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ShaderProgramResource.h"
 
 namespace anki {
 
 //==============================================================================
-void Bl::init(const RendererInitializer& initializer)
+void Bl::init(const Renderer::Initializer& initializer)
 {
 	enabled = initializer.pps.bl.enabled;
 	blurringIterationsNum = initializer.pps.bl.blurringIterationsNum;

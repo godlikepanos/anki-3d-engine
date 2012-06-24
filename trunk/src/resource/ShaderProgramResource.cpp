@@ -12,12 +12,18 @@ namespace anki {
 //==============================================================================
 void ShaderProgramResource::load(const char* filename)
 {
+	load(filename, "");
+}
+
+//==============================================================================
+void ShaderProgramResource::load(const char* filename, const char* extraSrc)
+{
 	ShaderProgramPrePreprocessor pars(filename);
 
 	std::array<const char*, 128> trfVarsArr = {{nullptr}};
 	if(pars.getTranformFeedbackVaryings().size() > 0)
 	{
-		uint i;
+		uint32_t i;
 		for(i = 0; i < pars.getTranformFeedbackVaryings().size(); i++)
 		{
 			trfVarsArr[i] = pars.getTranformFeedbackVaryings()[i].c_str();
@@ -25,11 +31,14 @@ void ShaderProgramResource::load(const char* filename)
 		trfVarsArr[i] = nullptr;
 	}
 
-	create(pars.getShaderSource(ST_VERTEX).c_str(), 
-		nullptr, 
-		nullptr, 
-		nullptr, 
-		pars.getShaderSource(ST_FRAGMENT).c_str(),
+	std::string vertSrc = extraSrc + pars.getShaderSource(ST_VERTEX);
+	std::string fragSrc = extraSrc + pars.getShaderSource(ST_FRAGMENT);
+
+	create(vertSrc.c_str(),
+		nullptr,
+		nullptr,
+		nullptr,
+		fragSrc.c_str(),
 		&trfVarsArr[0]);
 }
 

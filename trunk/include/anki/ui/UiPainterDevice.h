@@ -4,19 +4,16 @@
 #include "anki/gl/Fbo.h"
 #include "anki/math/Math.h"
 
-
 namespace anki {
 
-
 class Texture;
-
 
 /// This actually and FBO but with size info
 class UiPainterDevice: public Fbo
 {
 public:
 	/// Constructor
-	UiPainterDevice(Texture& colorFai);
+	UiPainterDevice(Texture* colorFai);
 
 	/// @name Accessors
 	/// @{
@@ -24,13 +21,11 @@ public:
 	/// @}
 
 private:
-	Texture& colorFai;
+	Texture* colorFai;
 
 	void create();
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

@@ -81,7 +81,7 @@ static int rmDir(const char* fpath, const struct stat* sb, int typeflag,
 
 	if(rv)
 	{
-		throw ANKI_EXCEPTION(strerror(errno) + ": " + filename);
+		throw ANKI_EXCEPTION(strerror(errno) + ": " + fpath);
 	}
 
 	return rv;
@@ -89,7 +89,7 @@ static int rmDir(const char* fpath, const struct stat* sb, int typeflag,
 
 void removeDirectory(const char* dir)
 {
-	nftw(path, rmDir, 64, FTW_DEPTH | FTW_PHYS);
+	nftw(dir, rmDir, 64, FTW_DEPTH | FTW_PHYS);
 }
 
 //==============================================================================
@@ -100,9 +100,9 @@ void createDirectory(const char* dir)
 		return;
 	}
 
-	if(mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+	if(mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
 	{
-		throw ANKI_EXCEPTION(strerror(errno) + ": " + filename);
+		throw ANKI_EXCEPTION(strerror(errno) + ": " + dir);
 	}
 }
 

@@ -1,8 +1,7 @@
 #include "anki/script/Common.h"
 #include "anki/renderer/RenderingPass.h"
 
-
-WRAP(SwitchableRenderingPass)
+ANKI_WRAP(SwitchableRenderingPass)
 {
 	class_<SwitchableRenderingPass, noncopyable>("SwitchableRenderingPass",
 		no_init)

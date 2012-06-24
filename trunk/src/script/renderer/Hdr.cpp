@@ -1,8 +1,7 @@
 #include "anki/script/Common.h"
 #include "anki/renderer/Hdr.h"
 
-
-WRAP(Hdr)
+ANKI_WRAP(Hdr)
 {
 	class_<Hdr, noncopyable>("Hdr", no_init)
 		.def("getBlurringIterationsNum", (uint (Hdr::*)() const)(

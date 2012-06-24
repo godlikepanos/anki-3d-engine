@@ -1,21 +1,15 @@
 #include "anki/ui/UiFtFontLoader.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
-#include "anki/core/Globals.h"
-#include <boost/foreach.hpp>
-
 
 namespace anki {
 
-
-//==============================================================================
-// getAllGlyphs                                                                =
 //==============================================================================
 void UiFtFontLoader::getAllGlyphs()
 {
 	glyphs.resize(GLYPHS_NUM);
 
-	for(uint n = 0; n < GLYPHS_NUM; n++)
+	for(uint32_t n = 0; n < GLYPHS_NUM; n++)
 	{
 		char c = ' ' + n;
 
@@ -39,12 +33,9 @@ void UiFtFontLoader::getAllGlyphs()
 	glyphs[0].metrics = glyphs['_' - ' '].metrics;
 }
 
-
 //==============================================================================
-// copyBitmap                                                                  =
-//==============================================================================
-void UiFtFontLoader::copyBitmap(const uchar* srcImg, const FT_Vector& srcSize,
-	const FT_Vector& pos)
+void UiFtFontLoader::copyBitmap(const uint8_t* srcImg,
+	const FT_Vector& srcSize, const FT_Vector& pos)
 {
 	for(int i = 0; i < srcSize.y; i++)
 	{
@@ -57,9 +48,6 @@ void UiFtFontLoader::copyBitmap(const uchar* srcImg, const FT_Vector& srcSize,
 	}
 }
 
-
-//==============================================================================
-// computeImageSize                                                            =
 //==============================================================================
 void UiFtFontLoader::computeImageSize()
 {
@@ -67,10 +55,9 @@ void UiFtFontLoader::computeImageSize()
 	imgSize.y = 0;
 	lineHeight = 0;
 
-	//
 	// Get img height
 	//
-	BOOST_FOREACH(const Glyph& glyph, glyphs)
+	for(const Glyph& glyph : glyphs)
 	{
 		if(toPixels(glyph.metrics.height) > int(lineHeight))
 		{
@@ -81,19 +68,17 @@ void UiFtFontLoader::computeImageSize()
 	float exp = ceil(log2(GLYPH_ROWS * lineHeight));
 	imgSize.y = pow(2, exp);
 
-	//
 	// Get img width
 	//
 
-
 	// For all rows
-	for(uint i = 0; i < GLYPH_ROWS; i++)
+	for(uint32_t i = 0; i < GLYPH_ROWS; i++)
 	{
-		uint rowSize = 0;
+		uint32_t rowSize = 0;
 		// For all columns
-		for(uint j = 0; j < GLYPH_COLUMNS; j++)
+		for(uint32_t j = 0; j < GLYPH_COLUMNS; j++)
 		{
-			uint pos = i * GLYPH_COLUMNS + j;
+			uint32_t pos = i * GLYPH_COLUMNS + j;
 			rowSize += toPixels(glyphs[pos].metrics.width);
 		}
 
@@ -107,10 +92,6 @@ void UiFtFontLoader::computeImageSize()
 	imgSize.x = pow(2, exp);
 }
 
-
-
-//==============================================================================
-// createImage                                                                 =
 //==============================================================================
 void UiFtFontLoader::createImage(const char* filename,
 	const FT_Vector& fontSize)
@@ -128,14 +109,13 @@ void UiFtFontLoader::createImage(const char* filename,
 	error = FT_New_Face(library, filename, 0, &face);
 	if(error)
 	{
-		throw ANKI_EXCEPTION("FT_New_Face failed with filename \"" + filename +
-			"\"");
+		throw ANKI_EXCEPTION("FT_New_Face() failed with filename: " + filename);
 	}
 
 	error = FT_Set_Pixel_Sizes(face, fontSize.x, fontSize.y);
 	if(error)
 	{
-		throw ANKI_EXCEPTION("FT_Set_Pixel_Sizes failed");
+		throw ANKI_EXCEPTION("FT_Set_Pixel_Sizes() failed");
 	}
 
 	// Get all glyphs
@@ -144,16 +124,16 @@ void UiFtFontLoader::createImage(const char* filename,
 	// Get final image size and create image buffer
 	computeImageSize();
 
-	size_t size = imgSize.x * imgSize.y * 1 * sizeof(uchar);
+	size_t size = imgSize.x * imgSize.y * 1 * sizeof(uint8_t);
 	img.resize(size, 128);
 
 	// Draw all glyphs to the image
 	FT_Vector pos = {0, 0}; // the (0,0) is the top left
 	// For all rows
-	for(uint i = 0; i < GLYPH_ROWS; i++)
+	for(uint32_t i = 0; i < GLYPH_ROWS; i++)
 	{
 		// For all columns
-		for(uint j = 0; j < GLYPH_COLUMNS; j++)
+		for(uint32_t j = 0; j < GLYPH_COLUMNS; j++)
 		{
 			Glyph& glyph = glyphs[i * GLYPH_COLUMNS + j];
 
@@ -181,14 +161,14 @@ void UiFtFontLoader::createImage(const char* filename,
 	{
 		for(int j = 0; j < imgSize.x; j++)
 		{
-			uchar tmp = img[i * imgSize.x + j];
+			uint8_t tmp = img[i * imgSize.x + j];
 			img[i * imgSize.x + j] = img[(imgSize.y - i - 1) * imgSize.x + j];
 			img[(imgSize.y - i - 1) * imgSize.x + j] = tmp;
 		}
 	}
 
 	// Clean
-	BOOST_FOREACH(Glyph& glyph, glyphs)
+	for(Glyph& glyph : glyphs)
 	{
 		FT_Done_Glyph(glyph.glyph);
 	}
@@ -197,19 +177,16 @@ void UiFtFontLoader::createImage(const char* filename,
 	FT_Done_FreeType(library);
 }
 
-
-//==============================================================================
-// saveImage                                                                   =
 //==============================================================================
 void UiFtFontLoader::saveImage(const char* filename) const
 {
-	char tgaHeader[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	uint8_t tgaHeader[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 	FILE* fp = fopen(filename, "wb");
 
 	fwrite(tgaHeader, 1, sizeof(tgaHeader), fp);
 
-	uchar header6[6];
+	uint8_t header6[6];
 
 	header6[0] = imgSize.x % 256;
 	header6[1] = imgSize.x / 256;
@@ -224,14 +201,13 @@ void UiFtFontLoader::saveImage(const char* filename) const
 	{
 		for(int j = 0; j < imgSize.x; j++)
 		{
-			fwrite(&img[i * imgSize.x + j], 1, sizeof(uchar), fp);
-			fwrite(&img[i * imgSize.x + j], 1, sizeof(uchar), fp);
-			fwrite(&img[i * imgSize.x + j], 1, sizeof(uchar), fp);
+			fwrite(&img[i * imgSize.x + j], 1, sizeof(uint8_t), fp);
+			fwrite(&img[i * imgSize.x + j], 1, sizeof(uint8_t), fp);
+			fwrite(&img[i * imgSize.x + j], 1, sizeof(uint8_t), fp);
 		}
 	}
 
 	fclose(fp);
 }
 
-
-} // end namespace
+} // end namespace anki

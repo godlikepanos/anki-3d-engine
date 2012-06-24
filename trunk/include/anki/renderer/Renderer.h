@@ -2,40 +2,110 @@
 #define ANKI_RENDERER_RENDERER_H
 
 #include "anki/math/Math.h"
-#include "anki/gl/Fbo.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/ShaderProgramResource.h"
-#include "anki/gl/Vbo.h"
-#include "anki/gl/Vao.h"
 #include "anki/resource/Resource.h"
+#include "anki/gl/Gl.h"
+
 #include "anki/renderer/Ms.h"
 #include "anki/renderer/Is.h"
 #include "anki/renderer/Pps.h"
 #include "anki/renderer/Bs.h"
 #include "anki/renderer/Dbg.h"
-#include "anki/gl/GlException.h"
-#include "anki/gl/GlState.h"
-#include "anki/gl/Query.h"
 #include "anki/renderer/Drawer.h"
-#include <boost/scoped_ptr.hpp>
-
 
 namespace anki {
 
+/// A struct to initialize the renderer. It contains a few extra params for
+/// the MainRenderer
+struct RendererInitializer
+{
+	// Ms
+	struct Ms
+	{
+		struct Ez
+		{
+			bool enabled = false;
+		} ez;
+	} ms;
+
+	// Is
+	struct Is
+	{
+		// Sm
+		struct Sm
+		{
+			bool enabled = true;
+			bool pcfEnabled = true;
+			bool bilinearEnabled = true;
+			int resolution = 1024;
+			float level0Distance = 3.0;
+		} sm;
+	} is;
+
+	// Pps
+	struct Pps
+	{
+		// Hdr
+		struct Hdr
+		{
+			bool enabled = true;
+			float renderingQuality = 0.25;
+			float blurringDist = 1.0;
+			float blurringIterationsNum = 2;
+			float exposure = 4.0;
+		} hdr;
+
+		// Ssao
+		struct Ssao
+		{
+			bool enabled = true;
+			float renderingQuality = 0.3;
+			uint32_t blurringIterationsNum = 2;
+		} ssao;
+
+		// Bl
+		struct Bl
+		{
+			bool enabled = true;
+			uint blurringIterationsNum = 2;
+			float sideBlurFactor = 1.0;
+		} bl;
+	} pps;
+
+	// Dbg
+	struct Dbg
+	{
+		bool enabled = true;
+	} dbg;
+
+	// the globals
+	int width; ///< Ignored by MainRenderer
+	int height; ///< Ignored by MainRenderer
+	float mainRendererQuality = 1.0; ///< Only for MainRenderer
+	float lodDistance; ///< Distance that used to calculate the LOD
+
+	// funcs
+	RendererInitializer()
+	{}
+
+	RendererInitializer(const RendererInitializer& initializer)
+	{
+		memcpy(this, &initializer, sizeof(RendererInitializer));
+	}
+};
 
 class Camera;
 struct RendererInitializer;
 class ModelNode;
 
-
-/// Renderer namespace
-
-/// Offscreen renderer
-/// It is a class and not a namespace because we may need external renderers
-/// for security cameras for example
+/// Offscreen renderer. It is a class and not a namespace because we may need
+/// external renderers for security cameras for example
 class Renderer
 {
 public:
+	typedef RendererInitializer Initializer;
+
 	/// The types of rendering a ModelNode
 	enum ModelNodeRenderType
 	{
@@ -101,13 +171,13 @@ public:
 		return viewProjectionMat;
 	}
 
-	const Camera& getCamera() const
+	const Scene& getScene() const
 	{
-		return *cam;
+		return *scene;
 	}
-	Camera& getCamera()
+	Scene& getScene()
 	{
-		return *cam;
+		return *scene;
 	}
 
 	const RenderableDrawer& getSceneDrawer() const
@@ -173,8 +243,7 @@ public:
 	void init(const RendererInitializer& initializer);
 
 	/// This function does all the rendering stages and produces a final FAI
-	/// @param cam The camera from where the rendering will be done
-	void render(Camera& cam);
+	void render(Scene& scene);
 
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
@@ -231,7 +300,7 @@ protected:
 	/// @name Profiling stuff
 	/// @{
 	double msTime, isTime, ppsTime, bsTime;
-	boost::scoped_ptr<Query> msTq, isTq, ppsTq, bsTq;
+	std::unique_ptr<Query> msTq, isTq, ppsTq, bsTq, pps2Tq;
 	bool enableStagesProfilingFlag;
 	/// @}
 
@@ -239,7 +308,7 @@ protected:
 	uint width;
 	/// Height of the rendering. Don't confuse with the window width
 	uint height;
-	Camera* cam; ///< Current camera
+	Scene* scene; ///< Current scene
 	/// Max color attachments an FBO can accept
 	static int maxColorAtachments;
 	RenderableDrawer sceneDrawer;

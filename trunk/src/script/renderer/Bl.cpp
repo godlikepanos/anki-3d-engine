@@ -1,8 +1,7 @@
 #include "anki/script/Common.h"
 #include "anki/renderer/Bl.h"
 
-
-WRAP(Bl)
+ANKI_WRAP(Bl)
 {
 	class_<Bl, noncopyable>("Bl", no_init)
 		.def("getEnabled", (bool (Bl::*)() const)(&Bl::getEnabled))

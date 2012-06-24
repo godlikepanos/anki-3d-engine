@@ -5,16 +5,13 @@
 #include "anki/math/Math.h"
 #include "anki/gl/Vbo.h"
 #include "anki/gl/Vao.h"
-#include <boost/scoped_ptr.hpp>
-
+#include "anki/resource/ShaderProgramResource.h"
 
 namespace anki {
 
-
 class UiFont;
 
-
-/// @todo
+/// XXX
 class UiPainter
 {
 public:
@@ -23,10 +20,6 @@ public:
 	/// @name Accessors
 	/// @{
 	const Vec2& getPosition() const
-	{
-		return pos;
-	}
-	Vec2& getPosition()
 	{
 		return pos;
 	}
@@ -39,13 +32,11 @@ public:
 	{
 		return col;
 	}
-	Vec4& getColor()
-	{
-		return col;
-	}
 	void setColor(const Vec4& x)
 	{
 		col = x;
+		sProg->bind();
+		sProg->findUniformVariableByName("color")->set(col);
 	}
 
 	void setFont(const char* fontFilename, uint nominalWidth,
@@ -67,7 +58,7 @@ public:
 private:
 	/// @name Data
 	/// @{
-	boost::scoped_ptr<UiFont> font;
+	std::unique_ptr<UiFont> font;
 	ShaderProgramResourcePointer sProg;
 
 	Vec2 pos;

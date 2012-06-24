@@ -3,11 +3,10 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/ModelNode.h"
 
-
-WRAP(Scene)
+ANKI_WRAP(Scene)
 {
-	WRAP_CONTAINER(Scene::Types<Camera>::Container)
-	WRAP_CONTAINER(Scene::Types<ModelNode>::Container)
+	ANKI_WRAP_CONTAINER(Scene::Types<Camera>::Container)
+	ANKI_WRAP_CONTAINER(Scene::Types<ModelNode>::Container)
 
 	class_<Scene, noncopyable>("Scene", no_init)
 		.def("setAmbientColor", &Scene::setAmbientColor)

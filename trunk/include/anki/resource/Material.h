@@ -8,7 +8,7 @@
 #include "anki/math/Math.h"
 #include "anki/util/Visitor.h"
 #include "anki/util/NonCopyable.h"
-#include "anki/gl/Gl.h"
+#include "anki/gl/Ogl.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/property_tree/ptree_fwd.hpp>
 

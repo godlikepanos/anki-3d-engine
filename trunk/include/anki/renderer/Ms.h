@@ -2,56 +2,56 @@
 #define ANKI_RENDERER_MS_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/resource/TextureResource.h"
+#include "anki/gl/Texture.h"
 #include "anki/gl/Fbo.h"
 #include "anki/renderer/Ez.h"
 
-
 namespace anki {
-
 
 /// Material stage
 class Ms: public RenderingPass
 {
-	public:
-		Ms(Renderer& r_);
-		~Ms();
+public:
+	Ms(Renderer* r_)
+		: RenderingPass(r_), ez(r_)
+	{}
 
-		/// @name Accessors
-		/// @{
-		const Texture& getNormalFai() const
-		{
-			return normalFai;
-		}
+	~Ms();
 
-		const Texture& getDiffuseFai() const
-		{
-			return diffuseFai;
-		}
+	/// @name Accessors
+	/// @{
+	const Texture& getNormalFai() const
+	{
+		return normalFai;
+	}
 
-		const Texture& getSpecularFai() const
-		{
-			return specularFai;
-		}
+	const Texture& getDiffuseFai() const
+	{
+		return diffuseFai;
+	}
 
-		const Texture& getDepthFai() const
-		{
-			return depthFai;
-		}
-		/// @}
+	const Texture& getSpecularFai() const
+	{
+		return specularFai;
+	}
 
-		void init(const RendererInitializer& initializer);
-		void run();
+	const Texture& getDepthFai() const
+	{
+		return depthFai;
+	}
+	/// @}
 
-	private:
-		Ez ez; /// EarlyZ pass
-		Fbo fbo;
-		Texture normalFai; ///< The FAI for normals
-		Texture diffuseFai; ///< The FAI for diffuse color
-		Texture specularFai; ///< The FAI for specular color and shininess
-		Texture depthFai; ///< The FAI for depth
+	void init(const RendererInitializer& initializer);
+	void run();
+
+private:
+	Ez ez; /// EarlyZ pass
+	Fbo fbo;
+	Texture normalFai; ///< The FAI for normals
+	Texture diffuseFai; ///< The FAI for diffuse color
+	Texture specularFai; ///< The FAI for specular color and shininess
+	Texture depthFai; ///< The FAI for depth
 };
-
 
 } // end namespace
 

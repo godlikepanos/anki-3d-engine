@@ -1,51 +1,31 @@
+#include "anki/renderer/MainRenderer.h"
+#include "anki/core/App.h"
+#include "anki/core/Logger.h"
+#include "anki/renderer/Deformer.h"
+#include "anki/util/Filesystem.h"
 #include <cstdlib>
 #include <cstdio>
 #include <jpeglib.h>
 #include <fstream>
-#include <boost/filesystem.hpp>
-#include <boost/algorithm/string.hpp>
-#include "anki/gl/GlException.h"
-#include "anki/renderer/MainRenderer.h"
-#include "anki/core/App.h"
-#include "anki/renderer/RendererInitializer.h"
-#include "anki/renderer/Ssao.h"
-#include "anki/core/Logger.h"
-#include "anki/gl/TimeQuery.h"
-#include "anki/renderer/Deformer.h"
-
 
 #define glewGetContext() (&glContext)
 
-
 namespace anki {
 
-
 //==============================================================================
-// Constructors & destructor                                                   =
-//==============================================================================
-MainRenderer::MainRenderer():
-	dbg(*this),
-	screenshotJpegQuality(90)
-{}
-
-
 MainRenderer::~MainRenderer()
 {}
 
-
 //==============================================================================
-// init                                                                        =
-//==============================================================================
-void MainRenderer::init(const RendererInitializer& initializer_)
+void MainRenderer::init(const Renderer::Initializer& initializer_)
 {
 	ANKI_LOGI("Initializing main renderer...");
 	initGl();
 
 	sProg.load("shaders/Final.glsl");
 
-	dbgTq.reset(new TimeQuery);
+	dbgTq.reset(new Query(GL_TIME_ELAPSED));
 
-	//
 	// init the offscreen Renderer
 	//
 	RendererInitializer initializer = initializer_;
@@ -56,51 +36,45 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 		renderingQuality;
 	Renderer::init(initializer);
 	dbg.init(initializer);
-	deformer.reset(new Deformer(*this));
+	deformer.reset(new Deformer);
 	ANKI_LOGI("Main renderer initialized");
 }
 
-
-//==============================================================================
-// initGl                                                                      =
 //==============================================================================
 void MainRenderer::initGl()
 {
 	glewExperimental = GL_TRUE;
-	GLenum err = glewInit();
-	if(err != GLEW_OK)
+	if(glewInit() != GLEW_OK)
 	{
 		throw ANKI_EXCEPTION("GLEW initialization failed");
 	}
 
-	// Ignore re first error
+	// Ignore the first error
 	glGetError();
 
 	// print GL info
-	ANKI_LOGI("OpenGL info: OGL " <<
-		reinterpret_cast<const char*>(glGetString(GL_VERSION)) <<
-		", GLSL " << reinterpret_cast<const char*>(
-			glGetString(GL_SHADING_LANGUAGE_VERSION)));
+	ANKI_LOGI("OpenGL info: OGL "
+		<< reinterpret_cast<const char*>(glGetString(GL_VERSION))
+		<< ", GLSL " << reinterpret_cast<const char*>(
+		glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
 	// get max texture units
 	//glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);
-	int& tun = Texture::getTextureUnitsNum();
-	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &tun);
 	glClearColor(0.1, 0.1, 0.0, 1.0);
 	glClearDepth(1.0);
 	glClearStencil(0);
 	glDepthFunc(GL_LEQUAL);
 	// CullFace is always on
 	glCullFace(GL_BACK);
-	GlStateMachineSingleton::get().enable(GL_CULL_FACE);
+	GlStateSingleton::get().enable(GL_CULL_FACE);
 
 	// defaults
 	//glDisable(GL_LIGHTING);
 	//glDisable(GL_TEXTURE_2D);
-	GlStateMachineSingleton::get().enable(GL_BLEND, false);
-	GlStateMachineSingleton::get().disable(GL_STENCIL_TEST);
+	GlStateSingleton::get().disable(GL_BLEND);
+	GlStateSingleton::get().disable(GL_STENCIL_TEST);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glDepthMask(true);
+	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LESS);
 
 	try
@@ -113,46 +87,39 @@ void MainRenderer::initGl()
 	}
 }
 
-
 //==============================================================================
-// render                                                                      =
-//==============================================================================
-void MainRenderer::render(Camera& cam_)
+void MainRenderer::render(Scene& scene)
 {
-	Renderer::render(cam_);
+	Renderer::render(scene);
 
 	if(getStagesProfilingEnabled())
 	{
 		dbgTq->begin();
 		dbg.run();
-		dbgTime = dbgTq->end();
+		dbgTq->end();
 	}
 	else
 	{
 		dbg.run();
 	}
 
-	//
 	// Render the PPS FAI to the framebuffer
 	//
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 
-	GlStateMachineSingleton::get().setViewport(
+	GlStateSingleton::get().setViewport(
 		0, 0, AppSingleton::get().getWindowWidth(),
 		AppSingleton::get().getWindowHeight());
-	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
-	GlStateMachineSingleton::get().enable(GL_BLEND, false);
+	GlStateSingleton::get().disable(GL_DEPTH_TEST);
+	GlStateSingleton::get().disable(GL_BLEND);
 	sProg->bind();
 	//sProg->findUniformVariableByName("rasterImage").set(ms.getDiffuseFai(), 0);
 	//sProg->findUniformVariableByName("rasterImage").
 	//	set(is.getFai(), 0);
-	sProg->findUniformVariableByName("rasterImage").set(pps.getPostPassFai(), 0);
+	sProg->findUniformVariableByName("rasterImage")->set(pps.getPostPassFai());
 	drawQuad();
 }
 
-
-//==============================================================================
-// takeScreenshotTga                                                           =
 //==============================================================================
 void MainRenderer::takeScreenshotTga(const char* filename)
 {
@@ -161,7 +128,8 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	fs.open(filename, std::ios::out | std::ios::binary);
 	if(!fs.is_open())
 	{
-		throw ANKI_EXCEPTION("Cannot create screenshot. File \"" + filename + "\"");
+		throw ANKI_EXCEPTION("Cannot create screenshot. File \""
+			+ filename + "\"");
 	}
 
 	// write headers
@@ -191,9 +159,6 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	free(buffer);
 }
 
-
-//==============================================================================
-// takeScreenshotJpeg                                                          =
 //==============================================================================
 void MainRenderer::takeScreenshotJpeg(const char* filename)
 {
@@ -243,14 +208,10 @@ void MainRenderer::takeScreenshotJpeg(const char* filename)
 	fclose(outfile);
 }
 
-
-//==============================================================================
-// takeScreenshot                                                              =
 //==============================================================================
 void MainRenderer::takeScreenshot(const char* filename)
 {
-	std::string ext = boost::filesystem::path(filename).extension().string();
-	boost::to_lower(ext);
+	std::string ext = getFileExtension(filename);
 
 	// exec from this extension
 	if(ext == ".tga")
@@ -263,11 +224,9 @@ void MainRenderer::takeScreenshot(const char* filename)
 	}
 	else
 	{
-		throw ANKI_EXCEPTION("File \"" + filename +
-			"\": Unsupported extension");
+		throw ANKI_EXCEPTION("Unsupported file extension: " + filename);
 	}
 	//ANKI_LOGI("Screenshot \"" << filename << "\" saved");
 }
-
 
 } // end namespace

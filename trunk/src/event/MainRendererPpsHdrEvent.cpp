@@ -1,6 +1,5 @@
 #include "anki/event/MainRendererPpsHdrEvent.h"
 #include "anki/renderer/MainRenderer.h"
-#include "anki/core/Globals.h"
 
 namespace anki {
 

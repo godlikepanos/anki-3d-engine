@@ -1,28 +1,20 @@
 #include "anki/ui/UiPainter.h"
-#include "anki/gl/GlStateMachine.h"
-#include "anki/resource/Texture.h"
-#include "anki/resource/ShaderProgram.h"
+#include "anki/gl/GlState.h"
+#include "anki/resource/TextureResource.h"
 #include "anki/core/Logger.h"
 #include "anki/ui/UiFont.h"
 #include <cstdarg>
 #include <cstdio>
 
-
 namespace anki {
 
-
-//==============================================================================
-// Constructor                                                                 =
 //==============================================================================
 UiPainter::UiPainter(const Vec2& deviceSize_)
-:	deviceSize(deviceSize_)
+	: deviceSize(deviceSize_)
 {
 	init();
 }
 
-
-//==============================================================================
-// setFont                                                                     =
 //==============================================================================
 void UiPainter::setFont(const char* fontFilename, uint nominalWidth,
 	uint nominalHeight)
@@ -30,22 +22,22 @@ void UiPainter::setFont(const char* fontFilename, uint nominalWidth,
 	font.reset(new UiFont(fontFilename, nominalWidth, nominalHeight));
 }
 
-
-//==============================================================================
-// init                                                                        =
 //==============================================================================
 void UiPainter::init()
 {
 	// Default font
 	float dfltFontWidth = 0.2 * deviceSize.x();
 	font.reset(new UiFont("engine-rsrc/ConsolaMono.ttf", dfltFontWidth,
-	                    deviceSize.x() / deviceSize.y() * dfltFontWidth));
+		deviceSize.x() / deviceSize.y() * dfltFontWidth));
 
 	// Misc
 	tabSize = 4;
 
 	// SProg
 	sProg.load("shaders/UiText.glsl");
+	sProg->bind();
+	sProg->findUniformVariableByName("texture")->set(font->getMap());
+	sProg->findUniformVariableByName("color")->set(col);
 
 	// Geom
 	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0},
@@ -62,23 +54,18 @@ void UiPainter::init()
 	qVao.attachElementArrayBufferVbo(qIndecesVbo);
 }
 
-
-//==============================================================================
-// drawText                                                                    =
 //==============================================================================
 void UiPainter::drawText(const char* text)
 {
 	// Set GL
-	GlStateMachineSingleton::get().enable(GL_BLEND);
+	GlStateSingleton::get().enable(GL_BLEND);
 	//GlStateMachineSingleton::get().disable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	GlStateMachineSingleton::get().disable(GL_DEPTH_TEST);
+	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 
 	// SProg (some)
 	sProg->bind();
-
-	sProg->findUniformVariableByName("texture").set(font->getMap(), 0);
-	sProg->findUniformVariableByName("color").set(col);
+	sProg->findUniformVariableByName("texture")->set(font->getMap());
 
 	// Vao
 	qVao.bind();
@@ -118,8 +105,8 @@ void UiPainter::drawText(const char* text)
 			trfM(1, 2) = p.y() + 2.0 * (font->getGlyphBearingY(cc) -
 				int(font->getGlyphHeight(cc))) / deviceSize.y();
 
-			sProg->findUniformVariableByName("transformation").set(trfM);
-			sProg->findUniformVariableByName("textureTranformation").set(
+			sProg->findUniformVariableByName("transformation")->set(trfM);
+			sProg->findUniformVariableByName("textureTranformation")->set(
 				font->getGlyphTextureMatrix(cc));
 
 			// Render

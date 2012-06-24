@@ -4,8 +4,7 @@
 #include "anki/event/SceneColorEvent.h"
 #include "anki/event/MainRendererPpsHdrEvent.h"
 
-
-WRAP(EventManager)
+ANKI_WRAP(EventManager)
 {
 	class_<EventManager, noncopyable>("EventManager", no_init)
 		.def("createEvent", &EventManager::createEvent<SceneColorEvent>,
