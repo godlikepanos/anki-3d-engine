@@ -2,65 +2,61 @@
 #define ANKI_RENDERER_SSAO_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/gl/Fbo.h"
-#include "anki/resource/TextureResource.h"
 #include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
-#include "anki/gl/Vbo.h"
-#include "anki/gl/Vao.h"
-
+#include "anki/gl/Fbo.h"
+#include "anki/gl/Texture.h"
 
 namespace anki {
-
 
 /// Screen space ambient occlusion pass
 ///
 /// Three passes:
-/// 1) Calc ssao factor
-/// 2) Blur vertically
-/// 3) Blur horizontally repeat 2, 3
+/// @li Calc ssao factor
+/// @li Blur vertically
+/// @li Blur horizontally repeat 2, 3
 class Ssao: public SwitchableRenderingPass
 {
-	public:
-		Ssao(Renderer* r_)
-			: SwitchableRenderingPass(r_)
-		{}
+public:
+	Ssao(Renderer* r_)
+		: SwitchableRenderingPass(r_)
+	{}
 
-		void init(const RendererInitializer& initializer);
-		void run();
+	void init(const RendererInitializer& initializer);
+	void run();
 
-		/// @name Accessors
-		/// @{
-		float getRenderingQuality() const
-		{
-			return renderingQuality;
-		}
+	/// @name Accessors
+	/// @{
+	float getRenderingQuality() const
+	{
+		return renderingQuality;
+	}
 
-		const Texture& getFai() const
-		{
-			return fai;
-		}
-		/// @}
+	const Texture& getFai() const
+	{
+		return fai;
+	}
+	/// @}
 
-	private:
-		Texture ssaoFai; ///< It contains the unblurred SSAO factor
-		Texture hblurFai;
-		Texture fai;  ///< AKA vblurFai The final FAI
-		float renderingQuality;
-		float blurringIterationsNum;
-		Fbo ssaoFbo;
-		Fbo hblurFbo;
-		Fbo vblurFbo;
-		TextureResourcePointer noiseMap;
-		ShaderProgramResourcePointer ssaoSProg;
-		ShaderProgramResourcePointer hblurSProg;
-		ShaderProgramResourcePointer vblurSProg;
+private:
+	Texture ssaoFai; ///< It contains the unblurred SSAO factor
+	Texture hblurFai;
+	Texture fai;  ///< AKA vblurFai The final FAI
+	float renderingQuality;
+	uint32_t blurringIterationsNum;
+	Fbo ssaoFbo;
+	Fbo hblurFbo;
+	Fbo vblurFbo;
+	TextureResourcePointer noiseMap;
+	ShaderProgramResource ssaoSProg;
+	ShaderProgramResource hblurSProg;
+	ShaderProgramResource vblurSProg;
+	uint32_t width, height;
 
-		void createFbo(Fbo& fbo, Texture& fai);
+	void createFbo(Fbo& fbo, Texture& fai);
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

@@ -1,8 +1,7 @@
 #include "anki/script/Common.h"
 #include "anki/event/SceneColorEvent.h"
 
-
-WRAP(SceneColorEvent)
+ANKI_WRAP(SceneColorEvent)
 {
 	class_<SceneColorEvent>("SceneColorEvent", no_init)
 		.def(init<float, float, const Vec3&>())

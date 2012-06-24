@@ -1,20 +1,13 @@
-#include <boost/foreach.hpp>
 #include "anki/renderer/Sm.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/App.h"
-#include "anki/scene/Scene.h"
 #include "anki/resource/LightRsrc.h"
+#include "anki/scene/Scene.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
-#include "anki/scene/SpotLight.h"
-#include "anki/renderer/RendererInitializer.h"
-
 
 namespace anki {
 
-
-//==============================================================================
-// init                                                                        =
 //==============================================================================
 void Sm::init(const RendererInitializer& initializer)
 {
@@ -32,7 +25,7 @@ void Sm::init(const RendererInitializer& initializer)
 
 	// Init the levels
 	initLevel(resolution, level0Distance, bilinearEnabled, levels[0]);
-	for(uint i = 1; i < levels.size(); i++)
+	for(uint32_t i = 1; i < levels.size(); i++)
 	{
 		initLevel(levels[i - 1].resolution / 2,
 			levels[i - 1].distance * 2.0,
@@ -41,11 +34,9 @@ void Sm::init(const RendererInitializer& initializer)
 	}
 }
 
-
 //==============================================================================
-// initLevel                                                                   =
-//==============================================================================
-void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
+void Sm::initLevel(uint32_t resolution, float distance, bool bilinear,
+	Level& level)
 {
 	level.resolution = resolution;
 	level.distance = distance;
@@ -53,13 +44,10 @@ void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
 
 	try
 	{
-		// create FBO
-		level.fbo.create();
-		level.fbo.bind();
-
-		// texture
+		// Init texture
 		Renderer::createFai(level.resolution, level.resolution,
 			GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, level.shadowMap);
+
 		if(level.bilinear)
 		{
 			level.shadowMap.setFiltering(Texture::TFT_LINEAR);
@@ -79,43 +67,28 @@ void Sm::initLevel(uint resolution, float distance, bool bilinear, Level& level)
 		Dt = shadow2D(shadow_depth_map, _shadow_uv).r (see lp_generic.frag).
 		Hardware filters like GL_LINEAR cannot be applied.*/
 
-		// inform the we wont write to color buffers
-		level.fbo.setNumOfColorAttachements(0);
-
-		// attach the texture
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-			GL_TEXTURE_2D, level.shadowMap.getGlId(), 0);
-
-		// test if success
-		level.fbo.checkIfGood();
-
-		// unbind
-		level.fbo.unbind();
+		// create FBO
+		level.fbo.create();
+		level.fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, level.shadowMap);
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot create shadowmapping "
-			"FBO") << e;
+		throw ANKI_EXCEPTION("Cannot create shadowmapping FBO") << e;
 	}
 }
 
-
-//==============================================================================
-// run                                                                         =
 //==============================================================================
 void Sm::run(Light& light, float distance)
 {
-	if(!enabled)
+	if(!enabled || !light.getShadowEnabled()
+		|| light.getLightType() == Light::LT_POINT)
 	{
 		return;
 	}
 
-	ANKI_ASSERT(light.getVisibleMsRenderableNodes().size() > 0);
-
-	//
 	// Determine the level
 	//
-	BOOST_FOREACH(Level& level, levels)
+	for(Level& level : levels)
 	{
 		crntLevel = &level;
 		if(distance < level.distance)
@@ -124,7 +97,6 @@ void Sm::run(Light& light, float distance)
 		}
 	}
 
-	//
 	// Render
 	//
 
@@ -132,43 +104,34 @@ void Sm::run(Light& light, float distance)
 	crntLevel->fbo.bind();
 
 	// set GL
-	GlStateMachineSingleton::get().setViewport(0, 0,
+	GlStateSingleton::get().setViewport(0, 0,
 		crntLevel->resolution, crntLevel->resolution);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	// disable color & blend & enable depth test
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, true);
-	GlStateMachineSingleton::get().enable(GL_BLEND, false);
+	GlStateSingleton::get().enable(GL_DEPTH_TEST);
+	GlStateSingleton::get().disable(GL_BLEND);
 
 	// for artifacts
 	glPolygonOffset(2.0, 2.0); // keep the values as low as possible!!!!
-	GlStateMachineSingleton::get().enable(GL_POLYGON_OFFSET_FILL);
+	GlStateSingleton::get().enable(GL_POLYGON_OFFSET_FILL);
+
+	// Visibility tests
+	SpotLight& slight = static_cast<SpotLight&>(light);
+	VisibilityInfo vi;
+	VisibilityTester vt;
+	vt.test(slight, r->getScene(), vi);
 
 	// render all
-	BOOST_FOREACH(RenderableNode* node, light.getVisibleMsRenderableNodes())
+	for(Renderable* node : vi.getRenderables())
 	{
-		switch(light.getLightType())
-		{
-			case Light::LT_SPOT:
-			{
-				const SpotLight& sl = static_cast<const SpotLight&>(light);
-				r.getSceneDrawer().renderRenderableNode(sl.getCamera(),
-					1, *node);
-				break;
-			}
-
-			default:
-				ANKI_ASSERT(0);
-		}
+		r->getSceneDrawer().render(r->getScene().getActiveCamera(), 1, *node);
 	}
 
 	// restore GL
-	GlStateMachineSingleton::get().disable(GL_POLYGON_OFFSET_FILL);
+	GlStateSingleton::get().disable(GL_POLYGON_OFFSET_FILL);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-	// FBO
-	crntLevel->fbo.unbind();
 }
 
 

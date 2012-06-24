@@ -1,6 +1,5 @@
 #include "anki/event/SceneColorEvent.h"
 #include "anki/scene/Scene.h"
-#include "anki/core/Globals.h"
 #include "anki/core/Logger.h"
 
 namespace anki {
@@ -39,5 +38,4 @@ void SceneColorEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 		interpolate(originalColor, finalColor, dp));
 }
 
-
-} // end namespace
+} // end namespace anki

@@ -194,7 +194,7 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	glId = glCreateProgram();
 	if(glId == 0)
 	{
-		throw ANKI_EXCEPTION("glCreateProgram failed");
+		throw ANKI_EXCEPTION("glCreateProgram() failed");
 	}
 	glAttachShader(glId, vertShaderGlId);
 	glAttachShader(glId, fragShaderGlId);

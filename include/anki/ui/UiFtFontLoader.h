@@ -1,7 +1,6 @@
 #ifndef ANKI_UI_UI_FT_FONT_LOADER_H
 #define ANKI_UI_UI_FT_FONT_LOADER_H
 
-#include "anki/util/StdTypes.h"
 #include "anki/math/Math.h"
 #include <vector>
 #include <boost/range/iterator_range.hpp>
@@ -9,9 +8,7 @@
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 
-
 namespace anki {
-
 
 /// A helper class that uses libfreetype to load glyphs from a font file and
 /// gather the metrics for each glyph
@@ -49,7 +46,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const uchar* getImage() const
+	const uint8_t* getImage() const
 	{
 		return &img[0];
 	}
@@ -86,16 +83,16 @@ private:
 	FT_Library library;
 	FT_Face face;
 	std::vector<Glyph> glyphs;
-	std::vector<uchar> img;
+	std::vector<uint8_t> img;
 	FT_Vector imgSize;
-	uint lineHeight; ///< Calculated as the max height among all glyphs
+	uint32_t lineHeight; ///< Calculated as the max height among all glyphs
 	/// @}
 
 	/// Reads the face and extracts the glyphs
 	void getAllGlyphs();
 
 	/// Copy one bitmap to img
-	void copyBitmap(const uchar* srcImg, const FT_Vector& srcSize,
+	void copyBitmap(const uint8_t* srcImg, const FT_Vector& srcSize,
 		const FT_Vector& pos);
 
 	/// Compute image size (imgSize) using the glyphs set
@@ -105,8 +102,6 @@ private:
 	void createImage(const char* filename, const FT_Vector& fontSize);
 };
 
-
 } // end namespace
-
 
 #endif

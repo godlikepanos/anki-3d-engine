@@ -3,12 +3,9 @@
 
 #include "anki/renderer/RenderingPass.h"
 
-
 namespace anki {
 
-
 class Light;
-
 
 /// Stencil masking optimizations
 class Smo: public RenderingPass
@@ -26,8 +23,6 @@ public:
 private:
 };
 
-
 } // end namespace
-
 
 #endif

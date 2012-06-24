@@ -3,7 +3,7 @@
 
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
-#include "anki/gl/Gl.h"
+#include "anki/gl/Ogl.h"
 #include <initializer_list>
 
 namespace anki {

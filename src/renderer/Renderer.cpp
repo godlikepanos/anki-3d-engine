@@ -1,26 +1,21 @@
 #include "anki/renderer/Renderer.h"
-#include "anki/renderer/RendererInitializer.h"
 #include "anki/util/Exception.h"
 #include "anki/scene/Camera.h"
-
+#include "anki/scene/Scene.h"
 
 namespace anki {
 
-
 //==============================================================================
 Renderer::Renderer()
-	: ms(*this), is(*this), pps(*this), bs(*this), width(640), height(480),
+	: ms(this), is(this), pps(this), bs(this), width(640), height(480),
 		sceneDrawer(this)
 {
 	enableStagesProfilingFlag = false;
-	lodDistance = 10.0;
 }
-
 
 //==============================================================================
 Renderer::~Renderer()
 {}
-
 
 //==============================================================================
 void Renderer::init(const RendererInitializer& initializer)
@@ -28,6 +23,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	// set from the initializer
 	width = initializer.width;
 	height = initializer.height;
+	lodDistance = initializer.lodDistance;
 	framesNum = 0;
 
 	// a few sanity checks
@@ -44,7 +40,7 @@ void Renderer::init(const RendererInitializer& initializer)
 
 	// quad VBOs and VAO
 	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0},
-		{1.0, 0.0}};
+		{1.0, 0.0}}; /// XXX change them to NDC
 	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords),
 		quadVertCoords, GL_STATIC_DRAW);
 
@@ -58,51 +54,56 @@ void Renderer::init(const RendererInitializer& initializer)
 	quadVao.attachElementArrayBufferVbo(quadVertIndecesVbo);
 
 	// Other
-	msTq.reset(new TimeQuery);
-	isTq.reset(new TimeQuery);
-	ppsTq.reset(new TimeQuery);
-	bsTq.reset(new TimeQuery);
+	msTq.reset(new Query(GL_TIME_ELAPSED));
+	isTq.reset(new Query(GL_TIME_ELAPSED));
+	ppsTq.reset(new Query(GL_TIME_ELAPSED));
+	bsTq.reset(new Query(GL_TIME_ELAPSED));
 }
 
-
 //==============================================================================
-void Renderer::render(Camera& cam_)
+void Renderer::render(Scene& scene_)
 {
-	cam = &cam_;
+	scene = &scene_;
+	const Camera& cam = scene->getActiveCamera();
 
-	//
 	// Calc a few vars
 	//
-	calcPlanes(Vec2(cam->getNear(), cam->getFar()), planes);
+	calcPlanes(Vec2(cam.getNear(), cam.getFar()), planes);
 
-	ANKI_ASSERT(cam->getCameraType() == Camera::CT_PERSPECTIVE);
-	const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(*cam);
+	ANKI_ASSERT(cam.getCameraType() == Camera::CT_PERSPECTIVE);
+	const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(cam);
 	calcLimitsOfNearPlane(pcam, limitsOfNearPlane);
 	limitsOfNearPlane2 = limitsOfNearPlane * 2.0;
 
-	viewProjectionMat = cam->getProjectionMatrix() * cam->getViewMatrix();
+	viewProjectionMat = cam.getProjectionMatrix() * cam.getViewMatrix();
 
 	if(enableStagesProfilingFlag)
 	{
 		msTq->begin();
 		ms.run();
-		msTime = msTq->end();
+		msTq->end();
 
 		isTq->begin();
 		is.run();
-		isTime = isTq->end();
+		isTq->end();
 
 		ppsTq->begin();
 		pps.runPrePass();
-		ppsTime = ppsTq->end();
+		ppsTq->end();
 
 		bsTq->begin();
 		bs.run();
-		bsTime = bsTq->end();
+		bsTq->end();
 
-		ppsTq->begin();
+		pps2Tq->begin();
 		pps.runPostPass();
-		ppsTime += ppsTq->end();
+		pps2Tq->end();
+
+		// Now wait
+		msTime = msTq->getResult();
+		isTime = isTq->getResult();
+		bsTime = bsTq->getResult();
+		ppsTime = ppsTq->getResult() + ppsTq->getResult();
 	}
 	else
 	{
@@ -116,14 +117,12 @@ void Renderer::render(Camera& cam_)
 	++framesNum;
 }
 
-
 //==============================================================================
 void Renderer::drawQuad()
 {
 	quadVao.bind();
 	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
 }
-
 
 //==============================================================================
 Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
@@ -144,7 +143,6 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 	return Vec3(final);
 }
 
-
 //==============================================================================
 void Renderer::createFai(uint width, uint height, int internalFormat,
 	int format, int type, Texture& fai)
@@ -164,7 +162,6 @@ void Renderer::createFai(uint width, uint height, int internalFormat,
 	fai.create(init);
 }
 
-
 //==============================================================================
 void Renderer::calcPlanes(const Vec2& cameraRange, Vec2& planes)
 {
@@ -175,7 +172,6 @@ void Renderer::calcPlanes(const Vec2& cameraRange, Vec2& planes)
 	planes.y() = (zFar * zNear) / (zNear -zFar);
 }
 
-
 //==============================================================================
 void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 	Vec2& limitsOfNearPlane)
@@ -184,6 +180,5 @@ void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 	limitsOfNearPlane.x() = limitsOfNearPlane.y()
 		* (pcam.getFovX() / pcam.getFovY());
 }
-
 
 } // end namespace

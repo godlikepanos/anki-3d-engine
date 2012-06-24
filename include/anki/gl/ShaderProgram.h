@@ -6,7 +6,7 @@
 #include "anki/util/Flags.h"
 #include "anki/math/Forward.h"
 #include "anki/util/NonCopyable.h"
-#include "anki/gl/Gl.h"
+#include "anki/gl/Ogl.h"
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <vector>
 #include <string>

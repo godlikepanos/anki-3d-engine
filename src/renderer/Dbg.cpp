@@ -1,11 +1,10 @@
 #include "anki/renderer/Dbg.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/renderer/RendererInitializer.h"
 
 namespace anki {
 
 //==============================================================================
-void Dbg::init(const RendererInitializer& initializer)
+void Dbg::init(const Renderer::Initializer& initializer)
 {
 	enabled = initializer.dbg.enabled;
 

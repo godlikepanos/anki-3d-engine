@@ -9,78 +9,74 @@
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Bl.h"
 
-
 namespace anki {
-
 
 class ShaderProgram;
 
-
-/// Post-processing stage.
-///
-/// This stage is divided into 2 two parts. The first happens before blending
-/// stage and the second after.
+/// Post-processing stage.This stage is divided into 2 two parts. The first
+/// happens before blending stage and the second after
 class Pps: private RenderingPass
 {
-	public:
-		Pps(Renderer& r_);
-		~Pps();
-		void init(const RendererInitializer& initializer);
-		void runPrePass();
-		void runPostPass();
+public:
+	Pps(Renderer* r_);
+	~Pps();
 
-		/// @name Accessors
-		/// @{
-		const Hdr& getHdr() const
-		{
-			return hdr;
-		}
-		Hdr& getHdr()
-		{
-			return hdr;
-		}
+	void init(const RendererInitializer& initializer);
+	void runPrePass();
+	void runPostPass();
 
-		const Ssao& getSsao() const
-		{
-			return ssao;
-		}
+	/// @name Accessors
+	/// @{
+	const Hdr& getHdr() const
+	{
+		return hdr;
+	}
+	Hdr& getHdr()
+	{
+		return hdr;
+	}
 
-		const Bl& getBl() const
-		{
-			return bl;
-		}
-		Bl& getBl()
-		{
-			return bl;
-		}
+	const Ssao& getSsao() const
+	{
+		return ssao;
+	}
 
-		const Texture& getPrePassFai() const
-		{
-			return prePassFai;
-		}
+	const Bl& getBl() const
+	{
+		return bl;
+	}
+	Bl& getBl()
+	{
+		return bl;
+	}
 
-		const Texture& getPostPassFai() const
-		{
-			return postPassFai;
-		}
-		/// @}
+	const Texture& getPrePassFai() const
+	{
+		return prePassFai;
+	}
 
-	private:
-		/// @name Passes
-		/// @{
-		Hdr hdr;
-		Ssao ssao;
-		Bl bl;
-		/// @}
+	const Texture& getPostPassFai() const
+	{
+		return postPassFai;
+	}
+	/// @}
 
-		Fbo prePassFbo;
-		Fbo postPassFbo;
+private:
+	/// @name Passes
+	/// @{
+	Hdr hdr;
+	Ssao ssao;
+	Bl bl;
+	/// @}
 
-		ShaderProgramResourcePointer prePassSProg;
-		ShaderProgramResourcePointer postPassSProg;
+	Fbo prePassFbo;
+	Fbo postPassFbo;
 
-		Texture prePassFai; ///< FAI #1
-		Texture postPassFai; ///< FAI #2
+	ShaderProgramResource prePassSProg;
+	ShaderProgramResource postPassSProg;
+
+	Texture prePassFai; ///< FAI #1
+	Texture postPassFai; ///< FAI #2
 };
 
 

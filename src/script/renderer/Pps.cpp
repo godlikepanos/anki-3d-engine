@@ -3,8 +3,7 @@
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Bl.h"
 
-
-WRAP(Pps)
+ANKI_WRAP(Pps)
 {
 	class_<Pps, noncopyable>("Pps", no_init)
 		.def("getHdr", (Hdr& (Pps::*)())(&Pps::getHdr),

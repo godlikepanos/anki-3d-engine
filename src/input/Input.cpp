@@ -1,12 +1,9 @@
 #include "anki/core/App.h"
 #include "anki/core/Logger.h"
-#include "anki/core/Globals.h"
 #include "anki/input/Input.h"
 #include <SDL/SDL.h>
 
-
 namespace anki {
-
 
 //==============================================================================
 void Input::init()
@@ -18,7 +15,6 @@ void Input::init()
 	ANKI_LOGI("Input initialized");
 }
 
-
 //==============================================================================
 void Input::reset(void)
 {
@@ -27,7 +23,6 @@ void Input::reset(void)
 	mousePosNdc = Vec2(0.0);
 	mouseVelocity = Vec2(0.0);
 }
-
 
 //==============================================================================
 void Input::handleEvents()
@@ -59,59 +54,58 @@ void Input::handleEvents()
 	{
 		switch(event_.type)
 		{
-			case SDL_KEYDOWN:
-				keys[event_.key.keysym.scancode] = 1;
-				break;
+		case SDL_KEYDOWN:
+			keys[event_.key.keysym.scancode] = 1;
+			break;
 
-			case SDL_KEYUP:
-				keys[event_.key.keysym.scancode] = 0;
-				break;
+		case SDL_KEYUP:
+			keys[event_.key.keysym.scancode] = 0;
+			break;
 
-			case SDL_MOUSEBUTTONDOWN:
-				mouseBtns[event_.button.button] = 1;
-				break;
+		case SDL_MOUSEBUTTONDOWN:
+			mouseBtns[event_.button.button] = 1;
+			break;
 
-			case SDL_MOUSEBUTTONUP:
-				mouseBtns[event_.button.button] = 0;
-				break;
+		case SDL_MOUSEBUTTONUP:
+			mouseBtns[event_.button.button] = 0;
+			break;
 
-			case SDL_MOUSEMOTION:
+		case SDL_MOUSEMOTION:
+		{
+			Vec2 prevMousePosNdc(mousePosNdc);
+
+			mousePos.x() = event_.button.x;
+			mousePos.y() = event_.button.y;
+
+			mousePosNdc.x() = (2.0 * mousePos.x()) /
+				(float)AppSingleton::get().getWindowWidth() - 1.0;
+			mousePosNdc.y() = 1.0 - (2.0 * mousePos.y()) /
+				(float)AppSingleton::get().getWindowHeight();
+
+			if(warpMouseFlag)
 			{
-				Vec2 prevMousePosNdc(mousePosNdc);
-
-				mousePos.x() = event_.button.x;
-				mousePos.y() = event_.button.y;
-
-				mousePosNdc.x() = (2.0 * mousePos.x()) /
-					(float)AppSingleton::get().getWindowWidth() - 1.0;
-				mousePosNdc.y() = 1.0 - (2.0 * mousePos.y()) /
-					(float)AppSingleton::get().getWindowHeight();
-
-				if(warpMouseFlag)
+				// the SDL_WarpMouse pushes an event in the event queue.
+				// This check is so we wont process the event of the
+				// SDL_WarpMouse function
+				if(mousePosNdc == Vec2(0.0))
 				{
-					// the SDL_WarpMouse pushes an event in the event queue.
-					// This check is so we wont process the event of the
-					// SDL_WarpMouse function
-					if(mousePosNdc == Vec2(0.0))
-					{
-						break;
-					}
-
-					uint w = AppSingleton::get().getWindowWidth();
-					uint h = AppSingleton::get().getWindowHeight();
-					SDL_WarpMouse(w / 2, h / 2);
+					break;
 				}
 
-				mouseVelocity = mousePosNdc - prevMousePosNdc;
-				break;
+				uint w = AppSingleton::get().getWindowWidth();
+				uint h = AppSingleton::get().getWindowHeight();
+				SDL_WarpMouse(w / 2, h / 2);
 			}
 
-			case SDL_QUIT:
-				AppSingleton::get().quit(1);
-				break;
+			mouseVelocity = mousePosNdc - prevMousePosNdc;
+			break;
+		}
+
+		case SDL_QUIT:
+			AppSingleton::get().quit(1);
+			break;
 		}
 	}
 }
-
 
 } // end namespace

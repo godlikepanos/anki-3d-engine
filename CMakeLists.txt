@@ -118,21 +118,18 @@ SET(BULLET_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib${ARCH}" CACHE PATH
 ANKI_ADD_LIB(${BULLET_INCLUDE_DIR}/bullet ${BULLET_LIBRARY_DIR} 
 	${BULLET_INCLUDE_DIR}/bullet/btBulletCollisionCommon.h)
 
+# Extern dir
 #
-# GLEW
-#
-SET(GLEW_INCLUDE_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/include" CACHE PATH 
-	"The directory that contains the GL directory with the header files")
-SET(GLEW_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib${ARCH}" CACHE PATH 
-	"The directory that contains the GLEW (static) libraries")
+ADD_SUBDIRECTORY(extern)
 
-ANKI_ADD_LIB(${GLEW_INCLUDE_DIR} ${GLEW_LIBRARY_DIR} 
-	${GLEW_INCLUDE_DIR}/GL/glew.h)
+INCLUDE_DIRECTORIES(extern/GLEW/include)
+INCLUDE_DIRECTORIES(extern/include)
+LINK_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/extern/lib64")
 
 #
 # Defines & flags
 #
-ADD_DEFINITIONS(-DANKI_MATH_INTEL_SIMD -DGLEW_MX 
+ADD_DEFINITIONS(-DANKI_MATH_INTEL_SIMD
 	-Dthread_local=__thread -pedantic-errors -pedantic -ansi -Wall -Winline 
 	-W -Wwrite-strings -Wno-unused -Wfatal-errors -Werror -Wno-long-long 
 	-msse4 -std=c++0x)

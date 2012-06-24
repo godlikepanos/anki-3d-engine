@@ -18,7 +18,6 @@
 #include "anki/scene/ParticleEmitterNode.h"
 #include "anki/physics/Character.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/renderer/RendererInitializer.h"
 #include "anki/renderer/MainRenderer.h"
 #include "anki/physics/Character.h"
 #include "anki/physics/RigidBody.h"
@@ -39,7 +38,6 @@
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
 #include "anki/core/ParallelManager.h"
-#include <boost/algorithm/string.hpp>
 
 
 using namespace anki;
@@ -51,7 +49,7 @@ SkinNode* imp;
 //SkelModelNode* imp;
 PointLight* point_lights[10];
 SpotLight* spot_lights[2];
-ParticleEmitterNode* partEmitter;
+//ParticleEmitter* partEmitter;
 Character* character;
 
 UiPainter* painter;

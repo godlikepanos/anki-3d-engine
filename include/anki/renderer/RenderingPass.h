@@ -1,13 +1,10 @@
 #ifndef ANKI_RENDERER_RENDERING_PASS_H
 #define ANKI_RENDERER_RENDERING_PASS_H
 
-
 namespace anki {
-
 
 class Renderer;
 struct RendererInitializer;
-
 
 /// Rendering pass
 class RenderingPass
@@ -26,7 +23,6 @@ public:
 protected:
 	Renderer* r; ///< Know your father
 };
-
 
 /// Rendering pass that can be enabled or disabled
 class SwitchableRenderingPass: public RenderingPass
@@ -50,11 +46,9 @@ public:
 	}
 
 protected:
-	bool enabled;
+	bool enabled = false;
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

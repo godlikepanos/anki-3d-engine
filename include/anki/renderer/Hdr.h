@@ -4,106 +4,105 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 #include "anki/resource/TextureResource.h"
+#include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/Resource.h"
-
 
 namespace anki {
 
-
 class ShaderProgram;
-
 
 /// High dynamic range lighting pass
 class Hdr: public SwitchableRenderingPass
 {
-	public:
-		Hdr(Renderer& r_);
-		~Hdr();
-		void init(const RendererInitializer& initializer);
-		void run();
+public:
+	Hdr(Renderer* r_)
+		: SwitchableRenderingPass(r_)
+	{}
 
-		/// @name Accessors
-		/// @{
-		float getExposure() const
-		{
-			return exposure;
-		}
-		float& getExposure()
-		{
-			return exposure;
-		}
-		void setExposure(const float x)
-		{
-			exposure = x;
-		}
+	~Hdr();
 
-		uint getBlurringIterationsNum() const
-		{
-			return blurringIterationsNum;
-		}
-		uint& getBlurringIterationsNum()
-		{
-			return blurringIterationsNum;
-		}
-		void setBlurringIterationsNum(const uint x)
-		{
-			blurringIterationsNum = x;
-		}
+	void init(const RendererInitializer& initializer);
+	void run();
 
-		float getBlurringDistance() const
-		{
-			return blurringDist;
-		}
-		float& getBlurringDistance()
-		{
-			return blurringDist;
-		}
-		void setBlurringDistance(const float x)
-		{
-			blurringDist = x;
-		}
+	/// @name Accessors
+	/// @{
+	float getExposure() const
+	{
+		return exposure;
+	}
+	void setExposure(const float x)
+	{
+		exposure = x;
+		toneSProg.bind();
+		toneSProg.findUniformVariableByName("exposure")->set(exposure);
+	}
 
-		float getRenderingQuality() const
-		{
-			return renderingQuality;
-		}
+	uint getBlurringIterationsNum() const
+	{
+		return blurringIterationsNum;
+	}
+	void setBlurringIterationsNum(const uint x)
+	{
+		blurringIterationsNum = x;
+	}
 
-		const Texture& getToneFai() const
-		{
-			return toneFai;
-		}
+	float getBlurringDistance() const
+	{
+		return blurringDist;
+	}
+	void setBlurringDistance(const float x)
+	{
+		blurringDist = x;
 
-		const Texture& getHblurFai() const
-		{
-			return hblurFai;
-		}
+		hblurSProg.bind();
+		hblurSProg.findUniformVariableByName("blurringDist")->set(
+			float(blurringDist / width));
+		vblurSProg.bind();
+		vblurSProg.findUniformVariableByName("blurringDist")->set(
+			float(blurringDist / height));
+	}
 
-		const Texture& getFai() const
-		{
-			return fai;
-		}
-		/// @}
+	float getRenderingQuality() const
+	{
+		return renderingQuality;
+	}
 
-	private:
-		float exposure; ///< How bright is the HDR
-		uint blurringIterationsNum; ///< The blurring iterations of the tone map
-		float blurringDist; ///< Distance in blurring
-		float renderingQuality;
-		Fbo toneFbo;
-		Fbo hblurFbo;
-		Fbo vblurFbo;
-		ShaderProgramResourcePointer toneSProg;
-		ShaderProgramResourcePointer hblurSProg;
-		ShaderProgramResourcePointer vblurSProg;
-		Texture toneFai; ///< Vertical blur pass FAI
-		Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
-		Texture fai; ///< The final FAI
+	const Texture& getToneFai() const
+	{
+		return toneFai;
+	}
 
-		void initFbo(Fbo& fbo, Texture& fai);
+	const Texture& getHblurFai() const
+	{
+		return hblurFai;
+	}
+
+	const Texture& getFai() const
+	{
+		return fai;
+	}
+	/// @}
+
+private:
+	uint32_t width;
+	uint32_t height;
+	float exposure = 4.0; ///< How bright is the HDR
+	uint32_t blurringIterationsNum = 2; ///< The blurring iterations of the tone map
+	float blurringDist = 1.0; ///< Distance in blurring
+	float renderingQuality = 0.5;
+	Fbo toneFbo;
+	Fbo hblurFbo;
+	Fbo vblurFbo;
+	ShaderProgramResource toneSProg;
+	ShaderProgramResource hblurSProg;
+	ShaderProgramResource vblurSProg;
+	Texture toneFai; ///< Vertical blur pass FAI
+	Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
+	Texture fai; ///< The final FAI
+
+	void initFbo(Fbo& fbo, Texture& fai);
 };
 
-
 } // end namespace
-
 
 #endif

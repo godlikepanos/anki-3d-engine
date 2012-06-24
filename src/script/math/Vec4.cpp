@@ -1,8 +1,7 @@
-#include "anki/script/math/Common.h"
+#include "anki/script/MathCommon.h"
 #include "anki/math/Math.h"
 
-
-WRAP(Vec4)
+ANKI_WRAP(Vec4)
 {
 	class_<Vec4>("Vec4")
 		// constructors
@@ -14,10 +13,10 @@ WRAP(Vec4)
 		.def(init<const Vec4&>())
 		.def(init<const Quat&>())
 		// Accessors
-		BP_PROPERTY_MATH(Vec4, x)
-		BP_PROPERTY_MATH(Vec4, y)
-		BP_PROPERTY_MATH(Vec4, z)
-		BP_PROPERTY_MATH(Vec4, w)
+		ANKI_BP_PROPERTY_MATH(Vec4, x)
+		ANKI_BP_PROPERTY_MATH(Vec4, y)
+		ANKI_BP_PROPERTY_MATH(Vec4, z)
+		ANKI_BP_PROPERTY_MATH(Vec4, w)
 		// ops with self
 		.def(self + self) // +
 		.def(self += self) // +=

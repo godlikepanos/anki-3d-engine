@@ -1,7 +1,7 @@
 #ifndef ANKI_GL_QUERY_H
 #define ANKI_GL_QUERY_H
 
-#include "anki/gl/Gl.h"
+#include "anki/gl/Ogl.h"
 #include <cstdint>
 
 namespace anki {
@@ -24,20 +24,16 @@ public:
 	/// @}
 
 	/// Start
-	void beginQuery();
+	void begin();
 
 	/// End
-	void endQuery();
+	void end();
 
-	/// Get results
-	///
-	/// Waits for operations to finish
+	/// Get results. Waits for operations to finish
 	uint64_t getResult();
 
-	/// Get results
-	///
-	/// Doesn't Wait for operations to finish. If @a finished is false then 
-	/// the return value is irrelevant
+	/// Get results. Doesn't Wait for operations to finish. If @a finished is
+	/// false then the return value is irrelevant
 	uint64_t getResultNoWait(bool& finished);
 
 private:

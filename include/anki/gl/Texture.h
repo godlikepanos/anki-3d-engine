@@ -3,7 +3,7 @@
 
 #include "anki/util/Assert.h"
 #include "anki/util/Singleton.h"
-#include "anki/gl/Gl.h"
+#include "anki/gl/Ogl.h"
 #include <cstdlib>
 #include <vector>
 #include <limits>
@@ -148,17 +148,17 @@ public:
 	/// Texture initializer struct
 	struct Initializer
 	{
-		uint32_t width;
-		uint32_t height;
-		GLint internalFormat;
-		GLenum format;
-		GLenum type;
-		const void* data;
-		bool mipmapping;
-		TextureFilteringType filteringType;
-		bool repeat;
-		int anisotropyLevel;
-		size_t dataSize; ///< For compressed textures
+		uint32_t width = 0;
+		uint32_t height = 0;
+		GLint internalFormat = 0;
+		GLenum format = 0;
+		GLenum type = 0;
+		const void* data = nullptr;
+		bool mipmapping = false;
+		TextureFilteringType filteringType = TFT_NEAREST;
+		bool repeat = true;
+		int anisotropyLevel = 0;
+		size_t dataSize = 0; ///< For compressed textures
 	};
 
 	/// @name Constructors/Destructor

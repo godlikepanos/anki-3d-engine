@@ -1,8 +1,7 @@
 #include "anki/script/Common.h"
 #include "anki/renderer/Renderer.h"
 
-
-WRAP(Renderer)
+ANKI_WRAP(Renderer)
 {
 	typedef Pps& (Renderer::* getPpsAccessor)();
 

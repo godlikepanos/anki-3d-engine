@@ -1,7 +1,7 @@
 #ifndef ANKI_GL_BUFFER_OBJECT_H
 #define ANKI_GL_BUFFER_OBJECT_H
 
-#include "anki/gl/Gl.h"
+#include "anki/gl/Ogl.h"
 #include "anki/util/Assert.h"
 
 namespace anki {

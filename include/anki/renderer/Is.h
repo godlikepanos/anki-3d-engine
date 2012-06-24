@@ -12,19 +12,17 @@
 #include "anki/renderer/Sm.h"
 #include "anki/renderer/Smo.h"
 
-
 namespace anki {
-
 
 class PointLight;
 class SpotLight;
-
 
 /// Illumination stage
 class Is: private RenderingPass
 {
 public:
-	Is(Renderer& r_);
+	Is(Renderer* r);
+
 	void init(const RendererInitializer& initializer);
 	void run();
 
@@ -40,8 +38,6 @@ private:
 	Texture fai;
 };
 
-
 } // end namespace
-
 
 #endif

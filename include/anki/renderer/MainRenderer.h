@@ -2,104 +2,99 @@
 #define ANKI_RENDERER_MAIN_RENDERER_H
 
 #include "anki/renderer/Renderer.h"
-#include <boost/scoped_ptr.hpp>
-#include <GL/glew.h>
-
+#include "anki/renderer/Deformer.h"
+#include "anki/util/Singleton.h"
 
 namespace anki {
-
-
-class Deformer;
-
 
 /// Main onscreen renderer
 class MainRenderer: public Renderer
 {
-	public:
-		MainRenderer();
+public:
+	MainRenderer()
+		: dbg(this)
+	{}
 
-		~MainRenderer();
+	~MainRenderer();
 
-		/// @name Setters & getters
-		/// @{
-		int getSceenshotJpegQuality() const
-		{
-			return screenshotJpegQuality;
-		}
-		int& getSceenshotJpegQuality()
-		{
-			return screenshotJpegQuality;
-		}
-		void setSceenshotJpegQuality(const int x)
-		{
-			screenshotJpegQuality = x;
-		}
+	/// @name Setters & getters
+	/// @{
+	int getSceenshotJpegQuality() const
+	{
+		return screenshotJpegQuality;
+	}
+	int& getSceenshotJpegQuality()
+	{
+		return screenshotJpegQuality;
+	}
+	void setSceenshotJpegQuality(const int x)
+	{
+		screenshotJpegQuality = x;
+	}
 
-		float getRenderingQuality() const
-		{
-			return renderingQuality;
-		}
+	float getRenderingQuality() const
+	{
+		return renderingQuality;
+	}
 
-		const Dbg& getDbg() const
-		{
-			return dbg;
-		}
-		Dbg& getDbg()
-		{
-			return dbg;
-		}
+	const Dbg& getDbg() const
+	{
+		return dbg;
+	}
+	Dbg& getDbg()
+	{
+		return dbg;
+	}
 
-		double getDbgTime() const
-		{
-			return dbgTime;
-		}
-		/// @}
+	double getDbgTime() const
+	{
+		return dbgTime;
+	}
+	/// @}
 
-		/// The same as Renderer::init but with additional initialization.
-		/// @see Renderer::init
-		void init(const RendererInitializer& initializer);
+	/// The same as Renderer::init but with additional initialization.
+	/// @see Renderer::init
+	void init(const RendererInitializer& initializer);
 
-		/// The same as Renderer::render but in addition it renders the final
-		/// FAI to the framebuffer
-		/// @param cam @see Renderer::render
-		void render(Camera& cam);
+	/// The same as Renderer::render but in addition it renders the final
+	/// FAI to the framebuffer
+	/// @param scene @see Renderer::render
+	void render(Scene& scene);
 
-		/// Save the color buffer to a tga (lossless & uncompressed & slow)
-		/// or jpeg (lossy & compressed fast)
-		/// @param filename The file to save
-		void takeScreenshot(const char* filename);
+	/// Save the color buffer to a tga (lossless & uncompressed & slow)
+	/// or jpeg (lossy & compressed fast)
+	/// @param filename The file to save
+	void takeScreenshot(const char* filename);
 
-	private:
-		/// @name Passes
-		/// @{
-		Dbg dbg; ///< Debugging rendering stage. Only the main renderer has it
-		/// @}
+private:
+	/// @name Passes
+	/// @{
+	Dbg dbg; ///< Debugging rendering stage. Only the main renderer has it
+	/// @}
 
-		/// @name Profiling stuff
-		/// @{
-		double dbgTime;
-		boost::scoped_ptr<Query> dbgTq;
-		/// @}
+	/// @name Profiling stuff
+	/// @{
+	double dbgTime;
+	std::unique_ptr<Query> dbgTq;
+	/// @}
 
-		ShaderProgramResourcePointer sProg; ///< Final pass' shader program
-		int screenshotJpegQuality; ///< The quality of the JPEG screenshots.
-		                           ///< From 0 to 100
+	ShaderProgramResourcePointer sProg; ///< Final pass' shader program
+	int screenshotJpegQuality = 90; ///< The quality of the JPEG screenshots.
+							        ///< From 0 to 100
 
-		/// The global rendering quality of the raster image. Its a percentage
-		/// of the application's window size. From 0.0(low) to 1.0(high)
-		float renderingQuality;
+	/// The global rendering quality of the raster image. Its a percentage
+	/// of the application's window size. From 0.0(low) to 1.0(high)
+	float renderingQuality;
 
-		boost::scoped_ptr<Deformer> deformer;
+	std::unique_ptr<Deformer> deformer;
 
-		GLEWContext glContext;
-
-		void takeScreenshotTga(const char* filename);
-		void takeScreenshotJpeg(const char* filename);
-		void initGl();
+	void takeScreenshotTga(const char* filename);
+	void takeScreenshotJpeg(const char* filename);
+	void initGl();
 };
 
+typedef Singleton<MainRenderer> MainRendererSingleton;
 
 } // end namespace
-
 
 #endif

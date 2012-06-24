@@ -1,56 +1,23 @@
 #include <boost/lexical_cast.hpp>
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/renderer/RendererInitializer.h"
-
 
 namespace anki {
 
-
-//==============================================================================
-// Constructor                                                                 =
-//==============================================================================
-Hdr::Hdr(Renderer& r_)
-:	SwitchableRenderingPass(r_)
-{}
-
-
-//==============================================================================
-// Destructor                                                                  =
 //==============================================================================
 Hdr::~Hdr()
 {}
 
-
-//==============================================================================
-// initFbo                                                                    =
 //==============================================================================
 void Hdr::initFbo(Fbo& fbo, Texture& fai)
 {
 	try
 	{
-		int width = renderingQuality * r.getWidth();
-		int height = renderingQuality * r.getHeight();
+		Renderer::createFai(width, height, GL_RGB8, GL_RGB, GL_FLOAT, fai);
 
 		// create FBO
 		fbo.create();
-		fbo.bind();
-
-		// inform in what buffers we draw
-		fbo.setNumOfColorAttachements(1);
-
-		// create the FAI
-		Renderer::createFai(width, height, GL_RGB, GL_RGB, GL_FLOAT, fai);
-
-		// attach
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, fai.getGlId(), 0);
-
-		// test if success
-		fbo.checkIfGood();
-
-		// unbind
-		fbo.unbind();
+		fbo.setColorAttachments({&fai});
 	}
 	catch(std::exception& e)
 	{
@@ -59,11 +26,8 @@ void Hdr::initFbo(Fbo& fbo, Texture& fai)
 	}
 }
 
-
 //==============================================================================
-// init                                                                        =
-//==============================================================================
-void Hdr::init(const RendererInitializer& initializer)
+void Hdr::init(const Renderer::Initializer& initializer)
 {
 	enabled = initializer.pps.hdr.enabled;
 
@@ -73,9 +37,9 @@ void Hdr::init(const RendererInitializer& initializer)
 	}
 
 	renderingQuality = initializer.pps.hdr.renderingQuality;
-	blurringDist = initializer.pps.hdr.blurringDist;
-	blurringIterationsNum = initializer.pps.hdr.blurringIterationsNum;
-	exposure = initializer.pps.hdr.exposure;
+
+	width = renderingQuality * r->getWidth();
+	height = renderingQuality * r->getHeight();
 
 	initFbo(toneFbo, toneFai);
 	initFbo(hblurFbo, hblurFai);
@@ -83,24 +47,25 @@ void Hdr::init(const RendererInitializer& initializer)
 
 	fai.setFiltering(Texture::TFT_LINEAR);
 
-
 	// init shaders
 	toneSProg.load("shaders/PpsHdr.glsl");
 
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
-	std::string pps = "#define HPASS\n#define COL_RGB\n";
-	hblurSProg.load(ShaderProgram::createSrcCodeToCache(SHADER_FILENAME,
-		pps.c_str()).c_str());
+	std::string pps = "#define HPASS\n#define COL_RGB\n#define IMG_DIMENTION "
+		+ std::to_string(width) + ".0\n";
+	hblurSProg.load(SHADER_FILENAME, pps.c_str());
 
-	pps = "#define VPASS\n#define COL_RGB\n";
-	vblurSProg.load(ShaderProgram::createSrcCodeToCache(SHADER_FILENAME,
-		pps.c_str()).c_str());
+	pps = "#define VPASS\n#define COL_RGB\n#define IMG_DIMENTION "
+		+ std::to_string(height) + ".0\n";
+	vblurSProg.load(SHADER_FILENAME, pps.c_str());
+
+	// Set the uniforms
+	setBlurringDistance(initializer.pps.hdr.blurringDist);
+	blurringIterationsNum = initializer.pps.hdr.blurringIterationsNum;
+	setExposure(initializer.pps.hdr.exposure);
 }
 
-
-//==============================================================================
-// runPass                                                                     =
 //==============================================================================
 void Hdr::run()
 {
@@ -109,56 +74,40 @@ void Hdr::run()
 		return;
 	}*/
 
-	int w = renderingQuality * r.getWidth();
-	int h = renderingQuality * r.getHeight();
-	GlStateMachineSingleton::get().setViewport(0, 0, w, h);
+	GlStateSingleton::get().setViewport(0, 0, width, height);
 
-	GlStateMachineSingleton::get().enable(GL_BLEND, false);
-	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
+	GlStateSingleton::get().disable(GL_BLEND);
+	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 
 	// pass 0
 	toneFbo.bind();
-	toneSProg->bind();
-	toneSProg->findUniformVariableByName("exposure").set(exposure);
-	toneSProg->findUniformVariableByName("fai").set(
-		r.getPps().getPrePassFai(), 0);
-	r.drawQuad();
+	toneSProg.bind();
+	toneSProg.findUniformVariableByName("fai")->set(
+		r->getPps().getPrePassFai());
+	r->drawQuad();
 
 	// blurring passes
-	hblurFai.setRepeat(false);
-	fai.setRepeat(false);
-	for(uint i=0; i<blurringIterationsNum; i++)
+	for(uint32_t i = 0; i < blurringIterationsNum; i++)
 	{
 		// hpass
 		hblurFbo.bind();
-		hblurSProg->bind();
+		hblurSProg.bind();
 		if(i == 0)
 		{
-			hblurSProg->findUniformVariableByName("img").set(toneFai, 0);
+			hblurSProg.findUniformVariableByName("img")->set(toneFai);
 		}
-		else
+		else if(i == 1)
 		{
-			hblurSProg->findUniformVariableByName("img").set(fai, 0);
+			hblurSProg.findUniformVariableByName("img")->set(fai);
 		}
-		//float tmp = float(w);
-		hblurSProg->findUniformVariableByName("imgDimension").set(float(w));
-		hblurSProg->findUniformVariableByName("blurringDist").set(
-			float(blurringDist / w));
-		r.drawQuad();
+		r->drawQuad();
 
 		// vpass
 		vblurFbo.bind();
-		vblurSProg->bind();
-		vblurSProg->findUniformVariableByName("img").set(hblurFai, 0);
-		vblurSProg->findUniformVariableByName("imgDimension").set(float(h));
-		vblurSProg->findUniformVariableByName("blurringDist").set(
-			float(blurringDist / h));
-		r.drawQuad();
+		vblurSProg.bind();
+		vblurSProg.findUniformVariableByName("img")->set(hblurFai);
+		r->drawQuad();
 	}
-
-	// end
-	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 }
-
 
 } // end namespace

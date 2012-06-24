@@ -4,6 +4,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
+#include "anki/resource/ShaderProgramResource.h"
 #include "anki/gl/Fbo.h"
 
 namespace anki {

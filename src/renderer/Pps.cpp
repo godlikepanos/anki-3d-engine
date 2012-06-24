@@ -2,54 +2,36 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Ssao.h"
-#include "anki/renderer/RendererInitializer.h"
-
 
 namespace anki {
 
-
 //==============================================================================
-// Constructor                                                                 =
-//==============================================================================
-Pps::Pps(Renderer& r_)
-:	RenderingPass(r_),
-	hdr(r_),
-	ssao(r_),
-	bl(r_)
+Pps::Pps(Renderer* r_)
+	: RenderingPass(r_), hdr(r_), ssao(r_), bl(r_)
 {}
 
-
-//==============================================================================
-// Destructor                                                                  =
 //==============================================================================
 Pps::~Pps()
 {}
 
-
 //==============================================================================
-// init                                                                        =
-//==============================================================================
-void Pps::init(const RendererInitializer& initializer)
+void Pps::init(const Renderer::Initializer& initializer)
 {
 	ssao.init(initializer);
 	hdr.init(initializer);
 
-	//
 	// Init pre pass
 	//
 
 	// FBO
 	try
 	{
-		prePassFbo.create();
-		prePassFbo.bind();
-		prePassFbo.setNumOfColorAttachements(1);
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB,
+		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
 			GL_FLOAT, prePassFai);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, prePassFai.getGlId(), 0);
-		prePassFbo.checkIfGood();
-		prePassFbo.unbind();
+
+		prePassFbo.create();
+		prePassFbo.setColorAttachments({&prePassFai});
+		ANKI_ASSERT(prePassFbo.isComplete());
 	}
 	catch(std::exception& e)
 	{
@@ -64,25 +46,20 @@ void Pps::init(const RendererInitializer& initializer)
 		pps += "#define SSAO_ENABLED\n";
 	}
 
-	prePassSProg.load(ShaderProgram::createSrcCodeToCache(
-		"shaders/PpsPrePass.glsl", pps.c_str()).c_str());
+	prePassSProg.load("shaders/PpsPrePass.glsl", pps.c_str());
 
-	//
 	// Init post pass
 	//
 
 	// FBO
 	try
 	{
-		postPassFbo.create();
-		postPassFbo.bind();
-		postPassFbo.setNumOfColorAttachements(1);
-		Renderer::createFai(r.getWidth(), r.getHeight(), GL_RGB, GL_RGB,
+		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
 			GL_FLOAT, postPassFai);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, postPassFai.getGlId(), 0);
-		postPassFbo.checkIfGood();
-		postPassFbo.unbind();
+
+		postPassFbo.create();
+		postPassFbo.setColorAttachments({&postPassFai});
+		ANKI_ASSERT(prePassFbo.isComplete());
 	}
 	catch(std::exception& e)
 	{
@@ -92,24 +69,18 @@ void Pps::init(const RendererInitializer& initializer)
 
 	// SProg
 	pps = "";
-
 	if(hdr.getEnabled())
 	{
 		pps += "#define HDR_ENABLED\n";
 	}
 
-	postPassSProg.load(ShaderProgram::createSrcCodeToCache(
-		"shaders/PpsPostPass.glsl", pps.c_str()).c_str());
+	postPassSProg.load("shaders/PpsPostPass.glsl", pps.c_str());
 
-	//
 	// Init Bl after
 	//
 	bl.init(initializer);
 }
 
-
-//==============================================================================
-// runPrePass                                                                  =
 //==============================================================================
 void Pps::runPrePass()
 {
@@ -120,30 +91,26 @@ void Pps::runPrePass()
 
 	prePassFbo.bind();
 
-	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
-	GlStateMachineSingleton::get().enable(GL_BLEND, false);
-	GlStateMachineSingleton::get().setViewport(0, 0,
-		r.getWidth(), r.getHeight());
+	GlStateSingleton::get().enable(GL_DEPTH_TEST, false);
+	GlStateSingleton::get().enable(GL_BLEND, false);
+	GlStateSingleton::get().setViewport(0, 0,
+		r->getWidth(), r->getHeight());
 
-	prePassSProg->bind();
-	prePassSProg->findUniformVariableByName("isFai").set(r.getIs().getFai(), 0);
+	prePassSProg.bind();
+	prePassSProg.findUniformVariableByName("isFai")->set(r->getIs().getFai());
 
 	if(ssao.getEnabled())
 	{
-		prePassSProg->findUniformVariableByName("ppsSsaoFai").set(
-			ssao.getFai(), 1);
+		prePassSProg.findUniformVariableByName("ppsSsaoFai")->set(
+			ssao.getFai());
 	}
 
-	r.drawQuad();
+	r->drawQuad();
 }
 
-
-//==============================================================================
-// runPostPass                                                                 =
 //==============================================================================
 void Pps::runPostPass()
 {
-	//
 	// The actual pass
 	//
 	if(hdr.getEnabled())
@@ -153,27 +120,23 @@ void Pps::runPostPass()
 
 	postPassFbo.bind();
 
-	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
-	GlStateMachineSingleton::get().enable(GL_BLEND, false);
-	GlStateMachineSingleton::get().setViewport(0, 0,
-		r.getWidth(), r.getHeight());
+	GlStateSingleton::get().enable(GL_DEPTH_TEST, false);
+	GlStateSingleton::get().enable(GL_BLEND, false);
+	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
 
-	postPassSProg->bind();
-	postPassSProg->findUniformVariableByName("ppsPrePassFai").set(
-		prePassFai, 0);
+	postPassSProg.bind();
+	postPassSProg.findUniformVariableByName("ppsPrePassFai")->set(prePassFai);
+
 	if(hdr.getEnabled())
 	{
-		postPassSProg->findUniformVariableByName("ppsHdrFai").set(
-			hdr.getFai(), 1);
+		postPassSProg.findUniformVariableByName("ppsHdrFai")->set(hdr.getFai());
 	}
 
-	r.drawQuad();
+	r->drawQuad();
 
-	//
 	// Blurring
 	//
 	bl.run();
 }
-
 
 } // end namespace

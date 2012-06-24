@@ -3,11 +3,9 @@
 
 #include "anki/math/Math.h"
 #include <SDL/SDL_scancode.h>
-#include <boost/array.hpp>
-
+#include <array>
 
 namespace anki {
-
 
 /// Handle the SDL input
 class Input
@@ -63,10 +61,10 @@ private:
 	/// - 0 times: unpressed
 	/// - 1 times: pressed once
 	/// - >1 times: Kept pressed 'n' times continuously
-	boost::array<short, SDL_NUM_SCANCODES> keys;
+	std::array<short, SDL_NUM_SCANCODES> keys;
 
 	/// Mouse btns. Supporting 3 btns & wheel. @see keys
-	boost::array<short, 8> mouseBtns;
+	std::array<short, 8> mouseBtns;
 	/// @}
 
 	bool warpMouseFlag;
@@ -74,8 +72,6 @@ private:
 	void init();
 };
 
-
 } // end namespace
-
 
 #endif

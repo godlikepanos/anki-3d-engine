@@ -12,6 +12,9 @@ public:
 	/// Resource load
 	void load(const char* filename);
 
+	/// Load and add extra code on top of the file
+	void load(const char* filename, const char* extraSrc);
+
 	/// Used by @ref Material and @ref Renderer to create custom shaders in
 	/// the cache
 	/// @param sProgFPathName The file pathname of the shader prog

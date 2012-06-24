@@ -2,7 +2,6 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/core/App.h"
 #include "anki/scene/Scene.h"
-#include "anki/renderer/RendererInitializer.h"
 
 namespace anki {
 
@@ -20,8 +19,7 @@ void Ez::init(const RendererInitializer& initializer)
 	try
 	{
 		fbo.create();
-		fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, 
-			GL_TEXTURE_2D, r->getMs().getDepthFai().getGlId());
+		fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, r->getMs().getDepthFai());
 	}
 	catch(std::exception& e)
 	{

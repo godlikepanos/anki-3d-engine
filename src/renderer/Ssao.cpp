@@ -2,42 +2,19 @@
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/scene/Camera.h"
-#include "anki/renderer/RendererInitializer.h"
-#include "anki/scene/PerspectiveCamera.h"
-
+#include "anki/scene/Scene.h"
 
 namespace anki {
 
-
-//==============================================================================
-// createFbo                                                                   =
 //==============================================================================
 void Ssao::createFbo(Fbo& fbo, Texture& fai)
 {
 	try
 	{
-		int width = renderingQuality * r.getWidth();
-		int height = renderingQuality * r.getHeight();
-
-		// create
-		fbo.create();
-		fbo.bind();
-
-		// inform in what buffers we draw
-		fbo.setNumOfColorAttachements(1);
-
-		// create the texes
 		Renderer::createFai(width, height, GL_RED, GL_RED, GL_FLOAT, fai);
 
-		// attach
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, fai.getGlId(), 0);
-
-		// test if success
-		fbo.checkIfGood();
-
-		// unbind
-		fbo.unbind();
+		fbo.create();
+		fbo.setColorAttachments({&fai});
 	}
 	catch(std::exception& e)
 	{
@@ -46,9 +23,6 @@ void Ssao::createFbo(Fbo& fbo, Texture& fai)
 	}
 }
 
-
-//==============================================================================
-// init                                                                        =
 //==============================================================================
 void Ssao::init(const RendererInitializer& initializer)
 {
@@ -62,12 +36,14 @@ void Ssao::init(const RendererInitializer& initializer)
 	renderingQuality = initializer.pps.ssao.renderingQuality;
 	blurringIterationsNum = initializer.pps.ssao.blurringIterationsNum;
 
+	width = renderingQuality * r->getWidth();
+	height = renderingQuality * r->getHeight();
+
 	// create FBOs
 	createFbo(ssaoFbo, ssaoFai);
 	createFbo(hblurFbo, hblurFai);
 	createFbo(vblurFbo, fai);
 
-	//
 	// Shaders
 	//
 
@@ -77,27 +53,19 @@ void Ssao::init(const RendererInitializer& initializer)
 	// blurring progs
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
-	std::string pps = "#define HPASS\n#define COL_R\n";
-	hblurSProg.load(
-		ShaderProgram::createSrcCodeToCache(SHADER_FILENAME, 
-		pps.c_str()).c_str());
+	std::string pps = "#define HPASS\n#define COL_R\n#define IMG_DIMENSION "
+		+ std::to_string(width) + ".0\n";
+	hblurSProg.load(SHADER_FILENAME, pps.c_str());
 
-	pps = "#define VPASS\n#define COL_R\n";
-	vblurSProg.load(
-		ShaderProgram::createSrcCodeToCache(SHADER_FILENAME, 
-		pps.c_str()).c_str());
+	pps = "#define VPASS\n#define COL_R\n#define IMG_DIMENSION "
+		+ std::to_string(width) + ".0 \n";
+	vblurSProg.load(SHADER_FILENAME, pps.c_str());
 
-	//
 	// noise map
 	//
-
 	noiseMap.load("engine-rsrc/noise.png");
-	noiseMap->setRepeat(true);
 }
 
-
-//==============================================================================
-// run                                                                         =
 //==============================================================================
 void Ssao::run()
 {
@@ -106,94 +74,78 @@ void Ssao::run()
 		return;
 	}
 
-	int width = renderingQuality * r.getWidth();
-	int height = renderingQuality * r.getHeight();
-	const Camera& cam = r.getCamera();
+	const Camera& cam = r->getScene().getActiveCamera();
 
-	GlStateMachineSingleton::get().enable(GL_BLEND, false);
-	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, false);
+	GlStateSingleton::get().disable(GL_BLEND);
+	GlStateSingleton::get().disable(GL_DEPTH_TEST);
+	GlStateSingleton::get().setViewport(0, 0, width, height);
 
-
-	GlStateMachineSingleton::get().setViewport(0, 0, width, height);
-
-	//
 	// 1st pass
 	//
 	
 	ssaoFbo.bind();
-	ssaoSProg->bind();
+	ssaoSProg.bind();
 	
 	// planes
-	ssaoSProg->findUniformVariableByName("planes").set(r.getPlanes());
+	ssaoSProg.findUniformVariableByName("planes")->set(r->getPlanes());
 
 	// limitsOfNearPlane
-	ssaoSProg->findUniformVariableByName("limitsOfNearPlane").set(
-		r.getLimitsOfNearPlane());
+	ssaoSProg.findUniformVariableByName("limitsOfNearPlane")->set(
+		r->getLimitsOfNearPlane());
 
 	// limitsOfNearPlane2
-	ssaoSProg->findUniformVariableByName("limitsOfNearPlane2").set(
-		r.getLimitsOfNearPlane2());
+	ssaoSProg.findUniformVariableByName("limitsOfNearPlane2")->set(
+		r->getLimitsOfNearPlane2());
 
 	// zNear
-	float zNear = cam.getZNear();
-	ssaoSProg->findUniformVariableByName("zNear").set(zNear);
+	ssaoSProg.findUniformVariableByName("zNear")->set(cam.getNear());
 
 	// msDepthFai
-	ssaoSProg->findUniformVariableByName("msDepthFai").set(
-		r.getMs().getDepthFai(), 0);
+	ssaoSProg.findUniformVariableByName("msDepthFai")->set(
+		r->getMs().getDepthFai());
 
 	// noiseMap
-	ssaoSProg->findUniformVariableByName("noiseMap").set(*noiseMap, 1);
+	ssaoSProg.findUniformVariableByName("noiseMap")->set(*noiseMap);
 
 	// noiseMapSize
-	float noiseMapSize = noiseMap->getWidth();
-	ssaoSProg->findUniformVariableByName("noiseMapSize").set(noiseMapSize);
+	ssaoSProg.findUniformVariableByName("noiseMapSize")->set(
+		noiseMap->getWidth());
 
 	// screenSize
 	Vec2 screenSize(width * 2, height * 2);
-	ssaoSProg->findUniformVariableByName("screenSize").set(screenSize);
+	ssaoSProg.findUniformVariableByName("screenSize")->set(screenSize);
 
 	// msNormalFai
-	ssaoSProg->findUniformVariableByName("msNormalFai").set(
-		r.getMs().getNormalFai(), 2);
+	ssaoSProg.findUniformVariableByName("msNormalFai")->set(
+		r->getMs().getNormalFai());
 
-	r.drawQuad();
+	r->drawQuad();
 
+	vblurSProg.bind();
+	vblurSProg.findUniformVariableByName("img")->set(hblurFai);
 
-	//
 	// Blurring passes
 	//
-	hblurFai.setRepeat(false);
-	fai.setRepeat(false);
-	for(uint i = 0; i < blurringIterationsNum; i++)
+	for(uint32_t i = 0; i < blurringIterationsNum; i++)
 	{
 		// hpass
 		hblurFbo.bind();
-		hblurSProg->bind();
+		hblurSProg.bind();
 		if(i == 0)
 		{
-			hblurSProg->findUniformVariableByName("img").set(ssaoFai, 0);
+			hblurSProg.findUniformVariableByName("img")->set(ssaoFai);
 		}
-		else
+		else if(i == 1)
 		{
-			hblurSProg->findUniformVariableByName("img").set(fai, 0);
+			hblurSProg.findUniformVariableByName("img")->set(fai);
 		}
-		float tmp = width;
-		hblurSProg->findUniformVariableByName("imgDimension").set(tmp);
-		r.drawQuad();
+		r->drawQuad();
 
 		// vpass
 		vblurFbo.bind();
-		vblurSProg->bind();
-		vblurSProg->findUniformVariableByName("img").set(hblurFai, 0);
-		tmp = height;
-		vblurSProg->findUniformVariableByName("imgDimension").set(tmp);
-		r.drawQuad();
+		vblurSProg.bind();
+		r->drawQuad();
 	}
-
-	// end
-	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 }
-
 
 } // end namespace

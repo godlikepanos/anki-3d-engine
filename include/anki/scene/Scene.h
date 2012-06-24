@@ -4,12 +4,11 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/VisibilityTester.h"
 #include "anki/math/Math.h"
+#include "anki/util/Singleton.h"
 #include <boost/range/iterator_range.hpp>
 #include <vector>
 
-
 namespace anki {
-
 
 /// The Scene contains all the dynamic entities
 ///
@@ -47,6 +46,19 @@ public:
 	void setAmbientColor(const Vec3& x)
 	{
 		ambientCol = x;
+	}
+
+	Camera& getActiveCamera()
+	{
+		return *mainCam;
+	}
+	const Camera& getActiveCamera() const
+	{
+		return *mainCam;
+	}
+	void setActiveCamera(Camera* cam)
+	{
+		mainCam = cam;
 	}
 
 	Types<SceneNode>::ConstRange getAllNodes() const
@@ -133,8 +145,8 @@ private:
 	}
 };
 
+typedef Singleton<Scene> SceneSingleton;
 
 } // end namespace
-
 
 #endif

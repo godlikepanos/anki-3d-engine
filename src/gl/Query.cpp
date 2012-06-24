@@ -24,13 +24,13 @@ Query::~Query()
 }
 
 //==============================================================================
-void Query::beginQuery()
+void Query::begin()
 {
 	glBeginQuery(question, glId);
 }
 
 //==============================================================================
-void Query::endQuery()
+void Query::end()
 {
 	glEndQuery(question);
 }
