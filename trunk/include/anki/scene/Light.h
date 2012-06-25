@@ -8,9 +8,7 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/Resource.h"
 
-
 namespace anki {
-
 
 /// Light scene node. It can be spot or point
 ///
@@ -40,9 +38,9 @@ public:
 
 	/// @name Constructors
 	/// @{
-	Light(LightType t, const char* mtl, // Light
+	Light(LightType t, // Light
 		const char* name, Scene* scene, // Scene
-		uint movableFlags, Movable* movParent, // Movable
+		uint32_t movableFlags, Movable* movParent, // Movable
 		CollisionShape* cs); // Spatial
 	/// @}
 
@@ -127,16 +125,14 @@ private:
 	bool shadow;
 };
 
-
 /// Point light
 class PointLight: public Light
 {
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	PointLight(const char* fmtl,
-		const char* name, Scene* scene,
-		uint movableFlags, Movable* movParent);
+	PointLight(const char* name, Scene* scene,
+		uint32_t movableFlags, Movable* movParent);
 	/// @}
 
 	/// @name Accessors
@@ -172,7 +168,6 @@ public:
 	Sphere sphereL;
 };
 
-
 /// Spot light
 class SpotLight: public Light, public Frustumable
 {
@@ -181,9 +176,8 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	SpotLight(const char* fmtl,
-		const char* name, Scene* scene,
-		uint movableFlags, Movable* movParent);
+	SpotLight(const char* name, Scene* scene,
+		uint32_t movableFlags, Movable* movParent);
 	/// @}
 
 	/// @name Accessors
@@ -278,8 +272,6 @@ private:
 	ANKI_SLOT(updateFov, const float&)
 };
 
-
 } // end namespace
-
 
 #endif

@@ -55,6 +55,7 @@ public:
 	/// Get the inverse transformation. Its faster that inverting a Mat4
 	Transform getInverse() const;
 	void invert();
+	void transform(const Transform& b);
 	/// @}
 
 	/// @name Friends

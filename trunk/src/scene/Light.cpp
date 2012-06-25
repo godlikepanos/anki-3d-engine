@@ -1,18 +1,16 @@
 #include "anki/scene/Light.h"
 #include "anki/resource/LightRsrc.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 // Light                                                                       =
 //==============================================================================
 
 //==============================================================================
-Light::Light(LightType t, const char* fmtl, // Light
+Light::Light(LightType t, // Light
 	const char* name, Scene* scene, // Scene
-	uint movableFlags, Movable* movParent, // Movable
+	uint32_t movableFlags, Movable* movParent, // Movable
 	CollisionShape* cs) // Spatial
 	: SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this),
@@ -26,21 +24,18 @@ Light::Light(LightType t, const char* fmtl, // Light
 	addNewProperty(new ReadWritePointerProperty<bool>("shadow", &shadow));
 }
 
-
 //==============================================================================
 Light::~Light()
 {}
-
 
 //==============================================================================
 // PointLight                                                                  =
 //==============================================================================
 
 //==============================================================================
-PointLight::PointLight(const char* fmtl,
-	const char* name, Scene* scene,
-	uint movableFlags, Movable* movParent)
-	: Light(LT_POINT, fmtl, name, scene, movableFlags, movParent, &sphereW)
+PointLight::PointLight(const char* name, Scene* scene,
+	uint32_t movableFlags, Movable* movParent)
+	: Light(LT_POINT, name, scene, movableFlags, movParent, &sphereW)
 {
 	sphereL.setCenter(Vec3(0.0));
 	sphereL.setRadius(1.0);
@@ -49,16 +44,14 @@ PointLight::PointLight(const char* fmtl,
 	addNewProperty(new ReadWritePointerProperty<float>("radius", &r));
 }
 
-
 //==============================================================================
 // SpotLight                                                                   =
 //==============================================================================
 
 //==============================================================================
-SpotLight::SpotLight(const char* fmtl,
-	const char* name, Scene* scene,
-	uint movableFlags, Movable* movParent)
-	: Light(LT_SPOT, fmtl, name, scene, movableFlags, movParent, &frustum),
+SpotLight::SpotLight(const char* name, Scene* scene,
+	uint32_t movableFlags, Movable* movParent)
+	: Light(LT_SPOT, name, scene, movableFlags, movParent, &frustum),
 		Frustumable(&frustum)
 {
 	// Fov
@@ -79,6 +72,5 @@ SpotLight::SpotLight(const char* fmtl,
 	//
 	frustum.setAll(ang, ang, 0.1, dist);
 }
-
 
 } // end namespace

@@ -150,6 +150,14 @@ inline void Transform::invert()
 	*this = getInverse();
 }
 
+// transform
+inline void Transform::transform(const Transform& b)
+{
+	origin = b.origin.getTransformed(origin, rotation, scale);
+	rotation = rotation * b.rotation;
+	scale *= b.scale;
+}
+
 //==============================================================================
 // Friends                                                                     =
 //==============================================================================
