@@ -39,83 +39,10 @@
 #include "anki/resource/Material.h"
 #include "anki/core/ParallelManager.h"
 
-
 using namespace anki;
-
-
-// map (hard coded)
-ModelNode* floor__,* sarge,* horse,* crate,* pentagram;
-SkinNode* imp;
-//SkelModelNode* imp;
-PointLight* point_lights[10];
-SpotLight* spot_lights[2];
-//ParticleEmitter* partEmitter;
-Character* character;
 
 UiPainter* painter;
 
-
-// Physics
-std::vector<btRigidBody*> boxes;
-
-#define ARRAY_SIZE_X 5
-#define ARRAY_SIZE_Y 5
-#define ARRAY_SIZE_Z 5
-
-#define MAX_PROXIES (ARRAY_SIZE_X*ARRAY_SIZE_Y*ARRAY_SIZE_Z + 1024)
-
-#define SCALING 1.
-#define START_POS_X -5
-#define START_POS_Y -5
-#define START_POS_Z -3
-
-
-void initPhysics()
-{
-	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.),btScalar(50.),btScalar(50.)));
-
-	Transform groundTransform;
-	groundTransform.setIdentity();
-	groundTransform.setOrigin(Vec3(0,-50, 0));
-
-	RigidBody::Initializer init;
-	init.mass = 0.0;
-	init.shape = groundShape;
-	init.startTrf = groundTransform;
-
-	new RigidBody(SceneSingleton::get().getPhysWorld(), init);
-
-
-	/*{
-		btCollisionShape* colShape = new btBoxShape(btVector3(SCALING*1,SCALING*1,SCALING*1));
-
-		float start_x = START_POS_X - ARRAY_SIZE_X/2;
-		float start_y = START_POS_Y;
-		float start_z = START_POS_Z - ARRAY_SIZE_Z/2;
-
-		for (int k=0;k<ARRAY_SIZE_Y;k++)
-		{
-			for (int i=0;i<ARRAY_SIZE_X;i++)
-			{
-				for(int j = 0;j<ARRAY_SIZE_Z;j++)
-				{
-					//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-					MeshNode* crate = new MeshNode;
-					crate->init("models/crate0/crate0.mesh");
-					crate->getLocalTransform().setScale(1.11);
-
-					Transform trf(SCALING*Vec3(2.0*i + start_x, 20+2.0*k + start_y, 2.0*j + start_z), Mat3::getIdentity(), 1.0);
-					new RigidBody(1.0, trf, colShape, crate, Physics::CG_MAP, Physics::CG_ALL);
-				}
-			}
-		}
-	}*/
-}
-
-
-
-//==============================================================================
-// init                                                                        =
 //==============================================================================
 void init()
 {
@@ -123,38 +50,25 @@ void init()
 
 	Scene& scene = SceneSingleton::get();
 
-	/*Material mtl;
-	mtl.load("lala.mtl");*/
-
-	srand(unsigned(time(NULL)));
-
 	painter = new UiPainter(Vec2(AppSingleton::get().getWindowWidth(),
 		AppSingleton::get().getWindowHeight()));
 	painter->setFont("engine-rsrc/ModernAntiqua.ttf", 25, 25);
 
 	// camera
-	PerspectiveCamera* cam = new PerspectiveCamera(scene, SceneNode::SNF_NONE, NULL);
-	//cam->setAll(toRad(100.0), toRad(100.0) / r::MainRendererSingleton::get().getAspectRatio(), 0.5, 200.0);
-	ANKI_LOGI(MainRendererSingleton::get().getAspectRatio());
-	cam->setAll(MainRendererSingleton::get().getAspectRatio()*Math::toRad(70.0), Math::toRad(70.0), 0.5, 200.0);
+	PerspectiveCamera* cam = new PerspectiveCamera("main-camera", &scene,
+		Movable::MF_NONE, nullptr);
+	const float ang = 70.0;
+	cam->setAll(
+		MainRendererSingleton::get().getAspectRatio() * Math::toRad(ang),
+		Math::toRad(ang), 0.5, 200.0);
 	cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
-	AppSingleton::get().setActiveCam(cam);
-	ANKI_LOGI(cam->getSceneNodeName());
-
-	OrthographicCamera* ocam = new OrthographicCamera(scene, SceneNode::SNF_NONE, NULL);
-	ocam->setAll(-1, 1, 1.0, -1.0, 0.1, 10.0);
+	scene.setActiveCamera(cam);
 
 	// lights
-	point_lights[0] = new PointLight(scene, SceneNode::SNF_NONE, NULL);
-	point_lights[0]->init("maps/temple/light0.light");
-	point_lights[0]->setLocalTransform(Transform(Vec3(-1.0, 2.4, 1.0), Mat3::getIdentity(), 1.0));
-	point_lights[1] = new PointLight(scene, SceneNode::SNF_NONE, NULL);
-	point_lights[1]->init("maps/temple/light1.light");
-	point_lights[1]->setLocalTransform(Transform(Vec3(2.5, 1.4, 1.0), Mat3::getIdentity(), 1.0));
 
-	spot_lights[0] = new SpotLight(scene, SceneNode::SNF_NONE, NULL);
+	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
 	spot_lights[0]->init("maps/temple/light2.light");
 	spot_lights[0]->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0), Mat3(Euler(Math::toRad(-20), Math::toRad(20), 0.0)), 1.0));
 	spot_lights[1] = new SpotLight(scene, SceneNode::SNF_NONE, NULL);

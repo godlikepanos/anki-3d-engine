@@ -4,9 +4,7 @@
 #include "anki/collision/Frustum.h"
 #include "anki/scene/Spatial.h"
 
-
 namespace anki {
-
 
 /// @addtogroup Scene
 /// @{
@@ -69,8 +67,6 @@ protected:
 	Frustum* frustum;
 };
 
-
 } // namespace anki
-
 
 #endif

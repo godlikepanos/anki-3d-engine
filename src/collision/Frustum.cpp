@@ -11,15 +11,20 @@ namespace anki {
 //==============================================================================
 Frustum& Frustum::operator=(const Frustum& b)
 {
-	planes = b.planes;
+	ANKI_ASSERT(type == b.type);
 	zNear = b.zNear;
 	zFar = b.zFar;
+	trf = b.trf;
+	planes = b.planes;
 	return *this;
 }
 
 //==============================================================================
 bool Frustum::insideFrustum(const CollisionShape& b) const
 {
+	recalculatePlanes();
+	transformPlanes();
+
 	for(const Plane& plane : planes)
 	{
 		if(b.testPlane(plane) < 0.0)
@@ -29,16 +34,6 @@ bool Frustum::insideFrustum(const CollisionShape& b) const
 	}
 
 	return true;
-}
-
-//==============================================================================
-void Frustum::transform(const Transform& trf)
-{
-	// Planes
-	for(Plane& p : planes)
-	{
-		p.transform(trf);
-	}
 }
 
 //==============================================================================
@@ -59,6 +54,9 @@ PerspectiveFrustum& PerspectiveFrustum::operator=(const PerspectiveFrustum& b)
 //==============================================================================
 float PerspectiveFrustum::testPlane(const Plane& p) const
 {
+	recalculateShape();
+	transformShape();
+
 	float o = 0.0;
 
 	for(const Vec3& dir : dirs)
@@ -66,7 +64,7 @@ float PerspectiveFrustum::testPlane(const Plane& p) const
 		LineSegment ls(eye, dir);
 		float t = ls.testPlane(p);
 
-		if(t == 0)
+		if(t == 0.0)
 		{
 			return 0.0;
 		}
@@ -84,10 +82,16 @@ float PerspectiveFrustum::testPlane(const Plane& p) const
 }
 
 //==============================================================================
-void PerspectiveFrustum::transform(const Transform& trf)
+void PerspectiveFrustum::transform(const Transform& trf_)
 {
-	Frustum::transform(trf);
+	trf.transform(trf_);
+	transformPlanes();
+	transformShape();
+}
 
+//==============================================================================
+void PerspectiveFrustum::transformShape() const
+{
 	eye.transform(trf);
 
 	for(Vec3& dir : dirs)
@@ -99,16 +103,17 @@ void PerspectiveFrustum::transform(const Transform& trf)
 //==============================================================================
 void PerspectiveFrustum::getAabb(Aabb& aabb) const
 {
+	recalculateShape();
+	transformShape();
+
 	aabb.set(dirs);
 	aabb.getMin() += eye;
 	aabb.getMax() += eye;
 }
 
 //==============================================================================
-void PerspectiveFrustum::recalculate()
+void PerspectiveFrustum::recalculatePlanes() const
 {
-	// Planes
-	//
 	float c, s; // cos & sine
 
 	Math::sinCos(Math::PI + fovX / 2, s, c);
@@ -127,9 +132,11 @@ void PerspectiveFrustum::recalculate()
 	planes[FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), zNear);
 	// far
 	planes[FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), -zFar);
+}
 
-	// Rest
-	//
+//==============================================================================
+void PerspectiveFrustum::recalculateShape() const
+{
 	eye = Vec3(0.0, 0.0, -zNear);
 
 	float x = zFar / tan((Math::PI - fovX) / 2.0);
@@ -190,19 +197,24 @@ OrthographicFrustum& OrthographicFrustum::operator=(
 //==============================================================================
 float OrthographicFrustum::testPlane(const Plane& p) const
 {
+	recalculateShape();
+	transformShape();
 	return obb.testPlane(p);
 }
 
 //==============================================================================
-void OrthographicFrustum::transform(const Transform& trf)
+void OrthographicFrustum::transform(const Transform& trf_)
 {
-	Frustum::transform(trf);
-	obb.transform(trf);
+	trf.transform(trf_);
+	transformPlanes();
+	transformShape();
 }
 
 //==============================================================================
 void OrthographicFrustum::getAabb(Aabb& aabb) const
 {
+	recalculateShape();
+	transformShape();
 	obb.getAabb(aabb);
 }
 
@@ -238,19 +250,19 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 }
 
 //==============================================================================
-void OrthographicFrustum::recalculate()
+void OrthographicFrustum::recalculatePlanes() const
 {
-	// Planes
-	//
 	planes[FP_LEFT] = Plane(Vec3(1.0, 0.0, 0.0), left);
 	planes[FP_RIGHT] = Plane(Vec3(-1.0, 0.0, 0.0), -right);
 	planes[FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), zNear);
 	planes[FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), -zFar);
 	planes[FP_TOP] = Plane(Vec3(0.0, -1.0, 0.0), -top);
 	planes[FP_BOTTOM] = Plane(Vec3(0.0, 1.0, 0.0), bottom);
+}
 
-	// OBB
-	//
+//==============================================================================
+void OrthographicFrustum::recalculateShape() const
+{
 	Vec3 c((right + left) * 0.5, (top + bottom) * 0.5, - (zFar + zNear) * 0.5);
 	Vec3 e = Vec3(right, top, -zFar) - c;
 	obb = Obb(c, Mat3::getIdentity(), e);

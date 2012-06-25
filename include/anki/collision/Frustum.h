@@ -12,10 +12,8 @@ namespace anki {
 /// @addtogroup Collision
 /// @{
 
-/// Frustum collision shape
-///
-/// This shape consists from 6 planes. The planes are being used to find shapes
-/// that are inside the frustum
+/// Frustum collision shape. This shape consists from 6 planes. The planes are
+/// being used to find shapes that are inside the frustum
 class Frustum: public CollisionShape
 {
 public:
@@ -59,28 +57,31 @@ public:
 	{
 		return zNear;
 	}
+	float& getNear()
+	{
+		return zNear;
+	}
 	void setNear(const float x)
 	{
 		zNear = x;
-		recalculate();
 	}
 
 	float getFar() const
 	{
 		return zFar;
 	}
+	float& getFar()
+	{
+		return zFar;
+	}
 	void setFar(const float x)
 	{
 		zFar = x;
-		recalculate();
 	}
 	/// @}
 
 	/// Copy
 	Frustum& operator=(const Frustum& b);
-
-	/// Implements CollisionShape::transform. Ignores scale
-	void transform(const Transform& trf);
 
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
@@ -100,18 +101,28 @@ public:
 	virtual Mat4 calculateProjectionMatrix() const = 0;
 
 protected:
-	/// Used to check against the frustum
-	std::array<Plane, FP_COUNT> planes;
-
 	/// @name Viewing variables
 	/// @{
 	float zNear;
 	float zFar;
 	/// @}
 
-	/// Called when a viewing variable changes. It recalculates the planes and
-	/// the other variables
-	virtual void recalculate() = 0;
+	Transform trf;
+
+	/// Used to check against the frustum
+	mutable std::array<Plane, FP_COUNT> planes;
+
+	/// It recalculates the planes in local space
+	virtual void recalculatePlanes() const = 0;
+
+	/// Self explanatory
+	void transformPlanes() const
+	{
+		for(Plane& p : planes)
+		{
+			p.transform(trf);
+		}
+	}
 
 private:
 	FrustumType type;
@@ -150,20 +161,26 @@ public:
 	{
 		return fovX;
 	}
+	float& getFovX()
+	{
+		return fovX;
+	}
 	void setFovX(float ang)
 	{
 		fovX = ang;
-		recalculate();
 	}
 
 	float getFovY() const
 	{
 		return fovY;
 	}
+	float& getFovY()
+	{
+		return fovY;
+	}
 	void setFovY(float ang)
 	{
 		fovY = ang;
-		recalculate();
 	}
 
 	/// Set all the parameters and recalculate the planes and shape
@@ -173,7 +190,6 @@ public:
 		fovY = fovY_,
 		zNear = zNear_;
 		zFar = zFar_;
-		recalculate();
 	}
 	/// @}
 
@@ -183,6 +199,9 @@ public:
 	/// Implements CollisionShape::testPlane
 	float testPlane(const Plane& p) const;
 
+	/// Implements CollisionShape::transform
+	virtual void transform(const Transform& trf);
+
 	/// Calculate and get transformed
 	PerspectiveFrustum getTransformed(const Transform& trf) const
 	{
@@ -190,9 +209,6 @@ public:
 		o.transform(trf);
 		return o;
 	}
-
-	/// Re-implements Frustum::transform
-	void transform(const Transform& trf);
 
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const;
@@ -203,8 +219,8 @@ public:
 private:
 	/// @name Shape
 	/// @{
-	Vec3 eye; ///< The eye point
-	std::array<Vec3, 4> dirs; ///< Directions
+	mutable Vec3 eye; ///< The eye point
+	mutable std::array<Vec3, 4> dirs; ///< Directions
 	/// @}
 
 	/// @name Viewing variables
@@ -213,9 +229,14 @@ private:
 	float fovY;
 	/// @}
 
-	/// Implements CollisionShape::recalculate. Recalculate @a planes, @a eye
-	/// and @a dirs
-	void recalculate();
+	/// Implements CollisionShape::recalculatePlanes
+	void recalculatePlanes() const;
+
+	/// Recalculate @a eye and @a dirs
+	void recalculateShape() const;
+
+	/// Transform @a eye and @a dirs
+	void transformShape() const;
 };
 
 /// Frustum shape for orthographic cameras
@@ -252,40 +273,52 @@ public:
 	{
 		return left;
 	}
+	float& getLeft()
+	{
+		return left;
+	}
 	void setLeft(float f)
 	{
 		left = f;
-		recalculate();
 	}
 
 	float getRight() const
 	{
 		return right;
 	}
+	float& getRight()
+	{
+		return right;
+	}
 	void setRight(float f)
 	{
 		right = f;
-		recalculate();
 	}
 
 	float getTop() const
 	{
 		return top;
 	}
+	float& getTop()
+	{
+		return top;
+	}
 	void setTop(float f)
 	{
 		top = f;
-		recalculate();
 	}
 
 	float getBottom() const
 	{
 		return bottom;
 	}
+	float& getBottom()
+	{
+		return bottom;
+	}
 	void setBottom(float f)
 	{
 		bottom = f;
-		recalculate();
 	}
 
 	/// Set all
@@ -298,12 +331,6 @@ public:
 		zFar = zFar_;
 		top = top_;
 		bottom = bottom_;
-		recalculate();
-	}
-
-	const Obb& getObb() const
-	{
-		return obb;
 	}
 	/// @}
 
@@ -325,7 +352,7 @@ public:
 private:
 	/// @name Shape
 	/// @{
-	Obb obb; ///< Including shape
+	mutable Obb obb; ///< Including shape
 	/// @}
 
 	/// @name Viewing variables
@@ -333,9 +360,15 @@ private:
 	float left, right, top, bottom;
 	/// @}
 
-	/// Implements CollisionShape::recalculate. Recalculate @a planes and
-	/// @a obb
-	void recalculate();
+	/// Implements Frustum::recalculatePlanes
+	void recalculatePlanes() const;
+
+	void recalculateShape() const;
+
+	void transformShape() const
+	{
+		obb.transform(trf);
+	}
 };
 /// @}
 
