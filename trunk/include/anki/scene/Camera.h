@@ -109,20 +109,6 @@ public:
 	}
 	/// @}
 
-	/// @name Movable virtuals
-	/// @{
-
-	/// Overrides Movable::moveUpdate(). This does:
-	/// - Update view matrix
-	/// - Update frustum
-	void movableUpdate()
-	{
-		Movable::movableUpdate();
-		updateViewMatrix();
-		getFrustum().transform(getWorldTransform());
-	}
-	/// @}
-
 	/// @name Frustumable virtuals
 	/// @{
 
@@ -136,6 +122,14 @@ public:
 	/// @}
 
 	void lookAtPoint(const Vec3& point);
+
+protected:
+	/// Calculate the @a viewMat. The view matrix is the inverse world 
+	/// transformation
+	void updateViewMatrix()
+	{
+		viewMat = Mat4(getWorldTransform().getInverse());
+	}
 
 private:
 	/// @name Matrices
@@ -153,14 +147,6 @@ private:
 	/// @}
 
 	CameraType type;
-
-	/// Calculate the @a viewMat
-	///
-	/// The view matrix is the inverse world transformation
-	void updateViewMatrix()
-	{
-		viewMat = Mat4(getWorldTransform().getInverse());
-	}
 };
 
 /// Perspective camera
@@ -179,33 +165,48 @@ public:
 	/// @{
 	float getFovX() const
 	{
-		return frustum.getFovX();
+		return frustumLocal.getFovX();
 	}
 	void setFovX(float ang)
 	{
-		frustum.setFovX(ang);
+		frustumLocal.setFovX(ang);
 		frustumUpdate();
 	}
 
 	float getFovY() const
 	{
-		return frustum.getFovY();
+		return frustumLocal.getFovY();
 	}
 	void setFovY(float ang)
 	{
-		frustum.setFovX(ang);
+		frustumLocal.setFovX(ang);
 		frustumUpdate();
 	}
 
 	void setAll(float fovX_, float fovY_, float zNear_, float zFar_)
 	{
-		frustum.setAll(fovX_, fovY_, zNear_, zFar_);
+		frustumLocal.setAll(fovX_, fovY_, zNear_, zFar_);
 		frustumUpdate();
 	}
 	/// @}
 
+	/// @name Movable virtuals
+	/// @{
+
+	/// Overrides Movable::moveUpdate(). This does:
+	/// - Update view matrix
+	/// - Update frustum
+	void movableUpdate()
+	{
+		Movable::movableUpdate();
+		updateViewMatrix();
+		frustumWorld = frustumLocal.getTransformed(getWorldTransform());
+	}
+	/// @}
+
 private:
-	PerspectiveFrustum frustum;
+	PerspectiveFrustum frustumLocal;
+	PerspectiveFrustum frustumWorld;
 
 	/// Called when the property changes
 	void updateFrustumSlot(const PerspectiveFrustum&)
@@ -231,41 +232,41 @@ public:
 	/// @{
 	float getLeft() const
 	{
-		return frustum.getLeft();
+		return frustumLocal.getLeft();
 	}
 	void setLeft(float f)
 	{
-		frustum.setLeft(f);
+		frustumLocal.setLeft(f);
 		frustumUpdate();
 	}
 
 	float getRight() const
 	{
-		return frustum.getRight();
+		return frustumLocal.getRight();
 	}
 	void setRight(float f)
 	{
-		frustum.setRight(f);
+		frustumLocal.setRight(f);
 		frustumUpdate();
 	}
 
 	float getTop() const
 	{
-		return frustum.getTop();
+		return frustumLocal.getTop();
 	}
 	void setTop(float f)
 	{
-		frustum.setTop(f);
+		frustumLocal.setTop(f);
 		frustumUpdate();
 	}
 
 	float getBottom() const
 	{
-		return frustum.getBottom();
+		return frustumLocal.getBottom();
 	}
 	void setBottom(float f)
 	{
-		frustum.setBottom(f);
+		frustumLocal.setBottom(f);
 		frustumUpdate();
 	}
 
@@ -273,13 +274,28 @@ public:
 	void setAll(float left_, float right_, float zNear_,
 		float zFar_, float top_, float bottom_)
 	{
-		frustum.setAll(left_, right_, zNear_, zFar_, top_, bottom_);
+		frustumLocal.setAll(left_, right_, zNear_, zFar_, top_, bottom_);
 		frustumUpdate();
 	}
 	/// @}
 
+	/// @name Movable virtuals
+	/// @{
+
+	/// Overrides Movable::moveUpdate(). This does:
+	/// - Update view matrix
+	/// - Update frustum
+	void movableUpdate()
+	{
+		Movable::movableUpdate();
+		updateViewMatrix();
+		frustumWorld = frustumLocal.getTransformed(getWorldTransform());
+	}
+	/// @}
+
 private:
-	OrthographicFrustum frustum;
+	OrthographicFrustum frustumLocal;
+	OrthographicFrustum frustumWorld;
 
 	void updateFrustumSlot(const OrthographicFrustum&)
 	{

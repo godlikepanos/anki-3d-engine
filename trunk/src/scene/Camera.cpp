@@ -30,10 +30,12 @@ void Camera::lookAtPoint(const Vec3& point)
 //==============================================================================
 PerspectiveCamera::PerspectiveCamera(const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent)
-	: Camera(CT_PERSPECTIVE, name, scene, movableFlags, movParent, &frustum)
+	: Camera(CT_PERSPECTIVE, name, scene, movableFlags, movParent, 
+		&frustumWorld)
 {
 	Property<PerspectiveFrustum>* prop =
-		new ReadWritePointerProperty<PerspectiveFrustum>("frustum", &frustum);
+		new ReadWritePointerProperty<PerspectiveFrustum>("frustum", 
+		&frustumLocal);
 
 	addNewProperty(prop);
 
@@ -47,10 +49,12 @@ PerspectiveCamera::PerspectiveCamera(const char* name, Scene* scene,
 //==============================================================================
 OrthographicCamera::OrthographicCamera(const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent)
-	: Camera(CT_ORTHOGRAPHIC, name, scene, movableFlags, movParent, &frustum)
+	: Camera(CT_ORTHOGRAPHIC, name, scene, movableFlags, movParent, 
+		&frustumWorld)
 {
 	Property<OrthographicFrustum>* prop =
-		new ReadWritePointerProperty<OrthographicFrustum>("frustum", &frustum);
+		new ReadWritePointerProperty<OrthographicFrustum>("frustum", 
+		&frustumLocal);
 
 	addNewProperty(prop);
 
