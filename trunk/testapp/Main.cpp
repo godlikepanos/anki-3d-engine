@@ -69,15 +69,17 @@ void init()
 	// lights
 
 	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
-	spot_lights[0]->init("maps/temple/light2.light");
-	spot_lights[0]->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0), Mat3(Euler(Math::toRad(-20), Math::toRad(20), 0.0)), 1.0));
-	spot_lights[1] = new SpotLight(scene, SceneNode::SNF_NONE, NULL);
-	spot_lights[1]->init("maps/temple/light3.light");
-	spot_lights[1]->setLocalTransform(Transform(Vec3(-2.3, 6.3, 2.9), Mat3(Euler(Math::toRad(-70), Math::toRad(-20), 0.0)), 1.0));
-
+	spot->setFov(Math::toRad(45.0));
+	spot->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0),
+		Mat3(Euler(Math::toRad(-20), Math::toRad(20), 0.0)), 1.0));
+	spot->setColor(Vec4(4.0));
+	spot->setSpecularColor(Vec4(1.0));
+	spot->loadTexture("gfx/lights/flashlight.tga");
+	spot->setDistance(20.0);
+	spot->setShadowEnabled(true);
 
 	// horse
-	horse = new ModelNode(scene, SceneNode::SNF_NONE, NULL);
+	ModelNode* horse = new ModelNode(scene, SceneNode::SNF_NONE, NULL);
 	horse->init("meshes/horse/horse.mdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(), 1.0));
 

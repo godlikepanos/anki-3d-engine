@@ -76,9 +76,6 @@ public:
 	}
 	/// @}
 
-	/// Implements CollisionShape::transform. Ignores scale
-	void transform(const Transform& trf);
-
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
 	{
@@ -97,16 +94,16 @@ public:
 	virtual Mat4 calculateProjectionMatrix() const = 0;
 
 protected:
-	/// Used to check against the frustum
-	std::array<Plane, FP_COUNT> planes;
-
 	/// @name Viewing variables
 	/// @{
 	float near;
 	float far;
 	/// @}
 
-	Transform trf; ///< Retain the tranformation
+	/// Used to check against the frustum
+	std::array<Plane, FP_COUNT> planes;
+
+	Transform trf; ///< Retain the transformation
 
 	/// Called when a viewing variable changes. It recalculates the planes and
 	/// the other variables
@@ -114,6 +111,14 @@ protected:
 
 	/// Copy
 	Frustum& operator=(const Frustum& b);
+
+	void transformPlanes()
+	{
+		for(Plane& p : planes)
+		{
+			p.transform(trf);
+		}
+	}
 
 private:
 	FrustumType type;
@@ -203,21 +208,24 @@ public:
 	void getAabb(Aabb& aabb) const;
 
 private:
-	/// @name Shape
-	/// @{
-	Vec3 eye; ///< The eye point
-	std::array<Vec3, 4> dirs; ///< Directions
-	/// @}
-
 	/// @name Viewing variables
 	/// @{
 	float fovX;
 	float fovY;
 	/// @}
 
+	/// @name Shape
+	/// @{
+	Vec3 eye; ///< The eye point
+	std::array<Vec3, 4> dirs; ///< Directions
+	/// @}
+
 	/// Implements CollisionShape::recalculate. Recalculate @a planes, @a eye
 	/// and @a dirs
 	void recalculate();
+
+	/// Transform the @a eye and @a dirs using @a Frustrum::trf
+	void transformShape();
 };
 
 /// Frustum shape for orthographic cameras
@@ -303,6 +311,7 @@ public:
 		recalculate();
 	}
 
+	/// Needed for debug drawing
 	const Obb& getObb() const
 	{
 		return obb;
@@ -313,13 +322,19 @@ public:
 	OrthographicFrustum& operator=(const OrthographicFrustum& b);
 
 	/// Implements CollisionShape::testPlane
-	float testPlane(const Plane& p) const;
+	float testPlane(const Plane& p) const
+	{
+		return obb.testPlane(p);
+	}
 
 	/// Override Frustum::transform
 	void transform(const Transform& trf);
 
 	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& aabb) const;
+	void getAabb(Aabb& aabb) const
+	{
+		obb.getAabb(aabb);
+	}
 
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const;
@@ -333,19 +348,25 @@ public:
 	}
 
 private:
-	/// @name Shape
-	/// @{
-	Obb obb; ///< Including shape
-	/// @}
-
 	/// @name Viewing variables
 	/// @{
 	float left, right, top, bottom;
 	/// @}
 
+	/// @name Shape
+	/// @{
+	Obb obb; ///< Including shape
+	/// @}
+
 	/// Implements CollisionShape::recalculate. Recalculate @a planes and
 	/// @a obb
 	void recalculate();
+
+	/// Transform the @a obb using @a Frustrum::trf
+	void transformShape()
+	{
+		obb.transform(trf);
+	}
 };
 /// @}
 

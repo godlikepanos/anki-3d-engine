@@ -5,8 +5,8 @@
 #include "anki/scene/Movable.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Spatial.h"
-#include "anki/resource/Material.h"
 #include "anki/resource/Resource.h"
+#include "anki/resource/TextureResource.h"
 
 namespace anki {
 
@@ -225,6 +225,15 @@ public:
 	{
 		projectionMat = x;
 	}
+
+	Texture& getTexture()
+	{
+		return *tex;
+	}
+	const Texture& getTexture() const
+	{
+		return *tex;
+	}
 	/// @}
 
 	/// @name Movable virtuals
@@ -251,10 +260,16 @@ public:
 	}
 	/// @}
 
+	void loadTexture(const char* filename)
+	{
+		tex.load(filename);
+	}
+
 private:
 	PerspectiveFrustum frustum;
 	Mat4 projectionMat;
 	Mat4 viewMat;
+	TextureResourcePointer tex;
 	ReadWriteProperty<float>* fovProp; ///< Have it here for updates
 	ReadWriteProperty<float>* distProp; ///< Have it here for updates
 
