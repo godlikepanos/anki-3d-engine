@@ -11,9 +11,10 @@ namespace anki {
 //==============================================================================
 Frustum& Frustum::operator=(const Frustum& b)
 {
-	planes = b.planes;
+	ANKI_ASSERT(type == b.type);
 	near = b.near;
 	far = b.far;
+	planes = b.planes;
 	trf = b.trf;
 	return *this;
 }
@@ -33,18 +34,6 @@ bool Frustum::insideFrustum(const CollisionShape& b) const
 }
 
 //==============================================================================
-void Frustum::transform(const Transform& trf_)
-{
-	trf.transform(trf_);
-
-	// Planes
-	for(Plane& p : planes)
-	{
-		p.transform(trf);
-	}
-}
-
-//==============================================================================
 // PerspectiveFrustum                                                          =
 //==============================================================================
 
@@ -52,10 +41,10 @@ void Frustum::transform(const Transform& trf_)
 PerspectiveFrustum& PerspectiveFrustum::operator=(const PerspectiveFrustum& b)
 {
 	Frustum::operator=(b);
-	eye = b.eye;
-	dirs = b.dirs;
 	fovX = b.fovX;
 	fovY = b.fovY;
+	eye = b.eye;
+	dirs = b.dirs;
 	return *this;
 }
 
@@ -87,16 +76,22 @@ float PerspectiveFrustum::testPlane(const Plane& p) const
 }
 
 //==============================================================================
-void PerspectiveFrustum::transform(const Transform& trf_)
+void PerspectiveFrustum::transformShape()
 {
-	Frustum::transform(trf_);
-
 	eye.transform(trf);
 
 	for(Vec3& dir : dirs)
 	{
 		dir = trf.getRotation() * dir;
 	}
+}
+
+//==============================================================================
+void PerspectiveFrustum::transform(const Transform& trf_)
+{
+	trf.transform(trf_);
+	transformPlanes();
+	transformShape();
 }
 
 //==============================================================================
@@ -146,9 +141,8 @@ void PerspectiveFrustum::recalculate()
 
 	// Transform
 	//
-	Transform tmptrf = trf;
-	trf.setIdentity();
-	transform(tmptrf);
+	transformPlanes();
+	transformShape();
 }
 
 //==============================================================================
@@ -187,32 +181,20 @@ OrthographicFrustum& OrthographicFrustum::operator=(
 	const OrthographicFrustum& b)
 {
 	Frustum::operator=(b);
-	obb = b.obb;
 	left = b.left;
 	right = b.right;
 	top = b.top;
 	bottom = b.bottom;
+	obb = b.obb;
 	return *this;
-}
-
-
-//==============================================================================
-float OrthographicFrustum::testPlane(const Plane& p) const
-{
-	return obb.testPlane(p);
 }
 
 //==============================================================================
 void OrthographicFrustum::transform(const Transform& trf_)
 {
-	Frustum::transform(trf_);
-	obb.transform(trf);
-}
-
-//==============================================================================
-void OrthographicFrustum::getAabb(Aabb& aabb) const
-{
-	obb.getAabb(aabb);
+	trf.transform(trf_);
+	transformPlanes();
+	transformShape();
 }
 
 //==============================================================================
@@ -228,7 +210,7 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 
 	m(0, 0) = 2.0 / difx;
 	m(0, 1) = 0.0;
-	m(0, 2) = 0.0:
+	m(0, 2) = 0.0;
 	m(0, 3) = tx;
 	m(1, 0) = 0.0;
 	m(1, 1) = 2.0 / dify;
@@ -250,7 +232,6 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 void OrthographicFrustum::recalculate()
 {
 	// Planes
-	//
 	planes[FP_LEFT] = Plane(Vec3(1.0, 0.0, 0.0), left);
 	planes[FP_RIGHT] = Plane(Vec3(-1.0, 0.0, 0.0), -right);
 	planes[FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), near);
@@ -259,16 +240,13 @@ void OrthographicFrustum::recalculate()
 	planes[FP_BOTTOM] = Plane(Vec3(0.0, 1.0, 0.0), bottom);
 
 	// OBB
-	//
 	Vec3 c((right + left) * 0.5, (top + bottom) * 0.5, - (far + near) * 0.5);
 	Vec3 e = Vec3(right, top, -far) - c;
 	obb = Obb(c, Mat3::getIdentity(), e);
 
 	// Transform
-	//
-	Transform tmptrf = trf;
-	trf.setIdentity();
-	transform(tmptrf);
+	transformPlanes();
+	transformShape();
 }
 
 } // end namespace
