@@ -64,7 +64,9 @@ public:
 
 	/// @name Operators with others
 	/// @{
-	Vec3 operator*(const Vec3& b) const;  ///< 9 muls, 6 adds
+
+	/// Vec3(dot(row0 * b), dot(row1 * b), dot(row2 * b)). 9 muls, 6 adds
+	Vec3 operator*(const Vec3& b) const;
 	/// @}
 
 	/// @name Other
