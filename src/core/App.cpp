@@ -37,7 +37,7 @@ void App::handleLoggerMessages(const Logger::Info& info)
 	}
 
 	(*out) << "(" << info.file << ":" << info.line << " "<< info.func 
-		<< ") " << x << ": " << info.msg << std::flush;
+		<< ") " << x << ": " << info.msg << std::endl;
 }
 
 //==============================================================================

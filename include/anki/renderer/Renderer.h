@@ -161,7 +161,7 @@ public:
 		return float(width) / height;
 	}
 
-	uint getFramesNum() const
+	uint32_t getFramesCount() const
 	{
 		return framesNum;
 	}

@@ -20,11 +20,6 @@ BOOST_PYTHON_MODULE(anki)
 
 	ANKI_CALL_WRAP(SceneNode);
 	ANKI_CALL_WRAP(Camera);
-	ANKI_CALL_WRAP(MaterialRuntimeVariable);
-	ANKI_CALL_WRAP(MaterialRuntime);
-	ANKI_CALL_WRAP(PatchNode);
-	ANKI_CALL_WRAP(ModelPatchNode);
-	ANKI_CALL_WRAP(ModelNode);
 	ANKI_CALL_WRAP(Scene);
 
 	ANKI_CALL_WRAP(SwitchableRenderingPass);
@@ -42,8 +37,6 @@ BOOST_PYTHON_MODULE(anki)
 	ANKI_CALL_WRAP(App);
 
 	ANKI_CALL_WRAP(Input);
-
-	ANKI_CALL_WRAP(AllGlobals);
 }
 
 namespace anki {
