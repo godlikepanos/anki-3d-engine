@@ -8,15 +8,11 @@
 #include "anki/resource/Resource.h"
 #include "anki/resource/Model.h"
 #include "anki/collision/Obb.h"
-
-#include <boost/array.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/range/iterator_range.hpp>
 #include <boost/scoped_ptr.hpp>
 
-
 namespace anki {
-
 
 /// A fragment of the ModelNode
 class ModelPatchNode: public SceneNode, public Movable, public Renderable,
@@ -92,7 +88,6 @@ private:
 	const ModelPatch* modelPatch; ///< The resource
 };
 
-
 /// The model scene node
 class ModelNode: public SceneNode, public Movable, public Spatial
 {
@@ -148,8 +143,6 @@ private:
 	Obb obb;
 };
 
-
 } // end namespace
-
 
 #endif

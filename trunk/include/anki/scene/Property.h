@@ -4,31 +4,36 @@
 #include "anki/util/Observer.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
+#include "anki/util/NonCopyable.h"
+#include "anki/util/Visitor.h"
+#include "anki/math/Math.h"
+#include "anki/resource/Resource.h"
+#include "anki/resource/TextureResource.h"
+#include "anki/collision/Collision.h"
 #include "anki/util/ConstCharPtrHashMap.h"
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/noncopyable.hpp>
-
 
 namespace anki {
 
+typedef Visitable<std::string, bool, float,
+	Vec2, Vec3, Vec4, Mat3, Mat4, Transform,
+	OrthographicFrustum, PerspectiveFrustum,
+	TextureResourcePointer>
+	PropertyVisitable;
 
 // Forward
 template<typename T>
 class Property;
 
-
 /// Base class for property
-class PropertyBase: public boost::noncopyable
+class PropertyBase: public NonCopyable
 {
 public:
 	/// @name Constructors/Destructor
 	/// @{
 	PropertyBase(const char* name_, uint tid_)
 		: name(name_), tid(tid_)
-	{
-		ANKI_ASSERT(tid != 0 && "Property::TYPE_ID not set");
-	}
+	{}
 
 	virtual ~PropertyBase()
 	{}
@@ -41,7 +46,7 @@ public:
 		return name;
 	}
 
-	uint getTypeId() const
+	uint32_t getTypeId() const
 	{
 		return tid;
 	}
@@ -64,28 +69,27 @@ public:
 	/// @}
 
 	/// Upcast to property. It makes a runtime check
-	template<typename Prop>
-	Prop& upCast()
+	template<typename TProp>
+	TProp& upCast()
 	{
-		checkType<Prop>();
-		return static_cast<Prop&>(*this);
+		checkType<TProp>();
+		return static_cast<TProp&>(*this);
 	}
 
 private:
 	std::string name;
-	uint tid; ///< Type ID
+	uint32_t tid; ///< Type ID
 
 	/// Runtime type checking
-	template<typename Prop>
+	template<typename TProp>
 	void checkType() const
 	{
-		if(Prop::TYPE_ID != getTypeId())
+		if(PropertyVisitable::getVariadicTypeId<TProp> != tid)
 		{
 			throw ANKI_EXCEPTION("Types do not match: " + name);
 		}
 	}
 };
-
 
 /// Property interface
 template<typename T>
@@ -95,17 +99,12 @@ public:
 	typedef T Value;
 	typedef Property<Value> Self;
 
-	/// Unique id for every type of property
-	/// @note Don't even think of defining a default value in this or any other
-	///       .h file
-	static const uint TYPE_ID;
-
 	/// @name Constructors/Destructor
 	/// @{
 
 	/// Read only property
 	Property(const char* name)
-		: PropertyBase(name, TYPE_ID)
+		: PropertyBase(name, PropertyVisitable::getVariadicTypeId<T>())
 	{}
 	/// @}
 
@@ -126,7 +125,6 @@ public:
 	/// Signal that it is emitted when the value gets changed
 	ANKI_SIGNAL(const Value&, valueChanged)
 };
-
 
 /// Read only property
 template<typename T>
@@ -156,7 +154,6 @@ public:
 private:
 	Value x;
 };
-
 
 /// Read write property
 template<typename T>
@@ -194,7 +191,6 @@ private:
 	Value x;
 };
 
-
 /// Read only property that holds a reference to a value
 template<typename T>
 class ReadPointerProperty: public Property<T>
@@ -223,7 +219,6 @@ public:
 private:
 	const Value* ptr;
 };
-
 
 /// Read write property that alters a reference to the value
 template<typename T>
@@ -260,7 +255,6 @@ public:
 private:
 	Value* ptr;
 };
-
 
 /// Read and Copy on Write property
 template<typename T>
@@ -309,9 +303,8 @@ public:
 
 private:
 	const Value* ptr;
-	boost::scoped_ptr<Value> sptr;
+	std::unique_ptr<Value> sptr;
 };
-
 
 /// A set of properties
 class PropertyMap
@@ -388,8 +381,6 @@ private:
 	NameToPropertyMap map;
 };
 
-
 } // namespace anki
-
 
 #endif

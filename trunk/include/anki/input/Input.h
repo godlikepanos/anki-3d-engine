@@ -2,6 +2,7 @@
 #define ANKI_INPUT_INPUT_H
 
 #include "anki/math/Math.h"
+#include "anki/util/Singleton.h"
 #include <SDL/SDL_scancode.h>
 #include <array>
 
@@ -18,12 +19,12 @@ public:
 
 	/// @name Acessors
 	/// @{
-	short getKey(uint i) const
+	short getKey(uint32_t i) const
 	{
 		return keys[i];
 	}
 
-	short getMouseBtn(uint i) const
+	short getMouseBtn(uint32_t i) const
 	{
 		return mouseBtns[i];
 	}
@@ -45,14 +46,6 @@ public:
 	void reset();
 	void handleEvents();
 
-	// mouse stuff
-	Vec2 mousePosNdc; ///< The coords are in the NDC space
-	/// The coords are in the window space. (0, 0) is in the upper left
-	/// corner
-	Vec2 mousePos;
-	Vec2 mouseVelocity;
-	bool hideCursor;
-
 private:
 	/// @name Keys and btns
 	/// @{
@@ -69,8 +62,18 @@ private:
 
 	bool warpMouseFlag;
 
+	// mouse stuff
+	Vec2 mousePosNdc; ///< The coords are in the NDC space
+	/// The coords are in the window space. (0, 0) is in the upper left
+	/// corner
+	Vec2 mousePos;
+	Vec2 mouseVelocity;
+	bool hideCursor;
+
 	void init();
 };
+
+typedef Singleton<Input> InputSingleton;
 
 } // end namespace
 
