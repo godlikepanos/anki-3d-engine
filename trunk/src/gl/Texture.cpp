@@ -154,11 +154,6 @@ void TextureUnits::unbindTexture(const Texture& tex)
 //==============================================================================
 
 //==============================================================================
-Texture::Texture()
-	: glId(0), target(GL_TEXTURE_2D)
-{}
-
-//==============================================================================
 Texture::~Texture()
 {
 	TextureUnitsSingleton::get().unbindTexture(*this);
@@ -174,7 +169,8 @@ void Texture::create(const Initializer& init)
 	// Sanity checks
 	//
 	ANKI_ASSERT(!isCreated());
-	ANKI_ASSERT(init.internalFormat <= 4 && "Deprecated internal format");
+	ANKI_ASSERT(init.internalFormat > 4 && "Deprecated internal format");
+	ANKI_ASSERT(init.width > 0 && init.height > 0);
 
 	// Create
 	//

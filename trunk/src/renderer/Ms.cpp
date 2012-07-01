@@ -2,6 +2,7 @@
 #include "anki/renderer/Ez.h"
 #include "anki/renderer/Renderer.h"
 
+#include "anki/core/Logger.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Scene.h"
 
@@ -29,6 +30,7 @@ void Ms::init(const RendererInitializer& initializer)
 		fbo.create();
 		fbo.setColorAttachments({&normalFai, &diffuseFai, &specularFai});
 		fbo.setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT, depthFai);
+		ANKI_ASSERT(fbo.isComplete());
 	}
 	catch(std::exception& e)
 	{

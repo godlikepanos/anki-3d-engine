@@ -29,7 +29,8 @@ public:
 
 	/// Split a string using a list of separators (@a sep) and return these
 	/// strings in a string list
-	static Self splitString(const Char* s, const Char* sep = " ");
+	static Self splitString(const Char* s, const Char sep = ' ',
+		bool keepEmpties = false);
 
 	/// Mainly for the unit tests
 	friend std::ostream& operator<<(std::ostream& s, const Self& a);

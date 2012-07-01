@@ -30,8 +30,16 @@ ShaderProgramVariable::ShaderProgramVariable(
 		type(type_), fatherSProg(fatherSProg_)
 {
 	name.shrink_to_fit();
-	ANKI_ASSERT(loc == 
-		glGetUniformLocation(fatherSProg->getGlId(), name.c_str()));
+	if(type == SPVT_ATTRIBUTE)
+	{
+		ANKI_ASSERT(loc ==
+			glGetAttribLocation(fatherSProg->getGlId(), name.c_str()));
+	}
+	else
+	{
+		ANKI_ASSERT(loc ==
+			glGetUniformLocation(fatherSProg->getGlId(), name.c_str()));
+	}
 }
 
 //==============================================================================
@@ -59,7 +67,7 @@ void ShaderProgramUniformVariable::set(const Vec2& x) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC2);
-	ANKI_ASSERT(getSize() == 2);
+	ANKI_ASSERT(getSize() == 1);
 
 	glUniform2f(getLocation(), x.x(), x.y());
 }
@@ -79,7 +87,7 @@ void ShaderProgramUniformVariable::set(const Vec2 x[], uint size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC2);
-	ANKI_ASSERT(getSize() == size * 2);
+	ANKI_ASSERT(getSize() == size);
 
 	glUniform2fv(getLocation(), size, &(const_cast<Vec2&>(x[0]))[0]);
 }
@@ -89,7 +97,7 @@ void ShaderProgramUniformVariable::set(const Vec3 x[], uint size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC3);
-	ANKI_ASSERT(getSize() == size * 3);
+	ANKI_ASSERT(getSize() == size);
 
 	glUniform3fv(getLocation(), size, &(const_cast<Vec3&>(x[0]))[0]);
 }
@@ -99,7 +107,7 @@ void ShaderProgramUniformVariable::set(const Vec4 x[], uint size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC4);
-	ANKI_ASSERT(getSize() == size * 4);
+	ANKI_ASSERT(getSize() == size);
 	
 	glUniform4fv(getLocation(), size, &(const_cast<Vec4&>(x[0]))[0]);
 }
@@ -147,7 +155,7 @@ const char* ShaderProgram::stdSourceCode =
 	"#pragma optimize(on)\n"
 	"#pragma debug(off)\n";
 #else
-	"#pragma optimize(of)\n"
+	"#pragma optimize(off)\n"
 	"#pragma debug(on)\n";
 #endif
 
@@ -217,10 +225,9 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	// 3) set the TRFFB varyings
 	ANKI_ASSERT(transformFeedbackVaryings != nullptr);
 	int count = 0;
-	while(*transformFeedbackVaryings != nullptr)
+	while(transformFeedbackVaryings[count] != nullptr)
 	{
 		++count;
-		++transformFeedbackVaryings;
 	}
 
 	if(count)
@@ -236,6 +243,7 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	link();
 
 	// init the rest
+	bind();
 	getUniAndAttribVars();
 }
 
@@ -311,15 +319,17 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 		infoLog[charsWritten] = '\0';
 
 		std::stringstream err;
-		err << "Shader compile failed:\n" << padding << "\n" << &infoLog[0]
+		err << "Shader compile failed (0x" << std::hex << type << std::dec
+			<< "):\n" << padding << "\n" << &infoLog[0]
 			<< "\n" << padding << "\nSource:\n" << padding << "\n";
 
 		// Prettyfy source
-		StringList lines = StringList::splitString(sourceCode, "\n");
+		StringList lines = StringList::splitString(sourceCode, '\n', true);
+		int lineno = 0;
 		for(const std::string& line : lines)
 		{
-			err << std::setw(4) << std::setfill('0') << ": " << line 
-				<< std::endl;
+			err << std::setw(4) << std::setfill('0') << ++lineno << ": "
+				<< line << std::endl;
 		}
 
 		err << padding;

@@ -93,11 +93,14 @@ public:
 	/// Calculate the projection matrix
 	virtual Mat4 calculateProjectionMatrix() const = 0;
 
+	/// XXX
+	virtual void setTransform(const Transform& trf) = 0;
+
 protected:
 	/// @name Viewing variables
 	/// @{
-	float near;
-	float far;
+	float near = 0.0;
+	float far = 0.0;
 	/// @}
 
 	/// Used to check against the frustum
@@ -201,6 +204,9 @@ public:
 	/// Re-implements Frustum::transform
 	void transform(const Transform& trf);
 
+	/// Implements Frustum::setTransform
+	void setTransform(const Transform& trf);
+
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const;
 
@@ -210,8 +216,8 @@ public:
 private:
 	/// @name Viewing variables
 	/// @{
-	float fovX;
-	float fovY;
+	float fovX = 0.0;
+	float fovY = 0.0;
 	/// @}
 
 	/// @name Shape
@@ -220,8 +226,10 @@ private:
 	std::array<Vec3, 4> dirs; ///< Directions
 	/// @}
 
-	/// Implements CollisionShape::recalculate. Recalculate @a planes, @a eye
-	/// and @a dirs
+	/// Implements CollisionShape::recalculate. Recalculate:
+	/// @li planes
+	/// @li eye
+	/// @li dirs
 	void recalculate();
 
 	/// Transform the @a eye and @a dirs using @a Frustrum::trf
@@ -330,6 +338,9 @@ public:
 	/// Override Frustum::transform
 	void transform(const Transform& trf);
 
+	/// Implements Frustum::setTransform
+	void setTransform(const Transform& trf);
+
 	/// Implements CollisionShape::getAabb
 	void getAabb(Aabb& aabb) const
 	{
@@ -350,7 +361,7 @@ public:
 private:
 	/// @name Viewing variables
 	/// @{
-	float left, right, top, bottom;
+	float left = 0.0, right = 0.0, top = 0.0, bottom = 0.0;
 	/// @}
 
 	/// @name Shape

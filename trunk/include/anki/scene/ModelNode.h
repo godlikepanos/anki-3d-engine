@@ -46,6 +46,12 @@ public:
 	{
 		return this;
 	}
+
+	/// Override SceneNode::frameUpdate
+	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
+	{
+		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
+	}
 	/// @}
 
 	// @name Movable virtuals
@@ -123,6 +129,12 @@ public:
 	{
 		return this;
 	}
+
+	/// Override SceneNode::frameUpdate
+	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
+	{
+		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
+	}
 	/// @}
 
 	/// @name Movable virtuals
@@ -132,6 +144,7 @@ public:
 	/// - Update collision shape
 	void movableUpdate()
 	{
+		Movable::movableUpdate();
 		obb = model->getVisibilityShape().getTransformed(
 			getWorldTransform());
 	}

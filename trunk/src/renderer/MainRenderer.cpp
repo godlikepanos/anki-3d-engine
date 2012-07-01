@@ -60,7 +60,7 @@ void MainRenderer::initGl()
 
 	// get max texture units
 	//glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);
-	glClearColor(0.1, 0.1, 0.0, 1.0);
+	glClearColor(1.0, 0.0, 1.0, 1.0);
 	glClearDepth(1.0);
 	glClearStencil(0);
 	glDepthFunc(GL_LEQUAL);
@@ -113,10 +113,8 @@ void MainRenderer::render(Scene& scene)
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
 	sProg->bind();
-	//sProg->findUniformVariableByName("rasterImage").set(ms.getDiffuseFai(), 0);
-	//sProg->findUniformVariableByName("rasterImage").
-	//	set(is.getFai(), 0);
-	sProg->findUniformVariableByName("rasterImage")->set(pps.getPostPassFai());
+	const Texture& finalFai = ms.getDiffuseFai();
+	sProg->findUniformVariableByName("rasterImage")->set(finalFai);
 	drawQuad();
 }
 

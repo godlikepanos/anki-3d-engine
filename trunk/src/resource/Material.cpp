@@ -124,7 +124,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 
 	if(pass)
 	{
-		passes = StringList::splitString(pass.get().c_str(), " ");
+		passes = StringList::splitString(pass.get().c_str(), ' ');
 	}
 	else
 	{
@@ -235,7 +235,7 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 
 	// Create path
 	std::string newfPathName =
-		AppSingleton::get().getCachePath() + "/" + prefix + ".glsl";
+		AppSingleton::get().getCachePath() + "/mtl_" + prefix + ".glsl";
 	toNativePath(newfPathName.c_str());
 
 	// If file not exists write it
@@ -313,8 +313,9 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 
 			if(iit == allVarNames.end())
 			{
-				ANKI_LOGW("Input variable \"" << name 
-					<< "\" not used in material \"" << fname << "\"");
+				ANKI_LOGW("Material input variable " << name
+					<< " not used by shader program. Material:"
+					<< fname);
 			}
 		}
 	}
@@ -430,7 +431,7 @@ template<typename Type, size_t n>
 Type Material::setMathType(const char* str)
 {
 	Type out;
-	StringList sl = StringList::splitString(str, " ");
+	StringList sl = StringList::splitString(str, ' ');
 	ANKI_ASSERT(sl.size() == n);
 
 	for(uint i = 0; i < n; ++i)
