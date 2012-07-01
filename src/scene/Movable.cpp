@@ -1,6 +1,5 @@
 #include "anki/scene/Movable.h"
 #include "anki/scene/Property.h"
-#include <boost/foreach.hpp>
 
 namespace anki {
 
@@ -12,12 +11,18 @@ Movable::Movable(uint flags_, Movable* parent, PropertyMap& pmap)
 		new ReadWritePointerProperty<Transform>("localTransform", &lTrf));
 	pmap.addNewProperty(
 		new ReadPointerProperty<Transform>("worldTransform", &wTrf));
+
+	lTrf.setIdentity();
+	wTrf.setIdentity();
+	// Change the wTrf so it wont be the same as lTrf. This means that in the
+	// updateWorldTransform() the "is moved" check will return true
+	wTrf.setScale(0.0);
 }
 
 //==============================================================================
 void Movable::update()
 {
-	if(getParent() == NULL) // If root
+	if(getParent() == nullptr) // If root
 	{
 		updateWorldTransform();
 	}
@@ -56,7 +61,7 @@ void Movable::updateWorldTransform()
 		disableFlag(MF_MOVED);
 	}
 
-	BOOST_FOREACH(Movable* child, getChildren())
+	for(Movable* child : getChildren())
 	{
 		child->updateWorldTransform();
 	}

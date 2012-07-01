@@ -95,6 +95,14 @@ void PerspectiveFrustum::transform(const Transform& trf_)
 }
 
 //==============================================================================
+void PerspectiveFrustum::setTransform(const Transform& trf_)
+{
+	trf = trf_;
+	transformPlanes();
+	transformShape();
+}
+
+//==============================================================================
 void PerspectiveFrustum::getAabb(Aabb& aabb) const
 {
 	aabb.set(dirs);
@@ -148,6 +156,7 @@ void PerspectiveFrustum::recalculate()
 //==============================================================================
 Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 {
+	ANKI_ASSERT(fovX != 0.0 && fovX != 0.0);
 	Mat4 projectionMat;
 
 	float f = 1.0 / tan(fovY * 0.5); // f = cot(fovY/2)
@@ -198,8 +207,18 @@ void OrthographicFrustum::transform(const Transform& trf_)
 }
 
 //==============================================================================
+void OrthographicFrustum::setTransform(const Transform& trf_)
+{
+	trf = trf_;
+	transformPlanes();
+	transformShape();
+}
+
+//==============================================================================
 Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 {
+	ANKI_ASSERT(right != 0.0 && left != 0.0 && top != 0.0 && bottom != 0.0
+		&& near != 0.0 && far != 0.0);
 	float difx = right - left;
 	float dify = top - bottom;
 	float difz = far - near;

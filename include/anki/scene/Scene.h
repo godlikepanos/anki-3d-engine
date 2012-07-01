@@ -50,6 +50,7 @@ public:
 
 	Camera& getActiveCamera()
 	{
+		ANKI_ASSERT(mainCam != nullptr);
 		return *mainCam;
 	}
 	const Camera& getActiveCamera() const

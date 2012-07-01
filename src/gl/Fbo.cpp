@@ -77,7 +77,7 @@ void Fbo::unbindAll()
 bool Fbo::isComplete() const
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(glId == getCurrentDrawFboGlId() && "Not binded");
+	ANKI_ASSERT(glId == getCurrentFboGlId() && "Not binded");
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	return status == GL_FRAMEBUFFER_COMPLETE;

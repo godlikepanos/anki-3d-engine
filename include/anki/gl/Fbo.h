@@ -71,6 +71,13 @@ private:
 		return glId != 0;
 	}
 
+	static GLuint getCurrentFboGlId()
+	{
+		GLint i;
+		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &i);
+		return i;
+	}
+
 	static GLuint getCurrentDrawFboGlId()
 	{
 		GLint i;

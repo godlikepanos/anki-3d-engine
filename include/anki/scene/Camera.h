@@ -5,6 +5,7 @@
 #include "anki/scene/Spatial.h"
 #include "anki/scene/Movable.h"
 #include "anki/scene/Frustumable.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
@@ -12,8 +13,7 @@ namespace anki {
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode, public Movable, public Spatial,
-	public Frustumable
+class Camera: public SceneNode, public Movable, public Spatial
 {
 public:
 	/// @note Don't EVER change the order
@@ -29,9 +29,9 @@ public:
 	Camera(CameraType type_,
 		const char* name, Scene* scene, // SceneNode
 		uint movableFlags, Movable* movParent, // Movable
-		Frustum* frustum) // Spatial &  Frustumable
+		Frustum* frustum) // Spatial
 		: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
-			Spatial(frustum), Frustumable(frustum), type(type_)
+			Spatial(frustum), type(type_)
 	{}
 
 	virtual ~Camera();
@@ -59,25 +59,10 @@ public:
 		return viewMat;
 	}
 
-	float getNear() const
-	{
-		return frustum->getNear();
-	}
-	void setNear(float x)
-	{
-		frustum->setNear(x);
-		frustumUpdate();
-	}
-
-	float getFar() const
-	{
-		return frustum->getFar();
-	}
-	void setFar(float x)
-	{
-		frustum->setFar(x);
-		frustumUpdate();
-	}
+	/// Needed by the renderer
+	virtual float getNear() const = 0;
+	/// Needed by the renderer
+	virtual float getFar() const = 0;
 	/// @}
 
 	/// @name SceneNode virtuals
@@ -85,12 +70,6 @@ public:
 
 	/// Override SceneNode::getMovable()
 	Movable* getMovable()
-	{
-		return this;
-	}
-
-	/// Override SceneNode::getFrustumable()
-	Frustumable* getFrustumable()
 	{
 		return this;
 	}
@@ -105,37 +84,13 @@ public:
 	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
 	{
 		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
-		Movable::update();
-	}
-	/// @}
-
-	/// @name Frustumable virtuals
-	/// @{
-
-	/// Implements Frustumable::frustumUpdate(). Calculate the projection
-	/// matrix
-	void frustumUpdate()
-	{
-		projectionMat = getFrustum().calculateProjectionMatrix();
-		invProjectionMat = projectionMat.getInverse();
 	}
 	/// @}
 
 	void lookAtPoint(const Vec3& point);
 
 protected:
-	/// Calculate the @a viewMat. The view matrix is the inverse world 
-	/// transformation
-	void updateViewMatrix()
-	{
-		viewMat = Mat4(getWorldTransform().getInverse());
-	}
-
-private:
-	/// @name Matrices
-	/// @{
 	Mat4 projectionMat;
-	Mat4 viewMat;
 
 	/// Used in deferred shading for the calculation of view vector (see
 	/// CalcViewVector). The reason we store this matrix here is that we
@@ -144,13 +99,22 @@ private:
 	/// the projection params change rarely. Note that the Camera as we all
 	/// know re-calculates the matrices only when the parameters change!!
 	Mat4 invProjectionMat;
-	/// @}
+
+	/// Calculate the @a viewMat. The view matrix is the inverse world 
+	/// transformation
+	void updateViewMatrix()
+	{
+		viewMat = Mat4(getWorldTransform().getInverse());
+	}
+
+private:
+	Mat4 viewMat;
 
 	CameraType type;
 };
 
 /// Perspective camera
-class PerspectiveCamera: public Camera
+class PerspectiveCamera: public Camera, public PerspectiveFrustumable
 {
 public:
 	ANKI_HAS_SLOTS(PerspectiveCamera)
@@ -161,32 +125,23 @@ public:
 		uint movableFlags, Movable* movParent);
 	/// @}
 
-	/// @name Accessors
+	float getNear() const
+	{
+		return frustum.getNear();
+	}
+
+	float getFar() const
+	{
+		return frustum.getFar();
+	}
+
+	/// @name SceneNode virtuals
 	/// @{
-	float getFovX() const
-	{
-		return frustumLocal.getFovX();
-	}
-	void setFovX(float ang)
-	{
-		frustumLocal.setFovX(ang);
-		frustumUpdate();
-	}
 
-	float getFovY() const
+	/// Override SceneNode::getFrustumable()
+	Frustumable* getFrustumable()
 	{
-		return frustumLocal.getFovY();
-	}
-	void setFovY(float ang)
-	{
-		frustumLocal.setFovX(ang);
-		frustumUpdate();
-	}
-
-	void setAll(float fovX_, float fovY_, float zNear_, float zFar_)
-	{
-		frustumLocal.setAll(fovX_, fovY_, zNear_, zFar_);
-		frustumUpdate();
+		return this;
 	}
 	/// @}
 
@@ -200,13 +155,24 @@ public:
 	{
 		Movable::movableUpdate();
 		updateViewMatrix();
-		frustumWorld = frustumLocal.getTransformed(getWorldTransform());
+		frustum.setTransform(getWorldTransform());
+	}
+	/// @}
+
+	/// @name Frustumable virtuals
+	/// @{
+
+	/// Implements Frustumable::frustumUpdate(). Calculate the projection
+	/// matrix
+	void frustumUpdate()
+	{
+		projectionMat = frustum.calculateProjectionMatrix();
+		invProjectionMat = projectionMat.getInverse();
 	}
 	/// @}
 
 private:
-	PerspectiveFrustum frustumLocal;
-	PerspectiveFrustum frustumWorld;
+	PerspectiveFrustum frustum;
 
 	/// Called when the property changes
 	void updateFrustumSlot(const PerspectiveFrustum&)
@@ -217,7 +183,7 @@ private:
 };
 
 /// Orthographic camera
-class OrthographicCamera: public Camera
+class OrthographicCamera: public Camera, public OrthographicFrustumable
 {
 public:
 	ANKI_HAS_SLOTS(OrthographicCamera)
@@ -228,54 +194,23 @@ public:
 		uint movableFlags, Movable* movParent);
 	/// @}
 
-	/// @name Accessors
+	float getNear() const
+	{
+		return frustum.getNear();
+	}
+
+	float getFar() const
+	{
+		return frustum.getFar();
+	}
+
+	/// @name SceneNode virtuals
 	/// @{
-	float getLeft() const
-	{
-		return frustumLocal.getLeft();
-	}
-	void setLeft(float f)
-	{
-		frustumLocal.setLeft(f);
-		frustumUpdate();
-	}
 
-	float getRight() const
+	/// Override SceneNode::getFrustumable()
+	Frustumable* getFrustumable()
 	{
-		return frustumLocal.getRight();
-	}
-	void setRight(float f)
-	{
-		frustumLocal.setRight(f);
-		frustumUpdate();
-	}
-
-	float getTop() const
-	{
-		return frustumLocal.getTop();
-	}
-	void setTop(float f)
-	{
-		frustumLocal.setTop(f);
-		frustumUpdate();
-	}
-
-	float getBottom() const
-	{
-		return frustumLocal.getBottom();
-	}
-	void setBottom(float f)
-	{
-		frustumLocal.setBottom(f);
-		frustumUpdate();
-	}
-
-	/// Set all
-	void setAll(float left_, float right_, float zNear_,
-		float zFar_, float top_, float bottom_)
-	{
-		frustumLocal.setAll(left_, right_, zNear_, zFar_, top_, bottom_);
-		frustumUpdate();
+		return this;
 	}
 	/// @}
 
@@ -289,13 +224,24 @@ public:
 	{
 		Movable::movableUpdate();
 		updateViewMatrix();
-		frustumWorld = frustumLocal.getTransformed(getWorldTransform());
+		frustum.setTransform(getWorldTransform());
+	}
+	/// @}
+
+	/// @name Frustumable virtuals
+	/// @{
+
+	/// Implements Frustumable::frustumUpdate(). Calculate the projection
+	/// matrix
+	void frustumUpdate()
+	{
+		projectionMat = frustum.calculateProjectionMatrix();
+		invProjectionMat = projectionMat.getInverse();
 	}
 	/// @}
 
 private:
-	OrthographicFrustum frustumLocal;
-	OrthographicFrustum frustumWorld;
+	OrthographicFrustum frustum;
 
 	void updateFrustumSlot(const OrthographicFrustum&)
 	{

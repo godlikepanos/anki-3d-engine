@@ -120,6 +120,8 @@ private:
 	{
 		std::array<float, 9> arr1;
 		std::array<std::array<float, 3>, 3> arr2;
+		float carr1[9]; ///< For gdb
+		float carr2[3][3]; ///< For gdb
 	};
 	/// @}
 };

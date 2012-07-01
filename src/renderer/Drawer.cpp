@@ -529,6 +529,8 @@ void RenderableDrawer::setupShaderProg(
 				Mat4(*renderable.getRenderableWorldTransform())
 				* cam.getViewMatrix() * cam.getProjectionMatrix();
 
+			std::cout << mvp << std::endl;
+
 			uni->set(mvp);
 		}
 		else

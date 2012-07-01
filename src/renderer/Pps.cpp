@@ -59,7 +59,7 @@ void Pps::init(const Renderer::Initializer& initializer)
 
 		postPassFbo.create();
 		postPassFbo.setColorAttachments({&postPassFai});
-		ANKI_ASSERT(prePassFbo.isComplete());
+		ANKI_ASSERT(postPassFbo.isComplete());
 	}
 	catch(std::exception& e)
 	{

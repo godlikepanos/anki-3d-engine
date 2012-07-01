@@ -1,6 +1,5 @@
 #include "anki/util/StringList.h"
-#include <iostream> ///XXX
-#include <boost/tokenizer.hpp> /// XXX Remove
+#include <sstream>
 
 namespace anki {
 
@@ -40,19 +39,19 @@ int StringList::getIndexOf(const Char* value) const
 }
 
 //==============================================================================
-StringList StringList::splitString(const Char* s, const Char* seperators)
+StringList StringList::splitString(const Char* s, Char seperator, bool keep)
 {
-	typedef boost::char_separator<Char> Sep;
-	typedef boost::tokenizer<Sep> Tok;
-
-	Sep sep(seperators);
 	StringList out;
-	String str(s);
-	Tok tok(str, sep);
-
-	for(const String& s_ : tok)
+	std::istringstream ss(s);
+	while(!ss.eof())
 	{
-		out.push_back(s_);
+		String field;
+		getline(ss, field, seperator);
+		if(!keep && field.empty())
+		{
+			continue;
+		}
+		out.push_back(field);
 	}
 
 	return out;

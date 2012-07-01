@@ -108,10 +108,10 @@ void Renderer::render(Scene& scene_)
 	else
 	{
 		ms.run();
-		is.run();
+		/*is.run();
 		pps.runPrePass();
 		bs.run();
-		pps.runPostPass();
+		pps.runPostPass();*/
 	}
 
 	++framesNum;

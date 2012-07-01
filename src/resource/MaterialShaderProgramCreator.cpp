@@ -2,7 +2,6 @@
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
 #include <boost/property_tree/ptree.hpp>
-#include <regex>
 
 namespace anki {
 
@@ -181,10 +180,12 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	std::stringstream line;
 	line << "#if defined(" << funcName << "_DEFINED)";
 
-	std::regex expr("^operationOut[0-9]*$");
+	// XXX Regexpr features still missing
+	//std::regex expr("^operationOut[0-9]*$");
 	for(const std::string& arg : argsList)
 	{
-		if(std::regex_match(arg, expr))
+		//if(std::regex_match(arg, expr))
+		if(arg.find("operationOut") == 0)
 		{
 			line << " && defined(" << arg << "_DEFINED)";
 		}

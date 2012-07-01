@@ -34,6 +34,10 @@ void main()
 #	error "See file"
 #endif
 
+#if !defined(IMG_DIMENSION)
+#	error "See file"
+#endif
+
 uniform sampler2D img; ///< Input FAI
 uniform float blurringDist = 0.0;
 
@@ -58,8 +62,10 @@ in vec2 vOffsets;
 #	define TEX_FETCH r
 #endif
 
-const float BLURRING_OFFSET[2] = float[](1.3846153846 / IMG_DIMENSION, 
-	3.2307692308 / IMG_DIMENSION); 
+const float BLURRING_OFFSET_X = 1.3846153846 / IMG_DIMENSION;
+const float BLURRING_OFFSET_Y = 3.2307692308 / IMG_DIMENSION;
+const float BLURRING_OFFSET[2] = float[](BLURRING_OFFSET_X, 
+	BLURRING_OFFSET_Y); 
 
 layout(location = 0) out COL_TYPE fFragColor;
 

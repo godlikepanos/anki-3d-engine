@@ -15,15 +15,10 @@ class Exception: public std::exception
 public:
 	/// Constructor
 	Exception(const char* error, const char* file = "unknown",
-		int line = -1, const char* func = "unknown")
-	{
-		err = synthErr(error, file, line, func);
-	}
+		int line = -1, const char* func = "unknown");
 
 	/// Copy constructor
-	Exception(const Exception& e)
-		: err(e.err)
-	{}
+	Exception(const Exception& e);
 
 	/// Destructor. Do nothing
 	~Exception() throw()

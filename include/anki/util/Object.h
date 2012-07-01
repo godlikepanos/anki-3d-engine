@@ -24,11 +24,11 @@ public:
 		: self(self_)
 	{
 		ANKI_ASSERT(self != nullptr && "Self can't be nullptr");
-		parent = parent_;
-		if(parent != nullptr)
+		if(parent_ != nullptr)
 		{
-			parent->addChild(self);
+			parent_->addChild(self);
 		}
+		parent = parent_;
 	}
 
 	/// Delete children from the last entered to the first and update parent
@@ -98,8 +98,8 @@ public:
 	}
 
 private:
-	Value* self;
-	Value* parent; ///< May be nullptr
+	Value* self = nullptr;
+	Value* parent = nullptr; ///< May be nullptr
 	Container childs;
 };
 

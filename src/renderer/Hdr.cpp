@@ -52,11 +52,11 @@ void Hdr::init(const Renderer::Initializer& initializer)
 
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
-	std::string pps = "#define HPASS\n#define COL_RGB\n#define IMG_DIMENTION "
+	std::string pps = "#define HPASS\n#define COL_RGB\n#define IMG_DIMENSION "
 		+ std::to_string(width) + ".0\n";
 	hblurSProg.load(SHADER_FILENAME, pps.c_str());
 
-	pps = "#define VPASS\n#define COL_RGB\n#define IMG_DIMENTION "
+	pps = "#define VPASS\n#define COL_RGB\n#define IMG_DIMENSION "
 		+ std::to_string(height) + ".0\n";
 	vblurSProg.load(SHADER_FILENAME, pps.c_str());
 

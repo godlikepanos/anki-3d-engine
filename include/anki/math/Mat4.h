@@ -124,6 +124,8 @@ private:
 	{
 		std::array<float, 16> arr1;
 		std::array<std::array<float, 4>, 4> arr2;
+		float carr1[16]; ///< For gdb
+		float carr2[4][4]; ///< For gdb
 #if defined(ANKI_MATH_INTEL_SIMD)
 		std::array<__m128, 4> arrMm;
 #endif

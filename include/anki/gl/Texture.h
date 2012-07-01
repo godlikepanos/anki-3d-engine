@@ -165,7 +165,8 @@ public:
 	/// @{
 
 	/// Default constructor
-	Texture();
+	Texture()
+	{}
 
 	Texture(const Initializer& init)
 	{
@@ -242,12 +243,12 @@ public:
 	void genMipmap();
 
 private:
-	GLuint glId; ///< Identification for OGL
-	GLuint target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
-	GLuint internalFormat; ///< GL_COMPRESSED_RED, GL_RGB16 etc
-	GLuint format; ///< GL_RED, GL_RG, GL_RGB etc
-	GLuint type; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
-	GLuint width, height;
+	GLuint glId = 0; ///< Identification for OGL
+	GLuint target = 0; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
+	GLuint internalFormat = 0; ///< GL_COMPRESSED_RED, GL_RGB16 etc
+	GLuint format = 0; ///< GL_RED, GL_RG, GL_RGB etc
+	GLuint type = 0; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
+	GLuint width = 0, height = 0;
 
 	bool isCreated() const
 	{
