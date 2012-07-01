@@ -1,10 +1,7 @@
-#include <fstream>
-#include <cstring>
-#include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
-
 #include "anki/resource/MeshLoader.h"
 #include "anki/util/BinaryStream.h"
+#include <fstream>
+#include <cstring>
 
 namespace anki {
 
@@ -19,7 +16,7 @@ void MeshLoader::load(const char* filename)
 
 		if(!file.is_open())
 		{
-			throw ANKI_EXCEPTION("Cannot open file \"" + filename + "\"");
+			throw ANKI_EXCEPTION("Cannot open file :" + filename);
 		}
 
 		BinaryStream bs(file.rdbuf());
@@ -40,7 +37,7 @@ void MeshLoader::load(const char* filename)
 		vertCoords.resize(vertsNum);
 
 		// Vert coords
-		BOOST_FOREACH(Vec3& vertCoord, vertCoords)
+		for(Vec3& vertCoord : vertCoords)
 		{
 			for(uint j = 0; j < 3; j++)
 			{
@@ -53,7 +50,7 @@ void MeshLoader::load(const char* filename)
 		tris.resize(facesNum);
 
 		// Faces IDs
-		BOOST_FOREACH(Triangle& tri, tris)
+		for(Triangle& tri : tris)
 		{
 			for(uint j = 0; j < 3; j++)
 			{
@@ -72,7 +69,7 @@ void MeshLoader::load(const char* filename)
 		texCoords.resize(texCoordsNum);
 
 		// Tex coords
-		BOOST_FOREACH(Vec2& texCoord, texCoords)
+		for(Vec2& texCoord : texCoords)
 		{
 			for(uint i = 0; i < 2; i++)
 			{
@@ -85,7 +82,7 @@ void MeshLoader::load(const char* filename)
 		vertWeights.resize(vertWeightsNum);
 
 		// Vert weights
-		BOOST_FOREACH(VertexWeight& vw, vertWeights)
+		for(VertexWeight& vw : vertWeights)
 		{
 			// get the bone connections num
 			uint boneConnections = bs.readUint();
@@ -100,9 +97,8 @@ void MeshLoader::load(const char* filename)
 			if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
 			{
 				uint tmp = VertexWeight::MAX_BONES_PER_VERT;
-				throw ANKI_EXCEPTION("Cannot have more than " +
-					boost::lexical_cast<std::string>(tmp) +
-					" bones per vertex");
+				throw ANKI_EXCEPTION("Cannot have more than "
+					+ std::to_string(tmp) + " bones per vertex");
 			}
 			vw.bonesNum = boneConnections;
 
@@ -123,7 +119,7 @@ void MeshLoader::load(const char* filename)
 	}
 	catch(Exception& e)
 	{
-		throw ANKI_EXCEPTION("File \"" + filename + "\"") << e;
+		throw ANKI_EXCEPTION("Loading of file failed: " + filename) << e;
 	}
 }
 
@@ -171,7 +167,7 @@ void MeshLoader::createVertIndeces()
 //==============================================================================
 void MeshLoader::createFaceNormals()
 {
-	BOOST_FOREACH(Triangle& tri, tris)
+	for(Triangle& tri : tris)
 	{
 		const Vec3& v0 = vertCoords[tri.vertIds[0]];
 		const Vec3& v1 = vertCoords[tri.vertIds[1]];
@@ -193,19 +189,19 @@ void MeshLoader::createVertNormals()
 {
 	vertNormals.resize(vertCoords.size());
 
-	BOOST_FOREACH(Vec3& vertNormal, vertNormals)
+	for(Vec3& vertNormal : vertNormals)
 	{
 		vertNormal = Vec3(0.0, 0.0, 0.0);
 	}
 
-	BOOST_FOREACH(Triangle& tri, tris)
+	for(Triangle& tri : tris)
 	{
 		vertNormals[tri.vertIds[0]] += tri.normal;
 		vertNormals[tri.vertIds[1]] += tri.normal;
 		vertNormals[tri.vertIds[2]] += tri.normal;
 	}
 
-	BOOST_FOREACH(Vec3& vertNormal, vertNormals)
+	for(Vec3& vertNormal : vertNormals)
 	{
 		vertNormal.normalize();
 	}

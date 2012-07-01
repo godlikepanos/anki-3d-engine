@@ -89,7 +89,10 @@ static int rmDir(const char* fpath, const struct stat* sb, int typeflag,
 
 void removeDirectory(const char* dir)
 {
-	nftw(dir, rmDir, 64, FTW_DEPTH | FTW_PHYS);
+	if(nftw(dir, rmDir, 64, FTW_DEPTH | FTW_PHYS))
+	{
+		throw ANKI_EXCEPTION(strerror(errno) + ": " + dir);
+	}
 }
 
 //==============================================================================

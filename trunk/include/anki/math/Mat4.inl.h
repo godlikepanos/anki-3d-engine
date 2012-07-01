@@ -728,15 +728,15 @@ inline Vec3 Mat4::getTranslationPart() const
 // getIdentity
 inline const Mat4& Mat4::getIdentity()
 {
-	static Mat4 ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
-		0.0, 0.0, 0.0, 0.0, 1.0);
+	static const Mat4 ident(1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0,
+		1.0, 0.0, 0.0, 0.0, 0.0, 1.0);
 	return ident;
 }
 
 // getZero
 inline const Mat4& Mat4::getZero()
 {
-	static Mat4 zero(0.0);
+	static const Mat4 zero(0.0);
 	return zero;
 }
 

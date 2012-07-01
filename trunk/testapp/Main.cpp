@@ -42,6 +42,8 @@
 using namespace anki;
 
 UiPainter* painter;
+ModelNode* horse;
+PerspectiveCamera* cam;
 
 //==============================================================================
 void init()
@@ -55,15 +57,16 @@ void init()
 	painter->setFont("engine-rsrc/ModernAntiqua.ttf", 25, 25);
 
 	// camera
-	PerspectiveCamera* cam = new PerspectiveCamera("main-camera", &scene,
+	cam = new PerspectiveCamera("main-camera", &scene,
 		Movable::MF_NONE, nullptr);
 	const float ang = 70.0;
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * Math::toRad(ang),
 		Math::toRad(ang), 0.5, 200.0);
-	cam->moveLocalY(3.0);
+	/*cam->moveLocalY(3.0);
 	cam->moveLocalZ(5.7);
 	cam->moveLocalX(-0.3);
+	cam->lookAtPoint(Vec3(0.0));*/
 	scene.setActiveCamera(cam);
 
 	// lights
@@ -79,7 +82,7 @@ void init()
 	spot->setShadowEnabled(true);
 
 	// horse
-	ModelNode* horse = new ModelNode("meshes/horse/horse.mdl", "horse", &scene,
+	horse = new ModelNode("meshes/horse/horse.mdl", "horse", &scene,
 		Movable::MF_NONE, nullptr);
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		1.0));
@@ -104,6 +107,11 @@ void mainLoopExtra()
 		mover = &SceneSingleton::get().getActiveCamera();
 	}
 
+	if(in.getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
+	if(in.getKey(SDL_SCANCODE_DOWN)) mover->rotateLocalX(-ang);
+	if(in.getKey(SDL_SCANCODE_LEFT)) mover->rotateLocalY(ang);
+	if(in.getKey(SDL_SCANCODE_RIGHT)) mover->rotateLocalY(-ang);
+
 	if(in.getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
 	if(in.getKey(SDL_SCANCODE_D)) mover->moveLocalX(dist);
 	if(in.getKey(SDL_SCANCODE_LSHIFT)) mover->moveLocalY(dist);
@@ -126,6 +134,53 @@ void mainLoop()
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar crntTime = prevUpdateTime;
 
+	const char* vert = R"(
+in vec3 position;
+uniform mat4 mvp;
+
+void main() {
+	gl_Position = mvp * vec4(position, 1.0);
+})";
+
+	const char* frag = R"(
+out vec3 fColor;
+void main() 
+{
+	fColor = vec3(0.0, 1.0, 0.0);
+})";
+
+	const char* trf[] = {nullptr};
+
+	ShaderProgram sprog;
+	sprog.create(vert, nullptr, nullptr, nullptr, frag, trf);
+
+	Vec3 maxPos = Vec3(0.5 * 1.0);
+	Vec3 minPos = Vec3(-0.5 * 1.0);
+
+	std::array<Vec3, 8> points = {{
+		Vec3(maxPos.x(), maxPos.y(), maxPos.z()),  // right top front
+		Vec3(minPos.x(), maxPos.y(), maxPos.z()),  // left top front
+		Vec3(minPos.x(), minPos.y(), maxPos.z()),  // left bottom front
+		Vec3(maxPos.x(), minPos.y(), maxPos.z()),  // right bottom front
+		Vec3(maxPos.x(), maxPos.y(), minPos.z()),  // right top back
+		Vec3(minPos.x(), maxPos.y(), minPos.z()),  // left top back
+		Vec3(minPos.x(), minPos.y(), minPos.z()),  // left bottom back
+		Vec3(maxPos.x(), minPos.y(), minPos.z())   // right bottom back
+	}};
+
+	std::array<uint16_t, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6,
+		7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
+
+	Vbo posvbo, idsvbo;
+
+	posvbo.create(GL_ARRAY_BUFFER, sizeof(points), &points[0], GL_STATIC_DRAW);
+	idsvbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(indeces), &indeces[0], GL_STATIC_DRAW);
+
+	Vao vao;
+	vao.create();
+	vao.attachArrayBufferVbo(posvbo, 0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+	vao.attachElementArrayBufferVbo(idsvbo);
+
 	while(1)
 	{
 		HighRezTimer timer;
@@ -142,12 +197,39 @@ void mainLoop()
 		EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
 		MainRendererSingleton::get().render(SceneSingleton::get());
 
+		Fbo::unbindAll();
+
+		/*glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);*/
+
+		sprog.bind();
+		sprog.findUniformVariableByName("mvp")->set(
+			cam->getProjectionMatrix() * cam->getViewMatrix());
+		//horse->model->getModelPatches()[0].getVao(PassLevelKey(0, 0)).bind();
+		vao.bind();
+
+		//int indeces = horse->model->getModelPatches()[0].getIndecesNumber(0);
+		int indeces = 24;
+		glDrawElements(GL_LINES,
+			indeces,
+			GL_UNSIGNED_SHORT, 0);
+
 		if(InputSingleton::get().getKey(SDL_SCANCODE_ESCAPE))
 		{
 			break;
 		}
 
 		AppSingleton::get().swapBuffers();
+
+		// Sleep
+		//
+		timer.stop();
+		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
+		{
+			SDL_Delay((AppSingleton::get().getTimerTick()
+				- timer.getElapsedTime()) * 1000.0);
+		}
+
 	}
 
 	ANKI_LOGI("Exiting main loop (" << mainLoopTimer.getElapsedTime() << " sec)");

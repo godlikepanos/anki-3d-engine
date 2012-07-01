@@ -47,6 +47,6 @@ private:
 	void parseOperationTag(const boost::property_tree::ptree& pt);
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

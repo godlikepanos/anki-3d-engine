@@ -9,6 +9,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/ModelNode.h"
 #include "anki/resource/TextureResource.h"
+#include "anki/renderer/Renderer.h"
 
 namespace anki {
 
@@ -526,10 +527,8 @@ void RenderableDrawer::setupShaderProg(
 		if(name == "modelViewProjectionMat")
 		{
 			Mat4 mvp = 
-				Mat4(*renderable.getRenderableWorldTransform())
-				* cam.getViewMatrix() * cam.getProjectionMatrix();
-
-			std::cout << mvp << std::endl;
+				cam.getProjectionMatrix() * cam.getViewMatrix()
+				* Mat4(*renderable.getRenderableWorldTransform());
 
 			uni->set(mvp);
 		}
@@ -558,9 +557,11 @@ void RenderableDrawer::render(const Camera& cam, uint pass,
 	uint indecesNum = 
 		renderable.getModelPatchBase().getIndecesNumber(0);
 
-	renderable.getModelPatchBase().getVao(key).bind();
+	const Vao& vao = renderable.getModelPatchBase().getVao(key);
+	ANKI_ASSERT(vao.getAttachmentsCount() > 1);
+	vao.bind();
 	glDrawElements(GL_TRIANGLES, indecesNum, GL_UNSIGNED_SHORT, 0);
-	renderable.getModelPatchBase().getVao(key).unbind();
+	vao.unbind();
 }
 
 
