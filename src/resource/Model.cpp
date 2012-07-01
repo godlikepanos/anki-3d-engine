@@ -22,37 +22,47 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 	Vao* vao = new Vao;
 	vao->create();
 
+	const ShaderProgramAttributeVariable* attrib;
 	const ShaderProgram& prog = mtl.findShaderProgram(key);
-	if(prog.findAttributeVariableByName("position"))
+
+	attrib = prog.findAttributeVariableByName("position");
+	if(attrib)
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_POSITIONS);
-		ANKI_ASSERT(vbo != NULL);
+		ANKI_ASSERT(vbo != nullptr);
 
-		vao->attachArrayBufferVbo(*vbo, 0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		vao->attachArrayBufferVbo(*vbo, *attrib, 3, GL_FLOAT, GL_FALSE, 0,
+			nullptr);
 	}
 
-	if(prog.findAttributeVariableByName("normal"))
+	attrib = prog.findAttributeVariableByName("normal");
+	if(attrib)
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_NORMALS);
-		ANKI_ASSERT(vbo != NULL);
+		ANKI_ASSERT(vbo != nullptr);
 
-		vao->attachArrayBufferVbo(*vbo, 1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		vao->attachArrayBufferVbo(*vbo, *attrib, 3, GL_FLOAT, GL_FALSE, 0,
+			nullptr);
 	}
 
-	if(prog.findAttributeVariableByName("tangent"))
+	attrib = prog.findAttributeVariableByName("tangent");
+	if(attrib)
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TANGENTS);
-		ANKI_ASSERT(vbo != NULL);
+		ANKI_ASSERT(vbo != nullptr);
 
-		vao->attachArrayBufferVbo(*vbo, 2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+		vao->attachArrayBufferVbo(*vbo, *attrib, 4, GL_FLOAT, GL_FALSE, 0,
+			nullptr);
 	}
 
-	if(prog.findAttributeVariableByName("texCoords"))
+	attrib = prog.findAttributeVariableByName("texCoords");
+	if(attrib)
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TEX_COORDS);
-		ANKI_ASSERT(vbo != NULL);
+		ANKI_ASSERT(vbo != nullptr);
 
-		vao->attachArrayBufferVbo(*vbo, 3, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+		vao->attachArrayBufferVbo(*vbo, *attrib, 2, GL_FLOAT, GL_FALSE, 0,
+			nullptr);
 	}
 
 	vao->attachElementArrayBufferVbo(*meshb.getVbo(Mesh::VBO_INDICES));

@@ -751,14 +751,14 @@ inline void Mat3::invert()
 // getZero
 inline const Mat3& Mat3::getZero()
 {
-	static Mat3 zero(0.0);
+	static const Mat3 zero(0.0);
 	return zero;
 }
 
 // getIdentity
 inline const Mat3& Mat3::getIdentity()
 {
-	static Mat3 ident(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+	static const Mat3 ident(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 	return ident;
 }
 

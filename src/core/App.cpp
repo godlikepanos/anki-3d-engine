@@ -152,11 +152,11 @@ void App::initDirs()
 	cachePath = settingsPath + "/cache";
 	if(directoryExists(cachePath.c_str()))
 	{
-		ANKI_LOGI("Deleting dir \"" << cachePath << "\"");
+		ANKI_LOGI("Deleting dir: " << cachePath);
 		removeDirectory(cachePath.c_str());
 	}
 
-	ANKI_LOGI("Creating cache dir \"" << cachePath << "\"");
+	ANKI_LOGI("Creating cache dir: " << cachePath);
 	createDirectory(cachePath.c_str());
 }
 

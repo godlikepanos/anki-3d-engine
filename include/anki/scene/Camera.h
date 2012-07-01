@@ -90,7 +90,7 @@ public:
 	void lookAtPoint(const Vec3& point);
 
 protected:
-	Mat4 projectionMat;
+	Mat4 projectionMat = Mat4::getIdentity();
 
 	/// Used in deferred shading for the calculation of view vector (see
 	/// CalcViewVector). The reason we store this matrix here is that we
@@ -98,7 +98,7 @@ protected:
 	/// projection params (fovX, fovY, zNear, zFar) change. Fortunately
 	/// the projection params change rarely. Note that the Camera as we all
 	/// know re-calculates the matrices only when the parameters change!!
-	Mat4 invProjectionMat;
+	Mat4 invProjectionMat = Mat4::getIdentity();
 
 	/// Calculate the @a viewMat. The view matrix is the inverse world 
 	/// transformation
@@ -108,7 +108,7 @@ protected:
 	}
 
 private:
-	Mat4 viewMat;
+	Mat4 viewMat = Mat4::getIdentity();
 
 	CameraType type;
 };

@@ -150,7 +150,7 @@ public:
 	}
 	/// @}
 
-private:
+//private:
 	ModelResourcePointer model; ///< The resource
 	ModelPatchNodes patches;
 	Obb obb;

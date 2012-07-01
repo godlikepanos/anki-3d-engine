@@ -61,10 +61,10 @@ public:
 	void bind() const
 	{
 		ANKI_ASSERT(isCreated());
-		if(lastBindedBo != this)
+		//if(lastBindedBo != this)
 		{
 			glBindBuffer(target, glId);
-			lastBindedBo = this;
+			//lastBindedBo = this;
 		}
 	}
 
@@ -73,7 +73,7 @@ public:
 	{
 		ANKI_ASSERT(isCreated());
 		glBindBuffer(target, 0);
-		lastBindedBo = nullptr;
+		//lastBindedBo = nullptr;
 	}
 
 	/// Creates a new BO with the given parameters and checks if everything

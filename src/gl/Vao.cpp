@@ -26,16 +26,21 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, GLuint attribVarLocation,
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(vbo.getBufferTarget() == GL_ARRAY_BUFFER
 		&& "Only GL_ARRAY_BUFFER is accepted");
+	ANKI_ASSERT(vbo.isCreated());
 
 	bind();
 	vbo.bind();
+	glEnableVertexAttribArray(attribVarLocation);
 	glVertexAttribPointer(attribVarLocation, size, type, normalized,
 		stride, pointer);
-	glEnableVertexAttribArray(attribVarLocation);
 	vbo.unbind();
 	unbind();
 
 	ANKI_CHECK_GL_ERROR();
+
+#if !defined(NDEBUG)
+	++attachments;
+#endif
 }
 
 //==============================================================================
@@ -54,11 +59,16 @@ void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(vbo.getBufferTarget() == GL_ELEMENT_ARRAY_BUFFER
 		&& "Only GL_ELEMENT_ARRAY_BUFFER is accepted");
+	ANKI_ASSERT(vbo.isCreated());
 
 	bind();
 	vbo.bind();
 	unbind();
 	ANKI_CHECK_GL_ERROR();
+
+#if !defined(NDEBUG)
+	++attachments;
+#endif
 }
 
 } // end namespace

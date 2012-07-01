@@ -106,7 +106,7 @@ protected:
 	/// Used to check against the frustum
 	std::array<Plane, FP_COUNT> planes;
 
-	Transform trf; ///< Retain the transformation
+	Transform trf = Transform::getIdentity(); ///< Retain the transformation
 
 	/// Called when a viewing variable changes. It recalculates the planes and
 	/// the other variables

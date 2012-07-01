@@ -59,7 +59,6 @@ void MainRenderer::initGl()
 		glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
 	// get max texture units
-	//glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxColorAtachments);
 	glClearColor(1.0, 0.0, 1.0, 1.0);
 	glClearDepth(1.0);
 	glClearStencil(0);

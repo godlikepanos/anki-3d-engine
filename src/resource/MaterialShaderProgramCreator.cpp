@@ -115,6 +115,13 @@ void MaterialShaderProgramCreator::parseShaderTag(
 		parseOperationTag(opPt);
 	} // end for all operations
 
+	if(type == "fragment")
+	{
+		srcLines.push_back("#if defined(fMsDiffuseFai_DEFINED)");
+		srcLines.push_back("fMsDiffuseFai = vec3(1.0);\n");
+		srcLines.push_back("#endif");
+	}
+
 	srcLines.push_back("}\n");
 }
 

@@ -1,9 +1,10 @@
 #ifndef ANKI_GL_VAO_H
 #define ANKI_GL_VAO_H
 
-#include "anki/util/Assert.h"
 #include "anki/gl/GlException.h"
 #include "anki/gl/Ogl.h"
+#include "anki/util/Assert.h"
+#include "anki/util/NonCopyable.h"
 
 namespace anki {
 
@@ -11,19 +12,14 @@ class ShaderProgramAttributeVariable;
 class Vbo;
 
 /// Vertex array object. Non-copyable to avoid instantiating it in the stack
-class Vao
+class Vao: public NonCopyable
 {
 public:
-	// Non-copyable
-	Vao(const Vao&) = delete;
-	Vao& operator=(const Vao&) = delete;
-
 	/// @name Constructors/Destructor
 	/// @{
 
 	/// Default
 	Vao()
-		: glId(0)
 	{}
 
 	/// Destroy VAO from the OpenGL context
@@ -101,22 +97,32 @@ public:
 	    GLsizei stride,
 	    const GLvoid* pointer);
 
+#if !defined(NDEBUG)
+	int getAttachmentsCount() const
+	{
+		return attachments;
+	}
+#endif
+
 	/// Attach an element array buffer VBO
 	void attachElementArrayBufferVbo(const Vbo& vbo);
 
 	/// Bind it
 	void bind() const
 	{
+		ANKI_ASSERT(isCreated());
 		if(current != this)
 		{
 			glBindVertexArray(glId);
 			current = this;
 		}
+		ANKI_ASSERT(getCurrentVertexArrayBinding() == glId);
 	}
 
 	/// Unbind all VAOs
 	void unbind() const
 	{
+		ANKI_ASSERT(isCreated());
 		if(current == this)
 		{
 			glBindVertexArray(0);
@@ -126,7 +132,10 @@ public:
 
 private:
 	static thread_local const Vao* current;
-	GLuint glId; ///< The OpenGL id
+	GLuint glId = 0; ///< The OpenGL id
+#if !defined(NDEBUG)
+	int attachments = 0;
+#endif
 
 	bool isCreated() const
 	{

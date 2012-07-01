@@ -290,17 +290,18 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 	const char* preproc, GLenum type)
 {
 	uint glId = 0;
-	const char* sourceStrs[2] = {NULL, NULL};
+	const char* sourceStrs[1] = {nullptr};
 
 	// create the shader
 	glId = glCreateShader(type);
 
 	// attach the source
-	sourceStrs[1] = sourceCode;
-	sourceStrs[0] = preproc;
+	std::string fullSrc = preproc;
+	fullSrc += sourceCode;
+	sourceStrs[0] = fullSrc.c_str();
 
 	// compile
-	glShaderSource(glId, 2, sourceStrs, NULL);
+	glShaderSource(glId, 1, sourceStrs, NULL);
 	glCompileShader(glId);
 
 	int success;
