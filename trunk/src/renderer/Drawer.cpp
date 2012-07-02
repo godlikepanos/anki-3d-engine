@@ -508,6 +508,15 @@ void RenderableDrawer::setupShaderProg(
 	const Material& mtl = renderable.getMaterial();
 	const ShaderProgram& sprog = mtl.findShaderProgram(key);
 
+	if(mtl.getDepthTestingEnabled())
+	{
+		GlStateSingleton::get().enable(GL_DEPTH_TEST);
+	}
+	else
+	{
+		GlStateSingleton::get().disable(GL_DEPTH_TEST);
+	}
+
 	sprog.bind();
 	
 	SetUniformVisitor vis;

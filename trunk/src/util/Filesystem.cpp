@@ -60,8 +60,14 @@ bool fileExists(const char* filename)
 {
 	ANKI_ASSERT(filename);
 	struct stat s;
-	stat(filename, &s);
-	return S_ISREG(s.st_mode);
+	if(stat(filename, &s) == 0)
+	{
+		return S_ISREG(s.st_mode);
+	}
+	else
+	{
+		return false;
+	}
 }
 
 //==============================================================================
@@ -69,8 +75,14 @@ bool directoryExists(const char* filename)
 {
 	ANKI_ASSERT(filename);
 	struct stat s;
-	stat(filename, &s);
-	return S_ISDIR(s.st_mode);
+	if(stat(filename, &s) == 0)
+	{
+		return S_ISDIR(s.st_mode);
+	}
+	else
+	{
+		return false;
+	}
 }
 
 //==============================================================================
