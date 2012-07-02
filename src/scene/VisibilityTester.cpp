@@ -4,14 +4,11 @@
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Light.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 VisibilityTester::~VisibilityTester()
 {}
-
 
 //==============================================================================
 void VisibilityTester::test(Frustumable& cam, Scene& scene,
@@ -50,6 +47,5 @@ void VisibilityTester::test(Frustumable& cam, Scene& scene,
 		}
 	}
 }
-
 
 } // end namespace

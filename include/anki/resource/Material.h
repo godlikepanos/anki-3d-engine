@@ -181,7 +181,7 @@ public:
 		return blendingDfactor;
 	}
 
-	bool getDepthTesting() const
+	bool getDepthTestingEnabled() const
 	{
 		return depthTesting;
 	}
