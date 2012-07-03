@@ -18,6 +18,10 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+DebugDrawer::~DebugDrawer()
+{}
+
+//==============================================================================
 DebugDrawer::DebugDrawer()
 {
 	sProg.load("shaders/Dbg.glsl");
@@ -208,6 +212,7 @@ void DebugDrawer::end()
 	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);
 
 	Mat4 pmv = vpMat * modelMat;
+	sProg->bind();
 	sProg->findUniformVariableByName("modelViewProjectionMat")->set(pmv);
 
 	vao.bind();

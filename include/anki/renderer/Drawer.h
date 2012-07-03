@@ -18,6 +18,7 @@ class DebugDrawer
 {
 public:
 	DebugDrawer();
+	~DebugDrawer();
 
 	void drawGrid();
 	void drawSphere(float radius, int complexity = 4);

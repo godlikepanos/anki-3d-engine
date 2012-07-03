@@ -17,8 +17,9 @@ void VisibilityTester::test(Frustumable& cam, Scene& scene,
 	vinfo.renderables.clear();
 	vinfo.lights.clear();
 
-	for(SceneNode* node : scene.getAllNodes())
+	for(auto it = scene.getAllNodesBegin(); it != scene.getAllNodesEnd(); it++)
 	{
+		SceneNode* node = *it;
 		Spatial* sp = node->getSpatial();
 
 		if(!sp)
