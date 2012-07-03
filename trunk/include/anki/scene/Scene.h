@@ -62,13 +62,21 @@ public:
 		mainCam = cam;
 	}
 
-	Types<SceneNode>::ConstRange getAllNodes() const
+	Types<SceneNode>::ConstIterator getAllNodesBegin() const
 	{
-		return Types<SceneNode>::ConstRange(nodes.begin(), nodes.end());
+		return nodes.begin();
 	}
-	Types<SceneNode>::MutableRange getAllNodes()
+	Types<SceneNode>::Iterator getAllNodesBegin()
 	{
-		return Types<SceneNode>::MutableRange(nodes.begin(), nodes.end());
+		return nodes.begin();
+	}
+	Types<SceneNode>::ConstIterator getAllNodesEnd() const
+	{
+		return nodes.end();
+	}
+	Types<SceneNode>::Iterator getAllNodesEnd()
+	{
+		return nodes.end();
 	}
 
 	const VisibilityInfo& getVisibilityInfo() const
@@ -92,8 +100,8 @@ public:
 private:
 	Types<SceneNode>::Container nodes;
 	Types<SceneNode>::NameToItemMap nameToNode;
-	Vec3 ambientCol; ///< The global ambient color
-	Camera* mainCam;
+	Vec3 ambientCol = Vec3(1.0); ///< The global ambient color
+	Camera* mainCam = nullptr;
 	VisibilityTester vtester;
 	VisibilityInfo vinfo;
 
