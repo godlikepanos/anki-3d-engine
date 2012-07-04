@@ -7,6 +7,7 @@
 #include "anki/resource/Resource.h"
 #include "anki/collision/CollisionShape.h"
 #include "anki/scene/SceneNode.h"
+#include "anki/util/Flags.h"
 #include <array>
 #include <map>
 #include <LinearMath/btIDebugDraw.h>
@@ -40,8 +41,8 @@ public:
 	{
 		crntCol = Vec3(col);
 	}
-	void setModelMat(const Mat4& modelMat);
-	void setViewProjectionMat(const Mat4& m)
+	void setModelMatrix(const Mat4& modelMat);
+	void setViewProjectionMatrix(const Mat4& m)
 	{
 		vpMat = m;
 	}
@@ -148,58 +149,36 @@ class Renderer;
 class Camera;
 
 /// This is a drawer for some scene nodes that need debug
-class SceneDebugDrawer
+class SceneDebugDrawer: public Flags<uint32_t>
 {
 public:
 	enum DebugFlag
 	{
 		DF_NONE = 0,
-		DF_SPATIAL = 1,
-		DF_MOVABLE = 2,
-		DF_FRUSTUMABLE = 4
+		DF_SPATIAL = 1 << 0,
+		DF_FRUSTUMABLE = 1 << 1
 	};
 
 	SceneDebugDrawer(DebugDrawer* d)
-		: dbg(d), flags(DF_NONE)
+		: Flags<uint32_t>(DF_SPATIAL | DF_FRUSTUMABLE), dbg(d)
 	{}
 
 	virtual ~SceneDebugDrawer()
 	{}
 
-	/// @name Flag manipulation
-	/// @{
-	void enableFlag(DebugFlag flag, bool enable = true)
-	{
-		flags = enable ? flags | flag : flags & ~flag;
-	}
-	void disableFlag(DebugFlag flag)
-	{
-		enableFlag(flag, false);
-	}
-	bool isFlagEnabled(DebugFlag flag) const
-	{
-		return flags & flag;
-	}
-	uint getFlagsBitmask() const
-	{
-		return flags;
-	}
-	/// @}
+	void draw(SceneNode& node);
 
-	void draw(const SceneNode& node);
-
-	virtual void draw(const Octree& octree) const;
+	virtual void draw(Octree& octree) const;
 
 private:
 	DebugDrawer* dbg;
-	uint flags;
 
-	virtual void draw(const Frustumable& fr) const;
+	virtual void draw(Frustumable& fr) const;
 
-	virtual void draw(const Spatial& sp) const;
+	virtual void draw(Spatial& sp) const;
 
-	virtual void draw(const OctreeNode& octnode,
-		uint depth, const Octree& octree) const;
+	virtual void draw(OctreeNode& octnode,
+		uint depth, Octree& octree) const;
 };
 
 class PassLevelKey;

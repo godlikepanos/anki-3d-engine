@@ -190,7 +190,7 @@ void DebugDrawer::drawCube(float size)
 }
 
 //==============================================================================
-void DebugDrawer::setModelMat(const Mat4& modelMat_)
+void DebugDrawer::setModelMatrix(const Mat4& modelMat_)
 {
 	ANKI_ASSERT(pointIndex == 0
 		&& "The func called after begin and before end");
@@ -238,7 +238,7 @@ void DebugDrawer::pushBackVertex(const Vec3& pos)
 //==============================================================================
 void CollisionDebugDrawer::visit(const Sphere& sphere)
 {
-	dbg->setModelMat(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
+	dbg->setModelMatrix(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
 	dbg->drawSphere(sphere.getRadius());
 }
 
@@ -258,7 +258,7 @@ void CollisionDebugDrawer::visit(const Obb& obb)
 	tsl = Mat4::combineTransformations(rot, scale);
 	tsl = Mat4::combineTransformations(trs, tsl);
 
-	dbg->setModelMat(tsl);
+	dbg->setModelMatrix(tsl);
 	dbg->setColor(Vec3(1.0, 1.0, 0.0));
 	dbg->drawCube(2.0);
 }
@@ -274,7 +274,7 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 	rot.rotateXAxis(Math::PI / 2);
 	Mat4 trf(n * o, rot);
 
-	dbg->setModelMat(trf);
+	dbg->setModelMatrix(trf);
 	dbg->drawGrid();
 }
 
@@ -294,7 +294,7 @@ void CollisionDebugDrawer::visit(const Aabb& aabb)
 	// Translation
 	trf.setTranslationPart((max + min) / 2.0);
 
-	dbg->setModelMat(trf);
+	dbg->setModelMatrix(trf);
 	dbg->drawCube();
 }
 
@@ -308,7 +308,7 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 			break;
 		case Frustum::FT_PERSPECTIVE:
 		{
-			dbg->setColor(Vec4(1.0, 0.0, 1.0, 1.0));
+			dbg->setColor(Vec4(0.5, 0.0, 0.5, 1.0));
 			const PerspectiveFrustum& pf =
 				static_cast<const PerspectiveFrustum&>(f);
 
@@ -355,7 +355,7 @@ void PhysicsDebugDrawer::drawSphere(btScalar radius,
 	const btVector3& color)
 {
 	dbg->setColor(toAnki(color));
-	dbg->setModelMat(Mat4(toAnki(transform)));
+	dbg->setModelMatrix(Mat4(toAnki(transform)));
 	dbg->drawSphere(radius);
 }
 
@@ -370,7 +370,7 @@ void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
 	trf(0, 3) = (max.getX() + min.getX()) / 2.0;
 	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
 	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
-	dbg->setModelMat(trf);
+	dbg->setModelMatrix(trf);
 	dbg->setColor(toAnki(color));
 	dbg->drawCube(1.0);
 }
@@ -387,7 +387,7 @@ void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
 	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
 	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
 	trf = Mat4::combineTransformations(Mat4(toAnki(trans)), trf);
-	dbg->setModelMat(trf);
+	dbg->setModelMatrix(trf);
 	dbg->setColor(toAnki(color));
 	dbg->drawCube(1.0);
 }
@@ -418,7 +418,7 @@ void PhysicsDebugDrawer::draw3dText(const btVector3& /*location*/,
 //==============================================================================
 
 //==============================================================================
-void SceneDebugDrawer::draw(const SceneNode& node)
+void SceneDebugDrawer::draw(SceneNode& node)
 {
 	if(isFlagEnabled(DF_FRUSTUMABLE) && node.getFrustumable())
 	{
@@ -431,9 +431,8 @@ void SceneDebugDrawer::draw(const SceneNode& node)
 	}
 }
 
-
 //==============================================================================
-void SceneDebugDrawer::draw(const Frustumable& fr) const
+void SceneDebugDrawer::draw(Frustumable& fr) const
 {
 	const Frustum& fs = fr.getFrustum();
 
@@ -441,9 +440,8 @@ void SceneDebugDrawer::draw(const Frustumable& fr) const
 	fs.accept(coldraw);
 }
 
-
 //==============================================================================
-void SceneDebugDrawer::draw(const Spatial& x) const
+void SceneDebugDrawer::draw(Spatial& x) const
 {
 	const CollisionShape& cs = x.getSpatialCollisionShape();
 
@@ -451,18 +449,16 @@ void SceneDebugDrawer::draw(const Spatial& x) const
 	cs.accept(coldraw);
 }
 
-
 //==============================================================================
-void SceneDebugDrawer::draw(const Octree& octree) const
+void SceneDebugDrawer::draw(Octree& octree) const
 {
 	dbg->setColor(Vec3(1.0));
 	draw(octree.getRoot(), 0, octree);
 }
 
-
 //==============================================================================
-void SceneDebugDrawer::draw(const OctreeNode& octnode, uint depth,
-	const Octree& octree) const
+void SceneDebugDrawer::draw(OctreeNode& octnode, uint depth,
+	Octree& octree) const
 {
 	Vec3 color = Vec3(1.0 - float(depth) / float(octree.getMaxDepth()));
 	dbg->setColor(color);
@@ -577,6 +573,5 @@ void RenderableDrawer::render(const Camera& cam, uint pass,
 	glDrawElements(GL_TRIANGLES, indecesNum, GL_UNSIGNED_SHORT, 0);
 	vao.unbind();
 }
-
 
 }  // namespace anki
