@@ -10,28 +10,35 @@ class Flags
 public:
 	typedef T Value;
 
+	Flags()
+	{}
+
+	Flags(T mask_)
+		: mask(mask_)
+	{}
+
 	/// @name Flag manipulation
 	/// @{
 	void enableFlag(Value flag)
 	{
-		flags |= flag;
+		mask |= flag;
 	}
 	void disableFlag(Value flag)
 	{
-		flags &= ~flag;
+		mask &= ~flag;
 	}
 	bool isFlagEnabled(Value flag) const
 	{
-		return flags & flag;
+		return mask & flag;
 	}
 	Value getFlagsBitmask() const
 	{
-		return flags;
+		return mask;
 	}
 	/// @}
 
 protected:
-	Value flags = 0;
+	Value mask = 0;
 };
 
 } // end namespace anki

@@ -166,7 +166,7 @@ public:
 		return framesNum;
 	}
 
-	const Mat4& getViewProjectionMat() const
+	const Mat4& getViewProjectionMatrix() const
 	{
 		return viewProjectionMat;
 	}

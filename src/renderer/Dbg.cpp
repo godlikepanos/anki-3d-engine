@@ -2,6 +2,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/scene/Scene.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
@@ -43,6 +44,8 @@ void Dbg::run()
 
 	fbo.bind();
 
+	drawer->setViewProjectionMatrix(r->getViewProjectionMatrix());
+	drawer->setModelMatrix(Mat4::getIdentity());
 	drawer->drawGrid();
 
 	for(auto it = scene.getAllNodesBegin(); it != scene.getAllNodesEnd(); it++)
