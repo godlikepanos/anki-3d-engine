@@ -72,6 +72,7 @@ void BufferObject::write(void* buff, size_t offset, size_t size)
 	ANKI_ASSERT(offset + size <= sizeInBytes);
 	bind();
 	void* mapped = glMapBufferRange(target, offset, size, GL_MAP_WRITE_BIT);
+	ANKI_ASSERT(mapped != nullptr);
 	memcpy(mapped, buff, size);
 	glUnmapBuffer(target);
 	unbind();
