@@ -20,8 +20,15 @@ void VisibilityTester::test(Frustumable& cam, Scene& scene,
 	for(auto it = scene.getAllNodesBegin(); it != scene.getAllNodesEnd(); it++)
 	{
 		SceneNode* node = *it;
-		Spatial* sp = node->getSpatial();
 
+		Frustumable* fr = node->getFrustumable();
+		// Wont check the same
+		if(&cam == fr)
+		{
+			continue;
+		}
+
+		Spatial* sp = node->getSpatial();
 		if(!sp)
 		{
 			continue;
@@ -49,4 +56,4 @@ void VisibilityTester::test(Frustumable& cam, Scene& scene,
 	}
 }
 
-} // end namespace
+} // end namespace anki

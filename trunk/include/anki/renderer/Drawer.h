@@ -170,6 +170,11 @@ public:
 
 	virtual void draw(Octree& octree) const;
 
+	void setViewProjectionMatrix(const Mat4& m)
+	{
+		dbg->setViewProjectionMatrix(m);
+	}
+
 private:
 	DebugDrawer* dbg;
 
@@ -204,6 +209,6 @@ private:
 		Renderable& renderable);
 };
 
-} // namespace anki
+} // end namespace anki
 
 #endif

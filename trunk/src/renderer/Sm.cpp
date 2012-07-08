@@ -124,9 +124,9 @@ void Sm::run(Light& light, float distance)
 	vt.test(slight, r->getScene(), vi);
 
 	// render all
-	for(Renderable* node : vi.getRenderables())
+	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
-		r->getSceneDrawer().render(r->getScene().getActiveCamera(), 1, *node);
+		r->getSceneDrawer().render(r->getScene().getActiveCamera(), 1, *(*it));
 	}
 
 	// restore GL

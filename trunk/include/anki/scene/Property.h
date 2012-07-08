@@ -15,24 +15,32 @@
 
 namespace anki {
 
-typedef Visitable<std::string, bool, float,
-	Vec2, Vec3, Vec4, Mat3, Mat4, Transform,
-	OrthographicFrustum, PerspectiveFrustum,
-	TextureResourcePointer>
-	PropertyVisitable;
-
 // Forward
+class PropertyBase;
+
 template<typename T>
 class Property;
 
+typedef VisitableCommonBase<
+	PropertyBase, // Base
+	// Misc
+	Property<std::string>, Property<bool>, Property<float>,
+	Property<TextureResourcePointer>,
+	// Math
+	Property<Vec2>, Property<Vec3>, Property<Vec4>, Property<Mat3>,
+	Property<Mat4>, Property<Transform>,
+	// Collision
+	Property<OrthographicFrustum>, Property<PerspectiveFrustum>>
+	PropertyVisitable;
+
 /// Base class for property
-class PropertyBase: public NonCopyable
+class PropertyBase: public NonCopyable, public PropertyVisitable
 {
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	PropertyBase(const char* name_, uint tid_)
-		: name(name_), tid(tid_)
+	PropertyBase(const char* name_)
+		: name(name_)
 	{}
 
 	virtual ~PropertyBase()
@@ -46,25 +54,20 @@ public:
 		return name;
 	}
 
-	uint32_t getTypeId() const
-	{
-		return tid;
-	}
-
 	/// Get the property value. Throws if the @a T is incorrect
-	template<typename T>
-	const T& getValue() const
+	template<typename TValue>
+	const TValue& getValue() const
 	{
-		checkType<Property<T> >();
-		return static_cast<const Property<T>*>(this)->getValue();
+		checkType<TValue>();
+		return static_cast<const Property<TValue>*>(this)->getValue();
 	}
 
 	/// Set the property value. Throws if the @a T is incorrect
-	template<typename T>
-	void setValue(const T& x)
+	template<typename TValue>
+	void setValue(const TValue& x)
 	{
-		checkType<Property<T> >();
-		return static_cast<Property<T>*>(this)->setValue(x);
+		checkType<TValue>();
+		return static_cast<Property<TValue>*>(this)->setValue(x);
 	}
 	/// @}
 
@@ -72,19 +75,19 @@ public:
 	template<typename TProp>
 	TProp& upCast()
 	{
-		checkType<TProp>();
+		checkType<TProp::Value>();
 		return static_cast<TProp&>(*this);
 	}
 
 private:
 	std::string name;
-	uint32_t tid; ///< Type ID
 
 	/// Runtime type checking
-	template<typename TProp>
+	template<typename TValue>
 	void checkType() const
 	{
-		if(PropertyVisitable::getVariadicTypeId<TProp> != tid)
+		if(PropertyVisitable::getVariadicTypeId<Property<TValue>>() !=
+			getVisitableTypeId())
 		{
 			throw ANKI_EXCEPTION("Types do not match: " + name);
 		}
@@ -104,8 +107,10 @@ public:
 
 	/// Read only property
 	Property(const char* name)
-		: PropertyBase(name, PropertyVisitable::getVariadicTypeId<T>())
-	{}
+		: PropertyBase(name)
+	{
+		setupVisitable(this);
+	}
 	/// @}
 
 	/// @name Accessors
@@ -136,8 +141,8 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	ReadProperty(const char* name, const Value& x_)
-		: Base(name), x(x_)
+	ReadProperty(const char* name, const Value& initialValue)
+		: Base(name), x(initialValue)
 	{}
 	/// @}
 
@@ -165,8 +170,8 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	ReadWriteProperty(const char* name, const Value& x_)
-		: Base(name), x(x_)
+	ReadWriteProperty(const char* name, const Value& initialValue)
+		: Base(name), x(initialValue)
 	{}
 	/// @}
 
@@ -201,8 +206,8 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	ReadPointerProperty(const char* name, const Value* x)
-		: Base(name), ptr(x)
+	ReadPointerProperty(const char* name, const Value* ptr_)
+		: Base(name), ptr(ptr_)
 	{}
 	/// @}
 
