@@ -5,7 +5,6 @@
 #include "anki/scene/VisibilityTester.h"
 #include "anki/math/Math.h"
 #include "anki/util/Singleton.h"
-#include <boost/range/iterator_range.hpp>
 #include <vector>
 
 namespace anki {
@@ -22,8 +21,6 @@ public:
 		typedef std::vector<T*> Container;
 		typedef typename Container::iterator Iterator;
 		typedef typename Container::const_iterator ConstIterator;
-		typedef boost::iterator_range<Iterator> MutableRange;
-		typedef boost::iterator_range<ConstIterator> ConstRange;
 		typedef typename ConstCharPtrHashMap<T*>::Type NameToItemMap;
 	};
 
@@ -97,6 +94,12 @@ public:
 
 	void doVisibilityTests(Camera& cam);
 
+	SceneNode* findSceneNode(const char* name)
+	{
+		Types<SceneNode>::NameToItemMap::iterator it = nameToNode.find(name);
+		return (it == nameToNode.end()) ? nullptr : it->second;
+	}
+
 private:
 	Types<SceneNode>::Container nodes;
 	Types<SceneNode>::NameToItemMap nameToNode;
@@ -119,7 +122,8 @@ private:
 	{
 		if(d.find(ptr->getName().c_str()) != d.end())
 		{
-			throw ANKI_EXCEPTION("Item already exists: " + ptr->getName());
+			throw ANKI_EXCEPTION("Item with same name already exists: "
+				+ ptr->getName());
 		}
 
 		d[ptr->getName().c_str()] = ptr;

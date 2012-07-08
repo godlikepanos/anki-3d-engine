@@ -63,11 +63,16 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * Math::toRad(ang),
 		Math::toRad(ang), 0.5, 200.0);
-	/*cam->moveLocalY(3.0);
-	cam->moveLocalZ(5.7);
-	cam->moveLocalX(-0.3);
-	cam->lookAtPoint(Vec3(0.0));*/
+	cam->setLocalTransform(Transform(Vec3(0.0, 3.0, 8.0), Mat3::getIdentity(),
+		1.0));
 	scene.setActiveCamera(cam);
+
+	// XXX
+	PerspectiveCamera* ccam = new PerspectiveCamera("ccam",
+		&scene, Movable::MF_NONE, nullptr);
+	ccam->setAll(
+		MainRendererSingleton::get().getAspectRatio() * Math::toRad(ang),
+		Math::toRad(ang), 0.5, 20.0);
 
 	// lights
 
@@ -105,6 +110,10 @@ void mainLoopExtra()
 	if(in.getKey(SDL_SCANCODE_1))
 	{
 		mover = &SceneSingleton::get().getActiveCamera();
+	}
+	if(in.getKey(SDL_SCANCODE_2))
+	{
+		mover = SceneSingleton::get().findSceneNode("ccam")->getMovable();
 	}
 
 	if(in.getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
@@ -294,9 +303,8 @@ int main(int argc, char* argv[])
 	catch(std::exception& e)
 	{
 		std::cerr << "Aborting: " << e.what() << std::endl;
-		//abort();
 		exitCode = 1;
 	}
-
+	ANKI_LOGI("Bye!!");
 	return exitCode;
 }

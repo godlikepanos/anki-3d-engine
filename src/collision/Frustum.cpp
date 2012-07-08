@@ -90,16 +90,14 @@ void PerspectiveFrustum::transformShape()
 void PerspectiveFrustum::transform(const Transform& trf_)
 {
 	trf.transform(trf_);
-	transformPlanes();
-	transformShape();
+	recalculate();
 }
 
 //==============================================================================
 void PerspectiveFrustum::setTransform(const Transform& trf_)
 {
 	trf = trf_;
-	transformPlanes();
-	transformShape();
+	recalculate();
 }
 
 //==============================================================================
@@ -203,16 +201,14 @@ OrthographicFrustum& OrthographicFrustum::operator=(
 void OrthographicFrustum::transform(const Transform& trf_)
 {
 	trf.transform(trf_);
-	transformPlanes();
-	transformShape();
+	recalculate();
 }
 
 //==============================================================================
 void OrthographicFrustum::setTransform(const Transform& trf_)
 {
 	trf = trf_;
-	transformPlanes();
-	transformShape();
+	recalculate();
 }
 
 //==============================================================================

@@ -72,11 +72,11 @@ void Ms::run()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// render all
-	for(Renderable* node :
-		r->getScene().getVisibilityInfo().getRenderables())
+	VisibilityInfo& vi = r->getScene().getVisibilityInfo();
+	for(auto it = vi.getRenderablesBegin();
+		it != vi.getRenderablesEnd(); ++it)
 	{
-		r->getSceneDrawer().render(r->getScene().getActiveCamera(),
-			0, *node);
+		r->getSceneDrawer().render(r->getScene().getActiveCamera(), 0, *(*it));
 	}
 
 	// restore depth

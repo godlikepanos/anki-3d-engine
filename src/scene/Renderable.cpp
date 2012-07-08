@@ -13,7 +13,7 @@ struct CreateNewPropertyVisitor
 {
 	const MaterialVariable* mvar;
 	PropertyMap* pmap;
-	Renderable::Properties* rprops;
+	Renderable::MaterialVariableProperties* rprops;
 
 	template<typename T>
 	void visit(const T&) const
@@ -21,7 +21,7 @@ struct CreateNewPropertyVisitor
 		MaterialVariableProperty<T>* prop = new MaterialVariableProperty<T>(
 			mvar->getName().c_str(),
 			&(mvar->getValue<T>()),
-			!mvar->getInitialized());
+			mvar);
 
 		pmap->addNewProperty(prop);
 		rprops->push_back(prop);
@@ -31,6 +31,10 @@ struct CreateNewPropertyVisitor
 //==============================================================================
 // Renderable                                                                  =
 //==============================================================================
+
+//==============================================================================
+Renderable::~Renderable()
+{}
 
 //==============================================================================
 void Renderable::init(PropertyMap& pmap)

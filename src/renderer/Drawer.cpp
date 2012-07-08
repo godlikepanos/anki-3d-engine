@@ -271,7 +271,7 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 	Quat q;
 	q.setFrom2Vec3(Vec3(0.0, 0.0, 1.0), n);
 	Mat3 rot(q);
-	rot.rotateXAxis(Math::PI / 2);
+	rot.rotateXAxis(Math::PI / 2.0);
 	Mat4 trf(n * o, rot);
 
 	dbg->setModelMatrix(trf);
@@ -303,38 +303,38 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 {
 	switch(f.getFrustumType())
 	{
-		case Frustum::FT_ORTHOGRAPHIC:
-			visit(static_cast<const OrthographicFrustum&>(f).getObb());
-			break;
-		case Frustum::FT_PERSPECTIVE:
+	case Frustum::FT_ORTHOGRAPHIC:
+		visit(static_cast<const OrthographicFrustum&>(f).getObb());
+		break;
+	case Frustum::FT_PERSPECTIVE:
+	{
+		dbg->setColor(Vec4(0.5, 0.0, 0.5, 1.0));
+		const PerspectiveFrustum& pf =
+			static_cast<const PerspectiveFrustum&>(f);
+
+		float camLen = pf.getFar();
+		float tmp0 = camLen / tan((Math::PI - pf.getFovX()) * 0.5) + 0.001;
+		float tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
+
+		Vec3 points[] = {
+			Vec3(0.0, 0.0, 0.0), // 0: eye point
+			Vec3(-tmp0, tmp1, -camLen), // 1: top left
+			Vec3(-tmp0, -tmp1, -camLen), // 2: bottom left
+			Vec3(tmp0, -tmp1, -camLen), // 3: bottom right
+			Vec3(tmp0, tmp1, -camLen) // 4: top right
+		};
+
+		const uint indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
+			3, 3, 4, 4, 1};
+
+		dbg->begin();
+		for(uint i = 0; i < sizeof(indeces) / sizeof(uint); i++)
 		{
-			dbg->setColor(Vec4(0.5, 0.0, 0.5, 1.0));
-			const PerspectiveFrustum& pf =
-				static_cast<const PerspectiveFrustum&>(f);
-
-			float camLen = pf.getFar();
-			float tmp0 = camLen / tan((Math::PI - pf.getFovX()) * 0.5) + 0.001;
-			float tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
-
-			Vec3 points[] = {
-				Vec3(0.0, 0.0, 0.0), // 0: eye point
-				Vec3(-tmp0, tmp1, -camLen), // 1: top left
-				Vec3(-tmp0, -tmp1, -camLen), // 2: bottom left
-				Vec3(tmp0, -tmp1, -camLen), // 3: bottom right
-				Vec3(tmp0, tmp1, -camLen) // 4: top right
-			};
-
-			const uint indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
-				3, 3, 4, 4, 1};
-
-			dbg->begin();
-			for(uint i = 0; i < sizeof(indeces) / sizeof(uint); i++)
-			{
-				dbg->pushBackVertex(points[indeces[i]]);
-			}
-			dbg->end();
-			break;
+			dbg->pushBackVertex(points[indeces[i]]);
 		}
+		dbg->end();
+		break;
+	}
 	}
 }
 
@@ -420,14 +420,32 @@ void PhysicsDebugDrawer::draw3dText(const btVector3& /*location*/,
 //==============================================================================
 void SceneDebugDrawer::draw(SceneNode& node)
 {
-	if(isFlagEnabled(DF_FRUSTUMABLE) && node.getFrustumable())
+	// Nothing to render?
+	if(getFlagsBitmask() == 0)
 	{
-		draw(*node.getFrustumable());
+		return;
 	}
 
-	if(isFlagEnabled(DF_SPATIAL) && node.getSpatial())
+	Movable* mv = node.getMovable();
+	if(mv)
 	{
-		draw(*node.getSpatial());
+		dbg->setModelMatrix(Mat4(mv->getWorldTransform()));
+	}
+	else
+	{
+		dbg->setModelMatrix(Mat4::getIdentity());
+	}
+
+	Frustumable* fr;
+	if(isFlagEnabled(DF_FRUSTUMABLE) && (fr = node.getFrustumable()))
+	{
+		draw(*fr);
+	}
+
+	Spatial* sp;
+	if(isFlagEnabled(DF_SPATIAL) && (sp = node.getSpatial()))
+	{
+		draw(*sp);
 	}
 }
 
@@ -480,25 +498,119 @@ void SceneDebugDrawer::draw(OctreeNode& octnode, uint depth,
 // RenderableDrawer                                                            =
 //==============================================================================
 
-/// Set the uniform using this visitor
-struct SetUniformVisitor
-{
-	const ShaderProgramUniformVariable* uni;
+//==============================================================================
 
-	template<typename T>
-	void visit(const T& x)
-	{
-		uni->set(x);
-	}
+enum BuildinId
+{
+	BI_UNITIALIZED = 0,
+	BT_NO_BUILDIN = 1,
+	BI_MODEL_VIEW_PROJECTION_MATRIX,
+	BI_NORMAL_MATRIX
 };
 
+static std::array<const char*, 2> buildinNames = {{
+	"modelViewProjectionMat",
+	"normalMat"
+}};
+
+template<typename T>
+static void uniSet(const ShaderProgramUniformVariable& uni, const T& x)
+{
+	ANKI_ASSERT(0);
+}
+
+#define TEMPLATE_SPECIALIZATION(type) \
+	template<> \
+	void uniSet<type>(const ShaderProgramUniformVariable& uni, const type& x) \
+	{ \
+		uni.set(x); \
+	}
+
+TEMPLATE_SPECIALIZATION(float)
+TEMPLATE_SPECIALIZATION(Vec2)
+TEMPLATE_SPECIALIZATION(Vec3)
+TEMPLATE_SPECIALIZATION(Vec4)
+TEMPLATE_SPECIALIZATION(Mat3)
+TEMPLATE_SPECIALIZATION(Mat4)
+
+// Texture specialization
 template<>
-void SetUniformVisitor::visit<TextureResourcePointer>(
+void uniSet<TextureResourcePointer>(
+	const ShaderProgramUniformVariable& uni,
 	const TextureResourcePointer& x)
 {
 	const Texture* tex = x.get();
-	uni->set(*tex);
+	uni.set(*tex);
 }
+
+/// XXX
+struct SetupMaterialVariableVisitor
+{
+	PassLevelKey key;
+	const Camera* cam = nullptr;
+	Renderer* r = nullptr;
+	Renderable* renderable = nullptr;
+
+	template<typename TProp>
+	void visit(TProp& x)
+	{
+		MaterialVariableProperty<typename TProp::Value>& mprop =
+			static_cast<MaterialVariableProperty<typename TProp::Value>&>(x);
+
+		const MaterialVariable& mv = mprop.getMaterialVariable();
+
+		const ShaderProgramUniformVariable* uni =
+			mv.findShaderProgramUniformVariable(key);
+
+		if(!uni)
+		{
+			return;
+		}
+
+		// Set buildin id
+		//
+		if(mprop.getBuildinId() == BI_UNITIALIZED)
+		{
+			const std::string name = mv.getName();
+
+			for(uint32_t i = 0; i < buildinNames.size(); i++)
+			{
+				if(name == buildinNames[i])
+				{
+					mprop.setBuildinId(i + 2);
+					break;
+				}
+			}
+
+			if(mprop.getBuildinId() == BI_UNITIALIZED)
+			{
+				mprop.setBuildinId(BT_NO_BUILDIN);
+			}
+		}
+
+		// Set uniform
+		//
+		const Transform* rwtrf = renderable->getRenderableWorldTransform();
+
+		Mat4 mMat = (rwtrf) ? Mat4(*rwtrf) : Mat4::getIdentity();
+		Mat4 vpMat = cam->getProjectionMatrix() * cam->getViewMatrix();
+		Mat4 mvpMat = vpMat * mMat;
+		Mat4 mvMat = cam->getViewMatrix() * mMat;
+
+		switch(mprop.getBuildinId())
+		{
+		case BT_NO_BUILDIN:
+			uniSet(*uni, mprop.getValue());
+			break;
+		case BI_MODEL_VIEW_PROJECTION_MATRIX:
+			uni->set(mvpMat);
+			break;
+		case BI_NORMAL_MATRIX:
+			uni->set(mvMat.getRotationPart());
+			break;
+		}
+	}
+};
 
 //==============================================================================
 void RenderableDrawer::setupShaderProg(
@@ -520,33 +632,18 @@ void RenderableDrawer::setupShaderProg(
 
 	sprog.bind();
 	
-	SetUniformVisitor vis;
+	SetupMaterialVariableVisitor vis;
 
-	for(const MaterialVariable& mv : mtl.getVariables())
+	vis.cam = &cam;
+	vis.key = key;
+	vis.renderable = &renderable;
+	vis.r = r;
+
+	for(auto it = renderable.getPropertiesBegin();
+		it != renderable.getPropertiesEnd(); ++it)
 	{
-		const ShaderProgramUniformVariable* uni = 
-			mv.findShaderProgramUniformVariable(key);
-
-		if(!uni)
-		{
-			continue;
-		}
-
-		const std::string& name = uni->getName();
-
-		if(name == "modelViewProjectionMat")
-		{
-			Mat4 mvp = 
-				cam.getProjectionMatrix() * cam.getViewMatrix()
-				* Mat4(*renderable.getRenderableWorldTransform());
-
-			uni->set(mvp);
-		}
-		else
-		{
-			vis.uni = uni;
-			mv.acceptVisitor(vis);
-		}
+		PropertyBase* pbase = *it;
+		pbase->acceptVisitor(vis);
 	}
 }
 

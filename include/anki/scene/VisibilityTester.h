@@ -2,7 +2,6 @@
 #define ANKI_SCENE_VISIBILITY_TESTER_H
 
 #include <vector>
-#include <boost/range/iterator_range.hpp>
 
 namespace anki {
 
@@ -22,16 +21,22 @@ public:
 	typedef std::vector<Renderable*> Renderables;
 	typedef std::vector<Light*> Lights;
 
-	boost::iterator_range<Renderables::iterator> getRenderables()
+	Renderables::iterator getRenderablesBegin()
 	{
-		return boost::iterator_range<Renderables::iterator>(
-			renderables.begin(), renderables.end());
+		return renderables.begin();
+	}
+	Renderables::iterator getRenderablesEnd()
+	{
+		return renderables.end();
 	}
 
-	boost::iterator_range<Lights::iterator> getLights()
+	Lights::iterator getLightsBegin()
 	{
-		return boost::iterator_range<Lights::iterator>(
-			lights.begin(), lights.end());
+		return lights.begin();
+	}
+	Lights::iterator getLightsEnd()
+	{
+		return lights.end();
 	}
 
 private:

@@ -15,7 +15,7 @@ class Transform;
 /// @addtogroup Scene
 /// @{
 
-/// XXX
+/// Material variable property. Its a layer on top of material variables
 template<typename T>
 class MaterialVariableProperty: public ReadCowPointerProperty<T>
 {
@@ -25,34 +25,44 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	MaterialVariableProperty(const char* name, const Value* x, bool buildin_)
-		: Base(name, x), buildin(buildin_)
+	MaterialVariableProperty(const char* name, const Value* x,
+		const MaterialVariable* mvar_)
+		: Base(name, x), mvar(mvar_)
 	{}
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	bool isBuildIn() const
+	uint32_t getBuildinId() const
 	{
-		return buildin;
+		return buildinId;
+	}
+	void setBuildinId(uint32_t id)
+	{
+		buildinId = id;
+	}
+
+	const MaterialVariable& getMaterialVariable() const
+	{
+		return *mvar;
 	}
 	/// @}
 
 private:
-	bool buildin;
+	uint32_t buildinId = 0; ///< The renderer sets it
+	const MaterialVariable* mvar = nullptr;
 };
 
 /// Renderable interface. Implemented by renderable scene nodes
 class Renderable
 {
 public:
-	typedef std::vector<PropertyBase*> Properties;
+	typedef std::vector<PropertyBase*> MaterialVariableProperties;
 
 	Renderable()
 	{}
 
-	virtual ~Renderable()
-	{}
+	virtual ~Renderable();
 
 	/// Access to VAOs
 	virtual const ModelPatchBase& getModelPatchBase() const = 0;
@@ -66,23 +76,30 @@ public:
 		return nullptr;
 	}
 
-	const Properties& getProperties() const
+	/// @name Accessors
+	/// @{
+	MaterialVariableProperties::iterator getPropertiesBegin()
 	{
-		return props;
+		return props.begin();
 	}
+	MaterialVariableProperties::iterator getPropertiesEnd()
+	{
+		return props.end();
+	}
+	/// @}
 
 protected:
 	void init(PropertyMap& pmap);
 
 private:
-	Properties props;
+	MaterialVariableProperties props;
 };
 
 
 /// @}
 
 
-} // end namespace
+} // end namespace anki
 
 
 #endif

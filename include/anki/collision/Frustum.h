@@ -12,10 +12,8 @@ namespace anki {
 /// @addtogroup Collision
 /// @{
 
-/// Frustum collision shape
-///
-/// This shape consists from 6 planes. The planes are being used to find shapes
-/// that are inside the frustum
+/// Frustum collision shape. This shape consists from 6 planes. The planes are
+/// being used to find shapes that are inside the frustum
 class Frustum: public CollisionShape
 {
 public:
@@ -93,7 +91,8 @@ public:
 	/// Calculate the projection matrix
 	virtual Mat4 calculateProjectionMatrix() const = 0;
 
-	/// XXX
+	/// Its like transform() but but with a difference. It doesn't transform
+	/// the @a trf, it just replaces it
 	virtual void setTransform(const Transform& trf) = 0;
 
 protected:
