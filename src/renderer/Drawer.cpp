@@ -505,11 +505,13 @@ enum BuildinId
 	BI_UNITIALIZED = 0,
 	BT_NO_BUILDIN = 1,
 	BI_MODEL_VIEW_PROJECTION_MATRIX,
+	BI_MODEL_VIEW_MATRIX,
 	BI_NORMAL_MATRIX
 };
 
-static std::array<const char*, 2> buildinNames = {{
+static std::array<const char*, 3> buildinNames = {{
 	"modelViewProjectionMat",
+	"modelViewMat",
 	"normalMat"
 }};
 
@@ -588,6 +590,14 @@ struct SetupMaterialVariableVisitor
 			}
 		}
 
+		// Sanity check
+		//
+		if(!mv.getInitialized() && mprop.getBuildinId() == BT_NO_BUILDIN)
+		{
+			ANKI_LOGW("Material variable no building and not initialized: "
+				<< mv.getName());
+		}
+
 		// Set uniform
 		//
 		const Transform* rwtrf = renderable->getRenderableWorldTransform();
@@ -595,7 +605,7 @@ struct SetupMaterialVariableVisitor
 		Mat4 mMat = (rwtrf) ? Mat4(*rwtrf) : Mat4::getIdentity();
 		Mat4 vpMat = cam->getProjectionMatrix() * cam->getViewMatrix();
 		Mat4 mvpMat = vpMat * mMat;
-		Mat4 mvMat = cam->getViewMatrix() * mMat;
+		Mat4 mvMat = mMat * cam->getViewMatrix();
 
 		switch(mprop.getBuildinId())
 		{
@@ -604,6 +614,9 @@ struct SetupMaterialVariableVisitor
 			break;
 		case BI_MODEL_VIEW_PROJECTION_MATRIX:
 			uni->set(mvpMat);
+			break;
+		case BI_MODEL_VIEW_MATRIX:
+			uni->set(mvMat);
 			break;
 		case BI_NORMAL_MATRIX:
 			uni->set(mvMat.getRotationPart());
