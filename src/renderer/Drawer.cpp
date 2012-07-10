@@ -592,20 +592,22 @@ struct SetupMaterialVariableVisitor
 
 		// Sanity check
 		//
-		if(!mv.getInitialized() && mprop.getBuildinId() == BT_NO_BUILDIN)
+		/*if(!mv.getInitialized() && mprop.getBuildinId() == BT_NO_BUILDIN)
 		{
 			ANKI_LOGW("Material variable no building and not initialized: "
 				<< mv.getName());
-		}
+		}*/
 
 		// Set uniform
 		//
 		const Transform* rwtrf = renderable->getRenderableWorldTransform();
 
 		Mat4 mMat = (rwtrf) ? Mat4(*rwtrf) : Mat4::getIdentity();
-		Mat4 vpMat = cam->getProjectionMatrix() * cam->getViewMatrix();
+		const Mat4& vpMat = cam->getViewProjectionMatrix();
 		Mat4 mvpMat = vpMat * mMat;
-		Mat4 mvMat = mMat * cam->getViewMatrix();
+
+		Mat4 mvMat;
+		bool mvMatCalculated = false; // Opt
 
 		switch(mprop.getBuildinId())
 		{
@@ -616,9 +618,19 @@ struct SetupMaterialVariableVisitor
 			uni->set(mvpMat);
 			break;
 		case BI_MODEL_VIEW_MATRIX:
+			if(!mvMatCalculated)
+			{
+				mvMat = mMat * cam->getViewMatrix();
+				mvMatCalculated = true;
+			}
 			uni->set(mvMat);
 			break;
 		case BI_NORMAL_MATRIX:
+			if(!mvMatCalculated)
+			{
+				mvMat = mMat * cam->getViewMatrix();
+				mvMatCalculated = true;
+			}
 			uni->set(mvMat.getRotationPart());
 			break;
 		}
@@ -674,7 +686,7 @@ void RenderableDrawer::render(const Camera& cam, uint pass,
 	setupShaderProg(key, cam, renderable);
 
 	// Render
-	uint indecesNum = 
+	uint32_t indecesNum =
 		renderable.getModelPatchBase().getIndecesNumber(0);
 
 	const Vao& vao = renderable.getModelPatchBase().getVao(key);
@@ -684,4 +696,4 @@ void RenderableDrawer::render(const Camera& cam, uint pass,
 	vao.unbind();
 }
 
-}  // namespace anki
+}  // end namespace anki

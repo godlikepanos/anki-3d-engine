@@ -59,6 +59,11 @@ public:
 		return viewMat;
 	}
 
+	const Mat4& getViewProjectionMatrix() const
+	{
+		return viewProjectionMat;
+	}
+
 	/// Needed by the renderer
 	virtual float getNear() const = 0;
 	/// Needed by the renderer
@@ -107,10 +112,16 @@ protected:
 		viewMat = Mat4(getWorldTransform().getInverse());
 	}
 
-private:
-	Mat4 viewMat = Mat4::getIdentity();
+	void updateViewProjectionMatrix()
+	{
+		viewProjectionMat = projectionMat * viewMat;
+	}
 
+private:
 	CameraType type;
+
+	Mat4 viewMat = Mat4::getIdentity();
+	Mat4 viewProjectionMat = Mat4::getIdentity();
 };
 
 /// Perspective camera
@@ -149,12 +160,14 @@ public:
 	/// @{
 
 	/// Overrides Movable::moveUpdate(). This does:
-	/// - Update view matrix
-	/// - Update frustum
+	/// @li Update view matrix
+	/// @li Update view-projection matrix
+	/// @li Update frustum
 	void movableUpdate()
 	{
 		Movable::movableUpdate();
 		updateViewMatrix();
+		updateViewProjectionMatrix();
 		frustum.setTransform(getWorldTransform());
 	}
 	/// @}
@@ -168,6 +181,7 @@ public:
 	{
 		projectionMat = frustum.calculateProjectionMatrix();
 		invProjectionMat = projectionMat.getInverse();
+		updateViewProjectionMatrix();
 	}
 	/// @}
 
@@ -218,12 +232,14 @@ public:
 	/// @{
 
 	/// Overrides Movable::moveUpdate(). This does:
-	/// - Update view matrix
-	/// - Update frustum
+	/// @li Update view matrix
+	/// @li Update view-projection matrix
+	/// @li Update frustum
 	void movableUpdate()
 	{
 		Movable::movableUpdate();
 		updateViewMatrix();
+		updateViewProjectionMatrix();
 		frustum.setTransform(getWorldTransform());
 	}
 	/// @}
@@ -237,6 +253,7 @@ public:
 	{
 		projectionMat = frustum.calculateProjectionMatrix();
 		invProjectionMat = projectionMat.getInverse();
+		updateViewProjectionMatrix();
 	}
 	/// @}
 
