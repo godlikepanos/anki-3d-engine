@@ -167,6 +167,13 @@ public:
 	{}
 };
 
+/// Uniform shader block
+class ShaderProgramUniformBlock
+{
+private:
+	std::vector<ShaderProgramUniformVariable> uniforms;
+};
+
 /// Shader program object
 ///
 /// Shader program. Combines. Every shader program consist of one OpenGL ID, a 
