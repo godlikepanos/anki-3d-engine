@@ -7,9 +7,9 @@
 #include "anki/math/Forward.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"
-#include <boost/ptr_container/ptr_vector.hpp>
 #include <vector>
 #include <string>
+#include <memory>
 
 namespace anki {
 
@@ -148,6 +148,9 @@ public:
 	/// @}
 
 private:
+	GLuint index;
+	GLsizei offset; ///< Offset inside the uniform block
+
 	/// Standard set uniform checks
 	/// - Check if initialized
 	/// - if the current shader program is the var's shader program
@@ -183,7 +186,8 @@ private:
 class ShaderProgram: public NonCopyable
 {
 public:
-	typedef boost::ptr_vector<ShaderProgramVariable> VariablesContainer;
+	typedef std::vector<std::shared_ptr<ShaderProgramVariable>>
+		VariablesContainer;
 	typedef std::vector<ShaderProgramUniformVariable*>
 		UniformVariablesContainer;
 	typedef std::vector<ShaderProgramAttributeVariable*>

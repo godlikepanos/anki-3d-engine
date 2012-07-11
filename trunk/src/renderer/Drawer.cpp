@@ -503,16 +503,19 @@ void SceneDebugDrawer::draw(OctreeNode& octnode, uint depth,
 enum BuildinId
 {
 	BI_UNITIALIZED = 0,
-	BT_NO_BUILDIN = 1,
+	BT_NO_BUILDIN,
 	BI_MODEL_VIEW_PROJECTION_MATRIX,
 	BI_MODEL_VIEW_MATRIX,
-	BI_NORMAL_MATRIX
+	BI_NORMAL_MATRIX,
+	BI_BLURRING,
+	BI_COUNT
 };
 
-static std::array<const char*, 3> buildinNames = {{
+static std::array<const char*, BI_COUNT - 2> buildinNames = {{
 	"modelViewProjectionMat",
 	"modelViewMat",
-	"normalMat"
+	"normalMat",
+	"blurring"
 }};
 
 template<typename T>
@@ -632,6 +635,9 @@ struct SetupMaterialVariableVisitor
 				mvMatCalculated = true;
 			}
 			uni->set(mvMat.getRotationPart());
+			break;
+		case BI_BLURRING:
+			uni->set(0.0);
 			break;
 		}
 	}

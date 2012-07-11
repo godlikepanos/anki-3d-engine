@@ -395,7 +395,7 @@ void ShaderProgram::getUniAndAttribVars()
 			new ShaderProgramAttributeVariable(loc, &name_[0], type, 
 			size, this);
 
-		vars.push_back(var);
+		vars.push_back(std::shared_ptr<ShaderProgramVariable>(var));
 		attribs.push_back(var);
 		nameToVar[var->getName().c_str()] = var;
 		nameToAttribVar[var->getName().c_str()] = var;
@@ -420,11 +420,15 @@ void ShaderProgram::getUniAndAttribVars()
 			new ShaderProgramUniformVariable(loc, &name_[0], type, 
 			size, this);
 
-		vars.push_back(var);
+		vars.push_back(std::shared_ptr<ShaderProgramVariable>(var));
 		unis.push_back(var);
 		nameToVar[var->getName().c_str()] = var;
 		nameToUniVar[var->getName().c_str()] = var;
 	}
+
+	vars.shrink_to_fit();
+	unis.shrink_to_fit();
+	attribs.shrink_to_fit();
 }
 
 //==============================================================================
@@ -477,10 +481,10 @@ std::ostream& operator<<(std::ostream& s, const ShaderProgram& x)
 {
 	s << "ShaderProgram\n";
 	s << "Variables:\n";
-	for(const ShaderProgramVariable& var : x.vars)
+	for(auto var : x.vars)
 	{
-		s << var.getName() << " " << var.getLocation() << " " 
-			<< (var.getType() == ShaderProgramVariable::SPVT_ATTRIBUTE 
+		s << var->getName() << " " << var->getLocation() << " "
+			<< (var->getType() == ShaderProgramVariable::SPVT_ATTRIBUTE
 			? "[A]" : "[U]") <<  '\n';
 	}
 	return s;
