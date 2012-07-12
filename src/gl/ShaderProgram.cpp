@@ -153,10 +153,12 @@ const char* ShaderProgram::stdSourceCode =
 	//"precision lowp float;\n"
 #if defined(NDEBUG)
 	"#pragma optimize(on)\n"
-	"#pragma debug(off)\n";
+	"#pragma debug(off)\n"
+	"#extension GL_ARB_gpu_shader5 : enable\n";
 #else
 	"#pragma optimize(off)\n"
-	"#pragma debug(on)\n";
+	"#pragma debug(on)\n"
+	"#extension GL_ARB_gpu_shader5 : enable\n";
 #endif
 
 thread_local const ShaderProgram* ShaderProgram::current = nullptr;
@@ -325,7 +327,7 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 			<< "\n" << padding << "\nSource:\n" << padding << "\n";
 
 		// Prettyfy source
-		StringList lines = StringList::splitString(sourceCode, '\n', true);
+		StringList lines = StringList::splitString(fullSrc.c_str(), '\n', true);
 		int lineno = 0;
 		for(const std::string& line : lines)
 		{

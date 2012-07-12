@@ -2,9 +2,7 @@
 /// The file contains common functions for fragment operations
 #pragma anki include "shaders/Pack.glsl"
 
-
 #define MAX_SHININESS 128.0
-
 
 //==============================================================================
 /// @param[in] normal The fragment's normal in view space
@@ -33,7 +31,6 @@ vec3 getNormalFromTexture(in vec3 normal, in vec3 tangent, in float tangentW,
 }
 #endif
 
-
 //==============================================================================
 /// Just normalize
 #if defined(PASS_COLOR)
@@ -43,7 +40,6 @@ vec3 getNormalSimple(in vec3 normal)
 	return normalize(normal);
 }
 #endif
-
 
 //==============================================================================
 /// Environment mapping calculations
@@ -69,7 +65,6 @@ vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 	return semCol;
 }
 #endif
-
 
 //==============================================================================
 /// Using a 4-channel texture and a tolerance discard the fragment if the 
@@ -105,7 +100,6 @@ vec3 getDiffuseColorAndDoAlphaTesting(
 #endif
 }
 
-
 //==============================================================================
 /// Just read the RGB color from texture
 #if defined(PASS_COLOR)
@@ -116,14 +110,12 @@ vec3 readRgbFromTexture(in sampler2D tex, in vec2 texCoords)
 }
 #endif
 
-
 //==============================================================================
 #define add2Vec3_DEFINED
 vec3 add2Vec3(in vec3 a, in vec3 b)
 {
 	return a + b;
 }
-
 
 //==============================================================================
 /// Write the data to FAIs
@@ -136,8 +128,6 @@ void writeFais(
 	in float shininess, 
 	in float blurring)
 {
-	fMsNormalFai = vec3(packNormal(normal), blurring);
-	fMsDiffuseFai = diffCol;
-	fMsSpecularFai = vec4(specularCol, shininess / MAX_SHININESS);
+	fMsFai0 = uvec3(packUnorm4x8(vec4(diffCol, 1.0)), 0, 0);
 }
 #endif

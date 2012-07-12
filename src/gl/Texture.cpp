@@ -194,11 +194,12 @@ void Texture::create(const Initializer& init)
 		glCompressedTexImage2D(target, 0, internalFormat,
 			width, height, 0, init.dataSize, init.data);
 		break;
-
 	default:
 		glTexImage2D(target, 0, internalFormat, width,
 			height, 0, format, type, init.data);
 	}
+
+	ANKI_CHECK_GL_ERROR();
 
 	if(init.repeat)
 	{
