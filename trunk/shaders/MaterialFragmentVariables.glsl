@@ -26,11 +26,7 @@ in vec3 vVertPosViewSpace;
 /// @name Fragment out
 /// @{
 #if defined(PASS_COLOR)
-layout(location = 0) out vec3 fMsNormalFai;
-#	define fMsNormalFai_DEFINED
-layout(location = 1) out vec3 fMsDiffuseFai;
-#	define fMsDiffuseFai_DEFINED
-layout(location = 2) out vec4 fMsSpecularFai;
-#	define fMsSpecularFai_DEFINED
+layout(location = 0) out uvec3 fMsFai0;
+#	define fMsFai0_DEFINED
 #endif
 /// @}

@@ -660,7 +660,7 @@ void Image::loadDds(const char* filename)
 			/ li->divSize * std::max(li->divSize, hdr.data.dwHeight)
 			/ li->divSize * li->blockBytes;
 
-		if(size != hdr.dwPitchOrLinearSize)
+		if(size != hdr.data.dwPitchOrLinearSize)
 		{
 			throw ANKI_EXCEPTION("Size in header and the calculated are "
 				"not the same");

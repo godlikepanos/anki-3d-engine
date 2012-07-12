@@ -106,7 +106,7 @@ void Bl::runBlur()
 	hBlurSProg->findUniformVariableByName("img")->set(
 		r->getPps().getPostPassFai());
 	hBlurSProg->findUniformVariableByName("msNormalFai")->set(
-		r->getMs().getNormalFai());
+		r->getMs().getFai0());
 	hBlurSProg->findUniformVariableByName("imgDimension")->set(
 		float(r->getWidth()));
 
