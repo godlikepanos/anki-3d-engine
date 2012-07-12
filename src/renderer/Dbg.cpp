@@ -19,7 +19,7 @@ void Dbg::init(const Renderer::Initializer& initializer)
 	{
 		fbo.create();
 		//fbo.setColorAttachments({&r->getPps().getPostPassFai()});
-		fbo.setColorAttachments({&r->getMs().getDiffuseFai()});
+		fbo.setColorAttachments({&r->getMs().getFai0()});
 		fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, r->getMs().getDepthFai());
 		ANKI_ASSERT(fbo.isComplete());
 	}

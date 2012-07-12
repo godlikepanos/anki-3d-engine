@@ -126,6 +126,6 @@ private:
 	void loadDds(const char* filename);
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif
