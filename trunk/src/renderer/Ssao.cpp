@@ -117,7 +117,7 @@ void Ssao::run()
 
 	// msNormalFai
 	ssaoSProg.findUniformVariableByName("msNormalFai")->set(
-		r->getMs().getNormalFai());
+		r->getMs().getFai0());
 
 	r->drawQuad();
 

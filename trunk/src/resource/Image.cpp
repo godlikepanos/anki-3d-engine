@@ -8,8 +8,47 @@
 
 namespace anki {
 
+//==============================================================================
+
 uint8_t Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 uint8_t Image::tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+//==============================================================================
+void Image::load(const char* filename)
+{
+	// get the extension
+	const char* ext = getFileExtension(filename);
+	ANKI_ASSERT(ext);
+
+	// load from this extension
+	try
+	{
+		if(strcmp(ext, "tga") == 0)
+		{
+			loadTga(filename);
+		}
+		else if(strcmp(ext, "png") == 0)
+		{
+			std::string err;
+			if(!loadPng(filename, err))
+			{
+				throw ANKI_EXCEPTION(err);
+			}
+		}
+		else if(strcmp(ext, "dds") == 0)
+		{
+			loadDds(filename);
+		}
+		else
+		{
+			throw ANKI_EXCEPTION("Unsupported extension");
+		}
+	}
+	catch(std::exception& e)
+	{
+		throw ANKI_EXCEPTION("File " + filename) << e;
+	}
+}
 
 //==============================================================================
 void Image::loadUncompressedTga(std::fstream& fs, uint32_t& bpp)
@@ -404,50 +443,13 @@ cleanup:
 }
 
 //==============================================================================
-void Image::load(const char* filename)
-{
-	// get the extension
-	const char* ext = getFileExtension(filename);
-	ANKI_ASSERT(ext);
-
-	// load from this extension
-	try
-	{
-		if(strcmp(ext, "tga") == 0)
-		{
-			loadTga(filename);
-		}
-		else if(strcmp(ext, "png") == 0)
-		{
-			std::string err;
-			if(!loadPng(filename, err))
-			{
-				throw ANKI_EXCEPTION(err);
-			}
-		}
-		else if(strcmp(ext, "dds") == 0)
-		{
-			loadDds(filename);
-		}
-		else
-		{
-			throw ANKI_EXCEPTION("Unsupported extension");
-		}
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("File " + filename) << e;
-	}
-}
-
-//==============================================================================
 // DDS                                                                         =
 //==============================================================================
 
-//  little-endian, of course
+// little-endian, of course
 #define DDS_MAGIC 0x20534444
 
-//  DDS_header.dwFlags
+// DdsHeader.dwFlags
 #define DDSD_CAPS                   0x00000001
 #define DDSD_HEIGHT                 0x00000002
 #define DDSD_WIDTH                  0x00000004
@@ -457,18 +459,18 @@ void Image::load(const char* filename)
 #define DDSD_LINEARSIZE             0x00080000
 #define DDSD_DEPTH                  0x00800000
 
-//  DDS_header.sPixelFormat.dwFlags
+// DdsHeader.sPixelFormat.dwFlags
 #define DDPF_ALPHAPIXELS            0x00000001
 #define DDPF_FOURCC                 0x00000004
 #define DDPF_INDEXED                0x00000020
 #define DDPF_RGB                    0x00000040
 
-//  DDS_header.sCaps.dwCaps1
+// DdsHeader.sCaps.dwCaps1
 #define DDSCAPS_COMPLEX             0x00000008
 #define DDSCAPS_TEXTURE             0x00001000
 #define DDSCAPS_MIPMAP              0x00400000
 
-//  DDS_header.sCaps.dwCaps2
+// DdsHeader.sCaps.dwCaps2
 #define DDSCAPS2_CUBEMAP            0x00000200
 #define DDSCAPS2_CUBEMAP_POSITIVEX  0x00000400
 #define DDSCAPS2_CUBEMAP_NEGATIVEX  0x00000800
@@ -539,7 +541,7 @@ static uint toInt(const char* x)
   ((pf.dwFlags & DDPF_INDEXED) && \
    (pf.dwRGBBitCount == 8))
 
-union DDS_header
+union DdsHeader
 {
 	struct
 	{
@@ -609,7 +611,7 @@ void Image::loadDds(const char* filename)
 
 	// Read header
 	//
-	DDS_header hdr;
+	DdsHeader hdr;
 	in.read((char*)&hdr, sizeof(hdr));
 
 	if(hdr.data.dwMagic != DDS_MAGIC || hdr.data.dwSize != 124
@@ -652,18 +654,26 @@ void Image::loadDds(const char* filename)
 		throw ANKI_EXCEPTION("Currently mipmaps are not supported in DDS");
 	}
 
-	uint x = hdr.data.dwWidth;
-	uint y = hdr.data.dwHeight;
-
 	if(li->compressed)
 	{
-		size_t size = std::max(li->divSize, x)
-			/ li->divSize * std::max(li->divSize, y)
+		size_t size = std::max(li->divSize, hdr.data.dwWidth)
+			/ li->divSize * std::max(li->divSize, hdr.data.dwHeight)
 			/ li->divSize * li->blockBytes;
-		//assert( size == hdr.dwPitchOrLinearSize );
+
+		if(size != hdr.dwPitchOrLinearSize)
+		{
+			throw ANKI_EXCEPTION("Size in header and the calculated are "
+				"not the same");
+		}
+
 		//assert( hdr.dwFlags & DDSD_LINEARSIZE );
 		data.resize(size);
 		in.read((char*)(&data[0]), size);
+
+		if(in.fail() || in.eof())
+		{
+			throw ANKI_EXCEPTION("Error reading file data");
+		}
 	}
 
 	type = CT_RGBA;
@@ -673,4 +683,4 @@ void Image::loadDds(const char* filename)
 	in.close();
 }
 
-} // end namespace
+} // end namespace anki

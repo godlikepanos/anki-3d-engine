@@ -56,7 +56,7 @@ void Bl::init(const Renderer::Initializer& initializer)
 	try
 	{
 		sideBlurFbo.create();
-		sideBlurFbo.setColorAttachments({&r->getMs().getNormalFai()});
+		sideBlurFbo.setColorAttachments({&r->getMs().getFai0()});
 	}
 	catch(std::exception& e)
 	{
@@ -98,7 +98,7 @@ void Bl::runBlur()
 	vBlurSProg->bind();
 	vBlurSProg->findUniformVariableByName("img")->set(blurFai);
 	vBlurSProg->findUniformVariableByName("msNormalFai")->set(
-		r->getMs().getNormalFai());
+		r->getMs().getFai0());
 	vBlurSProg->findUniformVariableByName("imgDimension")->set(
 		float(r->getHeight()));
 

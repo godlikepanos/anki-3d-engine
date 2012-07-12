@@ -20,19 +20,9 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Texture& getNormalFai() const
+	const Texture& getFai0() const
 	{
-		return normalFai;
-	}
-
-	const Texture& getDiffuseFai() const
-	{
-		return diffuseFai;
-	}
-
-	const Texture& getSpecularFai() const
-	{
-		return specularFai;
+		return fai0;
 	}
 
 	const Texture& getDepthFai() const
@@ -47,9 +37,7 @@ public:
 private:
 	Ez ez; /// EarlyZ pass
 	Fbo fbo;
-	Texture normalFai; ///< The FAI for normals
-	Texture diffuseFai; ///< The FAI for diffuse color
-	Texture specularFai; ///< The FAI for specular color and shininess
+	Texture fai0; ///< The FAI for diffuse color, normals and specular
 	Texture depthFai; ///< The FAI for depth
 };
 

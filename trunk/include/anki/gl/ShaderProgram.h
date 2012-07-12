@@ -149,7 +149,8 @@ public:
 
 private:
 	GLuint index;
-	GLsizei offset; ///< Offset inside the uniform block
+	GLint offset; ///< Offset inside the uniform block. -1 if it's inside the
+	              ///< default uniform block
 
 	/// Standard set uniform checks
 	/// - Check if initialized
@@ -173,16 +174,17 @@ public:
 /// Uniform shader block
 class ShaderProgramUniformBlock
 {
+public:
+	ShaderProgramUniformBlock(ShaderProgram& sprog);
+
 private:
-	std::vector<ShaderProgramUniformVariable> uniforms;
+	std::vector<ShaderProgramUniformVariable*> uniforms;
+	GLuint index;
+	uint32_t size; ///< In bytes
+	std::string name;
 };
 
 /// Shader program object
-///
-/// Shader program. Combines. Every shader program consist of one OpenGL ID, a 
-/// vector of uniform variables and a vector of attribute variables. Every 
-/// variable is a struct that contains the variable's name, location, OpenGL 
-/// data type and if it is a uniform or an attribute var.
 class ShaderProgram: public NonCopyable
 {
 public:
