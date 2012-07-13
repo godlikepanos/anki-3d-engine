@@ -7,7 +7,6 @@ vec2 packNormal(in vec3 normal)
     return normal.xy / scalar1 + 0.5;
 }
 
-
 /// Reverse the packNormal
 vec3 unpackNormal(in vec2 enc)
 {
@@ -18,4 +17,12 @@ vec3 unpackNormal(in vec2 enc)
 	normal.xy = g * nn.xy;
 	normal.z = g - 1.0;
 	return normal;
+}
+
+/// Pack specular stuff
+float packSpecular(int vec3 color, int float shininess)
+{
+	float s = shininess / 128.0;
+
+
 }
