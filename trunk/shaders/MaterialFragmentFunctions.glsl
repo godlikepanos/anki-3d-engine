@@ -1,10 +1,18 @@
 /// @file 
 /// The file contains common functions for fragment operations
+
 #pragma anki include "shaders/Pack.glsl"
 
 #define MAX_SHININESS 128.0
 
-//==============================================================================
+/// Generic add
+#define add_DEFINED
+#define add(a, b) (a + b)
+
+/// Generic mul
+#define mul_DEFINED
+#define mul(a, b) (a * b)
+
 /// @param[in] normal The fragment's normal in view space
 /// @param[in] tangent The tangent
 /// @param[in] tangent Extra stuff for the tangent
@@ -31,7 +39,6 @@ vec3 getNormalFromTexture(in vec3 normal, in vec3 tangent, in float tangentW,
 }
 #endif
 
-//==============================================================================
 /// Just normalize
 #if defined(PASS_COLOR)
 #	define getNormalSimple_DEFINED
@@ -41,7 +48,6 @@ vec3 getNormalSimple(in vec3 normal)
 }
 #endif
 
-//==============================================================================
 /// Environment mapping calculations
 /// @param[in] vertPosViewSpace Fragment position in view space
 /// @param[in] normal Fragment's normal in view space as well
@@ -66,7 +72,6 @@ vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 }
 #endif
 
-//==============================================================================
 /// Using a 4-channel texture and a tolerance discard the fragment if the 
 /// texture's alpha is less than the tolerance
 /// @param[in] map The diffuse map
@@ -100,7 +105,6 @@ vec3 getDiffuseColorAndDoAlphaTesting(
 #endif
 }
 
-//==============================================================================
 /// Just read the RGB color from texture
 #if defined(PASS_COLOR)
 #	define readRgbFromTexture_DEFINED
@@ -110,24 +114,17 @@ vec3 readRgbFromTexture(in sampler2D tex, in vec2 texCoords)
 }
 #endif
 
-//==============================================================================
-#define add2Vec3_DEFINED
-vec3 add2Vec3(in vec3 a, in vec3 b)
-{
-	return a + b;
-}
-
-//==============================================================================
 /// Write the data to FAIs
 #if defined(PASS_COLOR)
 #	define writeFais_DEFINED
 void writeFais(
-	in vec3 diffCol, 
+	in vec3 diffCol, // Normalized
 	in vec3 normal, 
-	in vec3 specularCol,
-	in float shininess, 
+	in float specularComponent, // Normalized
 	in float blurring)
 {
-	fMsFai0 = uvec3(packUnorm4x8(vec4(diffCol, 1.0)), 0, 0);
+	uint diffAndSpec = packUnorm4x8(vec4(diffCol, specularComponent));
+	uint norm = packHalf2x16(packNormal(normal));
+	fMsFai0 = uvec3(diffAndSpec, norm, 0);
 }
 #endif
