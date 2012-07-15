@@ -60,6 +60,7 @@ bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
 		out = tcollide<Frustum>(a, b);
 	default:
 		ANKI_ASSERT(0 && "Forgot something");
+		out = false;
 	}
 
 	return out;

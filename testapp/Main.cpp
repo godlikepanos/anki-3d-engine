@@ -232,12 +232,19 @@ void main()
 
 		// Sleep
 		//
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
 			SDL_Delay((AppSingleton::get().getTimerTick()
 				- timer.getElapsedTime()) * 1000.0);
 		}
+#else
+		if(MainRendererSingleton::get().getFramesCount() == 10000)
+		{
+			break;
+		}
+#endif
 
 	}
 

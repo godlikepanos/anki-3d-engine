@@ -20,6 +20,10 @@ Movable::Movable(uint flags_, Movable* parent, PropertyMap& pmap)
 }
 
 //==============================================================================
+Movable::~Movable()
+{}
+
+//==============================================================================
 void Movable::update()
 {
 	if(getParent() == nullptr) // If root

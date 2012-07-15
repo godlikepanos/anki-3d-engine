@@ -26,7 +26,11 @@ in vec3 vVertPosViewSpace;
 /// @name Fragment out
 /// @{
 #if defined(PASS_COLOR)
-layout(location = 0) out uvec3 fMsFai0;
+#if 1
+layout(location = 0) out uvec2 fMsFai0;
+#else
+layout(location = 0) out vec3 fMsFai0;
+#endif
 #	define fMsFai0_DEFINED
 #endif
 /// @}

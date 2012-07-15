@@ -103,8 +103,8 @@ void App::initWindow()
 	}
 
 	// set GL attribs
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 	// WARNING: Set this low only in deferred shading
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -214,19 +214,21 @@ void App::printAppInfo()
 //==============================================================================
 uint App::getDesktopWidth() const
 {
-	SDL_DisplayMode mode;
+	/*SDL_DisplayMode mode;
 	/// @todo re-enable it
 	//SDL_GetDesktopDisplayMode(&mode);
-	return mode.w;
+	return mode.w;*/
+	return 0;
 }
 
 //==============================================================================
 uint App::getDesktopHeight() const
 {
-	SDL_DisplayMode mode;
+	/*SDL_DisplayMode mode;
 	/// @todo re-enable it
 	//SDL_GetDesktopDisplayMode(&mode);
-	return mode.h;
+	return mode.h;*/
+	return 0;
 }
 
 } // end namespace
