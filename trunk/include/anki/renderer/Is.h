@@ -23,6 +23,8 @@ class Is: private RenderingPass
 public:
 	Is(Renderer* r);
 
+	~Is();
+
 	void init(const RendererInitializer& initializer);
 	void run();
 

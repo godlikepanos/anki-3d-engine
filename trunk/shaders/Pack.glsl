@@ -19,10 +19,21 @@ vec3 unpackNormal(in vec2 enc)
 	return normal;
 }
 
+#define MAX_SPECULARITY 128.0
+
 /// Pack specular stuff
-float packSpecular(int vec3 color, int float shininess)
+float packSpecular(in vec2 c)
 {
-	float s = shininess / 128.0;
+	return round(c[0] * 15.0) * 16.0 / 255.0 
+		+ round(c[1] / MAX_SPECULARITY * 15.0) / 255.0;
+}
 
+/// Unpack specular
+vec2 unpackSpecular(in float f)
+{
+	float r = floor(f * 255.0 / 16.0);
 
+	return vec2(
+		r / 15.0,
+		f * 255.0 * MAX_SPECULARITY / 15.0 - r * 16.0 * MAX_SPECULARITY / 15.0);
 }

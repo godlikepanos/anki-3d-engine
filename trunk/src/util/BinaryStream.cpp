@@ -5,6 +5,10 @@
 namespace anki {
 
 //==============================================================================
+BinaryStream::~BinaryStream()
+{}
+
+//==============================================================================
 template<typename Type>
 Type BinaryStream::read32bitNumber()
 {

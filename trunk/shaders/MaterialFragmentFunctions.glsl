@@ -120,11 +120,16 @@ vec3 readRgbFromTexture(in sampler2D tex, in vec2 texCoords)
 void writeFais(
 	in vec3 diffCol, // Normalized
 	in vec3 normal, 
-	in float specularComponent, // Normalized
+	in vec2 specular, // Streangth and shininess
 	in float blurring)
 {
-	uint diffAndSpec = packUnorm4x8(vec4(diffCol, specularComponent));
-	uint norm = packHalf2x16(packNormal(normal));
-	fMsFai0 = uvec3(diffAndSpec, norm, 0);
+#if 1
+	// Diffuse color and specular
+	fMsFai0[0] = packUnorm4x8(vec4(diffCol, packSpecular(specular)));
+	// Normal
+	fMsFai0[1] = packHalf2x16(packNormal(normal));
+#else
+	fMsFai0 = vec3(diffCol);
+#endif
 }
 #endif

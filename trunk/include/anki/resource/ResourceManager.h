@@ -14,6 +14,9 @@ struct ResourceHook
 	int referenceCounter;
 	Type* resource;
 
+	~ResourceHook()
+	{}
+
 	bool operator==(const ResourceHook& b) const
 	{
 		return uuid == b.uuid 

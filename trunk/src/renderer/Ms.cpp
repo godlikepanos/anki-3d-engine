@@ -17,8 +17,13 @@ void Ms::init(const RendererInitializer& initializer)
 {
 	try
 	{
-		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGBA32UI,
-			GL_RGBA_INTEGER, GL_UNSIGNED_INT, fai0);
+#if 1
+		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RG32UI,
+			GL_RG_INTEGER, GL_UNSIGNED_INT, fai0);
+#else
+		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RG32F,
+			GL_RG, GL_UNSIGNED_INT, fai0);
+#endif
 		Renderer::createFai(r->getWidth(), r->getHeight(),
 			GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
 			GL_UNSIGNED_INT_24_8, depthFai);

@@ -6,19 +6,23 @@
 
 #pragma anki start fragmentShader
 
+#if 1
+uniform usampler2D rasterImage;
+#else
 uniform sampler2D rasterImage;
+#endif
+
 in vec2 vTexCoords;
 layout(location = 0) out vec3 fFragColor;
 
-
 void main()
 {
-	/*if(vTexCoords.y > 0.5)
-	{
-		fFragColor = vec3(1.0, 0.0, 1.0);
-		return;
-	}*/
-
+#if 1
+	uvec2 a = texture2D(rasterImage, vTexCoords).rg;
+	vec4 diffAndSpec = unpackUnorm4x8(a.x);
+	fFragColor = diffAndSpec.rgb;
+#else
 	fFragColor = texture2D(rasterImage, vTexCoords).rgb;
-	//fFragColor = vec3(texture2D(rasterImage, vTexCoords).b);
+#endif
+	//fFragColor = texture2D(rasterImage, vTexCoords).rgb;
 }

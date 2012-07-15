@@ -137,7 +137,8 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_SAMPLER_2D 
-		|| getGlDataType() == GL_SAMPLER_2D_SHADOW);
+		|| getGlDataType() == GL_SAMPLER_2D_SHADOW
+		|| getGlDataType() == GL_UNSIGNED_INT_SAMPLER_2D);
 	
 	glUniform1i(getLocation(), tex.bind());
 }
@@ -149,7 +150,7 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 //==============================================================================
 
 const char* ShaderProgram::stdSourceCode =
-	"#version 330 core\n"
+	"#version 420 core\n"
 	//"precision lowp float;\n"
 #if defined(NDEBUG)
 	"#pragma optimize(on)\n"

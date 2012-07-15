@@ -26,6 +26,8 @@ public:
 		: std::iostream(sb), byteOrder(byteOrder_)
 	{}
 
+	~BinaryStream();
+
 	/// Read unsigned int (32bit)
 	/// @exception Exception
 	uint32_t readUint();

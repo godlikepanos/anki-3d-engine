@@ -24,7 +24,7 @@ public:
 		MF_MOVED = 2 ///< Moved in the previous frame
 	};
 
-	/// @name Constructors
+	/// @name Constructors & destructor
 	/// @{
 
 	/// The one and only constructor
@@ -32,6 +32,8 @@ public:
 	/// @param parent The parent. It can be nullptr
 	/// @param pmap Property map to add a few variables
 	Movable(uint flags, Movable* parent, PropertyMap& pmap);
+
+	~Movable();
 	/// @}
 
 	/// @name Accessors

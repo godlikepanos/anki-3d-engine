@@ -9,6 +9,11 @@ namespace anki {
 class ShaderProgramResource: public ShaderProgram
 {
 public:
+	ShaderProgramResource()
+	{}
+	~ShaderProgramResource()
+	{}
+
 	/// Resource load
 	void load(const char* filename);
 

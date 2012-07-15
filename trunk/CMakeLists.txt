@@ -129,8 +129,8 @@ LINK_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/extern/lib64")
 #
 # Defines & flags
 #
-ADD_DEFINITIONS(#-DANKI_MATH_INTEL_SIMD
-	-Dthread_local=__thread -pedantic-errors -pedantic -ansi -Wall -Winline 
+ADD_DEFINITIONS(-DANKI_MATH_INTEL_SIMD
+	-Dthread_local=__thread -pedantic-errors -pedantic -ansi -Wall 
 	-W -Wwrite-strings -Wno-unused -Wfatal-errors -Werror -Wno-long-long 
 	-msse4 -std=c++0x)
 
