@@ -127,6 +127,8 @@ private:
 };
 /// @}
 
+static_assert(sizeof(Mat3) == sizeof(float) * 3 * 3, "Incorrect size");
+
 } // end namespace
 
 #include "anki/math/Mat3.inl.h"
