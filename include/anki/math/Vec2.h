@@ -95,7 +95,9 @@ private:
 	};
 	/// @}
 };
-/// @}
+/// @
+
+static_assert(sizeof(Vec2) == sizeof(float) * 2, "Incorrect size");
 
 } // end namespace
 

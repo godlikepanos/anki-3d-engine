@@ -120,6 +120,8 @@ private:
 };
 /// @}
 
+static_assert(sizeof(Vec4) == sizeof(float) * 4, "Incorrect size");
+
 } // end namespace
 
 #include "anki/math/Vec4.inl.h"

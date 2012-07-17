@@ -134,6 +134,8 @@ private:
 };
 /// @}
 
+static_assert(sizeof(Mat4) == sizeof(float) * 4 * 4, "Incorrect size");
+
 } // end namespace
 
 #include "anki/math/Mat4.inl.h"

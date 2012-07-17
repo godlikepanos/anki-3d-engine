@@ -135,6 +135,8 @@ private:
 };
 /// @}
 
+static_assert(sizeof(Vec3) == sizeof(float) * 3, "Incorrect size");
+
 } // end namespace
 
 #include "anki/math/Vec3.inl.h"
