@@ -1,6 +1,8 @@
 /// @file
 /// Generic vertex shader for material passes (both color and depth)
 
+#pragma anki include "shaders/Pack.glsl"
+
 /// @name Attributes
 /// @{
 layout(location = 0) in vec3 position;
@@ -28,11 +30,10 @@ out vec3 vNormal;
 out vec3 vTangent;
 out float vTangentW;
 out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
+flat out float vSpecularComponent; ///< Calculate it per fragment
 #endif
 /// @}
 
-
-//==============================================================================
 /// Calculate the position and the varyings
 #define doVertex_DEFINED
 void doVertex()
@@ -53,3 +54,10 @@ void doVertex()
 	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 }
 
+/// Calculate the position and the varyings
+#define doVertexPrepackSpecular_DEFINED
+void doVertexPrepackSpecular(in vec2 specular)
+{
+	doVertex();
+	vSpecularComponent = packSpecular(specular);
+}
