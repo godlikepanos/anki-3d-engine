@@ -3,8 +3,6 @@
 
 #pragma anki include "shaders/Pack.glsl"
 
-#define MAX_SHININESS 128.0
-
 /// Generic add
 #define add_DEFINED
 #define add(a, b) (a + b)
@@ -120,16 +118,25 @@ vec3 readRgbFromTexture(in sampler2D tex, in vec2 texCoords)
 void writeFais(
 	in vec3 diffCol, // Normalized
 	in vec3 normal, 
+	in float specularComponent, // Streangth and shininess
+	in float blurring)
+{
+	// Diffuse color and specular
+	fMsFai0[0] = packUnorm4x8(vec4(diffCol, specularComponent));
+	// Normal
+	fMsFai0[1] = packHalf2x16(packNormal(normal));
+}
+#endif
+
+/// Write the data to FAIs
+#if defined(PASS_COLOR)
+#	define writeFaisPackSpecular_DEFINED
+void writeFaisPackSpecular(
+	in vec3 diffCol, // Normalized
+	in vec3 normal, 
 	in vec2 specular, // Streangth and shininess
 	in float blurring)
 {
-#if 1
-	// Diffuse color and specular
-	fMsFai0[0] = packUnorm4x8(vec4(diffCol, packSpecular(specular)));
-	// Normal
-	fMsFai0[1] = packHalf2x16(packNormal(normal));
-#else
-	fMsFai0 = vec3(diffCol);
-#endif
+	writeFais(diffCol, normal, packSpecular(specular), blurring);
 }
 #endif

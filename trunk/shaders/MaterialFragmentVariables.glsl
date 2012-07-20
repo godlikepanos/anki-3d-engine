@@ -20,17 +20,14 @@ in float vTangentW;
 #	define vTangentW_DEFINED
 in vec3 vVertPosViewSpace;
 #	define vVertPosViewSpace_DEFINED
+flat in float vSpecularComponent;
+#	define vSpecularComponent_DEFINED
 #endif
 /// @}
 
 /// @name Fragment out
 /// @{
-#if defined(PASS_COLOR)
-#if 1
 layout(location = 0) out uvec2 fMsFai0;
-#else
-layout(location = 0) out vec3 fMsFai0;
-#endif
 #	define fMsFai0_DEFINED
 #endif
 /// @}
