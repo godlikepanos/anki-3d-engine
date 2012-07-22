@@ -115,6 +115,10 @@ void mainLoopExtra()
 	{
 		mover = SceneSingleton::get().findSceneNode("ccam")->getMovable();
 	}
+	if(in.getKey(SDL_SCANCODE_3))
+	{
+		mover = SceneSingleton::get().findSceneNode("spot0")->getMovable();
+	}
 
 	if(in.getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
 	if(in.getKey(SDL_SCANCODE_DOWN)) mover->rotateLocalX(-ang);
@@ -232,7 +236,7 @@ void main()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -248,7 +252,8 @@ void main()
 
 	}
 
-	ANKI_LOGI("Exiting main loop (" << mainLoopTimer.getElapsedTime() << " sec)");
+	ANKI_LOGI("Exiting main loop (" << mainLoopTimer.getElapsedTime()
+		<< " sec)");
 }
 
 

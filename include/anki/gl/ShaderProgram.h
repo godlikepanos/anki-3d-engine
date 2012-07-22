@@ -182,6 +182,7 @@ private:
 	GLuint index;
 	uint32_t size; ///< In bytes
 	std::string name;
+	GLuint bindingPoint = 0; ///< All blocks the default to 0
 };
 
 /// Shader program object
@@ -194,6 +195,8 @@ public:
 		UniformVariablesContainer;
 	typedef std::vector<ShaderProgramAttributeVariable*>
 		AttributeVariablesContainer;
+	typedef std::vector<std::shared_ptr<ShaderProgramUniformBlock>>
+		UniformBlocksContainer;
 
 	/// @name Constructors/Destructor
 	/// @{
@@ -314,6 +317,9 @@ private:
 	typedef ConstCharPtrHashMap<ShaderProgramAttributeVariable*>::Type
 		NameToAttribVarHashMap;
 
+	typedef ConstCharPtrHashMap<ShaderProgramUniformBlock*>::Type
+		NameToUniformBlockHashMap;
+
 	static thread_local const ShaderProgram* current;
 
 	/// Shader source that is used in ALL shader programs
@@ -335,11 +341,17 @@ private:
 	NameToVarHashMap nameToVar; ///< Variable searching
 	NameToUniVarHashMap nameToUniVar; ///< Uniform searching
 	NameToAttribVarHashMap nameToAttribVar; ///< Attribute searching
+
+	UniformBlocksContainer blocks;
+	NameToUniformBlockHashMap namtToBlock;
 	/// @}
 
 	/// Query the driver to get the vars. After the linking of the shader
 	/// prog is done gather all the vars in custom containers
 	void getUniAndAttribVars();
+
+	/// Get info about the uniform blocks
+	void initUniformBlocks();
 
 	/// Create and compile shader
 	/// @return The shader's OpenGL id

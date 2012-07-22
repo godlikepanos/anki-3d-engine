@@ -27,6 +27,7 @@ flat in float vSpecularComponent;
 
 /// @name Fragment out
 /// @{
+#if defined(PASS_COLOR)
 layout(location = 0) out uvec2 fMsFai0;
 #	define fMsFai0_DEFINED
 #endif
