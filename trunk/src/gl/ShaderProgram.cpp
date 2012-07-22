@@ -45,7 +45,8 @@ ShaderProgramVariable::ShaderProgramVariable(
 //==============================================================================
 void ShaderProgramUniformVariable::doCommonSetCode() const
 {
-	ANKI_ASSERT(getLocation() != -1);
+	ANKI_ASSERT(getLocation() != -1
+		&& "You cannot set variable in uniform block");
 	ANKI_ASSERT(ShaderProgram::getCurrentProgramGlId() == 
 		getFatherShaderProgram().getGlId());
 
@@ -248,6 +249,7 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	// init the rest
 	bind();
 	getUniAndAttribVars();
+	initUniformBlocks();
 }
 
 //==============================================================================
@@ -412,12 +414,8 @@ void ShaderProgram::getUniAndAttribVars()
 			&size, &type, &name_[0]);
 		name_[length] = '\0';
 
-		// check if its FFP location
-		int loc = glGetUniformLocation(glId, &name_[0]);
-		if(loc == -1) // if -1 it means that its an FFP var
-		{
-			throw ANKI_EXCEPTION("You are using FFP vertex uniforms");
-		}
+		// -1 means in uniform block
+		GLint loc = glGetUniformLocation(glId, &name_[0]);
 
 		ShaderProgramUniformVariable* var =
 			new ShaderProgramUniformVariable(loc, &name_[0], type, 
@@ -432,6 +430,18 @@ void ShaderProgram::getUniAndAttribVars()
 	vars.shrink_to_fit();
 	unis.shrink_to_fit();
 	attribs.shrink_to_fit();
+}
+
+//==============================================================================
+void ShaderProgram::initUniformBlocks()
+{
+	GLint blocksCount;
+	glGetProgramiv(glId, GL_ACTIVE_UNIFORM_BLOCKS, &blocksCount);
+
+	for(GLint i = 0; i < blocksCount; i++)
+	{
+
+	}
 }
 
 //==============================================================================

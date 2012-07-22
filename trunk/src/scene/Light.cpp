@@ -52,7 +52,7 @@ PointLight::PointLight(const char* name, Scene* scene,
 SpotLight::SpotLight(const char* name, Scene* scene,
 	uint32_t movableFlags, Movable* movParent)
 	: Light(LT_SPOT, name, scene, movableFlags, movParent, &frustum),
-		Frustumable(&frustum)
+		PerspectiveFrustumable(&frustum)
 {
 	// Fov
 	//
@@ -66,11 +66,11 @@ SpotLight::SpotLight(const char* name, Scene* scene,
 	float dist = 10.0;
 	distProp = new ReadWriteProperty<float>("distance", dist);
 	addNewProperty(distProp);
-	ANKI_CONNECT(distProp, valueChanged, this, updateZFar);
+	ANKI_CONNECT(distProp, valueChanged, this, updateFar);
 
 	// Fix frustum
 	//
 	frustum.setAll(ang, ang, 0.1, dist);
 }
 
-} // end namespace
+} // end namespace anki

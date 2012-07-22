@@ -59,5 +59,7 @@ void doVertex()
 void doVertexPrepackSpecular(in vec2 specular)
 {
 	doVertex();
+#if defined(PASS_COLOR)
 	vSpecularComponent = packSpecular(specular);
+#endif
 }

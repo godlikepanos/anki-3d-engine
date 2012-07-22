@@ -64,7 +64,7 @@ public:
 	}
 
 protected:
-	Frustum* frustum;
+	Frustum* frustum = nullptr;
 };
 
 /// Perspective prustumable interface for scene nodes

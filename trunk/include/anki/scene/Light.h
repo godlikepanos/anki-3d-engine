@@ -114,7 +114,6 @@ public:
 	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
 	{
 		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
-		Movable::update();
 	}
 	/// @}
 
@@ -165,11 +164,11 @@ public:
 
 public:
 	Sphere sphereW;
-	Sphere sphereL;
+	Sphere sphereL = {Vec3(0.0), 1.0};
 };
 
 /// Spot light
-class SpotLight: public Light, public Frustumable
+class SpotLight: public Light, public PerspectiveFrustumable
 {
 public:
 	ANKI_HAS_SLOTS(SpotLight)
@@ -182,48 +181,14 @@ public:
 
 	/// @name Accessors
 	/// @{
-	float getFov() const
-	{
-		return frustum.getFovX();
-	}
-	void setFov(float x)
-	{
-		fovProp->setValue(x);
-	}
-
-	float getDistance() const
-	{
-		return frustum.getFar();
-	}
-	void setDistance(float x)
-	{
-		distProp->setValue(x);
-	}
-
 	const Mat4& getViewMatrix() const
 	{
 		return viewMat;
-	}
-	Mat4& getViewMatrix()
-	{
-		return viewMat;
-	}
-	void setViewMatrix(const Mat4& x)
-	{
-		viewMat = x;
 	}
 
 	const Mat4& getProjectionMatrix() const
 	{
 		return projectionMat;
-	}
-	Mat4& getProjectionMatrix()
-	{
-		return projectionMat;
-	}
-	void setProjectionMatrix(const Mat4& x)
-	{
-		projectionMat = x;
 	}
 
 	Texture& getTexture()
@@ -233,6 +198,35 @@ public:
 	const Texture& getTexture() const
 	{
 		return *tex;
+	}
+
+	float getFov() const
+	{
+		return getFovX();
+	}
+	void setFov(float x)
+	{
+		setFovX(x);
+		setFovY(x);
+	}
+
+	float getDistance() const
+	{
+		return getFar();
+	}
+	void setDistance(float f)
+	{
+		setFar(f);
+	}
+	/// @}
+
+	/// @name SceneNode virtuals
+	/// @{
+
+	/// Override SceneNode::getFrustumable()
+	Frustumable* getFrustumable()
+	{
+		return this;
 	}
 	/// @}
 
@@ -244,7 +238,7 @@ public:
 	void movableUpdate()
 	{
 		Movable::movableUpdate();
-		frustum.transform(getWorldTransform());
+		frustum.setTransform(getWorldTransform());
 		viewMat = Mat4(getWorldTransform().getInverse());
 	}
 	/// @}
@@ -273,11 +267,11 @@ private:
 	ReadWriteProperty<float>* fovProp; ///< Have it here for updates
 	ReadWriteProperty<float>* distProp; ///< Have it here for updates
 
-	void updateZFar(const float& f)
+	void updateFar(const float& f)
 	{
 		frustum.setFar(f);
 	}
-	ANKI_SLOT(updateZFar, const float&)
+	ANKI_SLOT(updateFar, const float&)
 
 	void updateFov(const float& f)
 	{
