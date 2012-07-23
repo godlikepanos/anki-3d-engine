@@ -145,6 +145,47 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 }
 
 //==============================================================================
+// ShaderProgramUniformBlock                                                   =
+//==============================================================================
+
+//==============================================================================
+ShaderProgramUniformBlock& ShaderProgramUniformBlock::operator=(
+	const ShaderProgramUniformBlock& b)
+{
+	uniforms = b.uniforms;
+	index = b.index;
+	size = b.size;
+	name = b.name;
+	bindingPoint = b.bindingPoint;
+	progId = b.progId;
+	return *this;
+}
+
+//==============================================================================
+void ShaderProgramUniformBlock::init(ShaderProgram& prog, 
+	const char* blockName)
+{
+	GLint gli;
+	name = blockName;
+	progId = prog.getGlId();
+
+	index = glGetUniformBlockIndex(progId, blockName);
+	if(index == GL_INVALID_INDEX)
+	{
+		throw ANKI_EXCEPTION("glGetUniformBlockIndex() returned "
+			"GL_INVALID_INDEX");
+	}
+
+	glGetActiveUniformBlockiv(progId, index, GL_UNIFORM_BLOCK_DATA_SIZE, &gli);
+	size = gli;
+
+	glGetActiveUniformBlockiv(progId, index, GL_UNIFORM_BLOCK_BINDING, &gli);
+	bindingPoint = gli;
+
+	// XXX Init uniforms
+}
+
+//==============================================================================
 // ShaderProgram                                                               =
 //==============================================================================
 
@@ -438,9 +479,17 @@ void ShaderProgram::initUniformBlocks()
 	GLint blocksCount;
 	glGetProgramiv(glId, GL_ACTIVE_UNIFORM_BLOCKS, &blocksCount);
 
+	blocks.resize(blocksCount);
+	blocks.shrink_to_fit();
+
 	for(GLint i = 0; i < blocksCount; i++)
 	{
+		char name[256];
+		GLsizei len;
+		glGetActiveUniformBlockName(glId, i, sizeof(name), &len, name);
 
+		blocks[i].init(*this, name);
+		nameToBlock[blocks[i].getName().c_str()] = &blocks[i];
 	}
 }
 
@@ -481,6 +530,26 @@ const ShaderProgramUniformVariable* ShaderProgram::findUniformVariableByName(
 }
 
 //==============================================================================
+const ShaderProgramUniformBlock* ShaderProgram::tryFindUniformBlock(
+	const char* name) const
+{
+	NameToUniformBlockHashMap::const_iterator it = nameToBlock.find(name);
+	return (it == nameToBlock.end()) ? nullptr : it->second;
+}
+
+//==============================================================================
+const ShaderProgramUniformBlock& ShaderProgram::findUniformBlock(
+	const char* name) const
+{
+	const ShaderProgramUniformBlock* block = tryFindUniformBlock(name);
+	if(block == nullptr)
+	{
+		throw ANKI_EXCEPTION("Block not found: " + name);
+	}
+	return *block;
+}
+
+//==============================================================================
 void ShaderProgram::cleanAllUniformsDirtyFlags()
 {
 	for(ShaderProgramUniformVariable* uni : unis)
@@ -503,4 +572,4 @@ std::ostream& operator<<(std::ostream& s, const ShaderProgram& x)
 	return s;
 }
 
-} // end namespace
+} // end namespace anki

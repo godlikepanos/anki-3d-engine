@@ -116,6 +116,14 @@ public:
 		return glId != 0;
 	}
 
+	void setBinding(GLuint binding) const
+	{
+		ANKI_ASSERT(target == GL_TRANSFORM_FEEDBACK_BUFFER ||
+			target == GL_UNIFORM_BUFFER);
+		bind();
+		glBindBufferBase(target, binding, glId);
+	}
+
 private:
 	/// Opt to save a few glBindBuffer calls
 	static const thread_local BufferObject* lastBindedBo; 
