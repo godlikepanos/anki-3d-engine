@@ -82,7 +82,7 @@ void Hdr::run()
 	// pass 0
 	toneFbo.bind();
 	toneSProg.bind();
-	toneSProg.findUniformVariableByName("fai")->set(
+	toneSProg.findUniformVariable("fai").set(
 		r->getPps().getPrePassFai());
 	r->drawQuad();
 
@@ -94,18 +94,18 @@ void Hdr::run()
 		hblurSProg.bind();
 		if(i == 0)
 		{
-			hblurSProg.findUniformVariableByName("img")->set(toneFai);
+			hblurSProg.findUniformVariable("img").set(toneFai);
 		}
 		else if(i == 1)
 		{
-			hblurSProg.findUniformVariableByName("img")->set(fai);
+			hblurSProg.findUniformVariable("img").set(fai);
 		}
 		r->drawQuad();
 
 		// vpass
 		vblurFbo.bind();
 		vblurSProg.bind();
-		vblurSProg.findUniformVariableByName("img")->set(hblurFai);
+		vblurSProg.findUniformVariable("img").set(hblurFai);
 		r->drawQuad();
 	}
 }

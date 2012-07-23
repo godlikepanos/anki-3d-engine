@@ -36,7 +36,7 @@ public:
 	{
 		col = x;
 		sProg->bind();
-		sProg->findUniformVariableByName("color")->set(col);
+		sProg->findUniformVariable("color").set(col);
 	}
 
 	void setFont(const char* fontFilename, uint nominalWidth,

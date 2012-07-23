@@ -329,10 +329,15 @@ public:
 	/// Used to find and return the variable. They return nullptr if the 
 	/// variable is not found
 	/// @{
-	const ShaderProgramVariable* findVariableByName(const char* varName) const;
-	const ShaderProgramUniformVariable* findUniformVariableByName(
+	const ShaderProgramVariable* tryFindVariable(const char* varName) const;
+	const ShaderProgramVariable& findVariable(const char* varName) const;
+	const ShaderProgramUniformVariable* tryFindUniformVariable(
 		const char* varName) const;
-	const ShaderProgramAttributeVariable* findAttributeVariableByName(
+	const ShaderProgramUniformVariable& findUniformVariable(
+		const char* varName) const;
+	const ShaderProgramAttributeVariable* tryFindAttributeVariable(
+		const char* varName) const;
+	const ShaderProgramAttributeVariable& findAttributeVariable(
 		const char* varName) const;
 	const ShaderProgramUniformBlock* tryFindUniformBlock(
 		const char* name) const;
@@ -389,7 +394,7 @@ private:
 	NameToAttribVarHashMap nameToAttribVar; ///< Attribute searching
 
 	UniformBlocksContainer blocks;
-	NameToUniformBlockHashMap namtToBlock;
+	NameToUniformBlockHashMap nameToBlock;
 	/// @}
 
 	/// Query the driver to get the vars. After the linking of the shader

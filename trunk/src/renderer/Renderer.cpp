@@ -108,8 +108,8 @@ void Renderer::render(Scene& scene_)
 	else
 	{
 		ms.run();
-		/*is.run();
-		pps.runPrePass();
+		is.run();
+		/*pps.runPrePass();
 		bs.run();
 		pps.runPostPass();*/
 	}

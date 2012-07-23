@@ -48,7 +48,7 @@ void MaterialVariable::init(const char* shaderProgVarName,
 
 		// Variable exists put it the map
 		const ShaderProgramUniformVariable* uni = 
-			sProg.findUniformVariableByName(shaderProgVarName);
+			sProg.tryFindUniformVariable(shaderProgVarName);
 		if(uni)
 		{
 			sProgVars[key] = uni;

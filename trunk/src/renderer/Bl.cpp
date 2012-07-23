@@ -82,9 +82,9 @@ void Bl::runSideBlur()
 	GlStateSingleton::get().enable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 
-	sideBlurSProg->findUniformVariableByName("tex")->set(
+	sideBlurSProg->findUniformVariable("tex").set(
 		static_cast<const Texture&>(*sideBlurMap));
-	sideBlurSProg->findUniformVariableByName("factor")->set(sideBlurFactor);
+	sideBlurSProg->findUniformVariable("factor").set(sideBlurFactor);
 
 	r->drawQuad();
 }
@@ -96,18 +96,18 @@ void Bl::runBlur()
 
 	// Setup programs here. Reverse order
 	vBlurSProg->bind();
-	vBlurSProg->findUniformVariableByName("img")->set(blurFai);
-	vBlurSProg->findUniformVariableByName("msNormalFai")->set(
+	vBlurSProg->findUniformVariable("img").set(blurFai);
+	vBlurSProg->findUniformVariable("msNormalFai").set(
 		r->getMs().getFai0());
-	vBlurSProg->findUniformVariableByName("imgDimension")->set(
+	vBlurSProg->findUniformVariable("imgDimension").set(
 		float(r->getHeight()));
 
 	hBlurSProg->bind();
-	hBlurSProg->findUniformVariableByName("img")->set(
+	hBlurSProg->findUniformVariable("img").set(
 		r->getPps().getPostPassFai());
-	hBlurSProg->findUniformVariableByName("msNormalFai")->set(
+	hBlurSProg->findUniformVariable("msNormalFai").set(
 		r->getMs().getFai0());
-	hBlurSProg->findUniformVariableByName("imgDimension")->set(
+	hBlurSProg->findUniformVariable("imgDimension").set(
 		float(r->getWidth()));
 
 	for(uint32_t i = 0; i < blurringIterationsNum; i++)

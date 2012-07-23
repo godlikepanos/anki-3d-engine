@@ -87,42 +87,42 @@ void Ssao::run()
 	ssaoSProg.bind();
 	
 	// planes
-	ssaoSProg.findUniformVariableByName("planes")->set(r->getPlanes());
+	ssaoSProg.findUniformVariable("planes").set(r->getPlanes());
 
 	// limitsOfNearPlane
-	ssaoSProg.findUniformVariableByName("limitsOfNearPlane")->set(
+	ssaoSProg.findUniformVariable("limitsOfNearPlane").set(
 		r->getLimitsOfNearPlane());
 
 	// limitsOfNearPlane2
-	ssaoSProg.findUniformVariableByName("limitsOfNearPlane2")->set(
+	ssaoSProg.findUniformVariable("limitsOfNearPlane2").set(
 		r->getLimitsOfNearPlane2());
 
 	// zNear
-	ssaoSProg.findUniformVariableByName("zNear")->set(cam.getNear());
+	ssaoSProg.findUniformVariable("zNear").set(cam.getNear());
 
 	// msDepthFai
-	ssaoSProg.findUniformVariableByName("msDepthFai")->set(
+	ssaoSProg.findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
 
 	// noiseMap
-	ssaoSProg.findUniformVariableByName("noiseMap")->set(*noiseMap);
+	ssaoSProg.findUniformVariable("noiseMap").set(*noiseMap);
 
 	// noiseMapSize
-	ssaoSProg.findUniformVariableByName("noiseMapSize")->set(
+	ssaoSProg.findUniformVariable("noiseMapSize").set(
 		noiseMap->getWidth());
 
 	// screenSize
 	Vec2 screenSize(width * 2, height * 2);
-	ssaoSProg.findUniformVariableByName("screenSize")->set(screenSize);
+	ssaoSProg.findUniformVariable("screenSize").set(screenSize);
 
 	// msNormalFai
-	ssaoSProg.findUniformVariableByName("msNormalFai")->set(
+	ssaoSProg.findUniformVariable("msNormalFai").set(
 		r->getMs().getFai0());
 
 	r->drawQuad();
 
 	vblurSProg.bind();
-	vblurSProg.findUniformVariableByName("img")->set(hblurFai);
+	vblurSProg.findUniformVariable("img").set(hblurFai);
 
 	// Blurring passes
 	//
@@ -133,11 +133,11 @@ void Ssao::run()
 		hblurSProg.bind();
 		if(i == 0)
 		{
-			hblurSProg.findUniformVariableByName("img")->set(ssaoFai);
+			hblurSProg.findUniformVariable("img").set(ssaoFai);
 		}
 		else if(i == 1)
 		{
-			hblurSProg.findUniformVariableByName("img")->set(fai);
+			hblurSProg.findUniformVariable("img").set(fai);
 		}
 		r->drawQuad();
 

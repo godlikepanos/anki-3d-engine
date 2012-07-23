@@ -494,31 +494,47 @@ void ShaderProgram::initUniformBlocks()
 }
 
 //==============================================================================
-const ShaderProgramVariable* ShaderProgram::findVariableByName(
+const ShaderProgramVariable* ShaderProgram::tryFindVariable(
 	const char* name) const
 {
 	NameToVarHashMap::const_iterator it = nameToVar.find(name);
-	if(it == nameToVar.end())
+	return (it == nameToVar.end()) ? nullptr : it->second;
+}
+
+//==============================================================================
+const ShaderProgramVariable& ShaderProgram::findVariable(
+	const char* name) const
+{
+	const ShaderProgramVariable* var = tryFindVariable(name);
+	if(var == nullptr)
 	{
-		return nullptr;
+		throw ANKI_EXCEPTION("Variable not found: " + name);
 	}
-	return it->second;
+	return *var;
 }
 
 //==============================================================================
 const ShaderProgramAttributeVariable*
-	ShaderProgram::findAttributeVariableByName(const char* name) const
+	ShaderProgram::tryFindAttributeVariable(const char* name) const
 {
 	NameToAttribVarHashMap::const_iterator it = nameToAttribVar.find(name);
-	if(it == nameToAttribVar.end())
-	{
-		return nullptr;
-	}
-	return it->second;
+	return (it == nameToAttribVar.end()) ? nullptr : it->second;
 }
 
 //==============================================================================
-const ShaderProgramUniformVariable* ShaderProgram::findUniformVariableByName(
+const ShaderProgramAttributeVariable&
+	ShaderProgram::findAttributeVariable(const char* name) const
+{
+	const ShaderProgramAttributeVariable* var = tryFindAttributeVariable(name);
+	if(var == nullptr)
+	{
+		throw ANKI_EXCEPTION("Attribute variable not found: " + name);
+	}
+	return *var;
+}
+
+//==============================================================================
+const ShaderProgramUniformVariable* ShaderProgram::tryFindUniformVariable(
 	const char* name) const
 {
 	NameToUniVarHashMap::const_iterator it = nameToUniVar.find(name);
@@ -527,6 +543,18 @@ const ShaderProgramUniformVariable* ShaderProgram::findUniformVariableByName(
 		return nullptr;
 	}
 	return it->second;
+}
+
+//==============================================================================
+const ShaderProgramUniformVariable& ShaderProgram::findUniformVariable(
+	const char* name) const
+{
+	const ShaderProgramUniformVariable* var = tryFindUniformVariable(name);
+	if(var == nullptr)
+	{
+		throw ANKI_EXCEPTION("Uniform variable not found: " + name);
+	}
+	return *var;
 }
 
 //==============================================================================

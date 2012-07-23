@@ -53,15 +53,15 @@ public:
 		return type;
 	}
 
-	const Vec4& getColor() const
+	const Vec4& getDiffuseColor() const
 	{
 		return color;
 	}
-	Vec4& getColor()
+	Vec4& getDiffuseColor()
 	{
 		return color;
 	}
-	void setColor(const Vec4& x)
+	void setDiffuseColor(const Vec4& x)
 	{
 		color = x;
 	}
@@ -119,9 +119,9 @@ public:
 
 private:
 	LightType type;
-	Vec4 color;
-	Vec4 specColor;
-	bool shadow;
+	Vec4 color = Vec4(1.0);
+	Vec4 specColor = Vec4(1.0);
+	bool shadow = true;
 };
 
 /// Point light
@@ -164,7 +164,7 @@ public:
 
 public:
 	Sphere sphereW;
-	Sphere sphereL = {Vec3(0.0), 1.0};
+	Sphere sphereL = {Vec3(0.0), 2.0};
 };
 
 /// Spot light

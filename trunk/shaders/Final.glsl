@@ -6,7 +6,7 @@
 
 #pragma anki start fragmentShader
 
-#if 1
+#if 0
 uniform usampler2D rasterImage;
 #else
 uniform sampler2D rasterImage;
@@ -17,7 +17,7 @@ layout(location = 0) out vec3 fFragColor;
 
 void main()
 {
-#if 1
+#if 0
 	uvec2 a = texture2D(rasterImage, vTexCoords).rg;
 	vec4 diffAndSpec = unpackUnorm4x8(a.x);
 	fFragColor = diffAndSpec.rgb;
