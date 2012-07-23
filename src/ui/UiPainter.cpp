@@ -36,8 +36,8 @@ void UiPainter::init()
 	// SProg
 	sProg.load("shaders/UiText.glsl");
 	sProg->bind();
-	sProg->findUniformVariableByName("texture")->set(font->getMap());
-	sProg->findUniformVariableByName("color")->set(col);
+	sProg->findUniformVariable("texture").set(font->getMap());
+	sProg->findUniformVariable("color").set(col);
 
 	// Geom
 	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0},
@@ -65,7 +65,7 @@ void UiPainter::drawText(const char* text)
 
 	// SProg (some)
 	sProg->bind();
-	sProg->findUniformVariableByName("texture")->set(font->getMap());
+	sProg->findUniformVariable("texture").set(font->getMap());
 
 	// Vao
 	qVao.bind();
@@ -105,8 +105,8 @@ void UiPainter::drawText(const char* text)
 			trfM(1, 2) = p.y() + 2.0 * (font->getGlyphBearingY(cc) -
 				int(font->getGlyphHeight(cc))) / deviceSize.y();
 
-			sProg->findUniformVariableByName("transformation")->set(trfM);
-			sProg->findUniformVariableByName("textureTranformation")->set(
+			sProg->findUniformVariable("transformation").set(trfM);
+			sProg->findUniformVariable("textureTranformation").set(
 				font->getGlyphTextureMatrix(cc));
 
 			// Render

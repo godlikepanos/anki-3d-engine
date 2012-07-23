@@ -1,23 +1,27 @@
 #include "anki/renderer/Is.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/scene/Scene.h"
+#include "anki/scene/Camera.h"
+#include "anki/scene/Light.h"
 
-#define BLEND_ENABLE true
+#define BLEND_ENABLE 0
 
 namespace anki {
+
+//==============================================================================
 
 /// Representation of the program's block
 struct UniformBlockData
 {
-	vec2 planes;
-	vec2 limitsOfNearPlane;
-	vec2 limitsOfNearPlane2;
-	float zNear; float padding0;
-	float lightRadius; float padding1;
-	float shadowMapSize; float padding2;
-	vec3 lightPos; float padding3;
-	vec3 lightDiffuseCol; float padding4;
-	vec3 lightSpecularCol; float padding5;
-	mat4 texProjectionMat;
+	Vec2 planes;
+	Vec2 limitsOfNearPlane;
+	Vec2 limitsOfNearPlane2;
+	float zNear; float lightRadius;
+	float shadowMapSize; float padding0;
+	Vec3 lightPos; float padding1;
+	Vec4 lightDiffuseCol;
+	Vec4 lightSpecularCol;
+	Mat4 texProjectionMat;
 };
 
 //==============================================================================
@@ -65,8 +69,10 @@ void Is::init(const RendererInitializer& /*initializer*/)
 
 		// Create FBO
 		//
+		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB8,
+			GL_RGB, GL_UNSIGNED_INT, fai);
 		fbo.create();
-		fbo.setColorAttachments({fai});
+		fbo.setColorAttachments({&fai});
 
 		if(!fbo.isComplete())
 		{
@@ -83,7 +89,8 @@ void Is::init(const RendererInitializer& /*initializer*/)
 			throw ANKI_EXCEPTION("Uniform block size is not the expected");
 		}
 
-		ubo.create(GL_UNIFORM_BUFFER, blockSize, nullptr, GL_STATIC_DRAW);
+		ubo.create(GL_UNIFORM_BUFFER, sizeof(UniformBlockData), nullptr,
+			GL_DYNAMIC_DRAW);
 
 		ubo.setBinding(0);
 	}
@@ -94,27 +101,45 @@ void Is::init(const RendererInitializer& /*initializer*/)
 }
 
 //==============================================================================
+void Is::ambientPass(const Vec3& color)
+{
+	GlStateSingleton::get().disable(GL_BLEND);
+
+	// set the shader
+	ambientPassSProg->bind();
+
+	// set the uniforms
+	ambientPassSProg->findUniformVariable("ambientCol").set(color);
+	ambientPassSProg->findUniformVariable("msFai0").set(
+		r->getMs().getFai0());
+
+	// Draw quad
+	r->drawQuad();
+}
+
+//==============================================================================
 void Is::pointLightPass(PointLight& light)
 {
-	const Camera& cam = r.getCamera();
+	const Camera& cam = r->getScene().getActiveCamera();
 
 	// XXX SMO
-	GlStateSingleton::get().enable(GL_DEPTH_TEST, false);
+	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 
 	// shader prog
 	const ShaderProgram& shader = *pointLightSProg; // ensure the const-ness
 	shader.bind();
 
-	shader.findUniformVariableByName("msFai0")->set(r->getMs().getFai0());
-	shader.findUniformVariableByName("msDepthFai")->set(
+	shader.findUniformVariable("msFai0").set(r->getMs().getFai0());
+	shader.findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
 
 	UniformBlockData data;
 	data.planes = r->getPlanes();
-	data.limitsOfNearPlane = r->.getLimitsOfNearPlane();
-	data.limitsOfNearPlane2 = r->getLimitsOfNearPlane();
-	data.zNear = cam.getZNear();
-	Vec3 lightPosEyeSpace = origin.getTransformed(cam.getViewMatrix());
+	data.limitsOfNearPlane = r->getLimitsOfNearPlane();
+	data.limitsOfNearPlane2 = r->getLimitsOfNearPlane2();
+	data.zNear = cam.getNear();
+	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().
+		getTransformed(cam.getViewMatrix());
 	data.lightPos = lightPosEyeSpace;
 	data.lightRadius = light.getRadius();
 	data.lightDiffuseCol = light.getDiffuseColor();
@@ -129,7 +154,39 @@ void Is::pointLightPass(PointLight& light)
 //==============================================================================
 void Is::run()
 {
-	/// TODO
+	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
+	fbo.bind();
+
+	GlStateSingleton::get().disable(GL_DEPTH_TEST);
+
+	// Ambient pass
+	ambientPass(r->getScene().getAmbientColor());
+
+	// render lights
+#if BLEND_ENABLE
+	GlStateSingleton::get().enable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+#endif
+
+	VisibilityInfo& vi = r->getScene().getVisibilityInfo();
+	for(auto it = vi.getLightsBegin();
+		it != vi.getLightsEnd(); ++it)
+	{
+		Light& light = *(*it);
+		switch(light.getLightType())
+		{
+		case Light::LT_SPOT:
+			break;
+		case Light::LT_POINT:
+			pointLightPass(static_cast<PointLight&>(light));
+			break;
+		default:
+			ANKI_ASSERT(0);
+			break;
+		}
+	}
+
+	GlStateSingleton::get().enable(GL_DEPTH_TEST);
 }
 
 } // end namespace anki

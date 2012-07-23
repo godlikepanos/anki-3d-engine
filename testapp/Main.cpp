@@ -80,11 +80,17 @@ void init()
 	spot->setFov(Math::toRad(45.0));
 	spot->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0),
 		Mat3(Euler(Math::toRad(-20), Math::toRad(20), 0.0)), 1.0));
-	spot->setColor(Vec4(4.0));
+	spot->setDiffuseColor(Vec4(4.0));
 	spot->setSpecularColor(Vec4(1.0));
 	spot->loadTexture("gfx/lights/flashlight.tga");
 	spot->setDistance(20.0);
 	spot->setShadowEnabled(true);
+
+	PointLight* point = new PointLight("point0", &scene, Movable::MF_NONE,
+		nullptr);
+	point->setRadius(3.0);
+	point->setDiffuseColor(Vec4(1.0, 0.0, 0.0, 0.0));
+	point->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
 
 	// horse
 	horse = new ModelNode("meshes/horse/horse.mdl", "horse", &scene,
@@ -118,6 +124,10 @@ void mainLoopExtra()
 	if(in.getKey(SDL_SCANCODE_3))
 	{
 		mover = SceneSingleton::get().findSceneNode("spot0")->getMovable();
+	}
+	if(in.getKey(SDL_SCANCODE_4))
+	{
+		mover = SceneSingleton::get().findSceneNode("point0")->getMovable();
 	}
 
 	if(in.getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
@@ -216,7 +226,7 @@ void main()
 		glDisable(GL_DEPTH_TEST);*/
 
 		sprog.bind();
-		sprog.findUniformVariableByName("mvp")->set(
+		sprog.findUniformVariable("mvp").set(
 			cam->getProjectionMatrix() * cam->getViewMatrix());
 		//horse->model->getModelPatches()[0].getVao(PassLevelKey(0, 0)).bind();
 		vao.bind();

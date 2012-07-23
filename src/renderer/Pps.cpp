@@ -97,11 +97,11 @@ void Pps::runPrePass()
 		r->getWidth(), r->getHeight());
 
 	prePassSProg.bind();
-	prePassSProg.findUniformVariableByName("isFai")->set(r->getIs().getFai());
+	prePassSProg.findUniformVariable("isFai").set(r->getIs().getFai());
 
 	if(ssao.getEnabled())
 	{
-		prePassSProg.findUniformVariableByName("ppsSsaoFai")->set(
+		prePassSProg.findUniformVariable("ppsSsaoFai").set(
 			ssao.getFai());
 	}
 
@@ -125,11 +125,11 @@ void Pps::runPostPass()
 	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
 
 	postPassSProg.bind();
-	postPassSProg.findUniformVariableByName("ppsPrePassFai")->set(prePassFai);
+	postPassSProg.findUniformVariable("ppsPrePassFai").set(prePassFai);
 
 	if(hdr.getEnabled())
 	{
-		postPassSProg.findUniformVariableByName("ppsHdrFai")->set(hdr.getFai());
+		postPassSProg.findUniformVariable("ppsHdrFai").set(hdr.getFai());
 	}
 
 	r->drawQuad();

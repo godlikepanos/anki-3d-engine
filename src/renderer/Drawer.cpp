@@ -213,7 +213,7 @@ void DebugDrawer::end()
 
 	Mat4 pmv = vpMat * modelMat;
 	sProg->bind();
-	sProg->findUniformVariableByName("modelViewProjectionMat")->set(pmv);
+	sProg->findUniformVariable("modelViewProjectionMat").set(pmv);
 
 	vao.bind();
 	glDrawArrays(GL_LINES, 0, pointIndex);

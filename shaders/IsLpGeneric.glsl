@@ -30,7 +30,8 @@ layout(std140) uniform uniforms
 	uniform mat4 texProjectionMat;
 };
 
-uniform usampler2D msFai0, msDepthFai;
+uniform usampler2D msFai0;
+uniform sampler2D msDepthFai;
 uniform sampler2D lightTex;
 uniform sampler2DShadow shadowMap;
 /// @}
@@ -223,7 +224,7 @@ void main()
 #endif // spot light
 
 	
-	//fColor = fColor - fColor + vec3(1, 0, 1);
+	//fColor = vec3(texture(msDepthFai, vTexCoords).r);
 
 	//gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4(1, 0, 1, 1);
 	/*#if defined(SPOT_LIGHT)

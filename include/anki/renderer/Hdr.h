@@ -34,7 +34,7 @@ public:
 	{
 		exposure = x;
 		toneSProg.bind();
-		toneSProg.findUniformVariableByName("exposure")->set(exposure);
+		toneSProg.findUniformVariable("exposure").set(exposure);
 	}
 
 	uint getBlurringIterationsNum() const
@@ -55,10 +55,10 @@ public:
 		blurringDist = x;
 
 		hblurSProg.bind();
-		hblurSProg.findUniformVariableByName("blurringDist")->set(
+		hblurSProg.findUniformVariable("blurringDist").set(
 			float(blurringDist / width));
 		vblurSProg.bind();
-		vblurSProg.findUniformVariableByName("blurringDist")->set(
+		vblurSProg.findUniformVariable("blurringDist").set(
 			float(blurringDist / height));
 	}
 

@@ -25,7 +25,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 	const ShaderProgramAttributeVariable* attrib;
 	const ShaderProgram& prog = mtl.findShaderProgram(key);
 
-	attrib = prog.findAttributeVariableByName("position");
+	attrib = prog.tryFindAttributeVariable("position");
 	if(attrib)
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_POSITIONS);
@@ -35,7 +35,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 			nullptr);
 	}
 
-	attrib = prog.findAttributeVariableByName("normal");
+	attrib = prog.tryFindAttributeVariable("normal");
 	if(attrib)
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_NORMALS);
@@ -45,7 +45,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 			nullptr);
 	}
 
-	attrib = prog.findAttributeVariableByName("tangent");
+	attrib = prog.tryFindAttributeVariable("tangent");
 	if(attrib)
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TANGENTS);
@@ -55,7 +55,7 @@ Vao* ModelPatchBase::createNewVao(const Material& mtl,
 			nullptr);
 	}
 
-	attrib = prog.findAttributeVariableByName("texCoords");
+	attrib = prog.tryFindAttributeVariable("texCoords");
 	if(attrib)
 	{
 		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TEX_COORDS);
