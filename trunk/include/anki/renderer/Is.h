@@ -37,6 +37,8 @@ public:
 private:
 	Texture fai;
 	Fbo fbo;
+	BufferObject ubo;
+
 	/// Illumination stage ambient pass shader program
 	ShaderProgramResourcePointer ambientPassSProg;
 	/// Illumination stage point light shader program
@@ -56,6 +58,6 @@ private:
 	void spotLightPass(SpotLight& slight);
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

@@ -175,14 +175,57 @@ public:
 class ShaderProgramUniformBlock
 {
 public:
-	ShaderProgramUniformBlock(ShaderProgram& sprog);
+	ShaderProgramUniformBlock()
+	{}
+	ShaderProgramUniformBlock(const ShaderProgramUniformBlock& b)
+	{
+		operator=(b);
+	}
+	~ShaderProgramUniformBlock()
+	{}
+
+	/// @name Accessors
+	/// @{
+	GLuint getIndex() const
+	{
+		return index;
+	}
+
+	uint32_t getSize() const
+	{
+		return size;
+	}
+
+	const std::string& getName() const
+	{
+		return name;
+	}
+
+	GLuint getBindingPoint() const
+	{
+		return bindingPoint;
+	}
+	void setBindingPoint(GLuint bp)
+	{
+		if(bindingPoint != bp)
+		{
+			glUniformBlockBinding(progId, index, bp);
+			bindingPoint = bp;
+		}
+	}
+	/// @}
+
+	ShaderProgramUniformBlock& operator=(const ShaderProgramUniformBlock& b);
+
+	void init(ShaderProgram& prog, const char* blockName);
 
 private:
 	std::vector<ShaderProgramUniformVariable*> uniforms;
-	GLuint index;
-	uint32_t size; ///< In bytes
+	GLuint index = GL_INVALID_INDEX;
+	uint32_t size = 0; ///< In bytes
 	std::string name;
 	GLuint bindingPoint = 0; ///< All blocks the default to 0
+	GLuint progId;
 };
 
 /// Shader program object
@@ -195,7 +238,7 @@ public:
 		UniformVariablesContainer;
 	typedef std::vector<ShaderProgramAttributeVariable*>
 		AttributeVariablesContainer;
-	typedef std::vector<std::shared_ptr<ShaderProgramUniformBlock>>
+	typedef std::vector<ShaderProgramUniformBlock>
 		UniformBlocksContainer;
 
 	/// @name Constructors/Destructor
@@ -291,6 +334,9 @@ public:
 		const char* varName) const;
 	const ShaderProgramAttributeVariable* findAttributeVariableByName(
 		const char* varName) const;
+	const ShaderProgramUniformBlock* tryFindUniformBlock(
+		const char* name) const;
+	const ShaderProgramUniformBlock& findUniformBlock(const char* name) const;
 	/// @}
 
 	/// For all uniforms set the SPUVF_DIRTY bit to 0
@@ -380,6 +426,6 @@ private:
 };
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif
