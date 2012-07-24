@@ -62,6 +62,15 @@ inline Vec4::Vec4(const Vec2& v2, const float z_, const float w_)
 	w() = w_;
 }
 
+// vec2, vec2
+inline Vec4::Vec4(const Vec2& av2, const Vec2& bv2)
+{
+	x() = av2.x();
+	y() = av2.y();
+	z() = bv2.x();
+	w() = bv2.y();
+}
+
 // vec3, float
 inline Vec4::Vec4(const Vec3& v3, const float w_)
 {

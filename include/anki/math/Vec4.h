@@ -20,6 +20,7 @@ public:
 	explicit Vec4(const float f);
 	explicit Vec4(const float arr[]);
 	explicit Vec4(const Vec2& v2, const float z, const float w);
+	explicit Vec4(const Vec2& av2, const Vec2& bv2);
 	explicit Vec4(const Vec3& v3, const float w);
 	Vec4(const Vec4& b);
 	explicit Vec4(const Quat& q);

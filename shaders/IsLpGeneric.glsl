@@ -10,7 +10,7 @@
 
 #pragma anki include "shaders/Pack.glsl"
 
-#define DISCARD 1
+#define DISCARD 0
 
 /// @name Uniforms
 /// @{
@@ -18,19 +18,33 @@
 /// Watch the placement
 layout(std140) uniform uniforms
 {
-	uniform vec2 planes; ///< for the calculation of frag pos in view space
-	/// for the calculation of frag pos in view space
-	uniform vec2 limitsOfNearPlane; 
-	/// This is an optimization see PpsSsao.glsl and r403 for the clean one
-	uniform vec2 limitsOfNearPlane2; 
-	uniform float zNear; ///< for the calculation of frag pos in view space
-	uniform float lightRadius;
-	uniform float shadowMapSize;
-	uniform vec3 lightPos; ///< Light pos in eye space
-	uniform vec3 lightDiffuseCol;
-	uniform vec3 lightSpecularCol;
+	/// For the calculation of frag pos in view space. Only the .xy is used
+	uniform vec4 planes_;
+
+	/// For the calculation of frag pos in view space. The xy is the 
+	/// limitsOfNearPlane and the zw is an optimization see PpsSsao.glsl and 
+	/// r403 for the clean one
+	uniform vec4 limitsOfNearPlane_; 
+
+	/// Packs zNear in x that is used for the calculation of frag pos in view 
+	/// space. Also it packs the lightRadius (AKA distance for spot lights)
+	uniform vec4 zNearLightRadius; 
+
+	uniform vec4 lightPos_; ///< Light pos in eye space. w is always 0.0
+
+	uniform vec4 lightDiffuseCol_;
+	uniform vec4 lightSpecularCol_;
 	uniform mat4 texProjectionMat;
 };
+
+#define planes planes_.xy
+#define limitsOfNearPlane limitsOfNearPlane_.xy
+#define limitsOfNearPlane2 limitsOfNearPlane_.zw
+#define zNear zNearLightRadius.x
+#define lightRadius zNearLightRadius.y
+#define lightPos lightPos_.xyz
+#define lightDiffuseCol lightDiffuseCol_.xyz
+#define lightSpecularCol lightSpecularCol_.xyz
 
 uniform usampler2D msFai0;
 uniform sampler2D msDepthFai;
@@ -85,25 +99,23 @@ float getAttenuation(in float fragLightDist)
 /// @return The blurred shadow
 float pcfLow(in vec3 shadowUv)
 {
-	float mapScale = 1.0 / shadowMapSize;
 	const int KERNEL_SIZE = 8;
-	const vec2 KERNEL[KERNEL_SIZE] = vec2[]
+	const ivec2 KERNEL[KERNEL_SIZE] = ivec2[]
 	(
-		vec2(1.0, 1.0),
-		vec2(1.0, -1.0),
-		vec2(-1.0, 1.0),
-		vec2(-1.0, -1.0),
-		vec2(0.0, 1.0),
-		vec2(0.0, -1.0),
-		vec2(1.0, 0.0),
-		vec2(-1.0, 0.0)
+		vec2(1, 1),
+		vec2(1, -1),
+		vec2(-1, 1),
+		vec2(-1, -1),
+		vec2(0, 1),
+		vec2(0, -1),
+		vec2(1, 0),
+		vec2(-1, 0)
 	);
 	
 	float shadowCol = texture(shadowMap, shadowUv);
 	for(int i = 0; i < KERNEL_SIZE; i++)
 	{
-		vec3 uv = vec3(shadowUv.xy + (KERNEL[i] * mapScale), shadowUv.z);
-		shadowCol += texture(shadowMap, uv);
+		shadowCol += textureOffset(shadowMap, shadowUv, KERNEL[i]);
 	}
 	
 	shadowCol *= (1.0 / 9.0);
@@ -232,8 +244,8 @@ void main()
 #	error "See file"
 #endif
 
-	
-	//fColor = vec3(texture(msDepthFai, vTexCoords).r);
+	//fColor = unpackNormal(unpackHalf2x16(texture(msFai0, vTexCoords).g));
+	//fColor = lightPos;
 
 	//gl_FragData[0] = gl_FragData[0] - gl_FragData[0] + vec4(1, 0, 1, 1);
 	/*#if defined(SPOT_LIGHT)

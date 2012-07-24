@@ -4,21 +4,19 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 
-#define BLEND_ENABLE 0
+#define BLEND_ENABLE 1
 
 namespace anki {
 
 //==============================================================================
 
-/// Representation of the program's block
+/// Representation of the program's block. See shader for more info
 struct UniformBlockData
 {
-	Vec2 planes;
-	Vec2 limitsOfNearPlane;
-	Vec2 limitsOfNearPlane2;
-	float zNear; float lightRadius;
-	float shadowMapSize; float padding0;
-	Vec3 lightPos; float padding1;
+	Vec4 planes;
+	Vec4 limitsOfNearPlane;
+	Vec4 zNearLightRadius;
+	Vec4 lightPos;
 	Vec4 lightDiffuseCol;
 	Vec4 lightSpecularCol;
 	Mat4 texProjectionMat;
@@ -123,7 +121,6 @@ void Is::pointLightPass(PointLight& light)
 	const Camera& cam = r->getScene().getActiveCamera();
 
 	// XXX SMO
-	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 
 	// shader prog
 	const ShaderProgram& shader = *pointLightSProg; // ensure the const-ness
@@ -134,14 +131,13 @@ void Is::pointLightPass(PointLight& light)
 		r->getMs().getDepthFai());
 
 	UniformBlockData data;
-	data.planes = r->getPlanes();
-	data.limitsOfNearPlane = r->getLimitsOfNearPlane();
-	data.limitsOfNearPlane2 = r->getLimitsOfNearPlane2();
-	data.zNear = cam.getNear();
+	data.planes = Vec4(r->getPlanes(), 0.0, 0.0);
+	data.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
+		r->getLimitsOfNearPlane2());
+	data.zNearLightRadius = Vec4(cam.getNear(), light.getRadius(), 0.0, 0.0);
 	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().
 		getTransformed(cam.getViewMatrix());
-	data.lightPos = lightPosEyeSpace;
-	data.lightRadius = light.getRadius();
+	data.lightPos = Vec4(lightPosEyeSpace, 0.0);
 	data.lightDiffuseCol = light.getDiffuseColor();
 	data.lightSpecularCol = light.getSpecularColor();
 
@@ -166,6 +162,8 @@ void Is::run()
 #if BLEND_ENABLE
 	GlStateSingleton::get().enable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
+#else
+	GlStateSingleton::get().disable(GL_BLEND);
 #endif
 
 	VisibilityInfo& vi = r->getScene().getVisibilityInfo();
