@@ -10,6 +10,8 @@
 
 #pragma anki include "shaders/Pack.glsl"
 
+#define DISCARD 1
+
 /// @name Uniforms
 /// @{
 
@@ -52,10 +54,12 @@ vec3 getFragPosVSpace()
 {
 	float depth = texture(msDepthFai, vTexCoords).r;
 
-	/*if(depth == 1.0)
+#if DISCARD
+	if(depth == 1.0)
 	{
 		discard;
-	}*/
+	}
+#endif
 
 	vec3 fragPosVspace;
 	fragPosVspace.z = -planes.y / (planes.x + depth);
@@ -130,11 +134,14 @@ vec3 doPhong(in vec3 fragPosVspace, out float fragLightDist)
 	// Lambert term
 	float lambertTerm = dot(normal, lightDir);
 
-	/*if(lambertTerm < 0.0)
+#if DISCARD
+	if(lambertTerm < 0.0)
 	{
 		discard;
-	}*/
+	}
+#else
 	lambertTerm = max(0.0, lambertTerm);
+#endif
 
 	// Diffuse
 	vec4 diffuseAndSpec = unpackUnorm4x8(msAll[0]);
@@ -180,8 +187,8 @@ vec3 doSpotLight(in vec3 fragPosVspace)
 	   texCoords2.w < lightRadius)
 	{
 		// Get shadow
-#if defined(SHADOW)
-#	if defined(PCF)
+#if SHADOW
+#	if PCF
 		float shadowCol = pcfLow(texCoords3);
 #	else
 		float shadowCol = texture(shadowMap, texCoords3);
@@ -199,7 +206,7 @@ vec3 doSpotLight(in vec3 fragPosVspace)
 		vec3 lightTexCol = textureProj(lightTex, texCoords2.xyz).rgb;
 		float att = getAttenuation(fragLightDist);
 
-#if defined(SHADOW)
+#if SHADOW
 		return lightTexCol * color * (shadowCol * att);
 #else
 		return lightTexCol * color * att;
@@ -217,11 +224,13 @@ void main()
 	// get frag pos in view space
 	vec3 fragPosVspace = getFragPosVSpace();
 
-#if defined(POINT_LIGHT)
+#if POINT_LIGHT
 	fColor = doPointLight(fragPosVspace);
-#elif defined(SPOT_LIGHT)
+#elif SPOT_LIGHT
 	fColor = doSpotLight(fragPosVspace);
-#endif // spot light
+#else
+#	error "See file"
+#endif
 
 	
 	//fColor = vec3(texture(msDepthFai, vTexCoords).r);
