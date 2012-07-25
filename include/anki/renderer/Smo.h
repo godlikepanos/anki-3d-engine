@@ -27,7 +27,7 @@ public:
 	void run(const SpotLight& light);
 
 private:
-	/// @todo
+	/// XXX
 	struct Geom
 	{
 		Geom();
@@ -45,8 +45,8 @@ private:
 
 	ShaderProgramResourcePointer sProg;
 
-	void setupGl(bool inside);
-	void restoreGl(bool inside);
+	static void setupGl(bool inside);
+	static void restoreGl(bool inside);
 };
 
 } // end namespace anki

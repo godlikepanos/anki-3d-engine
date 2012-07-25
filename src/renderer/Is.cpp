@@ -24,7 +24,7 @@ struct UniformBlockData
 
 //==============================================================================
 Is::Is(Renderer* r_)
-	: RenderingPass(r_)
+	: RenderingPass(r_), smo(r_)
 {}
 
 //==============================================================================
@@ -32,13 +32,13 @@ Is::~Is()
 {}
 
 //==============================================================================
-void Is::init(const RendererInitializer& /*initializer*/)
+void Is::init(const RendererInitializer& initializer)
 {
 	try
 	{
-		// Load the passes
+		// Init the passes
 		//
-		// XXX
+		smo.init(initializer);
 
 		// Load the programs
 		//
@@ -71,6 +71,8 @@ void Is::init(const RendererInitializer& /*initializer*/)
 			GL_RGB, GL_UNSIGNED_INT, fai);
 		fbo.create();
 		fbo.setColorAttachments({&fai});
+		fbo.setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT,
+			r->getMs().getDepthFai());
 
 		if(!fbo.isComplete())
 		{
@@ -101,8 +103,6 @@ void Is::init(const RendererInitializer& /*initializer*/)
 //==============================================================================
 void Is::ambientPass(const Vec3& color)
 {
-	GlStateSingleton::get().disable(GL_BLEND);
-
 	// set the shader
 	ambientPassSProg->bind();
 
@@ -120,7 +120,9 @@ void Is::pointLightPass(PointLight& light)
 {
 	const Camera& cam = r->getScene().getActiveCamera();
 
-	// XXX SMO
+	// SMO
+	smo.run(light);
+	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 
 	// shader prog
 	const ShaderProgram& shader = *pointLightSProg; // ensure the const-ness
@@ -153,9 +155,10 @@ void Is::run()
 	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
 	fbo.bind();
 
-	GlStateSingleton::get().disable(GL_DEPTH_TEST);
-
 	// Ambient pass
+	GlStateSingleton::get().disable(GL_BLEND);
+	GlStateSingleton::get().disable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE);
 	ambientPass(r->getScene().getAmbientColor());
 
 	// render lights
@@ -165,6 +168,8 @@ void Is::run()
 #else
 	GlStateSingleton::get().disable(GL_BLEND);
 #endif
+
+	GlStateSingleton::get().enable(GL_STENCIL_TEST);
 
 	VisibilityInfo& vi = r->getScene().getVisibilityInfo();
 	for(auto it = vi.getLightsBegin();
@@ -184,7 +189,8 @@ void Is::run()
 		}
 	}
 
-	GlStateSingleton::get().enable(GL_DEPTH_TEST);
+	GlStateSingleton::get().disable(GL_STENCIL_TEST);
+	glDepthMask(GL_TRUE);
 }
 
 } // end namespace anki

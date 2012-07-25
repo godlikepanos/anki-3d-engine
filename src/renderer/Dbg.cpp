@@ -48,6 +48,9 @@ void Dbg::run()
 
 	fbo.bind();
 
+	GlStateSingleton::get().disable(GL_BLEND);
+	GlStateSingleton::get().enable(GL_DEPTH_TEST);
+
 	drawer->setViewProjectionMatrix(r->getViewProjectionMatrix());
 	drawer->setModelMatrix(Mat4::getIdentity());
 	drawer->drawGrid();
