@@ -92,6 +92,13 @@ void init()
 	point->setDiffuseColor(Vec4(1.0, 0.0, 0.0, 0.0));
 	point->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
 
+	PointLight* point1 = new PointLight("point1", &scene, Movable::MF_NONE,
+		nullptr);
+	point1->setRadius(3.0);
+	point1->setDiffuseColor(Vec4(10.0, 10.0, 10.0, 0.0));
+	point1->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
+	point1->getLocalTransform().setOrigin(Vec3(-3.0, 2.0, 0.0));
+
 	// horse
 	horse = new ModelNode("meshes/horse/horse.mdl", "horse", &scene,
 		Movable::MF_NONE, nullptr);
@@ -112,6 +119,7 @@ void mainLoopExtra()
 	static Movable* mover = SceneSingleton::get().getActiveCamera().getMovable();
 	Input& in = InputSingleton::get();
 
+	SceneSingleton::get().setAmbientColor(Vec3(0.0));
 
 	if(in.getKey(SDL_SCANCODE_1))
 	{
@@ -128,6 +136,10 @@ void mainLoopExtra()
 	if(in.getKey(SDL_SCANCODE_4))
 	{
 		mover = SceneSingleton::get().findSceneNode("point0")->getMovable();
+	}
+	if(in.getKey(SDL_SCANCODE_5))
+	{
+		mover = SceneSingleton::get().findSceneNode("point1")->getMovable();
 	}
 
 	if(in.getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
