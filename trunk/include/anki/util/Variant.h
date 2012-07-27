@@ -289,9 +289,7 @@ public:
 	friend std::ostream& operator<<(std::ostream& s, const SelfType& x)
 	{
 		s << *x.ptr;
-		return s;	std::unique_ptr<int> ptr;
-
-	std::cout << *ptr << std::endl;
+		return s;
 	}
 
 private:

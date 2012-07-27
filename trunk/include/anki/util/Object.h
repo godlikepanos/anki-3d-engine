@@ -7,6 +7,9 @@
 
 namespace anki {
 
+/// @addtogroup util
+/// @{
+
 /// A hierarchical object
 template<typename T>
 class Object
@@ -102,7 +105,8 @@ private:
 	Value* parent = nullptr; ///< May be nullptr
 	Container childs;
 };
+/// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif
