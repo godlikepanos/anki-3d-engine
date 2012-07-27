@@ -3,6 +3,9 @@
 
 namespace anki {
 
+/// @addtogroup util
+/// @{
+
 /// Makes a derived class non copyable
 struct NonCopyable
 {
@@ -15,6 +18,7 @@ struct NonCopyable
 	~NonCopyable()
 	{}
 };
+/// @}
 
 } // end namespace anki
 
