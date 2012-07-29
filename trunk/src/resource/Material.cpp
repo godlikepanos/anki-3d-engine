@@ -99,7 +99,7 @@ void Material::load(const char* filename)
 	{
 		using namespace boost::property_tree;
 		ptree pt;
-		read_xml(filename, pt);
+		read_xml(filename, pt, xml_parser::no_comments);
 		parseMaterialTag(pt.get_child("material"));
 	}
 	catch(std::exception& e)

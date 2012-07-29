@@ -58,10 +58,13 @@ void BufferObject::write(void* buff)
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(usage != GL_STATIC_DRAW);
 	bind();
+#if 0
 	void* mapped = glMapBuffer(target, GL_WRITE_ONLY);
 	memcpy(mapped, buff, sizeInBytes);
 	glUnmapBuffer(target);
-	unbind();
+#else
+	glBufferData(target, sizeInBytes, buff, usage);
+#endif
 }
 
 //==============================================================================
@@ -75,7 +78,6 @@ void BufferObject::write(void* buff, size_t offset, size_t size)
 	ANKI_ASSERT(mapped != nullptr);
 	memcpy(mapped, buff, size);
 	glUnmapBuffer(target);
-	unbind();
 }
 
 } // end namespace

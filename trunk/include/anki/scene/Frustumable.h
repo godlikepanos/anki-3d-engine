@@ -57,10 +57,16 @@ public:
 	/// Called when a frustum parameter changes
 	virtual void frustumUpdate() = 0;
 
-	/// Is a spatial inside the frustum
+	/// Is a spatial inside the frustum?
 	bool insideFrustum(const Spatial& sp) const
 	{
 		return frustum->insideFrustum(sp.getSpatialCollisionShape());
+	}
+
+	/// Is a collision shape inside the frustum?
+	bool insideFrustum(const CollisionShape& cs) const
+	{
+		return frustum->insideFrustum(cs);
 	}
 
 protected:

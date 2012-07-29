@@ -16,7 +16,7 @@
 /// @{
 
 /// Watch the placement
-layout(std140) uniform uniforms
+layout(std140, row_major) uniform uniforms
 {
 	/// For the calculation of frag pos in view space. Only the .xy is used
 	uniform vec4 planes_;
