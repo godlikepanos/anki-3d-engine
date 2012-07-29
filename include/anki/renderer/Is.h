@@ -36,6 +36,7 @@ public:
 
 private:
 	Smo smo;
+	Sm sm;
 	Texture fai;
 	Fbo fbo;
 	BufferObject ubo;

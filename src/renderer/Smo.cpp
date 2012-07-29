@@ -117,11 +117,49 @@ void Smo::run(const PointLight& light)
 	sphereGeom.vao.bind();
 	glDrawElements(GL_TRIANGLES, sphereGeom.mesh->getIndicesNumber(0),
 		GL_UNSIGNED_SHORT, 0);
-	sphereGeom.vao.unbind();
 
 	// restore GL
 	restoreGl(inside);
 
+}
+
+//==============================================================================
+void Smo::run(const SpotLight& light)
+{
+	const Camera& cam = r->getScene().getActiveCamera();
+	const Vec3& origin = cam.getWorldTransform().getOrigin();
+	float radius = cam.getNear() + THRESHOLD;
+	bool inside =  light.insideFrustum(Sphere(origin, radius));
+
+	// set GL state
+	setupGl(inside);
+
+	// Calc the camera shape scale matrix
+	Mat4 localMat(Mat4::getIdentity());
+
+	// Scale in x
+	localMat(0, 0) = tan(light.getFovX() / 2.0) * light.getFar();
+	// Scale in y
+	localMat(1, 1) = tan(light.getFovY() / 2.0) * light.getFar();
+	localMat(2, 2) = light.getFar(); // Scale in z
+
+	const Geom& cg = camGeom[0];
+
+	// Setup the sprog
+	sProg->bind();
+	Mat4 modelMat = Mat4(light.getWorldTransform());
+
+	Mat4 trf = cam.getViewProjectionMatrix() * modelMat * localMat;
+	sProg->findUniformVariable("modelViewProjectionMat").set(trf);
+
+	// Render
+	//
+	cg.vao.bind();
+	glDrawElements(GL_TRIANGLES, cg.mesh->getIndicesNumber(0),
+		GL_UNSIGNED_SHORT, 0);
+
+	// restore GL state
+	restoreGl(inside);
 }
 
 } // end namespace anki

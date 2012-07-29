@@ -1,5 +1,4 @@
-SET(ANKI_SUB_DIRS script renderer scene ui event 
-	input physics resource core misc gl collision math util)
+SET(ANKI_SUB_DIRS script renderer scene ui event input physics resource core misc gl collision math util)
 
 SET(ANKI_LIBS "")
 
@@ -10,10 +9,7 @@ ENDFOREACH()
 
 ADD_LIBRARY(anki)
 
-TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} BulletSoftBody BulletDynamics 
-	BulletCollision LinearMath ankiglew GLU GL jpeg SDL png python${PYTHON_VER}
-	boost_system boost_python boost_filesystem boost_thread boost_regex 
-	freetype)
+TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath ankiglew ankitinyxml2 GLU GL jpeg SDL png python${PYTHON_VER} boost_system boost_python boost_thread freetype)
 
 SET_TARGET_PROPERTIES(anki PROPERTIES LINKER_LANGUAGE CXX)
 

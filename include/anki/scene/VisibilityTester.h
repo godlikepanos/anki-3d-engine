@@ -2,6 +2,7 @@
 #define ANKI_SCENE_VISIBILITY_TESTER_H
 
 #include <vector>
+#include <cstdint>
 
 namespace anki {
 
@@ -28,6 +29,10 @@ public:
 	Renderables::iterator getRenderablesEnd()
 	{
 		return renderables.end();
+	}
+	uint32_t getRenderablesCount() const
+	{
+		return renderables.size();
 	}
 
 	Lights::iterator getLightsBegin()

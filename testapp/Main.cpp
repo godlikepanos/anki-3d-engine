@@ -38,6 +38,7 @@
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
 #include "anki/core/ParallelManager.h"
+#include "anki/misc/Xml.h"
 
 using namespace anki;
 
@@ -67,13 +68,6 @@ void init()
 		1.0));
 	scene.setActiveCamera(cam);
 
-	// XXX
-	PerspectiveCamera* ccam = new PerspectiveCamera("ccam",
-		&scene, Movable::MF_NONE, nullptr);
-	ccam->setAll(
-		MainRendererSingleton::get().getAspectRatio() * Math::toRad(ang),
-		Math::toRad(ang), 0.5, 20.0);
-
 	// lights
 
 	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
@@ -95,8 +89,8 @@ void init()
 	PointLight* point1 = new PointLight("point1", &scene, Movable::MF_NONE,
 		nullptr);
 	point1->setRadius(3.0);
-	point1->setDiffuseColor(Vec4(10.0, 10.0, 10.0, 0.0));
-	point1->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
+	point1->setDiffuseColor(Vec4(2.0, 2.0, 2.0, 0.0));
+	point1->setSpecularColor(Vec4(3.0, 3.0, 0.0, 0.0));
 	point1->getLocalTransform().setOrigin(Vec3(-3.0, 2.0, 0.0));
 
 	// horse
@@ -124,10 +118,6 @@ void mainLoopExtra()
 	if(in.getKey(SDL_SCANCODE_1))
 	{
 		mover = &SceneSingleton::get().getActiveCamera();
-	}
-	if(in.getKey(SDL_SCANCODE_2))
-	{
-		mover = SceneSingleton::get().findSceneNode("ccam")->getMovable();
 	}
 	if(in.getKey(SDL_SCANCODE_3))
 	{

@@ -281,6 +281,6 @@ private:
 	ANKI_SLOT(updateFov, const float&)
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif
