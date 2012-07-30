@@ -48,12 +48,15 @@ def parse_commandline():
 		type="string", help="specify the .DAE file to parse")
 	parser.add_option("-o", "--output", dest="out",
 		type="string", help="specify the directory to save the files")
+	parser.add_option("-f", "--flip-yz", dest="flip",
+		type="string", default=False, 
+		help="flip Y with Z (from blender to AnKi)")
 	(options, args) = parser.parse_args()
 
 	if not options.inp or not options.out:
 		parser.error("argument is missing")
 
-	return (options.inp, options.out)
+	return (options.inp, options.out, options.flip)
 
 def parse_library_geometries(el):
 	geometries = []
@@ -116,6 +119,11 @@ def get_positions_and_uvs(mesh_el):
 			uvs_float_array = all_float_array[source[1:]]
 			uvs_offset = offset
 
+	if positions_float_array == None:
+		raise Exception("Positions not found")
+	if uvs_float_array == None:
+		raise Exception("UVs not found")
+
 	return (positions_float_array, int(positions_offset), 
 		uvs_float_array, int(uvs_offset))
 
@@ -132,25 +140,33 @@ def parse_geometry(geometry_el):
 	geom_name = geometry_el.get("name")
 	print("-- geometry: %s" % geom_name)
 
-	(positions_float_array, positions_offset, uvs_float_array, uvs_offset) = \
-		get_positions_and_uvs(geometry_el.find("mesh"))
+	mesh_el = geometry_el.find("mesh")
 
-	# Get vcount
-	vcount = []
+	# Get positions and UVs
+	(positions_float_array, positions_offset, uvs_float_array, uvs_offset) = \
+		get_positions_and_uvs(mesh_el)
+
+	# get polylist
+	polylist_el = mesh_el.find("polylist")
+	inputs_count = len(polylist_el.findall("input"))
+
+	# Make sure that we are dealing with triangles
 	tokens = [x.strip() for x in 
-		geometry_el.find("mesh/polylist/vcount").text.split(" ")]
+		polylist_el.find("vcount").text.split(" ")]
 
 	for token in tokens:
 		if token:
-			vcount.append(int(token))
+			if int(token) != 3:
+				raise Exception("Only triangles are alowed")	
 
-	face_count = len(vcount)
+	# Get face number
+	face_count = int(mesh_el.find("polylist").get("count"))
 
 	# Get p. p is a 3D array where the 1st dim is the face, 2nd is the vertex
 	# and the 3rd is 0 for position, 1 for normal and 2 for text coord
 	p = []
 	tokens = [x.strip() for x in 
-		geometry_el.find("mesh/polylist/p").text.split(" ")]
+		polylist_el.find("p").text.split(" ")]
 
 	for token in tokens:
 		if token:
@@ -160,20 +176,17 @@ def parse_geometry(geometry_el):
 	verts = []
 	indices = []
 	for fi in range(0, face_count):
-		v_num = vcount[fi]
-
-		if v_num > 3:
-			raise Exception("Only triangles are alowed")
-
 		# Get the positions for each vertex
 		for vi in range(0, 3):
-			index = p[fi * 3 * 3 + vi * 3 + positions_offset]
+			# index = p[fi][vi][positions_offset]
+			index = p[fi * 3 * inputs_count + vi * inputs_count 
+				+ positions_offset]
 			
 			pos = Vector(positions_float_array[index * 3], 
 				positions_float_array[index * 3 + 1], 
 				positions_float_array[index * 3 + 2])
 
-			index = p[fi * 3 * 3 + vi * 3 + uvs_offset]
+			index = p[fi * 3 * inputs_count + vi * inputs_count + uvs_offset]
 
 			uv = Vector(uvs_float_array[index * 2], 
 				uvs_float_array[index * 2 + 1], 0.0)
@@ -196,7 +209,7 @@ def parse_geometry(geometry_el):
 	geom.name = geom_name
 	return geom
 
-def write_mesh(mesh, directory):
+def write_mesh(mesh, directory, flip):
 	""" XXX """
 	f = open(directory + "/" + mesh.name + ".mesh", "wb")
 	
@@ -211,8 +224,14 @@ def write_mesh(mesh, directory):
 	buff += pack("I", len(mesh.vertices))
 
 	# Verts
-	for vert in mesh.vertices:
-		buff += pack("fff", vert.position.x, vert.position.y, vert.position.z)
+	if flip:
+		for vert in mesh.vertices:
+			buff += pack("fff", vert.position.x, vert.position.z, 
+				-vert.position.y)
+	else:
+		for vert in mesh.vertices:
+			buff += pack("fff", vert.position.x, vert.position.y, 
+				vert.position.z)
 
 	# Tris num
 	buff += pack("I", int(len(mesh.indices) / 3))
@@ -233,9 +252,10 @@ def write_mesh(mesh, directory):
 	f.close()
 
 def main():
-	(infile, outdir) = parse_commandline()
+	(infile, outdir, flip) = parse_commandline()
 
 	print("-- Begin...")
+	xml.register_namespace("", "http://www.collada.org/2005/11/COLLADASchema")
 	tree = xml.parse(infile)
 
 	el_arr = tree.findall("library_geometries")
@@ -243,7 +263,7 @@ def main():
 		geometries = parse_library_geometries(el)
 
 		for geom in geometries:
-			write_mesh(geom, outdir)
+			write_mesh(geom, outdir, flip)
 
 if __name__ == "__main__":
 	main()
