@@ -113,7 +113,7 @@ void mainLoopExtra()
 	static Movable* mover = SceneSingleton::get().getActiveCamera().getMovable();
 	Input& in = InputSingleton::get();
 
-	SceneSingleton::get().setAmbientColor(Vec3(0.0));
+	SceneSingleton::get().setAmbientColor(Vec3(0.2));
 
 	if(in.getKey(SDL_SCANCODE_1))
 	{
