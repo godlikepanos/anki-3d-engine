@@ -40,6 +40,7 @@ class Mesh:
 		self.name = ""
 		self.vertices = []
 		self.indices = []
+		self.id = "" # The mesh:id
 
 def parse_commandline():
 	""" Parse the command line arguments """
@@ -81,7 +82,7 @@ def parse_float_array(float_array_el):
 
 def get_positions_and_uvs(mesh_el):
 	""" Given a <mesh> get the positions and the UVs float_array. Also return
-		the offset of the mesh/polylist/input:offset for those two arrays """
+	    the offset of the mesh/polylist/input:offset for those two arrays """
 	positions_float_array = None
 	uvs_float_array = None
 
@@ -138,6 +139,7 @@ def parse_geometry(geometry_el):
 	""" XXX """
 
 	geom_name = geometry_el.get("name")
+	geom_id = geometry_el.get("id")
 	print("-- geometry: %s" % geom_name)
 
 	mesh_el = geometry_el.find("mesh")
@@ -207,10 +209,11 @@ def parse_geometry(geometry_el):
 	geom.vertices = verts
 	geom.indices = indices
 	geom.name = geom_name
+	geom.id = geom_id
 	return geom
 
 def write_mesh(mesh, directory, flip):
-	""" XXX """
+	""" Write mesh to file """
 	f = open(directory + "/" + mesh.name + ".mesh", "wb")
 	
 	# Magic
@@ -251,6 +254,9 @@ def write_mesh(mesh, directory, flip):
 	f.write(buff)
 	f.close()
 
+def update_mesh_with_vertex_weights(mesh, skin_el):
+	""" XXX """
+
 def main():
 	(infile, outdir, flip) = parse_commandline()
 
@@ -258,12 +264,23 @@ def main():
 	xml.register_namespace("", "http://www.collada.org/2005/11/COLLADASchema")
 	tree = xml.parse(infile)
 
+	# Meshes
 	el_arr = tree.findall("library_geometries")
 	for el in el_arr:
-		geometries = parse_library_geometries(el)
+		meshes = parse_library_geometries(el)
 
-		for geom in geometries:
-			write_mesh(geom, outdir, flip)
+		for mesh in meshes:
+			write_mesh(mesh, outdir, flip)
+
+	# Skins
+	skin_elarr = tree.findall("library_controllers/controller/skin")
+	for skin_el in skin_elarr:
+		source = skin_el.get("source")
+		source = source[1:]
+
+		for mesh in meshes:
+			if mesh.id == source:
+				update_mesh_with_vertex_weights(mesh, skin_el)
 
 if __name__ == "__main__":
 	main()
