@@ -28,6 +28,7 @@ class Vertex:
 		self.bones_count = 0
 		self.bone_ids = [-1, -1, -1, -1]
 		self.weights = [-1.0, -1.0, -1.0, -1.0]
+		self.index = -1
 
 	def __eq__(self, b):
 		return self.position == b.position and self.uv == b.uv \
@@ -46,7 +47,10 @@ class Mesh:
 		self.name = ""
 		self.vertices = []
 		self.indices = []
-		self.id = "" # The mesh:id
+		self.id = "" # The mesh:id needed for skinning
+		# The mesh/source/float_array that includes the vertex positions. 
+		# Needed for skinning
+		self.vert_positions = None 
 
 def compare_arr(a, b):
 	""" Compare 2 arrays """
@@ -59,6 +63,13 @@ def compare_arr(a, b):
 			return False
 
 	return True
+
+def search_in_array(arr, el):
+	""" Self explanatory. Return index in array or -1 if not found """
+	for i in range(0, len(arr)):
+		if arr[i] == el:
+			return i
+	return -1
 
 def parse_commandline():
 	""" Parse the command line arguments """
@@ -143,27 +154,29 @@ def get_positions_and_uvs(mesh_el):
 	if uvs_float_array == None:
 		raise Exception("UVs not found")
 
-	return (positions_float_array, int(positions_offset), 
-		uvs_float_array, int(uvs_offset))
+	# Convert the positions float array to a Vector array
+	positions_vec_array = []
+	for i in range(int(len(positions_float_array) / 3)):
+		x = positions_float_array[i * 3]
+		y = positions_float_array[i * 3 + 1]
+		z = positions_float_array[i * 3 + 2]
+		vec = Vector(x, y, z)
+		positions_vec_array.append(vec)
 
-def search_in_array(arr, el):
-	""" XXX """
-	for i in range(0, len(arr)):
-		if arr[i] == el:
-			return i
-	return -1
+	return (positions_vec_array, int(positions_offset), 
+		uvs_float_array, int(uvs_offset))
 
 def parse_geometry(geometry_el):
 	""" XXX """
 
 	geom_name = geometry_el.get("name")
 	geom_id = geometry_el.get("id")
-	print("---- Parshing geometry: %s" % geom_name)
+	print("---- Parsing geometry: %s" % geom_name)
 
 	mesh_el = geometry_el.find("mesh")
 
 	# Get positions and UVs
-	(positions_float_array, positions_offset, uvs_float_array, uvs_offset) = \
+	(positions_vec_array, positions_offset, uvs_float_array, uvs_offset) = \
 		get_positions_and_uvs(mesh_el)
 
 	# get polylist
@@ -199,21 +212,20 @@ def parse_geometry(geometry_el):
 		# Get the positions for each vertex
 		for vi in range(0, 3):
 			# index = p[fi][vi][positions_offset]
-			index = p[fi * 3 * inputs_count + vi * inputs_count 
+			pindex = p[fi * 3 * inputs_count + vi * inputs_count 
 				+ positions_offset]
 			
-			pos = Vector(positions_float_array[index * 3], 
-				positions_float_array[index * 3 + 1], 
-				positions_float_array[index * 3 + 2])
+			pos = positions_vec_array[pindex]
 
-			index = p[fi * 3 * inputs_count + vi * inputs_count + uvs_offset]
+			uvindex = p[fi * 3 * inputs_count + vi * inputs_count + uvs_offset]
 
-			uv = Vector(uvs_float_array[index * 2], 
-				uvs_float_array[index * 2 + 1], 0.0)
+			uv = Vector(uvs_float_array[uvindex * 2], 
+				uvs_float_array[uvindex * 2 + 1], 0.0)
 			
 			vert = Vertex()
 			vert.position = pos
 			vert.uv = uv
+			vert.index = pindex
 
 			i = search_in_array(verts, vert)
 			if i == -1:
@@ -228,10 +240,124 @@ def parse_geometry(geometry_el):
 	geom.indices = indices
 	geom.name = geom_name
 	geom.id = geom_id
+	geom.vert_positions = positions_vec_array
 
 	print("------ Number of verts: %d" % len(geom.vertices))
 	print("------ Number of faces: %d" % (len(geom.indices) / 3))
 	return geom
+
+def update_mesh_with_vertex_weights(mesh, skin_el):
+	""" XXX """
+	print("---- Updating with skin information: %s" % mesh.name)
+
+	# Get all <source>
+	source_data = {}
+	source_elarr = skin_el.findall("source")
+	for source_el in source_elarr:
+		source_id = source_el.get("id")
+	
+		float_array_el = source_el.find("float_array")
+		name_array_el = source_el.find("Name_array")
+
+		if float_array_el != None:
+			source_data[source_id] = parse_float_array(float_array_el)
+		elif name_array_el != None:
+			tokens = [x.strip() for x in name_array_el.text.split(' ')]
+			array = []
+			for token in tokens:
+				if token:
+					array.append(token)
+			source_data[source_id] = array
+		else:
+			raise Exception("Expected float_array or name_array")
+
+	# Now find the joint names and the weights
+	joint_names = None
+	joint_names_offset = -1
+	weight_arr = None
+	weight_arr_offset = -1
+
+	vertex_weights_el = skin_el.find("vertex_weights")
+	input_elarr = vertex_weights_el.findall("input")
+	for input_el in input_elarr:
+		semantic = input_el.get("semantic")
+		source = input_el.get("source")
+		source = source[1:]
+		offset = int(input_el.get("offset"))
+
+		source_array = source_data[source]
+
+		if semantic == "JOINT":
+			joint_names = source_array
+			joint_names_offset = offset
+			print("------ Found bone names")
+		elif semantic == "WEIGHT":
+			weight_arr = source_array
+			weight_arr_offset = offset
+			print("------ Found weights")
+		else:
+			raise Exception("Unrecognized semantic: %s" % semantic)
+			
+	# Get <vcount>
+	vcount = []
+	tokens = [x.strip() for x in 
+		vertex_weights_el.find("vcount").text.split(" ")]
+
+	for token in tokens:
+		if token:
+			vcount.append(int(token))
+
+	# Get <v>
+	v = []
+	tokens = [x.strip() for x in 
+		vertex_weights_el.find("v").text.split(" ")]
+
+	for token in tokens:
+		if token:
+			v.append(int(token))
+
+	# Do a sanity check because we made an assumption
+	if len(vcount) != len(mesh.vert_positions):
+		raise Exception("Wrong assumption made")
+
+	# Now that you have all do some magic... connect them
+	#
+	
+	# For every vert
+	other_index = 0
+	for vert_id in range(len(vcount)):
+		bones_in_vert = vcount[vert_id]
+
+		if bones_in_vert > 4:
+			raise Exception("You cannot have more than 4 bones per vertex")
+
+		if bones_in_vert == 0:
+			print("------ *WARNING* Vertex does not have bones: %d" % vert_id)
+
+		# Get weigths and ids for the vertex
+		bone_ids = [-1, -1, -1, -1]
+		vweights = [0.0, 0.0, 0.0, 0.0]
+		for i in range(bones_in_vert):
+			bone_name_index = v[other_index * 2 + joint_names_offset]
+			weight_index = v[other_index * 2 + weight_arr_offset]
+
+			bone_ids[i] = bone_name_index
+			vweights[i] = weight_arr[weight_index]
+
+			other_index += 1
+
+		# Update the vertex and the duplicates
+		for vert in mesh.vertices:
+			if vert.index != vert_id:
+				continue
+			vert.bones_count = bones_in_vert
+			vert.bone_ids = bone_ids
+			vert.weights = vweights
+
+	# Do a sanity check. Go to all verts and check if bones_count is set
+	for vert in mesh.vertices:
+		if vert.bones_count == -1:
+			raise Exception("Vertex skining information not set for vertex")
 
 def write_mesh(mesh, directory, flip):
 	""" Write mesh to file """
@@ -272,91 +398,26 @@ def write_mesh(mesh, directory, flip):
 		buff += pack("ff", vert.uv.x, vert.uv.y)
 
 	# Vert weight
-	buff += pack("I", 0)
+	if mesh.vertices[0].bones_count != -1:
+		buff += pack("I", len(mesh.vertices))
+
+		for vert in mesh.vertices:
+			buff += pack("I", vert.bones_count)
+			for i in range(vert.bones_count):
+				buff += pack("If", vert.bone_ids[i], vert.weights[i])
+	else:
+		buff += pack("I", 0)
 
 	f.write(buff)
 	f.close()
 
-def update_mesh_with_vertex_weights(mesh, skin_el):
-	""" XXX """
-	print("---- Updating with skin information: %s" % mesh.name)
-
-	# Get all <source>
-	source_data = {}
-	source_elarr = skin_el.findall("source")
-	for source_el in source_elarr:
-		source_id = source_el.get("id")
-	
-		float_array_el = source_el.find("float_array")
-		name_array_el = source_el.find("Name_array")
-
-		if float_array_el != None:
-			source_data[source_id] = parse_float_array(float_array_el)
-		elif name_array_el != None:
-			tokens = [x.strip() for x in name_array_el.text.split(' ')]
-			array = []
-			for token in tokens:
-				if token:
-					array.append(token)
-			source_data[source_id] = array
-		else:
-			raise Exception("Expected float_array or name_array")
-
-	# Now find the joint names and the weights
-	joint_names = None
-	joint_names_offset = -1
-	weights = None
-	weights_offset = -1
-
-	vertex_weights_el = skin_el.find("vertex_weights")
-	input_elarr = vertex_weights_el.findall("input")
-	for input_el in input_elarr:
-		semantic = input_el.get("semantic")
-		source = input_el.get("source")
-		source = source[1:]
-		offset = int(input_el.get("offset"))
-
-		source_array = source_data[source]
-
-		if semantic == "JOINT":
-			joint_names = source_array
-			joint_names_offset = offset
-			print("------ Found bone names")
-		elif semantic == "WEIGHT":
-			weights = source_array
-			weights_offset = offset
-			print("------ Found weights")
-		else:
-			raise Exception("Unrecognized semantic: %s" % semantic)
-			
-	# Get <vcount>
-	vcount = []
-	tokens = [x.strip() for x in 
-		vertex_weights_el.find("vcount").text.split(" ")]
-
-	for token in tokens:
-		if token:
-			vcount.append(int(token))
-
-	# Get <v>
-	v = []
-	tokens = [x.strip() for x in 
-		vertex_weights_el.find("v").text.split(" ")]
-
-	for token in tokens:
-		if token:
-			v.append(int(token))
-
-	# Now that you have all do some magic... connect them
-	"""for vert_id in range(len(vcount)):
-		vc = vcount[vert_id]
-		vert = mesh.ver
-		for """
+def write_mesh_v2(mesh, directory, flip):
+	noop
 
 def main():
 	(infile, outdir, flip) = parse_commandline()
 
-	print("-- Begin!")
+	print("-- Begin...")
 	xml.register_namespace("", "http://www.collada.org/2005/11/COLLADASchema")
 	tree = xml.parse(infile)
 
