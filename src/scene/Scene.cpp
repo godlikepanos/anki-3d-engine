@@ -53,4 +53,4 @@ void Scene::doVisibilityTests(Camera& cam)
 	vtester.test(*f, *this, vinfo);
 }
 
-} // end namespace
+} // end namespace anki

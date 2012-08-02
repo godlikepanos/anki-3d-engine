@@ -54,6 +54,15 @@ private:
 class VisibilityTester
 {
 public:
+	enum Test
+	{
+		T_NONE_BIT = 0
+		T_RENDERABLES_BIT = 1,
+		T_LIGHTS_BIT = 2,
+		T_CAMERAS_BIT = 4,
+		T_ALL_BIT = T_RENDERABLES_BIT | T_LIGHTS_BIT | T_CAMERAS_BIT
+	};
+
 	/// Constructor
 	VisibilityTester()
 	{}
@@ -63,9 +72,10 @@ public:
 	/// This method:
 	/// - Gets the visible renderables and frustumables
 	/// - For every frustumable perform tests
-	static void test(Frustumable& cam, Scene& scene, VisibilityInfo& vinfo);
+	static void test(Frustumable& cam, Scene& scene, VisibilityInfo& vinfo,
+		uint32_t testMask = T_ALL_BIT);
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

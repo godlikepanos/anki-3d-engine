@@ -2,6 +2,7 @@
 #define ANKI_SCENE_MOVABLE_H
 
 #include "anki/util/Object.h"
+#include "anki/util/Flags.h"
 #include "anki/math/Math.h"
 
 namespace anki {
@@ -12,7 +13,7 @@ class PropertyMap;
 /// @{
 
 /// Interface for movable scene nodes
-class Movable: public Object<Movable>
+class Movable: public Object<Movable>, public Flags<uint32_t>
 {
 public:
 	typedef Object<Movable> Base;
@@ -31,7 +32,7 @@ public:
 	/// @param flags The flags
 	/// @param parent The parent. It can be nullptr
 	/// @param pmap Property map to add a few variables
-	Movable(uint flags, Movable* parent, PropertyMap& pmap);
+	Movable(uint32_t flags, Movable* parent, PropertyMap& pmap);
 
 	~Movable();
 	/// @}
@@ -42,25 +43,25 @@ public:
 	{
 		return lTrf;
 	}
-	Transform& getLocalTransform()
-	{
-		return lTrf;
-	}
 	void setLocalTransform(const Transform& x)
 	{
 		lTrf = x;
+		enableFlag(MF_MOVED);
 	}
 	void setLocalTranslation(const Vec3& x)
 	{
 		lTrf.setOrigin(x);
+		enableFlag(MF_MOVED);
 	}
 	void setLocalRotation(const Mat3& x)
 	{
 		lTrf.setRotation(x);
+		enableFlag(MF_MOVED);
 	}
 	void setLocalScale(float x)
 	{
 		lTrf.setScale(x);
+		enableFlag(MF_MOVED);
 	}
 
 	const Transform& getWorldTransform() const
@@ -72,31 +73,6 @@ public:
 	{
 		return prevWTrf;
 	}
-
-	ulong getFlags() const
-	{
-		return flags;
-	}
-	/// @}
-
-	/// @name Flag manipulation
-	/// @{
-	void enableFlag(MovableFlag flag, bool enable = true)
-	{
-		flags = enable ? flags | flag : flags & ~flag;
-	}
-	void disableFlag(MovableFlag flag)
-	{
-		enableFlag(flag, false);
-	}
-	bool isFlagEnabled(MovableFlag flag) const
-	{
-		return flags & flag;
-	}
-	uint getFlagsBitmask() const
-	{
-		return flags;
-	}
 	/// @}
 
 	/// @name Mess with the local transform
@@ -104,29 +80,35 @@ public:
 	void rotateLocalX(float angDegrees)
 	{
 		lTrf.getRotation().rotateXAxis(angDegrees);
+		enableFlag(MF_MOVED);
 	}
 	void rotateLocalY(float angDegrees)
 	{
 		lTrf.getRotation().rotateYAxis(angDegrees);
+		enableFlag(MF_MOVED);
 	}
 	void rotateLocalZ(float angDegrees)
 	{
 		lTrf.getRotation().rotateZAxis(angDegrees);
+		enableFlag(MF_MOVED);
 	}
 	void moveLocalX(float distance)
 	{
 		Vec3 x_axis = lTrf.getRotation().getColumn(0);
 		lTrf.getOrigin() += x_axis * distance;
+		enableFlag(MF_MOVED);
 	}
 	void moveLocalY(float distance)
 	{
 		Vec3 y_axis = lTrf.getRotation().getColumn(1);
 		lTrf.getOrigin() += y_axis * distance;
+		enableFlag(MF_MOVED);
 	}
 	void moveLocalZ(float distance)
 	{
 		Vec3 z_axis = lTrf.getRotation().getColumn(2);
 		lTrf.getOrigin() += z_axis * distance;
+		enableFlag(MF_MOVED);
 	}
 	/// @}
 
@@ -152,14 +134,12 @@ protected:
 	/// Keep the previous transformation for checking if it moved
 	Transform prevWTrf;
 
-	ulong flags; ///< The state flags
-
 	/// Called for every frame. It updates the @a wTrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.
 	void updateWorldTransform();
 };
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

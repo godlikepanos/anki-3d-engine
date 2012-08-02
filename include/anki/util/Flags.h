@@ -23,6 +23,10 @@ public:
 	{
 		mask |= flag;
 	}
+	void enableFlag(Value flag, bool enable)
+	{
+		mask = (enable) ? mask | flag : mask & ~flag;
+	}
 	void disableFlag(Value flag)
 	{
 		mask &= ~flag;

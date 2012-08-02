@@ -12,7 +12,7 @@ VisibilityTester::~VisibilityTester()
 
 //==============================================================================
 void VisibilityTester::test(Frustumable& cam, Scene& scene,
-	VisibilityInfo& vinfo)
+	VisibilityInfo& vinfo, uint32_t testMask)
 {
 	vinfo.renderables.clear();
 	vinfo.lights.clear();
