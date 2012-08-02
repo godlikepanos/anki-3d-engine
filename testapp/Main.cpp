@@ -91,7 +91,7 @@ void init()
 	point1->setRadius(3.0);
 	point1->setDiffuseColor(Vec4(2.0, 2.0, 2.0, 0.0));
 	point1->setSpecularColor(Vec4(3.0, 3.0, 0.0, 0.0));
-	point1->getLocalTransform().setOrigin(Vec3(-3.0, 2.0, 0.0));
+	point1->setLocalTranslation(Vec3(-3.0, 2.0, 0.0));
 
 	// horse
 	horse = new ModelNode("meshes/horse/horse.mdl", "horse", &scene,
@@ -145,8 +145,14 @@ void mainLoopExtra()
 	if(in.getKey(SDL_SCANCODE_S)) mover->moveLocalZ(dist);
 	if(in.getKey(SDL_SCANCODE_Q)) mover->rotateLocalZ(ang);
 	if(in.getKey(SDL_SCANCODE_E)) mover->rotateLocalZ(-ang);
-	if(in.getKey(SDL_SCANCODE_PAGEUP)) mover->getLocalTransform().getScale() += scale ;
-	if(in.getKey(SDL_SCANCODE_PAGEDOWN)) mover->getLocalTransform().getScale() -= scale ;
+	if(in.getKey(SDL_SCANCODE_PAGEUP))
+	{
+		mover->scale(scale);
+	}
+	if(in.getKey(SDL_SCANCODE_PAGEDOWN))
+	{
+		mover->scale(-scale);
+	}
 }
 
 //==============================================================================
@@ -208,6 +214,7 @@ void main()
 
 	while(1)
 	{
+		SceneSingleton::get().updateFrameStart();
 		HighRezTimer timer;
 		timer.start();
 
@@ -217,8 +224,7 @@ void main()
 		// Update
 		//
 		mainLoopExtra();
-		SceneSingleton::get().update(prevUpdateTime, crntTime,
-			MainRendererSingleton::get().getFramesCount());
+		SceneSingleton::get().update(prevUpdateTime, crntTime);
 		EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
 		MainRendererSingleton::get().render(SceneSingleton::get());
 
@@ -261,7 +267,7 @@ void main()
 			break;
 		}
 #endif
-
+		SceneSingleton::get().updateFrameEnd();
 	}
 
 	ANKI_LOGI("Exiting main loop (" << mainLoopTimer.getElapsedTime()

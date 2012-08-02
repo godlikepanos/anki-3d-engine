@@ -879,8 +879,8 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 	// See the clean code in < r664
 
 	// one of the 2 mat4 doesnt represent transformation
-	ANKI_ASSERT(Math::isZero(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3)-1.0) 
-		&& Math::isZero(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3)-1.0));
+	ANKI_ASSERT(Math::isZero(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3) - 1.0)
+		&& Math::isZero(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3) - 1.0));
 
 	Mat4 m4;
 

@@ -5,18 +5,12 @@ namespace anki {
 
 //==============================================================================
 Movable::Movable(uint32_t flags_, Movable* parent, PropertyMap& pmap)
-	: Base(this, parent), Flags(flags_ | MF_MOVED)
+	: Base(this, parent), Flags(flags_)
 {
 	pmap.addNewProperty(
 		new ReadWritePointerProperty<Transform>("localTransform", &lTrf));
 	pmap.addNewProperty(
 		new ReadPointerProperty<Transform>("worldTransform", &wTrf));
-
-	lTrf.setIdentity();
-	wTrf.setIdentity();
-	// Change the wTrf so it wont be the same as lTrf. This means that in the
-	// updateWorldTransform() the "is moved" check will return true
-	wTrf.setScale(0.0);
 }
 
 //==============================================================================
@@ -37,62 +31,31 @@ void Movable::updateWorldTransform()
 {
 	prevWTrf = wTrf;
 	Movable* parent = getParent();
+	uint32_t sceneFramesCount = SceneSingleton::get().getFramesCount();
 
 	if(parent)
 	{
-		if(isFlagEnabled(MF_IGNORE_LOCAL_TRANSFORM))
+		if(parent->lastUpdateFrame == sceneFramesCount
+			|| lastUpdateFrame == sceneFramesCount)
 		{
-			wTrf = parent->getWorldTransform();
-		}
-		else
-		{
-			wTrf = parent->getWorldTransform().getTransformed(lTrf);
-		}
-	}
-	else // else copy
-	{
-		wTrf = lTrf;
-	}
-
-	// Moved?
-	if(prevWTrf != wTrf)
-	{
-		enableFlag(MF_MOVED);
-		movableUpdate();
-	}
-	else
-	{
-		disableFlag(MF_MOVED);
-	}
-
-
-
-	///////////////////
-	if(parent)
-	{
-		if(parent->isFlagEnabled(MF_MOVED) || isFlagEnabled(MF_MOVED))
-		{
-			enableFlag(MF_MOVED);
 			if(isFlagEnabled(MF_IGNORE_LOCAL_TRANSFORM))
 			{
 				wTrf = parent->getWorldTransform();
 			}
 			else
 			{
-				wTrf = parent->getWorldTransform().getTransformed(lTrf);
+				wTrf = Transform::combineTransformations(
+					parent->getWorldTransform(), lTrf);
 			}
+			lastUpdateFrame = sceneFramesCount;
 		}
 	}
-	else
+	else if(lastUpdateFrame == sceneFramesCount)
 	{
-		if(isFlagEnabled(MF_MOVED))
-		{
-			wTrf = lTrf;
-		}
+		wTrf = lTrf;
 	}
-	///////////////////
 
-	if(isFlagEnabled(MF_MOVED))
+	if(lastUpdateFrame == sceneFramesCount)
 	{
 		movableUpdate();
 	}

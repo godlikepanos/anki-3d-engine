@@ -30,7 +30,7 @@ void Scene::unregisterNode(SceneNode* node)
 }
 
 //==============================================================================
-void Scene::update(float prevUpdateTime, float crntTime, int frame)
+void Scene::update(float prevUpdateTime, float crntTime)
 {
 	for(SceneNode* n : nodes)
 	{
@@ -50,7 +50,7 @@ void Scene::doVisibilityTests(Camera& cam)
 {
 	Frustumable* f = cam.getFrustumable();
 	ANKI_ASSERT(f != nullptr);
-	vtester.test(*f, *this, vinfo);
+	vtester.test(*f, *this);
 }
 
 } // end namespace anki
