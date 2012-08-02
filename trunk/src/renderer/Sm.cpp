@@ -119,12 +119,10 @@ void Sm::run(Light& light, float distance)
 
 	// Visibility tests
 	SpotLight& slight = static_cast<SpotLight&>(light);
-	VisibilityInfo vi;
-	VisibilityTester vt;
-	vt.test(slight, r->getScene(), vi);
 
 	// render all
-	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
+	for(auto it = slight.getVisibilityInfo().getRenderablesBegin();
+		it != slight.getVisibilityInfo().getRenderablesEnd(); ++it)
 	{
 		r->getSceneDrawer().render(r->getScene().getActiveCamera(), 1, *(*it));
 	}

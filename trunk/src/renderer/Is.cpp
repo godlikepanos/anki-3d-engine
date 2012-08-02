@@ -254,7 +254,8 @@ void Is::run()
 
 	GlStateSingleton::get().enable(GL_STENCIL_TEST);
 
-	VisibilityInfo& vi = r->getScene().getVisibilityInfo();
+	VisibilityInfo& vi =
+		r->getScene().getActiveCamera().getFrustumable()->getVisibilityInfo();
 	for(auto it = vi.getLightsBegin();
 		it != vi.getLightsEnd(); ++it)
 	{

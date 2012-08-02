@@ -34,10 +34,11 @@ public:
 
 		if(node)
 		{
-			Transform& nodeTrf = node->getLocalTransform();
-			float originalScale = nodeTrf.getScale();
-			nodeTrf = toAnki(worldTrans);
-			nodeTrf.setScale(originalScale);
+			Transform newTrf;
+			float originalScale = node->getLocalTransform().getScale();
+			newTrf = toAnki(worldTrans);
+			newTrf.setScale(originalScale);
+			node->setLocalTransform(newTrf);
 		}
 	}
 	/// @}

@@ -9,6 +9,9 @@
 
 namespace anki {
 
+/// @addtogroup Scene
+/// @{
+
 /// The Scene contains all the dynamic entities
 ///
 /// XXX Add physics
@@ -76,13 +79,9 @@ public:
 		return nodes.end();
 	}
 
-	const VisibilityInfo& getVisibilityInfo() const
+	uint32_t getFramesCount() const
 	{
-		return vinfo;
-	}
-	VisibilityInfo& getVisibilityInfo()
-	{
-		return vinfo;
+		return frame;
 	}
 	/// @}
 
@@ -90,7 +89,15 @@ public:
 	void registerNode(SceneNode* node);
 	void unregisterNode(SceneNode* node);
 
-	void update(float prevUpdateTime, float crntTime, int frame);
+	void updateFrameStart()
+	{}
+
+	void update(float prevUpdateTime, float crntTime);
+
+	void updateFrameEnd()
+	{
+		++frame;
+	}
 
 	void doVisibilityTests(Camera& cam);
 
@@ -106,7 +113,7 @@ private:
 	Vec3 ambientCol = Vec3(1.0); ///< The global ambient color
 	Camera* mainCam = nullptr;
 	VisibilityTester vtester;
-	VisibilityInfo vinfo;
+	uint32_t frame = 1;
 
 	/// Add to a container
 	template<typename T>
@@ -159,7 +166,8 @@ private:
 };
 
 typedef Singleton<Scene> SceneSingleton;
+/// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

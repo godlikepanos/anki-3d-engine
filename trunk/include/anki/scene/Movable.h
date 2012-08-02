@@ -4,6 +4,7 @@
 #include "anki/util/Object.h"
 #include "anki/util/Flags.h"
 #include "anki/math/Math.h"
+#include "anki/scene/Scene.h"
 
 namespace anki {
 
@@ -22,7 +23,6 @@ public:
 	{
 		MF_NONE = 0,
 		MF_IGNORE_LOCAL_TRANSFORM = 1, ///< Get the parent's world transform
-		MF_MOVED = 2 ///< Moved in the previous frame
 	};
 
 	/// @name Constructors & destructor
@@ -46,22 +46,22 @@ public:
 	void setLocalTransform(const Transform& x)
 	{
 		lTrf = x;
-		enableFlag(MF_MOVED);
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
 	void setLocalTranslation(const Vec3& x)
 	{
 		lTrf.setOrigin(x);
-		enableFlag(MF_MOVED);
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
 	void setLocalRotation(const Mat3& x)
 	{
 		lTrf.setRotation(x);
-		enableFlag(MF_MOVED);
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
 	void setLocalScale(float x)
 	{
 		lTrf.setScale(x);
-		enableFlag(MF_MOVED);
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
 
 	const Transform& getWorldTransform() const
@@ -80,35 +80,40 @@ public:
 	void rotateLocalX(float angDegrees)
 	{
 		lTrf.getRotation().rotateXAxis(angDegrees);
-		enableFlag(MF_MOVED);
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
 	void rotateLocalY(float angDegrees)
 	{
 		lTrf.getRotation().rotateYAxis(angDegrees);
-		enableFlag(MF_MOVED);
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
 	void rotateLocalZ(float angDegrees)
 	{
 		lTrf.getRotation().rotateZAxis(angDegrees);
-		enableFlag(MF_MOVED);
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
 	void moveLocalX(float distance)
 	{
 		Vec3 x_axis = lTrf.getRotation().getColumn(0);
 		lTrf.getOrigin() += x_axis * distance;
-		enableFlag(MF_MOVED);
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
 	void moveLocalY(float distance)
 	{
 		Vec3 y_axis = lTrf.getRotation().getColumn(1);
 		lTrf.getOrigin() += y_axis * distance;
-		enableFlag(MF_MOVED);
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
 	void moveLocalZ(float distance)
 	{
 		Vec3 z_axis = lTrf.getRotation().getColumn(2);
 		lTrf.getOrigin() += z_axis * distance;
-		enableFlag(MF_MOVED);
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+	}
+	void scale(float s)
+	{
+		lTrf.getScale() += s;
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
 	/// @}
 
@@ -125,14 +130,18 @@ public:
 	void update();
 
 protected:
-	Transform lTrf; ///< The transformation in local space
+	/// The transformation in local space
+	Transform lTrf = Transform::getIdentity();
 
 	/// The transformation in world space (local combined with parent's
 	/// transformation)
-	Transform wTrf;
+	Transform wTrf = Transform::getIdentity();
 
 	/// Keep the previous transformation for checking if it moved
-	Transform prevWTrf;
+	Transform prevWTrf = Transform::getIdentity();
+
+	/// The frame where it was last moved
+	uint32_t lastUpdateFrame = SceneSingleton::get().getFramesCount();
 
 	/// Called for every frame. It updates the @a wTrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.
