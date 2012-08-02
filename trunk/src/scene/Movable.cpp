@@ -4,8 +4,8 @@
 namespace anki {
 
 //==============================================================================
-Movable::Movable(uint flags_, Movable* parent, PropertyMap& pmap)
-	: Base(this, parent), flags(flags_)
+Movable::Movable(uint32_t flags_, Movable* parent, PropertyMap& pmap)
+	: Base(this, parent), Flags(flags_ | MF_MOVED)
 {
 	pmap.addNewProperty(
 		new ReadWritePointerProperty<Transform>("localTransform", &lTrf));
@@ -36,17 +36,17 @@ void Movable::update()
 void Movable::updateWorldTransform()
 {
 	prevWTrf = wTrf;
+	Movable* parent = getParent();
 
-	if(getParent())
+	if(parent)
 	{
 		if(isFlagEnabled(MF_IGNORE_LOCAL_TRANSFORM))
 		{
-			wTrf = getParent()->getWorldTransform();
+			wTrf = parent->getWorldTransform();
 		}
 		else
 		{
-			wTrf = Transform::combineTransformations(
-				getParent()->getWorldTransform(), lTrf);
+			wTrf = parent->getWorldTransform().getTransformed(lTrf);
 		}
 	}
 	else // else copy
@@ -63,6 +63,38 @@ void Movable::updateWorldTransform()
 	else
 	{
 		disableFlag(MF_MOVED);
+	}
+
+
+
+	///////////////////
+	if(parent)
+	{
+		if(parent->isFlagEnabled(MF_MOVED) || isFlagEnabled(MF_MOVED))
+		{
+			enableFlag(MF_MOVED);
+			if(isFlagEnabled(MF_IGNORE_LOCAL_TRANSFORM))
+			{
+				wTrf = parent->getWorldTransform();
+			}
+			else
+			{
+				wTrf = parent->getWorldTransform().getTransformed(lTrf);
+			}
+		}
+	}
+	else
+	{
+		if(isFlagEnabled(MF_MOVED))
+		{
+			wTrf = lTrf;
+		}
+	}
+	///////////////////
+
+	if(isFlagEnabled(MF_MOVED))
+	{
+		movableUpdate();
 	}
 
 	for(Movable* child : getChildren())

@@ -3,6 +3,7 @@
 
 #include "anki/collision/Frustum.h"
 #include "anki/scene/Spatial.h"
+#include "anki/scene/VisibilityTester.h"
 
 namespace anki {
 
@@ -52,6 +53,15 @@ public:
 		frustum->setFar(x);
 		frustumUpdate();
 	}
+
+	const VisibilityInfo& getVisibilityInfo() const
+	{
+		return vinfo;
+	}
+	VisibilityInfo& getVisibilityInfo()
+	{
+		return vinfo;
+	}
 	/// @}
 
 	/// Called when a frustum parameter changes
@@ -71,6 +81,7 @@ public:
 
 protected:
 	Frustum* frustum = nullptr;
+	VisibilityInfo vinfo;
 };
 
 /// Perspective prustumable interface for scene nodes
@@ -201,6 +212,7 @@ private:
 		return *static_cast<const OrthographicFrustum*>(frustum);
 	}
 };
+/// @}
 
 } // namespace anki
 
