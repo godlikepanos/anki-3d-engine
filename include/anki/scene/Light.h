@@ -246,10 +246,11 @@ public:
 	/// @name Frustumable virtuals
 	/// @{
 
-	/// Implements Frustumable::frustumUpdate(). Calculate the projection
+	/// Overrides Frustumable::frustumUpdate(). Calculate the projection
 	/// matrix
 	void frustumUpdate()
 	{
+		Frustumable::frustumUpdate();
 		projectionMat = frustum.calculateProjectionMatrix();
 	}
 	/// @}
