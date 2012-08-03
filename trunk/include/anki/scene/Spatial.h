@@ -2,19 +2,18 @@
 #define ANKI_SCENE_SPATIAL_H
 
 #include "anki/collision/Collision.h"
-
+#include "anki/util/Flags.h"
+#include "anki/scene/Scene.h"
 
 namespace anki {
-
 
 /// @addtogroup Scene
 /// @{
 
-/// Spatial "interface" for scene nodes
-///
-/// It indicates scene nodes that need to be placed in the scene's octree and
-/// they participate in the visibility tests
-class Spatial
+/// Spatial "interface" for scene nodes. It indicates scene nodes that need to 
+/// be placed in the scene's octree and they participate in the visibility 
+/// tests
+class Spatial: public Flags<uint32_t>
 {
 public:
 	/// Spatial flags
@@ -26,7 +25,7 @@ public:
 
 	/// Pass the collision shape here so we can avoid the virtuals
 	Spatial(CollisionShape* cs)
-		: spatialCs(cs), flags(SF_NONE)
+		: spatialCs(cs)
 	{}
 
 	/// @name Accessors
@@ -35,40 +34,14 @@ public:
 	{
 		return *spatialCs;
 	}
-	CollisionShape& getSpatialCollisionShape()
-	{
-		return *spatialCs;
-	}
-	/// @}
-
-	/// @name Flag manipulation
-	/// @{
-	void enableFlag(SpatialFlag flag, bool enable = true)
-	{
-		flags = enable ? flags | flag : flags & ~flag;
-	}
-	void disableFlag(SpatialFlag flag)
-	{
-		enableFlag(flag, false);
-	}
-	bool isFlagEnabled(SpatialFlag flag) const
-	{
-		return flags & flag;
-	}
-	uint getFlagsBitmask() const
-	{
-		return flags;
-	}
 	/// @}
 
 protected:
 	CollisionShape* spatialCs;
-	uint flags;
+	uint32_t lastFrameUpdate = SceneSingleton::get().getFramesCount();
 };
 /// @}
 
-
 } // namespace anki
-
 
 #endif

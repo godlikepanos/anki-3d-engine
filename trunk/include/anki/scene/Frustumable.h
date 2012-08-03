@@ -29,10 +29,6 @@ public:
 	{
 		return *frustum;
 	}
-	Frustum& getFrustum()
-	{
-		return *frustum;
-	}
 
 	float getNear() const
 	{
@@ -65,7 +61,10 @@ public:
 	/// @}
 
 	/// Called when a frustum parameter changes
-	virtual void frustumUpdate() = 0;
+	virtual void frustumUpdate()
+	{
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+	}
 
 	/// Is a spatial inside the frustum?
 	bool insideFrustum(const Spatial& sp) const
@@ -82,6 +81,7 @@ public:
 protected:
 	Frustum* frustum = nullptr;
 	VisibilityInfo vinfo;
+	uint32_t lastUpdateFrame = SceneSingleton::get().getFramesCount();
 };
 
 /// Perspective prustumable interface for scene nodes
