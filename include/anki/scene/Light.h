@@ -138,15 +138,12 @@ public:
 	/// @{
 	float getRadius() const
 	{
-		return sphereL.getRadius();
-	}
-	float& getRadius()
-	{
-		return sphereL.getRadius();
+		return sphereW.getRadius();
 	}
 	void setRadius(const float x)
 	{
-		sphereL.setRadius(x);
+		sphereW.setRadius(x);
+		spatialMarkUpdated();
 	}
 	/// @}
 
@@ -158,13 +155,13 @@ public:
 	void movableUpdate()
 	{
 		Movable::movableUpdate();
-		sphereW = sphereL.getTransformed(getWorldTransform());
+		sphereW.setCenter(getWorldTransform().getOrigin());
+		spatialMarkUpdated();
 	}
 	/// @}
 
 public:
-	Sphere sphereW;
-	Sphere sphereL = {Vec3(0.0), 2.0};
+	Sphere sphereW = Sphere(Vec3(0.0), 2.0);
 };
 
 /// Spot light
@@ -240,6 +237,7 @@ public:
 		Movable::movableUpdate();
 		frustum.setTransform(getWorldTransform());
 		viewMat = Mat4(getWorldTransform().getInverse());
+		spatialMarkUpdated();
 	}
 	/// @}
 
@@ -252,6 +250,7 @@ public:
 	{
 		Frustumable::frustumUpdate();
 		projectionMat = frustum.calculateProjectionMatrix();
+		spatialMarkUpdated();
 	}
 	/// @}
 

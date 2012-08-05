@@ -132,6 +132,12 @@ void mainLoopExtra()
 		mover = SceneSingleton::get().findSceneNode("point1")->getMovable();
 	}
 
+	if(in.getKey(SDL_SCANCODE_L) == 1)
+	{
+		Light* l = SceneSingleton::get().findSceneNode("point1")->getLight();
+		static_cast<PointLight*>(l)->setRadius(10.0);
+	}
+
 	if(in.getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
 	if(in.getKey(SDL_SCANCODE_DOWN)) mover->rotateLocalX(-ang);
 	if(in.getKey(SDL_SCANCODE_LEFT)) mover->rotateLocalY(ang);

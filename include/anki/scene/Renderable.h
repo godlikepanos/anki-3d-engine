@@ -94,12 +94,8 @@ protected:
 private:
 	MaterialVariableProperties props;
 };
-
-
 /// @}
 
-
 } // end namespace anki
-
 
 #endif

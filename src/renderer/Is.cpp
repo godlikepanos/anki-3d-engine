@@ -223,10 +223,10 @@ void Is::spotLightPass(SpotLight& light)
 	shdr->findUniformVariable("lightTex").set(light.getTexture());
 
 	// the shadowmap
-	if(withShadow)
+	/*if(withShadow)
 	{
 		shdr->findUniformVariable("shadowMap").set(sm.getShadowMap());
-	}
+	}*/
 
 	// render quad
 	r->drawQuad();

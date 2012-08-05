@@ -43,6 +43,32 @@ void Scene::update(float prevUpdateTime, float crntTime)
 	}
 
 	doVisibilityTests(*mainCam);
+
+#if 0
+	for(SceneNode* n : nodes)
+	{
+		if(n->getSpatial()
+			&& n->getSpatial()->getSpatialLastUpdateFrame() == frame)
+		{
+			std::cout << "Spatial updated on: " << n->getName()
+				<< std::endl;
+		}
+
+		if(n->getMovable()
+			&& n->getMovable()->getMovableLastUpdateFrame() == frame)
+		{
+			std::cout << "Movable updated on: " << n->getName()
+				<< std::endl;
+		}
+
+		if(n->getFrustumable()
+			&& n->getFrustumable()->getFrustumableLastUpdateFrame() == frame)
+		{
+			std::cout << "Frustumable updated on: " << n->getName()
+				<< std::endl;
+		}
+	}
+#endif
 }
 
 //==============================================================================

@@ -9,8 +9,6 @@ namespace anki {
 void Input::init()
 {
 	ANKI_LOGI("Initializing input...");
-	warpMouseFlag = false;
-	hideCursor = true;
 	reset();
 	ANKI_LOGI("Input initialized");
 }
@@ -18,8 +16,8 @@ void Input::init()
 //==============================================================================
 void Input::reset(void)
 {
-	memset(&keys[0], 0, keys.size() * sizeof(short));
-	memset(&mouseBtns[0], 0, mouseBtns.size() * sizeof(short));
+	memset(&keys[0], 0, keys.size() * sizeof(uint32_t));
+	memset(&mouseBtns[0], 0, mouseBtns.size() * sizeof(uint32_t));
 	mousePosNdc = Vec2(0.0);
 	mouseVelocity = Vec2(0.0);
 }
@@ -27,25 +25,18 @@ void Input::reset(void)
 //==============================================================================
 void Input::handleEvents()
 {
-	if(hideCursor)
-	{
-		SDL_ShowCursor(SDL_DISABLE);
-	}
-	else
-	{
-		SDL_ShowCursor(SDL_ENABLE);
-	}
-
 	// add the times a key is bying pressed
-	for(uint x=0; x<keys.size(); x++)
+	for(uint32_t& k : keys)
 	{
-		if(keys[x]) ++keys[x];
+		if(k)
+		{
+			++k;
+		}
 	}
 	for(int x=0; x<8; x++)
 	{
 		if(mouseBtns[x]) ++mouseBtns[x];
 	}
-
 
 	mouseVelocity = Vec2(0.0);
 
