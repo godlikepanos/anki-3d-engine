@@ -169,6 +169,7 @@ public:
 		updateViewMatrix();
 		updateViewProjectionMatrix();
 		frustum.setTransform(getWorldTransform());
+		spatialMarkUpdated();
 	}
 	/// @}
 
@@ -183,6 +184,7 @@ public:
 		projectionMat = frustum.calculateProjectionMatrix();
 		invProjectionMat = projectionMat.getInverse();
 		updateViewProjectionMatrix();
+		spatialMarkUpdated();
 	}
 	/// @}
 

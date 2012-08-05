@@ -86,6 +86,8 @@ public:
 		(void)frame;
 	}
 
+	uint32_t getLastUpdateFrame();
+
 private:
 	std::string name; ///< A unique name
 	Scene* scene; ///< Keep it here for unregistering
@@ -93,7 +95,7 @@ private:
 /// @}
 
 
-} // end namespace
+} // end namespace anki
 
 
 #endif

@@ -19,12 +19,12 @@ public:
 
 	/// @name Acessors
 	/// @{
-	short getKey(uint32_t i) const
+	uint32_t getKey(uint32_t i) const
 	{
 		return keys[i];
 	}
 
-	short getMouseBtn(uint32_t i) const
+	uint32_t getMouseBtn(uint32_t i) const
 	{
 		return mouseBtns[i];
 	}
@@ -54,13 +54,13 @@ private:
 	/// - 0 times: unpressed
 	/// - 1 times: pressed once
 	/// - >1 times: Kept pressed 'n' times continuously
-	std::array<short, SDL_NUM_SCANCODES> keys;
+	std::array<uint32_t, SDL_NUM_SCANCODES> keys;
 
 	/// Mouse btns. Supporting 3 btns & wheel. @see keys
-	std::array<short, 8> mouseBtns;
+	std::array<uint32_t, 8> mouseBtns;
 	/// @}
 
-	bool warpMouseFlag;
+	bool warpMouseFlag = false;
 
 	// mouse stuff
 	Vec2 mousePosNdc; ///< The coords are in the NDC space
@@ -68,13 +68,13 @@ private:
 	/// corner
 	Vec2 mousePos;
 	Vec2 mouseVelocity;
-	bool hideCursor;
+	bool hideCursor = false;
 
 	void init();
 };
 
 typedef Singleton<Input> InputSingleton;
 
-} // end namespace
+} // end namespace anki
 
 #endif

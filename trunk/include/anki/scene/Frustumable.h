@@ -58,10 +58,20 @@ public:
 	{
 		return vinfo;
 	}
+
+	uint32_t getFrustumableLastUpdateFrame() const
+	{
+		return lastUpdateFrame;
+	}
 	/// @}
 
 	/// Called when a frustum parameter changes
 	virtual void frustumUpdate()
+	{
+		spatialMarkUpdated();
+	}
+
+	void spatialMarkUpdated()
 	{
 		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
@@ -81,6 +91,8 @@ public:
 protected:
 	Frustum* frustum = nullptr;
 	VisibilityInfo vinfo;
+
+private:
 	uint32_t lastUpdateFrame = SceneSingleton::get().getFramesCount();
 };
 

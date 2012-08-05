@@ -34,11 +34,25 @@ public:
 	{
 		return *spatialCs;
 	}
+
+	uint32_t getSpatialLastUpdateFrame() const
+	{
+		return lastUpdateFrame;
+	}
 	/// @}
+
+	/// The derived class has to manually set when the collision shape got
+	/// updated
+	void spatialMarkUpdated()
+	{
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+	}
 
 protected:
 	CollisionShape* spatialCs;
-	uint32_t lastFrameUpdate = SceneSingleton::get().getFramesCount();
+
+private:
+	uint32_t lastUpdateFrame = SceneSingleton::get().getFramesCount();
 };
 /// @}
 

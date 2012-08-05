@@ -46,22 +46,22 @@ public:
 	void setLocalTransform(const Transform& x)
 	{
 		lTrf = x;
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 	void setLocalTranslation(const Vec3& x)
 	{
 		lTrf.setOrigin(x);
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 	void setLocalRotation(const Mat3& x)
 	{
 		lTrf.setRotation(x);
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 	void setLocalScale(float x)
 	{
 		lTrf.setScale(x);
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 
 	const Transform& getWorldTransform() const
@@ -73,6 +73,11 @@ public:
 	{
 		return prevWTrf;
 	}
+
+	uint32_t getMovableLastUpdateFrame() const
+	{
+		return lastUpdateFrame;
+	}
 	/// @}
 
 	/// @name Mess with the local transform
@@ -80,40 +85,40 @@ public:
 	void rotateLocalX(float angDegrees)
 	{
 		lTrf.getRotation().rotateXAxis(angDegrees);
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 	void rotateLocalY(float angDegrees)
 	{
 		lTrf.getRotation().rotateYAxis(angDegrees);
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 	void rotateLocalZ(float angDegrees)
 	{
 		lTrf.getRotation().rotateZAxis(angDegrees);
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 	void moveLocalX(float distance)
 	{
 		Vec3 x_axis = lTrf.getRotation().getColumn(0);
 		lTrf.getOrigin() += x_axis * distance;
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 	void moveLocalY(float distance)
 	{
 		Vec3 y_axis = lTrf.getRotation().getColumn(1);
 		lTrf.getOrigin() += y_axis * distance;
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 	void moveLocalZ(float distance)
 	{
 		Vec3 z_axis = lTrf.getRotation().getColumn(2);
 		lTrf.getOrigin() += z_axis * distance;
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 	void scale(float s)
 	{
 		lTrf.getScale() += s;
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		movableMarkUpdated();
 	}
 	/// @}
 
@@ -146,6 +151,11 @@ protected:
 	/// Called for every frame. It updates the @a wTrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.
 	void updateWorldTransform();
+
+	void movableMarkUpdated()
+	{
+		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+	}
 };
 /// @}
 

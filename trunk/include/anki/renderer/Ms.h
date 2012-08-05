@@ -41,6 +41,6 @@ private:
 	Texture depthFai; ///< The FAI for depth
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

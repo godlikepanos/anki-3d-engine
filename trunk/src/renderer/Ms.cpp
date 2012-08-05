@@ -26,12 +26,15 @@ void Ms::init(const RendererInitializer& initializer)
 		fbo.create();
 		fbo.setColorAttachments({&fai0});
 		fbo.setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT, depthFai);
-		ANKI_ASSERT(fbo.isComplete());
+		if(!fbo.isComplete())
+		{
+			throw ANKI_EXCEPTION("FBO is incomplete");
+		}
 	}
 	catch(std::exception& e)
 	{
 		throw ANKI_EXCEPTION("Cannot create deferred "
-			"shading material stage FBO") << e;
+			"shading material stage") << e;
 	}
 
 	ez.init(initializer);
@@ -86,4 +89,4 @@ void Ms::run()
 	ANKI_CHECK_GL_ERROR();
 }
 
-} // end namespace
+} // end namespace anki

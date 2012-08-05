@@ -37,10 +37,7 @@ PointLight::PointLight(const char* name, Scene* scene,
 	uint32_t movableFlags, Movable* movParent)
 	: Light(LT_POINT, name, scene, movableFlags, movParent, &sphereW)
 {
-	sphereL.setCenter(Vec3(0.0));
-	sphereL.setRadius(1.0);
-
-	float& r = sphereL.getRadius();
+	float& r = sphereW.getRadius();
 	addNewProperty(new ReadWritePointerProperty<float>("radius", &r));
 }
 
