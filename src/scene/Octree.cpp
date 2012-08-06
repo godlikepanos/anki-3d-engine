@@ -3,9 +3,7 @@
 #include "anki/core/Logger.h"
 #include "anki/collision/CollisionAlgorithmsMatrix.h"
 
-
 namespace anki {
-
 
 //==============================================================================
 Octree::Octree(const Aabb& aabb, uint8_t maxDepth_, float looseness_)
@@ -16,7 +14,6 @@ Octree::Octree(const Aabb& aabb, uint8_t maxDepth_, float looseness_)
 	root = new OctreeNode(aabb, NULL);
 	nodes.push_back(root);
 }
-
 
 //==============================================================================
 OctreeNode* Octree::place(const Aabb& aabb)
@@ -32,23 +29,21 @@ OctreeNode* Octree::place(const Aabb& aabb)
 	}
 }
 
-
 //==============================================================================
-OctreeNode* Octree::place(const Aabb& aabb, uint depth, OctreeNode& node)
+OctreeNode* Octree::place(const Aabb& aabb, uint32_t depth, OctreeNode& node)
 {
 	if(depth >= maxDepth)
 	{
 		return &node;
 	}
 
-
-	for(uint i = 0; i < 2; ++i)
+	for(uint32_t i = 0; i < 2; ++i)
 	{
-		for(uint j = 0; j < 2; ++j)
+		for(uint32_t j = 0; j < 2; ++j)
 		{
-			for(uint k = 0; k < 2; ++k)
+			for(uint32_t k = 0; k < 2; ++k)
 			{
-				uint id = i * 4 + j * 2 + k;
+				uint32_t id = i * 4 + j * 2 + k;
 
 				Aabb childAabb;
 				if(node.getChildren()[id] != NULL)
@@ -59,7 +54,6 @@ OctreeNode* Octree::place(const Aabb& aabb, uint depth, OctreeNode& node)
 				{
 					calcAabb(i, j, k, node.getAabb(), childAabb);
 				}
-
 
 				// If aabb its completely inside the target
 				if(aabb.getMax() <= childAabb.getMax() &&
@@ -82,9 +76,8 @@ OctreeNode* Octree::place(const Aabb& aabb, uint depth, OctreeNode& node)
 	return &node;
 }
 
-
 //==============================================================================
-void Octree::calcAabb(uint i, uint j, uint k, const Aabb& paabb,
+void Octree::calcAabb(uint32_t i, uint32_t j, uint32_t k, const Aabb& paabb,
 	Aabb& out) const
 {
 	const Vec3& min = paabb.getMin();
@@ -105,7 +98,7 @@ void Octree::calcAabb(uint i, uint j, uint k, const Aabb& paabb,
 	Vec3 nomax = tmp0 * omax + tmp1 * omin;
 
 	// Crop to fit the parent's AABB
-	for(uint n = 0; n < 3; ++n)
+	for(uint32_t n = 0; n < 3; ++n)
 	{
 		if(nomin[n] < min[n])
 		{
@@ -121,5 +114,4 @@ void Octree::calcAabb(uint i, uint j, uint k, const Aabb& paabb,
 	out = Aabb(nomin, nomax);
 }
 
-
-} // end namespace
+} // end namespace anki

@@ -468,15 +468,15 @@ void SceneDebugDrawer::draw(Spatial& x) const
 }
 
 //==============================================================================
-void SceneDebugDrawer::draw(Octree& octree) const
+void SceneDebugDrawer::draw(const Octree& octree) const
 {
 	dbg->setColor(Vec3(1.0));
 	draw(octree.getRoot(), 0, octree);
 }
 
 //==============================================================================
-void SceneDebugDrawer::draw(OctreeNode& octnode, uint depth,
-	Octree& octree) const
+void SceneDebugDrawer::draw(const OctreeNode& octnode, uint32_t depth,
+	const Octree& octree) const
 {
 	Vec3 color = Vec3(1.0 - float(depth) / float(octree.getMaxDepth()));
 	dbg->setColor(color);
@@ -485,7 +485,7 @@ void SceneDebugDrawer::draw(OctreeNode& octnode, uint depth,
 	octnode.getAabb().accept(v);
 
 	// Children
-	for(uint i = 0; i < 8; ++i)
+	for(uint32_t i = 0; i < 8; ++i)
 	{
 		if(octnode.getChildren()[i] != NULL)
 		{

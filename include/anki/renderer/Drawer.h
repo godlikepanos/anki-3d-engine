@@ -168,7 +168,7 @@ public:
 
 	void draw(SceneNode& node);
 
-	virtual void draw(Octree& octree) const;
+	virtual void draw(const Octree& octree) const;
 
 	void setViewProjectionMatrix(const Mat4& m)
 	{
@@ -182,8 +182,8 @@ private:
 
 	virtual void draw(Spatial& sp) const;
 
-	virtual void draw(OctreeNode& octnode,
-		uint depth, Octree& octree) const;
+	virtual void draw(const OctreeNode& octnode,
+		uint32_t depth, const Octree& octree) const;
 };
 
 class PassLevelKey;

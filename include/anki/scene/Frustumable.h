@@ -68,10 +68,10 @@ public:
 	/// Called when a frustum parameter changes
 	virtual void frustumUpdate()
 	{
-		spatialMarkUpdated();
+		frustumableMarkUpdated();
 	}
 
-	void spatialMarkUpdated()
+	void frustumableMarkUpdated()
 	{
 		lastUpdateFrame = SceneSingleton::get().getFramesCount();
 	}
