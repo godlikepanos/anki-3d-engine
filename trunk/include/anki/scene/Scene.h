@@ -5,6 +5,7 @@
 #include "anki/scene/VisibilityTester.h"
 #include "anki/math/Math.h"
 #include "anki/util/Singleton.h"
+#include "anki/scene/Sector.h"
 #include <vector>
 
 namespace anki {
@@ -106,6 +107,8 @@ public:
 		Types<SceneNode>::NameToItemMap::iterator it = nameToNode.find(name);
 		return (it == nameToNode.end()) ? nullptr : it->second;
 	}
+
+	std::vector<Sector> sectors;
 
 private:
 	Types<SceneNode>::Container nodes;

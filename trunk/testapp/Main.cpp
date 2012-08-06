@@ -98,6 +98,9 @@ void init()
 		Movable::MF_NONE, nullptr);
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		1.0));
+
+	// Sectors
+	scene.sectors.push_back(Sector(Aabb(Vec3(-10.0), Vec3(10.0))));
 }
 
 //==============================================================================

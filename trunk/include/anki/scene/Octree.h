@@ -5,9 +5,7 @@
 #include <boost/array.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
 
-
 namespace anki {
-
 
 /// XXX
 class OctreeNode
@@ -62,7 +60,6 @@ private:
 	}
 };
 
-
 /// XXX
 class Octree
 {
@@ -89,7 +86,7 @@ public:
 	OctreeNode* place(const Aabb& aabb);
 
 private:
-	OctreeNode* root;
+	OctreeNode* root = nullptr;
 	boost::ptr_vector<OctreeNode> nodes; ///< For garbage collection
 	uint maxDepth;
 	float looseness;
@@ -111,8 +108,6 @@ private:
 		Aabb& out) const;
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif
