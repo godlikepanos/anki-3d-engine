@@ -6,7 +6,6 @@
 #include "anki/collision/Obb.h"
 #include "anki/resource/PassLevelKey.h"
 #include "anki/resource/Mesh.h"
-#include <boost/ptr_container/ptr_vector.hpp>
 
 namespace anki {
 
