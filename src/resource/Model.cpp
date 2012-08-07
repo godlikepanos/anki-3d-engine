@@ -5,8 +5,7 @@
 #include "anki/resource/MeshLoader.h"
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/ShaderProgramResource.h"
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
+#include "anki/misc/Xml.h"
 
 namespace anki {
 
@@ -118,24 +117,27 @@ void Model::load(const char* filename)
 {
 	try
 	{
-		//
 		// Load
 		//
-		using namespace boost::property_tree;
-		ptree pt_;
-		read_xml(filename, pt_);
+		XmlDocument doc;
+		doc.loadFile(filename);
 
-		const ptree& pt = pt_.get_child("model");
+		XmlElement rootEl = doc.getChildElement("model");
 
 		// modelPatches
-		for(const ptree::value_type& v : pt.get_child("modelPatches"))
+		XmlElement modelPatchesEl = rootEl.getChildElement("modelPatches");
+		XmlElement modelPatchEl = modelPatchesEl.getChildElement("modelPatch");
+		do
 		{
-			const std::string& mesh = v.second.get<std::string>("mesh");
-			const std::string& material = v.second.get<std::string>("material");
+			XmlElement meshEl = modelPatchEl.getChildElement("mesh");
+			XmlElement materialEl = modelPatchEl.getChildElement("material");
 
-			ModelPatch* patch = new ModelPatch(mesh.c_str(), material.c_str());
+			ModelPatch* patch = new ModelPatch(meshEl.getText(),
+				materialEl.getText());
 			modelPatches.push_back(patch);
-		}
+
+			modelPatchEl = modelPatchEl.getNextSiblingElement("modelPatch");
+		} while(modelPatchEl);
 
 		if(modelPatches.size() < 1)
 		{
