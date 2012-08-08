@@ -10,13 +10,13 @@
 #include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/property_tree/ptree_fwd.hpp>
 
 namespace anki {
 
 // Forward
 class ShaderProgram;
 class ShaderProgramUniformVariable;
+class XmlElement;
 
 /// Material variable base. Its a visitable
 typedef Visitable<float, Vec2, Vec3, Vec4, Mat3, Mat4, TextureResourcePointer> 
@@ -362,14 +362,14 @@ private:
 	PassLevelToShaderProgramHashMap eSProgs;
 
 	/// Parse what is within the @code <material></material> @endcode
-	void parseMaterialTag(const boost::property_tree::ptree& pt);
+	void parseMaterialTag(const XmlElement& el);
 
 	/// Create a unique shader source in chache. If already exists do nothing
 	std::string createShaderProgSourceToCache(const std::string& source);
 
 	/// Read all shader programs and pupulate the @a vars and @a nameToVar
 	/// containers
-	void populateVariables(const boost::property_tree::ptree& pt);
+	void populateVariables(const XmlElement& el);
 
 	/// Parses something like this: "0.0 0.01 -1.2" and returns a valid
 	/// math type
