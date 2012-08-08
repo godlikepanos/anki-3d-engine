@@ -99,25 +99,16 @@ float getAttenuation(in float fragLightDist)
 /// @return The blurred shadow
 float pcfLow(in vec3 shadowUv)
 {
-	const int KERNEL_SIZE = 8;
-	const ivec2 KERNEL[KERNEL_SIZE] = ivec2[]
-	(
-		vec2(1, 1),
-		vec2(1, -1),
-		vec2(-1, 1),
-		vec2(-1, -1),
-		vec2(0, 1),
-		vec2(0, -1),
-		vec2(1, 0),
-		vec2(-1, 0)
-	);
-	
-	float shadowCol = texture(shadowMap, shadowUv);
-	for(int i = 0; i < KERNEL_SIZE; i++)
-	{
-		shadowCol += textureOffset(shadowMap, shadowUv, KERNEL[i]);
-	}
-	
+	shadowCol  = textureOffset(shadowMap, shadowUv, ivec2(-1, -1));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, -1));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, -1));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(-1, 0));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, 0));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, 0));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(-1, 1));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, 1));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, 1));
+
 	shadowCol *= (1.0 / 9.0);
 	return shadowCol;
 }
