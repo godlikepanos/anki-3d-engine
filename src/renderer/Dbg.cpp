@@ -66,10 +66,10 @@ void Dbg::run()
 		sceneDrawer->draw(*node);
 	}
 
-	for(const Sector& sector : scene.sectors)
+	/*for(const Sector& sector : scene.sectors)
 	{
 		sceneDrawer->draw(sector.getOctree());
-	}
+	}*/
 }
 
 } // end namespace anki

@@ -125,12 +125,15 @@ void Model::load(const char* filename)
 		XmlElement rootEl = doc.getChildElement("model");
 
 		// modelPatches
-		XmlElement modelPatchesEl = rootEl.getChildElement("modelPatches");
-		XmlElement modelPatchEl = modelPatchesEl.getChildElement("modelPatch");
+		XmlElement modelPatchesEl =
+			rootEl.getChildElement("modelPatches");
+		XmlElement modelPatchEl =
+			modelPatchesEl.getChildElement("modelPatch");
 		do
 		{
 			XmlElement meshEl = modelPatchEl.getChildElement("mesh");
-			XmlElement materialEl = modelPatchEl.getChildElement("material");
+			XmlElement materialEl =
+				modelPatchEl.getChildElement("material");
 
 			ModelPatch* patch = new ModelPatch(meshEl.getText(),
 				materialEl.getText());

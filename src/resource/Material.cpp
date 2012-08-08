@@ -5,11 +5,11 @@
 #include "anki/util/Filesystem.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/TextureResource.h"
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
+#include "anki/misc/Xml.h"
 #include <functional>
 #include <algorithm>
 #include <map>
+#include <fstream>
 
 namespace anki {
 
@@ -97,10 +97,9 @@ void Material::load(const char* filename)
 	fname = filename;
 	try
 	{
-		using namespace boost::property_tree;
-		ptree pt;
-		read_xml(filename, pt, xml_parser::no_comments);
-		parseMaterialTag(pt.get_child("material"));
+		XmlDocument doc;
+		doc.loadFile(filename);
+		parseMaterialTag(doc.getChildElement("material"));
 	}
 	catch(std::exception& e)
 	{
@@ -109,22 +108,19 @@ void Material::load(const char* filename)
 }
 
 //==============================================================================
-void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
+void Material::parseMaterialTag(const XmlElement& materialEl)
 {
-	using namespace boost::property_tree;
-
 	// renderingStage
 	//
-	renderingStage = pt.get<int>("renderingStage");
+	renderingStage = materialEl.getChildElement("renderingStage").getInt();
 
 	// passes
 	//
-	boost::optional<std::string> pass =
-		pt.get_optional<std::string>("passes");
+	XmlElement passEl = materialEl.getChildElementOptional("passes");
 
-	if(pass)
+	if(passEl)
 	{
-		passes = StringList::splitString(pass.get().c_str(), ' ');
+		passes = StringList::splitString(passEl.getText(), ' ');
 	}
 	else
 	{
@@ -133,11 +129,12 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 
 	// levelsOfDetail
 	//
-	boost::optional<int> lod = pt.get_optional<int>("levelsOfDetail");
+	XmlElement lodEl = materialEl.getChildElementOptional("levelsOfDetail");
 
-	if(lod)
+	if(lodEl)
 	{
-		levelsOfDetail = (lod.get() < 1) ? 1 : lod.get();
+		int tmp = lodEl.getInt();
+		levelsOfDetail = (tmp < 1) ? 1 : tmp;
 	}
 	else
 	{
@@ -146,55 +143,52 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 
 	// shadow
 	//
-	boost::optional<int> sw = pt.get_optional<int>("shadow");
+	XmlElement shadowEl = materialEl.getChildElementOptional("shadow");
 
-	if(sw)
+	if(shadowEl)
 	{
-		shadow = sw.get();
+		shadow = shadowEl.getInt();
 	}
 
 	// blendFunctions
 	//
-	boost::optional<const ptree&> blendFuncsTree =
-		pt.get_child_optional("blendFunctions");
-	if(blendFuncsTree)
+	XmlElement blendFunctionsEl =
+		materialEl.getChildElementOptional("blendFunctions");
+
+	if(blendFunctionsEl)
 	{
 		// sFactor
-		{
-			const std::string& tmp =
-				blendFuncsTree.get().get<std::string>("sFactor");
-			blendingSfactor = blendToEnum(tmp.c_str());
-		}
+		blendingSfactor = blendToEnum(
+			blendFunctionsEl.getChildElement("sFactor").getText());
 
 		// dFactor
-		{
-			const std::string& tmp =
-				blendFuncsTree.get().get<std::string>("dFactor");
-			blendingDfactor = blendToEnum(tmp.c_str());
-		}
+		blendingDfactor = blendToEnum(
+			blendFunctionsEl.getChildElement("dFactor").getText());
 	}
 
 	// depthTesting
 	//
-	boost::optional<int> dp = pt.get_optional<int>("depthTesting");
+	XmlElement depthTestingEl =
+		materialEl.getChildElementOptional("depthTesting");
 
-	if(dp)
+	if(depthTestingEl)
 	{
-		depthTesting = dp.get();
+		depthTesting = depthTestingEl.getInt();
 	}
 
 	// wireframe
 	//
-	boost::optional<int> wf = pt.get_optional<int>("wireframe");
+	XmlElement wireframeEl = materialEl.getChildElementOptional("wireframe");
 
-	if(wf)
+	if(wireframeEl)
 	{
-		wireframe = wf.get();
+		wireframe = wireframeEl.getInt();
 	}
 
 	// shaderProgram
 	//
-	MaterialShaderProgramCreator mspc(pt.get_child("shaderProgram"));
+	XmlElement shaderProgramEl = materialEl.getChildElement("shaderProgram");
+	MaterialShaderProgramCreator mspc(shaderProgramEl);
 
 	for(uint level = 0; level < levelsOfDetail; ++level)
 	{
@@ -222,7 +216,7 @@ void Material::parseMaterialTag(const boost::property_tree::ptree& pt)
 		}
 	}
 
-	populateVariables(pt.get_child("shaderProgram"));
+	populateVariables(shaderProgramEl);
 }
 
 //==============================================================================
@@ -257,10 +251,8 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 }
 
 //==============================================================================
-void Material::populateVariables(const boost::property_tree::ptree& pt)
+void Material::populateVariables(const XmlElement& shaderProgramEl)
 {
-	using namespace boost::property_tree;
-
 	// Get all names of all the uniforms. Dont duplicate
 	//
 	std::map<std::string, GLenum> allVarNames;
@@ -277,33 +269,22 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 	// Iterate all the <input> and get the value
 	//
 	std::map<std::string, std::string> nameToValue;
+	XmlElement shaderEl = shaderProgramEl.getChildElement("shader");
 
-	for(const ptree::value_type& v : pt)
+	do
 	{
-		if(v.first != "shader")
-		{
-			throw ANKI_EXCEPTION("Expected \"shader\" tag and not: " +
-				v.first);
-		}
+		XmlElement insEl = shaderEl.getChildElementOptional("inputs");
 
-		boost::optional<const ptree&> insPt =
-			v.second.get_child_optional("inputs");
-
-		if(!insPt)
+		if(!insEl)
 		{
 			continue;
 		}
 
-		for(const ptree::value_type& vv : insPt.get())
+		XmlElement inEl = insEl.getChildElement("input");
+		do
 		{
-			if(vv.first != "input")
-			{
-				throw ANKI_EXCEPTION("Expected \"input\" tag and not: " 
-					+ vv.first);
-			}
-
-			std::string name = vv.second.get<std::string>("name");
-			std::string value = vv.second.get<std::string>("value");
+			std::string name = inEl.getChildElement("name").getText();
+			std::string value = inEl.getChildElement("value").getText();
 
 			nameToValue[name] = value;
 
@@ -317,8 +298,12 @@ void Material::populateVariables(const boost::property_tree::ptree& pt)
 					<< " not used by shader program. Material:"
 					<< fname);
 			}
-		}
-	}
+
+			inEl = inEl.getNextSiblingElement("input");
+		} while(inEl);
+
+		shaderEl = shaderEl.getNextSiblingElement("shader");
+	} while(shaderEl);
 
 	// Now combine
 	//

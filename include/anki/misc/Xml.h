@@ -6,10 +6,11 @@
 #if !ANKI_TINYXML2
 #	error "Wrong tinyxml2 included"
 #endif
+#include <string>
 
 namespace anki {
 
-/// XXX
+/// XML element
 struct XmlElement
 {
 	friend class XmlDocument;
@@ -20,21 +21,47 @@ public:
 		: el(b.el)
 	{}
 
+	/// If element has something return true
+	operator bool() const
+	{
+		return el != nullptr;
+	}
+
+	/// Copy
+	XmlElement& operator=(const XmlElement& b)
+	{
+		el = b.el;
+		return *this;
+	}
+
+	/// Return the text inside a tag
 	const char* getText() const
 	{
+		check();
 		return el->GetText();
 	}
 
-	XmlElement getChildElementOptional(const char* name)
+	/// Return the text inside as a string
+	int getInt() const
 	{
+		check();
+		return std::stoi(getText());
+	}
+
+	/// Get a child element quietly
+	XmlElement getChildElementOptional(const char* name) const
+	{
+		check();
 		XmlElement out;
 		out.el = el->FirstChildElement(name);
 		return out;
 	}
 
-	XmlElement getChildElement(const char* name)
+	/// Get a child element and throw exception if not found
+	XmlElement getChildElement(const char* name) const
 	{
-		XmlElement out = getChildElementOptional(name);
+		check();
+		const XmlElement out = getChildElementOptional(name);
 		if(!out)
 		{
 			throw ANKI_EXCEPTION("Cannot find <" + name + ">");
@@ -42,30 +69,29 @@ public:
 		return out;
 	}
 
-	XmlElement getNextSiblingElement(const char* name)
+	/// Get the next element with the same name. Returns empty XmlElement if
+	/// it reached the end of the list
+	XmlElement getNextSiblingElement(const char* name) const
 	{
+		check();
 		XmlElement out;
 		out.el = el->NextSiblingElement(name);
 		return out;
 	}
 
-	/// If element has something return true
-	operator bool() const
-	{
-		return el != nullptr;
-	}
-
-	XmlElement& operator=(const XmlElement& b)
-	{
-		el = b.el;
-		return *this;
-	}
-
 private:
 	tinyxml2::XMLElement* el = nullptr;
+
+	void check() const
+	{
+		if(el == nullptr)
+		{
+			throw ANKI_EXCEPTION("Empty element");
+		}
+	}
 };
 
-/// XXX
+/// XML document
 class XmlDocument
 {
 public:
@@ -73,7 +99,8 @@ public:
 	{
 		if(doc.LoadFile(filename))
 		{
-			throw ANKI_EXCEPTION("Cannot parse file");
+			throw ANKI_EXCEPTION("Cannot parse file. Reason: "
+				+ doc.GetErrorStr1());
 		}
 	}
 
