@@ -7,7 +7,7 @@
 #include "anki/scene/Spatial.h"
 #include "anki/resource/Model.h"
 #include "anki/math/Math.h"
-#include <vector>
+#include "anki/util/Vector.h"
 #include <array>
 
 namespace anki {

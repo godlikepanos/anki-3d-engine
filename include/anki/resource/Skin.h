@@ -3,6 +3,7 @@
 
 #include "anki/resource/Resource.h"
 #include "anki/resource/Model.h"
+#include "anki/util/Vector.h"
 
 namespace anki {
 

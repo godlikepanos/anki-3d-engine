@@ -2,7 +2,7 @@
 #define ANKI_SCENE_RENDERABLE_H
 
 #include "anki/scene/Property.h"
-#include <vector>
+#include "anki/util/Vector.h"
 
 namespace anki {
 

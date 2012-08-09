@@ -2,7 +2,7 @@
 #define ANKI_UI_UI_FT_FONT_LOADER_H
 
 #include "anki/math/Math.h"
-#include <vector>
+#include "anki/util/Vector.h"
 #include <boost/range/iterator_range.hpp>
 #include <ft2build.h>
 #include FT_FREETYPE_H

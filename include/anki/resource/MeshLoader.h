@@ -5,7 +5,7 @@
 #include <boost/range/iterator_range.hpp>
 #include <boost/array.hpp>
 #include <string>
-#include <vector>
+#include "anki/util/Vector.h"
 
 namespace anki {
 
