@@ -56,10 +56,10 @@ public:
 		return imgSize;
 	}
 
-	boost::iterator_range<std::vector<Glyph>::const_iterator>
+	boost::iterator_range<Vector<Glyph>::const_iterator>
 		getGlyphs() const
 	{
-		return boost::iterator_range<std::vector<Glyph>::const_iterator>(
+		return boost::iterator_range<Vector<Glyph>::const_iterator>(
 			glyphs.begin(), glyphs.end());
 	}
 
@@ -82,8 +82,8 @@ private:
 	/// @{
 	FT_Library library;
 	FT_Face face;
-	std::vector<Glyph> glyphs;
-	std::vector<uint8_t> img;
+	Vector<Glyph> glyphs;
+	Vector<uint8_t> img;
 	FT_Vector imgSize;
 	uint32_t lineHeight; ///< Calculated as the max height among all glyphs
 	/// @}

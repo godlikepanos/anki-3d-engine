@@ -358,7 +358,7 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 		// Get info log
 		int infoLen = 0;
 		int charsWritten = 0;
-		std::vector<char> infoLog;
+		Vector<char> infoLog;
 
 		glGetShaderiv(glId, GL_INFO_LOG_LENGTH, &infoLen);
 		infoLog.resize(infoLen + 1);

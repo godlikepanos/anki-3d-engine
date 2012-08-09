@@ -54,7 +54,7 @@ class BoneAnim
 public:
 	/// @name Accessors
 	/// @{
-	const std::vector<BonePose>& getBonePoses() const
+	const Vector<BonePose>& getBonePoses() const
 	{
 		return bonePoses;
 	}
@@ -63,7 +63,7 @@ public:
 private:
 	/// The poses for every keyframe. Its empty if the bone doesnt have
 	/// any animation
-	std::vector<BonePose> bonePoses;
+	Vector<BonePose> bonePoses;
 };
 
 
@@ -90,7 +90,7 @@ class SkelAnim
 public:
 	/// @name Accessors
 	/// @{
-	const std::vector<uint>& getKeyframes() const
+	const Vector<uint>& getKeyframes() const
 	{
 		return keyframes;
 	}
@@ -100,7 +100,7 @@ public:
 		return framesNum;
 	}
 
-	const std::vector<BoneAnim>& getBoneAnimations() const
+	const Vector<BoneAnim>& getBoneAnimations() const
 	{
 		return boneAnims;
 	}
@@ -110,9 +110,9 @@ public:
 	void load(const char* filename);
 
 private:
-	std::vector<uint> keyframes;
+	Vector<uint> keyframes;
 	uint framesNum;
-	std::vector<BoneAnim> boneAnims;
+	Vector<BoneAnim> boneAnims;
 };
 
 

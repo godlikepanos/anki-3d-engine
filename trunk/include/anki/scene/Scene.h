@@ -22,7 +22,7 @@ public:
 	template<typename T>
 	struct Types
 	{
-		typedef std::vector<T*> Container;
+		typedef Vector<T*> Container;
 		typedef typename Container::iterator Iterator;
 		typedef typename Container::const_iterator ConstIterator;
 		typedef typename ConstCharPtrHashMap<T*>::Type NameToItemMap;
@@ -108,7 +108,7 @@ public:
 		return (it == nameToNode.end()) ? nullptr : it->second;
 	}
 
-	std::vector<Sector> sectors;
+	Vector<Sector> sectors;
 
 private:
 	Types<SceneNode>::Container nodes;

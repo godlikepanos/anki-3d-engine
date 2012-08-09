@@ -31,7 +31,7 @@ class ParticleEmitterNode: public SceneNode, public ParticleEmitterRsrc
 
 	private:
 		boost::scoped_ptr<btCollisionShape> collShape;
-		std::vector<Particle*> particles;
+		Vector<Particle*> particles;
 		float timeLeftForNextEmission;
 		/// The resource
 		ParticleEmitterRsrcResourcePointer particleEmitterProps;

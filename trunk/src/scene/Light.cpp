@@ -1,5 +1,4 @@
 #include "anki/scene/Light.h"
-#include "anki/resource/LightRsrc.h"
 
 namespace anki {
 

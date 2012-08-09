@@ -6,98 +6,81 @@
 #include "anki/resource/PassLevelKey.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/Material.h"
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
-
+#include "anki/misc/Xml.h"
 
 namespace anki {
-
 
 //==============================================================================
 
 Skin::Skin()
 {}
 
-
 Skin::~Skin()
 {}
-
 
 //==============================================================================
 void Skin::load(const char* filename)
 {
 	try
 	{
-		//
 		// Load
 		//
-		using namespace boost::property_tree;
-		ptree pt_;
-		read_xml(filename, pt_);
+		XmlDocument doc;
+		doc.loadFile(filename);
 
-		const ptree& pt = pt_.get_child("skin");
+		XmlElement skinEl = doc.getChildElement("skin");
 
 		// model
-		model.load(pt.get<std::string>("model").c_str());
+		model.load(skinEl.getChildElement("model").getText());
 
 		// skeleton
-		skeleton.load(pt.get<std::string>("skeleton").c_str());
+		skeleton.load(skinEl.getChildElement("skeleton").getText());
 
 		// Anims
-		boost::optional<const ptree&> skelAnimsTree =
-			pt.get_child_optional("skelAnims");
-		if(skelAnimsTree)
+		XmlElement skelAnimsEl = skinEl.getChildElementOptional("skelAnims");
+		if(skelAnimsEl)
 		{
-			BOOST_FOREACH(const ptree::value_type& v, skelAnimsTree.get())
-			{
-				if(v.first != "skelAnim")
-				{
-					throw ANKI_EXCEPTION("Expected skelAnim and no " + v.first);
-				}
+			XmlElement skelAnimEl = skelAnimsEl.getChildElement("skelAnim");
 
-				const std::string& name = v.second.data();
+			do
+			{
 				skelAnims.push_back(SkelAnimResourcePointer());
-				skelAnims.back().load(name.c_str());
-			}
+				skelAnims.back().load(skelAnimEl.getText());
+
+				skelAnimEl = skelAnimEl.getNextSiblingElement("skelAnim");
+			} while(skelAnimEl);
 		}
 
-		//
 		// Sanity checks
 		//
 
 		// Anims and skel bones num check
-		BOOST_FOREACH(const SkelAnimResourcePointer& skelAnim, skelAnims)
+		for(const SkelAnimResourcePointer& skelAnim : skelAnims)
 		{
 			// Bone number problem
 			if(skelAnim->getBoneAnimations().size() !=
 				skeleton->getBones().size())
 			{
-				throw ANKI_EXCEPTION("Skeleton animation \"" +
-					skelAnim.getResourceName() + "\" and skeleton \"" +
-					skeleton.getResourceName() +
-					"\" dont have equal bone count");
+				throw ANKI_EXCEPTION("Skeleton animation \"" 
+					+ skelAnim.getResourceName() + "\" and skeleton \"" 
+					+ skeleton.getResourceName() 
+					+ "\" dont have equal bone count");
 			}
 		}
 
 		// All meshes should have vert weights
-		for(Model::ModelPatchesContainer::const_iterator it =
-			model->getModelPatches().begin();
-			it != model->getModelPatches().end(); ++it)
+		for(const ModelPatch& patch : model->getModelPatches())
 		{
-			const ModelPatch& patch = *it;
-
 			if(!patch.getMeshBase().hasWeights())
 			{
 				throw ANKI_EXCEPTION("Mesh does not support HW skinning");
 			}
 		}
-	  }
+	}
 	catch(const std::exception& e)
 	{
 		throw ANKI_EXCEPTION("Skin loading failed: " + filename) << e;
 	}
 }
 
-
-} // end namespace
+} // end namespace anki

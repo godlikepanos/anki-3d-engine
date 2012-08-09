@@ -46,7 +46,7 @@ void MaterialShaderProgramCreator::parseShaderTag(
 
 	// <includes></includes>
 	//
-	std::vector<std::string> includeLines;
+	Vector<std::string> includeLines;
 
 	XmlElement includesEl = shaderEl.getChildElement("includes");
 	XmlElement includeEl = includesEl.getChildElement("include");
@@ -69,7 +69,7 @@ void MaterialShaderProgramCreator::parseShaderTag(
 	if(inputsEl)
 	{
 		// Store the source of the uniform vars
-		std::vector<std::string> uniformsLines;
+		Vector<std::string> uniformsLines;
 	
 		XmlElement inputEl = inputsEl.getChildElement("input");
 		do

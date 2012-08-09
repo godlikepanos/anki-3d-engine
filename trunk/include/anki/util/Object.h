@@ -16,7 +16,7 @@ class Object
 {
 public:
 	typedef T Value;
-	typedef std::vector<Value*> Container;
+	typedef Vector<Value*> Container;
 	typedef boost::iterator_range<typename Container::const_iterator>
 		ConstIteratorRange;
 	typedef boost::iterator_range<typename Container::iterator>

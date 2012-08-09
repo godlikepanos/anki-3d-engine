@@ -58,7 +58,7 @@ class PhysWorld
 		/// Keep here for garbage collection
 		boost::scoped_ptr<btIDebugDraw> debugDrawer;
 		float defaultContactProcessingThreshold;
-		std::vector<Character*> characters;
+		Vector<Character*> characters;
 };
 
 

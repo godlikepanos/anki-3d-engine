@@ -211,7 +211,7 @@ void MeshLoader::createVertNormals()
 void MeshLoader::createVertTangents()
 {
 	vertTangents.resize(vertCoords.size(), Vec4(0.0)); // alloc
-	std::vector<Vec3> bitagents(vertCoords.size(), Vec3(0.0));
+	Vector<Vec3> bitagents(vertCoords.size(), Vec3(0.0));
 
 	for(uint i = 0; i < tris.size(); i++)
 	{

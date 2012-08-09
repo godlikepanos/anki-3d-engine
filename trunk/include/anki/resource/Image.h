@@ -89,7 +89,7 @@ private:
 	uint32_t width = 0; ///< Image width
 	uint32_t height = 0; ///< Image height
 	ColorType type; ///< Image color type
-	std::vector<uint8_t> data; ///< Image data
+	Vector<uint8_t> data; ///< Image data
 	DataCompression dataCompression;
 
 	/// @name TGA headers
