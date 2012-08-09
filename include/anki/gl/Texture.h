@@ -113,7 +113,7 @@ private:
 	};
 
 	/// Texture units
-	std::vector<Unit> units;
+	Vector<Unit> units;
 	/// The active texture unit
 	int activeUnit;
 	/// How many times the @a choseUnit has been called. Used to set the 

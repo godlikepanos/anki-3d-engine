@@ -57,7 +57,7 @@ private:
 class Renderable
 {
 public:
-	typedef std::vector<PropertyBase*> MaterialVariableProperties;
+	typedef Vector<PropertyBase*> MaterialVariableProperties;
 
 	Renderable()
 	{}

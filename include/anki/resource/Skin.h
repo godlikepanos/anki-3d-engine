@@ -4,17 +4,15 @@
 #include "anki/resource/Resource.h"
 #include "anki/resource/Model.h"
 
-
 namespace anki {
-
 
 class Skeleton;
 class SkelAnim;
 
-
+/// Skin resource
+/// 
 /// XML file format:
-/// @code
-/// <skin>
+/// @code<skin>
 /// 	<model>path/to/model.mdl</model>
 /// 	<skeleton>path/to/skeleton.skel</skeleton>
 /// 	<skelAnims>
@@ -22,12 +20,11 @@ class SkelAnim;
 /// 		...
 /// 		<skelAnim>...</skelAnim>
 /// 	</skelAnims>
-/// </skin>
-/// @endcode
+/// </skin>@endcode
 class Skin
 {
 public:
-	typedef std::vector<SkelAnimResourcePointer> SkeletonAnimationsContainer;
+	typedef Vector<SkelAnimResourcePointer> SkeletonAnimationsContainer;
 
 	Skin();
 	~Skin();
@@ -63,8 +60,6 @@ private:
 	/// @}
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

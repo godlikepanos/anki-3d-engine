@@ -22,8 +22,8 @@ class VisibilityInfo
 	friend class VisibilityTester;
 
 public:
-	typedef std::vector<Renderable*> Renderables;
-	typedef std::vector<Light*> Lights;
+	typedef Vector<Renderable*> Renderables;
+	typedef Vector<Light*> Lights;
 
 	Renderables::iterator getRenderablesBegin()
 	{

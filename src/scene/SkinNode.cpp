@@ -240,14 +240,14 @@ void SkinNode::frameUpdate(float prevUpdateTime, float crntTime, int f)
 
 //==============================================================================
 void SkinNode::interpolate(const SkelAnim& animation, float frame,
-	std::vector<Vec3>& boneTranslations, std::vector<Mat3>& boneRotations)
+	Vector<Vec3>& boneTranslations, std::vector<Mat3>& boneRotations)
 {
 	ANKI_ASSERT(frame < animation.getFramesNum());
 
 	// calculate the t (used in slerp and lerp) using the keyframs and the
 	// frame and calc the lPose and rPose witch indicate the pose IDs in witch
 	// the frame lies between
-	const std::vector<uint>& keyframes = animation.getKeyframes();
+	const Vector<uint>& keyframes = animation.getKeyframes();
 	float t = 0.0;
 	uint lPose = 0, rPose = 0;
 	for(uint j = 0; j < keyframes.size(); j++)
@@ -305,7 +305,7 @@ void SkinNode::interpolate(const SkelAnim& animation, float frame,
 
 //==============================================================================
 void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
-	std::vector<Vec3>& boneTranslations, std::vector<Mat3>& boneRotations)
+	Vector<Vec3>& boneTranslations, std::vector<Mat3>& boneRotations)
 {
 	std::array<uint, 128> queue;
 	uint head = 0, tail = 0;
@@ -363,9 +363,9 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 
 //==============================================================================
 void SkinNode::deformHeadsTails(const Skeleton& skeleton,
-    const std::vector<Vec3>& boneTranslations,
-    const std::vector<Mat3>& boneRotations,
-    std::vector<Vec3>& heads, std::vector<Vec3>& tails)
+    const Vector<Vec3>& boneTranslations,
+    const Vector<Mat3>& boneRotations,
+    Vector<Vec3>& heads, std::vector<Vec3>& tails)
 {
 	for(uint i = 0; i < skeleton.getBones().size(); i++)
 	{

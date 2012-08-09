@@ -64,7 +64,7 @@ private:
 	/// This is a container of some precalculated spheres. Its a map that
 	/// from sphere complexity it returns a vector of lines (Vec3s in
 	/// pairs)
-	std::map<uint, std::vector<Vec3>> complexityToPreCalculatedSphere;
+	std::map<uint, Vector<Vec3>> complexityToPreCalculatedSphere;
 };
 
 

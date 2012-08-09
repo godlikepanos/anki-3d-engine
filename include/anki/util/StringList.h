@@ -10,11 +10,11 @@ namespace anki {
 /// @{
 
 /// A simple convenience class for string lists
-class StringList: public std::vector<std::string>
+class StringList: public Vector<std::string>
 {
 public:
 	typedef StringList Self; ///< Self type
-	typedef std::vector<std::string> Base; ///< Its the vector of strings
+	typedef Vector<std::string> Base; ///< Its the vector of strings
 	typedef Base::value_type String; ///< Its string
 	typedef String::value_type Char; ///< Char type
 

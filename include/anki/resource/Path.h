@@ -11,9 +11,9 @@ namespace anki {
 class Path
 {
 	public:
-		std::vector<Vec3> positions; ///< AKA translations
-		std::vector<Mat3> rotations;
-		std::vector<float>  scales;
+		Vector<Vec3> positions; ///< AKA translations
+		Vector<Mat3> rotations;
+		Vector<float>  scales;
 		float         step;
 
 		Path() {}

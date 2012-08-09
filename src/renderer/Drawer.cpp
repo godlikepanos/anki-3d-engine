@@ -100,11 +100,11 @@ void DebugDrawer::drawGrid()
 //==============================================================================
 void DebugDrawer::drawSphere(float radius, int complexity)
 {
-	std::vector<Vec3>* sphereLines;
+	Vector<Vec3>* sphereLines;
 
 	// Pre-calculate the sphere points5
 	//
-	std::map<uint, std::vector<Vec3> >::iterator it =
+	std::map<uint, Vector<Vec3> >::iterator it =
 		complexityToPreCalculatedSphere.find(complexity);
 
 	if(it != complexityToPreCalculatedSphere.end()) // Found
@@ -113,7 +113,7 @@ void DebugDrawer::drawSphere(float radius, int complexity)
 	}
 	else // Not found
 	{
-		complexityToPreCalculatedSphere[complexity] = std::vector<Vec3>();
+		complexityToPreCalculatedSphere[complexity] = Vector<Vec3>();
 		sphereLines = &complexityToPreCalculatedSphere[complexity];
 
 		float fi = Math::PI / complexity;

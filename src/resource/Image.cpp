@@ -255,7 +255,7 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 	uint channels;
 	uint rowbytes;
 	uint colorType;
-	std::vector<png_bytep> rowPointers;
+	Vector<png_bytep> rowPointers;
 
 	// Open file
 	//

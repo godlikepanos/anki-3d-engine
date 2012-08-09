@@ -75,37 +75,37 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const std::vector<Vec3>& getVertCoords() const
+	const Vector<Vec3>& getVertCoords() const
 	{
 		return vertCoords;
 	}
 
-	const std::vector<Vec3>& getVertNormals() const
+	const Vector<Vec3>& getVertNormals() const
 	{
 		return vertNormals;
 	}
 
-	const std::vector<Vec4>& getVertTangents() const
+	const Vector<Vec4>& getVertTangents() const
 	{
 		return vertTangents;
 	}
 
-	const std::vector<Vec2>& getTexCoords() const
+	const Vector<Vec2>& getTexCoords() const
 	{
 		return texCoords;
 	}
 
-	const std::vector<VertexWeight>& getVertWeights() const
+	const Vector<VertexWeight>& getVertWeights() const
 	{
 		return vertWeights;
 	}
 
-	const std::vector<Triangle>& getTris() const
+	const Vector<Triangle>& getTris() const
 	{
 		return tris;
 	}
 
-	const std::vector<ushort>& getVertIndeces() const
+	const Vector<ushort>& getVertIndeces() const
 	{
 		return vertIndeces;
 	}
@@ -114,15 +114,15 @@ public:
 private:
 	/// @name Data
 	/// @{
-	std::vector<Vec3> vertCoords; ///< Loaded from file
-	std::vector<Vec3> vertNormals; ///< Generated
-	std::vector<Vec4> vertTangents; ///< Generated
+	Vector<Vec3> vertCoords; ///< Loaded from file
+	Vector<Vec3> vertNormals; ///< Generated
+	Vector<Vec4> vertTangents; ///< Generated
 	/// Optional. One for every vert so we can use vertex arrays & VBOs
-	std::vector<Vec2> texCoords;
-	std::vector<VertexWeight> vertWeights; ///< Optional
-	std::vector<Triangle> tris; ///< Required
+	Vector<Vec2> texCoords;
+	Vector<VertexWeight> vertWeights; ///< Optional
+	Vector<Triangle> tris; ///< Required
 	/// Generated. Used for vertex arrays & VBOs
-	std::vector<ushort> vertIndeces;
+	Vector<ushort> vertIndeces;
 	/// @}
 
 	/// Load the mesh data from a binary file

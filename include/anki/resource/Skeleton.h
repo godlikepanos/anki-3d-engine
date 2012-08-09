@@ -128,14 +128,14 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const std::vector<Bone>& getBones() const
+	const Vector<Bone>& getBones() const
 	{
 		return bones;
 	}
 	/// @}
 
 private:
-	std::vector<Bone> bones;
+	Vector<Bone> bones;
 };
 
 

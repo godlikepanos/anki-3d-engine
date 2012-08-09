@@ -242,22 +242,22 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const std::vector<Vec3>& getHeads() const
+	const Vector<Vec3>& getHeads() const
 	{
 		return heads;
 	}
 
-	const std::vector<Vec3>& getTails() const
+	const Vector<Vec3>& getTails() const
 	{
 		return tails;
 	}
 
-	const std::vector<Mat3>& getBoneRotations() const
+	const Vector<Mat3>& getBoneRotations() const
 	{
 		return boneRotations;
 	}
 
-	const std::vector<Vec3>& getBoneTranslations() const
+	const Vector<Vec3>& getBoneTranslations() const
 	{
 		return boneTranslations;
 	}
@@ -322,10 +322,10 @@ private:
 
 	/// @name Bone data
 	/// @{
-	std::vector<Vec3> heads;
-	std::vector<Vec3> tails;
-	std::vector<Mat3> boneRotations;
-	std::vector<Vec3> boneTranslations;
+	Vector<Vec3> heads;
+	Vector<Vec3> tails;
+	Vector<Mat3> boneRotations;
+	Vector<Vec3> boneTranslations;
 	/// @}
 
 	/// Interpolate
@@ -334,17 +334,17 @@ private:
 	/// @param[out] translations Translations vector
 	/// @param[out] rotations Rotations vector
 	static void interpolate(const SkelAnim& animation, float frame,
-		std::vector<Vec3>& translations, std::vector<Mat3>& rotations);
+		Vector<Vec3>& translations, std::vector<Mat3>& rotations);
 
 	/// Calculate the global pose
 	static void updateBoneTransforms(const Skeleton& skel,
-		std::vector<Vec3>& translations, std::vector<Mat3>& rotations);
+		Vector<Vec3>& translations, std::vector<Mat3>& rotations);
 
 	/// Deform the heads and tails
 	static void deformHeadsTails(const Skeleton& skeleton,
-		const std::vector<Vec3>& boneTranslations,
-		const std::vector<Mat3>& boneRotations,
-		std::vector<Vec3>& heads, std::vector<Vec3>& tails);
+		const Vector<Vec3>& boneTranslations,
+		const Vector<Mat3>& boneRotations,
+		Vector<Vec3>& heads, std::vector<Vec3>& tails);
 };
 
 } // end namespace

@@ -220,7 +220,7 @@ public:
 	void init(ShaderProgram& prog, const char* blockName);
 
 private:
-	std::vector<ShaderProgramUniformVariable*> uniforms;
+	Vector<ShaderProgramUniformVariable*> uniforms;
 	GLuint index = GL_INVALID_INDEX;
 	uint32_t size = 0; ///< In bytes
 	std::string name;
@@ -232,13 +232,13 @@ private:
 class ShaderProgram: public NonCopyable
 {
 public:
-	typedef std::vector<std::shared_ptr<ShaderProgramVariable>>
+	typedef Vector<std::shared_ptr<ShaderProgramVariable>>
 		VariablesContainer;
-	typedef std::vector<ShaderProgramUniformVariable*>
+	typedef Vector<ShaderProgramUniformVariable*>
 		UniformVariablesContainer;
-	typedef std::vector<ShaderProgramAttributeVariable*>
+	typedef Vector<ShaderProgramAttributeVariable*>
 		AttributeVariablesContainer;
-	typedef std::vector<ShaderProgramUniformBlock>
+	typedef Vector<ShaderProgramUniformBlock>
 		UniformBlocksContainer;
 
 	/// @name Constructors/Destructor

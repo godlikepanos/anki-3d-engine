@@ -13,7 +13,6 @@
 #include "anki/resource/Material.h"
 #include "anki/scene/Scene.h"
 #include "anki/resource/SkelAnim.h"
-#include "anki/resource/LightRsrc.h"
 #include "anki/misc/Parser.h"
 #include "anki/scene/ParticleEmitterNode.h"
 #include "anki/physics/Character.h"
