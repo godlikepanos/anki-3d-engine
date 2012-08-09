@@ -2,7 +2,7 @@
 #define ANKI_UTIL_OBJECT_H
 
 #include "anki/util/Assert.h"
-#include <vector>
+#include "anki/util/Vector.h"
 #include <boost/range/iterator_range.hpp>
 
 namespace anki {

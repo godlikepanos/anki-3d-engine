@@ -2,7 +2,7 @@
 #define ANKI_RESOURCE_SKELETON_H
 
 #include "anki/math/Math.h"
-#include <vector>
+#include "anki/util/Vector.h"
 #include <array>
 
 

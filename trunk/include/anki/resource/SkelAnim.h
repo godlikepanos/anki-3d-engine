@@ -2,7 +2,7 @@
 #define ANKI_RESOURCE_SKEL_ANIM_H
 
 #include "anki/math/Math.h"
-#include <vector>
+#include "anki/util/Vector.h"
 
 
 namespace anki {

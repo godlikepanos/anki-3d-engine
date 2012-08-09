@@ -2,7 +2,7 @@
 #define ANKI_PHYSICS_PHYS_WORLD_H
 
 #include "anki/physics/Convertors.h"
-#include <vector>
+#include "anki/util/Vector.h"
 #include <boost/scoped_ptr.hpp>
 #include <bullet/btBulletCollisionCommon.h>
 #include <bullet/btBulletDynamicsCommon.h>

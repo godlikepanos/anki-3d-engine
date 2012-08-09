@@ -10,10 +10,14 @@ namespace anki {
 /// @addtogroup util
 /// @{
 
+template<typename T>
+using Vector = std::vector<T>;
+
+#if 0
 /// This is a wrapper of Vector that adds new functionality and assertions
 /// in operator[]
 template<typename Type, typename Allocator = std::allocator<Type>>
-class Vector: public Vector<Type, Allocator>
+class Vector: public std::vector<Type, Allocator>
 {
 public:
 	typedef Vector<Type, Allocator> Base;
@@ -68,6 +72,7 @@ public:
 	}
 	/// @}
 };
+#endif
 /// @}
 
 } // end namespace anki

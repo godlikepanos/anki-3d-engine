@@ -2,7 +2,7 @@
 #define ANKI_RESOURCE_IMAGE_H
 
 #include "anki/util/Functions.h"
-#include <vector>
+#include "anki/util/Vector.h"
 #include <iosfwd>
 #include <cstdint>
 

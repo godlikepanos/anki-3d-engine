@@ -7,7 +7,7 @@
 #include "anki/math/Forward.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"
-#include <vector>
+#include "anki/util/Vector.h"
 #include <string>
 #include <memory>
 

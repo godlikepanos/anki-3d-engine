@@ -1,7 +1,7 @@
 #ifndef ANKI_UTIL_STRING_LIST_H
 #define ANKI_UTIL_STRING_LIST_H
 
-#include <vector>
+#include "anki/util/Vector.h"
 #include <string>
 
 namespace anki {

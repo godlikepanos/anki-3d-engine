@@ -4,7 +4,7 @@
 #include "anki/resource/ShaderProgramCommon.h"
 #include <limits>
 #include <boost/array.hpp>
-#include <vector>
+#include "anki/util/Vector.h"
 
 
 namespace anki {

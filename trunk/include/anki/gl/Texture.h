@@ -5,7 +5,7 @@
 #include "anki/util/Singleton.h"
 #include "anki/gl/Ogl.h"
 #include <cstdlib>
-#include <vector>
+#include "anki/util/Vector.h"
 #include <limits>
 #include <thread>
 

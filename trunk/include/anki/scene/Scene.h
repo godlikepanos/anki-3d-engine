@@ -6,7 +6,7 @@
 #include "anki/math/Math.h"
 #include "anki/util/Singleton.h"
 #include "anki/scene/Sector.h"
-#include <vector>
+#include "anki/util/Vector.h"
 
 namespace anki {
 

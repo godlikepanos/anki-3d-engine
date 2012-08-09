@@ -1,7 +1,7 @@
 #ifndef ANKI_SCENE_VISIBILITY_TESTER_H
 #define ANKI_SCENE_VISIBILITY_TESTER_H
 
-#include <vector>
+#include "anki/util/Vector.h"
 #include <cstdint>
 
 namespace anki {
