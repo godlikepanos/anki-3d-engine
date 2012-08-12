@@ -103,7 +103,9 @@ void PerspectiveFrustum::setTransform(const Transform& trf_)
 //==============================================================================
 void PerspectiveFrustum::getAabb(Aabb& aabb) const
 {
-	aabb.set(dirs);
+	std::array<Vec3, 5> points = {{
+		dirs[0], dirs[1], dirs[2], dirs[3], Vec3(0.0)}};
+	aabb.set(points);
 	aabb.getMin() += eye;
 	aabb.getMax() += eye;
 }

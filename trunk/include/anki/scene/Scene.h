@@ -108,7 +108,7 @@ public:
 		return (it == nameToNode.end()) ? nullptr : it->second;
 	}
 
-	Vector<Sector> sectors;
+	PtrVector<Sector> sectors;
 
 private:
 	Types<SceneNode>::Container nodes;

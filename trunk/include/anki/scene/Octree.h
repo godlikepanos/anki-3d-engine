@@ -2,26 +2,31 @@
 #define ANKI_SCENE_OCTREE_H
 
 #include "anki/collision/Aabb.h"
-#include <boost/array.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
+#include "anki/util/Vector.h"
+#include <array>
+#include <memory>
 
 namespace anki {
 
-/// XXX
+class Spatial;
+
+/// Octree node
 class OctreeNode
 {
+	friend class Octree;
+
 public:
+	typedef std::array<std::unique_ptr<OctreeNode>, 8> ChildrenContainer;
+
 	OctreeNode(const Aabb& aabb_, OctreeNode* parent_)
 		: parent(parent_), aabb(aabb_)
-	{
-		initArr();
-	}
+	{}
 
 	/// @name Accessors
 	/// @{
-	const boost::array<OctreeNode*, 8>& getChildren() const
+	const OctreeNode* getChild(uint32_t id) const
 	{
-		return children;
+		return children[id].get();
 	}
 
 	const OctreeNode* getParent() const
@@ -33,34 +38,40 @@ public:
 	{
 		return aabb;
 	}
+
+	Vector<Spatial*>::iterator getSpatialsBegin()
+	{
+		return spatials.begin();
+	}
+	Vector<Spatial*>::iterator getSpatialsEnd()
+	{
+		return spatials.end();
+	}
+	uint32_t getSpatialsCount() const
+	{
+		return spatials.size();
+	}
 	/// @}
 
 	bool isRoot() const
 	{
-		return parent == NULL;
+		return parent == nullptr;
 	}
 
-	void addChild(uint pos, OctreeNode& child)
+	void addChild(uint32_t pos, OctreeNode* child)
 	{
-		child.parent = this;
-		children[pos] = &child;
+		child->parent = this;
+		children[pos].reset(child);
 	}
 
 private:
-	boost::array<OctreeNode*, 8> children;
+	ChildrenContainer children;
 	OctreeNode* parent;
 	Aabb aabb; ///< Including AABB
-
-	void initArr()
-	{
-		for(size_t i = 0; i < children.size(); ++i)
-		{
-			children[i] = NULL;
-		}
-	}
+	Vector<Spatial*> spatials;
 };
 
-/// XXX
+/// Octree
 class Octree
 {
 public:
@@ -70,28 +81,31 @@ public:
 	/// @{
 	const OctreeNode& getRoot() const
 	{
-		return *root;
+		return root;
 	}
 	OctreeNode& getRoot()
 	{
-		return *root;
+		return root;
 	}
 
-	uint getMaxDepth() const
+	uint32_t getMaxDepth() const
 	{
 		return maxDepth;
 	}
 	/// @}
 
+	void placeSpatial(Spatial* sp);
+
+	/// Place an AABB inside the tree. The algorithm is pretty simple, find the
+	/// node that completely includes the aabb. If found then go deeper into
+	/// the node's children. The aabb will not be in more than one nodes. Also,
+	/// if it is ourside the tree then return nullptr
 	OctreeNode* place(const Aabb& aabb);
 
 private:
-	OctreeNode* root = nullptr;
-	boost::ptr_vector<OctreeNode> nodes; ///< For garbage collection
-	uint maxDepth;
+	uint32_t maxDepth;
 	float looseness;
-
-	//void createSubTree(uint rdepth, OctreeNode& parent);
+	OctreeNode root;
 
 	OctreeNode* place(const Aabb& aabb, uint depth, OctreeNode& node);
 

@@ -461,10 +461,12 @@ void SceneDebugDrawer::draw(Frustumable& fr) const
 //==============================================================================
 void SceneDebugDrawer::draw(Spatial& x) const
 {
-	const CollisionShape& cs = x.getSpatialCollisionShape();
+	/*const CollisionShape& cs = x.getSpatialCollisionShape();
 
 	CollisionDebugDrawer coldraw(dbg);
-	cs.accept(coldraw);
+	cs.accept(coldraw);*/
+	CollisionDebugDrawer coldraw(dbg);
+	x.getAabb().accept(coldraw);
 }
 
 //==============================================================================
@@ -478,18 +480,23 @@ void SceneDebugDrawer::draw(const Octree& octree) const
 void SceneDebugDrawer::draw(const OctreeNode& octnode, uint32_t depth,
 	const Octree& octree) const
 {
-	Vec3 color = Vec3(1.0 - float(depth) / float(octree.getMaxDepth()));
-	dbg->setColor(color);
+	// Draw if it has spatials
+	if(octnode.getSpatialsCount() != 0)
+	{
+		//Vec3 color = Vec3(1.0 - float(depth) / float(octree.getMaxDepth()));
+		Vec3 color(1.0);
+		dbg->setColor(color);
 
-	CollisionDebugDrawer v(dbg);
-	octnode.getAabb().accept(v);
+		CollisionDebugDrawer v(dbg);
+		octnode.getAabb().accept(v);
+	}
 
 	// Children
 	for(uint32_t i = 0; i < 8; ++i)
 	{
-		if(octnode.getChildren()[i] != NULL)
+		if(octnode.getChild(i) != nullptr)
 		{
-			draw(*octnode.getChildren()[i], depth + 1, octree);
+			draw(*octnode.getChild(i), depth + 1, octree);
 		}
 	}
 }

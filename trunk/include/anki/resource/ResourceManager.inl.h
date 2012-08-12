@@ -18,8 +18,7 @@ void ResourceManager<Type>::allocAndLoadRsrc(
 	}
 	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Constructor failed for \"" + filename +
-			"\"") << e;
+		throw ANKI_EXCEPTION("Constructor failed for: " + filename) << e;
 	}
 
 	// Load
@@ -29,7 +28,7 @@ void ResourceManager<Type>::allocAndLoadRsrc(
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot load \"" + filename + "\"") << e;
+		throw ANKI_EXCEPTION("Cannot load: " + filename) << e;
 	}
 }
 

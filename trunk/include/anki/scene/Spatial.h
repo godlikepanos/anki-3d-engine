@@ -7,6 +7,8 @@
 
 namespace anki {
 
+class OctreeNode;
+
 /// @addtogroup Scene
 /// @{
 
@@ -35,9 +37,27 @@ public:
 		return *spatialCs;
 	}
 
+	const Aabb& getAabb() const
+	{
+		return aabb;
+	}
+
 	uint32_t getSpatialLastUpdateFrame() const
 	{
 		return lastUpdateFrame;
+	}
+
+	OctreeNode* getOctreeNode()
+	{
+		return octreeNode;
+	}
+	const OctreeNode* getOctreeNode() const
+	{
+		return octreeNode;
+	}
+	void setOctreeNode(OctreeNode* x)
+	{
+		octreeNode = x;
 	}
 	/// @}
 
@@ -46,13 +66,16 @@ public:
 	void spatialMarkUpdated()
 	{
 		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		spatialCs->getAabb(aabb);
 	}
 
 protected:
-	CollisionShape* spatialCs;
+	CollisionShape* spatialCs = nullptr;
 
 private:
 	uint32_t lastUpdateFrame = SceneSingleton::get().getFramesCount();
+	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
+	Aabb aabb; ///< A faster shape
 };
 /// @}
 

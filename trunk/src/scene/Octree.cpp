@@ -1,4 +1,5 @@
 #include "anki/scene/Octree.h"
+#include "anki/scene/Spatial.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
 #include "anki/collision/CollisionAlgorithmsMatrix.h"
@@ -7,25 +8,58 @@ namespace anki {
 
 //==============================================================================
 Octree::Octree(const Aabb& aabb, uint8_t maxDepth_, float looseness_)
-:	maxDepth(maxDepth_ < 1 ? 1 : maxDepth_),
- 	looseness(looseness_)
+	: maxDepth(maxDepth_ < 1 ? 1 : maxDepth_), looseness(looseness_),
+		root(aabb, nullptr)
+{}
+
+//==============================================================================
+void Octree::placeSpatial(Spatial* sp)
 {
-	// Create root
-	root = new OctreeNode(aabb, NULL);
-	nodes.push_back(root);
+	OctreeNode* toBePlacedNode = place(sp->getAabb());
+
+	if(toBePlacedNode == nullptr)
+	{
+		ANKI_LOGI("Outside the whole tree");
+		// Outside the whole tree
+		return;
+	}
+
+	OctreeNode* crntNode = sp->getOctreeNode();
+
+	if(crntNode == toBePlacedNode)
+	{
+		ANKI_LOGI("Don't place in the same");
+		// Don't place in the same
+		return;
+	}
+
+	// Remove from current node
+	if(crntNode)
+	{
+		Vector<Spatial*>::iterator it =
+			std::find(crntNode->spatials.begin(), crntNode->spatials.end(), sp);
+
+		ANKI_ASSERT(it != crntNode->spatials.end());
+		crntNode->spatials.erase(it);
+	}
+
+	// Add to new one node
+	toBePlacedNode->spatials.push_back(sp);
+	sp->setOctreeNode(toBePlacedNode);
 }
 
 //==============================================================================
 OctreeNode* Octree::place(const Aabb& aabb)
 {
-	if(CollisionAlgorithmsMatrix::collide(aabb, root->getAabb()))
+	if(CollisionAlgorithmsMatrix::collide(aabb, root.aabb))
 	{
-		// Run the recursive
-		return place(aabb, 0, *root);
+		// Run the recursive method
+		return place(aabb, 0, root);
 	}
 	else
 	{
-		return NULL;
+		// Its completely outside the octree
+		return nullptr;
 	}
 }
 
@@ -45,29 +79,33 @@ OctreeNode* Octree::place(const Aabb& aabb, uint32_t depth, OctreeNode& node)
 			{
 				uint32_t id = i * 4 + j * 2 + k;
 
+				// Get the node's AABB. If there is no node then calculate the
+				// AABB
 				Aabb childAabb;
-				if(node.getChildren()[id] != NULL)
+				if(node.children[id].get() != nullptr)
 				{
-					childAabb = node.getChildren()[id]->getAabb();
+					// There is a child
+					childAabb = node.children[id]->aabb;
 				}
 				else
 				{
-					calcAabb(i, j, k, node.getAabb(), childAabb);
+					// Calculate
+					calcAabb(i, j, k, node.aabb, childAabb);
 				}
 
 				// If aabb its completely inside the target
 				if(aabb.getMax() <= childAabb.getMax() &&
 					aabb.getMin() >= childAabb.getMin())
 				{
-					// Create new node if needed
-					if(node.getChildren()[id] == NULL)
+					// Go deeper
+					if(node.children[id].get() == nullptr)
 					{
+						// Create new node if needed
 						OctreeNode* newNode = new OctreeNode(childAabb, &node);
-						node.addChild(id, *newNode);
-						nodes.push_back(newNode);
+						node.addChild(id, newNode);
 					}
 
-					return place(aabb, depth + 1, *node.getChildren()[id]);
+					return place(aabb, depth + 1, *node.children[id]);
 				}
 			} // k
 		} // j
