@@ -5,6 +5,9 @@
 
 namespace anki {
 
+class Spatial;
+
+/// A sector
 class Sector
 {
 public:
@@ -16,6 +19,12 @@ public:
 	{
 		return octree;
 	}
+	Octree& getOctree()
+	{
+		return octree;
+	}
+
+	bool placeSpatial(Spatial* sp);
 
 private:
 	Octree octree;

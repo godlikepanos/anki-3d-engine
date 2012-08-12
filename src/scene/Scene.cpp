@@ -32,13 +32,32 @@ void Scene::unregisterNode(SceneNode* node)
 //==============================================================================
 void Scene::update(float prevUpdateTime, float crntTime)
 {
+	// First do the movable updates
 	for(SceneNode* n : nodes)
 	{
-		n->frameUpdate(prevUpdateTime, crntTime, frame);
 		Movable* m = n->getMovable();
 		if(m)
 		{
 			m->update();
+		}
+	}
+
+	// Then the rest
+	for(SceneNode* n : nodes)
+	{
+		n->frameUpdate(prevUpdateTime, crntTime, frame);
+
+		Spatial* sp = n->getSpatial();
+		if(sp && sp->getSpatialLastUpdateFrame() == frame)
+		{
+			for(Sector* sector : sectors)
+			{
+				if(sector->placeSpatial(sp))
+				{
+					ANKI_LOGI("Placing: " << n->getName());
+					continue;
+				}
+			}
 		}
 	}
 

@@ -26,8 +26,7 @@ ModelPatchNode::ModelPatchNode(const ModelPatch* modelPatch_,
 ModelNode::ModelNode(const char* modelFname,
 	const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent)
-	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
-		Spatial(&obb)
+	: SceneNode(name, scene), Movable(movableFlags, movParent, *this)
 {
 	model.load(modelFname);
 
@@ -49,4 +48,4 @@ ModelNode::ModelNode(const char* modelFname,
 ModelNode::~ModelNode()
 {}
 
-} // end namespace
+} // end namespace anki

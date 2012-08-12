@@ -64,6 +64,7 @@ public:
 		Movable::movableUpdate();
 		obb = modelPatch->getMeshBase().getBoundingShape().getTransformed(
 			getWorldTransform());
+		spatialMarkUpdated();
 	}
 	/// @}
 
@@ -95,7 +96,7 @@ private:
 };
 
 /// The model scene node
-class ModelNode: public SceneNode, public Movable, public Spatial
+class ModelNode: public SceneNode, public Movable
 {
 public:
 	typedef boost::ptr_vector<ModelPatchNode> ModelPatchNodes;
@@ -124,12 +125,6 @@ public:
 		return this;
 	}
 
-	/// Override SceneNode::getSpatial()
-	Spatial* getSpatial()
-	{
-		return this;
-	}
-
 	/// Override SceneNode::frameUpdate
 	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
 	{
@@ -145,15 +140,12 @@ public:
 	void movableUpdate()
 	{
 		Movable::movableUpdate();
-		obb = model->getVisibilityShape().getTransformed(
-			getWorldTransform());
 	}
 	/// @}
 
-//private:
+private:
 	ModelResourcePointer model; ///< The resource
 	ModelPatchNodes patches;
-	Obb obb;
 };
 
 } // end namespace
