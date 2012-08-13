@@ -481,7 +481,7 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, uint32_t depth,
 	const Octree& octree) const
 {
 	// Draw if it has spatials
-	if(octnode.getSpatialsCount() != 0)
+	if(octnode.getSceneNodesCount() != 0)
 	{
 		//Vec3 color = Vec3(1.0 - float(depth) / float(octree.getMaxDepth()));
 		Vec3 color(1.0);

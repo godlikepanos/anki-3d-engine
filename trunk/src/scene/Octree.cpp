@@ -1,5 +1,7 @@
 #include "anki/scene/Octree.h"
 #include "anki/scene/Spatial.h"
+#include "anki/scene/Frustumable.h"
+#include "anki/scene/Light.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
 #include "anki/collision/CollisionAlgorithmsMatrix.h"
@@ -13,13 +15,14 @@ Octree::Octree(const Aabb& aabb, uint8_t maxDepth_, float looseness_)
 {}
 
 //==============================================================================
-void Octree::placeSpatial(Spatial* sp)
+void Octree::placeSceneNode(SceneNode* sn)
 {
+	Spatial* sp = sn->getSpatial();
+	ANKI_ASSERT(sp != nullptr);
 	OctreeNode* toBePlacedNode = place(sp->getAabb());
 
 	if(toBePlacedNode == nullptr)
 	{
-		ANKI_LOGI("Outside the whole tree");
 		// Outside the whole tree
 		return;
 	}
@@ -28,7 +31,6 @@ void Octree::placeSpatial(Spatial* sp)
 
 	if(crntNode == toBePlacedNode)
 	{
-		ANKI_LOGI("Don't place in the same");
 		// Don't place in the same
 		return;
 	}
@@ -36,15 +38,16 @@ void Octree::placeSpatial(Spatial* sp)
 	// Remove from current node
 	if(crntNode)
 	{
-		Vector<Spatial*>::iterator it =
-			std::find(crntNode->spatials.begin(), crntNode->spatials.end(), sp);
+		Vector<SceneNode*>::iterator it =
+			std::find(crntNode->sceneNodes.begin(),
+			crntNode->sceneNodes.end(), sn);
 
-		ANKI_ASSERT(it != crntNode->spatials.end());
-		crntNode->spatials.erase(it);
+		ANKI_ASSERT(it != crntNode->sceneNodes.end());
+		crntNode->sceneNodes.erase(it);
 	}
 
 	// Add to new one node
-	toBePlacedNode->spatials.push_back(sp);
+	toBePlacedNode->sceneNodes.push_back(sn);
 	sp->setOctreeNode(toBePlacedNode);
 }
 
@@ -150,6 +153,57 @@ void Octree::calcAabb(uint32_t i, uint32_t j, uint32_t k, const Aabb& paabb,
 	}
 
 	out = Aabb(nomin, nomax);
+}
+
+//==============================================================================
+void Octree::doVisibilityTests(Frustumable& fr)
+{
+	fr.getVisibilityInfo().renderables.clear();
+	fr.getVisibilityInfo().lights.clear();
+
+	doVisibilityTestsRec(fr, root);
+}
+
+//==============================================================================
+void Octree::doVisibilityTestsRec(Frustumable& fr, OctreeNode& node)
+{
+	VisibilityInfo& vinfo = fr.getVisibilityInfo();
+
+	for(SceneNode* sn : node.sceneNodes)
+	{
+		Spatial* sp = sn->getSpatial();
+		ANKI_ASSERT(sp);
+
+		if(!fr.insideFrustum(*sp))
+		{
+			continue;
+		}
+
+		Renderable* r = sn->getRenderable();
+		if(r)
+		{
+			vinfo.renderables.push_back(r);
+		}
+
+		Light* l = sn->getLight();
+		if(l)
+		{
+			vinfo.lights.push_back(l);
+
+			if(l->getShadowEnabled() && sn->getFrustumable() != nullptr)
+			{
+				//testLight(*l, scene);
+			}
+		}
+	}
+
+	for(uint32_t i = 0; i < 8; ++i)
+	{
+		if(node.children[i].get() != nullptr)
+		{
+			doVisibilityTestsRec(fr, *node.children[i]);
+		}
+	}
 }
 
 } // end namespace anki
