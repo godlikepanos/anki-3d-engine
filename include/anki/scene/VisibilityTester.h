@@ -20,6 +20,7 @@ class Light;
 class VisibilityInfo
 {
 	friend class VisibilityTester;
+	friend class Octree;
 
 public:
 	typedef Vector<Renderable*> Renderables;

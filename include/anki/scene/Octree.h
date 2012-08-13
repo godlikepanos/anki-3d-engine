@@ -9,6 +9,8 @@
 namespace anki {
 
 class Spatial;
+class Frustumable;
+class SceneNode;
 
 /// Octree node
 class OctreeNode
@@ -39,17 +41,17 @@ public:
 		return aabb;
 	}
 
-	Vector<Spatial*>::iterator getSpatialsBegin()
+	Vector<SceneNode*>::iterator getSceneNodesBegin()
 	{
-		return spatials.begin();
+		return sceneNodes.begin();
 	}
-	Vector<Spatial*>::iterator getSpatialsEnd()
+	Vector<SceneNode*>::iterator getSceneNodesEnd()
 	{
-		return spatials.end();
+		return sceneNodes.end();
 	}
-	uint32_t getSpatialsCount() const
+	uint32_t getSceneNodesCount() const
 	{
-		return spatials.size();
+		return sceneNodes.size();
 	}
 	/// @}
 
@@ -68,7 +70,7 @@ private:
 	ChildrenContainer children;
 	OctreeNode* parent;
 	Aabb aabb; ///< Including AABB
-	Vector<Spatial*> spatials;
+	Vector<SceneNode*> sceneNodes;
 };
 
 /// Octree
@@ -94,13 +96,11 @@ public:
 	}
 	/// @}
 
-	void placeSpatial(Spatial* sp);
+	/// Place a spatial in the tree
+	void placeSceneNode(SceneNode* sn);
 
-	/// Place an AABB inside the tree. The algorithm is pretty simple, find the
-	/// node that completely includes the aabb. If found then go deeper into
-	/// the node's children. The aabb will not be in more than one nodes. Also,
-	/// if it is ourside the tree then return nullptr
-	OctreeNode* place(const Aabb& aabb);
+	/// Fill the fr with visible data
+	void doVisibilityTests(Frustumable& fr);
 
 private:
 	uint32_t maxDepth;
@@ -108,6 +108,15 @@ private:
 	OctreeNode root;
 
 	OctreeNode* place(const Aabb& aabb, uint depth, OctreeNode& node);
+
+	/// Place an AABB inside the tree. The algorithm is pretty simple, find the
+	/// node that completely includes the aabb. If found then go deeper into
+	/// the node's children. The aabb will not be in more than one nodes. Also,
+	/// if it is ourside the tree then return nullptr
+	OctreeNode* place(const Aabb& aabb);
+
+	/// Recursive method
+	void doVisibilityTestsRec(Frustumable& fr, OctreeNode& node);
 
 	void createChildren(OctreeNode& parent);
 

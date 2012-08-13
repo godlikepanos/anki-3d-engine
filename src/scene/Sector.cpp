@@ -5,17 +5,17 @@
 namespace anki {
 
 //==============================================================================
-bool Sector::placeSpatial(Spatial* sp)
+bool Sector::placeSceneNode(SceneNode* sn)
 {
 	// XXX Optimize
 
-	if(!CollisionAlgorithmsMatrix::collide(sp->getAabb(),
+	if(!CollisionAlgorithmsMatrix::collide(sn->getSpatial()->getAabb(),
 		octree.getRoot().getAabb()))
 	{
 		return false;
 	}
 
-	octree.placeSpatial(sp);
+	octree.placeSceneNode(sn);
 	return true;
 }
 
