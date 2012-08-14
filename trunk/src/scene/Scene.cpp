@@ -45,10 +45,10 @@ void Scene::update(float prevUpdateTime, float crntTime)
 	// Then the rest
 	for(SceneNode* n : nodes)
 	{
-		n->frameUpdate(prevUpdateTime, crntTime, frame);
+		n->frameUpdate(prevUpdateTime, crntTime, Timestamp::getTimestamp());
 
 		Spatial* sp = n->getSpatial();
-		if(sp && sp->getSpatialLastUpdateFrame() == frame)
+		if(sp && sp->getSpatialTimestamp() == Timestamp::getTimestamp())
 		{
 			for(Sector* sector : sectors)
 			{

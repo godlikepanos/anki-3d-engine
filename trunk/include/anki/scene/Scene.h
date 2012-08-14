@@ -79,26 +79,13 @@ public:
 	{
 		return nodes.end();
 	}
-
-	uint32_t getFramesCount() const
-	{
-		return frame;
-	}
 	/// @}
 
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);
 	void unregisterNode(SceneNode* node);
 
-	void updateFrameStart()
-	{}
-
 	void update(float prevUpdateTime, float crntTime);
-
-	void updateFrameEnd()
-	{
-		++frame;
-	}
 
 	void doVisibilityTests(Camera& cam);
 
@@ -116,7 +103,6 @@ private:
 	Vec3 ambientCol = Vec3(1.0); ///< The global ambient color
 	Camera* mainCam = nullptr;
 	VisibilityTester vtester;
-	uint32_t frame = 1;
 
 	/// Add to a container
 	template<typename T>

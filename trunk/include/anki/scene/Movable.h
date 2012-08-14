@@ -4,7 +4,7 @@
 #include "anki/util/Object.h"
 #include "anki/util/Flags.h"
 #include "anki/math/Math.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/Timestamp.h"
 
 namespace anki {
 
@@ -74,9 +74,9 @@ public:
 		return prevWTrf;
 	}
 
-	uint32_t getMovableLastUpdateFrame() const
+	uint32_t getMovableTimestamp() const
 	{
-		return lastUpdateFrame;
+		return timestamp;
 	}
 	/// @}
 
@@ -146,7 +146,7 @@ protected:
 	Transform prevWTrf = Transform::getIdentity();
 
 	/// The frame where it was last moved
-	uint32_t lastUpdateFrame = SceneSingleton::get().getFramesCount();
+	uint32_t timestamp = Timestamp::getTimestamp();
 
 	/// Called for every frame. It updates the @a wTrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.
@@ -154,7 +154,7 @@ protected:
 
 	void movableMarkUpdated()
 	{
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		timestamp = Timestamp::getTimestamp();
 	}
 };
 /// @}

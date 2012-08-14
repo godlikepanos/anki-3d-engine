@@ -31,12 +31,12 @@ void Movable::updateWorldTransform()
 {
 	prevWTrf = wTrf;
 	Movable* parent = getParent();
-	uint32_t sceneFramesCount = SceneSingleton::get().getFramesCount();
+	uint32_t crntTimestamp = Timestamp::getTimestamp();
 
 	if(parent)
 	{
-		if(parent->lastUpdateFrame == sceneFramesCount
-			|| lastUpdateFrame == sceneFramesCount)
+		if(parent->timestamp == crntTimestamp
+			|| timestamp == crntTimestamp)
 		{
 			if(isFlagEnabled(MF_IGNORE_LOCAL_TRANSFORM))
 			{
@@ -47,15 +47,15 @@ void Movable::updateWorldTransform()
 				wTrf = Transform::combineTransformations(
 					parent->getWorldTransform(), lTrf);
 			}
-			lastUpdateFrame = sceneFramesCount;
+			timestamp = crntTimestamp;
 		}
 	}
-	else if(lastUpdateFrame == sceneFramesCount)
+	else if(timestamp == crntTimestamp)
 	{
 		wTrf = lTrf;
 	}
 
-	if(lastUpdateFrame == sceneFramesCount)
+	if(timestamp == crntTimestamp)
 	{
 		movableUpdate();
 	}

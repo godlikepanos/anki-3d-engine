@@ -3,7 +3,7 @@
 
 #include "anki/collision/Collision.h"
 #include "anki/util/Flags.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/Timestamp.h"
 
 namespace anki {
 
@@ -42,9 +42,9 @@ public:
 		return aabb;
 	}
 
-	uint32_t getSpatialLastUpdateFrame() const
+	uint32_t getSpatialTimestamp() const
 	{
-		return lastUpdateFrame;
+		return timestamp;
 	}
 
 	OctreeNode* getOctreeNode()
@@ -65,7 +65,7 @@ public:
 	/// updated
 	void spatialMarkUpdated()
 	{
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		timestamp = Timestamp::getTimestamp();
 		spatialCs->getAabb(aabb);
 	}
 
@@ -73,7 +73,7 @@ protected:
 	CollisionShape* spatialCs = nullptr;
 
 private:
-	uint32_t lastUpdateFrame = SceneSingleton::get().getFramesCount();
+	uint32_t timestamp = Timestamp::getTimestamp();
 	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
 	Aabb aabb; ///< A faster shape
 };
