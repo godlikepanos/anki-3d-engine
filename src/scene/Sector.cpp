@@ -1,5 +1,6 @@
 #include "anki/scene/Sector.h"
 #include "anki/scene/Spatial.h"
+#include "anki/scene/SceneNode.h"
 #include "anki/collision/CollisionAlgorithmsMatrix.h"
 
 namespace anki {

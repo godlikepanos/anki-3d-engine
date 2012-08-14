@@ -59,9 +59,9 @@ public:
 		return vinfo;
 	}
 
-	uint32_t getFrustumableLastUpdateFrame() const
+	uint32_t getFrustumableTimestamp() const
 	{
-		return lastUpdateFrame;
+		return timestamp;
 	}
 	/// @}
 
@@ -73,7 +73,7 @@ public:
 
 	void frustumableMarkUpdated()
 	{
-		lastUpdateFrame = SceneSingleton::get().getFramesCount();
+		timestamp = Timestamp::getTimestamp();
 	}
 
 	/// Is a spatial inside the frustum?
@@ -93,7 +93,7 @@ protected:
 	VisibilityInfo vinfo;
 
 private:
-	uint32_t lastUpdateFrame = SceneSingleton::get().getFramesCount();
+	uint32_t timestamp = Timestamp::getTimestamp();
 };
 
 /// Perspective prustumable interface for scene nodes

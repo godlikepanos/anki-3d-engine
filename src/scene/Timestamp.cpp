@@ -2,6 +2,6 @@
 
 namespace anki {
 
-int Timestamp::timestamp = 0;
+uint32_t Timestamp::timestamp = 1;
 
 } // end namespace anki

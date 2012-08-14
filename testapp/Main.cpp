@@ -37,7 +37,7 @@
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
 #include "anki/core/ParallelManager.h"
-#include "anki/misc/Xml.h"
+#include "anki/scene/Timestamp.h"
 
 using namespace anki;
 
@@ -179,7 +179,6 @@ void mainLoop()
 
 	while(1)
 	{
-		SceneSingleton::get().updateFrameStart();
 		HighRezTimer timer;
 		timer.start();
 
@@ -215,7 +214,7 @@ void mainLoop()
 			break;
 		}
 #endif
-		SceneSingleton::get().updateFrameEnd();
+		Timestamp::increaseTimestamp();
 	}
 
 	ANKI_LOGI("Exiting main loop (" << mainLoopTimer.getElapsedTime()

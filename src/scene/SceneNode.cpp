@@ -28,21 +28,21 @@ uint32_t SceneNode::getLastUpdateFrame()
 	uint32_t max = 0;
 
 	const Movable* m = getMovable();
-	if(m && m->getMovableLastUpdateFrame() > max)
+	if(m && m->getMovableTimestamp() > max)
 	{
-		max = m->getMovableLastUpdateFrame();
+		max = m->getMovableTimestamp();
 	}
 
 	const Frustumable* fr = getFrustumable();
-	if(fr && fr->getFrustumableLastUpdateFrame() > max)
+	if(fr && fr->getFrustumableTimestamp() > max)
 	{
-		max = fr->getFrustumableLastUpdateFrame();
+		max = fr->getFrustumableTimestamp();
 	}
 
 	const Spatial* s = getSpatial();
-	if(s && s->getSpatialLastUpdateFrame() > max)
+	if(s && s->getSpatialTimestamp() > max)
 	{
-		max = s->getSpatialLastUpdateFrame();
+		max = s->getSpatialTimestamp();
 	}
 
 	return max;
