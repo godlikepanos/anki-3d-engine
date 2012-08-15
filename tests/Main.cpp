@@ -1,15 +1,8 @@
-#include <gtest/gtest.h>
-#include "App.h"
-#include "MainRenderer.h"
-#include "RendererInitializer.h"
+#include "tests/framework/Framework.h"
 
+using namespace anki;
 
 int main(int argc, char** argv)
 {
-	// Init app
-	//AppSingleton::get().init(0, NULL);
-
-	// Tests
-	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+	return TesterSingleton::get().runAll();
 }

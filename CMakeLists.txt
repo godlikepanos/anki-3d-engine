@@ -172,12 +172,6 @@ OPTION(BUILD_TESTS "Build Unit Tests" OFF)
 
 IF(BUILD_TESTS)
 	ENABLE_TESTING()
-	
-	SET(GTEST_INCLUDE_DIR "/usr/include" CACHE PATH "The directory that contains the gtest directory")
-	SET(GTEST_LIBRARY_DIR "/usr/lib" CACHE PATH "The directory that contains the libgtest.so")
-
-	ANKI_ADD_LIB(${GTEST_INCLUDE_DIR} ${GTEST_LIBRARY_DIR} ${GTEST_INCLUDE_DIR}/gtest/gtest.h)
-	
 	ADD_SUBDIRECTORY(tests)
 ENDIF()
 
