@@ -1,8 +1,7 @@
+#include "tests/framework/Framework.h"
 #include "anki/util/HighRezTimer.h"
-#include <gtest/gtest.h>
 
-
-TEST(HighRezTimer, Test)
+/*TEST(HighRezTimer, Test)
 {
 	HighRezTimer t;
 	t.start();
@@ -20,4 +19,9 @@ TEST(HighRezTimer, Test)
 	sleep(1);
 	
 	EXPECT_EQ(t.getElapsedTime(), 4.0);
+}*/
+
+ANKI_TEST(Suite, TestName)
+{
+	std::cout << "asdfffffffffffffffffffffffff" << std::endl;
 }
