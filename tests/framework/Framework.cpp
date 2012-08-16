@@ -1,7 +1,16 @@
 #include "tests/framework/Framework.h"
 #include <iostream>
+#include <cstring>
 
 namespace anki {
+
+//==============================================================================
+void Test::run()
+{
+	std::cout << "========\nRunning " << suite->name << " " << name
+		<< "\n========" << std::endl;
+	callback(*this);
+}
 
 //==============================================================================
 void Tester::addTest(const char* name, const char* suiteName,
@@ -51,17 +60,23 @@ void Tester::addTest(const char* name, const char* suiteName,
 //==============================================================================
 int Tester::run(int argc, char** argv)
 {
-	const char* helpMessage = ""
-
+	// Parse args
+	//
 	programName = argv[0];
 
-	// Parse args
-	std::string suite;
-	std::string test;
+	std::string helpMessage = "Usage: " + programName + R"( [options]
+Options:
+  --help         Print this message
+  --list-tests   List all the tests
+  --suite <name> Run tests only from this suite
+  --test <name>  Run this test. --suite needs to be specified)";
+
+	std::string suiteName;
+	std::string testName;
 
 	for(int i = 1; i < argc; i++)
 	{
-		const char* arg = args[i];
+		const char* arg = argv[i];
 		if(strcmp(arg, "--list-tests") == 0)
 		{
 			listTests();
@@ -69,69 +84,91 @@ int Tester::run(int argc, char** argv)
 		}
 		else if(strcmp(arg, "--help") == 0)
 		{
-			// XXX
+			std::cout << helpMessage << std::endl;
 		}
 		else if(strcmp(arg, "--suite") == 0)
 		{
-			if(i + 1 >= argc)
-			{
-				// XXX
-			}
-			suite = arg;
 			++i;
+			if(i >= argc)
+			{
+				std::cerr << "<name> is missing after --suite" << std::endl;
+				return 1;
+			}
+			suiteName = argv[i];
 		}
 		else if(strcmp(arg, "--test") == 0)
 		{
-			if(i + 1 >= argc)
-			{
-				// XXX
-			}
-			test = arg;
 			++i;
+			if(i >= argc)
+			{
+				std::cerr << "<name> is missing after --test" << std::endl;
+				return 1;
+			}
+			testName = argv[i];
 		}
 	}
 
-	// Run tests
-	try
+	// Sanity check
+	if(testName.length() > 0 && suiteName.length() == 0)
 	{
-		if(argc == 1)
-		{
-			// Run all
-			for(TestSuite* suite : suites)
-			{
-				for(Test* test : suite->tests)
-				{
-					test->callback(*test);
-				}
-			}
-		}
-		else
-		{
-			// Run some
-		}
-	}
-	catch(const std::exception& e)
-	{
-		std::cerr << e.what() << std::endl;
+		std::cout << "Specify --suite as well" << std::endl;
 		return 1;
 	}
 
-	return 0;
-}
-
-//==============================================================================
-int Tester::runAll()
-{
-	int errors = 0;
-	for(TestSuite* suite : suites)
+	// Run tests
+	//
+	int passed = 0;
+	int run = 0;
+	if(argc == 1)
 	{
-		for(Test* test : suite->tests)
+		// Run all
+		for(TestSuite* suite : suites)
 		{
-			test->callback(*test);
+			for(Test* test : suite->tests)
+			{
+				++run;
+				try
+				{
+					test->run();
+					++passed;
+				}
+				catch(const std::exception& e)
+				{
+					std::cerr << e.what() << std::endl;
+				}
+			}
+		}
+	}
+	else
+	{
+		for(TestSuite* suite : suites)
+		{
+			if(suite->name == suiteName)
+			{
+				for(Test* test : suite->tests)
+				{
+					if(test->name == testName || testName.length() == 0)
+					{
+						++run;
+						try
+						{
+							test->run();
+							++passed;
+						}
+						catch(const std::exception& e)
+						{
+							std::cerr << e.what() << std::endl;
+						}
+					}
+				}
+			}
 		}
 	}
 
-	return errors;
+	std::cout << "========\nRun " << run << " tests, passed " << passed
+		<< "\n" << std::endl;
+
+	return run - passed;
 }
 
 //==============================================================================
@@ -141,8 +178,8 @@ int Tester::listTests()
 	{
 		for(Test* test : suite->tests)
 		{
-			std::cout << "./" << args[0] << " --suite " << suite->name 
-				<< " --test " << test->name << std::endl;
+			std::cout << programName << " --suite \"" << suite->name
+				<< "\" --test \"" << test->name << "\"" << std::endl;
 		}
 	}
 

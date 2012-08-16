@@ -4,5 +4,5 @@ using namespace anki;
 
 int main(int argc, char** argv)
 {
-	return TesterSingleton::get().runAll();
+	return TesterSingleton::get().run(argc, argv);
 }
