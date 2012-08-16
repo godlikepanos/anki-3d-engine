@@ -3,9 +3,11 @@
 
 #include "anki/util/Vector.h"
 #include "anki/util/Singleton.h"
-#include "anki/util/Exception.h"
+#include <stdexcept>
 #include <string>
 #include <iostream>
+#include <sstream>
+#include <cmath>
 
 namespace anki {
 
@@ -31,7 +33,7 @@ struct Test
 	TestSuite* suite = nullptr;
 	TestCallback callback = nullptr;
 
-	void assertion(const char* str);
+	void run();
 };
 
 /// A container of test suites
@@ -43,10 +45,6 @@ struct Tester
 	void addTest(const char* name, const char* suite, TestCallback callback);
 
 	int run(int argc, char** argv);
-
-	int runAll();
-
-	int runSome(const char* suite, const char* test);
 
 	int listTests();
 };
@@ -65,26 +63,58 @@ typedef Singleton<Tester> TesterSingleton;
 	\
 	struct Foo##suiteName_##name_ { \
 		Foo##suiteName_##name_() { \
-			TesterSingleton::get().addTest(#suiteName_, #name_, \
+			TesterSingleton::get().addTest(#name_, #suiteName_, \
 				test_##suiteName_##name_); \
 		} \
 	}; \
-	static Foo##suiteName_##name_ lala; \
+	static Foo##suiteName_##name_ yada##suiteName_##name_; \
 	void test_##suiteName_##name_(Test&)
 
-/// XXX
+/// Intermediate macro
 #define ANKI_TEST_EXPECT_EQ_IMPL(file_, line_, func_, x, y) \
 	do { \
 		if((x) != (y)) { \
 			std::stringstream ss; \
-			ss << #x << " != " << #y << " (" << x << " != " << y; \
-			throw anki::Excption(ss.str().c_str(), file_, line_, func_); \
+			ss << #x << " != " << #y << " [" << x << " != " << y << "] (" \
+				<< file_ << ":" << line_ << ")"; \
+			throw std::runtime_error(ss.str()); \
 		} \
-	} while(0); 
+	} while(0);
+
+/// Intermediate macro
+#define ANKI_TEST_EXPECT_NEQ_IMPL(file_, line_, func_, x, y) \
+	do { \
+		if((x) == (y)) { \
+			std::stringstream ss; \
+			ss << #x << " == " << #y << " [" << x << " == " << y << "] (" \
+				<< file_ << ":" << line_ << ")"; \
+			throw std::runtime_error(ss.str()); \
+		} \
+	} while(0);
+
+/// Intermediate macro
+#define ANKI_TEST_EXPECT_NEAR_IMPL(file_, line_, func_, x, y, epsilon_) \
+	do { \
+		if(fabs((x) - (y)) > (epsilon_)) { \
+			std::stringstream ss; \
+			ss << #x << " != " << #y << " [" << x << " - " << y << " > " \
+				<< epsilon_ << "] (" \
+				<< file_ << ":" << line_ << ")"; \
+			throw std::runtime_error(ss.str()); \
+		} \
+	} while(0);
+
+/// Macro to compare equal
+#define ANKI_TEST_EXPECT_EQ(x_, y_) \
+	ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
+
+/// Macro to compare equal
+#define ANKI_TEST_EXPECT_NEQ(x_, y_) \
+	ANKI_TEST_EXPECT_NEQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
 
 /// XXX
-#define ANKI_TEST_EXPECT_EQ(x, y) \
-	ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x, y)
+#define ANKI_TEST_EXPECT_NEAR(x_, y_, e_) \
+	ANKI_TEST_EXPECT_NEAR_IMPL(__FILE__, __LINE__, __func__, x_, y_, e_)
 
 } // end namespace anki
 
