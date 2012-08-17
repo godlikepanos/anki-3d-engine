@@ -85,6 +85,7 @@ Options:
 		else if(strcmp(arg, "--help") == 0)
 		{
 			std::cout << helpMessage << std::endl;
+			return 0;
 		}
 		else if(strcmp(arg, "--suite") == 0)
 		{
