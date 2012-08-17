@@ -42,9 +42,18 @@ const char* ClassProxy<Class>::NAME = nullptr;
 extern void checkArgsCount(lua_State* l, int argsCount);
 
 //==============================================================================
-/// Used mainly to push a method return value to the stack
-template<typename T>
-struct PushStack;
+/// Used mainly to push a method's return value to the stack
+template<typename Class>
+struct PushStack
+{
+	void operator()(lua_State* l, Class& x)
+	{
+		UserData* d = (UserData*)lua_newuserdata(l, sizeof(UserData));
+		luaL_setmetatable(l, ClassProxy<Class>::getName());
+		d->ptr = new Class(x);
+		d->gc = true;
+	}
+};
 
 // Specialization ref
 template<typename Class>
@@ -240,6 +249,20 @@ struct CallMethod<TReturn (Class::*)(Arg0)>
 	}
 };
 
+// R (_1) const
+template<typename Class, typename TReturn, typename Arg0>
+struct CallMethod<TReturn (Class::*)(Arg0) const>
+{
+	int operator()(lua_State* l, const Class* obj, 
+		TReturn (Class::* method)(Arg0) const)
+	{
+		TReturn out = (obj->*method)(StackGet<Arg0, 2>()(l));
+		PushStack<TReturn> ps;
+		ps(l, out);
+		return 1;
+	}
+};
+
 // R (_1, _2)
 template<typename Class, typename TReturn, typename Arg0, typename Arg1>
 struct CallMethod<TReturn (Class::*)(Arg0, Arg1)>
@@ -281,7 +304,7 @@ struct CallMethod<void (Class::*)(Arg0, Arg1)>
 template<typename Class>
 struct CallMethod<void (Class::*)(void)>
 {
-	int operator()(lua_State* l, Class* obj, void (Class::* method)(void))
+	int operator()(lua_State* /*l*/, Class* obj, void (Class::* method)(void))
 	{
 		(obj->*method)();
 		return 0;
@@ -372,7 +395,7 @@ struct CallFunction<TReturn (*)(void)>
 template<>
 struct CallFunction<void (*)(void)>
 {
-	int operator()(lua_State* l, void (*func)(void))
+	int operator()(lua_State* /*l*/, void (*func)(void))
 	{
 		(*func)();
 		return 0;
@@ -466,6 +489,21 @@ struct MethodSignature<TReturn (Class::*)(Args...)>
 		UserData* d = (UserData*)luaL_checkudata(l, 1, 
 			ClassProxy<Class>::getName());
 		Class* obj = reinterpret_cast<Class*>(d->ptr);
+		CallMethod<decltype(method)> cm;
+		return cm(l, obj, method);
+	}
+};
+
+template<typename Class, typename TReturn, typename... Args>
+struct MethodSignature<TReturn (Class::*)(Args...) const>
+{
+	template<TReturn (Class::* method)(Args...) const>
+	static int luafunc(lua_State* l)
+	{
+		checkArgsCount(l, sizeof...(Args) + 1);
+		UserData* d = (UserData*)luaL_checkudata(l, 1, 
+			ClassProxy<Class>::getName());
+		const Class* obj = reinterpret_cast<const Class*>(d->ptr);
 		CallMethod<decltype(method)> cm;
 		return cm(l, obj, method);
 	}
