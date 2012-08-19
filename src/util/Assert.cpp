@@ -21,4 +21,4 @@ void akassert(bool expr, const char* exprTxt, const char* file, int line,
 
 #endif
 
-} // end namespace
+} // end namespace anki

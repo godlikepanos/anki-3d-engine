@@ -181,12 +181,12 @@ SkinNode::SkinNode(const char* skinFname,
 	skin.load(skinFname);
 
 	uint i = 0;
-	for(const ModelPatch& patch : skin->getModel().getModelPatches())
+	for(const ModelPatch* patch : skin->getModel().getModelPatches())
 	{
 		std::string name = skin.getResourceName()
 			+ std::to_string(i);
 
-		patches.push_back(new SkinPatchNode(&patch,
+		patches.push_back(new SkinPatchNode(patch,
 			name.c_str(), scene,
 			Movable::MF_IGNORE_LOCAL_TRANSFORM, this,
 			&visibilityShapeWSpace));

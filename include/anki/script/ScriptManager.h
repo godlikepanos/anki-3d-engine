@@ -15,11 +15,6 @@ public:
 		init();
 	}
 
-	/// Execute python script
-	/// @param script Script source
-	/// @return true on success
-	void execScript(const char* script, const char* scriptName = "unamed");
-
 private:
 	void init();
 };

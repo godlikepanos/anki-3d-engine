@@ -3,16 +3,24 @@
 namespace anki {
 
 //==============================================================================
+EventManager::EventManager()
+{}
+
+//==============================================================================
+EventManager::~EventManager()
+{}
+
+//==============================================================================
 void EventManager::updateAllEvents(float prevUpdateTime_, float crntTime_)
 {
 	prevUpdateTime = prevUpdateTime_;
 	crntTime = crntTime_;
 
-	for(Event& event : events)
+	for(Event* event : events)
 	{
-		if(!event.isDead(crntTime))
+		if(!event->isDead(crntTime))
 		{
-			event.update(prevUpdateTime, crntTime);
+			event->update(prevUpdateTime, crntTime);
 		}
 	}
 }
@@ -25,7 +33,8 @@ EventManager::EventsContainer::iterator EventManager::
 
 	while(it != events.end())
 	{
-		if(it->isDead(crntTime) && it->getEventType() == type)
+		Event* event = *it;
+		if(event->isDead(crntTime) && event->getEventType() == type)
 		{
 			break;
 		}
@@ -35,4 +44,4 @@ EventManager::EventsContainer::iterator EventManager::
 	return it;
 }
 
-} // end namespace
+} // end namespace anki

@@ -3,7 +3,8 @@
 
 #include "anki/event/Event.h"
 #include "anki/util/Singleton.h"
-#include <boost/ptr_container/ptr_deque.hpp>
+#include "anki/util/Vector.h"
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
@@ -11,7 +12,10 @@ namespace anki {
 class EventManager
 {
 public:
-	typedef boost::ptr_deque<Event> EventsContainer;
+	typedef PtrVector<Event> EventsContainer;
+
+	EventManager();
+	~EventManager();
 
 	/// Create a new event
 	template<typename EventClass>

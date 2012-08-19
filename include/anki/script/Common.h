@@ -15,4 +15,12 @@
 	extern void ankiScriptWrap##x(LuaBinder&); \
 	ankiScriptWrap##x(*this);
 
+/// XXX
+#define ANKI_SCRIPT_WRAP_SINGLETON(x) \
+	ANKI_SCRIPT_WRAP(x) { \
+	ANKI_LUA_CLASS_BEGIN_NO_DESTRUCTOR(lb, x)	\
+		ANKI_LUA_CONSTRUCTOR() \
+		ANKI_LUA_STATIC_METHOD("get", &x::get) \
+	ANKI_LUA_CLASS_END() }
+
 #endif

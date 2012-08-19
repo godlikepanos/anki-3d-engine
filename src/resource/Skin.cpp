@@ -69,9 +69,9 @@ void Skin::load(const char* filename)
 		}
 
 		// All meshes should have vert weights
-		for(const ModelPatch& patch : model->getModelPatches())
+		for(const ModelPatch* patch : model->getModelPatches())
 		{
-			if(!patch.getMeshBase().hasWeights())
+			if(!patch->getMeshBase().hasWeights())
 			{
 				throw ANKI_EXCEPTION("Mesh does not support HW skinning");
 			}

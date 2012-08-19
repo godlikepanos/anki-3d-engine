@@ -6,6 +6,7 @@
 #include "anki/collision/Obb.h"
 #include "anki/resource/PassLevelKey.h"
 #include "anki/resource/Mesh.h"
+#include "anki/util/Vector.h"
 
 namespace anki {
 
@@ -15,7 +16,7 @@ class ModelPatchBase
 {
 public:
 	/// For garbage collection
-	typedef boost::ptr_vector<Vao> VaosContainer;
+	typedef PtrVector<Vao> VaosContainer;
 	/// Map to get the VAO given a PassLod key
 	typedef PassLevelHashMap<Vao*> PassLevelToVaoMap;
 
@@ -114,7 +115,7 @@ private:
 class Model
 {
 public:
-	typedef boost::ptr_vector<ModelPatch> ModelPatchesContainer;
+	typedef PtrVector<ModelPatch> ModelPatchesContainer;
 
 	/// @name Accessors
 	/// @{

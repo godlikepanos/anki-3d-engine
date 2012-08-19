@@ -1,5 +1,4 @@
 #include "anki/resource/Material.h"
-#include "anki/misc/PropertyTree.h"
 #include "anki/resource/MaterialShaderProgramCreator.h"
 #include "anki/core/App.h"
 #include "anki/util/Filesystem.h"
@@ -124,6 +123,7 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	}
 	else
 	{
+		ANKI_LOGW("<passes> is not defined. Expect errors later");
 		passes.push_back("DUMMY");
 	}
 
@@ -257,10 +257,10 @@ void Material::populateVariables(const XmlElement& shaderProgramEl)
 	//
 	std::map<std::string, GLenum> allVarNames;
 
-	for(const ShaderProgramResourcePointer& sProg : sProgs)
+	for(const ShaderProgramResourcePointer* sProg : sProgs)
 	{
 		for(const ShaderProgramUniformVariable* v :
-			sProg->getUniformVariables())
+			(*sProg)->getUniformVariables())
 		{
 			allVarNames[v->getName()] = v->getGlDataType();
 		}
@@ -295,7 +295,7 @@ void Material::populateVariables(const XmlElement& shaderProgramEl)
 			if(iit == allVarNames.end())
 			{
 				ANKI_LOGW("Material input variable " << name
-					<< " not used by shader program. Material:"
+					<< " not used by any shader program. Material: "
 					<< fname);
 			}
 

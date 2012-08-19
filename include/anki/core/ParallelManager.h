@@ -3,8 +3,8 @@
 
 #include "anki/util/Barrier.h"
 #include "anki/util/Singleton.h"
+#include "anki/util/Vector.h"
 #include <thread>
-#include <boost/ptr_container/ptr_vector.hpp>
 
 namespace anki {
 
@@ -86,7 +86,7 @@ public:
 	void assignNewJob(uint jobId, ParallelJobCallback callback,
 		ParallelJobParameters& jobParams)
 	{
-		jobs[jobId].assignNewJob(callback, jobParams);
+		jobs[jobId]->assignNewJob(callback, jobParams);
 	}
 
 	/// Wait for all jobs to finish
@@ -101,7 +101,7 @@ public:
 	}
 
 private:
-	boost::ptr_vector<ParallelJob> jobs; ///< Worker threads
+	PtrVector<ParallelJob> jobs; ///< Worker threads
 	std::unique_ptr<Barrier> barrier; ///< Synchronization barrier
 };
 

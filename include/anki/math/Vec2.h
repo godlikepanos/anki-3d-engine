@@ -99,7 +99,7 @@ private:
 
 static_assert(sizeof(Vec2) == sizeof(float) * 2, "Incorrect size");
 
-} // end namespace
+} // end namespace anki
 
 #include "anki/math/Vec2.inl.h"
 

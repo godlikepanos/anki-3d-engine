@@ -60,9 +60,10 @@ void Movable::updateWorldTransform()
 		movableUpdate();
 	}
 
-	for(Movable* child : getChildren())
+	Movable::Container::iterator it = getChildrenBegin();
+	for(; it != getChildrenEnd(); it++)
 	{
-		child->updateWorldTransform();
+		(*it)->updateWorldTransform();
 	}
 }
 

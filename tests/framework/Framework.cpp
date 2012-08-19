@@ -1,6 +1,7 @@
 #include "tests/framework/Framework.h"
 #include <iostream>
 #include <cstring>
+#include <malloc.h>
 
 namespace anki {
 
@@ -9,7 +10,18 @@ void Test::run()
 {
 	std::cout << "========\nRunning " << suite->name << " " << name
 		<< "\n========" << std::endl;
+
+	struct mallinfo a = mallinfo();
 	callback(*this);
+	struct mallinfo b = mallinfo();
+
+	int diff = b.uordblks - a.uordblks;
+	if(diff > 0)
+	{
+		std::cerr << "Test leaks memory: " << diff << std::endl;
+	}
+
+	std::cout << std::endl;
 }
 
 //==============================================================================
@@ -166,7 +178,7 @@ Options:
 		}
 	}
 
-	std::cout << "========\nRun " << run << " tests, passed " << passed
+	std::cout << "========\nRun " << run << " tests, failed " << (run - passed)
 		<< "\n" << std::endl;
 
 	return run - passed;

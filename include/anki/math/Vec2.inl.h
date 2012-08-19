@@ -174,6 +174,18 @@ inline bool Vec2::operator!=(const Vec2& b) const
 	return !(*this == b);
 }
 
+// <
+inline bool Vec2::operator<(const Vec2& b) const
+{
+	return vec.x < b.vec.x && vec.y < b.vec.y;
+}
+
+// <=
+inline bool Vec2::operator<=(const Vec2& b) const
+{
+	return vec.x <= b.vec.x && vec.y <= b.vec.y;
+}
+
 //==============================================================================
 // Operators with float                                                        =
 //==============================================================================
@@ -293,4 +305,4 @@ inline std::ostream& operator<<(std::ostream& s, const Vec2& v)
 	return s;
 }
 
-} // end namespace
+} // end namespace anki

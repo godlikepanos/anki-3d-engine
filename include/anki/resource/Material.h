@@ -9,7 +9,6 @@
 #include "anki/util/Visitor.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"
-#include <boost/ptr_container/ptr_vector.hpp>
 
 namespace anki {
 
@@ -268,7 +267,7 @@ protected:
 /// 			<operations>
 /// 				<operation>
 /// 					<id>x</id>
-/// 					[<returnType>any glsl type</returnType>]
+/// 					<returnType>any glsl type or void</returnType>
 /// 					<function>functionName</function>
 /// 					[<arguments>
 /// 						<argument>xx</argument>
@@ -294,7 +293,7 @@ protected:
 class Material: public MaterialProperties, public NonCopyable
 {
 public:
-	typedef boost::ptr_vector<MaterialVariable> VarsContainer;
+	typedef PtrVector<MaterialVariable> VarsContainer;
 
 	Material();
 	~Material();
@@ -338,7 +337,7 @@ public:
 
 private:
 	/// Type for garbage collection
-	typedef boost::ptr_vector<ShaderProgramResourcePointer> ShaderPrograms;
+	typedef PtrVector<ShaderProgramResourcePointer> ShaderPrograms;
 
 	typedef ConstCharPtrHashMap<MaterialVariable*>::Type
 		NameToVariableHashMap;

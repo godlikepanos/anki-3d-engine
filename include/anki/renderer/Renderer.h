@@ -76,7 +76,7 @@ struct RendererInitializer
 	// Dbg
 	struct Dbg
 	{
-		bool enabled = true;
+		bool enabled = false;
 	} dbg;
 
 	// the globals

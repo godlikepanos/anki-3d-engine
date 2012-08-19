@@ -205,7 +205,7 @@ public:
 	{
 		return bindingPoint;
 	}
-	void setBindingPoint(GLuint bp)
+	void setBindingPoint(GLuint bp) const
 	{
 		if(bindingPoint != bp)
 		{
@@ -224,7 +224,7 @@ private:
 	GLuint index = GL_INVALID_INDEX;
 	uint32_t size = 0; ///< In bytes
 	std::string name;
-	GLuint bindingPoint = 0; ///< All blocks the default to 0
+	mutable GLuint bindingPoint = 0; ///< All blocks the default to 0
 	GLuint progId;
 };
 

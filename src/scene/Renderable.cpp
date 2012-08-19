@@ -45,10 +45,10 @@ void Renderable::init(PropertyMap& pmap)
 	vis.pmap = &pmap;
 	vis.rprops = &props;
 
-	for(const MaterialVariable& mv : mtl.getVariables())
+	for(const MaterialVariable* mv : mtl.getVariables())
 	{
-		vis.mvar = &mv;
-		mv.acceptVisitor(vis);
+		vis.mvar = mv;
+		mv->acceptVisitor(vis);
 	}
 }
 
