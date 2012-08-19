@@ -3,7 +3,7 @@
 
 #include "anki/physics/Convertors.h"
 #include "anki/util/Vector.h"
-#include <boost/scoped_ptr.hpp>
+#include <memory>
 #include <bullet/btBulletCollisionCommon.h>
 #include <bullet/btBulletDynamicsCommon.h>
 
@@ -56,7 +56,7 @@ class PhysWorld
 		btBroadphaseInterface* broadphase;
 		btSequentialImpulseConstraintSolver* sol;
 		/// Keep here for garbage collection
-		boost::scoped_ptr<btIDebugDraw> debugDrawer;
+		std::unique_ptr<btIDebugDraw> debugDrawer;
 		float defaultContactProcessingThreshold;
 		Vector<Character*> characters;
 };

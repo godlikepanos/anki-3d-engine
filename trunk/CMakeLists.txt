@@ -131,8 +131,7 @@ LINK_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/extern/lib64")
 #
 ADD_DEFINITIONS(-DANKI_MATH_INTEL_SIMD
 	-Dthread_local=__thread -pedantic-errors -pedantic -ansi -Wall 
-	-W -Wwrite-strings -Wno-unused -Wfatal-errors -Werror -Wno-long-long 
-	-msse4 -std=c++0x)
+	-W -Wwrite-strings -Wno-unused -Werror -Wno-long-long -msse4 -std=c++0x)
 
 # Add a few compiler specific stuff 
 IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	

@@ -121,10 +121,10 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	int id = operationTag.getChildElement("id").getInt();
 	
 	// <returnType></returnType>
-	XmlElement retTypeEl = operationTag.getChildElementOptional("returnType");
-
+	XmlElement retTypeEl = operationTag.getChildElement("returnType");
+	std::string retType = retTypeEl.getText();
 	std::string operationOut;
-	if(retTypeEl)
+	if(retType != "void")
 	{
 		operationOut = "operationOut" + std::to_string(id);
 	}
@@ -163,7 +163,7 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	}
 	line << "\n";
 
-	if(retTypeEl)
+	if(retType != "void")
 	{
 		line << "#\tdefine " << operationOut << "_DEFINED\n";
 		line << '\t' << retTypeEl.getText() << " " << operationOut << " = ";

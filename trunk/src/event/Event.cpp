@@ -18,6 +18,10 @@ Event& Event::operator=(const Event& b)
 }
 
 //==============================================================================
+Event::~Event()
+{}
+
+//==============================================================================
 void Event::update(float prevUpdateTime, float crntTime)
 {
 	ANKI_ASSERT(!isDead(crntTime));

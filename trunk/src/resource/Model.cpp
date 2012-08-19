@@ -148,14 +148,14 @@ void Model::load(const char* filename)
 		}
 
 		// Calculate compound bounding volume
-		visibilityShape = modelPatches[0].getMeshBase().getBoundingShape();
+		visibilityShape = modelPatches[0]->getMeshBase().getBoundingShape();
 
 		for(ModelPatchesContainer::const_iterator it = modelPatches.begin() + 1;
 			it != modelPatches.end();
 			++it)
 		{
 			visibilityShape = visibilityShape.getCompoundShape(
-				(*it).getMeshBase().getBoundingShape());
+				(*it)->getMeshBase().getBoundingShape());
 		}
 	}
 	catch(std::exception& e)

@@ -313,6 +313,18 @@ inline bool Vec4::operator!=(const Vec4& b) const
 	return !operator==(b);
 }
 
+// <
+inline bool Vec4::operator<(const Vec4& b) const
+{
+	return x() < b.x() && y() < b.y() && z() < b.z() && w() < b.w();
+}
+
+// <=
+inline bool Vec4::operator<=(const Vec4& b) const
+{
+	return x() <= b.x() && y() <= b.y() && z() <= b.z() && w() <= b.w();
+}
+
 //==============================================================================
 // Operators with float                                                        =
 //==============================================================================

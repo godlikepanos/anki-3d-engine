@@ -54,7 +54,7 @@ void Scene::update(float prevUpdateTime, float crntTime)
 			{
 				if(sector->placeSceneNode(n))
 				{
-					ANKI_LOGI("Placing: " << n->getName());
+					//ANKI_LOGI("Placing: " << n->getName());
 					continue;
 				}
 			}

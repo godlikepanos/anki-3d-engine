@@ -63,13 +63,35 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * Math::toRad(ang),
 		Math::toRad(ang), 0.5, 200.0);
-	cam->setLocalTransform(Transform(Vec3(0.0, 3.0, 8.0), Mat3::getIdentity(),
+	cam->setLocalTransform(Transform(Vec3(100.0, 3.0, 8.0),
+		Mat3(Axisang(Math::toRad(90), Vec3(0, 1, 0))),
 		1.0));
 	scene.setActiveCamera(cam);
 
 	// lights
+	Vec3 lpos(-100.0, 0.0, 0.0);
+	for(int i = 0; i < 100; i++)
+	{
+		for(int j = 0; j < 10; j++)
+		{
+			std::string name = "plight" + std::to_string(i) + std::to_string(j);
 
-	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
+			PointLight* point = new PointLight(name.c_str(), &scene,
+				Movable::MF_NONE, nullptr);
+			point->setRadius(2.0);
+			point->setDiffuseColor(Vec4(1.0, 0.0, 0.0, 0.0));
+			point->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
+			point->setLocalTranslation(lpos);
+
+			lpos.z() += 2.0;
+		}
+
+		lpos.x() += 2.0;
+		lpos.z() = 0;
+	}
+
+
+	/*SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
 	spot->setFov(Math::toRad(45.0));
 	spot->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0),
 		Mat3(Euler(Math::toRad(-20), Math::toRad(20), 0.0)), 1.0));
@@ -90,7 +112,7 @@ void init()
 	point1->setRadius(3.0);
 	point1->setDiffuseColor(Vec4(2.0, 2.0, 2.0, 0.0));
 	point1->setSpecularColor(Vec4(3.0, 3.0, 0.0, 0.0));
-	point1->setLocalTranslation(Vec3(-3.0, 2.0, 0.0));
+	point1->setLocalTranslation(Vec3(-3.0, 2.0, 0.0));*/
 
 	// horse
 	horse = new ModelNode("meshes/horse/horse.mdl", "horse", &scene,
@@ -98,8 +120,40 @@ void init()
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		1.0));
 
+	// Sponza
+	ModelNode* sponzaModel = new ModelNode(
+		"/home/godlike/src/anki/maps/sponza-crytek/sponza_crytek.mdl",
+		"sponza", &scene, Movable::MF_NONE, nullptr);
+
+	sponzaModel->setLocalScale(0.1);
+
 	// Sectors
 	scene.sectors.push_back(new Sector(Aabb(Vec3(-10.0), Vec3(10.0))));
+}
+
+//==============================================================================
+/// The func pools the stdinListener for string in the console, if
+/// there are any it executes them with scriptingEngine
+void execStdinScpripts()
+{
+	while(1)
+	{
+		std::string cmd = StdinListenerSingleton::get().getLine();
+
+		if(cmd.length() < 1)
+		{
+			break;
+		}
+
+		try
+		{
+			ScriptManagerSingleton::get().evalString(cmd.c_str());
+		}
+		catch(Exception& e)
+		{
+			ANKI_LOGE(e.what());
+		}
+	}
 }
 
 //==============================================================================
@@ -165,6 +219,8 @@ void mainLoopExtra()
 	{
 		mover->scale(-scale);
 	}
+
+	execStdinScpripts();
 }
 
 //==============================================================================
@@ -201,7 +257,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -209,7 +265,7 @@ void mainLoop()
 				- timer.getElapsedTime()) * 1000.0);
 		}
 #else
-		if(MainRendererSingleton::get().getFramesCount() == 10000)
+		if(MainRendererSingleton::get().getFramesCount() == 100)
 		{
 			break;
 		}
@@ -233,7 +289,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = true;
+	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;

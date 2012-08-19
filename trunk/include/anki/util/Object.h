@@ -3,7 +3,8 @@
 
 #include "anki/util/Assert.h"
 #include "anki/util/Vector.h"
-#include <boost/range/iterator_range.hpp>
+#include "anki/util/StdTypes.h"
+#include <algorithm>
 
 namespace anki {
 
@@ -17,10 +18,6 @@ class Object
 public:
 	typedef T Value;
 	typedef Vector<Value*> Container;
-	typedef boost::iterator_range<typename Container::const_iterator>
-		ConstIteratorRange;
-	typedef boost::iterator_range<typename Container::iterator>
-		MutableIteratorRange;
 
 	/// Calls addChild if parent is not nullptr
 	Object(Value* self_, Value* parent_)
@@ -60,13 +57,21 @@ public:
 		return parent;
 	}
 
-	ConstIteratorRange getChildren() const
+	typename Container::const_iterator getChildrenBegin() const
 	{
-		return ConstIteratorRange(childs.begin(), childs.end());
+		return childs.begin();
 	}
-	MutableIteratorRange getChildren()
+	typename Container::iterator getChildrenBegin()
 	{
-		return MutableIteratorRange(childs.begin(), childs.end());
+		return childs.begin();
+	}
+	typename Container::const_iterator getChildrenEnd() const
+	{
+		return childs.end();
+	}
+	typename Container::iterator getChildrenEnd()
+	{
+		return childs.end();
 	}
 
 	size_t getChildrenSize() const

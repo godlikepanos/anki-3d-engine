@@ -31,12 +31,12 @@ ModelNode::ModelNode(const char* modelFname,
 	model.load(modelFname);
 
 	uint i = 0;
-	for(const ModelPatch& patch : model->getModelPatches())
+	for(const ModelPatch* patch : model->getModelPatches())
 	{
 		std::string name = model.getResourceName()
 			+ std::to_string(i);
 
-		ModelPatchNode* mpn = new ModelPatchNode(&patch, name.c_str(),
+		ModelPatchNode* mpn = new ModelPatchNode(patch, name.c_str(),
 			scene, Movable::MF_IGNORE_LOCAL_TRANSFORM, this);
 
 		patches.push_back(mpn);

@@ -25,6 +25,8 @@ public:
 		*this = b;
 	}
 
+	virtual ~Event();
+
 	/// @name Accessors
 	/// @{
 	float getStartTime() const
