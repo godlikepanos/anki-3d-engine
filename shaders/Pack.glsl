@@ -37,3 +37,29 @@ vec2 unpackSpecular(in float f)
 		r / 15.0,
 		f * 255.0 * MAX_SPECULARITY / 15.0 - r * 16.0 * MAX_SPECULARITY / 15.0);
 }
+
+/// Pack a vec4 to float
+/// @node The components of v should be inside [0.0, 1.0]
+float pack4x8ToFloat(in vec4 v)
+{
+	const vec4 unshift = vec4(
+		1.0 / (256.0f * 256.0 * 256.0), 
+		1.0f / (256.0 * 256.0), 
+		1.0 / 256.0, 1.0);
+	return dot(v, unshift);
+}
+
+/// Unpack a float to vec4
+vec4 unpackFloatTo4x8(in float val) 
+{
+	const vec4 bitSh = vec4(
+		256.0 * 256.0 * 256.0, 
+		256.0* 256.0, 
+		256.0, 
+		1.0);
+	const vec4 bitMsk = vec4(0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);
+
+	vec4 result = fract(val * bitSh);
+	result -= result.xxyz * bitMsk;
+	return result;
+}
