@@ -401,7 +401,13 @@ struct CallConstructor<Class, Arg0, Arg1, Arg2, Arg3>
 };
 
 //==============================================================================
-/// Make a method function
+/// Make a method function. Used like this:
+/// @code
+/// Foo foo; // An instance
+/// MethodFunctionalizer<decltype(Foo::bar)>::In<Foo::bar>::func(&foo, 123);
+/// // Equivelent of:
+/// foo.bar(123);
+/// @endcode
 template<typename T>
 struct MethodFunctionalizer;
 
@@ -491,44 +497,53 @@ struct FunctionSignature<TReturn (*)(Args...)>
 //==============================================================================
 // Macros
 
+/// Don't use it directly
 #define ANKI_LUA_DESTRUCTOR() \
 	lua_detail::pushCFunctionMethod(l_, "__gc", \
 		&lua_detail::DestructorSignature<Class>::luafunc);
 
+/// Start wrapping a class. Don't add a destructor (if for example the class 
+/// has a private derstructor)
 #define ANKI_LUA_CLASS_BEGIN_NO_DESTRUCTOR(luaBinder_, Class_) { \
 	typedef Class_ Class; \
 	lua_State* l_ = luaBinder_._getLuaState(); \
 	lua_detail::ClassProxy<Class>::NAME = #Class_; \
 	lua_detail::createClass(l_, lua_detail::ClassProxy<Class>::getName());
 
+/// Start wrapping a class
 #define ANKI_LUA_CLASS_BEGIN(luaBinder_, Class_) \
 	ANKI_LUA_CLASS_BEGIN_NO_DESTRUCTOR(luaBinder_, Class_) \
 	ANKI_LUA_DESTRUCTOR()
 
+/// End wrapping a class
 #define ANKI_LUA_CLASS_END() lua_settop(l_, 0); }
 
+/// Define a constructor. Call it from lua @code a = Foo.new(...) @endcode.
 #define ANKI_LUA_CONSTRUCTOR(...) \
 	lua_detail::pushCFunctionStatic(l_, \
 		lua_detail::ClassProxy<Class>::getName(), "new", \
 		&lua_detail::ConstructorSignature<Class, __VA_ARGS__>::luafunc);
 
+/// Define a static method
 #define ANKI_LUA_STATIC_METHOD(name_, smethodPtr_) \
 	lua_detail::pushCFunctionStatic(l_, \
 		lua_detail::ClassProxy<Class>::getName(), name_, \
 		&lua_detail::FunctionSignature< \
 		decltype(smethodPtr_)>::luafunc<smethodPtr_>);
 
+/// Define a function as method
 #define ANKI_LUA_FUNCTION_AS_METHOD(name_, funcPtr_) \
 	lua_detail::pushCFunctionMethod(l_, name_, \
 		&lua_detail::FunctionSignature< \
 		decltype(funcPtr_)>::luafunc<funcPtr_>);
 
+/// Define a method
 #define ANKI_LUA_METHOD(name_, methodPtr_) \
 	ANKI_LUA_FUNCTION_AS_METHOD(name_, &lua_detail::MethodFunctionalizer< \
 		decltype(methodPtr_)>::In<methodPtr_>::func)
 
 //==============================================================================
-/// Lua binder class. A wrapper on ton of LUA
+/// Lua binder class. A wrapper on top of LUA
 class LuaBinder
 {
 public:
