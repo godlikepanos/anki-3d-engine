@@ -10,11 +10,6 @@
 
 #pragma anki include "shaders/Pack.glsl"
 
-#define DISCARD 0
-#if !defined(MAX_LIGHTS)
-#	error "MAX_LIGHTS not defined"
-#endif
-
 /// @name Uniforms
 /// @{
 
@@ -28,14 +23,8 @@ struct Light
 #endif
 };
 
-// Light data
-layout(std140, row_major) uniform lightBlock
-{
-	uniform Light lights[MAX_LIGHTS];
-};
-
 // Common uniforms between lights
-layout(std140) uniform generalBlock
+layout(std140, row_major) uniform generalBlock
 {
 	/// Packs:
 	/// - x: zNear. For the calculation of frag pos in view space
@@ -46,14 +35,14 @@ layout(std140) uniform generalBlock
 	/// limitsOfNearPlane and the zw is an optimization see PpsSsao.glsl and 
 	/// r403 for the clean one
 	uniform vec4 limitsOfNearPlane_;
+
+	uniform Light light;
 };
 
 #define planes nearPlanes.zw
 #define zNear nearPlanes.x
 #define limitsOfNearPlane limitsOfNearPlane_.xy
 #define limitsOfNearPlane2 limitsOfNearPlane_.zw
-
-uniform float lightsCount;
 
 uniform usampler2D msFai0;
 uniform sampler2D msDepthFai;
@@ -141,25 +130,16 @@ vec3 doPhong(in vec3 fragPosVspace, in vec3 normal, in vec3 diffuse,
 #endif
 
 	// Attenuation
-	float attenuation = 
-		clamp(1.0 - fragLightDistSqrt / light.posAndRadius.w, 0.0, 1.0);
+	float attenuation = 1.0 - fragLightDistSqrt / light.posAndRadius.w;
 
 	// Diffuse
 	vec3 difCol = diffuse * light.diffuseColor.rgb;
 
 	// Specular
-	vec3 specCol;
-	if(fragLightDistSqrt < 0.9)
-	{
-		vec3 eyeVec = normalize(-fragPosVspace);
-		vec3 h = normalize(lightDir + eyeVec);
-		float specIntensity = pow(max(0.0, dot(normal, h)), specularAll.g);
-		specCol = light.specularColor.rgb * (specIntensity * specularAll.r);
-	}
-	else
-	{
-		specCol = vec3(0.0);
-	}
+	vec3 eyeVec = normalize(-fragPosVspace);
+	vec3 h = normalize(lightDir + eyeVec);
+	float specIntensity = pow(max(0.0, dot(normal, h)), specularAll.g);
+	vec3 specCol = light.specularColor.rgb * (specIntensity * specularAll.r);
 	
 	// end
 	return (difCol + specCol) * (attenuation * lambertTerm);
@@ -181,15 +161,11 @@ void main()
 
 #if POINT_LIGHT
 	fColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
-		specularAll, lights[0]);
-	for(int i = 1; i < int(lightsCount); i++)
-	{
-		fColor += doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
-			specularAll, lights[i]);
-	}
+		specularAll, light) /*+ vec3(1.0, 0.0, 1.0)*/;
 #elif SPOT_LIGHT
 	// XXX
 #else
 #	error "See file"
 #endif
 }
+

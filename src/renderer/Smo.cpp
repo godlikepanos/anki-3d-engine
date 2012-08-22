@@ -61,20 +61,17 @@ void Smo::init(const RendererInitializer& /*initializer*/)
 void Smo::setupGl(bool inside)
 {
 	glStencilFunc(GL_ALWAYS, 0x1, 0x1);
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	glClear(GL_STENCIL_BUFFER_BIT);
 
-	if(inside)
-	{
-		glCullFace(GL_FRONT);
-	}
-	else
-	{
-		glDepthMask(GL_FALSE);
-	}
+	glStencilOpSeparate(GL_BACK, GL_KEEP, GL_REPLACE, GL_KEEP);
+	glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_ZERO, GL_KEEP);
 
-	GlStateSingleton::get().enable(GL_DEPTH_TEST, !inside);
+	//glCullFace(GL_FRONT);
+	glDisable(GL_CULL_FACE);
+	//glDepthFunc(GL_GEQUAL);
+
+	GlStateSingleton::get().enable(GL_DEPTH_TEST);
 }
 
 //==============================================================================
@@ -84,14 +81,9 @@ void Smo::restoreGl(bool inside)
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 	glStencilFunc(GL_EQUAL, 0x1, 0x1);
 
-	if(inside)
-	{
-		glCullFace(GL_BACK);
-	}
-	else
-	{
-		glDepthMask(GL_TRUE);
-	}
+	//glDepthFunc(GL_LESS);
+	//glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
 }
 
 //==============================================================================
@@ -117,6 +109,9 @@ void Smo::run(const PointLight& light)
 	sphereGeom.vao.bind();
 	glDrawElements(GL_TRIANGLES, sphereGeom.mesh->getIndicesNumber(0),
 		GL_UNSIGNED_SHORT, 0);
+
+	// Render again
+
 
 	// restore GL
 	restoreGl(inside);
