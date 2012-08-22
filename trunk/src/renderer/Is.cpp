@@ -10,11 +10,6 @@ namespace anki {
 
 //==============================================================================
 
-#define MAX_LIGHTS_STR "#define MAX_LIGHTS 10\n"
-const int MAX_LIGHTS = 10;
-
-// See shader for more info about the blocks
-
 struct PointLightUniformBlock
 {
 	Vec4 posAndRadius; ///< xyz: Light pos in eye space. w: The radius
@@ -31,6 +26,7 @@ struct GeneralUniformBlock
 {
 	Vec4 nearPlanes;
 	Vec4 limitsOfNearPlane;
+	PointLightUniformBlock light;
 };
 
 //==============================================================================
@@ -60,29 +56,22 @@ void Is::init(const RendererInitializer& initializer)
 
 		// point light
 		pointLightSProg.load(ShaderProgramResource::createSrcCodeToCache(
-			"shaders/IsLpGeneric.glsl",
-			"#define POINT_LIGHT 1\n" MAX_LIGHTS_STR).c_str());
-		pointLightSProg->findUniformBlock("lightBlock").setBindingPoint(1);
+			"shaders/IsLpGeneric.glsl", "#define POINT_LIGHT 1\n").c_str());
 
 		// spot light no shadow
 		spotLightNoShadowSProg.load(
 			ShaderProgramResource::createSrcCodeToCache(
-			"shaders/IsLpGeneric.glsl",
-			"#define SPOT_LIGHT 1\n" MAX_LIGHTS_STR).c_str());
-		spotLightNoShadowSProg->findUniformBlock(
-			"lightBlock").setBindingPoint(1);
+			"shaders/IsLpGeneric.glsl", "#define SPOT_LIGHT 1\n").c_str());
 
 		// spot light w/t shadow
 		std::string pps = std::string("#define SPOT_LIGHT 1\n"
-			"#define SHADOW 1\n" MAX_LIGHTS_STR);
+			"#define SHADOW 1\n");
 		if(/*sm.isPcfEnabled()*/ 1) // XXX
 		{
 			pps += "#define PCF 1\n";
 		}
 		spotLightShadowSProg.load(ShaderProgramResource::createSrcCodeToCache(
 			"shaders/IsLpGeneric.glsl", pps.c_str()).c_str());
-		spotLightShadowSProg->findUniformBlock(
-			"lightBlock").setBindingPoint(1);
 
 		// Create FBO
 		//
@@ -114,21 +103,6 @@ void Is::init(const RendererInitializer& initializer)
 			nullptr, GL_DYNAMIC_DRAW);
 
 		generalUbo.setBinding(0);
-
-		// Light UBO
-		const ShaderProgramUniformBlock& block1 =
-			spotLightNoShadowSProg->findUniformBlock("lightBlock");
-
-		if(block1.getSize() != sizeof(SpotLightUniformBlock) * MAX_LIGHTS)
-		{
-			throw ANKI_EXCEPTION("Uniform block size is not the expected");
-		}
-
-		lightUbo.create(GL_UNIFORM_BUFFER,
-			sizeof(SpotLightUniformBlock) * MAX_LIGHTS,
-			nullptr, GL_DYNAMIC_DRAW);
-
-		lightUbo.setBinding(1);
 	}
 	catch(const std::exception& e)
 	{
@@ -154,7 +128,6 @@ void Is::ambientPass(const Vec3& color)
 //==============================================================================
 void Is::pointLightPass(PointLight& light)
 {
-#if 0
 	const Camera& cam = r->getScene().getActiveCamera();
 
 	/// XXX write the UBO async before calling SMO
@@ -171,22 +144,22 @@ void Is::pointLightPass(PointLight& light)
 	shader.findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
 
-	UniformBlockData data;
-	data.planes = Vec4(r->getPlanes(), 0.0, 0.0);
-	data.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
+	GeneralUniformBlock blk;
+	blk.nearPlanes = Vec4(cam.getNear(), 0.0, r->getPlanes().x(),
+		r->getPlanes().y());
+	blk.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
 		r->getLimitsOfNearPlane2());
-	data.zNearLightRadius = Vec4(cam.getNear(), light.getRadius(), 0.0, 0.0);
-	Vec3 lightPosEyeSpace = light.getWorldTransform().getOrigin().
-		getTransformed(cam.getViewMatrix());
-	data.lightPos = Vec4(lightPosEyeSpace, 0.0);
-	data.lightDiffuseCol = light.getDiffuseColor();
-	data.lightSpecularCol = light.getSpecularColor();
 
-	ubo.write(&data, 0, sizeof(UniformBlockData));
+	Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
+		cam.getViewMatrix());
+	blk.light.posAndRadius = Vec4(pos, light.getRadius());
+	blk.light.diffuseColor = light.getDiffuseColor();
+	blk.light.specularColor = light.getSpecularColor();;
+
+	generalUbo.write(&blk, 0, sizeof(GeneralUniformBlock));
 
 	// render quad
 	r->drawQuad();
-#endif
 }
 
 //==============================================================================
@@ -272,79 +245,17 @@ void Is::spotLightPass(SpotLight& light)
 }
 
 //==============================================================================
-void Is::pointLightsPass()
-{
-	Camera& cam = r->getScene().getActiveCamera();
-
-	// Shader
-	const ShaderProgram& shader = *pointLightSProg; // ensure the const-ness
-	shader.bind();
-
-	shader.findUniformVariable("msFai0").set(r->getMs().getFai0());
-	shader.findUniformVariable("msDepthFai").set(
-		r->getMs().getDepthFai());
-
-	//
-	const int buffSize = sizeof(PointLightUniformBlock) * MAX_LIGHTS;
-	uint8_t buff[buffSize];
-	PointLightUniformBlock* ublock = (PointLightUniformBlock*)buff;
-
-	int lightsCount = 0;
-	VisibilityInfo& vi = cam.getFrustumable()->getVisibilityInfo();
-	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
-	{
-		Light& light = *(*it);
-		if(light.getLightType() != Light::LT_POINT)
-		{
-			continue;
-		}
-
-		PointLight& plight = static_cast<PointLight&>(light);
-
-		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
-			cam.getViewMatrix());
-		ublock[lightsCount].posAndRadius = Vec4(pos, plight.getRadius());
-		ublock[lightsCount].diffuseColor = light.getDiffuseColor();
-		ublock[lightsCount].specularColor = light.getSpecularColor();
-
-		++lightsCount;
-		if(lightsCount % MAX_LIGHTS == 0 || it == vi.getLightsEnd() - 1)
-		{
-			// Render the bunch
-			shader.findUniformVariable("lightsCount").set((float)lightsCount);
-			lightUbo.write(buff, 0,
-				sizeof(PointLightUniformBlock) * lightsCount);
-			r->drawQuad();
-			lightsCount = 0;
-		}
-	}
-}
-
-//==============================================================================
 void Is::run()
 {
-	const Camera& cam = r->getScene().getActiveCamera();
-	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
 	fbo.bind();
+	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
+	const Camera& cam = r->getScene().getActiveCamera();
 
 	// Ambient pass
-	//
 	GlStateSingleton::get().disable(GL_BLEND);
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
-	//glDepthMask(GL_FALSE);
+	glDepthMask(GL_FALSE);
 	ambientPass(r->getScene().getAmbientColor());
-
-	// render lights
-	//
-
-	// Setup the general UBO
-	GeneralUniformBlock gblk;
-	gblk.nearPlanes = Vec4(cam.getNear(), 0.0, r->getPlanes().x(),
-		r->getPlanes().y());
-	gblk.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
-		r->getLimitsOfNearPlane2());
-
-	generalUbo.write(&gblk, 0, sizeof(GeneralUniformBlock));
 
 #if BLEND_ENABLE
 	GlStateSingleton::get().enable(GL_BLEND);
@@ -353,11 +264,9 @@ void Is::run()
 	GlStateSingleton::get().disable(GL_BLEND);
 #endif
 
-	pointLightsPass();
+	GlStateSingleton::get().enable(GL_STENCIL_TEST);
 
-	//GlStateSingleton::get().enable(GL_STENCIL_TEST);
-
-	/*VisibilityInfo& vi =
+	VisibilityInfo& vi =
 		r->getScene().getActiveCamera().getFrustumable()->getVisibilityInfo();
 	for(auto it = vi.getLightsBegin();
 		it != vi.getLightsEnd(); ++it)
@@ -375,10 +284,10 @@ void Is::run()
 			ANKI_ASSERT(0);
 			break;
 		}
-	}*/
+	}
 
-	//GlStateSingleton::get().disable(GL_STENCIL_TEST);
-	//glDepthMask(GL_TRUE);
+	GlStateSingleton::get().disable(GL_STENCIL_TEST);
+	glDepthMask(GL_TRUE);
 }
 
 } // end namespace anki
