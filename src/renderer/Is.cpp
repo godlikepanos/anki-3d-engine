@@ -30,6 +30,45 @@ struct GeneralUniformBlock
 };
 
 //==============================================================================
+void Is::initTiles()
+{
+	// FBO
+	Renderer::createFai(TILES_X_COUNT, TILES_Y_COUNT, GL_RGB32F, GL_RGB, 
+		GL_FLOAT, minMaxFai);
+	minMaxTilerFbo.create();
+	minMaxTilerFbo.setColorAttachments({&minMaxFai});
+	if(!minMaxTilerFbo.isComplete())
+	{
+		throw ANKI_EXCEPTION("minMaxTilerFbo creation failed");
+	}
+
+	// Shader program
+	std::string preproc = 
+		"#define TILES_X_COUNT " + std::to_string(TILES_X_COUNT) + "\n"
+		"#define TILES_Y_COUNT " + std::to_string(TILES_Y_COUNT) + "\n";
+	std::string filename = ShaderProgramResource::createSrcCodeToCache(
+		"shaders/IsMinMax.glsl", 
+		preproc.c_str());
+	minMaxPassSprog.load(filename.c_str());
+
+	// Tiles
+	F32 tileWidth = 1.0 / TILES_X_COUNT;
+	F32 tileHeight = 1.0 / TILES_Y_COUNT;
+
+	for(U i = 0; i < TILES_X_COUNT; i++)
+	{
+		for(U j = 0; j < TILES_Y_COUNT; j++)
+		{
+		}
+	}
+}
+
+//==============================================================================
+void Is::minMaxPass()
+{
+}
+
+//==============================================================================
 Is::Is(Renderer* r_)
 	: RenderingPass(r_), smo(r_), sm(r_)
 {}

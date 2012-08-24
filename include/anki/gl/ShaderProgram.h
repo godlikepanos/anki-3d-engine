@@ -207,11 +207,10 @@ public:
 	}
 	void setBindingPoint(GLuint bp) const
 	{
-		if(bindingPoint != bp)
-		{
-			glUniformBlockBinding(progId, index, bp);
-			bindingPoint = bp;
-		}
+		// Don't try any opts with existing binding point. Binding points 
+		// should break
+		glUniformBlockBinding(progId, index, bp);
+		bindingPoint = bp;
 	}
 	/// @}
 
