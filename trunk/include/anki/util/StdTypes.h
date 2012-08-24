@@ -11,16 +11,16 @@ typedef int16_t I16;
 typedef int32_t I32;
 typedef int64_t I64;
 
-typedef int_fast32_t IFast;
+typedef int_fast32_t I; ///< Fast integer
 
 typedef uint8_t U8;
 typedef uint16_t U16;
 typedef uint32_t U32;
 typedef uint64_t U64;
 
-typedef uint_fast32_t UFast;
+typedef uint_fast32_t U; ///< fast unigned integer
 
-typedef size_t Size;
+typedef size_t PtrSize; ///< Like size_t
 
 typedef float F32;
 typedef double F64;
