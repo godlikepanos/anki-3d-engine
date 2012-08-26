@@ -20,6 +20,13 @@ class SpotLight;
 class Is: private RenderingPass
 {
 public:
+	static const U TILES_X_COUNT = 16;
+	static const U TILES_Y_COUNT = 16;
+
+	static const U MAX_LIGHTS_PER_TILE = 128;
+
+	static const U MAX_LIGHTS = 1024;
+
 	Is(Renderer* r);
 
 	~Is();
@@ -33,6 +40,11 @@ public:
 	{
 		return fai;
 	}
+
+	const Texture& getMinMaxFai() const
+	{
+		return minMaxFai;
+	}
 	/// @}
 
 private:
@@ -40,7 +52,8 @@ private:
 	{
 		LST_POINT,
 		LST_SPOT,
-		LST_SPOT_SHADOW
+		LST_SPOT_SHADOW,
+		LST_COUNT
 	};
 
 	/// A screen tile
@@ -55,18 +68,9 @@ private:
 		///       top right
 		Vec2 coords[2]; 
 
-		Vector<PointLight*> plights;
-		Vector<SpotLight*> slights;
-		Vector<SpotLight*> slightsShadow;
-		Ubo lightIndicesUbo;
+		std::array<U32, MAX_LIGHTS_PER_TILE> lightIndices;
+		U lightsCount = 0;
 	};
-
-	static const U TILES_X_COUNT = 16;
-	static const U TILES_Y_COUNT = 16;
-
-	static const U MAX_LIGHTS_PER_TILE = 128;
-
-	static const U MAX_LIGHTS = 1024;
 
 	/// @note The [0][0] is the bottom left tile
 	Tile tiles[TILES_X_COUNT][TILES_Y_COUNT];
@@ -75,11 +79,31 @@ private:
 	/// to fill the Tile::depth
 	Texture minMaxFai;
 
+	/// The IS FAI
+	Texture fai;
+
 	/// An FBO to write to the minMaxTex
 	Fbo minMaxTilerFbo;
 
+	/// The IS FBO
+	Fbo fbo;
+
+	/// Contains common data for all shader programs
+	Ubo commonUbo;
+
+	/// Contains the indices of lights per tile
+	Ubo lightIndicesUbo;
+
+	/// Contains info of all the lights
+	Ubo lightsUbo;
+
 	/// Min max shader program
 	ShaderProgramResourcePointer minMaxPassSprog;
+
+	/// Light shaders
+	std::array<ShaderProgramResourcePointer, LST_COUNT> lightSProgs;
+
+	Sm sm;
 
 	/// Project a sphere to a circle
 	static void projectShape(const Mat4& projectionMat, 
@@ -104,31 +128,7 @@ private:
 	/// Do the light culling
 	void tileCulling();
 
-	void initTiles();
-
-	Smo smo;
-	Sm sm;
-	Texture fai;
-	Fbo fbo;
-	BufferObject generalUbo;
-
-	/// Illumination stage ambient pass shader program
-	ShaderProgramResourcePointer ambientPassSProg;
-	/// Illumination stage point light shader program
-	ShaderProgramResourcePointer pointLightSProg;
-	/// Illumination stage spot light w/o shadow shader program
-	ShaderProgramResourcePointer spotLightNoShadowSProg;
-	/// Illumination stage spot light w/ shadow shader program
-	ShaderProgramResourcePointer spotLightShadowSProg;
-
-	/// The ambient pass
-	void ambientPass(const Vec3& color);
-
-	/// The point light pass
-	void pointLightPass(PointLight& plight);
-
-	/// The spot light pass
-	void spotLightPass(SpotLight& slight);
+	void initInternal(const RendererInitializer& initializer);
 };
 
 } // end namespace anki
