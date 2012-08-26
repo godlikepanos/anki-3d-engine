@@ -36,10 +36,10 @@ TextureUnits::TextureUnits()
 }
 
 //==============================================================================
-int TextureUnits::whichUnit(const Texture& tex)
+I TextureUnits::whichUnit(const Texture& tex)
 {
 	GLuint glid = tex.getGlId();
-	int i = units.size();
+	I i = units.size();
 
 	do
 	{
@@ -50,21 +50,21 @@ int TextureUnits::whichUnit(const Texture& tex)
 }
 
 //==============================================================================
-void TextureUnits::activateUnit(uint32_t unit)
+void TextureUnits::activateUnit(U unit)
 {
 	ANKI_ASSERT(unit < units.size());
-	if(activeUnit != (int)unit)
+	if(activeUnit != (I)unit)
 	{
-		activeUnit = (int)unit;
+		activeUnit = (I)unit;
 		glActiveTexture(GL_TEXTURE0 + activeUnit);
 	}
 }
 
 //==============================================================================
-uint32_t TextureUnits::choseUnit(const Texture& tex, bool& allreadyBinded)
+U TextureUnits::choseUnit(const Texture& tex, Bool& allreadyBinded)
 {
 	++choseUnitTimes;
-	int myTexUnit = whichUnit(tex);
+	I myTexUnit = whichUnit(tex);
 
 	// Already binded => renew it
 	//
@@ -80,7 +80,7 @@ uint32_t TextureUnits::choseUnit(const Texture& tex, bool& allreadyBinded)
 
 	// Find an empty slot for it
 	//
-	for(uint32_t i = 0; i < units.size(); i++)
+	for(U i = 0; i < units.size(); i++)
 	{
 		if(units[i].tex == 0)
 		{
@@ -92,8 +92,8 @@ uint32_t TextureUnits::choseUnit(const Texture& tex, bool& allreadyBinded)
 
 	// Find the older unit and replace the texture
 	//
-	uint64_t older = 0;
-	for(uint32_t i = 1; i < units.size(); ++i)
+	U64 older = 0;
+	for(U i = 1; i < units.size(); ++i)
 	{
 		if(units[i].born < units[older].born)
 		{
@@ -107,10 +107,10 @@ uint32_t TextureUnits::choseUnit(const Texture& tex, bool& allreadyBinded)
 }
 
 //==============================================================================
-uint32_t TextureUnits::bindTexture(const Texture& tex)
+U TextureUnits::bindTexture(const Texture& tex)
 {
-	bool allreadyBinded;
-	uint32_t unit = choseUnit(tex, allreadyBinded);
+	Bool allreadyBinded;
+	U unit = choseUnit(tex, allreadyBinded);
 
 	if(!allreadyBinded)
 	{
@@ -124,8 +124,8 @@ uint32_t TextureUnits::bindTexture(const Texture& tex)
 //==============================================================================
 void TextureUnits::bindTextureAndActivateUnit(const Texture& tex)
 {
-	bool allreadyBinded;
-	uint32_t unit = choseUnit(tex, allreadyBinded);
+	Bool allreadyBinded;
+	U unit = choseUnit(tex, allreadyBinded);
 
 	activateUnit(unit);
 
@@ -138,7 +138,7 @@ void TextureUnits::bindTextureAndActivateUnit(const Texture& tex)
 //==============================================================================
 void TextureUnits::unbindTexture(const Texture& tex)
 {
-	int unit = whichUnit(tex);
+	I unit = whichUnit(tex);
 	if(unit == -1)
 	{
 		return;
@@ -237,7 +237,7 @@ void Texture::create(const Initializer& init)
 }
 
 //==============================================================================
-uint32_t Texture::bind() const
+U Texture::bind() const
 {
 	return TextureUnitsSingleton::get().bindTexture(*this);
 }
@@ -268,4 +268,11 @@ void Texture::setFilteringNoBind(TextureFilteringType filterType) const
 	}
 }
 
-} // end namespace
+//==============================================================================
+void Texture::readPixels(void* pixels, U level)
+{
+	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
+	glGetTexImage(target, level, format, type, pixels);
+}
+
+} // end namespace anki

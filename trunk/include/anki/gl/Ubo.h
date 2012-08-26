@@ -2,6 +2,7 @@
 #define ANKI_GL_UBO_H
 
 #include "anki/gl/BufferObject.h"
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
@@ -9,7 +10,14 @@ namespace anki {
 /// @{
 	
 /// Uniform buffer object
-typedef BufferObject Ubo;
+class Ubo: public BufferObject
+{
+public:
+	void create(PtrSize size, void* data)
+	{
+		BufferObject::create(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
+	}
+};
 
 /// @}
 
