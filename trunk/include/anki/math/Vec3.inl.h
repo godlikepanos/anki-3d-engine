@@ -12,22 +12,22 @@ inline Vec3::Vec3()
 	arr[0] = arr[1] = arr[2] = 0.0;
 }
 
-// float, float, float
-inline Vec3::Vec3(const float x_, const float y_, const float z_)
+// F32, F32, F32
+inline Vec3::Vec3(const F32 x_, const F32 y_, const F32 z_)
 {
 	x() = x_;
 	y() = y_;
 	z() = z_;
 }
 
-// float
-inline Vec3::Vec3(const float f)
+// F32
+inline Vec3::Vec3(const F32 f)
 {
 	arr[0] = arr[1] = arr[2] = f;
 }
 
-// float[]
-inline Vec3::Vec3(const float arr_[])
+// F32[]
+inline Vec3::Vec3(const F32 arr_[])
 {
 	arr[0] = arr_[0];
 	arr[1] = arr_[1];
@@ -42,8 +42,8 @@ inline Vec3::Vec3(const Vec3& b)
 	arr[2] = b.arr[2];
 }
 
-// Vec2, float
-inline Vec3::Vec3(const Vec2& v2, const float z_)
+// Vec2, F32
+inline Vec3::Vec3(const Vec2& v2, const F32 z_)
 {
 	x() = v2.x();
 	y() = v2.y();
@@ -70,44 +70,49 @@ inline Vec3::Vec3(const Quat& q)
 // Accessors                                                                   =
 //==============================================================================
 
-inline float& Vec3::x()
+inline F32& Vec3::x()
 {
 	return vec.x;
 }
 
-inline float Vec3::x() const
+inline F32 Vec3::x() const
 {
 	return vec.x;
 }
 
-inline float& Vec3::y()
+inline F32& Vec3::y()
 {
 	return vec.y;
 }
 
-inline float Vec3::y() const
+inline F32 Vec3::y() const
 {
 	return vec.y;
 }
 
-inline float& Vec3::z()
+inline F32& Vec3::z()
 {
 	return vec.z;
 }
 
-inline float Vec3::z() const
+inline F32 Vec3::z() const
 {
 	return vec.z;
 }
 
-inline float& Vec3::operator[](const size_t i)
+inline F32& Vec3::operator[](const U i)
 {
 	return arr[i];
 }
 
-inline float Vec3::operator[](const size_t i) const
+inline F32 Vec3::operator[](const U i) const
 {
 	return arr[i];
+}
+
+inline Vec2 Vec3::xy() const
+{
+	return Vec2(x(), y());
 }
 
 //==============================================================================
@@ -190,7 +195,7 @@ inline Vec3 Vec3::operator-() const
 }
 
 // ==
-inline bool Vec3::operator==(const Vec3& b) const
+inline Bool Vec3::operator==(const Vec3& b) const
 {
 	return Math::isZero(x() - b.x()) 
 		&& Math::isZero(y() - b.y()) 
@@ -198,86 +203,86 @@ inline bool Vec3::operator==(const Vec3& b) const
 }
 
 // !=
-inline bool Vec3::operator!=(const Vec3& b) const
+inline Bool Vec3::operator!=(const Vec3& b) const
 {
 	return !operator==(b);
 }
 
 // <
-inline bool Vec3::operator<(const Vec3& b) const
+inline Bool Vec3::operator<(const Vec3& b) const
 {
 	return x() < b.x() && y() < b.y() && z() < b.z();
 }
 
 // <=
-inline bool Vec3::operator<=(const Vec3& b) const
+inline Bool Vec3::operator<=(const Vec3& b) const
 {
 	return x() <= b.x() && y() <= b.y() && z() <= b.z();
 }
 
 // >
-inline bool Vec3::operator>(const Vec3& b) const
+inline Bool Vec3::operator>(const Vec3& b) const
 {
 	return x() > b.x() && y() > b.y() && z() > b.z();
 }
 
 // >=
-inline bool Vec3::operator>=(const Vec3& b) const
+inline Bool Vec3::operator>=(const Vec3& b) const
 {
 	return x() >= b.x() && y() >= b.y() && z() >= b.z();
 }
 
 //==============================================================================
-// Operators with float                                                        =
+// Operators with F32                                                        =
 //==============================================================================
 
-// Vec3 + float
-inline Vec3 Vec3::operator+(float f) const
+// Vec3 + F32
+inline Vec3 Vec3::operator+(F32 f) const
 {
 	return (*this) + Vec3(f);
 }
 
-// Vec3 += float
-inline Vec3& Vec3::operator+=(float f)
+// Vec3 += F32
+inline Vec3& Vec3::operator+=(F32 f)
 {
 	(*this) += Vec3(f);
 	return (*this);
 }
 
-// Vec3 - float
-inline Vec3 Vec3::operator-(float f) const
+// Vec3 - F32
+inline Vec3 Vec3::operator-(F32 f) const
 {
 	return (*this) - Vec3(f);
 }
 
-// Vec3 -= float
-inline Vec3& Vec3::operator-=(float f)
+// Vec3 -= F32
+inline Vec3& Vec3::operator-=(F32 f)
 {
 	(*this) -= Vec3(f);
 	return (*this);
 }
 
-// Vec3 * float
-inline Vec3 Vec3::operator*(float f) const
+// Vec3 * F32
+inline Vec3 Vec3::operator*(F32 f) const
 {
 	return (*this) * Vec3(f);
 }
 
-// Vec3 *= float
-inline Vec3& Vec3::operator*=(float f)
+// Vec3 *= F32
+inline Vec3& Vec3::operator*=(F32 f)
 {
 	(*this) *= Vec3(f);
 	return (*this);
 }
 
-// Vec3 / float
-inline Vec3 Vec3::operator/(float f) const
+// Vec3 / F32
+inline Vec3 Vec3::operator/(F32 f) const
 {
 	return (*this) / Vec3(f);
 }
 
-// Vec3 /= float
-inline Vec3& Vec3::operator/=(float f)
+// Vec3 /= F32
+inline Vec3& Vec3::operator/=(F32 f)
 {
 	(*this) /= Vec3(f);
 	return (*this);
@@ -288,7 +293,7 @@ inline Vec3& Vec3::operator/=(float f)
 //==============================================================================
 
 // dot
-inline float Vec3::dot(const Vec3& b) const
+inline F32 Vec3::dot(const Vec3& b) const
 {
 	return x() * b.x() + y() * b.y() + z() * b.z();
 }
@@ -302,19 +307,19 @@ inline Vec3 Vec3::cross(const Vec3& b) const
 }
 
 // getLength
-inline float Vec3::getLength() const
+inline F32 Vec3::getLength() const
 {
 	return Math::sqrt(getLengthSquared());
 }
 
 // getLengthSquared
-inline float Vec3::getLengthSquared() const
+inline F32 Vec3::getLengthSquared() const
 {
 	return x() * x() + y() * y() + z() * z();
 }
 
 // getDistanceSquared
-inline float Vec3::getDistanceSquared(const Vec3& b) const
+inline F32 Vec3::getDistanceSquared(const Vec3& b) const
 {
 	return ((*this) - b).getLengthSquared();
 }
@@ -352,7 +357,7 @@ inline void Vec3::rotate(const Quat& q)
 }
 
 // lerp
-inline Vec3 Vec3::lerp(const Vec3& v1, float t) const
+inline Vec3 Vec3::lerp(const Vec3& v1, F32 t) const
 {
 	return ((*this) * (1.0 - t)) + (v1 * t);
 }
@@ -363,14 +368,14 @@ inline Vec3 Vec3::lerp(const Vec3& v1, float t) const
 
 // Mat3
 inline Vec3 Vec3::getTransformed(const Vec3& translate, const Mat3& rotate,
-	float scale) const
+	F32 scale) const
 {
 	return (rotate * ((*this) * scale)) + translate;
 }
 
 // Mat3
 inline void Vec3::transform(const Vec3& translate, const Mat3& rotate,
-	float scale)
+	F32 scale)
 {
 	(*this) = getTransformed(translate, rotate, scale);
 }
@@ -390,14 +395,14 @@ inline void Vec3::transform(const Vec3& translate, const Mat3& rotate)
 
 // Quat
 inline Vec3 Vec3::getTransformed(const Vec3& translate, const Quat& rotate,
-	float scale) const
+	F32 scale) const
 {
 	return ((*this) * scale).getRotated(rotate) + translate;
 }
 
 // Quat
 inline void Vec3::transform(const Vec3& translate, const Quat& rotate,
-	float scale)
+	F32 scale)
 {
 	(*this) = getTransformed(translate, rotate, scale);
 }
@@ -408,7 +413,7 @@ inline Vec3 Vec3::getTransformed(const Mat4& transform) const
 #if defined(ANKI_MATH_INTEL_SIMD)
 	Vec3 out;
 	Vec4 v4((*this), 1.0);
-	for(int i = 0; i < 3; i++)
+	for(U i = 0; i < 3; i++)
 	{
 		_mm_store_ss(&out[i], _mm_dp_ps(transform.getMm(i), v4.getMm(), 0xF1));
 	}
@@ -447,26 +452,26 @@ inline void Vec3::transform(const Transform& transform)
 // Friends                                                                     =
 //==============================================================================
 
-// float + Vec3
-inline Vec3 operator+(const float f, const Vec3& v)
+// F32 + Vec3
+inline Vec3 operator+(const F32 f, const Vec3& v)
 {
 	return v + f;
 }
 
-// float - Vec3
-inline Vec3 operator-(const float f, const Vec3& v)
+// F32 - Vec3
+inline Vec3 operator-(const F32 f, const Vec3& v)
 {
 	return Vec3(f - v.x(), f - v.y(), f - v.z());
 }
 
-// float * Vec3
-inline Vec3 operator*(const float f, const Vec3& v)
+// F32 * Vec3
+inline Vec3 operator*(const F32 f, const Vec3& v)
 {
 	return v * f;
 }
 
-// float / Vec3
-inline Vec3 operator/(const float f, const Vec3& v)
+// F32 / Vec3
+inline Vec3 operator/(const F32 f, const Vec3& v)
 {
 	return Vec3(f / v.x(), f / v.y(), f / v.z());
 }

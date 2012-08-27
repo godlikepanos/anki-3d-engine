@@ -20,7 +20,7 @@ public:
 	Transform(const Transform& b);
 	explicit Transform(const Mat4& m4);
 	explicit Transform(const Vec3& origin, const Mat3& rotation,
-		const float scale);
+		const F32 scale);
 	/// @}
 
 	/// @name Accessors
@@ -33,16 +33,16 @@ public:
 	Mat3& getRotation();
 	void setRotation(const Mat3& r);
 
-	float getScale() const;
-	float& getScale();
-	void setScale(const float s);
+	F32 getScale() const;
+	F32& getScale();
+	void setScale(const F32 s);
 	/// @}
 
 	/// @name Operators with same type
 	/// @{
 	Transform& operator=(const Transform& b);
-	bool operator==(const Transform& b) const;
-	bool operator!=(const Transform& b) const;
+	Bool operator==(const Transform& b) const;
+	Bool operator!=(const Transform& b) const;
 	/// @}
 
 	/// @name Other
@@ -68,7 +68,7 @@ private:
 	/// @{
 	Vec3 origin; ///< The rotation
 	Mat3 rotation; ///< The translation
-	float scale; ///< The uniform scaling
+	F32 scale; ///< The uniform scaling
 	/// @}
 };
 /// @}

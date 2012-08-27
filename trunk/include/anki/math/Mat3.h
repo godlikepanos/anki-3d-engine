@@ -16,11 +16,11 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit Mat3() {};
-	explicit Mat3(const float f);
-	explicit Mat3(const float m00, const float m01, const float m02,
-		const float m10, const float m11, const float m12,
-		const float m20, const float m21, const float m22);
-	explicit Mat3(const float arr[]);
+	explicit Mat3(const F32 f);
+	explicit Mat3(const F32 m00, const F32 m01, const F32 m02,
+		const F32 m10, const F32 m11, const F32 m12,
+		const F32 m20, const F32 m21, const F32 m22);
+	explicit Mat3(const F32 arr[]);
 	Mat3(const Mat3& b);
 	explicit Mat3(const Quat& q); ///< Quat to Mat3. 12 muls, 12 adds
 	explicit Mat3(const Euler& eu);
@@ -29,10 +29,10 @@ public:
 
 	/// @name Accessors
 	/// @{
-	float& operator()(const size_t i, const size_t j);
-	const float& operator()(const size_t i, const size_t j) const;
-	float& operator[](const size_t i);
-	const float& operator[](const size_t i) const;
+	F32& operator()(const U i, const U j);
+	const F32& operator()(const U i, const U j) const;
+	F32& operator[](const U i);
+	const F32& operator[](const U i) const;
 	/// @}
 
 	/// @name Operators with same type
@@ -46,20 +46,20 @@ public:
 	Mat3& operator*=(const Mat3& b);
 	Mat3 operator/(const Mat3& b) const;
 	Mat3& operator/=(const Mat3& b);
-	bool operator==(const Mat3& b) const;
-	bool operator!=(const Mat3& b) const;
+	Bool operator==(const Mat3& b) const;
+	Bool operator!=(const Mat3& b) const;
 	/// @}
 
-	/// @name Operators with float
+	/// @name Operators with F32
 	/// @{
-	Mat3 operator+(const float f) const;
-	Mat3& operator+=(const float f);
-	Mat3 operator-(const float f) const;
-	Mat3& operator-=(const float f);
-	Mat3 operator*(const float f) const;
-	Mat3& operator*=(const float f);
-	Mat3 operator/(const float f) const;
-	Mat3& operator/=(const float f);
+	Mat3 operator+(const F32 f) const;
+	Mat3& operator+=(const F32 f);
+	Mat3 operator-(const F32 f) const;
+	Mat3& operator-=(const F32 f);
+	Mat3 operator*(const F32 f) const;
+	Mat3& operator*=(const F32 f);
+	Mat3 operator/(const F32 f) const;
+	Mat3& operator/=(const F32 f);
 	/// @}
 
 	/// @name Operators with others
@@ -72,31 +72,31 @@ public:
 	/// @name Other
 	/// @{
 	void setRows(const Vec3& a, const Vec3& b, const Vec3& c);
-	void setRow(const size_t i, const Vec3& v);
+	void setRow(const U i, const Vec3& v);
 	void getRows(Vec3& a, Vec3& b, Vec3& c) const;
-	Vec3 getRow(const size_t i) const;
+	Vec3 getRow(const U i) const;
 	void setColumns(const Vec3& a, const Vec3& b, const Vec3& c);
-	void setColumn(const size_t i, const Vec3& v);
+	void setColumn(const U i, const Vec3& v);
 	void getColumns(Vec3& a, Vec3& b, Vec3& c) const;
-	Vec3 getColumn(const size_t i) const;
+	Vec3 getColumn(const U i) const;
 	Vec3 getXAxis() const; ///< Get 1st column
 	Vec3 getYAxis() const; ///< Get 2nd column
 	Vec3 getZAxis() const; ///< Get 3rd column
 	void setXAxis(const Vec3& v3); ///< Set 1st column
 	void setYAxis(const Vec3& v3); ///< Set 2nd column
 	void setZAxis(const Vec3& v3); ///< Set 3rd column
-	void setRotationX(const float rad);
-	void setRotationY(const float rad);
-	void setRotationZ(const float rad);
+	void setRotationX(const F32 rad);
+	void setRotationY(const F32 rad);
+	void setRotationZ(const F32 rad);
 	/// It rotates "this" in the axis defined by the rotation AND not the
 	/// world axis
-	void rotateXAxis(const float rad);
-	void rotateYAxis(const float rad); ///< @copybrief rotateXAxis
-	void rotateZAxis(const float rad); ///< @copybrief rotateXAxis
+	void rotateXAxis(const F32 rad);
+	void rotateYAxis(const F32 rad); ///< @copybrief rotateXAxis
+	void rotateZAxis(const F32 rad); ///< @copybrief rotateXAxis
 	void transpose();
 	Mat3 getTransposed() const;
 	void reorthogonalize();
-	float getDet() const;
+	F32 getDet() const;
 	void invert();
 	Mat3 getInverse() const;
 	void setIdentity();
@@ -106,10 +106,10 @@ public:
 
 	/// @name Friends
 	/// @{
-	friend Mat3 operator+(float f, const Mat3& m3);
-	friend Mat3 operator-(float f, const Mat3& m3);
-	friend Mat3 operator*(float f, const Mat3& m3);
-	friend Mat3 operator/(float f, const Mat3& m3);
+	friend Mat3 operator+(F32 f, const Mat3& m3);
+	friend Mat3 operator-(F32 f, const Mat3& m3);
+	friend Mat3 operator*(F32 f, const Mat3& m3);
+	friend Mat3 operator/(F32 f, const Mat3& m3);
 	friend std::ostream& operator<<(std::ostream& s, const Mat3& m);
 	/// @}
 
@@ -118,16 +118,16 @@ private:
 	/// @{
 	union
 	{
-		std::array<float, 9> arr1;
-		std::array<std::array<float, 3>, 3> arr2;
-		float carr1[9]; ///< For gdb
-		float carr2[3][3]; ///< For gdb
+		std::array<F32, 9> arr1;
+		std::array<std::array<F32, 3>, 3> arr2;
+		F32 carr1[9]; ///< For gdb
+		F32 carr2[3][3]; ///< For gdb
 	};
 	/// @}
 };
 /// @}
 
-static_assert(sizeof(Mat3) == sizeof(float) * 3 * 3, "Incorrect size");
+static_assert(sizeof(Mat3) == sizeof(F32) * 3 * 3, "Incorrect size");
 
 } // end namespace
 

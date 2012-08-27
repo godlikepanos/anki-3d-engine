@@ -6,28 +6,28 @@ namespace anki {
 // Constructors                                                                =
 //==============================================================================
 
-// constructor [float]
-inline Mat3::Mat3(const float f)
+// constructor [F32]
+inline Mat3::Mat3(const F32 f)
 {
-	for(int i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		(*this)[i] = f;
 	}
 }
 
-// float[]
-inline Mat3::Mat3(const float arr [])
+// F32[]
+inline Mat3::Mat3(const F32 arr [])
 {
-	for(int i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		(*this)[i] = arr[i];
 	}
 }
 
-// many floats
-inline Mat3::Mat3(const float m00, const float m01, const float m02,
-	const float m10, const float m11, const float m12,
-	const float m20, const float m21, const float m22)
+// many F32s
+inline Mat3::Mat3(const F32 m00, const F32 m01, const F32 m02,
+	const F32 m10, const F32 m11, const F32 m12,
+	const F32 m20, const F32 m21, const F32 m22)
 {
 	(*this)(0, 0) = m00;
 	(*this)(0, 1) = m01;
@@ -43,7 +43,7 @@ inline Mat3::Mat3(const float m00, const float m01, const float m02,
 // Copy
 inline Mat3::Mat3(const Mat3& b)
 {
-	for(int i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		(*this)[i] = b[i];
 	}
@@ -55,7 +55,7 @@ inline Mat3::Mat3(const Quat& q)
 	// If length is > 1 + 0.002 or < 1 - 0.002 then not normalized quat
 	ANKI_ASSERT(fabs(1.0 - q.getLength()) <= 0.002);
 
-	float xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
+	F32 xs, ys, zs, wx, wy, wz, xx, xy, xz, yy, yz, zz;
 
 	xs = q.x() + q.x();
 	ys = q.y() + q.y();
@@ -86,7 +86,7 @@ inline Mat3::Mat3(const Quat& q)
 // Euler
 inline Mat3::Mat3(const Euler& e)
 {
-	float ch, sh, ca, sa, cb, sb;
+	F32 ch, sh, ca, sa, cb, sb;
 	Math::sinCos(e.y(), sh, ch);
 	Math::sinCos(e.z(), sa, ca);
 	Math::sinCos(e.x(), sb, cb);
@@ -108,17 +108,17 @@ inline Mat3::Mat3(const Axisang& axisang)
 	// Not normalized axis
 	ANKI_ASSERT(Math::isZero(1.0 - axisang.getAxis().getLength()));
 
-	float c, s;
+	F32 c, s;
 	Math::sinCos(axisang.getAngle(), s, c);
-	float t = 1.0 - c;
+	F32 t = 1.0 - c;
 
 	const Vec3& axis = axisang.getAxis();
 	(*this)(0, 0) = c + axis.x() * axis.x() * t;
 	(*this)(1, 1) = c + axis.y() * axis.y() * t;
 	(*this)(2, 2) = c + axis.z() * axis.z() * t;
 
-	float tmp1 = axis.x() * axis.y() * t;
-	float tmp2 = axis.z() * s;
+	F32 tmp1 = axis.x() * axis.y() * t;
+	F32 tmp2 = axis.z() * s;
 	(*this)(1, 0) = tmp1 + tmp2;
 	(*this)(0, 1) = tmp1 - tmp2;
 	tmp1 = axis.x() * axis.z() * t;
@@ -135,22 +135,22 @@ inline Mat3::Mat3(const Axisang& axisang)
 // Accessors                                                                   =
 //==============================================================================
 
-inline float& Mat3::operator()(const size_t i, const size_t j)
+inline F32& Mat3::operator()(const U i, const U j)
 {
 	return arr2[i][j];
 }
 
-inline const float& Mat3::operator()(const size_t i, const size_t j) const
+inline const F32& Mat3::operator()(const U i, const U j) const
 {
 	return arr2[i][j];
 }
 
-inline float& Mat3::operator[](const size_t i)
+inline F32& Mat3::operator[](const U i)
 {
 	return arr1[i];
 }
 
-inline const float& Mat3::operator[](const size_t i) const
+inline const F32& Mat3::operator[](const U i) const
 {
 	return arr1[i];
 }
@@ -162,7 +162,7 @@ inline const float& Mat3::operator[](const size_t i) const
 // =
 inline Mat3& Mat3::operator=(const Mat3& b)
 {
-	for(int i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		(*this)[i] = b[i];
 	}
@@ -173,7 +173,7 @@ inline Mat3& Mat3::operator=(const Mat3& b)
 inline Mat3 Mat3::operator+(const Mat3& b) const
 {
 	Mat3 c;
-	for(int i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		c[i] = (*this)[i] + b[i];
 	}
@@ -183,7 +183,7 @@ inline Mat3 Mat3::operator+(const Mat3& b) const
 // +=
 inline Mat3& Mat3::operator+=(const Mat3& b)
 {
-	for(int i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		(*this)[i] += b[i];
 	}
@@ -194,7 +194,7 @@ inline Mat3& Mat3::operator+=(const Mat3& b)
 inline Mat3 Mat3::operator-(const Mat3& b) const
 {
 	Mat3 c;
-	for(int i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		c[i] = (*this)[i] - b[i];
 	}
@@ -204,7 +204,7 @@ inline Mat3 Mat3::operator-(const Mat3& b) const
 // -=
 inline Mat3& Mat3::operator-=(const Mat3& b)
 {
-	for(int i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		(*this)[i] -= b[i];
 	}
@@ -244,9 +244,9 @@ inline Mat3& Mat3::operator*=(const Mat3& b)
 }
 
 // ==
-inline bool Mat3::operator==(const Mat3& b) const
+inline Bool Mat3::operator==(const Mat3& b) const
 {
-	for(int i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		if(!Math::isZero((*this)[i] - b[i]))
 		{
@@ -257,9 +257,9 @@ inline bool Mat3::operator==(const Mat3& b) const
 }
 
 // !=
-inline bool Mat3::operator!=(const Mat3& b) const
+inline Bool Mat3::operator!=(const Mat3& b) const
 {
-	for(int i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		if(!Math::isZero((*this)[i] - b[i]))
 		{
@@ -270,87 +270,87 @@ inline bool Mat3::operator!=(const Mat3& b) const
 }
 
 //==============================================================================
-// Operators with float                                                        =
+// Operators with F32                                                        =
 //==============================================================================
 
-// 3x3 + float
-inline Mat3 Mat3::operator+(const float f) const
+// 3x3 + F32
+inline Mat3 Mat3::operator+(const F32 f) const
 {
 	Mat3 c;
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		c[i] = (*this)[i] + f;
 	}
 	return c;
 }
 
-// 3x3 += float
-inline Mat3& Mat3::operator+=(const float f)
+// 3x3 += F32
+inline Mat3& Mat3::operator+=(const F32 f)
 {
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		(*this)[i] += f;
 	}
 	return (*this);
 }
 
-// 3x3 - float
-inline Mat3 Mat3::operator-(const float f) const
+// 3x3 - F32
+inline Mat3 Mat3::operator-(const F32 f) const
 {
 	Mat3 c;
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		c[i] = (*this)[i] - f;
 	}
 	return c;
 }
 
-// 3x3 -= float
-inline Mat3& Mat3::operator-=(const float f)
+// 3x3 -= F32
+inline Mat3& Mat3::operator-=(const F32 f)
 {
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		(*this)[i] -= f;
 	}
 	return (*this);
 }
 
-// 3x3 * float
-inline Mat3 Mat3::operator*(const float f) const
+// 3x3 * F32
+inline Mat3 Mat3::operator*(const F32 f) const
 {
 	Mat3 c;
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		c[i] = (*this)[i] * f;
 	}
 	return c;
 }
 
-// 3x3 *= float
-inline Mat3& Mat3::operator*=(const float f)
+// 3x3 *= F32
+inline Mat3& Mat3::operator*=(const F32 f)
 {
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		(*this)[i] *= f;
 	}
 	return (*this);
 }
 
-// 3x3 / float
-inline Mat3 Mat3::operator/(const float f) const
+// 3x3 / F32
+inline Mat3 Mat3::operator/(const F32 f) const
 {
 	Mat3 c;
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		c[i] = (*this)[i] / f;
 	}
 	return c;
 }
 
-// 3x3 / float (self)
-inline Mat3& Mat3::operator/=(const float f)
+// 3x3 / F32 (self)
+inline Mat3& Mat3::operator/=(const F32 f)
 {
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		(*this)[i] /= f;
 	}
@@ -431,7 +431,7 @@ inline void Mat3::getColumns(Vec3& a, Vec3& b, Vec3& c) const
 }
 
 // setRow
-inline void Mat3::setRow(const size_t i, const Vec3& v)
+inline void Mat3::setRow(const U i, const Vec3& v)
 {
 	(*this)(i, 0) = v.x();
 	(*this)(i, 1) = v.y();
@@ -439,13 +439,13 @@ inline void Mat3::setRow(const size_t i, const Vec3& v)
 }
 
 // getRow
-inline Vec3 Mat3::getRow(const size_t i) const
+inline Vec3 Mat3::getRow(const U i) const
 {
 	return Vec3((*this)(i, 0), (*this)(i, 1), (*this)(i, 2));
 }
 
 // setColumn
-inline void Mat3::setColumn(const size_t i, const Vec3& v)
+inline void Mat3::setColumn(const U i, const Vec3& v)
 {
 	(*this)(0, i) = v.x();
 	(*this)(1, i) = v.y();
@@ -453,7 +453,7 @@ inline void Mat3::setColumn(const size_t i, const Vec3& v)
 }
 
 // getColumn
-inline Vec3 Mat3::getColumn(const size_t i) const
+inline Vec3 Mat3::getColumn(const U i) const
 {
 	return Vec3((*this)(0,i), (*this)(1,i), (*this)(2,i));
 }
@@ -495,9 +495,9 @@ inline void Mat3::setZAxis(const Vec3& v3)
 }
 
 // setRotationX
-inline void Mat3::setRotationX(const float rad)
+inline void Mat3::setRotationX(const F32 rad)
 {
-	float sintheta, costheta;
+	F32 sintheta, costheta;
 	Math::sinCos(rad, sintheta, costheta);
 
 	(*this)(0, 0) = 1.0;
@@ -512,9 +512,9 @@ inline void Mat3::setRotationX(const float rad)
 }
 
 // setRotationY
-inline void Mat3::setRotationY(const float rad)
+inline void Mat3::setRotationY(const F32 rad)
 {
-	float sintheta, costheta;
+	F32 sintheta, costheta;
 	Math::sinCos(rad, sintheta, costheta);
 
 	(*this)(0, 0) = costheta;
@@ -529,9 +529,9 @@ inline void Mat3::setRotationY(const float rad)
 }
 
 // loadRotationZ
-inline void Mat3::setRotationZ(const float rad)
+inline void Mat3::setRotationZ(const F32 rad)
 {
-	float sintheta, costheta;
+	F32 sintheta, costheta;
 	Math::sinCos(rad, sintheta, costheta);
 
 	(*this)(0, 0) = costheta;
@@ -546,7 +546,7 @@ inline void Mat3::setRotationZ(const float rad)
 }
 
 // rotateXAxis
-inline void Mat3::rotateXAxis(const float rad)
+inline void Mat3::rotateXAxis(const F32 rad)
 {
 	// If we analize the mat3 we can extract the 3 unit vectors rotated by the 
 	// mat3. The 3 rotated vectors are in mat's columns. This means that:
@@ -554,7 +554,7 @@ inline void Mat3::rotateXAxis(const float rad)
 	// vector (aka x axis) but from the vector from colomn 0
 	// NOTE: See the clean code from < r664
 
-	float sina, cosa;
+	F32 sina, cosa;
 	Math::sinCos(rad, sina, cosa);
 
 	// zAxis = zAxis*cosa - yAxis*sina;
@@ -563,7 +563,7 @@ inline void Mat3::rotateXAxis(const float rad)
 	(*this)(2, 2) = (*this)(2, 2) * cosa - (*this)(2, 1) * sina;
 
 	// zAxis.normalize();
-	float len = sqrt((*this)(0, 2) * (*this)(0, 2)
+	F32 len = sqrt((*this)(0, 2) * (*this)(0, 2)
 		+ (*this)(1, 2) * (*this)(1, 2) + (*this)(2, 2) * (*this)(2, 2));
 	(*this)(0, 2) /= len;
 	(*this)(1, 2) /= len;
@@ -581,10 +581,10 @@ inline void Mat3::rotateXAxis(const float rad)
 }
 
 // rotateYAxis
-inline void Mat3::rotateYAxis(const float rad)
+inline void Mat3::rotateYAxis(const F32 rad)
 {
 	// NOTE: See the clean code from < r664
-	float sina, cosa;
+	F32 sina, cosa;
 	Math::sinCos(rad, sina, cosa);
 
 	// zAxis = zAxis*cosa + xAxis*sina;
@@ -593,7 +593,7 @@ inline void Mat3::rotateYAxis(const float rad)
 	(*this)(2, 2) = (*this)(2, 2) * cosa + (*this)(2, 0) * sina;
 
 	// zAxis.normalize();
-	float len = sqrt((*this)(0, 2) * (*this)(0, 2)
+	F32 len = sqrt((*this)(0, 2) * (*this)(0, 2)
 		+ (*this)(1, 2) * (*this)(1, 2) + (*this)(2, 2) * (*this)(2, 2));
 	(*this)(0, 2) /= len;
 	(*this)(1, 2) /= len;
@@ -609,10 +609,10 @@ inline void Mat3::rotateYAxis(const float rad)
 }
 
 // rotateZAxis
-inline void Mat3::rotateZAxis(const float rad)
+inline void Mat3::rotateZAxis(const F32 rad)
 {
 	// NOTE: See the clean code from < r664
-	float sina, cosa;
+	F32 sina, cosa;
 	Math::sinCos(rad, sina, cosa);
 
 	// xAxis = xAxis*cosa + yAxis*sina;
@@ -621,7 +621,7 @@ inline void Mat3::rotateZAxis(const float rad)
 	(*this)(2, 0) = (*this)(2, 0) * cosa + (*this)(2, 1) * sina;
 
 	// xAxis.normalize();
-	float len = sqrt((*this)(0, 0) * (*this)(0, 0)
+	F32 len = sqrt((*this)(0, 0) * (*this)(0, 0)
 		+ (*this)(1, 0) * (*this)(1, 0) + (*this)(2, 0) * (*this)(2, 0));
 	(*this)(0, 0) /= len;
 	(*this)(1, 0) /= len;
@@ -639,7 +639,7 @@ inline void Mat3::rotateZAxis(const float rad)
 // transpose
 inline void Mat3::transpose()
 {
-	float temp = (*this)(0, 1);
+	F32 temp = (*this)(0, 1);
 	(*this)(0, 1) = (*this)(1, 0);
 	(*this)(1, 0) = temp;
 	temp = (*this)(0, 2);
@@ -685,7 +685,7 @@ inline void Mat3::reorthogonalize()
 }
 
 // Determinant
-inline float Mat3::getDet() const
+inline F32 Mat3::getDet() const
 {
 	// For the accurate method see < r664
 	return (*this)(0, 0) * ((*this)(1, 1) * (*this)(2, 2)
@@ -701,19 +701,19 @@ inline Mat3 Mat3::getInverse() const
 	Mat3 r;
 
 	// compute determinant
-	float cofactor0 = (*this)(1, 1) * (*this)(2, 2)
+	F32 cofactor0 = (*this)(1, 1) * (*this)(2, 2)
 		- (*this)(1, 2) * (*this)(2, 1);
-	float cofactor3 = (*this)(0, 2) * (*this)(2, 1)
+	F32 cofactor3 = (*this)(0, 2) * (*this)(2, 1)
 		- (*this)(0, 1) * (*this)(2, 2);
-	float cofactor6 = (*this)(0, 1) * (*this)(1, 2)
+	F32 cofactor6 = (*this)(0, 1) * (*this)(1, 2)
 		- (*this)(0, 2) * (*this)(1, 1);
-	float det = (*this)(0, 0) * cofactor0 + (*this)(1, 0) * cofactor3
+	F32 det = (*this)(0, 0) * cofactor0 + (*this)(1, 0) * cofactor3
 		+ (*this)(2, 0) * cofactor6;
 
 	ANKI_ASSERT(!Math::isZero(det)); // Cannot invert det == 0
 
 	// create adjoint matrix and multiply by 1/det to get inverse
-	float invDet = 1.0 / det;
+	F32 invDet = 1.0 / det;
 	r(0, 0) = invDet * cofactor0;
 	r(0, 1) = invDet * cofactor3;
 	r(0, 2) = invDet * cofactor6;
@@ -766,39 +766,39 @@ inline const Mat3& Mat3::getIdentity()
 // Friends                                                                     =
 //==============================================================================
 
-// float + 3x3
-inline Mat3 operator+(const float f, const Mat3& m3)
+// F32 + 3x3
+inline Mat3 operator+(const F32 f, const Mat3& m3)
 {
 	return m3 + f;
 }
 
-// float - 3x3
-inline Mat3 operator-(const float f, const Mat3& m3)
+// F32 - 3x3
+inline Mat3 operator-(const F32 f, const Mat3& m3)
 {
 	Mat3 out;
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		out[i] = f - m3[i];
 	}
 	return out;
 }
 
-// float * 3x3
-inline Mat3 operator*(const float f, const Mat3& m3)
+// F32 * 3x3
+inline Mat3 operator*(const F32 f, const Mat3& m3)
 {
 	Mat3 out;
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		out[i] = f * m3[i];
 	}
 	return out;
 }
 
-// float / 3x3
-inline Mat3 operator/(const float f, const Mat3& m3)
+// F32 / 3x3
+inline Mat3 operator/(const F32 f, const Mat3& m3)
 {
 	Mat3 out;
-	for(size_t i = 0; i < 9; i++)
+	for(U i = 0; i < 9; i++)
 	{
 		out[i] = f / m3[i];
 	}
@@ -808,9 +808,9 @@ inline Mat3 operator/(const float f, const Mat3& m3)
 // Print
 inline std::ostream& operator<<(std::ostream& s, const Mat3& m)
 {
-	for(int i = 0; i < 3; i++)
+	for(U i = 0; i < 3; i++)
 	{
-		for(int j = 0; j < 3; j++)
+		for(U j = 0; j < 3; j++)
 		{
 			s << m(i, j) << ' ';
 		}

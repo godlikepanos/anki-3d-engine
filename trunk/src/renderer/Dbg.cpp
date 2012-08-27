@@ -90,17 +90,36 @@ void Dbg::run()
 	Vec4 l = cam.getViewProjectionMatrix() * Vec4(0.0, 0.0, 0.0, 1.0);
 	l /= l.w();
 
-	std::cout << (p1 - p0).getLength() << ", " << l << std::endl;
+	//std::cout << (p1 - p0).getLength() << ", " << l << std::endl;
+
+	//
+	F32 r = s.getRadius();
+	Vec3 e = cam.getWorldTransform().getOrigin();
+	Vec4 c(s.getCenter(), 1.0);
+	Vec4 a = Vec4(c.xyz() + cam.getWorldTransform().getRotation() * Vec3(r, 0.0, 0.0), 1.0);
+
+	c = cam.getViewProjectionMatrix() * c;
+	c /= c.w();
+
+	a = cam.getViewProjectionMatrix() * a;
+	a /= a.w();
+
+	Vec2 circleCenter = c.xy();
+	F32 circleRadius = (c.xy() - a.xy()).getLength();
+	//
 
 	drawer->setViewProjectionMatrix(Mat4::getIdentity());
 	drawer->setModelMatrix(Mat4::getIdentity());
 
-	drawer->drawLine(Vec3(p0.x(), p0.y(), 0.0),
+	/*drawer->drawLine(Vec3(p0.x(), p0.y(), 0.0),
 		Vec3(p0.x(), p0.y(), 0.0) + Vec3(2.0 / w, 0.0, 0.0),
 		Vec4(0.0, 1.0, 0.0, 0.0));
 
 	drawer->drawLine(Vec3(p0.x(), p0.y(), 0.0),
-		Vec3(p1.x(), p1.y(), 0.0), Vec4(0.0, 1.0, 1.0, 0.0));
+		Vec3(p1.x(), p1.y(), 0.0), Vec4(0.0, 1.0, 1.0, 0.0));*/
+
+	drawer->drawLine(Vec3(circleCenter, 0.0),
+		Vec3(circleCenter, 0.0) + Vec3(circleRadius, 0.0, 0.0), Vec4(0.0, 1.0, 1.0, 0.0));
 }
 
 } // end namespace anki

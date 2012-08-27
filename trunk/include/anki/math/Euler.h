@@ -16,7 +16,7 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit Euler();
-	explicit Euler(const float x, const float y, const float z);
+	explicit Euler(const F32 x, const F32 y, const F32 z);
 			 Euler(const Euler& b);
 	explicit Euler(const Quat& q);
 	explicit Euler(const Mat3& m3);
@@ -24,14 +24,14 @@ public:
 
 	/// @name Accessors
 	/// @{
-	float& operator [](const size_t i);
-	float operator [](const size_t i) const;
-	float& x();
-	float x() const;
-	float& y();
-	float y() const;
-	float& z();
-	float z() const;
+	F32& operator [](const U i);
+	F32 operator [](const U i) const;
+	F32& x();
+	F32 x() const;
+	F32& y();
+	F32 y() const;
+	F32& z();
+	F32 z() const;
 	/// @}
 
 	/// @name Operators with same type
@@ -51,10 +51,10 @@ private:
 	{
 		struct
 		{
-			float x, y, z;
+			F32 x, y, z;
 		} vec;
 
-		std::array<float, 3> arr;
+		std::array<F32, 3> arr;
 	};
 	/// @}
 };

@@ -10,6 +10,7 @@
 #include "anki/renderer/Sm.h"
 #include "anki/renderer/Smo.h"
 #include "anki/util/StdTypes.h"
+#include "anki/util/Array.h"
 
 namespace anki {
 
@@ -66,9 +67,9 @@ private:
 		/// @note The coords are in NDC
 		/// @note coords[0] is the bottom left coord, and the coords[1] the 
 		///       top right
-		Vec2 coords[2]; 
+		Array<Vec2, 2> coords;
 
-		std::array<U32, MAX_LIGHTS_PER_TILE> lightIndices;
+		Array<U32, MAX_LIGHTS_PER_TILE> lightIndices;
 		U lightsCount = 0;
 	};
 
@@ -101,7 +102,7 @@ private:
 	ShaderProgramResourcePointer minMaxPassSprog;
 
 	/// Light shaders
-	std::array<ShaderProgramResourcePointer, LST_COUNT> lightSProgs;
+	Array<ShaderProgramResourcePointer, LST_COUNT> lightSProgs;
 
 	Sm sm;
 
@@ -110,25 +111,28 @@ private:
 		const Sphere& sphere, Vec2& circleCenter, F32& circleRadius);
 	/// Project a perspective frustum to a triangle
 	static void projectShape(const Mat4& projectionMat,
-		const PerspectiveFrustum& fr, std::array<Vec2, 3>& coords);
+		const PerspectiveFrustum& fr, Array<Vec2, 3>& coords);
 
 	/// For intersecting of point lights
 	static Bool circleIntersects(const Tile& tile, const Vec2& circleCenter, 
 		F32 circleRadius);
 	/// For intersecting of spot lights
 	static Bool triangleIntersects(const Tile& tile, 
-		const std::array<Vec2, 3>& coords);
+		const Array<Vec2, 3>& coords);
 
 	/// Fill the minMaxFai
 	void minMaxPass();
 
-	/// See if the light is inside the tile and if it is assign it to the tile
-	void cullLight(Tile& tile, Light& light);
+	/// See if the light is inside the tile
+	Bool cullLight(const PointLight& light, const Tile& tile);
+	Bool cullLight(const SpotLight& light, const Tile& tile);
 
 	/// Do the light culling
 	void tileCulling();
 
 	void initInternal(const RendererInitializer& initializer);
+
+	void pointLightsPass();
 };
 
 } // end namespace anki

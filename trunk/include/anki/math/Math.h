@@ -14,35 +14,35 @@ namespace anki {
 class Math
 {
 public:
-	static const float PI;
-	static const float EPSILON;
+	static const F32 PI;
+	static const F32 EPSILON;
 
 	/// A fast func that given the angle in rads it returns the sin and cos
-	static void sinCos(const float rad, float& sin_, float& cos_);
+	static void sinCos(const F32 rad, F32& sin_, F32& cos_);
 
 	/// Optimized square root
-	static float sqrt(const float f);
+	static F32 sqrt(const F32 f);
 
 	/// Convert
-	static float toRad(const float degrees);
+	static F32 toRad(const F32 degrees);
 
 	/// Convert
-	static float toDegrees(const float rad);
+	static F32 toDegrees(const F32 rad);
 
 	/// Optimized sine
-	static float sin(const float rad);
+	static F32 sin(const F32 rad);
 
 	/// Optimized cosine
-	static float cos(const float rad);
+	static F32 cos(const F32 rad);
 
-	/// The proper way to test if a float is zero
-	static bool isZero(const float f);
+	/// The proper way to test if a F32 is zero
+	static Bool isZero(const F32 f);
 
 	/// Mat4(t0,r0,s0) * Mat4(t1, r1, s1) == Mat4(tf, rf, sf)
 	static void combineTransformations(
-		const Vec3& t0, const Mat3& r0, const float s0, // in 0
-		const Vec3& t1, const Mat3& r1, const float s1, // in 1
-		Vec3& tf, Mat3& rf, float& sf); // out
+		const Vec3& t0, const Mat3& r0, const F32 s0, // in 0
+		const Vec3& t1, const Mat3& r1, const F32 s1, // in 1
+		Vec3& tf, Mat3& rf, F32& sf); // out
 
 	/// Mat4(t0, r0, 1.0) * Mat4(t1, r1, 1.0) == Mat4(tf, rf, sf)
 	static void combineTransformations(
@@ -51,7 +51,7 @@ public:
 		Vec3& tf, Mat3& rf); // out
 
 private:
-	static float polynomialSinQuadrant(const float a);
+	static F32 polynomialSinQuadrant(const F32 a);
 };
 /// @}
 

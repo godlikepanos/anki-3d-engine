@@ -16,8 +16,8 @@ inline Axisang::Axisang(const Axisang& b)
 	: ang(b.ang), axis(b.axis)
 {}
 
-// float, axis
-inline Axisang::Axisang(const float rad, const Vec3& axis_)
+// F32, axis
+inline Axisang::Axisang(const F32 rad, const Vec3& axis_)
 	: ang(rad), axis(axis_)
 {}
 
@@ -25,7 +25,7 @@ inline Axisang::Axisang(const float rad, const Vec3& axis_)
 inline Axisang::Axisang(const Quat& q)
 {
 	ang = 2.0 * acos(q.w());
-	float length = Math::sqrt(1.0 - q.w() * q.w());
+	F32 length = Math::sqrt(1.0 - q.w() * q.w());
 	if(Math::isZero(length))
 	{
 		axis = Vec3(0.0);
@@ -85,12 +85,12 @@ inline Axisang::Axisang(const Mat3& m3)
 			axis.z() = 0.0;
 		}
 
-		bool xZero = (fabs(axis.x()) < Math::EPSILON);
-		bool yZero = (fabs(axis.y()) < Math::EPSILON);
-		bool zZero = (fabs(axis.z()) < Math::EPSILON);
-		bool xyPositive = (m3(0, 1) > 0);
-		bool xzPositive = (m3(0, 2) > 0);
-		bool yzPositive = (m3(1, 2) > 0);
+		Bool xZero = (fabs(axis.x()) < Math::EPSILON);
+		Bool yZero = (fabs(axis.y()) < Math::EPSILON);
+		Bool zZero = (fabs(axis.z()) < Math::EPSILON);
+		Bool xyPositive = (m3(0, 1) > 0);
+		Bool xzPositive = (m3(0, 2) > 0);
+		Bool yzPositive = (m3(1, 2) > 0);
 		if(xZero && !yZero && !zZero)
 		{
 			if(!yzPositive)
@@ -116,7 +116,7 @@ inline Axisang::Axisang(const Mat3& m3)
 		return;
 	}
 
-	float s = Math::sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2)) 
+	F32 s = Math::sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2)) 
 		+ (m3(0, 2) - m3(2, 0)) * (m3(0, 2) - m3(2, 0)) 
 		+ (m3(1, 0) - m3(0, 1)) * (m3(1, 0) - m3(0, 1)));
 
@@ -135,17 +135,17 @@ inline Axisang::Axisang(const Mat3& m3)
 // Accessors                                                                   =
 //==============================================================================
 
-inline float Axisang::getAngle() const
+inline F32 Axisang::getAngle() const
 {
 	return ang;
 }
 
-inline float& Axisang::getAngle()
+inline F32& Axisang::getAngle()
 {
 	return ang;
 }
 
-inline void Axisang::setAngle(float a)
+inline void Axisang::setAngle(F32 a)
 {
 	ang = a;
 }

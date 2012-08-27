@@ -17,16 +17,16 @@ public:
 	/// @{
 	explicit Axisang();
 	         Axisang(const Axisang& b);
-	explicit Axisang(const float rad, const Vec3& axis_);
+	explicit Axisang(const F32 rad, const Vec3& axis_);
 	explicit Axisang(const Quat& q);
 	explicit Axisang(const Mat3& m3);
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	float getAngle() const;
-	float& getAngle();
-	void setAngle(const float a);
+	F32 getAngle() const;
+	F32& getAngle();
+	void setAngle(const F32 a);
 
 	const Vec3& getAxis() const;
 	Vec3& getAxis();
@@ -46,7 +46,7 @@ public:
 private:
 	/// @name Data
 	/// @{
-	float ang;
+	F32 ang;
 	Vec3 axis;
 	/// @}
 };

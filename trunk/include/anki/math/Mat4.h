@@ -17,32 +17,32 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit Mat4() {}
-	explicit Mat4(const float f);
-	explicit Mat4(const float m00, const float m01, const float m02,
-		const float m03, const float m10, const float m11,
-		const float m12, const float m13, const float m20,
-		const float m21, const float m22, const float m23,
-		const float m30, const float m31, const float m32,
-		const float m33);
-	explicit Mat4(const float arr[]);
+	explicit Mat4(const F32 f);
+	explicit Mat4(const F32 m00, const F32 m01, const F32 m02,
+		const F32 m03, const F32 m10, const F32 m11,
+		const F32 m12, const F32 m13, const F32 m20,
+		const F32 m21, const F32 m22, const F32 m23,
+		const F32 m30, const F32 m31, const F32 m32,
+		const F32 m33);
+	explicit Mat4(const F32 arr[]);
 	Mat4(const Mat4& b);
 	explicit Mat4(const Mat3& m3);
 	explicit Mat4(const Vec3& v);
 	explicit Mat4(const Vec4& v);
 	explicit Mat4(const Vec3& transl, const Mat3& rot);
-	explicit Mat4(const Vec3& transl, const Mat3& rot, const float scale);
+	explicit Mat4(const Vec3& transl, const Mat3& rot, const F32 scale);
 	explicit Mat4(const Transform& t);
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	float& operator()(const size_t i, const size_t j);
-	const float& operator()(const size_t i, const size_t j) const;
-	float& operator[](const size_t i);
-	const float& operator[](const size_t i) const;
+	F32& operator()(const U i, const U j);
+	const F32& operator()(const U i, const U j) const;
+	F32& operator[](const U i);
+	const F32& operator[](const U i) const;
 #if defined(ANKI_MATH_INTEL_SIMD)
-	__m128& getMm(const size_t i);
-	const __m128& getMm(const size_t i) const;
+	__m128& getMm(const U i);
+	const __m128& getMm(const U i) const;
 #endif
 	/// @}
 
@@ -57,20 +57,20 @@ public:
 	Mat4& operator*=(const Mat4& b);
 	Mat4 operator/(const Mat4& b) const;
 	Mat4& operator/=(const Mat4& b);
-	bool operator==(const Mat4& b) const;
-	bool operator!=(const Mat4& b) const;
+	Bool operator==(const Mat4& b) const;
+	Bool operator!=(const Mat4& b) const;
 	/// @}
 
-	/// @name Operators with float
+	/// @name Operators with F32
 	/// @{
-	Mat4  operator+(const float f) const;
-	Mat4& operator+=(const float f);
-	Mat4  operator-(const float f) const;
-	Mat4& operator-=(const float f);
-	Mat4  operator*(const float f) const;
-	Mat4& operator*=(const float f);
-	Mat4  operator/(const float f) const;
-	Mat4& operator/=(const float f);
+	Mat4  operator+(const F32 f) const;
+	Mat4& operator+=(const F32 f);
+	Mat4  operator-(const F32 f) const;
+	Mat4& operator-=(const F32 f);
+	Mat4  operator*(const F32 f) const;
+	Mat4& operator*=(const F32 f);
+	Mat4  operator/(const F32 f) const;
+	Mat4& operator/=(const F32 f);
 	/// @}
 
 	/// @name Operators with other types
@@ -82,10 +82,10 @@ public:
 	/// @{
 	void setRows(const Vec4& a, const Vec4& b, const Vec4& c,
 		const Vec4& d);
-	void setRow(const size_t i, const Vec4& v);
+	void setRow(const U i, const Vec4& v);
 	void setColumns(const Vec4& a, const Vec4& b, const Vec4& c,
 		const Vec4& d);
-	void setColumn(const size_t i, const Vec4& v);
+	void setColumn(const U i, const Vec4& v);
 	void setRotationPart(const Mat3& m3);
 	void setTranslationPart(const Vec4& v4);
 	Mat3 getRotationPart() const;
@@ -93,13 +93,13 @@ public:
 	Vec3 getTranslationPart() const;
 	void transpose();
 	Mat4 getTransposed() const;
-	float getDet() const;
+	F32 getDet() const;
 	Mat4 getInverse() const; ///< Invert using Cramer's rule
 	void invert(); ///< See getInverse
 	/// If we suppose this matrix represents a transformation, return the
 	/// inverted transformation
 	Mat4 getInverseTransformation() const;
-	Mat4 lerp(const Mat4& b, float t) const;
+	Mat4 lerp(const Mat4& b, F32 t) const;
 	void setIdentity();
 	/// 12 muls, 27 adds. Something like m4 = m0 * m1 but without touching
 	/// the 4rth row and allot faster
@@ -110,10 +110,10 @@ public:
 
 	/// @name Friends
 	/// @{
-	friend Mat4 operator+(const float f, const Mat4& m4);
-	friend Mat4 operator-(const float f, const Mat4& m4);
-	friend Mat4 operator*(const float f, const Mat4& m4);
-	friend Mat4 operator/(const float f, const Mat4& m4);
+	friend Mat4 operator+(const F32 f, const Mat4& m4);
+	friend Mat4 operator-(const F32 f, const Mat4& m4);
+	friend Mat4 operator*(const F32 f, const Mat4& m4);
+	friend Mat4 operator/(const F32 f, const Mat4& m4);
 	friend std::ostream& operator<<(std::ostream& s, const Mat4& m);
 	/// @}
 
@@ -122,10 +122,10 @@ private:
 	/// @{
 	union
 	{
-		std::array<float, 16> arr1;
-		std::array<std::array<float, 4>, 4> arr2;
-		float carr1[16]; ///< For gdb
-		float carr2[4][4]; ///< For gdb
+		std::array<F32, 16> arr1;
+		std::array<std::array<F32, 4>, 4> arr2;
+		F32 carr1[16]; ///< For gdb
+		F32 carr2[4][4]; ///< For gdb
 #if defined(ANKI_MATH_INTEL_SIMD)
 		std::array<__m128, 4> arrMm;
 #endif
@@ -134,7 +134,7 @@ private:
 };
 /// @}
 
-static_assert(sizeof(Mat4) == sizeof(float) * 4 * 4, "Incorrect size");
+static_assert(sizeof(Mat4) == sizeof(F32) * 4 * 4, "Incorrect size");
 
 } // end namespace
 

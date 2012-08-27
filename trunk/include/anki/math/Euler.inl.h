@@ -12,8 +12,8 @@ inline Euler::Euler()
 	x() = y() = z() = 0.0;
 }
 
-// float, float, float
-inline Euler::Euler(const float x_, const float y_, const float z_)
+// F32, F32, F32
+inline Euler::Euler(const F32 x_, const F32 y_, const F32 z_)
 {
 	x() = x_;
 	y() = y_;
@@ -31,7 +31,7 @@ inline Euler::Euler(const Euler& b)
 // Quat
 inline Euler::Euler(const Quat& q)
 {
-	float test = q.x() * q.y() + q.z() * q.w();
+	F32 test = q.x() * q.y() + q.z() * q.w();
 	if(test > 0.499)
 	{
 		y() = 2.0 * atan2(q.x(), q.w());
@@ -47,9 +47,9 @@ inline Euler::Euler(const Quat& q)
 		return;
 	}
 
-	float sqx = q.x() * q.x();
-	float sqy = q.y() * q.y();
-	float sqz = q.z() * q.z();
+	F32 sqx = q.x() * q.x();
+	F32 sqy = q.y() * q.y();
+	F32 sqz = q.z() * q.z();
 	y() = atan2(2.0 * q.y() * q.w() - 2.0 * q.x() * q.z(),
 		1.0 - 2.0 * sqy - 2.0 * sqz);
 	z() = asin(2.0 * test);
@@ -60,16 +60,16 @@ inline Euler::Euler(const Quat& q)
 // mat3
 inline Euler::Euler(const Mat3& m3)
 {
-	float cx, sx;
-	float cy, sy;
-	float cz, sz;
+	F32 cx, sx;
+	F32 cy, sy;
+	F32 cz, sz;
 
 	sy = m3(0, 2);
 	cy = Math::sqrt(1.0 - sy * sy);
 	// normal case
 	if (!Math::isZero(cy))
 	{
-		float factor = 1.0/cy;
+		F32 factor = 1.0/cy;
 		sx = -m3(1, 2) * factor;
 		cx = m3(2, 2) * factor;
 		sz = -m3(0, 1) * factor;
@@ -93,42 +93,42 @@ inline Euler::Euler(const Mat3& m3)
 // Accessors                                                                   =
 //==============================================================================
 
-inline float& Euler::operator [](const size_t i)
+inline F32& Euler::operator [](const U i)
 {
 	return arr[i];
 }
 
-inline float Euler::operator [](const size_t i) const
+inline F32 Euler::operator [](const U i) const
 {
 	return arr[i];
 }
 
-inline float& Euler::x()
+inline F32& Euler::x()
 {
 	return vec.x;
 }
 
-inline float Euler::x() const
+inline F32 Euler::x() const
 {
 	return vec.x;
 }
 
-inline float& Euler::y()
+inline F32& Euler::y()
 {
 	return vec.y;
 }
 
-inline float Euler::y() const
+inline F32 Euler::y() const
 {
 	return vec.y;
 }
 
-inline float& Euler::z()
+inline F32& Euler::z()
 {
 	return vec.z;
 }
 
-inline float Euler::z() const
+inline F32 Euler::z() const
 {
 	return vec.z;
 }
