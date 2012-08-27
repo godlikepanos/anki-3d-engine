@@ -8,7 +8,7 @@ namespace anki {
 namespace lua_detail {
 
 //==============================================================================
-void checkArgsCount(lua_State* l, int argsCount)
+void checkArgsCount(lua_State* l, I argsCount)
 {
 	int actualArgsCount = lua_gettop(l);
 	if(argsCount != actualArgsCount)

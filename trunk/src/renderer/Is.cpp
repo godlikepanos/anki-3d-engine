@@ -181,10 +181,22 @@ void Is::initInternal(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Is::projectShape(const Mat4& projectionMat,
+void Is::projectShape(const Camera& cam,
 	const Sphere& sphere, Vec2& circleCenter, F32& circleRadius)
 {
+	F32 r = sphere.getRadius();
+	Vec4 e(cam.getWorldTransform().getOrigin(), 1.0);
+	Vec4 c(sphere.getCenter(), 1.0);
+	Vec4 a = c + (c - e).getNormalized() * r;
 
+	c = cam.getViewProjectionMatrix() * c;
+	c /= c.w();
+
+	a = cam.getViewProjectionMatrix() * a;
+	a /= a.w();
+
+	circleCenter = Vec2(c.x(), c.y());
+	circleRadius = (c - a).getLength();
 }
 
 //==============================================================================

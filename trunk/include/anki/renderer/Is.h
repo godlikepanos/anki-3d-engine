@@ -106,7 +106,7 @@ private:
 	Sm sm;
 
 	/// Project a sphere to a circle
-	static void projectShape(const Mat4& projectionMat, 
+	static void projectShape(const Camera& cam,
 		const Sphere& sphere, Vec2& circleCenter, F32& circleRadius);
 	/// Project a perspective frustum to a triangle
 	static void projectShape(const Mat4& projectionMat,
