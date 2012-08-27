@@ -16,8 +16,8 @@ inline Vec4::Vec4()
 #endif
 }
 
-// float
-inline Vec4::Vec4(float f)
+// F32
+inline Vec4::Vec4(F32 f)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_set1_ps(f);
@@ -26,8 +26,8 @@ inline Vec4::Vec4(float f)
 #endif
 }
 
-// float[]
-inline Vec4::Vec4(const float arr_[])
+// F32[]
+inline Vec4::Vec4(const F32 arr_[])
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_load_ps(arr_);
@@ -39,9 +39,9 @@ inline Vec4::Vec4(const float arr_[])
 #endif
 }
 
-// float, float, float, float
-inline Vec4::Vec4(const float x_, const float y_, const float z_,
-	const float w_)
+// F32, F32, F32, F32
+inline Vec4::Vec4(const F32 x_, const F32 y_, const F32 z_,
+	const F32 w_)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
 	mm = _mm_set_ps(w_, z_, y_, x_);
@@ -53,8 +53,8 @@ inline Vec4::Vec4(const float x_, const float y_, const float z_,
 #endif
 }
 
-// vec2, float, float
-inline Vec4::Vec4(const Vec2& v2, const float z_, const float w_)
+// vec2, F32, F32
+inline Vec4::Vec4(const Vec2& v2, const F32 z_, const F32 w_)
 {
 	x() = v2.x();
 	y() = v2.y();
@@ -71,8 +71,8 @@ inline Vec4::Vec4(const Vec2& av2, const Vec2& bv2)
 	w() = bv2.y();
 }
 
-// vec3, float
-inline Vec4::Vec4(const Vec3& v3, const float w_)
+// vec3, F32
+inline Vec4::Vec4(const Vec3& v3, const F32 w_)
 {
 	x() = v3.x();
 	y() = v3.y();
@@ -114,52 +114,52 @@ inline Vec4::Vec4(const __m128& mm_)
 // Accessors                                                                   =
 //==============================================================================
 
-inline float& Vec4::operator[](const size_t i)
+inline F32& Vec4::operator[](const U i)
 {
 	return arr[i];
 }
 
-inline float Vec4::operator[](const size_t i) const
+inline F32 Vec4::operator[](const U i) const
 {
 	return arr[i];
 }
 
-inline float& Vec4::x()
+inline F32& Vec4::x()
 {
 	return vec.x;
 }
 
-inline float Vec4::x() const
+inline F32 Vec4::x() const
 {
 	return vec.x;
 }
 
-inline float& Vec4::y()
+inline F32& Vec4::y()
 {
 	return vec.y;
 }
 
-inline float Vec4::y() const
+inline F32 Vec4::y() const
 {
 	return vec.y;
 }
 
-inline float& Vec4::z()
+inline F32& Vec4::z()
 {
 	return vec.z;
 }
 
-inline float Vec4::z() const
+inline F32 Vec4::z() const
 {
 	return vec.z;
 }
 
-inline float& Vec4::w()
+inline F32& Vec4::w()
 {
 	return vec.w;
 }
 
-inline float Vec4::w() const
+inline F32 Vec4::w() const
 {
 	return vec.w;
 }
@@ -176,6 +176,16 @@ inline const __m128& Vec4::getMm() const
 	return mm;
 }
 #endif
+
+inline Vec2 Vec4::xy() const
+{
+	return Vec2(x(), y());
+}
+
+inline Vec3 Vec4::xyz() const
+{
+	return Vec3(x(), y(), z());
+}
 
 //==============================================================================
 // Operators with same                                                         =
@@ -298,7 +308,7 @@ inline Vec4 Vec4::operator-() const
 }
 
 // ==
-inline bool Vec4::operator==(const Vec4& b) const
+inline Bool Vec4::operator==(const Vec4& b) const
 {
 	Vec4 sub = (*this) - b;
 	return Math::isZero(sub.x()) 
@@ -308,74 +318,74 @@ inline bool Vec4::operator==(const Vec4& b) const
 }
 
 // !=
-inline bool Vec4::operator!=(const Vec4& b) const
+inline Bool Vec4::operator!=(const Vec4& b) const
 {
 	return !operator==(b);
 }
 
 // <
-inline bool Vec4::operator<(const Vec4& b) const
+inline Bool Vec4::operator<(const Vec4& b) const
 {
 	return x() < b.x() && y() < b.y() && z() < b.z() && w() < b.w();
 }
 
 // <=
-inline bool Vec4::operator<=(const Vec4& b) const
+inline Bool Vec4::operator<=(const Vec4& b) const
 {
 	return x() <= b.x() && y() <= b.y() && z() <= b.z() && w() <= b.w();
 }
 
 //==============================================================================
-// Operators with float                                                        =
+// Operators with F32                                                        =
 //==============================================================================
 
-// Vec4 + float
-inline Vec4 Vec4::operator+(const float f) const
+// Vec4 + F32
+inline Vec4 Vec4::operator+(const F32 f) const
 {
 	return (*this) + Vec4(f);
 }
 
-// Vec4 += float
-inline Vec4& Vec4::operator+=(const float f)
+// Vec4 += F32
+inline Vec4& Vec4::operator+=(const F32 f)
 {
 	(*this) += Vec4(f);
 	return (*this);
 }
 
-// Vec4 - float
-inline Vec4 Vec4::operator-(const float f) const
+// Vec4 - F32
+inline Vec4 Vec4::operator-(const F32 f) const
 {
 	return (*this) - Vec4(f);
 }
 
-// Vec4 -= float
-inline Vec4& Vec4::operator-=(const float f)
+// Vec4 -= F32
+inline Vec4& Vec4::operator-=(const F32 f)
 {
 	(*this) -= Vec4(f);
 	return (*this);
 }
 
-// Vec4 * float
-inline Vec4 Vec4::operator*(const float f) const
+// Vec4 * F32
+inline Vec4 Vec4::operator*(const F32 f) const
 {
 	return (*this) * Vec4(f);
 }
 
-// Vec4 *= float
-inline Vec4& Vec4::operator*=(const float f)
+// Vec4 *= F32
+inline Vec4& Vec4::operator*=(const F32 f)
 {
 	(*this) *= Vec4(f);
 	return (*this);
 }
 
-// Vec4 / float
-inline Vec4 Vec4::operator/(const float f) const
+// Vec4 / F32
+inline Vec4 Vec4::operator/(const F32 f) const
 {
 	return (*this) / Vec4(f);
 }
 
-// Vec4 /= float
-inline Vec4& Vec4::operator/=(const float f)
+// Vec4 /= F32
+inline Vec4& Vec4::operator/=(const F32 f)
 {
 	(*this) /= Vec4(f);
 	return (*this);
@@ -400,10 +410,10 @@ inline Vec4 Vec4::operator*(const Mat4& m4) const
 //==============================================================================
 
 // dot
-inline float Vec4::dot(const Vec4& b) const
+inline F32 Vec4::dot(const Vec4& b) const
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
-	float o;
+	F32 o;
 	_mm_store_ss(&o, _mm_dp_ps(mm, b.mm, 0xF1));
 	return o;
 #else
@@ -412,7 +422,7 @@ inline float Vec4::dot(const Vec4& b) const
 }
 
 // getLength
-inline float Vec4::getLength() const
+inline F32 Vec4::getLength() const
 {
 	return Math::sqrt(dot((*this)));
 }
@@ -433,26 +443,26 @@ inline void Vec4::normalize()
 // Friends                                                                     =
 //==============================================================================
 
-// float + Vec4
-inline Vec4 operator+(const float f, const Vec4& v4)
+// F32 + Vec4
+inline Vec4 operator+(const F32 f, const Vec4& v4)
 {
 	return v4 + f;
 }
 
-// float - Vec4
-inline Vec4 operator-(const float f, const Vec4& v4)
+// F32 - Vec4
+inline Vec4 operator-(const F32 f, const Vec4& v4)
 {
 	return Vec4(f) - v4;
 }
 
-// float * Vec4
-inline Vec4 operator*(const float f, const Vec4& v4)
+// F32 * Vec4
+inline Vec4 operator*(const F32 f, const Vec4& v4)
 {
 	return v4 * f;
 }
 
-// float / Vec4
-inline Vec4 operator/(const float f, const Vec4& v4)
+// F32 / Vec4
+inline Vec4 operator/(const F32 f, const Vec4& v4)
 {
 	return Vec4(f) / v4;
 }

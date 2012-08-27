@@ -128,8 +128,6 @@ void Is::initInternal(const RendererInitializer& initializer)
 		GL_RGB, GL_UNSIGNED_INT, fai);
 	fbo.create();
 	fbo.setColorAttachments({&fai});
-	fbo.setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT,
-		r->getMs().getDepthFai());
 
 	if(!fbo.isComplete())
 	{
@@ -176,6 +174,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	{
 		for(U j = 0; j < TILES_Y_COUNT; j++)
 		{
+			// XXX
 		}
 	}
 }
@@ -185,9 +184,9 @@ void Is::projectShape(const Camera& cam,
 	const Sphere& sphere, Vec2& circleCenter, F32& circleRadius)
 {
 	F32 r = sphere.getRadius();
-	Vec4 e(cam.getWorldTransform().getOrigin(), 1.0);
 	Vec4 c(sphere.getCenter(), 1.0);
-	Vec4 a = c + (c - e).getNormalized() * r;
+	Vec4 a = Vec4(sphere.getCenter()
+		+ cam.getWorldTransform().getRotation() * Vec3(r, 0.0, 0.0), 1.0);
 
 	c = cam.getViewProjectionMatrix() * c;
 	c /= c.w();
@@ -195,8 +194,27 @@ void Is::projectShape(const Camera& cam,
 	a = cam.getViewProjectionMatrix() * a;
 	a /= a.w();
 
-	circleCenter = Vec2(c.x(), c.y());
-	circleRadius = (c - a).getLength();
+	circleCenter = c.xy();
+	circleRadius = (c.xy() - a.xy()).getLength();
+}
+
+//==============================================================================
+Bool Is::circleIntersects(const Tile& tile, const Vec2& circleCenter,
+	F32 circleRadius)
+{
+	// XXX
+	return true;
+}
+
+//==============================================================================
+Bool Is::cullLight(const PointLight& light, const Tile& tile)
+{
+	const Camera& cam = r->getScene().getActiveCamera();
+	Vec2 cc;
+	F32 r;
+	const PointLight& plight = static_cast<const PointLight&>(light);
+	projectShape(cam, plight.getSphere(), cc, r);
+	return circleIntersects(tile, cc, r);
 }
 
 //==============================================================================
@@ -205,8 +223,6 @@ void Is::minMaxPass()
 	// Do the pass
 	//
 	const Camera& cam = r->getScene().getActiveCamera();
-
-	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 
 	minMaxTilerFbo.bind();
 	minMaxPassSprog->bind();
@@ -237,16 +253,57 @@ void Is::minMaxPass()
 }
 
 //==============================================================================
+void Is::pointLightsPass()
+{
+	Camera& cam = r->getScene().getActiveCamera();
+	VisibilityInfo& vi = cam.getFrustumable()->getVisibilityInfo();
+
+	for(U i = 0; i < TILES_X_COUNT; i++)
+	{
+		for(U j = 0; j < TILES_Y_COUNT; j++)
+		{
+			Tile& tile = tiles[i][j];
+
+			U lightsCount = 0;
+			U ids = 0;
+
+			for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
+			{
+				const Light& light = *(*it);
+				if(light.getLightType() != Light::LT_POINT)
+				{
+					continue;
+				}
+
+				const PointLight& plight =
+					static_cast<const PointLight&>(light);
+
+				if(cullLight(plight, tile))
+				{
+					tile.lightIndices[ids] = lightsCount;
+					++ids;
+				}
+
+				++lightsCount;
+			}
+
+			tile.lightsCount = lightsCount;
+		}
+	}
+}
+
+//==============================================================================
 void Is::run()
 {
-	/*fbo.bind();
-	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
-	const Camera& cam = r->getScene().getActiveCamera();*/
+	GlStateSingleton::get().disable(GL_DEPTH_TEST);
+	GlStateSingleton::get().disable(GL_BLEND);
 
-	//minMaxPass();
+	minMaxPass();
 
 	fbo.bind();
-	glClear(GL_COLOR_BUFFER_BIT);
+	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
+
+	pointLightsPass();
 }
 
 } // end namespace anki

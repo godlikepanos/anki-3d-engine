@@ -12,21 +12,21 @@ inline Vec2::Vec2()
 	x() = y() = 0.0;
 }
 
-// float
-inline Vec2::Vec2(const float f)
+// F32
+inline Vec2::Vec2(const F32 f)
 {
 	x() = y() = f;
 }
 
-// float, float
-inline Vec2::Vec2(const float x_, const float y_)
+// F32, F32
+inline Vec2::Vec2(const F32 x_, const F32 y_)
 {
 	x() = x_;
 	y() = y_;
 }
 
-// float[]
-inline Vec2::Vec2(const float arr[])
+// F32[]
+inline Vec2::Vec2(const F32 arr[])
 {
 	x() = arr[0];
 	y() = arr[1];
@@ -57,32 +57,32 @@ inline Vec2::Vec2(const Vec4& v4)
 // Accessors                                                                   =
 //==============================================================================
 
-inline float& Vec2::x()
+inline F32& Vec2::x()
 {
 	return vec.x;
 }
 
-inline float Vec2::x() const
+inline F32 Vec2::x() const
 {
 	return vec.x;
 }
 
-inline float& Vec2::y()
+inline F32& Vec2::y()
 {
 	return vec.y;
 }
 
-inline float Vec2::y() const
+inline F32 Vec2::y() const
 {
 	return vec.y;
 }
 
-inline float& Vec2::operator[](const size_t i)
+inline F32& Vec2::operator[](const U i)
 {
 	return arr[i];
 }
 
-inline float Vec2::operator[](const size_t i) const
+inline F32 Vec2::operator[](const U i) const
 {
 	return arr[i];
 }
@@ -162,81 +162,81 @@ inline Vec2 Vec2::operator-() const
 }
 
 // ==
-inline bool Vec2::operator==(const Vec2& b) const
+inline Bool Vec2::operator==(const Vec2& b) const
 {
 	return Math::isZero(x() - b.x()) &&
 		Math::isZero(y() - b.y());
 }
 
 // !=
-inline bool Vec2::operator!=(const Vec2& b) const
+inline Bool Vec2::operator!=(const Vec2& b) const
 {
 	return !(*this == b);
 }
 
 // <
-inline bool Vec2::operator<(const Vec2& b) const
+inline Bool Vec2::operator<(const Vec2& b) const
 {
 	return vec.x < b.vec.x && vec.y < b.vec.y;
 }
 
 // <=
-inline bool Vec2::operator<=(const Vec2& b) const
+inline Bool Vec2::operator<=(const Vec2& b) const
 {
 	return vec.x <= b.vec.x && vec.y <= b.vec.y;
 }
 
 //==============================================================================
-// Operators with float                                                        =
+// Operators with F32                                                        =
 //==============================================================================
 
-// vec2 + float
-inline Vec2 Vec2::operator+(float f) const
+// vec2 + F32
+inline Vec2 Vec2::operator+(F32 f) const
 {
 	return (*this) + Vec2(f);
 }
 
-// vec2 += float
-inline Vec2& Vec2::operator+=(float f)
+// vec2 += F32
+inline Vec2& Vec2::operator+=(F32 f)
 {
 	(*this) += Vec2(f);
 	return (*this);
 }
 
-// vec2 - float
-inline Vec2 Vec2::operator-(float f) const
+// vec2 - F32
+inline Vec2 Vec2::operator-(F32 f) const
 {
 	return (*this) - Vec2(f);
 }
 
-// vec2 -= float
-inline Vec2& Vec2::operator-=(float f)
+// vec2 -= F32
+inline Vec2& Vec2::operator-=(F32 f)
 {
 	(*this) -= Vec2(f);
 	return (*this);
 }
 
-// vec2 * float
-inline Vec2 Vec2::operator*(float f) const
+// vec2 * F32
+inline Vec2 Vec2::operator*(F32 f) const
 {
 	return (*this) * Vec2(f);
 }
 
-// vec2 *= float
-inline Vec2& Vec2::operator*=(float f)
+// vec2 *= F32
+inline Vec2& Vec2::operator*=(F32 f)
 {
 	(*this) *= Vec2(f);
 	return (*this);
 }
 
-// vec2 / float
-inline Vec2 Vec2::operator/(float f) const
+// vec2 / F32
+inline Vec2 Vec2::operator/(F32 f) const
 {
 	return (*this) / Vec2(f);
 }
 
-// vec2 /= float
-inline Vec2& Vec2::operator/=(float f)
+// vec2 /= F32
+inline Vec2& Vec2::operator/=(F32 f)
 {
 	(*this) /= Vec2(f);
 	return (*this);
@@ -247,7 +247,7 @@ inline Vec2& Vec2::operator/=(float f)
 //==============================================================================
 
 // getLength
-inline float Vec2::getLength() const
+inline F32 Vec2::getLength() const
 {
 	return Math::sqrt(x() * x() + y() * y());
 }
@@ -265,7 +265,7 @@ inline Vec2 Vec2::getNormalized() const
 }
 
 // dot
-inline float Vec2::dot(const Vec2& b) const
+inline F32 Vec2::dot(const Vec2& b) const
 {
 	return x() * b.x() + y() * b.y();
 }
@@ -274,26 +274,26 @@ inline float Vec2::dot(const Vec2& b) const
 // Friends                                                                     =
 //==============================================================================
 
-// float + vec2
-inline Vec2 operator+(float f, const Vec2& v2)
+// F32 + vec2
+inline Vec2 operator+(F32 f, const Vec2& v2)
 {
 	return v2 + f;
 }
 
-// float - vec2
-inline Vec2 operator-(float f, const Vec2& v2)
+// F32 - vec2
+inline Vec2 operator-(F32 f, const Vec2& v2)
 {
 	return Vec2(f - v2.x(), f - v2.y());
 }
 
-// float * vec2
-inline Vec2 operator*(float f, const Vec2& v2)
+// F32 * vec2
+inline Vec2 operator*(F32 f, const Vec2& v2)
 {
 	return v2 * f;
 }
 
-// float / vec2
-inline Vec2 operator/(float f, const Vec2& v2)
+// F32 / vec2
+inline Vec2 operator/(F32 f, const Vec2& v2)
 {
 	return Vec2(f / v2.x(), f / v2.y());
 }

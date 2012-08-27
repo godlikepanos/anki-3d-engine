@@ -15,9 +15,9 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit Vec2();
-	explicit Vec2(const float x, const float y);
-	explicit Vec2(const float f);
-	explicit Vec2(const float arr[]);
+	explicit Vec2(const F32 x, const F32 y);
+	explicit Vec2(const F32 f);
+	explicit Vec2(const F32 arr[]);
 	Vec2(const Vec2& b);
 	explicit Vec2(const Vec3& v3);
 	explicit Vec2(const Vec4& v4);
@@ -25,12 +25,12 @@ public:
 
 	/// @name Accessors
 	/// @{
-	float& x();
-	float x() const;
-	float& y();
-	float y() const;
-	float& operator[](const size_t i);
-	float operator[](const size_t i) const;
+	F32& x();
+	F32 x() const;
+	F32& y();
+	F32 y() const;
+	F32& operator[](const U i);
+	F32 operator[](const U i) const;
 	/// @}
 
 	/// @name Operators with same type
@@ -45,39 +45,39 @@ public:
 	Vec2 operator/(const Vec2& b) const;
 	Vec2& operator/=(const Vec2& b);
 	Vec2 operator-() const;
-	bool operator==(const Vec2& b) const;
-	bool operator!=(const Vec2& b) const;
-	bool operator<(const Vec2& b) const;
-	bool operator<=(const Vec2& b) const;
-	bool operator>(const Vec2& b) const;
-	bool operator>=(const Vec2& b) const;
+	Bool operator==(const Vec2& b) const;
+	Bool operator!=(const Vec2& b) const;
+	Bool operator<(const Vec2& b) const;
+	Bool operator<=(const Vec2& b) const;
+	Bool operator>(const Vec2& b) const;
+	Bool operator>=(const Vec2& b) const;
 	/// @}
 
-	/// @name Operators with float
+	/// @name Operators with F32
 	/// @{
-	Vec2 operator+(const float f) const;
-	Vec2& operator+=(const float f);
-	Vec2 operator-(const float f) const;
-	Vec2& operator-=(const float f);
-	Vec2 operator*(const float f) const;
-	Vec2& operator*=(const float f);
-	Vec2 operator/(const float f) const;
-	Vec2& operator/=(const float f);
+	Vec2 operator+(const F32 f) const;
+	Vec2& operator+=(const F32 f);
+	Vec2 operator-(const F32 f) const;
+	Vec2& operator-=(const F32 f);
+	Vec2 operator*(const F32 f) const;
+	Vec2& operator*=(const F32 f);
+	Vec2 operator/(const F32 f) const;
+	Vec2& operator/=(const F32 f);
 	/// @}
 
 	/// @name Other
 	/// @{
-	float getLength() const;
+	F32 getLength() const;
 	Vec2 getNormalized() const;
 	void normalize();
-	float dot(const Vec2& b) const;
+	F32 dot(const Vec2& b) const;
 	/// @}
 
 	/// @name Friends
-	friend Vec2 operator+(const float f, const Vec2& v2);
-	friend Vec2 operator-(const float f, const Vec2& v2);
-	friend Vec2 operator*(const float f, const Vec2& v2);
-	friend Vec2 operator/(const float f, const Vec2& v2);
+	friend Vec2 operator+(const F32 f, const Vec2& v2);
+	friend Vec2 operator-(const F32 f, const Vec2& v2);
+	friend Vec2 operator*(const F32 f, const Vec2& v2);
+	friend Vec2 operator/(const F32 f, const Vec2& v2);
 	friend std::ostream& operator<<(std::ostream& s, const Vec2& v);
 	///@]
 
@@ -88,16 +88,16 @@ private:
 	{
 		struct
 		{
-			float x, y;
+			F32 x, y;
 		} vec;
 
-		std::array<float, 2> arr;
+		std::array<F32, 2> arr;
 	};
 	/// @}
 };
 /// @
 
-static_assert(sizeof(Vec2) == sizeof(float) * 2, "Incorrect size");
+static_assert(sizeof(Vec2) == sizeof(F32) * 2, "Incorrect size");
 
 } // end namespace anki
 

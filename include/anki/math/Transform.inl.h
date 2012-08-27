@@ -23,9 +23,9 @@ inline Transform::Transform(const Mat4& m4)
 	scale = 1.0;
 }
 
-// Vec3, Quat, float
+// Vec3, Quat, F32
 inline Transform::Transform(const Vec3& origin, const Mat3& rotation_,
-	const float scale_)
+	const F32 scale_)
 	: origin(origin), rotation(rotation_), scale(scale_)
 {}
 
@@ -63,17 +63,17 @@ inline void Transform::setRotation(const Mat3& r)
 	rotation = r;
 }
 
-inline float Transform::getScale() const
+inline F32 Transform::getScale() const
 {
 	return scale;
 }
 
-inline float& Transform::getScale()
+inline F32& Transform::getScale()
 {
 	return scale;
 }
 
-inline void Transform::setScale(const float s)
+inline void Transform::setScale(const F32 s)
 {
 	scale = s;
 }
@@ -92,13 +92,13 @@ inline Transform& Transform::operator=(const Transform& b)
 }
 
 // ==
-inline bool Transform::operator==(const Transform& b) const
+inline Bool Transform::operator==(const Transform& b) const
 {
 	return origin == b.origin && rotation == b.rotation && scale == b.scale;
 }
 
 // !=
-inline bool Transform::operator!=(const Transform& b) const
+inline Bool Transform::operator!=(const Transform& b) const
 {
 	return !operator==(b);
 }

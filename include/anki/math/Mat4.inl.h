@@ -10,50 +10,50 @@ namespace anki {
 inline Mat4::Mat4(const Mat4& b)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = b.arrMm[i];
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		(*this)[i] = b[i];
 	}
 #endif
 }
 
-// float
-inline Mat4::Mat4(const float f)
+// F32
+inline Mat4::Mat4(const F32 f)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_set1_ps(f);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		(*this)[i] = f;
 	}
 #endif
 }
 
-// float[]
-inline Mat4::Mat4(const float arr_[])
+// F32[]
+inline Mat4::Mat4(const F32 arr_[])
 {
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		(*this)[i] = arr_[i];
 	}
 }
 
-// many floats
-inline Mat4::Mat4(const float m00, const float m01, const float m02,
-	const float m03, const float m10, const float m11,
-	const float m12, const float m13, const float m20,
-	const float m21, const float m22, const float m23,
-	const float m30, const float m31, const float m32,
-	const float m33)
+// many F32s
+inline Mat4::Mat4(const F32 m00, const F32 m01, const F32 m02,
+	const F32 m03, const F32 m10, const F32 m11,
+	const F32 m12, const F32 m13, const F32 m20,
+	const F32 m21, const F32 m22, const F32 m23,
+	const F32 m30, const F32 m31, const F32 m32,
+	const F32 m33)
 {
 	(*this)(0, 0) = m00;
 	(*this)(0, 1) = m01;
@@ -79,14 +79,18 @@ inline Mat4::Mat4(const Mat3& m3)
 	(*this)(0, 0) = m3(0, 0);
 	(*this)(0, 1) = m3(0, 1);
 	(*this)(0, 2) = m3(0, 2);
+	(*this)(0, 3) = 0.0;
 	(*this)(1, 0) = m3(1, 0);
 	(*this)(1, 1) = m3(1, 1);
 	(*this)(1, 2) = m3(1, 2);
+	(*this)(1, 3) = 0.0;
 	(*this)(2, 0) = m3(2, 0);
 	(*this)(2, 1) = m3(2, 1);
 	(*this)(2, 2) = m3(2, 2);
-	(*this)(3, 0) = (*this)(3, 1) = (*this)(3, 2) = (*this)(0, 3) =
-		(*this)(1, 3) = (*this)(2, 3) = 0.0;
+	(*this)(2, 3) = 0.0;
+	(*this)(3, 0) = 0.0;
+	(*this)(3, 1) = 0.0;
+	(*this)(3, 2) = 0.0;
 	(*this)(3, 3) = 1.0;
 }
 
@@ -141,8 +145,8 @@ inline Mat4::Mat4(const Vec3& transl, const Mat3& rot)
 	(*this)(3, 3) = 1.0;
 }
 
-// Vec3, Mat3, float
-inline Mat4::Mat4(const Vec3& translate, const Mat3& rotate, const float scale)
+// Vec3, Mat3, F32
+inline Mat4::Mat4(const Vec3& translate, const Mat3& rotate, const F32 scale)
 {
 	if(!Math::isZero(scale - 1.0))
 	{
@@ -169,33 +173,33 @@ inline Mat4::Mat4(const Transform& t)
 // Accessors                                                                   =
 //==============================================================================
 
-inline float& Mat4::operator()(const size_t i, const size_t j)
+inline F32& Mat4::operator()(const U i, const U j)
 {
 	return arr2[i][j];
 }
 
-inline const float& Mat4::operator()(const size_t i, const size_t j) const
+inline const F32& Mat4::operator()(const U i, const U j) const
 {
 	return arr2[i][j];
 }
 
-inline float& Mat4::operator[](const size_t i)
+inline F32& Mat4::operator[](const U i)
 {
 	return arr1[i];
 }
 
-inline const float& Mat4::operator[](const size_t i) const
+inline const F32& Mat4::operator[](const U i) const
 {
 	return arr1[i];
 }
 
 #if defined(ANKI_MATH_INTEL_SIMD)
-inline const __m128& Mat4::getMm(const size_t i) const
+inline const __m128& Mat4::getMm(const U i) const
 {
 	return arrMm[i];
 }
 
-inline __m128& Mat4::getMm(const size_t i)
+inline __m128& Mat4::getMm(const U i)
 {
 	return arrMm[i];
 }
@@ -209,12 +213,12 @@ inline __m128& Mat4::getMm(const size_t i)
 inline Mat4& Mat4::operator=(const Mat4& b)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = b.arrMm[i];
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		(*this)[i] = b[i];
 	}
@@ -227,12 +231,12 @@ inline Mat4 Mat4::operator+(const Mat4& b) const
 {
 	Mat4 c;
 #if defined(ANKI_MATH_INTEL_SIMD)
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		c.arrMm[i] = _mm_add_ps(arrMm[i], b.arrMm[i]);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		c[i] = (*this)[i] + b[i];
 	}
@@ -244,12 +248,12 @@ inline Mat4 Mat4::operator+(const Mat4& b) const
 inline Mat4& Mat4::operator+=(const Mat4& b)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_add_ps(arrMm[i], b.arrMm[i]);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		(*this)[i] += b[i];
 	}
@@ -262,12 +266,12 @@ inline Mat4 Mat4::operator-(const Mat4& b) const
 {
 	Mat4 c;
 #if defined(ANKI_MATH_INTEL_SIMD)
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		c.arrMm[i] = _mm_sub_ps(arrMm[i], b.arrMm[i]);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		c[i] = (*this)[i] - b[i];
 	}
@@ -279,12 +283,12 @@ inline Mat4 Mat4::operator-(const Mat4& b) const
 inline Mat4& Mat4::operator-=(const Mat4& b)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_sub_ps(arrMm[i], b.arrMm[i]);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		(*this)[i] -= b[i];
 	}
@@ -299,17 +303,17 @@ inline Mat4 Mat4::operator*(const Mat4& b) const
 #if defined(ANKI_MATH_INTEL_SIMD)
 	Mat4 t(b);
 	t.transpose();
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
-		for(int j = 0; j < 4; j++)
+		for(U j = 0; j < 4; j++)
 		{
 			_mm_store_ss(&c(i, j), _mm_dp_ps(arrMm[i], t.arrMm[j], 0xF1));
 		}
 	}
 #else
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
-		for(int j = 0; j < 4; j++)
+		for(U j = 0; j < 4; j++)
 		{
 			c(i, j) = (*this)(i, 0) * b(0, j) + (*this)(i, 1) * b(1, j) 
 				+ (*this)(i, 2) * b(2, j) + (*this)(i, 3) * b(3, j);
@@ -327,9 +331,9 @@ inline Mat4& Mat4::operator*=(const Mat4& b)
 }
 
 // ==
-inline bool Mat4::operator==(const Mat4& b) const
+inline Bool Mat4::operator==(const Mat4& b) const
 {
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		if(!Math::isZero((*this)[i] - b[i]))
 		{
@@ -340,9 +344,9 @@ inline bool Mat4::operator==(const Mat4& b) const
 }
 
 // !=
-inline bool Mat4::operator!=(const Mat4& b) const
+inline Bool Mat4::operator!=(const Mat4& b) const
 {
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		if(!Math::isZero((*this)[i]-b[i]))
 		{
@@ -353,22 +357,22 @@ inline bool Mat4::operator!=(const Mat4& b) const
 }
 
 //==============================================================================
-// Operators with float                                                        =
+// Operators with F32                                                        =
 //==============================================================================
 
-// 4x4 + float
-inline Mat4 Mat4::operator+(const float f) const
+// 4x4 + F32
+inline Mat4 Mat4::operator+(const F32 f) const
 {
 	Mat4 c;
 #if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		c.arrMm[i] = _mm_add_ps(arrMm[i], mm);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		c[i] = (*this)[i] + f;
 	}
@@ -376,18 +380,18 @@ inline Mat4 Mat4::operator+(const float f) const
 	return c;
 }
 
-// 4x4 += float
-inline Mat4& Mat4::operator+=(const float f)
+// 4x4 += F32
+inline Mat4& Mat4::operator+=(const F32 f)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_add_ps(arrMm[i], mm);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		(*this)[i] += f;
 	}
@@ -395,19 +399,19 @@ inline Mat4& Mat4::operator+=(const float f)
 	return (*this);
 }
 
-// 4x4 - float
-inline Mat4 Mat4::operator-(const float f) const
+// 4x4 - F32
+inline Mat4 Mat4::operator-(const F32 f) const
 {
 	Mat4 r;
 #if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		r.arrMm[i] = _mm_sub_ps(arrMm[i], mm);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		r[i] = (*this)[i] - f;
 	}
@@ -415,18 +419,18 @@ inline Mat4 Mat4::operator-(const float f) const
 	return r;
 }
 
-// 4x4 -= float
-inline Mat4& Mat4::operator-=(const float f)
+// 4x4 -= F32
+inline Mat4& Mat4::operator-=(const F32 f)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_sub_ps(arrMm[i], mm);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		(*this)[i] -= f;
 	}
@@ -434,19 +438,19 @@ inline Mat4& Mat4::operator-=(const float f)
 	return (*this);
 }
 
-// 4x4 * float
-inline Mat4 Mat4::operator*(const float f) const
+// 4x4 * F32
+inline Mat4 Mat4::operator*(const F32 f) const
 {
 	Mat4 r;
 #if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		r.arrMm[i] = _mm_mul_ps(arrMm[i], mm);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		r[i] = (*this)[i] * f;
 	}
@@ -454,18 +458,18 @@ inline Mat4 Mat4::operator*(const float f) const
 	return r;
 }
 
-// 4x4 *= float
-inline Mat4& Mat4::operator*=(const float f)
+// 4x4 *= F32
+inline Mat4& Mat4::operator*=(const F32 f)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_mul_ps(arrMm[i], mm);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		(*this)[i] *= f;
 	}
@@ -473,19 +477,19 @@ inline Mat4& Mat4::operator*=(const float f)
 	return (*this);
 }
 
-// 4x4 / float
-inline Mat4 Mat4::operator/(const float f) const
+// 4x4 / F32
+inline Mat4 Mat4::operator/(const F32 f) const
 {
 	Mat4 r;
 #if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		r.arrMm[i] = _mm_div_ps(arrMm[i], mm);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		r[i] = (*this)[i] / f;
 	}
@@ -493,18 +497,18 @@ inline Mat4 Mat4::operator/(const float f) const
 	return r;
 }
 
-// 4x4 /= float
-inline Mat4& Mat4::operator/=(const float f)
+// 4x4 /= F32
+inline Mat4& Mat4::operator/=(const F32 f)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_div_ps(arrMm[i], mm);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		(*this)[i] /= f;
 	}
@@ -521,7 +525,7 @@ inline Vec4 Mat4::operator*(const Vec4& b) const
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
 	Vec4 v;
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		_mm_store_ss(&v[i], _mm_dp_ps(arrMm[i], b.getMm(), 0xF1));
 	}
@@ -579,7 +583,7 @@ inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c,
 }
 
 // setRow
-inline void Mat4::setRow(const size_t i, const Vec4& v)
+inline void Mat4::setRow(const U i, const Vec4& v)
 {
 #if defined(ANKI_MATH_INTEL_SIMD)
 	arrMm[i] = v.getMm();
@@ -614,7 +618,7 @@ inline void Mat4::setColumns(const Vec4& a, const Vec4& b, const Vec4& c,
 }
 
 // setColumn
-inline void Mat4::setColumn(const size_t i, const Vec4& v)
+inline void Mat4::setColumn(const U i, const Vec4& v)
 {
 	(*this)(0, i) = v.x();
 	(*this)(1, i) = v.y();
@@ -628,7 +632,7 @@ inline void Mat4::transpose()
 #if defined(ANKI_MATH_INTEL_SIMD)
 	_MM_TRANSPOSE4_PS(arrMm[0], arrMm[1], arrMm[2], arrMm[3]);
 #else
-	float tmp = (*this)(0, 1);
+	F32 tmp = (*this)(0, 1);
 	(*this)(0, 1) = (*this)(1, 0);
 	(*this)(1, 0) = tmp;
 	tmp = (*this)(0, 2);
@@ -741,7 +745,7 @@ inline const Mat4& Mat4::getZero()
 }
 
 // Determinant
-inline float Mat4::getDet() const
+inline F32 Mat4::getDet() const
 {
 	const Mat4& t = *this;
 	return t(0, 3) * t(1, 2) * t(2, 1) * t(3, 0) 
@@ -773,7 +777,7 @@ inline float Mat4::getDet() const
 // getInverse
 inline Mat4 Mat4::getInverse() const
 {
-	std::array<float, 12> tmp;
+	std::array<F32, 12> tmp;
 	const Mat4& in = (*this);
 	Mat4 m4;
 
@@ -837,7 +841,7 @@ inline Mat4 Mat4::getInverse() const
 	m4(3, 3) =  tmp[10] * in(2, 2) + tmp[4] * in(0, 2) + tmp[9] * in(1, 2);
 	m4(3, 3) -= tmp[8] * in(1, 2) + tmp[11] * in(2, 2) + tmp[5] * in(0, 2);
 
-	float det = in(0, 0) * m4(0, 0) + in(1, 0) * m4(0, 1) 
+	F32 det = in(0, 0) * m4(0, 0) + in(1, 0) * m4(0, 1) 
 		+ in(2, 0) * m4(0, 2) + in(3, 0) * m4(0, 3);
 
 	ANKI_ASSERT(!Math::isZero(det)); // Cannot invert, det == 0
@@ -862,7 +866,7 @@ inline Mat4 Mat4::getInverseTransformation() const
 }
 
 // lerp
-inline Mat4 Mat4::lerp(const Mat4& b, const float t) const
+inline Mat4 Mat4::lerp(const Mat4& b, const F32 t) const
 {
 	return ((*this) * (1.0 - t)) + (b * t);
 }
@@ -913,25 +917,25 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 // Friends                                                                     =
 //==============================================================================
 
-// float + 4x4
-inline Mat4 operator+(const float f, const Mat4& m4)
+// F32 + 4x4
+inline Mat4 operator+(const F32 f, const Mat4& m4)
 {
 	return m4 + f;
 }
 
-// float - 4x4
-inline Mat4 operator-(const float f, const Mat4& m4)
+// F32 - 4x4
+inline Mat4 operator-(const F32 f, const Mat4& m4)
 {
 	Mat4 r;
 #if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		r.arrMm[i] = _mm_sub_ps(mm, m4.arrMm[i]);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		r[i] = f - m4[i];
 	}
@@ -939,25 +943,25 @@ inline Mat4 operator-(const float f, const Mat4& m4)
 	return r;
 }
 
-// float * 4x4
-inline Mat4 operator*(const float f, const Mat4& m4)
+// F32 * 4x4
+inline Mat4 operator*(const F32 f, const Mat4& m4)
 {
 	return m4 * f;
 }
 
-// float / 4x4
-inline Mat4 operator/(const float f, const Mat4& m4)
+// F32 / 4x4
+inline Mat4 operator/(const F32 f, const Mat4& m4)
 {
 	Mat4 r;
 #if defined(ANKI_MATH_INTEL_SIMD)
 	__m128 mm;
 	mm = _mm_set1_ps(f);
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
 		r.arrMm[i] = _mm_div_ps(mm, m4.arrMm[i]);
 	}
 #else
-	for(int i = 0; i < 16; i++)
+	for(U i = 0; i < 16; i++)
 	{
 		r[i] = f / m4[i];
 	}
@@ -968,9 +972,9 @@ inline Mat4 operator/(const float f, const Mat4& m4)
 // Print
 inline std::ostream& operator<<(std::ostream& s, const Mat4& m)
 {
-	for(int i = 0; i < 4; i++)
+	for(U i = 0; i < 4; i++)
 	{
-		for(int j = 0; j < 4; j++)
+		for(U j = 0; j < 4; j++)
 		{
 			s << m(i, j) << ' ';
 		}

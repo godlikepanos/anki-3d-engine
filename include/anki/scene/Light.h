@@ -145,6 +145,11 @@ public:
 		sphereW.setRadius(x);
 		spatialMarkUpdated();
 	}
+
+	const Sphere& getSphere() const
+	{
+		return sphereW;
+	}
 	/// @}
 
 	/// @name Movable virtuals
