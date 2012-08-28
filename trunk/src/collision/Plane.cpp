@@ -9,12 +9,12 @@ Plane::Plane(const Plane& b)
 {}
 
 //==============================================================================
-Plane::Plane(const Vec3& normal_, float offset_)
+Plane::Plane(const Vec3& normal_, F32 offset_)
 	: CollisionShape(CST_PLANE), normal(normal_), offset(offset_)
 {}
 
 //==============================================================================
-float Plane::testPlane(const Plane& /*p*/) const
+F32 Plane::testPlane(const Plane& /*p*/) const
 {
 	ANKI_ASSERT(0 && "Ambiguous call");
 	return 0.0;
@@ -37,10 +37,10 @@ void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 }
 
 //==============================================================================
-void Plane::setFromPlaneEquation(float a, float b, float c, float d)
+void Plane::setFromPlaneEquation(F32 a, F32 b, F32 c, F32 d)
 {
 	// normalize for cheap distance checks
-	float lensq = a * a + b * b + c * c;
+	F32 lensq = a * a + b * b + c * c;
 	// length of normal had better not be zero
 	ANKI_ASSERT(!Math::isZero(lensq));
 
@@ -52,7 +52,7 @@ void Plane::setFromPlaneEquation(float a, float b, float c, float d)
 	}
 	else
 	{
-		float recip = 1.0 / sqrt(lensq);
+		F32 recip = 1.0 / sqrt(lensq);
 		normal = Vec3(a * recip, b * recip, c * recip);
 		offset = d * recip;
 	}
@@ -74,7 +74,7 @@ Plane Plane::getTransformed(const Transform& trf) const
 }
 
 //==============================================================================
-void Plane::getAabb(Aabb&) const
+void Plane::toAabb(Aabb&) const
 {
 	ANKI_ASSERT(0 && "Can't do that");
 }

@@ -5,10 +5,10 @@
 namespace anki {
 
 //==============================================================================
-float Sphere::testPlane(const Plane& p) const
+F32 Sphere::testPlane(const Plane& p) const
 {
 	const Sphere& s = *this;
-	float dist = p.test(s.getCenter());
+	F32 dist = p.test(s.getCenter());
 
 	if(dist > s.getRadius())
 	{
@@ -46,9 +46,9 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	/// @todo test this
 	/*
 	Vec3 centerDiff = b.center - a.center;
-	float radiusDiff = b.radius - a.radius;
+	F32 radiusDiff = b.radius - a.radius;
 	Vec3 radiusDiffSqr = radiusDiff * radiusDiff;
-	float lenSqr = centerDiff.getLengthSquared();
+	F32 lenSqr = centerDiff.getLengthSquared();
 
 	if(radiusDiffSqrt >= 0.0)
 	{
@@ -63,8 +63,8 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	}
 	else
 	{
-		float l = sqrt(lenSqr);
-		float t = (l + b.radius - a.radius) / (2.0 * l);
+		F32 l = sqrt(lenSqr);
+		F32 t = (l + b.radius - a.radius) / (2.0 * l);
 		return Sphere(a.center + t * centerDiff, (l + a.radius + b.radius) /
 			2.0);
 	}
@@ -72,7 +72,7 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 
 	Vec3 c = b.getCenter() - a.getCenter(); // Vector from one center to the
 	                                        // other
-	float cLen = c.getLength();
+	F32 cLen = c.getLength();
 
 	if(cLen + b.getRadius() < a.getRadius())
 	{
@@ -92,7 +92,7 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 }
 
 //==============================================================================
-void Sphere::getAabb(Aabb& aabb) const
+void Sphere::toAabb(Aabb& aabb) const
 {
 	aabb.setMin(center - radius);
 	aabb.setMax(center + radius);

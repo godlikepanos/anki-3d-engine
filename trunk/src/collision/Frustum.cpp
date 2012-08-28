@@ -49,14 +49,14 @@ PerspectiveFrustum& PerspectiveFrustum::operator=(const PerspectiveFrustum& b)
 }
 
 //==============================================================================
-float PerspectiveFrustum::testPlane(const Plane& p) const
+F32 PerspectiveFrustum::testPlane(const Plane& p) const
 {
-	float o = 0.0;
+	F32 o = 0.0;
 
 	for(const Vec3& dir : dirs)
 	{
 		LineSegment ls(eye, dir);
-		float t = ls.testPlane(p);
+		F32 t = ls.testPlane(p);
 
 		if(t == 0)
 		{
@@ -101,7 +101,7 @@ void PerspectiveFrustum::setTransform(const Transform& trf_)
 }
 
 //==============================================================================
-void PerspectiveFrustum::getAabb(Aabb& aabb) const
+void PerspectiveFrustum::toAabb(Aabb& aabb) const
 {
 	std::array<Vec3, 5> points = {{
 		dirs[0], dirs[1], dirs[2], dirs[3], Vec3(0.0)}};
@@ -115,7 +115,7 @@ void PerspectiveFrustum::recalculate()
 {
 	// Planes
 	//
-	float c, s; // cos & sine
+	F32 c, s; // cos & sine
 
 	Math::sinCos(Math::PI + fovX / 2, s, c);
 	// right
@@ -138,9 +138,9 @@ void PerspectiveFrustum::recalculate()
 	//
 	eye = Vec3(0.0, 0.0, -near);
 
-	float x = far / tan((Math::PI - fovX) / 2.0);
-	float y = tan(fovY / 2.0) * far;
-	float z = -far;
+	F32 x = far / tan((Math::PI - fovX) / 2.0);
+	F32 y = tan(fovY / 2.0) * far;
+	F32 z = -far;
 
 	dirs[0] = Vec3(x, y, z - near); // top right
 	dirs[1] = Vec3(-x, y, z - near); // top left
@@ -159,8 +159,8 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 	ANKI_ASSERT(fovX != 0.0 && fovX != 0.0);
 	Mat4 projectionMat;
 
-	float f = 1.0 / tan(fovY * 0.5); // f = cot(fovY/2)
-	float g = near - far;
+	F32 f = 1.0 / tan(fovY * 0.5); // f = cot(fovY/2)
+	F32 g = near - far;
 
 	projectionMat(0, 0) = f * fovY / fovX; // = f/aspectRatio;
 	projectionMat(0, 1) = 0.0;
@@ -218,12 +218,12 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 {
 	ANKI_ASSERT(right != 0.0 && left != 0.0 && top != 0.0 && bottom != 0.0
 		&& near != 0.0 && far != 0.0);
-	float difx = right - left;
-	float dify = top - bottom;
-	float difz = far - near;
-	float tx = -(right + left) / difx;
-	float ty = -(top + bottom) / dify;
-	float tz = -(far + near) / difz;
+	F32 difx = right - left;
+	F32 dify = top - bottom;
+	F32 difz = far - near;
+	F32 tx = -(right + left) / difx;
+	F32 ty = -(top + bottom) / dify;
+	F32 tz = -(far + near) / difz;
 	Mat4 m;
 
 	m(0, 0) = 2.0 / difx;

@@ -6,14 +6,14 @@
 namespace anki {
 
 //==============================================================================
-float LineSegment::testPlane(const Plane& p) const
+F32 LineSegment::testPlane(const Plane& p) const
 {
 	const LineSegment& ls = *this;
 	const Vec3& p0 = ls.getOrigin();
 	Vec3 p1 = ls.getOrigin() + ls.getDirection();
 
-	float dist0 = p.test(p0);
-	float dist1 = p.test(p1);
+	F32 dist0 = p.test(p0);
+	F32 dist1 = p.test(p1);
 
 	if(dist0 > 0.0)
 	{
@@ -49,16 +49,16 @@ LineSegment LineSegment::getTransformed(const Transform& transform) const
 }
 
 //==============================================================================
-void LineSegment::getAabb(Aabb& aabb) const
+void LineSegment::toAabb(Aabb& aabb) const
 {
 	Vec3 min = origin;
 	Vec3 max = origin + dir;
 
-	for(uint i = 0; i < 3; ++i)
+	for(U i = 0; i < 3; ++i)
 	{
 		if(max[i] < min[i])
 		{
-			float tmp = max[i];
+			F32 tmp = max[i];
 			max[i] = min[i];
 			min[i] = tmp;
 		}

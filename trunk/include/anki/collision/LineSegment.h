@@ -80,7 +80,7 @@ public:
 	}
 
 	/// Implements CollisionShape::testPlane
-	float testPlane(const Plane& p) const;
+	F32 testPlane(const Plane& p) const;
 
 	/// Implements CollisionShape::transform
 	void transform(const Transform& trf)
@@ -88,8 +88,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& b) const;
+	/// Implements CollisionShape::toAabb
+	void toAabb(Aabb& b) const;
 
 	LineSegment getTransformed(const Transform& transform) const;
 

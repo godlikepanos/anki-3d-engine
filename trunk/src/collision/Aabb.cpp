@@ -9,7 +9,7 @@ namespace anki {
 Aabb Aabb::getTransformed(const Transform& transform) const
 {
 	Mat3 absM;
-	for(int i = 0; i < 9; ++i)
+	for(U i = 0; i < 9; ++i)
 	{
 		absM[i] = fabs(transform.getRotation()[i]);
 	}
@@ -24,12 +24,12 @@ Aabb Aabb::getTransformed(const Transform& transform) const
 }
 
 //==============================================================================
-float Aabb::testPlane(const Plane& p) const
+F32 Aabb::testPlane(const Plane& p) const
 {
 	const Aabb& aabb = *this;
 	Vec3 diagMin, diagMax;
 	// set min/max values for x,y,z direction
-	for(int i = 0; i < 3; i++)
+	for(U i = 0; i < 3; i++)
 	{
 		if(p.getNormal()[i] >= 0.0)
 		{
@@ -44,7 +44,7 @@ float Aabb::testPlane(const Plane& p) const
 	}
 
 	// minimum on positive side of plane, box on positive side
-	float test = p.test(diagMin);
+	F32 test = p.test(diagMin);
 	if(test > 0.0)
 	{
 		return test;
@@ -68,7 +68,7 @@ Aabb Aabb::getCompoundShape(const Aabb& b) const
 {
 	Aabb out;
 
-	for(uint i = 0; i < 3; i++)
+	for(U i = 0; i < 3; i++)
 	{
 		out.min[i] = (min[i] < b.min[i]) ? min[i] : b.min[i];
 		out.max[i] = (max[i] > b.max[i]) ? max[i] : b.max[i];

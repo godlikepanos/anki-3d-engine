@@ -81,7 +81,7 @@ public:
 	}
 
 	/// Implements CollisionShape::testPlane
-	float testPlane(const Plane& p) const;
+	F32 testPlane(const Plane& p) const;
 
 	/// Implements CollisionShape::transform
 	void transform(const Transform& trf)
@@ -89,8 +89,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& b) const
+	/// Implements CollisionShape::toAabb
+	void toAabb(Aabb& b) const
 	{
 		b = *this;
 	}
@@ -128,7 +128,7 @@ void Aabb::set(const Container& container)
 	typename Container::const_iterator it = container.begin() + 1;
 	for(; it != container.end(); ++it)
 	{
-		for(int j = 0; j < 3; j++)
+		for(U j = 0; j < 3; j++)
 		{
 			if((*it)[j] > max[j])
 			{

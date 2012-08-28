@@ -7,6 +7,7 @@
 #include "anki/math/Mat3.h"
 #include "anki/math/Mat4.h"
 #include "anki/math/Transform.h"
+#include "anki/math/F16.h"
 #include "anki/math/Math.h"
 
 #include "anki/util/Assert.h"

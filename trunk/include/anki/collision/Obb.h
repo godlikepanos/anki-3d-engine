@@ -90,7 +90,7 @@ public:
 	}
 
 	/// Implements CollisionShape::testPlane
-	float testPlane(const Plane& p) const;
+	F32 testPlane(const Plane& p) const;
 
 	/// Implements CollisionShape::transform
 	void transform(const Transform& trf)
@@ -98,8 +98,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& aabb) const;
+	/// Implements CollisionShape::toAabb
+	void toAabb(Aabb& aabb) const;
 
 	Obb getTransformed(const Transform& transform) const;
 
@@ -141,7 +141,7 @@ void Obb::set(const Container& container)
 	{
 		const Vec3& v = *it;
 
-		for(int j = 0; j < 3; j++)
+		for(U j = 0; j < 3; j++)
 		{
 			if(v[j] > max[j])
 			{
