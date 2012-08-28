@@ -53,21 +53,21 @@ public:
 		return type;
 	}
 
-	float getNear() const
+	F32 getNear() const
 	{
 		return near;
 	}
-	void setNear(const float x)
+	void setNear(const F32 x)
 	{
 		near = x;
 		recalculate();
 	}
 
-	float getFar() const
+	F32 getFar() const
 	{
 		return far;
 	}
-	void setFar(const float x)
+	void setFar(const F32 x)
 	{
 		far = x;
 		recalculate();
@@ -98,8 +98,8 @@ public:
 protected:
 	/// @name Viewing variables
 	/// @{
-	float near = 0.0;
-	float far = 0.0;
+	F32 near = 0.0;
+	F32 far = 0.0;
 	/// @}
 
 	/// Used to check against the frustum
@@ -146,7 +146,7 @@ public:
 	}
 
 	/// Set all
-	PerspectiveFrustum(float fovX_, float fovY_, float near_, float far_)
+	PerspectiveFrustum(F32 fovX_, F32 fovY_, F32 near_, F32 far_)
 		: Frustum(FT_PERSPECTIVE)
 	{
 		setAll(fovX_, fovY_, near_, far_);
@@ -155,28 +155,28 @@ public:
 
 	/// @name Accessors
 	/// @{
-	float getFovX() const
+	F32 getFovX() const
 	{
 		return fovX;
 	}
-	void setFovX(float ang)
+	void setFovX(F32 ang)
 	{
 		fovX = ang;
 		recalculate();
 	}
 
-	float getFovY() const
+	F32 getFovY() const
 	{
 		return fovY;
 	}
-	void setFovY(float ang)
+	void setFovY(F32 ang)
 	{
 		fovY = ang;
 		recalculate();
 	}
 
 	/// Set all the parameters and recalculate the planes and shape
-	void setAll(float fovX_, float fovY_, float near_, float far_)
+	void setAll(F32 fovX_, F32 fovY_, F32 near_, F32 far_)
 	{
 		fovX = fovX_;
 		fovY = fovY_,
@@ -190,7 +190,7 @@ public:
 	PerspectiveFrustum& operator=(const PerspectiveFrustum& b);
 
 	/// Implements CollisionShape::testPlane
-	float testPlane(const Plane& p) const;
+	F32 testPlane(const Plane& p) const;
 
 	/// Calculate and get transformed
 	PerspectiveFrustum getTransformed(const Transform& trf) const
@@ -209,14 +209,14 @@ public:
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const;
 
-	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& aabb) const;
+	/// Implements CollisionShape::toAabb
+	void toAabb(Aabb& aabb) const;
 
 private:
 	/// @name Viewing variables
 	/// @{
-	float fovX = 0.0;
-	float fovY = 0.0;
+	F32 fovX = 0.0;
+	F32 fovY = 0.0;
 	/// @}
 
 	/// @name Shape
@@ -255,8 +255,8 @@ public:
 	}
 
 	/// Set all
-	OrthographicFrustum(float left_, float right_, float near_,
-		float far_, float top_, float bottom_)
+	OrthographicFrustum(F32 left_, F32 right_, F32 near_,
+		F32 far_, F32 top_, F32 bottom_)
 		: Frustum(FT_ORTHOGRAPHIC)
 	{
 		setAll(left_, right_, near_, far_, top_, bottom_);
@@ -265,49 +265,49 @@ public:
 
 	/// @name Accessors
 	/// @{
-	float getLeft() const
+	F32 getLeft() const
 	{
 		return left;
 	}
-	void setLeft(float f)
+	void setLeft(F32 f)
 	{
 		left = f;
 		recalculate();
 	}
 
-	float getRight() const
+	F32 getRight() const
 	{
 		return right;
 	}
-	void setRight(float f)
+	void setRight(F32 f)
 	{
 		right = f;
 		recalculate();
 	}
 
-	float getTop() const
+	F32 getTop() const
 	{
 		return top;
 	}
-	void setTop(float f)
+	void setTop(F32 f)
 	{
 		top = f;
 		recalculate();
 	}
 
-	float getBottom() const
+	F32 getBottom() const
 	{
 		return bottom;
 	}
-	void setBottom(float f)
+	void setBottom(F32 f)
 	{
 		bottom = f;
 		recalculate();
 	}
 
 	/// Set all
-	void setAll(float left_, float right_, float near_,
-		float far_, float top_, float bottom_)
+	void setAll(F32 left_, F32 right_, F32 near_,
+		F32 far_, F32 top_, F32 bottom_)
 	{
 		left = left_;
 		right = right_;
@@ -329,7 +329,7 @@ public:
 	OrthographicFrustum& operator=(const OrthographicFrustum& b);
 
 	/// Implements CollisionShape::testPlane
-	float testPlane(const Plane& p) const
+	F32 testPlane(const Plane& p) const
 	{
 		return obb.testPlane(p);
 	}
@@ -340,10 +340,10 @@ public:
 	/// Implements Frustum::setTransform
 	void setTransform(const Transform& trf);
 
-	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& aabb) const
+	/// Implements CollisionShape::toAabb
+	void toAabb(Aabb& aabb) const
 	{
-		obb.getAabb(aabb);
+		obb.toAabb(aabb);
 	}
 
 	/// Implements Frustum::calculateProjectionMatrix
@@ -360,7 +360,7 @@ public:
 private:
 	/// @name Viewing variables
 	/// @{
-	float left = 0.0, right = 0.0, top = 0.0, bottom = 0.0;
+	F32 left = 0.0, right = 0.0, top = 0.0, bottom = 0.0;
 	/// @}
 
 	/// @name Shape

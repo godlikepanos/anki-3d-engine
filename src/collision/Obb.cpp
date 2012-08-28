@@ -17,18 +17,18 @@ Obb::Obb(const Vec3& center_, const Mat3& rotation_, const Vec3& extends_)
 {}
 
 //==============================================================================
-float Obb::testPlane(const Plane& p) const
+F32 Obb::testPlane(const Plane& p) const
 {
 	const Obb& obb = *this;
 	Vec3 xNormal = obb.getRotation().getTransposed() * p.getNormal();
 
 	// maximum extent in direction of plane normal
-	float r =
+	F32 r =
 		fabs(obb.getExtend().x() * xNormal.x()) +
 		fabs(obb.getExtend().y() * xNormal.y()) +
 		fabs(obb.getExtend().z() * xNormal.z());
 	// signed distance between box center and plane
-	float d = p.test(obb.getCenter());
+	F32 d = p.test(obb.getCenter());
 
 	// return signed distance
 	if(fabs(d) < r)
@@ -67,7 +67,7 @@ Obb Obb::getCompoundShape(const Obb& b) const
 	b.getExtremePoints(points1);
 
 	std::array<Vec3, 16> points;
-	for(uint i = 0; i < 8; i++)
+	for(U i = 0; i < 8; i++)
 	{
 		points[i] = points0[i];
 		points[i + 8] = points1[i];
@@ -120,10 +120,10 @@ void Obb::getExtremePoints(std::array<Vec3, 8>& points) const
 }
 
 //==============================================================================
-void Obb::getAabb(Aabb& aabb) const
+void Obb::toAabb(Aabb& aabb) const
 {
 	Mat3 absM;
-	for(int i = 0; i < 9; ++i)
+	for(U i = 0; i < 9; ++i)
 	{
 		absM[i] = fabs(rotation[i]);
 	}

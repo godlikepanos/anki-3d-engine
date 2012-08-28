@@ -3,6 +3,7 @@
 
 #include "anki/collision/Forward.h"
 #include "anki/math/Forward.h"
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
@@ -75,13 +76,13 @@ public:
 	/// returns 0.0, else it returns the distance. If the distance is < 0.0
 	/// then the collision shape lies behind the plane and if > 0.0 then
 	/// in front of it
-	virtual float testPlane(const Plane& p) const = 0;
+	virtual F32 testPlane(const Plane& p) const = 0;
 
 	/// Transform
 	virtual void transform(const Transform& trf) = 0;
 
 	/// Get the AABB
-	virtual void getAabb(Aabb&) const = 0;
+	virtual void toAabb(Aabb&) const = 0;
 
 	/// Visitor accept
 	virtual void accept(MutableVisitor&) = 0;

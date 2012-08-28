@@ -13,11 +13,11 @@ Ray Ray::getTransformed(const Transform& transform) const
 }
 
 //==============================================================================
-float Ray::testPlane(const Plane& p) const
+F32 Ray::testPlane(const Plane& p) const
 {
 	const Ray& r = *this;
-	float dist = p.test(r.getOrigin());
-	float cos_ = p.getNormal().dot(r.getDirection());
+	F32 dist = p.test(r.getOrigin());
+	F32 cos_ = p.getNormal().dot(r.getDirection());
 
 	if(cos_ > 0.0) // the ray points to the same half-space as the plane
 	{
@@ -44,7 +44,7 @@ float Ray::testPlane(const Plane& p) const
 }
 
 //==============================================================================
-void Ray::getAabb(Aabb&) const
+void Ray::toAabb(Aabb&) const
 {
 	ANKI_ASSERT(0 && "Can't do that");
 }

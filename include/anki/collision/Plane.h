@@ -25,7 +25,7 @@ public:
 	Plane(const Plane& b);
 
 	/// Constructor
-	Plane(const Vec3& normal_, float offset_);
+	Plane(const Vec3& normal_, F32 offset_);
 
 	/// @see setFrom3Points
 	Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2)
@@ -35,7 +35,7 @@ public:
 	}
 
 	/// @see setFromPlaneEquation
-	Plane(float a, float b, float c, float d)
+	Plane(F32 a, F32 b, F32 c, F32 d)
 		: CollisionShape(CST_PLANE)
 	{
 		setFromPlaneEquation(a, b, c, d);
@@ -57,15 +57,15 @@ public:
 		normal = x;
 	}
 
-	float getOffset() const
+	F32 getOffset() const
 	{
 		return offset;
 	}
-	float& getOffset()
+	F32& getOffset()
 	{
 		return offset;
 	}
-	void setOffset(const float x)
+	void setOffset(const F32 x)
 	{
 		offset = x;
 	}
@@ -93,7 +93,7 @@ public:
 	}
 
 	/// Implements CollisionShape::testPlane
-	float testPlane(const Plane& p) const;
+	F32 testPlane(const Plane& p) const;
 
 	/// Implements CollisionShape::transform
 	void transform(const Transform& trf)
@@ -101,8 +101,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& b) const;
+	/// Implements CollisionShape::toAabb
+	void toAabb(Aabb& b) const;
 
 	/// Return the transformed
 	Plane getTransformed(const Transform& trf) const;
@@ -110,13 +110,13 @@ public:
 	/// It gives the distance between a point and a plane. if returns >0
 	/// then the point lies in front of the plane, if <0 then it is behind
 	/// and if =0 then it is co-planar
-	float test(const Vec3& point) const
+	F32 test(const Vec3& point) const
 	{
 		return normal.dot(point) - offset;
 	}
 
 	/// Get the distance from a point to this plane
-	float getDistance(const Vec3& point) const
+	F32 getDistance(const Vec3& point) const
 	{
 		return fabs(test(point));
 	}
@@ -130,7 +130,7 @@ public:
 
 	/// Test a CollisionShape
 	template<typename T>
-	float testShape(const T& x) const
+	F32 testShape(const T& x) const
 	{
 		return x.testPlane(*this, x);
 	}
@@ -139,14 +139,14 @@ private:
 	/// @name Data
 	/// @{
 	Vec3 normal;
-	float offset;
+	F32 offset;
 	/// @}
 
 	/// Set the plane from 3 points
 	void setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2);
 
 	/// Set from plane equation is ax+by+cz+d
-	void setFromPlaneEquation(float a, float b, float c, float d);
+	void setFromPlaneEquation(F32 a, F32 b, F32 c, F32 d);
 };
 /// @}
 

@@ -27,7 +27,7 @@ public:
 	{}
 
 	/// Constructor
-	Sphere(const Vec3& center_, float radius_)
+	Sphere(const Vec3& center_, F32 radius_)
 		: CollisionShape(CST_SPHERE), center(center_), radius(radius_)
 	{}
 	/// @}
@@ -47,15 +47,15 @@ public:
 		center = x;
 	}
 
-	float getRadius() const
+	F32 getRadius() const
 	{
 		return radius;
 	}
-	float& getRadius()
+	F32& getRadius()
 	{
 		return radius;
 	}
-	void setRadius(const float x)
+	void setRadius(const F32 x)
 	{
 		radius = x;
 	}
@@ -83,7 +83,7 @@ public:
 	}
 
 	/// Implements CollisionShape::testPlane
-	float testPlane(const Plane& p) const;
+	F32 testPlane(const Plane& p) const;
 
 	/// Implements CollisionShape::transform
 	void transform(const Transform& trf)
@@ -91,8 +91,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::getAabb
-	void getAabb(Aabb& b) const;
+	/// Implements CollisionShape::toAabb
+	void toAabb(Aabb& b) const;
 
 	Sphere getTransformed(const Transform& transform) const;
 
@@ -106,10 +106,9 @@ public:
 
 private:
 	Vec3 center;
-	float radius;
+	F32 radius;
 };
 /// @}
-
 
 //==============================================================================
 template<typename Container>
@@ -126,7 +125,7 @@ void Sphere::set(const Container& container)
 	{
 		const Vec3& v = *it;
 
-		for(int j = 0; j < 3; j++)
+		for(U j = 0; j < 3; j++)
 		{
 			if(v[j] > max[j])
 			{
@@ -142,14 +141,14 @@ void Sphere::set(const Container& container)
 	center = (min + max) * 0.5; // average
 
 	// max distance between center and the vec3 arr
-	float maxDist = (container.front() - center).getLengthSquared();
+	F32 maxDist = (container.front() - center).getLengthSquared();
 
 	typename Container::const_iterator it_ = container.begin() + 1;
 	for(; it_ != container.end(); ++it_)
 	{
 		const Vec3& v = *it_;
 
-		float dist = (v - center).getLengthSquared();
+		F32 dist = (v - center).getLengthSquared();
 		if(dist > maxDist)
 		{
 			maxDist = dist;
@@ -159,8 +158,6 @@ void Sphere::set(const Container& container)
 	radius = Math::sqrt(maxDist);
 }
 
-
 } // end namespace
-
 
 #endif

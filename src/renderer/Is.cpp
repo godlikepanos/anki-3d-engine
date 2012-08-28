@@ -199,11 +199,37 @@ void Is::projectShape(const Camera& cam,
 }
 
 //==============================================================================
-Bool Is::circleIntersects(const Tile& tile, const Vec2& circleCenter,
-	F32 circleRadius)
+Bool Is::circleIntersects(const Tile& tile, const Vec2& c, F32 r)
 {
-	// XXX
-	return true;
+	// For more info about the algorithm see the collision between an AABB and
+	// a sphere
+
+	Vec2 cp; // Closes point
+	for(U i = 0; i < 2; i++)
+	{
+		if(c[i] > tile.coords[1][i])
+		{
+			cp[i] = tile.coords[1][i];
+		}
+		else if(c[i] < tile.coords[0][i])
+		{
+			cp[i] = tile.coords[0][i];
+		}
+		else
+		{
+			cp[i] = c[i];
+		}
+	}
+
+	F32 rsq = r * r;
+	Vec2 sub = c - cp;
+
+	if(sub.getLengthSquared() <= rsq)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 //==============================================================================

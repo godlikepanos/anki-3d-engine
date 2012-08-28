@@ -81,21 +81,21 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/, const Ls& /*b*/)
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Obb& obb)
 {
-	float maxS = std::numeric_limits<float>::min();
-	float minT = std::numeric_limits<float>::max();
+	F32 maxS = std::numeric_limits<F32>::min();
+	F32 minT = std::numeric_limits<F32>::max();
 
 	// compute difference vector
 	Vec3 diff = obb.getCenter() - ls.getOrigin();
 
 	// for each axis do
-	for(int i = 0; i < 3; ++i)
+	for(U i = 0; i < 3; ++i)
 	{
 		// get axis i
 		Vec3 axis = obb.getRotation().getColumn(i);
 
 		// project relative vector onto axis
-		float e = axis.dot(diff);
-		float f = ls.getDirection().dot(axis);
+		F32 e = axis.dot(diff);
+		F32 f = ls.getDirection().dot(axis);
 
 		// ray is parallel to plane
 		if(Math::isZero(f))
@@ -108,13 +108,13 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Obb& obb)
 			continue;
 		}
 
-		float s = (e - obb.getExtend()[i]) / f;
-		float t = (e + obb.getExtend()[i]) / f;
+		F32 s = (e - obb.getExtend()[i]) / f;
+		F32 t = (e + obb.getExtend()[i]) / f;
 
 		// fix order
 		if(s > t)
 		{
-			float temp = s;
+			F32 temp = s;
 			s = t;
 			t = temp;
 		}
@@ -164,8 +164,8 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Sphere& s)
 {
 	const Vec3& v = ls.getDirection();
 	Vec3 w0 = s.getCenter() - ls.getOrigin();
-	float w0dv = w0.dot(v);
-	float rsq = s.getRadius() * s.getRadius();
+	F32 w0dv = w0.dot(v);
+	F32 rsq = s.getRadius() * s.getRadius();
 
 	if(w0dv < 0.0) // if the ang is >90
 	{
@@ -173,7 +173,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Sphere& s)
 	}
 
 	Vec3 w1 = w0 - v; // aka center - P1, where P1 = seg.origin + seg.dir
-	float w1dv = w1.dot(v);
+	F32 w1dv = w1.dot(v);
 
 	if(w1dv > 0.0) // if the ang is <90
 	{
@@ -188,11 +188,11 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Sphere& s)
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Aabb& aabb)
 {
-	float maxS = std::numeric_limits<float>::min();
-	float minT = std::numeric_limits<float>::max();
+	F32 maxS = std::numeric_limits<F32>::min();
+	F32 minT = std::numeric_limits<F32>::max();
 
 	// do tests against three sets of planes
-	for(int i = 0; i < 3; ++i)
+	for(U i = 0; i < 3; ++i)
 	{
 		// segment is parallel to plane
 		if(Math::isZero(ls.getDirection()[i]))
@@ -207,13 +207,13 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Aabb& aabb)
 		else
 		{
 			// compute intersection parameters and sort
-			float s = (aabb.getMin()[i] - ls.getOrigin()[i]) 
+			F32 s = (aabb.getMin()[i] - ls.getOrigin()[i]) 
 				/ ls.getDirection()[i];
-			float t = (aabb.getMax()[i] - ls.getOrigin()[i]) 
+			F32 t = (aabb.getMax()[i] - ls.getOrigin()[i]) 
 				/ ls.getDirection()[i];
 			if(s > t)
 			{
-				float temp = s;
+				F32 temp = s;
 				s = t;
 				t = temp;
 			}
@@ -252,7 +252,7 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& o0, const Obb& o1)
 	const Vec3& b = o1.getExtend();
 
 	// test factors
-	float cTest, aTest, bTest;
+	F32 cTest, aTest, bTest;
 	bool parallelAxes = false;
 
 	// transpose of rotation of B relative to A, i.e. (R_b^T * R_a)^T
@@ -260,9 +260,9 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& o0, const Obb& o1)
 
 	// absolute value of relative rotation matrix
 	Mat3 rabs;
-	for(uint i = 0; i < 3; ++i)
+	for(U i = 0; i < 3; ++i)
 	{
-		for(uint j = 0; j < 3; ++j)
+		for(U j = 0; j < 3; ++j)
 		{
 			rabs(i, j) = fabs(rt(i, j));
 			// if magnitude of dot product between axes is close to one
@@ -547,16 +547,16 @@ bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Sphere& s)
 {
 	Vec3 w(s.getCenter() - r.getOrigin());
 	const Vec3& v = r.getDirection();
-	float proj = v.dot(w);
-	float wsq = w.getLengthSquared();
-	float rsq = s.getRadius() * s.getRadius();
+	F32 proj = v.dot(w);
+	F32 wsq = w.getLengthSquared();
+	F32 rsq = s.getRadius() * s.getRadius();
 
 	if(proj < 0.0 && wsq > rsq)
 	{
 		return false;
 	}
 
-	float vsq = v.getLengthSquared();
+	F32 vsq = v.getLengthSquared();
 
 	return (vsq * wsq - proj * proj <= vsq * rsq);
 }
@@ -564,11 +564,11 @@ bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Sphere& s)
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Aabb& aabb)
 {
-	float maxS = std::numeric_limits<float>::min();
-	float minT = std::numeric_limits<float>::max();
+	F32 maxS = std::numeric_limits<F32>::min();
+	F32 minT = std::numeric_limits<F32>::max();
 
 	// do tests against three sets of planes
-	for(int i = 0; i < 3; ++i)
+	for(U i = 0; i < 3; ++i)
 	{
 		// ray is parallel to plane
 		if(Math::isZero(r.getDirection()[i]))
@@ -583,13 +583,13 @@ bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Aabb& aabb)
 		else
 		{
 			// compute intersection parameters and sort
-			float s = (aabb.getMin()[i] - r.getOrigin()[i]) /
+			F32 s = (aabb.getMin()[i] - r.getOrigin()[i]) /
 				r.getDirection()[i];
-			float t = (aabb.getMax()[i] - r.getOrigin()[i]) /
+			F32 t = (aabb.getMax()[i] - r.getOrigin()[i]) /
 				r.getDirection()[i];
 			if(s > t)
 			{
-				float temp = s;
+				F32 temp = s;
 				s = t;
 				t = temp;
 			}
@@ -624,7 +624,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Aabb& aabb)
 //==============================================================================
 bool CollisionAlgorithmsMatrix::collide(const Sphere& a, const Sphere& b)
 {
-	float tmp = a.getRadius() + b.getRadius();
+	F32 tmp = a.getRadius() + b.getRadius();
 	return (a.getCenter() - b.getCenter()).getLengthSquared() <= tmp * tmp;
 }
 
@@ -635,7 +635,7 @@ bool CollisionAlgorithmsMatrix::collide(const Sphere& s, const Aabb& aabb)
 
 	// find the box's closest point to the sphere
 	Vec3 cp; // Closest Point
-	for(uint i = 0; i < 3; i++)
+	for(U i = 0; i < 3; i++)
 	{
 		// if the center is greater than the max then the closest
 		// point is the max
@@ -654,9 +654,9 @@ bool CollisionAlgorithmsMatrix::collide(const Sphere& s, const Aabb& aabb)
 		}
 	}
 
-	float rsq = s.getRadius() * s.getRadius();
+	F32 rsq = s.getRadius() * s.getRadius();
 
-	// if the c lies totaly inside the box then the sub is the zero,
+	// if the c lies totally inside the box then the sub is the zero,
 	// this means that the length is also zero and thus its always smaller
 	// than rsq
 	Vec3 sub = c - cp;

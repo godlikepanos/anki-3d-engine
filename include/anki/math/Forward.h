@@ -14,6 +14,7 @@ class Axisang;
 class Mat3;
 class Mat4;
 class Transform;
+class F16;
 
 } // end namespace
 

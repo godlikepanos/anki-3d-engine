@@ -42,7 +42,7 @@ public:
 		return aabb;
 	}
 
-	uint32_t getSpatialTimestamp() const
+	U32 getSpatialTimestamp() const
 	{
 		return timestamp;
 	}
@@ -66,14 +66,14 @@ public:
 	void spatialMarkUpdated()
 	{
 		timestamp = Timestamp::getTimestamp();
-		spatialCs->getAabb(aabb);
+		spatialCs->toAabb(aabb);
 	}
 
 protected:
 	CollisionShape* spatialCs = nullptr;
 
 private:
-	uint32_t timestamp = Timestamp::getTimestamp();
+	U32 timestamp = Timestamp::getTimestamp();
 	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
 	Aabb aabb; ///< A faster shape
 };
