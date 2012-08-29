@@ -432,9 +432,11 @@ void ShaderProgram::getUniAndAttribVars()
 
 		// check if its FFP location
 		int loc = glGetAttribLocation(glId, &name_[0]);
-		if(loc == -1) // if -1 it means that its an FFP var
+		if(loc == -1)
 		{
-			throw ANKI_EXCEPTION("You are using FFP vertex attributes");
+			// if -1 it means that its an FFP var or a weird crap like
+			// gl_InstanceID
+			continue;
 		}
 
 		ShaderProgramAttributeVariable* var =

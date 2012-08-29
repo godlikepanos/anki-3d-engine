@@ -259,6 +259,8 @@ public:
 	/// longer support quads
 	void drawQuad();
 
+	void drawQuadInstanced(U32 primitiveCount);
+
 	/// Create FAI texture
 	static void createFai(uint width, uint height, int internalFormat,
 		int format, int type, Texture& fai);
