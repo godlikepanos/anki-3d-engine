@@ -4,7 +4,7 @@
 
 #pragma anki start vertexShader
 
-#pragma anki include "shaders/SimpleVert.glsl"
+#pragma anki include "shaders/IsLpVertex.glsl"
 
 #pragma anki start fragmentShader
 
@@ -35,8 +35,6 @@ layout(std140, row_major) uniform generalBlock
 	/// limitsOfNearPlane and the zw is an optimization see PpsSsao.glsl and 
 	/// r403 for the clean one
 	uniform vec4 limitsOfNearPlane_;
-
-	uniform Light light;
 };
 
 #define planes nearPlanes.zw
@@ -60,112 +58,7 @@ in vec2 vTexCoords;
 out vec3 fColor;
 /// @}
 
-//==============================================================================
-/// @return frag pos in view space
-vec3 getFragPosVSpace()
-{
-	float depth = texture(msDepthFai, vTexCoords).r;
-
-#if DISCARD
-	if(depth == 1.0)
-	{
-		discard;
-	}
-#endif
-
-	vec3 fragPosVspace;
-	fragPosVspace.z = -planes.y / (planes.x + depth);
-
-	fragPosVspace.xy = (vTexCoords * limitsOfNearPlane2) - limitsOfNearPlane;
-
-	float sc = -fragPosVspace.z / zNear;
-	fragPosVspace.xy *= sc;
-
-	return fragPosVspace;
-}
-
-//==============================================================================
-/// @return The blurred shadow
-float pcfLow(in vec3 shadowUv)
-{
-	float shadowCol = textureOffset(shadowMap, shadowUv, ivec2(-1, -1));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, -1));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, -1));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(-1, 0));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, 0));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, 0));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(-1, 1));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, 1));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, 1));
-
-	shadowCol *= (1.0 / 9.0);
-	return shadowCol;
-}
-
-//==============================================================================
-/// Performs phong lighting using the MS FAIs and a few other things
-/// @param fragPosVspace The fragment position in view space
-/// @return The final color
-vec3 doPhong(in vec3 fragPosVspace, in vec3 normal, in vec3 diffuse, 
-	in vec2 specularAll, in Light light)
-{
-	// get the vector from the frag to the light
-	vec3 frag2LightVec = light.posAndRadius.xyz - fragPosVspace;
-
-	// Instead of using normalize(frag2LightVec) we brake the operation 
-	// because we want fragLightDist for the calc of the attenuation
-	float fragLightDistSqrt = sqrt(dot(frag2LightVec, frag2LightVec));
-	vec3 lightDir = frag2LightVec / fragLightDistSqrt;
-
-	// Lambert term
-	float lambertTerm = dot(normal, lightDir);
-
-#if DISCARD
-	if(lambertTerm < 0.0)
-	{
-		discard;
-	}
-#else
-	lambertTerm = max(0.0, lambertTerm);
-#endif
-
-	// Attenuation
-	float attenuation = 1.0 - fragLightDistSqrt / light.posAndRadius.w;
-
-	// Diffuse
-	vec3 difCol = diffuse * light.diffuseColor.rgb;
-
-	// Specular
-	vec3 eyeVec = normalize(-fragPosVspace);
-	vec3 h = normalize(lightDir + eyeVec);
-	float specIntensity = pow(max(0.0, dot(normal, h)), specularAll.g);
-	vec3 specCol = light.specularColor.rgb * (specIntensity * specularAll.r);
-	
-	// end
-	return (difCol + specCol) * (attenuation * lambertTerm);
-}
-
-//==============================================================================
 void main()
 {
-	// Read texture first. Optimize for future out of order HW
-	uvec2 msAll = texture(msFai0, vTexCoords).rg;
-
-	// get frag pos in view space
-	vec3 fragPosVspace = getFragPosVSpace();
-
-	// Decode MS
-	vec3 normal = unpackNormal(unpackHalf2x16(msAll[1]));
-	vec4 diffuseAndSpec = unpackUnorm4x8(msAll[0]);
-	vec2 specularAll = unpackSpecular(diffuseAndSpec.a);
-
-#if POINT_LIGHT
-	fColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
-		specularAll, light) /*+ vec3(1.0, 0.0, 1.0)*/;
-#elif SPOT_LIGHT
-	// XXX
-#else
-#	error "See file"
-#endif
+	fColor = vec3(vTexCoords, 0.0);
 }
-

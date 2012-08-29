@@ -125,6 +125,14 @@ void Renderer::drawQuad()
 }
 
 //==============================================================================
+void Renderer::drawQuadInstanced(U32 primitiveCount)
+{
+	quadVao.bind();
+	glDrawElementsInstanced(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0,
+		primitiveCount);
+}
+
+//==============================================================================
 Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 	const Mat4& projectionMat, const int view[4])
 {

@@ -44,7 +44,7 @@ struct ShaderTile
 
 struct ShaderTiles
 {
-	Array<Array<ShaderTile, Is::TILES_Y_COUNT>, Is::TILES_X_COUNT> tiles;
+	Array<Array<ShaderTile, Is::TILES_X_COUNT>, Is::TILES_Y_COUNT> tiles;
 };
 
 struct ShaderCommonUniforms
@@ -86,34 +86,34 @@ void Is::initInternal(const RendererInitializer& initializer)
 	//
 	// Load the programs
 	//
-	std::string pps;
-
-	// point light
-	lightSProgs[LST_POINT].load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/IsLpGeneric.glsl", "#define POINT_LIGHT 1\n").c_str());
-
-	// spot light no shadow
-	lightSProgs[LST_SPOT].load(
-		ShaderProgramResource::createSrcCodeToCache(
-		"shaders/IsLpGeneric.glsl", "#define SPOT_LIGHT 1\n").c_str());
-
-	// spot light w/t shadow
-	pps = std::string("#define SPOT_LIGHT 1\n"
-		"#define SHADOW 1\n");
-	if(/*sm.isPcfEnabled()*/ 1) // XXX
-	{
-		pps += "#define PCF 1\n";
-	}
-	lightSProgs[LST_SPOT_SHADOW].load(
-		ShaderProgramResource::createSrcCodeToCache(
-		"shaders/IsLpGeneric.glsl", pps.c_str()).c_str());
-
-	// Min max
-	pps =
+	std::string pps =
 		"#define TILES_X_COUNT " + std::to_string(TILES_X_COUNT) + "\n"
 		"#define TILES_Y_COUNT " + std::to_string(TILES_Y_COUNT) + "\n"
 		"#define RENDERER_WIDTH " + std::to_string(r->getWidth()) + "\n"
 		"#define RENDERER_HEIGHT " + std::to_string(r->getWidth()) + "\n";
+
+	// point light
+	lightSProgs[LST_POINT].load(ShaderProgramResource::createSrcCodeToCache(
+		"shaders/IsLpGeneric.glsl",
+		(pps + "#define POINT_LIGHT 1\n").c_str()).c_str());
+
+	// spot light no shadow
+	lightSProgs[LST_SPOT].load(ShaderProgramResource::createSrcCodeToCache(
+		"shaders/IsLpGeneric.glsl",
+		(pps + "#define SPOT_LIGHT 1\n").c_str()).c_str());
+
+	// spot light w/t shadow
+	std::string pps2 = pps + "#define SPOT_LIGHT 1\n"
+		"#define SHADOW 1\n";
+	if(/*sm.isPcfEnabled()*/ 1) // XXX
+	{
+		pps2 += "#define PCF 1\n";
+	}
+	lightSProgs[LST_SPOT_SHADOW].load(
+		ShaderProgramResource::createSrcCodeToCache(
+		"shaders/IsLpGeneric.glsl", pps2.c_str()).c_str());
+
+	// Min max
 	std::string filename = ShaderProgramResource::createSrcCodeToCache(
 		"shaders/IsMinMax.glsl",
 		pps.c_str());
@@ -170,15 +170,15 @@ void Is::initInternal(const RendererInitializer& initializer)
 	F32 tileW = 1.0 / TILES_X_COUNT;
 	F32 tileH = 1.0 / TILES_Y_COUNT;
 
-	for(U i = 0; i < TILES_X_COUNT; i++)
+	for(U j = 0; j < TILES_Y_COUNT; j++)
 	{
-		for(U j = 0; j < TILES_Y_COUNT; j++)
+		for(U i = 0; i < TILES_X_COUNT; i++)
 		{
 			F32 x = i * tileW;
 			F32 y = j * tileH;
 
-			tiles[i][j].coords[0] = Vec2(x, y) * 2.0 - 1.0;
-			tiles[i][j].coords[1] = Vec2(x + tileW, y + tileH) * 2.0 - 1.0;
+			tiles[j][i].coords[0] = Vec2(x, y) * 2.0 - 1.0;
+			tiles[j][i].coords[1] = Vec2(x + tileW, y + tileH) * 2.0 - 1.0;
 		}
 	}
 }
@@ -266,16 +266,16 @@ void Is::minMaxPass()
 
 	// Update the tiles
 	//
-	F32 pixels[TILES_X_COUNT][TILES_Y_COUNT][2];
+	F32 pixels[TILES_Y_COUNT][TILES_X_COUNT][2];
 
 	minMaxFai.readPixels(pixels);
 
-	for(U i = 0; i < TILES_X_COUNT; i++)
+	for(U j = 0; j < TILES_Y_COUNT; j++)
 	{
-		for(U j = 0; j < TILES_Y_COUNT; j++)
+		for(U i = 0; i < TILES_X_COUNT; i++)
 		{
-			Tile& tile = tiles[i][j];
-			tile.depth = Vec2(pixels[i][j][0], pixels[i][j][1]);
+			Tile& tile = tiles[j][i];
+			tile.depth = Vec2(pixels[j][i][0], pixels[j][i][1]);
 		}
 	}
 }
@@ -331,17 +331,18 @@ void Is::pointLightsPass()
 	// Done
 	lightsUbo.unmap();
 
+#if 0
 	//
 	// Update the tiles
 	//
 
 	// For all tiles write their indices 
-	// OPT Parallelize that
-	for(U i = 0; i < TILES_X_COUNT; i++)
+	// OPT Parallelize that!!!!!!!!!!!!
+	for(U j = 0; j < TILES_Y_COUNT; j++)
 	{
-		for(U j = 0; j < TILES_Y_COUNT; j++)
+		for(U i = 0; i < TILES_X_COUNT; i++)
 		{
-			Tile& tile = tiles[i][j];
+			Tile& tile = tiles[j][i];
 
 			U lightsInTileCount = 0;
 			U ids = 0;
@@ -369,6 +370,7 @@ void Is::pointLightsPass()
 			tile.lightsCount = lightsInTileCount;
 		}
 	}
+#endif
 
 	//
 	// Write the lightIndicesUbo
@@ -377,16 +379,16 @@ void Is::pointLightsPass()
 	ShaderTiles* stiles = (ShaderTiles*)lightIndicesUbo.map(
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-	for(U i = 0; i < TILES_X_COUNT; i++)
+	for(U j = 0; j < TILES_Y_COUNT; j++)
 	{
-		for(U j = 0; j < TILES_Y_COUNT; j++)
+		for(U i = 0; i < TILES_X_COUNT; i++)
 		{
-			const Tile& tile = tiles[i][j];
-			stiles->tiles[i][j].lightsCount = tile.lightsCount;
+			const Tile& tile = tiles[j][i];
+			stiles->tiles[j][i].lightsCount = tile.lightsCount;
 
 			for(U k = 0; k < tile.lightsCount; k++)
 			{
-				stiles->tiles[i][j].lightIndices[k] = tile.lightIndices[k];
+				stiles->tiles[j][i].lightIndices[k] = tile.lightIndices[k];
 			}
 		}
 	}
@@ -406,6 +408,8 @@ void Is::run()
 	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
 
 	pointLightsPass();
+	lightSProgs[0]->bind();
+	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
 }
 
 } // end namespace anki

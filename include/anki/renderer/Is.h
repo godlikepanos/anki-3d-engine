@@ -74,7 +74,7 @@ private:
 	};
 
 	/// @note The [0][0] is the bottom left tile
-	Tile tiles[TILES_X_COUNT][TILES_Y_COUNT];
+	Tile tiles[TILES_Y_COUNT][TILES_X_COUNT];
 
 	/// A texture of TILES_X_COUNT*TILES_Y_COUNT size and format RG16F. Used to
 	/// to fill the Tile::depth
