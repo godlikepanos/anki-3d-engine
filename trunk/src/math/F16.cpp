@@ -66,7 +66,7 @@ F16 F16::toF16(F32 f)
 
 		if (e > 30)
 		{
-			//overflow();
+			ANKI_ASSERT(0 && "Overflow");
 			out.data = s | 0x7c00;
 		}
 		else

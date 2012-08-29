@@ -67,6 +67,7 @@ public:
 
 	/// @name Other
 	/// @{
+	F32 getLengthSquared() const;
 	F32 getLength() const;
 	Vec2 getNormalized() const;
 	void normalize();
