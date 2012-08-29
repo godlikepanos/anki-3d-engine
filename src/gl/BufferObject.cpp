@@ -19,7 +19,7 @@ BufferObject::~BufferObject()
 }
 
 //==============================================================================
-void BufferObject::create(GLenum target_, uint32_t sizeInBytes_,
+void BufferObject::create(GLenum target_, U32 sizeInBytes_,
 	const void* dataPtr, GLenum usage_)
 {
 	ANKI_ASSERT(!isCreated());
@@ -53,6 +53,23 @@ void BufferObject::create(GLenum target_, uint32_t sizeInBytes_,
 }
 
 //==============================================================================
+void* BufferObject::map(U32 offset, U32 length, GLuint flags)
+{
+	bind();
+	ANKI_ASSERT(offset + length <= sizeInBytes);
+	void* mappedMem = glMapBufferRange(target, offset, length, flags);
+	ANKI_ASSERT(mappedMem != nullptr);
+	return mappedMem;
+}
+
+//==============================================================================
+void BufferObject::unmap()
+{
+	bind();
+	glUnmapBuffer(target);
+}
+
+//==============================================================================
 void BufferObject::write(void* buff)
 {
 	ANKI_ASSERT(isCreated());
@@ -68,7 +85,7 @@ void BufferObject::write(void* buff)
 }
 
 //==============================================================================
-void BufferObject::write(void* buff, size_t offset, size_t size)
+void BufferObject::write(void* buff, U32 offset, U32 size)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(usage != GL_STATIC_DRAW);
@@ -82,4 +99,4 @@ void BufferObject::write(void* buff, size_t offset, size_t size)
 	glUnmapBuffer(target);
 }
 
-} // end namespace
+} // end namespace anki

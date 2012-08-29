@@ -187,7 +187,7 @@ inline Bool Vec2::operator<=(const Vec2& b) const
 }
 
 //==============================================================================
-// Operators with F32                                                        =
+// Operators with F32                                                          =
 //==============================================================================
 
 // vec2 + F32
@@ -246,10 +246,16 @@ inline Vec2& Vec2::operator/=(F32 f)
 // Misc methods                                                                =
 //==============================================================================
 
+// getLengthSquared
+inline F32 Vec2::getLengthSquared() const
+{
+	return x() * x() + y() * y();
+}
+
 // getLength
 inline F32 Vec2::getLength() const
 {
-	return Math::sqrt(x() * x() + y() * y());
+	return Math::sqrt(getLengthSquared());
 }
 
 // normalize

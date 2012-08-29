@@ -39,12 +39,12 @@ struct ShaderSpotLights
 struct ShaderTile
 {
 	U32 lightsCount;
-	U32 lightIndices[Is::MAX_LIGHTS_PER_TILE];
+	Array<U32, Is::MAX_LIGHTS_PER_TILE> lightIndices;
 };
 
 struct ShaderTiles
 {
-	ShaderTile tile[Is::TILES_X_COUNT * Is::TILES_X_COUNT];
+	Array<Array<ShaderTile, Is::TILES_Y_COUNT>, Is::TILES_X_COUNT> tiles;
 };
 
 struct ShaderCommonUniforms
@@ -167,14 +167,18 @@ void Is::initInternal(const RendererInitializer& initializer)
 	//
 	// Init tiles
 	//
-	F32 tileWidth = 1.0 / TILES_X_COUNT;
-	F32 tileHeight = 1.0 / TILES_Y_COUNT;
+	F32 tileW = 1.0 / TILES_X_COUNT;
+	F32 tileH = 1.0 / TILES_Y_COUNT;
 
 	for(U i = 0; i < TILES_X_COUNT; i++)
 	{
 		for(U j = 0; j < TILES_Y_COUNT; j++)
 		{
-			// XXX
+			F32 x = i * tileW;
+			F32 y = j * tileH;
+
+			tiles[i][j].coords[0] = Vec2(x, y) * 2.0 - 1.0;
+			tiles[i][j].coords[1] = Vec2(x + tileW, y + tileH) * 2.0 - 1.0;
 		}
 	}
 }
@@ -233,14 +237,12 @@ Bool Is::circleIntersects(const Tile& tile, const Vec2& c, F32 r)
 }
 
 //==============================================================================
-Bool Is::cullLight(const PointLight& light, const Tile& tile)
+Bool Is::cullLight(const PointLight& plight, const Tile& tile)
 {
-	const Camera& cam = r->getScene().getActiveCamera();
 	Vec2 cc;
-	F32 r;
-	const PointLight& plight = static_cast<const PointLight&>(light);
-	projectShape(cam, plight.getSphere(), cc, r);
-	return circleIntersects(tile, cc, r);
+	F32 rad;
+	projectShape(r->getScene().getActiveCamera(), plight.getSphere(), cc, rad);
+	return circleIntersects(tile, cc, rad);
 }
 
 //==============================================================================
@@ -284,13 +286,64 @@ void Is::pointLightsPass()
 	Camera& cam = r->getScene().getActiveCamera();
 	VisibilityInfo& vi = cam.getFrustumable()->getVisibilityInfo();
 
+	//
+	// Write the lightsUbo
+	//
+
+	// Quickly count the point lights
+	U pointLightsCount = 0;
+	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
+	{
+		const Light& light = *(*it);
+		if(light.getLightType() == Light::LT_POINT)
+		{
+			++pointLightsCount;		
+		}
+	}
+
+	// Map
+	ShaderPointLight* lightsMappedBuff = (ShaderPointLight*)lightsUbo.map(
+		0, 
+		sizeof(ShaderPointLight) * pointLightsCount,
+		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+
+	// Write the buff
+	pointLightsCount = 0;
+	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
+	{
+		const Light& light = *(*it);
+		if(light.getLightType() == Light::LT_POINT)
+		{
+			ShaderPointLight& pl = lightsMappedBuff[pointLightsCount];
+			const PointLight& plight = static_cast<const PointLight&>(light);
+
+			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
+				cam.getViewMatrix());
+
+			pl.posAndRadius = Vec4(pos, plight.getRadius());
+			pl.diffuseColor = light.getDiffuseColor();
+			pl.specularColor = light.getSpecularColor();
+
+			++pointLightsCount;		
+		}
+	}
+
+	// Done
+	lightsUbo.unmap();
+
+	//
+	// Update the tiles
+	//
+
+	// For all tiles write their indices 
+	// OPT Parallelize that
 	for(U i = 0; i < TILES_X_COUNT; i++)
 	{
 		for(U j = 0; j < TILES_Y_COUNT; j++)
 		{
 			Tile& tile = tiles[i][j];
 
-			U lightsCount = 0;
+			U lightsInTileCount = 0;
 			U ids = 0;
 
 			for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
@@ -306,16 +359,39 @@ void Is::pointLightsPass()
 
 				if(cullLight(plight, tile))
 				{
-					tile.lightIndices[ids] = lightsCount;
+					tile.lightIndices[ids] = lightsInTileCount;
 					++ids;
 				}
 
-				++lightsCount;
+				++lightsInTileCount;
 			}
 
-			tile.lightsCount = lightsCount;
+			tile.lightsCount = lightsInTileCount;
 		}
 	}
+
+	//
+	// Write the lightIndicesUbo
+	//
+
+	ShaderTiles* stiles = (ShaderTiles*)lightIndicesUbo.map(
+		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+
+	for(U i = 0; i < TILES_X_COUNT; i++)
+	{
+		for(U j = 0; j < TILES_Y_COUNT; j++)
+		{
+			const Tile& tile = tiles[i][j];
+			stiles->tiles[i][j].lightsCount = tile.lightsCount;
+
+			for(U k = 0; k < tile.lightsCount; k++)
+			{
+				stiles->tiles[i][j].lightIndices[k] = tile.lightIndices[k];
+			}
+		}
+	}
+
+	lightIndicesUbo.unmap();
 }
 
 //==============================================================================

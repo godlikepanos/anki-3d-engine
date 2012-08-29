@@ -3,6 +3,7 @@
 
 #include "anki/gl/Ogl.h"
 #include "anki/util/Assert.h"
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
@@ -19,8 +20,8 @@ public:
 	BufferObject()
 	{}
 
-	/// Default constructor @see create
-	BufferObject(GLenum target, uint32_t sizeInBytes,
+	/// @see create
+	BufferObject(GLenum target, U32 sizeInBytes,
 		const void* dataPtr, GLenum usage)
 	{
 		create(target, sizeInBytes, dataPtr, usage);
@@ -50,7 +51,7 @@ public:
 		return usage;
 	}
 
-	size_t getSizeInBytes() const
+	U32 getSizeInBytes() const
 	{
 		ANKI_ASSERT(isCreated());
 		return sizeInBytes;
@@ -85,7 +86,7 @@ public:
 	/// @param usage It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or
 	///		   GL_DYNAMIC_DRAW only!!!!!!!!!
 	/// @exception Exception
-	void create(GLenum target, uint32_t sizeInBytes, const void* dataPtr,
+	void create(GLenum target, U32 sizeInBytes, const void* dataPtr,
 		GLenum usage);
 
 	/// Delete the BO
@@ -108,9 +109,21 @@ public:
 	/// @param[in] buff The buffer to copy to BO
 	/// @param[in] offset The offset
 	/// @param[in] size The size in bytes we want to write
-	void write(void* buff, size_t offset, size_t size);
+	void write(void* buff, U32 offset, U32 size);
 
-	/// If created is run successfully it returns true
+	/// Map buffer
+	void* map(U32 offset, U32 length, GLuint flags);
+
+	/// Map the entire buffer
+	void* map(GLuint flags)
+	{
+		return map(0, sizeInBytes, flags);
+	}
+
+	/// Unmap buffer
+	void unmap();
+
+	/// If created is run successfully this returns true
 	bool isCreated() const
 	{
 		return glId != 0;
@@ -118,8 +131,8 @@ public:
 
 	void setBinding(GLuint binding) const
 	{
-		ANKI_ASSERT(target == GL_TRANSFORM_FEEDBACK_BUFFER ||
-			target == GL_UNIFORM_BUFFER);
+		ANKI_ASSERT(target == GL_TRANSFORM_FEEDBACK_BUFFER 
+			|| target == GL_UNIFORM_BUFFER);
 		bind();
 		glBindBufferBase(target, binding, glId);
 	}
@@ -136,7 +149,7 @@ private:
 	GLenum target;
 
 	GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
-	size_t sizeInBytes; ///< The size of the buffer
+	U32 sizeInBytes; ///< The size of the buffer
 };
 /// @}
 
