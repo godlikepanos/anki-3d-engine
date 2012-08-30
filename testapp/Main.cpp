@@ -37,7 +37,7 @@
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
 #include "anki/core/ParallelManager.h"
-#include "anki/scene/Timestamp.h"
+#include "anki/core/Timestamp.h"
 
 using namespace anki;
 

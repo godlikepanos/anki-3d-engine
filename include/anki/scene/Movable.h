@@ -4,7 +4,7 @@
 #include "anki/util/Object.h"
 #include "anki/util/Flags.h"
 #include "anki/math/Math.h"
-#include "anki/scene/Timestamp.h"
+#include "anki/core/Timestamp.h"
 
 namespace anki {
 

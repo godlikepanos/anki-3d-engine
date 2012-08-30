@@ -3,7 +3,7 @@
 
 #include "anki/collision/Collision.h"
 #include "anki/util/Flags.h"
-#include "anki/scene/Timestamp.h"
+#include "anki/core/Timestamp.h"
 
 namespace anki {
 
