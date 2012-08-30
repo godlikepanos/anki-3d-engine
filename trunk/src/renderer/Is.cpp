@@ -246,6 +246,42 @@ Bool Is::cullLight(const PointLight& plight, const Tile& tile)
 }
 
 //==============================================================================
+void Is::updateAllTilesPlanes(const PerspectiveCamera& pcam)
+{
+	//F32 fovXFragment = cam.getFov
+
+	for(U j = 0; j < TILES_Y_COUNT; j++)
+	{
+		for(U i = 0; i < TILES_X_COUNT; i++)
+		{
+	
+		}
+	}
+}
+
+//==============================================================================
+void Is::updateAllTilesPlanes()
+{
+	Camera& cam = r->getScene().getActiveCamera();
+	U32 camTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
+
+	if(camTimestamp <= planesUpdateTimestamp)
+	{
+		return;
+	}
+
+	switch(cam.getCameraType())
+	{
+		case Camera::CT_PERSPECTIVE:
+			updateAllTilesPlanes(static_cast<const PerspectiveCamera&>(cam));
+			break;
+		default:
+			ANKI_ASSERT(0 && "Unimplemented");
+			break;
+	}
+}
+
+//==============================================================================
 void Is::minMaxPass()
 {
 	// Do the pass

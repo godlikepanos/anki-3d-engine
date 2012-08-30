@@ -11,6 +11,7 @@
 #include "anki/renderer/Smo.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
+#include "anki/core/Timestamp.h"
 
 namespace anki {
 
@@ -71,7 +72,12 @@ private:
 
 		Array<U32, MAX_LIGHTS_PER_TILE> lightIndices;
 		U lightsCount = 0;
+
+		/// Frustum planes
+		Array<Plane, 6> planes;
 	};
+
+	U32 planesUpdateTimestamp = Timestamp::getTimestamp();
 
 	/// @note The [0][0] is the bottom left tile
 	Tile tiles[TILES_Y_COUNT][TILES_X_COUNT];
@@ -119,6 +125,12 @@ private:
 	/// For intersecting of spot lights
 	static Bool triangleIntersects(const Tile& tile, 
 		const Array<Vec2, 3>& coords);
+
+	/// Updates all the planes except the near and far plane. Near and far 
+	/// planes will be updated in min max pass when the depth is known
+	void updateAllTilesPlanes();
+
+	void updateAllTilesPlanes(const PerspectiveCamera& pcam);
 
 	/// Fill the minMaxFai
 	void minMaxPass();
