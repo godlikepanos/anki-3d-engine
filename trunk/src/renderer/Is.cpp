@@ -246,15 +246,120 @@ Bool Is::cullLight(const PointLight& plight, const Tile& tile)
 }
 
 //==============================================================================
-void Is::updateAllTilesPlanes(const PerspectiveCamera& pcam)
+void Is::updateAllTilesPlanes(const PerspectiveCamera& cam)
 {
-	//F32 fovXFragment = cam.getFov
+	// The algorithm is almost the same as the recalculation of planes for
+	// PerspectiveFrustum class
 
-	for(U j = 0; j < TILES_Y_COUNT; j++)
+	// Algorithm works for even number of tiles per dimention
+	ANKI_ASSERT(TILES_X_COUNT % 2 == 0 && TILES_Y_COUNT % 2 == 0);
+
+	F32 fovX = cam.getFovX();
+	F32 fovY = cam.getFovY();
+
+	// Opts
+	F32 piAddfovXDiv2 = Math::PI + fovX / 2.0;
+	F32 piAddFovYDiv2 = (Math::PI + fovY) * 0.5;
+
+	// This is X the angle of the tile frustums
+	F32 fovXFragment = fovX / TILES_X_COUNT;
+	// See above
+	F32 fovYFragment = fovY / TILES_Y_COUNT;
+
+	for(U j = 0; j < TILES_Y_COUNT / 2; j++)
 	{
-		for(U i = 0; i < TILES_X_COUNT; i++)
+		for(U i = 0; i < TILES_X_COUNT / 2; i++)
 		{
-	
+			F32 c, s; // cos & sin
+
+			// Calc planes for one of those tiles:
+			// +-+-+-+-+
+			// | | | | |
+			// +-+-+-+-+
+			// | | | | |
+			// +-+-+-+-+
+			// |x|x| | |
+			// +-+-+-+-+
+			// |x|x| | |
+			// +-+-+-+-+
+			Array<Plane, 6>& planes = tiles[j][i].planes;
+			
+			Math::sinCos(piAddfovXDiv2 - i * fovXFragment, s, c);
+			// right
+			planes[Frustum::FP_RIGHT] = Plane(Vec3(c, 0.0, s), 0.0);
+			// left
+			planes[Frustum::FP_LEFT] = Plane(Vec3(-c, 0.0, s), 0.0);
+
+			Math::sinCos(piAddFovYDiv2 - j * fovYFragment, s, c);
+			// bottom
+			planes[Frustum::FP_BOTTOM] = Plane(Vec3(0.0, s, c), 0.0);
+			// top
+			planes[Frustum::FP_TOP] = Plane(Vec3(0.0, -s, c), 0.0);
+
+			// Mirror planes for those tiles:
+			// +-+-+-+-+
+			// | | | | |
+			// +-+-+-+-+
+			// | | | | |
+			// +-+-+-+-+
+			// | | |x|x|
+			// +-+-+-+-+
+			// | | |x|x|
+			// +-+-+-+-+
+			Array<Plane, 6>& planes2 = tiles[j][TILES_X_COUNT - i - 1].planes;
+
+			planes2[Frustum::FP_RIGHT] = planes[Frustum::FP_LEFT];
+			planes2[Frustum::FP_RIGHT].getNormal().x() = 
+				-planes2[Frustum::FP_RIGHT].getNormal().x();
+
+			planes2[Frustum::FP_LEFT] = planes[Frustum::FP_RIGHT];
+			planes2[Frustum::FP_LEFT].getNormal().x() = 
+				-planes2[Frustum::FP_LEFT].getNormal().x();
+
+			planes2[Frustum::FP_BOTTOM] = planes[Frustum::FP_BOTTOM];
+			planes2[Frustum::FP_TOP] = planes[Frustum::FP_TOP];
+
+			// Mirror planes for those tiles:
+			// +-+-+-+-+
+			// |x|x| | |
+			// +-+-+-+-+
+			// |x|x| | |
+			// +-+-+-+-+
+			// | | | | |
+			// +-+-+-+-+
+			// | | | | |
+			// +-+-+-+-+
+			Array<Plane, 6>& planes3 = tiles[TILES_Y_COUNT - j - 1][i].planes;
+
+			planes3[Frustum::FP_RIGHT] = planes[Frustum::FP_RIGHT];
+			planes3[Frustum::FP_LEFT] = planes[Frustum::FP_RIGHT];
+
+			planes3[Frustum::FP_BOTTOM] = planes[Frustum::FP_TOP];
+			planes3[Frustum::FP_BOTTOM].getNormal().y() = 
+				-planes3[Frustum::FP_BOTTOM].getNormal().y();
+
+			planes3[Frustum::FP_TOP] = planes[Frustum::FP_BOTTOM];
+			planes3[Frustum::FP_TOP].getNormal().y() = 
+				-planes3[Frustum::FP_TOP].getNormal().y();
+
+			// Mirror planes for those tiles:
+			// +-+-+-+-+
+			// | | |x|x|
+			// +-+-+-+-+
+			// | | |x|x|
+			// +-+-+-+-+
+			// | | | | |
+			// +-+-+-+-+
+			// | | | | |
+			// +-+-+-+-+
+			Array<Plane, 6>& planes4 = 
+				tiles[TILES_Y_COUNT - j - 1][TILES_X_COUNT - i - 1].planes;
+
+			planes4[Frustum::FP_RIGHT] = planes2[Frustum::FP_RIGHT];
+			planes4[Frustum::FP_LEFT] = planes2[Frustum::FP_RIGHT];
+
+			planes4[Frustum::FP_BOTTOM] = planes3[Frustum::FP_BOTTOM];
+			planes4[Frustum::FP_TOP] = planes3[Frustum::FP_TOP];
 		}
 	}
 }
