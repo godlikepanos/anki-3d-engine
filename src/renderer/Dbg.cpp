@@ -123,17 +123,17 @@ void Dbg::run()
 	fr.accept(cdd);
 	}
 
-	for(U j = 0; j < 1; j++)
+	for(U j = 0; j < 16; j++)
 	{
-		for(U i = 0; i < 16; i++)
+		for(U i = 0; i < 1; i++)
 		{
 			Is::Tile& tile = r->getIs().tiles[j][i];
 
 			Mat4 vmat = scene.getActiveCamera().getViewMatrix();
 
 			CollisionDebugDrawer cdd(drawer.get());
-			tile.planes[Frustum::FP_LEFT].accept(cdd);
-			tile.planes[Frustum::FP_RIGHT].accept(cdd);
+			//tile.planes[Frustum::FP_LEFT].accept(cdd);
+			//tile.planes[Frustum::FP_RIGHT].accept(cdd);
 			//tile.planes[Frustum::FP_BOTTOM].accept(cdd);
 			//tile.planes[Frustum::FP_TOP].accept(cdd);
 		}
