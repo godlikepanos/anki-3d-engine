@@ -15,7 +15,7 @@ class OctreeNode;
 /// Spatial "interface" for scene nodes. It indicates scene nodes that need to 
 /// be placed in the scene's octree and they participate in the visibility 
 /// tests
-class Spatial: public Flags<uint32_t>
+class Spatial: public Flags<U32>
 {
 public:
 	/// Spatial flags

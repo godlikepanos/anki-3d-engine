@@ -22,12 +22,14 @@ class SpotLight;
 class Is: private RenderingPass
 {
 public:
+	// Config. These values affect the size of the uniform blocks and keep in
+	// mind that there are size limitations in uniform blocks.
 	static const U TILES_X_COUNT = 16;
 	static const U TILES_Y_COUNT = 16;
 
-	static const U MAX_LIGHTS_PER_TILE = 128;
+	static const U MAX_LIGHTS_PER_TILE = 32;
 
-	static const U MAX_LIGHTS = 1024;
+	static const U MAX_LIGHTS = 512;
 
 	Is(Renderer* r);
 
@@ -49,7 +51,7 @@ public:
 	}
 	/// @}
 
-private:
+public: // XXX
 	enum LightSubType
 	{
 		LST_POINT,
@@ -61,15 +63,6 @@ private:
 	/// A screen tile
 	struct Tile
 	{
-		/// depth[0] = min depth, depth[1] = max depth
-		Vec2 depth;
-
-		/// Used for 2D light culling
-		/// @note The coords are in NDC
-		/// @note coords[0] is the bottom left coord, and the coords[1] the 
-		///       top right
-		Array<Vec2, 2> coords;
-
 		Array<U32, MAX_LIGHTS_PER_TILE> lightIndices;
 		U lightsCount = 0;
 
@@ -80,7 +73,7 @@ private:
 	U32 planesUpdateTimestamp = Timestamp::getTimestamp();
 
 	/// @note The [0][0] is the bottom left tile
-	Tile tiles[TILES_Y_COUNT][TILES_X_COUNT];
+	Array<Array<Tile, TILES_X_COUNT>, TILES_Y_COUNT> tiles;
 
 	/// A texture of TILES_X_COUNT*TILES_Y_COUNT size and format RG16F. Used to
 	/// to fill the Tile::depth
@@ -98,11 +91,11 @@ private:
 	/// Contains common data for all shader programs
 	Ubo commonUbo;
 
-	/// Contains the indices of lights per tile
-	Ubo lightIndicesUbo;
-
 	/// Contains info of all the lights
 	Ubo lightsUbo;
+
+	/// Contains the indices of lights per tile
+	Ubo tilesUbo;
 
 	/// Min max shader program
 	ShaderProgramResourcePointer minMaxPassSprog;
@@ -112,28 +105,14 @@ private:
 
 	Sm sm;
 
-	/// Project a sphere to a circle
-	static void projectShape(const Camera& cam,
-		const Sphere& sphere, Vec2& circleCenter, F32& circleRadius);
-	/// Project a perspective frustum to a triangle
-	static void projectShape(const Mat4& projectionMat,
-		const PerspectiveFrustum& fr, Array<Vec2, 3>& coords);
-
-	/// For intersecting of point lights
-	static Bool circleIntersects(const Tile& tile, const Vec2& circleCenter, 
-		F32 circleRadius);
-	/// For intersecting of spot lights
-	static Bool triangleIntersects(const Tile& tile, 
-		const Array<Vec2, 3>& coords);
-
 	/// Updates all the planes except the near and far plane. Near and far 
 	/// planes will be updated in min max pass when the depth is known
 	void updateAllTilesPlanes();
 
 	void updateAllTilesPlanes(const PerspectiveCamera& pcam);
 
-	/// Fill the minMaxFai
-	void minMaxPass();
+	/// XXX
+	void updateTiles();
 
 	/// See if the light is inside the tile
 	Bool cullLight(const PointLight& light, const Tile& tile);

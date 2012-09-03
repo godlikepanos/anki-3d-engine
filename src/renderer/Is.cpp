@@ -39,6 +39,7 @@ struct ShaderSpotLights
 struct ShaderTile
 {
 	U32 lightsCount;
+	U32 padding[3];
 	Array<U32, Is::MAX_LIGHTS_PER_TILE> lightIndices;
 };
 
@@ -90,7 +91,12 @@ void Is::initInternal(const RendererInitializer& initializer)
 		"#define TILES_X_COUNT " + std::to_string(TILES_X_COUNT) + "\n"
 		"#define TILES_Y_COUNT " + std::to_string(TILES_Y_COUNT) + "\n"
 		"#define RENDERER_WIDTH " + std::to_string(r->getWidth()) + "\n"
-		"#define RENDERER_HEIGHT " + std::to_string(r->getWidth()) + "\n";
+		"#define RENDERER_HEIGHT " + std::to_string(r->getWidth()) + "\n"
+		"#define MAX_LIGHTS_PER_TILE " + std::to_string(MAX_LIGHTS_PER_TILE)
+		+ "\n"
+		"#define TILES_COUNT " + std::to_string(TILES_X_COUNT * TILES_Y_COUNT)
+		+ "\n"
+		"#define MAX_LIGHTS " + std::to_string(MAX_LIGHTS) + "\n";
 
 	// point light
 	lightSProgs[LST_POINT].load(ShaderProgramResource::createSrcCodeToCache(
@@ -158,91 +164,58 @@ void Is::initInternal(const RendererInitializer& initializer)
 
 	// lights UBO
 	lightsUbo.create(sizeof(ShaderSpotLights), nullptr);
-	commonUbo.setBinding(1);
+	lightsUbo.setBinding(1);
 
 	// lightIndices UBO
-	lightIndicesUbo.create(sizeof(ShaderTiles), nullptr);
-	commonUbo.setBinding(2);
+	tilesUbo.create(sizeof(ShaderTiles), nullptr);
+	tilesUbo.setBinding(2);
 
-	//
-	// Init tiles
-	//
-	F32 tileW = 1.0 / TILES_X_COUNT;
-	F32 tileH = 1.0 / TILES_Y_COUNT;
+	// Sanity checks
+	const ShaderProgramUniformBlock* ublock;
 
-	for(U j = 0; j < TILES_Y_COUNT; j++)
+	ublock = &lightSProgs[LST_POINT]->findUniformBlock("commonBlock");
+	if(ublock->getSize() != sizeof(ShaderCommonUniforms)
+		|| ublock->getBindingPoint() != 0)
 	{
-		for(U i = 0; i < TILES_X_COUNT; i++)
-		{
-			F32 x = i * tileW;
-			F32 y = j * tileH;
-
-			tiles[j][i].coords[0] = Vec2(x, y) * 2.0 - 1.0;
-			tiles[j][i].coords[1] = Vec2(x + tileW, y + tileH) * 2.0 - 1.0;
-		}
-	}
-}
-
-//==============================================================================
-void Is::projectShape(const Camera& cam,
-	const Sphere& sphere, Vec2& circleCenter, F32& circleRadius)
-{
-	F32 r = sphere.getRadius();
-	Vec4 c(sphere.getCenter(), 1.0);
-	Vec4 a = Vec4(sphere.getCenter()
-		+ cam.getWorldTransform().getRotation() * Vec3(r, 0.0, 0.0), 1.0);
-
-	c = cam.getViewProjectionMatrix() * c;
-	c /= c.w();
-
-	a = cam.getViewProjectionMatrix() * a;
-	a /= a.w();
-
-	circleCenter = c.xy();
-	circleRadius = (c.xy() - a.xy()).getLength();
-}
-
-//==============================================================================
-Bool Is::circleIntersects(const Tile& tile, const Vec2& c, F32 r)
-{
-	// For more info about the algorithm see the collision between an AABB and
-	// a sphere
-
-	Vec2 cp; // Closes point
-	for(U i = 0; i < 2; i++)
-	{
-		if(c[i] > tile.coords[1][i])
-		{
-			cp[i] = tile.coords[1][i];
-		}
-		else if(c[i] < tile.coords[0][i])
-		{
-			cp[i] = tile.coords[0][i];
-		}
-		else
-		{
-			cp[i] = c[i];
-		}
+		throw ANKI_EXCEPTION("Problem with the commonBlock");
 	}
 
-	F32 rsq = r * r;
-	Vec2 sub = c - cp;
-
-	if(sub.getLengthSquared() <= rsq)
+	ublock = &lightSProgs[LST_POINT]->findUniformBlock("lightsBlock");
+	if(ublock->getSize() != sizeof(ShaderPointLights)
+		|| ublock->getBindingPoint() != 1)
 	{
-		return true;
+		throw ANKI_EXCEPTION("Problem with the lightsBlock");
 	}
 
-	return false;
+	ublock = &lightSProgs[LST_POINT]->findUniformBlock("tilesBlock");
+	if(ublock->getSize() != sizeof(ShaderTiles)
+		|| ublock->getBindingPoint() != 2)
+	{
+		throw ANKI_EXCEPTION("Problem with the tilesBlock");
+	}
 }
 
 //==============================================================================
 Bool Is::cullLight(const PointLight& plight, const Tile& tile)
 {
-	Vec2 cc;
-	F32 rad;
-	projectShape(r->getScene().getActiveCamera(), plight.getSphere(), cc, rad);
-	return circleIntersects(tile, cc, rad);
+	Camera& cam = r->getScene().getActiveCamera();
+	Sphere sphere = plight.getSphere();
+
+	return cam.getFrustumable()->getFrustum().insideFrustum(sphere);
+
+#if 0
+	sphere.transform(Transform(cam.getViewMatrix()));
+
+	for(const Plane& plane : tile.planes)
+	{
+		if(sphere.testPlane(plane) < 0.0)
+		{
+			return false;
+		}
+	}
+
+	return true;
+#endif
 }
 
 //==============================================================================
@@ -251,12 +224,14 @@ void Is::updateAllTilesPlanes(const PerspectiveCamera& cam)
 	// The algorithm is almost the same as the recalculation of planes for
 	// PerspectiveFrustum class
 
-	// Algorithm works for even number of tiles per dimention
+	// Algorithm works for even number of tiles per dimension
 	ANKI_ASSERT(TILES_X_COUNT % 2 == 0 && TILES_Y_COUNT % 2 == 0);
 
-	F32 fovX = cam.getFovX();
-	F32 fovY = cam.getFovY();
+	F32 fx = cam.getFovX();
+	F32 fy = cam.getFovY();
+	F32 n = cam.getNear();
 
+#if 0
 	// Opts
 	F32 piAddfovXDiv2 = Math::PI + fovX / 2.0;
 	F32 piAddFovYDiv2 = (Math::PI + fovY) * 0.5;
@@ -265,11 +240,33 @@ void Is::updateAllTilesPlanes(const PerspectiveCamera& cam)
 	F32 fovXFragment = fovX / TILES_X_COUNT;
 	// See above
 	F32 fovYFragment = fovY / TILES_Y_COUNT;
+#endif
 
-	for(U j = 0; j < TILES_Y_COUNT / 2; j++)
+	F32 l = 2.0 * n * tan(fx / 2.0);
+	F32 l6 = l / TILES_X_COUNT;
+
+	for(U j = 0; j < TILES_Y_COUNT; j++)
 	{
-		for(U i = 0; i < TILES_X_COUNT / 2; i++)
+		for(U i = 0; i < TILES_X_COUNT; i++)
 		{
+			Array<Plane, Frustum::FP_COUNT>& planes = tiles[j][i].planes;
+			Vec3 a, b;
+
+			// left
+			a = Vec3((I(i) - I(TILES_X_COUNT) / 2) * l6, 0.0, -n);
+			b = a.cross(Vec3(0.0, 1.0, 0.0));
+			b.normalize();
+
+			planes[Frustum::FP_LEFT] = Plane(b, 0.0);
+
+			// right
+			a = Vec3((I(i) - I(TILES_X_COUNT) / 2 + 1) * l6, 0.0, -n);
+			b = Vec3(0.0, 1.0, 0.0).cross(a);
+			b.normalize();
+
+			planes[Frustum::FP_RIGHT] = Plane(b, 0.0);
+
+#if 0
 			F32 c, s; // cos & sin
 
 			// Calc planes for one of those tiles:
@@ -282,19 +279,23 @@ void Is::updateAllTilesPlanes(const PerspectiveCamera& cam)
 			// +-+-+-+-+
 			// |x|x| | |
 			// +-+-+-+-+
-			Array<Plane, 6>& planes = tiles[j][i].planes;
+			Array<Plane, Frustum::FP_COUNT>& planes = tiles[j][i].planes;
 			
-			Math::sinCos(piAddfovXDiv2 - i * fovXFragment, s, c);
 			// right
+			Math::sinCos(piAddfovXDiv2 - (TILES_X_COUNT - i - 1) * fovXFragment, s, c);
 			planes[Frustum::FP_RIGHT] = Plane(Vec3(c, 0.0, s), 0.0);
 			// left
-			planes[Frustum::FP_LEFT] = Plane(Vec3(-c, 0.0, s), 0.0);
+			Math::sinCos(-fovX / 2.0 + i * fovXFragment, s, c);
+			planes[Frustum::FP_LEFT] = Plane(Vec3(c, 0.0, s), 0.0);
 
-			Math::sinCos(piAddFovYDiv2 - j * fovYFragment, s, c);
 			// bottom
+			Math::sinCos(piAddFovYDiv2 - j * fovYFragment, s, c);
 			planes[Frustum::FP_BOTTOM] = Plane(Vec3(0.0, s, c), 0.0);
 			// top
-			planes[Frustum::FP_TOP] = Plane(Vec3(0.0, -s, c), 0.0);
+			Math::sinCos((3.0 * Math::PI - fovY) / 2 + (TILES_Y_COUNT - j - 1) * fovYFragment, s, c);
+			planes[Frustum::FP_TOP] = Plane(Vec3(0.0, s, c), 0.0);
+
+			continue;
 
 			// Mirror planes for those tiles:
 			// +-+-+-+-+
@@ -360,6 +361,7 @@ void Is::updateAllTilesPlanes(const PerspectiveCamera& cam)
 
 			planes4[Frustum::FP_BOTTOM] = planes3[Frustum::FP_BOTTOM];
 			planes4[Frustum::FP_TOP] = planes3[Frustum::FP_TOP];
+#endif
 		}
 	}
 }
@@ -370,26 +372,28 @@ void Is::updateAllTilesPlanes()
 	Camera& cam = r->getScene().getActiveCamera();
 	U32 camTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
 
-	if(camTimestamp <= planesUpdateTimestamp)
+	if(camTimestamp < planesUpdateTimestamp)
 	{
 		return;
 	}
 
 	switch(cam.getCameraType())
 	{
-		case Camera::CT_PERSPECTIVE:
-			updateAllTilesPlanes(static_cast<const PerspectiveCamera&>(cam));
-			break;
-		default:
-			ANKI_ASSERT(0 && "Unimplemented");
-			break;
+	case Camera::CT_PERSPECTIVE:
+		updateAllTilesPlanes(static_cast<const PerspectiveCamera&>(cam));
+		break;
+	default:
+		ANKI_ASSERT(0 && "Unimplemented");
+		break;
 	}
+
+	planesUpdateTimestamp = Timestamp::getTimestamp();
 }
 
 //==============================================================================
-void Is::minMaxPass()
+void Is::updateTiles()
 {
-	// Do the pass
+	// Do the min/max pass
 	//
 	const Camera& cam = r->getScene().getActiveCamera();
 
@@ -405,10 +409,14 @@ void Is::minMaxPass()
 
 	r->drawQuad();
 
-	// Update the tiles
+	// Do something else instead of waiting for the draw call to finish.
+	// Update the tile planes
+	//
+	updateAllTilesPlanes();
+
+	// Update the near and far planes of tiles
 	//
 	F32 pixels[TILES_Y_COUNT][TILES_X_COUNT][2];
-
 	minMaxFai.readPixels(pixels);
 
 	for(U j = 0; j < TILES_Y_COUNT; j++)
@@ -416,7 +424,18 @@ void Is::minMaxPass()
 		for(U i = 0; i < TILES_X_COUNT; i++)
 		{
 			Tile& tile = tiles[j][i];
-			tile.depth = Vec2(pixels[j][i][0], pixels[j][i][1]);
+#if 0
+			F32 minZ =
+				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][0]);
+			F32 maxZ =
+				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][1]);
+#else
+			F32 minZ = -cam.getNear();
+			F32 maxZ = -cam.getFar();
+#endif
+
+			tile.planes[Frustum::FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), -minZ);
+			tile.planes[Frustum::FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), maxZ);
 		}
 	}
 }
@@ -442,8 +461,13 @@ void Is::pointLightsPass()
 		}
 	}
 
+	if(pointLightsCount > MAX_LIGHTS)
+	{
+		throw ANKI_EXCEPTION("Too many lights");
+	}
+
 	// Map
-	ShaderPointLight* lightsMappedBuff = (ShaderPointLight*)lightsUbo.map(
+	ShaderPointLights* lightsMappedBuff = (ShaderPointLights*)lightsUbo.map(
 		0, 
 		sizeof(ShaderPointLight) * pointLightsCount,
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
@@ -455,7 +479,7 @@ void Is::pointLightsPass()
 		const Light& light = *(*it);
 		if(light.getLightType() == Light::LT_POINT)
 		{
-			ShaderPointLight& pl = lightsMappedBuff[pointLightsCount];
+			ShaderPointLight& pl = lightsMappedBuff->lights[pointLightsCount];
 			const PointLight& plight = static_cast<const PointLight&>(light);
 
 			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
@@ -472,7 +496,7 @@ void Is::pointLightsPass()
 	// Done
 	lightsUbo.unmap();
 
-#if 0
+#if 1
 	//
 	// Update the tiles
 	//
@@ -501,12 +525,17 @@ void Is::pointLightsPass()
 
 				if(cullLight(plight, tile))
 				{
-					tile.lightIndices[ids] = lightsInTileCount;
-					++ids;
+					tile.lightIndices[lightsInTileCount] = ids;
+					++lightsInTileCount;
 				}
 
-				++lightsInTileCount;
+				++ids;
 			}
+
+			/*if(lightsInTileCount > MAX_LIGHTS_PER_TILE)
+			{
+				throw ANKI_EXCEPTION("Too many lights per tile");
+			}*/
 
 			tile.lightsCount = lightsInTileCount;
 		}
@@ -514,10 +543,9 @@ void Is::pointLightsPass()
 #endif
 
 	//
-	// Write the lightIndicesUbo
+	// Write the tilesUbo
 	//
-
-	ShaderTiles* stiles = (ShaderTiles*)lightIndicesUbo.map(
+	ShaderTiles* stiles = (ShaderTiles*)tilesUbo.map(
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
 	for(U j = 0; j < TILES_Y_COUNT; j++)
@@ -527,14 +555,14 @@ void Is::pointLightsPass()
 			const Tile& tile = tiles[j][i];
 			stiles->tiles[j][i].lightsCount = tile.lightsCount;
 
-			for(U k = 0; k < tile.lightsCount; k++)
+			/*for(U k = 0; k < tile.lightsCount; k++)
 			{
 				stiles->tiles[j][i].lightIndices[k] = tile.lightIndices[k];
-			}
+			}*/
 		}
 	}
 
-	lightIndicesUbo.unmap();
+	tilesUbo.unmap();
 }
 
 //==============================================================================
@@ -543,7 +571,7 @@ void Is::run()
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
 
-	minMaxPass();
+	updateTiles();
 
 	fbo.bind();
 	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());

@@ -8,6 +8,7 @@
 #include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"
 #include "anki/util/Vector.h"
+#include "anki/util/StdTypes.h"
 #include <string>
 #include <memory>
 
@@ -221,9 +222,10 @@ public:
 private:
 	Vector<ShaderProgramUniformVariable*> uniforms;
 	GLuint index = GL_INVALID_INDEX;
-	uint32_t size = 0; ///< In bytes
+	U32 size = 0; ///< In bytes
 	std::string name;
-	mutable GLuint bindingPoint = 0; ///< All blocks the default to 0
+	/// Ask the program to get you the binding point
+	mutable GLuint bindingPoint;
 	GLuint progId;
 };
 

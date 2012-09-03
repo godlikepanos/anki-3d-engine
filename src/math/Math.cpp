@@ -3,10 +3,6 @@
 namespace anki {
 
 //==============================================================================
-const F32 Math::PI = 3.14159265358979323846;
-const F32 Math::EPSILON = 1.0e-6;
-
-//==============================================================================
 F32 Math::polynomialSinQuadrant(const F32 a)
 {
 	return a * (1.0 + a * a * (-0.16666 + a * a *
@@ -16,6 +12,7 @@ F32 Math::polynomialSinQuadrant(const F32 a)
 //==============================================================================
 void Math::sinCos(const F32 a_, F32& sina, F32& cosa)
 {
+#if NDEBUG
 	Bool negative = false;
 	F32 a = a_;
 	if(a < 0.0)
@@ -58,6 +55,10 @@ void Math::sinCos(const F32 a_, F32& sina, F32& cosa)
 	{
 		sina = -sina;
 	}
+#else
+	sina = ::sin(a_);
+	cosa = ::cos(a_);
+#endif
 }
 
 } // end namespace anki
