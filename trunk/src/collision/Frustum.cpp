@@ -166,18 +166,14 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 {
 	ANKI_ASSERT(fovX != 0.0 && fovY != 0.0);
 	Mat4 projectionMat;
-#define METHOD 0
-
-#if METHOD == 0
-	F32 f = 1.0 / tan(fovY * 0.5); // f = cot(fovY/2)
 	F32 g = near - far;
 
-	projectionMat(0, 0) = f * (fovY / fovX); // = f/aspectRatio;
+	projectionMat(0, 0) = 1.0 / tanf(fovX * 0.5);
 	projectionMat(0, 1) = 0.0;
 	projectionMat(0, 2) = 0.0;
 	projectionMat(0, 3) = 0.0;
 	projectionMat(1, 0) = 0.0;
-	projectionMat(1, 1) = f;
+	projectionMat(1, 1) = 1.0 / tanf(fovY * 0.5);
 	projectionMat(1, 2) = 0.0;
 	projectionMat(1, 3) = 0.0;
 	projectionMat(2, 0) = 0.0;
@@ -188,128 +184,6 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 	projectionMat(3, 1) = 0.0;
 	projectionMat(3, 2) = -1.0;
 	projectionMat(3, 3) = 0.0;
-#elif METHOD == 1
-	F32 size = near * tanf(fovX / 2.0);
-	F32 a = fovX / fovY;
-	F32 left = -size, right = size, bottom = -size / a, top = size / a;
-
-	projectionMat(0, 0) = 2 * near / (right - left);
-	projectionMat(0, 1) = 0.0;
-	projectionMat(0, 2) = 0.0;
-	projectionMat(0, 3) = 0.0;
-	projectionMat(1, 0) = 0.0;
-	projectionMat(1, 1) = 2 * near / (top - bottom);
-	projectionMat(1, 2) = 0.0;
-	projectionMat(1, 3) = 0.0;
-	projectionMat(2, 0) = (right + left) / (right - left);
-	projectionMat(2, 1) = (top + bottom) / (top - bottom);
-	projectionMat(2, 2) = -(far + near) / (far - near);
-	projectionMat(2, 3) = -1;
-	projectionMat(3, 0) = 0.0;
-	projectionMat(3, 1) = 0.0;
-	projectionMat(3, 2) = -(2 * far * near) / (far - near);
-	projectionMat(3, 3) = 0.0;
-#elif METHOD == 2
-	F32 e = 1.0 / tanf(fovX / 2.0);
-	F32 a = fovY / fovX;
-
-	projectionMat(0, 0) = e;
-	projectionMat(0, 1) = 0.0;
-	projectionMat(0, 2) = 0.0;
-	projectionMat(0, 3) = 0.0;
-	projectionMat(1, 0) = 0.0;
-	projectionMat(1, 1) = e / a;
-	projectionMat(1, 2) = 0.0;
-	projectionMat(1, 3) = 0.0;
-	projectionMat(2, 0) = 0.0;
-	projectionMat(2, 1) = 0.0;
-	projectionMat(2, 2) = -(far + near) / (far - near);
-	projectionMat(2, 3) = (2.0 * far * near) / (near - far);
-	projectionMat(3, 0) = 0.0;
-	projectionMat(3, 1) = 0.0;
-	projectionMat(3, 2) = -1.0;
-	projectionMat(3, 3) = 0.0;
-#elif METHOD == 3
-	F32 s = 1.0 / tan(fovY * 0.5); // f = cot(fovY/2)
-	F32 g = near - far;
-
-	projectionMat(0, 0) = f * (fovY / fovX); // = f/aspectRatio;
-	projectionMat(0, 1) = 0.0;
-	projectionMat(0, 2) = 0.0;
-	projectionMat(0, 3) = 0.0;
-	projectionMat(1, 0) = 0.0;
-	projectionMat(1, 1) = f;
-	projectionMat(1, 2) = 0.0;
-	projectionMat(1, 3) = 0.0;
-	projectionMat(2, 0) = 0.0;
-	projectionMat(2, 1) = 0.0;
-	projectionMat(2, 2) = (far + near) / g;
-	projectionMat(2, 3) = -(far * near) / g;
-	projectionMat(3, 0) = 0.0;
-	projectionMat(3, 1) = 0.0;
-	projectionMat(3, 2) = 1.0;
-	projectionMat(3, 3) = 0.0;
-#elif METHOD == 4
-	F32 s = 1.0 / tan(fovY * 0.5);
-
-	projectionMat(0, 0) = s;
-	projectionMat(0, 1) = 0.0;
-	projectionMat(0, 2) = 0.0;
-	projectionMat(0, 3) = 0.0;
-	projectionMat(1, 0) = 0.0;
-	projectionMat(1, 1) = s;
-	projectionMat(1, 2) = 0.0;
-	projectionMat(1, 3) = 0.0;
-	projectionMat(2, 0) = 0.0;
-	projectionMat(2, 1) = 0.0;
-	projectionMat(2, 2) = -far / (far - near);
-	projectionMat(2, 3) = -1;
-	projectionMat(3, 0) = 0.0;
-	projectionMat(3, 1) = 0.0;
-	projectionMat(3, 2) = - far * near / (far - near);
-	projectionMat(3, 3) = 0.0;
-#elif METHOD == 5
-	float xymax = near * tan(fovY);
-	float ymin = -xymax;
-	float xmin = -xymax;
-
-	float width = xymax - xmin;
-	float height = xymax - ymin;
-
-	float depth = far - near;
-	float q = -(far + near) / depth;
-	float qn = -2 * (far * near) / depth;
-
-	float w = 2 * near / width;
-	float aspect  = fovY / fovX;
-	w = w / aspect;
-	float h = 2 * znear / height;
-
-	Mat4 m;
-
-	m[0]  = w;
-	m[1]  = 0;
-	m[2]  = 0;
-	m[3]  = 0;
-
-	m[4]  = 0;
-	m[5]  = h;
-	m[6]  = 0;
-	m[7]  = 0;
-
-	m[8]  = 0;
-	m[9]  = 0;
-	m[10] = q;
-	m[11] = -1;
-
-	m[12] = 0;
-	m[13] = 0;
-	m[14] = qn;
-	m[15] = 0;
-
-	projectionMat = m;
-	// XXX Transpose???
-#endif
 
 	return projectionMat;
 }
