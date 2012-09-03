@@ -12,8 +12,8 @@ namespace anki {
 class Math
 {
 public:
-	static const F32 PI;
-	static const F32 EPSILON;
+	static constexpr F32 PI = 3.14159265358979323846;
+	static constexpr F32 EPSILON = 1.0e-6;
 
 	/// A fast func that given the angle in rads it returns the sin and cos
 	static void sinCos(const F32 rad, F32& sin_, F32& cos_);

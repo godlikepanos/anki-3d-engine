@@ -2,6 +2,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/scene/Scene.h"
+#include "anki/scene/Light.h"
 #include "anki/core/Logger.h"
 
 namespace anki {
@@ -53,7 +54,9 @@ void Dbg::run()
 
 	drawer->setViewProjectionMatrix(r->getViewProjectionMatrix());
 	drawer->setModelMatrix(Mat4::getIdentity());
-	drawer->drawGrid();
+	//drawer->drawGrid();
+
+	PointLight* deleteme;
 
 	for(auto it = scene.getAllNodesBegin(); it != scene.getAllNodesEnd(); it++)
 	{
@@ -64,6 +67,17 @@ void Dbg::run()
 		}
 
 		sceneDrawer->draw(*node);
+
+		// XXX
+		if(node->getLight())
+		{
+			CollisionDebugDrawer cdd(drawer.get());
+			Light& l = *node->getLight();
+			l.getLightType();
+			PointLight& pl = static_cast<PointLight&>(l);
+			deleteme = &pl;
+			pl.getSphere().accept(cdd);
+		}
 	}
 
 	for(const Sector* sector : scene.sectors)
@@ -71,6 +85,62 @@ void Dbg::run()
 		sceneDrawer->draw(sector->getOctree());
 	}
 
+	// XXX
+	drawer->setViewProjectionMatrix(r->getViewProjectionMatrix());
+	drawer->setModelMatrix(Mat4::getIdentity());
+
+	Camera* camera1 = static_cast<Camera*>(scene.findSceneNode("camera1"));
+
+	F32 fx = static_cast<PerspectiveCamera*>(camera1)->getFovX();
+	F32 fy = static_cast<PerspectiveCamera*>(camera1)->getFovY();
+
+	//std::cout << fx << " " << fy << std::endl;
+
+	Vec3 a(0.0);
+	F32 s, c;
+	Math::sinCos(Math::PI / 2 - fx / 2, s, c);
+	Vec3 b(c, 0.0, -s);
+
+	a.transform(camera1->getWorldTransform());
+	b.transform(camera1->getWorldTransform());
+
+	drawer->drawLine(a, b, Vec4(1));
+
+	Math::sinCos(fy / 2, s, c);
+	b = Vec3(0.0, s, -c);
+	b.transform(camera1->getWorldTransform());
+
+	drawer->drawLine(a, b, Vec4(1));
+
+#if 0
+	{
+	PerspectiveFrustum fr =
+		static_cast<const PerspectiveFrustum&>(scene.getActiveCamera().getFrustumable()->getFrustum());
+
+	fr.setTransform(Transform::getIdentity());
+
+	CollisionDebugDrawer cdd(drawer.get());
+	fr.accept(cdd);
+	}
+
+	for(U j = 0; j < 1; j++)
+	{
+		for(U i = 0; i < 16; i++)
+		{
+			Is::Tile& tile = r->getIs().tiles[j][i];
+
+			Mat4 vmat = scene.getActiveCamera().getViewMatrix();
+
+			CollisionDebugDrawer cdd(drawer.get());
+			tile.planes[Frustum::FP_LEFT].accept(cdd);
+			tile.planes[Frustum::FP_RIGHT].accept(cdd);
+			//tile.planes[Frustum::FP_BOTTOM].accept(cdd);
+			//tile.planes[Frustum::FP_TOP].accept(cdd);
+		}
+	}
+#endif
+
+#if 0
 	// XXX Remove these
 	CollisionDebugDrawer cdd(drawer.get());
 	Sphere s(Vec3(90.0, 4.0, 0.0), 2.0);
@@ -120,6 +190,7 @@ void Dbg::run()
 
 	drawer->drawLine(Vec3(circleCenter, 0.0),
 		Vec3(circleCenter, 0.0) + Vec3(circleRadius, 0.0, 0.0), Vec4(0.0, 1.0, 1.0, 0.0));
+#endif
 }
 
 } // end namespace anki

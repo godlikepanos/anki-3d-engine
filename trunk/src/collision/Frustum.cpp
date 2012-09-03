@@ -117,14 +117,14 @@ void PerspectiveFrustum::recalculate()
 	//
 	F32 c, s; // cos & sine
 
-	Math::sinCos(Math::PI + fovX / 2, s, c);
+	Math::sinCos(Math::PI + fovX / 2.0, s, c);
 	// right
 	planes[FP_RIGHT] = Plane(Vec3(c, 0.0, s), 0.0);
 	// left
 	planes[FP_LEFT] = Plane(Vec3(-c, 0.0, s), 0.0);
 
 #if 0
-	Math::sinCos((3 * Math::PI - fovY) * 0.5, s, c);
+	Math::sinCos((3.0 * Math::PI - fovY) * 0.5, s, c);
 	// top
 	planes[FP_TOP] = Plane(Vec3(0.0, s, c), 0.0);
 	// bottom
@@ -164,13 +164,14 @@ void PerspectiveFrustum::recalculate()
 //==============================================================================
 Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 {
-	ANKI_ASSERT(fovX != 0.0 && fovX != 0.0);
+	ANKI_ASSERT(fovX != 0.0 && fovY != 0.0);
 	Mat4 projectionMat;
 
+#if 0
 	F32 f = 1.0 / tan(fovY * 0.5); // f = cot(fovY/2)
 	F32 g = near - far;
 
-	projectionMat(0, 0) = f * fovY / fovX; // = f/aspectRatio;
+	projectionMat(0, 0) = f * (fovY / fovX); // = f/aspectRatio;
 	projectionMat(0, 1) = 0.0;
 	projectionMat(0, 2) = 0.0;
 	projectionMat(0, 3) = 0.0;
@@ -186,6 +187,48 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 	projectionMat(3, 1) = 0.0;
 	projectionMat(3, 2) = -1.0;
 	projectionMat(3, 3) = 0.0;
+#else
+	/*F32 size = near * tanf(fovX / 2.0);
+	F32 a = fovX / fovY;
+	F32 left = -size, right = size, bottom = -size / a, top = size / a;
+
+	projectionMat(0, 0) = 2 * near / (right - left);
+	projectionMat(0, 1) = 0.0;
+	projectionMat(0, 2) = 0.0;
+	projectionMat(0, 3) = 0.0;
+	projectionMat(1, 0) = 0.0;
+	projectionMat(1, 1) = 2 * near / (top - bottom);
+	projectionMat(1, 2) = 0.0;
+	projectionMat(1, 3) = 0.0;
+	projectionMat(2, 0) = (right + left) / (right - left);
+	projectionMat(2, 1) = (top + bottom) / (top - bottom);
+	projectionMat(2, 2) = -(far + near) / (far - near);
+	projectionMat(2, 3) = -1;
+	projectionMat(3, 0) = 0.0;
+	projectionMat(3, 1) = 0.0;
+	projectionMat(3, 2) = -(2 * far * near) / (far - near);
+	projectionMat(3, 3) = 0.0;*/
+
+	F32 e = 1.0 / tanf(fovX / 2.0);
+	F32 a = fovY / fovX;
+
+	projectionMat(0, 0) = e;
+	projectionMat(0, 1) = 0.0;
+	projectionMat(0, 2) = 0.0;
+	projectionMat(0, 3) = 0.0;
+	projectionMat(1, 0) = 0.0;
+	projectionMat(1, 1) = e / a;
+	projectionMat(1, 2) = 0.0;
+	projectionMat(1, 3) = 0.0;
+	projectionMat(2, 0) = 0.0;
+	projectionMat(2, 1) = 0.0;
+	projectionMat(2, 2) = -(far + near) / (far - near);
+	projectionMat(2, 3) = (2.0 * far * near) / (near - far);
+	projectionMat(3, 0) = 0.0;
+	projectionMat(3, 1) = 0.0;
+	projectionMat(3, 2) = -1.0;
+	projectionMat(3, 3) = 0.0;
+#endif
 
 	return projectionMat;
 }

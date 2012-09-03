@@ -150,6 +150,10 @@ private:
 
 	GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
 	U32 sizeInBytes; ///< The size of the buffer
+
+#if !NDEBUG
+	Bool mapped = false;
+#endif
 };
 /// @}
 

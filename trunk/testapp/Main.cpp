@@ -59,7 +59,7 @@ void init()
 	// camera
 	cam = new PerspectiveCamera("main-camera", &scene,
 		Movable::MF_NONE, nullptr);
-	const float ang = 70.0;
+	const float ang = 45.0;
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * Math::toRad(ang),
 		Math::toRad(ang), 0.5, 200.0);
@@ -68,11 +68,21 @@ void init()
 		1.0));
 	scene.setActiveCamera(cam);
 
+	// camera 2
+	PerspectiveCamera* pcam = new PerspectiveCamera("camera1", &scene,
+		Movable::MF_NONE, nullptr);
+	pcam->setAll(
+		MainRendererSingleton::get().getAspectRatio() * Math::toRad(ang),
+		Math::toRad(ang), 0.5, 200.0);
+	pcam->setLocalTransform(Transform(Vec3(100.0, 3.0, 8.0),
+		Mat3(Axisang(Math::toRad(90), Vec3(0, 1, 0))),
+		1.0));
+
 	// lights
 	Vec3 lpos(-100.0, 0.0, 0.0);
-	for(int i = 0; i < 100; i++)
+	for(int i = 0; i < 1; i++)
 	{
-		for(int j = 0; j < 10; j++)
+		for(int j = 0; j < 1; j++)
 		{
 			std::string name = "plight" + std::to_string(i) + std::to_string(j);
 
@@ -179,7 +189,7 @@ void mainLoopExtra()
 	{
 		mover = SceneSingleton::get().findSceneNode("horse")->getMovable();
 	}
-	if(in.getKey(SDL_SCANCODE_3))
+	/*if(in.getKey(SDL_SCANCODE_3))
 	{
 		mover = SceneSingleton::get().findSceneNode("spot0")->getMovable();
 	}
@@ -190,6 +200,11 @@ void mainLoopExtra()
 	if(in.getKey(SDL_SCANCODE_5))
 	{
 		mover = SceneSingleton::get().findSceneNode("point1")->getMovable();
+	}*/
+	if(in.getKey(SDL_SCANCODE_6))
+	{
+		mover = SceneSingleton::get().findSceneNode("camera1")->getMovable();
+		mover->setLocalTransform(cam->getLocalTransform());
 	}
 
 	if(in.getKey(SDL_SCANCODE_L) == 1)
@@ -257,7 +272,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -277,7 +292,6 @@ void mainLoop()
 		<< " sec)");
 }
 
-
 //==============================================================================
 // initSubsystems                                                              =
 //==============================================================================
@@ -289,7 +303,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = false;
+	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;

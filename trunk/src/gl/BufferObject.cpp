@@ -55,18 +55,26 @@ void BufferObject::create(GLenum target_, U32 sizeInBytes_,
 //==============================================================================
 void* BufferObject::map(U32 offset, U32 length, GLuint flags)
 {
+	ANKI_ASSERT(mapped == false);
 	bind();
 	ANKI_ASSERT(offset + length <= sizeInBytes);
 	void* mappedMem = glMapBufferRange(target, offset, length, flags);
 	ANKI_ASSERT(mappedMem != nullptr);
+#if !NDEBUG
+	mapped = true;
+#endif
 	return mappedMem;
 }
 
 //==============================================================================
 void BufferObject::unmap()
 {
+	ANKI_ASSERT(mapped == true);
 	bind();
 	glUnmapBuffer(target);
+#if !NDEBUG
+	mapped = false;
+#endif
 }
 
 //==============================================================================
