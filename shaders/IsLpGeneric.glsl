@@ -79,7 +79,96 @@ flat in uint vInstanceId;
 out vec3 fColor;
 /// @}
 
+//==============================================================================
+/// @return frag pos in view space
+vec3 getFragPosVSpace()
+{
+	float depth = texture(msDepthFai, vTexCoords).r;
+
+#if DISCARD
+	if(depth == 1.0)
+	{
+		discard;
+	}
+#endif
+
+	vec3 fragPosVspace;
+	fragPosVspace.z = -planes.y / (planes.x + depth);
+
+	fragPosVspace.xy = (vTexCoords * limitsOfNearPlane2) - limitsOfNearPlane;
+
+	float sc = -fragPosVspace.z / zNear;
+	fragPosVspace.xy *= sc;
+
+	return fragPosVspace;
+}
+
+//==============================================================================
+/// Performs phong lighting using the MS FAIs and a few other things
+/// @param fragPosVspace The fragment position in view space
+/// @return The final color
+vec3 doPhong(in vec3 fragPosVspace, in vec3 normal, in vec3 diffuse, 
+	in vec2 specularAll, in Light light)
+{
+	// get the vector from the frag to the light
+	vec3 frag2LightVec = light.posAndRadius.xyz - fragPosVspace;
+
+	// Instead of using normalize(frag2LightVec) we brake the operation 
+	// because we want fragLightDist for the calc of the attenuation
+	float fragLightDistSqrt = sqrt(dot(frag2LightVec, frag2LightVec));
+	vec3 lightDir = frag2LightVec / fragLightDistSqrt;
+
+	// Lambert term
+	float lambertTerm = dot(normal, lightDir);
+
+#if DISCARD
+	if(lambertTerm < 0.0)
+	{
+		discard;
+	}
+#else
+	lambertTerm = max(0.0, lambertTerm);
+#endif
+
+	// Attenuation
+	float attenuation = 1.0 - fragLightDistSqrt / light.posAndRadius.w;
+
+	// Diffuse
+	vec3 difCol = diffuse * light.diffuseColor.rgb;
+
+	// Specular
+	vec3 eyeVec = normalize(-fragPosVspace);
+	vec3 h = normalize(lightDir + eyeVec);
+	float specIntensity = pow(max(0.0, dot(normal, h)), specularAll.g);
+	vec3 specCol = light.specularColor.rgb * (specIntensity * specularAll.r);
+	
+	// end
+	return (difCol + specCol) * (attenuation * lambertTerm);
+}
+
+//==============================================================================
 void main()
 {
-	fColor = vec3(0.0, float(tiles[vInstanceId].lightsCount), 0.0);
+	// Read texture first. Optimize for future out of order HW
+	uvec2 msAll = texture(msFai0, vTexCoords).rg;
+
+	// get frag pos in view space
+	vec3 fragPosVspace = getFragPosVSpace();
+
+	// Decode MS
+	vec3 normal = unpackNormal(unpackHalf2x16(msAll[1]));
+	vec4 diffuseAndSpec = unpackUnorm4x8(msAll[0]);
+	vec2 specularAll = unpackSpecular(diffuseAndSpec.a);
+
+	// Lighting
+	uint lightsCount = tiles[vInstanceId].lightsCount;
+
+	fColor = vec3(0.0);
+	for(uint i = 0; i < lightsCount; ++i)
+	{
+		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
+
+		fColor += doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
+			specularAll, lights[lightId]);
+	}
 }

@@ -354,51 +354,46 @@ void Is::pointLightsPass()
 	Camera& cam = r->getScene().getActiveCamera();
 	VisibilityInfo& vi = cam.getFrustumable()->getVisibilityInfo();
 
+	Array<PointLight*, MAX_LIGHTS> visibleLights;
+	U visibleLightsCount = 0;
+
 	//
 	// Write the lightsUbo
 	//
 
-	// Quickly count the point lights
-	U pointLightsCount = 0;
+	// Quickly get the point lights
 	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
 	{
-		const Light& light = *(*it);
-		if(light.getLightType() == Light::LT_POINT)
+		Light* light = (*it);
+		if(light->getLightType() == Light::LT_POINT)
 		{
-			++pointLightsCount;		
+			// Use % to avoid overflows
+			visibleLights[visibleLightsCount % MAX_LIGHTS] = 
+				static_cast<PointLight*>(light);
+			++visibleLightsCount;
 		}
 	}
 
-	if(pointLightsCount > MAX_LIGHTS)
+	if(visibleLightsCount > MAX_LIGHTS)
 	{
-		throw ANKI_EXCEPTION("Too many lights");
+		throw ANKI_EXCEPTION("Too many visible lights");
 	}
 
 	// Map
 	ShaderPointLights* lightsMappedBuff = (ShaderPointLights*)lightsUbo.map(
 		0, 
-		sizeof(ShaderPointLight) * pointLightsCount,
+		sizeof(ShaderPointLight) * visibleLightsCount,
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
 	// Write the buff
-	pointLightsCount = 0;
-	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
+	for(U i = 0; i < visibleLightsCount; i++)
 	{
-		const Light& light = *(*it);
-		if(light.getLightType() == Light::LT_POINT)
-		{
-			ShaderPointLight& pl = lightsMappedBuff->lights[pointLightsCount];
-			const PointLight& plight = static_cast<const PointLight&>(light);
+		ShaderPointLight& pl = lightsMappedBuff->lights[i];
+		const PointLight& plight = *visibleLights[i];
 
-			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
-				cam.getViewMatrix());
-
-			pl.posAndRadius = Vec4(pos, plight.getRadius());
-			pl.diffuseColor = light.getDiffuseColor();
-			pl.specularColor = light.getSpecularColor();
-
-			++pointLightsCount;		
-		}
+		pl.posAndRadius = Vec4(pos, plight.getRadius());
+		pl.diffuseColor = plight.getDiffuseColor();
+		pl.specularColor = plight.getSpecularColor();
 	}
 
 	// Done
@@ -418,32 +413,24 @@ void Is::pointLightsPass()
 			Tile& tile = tiles[j][i];
 
 			U lightsInTileCount = 0;
-			U ids = 0;
 
-			for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
+			for(U i = 0; i < visibleLightsCount; i++)
 			{
-				const Light& light = *(*it);
-				if(light.getLightType() != Light::LT_POINT)
-				{
-					continue;
-				}
-
-				const PointLight& plight =
-					static_cast<const PointLight&>(light);
+				const PointLight& plight = *visibleLights[i];
 
 				if(cullLight(plight, tile))
 				{
-					tile.lightIndices[lightsInTileCount] = ids;
+					// Use % to avoid overflows
+					tile.lightIndices[lightsInTileCount 
+						% MAX_LIGHTS_PER_TILE] = i;
 					++lightsInTileCount;
 				}
-
-				++ids;
 			}
 
-			/*if(lightsInTileCount > MAX_LIGHTS_PER_TILE)
+			if(lightsInTileCount > MAX_LIGHTS_PER_TILE)
 			{
 				throw ANKI_EXCEPTION("Too many lights per tile");
-			}*/
+			}
 
 			tile.lightsCount = lightsInTileCount;
 		}
@@ -461,16 +448,31 @@ void Is::pointLightsPass()
 		for(U i = 0; i < TILES_X_COUNT; i++)
 		{
 			const Tile& tile = tiles[j][i];
+
 			stiles->tiles[j][i].lightsCount = tile.lightsCount;
 
-			/*for(U k = 0; k < tile.lightsCount; k++)
-			{
-				stiles->tiles[j][i].lightIndices[k] = tile.lightIndices[k];
-			}*/
+			memcpy(
+				&(stiles->tiles[j][i].lightIndices[0]),
+				&tile.lightIndices[0],
+				sizeof(U32) * MAX_LIGHTS_PER_TILE);
 		}
 	}
 
 	tilesUbo.unmap();
+
+	//
+	// Setup shader and draw
+	//
+	
+	// shader prog
+	const ShaderProgram& shader = *lightSProgs[LST_POINT];
+	shader.bind();
+
+	shader.findUniformVariable("msFai0").set(r->getMs().getFai0());
+	shader.findUniformVariable("msDepthFai").set(
+		r->getMs().getDepthFai());
+
+	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
 }
 
 //==============================================================================
@@ -485,8 +487,8 @@ void Is::run()
 	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
 
 	pointLightsPass();
-	lightSProgs[0]->bind();
-	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
+	//lightSProgs[0]->bind();
+	//r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
 }
 
 } // end namespace anki

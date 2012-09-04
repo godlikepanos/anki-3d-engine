@@ -123,19 +123,11 @@ void PerspectiveFrustum::recalculate()
 	// left
 	planes[FP_LEFT] = Plane(Vec3(-c, 0.0, s), 0.0);
 
-#if 0
-	Math::sinCos((3.0 * Math::PI - fovY) * 0.5, s, c);
-	// top
-	planes[FP_TOP] = Plane(Vec3(0.0, s, c), 0.0);
-	// bottom
-	planes[FP_BOTTOM] = Plane(Vec3(0.0, -s, c), 0.0);
-#else
 	Math::sinCos((Math::PI + fovY) * 0.5, s, c);
 	// bottom
 	planes[FP_BOTTOM] = Plane(Vec3(0.0, s, c), 0.0);
 	// top
 	planes[FP_TOP] = Plane(Vec3(0.0, -s, c), 0.0);
-#endif
 
 	// near
 	planes[FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), near);
