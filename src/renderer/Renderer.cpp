@@ -184,9 +184,14 @@ void Renderer::calcPlanes(const Vec2& cameraRange, Vec2& planes)
 void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 	Vec2& limitsOfNearPlane)
 {
+#if 0
 	limitsOfNearPlane.y() = pcam.getNear() * tan(0.5 * pcam.getFovY());
 	limitsOfNearPlane.x() = limitsOfNearPlane.y()
 		* (pcam.getFovX() / pcam.getFovY());
+#else
+	limitsOfNearPlane.y() = pcam.getNear() * tan(0.5 * pcam.getFovY());
+	limitsOfNearPlane.x() = pcam.getNear() * tan(0.5 * pcam.getFovX());
+#endif
 }
 
 } // end namespace
