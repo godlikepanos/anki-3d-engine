@@ -308,12 +308,12 @@ void Is::updateTiles()
 	minMaxTilerFbo.bind();
 	minMaxPassSprog->bind();
 	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
-#if 1
+#if 0
 	minMaxPassSprog->findUniformVariable("nearFar").set(
 		Vec2(cam.getNear(), cam.getFar()));
+#endif
 	minMaxPassSprog->findUniformVariable("depthMap").set(
 		r->getMs().getDepthFai());
-#endif
 
 	r->drawQuad();
 
@@ -332,11 +332,24 @@ void Is::updateTiles()
 		for(U i = 0; i < TILES_X_COUNT; i++)
 		{
 			Tile& tile = tiles[j][i];
-#if 0
+#if 1
+			/// Calculate as you do in the vertex position inside the shaders
 			F32 minZ =
-				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][0]);
+				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][0]) ;
 			F32 maxZ =
 				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][1]);
+
+			/*minZ = -cam.getNear();
+			maxZ = -cam.getFar();*/
+
+			/*if(i == 0 && j == 0)
+				std::cout << minZ << " " << maxZ << std::endl;*/
+
+			/*F32 minZ = -pixels[j][i][0];
+			F32 maxZ = -pixels[j][i][1];*/
+
+			/*if(i == 0 && j == 0)
+				std::cout << minZ << " " << maxZ << std::endl;*/
 #else
 			F32 minZ = -cam.getNear();
 			F32 maxZ = -cam.getFar();
@@ -390,6 +403,10 @@ void Is::pointLightsPass()
 	{
 		ShaderPointLight& pl = lightsMappedBuff->lights[i];
 		const PointLight& plight = *visibleLights[i];
+
+		Vec3 pos = plight.getWorldTransform().getOrigin().getTransformed(
+			cam.getViewMatrix());
+
 
 		pl.posAndRadius = Vec4(pos, plight.getRadius());
 		pl.diffuseColor = plight.getDiffuseColor();
@@ -468,9 +485,11 @@ void Is::pointLightsPass()
 	const ShaderProgram& shader = *lightSProgs[LST_POINT];
 	shader.bind();
 
+#if 1
 	shader.findUniformVariable("msFai0").set(r->getMs().getFai0());
 	shader.findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
+#endif
 
 	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
 }
@@ -481,14 +500,24 @@ void Is::run()
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
 
+	// Write common block
+	const Camera& cam = r->getScene().getActiveCamera();
+	ShaderCommonUniforms blk;
+	blk.nearPlanes = Vec4(cam.getNear(), 0.0, r->getPlanes().x(),
+		r->getPlanes().y());
+	blk.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
+		r->getLimitsOfNearPlane2());
+
+	commonUbo.write(&blk);
+
+	// Update tiles
 	updateTiles();
 
+	// Do the rest
 	fbo.bind();
 	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
 
 	pointLightsPass();
-	//lightSProgs[0]->bind();
-	//r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
 }
 
 } // end namespace anki

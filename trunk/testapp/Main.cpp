@@ -80,7 +80,7 @@ void init()
 
 	// lights
 	Vec3 lpos(-100.0, 0.0, 0.0);
-	for(int i = 0; i < 1; i++)
+	for(int i = 0; i < 10; i++)
 	{
 		for(int j = 0; j < 1; j++)
 		{
@@ -303,7 +303,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = true;
+	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;

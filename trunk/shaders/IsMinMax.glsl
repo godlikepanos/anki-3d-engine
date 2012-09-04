@@ -11,6 +11,9 @@
 #endif
 
 uniform vec2 nearFar;
+#define near nearFar.x
+#define far nearFar.y
+
 uniform sampler2D depthMap;
 
 in vec2 vTexCoords;
@@ -20,7 +23,6 @@ out vec2 fColor;
 //==============================================================================
 void main()
 {
-#if 1
 	const int FROM_W = RENDERER_WIDTH / TILES_X_COUNT / 2;
 	const int FROM_H = RENDERER_HEIGHT / TILES_Y_COUNT / 2;
 
@@ -44,11 +46,13 @@ void main()
 		}
 	}
 
-	fColor = vec2(linearizeDepth(minDepth, nearFar.x, nearFar.y),
-		linearizeDepth(maxDepth, nearFar.x, nearFar.y));
+#if 0
+	float linearMin = linearizeDepth(minDepth, near, far);
+	float linearMax = linearizeDepth(maxDepth, near, far);
+	fColor = vec2(linearMin,
+		linearMax);
 #else
-	fColor = vec2(float(gl_FragCoord.x) / TILES_X_COUNT, 
-		float(gl_FragCoord.y) / TILES_Y_COUNT);
+	fColor = vec2(minDepth, maxDepth);
 #endif
 }
 

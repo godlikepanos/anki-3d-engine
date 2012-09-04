@@ -160,6 +160,7 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 	Mat4 projectionMat;
 	F32 g = near - far;
 
+#if 1
 	projectionMat(0, 0) = 1.0 / tanf(fovX * 0.5);
 	projectionMat(0, 1) = 0.0;
 	projectionMat(0, 2) = 0.0;
@@ -176,6 +177,27 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 	projectionMat(3, 1) = 0.0;
 	projectionMat(3, 2) = -1.0;
 	projectionMat(3, 3) = 0.0;
+#else
+	float f = 1.0 / tan(fovY * 0.5); // f = cot(fovY/2)
+
+	projectionMat(0, 0) = f * fovY / fovX; // = f/aspectRatio;
+	projectionMat(0, 1) = 0.0;
+	projectionMat(0, 2) = 0.0;
+	projectionMat(0, 3) = 0.0;
+	projectionMat(1, 0) = 0.0;
+	projectionMat(1, 1) = f;
+	projectionMat(1, 2) = 0.0;
+	projectionMat(1, 3) = 0.0;
+	projectionMat(2, 0) = 0.0;
+	projectionMat(2, 1) = 0.0;
+	projectionMat(2, 2) = (far + near) / g;
+	projectionMat(2, 3) = (2.0 * far * near) / g;
+	projectionMat(3, 0) = 0.0;
+	projectionMat(3, 1) = 0.0;
+	projectionMat(3, 2) = -1.0;
+	projectionMat(3, 3) = 0.0;
+#endif
+
 
 	return projectionMat;
 }

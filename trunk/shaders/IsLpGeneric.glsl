@@ -9,6 +9,9 @@
 #pragma anki start fragmentShader
 
 #pragma anki include "shaders/Pack.glsl"
+#pragma anki include "shaders/LinearDepth.glsl"
+
+#define DISCARD 0
 
 #if !MAX_LIGHTS_PER_TILE || !TILES_X_COUNT || !TILES_Y_COUNT || !TILES_COUNT
 #	error "See file"
@@ -131,7 +134,8 @@ vec3 doPhong(in vec3 fragPosVspace, in vec3 normal, in vec3 diffuse,
 #endif
 
 	// Attenuation
-	float attenuation = 1.0 - fragLightDistSqrt / light.posAndRadius.w;
+	float attenuation = 
+		max(1.0 - fragLightDistSqrt / light.posAndRadius.w, 0.0);
 
 	// Diffuse
 	vec3 difCol = diffuse * light.diffuseColor.rgb;
@@ -163,12 +167,21 @@ void main()
 	// Lighting
 	uint lightsCount = tiles[vInstanceId].lightsCount;
 
-	fColor = vec3(0.0);
+	fColor = diffuseAndSpec.rgb * 0.1;
 	for(uint i = 0; i < lightsCount; ++i)
 	{
 		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
 
+#if 1
 		fColor += doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
 			specularAll, lights[lightId]);
+#else
+		fColor += lights[lightId].diffuseColor.rgb;
+#endif
+	}
+
+	if(lightsCount > 0)
+	{
+		fColor += vec3(0.0, float(lightsCount) / 7.0, 0.0);
 	}
 }

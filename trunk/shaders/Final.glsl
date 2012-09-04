@@ -22,8 +22,8 @@ void main()
 	vec4 diffAndSpec = unpackUnorm4x8(a.x);
 	fFragColor = diffAndSpec.rgb;
 #else
-	vec2 col = texture2D(rasterImage, vTexCoords).rg;
-	fFragColor = vec3(col.rg, 0.0);
+	vec3 col = texture2D(rasterImage, vTexCoords).rgb;
+	fFragColor = col;
 #endif
 	//fFragColor = texture2D(rasterImage, vTexCoords).rgb;
 }
