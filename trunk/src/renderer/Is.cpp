@@ -91,7 +91,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 		"#define TILES_X_COUNT " + std::to_string(TILES_X_COUNT) + "\n"
 		"#define TILES_Y_COUNT " + std::to_string(TILES_Y_COUNT) + "\n"
 		"#define RENDERER_WIDTH " + std::to_string(r->getWidth()) + "\n"
-		"#define RENDERER_HEIGHT " + std::to_string(r->getWidth()) + "\n"
+		"#define RENDERER_HEIGHT " + std::to_string(r->getHeight()) + "\n"
 		"#define MAX_LIGHTS_PER_TILE " + std::to_string(MAX_LIGHTS_PER_TILE)
 		+ "\n"
 		"#define TILES_COUNT " + std::to_string(TILES_X_COUNT * TILES_Y_COUNT)
@@ -335,21 +335,10 @@ void Is::updateTiles()
 #if 1
 			/// Calculate as you do in the vertex position inside the shaders
 			F32 minZ =
-				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][0]) ;
+				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][0]);
 			F32 maxZ =
 				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][1]);
 
-			/*minZ = -cam.getNear();
-			maxZ = -cam.getFar();*/
-
-			/*if(i == 0 && j == 0)
-				std::cout << minZ << " " << maxZ << std::endl;*/
-
-			/*F32 minZ = -pixels[j][i][0];
-			F32 maxZ = -pixels[j][i][1];*/
-
-			/*if(i == 0 && j == 0)
-				std::cout << minZ << " " << maxZ << std::endl;*/
 #else
 			F32 minZ = -cam.getNear();
 			F32 maxZ = -cam.getFar();
@@ -489,6 +478,10 @@ void Is::pointLightsPass()
 	shader.findUniformVariable("msFai0").set(r->getMs().getFai0());
 	shader.findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
+#endif
+
+#if 0
+	shader.findUniformVariable("minmax").set(minMaxFai);
 #endif
 
 	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);

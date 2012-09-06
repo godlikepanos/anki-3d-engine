@@ -20,20 +20,24 @@ in vec2 vTexCoords;
 
 out vec2 fColor;
 
+layout(pixel_center_integer) in vec4 gl_FragCoord;
+
 //==============================================================================
 void main()
 {
-	const int FROM_W = RENDERER_WIDTH / TILES_X_COUNT / 2;
-	const int FROM_H = RENDERER_HEIGHT / TILES_Y_COUNT / 2;
+	const int W = RENDERER_WIDTH / TILES_X_COUNT;
+	const int H = RENDERER_HEIGHT / TILES_Y_COUNT;
 
-	float maxDepth = -10.0;
-	float minDepth = 10.0;
+	float maxDepth = -10000.0;
+	float minDepth = 100000.0;
 
-	for(int i = -FROM_W; i < FROM_W; i++)
+	ivec2 coord = ivec2(gl_FragCoord.xy * vec2(W, H));
+
+	for(int i = 0; i < W; i++)
 	{
-		for(int j = -FROM_H; j < FROM_H; j++)
+		for(int j = 0; j < H; j++)
 		{
-			float depth = textureOffset(depthMap, vTexCoords, ivec2(i, j)).r;
+			float depth = texelFetch(depthMap, coord + ivec2(i, j), 0).r;
 
 			if(depth < minDepth)
 			{

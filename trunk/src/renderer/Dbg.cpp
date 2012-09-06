@@ -37,6 +37,8 @@ void Dbg::init(const Renderer::Initializer& initializer)
 	sceneDrawer.reset(new SceneDebugDrawer(drawer.get()));
 }
 
+U deletemeto = 0;
+
 //==============================================================================
 void Dbg::run()
 {
@@ -85,10 +87,65 @@ void Dbg::run()
 		sceneDrawer->draw(sector->getOctree());
 	}
 
+#if 0
 	// XXX
 	drawer->setViewProjectionMatrix(r->getViewProjectionMatrix());
 	drawer->setModelMatrix(Mat4::getIdentity());
 
+	Camera* camera1 = static_cast<Camera*>(scene.findSceneNode("camera1"));
+	CollisionDebugDrawer cdd(drawer.get());
+	static U ii, jj;
+	static Plane p, pp;
+
+	if(deletemeto == 0)
+	{
+		for(U i = 0; i < Is::TILES_X_COUNT; i++)
+		{
+			for(U j = 0; j < Is::TILES_Y_COUNT; j++)
+			{
+				if(r->getIs().tiles[j][i].lightsCount > 0)
+				{
+					std::cout << "--" << i << " " << j << std::endl;
+
+					p = r->getIs().tiles[j][i].planes[Frustum::FP_FAR];
+					pp = r->getIs().tiles[j][i].planes[Frustum::FP_NEAR];
+
+					ii = i;
+					jj = j;
+
+					camera1->setLocalTransform(scene.getActiveCamera().getWorldTransform());
+					camera1->update();
+
+					p.transform(camera1->getWorldTransform());
+					pp.transform(camera1->getWorldTransform());
+
+					//std::cout << scene.getActiveCamera().getWorldTransform() << std::endl;
+
+					//p.accept(cdd);
+				}
+			}
+		}
+	}
+
+	if(deletemeto == 1)
+	{
+		std::cout << "Brokolo" << std::endl;
+
+		p.accept(cdd);
+		pp.accept(cdd);
+
+	}
+
+	Plane p1 = r->getIs().tiles[jj][ii].planes[Frustum::FP_NEAR];
+	p1.transform(scene.getActiveCamera().getWorldTransform());
+	Plane p2 = r->getIs().tiles[jj][ii].planes[Frustum::FP_FAR];
+	p2.transform(scene.getActiveCamera().getWorldTransform());
+
+	//p1.accept(cdd);
+	//p2.accept(cdd);
+#endif
+
+#if 0
 	Camera* camera1 = static_cast<Camera*>(scene.findSceneNode("camera1"));
 
 	F32 fx = static_cast<PerspectiveCamera*>(camera1)->getFovX();
@@ -111,6 +168,7 @@ void Dbg::run()
 	b.transform(camera1->getWorldTransform());
 
 	drawer->drawLine(a, b, Vec4(1));
+#endif
 
 #if 0
 	{

@@ -80,9 +80,9 @@ void init()
 
 	// lights
 	Vec3 lpos(-100.0, 0.0, 0.0);
-	for(int i = 0; i < 10; i++)
+	for(int i = 0; i < 3; i++)
 	{
-		for(int j = 0; j < 1; j++)
+		for(int j = 0; j < 10; j++)
 		{
 			std::string name = "plight" + std::to_string(i) + std::to_string(j);
 
@@ -166,6 +166,9 @@ void execStdinScpripts()
 	}
 }
 
+namespace anki {
+		extern U deletemeto; }
+
 //==============================================================================
 void mainLoopExtra()
 {
@@ -211,6 +214,13 @@ void mainLoopExtra()
 	{
 		Light* l = SceneSingleton::get().findSceneNode("point1")->getLight();
 		static_cast<PointLight*>(l)->setRadius(10.0);
+	}
+
+	if(in.getKey(SDL_SCANCODE_P) == 1)
+	{
+		std::cout << "sdfffffffffffffffff" << std::endl;
+
+		deletemeto = !deletemeto;
 	}
 
 	if(in.getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);

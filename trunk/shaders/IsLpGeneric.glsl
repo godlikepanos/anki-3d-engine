@@ -69,6 +69,7 @@ uniform usampler2D msFai0;
 uniform sampler2D msDepthFai;
 uniform sampler2D lightTex;
 uniform sampler2DShadow shadowMap;
+uniform sampler2D minmax;
 /// @}
 
 /// @name Varyings
@@ -180,8 +181,22 @@ void main()
 #endif
 	}
 
-	if(lightsCount > 0)
+#if 0
+	float depth = texture(msDepthFai, vTexCoords).r;
+	vec2 mm = texture(minmax, vTexCoords).rg;
+
+	if(depth < mm.x)
+	{
+		fColor *= vec3(10.0, 0.0, 0.0);
+	}
+	if(depth > mm.y)
+	{
+		fColor *= vec3(0.0, 0.0, 10.0);
+	}
+#endif
+
+	/*if(lightsCount > 0)
 	{
 		fColor += vec3(0.0, float(lightsCount) / 7.0, 0.0);
-	}
+	}*/
 }
