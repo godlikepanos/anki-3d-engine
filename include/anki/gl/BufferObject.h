@@ -62,11 +62,7 @@ public:
 	void bind() const
 	{
 		ANKI_ASSERT(isCreated());
-		//if(lastBindedBo != this)
-		{
-			glBindBuffer(target, glId);
-			//lastBindedBo = this;
-		}
+		glBindBuffer(target, glId);
 	}
 
 	/// Unbind BO
@@ -74,7 +70,6 @@ public:
 	{
 		ANKI_ASSERT(isCreated());
 		glBindBuffer(target, 0);
-		//lastBindedBo = nullptr;
 	}
 
 	/// Creates a new BO with the given parameters and checks if everything
@@ -103,7 +98,10 @@ public:
 	/// given size and the BO size are not equal. It throws an exception if
 	/// the usage is GL_STATIC_DRAW
 	/// @param[in] buff The buffer to copy to BO
-	void write(void* buff);
+	void write(void* buff)
+	{
+		write(buff, 0, sizeInBytes);
+	}
 
 	/// The same as the other write but it maps only a subset of the data
 	/// @param[in] buff The buffer to copy to BO
@@ -138,9 +136,6 @@ public:
 	}
 
 private:
-	/// Opt to save a few glBindBuffer calls
-	static const thread_local BufferObject* lastBindedBo; 
-
 	GLuint glId = 0; ///< The OpenGL id of the BO
 
 	/// Used in glBindBuffer(target, glId) and its for easy access so we
@@ -152,7 +147,7 @@ private:
 	U32 sizeInBytes; ///< The size of the buffer
 
 #if !NDEBUG
-	Bool mapped = false;
+	Bool mapped = false; ///< Only in debug
 #endif
 };
 /// @}
