@@ -5,7 +5,6 @@
 
 namespace anki {
 
-
 /// @addtogroup Math
 /// @{
 
