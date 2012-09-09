@@ -7,8 +7,8 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-ThreadWorker::ThreadWorker(U32 id_, Barrier* barrier_)
-	: id(id_), barrier(barrier_)
+ThreadWorker::ThreadWorker(U32 id_, Barrier* barrier_, ThreadPool* threadPool_)
+	: id(id_), barrier(barrier_), threadPool(threadPool_)
 {
 	start();
 }
@@ -38,7 +38,7 @@ void ThreadWorker::workingFunc()
 		}
 
 		// Exec
-		(*job)();
+		(*job)(id, threadPool->getThreadsCount());
 
 		// Nullify
 		{
@@ -57,11 +57,13 @@ void ThreadWorker::workingFunc()
 //==============================================================================
 void ThreadPool::init(U threadsNum)
 {
+	ANKI_ASSERT(threadsNum <= MAX_THREADS);
+
 	barrier.reset(new Barrier(threadsNum + 1));
 
 	for(U i = 0; i < threadsNum; i++)
 	{
-		jobs.push_back(new ThreadWorker(i, barrier.get()));
+		jobs.push_back(new ThreadWorker(i, barrier.get(), this));
 	}
 }
 

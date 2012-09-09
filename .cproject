@@ -27,7 +27,7 @@
 									<listOptionValue builtIn="false" value="/usr/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/anki}&quot;"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.703966797" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+								<option id="gnu.cpp.compiler.option.preprocessor.def.703966797" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__GXX_EXPERIMENTAL_CXX0X__"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1705857210" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -39,7 +39,7 @@
 									<listOptionValue builtIn="false" value="/usr/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/anki}&quot;"/>
 								</option>
-								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1930194539" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1930194539" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__GXX_EXPERIMENTAL_CXX0X__"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1888715461" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
@@ -88,7 +88,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1634217479" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.release">
 								<option id="gnu.cpp.compiler.exe.release.option.optimization.level.467488783" name="Optimization Level" superClass="gnu.cpp.compiler.exe.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.exe.release.option.debugging.level.1206763877" name="Debug Level" superClass="gnu.cpp.compiler.exe.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.cpp.compiler.option.preprocessor.def.1535300050" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
+								<option id="gnu.cpp.compiler.option.preprocessor.def.1535300050" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__GXX_EXPERIMENTAL_CXX0X__"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1897753799" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -96,7 +96,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.release.1453949923" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.release">
 								<option defaultValue="gnu.c.optimization.level.most" id="gnu.c.compiler.exe.release.option.optimization.level.204107120" name="Optimization Level" superClass="gnu.c.compiler.exe.release.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.release.option.debugging.level.1402099681" name="Debug Level" superClass="gnu.c.compiler.exe.release.option.debugging.level" value="gnu.c.debugging.level.none" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1483582268" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
+								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1483582268" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__GXX_EXPERIMENTAL_CXX0X__"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.813305505" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
@@ -123,12 +123,16 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="anki.cdt.managedbuild.target.gnu.exe.1185865252" name="Executable" projectType="cdt.managedbuild.target.gnu.exe"/>
 	</storageModule>
+	<storageModule moduleId="refreshScope" versionNumber="1">
+		<resource resourceType="PROJECT" workspacePath="/anki"/>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.571635259;cdt.managedbuild.config.gnu.exe.release.571635259.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1634217479;cdt.managedbuild.tool.gnu.cpp.compiler.input.1897753799">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1191103617;cdt.managedbuild.config.gnu.exe.debug.1191103617.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.733325444;cdt.managedbuild.tool.gnu.cpp.compiler.input.1705857210">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1191103617;cdt.managedbuild.config.gnu.exe.debug.1191103617.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.733325444;cdt.managedbuild.tool.gnu.cpp.compiler.input.1705857210">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.571635259;cdt.managedbuild.config.gnu.exe.release.571635259.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1634217479;cdt.managedbuild.tool.gnu.cpp.compiler.input.1897753799">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileCPP"/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.1191103617;cdt.managedbuild.config.gnu.exe.debug.1191103617.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.509716139;cdt.managedbuild.tool.gnu.c.compiler.input.1888715461">
@@ -138,8 +142,4 @@
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 		</scannerConfigBuildInfo>
 	</storageModule>
-	<storageModule moduleId="refreshScope" versionNumber="1">
-		<resource resourceType="PROJECT" workspacePath="/anki"/>
-	</storageModule>
-	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 </cproject>

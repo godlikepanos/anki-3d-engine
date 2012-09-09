@@ -21,6 +21,8 @@ class SpotLight;
 /// Illumination stage
 class Is: private RenderingPass
 {
+	friend class WriteTilesUboJob;
+
 public:
 	// Config. These values affect the size of the uniform blocks and keep in
 	// mind that there are size limitations in uniform blocks.
@@ -118,7 +120,8 @@ public: // XXX
 	void updateTiles();
 
 	/// See if the light is inside the tile
-	Bool cullLight(const PointLight& light, const Tile& tile);
+	static Bool cullLight(const PointLight& light, const Tile& tile, 
+		const Mat4& viewMatrix);
 	Bool cullLight(const SpotLight& light, const Tile& tile);
 
 	/// Do the light culling

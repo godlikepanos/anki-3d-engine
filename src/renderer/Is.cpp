@@ -46,7 +46,8 @@ struct ShaderTile
 
 struct ShaderTiles
 {
-	Array<Array<ShaderTile, Is::TILES_X_COUNT>, Is::TILES_Y_COUNT> tiles;
+	//Array<Array<ShaderTile, Is::TILES_X_COUNT>, Is::TILES_Y_COUNT> tiles;
+	Array<ShaderTile, Is::TILES_X_COUNT * Is::TILES_Y_COUNT> tiles;
 };
 
 struct ShaderCommonUniforms
@@ -61,9 +62,79 @@ struct ShaderCommonUniforms
 /// XXX
 struct UbosUpdateJob: ThreadJob
 {
-	ShaderPointLights* pointLights;
-	PointLight* visibleLights;
+	ShaderPointLights* lightsMappedBuff;
+	PointLight** visibleLights;
 	U32 visibleLightsCount;
+	Camera* cam;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		U64 start, end;
+		choseStartEnd(threadId, threadsCount, visibleLightsCount, start, end);
+
+		for(U64 i = start; i < end; i++)
+		{
+			ShaderPointLight& pl = lightsMappedBuff->lights[i];
+			const PointLight& plight = *visibleLights[i];
+
+			Vec3 pos = plight.getWorldTransform().getOrigin().getTransformed(
+				cam->getViewMatrix());
+
+
+			pl.posAndRadius = Vec4(pos, plight.getRadius());
+			pl.diffuseColor = plight.getDiffuseColor();
+			pl.specularColor = plight.getSpecularColor();
+		}
+	}
+};
+
+/// XXX
+struct WriteTilesUboJob: ThreadJob
+{
+	PointLight** visibleLights;
+	U32 visibleLightsCount;
+	Is::Tile* tiles;
+	U tilesCount;
+	ShaderTiles* stiles;
+	Mat4 viewMatrix;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		U64 start, end;
+		choseStartEnd(threadId, threadsCount, tilesCount, start, end);
+
+		for(U64 i = start; i < end; i++)
+		{
+			Is::Tile& tile = tiles[i];
+			Array<U32, Is::MAX_LIGHTS_PER_TILE> lightIndices;
+			U lightsInTileCount = 0;
+
+			for(U j = 0; j < visibleLightsCount; j++)
+			{
+				const PointLight& plight = *visibleLights[j];
+
+				if(Is::cullLight(plight, tile, viewMatrix))
+				{
+					// Use % to avoid overflows
+					lightIndices[lightsInTileCount 
+						% Is::MAX_LIGHTS_PER_TILE] = j;
+					++lightsInTileCount;
+				}
+			}
+#if 0
+			if(lightsInTileCount > MAX_LIGHTS_PER_TILE)
+			{
+				ANKI_LOGW("Too many lights per tile: " << lightsInTileCount);
+			}
+#endif
+			stiles->tiles[i].lightsCount = lightsInTileCount;
+
+			memcpy(
+				&(stiles->tiles[i].lightIndices[0]),
+				&lightIndices[0],
+				sizeof(lightIndices));
+		}
+	}
 };
 
 //==============================================================================
@@ -208,15 +279,11 @@ void Is::initInternal(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-Bool Is::cullLight(const PointLight& plight, const Tile& tile)
+Bool Is::cullLight(const PointLight& plight, const Tile& tile, 
+	const Mat4& viewMatrix)
 {
-	Camera& cam = r->getScene().getActiveCamera();
 	Sphere sphere = plight.getSphere();
-
-	//return cam.getFrustumable()->getFrustum().insideFrustum(sphere);
-
-#if 1
-	sphere.transform(Transform(cam.getViewMatrix()));
+	sphere.transform(Transform(viewMatrix));
 
 	for(const Plane& plane : tile.planes)
 	{
@@ -227,7 +294,6 @@ Bool Is::cullLight(const PointLight& plight, const Tile& tile)
 	}
 
 	return true;
-#endif
 }
 
 //==============================================================================
@@ -371,6 +437,8 @@ void Is::pointLightsPass()
 	Array<PointLight*, MAX_LIGHTS> visibleLights;
 	U visibleLightsCount = 0;
 
+	ThreadPool& threadPool = ThreadPoolSingleton::get();
+
 	//
 	// Write the lightsUbo
 	//
@@ -399,84 +467,42 @@ void Is::pointLightsPass()
 		sizeof(ShaderPointLight) * visibleLightsCount,
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-	// Write the buff
-	for(U i = 0; i < visibleLightsCount; i++)
+	UbosUpdateJob jobs[ThreadPool::MAX_THREADS];
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		ShaderPointLight& pl = lightsMappedBuff->lights[i];
-		const PointLight& plight = *visibleLights[i];
+		jobs[i].cam = &cam;
+		jobs[i].lightsMappedBuff = lightsMappedBuff;
+		jobs[i].visibleLights = &visibleLights[0];
+		jobs[i].visibleLightsCount = visibleLightsCount;
 
-		Vec3 pos = plight.getWorldTransform().getOrigin().getTransformed(
-			cam.getViewMatrix());
-
-
-		pl.posAndRadius = Vec4(pos, plight.getRadius());
-		pl.diffuseColor = plight.getDiffuseColor();
-		pl.specularColor = plight.getSpecularColor();
+		threadPool.assignNewJob(i, &jobs[i]);
 	}
 
 	// Done
+	threadPool.waitForAllJobsToFinish();
 	lightsUbo.unmap();
 
-#if 1
 	//
 	// Update the tiles
 	//
 
-	// For all tiles write their indices 
-	// OPT Parallelize that!!!!!!!!!!!!
-	for(U j = 0; j < TILES_Y_COUNT; j++)
-	{
-		for(U i = 0; i < TILES_X_COUNT; i++)
-		{
-			Tile& tile = tiles[j][i];
-
-			U lightsInTileCount = 0;
-
-			for(U i = 0; i < visibleLightsCount; i++)
-			{
-				const PointLight& plight = *visibleLights[i];
-
-				if(cullLight(plight, tile))
-				{
-					// Use % to avoid overflows
-					tile.lightIndices[lightsInTileCount 
-						% MAX_LIGHTS_PER_TILE] = i;
-					++lightsInTileCount;
-				}
-			}
-
-			/*if(lightsInTileCount > MAX_LIGHTS_PER_TILE)
-			{
-				//throw ANKI_EXCEPTION("Too many lights per tile");
-				ANKI_LOGW("Too many lights per tile: " << lightsInTileCount);
-			}*/
-
-			tile.lightsCount = lightsInTileCount;
-		}
-	}
-#endif
-
-	//
-	// Write the tilesUbo
-	//
 	ShaderTiles* stiles = (ShaderTiles*)tilesUbo.map(
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-	for(U j = 0; j < TILES_Y_COUNT; j++)
+	WriteTilesUboJob tjobs[ThreadPool::MAX_THREADS];
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		for(U i = 0; i < TILES_X_COUNT; i++)
-		{
-			const Tile& tile = tiles[j][i];
+		tjobs[i].visibleLights = &visibleLights[0];
+		tjobs[i].visibleLightsCount = visibleLightsCount;
+		tjobs[i].tiles = &tiles[0][0];
+		tjobs[i].tilesCount = TILES_X_COUNT * TILES_Y_COUNT;
+		tjobs[i].stiles = stiles;
+		tjobs[i].viewMatrix = cam.getViewMatrix();
 
-			stiles->tiles[j][i].lightsCount = tile.lightsCount;
-
-			memcpy(
-				&(stiles->tiles[j][i].lightIndices[0]),
-				&tile.lightIndices[0],
-				sizeof(U32) * MAX_LIGHTS_PER_TILE);
-		}
+		threadPool.assignNewJob(i, &tjobs[i]);
 	}
 
+	threadPool.waitForAllJobsToFinish();
 	tilesUbo.unmap();
 
 	//
