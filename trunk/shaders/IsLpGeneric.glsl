@@ -32,6 +32,8 @@ layout(std140, row_major, binding = 0) uniform commonBlock
 	/// limitsOfNearPlane and the zw is an optimization see PpsSsao.glsl and 
 	/// r403 for the clean one
 	uniform vec4 limitsOfNearPlane_;
+
+	uniform vec4 sceneAmbientColor;
 };
 
 #define planes nearPlanes.zw
@@ -168,7 +170,7 @@ void main()
 	// Lighting
 	uint lightsCount = tiles[vInstanceId].lightsCount;
 
-	fColor = diffuseAndSpec.rgb * 0.1;
+	fColor = diffuseAndSpec.rgb * sceneAmbientColor.rgb;
 	for(uint i = 0; i < lightsCount; ++i)
 	{
 		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
@@ -195,8 +197,10 @@ void main()
 	}
 #endif
 
-	/*if(lightsCount > 0)
+#if 0
+	if(lightsCount > 0)
 	{
 		fColor += vec3(0.0, float(lightsCount) / 7.0, 0.0);
-	}*/
+	}
+#endif
 }

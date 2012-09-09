@@ -7,6 +7,7 @@
 #include "anki/util/Singleton.h"
 #include "anki/scene/Sector.h"
 #include "anki/util/Vector.h"
+#include "anki/core/Timestamp.h"
 
 namespace anki {
 
@@ -40,13 +41,14 @@ public:
 	{
 		return ambientCol;
 	}
-	Vec3& getAmbientColor()
-	{
-		return ambientCol;
-	}
 	void setAmbientColor(const Vec3& x)
 	{
 		ambientCol = x;
+		ambiendColorUpdateTimestamp = Timestamp::getTimestamp();
+	}
+	U32 getAmbientColorUpdateTimestamp() const
+	{
+		return ambiendColorUpdateTimestamp;
 	}
 
 	Camera& getActiveCamera()
@@ -61,6 +63,11 @@ public:
 	void setActiveCamera(Camera* cam)
 	{
 		mainCam = cam;
+		activeCameraChangeTimestamp = Timestamp::getTimestamp();
+	}
+	U32 getActiveCameraChangeTimestamp() const
+	{
+		return activeCameraChangeTimestamp;
 	}
 
 	Types<SceneNode>::ConstIterator getAllNodesBegin() const
@@ -101,7 +108,9 @@ private:
 	Types<SceneNode>::Container nodes;
 	Types<SceneNode>::NameToItemMap nameToNode;
 	Vec3 ambientCol = Vec3(1.0); ///< The global ambient color
+	U32 ambiendColorUpdateTimestamp = Timestamp::getTimestamp();
 	Camera* mainCam = nullptr;
+	U32 activeCameraChangeTimestamp = Timestamp::getTimestamp();
 	VisibilityTester vtester;
 
 	/// Add to a container

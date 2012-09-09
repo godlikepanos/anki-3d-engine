@@ -1,51 +1,49 @@
-#include "anki/core/ParallelManager.h"
+#include "anki/core/ThreadPool.h"
 
 namespace anki {
 
 //==============================================================================
-// ParallelJob                                                                 =
+// ThreadWorker                                                                =
 //==============================================================================
 
 //==============================================================================
-ParallelJob::ParallelJob(uint32_t id_, const ParallelManager* manager_,
-	Barrier* barrier_)
-	: id(id_), barrier(barrier_), callback(nullptr), manager(manager_)
+ThreadWorker::ThreadWorker(U32 id_, Barrier* barrier_)
+	: id(id_), barrier(barrier_)
 {
 	start();
 }
 
 //==============================================================================
-void ParallelJob::assignNewJob(ParallelJobCallback callback_,
-	ParallelJobParameters& jobParams_)
+void ThreadWorker::assignNewJob(ThreadJob* job_)
 {
 	mutex.lock();
-	callback = callback_;
-	params = &jobParams_;
+	ANKI_ASSERT(job == nullptr);
+	job = job_;
 	mutex.unlock();
-	condVar.notify_one();
+	condVar.notify_one(); // Wake the thread
 }
 
 //==============================================================================
-void ParallelJob::workingFunc()
+void ThreadWorker::workingFunc()
 {
 	while(1)
 	{
 		// Wait for something
 		{
 			std::unique_lock<std::mutex> lock(mutex);
-			while(callback == nullptr)
+			while(job == nullptr)
 			{
 				condVar.wait(lock);
 			}
 		}
 
 		// Exec
-		callback(*params, *this);
+		(*job)();
 
 		// Nullify
 		{
 			std::lock_guard<std::mutex> lock(mutex);
-			callback = nullptr;
+			job = nullptr;
 		}
 
 		barrier->wait();
@@ -53,19 +51,19 @@ void ParallelJob::workingFunc()
 }
 
 //==============================================================================
-// ParallelManager                                                             =
+// ThreadPool                                                                  =
 //==============================================================================
 
 //==============================================================================
-void ParallelManager::init(uint threadsNum)
+void ThreadPool::init(U threadsNum)
 {
 	barrier.reset(new Barrier(threadsNum + 1));
 
-	for(uint i = 0; i < threadsNum; i++)
+	for(U i = 0; i < threadsNum; i++)
 	{
-		jobs.push_back(new ParallelJob(i, this, barrier.get()));
+		jobs.push_back(new ThreadWorker(i, barrier.get()));
 	}
 }
 
 
-} // end namespace
+} // end namespace anki

@@ -2,32 +2,61 @@
 #define ANKI_UTIL_ARRAY_H
 
 #include "anki/util/Assert.h"
-#include <array>
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
 /// @addtogroup util
 /// @{
-template<typename T, size_t size>
-class Array: public std::array<T, size>
+
+/// Array
+template<typename T, U N>
+struct Array
 {
-public:
-	typedef std::array<T, size> Base;
+	typedef T Value;
+	typedef Value* Iterator;
+	typedef const Value* ConstIterator;
+	typedef Value& Reference;
+	typedef const Value& ConstReference;
 
-#if !NDEBUG
-	typename Base::reference operator[](typename Base::size_type n)
+	Value data[N];
+
+	Reference operator[](U n)
 	{
-		ANKI_ASSERT(n < Base::size());
-		return Base::operator[](n);
+		ANKI_ASSERT(n < N);
+		return data[n];
 	}
 
-	typename Base::const_reference operator[](
-		typename Base::size_type n) const
+	ConstReference operator[](U n) const
 	{
-		ANKI_ASSERT(n < Base::size());
-		return Base::operator[](n);
+		ANKI_ASSERT(n < N);
+		return data[n];
 	}
-#endif
+
+	Iterator begin()
+	{
+		return &data[0];
+	}
+
+	ConstIterator begin() const
+	{
+		return &data[0];
+	}
+
+	Iterator end()
+	{
+		return &data[0] + N;
+	}
+
+	ConstIterator end() const
+	{
+		return &data[0] + N;
+	}
+
+	constexpr U getSize() const
+	{
+		return N;
+	}
 };
 /// @}
 
