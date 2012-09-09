@@ -18,7 +18,17 @@ struct ThreadJob
 	virtual ~ThreadJob()
 	{}
 
-	virtual void operator()() = 0;
+	virtual void operator()(U threadId, U threadsCount) = 0;
+
+	/// Chose a starting and end index
+	void choseStartEnd(U threadId, U threadsCount, U64 elementsCount,
+		U64& start, U64& end)
+	{
+		start = threadId * (elementsCount / threadsCount);
+		end = (threadId == threadsCount - 1)
+			? elementsCount
+			: start + elementsCount / threadsCount;
+	}
 };
 
 /// A dummy job
@@ -33,7 +43,7 @@ class ThreadWorker
 {
 public:
 	/// Constructor
-	ThreadWorker(U32 id, Barrier* barrier);
+	ThreadWorker(U32 id, Barrier* barrier, ThreadPool* threadPool);
 
 	/// @name Accessors
 	/// @{
@@ -53,6 +63,7 @@ private:
 	std::condition_variable condVar; ///< To wake up the thread
 	Barrier* barrier = nullptr; ///< For synchronization
 	ThreadJob* job = nullptr; ///< Its NULL if there are no pending job
+	ThreadPool* threadPool;
 
 	/// Start thread
 	void start()
@@ -69,6 +80,8 @@ private:
 class ThreadPool
 {
 public:
+	static constexpr U MAX_THREADS = 32; ///< An absolute limit
+
 	/// Default constructor
 	ThreadPool()
 	{}
@@ -83,7 +96,7 @@ public:
 	void init(U threadsNum);
 
 	/// Assign a job to a working thread
-	void assignNewJob(uint jobId, ThreadJob* job)
+	void assignNewJob(U jobId, ThreadJob* job)
 	{
 		jobs[jobId]->assignNewJob(job);
 	}
@@ -94,7 +107,7 @@ public:
 		barrier->wait();
 	}
 
-	uint getThreadsNum() const
+	uint getThreadsCount() const
 	{
 		return jobs.size();
 	}
