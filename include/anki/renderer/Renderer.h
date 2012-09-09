@@ -193,15 +193,17 @@ public:
 	{
 		return planes;
 	}
-
 	const Vec2& getLimitsOfNearPlane() const
 	{
 		return limitsOfNearPlane;
 	}
-
 	const Vec2& getLimitsOfNearPlane2() const
 	{
 		return limitsOfNearPlane2;
+	}
+	U32 getPlanesUpdateTimestamp() const
+	{
+		return planesUpdateTimestamp;
 	}
 
 	double getMsTime() const
@@ -319,6 +321,7 @@ protected:
 	/// @name Optimization vars
 	/// Used in other stages
 	/// @{
+	U32 planesUpdateTimestamp = Timestamp::getTimestamp();
 
 	/// Used to to calculate the frag pos in view space inside a few shader
 	/// programs

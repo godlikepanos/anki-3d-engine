@@ -36,7 +36,7 @@
 #include "anki/event/MainRendererPpsHdrEvent.h"
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
-#include "anki/core/ParallelManager.h"
+#include "anki/core/ThreadPool.h"
 #include "anki/core/Timestamp.h"
 
 using namespace anki;
@@ -79,8 +79,8 @@ void init()
 		1.0));
 
 	// lights
-	Vec3 lpos(-100.0, 0.0, 0.0);
-	for(int i = 0; i < 3; i++)
+	Vec3 lpos(-100.0, 0.0, -20.0);
+	for(int i = 0; i < 50; i++)
 	{
 		for(int j = 0; j < 10; j++)
 		{
@@ -93,11 +93,11 @@ void init()
 			point->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
 			point->setLocalTranslation(lpos);
 
-			lpos.z() += 2.0;
+			lpos.z() += 4.0;
 		}
 
-		lpos.x() += 2.0;
-		lpos.z() = 0;
+		lpos.x() += 4.0;
+		lpos.z() = -20;
 	}
 
 
@@ -166,9 +166,6 @@ void execStdinScpripts()
 	}
 }
 
-namespace anki {
-		extern U deletemeto; }
-
 //==============================================================================
 void mainLoopExtra()
 {
@@ -181,8 +178,6 @@ void mainLoopExtra()
 	// move the camera
 	static Movable* mover = SceneSingleton::get().getActiveCamera().getMovable();
 	Input& in = InputSingleton::get();
-
-	SceneSingleton::get().setAmbientColor(Vec3(0.2));
 
 	if(in.getKey(SDL_SCANCODE_1))
 	{
@@ -218,9 +213,7 @@ void mainLoopExtra()
 
 	if(in.getKey(SDL_SCANCODE_P) == 1)
 	{
-		std::cout << "sdfffffffffffffffff" << std::endl;
-
-		deletemeto = !deletemeto;
+		SceneSingleton::get().getActiveCamera().getFrustumable()->setFar(250.0);
 	}
 
 	if(in.getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
@@ -282,7 +275,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -338,7 +331,7 @@ void initSubsystems(int argc, char* argv[])
 	StdinListenerSingleton::get().start();
 
 	// Parallel jobs
-	ParallelManagerSingleton::get().init(4);
+	ThreadPoolSingleton::get().init(4);
 }
 
 //==============================================================================

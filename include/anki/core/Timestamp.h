@@ -5,8 +5,8 @@
 
 namespace anki {
 
-/// Give the current timestamp. It actualy gives the current frame. Used to 
-/// indicate updates. It is actualy returning the current frame
+/// Give the current timestamp. It actually gives the current frame. Used to
+/// indicate updates. It is actually returning the current frame
 class Timestamp
 {
 public:

@@ -3,6 +3,7 @@
 #include "anki/scene/Scene.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
+#include "anki/core/ThreadPool.h"
 
 #define BLEND_ENABLE 1
 
@@ -52,6 +53,17 @@ struct ShaderCommonUniforms
 {
 	Vec4 nearPlanes;
 	Vec4 limitsOfNearPlane;
+	Vec4 sceneAmbientColor;
+};
+
+//==============================================================================
+
+/// XXX
+struct UbosUpdateJob: ThreadJob
+{
+	ShaderPointLights* pointLights;
+	PointLight* visibleLights;
+	U32 visibleLightsCount;
 };
 
 //==============================================================================
@@ -433,10 +445,11 @@ void Is::pointLightsPass()
 				}
 			}
 
-			if(lightsInTileCount > MAX_LIGHTS_PER_TILE)
+			/*if(lightsInTileCount > MAX_LIGHTS_PER_TILE)
 			{
-				throw ANKI_EXCEPTION("Too many lights per tile");
-			}
+				//throw ANKI_EXCEPTION("Too many lights per tile");
+				ANKI_LOGW("Too many lights per tile: " << lightsInTileCount);
+			}*/
 
 			tile.lightsCount = lightsInTileCount;
 		}
@@ -494,14 +507,27 @@ void Is::run()
 	GlStateSingleton::get().disable(GL_BLEND);
 
 	// Write common block
-	const Camera& cam = r->getScene().getActiveCamera();
-	ShaderCommonUniforms blk;
-	blk.nearPlanes = Vec4(cam.getNear(), 0.0, r->getPlanes().x(),
-		r->getPlanes().y());
-	blk.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
-		r->getLimitsOfNearPlane2());
+	Scene& scene = r->getScene();
+	if(commonUboUpdateTimestamp < r->getPlanesUpdateTimestamp()
+		|| commonUboUpdateTimestamp < scene.getAmbientColorUpdateTimestamp()
+		|| commonUboUpdateTimestamp == 1)
+	{
+		const Camera& cam = scene.getActiveCamera();
+		ShaderCommonUniforms blk;
+		blk.nearPlanes = Vec4(cam.getNear(), 0.0, r->getPlanes().x(),
+			r->getPlanes().y());
+		blk.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
+			r->getLimitsOfNearPlane2());
+		blk.sceneAmbientColor = Vec4(r->getScene().getAmbientColor(), 0.0);
 
-	commonUbo.write(&blk);
+		commonUbo.write(&blk);
+
+		commonUboUpdateTimestamp = Timestamp::getTimestamp();
+	}
+
+	commonUbo.setBinding(0);
+	lightsUbo.setBinding(1);
+	tilesUbo.setBinding(2);
 
 	// Update tiles
 	updateTiles();

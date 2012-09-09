@@ -91,6 +91,9 @@ public: // XXX
 	/// Contains common data for all shader programs
 	Ubo commonUbo;
 
+	/// Track the updates of commonUbo
+	U32 commonUboUpdateTimestamp = Timestamp::getTimestamp();
+
 	/// Contains info of all the lights
 	Ubo lightsUbo;
 

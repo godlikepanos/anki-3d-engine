@@ -64,18 +64,28 @@ void Renderer::init(const RendererInitializer& initializer)
 void Renderer::render(Scene& scene_)
 {
 	scene = &scene_;
-	const Camera& cam = scene->getActiveCamera();
+	Camera& cam = scene->getActiveCamera();
 
 	// Calc a few vars
 	//
-	calcPlanes(Vec2(cam.getNear(), cam.getFar()), planes);
+	U32 camUpdateTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
+	if(planesUpdateTimestamp < scene->getActiveCameraChangeTimestamp()
+		|| planesUpdateTimestamp < camUpdateTimestamp
+		|| planesUpdateTimestamp == 1)
+	{
+		calcPlanes(Vec2(cam.getNear(), cam.getFar()), planes);
 
-	ANKI_ASSERT(cam.getCameraType() == Camera::CT_PERSPECTIVE);
-	const PerspectiveCamera& pcam = static_cast<const PerspectiveCamera&>(cam);
-	calcLimitsOfNearPlane(pcam, limitsOfNearPlane);
-	limitsOfNearPlane2 = limitsOfNearPlane * 2.0;
+		ANKI_ASSERT(cam.getCameraType() == Camera::CT_PERSPECTIVE);
+		const PerspectiveCamera& pcam =
+			static_cast<const PerspectiveCamera&>(cam);
 
-	viewProjectionMat = cam.getProjectionMatrix() * cam.getViewMatrix();
+		calcLimitsOfNearPlane(pcam, limitsOfNearPlane);
+		limitsOfNearPlane2 = limitsOfNearPlane * 2.0;
+
+		planesUpdateTimestamp = Timestamp::getTimestamp();
+	}
+
+	viewProjectionMat = cam.getViewProjectionMatrix();
 
 	if(enableStagesProfilingFlag)
 	{
