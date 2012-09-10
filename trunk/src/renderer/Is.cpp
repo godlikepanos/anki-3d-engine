@@ -60,9 +60,10 @@ struct ShaderCommonUniforms
 //==============================================================================
 
 /// XXX
-struct UbosUpdateJob: ThreadJob
+struct WritePointLightsUbo: ThreadJob
 {
-	ShaderPointLights* lightsMappedBuff;
+	ShaderPointLight* shaderLights; ///< Mapped UBO
+	U32 maxShaderLights;
 	PointLight** visibleLights;
 	U32 visibleLightsCount;
 	Camera* cam;
@@ -74,16 +75,52 @@ struct UbosUpdateJob: ThreadJob
 
 		for(U64 i = start; i < end; i++)
 		{
-			ShaderPointLight& pl = lightsMappedBuff->lights[i];
-			const PointLight& plight = *visibleLights[i];
+			ANKI_ASSERT(i < maxShaderLights);
+			ShaderPointLight& pl = shaderLights[i];
+			const PointLight& light = *visibleLights[i];
 
-			Vec3 pos = plight.getWorldTransform().getOrigin().getTransformed(
+			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
 				cam->getViewMatrix());
 
+			pl.posAndRadius = Vec4(pos, light.getRadius());
+			pl.diffuseColor = light.getDiffuseColor();
+			pl.specularColor = light.getSpecularColor();
+		}
+	}
+};
 
-			pl.posAndRadius = Vec4(pos, plight.getRadius());
-			pl.diffuseColor = plight.getDiffuseColor();
-			pl.specularColor = plight.getSpecularColor();
+/// XXX
+struct WriteSpotLightsUbo: ThreadJob
+{
+	ShaderSpotLight* shaderLights; ///< Mapped UBO
+	U32 maxShaderLights;
+	SpotLight** visibleLights;
+	U32 visibleLightsCount;
+	Camera* cam;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		U64 start, end;
+		choseStartEnd(threadId, threadsCount, visibleLightsCount, start, end);
+
+		for(U64 i = start; i < end; i++)
+		{
+			ANKI_ASSERT(i < maxShaderLights);
+			ShaderSpotLight& slight = shaderLights[i];
+			const SpotLight& light = *visibleLights[i];
+
+			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
+				cam->getViewMatrix());
+
+			slight.posAndRadius = Vec4(pos, light.getDistance());
+			slight.diffuseColor = light.getDiffuseColor();
+			slight.specularColor = light.getSpecularColor();
+			
+			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 
+				0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
+			slight.texProjectionMat = biasMat4 * light.getProjectionMatrix() *
+				Mat4::combineTransformations(light.getViewMatrix(),
+				Mat4(cam->getWorldTransform()));
 		}
 	}
 };
@@ -410,17 +447,12 @@ void Is::updateTiles()
 		for(U i = 0; i < TILES_X_COUNT; i++)
 		{
 			Tile& tile = tiles[j][i];
-#if 1
+
 			/// Calculate as you do in the vertex position inside the shaders
 			F32 minZ =
 				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][0]);
 			F32 maxZ =
 				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][1]);
-
-#else
-			F32 minZ = -cam.getNear();
-			F32 maxZ = -cam.getFar();
-#endif
 
 			tile.planes[Frustum::FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), -minZ);
 			tile.planes[Frustum::FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), maxZ);
@@ -462,18 +494,19 @@ void Is::pointLightsPass()
 	}
 
 	// Map
-	ShaderPointLights* lightsMappedBuff = (ShaderPointLights*)lightsUbo.map(
+	ShaderPointLight* lightsMappedBuff = (ShaderPointLight*)lightsUbo.map(
 		0, 
 		sizeof(ShaderPointLight) * visibleLightsCount,
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-	UbosUpdateJob jobs[ThreadPool::MAX_THREADS];
+	WritePointLightsUbo jobs[ThreadPool::MAX_THREADS];
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		jobs[i].cam = &cam;
-		jobs[i].lightsMappedBuff = lightsMappedBuff;
+		jobs[i].shaderLights = lightsMappedBuff;
+		jobs[i].maxShaderLights = MAX_LIGHTS;
 		jobs[i].visibleLights = &visibleLights[0];
 		jobs[i].visibleLightsCount = visibleLightsCount;
+		jobs[i].cam = &cam;
 
 		threadPool.assignNewJob(i, &jobs[i]);
 	}
@@ -513,15 +546,9 @@ void Is::pointLightsPass()
 	const ShaderProgram& shader = *lightSProgs[LST_POINT];
 	shader.bind();
 
-#if 1
 	shader.findUniformVariable("msFai0").set(r->getMs().getFai0());
 	shader.findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
-#endif
-
-#if 0
-	shader.findUniformVariable("minmax").set(minMaxFai);
-#endif
 
 	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
 }
