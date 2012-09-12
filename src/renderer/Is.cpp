@@ -20,7 +20,8 @@ struct ShaderLight
 	Vec4 specularColor;
 };
 
-typedef ShaderLight ShaderPointLight;
+struct ShaderPointLight: ShaderLight
+{};
 
 struct ShaderSpotLight: ShaderLight
 {
@@ -41,7 +42,8 @@ struct ShaderTile
 {
 	U32 lightsCount;
 	U32 padding[3];
-	Array<U32, Is::MAX_LIGHTS_PER_TILE> lightIndices;
+	// When change this change the writeTilesUbo as well
+	Array<U32, Is::MAX_LIGHTS_PER_TILE> lightIndices; 
 };
 
 struct ShaderTiles
@@ -59,118 +61,60 @@ struct ShaderCommonUniforms
 
 //==============================================================================
 
-/// XXX
+/// Job to update point lights
 struct WritePointLightsUbo: ThreadJob
 {
 	ShaderPointLight* shaderLights; ///< Mapped UBO
 	U32 maxShaderLights;
 	PointLight** visibleLights;
 	U32 visibleLightsCount;
-	Camera* cam;
+	Is* is;
 
 	void operator()(U threadId, U threadsCount)
 	{
 		U64 start, end;
 		choseStartEnd(threadId, threadsCount, visibleLightsCount, start, end);
-
-		for(U64 i = start; i < end; i++)
-		{
-			ANKI_ASSERT(i < maxShaderLights);
-			ShaderPointLight& pl = shaderLights[i];
-			const PointLight& light = *visibleLights[i];
-
-			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
-				cam->getViewMatrix());
-
-			pl.posAndRadius = Vec4(pos, light.getRadius());
-			pl.diffuseColor = light.getDiffuseColor();
-			pl.specularColor = light.getSpecularColor();
-		}
+		is->writeLightUbo(shaderLights, maxShaderLights, visibleLights, 
+			visibleLightsCount, start, end);
 	}
 };
 
-/// XXX
+/// Job to update spot lights
 struct WriteSpotLightsUbo: ThreadJob
 {
 	ShaderSpotLight* shaderLights; ///< Mapped UBO
 	U32 maxShaderLights;
 	SpotLight** visibleLights;
 	U32 visibleLightsCount;
-	Camera* cam;
+	Is* is;
 
 	void operator()(U threadId, U threadsCount)
 	{
 		U64 start, end;
 		choseStartEnd(threadId, threadsCount, visibleLightsCount, start, end);
-
-		for(U64 i = start; i < end; i++)
-		{
-			ANKI_ASSERT(i < maxShaderLights);
-			ShaderSpotLight& slight = shaderLights[i];
-			const SpotLight& light = *visibleLights[i];
-
-			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
-				cam->getViewMatrix());
-
-			slight.posAndRadius = Vec4(pos, light.getDistance());
-			slight.diffuseColor = light.getDiffuseColor();
-			slight.specularColor = light.getSpecularColor();
-			
-			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 
-				0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
-			slight.texProjectionMat = biasMat4 * light.getProjectionMatrix() *
-				Mat4::combineTransformations(light.getViewMatrix(),
-				Mat4(cam->getWorldTransform()));
-		}
+		is->writeLightUbo(shaderLights, maxShaderLights, visibleLights, 
+			visibleLightsCount, start, end);
 	}
 };
 
-/// XXX
+/// A job to write the tiles UBO
+template<typename TLight>
 struct WriteTilesUboJob: ThreadJob
 {
-	PointLight** visibleLights;
+	TLight** visibleLights;
 	U32 visibleLightsCount;
-	Is::Tile* tiles;
-	U tilesCount;
-	ShaderTiles* stiles;
-	Mat4 viewMatrix;
+	ShaderTile* shaderTiles;
+	U32 maxLightsPerTile;
+	Is* is;
 
 	void operator()(U threadId, U threadsCount)
 	{
 		U64 start, end;
-		choseStartEnd(threadId, threadsCount, tilesCount, start, end);
+		choseStartEnd(threadId, threadsCount, 
+			Is::TILES_X_COUNT * Is::TILES_Y_COUNT, start, end);
 
-		for(U64 i = start; i < end; i++)
-		{
-			Is::Tile& tile = tiles[i];
-			Array<U32, Is::MAX_LIGHTS_PER_TILE> lightIndices;
-			U lightsInTileCount = 0;
-
-			for(U j = 0; j < visibleLightsCount; j++)
-			{
-				const PointLight& plight = *visibleLights[j];
-
-				if(Is::cullLight(plight, tile, viewMatrix))
-				{
-					// Use % to avoid overflows
-					lightIndices[lightsInTileCount 
-						% Is::MAX_LIGHTS_PER_TILE] = j;
-					++lightsInTileCount;
-				}
-			}
-#if 0
-			if(lightsInTileCount > MAX_LIGHTS_PER_TILE)
-			{
-				ANKI_LOGW("Too many lights per tile: " << lightsInTileCount);
-			}
-#endif
-			stiles->tiles[i].lightsCount = lightsInTileCount;
-
-			memcpy(
-				&(stiles->tiles[i].lightIndices[0]),
-				&lightIndices[0],
-				sizeof(lightIndices));
-		}
+		is->writeTilesUbo(visibleLights, visibleLightsCount,
+			shaderTiles, maxLightsPerTile, start, end);
 	}
 };
 
@@ -334,7 +278,7 @@ Bool Is::cullLight(const PointLight& plight, const Tile& tile,
 }
 
 //==============================================================================
-void Is::updateAllTilesPlanes(const PerspectiveCamera& cam)
+void Is::updateAllTilesPlanesInternal(const PerspectiveCamera& cam)
 {
 	// The algorithm is almost the same as the recalculation of planes for
 	// PerspectiveFrustum class
@@ -403,7 +347,8 @@ void Is::updateAllTilesPlanes()
 	switch(cam.getCameraType())
 	{
 	case Camera::CT_PERSPECTIVE:
-		updateAllTilesPlanes(static_cast<const PerspectiveCamera&>(cam));
+		updateAllTilesPlanesInternal(
+			static_cast<const PerspectiveCamera&>(cam));
 		break;
 	default:
 		ANKI_ASSERT(0 && "Unimplemented");
@@ -423,10 +368,7 @@ void Is::updateTiles()
 	minMaxTilerFbo.bind();
 	minMaxPassSprog->bind();
 	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
-#if 0
-	minMaxPassSprog->findUniformVariable("nearFar").set(
-		Vec2(cam.getNear(), cam.getFar()));
-#endif
+
 	minMaxPassSprog->findUniformVariable("depthMap").set(
 		r->getMs().getDepthFai());
 
@@ -457,6 +399,98 @@ void Is::updateTiles()
 			tile.planes[Frustum::FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), -minZ);
 			tile.planes[Frustum::FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), maxZ);
 		}
+	}
+}
+
+//==============================================================================
+void Is::writeLightUbo(ShaderPointLight* shaderLights, U32 maxShaderLights,
+	PointLight** visibleLights, U32 visibleLightsCount, U start, U end)
+{
+	const Camera& cam = r->getScene().getActiveCamera();
+
+	for(U64 i = start; i < end; i++)
+	{
+		ANKI_ASSERT(i < maxShaderLights);
+		ShaderPointLight& pl = shaderLights[i];
+		const PointLight& light = *visibleLights[i];
+
+		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
+			cam.getViewMatrix());
+
+		pl.posAndRadius = Vec4(pos, light.getRadius());
+		pl.diffuseColor = light.getDiffuseColor();
+		pl.specularColor = light.getSpecularColor();
+	}
+}
+
+//==============================================================================
+void Is::writeLightUbo(ShaderSpotLight* shaderLights, U32 maxShaderLights,
+	SpotLight** visibleLights, U32 visibleLightsCount, U start, U end)
+{
+	const Camera& cam = r->getScene().getActiveCamera();
+
+	for(U64 i = start; i < end; i++)
+	{
+		ANKI_ASSERT(i < maxShaderLights);
+		ShaderSpotLight& slight = shaderLights[i];
+		const SpotLight& light = *visibleLights[i];
+
+		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
+			cam.getViewMatrix());
+
+		slight.posAndRadius = Vec4(pos, light.getDistance());
+		slight.diffuseColor = light.getDiffuseColor();
+		slight.specularColor = light.getSpecularColor();
+		
+		static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 
+			0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
+		slight.texProjectionMat = biasMat4 * light.getProjectionMatrix() *
+			Mat4::combineTransformations(light.getViewMatrix(),
+			Mat4(cam.getWorldTransform()));
+	}
+}
+
+//==============================================================================
+template<typename TLight>
+void Is::writeTilesUbo(TLight** visibleLights, U32 visibleLightsCount,
+	ShaderTile* shaderTiles, U32 maxLightsPerTile,
+	U32 start, U32 end)
+{
+	Tile* tiles_ = &tiles[0][0];
+	const Camera& cam = r->getScene().getActiveCamera();
+	ANKI_ASSERT(maxLightsPerTile <= MAX_LIGHTS_PER_TILE);
+
+	for(U32 i = start; i < end; i++)
+	{
+		ANKI_ASSERT(i < TILES_X_COUNT * TILES_Y_COUNT);
+
+		Tile& tile = tiles_[i];
+		Array<U32, MAX_LIGHTS_PER_TILE> lightIndices;
+		U lightsInTileCount = 0;
+
+		for(U j = 0; j < visibleLightsCount; j++)
+		{
+			const TLight& light = *visibleLights[j];
+
+			if(cullLight(light, tile, cam.getViewMatrix()))
+			{
+				// Use % to avoid overflows
+				lightIndices[lightsInTileCount % maxLightsPerTile] = j;
+				++lightsInTileCount;
+			}
+		}
+#if 0
+		if(lightsInTileCount > maxLightsPerTile)
+		{
+			ANKI_LOGW("Too many lights per tile: " << lightsInTileCount);
+		}
+#endif
+		shaderTiles[i].lightsCount = lightsInTileCount;
+
+		memcpy(
+			&(shaderTiles[i].lightIndices[0]),
+			&lightIndices[0],
+			sizeof(U32) * lightsInTileCount);
 	}
 }
 
@@ -506,7 +540,7 @@ void Is::pointLightsPass()
 		jobs[i].maxShaderLights = MAX_LIGHTS;
 		jobs[i].visibleLights = &visibleLights[0];
 		jobs[i].visibleLightsCount = visibleLightsCount;
-		jobs[i].cam = &cam;
+		jobs[i].is = this;
 
 		threadPool.assignNewJob(i, &jobs[i]);
 	}
@@ -519,18 +553,17 @@ void Is::pointLightsPass()
 	// Update the tiles
 	//
 
-	ShaderTiles* stiles = (ShaderTiles*)tilesUbo.map(
+	ShaderTile* stiles = (ShaderTile*)tilesUbo.map(
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-	WriteTilesUboJob tjobs[ThreadPool::MAX_THREADS];
+	WriteTilesUboJob<PointLight> tjobs[ThreadPool::MAX_THREADS];
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		tjobs[i].visibleLights = &visibleLights[0];
 		tjobs[i].visibleLightsCount = visibleLightsCount;
-		tjobs[i].tiles = &tiles[0][0];
-		tjobs[i].tilesCount = TILES_X_COUNT * TILES_Y_COUNT;
-		tjobs[i].stiles = stiles;
-		tjobs[i].viewMatrix = cam.getViewMatrix();
+		tjobs[i].shaderTiles = stiles;
+		tjobs[i].maxLightsPerTile = MAX_LIGHTS_PER_TILE;
+		tjobs[i].is = this;
 
 		threadPool.assignNewJob(i, &tjobs[i]);
 	}
@@ -551,6 +584,12 @@ void Is::pointLightsPass()
 		r->getMs().getDepthFai());
 
 	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
+}
+
+//==============================================================================
+void Is::spotLightsPass()
+{
+	
 }
 
 //==============================================================================

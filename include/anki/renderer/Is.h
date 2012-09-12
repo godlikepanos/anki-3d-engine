@@ -17,11 +17,18 @@ namespace anki {
 
 class PointLight;
 class SpotLight;
+struct ShaderPointLight;
+struct ShaderSpotLight;
+struct ShaderTile;
 
 /// Illumination stage
 class Is: private RenderingPass
 {
-	friend class WriteTilesUboJob;
+	friend struct WritePointLightsUbo;
+	friend struct WriteSpotLightsUbo;
+
+	template<typename TLight>
+	friend struct WriteTilesUboJob;
 
 public:
 	// Config. These values affect the size of the uniform blocks and keep in
@@ -110,13 +117,15 @@ public: // XXX
 
 	Sm sm;
 
+	void initInternal(const RendererInitializer& initializer);
+
 	/// Updates all the planes except the near and far plane. Near and far 
 	/// planes will be updated in min max pass when the depth is known
 	void updateAllTilesPlanes();
 
-	void updateAllTilesPlanes(const PerspectiveCamera& pcam);
+	void updateAllTilesPlanesInternal(const PerspectiveCamera& pcam);
 
-	/// XXX
+	/// Do minmax pass and set the near/far planes of the tiles
 	void updateTiles();
 
 	/// See if the light is inside the tile
@@ -124,12 +133,18 @@ public: // XXX
 		const Mat4& viewMatrix);
 	Bool cullLight(const SpotLight& light, const Tile& tile);
 
-	/// Do the light culling
-	void tileCulling();
+	void writeLightUbo(ShaderPointLight* shaderLights, U32 maxShaderLights,
+		PointLight** visibleLights, U32 visibleLightsCount, U start, U end);
+	void writeLightUbo(ShaderSpotLight* shaderLights, U32 maxShaderLights,
+		SpotLight** visibleLights, U32 visibleLightsCount, U start, U end);
 
-	void initInternal(const RendererInitializer& initializer);
+	template<typename TLight>
+	void writeTilesUbo(TLight** visibleLights, U32 visibleLightsCount,
+		ShaderTile* shaderTiles, U32 maxLightsPerTile,
+		U32 start, U32 end);
 
 	void pointLightsPass();
+	void spotLightsPass();
 };
 
 } // end namespace anki
