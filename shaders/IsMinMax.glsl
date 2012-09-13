@@ -4,8 +4,6 @@
 
 #pragma anki start fragmentShader
 
-#pragma anki include "shaders/LinearDepth.glsl"
-
 #if !defined(TILES_X_COUNT) || !defined(TILES_Y_COUNT) || !defined(RENDERER_WIDTH) || !defined(RENDERER_HEIGHT)
 #	error "See file"
 #endif

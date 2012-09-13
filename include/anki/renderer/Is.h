@@ -26,8 +26,6 @@ class Is: private RenderingPass
 {
 	friend struct WritePointLightsUbo;
 	friend struct WriteSpotLightsUbo;
-
-	template<typename TLight>
 	friend struct WriteTilesUboJob;
 
 public:
@@ -38,7 +36,8 @@ public:
 
 	static const U MAX_LIGHTS_PER_TILE = 32;
 
-	static const U MAX_LIGHTS = 512;
+	static const U MAX_POINT_LIGHTS = 512;
+	static const U MAX_SPOT_LIGHTS = 8;
 
 	Is(Renderer* r);
 
@@ -60,7 +59,7 @@ public:
 	}
 	/// @}
 
-public: // XXX
+private:
 	enum LightSubType
 	{
 		LST_POINT,
@@ -78,6 +77,11 @@ public: // XXX
 		/// Frustum planes
 		Array<Plane, 6> planes;
 	};
+
+	static const U COMMON_UNIFORMS_BLOCK_BINDING = 0;
+	static const U POINT_LIGHTS_BLOCK_BINDING = 1;
+	static const U SPOT_LIGHTS_BLOCK_BINDING = 2;
+	static const U TILES_BLOCK_BINDING = 3;
 
 	U32 planesUpdateTimestamp = Timestamp::getTimestamp();
 
@@ -103,8 +107,9 @@ public: // XXX
 	/// Track the updates of commonUbo
 	U32 commonUboUpdateTimestamp = Timestamp::getTimestamp();
 
-	/// Contains info of all the lights
-	Ubo lightsUbo;
+	/// Contains info of for lights
+	Ubo pointLightsUbo;
+	Ubo spotLightsUbo;
 
 	/// Contains the indices of lights per tile
 	Ubo tilesUbo;
@@ -113,7 +118,7 @@ public: // XXX
 	ShaderProgramResourcePointer minMaxPassSprog;
 
 	/// Light shaders
-	Array<ShaderProgramResourcePointer, LST_COUNT> lightSProgs;
+	ShaderProgramResourcePointer lightPassProg;
 
 	Sm sm;
 
@@ -131,20 +136,21 @@ public: // XXX
 	/// See if the light is inside the tile
 	static Bool cullLight(const PointLight& light, const Tile& tile, 
 		const Mat4& viewMatrix);
-	Bool cullLight(const SpotLight& light, const Tile& tile);
+	static Bool cullLight(const SpotLight& light, const Tile& tile,
+		const Mat4& viewMatrix);
 
 	void writeLightUbo(ShaderPointLights& shaderLights, U32 maxShaderLights,
 		PointLight** visibleLights, U32 visibleLightsCount, U start, U end);
 	void writeLightUbo(ShaderSpotLights& shaderLights, U32 maxShaderLights,
 		SpotLight** visibleLights, U32 visibleLightsCount, U start, U end);
 
-	template<typename TLight>
-	void writeTilesUbo(TLight** visibleLights, U32 visibleLightsCount,
+	void writeTilesUbo(
+		PointLight* visiblePointLights[], U32 visiblePointLightsCount,
+		SpotLight* visibleSpotLights[], U32 visibleSpotLightsCount,
 		ShaderTiles& shaderTiles, U32 maxLightsPerTile,
 		U32 start, U32 end);
 
 	void pointLightsPass();
-	void spotLightsPass(Bool shadow);
 };
 
 } // end namespace anki

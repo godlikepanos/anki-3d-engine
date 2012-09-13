@@ -53,7 +53,8 @@ std::string ShaderProgramResource::createSrcCodeToCache(
 
 	// Create suffix
 	std::hash<std::string> stringHash;
-	std::size_t h = stringHash(preAppendedSrcCode);
+	std::size_t h = stringHash(std::string(sProgFPathName) 
+		+ preAppendedSrcCode);
 	std::string suffix = std::to_string(h);
 
 	//
