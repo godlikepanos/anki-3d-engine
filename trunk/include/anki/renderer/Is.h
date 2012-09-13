@@ -17,9 +17,9 @@ namespace anki {
 
 class PointLight;
 class SpotLight;
-struct ShaderPointLight;
-struct ShaderSpotLight;
-struct ShaderTile;
+struct ShaderPointLights;
+struct ShaderSpotLights;
+struct ShaderTiles;
 
 /// Illumination stage
 class Is: private RenderingPass
@@ -133,18 +133,18 @@ public: // XXX
 		const Mat4& viewMatrix);
 	Bool cullLight(const SpotLight& light, const Tile& tile);
 
-	void writeLightUbo(ShaderPointLight* shaderLights, U32 maxShaderLights,
+	void writeLightUbo(ShaderPointLights& shaderLights, U32 maxShaderLights,
 		PointLight** visibleLights, U32 visibleLightsCount, U start, U end);
-	void writeLightUbo(ShaderSpotLight* shaderLights, U32 maxShaderLights,
+	void writeLightUbo(ShaderSpotLights& shaderLights, U32 maxShaderLights,
 		SpotLight** visibleLights, U32 visibleLightsCount, U start, U end);
 
 	template<typename TLight>
 	void writeTilesUbo(TLight** visibleLights, U32 visibleLightsCount,
-		ShaderTile* shaderTiles, U32 maxLightsPerTile,
+		ShaderTiles& shaderTiles, U32 maxLightsPerTile,
 		U32 start, U32 end);
 
 	void pointLightsPass();
-	void spotLightsPass();
+	void spotLightsPass(Bool shadow);
 };
 
 } // end namespace anki

@@ -48,7 +48,6 @@ struct ShaderTile
 
 struct ShaderTiles
 {
-	//Array<Array<ShaderTile, Is::TILES_X_COUNT>, Is::TILES_Y_COUNT> tiles;
 	Array<ShaderTile, Is::TILES_X_COUNT * Is::TILES_Y_COUNT> tiles;
 };
 
@@ -61,10 +60,12 @@ struct ShaderCommonUniforms
 
 //==============================================================================
 
+// Threading jobs
+
 /// Job to update point lights
 struct WritePointLightsUbo: ThreadJob
 {
-	ShaderPointLight* shaderLights; ///< Mapped UBO
+	ShaderPointLights* shaderLights; ///< Mapped UBO
 	U32 maxShaderLights;
 	PointLight** visibleLights;
 	U32 visibleLightsCount;
@@ -74,7 +75,7 @@ struct WritePointLightsUbo: ThreadJob
 	{
 		U64 start, end;
 		choseStartEnd(threadId, threadsCount, visibleLightsCount, start, end);
-		is->writeLightUbo(shaderLights, maxShaderLights, visibleLights, 
+		is->writeLightUbo(*shaderLights, maxShaderLights, visibleLights, 
 			visibleLightsCount, start, end);
 	}
 };
@@ -82,7 +83,7 @@ struct WritePointLightsUbo: ThreadJob
 /// Job to update spot lights
 struct WriteSpotLightsUbo: ThreadJob
 {
-	ShaderSpotLight* shaderLights; ///< Mapped UBO
+	ShaderSpotLights* shaderLights; ///< Mapped UBO
 	U32 maxShaderLights;
 	SpotLight** visibleLights;
 	U32 visibleLightsCount;
@@ -92,7 +93,7 @@ struct WriteSpotLightsUbo: ThreadJob
 	{
 		U64 start, end;
 		choseStartEnd(threadId, threadsCount, visibleLightsCount, start, end);
-		is->writeLightUbo(shaderLights, maxShaderLights, visibleLights, 
+		is->writeLightUbo(*shaderLights, maxShaderLights, visibleLights, 
 			visibleLightsCount, start, end);
 	}
 };
@@ -103,7 +104,7 @@ struct WriteTilesUboJob: ThreadJob
 {
 	TLight** visibleLights;
 	U32 visibleLightsCount;
-	ShaderTile* shaderTiles;
+	ShaderTiles* shaderTiles;
 	U32 maxLightsPerTile;
 	Is* is;
 
@@ -114,7 +115,7 @@ struct WriteTilesUboJob: ThreadJob
 			Is::TILES_X_COUNT * Is::TILES_Y_COUNT, start, end);
 
 		is->writeTilesUbo(visibleLights, visibleLightsCount,
-			shaderTiles, maxLightsPerTile, start, end);
+			*shaderTiles, maxLightsPerTile, start, end);
 	}
 };
 
@@ -403,7 +404,7 @@ void Is::updateTiles()
 }
 
 //==============================================================================
-void Is::writeLightUbo(ShaderPointLight* shaderLights, U32 maxShaderLights,
+void Is::writeLightUbo(ShaderPointLights& shaderLights, U32 maxShaderLights,
 	PointLight** visibleLights, U32 visibleLightsCount, U start, U end)
 {
 	const Camera& cam = r->getScene().getActiveCamera();
@@ -411,7 +412,7 @@ void Is::writeLightUbo(ShaderPointLight* shaderLights, U32 maxShaderLights,
 	for(U64 i = start; i < end; i++)
 	{
 		ANKI_ASSERT(i < maxShaderLights);
-		ShaderPointLight& pl = shaderLights[i];
+		ShaderPointLight& pl = shaderLights.lights[i];
 		const PointLight& light = *visibleLights[i];
 
 		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
@@ -424,7 +425,7 @@ void Is::writeLightUbo(ShaderPointLight* shaderLights, U32 maxShaderLights,
 }
 
 //==============================================================================
-void Is::writeLightUbo(ShaderSpotLight* shaderLights, U32 maxShaderLights,
+void Is::writeLightUbo(ShaderSpotLight& shaderLights, U32 maxShaderLights,
 	SpotLight** visibleLights, U32 visibleLightsCount, U start, U end)
 {
 	const Camera& cam = r->getScene().getActiveCamera();
@@ -432,7 +433,7 @@ void Is::writeLightUbo(ShaderSpotLight* shaderLights, U32 maxShaderLights,
 	for(U64 i = start; i < end; i++)
 	{
 		ANKI_ASSERT(i < maxShaderLights);
-		ShaderSpotLight& slight = shaderLights[i];
+		ShaderSpotLight& slight = shaderLights.lights[i];
 		const SpotLight& light = *visibleLights[i];
 
 		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
@@ -453,7 +454,7 @@ void Is::writeLightUbo(ShaderSpotLight* shaderLights, U32 maxShaderLights,
 //==============================================================================
 template<typename TLight>
 void Is::writeTilesUbo(TLight** visibleLights, U32 visibleLightsCount,
-	ShaderTile* shaderTiles, U32 maxLightsPerTile,
+	ShaderTiles& shaderTiles, U32 maxLightsPerTile,
 	U32 start, U32 end)
 {
 	Tile* tiles_ = &tiles[0][0];
@@ -485,10 +486,10 @@ void Is::writeTilesUbo(TLight** visibleLights, U32 visibleLightsCount,
 			ANKI_LOGW("Too many lights per tile: " << lightsInTileCount);
 		}
 #endif
-		shaderTiles[i].lightsCount = lightsInTileCount;
+		shaderTiless.tiles[i].lightsCount = lightsInTileCount;
 
 		memcpy(
-			&(shaderTiles[i].lightIndices[0]),
+			&(shaderTiles.tiles[i].lightIndices[0]),
 			&lightIndices[0],
 			sizeof(U32) * lightsInTileCount);
 	}
@@ -528,7 +529,7 @@ void Is::pointLightsPass()
 	}
 
 	// Map
-	ShaderPointLight* lightsMappedBuff = (ShaderPointLight*)lightsUbo.map(
+	ShaderPointLights* lightsMappedBuff = (ShaderPointLights*)lightsUbo.map(
 		0, 
 		sizeof(ShaderPointLight) * visibleLightsCount,
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
@@ -553,7 +554,7 @@ void Is::pointLightsPass()
 	// Update the tiles
 	//
 
-	ShaderTile* stiles = (ShaderTile*)tilesUbo.map(
+	ShaderTiles* stiles = (ShaderTiles*)tilesUbo.map(
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
 	WriteTilesUboJob<PointLight> tjobs[ThreadPool::MAX_THREADS];
@@ -587,9 +588,99 @@ void Is::pointLightsPass()
 }
 
 //==============================================================================
-void Is::spotLightsPass()
+void Is::spotLightsPass(Bool shadow)
 {
+	Camera& cam = r->getScene().getActiveCamera();
+	VisibilityInfo& vi = cam.getFrustumable()->getVisibilityInfo();
+
+	Array<SpotLight*, MAX_LIGHTS> visibleLights;
+	U visibleLightsCount = 0;
+
+	ThreadPool& threadPool = ThreadPoolSingleton::get();
+
+	// Quickly get the point lights
+	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
+	{
+		Light* light = (*it);
+		if(light->getLightType() == Light::LT_SPOT)
+		{
+			SpotLight* slight = static_cast<SpotLight*>(light);
+
+			if(shadow && slight->getShadowEnabled())
+			{
+				// Use % to avoid overflows
+				visibleLights[visibleLightsCount % MAX_LIGHTS] = slight;
+				++visibleLightsCount;
+			}
+		}
+	}
+
+	if(visibleLightsCount > MAX_LIGHTS)
+	{
+		throw ANKI_EXCEPTION("Too many visible lights");
+	}
+
+	//
+	// Write the lightsUbo
+	//
+
+	ShaderSpotLights* lightsMappedBuff = (ShaderSpotLights*)lightsUbo.map(
+		0, 
+		sizeof(ShaderSpotLight) * visibleLightsCount,
+		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+
+	WriteSpotLightsUbo jobs[ThreadPool::MAX_THREADS];
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	{
+		jobs[i].shaderLights = lightsMappedBuff;
+		jobs[i].maxShaderLights = MAX_LIGHTS;
+		jobs[i].visibleLights = &visibleLights[0];
+		jobs[i].visibleLightsCount = visibleLightsCount;
+		jobs[i].is = this;
+
+		threadPool.assignNewJob(i, &jobs[i]);
+	}
+
+	// Done
+	threadPool.waitForAllJobsToFinish();
+	lightsUbo.unmap();
+
+	//
+	// Update the tiles
+	//
+
+	ShaderTiles* stiles = (ShaderTiles*)tilesUbo.map(
+		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+
+	WriteTilesUboJob<SpotLight> tjobs[ThreadPool::MAX_THREADS];
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	{
+		tjobs[i].visibleLights = &visibleLights[0];
+		tjobs[i].visibleLightsCount = visibleLightsCount;
+		tjobs[i].shaderTiles = stiles;
+		tjobs[i].maxLightsPerTile = MAX_LIGHTS_PER_TILE;
+		tjobs[i].is = this;
+
+		threadPool.assignNewJob(i, &tjobs[i]);
+	}
+
+	threadPool.waitForAllJobsToFinish();
+	tilesUbo.unmap();
 	
+	//
+	// Setup shader and draw
+	//
+	
+	// shader prog
+	const ShaderProgram& shader = *lightSProgs[
+		(shadow) ? LST_SPOT_SHADOW : LST_SPOT];
+	shader.bind();
+
+	shader.findUniformVariable("msFai0").set(r->getMs().getFai0());
+	shader.findUniformVariable("msDepthFai").set(
+		r->getMs().getDepthFai());
+
+	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
 }
 
 //==============================================================================
@@ -629,6 +720,10 @@ void Is::run()
 	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
 
 	pointLightsPass();
+
+	GlStateSingleton::get().enable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+	spotLightsPass(false);
 }
 
 } // end namespace anki
