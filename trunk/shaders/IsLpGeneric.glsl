@@ -13,7 +13,11 @@
 
 #define DISCARD 0
 
-#if !MAX_LIGHTS_PER_TILE || !TILES_X_COUNT || !TILES_Y_COUNT || !TILES_COUNT
+#if !MAX_LIGHTS_PER_TILE || !TILES_X_COUNT || !TILES_Y_COUNT
+#	error "See file"
+#endif
+
+#if !MAX_POINT_LIGHTS || !MAX_SPOT_LIGHTS
 #	error "See file"
 #endif
 
@@ -46,14 +50,22 @@ struct Light
 	vec4 posAndRadius; ///< xyz: Light pos in eye space. w: The radius
 	vec4 diffuseColor;
 	vec4 specularColor;
-#if SPOT_LIGHT
-	mat4 texProjectionMat;
-#endif
 };
 
-layout(std140, row_major, binding = 1) uniform lightsBlock
+struct SpotLight
 {
-	Light lights[MAX_LIGHTS];
+	Light light;
+	mat4 texProjectionMat;
+};
+
+layout(std140, row_major, binding = 1) uniform pointLightsBlock
+{
+	Light plights[MAX_POINT_LIGHTS];
+};
+
+layout(std140, row_major, binding = 2) uniform spotLightsBlock
+{
+	SpotLight slights[MAX_SPOT_LIGHTS];
 };
 
 struct Tile
@@ -62,7 +74,7 @@ struct Tile
 	uvec4 lightIndices[MAX_LIGHTS_PER_TILE / 4];
 };
 
-layout(std140, row_major, binding = 2) uniform tilesBlock
+layout(std140, row_major, binding = 3) uniform tilesBlock
 {
 	Tile tiles[TILES_X_COUNT * TILES_Y_COUNT];
 };
@@ -175,12 +187,8 @@ void main()
 	{
 		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
 
-#if 1
 		fColor += doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
-			specularAll, lights[lightId]);
-#else
-		fColor += lights[lightId].diffuseColor.rgb;
-#endif
+			specularAll, plights[lightId]);
 	}
 
 #if 0
