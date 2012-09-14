@@ -11,7 +11,7 @@ namespace anki {
 
 //==============================================================================
 
-// Shader struct and block representations
+// Shader structs and block representations
 
 struct ShaderLight
 {
@@ -40,7 +40,7 @@ struct ShaderSpotLights
 
 struct ShaderTile
 {
-	U32 lightsCount[2];
+	U32 lightsCount[2]; ///< 0: Point lights number, 1: Spot lights number
 	U32 padding[2];
 	// When change this change the writeTilesUbo as well
 	Array<U32, Is::MAX_LIGHTS_PER_TILE> lightIndices; 
@@ -119,6 +119,22 @@ struct WriteTilesUboJob: ThreadJob
 			visiblePointLights, visiblePointLightsCount,
 			visibleSpotLights, visibleSpotLightsCount,
 			*shaderTiles, maxLightsPerTile, start, end);
+	}
+};
+
+/// Job that updates the tile planes
+struct UpdateTilesJob: ThreadJob
+{
+	F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2];
+	Is* is;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		U64 start, end;
+		choseStartEnd(threadId, threadsCount, 
+			Is::TILES_X_COUNT * Is::TILES_Y_COUNT, start, end);
+
+		is->updateTilePlanes(pixels, start, end);
 	}
 };
 
@@ -253,13 +269,11 @@ void Is::initInternal(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-Bool Is::cullLight(const PointLight& plight, const Tile& tile, 
-	const Mat4& viewMatrix)
+Bool Is::cullLight(const PointLight& plight, const Tile& tile)
 {
-	Sphere sphere = plight.getSphere();
-	sphere.transform(Transform(viewMatrix));
+	const Sphere& sphere = plight.getSphere();
 
-	for(const Plane& plane : tile.planes)
+	for(const Plane& plane : tile.planesWSpace)
 	{
 		if(sphere.testPlane(plane) < 0.0)
 		{
@@ -271,15 +285,114 @@ Bool Is::cullLight(const PointLight& plight, const Tile& tile,
 }
 
 //==============================================================================
-Bool Is::cullLight(const SpotLight& light, const Tile& tile, 
-	const Mat4& viewMatrix)
+Bool Is::cullLight(const SpotLight& light, const Tile& tile)
 {
-	/// XXX
-	return false;
+	const PerspectiveFrustum& fr = light.getFrustum();
+
+	for(const Plane& plane : tile.planesWSpace)
+	{
+		if(fr.testPlane(plane) < 0.0)
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 //==============================================================================
-void Is::updateAllTilesPlanesInternal(const PerspectiveCamera& cam)
+void Is::updateTiles()
+{
+	// Do the min/max pass
+	//
+	minMaxTilerFbo.bind();
+	minMaxPassSprog->bind();
+	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
+
+	minMaxPassSprog->findUniformVariable("depthMap").set(
+		r->getMs().getDepthFai());
+
+	r->drawQuad();
+
+	F32 pixels[TILES_Y_COUNT][TILES_X_COUNT][2];
+	minMaxFai.readPixels(pixels);
+
+	// Update the rest of the tile stuff in parallel
+	// 
+
+	ThreadPool& threadPool = ThreadPoolSingleton::get();
+	UpdateTilesJob jobs[ThreadPool::MAX_THREADS]
+	
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	{
+		job[i].pixels = &pixels;
+		job[i].is = this;
+
+		threadPool.assignNewJob(i, &jobs[i]);
+	}
+
+	threadPool.waitForAllJobsToFinish();
+}
+
+//==============================================================================
+void Is::updateTilePlanes(F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2],
+	U32 start, U32 finish)
+{
+	// Update only the 4 planes
+	updateTiles4Planes(start, stop);
+
+	// - Calc the rest of the 2 planes and 
+	// - transform the planes
+	for(U32 k = start; k < stop; k++)
+	{
+		Tile& tile = tiles[j][i];
+
+		/// Calculate as you do in the vertex position inside the shaders
+		F32 minZ = 
+			r->getPlanes().y() / (r->getPlanes().x() + (*pixels)[j][i][0]);
+		F32 maxZ = 
+			-r->getPlanes().y() / (r->getPlanes().x() + (*pixels)[j][i][1]);
+
+		tile.planes[Frustum::FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), minZ);
+		tile.planes[Frustum::FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), maxZ);
+
+		// Now transform
+		for(U k = 0; k < 6; k++)
+		{
+			tile.planesWSpace[k] = tile.planes[k].getTransformed(
+				Transform(cam.getViewMatrix()));
+		}
+	}
+}
+
+//==============================================================================
+void Is::updateTiles4Planes(U32 start, U32 stop)
+{
+	Camera& cam = r->getScene().getActiveCamera();
+	U32 camTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
+
+	if(camTimestamp < planesUpdateTimestamp)
+	{
+		return;
+	}
+
+	switch(cam.getCameraType())
+	{
+	case Camera::CT_PERSPECTIVE:
+		updateTiles4PlanesInternal(
+			static_cast<const PerspectiveCamera&>(cam), start, stop);
+		break;
+	default:
+		ANKI_ASSERT(0 && "Unimplemented");
+		break;
+	}
+
+	planesUpdateTimestamp = Timestamp::getTimestamp();
+}
+
+//==============================================================================
+void Is::updateTiles4PlanesInternal(const PerspectiveCamera& cam,
+	U32 start, U32 stop)
 {
 	// The algorithm is almost the same as the recalculation of planes for
 	// PerspectiveFrustum class
@@ -296,116 +409,47 @@ void Is::updateAllTilesPlanesInternal(const PerspectiveCamera& cam)
 	F32 o = 2.0 * n * tan(fy / 2.0);
 	F32 o6 = o / TILES_Y_COUNT;
 
-	for(U j = 0; j < TILES_Y_COUNT; j++)
+	for(U32 k = start; k < stop; k++)
 	{
-		for(U i = 0; i < TILES_X_COUNT; i++)
-		{
-			Array<Plane, Frustum::FP_COUNT>& planes = tiles[j][i].planes;
-			Vec3 a, b;
+		U i = k % TILES_X_COUNT;
+		U j = k / TILES_X_COUNT;
 
-			// left
-			a = Vec3((I(i) - I(TILES_X_COUNT) / 2) * l6, 0.0, -n);
-			b = a.cross(Vec3(0.0, 1.0, 0.0));
-			b.normalize();
+		Array<Plane, Frustum::FP_COUNT>& planes = tiles[j][i].planes;
+		Vec3 a, b;
 
-			planes[Frustum::FP_LEFT] = Plane(b, 0.0);
+		// left
+		a = Vec3((I(i) - I(TILES_X_COUNT) / 2) * l6, 0.0, -n);
+		b = a.cross(Vec3(0.0, 1.0, 0.0));
+		b.normalize();
 
-			// right
-			a = Vec3((I(i) - I(TILES_X_COUNT) / 2 + 1) * l6, 0.0, -n);
-			b = Vec3(0.0, 1.0, 0.0).cross(a);
-			b.normalize();
+		planes[Frustum::FP_LEFT] = Plane(b, 0.0);
 
-			planes[Frustum::FP_RIGHT] = Plane(b, 0.0);
+		// right
+		a = Vec3((I(i) - I(TILES_X_COUNT) / 2 + 1) * l6, 0.0, -n);
+		b = Vec3(0.0, 1.0, 0.0).cross(a);
+		b.normalize();
 
-			// bottom
-			a = Vec3(0.0, (I(j) - I(TILES_Y_COUNT) / 2) * o6, -n);
-			b = Vec3(1.0, 0.0, 0.0).cross(a);
-			b.normalize();
+		planes[Frustum::FP_RIGHT] = Plane(b, 0.0);
 
-			planes[Frustum::FP_BOTTOM] = Plane(b, 0.0);
+		// bottom
+		a = Vec3(0.0, (I(j) - I(TILES_Y_COUNT) / 2) * o6, -n);
+		b = Vec3(1.0, 0.0, 0.0).cross(a);
+		b.normalize();
 
-			// bottom
-			a = Vec3(0.0, (I(j) - I(TILES_Y_COUNT) / 2 + 1) * o6, -n);
-			b = a.cross(Vec3(1.0, 0.0, 0.0));
-			b.normalize();
+		planes[Frustum::FP_BOTTOM] = Plane(b, 0.0);
 
-			planes[Frustum::FP_TOP] = Plane(b, 0.0);
-		}
-	}
-}
+		// bottom
+		a = Vec3(0.0, (I(j) - I(TILES_Y_COUNT) / 2 + 1) * o6, -n);
+		b = a.cross(Vec3(1.0, 0.0, 0.0));
+		b.normalize();
 
-//==============================================================================
-void Is::updateAllTilesPlanes()
-{
-	Camera& cam = r->getScene().getActiveCamera();
-	U32 camTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
-
-	if(camTimestamp < planesUpdateTimestamp)
-	{
-		return;
-	}
-
-	switch(cam.getCameraType())
-	{
-	case Camera::CT_PERSPECTIVE:
-		updateAllTilesPlanesInternal(
-			static_cast<const PerspectiveCamera&>(cam));
-		break;
-	default:
-		ANKI_ASSERT(0 && "Unimplemented");
-		break;
-	}
-
-	planesUpdateTimestamp = Timestamp::getTimestamp();
-}
-
-//==============================================================================
-void Is::updateTiles()
-{
-	// Do the min/max pass
-	//
-	const Camera& cam = r->getScene().getActiveCamera();
-
-	minMaxTilerFbo.bind();
-	minMaxPassSprog->bind();
-	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
-
-	minMaxPassSprog->findUniformVariable("depthMap").set(
-		r->getMs().getDepthFai());
-
-	r->drawQuad();
-
-	// Do something else instead of waiting for the draw call to finish.
-	// Update the tile planes
-	//
-	updateAllTilesPlanes();
-
-	// Update the near and far planes of tiles
-	//
-	F32 pixels[TILES_Y_COUNT][TILES_X_COUNT][2];
-	minMaxFai.readPixels(pixels);
-
-	for(U j = 0; j < TILES_Y_COUNT; j++)
-	{
-		for(U i = 0; i < TILES_X_COUNT; i++)
-		{
-			Tile& tile = tiles[j][i];
-
-			/// Calculate as you do in the vertex position inside the shaders
-			F32 minZ =
-				r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][0]);
-			F32 maxZ =
-				-r->getPlanes().y() / (r->getPlanes().x() + pixels[j][i][1]);
-
-			tile.planes[Frustum::FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), minZ);
-			tile.planes[Frustum::FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), maxZ);
-		}
+		planes[Frustum::FP_TOP] = Plane(b, 0.0);
 	}
 }
 
 //==============================================================================
 void Is::writeLightUbo(ShaderPointLights& shaderLights, U32 maxShaderLights,
-	PointLight** visibleLights, U32 visibleLightsCount, U start, U end)
+	PointLight* visibleLights[], U32 visibleLightsCount, U start, U end)
 {
 	const Camera& cam = r->getScene().getActiveCamera();
 
@@ -426,7 +470,7 @@ void Is::writeLightUbo(ShaderPointLights& shaderLights, U32 maxShaderLights,
 
 //==============================================================================
 void Is::writeLightUbo(ShaderSpotLights& shaderLights, U32 maxShaderLights,
-	SpotLight** visibleLights, U32 visibleLightsCount, U start, U end)
+	SpotLight* visibleLights[], U32 visibleLightsCount, U start, U end)
 {
 	const Camera& cam = r->getScene().getActiveCamera();
 
@@ -458,15 +502,12 @@ void Is::writeTilesUbo(
 	ShaderTiles& shaderTiles, U32 maxLightsPerTile,
 	U32 start, U32 end)
 {
-	Tile* tiles_ = &tiles[0][0];
 	const Camera& cam = r->getScene().getActiveCamera();
 	ANKI_ASSERT(maxLightsPerTile <= MAX_LIGHTS_PER_TILE);
 
 	for(U32 i = start; i < end; i++)
 	{
-		ANKI_ASSERT(i < TILES_X_COUNT * TILES_Y_COUNT);
-
-		Tile& tile = tiles_[i];
+		Tile& tile = tiles1d[i];
 		Array<U32, MAX_LIGHTS_PER_TILE> lightIndices;
 
 		// Point lights
@@ -477,7 +518,7 @@ void Is::writeTilesUbo(
 		{
 			const PointLight& light = *visiblePointLights[j];
 
-			if(cullLight(light, tile, cam.getViewMatrix()))
+			if(cullLight(light, tile))
 			{
 				// Use % to avoid overflows
 				lightIndices[pointLightsInTileCount % maxLightsPerTile] = j;
@@ -495,7 +536,7 @@ void Is::writeTilesUbo(
 		{
 			const SpotLight& light = *visibleSpotLights[j];
 
-			if(cullLight(light, tile, cam.getViewMatrix()))
+			if(cullLight(light, tile))
 			{
 				U id = (pointLightsInTileCount + spotLightsInTileCount) 
 					% maxLightsPerTile;
@@ -526,7 +567,7 @@ void Is::writeTilesUbo(
 }
 
 //==============================================================================
-void Is::pointLightsPass()
+void Is::lightPass()
 {
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
 	Camera& cam = r->getScene().getActiveCamera();
@@ -619,7 +660,7 @@ void Is::pointLightsPass()
 	spotLightsUbo.unmap();
 
 	//
-	// Update the tiles
+	// Update the tiles UBO
 	//
 
 	ShaderTiles* stiles = (ShaderTiles*)tilesUbo.map(
@@ -688,11 +729,10 @@ void Is::run()
 	// Update tiles
 	updateTiles();
 
-	// Do the rest
+	// Do the light pass
 	fbo.bind();
 	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
-
-	pointLightsPass();
+	lightPass();
 }
 
 } // end namespace anki

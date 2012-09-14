@@ -220,6 +220,11 @@ public:
 	{
 		setFar(f);
 	}
+
+	const PerspectiveFrustum& getFrustum() const
+	{
+		return frustum;
+	}
 	/// @}
 
 	/// @name SceneNode virtuals

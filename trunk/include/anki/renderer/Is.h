@@ -27,6 +27,7 @@ class Is: private RenderingPass
 	friend struct WritePointLightsUbo;
 	friend struct WriteSpotLightsUbo;
 	friend struct WriteTilesUboJob;
+	friend struct UpdateTilesJob;
 
 public:
 	// Config. These values affect the size of the uniform blocks and keep in
@@ -40,7 +41,6 @@ public:
 	static const U MAX_SPOT_LIGHTS = 8;
 
 	Is(Renderer* r);
-
 	~Is();
 
 	void init(const RendererInitializer& initializer);
@@ -59,15 +59,7 @@ public:
 	}
 	/// @}
 
-private:
-	enum LightSubType
-	{
-		LST_POINT,
-		LST_SPOT,
-		LST_SPOT_SHADOW,
-		LST_COUNT
-	};
-
+private
 	/// A screen tile
 	struct Tile
 	{
@@ -76,6 +68,7 @@ private:
 
 		/// Frustum planes
 		Array<Plane, 6> planes;
+		Array<Plane, 6> planesWSpace;
 	};
 
 	static const U COMMON_UNIFORMS_BLOCK_BINDING = 0;
@@ -86,7 +79,11 @@ private:
 	U32 planesUpdateTimestamp = Timestamp::getTimestamp();
 
 	/// @note The [0][0] is the bottom left tile
-	Array<Array<Tile, TILES_X_COUNT>, TILES_Y_COUNT> tiles;
+	union
+	{
+		Array<Array<Tile, TILES_X_COUNT>, TILES_Y_COUNT> tiles;
+		Array<Tile, TILES_X_COUNT * TILES_Y_COUNT> tiles1d;
+	};
 
 	/// A texture of TILES_X_COUNT*TILES_Y_COUNT size and format RG16F. Used to
 	/// to fill the Tile::depth
@@ -120,37 +117,47 @@ private:
 	/// Light shaders
 	ShaderProgramResourcePointer lightPassProg;
 
+	/// Shadow mapping
 	Sm sm;
 
+	/// Called by init
 	void initInternal(const RendererInitializer& initializer);
+
+	/// Do minmax pass and set the planes of the tiles
+	void updateTiles();
 
 	/// Updates all the planes except the near and far plane. Near and far 
 	/// planes will be updated in min max pass when the depth is known
-	void updateAllTilesPlanes();
+	void updateTilePlanes(F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2],
+		U32 start, U32 finish);
 
-	void updateAllTilesPlanesInternal(const PerspectiveCamera& pcam);
+	/// Update only the 4 planes of the tiles
+	void updateTiles4Planes(U32 start, U32 stop);
 
-	/// Do minmax pass and set the near/far planes of the tiles
-	void updateTiles();
+	/// Update the 4 planes of the tile for a perspective camera
+	void updateTiles4PlanesInternal(const PerspectiveCamera& cam,
+		U32 start, U32 stop)
 
 	/// See if the light is inside the tile
-	static Bool cullLight(const PointLight& light, const Tile& tile, 
-		const Mat4& viewMatrix);
-	static Bool cullLight(const SpotLight& light, const Tile& tile,
-		const Mat4& viewMatrix);
+	static Bool cullLight(const PointLight& light, const Tile& tile);
+	static Bool cullLight(const SpotLight& light, const Tile& tile);
 
+	/// Update the point lights UBO
 	void writeLightUbo(ShaderPointLights& shaderLights, U32 maxShaderLights,
-		PointLight** visibleLights, U32 visibleLightsCount, U start, U end);
+		PointLight* visibleLights[], U32 visibleLightsCount, U start, U end);
+	/// Update the spot lights UBO
 	void writeLightUbo(ShaderSpotLights& shaderLights, U32 maxShaderLights,
-		SpotLight** visibleLights, U32 visibleLightsCount, U start, U end);
+		SpotLight* visibleLights[], U32 visibleLightsCount, U start, U end);
 
+	/// Write the tiles UBO
 	void writeTilesUbo(
 		PointLight* visiblePointLights[], U32 visiblePointLightsCount,
 		SpotLight* visibleSpotLights[], U32 visibleSpotLightsCount,
 		ShaderTiles& shaderTiles, U32 maxLightsPerTile,
 		U32 start, U32 end);
 
-	void pointLightsPass();
+	// Do the actual pass
+	void lightPass();
 };
 
 } // end namespace anki
