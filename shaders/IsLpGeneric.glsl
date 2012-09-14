@@ -70,7 +70,7 @@ layout(std140, row_major, binding = 2) uniform spotLightsBlock
 
 struct Tile
 {
-	uint lightsCount;
+	uvec4 lightsCount;
 	uvec4 lightIndices[MAX_LIGHTS_PER_TILE / 4];
 };
 
@@ -81,9 +81,9 @@ layout(std140, row_major, binding = 3) uniform tilesBlock
 
 uniform usampler2D msFai0;
 uniform sampler2D msDepthFai;
-uniform sampler2D lightTex;
-uniform sampler2DShadow shadowMap;
-uniform sampler2D minmax;
+
+uniform sampler2D lightTextures[MAX_SPOT_LIGHTS];
+uniform sampler2DShadow shadowMap[MAX_SPOT_LIGHTS];
 /// @}
 
 /// @name Varyings
@@ -179,16 +179,37 @@ void main()
 	vec4 diffuseAndSpec = unpackUnorm4x8(msAll[0]);
 	vec2 specularAll = unpackSpecular(diffuseAndSpec.a);
 
-	// Lighting
-	uint lightsCount = tiles[vInstanceId].lightsCount;
-
+	// Ambient color
 	fColor = diffuseAndSpec.rgb * sceneAmbientColor.rgb;
-	for(uint i = 0; i < lightsCount; ++i)
+
+	// Point lights
+	uint pointLightsCount = tiles[vInstanceId].lightsCount[0];
+	for(uint i = 0; i < pointLightsCount; ++i)
 	{
 		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
 
 		fColor += doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
 			specularAll, plights[lightId]);
+	}
+
+	// Spot lights
+	uint spotLightsCount = tiles[vInstanceId].lightsCount[1];
+
+	for(uint i = pointLightsCount; i < pointLightsCount + spotLightsCount; ++i)
+	{
+		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
+
+		vec4 texCoords2 = slights[lightId].texProjectionMat 
+			* vec4(fragPosVspace, 1.0);
+		vec3 texCoords3 = texCoords2.xyz / texCoords2.w;
+		
+		vec2 pureColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
+			specularAll, plights[lightId].light);
+
+		vec3 lightTexColor = 
+			textureProj(lightTextures[lightId], texCoords2.xyz).rgb;
+
+		fColor += pureColor * lightTexColor;
 	}
 
 #if 0
