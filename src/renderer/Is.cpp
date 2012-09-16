@@ -5,8 +5,6 @@
 #include "anki/scene/Light.h"
 #include "anki/core/ThreadPool.h"
 
-#define BLEND_ENABLE 1
-
 namespace anki {
 
 //==============================================================================
@@ -25,6 +23,7 @@ struct ShaderPointLight: ShaderLight
 
 struct ShaderSpotLight: ShaderLight
 {
+	Vec4 lightDirection;
 	Mat4 texProjectionMat;
 };
 
@@ -125,7 +124,7 @@ struct WriteTilesUboJob: ThreadJob
 /// Job that updates the tile planes
 struct UpdateTilesJob: ThreadJob
 {
-	F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2];
+	F32 (*pixels)[Is::TILES_Y_COUNT][Is::TILES_X_COUNT][2];
 	Is* is;
 
 	void operator()(U threadId, U threadsCount)
@@ -321,12 +320,12 @@ void Is::updateTiles()
 	// 
 
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
-	UpdateTilesJob jobs[ThreadPool::MAX_THREADS]
+	UpdateTilesJob jobs[ThreadPool::MAX_THREADS];
 	
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		job[i].pixels = &pixels;
-		job[i].is = this;
+		jobs[i].pixels = &pixels;
+		jobs[i].is = this;
 
 		threadPool.assignNewJob(i, &jobs[i]);
 	}
@@ -336,7 +335,7 @@ void Is::updateTiles()
 
 //==============================================================================
 void Is::updateTilePlanes(F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2],
-	U32 start, U32 finish)
+	U32 start, U32 stop)
 {
 	// Update only the 4 planes
 	updateTiles4Planes(start, stop);
@@ -345,6 +344,8 @@ void Is::updateTilePlanes(F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2],
 	// - transform the planes
 	for(U32 k = start; k < stop; k++)
 	{
+		U i = k % TILES_X_COUNT;
+		U j = k / TILES_X_COUNT;
 		Tile& tile = tiles[j][i];
 
 		/// Calculate as you do in the vertex position inside the shaders
@@ -360,7 +361,7 @@ void Is::updateTilePlanes(F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2],
 		for(U k = 0; k < 6; k++)
 		{
 			tile.planesWSpace[k] = tile.planes[k].getTransformed(
-				Transform(cam.getViewMatrix()));
+				Transform(cam->getWorldTransform()));
 		}
 	}
 }
@@ -368,19 +369,18 @@ void Is::updateTilePlanes(F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2],
 //==============================================================================
 void Is::updateTiles4Planes(U32 start, U32 stop)
 {
-	Camera& cam = r->getScene().getActiveCamera();
-	U32 camTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
-
+	U32 camTimestamp = cam->getFrustumable()->getFrustumableTimestamp();
 	if(camTimestamp < planesUpdateTimestamp)
 	{
+		// Early exit if the frustum have not changed
 		return;
 	}
 
-	switch(cam.getCameraType())
+	switch(cam->getCameraType())
 	{
 	case Camera::CT_PERSPECTIVE:
 		updateTiles4PlanesInternal(
-			static_cast<const PerspectiveCamera&>(cam), start, stop);
+			static_cast<const PerspectiveCamera&>(*cam), start, stop);
 		break;
 	default:
 		ANKI_ASSERT(0 && "Unimplemented");
@@ -451,8 +451,6 @@ void Is::updateTiles4PlanesInternal(const PerspectiveCamera& cam,
 void Is::writeLightUbo(ShaderPointLights& shaderLights, U32 maxShaderLights,
 	PointLight* visibleLights[], U32 visibleLightsCount, U start, U end)
 {
-	const Camera& cam = r->getScene().getActiveCamera();
-
 	for(U64 i = start; i < end; i++)
 	{
 		ANKI_ASSERT(i < maxShaderLights);
@@ -460,7 +458,7 @@ void Is::writeLightUbo(ShaderPointLights& shaderLights, U32 maxShaderLights,
 		const PointLight& light = *visibleLights[i];
 
 		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
-			cam.getViewMatrix());
+			cam->getViewMatrix());
 
 		pl.posAndRadius = Vec4(pos, light.getRadius());
 		pl.diffuseColor = light.getDiffuseColor();
@@ -472,8 +470,6 @@ void Is::writeLightUbo(ShaderPointLights& shaderLights, U32 maxShaderLights,
 void Is::writeLightUbo(ShaderSpotLights& shaderLights, U32 maxShaderLights,
 	SpotLight* visibleLights[], U32 visibleLightsCount, U start, U end)
 {
-	const Camera& cam = r->getScene().getActiveCamera();
-
 	for(U64 i = start; i < end; i++)
 	{
 		ANKI_ASSERT(i < maxShaderLights);
@@ -481,17 +477,21 @@ void Is::writeLightUbo(ShaderSpotLights& shaderLights, U32 maxShaderLights,
 		const SpotLight& light = *visibleLights[i];
 
 		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
-			cam.getViewMatrix());
+			cam->getViewMatrix());
 
 		slight.posAndRadius = Vec4(pos, light.getDistance());
 		slight.diffuseColor = light.getDiffuseColor();
 		slight.specularColor = light.getSpecularColor();
+
+		Vec3 lightDir = -light.getWorldTransform().getRotation().getZAxis();
+		lightDir = cam->getViewMatrix().getRotationPart() * lightDir;
+		slight.lightDirection = Vec4(lightDir, cos(light.getFov() / 2.0));
 		
 		static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 
 			0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
 		slight.texProjectionMat = biasMat4 * light.getProjectionMatrix() *
 			Mat4::combineTransformations(light.getViewMatrix(),
-			Mat4(cam.getWorldTransform()));
+			Mat4(cam->getWorldTransform()));
 	}
 }
 
@@ -502,7 +502,6 @@ void Is::writeTilesUbo(
 	ShaderTiles& shaderTiles, U32 maxLightsPerTile,
 	U32 start, U32 end)
 {
-	const Camera& cam = r->getScene().getActiveCamera();
 	ANKI_ASSERT(maxLightsPerTile <= MAX_LIGHTS_PER_TILE);
 
 	for(U32 i = start; i < end; i++)
@@ -570,8 +569,7 @@ void Is::writeTilesUbo(
 void Is::lightPass()
 {
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
-	Camera& cam = r->getScene().getActiveCamera();
-	VisibilityInfo& vi = cam.getFrustumable()->getVisibilityInfo();
+	VisibilityInfo& vi = cam->getFrustumable()->getVisibilityInfo();
 
 	Array<PointLight*, MAX_POINT_LIGHTS> visiblePointLights;
 	U visiblePointLightsCount = 0;
@@ -703,8 +701,10 @@ void Is::run()
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
 
-	// Write common block
 	Scene& scene = r->getScene();
+	cam = &scene.getActiveCamera();
+
+	// Write common block
 	if(commonUboUpdateTimestamp < r->getPlanesUpdateTimestamp()
 		|| commonUboUpdateTimestamp < scene.getAmbientColorUpdateTimestamp()
 		|| commonUboUpdateTimestamp == 1)
@@ -715,7 +715,7 @@ void Is::run()
 			r->getPlanes().y());
 		blk.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
 			r->getLimitsOfNearPlane2());
-		blk.sceneAmbientColor = Vec4(r->getScene().getAmbientColor(), 0.0);
+		blk.sceneAmbientColor = Vec4(scene.getAmbientColor(), 0.0);
 
 		commonUbo.write(&blk);
 
@@ -724,6 +724,7 @@ void Is::run()
 
 	commonUbo.setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
 	pointLightsUbo.setBinding(POINT_LIGHTS_BLOCK_BINDING);
+	spotLightsUbo.setBinding(SPOT_LIGHTS_BLOCK_BINDING);
 	tilesUbo.setBinding(TILES_BLOCK_BINDING);
 
 	// Update tiles

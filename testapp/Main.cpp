@@ -38,6 +38,7 @@
 #include "anki/resource/Material.h"
 #include "anki/core/ThreadPool.h"
 #include "anki/core/Timestamp.h"
+#include "anki/util/Functions.h"
 
 using namespace anki;
 
@@ -79,7 +80,7 @@ void init()
 		1.0));
 
 	// lights
-	Vec3 lpos(-100.0, 0.0, -20.0);
+	Vec3 lpos(-100.0, 0.0, -50.0);
 	for(int i = 0; i < 50; i++)
 	{
 		for(int j = 0; j < 10; j++)
@@ -89,29 +90,31 @@ void init()
 			PointLight* point = new PointLight(name.c_str(), &scene,
 				Movable::MF_NONE, nullptr);
 			point->setRadius(2.0);
-			point->setDiffuseColor(Vec4(1.0, 0.0, 0.0, 0.0));
-			point->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
+			point->setDiffuseColor(Vec4(randFloat(3.0), randFloat(3.0), randFloat(3.0), 0.0));
+			point->setSpecularColor(Vec4(randFloat(3.0), randFloat(3.0), randFloat(3.0), 0.0));
 			point->setLocalTranslation(lpos);
 
-			lpos.z() += 4.0;
+			lpos.z() += 10.0;
 		}
 
 		lpos.x() += 4.0;
-		lpos.z() = -20;
+		lpos.z() = -50;
 	}
 
 
-	/*SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
+#if 0
+	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
 	spot->setFov(Math::toRad(45.0));
 	spot->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0),
-		Mat3(Euler(Math::toRad(-20), Math::toRad(20), 0.0)), 1.0));
-	spot->setDiffuseColor(Vec4(4.0));
+		Mat3::getIdentity(), 1.0));
+	spot->setDiffuseColor(Vec4(1.0));
 	spot->setSpecularColor(Vec4(1.0));
 	spot->loadTexture("gfx/lights/flashlight.tga");
 	spot->setDistance(20.0);
 	spot->setShadowEnabled(true);
+#endif
 
-	PointLight* point = new PointLight("point0", &scene, Movable::MF_NONE,
+	/*PointLight* point = new PointLight("point0", &scene, Movable::MF_NONE,
 		nullptr);
 	point->setRadius(3.0);
 	point->setDiffuseColor(Vec4(1.0, 0.0, 0.0, 0.0));
@@ -187,11 +190,11 @@ void mainLoopExtra()
 	{
 		mover = SceneSingleton::get().findSceneNode("horse")->getMovable();
 	}
-	/*if(in.getKey(SDL_SCANCODE_3))
+	if(in.getKey(SDL_SCANCODE_3))
 	{
 		mover = SceneSingleton::get().findSceneNode("spot0")->getMovable();
 	}
-	if(in.getKey(SDL_SCANCODE_4))
+	/*if(in.getKey(SDL_SCANCODE_4))
 	{
 		mover = SceneSingleton::get().findSceneNode("point0")->getMovable();
 	}
@@ -275,7 +278,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -283,7 +286,7 @@ void mainLoop()
 				- timer.getElapsedTime()) * 1000.0);
 		}
 #else
-		if(MainRendererSingleton::get().getFramesCount() == 100)
+		if(MainRendererSingleton::get().getFramesCount() == 1000)
 		{
 			break;
 		}

@@ -4,8 +4,7 @@
 #ifndef ANKI_UTIL_FUNCTIONS_H
 #define ANKI_UTIL_FUNCTIONS_H
 
-#include <cstdint>
-#include <cstdlib> // For size_t
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
@@ -15,22 +14,22 @@ namespace anki {
 /// @{
 
 /// Pick a random number from min to max
-extern int randRange(int min, int max);
+extern I32 randRange(I32 min, I32 max);
 
 /// Pick a random number from min to max
-extern uint32_t randRange(uint32_t min, uint32_t max);
+extern U32 randRange(U32 min, U32 max);
 
 /// Pick a random number from min to max
-extern float randRange(float min, float max);
+extern F32 randRange(F32 min, F32 max);
 
 /// Pick a random number from min to max
-extern double randRange(double min, double max);
+extern F64 randRange(F64 min, F64 max);
 
-extern float randFloat(float max);
+extern F32 randFloat(F32 max);
 
 /// Get the size in bytes of a vector
 template<typename Vec>
-extern size_t getVectorSizeInBytes(const Vec& v)
+extern PtrSize getVectorSizeInBytes(const Vec& v)
 {
 	return v.size() * sizeof(typename Vec::value_type);
 }

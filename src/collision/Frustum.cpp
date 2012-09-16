@@ -1,6 +1,7 @@
 #include "anki/collision/Frustum.h"
 #include "anki/collision/LineSegment.h"
 #include "anki/collision/Aabb.h"
+#include <limits>
 
 namespace anki {
 
@@ -51,14 +52,18 @@ PerspectiveFrustum& PerspectiveFrustum::operator=(const PerspectiveFrustum& b)
 //==============================================================================
 F32 PerspectiveFrustum::testPlane(const Plane& p) const
 {
-	F32 o = 0.0;
+	// At this point all are in the front side of the plane, all the are 
+	// intersecting or all on the negative side
 
-	for(const Vec3& dir : dirs)
+	LineSegment ls(eye, dirs[0]);
+	F32 o = ls.testPlane(p);
+
+	for(U i = 1; i < dirs.size(); i++)
 	{
-		LineSegment ls(eye, dir);
+		LineSegment ls(eye, dirs[i]);
 		F32 t = ls.testPlane(p);
 
-		if(t == 0)
+		if(t == 0.0)
 		{
 			return 0.0;
 		}

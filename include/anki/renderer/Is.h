@@ -35,7 +35,7 @@ public:
 	static const U TILES_X_COUNT = 16;
 	static const U TILES_Y_COUNT = 16;
 
-	static const U MAX_LIGHTS_PER_TILE = 32;
+	static const U MAX_LIGHTS_PER_TILE = 40;
 
 	static const U MAX_POINT_LIGHTS = 512;
 	static const U MAX_SPOT_LIGHTS = 8;
@@ -59,7 +59,7 @@ public:
 	}
 	/// @}
 
-private
+private:
 	/// A screen tile
 	struct Tile
 	{
@@ -120,6 +120,9 @@ private
 	/// Shadow mapping
 	Sm sm;
 
+	/// Opt because many ask for it
+	Camera* cam;
+
 	/// Called by init
 	void initInternal(const RendererInitializer& initializer);
 
@@ -136,7 +139,7 @@ private
 
 	/// Update the 4 planes of the tile for a perspective camera
 	void updateTiles4PlanesInternal(const PerspectiveCamera& cam,
-		U32 start, U32 stop)
+		U32 start, U32 stop);
 
 	/// See if the light is inside the tile
 	static Bool cullLight(const PointLight& light, const Tile& tile);
