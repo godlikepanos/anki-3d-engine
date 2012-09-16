@@ -69,23 +69,27 @@ void Dbg::run()
 		}
 
 		sceneDrawer->draw(*node);
-
-		// XXX
-		if(node->getLight())
-		{
-			CollisionDebugDrawer cdd(drawer.get());
-			Light& l = *node->getLight();
-			l.getLightType();
-			PointLight& pl = static_cast<PointLight&>(l);
-			deleteme = &pl;
-			pl.getSphere().accept(cdd);
-		}
 	}
 
 	for(const Sector* sector : scene.sectors)
 	{
 		sceneDrawer->draw(sector->getOctree());
 	}
+
+#if 0
+	drawer->setViewProjectionMatrix(r->getViewProjectionMatrix());
+	drawer->setModelMatrix(Mat4::getIdentity());
+
+	SceneNode* node = scene.findSceneNode("spot0");
+	Light* light = static_cast<Light*>(node);
+	SpotLight* slight = static_cast<SpotLight*>(light);
+
+	const Transform& trf = light->getWorldTransform();
+
+	drawer->drawLine(trf.getOrigin(),
+		trf.getOrigin() + (-trf.getRotation().getZAxis()), 
+		Vec4(1.0));
+#endif
 
 #if 0
 	// XXX

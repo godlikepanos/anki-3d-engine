@@ -11,8 +11,6 @@
 #pragma anki include "shaders/Pack.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
-#define DISCARD 0
-
 #if !MAX_LIGHTS_PER_TILE || !TILES_X_COUNT || !TILES_Y_COUNT
 #	error "See file"
 #endif
@@ -20,6 +18,8 @@
 #if !MAX_POINT_LIGHTS || !MAX_SPOT_LIGHTS
 #	error "See file"
 #endif
+
+#define ATTENUATION_FINE 0
 
 /// @name Uniforms
 /// @{
@@ -55,6 +55,7 @@ struct Light
 struct SpotLight
 {
 	Light light;
+	vec4 lightDirection;
 	mat4 texProjectionMat;
 };
 
@@ -103,13 +104,6 @@ vec3 getFragPosVSpace()
 {
 	float depth = texture(msDepthFai, vTexCoords).r;
 
-#if DISCARD
-	if(depth == 1.0)
-	{
-		discard;
-	}
-#endif
-
 	vec3 fragPosVspace;
 	fragPosVspace.z = -planes.y / (planes.x + depth);
 
@@ -133,24 +127,19 @@ vec3 doPhong(in vec3 fragPosVspace, in vec3 normal, in vec3 diffuse,
 
 	// Instead of using normalize(frag2LightVec) we brake the operation 
 	// because we want fragLightDist for the calc of the attenuation
-	float fragLightDistSqrt = sqrt(dot(frag2LightVec, frag2LightVec));
-	vec3 lightDir = frag2LightVec / fragLightDistSqrt;
+	float fragLightDistSquared = dot(frag2LightVec, frag2LightVec);
+	float fragLightDist = sqrt(fragLightDistSquared);
+	vec3 lightDir = frag2LightVec / fragLightDist;
 
 	// Lambert term
-	float lambertTerm = dot(normal, lightDir);
-
-#if DISCARD
-	if(lambertTerm < 0.0)
-	{
-		discard;
-	}
-#else
-	lambertTerm = max(0.0, lambertTerm);
-#endif
+	float lambertTerm = max(0.0, dot(normal, lightDir));
 
 	// Attenuation
-	float attenuation = 
-		max(1.0 - fragLightDistSqrt / light.posAndRadius.w, 0.0);
+#if ATTENUATION_FINE
+	float att = max(1.0 - fragLightDistSquared / light.posAndRadius.w, 0.0);
+#else
+	float att = max(1.0 - fragLightDist / light.posAndRadius.w, 0.0);
+#endif
 
 	// Diffuse
 	vec3 difCol = diffuse * light.diffuseColor.rgb;
@@ -162,7 +151,7 @@ vec3 doPhong(in vec3 fragPosVspace, in vec3 normal, in vec3 diffuse,
 	vec3 specCol = light.specularColor.rgb * (specIntensity * specularAll.r);
 	
 	// end
-	return (difCol + specCol) * (attenuation * lambertTerm);
+	return (difCol + specCol) * (att * lambertTerm);
 }
 
 //==============================================================================
@@ -172,7 +161,7 @@ void main()
 	uvec2 msAll = texture(msFai0, vTexCoords).rg;
 
 	// get frag pos in view space
-	vec3 fragPosVspace = getFragPosVSpace();
+	const vec3 fragPosVspace = getFragPosVSpace();
 
 	// Decode MS
 	vec3 normal = unpackNormal(unpackHalf2x16(msAll[1]));
@@ -199,17 +188,19 @@ void main()
 	{
 		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
 
-		vec4 texCoords2 = slights[lightId].texProjectionMat 
-			* vec4(fragPosVspace, 1.0);
-		vec3 texCoords3 = texCoords2.xyz / texCoords2.w;
-		
-		vec2 pureColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
-			specularAll, plights[lightId].light);
+		vec3 pureColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
+			specularAll, slights[lightId].light);
 
-		vec3 lightTexColor = 
-			textureProj(lightTextures[lightId], texCoords2.xyz).rgb;
+		vec4 lightDirAndAng = slights[lightId].lightDirection;
 
-		fColor += pureColor * lightTexColor;
+		vec3 l = 
+			normalize(fragPosVspace - slights[lightId].light.posAndRadius.xyz);
+
+		float costheta = dot(l, lightDirAndAng.xyz);
+		float spotFactor = smoothstep(lightDirAndAng.w,
+			cos(0.75 / 10), costheta);
+
+		fColor += pureColor * spotFactor;
 	}
 
 #if 0
@@ -227,9 +218,9 @@ void main()
 #endif
 
 #if 0
-	if(lightsCount > 0)
+	if(tiles[vInstanceId].lightsCount[1] > 0)
 	{
-		fColor += vec3(0.0, float(lightsCount) / 7.0, 0.0);
+		fColor += vec3(0.0, 1.0, 0.0);
 	}
 #endif
 }

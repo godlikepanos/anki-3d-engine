@@ -6,35 +6,35 @@
 namespace anki {
 
 //==============================================================================
-int randRange(int min, int max)
+I32 randRange(I32 min, I32 max)
 {
 	return (rand() % (max - min + 1)) + min;
 }
 
 //==============================================================================
-uint32_t randRange(uint32_t min, uint32_t max)
+U32 randRange(U32 min, U32 max)
 {
 	return (rand() % (max - min + 1)) + min;
 }
 
 //==============================================================================
-float randRange(float min, float max)
+F32 randRange(F32 min, F32 max)
 {
-	float r = (float)rand() / (float)RAND_MAX;
+	F32 r = (F32)rand() / (F32)RAND_MAX;
 	return min + r * (max - min);
 }
 
 //==============================================================================
-double randRange(double min, double max)
+F64 randRange(F64 min, F64 max)
 {
-	double r = (double)rand() / (double)RAND_MAX;
+	F64 r = (F64)rand() / (F64)RAND_MAX;
 	return min + r * (max - min);
 }
 
 //==============================================================================
-float randFloat(float max)
+F32 randFloat(F32 max)
 {
-	float r = float(rand()) / float(RAND_MAX);
+	F32 r = F32(rand()) / F32(RAND_MAX);
 	return r * max;
 }
 
