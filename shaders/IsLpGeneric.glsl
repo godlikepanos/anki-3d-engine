@@ -191,14 +191,14 @@ void main()
 		vec3 pureColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
 			specularAll, slights[lightId].light);
 
-		vec4 lightDirAndAng = slights[lightId].lightDirection;
+		const vec4 lightDirAndAng = slights[lightId].lightDirection;
 
 		vec3 l = 
 			normalize(fragPosVspace - slights[lightId].light.posAndRadius.xyz);
 
 		float costheta = dot(l, lightDirAndAng.xyz);
-		float spotFactor = smoothstep(lightDirAndAng.w,
-			cos(0.75 / 10), costheta);
+		float spotFactor = smoothstep(slights[lightId].light.diffuseColor.w,
+			slights[lightId].light.specularColor.w, costheta);
 
 		fColor += pureColor * spotFactor;
 	}

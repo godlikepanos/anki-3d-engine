@@ -8,13 +8,15 @@
 #include "anki/gl/Gl.h"
 #include "anki/math/Math.h"
 #include "anki/renderer/Sm.h"
-#include "anki/renderer/Smo.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
 #include "anki/core/Timestamp.h"
+#include "anki/collision/Plane.h"
 
 namespace anki {
 
+class Camera;
+class PerspectiveCamera;
 class PointLight;
 class SpotLight;
 struct ShaderPointLights;

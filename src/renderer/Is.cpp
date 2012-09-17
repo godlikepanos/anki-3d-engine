@@ -480,12 +480,14 @@ void Is::writeLightUbo(ShaderSpotLights& shaderLights, U32 maxShaderLights,
 			cam->getViewMatrix());
 
 		slight.posAndRadius = Vec4(pos, light.getDistance());
-		slight.diffuseColor = light.getDiffuseColor();
-		slight.specularColor = light.getSpecularColor();
+		slight.diffuseColor = Vec4(light.getDiffuseColor().xyz(),
+			light.getOuterAngleCos());
+		slight.specularColor = Vec4(light.getSpecularColor().xyz(),
+			light.getInnerAngleCos());
 
 		Vec3 lightDir = -light.getWorldTransform().getRotation().getZAxis();
 		lightDir = cam->getViewMatrix().getRotationPart() * lightDir;
-		slight.lightDirection = Vec4(lightDir, cos(light.getFov() / 2.0));
+		slight.lightDirection = Vec4(lightDir, 0.0);
 		
 		static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 
 			0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);

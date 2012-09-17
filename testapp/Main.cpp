@@ -102,15 +102,16 @@ void init()
 	}
 
 
-#if 0
+#if 1
 	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
-	spot->setFov(Math::toRad(45.0));
+	spot->setOuterAngle(Math::toRad(45.0));
+	spot->setInnerAngle(Math::toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0),
 		Mat3::getIdentity(), 1.0));
 	spot->setDiffuseColor(Vec4(1.0));
 	spot->setSpecularColor(Vec4(1.0));
 	spot->loadTexture("gfx/lights/flashlight.tga");
-	spot->setDistance(20.0);
+	spot->setDistance(30.0);
 	spot->setShadowEnabled(true);
 #endif
 
@@ -216,7 +217,8 @@ void mainLoopExtra()
 
 	if(in.getKey(SDL_SCANCODE_P) == 1)
 	{
-		SceneSingleton::get().getActiveCamera().getFrustumable()->setFar(250.0);
+		/*SceneSingleton::get().getActiveCamera().
+			getFrustumable()->getFrustum().setFar(250.0);*/
 	}
 
 	if(in.getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
@@ -278,7 +280,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{

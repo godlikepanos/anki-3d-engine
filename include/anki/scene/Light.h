@@ -40,7 +40,7 @@ public:
 	/// @{
 	Light(LightType t, // Light
 		const char* name, Scene* scene, // Scene
-		uint32_t movableFlags, Movable* movParent, // Movable
+		U32 movableFlags, Movable* movParent, // Movable
 		CollisionShape* cs); // Spatial
 	/// @}
 
@@ -111,7 +111,7 @@ public:
 	}
 
 	/// Override SceneNode::frameUpdate
-	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
+	void frameUpdate(F32 prevUpdateTime, F32 crntTime, int frame)
 	{
 		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
 	}
@@ -131,16 +131,16 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	PointLight(const char* name, Scene* scene,
-		uint32_t movableFlags, Movable* movParent);
+		U32 movableFlags, Movable* movParent);
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	float getRadius() const
+	F32 getRadius() const
 	{
 		return sphereW.getRadius();
 	}
-	void setRadius(const float x)
+	void setRadius(const F32 x)
 	{
 		sphereW.setRadius(x);
 		spatialMarkUpdated();
@@ -170,7 +170,7 @@ public:
 };
 
 /// Spot light
-class SpotLight: public Light, public PerspectiveFrustumable
+class SpotLight: public Light, public Frustumable
 {
 public:
 	ANKI_HAS_SLOTS(SpotLight)
@@ -178,7 +178,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	SpotLight(const char* name, Scene* scene,
-		uint32_t movableFlags, Movable* movParent);
+		U32 movableFlags, Movable* movParent);
 	/// @}
 
 	/// @name Accessors
@@ -202,23 +202,40 @@ public:
 		return *tex;
 	}
 
-	float getFov() const
+	F32 getOuterAngle() const
 	{
-		return getFovX();
+		return frustum.getFovX();
 	}
-	void setFov(float x)
+	void setOuterAngle(F32 x)
 	{
-		setFovX(x);
-		setFovY(x);
+		frustum.setFovX(x);
+		frustum.setFovY(x);
+		cosOuterAngle = cos(x / 2.0);
+		frustumUpdate();
 	}
 
-	float getDistance() const
+	F32 getOuterAngleCos() const
 	{
-		return getFar();
+		return cosOuterAngle;
 	}
-	void setDistance(float f)
+
+	void setInnerAngle(F32 ang)
 	{
-		setFar(f);
+		cosInnerAngle = cos(ang / 2.0);
+	}
+	F32 getInnerAngleCos() const
+	{
+		return cosInnerAngle;
+	}
+
+	F32 getDistance() const
+	{
+		return frustum.getFar();
+	}
+	void setDistance(F32 f)
+	{
+		frustum.setFar(f);
+		frustumUpdate();
 	}
 
 	const PerspectiveFrustum& getFrustum() const
@@ -233,7 +250,7 @@ public:
 	/// Override SceneNode::getFrustumable()
 	Frustumable* getFrustumable()
 	{
-		return this;
+		return (getShadowEnabled()) ? this : nullptr;
 	}
 	/// @}
 
@@ -247,19 +264,7 @@ public:
 		Movable::movableUpdate();
 		frustum.setTransform(getWorldTransform());
 		viewMat = Mat4(getWorldTransform().getInverse());
-		spatialMarkUpdated();
-	}
-	/// @}
 
-	/// @name Frustumable virtuals
-	/// @{
-
-	/// Overrides Frustumable::frustumUpdate(). Calculate the projection
-	/// matrix
-	void frustumUpdate()
-	{
-		Frustumable::frustumUpdate();
-		projectionMat = frustum.calculateProjectionMatrix();
 		spatialMarkUpdated();
 	}
 	/// @}
@@ -274,21 +279,16 @@ private:
 	Mat4 projectionMat;
 	Mat4 viewMat;
 	TextureResourcePointer tex;
-	ReadWriteProperty<float>* fovProp; ///< Have it here for updates
-	ReadWriteProperty<float>* distProp; ///< Have it here for updates
+	F32 cosOuterAngle;
+	F32 cosInnerAngle;
 
-	void updateFar(const float& f)
+	void frustumUpdate()
 	{
-		frustum.setFar(f);
-	}
-	ANKI_SLOT(updateFar, const float&)
+		projectionMat = frustum.calculateProjectionMatrix();
 
-	void updateFov(const float& f)
-	{
-		frustum.setFovX(f);
-		frustum.setFovY(f);
+		spatialMarkUpdated();
+		frustumableMarkUpdated();
 	}
-	ANKI_SLOT(updateFov, const float&)
 };
 
 } // end namespace anki
