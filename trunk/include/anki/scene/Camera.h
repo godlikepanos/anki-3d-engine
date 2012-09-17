@@ -13,7 +13,8 @@ namespace anki {
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode, public Movable, public Spatial
+class Camera: public SceneNode, public Movable, public Spatial, 
+	public Frustumable
 {
 public:
 	/// @note Don't EVER change the order
@@ -29,9 +30,9 @@ public:
 	Camera(CameraType type_,
 		const char* name, Scene* scene, // SceneNode
 		uint movableFlags, Movable* movParent, // Movable
-		Frustum* frustum) // Spatial
+		Frustum* frustum) // Spatial & Frustumable
 		: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
-			Spatial(frustum), type(type_)
+			Spatial(frustum), Frustumable(frustum), type(type_)
 	{}
 
 	virtual ~Camera();
@@ -85,6 +86,12 @@ public:
 		return this;
 	}
 
+	/// Override SceneNode::getFrustumable()
+	Frustumable* getFrustumable()
+	{
+		return this;
+	}
+
 	/// Override SceneNode::frameUpdate
 	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
 	{
@@ -125,7 +132,7 @@ private:
 };
 
 /// Perspective camera
-class PerspectiveCamera: public Camera, public PerspectiveFrustumable
+class PerspectiveCamera: public Camera
 {
 public:
 	ANKI_HAS_SLOTS(PerspectiveCamera)
@@ -136,6 +143,8 @@ public:
 		uint movableFlags, Movable* movParent);
 	/// @}
 
+	/// @name Accessors
+	/// @{
 	float getNear() const
 	{
 		return frustum.getNear();
@@ -146,13 +155,30 @@ public:
 		return frustum.getFar();
 	}
 
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::getFrustumable()
-	Frustumable* getFrustumable()
+	F32 getFovX() const
 	{
-		return this;
+		return frustum.getFovX();
+	}
+	void setFovX(F32 x)
+	{
+		frustumUpdate();
+		frustum.setFovX(x);
+	}
+
+	F32 getFovY() const
+	{
+		return frustum.getFovY();
+	}
+	void setFovY(F32 x)
+	{
+		frustumUpdate();
+		frustum.setFovY(x);
+	}
+
+	void setAll(F32 fovX_, F32 fovY_, F32 near_, F32 far_)
+	{
+		frustum.setAll(fovX_, fovY_, near_, far_);
+		frustumUpdate();
 	}
 	/// @}
 
@@ -173,34 +199,23 @@ public:
 	}
 	/// @}
 
-	/// @name Frustumable virtuals
-	/// @{
+private:
+	PerspectiveFrustum frustum;
 
-	/// Overrides Frustumable::frustumUpdate(). Calculate the projection
-	/// matrix
+	/// Called when something changes in the frustum
 	void frustumUpdate()
 	{
-		Frustumable::frustumUpdate();
+		frustumableMarkUpdated();
+
 		projectionMat = frustum.calculateProjectionMatrix();
 		invProjectionMat = projectionMat.getInverse();
 		updateViewProjectionMatrix();
 		spatialMarkUpdated();
 	}
-	/// @}
-
-private:
-	PerspectiveFrustum frustum;
-
-	/// Called when the property changes
-	void updateFrustumSlot(const PerspectiveFrustum&)
-	{
-		frustumUpdate();
-	}
-	ANKI_SLOT(updateFrustumSlot, const PerspectiveFrustum&)
 };
 
 /// Orthographic camera
-class OrthographicCamera: public Camera, public OrthographicFrustumable
+class OrthographicCamera: public Camera
 {
 public:
 	ANKI_HAS_SLOTS(OrthographicCamera)
@@ -211,23 +226,41 @@ public:
 		uint movableFlags, Movable* movParent);
 	/// @}
 
-	float getNear() const
+	/// @name Accessors
+	/// @{
+	F32 getNear() const
 	{
 		return frustum.getNear();
 	}
 
-	float getFar() const
+	F32 getFar() const
 	{
 		return frustum.getFar();
 	}
 
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::getFrustumable()
-	Frustumable* getFrustumable()
+	F32 getLeft() const
 	{
-		return this;
+		return frustum.getLeft();
+	}
+
+	F32 getRight() const
+	{
+		return frustum.getRight();
+	}
+
+	F32 getBottom() const
+	{
+		return frustum.getBottom();
+	}
+
+	F32 getTop() const
+	{
+		return frustum.getTop();
+	}
+
+	void setAll(F32 left, F32 right, F32 near, F32 far, F32 top, F32 bottom)
+	{
+		frustum.setAll(left, right, near, far, top, bottom);
 	}
 	/// @}
 
@@ -247,28 +280,19 @@ public:
 	}
 	/// @}
 
-	/// @name Frustumable virtuals
-	/// @{
-
-	/// Overrides Frustumable::frustumUpdate(). Calculate the projection
-	/// matrix
-	void frustumUpdate()
-	{
-		Frustumable::frustumUpdate();
-		projectionMat = frustum.calculateProjectionMatrix();
-		invProjectionMat = projectionMat.getInverse();
-		updateViewProjectionMatrix();
-	}
-	/// @}
-
 private:
 	OrthographicFrustum frustum;
 
-	void updateFrustumSlot(const OrthographicFrustum&)
+	/// Called when something changes in the frustum
+	void frustumUpdate()
 	{
-		frustumUpdate();
+		frustumableMarkUpdated();
+
+		projectionMat = frustum.calculateProjectionMatrix();
+		invProjectionMat = projectionMat.getInverse();
+		updateViewProjectionMatrix();
+		spatialMarkUpdated();
 	}
-	ANKI_SLOT(updateFrustumSlot, const OrthographicFrustum&)
 };
 /// @}
 

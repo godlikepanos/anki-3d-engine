@@ -95,7 +95,7 @@ public:
 	/// the @a trf, it just replaces it
 	virtual void setTransform(const Transform& trf) = 0;
 
-public: // XXX
+protected:
 	/// @name Viewing variables
 	/// @{
 	F32 near = 0.0;

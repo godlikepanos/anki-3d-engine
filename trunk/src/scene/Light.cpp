@@ -9,7 +9,7 @@ namespace anki {
 //==============================================================================
 Light::Light(LightType t, // Light
 	const char* name, Scene* scene, // Scene
-	uint32_t movableFlags, Movable* movParent, // Movable
+	U32 movableFlags, Movable* movParent, // Movable
 	CollisionShape* cs) // Spatial
 	: SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this),
@@ -33,11 +33,11 @@ Light::~Light()
 
 //==============================================================================
 PointLight::PointLight(const char* name, Scene* scene,
-	uint32_t movableFlags, Movable* movParent)
+	U32 movableFlags, Movable* movParent)
 	: Light(LT_POINT, name, scene, movableFlags, movParent, &sphereW)
 {
-	float& r = sphereW.getRadius();
-	addNewProperty(new ReadWritePointerProperty<float>("radius", &r));
+	F32& r = sphereW.getRadius();
+	addNewProperty(new ReadWritePointerProperty<F32>("radius", &r));
 }
 
 //==============================================================================
@@ -46,27 +46,18 @@ PointLight::PointLight(const char* name, Scene* scene,
 
 //==============================================================================
 SpotLight::SpotLight(const char* name, Scene* scene,
-	uint32_t movableFlags, Movable* movParent)
+	U32 movableFlags, Movable* movParent)
 	: Light(LT_SPOT, name, scene, movableFlags, movParent, &frustum),
-		PerspectiveFrustumable(&frustum)
+		Frustumable(&frustum)
 {
-	// Fov
-	//
-	float ang = Math::toRad(45.0);
-	fovProp = new ReadWriteProperty<float>("fov", ang);
-	addNewProperty(fovProp);
-	ANKI_CONNECT(fovProp, valueChanged, this, updateFov);
-
-	// Distance
-	//
-	float dist = 10.0;
-	distProp = new ReadWriteProperty<float>("distance", dist);
-	addNewProperty(distProp);
-	ANKI_CONNECT(distProp, valueChanged, this, updateFar);
+	const F32 ang = Math::toRad(45.0);
+	setOuterAngle(ang / 2.0);
+	const F32 dist = 1.0;
 
 	// Fix frustum
 	//
 	frustum.setAll(ang, ang, 0.1, dist);
+	frustumUpdate();
 }
 
 } // end namespace anki
