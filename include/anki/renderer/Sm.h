@@ -4,7 +4,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 #include "anki/resource/TextureResource.h"
-#include <array>
+#include "anki/util/Vector.h"
 
 namespace anki {
 
@@ -24,26 +24,10 @@ public:
 	{
 		return enabled;
 	}
-
-	bool getPcfEnabled() const
-	{
-		return pcfEnabled;
-	}
-
-	bool getBilinearEnabled() const
-	{
-		return bilinearEnabled;
-	}
 	/// @}
 
 	void init(const RendererInitializer& initializer);
-
-	/// Render the scene only with depth and store the result in the
-	/// shadowMap
-	/// @param[in] light The light
-	/// @param[in] distance The distance between the viewer's camera and the
-	///            light
-	Texture* run(Light& light, float distance); /// XXX order
+	void run();
 
 private:
 	struct Shadowmap
@@ -51,26 +35,37 @@ private:
 		Texture tex;
 		Fbo fbo;
 		Light* light = nullptr;
+		U32 timestamp = 0; ///< Timestamp of last render or light change
 	};
 
-	static const int MAX_SHADOWMAPS = 5;
+	Vector<Shadowmap> sms;
 
-	std::array<Shadowmap, MAX_SHADOWMAPS> sms;
+	/// If false then disable SM at all
+	Bool enabled; 
 
-	bool enabled; ///< If false then disable SM at all
 	/// Enable Percentage Closer Filtering for all the levels
-	bool pcfEnabled;
-	/// Shadowmap bilinear filtering for the first level. Better quality
-	bool bilinearEnabled;
-	/// Shadowmap resolution
-	int resolution;
+	Bool pcfEnabled;
 
-	/// XXX
-	Shadowmap& findBestCandidate(Light& light);
+	/// Shadowmap bilinear filtering for the first level. Better quality
+	Bool bilinearEnabled;
+
+	/// Shadowmap resolution
+	U32 resolution;
+
+	U32 getMaxLightsCount()
+	{
+		return sms.size();
+	}
+
+	void prepareDraw();
+	void afterDraw();
+
+	/// Find the best shadowmap for that light
+	Shadowmap& bestCandidate(Light& light);
+
+	void doLight(Light& light);
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

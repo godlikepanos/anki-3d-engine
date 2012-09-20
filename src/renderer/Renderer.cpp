@@ -162,7 +162,7 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 }
 
 //==============================================================================
-void Renderer::createFai(uint width, uint height, int internalFormat,
+void Renderer::createFai(U32 width, U32 height, int internalFormat,
 	int format, int type, Texture& fai)
 {
 	Texture::Initializer init;

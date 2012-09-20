@@ -243,6 +243,13 @@ public:
 		setFilteringNoBind(filterType);
 	}
 
+	/// Set texture parameter
+	void setParameter(GLenum param, GLint value)
+	{
+		TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
+		glTexParameteri(target, param, value);
+	}
+
 	/// Generate new mipmaps
 	void genMipmap();
 
