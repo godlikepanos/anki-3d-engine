@@ -25,7 +25,7 @@ struct RendererInitializer
 	{
 		struct Ez
 		{
-			bool enabled = false;
+			Bool enabled = false;
 		} ez;
 	} ms;
 
@@ -35,11 +35,11 @@ struct RendererInitializer
 		// Sm
 		struct Sm
 		{
-			bool enabled = true;
-			bool pcfEnabled = true;
-			bool bilinearEnabled = true;
-			int resolution = 1024;
-			float level0Distance = 3.0;
+			Bool enabled = true;
+			Bool pcfEnabled = true;
+			Bool bilinearEnabled = true;
+			U32 resolution = 512;
+			U32 maxLights = 4;
 		} sm;
 	} is;
 
@@ -49,41 +49,41 @@ struct RendererInitializer
 		// Hdr
 		struct Hdr
 		{
-			bool enabled = true;
-			float renderingQuality = 0.25;
-			float blurringDist = 1.0;
-			float blurringIterationsNum = 2;
-			float exposure = 4.0;
+			Bool enabled = true;
+			F32 renderingQuality = 0.25;
+			F32 blurringDist = 1.0;
+			F32 blurringIterationsNum = 2;
+			F32 exposure = 4.0;
 		} hdr;
 
 		// Ssao
 		struct Ssao
 		{
-			bool enabled = true;
-			float renderingQuality = 0.3;
-			uint32_t blurringIterationsNum = 2;
+			Bool enabled = true;
+			F32 renderingQuality = 0.3;
+			U32 blurringIterationsNum = 2;
 		} ssao;
 
 		// Bl
 		struct Bl
 		{
-			bool enabled = true;
-			uint blurringIterationsNum = 2;
-			float sideBlurFactor = 1.0;
+			Bool enabled = true;
+			U blurringIterationsNum = 2;
+			F32 sideBlurFactor = 1.0;
 		} bl;
 	} pps;
 
 	// Dbg
 	struct Dbg
 	{
-		bool enabled = false;
+		Bool enabled = false;
 	} dbg;
 
 	// the globals
-	int width; ///< Ignored by MainRenderer
-	int height; ///< Ignored by MainRenderer
-	float mainRendererQuality = 1.0; ///< Only for MainRenderer
-	float lodDistance; ///< Distance that used to calculate the LOD
+	U32 width; ///< Ignored by MainRenderer
+	U32 height; ///< Ignored by MainRenderer
+	F32 mainRendererQuality = 1.0; ///< Only for MainRenderer
+	F32 lodDistance; ///< Distance that used to calculate the LOD
 
 	// funcs
 	RendererInitializer()
@@ -146,22 +146,22 @@ public:
 		return pps;
 	}
 
-	uint getWidth() const
+	U getWidth() const
 	{
 		return width;
 	}
 
-	uint getHeight() const
+	U getHeight() const
 	{
 		return height;
 	}
 
-	float getAspectRatio() const
+	F32 getAspectRatio() const
 	{
-		return float(width) / height;
+		return F32(width) / height;
 	}
 
-	uint32_t getFramesCount() const
+	U32 getFramesCount() const
 	{
 		return framesNum;
 	}
@@ -206,35 +206,35 @@ public:
 		return planesUpdateTimestamp;
 	}
 
-	double getMsTime() const
+	F64 getMsTime() const
 	{
 		return msTime;
 	}
 
-	double getIsTime() const
+	F64 getIsTime() const
 	{
 		return isTime;
 	}
 
-	double getPpsTime() const
+	F64 getPpsTime() const
 	{
 		return ppsTime;
 	}
 
-	double getBsTime() const
+	F64 getBsTime() const
 	{
 		return bsTime;
 	}
 
-	bool getStagesProfilingEnabled() const
+	Bool getStagesProfilingEnabled() const
 	{
 		return enableStagesProfilingFlag;
 	}
-	bool& getStagesProfilingEnabled()
+	Bool& getStagesProfilingEnabled()
 	{
 		return enableStagesProfilingFlag;
 	}
-	void setStagesProfilingEnabled(const bool x)
+	void setStagesProfilingEnabled(const Bool x)
 	{
 		enableStagesProfilingFlag = x;
 	}
@@ -264,7 +264,7 @@ public:
 	void drawQuadInstanced(U32 primitiveCount);
 
 	/// Create FAI texture
-	static void createFai(uint width, uint height, int internalFormat,
+	static void createFai(U32 width, U32 height, int internalFormat,
 		int format, int type, Texture& fai);
 
 	/// Calculate the planes needed for the calculation of the fragment
@@ -287,7 +287,7 @@ public:
 		Vec2& limitsOfNearPlane);
 
 	/// Get the LOD given the distance of an object from the camera
-	uint calculateLod(float distance) const
+	U calculateLod(F32 distance) const
 	{
 		return distance / lodDistance;
 	}
@@ -303,20 +303,20 @@ protected:
 
 	/// @name Profiling stuff
 	/// @{
-	double msTime, isTime, ppsTime, bsTime;
+	F64 msTime, isTime, ppsTime, bsTime;
 	std::unique_ptr<Query> msTq, isTq, ppsTq, bsTq, pps2Tq;
-	bool enableStagesProfilingFlag;
+	Bool enableStagesProfilingFlag;
 	/// @}
 
 	/// Width of the rendering. Don't confuse with the window width
-	uint width;
+	U width;
 	/// Height of the rendering. Don't confuse with the window width
-	uint height;
+	U height;
 	Scene* scene; ///< Current scene
 	/// Max color attachments an FBO can accept
 	static int maxColorAtachments;
 	RenderableDrawer sceneDrawer;
-	float lodDistance; ///< Distance that used to calculate the LOD
+	F32 lodDistance; ///< Distance that used to calculate the LOD
 
 	/// @name Optimization vars
 	/// Used in other stages
@@ -335,7 +335,7 @@ protected:
 	/// @}
 
 private:
-	uint framesNum; ///< Frame number
+	U framesNum; ///< Frame number
 	Mat4 viewProjectionMat; ///< Precalculated in case anyone needs it
 
 	/// @name For drawing a quad into the active framebuffer
