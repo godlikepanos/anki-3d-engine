@@ -584,7 +584,7 @@ void Is::lightPass()
 
 	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
 	{
-		Light* light = (*it);
+		Light* light = (*it)->getLight();
 		switch(light->getLightType())
 		{
 		case Light::LT_POINT:
@@ -731,6 +731,9 @@ void Is::run()
 
 	// Update tiles
 	updateTiles();
+
+	// Shadows
+	sm.run();
 
 	// Do the light pass
 	fbo.bind();

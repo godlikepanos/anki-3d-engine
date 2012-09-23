@@ -30,6 +30,7 @@ public:
 	void run();
 
 private:
+	/// Shadowmap
 	struct Shadowmap
 	{
 		Texture tex;
@@ -52,6 +53,7 @@ private:
 	/// Shadowmap resolution
 	U32 resolution;
 
+	/// Get max shadow casters
 	U32 getMaxLightsCount()
 	{
 		return sms.size();

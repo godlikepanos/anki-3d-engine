@@ -43,6 +43,10 @@ ShaderProgramVariable::ShaderProgramVariable(
 }
 
 //==============================================================================
+// ShaderProgramUniformVariable                                                =
+//==============================================================================
+
+//==============================================================================
 void ShaderProgramUniformVariable::doCommonSetCode() const
 {
 	ANKI_ASSERT(getLocation() != -1
@@ -54,7 +58,7 @@ void ShaderProgramUniformVariable::doCommonSetCode() const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const float x) const
+void ShaderProgramUniformVariable::set(const F32 x) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT);
@@ -74,7 +78,7 @@ void ShaderProgramUniformVariable::set(const Vec2& x) const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const float x[], uint size) const
+void ShaderProgramUniformVariable::set(const F32 x[], uint size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT);
@@ -451,7 +455,7 @@ void ShaderProgram::getUniAndAttribVars()
 
 	// uni locations
 	glGetProgramiv(glId, GL_ACTIVE_UNIFORMS, &num);
-	for(int i = 0; i < num; i++) // loop all uniforms
+	for(U i = 0; i < (U)num; i++) // loop all uniforms
 	{
 		glGetActiveUniform(glId, i, sizeof(name_) / sizeof(char), &length,
 			&size, &type, &name_[0]);
@@ -462,7 +466,7 @@ void ShaderProgram::getUniAndAttribVars()
 
 		ShaderProgramUniformVariable* var =
 			new ShaderProgramUniformVariable(loc, &name_[0], type, 
-			size, this);
+			size, this, i);
 
 		vars.push_back(std::shared_ptr<ShaderProgramVariable>(var));
 		unis.push_back(var);
