@@ -89,8 +89,10 @@ private:
 
 /// Uniform shader variable
 class ShaderProgramUniformVariable: public ShaderProgramVariable, 
-	public Flags<uint32_t>
+	public Flags<U32>
 {
+	friend class ShaderProgramUniformBlock;
+
 public:
 	enum ShaderProgramUniformVariableFlag
 	{
@@ -99,20 +101,21 @@ public:
 	};
 
 	ShaderProgramUniformVariable(
-		int loc,
+		GLint loc,
 		const char* name,
 		GLenum glDataType,
 		size_t size,
-		const ShaderProgram* fatherSProg)
+		const ShaderProgram* fatherSProg,
+		GLuint index_)
 		: ShaderProgramVariable(loc, name, glDataType, size, SPVT_UNIFORM, 
-			fatherSProg)
+			fatherSProg), index(index_)
 	{
 		enableFlag(SPUVF_DIRTY);
 	}
 
 	/// @name Set the var
 	/// @{
-	void set(const float x) const;
+	void set(const F32 x) const;
 	void set(const Vec2& x) const;
 	void set(const Vec3& x) const
 	{
@@ -132,14 +135,14 @@ public:
 	}
 	void set(const Texture& tex) const;
 
-	void set(const float x[], uint size) const;
+	void set(const F32 x[], uint size) const;
 	void set(const Vec2 x[], uint size) const;
 	void set(const Vec3 x[], uint size) const;
 	void set(const Vec4 x[], uint size) const;
 	void set(const Mat3 x[], uint size) const;
 	void set(const Mat4 x[], uint size) const;
 
-	/// @tparam Container It could be something like array<float, X> or 
+	/// @tparam Container It could be something like array<F32, X> or 
 	///         vector<Vec2> etc
 	template<typename Container>
 	void setContainer(const Container& c) const
@@ -150,8 +153,21 @@ public:
 
 private:
 	GLuint index;
-	GLint offset; ///< Offset inside the uniform block. -1 if it's inside the
-	              ///< default uniform block
+
+	ShaderProgramUniformBlock* block = nullptr;
+
+	/// Offset inside the uniform block. -1 if it's inside the default uniform 
+	/// block
+	GLint offset; 
+
+	/// "An array identifying the stride between elements, in basic machine 
+	/// units, of each of the uniforms specified by the corresponding array of
+	/// uniformIndices is returned.  The stride of a uniform associated with 
+	/// the default uniform block is -1.  Note that this information only makes 
+	/// sense for uniforms that are arrays. For uniforms that are not arrays, 
+	/// but are declared in a named uniform block, an array stride of zero is 
+	/// returned"
+	GLint arrayStride;
 
 	/// Standard set uniform checks
 	/// - Check if initialized
@@ -192,7 +208,7 @@ public:
 		return index;
 	}
 
-	uint32_t getSize() const
+	U32 getSize() const
 	{
 		return size;
 	}

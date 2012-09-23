@@ -81,13 +81,13 @@ void Sm::run()
 	// Get the shadow casters
 	//
 	const U MAX_SHADOW_CASTERS = 256;
-	ANKI_ASSERT(getMaxLightsCount() > MAX_SHADOW_CASTERS);
+	ANKI_ASSERT(getMaxLightsCount() < MAX_SHADOW_CASTERS);
 	Array<Light*, MAX_SHADOW_CASTERS> casters;
 	U32 castersCount = 0;
 
 	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
 	{
-		Light* light = (*it);
+		Light* light = (*it)->getLight();
 
 		if(light->getShadowEnabled())
 		{
@@ -106,11 +106,10 @@ void Sm::run()
 	castersCount = castersCount % getMaxLightsCount();
 
 	// render all
-	/*for(auto it = fr->getVisibilityInfo().getRenderablesBegin();
-		it != fr->getVisibilityInfo().getRenderablesEnd(); ++it)
+	for(U32 i = 0; i < castersCount; i++)
 	{
-		r->getSceneDrawer().render(r->getScene().getActiveCamera(), 1, *(*it));
-	}*/
+		doLight(*casters[i]);
+	}
 
 	afterDraw();
 }
@@ -138,7 +137,7 @@ Sm::Shadowmap& Sm::bestCandidate(Light& light)
 		}
 	}
 
-	// Find an old
+	// Find an old and replace it
 	Shadowmap* sm = &sms[0];
 	for(U i = 1; i < sms.size(); i++)
 	{
@@ -156,19 +155,53 @@ Sm::Shadowmap& Sm::bestCandidate(Light& light)
 //==============================================================================
 void Sm::doLight(Light& light)
 {
-	/// XXX Set FBO
 	Shadowmap& sm = bestCandidate(light);
 
 	Frustumable* fr = light.getFrustumable();
 	ANKI_ASSERT(fr != nullptr);
 	Movable* mov = &light;
+	VisibilityInfo& vi = fr->getVisibilityInfo();
 
-	U32 lightLastUpdateTimestamp = light.getMovableTimestamp();
-	lightLastUpdateTimestamp = std::max(lightLastUpdateTimestamp, 
-		light.getFrustumable()->getFrustumableTimestamp());
+	//
+	// Find last update
+	//
+	U32 lastUpdate = light.getMovableTimestamp();
+	lastUpdate = std::max(lastUpdate, fr->getFrustumableTimestamp());
 
-	//for()
+	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
+	{
+		SceneNode* node = *it;
+		Frustumable* bfr = node->getFrustumable();
+		Movable* bmov = node->getMovable();
 
+		if(bfr)
+		{
+			lastUpdate = std::max(lastUpdate, bfr->getFrustumableTimestamp());
+		}
+
+		if(bmov)
+		{
+			lastUpdate = std::max(lastUpdate, bmov->getMovableTimestamp());
+		}
+	}
+
+	Bool shouldUpdate = lastUpdate >= sm.timestamp;
+
+	if(!shouldUpdate)
+	{
+		return;
+	}
+
+	sm.timestamp = Timestamp::getTimestamp();
+
+	//
+	// Render
+	//
+	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
+	{
+		r->getSceneDrawer().render(r->getScene().getActiveCamera(), 1,
+			*((*it)->getRenderable()));
+	}
 }
 
 } // end namespace anki

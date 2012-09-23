@@ -182,13 +182,13 @@ void Octree::doVisibilityTestsRec(Frustumable& fr, OctreeNode& node)
 		Renderable* r = sn->getRenderable();
 		if(r)
 		{
-			vinfo.renderables.push_back(r);
+			vinfo.renderables.push_back(sn);
 		}
 
 		Light* l = sn->getLight();
 		if(l)
 		{
-			vinfo.lights.push_back(l);
+			vinfo.lights.push_back(sn);
 
 			if(l->getShadowEnabled() && sn->getFrustumable() != nullptr)
 			{

@@ -121,7 +121,7 @@ private:
 	LightType type;
 	Vec4 color = Vec4(1.0);
 	Vec4 specColor = Vec4(1.0);
-	bool shadow = true;
+	bool shadow = false;
 };
 
 /// Point light

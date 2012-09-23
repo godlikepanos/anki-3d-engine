@@ -72,8 +72,9 @@ public:
 	const ShaderProgramUniformVariable* findShaderProgramUniformVariable(
 		const PassLevelKey& key) const
 	{
-		const ShaderProgramUniformVariable* var = sProgVars.at(key);
-		return var;
+		PassLevelToShaderProgramUniformVariableHashMap::const_iterator it =
+			sProgVars.find(key);
+		return (it == sProgVars.end()) ? nullptr : it->second;
 	}
 
 	/// Get the GL data type of all the shader program variables

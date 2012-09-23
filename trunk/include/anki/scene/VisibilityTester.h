@@ -2,7 +2,7 @@
 #define ANKI_SCENE_VISIBILITY_TESTER_H
 
 #include "anki/util/Vector.h"
-#include <cstdint>
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
@@ -23,8 +23,8 @@ class VisibilityInfo
 	friend class Octree;
 
 public:
-	typedef Vector<Renderable*> Renderables;
-	typedef Vector<Light*> Lights;
+	typedef Vector<SceneNode*> Renderables;
+	typedef Vector<SceneNode*> Lights;
 
 	Renderables::iterator getRenderablesBegin()
 	{
@@ -34,7 +34,7 @@ public:
 	{
 		return renderables.end();
 	}
-	uint32_t getRenderablesCount() const
+	U32 getRenderablesCount() const
 	{
 		return renderables.size();
 	}

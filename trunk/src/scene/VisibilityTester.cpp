@@ -44,13 +44,13 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene)
 		Renderable* r = node->getRenderable();
 		if(r)
 		{
-			vinfo.renderables.push_back(r);
+			vinfo.renderables.push_back(node);
 		}
 
 		Light* l = node->getLight();
 		if(l)
 		{
-			vinfo.lights.push_back(l);
+			vinfo.lights.push_back(node);
 
 			if(l->getShadowEnabled() && fr)
 			{
@@ -97,7 +97,7 @@ void VisibilityTester::testLight(Light& light, Scene& scene)
 		Renderable* r = node->getRenderable();
 		if(r)
 		{
-			vinfo.renderables.push_back(r);
+			vinfo.renderables.push_back(node);
 		}
 	}
 }
