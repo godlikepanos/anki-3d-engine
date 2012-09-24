@@ -3,7 +3,9 @@
 #include "anki/math/Math.h"
 #include "anki/util/Exception.h"
 #include "anki/gl/Texture.h"
+#include "anki/core/Logger.h"
 #include "anki/util/StringList.h"
+#include "anki/util/Array.h"
 #include <sstream>
 #include <iomanip>
 
@@ -13,34 +15,6 @@ namespace anki {
 
 static const char* padding = "======================================="
                              "=======================================";
-
-//==============================================================================
-// ShaderProgramVariable                                                       =
-//==============================================================================
-
-//==============================================================================
-ShaderProgramVariable::ShaderProgramVariable(
-	GLint loc_, 
-	const char* name_,
-	GLenum glDataType_, 
-	size_t size_,
-	ShaderProgramVariableType type_, 
-	const ShaderProgram* fatherSProg_)
-	: loc(loc_), name(name_), glDataType(glDataType_), size(size_), 
-		type(type_), fatherSProg(fatherSProg_)
-{
-	name.shrink_to_fit();
-	if(type == SPVT_ATTRIBUTE)
-	{
-		ANKI_ASSERT(loc ==
-			glGetAttribLocation(fatherSProg->getGlId(), name.c_str()));
-	}
-	else
-	{
-		ANKI_ASSERT(loc ==
-			glGetUniformLocation(fatherSProg->getGlId(), name.c_str()));
-	}
-}
 
 //==============================================================================
 // ShaderProgramUniformVariable                                                =
@@ -166,30 +140,6 @@ ShaderProgramUniformBlock& ShaderProgramUniformBlock::operator=(
 }
 
 //==============================================================================
-void ShaderProgramUniformBlock::init(ShaderProgram& prog, 
-	const char* blockName)
-{
-	GLint gli;
-	name = blockName;
-	progId = prog.getGlId();
-
-	index = glGetUniformBlockIndex(progId, blockName);
-	if(index == GL_INVALID_INDEX)
-	{
-		throw ANKI_EXCEPTION("glGetUniformBlockIndex() returned "
-			"GL_INVALID_INDEX");
-	}
-
-	glGetActiveUniformBlockiv(progId, index, GL_UNIFORM_BLOCK_DATA_SIZE, &gli);
-	size = gli;
-
-	glGetActiveUniformBlockiv(progId, index, GL_UNIFORM_BLOCK_BINDING, &gli);
-	bindingPoint = gli;
-
-	// XXX Init uniforms
-}
-
-//==============================================================================
 // ShaderProgram                                                               =
 //==============================================================================
 
@@ -293,7 +243,7 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 
 	// init the rest
 	bind();
-	getUniAndAttribVars();
+	initUniAndAttribVars();
 	initUniformBlocks();
 }
 
@@ -418,24 +368,52 @@ void ShaderProgram::link() const
 }
 
 //==============================================================================
-void ShaderProgram::getUniAndAttribVars()
+void ShaderProgram::initUniAndAttribVars()
 {
-	int num;
-	std::array<char, 256> name_;
+	GLint num;
+	Array<char, 256> name_;
 	GLsizei length;
 	GLint size;
 	GLenum type;
 
+	//
 	// attrib locations
+	//
+	U32 attribsCount = (U32)num;
 	glGetProgramiv(glId, GL_ACTIVE_ATTRIBUTES, &num);
-	for(int i = 0; i < num; i++) // loop all attributes
+
+	// Count the _useful_ attribs
+	for(GLint i = 0; i < num; i++)
 	{
-		glGetActiveAttrib(glId, i, sizeof(name_) / sizeof(char), &length,
+		// Name
+		glGetActiveAttrib(glId, i, sizeof(name_), &length, 
 			&size, &type, &name_[0]);
 		name_[length] = '\0';
 
 		// check if its FFP location
-		int loc = glGetAttribLocation(glId, &name_[0]);
+		GLint loc = glGetAttribLocation(glId, &name_[0]);
+
+		if(loc == -1)
+		{
+			// if -1 it means that its an FFP var or a weird crap like
+			// gl_InstanceID
+			--attribsCount;
+		}
+	}
+
+	attribs.resize(attribsCount);
+	attribs.shrink_to_fit();
+	for(int i = 0; i < num; i++) // loop all attributes
+	{
+		ShaderProgramAttributeVariable& var = attribs[i];
+
+		// Name
+		glGetActiveAttrib(glId, i, sizeof(name_), &length,
+			&size, &type, &name_[0]);
+		name_[length] = '\0';
+
+		// check if its FFP location
+		GLint loc = glGetAttribLocation(glId, &name_[0]);
 		if(loc == -1)
 		{
 			// if -1 it means that its an FFP var or a weird crap like
@@ -443,40 +421,44 @@ void ShaderProgram::getUniAndAttribVars()
 			continue;
 		}
 
-		ShaderProgramAttributeVariable* var =
-			new ShaderProgramAttributeVariable(loc, &name_[0], type, 
-			size, this);
+		var.loc = loc;
+		var.name = &name_[0];
+		var.glDataType = type;
+		var.size = size;
+		var.type = ShaderProgramVariable::SPVT_ATTRIBUTE;
+		var.fatherSProg = this;
 
-		vars.push_back(std::shared_ptr<ShaderProgramVariable>(var));
-		attribs.push_back(var);
-		nameToVar[var->getName().c_str()] = var;
-		nameToAttribVar[var->getName().c_str()] = var;
+		nameToAttribVar[var.name.c_str()] = &var;
 	}
 
+	//
 	// uni locations
+	//
 	glGetProgramiv(glId, GL_ACTIVE_UNIFORMS, &num);
-	for(U i = 0; i < (U)num; i++) // loop all uniforms
+	unis.resize(num);
+	unis.shrink_to_fit();
+	for(GLint i = 0; i < num; i++) // loop all uniforms
 	{
-		glGetActiveUniform(glId, i, sizeof(name_) / sizeof(char), &length,
+		ShaderProgramUniformVariable& var = unis[i];
+
+		glGetActiveUniform(glId, i, sizeof(name_), &length,
 			&size, &type, &name_[0]);
 		name_[length] = '\0';
 
 		// -1 means in uniform block
 		GLint loc = glGetUniformLocation(glId, &name_[0]);
 
-		ShaderProgramUniformVariable* var =
-			new ShaderProgramUniformVariable(loc, &name_[0], type, 
-			size, this, i);
+		var.loc = loc;
+		var.name = &name_[0];
+		var.glDataType = type;
+		var.size = size;
+		var.type = ShaderProgramVariable::SPVT_UNIFORM;
+		var.fatherSProg = this;
 
-		vars.push_back(std::shared_ptr<ShaderProgramVariable>(var));
-		unis.push_back(var);
-		nameToVar[var->getName().c_str()] = var;
-		nameToUniVar[var->getName().c_str()] = var;
+		var.index = (GLuint)i;
+
+		nameToUniVar[var.name.c_str()] = &var;
 	}
-
-	vars.shrink_to_fit();
-	unis.shrink_to_fit();
-	attribs.shrink_to_fit();
 }
 
 //==============================================================================
@@ -488,35 +470,54 @@ void ShaderProgram::initUniformBlocks()
 	blocks.resize(blocksCount);
 	blocks.shrink_to_fit();
 
-	for(GLint i = 0; i < blocksCount; i++)
+	GLuint i = 0;
+	for(ShaderProgramUniformBlock& block : blocks)
 	{
+		GLint gli; // General purpose int
+
+		// Name
 		char name[256];
 		GLsizei len;
 		glGetActiveUniformBlockName(glId, i, sizeof(name), &len, name);
 
-		blocks[i].init(*this, name);
-		nameToBlock[blocks[i].getName().c_str()] = &blocks[i];
+		block.name = name;
+		block.name.shrink_to_fit();
+
+		// Index
+		ANKI_ASSERT(glGetUniformBlockIndex(glId, name) == i);
+		block.index = i;
+
+		// Size
+		glGetActiveUniformBlockiv(glId, i, GL_UNIFORM_BLOCK_DATA_SIZE, &gli);
+		block.size = gli;
+
+		// Binding point
+		glGetActiveUniformBlockiv(glId, i, GL_UNIFORM_BLOCK_BINDING, &gli);
+		block.bindingPoint = gli;
+
+		// Prog id
+		block.progId = glId;
+
+		// Other update
+		nameToBlock[block.name.c_str()] = &block;
+		++i;
 	}
-}
 
-//==============================================================================
-const ShaderProgramVariable* ShaderProgram::tryFindVariable(
-	const char* name) const
-{
-	NameToVarHashMap::const_iterator it = nameToVar.find(name);
-	return (it == nameToVar.end()) ? nullptr : it->second;
-}
-
-//==============================================================================
-const ShaderProgramVariable& ShaderProgram::findVariable(
-	const char* name) const
-{
-	const ShaderProgramVariable* var = tryFindVariable(name);
-	if(var == nullptr)
+	// Connect uniforms and blocks
+	for(ShaderProgramUniformVariable& uni : unis)
 	{
-		throw ANKI_EXCEPTION("Variable not found: " + name);
+		GLint blockIndex;
+		glGetActiveUniformsiv(glId, 1, &(uni.index),  GL_UNIFORM_BLOCK_INDEX, 
+			&blockIndex);
+
+		if(blockIndex == -1)
+		{
+			continue;
+		}
+
+		uni.block = &blocks[blockIndex];
+		blocks[blockIndex].uniforms.push_back(&uni);
 	}
-	return *var;
 }
 
 //==============================================================================
@@ -584,24 +585,18 @@ const ShaderProgramUniformBlock& ShaderProgram::findUniformBlock(
 }
 
 //==============================================================================
-void ShaderProgram::cleanAllUniformsDirtyFlags()
-{
-	for(ShaderProgramUniformVariable* uni : unis)
-	{
-		uni->disableFlag(ShaderProgramUniformVariable::SPUVF_DIRTY);
-	}
-}
-
-//==============================================================================
 std::ostream& operator<<(std::ostream& s, const ShaderProgram& x)
 {
 	s << "ShaderProgram\n";
-	s << "Variables:\n";
-	for(auto var : x.vars)
+	s << "Uniform variables:\n";
+	for(auto var : x.unis)
 	{
-		s << var->getName() << " " << var->getLocation() << " "
-			<< (var->getType() == ShaderProgramVariable::SPVT_ATTRIBUTE
-			? "[A]" : "[U]") <<  '\n';
+		s << var.getName() << " " << var.getLocation() <<  '\n';
+	}
+	s << "Attrib variables:\n";
+	for(auto var : x.attribs)
+	{
+		s << var.getName() << " " << var.getLocation() <<  '\n';
 	}
 	return s;
 }
