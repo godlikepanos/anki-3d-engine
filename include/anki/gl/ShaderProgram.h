@@ -15,14 +15,17 @@
 namespace anki {
 
 class ShaderProgram;
+class ShaderProgramUniformBlock;
 class Texture;
 
 /// @addtogroup gl
 /// @{
 
 /// Shader program variable. The type is attribute or uniform
-class ShaderProgramVariable: public NonCopyable
+class ShaderProgramVariable
 {
+	friend class ShaderProgram;
+
 public:
 	/// Shader var types
 	enum ShaderProgramVariableType
@@ -31,14 +34,8 @@ public:
 		SPVT_UNIFORM
 	};
 
-	ShaderProgramVariable(
-		GLint loc,
-		const char* name,
-		GLenum glDataType, 
-		size_t size,
-		ShaderProgramVariableType type, 
-		const ShaderProgram* fatherSProg);
-
+	ShaderProgramVariable()
+	{}
 	virtual ~ShaderProgramVariable()
 	{}
 
@@ -75,6 +72,17 @@ public:
 	}
 	/// @}
 
+	ShaderProgramVariable& operator=(const ShaderProgramVariable& b)
+	{
+		loc = b.loc;
+		name = b.name;
+		glDataType = b.glDataType;
+		size = b.size;
+		type = b.type;
+		fatherSProg = b.fatherSProg;
+		return *this;
+	}
+
 private:
 	GLint loc; ///< GL location
 	std::string name; ///< The name inside the shader program
@@ -88,30 +96,14 @@ private:
 };
 
 /// Uniform shader variable
-class ShaderProgramUniformVariable: public ShaderProgramVariable, 
-	public Flags<U32>
+class ShaderProgramUniformVariable: public ShaderProgramVariable
 {
 	friend class ShaderProgramUniformBlock;
+	friend class ShaderProgram;
 
 public:
-	enum ShaderProgramUniformVariableFlag
-	{
-		SPUVF_NONE = 0,
-		SPUVF_DIRTY = (1 << 0) ///< This means that a setter was called
-	};
-
-	ShaderProgramUniformVariable(
-		GLint loc,
-		const char* name,
-		GLenum glDataType,
-		size_t size,
-		const ShaderProgram* fatherSProg,
-		GLuint index_)
-		: ShaderProgramVariable(loc, name, glDataType, size, SPVT_UNIFORM, 
-			fatherSProg), index(index_)
-	{
-		enableFlag(SPUVF_DIRTY);
-	}
+	ShaderProgramUniformVariable()
+	{}
 
 	/// @name Set the var
 	/// @{
@@ -151,6 +143,16 @@ public:
 	}
 	/// @}
 
+	ShaderProgramUniformVariable& operator=(
+		const ShaderProgramUniformVariable& b)
+	{
+		ShaderProgramVariable::operator=(b);
+		index = b.index;
+		offset = b.offset;
+		arrayStride = b.arrayStride;
+		return *this;
+	}
+
 private:
 	GLuint index;
 
@@ -179,18 +181,14 @@ private:
 /// Attribute shader program variable
 class ShaderProgramAttributeVariable: public ShaderProgramVariable
 {
-public:
-	ShaderProgramAttributeVariable(
-		int loc_, const char* name_, GLenum glDataType_, size_t size,
-		const ShaderProgram* fatherSProg_)
-		: ShaderProgramVariable(loc_, name_, glDataType_, size, SPVT_ATTRIBUTE,
-			fatherSProg_)
-	{}
+	friend class ShaderProgram;
 };
 
 /// Uniform shader block
 class ShaderProgramUniformBlock
 {
+	friend class ShaderProgram;
+
 public:
 	ShaderProgramUniformBlock()
 	{}
@@ -233,8 +231,6 @@ public:
 
 	ShaderProgramUniformBlock& operator=(const ShaderProgramUniformBlock& b);
 
-	void init(ShaderProgram& prog, const char* blockName);
-
 private:
 	Vector<ShaderProgramUniformVariable*> uniforms;
 	GLuint index = GL_INVALID_INDEX;
@@ -242,18 +238,16 @@ private:
 	std::string name;
 	/// Ask the program to get you the binding point
 	mutable GLuint bindingPoint;
-	GLuint progId;
+	GLuint progId; ///< Needed for binding
 };
 
 /// Shader program object
 class ShaderProgram: public NonCopyable
 {
 public:
-	typedef Vector<std::shared_ptr<ShaderProgramVariable>>
-		VariablesContainer;
-	typedef Vector<ShaderProgramUniformVariable*>
+	typedef Vector<ShaderProgramUniformVariable>
 		UniformVariablesContainer;
-	typedef Vector<ShaderProgramAttributeVariable*>
+	typedef Vector<ShaderProgramAttributeVariable>
 		AttributeVariablesContainer;
 	typedef Vector<ShaderProgramUniformBlock>
 		UniformBlocksContainer;
@@ -289,12 +283,6 @@ public:
 	{
 		ANKI_ASSERT(isCreated());
 		return glId;
-	}
-
-	/// Get all variables container
-	const VariablesContainer& getVariables() const
-	{
-		return vars;
 	}
 
 	const UniformVariablesContainer& getUniformVariables() const
@@ -346,8 +334,6 @@ public:
 	/// Used to find and return the variable. They return nullptr if the 
 	/// variable is not found
 	/// @{
-	const ShaderProgramVariable* tryFindVariable(const char* varName) const;
-	const ShaderProgramVariable& findVariable(const char* varName) const;
 	const ShaderProgramUniformVariable* tryFindUniformVariable(
 		const char* varName) const;
 	const ShaderProgramUniformVariable& findUniformVariable(
@@ -361,9 +347,6 @@ public:
 	const ShaderProgramUniformBlock& findUniformBlock(const char* name) const;
 	/// @}
 
-	/// For all uniforms set the SPUVF_DIRTY bit to 0
-	void cleanAllUniformsDirtyFlags();
-
 	static GLuint getCurrentProgramGlId()
 	{
 		int i;
@@ -376,9 +359,6 @@ public:
 		const ShaderProgram& x);
 
 private:
-	typedef ConstCharPtrHashMap<ShaderProgramVariable*>::Type
-		NameToVarHashMap;
-
 	typedef ConstCharPtrHashMap<ShaderProgramUniformVariable*>::Type
 		NameToUniVarHashMap;
 
@@ -402,11 +382,9 @@ private:
 
 	/// @name Containers
 	/// @{
-	VariablesContainer vars; ///< All the vars. Does garbage collection
 	UniformVariablesContainer unis;
 	AttributeVariablesContainer attribs;
 
-	NameToVarHashMap nameToVar; ///< Variable searching
 	NameToUniVarHashMap nameToUniVar; ///< Uniform searching
 	NameToAttribVarHashMap nameToAttribVar; ///< Attribute searching
 
@@ -416,7 +394,7 @@ private:
 
 	/// Query the driver to get the vars. After the linking of the shader
 	/// prog is done gather all the vars in custom containers
-	void getUniAndAttribVars();
+	void initUniAndAttribVars();
 
 	/// Get info about the uniform blocks
 	void initUniformBlocks();

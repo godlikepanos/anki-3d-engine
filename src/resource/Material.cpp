@@ -259,10 +259,10 @@ void Material::populateVariables(const XmlElement& shaderProgramEl)
 
 	for(const ShaderProgramResourcePointer* sProg : sProgs)
 	{
-		for(const ShaderProgramUniformVariable* v :
+		for(const ShaderProgramUniformVariable& v :
 			(*sProg)->getUniformVariables())
 		{
-			allVarNames[v->getName()] = v->getGlDataType();
+			allVarNames[v.getName()] = v.getGlDataType();
 		}
 	}
 
