@@ -349,7 +349,7 @@ void ShaderProgram::link() const
 	glLinkProgram(glId);
 
 	// check if linked correctly
-	int success;
+	GLint success;
 	glGetProgramiv(glId, GL_LINK_STATUS, &success);
 
 	if(!success)
@@ -425,7 +425,6 @@ void ShaderProgram::initUniAndAttribVars()
 		var.name = &name_[0];
 		var.glDataType = type;
 		var.size = size;
-		var.type = ShaderProgramVariable::SPVT_ATTRIBUTE;
 		var.fatherSProg = this;
 
 		nameToAttribVar[var.name.c_str()] = &var;
@@ -452,7 +451,6 @@ void ShaderProgram::initUniAndAttribVars()
 		var.name = &name_[0];
 		var.glDataType = type;
 		var.size = size;
-		var.type = ShaderProgramVariable::SPVT_UNIFORM;
 		var.fatherSProg = this;
 
 		var.index = (GLuint)i;
@@ -506,6 +504,7 @@ void ShaderProgram::initUniformBlocks()
 	// Connect uniforms and blocks
 	for(ShaderProgramUniformVariable& uni : unis)
 	{
+		/* Block index */
 		GLint blockIndex;
 		glGetActiveUniformsiv(glId, 1, &(uni.index),  GL_UNIFORM_BLOCK_INDEX, 
 			&blockIndex);
@@ -517,6 +516,13 @@ void ShaderProgram::initUniformBlocks()
 
 		uni.block = &blocks[blockIndex];
 		blocks[blockIndex].uniforms.push_back(&uni);
+
+		/* Offset in block */
+		GLint offset;
+		glGetActiveUniformsiv(glId, 1, &(uni.index),  GL_UNIFORM_OFFSET, 
+			&blockIndex);
+		ANKI_ASSERT(offset != -1); // If -1 then it should break before
+		uni.offset = offset;
 	}
 }
 

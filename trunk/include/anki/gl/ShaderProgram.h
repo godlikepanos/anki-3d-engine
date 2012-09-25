@@ -5,7 +5,6 @@
 #include "anki/util/Assert.h"
 #include "anki/util/Flags.h"
 #include "anki/math/Forward.h"
-#include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
@@ -34,7 +33,8 @@ public:
 		SPVT_UNIFORM
 	};
 
-	ShaderProgramVariable()
+	ShaderProgramVariable(ShaderProgramVariableType type_)
+		: type(type_)
 	{}
 	virtual ~ShaderProgramVariable()
 	{}
@@ -66,7 +66,7 @@ public:
 		return type;
 	}
 
-	size_t getSize() const
+	PtrSize getSize() const
 	{
 		return size;
 	}
@@ -74,11 +74,11 @@ public:
 
 	ShaderProgramVariable& operator=(const ShaderProgramVariable& b)
 	{
+		ANKI_ASSERT(type == b.type)
 		loc = b.loc;
 		name = b.name;
 		glDataType = b.glDataType;
 		size = b.size;
-		type = b.type;
 		fatherSProg = b.fatherSProg;
 		return *this;
 	}
@@ -89,7 +89,7 @@ private:
 	/// GL_FLOAT, GL_FLOAT_VEC2 etc. See
 	/// http://www.opengl.org/sdk/docs/man/xhtml/glGetActiveUniform.xml
 	GLenum glDataType;
-	size_t size; ///< Its 1 if it is a single or >1 if it is an array
+	PtrSize size; ///< Its 1 if it is a single or >1 if it is an array
 	ShaderProgramVariableType type;
 	/// We need the ShaderProg of this variable mainly for sanity checks
 	const ShaderProgram* fatherSProg;
@@ -103,6 +103,7 @@ class ShaderProgramUniformVariable: public ShaderProgramVariable
 
 public:
 	ShaderProgramUniformVariable()
+		: ShaderProgramVariable(SPVT_UNIFORM)
 	{}
 
 	/// @name Set the var
@@ -160,7 +161,7 @@ private:
 
 	/// Offset inside the uniform block. -1 if it's inside the default uniform 
 	/// block
-	GLint offset; 
+	GLint offset = -1; 
 
 	/// "An array identifying the stride between elements, in basic machine 
 	/// units, of each of the uniforms specified by the corresponding array of
@@ -182,6 +183,10 @@ private:
 class ShaderProgramAttributeVariable: public ShaderProgramVariable
 {
 	friend class ShaderProgram;
+
+	ShaderProgramAttributeVariable()
+		: ShaderProgramVariable(SPVT_ATTRIBUTE)
+	{}
 };
 
 /// Uniform shader block
