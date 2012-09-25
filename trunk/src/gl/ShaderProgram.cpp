@@ -520,7 +520,7 @@ void ShaderProgram::initUniformBlocks()
 		/* Offset in block */
 		GLint offset;
 		glGetActiveUniformsiv(glId, 1, &(uni.index),  GL_UNIFORM_OFFSET, 
-			&blockIndex);
+			&offset);
 		ANKI_ASSERT(offset != -1); // If -1 then it should break before
 		uni.offset = offset;
 	}

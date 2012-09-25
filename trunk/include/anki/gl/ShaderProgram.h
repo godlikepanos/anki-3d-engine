@@ -8,6 +8,7 @@
 #include "anki/gl/Ogl.h"
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
+#include "anki/util/NonCopyable.h"
 #include <string>
 #include <memory>
 
@@ -74,7 +75,7 @@ public:
 
 	ShaderProgramVariable& operator=(const ShaderProgramVariable& b)
 	{
-		ANKI_ASSERT(type == b.type)
+		ANKI_ASSERT(type == b.type);
 		loc = b.loc;
 		name = b.name;
 		glDataType = b.glDataType;
@@ -184,6 +185,7 @@ class ShaderProgramAttributeVariable: public ShaderProgramVariable
 {
 	friend class ShaderProgram;
 
+public:
 	ShaderProgramAttributeVariable()
 		: ShaderProgramVariable(SPVT_ATTRIBUTE)
 	{}
