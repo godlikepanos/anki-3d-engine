@@ -582,6 +582,10 @@ void Is::lightPass()
 	// Quickly get the lights
 	//
 
+	U spotsNoShadowCount = 0, spotsShadowCount = 0;
+	Array<SpotLight*, MAX_SPOT_LIGHTS> visibleSpotNoShadowLights, 
+		visibleSpotShadowLights;
+
 	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
 	{
 		Light* light = (*it)->getLight();
@@ -594,21 +598,50 @@ void Is::lightPass()
 			++visiblePointLightsCount;
 			break;
 		case Light::LT_SPOT:
-			// Use % to avoid overflows
-			visibleSpotLights[visibleSpotLightsCount % MAX_SPOT_LIGHTS] = 
-				static_cast<SpotLight*>(light);
-			++visibleSpotLightsCount;
-			break;
+			{
+				SpotLight* slight = static_cast<SpotLight*>(light);
+				
+				if(slight->getShadowEnabled())
+				{
+					visibleSpotShadowLights[
+						spotsShadowCount % MAX_SPOT_LIGHTS] = slight;
+					++spotsShadowCount;
+				}
+				else
+				{
+					visibleSpotNoShadowLights[
+						spotsNoShadowCount % MAX_SPOT_LIGHTS] = slight;
+					++spotsNoShadowCount;
+				}
+				break;
+			}
 		case Light::LT_NUM:
 			break;
 		}
 	}
+
+	visibleSpotLightsCount = spotsNoShadowCount + spotsShadowCount;
 
 	if(visiblePointLightsCount > MAX_POINT_LIGHTS 
 		|| visibleSpotLightsCount > MAX_SPOT_LIGHTS)
 	{
 		throw ANKI_EXCEPTION("Too many visible lights");
 	}
+
+	U i;
+	for(i = 0; i < spotsNoShadowCount; i++)
+	{
+		visibleSpotLights[i] = visibleSpotNoShadowLights[i];
+	}
+
+	for(; i < visibleSpotLightsCount; i++)
+	{
+		visibleSpotLights[i] = visibleSpotShadowLights[i];
+	}
+
+	//
+	// Do shadows pass
+	//
 
 	//
 	// Write the lights UBO
