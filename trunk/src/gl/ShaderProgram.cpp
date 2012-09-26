@@ -523,6 +523,30 @@ void ShaderProgram::initUniformBlocks()
 			&offset);
 		ANKI_ASSERT(offset != -1); // If -1 then it should break before
 		uni.offset = offset;
+
+		/* Array stride */
+		GLint arrStride;
+		glGetActiveUniformsiv(glId, 1, &(uni.index),  GL_UNIFORM_ARRAY_STRIDE, 
+			&arrStride);
+		ANKI_ASSERT(arrStride != -1); // If -1 then it should break before
+		uni.arrayStride = arrStride;
+
+		/* Matrix stride */
+		GLint matStride;
+		glGetActiveUniformsiv(glId, 1, &(uni.index),  GL_UNIFORM_MATRIX_STRIDE, 
+			&matStride);
+		ANKI_ASSERT(matStride != -1); // If -1 then it should break before
+		uni.matrixStride = matStride;
+
+		/* Matrix layout check */
+		GLint isRowMajor;
+		glGetActiveUniformsiv(glId, 1, &(uni.index),  GL_UNIFORM_IS_ROW_MAJOR, 
+			&isRowMajor);
+		if(isRowMajor)
+		{
+			ANKI_LOGW("The engine is designed to work with column major "
+				"matrices: " << uni.name);
+		}
 	}
 }
 

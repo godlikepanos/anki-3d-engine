@@ -33,37 +33,15 @@ ENDMACRO()
 #
 SET(ARCH 64 CACHE STRING "The architecture")
 
-SET(CMAKE_CXX_FLAGS -m${ARCH})
-SET(CMAKE_EXE_LINKER_FLAGS -m${ARCH})
+SET(CMAKE_CXX_FLAGS "-m${ARCH} ")
+SET(CMAKE_C_FLAGS "-m${ARCH} ")
+SET(CMAKE_EXE_LINKER_FLAGS "-m${ARCH} ")
 
 #
 # Install
 #
 SET(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include/" CACHE PATH "The subdirectory to the header prefix")
 SET(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Library install path")
-
-#
-# SVN
-#
-FIND_PACKAGE(Subversion 1.6 REQUIRED)
-
-IF(Subversion_FOUND)
-	Subversion_WC_INFO(${CMAKE_CURRENT_SOURCE_DIR} ER)
-	ADD_DEFINITIONS("-DANKI_REVISION=${ER_WC_REVISION}")
-	SET(ANKI_REVISION ${ER_WC_REVISION})
-ELSE()
-	ADD_DEFINITIONS("-DANKI_REVISION=???")
-	SET(ANKI_REVISION unkown)
-ENDIF()
-
-# 
-# Version
-#
-SET(ANKI_VERSION 0.1)
-
-CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/include/anki/Version.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/anki/Version.h)
-
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/anki/Version.h DESTINATION ${INCLUDE_INSTALL_DIR}/anki)
 	
 #
 # Doxygen
@@ -108,15 +86,6 @@ SET(FREETYPE_LIBRARY_DIR "/usr/lib"
 ANKI_ADD_LIB(${FREETYPE_INCLUDE_DIR} ${FREETYPE_LIBRARY_DIR} ${FREETYPE_INCLUDE_DIR}/freetype/freetype.h)
 
 #
-# Python
-#
-SET(PYTHON_VER 2.7 CACHE STRING "The python version")
-SET(PYTHON_INCLUDE_DIR "/usr/include/python${PYTHON_VER}" CACHE PATH "The directory that contains the Python.h")
-SET(PYTHON_LIBRARY_DIR "/usr/lib" CACHE PATH "The directory that contains the libpython${PYTHON_VER}.so")
-
-ANKI_ADD_LIB(${PYTHON_INCLUDE_DIR} ${PYTHON_LIBRARY_DIR} ${PYTHON_INCLUDE_DIR}/Python.h)
-
-#
 # Bullet (Because FIND_PACKAGE(Bullet) sucks)
 #
 SET(BULLET_INCLUDE_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/include/" CACHE PATH 
@@ -127,67 +96,19 @@ SET(BULLET_LIBRARY_DIR "${ANKI_PROJ_SOURCE_DIR}/extern/lib${ARCH}" CACHE PATH
 ANKI_ADD_LIB(${BULLET_INCLUDE_DIR}/bullet ${BULLET_LIBRARY_DIR} 
 	${BULLET_INCLUDE_DIR}/bullet/btBulletCollisionCommon.h)
 
-# Extern dir
+#
+# Add subdirs
 #
 ADD_SUBDIRECTORY(extern)
-
-INCLUDE_DIRECTORIES(extern/GLEW/include extern/tinyxml2/include extern/lua)
-INCLUDE_DIRECTORIES(extern/include)
-LINK_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/extern/lib64")
-
-#
-# Defines & flags
-#
-ADD_DEFINITIONS(-DANKI_MATH_INTEL_SIMD
-	-Dthread_local=__thread -pedantic-errors -pedantic -ansi -Wall 
-	-W -Wwrite-strings -Wno-unused -Werror -Wno-long-long -msse4 -std=c++0x)
-
-# Add a few compiler specific stuff 
-IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	
-	INCLUDE_DIRECTORIES("/opt/libcxx/include/c++/v1")
-	LINK_DIRECTORIES("/opt/libcxx/lib")
-ELSE()
-	# Dont use it. It produces warnings with -std=c++0x
-	#ADD_DEFINITIONS("-fsingle-precision-constant")
-ENDIF()
-
-IF(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
-	ADD_DEFINITIONS("-DANKI_PLATFORM_LINUX")
-ELSEIF(${CMAKE_SYSTEM_NAME} STREQUAL Windows)
-	ADD_DEFINITIONS("-DANKI_PLATFORM_WINDOWS")
-ENDIF()
-
-IF(CMAKE_BUILD_TYPE STREQUAL Debug)
-	# Removed because they do not work with boost::regexpr and who knows what
-	# else
-	#ADD_DEFINITIONS("-D_GLIBCXX_DEBUG -D_GLIBXX_DEBUG_PEDANTIC")
-ELSE()
-	ADD_DEFINITIONS("-DBOOST_DISABLE_ASSERTS -mtune=core2 -ffast-math")
-ENDIF()
-
-INCLUDE_DIRECTORIES(${ANKI_PROJ_SOURCE_DIR})
-
-#
-# libanki
-#
-INCLUDE_DIRECTORIES(include)
 ADD_SUBDIRECTORY(src)
 
-#
-# Unit tests
-#
 OPTION(BUILD_TESTS "Build Unit Tests" OFF)
-
 IF(BUILD_TESTS)
 	ENABLE_TESTING()
 	ADD_SUBDIRECTORY(tests)
 ENDIF()
 
-#
-# testapp
-#
 OPTION(BUILD_TESTAPP "Build Test Application" ON)
-
 IF(BUILD_TESTAPP)
 	ADD_SUBDIRECTORY(testapp)
 ENDIF()

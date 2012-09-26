@@ -171,7 +171,11 @@ private:
 	/// sense for uniforms that are arrays. For uniforms that are not arrays, 
 	/// but are declared in a named uniform block, an array stride of zero is 
 	/// returned"
-	GLint arrayStride;
+	GLint arrayStride = -1;
+
+	/// Identifying the stride between columns of a column-major matrix or rows 
+	/// of a row-major matrix
+	GLint matrixStride = -1;
 
 	/// Standard set uniform checks
 	/// - Check if initialized
