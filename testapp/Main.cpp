@@ -38,6 +38,7 @@
 #include "anki/resource/Material.h"
 #include "anki/core/ThreadPool.h"
 #include "anki/core/Timestamp.h"
+#include "anki/core/NativeWindow.h"
 #include "anki/util/Functions.h"
 
 using namespace anki;
@@ -45,6 +46,7 @@ using namespace anki;
 UiPainter* painter;
 ModelNode* horse;
 PerspectiveCamera* cam;
+NativeWindow* win;
 
 //==============================================================================
 void init()
@@ -275,7 +277,8 @@ void mainLoop()
 			break;
 		}
 
-		AppSingleton::get().swapBuffers();
+		//AppSingleton::get().swapBuffers();
+		win->swapBuffers();
 
 		// Sleep
 		//
@@ -306,6 +309,17 @@ void initSubsystems(int argc, char* argv[])
 {
 	// App
 	AppSingleton::get().init(argc, argv);
+
+	// Window
+	NativeWindowInitializer nwinit;
+	nwinit.width = 1280;
+	nwinit.height = 720;
+	nwinit.majorVersion = 4;
+	nwinit.minorVersion = 2;
+	nwinit.depthBits = 0;
+	nwinit.stencilBits = 0;
+	win = new NativeWindow;	
+	win->create(nwinit);
 
 	// Main renderer
 	RendererInitializer initializer;

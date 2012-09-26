@@ -642,6 +642,7 @@ void Is::lightPass()
 	//
 	// Do shadows pass
 	//
+	
 
 	//
 	// Write the lights UBO

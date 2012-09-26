@@ -256,12 +256,20 @@ NativeWindow::~NativeWindow()
 void NativeWindow::create(NativeWindowInitializer& initializer)
 {
 	impl.reset(new NativeWindowImpl);
+	impl->create(initializer);
 }
 
 //==============================================================================
 void NativeWindow::destroy()
 {
-	impl.reset(nullptr);
+	impl.reset();
+}
+
+//==============================================================================
+void NativeWindow::swapBuffers()
+{
+	ANKI_ASSERT(isCreated());
+	glXSwapBuffers(impl->xDisplay, impl->xWindow);
 }
 
 } // end namespace anki
