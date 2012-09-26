@@ -379,8 +379,8 @@ void ShaderProgram::initUniAndAttribVars()
 	//
 	// attrib locations
 	//
-	U32 attribsCount = (U32)num;
 	glGetProgramiv(glId, GL_ACTIVE_ATTRIBUTES, &num);
+	U32 attribsCount = (U32)num;
 
 	// Count the _useful_ attribs
 	for(GLint i = 0; i < num; i++)

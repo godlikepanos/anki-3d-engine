@@ -78,7 +78,8 @@ void App::init(int argc, char* argv[])
 	parseCommandLineArgs(argc, argv);
 	printAppInfo();
 	initDirs();
-	initWindow();
+	//initWindow();
+	//SDL_Init(SDL_INIT_INPUT)
 
 	// other
 	activeCam = NULL;

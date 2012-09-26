@@ -43,11 +43,11 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 //==============================================================================
 void MainRenderer::initGl()
 {
-	glewExperimental = GL_TRUE;
+	/*glewExperimental = GL_TRUE;
 	if(glewInit() != GLEW_OK)
 	{
 		throw ANKI_EXCEPTION("GLEW initialization failed");
-	}
+	}*/
 
 	// Ignore the first error
 	glGetError();

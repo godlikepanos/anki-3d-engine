@@ -41,13 +41,14 @@ public:
 	/// @{
 	void create(NativeWindowInitializer& initializer);
 	void destroy();
+	void swapBuffers();
 	/// @}
 
 private:
 	U32 width;
 	U32 height;
 
-	std::unique_ptr<NativeWindowImpl> impl;
+	std::shared_ptr<NativeWindowImpl> impl;
 
 	Bool isCreated() const
 	{
