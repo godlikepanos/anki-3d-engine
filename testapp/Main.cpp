@@ -184,6 +184,8 @@ void mainLoopExtra()
 	static Movable* mover = SceneSingleton::get().getActiveCamera().getMovable();
 	Input& in = InputSingleton::get();
 
+	mover->moveLocalZ(-0.02);
+
 	if(in.getKey(SDL_SCANCODE_1))
 	{
 		mover = &SceneSingleton::get().getActiveCamera();
@@ -320,6 +322,9 @@ void initSubsystems(int argc, char* argv[])
 	nwinit.stencilBits = 0;
 	win = new NativeWindow;	
 	win->create(nwinit);
+
+	// Input
+	InputSingleton::get().init(win);
 
 	// Main renderer
 	RendererInitializer initializer;
