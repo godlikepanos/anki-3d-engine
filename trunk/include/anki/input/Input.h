@@ -3,50 +3,41 @@
 
 #include "anki/math/Math.h"
 #include "anki/util/Singleton.h"
-#include <SDL/SDL_scancode.h>
-#include <array>
+#include "anki/util/Array.h"
 
 namespace anki {
 
-/// Handle the SDL input
+class NativeWindow;
+
+/// Handle the input and other events
 class Input
 {
 public:
 	Input()
-	{
-		init();
-	}
+	{}
+	~Input()
+	{}
 
 	/// @name Acessors
 	/// @{
-	uint32_t getKey(uint32_t i) const
+	U32 getKey(U32 i) const
 	{
 		return keys[i];
 	}
 
-	uint32_t getMouseBtn(uint32_t i) const
+	U32 getMouseBtn(U32 i) const
 	{
 		return mouseBtns[i];
 	}
-
-	bool getWarpMouse() const
-	{
-		return warpMouseFlag;
-	}
-	bool& getWarpMouse()
-	{
-		return warpMouseFlag;
-	}
-	void setWarpMouse(const bool x)
-	{
-		warpMouseFlag = x;
-	}
 	/// @}
 
+	void init(NativeWindow* nativeWindow);
 	void reset();
 	void handleEvents();
 
 private:
+	NativeWindow* nativeWindow = nullptr;
+
 	/// @name Keys and btns
 	/// @{
 
@@ -54,23 +45,13 @@ private:
 	/// - 0 times: unpressed
 	/// - 1 times: pressed once
 	/// - >1 times: Kept pressed 'n' times continuously
-	std::array<uint32_t, SDL_NUM_SCANCODES> keys;
+	Array<U32, 128> keys;
 
 	/// Mouse btns. Supporting 3 btns & wheel. @see keys
-	std::array<uint32_t, 8> mouseBtns;
+	Array<U32, 8> mouseBtns;
 	/// @}
 
-	bool warpMouseFlag = false;
-
-	// mouse stuff
 	Vec2 mousePosNdc; ///< The coords are in the NDC space
-	/// The coords are in the window space. (0, 0) is in the upper left
-	/// corner
-	Vec2 mousePos;
-	Vec2 mouseVelocity;
-	bool hideCursor = false;
-
-	void init();
 };
 
 typedef Singleton<Input> InputSingleton;

@@ -36,6 +36,12 @@ public:
 	{}
 	~NativeWindow();
 
+	NativeWindowImpl& getNative()
+	{
+		ANKI_ASSERT(isCreated());
+		return *impl;
+	}
+
 	/// @name Public interface
 	/// Don't implement them in .h files
 	/// @{
