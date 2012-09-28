@@ -4,6 +4,7 @@
 #include "anki/math/Math.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/Array.h"
+#include "anki/input/KeyCode.h"
 
 namespace anki {
 
@@ -45,7 +46,7 @@ private:
 	/// - 0 times: unpressed
 	/// - 1 times: pressed once
 	/// - >1 times: Kept pressed 'n' times continuously
-	Array<U32, 128> keys;
+	Array<U32, KC_COUNT> keys;
 
 	/// Mouse btns. Supporting 3 btns & wheel. @see keys
 	Array<U32, 8> mouseBtns;

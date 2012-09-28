@@ -8,7 +8,94 @@
 #	error "See file"
 #endif
 
+#define DEBUG_EVENTS 1
+
 namespace anki {
+
+//==============================================================================
+struct X11KeyCodeToAnki
+{
+	U32 x;
+	KeyCode ak;
+};
+
+X11KeyCodeToAnki x2a[] = {
+	{XK_Return, KC_RETURN},
+	{XK_Escape, KC_ESCAPE},
+	{XK_BackSpace, KC_BACKSPACE},
+	{XK_Tab, KC_TAB},
+	{XK_space, KC_SPACE},
+	{XK_exclam, KC_EXCLAIM},
+	{XK_quotedbl, KC_QUOTEDBL},
+	{XK_numbersign, KC_HASH},
+	{XK_percent, KC_PERCENT},
+	{XK_dollar, KC_DOLLAR},
+	{XK_ampersand, KC_AMPERSAND},
+	{XK_apostrophe, KC_QUOTE},
+	{XK_parenleft, KC_LEFTPAREN},
+	{XK_parenright, KC_RIGHTPAREN},
+	{XK_asterisk, KC_ASTERISK},
+	{XK_plus, KC_PLUS},
+	{XK_comma, KC_COMMA},
+	{XK_minus, KC_MINUS},
+	{XK_period, KC_PERIOD},
+	{XK_slash, KC_SLASH},
+	{XK_0, KC_0},
+	{XK_1, KC_1},
+	{XK_2, KC_2},
+	{XK_3, KC_3},
+	{XK_4, KC_4},
+	{XK_5, KC_5},
+	{XK_6, KC_6},
+	{XK_7, KC_7},
+	{XK_8, KC_8},
+	{XK_9, KC_9},
+	{XK_colon, KC_COLON},
+	{XK_semicolon, KC_SEMICOLON},
+	{XK_less, KC_LESS},
+	{XK_equal, KC_EQUALS},
+	{XK_greater, KC_GREATER},
+	{XK_question, KC_QUESTION},
+	{XK_at, KC_AT},
+	{XK_bracketleft, KC_LEFTBRACKET},
+	{XK_backslash, KC_BACKSLASH},
+	{XK_bracketright, KC_RIGHTBRACKET},
+	/*{XK_caret, KC_CARET},*/
+	{XK_underscore, KC_UNDERSCORE},
+	{XK_grave, KC_BACKQUOTE},
+	{XK_a, KC_A},
+	{XK_b, KC_B},
+	{XK_c, KC_C},
+	{XK_d, KC_D},
+	{XK_e, KC_E},
+	{XK_f, KC_F},
+	{XK_g, KC_G},
+	{XK_h, KC_H},
+	{XK_i, KC_I},
+	{XK_j, KC_J},
+	{XK_k, KC_K},
+	{XK_l, KC_L},
+	{XK_m, KC_M},
+	{XK_n, KC_N},
+	{XK_o, KC_O},
+	{XK_p, KC_P},
+	{XK_q, KC_Q},
+	{XK_r, KC_R},
+	{XK_s, KC_S},
+	{XK_t, KC_T},
+	{XK_u, KC_U},
+	{XK_v, KC_V},
+	{XK_w, KC_W},
+	{XK_x, KC_X},
+	{XK_y, KC_Y},
+	{XK_z, KC_Z},
+	{XK_Delete, KC_DELETE},
+
+	{XK_Up,  KC_UP},
+	{XK_Down, KC_DOWN},
+	{XK_Left, KC_LEFT},
+	{XK_Right, KC_RIGHT}
+};
 
 //==============================================================================
 static Bool eventsPending(Display* display)
@@ -76,10 +163,14 @@ void Input::handleEvents()
 		switch(event.type)
 		{
 		case KeyPress:
+#if DEBUG_EVENTS
 			ANKI_LOGI("Key pressed " << rand());
+#endif
 			break;
 		default:
+#if DEBUG_EVENTS
 			ANKI_LOGW("Unknown X event");
+#endif
 			break;
 		}
 	}
