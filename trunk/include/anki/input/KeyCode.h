@@ -1,0 +1,92 @@
+#ifndef ANKI_INPUT_KEY_CODES_H
+#define ANKI_INPUT_KEY_CODES_H
+
+namespace anki {
+
+/// Keyboard scancodes taken from SDL
+enum KeyCode
+{
+	KC_UNKNOWN = 0,
+
+	KC_RETURN = '\r',
+	KC_ESCAPE = '\033',
+	KC_BACKSPACE = '\b',
+	KC_TAB = '\t',
+	KC_SPACE = ' ',
+	KC_EXCLAIM = '!',
+	KC_QUOTEDBL = '"',
+	KC_HASH = '#',
+	KC_PERCENT = '%',
+	KC_DOLLAR = '$',
+	KC_AMPERSAND = '&',
+	KC_QUOTE = '\'',
+	KC_LEFTPAREN = '(',
+	KC_RIGHTPAREN = ')',
+	KC_ASTERISK = '*',
+	KC_PLUS = '+',
+	KC_COMMA = ',',
+	KC_MINUS = '-',
+	KC_PERIOD = '.',
+	KC_SLASH = '/',
+	KC_0 = '0',
+	KC_1 = '1',
+	KC_2 = '2',
+	KC_3 = '3',
+	KC_4 = '4',
+	KC_5 = '5',
+	KC_6 = '6',
+	KC_7 = '7',
+	KC_8 = '8',
+	KC_9 = '9',
+	KC_COLON = ':',
+	KC_SEMICOLON = ';',
+	KC_LESS = '<',
+	KC_EQUALS = '=',
+	KC_GREATER = '>',
+	KC_QUESTION = '?',
+	KC_AT = '@',
+	KC_LEFTBRACKET = '[',
+	KC_BACKSLASH = '\\',
+	KC_RIGHTBRACKET = ']',
+	KC_CARET = '^',
+	KC_UNDERSCORE = '_',
+	KC_BACKQUOTE = '`',
+	KC_A = 'a',
+	KC_B = 'b',
+	KC_C = 'c',
+	KC_D = 'd',
+	KC_E = 'e',
+	KC_F = 'f',
+	KC_G = 'g',
+	KC_H = 'h',
+	KC_I = 'i',
+	KC_J = 'j',
+	KC_K = 'k',
+	KC_L = 'l',
+	KC_M = 'm',
+	KC_N = 'n',
+	KC_O = 'o',
+	KC_P = 'p',
+	KC_Q = 'q',
+	KC_R = 'r',
+	KC_S = 's',
+	KC_T = 't',
+	KC_U = 'u',
+	KC_V = 'v',
+	KC_W = 'w',
+	KC_X = 'x',
+	KC_Y = 'y',
+	KC_Z = 'z',
+	KC_DELETE = '\177',
+
+	KC_UP,
+	KC_DOWN,
+	KC_LEFT,
+	KC_RIGHT,
+
+	KC_COUNT
+};
+
+} // end namespace anki
+
+#endif

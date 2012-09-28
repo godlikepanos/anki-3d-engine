@@ -15,7 +15,7 @@ struct NativeWindowImpl
 {
 	Display* xDisplay = nullptr;
 	Window xWindow = 0;
-	Colormap xColormap; ///< Its is actualy an unsigned int
+	Colormap xColormap = 0; ///< Its is actualy an unsigned int
 	GLXContext glxContext = nullptr; ///< Its actualy a pointer
 	GLXFBConfig* glxConfig = nullptr;
 
