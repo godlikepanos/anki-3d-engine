@@ -7,6 +7,7 @@
 #else
 #	error "See file"
 #endif
+#include <X11/XKBlib.h>
 
 #define DEBUG_EVENTS 1
 
@@ -19,7 +20,7 @@ struct X11KeyCodeToAnki
 	KeyCode ak;
 };
 
-X11KeyCodeToAnki x2a[] = {
+static const X11KeyCodeToAnki x2a[] = {
 	{XK_Return, KC_RETURN},
 	{XK_Escape, KC_ESCAPE},
 	{XK_BackSpace, KC_BACKSPACE},
@@ -32,8 +33,8 @@ X11KeyCodeToAnki x2a[] = {
 	{XK_dollar, KC_DOLLAR},
 	{XK_ampersand, KC_AMPERSAND},
 	{XK_apostrophe, KC_QUOTE},
-	{XK_parenleft, KC_LEFTPAREN},
-	{XK_parenright, KC_RIGHTPAREN},
+	{XK_parenleft, KC_LPAREN},
+	{XK_parenright, KC_RPAREN},
 	{XK_asterisk, KC_ASTERISK},
 	{XK_plus, KC_PLUS},
 	{XK_comma, KC_COMMA},
@@ -57,9 +58,9 @@ X11KeyCodeToAnki x2a[] = {
 	{XK_greater, KC_GREATER},
 	{XK_question, KC_QUESTION},
 	{XK_at, KC_AT},
-	{XK_bracketleft, KC_LEFTBRACKET},
+	{XK_bracketleft, KC_LBRACKET},
 	{XK_backslash, KC_BACKSLASH},
-	{XK_bracketright, KC_RIGHTBRACKET},
+	{XK_bracketright, KC_RBRACKET},
 	/*{XK_caret, KC_CARET},*/
 	{XK_underscore, KC_UNDERSCORE},
 	{XK_grave, KC_BACKQUOTE},
@@ -97,6 +98,8 @@ X11KeyCodeToAnki x2a[] = {
 	{XK_Right, KC_RIGHT}
 };
 
+#define XKEYCODE2ANKI(k_) nativeKeyToAnki[k_ & 0xFF]
+
 //==============================================================================
 static Bool eventsPending(Display* display)
 {
@@ -126,9 +129,21 @@ void Input::init(NativeWindow* nativeWindow_)
 {
 	ANKI_ASSERT(nativeWindow == nullptr);
 	nativeWindow = nativeWindow_;
-	XSelectInput(nativeWindow->getNative().xDisplay, 
-		nativeWindow->getNative().xWindow, 
-		ExposureMask | ButtonPressMask | KeyPressMask);
+	
+	NativeWindowImpl& nwin = nativeWindow->getNative();
+
+	XSelectInput(nwin.xDisplay, nwin.xWindow, 
+		ExposureMask | ButtonPressMask | KeyPressMask | KeyReleaseMask);
+
+	memset(&nativeKeyToAnki[0], sizeof(nativeKeyToAnki), KC_UNKNOWN);
+	for(const X11KeyCodeToAnki& a : x2a)
+	{
+		// Convert X11 keycode to something else
+		U32 somethingElse = a.x & 0xFF;
+
+		nativeKeyToAnki[somethingElse] = a.ak;
+	}
+
 	reset();
 }
 
@@ -138,14 +153,14 @@ void Input::handleEvents()
 	ANKI_ASSERT(nativeWindow != nullptr);
 
 	// add the times a key is being pressed
-	for(U32& k : keys)
+	for(auto& k : keys)
 	{
 		if(k)
 		{
 			++k;
 		}
 	}
-	for(U32& k : mouseBtns)
+	for(auto& k : mouseBtns)
 	{
 		if(k)
 		{
@@ -155,17 +170,50 @@ void Input::handleEvents()
 
 	NativeWindowImpl& win = nativeWindow->getNative();
 	Display* disp = win.xDisplay;
+	//ANKI_LOGI("----------------------");
 	while(eventsPending(disp))
 	{
 		XEvent event;
+		::KeyCode keycode = 0;
+		KeySym keysym;
 		XNextEvent(disp, &event);
+skipXNextEvent:
 
 		switch(event.type)
 		{
 		case KeyPress:
-#if DEBUG_EVENTS
-			ANKI_LOGI("Key pressed " << rand());
-#endif
+			keysym = XLookupKeysym(&event.xkey, 0);
+			keycode = event.xkey.keycode;
+			ANKI_LOGI("Key pressed: 0x" << std::hex << (U32)keysym);
+			keys[XKEYCODE2ANKI(keysym)] = 1;
+			break;
+		case KeyRelease:
+			keycode = event.xkey.keycode;
+			keysym = XLookupKeysym(&event.xkey, 0);
+			if(eventsPending(disp))
+			{
+				XEvent event1;
+				XNextEvent(disp, &event1);
+
+				if(event1.type == KeyPress && event1.xkey.keycode == keycode)
+				{
+					// Repeat
+					//ANKI_LOGI("Key autorepeat: 0x" << std::hex << (U32)keysym);
+					//++keys[XKEYCODE2ANKI(keysym)];
+				}
+				else
+				{
+					ANKI_LOGI("Key released: 0x" << std::hex << (U32)keysym);
+					keys[XKEYCODE2ANKI(keysym)] = 0;
+					event = event1;
+					goto skipXNextEvent;
+				}
+			}
+			else
+			{
+				ANKI_LOGI("Key released #2: 0x" << std::hex << (U32)keysym);
+				keys[XKEYCODE2ANKI(keysym)] = 0;
+			}
 			break;
 		default:
 #if DEBUG_EVENTS
@@ -174,67 +222,6 @@ void Input::handleEvents()
 			break;
 		}
 	}
-
-#if 0
-
-	SDL_Event event_;
-	while(SDL_PollEvent(&event_))
-	{
-		switch(event_.type)
-		{
-		case SDL_KEYDOWN:
-			keys[event_.key.keysym.scancode] = 1;
-			break;
-
-		case SDL_KEYUP:
-			keys[event_.key.keysym.scancode] = 0;
-			break;
-
-		case SDL_MOUSEBUTTONDOWN:
-			mouseBtns[event_.button.button] = 1;
-			break;
-
-		case SDL_MOUSEBUTTONUP:
-			mouseBtns[event_.button.button] = 0;
-			break;
-
-		case SDL_MOUSEMOTION:
-		{
-			Vec2 prevMousePosNdc(mousePosNdc);
-
-			mousePos.x() = event_.button.x;
-			mousePos.y() = event_.button.y;
-
-			mousePosNdc.x() = (2.0 * mousePos.x()) /
-				(F32)AppSingleton::get().getWindowWidth() - 1.0;
-			mousePosNdc.y() = 1.0 - (2.0 * mousePos.y()) /
-				(F32)AppSingleton::get().getWindowHeight();
-
-			if(warpMouseFlag)
-			{
-				// the SDL_WarpMouse pushes an event in the event queue.
-				// This check is so we wont process the event of the
-				// SDL_WarpMouse function
-				if(mousePosNdc == Vec2(0.0))
-				{
-					break;
-				}
-
-				uint w = AppSingleton::get().getWindowWidth();
-				uint h = AppSingleton::get().getWindowHeight();
-				SDL_WarpMouse(w / 2, h / 2);
-			}
-
-			mouseVelocity = mousePosNdc - prevMousePosNdc;
-			break;
-		}
-
-		case SDL_QUIT:
-			AppSingleton::get().quit(1);
-			break;
-		}
-	}
-#endif
 }
 
 } // end namespace anki

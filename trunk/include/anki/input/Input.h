@@ -53,6 +53,8 @@ private:
 	/// @}
 
 	Vec2 mousePosNdc; ///< The coords are in the NDC space
+
+	Array<U16, 256> nativeKeyToAnki;
 };
 
 typedef Singleton<Input> InputSingleton;
