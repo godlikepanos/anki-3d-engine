@@ -184,64 +184,62 @@ void mainLoopExtra()
 	static Movable* mover = SceneSingleton::get().getActiveCamera().getMovable();
 	Input& in = InputSingleton::get();
 
-	mover->moveLocalZ(-0.02);
-
-	if(in.getKey(SDL_SCANCODE_1))
+	if(in.getKey(KC_1))
 	{
 		mover = &SceneSingleton::get().getActiveCamera();
 	}
-	if(in.getKey(SDL_SCANCODE_2))
+	if(in.getKey(KC_2))
 	{
 		mover = SceneSingleton::get().findSceneNode("horse")->getMovable();
 	}
-	if(in.getKey(SDL_SCANCODE_3))
+	if(in.getKey(KC_3))
 	{
 		mover = SceneSingleton::get().findSceneNode("spot0")->getMovable();
 	}
-	/*if(in.getKey(SDL_SCANCODE_4))
+	/*if(in.getKey(KC_4))
 	{
 		mover = SceneSingleton::get().findSceneNode("point0")->getMovable();
 	}
-	if(in.getKey(SDL_SCANCODE_5))
+	if(in.getKey(KC_5))
 	{
 		mover = SceneSingleton::get().findSceneNode("point1")->getMovable();
 	}*/
-	if(in.getKey(SDL_SCANCODE_6))
+	if(in.getKey(KC_6))
 	{
 		mover = SceneSingleton::get().findSceneNode("camera1")->getMovable();
 		mover->setLocalTransform(cam->getLocalTransform());
 	}
 
-	if(in.getKey(SDL_SCANCODE_L) == 1)
+	if(in.getKey(KC_L) == 1)
 	{
 		Light* l = SceneSingleton::get().findSceneNode("point1")->getLight();
 		static_cast<PointLight*>(l)->setRadius(10.0);
 	}
 
-	if(in.getKey(SDL_SCANCODE_P) == 1)
+	if(in.getKey(KC_P) == 1)
 	{
 		/*SceneSingleton::get().getActiveCamera().
 			getFrustumable()->getFrustum().setFar(250.0);*/
 	}
 
-	if(in.getKey(SDL_SCANCODE_UP)) mover->rotateLocalX(ang);
-	if(in.getKey(SDL_SCANCODE_DOWN)) mover->rotateLocalX(-ang);
-	if(in.getKey(SDL_SCANCODE_LEFT)) mover->rotateLocalY(ang);
-	if(in.getKey(SDL_SCANCODE_RIGHT)) mover->rotateLocalY(-ang);
+	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
+	if(in.getKey(KC_DOWN)) mover->rotateLocalX(-ang);
+	if(in.getKey(KC_LEFT)) mover->rotateLocalY(ang);
+	if(in.getKey(KC_RIGHT)) mover->rotateLocalY(-ang);
 
-	if(in.getKey(SDL_SCANCODE_A)) mover->moveLocalX(-dist);
-	if(in.getKey(SDL_SCANCODE_D)) mover->moveLocalX(dist);
-	if(in.getKey(SDL_SCANCODE_LSHIFT)) mover->moveLocalY(dist);
-	if(in.getKey(SDL_SCANCODE_SPACE)) mover->moveLocalY(-dist);
-	if(in.getKey(SDL_SCANCODE_W)) mover->moveLocalZ(-dist);
-	if(in.getKey(SDL_SCANCODE_S)) mover->moveLocalZ(dist);
-	if(in.getKey(SDL_SCANCODE_Q)) mover->rotateLocalZ(ang);
-	if(in.getKey(SDL_SCANCODE_E)) mover->rotateLocalZ(-ang);
-	if(in.getKey(SDL_SCANCODE_PAGEUP))
+	if(in.getKey(KC_A)) mover->moveLocalX(-dist);
+	if(in.getKey(KC_D)) mover->moveLocalX(dist);
+	if(in.getKey(KC_LSHIFT)) mover->moveLocalY(dist);
+	if(in.getKey(KC_SPACE)) mover->moveLocalY(-dist);
+	if(in.getKey(KC_W)) mover->moveLocalZ(-dist);
+	if(in.getKey(KC_S)) mover->moveLocalZ(dist);
+	if(in.getKey(KC_Q)) mover->rotateLocalZ(ang);
+	if(in.getKey(KC_E)) mover->rotateLocalZ(-ang);
+	if(in.getKey(KC_PAGEUP))
 	{
 		mover->scale(scale);
 	}
-	if(in.getKey(SDL_SCANCODE_PAGEDOWN))
+	if(in.getKey(KC_PAGEDOWN))
 	{
 		mover->scale(-scale);
 	}
@@ -274,7 +272,7 @@ void mainLoop()
 		EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
 		MainRendererSingleton::get().render(SceneSingleton::get());
 
-		if(InputSingleton::get().getKey(SDL_SCANCODE_ESCAPE))
+		if(InputSingleton::get().getKey(KC_ESCAPE))
 		{
 			break;
 		}
@@ -329,7 +327,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = true;
+	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;
