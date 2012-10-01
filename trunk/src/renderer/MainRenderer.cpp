@@ -5,7 +5,6 @@
 #include "anki/util/Filesystem.h"
 #include <cstdlib>
 #include <cstdio>
-#include <jpeglib.h>
 #include <fstream>
 
 #define glewGetContext() (&glContext)
@@ -159,6 +158,7 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 //==============================================================================
 void MainRenderer::takeScreenshotJpeg(const char* filename)
 {
+#if 0
 	// open file
 	FILE* outfile = fopen(filename, "wb");
 
@@ -203,6 +203,7 @@ void MainRenderer::takeScreenshotJpeg(const char* filename)
 	// done
 	free(buffer);
 	fclose(outfile);
+#endif
 }
 
 //==============================================================================

@@ -286,8 +286,8 @@ void mainLoop()
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
-			SDL_Delay((AppSingleton::get().getTimerTick()
-				- timer.getElapsedTime()) * 1000.0);
+			HighRezTimer::sleep(AppSingleton::get().getTimerTick()
+				- timer.getElapsedTime());
 		}
 #else
 		if(MainRendererSingleton::get().getFramesCount() == 1000)

@@ -12,7 +12,7 @@ ENDFOREACH()
 
 ADD_LIBRARY(anki)
 
-TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath ankiglew ankitinyxml2 ankilua GLU GL jpeg SDL png freetype)
+TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath ankiglew ankitinyxml2 ankilua GLU GL png freetype)
 
 SET_TARGET_PROPERTIES(anki PROPERTIES LINKER_LANGUAGE CXX)
 
