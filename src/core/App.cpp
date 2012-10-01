@@ -89,6 +89,7 @@ void App::init(int argc, char* argv[])
 //==============================================================================
 void App::initWindow()
 {
+#if 0
 	ANKI_LOGI("SDL window initializing...");
 
 	if(SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -138,6 +139,7 @@ void App::initWindow()
 	}
 
 	ANKI_LOGI("SDL window initialization ends");
+#endif
 }
 
 //==============================================================================
@@ -164,26 +166,32 @@ void App::initDirs()
 //==============================================================================
 void App::togleFullScreen()
 {
+#if 0
 	//SDL_WM_ToggleFullScreen(mainSurf);
 	SDL_SetWindowFullscreen(windowId, fullScreenFlag ? SDL_TRUE : SDL_FALSE);
 	fullScreenFlag = !fullScreenFlag;
+#endif
 }
 
 //==============================================================================
 void App::swapBuffers()
 {
+#if 0
 	//SDL_GL_SwapBuffers();
 	SDL_GL_SwapWindow(windowId);
+#endif
 }
 
 //==============================================================================
 void App::quit(int code)
 {
+#if 0
 	SDL_FreeSurface(iconImage);
 	SDL_GL_DeleteContext(glContext);
 	SDL_DestroyWindow(windowId);
 	SDL_Quit();
 	exit(code);
+#endif
 }
 
 //==============================================================================
@@ -204,10 +212,7 @@ void App::printAppInfo()
 	msg << "platform ID " << ANKI_PLATFORM << ", ";
 	msg << "compiler ID " << ANKI_COMPILER << ", ";
 	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
-	const SDL_version* v = SDL_Linked_Version();
-	msg << "SDL " << int(v->major) << '.' << int(v->minor) << '.' 
-		<< int(v->patch) << ", " << "build date " __DATE__ << ", " 
-		<< "rev " << ANKI_REVISION;
+	msg << "build date " __DATE__ ", " << "rev " << ANKI_REVISION;
 
 	ANKI_LOGI(msg.str());
 }

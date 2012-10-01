@@ -1,6 +1,8 @@
 #ifndef ANKI_UTIL_HIGH_REZ_TIMER_H
 #define ANKI_UTIL_HIGH_REZ_TIMER_H
 
+#include "anki/util/StdTypes.h"
+
 namespace anki {
 
 /// High resolution timer. All time in seconds
@@ -8,7 +10,7 @@ class HighRezTimer
 {
 public:
 	/// The type that the timer manipulates the results
-	typedef double Scalar;
+	typedef F64 Scalar;
 
 	/// Start the timer
 	void start();
@@ -23,11 +25,14 @@ public:
 	/// Get the current date's seconds
 	static Scalar getCurrentTime();
 
+	/// Micro sleep
+	static void sleep(Scalar seconds);
+
 private:
 	Scalar startTime = 0.0;
 	Scalar stopTime = 0.0;
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif
