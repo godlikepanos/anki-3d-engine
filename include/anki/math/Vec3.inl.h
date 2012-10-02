@@ -410,7 +410,7 @@ inline void Vec3::transform(const Vec3& translate, const Quat& rotate,
 // Mat4
 inline Vec3 Vec3::getTransformed(const Mat4& transform) const
 {
-#if defined(ANKI_MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_SIMD_SSE)
 	Vec3 out;
 	Vec4 v4((*this), 1.0);
 	for(U i = 0; i < 3; i++)

@@ -5,7 +5,7 @@ namespace anki {
 //==============================================================================
 inline F32 Math::sqrt(const F32 f)
 {
-#if defined(ANKI_MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_SIMD_SSE)
 	__m128 mm = _mm_set_ss(f);
 	mm = _mm_sqrt_ss(mm);
 	F32 o;

@@ -39,7 +39,7 @@ public:
 	const F32& operator()(const U i, const U j) const;
 	F32& operator[](const U i);
 	const F32& operator[](const U i) const;
-#if defined(ANKI_MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_SIMD_SSE)
 	__m128& getMm(const U i);
 	const __m128& getMm(const U i) const;
 #endif
@@ -125,7 +125,7 @@ private:
 		std::array<std::array<F32, 4>, 4> arr2;
 		F32 carr1[16]; ///< For gdb
 		F32 carr2[4][4]; ///< For gdb
-#if defined(ANKI_MATH_INTEL_SIMD)
+#if defined(ANKI_MATH_SIMD_SSE)
 		std::array<__m128, 4> arrMm;
 #endif
 	};

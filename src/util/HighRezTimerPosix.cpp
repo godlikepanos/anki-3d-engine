@@ -19,9 +19,10 @@ static struct timespec gstart;
 static struct timeval gstart;
 #endif
 
-struct Dummy
+/// A dummy struct that inits the timer
+struct DummyInitTimer
 {
-	Dummy()
+	DummyInitTimer()
 	{
 #if HAVE_CLOCK_GETTIME
 		clock_gettime(CLOCK_MONOTONIC, &gstart);
@@ -31,7 +32,7 @@ struct Dummy
 	}
 };
 
-static Dummy dummy;
+static DummyInitTimer dummy;
 
 //==============================================================================
 void HighRezTimer::start()
