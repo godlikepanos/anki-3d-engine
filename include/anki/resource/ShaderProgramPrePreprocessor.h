@@ -4,6 +4,8 @@
 #include "anki/resource/ShaderProgramCommon.h"
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
+#include "anki/util/StringList.h"
+#include "anki/util/Array.h"
 #include <limits>
 
 namespace anki {
@@ -40,14 +42,14 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Vector<std::string>& getTranformFeedbackVaryings() const
+	const StringList& getTranformFeedbackVaryings() const
 	{
 		return trffbVaryings;
 	}
 
 	const std::string& getShaderSource(ShaderType type)
 	{
-		return output.shaderSources[type];
+		return shaderSources[type];
 	}
 	/// @}
 
@@ -63,93 +65,41 @@ protected:
 		}
 	};
 
-	struct IncludePragma: Pragma
-	{
-		std::string filename;
-	};
-
-	struct TrffbVaryingPragma: Pragma
-	{
-		StringList names;
-	};
-
 	struct CodeBeginningPragma: Pragma
 	{};
 
-	/// The output of the class packed in this struct
-	struct Output
-	{
-		friend class PrePreprocessor;
-
-		/// Names and and ids for transform feedback varyings
-		Vector<TrffbVaryingPragma> trffbVaryings;
-		Array<std::string, ST_NUM> shaderSources;
-	};
-
-	Output output; ///< The most important variable
+	/// Names and and ids for transform feedback varyings
 	StringList trffbVaryings;
+	Array<std::string, ST_NUM> shaderSources;
+
 	/// The parseFileForPragmas fills this
-	Vector<std::string> sourceLines;
+	StringList sourceLines;
 	Array<CodeBeginningPragma, ST_NUM> shaderStarts;
 
-	/// Parse a PrePreprocessor formated GLSL file. Use
-	/// the accessors to get the output
+	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get 
+	/// the output
+	///
 	/// @param filename The file to parse
 	/// @exception Ecxeption
 	void parseFile(const char* filename);
 
-	/// A recursive function that parses a file for pragmas and updates
-	/// the output
+	/// Called by parseFile
+	void parseFileInternal(const char* filename);
+
+	/// A recursive function that parses a file for pragmas and updates the 
+	/// output
+	///
 	/// @param filename The file to parse
 	/// @param depth The #line in GLSL does not support filename so an
-	/// depth it being used. It also tracks the
-	/// includance depth
+	///              depth it being used. It also tracks the includance depth
 	/// @exception Exception
-	void parseFileForPragmas(const std::string& filename, int depth = 0);
+	void parseFileForPragmas(const std::string& filename, U32 depth = 0);
 
-	/// @todo
-	void parseStartPragma(scanner::Scanner& scanner,
-		const std::string& filename, uint depth,
-		const Vector<std::string>& lines);
-
-	/// @todo
-	void parseIncludePragma(scanner::Scanner& scanner,
-		const std::string& filename, uint depth,
-		const Vector<std::string>& lines);
-
-	/// @todo
-	void parseTrffbVarying(scanner::Scanner& scanner,
-		const std::string& filename, uint depth,
-		const Vector<std::string>& lines);
-
-	/// Searches inside the Output::attributes or Output::trffbVaryings
-	/// vectors
-	/// @param vec Output::uniforms or Output::trffbVaryings
-	/// @param what The name of the varying or attrib
-	/// @return Iterator to the vector
-	template<typename Type>
-	typename Vector<Type>::const_iterator findNamed(
-		const Vector<Type>& vec,
-		const std::string& what) const;
+	/// Self explanatory
+	void parseStartPragma(U32 shaderType, const std::string& line);
 
 	void printSourceLines() const;  ///< For debugging
-
-	/// Add a in the source lines a: #line <line> <depth> // cmnt
-	void addLinePreProcExpression(uint line, uint depth, const char* cmnt);
 };
-
-template<typename Type>
-typename Vector<Type>::const_iterator
-	ShaderProgramPrePreprocessor::findNamed(
-	const Vector<Type>& vec, const std::string& what) const
-{
-	typename Vector<Type>::const_iterator it = vec.begin();
-	while(it != vec.end() && it->name != what)
-	{
-		++it;
-	}
-	return it;
-}
 
 } // end namespace anki
 

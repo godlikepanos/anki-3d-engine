@@ -358,7 +358,9 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 		if(colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
 		{
 			err = "Converting bit depth";
+#if 0
 			png_set_gray_1_2_4_to_8(pngPtr);
+#endif
 			goto again;
 		}
 

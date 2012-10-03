@@ -22,9 +22,9 @@ StringList::String StringList::join(const Char* sep) const
 }
 
 //==============================================================================
-int StringList::getIndexOf(const Char* value) const
+I StringList::getIndexOf(const Char* value) const
 {
-	size_t pos = 0;
+	U32 pos = 0;
 
 	for(const_iterator it = begin(); it != end(); ++it)
 	{
@@ -39,7 +39,7 @@ int StringList::getIndexOf(const Char* value) const
 }
 
 //==============================================================================
-StringList StringList::splitString(const Char* s, Char seperator, bool keep)
+StringList StringList::splitString(const Char* s, Char seperator, Bool keep)
 {
 	StringList out;
 	std::istringstream ss(s);
@@ -64,4 +64,4 @@ std::ostream& operator<<(std::ostream& s, const StringList& a)
 	return s;
 }
 
-} // end namespace
+} // end namespace anki

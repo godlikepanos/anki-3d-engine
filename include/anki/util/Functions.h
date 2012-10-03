@@ -5,6 +5,7 @@
 #define ANKI_UTIL_FUNCTIONS_H
 
 #include "anki/util/StdTypes.h"
+#include <string>
 
 namespace anki {
 
@@ -32,6 +33,15 @@ template<typename Vec>
 extern PtrSize getVectorSizeInBytes(const Vec& v)
 {
 	return v.size() * sizeof(typename Vec::value_type);
+}
+
+/// Trim a string
+inline std::string trimString(std::string& str, const char* what = " ")
+{
+	std::string out = str;
+	out.erase(0, out.find_first_not_of(what));
+	out.erase(out.find_last_not_of(what) + 1);
+	return out;
 }
 
 /// @}

@@ -1,9 +1,7 @@
 #ifndef ANKI_RESOURCE_SHADER_PROGRAM_COMMON_H
 #define ANKI_RESOURCE_SHADER_PROGRAM_COMMON_H
 
-
 namespace anki {
-
 
 /// Shader type
 enum ShaderType
@@ -16,8 +14,6 @@ enum ShaderType
 	ST_NUM
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

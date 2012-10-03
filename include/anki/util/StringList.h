@@ -2,6 +2,7 @@
 #define ANKI_UTIL_STRING_LIST_H
 
 #include "anki/util/Vector.h"
+#include "anki/util/StdTypes.h"
 #include <string>
 
 namespace anki {
@@ -25,18 +26,18 @@ public:
 	/// Returns the index position of the last occurrence of @a value in
 	/// the list
 	/// @return -1 of not found
-	int getIndexOf(const Char* value) const;
+	I getIndexOf(const Char* value) const;
 
 	/// Split a string using a list of separators (@a sep) and return these
 	/// strings in a string list
 	static Self splitString(const Char* s, const Char sep = ' ',
-		bool keepEmpties = false);
+		Bool keepEmpties = false);
 
 	/// Mainly for the unit tests
 	friend std::ostream& operator<<(std::ostream& s, const Self& a);
 };
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

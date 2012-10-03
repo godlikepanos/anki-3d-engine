@@ -172,7 +172,7 @@ ENDIF()
 #
 # Include & lib directories
 #
-INCLUDE_DIRECTORIES("extern/GLEW/include" "extern/tinyxml2/include" "extern/lua" "include")
+INCLUDE_DIRECTORIES("extern/GLEW/include" "extern/tinyxml2/include" "extern/lua" "extern/png" "include")
 INCLUDE_DIRECTORIES("extern/include") # XXX Remove that some day
 LINK_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/extern/lib64") # XXX Remove that some day
 
