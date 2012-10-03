@@ -2,18 +2,11 @@
 #define ANKI_RESOURCE_SHADER_PROGRAM_PRE_PREPROCESSOR_H
 
 #include "anki/resource/ShaderProgramCommon.h"
-#include <limits>
-#include <boost/array.hpp>
 #include "anki/util/Vector.h"
-
+#include "anki/util/StdTypes.h"
+#include <limits>
 
 namespace anki {
-
-
-namespace scanner {
-class Scanner;
-}
-
 
 /// Helper class used for shader program loading
 ///
@@ -62,20 +55,11 @@ protected:
 	/// The pragma base class
 	struct Pragma
 	{
-		std::string definedInFile;
-		int definedInLine;
+		I32 definedLine = -1;
 
-		Pragma()
-			: definedInLine(-1)
-		{}
-
-		Pragma(const std::string& definedInFile_, int definedInLine_)
-			: definedInFile(definedInFile_), definedInLine(definedInLine_)
-		{}
-
-		bool isDefined() const
+		Bool isDefined() const
 		{
-			return definedInLine != -1;
+			return definedLine != -1;
 		}
 	};
 
@@ -86,24 +70,11 @@ protected:
 
 	struct TrffbVaryingPragma: Pragma
 	{
-		std::string name;
-
-		TrffbVaryingPragma(const std::string& definedInFile_,
-			int definedInLine_, const std::string& name_)
-			: Pragma(definedInFile_, definedInLine_), name(name_)
-		{}
+		StringList names;
 	};
 
 	struct CodeBeginningPragma: Pragma
-	{
-		/// The line number in the PrePreprocessor-compatible
-		/// file
-		int globalLine;
-
-		CodeBeginningPragma()
-			: globalLine(-1)
-		{}
-	};
+	{};
 
 	/// The output of the class packed in this struct
 	struct Output
@@ -112,15 +83,14 @@ protected:
 
 		/// Names and and ids for transform feedback varyings
 		Vector<TrffbVaryingPragma> trffbVaryings;
-		boost::array<std::string, ST_NUM> shaderSources;
+		Array<std::string, ST_NUM> shaderSources;
 	};
 
 	Output output; ///< The most important variable
-	Vector<std::string> trffbVaryings;
+	StringList trffbVaryings;
 	/// The parseFileForPragmas fills this
 	Vector<std::string> sourceLines;
-	boost::array<CodeBeginningPragma, ST_NUM> shaderStarts;
-	static boost::array<const char*, ST_NUM> startTokens; ///< XXX
+	Array<CodeBeginningPragma, ST_NUM> shaderStarts;
 
 	/// Parse a PrePreprocessor formated GLSL file. Use
 	/// the accessors to get the output
@@ -168,7 +138,6 @@ protected:
 	void addLinePreProcExpression(uint line, uint depth, const char* cmnt);
 };
 
-
 template<typename Type>
 typename Vector<Type>::const_iterator
 	ShaderProgramPrePreprocessor::findNamed(
@@ -182,8 +151,6 @@ typename Vector<Type>::const_iterator
 	return it;
 }
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

@@ -26,6 +26,7 @@ Fbo::~Fbo()
 void Fbo::create()
 {
 	ANKI_ASSERT(!isCreated());
+	ANKI_GL_NON_SHARABLE_INIT();
 	glGenFramebuffers(1, &glId);
 	ANKI_ASSERT(glId != 0);
 }
@@ -43,6 +44,7 @@ void Fbo::destroy()
 void Fbo::bind() const
 {
 	ANKI_ASSERT(isCreated());
+	ANKI_GL_NON_SHARABLE_CHECK();
 
 	if(current != this)
 	{
@@ -55,6 +57,7 @@ void Fbo::bind() const
 void Fbo::unbind() const
 {
 	ANKI_ASSERT(isCreated());
+	ANKI_GL_NON_SHARABLE_CHECK();
 
 	if(current == this)
 	{
@@ -76,8 +79,7 @@ void Fbo::unbindAll()
 //==============================================================================
 bool Fbo::isComplete() const
 {
-	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(glId == getCurrentFboGlId() && "Not binded");
+	bind();
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	return status == GL_FRAMEBUFFER_COMPLETE;
@@ -87,7 +89,6 @@ bool Fbo::isComplete() const
 void Fbo::setColorAttachments(const std::initializer_list<const Texture*>& 
 	textures)
 {
-	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(textures.size() > 0);
 
 	bind();
@@ -108,8 +109,6 @@ void Fbo::setColorAttachments(const std::initializer_list<const Texture*>&
 //==============================================================================
 void Fbo::setOtherAttachment(GLenum attachment, const Texture& tex)
 {
-	ANKI_ASSERT(isCreated());
-
 	bind();
 	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
 		GL_TEXTURE_2D, tex.getGlId(), 0);

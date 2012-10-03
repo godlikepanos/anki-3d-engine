@@ -71,4 +71,4 @@ void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 #endif
 }
 
-} // end namespace
+} // end namespace anki
