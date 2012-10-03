@@ -5,50 +5,49 @@
 #include <iomanip>
 #include <cstring>
 #include <iostream>
-#include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
-
 
 namespace anki {
 
+//==============================================================================
 
-static const char* MULTIPLE_DEF_MSG = " already defined in the same place. "
-	"Check for circular or multiple includance";
+static Array<const char*, 3> commands = {{
+	"#pragma anki start",
+	"#pragma anki include",
+	"#pragma anki transformFeedbackVaryings"}};
 
-
-boost::array<const char*, ST_NUM>
-	ShaderProgramPrePreprocessor::startTokens = {{
+Array<const char*, ST_NUM> startTokens = {{
 	"vertexShader",
 	"tcShader",
 	"teShader",
 	"geometryShader",
 	"fragmentShader"}};
 
+static const char* MULTIPLE_DEF_MSG = " already defined in the same place. "
+	"Check for circular or multiple includance";
 
-//==============================================================================
-// printSourceLines                                                            =
+static const char* ENTRY_POINT_DOT_DEFINED = "Entry point not defined: ";
+
+const U32 MAX_DEPTH = 99;
+
 //==============================================================================
 void ShaderProgramPrePreprocessor::printSourceLines() const
 {
-	for(uint i = 0; i < sourceLines.size(); ++i)
+	for(U32 i = 0; i < sourceLines.size(); ++i)
 	{
-		std::cout << std::setw(3) << (i + 1) << ": " <<
-			sourceLines[i] << std::endl;
+		std::cout << std::setw(3) << (i + 1) << ": " 
+			<< sourceLines[i] << std::endl;
 	}
 }
 
-
-//==============================================================================
-// parseFileForPragmas                                                         =
 //==============================================================================
 void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	const std::string& filename, int depth)
 {
 	// first check the depth
-	if(depth > 99)
+	if(depth > MAX_DEPTH)
 	{
-		throw ANKI_EXCEPTION("File \"" + filename +
-			"\": The include depth is too high. Probably circular includance");
+		throw ANKI_EXCEPTION("The include depth is too high. "
+			"Probably circular includance: " + filename);
 	}
 
 	// load file in lines
@@ -58,6 +57,25 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 		throw ANKI_EXCEPTION("Cannot open file or empty: " + filename);
 	}
 
+	for(const std::string& line : lines)
+	{
+		if(line.find_first_of(commands[0]) != std::string::npos)
+		{
+
+		}
+		else if(line.find_first_of(commands[1]) != std::string::npos)
+		{
+		}
+		else if(line.find_first_of(commands[2]) != std::string::npos)
+		{
+		}
+		else
+		{
+			sourceLines.push_back(line);
+		}
+	}
+
+#if 0
 	scanner::Scanner scanner(filename.c_str(), false);
 	const scanner::Token* token;
 
@@ -141,11 +159,9 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 			// It will never get here
 		}
 	} // end while
+#endif
 }
 
-
-//=============================================================================/
-// parseFile                                                                   =
 //==============================================================================
 void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 {
@@ -157,18 +173,18 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 		// sanity checks
 		if(!shaderStarts[ST_VERTEX].isDefined())
 		{
-			throw ANKI_EXCEPTION("Entry point \""+ startTokens[ST_VERTEX] +
-				"\" is not defined");
+			throw ANKI_EXCEPTION(ENTRY_POINT_DOT_DEFINED 
+				+ startTokens[ST_VERTEX]);
 		}
 
 		if(!shaderStarts[ST_FRAGMENT].isDefined())
 		{
-			throw ANKI_EXCEPTION("Entry point \""+ startTokens[ST_FRAGMENT] +
-				"\" is not defined");
+			throw ANKI_EXCEPTION(ENTRY_POINT_DOT_DEFINED 
+				+ startTokens[ST_FRAGMENT]);
 		}
 
-		// construct shaders' source code
-		for(uint i = 0; i < ST_NUM; i++)
+		// construct each shaders' source code
+		for(U i = 0; i < ST_NUM; i++)
 		{
 			std::string& src = output.shaderSources[i];
 
@@ -181,39 +197,39 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 			}
 
 			// Sanity check: Check the correct order of i
-			int k = (int)i - 1;
+			I32 k = (I32)i - 1;
 			while(k > -1)
 			{
-				if(shaderStarts[k].isDefined() &&
-					shaderStarts[k].globalLine >= shaderStarts[i].globalLine)
+				if(shaderStarts[k].isDefined() 
+					&& shaderStarts[k].globalLine >= shaderStarts[i].globalLine)
 				{
-					throw ANKI_EXCEPTION(startTokens[i] + " must be after " +
-						startTokens[k]);
+					throw ANKI_EXCEPTION(startTokens[i] + " must be after " 
+						+ startTokens[k]);
 				}
 				--k;
 			}
 
-			k = (int)i + 1;
+			k = (I32)i + 1;
 			while(k < ST_NUM)
 			{
-				if(shaderStarts[k].isDefined() &&
-					shaderStarts[k].globalLine <= shaderStarts[i].globalLine)
+				if(shaderStarts[k].isDefined() 
+					&& shaderStarts[k].globalLine <= shaderStarts[i].globalLine)
 				{
-					throw ANKI_EXCEPTION(startTokens[k] + " must be after " +
-						startTokens[i]);
+					throw ANKI_EXCEPTION(startTokens[k] + " must be after " 
+						+ startTokens[i]);
 				}
 				++k;
 			}
 
 			// put global source code
-			for(int j = 0; j < shaderStarts[ST_VERTEX].globalLine - 1; ++j)
+			for(I32 j = 0; j < shaderStarts[ST_VERTEX].globalLine - 1; ++j)
 			{
 				src += sourceLines[j] + "\n";
 			}
 
 			// put the actual code
-			uint from = i;
-			uint to;
+			U32 from = i;
+			U32 to;
 
 			for(to = i + 1; to < ST_NUM; to++)
 			{
@@ -223,19 +239,13 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 				}
 			}
 
-			int toLine = (to == ST_NUM) ? sourceLines.size():
-				shaderStarts[to].globalLine - 1;
+			I32 toLine = (to == ST_NUM) ? sourceLines.size() 
+				: shaderStarts[to].globalLine - 1;
 
-			for(int j = shaderStarts[from].globalLine - 1; j < toLine; ++j)
+			for(I32 j = shaderStarts[from].globalLine - 1; j < toLine; ++j)
 			{
 				src += sourceLines[j] + "\n";
 			}
-		}
-
-		// TRF feedback varyings
-		BOOST_FOREACH(const TrffbVaryingPragma& trffbv, output.trffbVaryings)
-		{
-			trffbVaryings.push_back(trffbv.name);
 		}
 
 		//PRINT("vertShaderBegins.globalLine: " << vertShaderBegins.globalLine)
@@ -245,13 +255,10 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 	}
 	catch(Exception& e)
 	{
-		throw ANKI_EXCEPTION("Started from \"" + filename + "\"") << e;
+		throw ANKI_EXCEPTION("Loading file failed: " + filename) << e;
 	}
 }
 
-
-//==============================================================================
-// parseStartPragma                                                            =
 //==============================================================================
 void ShaderProgramPrePreprocessor::parseStartPragma(scanner::Scanner& scanner,
 	const std::string& filename, uint depth,

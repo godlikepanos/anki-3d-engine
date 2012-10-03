@@ -17,6 +17,8 @@ class Texture;
 /// mistakes. It only supports binding at both draw and read targets
 class Fbo
 {
+	ANKI_GL_NON_SHARABLE
+
 public:
 	/// @name Constructors/Destructor
 	/// @{

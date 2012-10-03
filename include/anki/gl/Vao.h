@@ -5,6 +5,7 @@
 #include "anki/gl/Ogl.h"
 #include "anki/util/Assert.h"
 #include "anki/util/NonCopyable.h"
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
@@ -14,6 +15,8 @@ class Vbo;
 /// Vertex array object. Non-copyable to avoid instantiating it in the stack
 class Vao: public NonCopyable
 {
+	ANKI_GL_NON_SHARABLE
+
 public:
 	/// @name Constructors/Destructor
 	/// @{
@@ -39,6 +42,7 @@ public:
 	void create()
 	{
 		ANKI_ASSERT(!isCreated());
+		ANKI_GL_NON_SHARABLE_INIT();
 		glGenVertexArrays(1, &glId);
 		ANKI_CHECK_GL_ERROR();
 	}
@@ -47,6 +51,7 @@ public:
 	void destroy()
 	{
 		ANKI_ASSERT(isCreated());
+		ANKI_GL_NON_SHARABLE_CHECK();
 		unbind();
 		glDeleteVertexArrays(1, &glId);
 	}
@@ -111,6 +116,7 @@ public:
 	void bind() const
 	{
 		ANKI_ASSERT(isCreated());
+		ANKI_GL_NON_SHARABLE_CHECK();
 		if(current != this)
 		{
 			glBindVertexArray(glId);
@@ -123,6 +129,7 @@ public:
 	void unbind() const
 	{
 		ANKI_ASSERT(isCreated());
+		ANKI_GL_NON_SHARABLE_CHECK();
 		if(current == this)
 		{
 			glBindVertexArray(0);
@@ -134,7 +141,7 @@ private:
 	static thread_local const Vao* current;
 	GLuint glId = 0; ///< The OpenGL id
 #if !defined(NDEBUG)
-	int attachments = 0;
+	U32 attachments = 0;
 #endif
 
 	bool isCreated() const
