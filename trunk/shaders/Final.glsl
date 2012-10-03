@@ -2,7 +2,7 @@
 
 #pragma anki start vertexShader
 
-#pragma anki include "shaders/SimpleVert.glsl"
+#pragma anki include shaders/SimpleVert.glsl
 
 #pragma anki start fragmentShader
 

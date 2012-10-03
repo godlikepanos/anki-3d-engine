@@ -15,5 +15,3 @@ void main()
 	vec2 vertPosNdc = position * 2.0 - 1.0;
 	gl_Position = vec4(vertPosNdc, 0.0, 1.0);
 }
-
-

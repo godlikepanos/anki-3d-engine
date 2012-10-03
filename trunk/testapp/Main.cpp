@@ -55,9 +55,11 @@ void init()
 
 	Scene& scene = SceneSingleton::get();
 
+#if 0
 	painter = new UiPainter(Vec2(AppSingleton::get().getWindowWidth(),
 		AppSingleton::get().getWindowHeight()));
 	painter->setFont("engine-rsrc/ModernAntiqua.ttf", 25, 25);
+#endif
 
 	// camera
 	cam = new PerspectiveCamera("main-camera", &scene,

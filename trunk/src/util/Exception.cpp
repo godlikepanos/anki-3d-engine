@@ -3,7 +3,7 @@
 #include <iostream>
 
 // Instead of throwing abort. Its easier to debug
-//#define ANKI_ABORT_ON_THROW 1
+#define ANKI_ABORT_ON_THROW 0
 
 namespace anki {
 
@@ -13,7 +13,7 @@ Exception::Exception(const char* error, const char* file,
 {
 	err = synthErr(error, file, line, func);
 
-#if defined(ANKI_ABORT_ON_THROW)
+#if ANKI_ABORT_ON_THROW
 	std::cerr << err << std::endl;
 	abort();
 #endif
@@ -23,7 +23,7 @@ Exception::Exception(const char* error, const char* file,
 Exception::Exception(const Exception& e)
 	: err(e.err)
 {
-#if defined(ANKI_ABORT_ON_THROW)
+#if ANKI_ABORT_ON_THROW
 	std::cerr << err << std::endl;
 	abort();
 #endif

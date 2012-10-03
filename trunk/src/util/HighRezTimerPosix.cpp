@@ -73,12 +73,12 @@ HighRezTimer::Scalar HighRezTimer::getCurrentTime()
 	struct timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
 	ticks = (now.tv_sec - gstart.tv_sec) * 1000 
-	        + (now.tv_nsec - gstart.tv_nsec) / 1000000;
+		+ (now.tv_nsec - gstart.tv_nsec) / 1000000;
 #else
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	ticks = (now.tv_sec - gstart.tv_sec) * 1000 
-	        + (now.tv_usec - gstart.tv_usec) / 1000;
+		+ (now.tv_usec - gstart.tv_usec) / 1000;
 #endif
 
 	return Scalar(ticks) / 1000.0;
