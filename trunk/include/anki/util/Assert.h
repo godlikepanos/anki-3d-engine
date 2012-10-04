@@ -3,7 +3,7 @@
 
 /// Assertion. Print an error and stop the debugger (if it runs through a
 /// debugger) and then abort
-#if defined(NDEBUG)
+#if NDEBUG
 #	define ANKI_ASSERT(x) ((void)0)
 #else
 

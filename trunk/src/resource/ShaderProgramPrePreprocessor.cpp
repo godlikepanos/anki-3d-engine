@@ -53,7 +53,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	StringList lines = readFileLines(filename.c_str());
 	if(lines.size() < 1)
 	{
-		throw ANKI_EXCEPTION("Cannot open file or empty: " + filename);
+		throw ANKI_EXCEPTION("File is empty: " + filename);
 	}
 
 	for(const std::string& line : lines)

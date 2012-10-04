@@ -10,9 +10,9 @@ FOREACH(TMP ${ANKI_SUB_DIRS})
 	SET(ANKI_LIBS ${ANKI_LIBS} anki${TMP})
 ENDFOREACH()
 
-ADD_LIBRARY(anki)
+ADD_LIBRARY(anki Dummy.cpp)
 
-TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath ankiglew ankitinyxml2 ankilua ankipng GLU GL)
+TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} BulletSoftBody BulletDynamics BulletCollision LinearMath ankiglew ankitinyxml2 ankilua ${_ANKI_LIBPNG} GL)
 
 SET_TARGET_PROPERTIES(anki PROPERTIES LINKER_LANGUAGE CXX)
 
