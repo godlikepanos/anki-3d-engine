@@ -1,0 +1,2 @@
+/// @file
+/// Make CMake happy

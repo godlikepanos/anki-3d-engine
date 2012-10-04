@@ -6,7 +6,6 @@
 #include "anki/scene/Camera.h"
 #include "anki/math/Math.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/ui/UiPainter.h"
 #include "anki/core/App.h"
 #include "anki/resource/Mesh.h"
 #include "anki/scene/Light.h"
@@ -29,8 +28,6 @@
 #include "anki/util/HighRezTimer.h"
 #include "anki/scene/SkinNode.h"
 #include "anki/resource/Skin.h"
-#include "anki/ui/UiFtFontLoader.h"
-#include "anki/ui/UiFont.h"
 #include "anki/event/EventManager.h"
 #include "anki/event/SceneColorEvent.h"
 #include "anki/event/MainRendererPpsHdrEvent.h"
@@ -43,7 +40,6 @@
 
 using namespace anki;
 
-UiPainter* painter;
 ModelNode* horse;
 PerspectiveCamera* cam;
 NativeWindow* win;

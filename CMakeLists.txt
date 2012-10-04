@@ -29,7 +29,7 @@ MACRO(ANKI_ADD_LIB INCDIR LIBDIR ONEINCFILE)
 ENDMACRO()
 
 #
-# Arch
+# Common stuff
 #
 SET(ARCH 64 CACHE STRING "The architecture (-mXX)")
 
@@ -38,6 +38,33 @@ MESSAGE("++ Arch: ${ARCH}")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m${ARCH} ")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m${ARCH} ")
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m${ARCH} ")
+
+IF(CMAKE_BUILD_TYPE STREQUAL Debug)
+ELSE()
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s ")
+ENDIF()
+
+#
+# Common options
+#
+OPTION(ANKI_SYSTEM_LIBZ "Use the system's libz" OFF)
+OPTION(ANKI_SYSTEM_LIBPNG "Use the system's libpng" OFF)
+
+IF(ANKI_SYSTEM_LIBZ)
+	SET(_ANKI_LIBZ "z")
+	MESSAGE("++ Building with system libz")
+ELSE()
+	SET(_ANKI_LIBZ "ankiz")
+	MESSAGE("++ Building with AnKi libz")
+ENDIF()
+
+IF(ANKI_SYSTEM_LIBPNG)
+	SET(_ANKI_LIBPNG "png")
+	MESSAGE("++ Building with system libpng")
+ELSE()
+	SET(_ANKI_LIBPNG "ankipng")
+	MESSAGE("++ Building with AnKi libpng")
+ENDIF()
 
 #
 # Install
@@ -56,23 +83,12 @@ ADD_SUBDIRECTORY(extern)
 #
 # Libraries
 #
-#FIND_PACKAGE(PNG REQUIRED)
-#FIND_PACKAGE(JPEG 62 REQUIRED)
-
 FIND_PACKAGE(Boost 1.46 REQUIRED)
 SET(Boost_USE_STATIC_LIBS ON)
 IF(Boost_FOUND)
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 	ADD_DEFINITIONS("-DHAS_BOOST")
 ENDIF()
-
-#
-# Freetype
-#
-SET(FREETYPE_INCLUDE_DIR "/usr/include/freetype2" CACHE PATH "The directory that contains the Freetype headers")
-SET(FREETYPE_LIBRARY_DIR "/usr/lib" CACHE PATH "The directory that contains the libfreetype.so")
-
-ANKI_ADD_LIB(${FREETYPE_INCLUDE_DIR} ${FREETYPE_LIBRARY_DIR} ${FREETYPE_INCLUDE_DIR}/freetype/freetype.h)
 
 #
 # Bullet (Because FIND_PACKAGE(Bullet) sucks)
@@ -199,13 +215,13 @@ ENDIF()
 #
 ADD_SUBDIRECTORY(src)
 
-OPTION(BUILD_TESTS "Build Unit Tests" OFF)
-IF(BUILD_TESTS)
+OPTION(ANKI_BUILD_TESTS "Build Unit Tests" OFF)
+IF(ANKI_BUILD_TESTS)
 	ENABLE_TESTING()
 	ADD_SUBDIRECTORY(tests)
 ENDIF()
 
-OPTION(BUILD_TESTAPP "Build Test Application" ON)
-IF(BUILD_TESTAPP)
+OPTION(ANKI_BUILD_TESTAPP "Build Test Application" ON)
+IF(ANKI_BUILD_TESTAPP)
 	ADD_SUBDIRECTORY(testapp)
 ENDIF()

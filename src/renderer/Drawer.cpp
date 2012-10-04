@@ -704,7 +704,9 @@ void RenderableDrawer::render(const Camera& cam, uint pass,
 		renderable.getModelPatchBase().getIndecesNumber(0);
 
 	const Vao& vao = renderable.getModelPatchBase().getVao(key);
+#if !NDEBUG
 	ANKI_ASSERT(vao.getAttachmentsCount() > 1);
+#endif
 	vao.bind();
 	glDrawElements(GL_TRIANGLES, indecesNum, GL_UNSIGNED_SHORT, 0);
 	vao.unbind();

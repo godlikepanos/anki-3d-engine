@@ -1,3 +1,7 @@
-- The light passes in IS should produce 1, 0, 1 and the play with the scene ambient color to see the results of the blending
-- Create n working threads with n contexts and make the IS parallel
-- Put uniform buffers in skinning 
+- Put uniform buffers everywhere
+- Move to GLES3
+	- Remove all boost
+	- Remove the readPixels from the Texture
+	- Do something about bullet
+	- Create FBDEV backend
+

@@ -23,9 +23,9 @@
 #else
 #	define ANKI_GL_NON_SHARABLE
 
-#	define ANKI_GL_NON_SHARABLE_INIT() (void)
+#	define ANKI_GL_NON_SHARABLE_INIT() ((void)0)
 
-#	define ANKI_GL_NON_SHARABLE_CHECK() (void)
+#	define ANKI_GL_NON_SHARABLE_CHECK() ((void)0)
 #endif
 
 #endif
