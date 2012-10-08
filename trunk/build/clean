@@ -1,2 +1,2 @@
 #!/bin/bash
-rm -rf CMakeCache.txt CMakeFiles Makefile cmake_install.cmake src doxyfile testapp anki
+ls | xargs -I % echo % | grep -v clean | grep -v genmakefiledbg | xargs -I % rm -rf %

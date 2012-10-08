@@ -1,4 +1,3 @@
-#include <boost/foreach.hpp>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
 #include "anki/scene/ParticleEmitterNode.h"

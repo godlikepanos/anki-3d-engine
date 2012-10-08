@@ -1,7 +1,7 @@
-#include <bullet/BulletCollision/CollisionDispatch/btGhostObject.h>
 #include "anki/physics/PhysWorld.h"
 #include "anki/physics/Character.h"
 #include "anki/physics/MotionState.h"
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
 
 
 namespace anki {

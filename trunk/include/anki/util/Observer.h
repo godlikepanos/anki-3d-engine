@@ -1,7 +1,8 @@
 #ifndef ANKI_UTIL_OBSERVER_H
 #define ANKI_UTIL_OBSERVER_H
 
-#include <boost/ptr_container/ptr_vector.hpp>
+#include "anki/util/Vector.h"
+#include "anki/util/Functions.h"
 
 namespace anki {
 
@@ -41,7 +42,7 @@ class Observable
 public:
 	typedef T Value;
 	typedef Observer<Value> ObserverType;
-	typedef boost::ptr_vector<ObserverType> Container;
+	typedef PtrVector<ObserverType> Container;
 
 	/// Add a new observer. The Observable takes ownership of the
 	/// pointer and its responsible of cleaning
@@ -56,7 +57,7 @@ public:
 		for(typename Container::iterator it = observers.begin();
 			it != observers.end(); ++it)
 		{
-			(*it).notify(x);
+			(*it)->notify(x);
 		}
 	}
 
@@ -101,8 +102,11 @@ private:
 #define ANKI_EMIT this->
 
 /// Connect a signal to a slot
-#define ANKI_CONNECT(_sender, _signal, _reveiver, _slot) \
-	 (_sender)->_signal.addNewObserver(new Observing_##_slot(_reveiver))
+/// @note Use RemovePointer so you can be able to use the macro outside of the
+///       _receiver body
+#define ANKI_CONNECT(_sender, _signal, _receiver, _slot) \
+	(_sender)->_signal.addNewObserver( new \
+		RemovePointer<decltype(_receiver)>::Type::Observing_##_slot(_receiver))
 
 } // namespace anki
 

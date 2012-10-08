@@ -43,6 +43,21 @@ public:
 	{
 		return timestamp;
 	}
+
+	const Mat4& getProjectionMatrix() const
+	{
+		return projectionMat;
+	}
+
+	const Mat4& getViewMatrix() const
+	{
+		return viewMat;
+	}
+
+	const Mat4& getViewProjectionMatrix() const
+	{
+		return viewProjectionMat;
+	}
 	/// @}
 
 	void frustumableMarkUpdated()
@@ -65,6 +80,9 @@ public:
 protected:
 	Frustum* frustum = nullptr;
 	VisibilityInfo vinfo;
+	Mat4 projectionMat = Mat4::getIdentity();
+	Mat4 viewMat = Mat4::getIdentity();
+	Mat4 viewProjectionMat = Mat4::getIdentity();
 
 private:
 	U32 timestamp = Timestamp::getTimestamp();

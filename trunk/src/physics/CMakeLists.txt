@@ -3,5 +3,3 @@ FILE(GLOB ANKI_PHYS_HEADERS *.h)
 
 ADD_LIBRARY(ankiphysics ${ANKI_PHYS_SOURCES} ${ANKI_PHYS_HEADERS})
 
-TARGET_LINK_LIBRARIES(ankiphysics BulletDynamics 
-	BulletCollision LinearMath)

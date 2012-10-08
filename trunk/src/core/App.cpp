@@ -3,12 +3,13 @@
 #include "anki/util/Exception.h"
 #include "anki/util/Platform.h"
 #include "anki/util/Filesystem.h"
+#include "anki/Config.h"
+#include "anki/util/Platform.h"
 #include <GL/glew.h>
+#include <cstring>
 #include <sstream>
-#include <SDL/SDL.h>
 #include <iostream>
 #include <iomanip>
-#include <boost/algorithm/string.hpp>
 
 namespace anki {
 
@@ -43,6 +44,7 @@ void App::handleLoggerMessages(const Logger::Info& info)
 //==============================================================================
 void App::parseCommandLineArgs(int argc, char* argv[])
 {
+#if 0
 	for(int i = 1; i < argc; i++)
 	{
 		char* arg = argv[i];
@@ -61,16 +63,12 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 			abort();
 		}
 	}
+#endif
 }
 
 //==============================================================================
 void App::init(int argc, char* argv[])
 {
-	windowW = 1280;
-	windowH = 720;
-	terminalColoringEnabled = true,
-	fullScreenFlag = false;
-
 	// send output to handleMessageHanlderMsgs
 	ANKI_CONNECT(&LoggerSingleton::get(), messageRecieved, 
 		this, handleLoggerMessages);
@@ -78,68 +76,8 @@ void App::init(int argc, char* argv[])
 	parseCommandLineArgs(argc, argv);
 	printAppInfo();
 	initDirs();
-	//initWindow();
-	//SDL_Init(SDL_INIT_INPUT)
 
-	// other
-	activeCam = NULL;
 	timerTick = 1.0 / 60.0; // in sec. 1.0 / period
-}
-
-//==============================================================================
-void App::initWindow()
-{
-#if 0
-	ANKI_LOGI("SDL window initializing...");
-
-	if(SDL_Init(SDL_INIT_VIDEO) < 0)
-	{
-		throw ANKI_EXCEPTION("Failed to init SDL_VIDEO");
-	}
-
-	// print driver name
-	const char* driverName = SDL_GetCurrentVideoDriver();
-	if(driverName != NULL)
-	{
-		ANKI_LOGI("Video driver name: " << driverName);
-	}
-
-	// set GL attribs
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-	SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-	// WARNING: Set this low only in deferred shading
-	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
-
-	// OpenWindow
-	windowId = SDL_CreateWindow("AnKi 3D Engine", SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED, windowW, windowH,
-		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
-
-	if(!windowId)
-	{
-		throw ANKI_EXCEPTION("Cannot create main window");
-	}
-
-	glContext = SDL_GL_CreateContext(windowId);
-
-	// the icon
-	iconImage = SDL_LoadBMP("gfx/icon.bmp");
-	if(iconImage == NULL)
-	{
-		ANKI_LOGW("Cannot load window icon");
-	}
-	else
-	{
-		Uint32 colorkey = SDL_MapRGB(iconImage->format, 255, 0, 255);
-		SDL_SetColorKey(iconImage, SDL_SRCCOLORKEY, colorkey);
-		//SDL_WM_SetIcon(iconImage, NULL);
-		SDL_SetWindowIcon(windowId, iconImage);
-	}
-
-	ANKI_LOGI("SDL window initialization ends");
-#endif
 }
 
 //==============================================================================
@@ -164,25 +102,6 @@ void App::initDirs()
 }
 
 //==============================================================================
-void App::togleFullScreen()
-{
-#if 0
-	//SDL_WM_ToggleFullScreen(mainSurf);
-	SDL_SetWindowFullscreen(windowId, fullScreenFlag ? SDL_TRUE : SDL_FALSE);
-	fullScreenFlag = !fullScreenFlag;
-#endif
-}
-
-//==============================================================================
-void App::swapBuffers()
-{
-#if 0
-	//SDL_GL_SwapBuffers();
-	SDL_GL_SwapWindow(windowId);
-#endif
-}
-
-//==============================================================================
 void App::quit(int code)
 {
 #if 0
@@ -195,46 +114,35 @@ void App::quit(int code)
 }
 
 //==============================================================================
-#if !defined(ANKI_REVISION)
-#	define ANKI_REVISION "unknown"
-#endif
-
 void App::printAppInfo()
 {
 	std::stringstream msg;
 	msg << "App info: ";
-#if defined(NDEBUG)
+	msg << "Version " << ANKI_VERSION_MAJOR << "." << ANKI_VERSION_MINOR 
+		<< ", ";
+#if NDEBUG
 	msg << "Release";
 #else
 	msg << "Debug";
 #endif
 	msg << " build, ";
-	msg << "platform ID " << ANKI_PLATFORM << ", ";
-	msg << "compiler ID " << ANKI_COMPILER << ", ";
+
+	msg << "platform " << 
+#if ANKI_PLATFORM_LINUX
+	"Linux"
+#elif ANKI_PLATFORM_WINDOWS
+	"Windows"
+#elif ANKI_PLATFORM_APPLE
+	"Apple"
+#else
+#	error "See file"
+#endif
+	<< ", ";
+
 	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
 	msg << "build date " __DATE__ ", " << "rev " << ANKI_REVISION;
 
 	ANKI_LOGI(msg.str());
 }
 
-//==============================================================================
-uint App::getDesktopWidth() const
-{
-	/*SDL_DisplayMode mode;
-	/// @todo re-enable it
-	//SDL_GetDesktopDisplayMode(&mode);
-	return mode.w;*/
-	return 0;
-}
-
-//==============================================================================
-uint App::getDesktopHeight() const
-{
-	/*SDL_DisplayMode mode;
-	/// @todo re-enable it
-	//SDL_GetDesktopDisplayMode(&mode);
-	return mode.h;*/
-	return 0;
-}
-
-} // end namespace
+} // end namespace anki

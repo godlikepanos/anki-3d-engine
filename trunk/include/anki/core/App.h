@@ -3,7 +3,6 @@
 
 #include "anki/core/Logger.h"
 #include "anki/util/Singleton.h"
-#include <SDL/SDL.h>
 
 namespace anki {
 
@@ -39,28 +38,10 @@ public:
 	/// - call exit()
 	void quit(int code);
 
-	/// Self explanatory
-	void togleFullScreen();
-
-	/// Wrapper for an SDL function that swaps the buffers
-	void swapBuffers();
-
 	static void printAppInfo();
-
-	uint getDesktopWidth() const;
-	uint getDesktopHeight() const;
 
 	/// @name Accessors
 	/// @{
-	Camera* getActiveCam()
-	{
-		return activeCam;
-	}
-	void setActiveCam(Camera* cam)
-	{
-		activeCam = cam;
-	}
-
 	float getTimerTick() const
 	{
 		return timerTick;
@@ -72,16 +53,6 @@ public:
 	void setTimerTick(const float x)
 	{
 		timerTick = x;
-	}
-
-	uint getWindowWidth() const
-	{
-		return windowW;
-	}
-
-	uint getWindowHeight() const
-	{
-		return windowH;
 	}
 
 	const std::string& getSettingsPath() const
@@ -96,20 +67,11 @@ public:
 	/// @}
 
 private:
-	uint windowW; ///< The main window width
-	uint windowH; ///< The main window height
 	/// The path that holds the configuration
 	std::string settingsPath;
 	/// This is used as a cache
 	std::string cachePath;
 	float timerTick;
-	/// Terminal coloring for Unix terminals. Default on
-	bool terminalColoringEnabled;
-	SDL_WindowID windowId;
-	SDL_GLContext glContext;
-	SDL_Surface* iconImage;
-	bool fullScreenFlag;
-	Camera* activeCam; ///< Pointer to the current camera
 
 	void parseCommandLineArgs(int argc, char* argv[]);
 

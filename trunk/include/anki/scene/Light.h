@@ -183,16 +183,6 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Mat4& getViewMatrix() const
-	{
-		return viewMat;
-	}
-
-	const Mat4& getProjectionMatrix() const
-	{
-		return projectionMat;
-	}
-
 	Texture& getTexture()
 	{
 		return *tex;
@@ -264,6 +254,7 @@ public:
 		Movable::movableUpdate();
 		frustum.setTransform(getWorldTransform());
 		viewMat = Mat4(getWorldTransform().getInverse());
+		viewProjectionMat = projectionMat * viewMat;
 
 		spatialMarkUpdated();
 	}
@@ -276,8 +267,6 @@ public:
 
 private:
 	PerspectiveFrustum frustum;
-	Mat4 projectionMat;
-	Mat4 viewMat;
 	TextureResourcePointer tex;
 	F32 cosOuterAngle;
 	F32 cosInnerAngle;
@@ -285,6 +274,7 @@ private:
 	void frustumUpdate()
 	{
 		projectionMat = frustum.calculateProjectionMatrix();
+		viewProjectionMat = projectionMat * viewMat;
 
 		spatialMarkUpdated();
 		frustumableMarkUpdated();

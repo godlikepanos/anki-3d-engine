@@ -560,7 +560,7 @@ void uniSet<TextureResourcePointer>(
 struct SetupMaterialVariableVisitor
 {
 	PassLevelKey key;
-	const Camera* cam = nullptr;
+	const Frustumable* fr = nullptr;
 	Renderer* r = nullptr;
 	Renderable* renderable = nullptr;
 
@@ -614,7 +614,7 @@ struct SetupMaterialVariableVisitor
 		const Transform* rwtrf = renderable->getRenderableWorldTransform();
 
 		Mat4 mMat = (rwtrf) ? Mat4(*rwtrf) : Mat4::getIdentity();
-		const Mat4& vpMat = cam->getViewProjectionMatrix();
+		const Mat4& vpMat = fr->getViewProjectionMatrix();
 		Mat4 mvpMat = vpMat * mMat;
 
 		Mat4 mvMat;
@@ -631,7 +631,7 @@ struct SetupMaterialVariableVisitor
 		case BI_MODEL_VIEW_MATRIX:
 			if(!mvMatCalculated)
 			{
-				mvMat = mMat * cam->getViewMatrix();
+				mvMat = mMat * fr->getViewMatrix();
 				mvMatCalculated = true;
 			}
 			uni->set(mvMat);
@@ -639,7 +639,7 @@ struct SetupMaterialVariableVisitor
 		case BI_NORMAL_MATRIX:
 			if(!mvMatCalculated)
 			{
-				mvMat = mMat * cam->getViewMatrix();
+				mvMat = mMat * fr->getViewMatrix();
 				mvMatCalculated = true;
 			}
 			uni->set(mvMat.getRotationPart());
@@ -654,7 +654,7 @@ struct SetupMaterialVariableVisitor
 //==============================================================================
 void RenderableDrawer::setupShaderProg(
 	const PassLevelKey& key,
-	const Camera& cam,
+	const Frustumable& fr,
 	Renderable& renderable)
 {
 	const Material& mtl = renderable.getMaterial();
@@ -673,7 +673,7 @@ void RenderableDrawer::setupShaderProg(
 	
 	SetupMaterialVariableVisitor vis;
 
-	vis.cam = &cam;
+	vis.fr = &fr;
 	vis.key = key;
 	vis.renderable = &renderable;
 	vis.r = r;
@@ -687,7 +687,7 @@ void RenderableDrawer::setupShaderProg(
 }
 
 //==============================================================================
-void RenderableDrawer::render(const Camera& cam, uint pass,
+void RenderableDrawer::render(const Frustumable& fr, uint pass,
 	Renderable& renderable)
 {
 	/*float dist = (node.getWorldTransform().getOrigin() -
@@ -697,7 +697,7 @@ void RenderableDrawer::render(const Camera& cam, uint pass,
 	PassLevelKey key(pass, 0);
 
 	// Setup shader
-	setupShaderProg(key, cam, renderable);
+	setupShaderProg(key, fr, renderable);
 
 	// Render
 	uint32_t indecesNum =

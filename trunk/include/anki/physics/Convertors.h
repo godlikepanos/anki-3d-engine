@@ -2,8 +2,8 @@
 #define ANKI_PHYSICS_CONVERTORS_H
 
 #include "anki/math/Math.h"
-#include <bullet/btBulletCollisionCommon.h>
-#include <bullet/btBulletDynamicsCommon.h>
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
 
 
 namespace anki {

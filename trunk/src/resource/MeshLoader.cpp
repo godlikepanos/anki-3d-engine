@@ -271,4 +271,4 @@ void MeshLoader::createVertTangents()
 	}
 }
 
-} // end namespace
+} // end namespace anki

@@ -8,9 +8,6 @@
 #include "anki/resource/Resource.h"
 #include "anki/resource/Model.h"
 #include "anki/collision/Obb.h"
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/range/iterator_range.hpp>
-#include <boost/scoped_ptr.hpp>
 
 namespace anki {
 
@@ -99,13 +96,7 @@ private:
 class ModelNode: public SceneNode, public Movable
 {
 public:
-	typedef boost::ptr_vector<ModelPatchNode> ModelPatchNodes;
-
-	typedef boost::iterator_range<ModelPatchNodes::const_iterator>
-		ConstRangeModelPatchNodes;
-
-	typedef boost::iterator_range<ModelPatchNodes::iterator>
-		MutableRangeModelPatchNodes;
+	typedef PtrVector<ModelPatchNode> ModelPatchNodes;
 
 	/// @name Constructors/Destructor
 	/// @{

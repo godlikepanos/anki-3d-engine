@@ -8,8 +8,15 @@
 #	error "See file"
 #endif
 #include <X11/XKBlib.h>
+#include <cstring>
 
-#define DEBUG_EVENTS 1
+#define DEBUG_EVENTS 0
+
+#if DEBUG_EVENTS
+#	define DBG_LOGI(x_) ANKI_LOGI(x_)
+#else
+#	define DBG_LOGI(x_) ((void)0)
+#endif
 
 namespace anki {
 
@@ -170,7 +177,7 @@ void Input::handleEvents()
 
 	NativeWindowImpl& win = nativeWindow->getNative();
 	Display* disp = win.xDisplay;
-	//ANKI_LOGI("----------------------");
+	//DBG_LOGI("----------------------");
 	while(eventsPending(disp))
 	{
 		XEvent event;
@@ -184,8 +191,8 @@ skipXNextEvent:
 		case KeyPress:
 			keysym = XLookupKeysym(&event.xkey, 0);
 			keycode = event.xkey.keycode;
-			ANKI_LOGI("Key pressed: 0x" << std::hex << (U32)keysym);
 			keys[XKEYCODE2ANKI(keysym)] = 1;
+			DBG_LOGI("Key pressed: 0x" << std::hex << (U32)keysym);
 			break;
 		case KeyRelease:
 			keycode = event.xkey.keycode;
@@ -198,12 +205,12 @@ skipXNextEvent:
 				if(event1.type == KeyPress && event1.xkey.keycode == keycode)
 				{
 					// Repeat
-					//ANKI_LOGI("Key autorepeat: 0x" << std::hex << (U32)keysym);
+					//DBG_LOGI("Key autorepeat: 0x" << std::hex << (U32)keysym);
 					//++keys[XKEYCODE2ANKI(keysym)];
 				}
 				else
 				{
-					ANKI_LOGI("Key released: 0x" << std::hex << (U32)keysym);
+					DBG_LOGI("Key released: 0x" << std::hex << (U32)keysym);
 					keys[XKEYCODE2ANKI(keysym)] = 0;
 					event = event1;
 					goto skipXNextEvent;
@@ -211,7 +218,7 @@ skipXNextEvent:
 			}
 			else
 			{
-				ANKI_LOGI("Key released #2: 0x" << std::hex << (U32)keysym);
+				DBG_LOGI("Key released #2: 0x" << std::hex << (U32)keysym);
 				keys[XKEYCODE2ANKI(keysym)] = 0;
 			}
 			break;

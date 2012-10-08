@@ -6,8 +6,8 @@ namespace anki {
 
 //==============================================================================
 template<typename Type>
-void ResourceManager<Type>::allocAndLoadRsrc(
-	const char* filename, Type*& newInstance)
+void ResourceManager<Type>::
+	allocAndLoadRsrc(const char* filename, Type*& newInstance)
 {
 	newInstance = NULL;
 
@@ -34,16 +34,16 @@ void ResourceManager<Type>::allocAndLoadRsrc(
 
 //==============================================================================
 template<typename Type>
-typename ResourceManager<Type>::Hook& ResourceManager<Type>::load(
-	const char* filename)
+typename ResourceManager<Type>::Hook& ResourceManager<Type>::
+	load(const char* filename)
 {
 	Iterator it = find(filename);
 
 	// If already loaded
 	if(it != hooks.end())
 	{
-		++it->referenceCounter;
-		return *it;
+		++(*it)->referenceCounter;
+		return *(*it);
 	}
 	// else create new, load it and update the container
 	else
@@ -64,8 +64,7 @@ typename ResourceManager<Type>::Hook& ResourceManager<Type>::load(
 				delete hook;
 			}
 
-			throw ANKI_EXCEPTION("Cannot load \"" 
-				+ filename + "\"") << e;
+			throw ANKI_EXCEPTION("Cannot load: " + filename) << e;
 		}
 
 		hooks.push_back(hook);
@@ -77,10 +76,7 @@ typename ResourceManager<Type>::Hook& ResourceManager<Type>::load(
 template<typename Type>
 void ResourceManager<Type>::deallocRsrc(Type* rsrc)
 {
-	typedef char TypeMustBeComplete[sizeof(Type) ? 1 : -1];
-    (void) sizeof(TypeMustBeComplete);
-
-	delete rsrc;
+	propperDelete(rsrc);
 }
 
 //==============================================================================
@@ -97,27 +93,27 @@ void ResourceManager<Type>::unload(const Hook& hook)
 			+ hook.uuid + "\")");
 	}
 
-	ANKI_ASSERT(*it == hook);
+	ANKI_ASSERT(*(*it) == hook);
 
-	--it->referenceCounter;
+	--(*it)->referenceCounter;
 
 	// Delete the resource
-	if(it->referenceCounter == 0)
+	if((*it)->referenceCounter == 0)
 	{
-		deallocRsrc(it->resource);
+		deallocRsrc((*it)->resource);
 		hooks.erase(it);
 	}
 }
 
 //==============================================================================
 template<typename Type>
-typename ResourceManager<Type>::Iterator ResourceManager<Type>::find(
-	const char* filename)
+typename ResourceManager<Type>::Iterator ResourceManager<Type>::
+	find(const char* filename)
 {
 	Iterator it = hooks.begin();
 	for(; it != hooks.end(); it++)
 	{
-		if(it->uuid == filename)
+		if((*it)->uuid == filename)
 		{
 			break;
 		}

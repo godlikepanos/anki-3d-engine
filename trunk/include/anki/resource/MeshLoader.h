@@ -2,10 +2,9 @@
 #define ANKI_RESOURCE_MESH_LOADER_H
 
 #include "anki/math/Math.h"
-#include <boost/range/iterator_range.hpp>
-#include <boost/array.hpp>
-#include <string>
 #include "anki/util/Vector.h"
+#include "anki/util/Array.h"
+#include <string>
 
 namespace anki {
 
@@ -53,17 +52,17 @@ public:
 
 		/// @todo change the vals to uint when change drivers
 		float bonesNum;
-		boost::array<float, MAX_BONES_PER_VERT> boneIds;
-		boost::array<float, MAX_BONES_PER_VERT> weights;
+		Array<float, MAX_BONES_PER_VERT> boneIds;
+		Array<float, MAX_BONES_PER_VERT> weights;
 	};
 
 	/// Triangle
 	class Triangle
 	{
-		public:
-			/// An array with the vertex indexes in the mesh class
-			boost::array<uint, 3> vertIds;
-			Vec3 normal;
+	public:
+		/// An array with the vertex indexes in the mesh class
+		Array<uint, 3> vertIds;
+		Vec3 normal;
 	};
 
 	MeshLoader(const char* filename)
@@ -145,8 +144,6 @@ private:
 	void doPostLoad();
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

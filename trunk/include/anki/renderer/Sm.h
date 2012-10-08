@@ -14,6 +14,8 @@ class Light;
 class Sm: private RenderingPass
 {
 public:
+	static const U32 MAX_SHADOW_CASTERS = 8;
+
 	Sm(Renderer* r_)
 		: RenderingPass(r_)
 	{}
@@ -27,7 +29,8 @@ public:
 	/// @}
 
 	void init(const RendererInitializer& initializer);
-	void run();
+	void run(Light* shadowCasters[], U32 shadowCastersCount, 
+		Texture* shadowmaps[]);
 
 private:
 	/// Shadowmap
@@ -65,7 +68,7 @@ private:
 	/// Find the best shadowmap for that light
 	Shadowmap& bestCandidate(Light& light);
 
-	void doLight(Light& light);
+	Texture* doLight(Light& light);
 };
 
 } // end namespace anki

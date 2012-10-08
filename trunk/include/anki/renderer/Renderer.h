@@ -80,8 +80,8 @@ struct RendererInitializer
 	} dbg;
 
 	// the globals
-	U32 width; ///< Ignored by MainRenderer
-	U32 height; ///< Ignored by MainRenderer
+	U32 width; 
+	U32 height;
 	F32 mainRendererQuality = 1.0; ///< Only for MainRenderer
 	F32 lodDistance; ///< Distance that used to calculate the LOD
 

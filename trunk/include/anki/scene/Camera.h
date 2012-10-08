@@ -45,24 +45,9 @@ public:
 		return type;
 	}
 
-	const Mat4& getProjectionMatrix() const
-	{
-		return projectionMat;
-	}
-
 	const Mat4& getInverseProjectionMatrix() const
 	{
 		return invProjectionMat;
-	}
-
-	const Mat4& getViewMatrix() const
-	{
-		return viewMat;
-	}
-
-	const Mat4& getViewProjectionMatrix() const
-	{
-		return viewProjectionMat;
 	}
 
 	/// Needed by the renderer
@@ -102,8 +87,6 @@ public:
 	void lookAtPoint(const Vec3& point);
 
 protected:
-	Mat4 projectionMat = Mat4::getIdentity();
-
 	/// Used in deferred shading for the calculation of view vector (see
 	/// CalcViewVector). The reason we store this matrix here is that we
 	/// don't want it to be re-calculated all the time but only when the
@@ -126,9 +109,6 @@ protected:
 
 private:
 	CameraType type;
-
-	Mat4 viewMat = Mat4::getIdentity();
-	Mat4 viewProjectionMat = Mat4::getIdentity();
 };
 
 /// Perspective camera
