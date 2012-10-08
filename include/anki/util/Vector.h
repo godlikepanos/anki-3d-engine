@@ -2,6 +2,7 @@
 #define ANKI_UTIL_VECTOR_H
 
 #include "anki/util/Assert.h"
+#include "anki/util/Functions.h"
 #include <vector>
 
 namespace anki {
@@ -16,15 +17,20 @@ template<typename T>
 class PtrVector: public Vector<T*>
 {
 public:
+	typedef Vector<T*> Base;
+
 	~PtrVector()
 	{
-		for(typename Vector<T*>::iterator it = Vector<T*>::begin();
-			it != Vector<T*>::end(); it++)
+		for(typename Base::iterator it = Base::begin(); it != Base::end(); it++)
 		{
-			typedef char TypeMustBeComplete[sizeof(T) ? 1 : -1];
-    		(void) sizeof(TypeMustBeComplete);
-			delete *it;
+			propperDelete(*it);
 		}
+	}
+
+	typename Base::iterator erase(typename Base::iterator pos)
+	{
+		propperDelete(*pos);
+		return Base::erase(pos);
 	}
 };
 

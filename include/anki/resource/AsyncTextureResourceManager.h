@@ -3,7 +3,6 @@
 
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/AsyncOperator.h"
-#include <boost/scoped_ptr.hpp>
 
 
 namespace anki {

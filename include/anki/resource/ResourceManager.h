@@ -1,7 +1,8 @@
 #ifndef ANKI_RESOURCE_RESOURCE_MANAGER_H
 #define ANKI_RESOURCE_RESOURCE_MANAGER_H
 
-#include <boost/ptr_container/ptr_vector.hpp>
+#include "anki/util/Vector.h"
+#include "anki/util/StdTypes.h"
 #include <string>
 
 namespace anki {
@@ -11,13 +12,13 @@ template<typename Type>
 struct ResourceHook
 {
 	std::string uuid; ///< Unique identifier
-	int referenceCounter;
+	U32 referenceCounter;
 	Type* resource;
 
 	~ResourceHook()
 	{}
 
-	bool operator==(const ResourceHook& b) const
+	Bool operator==(const ResourceHook& b) const
 	{
 		return uuid == b.uuid 
 			&& referenceCounter == b.referenceCounter 
@@ -32,7 +33,7 @@ class ResourceManager
 public:
 	typedef ResourceManager<Type> Self;
 	typedef ResourceHook<Type> Hook;
-	typedef boost::ptr_vector<Hook> Container;
+	typedef PtrVector<Hook> Container;
 	typedef typename Container::iterator Iterator;
 	typedef typename Container::const_iterator ConstIterator;
 
@@ -57,7 +58,7 @@ protected:
 	/// Dealocate the resource. Its separate for two reasons:
 	/// - Because we want to specialize it for the async loaded resources
 	/// - Because we cannot have the operator delete in a template body.
-	/// Apparently the compiler is to dump to decide
+	///   Apparently the compiler is to dump to decide
 	virtual void deallocRsrc(Type* rsrc);
 };
 

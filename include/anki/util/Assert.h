@@ -5,6 +5,7 @@
 /// debugger) and then abort
 #if NDEBUG
 #	define ANKI_ASSERT(x) ((void)0)
+#	define ANKI_ASSERTS_ENABLED 0
 #else
 
 namespace anki {
@@ -16,6 +17,7 @@ extern void akassert(bool expr, const char* exprTxt, const char* file,
 } // end namespace
 
 #	define ANKI_ASSERT(x) akassert((x), #x, __FILE__, __LINE__, __func__)
+#	define ANKI_ASSERTS_ENABLED 1
 
 #endif
 

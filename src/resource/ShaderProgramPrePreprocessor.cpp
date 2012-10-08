@@ -1,5 +1,4 @@
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
-#include "anki/misc/Parser.h"
 #include "anki/util/Filesystem.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Functions.h"

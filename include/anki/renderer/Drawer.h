@@ -197,7 +197,7 @@ public:
 		: r(r_)
 	{}
 
-	void render(const Camera& cam,
+	void render(const Frustumable& fr,
 		uint pass, Renderable& renderable);
 
 private:
@@ -205,7 +205,7 @@ private:
 
 	void setupShaderProg(
 		const PassLevelKey& key,
-		const Camera& cam,
+		const Frustumable& fr,
 		Renderable& renderable);
 };
 

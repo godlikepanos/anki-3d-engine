@@ -12,7 +12,6 @@
 #include "anki/resource/Material.h"
 #include "anki/scene/Scene.h"
 #include "anki/resource/SkelAnim.h"
-#include "anki/misc/Parser.h"
 #include "anki/scene/ParticleEmitterNode.h"
 #include "anki/physics/Character.h"
 #include "anki/renderer/Renderer.h"
@@ -81,9 +80,9 @@ void init()
 
 	// lights
 	Vec3 lpos(-100.0, 0.0, -50.0);
-	for(int i = 0; i < 50; i++)
+	for(int i = 0; i < 0; i++)
 	{
-		for(int j = 0; j < 10; j++)
+		for(int j = 0; j < 0; j++)
 		{
 			std::string name = "plight" + std::to_string(i) + std::to_string(j);
 
@@ -109,6 +108,18 @@ void init()
 		Mat3::getIdentity(), 1.0));
 	spot->setDiffuseColor(Vec4(1.0));
 	spot->setSpecularColor(Vec4(1.0));
+	spot->loadTexture("gfx/lights/flashlight.tga");
+	spot->setDistance(30.0);
+	spot->setShadowEnabled(false);
+
+
+	spot = new SpotLight("spot1", &scene, Movable::MF_NONE, nullptr);
+	spot->setOuterAngle(Math::toRad(45.0));
+	spot->setInnerAngle(Math::toRad(15.0));
+	spot->setLocalTransform(Transform(Vec3(5.3, 4.3, 3.0),
+		Mat3::getIdentity(), 1.0));
+	spot->setDiffuseColor(Vec4(1.0, 0.0, 0.0, 0.0));
+	spot->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
 	spot->loadTexture("gfx/lights/flashlight.tga");
 	spot->setDistance(30.0);
 	spot->setShadowEnabled(true);
@@ -194,11 +205,11 @@ void mainLoopExtra()
 	{
 		mover = SceneSingleton::get().findSceneNode("spot0")->getMovable();
 	}
-	/*if(in.getKey(KC_4))
+	if(in.getKey(KC_4))
 	{
-		mover = SceneSingleton::get().findSceneNode("point0")->getMovable();
+		mover = SceneSingleton::get().findSceneNode("spot1")->getMovable();
 	}
-	if(in.getKey(KC_5))
+	/*if(in.getKey(KC_5))
 	{
 		mover = SceneSingleton::get().findSceneNode("point1")->getMovable();
 	}*/
@@ -227,7 +238,7 @@ void mainLoopExtra()
 
 	if(in.getKey(KC_A)) mover->moveLocalX(-dist);
 	if(in.getKey(KC_D)) mover->moveLocalX(dist);
-	if(in.getKey(KC_LSHIFT)) mover->moveLocalY(dist);
+	if(in.getKey(KC_Z)) mover->moveLocalY(dist);
 	if(in.getKey(KC_SPACE)) mover->moveLocalY(-dist);
 	if(in.getKey(KC_W)) mover->moveLocalZ(-dist);
 	if(in.getKey(KC_S)) mover->moveLocalZ(dist);
@@ -325,7 +336,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = false;
+	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;
@@ -342,6 +353,8 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.bl.blurringIterationsNum = 2;
 	initializer.pps.bl.sideBlurFactor = 1.0;
 	initializer.mainRendererQuality = 1.0;
+	initializer.width = nwinit.width;
+	initializer.height = nwinit.height;
 
 	MainRendererSingleton::get().init(initializer);
 

@@ -1,5 +1,4 @@
 #include "anki/renderer/MainRenderer.h"
-#include "anki/core/App.h"
 #include "anki/core/Logger.h"
 #include "anki/renderer/Deformer.h"
 #include "anki/util/Filesystem.h"
@@ -25,14 +24,15 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 
 	dbgTq.reset(new Query(GL_TIME_ELAPSED));
 
+	windowWidth = initializer_.width;
+	windowHeight = initializer_.height;
+
 	// init the offscreen Renderer
 	//
 	RendererInitializer initializer = initializer_;
 	renderingQuality = initializer.mainRendererQuality;
-	initializer.width = AppSingleton::get().getWindowWidth() *
-		renderingQuality;
-	initializer.height = AppSingleton::get().getWindowHeight() *
-		renderingQuality;
+	initializer.width *= renderingQuality;
+	initializer.height *= renderingQuality;
 	Renderer::init(initializer);
 	dbg.init(initializer);
 	deformer.reset(new Deformer);
@@ -105,9 +105,7 @@ void MainRenderer::render(Scene& scene)
 	//
 	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
 
-	GlStateSingleton::get().setViewport(
-		0, 0, AppSingleton::get().getWindowWidth(),
-		AppSingleton::get().getWindowHeight());
+	GlStateSingleton::get().setViewport(0, 0, windowWidth, windowHeight);
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
 	sProg->bind();

@@ -84,7 +84,7 @@ uniform usampler2D msFai0;
 uniform sampler2D msDepthFai;
 
 uniform sampler2D lightTextures[MAX_SPOT_LIGHTS];
-uniform sampler2DShadow shadowMap[MAX_SPOT_LIGHTS];
+uniform sampler2DShadow shadowMaps[MAX_SPOT_LIGHTS];
 /// @}
 
 /// @name Varyings
@@ -155,6 +155,31 @@ vec3 doPhong(in vec3 fragPosVspace, in vec3 normal, in vec3 diffuse,
 }
 
 //==============================================================================
+float calcSpotFactor(in SpotLight light, in vec3 fragPosVspace)
+{
+	vec3 l = normalize(fragPosVspace - light.light.posAndRadius.xyz);
+
+	float costheta = dot(l, light.lightDirection.xyz);
+	float spotFactor = smoothstep(
+		light.light.diffuseColor.w, 
+		light.light.specularColor.w, 
+		costheta);
+
+	return spotFactor;
+}
+
+//==============================================================================
+float calcShadowFactor(in SpotLight light, in vec3 fragPosVspace, 
+	in sampler2DShadow shadowMap)
+{
+	vec4 texCoords4 = light.texProjectionMat * vec4(fragPosVspace, 1.0);
+	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+	float shadowFactor = texture(shadowMap, texCoords3).r;
+
+	return shadowFactor;
+}
+
+//==============================================================================
 void main()
 {
 	// Read texture first. Optimize for future out of order HW
@@ -184,24 +209,50 @@ void main()
 	// Spot lights
 	uint spotLightsCount = tiles[vInstanceId].lightsCount[1];
 
-	for(uint i = pointLightsCount; i < pointLightsCount + spotLightsCount; ++i)
+	uint opt = pointLightsCount + spotLightsCount;
+	for(uint i = pointLightsCount; i < opt; ++i)
 	{
 		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
 
 		vec3 pureColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
 			specularAll, slights[lightId].light);
 
-		const vec4 lightDirAndAng = slights[lightId].lightDirection;
+		fColor += pureColor * calcSpotFactor(slights[lightId], fragPosVspace);
+	}
 
-		vec3 l = 
-			normalize(fragPosVspace - slights[lightId].light.posAndRadius.xyz);
+	// Spot lights with shadow
+	uint spotLightsShadowCount = tiles[vInstanceId].lightsCount[2];
+	opt = pointLightsCount + spotLightsCount;
 
-		float costheta = dot(l, lightDirAndAng.xyz);
-		float spotFactor = smoothstep(slights[lightId].light.diffuseColor.w,
-			slights[lightId].light.specularColor.w, costheta);
+	for(uint i = 0; i < spotLightsShadowCount; ++i)
+	{
+		uint id = i + opt;
+		uint lightId = tiles[vInstanceId].lightIndices[id / 4][id % 4];
+
+		vec3 pureColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
+			specularAll, slights[lightId].light);
+
+		float spotFactor = calcSpotFactor(slights[lightId], fragPosVspace);
+
+		float shadowFactor = calcShadowFactor(slights[lightId], fragPosVspace,
+			shadowMaps[i]);
+
+		fColor += pureColor * (spotFactor * shadowFactor);
+	}
+
+#if 0
+	if(tiles[vInstanceId].lightsCount[2] > 0)
+	{
+		uint lightId = 0;
+
+		vec3 pureColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
+			specularAll, slights[lightId].light);
+
+		float spotFactor = calcSpotFactor(slights[lightId], fragPosVspace);
 
 		fColor += pureColor * spotFactor;
 	}
+#endif
 
 #if 0
 	float depth = texture(msDepthFai, vTexCoords).r;
@@ -217,10 +268,10 @@ void main()
 	}
 #endif
 
-#if 0
-	if(tiles[vInstanceId].lightsCount[1] > 0)
+#if 1
+	if(tiles[vInstanceId].lightsCount[0] > 0)
 	{
-		fColor += vec3(0.0, 1.0, 0.0);
+		fColor += vec3(0.0, 0.1, 0.0);
 	}
 #endif
 }

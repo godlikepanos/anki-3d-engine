@@ -147,20 +147,6 @@ private:
 	static Bool cullLight(const PointLight& light, const Tile& tile);
 	static Bool cullLight(const SpotLight& light, const Tile& tile);
 
-	/// Update the point lights UBO
-	void writeLightUbo(ShaderPointLights& shaderLights, U32 maxShaderLights,
-		PointLight* visibleLights[], U32 visibleLightsCount, U start, U end);
-	/// Update the spot lights UBO
-	void writeLightUbo(ShaderSpotLights& shaderLights, U32 maxShaderLights,
-		SpotLight* visibleLights[], U32 visibleLightsCount, U start, U end);
-
-	/// Write the tiles UBO
-	void writeTilesUbo(
-		PointLight* visiblePointLights[], U32 visiblePointLightsCount,
-		SpotLight* visibleSpotLights[], U32 visibleSpotLightsCount,
-		ShaderTiles& shaderTiles, U32 maxLightsPerTile,
-		U32 start, U32 end);
-
 	// Do the actual pass
 	void lightPass();
 };

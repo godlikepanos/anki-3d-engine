@@ -44,6 +44,33 @@ inline std::string trimString(std::string& str, const char* what = " ")
 	return out;
 }
 
+/// Delete a pointer properly 
+template<typename T>
+inline void propperDelete(T*& x)
+{
+	typedef char TypeMustBeComplete[sizeof(T) ? 1 : -1];
+  	(void) sizeof(TypeMustBeComplete);
+	delete x;
+	x = nullptr;
+}
+
+/// A simple template trick to remove the pointer from one type
+///
+/// Example:
+/// @code
+/// double a = 1234.456;
+/// RemovePointer<decltype(&a)>::Type b = a;
+/// @endcode
+/// The b is of type double
+template<typename T>
+struct RemovePointer;
+
+template<typename T>
+struct RemovePointer<T*>
+{
+	typedef T Type;
+};
+
 /// @}
 /// @}
 

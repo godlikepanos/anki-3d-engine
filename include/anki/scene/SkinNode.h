@@ -262,7 +262,7 @@ public:
 		return boneTranslations;
 	}
 
-	const boost::ptr_vector<SkinPatchNode>& getPatchNodes() const
+	const PtrVector<SkinPatchNode>& getPatchNodes() const
 	{
 		return patches;
 	}
@@ -310,7 +310,7 @@ public:
 
 private:
 	SkinResourcePointer skin; ///< The resource
-	boost::ptr_vector<SkinPatchNode> patches;
+	PtrVector<SkinPatchNode> patches;
 	Obb visibilityShapeWSpace;
 
 	/// @name Animation stuff

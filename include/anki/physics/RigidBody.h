@@ -3,8 +3,8 @@
 
 #include "anki/math/Math.h"
 #include <memory>
-#include <bullet/btBulletDynamicsCommon.h>
-#include <bullet/btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
+#include <btBulletCollisionCommon.h>
 
 namespace anki {
 

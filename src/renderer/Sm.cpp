@@ -22,6 +22,11 @@ void Sm::init(const RendererInitializer& initializer)
 	resolution = initializer.is.sm.resolution;
 
 	// Init the shadowmaps
+	if(initializer.is.sm.maxLights > MAX_SHADOW_CASTERS)
+	{
+		throw ANKI_EXCEPTION("Too many shadow casters");
+	}
+
 	sms.resize(initializer.is.sm.maxLights);
 	for(Shadowmap& sm : sms)
 	{
@@ -69,46 +74,19 @@ void Sm::afterDraw()
 }
 
 //==============================================================================
-void Sm::run()
+void Sm::run(Light* shadowCasters[], U32 shadowCastersCount, 
+	Texture* shadowmaps[])
 {
 	ANKI_ASSERT(enabled);
 
-	Camera& cam = r->getScene().getActiveCamera();
-	VisibilityInfo& vi = cam.getFrustumable()->getVisibilityInfo();
-
 	prepareDraw();
 
-	// Get the shadow casters
-	//
-	const U MAX_SHADOW_CASTERS = 256;
-	ANKI_ASSERT(getMaxLightsCount() < MAX_SHADOW_CASTERS);
-	Array<Light*, MAX_SHADOW_CASTERS> casters;
-	U32 castersCount = 0;
-
-	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
-	{
-		Light* light = (*it)->getLight();
-
-		if(light->getShadowEnabled())
-		{
-			casters[castersCount % getMaxLightsCount()] = light;
-			++castersCount;
-		}
-	}
-
-#if 1
-	if(castersCount > getMaxLightsCount())
-	{
-		ANKI_LOGW("Too many shadow casters: " << castersCount);
-	}
-#endif
-
-	castersCount = castersCount % getMaxLightsCount();
-
 	// render all
-	for(U32 i = 0; i < castersCount; i++)
+	for(U32 i = 0; i < shadowCastersCount; i++)
 	{
-		doLight(*casters[i]);
+		Texture* sm = doLight(*shadowCasters[i]);
+		ANKI_ASSERT(sm != nullptr);
+		shadowmaps[i] = sm;
 	}
 
 	afterDraw();
@@ -153,9 +131,10 @@ Sm::Shadowmap& Sm::bestCandidate(Light& light)
 }
 
 //==============================================================================
-void Sm::doLight(Light& light)
+Texture* Sm::doLight(Light& light)
 {
 	Shadowmap& sm = bestCandidate(light);
+	Texture* outSm = &sm.tex;
 
 	Frustumable* fr = light.getFrustumable();
 	ANKI_ASSERT(fr != nullptr);
@@ -189,7 +168,7 @@ void Sm::doLight(Light& light)
 
 	if(!shouldUpdate)
 	{
-		return;
+		return outSm;
 	}
 
 	sm.timestamp = Timestamp::getTimestamp();
@@ -197,11 +176,14 @@ void Sm::doLight(Light& light)
 	//
 	// Render
 	//
+	sm.fbo.bind();
+
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
-		r->getSceneDrawer().render(r->getScene().getActiveCamera(), 1,
-			*((*it)->getRenderable()));
+		r->getSceneDrawer().render(*fr, 1, *((*it)->getRenderable()));
 	}
+
+	return outSm;
 }
 
 } // end namespace anki

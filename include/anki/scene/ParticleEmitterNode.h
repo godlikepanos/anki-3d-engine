@@ -1,16 +1,12 @@
 #ifndef ANKI_SCENE_PARTICLE_EMITTER_NODE_H
 #define ANKI_SCENE_PARTICLE_EMITTER_NODE_H
 
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/scoped_ptr.hpp>
 #include <btBulletCollisionCommon.h>
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/ParticleEmitterRsrc.h"
 #include "anki/resource/Resource.h"
 
-
 class btCollisionShape;
-
 
 namespace anki {
 
@@ -47,8 +43,6 @@ inline ParticleEmitterNode::ParticleEmitterNode(Scene& scene, ulong flags,
 :	SceneNode(SNT_PARTICLE_EMITTER_NODE, scene, flags, parent)
 {}*/
 
-
 } // end namespace
-
 
 #endif

@@ -4,10 +4,10 @@
 #include "anki/physics/RigidBody.h"
 #include "anki/physics/PhysWorld.h"
 #include <algorithm>
-#include <bullet/btBulletCollisionCommon.h>
-#include <bullet/btBulletDynamicsCommon.h>
-#include <bullet/BulletCollision/CollisionDispatch/btGhostObject.h>
-#include <bullet/BulletDynamics/Character/btKinematicCharacterController.h>
+#include <btBulletCollisionCommon.h>
+#include <btBulletDynamicsCommon.h>
+#include <BulletCollision/CollisionDispatch/btGhostObject.h>
+#include <BulletDynamics/Character/btKinematicCharacterController.h>
 
 namespace anki {
 

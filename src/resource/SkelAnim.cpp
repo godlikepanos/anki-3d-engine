@@ -1,15 +1,11 @@
 #include "anki/resource/SkelAnim.h"
-#include "anki/misc/Parser.h"
-
 
 namespace anki {
 
-
-//==============================================================================
-// load                                                                        =
 //==============================================================================
 void SkelAnim::load(const char* filename)
 {
+#if 0
 	scanner::Scanner scanner(filename);
 	const scanner::Token* token;
 
@@ -66,7 +62,7 @@ void SkelAnim::load(const char* filename)
 
 
 	framesNum = keyframes[keyframes.size() - 1] + 1;
+#endif
 }
-
 
 } // end namespace
