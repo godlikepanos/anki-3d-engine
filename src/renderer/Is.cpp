@@ -132,8 +132,13 @@ struct WriteSpotLightsUbo: ThreadJob
 			lightDir = cam->getViewMatrix().getRotationPart() * lightDir;
 			slight.lightDirection = Vec4(lightDir, 0.0);
 			
-			static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 
-				0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
+			/*static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 
+				0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);*/
+			static const Mat4 biasMat4(
+				0.5, 0.0, 0.0, 0.0, 
+				0.0, 0.5, 0.0, 0.0, 
+				0.0, 0.0, 0.5, 0.0, 
+				0.0, 0.0, 0.0, 1.0);
 			slight.texProjectionMat = biasMat4 * light.getProjectionMatrix() *
 				Mat4::combineTransformations(light.getViewMatrix(),
 				Mat4(cam->getWorldTransform()));
@@ -744,9 +749,6 @@ void Is::lightPass()
 
 		lightPassProg->findUniformVariable(str).set(*shadowmaps[i]);
 	}
-
-	/*GLint shadowMapsLoc = lightPassProg->findUniformVariable("msFai0");
-	shadowmaps*/
 
 	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
 }
