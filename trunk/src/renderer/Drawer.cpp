@@ -116,14 +116,14 @@ void DebugDrawer::drawSphere(float radius, int complexity)
 		complexityToPreCalculatedSphere[complexity] = Vector<Vec3>();
 		sphereLines = &complexityToPreCalculatedSphere[complexity];
 
-		float fi = Math::PI / complexity;
+		float fi = getPi<F32>() / complexity;
 
 		Vec3 prev(1.0, 0.0, 0.0);
-		for(float th = fi; th < Math::PI * 2.0 + fi; th += fi)
+		for(float th = fi; th < getPi<F32>() * 2.0 + fi; th += fi)
 		{
 			Vec3 p = Mat3(Euler(0.0, th, 0.0)) * Vec3(1.0, 0.0, 0.0);
 
-			for(float th2 = 0.0; th2 < Math::PI; th2 += fi)
+			for(float th2 = 0.0; th2 < getPi<F32>(); th2 += fi)
 			{
 				Mat3 rot(Euler(th2, 0.0, 0.0));
 
@@ -133,7 +133,7 @@ void DebugDrawer::drawSphere(float radius, int complexity)
 				sphereLines->push_back(rotPrev);
 				sphereLines->push_back(rotP);
 
-				Mat3 rot2(Euler(0.0, 0.0, Math::PI / 2));
+				Mat3 rot2(Euler(0.0, 0.0, getPi<F32>() / 2));
 
 				sphereLines->push_back(rot2 * rotPrev);
 				sphereLines->push_back(rot2 * rotP);
@@ -271,7 +271,7 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 	Quat q;
 	q.setFrom2Vec3(Vec3(0.0, 0.0, 1.0), n);
 	Mat3 rot(q);
-	rot.rotateXAxis(Math::PI / 2.0);
+	rot.rotateXAxis(getPi<F32>() / 2.0);
 	Mat4 trf(n * o, rot);
 
 	dbg->setModelMatrix(trf);
@@ -313,7 +313,7 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 			static_cast<const PerspectiveFrustum&>(f);
 
 		float camLen = pf.getFar();
-		float tmp0 = camLen / tan((Math::PI - pf.getFovX()) * 0.5) + 0.001;
+		float tmp0 = camLen / tan((getPi<F32>() - pf.getFovX()) * 0.5) + 0.001;
 		float tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
 
 		Vec3 points[] = {

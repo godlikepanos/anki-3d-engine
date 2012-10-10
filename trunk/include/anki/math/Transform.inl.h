@@ -1,4 +1,4 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/CommonSrc.h"
 
 namespace anki {
 
@@ -121,15 +121,35 @@ inline const Transform& Transform::getIdentity()
 }
 
 // combineTransformations
+inline void Transform::combineTransformations(
+	const Vec3& t0, const Mat3& r0, const F32 s0,
+	const Vec3& t1, const Mat3& r1, const F32 s1,
+	Vec3& tf, Mat3& rf, F32& sf)
+{
+	tf = t1.getTransformed(t0, r0, s0);
+	rf = r0 * r1;
+	sf = s0 * s1;
+}
+
+// combineTransformations
+inline void Transform::combineTransformations(
+	const Vec3& t0, const Mat3& r0,
+	const Vec3& t1, const Mat3& r1,
+	Vec3& tf, Mat3& rf)
+{
+	tf = t1.getTransformed(t0, r0);
+	rf = r0 * r1;
+}
+
+// combineTransformations
 inline Transform Transform::combineTransformations(const Transform& a,
 	const Transform& b)
 {
 	Transform out;
 
-	Math::combineTransformations(
-		a.origin, a.rotation, a.scale,
-		b.origin, b.rotation, b.scale,
-		out.origin, out.rotation, out.scale);
+	out.origin = b.origin.getTransformed(a.origin, a.rotation, a.scale);
+	out.rotation = a.rotation * b.rotation;
+	out.scale = a.scale * b.scale;
 
 	return out;
 }

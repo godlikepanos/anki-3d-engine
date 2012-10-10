@@ -1,4 +1,4 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/CommonSrc.h"
 
 namespace anki {
 
@@ -148,7 +148,7 @@ inline Mat4::Mat4(const Vec3& transl, const Mat3& rot)
 // Vec3, Mat3, F32
 inline Mat4::Mat4(const Vec3& translate, const Mat3& rotate, const F32 scale)
 {
-	if(!Math::isZero(scale - 1.0))
+	if(!isZero(scale - 1.0))
 	{
 		setRotationPart(rotate * scale);
 	}
@@ -335,7 +335,7 @@ inline Bool Mat4::operator==(const Mat4& b) const
 {
 	for(U i = 0; i < 16; i++)
 	{
-		if(!Math::isZero((*this)[i] - b[i]))
+		if(!isZero((*this)[i] - b[i]))
 		{
 			return false;
 		}
@@ -348,7 +348,7 @@ inline Bool Mat4::operator!=(const Mat4& b) const
 {
 	for(U i = 0; i < 16; i++)
 	{
-		if(!Math::isZero((*this)[i]-b[i]))
+		if(!isZero((*this)[i]-b[i]))
 		{
 			return true;
 		}
@@ -777,7 +777,7 @@ inline F32 Mat4::getDet() const
 // getInverse
 inline Mat4 Mat4::getInverse() const
 {
-	std::array<F32, 12> tmp;
+	Array<F32, 12> tmp;
 	const Mat4& in = (*this);
 	Mat4 m4;
 
@@ -844,7 +844,7 @@ inline Mat4 Mat4::getInverse() const
 	F32 det = in(0, 0) * m4(0, 0) + in(1, 0) * m4(0, 1) 
 		+ in(2, 0) * m4(0, 2) + in(3, 0) * m4(0, 3);
 
-	ANKI_ASSERT(!Math::isZero(det)); // Cannot invert, det == 0
+	ANKI_ASSERT(!isZero(det)); // Cannot invert, det == 0
 	det = 1.0 / det;
 	m4 *= det;
 	return m4;
@@ -883,8 +883,8 @@ inline Mat4 Mat4::combineTransformations(const Mat4& m0, const Mat4& m1)
 	// See the clean code in < r664
 
 	// one of the 2 mat4 doesnt represent transformation
-	ANKI_ASSERT(Math::isZero(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3) - 1.0)
-		&& Math::isZero(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3) - 1.0));
+	ANKI_ASSERT(isZero(m0(3, 0) + m0(3, 1) + m0(3, 2) + m0(3, 3) - 1.0)
+		&& isZero(m1(3, 0) + m1(3, 1) + m1(3, 2) + m1(3, 3) - 1.0));
 
 	Mat4 m4;
 

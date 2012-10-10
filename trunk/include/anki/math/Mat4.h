@@ -1,7 +1,7 @@
 #ifndef ANKI_MATH_MAT4_H
 #define ANKI_MATH_MAT4_H
 
-#include "anki/math/MathCommonIncludes.h"
+#include "anki/math/CommonIncludes.h"
 
 namespace anki {
 
@@ -121,12 +121,12 @@ private:
 	/// @{
 	union
 	{
-		std::array<F32, 16> arr1;
-		std::array<std::array<F32, 4>, 4> arr2;
+		Array<F32, 16> arr1;
+		Array<Array<F32, 4>, 4> arr2;
 		F32 carr1[16]; ///< For gdb
 		F32 carr2[4][4]; ///< For gdb
 #if defined(ANKI_MATH_SIMD_SSE)
-		std::array<__m128, 4> arrMm;
+		Array<__m128, 4> arrMm;
 #endif
 	};
 	/// @}

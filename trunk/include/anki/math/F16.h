@@ -1,7 +1,7 @@
 #ifndef ANKI_MATH_F16_H
 #define ANKI_MATH_F16_H
 
-#include "anki/math/MathCommonIncludes.h"
+#include "anki/math/CommonIncludes.h"
 
 namespace anki {
 

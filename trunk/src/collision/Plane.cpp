@@ -30,7 +30,7 @@ void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 	normal = u.cross(v);
 
 	// length of normal had better not be zero
-	ANKI_ASSERT(!Math::isZero(normal.getLengthSquared()));
+	ANKI_ASSERT(!isZero(normal.getLengthSquared()));
 
 	normal.normalize();
 	offset = normal.dot(p0); // XXX: correct??
@@ -42,10 +42,10 @@ void Plane::setFromPlaneEquation(F32 a, F32 b, F32 c, F32 d)
 	// normalize for cheap distance checks
 	F32 lensq = a * a + b * b + c * c;
 	// length of normal had better not be zero
-	ANKI_ASSERT(!Math::isZero(lensq));
+	ANKI_ASSERT(!isZero(lensq));
 
 	// recover gracefully
-	if(Math::isZero(lensq))
+	if(isZero(lensq))
 	{
 		normal = Vec3(1.0, 0.0, 0.0);
 		offset = 0.0;

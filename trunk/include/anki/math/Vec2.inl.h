@@ -1,4 +1,4 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/CommonSrc.h"
 
 namespace anki {
 
@@ -164,8 +164,8 @@ inline Vec2 Vec2::operator-() const
 // ==
 inline Bool Vec2::operator==(const Vec2& b) const
 {
-	return Math::isZero(x() - b.x()) &&
-		Math::isZero(y() - b.y());
+	return isZero(x() - b.x()) &&
+		isZero(y() - b.y());
 }
 
 // !=
@@ -255,7 +255,7 @@ inline F32 Vec2::getLengthSquared() const
 // getLength
 inline F32 Vec2::getLength() const
 {
-	return Math::sqrt(getLengthSquared());
+	return sqrt(getLengthSquared());
 }
 
 // normalize

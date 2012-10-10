@@ -50,7 +50,7 @@ SpotLight::SpotLight(const char* name, Scene* scene,
 	: Light(LT_SPOT, name, scene, movableFlags, movParent, &frustum),
 		Frustumable(&frustum)
 {
-	const F32 ang = Math::toRad(45.0);
+	const F32 ang = toRad(45.0);
 	setOuterAngle(ang / 2.0);
 	const F32 dist = 1.0;
 

@@ -1,4 +1,4 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/CommonSrc.h"
 
 namespace anki {
 
@@ -311,10 +311,10 @@ inline Vec4 Vec4::operator-() const
 inline Bool Vec4::operator==(const Vec4& b) const
 {
 	Vec4 sub = (*this) - b;
-	return Math::isZero(sub.x()) 
-		&& Math::isZero(sub.y()) 
-		&& Math::isZero(sub.z()) 
-		&& Math::isZero(sub.w());
+	return isZero(sub.x()) 
+		&& isZero(sub.y()) 
+		&& isZero(sub.z()) 
+		&& isZero(sub.w());
 }
 
 // !=
@@ -424,7 +424,7 @@ inline F32 Vec4::dot(const Vec4& b) const
 // getLength
 inline F32 Vec4::getLength() const
 {
-	return Math::sqrt(dot((*this)));
+	return sqrt(dot((*this)));
 }
 
 // getNormalized
