@@ -132,16 +132,17 @@ struct WriteSpotLightsUbo: ThreadJob
 			lightDir = cam->getViewMatrix().getRotationPart() * lightDir;
 			slight.lightDirection = Vec4(lightDir, 0.0);
 			
-			/*static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 
-				0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);*/
 			static const Mat4 biasMat4(
-				0.5, 0.0, 0.0, 0.0, 
-				0.0, 0.5, 0.0, 0.0, 
-				0.0, 0.0, 0.5, 0.0, 
+				0.5, 0.0, 0.0, 0.5, 
+				0.0, 0.5, 0.0, 0.5, 
+				0.0, 0.0, 0.5, 0.5, 
 				0.0, 0.0, 0.0, 1.0);
 			slight.texProjectionMat = biasMat4 * light.getProjectionMatrix() *
 				Mat4::combineTransformations(light.getViewMatrix(),
 				Mat4(cam->getWorldTransform()));
+
+			// Transpose because of driver bug
+			slight.texProjectionMat.transpose();
 		}
 	}
 };
@@ -742,6 +743,7 @@ void Is::lightPass()
 	lightPassProg->findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
 
+#if 1
 	for(U i = 0; i < spotsShadowCount; i++)
 	{
 		char str[128];
@@ -749,6 +751,20 @@ void Is::lightPass()
 
 		lightPassProg->findUniformVariable(str).set(*shadowmaps[i]);
 	}
+#endif
+
+#if 0
+	{
+	SpotLight& light = *visibleSpotShadowLights[0];
+	static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 
+				0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
+	Mat4 matrix = biasMat4 * light.getProjectionMatrix() *
+				Mat4::combineTransformations(light.getViewMatrix(),
+				Mat4(cam->getWorldTransform()));
+
+	lightPassProg->findUniformVariable("matrix").set(matrix);
+	}
+#endif
 
 	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
 }

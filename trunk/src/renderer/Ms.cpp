@@ -57,6 +57,7 @@ void Ms::run()
 
 	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
 	GlStateSingleton::get().disable(GL_BLEND);
+	GlStateSingleton::get().enable(GL_DEPTH_TEST);
 
 	//GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, true);
 	//app->getScene().skybox.Render(cam.getViewMatrix().getRotationPart());
