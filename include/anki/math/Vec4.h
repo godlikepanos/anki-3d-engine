@@ -1,7 +1,7 @@
 #ifndef ANKI_MATH_VEC4_H
 #define ANKI_MATH_VEC4_H
 
-#include "anki/math/MathCommonIncludes.h"
+#include "anki/math/CommonIncludes.h"
 
 namespace anki {
 
@@ -113,7 +113,7 @@ private:
 			F32 x, y, z, w;
 		} vec;
 
-		std::array<F32, 4> arr;
+		Array<F32, 4> arr;
 
 #if defined(ANKI_MATH_SIMD_SSE)
 		__m128 mm;

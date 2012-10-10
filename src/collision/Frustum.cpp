@@ -122,13 +122,13 @@ void PerspectiveFrustum::recalculate()
 	//
 	F32 c, s; // cos & sine
 
-	Math::sinCos(Math::PI + fovX / 2.0, s, c);
+	sinCos(getPi<F32>() + fovX / 2.0, s, c);
 	// right
 	planes[FP_RIGHT] = Plane(Vec3(c, 0.0, s), 0.0);
 	// left
 	planes[FP_LEFT] = Plane(Vec3(-c, 0.0, s), 0.0);
 
-	Math::sinCos((Math::PI + fovY) * 0.5, s, c);
+	sinCos((getPi<F32>() + fovY) * 0.5, s, c);
 	// bottom
 	planes[FP_BOTTOM] = Plane(Vec3(0.0, s, c), 0.0);
 	// top
@@ -143,7 +143,7 @@ void PerspectiveFrustum::recalculate()
 	//
 	eye = Vec3(0.0, 0.0, -near);
 
-	F32 x = far / tan((Math::PI - fovX) / 2.0);
+	F32 x = far / tan((getPi<F32>() - fovX) / 2.0);
 	F32 y = tan(fovY / 2.0) * far;
 	F32 z = -far;
 

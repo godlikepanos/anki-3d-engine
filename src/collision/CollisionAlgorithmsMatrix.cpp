@@ -98,7 +98,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Obb& obb)
 		F32 f = ls.getDirection().dot(axis);
 
 		// ray is parallel to plane
-		if(Math::isZero(f))
+		if(isZero(f))
 		{
 			// ray passes by box
 			if(-e - obb.getExtend()[i] > 0.0 || -e + obb.getExtend()[i] > 0.0)
@@ -195,7 +195,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Aabb& aabb)
 	for(U i = 0; i < 3; ++i)
 	{
 		// segment is parallel to plane
-		if(Math::isZero(ls.getDirection()[i]))
+		if(isZero(ls.getDirection()[i]))
 		{
 			// segment passes by box
 			if(ls.getOrigin()[i] < aabb.getMin()[i] 
@@ -266,7 +266,7 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& o0, const Obb& o1)
 		{
 			rabs(i, j) = fabs(rt(i, j));
 			// if magnitude of dot product between axes is close to one
-			if(rabs(i, j) + Math::EPSILON >= 1.0)
+			if(rabs(i, j) + getEpsilon<F32>() >= 1.0)
 			{
 				// then box A and box B have near-parallel axes
 				parallelAxes = true;
@@ -571,7 +571,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Aabb& aabb)
 	for(U i = 0; i < 3; ++i)
 	{
 		// ray is parallel to plane
-		if(Math::isZero(r.getDirection()[i]))
+		if(isZero(r.getDirection()[i]))
 		{
 			// ray passes by box
 			if(r.getOrigin()[i] < aabb.getMin()[i] ||

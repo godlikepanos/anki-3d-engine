@@ -159,7 +159,7 @@ void Dbg::run()
 
 	Vec3 a(0.0);
 	F32 s, c;
-	Math::sinCos(Math::PI / 2 - fx / 2, s, c);
+	sinCos(getPi<F32>() / 2 - fx / 2, s, c);
 	Vec3 b(c, 0.0, -s);
 
 	a.transform(camera1->getWorldTransform());
@@ -167,7 +167,7 @@ void Dbg::run()
 
 	drawer->drawLine(a, b, Vec4(1));
 
-	Math::sinCos(fy / 2, s, c);
+	sinCos(fy / 2, s, c);
 	b = Vec3(0.0, s, -c);
 	b.transform(camera1->getWorldTransform());
 

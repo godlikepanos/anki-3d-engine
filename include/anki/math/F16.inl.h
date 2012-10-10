@@ -1,4 +1,4 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/CommonSrc.h"
 
 namespace anki {
 
@@ -163,13 +163,13 @@ inline F16& F16::operator/=(const F32 b)
 // ==
 inline Bool F16::operator==(const F32 b) const
 {
-	return Math::isZero(toF32() - b);
+	return isZero(toF32() - b);
 }
 
 // !=
 inline Bool F16::operator!=(const F32 b) const
 {
-	return !Math::isZero(toF32() - b);
+	return !isZero(toF32() - b);
 }
 
 //==============================================================================

@@ -1,7 +1,7 @@
 #ifndef ANKI_MATH_MAT3_H
 #define ANKI_MATH_MAT3_H
 
-#include "anki/math/MathCommonIncludes.h"
+#include "anki/math/CommonIncludes.h"
 
 namespace anki {
 
@@ -118,8 +118,8 @@ private:
 	/// @{
 	union
 	{
-		std::array<F32, 9> arr1;
-		std::array<std::array<F32, 3>, 3> arr2;
+		Array<F32, 9> arr1;
+		Array<Array<F32, 3>, 3> arr2;
 		F32 carr1[9]; ///< For gdb
 		F32 carr2[3][3]; ///< For gdb
 	};

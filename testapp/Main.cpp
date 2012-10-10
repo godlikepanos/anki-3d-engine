@@ -61,10 +61,10 @@ void init()
 		Movable::MF_NONE, nullptr);
 	const float ang = 45.0;
 	cam->setAll(
-		MainRendererSingleton::get().getAspectRatio() * Math::toRad(ang),
-		Math::toRad(ang), 0.5, 200.0);
+		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
+		toRad(ang), 0.5, 200.0);
 	cam->setLocalTransform(Transform(Vec3(100.0, 3.0, 8.0),
-		Mat3(Axisang(Math::toRad(90), Vec3(0, 1, 0))),
+		Mat3(Axisang(toRad(90.0), Vec3(0, 1, 0))),
 		1.0));
 	scene.setActiveCamera(cam);
 
@@ -72,10 +72,10 @@ void init()
 	PerspectiveCamera* pcam = new PerspectiveCamera("camera1", &scene,
 		Movable::MF_NONE, nullptr);
 	pcam->setAll(
-		MainRendererSingleton::get().getAspectRatio() * Math::toRad(ang),
-		Math::toRad(ang), 0.5, 200.0);
+		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
+		toRad(ang), 0.5, 200.0);
 	pcam->setLocalTransform(Transform(Vec3(100.0, 3.0, 8.0),
-		Mat3(Axisang(Math::toRad(90), Vec3(0, 1, 0))),
+		Mat3(Axisang(toRad(90.0), Vec3(0, 1, 0))),
 		1.0));
 
 	// lights
@@ -102,8 +102,8 @@ void init()
 
 #if 1
 	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
-	spot->setOuterAngle(Math::toRad(45.0));
-	spot->setInnerAngle(Math::toRad(15.0));
+	spot->setOuterAngle(toRad(45.0));
+	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0),
 		Mat3::getIdentity(), 1.0));
 	spot->setDiffuseColor(Vec4(1.0));
@@ -114,8 +114,8 @@ void init()
 
 
 	spot = new SpotLight("spot1", &scene, Movable::MF_NONE, nullptr);
-	spot->setOuterAngle(Math::toRad(45.0));
-	spot->setInnerAngle(Math::toRad(15.0));
+	spot->setOuterAngle(toRad(45.0));
+	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(5.3, 4.3, 3.0),
 		Mat3::getIdentity(), 1.0));
 	spot->setDiffuseColor(Vec4(1.0, 0.0, 0.0, 0.0));
@@ -186,7 +186,7 @@ void mainLoopExtra()
 	InputSingleton::get().handleEvents();
 
 	float dist = 0.2;
-	float ang = Math::toRad(3.0);
+	float ang = toRad(3.0);
 	float scale = 0.01;
 
 	// move the camera

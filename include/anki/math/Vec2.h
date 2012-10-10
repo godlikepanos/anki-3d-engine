@@ -1,7 +1,7 @@
 #ifndef ANKI_MATH_VEC2_H
 #define ANKI_MATH_VEC2_H
 
-#include "anki/math/MathCommonIncludes.h"
+#include "anki/math/CommonIncludes.h"
 
 namespace anki {
 
@@ -92,7 +92,7 @@ private:
 			F32 x, y;
 		} vec;
 
-		std::array<F32, 2> arr;
+		Array<F32, 2> arr;
 	};
 	/// @}
 };

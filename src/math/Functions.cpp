@@ -1,35 +1,37 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/Functions.h"
 
 namespace anki {
 
 //==============================================================================
-F32 Math::polynomialSinQuadrant(const F32 a)
+template<typename Scalar>
+static Scalar polynomialSinQuadrant(const Scalar a)
 {
 	return a * (1.0 + a * a * (-0.16666 + a * a *
 		(0.0083143 - a * a * 0.00018542)));
 }
 
 //==============================================================================
-void Math::sinCos(const F32 a_, F32& sina, F32& cosa)
+template<typename Scalar>
+static void sinCosInternal(const Scalar a_, Scalar& sina, Scalar& cosa)
 {
 #if NDEBUG
 	Bool negative = false;
-	F32 a = a_;
+	Scalar a = a_;
 	if(a < 0.0)
 	{
 		a = -a;
 		negative = true;
 	}
-	const F32 TWO_OVER_PI = 1.0 / (PI / 2.0);
-	F32 floatA = TWO_OVER_PI * a;
+	const Scalar TWO_OVER_PI = 1.0 / (getPi<Scalar>() / 2.0);
+	Scalar floatA = TWO_OVER_PI * a;
 	I intA = (int)floatA;
 
-	const F32 RATIONAL_HALF_PI = 201 / 128.0;
-	const F32 REMAINDER_HALF_PI = 4.8382679e-4;
+	const Scalar RATIONAL_HALF_PI = 201 / 128.0;
+	const Scalar REMAINDER_HALF_PI = 4.8382679e-4;
 
 	floatA = (a - RATIONAL_HALF_PI * intA) - REMAINDER_HALF_PI * intA;
 
-	F32 floatAMinusHalfPi = (floatA - RATIONAL_HALF_PI) - REMAINDER_HALF_PI;
+	Scalar floatAMinusHalfPi = (floatA - RATIONAL_HALF_PI) - REMAINDER_HALF_PI;
 
 	switch(intA & 3)
 	{
@@ -56,9 +58,21 @@ void Math::sinCos(const F32 a_, F32& sina, F32& cosa)
 		sina = -sina;
 	}
 #else
-	sina = ::sin(a_);
-	cosa = ::cos(a_);
+	sina = sin(a_);
+	cosa = cos(a_);
 #endif
+}
+
+//==============================================================================
+void sinCos(const F32 a, F32& sina, F32& cosa)
+{
+	sinCosInternal(a, sina, cosa);
+}
+
+//==============================================================================
+void sinCos(const F64 a, F64& sina, F64& cosa)
+{
+	sinCosInternal(a, sina, cosa);
 }
 
 } // end namespace anki

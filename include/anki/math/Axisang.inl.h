@@ -1,4 +1,4 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/CommonSrc.h"
 
 namespace anki {
 
@@ -25,8 +25,8 @@ inline Axisang::Axisang(const F32 rad, const Vec3& axis_)
 inline Axisang::Axisang(const Quat& q)
 {
 	ang = 2.0 * acos(q.w());
-	F32 length = Math::sqrt(1.0 - q.w() * q.w());
-	if(Math::isZero(length))
+	F32 length = sqrt(1.0 - q.w() * q.w());
+	if(isZero(length))
 	{
 		axis = Vec3(0.0);
 	}
@@ -40,9 +40,9 @@ inline Axisang::Axisang(const Quat& q)
 // constructor [mat3]
 inline Axisang::Axisang(const Mat3& m3)
 {
-	if((fabs(m3(0, 1) - m3(1, 0)) < Math::EPSILON) 
-		&&(fabs(m3(0, 2) - m3(2, 0)) < Math::EPSILON) 
-		&& (fabs(m3(1, 2) - m3(2, 1)) < Math::EPSILON))
+	if((fabs(m3(0, 1) - m3(1, 0)) < getEpsilon<F32>()) 
+		&&(fabs(m3(0, 2) - m3(2, 0)) < getEpsilon<F32>()) 
+		&& (fabs(m3(1, 2) - m3(2, 1)) < getEpsilon<F32>()))
 	{
 
 		if((fabs(m3(0, 1) + m3(1, 0)) < 0.1) 
@@ -55,11 +55,11 @@ inline Axisang::Axisang(const Mat3& m3)
 			return;
 		}
 
-		ang = Math::PI;
+		ang = getPi<F32>();
 		axis.x() = (m3(0, 0)+1) / 2.0;
 		if(axis.x() > 0.0)
 		{
-			axis.x() = Math::sqrt(axis.x());
+			axis.x() = sqrt(axis.x());
 		}
 		else
 		{
@@ -68,7 +68,7 @@ inline Axisang::Axisang(const Mat3& m3)
 		axis.y() = (m3(1, 1)+1)/2;
 		if(axis.y() > 0)
 		{
-			axis.y() = Math::sqrt(axis.y());
+			axis.y() = sqrt(axis.y());
 		}
 		else
 		{
@@ -78,16 +78,16 @@ inline Axisang::Axisang(const Mat3& m3)
 		axis.z() = (m3(2, 2)+1)/2;
 		if(axis.z() > 0)
 		{
-			axis.z() = Math::sqrt(axis.z());
+			axis.z() = sqrt(axis.z());
 		}
 		else
 		{
 			axis.z() = 0.0;
 		}
 
-		Bool xZero = (fabs(axis.x()) < Math::EPSILON);
-		Bool yZero = (fabs(axis.y()) < Math::EPSILON);
-		Bool zZero = (fabs(axis.z()) < Math::EPSILON);
+		Bool xZero = (fabs(axis.x()) < getEpsilon<F32>());
+		Bool yZero = (fabs(axis.y()) < getEpsilon<F32>());
+		Bool zZero = (fabs(axis.z()) < getEpsilon<F32>());
 		Bool xyPositive = (m3(0, 1) > 0);
 		Bool xzPositive = (m3(0, 2) > 0);
 		Bool yzPositive = (m3(1, 2) > 0);
@@ -116,7 +116,7 @@ inline Axisang::Axisang(const Mat3& m3)
 		return;
 	}
 
-	F32 s = Math::sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2)) 
+	F32 s = sqrt((m3(2, 1) - m3(1, 2)) * (m3(2, 1) - m3(1, 2)) 
 		+ (m3(0, 2) - m3(2, 0)) * (m3(0, 2) - m3(2, 0)) 
 		+ (m3(1, 0) - m3(0, 1)) * (m3(1, 0) - m3(0, 1)));
 

@@ -131,7 +131,7 @@ void Obb::toAabb(Aabb& aabb) const
 	Vec3 newE = absM * extends;
 
 	// Add a small epsilon to avoid some assertions
-	aabb = Aabb(center - newE, center + newE + Vec3(Math::EPSILON * 100.0));
+	aabb = Aabb(center - newE, center + newE + Vec3(getEpsilon<F32>() * 100.0));
 }
 
 } // end namespace

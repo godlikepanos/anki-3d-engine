@@ -1,4 +1,4 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/CommonSrc.h"
 
 namespace anki {
 
@@ -35,14 +35,14 @@ inline Euler::Euler(const Quat& q)
 	if(test > 0.499)
 	{
 		y() = 2.0 * atan2(q.x(), q.w());
-		z() = Math::PI / 2.0;
+		z() = getPi<F32>() / 2.0;
 		x() = 0.0;
 		return;
 	}
 	if(test < -0.499)
 	{
 		y() = -2.0 * atan2(q.x(), q.w());
-		z() = -Math::PI / 2.0;
+		z() = -getPi<F32>() / 2.0;
 		x() = 0.0;
 		return;
 	}
@@ -65,9 +65,9 @@ inline Euler::Euler(const Mat3& m3)
 	F32 cz, sz;
 
 	sy = m3(0, 2);
-	cy = Math::sqrt(1.0 - sy * sy);
+	cy = sqrt(1.0 - sy * sy);
 	// normal case
-	if (!Math::isZero(cy))
+	if (!isZero(cy))
 	{
 		F32 factor = 1.0/cy;
 		sx = -m3(1, 2) * factor;

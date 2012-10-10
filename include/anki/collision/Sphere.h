@@ -155,7 +155,7 @@ void Sphere::set(const Container& container)
 		}
 	}
 
-	radius = Math::sqrt(maxDist);
+	radius = sqrt(maxDist);
 }
 
 } // end namespace

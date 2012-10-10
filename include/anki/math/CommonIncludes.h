@@ -1,5 +1,5 @@
 #include "anki/math/Forward.h"
-#include "anki/math/MathSimd.h"
+#include "anki/math/Simd.h"
 #include "anki/util/StdTypes.h"
-#include <array>
+#include "anki/util/Array.h"
 #include <iosfwd>

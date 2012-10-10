@@ -1,4 +1,4 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/CommonSrc.h"
 
 namespace anki {
 
@@ -68,7 +68,7 @@ inline Quat::Quat(const Quat& b)
 inline Quat::Quat(const Mat3& m3)
 {
 	F32 trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + 1.0;
-	if(trace > Math::EPSILON)
+	if(trace > getEpsilon<F32>())
 	{
 		F32 s = 0.5 / sqrt(trace);
 		w() = 0.25 / s;
@@ -109,13 +109,13 @@ inline Quat::Quat(const Mat3& m3)
 inline Quat::Quat(const Euler& eu)
 {
 	F32 cx, sx;
-	Math::sinCos(eu.y() * 0.5, sx, cx);
+	sinCos(eu.y() * 0.5, sx, cx);
 
 	F32 cy, sy;
-	Math::sinCos(eu.z() * 0.5, sy, cy);
+	sinCos(eu.z() * 0.5, sy, cy);
 
 	F32 cz, sz;
-	Math::sinCos(eu.x() * 0.5, sz, cz);
+	sinCos(eu.x() * 0.5, sz, cz);
 
 	F32 cxcy = cx * cy;
 	F32 sxsy = sx * sy;
@@ -129,7 +129,7 @@ inline Quat::Quat(const Euler& eu)
 inline Quat::Quat(const Axisang& axisang)
 {
 	F32 lengthsq = axisang.getAxis().getLengthSquared();
-	if(Math::isZero(lengthsq))
+	if(isZero(lengthsq))
 	{
 		(*this) = getIdentity();
 		return;
@@ -138,7 +138,7 @@ inline Quat::Quat(const Axisang& axisang)
 	F32 rad = axisang.getAngle() * 0.5;
 
 	F32 sintheta, costheta;
-	Math::sinCos(rad, sintheta, costheta);
+	sinCos(rad, sintheta, costheta);
 
 	F32 scalefactor = sintheta / sqrt(lengthsq);
 
@@ -227,19 +227,19 @@ inline Quat& Quat::operator *=(const Quat& b)
 // ==
 inline Bool Quat::operator ==(const Quat& b) const
 {
-	return Math::isZero(x() - b.x()) &&
-		Math::isZero(y() - b.y()) &&
-		Math::isZero(z() - b.z()) &&
-		Math::isZero(w() - b.w());
+	return isZero(x() - b.x()) &&
+		isZero(y() - b.y()) &&
+		isZero(z() - b.z()) &&
+		isZero(w() - b.w());
 }
 
 // !=
 inline Bool Quat::operator !=(const Quat& b) const
 {
-	return !(Math::isZero(x() - b.x()) &&
-		Math::isZero(y() - b.y()) &&
-		Math::isZero(z() - b.z()) &&
-		Math::isZero(w() - b.w()));
+	return !(isZero(x() - b.x()) &&
+		isZero(y() - b.y()) &&
+		isZero(z() - b.z()) &&
+		isZero(w() - b.w()));
 }
 
 //==============================================================================
@@ -275,7 +275,7 @@ inline void Quat::normalize()
 // getLength
 inline F32 Quat::getLength() const
 {
-	return Math::sqrt(w() * w() + x() * x() + y() * y() + z() * z());
+	return sqrt(w() * w() + x() * x() + y() * y() + z() * z());
 }
 
 // getInverted
@@ -283,7 +283,7 @@ inline Quat Quat::getInverted() const
 {
 	F32 norm = w() * w() + x() * x() + y() * y() + z() * z();
 
-	ANKI_ASSERT(!Math::isZero(norm)); // Norm is zero
+	ANKI_ASSERT(!isZero(norm)); // Norm is zero
 
 	F32 normi = 1.0 / norm;
 	return Quat(-normi * x(), -normi * y(), -normi * z(), normi * w());
@@ -303,7 +303,7 @@ inline void Quat::setFrom2Vec3(const Vec3& from, const Vec3& to)
 	normalize();
 	w() += 1.0;
 
-	if(w() <= Math::EPSILON)
+	if(w() <= getEpsilon<F32>())
 	{
 		if(from.z() * from.z() > from.x() * from.x())
 		{
@@ -354,7 +354,7 @@ inline Quat Quat::slerp(const Quat& q1_, const F32 t) const
 	}
 
 	F32 halfTheta = acos(cosHalfTheta);
-	F32 sinHalfTheta = Math::sqrt(1.0 - cosHalfTheta * cosHalfTheta);
+	F32 sinHalfTheta = sqrt(1.0 - cosHalfTheta * cosHalfTheta);
 
 	if(fabs(sinHalfTheta) < 0.001)
 	{

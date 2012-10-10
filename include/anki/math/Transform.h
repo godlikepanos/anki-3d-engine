@@ -3,7 +3,7 @@
 
 #include "anki/math/Vec3.h"
 #include "anki/math/Mat3.h"
-#include "anki/math/MathCommonIncludes.h"
+#include "anki/math/CommonIncludes.h"
 
 namespace anki {
 
@@ -49,8 +49,17 @@ public:
 	/// @{
 	void setIdentity();
 	static const Transform& getIdentity();
+
+	static void combineTransformations(
+		const Vec3& t0, const Mat3& r0, const F32 s0,
+		const Vec3& t1, const Mat3& r1, const F32 s1,
+		Vec3& tf, Mat3& rf, F32& sf);
+	static void combineTransformations(
+		const Vec3& t0, const Mat3& r0,
+		const Vec3& t1, const Mat3& r1,
+		Vec3& tf, Mat3& rf);
 	static Transform combineTransformations(const Transform& a,
-		const Transform& b); ///< @copybrief Math::combineTransformations
+		const Transform& b); ///< @copybrief combineTransformations
 
 	/// Get the inverse transformation. Its faster that inverting a Mat4
 	Transform getInverse() const;

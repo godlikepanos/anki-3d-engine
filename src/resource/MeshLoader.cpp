@@ -230,7 +230,7 @@ void MeshLoader::createVertTangents()
 
 		float det = (uvedge01.y() * uvedge02.x()) -
 			(uvedge01.x() * uvedge02.y());
-		if(Math::isZero(det))
+		if(isZero(det))
 		{
 			//ANKI_LOGW(getRsrcName() << ": det == " << fixed << det);
 			det = 0.0001;

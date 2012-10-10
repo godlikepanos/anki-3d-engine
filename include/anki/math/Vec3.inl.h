@@ -1,4 +1,4 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/CommonSrc.h"
 
 namespace anki {
 
@@ -197,9 +197,9 @@ inline Vec3 Vec3::operator-() const
 // ==
 inline Bool Vec3::operator==(const Vec3& b) const
 {
-	return Math::isZero(x() - b.x()) 
-		&& Math::isZero(y() - b.y()) 
-		&& Math::isZero(z() - b.z());
+	return isZero(x() - b.x()) 
+		&& isZero(y() - b.y()) 
+		&& isZero(z() - b.z());
 }
 
 // !=
@@ -309,7 +309,7 @@ inline Vec3 Vec3::cross(const Vec3& b) const
 // getLength
 inline F32 Vec3::getLength() const
 {
-	return Math::sqrt(getLengthSquared());
+	return sqrt(getLengthSquared());
 }
 
 // getLengthSquared
@@ -345,7 +345,7 @@ inline Vec3 Vec3::getProjection(const Vec3& toThis) const
 // getRotated
 inline Vec3 Vec3::getRotated(const Quat& q) const
 {
-	ANKI_ASSERT(Math::isZero(1.0 - q.getLength())); // Not normalized quat
+	ANKI_ASSERT(isZero(1.0 - q.getLength())); // Not normalized quat
 	Vec3 qXyz(q);
 	return (*this) + qXyz.cross(qXyz.cross((*this)) + (*this) * q.w()) * 2.0;
 }

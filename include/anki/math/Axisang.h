@@ -2,7 +2,7 @@
 #define ANKI_MATH_AXISANG_H
 
 #include "anki/math/Vec3.h"
-#include "anki/math/MathCommonIncludes.h"
+#include "anki/math/CommonIncludes.h"
 
 namespace anki {
 

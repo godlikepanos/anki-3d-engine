@@ -1,4 +1,4 @@
-#include "anki/math/MathCommonSrc.h"
+#include "anki/math/CommonSrc.h"
 
 namespace anki {
 
@@ -87,9 +87,9 @@ inline Mat3::Mat3(const Quat& q)
 inline Mat3::Mat3(const Euler& e)
 {
 	F32 ch, sh, ca, sa, cb, sb;
-	Math::sinCos(e.y(), sh, ch);
-	Math::sinCos(e.z(), sa, ca);
-	Math::sinCos(e.x(), sb, cb);
+	sinCos(e.y(), sh, ch);
+	sinCos(e.z(), sa, ca);
+	sinCos(e.x(), sb, cb);
 
 	(*this)(0, 0) = ch * ca;
 	(*this)(0, 1) = sh * sb - ch * sa * cb;
@@ -106,10 +106,10 @@ inline Mat3::Mat3(const Euler& e)
 inline Mat3::Mat3(const Axisang& axisang)
 {
 	// Not normalized axis
-	ANKI_ASSERT(Math::isZero(1.0 - axisang.getAxis().getLength()));
+	ANKI_ASSERT(isZero(1.0 - axisang.getAxis().getLength()));
 
 	F32 c, s;
-	Math::sinCos(axisang.getAngle(), s, c);
+	sinCos(axisang.getAngle(), s, c);
 	F32 t = 1.0 - c;
 
 	const Vec3& axis = axisang.getAxis();
@@ -248,7 +248,7 @@ inline Bool Mat3::operator==(const Mat3& b) const
 {
 	for(U i = 0; i < 9; i++)
 	{
-		if(!Math::isZero((*this)[i] - b[i]))
+		if(!isZero((*this)[i] - b[i]))
 		{
 			return false;
 		}
@@ -261,7 +261,7 @@ inline Bool Mat3::operator!=(const Mat3& b) const
 {
 	for(U i = 0; i < 9; i++)
 	{
-		if(!Math::isZero((*this)[i] - b[i]))
+		if(!isZero((*this)[i] - b[i]))
 		{
 			return true;
 		}
@@ -498,7 +498,7 @@ inline void Mat3::setZAxis(const Vec3& v3)
 inline void Mat3::setRotationX(const F32 rad)
 {
 	F32 sintheta, costheta;
-	Math::sinCos(rad, sintheta, costheta);
+	sinCos(rad, sintheta, costheta);
 
 	(*this)(0, 0) = 1.0;
 	(*this)(0, 1) = 0.0;
@@ -515,7 +515,7 @@ inline void Mat3::setRotationX(const F32 rad)
 inline void Mat3::setRotationY(const F32 rad)
 {
 	F32 sintheta, costheta;
-	Math::sinCos(rad, sintheta, costheta);
+	sinCos(rad, sintheta, costheta);
 
 	(*this)(0, 0) = costheta;
 	(*this)(0, 1) = 0.0;
@@ -532,7 +532,7 @@ inline void Mat3::setRotationY(const F32 rad)
 inline void Mat3::setRotationZ(const F32 rad)
 {
 	F32 sintheta, costheta;
-	Math::sinCos(rad, sintheta, costheta);
+	sinCos(rad, sintheta, costheta);
 
 	(*this)(0, 0) = costheta;
 	(*this)(0, 1) = -sintheta;
@@ -555,7 +555,7 @@ inline void Mat3::rotateXAxis(const F32 rad)
 	// NOTE: See the clean code from < r664
 
 	F32 sina, cosa;
-	Math::sinCos(rad, sina, cosa);
+	sinCos(rad, sina, cosa);
 
 	// zAxis = zAxis*cosa - yAxis*sina;
 	(*this)(0, 2) = (*this)(0, 2) * cosa - (*this)(0, 1) * sina;
@@ -585,7 +585,7 @@ inline void Mat3::rotateYAxis(const F32 rad)
 {
 	// NOTE: See the clean code from < r664
 	F32 sina, cosa;
-	Math::sinCos(rad, sina, cosa);
+	sinCos(rad, sina, cosa);
 
 	// zAxis = zAxis*cosa + xAxis*sina;
 	(*this)(0, 2) = (*this)(0, 2) * cosa + (*this)(0, 0) * sina;
@@ -613,7 +613,7 @@ inline void Mat3::rotateZAxis(const F32 rad)
 {
 	// NOTE: See the clean code from < r664
 	F32 sina, cosa;
-	Math::sinCos(rad, sina, cosa);
+	sinCos(rad, sina, cosa);
 
 	// xAxis = xAxis*cosa + yAxis*sina;
 	(*this)(0, 0) = (*this)(0, 0) * cosa + (*this)(0, 1) * sina;
@@ -710,7 +710,7 @@ inline Mat3 Mat3::getInverse() const
 	F32 det = (*this)(0, 0) * cofactor0 + (*this)(1, 0) * cofactor3
 		+ (*this)(2, 0) * cofactor6;
 
-	ANKI_ASSERT(!Math::isZero(det)); // Cannot invert det == 0
+	ANKI_ASSERT(!isZero(det)); // Cannot invert det == 0
 
 	// create adjoint matrix and multiply by 1/det to get inverse
 	F32 invDet = 1.0 / det;

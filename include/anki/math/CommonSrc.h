@@ -8,8 +8,7 @@
 #include "anki/math/Mat4.h"
 #include "anki/math/Transform.h"
 #include "anki/math/F16.h"
-#include "anki/math/Math.h"
+#include "anki/math/Functions.h"
 
 #include "anki/util/Assert.h"
-#include <cmath>
 #include <iostream>
