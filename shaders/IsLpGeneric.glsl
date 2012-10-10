@@ -5,6 +5,7 @@
 #pragma anki start vertexShader
 
 #pragma anki include "shaders/IsLpVertex.glsl"
+#pragma anki include "shaders/LinearDepth.glsl"
 
 #pragma anki start fragmentShader
 
@@ -64,7 +65,7 @@ layout(std140, row_major, binding = 1) uniform pointLightsBlock
 	Light plights[MAX_POINT_LIGHTS];
 };
 
-layout(std140, row_major, binding = 2) uniform spotLightsBlock
+layout(std140, binding = 2) uniform spotLightsBlock
 {
 	SpotLight slights[MAX_SPOT_LIGHTS];
 };
@@ -85,6 +86,8 @@ uniform sampler2D msDepthFai;
 
 uniform sampler2D lightTextures[MAX_SPOT_LIGHTS];
 uniform sampler2DShadow shadowMaps[MAX_SPOT_LIGHTS];
+
+uniform mat4 matrix; /// XXX
 /// @}
 
 /// @name Varyings
@@ -226,6 +229,7 @@ void main()
 
 	for(uint i = 0; i < spotLightsShadowCount; ++i)
 	{
+#if 1
 		uint id = i + opt;
 		uint lightId = tiles[vInstanceId].lightIndices[id / 4][id % 4];
 
@@ -238,6 +242,39 @@ void main()
 			shadowMaps[i]);
 
 		fColor += pureColor * (spotFactor * shadowFactor);
+#endif
+
+#if 0
+		uint id = i + opt;
+		uint lightId = tiles[vInstanceId].lightIndices[id / 4][id % 4];
+
+		mat4 mat = slights[lightId].texProjectionMat;
+		vec4 texCoords4 = mat * vec4(fragPosVspace, 1.0);
+		vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+
+		if(texCoords4.w > 0.0 &&
+			texCoords3.x > 0.0 &&
+			texCoords3.x < 1.0 &&
+			texCoords3.y > 0.0 &&
+			texCoords3.y < 1.0)
+		{
+			//vec3 color = textureProj(lightTextures[0], texCoords3).rgb;
+			float color = linearizeDepth(textureProj(shadowMaps[i], texCoords3).r, 0.1, 30.0);
+
+			fColor += vec3(color);
+		}
+#endif
+
+#if 0
+		/*mat4 mat = slights[1].texProjectionMat;*/
+		vec4 lala = vec4(-1, 1, 0, 1);
+		lala = slights[1].texProjectionMat * lala;
+
+		if(lala != vec4(0, 1, 0.5, 1.0))
+			fColor = lala.rgb;
+		else
+			fColor = vec3(1.0);
+#endif
 	}
 
 #if 0

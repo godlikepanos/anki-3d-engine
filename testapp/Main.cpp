@@ -118,7 +118,7 @@ void init()
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(5.3, 4.3, 3.0),
 		Mat3::getIdentity(), 1.0));
-	spot->setDiffuseColor(Vec4(1.0, 0.0, 0.0, 0.0));
+	spot->setDiffuseColor(Vec4(3.0, 0.0, 0.0, 0.0));
 	spot->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
 	spot->loadTexture("gfx/lights/flashlight.tga");
 	spot->setDistance(30.0);
@@ -337,7 +337,7 @@ void initSubsystems(int argc, char* argv[])
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
 	initializer.dbg.enabled = true;
-	initializer.is.sm.bilinearEnabled = true;
+	initializer.is.sm.bilinearEnabled = false;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;
 	initializer.is.sm.resolution = 1024;

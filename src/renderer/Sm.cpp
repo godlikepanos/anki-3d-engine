@@ -177,6 +177,9 @@ Texture* Sm::doLight(Light& light)
 	// Render
 	//
 	sm.fbo.bind();
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	//std::cout << "Shadowmap for: " << &sm << std::endl;
 
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
