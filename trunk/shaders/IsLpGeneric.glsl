@@ -22,6 +22,8 @@
 
 #define ATTENUATION_FINE 0
 
+#define ATTENUATION_BOOST (0.1)
+
 /// @name Uniforms
 /// @{
 
@@ -86,8 +88,6 @@ uniform sampler2D msDepthFai;
 
 uniform sampler2D lightTextures[MAX_SPOT_LIGHTS];
 uniform sampler2DShadow shadowMaps[MAX_SPOT_LIGHTS];
-
-uniform mat4 matrix; /// XXX
 /// @}
 
 /// @name Varyings
@@ -105,56 +105,62 @@ out vec3 fColor;
 /// @return frag pos in view space
 vec3 getFragPosVSpace()
 {
-	float depth = texture(msDepthFai, vTexCoords).r;
+	const float depth = texture(msDepthFai, vTexCoords).r;
 
 	vec3 fragPosVspace;
 	fragPosVspace.z = -planes.y / (planes.x + depth);
 
 	fragPosVspace.xy = (vTexCoords * limitsOfNearPlane2) - limitsOfNearPlane;
 
-	float sc = -fragPosVspace.z / zNear;
+	const float sc = -fragPosVspace.z / zNear;
 	fragPosVspace.xy *= sc;
 
 	return fragPosVspace;
 }
 
 //==============================================================================
-/// Performs phong lighting using the MS FAIs and a few other things
-/// @param fragPosVspace The fragment position in view space
-/// @return The final color
-vec3 doPhong(in vec3 fragPosVspace, in vec3 normal, in vec3 diffuse, 
-	in vec2 specularAll, in Light light)
+float calcAttenuationFactor(
+	in vec3 fragPosVspace, 
+	in Light light,
+	out vec3 rayDir)
 {
 	// get the vector from the frag to the light
-	vec3 frag2LightVec = light.posAndRadius.xyz - fragPosVspace;
+	const vec3 frag2LightVec = light.posAndRadius.xyz - fragPosVspace;
 
 	// Instead of using normalize(frag2LightVec) we brake the operation 
 	// because we want fragLightDist for the calc of the attenuation
-	float fragLightDistSquared = dot(frag2LightVec, frag2LightVec);
-	float fragLightDist = sqrt(fragLightDistSquared);
-	vec3 lightDir = frag2LightVec / fragLightDist;
+	const float fragLightDistSquared = dot(frag2LightVec, frag2LightVec);
+	const float fragLightDist = sqrt(fragLightDistSquared);
+	rayDir = frag2LightVec / fragLightDist;
 
-	// Lambert term
-	float lambertTerm = max(0.0, dot(normal, lightDir));
+	const float att = max((1.0 + ATTENUATION_BOOST) 
+		- fragLightDist / light.posAndRadius.w, 0.0);
 
-	// Attenuation
-#if ATTENUATION_FINE
-	float att = max(1.0 - fragLightDistSquared / light.posAndRadius.w, 0.0);
-#else
-	float att = max(1.0 - fragLightDist / light.posAndRadius.w, 0.0);
-#endif
+	return att;
+}
 
+//==============================================================================
+float calcLambertTerm(in vec3 normal, in vec3 rayDir)
+{
+	return max(0.0, dot(normal, rayDir));
+}
+
+//==============================================================================
+/// Performs phong lighting using the MS FAIs and a few other things
+vec3 calcPhong(in vec3 fragPosVspace, in vec3 diffuse, 
+	in vec2 specularAll, in vec3 normal, in Light light, in vec3 rayDir)
+{
 	// Diffuse
 	vec3 difCol = diffuse * light.diffuseColor.rgb;
 
 	// Specular
-	vec3 eyeVec = normalize(-fragPosVspace);
-	vec3 h = normalize(lightDir + eyeVec);
+	vec3 eyeVec = normalize(fragPosVspace);
+	vec3 h = normalize(rayDir - eyeVec);
 	float specIntensity = pow(max(0.0, dot(normal, h)), specularAll.g);
 	vec3 specCol = light.specularColor.rgb * (specIntensity * specularAll.r);
 	
 	// end
-	return (difCol + specCol) * (att * lambertTerm);
+	return difCol + specCol;
 }
 
 //==============================================================================
@@ -205,8 +211,14 @@ void main()
 	{
 		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
 
-		fColor += doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
-			specularAll, plights[lightId]);
+		vec3 ray;
+		const float att = calcAttenuationFactor(fragPosVspace, 
+			plights[lightId], ray);
+
+		const float lambert = calcLambertTerm(normal, ray);
+
+		fColor += calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
+			specularAll, normal, plights[lightId], ray) * (att * lambert);
 	}
 
 	// Spot lights
@@ -217,64 +229,50 @@ void main()
 	{
 		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
 
-		vec3 pureColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
-			specularAll, slights[lightId].light);
+		vec3 ray;
+		const float att = calcAttenuationFactor(fragPosVspace, 
+			slights[lightId].light, ray);
 
-		fColor += pureColor * calcSpotFactor(slights[lightId], fragPosVspace);
+		const float lambert = calcLambertTerm(normal, ray);
+
+		const float spot = calcSpotFactor(slights[lightId], fragPosVspace);
+
+		const vec3 col = calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
+			specularAll, normal, slights[lightId].light, ray);
+
+		fColor += col * (att * lambert * spot);
 	}
 
 	// Spot lights with shadow
-	uint spotLightsShadowCount = tiles[vInstanceId].lightsCount[2];
+	const uint spotLightsShadowCount = tiles[vInstanceId].lightsCount[2];
 	opt = pointLightsCount + spotLightsCount;
 
 	for(uint i = 0; i < spotLightsShadowCount; ++i)
 	{
-#if 1
 		uint id = i + opt;
 		uint lightId = tiles[vInstanceId].lightIndices[id / 4][id % 4];
 
-		vec3 pureColor = doPhong(fragPosVspace, normal, diffuseAndSpec.rgb, 
-			specularAll, slights[lightId].light);
+		vec3 ray;
+		const float att = calcAttenuationFactor(fragPosVspace, 
+			slights[lightId].light, ray);
 
-		float spotFactor = calcSpotFactor(slights[lightId], fragPosVspace);
+		const float lambert = calcLambertTerm(normal, ray);
 
-		float shadowFactor = calcShadowFactor(slights[lightId], fragPosVspace,
-			shadowMaps[i]);
+		const float spot = calcSpotFactor(slights[lightId], fragPosVspace);
 
-		fColor += pureColor * (spotFactor * shadowFactor);
-#endif
+		const float midFactor = att * lambert * spot;
 
-#if 0
-		uint id = i + opt;
-		uint lightId = tiles[vInstanceId].lightIndices[id / 4][id % 4];
-
-		mat4 mat = slights[lightId].texProjectionMat;
-		vec4 texCoords4 = mat * vec4(fragPosVspace, 1.0);
-		vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
-
-		if(texCoords4.w > 0.0 &&
-			texCoords3.x > 0.0 &&
-			texCoords3.x < 1.0 &&
-			texCoords3.y > 0.0 &&
-			texCoords3.y < 1.0)
+		//if(midFactor > 0.0)
 		{
-			//vec3 color = textureProj(lightTextures[0], texCoords3).rgb;
-			float color = linearizeDepth(textureProj(shadowMaps[i], texCoords3).r, 0.1, 30.0);
 
-			fColor += vec3(color);
+			float shadow = calcShadowFactor(slights[lightId], fragPosVspace,
+				shadowMaps[i]);
+
+			const vec3 col = calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
+				specularAll, normal, slights[lightId].light, ray);
+
+			fColor += col * (midFactor * shadow);
 		}
-#endif
-
-#if 0
-		/*mat4 mat = slights[1].texProjectionMat;*/
-		vec4 lala = vec4(-1, 1, 0, 1);
-		lala = slights[1].texProjectionMat * lala;
-
-		if(lala != vec4(0, 1, 0.5, 1.0))
-			fColor = lala.rgb;
-		else
-			fColor = vec3(1.0);
-#endif
 	}
 
 #if 0
@@ -305,7 +303,7 @@ void main()
 	}
 #endif
 
-#if 1
+#if 0
 	if(tiles[vInstanceId].lightsCount[0] > 0)
 	{
 		fColor += vec3(0.0, 0.1, 0.0);
