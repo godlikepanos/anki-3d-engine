@@ -42,7 +42,7 @@ void Sm::init(const RendererInitializer& initializer)
 			sm.tex.setFiltering(Texture::TFT_NEAREST);
 		}
 
-		sm.tex.setParameter(GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+		sm.tex.setParameter(GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
 		sm.tex.setParameter(GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
 		sm.fbo.create();
