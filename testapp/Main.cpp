@@ -63,8 +63,8 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 200.0);
-	cam->setLocalTransform(Transform(Vec3(100.0, 3.0, 8.0),
-		Mat3(Axisang(toRad(90.0), Vec3(0, 1, 0))),
+	cam->setLocalTransform(Transform(Vec3(100.0, 5.0, 8.0),
+		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
 
@@ -80,9 +80,9 @@ void init()
 
 	// lights
 	Vec3 lpos(-100.0, 0.0, -50.0);
-	for(int i = 0; i < 0; i++)
+	for(int i = 0; i < 50; i++)
 	{
-		for(int j = 0; j < 0; j++)
+		for(int j = 0; j < 10; j++)
 		{
 			std::string name = "plight" + std::to_string(i) + std::to_string(j);
 
@@ -291,7 +291,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -336,7 +336,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = true;
+	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = false;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = true;
