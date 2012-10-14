@@ -24,6 +24,7 @@ vec3 unpackNormal(in vec2 enc)
 /// Pack specular stuff
 /// @param c The specular component. c.x is the color in grayscale and c.y the 
 ///          specularity
+#define packSpecular_DEFINED
 float packSpecular(in vec2 c)
 {
 	return round(c[0] * 15.0) * 16.0 / 255.0 

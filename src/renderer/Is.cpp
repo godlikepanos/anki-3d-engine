@@ -304,6 +304,11 @@ void Is::initInternal(const RendererInitializer& initializer)
 		"#define MAX_POINT_LIGHTS " + std::to_string(MAX_POINT_LIGHTS) + "\n"
 		"#define MAX_SPOT_LIGHTS " + std::to_string(MAX_SPOT_LIGHTS) + "\n";
 
+	if(sm.getPcfEnabled())
+	{
+		pps += "#define PCF 1\n";
+	}
+
 	// point light
 	lightPassProg.load(ShaderProgramResource::createSrcCodeToCache(
 		"shaders/IsLpGeneric.glsl", pps.c_str()).c_str());

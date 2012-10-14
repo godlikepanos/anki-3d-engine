@@ -13,15 +13,6 @@ layout(location = 2) in vec4 tangent;
 #endif
 /// @}
 
-/// @name Uniforms
-/// @{
-uniform mat4 modelViewProjectionMat;
-#if defined(PASS_COLOR)
-uniform mat3 normalMat;
-uniform mat4 modelViewMat;
-#endif
-/// @}
-
 /// @name Varyings
 /// @{
 out vec2 vTexCoords;
@@ -34,17 +25,10 @@ flat out float vSpecularComponent; ///< Calculate it per fragment
 #endif
 /// @}
 
-/// Calculate the position and the varyings
-#define doVertex_DEFINED
-void doVertex()
+//==============================================================================
+#define setVaryings1_DEFINED
+void setVaryings1(in mat4 modelViewProjectionMat)
 {
-#if defined(PASS_COLOR)
-	vNormal = normalMat * normal;
-	vTangent = normalMat * vec3(tangent);
-	vTangentW = tangent.w;
-	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
-#endif
-
 #if defined(PASS_DEPTH) && LOD > 0
 	// No tex coords for you
 #else
@@ -54,12 +38,35 @@ void doVertex()
 	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 }
 
-/// Calculate the position and the varyings
-#define doVertexPrepackSpecular_DEFINED
-void doVertexPrepackSpecular(in vec2 specular)
+//==============================================================================
+#define setVaryings2_DEFINED
+void setVaryings2(
+	in mat4 modelViewProjectionMat, 
+	in mat3 normalMat)
 {
-	doVertex();
 #if defined(PASS_COLOR)
-	vSpecularComponent = packSpecular(specular);
+	vNormal = normalMat * normal;
+	vTangent = normalMat * vec3(tangent);
+	vTangentW = tangent.w;
 #endif
+
+	setVaryings1(modelViewProjectionMat);
 }
+
+//==============================================================================
+#if defined(PASS_COLOR)
+#define setVertPosViewSpace_DEFINED
+void setVertPosViewSpace(in mat4 modelViewMat)
+{
+	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
+}
+#endif
+
+//==============================================================================
+#if defined(PASS_COLOR)
+#define prepackSpecular_DEFINED
+void prepackSpecular(in vec2 specular)
+{
+	vSpecularComponent = packSpecular(specular);
+}
+#endif

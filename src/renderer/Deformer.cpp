@@ -30,7 +30,6 @@ void Deformer::deform(SkinNode& skinNode, SkinPatchNode& node) const
 	// Chose sProg
 	//
 	const ShaderProgram* sProg;
-	const Material& mtl = node.getMaterial();
 
 	/*if(mtl.variableExistsAndInKey("normal", PassLevelKey(0, 0))
 		&& mtl.variableExistsAndInKey("tangent", PassLevelKey(0, 0)))

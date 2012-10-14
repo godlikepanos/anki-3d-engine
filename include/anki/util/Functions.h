@@ -30,19 +30,24 @@ extern F32 randFloat(F32 max);
 
 /// Get the size in bytes of a vector
 template<typename Vec>
-extern PtrSize getVectorSizeInBytes(const Vec& v)
+inline PtrSize getVectorSizeInBytes(const Vec& v)
 {
 	return v.size() * sizeof(typename Vec::value_type);
 }
 
 /// Trim a string
-inline std::string trimString(std::string& str, const char* what = " ")
+inline std::string trimString(const std::string& str, const char* what = " ")
 {
 	std::string out = str;
 	out.erase(0, out.find_first_not_of(what));
 	out.erase(out.find_last_not_of(what) + 1);
 	return out;
 }
+
+/// Replace substring. Substitute occurances of @a from into @a to inside the
+/// @a str string
+extern std::string replaceAllString(const std::string& str, 
+	const std::string& from, const std::string& to);
 
 /// Delete a pointer properly 
 template<typename T>

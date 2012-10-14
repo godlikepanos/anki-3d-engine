@@ -38,4 +38,24 @@ F32 randFloat(F32 max)
 	return r * max;
 }
 
+//==============================================================================
+std::string replaceAllString(const std::string& str, const std::string& from, 
+	const std::string& to)
+{
+	if(from.empty())
+	{
+		return str;
+	}
+
+	std::string out = str;
+	size_t start_pos = 0;
+	while((start_pos = out.find(from, start_pos)) != std::string::npos) 
+	{
+		out.replace(start_pos, from.length(), to);
+		start_pos += to.length();
+	}
+
+	return out;
+}
+
 } // end namespace anki

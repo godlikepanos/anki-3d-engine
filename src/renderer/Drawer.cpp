@@ -529,6 +529,8 @@ static std::array<const char*, BI_COUNT - 2> buildinNames = {{
 template<typename T>
 static void uniSet(const ShaderProgramUniformVariable& uni, const T& x)
 {
+	(void)uni;
+	(void)x;
 	ANKI_ASSERT(0);
 }
 

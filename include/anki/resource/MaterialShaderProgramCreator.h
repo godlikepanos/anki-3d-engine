@@ -13,7 +13,15 @@ class XmlElement;
 class MaterialShaderProgramCreator
 {
 public:
-	MaterialShaderProgramCreator(const XmlElement& pt);
+	struct Input
+	{
+		std::string name;
+		std::string type;
+		StringList value;
+		Bool const_;
+	};
+
+	explicit MaterialShaderProgramCreator(const XmlElement& pt);
 	~MaterialShaderProgramCreator();
 
 	/// Get the shader program source code. This is the one and only public
@@ -23,11 +31,18 @@ public:
 		return source;
 	}
 
+	const PtrVector<Input>& getInputVariables() const
+	{
+		return inputs;
+	}
+
 private:
 	/// The lines of the shader program source
 	StringList srcLines;
 
 	std::string source; ///< Shader program final source
+
+	PtrVector<Input> inputs;
 
 	/// Used for shorting vectors of strings. Used in std::sort
 	static bool compareStrings(const std::string& a, const std::string& b);

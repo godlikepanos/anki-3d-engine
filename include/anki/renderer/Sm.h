@@ -22,9 +22,14 @@ public:
 
 	/// @name Accessors
 	/// @{
-	bool getEnabled() const
+	Bool getEnabled() const
 	{
 		return enabled;
+	}
+
+	Bool getPcfEnabled() const
+	{
+		return pcfEnabled;
 	}
 	/// @}
 
