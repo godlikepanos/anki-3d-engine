@@ -178,12 +178,34 @@ float calcSpotFactor(in SpotLight light, in vec3 fragPosVspace)
 }
 
 //==============================================================================
+float pcfLow(in sampler2DShadow shadowMap, in vec3 shadowUv)
+{
+	float shadowCol = textureOffset(shadowMap, shadowUv, ivec2(-1, -1));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, -1));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, -1));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(-1, 0));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, 0));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, 0));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(-1, 1));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, 1));
+	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, 1));
+
+	shadowCol *= (1.0 / 9.0);
+	return shadowCol;
+}
+
+//==============================================================================
 float calcShadowFactor(in SpotLight light, in vec3 fragPosVspace, 
 	in sampler2DShadow shadowMap)
 {
 	vec4 texCoords4 = light.texProjectionMat * vec4(fragPosVspace, 1.0);
 	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
+
+#if PCF == 1
+	float shadowFactor = pcfLow(shadowMap, texCoords3);
+#else
 	float shadowFactor = texture(shadowMap, texCoords3).r;
+#endif
 
 	return shadowFactor;
 }
@@ -264,7 +286,6 @@ void main()
 
 		//if(midFactor > 0.0)
 		{
-
 			float shadow = calcShadowFactor(slights[lightId], fragPosVspace,
 				shadowMaps[i]);
 

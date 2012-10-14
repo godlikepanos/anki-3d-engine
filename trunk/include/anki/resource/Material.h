@@ -16,6 +16,7 @@ namespace anki {
 class ShaderProgram;
 class ShaderProgramUniformVariable;
 class XmlElement;
+class MaterialShaderProgramCreator;
 
 /// Material variable base. Its a visitable
 typedef Visitable<float, Vec2, Vec3, Vec4, Mat3, Mat4, TextureResourcePointer> 
@@ -230,23 +231,23 @@ protected:
 /// <material>
 /// 	<renderingStage>N</renderingStage> (1)
 ///
-/// 	[<passes>COLOR DEPTH</passes>] (2)
+/// 	[<passes>COLOR DEPTH</passes>]
 ///
 /// 	[<levelsOfDetail>N</levelsOfDetail>]
 ///
 /// 	[<shadow>0 | 1</shadow>]
 ///
-/// 	[<blendFunctions> (2)
+/// 	[<blendFunctions>
 /// 		<sFactor>GL_SOMETHING</sFactor>
 /// 		<dFactor>GL_SOMETHING</dFactor>
 /// 	</blendFunctions>]
 ///
-/// 	[<depthTesting>0 | 1</depthTesting>] (2)
+/// 	[<depthTesting>0 | 1</depthTesting>]
 ///
-/// 	[<wireframe>0 | 1</wireframe>] (2)
+/// 	[<wireframe>0 | 1</wireframe>]
 ///
 /// 	<shaderProgram>
-/// 		<shader> (5)
+/// 		<shader> (2)
 /// 			<type>vertex | tc | te | geometry | fragment</type>
 ///
 /// 			<includes>
@@ -254,14 +255,15 @@ protected:
 /// 				<include>path/to/file2.glsl</include>
 /// 			</includes>
 ///
-/// 			[<inputs> (4)
+/// 			[<inputs> (3)
 /// 				<input>
 /// 					<name>xx</name>
 /// 					<type>any glsl type</type>
-/// 					[<value> (3)
-/// 						a_series_of_numbers |
-/// 						path/to/image.tga
-/// 					</value>]
+/// 					<value> (4)
+/// 						[a_series_of_numbers |
+/// 						path/to/image.tga]
+/// 					</value>
+/// 					[<const>0 | 1</const>] (5)
 /// 				</input>
 /// 			</inputs>]
 ///
@@ -283,14 +285,12 @@ protected:
 /// </material>
 /// @endcode
 /// (1): For the moment 0 means MS, 1 BS, 2 IS (aka light)
-///
-/// (2): Not relevant for light materials at the moment
-///
-/// (3): The \<value\> tag is not present for build-in variables
-///
-/// (4): AKA uniforms
-///
-/// (5): The order of the shaders is crucial
+/// (2): The order of the shaders is crucial
+/// (3): AKA uniforms
+/// (4): The \<value\> can be left empty for build-in variables
+/// (5): The \<const\> will mark a variable as constant and it cannot be changed
+///      at all. Defauls is 0
+
 class Material: public MaterialProperties, public NonCopyable
 {
 public:
@@ -369,15 +369,7 @@ private:
 
 	/// Read all shader programs and pupulate the @a vars and @a nameToVar
 	/// containers
-	void populateVariables(const XmlElement& el);
-
-	/// Parses something like this: "0.0 0.01 -1.2" and returns a valid
-	/// math type
-	template<typename Type, size_t n>
-	static Type setMathType(const char* str);
-
-	/// Given a string that defines blending return the GLenum
-	static GLenum blendToEnum(const char* str);
+	void populateVariables(const MaterialShaderProgramCreator& mspc);
 };
 
 } // end namespace

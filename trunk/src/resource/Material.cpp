@@ -13,6 +13,56 @@
 namespace anki {
 
 //==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+template<typename Type, size_t n>
+static Type setMathType(const StringList& list)
+{
+	Type out;
+
+	if(list.size() != n)
+	{
+		throw ANKI_EXCEPTION("Incorrect number of values");
+	}
+
+	for(U i = 0; i < n; ++i)
+	{
+		out[i] = std::stof(list[i]);
+	}
+
+	return out;
+}
+
+//==============================================================================
+/// Given a string that defines blending return the GLenum
+static GLenum blendToEnum(const char* str)
+{
+// Dont make idiotic mistakes
+#define TXT_AND_ENUM(x) \
+	if(strcmp(str, #x) == 0) { \
+		return x; \
+	}
+
+	TXT_AND_ENUM(GL_ZERO)
+	TXT_AND_ENUM(GL_ONE)
+	TXT_AND_ENUM(GL_DST_COLOR)
+	TXT_AND_ENUM(GL_ONE_MINUS_DST_COLOR)
+	TXT_AND_ENUM(GL_SRC_ALPHA)
+	TXT_AND_ENUM(GL_ONE_MINUS_SRC_ALPHA)
+	TXT_AND_ENUM(GL_DST_ALPHA)
+	TXT_AND_ENUM(GL_ONE_MINUS_DST_ALPHA)
+	TXT_AND_ENUM(GL_SRC_ALPHA_SATURATE)
+	TXT_AND_ENUM(GL_SRC_COLOR)
+	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
+	ANKI_ASSERT(0);
+	throw ANKI_EXCEPTION("Incorrect blend enum: " + str);
+
+#undef TXT_AND_ENUM
+}
+
+//==============================================================================
 // MaterialVariable                                                            =
 //==============================================================================
 
@@ -93,6 +143,7 @@ Material::~Material()
 //==============================================================================
 void Material::load(const char* filename)
 {
+	ANKI_LOGI(filename);
 	fname = filename;
 	try
 	{
@@ -216,7 +267,7 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 		}
 	}
 
-	populateVariables(shaderProgramEl);
+	populateVariables(mspc);
 }
 
 //==============================================================================
@@ -251,7 +302,7 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 }
 
 //==============================================================================
-void Material::populateVariables(const XmlElement& shaderProgramEl)
+void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 {
 	// Get all names of all the uniforms. Dont duplicate
 	//
@@ -266,191 +317,122 @@ void Material::populateVariables(const XmlElement& shaderProgramEl)
 		}
 	}
 
-	// Iterate all the <input> and get the value
-	//
-	std::map<std::string, std::string> nameToValue;
-	XmlElement shaderEl = shaderProgramEl.getChildElement("shader");
-
-	do
-	{
-		XmlElement insEl = shaderEl.getChildElementOptional("inputs");
-
-		if(!insEl)
-		{
-			continue;
-		}
-
-		XmlElement inEl = insEl.getChildElement("input");
-		do
-		{
-			std::string name = inEl.getChildElement("name").getText();
-			std::string value = inEl.getChildElement("value").getText();
-
-			nameToValue[name] = value;
-
-			// A simple warning
-			std::map<std::string, GLenum>::const_iterator iit =
-				allVarNames.find(name);
-
-			if(iit == allVarNames.end())
-			{
-				ANKI_LOGW("Material input variable " << name
-					<< " not used by any shader program. Material: "
-					<< fname);
-			}
-
-			inEl = inEl.getNextSiblingElement("input");
-		} while(inEl);
-
-		shaderEl = shaderEl.getNextSiblingElement("shader");
-	} while(shaderEl);
-
 	// Now combine
 	//
-	std::map<std::string, GLenum>::const_iterator it = allVarNames.begin();
-	for(; it != allVarNames.end(); it++)
+	const PtrVector<MaterialShaderProgramCreator::Input>& invars =
+		mspc.getInputVariables();
+	for(std::map<std::string, GLenum>::value_type& it : allVarNames)
 	{
-		std::string name = it->first;
-		GLenum dataType = it->second;
+		const std::string& name = it.first;
+		GLenum dataType = it.second;
 
-		std::map<std::string, std::string>::const_iterator it1 =
-			nameToValue.find(name);
+		// Find var from XML
+		const MaterialShaderProgramCreator::Input* inpvar = nullptr;
+		for(auto x : invars)
+		{
+			if(name == x->name)
+			{
+				inpvar = x;
+				break;
+			}
+		}
+
+		if(inpvar == nullptr)
+		{
+			throw ANKI_EXCEPTION("Uniform not found in the inputs: " + name);
+		}
 
 		MaterialVariable* v = nullptr;
-
-		// Not found
-		if(it1 == nameToValue.end())
+		const char* n = name.c_str(); // Var name
+		// Has value?
+		if(inpvar->value.size() == 0)
 		{
-			const char* n = name.c_str(); // Var name
-			// Get the value
+			// Probably buildin
+
 			switch(dataType)
 			{
-				// sampler2D
-				case GL_SAMPLER_2D:
-					v = new MaterialVariableTemplate<TextureResourcePointer>(
-						n, eSProgs, TextureResourcePointer(), false);
-					break;
-				// float
-				case GL_FLOAT:
-					v = new MaterialVariableTemplate<float>(n, eSProgs, 
-						float(), false);
-					break;
-				// vec2
-				case GL_FLOAT_VEC2:
-					v = new MaterialVariableTemplate<Vec2>(n, eSProgs,
-						Vec2(), false);
-					break;
-				// vec3
-				case GL_FLOAT_VEC3:
-					v = new MaterialVariableTemplate<Vec3>(n, eSProgs,
-						Vec3(), false);
-					break;
-				// vec4
-				case GL_FLOAT_VEC4:
-					v = new MaterialVariableTemplate<Vec4>(n, eSProgs,
-						Vec4(), false);
-					break;
-				// mat3
-				case GL_FLOAT_MAT3:
-					v = new MaterialVariableTemplate<Mat3>(n, eSProgs,
-						Mat3(), false);
-					break;
-				// mat4
-				case GL_FLOAT_MAT4:
-					v = new MaterialVariableTemplate<Mat4>(n, eSProgs,
-						Mat4(), false);
-					break;
-				// default is error
-				default:
-					ANKI_ASSERT(0);
+			// sampler2D
+			case GL_SAMPLER_2D:
+				v = new MaterialVariableTemplate<TextureResourcePointer>(
+					n, eSProgs, TextureResourcePointer(), false);
+				break;
+			// float
+			case GL_FLOAT:
+				v = new MaterialVariableTemplate<float>(n, eSProgs,
+					float(), false);
+				break;
+			// vec2
+			case GL_FLOAT_VEC2:
+				v = new MaterialVariableTemplate<Vec2>(n, eSProgs,
+					Vec2(), false);
+				break;
+			// vec3
+			case GL_FLOAT_VEC3:
+				v = new MaterialVariableTemplate<Vec3>(n, eSProgs,
+					Vec3(), false);
+				break;
+			// vec4
+			case GL_FLOAT_VEC4:
+				v = new MaterialVariableTemplate<Vec4>(n, eSProgs,
+					Vec4(), false);
+				break;
+			// mat3
+			case GL_FLOAT_MAT3:
+				v = new MaterialVariableTemplate<Mat3>(n, eSProgs,
+					Mat3(), false);
+				break;
+			// mat4
+			case GL_FLOAT_MAT4:
+				v = new MaterialVariableTemplate<Mat4>(n, eSProgs,
+					Mat4(), false);
+				break;
+			// default is error
+			default:
+				ANKI_ASSERT(0);
 			}
 		}
 		else
 		{
-			std::string value = it1->second;
-			//ANKI_LOGI("With value " << name << " " << value);
-			const char* n = name.c_str();
+			const StringList& value = inpvar->value;
 
 			// Get the value
 			switch(dataType)
 			{
-				// sampler2D
-				case GL_SAMPLER_2D:
-					v = new MaterialVariableTemplate<TextureResourcePointer>(
-						n, eSProgs, 
-						TextureResourcePointer(value.c_str()), true);
-					break;
-				// float
-				case GL_FLOAT:
-					v = new MaterialVariableTemplate<float>(n, eSProgs,
-						std::stof(value), true);
-					break;
-				// vec2
-				case GL_FLOAT_VEC2:
-					v = new MaterialVariableTemplate<Vec2>(n, eSProgs,
-						setMathType<Vec2, 2>(value.c_str()), true);
-					break;
-				// vec3
-				case GL_FLOAT_VEC3:
-					v = new MaterialVariableTemplate<Vec3>(n, eSProgs,
-						setMathType<Vec3, 3>(value.c_str()), true);
-					break;
-				// vec4
-				case GL_FLOAT_VEC4:
-					v = new MaterialVariableTemplate<Vec4>(n, eSProgs,
-						setMathType<Vec4, 4>(value.c_str()), true);
-					break;
-				// default is error
-				default:
-					ANKI_ASSERT(0);
+			// sampler2D
+			case GL_SAMPLER_2D:
+				v = new MaterialVariableTemplate<TextureResourcePointer>(
+					n, eSProgs,
+					TextureResourcePointer(value[0].c_str()), true);
+				break;
+			// float
+			case GL_FLOAT:
+				v = new MaterialVariableTemplate<float>(n, eSProgs,
+					std::stof(value[0].c_str()), true);
+				break;
+			// vec2
+			case GL_FLOAT_VEC2:
+				v = new MaterialVariableTemplate<Vec2>(n, eSProgs,
+					setMathType<Vec2, 2>(value), true);
+				break;
+			// vec3
+			case GL_FLOAT_VEC3:
+				v = new MaterialVariableTemplate<Vec3>(n, eSProgs,
+					setMathType<Vec3, 3>(value), true);
+				break;
+			// vec4
+			case GL_FLOAT_VEC4:
+				v = new MaterialVariableTemplate<Vec4>(n, eSProgs,
+					setMathType<Vec4, 4>(value), true);
+				break;
+			// default is error
+			default:
+				ANKI_ASSERT(0);
 			}
 		}
 
 		vars.push_back(v);
 		nameToVar[v->getName().c_str()] = v;
 	}
-}
-
-//==============================================================================
-template<typename Type, size_t n>
-Type Material::setMathType(const char* str)
-{
-	Type out;
-	StringList sl = StringList::splitString(str, ' ');
-	ANKI_ASSERT(sl.size() == n);
-
-	for(uint i = 0; i < n; ++i)
-	{
-		out[i] = std::stof(sl[i]);
-	}
-
-	return out;
-}
-
-//==============================================================================
-GLenum Material::blendToEnum(const char* str)
-{
-// Dont make idiotic mistakes
-#define TXT_AND_ENUM(x) \
-	if(strcmp(str, #x) == 0) { \
-		return x; \
-	}
-
-	TXT_AND_ENUM(GL_ZERO)
-	TXT_AND_ENUM(GL_ONE)
-	TXT_AND_ENUM(GL_DST_COLOR)
-	TXT_AND_ENUM(GL_ONE_MINUS_DST_COLOR)
-	TXT_AND_ENUM(GL_SRC_ALPHA)
-	TXT_AND_ENUM(GL_ONE_MINUS_SRC_ALPHA)
-	TXT_AND_ENUM(GL_DST_ALPHA)
-	TXT_AND_ENUM(GL_ONE_MINUS_DST_ALPHA)
-	TXT_AND_ENUM(GL_SRC_ALPHA_SATURATE)
-	TXT_AND_ENUM(GL_SRC_COLOR)
-	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
-	ANKI_ASSERT(0);
-	throw ANKI_EXCEPTION("Incorrect blend enum: " + str);
-
-#undef TXT_AND_ENUM
 }
 
 } // end namespace

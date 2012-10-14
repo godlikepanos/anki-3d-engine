@@ -85,8 +85,6 @@ F32 F16::toF32(F16 h)
 	int e = (h.data >> 10) & 0x0000001f;
 	int m = h.data & 0x000003ff;
 
-	U32 i;
-
 	if(e == 0)
 	{
 		if(m == 0)

@@ -595,6 +595,12 @@ inline void Mat4::setRow(const U i, const Vec4& v)
 #endif
 }
 
+// getRow
+inline Vec4 Mat4::getRow(const U i) const
+{
+	return Vec4((*this)(i, 0), (*this)(i, 1), (*this)(i, 2), (*this)(i, 3));
+}
+
 // setColumns
 inline void Mat4::setColumns(const Vec4& a, const Vec4& b, const Vec4& c,
 	const Vec4& d)
@@ -624,6 +630,12 @@ inline void Mat4::setColumn(const U i, const Vec4& v)
 	(*this)(1, i) = v.y();
 	(*this)(2, i) = v.z();
 	(*this)(3, i) = v.w();
+}
+
+// getColumn
+inline Vec4 Mat4::getColumn(const U i) const
+{
+	return Vec4((*this)(0, i), (*this)(1, i), (*this)(2, i), (*this)(3, i));
 }
 
 // transpose

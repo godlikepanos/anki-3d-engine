@@ -1,11 +1,3 @@
-/// @name Uniforms
-/// @{
-#if defined(PASS_COLOR)
-#	define blurring_DEFINED
-uniform float blurring;
-#endif
-/// @}
-
 /// @name Varyings
 /// @{
 #define vTexCoords_DEFINED

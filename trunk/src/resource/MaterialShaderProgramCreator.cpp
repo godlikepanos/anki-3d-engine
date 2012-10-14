@@ -2,6 +2,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
 #include "anki/misc/Xml.h"
+#include "anki/core/Logger.h"
 #include <algorithm>
 #include <sstream>
 
@@ -107,10 +108,39 @@ void MaterialShaderProgramCreator::parseShaderTag(
 void MaterialShaderProgramCreator::parseInputTag(
 	const XmlElement& inputEl, std::string& line)
 {
-	const std::string& name = inputEl.getChildElement("name").getText();
-	const std::string& type = inputEl.getChildElement("type").getText();
+	Input* inpvar = new Input;
 
-	line = "uniform " + type + " " + name + ";";
+	inpvar->name = inputEl.getChildElement("name").getText();
+	inpvar->type = inputEl.getChildElement("type").getText();
+	XmlElement constEl = inputEl.getChildElementOptional("const");
+	XmlElement valueEl = inputEl.getChildElement("value");
+
+	if(constEl)
+	{
+		inpvar->const_ = constEl.getInt();
+	}
+
+	if(valueEl.getText())
+	{
+		inpvar->value = StringList::splitString(valueEl.getText(), ' ');
+	}
+
+	if(inpvar->const_ == false)
+	{
+		line = "uniform " + inpvar->type + " " + inpvar->name + ";";
+	}
+	else
+	{
+		if(inpvar->value.size() == 0)
+		{
+			throw ANKI_EXCEPTION("Empty value and const is illogical");
+		}
+
+		line = "const " + inpvar->type + " " + inpvar->name + " = "
+			+ inpvar->type + "(" + inpvar->value.join(", ") +  ");";
+	}
+
+	inputs.push_back(inpvar);
 }
 
 //==============================================================================

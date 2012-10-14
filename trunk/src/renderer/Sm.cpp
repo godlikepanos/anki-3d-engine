@@ -31,7 +31,7 @@ void Sm::init(const RendererInitializer& initializer)
 	for(Shadowmap& sm : sms)
 	{
 		Renderer::createFai(resolution, resolution,
-			GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT, sm.tex);
+			GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT, sm.tex);
 
 		if(bilinearEnabled)
 		{
@@ -138,7 +138,6 @@ Texture* Sm::doLight(Light& light)
 
 	Frustumable* fr = light.getFrustumable();
 	ANKI_ASSERT(fr != nullptr);
-	Movable* mov = &light;
 	VisibilityInfo& vi = fr->getVisibilityInfo();
 
 	//

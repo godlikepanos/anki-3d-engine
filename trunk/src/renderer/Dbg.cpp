@@ -58,8 +58,6 @@ void Dbg::run()
 	drawer->setModelMatrix(Mat4::getIdentity());
 	//drawer->drawGrid();
 
-	PointLight* deleteme;
-
 	for(auto it = scene.getAllNodesBegin(); it != scene.getAllNodesEnd(); it++)
 	{
 		SceneNode* node = *it;

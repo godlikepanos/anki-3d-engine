@@ -123,6 +123,7 @@ public:
 	/// Set the value and emit the signal valueChanged
 	virtual void setValue(const Value& x)
 	{
+		(void)x;
 		throw ANKI_EXCEPTION("Property is not writable: " + getName());
 	}
 	/// @}

@@ -82,9 +82,11 @@ public:
 	void setRows(const Vec4& a, const Vec4& b, const Vec4& c,
 		const Vec4& d);
 	void setRow(const U i, const Vec4& v);
+	Vec4 getRow(const U i) const;
 	void setColumns(const Vec4& a, const Vec4& b, const Vec4& c,
 		const Vec4& d);
 	void setColumn(const U i, const Vec4& v);
+	Vec4 getColumn(const U i) const;
 	void setRotationPart(const Mat3& m3);
 	void setTranslationPart(const Vec4& v4);
 	Mat3 getRotationPart() const;

@@ -43,6 +43,7 @@ bool directoryExists(const char* filename)
 static int rmDir(const char* fpath, const struct stat* sb, int typeflag,
 	struct FTW* ftwbuf)
 {
+	(void)sb;
 	int rv = remove(fpath);
 
 	if(rv)

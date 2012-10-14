@@ -107,6 +107,16 @@ public:
 		: ShaderProgramVariable(SPVT_UNIFORM)
 	{}
 
+	ShaderProgramUniformVariable& operator=(
+		const ShaderProgramUniformVariable& b)
+	{
+		ShaderProgramVariable::operator=(b);
+		index = b.index;
+		offset = b.offset;
+		arrayStride = b.arrayStride;
+		return *this;
+	}
+
 	/// @name Set the var
 	/// @{
 	void set(const F32 x) const;
@@ -145,15 +155,23 @@ public:
 	}
 	/// @}
 
-	ShaderProgramUniformVariable& operator=(
-		const ShaderProgramUniformVariable& b)
-	{
-		ShaderProgramVariable::operator=(b);
-		index = b.index;
-		offset = b.offset;
-		arrayStride = b.arrayStride;
-		return *this;
-	}
+	void setClientMemory(void* buff, U32 buffSize,
+		const F32 arr[], U32 size) const;
+
+	void setClientMemory(void* buff, U32 buffSize,
+		const Vec2 arr[], U32 size) const;
+
+	void setClientMemory(void* buff, U32 buffSize,
+		const Vec3 arr[], U32 size) const;
+
+	void setClientMemory(void* buff, U32 buffSize,
+		const Vec4 arr[], U32 size) const;
+
+	void setClientMemory(void* buff, U32 buffSize,
+		const Mat3 arr[], U32 size) const;
+
+	void setClientMemory(void* buff, U32 buffSize,
+		const Mat4 arr[], U32 size) const;
 
 private:
 	GLuint index;
@@ -166,8 +184,8 @@ private:
 
 	/// "An array identifying the stride between elements, in basic machine 
 	/// units, of each of the uniforms specified by the corresponding array of
-	/// uniformIndices is returned.  The stride of a uniform associated with 
-	/// the default uniform block is -1.  Note that this information only makes 
+	/// uniformIndices is returned. The stride of a uniform associated with
+	/// the default uniform block is -1. Note that this information only makes
 	/// sense for uniforms that are arrays. For uniforms that are not arrays, 
 	/// but are declared in a named uniform block, an array stride of zero is 
 	/// returned"
@@ -182,6 +200,20 @@ private:
 	/// - if the current shader program is the var's shader program
 	/// - if the GL driver gives the same location as the one the var has
 	void doCommonSetCode() const;
+
+	/// Do common checks
+	template<typename T>
+	void setClientMemoryChecks(U32 buffSize, U32 size) const;
+
+	/// Do the actual job of setClientMemory
+	template<typename T>
+	void setClientMemoryInternal(void* buff_, U32 buffSize,
+		const T arr[], U32 size) const;
+
+	/// Do the actual job of setClientMemory for matrices
+	template<typename Mat, typename Vec>
+	void setClientMemoryInternalMatrix(void* buff_, U32 buffSize,
+		const Mat arr[], U32 size) const;
 };
 
 /// Attribute shader program variable

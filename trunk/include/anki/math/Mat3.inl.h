@@ -455,7 +455,7 @@ inline void Mat3::setColumn(const U i, const Vec3& v)
 // getColumn
 inline Vec3 Mat3::getColumn(const U i) const
 {
-	return Vec3((*this)(0,i), (*this)(1,i), (*this)(2,i));
+	return Vec3((*this)(0, i), (*this)(1, i), (*this)(2, i));
 }
 
 // getXAxis

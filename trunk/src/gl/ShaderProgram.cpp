@@ -123,6 +123,139 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 }
 
 //==============================================================================
+/// XXX
+template<typename T>
+static Bool checkType(GLenum glDataType);
+
+template<>
+Bool checkType<F32>(GLenum glDataType)
+{
+	return glDataType == GL_FLOAT;
+}
+
+template<>
+Bool checkType<Vec2>(GLenum glDataType)
+{
+	return glDataType == GL_FLOAT_VEC2;
+}
+
+template<>
+Bool checkType<Vec3>(GLenum glDataType)
+{
+	return glDataType == GL_FLOAT_VEC3;
+}
+
+template<>
+Bool checkType<Vec4>(GLenum glDataType)
+{
+	return glDataType == GL_FLOAT_VEC4;
+}
+
+template<>
+Bool checkType<Mat3>(GLenum glDataType)
+{
+	return glDataType == GL_FLOAT_MAT3;
+}
+
+template<>
+Bool checkType<Mat4>(GLenum glDataType)
+{
+	return glDataType == GL_FLOAT_MAT4;
+}
+
+//==============================================================================
+template<typename T>
+void ShaderProgramUniformVariable::setClientMemoryChecks(
+	U32 buffSize, U32 size) const
+{
+	ANKI_ASSERT(checkType<T>(getGlDataType()));
+	ANKI_ASSERT(size <= getSize() && size > 0);
+	ANKI_ASSERT(offset != -1 && arrayStride != -1 && "Uniform is not in block");
+	ANKI_ASSERT(block->getSize() <= buffSize);
+	ANKI_ASSERT(size <= 1 || arrayStride != 0);
+}
+
+//==============================================================================
+template<typename T>
+void ShaderProgramUniformVariable::setClientMemoryInternal(
+	void* buff_, U32 buffSize, const T arr[], U32 size) const
+{
+	setClientMemoryChecks<T>(buffSize, size);
+	U8* buff = (U8*)buff_ + offset;
+
+	for(U32 i = 0; i < size; i++)
+	{
+		T* ptr = (T*)buff;
+		*ptr = arr[i];
+		buff += arrayStride;
+	}
+}
+
+//==============================================================================
+template<typename T, typename Vec>
+void ShaderProgramUniformVariable::setClientMemoryInternalMatrix(
+	void* buff_, U32 buffSize, const T arr[], U32 size) const
+{
+	setClientMemoryChecks<T>(buffSize, size);
+	ANKI_ASSERT(matrixStride >= (GLint)sizeof(Vec));
+	U8* buff = (U8*)buff_ + offset;
+
+	for(U32 i = 0; i < size; i++)
+	{
+		U8* subbuff = buff;
+		for(U j = 0; j < sizeof(T) / sizeof(Vec); j++)
+		{
+			Vec* ptr = (Vec*)subbuff;
+			*ptr = arr[i].getRow(j);
+			subbuff += matrixStride;
+		}
+		buff += arrayStride;
+	}
+}
+
+//==============================================================================
+void ShaderProgramUniformVariable::setClientMemory(void* buff, U32 buffSize,
+	const F32 arr[], U32 size) const
+{
+	setClientMemoryInternal(buff, buffSize, arr, size);
+}
+
+//==============================================================================
+void ShaderProgramUniformVariable::setClientMemory(void* buff, U32 buffSize,
+	const Vec2 arr[], U32 size) const
+{
+	setClientMemoryInternal(buff, buffSize, arr, size);
+}
+
+//==============================================================================
+void ShaderProgramUniformVariable::setClientMemory(void* buff, U32 buffSize,
+	const Vec3 arr[], U32 size) const
+{
+	setClientMemoryInternal(buff, buffSize, arr, size);
+}
+
+//==============================================================================
+void ShaderProgramUniformVariable::setClientMemory(void* buff, U32 buffSize,
+	const Vec4 arr[], U32 size) const
+{
+	setClientMemoryInternal(buff, buffSize, arr, size);
+}
+
+//==============================================================================
+void ShaderProgramUniformVariable::setClientMemory(void* buff, U32 buffSize,
+	const Mat3 arr[], U32 size) const
+{
+	setClientMemoryInternalMatrix<Mat3, Vec3>(buff, buffSize, arr, size);
+}
+
+//==============================================================================
+void ShaderProgramUniformVariable::setClientMemory(void* buff, U32 buffSize,
+	const Mat4 arr[], U32 size) const
+{
+	setClientMemoryInternalMatrix<Mat4, Vec4>(buff, buffSize, arr, size);
+}
+
+//==============================================================================
 // ShaderProgramUniformBlock                                                   =
 //==============================================================================
 

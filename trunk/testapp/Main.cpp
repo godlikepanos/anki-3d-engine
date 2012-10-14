@@ -62,7 +62,7 @@ void init()
 	const float ang = 45.0;
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
-		toRad(ang), 0.5, 200.0);
+		toRad(ang), 0.5, 500.0);
 	cam->setLocalTransform(Transform(Vec3(100.0, 5.0, 8.0),
 		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
@@ -119,7 +119,7 @@ void init()
 	spot->setLocalTransform(Transform(Vec3(5.3, 4.3, 3.0),
 		Mat3::getIdentity(), 1.0));
 	spot->setDiffuseColor(Vec4(3.0, 0.0, 0.0, 0.0));
-	spot->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
+	spot->setSpecularColor(Vec4(3.0, 3.0, 0.0, 0.0));
 	spot->loadTexture("gfx/lights/flashlight.tga");
 	spot->setDistance(30.0);
 	spot->setShadowEnabled(true);
@@ -144,12 +144,14 @@ void init()
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		1.0));
 
+#if 1
 	// Sponza
 	ModelNode* sponzaModel = new ModelNode(
 		"/home/godlike/src/anki/maps/sponza-crytek/sponza_crytek.mdl",
 		"sponza", &scene, Movable::MF_NONE, nullptr);
 
 	sponzaModel->setLocalScale(0.1);
+#endif
 
 	// Sectors
 	scene.sectors.push_back(new Sector(Aabb(Vec3(-10.0), Vec3(10.0))));
@@ -291,7 +293,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -337,10 +339,10 @@ void initSubsystems(int argc, char* argv[])
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
 	initializer.dbg.enabled = false;
-	initializer.is.sm.bilinearEnabled = false;
+	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
-	initializer.is.sm.pcfEnabled = true;
-	initializer.is.sm.resolution = 1024;
+	initializer.is.sm.pcfEnabled = false;
+	initializer.is.sm.resolution = 512;
 	initializer.pps.hdr.enabled = true;
 	initializer.pps.hdr.renderingQuality = 0.25;
 	initializer.pps.hdr.blurringDist = 1.0;

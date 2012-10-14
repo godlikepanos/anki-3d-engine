@@ -42,42 +42,17 @@ public:
 	}
 
 	/// Return the text inside as a string
-	int getInt() const
-	{
-		check();
-		return std::stoi(getText());
-	}
+	int getInt() const;
 
 	/// Get a child element quietly
-	XmlElement getChildElementOptional(const char* name) const
-	{
-		check();
-		XmlElement out;
-		out.el = el->FirstChildElement(name);
-		return out;
-	}
+	XmlElement getChildElementOptional(const char* name) const;
 
 	/// Get a child element and throw exception if not found
-	XmlElement getChildElement(const char* name) const
-	{
-		check();
-		const XmlElement out = getChildElementOptional(name);
-		if(!out)
-		{
-			throw ANKI_EXCEPTION("Cannot find <" + name + ">");
-		}
-		return out;
-	}
+	XmlElement getChildElement(const char* name) const;
 
 	/// Get the next element with the same name. Returns empty XmlElement if
 	/// it reached the end of the list
-	XmlElement getNextSiblingElement(const char* name) const
-	{
-		check();
-		XmlElement out;
-		out.el = el->NextSiblingElement(name);
-		return out;
-	}
+	XmlElement getNextSiblingElement(const char* name) const;
 
 private:
 	tinyxml2::XMLElement* el = nullptr;
