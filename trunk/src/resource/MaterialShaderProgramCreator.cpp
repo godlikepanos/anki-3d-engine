@@ -32,8 +32,30 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 		shaderEl = shaderEl.getNextSiblingElement("shader");
 	} while(shaderEl);
 
-	source = srcLines.join("\n");
-	//std::cout << source << std::endl;
+	// Create block
+	StringList block;
+	block.push_back("layout(std140, row_major, binding = 0) "
+		"uniform commonBlock\n{");
+	for(Input* in : inputs)
+	{
+		if(in->type == "sampler2D"
+			|| in->const_)
+		{
+			continue;
+		}
+
+		block.push_back("\tuniform " + in->type + " " + in->name + "_;");
+	}
+	block.push_back("};\n");
+
+	if(block.size() > 2)
+	{
+		source = block.join("\n") + srcLines.join("\n");
+	}
+	else
+	{
+		source = srcLines.join("\n");
+	}
 }
 
 //==============================================================================
@@ -118,6 +140,10 @@ void MaterialShaderProgramCreator::parseInputTag(
 	if(constEl)
 	{
 		inpvar->const_ = constEl.getInt();
+	}
+	else
+	{
+		inpvar->const_ = false;
 	}
 
 	if(valueEl.getText())
