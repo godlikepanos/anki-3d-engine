@@ -5,7 +5,6 @@
 #include "anki/util/Filesystem.h"
 #include "anki/Config.h"
 #include "anki/util/Platform.h"
-#include <GL/glew.h>
 #include <cstring>
 #include <sstream>
 #include <iostream>
@@ -139,7 +138,6 @@ void App::printAppInfo()
 #endif
 	<< ", ";
 
-	msg << "GLEW " << glewGetString(GLEW_VERSION) << ", ";
 	msg << "build date " __DATE__ ", " << "rev " << ANKI_REVISION;
 
 	ANKI_LOGI(msg.str());

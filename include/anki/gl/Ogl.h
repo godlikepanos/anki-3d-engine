@@ -19,7 +19,7 @@
 
 #	define ANKI_GL_NON_SHARABLE_CHECK() \
 		ANKI_ASSERT(creationThreadId == std::this_thread::get_id() \
-			&& "FBO can be used only from the creation thread")
+			&& "Object can be used only from the creation thread")
 #else
 #	define ANKI_GL_NON_SHARABLE
 
