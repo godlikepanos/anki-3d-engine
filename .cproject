@@ -27,6 +27,7 @@
 									<listOptionValue builtIn="false" value="/usr/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/anki}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/extern}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/build/anki}&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.703966797" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__GXX_EXPERIMENTAL_CXX0X__"/>
@@ -40,6 +41,7 @@
 									<listOptionValue builtIn="false" value="/usr/include"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/anki}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/extern}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/build/anki}&quot;"/>
 								</option>
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1930194539" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__GXX_EXPERIMENTAL_CXX0X__"/>
@@ -57,6 +59,7 @@
 								<option id="gnu.both.asm.option.include.paths.1360594794" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/include}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/extern}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/build/anki}&quot;"/>
 									<listOptionValue builtIn="false" value="/usr/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1588784404" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
@@ -94,8 +97,9 @@
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1535300050" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__GXX_EXPERIMENTAL_CXX0X__"/>
 								</option>
-								<option id="gnu.cpp.compiler.option.include.paths.1144441363" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+								<option id="gnu.cpp.compiler.option.include.paths.1144441363" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/extern}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/build/anki}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1897753799" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 							</tool>
@@ -105,8 +109,9 @@
 								<option id="gnu.c.compiler.option.preprocessor.def.symbols.1483582268" name="Defined symbols (-D)" superClass="gnu.c.compiler.option.preprocessor.def.symbols" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="__GXX_EXPERIMENTAL_CXX0X__"/>
 								</option>
-								<option id="gnu.c.compiler.option.include.paths.1839935228" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+								<option id="gnu.c.compiler.option.include.paths.1839935228" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/extern}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/build/anki}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.813305505" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -118,8 +123,9 @@
 								</inputType>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.exe.release.1828291711" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.exe.release">
-								<option id="gnu.both.asm.option.include.paths.22345717" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+								<option id="gnu.both.asm.option.include.paths.22345717" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/extern}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/anki/build/anki}&quot;"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1528209394" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>

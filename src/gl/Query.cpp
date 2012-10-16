@@ -11,10 +11,7 @@ Query::Query(GLenum q)
 
 	// glId
 	glGenQueries(1, &glId);
-	if(glId == 0)
-	{
-		throw ANKI_EXCEPTION("Query generation failed");
-	}
+	ANKI_ASSERT(glId != 0);
 }
 
 //==============================================================================
@@ -36,7 +33,7 @@ void Query::end()
 }
 
 //==============================================================================
-uint64_t Query::getResult()
+GLuint64 Query::getResult()
 {
 	GLuint64 result;
 	glGetQueryObjectui64v(glId, GL_QUERY_RESULT, &result);
@@ -44,7 +41,7 @@ uint64_t Query::getResult()
 }
 
 //==============================================================================
-uint64_t Query::getResultNoWait(bool& finished)
+GLuint64 Query::getResultNoWait(Bool& finished)
 {
 	GLuint resi;
 	glGetQueryObjectuiv(glId, GL_QUERY_RESULT_AVAILABLE, &resi);
