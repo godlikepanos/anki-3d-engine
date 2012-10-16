@@ -1,9 +1,13 @@
 #ifndef ANKI_GL_OGL_H
 #define ANKI_GL_OGL_H
 
-#include <GL/glew.h>
-#if !defined(ANKI_GLEW_H)
-#	error "Wrong GLEW included"
+#if ANKI_WINDOW_BACKEND_GLXX11
+#	include <GL/glew.h>
+#	if !defined(ANKI_GLEW_H)
+#		error "Wrong GLEW included"
+#	endif
+#else
+#	include <GLES3/gl3.h>
 #endif
 
 // The following macros are used for sanity checks in non sharable GL objects.
