@@ -24,8 +24,8 @@ public:
 	/// GL_ELEMENT_ARRAY_BUFFER targets
 	static void unbindAllTargets()
 	{
-		glBindBufferARB(GL_ARRAY_BUFFER, 0);
-		glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 	/// The same as BufferObject::create but it only accepts

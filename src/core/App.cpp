@@ -1,10 +1,8 @@
 #include "anki/core/App.h"
 #include "anki/core/Logger.h"
 #include "anki/util/Exception.h"
-#include "anki/util/Platform.h"
 #include "anki/util/Filesystem.h"
 #include "anki/Config.h"
-#include "anki/util/Platform.h"
 #include <cstring>
 #include <sstream>
 #include <iostream>
@@ -117,26 +115,13 @@ void App::printAppInfo()
 {
 	std::stringstream msg;
 	msg << "App info: ";
-	msg << "Version " << ANKI_VERSION_MAJOR << "." << ANKI_VERSION_MINOR 
-		<< ", ";
+	msg << "AnKi " << ANKI_VERSION_MAJOR << "." << ANKI_VERSION_MINOR << ", ";
 #if NDEBUG
 	msg << "Release";
 #else
 	msg << "Debug";
 #endif
 	msg << " build, ";
-
-	msg << "platform " << 
-#if ANKI_PLATFORM_LINUX
-	"Linux"
-#elif ANKI_PLATFORM_WINDOWS
-	"Windows"
-#elif ANKI_PLATFORM_APPLE
-	"Apple"
-#else
-#	error "See file"
-#endif
-	<< ", ";
 
 	msg << "build date " __DATE__ ", " << "rev " << ANKI_REVISION;
 

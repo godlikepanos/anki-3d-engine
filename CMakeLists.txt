@@ -67,11 +67,6 @@ ENDIF()
 SET(ANKI_WINDOW_BACKEND "GLXX11" CACHE STRING "The window backend (GLXX11 or EGLX11 or EGLFBDEV or DUMMY)")
 MESSAGE("++ AnKi window backend: ${ANKI_WINDOW_BACKEND}")
 
-IF(ANKI_WINDOW_BACKEND STREQUAL "EGLFBDEV")
-	SET(ANKI_FBDEV_INCLUDE_DIRS CACHE STRING "The include paths for FBDEV")
-	SET(ANKI_FBDEV_LIB_DIRS CACHE STRING "The lib paths for FBDEV")
-ENDIF()
-
 #
 # Common compiler flags
 #
@@ -149,8 +144,17 @@ ENDIF()
 #
 # Include & lib directories
 #
-INCLUDE_DIRECTORIES("extern/GLEW/include" "extern/tinyxml2/include" "extern/lua" "extern/png" "extern/bullet" "include"
+SET(ANKI_EXTRA_INCLUDE_DIRS CACHE STRING "Some extra include paths (Needed for FBDEV)")
+SET(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for FBDEV)")
+
+INCLUDE_DIRECTORIES("extern/tinyxml2/include" "extern/lua" "extern/png" "extern/bullet" "include"
 	"${CMAKE_CURRENT_BINARY_DIR}")
+
+IF(ANKI_WINDOW_BACKEND STREQUAL "GLXX11")
+	INCLUDE_DIRECTORIES("extern/GLEW/include")
+ELSE()
+	INCLUDE_DIRECTORIES("extern/GLES3/include")
+ENDIF()
 
 # Add a few compiler specific stuff 
 IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	
