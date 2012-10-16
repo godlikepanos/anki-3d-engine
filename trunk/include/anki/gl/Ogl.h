@@ -1,19 +1,23 @@
 #ifndef ANKI_GL_OGL_H
 #define ANKI_GL_OGL_H
 
-#if ANKI_WINDOW_BACKEND_GLXX11
+#include "anki/Config.h"
+
+#if ANKI_GL == ANKI_GL_DESKTOP
 #	include <GL/glew.h>
 #	if !defined(ANKI_GLEW_H)
 #		error "Wrong GLEW included"
 #	endif
-#else
+#elif ANKI_GL == ANKI_GL_ES
 #	include <GLES3/gl3.h>
+#else
+#	error "See file"
 #endif
 
 // The following macros are used for sanity checks in non sharable GL objects.
 // They help us avoid binding those objects from other than the creation 
 // threads. They are enabled only on debug
-#if !NDEBUG
+#if NDEBUG
 #	include <thread>
 
 #	define ANKI_GL_NON_SHARABLE std::thread::id creationThreadId;

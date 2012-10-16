@@ -3,7 +3,7 @@
 
 namespace anki {
 
-#if !NDEBUG
+#if !defined(NDEBUG)
 
 //==============================================================================
 void akassert(bool expr, const char* exprTxt, const char* file, int line,

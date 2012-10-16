@@ -2,7 +2,7 @@
 #define ANKI_GL_QUERY_H
 
 #include "anki/gl/Ogl.h"
-#include <cstdint>
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
@@ -30,11 +30,11 @@ public:
 	void end();
 
 	/// Get results. Waits for operations to finish
-	uint64_t getResult();
+	GLuint64 getResult();
 
 	/// Get results. Doesn't Wait for operations to finish. If @a finished is
 	/// false then the return value is irrelevant
-	uint64_t getResultNoWait(bool& finished);
+	GLuint64 getResultNoWait(Bool& finished);
 
 private:
 	GLuint glId;
