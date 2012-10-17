@@ -205,39 +205,6 @@ public:
 	{
 		return planesUpdateTimestamp;
 	}
-
-	F64 getMsTime() const
-	{
-		return msTime;
-	}
-
-	F64 getIsTime() const
-	{
-		return isTime;
-	}
-
-	F64 getPpsTime() const
-	{
-		return ppsTime;
-	}
-
-	F64 getBsTime() const
-	{
-		return bsTime;
-	}
-
-	Bool getStagesProfilingEnabled() const
-	{
-		return enableStagesProfilingFlag;
-	}
-	Bool& getStagesProfilingEnabled()
-	{
-		return enableStagesProfilingFlag;
-	}
-	void setStagesProfilingEnabled(const Bool x)
-	{
-		enableStagesProfilingFlag = x;
-	}
 	/// @}
 
 	/// Init the renderer given an initialization class
@@ -299,13 +266,6 @@ protected:
 	Is is; ///< Illumination rendering stage
 	Pps pps; ///< Postprocessing rendering stage
 	Bs bs; ///< Blending stage
-	/// @}
-
-	/// @name Profiling stuff
-	/// @{
-	F64 msTime, isTime, ppsTime, bsTime;
-	std::unique_ptr<Query> msTq, isTq, ppsTq, bsTq, pps2Tq;
-	Bool enableStagesProfilingFlag;
 	/// @}
 
 	/// Width of the rendering. Don't confuse with the window width

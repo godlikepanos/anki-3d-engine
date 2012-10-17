@@ -227,11 +227,13 @@ void Texture::create(const Initializer& init)
 		setFilteringNoBind(init.filteringType);
 	}
 
+#if ANKI_GL == ANKI_GL_DESKTOP
 	if(init.anisotropyLevel > 1)
 	{
 		glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
 			GLint(init.anisotropyLevel));
 	}
+#endif
 
 	ANKI_CHECK_GL_ERROR();
 }

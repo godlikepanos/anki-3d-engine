@@ -22,8 +22,6 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 
 	sProg.load("shaders/Final.glsl");
 
-	dbgTq.reset(new Query(GL_TIME_ELAPSED));
-
 	windowWidth = initializer_.width;
 	windowHeight = initializer_.height;
 
@@ -59,7 +57,7 @@ void MainRenderer::initGl()
 
 	// get max texture units
 	glClearColor(1.0, 0.0, 1.0, 1.0);
-	glClearDepth(1.0);
+	glClearDepthf(1.0);
 	glClearStencil(0);
 	glDepthFunc(GL_LEQUAL);
 	// CullFace is always on
@@ -67,11 +65,9 @@ void MainRenderer::initGl()
 	GlStateSingleton::get().enable(GL_CULL_FACE);
 
 	// defaults
-	//glDisable(GL_LIGHTING);
-	//glDisable(GL_TEXTURE_2D);
 	GlStateSingleton::get().disable(GL_BLEND);
 	GlStateSingleton::get().disable(GL_STENCIL_TEST);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LESS);
 
@@ -89,17 +85,7 @@ void MainRenderer::initGl()
 void MainRenderer::render(Scene& scene)
 {
 	Renderer::render(scene);
-
-	if(getStagesProfilingEnabled())
-	{
-		dbgTq->begin();
-		dbg.run();
-		dbgTq->end();
-	}
-	else
-	{
-		dbg.run();
-	}
+	dbg.run();
 
 	// Render the PPS FAI to the framebuffer
 	//
@@ -127,9 +113,9 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	}
 
 	// write headers
-	unsigned char tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0,
-		0, 0, 0, 0};
-	unsigned char header[6];
+	static const U8 tgaHeaderUncompressed[12] = {
+		0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	Array<U8, 6> header;
 
 	header[1] = getWidth() / 256;
 	header[0] = getWidth() % 256;
@@ -138,19 +124,26 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	header[4] = 24;
 	header[5] = 0;
 
-	fs.write((char*)tgaHeaderUncompressed, 12);
-	fs.write((char*)header, 6);
+	fs.write((char*)tgaHeaderUncompressed, sizeof(tgaHeaderUncompressed));
+	fs.write((char*)&header[0], sizeof(header));
 
-	// write the buffer
-	char* buffer = (char*)calloc(getWidth()*getHeight()*3, sizeof(char));
+	// get the buffer
+	U8* buffer = new U8[getWidth() * getHeight() * 3];
 
-	glReadPixels(0, 0, getWidth(), getHeight(), GL_BGR, GL_UNSIGNED_BYTE,
+	for(U i = 0; i < getWidth() * getHeight(); i += 3)
+	{
+		U8 temp = buffer[i];
+		buffer[i] = buffer[i + 2];
+		buffer[i + 2] = temp;
+	}
+
+	glReadPixels(0, 0, getWidth(), getHeight(), GL_RGB, GL_UNSIGNED_BYTE,
 		buffer);
-	fs.write(buffer, getWidth()*getHeight()*3);
+	fs.write((char*)buffer, getWidth() * getHeight() * 3);
 
 	// end
 	fs.close();
-	free(buffer);
+	delete[] buffer;
 }
 
 //==============================================================================

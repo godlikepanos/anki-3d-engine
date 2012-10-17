@@ -9,9 +9,7 @@ namespace anki {
 Renderer::Renderer()
 	: ms(this), is(this), pps(this), bs(this), width(640), height(480),
 		sceneDrawer(this)
-{
-	enableStagesProfilingFlag = false;
-}
+{}
 
 //==============================================================================
 Renderer::~Renderer()
@@ -52,12 +50,6 @@ void Renderer::init(const RendererInitializer& initializer)
 	quadVao.attachArrayBufferVbo(quadPositionsVbo, 0, 2, GL_FLOAT, false, 0,
 		NULL);
 	quadVao.attachElementArrayBufferVbo(quadVertIndecesVbo);
-
-	// Other
-	msTq.reset(new Query(GL_TIME_ELAPSED));
-	isTq.reset(new Query(GL_TIME_ELAPSED));
-	ppsTq.reset(new Query(GL_TIME_ELAPSED));
-	bsTq.reset(new Query(GL_TIME_ELAPSED));
 }
 
 //==============================================================================
@@ -87,42 +79,11 @@ void Renderer::render(Scene& scene_)
 
 	viewProjectionMat = cam.getViewProjectionMatrix();
 
-	if(enableStagesProfilingFlag)
-	{
-		msTq->begin();
-		ms.run();
-		msTq->end();
-
-		isTq->begin();
-		is.run();
-		isTq->end();
-
-		ppsTq->begin();
-		pps.runPrePass();
-		ppsTq->end();
-
-		bsTq->begin();
-		bs.run();
-		bsTq->end();
-
-		pps2Tq->begin();
-		pps.runPostPass();
-		pps2Tq->end();
-
-		// Now wait
-		msTime = msTq->getResult();
-		isTime = isTq->getResult();
-		bsTime = bsTq->getResult();
-		ppsTime = ppsTq->getResult() + ppsTq->getResult();
-	}
-	else
-	{
-		ms.run();
-		is.run();
-		/*pps.runPrePass();
-		bs.run();
-		pps.runPostPass();*/
-	}
+	ms.run();
+	is.run();
+	/*pps.runPrePass();
+	bs.run();
+	pps.runPostPass();*/
 
 	++framesNum;
 }

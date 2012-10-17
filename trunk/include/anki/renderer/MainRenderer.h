@@ -45,11 +45,6 @@ public:
 	{
 		return dbg;
 	}
-
-	double getDbgTime() const
-	{
-		return dbgTime;
-	}
 	/// @}
 
 	/// The same as Renderer::init but with additional initialization.
@@ -70,12 +65,6 @@ private:
 	/// @name Passes
 	/// @{
 	Dbg dbg; ///< Debugging rendering stage. Only the main renderer has it
-	/// @}
-
-	/// @name Profiling stuff
-	/// @{
-	double dbgTime;
-	std::unique_ptr<Query> dbgTq;
 	/// @}
 
 	ShaderProgramResourcePointer sProg; ///< Final pass' shader program

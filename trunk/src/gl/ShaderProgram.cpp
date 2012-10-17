@@ -310,20 +310,32 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 
 	if(tcSource != nullptr)
 	{
+#if ANKI_GL == ANKI_GL_DESKTOP
 		tcShaderGlId = createAndCompileShader(tcSource, preprocSource.c_str(), 
 			GL_TESS_CONTROL_SHADER);
+#else
+		ANKI_ASSERT(0 && "Not allowed");
+#endif
 	}
 
 	if(teSource != nullptr)
 	{
+#if ANKI_GL == ANKI_GL_DESKTOP
 		teShaderGlId = createAndCompileShader(teSource, preprocSource.c_str(), 
 			GL_TESS_EVALUATION_SHADER);
+#else
+		ANKI_ASSERT(0 && "Not allowed");
+#endif
 	}
 
 	if(geomSource != nullptr)
 	{
+#if ANKI_GL == ANKI_GL_DESKTOP
 		geomShaderGlId = createAndCompileShader(geomSource, 
 			preprocSource.c_str(), GL_GEOMETRY_SHADER);
+#else
+		ANKI_ASSERT(0 && "Not allowed");
+#endif
 	}
 
 	ANKI_ASSERT(fragSource != nullptr);

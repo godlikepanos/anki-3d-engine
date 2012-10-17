@@ -51,7 +51,7 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 
 	Vector<EGLConfig> configs(maxConfigs);
 
-	Array<int, 256> attribs;
+	Array<EGLint, 256> attribs;
 	U attr = 0;
 	attribs[attr++] = EGL_RENDERABLE_TYPE;
 	attribs[attr++] = EGL_OPENGL_ES2_BIT;
@@ -78,8 +78,8 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 
 	attribs[attr++] = EGL_NONE;
 
-	int configsCount;
-	if(eglChooseConfig(display, attribs, &configs[0], maxConfigs, 
+	EGLint configsCount;
+	if(eglChooseConfig(display, &attribs[0], &configs[0], maxConfigs, 
 		&configsCount) == EGL_FALSE)
 	{
 		throw ANKI_EXCEPTION("Failed to query required EGL configs");
@@ -91,7 +91,7 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 	}
 
 	EGLConfig config_ = nullptr;
-	for(U i = 0; i < configsCount; i++)
+	for(EGLint i = 0; i < configsCount; i++)
 	{
 		EGLint value;
 		EGLConfig config = configs[i];
@@ -99,43 +99,43 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 		// Use this to explicitly check that the EGL config has the 
 		// expected color depths
 		eglGetConfigAttrib(display, config, EGL_RED_SIZE, &value);
-		if(value != init.rgbaBits[0]) 
+		if(value != (EGLint)init.rgbaBits[0]) 
 		{
 			continue;
 		}
 
 		eglGetConfigAttrib(display, config, EGL_GREEN_SIZE, &value);
-		if(value != init.rgbaBits[1]) 
+		if(value != (EGLint)init.rgbaBits[1]) 
 		{
 			continue;
 		}
 
 		eglGetConfigAttrib(display, config, EGL_BLUE_SIZE, &value);
-	    if(value != init.rgbaBits[2])
+	    if(value != (EGLint)init.rgbaBits[2])
 		{
 			continue;
 		}
 
 		eglGetConfigAttrib(display, config, EGL_ALPHA_SIZE, &value);
-		if(value != init.rgbaBits[3])
+		if(value != (EGLint)init.rgbaBits[3])
 		{
 			continue;
 		}
 
 		eglGetConfigAttrib(display, config, EGL_SAMPLES, &value);
-		if(value != init.samplesCount)
+		if(value != (EGLint)init.samplesCount)
 		{
 			continue;
 		}
 
 		eglGetConfigAttrib(display, config, EGL_DEPTH_SIZE, &value);
-		if(value != init.depthBits)
+		if(value != (EGLint)init.depthBits)
 		{
 			continue;
 		}
 
 		eglGetConfigAttrib(display, config, EGL_STENCIL_SIZE, &value);
-		if(value != init.stencilBits)
+		if(value != (EGLint)init.stencilBits)
 		{
 			continue;
 		}
@@ -210,9 +210,9 @@ void NativeWindow::destroy()
 void NativeWindow::swapBuffers()
 {
 	ANKI_ASSERT(isCreated());
-	if(eglSwapBuffers(impl.display, impl.surface) == EGL_FALSE)
+	if(eglSwapBuffers(impl->display, impl->surface) == EGL_FALSE)
 	{
-		throw FUZZY_EXCEPTION("eglSwapBuffers() failed");
+		throw ANKI_EXCEPTION("eglSwapBuffers() failed");
 	}
 }
 
