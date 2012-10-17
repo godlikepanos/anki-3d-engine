@@ -17,7 +17,7 @@
 // The following macros are used for sanity checks in non sharable GL objects.
 // They help us avoid binding those objects from other than the creation 
 // threads. They are enabled only on debug
-#if NDEBUG
+#if !ANKI_DEBUG
 #	include <thread>
 
 #	define ANKI_GL_NON_SHARABLE std::thread::id creationThreadId;

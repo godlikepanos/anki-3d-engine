@@ -117,6 +117,11 @@ public:
 		return *this;
 	}
 
+	const ShaderProgramUniformBlock* getUniformBlock() const
+	{
+		return block;
+	}
+
 	/// @name Set the var
 	/// @{
 	void set(const F32 x) const;
@@ -203,7 +208,7 @@ private:
 
 	/// Do common checks
 	template<typename T>
-	void setClientMemoryChecks(U32 buffSize, U32 size) const;
+	void setClientMemorySanityChecks(U32 buffSize, U32 size) const;
 
 	/// Do the actual job of setClientMemory
 	template<typename T>

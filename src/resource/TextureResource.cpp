@@ -78,7 +78,7 @@ void TextureResource::load(const Image& img)
 	case Image::DC_NONE:
 		break;
 
-#if !DRIVER_CAN_COMPRESS
+#if DRIVER_CAN_COMPRESS
 	case Image::DC_DXT1:
 		init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 		break;

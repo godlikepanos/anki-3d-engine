@@ -1,9 +1,10 @@
+#include "anki/util/Assert.h"
 #include <cstdlib>
 #include <iostream>
 
 namespace anki {
 
-#if !defined(NDEBUG)
+#if ANKI_DEBUG
 
 //==============================================================================
 void akassert(bool expr, const char* exprTxt, const char* file, int line,

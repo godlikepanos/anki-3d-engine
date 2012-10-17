@@ -23,8 +23,8 @@
 #	define ANKI_GL ANKI_GL_ES
 #endif
 
-#if !NDEBUG
-#	define ANKI_DEBUG 1
+#if defined(NDEBUG)
+#	define ANKI_DEBUG NDEBUG
 #else
 #	define ANKI_DEBUG 0
 #endif
