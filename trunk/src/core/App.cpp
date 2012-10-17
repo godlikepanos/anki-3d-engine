@@ -116,7 +116,7 @@ void App::printAppInfo()
 	std::stringstream msg;
 	msg << "App info: ";
 	msg << "AnKi " << ANKI_VERSION_MAJOR << "." << ANKI_VERSION_MINOR << ", ";
-#if NDEBUG
+#if !ANKI_DEBUG
 	msg << "Release";
 #else
 	msg << "Debug";

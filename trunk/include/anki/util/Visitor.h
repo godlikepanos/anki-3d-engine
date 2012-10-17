@@ -269,7 +269,7 @@ class VisitableCommonBase
 {
 public:
 
-#if !defined(NDEBUG)
+#if ANKI_DEBUG
 	// Allow dynamic cast in acceptVisitor
 	virtual ~VisitableCommonBase()
 	{}
@@ -291,11 +291,11 @@ public:
 	void acceptVisitor(TVisitor& v)
 	{
 		ANKI_ASSERT(what != -1);
-#if defined(NDEBUG)
-		TBase* base = static_cast<TBase*>(this);
-#else
+#if ANKI_DEBUG
 		TBase* base = dynamic_cast<TBase*>(this);
 		ANKI_ASSERT(base != nullptr);
+#else
+		TBase* base = static_cast<TBase*>(this);
 #endif
 		visitor_detail::VisitorWrapperCommonBase<TVisitor, TBase, Types...>::
 			jumpTable[what](v, *base);
@@ -307,11 +307,11 @@ public:
 	{
 		typedef const TBase CTBase;
 		ANKI_ASSERT(what != -1);
-#if defined(NDEBUG)
-		CTBase* base = static_cast<CTBase*>(this);
-#else
+#if ANKI_DEBUG
 		CTBase* base = dynamic_cast<CTBase*>(this);
 		ANKI_ASSERT(base != nullptr);
+#else
+		CTBase* base = static_cast<CTBase*>(this);
 #endif
 		visitor_detail::VisitorWrapperCommonBase
 			<TVisitor,CTBase, const Types...>::

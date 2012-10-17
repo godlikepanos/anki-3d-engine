@@ -102,12 +102,10 @@ public:
 	    GLsizei stride,
 	    const GLvoid* pointer);
 
-#if !defined(NDEBUG)
 	int getAttachmentsCount() const
 	{
 		return attachments;
 	}
-#endif
 
 	/// Attach an element array buffer VBO
 	void attachElementArrayBufferVbo(const Vbo& vbo);
@@ -140,9 +138,7 @@ public:
 private:
 	static thread_local const Vao* current;
 	GLuint glId = 0; ///< The OpenGL id
-#if !defined(NDEBUG)
 	U32 attachments = 0;
-#endif
 
 	bool isCreated() const
 	{

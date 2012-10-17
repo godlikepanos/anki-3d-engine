@@ -43,7 +43,7 @@ public:
 	MaterialVariable(
 		const char* shaderProgVarName,
 		PassLevelToShaderProgramHashMap& sProgs,
-		bool init_)
+		Bool init_)
 		: initialized(init_)
 	{
 		init(shaderProgVarName, sProgs);
@@ -84,7 +84,7 @@ public:
 	/// Get the name of all the shader program variables
 	const std::string& getName() const;
 
-	bool getInitialized() const
+	Bool getInitialized() const
 	{
 		return initialized;
 	}
@@ -94,7 +94,7 @@ private:
 	/// If not initialized then there is no value given in the XML so it is
 	/// probably build in and the renderer should set the value on the shader
 	/// program setup
-	bool initialized;
+	Bool initialized;
 	PassLevelToShaderProgramUniformVariableHashMap sProgVars;
 
 	/// Keep one ShaderProgramVariable here for easy access of the common
@@ -117,7 +117,7 @@ public:
 		const char* shaderProgVarName,
 		PassLevelToShaderProgramHashMap& sProgs,
 		const Data& val,
-		bool init_)
+		Bool init_)
 		: MaterialVariable(shaderProgVarName, sProgs, init_)
 	{
 		setupVisitable(&data);
@@ -162,57 +162,57 @@ public:
 		return passes;
 	}
 
-	uint getLevelsOfDetail() const
+	U32 getLevelsOfDetail() const
 	{
 		return levelsOfDetail;
 	}
 
-	bool getShadow() const
+	Bool getShadow() const
 	{
 		return shadow;
 	}
 
-	int getBlendingSfactor() const
+	GLenum getBlendingSfactor() const
 	{
 		return blendingSfactor;
 	}
 
-	int getBlendingDfactor() const
+	GLenum getBlendingDfactor() const
 	{
 		return blendingDfactor;
 	}
 
-	bool getDepthTestingEnabled() const
+	Bool getDepthTestingEnabled() const
 	{
 		return depthTesting;
 	}
 
-	bool getWireframe() const
+	Bool getWireframe() const
 	{
 		return wireframe;
 	}
 	/// @}
 
 	/// Check if blending is enabled
-	bool isBlendingEnabled() const
+	Bool isBlendingEnabled() const
 	{
 		return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;
 	}
 protected:
-	uint renderingStage = 0;
+	U32 renderingStage = 0;
 
 	StringList passes;
 
-	uint levelsOfDetail = 1;
+	U32 levelsOfDetail = 1;
 
-	bool shadow = true;
+	Bool shadow = true;
 
-	int blendingSfactor = GL_ONE; ///< Default GL_ONE
-	int blendingDfactor = GL_ZERO; ///< Default GL_ZERO
+	GLenum blendingSfactor = GL_ONE; ///< Default GL_ONE
+	GLenum blendingDfactor = GL_ZERO; ///< Default GL_ZERO
 
-	bool depthTesting = true;
+	Bool depthTesting = true;
 
-	bool wireframe = false;
+	Bool wireframe = false;
 };
 
 /// Material resource
@@ -331,7 +331,7 @@ public:
 	void load(const char* filename);
 
 	/// For sorting
-	bool operator<(const Material& b) const
+	Bool operator<(const Material& b) const
 	{
 		return fname < b.fname;
 	}

@@ -146,7 +146,7 @@ private:
 	GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
 	U32 sizeInBytes; ///< The size of the buffer
 
-#if !NDEBUG
+#if ANKI_DEBUG
 	Bool mapped = false; ///< Only in debug
 #endif
 };

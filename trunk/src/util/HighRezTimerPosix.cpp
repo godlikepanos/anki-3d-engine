@@ -1,10 +1,18 @@
 #include "anki/util/HighRezTimer.h"
 #include "anki/util/Assert.h"
-
 #include <sys/time.h>
 #include <signal.h>
 #include <unistd.h>
 #include <errno.h>
+
+#if !defined(HAVE_NANOSLEEP)
+#	define HAVE_NANOSLEEP 0
+#endif
+
+#if !defined(HAVE_CLOCK_GETTIME)
+#	define HAVE_CLOCK_GETTIME 0
+#endif
+
 #if HAVE_NANOSLEEP || HAVE_CLOCK_GETTIME
 #	include <time.h>
 #endif
@@ -13,7 +21,7 @@ namespace anki {
 
 //==============================================================================
 // The first ticks value of the application
-#ifdef HAVE_CLOCK_GETTIME
+#if HAVE_CLOCK_GETTIME
 static struct timespec gstart;
 #else
 static struct timeval gstart;

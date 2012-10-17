@@ -165,7 +165,7 @@ Bool checkType<Mat4>(GLenum glDataType)
 
 //==============================================================================
 template<typename T>
-void ShaderProgramUniformVariable::setClientMemoryChecks(
+void ShaderProgramUniformVariable::setClientMemorySanityChecks(
 	U32 buffSize, U32 size) const
 {
 	ANKI_ASSERT(checkType<T>(getGlDataType()));
@@ -180,7 +180,7 @@ template<typename T>
 void ShaderProgramUniformVariable::setClientMemoryInternal(
 	void* buff_, U32 buffSize, const T arr[], U32 size) const
 {
-	setClientMemoryChecks<T>(buffSize, size);
+	setClientMemorySanityChecks<T>(buffSize, size);
 	U8* buff = (U8*)buff_ + offset;
 
 	for(U32 i = 0; i < size; i++)
@@ -196,7 +196,7 @@ template<typename T, typename Vec>
 void ShaderProgramUniformVariable::setClientMemoryInternalMatrix(
 	void* buff_, U32 buffSize, const T arr[], U32 size) const
 {
-	setClientMemoryChecks<T>(buffSize, size);
+	setClientMemorySanityChecks<T>(buffSize, size);
 	ANKI_ASSERT(matrixStride >= (GLint)sizeof(Vec));
 	U8* buff = (U8*)buff_ + offset;
 
@@ -281,13 +281,13 @@ ShaderProgramUniformBlock& ShaderProgramUniformBlock::operator=(
 const char* ShaderProgram::stdSourceCode =
 	"#version 420 core\n"
 	//"precision lowp float;\n"
-#if defined(NDEBUG)
-	"#pragma optimize(on)\n"
-	"#pragma debug(off)\n"
-	"#extension GL_ARB_gpu_shader5 : enable\n";
-#else
+#if ANKI_DEBUG
 	"#pragma optimize(off)\n"
 	"#pragma debug(on)\n"
+	"#extension GL_ARB_gpu_shader5 : enable\n";
+#else
+	"#pragma optimize(on)\n"
+	"#pragma debug(off)\n"
 	"#extension GL_ARB_gpu_shader5 : enable\n";
 #endif
 

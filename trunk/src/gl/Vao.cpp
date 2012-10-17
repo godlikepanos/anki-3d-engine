@@ -38,9 +38,7 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, GLuint attribVarLocation,
 
 	ANKI_CHECK_GL_ERROR();
 
-#if !defined(NDEBUG)
 	++attachments;
-#endif
 }
 
 //==============================================================================
@@ -66,9 +64,7 @@ void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
 	unbind();
 	ANKI_CHECK_GL_ERROR();
 
-#if !defined(NDEBUG)
 	++attachments;
-#endif
 }
 
 } // end namespace anki

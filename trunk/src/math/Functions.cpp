@@ -1,4 +1,5 @@
 #include "anki/math/Functions.h"
+#include "anki/Config.h"
 
 namespace anki {
 
@@ -14,7 +15,10 @@ static Scalar polynomialSinQuadrant(const Scalar a)
 template<typename Scalar>
 static void sinCosInternal(const Scalar a_, Scalar& sina, Scalar& cosa)
 {
-#if NDEBUG
+#if ANKI_DEBUG
+	sina = sin(a_);
+	cosa = cos(a_);
+#else
 	Bool negative = false;
 	Scalar a = a_;
 	if(a < 0.0)
@@ -57,9 +61,6 @@ static void sinCosInternal(const Scalar a_, Scalar& sina, Scalar& cosa)
 	{
 		sina = -sina;
 	}
-#else
-	sina = sin(a_);
-	cosa = cos(a_);
 #endif
 }
 
