@@ -1,0 +1,2 @@
+#!/bin/sh
+cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=ON -DANKI_ARCH=32 -DANKI_EXTRA_INCLUDE_DIRS="/work/halti/khronos/arm/winsys_fbdev;/work/halti;/work/halti/kernel/include" -DANKI_EXTRA_LIB_DIRS=/work/halti/progs -DANKI_WINDOW_BACKEND=EGLFBDEV ..
