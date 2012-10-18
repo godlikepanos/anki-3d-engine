@@ -290,7 +290,6 @@ protected:
 /// (4): The \<value\> can be left empty for build-in variables
 /// (5): The \<const\> will mark a variable as constant and it cannot be changed
 ///      at all. Defauls is 0
-
 class Material: public MaterialProperties, public NonCopyable
 {
 public:
@@ -343,9 +342,6 @@ private:
 	typedef ConstCharPtrHashMap<MaterialVariable*>::Type
 		NameToVariableHashMap;
 
-	/// From "GL_ZERO" return GL_ZERO
-	static ConstCharPtrHashMap<GLenum>::Type txtToBlengGlEnum;
-
 	std::string fname; ///< filename
 
 	/// All the material variables
@@ -372,6 +368,6 @@ private:
 	void populateVariables(const MaterialShaderProgramCreator& mspc);
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif
