@@ -16,20 +16,20 @@ uniform sampler2D depthMap;
 
 in vec2 vTexCoords;
 
-out vec2 fColor;
+out uvec2 fColor;
 
 layout(pixel_center_integer) in vec4 gl_FragCoord;
+
+#define W (RENDERER_WIDTH / TILES_X_COUNT)
+#define H (RENDERER_HEIGHT / TILES_Y_COUNT)
 
 //==============================================================================
 void main()
 {
-	const int W = RENDERER_WIDTH / TILES_X_COUNT;
-	const int H = RENDERER_HEIGHT / TILES_Y_COUNT;
+	const ivec2 coord = ivec2(gl_FragCoord.xy * vec2(W, H));
 
 	float maxDepth = -10000.0;
 	float minDepth = 100000.0;
-
-	ivec2 coord = ivec2(gl_FragCoord.xy * vec2(W, H));
 
 	for(int i = 0; i < W; i++)
 	{
@@ -37,25 +37,12 @@ void main()
 		{
 			float depth = texelFetch(depthMap, coord + ivec2(i, j), 0).r;
 
-			if(depth < minDepth)
-			{
-				minDepth = depth;
-			}
-			if(depth > maxDepth)
-			{
-				maxDepth = depth;
-			}
+			minDepth = min(depth, minDepth);
+			maxDepth = max(depth, maxDepth);
 		}
 	}
 
-#if 0
-	float linearMin = linearizeDepth(minDepth, near, far);
-	float linearMax = linearizeDepth(maxDepth, near, far);
-	fColor = vec2(linearMin,
-		linearMax);
-#else
-	fColor = vec2(minDepth, maxDepth);
-#endif
+	fColor = uvec2(floatBitsToUint(minDepth), floatBitsToUint(maxDepth));
 }
 
 

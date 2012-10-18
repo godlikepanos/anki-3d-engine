@@ -273,8 +273,12 @@ void Texture::setFilteringNoBind(TextureFilteringType filterType) const
 //==============================================================================
 void Texture::readPixels(void* pixels, U level)
 {
+#if ANKI_GL == ANKI_GL_DESKTOP
 	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
 	glGetTexImage(target, level, format, type, pixels);
+#else
+	ANKI_ASSERT(0 && "Not supported on GLES");
+#endif
 }
 
 } // end namespace anki

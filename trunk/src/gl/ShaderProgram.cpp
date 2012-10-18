@@ -434,7 +434,7 @@ void ShaderProgram::destroy()
 GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 	const char* preproc, GLenum type)
 {
-	uint glId = 0;
+	GLuint glId = 0;
 	const char* sourceStrs[1] = {nullptr};
 
 	// create the shader
@@ -449,14 +449,14 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 	glShaderSource(glId, 1, sourceStrs, NULL);
 	glCompileShader(glId);
 
-	int success;
+	GLint success;
 	glGetShaderiv(glId, GL_COMPILE_STATUS, &success);
 
 	if(!success)
 	{
 		// Get info log
-		int infoLen = 0;
-		int charsWritten = 0;
+		GLint infoLen = 0;
+		GLint charsWritten = 0;
 		Vector<char> infoLog;
 
 		glGetShaderiv(glId, GL_INFO_LOG_LENGTH, &infoLen);
@@ -483,6 +483,7 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 		// Throw
 		throw ANKI_EXCEPTION(err.str());
 	}
+	ANKI_ASSERT(glId != 0);
 
 	return glId;
 }

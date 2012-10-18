@@ -34,7 +34,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 
 	// Create block
 	StringList block;
-	block.push_back("layout(std140, row_major, binding = 0) "
+	block.push_back("/*layout(std140, row_major, binding = 0) "
 		"uniform commonBlock\n{");
 	for(Input* in : inputs)
 	{
@@ -46,7 +46,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 
 		block.push_back("\tuniform " + in->type + " " + in->name + "_;");
 	}
-	block.push_back("};\n");
+	block.push_back("};*/\n");
 
 	if(block.size() > 2)
 	{
