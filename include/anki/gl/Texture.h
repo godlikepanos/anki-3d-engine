@@ -253,7 +253,7 @@ public:
 	/// Generate new mipmaps
 	void genMipmap();
 
-	/// Read the data from the texture
+	/// Read the data from the texture. Available only in GL desktop
 	void readPixels(void* data, U level = 0);
 
 private:

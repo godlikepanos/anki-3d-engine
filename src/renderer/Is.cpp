@@ -334,8 +334,8 @@ void Is::initInternal(const RendererInitializer& initializer)
 	}
 
 	// min max FBO
-	Renderer::createFai(TILES_X_COUNT, TILES_Y_COUNT, GL_RG32F, GL_RG,
-		GL_FLOAT, minMaxFai);
+	Renderer::createFai(TILES_X_COUNT, TILES_Y_COUNT, GL_RG32UI,
+		GL_RG_INTEGER, GL_UNSIGNED_INT, minMaxFai);
 	minMaxFai.setFiltering(Texture::TFT_NEAREST);
 	minMaxTilerFbo.create();
 	minMaxTilerFbo.setColorAttachments({&minMaxFai});
@@ -444,7 +444,13 @@ void Is::updateTiles()
 	r->drawQuad();
 
 	F32 pixels[TILES_Y_COUNT][TILES_X_COUNT][2];
+#if ANKI_GL == ANKI_GL_DESKTOP
+	// It seems read from texture is a bit faster than readpixels on nVidia
 	minMaxFai.readPixels(pixels);
+#else
+	glReadPixels(0, 0, TILES_X_COUNT, TILES_Y_COUNT, GL_RG_INTEGER,
+		GL_UNSIGNED_INT, &pixels[0][0][0]);
+#endif
 
 	// Update the rest of the tile stuff in parallel
 	// 

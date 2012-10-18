@@ -134,7 +134,7 @@ void Renderer::createFai(U32 width, U32 height, int internalFormat,
 	init.type = type;
 	init.data = NULL;
 	init.mipmapping = false;
-	init.filteringType = Texture::TFT_LINEAR;
+	init.filteringType = Texture::TFT_NEAREST;
 	init.repeat = false;
 	init.anisotropyLevel = 0;
 
