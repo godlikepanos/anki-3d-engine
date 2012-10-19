@@ -18,7 +18,7 @@ extern void akassert(bool expr, const char* exprTxt, const char* file,
 
 } // end namespace
 
-#	define ANKI_ASSERT(x) akassert((x), #x, __FILE__, __LINE__, __func__)
+#	define ANKI_ASSERT(x) akassert((x), #x, ANKI_FILE, __LINE__, ANKI_FUNC)
 #	define ANKI_ASSERTS_ENABLED 1
 
 #endif

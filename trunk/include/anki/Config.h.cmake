@@ -24,9 +24,12 @@
 #endif
 
 #if defined(NDEBUG)
-#	define ANKI_DEBUG NDEBUG
+#	define ANKI_DEBUG !NDEBUG
 #else
 #	define ANKI_DEBUG 0
 #endif
+
+#define ANKI_FILE __BASE_FILE__
+#define ANKI_FUNC __func__
 
 #endif

@@ -11,7 +11,7 @@ void glConditionalThrowException(const char* file, int line, const char* func);
 
 #if ANKI_DEBUG
 #	define ANKI_CHECK_GL_ERROR() \
-		glConditionalThrowException(__FILE__, __LINE__, __func__)
+		glConditionalThrowException(ANKI_FILE, __LINE__, ANKI_FUNC)
 #else
 #	define ANKI_CHECK_GL_ERROR() ((void)0)
 #endif

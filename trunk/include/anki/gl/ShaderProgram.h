@@ -144,6 +144,8 @@ public:
 	}
 	void set(const Texture& tex) const;
 
+	void set(const Texture* const texes[], const U32 count) const;
+
 	void set(const F32 x[], uint size) const;
 	void set(const Vec2 x[], uint size) const;
 	void set(const Vec3 x[], uint size) const;

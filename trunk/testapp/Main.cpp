@@ -110,7 +110,7 @@ void init()
 	spot->setSpecularColor(Vec4(1.0));
 	spot->loadTexture("gfx/lights/flashlight.tga");
 	spot->setDistance(30.0);
-	spot->setShadowEnabled(false);
+	spot->setShadowEnabled(true);
 
 
 	spot = new SpotLight("spot1", &scene, Movable::MF_NONE, nullptr);

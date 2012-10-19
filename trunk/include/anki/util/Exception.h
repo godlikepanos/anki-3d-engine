@@ -1,6 +1,7 @@
 #ifndef ANKI_UTIL_EXCEPTION_H
 #define ANKI_UTIL_EXCEPTION_H
 
+#include "anki/Config.h"
 #include <exception>
 #include <string>
 
@@ -45,6 +46,6 @@ private:
 
 /// Macro for easy throwing
 #define ANKI_EXCEPTION(x) Exception((std::string() + x).c_str(), \
-	__FILE__, __LINE__, __func__)
+	ANKI_FILE, __LINE__, ANKI_FUNC)
 
 #endif

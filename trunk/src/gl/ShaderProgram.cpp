@@ -123,6 +123,24 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 }
 
 //==============================================================================
+void ShaderProgramUniformVariable::set(const Texture* const texes[], 
+	const U32 count) const
+{
+	doCommonSetCode();
+	ANKI_ASSERT(count > 128);
+	ANKI_ASSERT(count <= size);
+	Array<GLint, 128> units;
+
+	for(U32 i = 0; i < count; i++)
+	{
+		const Texture* tex = texes[i];
+		units[i] = tex->bind();
+	}
+
+	glUniform1iv(getLocation(), count, &units[0]);
+}
+
+//==============================================================================
 /// XXX
 template<typename T>
 static Bool checkType(GLenum glDataType);
@@ -589,6 +607,21 @@ void ShaderProgram::initUniAndAttribVars()
 		glGetActiveUniform(glId, i, sizeof(name_), &length,
 			&size, &type, &name_[0]);
 		name_[length] = '\0';
+
+		// In case of uniform arrays some implementations (nVidia) on 
+		// GL_ACTIVE_UNIFORMS they return the number of uniforms that are inside 
+		// that uniform array in addition to the first element (it will count 
+		// for example the floats[1]). Some other implementations don't (Mali 
+		// T6xx). Also in some cases with big arrays (IS shader) this will 
+		// overpopulate the uniforms vector and hash map. So, to solve this if 
+		// the uniform name has something like this "[N]" where N != 0 then 
+		// ignore the uniform
+		if(strchr(&name_[0], '[') != nullptr 
+			&& strstr(&name_[0], "[0]") != nullptr)
+		{
+			ANKI_ASSERT(size > 1);
+			continue;
+		}
 
 		// -1 means in uniform block
 		GLint loc = glGetUniformLocation(glId, &name_[0]);

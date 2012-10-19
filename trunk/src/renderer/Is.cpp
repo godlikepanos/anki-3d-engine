@@ -755,25 +755,15 @@ void Is::lightPass()
 		r->getMs().getDepthFai());
 
 #if 1
+	lightPassProg->findUniformVariable("shadowMaps[0]").set(
+		&shadowmaps[0], (U32)spotsShadowCount);
+#else
 	for(U i = 0; i < spotsShadowCount; i++)
 	{
 		char str[128];
 		sprintf(str, "shadowMaps[%u]", (unsigned int)i);
 
 		lightPassProg->findUniformVariable(str).set(*shadowmaps[i]);
-	}
-#endif
-
-#if 0
-	{
-	SpotLight& light = *visibleSpotShadowLights[0];
-	static const Mat4 biasMat4(0.5, 0.0, 0.0, 0.5, 0.0, 0.5, 0.0, 0.5, 
-				0.0, 0.0, 0.5, 0.5, 0.0, 0.0, 0.0, 1.0);
-	Mat4 matrix = biasMat4 * light.getProjectionMatrix() *
-				Mat4::combineTransformations(light.getViewMatrix(),
-				Mat4(cam->getWorldTransform()));
-
-	lightPassProg->findUniformVariable("matrix").set(matrix);
 	}
 #endif
 
