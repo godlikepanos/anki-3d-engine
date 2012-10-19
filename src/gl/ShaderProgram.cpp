@@ -569,7 +569,7 @@ void ShaderProgram::initUniAndAttribVars()
 	attribs.shrink_to_fit();
 	for(int i = 0; i < num; i++) // loop all attributes
 	{
-		ShaderProgramAttributeVariable& var = attribs[i];
+		ShaderProgramAttributeVariable& var = attribs[i]; bug /// XXX BUG
 
 		// Name
 		glGetActiveAttrib(glId, i, sizeof(name_), &length,
@@ -598,11 +598,31 @@ void ShaderProgram::initUniAndAttribVars()
 	// uni locations
 	//
 	glGetProgramiv(glId, GL_ACTIVE_UNIFORMS, &num);
-	unis.resize(num);
+	U unisCount = num;
+	
+	// Count the _useful_ uniforms
+	for(GLint i = 0; i < num; i++)
+	{
+		glGetActiveUniform(glId, i, sizeof(name_), &length,
+			&size, &type, &name_[0]);
+		name_[length] = '\0';
+
+		// See bellow for info
+		if(strchr(&name_[0], '[') != nullptr 
+			&& strstr(&name_[0], "[0]") != nullptr)
+		{
+			ANKI_ASSERT(size > 1);
+			continue;
+		}
+
+		--unisCount;
+	}
+
+	unis.resize(unisCount);
 	unis.shrink_to_fit();
 	for(GLint i = 0; i < num; i++) // loop all uniforms
 	{
-		ShaderProgramUniformVariable& var = unis[i];
+		ShaderProgramUniformVariable& var = unis[i]; bug/// XXX BUG
 
 		glGetActiveUniform(glId, i, sizeof(name_), &length,
 			&size, &type, &name_[0]);
