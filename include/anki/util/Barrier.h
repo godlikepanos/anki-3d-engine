@@ -2,6 +2,7 @@
 #define ANKI_UTIL_BARRIER_H
 
 #include "anki/util/Assert.h"
+#include "anki/util/StdTypes.h"
 #include <thread>
 #include <condition_variable>
 #include <mutex>
@@ -12,16 +13,16 @@ namespace anki {
 class Barrier
 {
 public:
-	Barrier(uint32_t count_)
+	Barrier(U32 count_)
 		: threshold(count_), count(count_), generation(0)
 	{
 		ANKI_ASSERT(count_ != 0);
 	}
 
-	bool wait()
+	Bool wait()
 	{
 		std::unique_lock<std::mutex> lock(mtx);
-		uint32_t gen = generation;
+		U32 gen = generation;
 
 		if(--count == 0)
 		{
@@ -41,9 +42,9 @@ public:
 private:
 	std::mutex mtx;
 	std::condition_variable cond;
-	uint32_t threshold;
-	uint32_t count;
-	uint32_t generation;
+	U32 threshold;
+	U32 count;
+	U32 generation;
 };
 
 } // end namespace anki

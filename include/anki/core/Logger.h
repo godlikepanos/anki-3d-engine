@@ -3,6 +3,7 @@
 
 #include "anki/util/Observer.h"
 #include "anki/util/Singleton.h"
+#include "anki/Config.h"
 #include <array>
 #include <mutex>
 #include <sstream> // For the macros
@@ -58,7 +59,7 @@ typedef Singleton<Logger> LoggerSingleton;
 	{ \
 		std::stringstream ss; \
 		ss << msg; \
-		LoggerSingleton::get().write(__FILE__, __LINE__, __func__, \
+		LoggerSingleton::get().write(ANKI_FILE, __LINE__, ANKI_FUNC, \
 			t, ss.str().c_str()); \
 	} while(false);
 

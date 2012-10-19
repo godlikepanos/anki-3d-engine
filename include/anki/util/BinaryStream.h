@@ -2,6 +2,7 @@
 #define ANKI_UTIL_BINARY_STREAM_H
 
 #include "anki/util/Exception.h"
+#include "anki/util/StdTypes.h"
 #include <iostream>
 
 namespace anki {
@@ -30,11 +31,11 @@ public:
 
 	/// Read unsigned int (32bit)
 	/// @exception Exception
-	uint32_t readUint();
+	U32 readUint();
 
 	/// Read float (32bit)
 	/// @exception Exception
-	float readFloat();
+	F32 readFloat();
 
 	/// Read a string. It reads the size as an unsigned int and then it
 	/// reads the characters
