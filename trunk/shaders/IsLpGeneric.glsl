@@ -12,14 +12,6 @@
 #pragma anki include "shaders/Pack.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
-#if !MAX_LIGHTS_PER_TILE || !TILES_X_COUNT || !TILES_Y_COUNT
-#	error "See file"
-#endif
-
-#if !MAX_POINT_LIGHTS || !MAX_SPOT_LIGHTS
-#	error "See file"
-#endif
-
 #define ATTENUATION_FINE 0
 
 #define ATTENUATION_BOOST (0.1)
@@ -51,7 +43,7 @@ layout(std140, row_major, binding = 0) uniform commonBlock
 struct Light
 {
 	vec4 posAndRadius; ///< xyz: Light pos in eye space. w: The radius
-	vec4 diffuseColor;
+	vec4 diffuseColorShadowmapId;
 	vec4 specularColor;
 };
 
@@ -59,6 +51,7 @@ struct SpotLight
 {
 	Light light;
 	vec4 lightDirection;
+	vec4 outerCosInnerCos;
 	mat4 texProjectionMat;
 };
 
@@ -151,7 +144,7 @@ vec3 calcPhong(in vec3 fragPosVspace, in vec3 diffuse,
 	in vec2 specularAll, in vec3 normal, in Light light, in vec3 rayDir)
 {
 	// Diffuse
-	vec3 difCol = diffuse * light.diffuseColor.rgb;
+	vec3 difCol = diffuse * light.diffuseColorShadowmapId.rgb;
 
 	// Specular
 	vec3 eyeVec = normalize(fragPosVspace);
@@ -170,8 +163,8 @@ float calcSpotFactor(in SpotLight light, in vec3 fragPosVspace)
 
 	float costheta = dot(l, light.lightDirection.xyz);
 	float spotFactor = smoothstep(
-		light.light.diffuseColor.w, 
-		light.light.specularColor.w, 
+		light.outerCosInnerCos.x, 
+		light.outerCosInnerCos.y, 
 		costheta);
 
 	return spotFactor;
@@ -286,8 +279,11 @@ void main()
 
 		//if(midFactor > 0.0)
 		{
-			float shadow = calcShadowFactor(slights[lightId], fragPosVspace,
-				shadowMaps[i]);
+			const uint shadowmapId = floatBitsToUint(
+					slights[lightId].light.diffuseColorShadowmapId.w);
+
+			const float shadow = calcShadowFactor(slights[lightId], 
+				fragPosVspace, shadowMaps[shadowmapId]);
 
 			const vec3 col = calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
 				specularAll, normal, slights[lightId].light, ray);
@@ -325,9 +321,14 @@ void main()
 #endif
 
 #if 0
-	if(tiles[vInstanceId].lightsCount[0] > 0)
+	if(tiles[vInstanceId].lightsCount[2] == 1)
 	{
 		fColor += vec3(0.0, 0.1, 0.0);
+	}
+
+	if(tiles[vInstanceId].lightsCount[2] == 2)
+	{
+		fColor += vec3(0.0, 0.0, 0.1);
 	}
 #endif
 }

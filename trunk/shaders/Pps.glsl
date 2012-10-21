@@ -6,16 +6,14 @@
 
 #pragma anki include "shaders/photoshop_filters.glsl"
 
-uniform sampler2D ppsPrePassFai;
+uniform sampler2D isFai;
 uniform sampler2D ppsHdrFai;
+uniform sampler2D ppsSsaoFai;
 
 in vec2 vTexCoords;
 
-layout(location = 0) out vec3 fFragColor;
+layout(location = 0) out vec3 fColor;
 
-
-//==============================================================================
-// GrayScale                                                                   =
 //==============================================================================
 vec3 grayScale(in vec3 col)
 {
@@ -23,9 +21,6 @@ vec3 grayScale(in vec3 col)
 	return vec3(grey);
 }
 
-
-//==============================================================================
-// saturation                                                                  =
 //==============================================================================
 vec3 saturation(in vec3 col, in float factor)
 {
@@ -35,13 +30,10 @@ vec3 saturation(in vec3 col, in float factor)
 	return mix(intensity, col, factor);
 }
 
-
-//==============================================================================
-// main                                                                        =
 //==============================================================================
 void main(void)
 {
-	fFragColor = texture2D(ppsPrePassFai, vTexCoords).rgb;
+	fColor = texture2D(isFai, vTexCoords).rgb;
 
 	/*const float gamma = 0.7;
 	color.r = pow(color.r, 1.0 / gamma);
@@ -50,9 +42,14 @@ void main(void)
 
 #if defined(HDR_ENABLED)
 	vec3 hdr = texture2D(ppsHdrFai, vTexCoords).rgb;
-	fFragColor += hdr;
+	fColor += hdr;
 #endif
 
-	fFragColor = BlendHardLight(vec3(0.6, 0.62, 0.4), fFragColor);
+#if defined(SSAO_ENABLED)
+	float ssao = texture2D(ppsSsaoFai, vTexCoords).r;
+	fColor *= ssao;
+#endif
+
+	fColor = BlendHardLight(vec3(0.6, 0.62, 0.4), fColor);
 }
 

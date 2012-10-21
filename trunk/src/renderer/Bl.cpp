@@ -7,6 +7,7 @@ namespace anki {
 //==============================================================================
 void Bl::init(const Renderer::Initializer& initializer)
 {
+#if 0
 	enabled = initializer.pps.bl.enabled;
 	blurringIterationsNum = initializer.pps.bl.blurringIterationsNum;
 	sideBlurFactor = initializer.pps.bl.sideBlurFactor;
@@ -66,11 +67,13 @@ void Bl::init(const Renderer::Initializer& initializer)
 
 	sideBlurMap.load("engine-rsrc/side-blur.png");
 	sideBlurSProg.load("shaders/PpsSideBlur.glsl");
+#endif
 }
 
 //==============================================================================
 void Bl::runSideBlur()
 {
+#if 0
 	if(sideBlurFactor == 0.0)
 	{
 		return;
@@ -87,11 +90,13 @@ void Bl::runSideBlur()
 	sideBlurSProg->findUniformVariable("factor").set(sideBlurFactor);
 
 	r->drawQuad();
+#endif
 }
 
 //==============================================================================
 void Bl::runBlur()
 {
+#if 0
 	GlStateSingleton::get().disable(GL_BLEND);
 
 	// Setup programs here. Reverse order
@@ -122,6 +127,7 @@ void Bl::runBlur()
 		vBlurSProg->bind();
 		r->drawQuad();
 	}
+#endif
 }
 
 //==============================================================================

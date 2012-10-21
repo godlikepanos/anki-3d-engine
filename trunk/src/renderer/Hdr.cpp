@@ -11,23 +11,19 @@ Hdr::~Hdr()
 //==============================================================================
 void Hdr::initFbo(Fbo& fbo, Texture& fai)
 {
-	try
-	{
-		Renderer::createFai(width, height, GL_RGB8, GL_RGB, GL_FLOAT, fai);
+	Renderer::createFai(width, height, GL_RGB8, GL_RGB, GL_FLOAT, fai);
 
-		// create FBO
-		fbo.create();
-		fbo.setColorAttachments({&fai});
-	}
-	catch(std::exception& e)
+	// create FBO
+	fbo.create();
+	fbo.setColorAttachments({&fai});
+	if(!fbo.isComplete())
 	{
-		throw ANKI_EXCEPTION("Cannot create deferred shading "
-			"post-processing stage HDR passes FBO") << e;
+		throw ANKI_EXCEPTION("Fbo not complete");
 	}
 }
 
 //==============================================================================
-void Hdr::init(const Renderer::Initializer& initializer)
+void Hdr::initInternal(const Renderer::Initializer& initializer)
 {
 	enabled = initializer.pps.hdr.enabled;
 
@@ -40,6 +36,9 @@ void Hdr::init(const Renderer::Initializer& initializer)
 
 	width = renderingQuality * r->getWidth();
 	height = renderingQuality * r->getHeight();
+	exposure = initializer.pps.hdr.exposure;
+	blurringDist = initializer.pps.hdr.blurringDist;
+	blurringIterationsCount = initializer.pps.hdr.blurringIterationsCount;
 
 	initFbo(toneFbo, toneFai);
 	initFbo(hblurFbo, hblurFai);
@@ -48,22 +47,48 @@ void Hdr::init(const Renderer::Initializer& initializer)
 	fai.setFiltering(Texture::TFT_LINEAR);
 
 	// init shaders
+	Vec4 block(exposure, 0.0, 0.0, 0.0);
+	commonUbo.create(sizeof(Vec4), &block);
+
 	toneSProg.load("shaders/PpsHdr.glsl");
 
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
-	std::string pps = "#define HPASS\n#define COL_RGB\n#define IMG_DIMENSION "
-		+ std::to_string(width) + ".0\n";
-	hblurSProg.load(SHADER_FILENAME, pps.c_str());
+	F32 blurringDistRealX = F32(blurringDist / width);
+	F32 blurringDistRealY = F32(blurringDist / height);
 
-	pps = "#define VPASS\n#define COL_RGB\n#define IMG_DIMENSION "
-		+ std::to_string(height) + ".0\n";
-	vblurSProg.load(SHADER_FILENAME, pps.c_str());
+	std::string pps =
+		"#define HPASS\n"
+		"#define COL_RGB\n"
+		"#define BLURRING_DIST " + std::to_string(blurringDistRealX) + "\n"
+		"#define IMG_DIMENSION " + std::to_string(width) + ".0\n";
+	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
+		SHADER_FILENAME, pps.c_str()).c_str());
 
-	// Set the uniforms
-	setBlurringDistance(initializer.pps.hdr.blurringDist);
-	blurringIterationsNum = initializer.pps.hdr.blurringIterationsNum;
-	setExposure(initializer.pps.hdr.exposure);
+	pps =
+		"#define VPASS\n"
+		"#define COL_RGB\n"
+		"#define BLURRING_DIST " + std::to_string(blurringDistRealY) + "\n"
+		"#define IMG_DIMENSION " + std::to_string(height) + ".0\n";
+	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
+		SHADER_FILENAME, pps.c_str()).c_str());
+
+	// Set timestamps
+	parameterUpdateTimestamp = Timestamp::getTimestamp();
+	commonUboUpdateTimestamp = Timestamp::getTimestamp();
+}
+
+//==============================================================================
+void Hdr::init(const RendererInitializer& initializer)
+{
+	try
+	{
+		initInternal(initializer);
+	}
+	catch(const std::exception& e)
+	{
+		throw ANKI_EXCEPTION("Failed to init PPS HDR") << e;
+	}
 }
 
 //==============================================================================
@@ -81,31 +106,38 @@ void Hdr::run()
 
 	// pass 0
 	toneFbo.bind();
-	toneSProg.bind();
-	toneSProg.findUniformVariable("fai").set(
-		r->getPps().getPrePassFai());
+	toneSProg->bind();
+
+	if(parameterUpdateTimestamp > commonUboUpdateTimestamp)
+	{
+		Vec4 block(exposure, 0.0, 0.0, 0.0);
+		commonUbo.write(&block);
+		commonUboUpdateTimestamp = Timestamp::getTimestamp();
+	}
+	commonUbo.setBinding(0);
+	toneSProg->findUniformVariable("fai").set(r->getIs().getFai());
 	r->drawQuad();
 
 	// blurring passes
-	for(uint32_t i = 0; i < blurringIterationsNum; i++)
+	for(U32 i = 0; i < blurringIterationsCount; i++)
 	{
 		// hpass
 		hblurFbo.bind();
-		hblurSProg.bind();
+		hblurSProg->bind();
 		if(i == 0)
 		{
-			hblurSProg.findUniformVariable("img").set(toneFai);
+			hblurSProg->findUniformVariable("img").set(toneFai);
 		}
 		else if(i == 1)
 		{
-			hblurSProg.findUniformVariable("img").set(fai);
+			hblurSProg->findUniformVariable("img").set(fai);
 		}
 		r->drawQuad();
 
 		// vpass
 		vblurFbo.bind();
-		vblurSProg.bind();
-		vblurSProg.findUniformVariable("img").set(hblurFai);
+		vblurSProg->bind();
+		vblurSProg->findUniformVariable("img").set(hblurFai);
 		r->drawQuad();
 	}
 }

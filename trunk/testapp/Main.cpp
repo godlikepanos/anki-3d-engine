@@ -229,8 +229,7 @@ void mainLoopExtra()
 
 	if(in.getKey(KC_P) == 1)
 	{
-		/*SceneSingleton::get().getActiveCamera().
-			getFrustumable()->getFrustum().setFar(250.0);*/
+		MainRendererSingleton::get().getPps().getHdr().setExposure(20);
 	}
 
 	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
@@ -345,9 +344,9 @@ void initSubsystems(int argc, char* argv[])
 	initializer.is.sm.resolution = 512;
 	initializer.pps.hdr.enabled = true;
 	initializer.pps.hdr.renderingQuality = 0.25;
-	initializer.pps.hdr.blurringDist = 1.0;
-	initializer.pps.hdr.blurringIterationsNum = 2;
-	initializer.pps.hdr.exposure = 4.0;
+	initializer.pps.hdr.blurringDist = 0.1;
+	initializer.pps.hdr.blurringIterationsCount = 2;
+	initializer.pps.hdr.exposure = 5.0;
 	initializer.pps.ssao.blurringIterationsNum = 4;
 	initializer.pps.ssao.enabled = true;
 	initializer.pps.ssao.renderingQuality = 0.3;

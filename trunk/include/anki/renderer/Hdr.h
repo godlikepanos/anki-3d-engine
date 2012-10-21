@@ -6,6 +6,8 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/Resource.h"
+#include "anki/core/Timestamp.h"
+#include "anki/gl/Ubo.h"
 
 namespace anki {
 
@@ -26,55 +28,23 @@ public:
 
 	/// @name Accessors
 	/// @{
-	float getExposure() const
+	F32 getExposure() const
 	{
 		return exposure;
 	}
-	void setExposure(const float x)
+	void setExposure(const F32 x)
 	{
 		exposure = x;
-		toneSProg.bind();
-		toneSProg.findUniformVariable("exposure").set(exposure);
+		parameterUpdateTimestamp = Timestamp::getTimestamp();
 	}
 
-	uint getBlurringIterationsNum() const
+	uint getBlurringIterationsCount() const
 	{
-		return blurringIterationsNum;
+		return blurringIterationsCount;
 	}
-	void setBlurringIterationsNum(const uint x)
+	void setBlurringIterationsCount(const uint x)
 	{
-		blurringIterationsNum = x;
-	}
-
-	float getBlurringDistance() const
-	{
-		return blurringDist;
-	}
-	void setBlurringDistance(const float x)
-	{
-		blurringDist = x;
-
-		hblurSProg.bind();
-		hblurSProg.findUniformVariable("blurringDist").set(
-			float(blurringDist / width));
-		vblurSProg.bind();
-		vblurSProg.findUniformVariable("blurringDist").set(
-			float(blurringDist / height));
-	}
-
-	float getRenderingQuality() const
-	{
-		return renderingQuality;
-	}
-
-	const Texture& getToneFai() const
-	{
-		return toneFai;
-	}
-
-	const Texture& getHblurFai() const
-	{
-		return hblurFai;
+		blurringIterationsCount = x;
 	}
 
 	const Texture& getFai() const
@@ -84,23 +54,27 @@ public:
 	/// @}
 
 private:
-	uint32_t width;
-	uint32_t height;
-	float exposure = 4.0; ///< How bright is the HDR
-	uint32_t blurringIterationsNum = 2; ///< The blurring iterations of the tone map
-	float blurringDist = 1.0; ///< Distance in blurring
-	float renderingQuality = 0.5;
+	U32 width;
+	U32 height;
+	F32 exposure = 4.0; ///< How bright is the HDR
+	U32 blurringIterationsCount = 2; ///< The blurring iterations of the tone map
+	F32 blurringDist = 1.0; ///< Distance in blurring
+	F32 renderingQuality = 0.5;
 	Fbo toneFbo;
 	Fbo hblurFbo;
 	Fbo vblurFbo;
-	ShaderProgramResource toneSProg;
-	ShaderProgramResource hblurSProg;
-	ShaderProgramResource vblurSProg;
+	ShaderProgramResourcePointer toneSProg;
+	ShaderProgramResourcePointer hblurSProg;
+	ShaderProgramResourcePointer vblurSProg;
 	Texture toneFai; ///< Vertical blur pass FAI
 	Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
 	Texture fai; ///< The final FAI
+	U32 parameterUpdateTimestamp = Timestamp::getTimestamp();
+	U32 commonUboUpdateTimestamp = Timestamp::getTimestamp();
+	Ubo commonUbo;
 
 	void initFbo(Fbo& fbo, Texture& fai);
+	void initInternal(const RendererInitializer& initializer);
 };
 
 } // end namespace

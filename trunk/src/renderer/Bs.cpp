@@ -11,6 +11,7 @@ Bs::~Bs()
 //==============================================================================
 void Bs::createFbo()
 {
+#if 0
 	try
 	{
 		fbo.create();
@@ -23,6 +24,7 @@ void Bs::createFbo()
 	{
 		throw ANKI_EXCEPTION("Failed to create blending stage FBO") << e;
 	}
+#endif
 }
 
 //==============================================================================

@@ -18,12 +18,11 @@ class ShaderProgram;
 class Pps: private RenderingPass
 {
 public:
-	Pps(Renderer* r_);
+	Pps(Renderer* r);
 	~Pps();
 
 	void init(const RendererInitializer& initializer);
-	void runPrePass();
-	void runPostPass();
+	void run();
 
 	/// @name Accessors
 	/// @{
@@ -50,14 +49,9 @@ public:
 		return bl;
 	}
 
-	const Texture& getPrePassFai() const
+	const Texture& getFai() const
 	{
-		return prePassFai;
-	}
-
-	const Texture& getPostPassFai() const
-	{
-		return postPassFai;
+		return fai;
 	}
 	/// @}
 
@@ -69,14 +63,11 @@ private:
 	Bl bl;
 	/// @}
 
-	Fbo prePassFbo;
-	Fbo postPassFbo;
+	Fbo fbo;
+	ShaderProgramResourcePointer prog;
+	Texture fai;
 
-	ShaderProgramResource prePassSProg;
-	ShaderProgramResource postPassSProg;
-
-	Texture prePassFai; ///< FAI #1
-	Texture postPassFai; ///< FAI #2
+	void initInternal(const RendererInitializer& initializer);
 };
 
 

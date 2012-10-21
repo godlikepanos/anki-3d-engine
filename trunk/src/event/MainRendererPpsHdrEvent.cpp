@@ -18,8 +18,8 @@ MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(float startTime,
 	const Hdr& hdr =
 		MainRendererSingleton::get().getPps().getHdr();
 	originalData.exposure = hdr.getExposure();
-	originalData.blurringIterationsNum = hdr.getBlurringIterationsNum();
-	originalData.blurringDist = hdr.getBlurringDistance();
+	originalData.blurringIterationsNum = hdr.getBlurringIterationsCount();
+	//originalData.blurringDist = hdr.getBlurringDistance();
 }
 
 //==============================================================================
@@ -50,12 +50,12 @@ void MainRendererPpsHdrEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 
 	hdr.setExposure(interpolate(originalData.exposure, finalData.exposure, dp));
 
-	hdr.setBlurringIterationsNum(
+	hdr.setBlurringIterationsCount(
 		interpolate(originalData.blurringIterationsNum,
 		finalData.blurringIterationsNum, dp));
 
-	hdr.setBlurringDistance(interpolate(originalData.blurringDist,
-		finalData.blurringDist, dp));
+	/*hdr.setBlurringDistance(interpolate(originalData.blurringDist,
+		finalData.blurringDist, dp));*/
 }
 
 } // end namespace
