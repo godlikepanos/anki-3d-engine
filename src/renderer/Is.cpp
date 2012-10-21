@@ -14,7 +14,7 @@ namespace anki {
 struct ShaderLight
 {
 	Vec4 posAndRadius; ///< xyz: Light pos in eye space. w: The radius
-	Vec4 diffuseColor;
+	Vec4 diffuseColorShadowmapId;
 	Vec4 specularColor;
 };
 
@@ -23,7 +23,8 @@ struct ShaderPointLight: ShaderLight
 
 struct ShaderSpotLight: ShaderLight
 {
-	Vec4 lightDirection;
+	Vec4 lightDirection; ///< xyz: Dir vector
+	Vec4 outerCosInnerCos; ///< x: outer angle cos, y: inner
 	Mat4 texProjectionMat;
 };
 
@@ -88,7 +89,7 @@ struct WritePointLightsUbo: ThreadJob
 				cam->getViewMatrix());
 
 			pl.posAndRadius = Vec4(pos, light.getRadius());
-			pl.diffuseColor = light.getDiffuseColor();
+			pl.diffuseColorShadowmapId = light.getDiffuseColor();
 			pl.specularColor = light.getSpecularColor();
 		}
 	}
@@ -122,16 +123,18 @@ struct WriteSpotLightsUbo: ThreadJob
 
 			slight.posAndRadius = Vec4(pos, light.getDistance());
 
-			slight.diffuseColor = Vec4(light.getDiffuseColor().xyz(),
-				light.getOuterAngleCos());
+			slight.diffuseColorShadowmapId = Vec4(light.getDiffuseColor().xyz(),
+				0);
 
-			slight.specularColor = Vec4(light.getSpecularColor().xyz(),
-				light.getInnerAngleCos());
+			slight.specularColor = light.getSpecularColor();
 
 			Vec3 lightDir = -light.getWorldTransform().getRotation().getZAxis();
 			lightDir = cam->getViewMatrix().getRotationPart() * lightDir;
 			slight.lightDirection = Vec4(lightDir, 0.0);
 			
+			slight.outerCosInnerCos = Vec4(light.getOuterAngleCos(),
+				light.getInnerAngleCos(), 1.0, 1.0);
+
 			static const Mat4 biasMat4(
 				0.5, 0.0, 0.0, 0.5, 
 				0.0, 0.5, 0.0, 0.5, 
@@ -716,6 +719,24 @@ void Is::lightPass()
 
 	// Done
 	threadPool.waitForAllJobsToFinish();
+
+	// Set shadow IDs
+	U32 i = 0;
+	ShaderSpotLight* shaderSpotLight = shaderSpotLights + spotsNoShadowCount;
+	for(; shaderSpotLight != shaderSpotLights + visibleSpotLightsCount;
+		++shaderSpotLight)
+	{
+		union
+		{
+			F32 f;
+			U32 i;
+		} variant;
+
+		variant.i = i;
+		shaderSpotLight->diffuseColorShadowmapId.w() = variant.f;
+		++i;
+	}
+
 	spotLightsUbo.unmap();
 
 	//
@@ -763,7 +784,8 @@ void Is::lightPass()
 		char str[128];
 		sprintf(str, "shadowMaps[%u]", (unsigned int)i);
 
-		lightPassProg->findUniformVariable(str).set(*shadowmaps[i]);
+		//lightPassProg->findUniformVariable(str).set(*shadowmaps[i]);
+		glUniform1i(glGetUniformLocation(lightPassProg->getGlId(), str), shadowmaps[i]->bind());
 	}
 #endif
 

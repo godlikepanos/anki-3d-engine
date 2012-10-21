@@ -52,7 +52,7 @@ struct RendererInitializer
 			Bool enabled = true;
 			F32 renderingQuality = 0.25;
 			F32 blurringDist = 1.0;
-			F32 blurringIterationsNum = 2;
+			F32 blurringIterationsCount = 2;
 			F32 exposure = 4.0;
 		} hdr;
 

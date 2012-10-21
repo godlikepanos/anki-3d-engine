@@ -26,7 +26,7 @@
 #if defined(NDEBUG)
 #	define ANKI_DEBUG !NDEBUG
 #else
-#	define ANKI_DEBUG 0
+#	define ANKI_DEBUG 1
 #endif
 
 #define ANKI_FILE __BASE_FILE__

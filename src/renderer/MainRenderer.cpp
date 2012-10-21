@@ -95,7 +95,11 @@ void MainRenderer::render(Scene& scene)
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
 	sProg->bind();
-	const Texture& finalFai = is.getFai();//ms.getFai0();
+#if 0
+	const Texture& finalFai = pps.getHdr().getFai();
+#else
+	const Texture& finalFai = pps.getFai();
+#endif
 	sProg->findUniformVariable("rasterImage").set(finalFai);
 	drawQuad();
 }

@@ -39,10 +39,13 @@ void main()
 #endif
 
 uniform sampler2D img; ///< Input FAI
-uniform float blurringDist = 0.0;
 
 in vec2 vTexCoords;
 in vec2 vOffsets;
+
+#if !defined(BLURRING_DIST)
+#	define BLURRING_DIST 0.0
+#endif
 
 // Determine color type
 #if defined(COL_RGBA)
@@ -81,18 +84,18 @@ void main()
 	for(int i = 0; i < 2; i++)
 	{
 #if defined(HPASS)
-		vec2 tc = vec2(vTexCoords.x + blurringDist + BLURRING_OFFSET[i], 
+		vec2 tc = vec2(vTexCoords.x + BLURRING_DIST + BLURRING_OFFSET[i], 
 			vTexCoords.y);
 		col += texture2D(img, tc).TEX_FETCH * WEIGHTS[i];
 
-		tc.x = vTexCoords.x - blurringDist - BLURRING_OFFSET[i];
+		tc.x = vTexCoords.x - BLURRING_DIST - BLURRING_OFFSET[i];
 		col += texture2D(img, tc).TEX_FETCH * WEIGHTS[i];
 #elif defined(VPASS)
 		vec2 tc = vec2(vTexCoords.x, 
-			vTexCoords.y + blurringDist + BLURRING_OFFSET[i]);
+			vTexCoords.y + BLURRING_DIST + BLURRING_OFFSET[i]);
 		col += texture2D(img, tc).TEX_FETCH * WEIGHTS[i];
 
-		tc.y = vTexCoords.y - blurringDist - BLURRING_OFFSET[i];
+		tc.y = vTexCoords.y - BLURRING_DIST - BLURRING_OFFSET[i];
 		col += texture2D(img, tc).TEX_FETCH * WEIGHTS[i];
 #endif
 	}

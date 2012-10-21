@@ -106,8 +106,8 @@ private:
 		GLuint tex;
 		
 		/// Born time. The bigger the value the latter the unit has been
-		/// accessed. This practicaly means that if the @a born is low the
-		/// unit is a canditate for replacement
+		/// accessed. This practically means that if the @a born is low the
+		/// unit is a candidate for replacement
 		U64 born;
 	};
 

@@ -5,7 +5,13 @@
 #pragma anki start fragmentShader
 
 uniform sampler2D fai; ///< Its the IS FAI
-uniform float exposure;
+
+layout(std140, binding = 0) uniform commonBlock
+{
+	vec4 exposure_;
+};
+
+#define exposure exposure_.x
 
 in vec2 vTexCoords;
 

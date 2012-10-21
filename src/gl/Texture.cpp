@@ -241,7 +241,31 @@ void Texture::create(const Initializer& init)
 //==============================================================================
 U Texture::bind() const
 {
-	return TextureUnitsSingleton::get().bindTexture(*this);
+	U unit = TextureUnitsSingleton::get().bindTexture(*this);
+#if ANKI_DEBUG
+	GLint activeUnit;
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeUnit);
+
+	GLint bindingPoint;
+	switch(target)
+	{
+	case GL_TEXTURE_2D:
+		bindingPoint = GL_TEXTURE_BINDING_2D;
+		break;
+	default:
+		ANKI_ASSERT(0 && "Unimplemented");
+		break;
+	}
+
+	GLint texName;
+	glActiveTexture(GL_TEXTURE0 + unit);
+	glGetIntegerv(bindingPoint, &texName);
+
+	ANKI_ASSERT(glId == (GLuint)texName);
+
+	glActiveTexture(activeUnit);
+#endif
+	return unit;
 }
 
 //==============================================================================

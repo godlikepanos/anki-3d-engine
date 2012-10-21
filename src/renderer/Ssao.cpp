@@ -7,24 +7,29 @@
 namespace anki {
 
 //==============================================================================
+struct ShaderCommonUniforms
+{
+	Vec4 nearPlanes;
+	Vec4 limitsOfNearPlane;
+};
+
+//==============================================================================
 void Ssao::createFbo(Fbo& fbo, Texture& fai)
 {
-	try
-	{
-		Renderer::createFai(width, height, GL_RED, GL_RED, GL_FLOAT, fai);
 
-		fbo.create();
-		fbo.setColorAttachments({&fai});
-	}
-	catch(std::exception& e)
+	Renderer::createFai(width, height, GL_RED, GL_RED, GL_FLOAT, fai);
+
+	fbo.create();
+	fbo.setColorAttachments({&fai});
+
+	if(!fbo.isComplete())
 	{
-		throw ANKI_EXCEPTION("Cannot create deferred shading post-processing "
-			"stage SSAO blur FBO") << e;
+		throw ANKI_EXCEPTION("Fbo not complete");
 	}
 }
 
 //==============================================================================
-void Ssao::init(const RendererInitializer& initializer)
+void Ssao::initInternal(const RendererInitializer& initializer)
 {
 	enabled = initializer.pps.ssao.enabled;
 
@@ -34,36 +39,69 @@ void Ssao::init(const RendererInitializer& initializer)
 	}
 
 	renderingQuality = initializer.pps.ssao.renderingQuality;
-	blurringIterationsNum = initializer.pps.ssao.blurringIterationsNum;
+	blurringIterationsCount = initializer.pps.ssao.blurringIterationsNum;
 
 	width = renderingQuality * r->getWidth();
 	height = renderingQuality * r->getHeight();
 
+	//
 	// create FBOs
+	//
 	createFbo(ssaoFbo, ssaoFai);
 	createFbo(hblurFbo, hblurFai);
 	createFbo(vblurFbo, fai);
 
+	//
+	// noise map
+	//
+	noiseMap.load("engine-rsrc/noise.png");
+	noiseMap->setFiltering(Texture::TFT_NEAREST);
+	if(noiseMap->getWidth() != noiseMap->getHeight())
+	{
+		throw ANKI_EXCEPTION("Incorrect noisemap size");
+	}
+
+	//
 	// Shaders
 	//
+	commonUbo.create(sizeof(ShaderCommonUniforms), nullptr);
+
+	std::string pps;
 
 	// first pass prog
-	ssaoSProg.load("shaders/PpsSsao.glsl");
+	pps = "#define NOISE_MAP_SIZE " + std::to_string(noiseMap->getWidth())
+		+ "\n#define WIDTH " + std::to_string(width)
+		+ "\n#define HEIGHT " + std::to_string(height) + "\n";
+	ssaoSProg.load(ShaderProgramResource::createSrcCodeToCache(
+		"shaders/PpsSsao.glsl", pps.c_str()).c_str());
 
 	// blurring progs
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
-	std::string pps = "#define HPASS\n#define COL_R\n#define IMG_DIMENSION "
-		+ std::to_string(width) + ".0\n";
-	hblurSProg.load(SHADER_FILENAME, pps.c_str());
+	pps = "#define HPASS\n"
+		"#define COL_R\n"
+		"#define IMG_DIMENSION " + std::to_string(width) + ".0\n";
+	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
+		SHADER_FILENAME, pps.c_str()).c_str());
 
-	pps = "#define VPASS\n#define COL_R\n#define IMG_DIMENSION "
-		+ std::to_string(width) + ".0 \n";
-	vblurSProg.load(SHADER_FILENAME, pps.c_str());
+	pps = "#define VPASS\n"
+		"#define COL_R\n"
+		"#define IMG_DIMENSION " + std::to_string(width) + ".0 \n";
+	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
+		SHADER_FILENAME, pps.c_str()).c_str());
+}
 
-	// noise map
-	//
-	noiseMap.load("engine-rsrc/noise.png");
+//==============================================================================
+void Ssao::init(const RendererInitializer& initializer)
+{
+	try
+	{
+		initInternal(initializer);
+	}
+	catch(const std::exception& e)
+	{
+		throw ANKI_EXCEPTION("Failed to init PPS SSAO") << e;
+	}
 }
 
 //==============================================================================
@@ -84,68 +122,61 @@ void Ssao::run()
 	//
 	
 	ssaoFbo.bind();
-	ssaoSProg.bind();
-	
-	// planes
-	ssaoSProg.findUniformVariable("planes").set(r->getPlanes());
+	ssaoSProg->bind();
+	commonUbo.setBinding(0);
 
-	// limitsOfNearPlane
-	ssaoSProg.findUniformVariable("limitsOfNearPlane").set(
-		r->getLimitsOfNearPlane());
+	// Write common block
+	if(commonUboUpdateTimestamp < r->getPlanesUpdateTimestamp()
+		|| commonUboUpdateTimestamp == 1)
+	{
+		ShaderCommonUniforms blk;
+		blk.nearPlanes = Vec4(cam.getNear(), 0.0, r->getPlanes().x(),
+			r->getPlanes().y());
+		blk.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
+			r->getLimitsOfNearPlane2());
 
-	// limitsOfNearPlane2
-	ssaoSProg.findUniformVariable("limitsOfNearPlane2").set(
-		r->getLimitsOfNearPlane2());
-
-	// zNear
-	ssaoSProg.findUniformVariable("zNear").set(cam.getNear());
+		commonUbo.write(&blk);
+		commonUboUpdateTimestamp = Timestamp::getTimestamp();
+	}
 
 	// msDepthFai
-	ssaoSProg.findUniformVariable("msDepthFai").set(
+	ssaoSProg->findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
 
 	// noiseMap
-	ssaoSProg.findUniformVariable("noiseMap").set(*noiseMap);
-
-	// noiseMapSize
-	ssaoSProg.findUniformVariable("noiseMapSize").set(
-		noiseMap->getWidth());
-
-	// screenSize
-	Vec2 screenSize(width * 2, height * 2);
-	ssaoSProg.findUniformVariable("screenSize").set(screenSize);
+	ssaoSProg->findUniformVariable("noiseMap").set(*noiseMap);
 
 	// msNormalFai
-	ssaoSProg.findUniformVariable("msNormalFai").set(
+	ssaoSProg->findUniformVariable("msGFai").set(
 		r->getMs().getFai0());
 
 	r->drawQuad();
 
-	vblurSProg.bind();
-	vblurSProg.findUniformVariable("img").set(hblurFai);
+	vblurSProg->bind();
+	vblurSProg->findUniformVariable("img").set(hblurFai);
 
 	// Blurring passes
 	//
-	for(uint32_t i = 0; i < blurringIterationsNum; i++)
+	for(U32 i = 0; i < blurringIterationsCount; i++)
 	{
 		// hpass
 		hblurFbo.bind();
-		hblurSProg.bind();
+		hblurSProg->bind();
 		if(i == 0)
 		{
-			hblurSProg.findUniformVariable("img").set(ssaoFai);
+			hblurSProg->findUniformVariable("img").set(ssaoFai);
 		}
 		else if(i == 1)
 		{
-			hblurSProg.findUniformVariable("img").set(fai);
+			hblurSProg->findUniformVariable("img").set(fai);
 		}
 		r->drawQuad();
 
 		// vpass
 		vblurFbo.bind();
-		vblurSProg.bind();
+		vblurSProg->bind();
 		r->drawQuad();
 	}
 }
 
-} // end namespace
+} // end namespace anki

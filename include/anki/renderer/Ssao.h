@@ -7,6 +7,8 @@
 #include "anki/resource/Resource.h"
 #include "anki/gl/Fbo.h"
 #include "anki/gl/Texture.h"
+#include "anki/gl/Ubo.h"
+#include "anki/core/Timestamp.h"
 
 namespace anki {
 
@@ -15,7 +17,8 @@ namespace anki {
 /// Three passes:
 /// @li Calc ssao factor
 /// @li Blur vertically
-/// @li Blur horizontally repeat 2, 3
+/// @li Blur horizontally
+/// @li Repeat from 2
 class Ssao: public SwitchableRenderingPass
 {
 public:
@@ -43,18 +46,21 @@ private:
 	Texture ssaoFai; ///< It contains the unblurred SSAO factor
 	Texture hblurFai;
 	Texture fai;  ///< AKA vblurFai The final FAI
-	float renderingQuality;
-	uint32_t blurringIterationsNum;
+	F32 renderingQuality;
+	U32 blurringIterationsCount;
 	Fbo ssaoFbo;
 	Fbo hblurFbo;
 	Fbo vblurFbo;
 	TextureResourcePointer noiseMap;
-	ShaderProgramResource ssaoSProg;
-	ShaderProgramResource hblurSProg;
-	ShaderProgramResource vblurSProg;
-	uint32_t width, height;
+	ShaderProgramResourcePointer ssaoSProg;
+	ShaderProgramResourcePointer hblurSProg;
+	ShaderProgramResourcePointer vblurSProg;
+	U32 width, height;
+	U32 commonUboUpdateTimestamp = Timestamp::getTimestamp();
+	Ubo commonUbo;
 
 	void createFbo(Fbo& fbo, Texture& fai);
+	void initInternal(const RendererInitializer& initializer);
 };
 
 } // end namespace anki
