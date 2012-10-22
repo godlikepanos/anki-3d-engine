@@ -85,6 +85,7 @@ void Renderer::render(Scene& scene_)
 	/*bs.run();
 	pps.runPostPass();*/
 
+	ANKI_CHECK_GL_ERROR();
 	++framesNum;
 }
 

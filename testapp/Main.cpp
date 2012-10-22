@@ -106,8 +106,8 @@ void init()
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0),
 		Mat3::getIdentity(), 1.0));
-	spot->setDiffuseColor(Vec4(1.0));
-	spot->setSpecularColor(Vec4(1.0));
+	spot->setDiffuseColor(Vec4(2.0));
+	spot->setSpecularColor(Vec4(-1.0));
 	spot->loadTexture("gfx/lights/flashlight.tga");
 	spot->setDistance(30.0);
 	spot->setShadowEnabled(true);

@@ -199,7 +199,8 @@ float calcShadowFactor(in SpotLight light, in vec3 fragPosVspace,
 #if PCF == 1
 	float shadowFactor = pcfLow(shadowMapArr, texCoords3);
 #else
-	float shadowFactor = texture(shadowMapArr, vec4(texCoords3, layer));
+	float shadowFactor = texture(shadowMapArr, 
+		vec4(texCoords3.x, texCoords3.y, layer, texCoords3.z));
 #endif
 
 	return shadowFactor;
@@ -309,17 +310,8 @@ void main()
 #endif
 
 #if 0
-	float depth = texture(msDepthFai, vTexCoords).r;
-	vec2 mm = texture(minmax, vTexCoords).rg;
-
-	if(depth < mm.x)
-	{
-		fColor *= vec3(10.0, 0.0, 0.0);
-	}
-	if(depth > mm.y)
-	{
-		fColor *= vec3(0.0, 0.0, 10.0);
-	}
+	fColor += vec3(slights[0].light.diffuseColorShadowmapId.w,
+		slights[1].light.diffuseColorShadowmapId.w, 0.0);
 #endif
 
 #if 0
