@@ -107,11 +107,35 @@ void Fbo::setColorAttachments(const std::initializer_list<const Texture*>&
 }
 
 //==============================================================================
-void Fbo::setOtherAttachment(GLenum attachment, const Texture& tex)
+void Fbo::setOtherAttachment(GLenum attachment, const Texture& tex, 
+	const I32 layer, const I32 face)
 {
 	bind();
-	glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
-		GL_TEXTURE_2D, tex.getGlId(), 0);
+
+	const GLenum target = GL_FRAMEBUFFER;
+	switch(tex.getTarget())
+	{
+	case GL_TEXTURE_2D:
+		ANKI_ASSERT(layer < 0 && face < 0);
+		glFramebufferTexture2D(target, attachment,
+			GL_TEXTURE_2D, tex.getGlId(), 0);
+		break;
+	case GL_TEXTURE_CUBE_MAP:
+		ANKI_ASSERT(layer < 0 && face >= 0);
+		glFramebufferTexture2D(target, attachment,
+			GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, tex.getGlId(), 0);
+		break;
+	case GL_TEXTURE_2D_ARRAY:
+	case GL_TEXTURE_3D:
+		ANKI_ASSERT(layer >= 0 && face < 0);
+		ANKI_ASSERT((GLuint)layer < tex.getDepth());
+		glFramebufferTextureLayer(target, attachment,
+			tex.getGlId(), 0, layer);
+		break;
+	default:
+		ANKI_ASSERT(0);
+		break;
+	}
 }
 
 } // end namespace anki

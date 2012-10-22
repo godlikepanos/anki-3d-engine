@@ -147,7 +147,7 @@ void init()
 #if 1
 	// Sponza
 	ModelNode* sponzaModel = new ModelNode(
-		"/home/godlike/src/anki/maps/sponza-crytek/sponza_crytek.mdl",
+		"maps/sponza-crytek/sponza_crytek.mdl",
 		"sponza", &scene, Movable::MF_NONE, nullptr);
 
 	sponzaModel->setLocalScale(0.1);
@@ -317,6 +317,14 @@ void mainLoop()
 //==============================================================================
 void initSubsystems(int argc, char* argv[])
 {
+#if ANKI_GL == ANKI_GL_DESKTOP
+	U32 glmajor = 3;
+	U32 glminor = 3;
+#else
+	U32 glmajor = 3;
+	U32 glminor = 0;
+#endif
+
 	// App
 	AppSingleton::get().init(argc, argv);
 
@@ -324,12 +332,15 @@ void initSubsystems(int argc, char* argv[])
 	NativeWindowInitializer nwinit;
 	nwinit.width = 1280;
 	nwinit.height = 720;
-	nwinit.majorVersion = 4;
-	nwinit.minorVersion = 2;
+	nwinit.majorVersion = glmajor;
+	nwinit.minorVersion = glminor;
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
 	win = new NativeWindow;	
 	win->create(nwinit);
+
+	// GL
+	GlStateSingleton::get().init(glmajor, glminor);
 
 	// Input
 	InputSingleton::get().init(win);

@@ -21,32 +21,47 @@ void Sm::init(const RendererInitializer& initializer)
 	bilinearEnabled = initializer.is.sm.bilinearEnabled;
 	resolution = initializer.is.sm.resolution;
 
+	//
 	// Init the shadowmaps
+	//
 	if(initializer.is.sm.maxLights > MAX_SHADOW_CASTERS)
 	{
 		throw ANKI_EXCEPTION("Too many shadow casters");
 	}
 
+	// Create shadowmaps array
+	Texture::Initializer sminit;
+	sminit.target = GL_TEXTURE_2D_ARRAY;
+	sminit.width = resolution;
+	sminit.height = resolution;
+	sminit.depth = initializer.is.sm.maxLights;
+	sminit.format = GL_DEPTH_COMPONENT;
+	sminit.internalFormat = GL_DEPTH_COMPONENT16;
+	sminit.type = GL_FLOAT;
+	if(bilinearEnabled)
+	{
+		sminit.filteringType = Texture::TFT_LINEAR;
+	}
+	else
+	{
+		sminit.filteringType = Texture::TFT_NEAREST;
+	}
+	sm2DArrayTex.create(sminit);
+
+	sm2DArrayTex.setParameter(GL_TEXTURE_COMPARE_MODE, 
+		GL_COMPARE_REF_TO_TEXTURE);
+	sm2DArrayTex.setParameter(GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+
+	// Init sms
+	U32 layer = 0;
 	sms.resize(initializer.is.sm.maxLights);
 	for(Shadowmap& sm : sms)
 	{
-		Renderer::createFai(resolution, resolution,
-			GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT, sm.tex);
-
-		if(bilinearEnabled)
-		{
-			sm.tex.setFiltering(Texture::TFT_LINEAR);
-		}
-		else
-		{
-			sm.tex.setFiltering(Texture::TFT_NEAREST);
-		}
-
-		sm.tex.setParameter(GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-		sm.tex.setParameter(GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-
+		sm.layerId = layer;
 		sm.fbo.create();
-		sm.fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, sm.tex);
+		sm.fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, sm2DArrayTex, layer, -1);
+
+		++layer;
 	}
 }
 
@@ -75,7 +90,7 @@ void Sm::afterDraw()
 
 //==============================================================================
 void Sm::run(Light* shadowCasters[], U32 shadowCastersCount, 
-	Texture* shadowmaps[])
+	Array<U32,  MAX_SHADOW_CASTERS>& shadowmapLayers)
 {
 	ANKI_ASSERT(enabled);
 
@@ -84,9 +99,9 @@ void Sm::run(Light* shadowCasters[], U32 shadowCastersCount,
 	// render all
 	for(U32 i = 0; i < shadowCastersCount; i++)
 	{
-		Texture* sm = doLight(*shadowCasters[i]);
+		Shadowmap* sm = doLight(*shadowCasters[i]);
 		ANKI_ASSERT(sm != nullptr);
-		shadowmaps[i] = sm;
+		shadowmapLayers[i] = sm->layerId;
 	}
 
 	afterDraw();
@@ -131,10 +146,9 @@ Sm::Shadowmap& Sm::bestCandidate(Light& light)
 }
 
 //==============================================================================
-Texture* Sm::doLight(Light& light)
+Sm::Shadowmap* Sm::doLight(Light& light)
 {
 	Shadowmap& sm = bestCandidate(light);
-	Texture* outSm = &sm.tex;
 
 	Frustumable* fr = light.getFrustumable();
 	ANKI_ASSERT(fr != nullptr);
@@ -167,7 +181,7 @@ Texture* Sm::doLight(Light& light)
 
 	if(!shouldUpdate)
 	{
-		return outSm;
+		return &sm;
 	}
 
 	sm.timestamp = Timestamp::getTimestamp();
@@ -185,7 +199,7 @@ Texture* Sm::doLight(Light& light)
 		r->getSceneDrawer().render(*fr, 1, *((*it)->getRenderable()));
 	}
 
-	return outSm;
+	return &sm;
 }
 
 } // end namespace anki

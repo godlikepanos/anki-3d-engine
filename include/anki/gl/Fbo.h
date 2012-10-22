@@ -3,6 +3,7 @@
 
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
+#include "anki/util/StdTypes.h"
 #include "anki/gl/Ogl.h"
 #include <initializer_list>
 
@@ -56,7 +57,8 @@ public:
 		textures);
 
 	/// Set other attachment
-	void setOtherAttachment(GLenum attachment, const Texture& tex);
+	void setOtherAttachment(GLenum attachment, const Texture& tex, 
+		const I32 layer = -1, const I32 face = -1);
 
 	/// Creates a new FBO
 	void create();

@@ -18,7 +18,7 @@ ELSE()
 	SET(ANKI_LIBS ${ANKI_LIBS} GLESv2 EGL)
 ENDIF()
 
-TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankibullet ${_ANKI_LIBPNG})
+TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankibullet ${_ANKI_LIBPNG} pthread)
 
 SET_TARGET_PROPERTIES(anki PROPERTIES LINKER_LANGUAGE CXX)
 

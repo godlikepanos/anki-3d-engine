@@ -5,6 +5,7 @@
 #include "anki/gl/Fbo.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/util/Vector.h"
+#include "anki/util/Array.h"
 
 namespace anki {
 
@@ -13,6 +14,7 @@ class Light;
 /// Shadowmapping pass
 class Sm: private RenderingPass
 {
+	friend class Is;
 public:
 	static const U32 MAX_SHADOW_CASTERS = 8;
 
@@ -35,13 +37,15 @@ public:
 
 	void init(const RendererInitializer& initializer);
 	void run(Light* shadowCasters[], U32 shadowCastersCount, 
-		Texture* shadowmaps[]);
+		Array<U32,  MAX_SHADOW_CASTERS>& shadowmapLayers);
 
 private:
+	Texture sm2DArrayTex;
+
 	/// Shadowmap
 	struct Shadowmap
 	{
-		Texture tex;
+		U32 layerId;
 		Fbo fbo;
 		Light* light = nullptr;
 		U32 timestamp = 0; ///< Timestamp of last render or light change
@@ -73,7 +77,7 @@ private:
 	/// Find the best shadowmap for that light
 	Shadowmap& bestCandidate(Light& light);
 
-	Texture* doLight(Light& light);
+	Shadowmap* doLight(Light& light);
 };
 
 } // end namespace anki

@@ -665,8 +665,8 @@ void Is::lightPass()
 		shadowCasters[i] = visibleSpotShadowLights[i];
 	}
 
-	Array<Texture*, Sm::MAX_SHADOW_CASTERS> shadowmaps;
-	sm.run(&shadowCasters[0], spotsShadowCount, &shadowmaps[0]);
+	Array<U32, Sm::MAX_SHADOW_CASTERS> shadowmapLayers;
+	sm.run(&shadowCasters[0], spotsShadowCount, shadowmapLayers);
 
 	// Prepare state
 	fbo.bind();
@@ -720,7 +720,7 @@ void Is::lightPass()
 	// Done
 	threadPool.waitForAllJobsToFinish();
 
-	// Set shadow IDs
+	// Set shadow layer IDs
 	U32 i = 0;
 	ShaderSpotLight* shaderSpotLight = shaderSpotLights + spotsNoShadowCount;
 	for(; shaderSpotLight != shaderSpotLights + visibleSpotLightsCount;
@@ -732,7 +732,7 @@ void Is::lightPass()
 			U32 i;
 		} variant;
 
-		variant.i = i;
+		variant.i = shadowmapLayers[i];
 		shaderSpotLight->diffuseColorShadowmapId.w() = variant.f;
 		++i;
 	}
@@ -774,20 +774,7 @@ void Is::lightPass()
 	lightPassProg->findUniformVariable("msFai0").set(r->getMs().getFai0());
 	lightPassProg->findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
-
-#if 1
-	lightPassProg->findUniformVariable("shadowMaps[0]").set(
-		&shadowmaps[0], (U32)spotsShadowCount);
-#else
-	for(U i = 0; i < spotsShadowCount; i++)
-	{
-		char str[128];
-		sprintf(str, "shadowMaps[%u]", (unsigned int)i);
-
-		//lightPassProg->findUniformVariable(str).set(*shadowmaps[i]);
-		glUniform1i(glGetUniformLocation(lightPassProg->getGlId(), str), shadowmaps[i]->bind());
-	}
-#endif
+	lightPassProg->findUniformVariable("shadowMapArr").set(sm.sm2DArrayTex);
 
 	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
 }

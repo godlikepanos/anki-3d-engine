@@ -5,6 +5,48 @@
 namespace anki {
 
 //==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+static Bool isCompressedInternalFormat(const GLenum internalFormat)
+{
+	Bool out = false;
+	switch(internalFormat)
+	{
+	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+		out = true;
+		break;
+	default:
+		out = false;
+	}
+	return out;
+}
+
+//==============================================================================
+static Bool isLayeredTarget(const GLenum target)
+{
+	Bool out = false;
+	switch(target)
+	{
+	case GL_TEXTURE_2D:
+	case GL_TEXTURE_CUBE_MAP:
+		out = false;
+		break;
+	case GL_TEXTURE_3D:
+	case GL_TEXTURE_2D_ARRAY:
+		out = true;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		break;
+	}
+	return out;
+}
+
+//==============================================================================
 // TextureManager                                                              =
 //==============================================================================
 
@@ -176,31 +218,50 @@ void Texture::create(const Initializer& init)
 	//
 	glGenTextures(1, &glId);
 	ANKI_ASSERT(glId != 0);
-	target = GL_TEXTURE_2D;
+	target = init.target;
 	internalFormat = init.internalFormat;
 	format = init.format;
 	type = init.type;
 	width = init.width;
 	height = init.height;
+	depth = init.depth;
 
 	// Bind
 	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
 
-	switch(internalFormat)
+	// Texture upload
+	if(isCompressedInternalFormat(internalFormat))
 	{
-	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-		glCompressedTexImage2D(target, 0, internalFormat,
-			width, height, 0, init.dataSize, init.data);
-		break;
-	default:
-		glTexImage2D(target, 0, internalFormat, width,
-			height, 0, format, type, init.data);
+		if(isLayeredTarget(target))
+		{
+			glCompressedTexImage3D(target, 0, internalFormat,
+				width, height, depth, 0, init.dataSize, init.data);
+		}
+		else
+		{
+			ANKI_ASSERT(depth == 0);
+			glCompressedTexImage2D(target, 0, internalFormat,
+				width, height, 0, init.dataSize, init.data);
+		}
+	}
+	else
+	{
+		if(isLayeredTarget(target))
+		{
+			glTexImage3D(target, 0, internalFormat, width, height, depth,
+				0, format, type, init.data);
+		}
+		else
+		{
+			ANKI_ASSERT(depth == 0);
+			glTexImage2D(target, 0, internalFormat, width,
+				height, 0, format, type, init.data);
+		}
 	}
 
 	ANKI_CHECK_GL_ERROR();
 
+	// Set parameters
 	if(init.repeat)
 	{
 		glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -251,6 +312,9 @@ U Texture::bind() const
 	{
 	case GL_TEXTURE_2D:
 		bindingPoint = GL_TEXTURE_BINDING_2D;
+		break;
+	case GL_TEXTURE_2D_ARRAY:
+		bindingPoint = GL_TEXTURE_BINDING_2D_ARRAY;
 		break;
 	default:
 		ANKI_ASSERT(0 && "Unimplemented");

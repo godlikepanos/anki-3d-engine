@@ -4,6 +4,7 @@
 #include "anki/util/Singleton.h"
 #include "anki/gl/Ogl.h"
 #include "anki/util/Assert.h"
+#include "anki/util/StdTypes.h"
 #include <unordered_map>
 #include <mutex>
 #include <algorithm>
@@ -24,15 +25,30 @@ class GlState
 {
 public:
 	GlState()
-	{
-		sync();
-	}
+	{}
 
 	~GlState()
 	{}
 
-	/// Sync the local members with the opengl ones
-	void sync();
+	void init(const U32 major_, const U32 minor_)
+	{
+		sync();
+		major = major_;
+		minor = minor_;
+#if ANKI_DEBUG
+		ANKI_ASSERT(initialized == false);
+		initialized = true;
+#endif
+	}
+
+	U32 getMajorVersion() const
+	{
+		return major;
+	}
+	U32 getMinorVersion() const
+	{
+		return minor;
+	}
 
 	/// @name Set the Fixed Function Pipeline, Call the OpenGL functions
 	/// only when needed
@@ -44,7 +60,7 @@ public:
 	}
 	bool isEnabled(GLenum flag);
 
-	void setViewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h);
+	void setViewport(U32 x, U32 y, U32 w, U32 h);
 	/// @}
 
 	/// Set the current program
@@ -59,10 +75,13 @@ public:
 
 	/// @name Draw functions
 	/// @{
-	void drawElements(uint32_t count);
+	void drawElements(U32 count);
 	/// @}
 
 private:
+	/// Minor major GL version
+	U32 major, minor;
+
 	/// @name The GL state
 	/// @{
 	std::unordered_map<GLenum, bool> flags;
@@ -73,6 +92,13 @@ private:
 	GLsizei viewportW;
 	GLsizei viewportH;
 	/// @}
+
+#if ANKI_DEBUG
+	Bool initialized = false;
+#endif
+
+	/// Sync the local members with the opengl ones
+	void sync();
 };
 
 typedef SingletonThreadSafe<GlState> GlStateSingleton;
