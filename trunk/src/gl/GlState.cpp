@@ -5,6 +5,12 @@
 #include "anki/util/Assert.h"
 #include <limits>
 
+#if ANKI_DEBUG
+#	define CHECK_GL() ANKI_ASSERT(initialized == true)
+#else
+#	define CHECK_GL() ((void)0)
+#endif
+
 namespace anki {
 
 //==============================================================================
@@ -22,6 +28,7 @@ GLenum GlState::flagEnums[] = {
 //==============================================================================
 void GlState::enable(GLenum glFlag, bool enable)
 {
+	CHECK_GL();
 	ANKI_ASSERT(flags.find(glFlag) != flags.end());
 	bool state = flags[glFlag];
 	ANKI_ASSERT(glIsEnabled(glFlag) == state);
@@ -43,6 +50,7 @@ void GlState::enable(GLenum glFlag, bool enable)
 //==============================================================================
 bool GlState::isEnabled(GLenum glFlag)
 {
+	CHECK_GL();
 	ANKI_ASSERT(flags.find(glFlag) != flags.end());
 	bool state = flags[glFlag];
 	ANKI_ASSERT(glIsEnabled(glFlag) == state);
@@ -70,10 +78,11 @@ void GlState::sync()
 }
 
 //==============================================================================
-void GlState::setViewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
+void GlState::setViewport(U32 x, U32 y, U32 w, U32 h)
 {
-	if(x != (uint32_t)viewportX || y != (uint32_t)viewportY 
-		|| w != (uint32_t)viewportW || h != (uint32_t)viewportH)
+	CHECK_GL();
+	if(x != (U32)viewportX || y != (U32)viewportY 
+		|| w != (U32)viewportW || h != (U32)viewportH)
 	{
 		glViewport(x, y, w, h);
 		viewportX = x;
@@ -86,6 +95,7 @@ void GlState::setViewport(uint32_t x, uint32_t y, uint32_t w, uint32_t h)
 //==============================================================================
 void GlState::setProgram(ShaderProgram* prog_)
 {
+	CHECK_GL();
 	ANKI_ASSERT(prog_);
 	prog_->bind();
 }
@@ -93,6 +103,7 @@ void GlState::setProgram(ShaderProgram* prog_)
 //==============================================================================
 void GlState::setFbo(Fbo* fbo_)
 {
+	CHECK_GL();
 	if(fbo_ == nullptr)
 	{
 		Fbo::unbindAll();
@@ -107,6 +118,7 @@ void GlState::setFbo(Fbo* fbo_)
 //==============================================================================
 void GlState::setVao(Vao* vao_)
 {
+	CHECK_GL();
 	ANKI_ASSERT(vao_);
 	vao_->bind();
 }

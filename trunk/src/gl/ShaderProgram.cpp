@@ -1,5 +1,6 @@
 #include "anki/gl/ShaderProgram.h"
 #include "anki/gl/GlException.h"
+#include "anki/gl/GlState.h"
 #include "anki/math/Math.h"
 #include "anki/util/Exception.h"
 #include "anki/gl/Texture.h"
@@ -117,7 +118,8 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_SAMPLER_2D 
 		|| getGlDataType() == GL_SAMPLER_2D_SHADOW
-		|| getGlDataType() == GL_UNSIGNED_INT_SAMPLER_2D);
+		|| getGlDataType() == GL_UNSIGNED_INT_SAMPLER_2D
+		|| getGlDataType() == GL_SAMPLER_2D_ARRAY_SHADOW);
 	
 	glUniform1i(getLocation(), tex.bind());
 }
@@ -296,19 +298,6 @@ ShaderProgramUniformBlock& ShaderProgramUniformBlock::operator=(
 
 //==============================================================================
 
-const char* ShaderProgram::stdSourceCode =
-	"#version 420 core\n"
-	//"precision lowp float;\n"
-#if ANKI_DEBUG
-	"#pragma optimize(off)\n"
-	"#pragma debug(on)\n"
-	"#extension GL_ARB_gpu_shader5 : enable\n";
-#else
-	"#pragma optimize(on)\n"
-	"#pragma debug(off)\n"
-	"#extension GL_ARB_gpu_shader5 : enable\n";
-#endif
-
 thread_local const ShaderProgram* ShaderProgram::current = nullptr;
 
 //==============================================================================
@@ -317,19 +306,41 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	const char* transformFeedbackVaryings[])
 {
 	ANKI_ASSERT(!isCreated());
+	U32 minor = GlStateSingleton::get().getMinorVersion();
+	U32 major = GlStateSingleton::get().getMajorVersion();
 
 	// 1) create and compile the shaders
 	//
-	std::string preprocSource = stdSourceCode;
+	std::string preprocSrc;
+#if ANKI_GL == ANKI_GL_DESKTOP
+	preprocSrc = "#version " + std::to_string(major) 
+		+ std::to_string(minor) + "0 core\n";
+
+	if(major == 3)
+	{
+		preprocSrc += "#extension GL_ARB_shading_language_420pack : enable\n"
+			"#extension GL_ARB_shading_language_packing : enable\n"
+			"#extension GL_ARB_gpu_shader5 : enable\n";
+	}
+	else
+	{
+		preprocSrc += "#extension GL_ARB_gpu_shader5 : enable\n";
+	}
+
+#else
+	preprocSrc = "#version " + std::to_string(major) 
+		+ std::to_string(minor) + "0 es\n";
+#endif
 
 	ANKI_ASSERT(vertSource != nullptr);
-	vertShaderGlId = createAndCompileShader(vertSource, preprocSource.c_str(),
+	vertShaderGlId = createAndCompileShader(vertSource, preprocSrc.c_str(),
 		GL_VERTEX_SHADER);
 
 	if(tcSource != nullptr)
 	{
 #if ANKI_GL == ANKI_GL_DESKTOP
-		tcShaderGlId = createAndCompileShader(tcSource, preprocSource.c_str(), 
+		ANKI_ASSERT(major > 3);
+		tcShaderGlId = createAndCompileShader(tcSource, preprocSrc.c_str(), 
 			GL_TESS_CONTROL_SHADER);
 #else
 		ANKI_ASSERT(0 && "Not allowed");
@@ -339,7 +350,8 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	if(teSource != nullptr)
 	{
 #if ANKI_GL == ANKI_GL_DESKTOP
-		teShaderGlId = createAndCompileShader(teSource, preprocSource.c_str(), 
+		ANKI_ASSERT(major > 3);
+		teShaderGlId = createAndCompileShader(teSource, preprocSrc.c_str(), 
 			GL_TESS_EVALUATION_SHADER);
 #else
 		ANKI_ASSERT(0 && "Not allowed");
@@ -350,14 +362,14 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	{
 #if ANKI_GL == ANKI_GL_DESKTOP
 		geomShaderGlId = createAndCompileShader(geomSource, 
-			preprocSource.c_str(), GL_GEOMETRY_SHADER);
+			preprocSrc.c_str(), GL_GEOMETRY_SHADER);
 #else
 		ANKI_ASSERT(0 && "Not allowed");
 #endif
 	}
 
 	ANKI_ASSERT(fragSource != nullptr);
-	fragShaderGlId = createAndCompileShader(fragSource, preprocSource.c_str(),
+	fragShaderGlId = createAndCompileShader(fragSource, preprocSrc.c_str(),
 		GL_FRAGMENT_SHADER);
 
 	// 2) create program and attach shaders

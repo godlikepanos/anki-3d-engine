@@ -79,14 +79,14 @@ layout(std140, row_major, binding = 3) uniform tilesBlock
 uniform usampler2D msFai0;
 uniform sampler2D msDepthFai;
 
-uniform sampler2D lightTextures[MAX_SPOT_LIGHTS];
-uniform sampler2DShadow shadowMaps[MAX_SPOT_LIGHTS];
+//uniform sampler2D lightTextures[MAX_SPOT_LIGHTS];
+uniform sampler2DArrayShadow shadowMapArr;
 /// @}
 
 /// @name Varyings
 /// @{
 in vec2 vTexCoords;
-flat in uint vInstanceId;
+flat in int vInstanceId;
 /// @}
 
 /// @name Output
@@ -171,7 +171,8 @@ float calcSpotFactor(in SpotLight light, in vec3 fragPosVspace)
 }
 
 //==============================================================================
-float pcfLow(in sampler2DShadow shadowMap, in vec3 shadowUv)
+#if PCF == 1
+float pcfLow(in sampler2DArrayShadow shadowMap, in vec3 shadowUv)
 {
 	float shadowCol = textureOffset(shadowMap, shadowUv, ivec2(-1, -1));
 	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, -1));
@@ -186,18 +187,19 @@ float pcfLow(in sampler2DShadow shadowMap, in vec3 shadowUv)
 	shadowCol *= (1.0 / 9.0);
 	return shadowCol;
 }
+#endif
 
 //==============================================================================
 float calcShadowFactor(in SpotLight light, in vec3 fragPosVspace, 
-	in sampler2DShadow shadowMap)
+	in sampler2DArrayShadow shadowMapArr, in float layer)
 {
 	vec4 texCoords4 = light.texProjectionMat * vec4(fragPosVspace, 1.0);
 	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
 #if PCF == 1
-	float shadowFactor = pcfLow(shadowMap, texCoords3);
+	float shadowFactor = pcfLow(shadowMapArr, texCoords3);
 #else
-	float shadowFactor = texture(shadowMap, texCoords3).r;
+	float shadowFactor = texture(shadowMapArr, vec4(texCoords3, layer));
 #endif
 
 	return shadowFactor;
@@ -222,9 +224,9 @@ void main()
 
 	// Point lights
 	uint pointLightsCount = tiles[vInstanceId].lightsCount[0];
-	for(uint i = 0; i < pointLightsCount; ++i)
+	for(uint i = 0U; i < pointLightsCount; ++i)
 	{
-		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
+		uint lightId = tiles[vInstanceId].lightIndices[i / 4U][i % 4U];
 
 		vec3 ray;
 		const float att = calcAttenuationFactor(fragPosVspace, 
@@ -242,7 +244,7 @@ void main()
 	uint opt = pointLightsCount + spotLightsCount;
 	for(uint i = pointLightsCount; i < opt; ++i)
 	{
-		uint lightId = tiles[vInstanceId].lightIndices[i / 4][i % 4];
+		uint lightId = tiles[vInstanceId].lightIndices[i / 4U][i % 4U];
 
 		vec3 ray;
 		const float att = calcAttenuationFactor(fragPosVspace, 
@@ -262,10 +264,10 @@ void main()
 	const uint spotLightsShadowCount = tiles[vInstanceId].lightsCount[2];
 	opt = pointLightsCount + spotLightsCount;
 
-	for(uint i = 0; i < spotLightsShadowCount; ++i)
+	for(uint i = 0U; i < spotLightsShadowCount; ++i)
 	{
 		uint id = i + opt;
-		uint lightId = tiles[vInstanceId].lightIndices[id / 4][id % 4];
+		uint lightId = tiles[vInstanceId].lightIndices[id / 4U][id % 4U];
 
 		vec3 ray;
 		const float att = calcAttenuationFactor(fragPosVspace, 
@@ -279,11 +281,11 @@ void main()
 
 		//if(midFactor > 0.0)
 		{
-			const uint shadowmapId = floatBitsToUint(
-					slights[lightId].light.diffuseColorShadowmapId.w);
+			const float shadowmapLayerId = 
+				slights[lightId].light.diffuseColorShadowmapId.w;
 
 			const float shadow = calcShadowFactor(slights[lightId], 
-				fragPosVspace, shadowMaps[shadowmapId]);
+				fragPosVspace, shadowMapArr, shadowmapLayerId);
 
 			const vec3 col = calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
 				specularAll, normal, slights[lightId].light, ray);

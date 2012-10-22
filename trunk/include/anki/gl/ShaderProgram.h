@@ -420,9 +420,6 @@ private:
 
 	static thread_local const ShaderProgram* current;
 
-	/// Shader source that is used in ALL shader programs
-	static const char* stdSourceCode;
-
 	GLuint glId; ///< The OpenGL ID of the shader program
 	GLuint vertShaderGlId; ///< Vertex shader OpenGL id
 	GLuint tcShaderGlId; ///< Tessellation control shader OpenGL id

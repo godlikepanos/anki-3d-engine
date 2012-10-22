@@ -150,9 +150,12 @@ public:
 	{
 		U width = 0;
 		U height = 0;
-		GLint internalFormat = GL_NONE;
+		U depth = 0;
+		GLenum target = GL_TEXTURE_2D;
+		GLenum internalFormat = GL_NONE;
 		GLenum format = GL_NONE;
-		GLenum type = GL_NONE;
+		/// The type of the data. Not relevant if data is zero
+		GLenum type = GL_NONE; 
 		const void* data = nullptr;
 		Bool mipmapping = false;
 		TextureFilteringType filteringType = TFT_NEAREST;
@@ -227,6 +230,12 @@ public:
 		ANKI_ASSERT(isCreated());
 		return height;
 	}
+
+	GLuint getDepth() const
+	{
+		ANKI_ASSERT(isCreated());
+		return depth;
+	}
 	/// @}
 
 	/// Create a texture
@@ -258,11 +267,11 @@ public:
 
 private:
 	GLuint glId = 0; ///< Identification for OGL
-	GLuint target = GL_NONE; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
-	GLuint internalFormat = GL_NONE; ///< GL_COMPRESSED_RED, GL_RGB16 etc
-	GLuint format = GL_NONE; ///< GL_RED, GL_RG, GL_RGB etc
-	GLuint type = GL_NONE; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
-	GLuint width = 0, height = 0;
+	GLenum target = GL_NONE; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
+	GLenum internalFormat = GL_NONE; ///< GL_COMPRESSED_RED, GL_RGB16 etc
+	GLenum format = GL_NONE; ///< GL_RED, GL_RG, GL_RGB etc
+	GLenum type = GL_NONE; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
+	GLuint width = 0, height = 0, depth = 0;
 
 	Bool isCreated() const
 	{
