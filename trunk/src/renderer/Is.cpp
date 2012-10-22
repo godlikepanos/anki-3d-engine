@@ -726,14 +726,7 @@ void Is::lightPass()
 	for(; shaderSpotLight != shaderSpotLights + visibleSpotLightsCount;
 		++shaderSpotLight)
 	{
-		union
-		{
-			F32 f;
-			U32 i;
-		} variant;
-
-		variant.i = shadowmapLayers[i];
-		shaderSpotLight->diffuseColorShadowmapId.w() = variant.f;
+		shaderSpotLight->diffuseColorShadowmapId.w() = (F32)shadowmapLayers[i];
 		++i;
 	}
 
