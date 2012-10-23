@@ -9,6 +9,7 @@
 #include "anki/util/Visitor.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"
+#include <memory>
 
 namespace anki {
 
@@ -19,7 +20,7 @@ class XmlElement;
 class MaterialShaderProgramCreator;
 
 /// Material variable base. Its a visitable
-typedef Visitable<float, Vec2, Vec3, Vec4, Mat3, Mat4, TextureResourcePointer> 
+typedef Visitable<F32, Vec2, Vec3, Vec4, Mat3, Mat4, TextureResourcePointer> 
 	MateriaVariableVisitable;
 
 // Forward
@@ -42,9 +43,7 @@ public:
 	/// @{
 	MaterialVariable(
 		const char* shaderProgVarName,
-		PassLevelToShaderProgramHashMap& sProgs,
-		Bool init_)
-		: initialized(init_)
+		PassLevelToShaderProgramHashMap& sProgs)
 	{
 		init(shaderProgVarName, sProgs);
 	}
@@ -84,17 +83,11 @@ public:
 	/// Get the name of all the shader program variables
 	const std::string& getName() const;
 
-	Bool getInitialized() const
-	{
-		return initialized;
-	}
+	/// If false then it should be buildin
+	virtual Bool hasValue() const = 0;
 	/// @}
 
 private:
-	/// If not initialized then there is no value given in the XML so it is
-	/// probably build in and the renderer should set the value on the shader
-	/// program setup
-	Bool initialized;
 	PassLevelToShaderProgramUniformVariableHashMap sProgVars;
 
 	/// Keep one ShaderProgramVariable here for easy access of the common
@@ -106,7 +99,7 @@ private:
 		PassLevelToShaderProgramHashMap& shaderProgsArr);
 };
 
-/// XXX
+/// Material variable with data. A complete type
 template<typename Data>
 class MaterialVariableTemplate: public MaterialVariable
 {
@@ -115,13 +108,10 @@ public:
 	/// @{
 	MaterialVariableTemplate(
 		const char* shaderProgVarName,
-		PassLevelToShaderProgramHashMap& sProgs,
-		const Data& val,
-		Bool init_)
-		: MaterialVariable(shaderProgVarName, sProgs, init_)
+		PassLevelToShaderProgramHashMap& sProgs)
+		: MaterialVariable(shaderProgVarName, sProgs)
 	{
 		setupVisitable(&data);
-		data = val;
 	}
 
 	~MaterialVariableTemplate()
@@ -132,17 +122,25 @@ public:
 	/// @{
 	const Data& get() const
 	{
+		ANKI_ASSERT(data.get() != nullptr);
 		return data;
 	}
 
 	void set(const Data& x)
 	{
 		data = x;
+		dataSet = true;
 	}
 	/// @}
 
+	Bool hasValue() const
+	{
+		return dataSet;
+	}
+
 private:
 	Data data;
+	Bool dataSet = false;
 };
 
 /// Contains a few properties that other classes may use. For an explanation of

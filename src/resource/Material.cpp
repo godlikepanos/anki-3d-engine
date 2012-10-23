@@ -344,54 +344,44 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 
 		MaterialVariable* v = nullptr;
 		const char* n = name.c_str(); // Var name
-		// Has value?
-		if(inpvar->value.size() == 0)
-		{
-			// Probably buildin
 
-			switch(dataType)
-			{
-			// sampler2D
-			case GL_SAMPLER_2D:
-				v = new MaterialVariableTemplate<TextureResourcePointer>(
-					n, eSProgs, TextureResourcePointer(), false);
-				break;
-			// float
-			case GL_FLOAT:
-				v = new MaterialVariableTemplate<float>(n, eSProgs,
-					float(), false);
-				break;
-			// vec2
-			case GL_FLOAT_VEC2:
-				v = new MaterialVariableTemplate<Vec2>(n, eSProgs,
-					Vec2(), false);
-				break;
-			// vec3
-			case GL_FLOAT_VEC3:
-				v = new MaterialVariableTemplate<Vec3>(n, eSProgs,
-					Vec3(), false);
-				break;
-			// vec4
-			case GL_FLOAT_VEC4:
-				v = new MaterialVariableTemplate<Vec4>(n, eSProgs,
-					Vec4(), false);
-				break;
-			// mat3
-			case GL_FLOAT_MAT3:
-				v = new MaterialVariableTemplate<Mat3>(n, eSProgs,
-					Mat3(), false);
-				break;
-			// mat4
-			case GL_FLOAT_MAT4:
-				v = new MaterialVariableTemplate<Mat4>(n, eSProgs,
-					Mat4(), false);
-				break;
-			// default is error
-			default:
-				ANKI_ASSERT(0);
-			}
+		switch(dataType)
+		{
+		// sampler2D
+		case GL_SAMPLER_2D:
+			v = new MaterialVariableTemplate<TextureResourcePointer>(
+				n, eSProgs);
+			break;
+		// F32
+		case GL_FLOAT:
+			v = new MaterialVariableTemplate<F32>(n, eSProgs);
+			break;
+		// vec2
+		case GL_FLOAT_VEC2:
+			v = new MaterialVariableTemplate<Vec2>(n, eSProgs);
+			break;
+		// vec3
+		case GL_FLOAT_VEC3:
+			v = new MaterialVariableTemplate<Vec3>(n, eSProgs);
+			break;
+		// vec4
+		case GL_FLOAT_VEC4:
+			v = new MaterialVariableTemplate<Vec4>(n, eSProgs);
+			break;
+		// mat3
+		case GL_FLOAT_MAT3:
+			v = new MaterialVariableTemplate<Mat3>(n, eSProgs);
+			break;
+		// mat4
+		case GL_FLOAT_MAT4:
+			v = new MaterialVariableTemplate<Mat4>(n, eSProgs);
+			break;
+		// default is error
+		default:
+			ANKI_ASSERT(0);
 		}
-		else
+
+		if(inpvar->value.size() != 0)
 		{
 			const StringList& value = inpvar->value;
 
@@ -400,29 +390,23 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 			{
 			// sampler2D
 			case GL_SAMPLER_2D:
-				v = new MaterialVariableTemplate<TextureResourcePointer>(
-					n, eSProgs,
-					TextureResourcePointer(value[0].c_str()), true);
+				v->setValue(TextureResourcePointer(value[0].c_str()));
 				break;
-			// float
+			// F32
 			case GL_FLOAT:
-				v = new MaterialVariableTemplate<float>(n, eSProgs,
-					std::stof(value[0].c_str()), true);
+				v->setValue(std::stof(value[0]));
 				break;
 			// vec2
 			case GL_FLOAT_VEC2:
-				v = new MaterialVariableTemplate<Vec2>(n, eSProgs,
-					setMathType<Vec2, 2>(value), true);
+				v->setValue(setMathType<Vec2, 2>(value));
 				break;
 			// vec3
 			case GL_FLOAT_VEC3:
-				v = new MaterialVariableTemplate<Vec3>(n, eSProgs,
-					setMathType<Vec3, 3>(value), true);
+				v->setValue(setMathType<Vec3, 3>(value));
 				break;
 			// vec4
 			case GL_FLOAT_VEC4:
-				v = new MaterialVariableTemplate<Vec4>(n, eSProgs,
-					setMathType<Vec4, 4>(value), true);
+				v->setValue(setMathType<Vec4, 4>(value));
 				break;
 			// default is error
 			default:
@@ -435,4 +419,4 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 	}
 }
 
-} // end namespace
+} // end namespace anki
