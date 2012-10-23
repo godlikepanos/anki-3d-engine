@@ -5,19 +5,45 @@
 #include "anki/gl/Ogl.h"
 #include "anki/util/Assert.h"
 #include "anki/util/StdTypes.h"
-#include <unordered_map>
-#include <mutex>
-#include <algorithm>
+#include "anki/util/Array.h"
+#include "anki/math/Math.h"
 
 namespace anki {
 
 class Vao;
 class Fbo;
 class ShaderProgram;
-class GlState;
 
 /// @addtogroup gl
 /// @{
+
+/// Common stuff for all states
+class GlStateCommon
+{
+public:
+	U32 getMajorVersion() const
+	{
+		ANKI_ASSERT(major != -1);
+		return (U32)major;
+	}
+	U32 getMinorVersion() const
+	{
+		ANKI_ASSERT(minor != -1);
+		return (U32)minor;
+	}
+
+	void init(const U32 major_, const U32 minor_)
+	{
+		major = (I32)major_;
+		minor = (I32)minor_;
+	}
+
+private:
+	/// Minor major GL version
+	I32 major = -1, minor = -1;
+};
+
+typedef Singleton<GlStateCommon> GlStateCommonSingleton;
 
 /// Access the GL state machine.
 /// This class saves us from calling the GL functions
@@ -25,85 +51,55 @@ class GlState
 {
 public:
 	GlState()
-	{}
+	{
+		sync();
+	}
 
 	~GlState()
 	{}
 
-	void init(const U32 major_, const U32 minor_)
-	{
-		sync();
-		major = major_;
-		minor = minor_;
-#if ANKI_DEBUG
-		ANKI_ASSERT(initialized == false);
-		initialized = true;
-#endif
-	}
-
-	U32 getMajorVersion() const
-	{
-		return major;
-	}
-	U32 getMinorVersion() const
-	{
-		return minor;
-	}
-
-	/// @name Set the Fixed Function Pipeline, Call the OpenGL functions
-	/// only when needed
+	/// @name Alter the GL state when needed
 	/// @{
-	void enable(GLenum flag, bool enable = true);
-	void disable(GLenum flag)
+	void enable(GLenum cap, Bool enable = true);
+	void disable(GLenum cap)
 	{
-		enable(flag, false);
+		enable(cap, false);
 	}
-	bool isEnabled(GLenum flag);
+	bool isEnabled(GLenum cap);
 
 	void setViewport(U32 x, U32 y, U32 w, U32 h);
-	/// @}
 
-	/// Set the current program
-	void setProgram(ShaderProgram* prog);
+	void setClearColor(const Vec4& color);
 
-	/// Set the current vao
-	void setVao(Vao* vao);
+	void setClearDepthValue(const GLfloat depth);
 
-	/// Set the current FBO
-	/// @param fbo If nullptr then bind the default FBO
-	void setFbo(Fbo* fbo);
-
-	/// @name Draw functions
-	/// @{
-	void drawElements(U32 count);
+	void setClearStencilValue(const GLint s);
 	/// @}
 
 private:
-	/// Minor major GL version
-	U32 major, minor;
-
 	/// @name The GL state
 	/// @{
-	std::unordered_map<GLenum, bool> flags;
-	static GLenum flagEnums[];
+	Array<Bool, 7> flags;
+	Array<GLint, 4> viewport;
+	Vec4 clearColor;
+	GLfloat clearDepthValue;
+	GLint clearStencilValue;
 
-	GLint viewportX;
-	GLint viewportY;
-	GLsizei viewportW;
-	GLsizei viewportH;
+	// XXX
+	GLenum depthFunc; 
+	Array<GLint, 4> colorMask;
+	GLint depthMask;
 	/// @}
-
-#if ANKI_DEBUG
-	Bool initialized = false;
-#endif
 
 	/// Sync the local members with the opengl ones
 	void sync();
+
+	static U getIndexFromGlEnum(const GLenum cap);
 };
 
 typedef SingletonThreadSafe<GlState> GlStateSingleton;
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

@@ -56,9 +56,9 @@ void MainRenderer::initGl()
 		glGetString(GL_SHADING_LANGUAGE_VERSION)));
 
 	// get max texture units
-	glClearColor(1.0, 0.0, 1.0, 1.0);
-	glClearDepthf(1.0);
-	glClearStencil(0);
+	GlStateSingleton::get().setClearColor(Vec4(1.0, 0.0, 1.0, 1.0));
+	GlStateSingleton::get().setClearDepthValue(1.0);
+	GlStateSingleton::get().setClearStencilValue(0);
 	glDepthFunc(GL_LEQUAL);
 	// CullFace is always on
 	glCullFace(GL_BACK);

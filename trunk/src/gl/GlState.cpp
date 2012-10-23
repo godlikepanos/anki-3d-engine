@@ -5,55 +5,80 @@
 #include "anki/util/Assert.h"
 #include <limits>
 
-#if ANKI_DEBUG
-#	define CHECK_GL() ANKI_ASSERT(initialized == true)
-#else
-#	define CHECK_GL() ((void)0)
-#endif
-
 namespace anki {
 
 //==============================================================================
-
-GLenum GlState::flagEnums[] = {
+static Array<GLenum, 7> glCaps = {{
 	GL_DEPTH_TEST,
 	GL_BLEND,
 	GL_STENCIL_TEST,
 	GL_CULL_FACE,
 	GL_RASTERIZER_DISCARD,
 	GL_POLYGON_OFFSET_FILL,
-	0
-};
+	GL_SCISSOR_TEST
+}};
 
 //==============================================================================
-void GlState::enable(GLenum glFlag, bool enable)
+U GlState::getIndexFromGlEnum(const GLenum cap)
 {
-	CHECK_GL();
-	ANKI_ASSERT(flags.find(glFlag) != flags.end());
-	bool state = flags[glFlag];
-	ANKI_ASSERT(glIsEnabled(glFlag) == state);
+	static_assert(decltype(GlState::flags)::getSize() == 7, "See file");
+	U out = false;
+	switch(cap)
+	{
+	case GL_DEPTH_TEST:
+		out = 0;
+		break;
+	case GL_BLEND:
+		out = 1;
+		break;
+	case GL_STENCIL_TEST:
+		out = 2;
+		break;
+	case GL_CULL_FACE:
+		out = 3;
+		break;
+	case GL_RASTERIZER_DISCARD:
+		out = 4;
+		break;
+	case GL_POLYGON_OFFSET_FILL:
+		out = 5;
+		break;
+	case GL_SCISSOR_TEST:
+		out = 6;
+	default:
+		ANKI_ASSERT(0);
+		break;
+	}
+	return out;
+}
+
+//==============================================================================
+void GlState::enable(GLenum cap, bool enable)
+{
+	U index = getIndexFromGlEnum(cap);
+	Bool state = flags[index];
+	ANKI_ASSERT(glIsEnabled(cap) == state);
 
 	if(enable != state)
 	{
 		if(enable)
 		{
-			glEnable(glFlag);
+			glEnable(cap);
 		}
 		else
 		{
-			glDisable(glFlag);
+			glDisable(cap);
 		}
-		flags[glFlag] = enable;
+		flags[index] = enable;
 	}
 }
 
 //==============================================================================
-bool GlState::isEnabled(GLenum glFlag)
+Bool GlState::isEnabled(GLenum cap)
 {
-	CHECK_GL();
-	ANKI_ASSERT(flags.find(glFlag) != flags.end());
-	bool state = flags[glFlag];
-	ANKI_ASSERT(glIsEnabled(glFlag) == state);
+	U index = getIndexFromGlEnum(cap);
+	Bool state = flags[index];
+	ANKI_ASSERT(glIsEnabled(cap) == state);
 	return state;
 }
 
@@ -61,66 +86,86 @@ bool GlState::isEnabled(GLenum glFlag)
 void GlState::sync()
 {
 	// Set flags
-	GLenum* flagEnum = &flagEnums[0];
-	while(*flagEnum != 0)
+	for(U i = 0; i < glCaps.getSize(); i++)
 	{
-		flags[*flagEnum] = glIsEnabled(*flagEnum);
-		++flagEnum;
+		flags[i] = glIsEnabled(glCaps[i]);
 	}
 
 	// viewport
-	GLint viewport[4];
 	glGetIntegerv(GL_VIEWPORT, &viewport[0]);
-	viewportX = viewport[0];
-	viewportY = viewport[1];
-	viewportW = viewport[2];
-	viewportH = viewport[3];
+
+	// clear color
+	glGetFloatv(GL_COLOR_CLEAR_VALUE, &clearColor[0]);
+
+	// clear depth value
+	glGetFloatv(GL_DEPTH_CLEAR_VALUE, &clearDepthValue);
+
+	// clear stencil value
+	glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &clearStencilValue);
 }
 
 //==============================================================================
 void GlState::setViewport(U32 x, U32 y, U32 w, U32 h)
 {
-	CHECK_GL();
-	if(x != (U32)viewportX || y != (U32)viewportY 
-		|| w != (U32)viewportW || h != (U32)viewportH)
+	if(x != (U32)viewport[0] 
+		|| y != (U32)viewport[1]
+		|| w != (U32)viewport[2] 
+		|| h != (U32)viewport[3])
 	{
 		glViewport(x, y, w, h);
-		viewportX = x;
-		viewportY = y;
-		viewportW = w;
-		viewportH = h;
+		viewport[0] = x;
+		viewport[1] = y;
+		viewport[2] = w;
+		viewport[3] = h;
 	}
 }
 
 //==============================================================================
-void GlState::setProgram(ShaderProgram* prog_)
+void GlState::setClearColor(const Vec4& color)
 {
-	CHECK_GL();
-	ANKI_ASSERT(prog_);
-	prog_->bind();
-}
+#if ANKI_DEBUG
+	Vec4 real;
+	glGetFloatv(GL_COLOR_CLEAR_VALUE, &real[0]);
+	ANKI_ASSERT(real == clearColor);
+#endif
 
-//==============================================================================
-void GlState::setFbo(Fbo* fbo_)
-{
-	CHECK_GL();
-	if(fbo_ == nullptr)
+	if(clearColor != color)
 	{
-		Fbo::unbindAll();
-	}
-	else
-	{
-		ANKI_ASSERT(fbo_->isComplete());
-		fbo_->bind();
+		glClearColor(color.x(), color.y(), color.z(), color.w());
+		clearColor == color;
 	}
 }
 
 //==============================================================================
-void GlState::setVao(Vao* vao_)
+void GlState::setClearDepthValue(const GLfloat depth)
 {
-	CHECK_GL();
-	ANKI_ASSERT(vao_);
-	vao_->bind();
+#if ANKI_DEBUG
+	GLfloat real;
+	glGetFloatv(GL_DEPTH_CLEAR_VALUE, &real);
+	ANKI_ASSERT(real == clearDepthValue);
+#endif
+
+	if(clearDepthValue != depth)
+	{
+		glClearDepthf(depth);
+		clearDepthValue = depth;
+	}
 }
 
-} // end namespace
+//==============================================================================
+void GlState::setClearStencilValue(const GLint s)
+{
+#if ANKI_DEBUG
+	GLint real;
+	glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &real);
+	ANKI_ASSERT(real == clearStencilValue);
+#endif
+
+	if(clearStencilValue != s)
+	{
+		glClearStencil(s);
+		clearStencilValue = s;
+	}
+}
+
+} // end namespace anki
