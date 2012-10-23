@@ -306,8 +306,8 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	const char* transformFeedbackVaryings[])
 {
 	ANKI_ASSERT(!isCreated());
-	U32 minor = GlStateSingleton::get().getMinorVersion();
-	U32 major = GlStateSingleton::get().getMajorVersion();
+	U32 minor = GlStateCommonSingleton::get().getMinorVersion();
+	U32 major = GlStateCommonSingleton::get().getMajorVersion();
 
 	// 1) create and compile the shaders
 	//

@@ -53,7 +53,7 @@ struct Array
 		return &data[0] + N;
 	}
 
-	constexpr U getSize() const
+	static constexpr U getSize()
 	{
 		return N;
 	}

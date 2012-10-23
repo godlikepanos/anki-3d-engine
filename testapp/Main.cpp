@@ -339,8 +339,8 @@ void initSubsystems(int argc, char* argv[])
 	win = new NativeWindow;	
 	win->create(nwinit);
 
-	// GL
-	GlStateSingleton::get().init(glmajor, glminor);
+	// GL stuff
+	GlStateCommonSingleton::get().init(glmajor, glminor);
 
 	// Input
 	InputSingleton::get().init(win);
