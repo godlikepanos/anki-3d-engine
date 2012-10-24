@@ -84,13 +84,13 @@ const std::string& MaterialVariable::getName() const
 
 //==============================================================================
 void MaterialVariable::init(const char* shaderProgVarName,
-	PassLevelToShaderProgramHashMap& sProgs)
+	PassLevelToShaderProgramHashMap& progs)
 {
 	oneSProgVar = NULL;
 
 	// For all programs
-	PassLevelToShaderProgramHashMap::iterator it = sProgs.begin();
-	for(; it != sProgs.end(); ++it)
+	PassLevelToShaderProgramHashMap::iterator it = progs.begin();
+	for(; it != progs.end(); ++it)
 	{
 		const ShaderProgram& sProg = *(it->second);
 		const PassLevelKey& key = it->first;
@@ -143,7 +143,6 @@ Material::~Material()
 //==============================================================================
 void Material::load(const char* filename)
 {
-	ANKI_LOGI(filename);
 	fname = filename;
 	try
 	{
@@ -261,7 +260,7 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 
 			ShaderProgram* sprog = pptr->get();
 
-			sProgs.push_back(pptr);
+			progs.push_back(pptr);
 
 			eSProgs[PassLevelKey(pid, level)] = sprog;
 		}
@@ -304,15 +303,25 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 //==============================================================================
 void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 {
+	const char* blockName = "commonBlock";
+
+	// Get default block
+	commonUniformBlock = (*progs[0])->tryFindUniformBlock(blockName);
+
 	// Get all names of all the uniforms. Dont duplicate
 	//
 	std::map<std::string, GLenum> allVarNames;
 
-	for(const ShaderProgramResourcePointer* sProg : sProgs)
+	for(const ShaderProgramResourcePointer* sProg : progs)
 	{
 		for(const ShaderProgramUniformVariable& v :
 			(*sProg)->getUniformVariables())
 		{
+			const ShaderProgramUniformBlock* bl = v.getUniformBlock();
+			(void)bl; // Make compiler happy
+			ANKI_ASSERT(bl == nullptr || v.getGlDataType() == GL_SAMPLER_2D);
+			ANKI_ASSERT(bl == nullptr || bl->getName() == blockName);
+
 			allVarNames[v.getName()] = v.getGlDataType();
 		}
 	}
