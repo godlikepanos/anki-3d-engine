@@ -1,17 +1,17 @@
 #ifndef ANKI_RESOURCE_PASS_LEVEL_KEY_H
 #define ANKI_RESOURCE_PASS_LEVEL_KEY_H
 
+#include "anki/util/StdTypes.h"
 #include <unordered_map>
-#include <cstdint>
 #include <cstdlib>
 
 namespace anki {
 
-/// XXX
+/// A key that consistst of the rendering pass and the level of detail
 struct PassLevelKey
 {
-	uint32_t pass = 0;
-	uint32_t level = 0;
+	U8 pass = 0;
+	U8 level = 0;
 
 	PassLevelKey()
 	{}
@@ -20,7 +20,7 @@ struct PassLevelKey
 		: pass(b.pass), level(b.level)
 	{}
 
-	PassLevelKey(uint32_t pass_, uint32_t level_)
+	explicit PassLevelKey(const U8 pass_, const U8 level_)
 		: pass(pass_), level(level_)
 	{}
 };
@@ -30,14 +30,14 @@ struct PassLevelKeyCreateHash
 {
 	size_t operator()(const PassLevelKey& b) const
 	{
-		return b.pass * 1000 + b.level;
+		return ((U32)b.pass << 16) | (U32)b.level;
 	}
 };
 
 /// Values comparisons functor
 struct PassLevelKeyComparision
 {
-	bool operator()(const PassLevelKey& a,
+	Bool operator()(const PassLevelKey& a,
 		const PassLevelKey& b) const
 	{
 		return a.pass == b.pass && a.level == b.level;
@@ -50,6 +50,6 @@ template<typename T>
 using PassLevelHashMap = std::unordered_map<
 	PassLevelKey, T, PassLevelKeyCreateHash, PassLevelKeyComparision>;
 
-} // end namespace
+} // end namespace anki
 
 #endif

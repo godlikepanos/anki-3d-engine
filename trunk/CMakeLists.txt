@@ -138,7 +138,7 @@ ADD_DEFINITIONS("-Dthread_local=__thread")
 #
 # Compiler flags
 #
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic-errors -pedantic -ansi -Wall -W -Wextra -Wwrite-strings -Wno-unused -Wundef -Wunused-variable -Werror -msse4 -std=c++11 ")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic-errors -pedantic -ansi -Wall -W -Wextra -Wwrite-strings -Wno-unused -Wundef -Wunused-variable -Wstrict-aliasing=1 -Wstrict-overflow=5 -Werror -msse4 -std=c++11")
 
 IF(CMAKE_BUILD_TYPE STREQUAL Debug)
 	# Removed because they do not work with boost::regexpr and who knows what

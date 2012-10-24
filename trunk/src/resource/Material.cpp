@@ -381,6 +381,7 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 			ANKI_ASSERT(0);
 		}
 
+		// Set value
 		if(inpvar->value.size() != 0)
 		{
 			const StringList& value = inpvar->value;
