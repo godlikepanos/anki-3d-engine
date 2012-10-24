@@ -17,7 +17,7 @@ public:
 	/// @{
 
 	/// @param q One of GL_SAMPLES_PASSED, GL_ANY_SAMPLES_PASSED, 
-	///        GL_TIME_ELAPSED
+	///          GL_TIME_ELAPSED
 	Query(GLenum q);
 
 	~Query();

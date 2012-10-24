@@ -19,6 +19,10 @@ class ShaderProgramUniformVariable;
 class XmlElement;
 class MaterialShaderProgramCreator;
 
+// A few consts
+const U32 MATERIAL_MAX_PASSES = 4;
+const U32 MATERIAL_MAX_LODS = 4;
+
 /// Material variable base. Its a visitable
 typedef Visitable<F32, Vec2, Vec3, Vec4, Mat3, Mat4, TextureResourcePointer> 
 	MateriaVariableVisitable;
@@ -122,7 +126,7 @@ public:
 	/// @{
 	const Data& get() const
 	{
-		ANKI_ASSERT(data.get() != nullptr);
+		ANKI_ASSERT(dataSet == true);
 		return data;
 	}
 
