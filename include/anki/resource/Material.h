@@ -18,6 +18,7 @@ class ShaderProgram;
 class ShaderProgramUniformVariable;
 class XmlElement;
 class MaterialShaderProgramCreator;
+class ShaderProgramUniformBlock;
 
 // A few consts
 const U32 MATERIAL_MAX_PASSES = 4;
@@ -47,9 +48,9 @@ public:
 	/// @{
 	MaterialVariable(
 		const char* shaderProgVarName,
-		PassLevelToShaderProgramHashMap& sProgs)
+		PassLevelToShaderProgramHashMap& progs)
 	{
-		init(shaderProgVarName, sProgs);
+		init(shaderProgVarName, progs);
 	}
 
 	virtual ~MaterialVariable();
@@ -112,8 +113,8 @@ public:
 	/// @{
 	MaterialVariableTemplate(
 		const char* shaderProgVarName,
-		PassLevelToShaderProgramHashMap& sProgs)
-		: MaterialVariable(shaderProgVarName, sProgs)
+		PassLevelToShaderProgramHashMap& progs)
+		: MaterialVariable(shaderProgVarName, progs)
 	{
 		setupVisitable(&data);
 	}
@@ -314,6 +315,11 @@ public:
 	{
 		return vars;
 	}
+
+	const ShaderProgramUniformBlock* getCommonUniformBlock() const
+	{
+		return commonUniformBlock;
+	}
 	/// @}
 
 	const ShaderProgram& findShaderProgram(const PassLevelKey& key) const
@@ -354,10 +360,13 @@ private:
 	/// The most important aspect of materials. These are all the shader
 	/// programs per level and per pass. Their number are NP * NL where
 	/// NP is the number of passes and NL the number of levels of detail
-	ShaderPrograms sProgs;
+	ShaderPrograms progs;
 
 	/// For searching
 	PassLevelToShaderProgramHashMap eSProgs;
+
+	/// One uniform block
+	const ShaderProgramUniformBlock* commonUniformBlock;
 
 	/// Parse what is within the @code <material></material> @endcode
 	void parseMaterialTag(const XmlElement& el);
