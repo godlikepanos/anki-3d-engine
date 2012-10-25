@@ -3,13 +3,13 @@
 
 #include "anki/scene/Property.h"
 #include "anki/util/Vector.h"
+#include "anki/gl/Ubo.h"
 
 namespace anki {
 
 class ModelPatchBase;
 class Material;
 class MaterialVariable;
-class Light;
 class Transform;
 
 /// @addtogroup Scene
@@ -33,11 +33,11 @@ public:
 
 	/// @name Accessors
 	/// @{
-	uint32_t getBuildinId() const
+	U32 getBuildinId() const
 	{
 		return buildinId;
 	}
-	void setBuildinId(uint32_t id)
+	void setBuildinId(U32 id)
 	{
 		buildinId = id;
 	}
@@ -49,7 +49,7 @@ public:
 	/// @}
 
 private:
-	uint32_t buildinId = 0; ///< The renderer sets it
+	U32 buildinId = 0; ///< The renderer sets it
 	const MaterialVariable* mvar = nullptr;
 };
 
@@ -86,6 +86,11 @@ public:
 	{
 		return props.end();
 	}
+
+	Ubo& getUbo()
+	{
+		return ubo;
+	}
 	/// @}
 
 protected:
@@ -93,6 +98,7 @@ protected:
 
 private:
 	MaterialVariableProperties props;
+	Ubo ubo;
 };
 /// @}
 
