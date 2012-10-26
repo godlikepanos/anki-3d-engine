@@ -1,4 +1,4 @@
-#include "anki/renderer/Drawer.h"
+#include "anki/renderer/DebugDrawer.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/physics/Convertors.h"
 #include "anki/collision/Collision.h"
@@ -59,10 +59,10 @@ void DebugDrawer::drawGrid()
 	Vec4 col1(0.0, 0.0, 1.0, 1.0);
 	Vec4 col2(1.0, 0.0, 0.0, 1.0);
 
-	const float SPACE = 1.0; // space between lines
+	const F32 SPACE = 1.0; // space between lines
 	const int NUM = 57;  // lines number. must be odd
 
-	const float GRID_HALF_SIZE = ((NUM - 1) * SPACE / 2);
+	const F32 GRID_HALF_SIZE = ((NUM - 1) * SPACE / 2);
 
 	setColor(col0);
 
@@ -98,13 +98,13 @@ void DebugDrawer::drawGrid()
 }
 
 //==============================================================================
-void DebugDrawer::drawSphere(float radius, int complexity)
+void DebugDrawer::drawSphere(F32 radius, int complexity)
 {
 	Vector<Vec3>* sphereLines;
 
 	// Pre-calculate the sphere points5
 	//
-	std::map<uint, Vector<Vec3> >::iterator it =
+	std::unordered_map<U32, Vector<Vec3>>::iterator it =
 		complexityToPreCalculatedSphere.find(complexity);
 
 	if(it != complexityToPreCalculatedSphere.end()) // Found
@@ -116,14 +116,14 @@ void DebugDrawer::drawSphere(float radius, int complexity)
 		complexityToPreCalculatedSphere[complexity] = Vector<Vec3>();
 		sphereLines = &complexityToPreCalculatedSphere[complexity];
 
-		float fi = getPi<F32>() / complexity;
+		F32 fi = getPi<F32>() / complexity;
 
 		Vec3 prev(1.0, 0.0, 0.0);
-		for(float th = fi; th < getPi<F32>() * 2.0 + fi; th += fi)
+		for(F32 th = fi; th < getPi<F32>() * 2.0 + fi; th += fi)
 		{
 			Vec3 p = Mat3(Euler(0.0, th, 0.0)) * Vec3(1.0, 0.0, 0.0);
 
-			for(float th2 = 0.0; th2 < getPi<F32>(); th2 += fi)
+			for(F32 th2 = 0.0; th2 < getPi<F32>(); th2 += fi)
 			{
 				Mat3 rot(Euler(th2, 0.0, 0.0));
 
@@ -162,12 +162,12 @@ void DebugDrawer::drawSphere(float radius, int complexity)
 }
 
 //==============================================================================
-void DebugDrawer::drawCube(float size)
+void DebugDrawer::drawCube(F32 size)
 {
 	Vec3 maxPos = Vec3(0.5 * size);
 	Vec3 minPos = Vec3(-0.5 * size);
 
-	std::array<Vec3, 8> points = {{
+	Array<Vec3, 8> points = {{
 		Vec3(maxPos.x(), maxPos.y(), maxPos.z()),  // right top front
 		Vec3(minPos.x(), maxPos.y(), maxPos.z()),  // left top front
 		Vec3(minPos.x(), minPos.y(), maxPos.z()),  // left bottom front
@@ -178,7 +178,7 @@ void DebugDrawer::drawCube(float size)
 		Vec3(maxPos.x(), minPos.y(), minPos.z())   // right bottom back
 	}};
 
-	std::array<uint, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6,
+	Array<uint, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6,
 		7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
 	begin();
@@ -267,7 +267,7 @@ void CollisionDebugDrawer::visit(const Obb& obb)
 void CollisionDebugDrawer::visit(const Plane& plane)
 {
 	const Vec3& n = plane.getNormal();
-	const float& o = plane.getOffset();
+	const F32& o = plane.getOffset();
 	Quat q;
 	q.setFrom2Vec3(Vec3(0.0, 0.0, 1.0), n);
 	Mat3 rot(q);
@@ -307,34 +307,35 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 		visit(static_cast<const OrthographicFrustum&>(f).getObb());
 		break;
 	case Frustum::FT_PERSPECTIVE:
-	{
-		dbg->setColor(Vec4(0.5, 0.0, 0.5, 1.0));
-		const PerspectiveFrustum& pf =
-			static_cast<const PerspectiveFrustum&>(f);
-
-		float camLen = pf.getFar();
-		float tmp0 = camLen / tan((getPi<F32>() - pf.getFovX()) * 0.5) + 0.001;
-		float tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
-
-		Vec3 points[] = {
-			Vec3(0.0, 0.0, 0.0), // 0: eye point
-			Vec3(-tmp0, tmp1, -camLen), // 1: top left
-			Vec3(-tmp0, -tmp1, -camLen), // 2: bottom left
-			Vec3(tmp0, -tmp1, -camLen), // 3: bottom right
-			Vec3(tmp0, tmp1, -camLen) // 4: top right
-		};
-
-		const uint indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
-			3, 3, 4, 4, 1};
-
-		dbg->begin();
-		for(uint i = 0; i < sizeof(indeces) / sizeof(uint); i++)
 		{
-			dbg->pushBackVertex(points[indeces[i]]);
+			dbg->setColor(Vec4(0.5, 0.0, 0.5, 1.0));
+			const PerspectiveFrustum& pf =
+				static_cast<const PerspectiveFrustum&>(f);
+
+			F32 camLen = pf.getFar();
+			F32 tmp0 = camLen / tan((getPi<F32>() - pf.getFovX()) * 0.5) 
+				+ 0.001;
+			F32 tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
+
+			Vec3 points[] = {
+				Vec3(0.0, 0.0, 0.0), // 0: eye point
+				Vec3(-tmp0, tmp1, -camLen), // 1: top left
+				Vec3(-tmp0, -tmp1, -camLen), // 2: bottom left
+				Vec3(tmp0, -tmp1, -camLen), // 3: bottom right
+				Vec3(tmp0, tmp1, -camLen) // 4: top right
+			};
+
+			const uint indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
+				3, 3, 4, 4, 1};
+
+			dbg->begin();
+			for(uint i = 0; i < sizeof(indeces) / sizeof(uint); i++)
+			{
+				dbg->pushBackVertex(points[indeces[i]]);
+			}
+			dbg->end();
+			break;
 		}
-		dbg->end();
-		break;
-	}
 	}
 }
 
@@ -484,7 +485,7 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, U32 depth,
 	// Draw if it has spatials
 	if(octnode.getSceneNodesCount() != 0)
 	{
-		//Vec3 color = Vec3(1.0 - float(depth) / float(octree.getMaxDepth()));
+		//Vec3 color = Vec3(1.0 - F32(depth) / F32(octree.getMaxDepth()));
 		Vec3 color(1.0);
 		dbg->setColor(color);
 

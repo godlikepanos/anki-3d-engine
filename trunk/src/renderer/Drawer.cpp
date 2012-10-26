@@ -11,7 +11,6 @@
 namespace anki {
 
 //==============================================================================
-
 enum BuildinId
 {
 	BI_UNITIALIZED = 0,
@@ -30,41 +29,47 @@ static Array<const char*, BI_COUNT - 2> buildinNames = {{
 	"blurring"
 }};
 
+struct SetBuildinIdVisitor
+{
+	Bool setted;
+
+	template<typename TProp>
+	void visit(TProp& x)
+	{
+		MaterialVariableProperty<typename TProp::Value>& mprop =
+			static_cast<MaterialVariableProperty<typename TProp::Value>&>(x);
+
+		const MaterialVariable& mv = mprop.getMaterialVariable();
+
+		if(mprop.getBuildinId() == BI_UNITIALIZED)
+		{
+			const std::string& name = mv.getName();
+
+			for(U i = 0; i < buildinNames.size(); i++)
+			{
+				if(name == buildinNames[i])
+				{
+					mprop.setBuildinId(i + 2);
+					break;
+				}
+			}
+
+			if(mprop.getBuildinId() == BI_UNITIALIZED)
+			{
+				mprop.setBuildinId(BT_NO_BUILDIN);
+			}
+
+			setted = true;
+		}
+
+		setted = false
+	}
+};
+
+//==============================================================================
 static const UNIFORM_BLOCK_MAX_SIZE = 256;
 
-template<typename T>
-static void uniSet(const ShaderProgramUniformVariable& uni, const T& x)
-{
-	(void)uni;
-	(void)x;
-	ANKI_ASSERT(0);
-}
-
-#define TEMPLATE_SPECIALIZATION(type) \
-	template<> \
-	void uniSet<type>(const ShaderProgramUniformVariable& uni, const type& x) \
-	{ \
-		uni.set(x); \
-	}
-
-TEMPLATE_SPECIALIZATION(float)
-TEMPLATE_SPECIALIZATION(Vec2)
-TEMPLATE_SPECIALIZATION(Vec3)
-TEMPLATE_SPECIALIZATION(Vec4)
-TEMPLATE_SPECIALIZATION(Mat3)
-TEMPLATE_SPECIALIZATION(Mat4)
-
-// Texture specialization
-template<>
-void uniSet<TextureResourcePointer>(
-	const ShaderProgramUniformVariable& uni,
-	const TextureResourcePointer& x)
-{
-	const Texture* tex = x.get();
-	uni.set(*tex);
-}
-
-/// XXX
+/// Visitor that sets a uniform
 struct SetupMaterialVariableVisitor
 {
 	PassLevelKey key;
@@ -72,6 +77,13 @@ struct SetupMaterialVariableVisitor
 	Renderer* r = nullptr;
 	Renderable* renderable = nullptr;
 	Array<U8, UNIFORM_BLOCK_MAX_SIZE> clientBlock;
+
+	/// Set a uniform in a client block
+	template<typename T>
+	static void uniSet(const ShaderProgramUniformVariable& uni, const T& value)
+	{
+		uni.setClientMemory(&clientBlock[0], UNIFORM_BLOCK_MAX_SIZE, &value, 1);
+	}
 
 	template<typename TProp>
 	void visit(TProp& x)
@@ -89,34 +101,14 @@ struct SetupMaterialVariableVisitor
 			return;
 		}
 
-		// Set buildin id
-		//
-		if(mprop.getBuildinId() == BI_UNITIALIZED)
-		{
-			const std::string name = mv.getName();
-
-			for(uint32_t i = 0; i < buildinNames.size(); i++)
-			{
-				if(name == buildinNames[i])
-				{
-					mprop.setBuildinId(i + 2);
-					break;
-				}
-			}
-
-			if(mprop.getBuildinId() == BI_UNITIALIZED)
-			{
-				mprop.setBuildinId(BT_NO_BUILDIN);
-			}
-		}
-
 		// Sanity check
 		//
-		/*if(!mv.getInitialized() && mprop.getBuildinId() == BT_NO_BUILDIN)
+		ANKI_ASSERT(mprop.getBuildinId() != BI_UNITIALIZED);
+		if(!mv.hasValue() && mprop.getBuildinId() == BT_NO_BUILDIN)
 		{
 			ANKI_LOGW("Material variable no building and not initialized: "
 				<< mv.getName());
-		}*/
+		}
 
 		// Set uniform
 		//
@@ -127,7 +119,7 @@ struct SetupMaterialVariableVisitor
 		Mat4 mvpMat = vpMat * mMat;
 
 		Mat4 mvMat;
-		bool mvMatCalculated = false; // Opt
+		Bool mvMatCalculated = false; // Opt
 
 		switch(mprop.getBuildinId())
 		{
@@ -160,24 +152,46 @@ struct SetupMaterialVariableVisitor
 	}
 };
 
+// Texture specialization
+template<>
+void uniSet<TextureResourcePointer>(
+	const ShaderProgramUniformVariable& uni,
+	const TextureResourcePointer& x,
+	void*)
+{
+	const Texture* tex = x.get();
+	uni.set(*tex);
+}
+
+//==============================================================================
+void RenderableDrawer::setBuildinIds(Renderable& renderable)
+{
+	SetBuildinIdVisitor vis;
+
+	for(auto it = renderable.getPropertiesBegin();
+		it != renderable.getPropertiesEnd(); ++it)
+	{
+		PropertyBase* prop = *it;
+
+		pbase->acceptVisitor(vis);
+
+		if(!vis.setted)
+		{
+			return;
+		}
+	}
+}
+
 //==============================================================================
 void RenderableDrawer::setupShaderProg(
 	const PassLevelKey& key,
 	const Frustumable& fr,
 	Renderable& renderable)
 {
+	setBuildinIds(renderable);
+
 	const Material& mtl = renderable.getMaterial();
 	const ShaderProgram& sprog = mtl.findShaderProgram(key);
-	Array<U8, UNIFORM_BLOCK_MAX_SIZE> clientBlock;
-
-	/*if(mtl.getDepthTestingEnabled())
-	{
-		GlStateSingleton::get().enable(GL_DEPTH_TEST);
-	}
-	else
-	{
-		GlStateSingleton::get().disable(GL_DEPTH_TEST);
-	}*/
 
 	sprog.bind();
 	
@@ -187,7 +201,6 @@ void RenderableDrawer::setupShaderProg(
 	vis.key = key;
 	vis.renderable = &renderable;
 	vis.r = r;
-	vis.clientBlock = &clientBlock;
 
 	for(auto it = renderable.getPropertiesBegin();
 		it != renderable.getPropertiesEnd(); ++it)
@@ -196,8 +209,11 @@ void RenderableDrawer::setupShaderProg(
 		pbase->acceptVisitor(vis);
 	}
 
-	if(mtl->getUniformBlock())
+	const ShaderProgramUniformBlock* block = mtl->getUniformBlock();
+	if(block)
 	{
+		ANKI_ASSERT(block->getSize() <= UNIFORM_BLOCK_MAX_SIZE);
+		renderable.getUbo().write(&vis.clientBlock[0]);
 		renderable.getUbo().setBindingPoint(0);
 	}
 }
