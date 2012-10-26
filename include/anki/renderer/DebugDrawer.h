@@ -8,8 +8,8 @@
 #include "anki/collision/CollisionShape.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/util/Flags.h"
-#include <array>
-#include <map>
+#include "anki/util/Array.h"
+#include <unordered_map>
 #include <LinearMath/btIDebugDraw.h>
 
 namespace anki {
@@ -22,8 +22,8 @@ public:
 	~DebugDrawer();
 
 	void drawGrid();
-	void drawSphere(float radius, int complexity = 4);
-	void drawCube(float size = 1.0);
+	void drawSphere(F32 radius, int complexity = 4);
+	void drawCube(F32 size = 1.0);
 	void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 
 	/// @name Render functions. Imitate the GL 1.1 immediate mode
@@ -50,12 +50,12 @@ public:
 
 private:
 	ShaderProgramResourcePointer sProg;
-	static const uint MAX_POINTS_PER_DRAW = 256;
-	std::array<Vec3, MAX_POINTS_PER_DRAW> positions;
-	std::array<Vec3, MAX_POINTS_PER_DRAW> colors;
+	static const U MAX_POINTS_PER_DRAW = 256;
+	Array<Vec3, MAX_POINTS_PER_DRAW> positions;
+	Array<Vec3, MAX_POINTS_PER_DRAW> colors;
 	Mat4 modelMat;
 	Mat4 vpMat;
-	uint pointIndex;
+	U pointIndex;
 	Vec3 crntCol;
 	Vbo positionsVbo;
 	Vbo colorsVbo;
@@ -64,7 +64,7 @@ private:
 	/// This is a container of some precalculated spheres. Its a map that
 	/// from sphere complexity it returns a vector of lines (Vec3s in
 	/// pairs)
-	std::map<uint, Vector<Vec3>> complexityToPreCalculatedSphere;
+	std::unordered_map<U32, Vector<Vec3>> complexityToPreCalculatedSphere;
 };
 
 /// Contains methods to render the collision shapes

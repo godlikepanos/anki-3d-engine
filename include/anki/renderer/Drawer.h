@@ -27,6 +27,8 @@ private:
 		const PassLevelKey& key,
 		const Frustumable& fr,
 		Renderable& renderable);
+
+	void setBuildinIds(Renderable& renderable);
 };
 
 } // end namespace anki
