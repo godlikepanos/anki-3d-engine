@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <sstream>
 
+#define ENABLE_UBOS 0
+
 namespace anki {
 
 //==============================================================================
@@ -33,8 +35,9 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	} while(shaderEl);
 
 	// Create block
+#if ENABLE_UBOS
 	StringList block;
-	block.push_back("layout(std140, row_major, binding = 0) "
+	block.push_back("layout(shared, row_major, binding = 0) "
 		"uniform commonBlock\n{");
 	for(Input* in : inputs)
 	{
@@ -44,7 +47,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 			continue;
 		}
 
-		block.push_back("\tuniform " + in->type + " " + in->name + "_;");
+		block.push_back("\tuniform " + in->type + " " + in->name + ";");
 	}
 	block.push_back("};\n");
 
@@ -53,6 +56,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 		source = block.join("\n") + srcLines.join("\n");
 	}
 	else
+#endif
 	{
 		source = srcLines.join("\n");
 	}
@@ -153,7 +157,12 @@ void MaterialShaderProgramCreator::parseInputTag(
 
 	if(inpvar->const_ == false)
 	{
-		//line = "uniform " + inpvar->type + " " + inpvar->name + ";";
+#if ENABLE_UBOS
+		if(inpvar->type == "sampler2D")
+#endif
+		{
+			line = "uniform " + inpvar->type + " " + inpvar->name + ";";
+		}
 	}
 	else
 	{

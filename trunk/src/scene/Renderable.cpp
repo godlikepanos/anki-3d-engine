@@ -1,6 +1,8 @@
 #include "anki/scene/Renderable.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/TextureResource.h"
+#include "anki/gl/ShaderProgram.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
@@ -8,25 +10,62 @@ namespace anki {
 // CreateNewPropertyVisitor                                                    =
 //==============================================================================
 
-/// Create a new property given a material variable
+/// Create a new RenderableMaterialVariable given a MaterialVariable
 struct CreateNewPropertyVisitor
 {
 	const MaterialVariable* mvar = nullptr;
 	PropertyMap* pmap = nullptr;
-	Renderable::MaterialVariableProperties* rprops = nullptr;
+	Renderable::RenderableMaterialVariables* vars = nullptr;
 
 	template<typename T>
 	void visit(const T&) const
 	{
-		MaterialVariableProperty<T>* prop = new MaterialVariableProperty<T>(
-			mvar->getName().c_str(),
-			&(mvar->getValue<T>()),
+		RenderableMaterialVariable* rvar = new RenderableMaterialVariable(
 			mvar);
 
-		pmap->addNewProperty(prop);
-		rprops->push_back(prop);
+		//pmap->addNewProperty(prop);
+		vars->push_back(rvar);
 	}
 };
+
+//==============================================================================
+// RenderableMaterialVariable                                                  =
+//==============================================================================
+
+//==============================================================================
+
+static Array<const char*, BMV_COUNT - 1> buildinNames = {{
+	"modelViewProjectionMat",
+	"modelViewMat",
+	"normalMat",
+	"blurring"
+}};
+
+//==============================================================================
+RenderableMaterialVariable::RenderableMaterialVariable(
+	const MaterialVariable* mvar_)
+	: mvar(mvar_)
+{
+	// Set buildin id
+	const std::string& name = getName();
+
+	buildinId = BMV_NO_BUILDIN;
+	for(U i = 0; i < buildinNames.getSize(); i++)
+	{
+		if(name == buildinNames[i])
+		{
+			buildinId = (BuildinMaterialVariableId)(i + 1);
+			break;
+		}
+	}
+
+	// Sanity checks
+	if(!mvar->hasValue() && buildinId == BMV_NO_BUILDIN)
+	{
+		ANKI_LOGW("Material variable no buildin and not initialized: "
+			<< name);
+	}
+}
 
 //==============================================================================
 // Renderable                                                                  =
@@ -43,7 +82,7 @@ void Renderable::init(PropertyMap& pmap)
 
 	CreateNewPropertyVisitor vis;
 	vis.pmap = &pmap;
-	vis.rprops = &props;
+	vis.vars = &vars;
 
 	for(const MaterialVariable* mv : mtl.getVariables())
 	{
@@ -56,11 +95,12 @@ void Renderable::init(PropertyMap& pmap)
 	// binding
 
 	// Init the UBO
-	const ShaderProgramUniformBlock* block = mtl.getUniformBlock();
+	const ShaderProgramUniformBlock* block = mtl.getCommonUniformBlock();
 
 	if(block)
 	{
-		ubo.create(block->getSize());
+		ubo.create(block->getSize(), nullptr);
+		//ubo.setBinding(20);
 	}
 }
 

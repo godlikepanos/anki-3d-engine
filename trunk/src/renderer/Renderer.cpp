@@ -31,7 +31,9 @@ void Renderer::init(const RendererInitializer& initializer)
 	}
 
 	// init the stages. Careful with the order!!!!!!!!!!
-	ms.init(initializer);
+	tiler.init(this);
+
+	ms.init(initializer);;
 	is.init(initializer);
 	pps.init(initializer);
 	bs.init(initializer);
@@ -80,10 +82,10 @@ void Renderer::render(Scene& scene_)
 	viewProjectionMat = cam.getViewProjectionMatrix();
 
 	ms.run();
+	//tiler.updateTiles(scene->getActiveCamera(), ms.getDepthFai());
 	is.run();
 	pps.run();
-	/*bs.run();
-	pps.runPostPass();*/
+	//bs.run();
 
 	ANKI_CHECK_GL_ERROR();
 	++framesNum;

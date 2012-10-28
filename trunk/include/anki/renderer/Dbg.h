@@ -4,7 +4,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 #include <memory>
-#include "anki/renderer/Drawer.h"
+#include "anki/renderer/DebugDrawer.h"
 
 namespace anki {
 

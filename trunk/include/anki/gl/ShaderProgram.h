@@ -266,11 +266,11 @@ public:
 		return name;
 	}
 
-	GLuint getBindingPoint() const
+	GLuint getBinding() const
 	{
 		return bindingPoint;
 	}
-	void setBindingPoint(GLuint bp) const
+	void setBinding(GLuint bp) const
 	{
 		// Don't try any opts with existing binding point. Binding points 
 		// should break

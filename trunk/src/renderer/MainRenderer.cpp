@@ -96,7 +96,7 @@ void MainRenderer::render(Scene& scene)
 	GlStateSingleton::get().disable(GL_BLEND);
 	sProg->bind();
 #if 0
-	const Texture& finalFai = pps.getHdr().getFai();
+	const Texture& finalFai = ms.getFai0();
 #else
 	const Texture& finalFai = pps.getFai();
 #endif
@@ -112,8 +112,8 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	fs.open(filename, std::ios::out | std::ios::binary);
 	if(!fs.is_open())
 	{
-		throw ANKI_EXCEPTION("Cannot create screenshot. File \""
-			+ filename + "\"");
+		throw ANKI_EXCEPTION("Cannot write screenshot file:"
+			+ filename);
 	}
 
 	// write headers

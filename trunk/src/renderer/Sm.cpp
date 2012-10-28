@@ -79,6 +79,8 @@ void Sm::prepareDraw()
 	// for artifacts
 	glPolygonOffset(2.0, 2.0); // keep the values as low as possible!!!!
 	GlStateSingleton::get().enable(GL_POLYGON_OFFSET_FILL);
+
+	r->getSceneDrawer().prepareDraw();
 }
 
 //==============================================================================

@@ -73,6 +73,7 @@ void Ms::run()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// render all
+	r->getSceneDrawer().prepareDraw();
 	VisibilityInfo& vi =
 		r->getScene().getActiveCamera().getFrustumable()->getVisibilityInfo();
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)

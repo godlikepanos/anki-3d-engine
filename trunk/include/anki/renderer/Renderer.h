@@ -12,6 +12,7 @@
 #include "anki/renderer/Pps.h"
 #include "anki/renderer/Bs.h"
 #include "anki/renderer/Dbg.h"
+#include "anki/renderer/Tiler.h"
 #include "anki/renderer/Drawer.h"
 
 namespace anki {
@@ -135,6 +136,15 @@ public:
 	Is& getIs()
 	{
 		return is;
+	}
+
+	const Tiler& getTiler() const
+	{
+		return tiler;
+	}
+	Tiler& getTiler()
+	{
+		return tiler;
 	}
 
 	const Pps& getPps() const
@@ -267,6 +277,8 @@ protected:
 	Pps pps; ///< Postprocessing rendering stage
 	Bs bs; ///< Blending stage
 	/// @}
+
+	Tiler tiler;
 
 	/// Width of the rendering. Don't confuse with the window width
 	U width;

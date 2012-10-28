@@ -387,6 +387,6 @@ private:
 	NameToPropertyMap map;
 };
 
-} // namespace anki
+} // end namespace anki
 
 #endif

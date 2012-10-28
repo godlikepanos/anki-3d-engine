@@ -4,60 +4,62 @@
 #include "anki/scene/Property.h"
 #include "anki/util/Vector.h"
 #include "anki/gl/Ubo.h"
+#include "anki/resource/Material.h"
 
 namespace anki {
 
 class ModelPatchBase;
-class Material;
-class MaterialVariable;
 class Transform;
 
 /// @addtogroup Scene
 /// @{
 
-/// Material variable property. Its a layer on top of material variables
-template<typename T>
-class MaterialVariableProperty: public ReadCowPointerProperty<T>
+/// XXX
+enum BuildinMaterialVariableId
+{
+	BMV_NO_BUILDIN = 0,
+	BMV_MODEL_VIEW_PROJECTION_MATRIX,
+	BMV_MODEL_VIEW_MATRIX,
+	BMV_NORMAL_MATRIX,
+	BMV_BLURRING,
+	BMV_COUNT
+};
+
+/// A wrapper on top of MaterialVariable
+class RenderableMaterialVariable
 {
 public:
-	typedef T Value;
-	typedef ReadCowPointerProperty<T> Base;
-
-	/// @name Constructors/Destructor
-	/// @{
-	MaterialVariableProperty(const char* name, const Value* x,
-		const MaterialVariable* mvar_)
-		: Base(name, x), mvar(mvar_)
-	{}
-	/// @}
+	RenderableMaterialVariable(const MaterialVariable* mvar_);
 
 	/// @name Accessors
 	/// @{
-	U32 getBuildinId() const
+	BuildinMaterialVariableId getBuildinId() const
 	{
 		return buildinId;
-	}
-	void setBuildinId(U32 id)
-	{
-		buildinId = id;
 	}
 
 	const MaterialVariable& getMaterialVariable() const
 	{
 		return *mvar;
 	}
+
+	const std::string& getName() const
+	{
+		return mvar->getName();
+	}
 	/// @}
 
 private:
-	U32 buildinId = 0; ///< The renderer sets it
+	BuildinMaterialVariableId buildinId;
 	const MaterialVariable* mvar = nullptr;
+	PropertyBase* prop = nullptr;
 };
 
 /// Renderable interface. Implemented by renderable scene nodes
 class Renderable
 {
 public:
-	typedef Vector<PropertyBase*> MaterialVariableProperties;
+	typedef PtrVector<RenderableMaterialVariable> RenderableMaterialVariables;
 
 	Renderable()
 	{}
@@ -78,13 +80,13 @@ public:
 
 	/// @name Accessors
 	/// @{
-	MaterialVariableProperties::iterator getPropertiesBegin()
+	RenderableMaterialVariables::iterator getVariablesBegin()
 	{
-		return props.begin();
+		return vars.begin();
 	}
-	MaterialVariableProperties::iterator getPropertiesEnd()
+	RenderableMaterialVariables::iterator getVariablesEnd()
 	{
-		return props.end();
+		return vars.end();
 	}
 
 	Ubo& getUbo()
@@ -97,7 +99,7 @@ protected:
 	void init(PropertyMap& pmap);
 
 private:
-	MaterialVariableProperties props;
+	RenderableMaterialVariables vars;
 	Ubo ubo;
 };
 /// @}

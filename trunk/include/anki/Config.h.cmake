@@ -29,7 +29,7 @@
 #	define ANKI_DEBUG 1
 #endif
 
-#define ANKI_FILE __BASE_FILE__
+#define ANKI_FILE __FILE__
 #define ANKI_FUNC __func__
 
 #endif
