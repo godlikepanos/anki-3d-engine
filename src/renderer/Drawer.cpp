@@ -11,64 +11,6 @@
 namespace anki {
 
 //==============================================================================
-enum BuildinId
-{
-	BI_UNITIALIZED = 0,
-	BT_NO_BUILDIN,
-	BI_MODEL_VIEW_PROJECTION_MATRIX,
-	BI_MODEL_VIEW_MATRIX,
-	BI_NORMAL_MATRIX,
-	BI_BLURRING,
-	BI_COUNT
-};
-
-static Array<const char*, BI_COUNT - 2> buildinNames = {{
-	"modelViewProjectionMat",
-	"modelViewMat",
-	"normalMat",
-	"blurring"
-}};
-
-struct SetBuildinIdVisitor
-{
-	Bool setted;
-
-	template<typename TProp>
-	void visit(TProp& x)
-	{
-		MaterialVariableProperty<typename TProp::Value>& mprop =
-			static_cast<MaterialVariableProperty<typename TProp::Value>&>(x);
-
-		const MaterialVariable& mv = mprop.getMaterialVariable();
-
-		if(mprop.getBuildinId() == BI_UNITIALIZED)
-		{
-			const std::string& name = mv.getName();
-
-			for(U i = 0; i < buildinNames.size(); i++)
-			{
-				if(name == buildinNames[i])
-				{
-					mprop.setBuildinId(i + 2);
-					break;
-				}
-			}
-
-			if(mprop.getBuildinId() == BI_UNITIALIZED)
-			{
-				mprop.setBuildinId(BT_NO_BUILDIN);
-			}
-
-			setted = true;
-		}
-
-		setted = false
-	}
-};
-
-//==============================================================================
-static const UNIFORM_BLOCK_MAX_SIZE = 256;
-
 /// Visitor that sets a uniform
 struct SetupMaterialVariableVisitor
 {
@@ -76,38 +18,26 @@ struct SetupMaterialVariableVisitor
 	const Frustumable* fr = nullptr;
 	Renderer* r = nullptr;
 	Renderable* renderable = nullptr;
-	Array<U8, UNIFORM_BLOCK_MAX_SIZE> clientBlock;
+	Array<U8, RenderableDrawer::UNIFORM_BLOCK_MAX_SIZE> clientBlock;
+	RenderableMaterialVariable* rvar = nullptr;
 
 	/// Set a uniform in a client block
 	template<typename T>
-	static void uniSet(const ShaderProgramUniformVariable& uni, const T& value)
+	void uniSet(const ShaderProgramUniformVariable& uni, const T& value)
 	{
-		uni.setClientMemory(&clientBlock[0], UNIFORM_BLOCK_MAX_SIZE, &value, 1);
+		ANKI_ASSERT(0);
 	}
 
 	template<typename TProp>
 	void visit(TProp& x)
 	{
-		MaterialVariableProperty<typename TProp::Value>& mprop =
-			static_cast<MaterialVariableProperty<typename TProp::Value>&>(x);
-
-		const MaterialVariable& mv = mprop.getMaterialVariable();
+		const MaterialVariable& mv = rvar->getMaterialVariable();
 
 		const ShaderProgramUniformVariable* uni =
 			mv.findShaderProgramUniformVariable(key);
-
 		if(!uni)
 		{
 			return;
-		}
-
-		// Sanity check
-		//
-		ANKI_ASSERT(mprop.getBuildinId() != BI_UNITIALIZED);
-		if(!mv.hasValue() && mprop.getBuildinId() == BT_NO_BUILDIN)
-		{
-			ANKI_LOGW("Material variable no building and not initialized: "
-				<< mv.getName());
 		}
 
 		// Set uniform
@@ -121,15 +51,15 @@ struct SetupMaterialVariableVisitor
 		Mat4 mvMat;
 		Bool mvMatCalculated = false; // Opt
 
-		switch(mprop.getBuildinId())
+		switch(rvar->getBuildinId())
 		{
-		case BT_NO_BUILDIN:
-			uniSet(*uni, mprop.getValue());
+		case BMV_NO_BUILDIN:
+			uniSet(*uni, x);
 			break;
-		case BI_MODEL_VIEW_PROJECTION_MATRIX:
+		case BMV_MODEL_VIEW_PROJECTION_MATRIX:
 			uniSet(*uni, mvpMat);
 			break;
-		case BI_MODEL_VIEW_MATRIX:
+		case BMV_MODEL_VIEW_MATRIX:
 			if(!mvMatCalculated)
 			{
 				mvMat = mMat * fr->getViewMatrix();
@@ -137,7 +67,7 @@ struct SetupMaterialVariableVisitor
 			}
 			uniSet(*uni, mvMat);
 			break;
-		case BI_NORMAL_MATRIX:
+		case BMV_NORMAL_MATRIX:
 			if(!mvMatCalculated)
 			{
 				mvMat = mMat * fr->getViewMatrix();
@@ -145,41 +75,50 @@ struct SetupMaterialVariableVisitor
 			}
 			uniSet(*uni, mvMat.getRotationPart());
 			break;
-		case BI_BLURRING:
+		case BMV_BLURRING:
 			uniSet(*uni, 0.0);
+			break;
+		default:
+			ANKI_ASSERT(0);
 			break;
 		}
 	}
 };
 
+/// Specialize the material accepted types. The un-specialized will be used for
+/// all Property types like strings, we don't need strings in our case
+#define TEMPLATE_SPECIALIZATION(type) \
+	template<> \
+	void SetupMaterialVariableVisitor::uniSet<type>( \
+		const ShaderProgramUniformVariable& uni, const type& value) \
+	{ \
+		if(uni.getUniformBlock()) \
+		{ \
+			uni.setClientMemory(&clientBlock[0], \
+				RenderableDrawer::UNIFORM_BLOCK_MAX_SIZE, \
+				&value, 1); \
+		} \
+		else \
+		{ \
+			uni.set(value); \
+		} \
+	}
+
+TEMPLATE_SPECIALIZATION(F32)
+TEMPLATE_SPECIALIZATION(Vec2)
+TEMPLATE_SPECIALIZATION(Vec3)
+TEMPLATE_SPECIALIZATION(Vec4)
+TEMPLATE_SPECIALIZATION(Mat3)
+TEMPLATE_SPECIALIZATION(Mat4)
+
 // Texture specialization
 template<>
-void uniSet<TextureResourcePointer>(
-	const ShaderProgramUniformVariable& uni,
-	const TextureResourcePointer& x,
-	void*)
+void SetupMaterialVariableVisitor::uniSet<TextureResourcePointer>(
+	const ShaderProgramUniformVariable& uni, 
+	const TextureResourcePointer& value)
 {
-	const Texture* tex = x.get();
+	const Texture* tex = value.get();
 	uni.set(*tex);
-}
-
-//==============================================================================
-void RenderableDrawer::setBuildinIds(Renderable& renderable)
-{
-	SetBuildinIdVisitor vis;
-
-	for(auto it = renderable.getPropertiesBegin();
-		it != renderable.getPropertiesEnd(); ++it)
-	{
-		PropertyBase* prop = *it;
-
-		pbase->acceptVisitor(vis);
-
-		if(!vis.setted)
-		{
-			return;
-		}
-	}
 }
 
 //==============================================================================
@@ -188,8 +127,6 @@ void RenderableDrawer::setupShaderProg(
 	const Frustumable& fr,
 	Renderable& renderable)
 {
-	setBuildinIds(renderable);
-
 	const Material& mtl = renderable.getMaterial();
 	const ShaderProgram& sprog = mtl.findShaderProgram(key);
 
@@ -202,19 +139,21 @@ void RenderableDrawer::setupShaderProg(
 	vis.renderable = &renderable;
 	vis.r = r;
 
-	for(auto it = renderable.getPropertiesBegin();
-		it != renderable.getPropertiesEnd(); ++it)
+	for(auto it = renderable.getVariablesBegin();
+		it != renderable.getVariablesEnd(); ++it)
 	{
-		PropertyBase* pbase = *it;
-		pbase->acceptVisitor(vis);
+		RenderableMaterialVariable* rvar = *it;
+		vis.rvar = rvar;
+		rvar->getMaterialVariable().acceptVisitor(vis);
 	}
 
-	const ShaderProgramUniformBlock* block = mtl->getUniformBlock();
+	const ShaderProgramUniformBlock* block = mtl.getCommonUniformBlock();
 	if(block)
 	{
 		ANKI_ASSERT(block->getSize() <= UNIFORM_BLOCK_MAX_SIZE);
+		ANKI_ASSERT(block->getBinding() == 0);
 		renderable.getUbo().write(&vis.clientBlock[0]);
-		renderable.getUbo().setBindingPoint(0);
+		renderable.getUbo().setBinding(0);
 	}
 }
 
@@ -238,7 +177,6 @@ void RenderableDrawer::render(const Frustumable& fr, uint pass,
 	ANKI_ASSERT(vao.getAttachmentsCount() > 1);
 	vao.bind();
 	glDrawElements(GL_TRIANGLES, indecesNum, GL_UNSIGNED_SHORT, 0);
-	vao.unbind();
 }
 
 }  // end namespace anki

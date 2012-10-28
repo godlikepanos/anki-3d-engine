@@ -366,35 +366,35 @@ void Is::initInternal(const RendererInitializer& initializer)
 
 	ublock = &lightPassProg->findUniformBlock("commonBlock");
 	if(ublock->getSize() != sizeof(ShaderCommonUniforms)
-		|| ublock->getBindingPoint() != COMMON_UNIFORMS_BLOCK_BINDING)
+		|| ublock->getBinding() != COMMON_UNIFORMS_BLOCK_BINDING)
 	{
 		throw ANKI_EXCEPTION("Problem with the commonBlock");
 	}
 
 	ublock = &lightPassProg->findUniformBlock("pointLightsBlock");
 	if(ublock->getSize() != sizeof(ShaderPointLights)
-		|| ublock->getBindingPoint() != POINT_LIGHTS_BLOCK_BINDING)
+		|| ublock->getBinding() != POINT_LIGHTS_BLOCK_BINDING)
 	{
 		throw ANKI_EXCEPTION("Problem with the pointLightsBlock");
 	}
 
 	ublock = &lightPassProg->findUniformBlock("spotLightsBlock");
 	if(ublock->getSize() != sizeof(ShaderSpotLights)
-		|| ublock->getBindingPoint() != SPOT_LIGHTS_BLOCK_BINDING)
+		|| ublock->getBinding() != SPOT_LIGHTS_BLOCK_BINDING)
 	{
 		throw ANKI_EXCEPTION("Problem with the spotLightsBlock");
 	}
 
 	ublock = &lightPassProg->findUniformBlock("spotLightsBlock");
 	if(ublock->getSize() != sizeof(ShaderSpotLights)
-		|| ublock->getBindingPoint() != SPOT_LIGHTS_BLOCK_BINDING)
+		|| ublock->getBinding() != SPOT_LIGHTS_BLOCK_BINDING)
 	{
 		throw ANKI_EXCEPTION("Problem with the spotLightsBlock");
 	}
 
 	ublock = &lightPassProg->findUniformBlock("tilesBlock");
 	if(ublock->getSize() != sizeof(ShaderTiles)
-		|| ublock->getBindingPoint() != TILES_BLOCK_BINDING)
+		|| ublock->getBinding() != TILES_BLOCK_BINDING)
 	{
 		throw ANKI_EXCEPTION("Problem with the tilesBlock");
 	}
@@ -764,6 +764,11 @@ void Is::lightPass()
 	// shader prog
 	lightPassProg->bind();
 
+	commonUbo.setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
+	pointLightsUbo.setBinding(POINT_LIGHTS_BLOCK_BINDING);
+	spotLightsUbo.setBinding(SPOT_LIGHTS_BLOCK_BINDING);
+	tilesUbo.setBinding(TILES_BLOCK_BINDING);
+
 	lightPassProg->findUniformVariable("msFai0").set(r->getMs().getFai0());
 	lightPassProg->findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
@@ -795,11 +800,6 @@ void Is::run()
 
 		commonUboUpdateTimestamp = Timestamp::getTimestamp();
 	}
-
-	commonUbo.setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
-	pointLightsUbo.setBinding(POINT_LIGHTS_BLOCK_BINDING);
-	spotLightsUbo.setBinding(SPOT_LIGHTS_BLOCK_BINDING);
-	tilesUbo.setBinding(TILES_BLOCK_BINDING);
 
 	// Update tiles
 	updateTiles();

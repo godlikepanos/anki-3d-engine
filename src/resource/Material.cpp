@@ -10,6 +10,8 @@
 #include <map>
 #include <fstream>
 
+#define ENABLE_UBOS 0
+
 namespace anki {
 
 //==============================================================================
@@ -317,10 +319,17 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 		for(const ShaderProgramUniformVariable& v :
 			(*sProg)->getUniformVariables())
 		{
+#if ENABLE_UBOS
 			const ShaderProgramUniformBlock* bl = v.getUniformBlock();
-			(void)bl; // Make compiler happy
-			ANKI_ASSERT(bl == nullptr || v.getGlDataType() == GL_SAMPLER_2D);
-			ANKI_ASSERT(bl == nullptr || bl->getName() == blockName);
+			if(bl == nullptr)
+			{
+				ANKI_ASSERT(v.getGlDataType() == GL_SAMPLER_2D);
+			}
+			else
+			{
+				ANKI_ASSERT(bl->getName() == blockName);
+			}
+#endif
 
 			allVarNames[v.getName()] = v.getGlDataType();
 		}
