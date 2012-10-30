@@ -173,12 +173,12 @@ void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 	//
 	// In the meantime update the 4 planes for all the tiles
 	//
+	fbo.bind(); // Flush prev FBO on Mali
 	update4Planes(cam);
 
 	//
 	// Issue the min/max draw call
 	//
-	fbo.bind();
 	prog->bind();
 	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
 	prog->findUniformVariable("depthMap").set(depthMap);

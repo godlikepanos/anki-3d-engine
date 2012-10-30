@@ -22,12 +22,20 @@ namespace anki {
 /// - #pragma anki start <vertexShader | tcShader | teShader |
 ///                       geometryShader | fragmentShader>
 /// - #pragma anki include "<filename>"
-/// - #pragma anki transformFeedbackVarying <varName>
+/// - #pragma anki transformFeedbackVaryings <separate|interleaved>
+///   <varName> <varName>
 ///
 /// @note The order of the "#pragma anki start" is important
 class ShaderProgramPrePreprocessor
 {
 public:
+	enum XfbBufferMode
+	{
+		XFBBM_NONE,
+		XFBBM_INTERLEAVED,
+		XFBBM_SEPARATE
+	};
+
 	/// It loads a file and parses it
 	/// @param[in] filename The file to load
 	/// @exception Exception
@@ -51,6 +59,11 @@ public:
 	{
 		return shaderSources[type];
 	}
+
+	XfbBufferMode getXfbBufferMode() const
+	{
+		return xfbBufferMode;
+	}
 	/// @}
 
 protected:
@@ -70,6 +83,7 @@ protected:
 
 	/// Names and and ids for transform feedback varyings
 	StringList trffbVaryings;
+	XfbBufferMode xfbBufferMode = XFBBM_NONE;
 	Array<std::string, ST_NUM> shaderSources;
 
 	/// The parseFileForPragmas fills this
