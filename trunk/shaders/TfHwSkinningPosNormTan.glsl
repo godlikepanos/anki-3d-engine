@@ -1,6 +1,4 @@
-#pragma anki transformFeedbackVarying vPosition
-#pragma anki transformFeedbackVarying vNormal
-#pragma anki transformFeedbackVarying vTangent
+#pragma anki transformFeedbackVaryings interleaved vPosition vNormal vTangent
 #define NORMAL_ENABLED
 #define TANGENT_ENABLED
 #pragma anki include "shaders/TfHwSkinningGeneric.glsl"

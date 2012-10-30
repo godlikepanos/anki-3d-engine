@@ -31,9 +31,17 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 	renderingQuality = initializer.mainRendererQuality;
 	initializer.width *= renderingQuality;
 	initializer.height *= renderingQuality;
+	initializer.pps.drawFinalToDefaultFbo = (renderingQuality == 1.0);
+
 	Renderer::init(initializer);
 	dbg.init(initializer);
 	deformer.reset(new Deformer);
+
+	if(!initializer.pps.drawFinalToDefaultFbo)
+	{
+		sProg.load("shaders/Final.glsl");
+	}
+
 	ANKI_LOGI("Main renderer initialized");
 }
 
@@ -89,19 +97,22 @@ void MainRenderer::render(Scene& scene)
 
 	// Render the PPS FAI to the framebuffer
 	//
-	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind the window framebuffer
+	if(!pps.getDrawFinalToDefaultFbo())
+	{
+		Fbo::unbindAll(); // Bind the window framebuffer
 
-	GlStateSingleton::get().setViewport(0, 0, windowWidth, windowHeight);
-	GlStateSingleton::get().disable(GL_DEPTH_TEST);
-	GlStateSingleton::get().disable(GL_BLEND);
-	sProg->bind();
+		GlStateSingleton::get().setViewport(0, 0, windowWidth, windowHeight);
+		GlStateSingleton::get().disable(GL_DEPTH_TEST);
+		GlStateSingleton::get().disable(GL_BLEND);
+		sProg->bind();
 #if 0
-	const Texture& finalFai = ms.getFai0();
+		const Texture& finalFai = ms.getFai0();
 #else
-	const Texture& finalFai = pps.getFai();
+		const Texture& finalFai = pps.getFai();
 #endif
-	sProg->findUniformVariable("rasterImage").set(finalFai);
-	drawQuad();
+		sProg->findUniformVariable("rasterImage").set(finalFai);
+		drawQuad();
+	}
 }
 
 //==============================================================================

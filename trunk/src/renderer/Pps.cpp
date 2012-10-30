@@ -19,16 +19,20 @@ void Pps::initInternal(const RendererInitializer& initializer)
 {
 	ssao.init(initializer);
 	hdr.init(initializer);
+	drawFinalToDefaultFbo = initializer.pps.drawFinalToDefaultFbo;
 
 	// FBO
-	Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
-		GL_FLOAT, fai);
-
-	fbo.create();
-	fbo.setColorAttachments({&fai});
-	if(!fbo.isComplete())
+	if(!drawFinalToDefaultFbo)
 	{
-		throw ANKI_EXCEPTION("Fbo not complete");
+		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
+			GL_FLOAT, fai);
+
+		fbo.create();
+		fbo.setColorAttachments({&fai});
+		if(!fbo.isComplete())
+		{
+			throw ANKI_EXCEPTION("Fbo not complete");
+		}
 	}
 
 	// SProg
@@ -74,7 +78,14 @@ void Pps::run()
 		hdr.run();
 	}
 
-	fbo.bind();
+	if(drawFinalToDefaultFbo)
+	{
+		Fbo::unbindAll();
+	}
+	else
+	{
+		fbo.bind();
+	}
 
 	GlStateSingleton::get().enable(GL_DEPTH_TEST, false);
 	GlStateSingleton::get().enable(GL_BLEND, false);

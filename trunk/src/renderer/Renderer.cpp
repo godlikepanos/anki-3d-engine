@@ -7,8 +7,7 @@ namespace anki {
 
 //==============================================================================
 Renderer::Renderer()
-	: ms(this), is(this), pps(this), bs(this), width(640), height(480),
-		sceneDrawer(this)
+	: ms(this), is(this), pps(this), bs(this), sceneDrawer(this)
 {}
 
 //==============================================================================

@@ -1,2 +1,2 @@
-#pragma anki transformFeedbackVarying vPosition
+#pragma anki transformFeedbackVaryings interleaved vPosition
 #pragma anki include "shaders/TfHwSkinningGeneric.glsl"
