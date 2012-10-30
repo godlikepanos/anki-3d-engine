@@ -12,14 +12,15 @@ namespace anki {
 
 // Keep the strings in that order so that the start pragmas will match to the
 // ShaderType enums
-static Array<const char*, 7> commands = {{
+static Array<const char*, 8> commands = {{
 	"#pragma anki start vertexShader",
 	"#pragma anki start teShader",
 	"#pragma anki start tcShader",
 	"#pragma anki start geometryShader",
 	"#pragma anki start fragmentShader",
 	"#pragma anki include",
-	"#pragma anki transformFeedbackVaryings"}};
+	"#pragma anki transformFeedbackVaryings separate",
+	"#pragma anki transformFeedbackVaryings interleaved"}};
 
 static_assert(ST_VERTEX == 0 && ST_FRAGMENT == 4, "See file");
 
@@ -58,6 +59,14 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	for(const std::string& line : lines)
 	{
 		std::string::size_type npos;
+		Bool expectPragmaAnki = false;
+		Bool gotPragmaAnki = true;
+
+		if(line.find("#pragma anki") == 0)
+		{
+			expectPragmaAnki = true;
+		}
+
 		if(line.find(commands[ST_VERTEX]) == 0)
 		{
 			parseStartPragma(ST_VERTEX, line);
@@ -89,10 +98,24 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 		{
 			std::string slist = {line, npos, std::string::npos};
 			trffbVaryings = StringList::splitString(slist.c_str(), ' ');
+			xfbBufferMode = XFBBM_SEPARATE;
+		}
+		else if(line.find(commands[7]) == 0)
+		{
+			std::string slist = {line, npos, std::string::npos};
+			trffbVaryings = StringList::splitString(slist.c_str(), ' ');
+			xfbBufferMode = XFBBM_INTERLEAVED;
 		}
 		else
 		{
+			gotPragmaAnki = false;
 			sourceLines.push_back(line);
+		}
+
+		// Sanity check
+		if(expectPragmaAnki && !gotPragmaAnki)
+		{
+			throw ANKI_EXCEPTION("Malformed pragma anki: " + line);
 		}
 	}
 }

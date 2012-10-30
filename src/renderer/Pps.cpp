@@ -63,6 +63,7 @@ void Pps::init(const Renderer::Initializer& initializer)
 //==============================================================================
 void Pps::run()
 {
+	// First SSAO because it depends on MS where HDR depends on IS
 	if(ssao.getEnabled())
 	{
 		ssao.run();

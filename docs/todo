@@ -1,3 +1,18 @@
+
+=======
+Pending
+=======
+
+- For the main renderer dont use final stage. Just make PPS to write to the FB
+  Maybe though do that only when the rendering quality is 1.0 else you will have
+  more blending ops to do
+- Interleaved geometry
+- See if you can have 2 FAIs instead of 3 on SSAO and HDR
+
+====
+Done
+====
+
 - Put uniform buffers everywhere
 - Move to GLES3
 	- Remove all boost

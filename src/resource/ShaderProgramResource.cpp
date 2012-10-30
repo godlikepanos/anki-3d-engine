@@ -20,15 +20,29 @@ void ShaderProgramResource::load(const char* filename, const char* extraSrc)
 {
 	ShaderProgramPrePreprocessor pars(filename);
 
-	std::array<const char*, 128> trfVarsArr = {{nullptr}};
+	Array<const char*, 128> trfVarsArr = {{nullptr}};
+	GLenum xfbBufferMode = GL_NONE;
 	if(pars.getTranformFeedbackVaryings().size() > 0)
 	{
-		uint32_t i;
+		U32 i;
 		for(i = 0; i < pars.getTranformFeedbackVaryings().size(); i++)
 		{
 			trfVarsArr[i] = pars.getTranformFeedbackVaryings()[i].c_str();
 		}
 		trfVarsArr[i] = nullptr;
+
+		switch(pars.getXfbBufferMode())
+		{
+		case ShaderProgramPrePreprocessor::XFBBM_INTERLEAVED:
+			xfbBufferMode = GL_INTERLEAVED_ATTRIBS;
+			break;
+		case ShaderProgramPrePreprocessor::XFBBM_SEPARATE:
+			xfbBufferMode = GL_SEPARATE_ATTRIBS;
+			break;
+		default:
+			ANKI_ASSERT(0);
+			break;
+		}
 	}
 
 	std::string vertSrc = extraSrc + pars.getShaderSource(ST_VERTEX);
@@ -39,7 +53,8 @@ void ShaderProgramResource::load(const char* filename, const char* extraSrc)
 		nullptr,
 		nullptr,
 		fragSrc.c_str(),
-		&trfVarsArr[0]);
+		&trfVarsArr[0],
+		xfbBufferMode);
 }
 
 //==============================================================================

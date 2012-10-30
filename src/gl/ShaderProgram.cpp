@@ -303,7 +303,7 @@ thread_local const ShaderProgram* ShaderProgram::current = nullptr;
 //==============================================================================
 void ShaderProgram::create(const char* vertSource, const char* tcSource, 
 	const char* teSource, const char* geomSource, const char* fragSource,
-	const char* transformFeedbackVaryings[])
+	const char* xfbVaryings[], const GLenum xfbBufferMode)
 {
 	ANKI_ASSERT(!isCreated());
 	U32 minor = GlStateCommonSingleton::get().getMinorVersion();
@@ -396,12 +396,14 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 		glAttachShader(glId, geomShaderGlId);
 	}
 
-	// 3) set the TRFFB varyings
-	ANKI_ASSERT(transformFeedbackVaryings != nullptr);
-	int count = 0;
-	while(transformFeedbackVaryings[count] != nullptr)
+	// 3) set the XFB varyings
+	U count = 0;
+	if(xfbVaryings)
 	{
-		++count;
+		while(xfbVaryings[count] != nullptr)
+		{
+			++count;
+		}
 	}
 
 	if(count)
@@ -409,8 +411,8 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 		glTransformFeedbackVaryings(
 			glId,
 			count, 
-			transformFeedbackVaryings,
-			GL_SEPARATE_ATTRIBS);
+			xfbVaryings,
+			xfbBufferMode);
 	}
 
 	// 4) link
