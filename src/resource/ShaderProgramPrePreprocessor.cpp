@@ -58,7 +58,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 
 	for(const std::string& line : lines)
 	{
-		std::string::size_type npos;
+		std::string::size_type npos = 0;
 		Bool expectPragmaAnki = false;
 		Bool gotPragmaAnki = true;
 
@@ -94,15 +94,15 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 
 			parseFileForPragmas(filen, depth + 1);
 		}
-		else if(line.find(commands[6]) == 0)
+		else if((npos = line.find(commands[6])) == 0)
 		{
-			std::string slist = {line, npos, std::string::npos};
+			std::string slist = {line, strlen(commands[6]), std::string::npos};
 			trffbVaryings = StringList::splitString(slist.c_str(), ' ');
 			xfbBufferMode = XFBBM_SEPARATE;
 		}
-		else if(line.find(commands[7]) == 0)
+		else if((npos = line.find(commands[7])) == 0)
 		{
-			std::string slist = {line, npos, std::string::npos};
+			std::string slist = {line, strlen(commands[7]), std::string::npos};
 			trffbVaryings = StringList::splitString(slist.c_str(), ' ');
 			xfbBufferMode = XFBBM_INTERLEAVED;
 		}

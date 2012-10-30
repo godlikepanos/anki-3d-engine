@@ -53,6 +53,11 @@ public:
 	{
 		return fai;
 	}
+
+	Bool getDrawFinalToDefaultFbo() const
+	{
+		return drawFinalToDefaultFbo;
+	}
 	/// @}
 
 private:
@@ -66,6 +71,7 @@ private:
 	Fbo fbo;
 	ShaderProgramResourcePointer prog;
 	Texture fai;
+	Bool drawFinalToDefaultFbo;
 
 	void initInternal(const RendererInitializer& initializer);
 };

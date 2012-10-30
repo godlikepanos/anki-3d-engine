@@ -72,6 +72,8 @@ struct RendererInitializer
 			U blurringIterationsNum = 2;
 			F32 sideBlurFactor = 1.0;
 		} bl;
+
+		Bool drawFinalToDefaultFbo = false;
 	} pps;
 
 	// Dbg
