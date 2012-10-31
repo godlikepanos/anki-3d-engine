@@ -38,18 +38,18 @@ public:
 		parameterUpdateTimestamp = Timestamp::getTimestamp();
 	}
 
-	uint getBlurringIterationsCount() const
+	U32 getBlurringIterationsCount() const
 	{
 		return blurringIterationsCount;
 	}
-	void setBlurringIterationsCount(const uint x)
+	void setBlurringIterationsCount(const U32 x)
 	{
 		blurringIterationsCount = x;
 	}
 
 	const Texture& getFai() const
 	{
-		return fai;
+		return vblurFai;
 	}
 	/// @}
 
@@ -57,19 +57,19 @@ private:
 	U32 width;
 	U32 height;
 	F32 exposure = 4.0; ///< How bright is the HDR
-	U32 blurringIterationsCount = 2; ///< The blurring iterations of the tone map
+	U32 blurringIterationsCount = 2; ///< The blurring iterations
 	F32 blurringDist = 1.0; ///< Distance in blurring
 	F32 renderingQuality = 0.5;
-	Fbo toneFbo;
 	Fbo hblurFbo;
 	Fbo vblurFbo;
 	ShaderProgramResourcePointer toneSProg;
 	ShaderProgramResourcePointer hblurSProg;
 	ShaderProgramResourcePointer vblurSProg;
-	Texture toneFai; ///< Vertical blur pass FAI
 	Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
-	Texture fai; ///< The final FAI
+	Texture vblurFai; ///< The final FAI
+	/// When a parameter changed by the setters
 	U32 parameterUpdateTimestamp = Timestamp::getTimestamp();
+	/// When the commonUbo got updated
 	U32 commonUboUpdateTimestamp = Timestamp::getTimestamp();
 	Ubo commonUbo;
 
@@ -77,6 +77,6 @@ private:
 	void initInternal(const RendererInitializer& initializer);
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif
