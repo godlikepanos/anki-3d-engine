@@ -9,7 +9,7 @@
 #define ANKI_UTIL_VISITOR_H
 
 #include "anki/util/Assert.h"
-#include <array>
+#include "anki/util/Array.h"
 
 namespace anki {
 
@@ -107,7 +107,7 @@ public:
 
 private:
 	/// Pointers to JumpPoint::visit static methods
-	std::array<FuncPtr, sizeof...(Types)> jumps;
+	Array<FuncPtr, sizeof...(Types)> jumps;
 
 	template<typename T>
 	static void visit(TVisitor& v, void* address)
@@ -150,7 +150,7 @@ public:
 
 private:
 	/// Pointers to JumpPoint::visit static methods
-	std::array<FuncPtr, sizeof...(Types)> jumps;
+	Array<FuncPtr, sizeof...(Types)> jumps;
 
 	template<typename T>
 	static void visit(TVisitor& v, TBase& base)

@@ -103,6 +103,7 @@ void Pps::run()
 	{
 		prog->findUniformVariable("ppsHdrFai").set(hdr.getFai());
 	}
+	//prog->findUniformVariable("msDepthFai").set(r->getMs().getDepthFai());
 
 	r->drawQuad();
 }
