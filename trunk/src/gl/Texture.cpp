@@ -340,7 +340,7 @@ void Texture::genMipmap()
 }
 
 //==============================================================================
-void Texture::setFilteringNoBind(TextureFilteringType filterType) const
+void Texture::setFilteringNoBind(TextureFilteringType filterType)
 {
 	switch(filterType)
 	{
@@ -355,7 +355,12 @@ void Texture::setFilteringNoBind(TextureFilteringType filterType) const
 	case TFT_TRILINEAR:
 		glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	default:
+		ANKI_ASSERT(0);
+		break;
 	}
+
+	filtering = filterType;
 }
 
 //==============================================================================

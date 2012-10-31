@@ -38,19 +38,17 @@ public:
 
 	const Texture& getFai() const
 	{
-		return fai;
+		return vblurFai;
 	}
 	/// @}
 
 private:
-	Texture ssaoFai; ///< It contains the unblurred SSAO factor
+	Texture vblurFai;
 	Texture hblurFai;
-	Texture fai;  ///< AKA vblurFai The final FAI
 	F32 renderingQuality;
 	U32 blurringIterationsCount;
-	Fbo ssaoFbo;
-	Fbo hblurFbo;
 	Fbo vblurFbo;
+	Fbo hblurFbo;
 	TextureResourcePointer noiseMap;
 	ShaderProgramResourcePointer ssaoSProg;
 	ShaderProgramResourcePointer hblurSProg;

@@ -246,10 +246,14 @@ public:
 	U bind() const;
 
 	/// Change the filtering type
-	void setFiltering(TextureFilteringType filterType)
+	void setFiltering(const TextureFilteringType filterType)
 	{
 		TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
 		setFilteringNoBind(filterType);
+	}
+	TextureFilteringType getFiltering() const
+	{
+		return filtering;
 	}
 
 	/// Set texture parameter
@@ -272,13 +276,14 @@ private:
 	GLenum format = GL_NONE; ///< GL_RED, GL_RG, GL_RGB etc
 	GLenum type = GL_NONE; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
 	GLuint width = 0, height = 0, depth = 0;
+	TextureFilteringType filtering;
 
 	Bool isCreated() const
 	{
 		return glId != 0;
 	}
 
-	void setFilteringNoBind(TextureFilteringType filterType) const;
+	void setFilteringNoBind(TextureFilteringType filterType);
 };
 /// @}
 

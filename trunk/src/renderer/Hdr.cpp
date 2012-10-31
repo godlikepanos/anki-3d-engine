@@ -1,4 +1,3 @@
-#include <boost/lexical_cast.hpp>
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Renderer.h"
 
@@ -40,11 +39,8 @@ void Hdr::initInternal(const Renderer::Initializer& initializer)
 	blurringDist = initializer.pps.hdr.blurringDist;
 	blurringIterationsCount = initializer.pps.hdr.blurringIterationsCount;
 
-	initFbo(toneFbo, toneFai);
 	initFbo(hblurFbo, hblurFai);
-	initFbo(vblurFbo, fai);
-
-	fai.setFiltering(Texture::TFT_LINEAR);
+	initFbo(vblurFbo, vblurFai);
 
 	// init shaders
 	Vec4 block(exposure, 0.0, 0.0, 0.0);
@@ -104,8 +100,11 @@ void Hdr::run()
 	GlStateSingleton::get().disable(GL_BLEND);
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 
+	// For the passes it should be NEAREST
+	vblurFai.setFiltering(Texture::TFT_NEAREST);
+
 	// pass 0
-	toneFbo.bind();
+	vblurFbo.bind();
 	toneSProg->bind();
 
 	if(parameterUpdateTimestamp > commonUboUpdateTimestamp)
@@ -126,20 +125,22 @@ void Hdr::run()
 		hblurSProg->bind();
 		if(i == 0)
 		{
-			hblurSProg->findUniformVariable("img").set(toneFai);
-		}
-		else if(i == 1)
-		{
-			hblurSProg->findUniformVariable("img").set(fai);
+			hblurSProg->findUniformVariable("img").set(vblurFai);
 		}
 		r->drawQuad();
 
 		// vpass
 		vblurFbo.bind();
 		vblurSProg->bind();
-		vblurSProg->findUniformVariable("img").set(hblurFai);
+		if(i == 0)
+		{
+			vblurSProg->findUniformVariable("img").set(hblurFai);
+		}
 		r->drawQuad();
 	}
+
+	// For the next stage it should be LINEAR though
+	vblurFai.setFiltering(Texture::TFT_LINEAR);
 }
 
-} // end namespace
+} // end namespace anki

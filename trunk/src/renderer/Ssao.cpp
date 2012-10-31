@@ -47,9 +47,8 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	//
 	// create FBOs
 	//
-	createFbo(ssaoFbo, ssaoFai);
 	createFbo(hblurFbo, hblurFai);
-	createFbo(vblurFbo, fai);
+	createFbo(vblurFbo, vblurFai);
 
 	//
 	// noise map
@@ -121,7 +120,7 @@ void Ssao::run()
 	// 1st pass
 	//
 	
-	ssaoFbo.bind();
+	vblurFbo.bind();
 	ssaoSProg->bind();
 	commonUbo.setBinding(0);
 
@@ -146,14 +145,10 @@ void Ssao::run()
 	// noiseMap
 	ssaoSProg->findUniformVariable("noiseMap").set(*noiseMap);
 
-	// msNormalFai
-	ssaoSProg->findUniformVariable("msGFai").set(
-		r->getMs().getFai0());
+	// msGFai
+	ssaoSProg->findUniformVariable("msGFai").set(r->getMs().getFai0());
 
 	r->drawQuad();
-
-	vblurSProg->bind();
-	vblurSProg->findUniformVariable("img").set(hblurFai);
 
 	// Blurring passes
 	//
@@ -164,17 +159,17 @@ void Ssao::run()
 		hblurSProg->bind();
 		if(i == 0)
 		{
-			hblurSProg->findUniformVariable("img").set(ssaoFai);
-		}
-		else if(i == 1)
-		{
-			hblurSProg->findUniformVariable("img").set(fai);
+			hblurSProg->findUniformVariable("img").set(vblurFai);
 		}
 		r->drawQuad();
 
 		// vpass
 		vblurFbo.bind();
 		vblurSProg->bind();
+		if(i == 0)
+		{
+			vblurSProg->findUniformVariable("img").set(hblurFai);
+		}
 		r->drawQuad();
 	}
 }
