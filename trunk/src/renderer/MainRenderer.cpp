@@ -31,7 +31,7 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 	renderingQuality = initializer.mainRendererQuality;
 	initializer.width *= renderingQuality;
 	initializer.height *= renderingQuality;
-	initializer.pps.drawFinalToDefaultFbo = (renderingQuality == 1.0);
+	initializer.pps.drawFinalToDefaultFbo = (renderingQuality > 0.9);
 
 	Renderer::init(initializer);
 	dbg.init(initializer);
@@ -106,7 +106,7 @@ void MainRenderer::render(Scene& scene)
 		GlStateSingleton::get().disable(GL_BLEND);
 		sProg->bind();
 #if 0
-		const Texture& finalFai = ms.getFai0();
+		const Texture& finalFai = pps.getHdr().getFai();
 #else
 		const Texture& finalFai = pps.getFai();
 #endif

@@ -5,7 +5,9 @@
 #pragma anki start fragmentShader
 
 #pragma anki include "shaders/photoshop_filters.glsl"
+#pragma anki include "shaders/LinearDepth.glsl"
 
+uniform sampler2D msDepthFai;
 uniform sampler2D isFai;
 uniform sampler2D ppsHdrFai;
 uniform sampler2D ppsSsaoFai;
@@ -31,14 +33,21 @@ vec3 saturation(in vec3 col, in float factor)
 }
 
 //==============================================================================
+vec3 gammaCorrection(in float gamma, in vec3 col)
+{
+	return pow(col, vec3(1.0 / gamma));
+}
+
+//==============================================================================
+vec3 gammaCorrectionRgb(in vec3 gamma, in vec3 col)
+{
+	return pow(col, 1.0 / gamma);
+}
+
+//==============================================================================
 void main(void)
 {
 	fColor = texture2D(isFai, vTexCoords).rgb;
-
-	/*const float gamma = 0.7;
-	color.r = pow(color.r, 1.0 / gamma);
-	color.g = pow(color.g, 1.0 / gamma);
-	color.b = pow(color.b, 1.0 / gamma);*/
 
 #if defined(HDR_ENABLED)
 	vec3 hdr = texture2D(ppsHdrFai, vTexCoords).rgb;
@@ -50,6 +59,11 @@ void main(void)
 	fColor *= ssao;
 #endif
 
-	fColor = BlendHardLight(vec3(0.6, 0.62, 0.4), fColor);
+	/*float fog = 1.0 - readFromTextureAndLinearizeDepth(msDepthFai, 
+		vTexCoords, 0.1, 10.0);
+	fColor *= ;*/
+
+	//fColor = BlendHardLight(vec3(0.6, 0.62, 0.4), fColor);
+	fColor = gammaCorrectionRgb(vec3(0.9, 0.92, 0.75), fColor);
 }
 

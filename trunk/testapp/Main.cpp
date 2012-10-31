@@ -292,7 +292,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -355,7 +355,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.is.sm.resolution = 512;
 	initializer.pps.hdr.enabled = true;
 	initializer.pps.hdr.renderingQuality = 0.25;
-	initializer.pps.hdr.blurringDist = 0.1;
+	initializer.pps.hdr.blurringDist = 0.0;
 	initializer.pps.hdr.blurringIterationsCount = 2;
 	initializer.pps.hdr.exposure = 5.0;
 	initializer.pps.ssao.blurringIterationsNum = 4;
