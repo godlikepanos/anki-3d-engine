@@ -15,7 +15,7 @@ class ShaderProgram;
 
 /// Post-processing stage.This stage is divided into 2 two parts. The first
 /// happens before blending stage and the second after
-class Pps: private RenderingPass
+class Pps: public SwitchableRenderingPass
 {
 public:
 	Pps(Renderer* r);
@@ -53,11 +53,6 @@ public:
 	{
 		return fai;
 	}
-
-	Bool getDrawFinalToDefaultFbo() const
-	{
-		return drawFinalToDefaultFbo;
-	}
 	/// @}
 
 private:
@@ -71,13 +66,10 @@ private:
 	Fbo fbo;
 	ShaderProgramResourcePointer prog;
 	Texture fai;
-	Bool drawFinalToDefaultFbo;
 
 	void initInternal(const RendererInitializer& initializer);
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

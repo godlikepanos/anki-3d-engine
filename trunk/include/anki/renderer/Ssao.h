@@ -31,11 +31,6 @@ public:
 
 	/// @name Accessors
 	/// @{
-	float getRenderingQuality() const
-	{
-		return renderingQuality;
-	}
-
 	const Texture& getFai() const
 	{
 		return vblurFai;
@@ -45,7 +40,6 @@ public:
 private:
 	Texture vblurFai;
 	Texture hblurFai;
-	F32 renderingQuality;
 	U32 blurringIterationsCount;
 	Fbo vblurFbo;
 	Fbo hblurFbo;

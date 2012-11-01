@@ -75,7 +75,10 @@ private:
 /// The global texture manager
 typedef Singleton<TextureManager> TextureManagerSingleton;
 
-/// Class for effective binding
+/// Class for effective binding of textures
+///
+/// @note GL has some nonsense where you can bind different texture targets in 
+///       the same unit. This class doesn't support that
 class TextureUnits
 {
 public:
@@ -102,7 +105,7 @@ private:
 	/// Texture unit representation
 	struct Unit
 	{
-		/// Have the GL ID to save memory. -1 if no tex is binded to that unit
+		/// Have the GL ID to save memory. 0 if no tex is binded to that unit
 		GLuint tex;
 		
 		/// Born time. The bigger the value the latter the unit has been

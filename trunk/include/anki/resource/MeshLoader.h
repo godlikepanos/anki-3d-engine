@@ -57,9 +57,8 @@ public:
 	};
 
 	/// Triangle
-	class Triangle
+	struct Triangle
 	{
-	public:
 		/// An array with the vertex indexes in the mesh class
 		Array<uint, 3> vertIds;
 		Vec3 normal;
@@ -99,6 +98,7 @@ public:
 		return vertWeights;
 	}
 
+	// XXX Delete: Unused
 	const Vector<Triangle>& getTris() const
 	{
 		return tris;

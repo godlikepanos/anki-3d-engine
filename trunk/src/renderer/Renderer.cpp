@@ -21,6 +21,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	width = initializer.width;
 	height = initializer.height;
 	lodDistance = initializer.lodDistance;
+	renderingQuality = initializer.renderingQuality;
 	framesNum = 0;
 
 	// a few sanity checks

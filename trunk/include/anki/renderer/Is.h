@@ -87,6 +87,8 @@ private:
 		Array<Tile, TILES_X_COUNT * TILES_Y_COUNT> tiles1d;
 	};
 
+	U32 width, height;
+
 	/// A texture of TILES_X_COUNT*TILES_Y_COUNT size and format RG16F. Used to
 	/// to fill the Tile::depth
 	Texture minMaxFai;
