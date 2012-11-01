@@ -66,6 +66,10 @@ private:
 	int screenshotJpegQuality = 90; ///< The quality of the JPEG screenshots.
 							        ///< From 0 to 100
 
+	U32 windowWidth, windowHeight;
+
+	Bool drawToDefaultFbo;
+
 	std::unique_ptr<Deformer> deformer;
 
 	void takeScreenshotTga(const char* filename);

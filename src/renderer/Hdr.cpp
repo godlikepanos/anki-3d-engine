@@ -31,11 +31,10 @@ void Hdr::initInternal(const Renderer::Initializer& initializer)
 		return;
 	}
 
-	F32 renderingQuality = initializer.pps.hdr.renderingQuality 
-		* initializer.renderingQuality;
+	const F32 renderingQuality = initializer.pps.hdr.renderingQuality;
 
-	width = renderingQuality * (F32)initializer.width;
-	height = renderingQuality * (F32)initializer.height;
+	width = renderingQuality * (F32)r->getWidth();
+	height = renderingQuality * (F32)r->getHeight();
 	exposure = initializer.pps.hdr.exposure;
 	blurringDist = initializer.pps.hdr.blurringDist;
 	blurringIterationsCount = initializer.pps.hdr.blurringIterationsCount;

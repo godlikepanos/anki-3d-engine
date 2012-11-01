@@ -38,12 +38,11 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 		return;
 	}
 
-	F32 renderingQuality = initializer.pps.ssao.renderingQuality 
-		* initializer.renderingQuality;
+	const F32 renderingQuality = initializer.pps.ssao.renderingQuality;
 	blurringIterationsCount = initializer.pps.ssao.blurringIterationsNum;
 
-	width = renderingQuality * (F32)initializer.width;
-	height = renderingQuality * (F32)initializer.height;
+	width = renderingQuality * (F32)r->getWidth();
+	height = renderingQuality * (F32)r->getHeight();
 
 	//
 	// create FBOs

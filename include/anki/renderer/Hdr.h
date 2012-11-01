@@ -54,8 +54,7 @@ public:
 	/// @}
 
 private:
-	U32 width;
-	U32 height;
+	U32 width, height;
 	F32 exposure = 4.0; ///< How bright is the HDR
 	U32 blurringIterationsCount = 2; ///< The blurring iterations
 	F32 blurringDist = 1.0; ///< Distance in blurring

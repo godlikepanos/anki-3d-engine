@@ -42,6 +42,7 @@ struct RendererInitializer
 			U32 resolution = 512;
 			U32 maxLights = 4;
 		} sm;
+		Bool drawToDefaultFbo = false;
 	} is;
 
 	// Pps
@@ -73,6 +74,7 @@ struct RendererInitializer
 			F32 sideBlurFactor = 1.0;
 		} bl;
 		Bool enabled = false;
+		Bool drawToDefaultFbo = false;
 	} pps;
 
 	// Dbg
@@ -84,7 +86,7 @@ struct RendererInitializer
 	// the globals
 	U32 width;
 	U32 height;
-	F32 renderingQuality = 1.0;
+	F32 renderingQuality = 1.0; ///< Applies only to MainRenderer
 	F32 lodDistance; ///< Distance that used to calculate the LOD
 
 	// funcs
@@ -157,12 +159,12 @@ public:
 		return pps;
 	}
 
-	U getWidth() const
+	U32 getWidth() const
 	{
 		return width;
 	}
 
-	U getHeight() const
+	U32 getHeight() const
 	{
 		return height;
 	}
@@ -215,16 +217,6 @@ public:
 	U32 getPlanesUpdateTimestamp() const
 	{
 		return planesUpdateTimestamp;
-	}
-
-	Bool getOffsceenRenderer() const
-	{
-		return isOffscreenRenderer;
-	}
-	
-	F32 getRenderingQuality() const
-	{
-		return renderingQuality;
 	}
 	/// @}
 
@@ -292,16 +284,14 @@ protected:
 	Tiler tiler;
 
 	/// Width of the rendering. Don't confuse with the window width
-	U width;
+	U32 width;
 	/// Height of the rendering. Don't confuse with the window width
-	U height;
-	F32 renderingQuality;
+	U32 height;
 	Scene* scene; ///< Current scene
 	/// Max color attachments an FBO can accept
 	static int maxColorAtachments;
 	RenderableDrawer sceneDrawer;
 	F32 lodDistance; ///< Distance that used to calculate the LOD
-	Bool isOffscreenRenderer = true; ///< An onscreen renderer may fake that
 
 	/// @name Optimization vars
 	/// Used in other stages
