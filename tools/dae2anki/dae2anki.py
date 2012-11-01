@@ -57,7 +57,7 @@ def compare_arr(a, b):
 	la = len(a)
 	lb = len(b)
 	if la != lb:
-		raise Exception("Arrays not the same")
+		raise Exception("Arrays don't have the same size")
 	for i in range(la):
 		if a[i] != b[i]:
 			return False

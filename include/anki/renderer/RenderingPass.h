@@ -1,6 +1,8 @@
 #ifndef ANKI_RENDERER_RENDERING_PASS_H
 #define ANKI_RENDERER_RENDERING_PASS_H
 
+#include "anki/util/StdTypes.h"
+
 namespace anki {
 
 class Renderer;
@@ -36,17 +38,9 @@ public:
 	{
 		return enabled;
 	}
-	bool& getEnabled()
-	{
-		return enabled;
-	}
-	void setEnabled(const bool x)
-	{
-		enabled = x;
-	}
 
 protected:
-	bool enabled = false;
+	Bool enabled = false;
 };
 
 } // end namespace anki

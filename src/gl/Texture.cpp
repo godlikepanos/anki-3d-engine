@@ -132,7 +132,8 @@ U TextureUnits::choseUnit(const Texture& tex, Bool& allreadyBinded)
 		}
 	}
 
-	// Find the older unit and replace the texture
+	// Find the older unit and choose that. Why? Because that texture haven't 
+	// been used for some time 
 	//
 	U64 older = 0;
 	for(U i = 1; i < units.size(); ++i)

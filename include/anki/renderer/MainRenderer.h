@@ -32,11 +32,6 @@ public:
 		screenshotJpegQuality = x;
 	}
 
-	float getRenderingQuality() const
-	{
-		return renderingQuality;
-	}
-
 	const Dbg& getDbg() const
 	{
 		return dbg;
@@ -71,12 +66,6 @@ private:
 	int screenshotJpegQuality = 90; ///< The quality of the JPEG screenshots.
 							        ///< From 0 to 100
 
-	U32 windowWidth, windowHeight;
-
-	/// The global rendering quality of the raster image. Its a percentage
-	/// of the application's window size. From 0.0(low) to 1.0(high)
-	float renderingQuality;
-
 	std::unique_ptr<Deformer> deformer;
 
 	void takeScreenshotTga(const char* filename);
@@ -86,6 +75,6 @@ private:
 
 typedef Singleton<MainRenderer> MainRendererSingleton;
 
-} // end namespace
+} // end namespace anki
 
 #endif

@@ -20,19 +20,12 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 	ANKI_LOGI("Initializing main renderer...");
 	initGl();
 
-	sProg.load("shaders/Final.glsl");
+	isOffscreenRenderer = (renderingQuality < 0.9);
 
-	windowWidth = initializer_.width;
-	windowHeight = initializer_.height;
+	sProg.load("shaders/Final.glsl");
 
 	// init the offscreen Renderer
 	//
-	RendererInitializer initializer = initializer_;
-	renderingQuality = initializer.mainRendererQuality;
-	initializer.width *= renderingQuality;
-	initializer.height *= renderingQuality;
-	initializer.pps.drawFinalToDefaultFbo = (renderingQuality > 0.9);
-
 	Renderer::init(initializer);
 	dbg.init(initializer);
 	deformer.reset(new Deformer);
@@ -233,4 +226,4 @@ void MainRenderer::takeScreenshot(const char* filename)
 	//ANKI_LOGI("Screenshot \"" << filename << "\" saved");
 }
 
-} // end namespace
+} // end namespace anki

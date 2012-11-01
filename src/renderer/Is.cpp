@@ -289,6 +289,9 @@ void Is::init(const RendererInitializer& initializer)
 //==============================================================================
 void Is::initInternal(const RendererInitializer& initializer)
 {
+	width = initializer.renderingQuality * initializer.width;
+	height = initializer.renderingQuality * initializer.height;
+
 	//
 	// Init the passes
 	//
@@ -300,8 +303,8 @@ void Is::initInternal(const RendererInitializer& initializer)
 	std::string pps =
 		"#define TILES_X_COUNT " + std::to_string(TILES_X_COUNT) + "\n"
 		"#define TILES_Y_COUNT " + std::to_string(TILES_Y_COUNT) + "\n"
-		"#define RENDERER_WIDTH " + std::to_string(r->getWidth()) + "\n"
-		"#define RENDERER_HEIGHT " + std::to_string(r->getHeight()) + "\n"
+		"#define RENDERER_WIDTH " + std::to_string(width) + "\n"
+		"#define RENDERER_HEIGHT " + std::to_string(height) + "\n"
 		"#define MAX_LIGHTS_PER_TILE " + std::to_string(MAX_LIGHTS_PER_TILE)
 		+ "\n"
 		"#define MAX_POINT_LIGHTS " + std::to_string(MAX_POINT_LIGHTS) + "\n"
@@ -325,7 +328,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	//
 
 	// IS FBO
-	Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB8,
+	Renderer::createFai(width, height, GL_RGB8,
 		GL_RGB, GL_UNSIGNED_INT, fai);
 	fbo.create();
 	fbo.setColorAttachments({&fai});
@@ -670,7 +673,7 @@ void Is::lightPass()
 
 	// Prepare state
 	fbo.bind();
-	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
+	GlStateSingleton::get().setViewport(0, 0, width, height);
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
 

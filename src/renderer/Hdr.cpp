@@ -31,10 +31,11 @@ void Hdr::initInternal(const Renderer::Initializer& initializer)
 		return;
 	}
 
-	renderingQuality = initializer.pps.hdr.renderingQuality;
+	F32 renderingQuality = initializer.pps.hdr.renderingQuality 
+		* initializer.renderingQuality;
 
-	width = renderingQuality * r->getWidth();
-	height = renderingQuality * r->getHeight();
+	width = renderingQuality * (F32)initializer.width;
+	height = renderingQuality * (F32)initializer.height;
 	exposure = initializer.pps.hdr.exposure;
 	blurringDist = initializer.pps.hdr.blurringDist;
 	blurringIterationsCount = initializer.pps.hdr.blurringIterationsCount;
@@ -90,6 +91,7 @@ void Hdr::init(const RendererInitializer& initializer)
 //==============================================================================
 void Hdr::run()
 {
+	ANKI_ASSERT(enabled);
 	/*if(r.getFramesNum() % 2 == 0)
 	{
 		return;

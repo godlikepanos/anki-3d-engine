@@ -17,12 +17,18 @@ Pps::~Pps()
 //==============================================================================
 void Pps::initInternal(const RendererInitializer& initializer)
 {
+	enabled = initializer.pps.enabled;
+	if(!enabled)
+	{
+		return;
+	}
+
 	ssao.init(initializer);
 	hdr.init(initializer);
 	drawFinalToDefaultFbo = initializer.pps.drawFinalToDefaultFbo;
 
 	// FBO
-	if(!drawFinalToDefaultFbo)
+	if(r->getOffscreenRenderer())
 	{
 		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
 			GL_FLOAT, fai);
@@ -67,6 +73,8 @@ void Pps::init(const Renderer::Initializer& initializer)
 //==============================================================================
 void Pps::run()
 {
+	ANKI_ASSERT(enabled);
+
 	// First SSAO because it depends on MS where HDR depends on IS
 	if(ssao.getEnabled())
 	{
@@ -78,13 +86,13 @@ void Pps::run()
 		hdr.run();
 	}
 
-	if(drawFinalToDefaultFbo)
+	if(r->getOffscreenRenderer())
 	{
-		Fbo::unbindAll();
+		fbo.bind();
 	}
 	else
 	{
-		fbo.bind();
+		Fbo::unbindAll();
 	}
 
 	GlStateSingleton::get().enable(GL_DEPTH_TEST, false);
