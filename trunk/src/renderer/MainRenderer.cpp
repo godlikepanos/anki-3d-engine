@@ -20,20 +20,32 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 	ANKI_LOGI("Initializing main renderer...");
 	initGl();
 
-	isOffscreenRenderer = (renderingQuality < 0.9);
-
-	sProg.load("shaders/Final.glsl");
+	const F32 renderingQuality = initializer_.renderingQuality;
+	windowWidth = initializer_.width;
+	windowHeight = initializer_.height;
+	drawToDefaultFbo = (renderingQuality > 0.9);
 
 	// init the offscreen Renderer
 	//
+	RendererInitializer initializer = initializer_;
+	initializer.width *= renderingQuality;
+	initializer.height *= renderingQuality;
+
+	if(drawToDefaultFbo)
+	{
+		initializer.pps.drawToDefaultFbo = true;
+		initializer.is.drawToDefaultFbo = !initializer.pps.enabled;
+	}
+	else
+	{
+		initializer.pps.drawToDefaultFbo = false;
+		initializer.is.drawToDefaultFbo = false;
+		sProg.load("shaders/Final.glsl");
+	}
+
 	Renderer::init(initializer);
 	dbg.init(initializer);
 	deformer.reset(new Deformer);
-
-	if(!initializer.pps.drawFinalToDefaultFbo)
-	{
-		sProg.load("shaders/Final.glsl");
-	}
 
 	ANKI_LOGI("Main renderer initialized");
 }
@@ -90,7 +102,7 @@ void MainRenderer::render(Scene& scene)
 
 	// Render the PPS FAI to the framebuffer
 	//
-	if(!pps.getDrawFinalToDefaultFbo())
+	if(!drawToDefaultFbo)
 	{
 		Fbo::unbindAll(); // Bind the window framebuffer
 

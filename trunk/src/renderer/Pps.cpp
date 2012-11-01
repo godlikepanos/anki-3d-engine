@@ -7,7 +7,7 @@ namespace anki {
 
 //==============================================================================
 Pps::Pps(Renderer* r_)
-	: RenderingPass(r_), hdr(r_), ssao(r_), bl(r_)
+	: SwitchableRenderingPass(r_), hdr(r_), ssao(r_), bl(r_)
 {}
 
 //==============================================================================
@@ -25,10 +25,10 @@ void Pps::initInternal(const RendererInitializer& initializer)
 
 	ssao.init(initializer);
 	hdr.init(initializer);
-	drawFinalToDefaultFbo = initializer.pps.drawFinalToDefaultFbo;
+	renderToDefaultFbo = initializer.pps.drawToDefaultFbo;
 
 	// FBO
-	if(r->getOffscreenRenderer())
+	if(!renderToDefaultFbo)
 	{
 		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
 			GL_FLOAT, fai);
@@ -39,6 +39,11 @@ void Pps::initInternal(const RendererInitializer& initializer)
 		{
 			throw ANKI_EXCEPTION("Fbo not complete");
 		}
+	}
+	else
+	{
+		width = initializer.width / initializer.renderingQuality;
+		height = initializer.height / initializer.renderingQuality;
 	}
 
 	// SProg
@@ -86,19 +91,21 @@ void Pps::run()
 		hdr.run();
 	}
 
-	if(r->getOffscreenRenderer())
+	if(renderToDefaultFbo)
 	{
-		fbo.bind();
+		Fbo::unbindAll();
+		GlStateSingleton::get().setViewport(
+			0, 0, width, height);
 	}
 	else
 	{
-		Fbo::unbindAll();
+		fbo.bind();
+		GlStateSingleton::get().setViewport(
+			0, 0, r->getWidth(), r->getHeight());
 	}
 
 	GlStateSingleton::get().enable(GL_DEPTH_TEST, false);
 	GlStateSingleton::get().enable(GL_BLEND, false);
-	GlStateSingleton::get().setViewport(0, 0,
-		r->getWidth(), r->getHeight());
 
 	prog->bind();
 	prog->findUniformVariable("isFai").set(r->getIs().getFai());

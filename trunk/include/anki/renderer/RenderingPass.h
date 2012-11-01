@@ -34,9 +34,13 @@ public:
 		: RenderingPass(r_)
 	{}
 
-	bool getEnabled() const
+	Bool getEnabled() const
 	{
 		return enabled;
+	}
+	void setEnabled(Bool e)
+	{
+		enabled = e;
 	}
 
 protected:

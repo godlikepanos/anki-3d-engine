@@ -74,7 +74,7 @@ MESSAGE("++ AnKi window backend: ${ANKI_WINDOW_BACKEND}")
 # Build type
 IF(CMAKE_BUILD_TYPE STREQUAL Debug)
 ELSE()
-	SET(FLAGS " -s -flto -ffast-math ")
+	SET(FLAGS " -s -ffast-math ")
 
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS}")
 	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS}")

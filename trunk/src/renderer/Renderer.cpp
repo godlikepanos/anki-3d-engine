@@ -21,7 +21,6 @@ void Renderer::init(const RendererInitializer& initializer)
 	width = initializer.width;
 	height = initializer.height;
 	lodDistance = initializer.lodDistance;
-	renderingQuality = initializer.renderingQuality;
 	framesNum = 0;
 
 	// a few sanity checks
@@ -84,7 +83,10 @@ void Renderer::render(Scene& scene_)
 	ms.run();
 	//tiler.updateTiles(scene->getActiveCamera(), ms.getDepthFai());
 	is.run();
-	pps.run();
+	if(pps.getEnabled())
+	{
+		pps.run();
+	}
 	//bs.run();
 
 	ANKI_CHECK_GL_ERROR();
