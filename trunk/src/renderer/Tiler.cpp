@@ -179,17 +179,12 @@ void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 	//
 	// Issue the min/max draw call
 	//
+
 	prog->bind();
 	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
 	prog->findUniformVariable("depthMap").set(depthMap);
 
 	r->drawQuad();
-
-#if ANKI_GL == ANKI_GL_ES
-	// For Mali T6xx do a flush because the GPU will stay doing nothing until 
-	// read pixels later on where it will be forced to flush
-	glFlush();
-#endif
 
 	//
 	// Read pixels from the min/max pass
@@ -275,17 +270,24 @@ void Tiler::update2Planes(Camera& cam,
 
 //==============================================================================
 Bool Tiler::test(const CollisionShape& cs,
-	Array<U32, TILES_X_COUNT * TILES_Y_COUNT>* tileIds) const
+	Array<U32, TILES_X_COUNT * TILES_Y_COUNT>* tileIds,
+	const Bool skipNearPlaneCheck) const
 {
+	static_assert(Frustum::FP_NEAR == 0, "Frustum::FP_NEAR should be 0");
+
+	U startPlane = (skipNearPlaneCheck) ? 1 : 0;
+
 	if(tileIds)
 	{
+		// Check all tiles
+
 		U32* ip = &(*tileIds)[0];
 		for(U i = 0; i < tiles1d.getSize(); i++)
 		{
 			Bool inside = true;
-			for(const Plane& plane : tiles1d[i].planesWSpace)
+			for(U j = startPlane; j < Frustum::FP_COUNT; j++)
 			{
-				if(cs.testPlane(plane) < 0.0)
+				if(cs.testPlane(tiles1d[i].planesWSpace[j]) < 0.0)
 				{
 					inside = false;
 					break;
@@ -302,12 +304,14 @@ Bool Tiler::test(const CollisionShape& cs,
 	}
 	else
 	{
+		// Check at least one
+
 		for(const Tile& tile : tiles1d)
 		{
 			Bool inside = true;
-			for(const Plane& plane : tile.planesWSpace)
+			for(U j = startPlane; j < Frustum::FP_COUNT; j++)
 			{
-				if(cs.testPlane(plane) < 0.0)
+				if(cs.testPlane(tile.planesWSpace[j]) < 0.0)
 				{
 					inside = false;
 					break;

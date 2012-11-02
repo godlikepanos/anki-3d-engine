@@ -3,6 +3,9 @@
 #include "anki/gl/GlException.h"
 #include "anki/util/Exception.h"
 
+/// Instead of map/unmap use glBufferSubData() when writing to the whole buffer
+#define USE_BUFFER_DATA_ON_WRITE 1
+
 namespace anki {
 
 //==============================================================================
@@ -87,11 +90,15 @@ void BufferObject::write(void* buff, U32 offset, U32 size)
 	ANKI_ASSERT(offset + size <= sizeInBytes);
 	bind();
 
+#if USE_BUFFER_DATA_ON_WRITE
+	glBufferSubData(target, offset, sizeInBytes, buff);
+#else
 	void* mapped = map(offset, size, 
 		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT);
 	
 	memcpy(mapped, buff, size);
 	unmap();
+#endif
 }
 
 } // end namespace anki

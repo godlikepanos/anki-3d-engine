@@ -127,6 +127,7 @@ public:
 		return glId != 0;
 	}
 
+	/// Set the binding for this buffer
 	void setBinding(GLuint binding) const
 	{
 		ANKI_ASSERT(target == GL_TRANSFORM_FEEDBACK_BUFFER 

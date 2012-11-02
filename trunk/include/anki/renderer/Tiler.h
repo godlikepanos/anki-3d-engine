@@ -37,7 +37,8 @@ public:
 	/// nullptr then check all tiles and return the IDS if the tiles that the
 	/// cs is on
 	Bool test(const CollisionShape& cs,
-		Array<U32, TILES_X_COUNT * TILES_Y_COUNT>* tileIds = nullptr) const;
+		Array<U32, TILES_X_COUNT * TILES_Y_COUNT>* tileIds = nullptr,
+		const Bool skipNearPlaneCheck = false) const;
 
 private:
 	/// A screen tile
