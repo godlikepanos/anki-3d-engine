@@ -17,6 +17,7 @@ public:
 	explicit F16();
 	F16(const F16& a);
 	explicit F16(const F32 f);
+	explicit F16(const U16 ui);
 	/// @}
 
 	/// @name Operators with same type
@@ -52,6 +53,7 @@ public:
 	/// @name Other
 	/// @{
 	F32 toF32() const;
+	U16 toU16() const;
 	/// @}
 
 	/// @name Friends

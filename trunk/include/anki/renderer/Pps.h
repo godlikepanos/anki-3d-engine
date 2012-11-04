@@ -67,7 +67,7 @@ private:
 	ShaderProgramResourcePointer prog;
 	Texture fai;
 
-	Bool renderToDefaultFbo;
+	Bool drawToDefaultFbo;
 	U32 width, height;
 
 	void initInternal(const RendererInitializer& initializer);

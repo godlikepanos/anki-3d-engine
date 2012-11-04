@@ -4,20 +4,24 @@
 #include "anki/math/Math.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/Array.h"
+#include "anki/util/StdTypes.h"
 #include "anki/input/KeyCode.h"
+#include <memory>
 
 namespace anki {
 
+struct InputImpl;
 class NativeWindow;
 
 /// Handle the input and other events
+///
+/// @note All positions are in NDC space
 class Input
 {
 public:
 	Input()
 	{}
-	~Input()
-	{}
+	~Input();
 
 	/// @name Acessors
 	/// @{
@@ -26,15 +30,22 @@ public:
 		return keys[i];
 	}
 
-	U32 getMouseBtn(U32 i) const
+	U32 getMouseButton(U32 i) const
 	{
 		return mouseBtns[i];
+	}
+
+	const Vec2& getMousePosition() const
+	{
+		return mousePosNdc;
 	}
 	/// @}
 
 	void init(NativeWindow* nativeWindow);
 	void reset();
 	void handleEvents();
+	void moveMouse(const Vec2& posNdc);
+	void hideCursor(Bool hide);
 
 private:
 	NativeWindow* nativeWindow = nullptr;
@@ -55,6 +66,8 @@ private:
 	Vec2 mousePosNdc; ///< The coords are in the NDC space
 
 	Array<U16, 256> nativeKeyToAnki;
+
+	std::shared_ptr<InputImpl> impl;
 };
 
 typedef Singleton<Input> InputSingleton;

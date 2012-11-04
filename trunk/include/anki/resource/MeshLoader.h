@@ -19,48 +19,47 @@ namespace anki {
 /// <string:meshName>
 ///
 /// // Verts
-/// uint: verts number
-/// float: vert 0 x, float vert 0 y, float: vert 0 z
+/// U32: verts number
+/// F32: vert 0 x, F32 vert 0 y, F32: vert 0 z
 /// ...
 ///
 /// // Faces
-/// uint: faces number
-/// uint: tri 0 vert ID 0, uint: tri 0 vert ID 1, uint: tri 0 vert ID 2
+/// U32: faces number
+/// U32: tri 0 vert ID 0, U32: tri 0 vert ID 1, U32: tri 0 vert ID 2
 /// ...
 ///
 /// // Tex coords
-/// uint: tex coords number
-/// float: tex coord for vert 0 x, float: tex coord for vert 0 y
+/// U32: tex coords number
+/// F32: tex coord for vert 0 x, F32: tex coord for vert 0 y
 /// ...
 ///
 /// // Bone weights
-/// uint: bone weights number (equal to verts number)
-/// uint: bones number for vert 0, uint: bone id for vert 0 and weight 0,
-///       float: weight for vert 0 and weight 0, ...
+/// U32: bone weights number (equal to verts number)
+/// U32: bones number for vert 0, U32: bone id for vert 0 and weight 0,
+///       F32: weight for vert 0 and weight 0, ...
 /// ...
 /// @endcode
 class MeshLoader
 {
 public:
 	/// Vertex weight for skeletal animation
-	class VertexWeight
+	struct VertexWeight
 	{
-	public:
 		/// Dont change this or prepare to change the skinning code in
 		/// shader
-		static const uint MAX_BONES_PER_VERT = 4;
+		static const U32 MAX_BONES_PER_VERT = 4;
 
-		/// @todo change the vals to uint when change drivers
-		float bonesNum;
-		Array<float, MAX_BONES_PER_VERT> boneIds;
-		Array<float, MAX_BONES_PER_VERT> weights;
+		/// @todo change the vals to U32 when change drivers
+		F32 bonesNum;
+		Array<F32, MAX_BONES_PER_VERT> boneIds;
+		Array<F32, MAX_BONES_PER_VERT> weights;
 	};
 
 	/// Triangle
 	struct Triangle
 	{
 		/// An array with the vertex indexes in the mesh class
-		Array<uint, 3> vertIds;
+		Array<U32, 3> vertIds;
 		Vec3 normal;
 	};
 
@@ -88,20 +87,18 @@ public:
 		return vertTangents;
 	}
 
-	const Vector<Vec2>& getTexCoords() const
+	const Vector<Vec2>& getTexCoords(const U32 channel = 0) const
 	{
 		return texCoords;
+	}
+	U32 getTexCoordChannels() const
+	{
+		return 0;
 	}
 
 	const Vector<VertexWeight>& getVertWeights() const
 	{
 		return vertWeights;
-	}
-
-	// XXX Delete: Unused
-	const Vector<Triangle>& getTris() const
-	{
-		return tris;
 	}
 
 	const Vector<ushort>& getVertIndeces() const

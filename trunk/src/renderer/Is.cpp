@@ -48,7 +48,7 @@ struct ShaderTile
 
 struct ShaderTiles
 {
-	Array<ShaderTile, Is::TILES_X_COUNT * Is::TILES_Y_COUNT> tiles;
+	Array<ShaderTile, Tiler::TILES_X_COUNT * Tiler::TILES_Y_COUNT> tiles;
 };
 
 struct ShaderCommonUniforms
@@ -167,21 +167,21 @@ struct WriteTilesUboJob: ThreadJob
 	{
 		U64 start, end;
 		choseStartEnd(threadId, threadsCount, 
-			Is::TILES_X_COUNT * Is::TILES_Y_COUNT, start, end);
+			Tiler::TILES_X_COUNT * Tiler::TILES_Y_COUNT, start, end);
 
 		for(U32 i = start; i < end; i++)
 		{
-			Is::Tile& tile = is->tiles1d[i];
 			ShaderTile& stile = shaderTiles[i];
 
-			doTile(tile, stile);
+			doTile(i, stile);
 		}
 	}
 
 	/// Do a tile
-	void doTile(Is::Tile& tile, ShaderTile& stile)
+	void doTile(U tileId, ShaderTile& stile)
 	{
 		auto& lightIndices = stile.lightIndices;
+		const Tiler& tiler = is->r->getTiler();
 
 		// Point lights
 		//
@@ -191,7 +191,7 @@ struct WriteTilesUboJob: ThreadJob
 		{
 			const PointLight& light = *visiblePointLights[i];
 
-			if(Is::cullLight(light, tile))
+			if(tiler.test(light.getSphere(), tileId))
 			{
 				// Use % to avoid overflows
 				const U id = pointLightsInTileCount % Is::MAX_LIGHTS_PER_TILE;
@@ -211,7 +211,7 @@ struct WriteTilesUboJob: ThreadJob
 		{
 			const SpotLight& light = *visibleSpotLights[i];
 
-			if(Is::cullLight(light, tile))
+			if(tiler.test(light.getFrustum(), tileId))
 			{
 				const U id = (pointLightsInTileCount + spotLightsInTileCount 
 					+ spotLightsShadowInTileCount) 
@@ -245,22 +245,6 @@ struct WriteTilesUboJob: ThreadJob
 			ANKI_LOGW("Too many lights per tile: " << lightsInTileCount);
 		}
 #endif
-	}
-};
-
-/// Job that updates the tile planes
-struct UpdateTilesJob: ThreadJob
-{
-	F32 (*pixels)[Is::TILES_Y_COUNT][Is::TILES_X_COUNT][2];
-	Is* is;
-
-	void operator()(U threadId, U threadsCount)
-	{
-		U64 start, end;
-		choseStartEnd(threadId, threadsCount, 
-			Is::TILES_X_COUNT * Is::TILES_Y_COUNT, start, end);
-
-		is->updateTilePlanes(pixels, start, end);
 	}
 };
 
@@ -302,8 +286,8 @@ void Is::initInternal(const RendererInitializer& initializer)
 	// Load the programs
 	//
 	std::string pps =
-		"#define TILES_X_COUNT " + std::to_string(TILES_X_COUNT) + "\n"
-		"#define TILES_Y_COUNT " + std::to_string(TILES_Y_COUNT) + "\n"
+		"#define TILES_X_COUNT " + std::to_string(Tiler::TILES_X_COUNT) + "\n"
+		"#define TILES_Y_COUNT " + std::to_string(Tiler::TILES_Y_COUNT) + "\n"
 		"#define RENDERER_WIDTH " + std::to_string(r->getWidth()) + "\n"
 		"#define RENDERER_HEIGHT " + std::to_string(r->getHeight()) + "\n"
 		"#define MAX_LIGHTS_PER_TILE " + std::to_string(MAX_LIGHTS_PER_TILE)
@@ -320,10 +304,6 @@ void Is::initInternal(const RendererInitializer& initializer)
 	lightPassProg.load(ShaderProgramResource::createSrcCodeToCache(
 		"shaders/IsLpGeneric.glsl", pps.c_str()).c_str());
 
-	// Min max
-	minMaxPassSprog.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/IsMinMax.glsl", pps.c_str()).c_str());
-
 	//
 	// Create FBOs
 	//
@@ -338,17 +318,6 @@ void Is::initInternal(const RendererInitializer& initializer)
 	if(!fbo.isComplete())
 	{
 		throw ANKI_EXCEPTION("Fbo not complete");
-	}
-
-	// min max FBO
-	Renderer::createFai(TILES_X_COUNT, TILES_Y_COUNT, GL_RG32UI,
-		GL_RG_INTEGER, GL_UNSIGNED_INT, minMaxFai);
-	minMaxFai.setFiltering(Texture::TFT_NEAREST);
-	minMaxTilerFbo.create();
-	minMaxTilerFbo.setColorAttachments({&minMaxFai});
-	if(!minMaxTilerFbo.isComplete())
-	{
-		throw ANKI_EXCEPTION("minMaxTilerFbo not complete");
 	}
 
 	//
@@ -401,192 +370,6 @@ void Is::initInternal(const RendererInitializer& initializer)
 		|| ublock->getBinding() != TILES_BLOCK_BINDING)
 	{
 		throw ANKI_EXCEPTION("Problem with the tilesBlock");
-	}
-}
-
-//==============================================================================
-Bool Is::cullLight(const PointLight& plight, const Tile& tile)
-{
-	const Sphere& sphere = plight.getSphere();
-
-	for(const Plane& plane : tile.planesWSpace)
-	{
-		if(sphere.testPlane(plane) < 0.0)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-//==============================================================================
-Bool Is::cullLight(const SpotLight& light, const Tile& tile)
-{
-	const PerspectiveFrustum& fr = light.getFrustum();
-
-	for(const Plane& plane : tile.planesWSpace)
-	{
-		if(fr.testPlane(plane) < 0.0)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-//==============================================================================
-void Is::updateTiles()
-{
-	// Do the min/max pass
-	//
-	minMaxTilerFbo.bind();
-	minMaxPassSprog->bind();
-	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
-
-	minMaxPassSprog->findUniformVariable("depthMap").set(
-		r->getMs().getDepthFai());
-
-	r->drawQuad();
-
-	F32 pixels[TILES_Y_COUNT][TILES_X_COUNT][2];
-#if ANKI_GL == ANKI_GL_DESKTOP
-	// It seems read from texture is a bit faster than readpixels on nVidia
-	minMaxFai.readPixels(pixels);
-#else
-	glReadPixels(0, 0, TILES_X_COUNT, TILES_Y_COUNT, GL_RG_INTEGER,
-		GL_UNSIGNED_INT, &pixels[0][0][0]);
-#endif
-
-	// Update the rest of the tile stuff in parallel
-	// 
-
-	ThreadPool& threadPool = ThreadPoolSingleton::get();
-	UpdateTilesJob jobs[ThreadPool::MAX_THREADS];
-	
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
-	{
-		jobs[i].pixels = &pixels;
-		jobs[i].is = this;
-
-		threadPool.assignNewJob(i, &jobs[i]);
-	}
-
-	threadPool.waitForAllJobsToFinish();
-}
-
-//==============================================================================
-void Is::updateTilePlanes(F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2],
-	U32 start, U32 stop)
-{
-	// Update only the 4 planes
-	updateTiles4Planes(start, stop);
-
-	// - Calc the rest of the 2 planes and 
-	// - transform the planes
-	for(U32 k = start; k < stop; k++)
-	{
-		U i = k % TILES_X_COUNT;
-		U j = k / TILES_X_COUNT;
-		Tile& tile = tiles[j][i];
-
-		/// Calculate as you do in the vertex position inside the shaders
-		F32 minZ = 
-			r->getPlanes().y() / (r->getPlanes().x() + (*pixels)[j][i][0]);
-		F32 maxZ = 
-			-r->getPlanes().y() / (r->getPlanes().x() + (*pixels)[j][i][1]);
-
-		tile.planes[Frustum::FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), minZ);
-		tile.planes[Frustum::FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), maxZ);
-
-		// Now transform
-		for(U k = 0; k < 6; k++)
-		{
-			tile.planesWSpace[k] = tile.planes[k].getTransformed(
-				Transform(cam->getWorldTransform()));
-		}
-	}
-}
-
-//==============================================================================
-void Is::updateTiles4Planes(U32 start, U32 stop)
-{
-	U32 camTimestamp = cam->getFrustumable()->getFrustumableTimestamp();
-	if(camTimestamp < planesUpdateTimestamp)
-	{
-		// Early exit if the frustum have not changed
-		return;
-	}
-
-	switch(cam->getCameraType())
-	{
-	case Camera::CT_PERSPECTIVE:
-		updateTiles4PlanesInternal(
-			static_cast<const PerspectiveCamera&>(*cam), start, stop);
-		break;
-	default:
-		ANKI_ASSERT(0 && "Unimplemented");
-		break;
-	}
-
-	planesUpdateTimestamp = Timestamp::getTimestamp();
-}
-
-//==============================================================================
-void Is::updateTiles4PlanesInternal(const PerspectiveCamera& cam,
-	U32 start, U32 stop)
-{
-	// The algorithm is almost the same as the recalculation of planes for
-	// PerspectiveFrustum class
-
-	// Algorithm works for even number of tiles per dimension
-	ANKI_ASSERT(TILES_X_COUNT % 2 == 0 && TILES_Y_COUNT % 2 == 0);
-
-	F32 fx = cam.getFovX();
-	F32 fy = cam.getFovY();
-	F32 n = cam.getNear();
-
-	F32 l = 2.0 * n * tan(fx / 2.0);
-	F32 l6 = l / TILES_X_COUNT;
-	F32 o = 2.0 * n * tan(fy / 2.0);
-	F32 o6 = o / TILES_Y_COUNT;
-
-	for(U32 k = start; k < stop; k++)
-	{
-		U i = k % TILES_X_COUNT;
-		U j = k / TILES_X_COUNT;
-
-		Array<Plane, Frustum::FP_COUNT>& planes = tiles[j][i].planes;
-		Vec3 a, b;
-
-		// left
-		a = Vec3((I(i) - I(TILES_X_COUNT) / 2) * l6, 0.0, -n);
-		b = a.cross(Vec3(0.0, 1.0, 0.0));
-		b.normalize();
-
-		planes[Frustum::FP_LEFT] = Plane(b, 0.0);
-
-		// right
-		a = Vec3((I(i) - I(TILES_X_COUNT) / 2 + 1) * l6, 0.0, -n);
-		b = Vec3(0.0, 1.0, 0.0).cross(a);
-		b.normalize();
-
-		planes[Frustum::FP_RIGHT] = Plane(b, 0.0);
-
-		// bottom
-		a = Vec3(0.0, (I(j) - I(TILES_Y_COUNT) / 2) * o6, -n);
-		b = Vec3(1.0, 0.0, 0.0).cross(a);
-		b.normalize();
-
-		planes[Frustum::FP_BOTTOM] = Plane(b, 0.0);
-
-		// bottom
-		a = Vec3(0.0, (I(j) - I(TILES_Y_COUNT) / 2 + 1) * o6, -n);
-		b = a.cross(Vec3(1.0, 0.0, 0.0));
-		b.normalize();
-
-		planes[Frustum::FP_TOP] = Plane(b, 0.0);
 	}
 }
 
@@ -790,7 +573,7 @@ void Is::lightPass()
 		r->getMs().getDepthFai());
 	lightPassProg->findUniformVariable("shadowMapArr").set(sm.sm2DArrayTex);
 
-	r->drawQuadInstanced(TILES_Y_COUNT * TILES_X_COUNT);
+	r->drawQuadInstanced(Tiler::TILES_Y_COUNT * Tiler::TILES_X_COUNT);
 }
 
 //==============================================================================
@@ -816,9 +599,6 @@ void Is::run()
 
 		commonUboUpdateTimestamp = Timestamp::getTimestamp();
 	}
-
-	// Update tiles
-	updateTiles();
 
 	// Do the light pass including the shadow passes
 	lightPass();

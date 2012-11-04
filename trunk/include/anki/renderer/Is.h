@@ -32,11 +32,6 @@ class Is: private RenderingPass
 	friend struct UpdateTilesJob;
 
 public:
-	// Config. These values affect the size of the uniform blocks and keep in
-	// mind that there are size limitations in uniform blocks.
-	static const U TILES_X_COUNT = 16;
-	static const U TILES_Y_COUNT = 16;
-
 	static const U MAX_LIGHTS_PER_TILE = 40;
 
 	static const U MAX_POINT_LIGHTS = 512;
@@ -54,48 +49,16 @@ public:
 	{
 		return fai;
 	}
-
-	const Texture& getMinMaxFai() const
-	{
-		return minMaxFai;
-	}
 	/// @}
 
 private:
-	/// A screen tile
-	struct Tile
-	{
-		Array<U32, MAX_LIGHTS_PER_TILE> lightIndices;
-		U lightsCount = 0;
-
-		/// Frustum planes
-		Array<Plane, 6> planes;
-		Array<Plane, 6> planesWSpace;
-	};
-
 	static const U COMMON_UNIFORMS_BLOCK_BINDING = 0;
 	static const U POINT_LIGHTS_BLOCK_BINDING = 1;
 	static const U SPOT_LIGHTS_BLOCK_BINDING = 2;
 	static const U TILES_BLOCK_BINDING = 3;
 
-	U32 planesUpdateTimestamp = Timestamp::getTimestamp();
-
-	/// @note The [0][0] is the bottom left tile
-	union
-	{
-		Array<Array<Tile, TILES_X_COUNT>, TILES_Y_COUNT> tiles;
-		Array<Tile, TILES_X_COUNT * TILES_Y_COUNT> tiles1d;
-	};
-
-	/// A texture of TILES_X_COUNT*TILES_Y_COUNT size and format RG16F. Used to
-	/// to fill the Tile::depth
-	Texture minMaxFai;
-
 	/// The IS FAI
 	Texture fai;
-
-	/// An FBO to write to the minMaxTex
-	Fbo minMaxTilerFbo;
 
 	/// The IS FBO
 	Fbo fbo;
@@ -113,9 +76,6 @@ private:
 	/// Contains the indices of lights per tile
 	Ubo tilesUbo;
 
-	/// Min max shader program
-	ShaderProgramResourcePointer minMaxPassSprog;
-
 	/// Light shaders
 	ShaderProgramResourcePointer lightPassProg;
 
@@ -130,25 +90,6 @@ private:
 
 	/// Called by init
 	void initInternal(const RendererInitializer& initializer);
-
-	/// Do minmax pass and set the planes of the tiles
-	void updateTiles();
-
-	/// Updates all the planes except the near and far plane. Near and far 
-	/// planes will be updated in min max pass when the depth is known
-	void updateTilePlanes(F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2],
-		U32 start, U32 finish);
-
-	/// Update only the 4 planes of the tiles
-	void updateTiles4Planes(U32 start, U32 stop);
-
-	/// Update the 4 planes of the tile for a perspective camera
-	void updateTiles4PlanesInternal(const PerspectiveCamera& cam,
-		U32 start, U32 stop);
-
-	/// See if the light is inside the tile
-	static Bool cullLight(const PointLight& light, const Tile& tile);
-	static Bool cullLight(const SpotLight& light, const Tile& tile);
 
 	// Do the actual pass
 	void lightPass();

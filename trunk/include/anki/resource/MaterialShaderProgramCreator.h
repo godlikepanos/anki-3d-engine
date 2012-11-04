@@ -21,7 +21,8 @@ public:
 		Bool const_;
 	};
 
-	explicit MaterialShaderProgramCreator(const XmlElement& pt);
+	explicit MaterialShaderProgramCreator(const XmlElement& pt, 
+		Bool enableUniformBlocks = false);
 	~MaterialShaderProgramCreator();
 
 	/// Get the shader program source code. This is the one and only public
@@ -43,6 +44,8 @@ private:
 	std::string source; ///< Shader program final source
 
 	PtrVector<Input> inputs;
+
+	Bool enableUniformBlocks;
 
 	/// Used for shorting vectors of strings. Used in std::sort
 	static bool compareStrings(const std::string& a, const std::string& b);

@@ -240,7 +240,7 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	// shaderProgram
 	//
 	XmlElement shaderProgramEl = materialEl.getChildElement("shaderProgram");
-	MaterialShaderProgramCreator mspc(shaderProgramEl);
+	MaterialShaderProgramCreator mspc(shaderProgramEl, ENABLE_UBOS);
 
 	for(uint level = 0; level < levelsOfDetail; ++level)
 	{

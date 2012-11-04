@@ -173,11 +173,6 @@ void MeshLoader::createFaceNormals()
 		const Vec3& v1 = vertCoords[tri.vertIds[1]];
 		const Vec3& v2 = vertCoords[tri.vertIds[2]];
 
-		/*std::cout << v0 << std::endl;
-		std::cout << v1 << std::endl;
-		std::cout << v2 << std::endl;
-		std::cout << std::endl;*/
-
 		tri.normal = (v1 - v0).cross(v2 - v0);
 
 		tri.normal.normalize();
