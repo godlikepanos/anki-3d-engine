@@ -1,0 +1,22 @@
+Changes for interleaved VBOs 
+
+Mesh
+====
+
+MeshBase
+- getVbo() Return the the PNTtW VBO
+- getIndicesVbo() Return I VBO
+- getTextureChannelsCount()
+- getIndicesNumber(lod)
+- getVerticesNumber(lod)
+- getBoundingShape()
+- hasWeights()
+
+
+Model
+=====
+
+ModelPatchBase
+
+
+

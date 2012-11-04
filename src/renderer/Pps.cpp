@@ -25,10 +25,10 @@ void Pps::initInternal(const RendererInitializer& initializer)
 
 	ssao.init(initializer);
 	hdr.init(initializer);
-	renderToDefaultFbo = initializer.pps.drawToDefaultFbo;
+	drawToDefaultFbo = initializer.pps.drawToDefaultFbo;
 
 	// FBO
-	if(!renderToDefaultFbo)
+	if(!drawToDefaultFbo)
 	{
 		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
 			GL_FLOAT, fai);
@@ -91,7 +91,7 @@ void Pps::run()
 		hdr.run();
 	}
 
-	if(renderToDefaultFbo)
+	if(drawToDefaultFbo)
 	{
 		Fbo::unbindAll();
 		GlStateSingleton::get().setViewport(

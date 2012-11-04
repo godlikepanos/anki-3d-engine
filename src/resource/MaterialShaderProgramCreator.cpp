@@ -6,13 +6,12 @@
 #include <algorithm>
 #include <sstream>
 
-#define ENABLE_UBOS 0
-
 namespace anki {
 
 //==============================================================================
 MaterialShaderProgramCreator::MaterialShaderProgramCreator(
-	const XmlElement& el)
+	const XmlElement& el, Bool enableUniformBlocks_)
+	: enableUniformBlocks(enableUniformBlocks_)
 {
 	parseShaderProgramTag(el);
 }
@@ -35,28 +34,33 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	} while(shaderEl);
 
 	// Create block
-#if ENABLE_UBOS
-	StringList block;
-	block.push_back("layout(shared, row_major, binding = 0) "
-		"uniform commonBlock\n{");
-	for(Input* in : inputs)
+	if(enableUniformBlocks)
 	{
-		if(in->type == "sampler2D"
-			|| in->const_)
+		StringList block;
+		block.push_back("layout(shared, row_major, binding = 0) "
+			"uniform commonBlock\n{");
+		for(Input* in : inputs)
 		{
-			continue;
+			if(in->type == "sampler2D"
+				|| in->const_)
+			{
+				continue;
+			}
+
+			block.push_back("\tuniform " + in->type + " " + in->name + ";");
 		}
+		block.push_back("};\n");
 
-		block.push_back("\tuniform " + in->type + " " + in->name + ";");
-	}
-	block.push_back("};\n");
-
-	if(block.size() > 2)
-	{
-		source = block.join("\n") + srcLines.join("\n");
+		if(block.size() > 2)
+		{
+			source = block.join("\n") + srcLines.join("\n");
+		}
+		else
+		{
+			source = srcLines.join("\n");
+		}
 	}
 	else
-#endif
 	{
 		source = srcLines.join("\n");
 	}
@@ -157,9 +161,7 @@ void MaterialShaderProgramCreator::parseInputTag(
 
 	if(inpvar->const_ == false)
 	{
-#if ENABLE_UBOS
-		if(inpvar->type == "sampler2D")
-#endif
+		if(!(enableUniformBlocks && inpvar->type != "sampler2D"))
 		{
 			line = "uniform " + inpvar->type + " " + inpvar->name + ";";
 		}

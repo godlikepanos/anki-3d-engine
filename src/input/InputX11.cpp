@@ -1,5 +1,6 @@
 #include "anki/input/Input.h"
 #include "anki/core/Logger.h"
+#include "anki/input/InputX11.h"
 #if ANKI_WINDOW_BACKEND_GLXX11
 #	include "anki/core/NativeWindowGlxX11.h"
 #elif ANKI_WINDOW_BACKEND_EGLX11
@@ -17,6 +18,9 @@
 #else
 #	define DBG_LOGI(x_) ((void)0)
 #endif
+
+// Undef stupid X11 defines
+#undef Bool
 
 namespace anki {
 
@@ -132,6 +136,10 @@ static Bool eventsPending(Display* display)
 }
 
 //==============================================================================
+Input::~Input()
+{}
+
+//==============================================================================
 void Input::init(NativeWindow* nativeWindow_)
 {
 	ANKI_ASSERT(nativeWindow == nullptr);
@@ -140,7 +148,9 @@ void Input::init(NativeWindow* nativeWindow_)
 	NativeWindowImpl& nwin = nativeWindow->getNative();
 
 	XSelectInput(nwin.xDisplay, nwin.xWindow, 
-		ExposureMask | ButtonPressMask | KeyPressMask | KeyReleaseMask);
+		ExposureMask | ButtonPressMask | KeyPressMask | KeyReleaseMask 
+		| PointerMotionMask | FocusChangeMask | EnterWindowMask 
+		| LeaveWindowMask);
 
 	memset(&nativeKeyToAnki[0], sizeof(nativeKeyToAnki), KC_UNKNOWN);
 	for(const X11KeyCodeToAnki& a : x2a)
@@ -152,6 +162,9 @@ void Input::init(NativeWindow* nativeWindow_)
 	}
 
 	reset();
+
+	// Init native
+	impl.reset(new InputImpl);
 }
 
 //==============================================================================
@@ -222,13 +235,69 @@ skipXNextEvent:
 				keys[XKEYCODE2ANKI(keysym)] = 0;
 			}
 			break;
+		case MotionNotify:
+			mousePosNdc.x() = 
+				(F32)event.xmotion.x / nativeWindow->getWidth() * 2.0 - 1.0;
+			mousePosNdc.y() = 
+				-((F32)event.xmotion.y / nativeWindow->getHeight() * 2.0 - 1.0);
+
+			DBG_LOGI("MotionNotify: " << event.xmotion.x << " " 
+				<< event.xmotion.y << " (" << mousePosNdc << ")");
+			break;
+		case EnterNotify:
+			DBG_LOGI("EnterNotify: ");
+			break;
+		case LeaveNotify:
+			DBG_LOGI("LeaveNotify: ");
+			break;
 		default:
-#if DEBUG_EVENTS
-			ANKI_LOGW("Unknown X event");
-#endif
+			DBG_LOGI("Unknown X event");
 			break;
 		}
 	}
+}
+
+//==============================================================================
+void Input::moveMouse(const Vec2& pos)
+{
+	DBG_LOGI("Moving to: " << pos.x() << " " << pos.y());
+
+	if(pos != mousePosNdc)
+	{
+		NativeWindowImpl& nwi = nativeWindow->getNative();
+
+		XWarpPointer(nwi.xDisplay, None, nwi.xWindow, 0, 0, 0, 0, 
+			(F32)nativeWindow->getWidth() * (pos.x() / 2.0 + 0.5), 
+			(F32)nativeWindow->getHeight() * (-pos.y() / 2.0 + 0.5));
+
+		XSync(nwi.xDisplay, False);
+	}
+}
+
+//==============================================================================
+void Input::hideCursor(Bool hide)
+{
+	Display* dis = nativeWindow->getNative().xDisplay;
+	Window win = nativeWindow->getNative().xWindow;
+
+	if(impl->emptyCursor == None)
+	{
+		char data[1] = {0};
+		XColor color;
+		Pixmap pixmap;
+
+		color.red = color.green = color.blue = 0;
+		pixmap = XCreateBitmapFromData(dis, DefaultRootWindow(dis), data, 1, 1);
+		if(pixmap) 
+		{
+			impl->emptyCursor = XCreatePixmapCursor(dis, pixmap, pixmap,
+				&color, &color, 0, 0);
+			XFreePixmap(dis, pixmap);
+		}	
+	}
+
+	XDefineCursor(dis, win, impl->emptyCursor);
+	XFlush(dis);
 }
 
 } // end namespace anki

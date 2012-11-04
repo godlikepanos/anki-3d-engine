@@ -8,10 +8,6 @@
 #	error "See file"
 #endif
 
-uniform vec2 nearFar;
-#define near nearFar.x
-#define far nearFar.y
-
 uniform sampler2D depthMap;
 
 in vec2 vTexCoords;

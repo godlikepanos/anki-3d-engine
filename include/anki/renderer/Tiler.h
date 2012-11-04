@@ -33,12 +33,13 @@ public:
 	/// Update the tiles before doing visibility tests
 	void updateTiles(Camera& cam, const Texture& depthMap);
 
-	/// Return true if the cs is in at least one shape. If the tileIds is not 
-	/// nullptr then check all tiles and return the IDS if the tiles that the
-	/// cs is on
-	Bool test(const CollisionShape& cs,
-		Array<U32, TILES_X_COUNT * TILES_Y_COUNT>* tileIds = nullptr,
-		const Bool skipNearPlaneCheck = false) const;
+	/// Test against all tiles
+	Bool testAll(const CollisionShape& cs,
+ 		const Bool skipNearPlaneCheck = false) const;
+ 
+	/// Test on a specific tile
+	Bool test(const CollisionShape& cs, 
+		const U32 tileId, const Bool skipNearPlaneCheck = false) const;
 
 private:
 	/// A screen tile
@@ -50,6 +51,8 @@ private:
 		Array<Plane, Frustum::FP_COUNT> planesWSpace; ///< In world space
 		/// @}
 	};
+
+	typedef F32 PixelArray[TILES_Y_COUNT][TILES_X_COUNT][2];
 
 	/// @note The [0][0] is the bottom left tile
 	union
@@ -77,8 +80,10 @@ private:
 	void initInternal(Renderer* r);
 
 	void update4Planes(Camera& cam);
-	void update2Planes(Camera& cam, 
-		F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2]);
+	void update2Planes(Camera& cam, const PixelArray& pixels);
+
+	Bool testInternal(const CollisionShape& cs, const Tile& tile, 
+		const U startPlane) const;
 };
 
 } // end namespace anki

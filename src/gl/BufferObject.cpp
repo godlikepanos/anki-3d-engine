@@ -94,7 +94,8 @@ void BufferObject::write(void* buff, U32 offset, U32 size)
 	glBufferSubData(target, offset, sizeInBytes, buff);
 #else
 	void* mapped = map(offset, size, 
-		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT);
+		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT 
+		| GL_MAP_UNSYNCHRONIZED_BIT);
 	
 	memcpy(mapped, buff, size);
 	unmap();

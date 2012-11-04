@@ -59,7 +59,7 @@ void init()
 	// camera
 	cam = new PerspectiveCamera("main-camera", &scene,
 		Movable::MF_NONE, nullptr);
-	const float ang = 45.0;
+	const F32 ang = 45.0;
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
@@ -89,8 +89,10 @@ void init()
 			PointLight* point = new PointLight(name.c_str(), &scene,
 				Movable::MF_NONE, nullptr);
 			point->setRadius(2.0);
-			point->setDiffuseColor(Vec4(randFloat(3.0), randFloat(3.0), randFloat(3.0), 0.0));
-			point->setSpecularColor(Vec4(randFloat(3.0), randFloat(3.0), randFloat(3.0), 0.0));
+			point->setDiffuseColor(Vec4(randFloat(6.0) - 2.0, 
+				randFloat(6.0) - 2.0, randFloat(6.0) - 2.0, 0.0));
+			point->setSpecularColor(Vec4(randFloat(6.0) - 3.0, 
+				randFloat(6.0) - 3.0, randFloat(6.0) - 3.0, 0.0));
 			point->setLocalTranslation(lpos);
 
 			lpos.z() += 10.0;
@@ -185,11 +187,10 @@ void execStdinScpripts()
 //==============================================================================
 void mainLoopExtra()
 {
-	InputSingleton::get().handleEvents();
-
-	float dist = 0.2;
-	float ang = toRad(3.0);
-	float scale = 0.01;
+	F32 dist = 0.2;
+	F32 ang = toRad(3.0);
+	F32 scale = 0.01;
+	F32 mouseSensivity = 9.0;
 
 	// move the camera
 	static Movable* mover = SceneSingleton::get().getActiveCamera().getMovable();
@@ -229,7 +230,8 @@ void mainLoopExtra()
 
 	if(in.getKey(KC_P) == 1)
 	{
-		MainRendererSingleton::get().getPps().getHdr().setExposure(20);
+		//MainRendererSingleton::get().getPps().getHdr().setExposure(20);
+		in.hideCursor(true);
 	}
 
 	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
@@ -254,6 +256,10 @@ void mainLoopExtra()
 		mover->scale(-scale);
 	}
 
+	mover->rotateLocalY(-ang * in.getMousePosition().x() * mouseSensivity * 
+		MainRendererSingleton::get().getAspectRatio());
+	mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
+
 	execStdinScpripts();
 }
 
@@ -277,6 +283,8 @@ void mainLoop()
 
 		// Update
 		//
+		InputSingleton::get().handleEvents();
+		InputSingleton::get().moveMouse(Vec2(0.0));
 		mainLoopExtra();
 		SceneSingleton::get().update(prevUpdateTime, crntTime);
 		EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
@@ -286,6 +294,8 @@ void mainLoop()
 		{
 			break;
 		}
+
+		//ANKI_LOGI(InputSingleton::get().getMousePosition());
 
 		//AppSingleton::get().swapBuffers();
 		win->swapBuffers();
@@ -344,6 +354,7 @@ void initSubsystems(int argc, char* argv[])
 
 	// Input
 	InputSingleton::get().init(win);
+	InputSingleton::get().hideCursor(true);
 
 	// Main renderer
 	RendererInitializer initializer;

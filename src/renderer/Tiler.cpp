@@ -12,6 +12,7 @@ struct UpdateTiles4PlanesPerspectiveCameraJob: ThreadJob
 {
 	Tiler* tiler;
 	PerspectiveCamera* cam;
+	Bool onlyTransformPlanes;
 
 	void operator()(U threadId, U threadsCount)
 	{
@@ -28,23 +29,37 @@ struct UpdateTiles4PlanesPerspectiveCameraJob: ThreadJob
 		F32 o = 2.0 * n * tan(fy / 2.0);
 		F32 o6 = o / Tiler::TILES_Y_COUNT;
 
+		Transform trf = Transform(cam->getWorldTransform());
+
 		for(U64 k = start; k < end; k++)
 		{
-			U i = k % Tiler::TILES_X_COUNT;
-			U j = k / Tiler::TILES_X_COUNT;
+			if(!onlyTransformPlanes)
+			{
+				updatePlanes(l, l6, o, o6, k);
+			}
 
-			Array<Plane, Frustum::FP_COUNT>& planes = tiler->tiles[j][i].planes;
-			updatePlanes(l, l6, o, o6, i, j, planes);
+			Tiler::Tile& tile = tiler->tiles1d[k];
+
+			tile.planesWSpace[Frustum::FP_LEFT] = 
+				tile.planes[Frustum::FP_LEFT].getTransformed(trf);
+			tile.planesWSpace[Frustum::FP_RIGHT] = 
+				tile.planes[Frustum::FP_RIGHT].getTransformed(trf);
+			tile.planesWSpace[Frustum::FP_BOTTOM] = 
+				tile.planes[Frustum::FP_BOTTOM].getTransformed(trf);
+			tile.planesWSpace[Frustum::FP_TOP] = 
+				tile.planes[Frustum::FP_TOP].getTransformed(trf);
 		}
 	}
 
 	void updatePlanes(
 		const F32 l, const F32 l6, const F32 o, const F32 o6,
-		const U i, const U j,
-		Array<Plane, Frustum::FP_COUNT>& planes)
+		const U k)
 	{
 		Vec3 a, b;
 		const F32 n = cam->getNear();
+		const U i = k % Tiler::TILES_X_COUNT;
+		const U j = k / Tiler::TILES_X_COUNT;
+		Array<Plane, Frustum::FP_COUNT>& planes = tiler->tiles1d[k].planes;
 
 		// left
 		a = Vec3((I(i) - I(Tiler::TILES_X_COUNT) / 2) * l6, 0.0, -n);
@@ -80,7 +95,7 @@ struct UpdateTiles4PlanesPerspectiveCameraJob: ThreadJob
 /// Job that updates the near and far tile planes and transforms them
 struct UpdateTiles2PlanesJob: ThreadJob
 {
-	F32 (*pixels)[Is::TILES_Y_COUNT][Is::TILES_X_COUNT][2];
+	const Tiler::PixelArray* pixels;
 	Tiler* tiler;
 	Camera* cam;
 
@@ -93,12 +108,13 @@ struct UpdateTiles2PlanesJob: ThreadJob
 		// Calc planes for this camera
 		Vec2 planes;
 		Renderer::calcPlanes(Vec2(cam->getNear(), cam->getFar()), planes);
+		Transform trf = Transform(cam->getWorldTransform());
 
 		for(U64 k = start; k < end; k++)
 		{
 			U i = k % Tiler::TILES_X_COUNT;
 			U j = k / Tiler::TILES_X_COUNT;
-			Tiler::Tile& tile = tiler->tiles[j][i];
+			Tiler::Tile& tile = tiler->tiles1d[k];
 
 			// Calculate depth as you do it for the vertex position inside 
 			// the shaders
@@ -108,12 +124,11 @@ struct UpdateTiles2PlanesJob: ThreadJob
 			tile.planes[Frustum::FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), minZ);
 			tile.planes[Frustum::FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), maxZ);
 
-			// Transform all planes
-			Transform trf = Transform(cam->getWorldTransform());
-			for(U k = 0; k < Frustum::FP_COUNT; k++)
-			{
-				tile.planesWSpace[k] = tile.planes[k].getTransformed(trf);
-			}
+			// Transform planes
+			tile.planesWSpace[Frustum::FP_NEAR] = 
+				tile.planes[Frustum::FP_NEAR].getTransformed(trf);
+			tile.planesWSpace[Frustum::FP_FAR] = 
+				tile.planes[Frustum::FP_FAR].getTransformed(trf);
 		}
 	}
 };
@@ -171,38 +186,35 @@ void Tiler::initInternal(Renderer* r_)
 void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 {
 	//
-	// In the meantime update the 4 planes for all the tiles
-	//
-	fbo.bind(); // Flush prev FBO on Mali
-	update4Planes(cam);
-
-	//
 	// Issue the min/max draw call
 	//
 
-	prog->bind();
+	fbo.bind(); // Flush prev FBO on Mali
 	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
+	prog->bind();
 	prog->findUniformVariable("depthMap").set(depthMap);
 
 	r->drawQuad();
+
+	update4Planes(cam);
 
 	//
 	// Read pixels from the min/max pass
 	//
 
-	F32 pixels[TILES_Y_COUNT][TILES_X_COUNT][2];
+	PixelArray pixels;
 #if ANKI_GL == ANKI_GL_DESKTOP
 	// It seems read from texture is a bit faster than readpixels on nVidia
 	fai.readPixels(pixels);
 #else
 	glReadPixels(0, 0, TILES_X_COUNT, TILES_Y_COUNT, GL_RG_INTEGER,
-		GL_UNSIGNED_INT, &pixels[0][0][0]);
+		GL_UNSIGNED_INT, pixels);
 #endif
 
 	// 
 	// Update the 2 planes and transform the planes
 	// 
-	update2Planes(cam, &pixels);
+	update2Planes(cam, pixels);
 
 	prevCam = &cam;
 }
@@ -211,16 +223,13 @@ void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 void Tiler::update4Planes(Camera& cam)
 {
 	U32 camTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
-	if(camTimestamp < planes4UpdateTimestamp && prevCam == &cam)
-	{
-		// Early exit because:
-		// - it is the same camera as before and
-		// - the camera frustum have not changed
-		return;
-	}
-#if 0
-	ANKI_LOGI("Updating 4 planes");
-#endif
+
+	// Transform only the planes when:
+	// - it is the same camera as before and
+	// - the camera frustum have not changed
+	Bool onlyTransformPlanes = 
+		camTimestamp < planes4UpdateTimestamp && prevCam == &cam;
+
 
 	// Update the planes in parallel
 	// 
@@ -236,6 +245,7 @@ void Tiler::update4Planes(Camera& cam)
 		{	
 			jobs[i].tiler = this;
 			jobs[i].cam = static_cast<PerspectiveCamera*>(&cam);
+			jobs[i].onlyTransformPlanes = onlyTransformPlanes;
 			threadPool.assignNewJob(i, &jobs[i]);
 		}
 		break;
@@ -246,19 +256,21 @@ void Tiler::update4Planes(Camera& cam)
 
 	threadPool.waitForAllJobsToFinish();
 
-	planes4UpdateTimestamp = Timestamp::getTimestamp();
+	if(!onlyTransformPlanes)
+	{
+		planes4UpdateTimestamp = Timestamp::getTimestamp();
+	}
 }
 
 //==============================================================================
-void Tiler::update2Planes(Camera& cam, 
-	F32 (*pixels)[TILES_Y_COUNT][TILES_X_COUNT][2])
+void Tiler::update2Planes(Camera& cam, const PixelArray& pixels)
 {
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
 	UpdateTiles2PlanesJob jobs[ThreadPool::MAX_THREADS];
 	
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		jobs[i].pixels = pixels;
+		jobs[i].pixels = &pixels;
 		jobs[i].tiler = this;
 		jobs[i].cam = &cam;
 
@@ -269,63 +281,43 @@ void Tiler::update2Planes(Camera& cam,
 }
 
 //==============================================================================
-Bool Tiler::test(const CollisionShape& cs,
-	Array<U32, TILES_X_COUNT * TILES_Y_COUNT>* tileIds,
+Bool Tiler::testInternal(const CollisionShape& cs, const Tile& tile, 
+	const U startPlane) const
+{
+	for(U j = startPlane; j < Frustum::FP_COUNT; j++)
+	{
+		if(cs.testPlane(tile.planesWSpace[j]) < 0.0)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+//==============================================================================
+Bool Tiler::test(const CollisionShape& cs, const U32 tileId,
+	const Bool skipNearPlaneCheck) const
+{
+	return testInternal(cs, tiles1d[tileId], (skipNearPlaneCheck) ? 1 : 0);
+}
+
+//==============================================================================
+Bool Tiler::testAll(const CollisionShape& cs, 
 	const Bool skipNearPlaneCheck) const
 {
 	static_assert(Frustum::FP_NEAR == 0, "Frustum::FP_NEAR should be 0");
 
 	U startPlane = (skipNearPlaneCheck) ? 1 : 0;
 
-	if(tileIds)
+	for(const Tile& tile : tiles1d)
 	{
-		// Check all tiles
-
-		U32* ip = &(*tileIds)[0];
-		for(U i = 0; i < tiles1d.getSize(); i++)
+		if(testInternal(cs, tile, startPlane))
 		{
-			Bool inside = true;
-			for(U j = startPlane; j < Frustum::FP_COUNT; j++)
-			{
-				if(cs.testPlane(tiles1d[i].planesWSpace[j]) < 0.0)
-				{
-					inside = false;
-					break;
-				}
-			}
-
-			if(inside)
-			{
-				*ip++ = i;
-			}
+			return true;
 		}
-
-		return ip != &(*tileIds)[0];
 	}
-	else
-	{
-		// Check at least one
 
-		for(const Tile& tile : tiles1d)
-		{
-			Bool inside = true;
-			for(U j = startPlane; j < Frustum::FP_COUNT; j++)
-			{
-				if(cs.testPlane(tile.planesWSpace[j]) < 0.0)
-				{
-					inside = false;
-					break;
-				}
-			}
-
-			if(inside)
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
+	return false;
 }
 
 } // end namespace anki

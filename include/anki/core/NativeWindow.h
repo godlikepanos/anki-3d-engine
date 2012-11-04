@@ -36,11 +36,23 @@ public:
 	{}
 	~NativeWindow();
 
+	/// @name Accessors
+	/// @{
 	NativeWindowImpl& getNative()
 	{
 		ANKI_ASSERT(isCreated());
 		return *impl;
 	}
+
+	U32 getWidth() const
+	{
+		return width;
+	}
+	U32 getHeight() const
+	{
+		return height;
+	}
+	/// @}
 
 	/// @name Public interface
 	/// Don't implement them in .h files
