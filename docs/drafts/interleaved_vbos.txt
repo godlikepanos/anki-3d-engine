@@ -11,12 +11,15 @@ MeshBase
 - getVerticesNumber(lod)
 - getBoundingShape()
 - hasWeights()
+- getVboInfo(enum, vbo, size, type, stride, base) given an enum return some 
+  stuff that will pass to glVertexAttribPointer() to set the VAO
 
 
 Model
 =====
 
 ModelPatchBase
+- createVaos() Change that to accept new MeshBase interface
 
 
 
