@@ -17,7 +17,6 @@ MeshBase
 Model
 =====
 
-ModelPatchBase
 - createVaos() Change that to accept new MeshBase interface
 
 

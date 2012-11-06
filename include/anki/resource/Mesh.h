@@ -14,18 +14,6 @@ class MeshLoader;
 class MeshBase
 {
 public:
-	/// XXX Rename to VertexAttributes
-	enum VboId
-	{
-		VBO_POSITIONS, ///< VBO never empty
-		VBO_NORMALS, ///< VBO never empty
-		VBO_TANGENTS, ///< VBO never empty
-		VBO_TEX_COORDS, ///< VBO may be empty
-		VBO_INDICES, ///< VBO never empty
-		VBO_WEIGHTS, ///< VBO may be empty
-		VBOS_NUMBER
-	};
-
 	enum VertexAttribute
 	{
 		VA_POSITIONS,
@@ -40,58 +28,26 @@ public:
 	virtual ~MeshBase()
 	{}
 
-	/// @name Accessors
-	/// @{
-
-	/// Get a VBO. Its nullptr if it does not exist
-	virtual const Vbo* getVbo(VboId id) const = 0;
-
-	virtual U32 getTextureChannelsNumber() const = 0;
-	virtual U32 getLodsNumber() const = 0;
-	virtual U32 getIndicesNumber(U32 lod) const = 0;
-	virtual U32 getVerticesNumber(U32 lod) const = 0;
-
-	virtual const Obb& getBoundingShape() const = 0;
-	/// @}
-
-	/// @name Ask for geometry properties
-	/// @{
-	bool hasTexCoords() const
-	{
-		return getTextureChannelsNumber() > 0;
-	}
-
-	bool hasWeights() const
-	{
-		return getVbo(VBO_WEIGHTS) != nullptr;
-	}
-
-	bool hasNormalsAndTangents() const
-	{
-		return getVbo(VBO_NORMALS) && getVbo(VBO_TANGENTS);
-	}
-	/// @}
-
-	/// XXX NEW interface
+	/// Get info on how to attach a VBO to a VAO
 	virtual void getVboInfo(
 		const VertexAttribute attrib, const U32 lod, const U32 texChannel,
-		Vbo* vbo, U32& size, GLenum& type, U32& stride, U32& offset);
+		Vbo* vbo, U32& size, GLenum& type, U32& stride, U32& offset) = 0;
 
-	virtual U32 getVerticesCount(U32 lod) const = 0;
+	virtual U32 getVerticesCount() const = 0;
 
-	virtual U32 getLodsCount() const = 0;
+	virtual U32 getIndicesCount(U32 lod) const = 0;
 
 	virtual U32 getTextureChannelsCount() const = 0;
 
 	virtual Bool hasWeights() const = 0;
+
+	virtual U32 getLodsCount() const = 0;
 };
 
 /// Mesh Resource. It contains the geometry packed in VBOs
 class Mesh: public MeshBase
 {
 public:
-	typedef Array<Vbo, VBOS_NUMBER> VbosArray;
-
 	/// @name Constructors
 	/// @{
 
@@ -113,34 +69,34 @@ public:
 	/// @name Accessors
 	/// @{
 
-	/// Implements MeshBase::getVbo
-	const Vbo* getVbo(VboId id) const
+	/// Implements MeshBase::getVerticesCount
+	U32 getVerticesCount() const
 	{
-		return vbos[id].isCreated() ? &vbos[id] : NULL;
+		return vertsCount;
 	}
 
-	/// Implements MeshBase::getTextureChannelsNumber
-	U32 getTextureChannelsNumber() const
+	/// Implements MeshBase::getIndicesCount
+	U32 getIndicesCount(U32 lod) const
 	{
-		return vbos[VBO_TEX_COORDS].isCreated() ? 1 : 0;
+		return indicesCount[lod];
 	}
 
-	/// Implements MeshBase::getLodsNumber
-	U32 getLodsNumber() const
+	/// Implements MeshBase::getTextureChannelsCount
+	U32 getTextureChannelsCount() const
 	{
-		return 1;
+		return texChannelsCount;
 	}
 
-	/// Implements MeshBase::getIndicesNumber
-	U32 getIndicesNumber(U32) const
+	/// Implements MeshBase::hasWeights
+	Bool hasWeights() const
 	{
-		return vertIdsNum;
+		return weights;
 	}
 
-	/// Implements MeshBase::getVerticesNumber
-	U32 getVerticesNumber(U32) const
+	/// Implements MeshBase::getLodsCount
+	U32 getLodsCount() const
 	{
-		return vertsNum;
+		return indicesVbos.size();
 	}
 
 	/// Implements MeshBase::getBoundingShape
@@ -153,11 +109,21 @@ public:
 	/// Load from a file
 	void load(const char* filename);
 
+	/// Implements MeshBase::getVboInfo
+	void getVboInfo(
+		const VertexAttribute attrib, const U32 lod, const U32 texChannel,
+		Vbo* vbo, U32& size, GLenum& type, U32& stride, U32& offset);
+
 private:
-	VbosArray vbos; ///< The vertex buffer objects
-	U32 vertIdsNum; ///< The number of vertex IDs
+	Vbo vbo;
+	Vector<Vbo> indicesVbos;
+
+	U32 vertsCount;
+	Vector<U32> indicesCount; ///< Indices count per level
+	Bool weights;
+	U32 texChannelsCount;
+
 	Obb visibilityShape;
-	U32 vertsNum;
 
 	/// Create the VBOs using the mesh data
 	void createVbos(const MeshLoader& meshData);
