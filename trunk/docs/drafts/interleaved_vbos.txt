@@ -4,8 +4,7 @@ Mesh
 ====
 
 MeshBase
-- getVbo() Return the the PNTtW VBO
-- getIndicesVbo() Return I VBO
+- getIndicesVbo(lod) Return I VBO
 - getTextureChannelsCount()
 - getIndicesNumber(lod)
 - getVerticesNumber(lod)
