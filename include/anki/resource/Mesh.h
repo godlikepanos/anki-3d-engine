@@ -1,7 +1,6 @@
 #ifndef ANKI_RESOURCE_MESH_H
 #define ANKI_RESOURCE_MESH_H
 
-#include <array>
 #include "anki/math/Math.h"
 #include "anki/gl/Vbo.h"
 #include "anki/collision/Obb.h"
@@ -15,6 +14,7 @@ class MeshLoader;
 class MeshBase
 {
 public:
+	/// XXX Rename to VertexAttributes
 	enum VboId
 	{
 		VBO_POSITIONS, ///< VBO never empty
@@ -26,6 +26,17 @@ public:
 		VBOS_NUMBER
 	};
 
+	enum VertexAttribute
+	{
+		VA_POSITIONS,
+		VA_NORMALS,
+		VA_TANGENTS,
+		VA_TEX_COORDS,
+		VA_INDICES, 
+		VA_WEIGHTS, 
+		VA_COUNT
+	};
+
 	virtual ~MeshBase()
 	{}
 
@@ -35,10 +46,10 @@ public:
 	/// Get a VBO. Its nullptr if it does not exist
 	virtual const Vbo* getVbo(VboId id) const = 0;
 
-	virtual uint32_t getTextureChannelsNumber() const = 0;
-	virtual uint32_t getLodsNumber() const = 0;
-	virtual uint32_t getIndicesNumber(uint32_t lod) const = 0;
-	virtual uint32_t getVerticesNumber(uint32_t lod) const = 0;
+	virtual U32 getTextureChannelsNumber() const = 0;
+	virtual U32 getLodsNumber() const = 0;
+	virtual U32 getIndicesNumber(U32 lod) const = 0;
+	virtual U32 getVerticesNumber(U32 lod) const = 0;
 
 	virtual const Obb& getBoundingShape() const = 0;
 	/// @}
@@ -52,7 +63,7 @@ public:
 
 	bool hasWeights() const
 	{
-		return getVbo(VBO_WEIGHTS) != NULL;
+		return getVbo(VBO_WEIGHTS) != nullptr;
 	}
 
 	bool hasNormalsAndTangents() const
@@ -60,13 +71,26 @@ public:
 		return getVbo(VBO_NORMALS) && getVbo(VBO_TANGENTS);
 	}
 	/// @}
+
+	/// XXX NEW interface
+	virtual void getVboInfo(
+		const VertexAttribute attrib, const U32 lod, const U32 texChannel,
+		Vbo* vbo, U32& size, GLenum& type, U32& stride, U32& offset);
+
+	virtual U32 getVerticesCount(U32 lod) const = 0;
+
+	virtual U32 getLodsCount() const = 0;
+
+	virtual U32 getTextureChannelsCount() const = 0;
+
+	virtual Bool hasWeights() const = 0;
 };
 
 /// Mesh Resource. It contains the geometry packed in VBOs
 class Mesh: public MeshBase
 {
 public:
-	typedef std::array<Vbo, VBOS_NUMBER> VbosArray;
+	typedef Array<Vbo, VBOS_NUMBER> VbosArray;
 
 	/// @name Constructors
 	/// @{
@@ -96,25 +120,25 @@ public:
 	}
 
 	/// Implements MeshBase::getTextureChannelsNumber
-	uint32_t getTextureChannelsNumber() const
+	U32 getTextureChannelsNumber() const
 	{
 		return vbos[VBO_TEX_COORDS].isCreated() ? 1 : 0;
 	}
 
 	/// Implements MeshBase::getLodsNumber
-	uint32_t getLodsNumber() const
+	U32 getLodsNumber() const
 	{
 		return 1;
 	}
 
 	/// Implements MeshBase::getIndicesNumber
-	uint32_t getIndicesNumber(uint32_t) const
+	U32 getIndicesNumber(U32) const
 	{
 		return vertIdsNum;
 	}
 
 	/// Implements MeshBase::getVerticesNumber
-	uint32_t getVerticesNumber(uint32_t) const
+	U32 getVerticesNumber(U32) const
 	{
 		return vertsNum;
 	}
@@ -131,9 +155,9 @@ public:
 
 private:
 	VbosArray vbos; ///< The vertex buffer objects
-	uint32_t vertIdsNum; ///< The number of vertex IDs
+	U32 vertIdsNum; ///< The number of vertex IDs
 	Obb visibilityShape;
-	uint32_t vertsNum;
+	U32 vertsNum;
 
 	/// Create the VBOs using the mesh data
 	void createVbos(const MeshLoader& meshData);
