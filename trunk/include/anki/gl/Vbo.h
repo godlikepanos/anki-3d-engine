@@ -14,7 +14,7 @@ public:
 	{}
 
 	/// Adds an extra check in target_ @see BufferObject::BufferObject
-	Vbo(GLenum target_, uint32_t sizeInBytes_, const void* dataPtr_,
+	Vbo(GLenum target_, PtrSize sizeInBytes_, const void* dataPtr_,
 		GLenum usage_)
 	{
 		create(target_, sizeInBytes_, dataPtr_, usage_);
@@ -31,7 +31,7 @@ public:
 	/// The same as BufferObject::create but it only accepts
 	/// GL_ARRAY_BUFFER or GL_ELEMENT_ARRAY_BUFFER in target
 	/// @see BufferObject::create
-	void create(GLenum target, uint32_t sizeInBytes, const void* dataPtr,
+	void create(GLenum target, PtrSize sizeInBytes, const void* dataPtr,
 		GLenum usage)
 	{
 		// unacceptable target_
