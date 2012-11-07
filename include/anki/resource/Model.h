@@ -15,8 +15,8 @@ namespace anki {
 class ModelPatchBase
 {
 public:
-	/// For garbage collection
-	typedef PtrVector<Vao> VaosContainer;
+	/// VAOs container
+	typedef Vector<Vao> VaosContainer;
 	/// Map to get the VAO given a PassLod key
 	typedef PassLevelHashMap<Vao*> PassLevelToVaoMap;
 
@@ -28,10 +28,13 @@ public:
 
 	const Vao& getVao(const PassLevelKey& key) const
 	{
-		return *vaosMap.at(key);
+		PassLevelToVaoMap::const_iterator it = vaosMap.find(key);
+		ANKI_ASSERT(it != vaosMap.end());
+		return *(*it);
 	}
 
-	U32 getIndecesNumber(const U32 lod) const
+	/// Allias to MeshBase::getIndicesCount()
+	U32 getIndecesCount(const U32 lod) const
 	{
 		return getMeshBase().getIndicesCount(lod);
 	}
@@ -52,6 +55,7 @@ protected:
 		VaosContainer& vaos,
 		PassLevelToVaoMap& vaosMap);
 
+private:
 	/// Called by @a createVaos multiple times to create and populate a single
 	/// VAO
 	static Vao* createNewVao(const Material& mtl,

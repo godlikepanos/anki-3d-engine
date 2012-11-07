@@ -3,6 +3,7 @@
 
 #include "anki/gl/Ogl.h"
 #include "anki/util/Assert.h"
+#include "anki/util/NonCopyable.h"
 #include "anki/util/StdTypes.h"
 
 namespace anki {
@@ -12,12 +13,23 @@ namespace anki {
 	
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
 /// to prevent us from making idiotic errors
-class BufferObject
+class BufferObject: public NonCopyable
 {
 public:
 	/// @name Constructors/Destructor
 	/// @{
+
+	/// Default
 	BufferObject()
+	{}
+
+	/// Move
+	BufferObject(BufferObject&& b)
+		: glId(b.glId), target(b.target), usage(b.usage), 
+			sizeInBytes(b.sizeInBytes)
+#if ANKI_DEBUG
+			, mapped(b.mapped)
+#endif
 	{}
 
 	/// @see create
