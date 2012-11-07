@@ -72,36 +72,41 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Vector<Vec3>& getVertCoords() const
+	U getLodsCount() const
+	{
+		return 1;
+	}
+
+	const Vector<Vec3>& getPositions() const
 	{
 		return vertCoords;
 	}
 
-	const Vector<Vec3>& getVertNormals() const
+	const Vector<Vec3>& getNormals() const
 	{
 		return vertNormals;
 	}
 
-	const Vector<Vec4>& getVertTangents() const
+	const Vector<Vec4>& getTangents() const
 	{
 		return vertTangents;
 	}
 
-	const Vector<Vec2>& getTexCoords(const U32 channel = 0) const
+	const Vector<Vec2>& getTexureCoordinates(const U32 channel) const
 	{
 		return texCoords;
 	}
-	U32 getTexCoordChannels() const
+	U getTextureChannelsCount() const
 	{
-		return 0;
+		return 1;
 	}
 
-	const Vector<VertexWeight>& getVertWeights() const
+	const Vector<VertexWeight>& getWeights() const
 	{
 		return vertWeights;
 	}
 
-	const Vector<ushort>& getVertIndeces() const
+	const Vector<ushort>& getIndices(const U lod) const
 	{
 		return vertIndeces;
 	}

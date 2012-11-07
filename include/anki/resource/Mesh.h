@@ -4,6 +4,7 @@
 #include "anki/math/Math.h"
 #include "anki/gl/Vbo.h"
 #include "anki/collision/Obb.h"
+#include "anki/util/Vector.h"
 
 namespace anki {
 
@@ -19,9 +20,11 @@ public:
 		VA_POSITIONS,
 		VA_NORMALS,
 		VA_TANGENTS,
-		VA_TEX_COORDS,
+		VA_TEXTURE_COORDS,
+		VA_WEIGHTS_BONE_COUNT,
+		VA_WEIGHTS_BONE_IDS,
+		VA_WEIGHTS_BONE_WEIGHTS,
 		VA_INDICES, 
-		VA_WEIGHTS, 
 		VA_COUNT
 	};
 
@@ -42,6 +45,8 @@ public:
 	virtual Bool hasWeights() const = 0;
 
 	virtual U32 getLodsCount() const = 0;
+
+	virtual const Obb& getBoundingShape() const = 0;
 };
 
 /// Mesh Resource. It contains the geometry packed in VBOs
@@ -127,6 +132,8 @@ private:
 
 	/// Create the VBOs using the mesh data
 	void createVbos(const MeshLoader& meshData);
+
+	U32 calcVertexSize() const;
 };
 
 } // end namespace anki

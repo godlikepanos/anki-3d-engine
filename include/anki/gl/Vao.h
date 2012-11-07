@@ -3,6 +3,7 @@
 
 #include "anki/gl/GlException.h"
 #include "anki/gl/Ogl.h"
+#include "anki/gl/ContextNonSharable.h"
 #include "anki/util/Assert.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/util/StdTypes.h"
@@ -13,16 +14,20 @@ class ShaderProgramAttributeVariable;
 class Vbo;
 
 /// Vertex array object. Non-copyable to avoid instantiating it in the stack
-class Vao: public NonCopyable
+class Vao: public NonCopyable, public ContextNonSharable
 {
-	ANKI_GL_NON_SHARABLE
-
 public:
 	/// @name Constructors/Destructor
 	/// @{
 
 	/// Default
 	Vao()
+	{}
+
+	/// Move
+	Vao(Vao&& b)
+		: ContextNonSharable(std::move(b)), glId(b.glId), 
+			attachments(b.attachments)
 	{}
 
 	/// Destroy VAO from the OpenGL context
@@ -33,6 +38,7 @@ public:
 	/// @{
 	GLuint getGlId() const
 	{
+		checkNonSharable();
 		ANKI_ASSERT(isCreated());
 		return glId;
 	}
@@ -42,7 +48,7 @@ public:
 	void create()
 	{
 		ANKI_ASSERT(!isCreated());
-		ANKI_GL_NON_SHARABLE_INIT();
+		crateNonSharable();
 		glGenVertexArrays(1, &glId);
 		ANKI_CHECK_GL_ERROR();
 	}
@@ -51,7 +57,7 @@ public:
 	void destroy()
 	{
 		ANKI_ASSERT(isCreated());
-		ANKI_GL_NON_SHARABLE_CHECK();
+		checkNonSharable();
 		unbind();
 		glDeleteVertexArrays(1, &glId);
 	}
@@ -102,7 +108,7 @@ public:
 	    GLsizei stride,
 	    const GLvoid* pointer);
 
-	int getAttachmentsCount() const
+	U32 getAttachmentsCount() const
 	{
 		return attachments;
 	}
@@ -114,7 +120,7 @@ public:
 	void bind() const
 	{
 		ANKI_ASSERT(isCreated());
-		ANKI_GL_NON_SHARABLE_CHECK();
+		checkNonSharable();
 		if(current != this)
 		{
 			glBindVertexArray(glId);
@@ -127,7 +133,7 @@ public:
 	void unbind() const
 	{
 		ANKI_ASSERT(isCreated());
-		ANKI_GL_NON_SHARABLE_CHECK();
+		checkNonSharable();
 		if(current == this)
 		{
 			glBindVertexArray(0);
@@ -140,7 +146,7 @@ private:
 	GLuint glId = 0; ///< The OpenGL id
 	U32 attachments = 0;
 
-	bool isCreated() const
+	Bool isCreated() const
 	{
 		return glId != 0;
 	}
@@ -153,6 +159,6 @@ private:
 	}
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

@@ -31,9 +31,9 @@ public:
 		return *vaosMap.at(key);
 	}
 
-	uint getIndecesNumber(uint lod) const
+	U32 getIndecesNumber(const U32 lod) const
 	{
-		return getMeshBase().getIndicesNumber(lod);
+		return getMeshBase().getIndicesCount(lod);
 	}
 
 protected:
