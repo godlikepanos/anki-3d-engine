@@ -75,9 +75,9 @@ void ModelPatchBase::createVaos(const Material& mtl,
 	VaosContainer& vaos,
 	PassLevelToVaoMap& vaosMap)
 {
-	for(uint level = 0; level < mtl.getLevelsOfDetail(); ++level)
+	for(U32 level = 0; level < mtl.getLevelsOfDetail(); ++level)
 	{
-		for(uint pass = 0; pass < mtl.getPasses().size(); ++pass)
+		for(U32 pass = 0; pass < mtl.getPasses().size(); ++pass)
 		{
 			PassLevelKey key(pass, level);
 
