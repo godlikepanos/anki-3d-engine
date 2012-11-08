@@ -36,17 +36,42 @@ public:
 		const VertexAttribute attrib, const U32 lod, const U32 texChannel,
 		Vbo* vbo, U32& size, GLenum& type, U32& stride, U32& offset) = 0;
 
-	virtual U32 getVerticesCount() const = 0;
+	U32 getVerticesCount() const
+	{
+		return vertsCount;
+	}
 
-	virtual U32 getIndicesCount(U32 lod) const = 0;
+	U32 getIndicesCount(U32 lod)
+	{
+		return indicesCount[lod];
+	}
 
-	virtual U32 getTextureChannelsCount() const = 0;
+	U32 getTextureChannelsCount() const
+	{
+		return texChannelsCount;
+	}
 
-	virtual Bool hasWeights() const = 0;
+	Bool hasWeights() const
+	{
+		return weights;
+	}
 
-	virtual U32 getLodsCount() const = 0;
+	U32 getLodsCount() const
+	{
+		return indicesCount.size();
+	}
 
-	virtual const Obb& getBoundingShape() const = 0;
+	const Obb& getBoundingShape() const
+	{
+		return visibilityShape;
+	}
+
+protected:
+	U32 vertsCount;
+	Vector<U32> indicesCount; ///< Indices count per level
+	U32 texChannelsCount;
+	Bool weights;
+	Obb visibilityShape;
 };
 
 /// Mesh Resource. It contains the geometry packed in VBOs
@@ -71,46 +96,6 @@ public:
 	~Mesh()
 	{}
 
-	/// @name Accessors
-	/// @{
-
-	/// Implements MeshBase::getVerticesCount
-	U32 getVerticesCount() const
-	{
-		return vertsCount;
-	}
-
-	/// Implements MeshBase::getIndicesCount
-	U32 getIndicesCount(U32 lod) const
-	{
-		return indicesCount[lod];
-	}
-
-	/// Implements MeshBase::getTextureChannelsCount
-	U32 getTextureChannelsCount() const
-	{
-		return texChannelsCount;
-	}
-
-	/// Implements MeshBase::hasWeights
-	Bool hasWeights() const
-	{
-		return weights;
-	}
-
-	/// Implements MeshBase::getLodsCount
-	U32 getLodsCount() const
-	{
-		return indicesVbos.size();
-	}
-
-	/// Implements MeshBase::getBoundingShape
-	const Obb& getBoundingShape() const
-	{
-		return visibilityShape;
-	}
-	/// @}
-
 	/// Load from a file
 	void load(const char* filename);
 
@@ -122,13 +107,6 @@ public:
 private:
 	Vbo vbo;
 	Vector<Vbo> indicesVbos;
-
-	U32 vertsCount;
-	Vector<U32> indicesCount; ///< Indices count per level
-	Bool weights;
-	U32 texChannelsCount;
-
-	Obb visibilityShape;
 
 	/// Create the VBOs using the mesh data
 	void createVbos(const MeshLoader& meshData);
