@@ -58,9 +58,10 @@ protected:
 private:
 	/// Called by @a createVaos multiple times to create and populate a single
 	/// VAO
-	static Vao* createNewVao(const Material& mtl,
+	static void createVao(const Material& mtl,
 		const MeshBase& mesh,
-		const PassLevelKey& key);
+		const PassLevelKey& key,
+		Vao& vao);
 };
 
 /// Its a chunk of a model. Its very important class and it binds the material

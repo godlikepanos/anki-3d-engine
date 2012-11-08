@@ -13,60 +13,58 @@ namespace anki {
 // ModelPatchBase                                                              =
 //==============================================================================
 
-//==============================================================================
-Vao* ModelPatchBase::createNewVao(const Material& mtl,
-	const MeshBase& meshb,
-	const PassLevelKey& key)
+struct Attrib
 {
-	Vao* vao = new Vao;
-	vao->create();
+	const char* name;
+	MeshBase::VertexAttribute id;
+};
 
-	const ShaderProgramAttributeVariable* attrib;
+static const Array<Attrib, MeshBase::VA_COUNT - 1> attribs = {{
+	{"position", MeshBase::VA_POSITION},
+	{"normal", MeshBase::VA_NORMAL},
+	{"tangent", MeshBase::VA_TANGENT},
+	{"texCoords", MeshBase::VA_TEXTURE_COORDS},
+	{"texCoords1", MeshBase::VA_TEXTURE_COORDS_1},
+	{"bonesCount", MeshBase::VA_WEIGHTS_BONE_COUNT},
+	{"boneIds", MeshBase::VA_WEIGHTS_BONE_IDS},
+	{"boneWeights", MeshBase::VA_WEIGHTS_BONE_WEIGHTS}
+}};
+
+//==============================================================================
+Vao* ModelPatchBase::createVao(const Material& mtl,const MeshBase& meshb,
+	const PassLevelKey& key, Vao& vao)
+{
+	vao.create();
+
 	const ShaderProgram& prog = mtl.findShaderProgram(key);
 
-	attrib = prog.tryFindAttributeVariable("position");
-	if(attrib)
+	for(const Attrib& attrib : attribs)
 	{
-		const Vbo* vbo = meshb.getVbo(Mesh::VBO_POSITIONS);
-		ANKI_ASSERT(vbo != nullptr);
+		const ShaderProgramAttributeVariable* attrib = 
+			prog.tryFindAttributeVariable(attrib.name);
 
-		vao->attachArrayBufferVbo(*vbo, *attrib, 3, GL_FLOAT, GL_FALSE, 0,
-			nullptr);
+		if(name == nullptr)
+		{
+			continue;
+		}
+
+		Vbo* vbo;
+		U32 size;
+		GLenum type;
+		U32 stride;
+		U32 offset;
+
+		meshb.getVboInfo(attrib.id, key.lod, vbo, size, type,
+			stride, offset);
+
+		vao.attachArrayBufferVbo(*vbo, *attrib, size, type, GL_FALSE, stride,
+			offset);
 	}
 
-	attrib = prog.tryFindAttributeVariable("normal");
-	if(attrib)
-	{
-		const Vbo* vbo = meshb.getVbo(Mesh::VBO_NORMALS);
-		ANKI_ASSERT(vbo != nullptr);
+	meshb.getVboInfo(MeshBase::VA_INDICES, key.lod, vbo, size, type,
+			stride, offset);
 
-		vao->attachArrayBufferVbo(*vbo, *attrib, 3, GL_FLOAT, GL_FALSE, 0,
-			nullptr);
-	}
-
-	attrib = prog.tryFindAttributeVariable("tangent");
-	if(attrib)
-	{
-		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TANGENTS);
-		ANKI_ASSERT(vbo != nullptr);
-
-		vao->attachArrayBufferVbo(*vbo, *attrib, 4, GL_FLOAT, GL_FALSE, 0,
-			nullptr);
-	}
-
-	attrib = prog.tryFindAttributeVariable("texCoords");
-	if(attrib)
-	{
-		const Vbo* vbo = meshb.getVbo(Mesh::VBO_TEX_COORDS);
-		ANKI_ASSERT(vbo != nullptr);
-
-		vao->attachArrayBufferVbo(*vbo, *attrib, 2, GL_FLOAT, GL_FALSE, 0,
-			nullptr);
-	}
-
-	vao->attachElementArrayBufferVbo(*meshb.getVbo(Mesh::VBO_INDICES));
-
-	return vao;
+	vao.attachElementArrayBufferVbo(*vbo);
 }
 
 //==============================================================================
@@ -81,10 +79,11 @@ void ModelPatchBase::createVaos(const Material& mtl,
 		{
 			PassLevelKey key(pass, level);
 
-			Vao* vao = createNewVao(mtl, meshb, key);
+			Vao vao;
+			createVao(mtl, meshb, key, vao);
 
-			vaos.push_back(vao);
-			vaosMap[key] = vao;
+			vaos.push_back(std::move(vao));
+			vaosMap[key] = &vaos.back();
 		}
 	}
 }
