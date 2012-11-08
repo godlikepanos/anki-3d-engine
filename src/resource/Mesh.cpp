@@ -112,8 +112,8 @@ void Mesh::createVbos(const MeshLoader& meshData)
 
 //==============================================================================
 void Mesh::getVboInfo(
-	const VertexAttribute attrib, const U32 lod, const U32 texChannel,
-	Vbo* v, U32& size, GLenum& type, U32& stride, U32& offset)
+	const VertexAttribute attrib, const U32 lod, Vbo* v, U32& size, 
+	GLenum& type, U32& stride, U32& offset)
 {
 	stride = calcVertexSize();
 
@@ -141,7 +141,14 @@ void Mesh::getVboInfo(
 		v = &vbo;
 		size = 2;
 		type = GL_FLOAT;
-		offset = sizeof(Vec3) * 2 + sizeof(Vec4) + texChannel * sizeof(Vec2);
+		offset = sizeof(Vec3) * 2 + sizeof(Vec4) + sizeof(Vec2);
+		break;
+	case VA_TEXTURE_COORDS_1:
+		ANKI_ASSERT(texChannelsCount > 1);
+		v = &vbo;
+		size = 2;
+		type = GL_FLOAT;
+		offset = sizeof(Vec3) * 2 + sizeof(Vec4) + sizeof(Vec2) * 2;
 		break;
 	case VA_WEIGHTS_BONE_COUNT:
 		v = &vbo;
