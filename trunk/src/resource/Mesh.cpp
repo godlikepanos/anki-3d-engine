@@ -112,66 +112,90 @@ void Mesh::createVbos(const MeshLoader& meshData)
 
 //==============================================================================
 void Mesh::getVboInfo(
-	const VertexAttribute attrib, const U32 lod, Vbo* v, U32& size, 
-	GLenum& type, U32& stride, U32& offset)
+	const VertexAttribute attrib, const U32 lod, const Vbo*& v, U32& size, 
+	GLenum& type, U32& stride, U32& offset) const
 {
 	stride = calcVertexSize();
 
+	// Set all to zero
+	v = nullptr;
+	size = 0;
+	type = GL_NONE;
+	offset = 0;
+
 	switch(attrib)
 	{
-	case VA_POSITIONS:
+	case VA_POSITION:
 		v = &vbo;
 		size = 3;
 		type = GL_FLOAT;
 		offset = 0;
 		break;
-	case VA_NORMALS:
+	case VA_NORMAL:
 		v = &vbo;
 		size = 3;
 		type = GL_FLOAT;
 		offset = sizeof(Vec3);
 		break;
-	case VA_TANGENTS:
+	case VA_TANGENT:
 		v = &vbo;
 		size = 4;
 		type = GL_FLOAT;
 		offset = sizeof(Vec3) * 2;
 		break;
 	case VA_TEXTURE_COORDS:
-		v = &vbo;
-		size = 2;
-		type = GL_FLOAT;
-		offset = sizeof(Vec3) * 2 + sizeof(Vec4) + sizeof(Vec2);
+		if(texChannelsCount > 0)
+		{
+			v = &vbo;
+			size = 2;
+			type = GL_FLOAT;
+			offset = sizeof(Vec3) * 2 + sizeof(Vec4) + sizeof(Vec2);
+		}
 		break;
 	case VA_TEXTURE_COORDS_1:
-		ANKI_ASSERT(texChannelsCount > 1);
-		v = &vbo;
-		size = 2;
-		type = GL_FLOAT;
-		offset = sizeof(Vec3) * 2 + sizeof(Vec4) + sizeof(Vec2) * 2;
+		if(texChannelsCount > 1)
+		{
+			v = &vbo;
+			size = 2;
+			type = GL_FLOAT;
+			offset = sizeof(Vec3) * 2 + sizeof(Vec4) + sizeof(Vec2) * 2;
+		}
 		break;
-	case VA_WEIGHTS_BONE_COUNT:
-		v = &vbo;
-		size = 1;
-		type = GL_UNSIGNED_INT;
-		offset = sizeof(Vec3) * 2 + sizeof(Vec4) 
-			+ texChannelsCount * sizeof(Vec2);
+	case VA_BONE_COUNT:
+		if(weights)
+		{
+			v = &vbo;
+			size = 1;
+			type = GL_UNSIGNED_INT;
+			offset = sizeof(Vec3) * 2 + sizeof(Vec4) 
+				+ texChannelsCount * sizeof(Vec2);
+		}
 		break;
-	case VA_WEIGHTS_BONE_IDS:
-		v = &vbo;
-		size = 4;
-		type = GL_UNSIGNED_INT;
-		offset = sizeof(Vec3) * 2 + sizeof(Vec4) 
-			+ texChannelsCount * sizeof(Vec2) + sizeof(U32);
+	case VA_BONE_IDS:
+		if(weights)
+		{
+			v = &vbo;
+			size = 4;
+			type = GL_UNSIGNED_INT;
+			offset = sizeof(Vec3) * 2 + sizeof(Vec4) 
+				+ texChannelsCount * sizeof(Vec2) + sizeof(U32);
+		}
 		break;
-	case VA_WEIGHTS_BONE_WEIGHTS:
-		v = &vbo;
-		size = 4;
-		type = GL_FLOAT;
-		offset = sizeof(Vec3) * 2 + sizeof(Vec4) 
-			+ texChannelsCount * sizeof(Vec2) + sizeof(U32) + sizeof(U32) * 4;
+	case VA_BONE_WEIGHTS:
+		if(weights)
+		{
+			v = &vbo;
+			size = 4;
+			type = GL_FLOAT;
+			offset = sizeof(Vec3) * 2 + sizeof(Vec4) 
+				+ texChannelsCount * sizeof(Vec2) + sizeof(U32) 
+				+ sizeof(U32) * 4;
+		}
 	case VA_INDICES:
-		v = &indicesVbos[lod];
+		if(lod < indicesVbos.size())
+		{
+			v = &indicesVbos[lod];
+		}
 		break;
 	default:
 		ANKI_ASSERT(0);

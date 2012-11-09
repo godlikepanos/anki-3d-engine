@@ -74,16 +74,16 @@ public:
 	///        be normalized
 	/// @param stride Specifies the byte offset between consecutive generic
 	///        vertex attributes
-	/// @param pointer Specifies a offset of the first component of the
+	/// @param offset Specifies a offset of the first component of the
 	///        first generic vertex attribute in the array
 	void attachArrayBufferVbo(
-	    const Vbo& vbo,
+	    const Vbo* vbo,
 	    const ShaderProgramAttributeVariable& attribVar,
-	    GLint size,
-	    GLenum type,
-	    GLboolean normalized,
-	    GLsizei stride,
-	    const GLvoid* pointer);
+	    const PtrSize size,
+	    const GLenum type,
+	    const Bool normalized,
+	    const PtrSize stride,
+	    const PtrSize offset);
 
 	/// Attach an array buffer VBO. See @link
 	/// http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
@@ -100,13 +100,13 @@ public:
 	/// @param pointer Specifies a offset of the first component of the
 	///        first generic vertex attribute in the array
 	void attachArrayBufferVbo(
-	    const Vbo& vbo,
-	    GLuint attribVarLocation,
-	    GLint size,
-	    GLenum type,
-	    GLboolean normalized,
-	    GLsizei stride,
-	    const GLvoid* pointer);
+	    const Vbo* vbo,
+	    const GLint attribVarLocation,
+	    const PtrSize size,
+	    const GLenum type,
+	    const Bool normalized,
+	    const PtrSize stride,
+	    const PtrSize offset);
 
 	U32 getAttachmentsCount() const
 	{
@@ -114,7 +114,7 @@ public:
 	}
 
 	/// Attach an element array buffer VBO
-	void attachElementArrayBufferVbo(const Vbo& vbo);
+	void attachElementArrayBufferVbo(const Vbo* vbo);
 
 	/// Bind it
 	void bind() const
