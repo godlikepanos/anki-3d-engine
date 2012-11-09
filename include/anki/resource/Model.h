@@ -30,7 +30,7 @@ public:
 	{
 		PassLevelToVaoMap::const_iterator it = vaosMap.find(key);
 		ANKI_ASSERT(it != vaosMap.end());
-		return *(*it);
+		return *(it->second);
 	}
 
 	/// Allias to MeshBase::getIndicesCount()

@@ -17,14 +17,14 @@ class MeshBase
 public:
 	enum VertexAttribute
 	{
-		VA_POSITIONS,
-		VA_NORMALS,
-		VA_TANGENTS,
+		VA_POSITION,
+		VA_NORMAL,
+		VA_TANGENT,
 		VA_TEXTURE_COORDS,
 		VA_TEXTURE_COORDS_1,
-		VA_WEIGHTS_BONE_COUNT,
-		VA_WEIGHTS_BONE_IDS,
-		VA_WEIGHTS_BONE_WEIGHTS,
+		VA_BONE_COUNT,
+		VA_BONE_IDS,
+		VA_BONE_WEIGHTS,
 		VA_INDICES, 
 		VA_COUNT
 	};
@@ -34,15 +34,15 @@ public:
 
 	/// Get info on how to attach a VBO to a VAO
 	virtual void getVboInfo(
-		const VertexAttribute attrib, const U32 lod, Vbo* vbo, 
-		U32& size, GLenum& type, U32& stride, U32& offset) = 0;
+		const VertexAttribute attrib, const U32 lod, const Vbo*& vbo, 
+		U32& size, GLenum& type, U32& stride, U32& offset) const = 0;
 
 	U32 getVerticesCount() const
 	{
 		return vertsCount;
 	}
 
-	U32 getIndicesCount(U32 lod)
+	U32 getIndicesCount(U32 lod) const
 	{
 		return indicesCount[lod];
 	}
@@ -102,8 +102,8 @@ public:
 
 	/// Implements MeshBase::getVboInfo
 	void getVboInfo(
-		const VertexAttribute attrib, const U32 lod, Vbo* vbo, 
-		U32& size, GLenum& type, U32& stride, U32& offset);
+		const VertexAttribute attrib, const U32 lod, const Vbo*& vbo, 
+		U32& size, GLenum& type, U32& stride, U32& offset) const;
 
 private:
 	Vbo vbo;

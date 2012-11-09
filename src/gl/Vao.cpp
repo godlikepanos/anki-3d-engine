@@ -19,9 +19,9 @@ Vao::~Vao()
 }
 
 //==============================================================================
-void Vao::attachArrayBufferVbo(const Vbo& vbo, GLuint attribVarLocation,
-	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
-	const GLvoid* pointer)
+void Vao::attachArrayBufferVbo(const Vbo* vbo, const GLint attribVarLocation,
+	const PtrSize size, const GLenum type, const Bool normalized, 
+	const PtrSize stride, const PtrSize offset)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(vbo.getBufferTarget() == GL_ARRAY_BUFFER
@@ -30,10 +30,10 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, GLuint attribVarLocation,
 	checkNonSharable();
 
 	bind();
-	vbo.bind();
+	vbo->bind();
 	glEnableVertexAttribArray(attribVarLocation);
 	glVertexAttribPointer(attribVarLocation, size, type, normalized,
-		stride, pointer);
+		stride, reinterpret_cast<const GLvoid*>(offset));
 	vbo.unbind();
 	unbind();
 
@@ -43,17 +43,17 @@ void Vao::attachArrayBufferVbo(const Vbo& vbo, GLuint attribVarLocation,
 }
 
 //==============================================================================
-void Vao::attachArrayBufferVbo(const Vbo& vbo,
+void Vao::attachArrayBufferVbo(const Vbo* vbo,
 	const ShaderProgramAttributeVariable& attribVar,
-	GLint size, GLenum type, GLboolean normalized, GLsizei stride,
-	const GLvoid* pointer)
+	const PtrSize size, const GLenum type, const Bool normalized, 
+	const PtrSize stride, const PtrSize offset)
 {
 	attachArrayBufferVbo(vbo, attribVar.getLocation(), size, type, normalized,
-		stride, pointer);
+		stride, offset);
 }
 
 //==============================================================================
-void Vao::attachElementArrayBufferVbo(const Vbo& vbo)
+void Vao::attachElementArrayBufferVbo(const Vbo* vbo)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(vbo.getBufferTarget() == GL_ELEMENT_ARRAY_BUFFER

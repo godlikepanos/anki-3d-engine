@@ -25,46 +25,61 @@ static const Array<Attrib, MeshBase::VA_COUNT - 1> attribs = {{
 	{"tangent", MeshBase::VA_TANGENT},
 	{"texCoords", MeshBase::VA_TEXTURE_COORDS},
 	{"texCoords1", MeshBase::VA_TEXTURE_COORDS_1},
-	{"bonesCount", MeshBase::VA_WEIGHTS_BONE_COUNT},
-	{"boneIds", MeshBase::VA_WEIGHTS_BONE_IDS},
-	{"boneWeights", MeshBase::VA_WEIGHTS_BONE_WEIGHTS}
+	{"bonesCount", MeshBase::VA_BONE_COUNT},
+	{"boneIds", MeshBase::VA_BONE_IDS},
+	{"boneWeights", MeshBase::VA_BONE_WEIGHTS}
 }};
 
 //==============================================================================
-Vao* ModelPatchBase::createVao(const Material& mtl,const MeshBase& meshb,
+void ModelPatchBase::createVao(const Material& mtl,const MeshBase& meshb,
 	const PassLevelKey& key, Vao& vao)
 {
 	vao.create();
 
 	const ShaderProgram& prog = mtl.findShaderProgram(key);
 
+	const Vbo* vbo;
+	U32 size;
+	GLenum type;
+	U32 stride;
+	U32 offset;
+
 	for(const Attrib& attrib : attribs)
 	{
-		const ShaderProgramAttributeVariable* attrib = 
+		const ShaderProgramAttributeVariable* attr = 
 			prog.tryFindAttributeVariable(attrib.name);
 
-		if(name == nullptr)
+		if(attr == nullptr)
 		{
 			continue;
 		}
 
-		Vbo* vbo;
-		U32 size;
-		GLenum type;
-		U32 stride;
-		U32 offset;
-
-		meshb.getVboInfo(attrib.id, key.lod, vbo, size, type,
+		meshb.getVboInfo(attrib.id, (U32)key.level, vbo, size, type,
 			stride, offset);
 
-		vao.attachArrayBufferVbo(*vbo, *attrib, size, type, GL_FALSE, stride,
+		if(vbo == nullptr)
+		{
+			throw ANKI_EXCEPTION("Material asks for attribute that the mesh "
+				"does not have: " + attrib.name);
+		}
+
+		vao.attachArrayBufferVbo(vbo, *attr, size, type, false, stride,
 			offset);
 	}
 
-	meshb.getVboInfo(MeshBase::VA_INDICES, key.lod, vbo, size, type,
+	// The indices VBO
+	meshb.getVboInfo(MeshBase::VA_INDICES, key.level, vbo, size, type,
 			stride, offset);
 
-	vao.attachElementArrayBufferVbo(*vbo);
+	if(vbo == nullptr)
+	{
+		// The desired LOD was not found. Use the 0
+		meshb.getVboInfo(MeshBase::VA_INDICES, 0, vbo, size, type,
+			stride, offset);
+	}
+
+	ANKI_ASSERT(vbo != nullptr);
+	vao.attachElementArrayBufferVbo(vbo);
 }
 
 //==============================================================================
@@ -83,7 +98,7 @@ void ModelPatchBase::createVaos(const Material& mtl,
 			createVao(mtl, meshb, key, vao);
 
 			vaos.push_back(std::move(vao));
-			vaosMap[key] = &vaos.back();
+			vaosMap[key] = &vaos[vaos.size() - 1];
 		}
 	}
 }
