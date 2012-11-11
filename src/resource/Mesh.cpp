@@ -10,28 +10,28 @@ namespace anki {
 //==============================================================================
 void Mesh::load(const char* filename)
 {
-	MeshLoader meshData(filename);
+	MeshLoader loader(filename);
 
 	// Set the non-VBO members
-	vertsCount = meshData.getPositions().size();
+	vertsCount = loader.getPositions().size();
 	ANKI_ASSERT(vertsCount > 0);
 
-	indicesCount.push_back(meshData.getLodsCount());
+	indicesCount.push_back(loader.getLodsCount());
 	for(U lod = 0; lod < indicesCount.size(); lod++)
 	{
-		indicesCount[lod] = meshData.getIndices(lod).size();
+		indicesCount[lod] = loader.getIndices(lod).size();
 		ANKI_ASSERT(indicesCount[lod] > 0);
 		ANKI_ASSERT(indicesCount[lod] % 3 == 0 && "Expecting triangles");
 	}
 
-	weights = meshData.getWeights().size() > 1;
-	texChannelsCount = meshData.getTextureChannelsCount();
+	weights = loader.getWeights().size() > 1;
+	texChannelsCount = loader.getTextureChannelsCount();
 
 	try
 	{
-		createVbos(meshData);
+		createVbos(loader);
 
-		visibilityShape.set(meshData.getPositions());
+		visibilityShape.set(loader.getPositions());
 	}
 	catch(std::exception& e)
 	{
@@ -42,7 +42,8 @@ void Mesh::load(const char* filename)
 //==============================================================================
 U32 Mesh::calcVertexSize() const
 {
-	U32 a = (3 + 3 + 4 + texChannelsCount * 2) * sizeof(F32);
+	U32 a = sizeof(Vec3) + sizeof(Vec3) + sizeof(Vec4) 
+		+ texChannelsCount * sizeof(Vec2);
 	if(weights)
 	{
 		a += sizeof(MeshLoader::VertexWeight);
@@ -51,39 +52,39 @@ U32 Mesh::calcVertexSize() const
 }
 
 //==============================================================================
-void Mesh::createVbos(const MeshLoader& meshData)
+void Mesh::createVbos(const MeshLoader& loader)
 {
 	// Calculate VBO size
 	U32 vertexsize = calcVertexSize();
 	U32 vbosize = vertexsize * vertsCount;
 
 	// Create a temp buffer and populate it
-	Vector<U8> buff;
-	buff.resize(vbosize);
+	Vector<U8> buff(vbosize, 0);
 
 	U8* ptr = &buff[0];
 	for(U i = 0; i < vertsCount; i++)
 	{
 		ANKI_ASSERT(ptr + vertexsize <= &buff[0] + vbosize);
 
-		*(Vec3*)ptr = meshData.getPositions()[i];
+		memcpy(ptr, &loader.getPositions()[i], sizeof(Vec3));
 		ptr += sizeof(Vec3);
 
-		*(Vec3*)ptr = meshData.getNormals()[i];
+		memcpy(ptr, &loader.getNormals()[i], sizeof(Vec3));
 		ptr += sizeof(Vec3);
 
-		*(Vec4*)ptr = meshData.getTangents()[i];
+		memcpy(ptr, &loader.getTangents()[i], sizeof(Vec4));
 		ptr += sizeof(Vec4);
 
 		for(U j = 0; j < texChannelsCount; j++)
 		{
-			*(Vec2*)ptr = meshData.getTexureCoordinates(j)[i];
+			memcpy(ptr, &loader.getTexureCoordinates(j)[i], sizeof(Vec2));
 			ptr += sizeof(Vec2);
 		}
 
 		if(weights)
 		{
-			*(MeshLoader::VertexWeight*)ptr = meshData.getWeights()[i];
+			memcpy(ptr, &loader.getWeights()[i], 
+				sizeof(MeshLoader::VertexWeight));
 			ptr += sizeof(MeshLoader::VertexWeight);
 		}
 	}
@@ -96,14 +97,14 @@ void Mesh::createVbos(const MeshLoader& meshData)
 		GL_STATIC_DRAW);
 
 	/// Create the indices VBOs
-	indicesVbos.resize(meshData.getLodsCount());
+	indicesVbos.resize(loader.getLodsCount());
 	U lod = 0;
 	for(Vbo& v : indicesVbos)
 	{
 		v.create(
 			GL_ELEMENT_ARRAY_BUFFER,
-			getVectorSizeInBytes(meshData.getIndices(lod)),
-			&meshData.getIndices(lod)[0],
+			getVectorSizeInBytes(loader.getIndices(lod)),
+			&loader.getIndices(lod)[0],
 			GL_STATIC_DRAW);
 
 		++lod;
@@ -149,7 +150,7 @@ void Mesh::getVboInfo(
 			v = &vbo;
 			size = 2;
 			type = GL_FLOAT;
-			offset = sizeof(Vec3) * 2 + sizeof(Vec4) + sizeof(Vec2);
+			offset = sizeof(Vec3) * 2 + sizeof(Vec4);
 		}
 		break;
 	case VA_TEXTURE_COORDS_1:
@@ -158,7 +159,7 @@ void Mesh::getVboInfo(
 			v = &vbo;
 			size = 2;
 			type = GL_FLOAT;
-			offset = sizeof(Vec3) * 2 + sizeof(Vec4) + sizeof(Vec2) * 2;
+			offset = sizeof(Vec3) * 2 + sizeof(Vec4) + sizeof(Vec2);
 		}
 		break;
 	case VA_BONE_COUNT:

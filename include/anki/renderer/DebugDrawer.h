@@ -49,7 +49,7 @@ public:
 	/// @}
 
 private:
-	ShaderProgramResourcePointer sProg;
+	ShaderProgramResourcePointer prog;
 	static const U MAX_POINTS_PER_DRAW = 256;
 	Array<Vec3, MAX_POINTS_PER_DRAW> positions;
 	Array<Vec3, MAX_POINTS_PER_DRAW> colors;

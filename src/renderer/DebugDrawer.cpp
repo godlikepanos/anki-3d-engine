@@ -18,29 +18,29 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-DebugDrawer::~DebugDrawer()
-{}
-
-//==============================================================================
 DebugDrawer::DebugDrawer()
 {
-	sProg.load("shaders/Dbg.glsl");
+	prog.load("shaders/Dbg.glsl");
 
 	positionsVbo.create(GL_ARRAY_BUFFER, sizeof(positions), NULL,
 		GL_DYNAMIC_DRAW);
 	colorsVbo.create(GL_ARRAY_BUFFER, sizeof(colors), NULL, GL_DYNAMIC_DRAW);
 	vao.create();
 	const int positionAttribLoc = 0;
-	vao.attachArrayBufferVbo(positionsVbo, positionAttribLoc, 3, GL_FLOAT,
-		GL_FALSE, 0, NULL);
+	vao.attachArrayBufferVbo(&positionsVbo, positionAttribLoc, 3, GL_FLOAT,
+		GL_FALSE, 0, 0);
 	const int colorAttribLoc = 1;
-	vao.attachArrayBufferVbo(colorsVbo, colorAttribLoc, 3, GL_FLOAT, GL_FALSE,
-		0, NULL);
+	vao.attachArrayBufferVbo(&colorsVbo, colorAttribLoc, 3, GL_FLOAT, GL_FALSE,
+		0, 0);
 
 	pointIndex = 0;
 	modelMat.setIdentity();
 	crntCol = Vec3(1.0, 0.0, 0.0);
 }
+
+//==============================================================================
+DebugDrawer::~DebugDrawer()
+{}
 
 //==============================================================================
 void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
@@ -212,8 +212,8 @@ void DebugDrawer::end()
 	colorsVbo.write(&colors[0], 0, sizeof(Vec3) * pointIndex);
 
 	Mat4 pmv = vpMat * modelMat;
-	sProg->bind();
-	sProg->findUniformVariable("modelViewProjectionMat").set(pmv);
+	prog->bind();
+	prog->findUniformVariable("modelViewProjectionMat").set(pmv);
 
 	vao.bind();
 	glDrawArrays(GL_LINES, 0, pointIndex);

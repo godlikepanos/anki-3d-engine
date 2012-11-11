@@ -32,7 +32,7 @@ public:
 		uint movableFlags, Movable* movParent, // Movable
 		Frustum* frustum) // Spatial & Frustumable
 		: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
-			Spatial(frustum), Frustumable(frustum), type(type_)
+			Spatial(this, frustum), Frustumable(frustum), type(type_)
 	{}
 
 	virtual ~Camera();

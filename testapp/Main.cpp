@@ -302,7 +302,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -359,7 +359,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = false;
+	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = false;
@@ -368,7 +368,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.hdr.renderingQuality = 0.25;
 	initializer.pps.hdr.blurringDist = 0.0;
 	initializer.pps.hdr.blurringIterationsCount = 2;
-	initializer.pps.hdr.exposure = 5.0;
+	initializer.pps.hdr.exposure = 8.0;
 	initializer.pps.ssao.blurringIterationsNum = 4;
 	initializer.pps.ssao.enabled = true;
 	initializer.pps.ssao.renderingQuality = 0.3;

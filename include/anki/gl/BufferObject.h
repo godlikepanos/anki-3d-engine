@@ -30,7 +30,9 @@ public:
 #if ANKI_DEBUG
 			, mapped(b.mapped)
 #endif
-	{}
+	{
+		b.glId = 0;
+	}
 
 	/// @see create
 	BufferObject(GLenum target, U32 sizeInBytes,

@@ -26,9 +26,9 @@ public:
 
 	/// Move
 	Vao(Vao&& b)
-		: ContextNonSharable(std::move(b)), glId(b.glId), 
-			attachments(b.attachments)
-	{}
+	{
+		*this = std::move(b);
+	}
 
 	/// Destroy VAO from the OpenGL context
 	~Vao();
@@ -41,6 +41,21 @@ public:
 		checkNonSharable();
 		ANKI_ASSERT(isCreated());
 		return glId;
+	}
+	/// @}
+
+	/// @name Operators
+	/// @{
+
+	/// Move
+	Vao& operator=(Vao&& b)
+	{
+		ContextNonSharable::operator=(b);
+		glId = b.glId;
+		attachments = b.attachments;
+
+		b.glId = 0;
+		return *this;
 	}
 	/// @}
 

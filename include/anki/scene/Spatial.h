@@ -8,6 +8,7 @@
 namespace anki {
 
 class OctreeNode;
+class SceneNode;
 
 /// @addtogroup Scene
 /// @{
@@ -26,9 +27,12 @@ public:
 	};
 
 	/// Pass the collision shape here so we can avoid the virtuals
-	Spatial(CollisionShape* cs)
-		: spatialCs(cs)
+	Spatial(SceneNode* sceneNode_, CollisionShape* cs)
+		: spatialCs(cs), sceneNode(sceneNode_)
 	{}
+
+	// Remove from current OctreeNode
+	~Spatial();
 
 	/// @name Accessors
 	/// @{
@@ -76,9 +80,10 @@ private:
 	U32 timestamp = Timestamp::getTimestamp();
 	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
 	Aabb aabb; ///< A faster shape
+	SceneNode* sceneNode; ///< Know your father
 };
 /// @}
 
-} // namespace anki
+} // end namespace anki
 
 #endif

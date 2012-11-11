@@ -40,6 +40,14 @@ public:
 		return *this;
 	}
 
+	ContextNonSharable& operator=(ContextNonSharable&& b)
+	{
+#if ANKI_DEBUG
+		creationThreadId = b.creationThreadId;
+#endif
+		return *this;
+	}
+
 	void crateNonSharable()
 	{
 #if ANKI_DEBUG

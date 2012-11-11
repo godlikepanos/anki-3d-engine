@@ -8,7 +8,6 @@
 #include "anki/resource/Model.h"
 #include "anki/math/Math.h"
 #include "anki/util/Vector.h"
-#include <array>
 
 namespace anki {
 
@@ -18,58 +17,56 @@ class Skin;
 class SkinMesh: public MeshBase
 {
 public:
-	/// Transform feedback VBOs
-	enum TfVboId
-	{
-		VBO_TF_POSITIONS, ///< VBO never empty
-		VBO_TF_NORMALS, ///< VBO never empty
-		VBO_TF_TANGENTS, ///< VBO never empty
-		VBOS_TF_COUNT
-	};
-
 	/// Create the @a tfVbos with empty data
 	SkinMesh(const MeshBase* mesh);
 
 	/// @name Accessors
 	/// @{
-	const Vbo* getTransformFeedbackVbo(TfVboId id) const /// XXX Why pointer?
+	const Vbo& getXfbVbo() const
 	{
-		return &tfVbos[id];
+		return vbo;
 	}
 	/// @}
 
-	/// @name Implementations of MeshBase virtuals
+	/// @name MeshBase implementers
 	/// @{
-	const Vbo* getVbo(VboId id) const;
-
-	uint getTextureChannelsNumber() const
+	U32 getVerticesCount() const
 	{
-		return mesh->getTextureChannelsNumber();
+		return mesh->getVerticesCount();
 	}
 
-	uint getLodsNumber() const
+	U32 getIndicesCount(U32 lod) const
 	{
-		return mesh->getLodsNumber();
+		return mesh->getIndicesCount(lod);
 	}
 
-	uint getIndicesNumber(uint lod) const
+	U32 getTextureChannelsCount() const
 	{
-		return mesh->getIndicesNumber(lod);
+		return mesh->getTextureChannelsCount();
 	}
 
-	uint getVerticesNumber(uint lod) const
+	Bool hasWeights() const
 	{
-		return mesh->getVerticesNumber(lod);
+		return false;
+	}
+
+	U32 getLodsCount() const
+	{
+		return mesh->getLodsCount();
 	}
 
 	const Obb& getBoundingShape() const
 	{
 		return mesh->getBoundingShape();
 	}
+
+	void getVboInfo(
+		const VertexAttribute attrib, const U32 lod, const Vbo*& vbo, 
+		U32& size, GLenum& type, U32& stride, U32& offset) const;
 	/// @}
 
 private:
-	std::array<Vbo, VBOS_TF_COUNT> tfVbos;
+	Vbo vbo; ///< Contains the transformed P,N,T 
 	const MeshBase* mesh; ///< The resource
 };
 
@@ -80,14 +77,14 @@ class SkinModelPatch: public ModelPatchBase
 {
 public:
 	/// See TfHwSkinningGeneric.glsl for the locations
-	enum TfShaderProgAttribLoc
+	enum XfbAttributeLocation
 	{
-		POSITION_LOC,
-		NORMAL_LOC,
-		TANGENT_LOC,
-		VERT_WEIGHT_BONES_NUM_LOC,
-		VERT_WEIGHT_BONE_IDS_LOC,
-		VERT_WEIGHT_WEIGHTS_LOC
+		XFBAL_POSITION,
+		XFBAL_NORMAL,
+		XFBAL_TANGENT,
+		XFBAL_BONES_COUNT,
+		XFBAL_BONE_IDS,
+		XFBAL_BONE_WEIGHTS
 	};
 
 	/// @name Constructors/Destructor
@@ -109,7 +106,7 @@ public:
 
 	const Vao& getTransformFeedbackVao() const
 	{
-		return tfVao;
+		return xfbVao;
 	}
 	/// @}
 
@@ -129,7 +126,7 @@ public:
 private:
 	std::unique_ptr<SkinMesh> skinMesh;
 	const ModelPatch* mpatch;
-	Vao tfVao; ///< Used as a source VAO in TFB
+	Vao xfbVao; ///< Used as a source VAO in XFB
 };
 
 
