@@ -13,7 +13,7 @@ ModelPatchNode::ModelPatchNode(const ModelPatch* modelPatch_,
 	const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent)
 	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
-		Spatial(&obb), modelPatch(modelPatch_)
+		Spatial(this, &obb), modelPatch(modelPatch_)
 {
 	Renderable::init(*this);
 }

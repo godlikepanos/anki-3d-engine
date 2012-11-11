@@ -88,6 +88,8 @@ void ModelPatchBase::createVaos(const Material& mtl,
 	VaosContainer& vaos,
 	PassLevelToVaoMap& vaosMap)
 {
+	vaos.resize(mtl.getLevelsOfDetail() * mtl.getPasses().size());
+
 	for(U32 level = 0; level < mtl.getLevelsOfDetail(); ++level)
 	{
 		for(U32 pass = 0; pass < mtl.getPasses().size(); ++pass)
@@ -97,8 +99,9 @@ void ModelPatchBase::createVaos(const Material& mtl,
 			Vao vao;
 			createVao(mtl, meshb, key, vao);
 
-			vaos.push_back(std::move(vao));
-			vaosMap[key] = &vaos[vaos.size() - 1];
+			U index = level * mtl.getPasses().size() + pass;
+			vaos[index] = std::move(vao);
+			vaosMap[key] = &vaos[index];
 		}
 	}
 }

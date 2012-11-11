@@ -9,7 +9,24 @@
 namespace anki {
 
 //==============================================================================
-Octree::Octree(const Aabb& aabb, uint8_t maxDepth_, float looseness_)
+// OctreeNode                                                                  =
+//==============================================================================
+
+//==============================================================================
+void OctreeNode::removeSceneNode(SceneNode* sn)
+{
+	Vector<SceneNode*>::iterator it =
+		std::find(sceneNodes.begin(), sceneNodes.end(), sn);
+	ANKI_ASSERT(it != sceneNodes.end());
+	sceneNodes.erase(it);
+}
+
+//==============================================================================
+// Octree                                                                      =
+//==============================================================================
+
+//==============================================================================
+Octree::Octree(const Aabb& aabb, U8 maxDepth_, F32 looseness_)
 	: maxDepth(maxDepth_ < 1 ? 1 : maxDepth_), looseness(looseness_),
 		root(aabb, nullptr)
 {}
@@ -35,19 +52,14 @@ void Octree::placeSceneNode(SceneNode* sn)
 		return;
 	}
 
-	// Remove from current node
+	// Remove from current node ...
 	if(crntNode)
 	{
-		Vector<SceneNode*>::iterator it =
-			std::find(crntNode->sceneNodes.begin(),
-			crntNode->sceneNodes.end(), sn);
-
-		ANKI_ASSERT(it != crntNode->sceneNodes.end());
-		crntNode->sceneNodes.erase(it);
+		crntNode->removeSceneNode(sn);
 	}
 
-	// Add to new one node
-	toBePlacedNode->sceneNodes.push_back(sn);
+	// ... and add to a new
+	toBePlacedNode->addSceneNode(sn);
 	sp->setOctreeNode(toBePlacedNode);
 }
 
@@ -57,7 +69,7 @@ OctreeNode* Octree::place(const Aabb& aabb)
 	if(CollisionAlgorithmsMatrix::collide(aabb, root.aabb))
 	{
 		// Run the recursive method
-		return place(aabb, 0, root);
+		return placeInternal(aabb, 0, root);
 	}
 	else
 	{
@@ -67,20 +79,20 @@ OctreeNode* Octree::place(const Aabb& aabb)
 }
 
 //==============================================================================
-OctreeNode* Octree::place(const Aabb& aabb, uint32_t depth, OctreeNode& node)
+OctreeNode* Octree::placeInternal(const Aabb& aabb, U depth, OctreeNode& node)
 {
 	if(depth >= maxDepth)
 	{
 		return &node;
 	}
 
-	for(uint32_t i = 0; i < 2; ++i)
+	for(U i = 0; i < 2; ++i)
 	{
-		for(uint32_t j = 0; j < 2; ++j)
+		for(U j = 0; j < 2; ++j)
 		{
-			for(uint32_t k = 0; k < 2; ++k)
+			for(U k = 0; k < 2; ++k)
 			{
-				uint32_t id = i * 4 + j * 2 + k;
+				U id = i * 4 + j * 2 + k;
 
 				// Get the node's AABB. If there is no node then calculate the
 				// AABB
@@ -108,7 +120,7 @@ OctreeNode* Octree::place(const Aabb& aabb, uint32_t depth, OctreeNode& node)
 						node.addChild(id, newNode);
 					}
 
-					return place(aabb, depth + 1, *node.children[id]);
+					return placeInternal(aabb, depth + 1, *node.children[id]);
 				}
 			} // k
 		} // j
@@ -118,8 +130,7 @@ OctreeNode* Octree::place(const Aabb& aabb, uint32_t depth, OctreeNode& node)
 }
 
 //==============================================================================
-void Octree::calcAabb(uint32_t i, uint32_t j, uint32_t k, const Aabb& paabb,
-	Aabb& out) const
+void Octree::calcAabb(U i, U j, U k, const Aabb& paabb, Aabb& out) const
 {
 	const Vec3& min = paabb.getMin();
 	const Vec3& max = paabb.getMax();
@@ -133,13 +144,13 @@ void Octree::calcAabb(uint32_t i, uint32_t j, uint32_t k, const Aabb& paabb,
 	Vec3 omax = omin + d;
 
 	// Scale the AABB with looseness
-	float tmp0 = (1.0 + looseness) / 2.0;
-	float tmp1 = (1.0 - looseness) / 2.0;
+	F32 tmp0 = (1.0 + looseness) / 2.0;
+	F32 tmp1 = (1.0 - looseness) / 2.0;
 	Vec3 nomin = tmp0 * omin + tmp1 * omax;
 	Vec3 nomax = tmp0 * omax + tmp1 * omin;
 
 	// Crop to fit the parent's AABB
-	for(uint32_t n = 0; n < 3; ++n)
+	for(U n = 0; n < 3; ++n)
 	{
 		if(nomin[n] < min[n])
 		{
@@ -197,7 +208,7 @@ void Octree::doVisibilityTestsRec(Frustumable& fr, OctreeNode& node)
 		}
 	}
 
-	for(uint32_t i = 0; i < 8; ++i)
+	for(U i = 0; i < 8; ++i)
 	{
 		if(node.children[i].get() != nullptr)
 		{

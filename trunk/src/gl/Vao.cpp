@@ -2,6 +2,7 @@
 #include "anki/gl/Vbo.h"
 #include "anki/util/Exception.h"
 #include "anki/gl/ShaderProgram.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
@@ -24,9 +25,9 @@ void Vao::attachArrayBufferVbo(const Vbo* vbo, const GLint attribVarLocation,
 	const PtrSize stride, const PtrSize offset)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(vbo.getBufferTarget() == GL_ARRAY_BUFFER
+	ANKI_ASSERT(vbo->getBufferTarget() == GL_ARRAY_BUFFER
 		&& "Only GL_ARRAY_BUFFER is accepted");
-	ANKI_ASSERT(vbo.isCreated());
+	ANKI_ASSERT(vbo->isCreated());
 	checkNonSharable();
 
 	bind();
@@ -34,7 +35,7 @@ void Vao::attachArrayBufferVbo(const Vbo* vbo, const GLint attribVarLocation,
 	glEnableVertexAttribArray(attribVarLocation);
 	glVertexAttribPointer(attribVarLocation, size, type, normalized,
 		stride, reinterpret_cast<const GLvoid*>(offset));
-	vbo.unbind();
+	vbo->unbind();
 	unbind();
 
 	ANKI_CHECK_GL_ERROR();
@@ -56,13 +57,13 @@ void Vao::attachArrayBufferVbo(const Vbo* vbo,
 void Vao::attachElementArrayBufferVbo(const Vbo* vbo)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(vbo.getBufferTarget() == GL_ELEMENT_ARRAY_BUFFER
+	ANKI_ASSERT(vbo->getBufferTarget() == GL_ELEMENT_ARRAY_BUFFER
 		&& "Only GL_ELEMENT_ARRAY_BUFFER is accepted");
-	ANKI_ASSERT(vbo.isCreated());
+	ANKI_ASSERT(vbo->isCreated());
 	checkNonSharable();
 
 	bind();
-	vbo.bind();
+	vbo->bind();
 	unbind();
 	ANKI_CHECK_GL_ERROR();
 

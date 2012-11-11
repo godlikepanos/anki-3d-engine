@@ -3,7 +3,7 @@
 
 #include "anki/collision/Aabb.h"
 #include "anki/util/Vector.h"
-#include <array>
+#include "anki/util/Array.h"
 #include <memory>
 
 namespace anki {
@@ -18,7 +18,7 @@ class OctreeNode
 	friend class Octree;
 
 public:
-	typedef std::array<std::unique_ptr<OctreeNode>, 8> ChildrenContainer;
+	typedef Array<std::unique_ptr<OctreeNode>, 8> ChildrenContainer;
 
 	OctreeNode(const Aabb& aabb_, OctreeNode* parent_)
 		: parent(parent_), aabb(aabb_)
@@ -26,7 +26,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const OctreeNode* getChild(uint32_t id) const
+	const OctreeNode* getChild(U id) const
 	{
 		return children[id].get();
 	}
@@ -49,22 +49,30 @@ public:
 	{
 		return sceneNodes.end();
 	}
-	uint32_t getSceneNodesCount() const
+	U getSceneNodesCount() const
 	{
 		return sceneNodes.size();
 	}
 	/// @}
 
-	bool isRoot() const
+	Bool isRoot() const
 	{
 		return parent == nullptr;
 	}
 
-	void addChild(uint32_t pos, OctreeNode* child)
+	void addChild(U pos, OctreeNode* child)
 	{
 		child->parent = this;
 		children[pos].reset(child);
 	}
+
+	void addSceneNode(SceneNode* sn)
+	{
+		ANKI_ASSERT(sn != nullptr);
+		sceneNodes.push_back(sn);
+	}
+
+	void removeSceneNode(SceneNode* sn);
 
 private:
 	ChildrenContainer children;
@@ -77,7 +85,7 @@ private:
 class Octree
 {
 public:
-	Octree(const Aabb& aabb, uint8_t maxDepth, float looseness = 1.5);
+	Octree(const Aabb& aabb, U8 maxDepth, F32 looseness = 1.5);
 
 	/// @name Accessors
 	/// @{
@@ -90,7 +98,7 @@ public:
 		return root;
 	}
 
-	uint32_t getMaxDepth() const
+	U getMaxDepth() const
 	{
 		return maxDepth;
 	}
@@ -103,11 +111,11 @@ public:
 	void doVisibilityTests(Frustumable& fr);
 
 private:
-	uint32_t maxDepth;
-	float looseness;
+	U maxDepth;
+	F32 looseness;
 	OctreeNode root;
 
-	OctreeNode* place(const Aabb& aabb, uint depth, OctreeNode& node);
+	OctreeNode* placeInternal(const Aabb& aabb, U depth, OctreeNode& node);
 
 	/// Place an AABB inside the tree. The algorithm is pretty simple, find the
 	/// node that completely includes the aabb. If found then go deeper into
@@ -127,8 +135,7 @@ private:
 	/// @param[in] k 0: back, 1: front
 	/// @param[in] parentAabb The parent's AABB
 	/// @param[out] out The out AABB
-	void calcAabb(uint i, uint j, uint k, const Aabb& parentAabb,
-		Aabb& out) const;
+	void calcAabb(U i, U j, U k, const Aabb& parentAabb, Aabb& out) const;
 };
 
 } // end namespace anki

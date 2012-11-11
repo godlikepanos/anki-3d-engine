@@ -22,6 +22,7 @@ void Deformer::init()
 //==============================================================================
 void Deformer::deform(SkinNode& skinNode, SkinPatchNode& node) const
 {
+#if 0
 	ANKI_ASSERT(node.getMovable()->getParent() != NULL
 		&& "The SkinPatchNode should always have parent");
 
@@ -77,6 +78,7 @@ void Deformer::deform(SkinNode& skinNode, SkinPatchNode& node) const
 	glEndTransformFeedback();
 
 	GlStateSingleton::get().disable(GL_RASTERIZER_DISCARD);
+#endif
 }
 
 } // end namespace

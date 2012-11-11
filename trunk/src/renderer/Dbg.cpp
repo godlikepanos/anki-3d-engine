@@ -19,8 +19,7 @@ void Dbg::init(const Renderer::Initializer& initializer)
 	try
 	{
 		fbo.create();
-		//fbo.setColorAttachments({&r->getPps().getPostPassFai()});
-		fbo.setColorAttachments({&r->getIs().getFai()});
+		fbo.setColorAttachments({&r->getPps().getFai()});
 		fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, r->getMs().getDepthFai());
 
 		if(!fbo.isComplete())
@@ -36,8 +35,6 @@ void Dbg::init(const Renderer::Initializer& initializer)
 	drawer.reset(new DebugDrawer);
 	sceneDrawer.reset(new SceneDebugDrawer(drawer.get()));
 }
-
-U deletemeto = 0;
 
 //==============================================================================
 void Dbg::run()

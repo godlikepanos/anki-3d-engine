@@ -38,19 +38,19 @@ void Renderer::init(const RendererInitializer& initializer)
 	bs.init(initializer);
 
 	// quad VBOs and VAO
-	float quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0},
+	F32 quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0},
 		{1.0, 0.0}}; /// XXX change them to NDC
 	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords),
 		quadVertCoords, GL_STATIC_DRAW);
 
-	ushort quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}}; // 2 triangles
+	U16 quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}}; // 2 triangles
 	quadVertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces),
 		quadVertIndeces, GL_STATIC_DRAW);
 
 	quadVao.create();
-	quadVao.attachArrayBufferVbo(quadPositionsVbo, 0, 2, GL_FLOAT, false, 0,
-		NULL);
-	quadVao.attachElementArrayBufferVbo(quadVertIndecesVbo);
+	quadVao.attachArrayBufferVbo(
+		&quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, 0);
+	quadVao.attachElementArrayBufferVbo(&quadVertIndecesVbo);
 }
 
 //==============================================================================

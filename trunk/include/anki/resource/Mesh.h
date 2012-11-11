@@ -37,6 +37,43 @@ public:
 		const VertexAttribute attrib, const U32 lod, const Vbo*& vbo, 
 		U32& size, GLenum& type, U32& stride, U32& offset) const = 0;
 
+	virtual U32 getVerticesCount() const = 0;
+
+	virtual U32 getIndicesCount(U32 lod) const = 0;
+
+	virtual U32 getTextureChannelsCount() const = 0;
+
+	virtual Bool hasWeights() const = 0;
+
+	virtual U32 getLodsCount() const = 0;
+
+	virtual const Obb& getBoundingShape() const = 0;
+};
+
+/// Mesh Resource. It contains the geometry packed in VBOs
+class Mesh: public MeshBase
+{
+public:
+	/// @name Constructors
+	/// @{
+
+	/// Default constructor. Do nothing
+	Mesh()
+	{}
+
+	/// Load file
+	Mesh(const char* filename)
+	{
+		load(filename);
+	}
+	/// @}
+
+	/// Does nothing
+	~Mesh()
+	{}
+
+	/// @name MeshBase implementers
+	/// @{
 	U32 getVerticesCount() const
 	{
 		return vertsCount;
@@ -66,36 +103,7 @@ public:
 	{
 		return visibilityShape;
 	}
-
-protected:
-	U32 vertsCount;
-	Vector<U32> indicesCount; ///< Indices count per level
-	U32 texChannelsCount;
-	Bool weights;
-	Obb visibilityShape;
-};
-
-/// Mesh Resource. It contains the geometry packed in VBOs
-class Mesh: public MeshBase
-{
-public:
-	/// @name Constructors
-	/// @{
-
-	/// Default constructor. Do nothing
-	Mesh()
-	{}
-
-	/// Load file
-	Mesh(const char* filename)
-	{
-		load(filename);
-	}
 	/// @}
-
-	/// Does nothing
-	~Mesh()
-	{}
 
 	/// Load from a file
 	void load(const char* filename);
@@ -106,11 +114,17 @@ public:
 		U32& size, GLenum& type, U32& stride, U32& offset) const;
 
 private:
+	U32 vertsCount;
+	Vector<U32> indicesCount; ///< Indices count per level
+	U32 texChannelsCount;
+	Bool weights;
+	Obb visibilityShape;
+
 	Vbo vbo;
 	Vector<Vbo> indicesVbos;
 
 	/// Create the VBOs using the mesh data
-	void createVbos(const MeshLoader& meshData);
+	void createVbos(const MeshLoader& loader);
 
 	U32 calcVertexSize() const;
 };

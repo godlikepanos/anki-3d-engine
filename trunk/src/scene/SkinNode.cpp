@@ -13,58 +13,34 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-const Vbo* SkinMesh::getVbo(VboId id) const
-{
-	switch(id)
-	{
-	case VBO_POSITIONS:
-		return &tfVbos[VBO_TF_POSITIONS];
-	case VBO_NORMALS:
-		return &tfVbos[VBO_TF_NORMALS];
-	case VBO_TANGENTS:
-		return &tfVbos[VBO_TF_TANGENTS];
-	default:
-		return mesh->getVbo(id);
-	}
-}
-
-//==============================================================================
 SkinMesh::SkinMesh(const MeshBase* mesh_)
 	: mesh(mesh_)
 {
-	const Vbo* vbo;
+	// Init the VBO
+	vbo.create(
+		GL_ARRAY_BUFFER,
+		(sizeof(Vec3) * 2 + sizeof(Vec4)) * mesh->getVerticesCount(),
+		nullptr,
+		GL_STATIC_DRAW);
+}
 
-	// Positions
-	vbo = mesh->getVbo(VBO_POSITIONS);
-	if(vbo)
-	{
-		tfVbos[VBO_TF_POSITIONS].create(
-			GL_ARRAY_BUFFER,
-			vbo->getSizeInBytes(),
-			nullptr,
-			GL_STATIC_DRAW);
-	}
+//==============================================================================
+void SkinMesh::getVboInfo(
+	const VertexAttribute attrib, const U32 lod, const Vbo*& v, 
+	U32& size, GLenum& type, U32& stride, U32& offset) const
+{
+	mesh->getVboInfo(attrib, lod, v, size, type, stride, offset);
 
-	// Normals
-	vbo = mesh->getVbo(VBO_NORMALS);
-	if(vbo)
+	switch(attrib)
 	{
-		tfVbos[VBO_TF_NORMALS].create(
-			GL_ARRAY_BUFFER,
-			vbo->getSizeInBytes(),
-			nullptr,
-			GL_STATIC_DRAW);
-	}
-
-	// Tangents
-	vbo = mesh->getVbo(VBO_TANGENTS);
-	if(vbo)
-	{
-		tfVbos[VBO_TF_TANGENTS].create(
-			GL_ARRAY_BUFFER,
-			vbo->getSizeInBytes(),
-			nullptr,
-			GL_STATIC_DRAW);
+	case VA_POSITION:
+	case VA_NORMAL:
+	case VA_TANGENT:
+		v = &vbo;
+		stride = sizeof(Vec3) * 2 + sizeof(Vec4);
+		break;
+	default:
+		break;
 	}
 }
 
@@ -79,77 +55,38 @@ SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_)
 	skinMesh.reset(new SkinMesh(&mpatch->getMeshBase()));
 	create();
 
+	const Vbo* vbo;
+	U32 size;
+	GLenum type;
+	U32 stride;
+	U32 offset;
+
 	// Create the VAO
 	//
-	const MeshBase& mesh = mpatch->getMeshBase();
-	tfVao.create();
-	const Vbo* vbo;
+	xfbVao.create();
 
-	// Positions
-	vbo = mesh.getVbo(MeshBase::VBO_POSITIONS);
-	if(vbo)
+	static const Array<MeshBase::VertexAttribute, 6> attribs = {{
+		MeshBase::VA_POSITION, MeshBase::VA_NORMAL, MeshBase::VA_TANGENT,
+		MeshBase::VA_BONE_COUNT, MeshBase::VA_BONE_IDS, 
+		MeshBase::VA_BONE_WEIGHTS}};
+	U i = 0;
+	for(auto a : attribs)
 	{
-		tfVao.attachArrayBufferVbo(*vbo,
-			POSITION_LOC,
-			3,
-			GL_FLOAT,
-			false,
-			0,
-			NULL);
+		mpatch->getMeshBase().getVboInfo(
+			a, 0, vbo, size, type, stride, offset);
+
+		ANKI_ASSERT(vbo != nullptr);
+
+		xfbVao.attachArrayBufferVbo(vbo, i, size, type, false, stride, offset);
+
+		++i;
 	}
 
-	// Normals
-	vbo = mesh.getVbo(MeshBase::VBO_NORMALS);
-	if(vbo)
-	{
-		tfVao.attachArrayBufferVbo(*vbo,
-			NORMAL_LOC,
-			3,
-			GL_FLOAT,
-			false,
-			0,
-			NULL);
-	}
-
-	// Tangents
-	vbo = mesh.getVbo(MeshBase::VBO_TANGENTS);
-	if(vbo)
-	{
-		tfVao.attachArrayBufferVbo(*vbo,
-			TANGENT_LOC,
-			4,
-			GL_FLOAT,
-			false,
-			0,
-			NULL);
-	}
-
-	vbo = mesh.getVbo(Mesh::VBO_WEIGHTS);
-	ANKI_ASSERT(vbo);
-
-	tfVao.attachArrayBufferVbo(*vbo,
-		VERT_WEIGHT_BONES_NUM_LOC,
-		1,
-		GL_FLOAT,
-		GL_FALSE,
-		sizeof(MeshLoader::VertexWeight),
-		BUFFER_OFFSET(0));
-
-	tfVao.attachArrayBufferVbo(*vbo,
-		VERT_WEIGHT_BONE_IDS_LOC,
-		4,
-		GL_FLOAT,
-		GL_FALSE,
-		sizeof(MeshLoader::VertexWeight),
-		BUFFER_OFFSET(4));
-
-	tfVao.attachArrayBufferVbo(*vbo,
-		VERT_WEIGHT_WEIGHTS_LOC,
-		4,
-		GL_FLOAT,
-		GL_FALSE,
-		sizeof(MeshLoader::VertexWeight),
-		BUFFER_OFFSET(20));
+	// The indices VBO
+	mpatch->getMeshBase().getVboInfo(MeshBase::VA_INDICES, 0, vbo, size, type,
+			stride, offset);
+	ANKI_ASSERT(vbo != nullptr);
+	xfbVao.attachElementArrayBufferVbo(vbo);
 }
 
 //==============================================================================
@@ -162,7 +99,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
 	uint movableFlags, Movable* movParent,
 	CollisionShape* spatialCs)
 	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
-		Spatial(spatialCs)
+		Spatial(this, spatialCs)
 {
 	skinModelPatch.reset(new SkinModelPatch(modelPatch_));
 	Renderable::init(*this);

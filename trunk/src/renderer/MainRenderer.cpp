@@ -23,7 +23,7 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 	const F32 renderingQuality = initializer_.renderingQuality;
 	windowWidth = initializer_.width;
 	windowHeight = initializer_.height;
-	drawToDefaultFbo = (renderingQuality > 0.9);
+	drawToDefaultFbo = (renderingQuality > 0.9 && !initializer_.dbg.enabled);
 
 	// init the offscreen Renderer
 	//

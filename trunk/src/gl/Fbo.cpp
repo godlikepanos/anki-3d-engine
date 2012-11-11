@@ -97,7 +97,7 @@ void Fbo::setColorAttachments(const std::initializer_list<const Texture*>&
 	glDrawBuffers(textures.size(), &colorAttachments[0]);
 
 	// Set attachments
-	int i = 0;
+	U i = 0;
 	for(const Texture* tex : textures)
 	{
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i,
