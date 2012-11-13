@@ -41,24 +41,28 @@ public:
 	{
 		crntCol = Vec3(col);
 	}
-	void setModelMatrix(const Mat4& modelMat);
-	void setViewProjectionMatrix(const Mat4& m)
-	{
-		vpMat = m;
-	}
+	void setModelMatrix(const Mat4& m);
+	void setViewProjectionMatrix(const Mat4& m);
 	/// @}
+
+	void flush();
 
 private:
 	ShaderProgramResourcePointer prog;
 	static const U MAX_POINTS_PER_DRAW = 256;
-	Array<Vec3, MAX_POINTS_PER_DRAW> positions;
-	Array<Vec3, MAX_POINTS_PER_DRAW> colors;
-	Mat4 modelMat;
+	Mat4 mMat;
 	Mat4 vpMat;
-	U pointIndex;
+	Mat4 mvpMat;
+	U vertexPointer;
 	Vec3 crntCol;
+
+	Array<Vec3, MAX_POINTS_PER_DRAW> clientPositions;
+	Array<Vec3, MAX_POINTS_PER_DRAW> clientColors;
+	Array<Mat4, MAX_POINTS_PER_DRAW> clientMatrices;
+
 	Vbo positionsVbo;
 	Vbo colorsVbo;
+	Vbo matricesVbo;
 	Vao vao;
 
 	/// This is a container of some precalculated spheres. Its a map that
