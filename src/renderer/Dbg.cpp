@@ -16,6 +16,11 @@ void Dbg::init(const Renderer::Initializer& initializer)
 {
 	enabled = initializer.dbg.enabled;
 
+	if(!enabled)
+	{
+		return;
+	}
+
 	try
 	{
 		fbo.create();
@@ -71,183 +76,7 @@ void Dbg::run()
 		sceneDrawer->draw(sector->getOctree());
 	}
 
-#if 0
-	drawer->setViewProjectionMatrix(r->getViewProjectionMatrix());
-	drawer->setModelMatrix(Mat4::getIdentity());
-
-	SceneNode* node = scene.findSceneNode("spot0");
-	Light* light = static_cast<Light*>(node);
-	SpotLight* slight = static_cast<SpotLight*>(light);
-
-	const Transform& trf = light->getWorldTransform();
-
-	drawer->drawLine(trf.getOrigin(),
-		trf.getOrigin() + (-trf.getRotation().getZAxis()), 
-		Vec4(1.0));
-#endif
-
-#if 0
-	// XXX
-	drawer->setViewProjectionMatrix(r->getViewProjectionMatrix());
-	drawer->setModelMatrix(Mat4::getIdentity());
-
-	Camera* camera1 = static_cast<Camera*>(scene.findSceneNode("camera1"));
-	CollisionDebugDrawer cdd(drawer.get());
-	static U ii, jj;
-	static Plane p, pp;
-
-	if(deletemeto == 0)
-	{
-		for(U i = 0; i < Is::TILES_X_COUNT; i++)
-		{
-			for(U j = 0; j < Is::TILES_Y_COUNT; j++)
-			{
-				if(r->getIs().tiles[j][i].lightsCount > 0)
-				{
-					std::cout << "--" << i << " " << j << std::endl;
-
-					p = r->getIs().tiles[j][i].planes[Frustum::FP_FAR];
-					pp = r->getIs().tiles[j][i].planes[Frustum::FP_NEAR];
-
-					ii = i;
-					jj = j;
-
-					camera1->setLocalTransform(scene.getActiveCamera().getWorldTransform());
-					camera1->update();
-
-					p.transform(camera1->getWorldTransform());
-					pp.transform(camera1->getWorldTransform());
-
-					//std::cout << scene.getActiveCamera().getWorldTransform() << std::endl;
-
-					//p.accept(cdd);
-				}
-			}
-		}
-	}
-
-	if(deletemeto == 1)
-	{
-		std::cout << "Brokolo" << std::endl;
-
-		p.accept(cdd);
-		pp.accept(cdd);
-
-	}
-
-	Plane p1 = r->getIs().tiles[jj][ii].planes[Frustum::FP_NEAR];
-	p1.transform(scene.getActiveCamera().getWorldTransform());
-	Plane p2 = r->getIs().tiles[jj][ii].planes[Frustum::FP_FAR];
-	p2.transform(scene.getActiveCamera().getWorldTransform());
-
-	//p1.accept(cdd);
-	//p2.accept(cdd);
-#endif
-
-#if 0
-	Camera* camera1 = static_cast<Camera*>(scene.findSceneNode("camera1"));
-
-	F32 fx = static_cast<PerspectiveCamera*>(camera1)->getFovX();
-	F32 fy = static_cast<PerspectiveCamera*>(camera1)->getFovY();
-
-	//std::cout << fx << " " << fy << std::endl;
-
-	Vec3 a(0.0);
-	F32 s, c;
-	sinCos(getPi<F32>() / 2 - fx / 2, s, c);
-	Vec3 b(c, 0.0, -s);
-
-	a.transform(camera1->getWorldTransform());
-	b.transform(camera1->getWorldTransform());
-
-	drawer->drawLine(a, b, Vec4(1));
-
-	sinCos(fy / 2, s, c);
-	b = Vec3(0.0, s, -c);
-	b.transform(camera1->getWorldTransform());
-
-	drawer->drawLine(a, b, Vec4(1));
-#endif
-
-#if 0
-	{
-	PerspectiveFrustum fr =
-		static_cast<const PerspectiveFrustum&>(scene.getActiveCamera().getFrustumable()->getFrustum());
-
-	fr.setTransform(Transform::getIdentity());
-
-	CollisionDebugDrawer cdd(drawer.get());
-	fr.accept(cdd);
-	}
-
-	for(U j = 0; j < 16; j++)
-	{
-		for(U i = 0; i < 1; i++)
-		{
-			Is::Tile& tile = r->getIs().tiles[j][i];
-
-			Mat4 vmat = scene.getActiveCamera().getViewMatrix();
-
-			CollisionDebugDrawer cdd(drawer.get());
-			//tile.planes[Frustum::FP_LEFT].accept(cdd);
-			//tile.planes[Frustum::FP_RIGHT].accept(cdd);
-			//tile.planes[Frustum::FP_BOTTOM].accept(cdd);
-			//tile.planes[Frustum::FP_TOP].accept(cdd);
-		}
-	}
-#endif
-
-#if 0
-	// XXX Remove these
-	CollisionDebugDrawer cdd(drawer.get());
-	Sphere s(Vec3(90.0, 4.0, 0.0), 2.0);
-	s.accept(cdd);
-
-	Camera& cam = scene.getActiveCamera();
-
-	Vec4 p0(s.getCenter(), 1.0);
-	Vec4 p1(s.getCenter() + Vec3(0.0, 2.0, 0.0), 1.0);
-	p0 = cam.getViewProjectionMatrix() * p0;
-	F32 w = p0.w();
-	p0 /= p0.w();
-	p1 = cam.getViewProjectionMatrix() * p1;
-	F32 p1w = p1.w();
-	p1 /= p1.w();
-
-	Vec4 l = cam.getViewProjectionMatrix() * Vec4(0.0, 0.0, 0.0, 1.0);
-	l /= l.w();
-
-	//std::cout << (p1 - p0).getLength() << ", " << l << std::endl;
-
-	//
-	F32 r = s.getRadius();
-	Vec3 e = cam.getWorldTransform().getOrigin();
-	Vec4 c(s.getCenter(), 1.0);
-	Vec4 a = Vec4(c.xyz() + cam.getWorldTransform().getRotation() * Vec3(r, 0.0, 0.0), 1.0);
-
-	c = cam.getViewProjectionMatrix() * c;
-	c /= c.w();
-
-	a = cam.getViewProjectionMatrix() * a;
-	a /= a.w();
-
-	Vec2 circleCenter = c.xy();
-	F32 circleRadius = (c.xy() - a.xy()).getLength();
-	//
-
-	drawer->setViewProjectionMatrix(Mat4::getIdentity());
-	drawer->setModelMatrix(Mat4::getIdentity());
-
-	/*drawer->drawLine(Vec3(p0.x(), p0.y(), 0.0),
-		Vec3(p0.x(), p0.y(), 0.0) + Vec3(2.0 / w, 0.0, 0.0),
-		Vec4(0.0, 1.0, 0.0, 0.0));
-
-	drawer->drawLine(Vec3(p0.x(), p0.y(), 0.0),
-		Vec3(p1.x(), p1.y(), 0.0), Vec4(0.0, 1.0, 1.0, 0.0));*/
-
-	drawer->drawLine(Vec3(circleCenter, 0.0),
-		Vec3(circleCenter, 0.0) + Vec3(circleRadius, 0.0, 0.0), Vec4(0.0, 1.0, 1.0, 0.0));
-#endif
+	drawer->flush();
 }
 
 } // end namespace anki
