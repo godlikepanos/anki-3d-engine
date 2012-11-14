@@ -11,6 +11,8 @@
 
 namespace anki {
 
+class Renderer;
+
 /// @addtogroup Scene
 /// @{
 
@@ -92,9 +94,7 @@ public:
 	void registerNode(SceneNode* node);
 	void unregisterNode(SceneNode* node);
 
-	void update(float prevUpdateTime, float crntTime);
-
-	void doVisibilityTests(Camera& cam);
+	void update(float prevUpdateTime, float crntTime, Renderer& renderer);
 
 	SceneNode* findSceneNode(const char* name)
 	{
@@ -112,6 +112,8 @@ private:
 	Camera* mainCam = nullptr;
 	U32 activeCameraChangeTimestamp = Timestamp::getTimestamp();
 	VisibilityTester vtester;
+
+	void doVisibilityTests(Camera& cam, Renderer& r);
 
 	/// Add to a container
 	template<typename T>

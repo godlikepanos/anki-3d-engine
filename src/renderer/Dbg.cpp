@@ -54,7 +54,7 @@ void Dbg::run()
 	fbo.bind();
 
 	GlStateSingleton::get().disable(GL_BLEND);
-	GlStateSingleton::get().enable(GL_DEPTH_TEST);
+	GlStateSingleton::get().enable(GL_DEPTH_TEST, depthTest);
 
 	drawer->setViewProjectionMatrix(r->getViewProjectionMatrix());
 	drawer->setModelMatrix(Mat4::getIdentity());

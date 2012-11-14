@@ -231,7 +231,9 @@ void mainLoopExtra()
 	if(in.getKey(KC_P) == 1)
 	{
 		//MainRendererSingleton::get().getPps().getHdr().setExposure(20);
-		in.hideCursor(true);
+		//in.hideCursor(true);
+		MainRendererSingleton::get().getDbg().setDepthTestEnabled(
+			!MainRendererSingleton::get().getDbg().getDepthTestEnabled());
 	}
 
 	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
@@ -286,7 +288,8 @@ void mainLoop()
 		InputSingleton::get().handleEvents();
 		InputSingleton::get().moveMouse(Vec2(0.0));
 		mainLoopExtra();
-		SceneSingleton::get().update(prevUpdateTime, crntTime);
+		SceneSingleton::get().update(
+			prevUpdateTime, crntTime, MainRendererSingleton::get());
 		EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
 		MainRendererSingleton::get().render(SceneSingleton::get());
 

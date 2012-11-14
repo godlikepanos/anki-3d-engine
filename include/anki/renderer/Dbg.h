@@ -21,11 +21,21 @@ public:
 	void init(const RendererInitializer& initializer);
 	void run();
 
+	Bool getDepthTestEnabled() const
+	{
+		return depthTest;
+	}
+	void setDepthTestEnabled(Bool enable)
+	{
+		depthTest = enable;
+	}
+
 private:
 	Fbo fbo;
 	std::unique_ptr<DebugDrawer> drawer;
 	// Have it as ptr because the constructor calls opengl
 	std::unique_ptr<SceneDebugDrawer> sceneDrawer;
+	Bool depthTest = true;
 };
 
 } // end namespace

@@ -18,6 +18,8 @@ class SceneNode;
 /// tests
 class Spatial: public Flags<U32>
 {
+	friend class OctreeNode;
+
 public:
 	/// Spatial flags
 	enum SpatialFlag
@@ -49,19 +51,6 @@ public:
 	U32 getSpatialTimestamp() const
 	{
 		return timestamp;
-	}
-
-	OctreeNode* getOctreeNode()
-	{
-		return octreeNode;
-	}
-	const OctreeNode* getOctreeNode() const
-	{
-		return octreeNode;
-	}
-	void setOctreeNode(OctreeNode* x)
-	{
-		octreeNode = x;
 	}
 	/// @}
 

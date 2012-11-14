@@ -272,6 +272,9 @@ public:
 		return distance / lodDistance;
 	}
 
+	/// Use the tiler to do visibility tests
+	Bool doVisibilityTests(const CollisionShape& cs) const;
+
 protected:
 	/// @name Rendering stages
 	/// @{

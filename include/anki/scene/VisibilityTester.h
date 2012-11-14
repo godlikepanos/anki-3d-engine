@@ -12,6 +12,7 @@ class SceneNode;
 class Frustumable;
 class Renderable;
 class Light;
+class Renderer;
 
 /// @addtogroup Scene
 /// @{
@@ -67,7 +68,7 @@ public:
 	/// This method:
 	/// - Gets the visible renderables and frustumables
 	/// - For every frustumable perform tests
-	static void test(Frustumable& ref, Scene& scene);
+	static void test(Frustumable& ref, Scene& scene, Renderer& r);
 
 private:
 	static void testLight(Light& light, Scene& scene);

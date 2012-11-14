@@ -66,11 +66,7 @@ public:
 		children[pos].reset(child);
 	}
 
-	void addSceneNode(SceneNode* sn)
-	{
-		ANKI_ASSERT(sn != nullptr);
-		sceneNodes.push_back(sn);
-	}
+	void addSceneNode(SceneNode* sn);
 
 	void removeSceneNode(SceneNode* sn);
 

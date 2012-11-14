@@ -13,12 +13,38 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+void OctreeNode::addSceneNode(SceneNode* sn)
+{
+	ANKI_ASSERT(sn != nullptr);
+
+	Spatial* sp = sn->getSpatial();
+	if(this == sp->octreeNode)
+	{
+		// early exit
+		return;
+	}
+
+	// Remove from current node ...
+	if(sp->octreeNode != nullptr)
+	{
+		sp->octreeNode->removeSceneNode(sn);
+	}
+
+	// ... and add to a new
+	sceneNodes.push_back(sn);
+	sp->octreeNode = this;
+}
+
+//==============================================================================
 void OctreeNode::removeSceneNode(SceneNode* sn)
 {
+	ANKI_ASSERT(sn != nullptr);
 	Vector<SceneNode*>::iterator it =
 		std::find(sceneNodes.begin(), sceneNodes.end(), sn);
 	ANKI_ASSERT(it != sceneNodes.end());
+
 	sceneNodes.erase(it);
+	sn->getSpatial()->octreeNode = nullptr;
 }
 
 //==============================================================================
@@ -44,23 +70,7 @@ void Octree::placeSceneNode(SceneNode* sn)
 		return;
 	}
 
-	OctreeNode* crntNode = sp->getOctreeNode();
-
-	if(crntNode == toBePlacedNode)
-	{
-		// Don't place in the same
-		return;
-	}
-
-	// Remove from current node ...
-	if(crntNode)
-	{
-		crntNode->removeSceneNode(sn);
-	}
-
-	// ... and add to a new
 	toBePlacedNode->addSceneNode(sn);
-	sp->setOctreeNode(toBePlacedNode);
 }
 
 //==============================================================================
