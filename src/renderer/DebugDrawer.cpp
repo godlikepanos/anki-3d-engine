@@ -22,36 +22,33 @@ DebugDrawer::DebugDrawer()
 {
 	prog.load("shaders/Dbg.glsl");
 
-	positionsVbo.create(GL_ARRAY_BUFFER, sizeof(clientPositions), nullptr,
-		GL_DYNAMIC_DRAW);
-	colorsVbo.create(GL_ARRAY_BUFFER, sizeof(clientColors), nullptr,
-		GL_DYNAMIC_DRAW);
-	matricesVbo.create(GL_ARRAY_BUFFER, sizeof(clientMatrices), nullptr,
+	vbo.create(GL_ARRAY_BUFFER, sizeof(clientVerts), nullptr,
 		GL_DYNAMIC_DRAW);
 
 	vao.create();
 	vao.attachArrayBufferVbo(
-		&positionsVbo, prog->findAttributeVariable("position"), 3, GL_FLOAT,
-		false, 0, 0);
+		&vbo, prog->findAttributeVariable("position"), 3, GL_FLOAT,
+		false, sizeof(Vertex), 0);
+
 	vao.attachArrayBufferVbo(
-		&colorsVbo, prog->findAttributeVariable("color"), 3, GL_FLOAT,
-		false, 0, 0);
+		&vbo, prog->findAttributeVariable("color"), 3, GL_FLOAT,
+		false, sizeof(Vertex), sizeof(Vec3));
 
 	GLint loc =
 		prog->findAttributeVariable("modelViewProjectionMat").getLocation();
 
 	vao.attachArrayBufferVbo(
-		&matricesVbo, loc,
-		4, GL_FLOAT, false, sizeof(Mat4), 0);
+		&vbo, loc, 4, GL_FLOAT, false, sizeof(Vertex), 
+		2 * sizeof(Vec3));
 	vao.attachArrayBufferVbo(
-		&matricesVbo, loc + 1,
-		4, GL_FLOAT, false, sizeof(Mat4), sizeof(Vec4));
+		&vbo, loc + 1, 4, GL_FLOAT, false, sizeof(Vertex), 
+		2 * sizeof(Vec3) + sizeof(Vec4));
 	vao.attachArrayBufferVbo(
-		&matricesVbo, loc + 2,
-		4, GL_FLOAT, false, sizeof(Mat4), sizeof(Vec4) * 2);
+		&vbo, loc + 2, 4, GL_FLOAT, false, sizeof(Vertex), 
+		2 * sizeof(Vec3) + sizeof(Vec4) * 2);
 	vao.attachArrayBufferVbo(
-		&matricesVbo, loc + 3,
-		4, GL_FLOAT, false, sizeof(Mat4), sizeof(Vec4) * 3);
+		&vbo, loc + 3, 4, GL_FLOAT, false, sizeof(Vertex), 
+		2 * sizeof(Vec3) + sizeof(Vec4) * 3);
 
 	vertexPointer = 0;
 	mMat.setIdentity();
@@ -61,6 +58,72 @@ DebugDrawer::DebugDrawer()
 //==============================================================================
 DebugDrawer::~DebugDrawer()
 {}
+
+//==============================================================================
+void DebugDrawer::setModelMatrix(const Mat4& m)
+{
+	ANKI_ASSERT(vertexPointer == 0
+		&& "The func called after begin and before end");
+	mMat = m;
+	mvpMat = vpMat * mMat;
+}
+
+//==============================================================================
+void DebugDrawer::setViewProjectionMatrix(const Mat4& m)
+{
+	ANKI_ASSERT(vertexPointer == 0
+		&& "The func called after begin and before end");
+	vpMat = m;
+	mvpMat = vpMat * mMat;
+}
+
+//==============================================================================
+void DebugDrawer::begin()
+{
+	// Do nothing. Keep for compatibility
+}
+
+//==============================================================================
+void DebugDrawer::end()
+{
+	ANKI_ASSERT(vertexPointer != 0);
+
+	if(vertexPointer % 2 != 0)
+	{
+		// push back the previous vertex to close the loop
+		pushBackVertex(clientVerts[vertexPointer].position);
+	}
+}
+
+//==============================================================================
+void DebugDrawer::flush()
+{
+	if(vertexPointer == 0)
+	{
+		// Early exit
+		return;
+	}
+
+	vbo.write(&clientVerts[0], 0, sizeof(clientVerts));
+
+	prog->bind();
+	vao.bind();
+	glDrawArrays(GL_LINES, 0, vertexPointer);
+	vertexPointer = 0;
+}
+
+//==============================================================================
+void DebugDrawer::pushBackVertex(const Vec3& pos)
+{
+	clientVerts[vertexPointer] = Vertex{pos, crntCol, mvpMat.getTransposed()};
+
+	++vertexPointer;
+
+	if(vertexPointer == MAX_POINTS_PER_DRAW)
+	{
+		flush();
+	}
+}
 
 //==============================================================================
 void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
@@ -80,7 +143,7 @@ void DebugDrawer::drawGrid()
 	Vec4 col2(1.0, 0.0, 0.0, 1.0);
 
 	const F32 SPACE = 1.0; // space between lines
-	const int NUM = 57;  // lines number. must be odd
+	const U NUM = 57;  // lines number. must be odd
 
 	const F32 GRID_HALF_SIZE = ((NUM - 1) * SPACE / 2);
 
@@ -88,7 +151,7 @@ void DebugDrawer::drawGrid()
 
 	begin();
 
-	for(int x = - NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
+	for(U x = - NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
 	{
 		setColor(col0);
 
@@ -165,20 +228,21 @@ void DebugDrawer::drawSphere(F32 radius, int complexity)
 
 	// Render
 	//
-	mMat = mMat * Mat4(Vec3(0.0), Mat3::getIdentity(), radius);
+	Mat4 oldMMat = mMat;
+	Mat4 oldVpMat = vpMat;
+
+	setModelMatrix(mMat * Mat4(Vec3(0.0), Mat3::getIdentity(), radius));
 
 	begin();
 	for(const Vec3& p : *sphereLines)
 	{
-		if(vertexPointer >= MAX_POINTS_PER_DRAW)
-		{
-			end();
-			begin();
-		}
-
 		pushBackVertex(p);
 	}
 	end();
+
+	// restore
+	mMat = oldMMat;
+	vpMat = oldVpMat;
 }
 
 //==============================================================================
@@ -198,8 +262,9 @@ void DebugDrawer::drawCube(F32 size)
 		Vec3(maxPos.x(), minPos.y(), minPos.z())   // right bottom back
 	}};
 
-	Array<uint, 24> indeces = {{0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6,
-		7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
+	static const Array<uint, 24> indeces = {{
+		0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 
+		6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
 	begin();
 		for(uint id : indeces)
@@ -207,62 +272,6 @@ void DebugDrawer::drawCube(F32 size)
 			pushBackVertex(points[id]);
 		}
 	end();
-}
-
-//==============================================================================
-void DebugDrawer::setModelMatrix(const Mat4& m)
-{
-	ANKI_ASSERT(vertexPointer == 0
-		&& "The func called after begin and before end");
-	mMat = m;
-	mvpMat = vpMat * mMat;
-}
-
-//==============================================================================
-void DebugDrawer::setViewProjectionMatrix(const Mat4& m)
-{
-	vpMat = m;
-	mvpMat = vpMat * mMat;
-}
-
-//==============================================================================
-void DebugDrawer::begin()
-{
-	ANKI_ASSERT(vertexPointer == 0);
-}
-
-//==============================================================================
-void DebugDrawer::end()
-{
-	ANKI_ASSERT(vertexPointer != 0);
-}
-
-//==============================================================================
-void DebugDrawer::flush()
-{
-	positionsVbo.write(&clientPositions[0], 0, sizeof(clientPositions));
-	colorsVbo.write(&clientColors[0], 0, sizeof(clientColors));
-	matricesVbo.write(&clientMatrices[0], 0, sizeof(clientMatrices));
-
-	prog->bind();
-	vao.bind();
-	glDrawArrays(GL_LINES, 0, vertexPointer);
-}
-
-//==============================================================================
-void DebugDrawer::pushBackVertex(const Vec3& pos)
-{
-	clientPositions[vertexPointer] = pos;
-	clientColors[vertexPointer] = crntCol;
-	clientMatrices[vertexPointer] = mvpMat.getTransposed();
-
-	++vertexPointer;
-
-	if(vertexPointer == MAX_POINTS_PER_DRAW)
-	{
-		flush();
-		vertexPointer = 0;
-	}
 }
 
 //==============================================================================
