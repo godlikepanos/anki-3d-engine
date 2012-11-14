@@ -45,24 +45,28 @@ public:
 	void setViewProjectionMatrix(const Mat4& m);
 	/// @}
 
+	/// This is the function that actualy draws
 	void flush();
 
 private:
+	struct Vertex
+	{
+		Vec3 position;
+		Vec3 color;
+		Mat4 matrix;
+	};
+
 	ShaderProgramResourcePointer prog;
 	static const U MAX_POINTS_PER_DRAW = 256;
 	Mat4 mMat;
 	Mat4 vpMat;
-	Mat4 mvpMat;
+	Mat4 mvpMat; ///< Optimization
 	U vertexPointer;
 	Vec3 crntCol;
 
-	Array<Vec3, MAX_POINTS_PER_DRAW> clientPositions;
-	Array<Vec3, MAX_POINTS_PER_DRAW> clientColors;
-	Array<Mat4, MAX_POINTS_PER_DRAW> clientMatrices;
+	Array<Vertex, MAX_POINTS_PER_DRAW> clientVerts;
 
-	Vbo positionsVbo;
-	Vbo colorsVbo;
-	Vbo matricesVbo;
+	Vbo vbo;
 	Vao vao;
 
 	/// This is a container of some precalculated spheres. Its a map that
