@@ -32,26 +32,28 @@ DebugDrawer::DebugDrawer()
 
 	vao.attachArrayBufferVbo(
 		&vbo, prog->findAttributeVariable("color"), 3, GL_FLOAT,
-		false, sizeof(Vertex), sizeof(Vec3));
+		false, sizeof(Vertex), sizeof(Vec4));
 
 	GLint loc =
 		prog->findAttributeVariable("modelViewProjectionMat").getLocation();
 
 	vao.attachArrayBufferVbo(
 		&vbo, loc, 4, GL_FLOAT, false, sizeof(Vertex), 
-		2 * sizeof(Vec3));
+		2 * sizeof(Vec4));
 	vao.attachArrayBufferVbo(
 		&vbo, loc + 1, 4, GL_FLOAT, false, sizeof(Vertex), 
-		2 * sizeof(Vec3) + sizeof(Vec4));
+		3 * sizeof(Vec4));
 	vao.attachArrayBufferVbo(
 		&vbo, loc + 2, 4, GL_FLOAT, false, sizeof(Vertex), 
-		2 * sizeof(Vec3) + sizeof(Vec4) * 2);
+		4 * sizeof(Vec4));
 	vao.attachArrayBufferVbo(
 		&vbo, loc + 3, 4, GL_FLOAT, false, sizeof(Vertex), 
-		2 * sizeof(Vec3) + sizeof(Vec4) * 3);
+		5 * sizeof(Vec4));
 
 	vertexPointer = 0;
 	mMat.setIdentity();
+	vpMat.setIdentity();
+	mvpMat.setIdentity();
 	crntCol = Vec3(1.0, 0.0, 0.0);
 }
 
@@ -62,8 +64,6 @@ DebugDrawer::~DebugDrawer()
 //==============================================================================
 void DebugDrawer::setModelMatrix(const Mat4& m)
 {
-	ANKI_ASSERT(vertexPointer == 0
-		&& "The func called after begin and before end");
 	mMat = m;
 	mvpMat = vpMat * mMat;
 }
@@ -71,8 +71,6 @@ void DebugDrawer::setModelMatrix(const Mat4& m)
 //==============================================================================
 void DebugDrawer::setViewProjectionMatrix(const Mat4& m)
 {
-	ANKI_ASSERT(vertexPointer == 0
-		&& "The func called after begin and before end");
 	vpMat = m;
 	mvpMat = vpMat * mMat;
 }
@@ -86,12 +84,10 @@ void DebugDrawer::begin()
 //==============================================================================
 void DebugDrawer::end()
 {
-	ANKI_ASSERT(vertexPointer != 0);
-
 	if(vertexPointer % 2 != 0)
 	{
 		// push back the previous vertex to close the loop
-		pushBackVertex(clientVerts[vertexPointer].position);
+		pushBackVertex(clientVerts[vertexPointer].position.xyz());
 	}
 }
 
@@ -115,7 +111,9 @@ void DebugDrawer::flush()
 //==============================================================================
 void DebugDrawer::pushBackVertex(const Vec3& pos)
 {
-	clientVerts[vertexPointer] = Vertex{pos, crntCol, mvpMat.getTransposed()};
+	clientVerts[vertexPointer].position = Vec4(pos, 1.0);
+	clientVerts[vertexPointer].color = Vec4(crntCol, 1.0);
+	clientVerts[vertexPointer].matrix = mvpMat.getTransposed();
 
 	++vertexPointer;
 

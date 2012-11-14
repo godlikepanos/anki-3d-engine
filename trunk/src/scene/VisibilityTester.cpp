@@ -3,6 +3,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Light.h"
+#include "anki/renderer/Renderer.h"
 
 namespace anki {
 
@@ -11,7 +12,7 @@ VisibilityTester::~VisibilityTester()
 {}
 
 //==============================================================================
-void VisibilityTester::test(Frustumable& ref, Scene& scene)
+void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 {
 	VisibilityInfo& vinfo = ref.getVisibilityInfo();
 	vinfo.renderables.clear();
@@ -35,6 +36,11 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene)
 		}
 
 		if(!ref.insideFrustum(*sp))
+		{
+			continue;
+		}
+
+		if(!r.doVisibilityTests(sp->getAabb()))
 		{
 			continue;
 		}

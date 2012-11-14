@@ -51,8 +51,8 @@ public:
 private:
 	struct Vertex
 	{
-		Vec3 position;
-		Vec3 color;
+		Vec4 position;
+		Vec4 color;
 		Mat4 matrix;
 	};
 
