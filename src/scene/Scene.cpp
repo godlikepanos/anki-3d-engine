@@ -40,12 +40,6 @@ void Scene::update(float prevUpdateTime, float crntTime, Renderer& r)
 		{
 			m->update();
 		}
-
-		Spatial* sp = n->getSpatial();
-		if(sp)
-		{
-			sp->disableFlag(Spatial::SF_VISIBLE);
-		}
 	}
 
 	// Then the rest

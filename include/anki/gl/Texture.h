@@ -270,7 +270,7 @@ public:
 	void genMipmap();
 
 	/// Read the data from the texture. Available only in GL desktop
-	void readPixels(void* data, U level = 0);
+	void readPixels(void* data, U level = 0) const;
 
 private:
 	GLuint glId = 0; ///< Identification for OGL

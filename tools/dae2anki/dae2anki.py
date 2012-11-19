@@ -3,6 +3,7 @@
 import optparse
 import xml.etree.cElementTree as xml
 from struct import pack
+import os
 
 class Vector:
 	""" 3D vector """
@@ -50,7 +51,8 @@ class Mesh:
 		self.id = "" # The mesh:id needed for skinning
 		# The mesh/source/float_array that includes the vertex positions. 
 		# Needed for skinning
-		self.vert_positions = None 
+		self.vert_positions = None
+		self.material_name = "unnamed.mtl"
 
 def compare_arr(a, b):
 	""" Compare 2 arrays """
@@ -70,6 +72,13 @@ def search_in_array(arr, el):
 		if arr[i] == el:
 			return i
 	return -1
+
+def to_collada_tag(name):
+	""" Transform a name of the tag to something that COLLADA format 
+	    understands """
+	collada_str = "{http://www.collada.org/2005/11/COLLADASchema}"
+	s = name.replace("/", "/" + collada_str)
+	return collada_str + s
 
 def parse_commandline():
 	""" Parse the command line arguments """
@@ -91,7 +100,7 @@ def parse_commandline():
 def parse_library_geometries(el):
 	geometries = []
 
-	geometry_el_arr = el.findall("geometry")
+	geometry_el_arr = el.findall(to_collada_tag("geometry"))
 	for geometry_el in geometry_el_arr:
 		geometries.append(parse_geometry(geometry_el))
 
@@ -116,24 +125,24 @@ def get_positions_and_uvs(mesh_el):
 	uvs_float_array = None
 
 	# First get all
-	source_elarr = mesh_el.findall("source")
+	source_elarr = mesh_el.findall(to_collada_tag("source"))
 	all_float_array = {}
 	for source_el in source_elarr:
 		source_id = source_el.get("id")
 	
-		float_array_el = source_el.find("float_array")
+		float_array_el = source_el.find(to_collada_tag("float_array"))
 		all_float_array[source_id] = parse_float_array(float_array_el)
 
 	# Create a link between vertices:id and vertices/input:source
 	vertices_id_to_source = {}
-	vertices_el = mesh_el.find("vertices")
+	vertices_el = mesh_el.find(to_collada_tag("vertices"))
 	vertices_id = vertices_el.get("id")
-	input_el = vertices_el.find("input")
+	input_el = vertices_el.find(to_collada_tag("input"))
 	vertices_input_source = input_el.get("source")
 	vertices_id_to_source[vertices_id] = vertices_input_source[1:]
 
 	# Now find what it is what
-	input_elarr = mesh_el.findall("polylist/input")
+	input_elarr = mesh_el.findall(to_collada_tag("polylist/input"))
 	for input_el in input_elarr:
 		semantic = input_el.get("semantic")
 		source = input_el.get("source")
@@ -173,19 +182,22 @@ def parse_geometry(geometry_el):
 	geom_id = geometry_el.get("id")
 	print("---- Parsing geometry: %s" % geom_name)
 
-	mesh_el = geometry_el.find("mesh")
+	mesh_el = geometry_el.find(to_collada_tag("mesh"))
 
 	# Get positions and UVs
 	(positions_vec_array, positions_offset, uvs_float_array, uvs_offset) = \
 		get_positions_and_uvs(mesh_el)
 
-	# get polylist
-	polylist_el = mesh_el.find("polylist")
-	inputs_count = len(polylist_el.findall("input"))
+	# Get polylist
+	polylist_el = mesh_el.find(to_collada_tag("polylist"))
+	inputs_count = len(polylist_el.findall(to_collada_tag("input")))
+
+	# Get material
+	mtl = polylist_el.get("material")
 
 	# Make sure that we are dealing with triangles
 	tokens = [x.strip() for x in 
-		polylist_el.find("vcount").text.split(" ")]
+		polylist_el.find(to_collada_tag("vcount")).text.split(" ")]
 
 	for token in tokens:
 		if token:
@@ -193,13 +205,13 @@ def parse_geometry(geometry_el):
 				raise Exception("Only triangles are alowed")	
 
 	# Get face number
-	face_count = int(mesh_el.find("polylist").get("count"))
+	face_count = int(mesh_el.find(to_collada_tag("polylist")).get("count"))
 
 	# Get p. p is a 3D array where the 1st dim is the face, 2nd is the vertex
 	# and the 3rd is 0 for position, 1 for normal and 2 for text coord
 	p = []
 	tokens = [x.strip() for x in 
-		polylist_el.find("p").text.split(" ")]
+		polylist_el.find(to_collada_tag("p")).text.split(" ")]
 
 	for token in tokens:
 		if token:
@@ -241,6 +253,8 @@ def parse_geometry(geometry_el):
 	geom.name = geom_name
 	geom.id = geom_id
 	geom.vert_positions = positions_vec_array
+	if mtl:
+		geom.material_name = mtl
 
 	print("------ Number of verts: %d" % len(geom.vertices))
 	print("------ Number of faces: %d" % (len(geom.indices) / 3))
@@ -252,12 +266,12 @@ def update_mesh_with_vertex_weights(mesh, skin_el):
 
 	# Get all <source>
 	source_data = {}
-	source_elarr = skin_el.findall("source")
+	source_elarr = skin_el.findall(to_collada_tag("source"))
 	for source_el in source_elarr:
 		source_id = source_el.get("id")
 	
-		float_array_el = source_el.find("float_array")
-		name_array_el = source_el.find("Name_array")
+		float_array_el = source_el.find(to_collada_tag("float_array"))
+		name_array_el = source_el.find(to_collada_tag("Name_array"))
 
 		if float_array_el != None:
 			source_data[source_id] = parse_float_array(float_array_el)
@@ -277,8 +291,8 @@ def update_mesh_with_vertex_weights(mesh, skin_el):
 	weight_arr = None
 	weight_arr_offset = -1
 
-	vertex_weights_el = skin_el.find("vertex_weights")
-	input_elarr = vertex_weights_el.findall("input")
+	vertex_weights_el = skin_el.find(to_collada_tag("vertex_weights"))
+	input_elarr = vertex_weights_el.findall(to_collada_tag("input"))
 	for input_el in input_elarr:
 		semantic = input_el.get("semantic")
 		source = input_el.get("source")
@@ -301,7 +315,7 @@ def update_mesh_with_vertex_weights(mesh, skin_el):
 	# Get <vcount>
 	vcount = []
 	tokens = [x.strip() for x in 
-		vertex_weights_el.find("vcount").text.split(" ")]
+		vertex_weights_el.find(to_collada_tag("vcount")).text.split(" ")]
 
 	for token in tokens:
 		if token:
@@ -310,7 +324,7 @@ def update_mesh_with_vertex_weights(mesh, skin_el):
 	# Get <v>
 	v = []
 	tokens = [x.strip() for x in 
-		vertex_weights_el.find("v").text.split(" ")]
+		vertex_weights_el.find(to_collada_tag("v")).text.split(" ")]
 
 	for token in tokens:
 		if token:
@@ -398,7 +412,7 @@ def write_mesh(mesh, directory, flip):
 		buff += pack("ff", vert.uv.x, vert.uv.y)
 
 	# Vert weight
-	if mesh.vertices[0].bones_count != -1:
+	if mesh.vertices[0].bones_count > 0:
 		buff += pack("I", len(mesh.vertices))
 
 		for vert in mesh.vertices:
@@ -414,6 +428,28 @@ def write_mesh(mesh, directory, flip):
 def write_mesh_v2(mesh, directory, flip):
 	noop
 
+def write_model(meshes, directory, mdl_name):
+	""" Write the .model XML file """
+	filename = directory + "/" + mdl_name + ".mdl"
+	print("---- Writing file: %s" % filename)
+	f = open(filename, "w")
+
+	f.write("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n")
+	f.write("<model>\n")
+	f.write("\t<modelPatches>\n")
+
+	for mesh in meshes:
+		f.write("\t\t<modelPatch>\n")
+		f.write("\t\t\t<mesh>%s</mesh>\n" 
+			% os.path.abspath(directory + "/" + mesh.name + ".mesh"))
+		f.write("\t\t\t<material>%s</material>\n" % "unnamed.mtl")
+		f.write("\t\t</modelPatch>\n")
+
+	f.write("\t</modelPatches>\n")
+	f.write("</model>\n")
+
+	f.close()
+
 def main():
 	(infile, outdir, flip) = parse_commandline()
 
@@ -422,12 +458,13 @@ def main():
 	tree = xml.parse(infile)
 
 	# Get meshes
-	el_arr = tree.findall("library_geometries")
+	el_arr = tree.findall(to_collada_tag("library_geometries"))
 	for el in el_arr:
 		meshes = parse_library_geometries(el)
 
 	# Update with skin info
-	skin_elarr = tree.findall("library_controllers/controller/skin")
+	skin_elarr = tree.findall(to_collada_tag(
+		"library_controllers/controller/skin"))
 	for skin_el in skin_elarr:
 		source = skin_el.get("source")
 		source = source[1:]
@@ -439,6 +476,10 @@ def main():
 	# Now write meshes
 	for mesh in meshes:
 		write_mesh(mesh, outdir, flip)
+
+	# Write the model
+	mdl_name = os.path.splitext(os.path.basename(infile))[0]
+	write_model(meshes, outdir, mdl_name)
 
 	print("-- Bye!")
 

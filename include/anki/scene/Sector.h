@@ -2,7 +2,6 @@
 #define ANKI_SCENE_SECTOR_H
 
 #include "anki/scene/Octree.h"
-#include <array>
 
 namespace anki {
 
@@ -13,7 +12,7 @@ class Sector;
 class Portal
 {
 private:
-	std::array<Sector*, 2> sectors;
+	Array<Sector*, 2> sectors;
 };
 
 /// A sector

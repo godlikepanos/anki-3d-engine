@@ -79,7 +79,8 @@ private:
 
 	void initInternal(Renderer* r);
 
-	void update4Planes(Camera& cam);
+	void update4Planes(Camera& cam, void* jobs);
+	void waitUpdate4Planes();
 	void update2Planes(Camera& cam, const PixelArray& pixels);
 
 	Bool testInternal(const CollisionShape& cs, const Tile& tile, 

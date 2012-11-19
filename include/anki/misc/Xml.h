@@ -75,7 +75,8 @@ public:
 		if(doc.LoadFile(filename))
 		{
 			throw ANKI_EXCEPTION("Cannot parse file. Reason: "
-				+ doc.GetErrorStr1());
+				+ ((doc.GetErrorStr1() == nullptr)
+				? "unknown" : doc.GetErrorStr1()));
 		}
 	}
 

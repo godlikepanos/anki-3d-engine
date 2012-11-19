@@ -35,15 +35,17 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 			continue;
 		}
 
+		sp->disableFlag(Spatial::SF_VISIBLE);
+
 		if(!ref.insideFrustum(*sp))
 		{
 			continue;
 		}
 
-		if(!r.doVisibilityTests(sp->getAabb()))
+		/*if(!r.doVisibilityTests(sp->getAabb()))
 		{
 			continue;
-		}
+		}*/
 
 		sp->enableFlag(Spatial::SF_VISIBLE);
 

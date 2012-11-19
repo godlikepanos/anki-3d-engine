@@ -32,7 +32,7 @@ class Is: private RenderingPass
 	friend struct UpdateTilesJob;
 
 public:
-	static const U MAX_LIGHTS_PER_TILE = 40;
+	static const U MAX_LIGHTS_PER_TILE = 32;
 
 	static const U MAX_POINT_LIGHTS = 512;
 	static const U MAX_SPOT_LIGHTS = 8;

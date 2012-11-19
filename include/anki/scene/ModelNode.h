@@ -107,6 +107,14 @@ public:
 	virtual ~ModelNode();
 	/// @}
 
+	/// @name Accessors
+	/// @{
+	const Model& getModel() const
+	{
+		return *model;
+	}
+	/// @}
+
 	/// @name SceneNode virtuals
 	/// @{
 
