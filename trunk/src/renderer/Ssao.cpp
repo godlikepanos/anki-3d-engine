@@ -106,10 +106,7 @@ void Ssao::init(const RendererInitializer& initializer)
 //==============================================================================
 void Ssao::run()
 {
-	if(!enabled)
-	{
-		return;
-	}
+	ANKI_ASSERT(enabled);
 
 	const Camera& cam = r->getScene().getActiveCamera();
 

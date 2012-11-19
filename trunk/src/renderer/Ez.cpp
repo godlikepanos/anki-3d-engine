@@ -15,6 +15,8 @@ void Ez::init(const RendererInitializer& initializer)
 		return;
 	}
 
+	maxObjectsToDraw = initializer.ms.ez.maxObjectsToDraw;
+
 	// init FBO
 	try
 	{
@@ -30,9 +32,19 @@ void Ez::init(const RendererInitializer& initializer)
 //==============================================================================
 void Ez::run()
 {
-	if(!enabled)
+	ANKI_ASSERT(enabled);
+
+	Scene& scene = r->getScene();
+	Camera& cam = scene.getActiveCamera();
+
+	VisibilityInfo& vi = cam.getFrustumable()->getVisibilityInfo();
+
+	U count = 0;
+	for(auto it = vi.getRenderablesBegin();
+		it != vi.getRenderablesEnd() && count < maxObjectsToDraw; ++it)
 	{
-		return;
+		r->getSceneDrawer().render(cam, 0, *((*it)->getRenderable()));
+		++count;
 	}
 
 	/*Camera& cam = r.getCamera();
