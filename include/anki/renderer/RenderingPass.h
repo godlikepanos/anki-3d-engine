@@ -47,6 +47,23 @@ protected:
 	Bool enabled = false;
 };
 
+/// Rendering pass that can be enabled or disabled
+class OptionalRenderingPass: public RenderingPass
+{
+public:
+	OptionalRenderingPass(Renderer* r_)
+		: RenderingPass(r_)
+	{}
+
+	Bool getEnabled() const
+	{
+		return enabled;
+	}
+
+protected:
+	Bool enabled = false;
+};
+
 } // end namespace anki
 
 #endif

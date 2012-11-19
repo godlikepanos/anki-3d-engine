@@ -4,27 +4,24 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
 
-
 namespace anki {
 
-
 /// Material stage EarlyZ pass
-class Ez: public SwitchableRenderingPass
+class Ez: public OptionalRenderingPass
 {
-	public:
-		Ez(Renderer* r)
-			: SwitchableRenderingPass(r)
-		{}
+public:
+	Ez(Renderer* r)
+		: OptionalRenderingPass(r)
+	{}
 
-		void init(const RendererInitializer& initializer);
-		void run();
+	void init(const RendererInitializer& initializer);
+	void run();
 
-	private:
-		Fbo fbo; ///< Writes to MS depth FAI
+private:
+	U maxObjectsToDraw;
 };
 
-
-} // end namespace
+} // end namespace anki
 
 
 #endif

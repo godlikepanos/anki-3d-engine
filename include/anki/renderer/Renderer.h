@@ -27,6 +27,7 @@ struct RendererInitializer
 		struct Ez
 		{
 			Bool enabled = false;
+			U maxObjectsToDraw = 10;
 		} ez;
 	} ms;
 

@@ -43,12 +43,14 @@ void Ms::init(const RendererInitializer& initializer)
 //==============================================================================
 void Ms::run()
 {
+	fbo.bind();
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
 	/*if(ez.getEnabled())
 	{
 		ez.run();
 	}*/
-
-	fbo.bind();
 
 	/*if(!ez.getEnabled())
 	{
@@ -69,8 +71,6 @@ void Ms::run()
 		glDepthMask(false);
 		glDepthFunc(GL_EQUAL);
 	}*/
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	// render all
 	r->getSceneDrawer().prepareDraw();

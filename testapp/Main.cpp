@@ -63,7 +63,7 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
-	cam->setLocalTransform(Transform(Vec3(90.0, 5.0, 8.0),
+	cam->setLocalTransform(Transform(Vec3(88.0, 5.0, 8.0),
 		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
@@ -323,7 +323,7 @@ void mainLoop()
 				- timer.getElapsedTime());
 		}
 #else
-		if(MainRendererSingleton::get().getFramesCount() == 100)
+		if(MainRendererSingleton::get().getFramesCount() == 1000)
 		{
 			break;
 		}
@@ -400,8 +400,6 @@ void initSubsystems(int argc, char* argv[])
 
 	// Parallel jobs
 	ThreadPoolSingleton::get().init(4);
-
-	SceneSingleton::get().setAmbientColor(Vec3(0.3));
 }
 
 //==============================================================================
