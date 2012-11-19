@@ -17,6 +17,9 @@ class Texture;
 /// @addtogroup gl
 /// @{
 
+/// The absolute limit of textures
+const U MAX_TEXTURES = 512;
+
 /// Contains a few hints on how to crate textures
 class TextureManager
 {
@@ -116,6 +119,9 @@ private:
 
 	/// Texture units
 	Vector<Unit> units;
+
+	/// XXX
+	Vector<I8> texIdToUnitId;
 
 	/// The active texture unit
 	I activeUnit;

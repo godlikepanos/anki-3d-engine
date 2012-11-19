@@ -44,10 +44,7 @@ void Dbg::init(const Renderer::Initializer& initializer)
 //==============================================================================
 void Dbg::run()
 {
-	if(!enabled)
-	{
-		return;
-	}
+	ANKI_ASSERT(enabled);
 
 	Scene& scene = r->getScene();
 

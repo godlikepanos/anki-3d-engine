@@ -148,13 +148,13 @@ inline Mat4::Mat4(const Vec3& transl, const Mat3& rot)
 // Vec3, Mat3, F32
 inline Mat4::Mat4(const Vec3& translate, const Mat3& rotate, const F32 scale)
 {
-	if(!isZero(scale - 1.0))
+	if(isZero(scale - 1.0))
 	{
-		setRotationPart(rotate * scale);
+		setRotationPart(rotate);
 	}
 	else
 	{
-		setRotationPart(rotate);
+		setRotationPart(rotate * scale);
 	}
 
 	setTranslationPart(translate);

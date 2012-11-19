@@ -315,7 +315,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -323,7 +323,7 @@ void mainLoop()
 				- timer.getElapsedTime());
 		}
 #else
-		if(MainRendererSingleton::get().getFramesCount() == 1000)
+		if(MainRendererSingleton::get().getFramesCount() == 100)
 		{
 			break;
 		}
@@ -400,6 +400,8 @@ void initSubsystems(int argc, char* argv[])
 
 	// Parallel jobs
 	ThreadPoolSingleton::get().init(4);
+
+	SceneSingleton::get().setAmbientColor(Vec3(0.3));
 }
 
 //==============================================================================
