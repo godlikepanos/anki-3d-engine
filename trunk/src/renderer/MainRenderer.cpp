@@ -98,7 +98,11 @@ void MainRenderer::initGl()
 void MainRenderer::render(Scene& scene)
 {
 	Renderer::render(scene);
-	dbg.run();
+
+	if(dbg.getEnabled())
+	{
+		dbg.run();
+	}
 
 	// Render the PPS FAI to the framebuffer
 	//

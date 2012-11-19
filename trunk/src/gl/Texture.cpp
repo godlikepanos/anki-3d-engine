@@ -75,12 +75,18 @@ TextureUnits::TextureUnits()
 
 	activeUnit = -1;
 	choseUnitTimes = 0;
+
+	texIdToUnitId.resize(MAX_TEXTURES, -1);
 }
 
 //==============================================================================
 I TextureUnits::whichUnit(const Texture& tex)
 {
 	GLuint glid = tex.getGlId();
+
+#if 1
+	return texIdToUnitId[glid];
+#else
 	I i = units.size();
 
 	do
@@ -89,6 +95,7 @@ I TextureUnits::whichUnit(const Texture& tex)
 	} while(i >= 0 && glid != units[i].tex);
 
 	return i;
+#endif
 }
 
 //==============================================================================
@@ -108,11 +115,13 @@ U TextureUnits::choseUnit(const Texture& tex, Bool& allreadyBinded)
 	++choseUnitTimes;
 	I myTexUnit = whichUnit(tex);
 
+	const GLuint texid = tex.getGlId();
+
 	// Already binded => renew it
 	//
 	if(myTexUnit != -1)
 	{
-		ANKI_ASSERT(units[myTexUnit].tex == tex.getGlId());
+		ANKI_ASSERT(units[myTexUnit].tex == texid);
 		units[myTexUnit].born = choseUnitTimes;
 		allreadyBinded = true;
 		return myTexUnit;
@@ -126,8 +135,9 @@ U TextureUnits::choseUnit(const Texture& tex, Bool& allreadyBinded)
 	{
 		if(units[i].tex == 0)
 		{
-			units[i].tex = tex.getGlId();
+			units[i].tex = texid;
 			units[i].born = choseUnitTimes;
+			texIdToUnitId[texid] = i;
 			return i;
 		}
 	}
@@ -144,8 +154,10 @@ U TextureUnits::choseUnit(const Texture& tex, Bool& allreadyBinded)
 		}
 	}
 
-	units[older].tex = tex.getGlId();
+	texIdToUnitId[units[older].tex] = -1;
+	units[older].tex = texid;
 	units[older].born = choseUnitTimes;
+	texIdToUnitId[tex.getGlId()] = older;
 	return older;
 }
 

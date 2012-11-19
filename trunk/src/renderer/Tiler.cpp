@@ -207,8 +207,6 @@ void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 
 	r->drawQuad();
 
-	waitUpdate4Planes();
-
 	//
 	// Read pixels from the min/max pass
 	//
@@ -221,6 +219,8 @@ void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 	glReadPixels(0, 0, TILES_X_COUNT, TILES_Y_COUNT, GL_RG_INTEGER,
 		GL_UNSIGNED_INT, pixels);
 #endif
+
+	waitUpdate4Planes();
 
 	// 
 	// Update and transform the 2 planes
