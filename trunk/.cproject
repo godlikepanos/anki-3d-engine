@@ -18,7 +18,7 @@
 					<folderInfo id="cdt.managedbuild.config.gnu.exe.debug.1191103617." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.exe.debug.265738319" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.exe.debug">
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.exe.debug.1307654940" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.exe.debug"/>
-							<builder buildPath="${workspace_loc:/anki/build}" id="cdt.managedbuild.target.gnu.builder.exe.debug.887785930" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="4" superClass="cdt.managedbuild.target.gnu.builder.exe.debug"/>
+							<builder buildPath="${workspace_loc:/anki/build}" id="cdt.managedbuild.target.gnu.builder.exe.debug.887785930" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="8" superClass="cdt.managedbuild.target.gnu.builder.exe.debug"/>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.1037353125" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug.733325444" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.exe.debug">
 								<option id="gnu.cpp.compiler.exe.debug.option.optimization.level.678362421" name="Optimization Level" superClass="gnu.cpp.compiler.exe.debug.option.optimization.level" value="gnu.cpp.compiler.optimization.level.none" valueType="enumerated"/>

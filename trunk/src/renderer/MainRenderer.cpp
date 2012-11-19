@@ -118,6 +118,12 @@ void MainRenderer::render(Scene& scene)
 		sProg->findUniformVariable("rasterImage").set(finalFai);
 		drawQuad();
 	}
+
+	GLenum glerr = glGetError();
+	if(glerr != GL_NO_ERROR)
+	{
+		throw ANKI_EXCEPTION("GL error");
+	}
 }
 
 //==============================================================================

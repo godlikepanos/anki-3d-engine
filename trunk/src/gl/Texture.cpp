@@ -366,7 +366,7 @@ void Texture::setFilteringNoBind(TextureFilteringType filterType)
 }
 
 //==============================================================================
-void Texture::readPixels(void* pixels, U level)
+void Texture::readPixels(void* pixels, U level) const
 {
 #if ANKI_GL == ANKI_GL_DESKTOP
 	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);

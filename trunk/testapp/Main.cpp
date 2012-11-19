@@ -63,7 +63,7 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
-	cam->setLocalTransform(Transform(Vec3(100.0, 5.0, 8.0),
+	cam->setLocalTransform(Transform(Vec3(90.0, 5.0, 8.0),
 		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
@@ -79,7 +79,8 @@ void init()
 		1.0));
 
 	// lights
-	Vec3 lpos(-100.0, 0.0, -50.0);
+#if 1
+	Vec3 lpos(-90.0, 1.2, -32.0);
 	for(int i = 0; i < 50; i++)
 	{
 		for(int j = 0; j < 10; j++)
@@ -95,12 +96,13 @@ void init()
 				randFloat(6.0) - 3.0, randFloat(6.0) - 3.0, 0.0));
 			point->setLocalTranslation(lpos);
 
-			lpos.z() += 10.0;
+			lpos.z() += 7.0;
 		}
 
-		lpos.x() += 4.0;
-		lpos.z() = -50;
+		lpos.x() += 3.5;
+		lpos.z() = -32;
 	}
+#endif
 
 #if 1
 	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
@@ -141,22 +143,30 @@ void init()
 	point1->setLocalTranslation(Vec3(-3.0, 2.0, 0.0));*/
 
 	// horse
-	horse = new ModelNode("meshes/horse/horse.mdl", "horse", &scene,
+	horse = new ModelNode("data/models/horse/horse.mdl", "horse", &scene,
 		Movable::MF_NONE, nullptr);
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		1.0));
 
-#if 1
+#if 0
 	// Sponza
 	ModelNode* sponzaModel = new ModelNode(
 		"maps/sponza-crytek/sponza_crytek.mdl",
 		"sponza", &scene, Movable::MF_NONE, nullptr);
 
 	sponzaModel->setLocalScale(0.1);
-#endif
 
 	// Sectors
-	scene.sectors.push_back(new Sector(Aabb(Vec3(-10.0), Vec3(10.0))));
+	Aabb sectorAabb;
+	sponzaModel->getModel().getVisibilityShape().toAabb(sectorAabb);
+	scene.sectors.push_back(new Sector(sectorAabb));
+#endif
+
+	ModelNode* sponzaModel = new ModelNode(
+		"data/maps/sponza/sponza.mdl",
+		"sponza", &scene, Movable::MF_NONE, nullptr);
+
+	(void)sponzaModel;
 }
 
 //==============================================================================
@@ -362,7 +372,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = true;
+	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = false;

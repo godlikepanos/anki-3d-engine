@@ -4,6 +4,9 @@
 #include "anki/core/ThreadPool.h"
 #include "anki/scene/Camera.h"
 
+// Default should be 0
+#define ALTERNATIVE_MIN_MAX 0
+
 namespace anki {
 
 //==============================================================================
@@ -91,6 +94,9 @@ struct UpdateTiles4PlanesPerspectiveCameraJob: ThreadJob
 	}
 };
 
+typedef Array<UpdateTiles4PlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS>
+	Update4JobArray;
+
 //==============================================================================
 /// Job that updates the near and far tile planes and transforms them
 struct UpdateTiles2PlanesJob: ThreadJob
@@ -119,10 +125,10 @@ struct UpdateTiles2PlanesJob: ThreadJob
 			// Calculate depth as you do it for the vertex position inside 
 			// the shaders
 			F32 minZ = planes.y() / (planes.x() + (*pixels)[j][i][0]);
-			F32 maxZ = -planes.y() / (planes.x() + (*pixels)[j][i][1]);
+			F32 maxZ = planes.y() / (planes.x() + (*pixels)[j][i][1]);
 
 			tile.planes[Frustum::FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), minZ);
-			tile.planes[Frustum::FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), maxZ);
+			tile.planes[Frustum::FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), -maxZ);
 
 			// Transform planes
 			tile.planesWSpace[Frustum::FP_NEAR] = 
@@ -167,7 +173,7 @@ void Tiler::initInternal(Renderer* r_)
 		"#define RENDERER_HEIGHT " + std::to_string(r->getHeight()) + "\n";
 
 	prog.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/IsMinMax.glsl", pps.c_str()).c_str());
+		"shaders/TilerMinMax.glsl", pps.c_str()).c_str());
 
 	// Create FBO
 	Renderer::createFai(TILES_X_COUNT, TILES_Y_COUNT, GL_RG32UI,
@@ -185,18 +191,23 @@ void Tiler::initInternal(Renderer* r_)
 //==============================================================================
 void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 {
+	Update4JobArray jobs4;
+
+#if !ALTERNATIVE_MIN_MAX
 	//
 	// Issue the min/max draw call
 	//
 
-	fbo.bind(); // Flush prev FBO on Mali
+	update4Planes(cam, &jobs4);
+
+	fbo.bind(); // Flush prev FBO to force flush on Mali
 	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
 	prog->bind();
 	prog->findUniformVariable("depthMap").set(depthMap);
 
 	r->drawQuad();
 
-	update4Planes(cam);
+	waitUpdate4Planes();
 
 	//
 	// Read pixels from the min/max pass
@@ -212,16 +223,63 @@ void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 #endif
 
 	// 
-	// Update the 2 planes and transform the planes
+	// Update and transform the 2 planes
 	// 
 	update2Planes(cam, pixels);
 
 	prevCam = &cam;
+#else
+	Vector<F32> allpixels;
+
+	update4Planes(cam, &jobs4);
+
+	allpixels.resize(r->getWidth() * r->getHeight());
+	glReadPixels(0, 0, r->getWidth(), r->getHeight(), GL_DEPTH_COMPONENT,
+		GL_FLOAT, &allpixels[0]);
+
+	// Init pixels
+	PixelArray pixels;
+	for(U j = 0; j < TILES_Y_COUNT; j++)
+	{
+		for(U i = 0; i < TILES_X_COUNT; i++)
+		{
+			pixels[j][i][0] = 1.0;
+			pixels[j][i][1] = 0.0;
+		}
+	}
+
+	// Get min max
+	U w = r->getWidth() / TILES_X_COUNT;
+	U h = r->getHeight() / TILES_Y_COUNT;
+	for(U j = 0; j < r->getHeight(); j++)
+	{
+		for(U i = 0; i < r->getWidth(); i++)
+		{
+			U ii = i / w;
+			U jj = j / h;
+
+			F32 depth = allpixels[j * r->getWidth() + i];
+
+			pixels[jj][ii][0] = std::min(pixels[jj][ii][0], depth);
+			pixels[jj][ii][1] = std::max(pixels[jj][ii][1], depth);
+		}
+	}
+
+	waitUpdate4Planes();
+
+	// Update and transform the 2 planes
+	update2Planes(cam, pixels);
+
+	prevCam = &cam;
+
+#endif
 }
 
 //==============================================================================
-void Tiler::update4Planes(Camera& cam)
+void Tiler::update4Planes(Camera& cam, void* jobs_)
 {
+	Update4JobArray& jobs = *(Update4JobArray*)jobs_;
+
 	U32 camTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
 
 	// Transform only the planes when:
@@ -230,13 +288,9 @@ void Tiler::update4Planes(Camera& cam)
 	Bool onlyTransformPlanes = 
 		camTimestamp < planes4UpdateTimestamp && prevCam == &cam;
 
-
 	// Update the planes in parallel
 	// 
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
-
-	// Dont even think of defining that in the switch
-	Array<UpdateTiles4PlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS> jobs;
 
 	switch(cam.getCameraType())
 	{
@@ -254,12 +308,16 @@ void Tiler::update4Planes(Camera& cam)
 		break;
 	}
 
-	threadPool.waitForAllJobsToFinish();
-
 	if(!onlyTransformPlanes)
 	{
 		planes4UpdateTimestamp = Timestamp::getTimestamp();
 	}
+}
+
+//==============================================================================
+void Tiler::waitUpdate4Planes()
+{
+	ThreadPoolSingleton::get().waitForAllJobsToFinish();
 }
 
 //==============================================================================

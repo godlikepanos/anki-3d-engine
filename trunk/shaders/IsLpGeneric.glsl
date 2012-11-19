@@ -320,4 +320,10 @@ void main()
 		fColor += vec3(0.0, 0.1, 0.0);
 	}
 #endif
+
+#if 0
+	vec3 tmpc = vec3((vInstanceId % 4) / 3.0, (vInstanceId % 3) / 2.0, 
+		(vInstanceId % 2));
+	fColor += tmpc / 50.0;
+#endif
 }
