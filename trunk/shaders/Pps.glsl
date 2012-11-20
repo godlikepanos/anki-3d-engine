@@ -65,5 +65,12 @@ void main(void)
 
 	//fColor = BlendHardLight(vec3(0.6, 0.62, 0.4), fColor);
 	fColor = gammaCorrectionRgb(vec3(0.9, 0.92, 0.75), fColor);
+
+#if 0
+	if(fColor.r != 0.00000001)
+	{
+		fColor = hdr;
+	}
+#endif
 }
 

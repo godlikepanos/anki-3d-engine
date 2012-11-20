@@ -158,22 +158,23 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	fs.write((char*)&header[0], sizeof(header));
 
 	// get the buffer
-	U8* buffer = new U8[getWidth() * getHeight() * 3];
+	Vector<U8> buffer;
+	buffer.resize(getWidth() * getHeight() * 3);
 
-	for(U i = 0; i < getWidth() * getHeight(); i += 3)
+	glReadPixels(0, 0, getWidth(), getHeight(), GL_RGB, GL_UNSIGNED_BYTE,
+		&buffer[0]);
+
+	for(U i = 0; i < getWidth() * getHeight() * 3; i += 3)
 	{
 		U8 temp = buffer[i];
 		buffer[i] = buffer[i + 2];
 		buffer[i + 2] = temp;
 	}
 
-	glReadPixels(0, 0, getWidth(), getHeight(), GL_RGB, GL_UNSIGNED_BYTE,
-		buffer);
-	fs.write((char*)buffer, getWidth() * getHeight() * 3);
+	fs.write((char*)&buffer[0], getWidth() * getHeight() * 3);
 
 	// end
 	fs.close();
-	delete[] buffer;
 }
 
 //==============================================================================
@@ -233,11 +234,11 @@ void MainRenderer::takeScreenshot(const char* filename)
 	std::string ext = getFileExtension(filename);
 
 	// exec from this extension
-	if(ext == ".tga")
+	if(ext == "tga")
 	{
 		takeScreenshotTga(filename);
 	}
-	else if(ext == ".jpg" || ext == ".jpeg")
+	else if(ext == "jpg" || ext == "jpeg")
 	{
 		takeScreenshotJpeg(filename);
 	}

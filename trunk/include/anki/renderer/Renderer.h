@@ -244,6 +244,9 @@ public:
 
 	void drawQuadInstanced(U32 primitiveCount);
 
+	/// Used by blurring where we draw the same quad many times
+	void drawQuadMultiple(U times);
+
 	/// Create FAI texture
 	static void createFai(U32 width, U32 height, int internalFormat,
 		int format, int type, Texture& fai);

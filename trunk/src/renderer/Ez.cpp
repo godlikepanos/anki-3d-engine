@@ -2,6 +2,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/core/App.h"
 #include "anki/scene/Scene.h"
+#include "anki/scene/Camera.h"
 
 namespace anki {
 
@@ -16,17 +17,6 @@ void Ez::init(const RendererInitializer& initializer)
 	}
 
 	maxObjectsToDraw = initializer.ms.ez.maxObjectsToDraw;
-
-	// init FBO
-	try
-	{
-		fbo.create();
-		fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, r->getMs().getDepthFai());
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Cannot create EarlyZ FBO");
-	}
 }
 
 //==============================================================================
