@@ -109,6 +109,31 @@ void Renderer::drawQuadInstanced(U32 primitiveCount)
 }
 
 //==============================================================================
+void Renderer::drawQuadMultiple(U times)
+{
+	quadVao.bind();
+#if ANKI_GL == ANKI_GL_DESKTOP
+	const U max_times = 8;
+	Array<GLsizei, max_times> count;
+	Array<const GLvoid*, max_times> indices;
+
+	for(U i = 0; i < times; i++)
+	{
+		count[i] = 2 * 3;
+		indices[i] = nullptr;
+	}
+
+	glMultiDrawElements(
+		GL_TRIANGLES, &count[0], GL_UNSIGNED_SHORT, &indices[0], times);
+#else
+	for(U i = 0; i < times; i++)
+	{
+		glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
+	}
+#endif
+}
+
+//==============================================================================
 Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 	const Mat4& projectionMat, const int view[4])
 {

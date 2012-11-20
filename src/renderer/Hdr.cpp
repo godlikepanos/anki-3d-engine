@@ -11,6 +11,7 @@ Hdr::~Hdr()
 void Hdr::initFbo(Fbo& fbo, Texture& fai)
 {
 	Renderer::createFai(width, height, GL_RGB8, GL_RGB, GL_FLOAT, fai);
+	fai.setFiltering(Texture::TFT_LINEAR);
 
 	// create FBO
 	fbo.create();
@@ -91,7 +92,7 @@ void Hdr::init(const RendererInitializer& initializer)
 void Hdr::run()
 {
 	ANKI_ASSERT(enabled);
-	/*if(r.getFramesNum() % 2 == 0)
+	/*if(r->getFramesCount() % 2 == 0)
 	{
 		return;
 	}*/
@@ -102,7 +103,7 @@ void Hdr::run()
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 
 	// For the passes it should be NEAREST
-	vblurFai.setFiltering(Texture::TFT_NEAREST);
+	//vblurFai.setFiltering(Texture::TFT_NEAREST);
 
 	// pass 0
 	vblurFbo.bind();
@@ -118,6 +119,7 @@ void Hdr::run()
 	toneSProg->findUniformVariable("fai").set(r->getIs().getFai());
 	r->drawQuad();
 
+#if 1
 	// blurring passes
 	for(U32 i = 0; i < blurringIterationsCount; i++)
 	{
@@ -139,9 +141,22 @@ void Hdr::run()
 		}
 		r->drawQuad();
 	}
+#else
+	hblurFbo.bind();
+	hblurSProg->bind();
+	hblurSProg->findUniformVariable("img").set(vblurFai);
+
+	r->drawQuadMultiple(blurringIterationsCount);
+
+	vblurFbo.bind();
+	vblurSProg->bind();
+	vblurSProg->findUniformVariable("img").set(hblurFai);
+
+	r->drawQuadMultiple(blurringIterationsCount);
+#endif
 
 	// For the next stage it should be LINEAR though
-	vblurFai.setFiltering(Texture::TFT_LINEAR);
+	//vblurFai.setFiltering(Texture::TFT_LINEAR);
 }
 
 } // end namespace anki
