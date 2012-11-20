@@ -113,7 +113,7 @@ void Renderer::drawQuadMultiple(U times)
 {
 	quadVao.bind();
 #if ANKI_GL == ANKI_GL_DESKTOP
-	const U max_times = 8;
+	const U max_times = 16;
 	Array<GLsizei, max_times> count;
 	Array<const GLvoid*, max_times> indices;
 

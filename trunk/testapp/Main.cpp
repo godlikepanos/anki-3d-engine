@@ -383,7 +383,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.is.sm.resolution = 512;
 	initializer.pps.hdr.enabled = true;
 	initializer.pps.hdr.renderingQuality = 0.25;
-	initializer.pps.hdr.blurringDist = 2.0;
+	initializer.pps.hdr.blurringDist = 0.5;
 	initializer.pps.hdr.blurringIterationsCount = 2;
 	initializer.pps.hdr.exposure = 8.0;
 	initializer.pps.ssao.blurringIterationsNum = 4;

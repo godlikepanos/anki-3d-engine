@@ -8,6 +8,25 @@
 namespace anki {
 
 //==============================================================================
+
+struct DistanceSortFunctor
+{
+	Vec3 origin;
+
+	bool operator()(SceneNode* a, SceneNode* b)
+	{
+		ANKI_ASSERT(a->getSpatial() != nullptr && b->getSpatial() != nullptr);
+
+		F32 dist0 = origin.getDistanceSquared(
+			a->getSpatial()->getSpatialOrigin());
+		F32 dist1 = origin.getDistanceSquared(
+			b->getSpatial()->getSpatialOrigin());
+
+		return dist0 < dist1;
+	}
+};
+
+//==============================================================================
 VisibilityTester::~VisibilityTester()
 {}
 
@@ -54,18 +73,27 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 		{
 			vinfo.renderables.push_back(node);
 		}
-
-		Light* l = node->getLight();
-		if(l)
+		else
 		{
-			vinfo.lights.push_back(node);
-
-			if(l->getShadowEnabled() && fr)
+			Light* l = node->getLight();
+			if(l)
 			{
-				testLight(*l, scene);
+				vinfo.lights.push_back(node);
+
+				if(l->getShadowEnabled() && fr)
+				{
+					testLight(*l, scene);
+				}
 			}
 		}
 	}
+
+	DistanceSortFunctor comp;
+	comp.origin =
+		ref.getSceneNode().getMovable()->getWorldTransform().getOrigin();
+	std::sort(vinfo.lights.begin(), vinfo.lights.end(), comp);
+
+	std::sort(vinfo.renderables.begin(), vinfo.renderables.end(), comp);
 }
 
 //==============================================================================

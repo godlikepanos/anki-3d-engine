@@ -18,8 +18,8 @@ public:
 	/// @{
 
 	/// Pass the frustum here so we can avoid the virtuals
-	Frustumable(Frustum* fr)
-		: frustum(fr)
+	Frustumable(Frustum* fr, SceneNode* sn)
+		: frustum(fr), node(sn)
 	{}
 	/// @}
 
@@ -58,6 +58,15 @@ public:
 	{
 		return viewProjectionMat;
 	}
+
+	const SceneNode& getSceneNode() const
+	{
+		return *node;
+	}
+	SceneNode& getSceneNode()
+	{
+		return *node;
+	}
 	/// @}
 
 	void frustumableMarkUpdated()
@@ -83,6 +92,7 @@ protected:
 	Mat4 projectionMat = Mat4::getIdentity();
 	Mat4 viewMat = Mat4::getIdentity();
 	Mat4 viewProjectionMat = Mat4::getIdentity();
+	SceneNode* node;
 
 private:
 	U32 timestamp = Timestamp::getTimestamp();
