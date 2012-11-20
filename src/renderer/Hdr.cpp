@@ -92,10 +92,10 @@ void Hdr::init(const RendererInitializer& initializer)
 void Hdr::run()
 {
 	ANKI_ASSERT(enabled);
-	/*if(r->getFramesCount() % 2 == 0)
+	if(r->getFramesCount() % 2 == 0)
 	{
 		return;
-	}*/
+	}
 
 	GlStateSingleton::get().setViewport(0, 0, width, height);
 
@@ -119,7 +119,7 @@ void Hdr::run()
 	toneSProg->findUniformVariable("fai").set(r->getIs().getFai());
 	r->drawQuad();
 
-#if 1
+#if 0
 	// blurring passes
 	for(U32 i = 0; i < blurringIterationsCount; i++)
 	{

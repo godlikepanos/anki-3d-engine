@@ -52,6 +52,11 @@ public:
 	{
 		return timestamp;
 	}
+
+	const Vec3& getSpatialOrigin() const
+	{
+		return origin;
+	}
 	/// @}
 
 	/// The derived class has to manually set when the collision shape got
@@ -60,6 +65,7 @@ public:
 	{
 		timestamp = Timestamp::getTimestamp();
 		spatialCs->toAabb(aabb);
+		origin = (aabb.getMin() + aabb.getMax()) * 0.5;
 	}
 
 protected:
@@ -70,6 +76,7 @@ private:
 	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
 	Aabb aabb; ///< A faster shape
 	SceneNode* sceneNode; ///< Know your father
+	Vec3 origin;
 };
 /// @}
 
