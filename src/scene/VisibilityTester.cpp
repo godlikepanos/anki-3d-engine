@@ -4,11 +4,15 @@
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Light.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/core/ThreadPool.h"
 
 namespace anki {
 
 //==============================================================================
+// Misc                                                                        =
+//==============================================================================
 
+//==============================================================================
 struct DistanceSortFunctor
 {
 	Vec3 origin;
@@ -23,6 +27,31 @@ struct DistanceSortFunctor
 			b->getSpatial()->getSpatialOrigin());
 
 		return dist0 < dist1;
+	}
+};
+
+//==============================================================================
+struct MaterialSortFunctor
+{
+	// XXX
+};
+
+//==============================================================================
+struct TestJob: ThreadJob
+{
+	U count;
+	Scene::Types<SceneNode>::Container::iterator nodes;
+	VisibilityInfo::Renderables* renderables;
+	VisibilityInfo::Lights* lights;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		U64 start, end;
+		choseStartEnd(threadId, threadsCount, count, start, end);
+
+		for(auto it = nodes + start; it != nodes + end; it++)
+		{
+		}
 	}
 };
 
