@@ -43,14 +43,88 @@ struct TestJob: ThreadJob
 	Scene::Types<SceneNode>::Container::iterator nodes;
 	VisibilityInfo::Renderables* renderables;
 	VisibilityInfo::Lights* lights;
+	std::mutex* renderablesMtx;
+	std::mutex* lightsMtx;
+	Frustumable* frustumable;
 
 	void operator()(U threadId, U threadsCount)
 	{
 		U64 start, end;
 		choseStartEnd(threadId, threadsCount, count, start, end);
+		const U TEMP_STORE_COUNT = 128;
+		Array<SceneNode*, TEMP_STORE_COUNT> tmpRenderables;
+		Array<SceneNode*, TEMP_STORE_COUNT> tmpLights;
+		U renderablesIdx = 0;
+		U lightsIdx = 0;
 
 		for(auto it = nodes + start; it != nodes + end; it++)
 		{
+			SceneNode* node = *it;
+
+			Frustumable* fr = node->getFrustumable();
+			// Skip if it is the same
+			if(frustumable == fr)
+			{
+				continue;
+			}
+
+			Spatial* sp = node->getSpatial();
+			if(!sp)
+			{
+				continue;
+			}
+
+			sp->disableFlag(Spatial::SF_VISIBLE);
+
+			if(!frustumable->insideFrustum(*sp))
+			{
+				continue;
+			}
+
+			/*if(!r.doVisibilityTests(sp->getAabb()))
+			{
+				continue;
+			}*/
+
+			sp->enableFlag(Spatial::SF_VISIBLE);
+
+			Renderable* r = node->getRenderable();
+			if(r)
+			{
+				tmpRenderables[renderablesIdx++] = node;
+			}
+			else
+			{
+				Light* l = node->getLight();
+				if(l)
+				{
+					tmpLights[lightsIdx++] = node;
+
+					/*if(l->getShadowEnabled() && fr)
+					{
+						testLight(*l, scene);
+					}*/
+				}
+			}
+		} // end for
+
+		// Write to containers
+		if(renderablesIdx > 0)
+		{
+			std::lock_guard<std::mutex> lock(*renderablesMtx);
+
+			renderables->insert(renderables->begin(),
+				&tmpRenderables[0],
+				&tmpRenderables[renderablesIdx]);
+		}
+
+		if(lightsIdx > 0)
+		{
+			std::lock_guard<std::mutex> lock(*lightsMtx);
+
+			lights->insert(lights->begin(),
+				&tmpLights[0],
+				&tmpLights[lightsIdx]);
 		}
 	}
 };
