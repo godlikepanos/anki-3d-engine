@@ -269,6 +269,11 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	}
 
 	populateVariables(mspc);
+
+	// Create hash
+	//
+	std::hash<std::string> stringHash;
+	hash = stringHash(mspc.getShaderProgramSource());
 }
 
 //==============================================================================

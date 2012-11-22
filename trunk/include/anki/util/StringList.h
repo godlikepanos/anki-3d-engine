@@ -19,6 +19,12 @@ public:
 	typedef Base::value_type String; ///< Its string
 	typedef String::value_type Char; ///< Char type
 
+	enum StringListSort
+	{
+		SLS_ASCENDING = 0,
+		SLS_DESCENDING
+	};
+
 	/// Join all the elements into a single big string using a the
 	/// seperator @a sep
 	String join(const Char* sep) const;
@@ -27,6 +33,9 @@ public:
 	/// the list
 	/// @return -1 of not found
 	I getIndexOf(const Char* value) const;
+
+	/// Sort the string list
+	void sortAll(const StringListSort method = SLS_ASCENDING);
 
 	/// Split a string using a list of separators (@a sep) and return these
 	/// strings in a string list

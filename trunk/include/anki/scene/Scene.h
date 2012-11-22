@@ -88,6 +88,10 @@ public:
 	{
 		return nodes.end();
 	}
+	U32 getAllNodesCount() const
+	{
+		return nodes.size();
+	}
 	/// @}
 
 	/// Put a node in the appropriate containers
