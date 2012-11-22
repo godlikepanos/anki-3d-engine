@@ -340,7 +340,7 @@ public:
 	/// For sorting
 	Bool operator<(const Material& b) const
 	{
-		return fname < b.fname;
+		return hash < b.hash;
 	}
 
 private:
@@ -364,6 +364,9 @@ private:
 
 	/// For searching
 	PassLevelToShaderProgramHashMap eSProgs;
+
+	/// Used for sorting
+	std::size_t hash;
 
 	/// One uniform block
 	const ShaderProgramUniformBlock* commonUniformBlock;

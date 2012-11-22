@@ -10,6 +10,9 @@ class XmlElement;
 /// Creator of shader programs. This class parses between
 /// <shaderProgam></shaderProgram> located inside a <material></material>
 /// and creates the source of a custom program.
+///
+/// @note Be carefull when you change the methods. Create as less unique 
+///       shaders as possible
 class MaterialShaderProgramCreator
 {
 public:
@@ -46,9 +49,6 @@ private:
 	PtrVector<Input> inputs;
 
 	Bool enableUniformBlocks;
-
-	/// Used for shorting vectors of strings. Used in std::sort
-	static bool compareStrings(const std::string& a, const std::string& b);
 
 	/// Parse what is within the
 	/// @code <shaderProgram></shaderProgram> @endcode

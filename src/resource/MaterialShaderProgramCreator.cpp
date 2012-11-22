@@ -1,6 +1,7 @@
 #include "anki/resource/MaterialShaderProgramCreator.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
+#include "anki/util/StringList.h"
 #include "anki/misc/Xml.h"
 #include "anki/core/Logger.h"
 #include <algorithm>
@@ -34,31 +35,25 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	} while(shaderEl);
 
 	// Create block
-	if(enableUniformBlocks)
+	if(enableUniformBlocks && inputs.size() > 0)
 	{
 		StringList block;
-		block.push_back("layout(shared, row_major, binding = 0) "
-			"uniform commonBlock\n{");
+		
 		for(Input* in : inputs)
 		{
-			if(in->type == "sampler2D"
-				|| in->const_)
+			if(in->type == "sampler2D" || in->const_)
 			{
 				continue;
 			}
 
 			block.push_back("\tuniform " + in->type + " " + in->name + ";");
 		}
-		block.push_back("};\n");
+		block.sortAll();
 
-		if(block.size() > 2)
-		{
-			source = block.join("\n") + srcLines.join("\n");
-		}
-		else
-		{
-			source = srcLines.join("\n");
-		}
+		std::string blockHead = "layout(shared, row_major, binding = 0) "
+			"uniform commonBlock\n{";
+
+		source = blockHead + block.join("\n") + "};\n" + srcLines.join("\n");
 	}
 	else
 	{
@@ -77,7 +72,7 @@ void MaterialShaderProgramCreator::parseShaderTag(
 
 	// <includes></includes>
 	//
-	Vector<std::string> includeLines;
+	StringList includeLines;
 
 	XmlElement includesEl = shaderEl.getChildElement("includes");
 	XmlElement includeEl = includesEl.getChildElement("include");
@@ -91,7 +86,7 @@ void MaterialShaderProgramCreator::parseShaderTag(
 		includeEl = includeEl.getNextSiblingElement("include");
 	} while(includeEl);
 
-	//std::sort(includeLines.begin(), includeLines.end(), compareStrings);
+	//includeLines.sortAll();
 	srcLines.insert(srcLines.end(), includeLines.begin(), includeLines.end());
 
 	// <inputs></inputs>
@@ -100,7 +95,7 @@ void MaterialShaderProgramCreator::parseShaderTag(
 	if(inputsEl)
 	{
 		// Store the source of the uniform vars
-		Vector<std::string> uniformsLines;
+		StringList uniformsLines;
 	
 		XmlElement inputEl = inputsEl.getChildElement("input");
 		do
@@ -113,7 +108,7 @@ void MaterialShaderProgramCreator::parseShaderTag(
 		} while(inputEl);
 
 		srcLines.push_back("");
-		std::sort(uniformsLines.begin(), uniformsLines.end(), compareStrings);
+		uniformsLines.sortAll();
 		srcLines.insert(srcLines.end(), uniformsLines.begin(),
 			uniformsLines.end());
 	}
@@ -247,13 +242,6 @@ void MaterialShaderProgramCreator::parseOperationTag(
 
 	// Done
 	srcLines.push_back(line.str());
-}
-
-//==============================================================================
-bool MaterialShaderProgramCreator::compareStrings(
-	const std::string& a, const std::string& b)
-{
-	return a < b;
 }
 
 } // end namespace anki

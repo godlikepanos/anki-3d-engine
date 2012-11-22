@@ -17,7 +17,7 @@ struct DistanceSortFunctor
 {
 	Vec3 origin;
 
-	bool operator()(SceneNode* a, SceneNode* b)
+	Bool operator()(SceneNode* a, SceneNode* b)
 	{
 		ANKI_ASSERT(a->getSpatial() != nullptr && b->getSpatial() != nullptr);
 
@@ -33,16 +33,21 @@ struct DistanceSortFunctor
 //==============================================================================
 struct MaterialSortFunctor
 {
-	// XXX
+	Bool operator()(SceneNode* a, SceneNode* b)
+	{
+		ANKI_ASSERT(a->getRenderable() != nullptr 
+			&& b->getRenderable() != nullptr);
+
+		return a->getRenderable()->getMaterial() 
+			< b->getRenderable()->getMaterial();
+	}
 };
 
 //==============================================================================
-struct TestJob: ThreadJob
+struct VisibilityTestJob: ThreadJob
 {
-	U count;
+	U nodesCount;
 	Scene::Types<SceneNode>::Container::iterator nodes;
-	VisibilityInfo::Renderables* renderables;
-	VisibilityInfo::Lights* lights;
 	std::mutex* renderablesMtx;
 	std::mutex* lightsMtx;
 	Frustumable* frustumable;
@@ -50,8 +55,8 @@ struct TestJob: ThreadJob
 	void operator()(U threadId, U threadsCount)
 	{
 		U64 start, end;
-		choseStartEnd(threadId, threadsCount, count, start, end);
-		const U TEMP_STORE_COUNT = 128;
+		choseStartEnd(threadId, threadsCount, nodesCount, start, end);
+		const U TEMP_STORE_COUNT = 512;
 		Array<SceneNode*, TEMP_STORE_COUNT> tmpRenderables;
 		Array<SceneNode*, TEMP_STORE_COUNT> tmpLights;
 		U renderablesIdx = 0;
@@ -100,20 +105,22 @@ struct TestJob: ThreadJob
 				{
 					tmpLights[lightsIdx++] = node;
 
-					/*if(l->getShadowEnabled() && fr)
+					if(l->getShadowEnabled() && fr)
 					{
-						testLight(*l, scene);
-					}*/
+						testLight(*l);
+					}
 				}
 			}
 		} // end for
+
+		VisibilityInfo& vinfo = frustumable->getVisibilityInfo();
 
 		// Write to containers
 		if(renderablesIdx > 0)
 		{
 			std::lock_guard<std::mutex> lock(*renderablesMtx);
 
-			renderables->insert(renderables->begin(),
+			vinfo.renderables.insert(vinfo.renderables.begin(),
 				&tmpRenderables[0],
 				&tmpRenderables[renderablesIdx]);
 		}
@@ -122,9 +129,50 @@ struct TestJob: ThreadJob
 		{
 			std::lock_guard<std::mutex> lock(*lightsMtx);
 
-			lights->insert(lights->begin(),
+			vinfo.lights.insert(vinfo.lights.begin(),
 				&tmpLights[0],
 				&tmpLights[lightsIdx]);
+		}
+	}
+
+	void testLight(Light& light)
+	{
+		Frustumable& ref = *light.getFrustumable();
+		ANKI_ASSERT(&ref != nullptr);
+
+		VisibilityInfo& vinfo = ref.getVisibilityInfo();
+		vinfo.renderables.clear();
+		vinfo.lights.clear();
+
+		for(auto it = nodes; it != nodes + nodesCount; it++)
+		{
+			SceneNode* node = *it;
+
+			Frustumable* fr = node->getFrustumable();
+			// Wont check the same
+			if(&ref == fr)
+			{
+				continue;
+			}
+
+			Spatial* sp = node->getSpatial();
+			if(!sp)
+			{
+				continue;
+			}
+
+			if(!ref.insideFrustum(*sp))
+			{
+				continue;
+			}
+
+			sp->enableFlag(Spatial::SF_VISIBLE);
+
+			Renderable* r = node->getRenderable();
+			if(r)
+			{
+				vinfo.renderables.push_back(node);
+			}
 		}
 	}
 };
@@ -140,63 +188,32 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 	vinfo.renderables.clear();
 	vinfo.lights.clear();
 
-	for(auto it = scene.getAllNodesBegin(); it != scene.getAllNodesEnd(); it++)
+	ThreadPool& threadPool = ThreadPoolSingleton::get();
+	VisibilityTestJob jobs[ThreadPool::MAX_THREADS];
+
+	std::mutex renderablesMtx;
+	std::mutex lightsMtx;
+
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		SceneNode* node = *it;
+		jobs[i].nodesCount = scene.getAllNodesCount();
+		jobs[i].nodes = scene.getAllNodesBegin();
+		jobs[i].renderablesMtx = &renderablesMtx;
+		jobs[i].lightsMtx = &lightsMtx;
+		jobs[i].frustumable = &ref;
 
-		Frustumable* fr = node->getFrustumable();
-		// Wont check the same
-		if(&ref == fr)
-		{
-			continue;
-		}
-
-		Spatial* sp = node->getSpatial();
-		if(!sp)
-		{
-			continue;
-		}
-
-		sp->disableFlag(Spatial::SF_VISIBLE);
-
-		if(!ref.insideFrustum(*sp))
-		{
-			continue;
-		}
-
-		/*if(!r.doVisibilityTests(sp->getAabb()))
-		{
-			continue;
-		}*/
-
-		sp->enableFlag(Spatial::SF_VISIBLE);
-
-		Renderable* r = node->getRenderable();
-		if(r)
-		{
-			vinfo.renderables.push_back(node);
-		}
-		else
-		{
-			Light* l = node->getLight();
-			if(l)
-			{
-				vinfo.lights.push_back(node);
-
-				if(l->getShadowEnabled() && fr)
-				{
-					testLight(*l, scene);
-				}
-			}
-		}
+		threadPool.assignNewJob(i, &jobs[i]);
 	}
+
+	threadPool.waitForAllJobsToFinish();
 
 	DistanceSortFunctor comp;
 	comp.origin =
 		ref.getSceneNode().getMovable()->getWorldTransform().getOrigin();
 	std::sort(vinfo.lights.begin(), vinfo.lights.end(), comp);
 
-	std::sort(vinfo.renderables.begin(), vinfo.renderables.end(), comp);
+	std::sort(vinfo.renderables.begin(), vinfo.renderables.end(), 
+		MaterialSortFunctor());
 }
 
 //==============================================================================

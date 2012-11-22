@@ -22,6 +22,7 @@ class VisibilityInfo
 {
 	friend class VisibilityTester;
 	friend class Octree;
+	friend struct VisibilityTestJob;
 
 public:
 	typedef Vector<SceneNode*> Renderables;

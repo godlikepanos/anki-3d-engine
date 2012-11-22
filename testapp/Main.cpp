@@ -403,7 +403,7 @@ void initSubsystems(int argc, char* argv[])
 	StdinListenerSingleton::get().start();
 
 	// Parallel jobs
-	ThreadPoolSingleton::get().init(4);
+	ThreadPoolSingleton::get().init(8);
 }
 
 //==============================================================================

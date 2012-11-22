@@ -1,7 +1,22 @@
 #include "anki/util/StringList.h"
 #include <sstream>
+#include <algorithm>
 
 namespace anki {
+
+//==============================================================================
+
+static bool compareStringsAsc(const StringList::String& a, 
+	const StringList::String& b)
+{
+	return a < b;
+}
+
+static bool compareStringsDesc(const StringList::String& a, 
+	const StringList::String& b)
+{
+	return a > b;
+}
 
 //==============================================================================
 StringList::String StringList::join(const Char* sep) const
@@ -36,6 +51,19 @@ I StringList::getIndexOf(const Char* value) const
 	}
 
 	return (pos == size()) ? -1 : pos;
+}
+
+//==============================================================================
+void StringList::sortAll(const StringListSort method)
+{
+	if(method == SLS_ASCENDING)
+	{
+		std::sort(begin(), end(), compareStringsAsc);
+	}
+	else
+	{
+		std::sort(begin(), end(), compareStringsDesc);
+	}
 }
 
 //==============================================================================
