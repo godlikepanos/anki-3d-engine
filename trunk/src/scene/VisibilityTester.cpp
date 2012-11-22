@@ -178,6 +178,33 @@ struct VisibilityTestJob: ThreadJob
 };
 
 //==============================================================================
+struct DistanceSortJob: ThreadJob
+{
+	U nodesCount;
+	VisibilityInfo::Renderables::iterator nodes;
+	Vec3 origin;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		DistanceSortFunctor comp;
+		comp.origin = origin;
+		std::sort(nodes, nodes + nodesCount, comp);
+	}
+};
+
+//==============================================================================
+struct MaterialSortJob: ThreadJob
+{
+	U nodesCount;
+	VisibilityInfo::Renderables::iterator nodes;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		std::sort(nodes, nodes + nodesCount, MaterialSortFunctor());
+	}
+};
+
+//==============================================================================
 VisibilityTester::~VisibilityTester()
 {}
 
@@ -207,55 +234,31 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 
 	threadPool.waitForAllJobsToFinish();
 
-	DistanceSortFunctor comp;
-	comp.origin =
+	// Sort
+	//
+
+	// First renderables
+	MaterialSortJob msjob;
+	msjob.nodes = vinfo.renderables.begin();
+	msjob.nodesCount = vinfo.renderables.size();
+	threadPool.assignNewJob(1, &msjob);
+
+	// Then lights
+	DistanceSortJob dsjob;
+	dsjob.nodes = vinfo.lights.begin();
+	dsjob.nodesCount = vinfo.lights.size();
+	dsjob.origin =
 		ref.getSceneNode().getMovable()->getWorldTransform().getOrigin();
-	std::sort(vinfo.lights.begin(), vinfo.lights.end(), comp);
+	threadPool.assignNewJob(0, &dsjob);
 
-	std::sort(vinfo.renderables.begin(), vinfo.renderables.end(), 
-		MaterialSortFunctor());
-}
-
-//==============================================================================
-void VisibilityTester::testLight(Light& light, Scene& scene)
-{
-	Frustumable& ref = *light.getFrustumable();
-	ANKI_ASSERT(&ref != nullptr);
-
-	VisibilityInfo& vinfo = ref.getVisibilityInfo();
-	vinfo.renderables.clear();
-	vinfo.lights.clear();
-
-	for(auto it = scene.getAllNodesBegin(); it != scene.getAllNodesEnd(); it++)
+	// The rest of the jobs are dummy
+	ThreadJobDummy dummyjobs[ThreadPool::MAX_THREADS];
+	for(U i = 2; i < threadPool.getThreadsCount(); i++)
 	{
-		SceneNode* node = *it;
-
-		Frustumable* fr = node->getFrustumable();
-		// Wont check the same
-		if(&ref == fr)
-		{
-			continue;
-		}
-
-		Spatial* sp = node->getSpatial();
-		if(!sp)
-		{
-			continue;
-		}
-
-		if(!ref.insideFrustum(*sp))
-		{
-			continue;
-		}
-
-		sp->enableFlag(Spatial::SF_VISIBLE);
-
-		Renderable* r = node->getRenderable();
-		if(r)
-		{
-			vinfo.renderables.push_back(node);
-		}
+		threadPool.assignNewJob(i, &dummyjobs[i - 2]);
 	}
+
+	threadPool.waitForAllJobsToFinish();
 }
 
 } // end namespace anki
