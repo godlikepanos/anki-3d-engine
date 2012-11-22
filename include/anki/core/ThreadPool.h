@@ -32,10 +32,13 @@ struct ThreadJob
 };
 
 /// A dummy job
-struct ThreadJobDummy
+struct ThreadJobDummy: ThreadJob
 {
-	void operator()()
-	{}
+	void operator()(U threadId, U threadsCount)
+	{
+		(void)threadId;
+		(void)threadsCount;
+	}
 };
 
 /// The thread that executes a ThreadJobCallback

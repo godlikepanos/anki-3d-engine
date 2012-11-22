@@ -23,6 +23,7 @@ class VisibilityInfo
 	friend class VisibilityTester;
 	friend class Octree;
 	friend struct VisibilityTestJob;
+	friend struct DistanceSortJob;
 
 public:
 	typedef Vector<SceneNode*> Renderables;
@@ -70,9 +71,6 @@ public:
 	/// - Gets the visible renderables and frustumables
 	/// - For every frustumable perform tests
 	static void test(Frustumable& ref, Scene& scene, Renderer& r);
-
-private:
-	static void testLight(Light& light, Scene& scene);
 };
 /// @}
 
