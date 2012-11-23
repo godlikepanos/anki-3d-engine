@@ -14,26 +14,11 @@
 #	error "See file"
 #endif
 
-// The following macros are used for sanity checks in non sharable GL objects.
-// They help us avoid binding those objects from other than the creation 
-// threads. They are enabled only on debug
-#if !ANKI_DEBUG
-#	include <thread>
+#include "anki/gl/ContextNonSharable.h"
 
-#	define ANKI_GL_NON_SHARABLE std::thread::id creationThreadId;
-
-#	define ANKI_GL_NON_SHARABLE_INIT() \
-		creationThreadId = std::this_thread::get_id()
-
-#	define ANKI_GL_NON_SHARABLE_CHECK() \
-		ANKI_ASSERT(creationThreadId == std::this_thread::get_id() \
-			&& "Object can be used only from the creation thread")
-#else
-#	define ANKI_GL_NON_SHARABLE
-
-#	define ANKI_GL_NON_SHARABLE_INIT() ((void)0)
-
-#	define ANKI_GL_NON_SHARABLE_CHECK() ((void)0)
-#endif
+#define ANKI_GL_CALL(func__) \
+	do { \
+		func__; \
+	} while(0)
 
 #endif

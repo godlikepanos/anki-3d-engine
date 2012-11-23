@@ -147,7 +147,7 @@ public:
 		ANKI_ASSERT(target == GL_TRANSFORM_FEEDBACK_BUFFER 
 			|| target == GL_UNIFORM_BUFFER);
 		bind();
-		glBindBufferBase(target, binding, glId);
+		ANKI_GL_CALL(glBindBufferBase(target, binding, glId));
 	}
 
 private:
