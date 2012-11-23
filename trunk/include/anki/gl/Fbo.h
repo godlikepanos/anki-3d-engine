@@ -16,10 +16,8 @@ class Texture;
 
 /// Frame buffer object. The class is actually a wrapper to avoid common 
 /// mistakes. It only supports binding at both draw and read targets
-class Fbo
+class Fbo: public ContextNonSharable
 {
-	ANKI_GL_NON_SHARABLE
-
 public:
 	/// @name Constructors/Destructor
 	/// @{
@@ -53,8 +51,8 @@ public:
 	bool isComplete() const;
 
 	/// Set the color attachments of this FBO
-	void setColorAttachments(const std::initializer_list<const Texture*>& 
-		textures);
+	void setColorAttachments(
+		const std::initializer_list<const Texture*>& textures);
 
 	/// Set other attachment
 	void setOtherAttachment(GLenum attachment, const Texture& tex, 

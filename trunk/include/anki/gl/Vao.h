@@ -3,7 +3,6 @@
 
 #include "anki/gl/GlException.h"
 #include "anki/gl/Ogl.h"
-#include "anki/gl/ContextNonSharable.h"
 #include "anki/util/Assert.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/util/StdTypes.h"

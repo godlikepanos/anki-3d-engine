@@ -26,7 +26,7 @@ Fbo::~Fbo()
 void Fbo::create()
 {
 	ANKI_ASSERT(!isCreated());
-	ANKI_GL_NON_SHARABLE_INIT();
+	crateNonSharable();
 	glGenFramebuffers(1, &glId);
 	ANKI_ASSERT(glId != 0);
 }
@@ -35,6 +35,7 @@ void Fbo::create()
 void Fbo::destroy()
 {
 	ANKI_ASSERT(isCreated());
+	checkNonSharable();
 	unbind();
 	glDeleteFramebuffers(1, &glId);
 	glId = 0;
@@ -44,7 +45,7 @@ void Fbo::destroy()
 void Fbo::bind() const
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_GL_NON_SHARABLE_CHECK();
+	checkNonSharable();
 
 	if(current != this)
 	{
@@ -57,7 +58,7 @@ void Fbo::bind() const
 void Fbo::unbind() const
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_GL_NON_SHARABLE_CHECK();
+	checkNonSharable();
 
 	if(current == this)
 	{

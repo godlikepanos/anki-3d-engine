@@ -237,13 +237,7 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 	// Sort
 	//
 
-	// First renderables
-	MaterialSortJob msjob;
-	msjob.nodes = vinfo.renderables.begin();
-	msjob.nodesCount = vinfo.renderables.size();
-	threadPool.assignNewJob(1, &msjob);
-
-	// Then lights
+	// The lights
 	DistanceSortJob dsjob;
 	dsjob.nodes = vinfo.lights.begin();
 	dsjob.nodesCount = vinfo.lights.size();
@@ -253,10 +247,14 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 
 	// The rest of the jobs are dummy
 	ThreadJobDummy dummyjobs[ThreadPool::MAX_THREADS];
-	for(U i = 2; i < threadPool.getThreadsCount(); i++)
+	for(U i = 1; i < threadPool.getThreadsCount(); i++)
 	{
-		threadPool.assignNewJob(i, &dummyjobs[i - 2]);
+		threadPool.assignNewJob(i, &dummyjobs[i]);
 	}
+
+	// Sort the renderables in the main thread
+	std::sort(vinfo.renderables.begin(), 
+		vinfo.renderables.end(), MaterialSortFunctor());
 
 	threadPool.waitForAllJobsToFinish();
 }
