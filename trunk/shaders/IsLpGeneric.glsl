@@ -33,6 +33,8 @@ layout(std140, row_major, binding = 0) uniform commonBlock
 	uniform vec4 limitsOfNearPlane_;
 
 	uniform vec4 sceneAmbientColor;
+
+	uniform vec4 groundLightDir;
 };
 
 #define planes nearPlanes.zw
@@ -295,6 +297,11 @@ void main()
 		}
 	}
 
+
+#if GROUND_LIGHT
+	fColor *= dot(normal, groundLightDir.xyz) + 1.0;
+#endif
+
 #if 0
 	if(tiles[vInstanceId].lightsCount[2] > 0)
 	{
@@ -324,6 +331,6 @@ void main()
 #if 0
 	vec3 tmpc = vec3((vInstanceId % 4) / 3.0, (vInstanceId % 3) / 2.0, 
 		(vInstanceId % 2));
-	fColor += tmpc / 50.0;
+	fColor += tmpc / 40.0;
 #endif
 }

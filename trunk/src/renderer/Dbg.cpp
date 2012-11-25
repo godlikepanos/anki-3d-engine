@@ -60,12 +60,11 @@ void Dbg::run()
 	for(auto it = scene.getAllNodesBegin(); it != scene.getAllNodesEnd(); it++)
 	{
 		SceneNode* node = *it;
-		if(!node->getSpatial())
+		Spatial* sp = node->getSpatial();
+		if(sp)
 		{
-			continue;
+			sceneDrawer->draw(*node);
 		}
-
-		sceneDrawer->draw(*node);
 	}
 
 	for(const Sector* sector : scene.sectors)

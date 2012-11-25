@@ -43,7 +43,7 @@ struct UpdateTiles4PlanesPerspectiveCameraJob: ThreadJob
 
 			Tiler::Tile& tile = tiler->tiles1d[k];
 
-			tile.planesWSpace[Frustum::FP_LEFT] = 
+			tile.planesWSpace[Frustum::FP_LEFT] =
 				tile.planes[Frustum::FP_LEFT].getTransformed(trf);
 			tile.planesWSpace[Frustum::FP_RIGHT] = 
 				tile.planes[Frustum::FP_RIGHT].getTransformed(trf);
@@ -217,7 +217,7 @@ void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 	fai.readPixels(pixels);
 #else
 	glReadPixels(0, 0, TILES_X_COUNT, TILES_Y_COUNT, GL_RG_INTEGER,
-		GL_UNSIGNED_INT, pixels);
+		GL_UNSIGNED_INT, &pixels[0][0][0]);
 #endif
 
 	waitUpdate4Planes();
@@ -228,6 +228,15 @@ void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 	update2Planes(cam, pixels);
 
 	prevCam = &cam;
+
+	/*for(U i = 0; i < TILES_Y_COUNT; i++)
+		for(U j = 0; j < TILES_X_COUNT; j++)
+		{
+			std::cout << tiles[j][i].planesWSpace[0].getNormal() << " "
+				<< tiles[j][i].planesWSpace[0].getOffset() << std::endl;
+		}
+
+	std::cout << std::endl;*/
 #else
 	Vector<F32> allpixels;
 

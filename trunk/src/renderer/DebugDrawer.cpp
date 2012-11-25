@@ -486,7 +486,7 @@ void SceneDebugDrawer::draw(SceneNode& node)
 
 	Spatial* sp;
 	if(isFlagEnabled(DF_SPATIAL) && (sp = node.getSpatial())
-		&& sp->isFlagEnabled(Spatial::SF_VISIBLE))
+		&& sp->isFlagEnabled(Spatial::SF_VISIBLE_CAMERA))
 	{
 		draw(*sp);
 	}
