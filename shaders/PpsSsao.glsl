@@ -45,7 +45,7 @@ uniform sampler2D noiseMap;
 #define SAMPLE_RAD 0.08
 #define SCALE 1.0
 #define INTENSITY 3.0
-#define BIAS 0.00
+#define BIAS 0.0
 
 vec3 getNormal(in vec2 uv)
 {
@@ -56,8 +56,8 @@ vec3 getNormal(in vec2 uv)
 
 vec2 getRandom(in vec2 uv)
 {
-	vec2 noise = texture2D(noiseMap, 
-		vec2(WIDTH, HEIGHT) * uv / NOISE_MAP_SIZE / 2.0).xy;
+	vec2 noise = texture2D(
+		noiseMap, vec2(WIDTH, HEIGHT) * uv / NOISE_MAP_SIZE / 2.0).xy;
 	return normalize(noise * 2.0 - 1.0);
 }
 
@@ -83,7 +83,7 @@ float calcAmbientOcclusionFactor(in vec2 uv, in vec3 original, in vec3 cnorm)
 	vec3 v = normalize(diff);
 	float d = length(diff) /* * SCALE*/;
 
-	float ret = max(0.0, dot(cnorm, v) /* - BIAS*/) * (INTENSITY / (1.0 + d));
+	float ret = max(0.0, dot(cnorm, v)  - BIAS) * (INTENSITY / (1.0 + d));
 	return ret;
 }
 

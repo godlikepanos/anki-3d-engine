@@ -88,6 +88,11 @@ private:
 	Bool drawToDefaultFbo;
 	U32 width, height;
 
+	/// If enabled the ground emmits a light
+	Bool groundLightEnabled;
+	/// Keep the prev light dir to avoid uniform block updates
+	Vec3 prevGroundLightDir = Vec3(0.0);
+
 	/// Called by init
 	void initInternal(const RendererInitializer& initializer);
 

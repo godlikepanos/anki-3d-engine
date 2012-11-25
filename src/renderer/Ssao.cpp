@@ -18,6 +18,7 @@ void Ssao::createFbo(Fbo& fbo, Texture& fai)
 {
 
 	Renderer::createFai(width, height, GL_RED, GL_RED, GL_FLOAT, fai);
+	fai.setFiltering(Texture::TFT_LINEAR);
 
 	fbo.create();
 	fbo.setColorAttachments({&fai});
@@ -107,6 +108,10 @@ void Ssao::init(const RendererInitializer& initializer)
 void Ssao::run()
 {
 	ANKI_ASSERT(enabled);
+	if(r->getFramesCount() % 2 == 1)
+	{
+		return;
+	}
 
 	const Camera& cam = r->getScene().getActiveCamera();
 

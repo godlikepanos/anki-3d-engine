@@ -25,7 +25,10 @@ public:
 	enum SpatialFlag
 	{
 		SF_NONE = 0,
-		SF_VISIBLE = 1 ///< Visible or not. The visibility tester sets it
+		SF_VISIBLE_CAMERA = 1 << 1,
+		SF_VISIBLE_LIGHT = 1 << 2,
+		/// Visible or not. The visibility tester sets it
+		SF_VISIBLE_ANY = SF_VISIBLE_CAMERA | SF_VISIBLE_LIGHT
 	};
 
 	/// Pass the collision shape here so we can avoid the virtuals

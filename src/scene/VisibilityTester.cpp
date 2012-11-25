@@ -51,6 +51,7 @@ struct VisibilityTestJob: ThreadJob
 	std::mutex* renderablesMtx;
 	std::mutex* lightsMtx;
 	Frustumable* frustumable;
+	Renderer* renderer;
 
 	void operator()(U threadId, U threadsCount)
 	{
@@ -79,23 +80,18 @@ struct VisibilityTestJob: ThreadJob
 				continue;
 			}
 
-			sp->disableFlag(Spatial::SF_VISIBLE);
-
 			if(!frustumable->insideFrustum(*sp))
 			{
 				continue;
 			}
 
-			/*if(!r.doVisibilityTests(sp->getAabb()))
-			{
-				continue;
-			}*/
-
-			sp->enableFlag(Spatial::SF_VISIBLE);
-
 			Renderable* r = node->getRenderable();
 			if(r)
 			{
+				if(!renderer->doVisibilityTests(sp->getAabb()))
+				{
+					continue;
+				}
 				tmpRenderables[renderablesIdx++] = node;
 			}
 			else
@@ -111,6 +107,8 @@ struct VisibilityTestJob: ThreadJob
 					}
 				}
 			}
+
+			sp->enableFlag(Spatial::SF_VISIBLE_CAMERA);
 		} // end for
 
 		VisibilityInfo& vinfo = frustumable->getVisibilityInfo();
@@ -166,7 +164,7 @@ struct VisibilityTestJob: ThreadJob
 				continue;
 			}
 
-			sp->enableFlag(Spatial::SF_VISIBLE);
+			sp->enableFlag(Spatial::SF_VISIBLE_LIGHT);
 
 			Renderable* r = node->getRenderable();
 			if(r)
@@ -211,6 +209,17 @@ VisibilityTester::~VisibilityTester()
 //==============================================================================
 void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 {
+	// Set all spatials to not visible
+	for(auto it = scene.getAllNodesBegin(); it != scene.getAllNodesEnd(); ++it)
+	{
+		Spatial* sp = (*it)->getSpatial();
+
+		if(sp)
+		{
+			sp->disableFlag(Spatial::SF_VISIBLE_ANY);
+		}
+	}
+
 	VisibilityInfo& vinfo = ref.getVisibilityInfo();
 	vinfo.renderables.clear();
 	vinfo.lights.clear();
@@ -228,6 +237,7 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 		jobs[i].renderablesMtx = &renderablesMtx;
 		jobs[i].lightsMtx = &lightsMtx;
 		jobs[i].frustumable = &ref;
+		jobs[i].renderer = &r;
 
 		threadPool.assignNewJob(i, &jobs[i]);
 	}

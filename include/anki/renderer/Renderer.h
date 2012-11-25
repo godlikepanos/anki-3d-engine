@@ -44,6 +44,7 @@ struct RendererInitializer
 			U32 maxLights = 4;
 		} sm;
 		Bool drawToDefaultFbo = false;
+		Bool groundLightEnabled = true;
 	} is;
 
 	// Pps

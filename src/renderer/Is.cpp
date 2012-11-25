@@ -8,6 +8,19 @@
 namespace anki {
 
 //==============================================================================
+static Bool groundVectorsEqual(const Vec3& prev, const Vec3& crnt)
+{
+	Bool out = true;
+	for(U i = 0; i < 3; i++)
+	{
+		Bool subout = fabs(prev[i] - crnt[i]) < (getEpsilon<F32>() * 10.0);
+		out = out && subout;
+	}
+
+	return out;
+}
+
+//==============================================================================
 
 // Shader structs and block representations
 
@@ -56,6 +69,7 @@ struct ShaderCommonUniforms
 	Vec4 nearPlanes;
 	Vec4 limitsOfNearPlane;
 	Vec4 sceneAmbientColor;
+	Vec4 groundLightDir;
 };
 
 //==============================================================================
@@ -276,6 +290,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	drawToDefaultFbo = initializer.is.drawToDefaultFbo;
 	width = initializer.width / initializer.renderingQuality;
 	height = initializer.height / initializer.renderingQuality;
+	groundLightEnabled = initializer.is.groundLightEnabled;
 
 	//
 	// Init the passes
@@ -293,7 +308,8 @@ void Is::initInternal(const RendererInitializer& initializer)
 		"#define MAX_LIGHTS_PER_TILE " + std::to_string(MAX_LIGHTS_PER_TILE)
 		+ "\n"
 		"#define MAX_POINT_LIGHTS " + std::to_string(MAX_POINT_LIGHTS) + "\n"
-		"#define MAX_SPOT_LIGHTS " + std::to_string(MAX_SPOT_LIGHTS) + "\n";
+		"#define MAX_SPOT_LIGHTS " + std::to_string(MAX_SPOT_LIGHTS) + "\n"
+		"#define GROUND_LIGHT " + std::to_string(groundLightEnabled) + "\n";
 
 	if(sm.getPcfEnabled())
 	{
@@ -582,10 +598,19 @@ void Is::run()
 	Scene& scene = r->getScene();
 	cam = &scene.getActiveCamera();
 
+	// Ground light direction
+	Vec3 groundLightDir;
+	if(groundLightEnabled)
+	{
+		groundLightDir = cam->getViewMatrix().getColumn(1).xyz();
+	}
+
 	// Write common block
 	if(commonUboUpdateTimestamp < r->getPlanesUpdateTimestamp()
 		|| commonUboUpdateTimestamp < scene.getAmbientColorUpdateTimestamp()
-		|| commonUboUpdateTimestamp == 1)
+		|| commonUboUpdateTimestamp == 1
+		|| (groundLightEnabled
+			&& !groundVectorsEqual(groundLightDir, prevGroundLightDir)))
 	{
 		const Camera& cam = scene.getActiveCamera();
 		ShaderCommonUniforms blk;
@@ -594,6 +619,12 @@ void Is::run()
 		blk.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
 			r->getLimitsOfNearPlane2());
 		blk.sceneAmbientColor = Vec4(scene.getAmbientColor(), 0.0);
+
+		if(groundLightEnabled)
+		{
+			blk.groundLightDir = Vec4(groundLightDir, 1.0);
+			prevGroundLightDir = groundLightDir;
+		}
 
 		commonUbo.write(&blk);
 

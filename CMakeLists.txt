@@ -85,11 +85,24 @@ ENDIF()
 OPTION(ANKI_STRIP "Srip the symbols from the executables" OFF)
 IF(ANKI_STRIP)
 	MESSAGE("++ Stipping: true")
-	SET(CMAKE_CXX_FLAGS " -s ")
-	SET(CMAKE_C_FLAGS " -s ")
-	SET(CMAKE_EXE_LINKER_FLAGS " -s ")
+	SET(FLAGS " -s ")
+
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS}")
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS}")
+	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FLAGS}")
 ELSE()
 	MESSAGE("++ Stipping: false")
+ENDIF()
+
+# gperftools
+OPTION(ANKI_WITH_GPERFTOOLS_PROF "Link with gperftools profiler" OFF)
+IF(ANKI_WITH_GPERFTOOLS_PROF)
+	LINK_DIRECTORIES("/home/godlike/src/more/gperftools/install/lib")
+	SET(ANKI_GPERFTOOLS_LIBS "profiler")
+	MESSAGE("++ gperftools profiler: true")
+ELSE()
+	SET(ANKI_GPERFTOOLS_LIBS "")
+	MESSAGE("++ gperftools profiler: false")
 ENDIF()
 
 #
@@ -151,17 +164,9 @@ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE
 ADD_DEFINITIONS("-Dthread_local=__thread")
 
 #
-# Compiler flags
+# AnKi compiler flags
 #
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic-errors -pedantic -ansi -Wall -W -Wextra -Wwrite-strings -Wno-unused -Wundef -Wunused-variable -Werror -msse4 -std=c++11")
-
-IF(CMAKE_BUILD_TYPE STREQUAL Debug)
-	# Removed because they do not work with boost::regexpr and who knows what
-	# else
-	#ADD_DEFINITIONS("-D_GLIBCXX_DEBUG -D_GLIBXX_DEBUG_PEDANTIC")
-ELSE()
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=core2 -ffast-math ")
-ENDIF()
 
 #
 # Include & lib directories

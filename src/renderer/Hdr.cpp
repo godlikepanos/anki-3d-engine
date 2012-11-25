@@ -119,7 +119,6 @@ void Hdr::run()
 	toneSProg->findUniformVariable("fai").set(r->getIs().getFai());
 	r->drawQuad();
 
-#if 0
 	// blurring passes
 	for(U32 i = 0; i < blurringIterationsCount; i++)
 	{
@@ -141,19 +140,6 @@ void Hdr::run()
 		}
 		r->drawQuad();
 	}
-#else
-	hblurFbo.bind();
-	hblurSProg->bind();
-	hblurSProg->findUniformVariable("img").set(vblurFai);
-
-	r->drawQuadMultiple(blurringIterationsCount);
-
-	vblurFbo.bind();
-	vblurSProg->bind();
-	vblurSProg->findUniformVariable("img").set(hblurFai);
-
-	r->drawQuadMultiple(blurringIterationsCount);
-#endif
 
 	// For the next stage it should be LINEAR though
 	//vblurFai.setFiltering(Texture::TFT_LINEAR);

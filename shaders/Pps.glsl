@@ -69,7 +69,7 @@ void main(void)
 #if 0
 	if(fColor.r != 0.00000001)
 	{
-		fColor = hdr;
+		fColor = vec3(ssao);
 	}
 #endif
 }
