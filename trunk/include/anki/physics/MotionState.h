@@ -10,11 +10,13 @@ namespace anki {
 class MotionState: public btMotionState
 {
 public:
-	MotionState(const Transform& initialTransform, Movable* node_)
-		: worldTransform(toBt(initialTransform)), node(node_)
+	MotionState();
+	MotionState(const Transform& initialTransform, Movable* node);
+
+	~MotionState()
 	{}
 
-	~MotionState() {}
+	MotionState& operator=(const MotionState& b);
 
 	/// @name Bullet implementation of virtuals
 	/// @{
@@ -23,24 +25,7 @@ public:
 		worldTrans = worldTransform;
 	}
 
-	const btTransform& getWorldTransform() const
-	{
-		return worldTransform;;
-	}
-
-	void setWorldTransform(const btTransform& worldTrans)
-	{
-		worldTransform = worldTrans;
-
-		if(node)
-		{
-			Transform newTrf;
-			float originalScale = node->getLocalTransform().getScale();
-			newTrf = toAnki(worldTrans);
-			newTrf.setScale(originalScale);
-			node->setLocalTransform(newTrf);
-		}
-	}
+	void setWorldTransform(const btTransform& worldTrans);
 	/// @}
 
 private:
@@ -48,6 +33,6 @@ private:
 	Movable* node; ///< Pointer cause it may be NULL
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

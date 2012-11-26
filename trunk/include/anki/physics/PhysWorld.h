@@ -1,7 +1,7 @@
 #ifndef ANKI_PHYSICS_PHYS_WORLD_H
 #define ANKI_PHYSICS_PHYS_WORLD_H
 
-#include "anki/physics/Convertors.h"
+#include "anki/physics/Converters.h"
 #include "anki/util/Vector.h"
 #include <memory>
 #include <btBulletCollisionCommon.h>

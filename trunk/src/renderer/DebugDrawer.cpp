@@ -1,6 +1,6 @@
 #include "anki/renderer/DebugDrawer.h"
 #include "anki/resource/ShaderProgramResource.h"
-#include "anki/physics/Convertors.h"
+#include "anki/physics/Converters.h"
 #include "anki/collision/Collision.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Octree.h"

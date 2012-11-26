@@ -6,8 +6,7 @@
 namespace anki {
 
 //==============================================================================
-RigidBody::RigidBody(PhysWorld* masterContainer_,
-	const Initializer& init)
+RigidBody::RigidBody(PhysWorld* masterContainer_, const Initializer& init)
 	: btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, nullptr, 
 		nullptr, btVector3(0.0, 0.0, 0.0))), // dummy init
 		masterContainer(masterContainer_)
@@ -15,7 +14,7 @@ RigidBody::RigidBody(PhysWorld* masterContainer_,
 	ANKI_ASSERT(init.shape != nullptr 
 		&& init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
 
-	bool isDynamic = (init.mass != 0.0);
+	Bool isDynamic = (init.mass != 0.0);
 
 	btVector3 localInertia;
 	if(isDynamic)
@@ -27,10 +26,10 @@ RigidBody::RigidBody(PhysWorld* masterContainer_,
 		localInertia = btVector3(0.0, 0.0, 0.0);
 	}
 
-	motionState.reset(new MotionState(init.startTrf, init.movable));
+	motionState = MotionState(init.startTrf, init.movable);
 
 	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass,
-		motionState.get(), init.shape, localInertia);
+		&motionState, init.shape, localInertia);
 
 	setupRigidBody(cInfo);
 
@@ -46,8 +45,8 @@ RigidBody::RigidBody(PhysWorld* masterContainer_,
 	}
 	else
 	{
-		masterContainer->dynamicsWorld->addRigidBody(this, init.group,
-			init.mask);
+		masterContainer->dynamicsWorld->addRigidBody(
+			this, init.group, init.mask);
 	}
 }
 
@@ -57,4 +56,4 @@ RigidBody::~RigidBody()
 	masterContainer->dynamicsWorld->removeRigidBody(this);
 }
 
-} // end namespace
+} // end namespace anki
