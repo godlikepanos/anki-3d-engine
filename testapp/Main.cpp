@@ -308,9 +308,6 @@ void mainLoop()
 			break;
 		}
 
-		//ANKI_LOGI(InputSingleton::get().getMousePosition());
-
-		//AppSingleton::get().swapBuffers();
 		win->swapBuffers();
 
 		// Sleep

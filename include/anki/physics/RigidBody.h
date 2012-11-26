@@ -2,14 +2,13 @@
 #define ANKI_PHYSICS_RIGID_BODY_H
 
 #include "anki/math/Math.h"
-#include <memory>
+#include "anki/physics/MotionState.h"
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
 
 namespace anki {
 
 class Movable;
-class MotionState;
 class PhysWorld;
 
 /// Wrapper for rigid body
@@ -19,17 +18,12 @@ public:
 	/// Initializer class
 	struct Initializer
 	{
-		float mass;
-		Transform startTrf;
-		btCollisionShape* shape;
-		Movable* movable;
-		int group;
-		int mask;
-
-		Initializer()
-			: mass(0.0), startTrf(Transform::getIdentity()),
-				shape(nullptr), movable(nullptr), group(-1), mask(-1)
-		{}
+		F32 mass = 0.0;
+		Transform startTrf = Transform::getIdentity();
+		btCollisionShape* shape = nullptr;
+		Movable* movable = nullptr;
+		I32 group = -1;
+		I32 mask = -1;
 	};
 
 	/// Init and register
@@ -40,10 +34,9 @@ public:
 
 private:
 	PhysWorld* masterContainer; ///< Know your father
-	/// Keep it here for garbage collection
-	std::unique_ptr<MotionState> motionState;
+	MotionState motionState;
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

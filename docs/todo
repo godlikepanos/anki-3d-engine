@@ -3,9 +3,6 @@
 Pending
 =======
 
-- Interleaved geometry
-- See if you can have 2 FAIs instead of 3 on SSAO and HDR
-
 ====
 Done
 ====
@@ -19,4 +16,6 @@ Done
 	- Remove the readPixels from the Texture
 	- Do something about bullet
 	- Create FBDEV backend
+- Interleaved geometry
+- See if you can have 2 FAIs instead of 3 on SSAO and HDR
 
