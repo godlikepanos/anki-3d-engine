@@ -21,6 +21,8 @@ class Renderer;
 /// XXX Add physics
 class Scene
 {
+	friend class SceneNode;
+
 public:
 	template<typename T>
 	struct Types
@@ -94,10 +96,6 @@ public:
 	}
 	/// @}
 
-	/// Put a node in the appropriate containers
-	void registerNode(SceneNode* node);
-	void unregisterNode(SceneNode* node);
-
 	void update(float prevUpdateTime, float crntTime, Renderer& renderer);
 
 	SceneNode* findSceneNode(const char* name)
@@ -109,15 +107,21 @@ public:
 	PtrVector<Sector> sectors;
 
 private:
-	Types<SceneNode>::Container nodes;
-	Types<SceneNode>::NameToItemMap nameToNode;
 	Vec3 ambientCol = Vec3(1.0); ///< The global ambient color
 	U32 ambiendColorUpdateTimestamp = Timestamp::getTimestamp();
 	Camera* mainCam = nullptr;
 	U32 activeCameraChangeTimestamp = Timestamp::getTimestamp();
+
+	Types<SceneNode>::Container nodes;
+	Types<SceneNode>::NameToItemMap nameToNode;
+
 	VisibilityTester vtester;
 
 	void doVisibilityTests(Camera& cam, Renderer& r);
+
+	/// Put a node in the appropriate containers
+	void registerNode(SceneNode* node);
+	void unregisterNode(SceneNode* node);
 
 	/// Add to a container
 	template<typename T>
@@ -131,11 +135,8 @@ private:
 	template<typename T>
 	void addDict(typename Types<T>::NameToItemMap& d, T* ptr)
 	{
-		if(d.find(ptr->getName().c_str()) != d.end())
-		{
-			throw ANKI_EXCEPTION("Item with same name already exists: "
-				+ ptr->getName());
-		}
+		ANKI_ASSERT(d.find(ptr->getName().c_str()) == d.end()
+			&& "Item with same name already exists");
 
 		d[ptr->getName().c_str()] = ptr;
 	}
