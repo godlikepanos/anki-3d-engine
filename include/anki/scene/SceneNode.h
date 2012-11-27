@@ -4,9 +4,7 @@
 #include "anki/scene/Property.h"
 #include <string>
 
-
 namespace anki {
-
 
 class Scene; // Don't include
 
@@ -15,7 +13,7 @@ class Renderable;
 class Frustumable;
 class Spatial;
 class Light;
-
+class RigidBody;
 
 /// @addtogroup Scene
 /// @{
@@ -69,6 +67,11 @@ public:
 	}
 
 	virtual Light* getLight()
+	{
+		return nullptr;
+	}
+
+	virtual RigidBody* getRigidBody()
 	{
 		return nullptr;
 	}
