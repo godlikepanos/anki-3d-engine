@@ -28,8 +28,8 @@ RigidBody::RigidBody(PhysWorld* masterContainer_, const Initializer& init)
 
 	motionState = MotionState(init.startTrf, init.movable);
 
-	btRigidBody::btRigidBodyConstructionInfo cInfo(init.mass,
-		&motionState, init.shape, localInertia);
+	btRigidBody::btRigidBodyConstructionInfo cInfo(
+		init.mass, &motionState, init.shape, localInertia);
 
 	setupRigidBody(cInfo);
 
