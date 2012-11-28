@@ -32,6 +32,8 @@ void Scene::unregisterNode(SceneNode* node)
 //==============================================================================
 void Scene::update(float prevUpdateTime, float crntTime, Renderer& r)
 {
+	physics.update(prevUpdateTime, crntTime);
+
 	// First do the movable updates
 	for(SceneNode* n : nodes)
 	{
@@ -96,6 +98,20 @@ void Scene::doVisibilityTests(Camera& cam, Renderer& r)
 	Frustumable* f = cam.getFrustumable();
 	ANKI_ASSERT(f != nullptr);
 	vtester.test(*f, *this, r);
+}
+
+//==============================================================================
+SceneNode& Scene::findSceneNode(const char* name)
+{
+	ANKI_ASSERT(nameToNode.find(name) != nameToNode.end());
+	return *(nameToNode.find(name)->second);
+}
+
+//==============================================================================
+SceneNode* Scene::tryFindSceneNode(const char* name)
+{
+	Types<SceneNode>::NameToItemMap::iterator it = nameToNode.find(name);
+	return (it == nameToNode.end()) ? nullptr : it->second;
 }
 
 } // end namespace anki

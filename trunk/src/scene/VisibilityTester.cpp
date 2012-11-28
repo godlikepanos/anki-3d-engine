@@ -210,7 +210,7 @@ VisibilityTester::~VisibilityTester()
 void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 {
 	// Set all spatials to not visible
-	for(auto it = scene.getAllNodesBegin(); it != scene.getAllNodesEnd(); ++it)
+	for(auto it = scene.getSceneNodesBegin(); it != scene.getSceneNodesEnd(); ++it)
 	{
 		Spatial* sp = (*it)->getSpatial();
 
@@ -232,8 +232,8 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		jobs[i].nodesCount = scene.getAllNodesCount();
-		jobs[i].nodes = scene.getAllNodesBegin();
+		jobs[i].nodesCount = scene.getSceneNodesCount();
+		jobs[i].nodes = scene.getSceneNodesBegin();
 		jobs[i].renderablesMtx = &renderablesMtx;
 		jobs[i].lightsMtx = &lightsMtx;
 		jobs[i].frustumable = &ref;

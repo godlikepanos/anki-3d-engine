@@ -171,12 +171,12 @@ void RenderableDrawer::render(const Frustumable& fr, uint pass,
 	setupShaderProg(key, fr, renderable);
 
 	// Render
-	U32 indecesNum = renderable.getModelPatchBase().getIndecesCount(0);
+	U32 indecesCount = renderable.getModelPatchBase().getIndecesCount(0);
 
 	const Vao& vao = renderable.getModelPatchBase().getVao(key);
 	ANKI_ASSERT(vao.getAttachmentsCount() > 1);
 	vao.bind();
-	glDrawElements(GL_TRIANGLES, indecesNum, GL_UNSIGNED_SHORT, 0);
+	glDrawElements(GL_TRIANGLES, indecesCount, GL_UNSIGNED_SHORT, 0);
 }
 
 }  // end namespace anki

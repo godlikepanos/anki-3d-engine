@@ -36,6 +36,8 @@ public:
 
 	void setDebugDrawer(btIDebugDraw* newDebugDrawer);
 
+	void debugDraw();
+
 	/// Time as always in sec
 	void update(F32 prevUpdateTime, F32 crntTime);
 

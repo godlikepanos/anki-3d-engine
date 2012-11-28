@@ -36,7 +36,7 @@ RigidBody::RigidBody(PhysWorld* masterContainer_, const Initializer& init)
 	setContactProcessingThreshold(
 		masterContainer->defaultContactProcessingThreshold);
 
-	forceActivationState(ISLAND_SLEEPING);
+	//forceActivationState(ISLAND_SLEEPING);
 
 	// register
 	if(init.mask == -1 || init.group == -1)

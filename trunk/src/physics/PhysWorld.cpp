@@ -47,4 +47,10 @@ void PhysWorld::update(F32 prevUpdateTime, F32 crntTime)
 	}
 }
 
+//==============================================================================
+void PhysWorld::debugDraw()
+{
+	dynamicsWorld->debugDrawWorld();
+}
+
 } // end namespace anki

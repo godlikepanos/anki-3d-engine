@@ -30,6 +30,15 @@ public:
 		depthTest = enable;
 	}
 
+	DebugDrawer& getDebugDrawer()
+	{
+		return *drawer;
+	}
+	const DebugDrawer& getDebugDrawer() const
+	{
+		return *drawer;
+	}
+
 private:
 	Fbo fbo;
 	std::unique_ptr<DebugDrawer> drawer;
