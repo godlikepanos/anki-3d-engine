@@ -8,6 +8,7 @@ namespace anki {
 
 class Scene; // Don't include
 
+// Components forward. Don't include
 class Movable;
 class Renderable;
 class Frustumable;
@@ -82,14 +83,15 @@ public:
 	/// @param[in] prevUpdateTime Timestamp of the previous update
 	/// @param[in] crntTime Timestamp of this update
 	/// @param[in] frame Frame number
-	virtual void frameUpdate(float prevUpdateTime, float crntTime, int frame)
+	virtual void frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	{
 		(void)prevUpdateTime;
 		(void)crntTime;
 		(void)frame;
 	}
 
-	uint32_t getLastUpdateFrame();
+	/// Return the last frame the node was updated. It checks all components
+	U32 getLastUpdateFrame();
 
 private:
 	std::string name; ///< A unique name
@@ -97,8 +99,6 @@ private:
 };
 /// @}
 
-
 } // end namespace anki
-
 
 #endif
