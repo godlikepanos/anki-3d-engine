@@ -8,6 +8,7 @@
 #include "anki/scene/Sector.h"
 #include "anki/util/Vector.h"
 #include "anki/core/Timestamp.h"
+#include "anki/physics/PhysWorld.h"
 
 namespace anki {
 
@@ -17,8 +18,6 @@ class Renderer;
 /// @{
 
 /// The Scene contains all the dynamic entities
-///
-/// XXX Add physics
 class Scene
 {
 	friend class SceneNode;
@@ -74,35 +73,41 @@ public:
 		return activeCameraChangeTimestamp;
 	}
 
-	Types<SceneNode>::ConstIterator getAllNodesBegin() const
+	Types<SceneNode>::ConstIterator getSceneNodesBegin() const
 	{
 		return nodes.begin();
 	}
-	Types<SceneNode>::Iterator getAllNodesBegin()
+	Types<SceneNode>::Iterator getSceneNodesBegin()
 	{
 		return nodes.begin();
 	}
-	Types<SceneNode>::ConstIterator getAllNodesEnd() const
+	Types<SceneNode>::ConstIterator getSceneNodesEnd() const
 	{
 		return nodes.end();
 	}
-	Types<SceneNode>::Iterator getAllNodesEnd()
+	Types<SceneNode>::Iterator getSceneNodesEnd()
 	{
 		return nodes.end();
 	}
-	U32 getAllNodesCount() const
+	U32 getSceneNodesCount() const
 	{
 		return nodes.size();
+	}
+
+	PhysWorld& getPhysics()
+	{
+		return physics;
+	}
+	const PhysWorld& getPhysics() const
+	{
+		return physics;
 	}
 	/// @}
 
 	void update(float prevUpdateTime, float crntTime, Renderer& renderer);
 
-	SceneNode* findSceneNode(const char* name)
-	{
-		Types<SceneNode>::NameToItemMap::iterator it = nameToNode.find(name);
-		return (it == nameToNode.end()) ? nullptr : it->second;
-	}
+	SceneNode& findSceneNode(const char* name);
+	SceneNode* tryFindSceneNode(const char* name);
 
 	PtrVector<Sector> sectors;
 
@@ -116,6 +121,7 @@ private:
 	Types<SceneNode>::NameToItemMap nameToNode;
 
 	VisibilityTester vtester;
+	PhysWorld physics;
 
 	void doVisibilityTests(Camera& cam, Renderer& r);
 

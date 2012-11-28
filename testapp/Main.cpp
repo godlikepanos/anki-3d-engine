@@ -44,6 +44,80 @@ PerspectiveCamera* cam;
 NativeWindow* win;
 
 //==============================================================================
+void initPhysics()
+{
+	Scene& scene = SceneSingleton::get();
+
+	scene.getPhysics().setDebugDrawer(
+		new PhysicsDebugDrawer(
+			&MainRendererSingleton::get().getDbg().getDebugDrawer()));
+
+	btCollisionShape* groundShape = new btBoxShape(
+	    btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
+
+	Transform groundTransform;
+	groundTransform.setIdentity();
+	groundTransform.setOrigin(Vec3(0, -50, 0));
+
+	RigidBody::Initializer init;
+	init.mass = 0.0;
+	init.shape = groundShape;
+	init.startTrf = groundTransform;
+	init.group = PhysWorld::CG_MAP;
+	init.mask = PhysWorld::CG_ALL;
+
+	new RigidBody(&SceneSingleton::get().getPhysics(), init);
+
+	btCollisionShape* colShape = new btBoxShape(
+	    btVector3(1, 1, 1));
+
+	init.startTrf.setOrigin(Vec3(0.0, 15.0, 0.0));
+	init.mass = 1;
+	init.shape = colShape;
+	init.group = PhysWorld::CG_PARTICLE;
+	init.mask = PhysWorld::CG_MAP;
+
+	const U ARRAY_SIZE_X = 5;
+	const U ARRAY_SIZE_Y = 5;
+	const U ARRAY_SIZE_Z = 5;
+	const U START_POS_X = -5;
+	const U START_POS_Y = 15;
+	const U START_POS_Z = -3;
+
+	float start_x = START_POS_X - ARRAY_SIZE_X / 2;
+	float start_y = START_POS_Y;
+	float start_z = START_POS_Z - ARRAY_SIZE_Z / 2;
+
+	for(U k = 0; k < ARRAY_SIZE_Y; k++)
+	{
+		for(U i = 0; i < ARRAY_SIZE_X; i++)
+		{
+			for(U j = 0; j < ARRAY_SIZE_Z; j++)
+			{
+				std::string name = std::string("crate0") + std::to_string(i)
+					+ std::to_string(j) + std::to_string(k);
+
+				new ModelNode(
+					"data/models/crate0/crate0.mdl",
+					name.c_str(),
+					&SceneSingleton::get(), Movable::MF_NONE, nullptr);
+
+				init.movable = scene.findSceneNode((name + "0").c_str()).getMovable();
+				ANKI_ASSERT(init.movable);
+
+				Transform trf(
+					Vec3(2.0 * i + start_x, 2.0 * k + start_y,
+						2.0 * j + start_z), Mat3::getIdentity(), 1.0);
+
+				init.startTrf = trf;
+
+				new RigidBody(&SceneSingleton::get().getPhysics(), init);
+			}
+		}
+	}
+}
+
+//==============================================================================
 void init()
 {
 	ANKI_LOGI("Other init...");
@@ -63,7 +137,7 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
-	cam->setLocalTransform(Transform(Vec3(88.0, 5.0, 8.0),
+	cam->setLocalTransform(Transform(Vec3(82.0, 5.0, 8.0),
 		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
@@ -167,6 +241,8 @@ void init()
 		"sponza", &scene, Movable::MF_NONE, nullptr);
 
 	(void)sponzaModel;
+
+	initPhysics();
 }
 
 //==============================================================================
@@ -212,15 +288,15 @@ void mainLoopExtra()
 	}
 	if(in.getKey(KC_2))
 	{
-		mover = SceneSingleton::get().findSceneNode("horse")->getMovable();
+		mover = SceneSingleton::get().findSceneNode("horse").getMovable();
 	}
 	if(in.getKey(KC_3))
 	{
-		mover = SceneSingleton::get().findSceneNode("spot0")->getMovable();
+		mover = SceneSingleton::get().findSceneNode("spot0").getMovable();
 	}
 	if(in.getKey(KC_4))
 	{
-		mover = SceneSingleton::get().findSceneNode("spot1")->getMovable();
+		mover = SceneSingleton::get().findSceneNode("spot1").getMovable();
 	}
 	/*if(in.getKey(KC_5))
 	{
@@ -228,13 +304,13 @@ void mainLoopExtra()
 	}*/
 	if(in.getKey(KC_6))
 	{
-		mover = SceneSingleton::get().findSceneNode("camera1")->getMovable();
+		mover = SceneSingleton::get().findSceneNode("camera1").getMovable();
 		mover->setLocalTransform(cam->getLocalTransform());
 	}
 
 	if(in.getKey(KC_L) == 1)
 	{
-		Light* l = SceneSingleton::get().findSceneNode("point1")->getLight();
+		Light* l = SceneSingleton::get().findSceneNode("point1").getLight();
 		static_cast<PointLight*>(l)->setRadius(10.0);
 	}
 
@@ -312,7 +388,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -373,7 +449,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = false;
+	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = false;
