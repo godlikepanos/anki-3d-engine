@@ -10,6 +10,7 @@ namespace anki {
 SceneNode::SceneNode(const char* name_, Scene* scene_)
 	: name(name_), scene(scene_)
 {
+	name.shrink_to_fit(); // Do that first
 	scene->registerNode(this);
 
 	/// Add the first property
@@ -23,9 +24,9 @@ SceneNode::~SceneNode()
 }
 
 //==============================================================================
-uint32_t SceneNode::getLastUpdateFrame()
+U32 SceneNode::getLastUpdateFrame()
 {
-	uint32_t max = 0;
+	U32 max = 0;
 
 	const Movable* m = getMovable();
 	if(m && m->getMovableTimestamp() > max)
