@@ -2,8 +2,40 @@
 #include "anki/scene/Camera.h"
 #include "anki/util/Exception.h"
 #include "anki/scene/VisibilityTester.h"
+#include "anki/core/ThreadPool.h"
 
 namespace anki {
+
+//==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+struct UpdateMovablesJob: ThreadJob
+{
+	Scene::Types<SceneNode>::Iterator movablesBegin;
+	U32 movablesCount;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		U64 start, end;
+		choseStartEnd(threadId, threadsCount, movablesCount, start, end);
+
+		for(U64 i = start; i < end; i++)
+		{
+			SceneNode* sn = *(movablesBegin + i);
+			Movable* m = sn->getMovable();
+			if(m)
+			{
+				m->update();
+			}
+		}
+	}
+};
+
+//==============================================================================
+// Scene                                                                       =
+//==============================================================================
 
 //==============================================================================
 Scene::Scene()
@@ -34,6 +66,7 @@ void Scene::update(float prevUpdateTime, float crntTime, Renderer& r)
 {
 	physics.update(prevUpdateTime, crntTime);
 
+#if 0
 	// First do the movable updates
 	for(SceneNode* n : nodes)
 	{
@@ -43,6 +76,20 @@ void Scene::update(float prevUpdateTime, float crntTime, Renderer& r)
 			m->update();
 		}
 	}
+#else
+	ThreadPool& threadPool = ThreadPoolSingleton::get();
+	UpdateMovablesJob jobs[ThreadPool::MAX_THREADS];
+
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	{
+		jobs[i].movablesBegin = nodes.begin();
+		jobs[i].movablesCount = nodes.size();
+
+		threadPool.assignNewJob(i, &jobs[i]);
+	}
+
+	threadPool.waitForAllJobsToFinish();
+#endif
 
 	// Then the rest
 	for(SceneNode* n : nodes)

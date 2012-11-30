@@ -43,6 +43,26 @@ struct DummyInitTimer
 static DummyInitTimer dummy;
 
 //==============================================================================
+static U32 getMs()
+{
+	U32 ticks;
+
+#if HAVE_CLOCK_GETTIME
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	ticks = (now.tv_sec - gstart.tv_sec) * 1000 
+		+ (now.tv_nsec - gstart.tv_nsec) / 1000000;
+#else
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	ticks = (now.tv_sec - gstart.tv_sec) * 1000 
+		+ (now.tv_usec - gstart.tv_usec) / 1000;
+#endif
+
+	return ticks;
+}
+
+//==============================================================================
 void HighRezTimer::start()
 {
 	ANKI_ASSERT(startTime == 0);
@@ -62,7 +82,7 @@ void HighRezTimer::stop()
 //==============================================================================
 HighRezTimer::Scalar HighRezTimer::getElapsedTime() const
 {
-	if(stopTime == 0)
+	if(stopTime == 0.0)
 	{
 		return getCurrentTime() - startTime;
 	}
@@ -75,27 +95,14 @@ HighRezTimer::Scalar HighRezTimer::getElapsedTime() const
 //==============================================================================
 HighRezTimer::Scalar HighRezTimer::getCurrentTime()
 {
-	U32 ticks;
-
-#if HAVE_CLOCK_GETTIME
-	struct timespec now;
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	ticks = (now.tv_sec - gstart.tv_sec) * 1000 
-		+ (now.tv_nsec - gstart.tv_nsec) / 1000000;
-#else
-	struct timeval now;
-	gettimeofday(&now, NULL);
-	ticks = (now.tv_sec - gstart.tv_sec) * 1000 
-		+ (now.tv_usec - gstart.tv_usec) / 1000;
-#endif
-
-	return Scalar(ticks) / 1000.0;
+	// Scalar(ticks) / 1000.0
+	return Scalar(getMs()) * 0.001;
 }
 
 //==============================================================================
 void HighRezTimer::sleep(Scalar sec)
 {
-	int was_error;
+	int wasError;
 	U32 ms = U32(sec * 1000.0);
 
 #if HAVE_NANOSLEEP
@@ -110,7 +117,7 @@ void HighRezTimer::sleep(Scalar sec)
 	elapsed.tv_sec = ms / 1000;
 	elapsed.tv_nsec = (ms % 1000) * 1000000;
 #else
-	then = getCurrentTime() * 1000.0;
+	then = getMs();
 #endif
 
 	do 
@@ -120,10 +127,10 @@ void HighRezTimer::sleep(Scalar sec)
 #if HAVE_NANOSLEEP
 		tv.tv_sec = elapsed.tv_sec;
 		tv.tv_nsec = elapsed.tv_nsec;
-		was_error = nanosleep(&tv, &elapsed);
+		wasError = nanosleep(&tv, &elapsed);
 #else
 		// Calculate the time interval left (in case of interrupt)
-		now = getCurrentTime() * 1000.0;
+		now = getMs();
 		elapsed = now - then;
 		then = now;
 		if(elapsed >= ms)
@@ -134,9 +141,9 @@ void HighRezTimer::sleep(Scalar sec)
 		tv.tv_sec = ms / 1000;
 		tv.tv_usec = (ms % 1000) * 1000;
 
-		was_error = select(0, NULL, NULL, NULL, &tv);
+		wasError = select(0, NULL, NULL, NULL, &tv);
 #endif
-	} while(was_error && (errno == EINTR));
+	} while(wasError && (errno == EINTR));
 }
 
 } // end namespace anki

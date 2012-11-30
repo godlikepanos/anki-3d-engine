@@ -242,7 +242,7 @@ void init()
 
 	(void)sponzaModel;
 
-	initPhysics();
+	/*initPhysics();*/
 }
 
 //==============================================================================
@@ -449,7 +449,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = true;
+	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = false;
