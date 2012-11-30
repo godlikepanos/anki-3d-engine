@@ -14,7 +14,7 @@ class PropertyMap;
 /// @{
 
 /// Interface for movable scene nodes
-class Movable: public Object<Movable>, public Flags<uint32_t>
+class Movable: public Object<Movable>, public Flags<U32>
 {
 public:
 	typedef Object<Movable> Base;
@@ -32,7 +32,7 @@ public:
 	/// @param flags The flags
 	/// @param parent The parent. It can be nullptr
 	/// @param pmap Property map to add a few variables
-	Movable(uint32_t flags, Movable* parent, PropertyMap& pmap);
+	Movable(U32 flags, Movable* parent, PropertyMap& pmap);
 
 	~Movable();
 	/// @}
@@ -74,7 +74,7 @@ public:
 		return prevWTrf;
 	}
 
-	uint32_t getMovableTimestamp() const
+	U32 getMovableTimestamp() const
 	{
 		return timestamp;
 	}
@@ -146,7 +146,7 @@ protected:
 	Transform prevWTrf = Transform::getIdentity();
 
 	/// The frame where it was last moved
-	uint32_t timestamp = Timestamp::getTimestamp();
+	U32 timestamp = Timestamp::getTimestamp();
 
 	/// Called for every frame. It updates the @a wTrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.

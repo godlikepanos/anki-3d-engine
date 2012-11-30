@@ -4,7 +4,7 @@
 namespace anki {
 
 //==============================================================================
-Movable::Movable(uint32_t flags_, Movable* parent, PropertyMap& pmap)
+Movable::Movable(U32 flags_, Movable* parent, PropertyMap& pmap)
 	: Base(this, parent), Flags(flags_)
 {
 	pmap.addNewProperty(
@@ -31,7 +31,7 @@ void Movable::updateWorldTransform()
 {
 	prevWTrf = wTrf;
 	Movable* parent = getParent();
-	uint32_t crntTimestamp = Timestamp::getTimestamp();
+	U32 crntTimestamp = Timestamp::getTimestamp();
 
 	if(parent)
 	{
