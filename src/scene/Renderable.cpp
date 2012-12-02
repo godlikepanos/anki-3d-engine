@@ -20,8 +20,8 @@ struct CreateNewPropertyVisitor
 	template<typename T>
 	void visit(const T&) const
 	{
-		RenderableMaterialVariable* rvar = new RenderableMaterialVariable(
-			mvar);
+		RenderableMaterialVariable* rvar =
+			new RenderableMaterialVariable(mvar);
 
 		//pmap->addNewProperty(prop);
 		vars->push_back(rvar);
@@ -38,7 +38,9 @@ static Array<const char*, BMV_COUNT - 1> buildinNames = {{
 	"modelViewProjectionMat",
 	"modelViewMat",
 	"normalMat",
-	"blurring"
+	"blurring",
+	"instancingTranslations",
+	"instancingModelViewProjectionMatrices"
 }};
 
 //==============================================================================
@@ -78,7 +80,7 @@ Renderable::~Renderable()
 //==============================================================================
 void Renderable::init(PropertyMap& pmap)
 {
-	const Material& mtl = getMaterial();
+	const Material& mtl = getRenderableMaterial();
 
 	CreateNewPropertyVisitor vis;
 	vis.pmap = &pmap;
@@ -100,7 +102,27 @@ void Renderable::init(PropertyMap& pmap)
 	if(block)
 	{
 		ubo.create(block->getSize(), nullptr);
-		//ubo.setBinding(20);
+	}
+
+	// Init the instancing UBO
+	U32 instancesCount = getRenderableInstancesCount();
+	if(instancesCount > 0)
+	{
+		Vec3* translations;
+		Transform* transforms;
+		U32 size = 0;
+
+		if((translations = getRenderableInstancingTranslations()) != 0)
+		{
+			size = sizeof(Vec3) * instancesCount;
+		}
+		else if((transforms = getRenderableInstancingWorldTransforms()) != 0)
+		{
+			size = sizeof(Mat4) * instancesCount;
+		}
+
+		ANKI_ASSERT(size != 0);
+		instancingUbo.create(size, nullptr);
 	}
 }
 

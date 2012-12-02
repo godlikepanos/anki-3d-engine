@@ -181,13 +181,13 @@ public:
 	/// @{
 
 	/// Implements Renderable::getModelPatchBase
-	const ModelPatchBase& getModelPatchBase() const
+	const ModelPatchBase& getRenderableModelPatchBase() const
 	{
 		return *skinModelPatch;
 	}
 
 	/// Implements Renderable::getMaterial
-	const Material& getMaterial() const
+	const Material& getRenderableMaterial() const
 	{
 		return skinModelPatch->getMaterial();
 	}

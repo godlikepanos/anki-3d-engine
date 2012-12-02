@@ -38,8 +38,8 @@ struct MaterialSortFunctor
 		ANKI_ASSERT(a->getRenderable() != nullptr 
 			&& b->getRenderable() != nullptr);
 
-		return a->getRenderable()->getMaterial() 
-			< b->getRenderable()->getMaterial();
+		return a->getRenderable()->getRenderableMaterial()
+			< b->getRenderable()->getRenderableMaterial();
 	}
 };
 
