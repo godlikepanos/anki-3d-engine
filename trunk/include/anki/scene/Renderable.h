@@ -14,7 +14,7 @@ class Transform;
 /// @addtogroup Scene
 /// @{
 
-/// XXX
+/// The ID of a buildin material variable
 enum BuildinMaterialVariableId
 {
 	BMV_NO_BUILDIN = 0,
@@ -22,6 +22,8 @@ enum BuildinMaterialVariableId
 	BMV_MODEL_VIEW_MATRIX,
 	BMV_NORMAL_MATRIX,
 	BMV_BLURRING,
+	BMV_INSTANCING_TRANSLATIONS,
+	BMV_INSTANCING_MODEL_VIEW_PROJECTION_MATRICES,
 	BMV_COUNT
 };
 
@@ -67,16 +69,35 @@ public:
 	virtual ~Renderable();
 
 	/// Access to VAOs
-	virtual const ModelPatchBase& getModelPatchBase() const = 0;
+	virtual const ModelPatchBase& getRenderableModelPatchBase() const = 0;
 
 	/// Access the material
-	virtual const Material& getMaterial() const = 0;
+	virtual const Material& getRenderableMaterial() const = 0;
 
 	/// Information for movables
 	virtual const Transform* getRenderableWorldTransform() const
 	{
 		return nullptr;
 	}
+
+	/// @name Instancing methods
+	/// @{
+
+	virtual Vec3* getRenderableInstancingTranslations() const
+	{
+		return nullptr;
+	}
+
+	virtual Transform* getRenderableInstancingWorldTransforms() const
+	{
+		return nullptr;
+	}
+
+	virtual U32 getRenderableInstancesCount() const
+	{
+		return 0;
+	}
+	/// @}
 
 	/// @name Accessors
 	/// @{
@@ -96,11 +117,13 @@ public:
 	/// @}
 
 protected:
+	/// The derived class needs to call that
 	void init(PropertyMap& pmap);
 
 private:
 	RenderableMaterialVariables vars;
 	Ubo ubo;
+	Ubo instancingUbo;
 };
 /// @}
 

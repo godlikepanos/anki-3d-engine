@@ -57,7 +57,8 @@ void Dbg::run()
 	drawer->setModelMatrix(Mat4::getIdentity());
 	//drawer->drawGrid();
 
-	for(auto it = scene.getSceneNodesBegin(); it != scene.getSceneNodesEnd(); it++)
+	for(auto it = scene.getSceneNodesBegin();
+		it != scene.getSceneNodesEnd(); it++)
 	{
 		SceneNode* node = *it;
 		Spatial* sp = node->getSpatial();
@@ -72,7 +73,7 @@ void Dbg::run()
 		sceneDrawer->draw(sector->getOctree());
 	}
 
-	scene.getPhysics().debugDraw();
+	/*scene.getPhysics().debugDraw();*/
 
 	drawer->flush();
 }

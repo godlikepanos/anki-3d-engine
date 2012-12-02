@@ -20,7 +20,7 @@ public:
 	/// @{
 	ModelPatchNode(const ModelPatch* modelPatch_,
 		const char* name, Scene* scene, // Scene
-		uint movableFlags, Movable* movParent); // Movable
+		U32 movableFlags, Movable* movParent); // Movable
 	/// @}
 
 	/// @name SceneNode virtuals
@@ -45,7 +45,7 @@ public:
 	}
 
 	/// Override SceneNode::frameUpdate
-	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
+	void frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	{
 		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
 	}
@@ -69,13 +69,13 @@ public:
 	/// @{
 
 	/// Implements Renderable::getModelPatchBase
-	const ModelPatchBase& getModelPatchBase() const
+	const ModelPatchBase& getRenderableModelPatchBase() const
 	{
 		return *modelPatch;
 	}
 
 	/// Implements  Renderable::getMaterial
-	const Material& getMaterial() const
+	const Material& getRenderableMaterial() const
 	{
 		return modelPatch->getMaterial();
 	}

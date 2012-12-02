@@ -12,7 +12,6 @@
 #include "anki/resource/Material.h"
 #include "anki/scene/Scene.h"
 #include "anki/resource/SkelAnim.h"
-#include "anki/scene/ParticleEmitterNode.h"
 #include "anki/physics/Character.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/MainRenderer.h"
@@ -75,34 +74,34 @@ void initPhysics()
 	init.mass = 1;
 	init.shape = colShape;
 	init.group = PhysWorld::CG_PARTICLE;
-	init.mask = PhysWorld::CG_MAP;
+	init.mask = PhysWorld::CG_MAP | PhysWorld::CG_PARTICLE;
 
-	const U ARRAY_SIZE_X = 5;
-	const U ARRAY_SIZE_Y = 5;
-	const U ARRAY_SIZE_Z = 5;
-	const U START_POS_X = -5;
-	const U START_POS_Y = 15;
-	const U START_POS_Z = -3;
+	const I ARRAY_SIZE_X = 5;
+	const I ARRAY_SIZE_Y = 5;
+	const I ARRAY_SIZE_Z = 5;
+	const I START_POS_X = -5;
+	const I START_POS_Y = 35;
+	const I START_POS_Z = -3;
 
 	float start_x = START_POS_X - ARRAY_SIZE_X / 2;
 	float start_y = START_POS_Y;
 	float start_z = START_POS_Z - ARRAY_SIZE_Z / 2;
 
-	for(U k = 0; k < ARRAY_SIZE_Y; k++)
+	for(I k = 0; k < ARRAY_SIZE_Y; k++)
 	{
-		for(U i = 0; i < ARRAY_SIZE_X; i++)
+		for(I i = 0; i < ARRAY_SIZE_X; i++)
 		{
-			for(U j = 0; j < ARRAY_SIZE_Z; j++)
+			for(I j = 0; j < ARRAY_SIZE_Z; j++)
 			{
 				std::string name = std::string("crate0") + std::to_string(i)
 					+ std::to_string(j) + std::to_string(k);
 
-				new ModelNode(
+				ModelNode* mnode = new ModelNode(
 					"data/models/crate0/crate0.mdl",
 					name.c_str(),
 					&SceneSingleton::get(), Movable::MF_NONE, nullptr);
 
-				init.movable = scene.findSceneNode((name + "0").c_str()).getMovable();
+				init.movable = mnode;
 				ANKI_ASSERT(init.movable);
 
 				Transform trf(
@@ -236,13 +235,15 @@ void init()
 	scene.sectors.push_back(new Sector(sectorAabb));
 #endif
 
+#if 1
 	ModelNode* sponzaModel = new ModelNode(
 		"data/maps/sponza/sponza.mdl",
 		"sponza", &scene, Movable::MF_NONE, nullptr);
 
 	(void)sponzaModel;
+#endif
 
-	/*initPhysics();*/
+	initPhysics();
 }
 
 //==============================================================================
@@ -449,8 +450,9 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = false;
+	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
+	initializer.is.groundLightEnabled = false;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = false;
 	initializer.is.sm.resolution = 512;

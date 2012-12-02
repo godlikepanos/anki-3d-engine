@@ -1,41 +1,53 @@
-#include <btBulletCollisionCommon.h>
-#include <btBulletDynamicsCommon.h>
-#include "anki/scene/ParticleEmitterNode.h"
-#include "anki/scene/Particle.h"
-#include "anki/physics/RigidBody.h"
-#include "anki/core/App.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/ParticleEmitter.h"
+#include "anki/resource/Model.h"
 #include "anki/util/Functions.h"
-
 
 namespace anki {
 
-
-/*btTransform ParticleEmitterNode::startingTrf(toBt(Mat3::getIdentity()),
-	btVector3(10000000.0, 10000000.0, 10000000.0));
-
+//==============================================================================
+// Particle                                                                    =
+//==============================================================================
 
 //==============================================================================
-// Destructor                                                                  =
-//==============================================================================
-ParticleEmitterNode::~ParticleEmitterNode()
+Particle::Particle(F32 timeOfDeath_,
+	const char* name, Scene* scene, // Scene
+	U32 movableFlags, Movable* movParent, // Movable
+	PhysWorld* masterContainer, const Initializer& init)
+	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
+		 RigidBody(masterContainer, init), timeOfDeath(timeOfDeath_)
 {}
 
+//==============================================================================
+Particle::~Particle()
+{}
 
 //==============================================================================
-// getRandom                                                                   =
+// ParticleEmitter                                                             =
 //==============================================================================
-float ParticleEmitterNode::getRandom(float initial, float deviation)
+
+//==============================================================================
+ParticleEmitter::ParticleEmitter(const char* filename,
+	const char* name, Scene* scene, // Scene
+	U32 movableFlags, Movable* movParent) // Movable
+	: SceneNode(name, scene), Spatial(this, &aabb),
+		Movable(movableFlags, movParent, *this)
 {
-	return (deviation == 0.0) ?  initial :
-		initial + Util::randFloat(deviation) * 2.0 - deviation;
+	init(filename);
 }
 
+//==============================================================================
+ParticleEmitter::~ParticleEmitter()
+{}
 
 //==============================================================================
-// getRandom                                                                   =
+F32 ParticleEmitter::getRandom(F32 initial, F32 deviation)
+{
+	return (deviation == 0.0) ? initial
+		: initial + randFloat(deviation) * 2.0 - deviation;
+}
+
 //==============================================================================
-Vec3 ParticleEmitterNode::getRandom(const Vec3& initial, const Vec3& deviation)
+Vec3 ParticleEmitter::getRandom(const Vec3& initial, const Vec3& deviation)
 {
 	if(deviation == Vec3(0.0))
 	{
@@ -44,7 +56,7 @@ Vec3 ParticleEmitterNode::getRandom(const Vec3& initial, const Vec3& deviation)
 	else
 	{
 		Vec3 out;
-		for(int i = 0; i < 3; i++)
+		for(U i = 0; i < 3; i++)
 		{
 			out[i] = getRandom(initial[i], deviation[i]);
 		}
@@ -52,23 +64,33 @@ Vec3 ParticleEmitterNode::getRandom(const Vec3& initial, const Vec3& deviation)
 	}
 }
 
+//==============================================================================
+const ModelPatchBase& ParticleEmitter::getRenderableModelPatchBase() const
+{
+	return *particleEmitterResource->getModel().getModelPatches()[0];
+}
 
 //==============================================================================
-// init                                                                        =
-//==============================================================================
-void ParticleEmitterNode::init(const char* filename)
+const Material& ParticleEmitter::getRenderableMaterial() const
 {
-	particleEmitterProps.load(filename);
+	return
+		particleEmitterResource->getModel().getModelPatches()[0]->getMaterial();
+}
+
+//==============================================================================
+void ParticleEmitter::init(const char* filename)
+{
+	particleEmitterResource.load(filename);
 
 	// copy the resource to me
-	ParticleEmitterRsrc& me = *this;
-	ParticleEmitterRsrc& other = *particleEmitterProps.get();
+	ParticleEmitterProperties& me = *this;
+	const ParticleEmitterProperties& other = *particleEmitterResource;
 	me = other;
 
 	// create the particles
 	collShape.reset(new btSphereShape(size));
 
-	for(uint i = 0; i < maxNumOfParticles; i++)
+	for(U i = 0; i < maxNumOfParticles; i++)
 	{
 		Particle* particle = new Particle(-1.0, getScene(), SNF_NONE, NULL);
 		particle->init(modelName.c_str());
@@ -102,18 +124,17 @@ void ParticleEmitterNode::init(const char* filename)
 	timeLeftForNextEmission = 0.0;
 }
 
-
 //==============================================================================
-// frameUpdate                                                                 =
-//==============================================================================
-void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
+void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 {
+	SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
+
 	// Opt: We dont have to make extra calculations if the ParticleEmitterNode's
 	// rotation is the identity
-	bool identRot = getWorldTransform().getRotation() == Mat3::getIdentity();
+	Bool identRot = getWorldTransform().getRotation() == Mat3::getIdentity();
 
 	// deactivate the dead particles
-	BOOST_FOREACH(Particle* p, particles)
+	for(Particle* p : particles)
 	{
 		if(p->isDead()) // its already dead so dont deactivate it again
 		{
@@ -123,21 +144,19 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 		if(p->getTimeOfDeath() < crntTime)
 		{
 			//cout << "Killing " << i << " " << p.timeOfDeath << endl;
-			p->getRigidBody().setActivationState(DISABLE_SIMULATION);
-			p->getRigidBody().setWorldTransform(startingTrf);
-			p->disableFlag(SceneNode::SNF_ACTIVE);
+			p->setActivationState(DISABLE_SIMULATION);
 			p->setTimeOfDeath(-1.0);
 		}
 	}
 
 	// pre calculate
-	bool forceFlag = hasForce();
-	bool worldGravFlag = usingWorldGrav();
+	Bool forceFlag = particleEmitterResource->hasForce();
+	Bool worldGravFlag = particleEmitterResource->usingWorldGravity();
 
 	if(timeLeftForNextEmission <= 0.0)
 	{
-		uint partNum = 0;
-		BOOST_FOREACH(Particle* pp, particles)
+		U partNum = 0;
+		for(Particle* pp : particles)
 		{
 			Particle& p = *pp;
 			if(!p.isDead())
@@ -147,8 +166,6 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 			}
 
 			RigidBody& body = p.getRigidBody();
-
-			p.enableFlag(SceneNode::SNF_ACTIVE);
 
 			// life
 			p.setTimeOfDeath(getRandom(crntTime + particleLife,
@@ -169,8 +186,8 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 			// force
 			if(forceFlag)
 			{
-				Vec3 forceDir = getRandom(forceDirection,
-					forceDirectionDeviation);
+				Vec3 forceDir = getRandom(
+					forceDirection, forceDirectionDeviation);
 				forceDir.normalize();
 
 				if(!identRot)
@@ -221,7 +238,6 @@ void ParticleEmitterNode::frameUpdate(float prevUpdateTime, float crntTime)
 	{
 		timeLeftForNextEmission -= crntTime - prevUpdateTime;
 	}
-}*/
+}
 
-
-} // end namespace
+} // end namespace anki

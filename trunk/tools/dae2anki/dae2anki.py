@@ -90,12 +90,15 @@ def parse_commandline():
 	parser.add_option("-f", "--flip-yz", dest="flip",
 		type="string", default=False, 
 		help="flip Y with Z (from blender to AnKi)")
+	parser.add_option("-m", "--model", dest="export_model",
+		type="string", default=False, 
+		help="create a model file as well")
 	(options, args) = parser.parse_args()
 
 	if not options.inp or not options.out:
 		parser.error("argument is missing")
 
-	return (options.inp, options.out, options.flip)
+	return (options.inp, options.out, options.flip, options.export_model)
 
 def parse_library_geometries(el):
 	geometries = []
@@ -451,7 +454,7 @@ def write_model(meshes, directory, mdl_name):
 	f.close()
 
 def main():
-	(infile, outdir, flip) = parse_commandline()
+	(infile, outdir, flip, export_model) = parse_commandline()
 
 	print("-- Begin...")
 	xml.register_namespace("", "http://www.collada.org/2005/11/COLLADASchema")
@@ -478,8 +481,9 @@ def main():
 		write_mesh(mesh, outdir, flip)
 
 	# Write the model
-	mdl_name = os.path.splitext(os.path.basename(infile))[0]
-	write_model(meshes, outdir, mdl_name)
+	if export_model:
+		mdl_name = os.path.splitext(os.path.basename(infile))[0]
+		write_model(meshes, outdir, mdl_name)
 
 	print("-- Bye!")
 

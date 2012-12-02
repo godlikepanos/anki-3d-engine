@@ -71,6 +71,7 @@ void Scene::update(float prevUpdateTime, float crntTime, Renderer& r)
 	for(SceneNode* n : nodes)
 	{
 		Movable* m = n->getMovable();
+
 		if(m)
 		{
 			m->update();

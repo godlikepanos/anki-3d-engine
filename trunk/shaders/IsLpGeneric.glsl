@@ -303,6 +303,10 @@ void main()
 #endif
 
 #if 0
+	fColor = fColor * 0.5 + normal * 0.5;
+#endif
+
+#if 0
 	if(tiles[vInstanceId].lightsCount[2] > 0)
 	{
 		uint lightId = 0;

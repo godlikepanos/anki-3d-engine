@@ -62,7 +62,7 @@ struct SetupMaterialVariableVisitor
 		case BMV_MODEL_VIEW_MATRIX:
 			if(!mvMatCalculated)
 			{
-				mvMat = mMat * fr->getViewMatrix();
+				mvMat = fr->getViewMatrix() * mMat;
 				mvMatCalculated = true;
 			}
 			uniSet(*uni, mvMat);
@@ -70,7 +70,7 @@ struct SetupMaterialVariableVisitor
 		case BMV_NORMAL_MATRIX:
 			if(!mvMatCalculated)
 			{
-				mvMat = mMat * fr->getViewMatrix();
+				mvMat = fr->getViewMatrix() * mMat;
 				mvMatCalculated = true;
 			}
 			uniSet(*uni, mvMat.getRotationPart());
@@ -127,7 +127,7 @@ void RenderableDrawer::setupShaderProg(
 	const Frustumable& fr,
 	Renderable& renderable)
 {
-	const Material& mtl = renderable.getMaterial();
+	const Material& mtl = renderable.getRenderableMaterial();
 	const ShaderProgram& sprog = mtl.findShaderProgram(key);
 
 	sprog.bind();
@@ -171,9 +171,9 @@ void RenderableDrawer::render(const Frustumable& fr, uint pass,
 	setupShaderProg(key, fr, renderable);
 
 	// Render
-	U32 indecesCount = renderable.getModelPatchBase().getIndecesCount(0);
+	U32 indecesCount = renderable.getRenderableModelPatchBase().getIndecesCount(0);
 
-	const Vao& vao = renderable.getModelPatchBase().getVao(key);
+	const Vao& vao = renderable.getRenderableModelPatchBase().getVao(key);
 	ANKI_ASSERT(vao.getAttachmentsCount() > 1);
 	vao.bind();
 	glDrawElements(GL_TRIANGLES, indecesCount, GL_UNSIGNED_SHORT, 0);
