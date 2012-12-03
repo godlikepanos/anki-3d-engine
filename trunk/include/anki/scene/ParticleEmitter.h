@@ -107,11 +107,23 @@ public:
 	/// Implements  Renderable::getMaterial
 	const Material& getRenderableMaterial() const;
 
-	/// Overrides Renderable::getRenderableWorldTransform
-	const Transform* getRenderableWorldTransform() const
+	/// Overrides Renderable::getRenderableInstancingTranslations
+	virtual const Vec3* getRenderableInstancingTranslations() const
 	{
-		return nullptr;
+		return &instancintPositions[0];
 	}
+
+	virtual U32 getRenderableInstancesCount() const
+	{
+		return instancesCount;
+	}
+	/// @}
+
+	/// @name Movable virtuals
+	/// @{
+
+	/// Overrides Movable::movableUpdate. Calculates an optimization
+	void movableUpdate();
 	/// @}
 
 private:
@@ -122,7 +134,15 @@ private:
 	/// The resource
 	Aabb aabb;
 
-	void init(const char* filename);
+	// Opt: We dont have to make extra calculations if the ParticleEmitter's
+	// rotation is the identity
+	Bool identityRotation = true;
+
+	U32 instancesCount; ///< AKA alive
+
+	Vector<Vec3> instancintPositions;
+
+	void init(const char* filename, Scene* scene);
 
 	static F32 getRandom(F32 initial, F32 deviation);
 	static Vec3 getRandom(const Vec3& initial, const Vec3& deviation);

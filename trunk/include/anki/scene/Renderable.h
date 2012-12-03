@@ -83,12 +83,12 @@ public:
 	/// @name Instancing methods
 	/// @{
 
-	virtual Vec3* getRenderableInstancingTranslations() const
+	virtual const Vec3* getRenderableInstancingTranslations() const
 	{
 		return nullptr;
 	}
 
-	virtual Transform* getRenderableInstancingWorldTransforms() const
+	virtual const Transform* getRenderableInstancingWorldTransforms() const
 	{
 		return nullptr;
 	}

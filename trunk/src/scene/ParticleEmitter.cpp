@@ -1,6 +1,9 @@
 #include "anki/scene/ParticleEmitter.h"
+#include "anki/scene/Scene.h"
 #include "anki/resource/Model.h"
 #include "anki/util/Functions.h"
+#include "anki/physics/PhysWorld.h"
+#include <limits>
 
 namespace anki {
 
@@ -40,7 +43,7 @@ ParticleEmitter::ParticleEmitter(
 		Movable(movableFlags, movParent, *this)
 {
 	Renderable::init(*this);
-	init(filename);
+	init(filename, scene);
 }
 
 //==============================================================================
@@ -86,6 +89,13 @@ const Material& ParticleEmitter::getRenderableMaterial() const
 }
 
 //==============================================================================
+void ParticleEmitter::movableUpdate()
+{
+	identityRotation =
+		getWorldTransform().getRotation() == Mat3::getIdentity();
+}
+
+//==============================================================================
 void ParticleEmitter::init(const char* filename, Scene* scene)
 {
 	particleEmitterResource.load(filename);
@@ -101,21 +111,21 @@ void ParticleEmitter::init(const char* filename, Scene* scene)
 	RigidBody::Initializer binit;
 	binit.shape = collShape.get();
 	binit.group = PhysWorld::CG_PARTICLE;
-	binit.mask = PhysWorld::CG_WORD;
+	binit.mask = PhysWorld::CG_MAP;
 
 	for(U i = 0; i < maxNumOfParticles; i++)
 	{
-		init.mass = getRandom(particleMass, particleMassDeviation);
+		binit.mass = getRandom(particleMass, particleMassDeviation);
 
 		Particle* particle = new Particle(
 			-1.0, 
-			(getName() + std::to_string(i)).c_str, scene,
+			(getName() + std::to_string(i)).c_str(), scene,
 			Movable::MF_NONE, nullptr,
 			&scene->getPhysics(), binit);
 
 		particles.push_back(particle);
 
-		body->forceActivationState(DISABLE_SIMULATION);
+		particle->forceActivationState(DISABLE_SIMULATION);
 	}
 
 	timeLeftForNextEmission = 0.0;
@@ -126,25 +136,37 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 {
 	SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
 
-	// Opt: We dont have to make extra calculations if the ParticleEmitter's
-	// rotation is the identity
-	Bool identRot = getWorldTransform().getRotation() == Mat3::getIdentity();
-
-	// deactivate the dead particles
+	// - Deactivate the dead particles
+	// - Calc the AABB
+	// - Calc the instancing stuff
+	//
+	Vec3 aabbmin(std::numeric_limits<F32>::max());
+	Vec3 aabbmax(std::numeric_limits<F32>::min());
+	instancesCount = 0;
+	instancintPositions.clear();
 	for(Particle* p : particles)
 	{
-		if(p->isDead()) // its already dead so dont deactivate it again
-		{
-			continue;
-		}
-
-		if(p->getTimeOfDeath() < crntTime)
+		// if its already dead so dont deactivate it again
+		if(!p->isDead() && p->getTimeOfDeath() < crntTime)
 		{
 			//cout << "Killing " << i << " " << p.timeOfDeath << endl;
 			p->setActivationState(DISABLE_SIMULATION);
 			p->setTimeOfDeath(-1.0);
+
+			const Vec3& origin = p->Movable::getWorldTransform().getOrigin();
+			for(U i = 0; i < 3; i++)
+			{
+				aabbmin[i] = std::min(aabbmin[i], origin[i]);
+				aabbmax[i] = std::max(aabbmax[i], origin[i]);
+			}
+
+			++instancesCount;
+			instancintPositions.push_back(origin);
 		}
 	}
+
+	aabb = Aabb(aabbmin, aabbmax);
+	spatialMarkUpdated();
 
 	// pre calculate
 	Bool forceFlag = particleEmitterResource->hasForce();
@@ -152,7 +174,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 
 	if(timeLeftForNextEmission <= 0.0)
 	{
-		U partNum = 0;
+		U particlesCount = 0; // How many particles I am allowed to emmit
 		for(Particle* pp : particles)
 		{
 			Particle& p = *pp;
@@ -162,11 +184,11 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 				continue;
 			}
 
-			RigidBody& body = p.getRigidBody();
+			RigidBody& body = p;
 
 			// life
-			p.setTimeOfDeath(getRandom(crntTime + particleLife,
-				particleLifeDeviation));
+			p.setTimeOfDeath(
+				getRandom(crntTime + particleLife, particleLifeDeviation));
 
 			//cout << "Time of death " << p.timeOfDeath << endl;
 			//cout << "Particle life " << p.timeOfDeath - crntTime << endl;
@@ -183,18 +205,18 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			// force
 			if(forceFlag)
 			{
-				Vec3 forceDir = getRandom(
-					forceDirection, forceDirectionDeviation);
+				Vec3 forceDir =
+					getRandom(forceDirection, forceDirectionDeviation);
 				forceDir.normalize();
 
-				if(!identRot)
+				if(!identityRotation)
 				{
 					// the forceDir depends on the particle emitter rotation
 					forceDir = getWorldTransform().getRotation() * forceDir;
 				}
 
-				float forceMag = getRandom(forceMagnitude,
-					forceMagnitudeDeviation);
+				F32 forceMag =
+					getRandom(forceMagnitude, forceMagnitudeDeviation);
 
 				body.applyCentralForce(toBt(forceDir * forceMag));
 			}
@@ -208,7 +230,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			// Starting pos. In local space
 			Vec3 pos = getRandom(startingPos, startingPosDeviation);
 
-			if(identRot)
+			if(identityRotation)
 			{
 				pos += getWorldTransform().getOrigin();
 			}
@@ -217,13 +239,13 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 				pos.transform(getWorldTransform());
 			}
 
-			btTransform trf(toBt(Transform(pos,
-				getWorldTransform().getRotation(), 1.0)));
+			btTransform trf(
+				toBt(Transform(pos, getWorldTransform().getRotation(), 1.0)));
 			body.setWorldTransform(trf);
 
 			// do the rest
-			++partNum;
-			if(partNum >= particlesPerEmittion)
+			++particlesCount;
+			if(particlesCount >= particlesPerEmittion)
 			{
 				break;
 			}

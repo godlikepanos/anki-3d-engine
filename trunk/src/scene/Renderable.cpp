@@ -108,8 +108,8 @@ void Renderable::init(PropertyMap& pmap)
 	U32 instancesCount = getRenderableInstancesCount();
 	if(instancesCount > 0)
 	{
-		Vec3* translations;
-		Transform* transforms;
+		const Vec3* translations;
+		const Transform* transforms;
 		U32 size = 0;
 
 		if((translations = getRenderableInstancingTranslations()) != 0)

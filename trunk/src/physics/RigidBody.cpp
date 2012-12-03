@@ -15,7 +15,7 @@ RigidBody::RigidBody(PhysWorld* masterContainer_, const Initializer& init,
 	ANKI_ASSERT(init.shape != nullptr 
 		&& init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
 
-	movable = (movable != nullptr) : movable ? init.movable;
+	movable = (movable != nullptr) ? movable : init.movable;
 
 	Bool isDynamic = (init.mass != 0.0);
 
