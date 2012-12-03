@@ -6,13 +6,16 @@
 namespace anki {
 
 //==============================================================================
-RigidBody::RigidBody(PhysWorld* masterContainer_, const Initializer& init)
+RigidBody::RigidBody(PhysWorld* masterContainer_, const Initializer& init,
+	Movable* movable)
 	: btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, nullptr, 
 		nullptr, btVector3(0.0, 0.0, 0.0))), // dummy init
 		masterContainer(masterContainer_)
 {
 	ANKI_ASSERT(init.shape != nullptr 
 		&& init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
+
+	movable = (movable != nullptr) : movable ? init.movable;
 
 	Bool isDynamic = (init.mass != 0.0);
 

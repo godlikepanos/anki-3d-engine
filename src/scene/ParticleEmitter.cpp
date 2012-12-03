@@ -9,12 +9,16 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-Particle::Particle(F32 timeOfDeath_,
-	const char* name, Scene* scene, // Scene
-	U32 movableFlags, Movable* movParent, // Movable
+Particle::Particle(
+	F32 timeOfDeath_,
+	// Scene
+	const char* name, Scene* scene,
+	// Movable
+	U32 movableFlags, Movable* movParent, 
+	// RigidBody
 	PhysWorld* masterContainer, const Initializer& init)
 	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
-		 RigidBody(masterContainer, init), timeOfDeath(timeOfDeath_)
+		 RigidBody(masterContainer, init, this), timeOfDeath(timeOfDeath_)
 {}
 
 //==============================================================================
@@ -26,12 +30,16 @@ Particle::~Particle()
 //==============================================================================
 
 //==============================================================================
-ParticleEmitter::ParticleEmitter(const char* filename,
-	const char* name, Scene* scene, // Scene
-	U32 movableFlags, Movable* movParent) // Movable
+ParticleEmitter::ParticleEmitter(
+	const char* filename,
+	// SceneNode
+	const char* name, Scene* scene, 
+	// Movable
+	U32 movableFlags, Movable* movParent)
 	: SceneNode(name, scene), Spatial(this, &aabb),
 		Movable(movableFlags, movParent, *this)
 {
+	Renderable::init(*this);
 	init(filename);
 }
 
@@ -78,7 +86,7 @@ const Material& ParticleEmitter::getRenderableMaterial() const
 }
 
 //==============================================================================
-void ParticleEmitter::init(const char* filename)
+void ParticleEmitter::init(const char* filename, Scene* scene)
 {
 	particleEmitterResource.load(filename);
 
@@ -90,35 +98,24 @@ void ParticleEmitter::init(const char* filename)
 	// create the particles
 	collShape.reset(new btSphereShape(size));
 
+	RigidBody::Initializer binit;
+	binit.shape = collShape.get();
+	binit.group = PhysWorld::CG_PARTICLE;
+	binit.mask = PhysWorld::CG_WORD;
+
 	for(U i = 0; i < maxNumOfParticles; i++)
 	{
-		Particle* particle = new Particle(-1.0, getScene(), SNF_NONE, NULL);
-		particle->init(modelName.c_str());
-		particle->disableFlag(SceneNode::SNF_ACTIVE);
-		particle->setWorldTransform(Transform(Vec3(1000000.0),
-			Mat3::getIdentity(), 1.0));
+		init.mass = getRandom(particleMass, particleMassDeviation);
+
+		Particle* particle = new Particle(
+			-1.0, 
+			(getName() + std::to_string(i)).c_str, scene,
+			Movable::MF_NONE, nullptr,
+			&scene->getPhysics(), binit);
 
 		particles.push_back(particle);
 
-		float mass = particleMass +
-			Util::randFloat(particleMassDeviation) * 2.0 -
-			particleMassDeviation;
-
-		RigidBody::Initializer init;
-		init.mass = mass;
-		init.startTrf = toAnki(startingTrf);
-		init.shape = collShape.get();
-		init.sceneNode = particle;
-		init.group = PhysWorld::CG_PARTICLE;
-		init.mask = PhysWorld::CG_ALL ^
-			PhysWorld::CG_PARTICLE;
-
-		RigidBody* body = new RigidBody(
-			getScene().getPhysWorld(), init);
-
 		body->forceActivationState(DISABLE_SIMULATION);
-
-		particle->setNewRigidBody(body);
 	}
 
 	timeLeftForNextEmission = 0.0;
@@ -129,7 +126,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 {
 	SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
 
-	// Opt: We dont have to make extra calculations if the ParticleEmitterNode's
+	// Opt: We dont have to make extra calculations if the ParticleEmitter's
 	// rotation is the identity
 	Bool identRot = getWorldTransform().getRotation() == Mat3::getIdentity();
 

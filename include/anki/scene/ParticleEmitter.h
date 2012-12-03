@@ -14,10 +14,14 @@ namespace anki {
 class Particle: public SceneNode, public Movable, public RigidBody
 {
 public:
-	Particle(F32 timeOfDeath,
-		const char* name, Scene* scene, // Scene
-		U32 movableFlags, Movable* movParent, // Movable
-		PhysWorld* masterContainer, const Initializer& init); // RigidBody
+	Particle(
+		F32 timeOfDeath,
+		// SceneNode
+		const char* name, Scene* scene, 
+		// Movable
+		U32 movableFlags, Movable* movParent,
+		// RigidBody
+		PhysWorld* masterContainer, const RigidBody::Initializer& init); 
 
 	~Particle();
 
@@ -80,6 +84,12 @@ public:
 
 	/// Override SceneNode::getSpatial()
 	Spatial* getSpatial()
+	{
+		return this;
+	}
+
+	/// Override SceneNode::getRenderable()
+	Renderable* getRenderable()
 	{
 		return this;
 	}

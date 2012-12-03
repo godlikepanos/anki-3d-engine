@@ -27,7 +27,8 @@ public:
 	};
 
 	/// Init and register
-	RigidBody(PhysWorld* masterContainer, const Initializer& init);
+	RigidBody(PhysWorld* masterContainer, const Initializer& init, 
+		Movable* movable = nullptr);
 
 	/// Unregister
 	~RigidBody();
