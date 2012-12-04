@@ -68,9 +68,13 @@ class ParticleEmitter: public SceneNode, public Spatial, public Movable,
 	public Renderable, private ParticleEmitterProperties
 {
 public:
-	ParticleEmitter(const char* filename,
-		const char* name, Scene* scene, // Scene
-		U32 movableFlags, Movable* movParent); // Movable
+	ParticleEmitter(
+		const char* filename,
+		// SceneNode
+		const char* name, Scene* scene,
+		// Movable
+		U32 movableFlags, Movable* movParent);
+
 	~ParticleEmitter();
 
 	/// @name SceneNode virtuals
@@ -138,7 +142,7 @@ private:
 	// rotation is the identity
 	Bool identityRotation = true;
 
-	U32 instancesCount; ///< AKA alive
+	U32 instancesCount; ///< AKA alive count
 
 	Vector<Vec3> instancintPositions;
 

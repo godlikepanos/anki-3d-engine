@@ -139,6 +139,7 @@ void RenderableDrawer::setupShaderProg(
 	vis.renderable = &renderable;
 	vis.r = r;
 
+	// Set the uniforms
 	for(auto it = renderable.getVariablesBegin();
 		it != renderable.getVariablesEnd(); ++it)
 	{
@@ -147,6 +148,7 @@ void RenderableDrawer::setupShaderProg(
 		rvar->getMaterialVariable().acceptVisitor(vis);
 	}
 
+	// Write the block
 	const ShaderProgramUniformBlock* block = mtl.getCommonUniformBlock();
 	if(block)
 	{
@@ -155,10 +157,26 @@ void RenderableDrawer::setupShaderProg(
 		renderable.getUbo().write(&vis.clientBlock[0]);
 		renderable.getUbo().setBinding(0);
 	}
+
+	// Write the instancing blocks
+#if 0
+	U32 instancesCount = renderable.getRenderableInstancesCount();
+	const Vec3* translations = renderable.getRenderableInstancingTranslations();
+	if(translations)
+	{
+		ShaderProgramUniformBlock& block = 
+			sprog.findUniformBlock("instancingTranslations");
+		ANKI_ASSERT(block.getBinding() == 1);
+
+		Ubo& ubo = renderable.getInstancingUbo();
+		ubo.write(translations, instancesCount * sizeof(Vec3), 0);
+		ubo.setBinding(1);
+	}
+#endif
 }
 
 //==============================================================================
-void RenderableDrawer::render(const Frustumable& fr, uint pass,
+void RenderableDrawer::render(const Frustumable& fr, U32 pass,
 	Renderable& renderable)
 {
 	/*float dist = (node.getWorldTransform().getOrigin() -
@@ -171,12 +189,24 @@ void RenderableDrawer::render(const Frustumable& fr, uint pass,
 	setupShaderProg(key, fr, renderable);
 
 	// Render
-	U32 indecesCount = renderable.getRenderableModelPatchBase().getIndecesCount(0);
+	U32 indicesCount = 
+		renderable.getRenderableModelPatchBase().getIndecesCount(0);
 
 	const Vao& vao = renderable.getRenderableModelPatchBase().getVao(key);
 	ANKI_ASSERT(vao.getAttachmentsCount() > 1);
 	vao.bind();
-	glDrawElements(GL_TRIANGLES, indecesCount, GL_UNSIGNED_SHORT, 0);
+
+	U32 instancesCount = renderable.getRenderableInstancesCount();
+
+	if(instancesCount == 0)
+	{
+		glDrawElements(GL_TRIANGLES, indicesCount, GL_UNSIGNED_SHORT, 0);
+	}
+	else
+	{
+		glDrawElementsInstanced(
+			GL_TRIANGLES, indicesCount, GL_UNSIGNED_SHORT, 0, instancesCount);
+	}
 }
 
 }  // end namespace anki

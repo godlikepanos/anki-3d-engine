@@ -42,8 +42,10 @@ ParticleEmitter::ParticleEmitter(
 	: SceneNode(name, scene), Spatial(this, &aabb),
 		Movable(movableFlags, movParent, *this)
 {
-	Renderable::init(*this);
 	init(filename, scene);
+
+	instancesCount = particles.size();
+	Renderable::init(*this);
 }
 
 //==============================================================================

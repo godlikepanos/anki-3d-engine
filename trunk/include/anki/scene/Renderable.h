@@ -114,6 +114,11 @@ public:
 	{
 		return ubo;
 	}
+
+	Ubo& getInstancingUbo()
+	{
+		return instancingUbo;
+	}
 	/// @}
 
 protected:
