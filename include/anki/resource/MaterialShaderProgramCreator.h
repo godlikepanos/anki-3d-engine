@@ -21,7 +21,8 @@ public:
 		std::string name;
 		std::string type;
 		StringList value;
-		Bool const_;
+		Bool constant;
+		U32 arraySize;
 	};
 
 	explicit MaterialShaderProgramCreator(const XmlElement& pt, 

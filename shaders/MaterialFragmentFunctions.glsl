@@ -2,14 +2,7 @@
 /// The file contains common functions for fragment operations
 
 #pragma anki include "shaders/Pack.glsl"
-
-/// Generic add
-#define add_DEFINED
-#define add(a, b) (a + b)
-
-/// Generic mul
-#define mul_DEFINED
-#define mul(a, b) (a * b)
+#pragma anki include "shaders/MaterialCommonFunctions.glsl"
 
 /// @param[in] normal The fragment's normal in view space
 /// @param[in] tangent The tangent

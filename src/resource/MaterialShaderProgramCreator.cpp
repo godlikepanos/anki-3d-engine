@@ -41,12 +41,20 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 		
 		for(Input* in : inputs)
 		{
-			if(in->type == "sampler2D" || in->const_)
+			if(in->type == "sampler2D" || in->constant)
 			{
 				continue;
 			}
 
-			block.push_back("\tuniform " + in->type + " " + in->name + ";");
+			std::string line = "\tuniform " + in->type + " " + in->name;
+
+			if(in->arraySize > 1)
+			{
+				line += "[" + std::to_string(in->arraySize) + "U]";
+			}
+
+			line += ";";
+			block.push_back(line);
 		}
 		block.sortAll();
 
@@ -139,33 +147,62 @@ void MaterialShaderProgramCreator::parseInputTag(
 	inpvar->type = inputEl.getChildElement("type").getText();
 	XmlElement constEl = inputEl.getChildElementOptional("const");
 	XmlElement valueEl = inputEl.getChildElement("value");
+	XmlElement arrSizeEl = inputEl.getChildElement("arraySize");
 
+	// Is const?
 	if(constEl)
 	{
-		inpvar->const_ = constEl.getInt();
+		inpvar->constant = constEl.getInt();
 	}
 	else
 	{
-		inpvar->const_ = false;
+		inpvar->constant = false;
 	}
 
+	// Is array?
+	if(arrSizeEl)
+	{
+		inpvar->arraySize = arrSizeEl.getInt();
+	}
+	else
+	{
+		inpvar->arraySize = 0;
+	}
+
+	// Get value
 	if(valueEl.getText())
 	{
 		inpvar->value = StringList::splitString(valueEl.getText(), ' ');
 	}
 
-	if(inpvar->const_ == false)
+	if(inpvar->constant == false)
 	{
+		// Handle non-consts
+
 		if(!(enableUniformBlocks && inpvar->type != "sampler2D"))
 		{
-			line = "uniform " + inpvar->type + " " + inpvar->name + ";";
+			line = "uniform " + inpvar->type + " " + inpvar->name;
+			
+			if(inpvar->arraySize > 1)
+			{
+				line += "[" + std::to_string(inpvar->arraySize) + "U]";
+			}
+
+			line += ";";
 		}
 	}
 	else
 	{
+		// Handle consts
+
 		if(inpvar->value.size() == 0)
 		{
 			throw ANKI_EXCEPTION("Empty value and const is illogical");
+		}
+
+		if(inpvar->arraySize > 0)
+		{
+			throw ANKI_EXCEPTION("Const arrays currently cannot be handled");
 		}
 
 		line = "const " + inpvar->type + " " + inpvar->name + " = "

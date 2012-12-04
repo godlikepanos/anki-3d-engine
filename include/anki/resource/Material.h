@@ -298,6 +298,9 @@ class Material: public MaterialProperties, public NonCopyable
 public:
 	typedef PtrVector<MaterialVariable> VarsContainer;
 
+	/// Type for garbage collection
+	typedef PtrVector<ShaderProgramResourcePointer> ShaderPrograms;
+
 	Material();
 	~Material();
 
@@ -319,6 +322,11 @@ public:
 	const ShaderProgramUniformBlock* getCommonUniformBlock() const
 	{
 		return commonUniformBlock;
+	}
+
+	const ShaderPrograms& getShaderPrograms() const
+	{
+		return progs;
 	}
 	/// @}
 
@@ -344,9 +352,6 @@ public:
 	}
 
 private:
-	/// Type for garbage collection
-	typedef PtrVector<ShaderProgramResourcePointer> ShaderPrograms;
-
 	typedef ConstCharPtrHashMap<MaterialVariable*>::Type
 		NameToVariableHashMap;
 

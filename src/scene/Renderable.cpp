@@ -105,25 +105,23 @@ void Renderable::init(PropertyMap& pmap)
 	}
 
 	// Init the instancing UBO
+#if 0
+	const ShaderProgram* aprog = mtl.getShaderPrograms()[0].get();
 	U32 instancesCount = getRenderableInstancesCount();
-	if(instancesCount > 0)
+	
+	const ShaderProrgamUniformBlock* block = 
+		aprog->tryFindUniformBlock("instancesTranslations");
+	if(block)
 	{
-		const Vec3* translations;
-		const Transform* transforms;
-		U32 size = 0;
-
-		if((translations = getRenderableInstancingTranslations()) != 0)
+		if(instancesCount < 1)
 		{
-			size = sizeof(Vec3) * instancesCount;
-		}
-		else if((transforms = getRenderableInstancingWorldTransforms()) != 0)
-		{
-			size = sizeof(Mat4) * instancesCount;
+			throw ANKI_EXCEPTION("The shader program implies multiple "
+				"instances but the object has zero");
 		}
 
-		ANKI_ASSERT(size != 0);
-		instancingUbo.create(size, nullptr);
+		instancingUbo.create(instancesCount * sizeof(Vec3), nullptr);
 	}
+#endif
 }
 
 }  // end namespace anki
