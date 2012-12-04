@@ -147,7 +147,7 @@ void MaterialShaderProgramCreator::parseInputTag(
 	inpvar->type = inputEl.getChildElement("type").getText();
 	XmlElement constEl = inputEl.getChildElementOptional("const");
 	XmlElement valueEl = inputEl.getChildElement("value");
-	XmlElement arrSizeEl = inputEl.getChildElement("arraySize");
+	XmlElement arrSizeEl = inputEl.getChildElementOptional("arraySize");
 
 	// Is const?
 	if(constEl)
