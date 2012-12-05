@@ -21,9 +21,8 @@ enum BuildinMaterialVariableId
 	BMV_MODEL_VIEW_PROJECTION_MATRIX,
 	BMV_MODEL_VIEW_MATRIX,
 	BMV_NORMAL_MATRIX,
-	BMV_BLURRING,
-	BMV_INSTANCING_TRANSLATIONS,
 	BMV_INSTANCING_MODEL_VIEW_PROJECTION_MATRICES,
+	BMV_BLURRING,
 	BMV_COUNT
 };
 
@@ -83,11 +82,6 @@ public:
 	/// @name Instancing methods
 	/// @{
 
-	virtual const Vec3* getRenderableInstancingTranslations() const
-	{
-		return nullptr;
-	}
-
 	virtual const Transform* getRenderableInstancingWorldTransforms() const
 	{
 		return nullptr;
@@ -95,7 +89,7 @@ public:
 
 	virtual U32 getRenderableInstancesCount() const
 	{
-		return 0;
+		return 1;
 	}
 	/// @}
 

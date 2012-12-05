@@ -144,30 +144,39 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	//
 	Vec3 aabbmin(std::numeric_limits<F32>::max());
 	Vec3 aabbmax(std::numeric_limits<F32>::min());
-	instancesCount = 0;
-	instancintPositions.clear();
+	instancingTransformations.clear();
 	for(Particle* p : particles)
 	{
 		// if its already dead so dont deactivate it again
 		if(!p->isDead() && p->getTimeOfDeath() < crntTime)
 		{
-			//cout << "Killing " << i << " " << p.timeOfDeath << endl;
 			p->setActivationState(DISABLE_SIMULATION);
 			p->setTimeOfDeath(-1.0);
-
+		}
+		else
+		{
 			const Vec3& origin = p->Movable::getWorldTransform().getOrigin();
+
 			for(U i = 0; i < 3; i++)
 			{
 				aabbmin[i] = std::min(aabbmin[i], origin[i]);
 				aabbmax[i] = std::max(aabbmax[i], origin[i]);
 			}
 
-			++instancesCount;
-			instancintPositions.push_back(origin);
+			instancingTransformations.push_back(
+				p->Movable::getWorldTransform());
 		}
 	}
 
-	aabb = Aabb(aabbmin, aabbmax);
+	instancesCount = instancingTransformations.size();
+	if(instancesCount != 0)
+	{
+		aabb = Aabb(aabbmin - size, aabbmax + size);
+	}
+	else
+	{
+		aabb = Aabb(Vec3(0.0), Vec3(0.01));
+	}
 	spatialMarkUpdated();
 
 	// pre calculate

@@ -29,7 +29,7 @@ RigidBody::RigidBody(PhysWorld* masterContainer_, const Initializer& init,
 		localInertia = btVector3(0.0, 0.0, 0.0);
 	}
 
-	motionState = MotionState(init.startTrf, init.movable);
+	motionState = MotionState(init.startTrf, movable);
 
 	btRigidBody::btRigidBodyConstructionInfo cInfo(
 		init.mass, &motionState, init.shape, localInertia);

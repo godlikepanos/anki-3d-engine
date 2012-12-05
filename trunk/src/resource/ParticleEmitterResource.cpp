@@ -54,10 +54,10 @@ void ParticleEmitterResource::load(const char* /*filename*/)
 	startingPos = Vec3(0.0, 1.0, 0.0);
 	startingPosDeviation = Vec3(0.0, 0.0, 0.0);
 	size = 0.5;
-	maxNumOfParticles = 50;
+	maxNumOfParticles = 16;
 	emissionPeriod = 1.0;
 	particlesPerEmittion = 1;
-	model.load("data/models/horse/horse.mdl");
+	model.load("data/particles/fire/fire.mdl");
 
 	// sanity checks
 	//

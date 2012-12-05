@@ -73,7 +73,7 @@ void Dbg::run()
 		sceneDrawer->draw(sector->getOctree());
 	}
 
-	/*scene.getPhysics().debugDraw();*/
+	scene.getPhysics().debugDraw();
 
 	drawer->flush();
 }

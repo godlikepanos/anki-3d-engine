@@ -46,7 +46,6 @@ struct SetupMaterialVariableVisitor
 
 		Mat4 mMat = (rwtrf) ? Mat4(*rwtrf) : Mat4::getIdentity();
 		const Mat4& vpMat = fr->getViewProjectionMatrix();
-		Mat4 mvpMat = vpMat * mMat;
 
 		Mat4 mvMat;
 		Bool mvMatCalculated = false; // Opt
@@ -57,7 +56,10 @@ struct SetupMaterialVariableVisitor
 			uniSet(*uni, x);
 			break;
 		case BMV_MODEL_VIEW_PROJECTION_MATRIX:
-			uniSet(*uni, mvpMat);
+			{
+				Mat4 mvpMat = vpMat * mMat;
+				uniSet(*uni, mvpMat);
+			}
 			break;
 		case BMV_MODEL_VIEW_MATRIX:
 			if(!mvMatCalculated)
@@ -74,6 +76,24 @@ struct SetupMaterialVariableVisitor
 				mvMatCalculated = true;
 			}
 			uniSet(*uni, mvMat.getRotationPart());
+			break;
+		case BMV_INSTANCING_MODEL_VIEW_PROJECTION_MATRICES:
+			{
+				U32 instancesCount = renderable->getRenderableInstancesCount();
+
+				Array<Mat4, 64> mvps;
+				ANKI_ASSERT(mvps.getSize() >= instancesCount);
+				const Transform* trfs =
+					renderable->getRenderableInstancingWorldTransforms();
+				ANKI_ASSERT(trfs != nullptr);
+
+				for(U i = 0; i < instancesCount; i++)
+				{
+					mvps[i] = vpMat * Mat4(trfs[0]);
+				}
+
+				uni->set(&mvps[0], instancesCount);
+			}
 			break;
 		case BMV_BLURRING:
 			uniSet(*uni, 0.0);
@@ -157,22 +177,6 @@ void RenderableDrawer::setupShaderProg(
 		renderable.getUbo().write(&vis.clientBlock[0]);
 		renderable.getUbo().setBinding(0);
 	}
-
-	// Write the instancing blocks
-#if 0
-	U32 instancesCount = renderable.getRenderableInstancesCount();
-	const Vec3* translations = renderable.getRenderableInstancingTranslations();
-	if(translations)
-	{
-		ShaderProgramUniformBlock& block = 
-			sprog.findUniformBlock("instancingTranslations");
-		ANKI_ASSERT(block.getBinding() == 1);
-
-		Ubo& ubo = renderable.getInstancingUbo();
-		ubo.write(translations, instancesCount * sizeof(Vec3), 0);
-		ubo.setBinding(1);
-	}
-#endif
 }
 
 //==============================================================================
@@ -182,6 +186,13 @@ void RenderableDrawer::render(const Frustumable& fr, U32 pass,
 	/*float dist = (node.getWorldTransform().getOrigin() -
 		cam.getWorldTransform().getOrigin()).getLength();
 	uint lod = std::min(r.calculateLod(dist), mtl.getLevelsOfDetail() - 1);*/
+
+	U32 instancesCount = renderable.getRenderableInstancesCount();
+
+	if(instancesCount < 1)
+	{
+		return;
+	}
 
 	PassLevelKey key(pass, 0);
 
@@ -196,9 +207,7 @@ void RenderableDrawer::render(const Frustumable& fr, U32 pass,
 	ANKI_ASSERT(vao.getAttachmentsCount() > 1);
 	vao.bind();
 
-	U32 instancesCount = renderable.getRenderableInstancesCount();
-
-	if(instancesCount == 0)
+	if(instancesCount == 1)
 	{
 		glDrawElements(GL_TRIANGLES, indicesCount, GL_UNSIGNED_SHORT, 0);
 	}
