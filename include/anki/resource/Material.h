@@ -88,6 +88,12 @@ public:
 	/// Get the name of all the shader program variables
 	const std::string& getName() const;
 
+	const ShaderProgramUniformVariable&
+		getAShaderProgramUniformVariable() const
+	{
+		return *oneSProgVar;
+	}
+
 	/// If false then it should be buildin
 	virtual Bool hasValue() const = 0;
 	/// @}

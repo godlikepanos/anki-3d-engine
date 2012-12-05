@@ -53,61 +53,61 @@ void ShaderProgramUniformVariable::set(const Vec2& x) const
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const F32 x[], uint size) const
+void ShaderProgramUniformVariable::set(const F32 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT);
-	ANKI_ASSERT(getSize() == size);
+	ANKI_ASSERT(size <= getSize());
 	
 	glUniform1fv(getLocation(), size, x);
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Vec2 x[], uint size) const
+void ShaderProgramUniformVariable::set(const Vec2 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC2);
-	ANKI_ASSERT(getSize() == size);
+	ANKI_ASSERT(size <= getSize());
 
 	glUniform2fv(getLocation(), size, &(const_cast<Vec2&>(x[0]))[0]);
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Vec3 x[], uint size) const
+void ShaderProgramUniformVariable::set(const Vec3 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC3);
-	ANKI_ASSERT(getSize() == size);
+	ANKI_ASSERT(size <= getSize());
 
 	glUniform3fv(getLocation(), size, &(const_cast<Vec3&>(x[0]))[0]);
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Vec4 x[], uint size) const
+void ShaderProgramUniformVariable::set(const Vec4 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC4);
-	ANKI_ASSERT(getSize() == size);
+	ANKI_ASSERT(size <= getSize());
 	
 	glUniform4fv(getLocation(), size, &(const_cast<Vec4&>(x[0]))[0]);
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Mat3 x[], uint size) const
+void ShaderProgramUniformVariable::set(const Mat3 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_MAT3);
-	ANKI_ASSERT(getSize() == size);
+	ANKI_ASSERT(size <= getSize());
 
 	glUniformMatrix3fv(getLocation(), size, true, &(x[0])[0]);
 }
 
 //==============================================================================
-void ShaderProgramUniformVariable::set(const Mat4 x[], uint size) const
+void ShaderProgramUniformVariable::set(const Mat4 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_MAT4);
-	ANKI_ASSERT(getSize() == size);
+	ANKI_ASSERT(size <= getSize());
 
 	glUniformMatrix4fv(getLocation(), size, true, &(x[0])[0]);
 }
@@ -647,10 +647,20 @@ void ShaderProgram::initUniAndAttribVars()
 		// overpopulate the uniforms vector and hash map. So, to solve this if 
 		// the uniform name has something like this "[N]" where N != 0 then 
 		// ignore the uniform and put it as array
-		if(strchr(&name_[0], '[') != nullptr 
-			&& strstr(&name_[0], "[0]") == nullptr)
+		if(strchr(&name_[0], '[') != nullptr)
 		{
-			continue;
+			// Found bracket
+
+			if(strstr(&name_[0], "[0]") == nullptr)
+			{
+				// Found something other than "[0]"
+				continue;
+			}
+			else
+			{
+				// Cut the bracket stuff
+				name_[length - 3] = '\0';
+			}
 		}
 
 		ShaderProgramUniformVariable& var = unis[unisCount++];

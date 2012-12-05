@@ -111,10 +111,10 @@ public:
 	/// Implements  Renderable::getMaterial
 	const Material& getRenderableMaterial() const;
 
-	/// Overrides Renderable::getRenderableInstancingTranslations
-	virtual const Vec3* getRenderableInstancingTranslations() const
+	/// Overrides Renderable::getRenderableInstancingTransformations
+	virtual const Transform* getRenderableInstancingWorldTransforms() const
 	{
-		return &instancintPositions[0];
+		return &instancingTransformations[0];
 	}
 
 	virtual U32 getRenderableInstancesCount() const
@@ -144,7 +144,7 @@ private:
 
 	U32 instancesCount; ///< AKA alive count
 
-	Vector<Vec3> instancintPositions;
+	Vector<Transform> instancingTransformations;
 
 	void init(const char* filename, Scene* scene);
 

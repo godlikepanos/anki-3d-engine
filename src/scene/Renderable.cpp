@@ -38,10 +38,8 @@ static Array<const char*, BMV_COUNT - 1> buildinNames = {{
 	"modelViewProjectionMat",
 	"modelViewMat",
 	"normalMat",
-	"blurring",
-	"instancingTranslations",
-	"instancingModelViewProjectionMatrices"
-}};
+	"instancingModelViewProjectionMatrices",
+	"blurring"}};
 
 //==============================================================================
 RenderableMaterialVariable::RenderableMaterialVariable(
@@ -104,24 +102,16 @@ void Renderable::init(PropertyMap& pmap)
 		ubo.create(block->getSize(), nullptr);
 	}
 
-	// Init the instancing UBO
-#if 0
-	const ShaderProgram* aprog = mtl.getShaderPrograms()[0].get();
+	// Instancing sanity checks
 	U32 instancesCount = getRenderableInstancesCount();
-	
-	const ShaderProrgamUniformBlock* block = 
-		aprog->tryFindUniformBlock("instancesTranslations");
-	if(block)
-	{
-		if(instancesCount < 1)
-		{
-			throw ANKI_EXCEPTION("The shader program implies multiple "
-				"instances but the object has zero");
-		}
+	const MaterialVariable* mv =
+		mtl.findVariableByName("instancingModelViewProjectionMatrices");
 
-		instancingUbo.create(instancesCount * sizeof(Vec3), nullptr);
+	if(mv && mv->getAShaderProgramUniformVariable().getSize() < instancesCount)
+	{
+		throw ANKI_EXCEPTION("The renderable needs more instances that the "
+			"shader program can handle");
 	}
-#endif
 }
 
 }  // end namespace anki
