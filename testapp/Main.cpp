@@ -306,10 +306,10 @@ void mainLoopExtra()
 	{
 		mover = SceneSingleton::get().findSceneNode("spot1").getMovable();
 	}
-	/*if(in.getKey(KC_5))
+	if(in.getKey(KC_5))
 	{
-		mover = SceneSingleton::get().findSceneNode("point1")->getMovable();
-	}*/
+		mover = SceneSingleton::get().findSceneNode("pe").getMovable();
+	}
 	if(in.getKey(KC_6))
 	{
 		mover = SceneSingleton::get().findSceneNode("camera1").getMovable();
@@ -457,7 +457,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = true;
+	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.groundLightEnabled = false;
 	initializer.is.sm.enabled = true;

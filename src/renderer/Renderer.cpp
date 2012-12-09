@@ -34,6 +34,7 @@ void Renderer::init(const RendererInitializer& initializer)
 
 	ms.init(initializer);;
 	is.init(initializer);
+	bs.init(initializer);
 	pps.init(initializer);
 	bs.init(initializer);
 
@@ -83,11 +84,11 @@ void Renderer::render(Scene& scene_)
 	tiler.updateTiles(scene->getActiveCamera(), ms.getDepthFai());
 	ms.run();
 	is.run();
+	bs.run();
 	if(pps.getEnabled())
 	{
 		pps.run();
 	}
-	//bs.run();
 
 	ANKI_CHECK_GL_ERROR();
 	++framesNum;

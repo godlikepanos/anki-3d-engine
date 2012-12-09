@@ -89,7 +89,7 @@ struct SetupMaterialVariableVisitor
 
 				for(U i = 0; i < instancesCount; i++)
 				{
-					mvps[i] = vpMat * Mat4(trfs[0]);
+					mvps[i] = vpMat * Mat4(trfs[i]);
 				}
 
 				uni->set(&mvps[0], instancesCount);
@@ -180,9 +180,33 @@ void RenderableDrawer::setupShaderProg(
 }
 
 //==============================================================================
-void RenderableDrawer::render(const Frustumable& fr, U32 pass,
-	Renderable& renderable)
+void RenderableDrawer::render(const Frustumable& fr, RenderingStage stage,
+	U32 pass, Renderable& renderable)
 {
+	const Material& mtl = renderable.getRenderableMaterial();
+
+	Bool blending = mtl.isBlendingEnabled();
+
+	if(blending)
+	{
+		if(stage != RS_BLEND)
+		{
+			return;
+		}
+
+		GlStateSingleton::get().setBlendFunctions(
+			mtl.getBlendingSfactor(), mtl.getBlendingDfactor());
+	}
+	else
+	{
+		if(stage == RS_BLEND)
+		{
+			return;
+		}
+	}
+
+	GlStateSingleton::get().enable(GL_BLEND, blending);
+
 	/*float dist = (node.getWorldTransform().getOrigin() -
 		cam.getWorldTransform().getOrigin()).getLength();
 	uint lod = std::min(r.calculateLod(dist), mtl.getLevelsOfDetail() - 1);*/

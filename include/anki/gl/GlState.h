@@ -74,6 +74,8 @@ public:
 	void setClearDepthValue(const GLfloat depth);
 
 	void setClearStencilValue(const GLint s);
+
+	void setBlendFunctions(const GLenum sFactor, const GLenum dFactor);
 	/// @}
 
 private:
@@ -84,6 +86,7 @@ private:
 	Vec4 clearColor;
 	GLfloat clearDepthValue;
 	GLint clearStencilValue;
+	Array<GLenum, 2> blendFuncs;
 
 	// XXX
 	GLenum depthFunc; 

@@ -102,6 +102,10 @@ void GlState::sync()
 
 	// clear stencil value
 	glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &clearStencilValue);
+
+	// blend funcs
+	glGetIntegerv(GL_BLEND_SRC, (GLint*)&blendFuncs[0]);
+	glGetIntegerv(GL_BLEND_DST, (GLint*)&blendFuncs[1]);
 }
 
 //==============================================================================
@@ -165,6 +169,25 @@ void GlState::setClearStencilValue(const GLint s)
 	{
 		glClearStencil(s);
 		clearStencilValue = s;
+	}
+}
+
+//==============================================================================
+void GlState::setBlendFunctions(const GLenum sFactor, const GLenum dFactor)
+{
+#if ANKI_DEBUG
+	GLint real;
+	glGetIntegerv(GL_BLEND_SRC, &real);
+	ANKI_ASSERT(blendFuncs[0] == (GLenum)real);
+	glGetIntegerv(GL_BLEND_DST, &real);
+	ANKI_ASSERT(blendFuncs[1] == (GLenum)real);
+#endif
+
+	if(sFactor != blendFuncs[0] || dFactor != blendFuncs[1])
+	{
+		glBlendFunc(sFactor, dFactor);
+		blendFuncs[0] = sFactor;
+		blendFuncs[1] = dFactor;
 	}
 }
 

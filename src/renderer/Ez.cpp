@@ -33,7 +33,8 @@ void Ez::run()
 	for(auto it = vi.getRenderablesBegin();
 		it != vi.getRenderablesEnd() && count < maxObjectsToDraw; ++it)
 	{
-		r->getSceneDrawer().render(cam, 0, *((*it)->getRenderable()));
+		r->getSceneDrawer().render(cam, RenderableDrawer::RS_MATERIAL,
+			0, *((*it)->getRenderable()));
 		++count;
 	}
 
