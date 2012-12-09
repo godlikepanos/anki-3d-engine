@@ -20,17 +20,8 @@ public:
 
 	void init(const RendererInitializer& initializer);
 	void run();
-
-private:
-	Fbo fbo; ///< Writes to Pps::prePassFai
-	Fbo refractFbo; ///< Writes to refractFai
-	ShaderProgramResourcePointer refractSProg;
-	Texture refractFai;
-
-	void createFbo();
-	void createRefractFbo();
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

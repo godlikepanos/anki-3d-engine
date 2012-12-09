@@ -80,6 +80,8 @@ void Pps::run()
 {
 	ANKI_ASSERT(enabled);
 
+	GlStateSingleton::get().disable(GL_BLEND);
+
 	// First SSAO because it depends on MS where HDR depends on IS
 	if(ssao.getEnabled())
 	{

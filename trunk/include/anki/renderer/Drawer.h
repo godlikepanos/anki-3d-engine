@@ -16,6 +16,12 @@ class RenderableDrawer
 public:
 	static const U UNIFORM_BLOCK_MAX_SIZE = 256;
 
+	enum RenderingStage
+	{
+		RS_MATERIAL,
+		RS_BLEND
+	};
+
 	/// The one and only constructor
 	RenderableDrawer(Renderer* r_)
 		: r(r_)
@@ -25,7 +31,7 @@ public:
 	{}
 
 	void render(const Frustumable& fr,
-		U32 pass, Renderable& renderable);
+		RenderingStage stage, U32 pass, Renderable& renderable);
 
 private:
 	Renderer* r;

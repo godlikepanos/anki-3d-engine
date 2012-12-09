@@ -25,6 +25,8 @@ void main()
 
 #pragma anki start fragmentShader
 
+precision mediump float;
+
 // Preprocessor switches sanity checks
 #if !defined(VPASS) && !defined(HPASS)
 #	error "See file"
@@ -38,7 +40,7 @@ void main()
 #	error "See file"
 #endif
 
-uniform sampler2D img; ///< Input FAI
+uniform mediump sampler2D img; ///< Input FAI
 
 in vec2 vTexCoords;
 in vec2 vOffsets;

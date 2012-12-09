@@ -78,8 +78,8 @@ void Ms::run()
 		r->getScene().getActiveCamera().getFrustumable()->getVisibilityInfo();
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
-		r->getSceneDrawer().render(r->getScene().getActiveCamera(), 0, 
-			*((*it)->getRenderable()));
+		r->getSceneDrawer().render(r->getScene().getActiveCamera(),
+			RenderableDrawer::RS_MATERIAL, 0, *((*it)->getRenderable()));
 	}
 
 	// restore depth

@@ -598,6 +598,8 @@ void Is::run()
 	Scene& scene = r->getScene();
 	cam = &scene.getActiveCamera();
 
+	GlStateSingleton::get().disable(GL_BLEND);
+
 	// Ground light direction
 	Vec3 groundLightDir;
 	if(groundLightEnabled)

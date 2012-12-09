@@ -167,6 +167,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 		SceneNode* node = *it;
 		Frustumable* bfr = node->getFrustumable();
 		Movable* bmov = node->getMovable();
+		Spatial* sp = node->getSpatial();
 
 		if(bfr)
 		{
@@ -176,6 +177,11 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 		if(bmov)
 		{
 			lastUpdate = std::max(lastUpdate, bmov->getMovableTimestamp());
+		}
+
+		if(sp)
+		{
+			lastUpdate = std::max(lastUpdate, sp->getSpatialTimestamp());
 		}
 	}
 
@@ -198,7 +204,8 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
-		r->getSceneDrawer().render(*fr, 1, *((*it)->getRenderable()));
+		r->getSceneDrawer().render(*fr, RenderableDrawer::RS_MATERIAL,
+			1, *((*it)->getRenderable()));
 	}
 
 	return &sm;
