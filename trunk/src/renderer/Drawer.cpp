@@ -23,13 +23,14 @@ struct SetupMaterialVariableVisitor
 
 	/// Set a uniform in a client block
 	template<typename T>
-	void uniSet(const ShaderProgramUniformVariable& uni, const T& value)
+	void uniSet(const ShaderProgramUniformVariable& uni,
+		const T* value, U32 size)
 	{
 		ANKI_ASSERT(0);
 	}
 
-	template<typename TProp>
-	void visit(TProp& x)
+	template<typename MtlVariableTemplate>
+	void visit(MtlVariableTemplate& x)
 	{
 		const MaterialVariable& mv = rvar->getMaterialVariable();
 
@@ -53,12 +54,13 @@ struct SetupMaterialVariableVisitor
 		switch(rvar->getBuildinId())
 		{
 		case BMV_NO_BUILDIN:
-			uniSet(*uni, x);
+			uniSet<typename MtlVariableTemplate::Type>(
+				*uni, x.get(), x.getValuesCount());
 			break;
 		case BMV_MODEL_VIEW_PROJECTION_MATRIX:
 			{
 				Mat4 mvpMat = vpMat * mMat;
-				uniSet(*uni, mvpMat);
+				uniSet(*uni, &mvpMat, 1);
 			}
 			break;
 		case BMV_MODEL_VIEW_MATRIX:
@@ -67,15 +69,18 @@ struct SetupMaterialVariableVisitor
 				mvMat = fr->getViewMatrix() * mMat;
 				mvMatCalculated = true;
 			}
-			uniSet(*uni, mvMat);
+			uniSet(*uni, &mvMat, 1);
 			break;
 		case BMV_NORMAL_MATRIX:
-			if(!mvMatCalculated)
 			{
-				mvMat = fr->getViewMatrix() * mMat;
-				mvMatCalculated = true;
+				if(!mvMatCalculated)
+				{
+					mvMat = fr->getViewMatrix() * mMat;
+					mvMatCalculated = true;
+				}
+				Mat3 rot = mvMat.getRotationPart();
+				uniSet(*uni, &rot, 1);
 			}
-			uniSet(*uni, mvMat.getRotationPart());
 			break;
 		case BMV_INSTANCING_MODEL_VIEW_PROJECTION_MATRICES:
 			{
@@ -96,7 +101,10 @@ struct SetupMaterialVariableVisitor
 			}
 			break;
 		case BMV_BLURRING:
-			uniSet(*uni, 0.0);
+			{
+				F32 blurring = 0.0;
+				uniSet(*uni, &blurring, 1);
+			}
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -110,17 +118,18 @@ struct SetupMaterialVariableVisitor
 #define TEMPLATE_SPECIALIZATION(type) \
 	template<> \
 	void SetupMaterialVariableVisitor::uniSet<type>( \
-		const ShaderProgramUniformVariable& uni, const type& value) \
+		const ShaderProgramUniformVariable& uni, const type* values, \
+		U32 size) \
 	{ \
 		if(uni.getUniformBlock()) \
 		{ \
 			uni.setClientMemory(&clientBlock[0], \
 				RenderableDrawer::UNIFORM_BLOCK_MAX_SIZE, \
-				&value, 1); \
+				values, size); \
 		} \
 		else \
 		{ \
-			uni.set(value); \
+			uni.set(values, size); \
 		} \
 	}
 
@@ -135,9 +144,10 @@ TEMPLATE_SPECIALIZATION(Mat4)
 template<>
 void SetupMaterialVariableVisitor::uniSet<TextureResourcePointer>(
 	const ShaderProgramUniformVariable& uni, 
-	const TextureResourcePointer& value)
+	const TextureResourcePointer* values, U32 size)
 {
-	const Texture* tex = value.get();
+	ANKI_ASSERT(size == 1);
+	const Texture* tex = values->get();
 	uni.set(*tex);
 }
 
