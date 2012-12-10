@@ -19,23 +19,38 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-template<typename Type, size_t n>
-static Type setMathType(const StringList& list)
+struct SetMaterialVariableValuesVisitor
 {
-	Type out;
+	const StringList& list;
 
-	if(list.size() != n)
+	SetMaterialVariableValuesVisitor(const StringList& list_)
+		: list(list_)
+	{}
+
+	template<typename TMaterialVariableTemplate>
+	void visit(TMaterialVariableTemplate& mv)
 	{
-		throw ANKI_EXCEPTION("Incorrect number of values");
-	}
+		typedef typename TMaterialVariableTemplate::Type Type;
 
-	for(U i = 0; i < n; ++i)
-	{
-		out[i] = std::stof(list[i]);
-	}
+		U32 floatsNeeded = mv.getAShaderProgramUniformVariable().getSize()
+			* (sizeof(Type) / sizeof(F32));
 
-	return out;
-}
+		if(list.size() != floatsNeeded)
+		{
+			throw ANKI_EXCEPTION("Incorrect number of values");
+		}
+
+		Vector<F32> floatvec;
+		floatvec.resize(floatsNeeded);
+		for(U i = 0; i < floatsNeeded; ++i)
+		{
+			floatvec[i] = std::stof(list[i]);
+		}
+
+		mv.set((Type*)&floatvec[0],
+			mv.getAShaderProgramUniformVariable().getSize());
+	}
+};
 
 //==============================================================================
 /// Given a string that defines blending return the GLenum
@@ -414,23 +429,20 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 			{
 			// sampler2D
 			case GL_SAMPLER_2D:
-				v->setValue(TextureResourcePointer(value[0].c_str()));
+				{
+					TextureResourcePointer tp(value[0].c_str());
+					v->setValues(&tp, 1);
+				}
 				break;
-			// F32
+			// Math types
 			case GL_FLOAT:
-				v->setValue(std::stof(value[0]));
-				break;
-			// vec2
 			case GL_FLOAT_VEC2:
-				v->setValue(setMathType<Vec2, 2>(value));
-				break;
-			// vec3
 			case GL_FLOAT_VEC3:
-				v->setValue(setMathType<Vec3, 3>(value));
-				break;
-			// vec4
 			case GL_FLOAT_VEC4:
-				v->setValue(setMathType<Vec4, 4>(value));
+				{
+					SetMaterialVariableValuesVisitor vis(value);
+					v->acceptVisitor(vis);
+				}
 				break;
 			// default is error
 			default:

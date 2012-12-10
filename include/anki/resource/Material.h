@@ -24,13 +24,23 @@ class ShaderProgramUniformBlock;
 const U32 MATERIAL_MAX_PASSES = 4;
 const U32 MATERIAL_MAX_LODS = 4;
 
-/// Material variable base. Its a visitable
-typedef Visitable<F32, Vec2, Vec3, Vec4, Mat3, Mat4, TextureResourcePointer> 
-	MateriaVariableVisitable;
-
 // Forward
 template<typename T>
 class MaterialVariableTemplate;
+
+class MaterialVariable;
+
+/// Material variable base. Its a visitable
+typedef VisitableCommonBase<
+	MaterialVariable,
+	MaterialVariableTemplate<F32>,
+	MaterialVariableTemplate<Vec2>,
+	MaterialVariableTemplate<Vec3>,
+	MaterialVariableTemplate<Vec4>,
+	MaterialVariableTemplate<Mat3>,
+	MaterialVariableTemplate<Mat4>,
+	MaterialVariableTemplate<TextureResourcePointer>>
+	MateriaVariableVisitable;
 
 /// Holds the shader variables. Its a container for shader program variables
 /// that share the same name
@@ -59,18 +69,22 @@ public:
 	/// @name Accessors
 	/// @{
 	template<typename T>
-	const T& getValue() const
+	const T* getValues() const
 	{
-		ANKI_ASSERT(Base::getVariadicTypeId<T>() == Base::getVisitableTypeId());
+		ANKI_ASSERT(Base::getVariadicTypeId<MaterialVariableTemplate<T>>()
+			== Base::getVisitableTypeId());
 		return static_cast<const MaterialVariableTemplate<T>*>(this)->get();
 	}
 
 	template<typename T>
-	void setValue(const T& x)
+	void setValues(const T* x, U32 size)
 	{
-		ANKI_ASSERT(Base::getVariadicTypeId<T>() == Base::getVisitableTypeId());
-		static_cast<MaterialVariableTemplate<T>*>(this)->set(x);
+		ANKI_ASSERT(Base::getVariadicTypeId<MaterialVariableTemplate<T>>()
+			== Base::getVisitableTypeId());
+		static_cast<MaterialVariableTemplate<T>*>(this)->set(x, size);
 	}
+
+	virtual U32 getValuesCount() const = 0;
 
 	/// Given a key return the uniform. If the uniform is not present in the
 	/// LOD pass key then returns nullptr
@@ -95,7 +109,10 @@ public:
 	}
 
 	/// If false then it should be buildin
-	virtual Bool hasValue() const = 0;
+	Bool hasValue() const
+	{
+		return getValuesCount() > 0;
+	}
 	/// @}
 
 private:
@@ -115,6 +132,8 @@ template<typename Data>
 class MaterialVariableTemplate: public MaterialVariable
 {
 public:
+	typedef Data Type;
+
 	/// @name Constructors/Destructor
 	/// @{
 	MaterialVariableTemplate(
@@ -122,7 +141,7 @@ public:
 		PassLevelToShaderProgramHashMap& progs)
 		: MaterialVariable(shaderProgVarName, progs)
 	{
-		setupVisitable(&data);
+		setupVisitable(this);
 	}
 
 	~MaterialVariableTemplate()
@@ -131,27 +150,28 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Data& get() const
+	const Data* get() const
 	{
-		ANKI_ASSERT(dataSet == true);
-		return data;
+		ANKI_ASSERT(data.size() > 0);
+		return &data[0];
 	}
 
-	void set(const Data& x)
+	void set(const Data* x, U32 size)
 	{
-		data = x;
-		dataSet = true;
+		if(size > 0)
+		{
+			data.insert(data.begin(), x, x + size);
+		}
+	}
+
+	U32 getValuesCount() const
+	{
+		return data.size();
 	}
 	/// @}
 
-	Bool hasValue() const
-	{
-		return dataSet;
-	}
-
 private:
-	Data data;
-	Bool dataSet = false;
+	Vector<Data> data;
 };
 
 /// Contains a few properties that other classes may use. For an explanation of
