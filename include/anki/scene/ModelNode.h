@@ -80,8 +80,8 @@ public:
 		return modelPatch->getMaterial();
 	}
 
-	/// Overrides Renderable::getRenderableWorldTransform
-	const Transform* getRenderableWorldTransform() const
+	/// Overrides Renderable::getRenderableWorldTransforms
+	const Transform* getRenderableWorldTransforms() const
 	{
 		return &getWorldTransform();
 	}

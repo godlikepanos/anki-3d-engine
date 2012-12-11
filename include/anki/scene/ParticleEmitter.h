@@ -111,12 +111,13 @@ public:
 	/// Implements  Renderable::getMaterial
 	const Material& getRenderableMaterial() const;
 
-	/// Overrides Renderable::getRenderableInstancingTransformations
-	virtual const Transform* getRenderableInstancingWorldTransforms() const
+	/// Overrides Renderable::getRenderableWorldTransforms
+	virtual const Transform* getRenderableWorldTransforms() const
 	{
 		return &instancingTransformations[0];
 	}
 
+	/// Overrides Renderable::getRenderableInstancesCount
 	virtual U32 getRenderableInstancesCount() const
 	{
 		return instancesCount;
