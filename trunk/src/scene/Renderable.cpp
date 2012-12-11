@@ -38,7 +38,6 @@ static Array<const char*, BMV_COUNT - 1> buildinNames = {{
 	"modelViewProjectionMat",
 	"modelViewMat",
 	"normalMat",
-	"instancingModelViewProjectionMatrices",
 	"blurring"}};
 
 //==============================================================================

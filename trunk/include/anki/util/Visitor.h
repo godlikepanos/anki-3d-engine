@@ -10,6 +10,7 @@
 
 #include "anki/util/Assert.h"
 #include "anki/util/Array.h"
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
@@ -44,12 +45,12 @@ struct GetVariadicTypeId
 	template<typename Type, typename... Types_>
 	struct Helper<Type, Type, Types_...>
 	{
-		static const int ID = sizeof...(Types_);
+		static const I ID = sizeof...(Types_);
 	};
 
 	/// Get the id
 	template<typename Type>
-	static constexpr int get()
+	static constexpr I get()
 	{
 		return sizeof...(Types) - Helper<Type, Types...>::ID - 1;
 	}
@@ -67,11 +68,11 @@ template<typename... Types>
 struct GetTypeUsingId
 {
 	// Forward declaration
-	template<int id, typename... Types_>
+	template<I id, typename... Types_>
 	struct Helper;
 
 	// Declaration
-	template<int id, typename TFirst, typename... Types_>
+	template<I id, typename TFirst, typename... Types_>
 	struct Helper<id, TFirst, Types_...>: Helper<id - 1, Types_...>
 	{};
 
@@ -82,120 +83,9 @@ struct GetTypeUsingId
 		typedef TFirst DataType;
 	};
 
-	template<int id>
+	template<I id>
 	using DataType = typename Helper<id, Types...>::DataType;
 };
-
-/// A simple struct that creates an array of pointers to functions that have
-/// the same arguments but different body
-template<typename TVisitor, typename... Types>
-class JumpTable
-{
-public:
-	using FuncPtr = void (*)(TVisitor&, void*);
-
-	JumpTable()
-	{
-		init<Types...>();
-	}
-
-	/// Accessor
-	FuncPtr operator[](int i) const
-	{
-		return jumps[i];
-	}
-
-private:
-	/// Pointers to JumpPoint::visit static methods
-	Array<FuncPtr, sizeof...(Types)> jumps;
-
-	template<typename T>
-	static void visit(TVisitor& v, void* address)
-	{
-		v.template visit(*reinterpret_cast<T*>(address));
-	}
-
-	template<typename TFirst>
-	void init()
-	{
-		jumps[0] = &visit<TFirst>;
-	}
-
-	template<typename TFirst, typename TSecond, typename... Types_>
-	void init()
-	{
-		constexpr int i = sizeof...(Types) - sizeof...(Types_) - 1;
-		jumps[i] = &visit<TSecond>;
-		init<TFirst, Types_...>();
-	}
-};
-
-/// Jump table for types with common base
-template<typename TVisitor, typename TBase, typename... Types>
-class JumpTableCommonBase
-{
-public:
-	using FuncPtr = void (*)(TVisitor&, TBase&);
-
-	JumpTableCommonBase()
-	{
-		init<Types...>();
-	}
-
-	/// Accessor
-	FuncPtr operator[](int i) const
-	{
-		return jumps[i];
-	}
-
-private:
-	/// Pointers to JumpPoint::visit static methods
-	Array<FuncPtr, sizeof...(Types)> jumps;
-
-	template<typename T>
-	static void visit(TVisitor& v, TBase& base)
-	{
-		v.template visit(static_cast<T&>(base));
-	}
-
-	template<typename TFirst>
-	void init()
-	{
-		jumps[0] = &visit<TFirst>;
-	}
-
-	template<typename TFirst, typename TSecond, typename... Types_>
-	void init()
-	{
-		constexpr int i = sizeof...(Types) - sizeof...(Types_) - 1;
-		jumps[i] = &visit<TSecond>;
-		init<TFirst, Types_...>();
-	}
-};
-
-/// A simple struct that contains a static field with jump points
-template<typename TDerived, typename... Types>
-struct VisitorWrapper
-{
-	static const JumpTable<TDerived, Types...> jumpTable;
-};
-
-// A static
-template<typename TDerived, typename... Types>
-const JumpTable<TDerived, Types...>
-	VisitorWrapper<TDerived, Types...>::jumpTable;
-
-/// Jumps container for types with common base
-template<typename TDerived, typename TBase, typename... Types>
-struct VisitorWrapperCommonBase
-{
-	static const JumpTableCommonBase<TDerived, TBase, Types...> jumpTable;
-};
-
-// A static
-template<typename TDerived, typename TBase, typename... Types>
-const JumpTableCommonBase<TDerived, TBase, Types...>
-	VisitorWrapperCommonBase<TDerived, TBase, Types...>::jumpTable;
 
 } // end namespace visitor_detail
 
@@ -213,13 +103,13 @@ public:
 		setupVisitable(t);
 	}
 
-	int getVisitableTypeId() const
+	I getVisitableTypeId() const
 	{
 		return what;
 	}
 
 	template<typename T>
-	static constexpr int getVariadicTypeId()
+	static constexpr I getVariadicTypeId()
 	{
 		return visitor_detail::GetVariadicTypeId<Types...>::template get<T>();
 	}
@@ -229,8 +119,7 @@ public:
 	void acceptVisitor(TVisitor& v)
 	{
 		ANKI_ASSERT(what != -1 && address != nullptr);
-		visitor_detail::VisitorWrapper<TVisitor, Types...>::
-			jumpTable[what](v, address);
+		acceptVisitorInternal<TVisitor, Types...>(v);
 	}
 
 	/// Apply visitor (const version)
@@ -238,8 +127,7 @@ public:
 	void acceptVisitor(TVisitor& v) const
 	{
 		ANKI_ASSERT(what != -1 && address != nullptr);
-		visitor_detail::VisitorWrapper<TVisitor, Types...>::
-			jumpTable[what](v, address);
+		acceptVisitorInternalConst<TVisitor, Types...>(v);
 	}
 
 	/// Setup the data
@@ -254,8 +142,73 @@ public:
 	}
 
 private:
-	int what = -1; ///< The type ID
+	I what = -1; ///< The type ID
 	void* address = nullptr; ///< The address to the data
+
+	/// @name Accept visitor template methods
+	/// @{
+	template<typename TVisitor, typename TFirst>
+	void acceptVisitorInternal(TVisitor& v)
+	{
+		switch(what)
+		{
+		case 0:
+			v.template visit(*reinterpret_cast<TFirst*>(address));
+			break;
+		default:
+			ANKI_ASSERT(0 && "Wrong type ID");
+			break;
+		}
+	}
+
+	template<typename TVisitor, typename TFirst, typename TSecond, 
+		typename... Types_>
+	void acceptVisitorInternal(TVisitor& v)
+	{
+		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
+
+		switch(what)
+		{
+		case i:
+			v.template visit(*reinterpret_cast<TSecond*>(address));
+			break;
+		default:
+			acceptVisitorInternal<TVisitor, TFirst, Types_...>(v);
+			break;
+		}
+	}
+
+	template<typename TVisitor, typename TFirst>
+	void acceptVisitorInternalConst(TVisitor& v) const
+	{
+		switch(what)
+		{
+		case 0:
+			v.template visit(*reinterpret_cast<const TFirst*>(address));
+			break;
+		default:
+			ANKI_ASSERT(0 && "Wrong type ID");
+			break;
+		}
+	}
+
+	template<typename TVisitor, typename TFirst, typename TSecond, 
+		typename... Types_>
+	void acceptVisitorInternalConst(TVisitor& v) const
+	{
+		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
+
+		switch(what)
+		{
+		case i:
+			v.template visit(*reinterpret_cast<const TSecond*>(address));
+			break;
+		default:
+			acceptVisitorInternalConst<TVisitor, TFirst, Types_...>(v);
+			break;
+		}
+	}
+	/// @}
 };
 
 /// Visitable for types with common base
@@ -275,13 +228,13 @@ public:
 	{}
 #endif
 
-	int getVisitableTypeId() const
+	I getVisitableTypeId() const
 	{
 		return what;
 	}
 
 	template<typename T>
-	static constexpr int getVariadicTypeId()
+	static constexpr I getVariadicTypeId()
 	{
 		return visitor_detail::GetVariadicTypeId<Types...>::template get<T>();
 	}
@@ -291,31 +244,15 @@ public:
 	void acceptVisitor(TVisitor& v)
 	{
 		ANKI_ASSERT(what != -1);
-#if ANKI_DEBUG
-		TBase* base = dynamic_cast<TBase*>(this);
-		ANKI_ASSERT(base != nullptr);
-#else
-		TBase* base = static_cast<TBase*>(this);
-#endif
-		visitor_detail::VisitorWrapperCommonBase<TVisitor, TBase, Types...>::
-			jumpTable[what](v, *base);
+		acceptVisitorInternal<TVisitor, Types...>(v);
 	}
 
 	/// Apply const visitor
 	template<typename TVisitor>
 	void acceptVisitor(TVisitor& v) const
 	{
-		typedef const TBase CTBase;
 		ANKI_ASSERT(what != -1);
-#if ANKI_DEBUG
-		CTBase* base = dynamic_cast<CTBase*>(this);
-		ANKI_ASSERT(base != nullptr);
-#else
-		CTBase* base = static_cast<CTBase*>(this);
-#endif
-		visitor_detail::VisitorWrapperCommonBase
-			<TVisitor,CTBase, const Types...>::
-			jumpTable[what](v, *base);
+		acceptVisitorInternalConst<TVisitor, Types...>(v);
 	}
 
 	/// Setup the type ID
@@ -327,7 +264,104 @@ public:
 	}
 
 private:
-	int what = -1; ///< The type ID
+	I what = -1; ///< The type ID
+
+	/// @name Accept visitor template methods
+	/// @{
+	template<typename TVisitor, typename TFirst>
+	void acceptVisitorInternal(TVisitor& v)
+	{
+		switch(what)
+		{
+		case 0:
+			{
+#if ANKI_DEBUG
+				TFirst* base = dynamic_cast<TFirst*>(this);
+				ANKI_ASSERT(base != nullptr);
+#else
+				TFirst* base = static_cast<TFirst*>(this);
+#endif
+				v.template visit(*base);
+			}
+			break;
+		default:
+			ANKI_ASSERT(0 && "Wrong type ID");
+			break;
+		}
+	}
+
+	template<typename TVisitor, typename TFirst, typename TSecond, 
+		typename... Types_>
+	void acceptVisitorInternal(TVisitor& v)
+	{
+		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
+
+		switch(what)
+		{
+		case i:
+			{
+#if ANKI_DEBUG
+				TSecond* base = dynamic_cast<TSecond*>(this);
+				ANKI_ASSERT(base != nullptr);
+#else
+				TSecond* base = static_cast<TSecond*>(this);
+#endif
+				v.template visit(*base);
+			}
+			break;
+		default:
+			acceptVisitorInternal<TVisitor, TFirst, Types_...>(v);
+			break;
+		}
+	}
+
+	template<typename TVisitor, typename TFirst>
+	void acceptVisitorInternalConst(TVisitor& v) const
+	{
+		switch(what)
+		{
+		case 0:
+			{
+#if ANKI_DEBUG
+				const TFirst* base = dynamic_cast<const TFirst*>(this);
+				ANKI_ASSERT(base != nullptr);
+#else
+				const TFirst* base = static_cast<const TFirst*>(this);
+#endif
+				v.template visit(*base);
+			}
+			break;
+		default:
+			ANKI_ASSERT(0 && "Wrong type ID");
+			break;
+		}
+	}
+
+	template<typename TVisitor, typename TFirst, typename TSecond, 
+		typename... Types_>
+	void acceptVisitorInternalConst(TVisitor& v) const
+	{
+		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
+
+		switch(what)
+		{
+		case i:
+			{
+#if ANKI_DEBUG
+				const TSecond* base = dynamic_cast<const TSecond*>(this);
+				ANKI_ASSERT(base != nullptr);
+#else
+				const TSecond* base = static_cast<const TSecond*>(this);
+#endif
+				v.template visit(*base);
+			}
+			break;
+		default:
+			acceptVisitorInternalConst<TVisitor, TFirst, Types_...>(v);
+			break;
+		}
+	}
+	/// @}
 };
 /// @}
 

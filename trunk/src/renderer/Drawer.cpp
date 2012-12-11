@@ -32,24 +32,26 @@ struct SetupMaterialVariableVisitor
 	template<typename MtlVariableTemplate>
 	void visit(MtlVariableTemplate& x)
 	{
-		const MaterialVariable& mv = rvar->getMaterialVariable();
+		const MaterialVariable& mvar = rvar->getMaterialVariable();
 
 		const ShaderProgramUniformVariable* uni =
-			mv.findShaderProgramUniformVariable(key);
+			mvar.findShaderProgramUniformVariable(key);
 		if(!uni)
 		{
 			return;
 		}
 
+		U32 instancesCount = renderable->getRenderableInstancesCount();
+
 		// Set uniform
 		//
-		const Transform* rwtrf = renderable->getRenderableWorldTransform();
+		const Transform* trfs = renderable->getRenderableWorldTransforms();
+		const Mat4& vp = fr->getViewProjectionMatrix();
+		const Mat4& v = fr->getViewMatrix();
 
-		Mat4 mMat = (rwtrf) ? Mat4(*rwtrf) : Mat4::getIdentity();
-		const Mat4& vpMat = fr->getViewProjectionMatrix();
+		const U maxInstances = 32; // XXX Use a proper vector with allocator
 
-		Mat4 mvMat;
-		Bool mvMatCalculated = false; // Opt
+		Array<Mat4, maxInstances> mv;
 
 		switch(rvar->getBuildinId())
 		{
@@ -59,45 +61,41 @@ struct SetupMaterialVariableVisitor
 			break;
 		case BMV_MODEL_VIEW_PROJECTION_MATRIX:
 			{
-				Mat4 mvpMat = vpMat * mMat;
-				uniSet(*uni, &mvpMat, 1);
-			}
-			break;
-		case BMV_MODEL_VIEW_MATRIX:
-			if(!mvMatCalculated)
-			{
-				mvMat = fr->getViewMatrix() * mMat;
-				mvMatCalculated = true;
-			}
-			uniSet(*uni, &mvMat, 1);
-			break;
-		case BMV_NORMAL_MATRIX:
-			{
-				if(!mvMatCalculated)
-				{
-					mvMat = fr->getViewMatrix() * mMat;
-					mvMatCalculated = true;
-				}
-				Mat3 rot = mvMat.getRotationPart();
-				uniSet(*uni, &rot, 1);
-			}
-			break;
-		case BMV_INSTANCING_MODEL_VIEW_PROJECTION_MATRICES:
-			{
-				U32 instancesCount = renderable->getRenderableInstancesCount();
-
-				Array<Mat4, 64> mvps;
-				ANKI_ASSERT(mvps.getSize() >= instancesCount);
-				const Transform* trfs =
-					renderable->getRenderableInstancingWorldTransforms();
 				ANKI_ASSERT(trfs != nullptr);
+				Array<Mat4, maxInstances> mvp;
 
 				for(U i = 0; i < instancesCount; i++)
 				{
-					mvps[i] = vpMat * Mat4(trfs[i]);
+					mvp[i] = vp * Mat4(trfs[i]);
 				}
 
-				uni->set(&mvps[0], instancesCount);
+				uniSet(*uni, &mvp[0], instancesCount);
+			}
+			break;
+		case BMV_MODEL_VIEW_MATRIX:
+			{
+				ANKI_ASSERT(trfs != nullptr);
+				Array<Mat4, maxInstances> mv;
+
+				for(U i = 0; i < instancesCount; i++)
+				{
+					mv[i] = v * Mat4(trfs[i]);
+				}
+
+				uniSet(*uni, &mv[0], instancesCount);
+			}
+			break;
+		case BMV_NORMAL_MATRIX:
+			{
+				Array<Mat3, maxInstances> normm;
+
+				for(U i = 0; i < instancesCount; i++)
+				{
+					Mat4 mv = v * Mat4(trfs[i]);
+					normm[i] = mv.getRotationPart();
+				}
+
+				uniSet(*uni, &normm[0], instancesCount);
 			}
 			break;
 		case BMV_BLURRING:

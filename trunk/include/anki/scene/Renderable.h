@@ -21,7 +21,6 @@ enum BuildinMaterialVariableId
 	BMV_MODEL_VIEW_PROJECTION_MATRIX,
 	BMV_MODEL_VIEW_MATRIX,
 	BMV_NORMAL_MATRIX,
-	BMV_INSTANCING_MODEL_VIEW_PROJECTION_MATRICES,
 	BMV_BLURRING,
 	BMV_COUNT
 };
@@ -73,25 +72,17 @@ public:
 	/// Access the material
 	virtual const Material& getRenderableMaterial() const = 0;
 
-	/// Information for movables
-	virtual const Transform* getRenderableWorldTransform() const
+	/// Information for movables. It's actualy an array of transformations.
+	virtual const Transform* getRenderableWorldTransforms() const
 	{
 		return nullptr;
 	}
 
-	/// @name Instancing methods
-	/// @{
-
-	virtual const Transform* getRenderableInstancingWorldTransforms() const
-	{
-		return nullptr;
-	}
-
+	/// Used for instancing
 	virtual U32 getRenderableInstancesCount() const
 	{
 		return 1;
 	}
-	/// @}
 
 	/// @name Accessors
 	/// @{

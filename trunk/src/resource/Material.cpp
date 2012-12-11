@@ -423,6 +423,7 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 		if(inpvar->value.size() != 0)
 		{
 			const StringList& value = inpvar->value;
+			ANKI_ASSERT(inpvar->arraySize <= 1 && "Arrays not supported");
 
 			// Get the value
 			switch(dataType)
