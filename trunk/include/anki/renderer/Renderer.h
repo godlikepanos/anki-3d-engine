@@ -65,6 +65,7 @@ struct RendererInitializer
 		{
 			Bool enabled = true;
 			F32 renderingQuality = 0.3;
+			F32 blurringRenderingQuality = 0.3;
 			U32 blurringIterationsNum = 2;
 		} ssao;
 

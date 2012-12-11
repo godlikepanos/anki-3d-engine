@@ -108,7 +108,7 @@ void MainRenderer::render(Scene& scene)
 	//
 	if(!drawToDefaultFbo)
 	{
-		Fbo::unbindAll(); // Bind the window framebuffer
+		Fbo::bindDefault(); // Bind the window framebuffer
 
 		GlStateSingleton::get().setViewport(0, 0, windowWidth, windowHeight);
 		GlStateSingleton::get().disable(GL_DEPTH_TEST);

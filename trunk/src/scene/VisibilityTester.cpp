@@ -88,7 +88,8 @@ struct VisibilityTestJob: ThreadJob
 			Renderable* r = node->getRenderable();
 			if(r)
 			{
-				if(!renderer->doVisibilityTests(sp->getAabb()))
+				if(!renderer->doVisibilityTests(
+					sp->getOptimalCollisionShape()))
 				{
 					continue;
 				}
