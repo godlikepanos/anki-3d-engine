@@ -38,9 +38,11 @@ public:
 	/// @}
 
 private:
+	Texture mfai;
 	Texture vblurFai;
 	Texture hblurFai;
 	U32 blurringIterationsCount;
+	Fbo mfbo; ///< Main FBO
 	Fbo vblurFbo;
 	Fbo hblurFbo;
 	TextureResourcePointer noiseMap;

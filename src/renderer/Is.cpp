@@ -475,7 +475,7 @@ void Is::lightPass()
 	if(drawToDefaultFbo)
 	{
 		ANKI_ASSERT(!r->getPps().getEnabled());
-		Fbo::unbindAll();
+		Fbo::bindDefault();
 		GlStateSingleton::get().setViewport(
 			0, 0, width, height);
 	}

@@ -95,7 +95,7 @@ void Pps::run()
 
 	if(drawToDefaultFbo)
 	{
-		Fbo::unbindAll();
+		Fbo::bindDefault();
 		GlStateSingleton::get().setViewport(
 			0, 0, width, height);
 	}

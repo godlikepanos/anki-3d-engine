@@ -51,6 +51,19 @@ public:
 		return aabb;
 	}
 
+	/// Get optimal collision shape for visibility tests
+	const CollisionShape& getOptimalCollisionShape() const
+	{
+		if(spatialCs->getCollisionShapeType() == CollisionShape::CST_SPHERE)
+		{
+			return *spatialCs;
+		}
+		else
+		{
+			return aabb;
+		}
+	}
+
 	U32 getSpatialTimestamp() const
 	{
 		return timestamp;

@@ -19,6 +19,14 @@ class Texture;
 class Fbo: public ContextNonSharable
 {
 public:
+	/// FBO target
+	enum FboTarget
+	{
+		FT_DRAW = 1 << 1,
+		FT_READ = 1 << 2,
+		FT_ALL = FT_DRAW | FT_READ
+	};
+
 	/// @name Constructors/Destructor
 	/// @{
 	Fbo()
@@ -37,18 +45,14 @@ public:
 	/// @}
 
 	/// Binds FBO
-	void bind() const;
+	void bind(const FboTarget target = FT_ALL) const;
 
-	/// Unbinds the FBO
-	void unbind() const;
-
-	/// Unbind all
-	///
-	/// Unbinds both draw and read FBOs so the active is the default FBO
-	static void unbindAll();
+	/// Unbind all targets. Unbinds both draw and read FBOs so the active is
+	/// the default FBO
+	static void bindDefault(const FboTarget target = FT_ALL);
 
 	/// Returns true if the FBO is ready for draw calls
-	bool isComplete() const;
+	Bool isComplete() const;
 
 	/// Set the color attachments of this FBO
 	void setColorAttachments(
@@ -65,10 +69,11 @@ public:
 	void destroy();
 
 private:
-	static thread_local const Fbo* current;
+	static thread_local const Fbo* currentRead;
+	static thread_local const Fbo* currentDraw;
 	GLuint glId = 0; ///< OpenGL identification
 
-	bool isCreated() const
+	Bool isCreated() const
 	{
 		return glId != 0;
 	}
@@ -96,6 +101,6 @@ private:
 };
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

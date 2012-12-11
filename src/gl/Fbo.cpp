@@ -6,7 +6,8 @@ namespace anki {
 
 //==============================================================================
 
-thread_local const Fbo* Fbo::current = nullptr;
+thread_local const Fbo* Fbo::currentRead = nullptr;
+thread_local const Fbo* Fbo::currentDraw = nullptr;
 
 static const Array<GLenum, 8> colorAttachments = {{
 	GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
@@ -36,49 +37,76 @@ void Fbo::destroy()
 {
 	ANKI_ASSERT(isCreated());
 	checkNonSharable();
-	unbind();
+	bindDefault();
 	glDeleteFramebuffers(1, &glId);
 	glId = 0;
 }
 
 //==============================================================================
-void Fbo::bind() const
+void Fbo::bind(const FboTarget target) const
 {
 	ANKI_ASSERT(isCreated());
 	checkNonSharable();
 
-	if(current != this)
+	if(target == FT_ALL)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, glId);
-		current = this;
+		if(currentDraw != this || currentRead != this)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, glId);
+			currentDraw = currentRead = this;
+		}
+	}
+	else if(target == FT_DRAW)
+	{
+		if(currentDraw != this)
+		{
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, glId);
+			currentDraw = this;
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(target == FT_READ);
+		if(currentRead != this)
+		{
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, glId);
+			currentRead = this;
+		}
 	}
 }
 
 //==============================================================================
-void Fbo::unbind() const
+void Fbo::bindDefault(const FboTarget target)
 {
-	ANKI_ASSERT(isCreated());
-	checkNonSharable();
-
-	if(current == this)
+	if(target == FT_ALL)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		current = nullptr;
+		if(currentDraw != nullptr || currentRead != nullptr)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			currentDraw = currentRead = nullptr;
+		}
+	}
+	else if(target == FT_DRAW)
+	{
+		if(currentDraw != nullptr)
+		{
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+			currentDraw = nullptr;
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(target == FT_READ);
+		if(currentRead != nullptr)
+		{
+			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+			currentRead = nullptr;
+		}
 	}
 }
 
 //==============================================================================
-void Fbo::unbindAll()
-{
-	if(current != nullptr)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		current = nullptr;
-	}
-}
-
-//==============================================================================
-bool Fbo::isComplete() const
+Bool Fbo::isComplete() const
 {
 	bind();
 

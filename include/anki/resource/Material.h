@@ -152,8 +152,7 @@ public:
 	/// @{
 	const Data* get() const
 	{
-		ANKI_ASSERT(data.size() > 0);
-		return &data[0];
+		return (data.size() > 0) ? &data[0] : nullptr;
 	}
 
 	void set(const Data* x, U32 size)
