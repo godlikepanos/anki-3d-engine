@@ -41,7 +41,9 @@ struct SetupMaterialVariableVisitor
 			return;
 		}
 
-		U32 instancesCount = renderable->getRenderableInstancesCount();
+		const U32 instancesCount = renderable->getRenderableInstancesCount();
+		const U32 uniArrSize = uni->getSize();
+		const U32 size = std::min(instancesCount, uniArrSize);
 
 		// Set uniform
 		//
@@ -64,12 +66,12 @@ struct SetupMaterialVariableVisitor
 				ANKI_ASSERT(trfs != nullptr);
 				Array<Mat4, maxInstances> mvp;
 
-				for(U i = 0; i < instancesCount; i++)
+				for(U i = 0; i < size; i++)
 				{
 					mvp[i] = vp * Mat4(trfs[i]);
 				}
 
-				uniSet(*uni, &mvp[0], instancesCount);
+				uniSet(*uni, &mvp[0], size);
 			}
 			break;
 		case BMV_MODEL_VIEW_MATRIX:
@@ -77,25 +79,25 @@ struct SetupMaterialVariableVisitor
 				ANKI_ASSERT(trfs != nullptr);
 				Array<Mat4, maxInstances> mv;
 
-				for(U i = 0; i < instancesCount; i++)
+				for(U i = 0; i < size; i++)
 				{
 					mv[i] = v * Mat4(trfs[i]);
 				}
 
-				uniSet(*uni, &mv[0], instancesCount);
+				uniSet(*uni, &mv[0], size);
 			}
 			break;
 		case BMV_NORMAL_MATRIX:
 			{
 				Array<Mat3, maxInstances> normm;
 
-				for(U i = 0; i < instancesCount; i++)
+				for(U i = 0; i < size; i++)
 				{
 					Mat4 mv = v * Mat4(trfs[i]);
 					normm[i] = mv.getRotationPart();
 				}
 
-				uniSet(*uni, &normm[0], instancesCount);
+				uniSet(*uni, &normm[0], size);
 			}
 			break;
 		case BMV_BLURRING:

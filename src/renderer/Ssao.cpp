@@ -136,7 +136,7 @@ void Ssao::run()
 	//
 	if(blit())
 	{
-		mpFai.bind();
+		mpFbo.bind();
 		GlStateSingleton::get().setViewport(0, 0, mpWidth, mpHeight);
 	}
 	else
@@ -182,7 +182,7 @@ void Ssao::run()
 		glBlitFramebuffer(
 			0, 0, mpWidth, mpHeight,
 			0, 0, bWidth, bHeight,
-			GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
 		// Set the correct viewport
 		GlStateSingleton::get().setViewport(0, 0, bWidth, bHeight);
