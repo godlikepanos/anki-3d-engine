@@ -14,7 +14,7 @@ struct ShaderCommonUniforms
 };
 
 //==============================================================================
-void Ssao::createFbo(Fbo& fbo, Texture& fai)
+void Ssao::createFbo(Fbo& fbo, Texture& fai, F32 width, F32 height)
 {
 
 	Renderer::createFai(width, height, GL_RED, GL_RED, GL_FLOAT, fai);
@@ -39,17 +39,35 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 		return;
 	}
 
-	const F32 renderingQuality = initializer.pps.ssao.renderingQuality;
 	blurringIterationsCount = initializer.pps.ssao.blurringIterationsNum;
 
-	width = renderingQuality * (F32)r->getWidth();
-	height = renderingQuality * (F32)r->getHeight();
+	//
+	// Init the widths/heights
+	//
+	const F32 bQuality = initializer.pps.ssao.blurringRenderingQuality;
+	const F32 mpQuality = initializer.pps.ssao.mainPassRenderingQuality;
+
+	if(mpQuality > bQuality)
+	{
+		throw ANKI_EXCEPTION("SSAO blur quality shouldn't be less than "
+			"main pass SSAO quality");
+	}
+
+	bWidth = bQuality * (F32)r->getWidth();
+	bHeight = bQuality * (F32)r->getHeight();
+	mpWidth =  mpQuality * (F32)r->getWidth();
+	mpHeight =  mpQuality * (F32)r->getHeight();
 
 	//
 	// create FBOs
 	//
-	createFbo(hblurFbo, hblurFai);
-	createFbo(vblurFbo, vblurFai);
+	createFbo(hblurFbo, hblurFai, bWidth, bHeight);
+	createFbo(vblurFbo, vblurFai, bWidth, bHeight);
+
+	if(blit())
+	{
+		createFbo(mpFbo, mpFai, mpWidth, mpHeight);
+	}
 
 	//
 	// noise map
@@ -68,10 +86,10 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 
 	std::string pps;
 
-	// first pass prog
+	// main pass prog
 	pps = "#define NOISE_MAP_SIZE " + std::to_string(noiseMap->getWidth())
-		+ "\n#define WIDTH " + std::to_string(width)
-		+ "\n#define HEIGHT " + std::to_string(height) + "\n";
+		+ "\n#define WIDTH " + std::to_string(mpWidth)
+		+ "\n#define HEIGHT " + std::to_string(mpHeight) + "\n";
 	ssaoSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		"shaders/PpsSsao.glsl", pps.c_str()).c_str());
 
@@ -80,13 +98,13 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 
 	pps = "#define HPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " + std::to_string(width) + ".0\n";
+		"#define IMG_DIMENSION " + std::to_string(bWidth) + ".0\n";
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.c_str()).c_str());
 
 	pps = "#define VPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " + std::to_string(width) + ".0 \n";
+		"#define IMG_DIMENSION " + std::to_string(bHeight) + ".0 \n";
 	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.c_str()).c_str());
 }
@@ -113,12 +131,19 @@ void Ssao::run()
 
 	GlStateSingleton::get().disable(GL_BLEND);
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
-	GlStateSingleton::get().setViewport(0, 0, width, height);
 
 	// 1st pass
 	//
-	
-	vblurFbo.bind();
+	if(blit())
+	{
+		mpFai.bind();
+		GlStateSingleton::get().setViewport(0, 0, mpWidth, mpHeight);
+	}
+	else
+	{
+		vblurFbo.bind();
+		GlStateSingleton::get().setViewport(0, 0, bWidth, bHeight);
+	}
 	ssaoSProg->bind();
 	commonUbo.setBinding(0);
 
@@ -146,7 +171,22 @@ void Ssao::run()
 	// msGFai
 	ssaoSProg->findUniformVariable("msGFai").set(r->getMs().getFai0());
 
+	// Draw
 	r->drawQuad();
+
+	// Blit from main pass FBO to vertical pass FBO
+	if(blit())
+	{
+		mpFbo.bind(Fbo::FT_READ);
+		vblurFbo.bind(Fbo::FT_DRAW);
+		glBlitFramebuffer(
+			0, 0, mpWidth, mpHeight,
+			0, 0, bWidth, bHeight,
+			GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+		// Set the correct viewport
+		GlStateSingleton::get().setViewport(0, 0, bWidth, bHeight);
+	}
 
 	// Blurring passes
 	//
