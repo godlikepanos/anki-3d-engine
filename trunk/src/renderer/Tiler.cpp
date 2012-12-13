@@ -201,6 +201,7 @@ void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 	update4Planes(cam, &jobs4);
 
 	fbo.bind(); // Flush prev FBO to force flush on Mali
+	r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
 	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
 	prog->bind();
 	prog->findUniformVariable("depthMap").set(depthMap);

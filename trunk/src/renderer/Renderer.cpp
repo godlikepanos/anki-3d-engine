@@ -197,4 +197,13 @@ Bool Renderer::doVisibilityTests(const CollisionShape& cs) const
 	return tiler.testAll(cs, true);
 }
 
+//==============================================================================
+void Renderer::clearAfterBindingFbo(const GLenum cap)
+{
+	if(GlStateCommonSingleton::get().getGpu() == GlStateCommon::GPU_ARM)
+	{
+		glClear(cap);
+	}
+}
+
 } // end namespace anki

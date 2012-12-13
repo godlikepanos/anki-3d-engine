@@ -16,7 +16,6 @@ struct ShaderCommonUniforms
 //==============================================================================
 void Ssao::createFbo(Fbo& fbo, Texture& fai, F32 width, F32 height)
 {
-
 	Renderer::createFai(width, height, GL_RED, GL_RED, GL_FLOAT, fai);
 	fai.setFiltering(Texture::TFT_LINEAR);
 
@@ -144,6 +143,7 @@ void Ssao::run()
 		vblurFbo.bind();
 		GlStateSingleton::get().setViewport(0, 0, bWidth, bHeight);
 	}
+	r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
 	ssaoSProg->bind();
 	commonUbo.setBinding(0);
 
@@ -194,6 +194,7 @@ void Ssao::run()
 	{
 		// hpass
 		hblurFbo.bind();
+		r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
 		hblurSProg->bind();
 		if(i == 0)
 		{
@@ -203,6 +204,7 @@ void Ssao::run()
 
 		// vpass
 		vblurFbo.bind();
+		r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
 		vblurSProg->bind();
 		if(i == 0)
 		{

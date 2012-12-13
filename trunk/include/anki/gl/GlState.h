@@ -21,6 +21,14 @@ class ShaderProgram;
 class GlStateCommon
 {
 public:
+	/// Knowing the ventor allows some optimizations
+	enum Gpu
+	{
+		GPU_UNKNOWN,
+		GPU_ARM,
+		GPU_NVIDIA
+	};
+
 	U32 getMajorVersion() const
 	{
 		ANKI_ASSERT(major != -1);
@@ -32,15 +40,17 @@ public:
 		return (U32)minor;
 	}
 
-	void init(const U32 major_, const U32 minor_)
+	Gpu getGpu() const
 	{
-		major = (I32)major_;
-		minor = (I32)minor_;
+		return gpu;
 	}
+
+	void init(const U32 major_, const U32 minor_);
 
 private:
 	/// Minor major GL version
 	I32 major = -1, minor = -1;
+	Gpu gpu = GPU_UNKNOWN;
 };
 
 typedef Singleton<GlStateCommon> GlStateCommonSingleton;
