@@ -4,8 +4,37 @@
 #include "anki/gl/Vao.h"
 #include "anki/util/Assert.h"
 #include <limits>
+#include <algorithm>
 
 namespace anki {
+
+//==============================================================================
+// GlStateCommon                                                               = 
+//==============================================================================
+
+//==============================================================================
+void GlStateCommon::init(const U32 major_, const U32 minor_)
+{
+	major = (I32)major_;
+	minor = (I32)minor_;
+
+	std::string glstr = (const char*)glGetString(GL_VENDOR);
+	glstr += (const char*)glGetString(GL_RENDERER);
+	std::transform(glstr.begin(), glstr.end(), glstr.begin(), ::tolower);
+
+	if(glstr.find("arm") != std::string::npos)
+	{
+		gpu = GPU_ARM;
+	}
+	else if(glstr.find("nvidia") != std::string::npos)
+	{
+		gpu = GPU_NVIDIA;
+	}
+}
+
+//==============================================================================
+// GlState                                                                     = 
+//==============================================================================
 
 //==============================================================================
 static Array<GLenum, 7> glCaps = {{

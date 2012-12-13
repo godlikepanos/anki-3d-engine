@@ -107,6 +107,7 @@ void Hdr::run()
 
 	// pass 0
 	vblurFbo.bind();
+	r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
 	toneSProg->bind();
 
 	if(parameterUpdateTimestamp > commonUboUpdateTimestamp)
@@ -124,6 +125,7 @@ void Hdr::run()
 	{
 		// hpass
 		hblurFbo.bind();
+		r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
 		hblurSProg->bind();
 		if(i == 0)
 		{
@@ -133,6 +135,7 @@ void Hdr::run()
 
 		// vpass
 		vblurFbo.bind();
+		r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
 		vblurSProg->bind();
 		if(i == 0)
 		{

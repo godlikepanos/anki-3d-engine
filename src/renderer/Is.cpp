@@ -476,6 +476,8 @@ void Is::lightPass()
 	{
 		ANKI_ASSERT(!r->getPps().getEnabled());
 		Fbo::bindDefault();
+		r->clearAfterBindingFbo(
+			GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		GlStateSingleton::get().setViewport(
 			0, 0, width, height);
 	}
@@ -483,6 +485,8 @@ void Is::lightPass()
 	{
 		ANKI_ASSERT(r->getPps().getEnabled());
 		fbo.bind();
+		r->clearAfterBindingFbo(
+			GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		GlStateSingleton::get().setViewport(
 			0, 0, r->getWidth(), r->getHeight());
 	}

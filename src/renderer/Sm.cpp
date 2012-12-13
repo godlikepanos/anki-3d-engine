@@ -198,6 +198,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 	// Render
 	//
 	sm.fbo.bind();
+	r->clearAfterBindingFbo(GL_DEPTH_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	//std::cout << "Shadowmap for: " << &sm << std::endl;
