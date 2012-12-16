@@ -135,6 +135,9 @@ void GlState::sync()
 	// blend funcs
 	glGetIntegerv(GL_BLEND_SRC, (GLint*)&blendFuncs[0]);
 	glGetIntegerv(GL_BLEND_DST, (GLint*)&blendFuncs[1]);
+
+	// depth mask
+	glGetIntegerv(GL_DEPTH_WRITEMASK, &depthMask);
 }
 
 //==============================================================================
@@ -217,6 +220,22 @@ void GlState::setBlendFunctions(const GLenum sFactor, const GLenum dFactor)
 		glBlendFunc(sFactor, dFactor);
 		blendFuncs[0] = sFactor;
 		blendFuncs[1] = dFactor;
+	}
+}
+
+//==============================================================================
+void GlState::setDepthMaskEnabled(const Bool enable)
+{
+#if ANKI_DEBUG
+	GLint real;
+	glGetIntegerv(GL_DEPTH_WRITEMASK, &real);
+	ANKI_ASSERT(real == depthMask);
+#endif
+
+	if(depthMask != enable)
+	{
+		glDepthMask(enable);
+		depthMask = enable;
 	}
 }
 

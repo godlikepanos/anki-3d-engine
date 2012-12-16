@@ -59,6 +59,16 @@ inline void propperDelete(T*& x)
 	x = nullptr;
 }
 
+/// Delete a pointer properly
+template<typename T>
+inline void propperDeleteArray(T*& x)
+{
+	typedef char TypeMustBeComplete[sizeof(T) ? 1 : -1];
+	(void) sizeof(TypeMustBeComplete);
+	delete[] x;
+	x = nullptr;
+}
+
 /// A simple template trick to remove the pointer from one type
 ///
 /// Example:

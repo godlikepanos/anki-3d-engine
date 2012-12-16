@@ -7,29 +7,30 @@
 namespace anki {
 
 //==============================================================================
-// CreateNewPropertyVisitor                                                    =
+// CreateNewRenderableVariableVisitor                                                    =
 //==============================================================================
 
-/// Create a new RenderableMaterialVariable given a MaterialVariable
-struct CreateNewPropertyVisitor
+/// Create a new RenderableVariable given a MaterialVariable
+struct CreateNewRenderableVariableVisitor
 {
 	const MaterialVariable* mvar = nullptr;
 	PropertyMap* pmap = nullptr;
-	Renderable::RenderableMaterialVariables* vars = nullptr;
+	Renderable::RenderableVariables* vars = nullptr;
 
-	template<typename T>
-	void visit(const T&) const
+	template<typename TMaterialVariableTemplate>
+	void visit(const TMaterialVariableTemplate&) const
 	{
-		RenderableMaterialVariable* rvar =
-			new RenderableMaterialVariable(mvar);
+		typedef typename TMaterialVariableTemplate::Type Type;
 
-		//pmap->addNewProperty(prop);
+		RenderableVariableTemplate<Type>* rvar =
+			new RenderableVariableTemplate<Type>(mvar);
+
 		vars->push_back(rvar);
 	}
 };
 
 //==============================================================================
-// RenderableMaterialVariable                                                  =
+// RenderableVariable                                                          =
 //==============================================================================
 
 //==============================================================================
@@ -38,10 +39,11 @@ static Array<const char*, BMV_COUNT - 1> buildinNames = {{
 	"modelViewProjectionMat",
 	"modelViewMat",
 	"normalMat",
+	"billboardMvpMatrix",
 	"blurring"}};
 
 //==============================================================================
-RenderableMaterialVariable::RenderableMaterialVariable(
+RenderableVariable::RenderableVariable(
 	const MaterialVariable* mvar_)
 	: mvar(mvar_)
 {
@@ -59,12 +61,16 @@ RenderableMaterialVariable::RenderableMaterialVariable(
 	}
 
 	// Sanity checks
-	if(!mvar->hasValue() && buildinId == BMV_NO_BUILDIN)
+	if(!mvar->hasValues() && buildinId == BMV_NO_BUILDIN)
 	{
 		ANKI_LOGW("Material variable no buildin and not initialized: "
 			<< name);
 	}
 }
+
+//==============================================================================
+RenderableVariable::~RenderableVariable()
+{}
 
 //==============================================================================
 // Renderable                                                                  =
@@ -79,7 +85,8 @@ void Renderable::init(PropertyMap& pmap)
 {
 	const Material& mtl = getRenderableMaterial();
 
-	CreateNewPropertyVisitor vis;
+	// Create the material variables using a visitor
+	CreateNewRenderableVariableVisitor vis;
 	vis.pmap = &pmap;
 	vis.vars = &vars;
 

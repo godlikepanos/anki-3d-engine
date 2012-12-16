@@ -86,6 +86,8 @@ public:
 	void setClearStencilValue(const GLint s);
 
 	void setBlendFunctions(const GLenum sFactor, const GLenum dFactor);
+
+	void setDepthMaskEnabled(const Bool enable);
 	/// @}
 
 private:

@@ -37,42 +37,50 @@ ParticleEmitterResource::~ParticleEmitterResource()
 void ParticleEmitterResource::load(const char* /*filename*/)
 {
 	// dummy load
-	particleLife = 7.0;
-	particleLifeDeviation = 2.0;
+	particle.life = 7.0;
+	particle.lifeDeviation = 2.0;
 
-	forceDirection = Vec3(0.0, 0.1, 0.0);
-	forceDirectionDeviation = Vec3(0.0, 0.0, 0.0);
-	forceMagnitude = 900.0;
-	forceMagnitudeDeviation = 100.0;
+	particle.size = 1.0;
+	particle.sizeAnimation = 2.0;
 
-	particleMass = 1.0;
-	particleMassDeviation = 0.0;
+	particle.forceDirection = Vec3(0.0, 1.0, 0.0);
+	particle.forceDirectionDeviation = Vec3(0.2);
+	particle.forceMagnitude = 100.0;
+	particle.forceMagnitudeDeviation = 0.0;
+
+	particle.mass = 1.0;
+	particle.massDeviation = 0.0;
+
+	particle.gravity = Vec3(0.0, 1.0, 0.0);
+	particle.gravityDeviation = Vec3(0.0, 0.0, 0.0);
+
+	particle.alpha = 0.25;
 
 	/*gravity = Vec3(0.0, 10.0, 0.0);
 	gravityDeviation = Vec3(0.0, 0.0, 0.0);*/
 
-	startingPos = Vec3(0.0, 1.0, 0.0);
-	startingPosDeviation = Vec3(0.0, 0.0, 0.0);
-	size = 0.5;
+	particle.startingPos = Vec3(0.0, -0.5, 0.0);
+	particle.startingPosDeviation = Vec3(0.3, 0.0, 0.3);
+
 	maxNumOfParticles = 16;
-	emissionPeriod = 1.0;
+	emissionPeriod = 0.5;
 	particlesPerEmittion = 1;
 	model.load("data/particles/fire/fire.mdl");
 
 	// sanity checks
 	//
 
-	if(particleLife <= 0.0)
+	if(particle.life <= 0.0)
 	{
-		throw PE_EXCEPTION(errMsg + "particleLife");
+		throw PE_EXCEPTION(errMsg + "life");
 	}
 
-	if(particleLife - particleLifeDeviation <= 0.0)
+	if(particle.life - particle.lifeDeviation <= 0.0)
 	{
-		throw PE_EXCEPTION(errMsg + "particleLifeDeviation");
+		throw PE_EXCEPTION(errMsg + "lifeDeviation");
 	}
 
-	if(size <= 0.0)
+	if(particle.size <= 0.0)
 	{
 		throw PE_EXCEPTION(errMsg + "size");
 	}
@@ -95,12 +103,14 @@ void ParticleEmitterResource::load(const char* /*filename*/)
 	// Calc some stuff
 	//
 
-	forceEnabled =
-		(!isZero(forceDirection.getLengthSquared())
-		|| !isZero(forceDirectionDeviation.getLengthSquared()))
-		&& (forceMagnitude != 0.0 || forceMagnitudeDeviation != 0.0);
+	forceEnabled = !isZero(particle.forceDirection.getLengthSquared());
+	forceEnabled = forceEnabled
+		|| !isZero(particle.forceDirectionDeviation.getLengthSquared());
+	forceEnabled = forceEnabled
+		&& (particle.forceMagnitude != 0.0
+		|| particle.forceMagnitudeDeviation != 0.0);
 
-	wordGravityEnabled = isZero(gravity.getLengthSquared());
+	wordGravityEnabled = isZero(particle.gravity.getLengthSquared());
 }
 
 } // end namespace anki

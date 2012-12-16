@@ -205,13 +205,26 @@ void init()
 	spot->setShadowEnabled(true);
 #endif
 
-	/*PointLight* point = new PointLight("point0", &scene, Movable::MF_NONE,
-		nullptr);
-	point->setRadius(3.0);
-	point->setDiffuseColor(Vec4(1.0, 0.0, 0.0, 0.0));
-	point->setSpecularColor(Vec4(0.0, 0.0, 1.0, 0.0));
+	// Vase point lights
+	Array<Vec3, 4> vaseLightPos = {{Vec3(32.4, 9, -13.2), Vec3(32.4, 9, 10),
+		Vec3(-37.6001, 9, 10), Vec3(-37.6001, 9, -13.2)}};
+	for(U i = 0; i < vaseLightPos.getSize(); i++)
+	{
+		PointLight* point =
+			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
+			&scene, Movable::MF_NONE, nullptr);
+		point->setRadius(3.5);
+		point->setLocalTranslation(vaseLightPos[i]);
+		point->setDiffuseColor(Vec4(3.0, 0.0, 0.0, 0.0));
+		point->setSpecularColor(Vec4(1.0, 1.0, 0.0, 0.0));
 
-	PointLight* point1 = new PointLight("point1", &scene, Movable::MF_NONE,
+		ParticleEmitter* pe = new ParticleEmitter("todo",
+			("pe" + std::to_string(i)).c_str(), &scene,
+			Movable::MF_NONE, nullptr);
+		pe->setLocalTranslation(vaseLightPos[i]);
+	}
+
+	/*PointLight* point1 = new PointLight("point1", &scene, Movable::MF_NONE,
 		nullptr);
 	point1->setRadius(3.0);
 	point1->setDiffuseColor(Vec4(2.0, 2.0, 2.0, 0.0));
@@ -248,9 +261,9 @@ void init()
 
 	initPhysics();
 
-	ParticleEmitter* pe = new ParticleEmitter("todo", "pe", &scene,
+	/*ParticleEmitter* pe = new ParticleEmitter("todo", "pe", &scene,
 		Movable::MF_NONE, nullptr);
-	(void)pe;
+	(void)pe;*/
 }
 
 //==============================================================================
@@ -312,8 +325,7 @@ void mainLoopExtra()
 	}
 	if(in.getKey(KC_6))
 	{
-		mover = SceneSingleton::get().findSceneNode("camera1").getMovable();
-		mover->setLocalTransform(cam->getLocalTransform());
+		mover = SceneSingleton::get().findSceneNode("vase_plight0").getMovable();
 	}
 
 	if(in.getKey(KC_L) == 1)
@@ -351,6 +363,11 @@ void mainLoopExtra()
 	{
 		mover->scale(-scale);
 	}
+	if(in.getKey(KC_P))
+	{
+		ANKI_LOGI("pos: " << mover->getWorldTransform().getOrigin());
+	}
+
 
 	mover->rotateLocalY(-ang * in.getMousePosition().x() * mouseSensivity * 
 		MainRendererSingleton::get().getAspectRatio());

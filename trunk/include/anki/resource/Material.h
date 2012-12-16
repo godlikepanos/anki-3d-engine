@@ -84,7 +84,7 @@ public:
 		static_cast<MaterialVariableTemplate<T>*>(this)->set(x, size);
 	}
 
-	virtual U32 getValuesCount() const = 0;
+	U32 getArraySize() const;
 
 	/// Given a key return the uniform. If the uniform is not present in the
 	/// LOD pass key then returns nullptr
@@ -109,10 +109,7 @@ public:
 	}
 
 	/// If false then it should be buildin
-	Bool hasValue() const
-	{
-		return getValuesCount() > 0;
-	}
+	virtual Bool hasValues() const = 0;
 	/// @}
 
 private:
@@ -163,9 +160,9 @@ public:
 		}
 	}
 
-	U32 getValuesCount() const
+	Bool hasValues() const
 	{
-		return data.size();
+		return data.size() > 0;
 	}
 	/// @}
 

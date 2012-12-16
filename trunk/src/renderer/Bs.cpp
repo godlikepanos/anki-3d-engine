@@ -18,6 +18,9 @@ void Bs::init(const RendererInitializer& /*initializer*/)
 //==============================================================================
 void Bs::run()
 {
+	GlStateSingleton::get().enable(GL_DEPTH_TEST);
+	GlStateSingleton::get().setDepthMaskEnabled(false);
+
 	RenderableDrawer& drawer = r->getSceneDrawer();
 	drawer.prepareDraw();
 	Scene& scene = r->getScene();
@@ -30,6 +33,8 @@ void Bs::run()
 		drawer.render(scene.getActiveCamera(), RenderableDrawer::RS_BLEND,
 			0, *((*it)->getRenderable()));
 	}
+
+	GlStateSingleton::get().setDepthMaskEnabled(true);
 }
 
 } // end namespace anki

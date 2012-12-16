@@ -9,7 +9,7 @@ namespace anki {
 /// @{
 
 /// 3x3 Matrix. Mainly used for rotations. It includes many helpful member
-/// functions. Its row major
+/// functions. Its row major. The columns are the x,y,z axis
 class Mat3
 {
 public:
@@ -129,7 +129,7 @@ private:
 
 static_assert(sizeof(Mat3) == sizeof(F32) * 3 * 3, "Incorrect size");
 
-} // end namespace
+} // end namespace anki
 
 #include "anki/math/Mat3.inl.h"
 

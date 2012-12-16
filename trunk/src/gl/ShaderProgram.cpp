@@ -57,7 +57,7 @@ void ShaderProgramUniformVariable::set(const F32 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT);
-	ANKI_ASSERT(size <= getSize());
+	ANKI_ASSERT(size <= getSize() && size != 0);
 	
 	glUniform1fv(getLocation(), size, x);
 }
@@ -67,7 +67,7 @@ void ShaderProgramUniformVariable::set(const Vec2 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC2);
-	ANKI_ASSERT(size <= getSize());
+	ANKI_ASSERT(size <= getSize() && size != 0);
 
 	glUniform2fv(getLocation(), size, &(const_cast<Vec2&>(x[0]))[0]);
 }
@@ -77,7 +77,7 @@ void ShaderProgramUniformVariable::set(const Vec3 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC3);
-	ANKI_ASSERT(size <= getSize());
+	ANKI_ASSERT(size <= getSize() && size != 0);
 
 	glUniform3fv(getLocation(), size, &(const_cast<Vec3&>(x[0]))[0]);
 }
@@ -87,7 +87,7 @@ void ShaderProgramUniformVariable::set(const Vec4 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_VEC4);
-	ANKI_ASSERT(size <= getSize());
+	ANKI_ASSERT(size <= getSize() && size != 0);
 	
 	glUniform4fv(getLocation(), size, &(const_cast<Vec4&>(x[0]))[0]);
 }
@@ -97,7 +97,7 @@ void ShaderProgramUniformVariable::set(const Mat3 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_MAT3);
-	ANKI_ASSERT(size <= getSize());
+	ANKI_ASSERT(size <= getSize() && size != 0);
 
 	glUniformMatrix3fv(getLocation(), size, true, &(x[0])[0]);
 }
@@ -107,7 +107,7 @@ void ShaderProgramUniformVariable::set(const Mat4 x[], U32 size) const
 {
 	doCommonSetCode();
 	ANKI_ASSERT(getGlDataType() == GL_FLOAT_MAT4);
-	ANKI_ASSERT(size <= getSize());
+	ANKI_ASSERT(size <= getSize() && size != 0);
 
 	glUniformMatrix4fv(getLocation(), size, true, &(x[0])[0]);
 }
@@ -129,7 +129,7 @@ void ShaderProgramUniformVariable::set(const Texture* const texes[],
 	const U32 count) const
 {
 	doCommonSetCode();
-	ANKI_ASSERT(count <= getSize());
+	ANKI_ASSERT(count <= getSize() && count != 0);
 	ANKI_ASSERT(count <= 128);
 	Array<GLint, 128> units;
 
