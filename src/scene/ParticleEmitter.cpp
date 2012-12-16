@@ -46,6 +46,16 @@ ParticleEmitter::ParticleEmitter(
 
 	instancesCount = particles.size();
 	Renderable::init(*this);
+
+	// Find the "alpha" material variable
+	for(auto it = Renderable::getVariablesBegin();
+		it != Renderable::getVariablesEnd(); ++it)
+	{
+		if((*it)->getName() == "alpha")
+		{
+			alphaRenderableVar = *it;
+		}
+	}
 }
 
 //==============================================================================
@@ -108,7 +118,7 @@ void ParticleEmitter::init(const char* filename, Scene* scene)
 	me = other;
 
 	// create the particles
-	collShape.reset(new btSphereShape(size));
+	collShape.reset(new btSphereShape(particle.size));
 
 	RigidBody::Initializer binit;
 	binit.shape = collShape.get();
@@ -117,17 +127,17 @@ void ParticleEmitter::init(const char* filename, Scene* scene)
 
 	for(U i = 0; i < maxNumOfParticles; i++)
 	{
-		binit.mass = getRandom(particleMass, particleMassDeviation);
+		binit.mass = getRandom(particle.mass, particle.massDeviation);
 
-		Particle* particle = new Particle(
+		Particle* part = new Particle(
 			-1.0, 
 			(getName() + std::to_string(i)).c_str(), scene,
 			Movable::MF_NONE, nullptr,
 			&scene->getPhysics(), binit);
 
-		particles.push_back(particle);
+		particles.push_back(part);
 
-		particle->forceActivationState(DISABLE_SIMULATION);
+		part->forceActivationState(DISABLE_SIMULATION);
 	}
 
 	timeLeftForNextEmission = 0.0;
@@ -145,16 +155,22 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	Vec3 aabbmin(std::numeric_limits<F32>::max());
 	Vec3 aabbmax(std::numeric_limits<F32>::min());
 	instancingTransformations.clear();
+	Vector<F32> alpha;
 	for(Particle* p : particles)
 	{
-		// if its already dead so dont deactivate it again
-		if(!p->isDead() && p->getTimeOfDeath() < crntTime)
+		if(p->isDead())
+		{
+			// if its already dead so dont deactivate it again
+			continue;
+		}
+
+		if(p->getTimeOfDeath() < crntTime)
 		{
 			p->setActivationState(DISABLE_SIMULATION);
 			p->setTimeOfDeath(-1.0);
 		}
 		else
-		{
+		{	
 			const Vec3& origin = p->Movable::getWorldTransform().getOrigin();
 
 			for(U i = 0; i < 3; i++)
@@ -163,21 +179,42 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 				aabbmax[i] = std::max(aabbmax[i], origin[i]);
 			}
 
-			instancingTransformations.push_back(
-				p->Movable::getWorldTransform());
+			F32 lifePercent = (crntTime - p->getTimeOfBirth())
+				/ (p->getTimeOfDeath() - p->getTimeOfBirth());
+
+			Transform trf = p->Movable::getWorldTransform();
+			// XXX set a flag for scale
+			trf.setScale(particle.size + (lifePercent * particle.sizeAnimation));
+
+			instancingTransformations.push_back(trf);
+
+			// Set alpha
+			if(alphaRenderableVar)
+			{
+				alpha.push_back((1.0 - lifePercent) * particle.alpha);
+			}
 		}
 	}
 
 	instancesCount = instancingTransformations.size();
 	if(instancesCount != 0)
 	{
-		aabb = Aabb(aabbmin - size, aabbmax + size);
+		aabb = Aabb(aabbmin - particle.size, aabbmax + particle.size);
 	}
 	else
 	{
 		aabb = Aabb(Vec3(0.0), Vec3(0.01));
 	}
 	spatialMarkUpdated();
+
+	if(alphaRenderableVar)
+	{
+		alphaRenderableVar->setValues(&alpha[0], alpha.size());
+	}
+
+	//
+	// Emit new particles
+	//
 
 	// pre calculate
 	Bool forceFlag = particleEmitterResource->hasForce();
@@ -199,10 +236,8 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 
 			// life
 			p.setTimeOfDeath(
-				getRandom(crntTime + particleLife, particleLifeDeviation));
-
-			//cout << "Time of death " << p.timeOfDeath << endl;
-			//cout << "Particle life " << p.timeOfDeath - crntTime << endl;
+				getRandom(crntTime + particle.life, particle.lifeDeviation));
+			p.setTimeOfBirth(crntTime);
 
 			// activate it (Bullet stuff)
 			body.forceActivationState(ACTIVE_TAG);
@@ -217,7 +252,8 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			if(forceFlag)
 			{
 				Vec3 forceDir =
-					getRandom(forceDirection, forceDirectionDeviation);
+					getRandom(particle.forceDirection,
+					particle.forceDirectionDeviation);
 				forceDir.normalize();
 
 				if(!identityRotation)
@@ -227,7 +263,8 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 				}
 
 				F32 forceMag =
-					getRandom(forceMagnitude, forceMagnitudeDeviation);
+					getRandom(particle.forceMagnitude,
+					particle.forceMagnitudeDeviation);
 
 				body.applyCentralForce(toBt(forceDir * forceMag));
 			}
@@ -235,11 +272,13 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			// gravity
 			if(!worldGravFlag)
 			{
-				body.setGravity(toBt(getRandom(gravity, gravityDeviation)));
+				body.setGravity(toBt(
+					getRandom(particle.gravity, particle.gravityDeviation)));
 			}
 
 			// Starting pos. In local space
-			Vec3 pos = getRandom(startingPos, startingPosDeviation);
+			Vec3 pos =
+				getRandom(particle.startingPos, particle.startingPosDeviation);
 
 			if(identityRotation)
 			{

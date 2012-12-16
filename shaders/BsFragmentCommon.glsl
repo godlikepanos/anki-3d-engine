@@ -1,5 +1,7 @@
 #define vTexCoords_DEFINED
 in vec2 vTexCoords;
+#define vInstanceId_DEFINED
+in flat uint vInstanceId;
 
 #if defined(PASS_COLOR)
 layout(location = 0) out vec4 fColor;
@@ -19,3 +21,11 @@ void writeFais(in vec4 color)
 	fColor = color;
 }
 #endif
+
+#define particleAlpha_DEFINED
+void particleAlpha(in sampler2D tex, in float alpha)
+{
+	vec4 color = texture(tex, vTexCoords);
+	color.w *= alpha;
+	writeFais(color);
+}

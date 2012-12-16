@@ -58,7 +58,7 @@ public:
 		lTrf.setRotation(x);
 		movableMarkUpdated();
 	}
-	void setLocalScale(float x)
+	void setLocalScale(F32 x)
 	{
 		lTrf.setScale(x);
 		movableMarkUpdated();
@@ -82,40 +82,40 @@ public:
 
 	/// @name Mess with the local transform
 	/// @{
-	void rotateLocalX(float angDegrees)
+	void rotateLocalX(F32 angDegrees)
 	{
 		lTrf.getRotation().rotateXAxis(angDegrees);
 		movableMarkUpdated();
 	}
-	void rotateLocalY(float angDegrees)
+	void rotateLocalY(F32 angDegrees)
 	{
 		lTrf.getRotation().rotateYAxis(angDegrees);
 		movableMarkUpdated();
 	}
-	void rotateLocalZ(float angDegrees)
+	void rotateLocalZ(F32 angDegrees)
 	{
 		lTrf.getRotation().rotateZAxis(angDegrees);
 		movableMarkUpdated();
 	}
-	void moveLocalX(float distance)
+	void moveLocalX(F32 distance)
 	{
 		Vec3 x_axis = lTrf.getRotation().getColumn(0);
 		lTrf.getOrigin() += x_axis * distance;
 		movableMarkUpdated();
 	}
-	void moveLocalY(float distance)
+	void moveLocalY(F32 distance)
 	{
 		Vec3 y_axis = lTrf.getRotation().getColumn(1);
 		lTrf.getOrigin() += y_axis * distance;
 		movableMarkUpdated();
 	}
-	void moveLocalZ(float distance)
+	void moveLocalZ(F32 distance)
 	{
 		Vec3 z_axis = lTrf.getRotation().getColumn(2);
 		lTrf.getOrigin() += z_axis * distance;
 		movableMarkUpdated();
 	}
-	void scale(float s)
+	void scale(F32 s)
 	{
 		lTrf.getScale() += s;
 		movableMarkUpdated();

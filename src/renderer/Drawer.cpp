@@ -12,14 +12,14 @@ namespace anki {
 
 //==============================================================================
 /// Visitor that sets a uniform
-struct SetupMaterialVariableVisitor
+struct SetupRenderableVariableVisitor
 {
 	PassLevelKey key;
 	const Frustumable* fr = nullptr;
 	Renderer* r = nullptr;
 	Renderable* renderable = nullptr;
 	Array<U8, RenderableDrawer::UNIFORM_BLOCK_MAX_SIZE> clientBlock;
-	RenderableMaterialVariable* rvar = nullptr;
+	RenderableVariable* rvar = nullptr;
 
 	/// Set a uniform in a client block
 	template<typename T>
@@ -29,13 +29,11 @@ struct SetupMaterialVariableVisitor
 		ANKI_ASSERT(0);
 	}
 
-	template<typename MtlVariableTemplate>
-	void visit(MtlVariableTemplate& x)
+	template<typename TRenderableVariableTemplate>
+	void visit(TRenderableVariableTemplate& x)
 	{
-		const MaterialVariable& mvar = rvar->getMaterialVariable();
-
 		const ShaderProgramUniformVariable* uni =
-			mvar.findShaderProgramUniformVariable(key);
+			x.tryFindShaderProgramUniformVariable(key);
 		if(!uni)
 		{
 			return;
@@ -53,13 +51,11 @@ struct SetupMaterialVariableVisitor
 
 		const U maxInstances = 32; // XXX Use a proper vector with allocator
 
-		Array<Mat4, maxInstances> mv;
-
-		switch(rvar->getBuildinId())
+		switch(x.getBuildinId())
 		{
 		case BMV_NO_BUILDIN:
-			uniSet<typename MtlVariableTemplate::Type>(
-				*uni, x.get(), x.getValuesCount());
+			uniSet<typename TRenderableVariableTemplate::Type>(
+				*uni, x.get(), x.getArraySize());
 			break;
 		case BMV_MODEL_VIEW_PROJECTION_MATRIX:
 			{
@@ -72,6 +68,30 @@ struct SetupMaterialVariableVisitor
 				}
 
 				uniSet(*uni, &mvp[0], size);
+			}
+			break;
+		case BMV_BILLBOARD_MVP_MATRIX:
+			{
+				// Calc the billboard rotation matrix
+				Mat3 rot =
+					fr->getViewMatrix().getRotationPart().getTransposed();
+
+				/*Vec3 up(0.0, 1.0, 0.0);
+				Vec3 front = rot.getColumn(2);
+				Vec3 right = up.cross(front);
+				up = front.cross(right);
+				rot.setColumns(right, up, front);*/
+
+				Array<Mat4, maxInstances> bmvp;
+
+				for(U i = 0; i < size; i++)
+				{
+					Transform trf = trfs[i];
+					trf.setRotation(rot);
+					bmvp[i] = vp * Mat4(trf);
+				}
+
+				uniSet(*uni, &bmvp[0], size);
 			}
 			break;
 		case BMV_MODEL_VIEW_MATRIX:
@@ -117,7 +137,7 @@ struct SetupMaterialVariableVisitor
 /// all Property types like strings, we don't need strings in our case
 #define TEMPLATE_SPECIALIZATION(type) \
 	template<> \
-	void SetupMaterialVariableVisitor::uniSet<type>( \
+	void SetupRenderableVariableVisitor::uniSet<type>( \
 		const ShaderProgramUniformVariable& uni, const type* values, \
 		U32 size) \
 	{ \
@@ -142,7 +162,7 @@ TEMPLATE_SPECIALIZATION(Mat4)
 
 // Texture specialization
 template<>
-void SetupMaterialVariableVisitor::uniSet<TextureResourcePointer>(
+void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 	const ShaderProgramUniformVariable& uni, 
 	const TextureResourcePointer* values, U32 size)
 {
@@ -162,7 +182,7 @@ void RenderableDrawer::setupShaderProg(
 
 	sprog.bind();
 	
-	SetupMaterialVariableVisitor vis;
+	SetupRenderableVariableVisitor vis;
 
 	vis.fr = &fr;
 	vis.key = key;
@@ -173,9 +193,9 @@ void RenderableDrawer::setupShaderProg(
 	for(auto it = renderable.getVariablesBegin();
 		it != renderable.getVariablesEnd(); ++it)
 	{
-		RenderableMaterialVariable* rvar = *it;
+		RenderableVariable* rvar = *it;
 		vis.rvar = rvar;
-		rvar->getMaterialVariable().acceptVisitor(vis);
+		rvar->acceptVisitor(vis);
 	}
 
 	// Write the block

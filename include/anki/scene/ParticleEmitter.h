@@ -41,6 +41,19 @@ public:
 	}
 	/// @}
 
+	F32 getTimeOfBirth() const
+	{
+		return timeOfBirth;
+	}
+	F32& getTimeOfBirth()
+	{
+		return timeOfBirth;
+	}
+	void setTimeOfBirth(F32 x)
+	{
+		timeOfBirth = x;
+	}
+
 	F32 getTimeOfDeath() const
 	{
 		return timeOfDeath;
@@ -60,7 +73,8 @@ public:
 	}
 
 private:
-	F32 timeOfDeath; ///< Life of death. If < 0.0 then dead. In seconds
+	F32 timeOfBirth; ///< Keep the time of birth for nice effects
+	F32 timeOfDeath; ///< Time of death. If < 0.0 then dead. In seconds
 };
 
 /// The particle emitter scene node. This scene node emitts
@@ -146,6 +160,8 @@ private:
 	U32 instancesCount; ///< AKA alive count
 
 	Vector<Transform> instancingTransformations;
+
+	RenderableVariable* alphaRenderableVar = nullptr;
 
 	void init(const char* filename, Scene* scene);
 
