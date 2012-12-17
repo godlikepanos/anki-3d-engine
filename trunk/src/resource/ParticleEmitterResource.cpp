@@ -172,7 +172,7 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
 
 	if(particlesPerEmittion < 1)
 	{
-		throw PE_EXCEPTION(errMsg + "particlesPerEmittion");
+		throw PE_EXCEPTION(errMsg + "particlesPerEmission");
 	}
 
 	// Calc some stuff

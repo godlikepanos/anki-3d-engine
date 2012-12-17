@@ -206,7 +206,7 @@ void init()
 #endif
 
 	// Vase point lights
-	Array<Vec3, 4> vaseLightPos = {{Vec3(32.4, 9, -13.2), Vec3(32.4, 9, 10),
+	Array<Vec3, 4> vaseLightPos = {{Vec3(32.6, 9, -13.2), Vec3(32.6, 9, 10),
 		Vec3(-37.6001, 9, 10), Vec3(-37.6001, 9, -13.2)}};
 	for(U i = 0; i < vaseLightPos.getSize(); i++)
 	{
@@ -218,8 +218,15 @@ void init()
 		point->setDiffuseColor(Vec4(3.0, 0.0, 0.0, 0.0));
 		point->setSpecularColor(Vec4(1.0, 1.0, 0.0, 0.0));
 
-		ParticleEmitter* pe = new ParticleEmitter("todo",
+		ParticleEmitter* pe = new ParticleEmitter(
+			"data/particles/smoke.particles",
 			("pe" + std::to_string(i)).c_str(), &scene,
+			Movable::MF_NONE, nullptr);
+		pe->setLocalTranslation(vaseLightPos[i]);
+
+		pe = new ParticleEmitter(
+			"data/particles/fire.particles",
+			("pef" + std::to_string(i)).c_str(), &scene,
 			Movable::MF_NONE, nullptr);
 		pe->setLocalTranslation(vaseLightPos[i]);
 	}
