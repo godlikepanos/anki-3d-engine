@@ -1,13 +1,70 @@
 #include "anki/resource/ParticleEmitterResource.h"
 #include "anki/resource/Model.h"
 #include "anki/util/Exception.h"
+#include "anki/util/StringList.h"
+#include "anki/misc/Xml.h"
 #include <cstring>
 
 namespace anki {
 
+//==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
 static const char* errMsg = "Incorrect or missing value ";
 
 #define PE_EXCEPTION(x) ANKI_EXCEPTION("Particle emmiter: " + x)
+
+//==============================================================================
+static void xmlReadVec3(const XmlElement& el_, const char* str, Vec3& out)
+{
+	XmlElement el = el_.getChildElementOptional(str);
+
+	if(!el)
+	{
+		return;
+	}
+
+	StringList list;
+
+	list = StringList::splitString(el.getText(), ' ');
+	if(list.size() != 3)
+	{
+		throw ANKI_EXCEPTION("Expecting 3 floats for Vec3");
+	}
+
+	for(U i = 0; i < 3; i++)
+	{
+		out[i] = std::stof(list[i]);
+	}
+}
+
+//==============================================================================
+static void xmlReadFloat(const XmlElement& el_, const char* str, F32& out)
+{
+	XmlElement el = el_.getChildElementOptional(str);
+
+	if(!el)
+	{
+		return;
+	}
+
+	out = std::stof(el.getText());
+}
+
+//==============================================================================
+static void xmlReadU(const XmlElement& el_, const char* str, U32& out)
+{
+	XmlElement el = el_.getChildElementOptional(str);
+
+	if(!el)
+	{
+		return;
+	}
+
+	out = (U32)std::stoi(el.getText());
+}
 
 //==============================================================================
 // ParticleEmitterProperties                                                   =
@@ -34,38 +91,56 @@ ParticleEmitterResource::~ParticleEmitterResource()
 {}
 
 //==============================================================================
-void ParticleEmitterResource::load(const char* /*filename*/)
+void ParticleEmitterResource::load(const char* filename)
 {
-	// dummy load
-	particle.life = 7.0;
-	particle.lifeDeviation = 2.0;
+	try
+	{
+		XmlDocument doc;
+		doc.loadFile(filename);
+		loadInternal(doc.getChildElement("particleEmitter"));
+	}
+	catch(std::exception& e)
+	{
+		throw ANKI_EXCEPTION("Failed to load file: " + filename) << e;
+	}
+}
 
-	particle.size = 1.0;
-	particle.sizeAnimation = 2.0;
+//==============================================================================
+void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
+{
+	// XML load
+	//
+	xmlReadFloat(rootel, "life", particle.life);
+	xmlReadFloat(rootel, "lifeDeviation", particle.lifeDeviation);
+	
+	xmlReadFloat(rootel, "mass", particle.mass);
+	xmlReadFloat(rootel, "massDeviation", particle.massDeviation);
 
-	particle.forceDirection = Vec3(0.0, 1.0, 0.0);
-	particle.forceDirectionDeviation = Vec3(0.2);
-	particle.forceMagnitude = 100.0;
-	particle.forceMagnitudeDeviation = 0.0;
+	xmlReadFloat(rootel, "size", particle.size);
+	xmlReadFloat(rootel, "sizeAnimation", particle.sizeAnimation);
 
-	particle.mass = 1.0;
-	particle.massDeviation = 0.0;
+	xmlReadFloat(rootel, "alpha", particle.alpha);
 
-	particle.gravity = Vec3(0.0, 1.0, 0.0);
-	particle.gravityDeviation = Vec3(0.0, 0.0, 0.0);
+	xmlReadVec3(rootel, "forceDirection", particle.forceDirection);
+	xmlReadVec3(rootel, "forceDirectionDeviation", 
+		particle.forceDirectionDeviation);
+	xmlReadFloat(rootel, "forceMagnitude", particle.forceMagnitude);
+	xmlReadFloat(rootel, "forceMagnitudeDeviation", 
+		particle.forceMagnitudeDeviation);
 
-	particle.alpha = 0.25;
+	xmlReadVec3(rootel, "gravity", particle.gravity);
+	xmlReadVec3(rootel, "gravityDeviation", particle.gravityDeviation);
 
-	/*gravity = Vec3(0.0, 10.0, 0.0);
-	gravityDeviation = Vec3(0.0, 0.0, 0.0);*/
+	xmlReadVec3(rootel, "startingPosition", particle.startingPos);
+	xmlReadVec3(rootel, "startingPositionDeviation", 
+		particle.startingPosDeviation);
 
-	particle.startingPos = Vec3(0.0, -0.5, 0.0);
-	particle.startingPosDeviation = Vec3(0.3, 0.0, 0.3);
+	xmlReadU(rootel, "maxNumberOfParticles", maxNumOfParticles);
+	xmlReadFloat(rootel, "emissionPeriod", emissionPeriod);
+	xmlReadU(rootel, "particlesPerEmittion", particlesPerEmittion);
 
-	maxNumOfParticles = 16;
-	emissionPeriod = 0.5;
-	particlesPerEmittion = 1;
-	model.load("data/particles/fire/fire.mdl");
+	XmlElement el = rootel.getChildElement("model");
+	model.load(el.getText());
 
 	// sanity checks
 	//

@@ -8,20 +8,36 @@
 namespace anki {
 
 //==============================================================================
+// ParticleSimple                                                              =
+//==============================================================================
+
+//==============================================================================
+ParticleSimple::ParticleSimple(
+	// SceneNode
+	const char* name, Scene* scene, 
+	// Movable
+	U32 movableFlags, Movable* movParent)
+	: SceneNode(name, scene), Movable(movableFlags, movParent, *this)
+{}
+
+//==============================================================================
+ParticleSimple::~ParticleSimple()
+{}
+
+//==============================================================================
 // Particle                                                                    =
 //==============================================================================
 
 //==============================================================================
 Particle::Particle(
-	F32 timeOfDeath_,
 	// Scene
 	const char* name, Scene* scene,
 	// Movable
 	U32 movableFlags, Movable* movParent, 
 	// RigidBody
 	PhysWorld* masterContainer, const Initializer& init)
-	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
-		 RigidBody(masterContainer, init, this), timeOfDeath(timeOfDeath_)
+	: ParticleSimple(name, scene, movableFlags, movParent),
+		RigidBody(masterContainer, init, this)
 {}
 
 //==============================================================================
@@ -130,7 +146,6 @@ void ParticleEmitter::init(const char* filename, Scene* scene)
 		binit.mass = getRandom(particle.mass, particle.massDeviation);
 
 		Particle* part = new Particle(
-			-1.0, 
 			(getName() + std::to_string(i)).c_str(), scene,
 			Movable::MF_NONE, nullptr,
 			&scene->getPhysics(), binit);
@@ -166,11 +181,13 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 
 		if(p->getTimeOfDeath() < crntTime)
 		{
+			// Just died
 			p->setActivationState(DISABLE_SIMULATION);
 			p->setTimeOfDeath(-1.0);
 		}
 		else
-		{	
+		{
+			// An alive
 			const Vec3& origin = p->Movable::getWorldTransform().getOrigin();
 
 			for(U i = 0; i < 3; i++)
@@ -184,7 +201,8 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 
 			Transform trf = p->Movable::getWorldTransform();
 			// XXX set a flag for scale
-			trf.setScale(particle.size + (lifePercent * particle.sizeAnimation));
+			trf.setScale(
+				particle.size + (lifePercent * particle.sizeAnimation));
 
 			instancingTransformations.push_back(trf);
 
@@ -215,11 +233,6 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	//
 	// Emit new particles
 	//
-
-	// pre calculate
-	Bool forceFlag = particleEmitterResource->hasForce();
-	Bool worldGravFlag = particleEmitterResource->usingWorldGravity();
-
 	if(timeLeftForNextEmission <= 0.0)
 	{
 		U particlesCount = 0; // How many particles I am allowed to emmit
@@ -232,66 +245,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 				continue;
 			}
 
-			RigidBody& body = p;
-
-			// life
-			p.setTimeOfDeath(
-				getRandom(crntTime + particle.life, particle.lifeDeviation));
-			p.setTimeOfBirth(crntTime);
-
-			// activate it (Bullet stuff)
-			body.forceActivationState(ACTIVE_TAG);
-			body.activate();
-			body.clearForces();
-			body.setLinearVelocity(btVector3(0.0, 0.0, 0.0));
-			body.setAngularVelocity(btVector3(0.0, 0.0, 0.0));
-
-			//cout << p.body->internalGetDeltaAngularVelocity() << endl;
-
-			// force
-			if(forceFlag)
-			{
-				Vec3 forceDir =
-					getRandom(particle.forceDirection,
-					particle.forceDirectionDeviation);
-				forceDir.normalize();
-
-				if(!identityRotation)
-				{
-					// the forceDir depends on the particle emitter rotation
-					forceDir = getWorldTransform().getRotation() * forceDir;
-				}
-
-				F32 forceMag =
-					getRandom(particle.forceMagnitude,
-					particle.forceMagnitudeDeviation);
-
-				body.applyCentralForce(toBt(forceDir * forceMag));
-			}
-
-			// gravity
-			if(!worldGravFlag)
-			{
-				body.setGravity(toBt(
-					getRandom(particle.gravity, particle.gravityDeviation)));
-			}
-
-			// Starting pos. In local space
-			Vec3 pos =
-				getRandom(particle.startingPos, particle.startingPosDeviation);
-
-			if(identityRotation)
-			{
-				pos += getWorldTransform().getOrigin();
-			}
-			else
-			{
-				pos.transform(getWorldTransform());
-			}
-
-			btTransform trf(
-				toBt(Transform(pos, getWorldTransform().getRotation(), 1.0)));
-			body.setWorldTransform(trf);
+			reanimateParticle(p, crntTime);
 
 			// do the rest
 			++particlesCount;
@@ -307,6 +261,73 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	{
 		timeLeftForNextEmission -= crntTime - prevUpdateTime;
 	}
+}
+
+//==============================================================================
+void ParticleEmitter::reanimateParticle(ParticleSimple& p, F32 crntTime)
+{
+	ANKI_ASSERT(p.isDead());
+
+	ANKI_ASSERT(p.getRigidBody() != nullptr);
+	RigidBody& body = *p.getRigidBody();
+
+	// pre calculate
+	Bool forceFlag = particleEmitterResource->hasForce();
+	Bool worldGravFlag = particleEmitterResource->usingWorldGravity();
+
+	// life
+	p.setTimeOfDeath(
+		getRandom(crntTime + particle.life, particle.lifeDeviation));
+	p.setTimeOfBirth(crntTime);
+
+	// activate it (Bullet stuff)
+	body.forceActivationState(ACTIVE_TAG);
+	body.activate();
+	body.clearForces();
+	body.setLinearVelocity(btVector3(0.0, 0.0, 0.0));
+	body.setAngularVelocity(btVector3(0.0, 0.0, 0.0));
+
+	// force
+	if(forceFlag)
+	{
+		Vec3 forceDir = getRandom(particle.forceDirection,
+			particle.forceDirectionDeviation);
+		forceDir.normalize();
+
+		if(!identityRotation)
+		{
+			// the forceDir depends on the particle emitter rotation
+			forceDir = getWorldTransform().getRotation() * forceDir;
+		}
+
+		F32 forceMag = getRandom(particle.forceMagnitude,
+			particle.forceMagnitudeDeviation);
+
+		body.applyCentralForce(toBt(forceDir * forceMag));
+	}
+
+	// gravity
+	if(!worldGravFlag)
+	{
+		body.setGravity(
+			toBt(getRandom(particle.gravity, particle.gravityDeviation)));
+	}
+
+	// Starting pos. In local space
+	Vec3 pos = getRandom(particle.startingPos, particle.startingPosDeviation);
+
+	if(identityRotation)
+	{
+		pos += getWorldTransform().getOrigin();
+	}
+	else
+	{
+		pos.transform(getWorldTransform());
+	}
+
+	btTransform trf(
+		toBt(Transform(pos, getWorldTransform().getRotation(), 1.0)));
+	body.setWorldTransform(trf);
 }
 
 } // end namespace anki
