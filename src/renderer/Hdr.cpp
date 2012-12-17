@@ -92,10 +92,10 @@ void Hdr::init(const RendererInitializer& initializer)
 void Hdr::run()
 {
 	ANKI_ASSERT(enabled);
-	if(r->getFramesCount() % 2 == 0)
+	/*if(r->getFramesCount() % 2 == 0)
 	{
 		return;
-	}
+	}*/
 
 	GlStateSingleton::get().setViewport(0, 0, width, height);
 
