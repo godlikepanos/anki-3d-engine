@@ -6,6 +6,8 @@
 
 namespace anki {
 
+class XmlElement;
+
 /// The particle emitter properties. Different class from
 /// ParticleEmitterResource so it can be inherited
 struct ParticleEmitterProperties
@@ -18,30 +20,35 @@ protected:
 	/// @{
 	struct
 	{
-		F32 life = 10.0; ///< Required and > 0.0. In seconds
+		/// Particle life
+		F32 life = 10.0;
 		F32 lifeDeviation = 0.0;
 
-		/// Not-required, any value, Default 0.0, If not set only the gravity
-		/// applies
+		/// Particle mass
+		F32 mass = 1.0;
+		F32 massDeviation = 0.0;
+
+		/// Particle size. It is the size of the collision shape
+		F32 size = 1.0;
+		F32 sizeAnimation = 1.0;
+
+		/// Alpha factor. If the material supports alpha then multiply with 
+		/// this
+		F32 alpha = 1.0;
+
+		/// Initial force. If not set only the gravity applies
 		Vec3 forceDirection = Vec3(0.0, 1.0, 0.0);
 		Vec3 forceDirectionDeviation = Vec3(0.0);
 		F32 forceMagnitude = 0.0; ///< Default 0.0
 		F32 forceMagnitudeDeviation = 0.0;
 
-		F32 mass = 1.0; ///< Required and > 0.0
-		F32 massDeviation = 0.0;
-
-		/// Not-required, any value. If not set then it uses the world's default
+		/// If not set then it uses the world's default
 		Vec3 gravity = Vec3(0.0);
 		Vec3 gravityDeviation = Vec3(0.0);
 
-		Vec3 startingPos = Vec3(0.0); ///< If not set the default is zero
+		/// This position is relevant to the particle emitter pos
+		Vec3 startingPos = Vec3(0.0);
 		Vec3 startingPosDeviation = Vec3(0.0);
-
-		F32 size = 1.0; ///< The size of the collision shape. Required and > 0.0
-		F32 sizeAnimation = 1.0;
-
-		F32 alpha = 1.0;
 	} particle;
 	/// @}
 
@@ -87,6 +94,8 @@ private:
 	ModelResourcePointer model;
 	Bool forceEnabled;
 	Bool wordGravityEnabled;
+
+	void loadInternal(const XmlElement& el);
 };
 
 } // end namespace anki

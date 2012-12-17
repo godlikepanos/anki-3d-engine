@@ -10,37 +10,21 @@
 
 namespace anki {
 
-/// Particle scene node
-class Particle: public SceneNode, public Movable, public RigidBody
+/// Particle without rigid body properties
+/// XXX Remove SceneNode
+class ParticleSimple: public SceneNode, public Movable
 {
 public:
-	Particle(
-		F32 timeOfDeath,
+	ParticleSimple(
 		// SceneNode
 		const char* name, Scene* scene, 
 		// Movable
-		U32 movableFlags, Movable* movParent,
-		// RigidBody
-		PhysWorld* masterContainer, const RigidBody::Initializer& init); 
+		U32 movableFlags, Movable* movParent);
 
-	~Particle();
+	virtual ~ParticleSimple();
 
-	/// @name SceneNode virtuals
+	/// @name Accessors
 	/// @{
-
-	/// Override SceneNode::getMovable()
-	Movable* getMovable()
-	{
-		return this;
-	}
-
-	/// Override SceneNode::getRigidBody()
-	RigidBody* getRigidBody()
-	{
-		return this;
-	}
-	/// @}
-
 	F32 getTimeOfBirth() const
 	{
 		return timeOfBirth;
@@ -49,7 +33,7 @@ public:
 	{
 		return timeOfBirth;
 	}
-	void setTimeOfBirth(F32 x)
+	void setTimeOfBirth(const F32 x)
 	{
 		timeOfBirth = x;
 	}
@@ -62,10 +46,21 @@ public:
 	{
 		return timeOfDeath;
 	}
-	void setTimeOfDeath(F32 x)
+	void setTimeOfDeath(const F32 x)
 	{
 		timeOfDeath = x;
 	}
+	/// @}
+
+	/// @name SceneNode virtuals
+	/// @{
+
+	/// Override SceneNode::getMovable()
+	Movable* getMovable()
+	{
+		return this;
+	}
+	/// @}
 
 	Bool isDead() const
 	{
@@ -74,7 +69,32 @@ public:
 
 private:
 	F32 timeOfBirth; ///< Keep the time of birth for nice effects
-	F32 timeOfDeath; ///< Time of death. If < 0.0 then dead. In seconds
+	F32 timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead. In seconds
+};
+
+/// Particle scene node
+class Particle: public ParticleSimple, public RigidBody
+{
+public:
+	Particle(
+		// SceneNode
+		const char* name, Scene* scene, 
+		// Movable
+		U32 movableFlags, Movable* movParent,
+		// RigidBody
+		PhysWorld* masterContainer, const RigidBody::Initializer& init); 
+
+	~Particle();
+
+	/// @name SceneNode virtuals
+	/// @{
+
+	/// Override SceneNode::getRigidBody()
+	RigidBody* getRigidBody()
+	{
+		return this;
+	}
+	/// @}
 };
 
 /// The particle emitter scene node. This scene node emitts
@@ -167,6 +187,8 @@ private:
 
 	static F32 getRandom(F32 initial, F32 deviation);
 	static Vec3 getRandom(const Vec3& initial, const Vec3& deviation);
+
+	void reanimateParticle(ParticleSimple& p, F32 crntTime);
 };
 
 } // end namespace anki
