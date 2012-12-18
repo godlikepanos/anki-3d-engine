@@ -12,10 +12,8 @@ class XmlElement;
 /// ParticleEmitterResource so it can be inherited
 struct ParticleEmitterProperties
 {
-public:
 	ParticleEmitterProperties& operator=(const ParticleEmitterProperties& b);
 
-protected:
 	/// @name Particle specific properties
 	/// @{
 	struct
@@ -61,25 +59,27 @@ protected:
 	F32 emissionPeriod = 1.0;
 	/// How many particles are emitted every emission. Required
 	U32 particlesPerEmittion = 1;
+	/// Use bullet for the simulation
+	Bool usePhysicsEngine = true;
 	/// @}
+
+	// Optimization flags
+	Bool forceEnabled;
+	Bool wordGravityEnabled;
+
+	void updateFlags();
 };
 
 /// This is the properties of the particle emitter resource
-class ParticleEmitterResource: public ParticleEmitterProperties
+class ParticleEmitterResource: private ParticleEmitterProperties
 {
 public:
 	ParticleEmitterResource();
 	~ParticleEmitterResource();
 
-	Bool hasForce() const
+	const ParticleEmitterProperties& getProperties() const
 	{
-		return forceEnabled;
-	}
-
-	///< @return True if gravity is derived
-	Bool usingWorldGravity() const
-	{
-		return wordGravityEnabled;
+		return *this;
 	}
 
 	const Model& getModel() const
@@ -92,8 +92,6 @@ public:
 
 private:
 	ModelResourcePointer model;
-	Bool forceEnabled;
-	Bool wordGravityEnabled;
 
 	void loadInternal(const XmlElement& el);
 };

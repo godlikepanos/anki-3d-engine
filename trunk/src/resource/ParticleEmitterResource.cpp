@@ -79,6 +79,19 @@ ParticleEmitterProperties& ParticleEmitterProperties::operator=(
 }
 
 //==============================================================================
+void ParticleEmitterProperties::updateFlags()
+{
+	forceEnabled = !isZero(particle.forceDirection.getLengthSquared());
+	forceEnabled = forceEnabled
+		|| !isZero(particle.forceDirectionDeviation.getLengthSquared());
+	forceEnabled = forceEnabled
+		&& (particle.forceMagnitude != 0.0
+		|| particle.forceMagnitudeDeviation != 0.0);
+
+	wordGravityEnabled = isZero(particle.gravity.getLengthSquared());
+}
+
+//==============================================================================
 // ParticleEmitterResource                                                     =
 //==============================================================================
 
@@ -138,6 +151,9 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
 	xmlReadU(rootel, "maxNumberOfParticles", maxNumOfParticles);
 	xmlReadFloat(rootel, "emissionPeriod", emissionPeriod);
 	xmlReadU(rootel, "particlesPerEmittion", particlesPerEmittion);
+	U32 u = usePhysicsEngine;
+	xmlReadU(rootel, "usePhysicsEngine", u);
+	usePhysicsEngine = u;
 
 	XmlElement el = rootel.getChildElement("model");
 	model.load(el.getText());
@@ -177,15 +193,7 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
 
 	// Calc some stuff
 	//
-
-	forceEnabled = !isZero(particle.forceDirection.getLengthSquared());
-	forceEnabled = forceEnabled
-		|| !isZero(particle.forceDirectionDeviation.getLengthSquared());
-	forceEnabled = forceEnabled
-		&& (particle.forceMagnitude != 0.0
-		|| particle.forceMagnitudeDeviation != 0.0);
-
-	wordGravityEnabled = isZero(particle.gravity.getLengthSquared());
+	updateFlags();
 }
 
 } // end namespace anki
