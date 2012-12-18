@@ -8,11 +8,11 @@
 namespace anki {
 
 //==============================================================================
-// ParticleSimple                                                              =
+// ParticleBase                                                                =
 //==============================================================================
 
 //==============================================================================
-ParticleSimple::ParticleSimple(
+ParticleBase::ParticleBase(
 	// SceneNode
 	const char* name, Scene* scene, 
 	// Movable
@@ -21,7 +21,7 @@ ParticleSimple::ParticleSimple(
 {}
 
 //==============================================================================
-ParticleSimple::~ParticleSimple()
+ParticleBase::~ParticleBase()
 {}
 
 //==============================================================================
@@ -36,7 +36,7 @@ Particle::Particle(
 	U32 movableFlags, Movable* movParent, 
 	// RigidBody
 	PhysWorld* masterContainer, const Initializer& init)
-	: ParticleSimple(name, scene, movableFlags, movParent),
+	: ParticleBase(name, scene, movableFlags, movParent),
 		RigidBody(masterContainer, init, this)
 {}
 
@@ -130,7 +130,8 @@ void ParticleEmitter::init(const char* filename, Scene* scene)
 
 	// copy the resource to me
 	ParticleEmitterProperties& me = *this;
-	const ParticleEmitterProperties& other = *particleEmitterResource;
+	const ParticleEmitterProperties& other = 
+		particleEmitterResource->getProperties();
 	me = other;
 
 	// create the particles
@@ -264,7 +265,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 }
 
 //==============================================================================
-void ParticleEmitter::reanimateParticle(ParticleSimple& p, F32 crntTime)
+void ParticleEmitter::reanimateParticle(ParticleBase& p, F32 crntTime)
 {
 	ANKI_ASSERT(p.isDead());
 
@@ -272,8 +273,8 @@ void ParticleEmitter::reanimateParticle(ParticleSimple& p, F32 crntTime)
 	RigidBody& body = *p.getRigidBody();
 
 	// pre calculate
-	Bool forceFlag = particleEmitterResource->hasForce();
-	Bool worldGravFlag = particleEmitterResource->usingWorldGravity();
+	Bool forceFlag = forceEnabled;
+	Bool worldGravFlag = wordGravityEnabled;
 
 	// life
 	p.setTimeOfDeath(

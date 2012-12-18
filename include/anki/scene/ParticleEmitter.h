@@ -10,18 +10,18 @@
 
 namespace anki {
 
-/// Particle without rigid body properties
+/// Particle base
 /// XXX Remove SceneNode
-class ParticleSimple: public SceneNode, public Movable
+class ParticleBase: public SceneNode, public Movable
 {
 public:
-	ParticleSimple(
+	ParticleBase(
 		// SceneNode
 		const char* name, Scene* scene, 
 		// Movable
 		U32 movableFlags, Movable* movParent);
 
-	virtual ~ParticleSimple();
+	virtual ~ParticleBase();
 
 	/// @name Accessors
 	/// @{
@@ -67,13 +67,52 @@ public:
 		return timeOfDeath < 0.0;
 	}
 
+	/// Kill the particle
+	virtual void kill()
+	{
+		timeOfDeath = -1.0;
+	}
+
+	/// Revive the particle
+	virtual void revive(const ParticleEmitterProperties& props,
+		F32 prevUpdateTime, F32 crntTime)
+	{
+		(void)props;
+		(void)prevUpdateTime;
+		(void)crntTime;
+	}
+
 private:
 	F32 timeOfBirth; ///< Keep the time of birth for nice effects
 	F32 timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead. In seconds
 };
 
-/// Particle scene node
-class Particle: public ParticleSimple, public RigidBody
+/// Simple particle for simple simulation
+class ParticleSimple: public ParticleBase
+{
+public:
+	ParticleSimple(
+		// SceneNode
+		const char* name, Scene* scene, 
+		// Movable
+		U32 movableFlags, Movable* movParent)
+		: ParticleBase(name, scene, movableFlags, movParent)
+	{}
+
+	void revive(const ParticleEmitterProperties& props,
+		F32 prevUpdateTime, F32 crntTime)
+	{
+		ParticleBase::revive(props, prevUpdateTime, crntTime);
+		velocity = Vec3(0.0);
+	}
+
+private:
+	/// The velocity
+	Vec3 velocity = Vec3(0.0);
+};
+
+/// Particle for bullet simulations
+class Particle: public ParticleBase, public RigidBody
 {
 public:
 	Particle(
@@ -95,6 +134,12 @@ public:
 		return this;
 	}
 	/// @}
+
+	void kill()
+	{
+		ParticleBase::kill();
+		setActivationState(DISABLE_SIMULATION);
+	}
 };
 
 /// The particle emitter scene node. This scene node emitts
@@ -188,7 +233,7 @@ private:
 	static F32 getRandom(F32 initial, F32 deviation);
 	static Vec3 getRandom(const Vec3& initial, const Vec3& deviation);
 
-	void reanimateParticle(ParticleSimple& p, F32 crntTime);
+	void reanimateParticle(ParticleBase& p, F32 crntTime);
 };
 
 } // end namespace anki

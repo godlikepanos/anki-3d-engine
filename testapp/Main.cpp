@@ -483,7 +483,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.ms.ez.enabled = true;
 	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
-	initializer.is.groundLightEnabled = false;
+	initializer.is.groundLightEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = false;
 	initializer.is.sm.resolution = 512;
