@@ -8,16 +8,47 @@
 namespace anki {
 
 //==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+F32 getRandom(F32 initial, F32 deviation)
+{
+	return (deviation == 0.0) ? initial
+		: initial + randFloat(deviation) * 2.0 - deviation;
+}
+
+//==============================================================================
+Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
+{
+	if(deviation == Vec3(0.0))
+	{
+		return initial;
+	}
+	else
+	{
+		Vec3 out;
+		for(U i = 0; i < 3; i++)
+		{
+			out[i] = getRandom(initial[i], deviation[i]);
+		}
+		return out;
+	}
+}
+
+//==============================================================================
 // ParticleBase                                                                =
 //==============================================================================
 
 //==============================================================================
 ParticleBase::ParticleBase(
+	ParticleType type_,
 	// SceneNode
 	const char* name, Scene* scene, 
 	// Movable
 	U32 movableFlags, Movable* movParent)
-	: SceneNode(name, scene), Movable(movableFlags, movParent, *this)
+	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
+		type(type_)
 {}
 
 //==============================================================================
@@ -36,13 +67,84 @@ Particle::Particle(
 	U32 movableFlags, Movable* movParent, 
 	// RigidBody
 	PhysWorld* masterContainer, const Initializer& init)
-	: ParticleBase(name, scene, movableFlags, movParent),
+	: ParticleBase(PT_PHYSICS, name, scene, movableFlags, movParent),
 		RigidBody(masterContainer, init, this)
 {}
 
 //==============================================================================
 Particle::~Particle()
 {}
+
+//==============================================================================
+void Particle::revive(const ParticleEmitter& pe,
+	F32 prevUpdateTime, F32 crntTime)
+{
+	ParticleBase::revive(pe, prevUpdateTime, crntTime);
+	ANKI_ASSERT(isDead());
+
+	const ParticleEmitterProperties& props = pe;
+
+	RigidBody& body = *this;
+
+	// pre calculate
+	Bool forceFlag = props.forceEnabled;
+	Bool worldGravFlag = props.wordGravityEnabled;
+
+	// life
+	timeOfDeath = getRandom(crntTime + props.particle.life,
+		props.particle.lifeDeviation);
+	timeOfBirth = crntTime;
+
+	// activate it (Bullet stuff)
+	body.forceActivationState(ACTIVE_TAG);
+	body.activate();
+	body.clearForces();
+	body.setLinearVelocity(btVector3(0.0, 0.0, 0.0));
+	body.setAngularVelocity(btVector3(0.0, 0.0, 0.0));
+
+	// force
+	if(forceFlag)
+	{
+		Vec3 forceDir = getRandom(props.particle.forceDirection,
+			props.particle.forceDirectionDeviation);
+		forceDir.normalize();
+
+		if(!pe.identityRotation)
+		{
+			// the forceDir depends on the particle emitter rotation
+			forceDir = pe.getWorldTransform().getRotation() * forceDir;
+		}
+
+		F32 forceMag = getRandom(props.particle.forceMagnitude,
+			props.particle.forceMagnitudeDeviation);
+
+		body.applyCentralForce(toBt(forceDir * forceMag));
+	}
+
+	// gravity
+	if(!worldGravFlag)
+	{
+		body.setGravity(toBt(getRandom(props.particle.gravity,
+			props.particle.gravityDeviation)));
+	}
+
+	// Starting pos. In local space
+	Vec3 pos = getRandom(props.particle.startingPos,
+		props.particle.startingPosDeviation);
+
+	if(pe.identityRotation)
+	{
+		pos += pe.getWorldTransform().getOrigin();
+	}
+	else
+	{
+		pos.transform(pe.getWorldTransform());
+	}
+
+	btTransform trf(
+		toBt(Transform(pos, pe.getWorldTransform().getRotation(), 1.0)));
+	body.setWorldTransform(trf);
+}
 
 //==============================================================================
 // ParticleEmitter                                                             =
@@ -77,31 +179,6 @@ ParticleEmitter::ParticleEmitter(
 //==============================================================================
 ParticleEmitter::~ParticleEmitter()
 {}
-
-//==============================================================================
-F32 ParticleEmitter::getRandom(F32 initial, F32 deviation)
-{
-	return (deviation == 0.0) ? initial
-		: initial + randFloat(deviation) * 2.0 - deviation;
-}
-
-//==============================================================================
-Vec3 ParticleEmitter::getRandom(const Vec3& initial, const Vec3& deviation)
-{
-	if(deviation == Vec3(0.0))
-	{
-		return initial;
-	}
-	else
-	{
-		Vec3 out;
-		for(U i = 0; i < 3; i++)
-		{
-			out[i] = getRandom(initial[i], deviation[i]);
-		}
-		return out;
-	}
-}
 
 //==============================================================================
 const ModelPatchBase& ParticleEmitter::getRenderableModelPatchBase() const
@@ -172,7 +249,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	Vec3 aabbmax(std::numeric_limits<F32>::min());
 	instancingTransformations.clear();
 	Vector<F32> alpha;
-	for(Particle* p : particles)
+	for(ParticleBase* p : particles)
 	{
 		if(p->isDead())
 		{
@@ -183,8 +260,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 		if(p->getTimeOfDeath() < crntTime)
 		{
 			// Just died
-			p->setActivationState(DISABLE_SIMULATION);
-			p->setTimeOfDeath(-1.0);
+			p->kill();
 		}
 		else
 		{
@@ -237,16 +313,16 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	if(timeLeftForNextEmission <= 0.0)
 	{
 		U particlesCount = 0; // How many particles I am allowed to emmit
-		for(Particle* pp : particles)
+		for(ParticleBase* pp : particles)
 		{
-			Particle& p = *pp;
+			ParticleBase& p = *pp;
 			if(!p.isDead())
 			{
 				// its alive so skip it
 				continue;
 			}
 
-			reanimateParticle(p, crntTime);
+			p.revive(*this, prevUpdateTime, crntTime);
 
 			// do the rest
 			++particlesCount;
@@ -262,73 +338,6 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	{
 		timeLeftForNextEmission -= crntTime - prevUpdateTime;
 	}
-}
-
-//==============================================================================
-void ParticleEmitter::reanimateParticle(ParticleBase& p, F32 crntTime)
-{
-	ANKI_ASSERT(p.isDead());
-
-	ANKI_ASSERT(p.getRigidBody() != nullptr);
-	RigidBody& body = *p.getRigidBody();
-
-	// pre calculate
-	Bool forceFlag = forceEnabled;
-	Bool worldGravFlag = wordGravityEnabled;
-
-	// life
-	p.setTimeOfDeath(
-		getRandom(crntTime + particle.life, particle.lifeDeviation));
-	p.setTimeOfBirth(crntTime);
-
-	// activate it (Bullet stuff)
-	body.forceActivationState(ACTIVE_TAG);
-	body.activate();
-	body.clearForces();
-	body.setLinearVelocity(btVector3(0.0, 0.0, 0.0));
-	body.setAngularVelocity(btVector3(0.0, 0.0, 0.0));
-
-	// force
-	if(forceFlag)
-	{
-		Vec3 forceDir = getRandom(particle.forceDirection,
-			particle.forceDirectionDeviation);
-		forceDir.normalize();
-
-		if(!identityRotation)
-		{
-			// the forceDir depends on the particle emitter rotation
-			forceDir = getWorldTransform().getRotation() * forceDir;
-		}
-
-		F32 forceMag = getRandom(particle.forceMagnitude,
-			particle.forceMagnitudeDeviation);
-
-		body.applyCentralForce(toBt(forceDir * forceMag));
-	}
-
-	// gravity
-	if(!worldGravFlag)
-	{
-		body.setGravity(
-			toBt(getRandom(particle.gravity, particle.gravityDeviation)));
-	}
-
-	// Starting pos. In local space
-	Vec3 pos = getRandom(particle.startingPos, particle.startingPosDeviation);
-
-	if(identityRotation)
-	{
-		pos += getWorldTransform().getOrigin();
-	}
-	else
-	{
-		pos.transform(getWorldTransform());
-	}
-
-	btTransform trf(
-		toBt(Transform(pos, getWorldTransform().getRotation(), 1.0)));
-	body.setWorldTransform(trf);
 }
 
 } // end namespace anki
