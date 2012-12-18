@@ -10,12 +10,21 @@
 
 namespace anki {
 
+class ParticleEmitter;
+
 /// Particle base
 /// XXX Remove SceneNode
 class ParticleBase: public SceneNode, public Movable
 {
 public:
+	enum ParticleType
+	{
+		PT_SIMPLE,
+		PT_PHYSICS
+	};
+
 	ParticleBase(
+		ParticleType type,
 		// SceneNode
 		const char* name, Scene* scene, 
 		// Movable
@@ -74,17 +83,20 @@ public:
 	}
 
 	/// Revive the particle
-	virtual void revive(const ParticleEmitterProperties& props,
+	virtual void revive(const ParticleEmitter& pe,
 		F32 prevUpdateTime, F32 crntTime)
 	{
-		(void)props;
+		(void)pe;
 		(void)prevUpdateTime;
 		(void)crntTime;
 	}
 
-private:
+protected:
 	F32 timeOfBirth; ///< Keep the time of birth for nice effects
 	F32 timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead. In seconds
+
+private:
+	ParticleType type;
 };
 
 /// Simple particle for simple simulation
@@ -96,13 +108,13 @@ public:
 		const char* name, Scene* scene, 
 		// Movable
 		U32 movableFlags, Movable* movParent)
-		: ParticleBase(name, scene, movableFlags, movParent)
+		: ParticleBase(PT_SIMPLE, name, scene, movableFlags, movParent)
 	{}
 
-	void revive(const ParticleEmitterProperties& props,
+	void revive(const ParticleEmitter& pe,
 		F32 prevUpdateTime, F32 crntTime)
 	{
-		ParticleBase::revive(props, prevUpdateTime, crntTime);
+		ParticleBase::revive(pe, prevUpdateTime, crntTime);
 		velocity = Vec3(0.0);
 	}
 
@@ -140,12 +152,17 @@ public:
 		ParticleBase::kill();
 		setActivationState(DISABLE_SIMULATION);
 	}
+
+	void revive(const ParticleEmitter& pe,
+		F32 prevUpdateTime, F32 crntTime);
 };
 
 /// The particle emitter scene node. This scene node emitts
 class ParticleEmitter: public SceneNode, public Spatial, public Movable,
 	public Renderable, private ParticleEmitterProperties
 {
+	friend class Particle;
+
 public:
 	ParticleEmitter(
 		const char* filename,
@@ -213,7 +230,7 @@ public:
 private:
 	ParticleEmitterResourcePointer particleEmitterResource;
 	std::unique_ptr<btCollisionShape> collShape;
-	PtrVector<Particle> particles;
+	PtrVector<ParticleBase> particles;
 	F32 timeLeftForNextEmission;
 	/// The resource
 	Aabb aabb;
@@ -229,11 +246,6 @@ private:
 	RenderableVariable* alphaRenderableVar = nullptr;
 
 	void init(const char* filename, Scene* scene);
-
-	static F32 getRandom(F32 initial, F32 deviation);
-	static Vec3 getRandom(const Vec3& initial, const Vec3& deviation);
-
-	void reanimateParticle(ParticleBase& p, F32 crntTime);
 };
 
 } // end namespace anki
