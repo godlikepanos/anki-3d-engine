@@ -56,6 +56,19 @@ ParticleBase::~ParticleBase()
 {}
 
 //==============================================================================
+void ParticleBase::revive(const ParticleEmitter& pe,
+	F32 /*prevUpdateTime*/, F32 crntTime)
+{
+	ANKI_ASSERT(isDead());
+	const ParticleEmitterProperties& props = pe;
+
+	// life
+	timeOfDeath = getRandom(crntTime + props.particle.life,
+		props.particle.lifeDeviation);
+	timeOfBirth = crntTime;
+}
+
+//==============================================================================
 // ParticleSimple                                                              =
 //==============================================================================
 
@@ -72,7 +85,7 @@ ParticleSimple::ParticleSimple(
 void ParticleSimple::simulate(const ParticleEmitter& pe,
 	F32 prevUpdateTime, F32 crntTime)
 {
-	F32 dt = crntTime - prevUpdateTime;
+	/*F32 dt = crntTime - prevUpdateTime;
 
 	const ParticleEmitterProperties& props = pe;
 	
@@ -84,6 +97,29 @@ void ParticleSimple::simulate(const ParticleEmitter& pe,
 
 	trf.setOrigin(xc);
 
+	std::cout << xc << std::endl;
+
+	setLocalTransform(trf);*/
+}
+
+//==============================================================================
+void ParticleSimple::revive(const ParticleEmitter& pe,
+	F32 prevUpdateTime, F32 crntTime)
+{
+	ParticleBase::revive(pe, prevUpdateTime, crntTime);
+	velocity = Vec3(0.0);
+
+	const ParticleEmitterProperties& props = pe;
+
+	// Set the initial position
+	Vec3 pos = getRandom(props.particle.startingPos,
+		props.particle.startingPosDeviation);
+
+	pos += pe.getWorldTransform().getOrigin();
+
+	Transform trf;
+	trf.setIdentity();
+	trf.setOrigin(pos);
 	setLocalTransform(trf);
 }
 
@@ -112,7 +148,6 @@ void Particle::revive(const ParticleEmitter& pe,
 	F32 prevUpdateTime, F32 crntTime)
 {
 	ParticleBase::revive(pe, prevUpdateTime, crntTime);
-	ANKI_ASSERT(isDead());
 
 	const ParticleEmitterProperties& props = pe;
 
@@ -121,11 +156,6 @@ void Particle::revive(const ParticleEmitter& pe,
 	// pre calculate
 	Bool forceFlag = props.forceEnabled;
 	Bool worldGravFlag = props.wordGravityEnabled;
-
-	// life
-	timeOfDeath = getRandom(crntTime + props.particle.life,
-		props.particle.lifeDeviation);
-	timeOfBirth = crntTime;
 
 	// activate it (Bullet stuff)
 	body.forceActivationState(ACTIVE_TAG);
@@ -192,8 +222,25 @@ ParticleEmitter::ParticleEmitter(
 	: SceneNode(name, scene), Spatial(this, &aabb),
 		Movable(movableFlags, movParent, *this)
 {
-	init(filename, scene);
+	// Load resource
+	particleEmitterResource.load(filename);
 
+	// copy the resource to me
+	ParticleEmitterProperties& me = *this;
+	const ParticleEmitterProperties& other =
+		particleEmitterResource->getProperties();
+	me = other;
+
+	if(usePhysicsEngine)
+	{
+		createParticlesSimulation(scene);
+	}
+	else
+	{
+		createParticlesSimpleSimulation(scene);
+	}
+
+	timeLeftForNextEmission = 0.0;
 	instancesCount = particles.size();
 	Renderable::init(*this);
 
@@ -233,16 +280,8 @@ void ParticleEmitter::movableUpdate()
 }
 
 //==============================================================================
-void ParticleEmitter::init(const char* filename, Scene* scene)
+void ParticleEmitter::createParticlesSimulation(Scene* scene)
 {
-	particleEmitterResource.load(filename);
-
-	// copy the resource to me
-	ParticleEmitterProperties& me = *this;
-	const ParticleEmitterProperties& other = 
-		particleEmitterResource->getProperties();
-	me = other;
-
 	// create the particles
 	collShape.reset(new btSphereShape(particle.size));
 
@@ -264,8 +303,19 @@ void ParticleEmitter::init(const char* filename, Scene* scene)
 
 		part->forceActivationState(DISABLE_SIMULATION);
 	}
+}
 
-	timeLeftForNextEmission = 0.0;
+//==============================================================================
+void ParticleEmitter::createParticlesSimpleSimulation(Scene* scene)
+{
+	for(U i = 0; i < maxNumOfParticles; i++)
+	{
+		ParticleSimple* p = new ParticleSimple(
+			(getName() + std::to_string(i)).c_str(),
+			scene, Movable::MF_NONE, nullptr);
+
+		particles.push_back(p);
+	}
 }
 
 //==============================================================================

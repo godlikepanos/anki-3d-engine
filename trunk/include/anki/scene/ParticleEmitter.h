@@ -85,12 +85,7 @@ public:
 
 	/// Revive the particle
 	virtual void revive(const ParticleEmitter& pe,
-		F32 prevUpdateTime, F32 crntTime)
-	{
-		(void)pe;
-		(void)prevUpdateTime;
-		(void)crntTime;
-	}
+		F32 prevUpdateTime, F32 crntTime);
 
 	/// Only relevant for non-bullet simulations
 	virtual void simulate(const ParticleEmitter& pe, 
@@ -120,11 +115,7 @@ public:
 		U32 movableFlags, Movable* movParent);
 
 	void revive(const ParticleEmitter& pe,
-		F32 prevUpdateTime, F32 crntTime)
-	{
-		ParticleBase::revive(pe, prevUpdateTime, crntTime);
-		velocity = Vec3(0.0);
-	}
+		F32 prevUpdateTime, F32 crntTime);
 
 	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime);
 
@@ -171,6 +162,7 @@ public:
 class ParticleEmitter: public SceneNode, public Spatial, public Movable,
 	public Renderable, private ParticleEmitterProperties
 {
+	friend class ParticleBase;
 	friend class Particle;
 	friend class ParticleSimple;
 
@@ -256,7 +248,8 @@ private:
 
 	RenderableVariable* alphaRenderableVar = nullptr;
 
-	void init(const char* filename, Scene* scene);
+	void createParticlesSimulation(Scene* scene);
+	void createParticlesSimpleSimulation(Scene* scene);
 };
 
 } // end namespace anki
