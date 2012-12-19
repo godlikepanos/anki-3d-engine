@@ -56,6 +56,38 @@ ParticleBase::~ParticleBase()
 {}
 
 //==============================================================================
+// ParticleSimple                                                              =
+//==============================================================================
+
+//==============================================================================
+ParticleSimple::ParticleSimple(
+	// SceneNode
+	const char* name, Scene* scene, 
+	// Movable
+	U32 movableFlags, Movable* movParent)
+	: ParticleBase(PT_SIMPLE, name, scene, movableFlags, movParent)
+{}
+
+//==============================================================================
+void ParticleSimple::simulate(const ParticleEmitter& pe,
+	F32 prevUpdateTime, F32 crntTime)
+{
+	F32 dt = crntTime - prevUpdateTime;
+
+	const ParticleEmitterProperties& props = pe;
+	
+	ANKI_ASSERT(props.particle.gravity.getLength() > 0.0);
+
+	Transform trf = getWorldTransform();
+	Vec3 xp = trf.getOrigin();
+	Vec3 xc = props.particle.gravity * (dt * dt) + velocity * dt + xp;
+
+	trf.setOrigin(xc);
+
+	setLocalTransform(trf);
+}
+
+//==============================================================================
 // Particle                                                                    =
 //==============================================================================
 
@@ -264,6 +296,9 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 		}
 		else
 		{
+			// This will calculate a new world transformation
+			p->simulate(*this, prevUpdateTime, crntTime);
+
 			// An alive
 			const Vec3& origin = p->Movable::getWorldTransform().getOrigin();
 

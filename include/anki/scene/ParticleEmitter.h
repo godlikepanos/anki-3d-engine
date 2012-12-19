@@ -79,11 +79,21 @@ public:
 	/// Kill the particle
 	virtual void kill()
 	{
+		ANKI_ASSERT(timeOfDeath > 0.0);
 		timeOfDeath = -1.0;
 	}
 
 	/// Revive the particle
 	virtual void revive(const ParticleEmitter& pe,
+		F32 prevUpdateTime, F32 crntTime)
+	{
+		(void)pe;
+		(void)prevUpdateTime;
+		(void)crntTime;
+	}
+
+	/// Only relevant for non-bullet simulations
+	virtual void simulate(const ParticleEmitter& pe, 
 		F32 prevUpdateTime, F32 crntTime)
 	{
 		(void)pe;
@@ -107,9 +117,7 @@ public:
 		// SceneNode
 		const char* name, Scene* scene, 
 		// Movable
-		U32 movableFlags, Movable* movParent)
-		: ParticleBase(PT_SIMPLE, name, scene, movableFlags, movParent)
-	{}
+		U32 movableFlags, Movable* movParent);
 
 	void revive(const ParticleEmitter& pe,
 		F32 prevUpdateTime, F32 crntTime)
@@ -117,6 +125,8 @@ public:
 		ParticleBase::revive(pe, prevUpdateTime, crntTime);
 		velocity = Vec3(0.0);
 	}
+
+	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime);
 
 private:
 	/// The velocity
@@ -162,6 +172,7 @@ class ParticleEmitter: public SceneNode, public Spatial, public Movable,
 	public Renderable, private ParticleEmitterProperties
 {
 	friend class Particle;
+	friend class ParticleSimple;
 
 public:
 	ParticleEmitter(
