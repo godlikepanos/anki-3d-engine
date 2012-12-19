@@ -24,6 +24,7 @@ public:
 		: self(self_)
 	{
 		ANKI_ASSERT(self != nullptr && "Self can't be nullptr");
+		ANKI_ASSERT(parent_ != this && "Cannot put itself");
 		if(parent_ != nullptr)
 		{
 			parent_->addChild(self);

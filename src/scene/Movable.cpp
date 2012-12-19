@@ -50,9 +50,14 @@ void Movable::updateWorldTransform()
 			timestamp = crntTimestamp;
 		}
 	}
-	else if(timestamp == crntTimestamp)
+	else
 	{
-		wTrf = lTrf;
+		if(timestamp == crntTimestamp)
+		{
+			wTrf = lTrf;
+		}
+
+		ANKI_ASSERT(wTrf == lTrf && "Somehow timestamp is incorrect");
 	}
 
 	if(timestamp == crntTimestamp)
