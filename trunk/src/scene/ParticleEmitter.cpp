@@ -86,18 +86,18 @@ void ParticleSimple::simulate(const ParticleEmitter& pe,
 	F32 prevUpdateTime, F32 crntTime)
 {
 	F32 dt = crntTime - prevUpdateTime;
-
-	const ParticleEmitterProperties& props = pe;
 	
 	ANKI_ASSERT(props.particle.gravity.getLength() > 0.0);
 
 	Transform trf = getWorldTransform();
 	Vec3 xp = trf.getOrigin();
-	Vec3 xc = props.particle.gravity * (dt * dt) + velocity * dt + xp;
+	Vec3 xc = acceleration * (dt * dt) + velocity * dt + xp;
 
 	trf.setOrigin(xc);
 
 	setLocalTransform(trf);
+
+	velocity += acceleration * dt;
 }
 
 //==============================================================================
@@ -108,6 +108,9 @@ void ParticleSimple::revive(const ParticleEmitter& pe,
 	velocity = Vec3(0.0);
 
 	const ParticleEmitterProperties& props = pe;
+
+	acceleration = getRandom(props.particle.gravity,
+			props.particle.gravityDeviation);
 
 	// Set the initial position
 	Vec3 pos = getRandom(props.particle.startingPos,

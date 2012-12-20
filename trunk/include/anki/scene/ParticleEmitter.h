@@ -122,6 +122,7 @@ public:
 private:
 	/// The velocity
 	Vec3 velocity = Vec3(0.0);
+	Vec3 acceleration = Vec3(0.0);
 };
 
 /// Particle for bullet simulations

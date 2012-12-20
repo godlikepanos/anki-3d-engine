@@ -17,7 +17,7 @@ PhysWorld::PhysWorld()
 	sol = new btSequentialImpulseConstraintSolver;
 	dynamicsWorld = new btDiscreteDynamicsWorld(
 		dispatcher, broadphase, sol, collisionConfiguration);
-	dynamicsWorld->setGravity(btVector3(0,-10, 0));
+	dynamicsWorld->setGravity(btVector3(0, -10, 0));
 }
 
 //==============================================================================
@@ -37,7 +37,8 @@ void PhysWorld::setDebugDrawer(btIDebugDraw* newDebugDrawer)
 //==============================================================================
 void PhysWorld::update(F32 prevUpdateTime, F32 crntTime)
 {
-	dynamicsWorld->stepSimulation(crntTime - prevUpdateTime);
+	F32 dt = crntTime - prevUpdateTime;
+	dynamicsWorld->stepSimulation(dt);
 
 	// updateNonRigidBodiesMotionStates
 	for(U i = 0; i < characters.size(); i++)
