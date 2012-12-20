@@ -90,7 +90,7 @@ public:
 	{}
 
 	/// Constructor #2
-	ThreadPool(uint threadsNum)
+	ThreadPool(U threadsNum)
 	{
 		init(threadsNum);
 	}
@@ -110,7 +110,7 @@ public:
 		barrier->wait();
 	}
 
-	uint getThreadsCount() const
+	U32 getThreadsCount() const
 	{
 		return jobs.size();
 	}

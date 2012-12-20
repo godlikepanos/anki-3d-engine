@@ -1,6 +1,8 @@
 #ifndef ANKI_UTIL_FLAGS_H
 #define ANKI_UTIL_FLAGS_H
 
+#include "anki/util/StdTypes.h"
+
 namespace anki {
 
 /// Easy flag manipulation
@@ -23,7 +25,7 @@ public:
 	{
 		mask |= flag;
 	}
-	void enableFlag(Value flag, bool enable)
+	void enableFlag(Value flag, Bool enable)
 	{
 		mask = (enable) ? mask | flag : mask & ~flag;
 	}
@@ -31,7 +33,7 @@ public:
 	{
 		mask &= ~flag;
 	}
-	bool isFlagEnabled(Value flag) const
+	Bool isFlagEnabled(Value flag) const
 	{
 		return mask & flag;
 	}
