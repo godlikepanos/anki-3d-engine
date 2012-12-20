@@ -68,12 +68,12 @@ void initPhysics()
 
 	new RigidBody(&SceneSingleton::get().getPhysics(), init);
 
-#if 0
+#if 1
 	btCollisionShape* colShape = new btBoxShape(
 	    btVector3(1, 1, 1));
 
 	init.startTrf.setOrigin(Vec3(0.0, 15.0, 0.0));
-	init.mass = 1;
+	init.mass = 20;
 	init.shape = colShape;
 	init.group = PhysWorld::CG_PARTICLE;
 	init.mask = PhysWorld::CG_MAP | PhysWorld::CG_PARTICLE;
