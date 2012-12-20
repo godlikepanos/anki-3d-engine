@@ -11,6 +11,8 @@ Movable::Movable(U32 flags_, Movable* parent, PropertyMap& pmap)
 		new ReadWritePointerProperty<Transform>("localTransform", &lTrf));
 	pmap.addNewProperty(
 		new ReadPointerProperty<Transform>("worldTransform", &wTrf));
+
+	movableMarkUpdated();
 }
 
 //==============================================================================
@@ -20,7 +22,8 @@ Movable::~Movable()
 //==============================================================================
 void Movable::update()
 {
-	if(getParent() == nullptr) // If root
+	// If root begin updating
+	if(getParent() == nullptr)
 	{
 		updateWorldTransform();
 	}
@@ -30,13 +33,13 @@ void Movable::update()
 void Movable::updateWorldTransform()
 {
 	prevWTrf = wTrf;
-	Movable* parent = getParent();
-	U32 crntTimestamp = Timestamp::getTimestamp();
+	const Movable* parent = getParent();
+	const Bool dirty = isFlagEnabled(MF_TRANSFORM_DIRTY);
 
-	if(parent)
+	// If dirty then update world transform
+	if(dirty)
 	{
-		if(parent->timestamp == crntTimestamp
-			|| timestamp == crntTimestamp)
+		if(parent)
 		{
 			if(isFlagEnabled(MF_IGNORE_LOCAL_TRANSFORM))
 			{
@@ -47,29 +50,30 @@ void Movable::updateWorldTransform()
 				wTrf = Transform::combineTransformations(
 					parent->getWorldTransform(), lTrf);
 			}
-			timestamp = crntTimestamp;
 		}
-	}
-	else
-	{
-		if(timestamp == crntTimestamp)
+		else
 		{
 			wTrf = lTrf;
 		}
 
-		ANKI_ASSERT(wTrf == lTrf && "Somehow timestamp is incorrect");
-	}
-
-	if(timestamp == crntTimestamp)
-	{
 		movableUpdate();
 	}
 
+	// Update the children
 	Movable::Container::iterator it = getChildrenBegin();
 	for(; it != getChildrenEnd(); it++)
 	{
+		// If parent is dirty then make children dirty as well
+		if(dirty)
+		{
+			(*it)->movableMarkUpdated();
+		}
+
 		(*it)->updateWorldTransform();
 	}
+
+	// Now it's a good time to cleanse parent
+	disableFlag(MF_TRANSFORM_DIRTY);
 }
 
-} // namespace anki
+} // end namespace anki

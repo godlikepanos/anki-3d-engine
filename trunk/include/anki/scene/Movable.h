@@ -22,7 +22,10 @@ public:
 	enum MovableFlag
 	{
 		MF_NONE = 0,
-		MF_IGNORE_LOCAL_TRANSFORM = 1, ///< Get the parent's world transform
+		/// Get the parent's world transform
+		MF_IGNORE_LOCAL_TRANSFORM = 1 << 1,
+		/// If dirty then is marked for update
+		MF_TRANSFORM_DIRTY = 1 << 2
 	};
 
 	/// @name Constructors & destructor
@@ -117,7 +120,7 @@ public:
 	}
 	void scale(F32 s)
 	{
-		lTrf.getScale() += s;
+		lTrf.getScale() *= s;
 		movableMarkUpdated();
 	}
 	/// @}
@@ -155,6 +158,7 @@ protected:
 	void movableMarkUpdated()
 	{
 		timestamp = Timestamp::getTimestamp();
+		enableFlag(MF_TRANSFORM_DIRTY);
 	}
 };
 /// @}

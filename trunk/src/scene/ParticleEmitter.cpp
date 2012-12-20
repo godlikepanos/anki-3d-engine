@@ -85,7 +85,7 @@ ParticleSimple::ParticleSimple(
 void ParticleSimple::simulate(const ParticleEmitter& pe,
 	F32 prevUpdateTime, F32 crntTime)
 {
-	/*F32 dt = crntTime - prevUpdateTime;
+	F32 dt = crntTime - prevUpdateTime;
 
 	const ParticleEmitterProperties& props = pe;
 	
@@ -97,9 +97,7 @@ void ParticleSimple::simulate(const ParticleEmitter& pe,
 
 	trf.setOrigin(xc);
 
-	std::cout << xc << std::endl;
-
-	setLocalTransform(trf);*/
+	setLocalTransform(trf);
 }
 
 //==============================================================================
