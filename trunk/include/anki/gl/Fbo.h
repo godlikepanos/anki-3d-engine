@@ -11,7 +11,7 @@ namespace anki {
 
 class Texture;
 
-/// @addtogroup gl
+/// @addtogroup OpenGL
 /// @{
 
 /// Frame buffer object. The class is actually a wrapper to avoid common 

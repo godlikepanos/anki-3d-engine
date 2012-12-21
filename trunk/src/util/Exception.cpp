@@ -9,9 +9,21 @@ namespace anki {
 
 //==============================================================================
 Exception::Exception(const char* error, const char* file,
-	int line, const char* func)
+	I line, const char* func)
 {
 	err = synthErr(error, file, line, func);
+
+#if ANKI_ABORT_ON_THROW
+	std::cerr << err << std::endl;
+	abort();
+#endif
+}
+
+//==============================================================================
+Exception::Exception(const std::string& error, const char* file,
+	I line, const char* func)
+{
+	err = synthErr(error.c_str(), file, line, func);
 
 #if ANKI_ABORT_ON_THROW
 	std::cerr << err << std::endl;
@@ -31,7 +43,7 @@ Exception::Exception(const Exception& e)
 
 //==============================================================================
 std::string Exception::synthErr(const char* error, const char* file,
-	int line, const char* func)
+	I line, const char* func)
 {
 	std::stringstream ss;
 	ss << "(" << file << ':' << line << ' ' << func << ") " << error;
@@ -47,4 +59,4 @@ Exception Exception::operator<<(const std::exception& e) const
 	return out;
 }
 
-} // end namespace
+} // end namespace anki

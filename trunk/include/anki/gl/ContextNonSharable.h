@@ -7,6 +7,9 @@
 
 namespace anki {
 
+/// @addtogroup OpenGL
+/// @{
+
 /// Defines an non sharable GL object. Used to avoid idiotic mistakes and more
 /// specifically using the object from other than contexts
 class ContextNonSharable
@@ -68,6 +71,7 @@ private:
 	std::thread::id creationThreadId;
 #endif
 };
+/// @}
 
 } // end namespace anki
 

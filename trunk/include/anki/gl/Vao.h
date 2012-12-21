@@ -12,6 +12,9 @@ namespace anki {
 class ShaderProgramAttributeVariable;
 class Vbo;
 
+/// @addtogroup OpenGL
+/// @{
+
 /// Vertex array object. Non-copyable to avoid instantiating it in the stack
 class Vao: public NonCopyable, public ContextNonSharable
 {
@@ -172,6 +175,7 @@ private:
 		return (GLuint)x;
 	}
 };
+/// @}
 
 } // end namespace anki
 

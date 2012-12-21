@@ -8,7 +8,7 @@
 
 namespace anki {
 
-/// @addtogroup gl
+/// @addtogroup OpenGL
 /// @{
 	
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
@@ -41,7 +41,7 @@ public:
 		create(target, sizeInBytes, dataPtr, usage);
 	}
 
-	/// It deletes the BO from the GL context
+	/// It deletes the BO
 	~BufferObject();
 	/// @}
 
@@ -70,7 +70,7 @@ public:
 		ANKI_ASSERT(isCreated());
 		return sizeInBytes;
 	}
-	/// @]
+	/// @}
 
 	/// Bind BO
 	void bind() const
@@ -123,7 +123,7 @@ public:
 	/// @param[in] size The size in bytes we want to write
 	void write(void* buff, U32 offset, U32 size);
 
-	/// Map buffer
+	/// Map part of the buffer
 	void* map(U32 offset, U32 length, GLuint flags);
 
 	/// Map the entire buffer
@@ -135,8 +135,8 @@ public:
 	/// Unmap buffer
 	void unmap();
 
-	/// If created is run successfully this returns true
-	bool isCreated() const
+	/// If create() is run successfully this returns true
+	Bool isCreated() const
 	{
 		return glId != 0;
 	}
@@ -147,7 +147,7 @@ public:
 		ANKI_ASSERT(target == GL_TRANSFORM_FEEDBACK_BUFFER 
 			|| target == GL_UNIFORM_BUFFER);
 		bind();
-		ANKI_GL_CALL(glBindBufferBase(target, binding, glId));
+		glBindBufferBase(target, binding, glId);
 	}
 
 private:

@@ -2,6 +2,7 @@
 #define ANKI_UTIL_EXCEPTION_H
 
 #include "anki/Config.h"
+#include "anki/util/StdTypes.h"
 #include <exception>
 #include <string>
 
@@ -15,8 +16,12 @@ class Exception: public std::exception
 {
 public:
 	/// Constructor
-	Exception(const char* error, const char* file = "unknown",
-		int line = -1, const char* func = "unknown");
+	explicit Exception(const char* error, const char* file = "unknown",
+		I line = -1, const char* func = "unknown");
+
+	/// Constructor 2
+	explicit Exception(const std::string& error, const char* file = "unknown",
+		I line = -1, const char* func = "unknown");
 
 	/// Copy constructor
 	Exception(const Exception& e);
@@ -26,6 +31,12 @@ public:
 	{}
 
 	/// For re-throws
+	/// Usage:
+	/// @code
+	/// catch(std::exception& e) {
+	/// 	throw Exception("message", ...) << e;
+	/// }
+	/// @endcode
 	Exception operator<<(const std::exception& e) const;
 
 	/// Implements std::exception::what()
@@ -39,13 +50,13 @@ private:
 
 	/// Synthesize the error string
 	static std::string synthErr(const char* error, const char* file,
-		int line, const char* func);
+		I line, const char* func);
 };
 
-} // end namespace
+} // end namespace anki
 
 /// Macro for easy throwing
-#define ANKI_EXCEPTION(x) Exception((std::string() + x).c_str(), \
-	ANKI_FILE, __LINE__, ANKI_FUNC)
+#define ANKI_EXCEPTION(x) \
+	Exception(std::string() + x, ANKI_FILE, __LINE__, ANKI_FUNC)
 
 #endif

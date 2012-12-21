@@ -8,7 +8,7 @@ namespace anki {
 /// @addtogroup Math
 /// @{
 
-/// 4D vector. SSE optimized
+/// 4D vector. SIMD optimized
 class Vec4
 {
 public:
@@ -24,7 +24,7 @@ public:
 	explicit Vec4(const Vec3& v3, const F32 w);
 	Vec4(const Vec4& b);
 	explicit Vec4(const Quat& q);
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	explicit Vec4(const __m128& mm);
 #endif
 	/// @}
@@ -41,7 +41,7 @@ public:
 	F32 w() const;
 	F32& operator[](const U i);
 	F32 operator[](const U i) const;
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128& getMm();
 	const __m128& getMm() const;
 #endif
@@ -115,7 +115,7 @@ private:
 
 		Array<F32, 4> arr;
 
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 		__m128 mm;
 #endif
 	};

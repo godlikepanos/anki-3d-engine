@@ -6,7 +6,7 @@
 
 namespace anki {
 
-/// @addtogroup gl
+/// @addtogroup OpenGL
 /// @{
 	
 /// Uniform buffer object
@@ -18,7 +18,6 @@ public:
 		BufferObject::create(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW);
 	}
 };
-
 /// @}
 
 } // end namespace anki

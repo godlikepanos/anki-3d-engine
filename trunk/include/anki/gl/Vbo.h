@@ -5,6 +5,9 @@
 
 namespace anki {
 
+/// @addtogroup OpenGL
+/// @{
+
 /// This is a wrapper for Vertex Buffer Objects to prevent us from making
 /// idiotic errors
 class Vbo: public BufferObject
@@ -40,6 +43,7 @@ public:
 		BufferObject::create(target, sizeInBytes, dataPtr, usage);
 	}
 };
+/// @}
 
 } // end namespace
 

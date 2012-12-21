@@ -16,9 +16,4 @@
 
 #include "anki/gl/ContextNonSharable.h"
 
-#define ANKI_GL_CALL(func__) \
-	do { \
-		func__; \
-	} while(0)
-
 #endif
