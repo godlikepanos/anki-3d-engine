@@ -6,7 +6,7 @@
 
 namespace anki {
 
-/// @addtogroup gl
+/// @addtogroup OpenGL
 ///
 
 /// Query object

@@ -18,6 +18,7 @@ namespace anki {
 class Logger
 {
 public:
+	/// Logger message type
 	enum LoggerMessageType
 	{
 		LMT_NORMAL,
@@ -25,7 +26,7 @@ public:
 		LMT_WARNING
 	};
 
-	/// XXX
+	/// Used as parammeter when emitting the signal
 	struct Info
 	{
 		const char* file;

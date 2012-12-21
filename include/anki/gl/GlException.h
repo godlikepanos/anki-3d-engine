@@ -5,6 +5,9 @@
 
 namespace anki {
 
+/// @addtogroup OpenGL
+/// @{
+
 /// The function throws an exception if there is an OpenGL error. Use it with
 /// the ANKI_CHECK_GL_ERROR macro
 void glConditionalThrowException(const char* file, int line, const char* func);
@@ -15,6 +18,8 @@ void glConditionalThrowException(const char* file, int line, const char* func);
 #else
 #	define ANKI_CHECK_GL_ERROR() ((void)0)
 #endif
+
+/// @}
 
 } // end namespace
 

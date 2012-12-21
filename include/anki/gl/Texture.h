@@ -14,7 +14,7 @@ namespace anki {
 
 class Texture;
 
-/// @addtogroup gl
+/// @addtogroup OpenGL
 /// @{
 
 /// The absolute limit of textures

@@ -14,7 +14,7 @@ class Vao;
 class Fbo;
 class ShaderProgram;
 
-/// @addtogroup gl
+/// @addtogroup OpenGL
 /// @{
 
 /// Common stuff for all states

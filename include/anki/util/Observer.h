@@ -108,6 +108,6 @@ private:
 	(_sender)->_signal.addNewObserver( new \
 		RemovePointer<decltype(_receiver)>::Type::Observing_##_slot(_receiver))
 
-} // namespace anki
+} // end namespace anki
 
 #endif

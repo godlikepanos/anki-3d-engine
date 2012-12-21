@@ -9,7 +9,7 @@ namespace anki {
 // Copy
 inline Mat4::Mat4(const Mat4& b)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = b.arrMm[i];
@@ -25,7 +25,7 @@ inline Mat4::Mat4(const Mat4& b)
 // F32
 inline Mat4::Mat4(const F32 f)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_set1_ps(f);
@@ -193,7 +193,7 @@ inline const F32& Mat4::operator[](const U i) const
 	return arr1[i];
 }
 
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 inline const __m128& Mat4::getMm(const U i) const
 {
 	return arrMm[i];
@@ -212,7 +212,7 @@ inline __m128& Mat4::getMm(const U i)
 // =
 inline Mat4& Mat4::operator=(const Mat4& b)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = b.arrMm[i];
@@ -230,7 +230,7 @@ inline Mat4& Mat4::operator=(const Mat4& b)
 inline Mat4 Mat4::operator+(const Mat4& b) const
 {
 	Mat4 c;
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	for(U i = 0; i < 4; i++)
 	{
 		c.arrMm[i] = _mm_add_ps(arrMm[i], b.arrMm[i]);
@@ -247,7 +247,7 @@ inline Mat4 Mat4::operator+(const Mat4& b) const
 // +=
 inline Mat4& Mat4::operator+=(const Mat4& b)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_add_ps(arrMm[i], b.arrMm[i]);
@@ -265,7 +265,7 @@ inline Mat4& Mat4::operator+=(const Mat4& b)
 inline Mat4 Mat4::operator-(const Mat4& b) const
 {
 	Mat4 c;
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	for(U i = 0; i < 4; i++)
 	{
 		c.arrMm[i] = _mm_sub_ps(arrMm[i], b.arrMm[i]);
@@ -282,7 +282,7 @@ inline Mat4 Mat4::operator-(const Mat4& b) const
 // -=
 inline Mat4& Mat4::operator-=(const Mat4& b)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	for(U i = 0; i < 4; i++)
 	{
 		arrMm[i] = _mm_sub_ps(arrMm[i], b.arrMm[i]);
@@ -300,7 +300,7 @@ inline Mat4& Mat4::operator-=(const Mat4& b)
 inline Mat4 Mat4::operator*(const Mat4& b) const
 {
 	Mat4 c;
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	Mat4 t(b);
 	t.transpose();
 	for(U i = 0; i < 4; i++)
@@ -364,7 +364,7 @@ inline Bool Mat4::operator!=(const Mat4& b) const
 inline Mat4 Mat4::operator+(const F32 f) const
 {
 	Mat4 c;
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(U i = 0; i < 4; i++)
@@ -383,7 +383,7 @@ inline Mat4 Mat4::operator+(const F32 f) const
 // 4x4 += F32
 inline Mat4& Mat4::operator+=(const F32 f)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(U i = 0; i < 4; i++)
@@ -403,7 +403,7 @@ inline Mat4& Mat4::operator+=(const F32 f)
 inline Mat4 Mat4::operator-(const F32 f) const
 {
 	Mat4 r;
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(U i = 0; i < 4; i++)
@@ -422,7 +422,7 @@ inline Mat4 Mat4::operator-(const F32 f) const
 // 4x4 -= F32
 inline Mat4& Mat4::operator-=(const F32 f)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(U i = 0; i < 4; i++)
@@ -442,7 +442,7 @@ inline Mat4& Mat4::operator-=(const F32 f)
 inline Mat4 Mat4::operator*(const F32 f) const
 {
 	Mat4 r;
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(U i = 0; i < 4; i++)
@@ -461,7 +461,7 @@ inline Mat4 Mat4::operator*(const F32 f) const
 // 4x4 *= F32
 inline Mat4& Mat4::operator*=(const F32 f)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(U i = 0; i < 4; i++)
@@ -481,7 +481,7 @@ inline Mat4& Mat4::operator*=(const F32 f)
 inline Mat4 Mat4::operator/(const F32 f) const
 {
 	Mat4 r;
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(U i = 0; i < 4; i++)
@@ -500,7 +500,7 @@ inline Mat4 Mat4::operator/(const F32 f) const
 // 4x4 /= F32
 inline Mat4& Mat4::operator/=(const F32 f)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(U i = 0; i < 4; i++)
@@ -523,7 +523,7 @@ inline Mat4& Mat4::operator/=(const F32 f)
 // Mat4 * Vec4
 inline Vec4 Mat4::operator*(const Vec4& b) const
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	Vec4 v;
 	for(U i = 0; i < 4; i++)
 	{
@@ -557,7 +557,7 @@ inline Vec4 Mat4::operator*(const Vec4& b) const
 inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c,
 	const Vec4& d)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	arrMm[0] = a.getMm();
 	arrMm[1] = b.getMm();
 	arrMm[2] = c.getMm();
@@ -585,7 +585,7 @@ inline void Mat4::setRows(const Vec4& a, const Vec4& b, const Vec4& c,
 // setRow
 inline void Mat4::setRow(const U i, const Vec4& v)
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	arrMm[i] = v.getMm();
 #else
 	(*this)(i, 0) = v.x();
@@ -641,7 +641,7 @@ inline Vec4 Mat4::getColumn(const U i) const
 // transpose
 inline void Mat4::transpose()
 {
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	_MM_TRANSPOSE4_PS(arrMm[0], arrMm[1], arrMm[2], arrMm[3]);
 #else
 	F32 tmp = (*this)(0, 1);
@@ -939,7 +939,7 @@ inline Mat4 operator+(const F32 f, const Mat4& m4)
 inline Mat4 operator-(const F32 f, const Mat4& m4)
 {
 	Mat4 r;
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(U i = 0; i < 4; i++)
@@ -965,7 +965,7 @@ inline Mat4 operator*(const F32 f, const Mat4& m4)
 inline Mat4 operator/(const F32 f, const Mat4& m4)
 {
 	Mat4 r;
-#if defined(ANKI_MATH_SIMD_SSE)
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
 	__m128 mm;
 	mm = _mm_set1_ps(f);
 	for(U i = 0; i < 4; i++)

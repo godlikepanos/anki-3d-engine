@@ -18,7 +18,7 @@ class ShaderProgram;
 class ShaderProgramUniformBlock;
 class Texture;
 
-/// @addtogroup gl
+/// @addtogroup OpenGL
 /// @{
 
 /// Shader program variable. The type is attribute or uniform
