@@ -372,7 +372,9 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			// Set alpha
 			if(alphaRenderableVar)
 			{
-				alpha.push_back((1.0 - lifePercent) * particle.alpha);
+				alpha.push_back(
+					sin((lifePercent) * getPi<F32>())
+					* particle.alpha);
 			}
 		}
 	}
