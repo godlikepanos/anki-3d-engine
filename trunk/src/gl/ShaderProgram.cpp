@@ -18,8 +18,38 @@ static const char* padding = "======================================="
                              "=======================================";
 
 //==============================================================================
+// ShaderProgramVariable                                                       =
+//==============================================================================
+
+//==============================================================================
+ShaderProgramVariable& ShaderProgramVariable::operator=(
+	const ShaderProgramVariable& b)
+{
+	ANKI_ASSERT(type == b.type);
+	loc = b.loc;
+	name = b.name;
+	glDataType = b.glDataType;
+	size = b.size;
+	fatherSProg = b.fatherSProg;
+	return *this;
+}
+
+//==============================================================================
 // ShaderProgramUniformVariable                                                =
 //==============================================================================
+
+//==============================================================================
+ShaderProgramUniformVariable& ShaderProgramUniformVariable::operator=(
+	const ShaderProgramUniformVariable& b)
+{
+	ShaderProgramVariable::operator=(b);
+	index = b.index;
+	block = b.block;
+	offset = b.offset;
+	arrayStride = b.arrayStride;
+	matrixStride = b.matrixStride;
+	return *this;
+}
 
 //==============================================================================
 void ShaderProgramUniformVariable::doCommonSetCode() const
@@ -28,8 +58,6 @@ void ShaderProgramUniformVariable::doCommonSetCode() const
 		&& "You cannot set variable in uniform block");
 	ANKI_ASSERT(ShaderProgram::getCurrentProgramGlId() == 
 		getFatherShaderProgram().getGlId());
-
-	/*enableFlag(SPUVF_DIRTY);*/
 }
 
 //==============================================================================
@@ -143,7 +171,7 @@ void ShaderProgramUniformVariable::set(const Texture* const texes[],
 }
 
 //==============================================================================
-/// XXX
+// Template functions that return the GL type using an AnKi type
 template<typename T>
 static Bool checkType(GLenum glDataType);
 
@@ -582,7 +610,7 @@ void ShaderProgram::initUniAndAttribVars()
 	attribs.resize(attribsCount);
 	attribs.shrink_to_fit();
 	attribsCount = 0;
-	for(int i = 0; i < num; i++) // loop all attributes
+	for(GLint i = 0; i < num; i++) // loop all attributes
 	{
 		// Name
 		glGetActiveAttrib(glId, i, sizeof(name_), &length,
@@ -602,6 +630,7 @@ void ShaderProgram::initUniAndAttribVars()
 
 		var.loc = loc;
 		var.name = &name_[0];
+		var.name.shrink_to_fit();
 		var.glDataType = type;
 		var.size = size;
 		var.fatherSProg = this;
@@ -670,6 +699,7 @@ void ShaderProgram::initUniAndAttribVars()
 
 		var.loc = loc;
 		var.name = &name_[0];
+		var.name.shrink_to_fit();
 		var.glDataType = type;
 		var.size = size;
 		var.fatherSProg = this;
@@ -683,23 +713,30 @@ void ShaderProgram::initUniAndAttribVars()
 //==============================================================================
 void ShaderProgram::initUniformBlocks()
 {
+	// Get blocks count and create the vector
 	GLint blocksCount;
 	glGetProgramiv(glId, GL_ACTIVE_UNIFORM_BLOCKS, &blocksCount);
-
+	if(blocksCount < 1)
+	{
+		// Early exit
+		return;
+	}
 	blocks.resize(blocksCount);
 	blocks.shrink_to_fit();
 
+	// Init all blocks
 	GLuint i = 0;
 	for(ShaderProgramUniformBlock& block : blocks)
 	{
 		GLint gli; // General purpose int
 
 		// Name
-		char name[256];
+		Array<char, 256> name;
 		GLsizei len;
-		glGetActiveUniformBlockName(glId, i, sizeof(name), &len, name);
+		glGetActiveUniformBlockName(glId, i, sizeof(name), &len, &name[0]);
+		// The name is null terminated
 
-		block.name = name;
+		block.name = &name[0];
 		block.name.shrink_to_fit();
 
 		// Index

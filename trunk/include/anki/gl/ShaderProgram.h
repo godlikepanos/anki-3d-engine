@@ -3,7 +3,6 @@
 
 #include "anki/util/ConstCharPtrHashMap.h"
 #include "anki/util/Assert.h"
-#include "anki/util/Flags.h"
 #include "anki/math/Forward.h"
 #include "anki/gl/Ogl.h"
 #include "anki/util/Vector.h"
@@ -40,6 +39,8 @@ public:
 	virtual ~ShaderProgramVariable()
 	{}
 
+	ShaderProgramVariable& operator=(const ShaderProgramVariable& b);
+
 	/// @name Accessors
 	/// @{
 	const ShaderProgram& getFatherShaderProgram() const
@@ -73,17 +74,6 @@ public:
 	}
 	/// @}
 
-	ShaderProgramVariable& operator=(const ShaderProgramVariable& b)
-	{
-		ANKI_ASSERT(type == b.type);
-		loc = b.loc;
-		name = b.name;
-		glDataType = b.glDataType;
-		size = b.size;
-		fatherSProg = b.fatherSProg;
-		return *this;
-	}
-
 private:
 	GLint loc; ///< GL location
 	std::string name; ///< The name inside the shader program
@@ -108,14 +98,7 @@ public:
 	{}
 
 	ShaderProgramUniformVariable& operator=(
-		const ShaderProgramUniformVariable& b)
-	{
-		ShaderProgramVariable::operator=(b);
-		index = b.index;
-		offset = b.offset;
-		arrayStride = b.arrayStride;
-		return *this;
-	}
+		const ShaderProgramUniformVariable& b);
 
 	const ShaderProgramUniformBlock* getUniformBlock() const
 	{
@@ -162,6 +145,9 @@ public:
 	}
 	/// @}
 
+	/// @name Uniform block setters
+	/// Write a client memory that represents the uniform block
+	/// @{
 	void setClientMemory(void* buff, U32 buffSize,
 		const F32 arr[], U32 size) const;
 
@@ -179,6 +165,7 @@ public:
 
 	void setClientMemory(void* buff, U32 buffSize,
 		const Mat4 arr[], U32 size) const;
+	/// @}
 
 private:
 	GLuint index;
@@ -402,7 +389,7 @@ public:
 
 	static GLuint getCurrentProgramGlId()
 	{
-		int i;
+		GLint i;
 		glGetIntegerv(GL_CURRENT_PROGRAM, &i);
 		return i;
 	}

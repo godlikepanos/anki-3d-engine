@@ -123,7 +123,7 @@ private:
 	Vector<VertexWeight> vertWeights; ///< Optional
 	Vector<Triangle> tris; ///< Required
 	/// Generated. Used for vertex arrays & VBOs
-	Vector<ushort> vertIndeces;
+	Vector<U16> vertIndeces;
 	/// @}
 
 	/// Load the mesh data from a binary file
