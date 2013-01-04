@@ -3,7 +3,6 @@
 #include "anki/resource/MeshLoader.h"
 #include "anki/gl/Vbo.h"
 #include "anki/util/Functions.h"
-#include <fstream>
 
 namespace anki {
 
