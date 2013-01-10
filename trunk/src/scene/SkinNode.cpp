@@ -25,11 +25,10 @@ SkinMesh::SkinMesh(const MeshBase* mesh_)
 }
 
 //==============================================================================
-void SkinMesh::getVboInfo(
-	const VertexAttribute attrib, const U32 lod, const Vbo*& v, 
+void SkinMesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v,
 	U32& size, GLenum& type, U32& stride, U32& offset) const
 {
-	mesh->getVboInfo(attrib, lod, v, size, type, stride, offset);
+	mesh->getVboInfo(attrib, v, size, type, stride, offset);
 
 	switch(attrib)
 	{
@@ -73,7 +72,7 @@ SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_)
 	for(auto a : attribs)
 	{
 		mpatch->getMeshBase().getVboInfo(
-			a, 0, vbo, size, type, stride, offset);
+			a, vbo, size, type, stride, offset);
 
 		ANKI_ASSERT(vbo != nullptr);
 
@@ -83,7 +82,7 @@ SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_)
 	}
 
 	// The indices VBO
-	mpatch->getMeshBase().getVboInfo(MeshBase::VA_INDICES, 0, vbo, size, type,
+	mpatch->getMeshBase().getVboInfo(MeshBase::VA_INDICES, vbo, size, type,
 			stride, offset);
 	ANKI_ASSERT(vbo != nullptr);
 	xfbVao.attachElementArrayBufferVbo(vbo);

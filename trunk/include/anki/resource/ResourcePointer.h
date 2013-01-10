@@ -27,6 +27,12 @@ public:
 		copy(b);
 	}
 
+	/// Move contructor
+	ResourcePointer(Self&& b)
+	{
+		*this = std::move(b);
+	}
+
 	/// Construct and load
 	ResourcePointer(const char* filename)
 	{
@@ -84,6 +90,14 @@ public:
 		return *this;
 	}
 
+	/// Move
+	Self& operator=(Self&& b)
+	{
+		hook = b.hook;
+		b.hook = nullptr;
+		return *this;
+	}
+
 	/// Load the resource using the resource manager
 	void load(const char* filename)
 	{
@@ -124,6 +138,6 @@ private:
 	}
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

@@ -35,9 +35,9 @@ public:
 		return mesh->getVerticesCount();
 	}
 
-	U32 getIndicesCount(U32 lod) const
+	U32 getIndicesCount() const
 	{
-		return mesh->getIndicesCount(lod);
+		return mesh->getIndicesCount();
 	}
 
 	U32 getTextureChannelsCount() const
@@ -50,18 +50,13 @@ public:
 		return false;
 	}
 
-	U32 getLodsCount() const
-	{
-		return mesh->getLodsCount();
-	}
-
 	const Obb& getBoundingShape() const
 	{
 		return mesh->getBoundingShape();
 	}
 
 	void getVboInfo(
-		const VertexAttribute attrib, const U32 lod, const Vbo*& vbo, 
+		const VertexAttribute attrib, const Vbo*& vbo,
 		U32& size, GLenum& type, U32& stride, U32& offset) const;
 	/// @}
 
@@ -128,7 +123,6 @@ private:
 	const ModelPatch* mpatch;
 	Vao xfbVao; ///< Used as a source VAO in XFB
 };
-
 
 /// A fragment of the SkinNode
 class SkinPatchNode: public SceneNode, public Movable, public Renderable,
@@ -312,8 +306,8 @@ private:
 
 	/// @name Animation stuff
 	/// @{
-	float step;
-	float frame;
+	F32 step;
+	F32 frame;
 	const SkelAnim* anim; ///< The active skeleton animation
 	/// @}
 

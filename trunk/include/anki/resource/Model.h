@@ -23,7 +23,8 @@ public:
 	virtual ~ModelPatchBase()
 	{}
 
-	virtual const MeshBase& getMeshBase() const = 0;
+	virtual const MeshBase& getMeshBase(const PassLevelKey& key) const = 0;
+	virtual U32 getMeshesCount() const = 0;
 	virtual const Material& getMaterial() const = 0;
 
 	const Vao& getVao(const PassLevelKey& key) const
@@ -34,26 +35,18 @@ public:
 	}
 
 	/// Allias to MeshBase::getIndicesCount()
-	U32 getIndecesCount(const U32 lod) const
+	U32 getIndicesCount(const PassLevelKey& key) const
 	{
-		return getMeshBase().getIndicesCount(lod);
+		return getMeshBase(key).getIndicesCount();
 	}
 
 protected:
 	VaosContainer vaos;
 	PassLevelToVaoMap vaosMap;
 
-	void create()
-	{
-		createVaos(getMaterial(), getMeshBase(), vaos, vaosMap);
-	}
-
 	/// Create VAOs using a material and a mesh. It writes a VaosContainer and
 	/// a hash map
-	static void createVaos(const Material& mtl,
-		const MeshBase& mesh,
-		VaosContainer& vaos,
-		PassLevelToVaoMap& vaosMap);
+	void create();
 
 private:
 	/// Called by @a createVaos multiple times to create and populate a single
@@ -72,16 +65,23 @@ public:
 	/// Map to get the VAO given a PassLod key
 	typedef PassLevelHashMap<Vao> PassLevelToVaoMap;
 
-	ModelPatch(const char* meshFName, const char* mtlFName);
+	ModelPatch(const char* meshFNames[], U32 meshesCount, const char* mtlFName);
 	~ModelPatch();
 
 	/// @name Accessors
 	/// @{
 
 	/// Implements ModelPatchBase::getMeshBase
-	const MeshBase& getMeshBase() const
+	const MeshBase& getMeshBase(const PassLevelKey& key) const
 	{
-		return *mesh;
+		U i = std::min((U32)key.level, (U32)meshes.size());
+		return *meshes[i];
+	}
+
+	/// Implements ModelPatchBase::getMeshesCount
+	U32 getMeshesCount() const
+	{
+		return meshes.size();
 	}
 
 	/// Implements ModelPatchBase::getMaterial
@@ -92,7 +92,7 @@ public:
 	/// @}
 
 private:
-	MeshResourcePointer mesh; ///< The geometry
+	Vector<MeshResourcePointer> meshes; ///< The geometries
 	MaterialResourcePointer mtl; ///< Material
 };
 
@@ -105,6 +105,8 @@ private:
 /// 	<modelPatches>
 /// 		<modelPatch>
 /// 			<mesh>path/to/mesh.mesh</mesh>
+///				[<mesh1>path/to/mesh_lod_1.mesh</mesh1>]
+///				[<mesh2>path/to/mesh_lod_2.mesh</mesh2>]
 /// 			<material>path/to/material.mtl</material>
 /// 		</modelPatch>
 /// 		...

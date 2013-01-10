@@ -72,11 +72,6 @@ public:
 
 	/// @name Accessors
 	/// @{
-	U getLodsCount() const
-	{
-		return 1;
-	}
-
 	const Vector<Vec3>& getPositions() const
 	{
 		return vertCoords;
@@ -106,7 +101,7 @@ public:
 		return vertWeights;
 	}
 
-	const Vector<ushort>& getIndices(const U lod) const
+	const Vector<ushort>& getIndices() const
 	{
 		return vertIndeces;
 	}

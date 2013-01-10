@@ -54,7 +54,7 @@ void ModelPatchBase::createVao(const Material& mtl,const MeshBase& meshb,
 			continue;
 		}
 
-		meshb.getVboInfo(attrib.id, (U32)key.level, vbo, size, type,
+		meshb.getVboInfo(attrib.id, vbo, size, type,
 			stride, offset);
 
 		if(vbo == nullptr)
@@ -68,40 +68,38 @@ void ModelPatchBase::createVao(const Material& mtl,const MeshBase& meshb,
 	}
 
 	// The indices VBO
-	meshb.getVboInfo(MeshBase::VA_INDICES, key.level, vbo, size, type,
+	meshb.getVboInfo(MeshBase::VA_INDICES, vbo, size, type,
 			stride, offset);
-
-	if(vbo == nullptr)
-	{
-		// The desired LOD was not found. Use the 0
-		meshb.getVboInfo(MeshBase::VA_INDICES, 0, vbo, size, type,
-			stride, offset);
-	}
 
 	ANKI_ASSERT(vbo != nullptr);
 	vao.attachElementArrayBufferVbo(vbo);
 }
 
 //==============================================================================
-void ModelPatchBase::createVaos(const Material& mtl,
-	const MeshBase& meshb,
-	VaosContainer& vaos,
-	PassLevelToVaoMap& vaosMap)
+void ModelPatchBase::create()
 {
-	vaos.resize(mtl.getLevelsOfDetail() * mtl.getPasses().size());
+	const Material& mtl = getMaterial();
+	U32 meshMaxLod = getMeshesCount() - 1;
+	U32 mtlMaxLod = mtl.getLevelsOfDetail() - 1;
+	U32 maxLod = std::max(meshLods, mtlLods);
+	U i = 0;
+	U passesCount = mtl.getPasses().size();
 
-	for(U32 level = 0; level < mtl.getLevelsOfDetail(); ++level)
+	vaos.resize(maxLod * passesCount);
+
+	for(U32 level = 0; level < maxLod + 1; ++level)
 	{
-		for(U32 pass = 0; pass < mtl.getPasses().size(); ++pass)
+		for(U32 pass = 0; pass < passesCount; ++pass)
 		{
-			PassLevelKey key(pass, level);
+			PassLevelKey meshKey(pass, std::min(level, meshMaxLod));
+			PassLevelKey mtlKey(pass, std::min(level, mtlMaxLod));
 
 			Vao vao;
-			createVao(mtl, meshb, key, vao);
+			createVao(mtl, getMeshBase(meshKey), mtlKey, vao);
 
-			U index = level * mtl.getPasses().size() + pass;
-			vaos[index] = std::move(vao);
-			vaosMap[key] = &vaos[index];
+			vaos[i] = std::move(vao);
+			vaosMap[key] = &vaos[i];
+			++i;
 		}
 	}
 }
@@ -111,10 +109,16 @@ void ModelPatchBase::createVaos(const Material& mtl,
 //==============================================================================
 
 //==============================================================================
-ModelPatch::ModelPatch(const char* meshFName, const char* mtlFName)
+ModelPatch::ModelPatch(const char *meshFNames[], U32 meshesCount,
+	const char* mtlFName)
 {
 	// Load
-	mesh.load(meshFName);
+	ANKI_ASSERT(meshesCount > 0);
+	meshes.resize(meshesCount);
+	for(U32 i = 0; i < meshesCount; i++)
+	{
+		meshes[i].load(meshFNames[i]);
+	}
 	mtl.load(mtlFName);
 
 	/// Create VAOs
@@ -149,30 +153,52 @@ void Model::load(const char* filename)
 		do
 		{
 			XmlElement meshEl = modelPatchEl.getChildElement("mesh");
+			XmlElement meshEl1 = modelPatchEl.getChildElementOptional("mesh1");
+			XmlElement meshEl2 = modelPatchEl.getChildElementOptional("mesh2");
+			Array<const char*, 3> meshesFnames;
+			U meshesCount = 1;
+
+			meshesFnames[0] = meshEl.getText();
+
+			if(meshEl1)
+			{
+				++meshesCount;
+				meshesFnames[1] = meshEl1.getText();
+			}
+
+			if(meshEl2)
+			{
+				++meshesCount;
+				meshesFnames[2] = meshEl2.getText();
+			}
+
 			XmlElement materialEl =
 				modelPatchEl.getChildElement("material");
 
-			ModelPatch* patch = new ModelPatch(meshEl.getText(),
-				materialEl.getText());
+			ModelPatch* patch = new ModelPatch(
+				&meshesFnames[0], meshesCount, materialEl.getText());
 			modelPatches.push_back(patch);
 
 			modelPatchEl = modelPatchEl.getNextSiblingElement("modelPatch");
 		} while(modelPatchEl);
 
+		// Check number of model patches
 		if(modelPatches.size() < 1)
 		{
 			throw ANKI_EXCEPTION("Zero number of model patches");
 		}
 
 		// Calculate compound bounding volume
-		visibilityShape = modelPatches[0]->getMeshBase().getBoundingShape();
+		PassLevelKey key;
+		key.level = 0;
+		visibilityShape = modelPatches[0]->getMeshBase(key).getBoundingShape();
 
 		for(ModelPatchesContainer::const_iterator it = modelPatches.begin() + 1;
 			it != modelPatches.end();
 			++it)
 		{
 			visibilityShape = visibilityShape.getCompoundShape(
-				(*it)->getMeshBase().getBoundingShape());
+				(*it)->getMeshBase(key).getBoundingShape());
 		}
 	}
 	catch(std::exception& e)

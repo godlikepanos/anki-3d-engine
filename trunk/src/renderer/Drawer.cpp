@@ -255,7 +255,7 @@ void RenderableDrawer::render(const Frustumable& fr, RenderingStage stage,
 
 	// Render
 	U32 indicesCount = 
-		renderable.getRenderableModelPatchBase().getIndecesCount(0);
+		renderable.getRenderableModelPatchBase().getIndecesCount();
 
 	const Vao& vao = renderable.getRenderableModelPatchBase().getVao(key);
 	ANKI_ASSERT(vao.getAttachmentsCount() > 1);

@@ -34,18 +34,16 @@ public:
 
 	/// Get info on how to attach a VBO to a VAO
 	virtual void getVboInfo(
-		const VertexAttribute attrib, const U32 lod, const Vbo*& vbo, 
+		const VertexAttribute attrib, const Vbo*& vbo,
 		U32& size, GLenum& type, U32& stride, U32& offset) const = 0;
 
 	virtual U32 getVerticesCount() const = 0;
 
-	virtual U32 getIndicesCount(U32 lod) const = 0;
+	virtual U32 getIndicesCount() const = 0;
 
 	virtual U32 getTextureChannelsCount() const = 0;
 
 	virtual Bool hasWeights() const = 0;
-
-	virtual U32 getLodsCount() const = 0;
 
 	virtual const Obb& getBoundingShape() const = 0;
 };
@@ -79,9 +77,9 @@ public:
 		return vertsCount;
 	}
 
-	U32 getIndicesCount(U32 lod) const
+	U32 getIndicesCount() const
 	{
-		return indicesCount[lod];
+		return indicesCount;
 	}
 
 	U32 getTextureChannelsCount() const
@@ -94,34 +92,28 @@ public:
 		return weights;
 	}
 
-	U32 getLodsCount() const
-	{
-		return indicesCount.size();
-	}
-
 	const Obb& getBoundingShape() const
 	{
 		return visibilityShape;
 	}
+
+	void getVboInfo(
+		const VertexAttribute attrib, const Vbo*& vbo,
+		U32& size, GLenum& type, U32& stride, U32& offset) const;
 	/// @}
 
 	/// Load from a file
 	void load(const char* filename);
 
-	/// Implements MeshBase::getVboInfo
-	void getVboInfo(
-		const VertexAttribute attrib, const U32 lod, const Vbo*& vbo, 
-		U32& size, GLenum& type, U32& stride, U32& offset) const;
-
 private:
 	U32 vertsCount;
-	Vector<U32> indicesCount; ///< Indices count per level
+	U32 indicesCount; ///< Indices count per level
 	U32 texChannelsCount;
 	Bool weights;
 	Obb visibilityShape;
 
 	Vbo vbo;
-	Vector<Vbo> indicesVbos;
+	Vbo indicesVbo;
 
 	/// Create the VBOs using the mesh data
 	void createVbos(const MeshLoader& loader);
