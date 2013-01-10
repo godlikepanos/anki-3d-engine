@@ -16,6 +16,8 @@ class ParticleEmitter;
 /// XXX Remove SceneNode
 class ParticleBase: public SceneNode, public Movable
 {
+	friend class ParticleEmitter;
+
 public:
 	enum ParticleType
 	{
@@ -99,6 +101,8 @@ public:
 protected:
 	F32 timeOfBirth; ///< Keep the time of birth for nice effects
 	F32 timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead. In seconds
+	F32 size = 1.0;
+	F32 alpha = 1.0;
 
 private:
 	ParticleType type;

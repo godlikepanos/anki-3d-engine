@@ -130,9 +130,11 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
 	xmlReadFloat(rootel, "massDeviation", particle.massDeviation);
 
 	xmlReadFloat(rootel, "size", particle.size);
+	xmlReadFloat(rootel, "sizeDeviation", particle.sizeDeviation);
 	xmlReadFloat(rootel, "sizeAnimation", particle.sizeAnimation);
 
 	xmlReadFloat(rootel, "alpha", particle.alpha);
+	xmlReadFloat(rootel, "alphaDeviation", particle.alphaDeviation);
 
 	xmlReadVec3(rootel, "forceDirection", particle.forceDirection);
 	xmlReadVec3(rootel, "forceDirectionDeviation", 

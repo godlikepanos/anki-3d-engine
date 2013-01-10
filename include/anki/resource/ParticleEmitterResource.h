@@ -28,11 +28,13 @@ struct ParticleEmitterProperties
 
 		/// Particle size. It is the size of the collision shape
 		F32 size = 1.0;
+		F32 sizeDeviation = 0.0;
 		F32 sizeAnimation = 1.0;
 
 		/// Alpha factor. If the material supports alpha then multiply with 
 		/// this
 		F32 alpha = 1.0;
+		F32 alphaDeviation = 0.0;
 
 		/// Initial force. If not set only the gravity applies
 		Vec3 forceDirection = Vec3(0.0, 1.0, 0.0);

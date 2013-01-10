@@ -300,9 +300,11 @@ void ParticleEmitter::createParticlesSimulation(Scene* scene)
 			Movable::MF_NONE, nullptr,
 			&scene->getPhysics(), binit);
 
-		particles.push_back(part);
-
+		part->size = getRandom(particle.size, particle.sizeDeviation);
+		part->alpha = getRandom(particle.alpha, particle.alphaDeviation);
 		part->forceActivationState(DISABLE_SIMULATION);
+
+		particles.push_back(part);
 	}
 }
 
@@ -311,11 +313,14 @@ void ParticleEmitter::createParticlesSimpleSimulation(Scene* scene)
 {
 	for(U i = 0; i < maxNumOfParticles; i++)
 	{
-		ParticleSimple* p = new ParticleSimple(
+		ParticleSimple* part = new ParticleSimple(
 			(getName() + std::to_string(i)).c_str(),
 			scene, Movable::MF_NONE, nullptr);
 
-		particles.push_back(p);
+		part->size = getRandom(particle.size, particle.sizeDeviation);
+		part->alpha = getRandom(particle.alpha, particle.alphaDeviation);
+
+		particles.push_back(part);
 	}
 }
 
@@ -365,7 +370,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			Transform trf = p->Movable::getWorldTransform();
 			// XXX set a flag for scale
 			trf.setScale(
-				particle.size + (lifePercent * particle.sizeAnimation));
+				p->size + (lifePercent * particle.sizeAnimation));
 
 			instancingTransformations.push_back(trf);
 
@@ -374,7 +379,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			{
 				alpha.push_back(
 					sin((lifePercent) * getPi<F32>())
-					* particle.alpha);
+					* p->alpha);
 			}
 		}
 	}

@@ -15,13 +15,9 @@ void Mesh::load(const char* filename)
 	vertsCount = loader.getPositions().size();
 	ANKI_ASSERT(vertsCount > 0);
 
-	indicesCount.push_back(loader.getLodsCount());
-	for(U lod = 0; lod < indicesCount.size(); lod++)
-	{
-		indicesCount[lod] = loader.getIndices(lod).size();
-		ANKI_ASSERT(indicesCount[lod] > 0);
-		ANKI_ASSERT(indicesCount[lod] % 3 == 0 && "Expecting triangles");
-	}
+	indicesCount = loader.getIndices().size();
+	ANKI_ASSERT(indicesCount > 0);
+	ANKI_ASSERT(indicesCount % 3 == 0 && "Expecting triangles");
 
 	weights = loader.getWeights().size() > 1;
 	texChannelsCount = loader.getTextureChannelsCount();
@@ -95,24 +91,16 @@ void Mesh::createVbos(const MeshLoader& loader)
 		&buff[0],
 		GL_STATIC_DRAW);
 
-	/// Create the indices VBOs
-	indicesVbos.resize(loader.getLodsCount());
-	U lod = 0;
-	for(Vbo& v : indicesVbos)
-	{
-		v.create(
-			GL_ELEMENT_ARRAY_BUFFER,
-			getVectorSizeInBytes(loader.getIndices(lod)),
-			&loader.getIndices(lod)[0],
-			GL_STATIC_DRAW);
-
-		++lod;
-	}
+	/// Create the indices VBO
+	indicesVbo.create(
+		GL_ELEMENT_ARRAY_BUFFER,
+		getVectorSizeInBytes(loader.getIndices()),
+		&loader.getIndices()[0],
+		GL_STATIC_DRAW);
 }
 
 //==============================================================================
-void Mesh::getVboInfo(
-	const VertexAttribute attrib, const U32 lod, const Vbo*& v, U32& size, 
+void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 	GLenum& type, U32& stride, U32& offset) const
 {
 	stride = calcVertexSize();
@@ -192,10 +180,7 @@ void Mesh::getVboInfo(
 				+ sizeof(U32) * 4;
 		}
 	case VA_INDICES:
-		if(lod < indicesVbos.size())
-		{
-			v = &indicesVbos[lod];
-		}
+		v = &indicesVbo;
 		break;
 	default:
 		ANKI_ASSERT(0);
