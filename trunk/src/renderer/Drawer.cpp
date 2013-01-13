@@ -14,12 +14,12 @@ namespace anki {
 /// Visitor that sets a uniform
 struct SetupRenderableVariableVisitor
 {
-	PassLevelKey key;
 	const Frustumable* fr = nullptr;
 	Renderer* r = nullptr;
 	Renderable* renderable = nullptr;
 	Array<U8, RenderableDrawer::UNIFORM_BLOCK_MAX_SIZE> clientBlock;
 	RenderableVariable* rvar = nullptr;
+	const ShaderProgramUniformVariable* uni;
 
 	/// Set a uniform in a client block
 	template<typename T>
@@ -32,13 +32,6 @@ struct SetupRenderableVariableVisitor
 	template<typename TRenderableVariableTemplate>
 	void visit(TRenderableVariableTemplate& x)
 	{
-		const ShaderProgramUniformVariable* uni =
-			x.tryFindShaderProgramUniformVariable(key);
-		if(!uni)
-		{
-			return;
-		}
-
 		const U32 instancesCount = renderable->getRenderableInstancesCount();
 		const U32 uniArrSize = uni->getSize();
 		const U32 size = std::min(instancesCount, uniArrSize);
@@ -49,7 +42,7 @@ struct SetupRenderableVariableVisitor
 		const Mat4& vp = fr->getViewProjectionMatrix();
 		const Mat4& v = fr->getViewMatrix();
 
-		const U maxInstances = 32; // XXX Use a proper vector with allocator
+		const U32 maxInstances = 32;
 
 		switch(x.getBuildinId())
 		{
@@ -172,34 +165,42 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 }
 
 //==============================================================================
-void RenderableDrawer::setupShaderProg(
-	const PassLevelKey& key,
-	const Frustumable& fr,
+void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
+	const Frustumable& fr, const ShaderProgram &prog,
 	Renderable& renderable)
 {
-	const Material& mtl = renderable.getRenderableMaterial();
-	const ShaderProgram& sprog = mtl.findShaderProgram(key);
-
-	sprog.bind();
+	prog.bind();
 	
 	SetupRenderableVariableVisitor vis;
 
 	vis.fr = &fr;
-	vis.key = key;
 	vis.renderable = &renderable;
 	vis.r = r;
+
+	PassLevelKey key(key_.pass,
+		std::min(key_.level,
+		U8(renderable.getRenderableMaterial().getLevelsOfDetail() - 1)));
 
 	// Set the uniforms
 	for(auto it = renderable.getVariablesBegin();
 		it != renderable.getVariablesEnd(); ++it)
 	{
 		RenderableVariable* rvar = *it;
-		vis.rvar = rvar;
-		rvar->acceptVisitor(vis);
+
+		const ShaderProgramUniformVariable* uni =
+			rvar->tryFindShaderProgramUniformVariable(key);
+
+		if(uni)
+		{
+			vis.rvar = rvar;
+			vis.uni = uni;
+			rvar->acceptVisitor(vis);
+		}
 	}
 
 	// Write the block
-	const ShaderProgramUniformBlock* block = mtl.getCommonUniformBlock();
+	const ShaderProgramUniformBlock* block =
+		renderable.getRenderableMaterial().getCommonUniformBlock();
 	if(block)
 	{
 		ANKI_ASSERT(block->getSize() <= UNIFORM_BLOCK_MAX_SIZE);
@@ -210,9 +211,18 @@ void RenderableDrawer::setupShaderProg(
 }
 
 //==============================================================================
-void RenderableDrawer::render(const Frustumable& fr, RenderingStage stage,
+void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
 	U32 pass, Renderable& renderable)
 {
+	/* Instancing */
+	U32 instancesCount = renderable.getRenderableInstancesCount();
+
+	if(instancesCount < 1)
+	{
+		return;
+	}
+
+	/* Blending */
 	const Material& mtl = renderable.getRenderableMaterial();
 
 	Bool blending = mtl.isBlendingEnabled();
@@ -237,29 +247,29 @@ void RenderableDrawer::render(const Frustumable& fr, RenderingStage stage,
 
 	GlStateSingleton::get().enable(GL_BLEND, blending);
 
-	/*float dist = (node.getWorldTransform().getOrigin() -
-		cam.getWorldTransform().getOrigin()).getLength();
-	uint lod = std::min(r.calculateLod(dist), mtl.getLevelsOfDetail() - 1);*/
+	// Calculate the LOD
+	Vec3 camPos =
+		fr.getSceneNode().getMovable()->getWorldTransform().getOrigin();
 
-	U32 instancesCount = renderable.getRenderableInstancesCount();
+	F32 dist = (renderable.getRenderableOrigin() - camPos).getLength();
+	U8 lod = r->calculateLod(dist);
 
-	if(instancesCount < 1)
-	{
-		return;
-	}
+	PassLevelKey key(pass, lod);
 
-	PassLevelKey key(pass, 0);
+	// Get rendering useful stuff
+	const ShaderProgram* prog;
+	const Vao* vao;
+	U32 indicesCount;
+
+	renderable.getRenderableModelPatchBase().getRenderingData(
+		key, vao, prog, indicesCount);
 
 	// Setup shader
-	setupShaderProg(key, fr, renderable);
+	setupShaderProg(key, fr, *prog, renderable);
 
 	// Render
-	U32 indicesCount = 
-		renderable.getRenderableModelPatchBase().getIndecesCount();
-
-	const Vao& vao = renderable.getRenderableModelPatchBase().getVao(key);
-	ANKI_ASSERT(vao.getAttachmentsCount() > 1);
-	vao.bind();
+	ANKI_ASSERT(vao->getAttachmentsCount() > 1);
+	vao->bind();
 
 	if(instancesCount == 1)
 	{

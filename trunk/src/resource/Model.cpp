@@ -31,12 +31,10 @@ static const Array<Attrib, MeshBase::VA_COUNT - 1> attribs = {{
 }};
 
 //==============================================================================
-void ModelPatchBase::createVao(const Material& mtl,const MeshBase& meshb,
-	const PassLevelKey& key, Vao& vao)
+void ModelPatchBase::createVao(const ShaderProgram& prog,
+	const MeshBase& meshb, Vao& vao)
 {
 	vao.create();
-
-	const ShaderProgram& prog = mtl.findShaderProgram(key);
 
 	const Vbo* vbo;
 	U32 size;
@@ -76,29 +74,73 @@ void ModelPatchBase::createVao(const Material& mtl,const MeshBase& meshb,
 }
 
 //==============================================================================
+void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
+	const ShaderProgram*& prog, U32& indicesCount) const
+{
+	const U meshLods = getMeshesCount();
+	ANKI_ASSERT(meshLods > 0);
+	const U mtlLods = getMaterial().getLevelsOfDetail();
+	ANKI_ASSERT(mtlLods > 0);
+
+	// VAO
+	U lodsCount = std::max(meshLods, mtlLods);
+
+	U index = key.pass + std::min((U)key.level, lodsCount - 1) * lodsCount;
+
+	ANKI_ASSERT(index < vaos.size());
+	vao = &vaos[index];
+
+	// Mesh and indices
+	PassLevelKey meshKey;
+	meshKey.pass = key.pass;
+	meshKey.level = std::min(key.level, (U8)(meshLods - 1));
+
+	const MeshBase& meshBase = getMeshBase(meshKey);
+	indicesCount = meshBase.getIndicesCount();
+
+	// Prog
+	PassLevelKey mtlKey;
+	mtlKey.pass = key.pass;
+	mtlKey.level = std::min(key.level, (U8)(mtlLods - 1));
+
+	prog = &getMaterial().findShaderProgram(mtlKey);
+}
+
+//==============================================================================
 void ModelPatchBase::create()
 {
-	const Material& mtl = getMaterial();
-	U32 meshMaxLod = getMeshesCount() - 1;
-	U32 mtlMaxLod = mtl.getLevelsOfDetail() - 1;
-	U32 maxLod = std::max(meshLods, mtlLods);
 	U i = 0;
+	const Material& mtl = getMaterial();
+	U lodsCount = std::max(getMeshesCount(), mtl.getLevelsOfDetail());
 	U passesCount = mtl.getPasses().size();
 
-	vaos.resize(maxLod * passesCount);
+	vaos.resize(lodsCount * passesCount);
 
-	for(U32 level = 0; level < maxLod + 1; ++level)
+	for(U lod = 0; lod < lodsCount; ++lod)
 	{
-		for(U32 pass = 0; pass < passesCount; ++pass)
+		for(U pass = 0; pass < passesCount; ++pass)
 		{
-			PassLevelKey meshKey(pass, std::min(level, meshMaxLod));
-			PassLevelKey mtlKey(pass, std::min(level, mtlMaxLod));
+			PassLevelKey key(pass, lod);
+			const ShaderProgram* prog;
+			const MeshBase* mesh;
+
+			// Get mesh
+			ANKI_ASSERT(getMeshesCount() > 0);
+			PassLevelKey meshKey = key;
+			meshKey.level = std::min(key.level, (U8)(getMeshesCount() - 1));
+			mesh = &getMeshBase(meshKey);
+
+			// Get shader prog
+			ANKI_ASSERT(getMaterial().getLevelsOfDetail() > 0);
+			PassLevelKey shaderKey = key;
+			shaderKey.level = std::min(key.level,
+				(U8)(getMaterial().getLevelsOfDetail() - 1));
+			prog = &getMaterial().findShaderProgram(shaderKey);
 
 			Vao vao;
-			createVao(mtl, getMeshBase(meshKey), mtlKey, vao);
+			createVao(*prog, *mesh, vao);
 
 			vaos[i] = std::move(vao);
-			vaosMap[key] = &vaos[i];
 			++i;
 		}
 	}

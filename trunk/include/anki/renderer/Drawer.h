@@ -9,6 +9,7 @@ class PassLevelKey;
 class Renderer;
 class Frustumable;
 class Renderable;
+class ShaderProgram;
 
 /// It includes all the functions to render a Renderable
 class RenderableDrawer
@@ -30,7 +31,7 @@ public:
 	void prepareDraw()
 	{}
 
-	void render(const Frustumable& fr,
+	void render(Frustumable& fr,
 		RenderingStage stage, U32 pass, Renderable& renderable);
 
 private:
@@ -39,6 +40,7 @@ private:
 	void setupShaderProg(
 		const PassLevelKey& key,
 		const Frustumable& fr,
+		const ShaderProgram& prog,
 		Renderable& renderable);
 };
 

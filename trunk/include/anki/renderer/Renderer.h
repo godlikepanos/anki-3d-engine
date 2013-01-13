@@ -90,7 +90,7 @@ struct RendererInitializer
 	U32 width;
 	U32 height;
 	F32 renderingQuality = 1.0; ///< Applies only to MainRenderer
-	F32 lodDistance; ///< Distance that used to calculate the LOD
+	F32 lodDistance = 10.0; ///< Distance that used to calculate the LOD
 
 	// funcs
 	RendererInitializer()

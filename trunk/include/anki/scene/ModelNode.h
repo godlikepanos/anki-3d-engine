@@ -59,7 +59,7 @@ public:
 	void movableUpdate()
 	{
 		Movable::movableUpdate();
-		obb = modelPatch->getMeshBase().getBoundingShape().getTransformed(
+		obb = modelPatch->getBoundingShape().getTransformed(
 			getWorldTransform());
 		spatialMarkUpdated();
 	}
@@ -84,6 +84,12 @@ public:
 	const Transform* getRenderableWorldTransforms() const
 	{
 		return &getWorldTransform();
+	}
+
+	/// Overrides Renderable::getRenderableOrigin
+	Vec3 getRenderableOrigin() const
+	{
+		return getWorldTransform().getOrigin();
 	}
 	/// @}
 
@@ -147,6 +153,6 @@ private:
 	ModelPatchNodes patches;
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

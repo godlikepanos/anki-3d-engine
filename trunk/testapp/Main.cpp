@@ -503,6 +503,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.renderingQuality = 1.0;
 	initializer.width = nwinit.width;
 	initializer.height = nwinit.height;
+	initializer.lodDistance = 20.0;
 
 	MainRendererSingleton::get().init(initializer);
 

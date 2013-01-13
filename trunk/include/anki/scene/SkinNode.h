@@ -89,27 +89,31 @@ public:
 
 	/// @name Accessors
 	/// @{
-	SkinMesh& getSkinMesh()
+	SkinMesh& getSkinMesh(const PassLevelKey& key)
 	{
-		return *skinMesh;
+		return *skinMeshes[key.level];
+	}
+	const SkinMesh& getSkinMesh(const PassLevelKey& key) const
+	{
+		return *skinMeshes[key.level];
 	}
 
-	const SkinMesh& getSkinMesh() const
+	const Vao& getTransformFeedbackVao(const PassLevelKey& key) const
 	{
-		return *skinMesh;
-	}
-
-	const Vao& getTransformFeedbackVao() const
-	{
-		return xfbVao;
+		return xfbVaos[key.level];
 	}
 	/// @}
 
 	/// @name Implementations of ModelPatchBase virtuals
 	/// @{
-	const MeshBase& getMeshBase() const
+	const MeshBase& getMeshBase(const PassLevelKey& key) const
 	{
-		return *skinMesh;
+		return *skinMeshes[key.level];
+	}
+
+	U32 getMeshesCount() const
+	{
+		return skinMeshes.size();
 	}
 
 	const Material& getMaterial() const
@@ -119,9 +123,9 @@ public:
 	/// @}
 
 private:
-	std::unique_ptr<SkinMesh> skinMesh;
+	PtrVector<SkinMesh> skinMeshes;
 	const ModelPatch* mpatch;
-	Vao xfbVao; ///< Used as a source VAO in XFB
+	Vector<Vao> xfbVaos; ///< Used as a source VAO in XFB
 };
 
 /// A fragment of the SkinNode
@@ -190,6 +194,12 @@ public:
 	const Transform* getRenderableWorldTransforms() const
 	{
 		return &getWorldTransform();
+	}
+
+	/// Overrides Renderable::getRenderableOrigin
+	Vec3 getRenderableOrigin() const
+	{
+		return getWorldTransform().getOrigin();
 	}
 	/// @}
 
