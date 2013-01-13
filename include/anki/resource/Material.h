@@ -354,6 +354,7 @@ public:
 
 	const ShaderProgram& findShaderProgram(const PassLevelKey& key) const
 	{
+		ANKI_ASSERT(eSProgs.find(key) != eSProgs.end());
 		return *eSProgs.at(key);
 	}
 

@@ -10,6 +10,9 @@
 
 namespace anki {
 
+// Forward
+class ShaderProgram;
+
 /// Model patch interface class. Its very important class and it binds the
 /// material with the mesh
 class ModelPatchBase
@@ -27,22 +30,19 @@ public:
 	virtual U32 getMeshesCount() const = 0;
 	virtual const Material& getMaterial() const = 0;
 
-	const Vao& getVao(const PassLevelKey& key) const
+	const Obb& getBoundingShape() const
 	{
-		PassLevelToVaoMap::const_iterator it = vaosMap.find(key);
-		ANKI_ASSERT(it != vaosMap.end());
-		return *(it->second);
+		PassLevelKey key(0, 0);
+		return getMeshBase(key).getBoundingShape();
 	}
 
-	/// Allias to MeshBase::getIndicesCount()
-	U32 getIndicesCount(const PassLevelKey& key) const
-	{
-		return getMeshBase(key).getIndicesCount();
-	}
+	/// Given a pass lod key retrieve variables useful for rendering
+	void getRenderingData(const PassLevelKey& key, const Vao*& vao,
+		const ShaderProgram*& prog, U32& indicesCount) const;
 
 protected:
+	/// Array [lod][pass]
 	VaosContainer vaos;
-	PassLevelToVaoMap vaosMap;
 
 	/// Create VAOs using a material and a mesh. It writes a VaosContainer and
 	/// a hash map
@@ -51,9 +51,9 @@ protected:
 private:
 	/// Called by @a createVaos multiple times to create and populate a single
 	/// VAO
-	static void createVao(const Material& mtl,
+	static void createVao(
+		const ShaderProgram &prog,
 		const MeshBase& mesh,
-		const PassLevelKey& key,
 		Vao& vao);
 };
 
@@ -74,8 +74,7 @@ public:
 	/// Implements ModelPatchBase::getMeshBase
 	const MeshBase& getMeshBase(const PassLevelKey& key) const
 	{
-		U i = std::min((U32)key.level, (U32)meshes.size());
-		return *meshes[i];
+		return *meshes[key.level];
 	}
 
 	/// Implements ModelPatchBase::getMeshesCount

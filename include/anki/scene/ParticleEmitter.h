@@ -216,15 +216,21 @@ public:
 	const Material& getRenderableMaterial() const;
 
 	/// Overrides Renderable::getRenderableWorldTransforms
-	virtual const Transform* getRenderableWorldTransforms() const
+	const Transform* getRenderableWorldTransforms() const
 	{
 		return &instancingTransformations[0];
 	}
 
 	/// Overrides Renderable::getRenderableInstancesCount
-	virtual U32 getRenderableInstancesCount() const
+	U32 getRenderableInstancesCount() const
 	{
 		return instancesCount;
+	}
+
+	/// Overrides Renderable::getRenderableOrigin
+	Vec3 getRenderableOrigin() const
+	{
+		return getWorldTransform().getOrigin();
 	}
 	/// @}
 

@@ -740,7 +740,7 @@ void ShaderProgram::initUniformBlocks()
 		block.name.shrink_to_fit();
 
 		// Index
-		ANKI_ASSERT(glGetUniformBlockIndex(glId, name) == i);
+		ANKI_ASSERT(glGetUniformBlockIndex(glId, &name[0]) == i);
 		block.index = i;
 
 		// Size

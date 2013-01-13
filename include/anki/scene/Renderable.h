@@ -165,11 +165,14 @@ public:
 		return nullptr;
 	}
 
-	/// Used for instancing
+	/// Number of instances. If greater than 1 then it's instanced
 	virtual U32 getRenderableInstancesCount() const
 	{
 		return 1;
 	}
+
+	/// XXX
+	virtual Vec3 getRenderableOrigin() const = 0;
 
 	/// @name Accessors
 	/// @{

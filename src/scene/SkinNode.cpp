@@ -51,7 +51,15 @@ void SkinMesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v,
 SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_)
 	: mpatch(mpatch_)
 {
-	skinMesh.reset(new SkinMesh(&mpatch->getMeshBase()));
+#if 0
+	// Create the model patch
+	skinMeshes.resize(mpatch->getMeshesCount());
+	for(U i = 0; i < mpatch->getMeshesCount(); i++)
+	{
+		PassLevelKey key;
+		key.level = i;
+		skinMeshes[i].reset(new SkinMesh(&mpatch->getMeshBase(key)));
+	}
 	create();
 
 	const Vbo* vbo;
@@ -62,30 +70,41 @@ SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_)
 
 	// Create the VAO
 	//
-	xfbVao.create();
+	xfbVaos.resize(mpatch->getMeshesCount());
 
-	static const Array<MeshBase::VertexAttribute, 6> attribs = {{
-		MeshBase::VA_POSITION, MeshBase::VA_NORMAL, MeshBase::VA_TANGENT,
-		MeshBase::VA_BONE_COUNT, MeshBase::VA_BONE_IDS, 
-		MeshBase::VA_BONE_WEIGHTS}};
-	U i = 0;
-	for(auto a : attribs)
+	for(Vao& xfbVao : xfbVaos)
 	{
-		mpatch->getMeshBase().getVboInfo(
-			a, vbo, size, type, stride, offset);
+		static const Array<MeshBase::VertexAttribute, 6> attribs = {{
+			MeshBase::VA_POSITION, MeshBase::VA_NORMAL, MeshBase::VA_TANGENT,
+			MeshBase::VA_BONE_COUNT, MeshBase::VA_BONE_IDS,
+			MeshBase::VA_BONE_WEIGHTS}};
 
+		xfbVao.create();
+
+		U i = 0;
+		for(auto a : attribs)
+		{
+			PassLevelKey key;
+			key.level = i;
+
+			mpatch->getMeshBase(key).getVboInfo(
+				a, vbo, size, type, stride, offset);
+
+			ANKI_ASSERT(vbo != nullptr);
+
+			xfbVao.attachArrayBufferVbo(
+				vbo, i, size, type, false, stride, offset);
+
+			++i;
+		}
+
+		// The indices VBO
+		mpatch->getMeshBase(key).getVboInfo(MeshBase::VA_INDICES, vbo, size,
+			type, stride, offset);
 		ANKI_ASSERT(vbo != nullptr);
-
-		xfbVao.attachArrayBufferVbo(vbo, i, size, type, false, stride, offset);
-
-		++i;
+		xfbVao.attachElementArrayBufferVbo(vbo);
 	}
-
-	// The indices VBO
-	mpatch->getMeshBase().getVboInfo(MeshBase::VA_INDICES, vbo, size, type,
-			stride, offset);
-	ANKI_ASSERT(vbo != nullptr);
-	xfbVao.attachElementArrayBufferVbo(vbo);
+#endif
 }
 
 //==============================================================================
