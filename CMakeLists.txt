@@ -27,7 +27,12 @@ MESSAGE("++ AnKi SIMD: ${ANKI_MATH_SIMD}")
 
 # Arch
 SET(ANKI_ARCH "0" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
-MESSAGE("++ AnKi arch: ${ANKI_ARCH}")
+
+IF(ANKI_ARCH STREQUAL "0")
+	MESSAGE("++ AnKi arch: 0 (Native)")
+ELSE()
+	MESSAGE("++ AnKi arch: ${ANKI_ARCH}")
+ENDIF()
 
 IF(NOT ANKI_ARCH STREQUAL "0")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m${ANKI_ARCH} ")
@@ -84,14 +89,14 @@ ENDIF()
 # Strip
 OPTION(ANKI_STRIP "Srip the symbols from the executables" OFF)
 IF(ANKI_STRIP)
-	MESSAGE("++ Stipping: true")
+	MESSAGE("++ Stipping symbols: true")
 	SET(FLAGS " -s ")
 
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS}")
 	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS}")
 	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FLAGS}")
 ELSE()
-	MESSAGE("++ Stipping: false")
+	MESSAGE("++ Stipping symbols: false")
 ENDIF()
 
 # gperftools
@@ -99,10 +104,10 @@ OPTION(ANKI_WITH_GPERFTOOLS_PROF "Link with gperftools profiler" OFF)
 IF(ANKI_WITH_GPERFTOOLS_PROF)
 	LINK_DIRECTORIES("/home/godlike/src/more/gperftools/install/lib")
 	SET(ANKI_GPERFTOOLS_LIBS "profiler")
-	MESSAGE("++ gperftools profiler: true")
+	MESSAGE("++ With gperftools profiler: true")
 ELSE()
 	SET(ANKI_GPERFTOOLS_LIBS "")
-	MESSAGE("++ gperftools profiler: false")
+	MESSAGE("++ With gperftools profiler: false")
 ENDIF()
 
 #
