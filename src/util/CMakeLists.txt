@@ -1,4 +1,4 @@
-SET(ANKI_UTIL_SOURCES Assert.cpp BinaryStream.cpp Exception.cpp Functions.cpp Scanner.cpp StringList.cpp Filesystem.cpp)
+SET(ANKI_UTIL_SOURCES Assert.cpp BinaryStream.cpp Exception.cpp Functions.cpp Scanner.cpp StringList.cpp Filesystem.cpp Allocator.cpp)
 
 IF(ANKI_PLATFORM STREQUAL "LINUX")
 	SET(ANKI_UTIL_SOURCES ${ANKI_UTIL_SOURCES} HighRezTimerPosix.cpp FilesystemPosix.cpp)
