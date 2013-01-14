@@ -154,6 +154,7 @@ struct WriteSpotLightsUbo: ThreadJob
 				0.0, 0.5, 0.0, 0.5, 
 				0.0, 0.0, 0.5, 0.5, 
 				0.0, 0.0, 0.0, 1.0);
+			// bias * proj_l * view_l * world_c
 			slight.texProjectionMat = biasMat4 * light.getProjectionMatrix() *
 				Mat4::combineTransformations(light.getViewMatrix(),
 				Mat4(cam->getWorldTransform()));
