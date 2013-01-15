@@ -171,7 +171,6 @@ private:
 };
 /// @}
 
-} // end namespace
-
+} // end namespace anki
 
 #endif

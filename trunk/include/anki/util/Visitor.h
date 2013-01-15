@@ -16,6 +16,8 @@ namespace anki {
 
 /// @addtogroup util
 /// @{
+/// @addtogroup patterns
+/// @{
 
 /// Namespace for visitor internal classes
 namespace visitor_detail {
@@ -363,6 +365,7 @@ private:
 	}
 	/// @}
 };
+/// @}
 /// @}
 
 } // end namespace anki

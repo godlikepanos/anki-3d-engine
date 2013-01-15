@@ -4,16 +4,16 @@
 namespace anki {
 
 //==============================================================================
-// Allocator                                                                   =
+// AllocatorInternal                                                           =
 //==============================================================================
 
 namespace detail {
 
 //==============================================================================
-PtrSize AllocatorStatic::allocatedSize = 0;
+PtrSize AllocatorInternal::allocatedSize = 0;
 
 //==============================================================================
-void AllocatorStatic::dump()
+void AllocatorInternal::dump()
 {
 #if ANKI_DEBUG_ALLOCATORS
 	if(allocatedSize > 0)
@@ -25,7 +25,7 @@ void AllocatorStatic::dump()
 }
 
 //==============================================================================
-void* AllocatorStatic::malloc(PtrSize size)
+void* AllocatorInternal::gmalloc(PtrSize size)
 {
 	void* out = std::malloc(size);
 
@@ -46,7 +46,7 @@ void* AllocatorStatic::malloc(PtrSize size)
 }
 
 //==============================================================================
-void AllocatorStatic::free(void* p, PtrSize size)
+void AllocatorInternal::gfree(void* p, PtrSize size)
 {
 	std::free(p);
 

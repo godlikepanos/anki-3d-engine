@@ -5,6 +5,8 @@ namespace anki {
 
 /// @addtogroup util
 /// @{
+/// @addtogroup patterns
+/// @{
 
 /// This template makes a class singleton
 template<typename T>
@@ -63,6 +65,7 @@ template <typename T>
 thread_local typename SingletonThreadSafe<T>::Value* 
 	SingletonThreadSafe<T>::instance = nullptr;
 
+/// @}
 /// @}
 
 } // end namespace anki

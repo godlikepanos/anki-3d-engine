@@ -5,6 +5,11 @@
 
 namespace anki {
 
+/// @addtogroup util
+/// @{
+/// @addtogroup memory
+/// @{
+
 /// Function that imitates the new operator. The function allocates memory for
 /// a number of elements and calls their constructor. The interesting thing is
 /// that if the elements size is >1 then it allocates size bigger than the
@@ -95,6 +100,9 @@ void deleteObjectArray(const Alloc& allocator, T* p)
 	typename Alloc::template rebind<U8>::other allocc(allocator);
 	allocc.deallocate(block, n * sizeof(T) + sizeof(PtrSize));
 }
+
+/// @}
+/// @}
 
 } // end namespace anki
 

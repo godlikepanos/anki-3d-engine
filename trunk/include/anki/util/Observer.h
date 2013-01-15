@@ -6,6 +6,11 @@
 
 namespace anki {
 
+/// @addtogroup util
+/// @{
+/// @addtogroup patterns
+/// @{
+
 /// The observer interface template
 template<typename T>
 struct Observer
@@ -107,6 +112,8 @@ private:
 #define ANKI_CONNECT(_sender, _signal, _receiver, _slot) \
 	(_sender)->_signal.addNewObserver( new \
 		RemovePointer<decltype(_receiver)>::Type::Observing_##_slot(_receiver))
+/// @}
+/// @}
 
 } // end namespace anki
 

@@ -4,6 +4,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
 #include "anki/util/StdTypes.h"
+#include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"
 #include <initializer_list>
 
@@ -16,7 +17,7 @@ class Texture;
 
 /// Frame buffer object. The class is actually a wrapper to avoid common 
 /// mistakes. It only supports binding at both draw and read targets
-class Fbo: public ContextNonSharable
+class Fbo: public NonCopyable, public ContextNonSharable
 {
 public:
 	/// FBO target
@@ -32,7 +33,23 @@ public:
 	Fbo()
 	{}
 
+	/// Move
+	Fbo(Fbo&& b)
+	{
+		*this = std::move(b);
+	}
+
 	~Fbo();
+	/// @}
+
+	/// @name Operators
+	/// @{
+	Fbo& operator=(Fbo&& b)
+	{
+		glId = b.glId;
+		b.glId = 0;
+		return *this;
+	}
 	/// @}
 
 	/// @name Accessors
