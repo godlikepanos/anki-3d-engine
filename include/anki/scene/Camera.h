@@ -51,9 +51,9 @@ public:
 	}
 
 	/// Needed by the renderer
-	virtual float getNear() const = 0;
+	virtual F32 getNear() const = 0;
 	/// Needed by the renderer
-	virtual float getFar() const = 0;
+	virtual F32 getFar() const = 0;
 	/// @}
 
 	/// @name SceneNode virtuals
@@ -78,7 +78,7 @@ public:
 	}
 
 	/// Override SceneNode::frameUpdate
-	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
+	void frameUpdate(F32 prevUpdateTime, F32 crntTime, int frame)
 	{
 		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
 	}
@@ -125,12 +125,12 @@ public:
 
 	/// @name Accessors
 	/// @{
-	float getNear() const
+	F32 getNear() const
 	{
 		return frustum.getNear();
 	}
 
-	float getFar() const
+	F32 getFar() const
 	{
 		return frustum.getFar();
 	}

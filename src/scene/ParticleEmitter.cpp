@@ -87,7 +87,9 @@ void ParticleSimple::simulate(const ParticleEmitter& pe,
 {
 	F32 dt = crntTime - prevUpdateTime;
 
-	ANKI_ASSERT(props.particle.gravity.getLength() > 0.0);
+	ANKI_ASSERT(
+		static_cast<const ParticleEmitterProperties&>(pe).
+		particle.gravity.getLength() > 0.0);
 
 	Transform trf = getWorldTransform();
 	Vec3 xp = trf.getOrigin();

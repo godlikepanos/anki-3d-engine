@@ -32,6 +32,9 @@ public:
 		typedef typename ConstCharPtrHashMap<T*>::Type NameToItemMap;
 	};
 
+	/// The size of the internal allocator
+	const PtrSize ALLOCATOR_SIZE = 0x100000;
+
 	/// @name Constructors/Destructor
 	/// @{
 	Scene();
@@ -40,6 +43,11 @@ public:
 
 	/// @name Accessors
 	/// @{
+	const SceneAllocator<U8> getAllocator() const
+	{
+		return alloc;
+	}
+
 	const Vec3& getAmbientColor() const
 	{
 		return ambientCol;
@@ -112,6 +120,8 @@ public:
 	PtrVector<Sector> sectors;
 
 private:
+	SceneAllocator<U8> alloc;
+
 	Vec3 ambientCol = Vec3(1.0); ///< The global ambient color
 	U32 ambiendColorUpdateTimestamp = Timestamp::getTimestamp();
 	Camera* mainCam = nullptr;

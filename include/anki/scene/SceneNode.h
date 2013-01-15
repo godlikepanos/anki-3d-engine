@@ -2,6 +2,7 @@
 #define ANKI_SCENE_SCENE_NODE_H
 
 #include "anki/scene/Property.h"
+#include "anki/util/Allocator.h"
 #include <string>
 
 namespace anki {
@@ -18,6 +19,10 @@ class RigidBody;
 
 /// @addtogroup Scene
 /// @{
+
+/// XXX
+template<typename T>
+using SceneAllocator = StackAllocator<T, false>;
 
 /// Interface class backbone of scene
 class SceneNode: public PropertyMap
@@ -42,6 +47,11 @@ public:
 	const std::string& getName() const
 	{
 		return name;
+	}
+
+	Scene& getScene()
+	{
+		return *scene;
 	}
 	/// @}
 

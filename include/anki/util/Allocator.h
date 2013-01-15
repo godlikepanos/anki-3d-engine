@@ -6,6 +6,7 @@
 #include <cstddef> // For ptrdiff_t
 #include <cstring> // For memset
 #include <atomic>
+#include <utility> // For forward
 
 #define ANKI_DEBUG_ALLOCATORS ANKI_DEBUG
 #define ANKI_PRINT_ALLOCATOR_MESSAGES 0
