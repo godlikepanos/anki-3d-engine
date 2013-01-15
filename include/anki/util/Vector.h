@@ -9,10 +9,14 @@ namespace anki {
 
 /// @addtogroup util
 /// @{
+/// @addtogroup containers
+/// @{
 
 template<typename T>
 using Vector = std::vector<T>;
 
+/// Vector of pointers. The same as the regular vector but it deallocates the
+/// pointers
 template<typename T>
 class PtrVector: public Vector<T*>
 {
@@ -33,6 +37,9 @@ public:
 		return Base::erase(pos);
 	}
 };
+
+/// @}
+/// @}
 
 } // end namespace anki
 

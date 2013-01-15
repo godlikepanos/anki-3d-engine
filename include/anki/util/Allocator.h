@@ -12,21 +12,29 @@
 
 namespace anki {
 
+/// @addtogroup util
+/// @{
+/// @addtogroup memory
+/// @{
+
 namespace detail {
 
-/// Static methods for the #Allocator class
-struct AllocatorStatic
+/// Internal methods for the #Allocator class
+class AllocatorInternal
 {
-	static PtrSize allocatedSize;
-
+public:
 	/// Print a few debugging messages
 	static void dump();
 
+protected:
+	/// Keep track of the allocated size. Relevant only when we debugging
+	static PtrSize allocatedSize;
+
 	/// Allocate memory
-	static void* malloc(PtrSize size);
+	static void* gmalloc(PtrSize size);
 
 	/// Free memory
-	static void free(void* p, PtrSize size);
+	static void gfree(void* p, PtrSize size);
 };
 
 } // end namespace detail
@@ -34,7 +42,7 @@ struct AllocatorStatic
 /// The default allocator. It uses malloc and free for 
 /// allocations/deallocations. It's STL compatible
 template<typename T>
-class Allocator
+class Allocator: public detail::AllocatorInternal
 {
 public:
 	// Typedefs
@@ -88,14 +96,14 @@ public:
 	pointer allocate(size_type n, const void* = 0)
 	{
 		size_type size = n * sizeof(value_type);
-		return (pointer)detail::AllocatorStatic::malloc(size);
+		return (pointer)detail::AllocatorInternal::gmalloc(size);
 	}
 
 	/// Deallocate memory
 	void deallocate(void* p, size_type n)
 	{
 		size_type size = n * sizeof(T);
-		detail::AllocatorStatic::free(p, size);
+		detail::AllocatorInternal::gfree(p, size);
 	}
 
 	/// Call constructor
@@ -168,9 +176,9 @@ struct MemoryPool
 	std::atomic<I32> refCounter = {1};
 };
 
-/// Internal members for the StackAllocator. They are separate because we don't
-/// want to polute the StackAllocator template with specialized functions that
-/// take space
+/// Internal members for the @ref StackAllocator. They are separate because we 
+/// don't want to pollute the @ref StackAllocator template with specialized 
+/// functions that take space
 class StackAllocatorInternal
 {
 protected:
@@ -196,7 +204,7 @@ protected:
 ///
 /// @note The deallocationFlag can brake the allocator when the deallocations
 ///       are not in the correct order. For example when deallocationFlag==true
-///       and the allocator is used in vector it is likely to fail
+///       and the allocator is used in vector it is likely to fail.
 ///
 /// @note Don't ever EVER remove the double copy constructor and the double
 ///       operator=. The compiler will create defaults
@@ -358,12 +366,14 @@ public:
 		return mpool->size;
 	}
 
+	/// A struct to rebind the allocator to another allocator of type U
 	template<typename U>
 	struct rebind
 	{
 		typedef StackAllocator<U, deallocationFlag, alignmentBits> other;
 	};
 
+	/// Reinit the allocator. All existing allocated memory will be lost
 	void reset()
 	{
 		mpool->ptr = mpool->memory;
@@ -395,6 +405,9 @@ inline bool operator==(
 {
 	return false;
 }
+
+/// @}
+/// @}
 
 } // end namespace anki
 

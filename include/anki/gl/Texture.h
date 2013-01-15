@@ -3,9 +3,10 @@
 
 #include "anki/util/Assert.h"
 #include "anki/util/Singleton.h"
-#include "anki/gl/Ogl.h"
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
+#include "anki/util/NonCopyable.h"
+#include "anki/gl/Ogl.h"
 #include <cstdlib>
 #include <limits>
 #include <thread>
@@ -141,7 +142,7 @@ typedef SingletonThreadSafe<TextureUnits> TextureUnitsSingleton;
 /// Texture class.
 /// Generally its thread safe as long as you have a shared context and the 
 /// driver supports it
-class Texture
+class Texture: public NonCopyable
 {
 	friend class TextureManager;
 

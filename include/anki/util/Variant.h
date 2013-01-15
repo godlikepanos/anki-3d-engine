@@ -8,6 +8,11 @@
 
 namespace anki {
 
+/// @addtogroup util
+/// @{
+/// @addtogroup patterns
+/// @{
+
 // Forwards
 template<typename Data, typename VariantBase>
 class VariantDerived;
@@ -335,7 +340,9 @@ private:
 	/// The only data member, a pointer to a VariantBase class
 	std::unique_ptr<VariantBaseType> ptr;
 };
+/// @}
+/// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

@@ -9,6 +9,8 @@ namespace anki {
 
 /// @addtogroup util
 /// @{
+/// @addtogroup containers
+/// @{
 
 /// A simple convenience class for string lists
 class StringList: public Vector<std::string>
@@ -45,6 +47,7 @@ public:
 	/// Mainly for the unit tests
 	friend std::ostream& operator<<(std::ostream& s, const Self& a);
 };
+/// @}
 /// @}
 
 } // end namespace anki

@@ -1,8 +1,7 @@
-#ifndef ANKI_PtrSizeTIL_ARRAY_H
-#define ANKI_PtrSizeTIL_ARRAY_H
+#ifndef ANKI_UTIL_DYNAMIC_ARRAY_H
+#define ANKI_UTIL_DYNAMIC_ARRAY_H
 
-#include "anki/util/Assert.h"
-#include "anki/util/StdTypes.h"
+#include "anki/util/Allocator.h"
 
 namespace anki {
 
@@ -11,59 +10,76 @@ namespace anki {
 /// @addtogroup containers
 /// @{
 
-/// Like std::array but with some additions
-template<typename T, PtrSize N>
-struct Array
+template<typename T, typename Alloc = Allocator<T>>
+class DynamicArray
 {
+public:
 	typedef T Value;
 	typedef Value* Iterator;
 	typedef const Value* ConstIterator;
 	typedef Value& Reference;
 	typedef const Value& ConstReference;
 
-	Value data[N];
+	/// @name Constructors/destructor
+	/// @{
+
+	/// XXX
+	DynamicArray()
+	{}
+	/// XXX
+	DynamicArray(const PtrSize n)
+	{
+
+	}
+	/// @}
 
 	Reference operator[](const PtrSize n)
 	{
-		ANKI_ASSERT(n < N);
-		return data[n];
+		ANKI_ASSERT(n < getSize());
+		return *(begin + n);
 	}
 
 	ConstReference operator[](const PtrSize n) const
 	{
-		ANKI_ASSERT(n < N);
-		return data[n];
+		ANKI_ASSERT(n < getSize());
+		return *(begin + n);
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	Iterator begin()
 	{
-		return &data[0];
+		return b;
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	ConstIterator begin() const
 	{
-		return &data[0];
+		return b;
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	Iterator end()
 	{
-		return &data[0] + N;
+		return e;
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	ConstIterator end() const
 	{
-		return &data[0] + N;
+		return e;
 	}
 
-	static constexpr PtrSize getSize()
+	PtrSize getSize() const
 	{
-		return N;
+		return e - b;
 	}
+
+private:
+	Value* b = nullptr;
+	Value* e = nullptr;
+	Alloc allocator;
 };
+
 /// @}
 /// @}
 

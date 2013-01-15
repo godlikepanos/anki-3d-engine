@@ -5,6 +5,11 @@
 
 namespace anki {
 
+/// @addtogroup util
+/// @{
+/// @addtogroup time
+/// @{
+
 /// High resolution timer. All time in seconds
 class HighRezTimer
 {
@@ -32,6 +37,8 @@ private:
 	Scalar startTime = 0.0;
 	Scalar stopTime = 0.0;
 };
+/// @}
+/// @}
 
 } // end namespace anki
 
