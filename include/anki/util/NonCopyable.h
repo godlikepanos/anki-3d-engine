@@ -6,6 +6,7 @@ namespace anki {
 /// @addtogroup util
 /// @{
 /// @addtogroup patterns
+/// @{
 
 /// Makes a derived class non copyable
 struct NonCopyable

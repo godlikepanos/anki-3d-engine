@@ -28,7 +28,7 @@ public:
 	static void dump();
 
 protected:
-	/// Keep track of the allocated size. Relevant only when we debugging
+	/// Keep track of the allocated size. Relevant only when debugging
 	static PtrSize allocatedSize;
 
 	/// Allocate memory
@@ -225,8 +225,9 @@ public:
 	typedef const T& const_reference;
 	typedef T value_type;
 
-	/// Default constructor deleted
-	StackAllocator() = delete;
+	/// Default constructor
+	StackAllocator() throw()
+	{}
 	/// Copy constructor
 	StackAllocator(const StackAllocator& b) throw()
 	{
@@ -254,9 +255,13 @@ public:
 	/// Copy
 	StackAllocator& operator=(const StackAllocator& b)
 	{
+		deinit();
 		mpool = b.mpool;
-		// Retain the mpool
-		++mpool->refCounter;
+		if(mpool)
+		{
+			// Retain the mpool
+			++mpool->refCounter;
+		}
 		return *this;
 	}
 	/// Copy
@@ -264,9 +269,13 @@ public:
 	StackAllocator& operator=(
 		const StackAllocator<U, deallocationFlag, alignmentBits>& b)
 	{
+		deinit();
 		mpool = b.mpool;
-		// Retain the mpool
-		++mpool->refCounter;
+		if(mpool)
+		{
+			// Retain the mpool
+			++mpool->refCounter;
+		}
 		return *this;
 	}
 
@@ -284,6 +293,7 @@ public:
 	/// Allocate memory
 	pointer allocate(size_type n, const void* hint = 0)
 	{
+		ANKI_ASSERT(mpool != nullptr);
 		(void)hint;
 		size_type size = n * sizeof(value_type);
 		size_type alignedSize = calcAlignSize(size);
@@ -312,6 +322,7 @@ public:
 	/// Deallocate memory
 	void deallocate(void* p, size_type n)
 	{
+		ANKI_ASSERT(mpool != nullptr);
 		(void)p;
 		(void)n;
 
@@ -364,6 +375,7 @@ public:
 	/// Get the max allocation size
 	size_type max_size() const
 	{
+		ANKI_ASSERT(mpool != nullptr);
 		return mpool->size;
 	}
 
@@ -377,6 +389,7 @@ public:
 	/// Reinit the allocator. All existing allocated memory will be lost
 	void reset()
 	{
+		ANKI_ASSERT(mpool != nullptr);
 		mpool->ptr = mpool->memory;
 	}
 
@@ -406,7 +419,6 @@ inline bool operator==(
 {
 	return false;
 }
-
 /// @}
 /// @}
 

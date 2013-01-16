@@ -71,6 +71,7 @@ namespace detail {
 //==============================================================================
 void StackAllocatorInternal::init(const PtrSize size)
 {
+	ANKI_ASSERT(mpool == nullptr);
 	mpool = new detail::MemoryPool;
 
 	if(mpool != nullptr)
@@ -83,24 +84,16 @@ void StackAllocatorInternal::init(const PtrSize size)
 			mpool->ptr = mpool->memory;
 			// Memory pool's refcounter is 1
 #if ANKI_PRINT_ALLOCATOR_MESSAGES
-		std::cout << "New MemoryPool created: Address: " << mpool
-			<< ", size: " << size
-			<< ", pool address: " << mpool->memory << std::endl;
+			std::cout << "New MemoryPool created: Address: " << mpool
+				<< ", size: " << size
+				<< ", pool address: " << mpool->memory << std::endl;
 #endif
 			return;
 		}
-	}
-
-	// Errors happened
-
-	if(mpool->memory)
-	{
-		::free(mpool->memory);
-	}
-
-	if(mpool)
-	{
-		delete mpool;
+		else
+		{
+			delete mpool;
+		}
 	}
 
 	std::cerr << "Stack allocator constuctor failed. I will cannot "
@@ -111,18 +104,22 @@ void StackAllocatorInternal::init(const PtrSize size)
 //==============================================================================
 void StackAllocatorInternal::deinit()
 {
-	int refCounter = mpool->refCounter.fetch_sub(1);
-
-	if(mpool && (refCounter - 1) == 0)
+	if (mpool)
 	{
-#if ANKI_PRINT_ALLOCATOR_MESSAGES
-		std::cout << "Deleting MemoryPool " << mpool << std::endl;
-#endif
-		// It is safe to delete the memory pool
-		ANKI_ASSERT(mpool->refCounter == 0);
+		I32 refCounter = mpool->refCounter.fetch_sub(1);
 
-		::free(mpool->memory);
-		delete mpool;
+		if(refCounter == 1)
+		{
+#if ANKI_PRINT_ALLOCATOR_MESSAGES
+			std::cout << "Deleting MemoryPool " << mpool << std::endl;
+#endif
+			// It is safe to delete the memory pool
+			ANKI_ASSERT(mpool->refCounter == 0);
+
+			::free(mpool->memory);
+			delete mpool;
+			mpool = nullptr;
+		}
 	}
 }
 
