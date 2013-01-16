@@ -40,9 +40,9 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const std::string& getName() const
+	const char* getName() const
 	{
-		return name;
+		return name.c_str();
 	}
 
 	Scene& getScene()
@@ -100,7 +100,7 @@ public:
 	U32 getLastUpdateFrame();
 
 private:
-	std::string name; ///< A unique name
+	SceneString name; ///< A unique name
 	Scene* scene; ///< Keep it here for unregistering
 };
 /// @}

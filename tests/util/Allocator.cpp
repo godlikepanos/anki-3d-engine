@@ -5,14 +5,15 @@
 
 ANKI_TEST(Allocator, StackAllocator)
 {
-	StackAllocator<char> alloc(12);
+	StackAllocator<char, false> alloc(128);
 	typedef std::basic_string<char, std::char_traits<char>, 
-		StackAllocator<char>> Str;
+		StackAllocator<char, false>> Str;
 
 	{
 		Str str(alloc);
 
 		str = "lalala";
+		str = "lalalalo";
 	}
 }
 

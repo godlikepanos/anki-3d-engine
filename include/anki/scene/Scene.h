@@ -43,7 +43,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const SceneAllocator<U8> getAllocator() const
+	const SceneAllocator<U8>& getAllocator() const
 	{
 		return alloc;
 	}
@@ -151,10 +151,10 @@ private:
 	template<typename T>
 	void addDict(typename Types<T>::NameToItemMap& d, T* ptr)
 	{
-		ANKI_ASSERT(d.find(ptr->getName().c_str()) == d.end()
+		ANKI_ASSERT(d.find(ptr->getName()) == d.end()
 			&& "Item with same name already exists");
 
-		d[ptr->getName().c_str()] = ptr;
+		d[ptr->getName()] = ptr;
 	}
 
 	/// Remove from a container
@@ -179,7 +179,7 @@ private:
 	void removeDict(typename Types<T>::NameToItemMap& d, T* ptr)
 	{
 		typename Types<T>::NameToItemMap::iterator it =
-			d.find(ptr->getName().c_str());
+			d.find(ptr->getName());
 
 		ANKI_ASSERT(it != d.end());
 		d.erase(it);

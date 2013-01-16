@@ -9,7 +9,11 @@
 #include <utility> // For forward
 
 #define ANKI_DEBUG_ALLOCATORS ANKI_DEBUG
-#define ANKI_PRINT_ALLOCATOR_MESSAGES 0
+#define ANKI_PRINT_ALLOCATOR_MESSAGES 1
+
+#if ANKI_PRINT_ALLOCATOR_MESSAGES
+#	include <iostream> // Never include it on release
+#endif
 
 namespace anki {
 
@@ -191,6 +195,9 @@ protected:
 
 	/// Deinit the memory pool
 	void deinit();
+
+	/// Copy
+	void copy(const StackAllocatorInternal& b);
 };
 
 } // end namespace detail
@@ -255,13 +262,7 @@ public:
 	/// Copy
 	StackAllocator& operator=(const StackAllocator& b)
 	{
-		deinit();
-		mpool = b.mpool;
-		if(mpool)
-		{
-			// Retain the mpool
-			++mpool->refCounter;
-		}
+		copy(b);
 		return *this;
 	}
 	/// Copy
@@ -269,13 +270,7 @@ public:
 	StackAllocator& operator=(
 		const StackAllocator<U, deallocationFlag, alignmentBits>& b)
 	{
-		deinit();
-		mpool = b.mpool;
-		if(mpool)
-		{
-			// Retain the mpool
-			++mpool->refCounter;
-		}
+		copy(b);
 		return *this;
 	}
 
@@ -303,7 +298,7 @@ public:
 #if ANKI_PRINT_ALLOCATOR_MESSAGES
 			std::cout << "Allocating: size: " << size
 				<< ", size after alignment: " << alignedSize
-				<< ", returned address: " << out
+				<< ", returned address: " << (void*)out
 				<< ", hint: " << hint <<std::endl;
 #endif
 
