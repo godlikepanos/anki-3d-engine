@@ -86,7 +86,7 @@ void StackAllocatorInternal::init(const PtrSize size)
 #if ANKI_PRINT_ALLOCATOR_MESSAGES
 			std::cout << "New MemoryPool created: Address: " << mpool
 				<< ", size: " << size
-				<< ", pool address: " << mpool->memory << std::endl;
+				<< ", pool address: " << (void*)mpool->memory << std::endl;
 #endif
 			return;
 		}
@@ -106,20 +106,30 @@ void StackAllocatorInternal::deinit()
 {
 	if (mpool)
 	{
-		I32 refCounter = mpool->refCounter.fetch_sub(1);
+		I32 refCounterPrev = mpool->refCounter.fetch_sub(1);
 
-		if(refCounter == 1)
+		if(refCounterPrev == 1)
 		{
 #if ANKI_PRINT_ALLOCATOR_MESSAGES
 			std::cout << "Deleting MemoryPool " << mpool << std::endl;
 #endif
-			// It is safe to delete the memory pool
-			ANKI_ASSERT(mpool->refCounter == 0);
 
 			::free(mpool->memory);
 			delete mpool;
 			mpool = nullptr;
 		}
+	}
+}
+
+//==============================================================================
+void StackAllocatorInternal::copy(const StackAllocatorInternal& b)
+{
+	deinit();
+	mpool = b.mpool;
+	if(mpool)
+	{
+		// Retain the mpool
+		++mpool->refCounter;
 	}
 }
 

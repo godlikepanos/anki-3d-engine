@@ -8,13 +8,13 @@ namespace anki {
 
 //==============================================================================
 SceneNode::SceneNode(const char* name_, Scene* scene_)
-	: name(name_), scene(scene_)
+	: name(name_, scene_->getAllocator()), scene(scene_)
 {
 	name.shrink_to_fit(); // Do that first
 	scene->registerNode(this);
 
 	/// Add the first property
-	addNewProperty(new ReadPointerProperty<std::string>("name", &name));
+	//addNewProperty(new ReadPointerProperty<std::string>("name", &name));
 }
 
 //==============================================================================

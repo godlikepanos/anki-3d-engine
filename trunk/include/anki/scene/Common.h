@@ -9,6 +9,10 @@ namespace anki {
 template<typename T>
 using SceneAllocator = StackAllocator<T, false>;
 
+/// Scene string
+typedef std::basic_string<char, std::char_traits<char>,
+	SceneAllocator<char>> SceneString;
+
 } // end namespace anki
 
 #endif
