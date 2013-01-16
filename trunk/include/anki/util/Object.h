@@ -10,6 +10,8 @@ namespace anki {
 
 /// @addtogroup util
 /// @{
+/// @addtogroup patterns
+/// @{
 
 /// A hierarchical object
 template<typename T>
@@ -75,7 +77,7 @@ public:
 		return childs.end();
 	}
 
-	size_t getChildrenSize() const
+	PtrSize getChildrenSize() const
 	{
 		return childs.size();
 	}
@@ -111,6 +113,7 @@ private:
 	Value* parent = nullptr; ///< May be nullptr
 	Container childs;
 };
+/// @}
 /// @}
 
 } // end namespace anki
