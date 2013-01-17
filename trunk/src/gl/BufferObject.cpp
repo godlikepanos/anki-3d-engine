@@ -9,11 +9,27 @@
 namespace anki {
 
 //==============================================================================
-BufferObject::~BufferObject()
+BufferObject& BufferObject::operator=(BufferObject&& b)
+{
+	destroy();
+	Base::operator=(std::forward<Base>(b));
+	target = b.target;
+	usage = b.usage;
+	sizeInBytes = b.sizeInBytes;
+#if ANKI_DEBUG
+	mapped = b.mapped;
+#endif
+	return *this;
+}
+
+//==============================================================================
+void BufferObject::destroy()
 {
 	if(isCreated())
 	{
-		destroy();
+		unbind();
+		glDeleteBuffers(1, &glId);
+		glId = 0;
 	}
 }
 

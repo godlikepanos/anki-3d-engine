@@ -17,6 +17,8 @@ class Texture;
 class Fbo: public GlObjectContextNonSharable
 {
 public:
+	typedef GlObjectContextNonSharable Base;
+
 	/// FBO target
 	enum FboTarget
 	{
@@ -36,15 +38,18 @@ public:
 		*this = std::move(b);
 	}
 
-	~Fbo();
+	~Fbo()
+	{
+		destroy();
+	}
 	/// @}
 
 	/// @name Operators
 	/// @{
 	Fbo& operator=(Fbo&& b)
 	{
-		GlObjectContextNonSharable::operator=(
-			std::forward<GlObjectContextNonSharable>(b));
+		destroy();
+		Base::operator=(std::forward<Base>(b));
 		return *this;
 	}
 	/// @}

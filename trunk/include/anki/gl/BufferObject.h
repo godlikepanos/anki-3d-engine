@@ -1,10 +1,7 @@
 #ifndef ANKI_GL_BUFFER_OBJECT_H
 #define ANKI_GL_BUFFER_OBJECT_H
 
-#include "anki/gl/Ogl.h"
-#include "anki/util/Assert.h"
-#include "anki/util/NonCopyable.h"
-#include "anki/util/StdTypes.h"
+#include "anki/gl/GlObject.h"
 
 namespace anki {
 
@@ -13,9 +10,11 @@ namespace anki {
 	
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
 /// to prevent us from making idiotic errors
-class BufferObject: public NonCopyable
+class BufferObject: public GlObject
 {
 public:
+	typedef GlObject Base;
+
 	/// @name Constructors/Destructor
 	/// @{
 
@@ -24,14 +23,9 @@ public:
 	{}
 
 	/// Move
-	BufferObject(BufferObject&& b)
-		: glId(b.glId), target(b.target), usage(b.usage), 
-			sizeInBytes(b.sizeInBytes)
-#if ANKI_DEBUG
-			, mapped(b.mapped)
-#endif
+	BufferObject(BufferObject&& b)	
 	{
-		b.glId = 0;
+		*this = std::move(b);
 	}
 
 	/// @see create
@@ -42,17 +36,17 @@ public:
 	}
 
 	/// It deletes the BO
-	~BufferObject();
+	~BufferObject()
+	{
+		destroy();
+	}
 	/// @}
+
+	/// Move
+	BufferObject& operator=(BufferObject&& b);
 
 	/// @name Accessors
 	/// @{
-	GLuint getGlId() const
-	{
-		ANKI_ASSERT(isCreated());
-		return glId;
-	}
-
 	GLenum getBufferTarget() const
 	{
 		ANKI_ASSERT(isCreated());
@@ -99,13 +93,7 @@ public:
 		GLenum usage);
 
 	/// Delete the BO
-	void destroy()
-	{
-		ANKI_ASSERT(isCreated());
-		unbind();
-		glDeleteBuffers(1, &glId);
-		glId = 0;
-	}
+	void destroy();
 
 	/// Write data to buffer. This means that maps the BO to local memory,
 	/// writes the local memory and unmaps it. Throws exception if the
@@ -135,12 +123,6 @@ public:
 	/// Unmap buffer
 	void unmap();
 
-	/// If create() is run successfully this returns true
-	Bool isCreated() const
-	{
-		return glId != 0;
-	}
-
 	/// Set the binding for this buffer
 	void setBinding(GLuint binding) const
 	{
@@ -151,8 +133,6 @@ public:
 	}
 
 private:
-	GLuint glId = 0; ///< The OpenGL id of the BO
-
 	/// Used in glBindBuffer(target, glId) and its for easy access so we
 	/// wont have to query the GL driver. Its the type of the buffer eg
 	/// GL_TEXTURE_BUFFER or GL_ELEMENT_ARRAY_BUFFER etc

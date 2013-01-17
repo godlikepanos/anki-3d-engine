@@ -36,7 +36,7 @@ public:
 	/// Move
 	GlObject& operator=(GlObject&& b)
 	{
-		ANKI_DEBUG(!isCreated());
+		ANKI_ASSERT(!isCreated());
 		glId = b.glId;
 		b.glId = 0;
 		return *this;

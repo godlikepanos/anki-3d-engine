@@ -195,7 +195,7 @@ void SkinNode::frameUpdate(float prevUpdateTime, float crntTime, int f)
 
 //==============================================================================
 void SkinNode::interpolate(const SkelAnim& animation, float frame,
-	Vector<Vec3>& boneTranslations, std::vector<Mat3>& boneRotations)
+	Vector<Vec3>& boneTranslations, Vector<Mat3>& boneRotations)
 {
 	ANKI_ASSERT(frame < animation.getFramesNum());
 
@@ -260,7 +260,7 @@ void SkinNode::interpolate(const SkelAnim& animation, float frame,
 
 //==============================================================================
 void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
-	Vector<Vec3>& boneTranslations, std::vector<Mat3>& boneRotations)
+	Vector<Vec3>& boneTranslations, Vector<Mat3>& boneRotations)
 {
 	std::array<uint, 128> queue;
 	uint head = 0, tail = 0;
@@ -320,7 +320,7 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 void SkinNode::deformHeadsTails(const Skeleton& skeleton,
     const Vector<Vec3>& boneTranslations,
     const Vector<Mat3>& boneRotations,
-    Vector<Vec3>& heads, std::vector<Vec3>& tails)
+	Vector<Vec3>& heads, Vector<Vec3>& tails)
 {
 	for(uint i = 0; i < skeleton.getBones().size(); i++)
 	{

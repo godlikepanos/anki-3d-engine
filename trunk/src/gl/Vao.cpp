@@ -11,11 +11,16 @@ namespace anki {
 const Vao* Vao::current = nullptr;
 
 //==============================================================================
-Vao::~Vao()
+void Vao::destroy()
 {
+	checkNonSharable();
+
 	if(isCreated())
 	{
-		destroy();
+		unbind();
+		glDeleteVertexArrays(1, &glId);
+		glId = 0;
+		attachments = 0;
 	}
 }
 
@@ -25,10 +30,10 @@ void Vao::attachArrayBufferVbo(const Vbo* vbo, const GLint attribVarLocation,
 	const PtrSize stride, const PtrSize offset)
 {
 	ANKI_ASSERT(isCreated());
+	checkNonSharable();
 	ANKI_ASSERT(vbo->getBufferTarget() == GL_ARRAY_BUFFER
 		&& "Only GL_ARRAY_BUFFER is accepted");
 	ANKI_ASSERT(vbo->isCreated());
-	checkNonSharable();
 
 	bind();
 	vbo->bind();
@@ -57,10 +62,10 @@ void Vao::attachArrayBufferVbo(const Vbo* vbo,
 void Vao::attachElementArrayBufferVbo(const Vbo* vbo)
 {
 	ANKI_ASSERT(isCreated());
+	checkNonSharable();
 	ANKI_ASSERT(vbo->getBufferTarget() == GL_ELEMENT_ARRAY_BUFFER
 		&& "Only GL_ELEMENT_ARRAY_BUFFER is accepted");
 	ANKI_ASSERT(vbo->isCreated());
-	checkNonSharable();
 
 	bind();
 	vbo->bind();

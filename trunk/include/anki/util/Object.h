@@ -4,6 +4,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
+#include "anki/util/Allocator.h"
 #include <algorithm>
 
 namespace anki {
@@ -14,16 +15,16 @@ namespace anki {
 /// @{
 
 /// A hierarchical object
-template<typename T>
+template<typename T, typename Alloc = Allocator<T>>
 class Object
 {
 public:
 	typedef T Value;
-	typedef Vector<Value*> Container;
+	typedef Vector<Value*, Alloc> Container;
 
 	/// Calls addChild if parent is not nullptr
-	Object(Value* self_, Value* parent_)
-		: self(self_)
+	Object(Value* self_, Value* parent_, const Alloc& alloc = Alloc())
+		: self(self_), childs(alloc)
 	{
 		ANKI_ASSERT(self != nullptr && "Self can't be nullptr");
 		ANKI_ASSERT(parent_ != this && "Cannot put itself");
@@ -113,6 +114,7 @@ private:
 	Value* parent = nullptr; ///< May be nullptr
 	Container childs;
 };
+
 /// @}
 /// @}
 

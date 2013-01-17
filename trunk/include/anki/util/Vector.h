@@ -3,6 +3,8 @@
 
 #include "anki/util/Assert.h"
 #include "anki/util/Functions.h"
+#include "anki/util/Allocator.h"
+#include "anki/util/Memory.h"
 #include <vector>
 
 namespace anki {
@@ -12,16 +14,16 @@ namespace anki {
 /// @addtogroup containers
 /// @{
 
-template<typename T>
-using Vector = std::vector<T>;
+template<typename T, typename Alloc = Allocator<T>>
+using Vector = std::vector<T, Alloc>;
 
 /// Vector of pointers. The same as the regular vector but it deallocates the
 /// pointers
-template<typename T>
-class PtrVector: public Vector<T*>
+template<typename T, typename Alloc = Allocator<T>>
+class PtrVector: public Vector<T*, Alloc>
 {
 public:
-	typedef Vector<T*> Base;
+	typedef Vector<T*, Alloc> Base;
 
 	~PtrVector()
 	{
@@ -33,7 +35,6 @@ public:
 
 	typename Base::iterator erase(typename Base::iterator pos)
 	{
-		propperDelete(*pos);
 		return Base::erase(pos);
 	}
 };
