@@ -1,11 +1,8 @@
 #ifndef ANKI_GL_FBO_H
 #define ANKI_GL_FBO_H
 
-#include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
-#include "anki/util/StdTypes.h"
-#include "anki/util/NonCopyable.h"
-#include "anki/gl/Ogl.h"
+#include "anki/gl/GlObject.h"
 #include <initializer_list>
 
 namespace anki {
@@ -17,7 +14,7 @@ class Texture;
 
 /// Frame buffer object. The class is actually a wrapper to avoid common 
 /// mistakes. It only supports binding at both draw and read targets
-class Fbo: public NonCopyable, public ContextNonSharable
+class Fbo: public GlObjectContextNonSharable
 {
 public:
 	/// FBO target
@@ -46,18 +43,9 @@ public:
 	/// @{
 	Fbo& operator=(Fbo&& b)
 	{
-		glId = b.glId;
-		b.glId = 0;
+		GlObjectContextNonSharable::operator=(
+			std::forward<GlObjectContextNonSharable>(b));
 		return *this;
-	}
-	/// @}
-
-	/// @name Accessors
-	/// @{
-	GLuint getGlId() const
-	{
-		ANKI_ASSERT(isCreated());
-		return glId;
 	}
 	/// @}
 
@@ -88,12 +76,6 @@ public:
 private:
 	static thread_local const Fbo* currentRead;
 	static thread_local const Fbo* currentDraw;
-	GLuint glId = 0; ///< OpenGL identification
-
-	Bool isCreated() const
-	{
-		return glId != 0;
-	}
 
 	static GLuint getCurrentFboGlId()
 	{
