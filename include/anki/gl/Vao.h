@@ -32,7 +32,10 @@ public:
 	}
 
 	/// Destroy VAO from the OpenGL context
-	~Vao();
+	~Vao()
+	{
+		destroy();
+	}
 	/// @}
 
 	/// @name Operators
@@ -41,10 +44,8 @@ public:
 	/// Move
 	Vao& operator=(Vao&& b)
 	{
-		if(isCreated())
-		{
-			destroy();
-		}
+		crateNonSharable();
+		destroy();
 
 		Base::operator=(std::forward<Base>(b));
 		attachments = b.attachments;
@@ -63,14 +64,7 @@ public:
 	}
 
 	/// Destroy
-	void destroy()
-	{
-		checkNonSharable();
-		ANKI_ASSERT(isCreated());
-		unbind();
-		glDeleteVertexArrays(1, &glId);
-		glId = 0;
-	}
+	void destroy();
 
 	/// Attach an array buffer VBO. See @link
 	/// http://www.opengl.org/sdk/docs/man3/xhtml/glVertexAttribPointer.xml
@@ -120,6 +114,7 @@ public:
 
 	U32 getAttachmentsCount() const
 	{
+		ANKI_ASSERT(isCreated());
 		return attachments;
 	}
 

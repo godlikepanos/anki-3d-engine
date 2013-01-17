@@ -1,13 +1,10 @@
 #ifndef ANKI_GL_SHADER_PROGRAM_H
 #define ANKI_GL_SHADER_PROGRAM_H
 
+#include "anki/gl/GlObject.h"
 #include "anki/util/ConstCharPtrHashMap.h"
-#include "anki/util/Assert.h"
 #include "anki/math/Forward.h"
-#include "anki/gl/Ogl.h"
 #include "anki/util/Vector.h"
-#include "anki/util/StdTypes.h"
-#include "anki/util/NonCopyable.h"
 #include <string>
 #include <memory>
 
@@ -279,9 +276,11 @@ private:
 };
 
 /// Shader program object
-class ShaderProgram: public NonCopyable
+class ShaderProgram: public GlObject
 {
 public:
+	typedef GlObject Base;
+
 	typedef Vector<ShaderProgramUniformVariable>
 		UniformVariablesContainer;
 	typedef Vector<ShaderProgramAttributeVariable>
@@ -292,44 +291,40 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	ShaderProgram()
-	{
-		init();
-	}
+	{}
+
+	/// Move. It's not movable untill we need it
+	ShaderProgram(ShaderProgram&& b) = delete;
 
 	ShaderProgram(const char* vertSource, const char* tcSource, 
 		const char* teSource, const char* geomSource, const char* fragSource,
 		const char* transformFeedbackVaryings[],
 		const GLenum xfbBufferMode = GL_SEPARATE_ATTRIBS)
 	{
-		init();
 		create(vertSource, tcSource, teSource, geomSource, fragSource,
 			transformFeedbackVaryings, xfbBufferMode);
 	}
 
 	~ShaderProgram()
 	{
-		if(isCreated())
-		{
-			destroy();
-		}
+		destroy();
 	}
 	/// @}
 
+	/// Move deleted. It's not movable untill we need it
+	ShaderProgram& operator=(ShaderProgram&& b) = delete;
+
 	/// @name Accessors
 	/// @{
-	GLuint getGlId() const
-	{
-		ANKI_ASSERT(isCreated());
-		return glId;
-	}
-
 	const UniformVariablesContainer& getUniformVariables() const
 	{
+		ANKI_ASSERT(isCreated());
 		return unis;
 	}
 
 	const AttributeVariablesContainer& getAttributeVariables() const
 	{
+		ANKI_ASSERT(isCreated());
 		return attribs;
 	}
 	/// @}
@@ -410,12 +405,11 @@ private:
 
 	static thread_local const ShaderProgram* current;
 
-	GLuint glId; ///< The OpenGL ID of the shader program
-	GLuint vertShaderGlId; ///< Vertex shader OpenGL id
-	GLuint tcShaderGlId; ///< Tessellation control shader OpenGL id
-	GLuint teShaderGlId; ///< Tessellation eval shader OpenGL id
-	GLuint geomShaderGlId; ///< Geometry shader OpenGL id
-	GLuint fragShaderGlId; ///< Fragment shader OpenGL id
+	GLuint vertShaderGlId = 0; ///< Vertex shader OpenGL id
+	GLuint tcShaderGlId = 0; ///< Tessellation control shader OpenGL id
+	GLuint teShaderGlId = 0; ///< Tessellation eval shader OpenGL id
+	GLuint geomShaderGlId = 0; ///< Geometry shader OpenGL id
+	GLuint fragShaderGlId = 0; ///< Fragment shader OpenGL id
 
 	/// @name Containers
 	/// @{
@@ -445,19 +439,6 @@ private:
 	/// Link the shader program
 	/// @exception Exception
 	void link() const;
-
-	/// Returns true if the class points to a valid GL ID
-	bool isCreated() const
-	{
-		return glId != 0;
-	}
-
-	/// Common construction code
-	void init()
-	{
-		glId = vertShaderGlId = tcShaderGlId = teShaderGlId =
-			geomShaderGlId = fragShaderGlId = 0;
-	}
 
 	void destroy();
 };

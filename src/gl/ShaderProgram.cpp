@@ -460,34 +460,38 @@ void ShaderProgram::destroy()
 	if(vertShaderGlId != 0)
 	{
 		glDeleteShader(vertShaderGlId);
+		vertShaderGlId = 0;
 	}
 
 	if(tcShaderGlId != 0)
 	{
 		glDeleteShader(tcShaderGlId);
+		tcShaderGlId = 0;
 	}
 
 	if(teShaderGlId != 0)
 	{
 		glDeleteShader(teShaderGlId);
+		teShaderGlId = 0;
 	}
 
 	if(geomShaderGlId != 0)
 	{
 		glDeleteShader(geomShaderGlId);
+		geomShaderGlId = 0;
 	}
 
 	if(fragShaderGlId != 0)
 	{
 		glDeleteShader(fragShaderGlId);
+		fragShaderGlId = 0;
 	}
 
 	if(glId != 0)
 	{
 		glDeleteProgram(glId);
+		glId = 0;
 	}
-
-	init();
 }
 
 //==============================================================================
@@ -812,6 +816,7 @@ void ShaderProgram::initUniformBlocks()
 const ShaderProgramAttributeVariable*
 	ShaderProgram::tryFindAttributeVariable(const char* name) const
 {
+	ANKI_ASSERT(isCreated());
 	NameToAttribVarHashMap::const_iterator it = nameToAttribVar.find(name);
 	return (it == nameToAttribVar.end()) ? nullptr : it->second;
 }
@@ -820,6 +825,7 @@ const ShaderProgramAttributeVariable*
 const ShaderProgramAttributeVariable&
 	ShaderProgram::findAttributeVariable(const char* name) const
 {
+	ANKI_ASSERT(isCreated());
 	const ShaderProgramAttributeVariable* var = tryFindAttributeVariable(name);
 	if(var == nullptr)
 	{
@@ -832,6 +838,7 @@ const ShaderProgramAttributeVariable&
 const ShaderProgramUniformVariable* ShaderProgram::tryFindUniformVariable(
 	const char* name) const
 {
+	ANKI_ASSERT(isCreated());
 	NameToUniVarHashMap::const_iterator it = nameToUniVar.find(name);
 	if(it == nameToUniVar.end())
 	{
@@ -844,6 +851,7 @@ const ShaderProgramUniformVariable* ShaderProgram::tryFindUniformVariable(
 const ShaderProgramUniformVariable& ShaderProgram::findUniformVariable(
 	const char* name) const
 {
+	ANKI_ASSERT(isCreated());
 	const ShaderProgramUniformVariable* var = tryFindUniformVariable(name);
 	if(var == nullptr)
 	{
@@ -856,6 +864,7 @@ const ShaderProgramUniformVariable& ShaderProgram::findUniformVariable(
 const ShaderProgramUniformBlock* ShaderProgram::tryFindUniformBlock(
 	const char* name) const
 {
+	ANKI_ASSERT(isCreated());
 	NameToUniformBlockHashMap::const_iterator it = nameToBlock.find(name);
 	return (it == nameToBlock.end()) ? nullptr : it->second;
 }
@@ -864,6 +873,7 @@ const ShaderProgramUniformBlock* ShaderProgram::tryFindUniformBlock(
 const ShaderProgramUniformBlock& ShaderProgram::findUniformBlock(
 	const char* name) const
 {
+	ANKI_ASSERT(isCreated());
 	const ShaderProgramUniformBlock* block = tryFindUniformBlock(name);
 	if(block == nullptr)
 	{
@@ -875,6 +885,7 @@ const ShaderProgramUniformBlock& ShaderProgram::findUniformBlock(
 //==============================================================================
 std::ostream& operator<<(std::ostream& s, const ShaderProgram& x)
 {
+	ANKI_ASSERT(x.isCreated());
 	s << "ShaderProgram\n";
 	s << "Uniform variables:\n";
 	for(auto var : x.unis)

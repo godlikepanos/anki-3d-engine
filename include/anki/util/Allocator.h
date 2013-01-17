@@ -165,6 +165,20 @@ inline bool operator==(const Allocator<T1>&, const AnotherAllocator&)
 	return false;
 }
 
+/// Another allocator of the same type can deallocate from this one
+template<typename T1, typename T2>
+inline bool operator!=(const Allocator<T1>&, const Allocator<T2>&)
+{
+	return false;
+}
+
+/// Another allocator of the another type cannot deallocate from this one
+template<typename T1, typename AnotherAllocator>
+inline bool operator!=(const Allocator<T1>&, const AnotherAllocator&)
+{
+	return true;
+}
+
 namespace detail {
 
 /// Thread safe memory pool
@@ -425,6 +439,26 @@ inline bool operator==(
 {
 	return false;
 }
+
+/// Another allocator of the same type can deallocate from this one
+template<typename T1, typename T2, Bool deallocationFlag, U32 alignmentBits>
+inline bool operator!=(
+	const StackAllocator<T1, deallocationFlag, alignmentBits>&,
+	const StackAllocator<T2, deallocationFlag, alignmentBits>&)
+{
+	return false;
+}
+
+/// Another allocator of the another type cannot deallocate from this one
+template<typename T1, typename AnotherAllocator, Bool deallocationFlag,
+	U32 alignmentBits>
+inline bool operator!=(
+	const StackAllocator<T1, deallocationFlag, alignmentBits>&,
+	const AnotherAllocator&)
+{
+	return true;
+}
+
 /// @}
 /// @}
 

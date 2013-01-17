@@ -335,17 +335,17 @@ private:
 	/// @param[out] translations Translations vector
 	/// @param[out] rotations Rotations vector
 	static void interpolate(const SkelAnim& animation, float frame,
-		Vector<Vec3>& translations, std::vector<Mat3>& rotations);
+		Vector<Vec3>& translations, Vector<Mat3>& rotations);
 
 	/// Calculate the global pose
 	static void updateBoneTransforms(const Skeleton& skel,
-		Vector<Vec3>& translations, std::vector<Mat3>& rotations);
+		Vector<Vec3>& translations, Vector<Mat3>& rotations);
 
 	/// Deform the heads and tails
 	static void deformHeadsTails(const Skeleton& skeleton,
 		const Vector<Vec3>& boneTranslations,
 		const Vector<Mat3>& boneRotations,
-		Vector<Vec3>& heads, std::vector<Vec3>& tails);
+		Vector<Vec3>& heads, Vector<Vec3>& tails);
 };
 
 } // end namespace

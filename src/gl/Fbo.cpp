@@ -15,15 +15,6 @@ static const Array<GLenum, 8> colorAttachments = {{
 	GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7}};
 
 //==============================================================================
-Fbo::~Fbo()
-{
-	if(isCreated())
-	{
-		destroy();
-	}
-}
-
-//==============================================================================
 void Fbo::create()
 {
 	ANKI_ASSERT(!isCreated());
@@ -35,11 +26,13 @@ void Fbo::create()
 //==============================================================================
 void Fbo::destroy()
 {
-	ANKI_ASSERT(isCreated());
 	checkNonSharable();
-	bindDefault();
-	glDeleteFramebuffers(1, &glId);
-	glId = 0;
+	if(isCreated())
+	{
+		bindDefault();
+		glDeleteFramebuffers(1, &glId);
+		glId = 0;
+	}
 }
 
 //==============================================================================
