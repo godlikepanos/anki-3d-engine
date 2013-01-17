@@ -179,6 +179,10 @@ struct MemoryPool
 	std::atomic<U8*> ptr = {nullptr};
 	/// Reference counter
 	std::atomic<I32> refCounter = {1};
+
+#if ANKI_DEBUG_ALLOCATORS
+	std::atomic<PtrSize> wastedSize = {0};
+#endif
 };
 
 /// Internal members for the @ref StackAllocator. They are separate because we 
@@ -338,6 +342,13 @@ public:
 			}
 
 			ANKI_ASSERT((headPtr - alignedSize) >= mpool->memory);
+		}
+		else
+		{
+#if ANKI_DEBUG_ALLOCATORS
+			size_type alignedSize = calcAlignSize(n * sizeof(value_type));
+			mpool->wastedSize += alignedSize;
+#endif
 		}
 	}
 

@@ -2,10 +2,7 @@
 #define ANKI_GL_VAO_H
 
 #include "anki/gl/GlException.h"
-#include "anki/gl/Ogl.h"
-#include "anki/util/Assert.h"
-#include "anki/util/NonCopyable.h"
-#include "anki/util/StdTypes.h"
+#include "anki/gl/GlObject.h"
 
 namespace anki {
 
@@ -16,9 +13,11 @@ class Vbo;
 /// @{
 
 /// Vertex array object. Non-copyable to avoid instantiating it in the stack
-class Vao: public NonCopyable, public ContextNonSharable
+class Vao: public GlObjectContextNonSharable
 {
 public:
+	typedef GlObjectContextNonSharable Base;
+
 	/// @name Constructors/Destructor
 	/// @{
 
@@ -36,27 +35,20 @@ public:
 	~Vao();
 	/// @}
 
-	/// @name Accessors
-	/// @{
-	GLuint getGlId() const
-	{
-		checkNonSharable();
-		ANKI_ASSERT(isCreated());
-		return glId;
-	}
-	/// @}
-
 	/// @name Operators
 	/// @{
 
 	/// Move
 	Vao& operator=(Vao&& b)
 	{
-		ContextNonSharable::operator=(b);
-		glId = b.glId;
-		attachments = b.attachments;
+		if(isCreated())
+		{
+			destroy();
+		}
 
-		b.glId = 0;
+		Base::operator=(std::forward<Base>(b));
+		attachments = b.attachments;
+		b.attachments = 0;
 		return *this;
 	}
 	/// @}
@@ -73,10 +65,11 @@ public:
 	/// Destroy
 	void destroy()
 	{
-		ANKI_ASSERT(isCreated());
 		checkNonSharable();
+		ANKI_ASSERT(isCreated());
 		unbind();
 		glDeleteVertexArrays(1, &glId);
+		glId = 0;
 	}
 
 	/// Attach an array buffer VBO. See @link
@@ -159,14 +152,8 @@ public:
 	}
 
 private:
-	static thread_local const Vao* current;
-	GLuint glId = 0; ///< The OpenGL id
+	static const Vao* current;
 	U32 attachments = 0;
-
-	Bool isCreated() const
-	{
-		return glId != 0;
-	}
 
 	static GLuint getCurrentVertexArrayBinding()
 	{
