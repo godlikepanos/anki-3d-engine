@@ -126,7 +126,7 @@ public:
 	void resize(const PtrSize n)
 	{
 		ANKI_ASSERT(b == nullptr);
-		b = newObject<Value>(allocator, n);
+		b = New<Value, Alloc>(n, allocator)();
 		e = b + n;
 	}
 
@@ -135,7 +135,7 @@ public:
 	void resize(const PtrSize n, Args&&... args)
 	{
 		ANKI_ASSERT(b == nullptr);
-		b = newObject<Value>(allocator, n, std::forward<Args>(args)...);
+		b = New<Value, Alloc>(n, allocator)(std::forward<Args>(args)...);
 		e = b + n;
 	}
 
@@ -144,7 +144,7 @@ public:
 	{
 		if(b)
 		{
-			deleteObjectArray<Value>(allocator, b);
+			DeleteArray<Value, Alloc>{allocator}(b);
 			b = nullptr;
 			e = nullptr;
 		}

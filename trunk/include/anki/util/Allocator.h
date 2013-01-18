@@ -204,6 +204,10 @@ struct MemoryPool
 /// functions that take space
 class StackAllocatorInternal
 {
+public:
+	/// Used for debugging
+	Bool dump();
+
 protected:
 	/// The memory pool
 	detail::MemoryPool* mpool = nullptr;

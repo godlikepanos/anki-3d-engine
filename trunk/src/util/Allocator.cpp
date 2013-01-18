@@ -3,6 +3,14 @@
 
 namespace anki {
 
+#if ANKI_PRINT_ALLOCATOR_MESSAGES
+#	define ANKI_ALLOCATOR_PRINT(x_) \
+		std::cout << "(" << ANKI_FILE << ":" << __LINE__ << ") " << x_ \
+		<< std::endl;
+#else
+#	define ANKI_ALLOCATOR_PRINT(x) ((void)0)
+#endif
+
 //==============================================================================
 // AllocatorInternal                                                           =
 //==============================================================================
@@ -18,8 +26,8 @@ void AllocatorInternal::dump()
 #if ANKI_DEBUG_ALLOCATORS
 	if(allocatedSize > 0)
 	{
-		std::cerr << "You have memory leak of " << allocatedSize 
-			<< " bytes" << std::endl;
+		ANKI_ALLOCATOR_PRINT("You have memory leak of " << allocatedSize 
+			<< " bytes");
 	}
 #endif
 }
@@ -83,11 +91,11 @@ void StackAllocatorInternal::init(const PtrSize size)
 			mpool->size = size;
 			mpool->ptr = mpool->memory;
 			// Memory pool's refcounter is 1
-#if ANKI_PRINT_ALLOCATOR_MESSAGES
-			std::cout << "New MemoryPool created: Address: " << mpool
+
+			ANKI_ALLOCATOR_PRINT("New MemoryPool created: Address: " << mpool
 				<< ", size: " << size
-				<< ", pool address: " << (void*)mpool->memory << std::endl;
-#endif
+				<< ", pool address: " << (void*)mpool->memory);
+
 			return;
 		}
 		else
@@ -110,9 +118,7 @@ void StackAllocatorInternal::deinit()
 
 		if(refCounterPrev == 1)
 		{
-#if ANKI_PRINT_ALLOCATOR_MESSAGES
-			std::cout << "Deleting MemoryPool " << mpool << std::endl;
-#endif
+			ANKI_ALLOCATOR_PRINT("Deleting MemoryPool " << mpool);
 
 			::free(mpool->memory);
 			delete mpool;
@@ -131,6 +137,25 @@ void StackAllocatorInternal::copy(const StackAllocatorInternal& b)
 		// Retain the mpool
 		++mpool->refCounter;
 	}
+}
+
+//==============================================================================
+Bool StackAllocatorInternal::dump()
+{
+	Bool ret = true;
+
+	if(mpool)
+	{
+		auto diff = mpool->ptr.load() - mpool->memory;
+
+		if(diff > 0)
+		{
+			ANKI_ALLOCATOR_PRINT("Lost bytes: " << diff);
+			ret = false;
+		}
+	}
+
+	return ret;
 }
 
 } // end namespace detail

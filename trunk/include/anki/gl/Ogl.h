@@ -14,6 +14,4 @@
 #	error "See file"
 #endif
 
-#include "anki/gl/ContextNonSharable.h"
-
 #endif

@@ -95,6 +95,8 @@ public:
 		init(threadsNum);
 	}
 
+	~ThreadPool();
+
 	/// Init the manager
 	void init(U threadsNum);
 
@@ -116,8 +118,8 @@ public:
 	}
 
 private:
-	PtrVector<ThreadWorker> jobs; ///< Worker threads
-	std::unique_ptr<Barrier> barrier; ///< Synchronization barrier
+	DynamicArray<ThreadWorker*> jobs; ///< Worker threads
+	Barrier* barrier = nullptr; ///< Synchronization barrier
 };
 
 /// Singleton

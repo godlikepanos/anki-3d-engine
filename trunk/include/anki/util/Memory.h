@@ -15,91 +15,122 @@ namespace anki {
 /// that if the elements size is >1 then it allocates size bigger than the
 /// required. The extra chunk is a number that will be used in
 /// deleteObjectArray to identify the number of elements that were allocated
-template<typename T, typename Alloc, typename... Args>
-T* newObject(const Alloc& allocator_, const PtrSize n, Args&&... args)
+template<typename T, typename Alloc = Allocator<T>>
+struct New
 {
-	ANKI_ASSERT(n != 0);
-	T* out;
-	typename Alloc::template rebind<T>::other allocator(allocator_);
+	PtrSize n; ///< Number of elements
+	Alloc alloc; ///< The allocator
 
-	// If the number of elements is then do a simple allocaton
-	if(n == 1)
+	New(PtrSize n_ = 1, const Alloc& alloc_ = Alloc())
+		: n(n_), alloc(alloc_)
+	{}
+
+	template<typename... Args>
+	T* operator()(Args&&... args)
 	{
-		out = allocator.allocate(n);
+		ANKI_ASSERT(n != 0);
+		T* out;
+
+		// If the number of elements is then do a simple allocaton
+		if(n == 1)
+		{
+			out = alloc.allocate(n);
+		}
+		else
+		{
+			// Allocate a memory block that includes the array size
+			typedef typename Alloc::template rebind<U8>::other CharAlloc;
+			CharAlloc charAlloc(alloc);
+			U8* mem = charAlloc.allocate(sizeof(PtrSize) + n * sizeof(T));
+
+			// Set the size of the block
+			*(PtrSize*)mem = n;
+
+			// Set the output address
+			out = (T*)(mem + sizeof(PtrSize));
+		}
+
+		// Call the constuctors
+		for(PtrSize i = 0; i < n; i++)
+		{
+			alloc.construct(&out[i], std::forward<Args>(args)...);
+		}
+
+		// Return result
+		return out;
 	}
-	else
-	{
-		// Allocate a memory block that includes the array size
-		typedef typename Alloc::template rebind<U8>::other CharAlloc;
-		CharAlloc charAlloc(allocator);
-		U8* mem = charAlloc.allocate(sizeof(PtrSize) + n * sizeof(T));
-
-		// Set the size of the block
-		*(PtrSize*)mem = n;
-
-		// Set the output address
-		out = (T*)(mem + sizeof(PtrSize));
-	}
-
-	// Call the constuctors
-	for(PtrSize i = 0; i < n; i++)
-	{
-		allocator.construct(&out[i], std::forward<Args>(args)...);
-	}
-
-	// Return result
-	return out;
-}
+};
 
 /// Function that imitates the delete operator
-template<typename T, typename Alloc>
-void deleteObject(const Alloc& allocator, T* p)
+template<typename T, typename Alloc = Allocator<T>>
+struct Delete
 {
-	ANKI_ASSERT(p);
+	Alloc alloc;
 
-	// Make sure the type is defined
-	typedef U8 TypeMustBeComplete[sizeof(T) ? 1 : -1];
-	(void) sizeof(TypeMustBeComplete);
+	Delete(const Alloc& alloc_ = Alloc())
+		: alloc(alloc_)
+	{}
 
-	// Rebind allocator because the Alloc may be of another type
-	typename Alloc::template rebind<T>::other alloc(allocator);
+	void operator()(void* ptr)
+	{
+		T* p = (T*)ptr;
 
-	// Call the destructor
-	alloc.destroy(p);
+		// Make sure the type is defined
+		typedef U8 TypeMustBeComplete[sizeof(T) ? 1 : -1];
+		(void) sizeof(TypeMustBeComplete);
 
-	// Deallocate
-	alloc.deallocate(p, 1);
-}
+		if(p)
+		{
+			// Rebind allocator because the Alloc may be of another type
+			typename Alloc::template rebind<T>::other alloc(alloc);
+
+			// Call the destructor
+			alloc.destroy(p);
+
+			// Deallocate
+			alloc.deallocate(p, 1);
+		}
+	}
+};
 
 /// Function that imitates the delete[] operator
-template<typename T, typename Alloc>
-void deleteObjectArray(const Alloc& allocator, T* p)
+template<typename T, typename Alloc = Allocator<T>>
+struct DeleteArray
 {
-	ANKI_ASSERT(p);
+	Alloc alloc;
 
-	// Make sure the type is defined
-	typedef U8 TypeMustBeComplete[sizeof(T) ? 1 : -1];
-	(void) sizeof(TypeMustBeComplete);
+	DeleteArray(const Alloc& alloc_ = Alloc())
+		: alloc(alloc_)
+	{}
 
-	// Rebind allocator
-	typename Alloc::template rebind<T>::other alloc(allocator);
-
-	// Get the allocated block
-	U8* block = (U8*)(p) - sizeof(PtrSize);
-
-	// Get number of elements
-	const PtrSize n = *(PtrSize*)block;
-
-	// Call the destructors
-	for(PtrSize i = 0; i < n; i++)
+	void operator()(void* ptr)
 	{
-		alloc.destroy(&p[i]);
-	}
+		// Make sure the type is defined
+		typedef U8 TypeMustBeComplete[sizeof(T) ? 1 : -1];
+		(void) sizeof(TypeMustBeComplete);
 
-	// Deallocate the block
-	typename Alloc::template rebind<U8>::other allocc(allocator);
-	allocc.deallocate(block, n * sizeof(T) + sizeof(PtrSize));
-}
+		T* p = (T*)ptr;
+
+		if(p)
+		{
+			// Get the allocated block
+			U8* block = (U8*)(p) - sizeof(PtrSize);
+
+			// Get number of elements
+			const PtrSize n = *(PtrSize*)block;
+
+			// Call the destructors
+			for(PtrSize i = 0; i < n; i++)
+			{
+				alloc.destroy(&p[i]);
+			}
+
+			// Deallocate the block
+			typename Alloc::template rebind<U8>::other allocc(alloc);
+			allocc.deallocate(block, n * sizeof(T) + sizeof(PtrSize));
+		}
+	}
+};
 
 /// @}
 /// @}
