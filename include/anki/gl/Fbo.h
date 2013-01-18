@@ -1,7 +1,6 @@
 #ifndef ANKI_GL_FBO_H
 #define ANKI_GL_FBO_H
 
-#include "anki/util/Exception.h"
 #include "anki/gl/GlObject.h"
 #include <initializer_list>
 

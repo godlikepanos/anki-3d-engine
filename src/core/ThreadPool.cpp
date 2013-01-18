@@ -1,4 +1,5 @@
 #include "anki/core/ThreadPool.h"
+#include "anki/util/Memory.h"
 
 namespace anki {
 
@@ -55,15 +56,28 @@ void ThreadWorker::workingFunc()
 //==============================================================================
 
 //==============================================================================
+ThreadPool::~ThreadPool()
+{
+	for(ThreadWorker* thread : jobs)
+	{
+		Delete<ThreadWorker>{}(thread);
+	}
+
+	Delete<Barrier>{}(barrier);
+}
+
+//==============================================================================
 void ThreadPool::init(U threadsNum)
 {
 	ANKI_ASSERT(threadsNum <= MAX_THREADS);
 
-	barrier.reset(new Barrier(threadsNum + 1));
+	barrier = New<Barrier>{}(threadsNum + 1);
+
+	jobs.resize(threadsNum);
 
 	for(U i = 0; i < threadsNum; i++)
 	{
-		jobs.push_back(new ThreadWorker(i, barrier.get(), this));
+		jobs[i] = New<ThreadWorker>{}(i, barrier, this);
 	}
 }
 

@@ -1,18 +1,19 @@
 #ifndef ANKI_GL_QUERY_H
 #define ANKI_GL_QUERY_H
 
-#include "anki/gl/Ogl.h"
-#include "anki/util/StdTypes.h"
+#include "anki/gl/GlObject.h"
 
 namespace anki {
 
 /// @addtogroup OpenGL
-///
+/// @{
 
 /// Query object
-class Query
+class Query: public GlObjectContextNonSharable
 {
 public:
+	typedef GlObjectContextNonSharable Base;
+
 	/// @name Constructors/Destructor
 	/// @{
 
@@ -20,8 +21,17 @@ public:
 	///          GL_TIME_ELAPSED
 	Query(GLenum q);
 
+	/// Move
+	Query(Query&& b)
+	{
+		*this = std::move(b);
+	}
+
 	~Query();
 	/// @}
+
+	/// Move
+	Query& operator=(Query&& b);
 
 	/// Start
 	void begin();
@@ -37,9 +47,13 @@ public:
 	GLuint64 getResultNoWait(Bool& finished);
 
 private:
-	GLuint glId;
 	GLenum question;
+
+	void create(const GLenum q);
+
+	void destroy();
 };
+
 /// @}
 
 } // end namespace anki
