@@ -60,10 +60,8 @@ ThreadPool::~ThreadPool()
 {
 	for(ThreadWorker* thread : jobs)
 	{
-		Delete<ThreadWorker>{}(thread);
+		delete thread;
 	}
-
-	Delete<Barrier>{}(barrier);
 }
 
 //==============================================================================
@@ -71,13 +69,13 @@ void ThreadPool::init(U threadsNum)
 {
 	ANKI_ASSERT(threadsNum <= MAX_THREADS);
 
-	barrier = New<Barrier>{}(threadsNum + 1);
+	barrier.reset(new Barrier(threadsNum + 1));
 
 	jobs.resize(threadsNum);
 
 	for(U i = 0; i < threadsNum; i++)
 	{
-		jobs[i] = New<ThreadWorker>{}(i, barrier, this);
+		jobs[i] = new ThreadWorker(i, barrier.get(), this);
 	}
 }
 

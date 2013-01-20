@@ -49,6 +49,8 @@ public:
 	{
 		return *scene;
 	}
+
+	SceneAllocator<U8> getSceneAllocator() const;
 	/// @}
 
 	/// @name Accessors of components
@@ -101,7 +103,7 @@ public:
 
 private:
 	SceneString name; ///< A unique name
-	Scene* scene; ///< Keep it here for unregistering
+	Scene* scene = nullptr; ///< Keep it here for unregistering
 };
 /// @}
 

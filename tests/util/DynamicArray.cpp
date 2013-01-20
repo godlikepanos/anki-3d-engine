@@ -23,4 +23,20 @@ ANKI_TEST(DynamicArray, Test)
 
 	ANKI_TEST_EXPECT_EQ(arr.getSize(), 0);
 	ANKI_TEST_EXPECT_EQ(alloc.dump(), true);
+
+	// Again
+	arr.resize(n);
+
+	i = 0;
+	for(const Foo& f : arr)
+	{
+		i += f.x;
+	}
+
+	ANKI_TEST_EXPECT_EQ(i, n * 666);
+
+	arr.clear();
+
+	ANKI_TEST_EXPECT_EQ(arr.getSize(), 0);
+	ANKI_TEST_EXPECT_EQ(alloc.dump(), true);
 }
