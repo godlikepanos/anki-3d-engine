@@ -24,6 +24,13 @@ SceneNode::~SceneNode()
 }
 
 //==============================================================================
+SceneAllocator<U8> SceneNode::getSceneAllocator() const
+{
+	ANKI_ASSERT(scene);
+	return scene->getAllocator();
+}
+
+//==============================================================================
 U32 SceneNode::getLastUpdateFrame()
 {
 	U32 max = 0;

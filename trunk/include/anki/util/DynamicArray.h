@@ -2,7 +2,6 @@
 #define ANKI_UTIL_DYNAMIC_ARRAY_H
 
 #include "anki/util/Allocator.h"
-#include "anki/util/Memory.h"
 
 namespace anki {
 
@@ -84,6 +83,7 @@ public:
 		allocator = b.allocator;
 
 		other.b = nullptr;
+		other.e = nullptr;
 
 		return *this;
 	}
@@ -122,21 +122,22 @@ public:
 		return e - b;
 	}
 
-	/// Resize the array
-	void resize(const PtrSize n)
-	{
-		ANKI_ASSERT(b == nullptr);
-		b = New<Value, Alloc>(n, allocator)();
-		e = b + n;
-	}
-
 	/// Resize the array and call the constructors
 	template<typename... Args>
 	void resize(const PtrSize n, Args&&... args)
 	{
-		ANKI_ASSERT(b == nullptr);
-		b = New<Value, Alloc>(n, allocator)(std::forward<Args>(args)...);
+		ANKI_ASSERT(b == nullptr && e == nullptr);
+		ANKI_ASSERT(n > 0);
+
+		// Allocate memory
+		b = allocator.allocate(n);
 		e = b + n;
+
+		// Call the constructors
+		for(PtrSize i = 0; i < n; i++)
+		{
+			allocator.construct(b + i, std::forward<Args>(args)...);
+		}
 	}
 
 	/// Clear the array
@@ -144,7 +145,21 @@ public:
 	{
 		if(b)
 		{
-			DeleteArray<Value, Alloc>{allocator}(b);
+			ANKI_ASSERT(e != nullptr);
+
+			PtrSize n = getSize();
+			ANKI_ASSERT(n > 0);
+
+			// Call the destructors
+			for(PtrSize i = 0; i < n; i++)
+			{
+				allocator.destroy(b + i);
+			}
+
+			// Deallocate the memory
+			allocator.deallocate(b, n);
+
+			// Reset the data
 			b = nullptr;
 			e = nullptr;
 		}

@@ -118,8 +118,8 @@ public:
 	}
 
 private:
-	DynamicArray<ThreadWorker*> jobs; ///< Worker threads
-	Barrier* barrier = nullptr; ///< Synchronization barrier
+	Vector<ThreadWorker*> jobs; ///< Worker threads
+	std::unique_ptr<Barrier> barrier; ///< Synchronization barrier
 };
 
 /// Singleton

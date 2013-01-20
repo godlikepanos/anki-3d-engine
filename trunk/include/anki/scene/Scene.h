@@ -43,9 +43,11 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const SceneAllocator<U8>& getAllocator() const
+
+	/// Return a copy
+	SceneAllocator<U8> getAllocator() const
 	{
-		return alloc;
+		return SceneAllocator<U8>(alloc);
 	}
 
 	const Vec3& getAmbientColor() const

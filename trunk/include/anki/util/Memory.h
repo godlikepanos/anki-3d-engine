@@ -10,6 +10,8 @@ namespace anki {
 /// @addtogroup memory
 /// @{
 
+#if 0
+
 /// Function that imitates the new operator. The function allocates memory for
 /// a number of elements and calls their constructor. The interesting thing is
 /// that if the elements size is >1 then it allocates size bigger than the
@@ -131,6 +133,8 @@ struct DeleteArray
 		}
 	}
 };
+
+#endif
 
 /// @}
 /// @}
