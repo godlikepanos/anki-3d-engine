@@ -3,10 +3,10 @@
 
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
+#include "anki/util/Memory.h"
 #include <cstddef> // For ptrdiff_t
-#include <cstring> // For memset
-#include <atomic>
 #include <utility> // For forward
+#include <memory> // For shared_ptr
 
 #define ANKI_DEBUG_ALLOCATORS ANKI_DEBUG
 #define ANKI_PRINT_ALLOCATOR_MESSAGES 1
@@ -179,51 +179,6 @@ inline bool operator!=(const Allocator<T1>&, const AnotherAllocator&)
 	return true;
 }
 
-namespace detail {
-
-/// Thread safe memory pool
-struct MemoryPool
-{
-	/// Allocated memory
-	U8* memory = nullptr;
-	/// Size of the allocated memory
-	PtrSize size = 0;
-	/// Points to the memory and more specifically to the address of the next
-	/// allocation
-	std::atomic<U8*> ptr = {nullptr};
-	/// Reference counter
-	std::atomic<I32> refCounter = {1};
-
-#if ANKI_DEBUG_ALLOCATORS
-	std::atomic<PtrSize> wastedSize = {0};
-#endif
-};
-
-/// Internal members for the @ref StackAllocator. They are separate because we 
-/// don't want to pollute the @ref StackAllocator template with specialized 
-/// functions that take space
-class StackAllocatorInternal
-{
-public:
-	/// Used for debugging
-	Bool dump();
-
-protected:
-	/// The memory pool
-	detail::MemoryPool* mpool = nullptr;
-
-	/// Init the memory pool with the given size
-	void init(const PtrSize size);
-
-	/// Deinit the memory pool
-	void deinit();
-
-	/// Copy
-	void copy(const StackAllocatorInternal& b);
-};
-
-} // end namespace detail
-
 /// Stack based allocator
 ///
 /// @tparam T The type
@@ -239,7 +194,7 @@ protected:
 /// @note Don't ever EVER remove the double copy constructor and the double
 ///       operator=. The compiler will create defaults
 template<typename T, Bool deallocationFlag = false, U32 alignmentBits = 16>
-class StackAllocator: public detail::StackAllocatorInternal
+class StackAllocator
 {
 	template<typename U, Bool deallocationFlag_, U32 alignmentBits_>
 	friend class StackAllocator;
@@ -272,19 +227,17 @@ public:
 	/// Constuctor with size
 	StackAllocator(size_type size) throw()
 	{
-		init(size);
+		mpool.reset(new StackMemoryPool(size, alignmentBits));
 	}
 
 	/// Destructor
 	~StackAllocator()
-	{
-		deinit();
-	}
+	{}
 
 	/// Copy
 	StackAllocator& operator=(const StackAllocator& b)
 	{
-		copy(b);
+		mpool = b.mpool;
 		return *this;
 	}
 	/// Copy
@@ -292,7 +245,7 @@ public:
 	StackAllocator& operator=(
 		const StackAllocator<U, deallocationFlag, alignmentBits>& b)
 	{
-		copy(b);
+		mpool = b.mpool;
 		return *this;
 	}
 
@@ -313,18 +266,10 @@ public:
 		ANKI_ASSERT(mpool != nullptr);
 		(void)hint;
 		size_type size = n * sizeof(value_type);
-		size_type alignedSize = calcAlignSize(size);
+		
+		void* out = mpool->allocate(size);
 
-		U8* out = mpool->ptr.fetch_add(alignedSize);
-
-#if ANKI_PRINT_ALLOCATOR_MESSAGES
-			std::cout << "Allocating: size: " << size
-				<< ", size after alignment: " << alignedSize
-				<< ", returned address: " << (void*)out
-				<< ", hint: " << hint <<std::endl;
-#endif
-
-		if(out + alignedSize <= mpool->memory + mpool->size)
+		if(out != nullptr)
 		{
 			// Everything ok
 		}
@@ -345,28 +290,13 @@ public:
 
 		if(deallocationFlag)
 		{
-			size_type alignedSize = calcAlignSize(n * sizeof(value_type));
-#if ANKI_PRINT_ALLOCATOR_MESSAGES
-			std::cout << "Deallocating: size: " << (n * sizeof(value_type))
-				<< " alignedSize: " << alignedSize
-				<< " pointer: " << p << std::endl;
-#endif
-			U8* headPtr = mpool->ptr.fetch_sub(alignedSize);
+			Bool ok = mpool->free(p);
 
-			if(headPtr - alignedSize != p)
+			if(!ok)
 			{
 				throw ANKI_EXCEPTION("Freeing wrong pointer. "
 					"The deallocations on StackAllocator should be in order");
 			}
-
-			ANKI_ASSERT((headPtr - alignedSize) >= mpool->memory);
-		}
-		else
-		{
-#if ANKI_DEBUG_ALLOCATORS
-			size_type alignedSize = calcAlignSize(n * sizeof(value_type));
-			mpool->wastedSize += alignedSize;
-#endif
 		}
 	}
 
@@ -400,7 +330,7 @@ public:
 	size_type max_size() const
 	{
 		ANKI_ASSERT(mpool != nullptr);
-		return mpool->size;
+		return mpool->getSize();
 	}
 
 	/// A struct to rebind the allocator to another allocator of type U
@@ -414,15 +344,11 @@ public:
 	void reset()
 	{
 		ANKI_ASSERT(mpool != nullptr);
-		mpool->ptr = mpool->memory;
+		mpool->reset();
 	}
 
 private:
-	/// Calculate tha align size
-	size_type calcAlignSize(size_type size)
-	{
-		return size + (size % (alignmentBits / 8));
-	}
+	std::shared_ptr<StackMemoryPool> mpool;
 };
 
 /// Another allocator of the same type can deallocate from this one

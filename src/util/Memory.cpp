@@ -7,13 +7,13 @@
 namespace anki {
 
 //==============================================================================
-struct StackedMemoryPoolBlock
+struct MemoryBlockHeader
 {
 	U32 size;
 };
 
 //==============================================================================
-StackedMemoryPool::StackedMemoryPool(PtrSize size_, U32 alignmentBits_)
+StackMemoryPool::StackMemoryPool(PtrSize size_, U32 alignmentBits_)
 	: memsize(size_), alignmentBits(alignmentBits_)
 {
 	ANKI_ASSERT(memsize > 0);
@@ -21,7 +21,7 @@ StackedMemoryPool::StackedMemoryPool(PtrSize size_, U32 alignmentBits_)
 
 	if(memory != nullptr)
 	{
-		ptr = memory;
+		top = memory;
 	}
 	else
 	{
@@ -30,21 +30,51 @@ StackedMemoryPool::StackedMemoryPool(PtrSize size_, U32 alignmentBits_)
 }
 
 //==============================================================================
-void* StackedMemoryPool::allocate(PtrSize size_) throw()
+StackMemoryPool::~StackMemoryPool()
 {
-	PtrSize size = calcAlignSize(size_ + sizeof(StackedMemoryPoolBlock));
+	if(memory != nullptr)
+	{
+		::free(memory);
+	}
+}
+
+//==============================================================================
+StackMemoryPool& StackMemoryPool::operator=(StackMemoryPool&& other)
+{
+	if(memory != nullptr)
+	{
+		::free(memory);
+	}
+
+	memory = other.memory;
+	memsize = other.memsize;
+	top.store(other.top.load());
+	alignmentBits = other.alignmentBits;
+
+	other.memory = nullptr;
+
+	return *this;
+}
+
+//==============================================================================
+void* StackMemoryPool::allocate(PtrSize size_) throw()
+{
+	// memory is nullptr if moved
+	ANKI_ASSERT(memory != nullptr);
+
+	PtrSize size = calcAlignSize(size_ + sizeof(MemoryBlockHeader));
 
 	ANKI_ASSERT(size < std::numeric_limits<U32>::max() && "Too big allocation");
 
-	U8* out = ptr.fetch_add(size);
+	U8* out = top.fetch_add(size);
 
 	if(out + size <= memory + memsize)
 	{
-		// Write the block
-		((StackedMemoryPoolBlock*)out)->size = size;
+		// Write the block header
+		((MemoryBlockHeader*)out)->size = size;
 
 		// Set the correct output
-		out += sizeof(StackedMemoryPoolBlock);
+		out += sizeof(MemoryBlockHeader);
 	}
 	else
 	{
@@ -56,25 +86,49 @@ void* StackedMemoryPool::allocate(PtrSize size_) throw()
 }
 
 //==============================================================================
-Bool StackedMemoryPool::free(void* p) throw()
+Bool StackMemoryPool::free(void* ptr) throw()
 {
+	// memory is nullptr if moved
+	ANKI_ASSERT(memory != nullptr);
+
 	// Correct the p
-	U8* realp = (U8*)p - sizeof(StackedMemoryPoolBlock);
+	U8* realptr = (U8*)ptr - sizeof(MemoryBlockHeader);
+
+	// realptr should be inside the pool's preallocated memory
+	ANKI_ASSERT(realptr >= memory && realptr < memory + memsize);
 
 	// Get block size
-	U32 size = ((StackedMemoryPoolBlock*)realp)->size;
+	U32 size = ((MemoryBlockHeader*)realptr)->size;
 
 	// Atomic stuff
-	U8* expected = realp + size;
-	U8* desired = realp;
+	U8* expected = realptr + size;
+	U8* desired = realptr;
 
-	// if(ptr == expected)
-	//     ptr = desired
-	// else
-	//     expected = ptr
-	Bool exchange = ptr.compare_exchange_strong(expected, desired);
+	// if(top == expected) {
+	//     top = desired;
+	//     exchange = true;
+	// } else {
+	//     expected = top;
+	//     exchange = false;
+	// }
+	Bool exchange = top.compare_exchange_strong(expected, desired);
 
 	return exchange;
+}
+
+//==============================================================================
+void StackMemoryPool::reset()
+{
+	// memory is nullptr if moved
+	ANKI_ASSERT(memory != nullptr);
+
+	top = memory;
+}
+
+//==============================================================================
+PtrSize StackMemoryPool::calcAlignSize(PtrSize size) const
+{
+	return size + (size % (alignmentBits / 8));
 }
 
 } // end namespace anki
