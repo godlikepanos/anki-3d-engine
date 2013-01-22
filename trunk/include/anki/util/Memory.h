@@ -4,6 +4,7 @@
 #include "anki/util/StdTypes.h"
 #include "anki/util/NonCopyable.h"
 #include <atomic>
+#include <algorithm>
 
 namespace anki {
 
@@ -13,42 +14,55 @@ namespace anki {
 /// @{
 
 /// Thread safe memory pool
-class StackedMemoryPool: public NonCopyable
+class StackMemoryPool: public NonCopyable
 {
 public:
 	/// Default constructor
-	StackedMemoryPool(PtrSize size, U32 alignmentBits = 16);
+	StackMemoryPool(PtrSize size, U32 alignmentBits = 16);
 
 	/// Move
-	StackedMemoryPool(StackedMemoryPool&& other);
+	StackMemoryPool(StackMemoryPool&& other)
+	{
+		*this = std::move(other);
+	}
 
-	~StackedMemoryPool();
+	/// Destroy
+	~StackMemoryPool();
 
-	/// Allocate memory in StackedMemoryPool
+	/// Move
+	StackMemoryPool& operator=(StackMemoryPool&& other);
+
+	/// Access the max size
+	PtrSize getSize() const
+	{
+		return memsize;
+	}
+
+	/// Allocate memory
 	void* allocate(PtrSize size) throw();
 
-	/// Free memory in StackedMemoryPool
+	/// Free memory in StackMemoryPool. If the ptr is not the last allocation
+	/// then nothing happens and the method returns false
 	Bool free(void* ptr) throw();
 
+	/// Reinit the pool. All existing allocated memory will be lost
+	void reset();
+
 private:
-	/// Allocated memory
+	/// Pre-allocated memory memory chunk
 	U8* memory = nullptr;
 
-	/// Size of the allocated memory
+	/// Size of the allocated memory chunk
 	PtrSize memsize = 0;
 
-	/// Points to the memory and more specifically to the address of the next
-	/// allocation
-	std::atomic<U8*> ptr = {nullptr};
+	/// Points to the memory and more specifically to the top of the stack
+	std::atomic<U8*> top = {nullptr};
 
 	/// Alignment
 	U32 alignmentBits;
 
-	/// Calculate tha aligned size
-	PtrSize calcAlignSize(PtrSize size) const
-	{
-		return size + (size % (alignmentBits / 8));
-	}
+	/// Calculate tha aligned size of an allocation
+	PtrSize calcAlignSize(PtrSize size) const;
 };
 
 /// @}

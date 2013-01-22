@@ -72,12 +72,10 @@ void ThreadPool::init(U threadsNum)
 	barrier.reset(new Barrier(threadsNum + 1));
 
 	jobs.resize(threadsNum);
-
 	for(U i = 0; i < threadsNum; i++)
 	{
 		jobs[i] = new ThreadWorker(i, barrier.get(), this);
 	}
 }
-
 
 } // end namespace anki
