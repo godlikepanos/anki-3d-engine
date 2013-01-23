@@ -5,6 +5,7 @@
 #include "anki/util/Flags.h"
 #include "anki/math/Math.h"
 #include "anki/core/Timestamp.h"
+#include "anki/scene/Common.h"
 
 namespace anki {
 
@@ -14,10 +15,11 @@ class PropertyMap;
 /// @{
 
 /// Interface for movable scene nodes
-class Movable: public Object<Movable>, public Flags<U32>
+class Movable: public Object<Movable, SceneAllocator<Movable>>,
+	public Flags<U32>
 {
 public:
-	typedef Object<Movable> Base;
+	typedef Object<Movable, SceneAllocator<Movable>> Base;
 
 	enum MovableFlag
 	{
@@ -35,7 +37,8 @@ public:
 	/// @param flags The flags
 	/// @param parent The parent. It can be nullptr
 	/// @param pmap Property map to add a few variables
-	Movable(U32 flags, Movable* parent, PropertyMap& pmap);
+	Movable(U32 flags, Movable* parent, PropertyMap& pmap,
+		const SceneAllocator<Movable>& alloc);
 
 	~Movable();
 	/// @}

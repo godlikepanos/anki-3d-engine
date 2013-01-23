@@ -47,7 +47,8 @@ ParticleBase::ParticleBase(
 	const char* name, Scene* scene, 
 	// Movable
 	U32 movableFlags, Movable* movParent)
-	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
+	: SceneNode(name, scene),
+		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		type(type_)
 {}
 
@@ -222,8 +223,9 @@ ParticleEmitter::ParticleEmitter(
 	const char* name, Scene* scene, 
 	// Movable
 	U32 movableFlags, Movable* movParent)
-	: SceneNode(name, scene), Spatial(this, &aabb),
-		Movable(movableFlags, movParent, *this)
+	:	SceneNode(name, scene),
+		Spatial(this, &aabb),
+		Movable(movableFlags, movParent, *this, getSceneAllocator())
 {
 	// Load resource
 	particleEmitterResource.load(filename);
@@ -260,7 +262,12 @@ ParticleEmitter::ParticleEmitter(
 
 //==============================================================================
 ParticleEmitter::~ParticleEmitter()
-{}
+{
+	for(ParticleBase* part : particles)
+	{
+		delete part;
+	}
+}
 
 //==============================================================================
 const ModelPatchBase& ParticleEmitter::getRenderableModelPatchBase() const

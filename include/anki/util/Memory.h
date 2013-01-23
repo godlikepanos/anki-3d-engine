@@ -38,6 +38,7 @@ public:
 		return memsize;
 	}
 
+	/// Get the allocated size
 	PtrSize getAllocatedSize() const;
 
 	/// Allocate memory

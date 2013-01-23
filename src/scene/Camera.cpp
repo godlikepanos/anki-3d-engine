@@ -7,6 +7,17 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+Camera::Camera(CameraType type_,
+	const char* name, Scene* scene, // SceneNode
+	U32 movableFlags, Movable* movParent, // Movable
+	Frustum* frustum) // Spatial & Frustumable
+	:	SceneNode(name, scene),
+		Movable(movableFlags, movParent, *this, getSceneAllocator()),
+		Spatial(this, frustum),
+		Frustumable(frustum, this), type(type_)
+{}
+
+//==============================================================================
 Camera::~Camera()
 {}
 
