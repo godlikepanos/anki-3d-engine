@@ -32,11 +32,13 @@ public:
 	/// Move
 	StackMemoryPool& operator=(StackMemoryPool&& other);
 
-	/// Access the max size
+	/// Access the total size
 	PtrSize getSize() const
 	{
 		return memsize;
 	}
+
+	PtrSize getAllocatedSize() const;
 
 	/// Allocate memory
 	void* allocate(PtrSize size) throw();

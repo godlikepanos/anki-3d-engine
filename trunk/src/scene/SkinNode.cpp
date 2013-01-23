@@ -48,6 +48,15 @@ void SkinMesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v,
 //==============================================================================
 
 //==============================================================================
+SkinModelPatch::~SkinModelPatch()
+{
+	for(SkinMesh* x : skinMeshes)
+	{
+		delete x;
+	}
+}
+
+//==============================================================================
 SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_)
 	: mpatch(mpatch_)
 {

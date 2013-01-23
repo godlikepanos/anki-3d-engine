@@ -52,8 +52,16 @@ StackMemoryPool& StackMemoryPool::operator=(StackMemoryPool&& other)
 	alignmentBits = other.alignmentBits;
 
 	other.memory = nullptr;
+	other.memsize = 0;
+	other.top = nullptr;
 
 	return *this;
+}
+
+//==============================================================================
+PtrSize StackMemoryPool::getAllocatedSize() const
+{
+	return top.load() - memory;
 }
 
 //==============================================================================

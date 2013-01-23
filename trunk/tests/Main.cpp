@@ -47,5 +47,9 @@ int main(int argc, char** argv)
 	ANKI_CONNECT(&LoggerSingleton::get(), messageRecieved, 
 		&msgh, handleLoggerMessages);
 
-	return TesterSingleton::get().run(argc, argv);
+	int exitcode = getTesterSingleton().run(argc, argv);
+
+	deleteTesterSingleton();
+
+	return exitcode;
 }

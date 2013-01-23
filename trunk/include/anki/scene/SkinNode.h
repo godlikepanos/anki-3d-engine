@@ -123,7 +123,7 @@ public:
 	/// @}
 
 private:
-	PtrVector<SkinMesh> skinMeshes;
+	Vector<SkinMesh*> skinMeshes;
 	const ModelPatch* mpatch;
 	Vector<Vao> xfbVaos; ///< Used as a source VAO in XFB
 };

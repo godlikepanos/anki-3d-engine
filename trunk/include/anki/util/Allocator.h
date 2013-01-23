@@ -347,6 +347,12 @@ public:
 		mpool->reset();
 	}
 
+	const StackMemoryPool& getMemoryPool() const
+	{
+		ANKI_ASSERT(mpool != nullptr);
+		return *mpool;
+	}
+
 private:
 	std::shared_ptr<StackMemoryPool> mpool;
 };

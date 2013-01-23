@@ -50,7 +50,10 @@ struct Tester
 };
 
 /// Singleton so we can do the ANKI_TEST trick
-typedef Singleton<Tester> TesterSingleton;
+extern Tester& getTesterSingleton();
+
+/// Delete the instance to make valgrind a bit happy
+extern void deleteTesterSingleton();
 
 //==============================================================================
 // Macros
@@ -63,7 +66,7 @@ typedef Singleton<Tester> TesterSingleton;
 	\
 	struct Foo##suiteName_##name_ { \
 		Foo##suiteName_##name_() { \
-			TesterSingleton::get().addTest(#name_, #suiteName_, \
+			getTesterSingleton().addTest(#name_, #suiteName_, \
 				test_##suiteName_##name_); \
 		} \
 	}; \

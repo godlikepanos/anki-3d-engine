@@ -22,7 +22,7 @@ ANKI_TEST(DynamicArray, Test)
 	arr.clear();
 
 	ANKI_TEST_EXPECT_EQ(arr.getSize(), 0);
-	ANKI_TEST_EXPECT_EQ(alloc.dump(), true);
+	ANKI_TEST_EXPECT_EQ(alloc.getMemoryPool().getAllocatedSize(), 0);
 
 	// Again
 	arr.resize(n);
@@ -38,5 +38,5 @@ ANKI_TEST(DynamicArray, Test)
 	arr.clear();
 
 	ANKI_TEST_EXPECT_EQ(arr.getSize(), 0);
-	ANKI_TEST_EXPECT_EQ(alloc.dump(), true);
+	ANKI_TEST_EXPECT_EQ(alloc.getMemoryPool().getAllocatedSize(), 0);
 }
