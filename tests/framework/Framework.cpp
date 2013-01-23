@@ -199,4 +199,20 @@ int Tester::listTests()
 	return 0;
 }
 
+//==============================================================================
+static Tester* testerInstance = nullptr;
+
+Tester& getTesterSingleton()
+{
+	return *(testerInstance ? testerInstance : (testerInstance = new Tester));
+}
+
+void deleteTesterSingleton()
+{
+	if(testerInstance != nullptr)
+	{
+		delete testerInstance;
+	}
+}
+
 } // end namespace anki
