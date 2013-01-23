@@ -29,11 +29,8 @@ public:
 	/// @{
 	Camera(CameraType type_,
 		const char* name, Scene* scene, // SceneNode
-		uint movableFlags, Movable* movParent, // Movable
-		Frustum* frustum) // Spatial & Frustumable
-		: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
-			Spatial(this, frustum), Frustumable(frustum, this), type(type_)
-	{}
+		U32 movableFlags, Movable* movParent, // Movable
+		Frustum* frustum); // Spatial & Frustumable
 
 	virtual ~Camera();
 	/// @}

@@ -85,6 +85,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	SkinModelPatch(const ModelPatch* mpatch_);
+	~SkinModelPatch();
 	/// @}
 
 	/// @name Accessors
@@ -230,7 +231,7 @@ public:
 	}
 
 	/// Update the animation stuff
-	void frameUpdate(float prevUpdateTime, float crntTime, int frame);
+	void frameUpdate(F32 prevUpdateTime, F32 crntTime, int frame);
 	/// @}
 
 	/// @name Movable virtuals
@@ -263,7 +264,7 @@ public:
 		return boneTranslations;
 	}
 
-	const PtrVector<SkinPatchNode>& getPatchNodes() const
+	const Vector<SkinPatchNode*>& getPatchNodes() const
 	{
 		return patches;
 	}
@@ -273,28 +274,28 @@ public:
 		return *skin;
 	}
 
-	float getStep() const
+	F32 getStep() const
 	{
 		return step;
 	}
-	float& getStep()
+	F32& getStep()
 	{
 		return step;
 	}
-	void setStep(const float x)
+	void setStep(const F32 x)
 	{
 		step = x;
 	}
 
-	float getFrame() const
+	F32 getFrame() const
 	{
 		return frame;
 	}
-	float& getFrame()
+	F32& getFrame()
 	{
 		return frame;
 	}
-	void setFrame(const float x)
+	void setFrame(const F32 x)
 	{
 		frame = x;
 	}
@@ -311,7 +312,7 @@ public:
 
 private:
 	SkinResourcePointer skin; ///< The resource
-	PtrVector<SkinPatchNode> patches;
+	Vector<SkinPatchNode*> patches;
 	Obb visibilityShapeWSpace;
 
 	/// @name Animation stuff
@@ -334,7 +335,7 @@ private:
 	/// @param[in] frame Frame
 	/// @param[out] translations Translations vector
 	/// @param[out] rotations Rotations vector
-	static void interpolate(const SkelAnim& animation, float frame,
+	static void interpolate(const SkelAnim& animation, F32 frame,
 		Vector<Vec3>& translations, Vector<Mat3>& rotations);
 
 	/// Calculate the global pose

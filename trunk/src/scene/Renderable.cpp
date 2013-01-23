@@ -78,7 +78,12 @@ RenderableVariable::~RenderableVariable()
 
 //==============================================================================
 Renderable::~Renderable()
-{}
+{
+	for(RenderableVariable* var : vars)
+	{
+		delete var;
+	}
+}
 
 //==============================================================================
 void Renderable::init(PropertyMap& pmap)

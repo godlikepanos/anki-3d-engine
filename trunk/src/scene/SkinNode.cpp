@@ -125,7 +125,8 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
 	const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent,
 	CollisionShape* spatialCs)
-	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
+	: SceneNode(name, scene),
+		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Spatial(this, spatialCs)
 {
 	skinModelPatch.reset(new SkinModelPatch(modelPatch_));
@@ -140,7 +141,8 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
 SkinNode::SkinNode(const char* skinFname,
 	const char* name, Scene* scene, // SceneNode
 	uint movableFlags, Movable* movParent) // Movable
-	: SceneNode(name, scene), Movable(movableFlags, movParent, *this)
+	: SceneNode(name, scene),
+		Movable(movableFlags, movParent, *this, getSceneAllocator())
 {
 	skin.load(skinFname);
 
@@ -165,7 +167,12 @@ SkinNode::SkinNode(const char* skinFname,
 
 //==============================================================================
 SkinNode::~SkinNode()
-{}
+{
+	for(SkinPatchNode* patch : patches)
+	{
+		delete patch;
+	}
+}
 
 //==============================================================================
 void SkinNode::movableUpdate()

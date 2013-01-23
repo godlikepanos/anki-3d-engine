@@ -12,7 +12,7 @@ Light::Light(LightType t, // Light
 	U32 movableFlags, Movable* movParent, // Movable
 	CollisionShape* cs) // Spatial
 	: SceneNode(name, scene),
-		Movable(movableFlags, movParent, *this),
+		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Spatial(this, cs), type(t)
 {
 	addNewProperty(new ReadWritePointerProperty<Vec4>("color", &color));

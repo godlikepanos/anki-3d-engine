@@ -12,7 +12,8 @@ namespace anki {
 ModelPatchNode::ModelPatchNode(const ModelPatch* modelPatch_,
 	const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent)
-	: SceneNode(name, scene), Movable(movableFlags, movParent, *this),
+	: SceneNode(name, scene),
+		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Spatial(this, &obb), modelPatch(modelPatch_)
 {
 	Renderable::init(*this);
@@ -26,7 +27,8 @@ ModelPatchNode::ModelPatchNode(const ModelPatch* modelPatch_,
 ModelNode::ModelNode(const char* modelFname,
 	const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent)
-	: SceneNode(name, scene), Movable(movableFlags, movParent, *this)
+	: SceneNode(name, scene),
+		Movable(movableFlags, movParent, *this, getSceneAllocator())
 {
 	model.load(modelFname);
 
