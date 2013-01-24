@@ -7,7 +7,6 @@
 #include "anki/scene/Spatial.h"
 #include "anki/resource/Model.h"
 #include "anki/math/Math.h"
-#include "anki/util/Vector.h"
 
 namespace anki {
 
@@ -84,7 +83,8 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	SkinModelPatch(const ModelPatch* mpatch_);
+	SkinModelPatch(const ModelPatch* mpatch_, 
+		const SceneAllocator<U8>& alloc);
 	~SkinModelPatch();
 	/// @}
 
@@ -124,9 +124,9 @@ public:
 	/// @}
 
 private:
-	Vector<SkinMesh*> skinMeshes;
 	const ModelPatch* mpatch;
-	Vector<Vao> xfbVaos; ///< Used as a source VAO in XFB
+	SceneVector<SkinMesh*> skinMeshes;
+	SceneVector<Vao> xfbVaos; ///< Used as a source VAO in XFB
 };
 
 /// A fragment of the SkinNode
@@ -244,27 +244,27 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Vector<Vec3>& getHeads() const
+	const SceneVector<Vec3>& getHeads() const
 	{
 		return heads;
 	}
 
-	const Vector<Vec3>& getTails() const
+	const SceneVector<Vec3>& getTails() const
 	{
 		return tails;
 	}
 
-	const Vector<Mat3>& getBoneRotations() const
+	const SceneVector<Mat3>& getBoneRotations() const
 	{
 		return boneRotations;
 	}
 
-	const Vector<Vec3>& getBoneTranslations() const
+	const SceneVector<Vec3>& getBoneTranslations() const
 	{
 		return boneTranslations;
 	}
 
-	const Vector<SkinPatchNode*>& getPatchNodes() const
+	const SceneVector<SkinPatchNode*>& getPatchNodes() const
 	{
 		return patches;
 	}
@@ -312,7 +312,7 @@ public:
 
 private:
 	SkinResourcePointer skin; ///< The resource
-	Vector<SkinPatchNode*> patches;
+	SceneVector<SkinPatchNode*> patches;
 	Obb visibilityShapeWSpace;
 
 	/// @name Animation stuff
@@ -324,10 +324,10 @@ private:
 
 	/// @name Bone data
 	/// @{
-	Vector<Vec3> heads;
-	Vector<Vec3> tails;
-	Vector<Mat3> boneRotations;
-	Vector<Vec3> boneTranslations;
+	SceneVector<Vec3> heads;
+	SceneVector<Vec3> tails;
+	SceneVector<Mat3> boneRotations;
+	SceneVector<Vec3> boneTranslations;
 	/// @}
 
 	/// Interpolate
@@ -336,17 +336,17 @@ private:
 	/// @param[out] translations Translations vector
 	/// @param[out] rotations Rotations vector
 	static void interpolate(const SkelAnim& animation, F32 frame,
-		Vector<Vec3>& translations, Vector<Mat3>& rotations);
+		SceneVector<Vec3>& translations, SceneVector<Mat3>& rotations);
 
 	/// Calculate the global pose
 	static void updateBoneTransforms(const Skeleton& skel,
-		Vector<Vec3>& translations, Vector<Mat3>& rotations);
+		SceneVector<Vec3>& translations, SceneVector<Mat3>& rotations);
 
 	/// Deform the heads and tails
 	static void deformHeadsTails(const Skeleton& skeleton,
-		const Vector<Vec3>& boneTranslations,
-		const Vector<Mat3>& boneRotations,
-		Vector<Vec3>& heads, Vector<Vec3>& tails);
+		const SceneVector<Vec3>& boneTranslations,
+		const SceneVector<Mat3>& boneRotations,
+		SceneVector<Vec3>& heads, SceneVector<Vec3>& tails);
 };
 
 } // end namespace

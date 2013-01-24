@@ -14,7 +14,8 @@ Camera::Camera(CameraType type_,
 	:	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Spatial(this, frustum),
-		Frustumable(frustum, this), type(type_)
+		Frustumable(frustum), 
+		type(type_)
 {}
 
 //==============================================================================

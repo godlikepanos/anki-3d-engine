@@ -57,8 +57,11 @@ SkinModelPatch::~SkinModelPatch()
 }
 
 //==============================================================================
-SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_)
-	: mpatch(mpatch_)
+SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_, 
+	const SceneAllocator<U8>& alloc)
+	:	mpatch(mpatch_),
+		skinMeshes(alloc),
+		xfbVaos(alloc)
 {
 #if 0
 	// Create the model patch
@@ -125,11 +128,12 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
 	const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent,
 	CollisionShape* spatialCs)
-	: SceneNode(name, scene),
+	: 	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
+		Renderable(getSceneAllocator()),
 		Spatial(this, spatialCs)
 {
-	skinModelPatch.reset(new SkinModelPatch(modelPatch_));
+	skinModelPatch.reset(new SkinModelPatch(modelPatch_, getSceneAllocator()));
 	Renderable::init(*this);
 }
 
@@ -141,8 +145,13 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
 SkinNode::SkinNode(const char* skinFname,
 	const char* name, Scene* scene, // SceneNode
 	uint movableFlags, Movable* movParent) // Movable
-	: SceneNode(name, scene),
-		Movable(movableFlags, movParent, *this, getSceneAllocator())
+	:	SceneNode(name, scene),
+		Movable(movableFlags, movParent, *this, getSceneAllocator()),
+		patches(getSceneAllocator()),
+		heads(getSceneAllocator()),
+		tails(getSceneAllocator()),
+		boneRotations(getSceneAllocator()),
+		boneTranslations(getSceneAllocator())
 {
 	skin.load(skinFname);
 
@@ -211,7 +220,7 @@ void SkinNode::frameUpdate(float prevUpdateTime, float crntTime, int f)
 
 //==============================================================================
 void SkinNode::interpolate(const SkelAnim& animation, float frame,
-	Vector<Vec3>& boneTranslations, Vector<Mat3>& boneRotations)
+	SceneVector<Vec3>& boneTranslations, SceneVector<Mat3>& boneRotations)
 {
 	ANKI_ASSERT(frame < animation.getFramesNum());
 
@@ -276,7 +285,7 @@ void SkinNode::interpolate(const SkelAnim& animation, float frame,
 
 //==============================================================================
 void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
-	Vector<Vec3>& boneTranslations, Vector<Mat3>& boneRotations)
+	SceneVector<Vec3>& boneTranslations, SceneVector<Mat3>& boneRotations)
 {
 	std::array<uint, 128> queue;
 	uint head = 0, tail = 0;
@@ -334,9 +343,9 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 
 //==============================================================================
 void SkinNode::deformHeadsTails(const Skeleton& skeleton,
-    const Vector<Vec3>& boneTranslations,
-    const Vector<Mat3>& boneRotations,
-	Vector<Vec3>& heads, Vector<Vec3>& tails)
+    const SceneVector<Vec3>& boneTranslations,
+    const SceneVector<Mat3>& boneRotations,
+	SceneVector<Vec3>& heads, SceneVector<Vec3>& tails)
 {
 	for(uint i = 0; i < skeleton.getBones().size(); i++)
 	{

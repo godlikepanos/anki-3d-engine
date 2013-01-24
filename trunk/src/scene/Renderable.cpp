@@ -7,7 +7,7 @@
 namespace anki {
 
 //==============================================================================
-// CreateNewRenderableVariableVisitor                                                    =
+// CreateNewRenderableVariableVisitor                                          =
 //==============================================================================
 
 /// Create a new RenderableVariable given a MaterialVariable
@@ -77,6 +77,11 @@ RenderableVariable::~RenderableVariable()
 //==============================================================================
 
 //==============================================================================
+Renderable::Renderable(const SceneAllocator<U8>& alloc)
+	:	vars(alloc)
+{}
+
+//==============================================================================
 Renderable::~Renderable()
 {
 	for(RenderableVariable* var : vars)
@@ -94,6 +99,8 @@ void Renderable::init(PropertyMap& pmap)
 	CreateNewRenderableVariableVisitor vis;
 	vis.pmap = &pmap;
 	vis.vars = &vars;
+
+	vars.reserve(mtl.getVariables().size());
 
 	for(const MaterialVariable* mv : mtl.getVariables())
 	{

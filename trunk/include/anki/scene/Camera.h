@@ -81,6 +81,16 @@ public:
 	}
 	/// @}
 
+	/// @name Frustumable virtuals
+	/// @{
+
+	/// Override Frustumable::getFrustumableOrigin()
+	const Vec3& getFrustumableOrigin() const
+	{
+		return getWorldTransform().getOrigin();
+	}
+	/// @}
+
 	void lookAtPoint(const Vec3& point);
 
 protected:

@@ -248,8 +248,7 @@ void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
 	GlStateSingleton::get().enable(GL_BLEND, blending);
 
 	// Calculate the LOD
-	Vec3 camPos =
-		fr.getSceneNode().getMovable()->getWorldTransform().getOrigin();
+	Vec3 camPos = fr.getFrustumableOrigin();
 
 	F32 dist = (renderable.getRenderableOrigin() - camPos).getLength();
 	U8 lod = r->calculateLod(dist);
