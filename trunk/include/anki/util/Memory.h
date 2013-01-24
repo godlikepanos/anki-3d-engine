@@ -4,6 +4,7 @@
 #include "anki/util/StdTypes.h"
 #include "anki/util/Assert.h"
 #include "anki/util/NonCopyable.h"
+#include "anki/util/Functions.h"
 #include <atomic>
 #include <algorithm>
 
@@ -80,15 +81,8 @@ class Allocator;
 template<typename T, typename Alloc = Allocator<T>>
 struct New
 {
-	PtrSize n; ///< Number of elements
-	Alloc alloc; ///< The allocator
-
-	New(PtrSize n_, const Alloc& alloc_ = Alloc())
-		: n(n_), alloc(alloc_)
-	{}
-
 	template<typename... Args>
-	T* operator()(Args&&... args)
+	T* operator()(PtrSize n, Alloc alloc, Args&&... args)
 	{
 		ANKI_ASSERT(n != 0);
 		T* out;
@@ -143,9 +137,6 @@ struct Delete
 
 		if(p)
 		{
-			// Rebind allocator because the Alloc may be of another type
-			typename Alloc::template rebind<T>::other alloc(alloc);
-
 			// Call the destructor
 			alloc.destroy(p);
 
@@ -193,6 +184,28 @@ struct DeleteArray
 		}
 	}
 };
+
+/// Allocate memory using a constructor
+#define ANKI_NEW(Type_, alloc_, ...) \
+	New<Type_, decltype(alloc_)::rebind<Type_>::other>{}( \
+		1, alloc_, ## __VA_ARGS__)
+
+/// Allocate memory using a constructor
+#define ANKI_NEW_ARRAY(Type_, alloc_, n_, ...) \
+	New<Type_, decltype(alloc_)::rebind<Type_>::other>{}( \
+		n_, alloc_, ## __VA_ARGS__)
+
+/// Delete memory allocated by #ANKI_NEW
+#define ANKI_DELETE(ptr_, alloc_) \
+	Delete<RemovePointer<decltype(ptr_)>::Type, \
+		decltype(alloc_)::rebind<RemovePointer<decltype(ptr_)>::Type>::other \
+		>{alloc_}(ptr_);
+
+/// Delete memory allocated by #ANKI_NEW_ARRAY
+#define ANKI_DELETE_ARRAY(ptr_, alloc_) \
+	DeleteArray<RemovePointer<decltype(ptr_)>::Type, \
+		decltype(alloc_)::rebind<RemovePointer<decltype(ptr_)>::Type>::other \
+		>{alloc_}(ptr_);
 
 /// @}
 /// @}
