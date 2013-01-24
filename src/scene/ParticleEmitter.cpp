@@ -225,7 +225,8 @@ ParticleEmitter::ParticleEmitter(
 	U32 movableFlags, Movable* movParent)
 	:	SceneNode(name, scene),
 		Spatial(this, &aabb),
-		Movable(movableFlags, movParent, *this, getSceneAllocator())
+		Movable(movableFlags, movParent, *this, getSceneAllocator()),
+		Renderable(getSceneAllocator())
 {
 	// Load resource
 	particleEmitterResource.load(filename);
@@ -292,7 +293,6 @@ void ParticleEmitter::movableUpdate()
 //==============================================================================
 void ParticleEmitter::createParticlesSimulation(Scene* scene)
 {
-	// create the particles
 	collShape.reset(new btSphereShape(particle.size));
 
 	RigidBody::Initializer binit;

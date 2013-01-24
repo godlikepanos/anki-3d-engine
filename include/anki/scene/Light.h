@@ -260,6 +260,16 @@ public:
 	}
 	/// @}
 
+	/// @name Frustumable virtuals
+	/// @{
+
+	/// Override Frustumable::getFrustumableOrigin()
+	const Vec3& getFrustumableOrigin() const
+	{
+		return getWorldTransform().getOrigin();
+	}
+	/// @}
+
 	void loadTexture(const char* filename)
 	{
 		tex.load(filename);

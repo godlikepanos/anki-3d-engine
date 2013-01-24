@@ -2,6 +2,7 @@
 #define ANKI_SCENE_COMMON_H
 
 #include "anki/util/Allocator.h"
+#include "anki/util/Vector.h"
 
 namespace anki {
 
@@ -12,6 +13,10 @@ using SceneAllocator = StackAllocator<T, false>;
 /// Scene string
 typedef std::basic_string<char, std::char_traits<char>,
 	SceneAllocator<char>> SceneString;
+
+/// Scene vector
+template<typename T>
+using SceneVector = Vector<T, SceneAllocator<T>>;
 
 } // end namespace anki
 

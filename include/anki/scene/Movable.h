@@ -153,6 +153,7 @@ protected:
 
 	/// The frame where it was last moved
 	U32 timestamp = Timestamp::getTimestamp();
+	
 
 	/// Called for every frame. It updates the @a wTrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.

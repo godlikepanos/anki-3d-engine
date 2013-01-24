@@ -2,6 +2,7 @@
 #define ANKI_SCENE_RENDERABLE_H
 
 #include "anki/scene/Property.h"
+#include "anki/scene/Common.h"
 #include "anki/util/Vector.h"
 #include "anki/gl/Ubo.h"
 #include "anki/resource/Material.h"
@@ -146,10 +147,9 @@ private:
 class Renderable
 {
 public:
-	typedef Vector<RenderableVariable*> RenderableVariables;
+	typedef SceneVector<RenderableVariable*> RenderableVariables;
 
-	Renderable()
-	{}
+	Renderable(const SceneAllocator<U8>& alloc);
 
 	virtual ~Renderable();
 

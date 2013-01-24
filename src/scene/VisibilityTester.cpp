@@ -252,8 +252,7 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 	DistanceSortJob dsjob;
 	dsjob.nodes = vinfo.lights.begin();
 	dsjob.nodesCount = vinfo.lights.size();
-	dsjob.origin =
-		ref.getSceneNode().getMovable()->getWorldTransform().getOrigin();
+	dsjob.origin = ref.getFrustumableOrigin();
 	threadPool.assignNewJob(0, &dsjob);
 
 	// The rest of the jobs are dummy

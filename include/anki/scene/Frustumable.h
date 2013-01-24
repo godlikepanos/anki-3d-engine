@@ -18,8 +18,8 @@ public:
 	/// @{
 
 	/// Pass the frustum here so we can avoid the virtuals
-	Frustumable(Frustum* fr, SceneNode* sn)
-		: frustum(fr), node(sn)
+	Frustumable(Frustum* fr)
+		: frustum(fr)
 	{}
 	/// @}
 
@@ -59,14 +59,8 @@ public:
 		return viewProjectionMat;
 	}
 
-	const SceneNode& getSceneNode() const
-	{
-		return *node;
-	}
-	SceneNode& getSceneNode()
-	{
-		return *node;
-	}
+	/// Get the origin for sorting and visibility tests
+	virtual const Vec3& getFrustumableOrigin() const = 0;
 	/// @}
 
 	void frustumableMarkUpdated()
@@ -75,13 +69,13 @@ public:
 	}
 
 	/// Is a spatial inside the frustum?
-	bool insideFrustum(const Spatial& sp) const
+	Bool insideFrustum(const Spatial& sp) const
 	{
 		return frustum->insideFrustum(sp.getSpatialCollisionShape());
 	}
 
 	/// Is a collision shape inside the frustum?
-	bool insideFrustum(const CollisionShape& cs) const
+	Bool insideFrustum(const CollisionShape& cs) const
 	{
 		return frustum->insideFrustum(cs);
 	}
@@ -92,7 +86,6 @@ protected:
 	Mat4 projectionMat = Mat4::getIdentity();
 	Mat4 viewMat = Mat4::getIdentity();
 	Mat4 viewProjectionMat = Mat4::getIdentity();
-	SceneNode* node;
 
 private:
 	U32 timestamp = Timestamp::getTimestamp();

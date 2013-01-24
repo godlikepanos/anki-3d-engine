@@ -243,7 +243,7 @@ public:
 
 private:
 	ParticleEmitterResourcePointer particleEmitterResource;
-	std::unique_ptr<btCollisionShape> collShape;
+	std::unique_ptr<btCollisionShape> collShape = nullptr;
 	Vector<ParticleBase*> particles;
 	F32 timeLeftForNextEmission;
 	/// The resource
