@@ -5,37 +5,56 @@
 
 namespace anki {
 
+// Forward
 class SceneNode;
 class Sector;
 
-/// Portal
-class Portal
+/// 2 way Portal
+struct Portal
 {
-private:
 	Array<Sector*, 2> sectors;
+
+	Portal();
 };
 
-/// A sector
-class Sector
+/// A sector. It consists of an octree and some portals
+struct Sector
+{
+	Octree octree;
+	SceneVector<Portal*> portals;
+
+	/// Default constructor
+	Sector(const SceneAllocator<U8>& alloc, const Aabb& box);
+
+	/// Called when a node was moved or a change in shape happened
+	Bool placeSceneNode(SceneNode* sp);
+
+	const Aabb& getAabb() const
+	{
+		return octree.getRoot().getAabb();
+	}
+};
+
+/// Sector group. This is supposed to represent the whole sceene
+class SectorGroup
 {
 public:
-	Sector(const Aabb& box)
-		: octree(box, 3)
-	{}
+	/// Default constructor
+	SectorGroup(const SceneAllocator<U8>& alloc);
 
-	const Octree& getOctree() const
-	{
-		return octree;
-	}
-	Octree& getOctree()
-	{
-		return octree;
-	}
+	/// Destructor
+	~SectorGroup();
 
-	bool placeSceneNode(SceneNode* sp);
+	/// Called when a node was moved or a change in shape happened. The node 
+	/// must be Spatial
+	///
+	/// @return false if scene node is out of all sectors.
+	Bool placeSceneNode(SceneNode* sp);
 
 private:
-	Octree octree;
+	SceneAllocator<U8> alloc; ///< Keep a copy of the scene allocator
+	SceneVector<Sector*> sectors;
+	SceneVector<Portal*> portals;
 };
 
 } // end namespace anki

@@ -4,6 +4,7 @@
 #include "anki/collision/Aabb.h"
 #include "anki/util/Vector.h"
 #include "anki/util/Array.h"
+#include "anki/scene/Common.h"
 #include <memory>
 
 namespace anki {
@@ -81,7 +82,8 @@ private:
 class Octree
 {
 public:
-	Octree(const Aabb& aabb, U8 maxDepth, F32 looseness = 1.5);
+	Octree(const SceneAllocator<U8>& alloc, const Aabb& aabb, U8 maxDepth, 
+		F32 looseness = 1.5);
 
 	/// @name Accessors
 	/// @{
@@ -107,6 +109,7 @@ public:
 	void doVisibilityTests(Frustumable& fr);
 
 private:
+	SceneAllocator<U8> alloc;
 	U maxDepth;
 	F32 looseness;
 	OctreeNode root;

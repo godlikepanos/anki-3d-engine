@@ -52,8 +52,11 @@ void OctreeNode::removeSceneNode(SceneNode* sn)
 //==============================================================================
 
 //==============================================================================
-Octree::Octree(const Aabb& aabb, U8 maxDepth_, F32 looseness_)
-	: maxDepth(maxDepth_ < 1 ? 1 : maxDepth_), looseness(looseness_),
+Octree::Octree(const SceneAllocator<U8>& alloc_, const Aabb& aabb, 
+	U8 maxDepth_, F32 looseness_)
+	:	alloc(alloc_), 
+		maxDepth(maxDepth_ < 1 ? 1 : maxDepth_), 
+		looseness(looseness_),
 		root(aabb, nullptr)
 {}
 
