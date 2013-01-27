@@ -4,6 +4,7 @@
 #include "anki/collision/Frustum.h"
 #include "anki/scene/Spatial.h"
 #include "anki/scene/VisibilityTester.h"
+#include "anki/scene/Common.h"
 
 namespace anki {
 
@@ -18,8 +19,8 @@ public:
 	/// @{
 
 	/// Pass the frustum here so we can avoid the virtuals
-	Frustumable(Frustum* fr)
-		: frustum(fr)
+	Frustumable(const SceneAllocator<U8>& alloc, Frustum* fr)
+		: frustum(fr), renderables(alloc), lights(alloc)
 	{}
 	/// @}
 
@@ -89,6 +90,13 @@ protected:
 
 private:
 	U32 timestamp = Timestamp::getTimestamp();
+
+	// Visibility stuff
+	typedef SceneVector<SceneNode*> Renderables;
+	typedef SceneVector<SceneNode*> Lights;
+
+	Renderables renderables;
+	Lights lights;
 };
 
 } // end namespace anki

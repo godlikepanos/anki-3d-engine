@@ -8,6 +8,7 @@
 namespace anki {
 
 class OctreeNode;
+class Grid;
 class SceneNode;
 
 /// @addtogroup Scene
@@ -19,6 +20,7 @@ class SceneNode;
 class Spatial: public Flags<U32>
 {
 	friend class OctreeNode;
+	friend class Grid;
 
 public:
 	/// Spatial flags
@@ -90,6 +92,7 @@ protected:
 private:
 	U32 timestamp = Timestamp::getTimestamp();
 	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
+	Grid* grid = nullptr;
 	Aabb aabb; ///< A faster shape
 	SceneNode* sceneNode; ///< Know your father
 	Vec3 origin;

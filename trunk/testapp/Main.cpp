@@ -393,6 +393,11 @@ void mainLoop()
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar crntTime = prevUpdateTime;
 
+	std::cout << sizeof(SpotLight) << " " << sizeof(Light) << " "
+		<< sizeof(Frustumable) << " " << sizeof(VisibilityInfo) << " "
+		<< sizeof(SceneNode) << " " << sizeof(Movable) << " "
+		<< sizeof(Spatial) << std::endl;
+
 	while(1)
 	{
 		HighRezTimer timer;

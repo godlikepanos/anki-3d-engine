@@ -1,6 +1,7 @@
 #include "anki/scene/Sector.h"
 #include "anki/scene/Spatial.h"
 #include "anki/scene/SceneNode.h"
+#include "anki/scene/Scene.h"
 #include "anki/collision/CollisionAlgorithmsMatrix.h"
 
 namespace anki {
@@ -44,21 +45,23 @@ Bool Sector::placeSceneNode(SceneNode* sn)
 //==============================================================================
 
 //==============================================================================
-SectorGroup::SectorGroup(const SceneAllocator<U8>& alloc_)
-	: alloc(alloc_)
-{}
+SectorGroup::SectorGroup(Scene* scene_)
+	: scene(scene_)
+{
+	ANKI_ASSERT(scene != nullptr);
+}
 
 //==============================================================================
 SectorGroup::~SectorGroup()
 {
 	for(Sector* sector : sectors)
 	{
-		ANKI_DELETE(sector, alloc);
+		ANKI_DELETE(sector, scene->getAllocator());
 	}
 
 	for(Portal* portal : portals)
 	{
-		ANKI_DELETE(portal, alloc);
+		ANKI_DELETE(portal, scene->getAllocator());
 	}
 }
 
