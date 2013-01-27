@@ -2,17 +2,20 @@
 #define ANKI_SCENE_SECTOR_H
 
 #include "anki/scene/Octree.h"
+#include "anki/collision/Collision.h"
 
 namespace anki {
 
 // Forward
 class SceneNode;
+class Scene;
 class Sector;
 
 /// 2 way Portal
 struct Portal
 {
 	Array<Sector*, 2> sectors;
+	Obb shape;
 
 	Portal();
 };
@@ -40,7 +43,7 @@ class SectorGroup
 {
 public:
 	/// Default constructor
-	SectorGroup(const SceneAllocator<U8>& alloc);
+	SectorGroup(Scene* scene);
 
 	/// Destructor
 	~SectorGroup();
@@ -52,7 +55,7 @@ public:
 	Bool placeSceneNode(SceneNode* sp);
 
 private:
-	SceneAllocator<U8> alloc; ///< Keep a copy of the scene allocator
+	Scene* scene; ///< Keep it here to access various allocators
 	SceneVector<Sector*> sectors;
 	SceneVector<Portal*> portals;
 };

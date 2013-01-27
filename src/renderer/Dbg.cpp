@@ -68,10 +68,10 @@ void Dbg::run()
 		}
 	}
 
-	for(const Sector* sector : scene.sectors)
+	/*for(const Sector* sector : scene.sectors)
 	{
 		sceneDrawer->draw(sector->getOctree());
-	}
+	}*/
 
 	scene.getPhysics().debugDraw();
 

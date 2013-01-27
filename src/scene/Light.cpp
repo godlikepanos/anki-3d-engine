@@ -48,7 +48,7 @@ PointLight::PointLight(const char* name, Scene* scene,
 SpotLight::SpotLight(const char* name, Scene* scene,
 	U32 movableFlags, Movable* movParent)
 	: 	Light(LT_SPOT, name, scene, movableFlags, movParent, &frustum),
-		Frustumable(&frustum)
+		Frustumable(getSceneAllocator(), &frustum)
 {
 	const F32 ang = toRad(45.0);
 	setOuterAngle(ang / 2.0);
