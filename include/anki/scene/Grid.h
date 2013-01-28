@@ -9,7 +9,7 @@ namespace anki {
 class SceneNode;
 class Frustumable;
 
-/// XXX
+/// Space partitioning container
 class Grid
 {
 public:
@@ -36,8 +36,9 @@ public:
 	/// Place a scene node in the grid
 	Bool placeSceneNode(SceneNode* sn);
 
-	/// Populate the fr with visible scene nodes and go up
-	void doVisibilityTests(Frustumable& fr);
+	/// XXX
+	void getVisible(const Frustumable& cam, 
+		SceneVector<SceneNode*>& nodes);
 
 private:
 	Aabb aabb;

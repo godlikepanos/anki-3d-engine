@@ -60,9 +60,9 @@ Bool Grid::placeSceneNode(SceneNode* sn)
 }
 
 //==============================================================================
-void doVisibilityTests(Frustumable& fr)
+void getVisible(const Frustumable& /*cam*/, SceneVector<SceneNode*>& nodes)
 {
-
+	nodes.insert(nodes.end(), sceneNodes.begin(), sceneNodes.end());
 }
 
 } // end namespace anki

@@ -23,14 +23,12 @@ public:
 	typedef Vector<Value*, Alloc> Container;
 
 	/// Calls addChild if parent is not nullptr
-	Object(Value* self_, Value* parent_, const Alloc& alloc = Alloc())
-		: self(self_), childs(alloc)
+	Object(Value* parent_, const Alloc& alloc = Alloc())
+		: childs(alloc)
 	{
-		ANKI_ASSERT(self != nullptr && "Self can't be nullptr");
-		ANKI_ASSERT(parent_ != this && "Cannot put itself");
 		if(parent_ != nullptr)
 		{
-			parent_->addChild(self);
+			parent_->addChild(getSelf());
 		}
 		parent = parent_;
 	}
@@ -40,7 +38,7 @@ public:
 	{
 		if(parent != nullptr)
 		{
-			parent->removeChild(self);
+			parent->removeChild(getSelf());
 		}
 
 		// Remove all children (fast version)
@@ -88,9 +86,13 @@ public:
 	void addChild(Value* child)
 	{
 		ANKI_ASSERT(child != nullptr && "Null arg");
-		ANKI_ASSERT(child->parent ==  nullptr && "Child already has parent");
+		ANKI_ASSERT(child != getSelf() && "Cannot put itself");
+		ANKI_ASSERT(child->parent == nullptr && "Child already has parent");
+		ANKI_ASSERT(child->findChild(getSelf()) == child->childs.end() 
+			&& "Cyclic add");
+		ANKI_ASSERT(findChild(child) == childs.end() && "Already a child");
 
-		child->parent = self;
+		child->parent = getSelf();
 		childs.push_back(child);
 	}
 
@@ -98,10 +100,9 @@ public:
 	void removeChild(Value* child)
 	{
 		ANKI_ASSERT(child != nullptr && "Null arg");
-		ANKI_ASSERT(child->parent == self);
+		ANKI_ASSERT(child->parent == getSelf() && "Child has other parent");
 
-		typename Container::iterator it =
-			std::find(childs.begin(), childs.end(), child);
+		typename Container::iterator it = findChild(child);
 
 		ANKI_ASSERT(it != childs.end() && "Child not found");
 
@@ -109,10 +110,35 @@ public:
 		child->parent = nullptr;
 	}
 
+	/// Visit
+	template<typename Visitor>
+	void visitTreeDepth(Visitor& vis)
+	{
+		vis(*getSelf());
+
+		for(Value* c : childs)
+		{
+			c->visitTreeDepth(vis);
+		}
+	}
+
 private:
-	Value* self = nullptr;
-	Value* parent = nullptr; ///< May be nullptr
+	Value* parent; ///< May be nullptr
 	Container childs;
+
+	/// Cast the Object to the given type
+	Value* getSelf()
+	{
+		return static_cast<Value*>(this);
+	}
+
+	/// Find the child
+	typename Container::iterator findChild(Value* child)
+	{
+		typename Container::iterator it =
+			std::find(childs.begin(), childs.end(), child);
+		return it;
+	}
 };
 
 /// @}
