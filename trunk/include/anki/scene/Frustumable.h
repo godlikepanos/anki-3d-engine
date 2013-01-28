@@ -99,6 +99,8 @@ private:
 	Lights lights;
 };
 
+/// @}
+
 } // end namespace anki
 
 #endif

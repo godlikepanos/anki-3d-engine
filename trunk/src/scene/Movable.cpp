@@ -6,7 +6,7 @@ namespace anki {
 //==============================================================================
 Movable::Movable(U32 flags_, Movable* parent, PropertyMap& pmap,
 	const SceneAllocator<Movable>& alloc)
-	: Base(this, parent, alloc), Flags(flags_)
+	: Base(parent, alloc), Flags(flags_)
 {
 	pmap.addNewProperty(
 		new ReadWritePointerProperty<Transform>("localTransform", &lTrf));
