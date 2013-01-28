@@ -91,6 +91,16 @@ public:
 	}
 	/// @}
 
+	/// @name Spatial virtuals
+	/// @{
+
+	/// Override Spatial::getSpatialOrigin
+	const Vec3& getSpatialOrigin() const
+	{
+		return getWorldTransform().getOrigin();
+	}
+	/// @}
+
 	void lookAtPoint(const Vec3& point);
 
 protected:

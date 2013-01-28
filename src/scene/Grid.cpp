@@ -60,7 +60,8 @@ Bool Grid::placeSceneNode(SceneNode* sn)
 }
 
 //==============================================================================
-void getVisible(const Frustumable& /*cam*/, SceneVector<SceneNode*>& nodes)
+void Grid::getVisible(const Frustumable& cam,
+	SceneVector<SceneNode*>& nodes)
 {
 	nodes.insert(nodes.end(), sceneNodes.begin(), sceneNodes.end());
 }
