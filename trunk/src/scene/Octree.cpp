@@ -13,38 +13,82 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+OctreeNode::OctreeNode(const Aabb& aabb_, OctreeNode* parent_,
+	const SceneAllocator<U8>& alloc)
+	: parent(parent_), aabb(aabb_), sceneNodes(alloc)
+{
+	for(OctreeNode* child : children)
+	{
+		child = nullptr;
+	}
+}
+
+//==============================================================================
+OctreeNode::~OctreeNode()
+{
+	SceneAllocator<U8> alloc = sceneNodes.get_allocator();
+
+	for(OctreeNode* onode : children)
+	{
+		if(onode)
+		{
+			ANKI_DELETE(onode, alloc);
+		}
+	}
+}
+
+//==============================================================================
 void OctreeNode::addSceneNode(SceneNode* sn)
 {
 	ANKI_ASSERT(sn != nullptr);
 
 	Spatial* sp = sn->getSpatial();
+	ANKI_ASSERT(sp != nullptr);
+
 	if(this == sp->octreeNode)
 	{
-		// early exit
-		return;
+		// Nothing to do
 	}
-
-	// Remove from current node ...
-	if(sp->octreeNode != nullptr)
+	else
 	{
-		sp->octreeNode->removeSceneNode(sn);
-	}
+		// Remove from current node ...
+		if(sp->octreeNode != nullptr)
+		{
+			sp->octreeNode->removeSceneNode(sn);
+		}
 
-	// ... and add to a new
-	sceneNodes.push_back(sn);
-	sp->octreeNode = this;
+		// ... and add to a new
+		sceneNodes.push_back(sn);
+		sp->octreeNode = this;
+	}
 }
 
 //==============================================================================
 void OctreeNode::removeSceneNode(SceneNode* sn)
 {
 	ANKI_ASSERT(sn != nullptr);
-	Vector<SceneNode*>::iterator it =
+	SceneVector<SceneNode*>::iterator it =
 		std::find(sceneNodes.begin(), sceneNodes.end(), sn);
 	ANKI_ASSERT(it != sceneNodes.end());
 
 	sceneNodes.erase(it);
 	sn->getSpatial()->octreeNode = nullptr;
+}
+
+//==============================================================================
+void OctreeNode::addChild(U pos, OctreeNode* child)
+{
+	SceneAllocator<U8> alloc = sceneNodes.get_allocator();
+
+	child->parent = this;
+
+	if(children[pos])
+	{
+		OctreeNode* onode = children[pos];
+		ANKI_DELETE(onode, alloc);
+	}
+
+	children[pos] = child;
 }
 
 //==============================================================================
@@ -54,10 +98,14 @@ void OctreeNode::removeSceneNode(SceneNode* sn)
 //==============================================================================
 Octree::Octree(const SceneAllocator<U8>& alloc_, const Aabb& aabb, 
 	U8 maxDepth_, F32 looseness_)
-	:	alloc(alloc_), 
+	: alloc(alloc_),
 		maxDepth(maxDepth_ < 1 ? 1 : maxDepth_), 
 		looseness(looseness_),
-		root(aabb, nullptr)
+		root(aabb, nullptr, alloc)
+{}
+
+//==============================================================================
+Octree::~Octree()
 {}
 
 //==============================================================================
@@ -67,13 +115,10 @@ void Octree::placeSceneNode(SceneNode* sn)
 	ANKI_ASSERT(sp != nullptr);
 	OctreeNode* toBePlacedNode = place(sp->getAabb());
 
-	if(toBePlacedNode == nullptr)
+	if(toBePlacedNode != nullptr)
 	{
-		// Outside the whole tree
-		return;
+		toBePlacedNode->addSceneNode(sn);
 	}
-
-	toBePlacedNode->addSceneNode(sn);
 }
 
 //==============================================================================
@@ -110,7 +155,7 @@ OctreeNode* Octree::placeInternal(const Aabb& aabb, U depth, OctreeNode& node)
 				// Get the node's AABB. If there is no node then calculate the
 				// AABB
 				Aabb childAabb;
-				if(node.children[id].get() != nullptr)
+				if(node.children[id] != nullptr)
 				{
 					// There is a child
 					childAabb = node.children[id]->aabb;
@@ -126,10 +171,13 @@ OctreeNode* Octree::placeInternal(const Aabb& aabb, U depth, OctreeNode& node)
 					aabb.getMin() >= childAabb.getMin())
 				{
 					// Go deeper
-					if(node.children[id].get() == nullptr)
+					if(node.children[id] == nullptr)
 					{
 						// Create new node if needed
-						OctreeNode* newNode = new OctreeNode(childAabb, &node);
+						OctreeNode* newNode =
+							ANKI_NEW(OctreeNode, alloc,
+							childAabb, &node, alloc);
+
 						node.addChild(id, newNode);
 					}
 
@@ -180,52 +228,46 @@ void Octree::calcAabb(U i, U j, U k, const Aabb& paabb, Aabb& out) const
 }
 
 //==============================================================================
-void Octree::doVisibilityTests(Frustumable& fr)
+void Octree::getVisible(const Frustumable& fr,
+	SceneVector<SceneNode*>* renderableNodes,
+	SceneVector<SceneNode*>* lightNodes)
 {
-	fr.getVisibilityInfo().renderables.clear();
-	fr.getVisibilityInfo().lights.clear();
-
-	doVisibilityTestsRec(fr, root);
+	doVisibilityTestsInternal(fr, renderableNodes, lightNodes, root);
 }
 
 //==============================================================================
-void Octree::doVisibilityTestsRec(Frustumable& fr, OctreeNode& node)
+void Octree::doVisibilityTestsInternal(const Frustumable& fr,
+	SceneVector<SceneNode*>* renderableNodes,
+	SceneVector<SceneNode*>* lightNodes,
+	OctreeNode& node)
 {
-	VisibilityInfo& vinfo = fr.getVisibilityInfo();
-
 	for(SceneNode* sn : node.sceneNodes)
 	{
 		Spatial* sp = sn->getSpatial();
 		ANKI_ASSERT(sp);
 
-		if(!fr.insideFrustum(*sp))
+		if(fr.insideFrustum(*sp))
 		{
-			continue;
-		}
-
-		Renderable* r = sn->getRenderable();
-		if(r)
-		{
-			vinfo.renderables.push_back(sn);
-		}
-
-		Light* l = sn->getLight();
-		if(l)
-		{
-			vinfo.lights.push_back(sn);
-
-			if(l->getShadowEnabled() && sn->getFrustumable() != nullptr)
+			Renderable* r = sn->getRenderable();
+			if(r != nullptr && renderableNodes != nullptr)
 			{
-				//testLight(*l, scene);
+				renderableNodes->push_back(sn);
+			}
+
+			Light* l = sn->getLight();
+			if(l != nullptr && lightNodes != nullptr)
+			{
+				lightNodes->push_back(sn);
 			}
 		}
 	}
 
-	for(U i = 0; i < 8; ++i)
+	// Go to children
+	for(OctreeNode* onode : node.children)
 	{
-		if(node.children[i].get() != nullptr)
+		if(onode != nullptr)
 		{
-			doVisibilityTestsRec(fr, *node.children[i]);
+			doVisibilityTestsInternal(fr, renderableNodes, lightNodes, *onode);
 		}
 	}
 }

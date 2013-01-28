@@ -204,6 +204,16 @@ public:
 	}
 	/// @}
 
+	/// @name Spatial virtuals
+	/// @{
+
+	/// Override Spatial::getSpatialOrigin
+	const Vec3& getSpatialOrigin() const
+	{
+		return getWorldTransform().getOrigin();
+	}
+	/// @}
+
 private:
 	std::unique_ptr<SkinModelPatch> skinModelPatch;
 };

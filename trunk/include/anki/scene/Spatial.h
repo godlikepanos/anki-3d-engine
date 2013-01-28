@@ -71,10 +71,7 @@ public:
 		return timestamp;
 	}
 
-	const Vec3& getSpatialOrigin() const
-	{
-		return origin;
-	}
+	virtual const Vec3& getSpatialOrigin() const = 0;
 	/// @}
 
 	/// The derived class has to manually set when the collision shape got

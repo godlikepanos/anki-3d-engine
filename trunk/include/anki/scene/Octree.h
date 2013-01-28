@@ -19,17 +19,18 @@ class OctreeNode
 	friend class Octree;
 
 public:
-	typedef Array<std::unique_ptr<OctreeNode>, 8> ChildrenContainer;
+	typedef Array<OctreeNode*, 8> ChildrenContainer;
 
-	OctreeNode(const Aabb& aabb_, OctreeNode* parent_)
-		: parent(parent_), aabb(aabb_)
-	{}
+	OctreeNode(const Aabb& aabb, OctreeNode* parent,
+		const SceneAllocator<U8>& alloc);
+
+	~OctreeNode();
 
 	/// @name Accessors
 	/// @{
 	const OctreeNode* getChild(U id) const
 	{
-		return children[id].get();
+		return children[id];
 	}
 
 	const OctreeNode* getParent() const
@@ -42,17 +43,21 @@ public:
 		return aabb;
 	}
 
-	Vector<SceneNode*>::iterator getSceneNodesBegin()
+	SceneVector<SceneNode*>::iterator getSceneNodesBegin()
 	{
 		return sceneNodes.begin();
 	}
-	Vector<SceneNode*>::iterator getSceneNodesEnd()
+	SceneVector<SceneNode*>::const_iterator getSceneNodesBegin() const
+	{
+		return sceneNodes.begin();
+	}
+	SceneVector<SceneNode*>::iterator getSceneNodesEnd()
 	{
 		return sceneNodes.end();
 	}
-	U getSceneNodesCount() const
+	SceneVector<SceneNode*>::const_iterator getSceneNodesEnd() const
 	{
-		return sceneNodes.size();
+		return sceneNodes.end();
 	}
 	/// @}
 
@@ -61,21 +66,17 @@ public:
 		return parent == nullptr;
 	}
 
-	void addChild(U pos, OctreeNode* child)
-	{
-		child->parent = this;
-		children[pos].reset(child);
-	}
-
-	void addSceneNode(SceneNode* sn);
-
 	void removeSceneNode(SceneNode* sn);
 
 private:
 	ChildrenContainer children;
 	OctreeNode* parent;
 	Aabb aabb; ///< Including AABB
-	Vector<SceneNode*> sceneNodes;
+	SceneVector<SceneNode*> sceneNodes;
+
+	void addSceneNode(SceneNode* sn);
+
+	void addChild(U pos, OctreeNode* child);
 };
 
 /// Octree
@@ -84,6 +85,8 @@ class Octree
 public:
 	Octree(const SceneAllocator<U8>& alloc, const Aabb& aabb, U8 maxDepth, 
 		F32 looseness = 1.5);
+
+	~Octree();
 
 	/// @name Accessors
 	/// @{
@@ -105,8 +108,10 @@ public:
 	/// Place a spatial in the tree
 	void placeSceneNode(SceneNode* sn);
 
-	/// Fill the fr with visible data
-	void doVisibilityTests(Frustumable& fr);
+	/// Do the visibility tests
+	void getVisible(const Frustumable& fr,
+		SceneVector<SceneNode*>* renderableNodes,
+		SceneVector<SceneNode*>* lightNodes);
 
 private:
 	SceneAllocator<U8> alloc;
@@ -123,7 +128,10 @@ private:
 	OctreeNode* place(const Aabb& aabb);
 
 	/// Recursive method
-	void doVisibilityTestsRec(Frustumable& fr, OctreeNode& node);
+	void doVisibilityTestsInternal(const Frustumable& fr,
+		SceneVector<SceneNode*>* renderableNodes,
+		SceneVector<SceneNode*>* lightNodes,
+		OctreeNode& node);
 
 	void createChildren(OctreeNode& parent);
 

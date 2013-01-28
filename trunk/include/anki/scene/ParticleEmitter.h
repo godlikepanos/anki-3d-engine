@@ -241,6 +241,16 @@ public:
 	void movableUpdate();
 	/// @}
 
+	/// @name Spatial virtuals
+	/// @{
+
+	/// Override Spatial::getSpatialOrigin
+	const Vec3& getSpatialOrigin() const
+	{
+		return getWorldTransform().getOrigin();
+	}
+	/// @}
+
 private:
 	ParticleEmitterResourcePointer particleEmitterResource;
 	std::unique_ptr<btCollisionShape> collShape = nullptr;
