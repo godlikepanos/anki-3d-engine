@@ -1,67 +1,81 @@
-#include "anki/collision/CollisionAlgorithmsMatrix.h"
+#include "anki/collision/CollisionAlgorithms.h"
 #include "anki/collision/Collision.h"
 #include "anki/util/Assert.h"
 #include "anki/math/Math.h"
 #include <limits>
 
 namespace anki {
+namespace detail {
 
 //==============================================================================
 template<typename T>
-bool CollisionAlgorithmsMatrix::tcollide(const CollisionShape& a,
-	const CollisionShape& b)
+static Bool tcollide(const CollisionShape& a, const CollisionShape& b)
 {
 	const T& t = static_cast<const T&>(a);
-	bool out;
+	Bool out = false;
 
 	switch(b.getCollisionShapeType())
 	{
 	case CollisionShape::CST_LINE_SEG:
 		out = collide(t, static_cast<const LineSegment&>(b));
+		break;
 	case CollisionShape::CST_RAY:
 		out = collide(t, static_cast<const Ray&>(b));
+		break;
 	case CollisionShape::CST_PLANE:
 		out = collide(t, static_cast<const Plane&>(b));
+		break;
 	case CollisionShape::CST_SPHERE:
 		out = collide(t, static_cast<const Sphere&>(b));
+		break;
 	case CollisionShape::CST_AABB:
 		out = collide(t, static_cast<const Aabb&>(b));
+		break;
 	case CollisionShape::CST_OBB:
 		out = collide(t, static_cast<const Obb&>(b));
+		break;
 	case CollisionShape::CST_FRUSTUM:
 		out = collide(t, static_cast<const Frustum&>(b));
+		break;
 	default:
 		ANKI_ASSERT(0 && "Forgot something");
-		out = false;
+		break;
 	}
 
 	return out;
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
-	const CollisionShape& b)
+Bool collide(const CollisionShape& a, const CollisionShape& b)
 {
-	bool out;
+	Bool out = false;
+
 	switch(a.getCollisionShapeType())
 	{
 	case CollisionShape::CST_LINE_SEG:
 		out = tcollide<LineSegment>(a, b);
+		break;
 	case CollisionShape::CST_RAY:
 		out = tcollide<Ray>(a, b);
+		break;
 	case CollisionShape::CST_PLANE:
 		out = tcollide<Plane>(a, b);
+		break;
 	case CollisionShape::CST_SPHERE:
 		out = tcollide<Sphere>(a, b);
+		break;
 	case CollisionShape::CST_AABB:
 		out = tcollide<Aabb>(a, b);
+		break;
 	case CollisionShape::CST_OBB:
 		out = tcollide<Obb>(a, b);
+		break;
 	case CollisionShape::CST_FRUSTUM:
 		out = tcollide<Frustum>(a, b);
+		break;
 	default:
 		ANKI_ASSERT(0 && "Forgot something");
-		out = false;
+		break;
 	}
 
 	return out;
@@ -72,14 +86,14 @@ bool CollisionAlgorithmsMatrix::collide(const CollisionShape& a,
 //==============================================================================
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/, const Ls& /*b*/)
+Bool collide(const LineSegment& /*a*/, const LineSegment& /*b*/)
 {
 	ANKI_ASSERT(0 && "N/A");
 	return false;
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Obb& obb)
+Bool collide(const LineSegment& ls, const Obb& obb)
 {
 	F32 maxS = std::numeric_limits<F32>::min();
 	F32 minT = std::numeric_limits<F32>::max();
@@ -141,26 +155,26 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Obb& obb)
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ls& a, const Frustum& b)
+Bool collide(const LineSegment& a, const Frustum& b)
 {
 	return b.insideFrustum(a);
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Plane& p)
+Bool collide(const LineSegment& ls, const Plane& p)
 {
 	return ls.testPlane(p) == 0.0;
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ls& /*a*/, const Ray& /*b*/)
+Bool collide(const LineSegment& /*a*/, const Ray& /*b*/)
 {
 	ANKI_ASSERT(0 && "N/A");
 	return false;
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Sphere& s)
+Bool collide(const LineSegment& ls, const Sphere& s)
 {
 	const Vec3& v = ls.getDirection();
 	Vec3 w0 = s.getCenter() - ls.getOrigin();
@@ -186,7 +200,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Sphere& s)
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Aabb& aabb)
+Bool collide(const LineSegment& ls, const Aabb& aabb)
 {
 	F32 maxS = std::numeric_limits<F32>::min();
 	F32 minT = std::numeric_limits<F32>::max();
@@ -245,7 +259,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ls& ls, const Aabb& aabb)
 //==============================================================================
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Obb& o0, const Obb& o1)
+Bool collide(const Obb& o0, const Obb& o1)
 {
 	// extent vectors
 	const Vec3& a = o0.getExtend();
@@ -253,7 +267,7 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& o0, const Obb& o1)
 
 	// test factors
 	F32 cTest, aTest, bTest;
-	bool parallelAxes = false;
+	Bool parallelAxes = false;
 
 	// transpose of rotation of B relative to A, i.e. (R_b^T * R_a)^T
 	Mat3 rt = o0.getRotation().getTransposed() * o1.getRotation();
@@ -424,19 +438,19 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& o0, const Obb& o1)
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Obb& a, const Frustum& b)
+Bool collide(const Obb& a, const Frustum& b)
 {
 	return b.insideFrustum(a);
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Obb& a, const Plane& b)
+Bool collide(const Obb& a, const Plane& b)
 {
 	return a.testPlane(b) == 0.0;
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Ray& r)
+Bool collide(const Obb& obb, const Ray& r)
 {
 	Aabb aabb_(-obb.getExtend(), obb.getExtend());
 	Ray newray;
@@ -449,7 +463,7 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Ray& r)
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Sphere& s)
+Bool collide(const Obb& obb, const Sphere& s)
 {
 	Aabb aabb_(-obb.getExtend(), obb.getExtend()); // aabb_ is in "this" frame
 	Vec3 newCenter = obb.getRotation().getTransposed() 
@@ -460,7 +474,7 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Sphere& s)
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Aabb& aabb)
+Bool collide(const Obb& obb, const Aabb& aabb)
 {
 	Vec3 center_ = (aabb.getMax() + aabb.getMin()) * 0.5;
 	Vec3 extends_ = (aabb.getMax() - aabb.getMin()) * 0.5;
@@ -474,31 +488,31 @@ bool CollisionAlgorithmsMatrix::collide(const Obb& obb, const Aabb& aabb)
 //==============================================================================
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Frustum& b)
+Bool collide(const Frustum& a, const Frustum& b)
 {
 	return b.insideFrustum(a);
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Plane& b)
+Bool collide(const Frustum& a, const Plane& b)
 {
 	return a.insideFrustum(b);
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Ray& b)
+Bool collide(const Frustum& a, const Ray& b)
 {
 	return a.insideFrustum(b);
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Sphere& b)
+Bool collide(const Frustum& a, const Sphere& b)
 {
 	return a.insideFrustum(b);
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Aabb& b)
+Bool collide(const Frustum& a, const Aabb& b)
 {
 	return a.insideFrustum(b);
 }
@@ -508,25 +522,25 @@ bool CollisionAlgorithmsMatrix::collide(const Frustum& a, const Aabb& b)
 //==============================================================================
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Plane& p0, const Plane& p1)
+Bool collide(const Plane& p0, const Plane& p1)
 {
 	return p0.getNormal() != p1.getNormal();
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Plane& p, const Ray& r)
+Bool collide(const Plane& p, const Ray& r)
 {
 	return r.testPlane(p) == 0.0;
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Plane& p, const Sphere& s)
+Bool collide(const Plane& p, const Sphere& s)
 {
 	return s.testPlane(p) == 0.0;
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Plane& p, const Aabb& aabb)
+Bool collide(const Plane& p, const Aabb& aabb)
 {
 	return aabb.testPlane(p) == 0.0;
 }
@@ -536,14 +550,14 @@ bool CollisionAlgorithmsMatrix::collide(const Plane& p, const Aabb& aabb)
 //==============================================================================
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ray& a, const Ray& b)
+Bool collide(const Ray& a, const Ray& b)
 {
 	ANKI_ASSERT(0 && "N/A");
 	return false;
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Sphere& s)
+Bool collide(const Ray& r, const Sphere& s)
 {
 	Vec3 w(s.getCenter() - r.getOrigin());
 	const Vec3& v = r.getDirection();
@@ -562,7 +576,7 @@ bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Sphere& s)
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Aabb& aabb)
+Bool collide(const Ray& r, const Aabb& aabb)
 {
 	F32 maxS = std::numeric_limits<F32>::min();
 	F32 minT = std::numeric_limits<F32>::max();
@@ -622,14 +636,14 @@ bool CollisionAlgorithmsMatrix::collide(const Ray& r, const Aabb& aabb)
 //==============================================================================
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Sphere& a, const Sphere& b)
+Bool collide(const Sphere& a, const Sphere& b)
 {
 	F32 tmp = a.getRadius() + b.getRadius();
 	return (a.getCenter() - b.getCenter()).getLengthSquared() <= tmp * tmp;
 }
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Sphere& s, const Aabb& aabb)
+Bool collide(const Sphere& s, const Aabb& aabb)
 {
 	const Vec3& c = s.getCenter();
 
@@ -674,7 +688,7 @@ bool CollisionAlgorithmsMatrix::collide(const Sphere& s, const Aabb& aabb)
 //==============================================================================
 
 //==============================================================================
-bool CollisionAlgorithmsMatrix::collide(const Aabb& a, const Aabb& b)
+Bool collide(const Aabb& a, const Aabb& b)
 {
 	// if separated in x direction
 	if(a.getMin().x() > b.getMax().x() || b.getMin().x() > a.getMax().x())
@@ -698,4 +712,5 @@ bool CollisionAlgorithmsMatrix::collide(const Aabb& a, const Aabb& b)
 	return true;
 }
 
-} // end namespace
+} // end namespace detail
+} // end namespace anki

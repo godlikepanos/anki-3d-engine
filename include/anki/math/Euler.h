@@ -6,7 +6,7 @@
 namespace anki {
 
 /// @addtogroup Math
-///
+/// @{
 
 /// Euler angles. Used for rotations. It cannot describe a rotation
 /// accurately though

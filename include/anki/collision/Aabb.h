@@ -69,6 +69,13 @@ public:
 	}
 	/// @}
 
+	/// Check for collision
+	template<typename T>
+	Bool collide(const T& x) const
+	{
+		return detail::collide(*this, x);
+	}
+
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
 	{

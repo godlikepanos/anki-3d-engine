@@ -2,6 +2,7 @@
 #define ANKI_COLLISION_COLLISION_SHAPE
 
 #include "anki/collision/Forward.h"
+#include "anki/collision/CollisionAlgorithms.h"
 #include "anki/math/Forward.h"
 #include "anki/util/StdTypes.h"
 
@@ -71,6 +72,13 @@ public:
 		return cid;
 	}
 	/// @}
+
+	/// Check for collision
+	template<typename T>
+	Bool collide(const T& x) const
+	{
+		return detail::collide(*this, x);
+	}
 
 	/// If the collision shape intersects with the plane then the method
 	/// returns 0.0, else it returns the distance. If the distance is < 0.0
