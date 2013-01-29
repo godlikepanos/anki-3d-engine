@@ -9,6 +9,7 @@
 #include "anki/util/Vector.h"
 #include "anki/core/Timestamp.h"
 #include "anki/physics/PhysWorld.h"
+#include "anki/scene/Common.h"
 
 namespace anki {
 
@@ -26,7 +27,7 @@ public:
 	template<typename T>
 	struct Types
 	{
-		typedef Vector<T*> Container;
+		typedef SceneVector<T*> Container;
 		typedef typename Container::iterator Iterator;
 		typedef typename Container::const_iterator ConstIterator;
 		typedef typename ConstCharPtrHashMap<T*>::Type NameToItemMap;
@@ -44,10 +45,16 @@ public:
 	/// @name Accessors
 	/// @{
 
-	/// Return a copy
+	/// @note Return a copy
 	SceneAllocator<U8> getAllocator() const
 	{
 		return SceneAllocator<U8>(alloc);
+	}
+
+	/// @note Return a copy
+	SceneAllocator<U8> getFrameAllocator() const
+	{
+		return SceneAllocator<U8>(frameAlloc);
 	}
 
 	const Vec3& getAmbientColor() const
@@ -114,7 +121,7 @@ public:
 	}
 	/// @}
 
-	void update(float prevUpdateTime, float crntTime, Renderer& renderer);
+	void update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer);
 
 	SceneNode& findSceneNode(const char* name);
 	SceneNode* tryFindSceneNode(const char* name);
@@ -123,14 +130,15 @@ public:
 
 private:
 	SceneAllocator<U8> alloc;
+	SceneAllocator<U8> frameAlloc;
+
+	Types<SceneNode>::Container nodes;
+	Types<SceneNode>::NameToItemMap nameToNode;
 
 	Vec3 ambientCol = Vec3(1.0); ///< The global ambient color
 	U32 ambiendColorUpdateTimestamp = Timestamp::getTimestamp();
 	Camera* mainCam = nullptr;
 	U32 activeCameraChangeTimestamp = Timestamp::getTimestamp();
-
-	Types<SceneNode>::Container nodes;
-	Types<SceneNode>::NameToItemMap nameToNode;
 
 	VisibilityTester vtester;
 	PhysWorld physics;
