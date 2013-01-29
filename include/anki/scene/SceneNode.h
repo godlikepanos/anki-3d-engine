@@ -51,6 +51,8 @@ public:
 	}
 
 	SceneAllocator<U8> getSceneAllocator() const;
+
+	SceneAllocator<U8> getSceneFrameAllocator() const;
 	/// @}
 
 	/// @name Accessors of components

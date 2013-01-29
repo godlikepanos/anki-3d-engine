@@ -39,7 +39,7 @@ struct UpdateMovablesJob: ThreadJob
 
 //==============================================================================
 Scene::Scene()
-	: alloc(ALLOCATOR_SIZE)
+	: alloc(ALLOCATOR_SIZE), frameAlloc(ALLOCATOR_SIZE), nodes(alloc)
 {
 	ambientCol = Vec3(0.1, 0.05, 0.05) * 2;
 }
@@ -63,7 +63,7 @@ void Scene::unregisterNode(SceneNode* node)
 }
 
 //==============================================================================
-void Scene::update(float prevUpdateTime, float crntTime, Renderer& r)
+void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& r)
 {
 	physics.update(prevUpdateTime, crntTime);
 

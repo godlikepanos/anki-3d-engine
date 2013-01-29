@@ -68,7 +68,13 @@ SectorGroup::~SectorGroup()
 //==============================================================================
 Bool SectorGroup::placeSceneNode(SceneNode* sp)
 {
-	// XXX
+	// Find the candidates first. Sectors overlap
+	SceneVector<Sector*> placeSectors(scene->getFrameAllocator());
+	for(Sector* sector : sectors)
+	{
+		
+	}
+
 	return false;
 }
 
