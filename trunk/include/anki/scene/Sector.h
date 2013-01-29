@@ -11,6 +11,9 @@ class SceneNode;
 class Scene;
 class Sector;
 
+/// @addtogroup Scene
+/// @{
+
 /// 2 way Portal
 struct Portal
 {
@@ -38,7 +41,7 @@ struct Sector
 	}
 };
 
-/// Sector group. This is supposed to represent the whole sceene
+/// Sector group. This is supposed to represent the whole scene
 class SectorGroup
 {
 public:
@@ -50,15 +53,15 @@ public:
 
 	/// Called when a node was moved or a change in shape happened. The node 
 	/// must be Spatial
-	///
-	/// @return false if scene node is out of all sectors.
-	Bool placeSceneNode(SceneNode* sp);
+	void placeSceneNode(SceneNode* sp);
 
 private:
 	Scene* scene; ///< Keep it here to access various allocators
 	SceneVector<Sector*> sectors;
 	SceneVector<Portal*> portals;
 };
+
+/// @}
 
 } // end namespace anki
 

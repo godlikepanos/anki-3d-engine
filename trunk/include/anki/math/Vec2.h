@@ -96,7 +96,7 @@ private:
 	};
 	/// @}
 };
-/// @
+/// @}
 
 static_assert(sizeof(Vec2) == sizeof(F32) * 2, "Incorrect size");
 

@@ -10,6 +10,10 @@
 
 namespace anki {
 
+// Forward
+template<typename T>
+class Allocator;
+
 /// @addtogroup util
 /// @{
 /// @addtogroup memory
@@ -70,10 +74,7 @@ private:
 	PtrSize calcAlignSize(PtrSize size) const;
 };
 
-template<typename T>
-class Allocator;
-
-/// Function that imitates the new operator. The function allocates memory for
+/// Functior that imitates the new operator. The functior allocates memory for
 /// a number of elements and calls their constructor. The interesting thing is
 /// that if the elements size is >1 then it allocates size bigger than the
 /// required. The extra chunk is a number that will be used in
@@ -185,12 +186,12 @@ struct DeleteArray
 	}
 };
 
-/// Allocate memory using a constructor
+/// Allocate memory using an allocator
 #define ANKI_NEW(Type_, alloc_, ...) \
 	New<Type_, decltype(alloc_)::rebind<Type_>::other>{}( \
 		1, alloc_, ## __VA_ARGS__)
 
-/// Allocate memory using a constructor
+/// Allocate memory using an allocator
 #define ANKI_NEW_ARRAY(Type_, alloc_, n_, ...) \
 	New<Type_, decltype(alloc_)::rebind<Type_>::other>{}( \
 		n_, alloc_, ## __VA_ARGS__)

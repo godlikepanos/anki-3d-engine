@@ -4,7 +4,6 @@
 #include "anki/scene/Light.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
-#include "anki/collision/CollisionAlgorithmsMatrix.h"
 
 namespace anki {
 
@@ -124,7 +123,7 @@ void Octree::placeSceneNode(SceneNode* sn)
 //==============================================================================
 OctreeNode* Octree::place(const Aabb& aabb)
 {
-	if(CollisionAlgorithmsMatrix::collide(aabb, root.aabb))
+	if(aabb.collide(root.aabb))
 	{
 		// Run the recursive method
 		return placeInternal(aabb, 0, root);

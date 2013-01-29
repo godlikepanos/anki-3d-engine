@@ -2,7 +2,7 @@
 #include "anki/scene/Spatial.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Scene.h"
-#include "anki/collision/CollisionAlgorithmsMatrix.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
@@ -30,8 +30,7 @@ Bool Sector::placeSceneNode(SceneNode* sn)
 {
 	// XXX Optimize
 
-	if(!CollisionAlgorithmsMatrix::collide(sn->getSpatial()->getAabb(),
-		octree.getRoot().getAabb()))
+	if(!sn->getSpatial()->getAabb().collide(octree.getRoot().getAabb()))
 	{
 		return false;
 	}
@@ -66,16 +65,51 @@ SectorGroup::~SectorGroup()
 }
 
 //==============================================================================
-Bool SectorGroup::placeSceneNode(SceneNode* sp)
+void SectorGroup::placeSceneNode(SceneNode* sn)
 {
-	// Find the candidates first. Sectors overlap
-	SceneVector<Sector*> placeSectors(scene->getFrameAllocator());
-	for(Sector* sector : sectors)
+	ANKI_ASSERT(sn != nullptr);
+	Spatial* sp = sn->getSpatial();
+	ANKI_ASSERT(sp);
+	const Aabb& spAabb = sp->getAabb();
+
+	// Find the candidates first. Sectors overlap, chose the smaller(??!!??)
+	Sector* sector = nullptr;
+	for(Sector* s : sectors)
 	{
-		
+		// Spatial inside the sector?
+		if(s->getAabb().collide(spAabb))
+		{
+			// No other candidate?
+			if(sector == nullptr)
+			{
+				sector = s;
+			}
+			else
+			{
+				// Other candidata so chose the smaller
+				F32 lengthSqA = (sector->getAabb().getMax()
+					- sector->getAabb().getMin()).getLengthSquared();
+
+				F32 lengthSqB = (s->getAabb().getMax()
+					- s->getAabb().getMin()).getLengthSquared();
+
+				if(lengthSqB < lengthSqA)
+				{
+					sector = s;
+				}
+			}
+		}
 	}
 
-	return false;
+	// Ask Octree to place it
+	if(sector != nullptr)
+	{
+		sector->octree.placeSceneNode(sn);
+	}
+	else
+	{
+		ANKI_LOGW("Spatial outside all sectors");
+	}
 }
 
 } // end namespace anki
