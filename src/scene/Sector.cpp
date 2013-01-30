@@ -101,7 +101,7 @@ void SectorGroup::placeSceneNode(SceneNode* sn)
 		}
 	}
 
-	// Ask Octree to place it
+	// Ask the octree to place it
 	if(sector != nullptr)
 	{
 		sector->octree.placeSceneNode(sn);
