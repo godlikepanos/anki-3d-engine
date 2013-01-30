@@ -2,6 +2,8 @@
 #include "anki/scene/Spatial.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Light.h"
+#include "anki/scene/Sector.h"
+#include "anki/scene/Scene.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
 
@@ -91,16 +93,41 @@ void OctreeNode::addChild(U pos, OctreeNode* child)
 }
 
 //==============================================================================
+const Octree& OctreeNode::getOctree() const
+{
+	const OctreeNode* root = this;
+	while(root->parent != nullptr)
+	{
+		root = root->parent;
+	}
+
+	const RootOctreeNode* realRoot = static_cast<const RootOctreeNode*>(root);
+	return *(realRoot->octree);
+}
+
+//==============================================================================
+Octree& OctreeNode::getOctree()
+{
+	OctreeNode* root = this;
+	while(root->parent != nullptr)
+	{
+		root = root->parent;
+	}
+
+	RootOctreeNode* realRoot = static_cast<RootOctreeNode*>(root);
+	return *(realRoot->octree);
+}
+
+//==============================================================================
 // Octree                                                                      =
 //==============================================================================
 
 //==============================================================================
-Octree::Octree(const SceneAllocator<U8>& alloc_, const Aabb& aabb, 
-	U8 maxDepth_, F32 looseness_)
-	: alloc(alloc_),
+Octree::Octree(Sector* sector_, const Aabb& aabb, U8 maxDepth_, F32 looseness_)
+	: sector(sector_),
 		maxDepth(maxDepth_ < 1 ? 1 : maxDepth_), 
 		looseness(looseness_),
-		root(aabb, nullptr, alloc)
+		root(aabb, sector->getSectorGroup().getScene().getAllocator(), this)
 {}
 
 //==============================================================================
@@ -172,6 +199,9 @@ OctreeNode* Octree::placeInternal(const Aabb& aabb, U depth, OctreeNode& node)
 					// Go deeper
 					if(node.children[id] == nullptr)
 					{
+						SceneAllocator<U8> alloc =
+							sector->getSectorGroup().getScene().getAllocator();
+
 						// Create new node if needed
 						OctreeNode* newNode =
 							ANKI_NEW(OctreeNode, alloc,

@@ -9,9 +9,11 @@
 
 namespace anki {
 
-class Spatial;
+// Forward
 class Frustumable;
 class SceneNode;
+class Octree;
+class Sector;
 
 /// Octree node
 class OctreeNode
@@ -68,6 +70,12 @@ public:
 
 	void removeSceneNode(SceneNode* sn);
 
+	/// @{
+	/// Will traverse to find the octree
+	const Octree& getOctree() const;
+	Octree& getOctree();
+	/// @}
+
 private:
 	ChildrenContainer children;
 	OctreeNode* parent;
@@ -79,12 +87,29 @@ private:
 	void addChild(U pos, OctreeNode* child);
 };
 
+/// Octree node
+class RootOctreeNode: public OctreeNode
+{
+	friend class OctreeNode;
+	friend class Octree;
+
+public:
+	RootOctreeNode(const Aabb& aabb, const SceneAllocator<U8>& alloc,
+		Octree* octree_)
+		: OctreeNode(aabb, nullptr, alloc), octree(octree_)
+	{
+		ANKI_ASSERT(octree != nullptr);
+	}
+
+private:
+	Octree* octree;
+};
+
 /// Octree
 class Octree
 {
 public:
-	Octree(const SceneAllocator<U8>& alloc, const Aabb& aabb, U8 maxDepth, 
-		F32 looseness = 1.5);
+	Octree(Sector* sector, const Aabb& aabb, U8 maxDepth, F32 looseness = 1.5);
 
 	~Octree();
 
@@ -114,10 +139,10 @@ public:
 		SceneVector<SceneNode*>* lightNodes);
 
 private:
-	SceneAllocator<U8> alloc;
+	Sector* sector;
 	U maxDepth;
 	F32 looseness;
-	OctreeNode root;
+	RootOctreeNode root;
 
 	OctreeNode* placeInternal(const Aabb& aabb, U depth, OctreeNode& node);
 

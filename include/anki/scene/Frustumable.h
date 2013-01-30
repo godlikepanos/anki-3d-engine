@@ -11,6 +11,7 @@ namespace anki {
 // Forward
 class SectorGroup;
 class Sector;
+struct VisibilityTestResults;
 
 /// @addtogroup Scene
 /// @{
@@ -26,8 +27,8 @@ public:
 	/// @{
 
 	/// Pass the frustum here so we can avoid the virtuals
-	Frustumable(const SceneAllocator<U8>& alloc, Frustum* fr)
-		: frustum(fr), renderables(alloc), lights(alloc)
+	Frustumable(Frustum* fr)
+		: frustum(fr)
 	{}
 	/// @}
 
@@ -70,8 +71,8 @@ public:
 	/// Call this after the tests. Before it will point to junk
 	const VisibilityTestResults& getVisibilityTestResults() const
 	{
-		ANKI_ASSERT(visibles != nullptr);
-		return *visibles;
+		ANKI_ASSERT(visible != nullptr);
+		return *visible;
 	}
 
 	/// Get the origin for sorting and visibility tests
@@ -107,7 +108,7 @@ private:
 
 	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
 	/// frame and before any visibility tests are run
-	VisibilityTestResults* visibles = nullptr;
+	VisibilityTestResults* visible = nullptr;
 };
 
 /// @}

@@ -10,6 +10,7 @@ namespace anki {
 class SceneNode;
 class Scene;
 class Sector;
+class SectorGroup;
 
 /// @addtogroup Scene
 /// @{
@@ -24,13 +25,13 @@ struct Portal
 };
 
 /// A sector. It consists of an octree and some portals
-struct Sector
+class Sector
 {
-	Octree octree;
-	SceneVector<Portal*> portals;
+	friend class SectorGroup;
 
+public:
 	/// Default constructor
-	Sector(const SceneAllocator<U8>& alloc, const Aabb& box);
+	Sector(SectorGroup* group, const Aabb& box);
 
 	/// Called when a node was moved or a change in shape happened
 	Bool placeSceneNode(SceneNode* sp);
@@ -39,6 +40,20 @@ struct Sector
 	{
 		return octree.getRoot().getAabb();
 	}
+
+	const SectorGroup& getSectorGroup() const
+	{
+		return *group;
+	}
+	SectorGroup& getSectorGroup()
+	{
+		return *group;
+	}
+
+private:
+	SectorGroup* group; ///< Know your father
+	Octree octree;
+	SceneVector<Portal*> portals;
 };
 
 /// Sector group. This is supposed to represent the whole scene
@@ -57,6 +72,15 @@ public:
 
 	/// Destructor
 	~SectorGroup();
+
+	const Scene& getScene() const
+	{
+		return *scene;
+	}
+	Scene& getScene()
+	{
+		return *scene;
+	}
 
 	/// Called when a node was moved or a change in shape happened. The node 
 	/// must be Spatial

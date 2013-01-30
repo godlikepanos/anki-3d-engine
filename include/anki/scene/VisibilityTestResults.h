@@ -20,7 +20,7 @@ struct VisibilityTestResults
 	Renderables renderables;
 	Lights lights;
 
-	VisibilityTestResults(const SceneVector<U8>& frameAlloc)
+	VisibilityTestResults(const SceneAllocator<U8>& frameAlloc)
 		: renderables(frameAlloc), lights(frameAlloc)
 	{}
 };
