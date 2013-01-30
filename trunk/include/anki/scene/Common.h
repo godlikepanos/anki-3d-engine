@@ -3,6 +3,7 @@
 
 #include "anki/util/Allocator.h"
 #include "anki/util/Vector.h"
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 

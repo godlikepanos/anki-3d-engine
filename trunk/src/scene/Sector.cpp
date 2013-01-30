@@ -1,6 +1,8 @@
 #include "anki/scene/Sector.h"
 #include "anki/scene/Spatial.h"
 #include "anki/scene/SceneNode.h"
+#include "anki/scene/VisibilityTestResults.h"
+#include "anki/scene/Frustumable.h"
 #include "anki/scene/Scene.h"
 #include "anki/core/Logger.h"
 
@@ -21,8 +23,9 @@ Portal::Portal()
 //==============================================================================
 
 //==============================================================================
-Sector::Sector(const SceneAllocator<U8>& alloc_, const Aabb& box)
-	: octree(alloc_, box, 3), portals(alloc_)
+Sector::Sector(SectorGroup* group_, const Aabb& box)
+	: group(group_), octree(this, box, 3),
+		portals(group->getScene().getAllocator())
 {}
 
 //==============================================================================
@@ -110,6 +113,19 @@ void SectorGroup::placeSceneNode(SceneNode* sn)
 	{
 		ANKI_LOGW("Spatial outside all sectors");
 	}
+}
+
+//==============================================================================
+void SectorGroup::doVisibilityTests(Frustumable& fr, VisibilityTest test)
+{
+	/// Create the visibility container
+	VisibilityTestResults* visible =
+		ANKI_NEW(VisibilityTestResults, scene->getFrameAllocator(),
+		scene->getFrameAllocator());
+
+	// Find the sectors
+
+	fr.visible = visible;
 }
 
 } // end namespace anki
