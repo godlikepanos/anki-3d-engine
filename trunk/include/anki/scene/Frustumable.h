@@ -8,12 +8,19 @@
 
 namespace anki {
 
+// Forward
+class SectorGroup;
+class Sector;
+
 /// @addtogroup Scene
 /// @{
 
 /// Frustumable interface for scene nodes
 class Frustumable
 {
+	friend SectorGroup;
+	friend Sector;
+
 public:
 	/// @name Constructors
 	/// @{
@@ -60,6 +67,13 @@ public:
 		return viewProjectionMat;
 	}
 
+	/// Call this after the tests. Before it will point to junk
+	const VisibilityTestResults& getVisibilityTestResults() const
+	{
+		ANKI_ASSERT(visibles != nullptr);
+		return *visibles;
+	}
+
 	/// Get the origin for sorting and visibility tests
 	virtual const Vec3& getFrustumableOrigin() const = 0;
 	/// @}
@@ -91,12 +105,9 @@ protected:
 private:
 	U32 timestamp = Timestamp::getTimestamp();
 
-	// Visibility stuff
-	typedef SceneVector<SceneNode*> Renderables;
-	typedef SceneVector<SceneNode*> Lights;
-
-	Renderables renderables;
-	Lights lights;
+	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
+	/// frame and before any visibility tests are run
+	VisibilityTestResults* visibles = nullptr;
 };
 
 /// @}

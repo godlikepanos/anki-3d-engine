@@ -45,6 +45,13 @@ struct Sector
 class SectorGroup
 {
 public:
+	enum VisibilityTest
+	{
+		VT_RENDERABLES = 1 << 0,
+		VT_ONLY_SHADOW_CASTERS = 1 << 1,
+		VT_LIGHTS = 1 << 2
+	};
+
 	/// Default constructor
 	SectorGroup(Scene* scene);
 
@@ -54,6 +61,9 @@ public:
 	/// Called when a node was moved or a change in shape happened. The node 
 	/// must be Spatial
 	void placeSceneNode(SceneNode* sp);
+
+	/// XXX
+	void doVisibilityTests(Frustumable& fr, VisibilityTest test);
 
 private:
 	Scene* scene; ///< Keep it here to access various allocators

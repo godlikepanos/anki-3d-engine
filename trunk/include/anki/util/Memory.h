@@ -182,6 +182,9 @@ struct DeleteArray
 			// Deallocate the block
 			typename Alloc::template rebind<U8>::other allocc(alloc);
 			allocc.deallocate(block, n * sizeof(T) + sizeof(PtrSize));
+
+			// nullify
+			ptr = nullptr;
 		}
 	}
 };
