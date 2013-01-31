@@ -11,6 +11,14 @@ class SceneNode;
 /// @addtogroup Scene
 /// @{
 
+/// Visibility test type
+enum VisibilityTest
+{
+	VT_RENDERABLES = 1 << 0,
+	VT_ONLY_SHADOW_CASTERS = 1 << 1,
+	VT_LIGHTS = 1 << 2
+};
+
 /// Its actually a container for visible entities. It should be per frame
 struct VisibilityTestResults
 {

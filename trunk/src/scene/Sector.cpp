@@ -43,7 +43,7 @@ Bool Sector::placeSceneNode(SceneNode* sn)
 }
 
 //==============================================================================
-// Sector                                                                      =
+// SectorGroup                                                                 =
 //==============================================================================
 
 //==============================================================================
@@ -116,16 +116,50 @@ void SectorGroup::placeSceneNode(SceneNode* sn)
 }
 
 //==============================================================================
-void SectorGroup::doVisibilityTests(Frustumable& fr, VisibilityTest test)
+void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test)
 {
+	Frustumable* fr = sn.getFrustumable();
+	ANKI_ASSERT(fr != nullptr);
+
+	//
+	// Find the visible sectors
+	//
+
+	SceneVector<Sector*> visibleSectors(scene->getFrameAllocator());
+
+	Spatial* sp = sn.getSpatial();
+	ANKI_ASSERT(sp != nullptr);
+
+	// Find the sector that contains the frustumable
+	Sector& containerSector = sp->getOctreeNode().getOctree().getSector();
+	visibleSectors.push_back(&containerSector);
+
+	// Loop all portals and add other sectors
+	for(Portal* portal : portals)
+	{
+		// Portal is visible
+		// XXX Add tiler test for portals
+		if(fr->insideFrustum(portal->shape))
+		{
+			if(portal->sectors[0] != &containerSector)
+			{
+				visibleSectors.push_back(portal->sectors[0]);
+			}
+			else
+			{
+				ANKI_ASSERT(portal->sectors[1] != &containerSector);
+				visibleSectors.push_back(portal->sectors[1]);
+			}
+		}
+	}
+
+
 	/// Create the visibility container
 	VisibilityTestResults* visible =
 		ANKI_NEW(VisibilityTestResults, scene->getFrameAllocator(),
 		scene->getFrameAllocator());
 
-	// Find the sectors
-
-	fr.visible = visible;
+	fr->visible = visible;
 }
 
 } // end namespace anki

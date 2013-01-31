@@ -5,6 +5,7 @@
 #include "anki/util/Vector.h"
 #include "anki/util/Array.h"
 #include "anki/scene/Common.h"
+#include "anki/scene/VisibilityTestResults.h"
 #include <memory>
 
 namespace anki {
@@ -87,7 +88,7 @@ private:
 	void addChild(U pos, OctreeNode* child);
 };
 
-/// Octree node
+/// Root octree node. Its seperate because it holds pointer to the octree
 class RootOctreeNode: public OctreeNode
 {
 	friend class OctreeNode;
@@ -128,15 +129,23 @@ public:
 	{
 		return maxDepth;
 	}
+
+	Sector& getSector() 
+	{
+		return *sector;
+	}
+	const Sector& getSector() const
+	{
+		return *sector;
+	}
 	/// @}
 
 	/// Place a spatial in the tree
 	void placeSceneNode(SceneNode* sn);
 
 	/// Do the visibility tests
-	void getVisible(const Frustumable& fr,
-		SceneVector<SceneNode*>* renderableNodes,
-		SceneVector<SceneNode*>* lightNodes);
+	void doVisibilityTests(const Frustumable& fr, VisibilityTest test,
+		VisibilityTestResults& visibles);
 
 private:
 	Sector* sector;
@@ -153,9 +162,9 @@ private:
 	OctreeNode* place(const Aabb& aabb);
 
 	/// Recursive method
-	void doVisibilityTestsInternal(const Frustumable& fr,
-		SceneVector<SceneNode*>* renderableNodes,
-		SceneVector<SceneNode*>* lightNodes,
+	void doVisibilityTestsInternal(const Frustumable& fr, 
+		VisibilityTest test,
+		VisibilityTestResults& visibles,
 		OctreeNode& node);
 
 	void createChildren(OctreeNode& parent);
