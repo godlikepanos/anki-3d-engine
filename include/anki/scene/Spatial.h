@@ -72,6 +72,17 @@ public:
 	}
 
 	virtual const Vec3& getSpatialOrigin() const = 0;
+
+	OctreeNode& getOctreeNode()
+	{
+		ANKI_ASSERT(octreeNode != nullptr && "Not placed yet");
+		return *octreeNode;
+	}
+	const OctreeNode& getOctreeNode() const
+	{
+		ANKI_ASSERT(octreeNode != nullptr && "Not placed yet");
+		return *octreeNode;
+	}
 	/// @}
 
 	/// The derived class has to manually set when the collision shape got

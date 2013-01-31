@@ -27,6 +27,9 @@ OctreeNode::OctreeNode(const Aabb& aabb_, OctreeNode* parent_,
 //==============================================================================
 OctreeNode::~OctreeNode()
 {
+	ANKI_ASSERT(sceneNodes.size() == 0 
+		&& "Deleting an OctreeNode with scene nodes");
+
 	SceneAllocator<U8> alloc = sceneNodes.get_allocator();
 
 	for(OctreeNode* onode : children)
@@ -48,7 +51,7 @@ void OctreeNode::addSceneNode(SceneNode* sn)
 
 	if(this == sp->octreeNode)
 	{
-		// Nothing to do
+		// Nothing changes. Nothing to do
 	}
 	else
 	{
@@ -257,19 +260,18 @@ void Octree::calcAabb(U i, U j, U k, const Aabb& paabb, Aabb& out) const
 }
 
 //==============================================================================
-void Octree::getVisible(const Frustumable& fr,
-	SceneVector<SceneNode*>* renderableNodes,
-	SceneVector<SceneNode*>* lightNodes)
+void Octree::doVisibilityTests(const Frustumable& fr, VisibilityTest test,
+	VisibilityTestResults& visibles)
 {
-	doVisibilityTestsInternal(fr, renderableNodes, lightNodes, root);
+	ANKI_ASSERT(fr.insideFrustum(root.getAabb()));
+	doVisibilityTestsInternal(fr, test, visibles, root);
 }
 
 //==============================================================================
-void Octree::doVisibilityTestsInternal(const Frustumable& fr,
-	SceneVector<SceneNode*>* renderableNodes,
-	SceneVector<SceneNode*>* lightNodes,
-	OctreeNode& node)
+void Octree::doVisibilityTestsInternal(const Frustumable& fr, 
+	VisibilityTest test, VisibilityTestResults& visible, OctreeNode& node)
 {
+	// Put my scene nodes
 	for(SceneNode* sn : node.sceneNodes)
 	{
 		Spatial* sp = sn->getSpatial();
@@ -278,15 +280,15 @@ void Octree::doVisibilityTestsInternal(const Frustumable& fr,
 		if(fr.insideFrustum(*sp))
 		{
 			Renderable* r = sn->getRenderable();
-			if(r != nullptr && renderableNodes != nullptr)
+			if(r != nullptr && (test & VT_RENDERABLES))
 			{
-				renderableNodes->push_back(sn);
+				visible.renderables.push_back(sn);
 			}
 
 			Light* l = sn->getLight();
-			if(l != nullptr && lightNodes != nullptr)
+			if(l != nullptr && (test & VT_LIGHTS))
 			{
-				lightNodes->push_back(sn);
+				visible.lights.push_back(sn);
 			}
 		}
 	}
@@ -294,9 +296,9 @@ void Octree::doVisibilityTestsInternal(const Frustumable& fr,
 	// Go to children
 	for(OctreeNode* onode : node.children)
 	{
-		if(onode != nullptr)
+		if(onode != nullptr && fr.insideFrustum(onode->getAabb()))
 		{
-			doVisibilityTestsInternal(fr, renderableNodes, lightNodes, *onode);
+			doVisibilityTestsInternal(fr, test, visible, *onode);
 		}
 	}
 }
