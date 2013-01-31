@@ -5,6 +5,7 @@
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Scene.h"
 #include "anki/core/Logger.h"
+#include "anki/renderer/Renderer.h"
 
 namespace anki {
 
@@ -116,7 +117,8 @@ void SectorGroup::placeSceneNode(SceneNode* sn)
 }
 
 //==============================================================================
-void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test)
+void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
+	Renderer* r)
 {
 	Frustumable* fr = sn.getFrustumable();
 	ANKI_ASSERT(fr != nullptr);
@@ -137,18 +139,34 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test)
 	// Loop all portals and add other sectors
 	for(Portal* portal : portals)
 	{
-		// Portal is visible
-		// XXX Add tiler test for portals
-		if(fr->insideFrustum(portal->shape))
+		// Get the "other" sector of that portal
+		Sector* testAgainstSector;
+
+		if(portal->sectors[0] == &containerSector)
 		{
-			if(portal->sectors[0] != &containerSector)
+			testAgainstSector = portal->sectors[1];
+		}
+		else
+		{
+			ANKI_ASSERT(portal->sectors[1] == &containerSector);
+			testAgainstSector = portal->sectors[0];
+		}
+
+		// Search if portal is in the container from another portal
+		SceneVector<Sector*>::iterator it = std::find(visibleSectors.begin(),
+			visibleSectors.end(), testAgainstSector);
+
+		if(it == visibleSectors.end())
+		{
+			// Not found so test the portal
+
+			// Portal is visible
+			if(fr->insideFrustum(portal->shape))
 			{
-				visibleSectors.push_back(portal->sectors[0]);
-			}
-			else
-			{
-				ANKI_ASSERT(portal->sectors[1] != &containerSector);
-				visibleSectors.push_back(portal->sectors[1]);
+				if(r == nullptr || r->doVisibilityTests(portal->shape))
+				{
+					visibleSectors.push_back(testAgainstSector);
+				}
 			}
 		}
 	}
