@@ -11,6 +11,7 @@ class SceneNode;
 class Scene;
 class Sector;
 class SectorGroup;
+class Renderer;
 
 /// @addtogroup Scene
 /// @{
@@ -80,7 +81,7 @@ public:
 	void placeSceneNode(SceneNode* sp);
 
 	/// XXX
-	void doVisibilityTests(SceneNode& fr, VisibilityTest test);
+	void doVisibilityTests(SceneNode& fr, VisibilityTest test, Renderer* r);
 
 private:
 	Scene* scene; ///< Keep it here to access various allocators
