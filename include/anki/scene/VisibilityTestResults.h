@@ -32,6 +32,7 @@ struct VisibilityTestResults
 		: renderables(frameAlloc), lights(frameAlloc)
 	{}
 };
+
 /// @}
 
 } // end namespace anki

@@ -5,6 +5,7 @@
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Allocator.h"
+#include "anki/util/NonCopyable.h"
 #include <algorithm>
 
 namespace anki {
@@ -16,7 +17,7 @@ namespace anki {
 
 /// A hierarchical object
 template<typename T, typename Alloc = Allocator<T>>
-class Object
+class Object: public NonCopyable
 {
 public:
 	typedef T Value;
@@ -24,13 +25,12 @@ public:
 
 	/// Calls addChild if parent is not nullptr
 	Object(Value* parent_, const Alloc& alloc = Alloc())
-		: childs(alloc)
+		: parent(nullptr), childs(alloc)
 	{
 		if(parent_ != nullptr)
 		{
 			parent_->addChild(getSelf());
 		}
-		parent = parent_;
 	}
 
 	/// Delete children from the last entered to the first and update parent

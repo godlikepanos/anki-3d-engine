@@ -1,6 +1,7 @@
 #include "anki/scene/Sector.h"
 #include "anki/scene/Spatial.h"
 #include "anki/scene/SceneNode.h"
+#include "anki/scene/Light.h"
 #include "anki/scene/VisibilityTestResults.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Scene.h"
@@ -69,6 +70,28 @@ SectorGroup::~SectorGroup()
 }
 
 //==============================================================================
+Sector* SectorGroup::createNewSector(const Aabb& aabb)
+{
+	Sector* out = ANKI_NEW(Sector, scene->getAllocator(), this, aabb);
+	sectors.push_back(out);
+	return out;
+}
+
+//==============================================================================
+Portal* SectorGroup::createNewPortal(Sector* a, Sector* b, 
+	const Obb& collisionShape)
+{
+	ANKI_ASSERT(a && b);
+	Portal* out = ANKI_NEW_0(Portal, scene->getAllocator());
+
+	out->sectors[0] = a;
+	out->sectors[1] = b;
+	out->shape = collisionShape;
+
+	return out;
+}
+
+//==============================================================================
 void SectorGroup::placeSceneNode(SceneNode* sn)
 {
 	ANKI_ASSERT(sn != nullptr);
@@ -121,7 +144,7 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 	Renderer* r)
 {
 	Frustumable* fr = sn.getFrustumable();
-	ANKI_ASSERT(fr != nullptr);
+	ANKI_ASSERT(fr != nullptr && "sn should be frustumable");
 
 	//
 	// Find the visible sectors
@@ -151,6 +174,7 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 			ANKI_ASSERT(portal->sectors[1] == &containerSector);
 			testAgainstSector = portal->sectors[0];
 		}
+		ANKI_ASSERT(testAgainstSector != nullptr);
 
 		// Search if portal is in the container from another portal
 		SceneVector<Sector*>::iterator it = std::find(visibleSectors.begin(),
@@ -171,13 +195,110 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 		}
 	}
 
+	//
+	// For all visible sectors do the tests
+	//
 
-	/// Create the visibility container
+	// Create a few VisibilityTestResults to pass to every octree
+	SceneVector<VisibilityTestResults> testResults(scene->getFrameAllocator());
+	testResults.resize(visibleSectors.size(), 
+		VisibilityTestResults(scene->getFrameAllocator()));
+	U renderablesCount = 0;
+	U lightsCount = 0;
+
+	// Run tests for every octree
+	for(U i = 0; i < visibleSectors.size(); i++)
+	{
+		Sector* sector = visibleSectors[i];
+
+		sector->octree.doVisibilityTests(*fr, test, testResults[i]);
+
+		renderablesCount += testResults[i].renderables.size();
+		lightsCount += testResults[i].lights.size();
+	}
+
+	// If you don't want lights then the octree should do tests with them
+	ANKI_ASSERT(!((test & VT_LIGHTS) == 0 && lightsCount != 0));
+	// Same as ^
+	ANKI_ASSERT(!((test & VT_RENDERABLES) == 0 && renderablesCount != 0));
+
+	//
+	// Combine test results and try doing renderer tests
+	//
+
+	// Create the visibility container
 	VisibilityTestResults* visible =
 		ANKI_NEW(VisibilityTestResults, scene->getFrameAllocator(),
 		scene->getFrameAllocator());
 
+	// Set the sizes to save some moves
+	visible->renderables.reserve(renderablesCount);
+	visible->lights.reserve(lightsCount);
+
+	// Iterate previous test results and append to the combined one
+	if(r != nullptr)
+	{
+		for(VisibilityTestResults& testResult : testResults)
+		{
+			visible->renderables.insert(
+				visible->renderables.end(), 
+				testResult.renderables.begin(), 
+				testResult.renderables.end());
+
+			visible->lights.insert(
+				visible->lights.end(), 
+				testResult.lights.begin(), 
+				testResult.lights.end());
+		}
+	}
+	else
+	{
+		for(VisibilityTestResults& testResult : testResults)
+		{
+			// First the renderables
+			for(SceneNode* renderable : testResult.renderables)
+			{
+				if(r->doVisibilityTests(
+					renderable->getSpatial()->getOptimalCollisionShape()))
+				{
+					visible->renderables.push_back(renderable);
+				}
+			}
+
+			// Then the lights
+			for(SceneNode* light : testResult.lights)
+			{
+				if(r->doVisibilityTests(
+					light->getSpatial()->getOptimalCollisionShape()))
+				{
+					visible->lights.push_back(light);
+				}
+			}
+		}
+	}
+
+	// The given frustumable is finished
 	fr->visible = visible;
+
+	//
+	// Continue with testing the lights
+	//
+
+	for(SceneNode* lsn : visible->lights)
+	{
+		Light* l = lsn->getLight();
+		ANKI_ASSERT(l != nullptr);
+
+		if(l->getShadowEnabled())
+		{
+			Frustumable* lfr = lsn->getFrustumable();
+			ANKI_ASSERT(lfr != nullptr);
+
+			doVisibilityTests(*lsn, 
+				(VisibilityTest)(VT_RENDERABLES | VT_ONLY_SHADOW_CASTERS),
+				nullptr);
+		}
+	}
 }
 
 } // end namespace anki

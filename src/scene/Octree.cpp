@@ -6,6 +6,7 @@
 #include "anki/scene/Scene.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
+#include "anki/scene/Renderable.h"
 
 namespace anki {
 
@@ -282,7 +283,11 @@ void Octree::doVisibilityTestsInternal(const Frustumable& fr,
 			Renderable* r = sn->getRenderable();
 			if(r != nullptr && (test & VT_RENDERABLES))
 			{
-				visible.renderables.push_back(sn);
+				if((test & VT_ONLY_SHADOW_CASTERS) == false
+					|| r->getRenderableMaterial().getShadow())
+				{
+					visible.renderables.push_back(sn);
+				}
 			}
 
 			Light* l = sn->getLight();
