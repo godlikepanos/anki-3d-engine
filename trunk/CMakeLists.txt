@@ -76,6 +76,8 @@ MESSAGE("++ AnKi window backend: ${ANKI_WINDOW_BACKEND}")
 # Common compiler flags
 #
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -static-libstdc++")
+
 # Build type
 IF(CMAKE_BUILD_TYPE STREQUAL Debug)
 ELSE()

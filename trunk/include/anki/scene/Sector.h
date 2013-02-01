@@ -67,6 +67,8 @@ public:
 	/// Destructor
 	~SectorGroup();
 
+	/// @name Accessors
+	/// @{
 	const Scene& getScene() const
 	{
 		return *scene;
@@ -75,6 +77,7 @@ public:
 	{
 		return *scene;
 	}
+	/// @}
 
 	/// Called when a node was moved or a change in shape happened. The node 
 	/// must be Spatial
@@ -82,6 +85,12 @@ public:
 
 	/// XXX
 	void doVisibilityTests(SceneNode& fr, VisibilityTest test, Renderer* r);
+
+	/// The owner of the pointer is the sector group
+	Sector* createNewSector(const Aabb& aabb);
+
+	/// The owner of the pointer is the sector group
+	Portal* createNewPortal(Sector* a, Sector* b, const Obb& collisionShape);
 
 private:
 	Scene* scene; ///< Keep it here to access various allocators

@@ -195,9 +195,19 @@ struct DeleteArray
 		1, alloc_, ## __VA_ARGS__)
 
 /// Allocate memory using an allocator
+#define ANKI_NEW_0(Type_, alloc_) \
+	New<Type_, decltype(alloc_)::rebind<Type_>::other>{}( \
+		1, alloc_)
+
+/// Allocate memory using an allocator
 #define ANKI_NEW_ARRAY(Type_, alloc_, n_, ...) \
 	New<Type_, decltype(alloc_)::rebind<Type_>::other>{}( \
 		n_, alloc_, ## __VA_ARGS__)
+
+/// Allocate memory using an allocator
+#define ANKI_NEW_ARRAY_0(Type_, alloc_, n_) \
+	New<Type_, decltype(alloc_)::rebind<Type_>::other>{}( \
+		n_, alloc_)
 
 /// Delete memory allocated by #ANKI_NEW
 #define ANKI_DELETE(ptr_, alloc_) \
