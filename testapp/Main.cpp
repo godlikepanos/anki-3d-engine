@@ -139,7 +139,7 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
-	cam->setLocalTransform(Transform(Vec3(40.0, 5.0, 8.0),
+	cam->setLocalTransform(Transform(Vec3(20.0, 5.0, 8.0),
 		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
@@ -197,11 +197,14 @@ void init()
 
 #if 1
 	// Vase point lights
-	Array<Vec3, 4> vaseLightPos = {{Vec3(32.6, 9, -13.2), Vec3(32.6, 9, 10),
-		Vec3(-37.6001, 9, 10), Vec3(-37.6001, 9, -13.2)}};
+	F32 x = 8.5;
+	F32 y = 2.25;
+	F32 z = 2.49;
+	Array<Vec3, 4> vaseLightPos = {{Vec3(x, y, -z - 1.4), Vec3(x, y, z),
+		Vec3(-x - 2.3, y, z), Vec3(-x - 2.3, y, -z - 1.4)}};
 	for(U i = 0; i < vaseLightPos.getSize(); i++)
 	{
-		Vec3 lightPos = vaseLightPos[i] * 0.25;
+		Vec3 lightPos = vaseLightPos[i];
 
 		PointLight* point =
 			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
@@ -478,7 +481,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = true;
+	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.groundLightEnabled = false;
 	initializer.is.sm.enabled = true;
