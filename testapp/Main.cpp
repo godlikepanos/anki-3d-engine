@@ -248,11 +248,16 @@ void init()
 
 	(void)sponzaModel;
 
-	//initPhysics();
+	initPhysics();
 
-	/*ParticleEmitter* pe = new ParticleEmitter("todo", "pe", &scene,
-		Movable::MF_NONE, nullptr);
-	(void)pe;*/
+	// Sectors
+	SectorGroup& sgroup = scene.getSectorGroup();
+
+	Sector* sectorA = sgroup.createNewSector(Aabb(Vec3(-100), Vec3(100)));
+	Sector* sectorB = sgroup.createNewSector(Aabb(Vec3(-10), Vec3(10)));
+
+	sgroup.createNewPortal(sectorA, sectorB, Obb(Vec3(0.0), 
+		Mat3::getIdentity(), Vec3(2.0, 2.0, 0.0)));
 }
 
 //==============================================================================

@@ -21,6 +21,7 @@ struct Portal
 {
 	Array<Sector*, 2> sectors;
 	Obb shape;
+	Bool8 open;
 
 	Portal();
 };
@@ -33,9 +34,6 @@ class Sector
 public:
 	/// Default constructor
 	Sector(SectorGroup* group, const Aabb& box);
-
-	/// Called when a node was moved or a change in shape happened
-	Bool placeSceneNode(SceneNode* sp);
 
 	const Aabb& getAabb() const
 	{
@@ -51,10 +49,24 @@ public:
 		return *group;
 	}
 
+	const Octree& getOctree() const
+	{
+		return octree;
+	}
+
+	Bool isVisible() const
+	{
+		return visible;
+	}
+
+	/// Called when a node was moved or a change in shape happened
+	Bool placeSceneNode(SceneNode* sp);
+
 private:
 	SectorGroup* group; ///< Know your father
 	Octree octree;
 	SceneVector<Portal*> portals;
+	Bool8 visible;
 };
 
 /// Sector group. This is supposed to represent the whole scene
@@ -76,6 +88,16 @@ public:
 	Scene& getScene()
 	{
 		return *scene;
+	}
+
+	const SceneVector<Portal*>& getPortals() const
+	{
+		return portals;
+	}
+
+	const SceneVector<Sector*>& getSectors() const
+	{
+		return sectors;
 	}
 	/// @}
 

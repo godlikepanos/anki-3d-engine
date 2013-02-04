@@ -155,6 +155,7 @@ class Octree;
 class OctreeNode;
 class Renderer;
 class Camera;
+class Sector;
 
 /// This is a drawer for some scene nodes that need debug
 class SceneDebugDrawer: public Flags<U32>
@@ -164,7 +165,9 @@ public:
 	{
 		DF_NONE = 0,
 		DF_SPATIAL = 1 << 0,
-		DF_FRUSTUMABLE = 1 << 1
+		DF_FRUSTUMABLE = 1 << 1,
+		DF_SECTOR = 1 << 2,
+		DF_OCTREE = 1 << 3
 	};
 
 	SceneDebugDrawer(DebugDrawer* d)
@@ -177,6 +180,8 @@ public:
 	void draw(SceneNode& node);
 
 	virtual void draw(const Octree& octree) const;
+
+	void draw(const Sector& sector);
 
 	void setViewProjectionMatrix(const Mat4& m)
 	{

@@ -82,6 +82,7 @@ struct MaterialSortJob: ThreadJob
 Portal::Portal()
 {
 	sectors[0] = sectors[1] = nullptr;
+	open = true;
 }
 
 //==============================================================================
@@ -210,6 +211,12 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 	Frustumable* fr = sn.getFrustumable();
 	ANKI_ASSERT(fr != nullptr && "sn should be frustumable");
 
+	// Set all sectors to not visible
+	for(Sector* sector : sectors)
+	{
+		sector->visible = false;
+	}
+
 	//
 	// Find the visible sectors
 	//
@@ -221,11 +228,17 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 
 	// Find the sector that contains the frustumable
 	Sector& containerSector = sp->getOctreeNode().getOctree().getSector();
+	containerSector.visible = true;
 	visibleSectors.push_back(&containerSector);
 
 	// Loop all portals and add other sectors
 	for(Portal* portal : portals)
 	{
+		if(ANKI_UNLIKELY(!portal->open))
+		{
+			continue;
+		}
+
 		// Get the "other" sector of that portal
 		Sector* testAgainstSector;
 
@@ -253,6 +266,7 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 			{
 				if(r == nullptr || r->doVisibilityTests(portal->shape))
 				{
+					testAgainstSector->visible = true;
 					visibleSectors.push_back(testAgainstSector);
 				}
 			}
