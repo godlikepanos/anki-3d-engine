@@ -196,12 +196,6 @@ public:
 	{
 		return &getWorldTransform();
 	}
-
-	/// Overrides Renderable::getRenderableOrigin
-	Vec3 getRenderableOrigin() const
-	{
-		return getWorldTransform().getOrigin();
-	}
 	/// @}
 
 	/// @name Spatial virtuals

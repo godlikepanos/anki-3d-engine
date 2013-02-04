@@ -34,7 +34,7 @@ void Ez::run()
 		it != vi.getRenderablesEnd() && count < maxObjectsToDraw; ++it)
 	{
 		r->getSceneDrawer().render(cam, RenderableDrawer::RS_MATERIAL,
-			0, *((*it)->getRenderable()));
+			0, *(*it));
 		++count;
 	}
 

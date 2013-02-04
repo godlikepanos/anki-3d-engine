@@ -212,10 +212,13 @@ void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 
 //==============================================================================
 void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
-	U32 pass, Renderable& renderable)
+	U32 pass, SceneNode& rsn)
 {
+	Renderable* renderable = rsn.getRenderable();
+	ANKI_ASSERT(renderable);
+
 	/* Instancing */
-	U32 instancesCount = renderable.getRenderableInstancesCount();
+	U32 instancesCount = renderable->getRenderableInstancesCount();
 
 	if(instancesCount < 1)
 	{
@@ -223,7 +226,7 @@ void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
 	}
 
 	/* Blending */
-	const Material& mtl = renderable.getRenderableMaterial();
+	const Material& mtl = renderable->getRenderableMaterial();
 
 	Bool blending = mtl.isBlendingEnabled();
 
@@ -250,7 +253,7 @@ void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
 	// Calculate the LOD
 	Vec3 camPos = fr.getFrustumableOrigin();
 
-	F32 dist = (renderable.getRenderableOrigin() - camPos).getLength();
+	F32 dist = (rsn.getSpatial()->getSpatialOrigin() - camPos).getLength();
 	U8 lod = r->calculateLod(dist);
 
 	PassLevelKey key(pass, lod);
@@ -260,11 +263,11 @@ void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
 	const Vao* vao;
 	U32 indicesCount;
 
-	renderable.getRenderableModelPatchBase().getRenderingData(
+	renderable->getRenderableModelPatchBase().getRenderingData(
 		key, vao, prog, indicesCount);
 
 	// Setup shader
-	setupShaderProg(key, fr, *prog, renderable);
+	setupShaderProg(key, fr, *prog, *renderable);
 
 	// Render
 	ANKI_ASSERT(vao->getAttachmentsCount() > 1);

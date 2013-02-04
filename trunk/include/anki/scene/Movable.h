@@ -16,7 +16,7 @@ class PropertyMap;
 
 /// Interface for movable scene nodes
 class Movable: public Object<Movable, SceneAllocator<Movable>>,
-	public Flags<U32>
+	public Flags<U8>
 {
 public:
 	typedef Object<Movable, SceneAllocator<Movable>> Base;

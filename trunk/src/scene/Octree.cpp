@@ -261,18 +261,21 @@ void Octree::calcAabb(U i, U j, U k, const Aabb& paabb, Aabb& out) const
 }
 
 //==============================================================================
-void Octree::doVisibilityTests(const Frustumable& fr, VisibilityTest test,
+void Octree::doVisibilityTests(SceneNode& fsn, VisibilityTest test,
 	VisibilityTestResults& visibles)
 {
-	ANKI_ASSERT(fr.insideFrustum(root.getAabb()));
-	doVisibilityTestsInternal(fr, test, visibles, root);
+	ANKI_ASSERT(fsn.getFrustumable());
+	ANKI_ASSERT(fsn.getFrustumable()->insideFrustum(root.getAabb()));
+	doVisibilityTestsInternal(fsn, test, visibles, root);
 }
 
 //==============================================================================
-void Octree::doVisibilityTestsInternal(const Frustumable& fr, 
+void Octree::doVisibilityTestsInternal(SceneNode& fsn,
 	VisibilityTest test, VisibilityTestResults& visible, OctreeNode& node)
 {
-	// Put my scene nodes
+	const Frustumable& fr = *fsn.getFrustumable();
+
+	// Put node's scene nodes
 	for(SceneNode* sn : node.sceneNodes)
 	{
 		Spatial* sp = sn->getSpatial();
@@ -283,8 +286,8 @@ void Octree::doVisibilityTestsInternal(const Frustumable& fr,
 			Renderable* r = sn->getRenderable();
 			if(r != nullptr && (test & VT_RENDERABLES))
 			{
-				if((test & VT_ONLY_SHADOW_CASTERS) == false
-					|| r->getRenderableMaterial().getShadow())
+				if(!((test & VT_ONLY_SHADOW_CASTERS) == true
+					&& !r->getRenderableMaterial().getShadow()))
 				{
 					visible.renderables.push_back(sn);
 				}
@@ -303,7 +306,7 @@ void Octree::doVisibilityTestsInternal(const Frustumable& fr,
 	{
 		if(onode != nullptr && fr.insideFrustum(onode->getAabb()))
 		{
-			doVisibilityTestsInternal(fr, test, visible, *onode);
+			doVisibilityTestsInternal(fsn, test, visible, *onode);
 		}
 	}
 }

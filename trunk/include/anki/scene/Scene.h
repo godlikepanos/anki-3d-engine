@@ -1,15 +1,15 @@
 #ifndef ANKI_SCENE_SCENE_H
 #define ANKI_SCENE_SCENE_H
 
+#include "anki/scene/Common.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/VisibilityTester.h"
+#include "anki/scene/Sector.h"
 #include "anki/math/Math.h"
 #include "anki/util/Singleton.h"
-#include "anki/scene/Sector.h"
 #include "anki/util/Vector.h"
 #include "anki/core/Timestamp.h"
 #include "anki/physics/PhysWorld.h"
-#include "anki/scene/Common.h"
 
 namespace anki {
 
@@ -119,6 +119,15 @@ public:
 	{
 		return physics;
 	}
+
+	SectorGroup& getSectorGroup()
+	{
+		return sectorGroup;
+	}
+	const SectorGroup& getSectorGroup() const
+	{
+		return sectorGroup;
+	}
 	/// @}
 
 	void update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer);
@@ -142,6 +151,8 @@ private:
 
 	VisibilityTester vtester;
 	PhysWorld physics;
+
+	SectorGroup sectorGroup;
 
 	void doVisibilityTests(Camera& cam, Renderer& r);
 

@@ -5,11 +5,6 @@ namespace anki {
 
 //==============================================================================
 Spatial::~Spatial()
-{
-	if(octreeNode)
-	{
-		octreeNode->removeSceneNode(sceneNode);
-	}
-}
+{}
 
 } // end namespace anki

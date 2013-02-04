@@ -21,6 +21,11 @@ SceneNode::SceneNode(const char* name_, Scene* scene_)
 SceneNode::~SceneNode()
 {
 	scene->unregisterNode(this);
+
+	if(getSpatial() && getSpatial()->octreeNode)
+	{
+		getSpatial()->octreeNode->removeSceneNode(this);
+	}
 }
 
 //==============================================================================

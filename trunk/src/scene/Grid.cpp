@@ -36,13 +36,13 @@ void Grid::removeSceneNode(SceneNode* sn)
 	ANKI_ASSERT(it != sceneNodes.end());
 	sceneNodes.erase(it);
 
-	(*it)->getSpatial()->grid = nullptr;
+	//(*it)->getSpatial()->grid = nullptr;
 }
 
 //==============================================================================
 Bool Grid::placeSceneNode(SceneNode* sn)
 {
-	Spatial* sp = sn->getSpatial();
+	/*Spatial* sp = sn->getSpatial();
 	ANKI_ASSERT(sp);
 
 	if(sp->grid == this)
@@ -54,7 +54,7 @@ Bool Grid::placeSceneNode(SceneNode* sn)
 		sp->grid->removeSceneNode(sn);
 		sp->grid = this;
 		sceneNodes.push_back(sn);
-	}
+	}*/
 
 	return true;
 }

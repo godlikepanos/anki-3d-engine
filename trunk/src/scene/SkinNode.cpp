@@ -131,7 +131,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
 	: 	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Renderable(getSceneAllocator()),
-		Spatial(this, spatialCs)
+		Spatial(spatialCs)
 {
 	skinModelPatch.reset(new SkinModelPatch(modelPatch_, getSceneAllocator()));
 	Renderable::init(*this);

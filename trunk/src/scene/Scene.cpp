@@ -39,7 +39,10 @@ struct UpdateMovablesJob: ThreadJob
 
 //==============================================================================
 Scene::Scene()
-	: alloc(ALLOCATOR_SIZE), frameAlloc(ALLOCATOR_SIZE), nodes(alloc)
+	: alloc(ALLOCATOR_SIZE),
+		frameAlloc(ALLOCATOR_SIZE),
+		nodes(alloc),
+		sectorGroup(this)
 {
 	ambientCol = Vec3(0.1, 0.05, 0.05) * 2;
 }

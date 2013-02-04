@@ -78,7 +78,7 @@ void Ms::run()
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
 		r->getSceneDrawer().render(r->getScene().getActiveCamera(),
-			RenderableDrawer::RS_MATERIAL, 0, *((*it)->getRenderable()));
+			RenderableDrawer::RS_MATERIAL, 0, *(*it));
 	}
 
 	// restore depth

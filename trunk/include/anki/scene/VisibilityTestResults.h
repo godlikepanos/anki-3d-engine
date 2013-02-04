@@ -22,11 +22,10 @@ enum VisibilityTest
 /// Its actually a container for visible entities. It should be per frame
 struct VisibilityTestResults
 {
-	typedef SceneVector<SceneNode*> Renderables;
-	typedef SceneVector<SceneNode*> Lights;
+	typedef SceneVector<SceneNode*> Container;
 
-	Renderables renderables;
-	Lights lights;
+	Container renderables;
+	Container lights;
 
 	VisibilityTestResults(const SceneAllocator<U8>& frameAlloc)
 		: renderables(frameAlloc), lights(frameAlloc)

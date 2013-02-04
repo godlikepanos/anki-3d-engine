@@ -186,7 +186,7 @@ void MainRenderer::takeScreenshotJpeg(const char* filename)
 
 	if(!outfile)
 	{
-		throw ANKI_EXCEPTION("Cannot open file \"" + filename + "\"");
+		throw ANKI_EXCEPTION("Cannot open file: " + filename);
 	}
 
 	// set jpg params

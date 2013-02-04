@@ -8,8 +8,9 @@ namespace anki {
 class PassLevelKey;
 class Renderer;
 class Frustumable;
-class Renderable;
+class SceneNode;
 class ShaderProgram;
+class Renderable;
 
 /// It includes all the functions to render a Renderable
 class RenderableDrawer
@@ -32,7 +33,7 @@ public:
 	{}
 
 	void render(Frustumable& fr,
-		RenderingStage stage, U32 pass, Renderable& renderable);
+		RenderingStage stage, U32 pass, SceneNode& renderableSceneNode);
 
 private:
 	Renderer* r;

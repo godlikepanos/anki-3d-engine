@@ -144,8 +144,8 @@ public:
 	void placeSceneNode(SceneNode* sn);
 
 	/// Do the visibility tests
-	void doVisibilityTests(const Frustumable& fr, VisibilityTest test,
-		VisibilityTestResults& visibles);
+	void doVisibilityTests(SceneNode& frustumableSceneNode,
+		VisibilityTest test, VisibilityTestResults& visibles);
 
 private:
 	Sector* sector;
@@ -162,7 +162,8 @@ private:
 	OctreeNode* place(const Aabb& aabb);
 
 	/// Recursive method
-	void doVisibilityTestsInternal(const Frustumable& fr, 
+	void doVisibilityTestsInternal(
+		SceneNode& frustumableSceneNode,
 		VisibilityTest test,
 		VisibilityTestResults& visibles,
 		OctreeNode& node);
