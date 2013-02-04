@@ -504,10 +504,6 @@ void SceneDebugDrawer::draw(Frustumable& fr) const
 //==============================================================================
 void SceneDebugDrawer::draw(Spatial& x) const
 {
-	/*const CollisionShape& cs = x.getSpatialCollisionShape();
-
-	CollisionDebugDrawer coldraw(dbg);
-	cs.accept(coldraw);*/
 	CollisionDebugDrawer coldraw(dbg);
 	x.getAabb().accept(coldraw);
 }

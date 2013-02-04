@@ -12,10 +12,10 @@ namespace anki {
 ModelPatchNode::ModelPatchNode(const ModelPatch* modelPatch_,
 	const char* name, Scene* scene,
 	U32 movableFlags, Movable* movParent)
-	: 	SceneNode(name, scene),
+	: SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Renderable(getSceneAllocator()),
-		Spatial(this, &obb), modelPatch(modelPatch_)
+		Spatial(&obb), modelPatch(modelPatch_)
 {
 	Renderable::init(*this);
 }

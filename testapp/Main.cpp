@@ -139,23 +139,13 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
-	cam->setLocalTransform(Transform(Vec3(82.0, 5.0, 8.0),
+	cam->setLocalTransform(Transform(Vec3(40.0, 5.0, 8.0),
 		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
 
-	// camera 2
-	PerspectiveCamera* pcam = new PerspectiveCamera("camera1", &scene,
-		Movable::MF_NONE, nullptr);
-	pcam->setAll(
-		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
-		toRad(ang), 0.5, 200.0);
-	pcam->setLocalTransform(Transform(Vec3(100.0, 3.0, 8.0),
-		Mat3(Axisang(toRad(90.0), Vec3(0, 1, 0))),
-		1.0));
-
 	// lights
-#if 1
+#if 0
 	Vec3 lpos(-90.0, 1.2, -32.0);
 	for(int i = 0; i < 50; i++)
 	{
@@ -205,16 +195,19 @@ void init()
 	spot->setShadowEnabled(true);
 #endif
 
+#if 1
 	// Vase point lights
 	Array<Vec3, 4> vaseLightPos = {{Vec3(32.6, 9, -13.2), Vec3(32.6, 9, 10),
 		Vec3(-37.6001, 9, 10), Vec3(-37.6001, 9, -13.2)}};
 	for(U i = 0; i < vaseLightPos.getSize(); i++)
 	{
+		Vec3 lightPos = vaseLightPos[i] * 0.25;
+
 		PointLight* point =
 			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
 			&scene, Movable::MF_NONE, nullptr);
-		point->setRadius(3.5);
-		point->setLocalTranslation(vaseLightPos[i]);
+		point->setRadius(2.0);
+		point->setLocalTranslation(lightPos);
 		point->setDiffuseColor(Vec4(3.0, 0.0, 0.0, 0.0));
 		point->setSpecularColor(Vec4(1.0, 1.0, 0.0, 0.0));
 
@@ -222,14 +215,15 @@ void init()
 			"data/particles/smoke.particles",
 			("pe" + std::to_string(i)).c_str(), &scene,
 			Movable::MF_NONE, nullptr);
-		pe->setLocalTranslation(vaseLightPos[i]);
+		pe->setLocalTranslation(lightPos);
 
 		pe = new ParticleEmitter(
 			"data/particles/fire.particles",
 			("pef" + std::to_string(i)).c_str(), &scene,
 			Movable::MF_NONE, nullptr);
-		pe->setLocalTranslation(vaseLightPos[i]);
+		pe->setLocalTranslation(lightPos);
 	}
+#endif
 
 	/*PointLight* point1 = new PointLight("point1", &scene, Movable::MF_NONE,
 		nullptr);
@@ -244,20 +238,6 @@ void init()
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		1.0));
 
-#if 0
-	// Sponza
-	ModelNode* sponzaModel = new ModelNode(
-		"maps/sponza-crytek/sponza_crytek.mdl",
-		"sponza", &scene, Movable::MF_NONE, nullptr);
-
-	sponzaModel->setLocalScale(0.1);
-
-	// Sectors
-	Aabb sectorAabb;
-	sponzaModel->getModel().getVisibilityShape().toAabb(sectorAabb);
-	scene.sectors.push_back(new Sector(sectorAabb));
-#endif
-
 #if 1
 	ModelNode* sponzaModel = new ModelNode(
 		"data/maps/sponza/sponza.mdl",
@@ -266,7 +246,9 @@ void init()
 	(void)sponzaModel;
 #endif
 
-	initPhysics();
+	(void)sponzaModel;
+
+	//initPhysics();
 
 	/*ParticleEmitter* pe = new ParticleEmitter("todo", "pe", &scene,
 		Movable::MF_NONE, nullptr);
@@ -333,6 +315,11 @@ void mainLoopExtra()
 	if(in.getKey(KC_6))
 	{
 		mover = SceneSingleton::get().findSceneNode("vase_plight0").getMovable();
+	}
+	if(in.getKey(KC_7))
+	{
+		mover = SceneSingleton::get().findSceneNode("sponza").getMovable();
+		std::cout << mover->getWorldTransform() << std::endl;
 	}
 
 	if(in.getKey(KC_L) == 1)
@@ -486,7 +473,7 @@ void initSubsystems(int argc, char* argv[])
 	// Main renderer
 	RendererInitializer initializer;
 	initializer.ms.ez.enabled = true;
-	initializer.dbg.enabled = false;
+	initializer.dbg.enabled = true;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.groundLightEnabled = false;
 	initializer.is.sm.enabled = true;

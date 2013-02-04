@@ -171,9 +171,6 @@ public:
 		return 1;
 	}
 
-	/// Get the center of the renderable. Used in sorting
-	virtual Vec3 getRenderableOrigin() const = 0;
-
 	/// @name Accessors
 	/// @{
 	RenderableVariables::iterator getVariablesBegin()

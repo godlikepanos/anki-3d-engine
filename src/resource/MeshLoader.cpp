@@ -16,7 +16,7 @@ void MeshLoader::load(const char* filename)
 
 		if(!file.is_open())
 		{
-			throw ANKI_EXCEPTION("Cannot open file :" + filename);
+			throw ANKI_EXCEPTION("Cannot open file:" + filename);
 		}
 
 		BinaryStream bs(file.rdbuf());

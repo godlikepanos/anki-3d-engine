@@ -1,14 +1,78 @@
 #include "anki/scene/Sector.h"
 #include "anki/scene/Spatial.h"
 #include "anki/scene/SceneNode.h"
+#include "anki/scene/Renderable.h"
 #include "anki/scene/Light.h"
 #include "anki/scene/VisibilityTestResults.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Scene.h"
 #include "anki/core/Logger.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/core/ThreadPool.h"
 
 namespace anki {
+
+//==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+struct DistanceSortFunctor
+{
+	Vec3 origin;
+
+	Bool operator()(SceneNode* a, SceneNode* b)
+	{
+		ANKI_ASSERT(a->getSpatial() != nullptr && b->getSpatial() != nullptr);
+
+		F32 dist0 = origin.getDistanceSquared(
+			a->getSpatial()->getSpatialOrigin());
+		F32 dist1 = origin.getDistanceSquared(
+			b->getSpatial()->getSpatialOrigin());
+
+		return dist0 < dist1;
+	}
+};
+
+//==============================================================================
+struct MaterialSortFunctor
+{
+	Bool operator()(SceneNode* a, SceneNode* b)
+	{
+		ANKI_ASSERT(a->getRenderable() != nullptr
+			&& b->getRenderable() != nullptr);
+
+		return a->getRenderable()->getRenderableMaterial()
+			< b->getRenderable()->getRenderableMaterial();
+	}
+};
+
+//==============================================================================
+struct DistanceSortJob: ThreadJob
+{
+	U nodesCount;
+	VisibilityTestResults::Container::iterator nodes;
+	Vec3 origin;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		DistanceSortFunctor comp;
+		comp.origin = origin;
+		std::sort(nodes, nodes + nodesCount, comp);
+	}
+};
+
+//==============================================================================
+struct MaterialSortJob: ThreadJob
+{
+	U nodesCount;
+	VisibilityTestResults::Container::iterator nodes;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		std::sort(nodes, nodes + nodesCount, MaterialSortFunctor());
+	}
+};
 
 //==============================================================================
 // Portal                                                                      =
@@ -211,7 +275,7 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 	{
 		Sector* sector = visibleSectors[i];
 
-		sector->octree.doVisibilityTests(*fr, test, testResults[i]);
+		sector->octree.doVisibilityTests(sn, test, testResults[i]);
 
 		renderablesCount += testResults[i].renderables.size();
 		lightsCount += testResults[i].lights.size();
@@ -281,6 +345,32 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 	fr->visible = visible;
 
 	//
+	// Sort
+	//
+
+	ThreadPool& threadPool = ThreadPoolSingleton::get();
+
+	// Sort the renderables in a another thread
+	DistanceSortJob dsjob;
+	dsjob.nodes = visible->renderables.begin();
+	dsjob.nodesCount = visible->renderables.size();
+	dsjob.origin = sp->getSpatialOrigin();
+	threadPool.assignNewJob(0, &dsjob);
+
+	// The rest of the jobs are dummy
+	Array<ThreadJobDummy, ThreadPool::MAX_THREADS>  dummyjobs;
+	for(U i = 1; i < threadPool.getThreadsCount(); i++)
+	{
+		threadPool.assignNewJob(i, &dummyjobs[i]);
+	}
+
+	// Sort the lights in the main thread
+	std::sort(visible->lights.begin(),
+		visible->lights.end(), DistanceSortFunctor{sp->getSpatialOrigin()});
+
+	threadPool.waitForAllJobsToFinish();
+
+	//
 	// Continue with testing the lights
 	//
 
@@ -291,8 +381,7 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 
 		if(l->getShadowEnabled())
 		{
-			Frustumable* lfr = lsn->getFrustumable();
-			ANKI_ASSERT(lfr != nullptr);
+			ANKI_ASSERT(lsn->getFrustumable() != nullptr);
 
 			doVisibilityTests(*lsn, 
 				(VisibilityTest)(VT_RENDERABLES | VT_ONLY_SHADOW_CASTERS),

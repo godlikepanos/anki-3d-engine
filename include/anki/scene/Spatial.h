@@ -17,10 +17,11 @@ class SceneNode;
 /// Spatial "interface" for scene nodes. It indicates scene nodes that need to 
 /// be placed in the scene's octree and they participate in the visibility 
 /// tests
-class Spatial: public Flags<U32>
+class Spatial: public Flags<U8>
 {
 	friend class OctreeNode;
 	friend class Grid;
+	friend class SceneNode;
 
 public:
 	/// Spatial flags
@@ -34,8 +35,8 @@ public:
 	};
 
 	/// Pass the collision shape here so we can avoid the virtuals
-	Spatial(SceneNode* sceneNode_, CollisionShape* cs)
-		: spatialCs(cs), sceneNode(sceneNode_)
+	Spatial(CollisionShape* cs)
+		: spatialCs(cs)
 	{}
 
 	// Remove from current OctreeNode
@@ -91,7 +92,6 @@ public:
 	{
 		timestamp = Timestamp::getTimestamp();
 		spatialCs->toAabb(aabb);
-		origin = (aabb.getMin() + aabb.getMax()) * 0.5;
 	}
 
 protected:
@@ -100,10 +100,7 @@ protected:
 private:
 	U32 timestamp = Timestamp::getTimestamp();
 	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
-	Grid* grid = nullptr;
 	Aabb aabb; ///< A faster shape
-	SceneNode* sceneNode; ///< Know your father
-	Vec3 origin;
 };
 /// @}
 

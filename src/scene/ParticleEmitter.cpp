@@ -224,7 +224,7 @@ ParticleEmitter::ParticleEmitter(
 	// Movable
 	U32 movableFlags, Movable* movParent)
 	:	SceneNode(name, scene),
-		Spatial(this, &aabb),
+		Spatial(&aabb),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Renderable(getSceneAllocator())
 {
@@ -343,7 +343,8 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	// - Calc the instancing stuff
 	//
 	Vec3 aabbmin(std::numeric_limits<F32>::max());
-	Vec3 aabbmax(std::numeric_limits<F32>::min());
+	Vec3 aabbmax(-std::numeric_limits<F32>::max());
+
 	instancingTransformations.clear();
 	Vector<F32> alpha;
 	for(ParticleBase* p : particles)
