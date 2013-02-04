@@ -4,6 +4,7 @@
 #include "anki/collision/Collision.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Octree.h"
+#include "anki/scene/Sector.h"
 #include "anki/resource/Material.h"
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Camera.h"
@@ -540,6 +541,36 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, U32 depth,
 		{
 			draw(*octnode.getChild(i), depth + 1, octree);
 		}
+	}
+}
+
+//==============================================================================
+void SceneDebugDrawer::draw(const Sector& sector)
+{
+	if(!isFlagEnabled(DF_SECTOR))
+	{
+		return;
+	}
+
+	// Draw the sector
+	dbg->setColor(Vec3(0.5, 0.5, 1.0));
+	CollisionDebugDrawer v(dbg);
+	sector.getAabb().accept(v);
+
+	// Draw the portals
+	dbg->setColor(Vec3(0.0, 0.0, 1.0));
+	for(const Portal* portal : sector.getSectorGroup().getPortals())
+	{
+		if(portal->sectors[0] == &sector || portal->sectors[1] == &sector)
+		{
+			portal->shape.accept(v);
+		}
+	}
+
+	// Draw the octree
+	if(isFlagEnabled(DF_OCTREE))
+	{
+		draw(sector.getOctree());
 	}
 }
 

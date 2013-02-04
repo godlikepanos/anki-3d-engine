@@ -32,4 +32,12 @@
 #define ANKI_FILE __FILE__
 #define ANKI_FUNC __func__
 
+#if defined(__GNUC__)
+#	define ANKI_LIKELY(x) __builtin_expect((x), 1)
+#	define ANKI_UNLIKELY(x) __builtin_expect((x), 0)
+#else
+#	define ANKI_LIKELY(x) ((x) == 1)
+#	define ANKI_UNLIKELY(x) ((x) == 1)
+#endif
+
 #endif

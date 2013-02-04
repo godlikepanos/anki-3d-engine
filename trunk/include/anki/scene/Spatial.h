@@ -72,7 +72,12 @@ public:
 		return timestamp;
 	}
 
-	virtual const Vec3& getSpatialOrigin() const = 0;
+	/// Used for sorting spatials. In most object the origin is the center of
+	/// the bounding volume but for cameras the origin is the eye point
+	virtual const Vec3& getSpatialOrigin() const
+	{
+		return origin;
+	}
 
 	OctreeNode& getOctreeNode()
 	{
@@ -92,6 +97,7 @@ public:
 	{
 		timestamp = Timestamp::getTimestamp();
 		spatialCs->toAabb(aabb);
+		origin = (aabb.getMax() + aabb.getMin()) * 0.5;
 	}
 
 protected:
@@ -101,6 +107,7 @@ private:
 	U32 timestamp = Timestamp::getTimestamp();
 	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
 	Aabb aabb; ///< A faster shape
+	Vec3 origin; ///< Cached value
 };
 /// @}
 

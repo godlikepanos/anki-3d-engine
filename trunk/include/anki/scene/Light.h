@@ -117,16 +117,6 @@ public:
 	}
 	/// @}
 
-	/// @name Spatial virtuals
-	/// @{
-
-	/// Override Spatial::getSpatialOrigin
-	const Vec3& getSpatialOrigin() const
-	{
-		return getWorldTransform().getOrigin();
-	}
-	/// @}
-
 private:
 	LightType type;
 	Vec4 color = Vec4(1.0);

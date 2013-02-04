@@ -68,10 +68,14 @@ void Dbg::run()
 		}
 	}
 
-	/*for(const Sector* sector : scene.sectors)
+	// Draw sectors
+	for(const Sector* sector : scene.getSectorGroup().getSectors())
 	{
-		sceneDrawer->draw(sector->getOctree());
-	}*/
+		if(sector->isVisible())
+		{
+			sceneDrawer->draw(*sector);
+		}
+	}
 
 	scene.getPhysics().debugDraw();
 
