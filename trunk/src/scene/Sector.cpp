@@ -115,7 +115,9 @@ Bool Sector::placeSceneNode(SceneNode* sn)
 
 //==============================================================================
 SectorGroup::SectorGroup(Scene* scene_)
-	: scene(scene_)
+	:	scene(scene_),
+		sectors(scene->getAllocator()),
+		portals(scene->getAllocator())
 {
 	ANKI_ASSERT(scene != nullptr);
 }
