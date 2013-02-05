@@ -68,7 +68,7 @@ private:
 
 	U32 windowWidth, windowHeight;
 
-	Bool drawToDefaultFbo;
+	F32 renderingQuality;
 
 	std::unique_ptr<Deformer> deformer;
 

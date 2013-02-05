@@ -15,7 +15,7 @@ class ShaderProgram;
 
 /// Post-processing stage.This stage is divided into 2 two parts. The first
 /// happens before blending stage and the second after
-class Pps: public SwitchableRenderingPass
+class Pps: public RenderingPass
 {
 public:
 	Pps(Renderer* r);
@@ -53,6 +53,11 @@ public:
 	{
 		return fai;
 	}
+
+	void setDrawToDefaultFbo(Bool x)
+	{
+		drawToDefaultFbo = x;
+	}
 	/// @}
 
 private:
@@ -68,6 +73,7 @@ private:
 	Texture fai;
 
 	Bool drawToDefaultFbo;
+	/// Used only if rendering to default FBO
 	U32 width, height;
 
 	void initInternal(const RendererInitializer& initializer);

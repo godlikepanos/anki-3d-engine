@@ -109,7 +109,7 @@ struct VisibilityTestJob: ThreadJob
 				}
 			}
 
-			sp->enableFlag(Spatial::SF_VISIBLE_CAMERA);
+			sp->enableFlags(Spatial::SF_VISIBLE_CAMERA);
 		} // end for
 
 		VisibilityInfo& vinfo = frustumable->getVisibilityInfo();
@@ -165,7 +165,7 @@ struct VisibilityTestJob: ThreadJob
 				continue;
 			}
 
-			sp->enableFlag(Spatial::SF_VISIBLE_LIGHT);
+			sp->enableFlags(Spatial::SF_VISIBLE_LIGHT);
 
 			Renderable* r = node->getRenderable();
 			if(r)
@@ -217,7 +217,7 @@ void VisibilityTester::test(Frustumable& ref, Scene& scene, Renderer& r)
 
 		if(sp)
 		{
-			sp->disableFlag(Spatial::SF_VISIBLE_ANY);
+			sp->disableFlags(Spatial::SF_VISIBLE_ANY);
 		}
 	}
 

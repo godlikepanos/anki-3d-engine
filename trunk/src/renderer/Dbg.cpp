@@ -15,11 +15,7 @@ Dbg::~Dbg()
 void Dbg::init(const Renderer::Initializer& initializer)
 {
 	enabled = initializer.dbg.enabled;
-
-	if(!enabled)
-	{
-		return;
-	}
+	enableFlags(DF_ALL);
 
 	try
 	{
@@ -62,7 +58,7 @@ void Dbg::run()
 	{
 		SceneNode* node = *it;
 		Spatial* sp = node->getSpatial();
-		if(sp)
+		if(flagsEnabled(DF_SPATIAL) && sp)
 		{
 			sceneDrawer->draw(*node);
 		}
@@ -73,11 +69,23 @@ void Dbg::run()
 	{
 		if(sector->isVisible())
 		{
-			sceneDrawer->draw(*sector);
+			if(flagsEnabled(DF_SPATIAL))
+			{
+				sceneDrawer->draw(*sector);
+			}
+
+			if(flagsEnabled(DF_OCTREE))
+			{
+				sceneDrawer->draw(sector->getOctree());
+			}
 		}
 	}
 
-	scene.getPhysics().debugDraw();
+	// Physics
+	if(flagsEnabled(DF_PHYSICS))
+	{
+		scene.getPhysics().debugDraw();
+	}
 
 	drawer->flush();
 }

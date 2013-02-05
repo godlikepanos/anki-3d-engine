@@ -35,14 +35,14 @@ void Movable::updateWorldTransform()
 {
 	prevWTrf = wTrf;
 	const Movable* parent = getParent();
-	const Bool dirty = isFlagEnabled(MF_TRANSFORM_DIRTY);
+	const Bool dirty = flagsEnabled(MF_TRANSFORM_DIRTY);
 
 	// If dirty then update world transform
 	if(dirty)
 	{
 		if(parent)
 		{
-			if(isFlagEnabled(MF_IGNORE_LOCAL_TRANSFORM))
+			if(flagsEnabled(MF_IGNORE_LOCAL_TRANSFORM))
 			{
 				wTrf = parent->getWorldTransform();
 			}
@@ -74,7 +74,7 @@ void Movable::updateWorldTransform()
 	}
 
 	// Now it's a good time to cleanse parent
-	disableFlag(MF_TRANSFORM_DIRTY);
+	disableFlags(MF_TRANSFORM_DIRTY);
 }
 
 } // end namespace anki

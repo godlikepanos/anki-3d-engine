@@ -20,10 +20,9 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 	ANKI_LOGI("Initializing main renderer...");
 	initGl();
 
-	const F32 renderingQuality = initializer_.renderingQuality;
+	renderingQuality = initializer_.renderingQuality;
 	windowWidth = initializer_.width;
 	windowHeight = initializer_.height;
-	drawToDefaultFbo = (renderingQuality > 0.9 && !initializer_.dbg.enabled);
 
 	// init the offscreen Renderer
 	//
@@ -31,17 +30,7 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 	initializer.width *= renderingQuality;
 	initializer.height *= renderingQuality;
 
-	if(drawToDefaultFbo)
-	{
-		initializer.pps.drawToDefaultFbo = true;
-		initializer.is.drawToDefaultFbo = !initializer.pps.enabled;
-	}
-	else
-	{
-		initializer.pps.drawToDefaultFbo = false;
-		initializer.is.drawToDefaultFbo = false;
-		sProg.load("shaders/Final.glsl");
-	}
+	sProg.load("shaders/Final.glsl");
 
 	Renderer::init(initializer);
 	dbg.init(initializer);
@@ -53,12 +42,6 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 //==============================================================================
 void MainRenderer::initGl()
 {
-	/*glewExperimental = GL_TRUE;
-	if(glewInit() != GLEW_OK)
-	{
-		throw ANKI_EXCEPTION("GLEW initialization failed");
-	}*/
-
 	// Ignore the first error
 	glGetError();
 
@@ -97,6 +80,10 @@ void MainRenderer::initGl()
 //==============================================================================
 void MainRenderer::render(Scene& scene)
 {
+	Bool drawToDefaultFbo = renderingQuality > 0.9 && !dbg.getEnabled();
+
+	pps.setDrawToDefaultFbo(drawToDefaultFbo);
+
 	Renderer::render(scene);
 
 	if(dbg.getEnabled())
