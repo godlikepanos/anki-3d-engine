@@ -15,36 +15,44 @@ public:
 	Flags()
 	{}
 
-	Flags(T mask_)
-		: mask(mask_)
+	Flags(T bitmask_)
+		: bitmask(bitmask_)
 	{}
 
 	/// @name Flag manipulation
 	/// @{
-	void enableFlag(Value flag)
+	void enableFlags(Value mask)
 	{
-		mask |= flag;
+		bitmask |= mask;
 	}
-	void enableFlag(Value flag, Bool enable)
+	void enableFlags(Value mask, Bool enable)
 	{
-		mask = (enable) ? mask | flag : mask & ~flag;
+		bitmask = (enable) ? bitmask | mask : bitmask & ~mask;
 	}
-	void disableFlag(Value flag)
+
+	void disableFlags(Value mask)
 	{
-		mask &= ~flag;
+		bitmask &= ~mask;
 	}
-	Bool isFlagEnabled(Value flag) const
+
+	void switchFlags(Value mask)
 	{
-		return mask & flag;
+		bitmask ^= mask;
 	}
-	Value getFlagsBitmask() const
+
+	Bool flagsEnabled(Value mask) const
 	{
-		return mask;
+		return bitmask & mask;
+	}
+
+	Value getFlagsBitbitmask() const
+	{
+		return bitmask;
 	}
 	/// @}
 
 protected:
-	Value mask = 0;
+	Value bitmask = 0;
 };
 
 } // end namespace anki

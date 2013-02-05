@@ -161,7 +161,7 @@ protected:
 	void movableMarkUpdated()
 	{
 		timestamp = Timestamp::getTimestamp();
-		enableFlag(MF_TRANSFORM_DIRTY);
+		enableFlags(MF_TRANSFORM_DIRTY);
 	}
 };
 /// @}

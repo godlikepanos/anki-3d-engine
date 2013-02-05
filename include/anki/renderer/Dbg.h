@@ -9,9 +9,21 @@
 namespace anki {
 
 /// Debugging stage
-class Dbg: public SwitchableRenderingPass
+class Dbg: public SwitchableRenderingPass, public Flags<U8>
 {
 public:
+	enum DebugFlag
+	{
+		DF_NONE = 0,
+		DF_SPATIAL = 1 << 0,
+		DF_FRUSTUMABLE = 1 << 1,
+		DF_SECTOR = 1 << 2,
+		DF_OCTREE = 1 << 3,
+		DF_PHYSICS = 1 << 4,
+		DF_ALL = DF_SPATIAL | DF_FRUSTUMABLE | DF_SECTOR | DF_OCTREE
+			| DF_PHYSICS
+	};
+
 	Dbg(Renderer* r_)
 		: SwitchableRenderingPass(r_)
 	{}

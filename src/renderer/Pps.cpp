@@ -2,12 +2,13 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Ssao.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
 //==============================================================================
 Pps::Pps(Renderer* r_)
-	: SwitchableRenderingPass(r_), hdr(r_), ssao(r_), bl(r_)
+	: RenderingPass(r_), hdr(r_), ssao(r_), bl(r_)
 {}
 
 //==============================================================================
@@ -17,33 +18,21 @@ Pps::~Pps()
 //==============================================================================
 void Pps::initInternal(const RendererInitializer& initializer)
 {
-	enabled = initializer.pps.enabled;
-	if(!enabled)
-	{
-		return;
-	}
-
 	ssao.init(initializer);
 	hdr.init(initializer);
-	drawToDefaultFbo = initializer.pps.drawToDefaultFbo;
+
+	width = initializer.width / initializer.renderingQuality;
+	height = initializer.height / initializer.renderingQuality;
 
 	// FBO
-	if(!drawToDefaultFbo)
-	{
-		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
-			GL_FLOAT, fai);
+	Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
+		GL_FLOAT, fai);
 
-		fbo.create();
-		fbo.setColorAttachments({&fai});
-		if(!fbo.isComplete())
-		{
-			throw ANKI_EXCEPTION("Fbo not complete");
-		}
-	}
-	else
+	fbo.create();
+	fbo.setColorAttachments({&fai});
+	if(!fbo.isComplete())
 	{
-		width = initializer.width / initializer.renderingQuality;
-		height = initializer.height / initializer.renderingQuality;
+		throw ANKI_EXCEPTION("Fbo not complete");
 	}
 
 	// SProg
@@ -78,8 +67,6 @@ void Pps::init(const Renderer::Initializer& initializer)
 //==============================================================================
 void Pps::run()
 {
-	ANKI_ASSERT(enabled);
-
 	GlStateSingleton::get().disable(GL_BLEND);
 
 	// First SSAO because it depends on MS where HDR depends on IS

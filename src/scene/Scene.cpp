@@ -104,18 +104,14 @@ void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& r)
 		Spatial* sp = n->getSpatial();
 		if(sp && sp->getSpatialTimestamp() == Timestamp::getTimestamp())
 		{
-			for(Sector* sector : sectors)
-			{
-				if(sector->placeSceneNode(n))
-				{
-					//ANKI_LOGI("Placing: " << n->getName());
-					continue;
-				}
-			}
+			sectorGroup.placeSceneNode(n);
 		}
 	}
 
 	doVisibilityTests(*mainCam, r);
+
+	sectorGroup.doVisibilityTests(*mainCam,
+		VisibilityTest(VT_RENDERABLES | VT_LIGHTS), &r);
 
 #if 0
 	for(SceneNode* n : nodes)

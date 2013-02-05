@@ -288,9 +288,6 @@ void Is::init(const RendererInitializer& initializer)
 //==============================================================================
 void Is::initInternal(const RendererInitializer& initializer)
 {
-	drawToDefaultFbo = initializer.is.drawToDefaultFbo;
-	width = initializer.width / initializer.renderingQuality;
-	height = initializer.height / initializer.renderingQuality;
 	groundLightEnabled = initializer.is.groundLightEnabled;
 
 	//
@@ -473,24 +470,11 @@ void Is::lightPass()
 	sm.run(&shadowCasters[0], spotsShadowCount, shadowmapLayers);
 
 	// Prepare state
-	if(drawToDefaultFbo)
-	{
-		ANKI_ASSERT(!r->getPps().getEnabled());
-		Fbo::bindDefault();
-		r->clearAfterBindingFbo(
-			GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		GlStateSingleton::get().setViewport(
-			0, 0, width, height);
-	}
-	else
-	{
-		ANKI_ASSERT(r->getPps().getEnabled());
-		fbo.bind();
-		r->clearAfterBindingFbo(
-			GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		GlStateSingleton::get().setViewport(
-			0, 0, r->getWidth(), r->getHeight());
-	}
+	fbo.bind();
+	r->clearAfterBindingFbo(
+		GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	GlStateSingleton::get().setViewport(
+		0, 0, r->getWidth(), r->getHeight());
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
 

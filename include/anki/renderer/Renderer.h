@@ -43,7 +43,6 @@ struct RendererInitializer
 			U32 resolution = 512;
 			U32 maxLights = 4;
 		} sm;
-		Bool drawToDefaultFbo = false;
 		Bool groundLightEnabled = true;
 	} is;
 
@@ -77,7 +76,6 @@ struct RendererInitializer
 			F32 sideBlurFactor = 1.0;
 		} bl;
 		Bool enabled = false;
-		Bool drawToDefaultFbo = false;
 	} pps;
 
 	// Dbg
@@ -302,8 +300,6 @@ protected:
 	/// Height of the rendering. Don't confuse with the window width
 	U32 height;
 	Scene* scene; ///< Current scene
-	/// Max color attachments an FBO can accept
-	static int maxColorAtachments;
 	RenderableDrawer sceneDrawer;
 	F32 lodDistance; ///< Distance that used to calculate the LOD
 

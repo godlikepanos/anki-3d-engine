@@ -344,6 +344,22 @@ void mainLoopExtra()
 			!MainRendererSingleton::get().getDbg().getDepthTestEnabled());
 	}
 
+	if(in.getKey(KC_F1) == 1)
+	{
+		MainRendererSingleton::get().getDbg().setEnabled(
+			!MainRendererSingleton::get().getDbg().getEnabled());
+	}
+	if(in.getKey(KC_F2) == 1)
+	{
+		MainRendererSingleton::get().getDbg().switchFlags(
+			Dbg::DF_SPATIAL);
+	}
+	if(in.getKey(KC_F3) == 1)
+	{
+		MainRendererSingleton::get().getDbg().switchFlags(
+			Dbg::DF_PHYSICS);
+	}
+
 	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
 	if(in.getKey(KC_DOWN)) mover->rotateLocalX(-ang);
 	if(in.getKey(KC_LEFT)) mover->rotateLocalY(ang);

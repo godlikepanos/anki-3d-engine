@@ -463,12 +463,6 @@ void PhysicsDebugDrawer::draw3dText(const btVector3& /*location*/,
 //==============================================================================
 void SceneDebugDrawer::draw(SceneNode& node)
 {
-	// Nothing to render?
-	if(getFlagsBitmask() == 0)
-	{
-		return;
-	}
-
 	Movable* mv = node.getMovable();
 	if(mv)
 	{
@@ -480,14 +474,14 @@ void SceneDebugDrawer::draw(SceneNode& node)
 	}
 
 	Frustumable* fr;
-	if(isFlagEnabled(DF_FRUSTUMABLE) && (fr = node.getFrustumable()))
+	if((fr = node.getFrustumable()))
 	{
 		draw(*fr);
 	}
 
 	Spatial* sp;
-	if(isFlagEnabled(DF_SPATIAL) && (sp = node.getSpatial())
-		&& sp->isFlagEnabled(Spatial::SF_VISIBLE_CAMERA))
+	if((sp = node.getSpatial())
+		&& sp->flagsEnabled(Spatial::SF_VISIBLE_CAMERA))
 	{
 		draw(*sp);
 	}
@@ -547,11 +541,6 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, U32 depth,
 //==============================================================================
 void SceneDebugDrawer::draw(const Sector& sector)
 {
-	if(!isFlagEnabled(DF_SECTOR))
-	{
-		return;
-	}
-
 	// Draw the sector
 	dbg->setColor(Vec3(0.5, 0.5, 1.0));
 	CollisionDebugDrawer v(dbg);
@@ -565,12 +554,6 @@ void SceneDebugDrawer::draw(const Sector& sector)
 		{
 			portal->shape.accept(v);
 		}
-	}
-
-	// Draw the octree
-	if(isFlagEnabled(DF_OCTREE))
-	{
-		draw(sector.getOctree());
 	}
 }
 

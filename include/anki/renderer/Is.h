@@ -85,9 +85,6 @@ private:
 	/// Opt because many ask for it
 	Camera* cam;
 
-	Bool drawToDefaultFbo;
-	U32 width, height;
-
 	/// If enabled the ground emmits a light
 	Bool groundLightEnabled;
 	/// Keep the prev light dir to avoid uniform block updates

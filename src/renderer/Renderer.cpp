@@ -85,10 +85,7 @@ void Renderer::render(Scene& scene_)
 	ms.run();
 	is.run();
 	bs.run();
-	if(pps.getEnabled())
-	{
-		pps.run();
-	}
+	pps.run();
 
 	ANKI_CHECK_GL_ERROR();
 	++framesNum;
