@@ -93,7 +93,7 @@ public:
 
 	/// The derived class has to manually set when the collision shape got
 	/// updated
-	void spatialMarkUpdated()
+	void spatialMarkForUpdate()
 	{
 		timestamp = Timestamp::getTimestamp();
 		spatialCs->toAabb(aabb);

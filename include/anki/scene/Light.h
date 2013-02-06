@@ -143,7 +143,7 @@ public:
 	void setRadius(const F32 x)
 	{
 		sphereW.setRadius(x);
-		spatialMarkUpdated();
+		spatialMarkForUpdate();
 	}
 
 	const Sphere& getSphere() const
@@ -161,7 +161,7 @@ public:
 	{
 		Movable::movableUpdate();
 		sphereW.setCenter(getWorldTransform().getOrigin());
-		spatialMarkUpdated();
+		spatialMarkForUpdate();
 	}
 	/// @}
 
@@ -256,7 +256,7 @@ public:
 		viewMat = Mat4(getWorldTransform().getInverse());
 		viewProjectionMat = projectionMat * viewMat;
 
-		spatialMarkUpdated();
+		spatialMarkForUpdate();
 	}
 	/// @}
 
@@ -286,7 +286,7 @@ private:
 		projectionMat = frustum.calculateProjectionMatrix();
 		viewProjectionMat = projectionMat * viewMat;
 
-		spatialMarkUpdated();
+		spatialMarkForUpdate();
 		frustumableMarkUpdated();
 	}
 };

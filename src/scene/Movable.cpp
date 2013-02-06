@@ -13,7 +13,7 @@ Movable::Movable(U32 flags_, Movable* parent, PropertyMap& pmap,
 	pmap.addNewProperty(
 		new ReadPointerProperty<Transform>("worldTransform", &wTrf));
 
-	movableMarkUpdated();
+	movableMarkForUpdate();
 }
 
 //==============================================================================
@@ -67,7 +67,7 @@ void Movable::updateWorldTransform()
 		// If parent is dirty then make children dirty as well
 		if(dirty)
 		{
-			(*it)->movableMarkUpdated();
+			(*it)->movableMarkForUpdate();
 		}
 
 		(*it)->updateWorldTransform();

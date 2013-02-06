@@ -68,6 +68,8 @@ void Scene::unregisterNode(SceneNode* node)
 //==============================================================================
 void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& r)
 {
+	frameAlloc.reset();
+
 	physics.update(prevUpdateTime, crntTime);
 
 #if 0

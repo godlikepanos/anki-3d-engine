@@ -195,7 +195,7 @@ void init()
 	spot->setShadowEnabled(true);
 #endif
 
-#if 1
+#if 0
 	// Vase point lights
 	F32 x = 8.5;
 	F32 y = 2.25;
@@ -251,16 +251,16 @@ void init()
 
 	(void)sponzaModel;
 
-	initPhysics();
+	//initPhysics();
 
 	// Sectors
 	SectorGroup& sgroup = scene.getSectorGroup();
 
-	Sector* sectorA = sgroup.createNewSector(Aabb(Vec3(-100), Vec3(100)));
-	Sector* sectorB = sgroup.createNewSector(Aabb(Vec3(-10), Vec3(10)));
+	Sector* sectorA = sgroup.createNewSector(Aabb(Vec3(-10), Vec3(10)));
+	Sector* sectorB = sgroup.createNewSector(Aabb(Vec3(-5), Vec3(5)));
 
-	sgroup.createNewPortal(sectorA, sectorB, Obb(Vec3(0.0), 
-		Mat3::getIdentity(), Vec3(2.0, 2.0, 0.0)));
+	sgroup.createNewPortal(sectorA, sectorB, Obb(Vec3(0.0, 1.0, 0.0),
+		Mat3::getIdentity(), Vec3(2.0, 2.0, 1.0)));
 }
 
 //==============================================================================
@@ -359,6 +359,16 @@ void mainLoopExtra()
 		MainRendererSingleton::get().getDbg().switchFlags(
 			Dbg::DF_PHYSICS);
 	}
+	if(in.getKey(KC_F4) == 1)
+	{
+		MainRendererSingleton::get().getDbg().switchFlags(
+			Dbg::DF_SECTOR);
+	}
+	if(in.getKey(KC_F5) == 1)
+	{
+		MainRendererSingleton::get().getDbg().switchFlags(
+			Dbg::DF_OCTREE);
+	}
 
 	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
 	if(in.getKey(KC_DOWN)) mover->rotateLocalX(-ang);
@@ -387,9 +397,12 @@ void mainLoopExtra()
 	}
 
 
-	mover->rotateLocalY(-ang * in.getMousePosition().x() * mouseSensivity * 
-		MainRendererSingleton::get().getAspectRatio());
-	mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
+	if(in.getMousePosition() != Vec2(0.0))
+	{
+		mover->rotateLocalY(-ang * in.getMousePosition().x() * mouseSensivity *
+			MainRendererSingleton::get().getAspectRatio());
+		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
+	}
 
 	execStdinScpripts();
 }
@@ -403,11 +416,6 @@ void mainLoop()
 	mainLoopTimer.start();
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar crntTime = prevUpdateTime;
-
-	std::cout << sizeof(SpotLight) << " " << sizeof(Light) << " "
-		<< sizeof(Frustumable) << " " << sizeof(VisibilityInfo) << " "
-		<< sizeof(SceneNode) << " " << sizeof(Movable) << " "
-		<< sizeof(Spatial) << std::endl;
 
 	while(1)
 	{

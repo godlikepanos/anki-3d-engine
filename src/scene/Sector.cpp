@@ -155,6 +155,8 @@ Portal* SectorGroup::createNewPortal(Sector* a, Sector* b,
 	out->sectors[1] = b;
 	out->shape = collisionShape;
 
+	portals.push_back(out);
+
 	return out;
 }
 
