@@ -265,7 +265,6 @@ void Octree::doVisibilityTests(SceneNode& fsn, VisibilityTest test,
 	VisibilityTestResults& visibles)
 {
 	ANKI_ASSERT(fsn.getFrustumable());
-	ANKI_ASSERT(fsn.getFrustumable()->insideFrustum(root.getAabb()));
 	doVisibilityTestsInternal(fsn, test, visibles, root);
 }
 

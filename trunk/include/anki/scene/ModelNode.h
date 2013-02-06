@@ -61,7 +61,7 @@ public:
 		Movable::movableUpdate();
 		obb = modelPatch->getBoundingShape().getTransformed(
 			getWorldTransform());
-		spatialMarkUpdated();
+		spatialMarkForUpdate();
 	}
 	/// @}
 

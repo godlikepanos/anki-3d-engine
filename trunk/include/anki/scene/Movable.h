@@ -52,22 +52,22 @@ public:
 	void setLocalTransform(const Transform& x)
 	{
 		lTrf = x;
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 	void setLocalTranslation(const Vec3& x)
 	{
 		lTrf.setOrigin(x);
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 	void setLocalRotation(const Mat3& x)
 	{
 		lTrf.setRotation(x);
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 	void setLocalScale(F32 x)
 	{
 		lTrf.setScale(x);
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 
 	const Transform& getWorldTransform() const
@@ -91,40 +91,40 @@ public:
 	void rotateLocalX(F32 angDegrees)
 	{
 		lTrf.getRotation().rotateXAxis(angDegrees);
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 	void rotateLocalY(F32 angDegrees)
 	{
 		lTrf.getRotation().rotateYAxis(angDegrees);
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 	void rotateLocalZ(F32 angDegrees)
 	{
 		lTrf.getRotation().rotateZAxis(angDegrees);
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 	void moveLocalX(F32 distance)
 	{
 		Vec3 x_axis = lTrf.getRotation().getColumn(0);
 		lTrf.getOrigin() += x_axis * distance;
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 	void moveLocalY(F32 distance)
 	{
 		Vec3 y_axis = lTrf.getRotation().getColumn(1);
 		lTrf.getOrigin() += y_axis * distance;
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 	void moveLocalZ(F32 distance)
 	{
 		Vec3 z_axis = lTrf.getRotation().getColumn(2);
 		lTrf.getOrigin() += z_axis * distance;
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 	void scale(F32 s)
 	{
 		lTrf.getScale() *= s;
-		movableMarkUpdated();
+		movableMarkForUpdate();
 	}
 	/// @}
 
@@ -158,7 +158,7 @@ protected:
 	/// is true. Then it moves to the children.
 	void updateWorldTransform();
 
-	void movableMarkUpdated()
+	void movableMarkForUpdate()
 	{
 		timestamp = Timestamp::getTimestamp();
 		enableFlags(MF_TRANSFORM_DIRTY);

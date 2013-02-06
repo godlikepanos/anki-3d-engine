@@ -226,7 +226,8 @@ ParticleEmitter::ParticleEmitter(
 	:	SceneNode(name, scene),
 		Spatial(&aabb),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
-		Renderable(getSceneAllocator())
+		Renderable(getSceneAllocator()),
+		particles(getSceneAllocator())
 {
 	// Load resource
 	particleEmitterResource.load(filename);
@@ -299,6 +300,8 @@ void ParticleEmitter::createParticlesSimulation(Scene* scene)
 	binit.shape = collShape.get();
 	binit.group = PhysWorld::CG_PARTICLE;
 	binit.mask = PhysWorld::CG_MAP;
+
+	particles.reserve(maxNumOfParticles);
 
 	for(U i = 0; i < maxNumOfParticles; i++)
 	{
@@ -403,7 +406,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	{
 		aabb = Aabb(Vec3(0.0), Vec3(0.01));
 	}
-	spatialMarkUpdated();
+	spatialMarkForUpdate();
 
 	if(alphaRenderableVar)
 	{

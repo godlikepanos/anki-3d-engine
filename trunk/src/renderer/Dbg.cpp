@@ -67,9 +67,9 @@ void Dbg::run()
 	// Draw sectors
 	for(const Sector* sector : scene.getSectorGroup().getSectors())
 	{
-		if(sector->isVisible())
+		//if(sector->isVisible())
 		{
-			if(flagsEnabled(DF_SPATIAL))
+			if(flagsEnabled(DF_SECTOR))
 			{
 				sceneDrawer->draw(*sector);
 			}
