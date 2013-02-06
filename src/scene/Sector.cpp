@@ -316,7 +316,7 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 	visible->lights.reserve(lightsCount);
 
 	// Iterate previous test results and append to the combined one
-	if(r != nullptr)
+	if(r == nullptr)
 	{
 		for(VisibilityTestResults& testResult : testResults)
 		{
