@@ -48,26 +48,30 @@ public:
 	PtrSize getAllocatedSize() const;
 
 	/// Allocate memory
+	/// @return The allocated memory or nullptr on failure
 	void* allocate(PtrSize size) throw();
 
 	/// Free memory in StackMemoryPool. If the ptr is not the last allocation
 	/// then nothing happens and the method returns false
+	///
+	/// @param[in] ptr Memory block to deallocate
+	/// @return True if the deallocation actually happened and false otherwise
 	Bool free(void* ptr) throw();
 
 	/// Reinit the pool. All existing allocated memory will be lost
 	void reset();
 
 private:
-	/// Pre-allocated memory memory chunk
+	/// Pre-allocated memory chunk
 	U8* memory = nullptr;
 
-	/// Size of the allocated memory chunk
+	/// Size of the pre-allocated memory chunk
 	PtrSize memsize = 0;
 
 	/// Points to the memory and more specifically to the top of the stack
 	std::atomic<U8*> top = {nullptr};
 
-	/// Alignment
+	/// Alignment of allocations
 	U32 alignmentBits;
 
 	/// Calculate tha aligned size of an allocation
