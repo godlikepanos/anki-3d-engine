@@ -267,8 +267,10 @@ ParticleEmitter::~ParticleEmitter()
 {
 	for(ParticleBase* part : particles)
 	{
-		delete part;
+		ANKI_DELETE(part, getSceneAllocator());
 	}
+
+	ANKI_DELETE(collShape, getSceneAllocator());
 }
 
 //==============================================================================
@@ -294,10 +296,10 @@ void ParticleEmitter::movableUpdate()
 //==============================================================================
 void ParticleEmitter::createParticlesSimulation(Scene* scene)
 {
-	collShape.reset(new btSphereShape(particle.size));
+	collShape = ANKI_NEW(btSphereShape, getSceneAllocator(), particle.size);
 
 	RigidBody::Initializer binit;
-	binit.shape = collShape.get();
+	binit.shape = collShape;
 	binit.group = PhysWorld::CG_PARTICLE;
 	binit.mask = PhysWorld::CG_MAP;
 
@@ -307,7 +309,7 @@ void ParticleEmitter::createParticlesSimulation(Scene* scene)
 	{
 		binit.mass = getRandom(particle.mass, particle.massDeviation);
 
-		Particle* part = new Particle(
+		Particle* part = ANKI_NEW(Particle, getSceneAllocator(),
 			(getName() + std::to_string(i)).c_str(), scene,
 			Movable::MF_NONE, nullptr,
 			&scene->getPhysics(), binit);
@@ -325,7 +327,7 @@ void ParticleEmitter::createParticlesSimpleSimulation(Scene* scene)
 {
 	for(U i = 0; i < maxNumOfParticles; i++)
 	{
-		ParticleSimple* part = new ParticleSimple(
+		ParticleSimple* part = ANKI_NEW(ParticleSimple, getSceneAllocator(),
 			(getName() + std::to_string(i)).c_str(),
 			scene, Movable::MF_NONE, nullptr);
 
@@ -348,8 +350,16 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	Vec3 aabbmin(std::numeric_limits<F32>::max());
 	Vec3 aabbmax(-std::numeric_limits<F32>::max());
 
-	instancingTransformations.clear();
-	Vector<F32> alpha;
+	// Create the transformations vector
+	instancingTransformations = ANKI_NEW(SceneFrameVector<Transform>,
+		getSceneFrameAllocator(), getSceneFrameAllocator());
+
+	instancingTransformations->reserve(particles.size());
+
+	// Create the alpha vectors
+	SceneFrameVector<F32> alpha(getSceneFrameAllocator());
+	alpha.reserve(particles.size());
+
 	for(ParticleBase* p : particles)
 	{
 		if(p->isDead())
@@ -385,7 +395,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			trf.setScale(
 				p->size + (lifePercent * particle.sizeAnimation));
 
-			instancingTransformations.push_back(trf);
+			instancingTransformations->push_back(trf);
 
 			// Set alpha
 			if(alphaRenderableVar)
@@ -397,7 +407,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 		}
 	}
 
-	instancesCount = instancingTransformations.size();
+	instancesCount = instancingTransformations->size();
 	if(instancesCount != 0)
 	{
 		aabb = Aabb(aabbmin - particle.size, aabbmax + particle.size);

@@ -96,7 +96,7 @@ private:
 class ModelNode: public SceneNode, public Movable
 {
 public:
-	typedef PtrVector<ModelPatchNode> ModelPatchNodes;
+	typedef SceneVector<ModelPatchNode*> ModelPatchNodes;
 
 	/// @name Constructors/Destructor
 	/// @{

@@ -249,18 +249,23 @@ void init()
 	(void)sponzaModel;
 #endif
 
-	(void)sponzaModel;
-
 	//initPhysics();
 
 	// Sectors
 	SectorGroup& sgroup = scene.getSectorGroup();
 
-	Sector* sectorA = sgroup.createNewSector(Aabb(Vec3(-10), Vec3(10)));
+	Sector* sectorA = sgroup.createNewSector(
+		Aabb(Vec3(-38, -3, -20), Vec3(38, 27, 20)));
 	Sector* sectorB = sgroup.createNewSector(Aabb(Vec3(-5), Vec3(5)));
 
-	sgroup.createNewPortal(sectorA, sectorB, Obb(Vec3(0.0, 1.0, 0.0),
-		Mat3::getIdentity(), Vec3(2.0, 2.0, 1.0)));
+	sgroup.createNewPortal(sectorA, sectorB, Obb(Vec3(0.0, 3.0, 0.0),
+		Mat3::getIdentity(), Vec3(1.0, 2.0, 2.0)));
+
+	Sector* sectorC = sgroup.createNewSector(
+		Aabb(Vec3(-30, -10, -35), Vec3(30, 10, -25)));
+
+	sgroup.createNewPortal(sectorA, sectorC, Obb(Vec3(-1.1, 2.0, -11.0),
+		Mat3::getIdentity(), Vec3(1.3, 1.8, 0.5)));
 }
 
 //==============================================================================
@@ -368,6 +373,10 @@ void mainLoopExtra()
 	{
 		MainRendererSingleton::get().getDbg().switchFlags(
 			Dbg::DF_OCTREE);
+	}
+	if(in.getKey(KC_F12) == 1)
+	{
+		MainRendererSingleton::get().getDbg().switchDepthTestEnabled();
 	}
 
 	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);

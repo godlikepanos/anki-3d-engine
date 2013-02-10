@@ -218,7 +218,7 @@ public:
 	/// Overrides Renderable::getRenderableWorldTransforms
 	const Transform* getRenderableWorldTransforms() const
 	{
-		return &instancingTransformations[0];
+		return &(*instancingTransformations)[0];
 	}
 
 	/// Overrides Renderable::getRenderableInstancesCount
@@ -237,7 +237,7 @@ public:
 
 private:
 	ParticleEmitterResourcePointer particleEmitterResource;
-	std::unique_ptr<btCollisionShape> collShape = nullptr;
+	btCollisionShape* collShape = nullptr;
 	SceneVector<ParticleBase*> particles;
 	F32 timeLeftForNextEmission;
 	/// The resource
@@ -249,7 +249,9 @@ private:
 
 	U32 instancesCount; ///< AKA alive count
 
-	Vector<Transform> instancingTransformations;
+	/// The transformations. Calculated on frameUpdate() and consumed on
+	/// rendering.
+	SceneFrameVector<Transform>* instancingTransformations;
 
 	RenderableVariable* alphaRenderableVar = nullptr;
 

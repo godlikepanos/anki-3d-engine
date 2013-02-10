@@ -19,10 +19,18 @@ enum VisibilityTest
 	VT_LIGHTS = 1 << 2
 };
 
+/// Visible by
+enum VisibleBy
+{
+	VB_NONE = 0,
+	VB_CAMERA = 1 << 0,
+	VB_LIGHT = 1 << 1
+};
+
 /// Its actually a container for visible entities. It should be per frame
 struct VisibilityTestResults
 {
-	typedef SceneVector<SceneNode*> Container;
+	typedef SceneFrameVector<SceneNode*> Container;
 
 	Container renderables;
 	Container lights;

@@ -7,7 +7,6 @@
 #include "anki/scene/Sector.h"
 #include "anki/math/Math.h"
 #include "anki/util/Singleton.h"
-#include "anki/util/Vector.h"
 #include "anki/core/Timestamp.h"
 #include "anki/physics/PhysWorld.h"
 
@@ -134,8 +133,6 @@ public:
 
 	SceneNode& findSceneNode(const char* name);
 	SceneNode* tryFindSceneNode(const char* name);
-
-	PtrVector<Sector> sectors;
 
 private:
 	SceneAllocator<U8> alloc;

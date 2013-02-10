@@ -32,6 +32,9 @@ class Sector
 	friend class SectorGroup;
 
 public:
+	/// Used to reserve some space on the portals vector to save memory
+	static const U AVERAGE_PORTALS_PER_SECTOR = 3;
+
 	/// Default constructor
 	Sector(SectorGroup* group, const Aabb& box);
 
@@ -54,9 +57,9 @@ public:
 		return octree;
 	}
 
-	Bool isVisible() const
+	U8 getVisibleByMask() const
 	{
-		return visible;
+		return visibleBy;
 	}
 
 	/// Called when a node was moved or a change in shape happened
@@ -66,7 +69,13 @@ private:
 	SectorGroup* group; ///< Know your father
 	Octree octree;
 	SceneVector<Portal*> portals;
-	Bool8 visible;
+	U8 visibleBy;
+
+	/// Sector does not take ownership of the portal
+	void addNewPortal(Portal* portal);
+
+	/// Remove a Portal from the portals container
+	void removePortal(Portal* portal);
 };
 
 /// Sector group. This is supposed to represent the whole scene
@@ -118,6 +127,9 @@ private:
 	Scene* scene; ///< Keep it here to access various allocators
 	SceneVector<Sector*> sectors;
 	SceneVector<Portal*> portals;
+
+	void doVisibilityTestsInternal(SceneNode& fr, VisibilityTest test,
+		Renderer* r, VisibleBy visibleBy);
 };
 
 /// @}

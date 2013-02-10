@@ -542,7 +542,21 @@ void SceneDebugDrawer::draw(const OctreeNode& octnode, U32 depth,
 void SceneDebugDrawer::draw(const Sector& sector)
 {
 	// Draw the sector
-	dbg->setColor(Vec3(0.5, 0.5, 1.0));
+	if(sector.getVisibleByMask() == VB_NONE)
+	{
+		dbg->setColor(Vec3(1.0, 0.5, 0.5));
+	}
+	else
+	{
+		if(sector.getVisibleByMask() & VB_CAMERA)
+		{
+			dbg->setColor(Vec3(0.5, 1.0, 0.5));
+		}
+		else
+		{
+			dbg->setColor(Vec3(0.5, 0.5, 1.0));
+		}
+	}
 	CollisionDebugDrawer v(dbg);
 	sector.getAabb().accept(v);
 

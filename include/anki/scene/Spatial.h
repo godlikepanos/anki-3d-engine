@@ -79,15 +79,13 @@ public:
 		return origin;
 	}
 
-	OctreeNode& getOctreeNode()
+	OctreeNode* getOctreeNode()
 	{
-		ANKI_ASSERT(octreeNode != nullptr && "Not placed yet");
-		return *octreeNode;
+		return octreeNode;
 	}
-	const OctreeNode& getOctreeNode() const
+	const OctreeNode* getOctreeNode() const
 	{
-		ANKI_ASSERT(octreeNode != nullptr && "Not placed yet");
-		return *octreeNode;
+		return octreeNode;
 	}
 	/// @}
 
