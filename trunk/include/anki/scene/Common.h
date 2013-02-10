@@ -19,6 +19,10 @@ typedef std::basic_string<char, std::char_traits<char>,
 template<typename T>
 using SceneVector = Vector<T, SceneAllocator<T>>;
 
+/// The same as SceneVector. Different name to show the difference
+template<typename T>
+using SceneFrameVector = Vector<T, SceneAllocator<T>>;
+
 } // end namespace anki
 
 #endif

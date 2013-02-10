@@ -93,7 +93,10 @@ Portal::Portal()
 Sector::Sector(SectorGroup* group_, const Aabb& box)
 	: group(group_), octree(this, box, 3),
 		portals(group->getScene().getAllocator())
-{}
+{
+	// Reserve some space for portals
+	portals.reserve(AVERAGE_PORTALS_PER_SECTOR);
+}
 
 //==============================================================================
 Bool Sector::placeSceneNode(SceneNode* sn)
@@ -107,6 +110,28 @@ Bool Sector::placeSceneNode(SceneNode* sn)
 
 	octree.placeSceneNode(sn);
 	return true;
+}
+
+//==============================================================================
+void Sector::addNewPortal(Portal* portal)
+{
+	ANKI_ASSERT(portal);
+	ANKI_ASSERT(
+		std::find(portals.begin(), portals.end(), portal) == portals.end()
+		&& "Portal found in the container");
+
+	portals.push_back(portal);
+}
+
+//==============================================================================
+void Sector::removePortal(Portal* portal)
+{
+	ANKI_ASSERT(portal);
+	SceneVector<Portal*>::iterator it =
+		std::find(portals.begin(), portals.end(), portal);
+
+	ANKI_ASSERT(it != portals.end());
+	portals.erase(it);
 }
 
 //==============================================================================
@@ -157,6 +182,9 @@ Portal* SectorGroup::createNewPortal(Sector* a, Sector* b,
 
 	portals.push_back(out);
 
+	a->addNewPortal(out);
+	b->addNewPortal(out);
+
 	return out;
 }
 
@@ -166,14 +194,29 @@ void SectorGroup::placeSceneNode(SceneNode* sn)
 	ANKI_ASSERT(sn != nullptr);
 	Spatial* sp = sn->getSpatial();
 	ANKI_ASSERT(sp);
-	const Aabb& spAabb = sp->getAabb();
+	const Vec3& spPos = sp->getSpatialOrigin();
 
 	// Find the candidates first. Sectors overlap, chose the smaller(??!!??)
 	Sector* sector = nullptr;
 	for(Sector* s : sectors)
 	{
-		// Spatial inside the sector?
-		if(s->getAabb().collide(spAabb))
+		// Find if the spatia's position is inside the sector
+		Bool inside = true;
+		for(U i = 0; i < 3; i++)
+		{
+			if(spPos[i] > s->getAabb().getMax()[i]
+				|| spPos[i] < s->getAabb().getMin()[i])
+			{
+				inside = false;
+				continue;
+			}
+		}
+
+		if(!inside)
+		{
+			// continue
+		}
+		else
 		{
 			// No other candidate?
 			if(sector == nullptr)
@@ -194,7 +237,7 @@ void SectorGroup::placeSceneNode(SceneNode* sn)
 					sector = s;
 				}
 			}
-		}
+		} // end if inside
 	}
 
 	// Ask the octree to place it
@@ -212,31 +255,45 @@ void SectorGroup::placeSceneNode(SceneNode* sn)
 void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 	Renderer* r)
 {
-	Frustumable* fr = sn.getFrustumable();
-	ANKI_ASSERT(fr != nullptr && "sn should be frustumable");
-
 	// Set all sectors to not visible
 	for(Sector* sector : sectors)
 	{
-		sector->visible = false;
+		sector->visibleBy = VB_NONE;
+	}
+
+	doVisibilityTestsInternal(sn, test, r, VB_CAMERA);
+}
+
+//==============================================================================
+void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
+	Renderer* r, VisibleBy visibleBy)
+{
+	Frustumable* fr = sn.getFrustumable();
+	ANKI_ASSERT(fr != nullptr && "sn should be frustumable");
+	fr->visible = nullptr;
+
+	Spatial* sp = sn.getSpatial();
+	ANKI_ASSERT(sp != nullptr && "sn should be spatial as well");
+
+	// sn is not placed in any octree
+	if(sp->getOctreeNode() == nullptr)
+	{
+		return;
 	}
 
 	//
 	// Find the visible sectors
 	//
 
-	SceneVector<Sector*> visibleSectors(scene->getFrameAllocator());
-
-	Spatial* sp = sn.getSpatial();
-	ANKI_ASSERT(sp != nullptr);
+	SceneFrameVector<Sector*> visibleSectors(scene->getFrameAllocator());
 
 	// Find the sector that contains the frustumable
-	Sector& containerSector = sp->getOctreeNode().getOctree().getSector();
-	containerSector.visible = true;
+	Sector& containerSector = sp->getOctreeNode()->getOctree().getSector();
+	containerSector.visibleBy |= visibleBy;
 	visibleSectors.push_back(&containerSector);
 
-	// Loop all portals and add other sectors
-	for(Portal* portal : portals)
+	// Loop all sector portals and add other sectors
+	for(Portal* portal : containerSector.portals)
 	{
 		if(ANKI_UNLIKELY(!portal->open))
 		{
@@ -268,9 +325,9 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 			// Portal is visible
 			if(fr->insideFrustum(portal->shape))
 			{
-				if(r == nullptr || r->doVisibilityTests(portal->shape))
+				/*if(r == nullptr || r->doVisibilityTests(portal->shape))*/
 				{
-					testAgainstSector->visible = true;
+					testAgainstSector->visibleBy |= visibleBy;
 					visibleSectors.push_back(testAgainstSector);
 				}
 			}
@@ -389,7 +446,7 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 	threadPool.waitForAllJobsToFinish();
 
 	//
-	// Continue with testing the lights
+	// Continue by testing the lights
 	//
 
 	for(SceneNode* lsn : visible->lights)
@@ -401,9 +458,9 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 		{
 			ANKI_ASSERT(lsn->getFrustumable() != nullptr);
 
-			doVisibilityTests(*lsn, 
+			doVisibilityTestsInternal(*lsn,
 				(VisibilityTest)(VT_RENDERABLES | VT_ONLY_SHADOW_CASTERS),
-				nullptr);
+				nullptr, VB_LIGHT);
 		}
 	}
 }

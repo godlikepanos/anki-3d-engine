@@ -2,7 +2,6 @@
 #define ANKI_SCENE_OCTREE_H
 
 #include "anki/collision/Aabb.h"
-#include "anki/util/Vector.h"
 #include "anki/util/Array.h"
 #include "anki/scene/Common.h"
 #include "anki/scene/VisibilityTestResults.h"

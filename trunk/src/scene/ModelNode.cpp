@@ -12,7 +12,7 @@ namespace anki {
 ModelPatchNode::ModelPatchNode(const ModelPatch* modelPatch_,
 	const char* name, Scene* scene,
 	U32 movableFlags, Movable* movParent)
-	: SceneNode(name, scene),
+	:	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Renderable(getSceneAllocator()),
 		Spatial(&obb), modelPatch(modelPatch_)
@@ -29,16 +29,20 @@ ModelNode::ModelNode(const char* modelFname,
 	const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent)
 	: 	SceneNode(name, scene),
-		Movable(movableFlags, movParent, *this, getSceneAllocator())
+		Movable(movableFlags, movParent, *this, getSceneAllocator()),
+		patches(getSceneAllocator())
 {
 	model.load(modelFname);
 
-	uint i = 0;
+	patches.reserve(model->getModelPatches().size());
+
+	U i = 0;
 	for(const ModelPatch* patch : model->getModelPatches())
 	{
 		std::string name_ = name + std::to_string(i);
 
-		ModelPatchNode* mpn = new ModelPatchNode(patch, name_.c_str(),
+		ModelPatchNode* mpn = ANKI_NEW(ModelPatchNode, getSceneAllocator(),
+			patch, name_.c_str(),
 			scene, Movable::MF_IGNORE_LOCAL_TRANSFORM, this);
 
 		patches.push_back(mpn);
@@ -48,6 +52,11 @@ ModelNode::ModelNode(const char* modelFname,
 
 //==============================================================================
 ModelNode::~ModelNode()
-{}
+{
+	for(ModelPatchNode* patch : patches)
+	{
+		ANKI_DELETE(patch, getSceneAllocator());
+	}
+}
 
 } // end namespace anki

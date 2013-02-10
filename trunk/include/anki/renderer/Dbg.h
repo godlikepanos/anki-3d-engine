@@ -41,6 +41,10 @@ public:
 	{
 		depthTest = enable;
 	}
+	void switchDepthTestEnabled()
+	{
+		depthTest = !depthTest;
+	}
 
 	DebugDrawer& getDebugDrawer()
 	{
