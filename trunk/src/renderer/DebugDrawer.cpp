@@ -33,23 +33,23 @@ DebugDrawer::DebugDrawer()
 
 	vao.attachArrayBufferVbo(
 		&vbo, prog->findAttributeVariable("color"), 1, GL_FLOAT,
-		false, sizeof(Vertex), sizeof(U32));
+		false, sizeof(Vertex), sizeof(Vec3));
 
 	GLint loc =
 		prog->findAttributeVariable("modelViewProjectionMat").getLocation();
 
 	vao.attachArrayBufferVbo(
 		&vbo, loc, 4, GL_FLOAT, false, sizeof(Vertex), 
-		2 * sizeof(Vec4));
+		1 * sizeof(Vec4));
 	vao.attachArrayBufferVbo(
 		&vbo, loc + 1, 4, GL_FLOAT, false, sizeof(Vertex), 
-		3 * sizeof(Vec4));
+		2 * sizeof(Vec4));
 	vao.attachArrayBufferVbo(
 		&vbo, loc + 2, 4, GL_FLOAT, false, sizeof(Vertex), 
-		4 * sizeof(Vec4));
+		3 * sizeof(Vec4));
 	vao.attachArrayBufferVbo(
 		&vbo, loc + 3, 4, GL_FLOAT, false, sizeof(Vertex), 
-		5 * sizeof(Vec4));
+		4 * sizeof(Vec4));
 
 	vertexPointer = 0;
 	mMat.setIdentity();
@@ -112,10 +112,10 @@ void DebugDrawer::flush()
 //==============================================================================
 void DebugDrawer::pushBackVertex(const Vec3& pos)
 {
-	U32 color = (U8)(crntCol.x() * 255.0);
-	color = (color << 8) | (U8)(crntCol.y() * 255.0);
+	U32 color = (U8)(1.0 * 255.0);
 	color = (color << 8) | (U8)(crntCol.z() * 255.0);
-	color = (color << 8) | (U8)(1.0 * 255.0);
+	color = (color << 8) | (U8)(crntCol.y() * 255.0);
+	color = (color << 8) | (U8)(crntCol.x() * 255.0);
 
 	union
 	{

@@ -8,7 +8,7 @@ out vec3 vColor;
 
 void main()
 {
-	vColor = unpackSnorm4x8(color).rgb;
+	vColor = unpackUnorm4x8(color).rgb;
 	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
 }
 

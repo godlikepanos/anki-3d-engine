@@ -139,14 +139,14 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
-	cam->setLocalTransform(Transform(Vec3(20.0, 5.0, 8.0),
+	cam->setLocalTransform(Transform(Vec3(20.0, 5.0, 0.0),
 		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
 
 	// lights
-#if 0
-	Vec3 lpos(-90.0, 1.2, -32.0);
+#if 1
+	Vec3 lpos(-24.0, 0.1, -10.0);
 	for(int i = 0; i < 50; i++)
 	{
 		for(int j = 0; j < 10; j++)
@@ -155,18 +155,18 @@ void init()
 
 			PointLight* point = new PointLight(name.c_str(), &scene,
 				Movable::MF_NONE, nullptr);
-			point->setRadius(2.0);
+			point->setRadius(0.5);
 			point->setDiffuseColor(Vec4(randFloat(6.0) - 2.0, 
 				randFloat(6.0) - 2.0, randFloat(6.0) - 2.0, 0.0));
 			point->setSpecularColor(Vec4(randFloat(6.0) - 3.0, 
 				randFloat(6.0) - 3.0, randFloat(6.0) - 3.0, 0.0));
 			point->setLocalTranslation(lpos);
 
-			lpos.z() += 7.0;
+			lpos.z() += 2.0;
 		}
 
-		lpos.x() += 3.5;
-		lpos.z() = -32;
+		lpos.x() += 0.93;
+		lpos.z() = -10;
 	}
 #endif
 
@@ -195,7 +195,7 @@ void init()
 	spot->setShadowEnabled(true);
 #endif
 
-#if 0
+#if 1
 	// Vase point lights
 	F32 x = 8.5;
 	F32 y = 2.25;
@@ -239,7 +239,7 @@ void init()
 	horse = new ModelNode("data/models/horse/horse.mdl", "horse", &scene,
 		Movable::MF_NONE, nullptr);
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
-		1.0));
+		0.7));
 
 #if 1
 	ModelNode* sponzaModel = new ModelNode(
@@ -453,7 +453,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
