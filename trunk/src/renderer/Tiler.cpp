@@ -175,6 +175,8 @@ void Tiler::initInternal(Renderer* r_)
 	prog.load(ShaderProgramResource::createSrcCodeToCache(
 		"shaders/TilerMinMax.glsl", pps.c_str()).c_str());
 
+	depthMapUniform = &(prog->findUniformVariable("depthMap"));
+
 	// Create FBO
 	Renderer::createFai(TILES_X_COUNT, TILES_Y_COUNT, GL_RG32UI,
 		GL_RG_INTEGER, GL_UNSIGNED_INT, fai);
@@ -186,6 +188,29 @@ void Tiler::initInternal(Renderer* r_)
 	{
 		throw ANKI_EXCEPTION("FBO not complete");
 	}
+
+	// Create PBO
+	pbo.create(GL_PIXEL_PACK_BUFFER, 
+		TILES_X_COUNT * TILES_Y_COUNT * 2 * sizeof(F32), nullptr);
+}
+
+//==============================================================================
+void Tiler::runMinMax(const Texture& depthMap)
+{
+	// Issue the min/max job
+	fbo.bind();
+	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
+	r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
+	prog->bind();
+	depthMapUniform->set(depthMap);
+
+	r->drawQuad();
+
+	// Issue the async pixel read
+	pbo.bind();
+	glReadPixels(0, 0, TILES_X_COUNT, TILES_Y_COUNT, GL_RG_INTEGER,
+		GL_UNSIGNED_INT, nullptr);
+	pbo.unbind();
 }
 
 //==============================================================================
@@ -229,15 +254,6 @@ void Tiler::updateTiles(Camera& cam, const Texture& depthMap)
 	update2Planes(cam, pixels);
 
 	prevCam = &cam;
-
-	/*for(U i = 0; i < TILES_Y_COUNT; i++)
-		for(U j = 0; j < TILES_X_COUNT; j++)
-		{
-			std::cout << tiles[j][i].planesWSpace[0].getNormal() << " "
-				<< tiles[j][i].planesWSpace[0].getOffset() << std::endl;
-		}
-
-	std::cout << std::endl;*/
 #else
 	Vector<F32> allpixels;
 

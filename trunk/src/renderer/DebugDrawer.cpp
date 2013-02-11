@@ -32,8 +32,8 @@ DebugDrawer::DebugDrawer()
 		false, sizeof(Vertex), 0);
 
 	vao.attachArrayBufferVbo(
-		&vbo, prog->findAttributeVariable("color"), 3, GL_FLOAT,
-		false, sizeof(Vertex), sizeof(Vec4));
+		&vbo, prog->findAttributeVariable("color"), 1, GL_FLOAT,
+		false, sizeof(Vertex), sizeof(U32));
 
 	GLint loc =
 		prog->findAttributeVariable("modelViewProjectionMat").getLocation();
@@ -88,7 +88,7 @@ void DebugDrawer::end()
 	if(vertexPointer % 2 != 0)
 	{
 		// push back the previous vertex to close the loop
-		pushBackVertex(clientVerts[vertexPointer].position.xyz());
+		pushBackVertex(clientVerts[vertexPointer].positionAndColor.xyz());
 	}
 }
 
@@ -112,8 +112,20 @@ void DebugDrawer::flush()
 //==============================================================================
 void DebugDrawer::pushBackVertex(const Vec3& pos)
 {
-	clientVerts[vertexPointer].position = Vec4(pos, 1.0);
-	clientVerts[vertexPointer].color = Vec4(crntCol, 1.0);
+	U32 color = (U8)(crntCol.x() * 255.0);
+	color = (color << 8) | (U8)(crntCol.y() * 255.0);
+	color = (color << 8) | (U8)(crntCol.z() * 255.0);
+	color = (color << 8) | (U8)(1.0 * 255.0);
+
+	union
+	{
+		F32 f;
+		U32 u;
+	} uni;
+
+	uni.u = color;
+
+	clientVerts[vertexPointer].positionAndColor = Vec4(pos, uni.f);
 	clientVerts[vertexPointer].matrix = mvpMat.getTransposed();
 
 	++vertexPointer;

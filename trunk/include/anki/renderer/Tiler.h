@@ -3,8 +3,7 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/collision/Collision.h"
-#include "anki/gl/Fbo.h"
-#include "anki/gl/Texture.h"
+#include "anki/gl/Gl.h"
 #include "anki/resource/Resource.h"
 #include "anki/core/Timestamp.h"
 
@@ -12,6 +11,7 @@ namespace anki {
 
 class Renderer;
 class Camera;
+class ShaderProgramUniformVariable;
 
 /// Tiler used for visibility tests
 class Tiler
@@ -29,6 +29,9 @@ public:
 	~Tiler();
 
 	void init(Renderer* r);
+
+	/// Issue the GPU job
+	void runMinMax(const Texture& depthMap);
 
 	/// Update the tiles before doing visibility tests
 	void updateTiles(Camera& cam, const Texture& depthMap);
@@ -71,8 +74,13 @@ private:
 	/// Main FBO
 	Fbo fbo;
 
+	/// PBO
+	Pbo pbo;
+
 	/// Main shader program
 	ShaderProgramResourcePointer prog;
+
+	const ShaderProgramUniformVariable* depthMapUniform;
 
 	Renderer* r;
 	const Camera* prevCam;
