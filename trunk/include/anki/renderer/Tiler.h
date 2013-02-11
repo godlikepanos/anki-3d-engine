@@ -16,8 +16,7 @@ class ShaderProgramUniformVariable;
 /// Tiler used for visibility tests
 class Tiler
 {
-	friend struct UpdateTiles2PlanesJob;
-	friend struct UpdateTiles4PlanesPerspectiveCameraJob;
+	friend struct UpdateTilesPlanesPerspectiveCameraJob;
 
 public:
 	// Config. These values affect the size of the uniform blocks and keep in
@@ -34,7 +33,7 @@ public:
 	void runMinMax(const Texture& depthMap);
 
 	/// Update the tiles before doing visibility tests
-	void updateTiles(Camera& cam, const Texture& depthMap);
+	void updateTiles(Camera& cam);
 
 	/// Test against all tiles
 	Bool testAll(const CollisionShape& cs,
@@ -86,10 +85,6 @@ private:
 	const Camera* prevCam;
 
 	void initInternal(Renderer* r);
-
-	void update4Planes(Camera& cam, void* jobs);
-	void waitUpdate4Planes();
-	void update2Planes(Camera& cam, const PixelArray& pixels);
 
 	Bool testInternal(const CollisionShape& cs, const Tile& tile, 
 		const U startPlane) const;

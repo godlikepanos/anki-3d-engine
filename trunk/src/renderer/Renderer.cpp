@@ -81,8 +81,9 @@ void Renderer::render(Scene& scene_)
 
 	viewProjectionMat = cam.getViewProjectionMatrix();
 
-	tiler.updateTiles(scene->getActiveCamera(), ms.getDepthFai());
+	tiler.updateTiles(scene->getActiveCamera());
 	ms.run();
+	tiler.runMinMax(ms.getDepthFai());
 	is.run();
 	bs.run();
 	pps.run();
