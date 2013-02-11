@@ -111,6 +111,19 @@ public:
 	/// @param[in] size The size in bytes we want to write
 	void write(void* buff, U32 offset, U32 size);
 
+	/// Read the containts of the buffer
+	/// @param[out] outBuff The buffer to copy from BO
+	void read(void* outBuff)
+	{
+		read(outBuff, 0, sizeInBytes);
+	}
+
+	/// Read the containts of the buffer
+	/// @param[in] outBuff The buffer to copy from BO
+	/// @param[in] offset The offset
+	/// @param[in] size The size in bytes we want to write
+	void read(void* buff, U32 offset, U32 size);
+
 	/// Map part of the buffer
 	void* map(U32 offset, U32 length, GLuint flags);
 

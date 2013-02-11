@@ -118,4 +118,17 @@ void BufferObject::write(void* buff, U32 offset, U32 size)
 #endif
 }
 
+//==============================================================================
+void BufferObject::read(void* outBuff, U32 offset, U32 size)
+{
+	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(usage != GL_STATIC_DRAW);
+	ANKI_ASSERT(offset + size <= sizeInBytes);
+	bind();
+
+	void* mapped = map(offset, size, GL_MAP_READ_BIT);
+	memcpy(outBuff, mapped, size);
+	unmap();
+}
+
 } // end namespace anki
