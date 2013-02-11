@@ -6,6 +6,7 @@
 
 #include "anki/gl/BufferObject.h"
 #include "anki/gl/Ubo.h"
+#include "anki/gl/Pbo.h"
 #include "anki/gl/Fbo.h"
 #include "anki/gl/GlException.h"
 #include "anki/gl/GlState.h"

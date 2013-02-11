@@ -3,6 +3,7 @@
 #include "anki/util/Exception.h"
 #include <limits>
 #include <cstdlib>
+#include <cstring>
 
 namespace anki {
 
@@ -129,6 +130,11 @@ void StackMemoryPool::reset()
 {
 	// memory is nullptr if moved
 	ANKI_ASSERT(memory != nullptr);
+
+#if ANKI_DEBUG
+	// Invalidate the memory
+	memset(memory, 0xCC, memsize);
+#endif
 
 	top = memory;
 }
