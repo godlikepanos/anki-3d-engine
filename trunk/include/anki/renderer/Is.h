@@ -90,6 +90,13 @@ private:
 	/// Keep the prev light dir to avoid uniform block updates
 	Vec3 prevGroundLightDir = Vec3(0.0);
 
+	/// @name For drawing a quad into the active framebuffer
+	/// @{
+	Vbo quadPositionsVbo; ///< The VBO for quad positions
+	Vbo quadVertIndecesVbo; ///< The VBO for quad array buffer elements
+	Vao quadVao; ///< This VAO is used everywhere except material stage
+	/// @}
+
 	/// Called by init
 	void initInternal(const RendererInitializer& initializer);
 
