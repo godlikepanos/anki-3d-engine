@@ -39,12 +39,13 @@ void Renderer::init(const RendererInitializer& initializer)
 	bs.init(initializer);
 
 	// quad VBOs and VAO
-	F32 quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0}, {0.0, 0.0},
-		{1.0, 0.0}}; /// XXX change them to NDC
+	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
+		{-1.0, -1.0}, {1.0, -1.0}};
 	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords),
 		quadVertCoords, GL_STATIC_DRAW);
 
-	U16 quadVertIndeces[2][3] = {{0, 1, 3}, {1, 2, 3}}; // 2 triangles
+	static const U16 quadVertIndeces[2][3] = 
+		{{0, 1, 3}, {1, 2, 3}}; // 2 triangles
 	quadVertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces),
 		quadVertIndeces, GL_STATIC_DRAW);
 
