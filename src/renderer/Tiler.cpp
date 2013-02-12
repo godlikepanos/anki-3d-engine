@@ -291,4 +291,24 @@ Bool Tiler::testAll(const CollisionShape& cs,
 	return false;
 }
 
+//==============================================================================
+Bool Tiler::testAll(const CollisionShape& cs,
+ 	U32* tileIds, U32& tilesCount, const Bool skipNearPlaneCheck) const
+{
+	U startPlane = (skipNearPlaneCheck) ? 1 : 0;
+	tilesCount = 0;
+
+	for(U i = 0; i < tiles1d.getSize(); i++)
+	{
+		const Tile& tile = tiles1d[i];
+
+		if(testInternal(cs, tile, startPlane))
+		{
+			tileIds[tilesCount++] = i;
+		}
+	}
+
+	return tilesCount > 0;
+}
+
 } // end namespace anki

@@ -4,14 +4,13 @@
 /// looking in the vertex position. The vertex positions of the quad are from 
 /// 0.0 to 1.0 for both axis.
 
-/// the vert coords are {1.0,1.0}, {0.0,1.0}, {0.0,0.0}, {1.0,0.0}
+/// the vert coords are {{1.0, 1.0}, {-1.0, 1.0}, {-1.0, -1.0}, {1.0, -1.0}}
 layout(location = 0) in vec2 position;
 
 out vec2 vTexCoords;
 
 void main()
 {
-	vTexCoords = position;
-	vec2 vertPosNdc = position * 2.0 - 1.0;
-	gl_Position = vec4(vertPosNdc, 0.0, 1.0);
+	vTexCoords = position * 0.5 + 0.5;
+	gl_Position = vec4(position, 0.0, 1.0);
 }

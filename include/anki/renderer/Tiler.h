@@ -38,6 +38,11 @@ public:
 	/// Test against all tiles
 	Bool testAll(const CollisionShape& cs,
  		const Bool skipNearPlaneCheck = false) const;
+
+	/// Test against all tiles and return affected tiles
+	Bool testAll(const CollisionShape& cs,
+ 		U32* tileIds, U32& tilesCount, 
+		const Bool skipNearPlaneCheck = false) const;
  
 	/// Test on a specific tile
 	Bool test(const CollisionShape& cs, 
