@@ -5,7 +5,6 @@
 #pragma anki start vertexShader
 
 #pragma anki include "shaders/IsLpVertex.glsl"
-#pragma anki include "shaders/LinearDepth.glsl"
 
 #pragma anki start fragmentShader
 
