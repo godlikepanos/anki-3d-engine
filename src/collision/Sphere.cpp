@@ -7,37 +7,27 @@ namespace anki {
 //==============================================================================
 F32 Sphere::testPlane(const Plane& p) const
 {
-	const Sphere& s = *this;
-	F32 dist = p.test(s.getCenter());
+	F32 dist = p.test(center);
 
-#if 0
-	if(dist > s.getRadius())
+	F32 out = dist - radius;
+	if(out > 0)
 	{
-		return dist - s.getRadius();
-	}
-	else if(-dist > s.getRadius())
-	{
-		return dist + s.getRadius();
+		// Do nothing
 	}
 	else
 	{
-		return 0.0;
+		out = dist + radius;
+		if(out < 0)
+		{
+			// Do nothing
+		}
+		else
+		{
+			out = 0.0;
+		}
 	}
-#else
-	F32 opt = dist - s.getRadius();
-	if(opt > 0)
-	{
-		return opt;
-	}
-	else if((opt = dist + s.getRadius()) < 0)
-	{
-		return opt;
-	}
-	else
-	{
-		return 0.0;
-	}
-#endif
+
+	return out;
 }
 
 //==============================================================================
