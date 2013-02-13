@@ -16,7 +16,7 @@ struct ShaderCommonUniforms
 //==============================================================================
 void Ssao::createFbo(Fbo& fbo, Texture& fai, F32 width, F32 height)
 {
-	Renderer::createFai(width, height, GL_RED, GL_RED, GL_FLOAT, fai);
+	Renderer::createFai(width, height, GL_RED, GL_RED, GL_UNSIGNED_BYTE, fai);
 	fai.setFiltering(Texture::TFT_LINEAR);
 
 	fbo.create();

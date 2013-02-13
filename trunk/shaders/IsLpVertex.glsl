@@ -4,8 +4,11 @@
 
 layout(location = 0) in vec2 position;
 
+uniform vec4 limitsOfNearPlane;
+
 out vec2 vTexCoords;
 flat out int vInstanceId;
+out vec2 vLimitsOfNoearPlaneOpt;
 
 void main()
 {
@@ -20,4 +23,7 @@ void main()
 	vTexCoords = (position + ij) * SIZES;
 	vec2 vertPosNdc = vTexCoords * 2.0 - 1.0;
 	gl_Position = vec4(vertPosNdc, 0.0, 1.0);
+
+	vLimitsOfNoearPlaneOpt = 
+		(vTexCoords * limitsOfNearPlane.zw) - limitsOfNearPlane.xy;
 }

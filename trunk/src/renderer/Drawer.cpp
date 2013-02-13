@@ -220,7 +220,7 @@ void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
 	/* Instancing */
 	U32 instancesCount = renderable->getRenderableInstancesCount();
 
-	if(instancesCount < 1)
+	if(ANKI_UNLIKELY(instancesCount < 1))
 	{
 		return;
 	}
@@ -230,7 +230,14 @@ void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
 
 	Bool blending = mtl.isBlendingEnabled();
 
-	if(blending)
+	if(!blending)
+	{
+		if(stage == RS_BLEND)
+		{
+			return;
+		}
+	}
+	else
 	{
 		if(stage != RS_BLEND)
 		{
@@ -239,13 +246,6 @@ void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
 
 		GlStateSingleton::get().setBlendFunctions(
 			mtl.getBlendingSfactor(), mtl.getBlendingDfactor());
-	}
-	else
-	{
-		if(stage == RS_BLEND)
-		{
-			return;
-		}
 	}
 
 	GlStateSingleton::get().enable(GL_BLEND, blending);

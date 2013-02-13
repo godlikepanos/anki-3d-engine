@@ -22,24 +22,15 @@
 layout(std140, row_major, binding = 0) uniform commonBlock
 {
 	/// Packs:
-	/// - x: zNear. For the calculation of frag pos in view space
-	/// - zw: Planes. For the calculation of frag pos in view space
-	uniform vec4 nearPlanes;
-
-	/// For the calculation of frag pos in view space. The xy is the 
-	/// limitsOfNearPlane and the zw is an optimization see PpsSsao.glsl and 
-	/// r403 for the clean one
-	uniform vec4 limitsOfNearPlane_;
+	/// - xy: Planes. For the calculation of frag pos in view space
+	uniform vec4 planes_;
 
 	uniform vec4 sceneAmbientColor;
 
 	uniform vec4 groundLightDir;
 };
 
-#define planes nearPlanes.zw
-#define zNear nearPlanes.x
-#define limitsOfNearPlane limitsOfNearPlane_.xy
-#define limitsOfNearPlane2 limitsOfNearPlane_.zw
+#define planes planes_.xy
 
 struct Light
 {
@@ -88,6 +79,7 @@ uniform sampler2DArrayShadow shadowMapArr;
 /// @{
 in vec2 vTexCoords;
 flat in int vInstanceId;
+in vec2 vLimitsOfNoearPlaneOpt;
 /// @}
 
 /// @name Output
@@ -106,8 +98,7 @@ vec3 getFragPosVSpace()
 	fragPosVspace.z = -planes.y / (planes.x + depth);
 
 	/// XXX OPT: Do that a varying
-	fragPosVspace.xy = (vTexCoords * limitsOfNearPlane2) - limitsOfNearPlane;
-	fragPosVspace.xy *= -fragPosVspace.z;
+	fragPosVspace.xy = vLimitsOfNoearPlaneOpt * (-fragPosVspace.z);
 
 	return fragPosVspace;
 }
@@ -302,7 +293,7 @@ void main()
 #endif
 
 #if 0
-	fColor = fColor * 0.5 + normal * 0.5;
+	fColor = fColor * 0.005 + vec3(vLimitsOfNoearPlaneOpt, 1.0);
 #endif
 
 #if 0

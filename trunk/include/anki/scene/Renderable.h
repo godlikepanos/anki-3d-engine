@@ -185,11 +185,6 @@ public:
 	{
 		return ubo;
 	}
-
-	Ubo& getInstancingUbo()
-	{
-		return instancingUbo;
-	}
 	/// @}
 
 protected:
@@ -199,7 +194,6 @@ protected:
 private:
 	RenderableVariables vars;
 	Ubo ubo;
-	Ubo instancingUbo;
 };
 /// @}
 

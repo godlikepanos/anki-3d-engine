@@ -66,8 +66,7 @@ struct ShaderTiles
 
 struct ShaderCommonUniforms
 {
-	Vec4 nearPlanes;
-	Vec4 limitsOfNearPlane;
+	Vec4 planes;
 	Vec4 sceneAmbientColor;
 	Vec4 groundLightDir;
 };
@@ -586,6 +585,9 @@ void Is::lightPass()
 	// shader prog
 	lightPassProg->bind();
 
+	lightPassProg->findUniformVariable("limitsOfNearPlane").set(
+		Vec4(r->getLimitsOfNearPlane(), r->getLimitsOfNearPlane2()));
+
 	commonUbo.setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
 	pointLightsUbo.setBinding(POINT_LIGHTS_BLOCK_BINDING);
 	spotLightsUbo.setBinding(SPOT_LIGHTS_BLOCK_BINDING);
@@ -623,12 +625,8 @@ void Is::run()
 		|| (groundLightEnabled
 			&& !groundVectorsEqual(groundLightDir, prevGroundLightDir)))
 	{
-		const Camera& cam = scene.getActiveCamera();
 		ShaderCommonUniforms blk;
-		blk.nearPlanes = Vec4(cam.getNear(), 0.0, r->getPlanes().x(),
-			r->getPlanes().y());
-		blk.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
-			r->getLimitsOfNearPlane2());
+		blk.planes = Vec4(r->getPlanes().x(), r->getPlanes().y(), 0.0, 0.0);
 		blk.sceneAmbientColor = Vec4(scene.getAmbientColor(), 0.0);
 
 		if(groundLightEnabled)

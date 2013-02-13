@@ -112,8 +112,8 @@ void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& r)
 
 	doVisibilityTests(*mainCam, r);
 
-	sectorGroup.doVisibilityTests(*mainCam,
-		VisibilityTest(VT_RENDERABLES | VT_LIGHTS), &r);
+	/*sectorGroup.doVisibilityTests(*mainCam,
+		VisibilityTest(VT_RENDERABLES | VT_LIGHTS), &r);*/
 
 #if 0
 	for(SceneNode* n : nodes)
