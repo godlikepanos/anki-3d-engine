@@ -102,12 +102,12 @@ vec3 getFragPosVSpace()
 	const float depth = texture(msDepthFai, vTexCoords).r;
 
 	vec3 fragPosVspace;
+	/// XXX OPT: Why negative planes.y?
 	fragPosVspace.z = -planes.y / (planes.x + depth);
 
+	/// XXX OPT: Do that a varying
 	fragPosVspace.xy = (vTexCoords * limitsOfNearPlane2) - limitsOfNearPlane;
-
-	const float sc = -fragPosVspace.z / zNear;
-	fragPosVspace.xy *= sc;
+	fragPosVspace.xy *= -fragPosVspace.z;
 
 	return fragPosVspace;
 }
