@@ -174,19 +174,21 @@ void Renderer::createFai(U32 width, U32 height, int internalFormat,
 //==============================================================================
 void Renderer::calcPlanes(const Vec2& cameraRange, Vec2& planes)
 {
-	float zNear = cameraRange.x();
-	float zFar = cameraRange.y();
+	F32 zNear = cameraRange.x();
+	F32 zFar = cameraRange.y();
 
-	planes.x() = zFar / (zNear - zFar);
-	planes.y() = (zFar * zNear) / (zNear -zFar);
+	F32 opt = zNear - zFar;
+
+	planes.x() = zFar / opt;
+	planes.y() = (zFar * zNear) / opt;
 }
 
 //==============================================================================
 void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 	Vec2& limitsOfNearPlane)
 {
-	limitsOfNearPlane.y() = pcam.getNear() * tan(0.5 * pcam.getFovY());
-	limitsOfNearPlane.x() = pcam.getNear() * tan(0.5 * pcam.getFovX());
+	limitsOfNearPlane.y() = tan(0.5 * pcam.getFovY());
+	limitsOfNearPlane.x() = tan(0.5 * pcam.getFovX());
 }
 
 

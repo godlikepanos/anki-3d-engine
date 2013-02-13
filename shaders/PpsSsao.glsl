@@ -70,7 +70,7 @@ vec3 getPosition(in vec2 uv)
 	
 	fragPosVspace.xy = (uv * limitsOfNearPlane2) - limitsOfNearPlane;
 	
-	const float sc = -fragPosVspace.z / zNear;
+	const float sc = -fragPosVspace.z;
 	fragPosVspace.xy *= sc;
 
 	return fragPosVspace;
