@@ -37,15 +37,34 @@ public:
 		const VertexAttribute attrib, const Vbo*& vbo,
 		U32& size, GLenum& type, U32& stride, U32& offset) const = 0;
 
-	virtual U32 getVerticesCount() const = 0;
-
-	virtual U32 getIndicesCount() const = 0;
-
 	virtual U32 getTextureChannelsCount() const = 0;
 
 	virtual Bool hasWeights() const = 0;
 
+	/// Used only to clone the VBO
+	virtual U32 getVerticesCount() const = 0;
+
+	virtual U32 getIndicesCount() const = 0;
+
 	virtual const Obb& getBoundingShape() const = 0;
+
+	virtual U32 getIndicesCountSub(U32 subMeshId, U32& offset) const
+	{
+		ANKI_ASSERT(subMeshId == 0);
+		offset = 0;
+		return getIndicesCount();
+	}
+
+	virtual const Obb& getBoundingShapeSub(U32 subMeshId) const
+	{
+		ANKI_ASSERT(subMeshId == 0);
+		return getBoundingShape();
+	}
+
+	virtual U32 getSubMeshesCount() const
+	{
+		return 1;
+	}
 };
 
 /// Mesh Resource. It contains the geometry packed in VBOs
@@ -102,10 +121,10 @@ public:
 		U32& size, GLenum& type, U32& stride, U32& offset) const;
 	/// @}
 
-	/// Load from a file
+	/// Load from a .mesh file
 	void load(const char* filename);
 
-private:
+protected:
 	U32 vertsCount;
 	U32 indicesCount; ///< Indices count per level
 	U32 texChannelsCount;
@@ -119,6 +138,54 @@ private:
 	void createVbos(const MeshLoader& loader);
 
 	U32 calcVertexSize() const;
+};
+
+/// A mesh that behaves as a mesh and as a collection of separate meshes
+class MultiMesh: public Mesh
+{
+	/// Default constructor. Do nothing
+	MultiMesh()
+	{}
+
+	/// Load file
+	MultiMesh(const char* filename)
+	{
+		load(filename);
+	}
+	/// @}
+
+	/// Does nothing
+	~MultiMesh()
+	{}
+
+	/// @name MeshBase implementers
+	/// @{
+	U32 getIndicesCountSub(U32 subMeshId, U32& offset) const
+	{
+		ANKI_ASSERT(subMeshId < subIndicesCount.size());
+		offset = subIndicesOffsets[subMeshId];
+		return subIndicesCount[subMeshId];
+	}
+
+	const Obb& getBoundingShapeSub(U32 subMeshId) const
+	{
+		ANKI_ASSERT(subMeshId < subVisibilityShapes.size());
+		return subVisibilityShapes[subMeshId];
+	}
+
+	U32 getSubMeshesCount() const
+	{
+		return subIndicesCount.size();
+	}
+	/// @}
+
+	/// Load from a .mmesh file
+	void load(const char* filename);
+
+private:
+	Vector<U32> subIndicesCount;
+	Vector<U32> subIndicesOffsets;
+	Vector<Obb> subVisibilityShapes;
 };
 
 } // end namespace anki

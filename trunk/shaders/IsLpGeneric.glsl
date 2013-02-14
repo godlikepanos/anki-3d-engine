@@ -79,7 +79,7 @@ uniform sampler2DArrayShadow shadowMapArr;
 /// @{
 in vec2 vTexCoords;
 flat in int vInstanceId;
-in vec2 vLimitsOfNoearPlaneOpt;
+in vec2 vLimitsOfNearPlaneOpt;
 /// @}
 
 /// @name Output
@@ -94,11 +94,9 @@ vec3 getFragPosVSpace()
 	const float depth = texture(msDepthFai, vTexCoords).r;
 
 	vec3 fragPosVspace;
-	/// XXX OPT: Why negative planes.y?
-	fragPosVspace.z = -planes.y / (planes.x + depth);
-
-	/// XXX OPT: Do that a varying
-	fragPosVspace.xy = vLimitsOfNoearPlaneOpt * (-fragPosVspace.z);
+	fragPosVspace.z = planes.y / (planes.x + depth);
+	fragPosVspace.xy = vLimitsOfNearPlaneOpt * fragPosVspace.z;
+	fragPosVspace.z = -fragPosVspace.z;
 
 	return fragPosVspace;
 }
@@ -293,7 +291,7 @@ void main()
 #endif
 
 #if 0
-	fColor = fColor * 0.005 + vec3(vLimitsOfNoearPlaneOpt, 1.0);
+	fColor = fColor * 0.005 + vec3(vLimitsOfNearPlaneOpt, 1.0);
 #endif
 
 #if 0
