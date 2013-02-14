@@ -3,8 +3,13 @@
 #include "anki/resource/MeshLoader.h"
 #include "anki/gl/Vbo.h"
 #include "anki/util/Functions.h"
+#include "anki/misc/Xml.h"
 
 namespace anki {
+
+//==============================================================================
+// Mesh                                                                        =
+//==============================================================================
 
 //==============================================================================
 void Mesh::load(const char* filename)
@@ -185,6 +190,34 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 	default:
 		ANKI_ASSERT(0);
 		break;
+	}
+}
+
+//==============================================================================
+// MultiMesh                                                                   =
+//==============================================================================
+
+//==============================================================================
+void MultiMesh::load(const char* filename)
+{
+	try
+	{
+		XmlDocument doc;
+		doc.loadFile(filename);
+
+		XmlElement rootEl = doc.getChildElement("multiMesh");
+		XmlElement meshesEl = rootEl.getChildElement("meshes");
+
+		XmlElement meshEl = meshesEl.getChildElement("mesh");
+
+		do
+		{
+			meshesEl = meshesEl.getNextSiblingElement("mesh");
+		} while(meshesEl);
+	}
+	catch(std::exception& e)
+	{
+		throw ANKI_EXCEPTION("MultiMesh loading failed: " + filename) << e;
 	}
 }
 
