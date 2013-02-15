@@ -14,21 +14,21 @@ namespace anki {
 //==============================================================================
 void Mesh::load(const char* filename)
 {
-	MeshLoader loader(filename);
-
-	// Set the non-VBO members
-	vertsCount = loader.getPositions().size();
-	ANKI_ASSERT(vertsCount > 0);
-
-	indicesCount = loader.getIndices().size();
-	ANKI_ASSERT(indicesCount > 0);
-	ANKI_ASSERT(indicesCount % 3 == 0 && "Expecting triangles");
-
-	weights = loader.getWeights().size() > 1;
-	texChannelsCount = loader.getTextureChannelsCount();
-
 	try
 	{
+		MeshLoader loader(filename);
+
+		// Set the non-VBO members
+		vertsCount = loader.getPositions().size();
+		ANKI_ASSERT(vertsCount > 0);
+
+		indicesCount = loader.getIndices().size();
+		ANKI_ASSERT(indicesCount > 0);
+		ANKI_ASSERT(indicesCount % 3 == 0 && "Expecting triangles");
+
+		weights = loader.getWeights().size() > 1;
+		texChannelsCount = loader.getTextureChannelsCount();
+
 		createVbos(loader);
 
 		visibilityShape.set(loader.getPositions());
@@ -77,7 +77,7 @@ void Mesh::createVbos(const MeshLoader& loader)
 
 		for(U j = 0; j < texChannelsCount; j++)
 		{
-			memcpy(ptr, &loader.getTexureCoordinates(j)[i], sizeof(Vec2));
+			memcpy(ptr, &loader.getTextureCoordinates(j)[i], sizeof(Vec2));
 			ptr += sizeof(Vec2);
 		}
 
@@ -194,11 +194,11 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 }
 
 //==============================================================================
-// MultiMesh                                                                   =
+// BucketMesh                                                                  =
 //==============================================================================
 
 //==============================================================================
-void MultiMesh::load(const char* filename)
+void BucketMesh::load(const char* filename)
 {
 	try
 	{
@@ -207,17 +207,93 @@ void MultiMesh::load(const char* filename)
 
 		XmlElement rootEl = doc.getChildElement("multiMesh");
 		XmlElement meshesEl = rootEl.getChildElement("meshes");
-
 		XmlElement meshEl = meshesEl.getChildElement("mesh");
+
+		vertsCount = 0;
+		indicesCount = 0;
+		U i = 0;
+
+		MeshLoader fullLoader;
 
 		do
 		{
+			std::string subMeshFilename = meshEl.getText();
+
+			// Load the submesh and if not the first load the append the 
+			// vertices to the fullMesh
+			MeshLoader* loader;
+			MeshLoader subLoader;
+			if(i != 0)
+			{
+				// Load
+				subLoader.load(subMeshFilename.c_str());
+				loader = &subLoader;
+
+				// Sanity checks
+				if(weights != (loader->getWeights().size() > 1))
+				{
+					throw ANKI_EXCEPTION("All sub meshes should have or not "
+						"have vertex weights");
+				}
+
+				if(texChannelsCount != loader->getTextureChannelsCount())
+				{
+					throw ANKI_EXCEPTION("All sub meshes should have the "
+						"same number of texture channels");
+				}
+
+				// Append
+				fullLoader.appendPositions(subLoader.getPositions());
+				fullLoader.appendNormals(subLoader.getNormals());
+				fullLoader.appendTangents(subLoader.getTangents());
+
+				for(U j = 0; j < texChannelsCount; j++)
+				{
+					fullLoader.appendTextureCoordinates(
+						subLoader.getTextureCoordinates(j), j);
+				}
+
+				if(weights)
+				{
+					fullLoader.appendWeights(subLoader.getWeights());
+				}
+			}
+			else
+			{
+				// Load
+				fullLoader.load(subMeshFilename.c_str());
+				loader = &fullLoader;
+
+				// Set properties
+				weights = loader->getWeights().size() > 1;
+				texChannelsCount = loader->getTextureChannelsCount();
+			}
+
+			// Push back the new submesh
+			SubMeshData submesh;
+
+			submesh.indicesCount = loader->getIndices().size();
+			submesh.indicesOffset = indicesCount * sizeof(U16);
+			submesh.visibilityShape.set(loader->getPositions());
+
+			subMeshes.push_back(submesh);
+
+			// Set the global numbers
+			vertsCount += loader->getPositions().size();
+			indicesCount += loader->getIndices().size();
+
+			// Move to next
 			meshesEl = meshesEl.getNextSiblingElement("mesh");
+			++i;
 		} while(meshesEl);
+
+		// Create the bucket mesh
+		createVbos(fullLoader);
+		visibilityShape.set(fullLoader.getPositions());
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("MultiMesh loading failed: " + filename) << e;
+		throw ANKI_EXCEPTION("BucketMesh loading failed: " + filename) << e;
 	}
 }
 

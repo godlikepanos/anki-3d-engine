@@ -78,7 +78,7 @@ RenderableVariable::~RenderableVariable()
 
 //==============================================================================
 Renderable::Renderable(const SceneAllocator<U8>& alloc)
-	:	vars(alloc)
+	: vars(alloc), subMeshVisible(alloc)
 {}
 
 //==============================================================================
