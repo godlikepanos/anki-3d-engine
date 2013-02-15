@@ -128,7 +128,7 @@ protected:
 	U32 vertsCount;
 	U32 indicesCount; ///< Indices count per level
 	U32 texChannelsCount;
-	Bool weights;
+	Bool8 weights;
 	Obb visibilityShape;
 
 	Vbo vbo;
@@ -141,41 +141,41 @@ protected:
 };
 
 /// A mesh that behaves as a mesh and as a collection of separate meshes
-class MultiMesh: public Mesh
+class BucketMesh: public Mesh
 {
 	/// Default constructor. Do nothing
-	MultiMesh()
+	BucketMesh()
 	{}
 
 	/// Load file
-	MultiMesh(const char* filename)
+	BucketMesh(const char* filename)
 	{
 		load(filename);
 	}
 	/// @}
 
 	/// Does nothing
-	~MultiMesh()
+	~BucketMesh()
 	{}
 
 	/// @name MeshBase implementers
 	/// @{
 	U32 getIndicesCountSub(U32 subMeshId, U32& offset) const
 	{
-		ANKI_ASSERT(subMeshId < subIndicesCount.size());
-		offset = subIndicesOffsets[subMeshId];
-		return subIndicesCount[subMeshId];
+		ANKI_ASSERT(subMeshId < subMeshes.size());
+		offset = subMeshes[subMeshId].indicesOffset;
+		return subMeshes[subMeshId].indicesCount;
 	}
 
 	const Obb& getBoundingShapeSub(U32 subMeshId) const
 	{
-		ANKI_ASSERT(subMeshId < subVisibilityShapes.size());
-		return subVisibilityShapes[subMeshId];
+		ANKI_ASSERT(subMeshId < subMeshes.size());
+		return subMeshes[subMeshId].visibilityShape;
 	}
 
 	U32 getSubMeshesCount() const
 	{
-		return subIndicesCount.size();
+		return subMeshes.size();
 	}
 	/// @}
 
@@ -183,9 +183,14 @@ class MultiMesh: public Mesh
 	void load(const char* filename);
 
 private:
-	Vector<U32> subIndicesCount;
-	Vector<U32> subIndicesOffsets;
-	Vector<Obb> subVisibilityShapes;
+	struct SubMeshData
+	{
+		U32 indicesCount;
+		U32 indicesOffset; ///< In bytes
+		Obb visibilityShape;
+	};
+
+	Vector<SubMeshData> subMeshes;
 };
 
 } // end namespace anki

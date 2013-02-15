@@ -63,6 +63,8 @@ public:
 		Vec3 normal;
 	};
 
+	MeshLoader()
+	{}
 	MeshLoader(const char* filename)
 	{
 		load(filename);
@@ -87,7 +89,7 @@ public:
 		return vertTangents;
 	}
 
-	const Vector<Vec2>& getTexureCoordinates(const U32 channel) const
+	const Vector<Vec2>& getTextureCoordinates(const U32 channel) const
 	{
 		return texCoords;
 	}
@@ -103,9 +105,56 @@ public:
 
 	const Vector<ushort>& getIndices() const
 	{
-		return vertIndeces;
+		return vertIndices;
 	}
 	/// @}
+
+	/// @name BucketMesh methods
+	/// @{
+	void appendPositions(const Vector<Vec3>& positions)
+	{
+		vertCoords.insert(
+			vertCoords.end(), positions.begin(), positions.end());
+	}
+
+	void appendNormals(const Vector<Vec3>& normals)
+	{
+		vertNormals.insert(
+			vertNormals.end(), normals.begin(), normals.end());
+	}
+
+	void appendTangents(const Vector<Vec4>& tangents)
+	{
+		vertTangents.insert(
+			vertTangents.end(), tangents.begin(), tangents.end());
+	}
+
+	void appendTextureCoordinates(const Vector<Vec2>& coords, U32 channel)
+	{
+		ANKI_ASSERT(channel == 0 && "Currently only one channel is supported");
+		texCoords.insert(texCoords.end(), coords.begin(), coords.end());
+	}
+
+	void appendWeights(const Vector<VertexWeight>& weights)
+	{
+		vertWeights.insert(vertWeights.end(), weights.begin(), weights.end());
+	}
+
+	/// This will adjust the indices bias
+	void appendIndices(const Vector<U16>& indices)
+	{
+		U16 bias = vertCoords.size();
+
+		for(U16 index : indices)
+		{
+			vertIndices.push_back(bias + index);
+		}
+	}
+	/// @}
+
+	/// Load the mesh data from a binary file
+	/// @exception Exception
+	void load(const char* filename);
 
 private:
 	/// @name Data
@@ -118,12 +167,8 @@ private:
 	Vector<VertexWeight> vertWeights; ///< Optional
 	Vector<Triangle> tris; ///< Required
 	/// Generated. Used for vertex arrays & VBOs
-	Vector<U16> vertIndeces;
+	Vector<U16> vertIndices;
 	/// @}
-
-	/// Load the mesh data from a binary file
-	/// @exception Exception
-	void load(const char* filename);
 
 	void createFaceNormals();
 	void createVertNormals();

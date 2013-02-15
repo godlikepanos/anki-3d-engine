@@ -3,7 +3,7 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Light.h"
-#include "anki/scene/VisibilityTestResults.h"
+#include "anki/scene/Visibility.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Scene.h"
 #include "anki/core/Logger.h"

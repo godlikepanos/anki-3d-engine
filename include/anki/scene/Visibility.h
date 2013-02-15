@@ -40,6 +40,8 @@ struct VisibilityTestResults
 	{}
 };
 
+/// XXX
+
 /// @}
 
 } // end namespace anki

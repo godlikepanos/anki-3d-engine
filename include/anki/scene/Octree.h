@@ -4,7 +4,7 @@
 #include "anki/collision/Aabb.h"
 #include "anki/util/Array.h"
 #include "anki/scene/Common.h"
-#include "anki/scene/VisibilityTestResults.h"
+#include "anki/scene/Visibility.h"
 #include <memory>
 
 namespace anki {

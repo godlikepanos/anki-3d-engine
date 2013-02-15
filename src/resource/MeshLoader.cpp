@@ -155,12 +155,12 @@ void MeshLoader::doPostLoad()
 //==============================================================================
 void MeshLoader::createVertIndeces()
 {
-	vertIndeces.resize(tris.size() * 3);
+	vertIndices.resize(tris.size() * 3);
 	for(uint i = 0; i < tris.size(); i++)
 	{
-		vertIndeces[i * 3 + 0] = tris[i].vertIds[0];
-		vertIndeces[i * 3 + 1] = tris[i].vertIds[1];
-		vertIndeces[i * 3 + 2] = tris[i].vertIds[2];
+		vertIndices[i * 3 + 0] = tris[i].vertIds[0];
+		vertIndices[i * 3 + 1] = tris[i].vertIds[1];
+		vertIndices[i * 3 + 2] = tris[i].vertIds[2];
 	}
 }
 
