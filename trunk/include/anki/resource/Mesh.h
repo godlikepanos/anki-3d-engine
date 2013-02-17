@@ -143,6 +143,10 @@ protected:
 /// A mesh that behaves as a mesh and as a collection of separate meshes
 class BucketMesh: public Mesh
 {
+public:
+	/// The absolute limit of submeshes
+	static const U MAX_SUB_MESHES = 64;
+
 	/// Default constructor. Do nothing
 	BucketMesh()
 	{}

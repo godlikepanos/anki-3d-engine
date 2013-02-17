@@ -2,6 +2,7 @@
 #define ANKI_SCENE_VISIBILITY_TEST_RESULTS_H
 
 #include "anki/scene/Common.h"
+#include "anki/collision/Forward.h"
 
 namespace anki {
 
@@ -39,8 +40,6 @@ struct VisibilityTestResults
 		: renderables(frameAlloc), lights(frameAlloc)
 	{}
 };
-
-/// XXX
 
 /// @}
 

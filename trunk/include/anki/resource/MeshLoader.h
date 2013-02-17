@@ -141,10 +141,8 @@ public:
 	}
 
 	/// This will adjust the indices bias
-	void appendIndices(const Vector<U16>& indices)
+	void appendIndices(const Vector<U16>& indices, U16 bias)
 	{
-		U16 bias = vertCoords.size();
-
 		for(U16 index : indices)
 		{
 			vertIndices.push_back(bias + index);

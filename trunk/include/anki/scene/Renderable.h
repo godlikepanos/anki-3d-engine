@@ -9,6 +9,7 @@
 namespace anki {
 
 class ModelPatchBase;
+class SceneNode;
 
 /// @addtogroup Scene
 /// @{
@@ -185,31 +186,16 @@ public:
 	{
 		return ubo;
 	}
-
-	U32 getSubMeshesCount() const
-	{
-		return subMeshVisible.size();
-	}
 	/// @}
 
-	/// Set all sub meshes to not visible
-	void setAllSubMeshesNotVisible()
+	U32 getSetsCount() const
 	{
-		memset(&subMeshVisible[0], 0, 
-			sizeof(subMeshVisible.size()) * sizeof(Bool8));
+		return 1;
 	}
 
-	/// Set the visibility of a single sub mesh
-	void setSubMeshVisible(U submeshId, Bool visible)
-	{
-		ANKI_ASSERT(submeshId < subMeshVisible.size());
-		subMeshVisible[submeshId] = visible;
-	}
+	void setVisibleSetsMask(const SceneNode* frustumable, U64 mask);
 
 protected:
-	/// Holds the visible submeshes in case of bucket meshes
-	SceneVector<Bool8> subMeshVisible;
-
 	/// The derived class needs to call that
 	void init(PropertyMap& pmap);
 

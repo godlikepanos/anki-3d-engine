@@ -20,15 +20,14 @@ class ModelPatchBase
 public:
 	/// VAOs container
 	typedef Vector<Vao> VaosContainer;
-	/// Map to get the VAO given a PassLod key
-	typedef PassLevelHashMap<Vao*> PassLevelToVaoMap;
 
 	virtual ~ModelPatchBase()
 	{}
 
+	virtual const Material& getMaterial() const = 0;
+
 	virtual const MeshBase& getMeshBase(const PassLevelKey& key) const = 0;
 	virtual U32 getMeshesCount() const = 0;
-	virtual const Material& getMaterial() const = 0;
 
 	const Obb& getBoundingShape() const
 	{
@@ -36,9 +35,26 @@ public:
 		return getMeshBase(key).getBoundingShape();
 	}
 
+	const Obb& getBoundingShapeSub(U32 subMeshId) const
+	{
+		PassLevelKey key(0, 0);
+		return getMeshBase(key).getBoundingShapeSub(subMeshId);
+	}
+
+	U32 getSubMeshesCount() const
+	{
+		PassLevelKey key(0, 0);
+		return getMeshBase(key).getSubMeshesCount();
+	}
+
 	/// Given a pass lod key retrieve variables useful for rendering
 	void getRenderingData(const PassLevelKey& key, const Vao*& vao,
 		const ShaderProgram*& prog, U32& indicesCount) const;
+
+	/// Get information for multiDraw rendering
+	void getRenderingDataSub(const PassLevelKey& key, U64 subMeshesMask,
+		const Vao*& vao, const ShaderProgram*& prog,
+		U32* indicesCountArray, U32* indicesOffsetArray, U32& primcount) const;
 
 protected:
 	/// Array [lod][pass]
@@ -59,14 +75,31 @@ private:
 
 /// Its a chunk of a model. Its very important class and it binds the material
 /// with the mesh
+template<typename MeshResourcePointerType>
 class ModelPatch: public ModelPatchBase
 {
 public:
 	/// Map to get the VAO given a PassLod key
 	typedef PassLevelHashMap<Vao> PassLevelToVaoMap;
 
-	ModelPatch(const char* meshFNames[], U32 meshesCount, const char* mtlFName);
-	~ModelPatch();
+	ModelPatch(const char* meshFNames[], U32 meshesCount,
+		const char* mtlFName)
+	{
+		// Load
+		ANKI_ASSERT(meshesCount > 0);
+		meshes.resize(meshesCount);
+		for(U32 i = 0; i < meshesCount; i++)
+		{
+			meshes[i].load(meshFNames[i]);
+		}
+		mtl.load(mtlFName);
+
+		/// Create VAOs
+		create();
+	}
+
+	~ModelPatch()
+	{}
 
 	/// @name Accessors
 	/// @{
@@ -91,7 +124,7 @@ public:
 	/// @}
 
 private:
-	Vector<MeshResourcePointer> meshes; ///< The geometries
+	Vector<MeshResourcePointerType> meshes; ///< The geometries
 	MaterialResourcePointer mtl; ///< Material
 };
 
@@ -103,9 +136,12 @@ private:
 /// <model>
 /// 	<modelPatches>
 /// 		<modelPatch>
-/// 			<mesh>path/to/mesh.mesh</mesh>
+/// 			[<mesh>path/to/mesh.mesh</mesh>
 ///				[<mesh1>path/to/mesh_lod_1.mesh</mesh1>]
-///				[<mesh2>path/to/mesh_lod_2.mesh</mesh2>]
+///				[<mesh2>path/to/mesh_lod_2.mesh</mesh2>]] |
+/// 			[<bucketMesh>path/to/mesh.bmesh</bucketMesh>
+///				[<bucketMesh1>path/to/mesh_lod_1.bmesh</bucketMesh1>]
+///				[<bucketMesh2>path/to/mesh_lod_2.bmesh</bucketMesh2>]]
 /// 			<material>path/to/material.mtl</material>
 /// 		</modelPatch>
 /// 		...
@@ -121,7 +157,11 @@ private:
 class Model
 {
 public:
-	typedef PtrVector<ModelPatch> ModelPatchesContainer;
+	typedef Vector<ModelPatchBase*> ModelPatchesContainer;
+
+	Model()
+	{}
+	~Model();
 
 	/// @name Accessors
 	/// @{

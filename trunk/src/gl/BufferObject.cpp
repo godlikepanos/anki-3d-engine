@@ -39,10 +39,6 @@ void BufferObject::create(GLenum target_, U32 sizeInBytes_,
 {
 	ANKI_ASSERT(!isCreated());
 
-	ANKI_ASSERT(usage_ == GL_STREAM_DRAW
-		|| usage_ == GL_STATIC_DRAW
-		|| usage_ == GL_DYNAMIC_DRAW);
-
 	ANKI_ASSERT(sizeInBytes_ > 0 && "Unacceptable sizeInBytes");
 
 	usage = usage_;
