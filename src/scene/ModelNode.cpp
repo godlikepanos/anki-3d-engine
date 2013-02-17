@@ -9,7 +9,7 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-ModelPatchNode::ModelPatchNode(const ModelPatch* modelPatch_,
+ModelPatchNode::ModelPatchNode(const ModelPatchBase *modelPatch_,
 	const char* name, Scene* scene,
 	U32 movableFlags, Movable* movParent)
 	:	SceneNode(name, scene),
@@ -37,7 +37,7 @@ ModelNode::ModelNode(const char* modelFname,
 	patches.reserve(model->getModelPatches().size());
 
 	U i = 0;
-	for(const ModelPatch* patch : model->getModelPatches())
+	for(const ModelPatchBase* patch : model->getModelPatches())
 	{
 		std::string name_ = name + std::to_string(i);
 

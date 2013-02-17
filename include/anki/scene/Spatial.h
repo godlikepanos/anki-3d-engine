@@ -1,6 +1,7 @@
 #ifndef ANKI_SCENE_SPATIAL_H
 #define ANKI_SCENE_SPATIAL_H
 
+#include "anki/scene/Common.h"
 #include "anki/collision/Collision.h"
 #include "anki/util/Flags.h"
 #include "anki/core/Timestamp.h"

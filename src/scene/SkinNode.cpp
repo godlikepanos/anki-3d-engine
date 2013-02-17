@@ -57,7 +57,7 @@ SkinModelPatch::~SkinModelPatch()
 }
 
 //==============================================================================
-SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_, 
+SkinModelPatch::SkinModelPatch(const ModelPatchBase* mpatch_,
 	const SceneAllocator<U8>& alloc)
 	:	mpatch(mpatch_),
 		skinMeshes(alloc),
@@ -124,7 +124,7 @@ SkinModelPatch::SkinModelPatch(const ModelPatch* mpatch_,
 //==============================================================================
 
 //==============================================================================
-SkinPatchNode::SkinPatchNode(const ModelPatch* modelPatch_,
+SkinPatchNode::SkinPatchNode(const ModelPatchBase* modelPatch_,
 	const char* name, Scene* scene,
 	uint movableFlags, Movable* movParent,
 	CollisionShape* spatialCs)
@@ -156,7 +156,7 @@ SkinNode::SkinNode(const char* skinFname,
 	skin.load(skinFname);
 
 	uint i = 0;
-	for(const ModelPatch* patch : skin->getModel().getModelPatches())
+	for(const ModelPatchBase* patch : skin->getModel().getModelPatches())
 	{
 		std::string name = skin.getResourceName()
 			+ std::to_string(i);

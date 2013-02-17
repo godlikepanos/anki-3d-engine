@@ -107,6 +107,51 @@ void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
 }
 
 //==============================================================================
+void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
+	U64 subMeshesMask, const Vao*& vao, const ShaderProgram*& prog,
+	U32* indicesCountArray, U32* indicesOffsetArray, U32& primcount) const
+{
+	const U meshLods = getMeshesCount();
+	ANKI_ASSERT(meshLods > 0);
+	const U mtlLods = getMaterial().getLevelsOfDetail();
+	ANKI_ASSERT(mtlLods > 0);
+
+	// VAO
+	U lodsCount = std::max(meshLods, mtlLods);
+
+	U index = key.pass + std::min((U)key.level, lodsCount - 1) * lodsCount;
+
+	ANKI_ASSERT(index < vaos.size());
+	vao = &vaos[index];
+
+	// Prog
+	PassLevelKey mtlKey;
+	mtlKey.pass = key.pass;
+	mtlKey.level = std::min(key.level, (U8)(mtlLods - 1));
+
+	prog = &getMaterial().findShaderProgram(mtlKey);
+
+	// Mesh and indices
+	PassLevelKey meshKey;
+	meshKey.pass = key.pass;
+	meshKey.level = std::min(key.level, (U8)(meshLods - 1));
+
+	const MeshBase& meshBase = getMeshBase(meshKey);
+
+	U subMeshesCount = meshBase.getSubMeshesCount();
+	primcount = 0;
+	for(U i = 0; i < subMeshesCount; i++)
+	{
+		if(subMeshesMask & (1 << i))
+		{
+			indicesCountArray[primcount] =
+				meshBase.getIndicesCountSub(i, indicesOffsetArray[primcount]);
+			++primcount;
+		}
+	}
+}
+
+//==============================================================================
 void ModelPatchBase::create()
 {
 	U i = 0;
@@ -147,33 +192,17 @@ void ModelPatchBase::create()
 }
 
 //==============================================================================
-// ModelPatch                                                                  =
-//==============================================================================
-
-//==============================================================================
-ModelPatch::ModelPatch(const char *meshFNames[], U32 meshesCount,
-	const char* mtlFName)
-{
-	// Load
-	ANKI_ASSERT(meshesCount > 0);
-	meshes.resize(meshesCount);
-	for(U32 i = 0; i < meshesCount; i++)
-	{
-		meshes[i].load(meshFNames[i]);
-	}
-	mtl.load(mtlFName);
-
-	/// Create VAOs
-	create();
-}
-
-//==============================================================================
-ModelPatch::~ModelPatch()
-{}
-
-//==============================================================================
 // Model                                                                       =
 //==============================================================================
+
+//==============================================================================
+Model::~Model()
+{
+	for(ModelPatchBase* patch : modelPatches)
+	{
+		delete patch;
+	}
+}
 
 //==============================================================================
 void Model::load(const char* filename)
@@ -194,33 +223,69 @@ void Model::load(const char* filename)
 			modelPatchesEl.getChildElement("modelPatch");
 		do
 		{
-			XmlElement meshEl = modelPatchEl.getChildElement("mesh");
-			XmlElement meshEl1 = modelPatchEl.getChildElementOptional("mesh1");
-			XmlElement meshEl2 = modelPatchEl.getChildElementOptional("mesh2");
+			XmlElement materialEl =
+			modelPatchEl.getChildElement("material");
+
 			Array<const char*, 3> meshesFnames;
 			U meshesCount = 1;
+			ModelPatchBase* patch;
 
-			meshesFnames[0] = meshEl.getText();
-
-			if(meshEl1)
+			// Try mesh
+			XmlElement meshEl = modelPatchEl.getChildElementOptional("mesh");
+			if(meshEl)
 			{
-				++meshesCount;
-				meshesFnames[1] = meshEl1.getText();
+				XmlElement meshEl1 =
+					modelPatchEl.getChildElementOptional("mesh1");
+				XmlElement meshEl2 =
+					modelPatchEl.getChildElementOptional("mesh2");
+
+				meshesFnames[0] = meshEl.getText();
+
+				if(meshEl1)
+				{
+					++meshesCount;
+					meshesFnames[1] = meshEl1.getText();
+				}
+
+				if(meshEl2)
+				{
+					++meshesCount;
+					meshesFnames[2] = meshEl2.getText();
+				}
+
+				patch = new ModelPatch<MeshResourcePointer>(
+					&meshesFnames[0], meshesCount, materialEl.getText());
+			}
+			else
+			{
+				XmlElement bmeshEl =
+					modelPatchEl.getChildElement("bucketMesh");
+				XmlElement bmeshEl1 =
+					modelPatchEl.getChildElementOptional("bucketMesh1");
+				XmlElement bmeshEl2 =
+					modelPatchEl.getChildElementOptional("bucketMesh2");
+
+				meshesFnames[0] = bmeshEl.getText();
+
+				if(bmeshEl1)
+				{
+					++meshesCount;
+					meshesFnames[1] = bmeshEl1.getText();
+				}
+
+				if(bmeshEl2)
+				{
+					++meshesCount;
+					meshesFnames[2] = bmeshEl2.getText();
+				}
+
+				patch = new ModelPatch<BucketMeshResourcePointer>(
+					&meshesFnames[0], meshesCount, materialEl.getText());
 			}
 
-			if(meshEl2)
-			{
-				++meshesCount;
-				meshesFnames[2] = meshEl2.getText();
-			}
-
-			XmlElement materialEl =
-				modelPatchEl.getChildElement("material");
-
-			ModelPatch* patch = new ModelPatch(
-				&meshesFnames[0], meshesCount, materialEl.getText());
 			modelPatches.push_back(patch);
 
+			// Move to next
 			modelPatchEl = modelPatchEl.getNextSiblingElement("modelPatch");
 		} while(modelPatchEl);
 

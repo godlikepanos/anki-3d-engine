@@ -83,7 +83,7 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	SkinModelPatch(const ModelPatch* mpatch_, 
+	SkinModelPatch(const ModelPatchBase* mpatch_,
 		const SceneAllocator<U8>& alloc);
 	~SkinModelPatch();
 	/// @}
@@ -124,7 +124,7 @@ public:
 	/// @}
 
 private:
-	const ModelPatch* mpatch;
+	const ModelPatchBase* mpatch;
 	SceneVector<SkinMesh*> skinMeshes;
 	SceneVector<Vao> xfbVaos; ///< Used as a source VAO in XFB
 };
@@ -136,7 +136,7 @@ class SkinPatchNode: public SceneNode, public Movable, public Renderable,
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	SkinPatchNode(const ModelPatch* modelPatch_,
+	SkinPatchNode(const ModelPatchBase* modelPatch_,
 		const char* name, Scene* scene, // Scene
 		uint movableFlags, Movable* movParent, // Movable
 		CollisionShape* spatialCs); // Spatial

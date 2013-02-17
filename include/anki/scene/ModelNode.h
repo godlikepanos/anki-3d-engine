@@ -18,7 +18,7 @@ class ModelPatchNode: public SceneNode, public Movable, public Renderable,
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	ModelPatchNode(const ModelPatch* modelPatch_,
+	ModelPatchNode(const ModelPatchBase* modelPatch_,
 		const char* name, Scene* scene, // Scene
 		U32 movableFlags, Movable* movParent); // Movable
 	/// @}
@@ -89,7 +89,7 @@ public:
 
 private:
 	Obb obb; ///< In world space
-	const ModelPatch* modelPatch; ///< The resource
+	const ModelPatchBase* modelPatch; ///< The resource
 };
 
 /// The model scene node

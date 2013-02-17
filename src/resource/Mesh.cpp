@@ -54,6 +54,10 @@ U32 Mesh::calcVertexSize() const
 //==============================================================================
 void Mesh::createVbos(const MeshLoader& loader)
 {
+	ANKI_ASSERT(vertsCount == loader.getPositions().size()
+		&& vertsCount == loader.getNormals().size()
+		&& vertsCount == loader.getTangents().size());
+
 	// Calculate VBO size
 	U32 vertexsize = calcVertexSize();
 	U32 vbosize = vertexsize * vertsCount;
@@ -205,7 +209,7 @@ void BucketMesh::load(const char* filename)
 		XmlDocument doc;
 		doc.loadFile(filename);
 
-		XmlElement rootEl = doc.getChildElement("multiMesh");
+		XmlElement rootEl = doc.getChildElement("bucketMesh");
 		XmlElement meshesEl = rootEl.getChildElement("meshes");
 		XmlElement meshEl = meshesEl.getChildElement("mesh");
 
@@ -225,6 +229,12 @@ void BucketMesh::load(const char* filename)
 			MeshLoader subLoader;
 			if(i != 0)
 			{
+				// Sanity check
+				if(i > MAX_SUB_MESHES)
+				{
+					throw ANKI_EXCEPTION("Max number of submeshes exceeded");
+				}
+
 				// Load
 				subLoader.load(subMeshFilename.c_str());
 				loader = &subLoader;
@@ -257,6 +267,8 @@ void BucketMesh::load(const char* filename)
 				{
 					fullLoader.appendWeights(subLoader.getWeights());
 				}
+
+				fullLoader.appendIndices(loader->getIndices(), vertsCount);
 			}
 			else
 			{
@@ -283,9 +295,9 @@ void BucketMesh::load(const char* filename)
 			indicesCount += loader->getIndices().size();
 
 			// Move to next
-			meshesEl = meshesEl.getNextSiblingElement("mesh");
+			meshEl = meshEl.getNextSiblingElement("mesh");
 			++i;
-		} while(meshesEl);
+		} while(meshEl);
 
 		// Create the bucket mesh
 		createVbos(fullLoader);

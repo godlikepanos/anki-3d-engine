@@ -69,7 +69,7 @@ void Skin::load(const char* filename)
 		}
 
 		// All meshes should have vert weights
-		for(const ModelPatch* patch : model->getModelPatches())
+		for(const ModelPatchBase* patch : model->getModelPatches())
 		{
 			for(U i = 0; i < patch->getMeshesCount(); i++)
 			{
