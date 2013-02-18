@@ -65,7 +65,7 @@ void Scene::unregisterNode(SceneNode* node)
 }
 
 //==============================================================================
-void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& r)
+void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 {
 	frameAlloc.reset();
 
@@ -104,12 +104,14 @@ void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& r)
 
 		// Do some spatial stuff
 		Spatial* sp = n->getSpatial();
-		if(sp && sp->getSpatialTimestamp() == Timestamp::getTimestamp())
+		if(sp)
 		{
-			sectorGroup.placeSceneNode(n);
+			if(sp->getSpatialTimestamp() == Timestamp::getTimestamp())
+			{
+				sectorGroup.placeSceneNode(n);
+			}
+			sp->disableFlags(Spatial::SF_VISIBLE_ANY);
 		}
-
-		sp->disableFlags(Spatial::SF_VISIBLE_ANY);
 
 		// Do some frustumable stuff
 		Frustumable* fr = n->getFrustumable();
@@ -117,9 +119,16 @@ void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& r)
 		{
 			fr->setVisibilityTestResults(nullptr);
 		}
+
+		// Do some renderable stuff
+		Renderable* rb = n->getRenderable();
+		if(rb)
+		{
+			rb->resetFrame();
+		}
 	}
 
-	doVisibilityTests(*mainCam, *this, r);
+	doVisibilityTests(*mainCam, *this, renderer);
 
 	/*sectorGroup.doVisibilityTests(*mainCam,
 		VisibilityTest(VT_RENDERABLES | VT_LIGHTS), &r);*/

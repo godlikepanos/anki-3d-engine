@@ -38,7 +38,7 @@ struct VisibilityTestResults
 	typedef SceneFrameVector<SceneNode*> Container;
 
 	/// Used to optimize the initial vector size a bit
-	static const AVERAGE_NUMBER_OF_VISIBLE_SCENE_NODES = 10;
+	static const U32 AVERAGE_NUMBER_OF_VISIBLE_SCENE_NODES = 10;
 
 	Container renderables;
 	Container lights;

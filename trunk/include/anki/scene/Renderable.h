@@ -5,10 +5,10 @@
 #include "anki/scene/Common.h"
 #include "anki/gl/Ubo.h"
 #include "anki/resource/Material.h"
+#include "anki/resource/Model.h"
 
 namespace anki {
 
-class ModelPatchBase;
 class SceneNode;
 
 /// @addtogroup Scene
@@ -102,7 +102,7 @@ private:
 	BuildinMaterialVariableId buildinId;
 };
 
-/// XXX
+/// Renderable variable
 template<typename T>
 class RenderableVariableTemplate: public RenderableVariable
 {
@@ -188,20 +188,49 @@ public:
 	}
 	/// @}
 
-	U32 getSetsCount() const
+	U32 getSubMeshesCount() const
 	{
-		return 1;
+		return getRenderableModelPatchBase().getSubMeshesCount();
 	}
 
-	void setVisibleSetsMask(const SceneNode* frustumable, U64 mask);
+	/// Set the visibility mask of submeshes. This is called on visibility tests
+	void setVisibleSubMeshesMask(const SceneNode* frustumable, U64 mask);
+
+	/// Get the mask to render only the needed submeshess. Called on rendering
+	U64 getVisibleSubMeshsMask(const SceneNode& frustumable) const;
+
+	/// Reset on frame start
+	void resetFrame()
+	{
+		perframe = nullptr;
+	}
 
 protected:
 	/// The derived class needs to call that
 	void init(PropertyMap& pmap);
 
 private:
+	struct FrustumableMaskPair
+	{
+		const SceneNode* frustumable;
+		U64 mask;
+	};
+
+	/// Per frame data
+	struct PerFrame
+	{
+		PerFrame(const SceneAllocator<U8>& frameAlloc)
+			: pairs(frameAlloc)
+		{
+			pairs.reserve(3);
+		}
+
+		SceneFrameVector<FrustumableMaskPair> pairs;
+	};
+
 	RenderableVariables vars;
 	Ubo ubo;
+	PerFrame* perframe;
 };
 /// @}
 

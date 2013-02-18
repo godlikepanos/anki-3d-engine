@@ -11,6 +11,9 @@
 
 namespace anki {
 
+/// @addtogroup Scene
+/// @{
+
 /// A fragment of the ModelNode
 class ModelPatchNode: public SceneNode, public Movable, public Renderable,
 	public Spatial
@@ -146,6 +149,8 @@ private:
 	ModelResourcePointer model; ///< The resource
 	ModelPatchNodes patches;
 };
+
+/// @}
 
 } // end namespace anki
 

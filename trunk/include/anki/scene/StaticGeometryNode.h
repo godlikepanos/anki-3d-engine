@@ -8,13 +8,16 @@
 
 namespace anki {
 
-/// Part of the static geometry
-class StaticGeometryPatchNode: public SceneNode, public Spatial
+/// @addtogroup Scene
+/// @{
+
+/// Part of the static geometry. Used only for visibility tests
+class StaticGeometrySpatialNode: public SceneNode, public Spatial
 {
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	StaticGeometryPatchNode(const Obb& obb,
+	StaticGeometrySpatialNode(const Obb& obb,
 		const char* name, Scene* scene); // Scene
 	/// @}
 
@@ -32,14 +35,56 @@ public:
 	Obb obb;
 };
 
-/// XXX
-class StaticGeometryNode: public SceneNode, public Spatial, public Renderable
+/// Static geometry scene node
+class StaticGeometryPatchNode: public SceneNode, public Spatial,
+	public Renderable
 {
 public:
+	/// @name Constructors/Destructor
+	/// @{
+	StaticGeometryPatchNode(const ModelPatchBase* modelPatch,
+		const char* name, Scene* scene); // Scene
+	/// @}
+
+	/// @name SceneNode virtuals
+	/// @{
+
+	/// Override SceneNode::getSpatial()
+	Spatial* getSpatial()
+	{
+		return this;
+	}
+
+	/// Override SceneNode::getRenderable()
+	Renderable* getRenderable()
+	{
+		return this;
+	}
+	/// @}
+
+	/// @name Renderable virtuals
+	/// @{
+
+	/// Implements Renderable::getModelPatchBase
+	const ModelPatchBase& getRenderableModelPatchBase() const
+	{
+		return *modelPatch;
+	}
+
+	/// Implements  Renderable::getMaterial
+	const Material& getRenderableMaterial() const
+	{
+		return modelPatch->getMaterial();
+	}
+	/// @}
 
 private:
-	SceneVector<StaticGeometryPatchNode*> patches;
+	const ModelPatchBase* modelPatch;
+	Obb obb; ///< In world space
+	SceneVector<StaticGeometrySpatialNode*> spatials;
 };
+
+/// @}
 
 } // end namespace anki
 
