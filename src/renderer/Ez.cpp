@@ -27,7 +27,8 @@ void Ez::run()
 	Scene& scene = r->getScene();
 	Camera& cam = scene.getActiveCamera();
 
-	VisibilityInfo& vi = cam.getFrustumable()->getVisibilityInfo();
+	VisibilityTestResults& vi = 
+		*cam.getFrustumable()->getVisibilityTestResults();
 
 	U count = 0;
 	for(auto it = vi.getRenderablesBegin();

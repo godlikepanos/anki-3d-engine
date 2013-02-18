@@ -65,6 +65,9 @@ public:
 	{
 		return 1;
 	}
+
+	/// Helper function for correct loading
+	Bool isCompatible(const MeshBase& other) const;
 };
 
 /// Mesh Resource. It contains the geometry packed in VBOs

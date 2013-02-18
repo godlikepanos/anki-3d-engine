@@ -73,8 +73,9 @@ void Ms::run()
 
 	// render all
 	r->getSceneDrawer().prepareDraw();
-	VisibilityInfo& vi =
-		r->getScene().getActiveCamera().getFrustumable()->getVisibilityInfo();
+	VisibilityTestResults& vi =
+		*r->getScene().getActiveCamera().getVisibilityTestResults();
+
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
 		r->getSceneDrawer().render(r->getScene().getActiveCamera(),

@@ -408,7 +408,8 @@ void Is::initInternal(const RendererInitializer& initializer)
 void Is::lightPass()
 {
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
-	VisibilityInfo& vi = cam->getFrustumable()->getVisibilityInfo();
+	VisibilityTestResults& vi = 
+		*cam->getFrustumable()->getVisibilityTestResults();
 
 	Array<PointLight*, MAX_POINT_LIGHTS> visiblePointLights;
 	U visiblePointLightsCount = 0;

@@ -3,7 +3,6 @@
 
 #include "anki/collision/Frustum.h"
 #include "anki/scene/Spatial.h"
-#include "anki/scene/VisibilityTester.h"
 #include "anki/scene/Common.h"
 
 namespace anki {
@@ -19,8 +18,8 @@ struct VisibilityTestResults;
 /// Frustumable interface for scene nodes
 class Frustumable
 {
-	friend SectorGroup;
-	friend Sector;
+	friend class SectorGroup;
+	friend class Sector;
 
 public:
 	/// @name Constructors
@@ -37,15 +36,6 @@ public:
 	const Frustum& getFrustum() const
 	{
 		return *frustum;
-	}
-
-	const VisibilityInfo& getVisibilityInfo() const
-	{
-		return vinfo;
-	}
-	VisibilityInfo& getVisibilityInfo()
-	{
-		return vinfo;
 	}
 
 	U32 getFrustumableTimestamp() const
@@ -77,6 +67,15 @@ public:
 
 	/// Get the origin for sorting and visibility tests
 	virtual const Vec3& getFrustumableOrigin() const = 0;
+
+	void setVisibilityTestResults(VisibilityTestResults* visible_)
+	{
+		visible = visible_;
+	}
+	VisibilityTestResults* getVisibilityTestResults()
+	{
+		return visible;
+	}
 	/// @}
 
 	void frustumableMarkUpdated()
@@ -98,7 +97,6 @@ public:
 
 protected:
 	Frustum* frustum = nullptr;
-	VisibilityInfo vinfo;
 	Mat4 projectionMat = Mat4::getIdentity();
 	Mat4 viewMat = Mat4::getIdentity();
 	Mat4 viewProjectionMat = Mat4::getIdentity();
