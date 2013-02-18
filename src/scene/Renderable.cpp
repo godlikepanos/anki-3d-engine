@@ -1,5 +1,5 @@
 #include "anki/scene/Renderable.h"
-#include "anki/resource/Material.h"
+#include "anki/scene/SceneNode.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/gl/ShaderProgram.h"
 #include "anki/core/Logger.h"
@@ -130,6 +130,37 @@ void Renderable::init(PropertyMap& pmap)
 		throw ANKI_EXCEPTION("The renderable needs more instances that the "
 			"shader program can handle");
 	}
+}
+
+//==============================================================================
+void Renderable::setVisibleSubMeshesMask(const SceneNode* frustumable, U64 mask)
+{
+	if(ANKI_UNLIKELY(perframe == nullptr))
+	{
+		perframe = ANKI_NEW(PerFrame, frustumable->getSceneFrameAllocator(),
+			frustumable->getSceneFrameAllocator());
+	}
+
+	perframe->pairs.push_back(FrustumableMaskPair{frustumable, mask});
+}
+
+//==============================================================================
+U64 Renderable::getVisibleSubMeshsMask(const SceneNode& frustumable) const
+{
+	ANKI_ASSERT(perframe);
+
+	SceneFrameVector<FrustumableMaskPair>::const_iterator it =
+		perframe->pairs.begin();
+	for(; it != perframe->pairs.end(); it++)
+	{
+		if(it->frustumable == &frustumable)
+		{
+			return it->mask;
+		}
+	}
+
+	ANKI_ASSERT("Shouldn't have come to this");
+	return 0;
 }
 
 }  // end namespace anki

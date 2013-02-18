@@ -243,7 +243,7 @@ void init()
 
 #if 1
 	ModelNode* sponzaModel = new ModelNode(
-		"data/maps/sponza/sponza_new.mdl",
+		"data/maps/sponza/sponza.mdl",
 		"sponza", &scene, Movable::MF_NONE, nullptr);
 
 	(void)sponzaModel;
@@ -453,7 +453,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
