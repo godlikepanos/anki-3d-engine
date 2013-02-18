@@ -3,7 +3,7 @@
 
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/VisibilityTester.h"
+#include "anki/scene/Visibility.h"
 #include "anki/scene/Sector.h"
 #include "anki/math/Math.h"
 #include "anki/util/Singleton.h"
@@ -12,7 +12,9 @@
 
 namespace anki {
 
+// Forward
 class Renderer;
+class Camera;
 
 /// @addtogroup Scene
 /// @{
@@ -146,12 +148,9 @@ private:
 	Camera* mainCam = nullptr;
 	U32 activeCameraChangeTimestamp = Timestamp::getTimestamp();
 
-	VisibilityTester vtester;
 	PhysWorld physics;
 
 	SectorGroup sectorGroup;
-
-	void doVisibilityTests(Camera& cam, Renderer& r);
 
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);

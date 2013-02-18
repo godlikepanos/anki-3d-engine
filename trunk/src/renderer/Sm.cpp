@@ -154,7 +154,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 
 	Frustumable* fr = light.getFrustumable();
 	ANKI_ASSERT(fr != nullptr);
-	VisibilityInfo& vi = fr->getVisibilityInfo();
+	VisibilityTestResults& vi = *fr->getVisibilityTestResults();
 
 	//
 	// Find last update

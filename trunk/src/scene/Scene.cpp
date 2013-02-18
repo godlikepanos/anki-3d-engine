@@ -1,7 +1,6 @@
 #include "anki/scene/Scene.h"
 #include "anki/scene/Camera.h"
 #include "anki/util/Exception.h"
-#include "anki/scene/VisibilityTester.h"
 #include "anki/core/ThreadPool.h"
 
 namespace anki {
@@ -103,14 +102,24 @@ void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& r)
 	{
 		n->frameUpdate(prevUpdateTime, crntTime, Timestamp::getTimestamp());
 
+		// Do some spatial stuff
 		Spatial* sp = n->getSpatial();
 		if(sp && sp->getSpatialTimestamp() == Timestamp::getTimestamp())
 		{
 			sectorGroup.placeSceneNode(n);
 		}
+
+		sp->disableFlags(Spatial::SF_VISIBLE_ANY);
+
+		// Do some frustumable stuff
+		Frustumable* fr = n->getFrustumable();
+		if(fr)
+		{
+			fr->setVisibilityTestResults(nullptr);
+		}
 	}
 
-	doVisibilityTests(*mainCam, r);
+	doVisibilityTests(*mainCam, *this, r);
 
 	/*sectorGroup.doVisibilityTests(*mainCam,
 		VisibilityTest(VT_RENDERABLES | VT_LIGHTS), &r);*/
@@ -140,14 +149,6 @@ void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& r)
 		}
 	}
 #endif
-}
-
-//==============================================================================
-void Scene::doVisibilityTests(Camera& cam, Renderer& r)
-{
-	Frustumable* f = cam.getFrustumable();
-	ANKI_ASSERT(f != nullptr);
-	vtester.test(*f, *this, r);
 }
 
 //==============================================================================

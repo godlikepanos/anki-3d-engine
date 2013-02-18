@@ -91,6 +91,11 @@ public:
 		for(U32 i = 0; i < meshesCount; i++)
 		{
 			meshes[i].load(meshFNames[i]);
+
+			if(i > 0 && !meshes[i]->isCompatible(*meshes[i - 1]))
+			{
+				throw ANKI_EXCEPTION("Meshes not compatible");
+			}
 		}
 		mtl.load(mtlFName);
 

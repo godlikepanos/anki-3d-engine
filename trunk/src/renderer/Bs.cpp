@@ -24,8 +24,8 @@ void Bs::run()
 	RenderableDrawer& drawer = r->getSceneDrawer();
 	drawer.prepareDraw();
 	Scene& scene = r->getScene();
-	VisibilityInfo& vi =
-		scene.getActiveCamera().getFrustumable()->getVisibilityInfo();
+	VisibilityTestResults& vi =
+		*scene.getActiveCamera().getFrustumable()->getVisibilityTestResults();
 
 	for(auto it = vi.getRenderablesEnd() - 1; it >= vi.getRenderablesBegin();
 		--it)

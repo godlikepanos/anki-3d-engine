@@ -13,68 +13,6 @@
 namespace anki {
 
 //==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
-struct DistanceSortFunctor
-{
-	Vec3 origin;
-
-	Bool operator()(SceneNode* a, SceneNode* b)
-	{
-		ANKI_ASSERT(a->getSpatial() != nullptr && b->getSpatial() != nullptr);
-
-		F32 dist0 = origin.getDistanceSquared(
-			a->getSpatial()->getSpatialOrigin());
-		F32 dist1 = origin.getDistanceSquared(
-			b->getSpatial()->getSpatialOrigin());
-
-		return dist0 < dist1;
-	}
-};
-
-//==============================================================================
-struct MaterialSortFunctor
-{
-	Bool operator()(SceneNode* a, SceneNode* b)
-	{
-		ANKI_ASSERT(a->getRenderable() != nullptr
-			&& b->getRenderable() != nullptr);
-
-		return a->getRenderable()->getRenderableMaterial()
-			< b->getRenderable()->getRenderableMaterial();
-	}
-};
-
-//==============================================================================
-struct DistanceSortJob: ThreadJob
-{
-	U nodesCount;
-	VisibilityTestResults::Container::iterator nodes;
-	Vec3 origin;
-
-	void operator()(U threadId, U threadsCount)
-	{
-		DistanceSortFunctor comp;
-		comp.origin = origin;
-		std::sort(nodes, nodes + nodesCount, comp);
-	}
-};
-
-//==============================================================================
-struct MaterialSortJob: ThreadJob
-{
-	U nodesCount;
-	VisibilityTestResults::Container::iterator nodes;
-
-	void operator()(U threadId, U threadsCount)
-	{
-		std::sort(nodes, nodes + nodesCount, MaterialSortFunctor());
-	}
-};
-
-//==============================================================================
 // Portal                                                                      =
 //==============================================================================
 
