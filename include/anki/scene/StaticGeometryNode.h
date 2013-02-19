@@ -21,16 +21,6 @@ public:
 		const char* name, Scene* scene); // Scene
 	/// @}
 
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::getSpatial()
-	Spatial* getSpatial()
-	{
-		return this;
-	}
-	/// @}
-
 public:
 	Obb obb;
 };
@@ -44,22 +34,6 @@ public:
 	/// @{
 	StaticGeometryPatchNode(const ModelPatchBase* modelPatch,
 		const char* name, Scene* scene); // Scene
-	/// @}
-
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::getSpatial()
-	Spatial* getSpatial()
-	{
-		return this;
-	}
-
-	/// Override SceneNode::getRenderable()
-	Renderable* getRenderable()
-	{
-		return this;
-	}
 	/// @}
 
 	/// @name Renderable virtuals

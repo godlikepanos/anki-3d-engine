@@ -47,10 +47,12 @@ ParticleBase::ParticleBase(
 	const char* name, Scene* scene, 
 	// Movable
 	U32 movableFlags, Movable* movParent)
-	: SceneNode(name, scene),
+	:	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		type(type_)
-{}
+{
+	sceneNodeProtected.movable = this;
+}
 
 //==============================================================================
 ParticleBase::~ParticleBase()
@@ -141,7 +143,9 @@ Particle::Particle(
 	PhysWorld* masterContainer, const Initializer& init)
 	: ParticleBase(PT_PHYSICS, name, scene, movableFlags, movParent),
 		RigidBody(masterContainer, init, this)
-{}
+{
+	sceneNodeProtected.rigidBody = this;
+}
 
 //==============================================================================
 Particle::~Particle()
@@ -229,6 +233,11 @@ ParticleEmitter::ParticleEmitter(
 		Renderable(getSceneAllocator()),
 		particles(getSceneAllocator())
 {
+	sceneNodeProtected.spatial = this;
+	sceneNodeProtected.movable = this;
+	sceneNodeProtected.renderable = this;
+	sceneNodeProtected.renderable = this;
+
 	// Load resource
 	particleEmitterResource.load(filename);
 

@@ -95,20 +95,6 @@ public:
 
 	/// @name SceneNode virtuals
 	/// @{
-	Movable* getMovable()
-	{
-		return this;
-	}
-
-	Spatial* getSpatial()
-	{
-		return this;
-	}
-
-	Light* getLight()
-	{
-		return this;
-	}
 
 	/// Override SceneNode::frameUpdate
 	void frameUpdate(F32 prevUpdateTime, F32 crntTime, int frame)
@@ -231,16 +217,6 @@ public:
 	const PerspectiveFrustum& getFrustum() const
 	{
 		return frustum;
-	}
-	/// @}
-
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::getFrustumable()
-	Frustumable* getFrustumable()
-	{
-		return (getShadowEnabled()) ? this : nullptr;
 	}
 	/// @}
 

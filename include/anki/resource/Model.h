@@ -24,10 +24,22 @@ public:
 	virtual ~ModelPatchBase()
 	{}
 
-	virtual const Material& getMaterial() const = 0;
+	const Material& getMaterial() const
+	{
+		ANKI_ASSERT(modelPatchProtected.mtl);
+		return *modelPatchProtected.mtl;
+	}
 
-	virtual const MeshBase& getMeshBase(const PassLevelKey& key) const = 0;
-	virtual U32 getMeshesCount() const = 0;
+	const MeshBase& getMeshBase(const PassLevelKey& key) const
+	{
+		ANKI_ASSERT(key.level < modelPatchProtected.meshes.size());
+		return *modelPatchProtected.meshes[key.level];
+	}
+
+	U32 getMeshesCount() const
+	{
+		return modelPatchProtected.meshes.size();
+	}
 
 	const Obb& getBoundingShape() const
 	{
@@ -57,8 +69,13 @@ public:
 		U32* indicesCountArray, U32* indicesOffsetArray, U32& primcount) const;
 
 protected:
-	/// Array [lod][pass]
-	VaosContainer vaos;
+	struct
+	{
+		/// Array [lod][pass]
+		VaosContainer vaos;
+		Material* mtl = nullptr;
+		Vector<MeshBase*> meshes;
+	} modelPatchProtected;
 
 	/// Create VAOs using a material and a mesh. It writes a VaosContainer and
 	/// a hash map
@@ -88,16 +105,21 @@ public:
 		// Load
 		ANKI_ASSERT(meshesCount > 0);
 		meshes.resize(meshesCount);
+		modelPatchProtected.meshes.resize(meshesCount);
+
 		for(U32 i = 0; i < meshesCount; i++)
 		{
 			meshes[i].load(meshFNames[i]);
+			modelPatchProtected.meshes[i] = meshes[i].get();
 
 			if(i > 0 && !meshes[i]->isCompatible(*meshes[i - 1]))
 			{
 				throw ANKI_EXCEPTION("Meshes not compatible");
 			}
 		}
+
 		mtl.load(mtlFName);
+		modelPatchProtected.mtl = mtl.get();
 
 		/// Create VAOs
 		create();
@@ -105,28 +127,6 @@ public:
 
 	~ModelPatch()
 	{}
-
-	/// @name Accessors
-	/// @{
-
-	/// Implements ModelPatchBase::getMeshBase
-	const MeshBase& getMeshBase(const PassLevelKey& key) const
-	{
-		return *meshes[key.level];
-	}
-
-	/// Implements ModelPatchBase::getMeshesCount
-	U32 getMeshesCount() const
-	{
-		return meshes.size();
-	}
-
-	/// Implements ModelPatchBase::getMaterial
-	const Material& getMaterial() const
-	{
-		return *mtl;
-	}
-	/// @}
 
 private:
 	Vector<MeshResourcePointerType> meshes; ///< The geometries

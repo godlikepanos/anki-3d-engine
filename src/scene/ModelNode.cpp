@@ -17,6 +17,10 @@ ModelPatchNode::ModelPatchNode(const ModelPatchBase *modelPatch_,
 		Renderable(getSceneAllocator()),
 		Spatial(&obb), modelPatch(modelPatch_)
 {
+	sceneNodeProtected.movable = this;
+	sceneNodeProtected.renderable = this;
+	sceneNodeProtected.spatial = this;
+
 	Renderable::init(*this);
 }
 
@@ -32,6 +36,8 @@ ModelNode::ModelNode(const char* modelFname,
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		patches(getSceneAllocator())
 {
+	sceneNodeProtected.movable = this;
+
 	model.load(modelFname);
 
 	patches.reserve(model->getModelPatches().size());

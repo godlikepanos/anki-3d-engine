@@ -63,16 +63,6 @@ public:
 	}
 	/// @}
 
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::getMovable()
-	Movable* getMovable()
-	{
-		return this;
-	}
-	/// @}
-
 	Bool isDead() const
 	{
 		return timeOfDeath < 0.0;
@@ -143,16 +133,6 @@ public:
 
 	~Particle();
 
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::getRigidBody()
-	RigidBody* getRigidBody()
-	{
-		return this;
-	}
-	/// @}
-
 	void kill()
 	{
 		ParticleBase::kill();
@@ -183,24 +163,6 @@ public:
 
 	/// @name SceneNode virtuals
 	/// @{
-
-	/// Override SceneNode::getMovable()
-	Movable* getMovable()
-	{
-		return this;
-	}
-
-	/// Override SceneNode::getSpatial()
-	Spatial* getSpatial()
-	{
-		return this;
-	}
-
-	/// Override SceneNode::getRenderable()
-	Renderable* getRenderable()
-	{
-		return this;
-	}
 
 	/// Override SceneNode::frameUpdate()
 	void frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame);

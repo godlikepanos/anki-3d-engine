@@ -16,7 +16,11 @@ Camera::Camera(CameraType type_,
 		Spatial(frustum),
 		Frustumable(frustum),
 		type(type_)
-{}
+{
+	sceneNodeProtected.movable = this;
+	sceneNodeProtected.spatial = this;
+	sceneNodeProtected.frustumable = this;
+}
 
 //==============================================================================
 Camera::~Camera()

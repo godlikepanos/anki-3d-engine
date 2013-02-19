@@ -57,34 +57,58 @@ public:
 
 	/// @name Accessors of components
 	/// @{
-	virtual Movable* getMovable()
+	Movable* getMovable()
 	{
-		return nullptr;
+		return sceneNodeProtected.movable;
+	}
+	const Movable* getMovable() const
+	{
+		return sceneNodeProtected.movable;
 	}
 
-	virtual Renderable* getRenderable()
+	Renderable* getRenderable()
 	{
-		return nullptr;
+		return sceneNodeProtected.renderable;
+	}
+	const Renderable* getRenderable() const
+	{
+		return sceneNodeProtected.renderable;
 	}
 
-	virtual Frustumable* getFrustumable()
+	Frustumable* getFrustumable()
 	{
-		return nullptr;
+		return sceneNodeProtected.frustumable;
+	}
+	const Frustumable* getFrustumable() const
+	{
+		return sceneNodeProtected.frustumable;
 	}
 
-	virtual Spatial* getSpatial()
+	Spatial* getSpatial()
 	{
-		return nullptr;
+		return sceneNodeProtected.spatial;
+	}
+	const Spatial* getSpatial() const
+	{
+		return sceneNodeProtected.spatial;
 	}
 
-	virtual Light* getLight()
+	Light* getLight()
 	{
-		return nullptr;
+		return sceneNodeProtected.light;
+	}
+	const Light* getLight() const 
+	{
+		return sceneNodeProtected.light;
 	}
 
-	virtual RigidBody* getRigidBody()
+	RigidBody* getRigidBody()
 	{
-		return nullptr;
+		return sceneNodeProtected.rigidBody;
+	}
+	const RigidBody* getRigidBody() const
+	{
+		return sceneNodeProtected.rigidBody;
 	}
 	/// @}
 
@@ -102,6 +126,17 @@ public:
 
 	/// Return the last frame the node was updated. It checks all components
 	U32 getLastUpdateFrame();
+
+protected:
+	struct
+	{
+		Movable* movable = nullptr;
+		Renderable* renderable = nullptr;
+		Frustumable* frustumable = nullptr;
+		Spatial* spatial = nullptr;
+		Light* light = nullptr;
+		RigidBody* rigidBody = nullptr;
+	} sceneNodeProtected;
 
 private:
 	SceneString name; ///< A unique name

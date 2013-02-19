@@ -31,11 +31,9 @@ public:
 		typedef SceneVector<T*> Container;
 		typedef typename Container::iterator Iterator;
 		typedef typename Container::const_iterator ConstIterator;
+		// XXX Change the map with map with allocator
 		typedef typename ConstCharPtrHashMap<T*>::Type NameToItemMap;
 	};
-
-	/// The size of the internal allocator. 1MB
-	const PtrSize ALLOCATOR_SIZE = 0x100000;
 
 	/// @name Constructors/Destructor
 	/// @{
