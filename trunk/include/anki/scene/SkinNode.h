@@ -154,28 +154,6 @@ public:
 	}
 	/// @}
 
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::getMovable()
-	Movable* getMovable()
-	{
-		return this;
-	}
-
-	/// Override SceneNode::getSpatial()
-	Spatial* getSpatial()
-	{
-		return this;
-	}
-
-	/// Override SceneNode::getRenderable
-	Renderable* getRenderable()
-	{
-		return this;
-	}
-	/// @}
-
 	/// @name Renderable virtuals
 	/// @{
 
@@ -217,12 +195,6 @@ public:
 
 	/// @name SceneNode virtuals
 	/// @{
-
-	/// Override SceneNode::getMovable()
-	Movable* getMovable()
-	{
-		return this;
-	}
 
 	/// Update the animation stuff
 	void frameUpdate(F32 prevUpdateTime, F32 crntTime, int frame);

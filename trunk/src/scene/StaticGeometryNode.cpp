@@ -11,7 +11,9 @@ namespace anki {
 StaticGeometrySpatialNode::StaticGeometrySpatialNode(const Obb& obb_,
 	const char* name, Scene* scene)
 	: SceneNode(name, scene), Spatial(&obb), obb(obb_)
-{}
+{
+	sceneNodeProtected.spatial = this;
+}
 
 //==============================================================================
 // StaticGeometryPatchNode                                                     =
@@ -25,6 +27,9 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(
 		Renderable(getSceneAllocator()),
 		modelPatch(modelPatch_)
 {
+	sceneNodeProtected.spatial = this;
+	sceneNodeProtected.renderable = this;
+
 	ANKI_ASSERT(modelPatch);
 	Renderable::init(*this);
 

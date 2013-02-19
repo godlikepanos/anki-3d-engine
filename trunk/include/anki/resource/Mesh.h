@@ -37,37 +37,73 @@ public:
 		const VertexAttribute attrib, const Vbo*& vbo,
 		U32& size, GLenum& type, U32& stride, U32& offset) const = 0;
 
-	virtual U32 getTextureChannelsCount() const = 0;
+	U32 getTextureChannelsCount() const
+	{
+		return meshProtected.texChannelsCount;
+	}
 
-	virtual Bool hasWeights() const = 0;
+	Bool hasWeights() const
+	{
+		return meshProtected.weights;
+	}
 
 	/// Used only to clone the VBO
-	virtual U32 getVerticesCount() const = 0;
-
-	virtual U32 getIndicesCount() const = 0;
-
-	virtual const Obb& getBoundingShape() const = 0;
-
-	virtual U32 getIndicesCountSub(U32 subMeshId, U32& offset) const
+	U32 getVerticesCount() const
 	{
-		ANKI_ASSERT(subMeshId == 0);
-		offset = 0;
-		return getIndicesCount();
+		return meshProtected.vertsCount;
 	}
 
-	virtual const Obb& getBoundingShapeSub(U32 subMeshId) const
+	U32 getIndicesCount() const
 	{
-		ANKI_ASSERT(subMeshId == 0);
-		return getBoundingShape();
+		ANKI_ASSERT(meshProtected.subMeshes.size() > 0);
+		return meshProtected.subMeshes[0].indicesCount;
 	}
 
-	virtual U32 getSubMeshesCount() const
+	const Obb& getBoundingShape() const
 	{
-		return 1;
+		return meshProtected.obb;
+	}
+
+	U32 getIndicesCountSub(U subMeshId, U32& offset) const
+	{
+		ANKI_ASSERT(subMeshId < meshProtected.subMeshes.size());
+		const SubMesh& sm = meshProtected.subMeshes[subMeshId];
+		offset = sm.indicesOffset;
+		return sm.indicesCount;
+	}
+
+	const Obb& getBoundingShapeSub(U subMeshId) const
+	{
+		ANKI_ASSERT(subMeshId < meshProtected.subMeshes.size());
+		return meshProtected.subMeshes[subMeshId].obb;
+	}
+
+	U32 getSubMeshesCount() const
+	{
+		return meshProtected.subMeshes.size();
 	}
 
 	/// Helper function for correct loading
 	Bool isCompatible(const MeshBase& other) const;
+
+protected:
+	/// Per sub mesh data
+	struct SubMesh
+	{
+		U32 indicesCount;
+		U32 indicesOffset;
+		Obb obb;
+	};
+
+	struct
+	{
+		Vector<SubMesh> subMeshes;
+		U32 indicesCount;
+		U32 vertsCount;
+		Obb obb;
+		U8 texChannelsCount;
+		Bool8 weights;
+	} meshProtected;
 };
 
 /// Mesh Resource. It contains the geometry packed in VBOs
@@ -94,31 +130,6 @@ public:
 
 	/// @name MeshBase implementers
 	/// @{
-	U32 getVerticesCount() const
-	{
-		return vertsCount;
-	}
-
-	U32 getIndicesCount() const
-	{
-		return indicesCount;
-	}
-
-	U32 getTextureChannelsCount() const
-	{
-		return texChannelsCount;
-	}
-
-	Bool hasWeights() const
-	{
-		return weights;
-	}
-
-	const Obb& getBoundingShape() const
-	{
-		return visibilityShape;
-	}
-
 	void getVboInfo(
 		const VertexAttribute attrib, const Vbo*& vbo,
 		U32& size, GLenum& type, U32& stride, U32& offset) const;
@@ -128,12 +139,6 @@ public:
 	void load(const char* filename);
 
 protected:
-	U32 vertsCount;
-	U32 indicesCount; ///< Indices count per level
-	U32 texChannelsCount;
-	Bool8 weights;
-	Obb visibilityShape;
-
 	Vbo vbo;
 	Vbo indicesVbo;
 
@@ -165,39 +170,8 @@ public:
 	~BucketMesh()
 	{}
 
-	/// @name MeshBase implementers
-	/// @{
-	U32 getIndicesCountSub(U32 subMeshId, U32& offset) const
-	{
-		ANKI_ASSERT(subMeshId < subMeshes.size());
-		offset = subMeshes[subMeshId].indicesOffset;
-		return subMeshes[subMeshId].indicesCount;
-	}
-
-	const Obb& getBoundingShapeSub(U32 subMeshId) const
-	{
-		ANKI_ASSERT(subMeshId < subMeshes.size());
-		return subMeshes[subMeshId].visibilityShape;
-	}
-
-	U32 getSubMeshesCount() const
-	{
-		return subMeshes.size();
-	}
-	/// @}
-
 	/// Load from a .mmesh file
 	void load(const char* filename);
-
-private:
-	struct SubMeshData
-	{
-		U32 indicesCount;
-		U32 indicesOffset; ///< In bytes
-		Obb visibilityShape;
-	};
-
-	Vector<SubMeshData> subMeshes;
 };
 
 } // end namespace anki

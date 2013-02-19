@@ -33,16 +33,65 @@ struct UpdateMovablesJob: ThreadJob
 };
 
 //==============================================================================
+#if 0
+struct UpdateSceneNodesJob: ThreadJob
+{
+	Scene::Types<SceneNode>::Iterator sceneNodesBegin;
+	U32 sceneNodesCount;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		U64 start, end;
+		choseStartEnd(threadId, threadsCount, sceneNodesCount, start, end);
+
+		for(U64 i = start; i < end; i++)
+		{
+			SceneNode* n = *(sceneNodesBegin + i);
+
+			n->frameUpdate(prevUpdateTime, crntTime, Timestamp::getTimestamp());
+
+			// Do some spatial stuff
+			Spatial* sp = n->getSpatial();
+			if(sp)
+			{
+				if(sp->getSpatialTimestamp() == Timestamp::getTimestamp())
+				{
+					sectorGroup.placeSceneNode(n);
+				}
+				sp->disableFlags(Spatial::SF_VISIBLE_ANY);
+			}
+
+			// Do some frustumable stuff
+			Frustumable* fr = n->getFrustumable();
+			if(fr)
+			{
+				fr->setVisibilityTestResults(nullptr);
+			}
+
+			// Do some renderable stuff
+			Renderable* r = n->getRenderable();
+			if(r)
+			{
+				r->resetFrame();
+			}
+		}
+	}
+}
+#endif
+
+//==============================================================================
 // Scene                                                                       =
 //==============================================================================
 
 //==============================================================================
 Scene::Scene()
-	: alloc(ALLOCATOR_SIZE),
-		frameAlloc(ALLOCATOR_SIZE),
+	:	alloc(SceneConfig::SCENE_ALLOCATOR_SIZE),
+		frameAlloc(SceneConfig::SCENE_FRAME_ALLOCATOR_SIZE),
 		nodes(alloc),
 		sectorGroup(this)
 {
+	nodes.reserve(SceneConfig::SCENE_NODES_AVERAGE_COUNT);
+
 	ambientCol = Vec3(0.1, 0.05, 0.05) * 2;
 }
 

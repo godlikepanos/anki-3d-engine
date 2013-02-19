@@ -87,8 +87,8 @@ void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
 
 	U index = key.pass + std::min((U)key.level, lodsCount - 1) * lodsCount;
 
-	ANKI_ASSERT(index < vaos.size());
-	vao = &vaos[index];
+	ANKI_ASSERT(index < modelPatchProtected.vaos.size());
+	vao = &modelPatchProtected.vaos[index];
 
 	// Mesh and indices
 	PassLevelKey meshKey;
@@ -121,8 +121,8 @@ void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
 
 	U index = key.pass + std::min((U)key.level, lodsCount - 1) * lodsCount;
 
-	ANKI_ASSERT(index < vaos.size());
-	vao = &vaos[index];
+	ANKI_ASSERT(index < modelPatchProtected.vaos.size());
+	vao = &modelPatchProtected.vaos[index];
 
 	// Prog
 	PassLevelKey mtlKey;
@@ -159,7 +159,7 @@ void ModelPatchBase::create()
 	U lodsCount = std::max(getMeshesCount(), mtl.getLevelsOfDetail());
 	U passesCount = mtl.getPasses().size();
 
-	vaos.resize(lodsCount * passesCount);
+	modelPatchProtected.vaos.resize(lodsCount * passesCount);
 
 	for(U lod = 0; lod < lodsCount; ++lod)
 	{
@@ -185,7 +185,7 @@ void ModelPatchBase::create()
 			Vao vao;
 			createVao(*prog, *mesh, vao);
 
-			vaos[i] = std::move(vao);
+			modelPatchProtected.vaos[i] = std::move(vao);
 			++i;
 		}
 	}

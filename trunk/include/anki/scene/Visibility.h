@@ -37,15 +37,14 @@ struct VisibilityTestResults
 {
 	typedef SceneFrameVector<SceneNode*> Container;
 
-	/// Used to optimize the initial vector size a bit
-	static const U32 AVERAGE_NUMBER_OF_VISIBLE_SCENE_NODES = 10;
-
 	Container renderables;
 	Container lights;
 
 	VisibilityTestResults(const SceneAllocator<U8>& frameAlloc,
-		U32 renderablesReservedSize = AVERAGE_NUMBER_OF_VISIBLE_SCENE_NODES,
-		U32 lightsReservedSize = AVERAGE_NUMBER_OF_VISIBLE_SCENE_NODES)
+		U32 renderablesReservedSize = 
+		SceneConfig::FRUSTUMABLE_AVERAGE_VISIBLE_SCENE_NODES_COUNT,
+		U32 lightsReservedSize =
+		SceneConfig::FRUSTUMABLE_AVERAGE_VISIBLE_SCENE_NODES_COUNT)
 		: renderables(frameAlloc), lights(frameAlloc)
 	{
 		renderables.reserve(renderablesReservedSize);

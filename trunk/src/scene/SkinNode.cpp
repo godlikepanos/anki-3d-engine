@@ -63,6 +63,7 @@ SkinModelPatch::SkinModelPatch(const ModelPatchBase* mpatch_,
 		skinMeshes(alloc),
 		xfbVaos(alloc)
 {
+	// XXX set spatial private
 #if 0
 	// Create the model patch
 	skinMeshes.resize(mpatch->getMeshesCount());
@@ -133,6 +134,10 @@ SkinPatchNode::SkinPatchNode(const ModelPatchBase* modelPatch_,
 		Renderable(getSceneAllocator()),
 		Spatial(spatialCs)
 {
+	sceneNodeProtected.movable = this;
+	sceneNodeProtected.renderable = this;
+	sceneNodeProtected.spatial = this;
+
 	skinModelPatch.reset(new SkinModelPatch(modelPatch_, getSceneAllocator()));
 	Renderable::init(*this);
 }
@@ -153,6 +158,8 @@ SkinNode::SkinNode(const char* skinFname,
 		boneRotations(getSceneAllocator()),
 		boneTranslations(getSceneAllocator())
 {
+	sceneNodeProtected.movable = this;
+
 	skin.load(skinFname);
 
 	uint i = 0;
