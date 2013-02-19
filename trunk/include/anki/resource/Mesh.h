@@ -55,8 +55,7 @@ public:
 
 	U32 getIndicesCount() const
 	{
-		ANKI_ASSERT(meshProtected.subMeshes.size() > 0);
-		return meshProtected.subMeshes[0].indicesCount;
+		return meshProtected.indicesCount;
 	}
 
 	const Obb& getBoundingShape() const
