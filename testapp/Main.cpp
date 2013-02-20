@@ -3,14 +3,11 @@
 #include <fstream>
 
 #include "anki/input/Input.h"
-#include "anki/scene/Camera.h"
 #include "anki/math/Math.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/App.h"
 #include "anki/resource/Mesh.h"
-#include "anki/scene/Light.h"
 #include "anki/resource/Material.h"
-#include "anki/scene/SceneGraph.h"
 #include "anki/resource/SkelAnim.h"
 #include "anki/physics/Character.h"
 #include "anki/renderer/Renderer.h"
@@ -19,12 +16,10 @@
 #include "anki/physics/RigidBody.h"
 #include "anki/script/ScriptManager.h"
 #include "anki/core/StdinListener.h"
-#include "anki/scene/ModelNode.h"
 #include "anki/resource/Model.h"
 #include "anki/core/Logger.h"
 #include "anki/util/Filesystem.h"
 #include "anki/util/HighRezTimer.h"
-#include "anki/scene/SkinNode.h"
 #include "anki/resource/Skin.h"
 #include "anki/event/EventManager.h"
 #include "anki/event/SceneColorEvent.h"
@@ -35,7 +30,7 @@
 #include "anki/core/Timestamp.h"
 #include "anki/core/NativeWindow.h"
 #include "anki/util/Functions.h"
-#include "anki/scene/ParticleEmitter.h"
+#include "anki/scene/Scene.h"
 
 using namespace anki;
 
@@ -469,7 +464,7 @@ void mainLoop()
 		Timestamp::increaseTimestamp();
 	}
 
-#if 1
+#if 0
 	MainRendererSingleton::get().takeScreenshot("screenshot.tga");
 #endif
 
