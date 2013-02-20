@@ -6,6 +6,9 @@
 #include "anki/scene/Common.h"
 #include "anki/scene/Visibility.h"
 #include <memory>
+#if ANKI_CFG_OCTREE_THREAD_SAFE
+#	include <mutex>
+#endif
 
 namespace anki {
 
@@ -81,6 +84,9 @@ private:
 	OctreeNode* parent;
 	Aabb aabb; ///< Including AABB
 	SceneVector<SceneNode*> sceneNodes;
+#if ANKI_CFG_OCTREE_THREAD_SAFE
+	std::mutex mtx;
+#endif
 
 	void addSceneNode(SceneNode* sn);
 

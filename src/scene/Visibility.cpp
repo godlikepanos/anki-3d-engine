@@ -166,18 +166,27 @@ void doVisibilityTests(SceneNode& fsn, Scene& scene,
 		renderablesSize, 
 		lightsSize);
 
+	visible->renderables.resize(renderablesSize);
+	visible->lights.resize(lightsSize);
+
 	// Append thread results
+	renderablesSize = 0;
+	lightsSize = 0;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		visible->renderables.insert(
-			visible->renderables.end(),
-			jobs[i].visible->renderables.begin(), 
-			jobs[i].visible->renderables.end());
+		const VisibilityTestResults& from = *jobs[i].visible;
 
-		visible->lights.insert(
-			visible->lights.end(),
-			jobs[i].visible->lights.begin(), 
-			jobs[i].visible->lights.end());
+		memcpy(&visible->renderables[renderablesSize],
+			&from.renderables[0],
+			sizeof(SceneNode*) * from.renderables.size());
+
+		renderablesSize += from.renderables.size();
+
+		memcpy(&visible->lights[lightsSize],
+			&from.lights[0],
+			sizeof(SceneNode*) * from.lights.size());
+
+		lightsSize += from.lights.size();
 	}
 
 	// Set the frustumable

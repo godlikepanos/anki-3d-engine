@@ -33,11 +33,45 @@ struct UpdateMovablesJob: ThreadJob
 };
 
 //==============================================================================
-#if 0
+static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
+	F32 crntTime, SectorGroup& sectorGroup)
+{
+	sn.frameUpdate(prevUpdateTime, crntTime, Timestamp::getTimestamp());
+
+	// Do some spatial stuff
+	Spatial* sp = sn.getSpatial();
+	if(sp)
+	{
+		if(sp->getSpatialTimestamp() == Timestamp::getTimestamp())
+		{
+			sectorGroup.placeSceneNode(&sn);
+		}
+		sp->disableFlags(Spatial::SF_VISIBLE_ANY);
+	}
+
+	// Do some frustumable stuff
+	Frustumable* fr = sn.getFrustumable();
+	if(fr)
+	{
+		fr->setVisibilityTestResults(nullptr);
+	}
+
+	// Do some renderable stuff
+	Renderable* r = sn.getRenderable();
+	if(r)
+	{
+		r->resetFrame();
+	}
+}
+
+//==============================================================================
 struct UpdateSceneNodesJob: ThreadJob
 {
 	Scene::Types<SceneNode>::Iterator sceneNodesBegin;
 	U32 sceneNodesCount;
+	F32 prevUpdateTime;
+	F32 crntTime;
+	SectorGroup* sectorGroup;
 
 	void operator()(U threadId, U threadsCount)
 	{
@@ -47,37 +81,10 @@ struct UpdateSceneNodesJob: ThreadJob
 		for(U64 i = start; i < end; i++)
 		{
 			SceneNode* n = *(sceneNodesBegin + i);
-
-			n->frameUpdate(prevUpdateTime, crntTime, Timestamp::getTimestamp());
-
-			// Do some spatial stuff
-			Spatial* sp = n->getSpatial();
-			if(sp)
-			{
-				if(sp->getSpatialTimestamp() == Timestamp::getTimestamp())
-				{
-					sectorGroup.placeSceneNode(n);
-				}
-				sp->disableFlags(Spatial::SF_VISIBLE_ANY);
-			}
-
-			// Do some frustumable stuff
-			Frustumable* fr = n->getFrustumable();
-			if(fr)
-			{
-				fr->setVisibilityTestResults(nullptr);
-			}
-
-			// Do some renderable stuff
-			Renderable* r = n->getRenderable();
-			if(r)
-			{
-				r->resetFrame();
-			}
+			updateSceneNode(*n, prevUpdateTime, crntTime, *sectorGroup);
 		}
 	}
-}
-#endif
+};
 
 //==============================================================================
 // Scene                                                                       =
@@ -85,12 +92,12 @@ struct UpdateSceneNodesJob: ThreadJob
 
 //==============================================================================
 Scene::Scene()
-	:	alloc(SceneConfig::SCENE_ALLOCATOR_SIZE),
-		frameAlloc(SceneConfig::SCENE_FRAME_ALLOCATOR_SIZE),
+	:	alloc(ANKI_CFG_SCENE_ALLOCATOR_SIZE),
+		frameAlloc(ANKI_CFG_SCENE_FRAME_ALLOCATOR_SIZE),
 		nodes(alloc),
 		sectorGroup(this)
 {
-	nodes.reserve(SceneConfig::SCENE_NODES_AVERAGE_COUNT);
+	nodes.reserve(ANKI_CFG_SCENE_NODES_AVERAGE_COUNT);
 
 	ambientCol = Vec3(0.1, 0.05, 0.05) * 2;
 }
@@ -147,35 +154,27 @@ void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 #endif
 
 	// Then the rest
+#if 0
 	for(SceneNode* n : nodes)
 	{
-		n->frameUpdate(prevUpdateTime, crntTime, Timestamp::getTimestamp());
-
-		// Do some spatial stuff
-		Spatial* sp = n->getSpatial();
-		if(sp)
-		{
-			if(sp->getSpatialTimestamp() == Timestamp::getTimestamp())
-			{
-				sectorGroup.placeSceneNode(n);
-			}
-			sp->disableFlags(Spatial::SF_VISIBLE_ANY);
-		}
-
-		// Do some frustumable stuff
-		Frustumable* fr = n->getFrustumable();
-		if(fr)
-		{
-			fr->setVisibilityTestResults(nullptr);
-		}
-
-		// Do some renderable stuff
-		Renderable* rb = n->getRenderable();
-		if(rb)
-		{
-			rb->resetFrame();
-		}
+		updateSceneNode(*n, prevUpdateTime, crntTime, *sectorGroup);
 	}
+#else
+	UpdateSceneNodesJob jobs2[ThreadPool::MAX_THREADS];
+
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	{
+		UpdateSceneNodesJob& job = jobs2[i];
+
+		job.sceneNodesBegin = nodes.begin();
+		job.sceneNodesCount = nodes.size();
+		job.prevUpdateTime = prevUpdateTime;
+		job.crntTime = crntTime;
+		job.sectorGroup = &sectorGroup;
+
+		threadPool.assignNewJob(i, &job);
+	}
+#endif
 
 	doVisibilityTests(*mainCam, *this, renderer);
 

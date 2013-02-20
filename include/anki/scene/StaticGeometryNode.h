@@ -20,12 +20,9 @@ public:
 	StaticGeometrySpatialNode(const Obb& obb,
 		const char* name, Scene* scene); // Scene
 	/// @}
-
-public:
-	Obb obb;
 };
 
-/// Static geometry scene node
+/// Static geometry scene node patch
 class StaticGeometryPatchNode: public SceneNode, public Spatial,
 	public Renderable
 {
@@ -34,6 +31,8 @@ public:
 	/// @{
 	StaticGeometryPatchNode(const ModelPatchBase* modelPatch,
 		const char* name, Scene* scene); // Scene
+
+	~StaticGeometryPatchNode();
 	/// @}
 
 	/// @name Renderable virtuals
@@ -54,8 +53,21 @@ public:
 
 private:
 	const ModelPatchBase* modelPatch;
-	Obb obb; ///< In world space
 	SceneVector<StaticGeometrySpatialNode*> spatials;
+};
+
+/// Static geometry scene node
+class StaticGeometryNode: public SceneNode
+{
+public:
+	StaticGeometryNode(const char* filename,
+		const char* name, Scene* scene); // Scene
+
+	~StaticGeometryNode();
+
+private:
+	ModelResourcePointer model;
+	SceneVector<StaticGeometryPatchNode*> patches;
 };
 
 /// @}

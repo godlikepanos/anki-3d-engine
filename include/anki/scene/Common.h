@@ -7,23 +7,33 @@
 
 namespace anki {
 
-/// @addtogroup Scene
+/// @addtogroup config 
+/// @{
+/// @addtogroup config_scene Scene configuration constants
 /// @{
 
-/// Scene configuration constants. The enum contains absolute values and other
-/// constants that help to optimize allocations
-struct SceneConfig
-{
-	enum 
-	{
-		SCENE_NODES_AVERAGE_COUNT = 1024,
-		SCENE_ALLOCATOR_SIZE = 0x100000, // 1MB
-		SCENE_FRAME_ALLOCATOR_SIZE = 0x80000, // 512K
+#define ANKI_CFG_SCENE_NODES_AVERAGE_COUNT 1024
 
-		/// Used to optimize the initial vectors of VisibilityTestResults
-		FRUSTUMABLE_AVERAGE_VISIBLE_SCENE_NODES_COUNT = 10
-	};
-};
+/// 1MB
+#define ANKI_CFG_SCENE_ALLOCATOR_SIZE 0x100000 
+
+// 512K
+#define ANKI_CFG_SCENE_FRAME_ALLOCATOR_SIZE 0x80000
+
+/// @{
+/// Used to optimize the initial vectors of VisibilityTestResults
+#define ANKI_CFG_FRUSTUMABLE_AVERAGE_VISIBLE_RENDERABLES_COUNT 16
+#define ANKI_CFG_FRUSTUMABLE_AVERAGE_VISIBLE_LIGHTS_COUNT 8
+/// @}
+
+/// If true then we can place spatials in a thread-safe way
+#define ANKI_CFG_OCTREE_THREAD_SAFE 1
+
+/// @}
+/// @}
+
+/// @addtogroup Scene
+/// @{
 
 /// The type of the scene's allocator
 template<typename T>

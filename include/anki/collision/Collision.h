@@ -1,8 +1,7 @@
 #ifndef ANKI_COLLISION_COLLISION_H
 #define ANKI_COLLISION_COLLISION_H
 
-/// @defgroup Collision
-/// Collision detection module
+/// @defgroup Collision Collision detection module
 
 #include "anki/collision/Plane.h"
 #include "anki/collision/Sphere.h"

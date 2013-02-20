@@ -36,9 +36,10 @@ public:
 	};
 
 	/// Pass the collision shape here so we can avoid the virtuals
-	Spatial(CollisionShape* cs)
-		: spatialCs(cs)
-	{}
+	Spatial(const CollisionShape* cs)
+	{
+		spatialProtected.spatialCs = cs;
+	}
 
 	// Remove from current OctreeNode
 	~Spatial();
@@ -47,7 +48,7 @@ public:
 	/// @{
 	const CollisionShape& getSpatialCollisionShape() const
 	{
-		return *spatialCs;
+		return *spatialProtected.spatialCs;
 	}
 
 	const Aabb& getAabb() const
@@ -58,9 +59,10 @@ public:
 	/// Get optimal collision shape for visibility tests
 	const CollisionShape& getOptimalCollisionShape() const
 	{
-		if(spatialCs->getCollisionShapeType() == CollisionShape::CST_SPHERE)
+		if(spatialProtected.spatialCs->getCollisionShapeType() 
+			== CollisionShape::CST_SPHERE)
 		{
-			return *spatialCs;
+			return *spatialProtected.spatialCs;
 		}
 		else
 		{
@@ -95,12 +97,15 @@ public:
 	void spatialMarkForUpdate()
 	{
 		timestamp = Timestamp::getTimestamp();
-		spatialCs->toAabb(aabb);
+		spatialProtected.spatialCs->toAabb(aabb);
 		origin = (aabb.getMax() + aabb.getMin()) * 0.5;
 	}
 
 protected:
-	CollisionShape* spatialCs = nullptr;
+	struct
+	{
+		const CollisionShape* spatialCs = nullptr;
+	} spatialProtected;
 
 private:
 	U32 timestamp = Timestamp::getTimestamp();

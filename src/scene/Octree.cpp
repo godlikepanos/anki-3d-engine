@@ -63,7 +63,13 @@ void OctreeNode::addSceneNode(SceneNode* sn)
 		}
 
 		// ... and add to a new
+#if ANKI_CFG_OCTREE_THREAD_SAFE
+		mtx.lock();
+#endif
 		sceneNodes.push_back(sn);
+#if ANKI_CFG_OCTREE_THREAD_SAFE
+		mtx.unlock();
+#endif
 		sp->octreeNode = this;
 	}
 }
@@ -72,11 +78,21 @@ void OctreeNode::addSceneNode(SceneNode* sn)
 void OctreeNode::removeSceneNode(SceneNode* sn)
 {
 	ANKI_ASSERT(sn != nullptr);
+
+#if ANKI_CFG_OCTREE_THREAD_SAFE
+	mtx.lock();
+#endif
+
 	SceneVector<SceneNode*>::iterator it =
 		std::find(sceneNodes.begin(), sceneNodes.end(), sn);
 	ANKI_ASSERT(it != sceneNodes.end());
 
 	sceneNodes.erase(it);
+
+#if ANKI_CFG_OCTREE_THREAD_SAFE
+	mtx.unlock();
+#endif
+
 	sn->getSpatial()->octreeNode = nullptr;
 }
 
@@ -128,7 +144,7 @@ Octree& OctreeNode::getOctree()
 
 //==============================================================================
 Octree::Octree(Sector* sector_, const Aabb& aabb, U8 maxDepth_, F32 looseness_)
-	: sector(sector_),
+	:	sector(sector_),
 		maxDepth(maxDepth_ < 1 ? 1 : maxDepth_), 
 		looseness(looseness_),
 		root(aabb, sector->getSectorGroup().getScene().getAllocator(), this)
@@ -185,7 +201,8 @@ OctreeNode* Octree::placeInternal(const Aabb& aabb, U depth, OctreeNode& node)
 				// Get the node's AABB. If there is no node then calculate the
 				// AABB
 				Aabb childAabb;
-				if(node.children[id] != nullptr)
+				Bool child = node.children[id] != nullptr;
+				if(child)
 				{
 					// There is a child
 					childAabb = node.children[id]->aabb;
@@ -196,24 +213,37 @@ OctreeNode* Octree::placeInternal(const Aabb& aabb, U depth, OctreeNode& node)
 					calcAabb(i, j, k, node.aabb, childAabb);
 				}
 
-				// If aabb its completely inside the target
-				if(aabb.getMax() <= childAabb.getMax() &&
-					aabb.getMin() >= childAabb.getMin())
+				// If aabb its completely inside the target => go deeper
+				if(aabb.getMax() <= childAabb.getMax() 
+					&& aabb.getMin() >= childAabb.getMin())
 				{
-					// Go deeper
-					if(node.children[id] == nullptr)
+					if(!child)
 					{
-						SceneAllocator<U8> alloc =
-							sector->getSectorGroup().getScene().getAllocator();
+#if ANKI_CFG_OCTREE_THREAD_SAFE
+						node.mtx.lock();
+					
+						// Check again now that the mutex is locked
+						volatile Bool checkAgain = node.children[id] == nullptr;
+						if(checkAgain)
+#endif
+						{
+							SceneAllocator<U8> alloc =
+								sector->getSectorGroup().getScene().
+								getAllocator();
 
-						// Create new node if needed
-						OctreeNode* newNode =
-							ANKI_NEW(OctreeNode, alloc,
-							childAabb, &node, alloc);
+							// Create new node if needed
+							OctreeNode* newNode =
+								ANKI_NEW(OctreeNode, alloc,
+								childAabb, &node, alloc);
 
-						node.addChild(id, newNode);
+							node.addChild(id, newNode);
+						}
+#if ANKI_CFG_OCTREE_THREAD_SAFE
+						node.mtx.unlock();
+#endif
 					}
 
+					ANKI_ASSERT(node.children[id]);
 					return placeInternal(aabb, depth + 1, *node.children[id]);
 				}
 			} // k
