@@ -8,7 +8,7 @@ namespace anki {
 
 //==============================================================================
 Camera::Camera(CameraType type_,
-	const char* name, Scene* scene, // SceneNode
+	const char* name, SceneGraph* scene, // SceneNode
 	U32 movableFlags, Movable* movParent, // Movable
 	Frustum* frustum) // Spatial & Frustumable
 	:	SceneNode(name, scene),
@@ -44,7 +44,7 @@ void Camera::lookAtPoint(const Vec3& point)
 //==============================================================================
 
 //==============================================================================
-PerspectiveCamera::PerspectiveCamera(const char* name, Scene* scene,
+PerspectiveCamera::PerspectiveCamera(const char* name, SceneGraph* scene,
 	uint movableFlags, Movable* movParent)
 	: Camera(CT_PERSPECTIVE, name, scene, movableFlags, movParent, 
 		&frustum)
@@ -55,7 +55,7 @@ PerspectiveCamera::PerspectiveCamera(const char* name, Scene* scene,
 //==============================================================================
 
 //==============================================================================
-OrthographicCamera::OrthographicCamera(const char* name, Scene* scene,
+OrthographicCamera::OrthographicCamera(const char* name, SceneGraph* scene,
 	uint movableFlags, Movable* movParent)
 	: Camera(CT_ORTHOGRAPHIC, name, scene, movableFlags, movParent, 
 		&frustum)

@@ -10,7 +10,7 @@ namespace anki {
 
 //==============================================================================
 ModelPatchNode::ModelPatchNode(const ModelPatchBase *modelPatch_,
-	const char* name, Scene* scene,
+	const char* name, SceneGraph* scene,
 	U32 movableFlags, Movable* movParent)
 	:	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
@@ -30,7 +30,7 @@ ModelPatchNode::ModelPatchNode(const ModelPatchBase *modelPatch_,
 
 //==============================================================================
 ModelNode::ModelNode(const char* modelFname,
-	const char* name, Scene* scene,
+	const char* name, SceneGraph* scene,
 	uint movableFlags, Movable* movParent)
 	: 	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),

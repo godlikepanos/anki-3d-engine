@@ -22,7 +22,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	ModelPatchNode(const ModelPatchBase* modelPatch_,
-		const char* name, Scene* scene, // Scene
+		const char* name, SceneGraph* scene, // Scene
 		U32 movableFlags, Movable* movParent); // Movable
 	/// @}
 
@@ -86,7 +86,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	ModelNode(const char* modelFname,
-		const char* name, Scene* scene, // SceneNode
+		const char* name, SceneGraph* scene, // SceneNode
 		uint movableFlags, Movable* movParent); // Movable
 
 	virtual ~ModelNode();

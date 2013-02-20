@@ -1,6 +1,6 @@
 #include "anki/renderer/Bs.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 
 namespace anki {
@@ -23,7 +23,7 @@ void Bs::run()
 
 	RenderableDrawer& drawer = r->getSceneDrawer();
 	drawer.prepareDraw();
-	Scene& scene = r->getScene();
+	SceneGraph& scene = r->getSceneGraph();
 	VisibilityTestResults& vi =
 		*scene.getActiveCamera().getFrustumable()->getVisibilityTestResults();
 

@@ -1,5 +1,5 @@
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/scene/Movable.h"
 #include "anki/scene/Spatial.h"
 #include "anki/scene/Frustumable.h"
@@ -7,7 +7,7 @@
 namespace anki {
 
 //==============================================================================
-SceneNode::SceneNode(const char* name_, Scene* scene_)
+SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
 	: name(name_, scene_->getAllocator()), scene(scene_)
 {
 	name.shrink_to_fit(); // Do that first

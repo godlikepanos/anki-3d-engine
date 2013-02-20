@@ -28,7 +28,7 @@ public:
 	ParticleBase(
 		ParticleType type,
 		// SceneNode
-		const char* name, Scene* scene, 
+		const char* name, SceneGraph* scene, 
 		// Movable
 		U32 movableFlags, Movable* movParent);
 
@@ -104,7 +104,7 @@ class ParticleSimple: public ParticleBase
 public:
 	ParticleSimple(
 		// SceneNode
-		const char* name, Scene* scene, 
+		const char* name, SceneGraph* scene, 
 		// Movable
 		U32 movableFlags, Movable* movParent);
 
@@ -125,7 +125,7 @@ class Particle: public ParticleBase, public RigidBody
 public:
 	Particle(
 		// SceneNode
-		const char* name, Scene* scene, 
+		const char* name, SceneGraph* scene, 
 		// Movable
 		U32 movableFlags, Movable* movParent,
 		// RigidBody
@@ -155,7 +155,7 @@ public:
 	ParticleEmitter(
 		const char* filename,
 		// SceneNode
-		const char* name, Scene* scene,
+		const char* name, SceneGraph* scene,
 		// Movable
 		U32 movableFlags, Movable* movParent);
 
@@ -217,8 +217,8 @@ private:
 
 	RenderableVariable* alphaRenderableVar = nullptr;
 
-	void createParticlesSimulation(Scene* scene);
-	void createParticlesSimpleSimulation(Scene* scene);
+	void createParticlesSimulation(SceneGraph* scene);
+	void createParticlesSimpleSimulation(SceneGraph* scene);
 };
 
 } // end namespace anki

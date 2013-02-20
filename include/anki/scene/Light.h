@@ -39,7 +39,7 @@ public:
 	/// @name Constructors
 	/// @{
 	Light(LightType t, // Light
-		const char* name, Scene* scene, // Scene
+		const char* name, SceneGraph* scene, // Scene
 		U32 movableFlags, Movable* movParent, // Movable
 		CollisionShape* cs); // Spatial
 	/// @}
@@ -116,7 +116,7 @@ class PointLight: public Light
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	PointLight(const char* name, Scene* scene,
+	PointLight(const char* name, SceneGraph* scene,
 		U32 movableFlags, Movable* movParent);
 	/// @}
 
@@ -163,7 +163,7 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	SpotLight(const char* name, Scene* scene,
+	SpotLight(const char* name, SceneGraph* scene,
 		U32 movableFlags, Movable* movParent);
 	/// @}
 

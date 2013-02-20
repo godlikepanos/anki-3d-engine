@@ -1,6 +1,6 @@
 #include "anki/renderer/Is.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 #include "anki/core/ThreadPool.h"
@@ -607,7 +607,7 @@ void Is::lightPass()
 //==============================================================================
 void Is::run()
 {
-	Scene& scene = r->getScene();
+	SceneGraph& scene = r->getSceneGraph();
 	cam = &scene.getActiveCamera();
 
 	GlStateSingleton::get().disable(GL_BLEND);

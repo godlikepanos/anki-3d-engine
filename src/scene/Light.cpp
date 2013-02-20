@@ -8,7 +8,7 @@ namespace anki {
 
 //==============================================================================
 Light::Light(LightType t, // Light
-	const char* name, Scene* scene, // Scene
+	const char* name, SceneGraph* scene, // Scene
 	U32 movableFlags, Movable* movParent, // Movable
 	CollisionShape* cs) // Spatial
 	: SceneNode(name, scene),
@@ -37,7 +37,7 @@ Light::~Light()
 //==============================================================================
 
 //==============================================================================
-PointLight::PointLight(const char* name, Scene* scene,
+PointLight::PointLight(const char* name, SceneGraph* scene,
 	U32 movableFlags, Movable* movParent)
 	: Light(LT_POINT, name, scene, movableFlags, movParent, &sphereW)
 {
@@ -50,7 +50,7 @@ PointLight::PointLight(const char* name, Scene* scene,
 //==============================================================================
 
 //==============================================================================
-SpotLight::SpotLight(const char* name, Scene* scene,
+SpotLight::SpotLight(const char* name, SceneGraph* scene,
 	U32 movableFlags, Movable* movParent)
 	: 	Light(LT_SPOT, name, scene, movableFlags, movParent, &frustum),
 		Frustumable(&frustum)

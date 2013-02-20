@@ -1,7 +1,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/util/Exception.h"
 #include "anki/scene/Camera.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 
 namespace anki {
 
@@ -56,7 +56,7 @@ void Renderer::init(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Renderer::render(Scene& scene_)
+void Renderer::render(SceneGraph& scene_)
 {
 	scene = &scene_;
 	Camera& cam = scene->getActiveCamera();

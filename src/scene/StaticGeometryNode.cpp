@@ -1,5 +1,5 @@
 #include "anki/scene/StaticGeometryNode.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 
 namespace anki {
 
@@ -9,7 +9,7 @@ namespace anki {
 
 //==============================================================================
 StaticGeometrySpatialNode::StaticGeometrySpatialNode(const Obb& obb,
-	const char* name, Scene* scene)
+	const char* name, SceneGraph* scene)
 	: SceneNode(name, scene), Spatial(&obb)
 {
 	sceneNodeProtected.spatial = this;
@@ -21,7 +21,7 @@ StaticGeometrySpatialNode::StaticGeometrySpatialNode(const Obb& obb,
 
 //==============================================================================
 StaticGeometryPatchNode::StaticGeometryPatchNode(
-	const ModelPatchBase* modelPatch_, const char* name, Scene* scene)
+	const ModelPatchBase* modelPatch_, const char* name, SceneGraph* scene)
 	:	SceneNode(name, scene),
 		Spatial(&modelPatch->getBoundingShape()),
 		Renderable(getSceneAllocator()),
@@ -66,7 +66,7 @@ StaticGeometryPatchNode::~StaticGeometryPatchNode()
 
 //==============================================================================
 StaticGeometryNode::StaticGeometryNode(const char* filename,
-	const char* name, Scene* scene)
+	const char* name, SceneGraph* scene)
 	: SceneNode(name, scene)
 {
 	model.load(filename);

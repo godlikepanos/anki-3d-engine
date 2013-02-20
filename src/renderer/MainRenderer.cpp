@@ -78,7 +78,7 @@ void MainRenderer::initGl()
 }
 
 //==============================================================================
-void MainRenderer::render(Scene& scene)
+void MainRenderer::render(SceneGraph& scene)
 {
 	Bool drawToDefaultFbo = renderingQuality > 0.9 && !dbg.getEnabled();
 

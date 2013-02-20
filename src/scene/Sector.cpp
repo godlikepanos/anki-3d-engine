@@ -5,7 +5,7 @@
 #include "anki/scene/Light.h"
 #include "anki/scene/Visibility.h"
 #include "anki/scene/Frustumable.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/core/Logger.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/ThreadPool.h"
@@ -30,7 +30,7 @@ Portal::Portal()
 //==============================================================================
 Sector::Sector(SectorGroup* group_, const Aabb& box)
 	: group(group_), octree(this, box, 3),
-		portals(group->getScene().getAllocator())
+		portals(group->getSceneGraph().getAllocator())
 {
 	// Reserve some space for portals
 	portals.reserve(AVERAGE_PORTALS_PER_SECTOR);
@@ -77,7 +77,7 @@ void Sector::removePortal(Portal* portal)
 //==============================================================================
 
 //==============================================================================
-SectorGroup::SectorGroup(Scene* scene_)
+SectorGroup::SectorGroup(SceneGraph* scene_)
 	:	scene(scene_),
 		sectors(scene->getAllocator()),
 		portals(scene->getAllocator())

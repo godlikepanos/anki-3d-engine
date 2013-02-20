@@ -1,7 +1,7 @@
 #include "anki/renderer/Sm.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/App.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 

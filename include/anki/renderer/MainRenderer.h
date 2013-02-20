@@ -49,7 +49,7 @@ public:
 	/// The same as Renderer::render but in addition it renders the final
 	/// FAI to the framebuffer
 	/// @param scene @see Renderer::render
-	void render(Scene& scene);
+	void render(SceneGraph& scene);
 
 	/// Save the color buffer to a tga (lossless & uncompressed & slow)
 	/// or jpeg (lossy & compressed fast)

@@ -1,7 +1,7 @@
 #include "anki/renderer/Ez.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/App.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 
 namespace anki {
@@ -24,7 +24,7 @@ void Ez::run()
 {
 	ANKI_ASSERT(enabled);
 
-	Scene& scene = r->getScene();
+	SceneGraph& scene = r->getSceneGraph();
 	Camera& cam = scene.getActiveCamera();
 
 	VisibilityTestResults& vi = 

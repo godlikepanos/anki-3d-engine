@@ -1,5 +1,5 @@
 #include "anki/scene/Visibility.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Light.h"
 #include "anki/renderer/Renderer.h"
@@ -10,7 +10,7 @@ namespace anki {
 struct VisibilityTestJob: ThreadJob
 {
 	U nodesCount = 0;
-	Scene::Types<SceneNode>::Container::iterator nodes;
+	SceneGraph::Types<SceneNode>::Container::iterator nodes;
 	Frustumable* frustumable = nullptr;
 	Renderer* renderer = nullptr;
 	SceneAllocator<U8> frameAlloc;
@@ -121,7 +121,7 @@ struct VisibilityTestJob: ThreadJob
 };
 
 //==============================================================================
-void doVisibilityTests(SceneNode& fsn, Scene& scene, 
+void doVisibilityTests(SceneNode& fsn, SceneGraph& scene, 
 	Renderer& r)
 {
 	Frustumable* fr = fsn.getFrustumable();

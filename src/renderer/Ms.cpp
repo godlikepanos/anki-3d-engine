@@ -4,7 +4,7 @@
 
 #include "anki/core/Logger.h"
 #include "anki/scene/Camera.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 
 namespace anki {
 
@@ -61,7 +61,7 @@ void Ms::run()
 	GlStateSingleton::get().enable(GL_DEPTH_TEST);
 
 	//GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, true);
-	//app->getScene().skybox.Render(cam.getViewMatrix().getRotationPart());
+	//app->getSceneGraph().skybox.Render(cam.getViewMatrix().getRotationPart());
 	//glDepthFunc(GL_LEQUAL);
 
 	// if ez then change the default depth test and disable depth writing
@@ -74,11 +74,11 @@ void Ms::run()
 	// render all
 	r->getSceneDrawer().prepareDraw();
 	VisibilityTestResults& vi =
-		*r->getScene().getActiveCamera().getVisibilityTestResults();
+		*r->getSceneGraph().getActiveCamera().getVisibilityTestResults();
 
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
-		r->getSceneDrawer().render(r->getScene().getActiveCamera(),
+		r->getSceneDrawer().render(r->getSceneGraph().getActiveCamera(),
 			RenderableDrawer::RS_MATERIAL, 0, *(*it));
 	}
 

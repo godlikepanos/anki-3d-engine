@@ -1,5 +1,5 @@
 #include "anki/scene/ParticleEmitter.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/resource/Model.h"
 #include "anki/util/Functions.h"
 #include "anki/physics/PhysWorld.h"
@@ -44,7 +44,7 @@ Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 ParticleBase::ParticleBase(
 	ParticleType type_,
 	// SceneNode
-	const char* name, Scene* scene, 
+	const char* name, SceneGraph* scene, 
 	// Movable
 	U32 movableFlags, Movable* movParent)
 	:	SceneNode(name, scene),
@@ -78,7 +78,7 @@ void ParticleBase::revive(const ParticleEmitter& pe,
 //==============================================================================
 ParticleSimple::ParticleSimple(
 	// SceneNode
-	const char* name, Scene* scene, 
+	const char* name, SceneGraph* scene, 
 	// Movable
 	U32 movableFlags, Movable* movParent)
 	: ParticleBase(PT_SIMPLE, name, scene, movableFlags, movParent)
@@ -136,7 +136,7 @@ void ParticleSimple::revive(const ParticleEmitter& pe,
 //==============================================================================
 Particle::Particle(
 	// Scene
-	const char* name, Scene* scene,
+	const char* name, SceneGraph* scene,
 	// Movable
 	U32 movableFlags, Movable* movParent, 
 	// RigidBody
@@ -224,7 +224,7 @@ void Particle::revive(const ParticleEmitter& pe,
 ParticleEmitter::ParticleEmitter(
 	const char* filename,
 	// SceneNode
-	const char* name, Scene* scene, 
+	const char* name, SceneGraph* scene, 
 	// Movable
 	U32 movableFlags, Movable* movParent)
 	:	SceneNode(name, scene),
@@ -303,7 +303,7 @@ void ParticleEmitter::movableUpdate()
 }
 
 //==============================================================================
-void ParticleEmitter::createParticlesSimulation(Scene* scene)
+void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 {
 	collShape = ANKI_NEW(btSphereShape, getSceneAllocator(), particle.size);
 
@@ -332,7 +332,7 @@ void ParticleEmitter::createParticlesSimulation(Scene* scene)
 }
 
 //==============================================================================
-void ParticleEmitter::createParticlesSimpleSimulation(Scene* scene)
+void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
 {
 	for(U i = 0; i < maxNumOfParticles; i++)
 	{

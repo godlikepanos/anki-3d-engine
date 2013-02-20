@@ -10,7 +10,7 @@
 #include "anki/resource/Mesh.h"
 #include "anki/scene/Light.h"
 #include "anki/resource/Material.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/resource/SkelAnim.h"
 #include "anki/physics/Character.h"
 #include "anki/renderer/Renderer.h"
@@ -46,7 +46,7 @@ NativeWindow* win;
 //==============================================================================
 void initPhysics()
 {
-	Scene& scene = SceneSingleton::get();
+	SceneGraph& scene = SceneGraphSingleton::get();
 
 	scene.getPhysics().setDebugDrawer(
 		new PhysicsDebugDrawer(
@@ -66,7 +66,7 @@ void initPhysics()
 	init.group = PhysWorld::CG_MAP;
 	init.mask = PhysWorld::CG_ALL;
 
-	new RigidBody(&SceneSingleton::get().getPhysics(), init);
+	new RigidBody(&SceneGraphSingleton::get().getPhysics(), init);
 
 #if 1
 	btCollisionShape* colShape = new btBoxShape(
@@ -101,7 +101,7 @@ void initPhysics()
 				ModelNode* mnode = new ModelNode(
 					"data/models/crate0/crate0.mdl",
 					name.c_str(),
-					&SceneSingleton::get(), Movable::MF_NONE, nullptr);
+					&SceneGraphSingleton::get(), Movable::MF_NONE, nullptr);
 
 				init.movable = mnode;
 				ANKI_ASSERT(init.movable);
@@ -112,7 +112,7 @@ void initPhysics()
 
 				init.startTrf = trf;
 
-				new RigidBody(&SceneSingleton::get().getPhysics(), init);
+				new RigidBody(&SceneGraphSingleton::get().getPhysics(), init);
 			}
 		}
 	}
@@ -124,7 +124,7 @@ void init()
 {
 	ANKI_LOGI("Other init...");
 
-	Scene& scene = SceneSingleton::get();
+	SceneGraph& scene = SceneGraphSingleton::get();
 
 #if 0
 	painter = new UiPainter(Vec2(AppSingleton::get().getWindowWidth(),
@@ -302,42 +302,42 @@ void mainLoopExtra()
 	F32 mouseSensivity = 9.0;
 
 	// move the camera
-	static Movable* mover = SceneSingleton::get().getActiveCamera().getMovable();
+	static Movable* mover = SceneGraphSingleton::get().getActiveCamera().getMovable();
 	Input& in = InputSingleton::get();
 
 	if(in.getKey(KC_1))
 	{
-		mover = &SceneSingleton::get().getActiveCamera();
+		mover = &SceneGraphSingleton::get().getActiveCamera();
 	}
 	if(in.getKey(KC_2))
 	{
-		mover = SceneSingleton::get().findSceneNode("horse").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("horse").getMovable();
 	}
 	if(in.getKey(KC_3))
 	{
-		mover = SceneSingleton::get().findSceneNode("spot0").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("spot0").getMovable();
 	}
 	if(in.getKey(KC_4))
 	{
-		mover = SceneSingleton::get().findSceneNode("spot1").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("spot1").getMovable();
 	}
 	if(in.getKey(KC_5))
 	{
-		mover = SceneSingleton::get().findSceneNode("pe").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("pe").getMovable();
 	}
 	if(in.getKey(KC_6))
 	{
-		mover = SceneSingleton::get().findSceneNode("vase_plight0").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("vase_plight0").getMovable();
 	}
 	if(in.getKey(KC_7))
 	{
-		mover = SceneSingleton::get().findSceneNode("sponza").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("sponza").getMovable();
 		std::cout << mover->getWorldTransform() << std::endl;
 	}
 
 	if(in.getKey(KC_L) == 1)
 	{
-		Light* l = SceneSingleton::get().findSceneNode("point1").getLight();
+		Light* l = SceneGraphSingleton::get().findSceneNode("point1").getLight();
 		static_cast<PointLight*>(l)->setRadius(10.0);
 	}
 
@@ -439,10 +439,10 @@ void mainLoop()
 		InputSingleton::get().handleEvents();
 		InputSingleton::get().moveMouse(Vec2(0.0));
 		mainLoopExtra();
-		SceneSingleton::get().update(
+		SceneGraphSingleton::get().update(
 			prevUpdateTime, crntTime, MainRendererSingleton::get());
 		EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
-		MainRendererSingleton::get().render(SceneSingleton::get());
+		MainRendererSingleton::get().render(SceneGraphSingleton::get());
 
 		if(InputSingleton::get().getKey(KC_ESCAPE))
 		{
