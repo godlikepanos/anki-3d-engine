@@ -8,7 +8,7 @@
 #include "Input.h"
 #include "MainRenderer.h"
 #include "RendererInitializer.h"
-#include "Scene.h"
+#include "SceneGraph.h"
 #include "anki/gl/GlException.h"
 
 
@@ -214,8 +214,8 @@ int main(int argc, char** argv)
 			mover->getLocalTransform().rotation.reorthogonalize();
 
 			// Update
-			app->getScene().updateAllControllers();
-			app->getScene().updateAllWorldStuff();
+			app->getSceneGraph().updateAllControllers();
+			app->getSceneGraph().updateAllWorldStuff();
 
 			// Render
 			glClear(GL_COLOR_BUFFER_BIT);

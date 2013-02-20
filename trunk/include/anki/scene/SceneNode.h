@@ -7,7 +7,7 @@
 
 namespace anki {
 
-class Scene; // Don't include
+class SceneGraph; // Don't include
 
 // Components forward. Don't include
 class Movable;
@@ -32,7 +32,7 @@ public:
 	/// @param scene The scene that will register it
 	explicit SceneNode(
 		const char* name,
-		Scene* scene);
+		SceneGraph* scene);
 
 	/// Unregister node
 	virtual ~SceneNode();
@@ -45,7 +45,7 @@ public:
 		return name.c_str();
 	}
 
-	Scene& getScene()
+	SceneGraph& getSceneGraph()
 	{
 		return *scene;
 	}
@@ -140,7 +140,7 @@ protected:
 
 private:
 	SceneString name; ///< A unique name
-	Scene* scene = nullptr; ///< Keep it here for unregistering
+	SceneGraph* scene = nullptr; ///< Keep it here for unregistering
 };
 /// @}
 

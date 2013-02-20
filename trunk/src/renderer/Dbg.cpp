@@ -1,7 +1,7 @@
 #include "anki/renderer/Dbg.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ShaderProgramResource.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/scene/Light.h"
 #include "anki/core/Logger.h"
 
@@ -42,7 +42,7 @@ void Dbg::run()
 {
 	ANKI_ASSERT(enabled);
 
-	Scene& scene = r->getScene();
+	SceneGraph& scene = r->getSceneGraph();
 
 	fbo.bind();
 

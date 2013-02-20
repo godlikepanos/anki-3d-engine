@@ -1,5 +1,5 @@
-#ifndef ANKI_SCENE_SCENE_H
-#define ANKI_SCENE_SCENE_H
+#ifndef ANKI_SCENE_SCENE_GRAPH_H
+#define ANKI_SCENE_SCENE_GRAPH_H
 
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneNode.h"
@@ -19,8 +19,8 @@ class Camera;
 /// @addtogroup Scene
 /// @{
 
-/// The Scene contains all the dynamic entities
-class Scene
+/// The scene graph that  all the scene entities
+class SceneGraph
 {
 	friend class SceneNode;
 
@@ -37,8 +37,8 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	Scene();
-	~Scene();
+	SceneGraph();
+	~SceneGraph();
 	/// @}
 
 	/// @name Accessors
@@ -201,7 +201,7 @@ private:
 	}
 };
 
-typedef Singleton<Scene> SceneSingleton;
+typedef Singleton<SceneGraph> SceneGraphSingleton;
 /// @}
 
 } // end namespace anki

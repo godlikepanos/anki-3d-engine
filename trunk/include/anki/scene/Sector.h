@@ -8,7 +8,7 @@ namespace anki {
 
 // Forward
 class SceneNode;
-class Scene;
+class SceneGraph;
 class Sector;
 class SectorGroup;
 class Renderer;
@@ -83,18 +83,18 @@ class SectorGroup
 {
 public:
 	/// Default constructor
-	SectorGroup(Scene* scene);
+	SectorGroup(SceneGraph* scene);
 
 	/// Destructor
 	~SectorGroup();
 
 	/// @name Accessors
 	/// @{
-	const Scene& getScene() const
+	const SceneGraph& getSceneGraph() const
 	{
 		return *scene;
 	}
-	Scene& getScene()
+	SceneGraph& getSceneGraph()
 	{
 		return *scene;
 	}
@@ -124,7 +124,7 @@ public:
 	Portal* createNewPortal(Sector* a, Sector* b, const Obb& collisionShape);
 
 private:
-	Scene* scene; ///< Keep it here to access various allocators
+	SceneGraph* scene; ///< Keep it here to access various allocators
 	SceneVector<Sector*> sectors;
 	SceneVector<Portal*> portals;
 

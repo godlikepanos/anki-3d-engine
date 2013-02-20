@@ -185,11 +185,11 @@ public:
 		return viewProjectionMat;
 	}
 
-	const Scene& getScene() const
+	const SceneGraph& getSceneGraph() const
 	{
 		return *scene;
 	}
-	Scene& getScene()
+	SceneGraph& getSceneGraph()
 	{
 		return *scene;
 	}
@@ -226,7 +226,7 @@ public:
 	void init(const RendererInitializer& initializer);
 
 	/// This function does all the rendering stages and produces a final FAI
-	void render(Scene& scene);
+	void render(SceneGraph& scene);
 
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
@@ -299,7 +299,7 @@ protected:
 	U32 width;
 	/// Height of the rendering. Don't confuse with the window width
 	U32 height;
-	Scene* scene; ///< Current scene
+	SceneGraph* scene; ///< Current scene
 	RenderableDrawer sceneDrawer;
 	F32 lodDistance; ///< Distance that used to calculate the LOD
 

@@ -126,7 +126,7 @@ SkinModelPatch::SkinModelPatch(const ModelPatchBase* mpatch_,
 
 //==============================================================================
 SkinPatchNode::SkinPatchNode(const ModelPatchBase* modelPatch_,
-	const char* name, Scene* scene,
+	const char* name, SceneGraph* scene,
 	uint movableFlags, Movable* movParent,
 	CollisionShape* spatialCs)
 	: 	SceneNode(name, scene),
@@ -148,7 +148,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatchBase* modelPatch_,
 
 //==============================================================================
 SkinNode::SkinNode(const char* skinFname,
-	const char* name, Scene* scene, // SceneNode
+	const char* name, SceneGraph* scene, // SceneNode
 	uint movableFlags, Movable* movParent) // Movable
 	:	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),

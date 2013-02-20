@@ -133,7 +133,7 @@ struct MaterialSortJob: ThreadJob
 };
 
 /// Do visibility tests bypassing portals 
-void doVisibilityTests(SceneNode& frustumable, Scene& scene, 
+void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, 
 	Renderer& renderer);
 
 /// @}

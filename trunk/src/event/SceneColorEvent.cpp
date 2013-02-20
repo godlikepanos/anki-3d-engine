@@ -1,5 +1,5 @@
 #include "anki/event/SceneColorEvent.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/core/Logger.h"
 
 namespace anki {
@@ -9,7 +9,7 @@ SceneColorEvent::SceneColorEvent(float startTime, float duration,
 	const Vec3& finalColor_)
 	: Event(ET_SCENE_COLOR, startTime, duration), finalColor(finalColor_)
 {
-	originalColor = SceneSingleton::get().getAmbientColor();
+	originalColor = SceneGraphSingleton::get().getAmbientColor();
 }
 
 //==============================================================================
@@ -34,7 +34,7 @@ void SceneColorEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 	float d = crntTime - getStartTime(); // delta
 	float dp = d / float(getDuration()); // delta as persentage
 
-	SceneSingleton::get().setAmbientColor(
+	SceneGraphSingleton::get().setAmbientColor(
 		interpolate(originalColor, finalColor, dp));
 }
 

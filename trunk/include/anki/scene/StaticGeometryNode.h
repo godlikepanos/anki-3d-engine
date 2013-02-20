@@ -18,7 +18,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	StaticGeometrySpatialNode(const Obb& obb,
-		const char* name, Scene* scene); // Scene
+		const char* name, SceneGraph* scene); // Scene
 	/// @}
 };
 
@@ -30,7 +30,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	StaticGeometryPatchNode(const ModelPatchBase* modelPatch,
-		const char* name, Scene* scene); // Scene
+		const char* name, SceneGraph* scene); // Scene
 
 	~StaticGeometryPatchNode();
 	/// @}
@@ -61,7 +61,7 @@ class StaticGeometryNode: public SceneNode
 {
 public:
 	StaticGeometryNode(const char* filename,
-		const char* name, Scene* scene); // Scene
+		const char* name, SceneGraph* scene); // Scene
 
 	~StaticGeometryNode();
 

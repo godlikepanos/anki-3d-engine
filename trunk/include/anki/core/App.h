@@ -7,7 +7,7 @@
 namespace anki {
 
 class StdinListener;
-class Scene;
+class SceneGraph;
 class Camera;
 class Input;
 

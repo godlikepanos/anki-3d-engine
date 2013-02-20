@@ -3,7 +3,7 @@
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Light.h"
 #include "anki/scene/Sector.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
 #include "anki/scene/Renderable.h"
@@ -147,7 +147,7 @@ Octree::Octree(Sector* sector_, const Aabb& aabb, U8 maxDepth_, F32 looseness_)
 	:	sector(sector_),
 		maxDepth(maxDepth_ < 1 ? 1 : maxDepth_), 
 		looseness(looseness_),
-		root(aabb, sector->getSectorGroup().getScene().getAllocator(), this)
+		root(aabb, sector->getSectorGroup().getSceneGraph().getAllocator(), this)
 {}
 
 //==============================================================================
@@ -228,7 +228,7 @@ OctreeNode* Octree::placeInternal(const Aabb& aabb, U depth, OctreeNode& node)
 #endif
 						{
 							SceneAllocator<U8> alloc =
-								sector->getSectorGroup().getScene().
+								sector->getSectorGroup().getSceneGraph().
 								getAllocator();
 
 							// Create new node if needed

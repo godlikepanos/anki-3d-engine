@@ -2,7 +2,7 @@
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/scene/Camera.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 
 namespace anki {
 
@@ -126,7 +126,7 @@ void Ssao::run()
 {
 	ANKI_ASSERT(enabled);
 
-	const Camera& cam = r->getScene().getActiveCamera();
+	const Camera& cam = r->getSceneGraph().getActiveCamera();
 
 	GlStateSingleton::get().disable(GL_BLEND);
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);

@@ -1,4 +1,4 @@
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/util/Exception.h"
 #include "anki/core/ThreadPool.h"
@@ -12,7 +12,7 @@ namespace anki {
 //==============================================================================
 struct UpdateMovablesJob: ThreadJob
 {
-	Scene::Types<SceneNode>::Iterator movablesBegin;
+	SceneGraph::Types<SceneNode>::Iterator movablesBegin;
 	U32 movablesCount;
 
 	void operator()(U threadId, U threadsCount)
@@ -67,7 +67,7 @@ static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 //==============================================================================
 struct UpdateSceneNodesJob: ThreadJob
 {
-	Scene::Types<SceneNode>::Iterator sceneNodesBegin;
+	SceneGraph::Types<SceneNode>::Iterator sceneNodesBegin;
 	U32 sceneNodesCount;
 	F32 prevUpdateTime;
 	F32 crntTime;
@@ -91,7 +91,7 @@ struct UpdateSceneNodesJob: ThreadJob
 //==============================================================================
 
 //==============================================================================
-Scene::Scene()
+SceneGraph::SceneGraph()
 	:	alloc(ANKI_CFG_SCENE_ALLOCATOR_SIZE),
 		frameAlloc(ANKI_CFG_SCENE_FRAME_ALLOCATOR_SIZE),
 		nodes(alloc),
@@ -103,25 +103,25 @@ Scene::Scene()
 }
 
 //==============================================================================
-Scene::~Scene()
+SceneGraph::~SceneGraph()
 {}
 
 //==============================================================================
-void Scene::registerNode(SceneNode* node)
+void SceneGraph::registerNode(SceneNode* node)
 {
 	addC(nodes, node);
 	addDict(nameToNode, node);
 }
 
 //==============================================================================
-void Scene::unregisterNode(SceneNode* node)
+void SceneGraph::unregisterNode(SceneNode* node)
 {
 	removeC(nodes, node);
 	removeDict(nameToNode, node);
 }
 
 //==============================================================================
-void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
+void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 {
 	frameAlloc.reset();
 
@@ -209,14 +209,14 @@ void Scene::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 }
 
 //==============================================================================
-SceneNode& Scene::findSceneNode(const char* name)
+SceneNode& SceneGraph::findSceneNode(const char* name)
 {
 	ANKI_ASSERT(nameToNode.find(name) != nameToNode.end());
 	return *(nameToNode.find(name)->second);
 }
 
 //==============================================================================
-SceneNode* Scene::tryFindSceneNode(const char* name)
+SceneNode* SceneGraph::tryFindSceneNode(const char* name)
 {
 	Types<SceneNode>::NameToItemMap::iterator it = nameToNode.find(name);
 	return (it == nameToNode.end()) ? nullptr : it->second;

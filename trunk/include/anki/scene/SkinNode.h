@@ -137,7 +137,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	SkinPatchNode(const ModelPatchBase* modelPatch_,
-		const char* name, Scene* scene, // Scene
+		const char* name, SceneGraph* scene, // Scene
 		uint movableFlags, Movable* movParent, // Movable
 		CollisionShape* spatialCs); // Spatial
 	/// @}
@@ -187,7 +187,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	SkinNode(const char* skinFname,
-		const char* name, Scene* scene, // SceneNode
+		const char* name, SceneGraph* scene, // SceneNode
 		uint movableFlags, Movable* movParent); // Movable
 
 	~SkinNode();

@@ -1,6 +1,6 @@
 #include "anki/physics/RigidBody.h"
 #include "anki/physics/PhysWorld.h"
-#include "anki/scene/Scene.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/physics/MotionState.h"
 
 namespace anki {
