@@ -18,7 +18,7 @@ ThreadWorker::ThreadWorker(U32 id_, Barrier* barrier_, ThreadPool* threadPool_)
 void ThreadWorker::assignNewJob(ThreadJob* job_)
 {
 	mutex.lock();
-	ANKI_ASSERT(job == nullptr);
+	ANKI_ASSERT(job == nullptr && "Probably forgot to wait for all jobs");
 	job = job_;
 	mutex.unlock();
 	condVar.notify_one(); // Wake the thread

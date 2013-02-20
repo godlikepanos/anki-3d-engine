@@ -160,7 +160,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 		updateSceneNode(*n, prevUpdateTime, crntTime, *sectorGroup);
 	}
 #else
-	UpdateSceneNodesJob jobs2[ThreadPool::MAX_THREADS];
+	Array<UpdateSceneNodesJob, ThreadPool::MAX_THREADS> jobs2;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
@@ -174,6 +174,8 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 
 		threadPool.assignNewJob(i, &job);
 	}
+
+	threadPool.waitForAllJobsToFinish();
 #endif
 
 	doVisibilityTests(*mainCam, *this, renderer);
