@@ -11,7 +11,7 @@ struct VisibilityTestJob: ThreadJob
 {
 	U nodesCount = 0;
 	SceneGraph::Types<SceneNode>::Container::iterator nodes;
-	Frustumable* frustumable = nullptr;
+	SceneNode* frustumableSn = nullptr;
 	Renderer* renderer = nullptr;
 	SceneAllocator<U8> frameAlloc;
 
@@ -24,6 +24,9 @@ struct VisibilityTestJob: ThreadJob
 		choseStartEnd(threadId, threadsCount, nodesCount, start, end);
 
 		visible = ANKI_NEW(VisibilityTestResults, frameAlloc, frameAlloc);
+
+		Frustumable* frustumable = frustumableSn->getFrustumable();
+		ANKI_ASSERT(frustumable);
 
 		for(auto it = nodes + start; it != nodes + end; it++)
 		{
@@ -49,17 +52,17 @@ struct VisibilityTestJob: ThreadJob
 
 			// Hierarchical spatial => check subspatials
 			U64 subSpatialsMask = 0;
-			for(auto it = sp->getSubSpatialsEnd() - 1; 
-				it >= sp->getSubSpatialsBegin(); --it)
+			U i = 0;
+			for(auto it = sp->getSubSpatialsBegin();
+				it != sp->getSubSpatialsEnd(); ++it)
 			{
 				Spatial* subsp = *it;
-
-				subSpatialsMask <<= 1;
 	
 				if(frustumable->insideFrustum(*subsp))
 				{
-					subSpatialsMask |= 1; 
+					subSpatialsMask |= 1 << i;
 				}
+				++i;
 			}
 
 			// renderable
@@ -77,7 +80,7 @@ struct VisibilityTestJob: ThreadJob
 				if(subSpatialsMask)
 				{
 					ANKI_ASSERT(r->getSubMeshesCount() > 0);
-					r->setVisibleSubMeshesMask(node, subSpatialsMask);
+					r->setVisibleSubMeshesMask(frustumableSn, subSpatialsMask);
 				}
 			}
 			else
@@ -89,7 +92,7 @@ struct VisibilityTestJob: ThreadJob
 
 					if(l->getShadowEnabled() && fr)
 					{
-						testLight(*l);
+						testLight(*node);
 					}
 				}
 			}
@@ -99,10 +102,10 @@ struct VisibilityTestJob: ThreadJob
 	}
 
 	/// Test an individual light
-	void testLight(Light& light)
+	void testLight(SceneNode& lightSn)
 	{
-		Frustumable& ref = *light.getFrustumable();
-		ANKI_ASSERT(&ref != nullptr);
+		ANKI_ASSERT(lightSn.getFrustumable() != nullptr);
+		Frustumable& ref = *lightSn.getFrustumable();
 
 		// Allocate new visibles
 		VisibilityTestResults* lvisible = 
@@ -132,12 +135,34 @@ struct VisibilityTestJob: ThreadJob
 				continue;
 			}
 
+			// Hierarchical spatial => check subspatials
+			U64 subSpatialsMask = 0;
+			U i = 0;
+			for(auto it = sp->getSubSpatialsBegin();
+				it != sp->getSubSpatialsEnd(); ++it)
+			{
+				Spatial* subsp = *it;
+
+				if(frustumableSn->getFrustumable()->insideFrustum(*subsp))
+				{
+					subSpatialsMask |= 1 << i;
+				}
+				++i;
+			}
+
 			sp->enableFlags(Spatial::SF_VISIBLE_LIGHT);
 
 			Renderable* r = node->getRenderable();
 			if(r)
 			{
 				lvisible->renderables.push_back(node);
+
+				// Inform the renderable for the mask
+				if(subSpatialsMask)
+				{
+					ANKI_ASSERT(r->getSubMeshesCount() > 0);
+					r->setVisibleSubMeshesMask(&lightSn, subSpatialsMask);
+				}
 			}
 		}
 	}
@@ -159,7 +184,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	{
 		jobs[i].nodesCount = scene.getSceneNodesCount();
 		jobs[i].nodes = scene.getSceneNodesBegin();
-		jobs[i].frustumable = fr;
+		jobs[i].frustumableSn = &fsn;
 		jobs[i].renderer = &r;
 		jobs[i].frameAlloc = scene.getFrameAllocator();
 

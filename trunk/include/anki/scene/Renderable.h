@@ -6,6 +6,7 @@
 #include "anki/gl/Ubo.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Model.h"
+#include <mutex>
 
 namespace anki {
 
@@ -18,8 +19,9 @@ class SceneNode;
 enum BuildinMaterialVariableId
 {
 	BMV_NO_BUILDIN = 0,
-	BMV_MODEL_VIEW_PROJECTION_MATRIX,
-	BMV_MODEL_VIEW_MATRIX,
+	BMV_MVP_MATRIX,
+	BMV_MV_MATRIX,
+	BMV_VP_MATRIX,
 	BMV_NORMAL_MATRIX,
 	BMV_BILLBOARD_MVP_MATRIX,
 	BMV_BLURRING,
@@ -231,6 +233,7 @@ private:
 	RenderableVariables vars;
 	Ubo ubo;
 	PerFrame* perframe;
+	std::mutex mtx;
 };
 /// @}
 

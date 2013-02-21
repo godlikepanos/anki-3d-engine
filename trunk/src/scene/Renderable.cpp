@@ -38,6 +38,7 @@ struct CreateNewRenderableVariableVisitor
 static Array<const char*, BMV_COUNT - 1> buildinNames = {{
 	"modelViewProjectionMat",
 	"modelViewMat",
+	"viewProjectionMat",
 	"normalMat",
 	"billboardMvpMatrix",
 	"blurring"}};
@@ -135,6 +136,8 @@ void Renderable::init(PropertyMap& pmap)
 //==============================================================================
 void Renderable::setVisibleSubMeshesMask(const SceneNode* frustumable, U64 mask)
 {
+	mtx.lock();
+
 	if(ANKI_UNLIKELY(perframe == nullptr))
 	{
 		perframe = ANKI_NEW(PerFrame, frustumable->getSceneFrameAllocator(),
@@ -142,6 +145,8 @@ void Renderable::setVisibleSubMeshesMask(const SceneNode* frustumable, U64 mask)
 	}
 
 	perframe->pairs.push_back(FrustumableMaskPair{frustumable, mask});
+
+	mtx.unlock();
 }
 
 //==============================================================================
@@ -159,7 +164,7 @@ U64 Renderable::getVisibleSubMeshsMask(const SceneNode& frustumable) const
 		}
 	}
 
-	ANKI_ASSERT("Shouldn't have come to this");
+	ANKI_ASSERT(0 && "Shouldn't have come to this");
 	return 0;
 }
 

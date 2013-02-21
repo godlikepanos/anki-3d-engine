@@ -237,9 +237,9 @@ void init()
 		0.7));
 
 #if 1
-	ModelNode* sponzaModel = new ModelNode(
-		"data/maps/sponza/sponza.mdl",
-		"sponza", &scene, Movable::MF_NONE, nullptr);
+	StaticGeometryNode* sponzaModel = new StaticGeometryNode(
+		"data/maps/sponza/sponza_new.mdl",
+		"sponza", &scene);
 
 	(void)sponzaModel;
 #endif

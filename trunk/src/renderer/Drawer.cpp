@@ -50,7 +50,7 @@ struct SetupRenderableVariableVisitor
 			uniSet<typename TRenderableVariableTemplate::Type>(
 				*uni, x.get(), x.getArraySize());
 			break;
-		case BMV_MODEL_VIEW_PROJECTION_MATRIX:
+		case BMV_MVP_MATRIX:
 			{
 				ANKI_ASSERT(trfs != nullptr);
 				Array<Mat4, maxInstances> mvp;
@@ -63,31 +63,7 @@ struct SetupRenderableVariableVisitor
 				uniSet(*uni, &mvp[0], size);
 			}
 			break;
-		case BMV_BILLBOARD_MVP_MATRIX:
-			{
-				// Calc the billboard rotation matrix
-				Mat3 rot =
-					fr->getViewMatrix().getRotationPart().getTransposed();
-
-				/*Vec3 up(0.0, 1.0, 0.0);
-				Vec3 front = rot.getColumn(2);
-				Vec3 right = up.cross(front);
-				up = front.cross(right);
-				rot.setColumns(right, up, front);*/
-
-				Array<Mat4, maxInstances> bmvp;
-
-				for(U i = 0; i < size; i++)
-				{
-					Transform trf = trfs[i];
-					trf.setRotation(rot);
-					bmvp[i] = vp * Mat4(trf);
-				}
-
-				uniSet(*uni, &bmvp[0], size);
-			}
-			break;
-		case BMV_MODEL_VIEW_MATRIX:
+		case BMV_MV_MATRIX:
 			{
 				ANKI_ASSERT(trfs != nullptr);
 				Array<Mat4, maxInstances> mv;
@@ -100,7 +76,11 @@ struct SetupRenderableVariableVisitor
 				uniSet(*uni, &mv[0], size);
 			}
 			break;
+		case BMV_VP_MATRIX:
+			uniSet(*uni, &vp, 1);
+			break;
 		case BMV_NORMAL_MATRIX:
+			if(trfs)
 			{
 				Array<Mat3, maxInstances> normm;
 
@@ -111,6 +91,33 @@ struct SetupRenderableVariableVisitor
 				}
 
 				uniSet(*uni, &normm[0], size);
+			}
+			else
+			{
+				ANKI_ASSERT(uniArrSize == 1
+					&& "Having that instanced doesn't make sense");
+
+				Mat3 norm = v.getRotationPart();
+
+				uniSet(*uni, &norm, 1);
+			}
+			break;
+		case BMV_BILLBOARD_MVP_MATRIX:
+			{
+				// Calc the billboard rotation matrix
+				Mat3 rot =
+					fr->getViewMatrix().getRotationPart().getTransposed();
+
+				Array<Mat4, maxInstances> bmvp;
+
+				for(U i = 0; i < size; i++)
+				{
+					Transform trf = trfs[i];
+					trf.setRotation(rot);
+					bmvp[i] = vp * Mat4(trf);
+				}
+
+				uniSet(*uni, &bmvp[0], size);
 			}
 			break;
 		case BMV_BLURRING:
