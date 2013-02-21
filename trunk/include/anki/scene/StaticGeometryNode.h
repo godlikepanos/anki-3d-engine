@@ -12,13 +12,12 @@ namespace anki {
 /// @{
 
 /// Part of the static geometry. Used only for visibility tests
-class StaticGeometrySpatialNode: public SceneNode, public Spatial
+class StaticGeometrySpatial: public Spatial
 {
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	StaticGeometrySpatialNode(const Obb& obb,
-		const char* name, SceneGraph* scene); // Scene
+	StaticGeometrySpatial(const Obb& obb, const SceneAllocator<U8>& alloc);
 	/// @}
 };
 
@@ -53,7 +52,6 @@ public:
 
 private:
 	const ModelPatchBase* modelPatch;
-	SceneVector<StaticGeometrySpatialNode*> spatials;
 };
 
 /// Static geometry scene node

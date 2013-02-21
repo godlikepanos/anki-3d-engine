@@ -132,7 +132,7 @@ SkinPatchNode::SkinPatchNode(const ModelPatchBase* modelPatch_,
 	: 	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Renderable(getSceneAllocator()),
-		Spatial(spatialCs)
+		Spatial(spatialCs, getSceneAllocator())
 {
 	sceneNodeProtected.movable = this;
 	sceneNodeProtected.renderable = this;

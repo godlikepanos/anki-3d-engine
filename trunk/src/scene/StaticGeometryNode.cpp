@@ -4,16 +4,14 @@
 namespace anki {
 
 //==============================================================================
-// StaticGeometrySpatialNode                                                   =
+// StaticGeometrySpatial                                                       =
 //==============================================================================
 
 //==============================================================================
-StaticGeometrySpatialNode::StaticGeometrySpatialNode(const Obb& obb,
-	const char* name, SceneGraph* scene)
-	: SceneNode(name, scene), Spatial(&obb)
-{
-	sceneNodeProtected.spatial = this;
-}
+StaticGeometrySpatial::StaticGeometrySpatial(const Obb& obb,
+	const SceneAllocator<U8>& alloc)
+	: Spatial(&obb, alloc)
+{}
 
 //==============================================================================
 // StaticGeometryPatchNode                                                     =
@@ -23,7 +21,7 @@ StaticGeometrySpatialNode::StaticGeometrySpatialNode(const Obb& obb,
 StaticGeometryPatchNode::StaticGeometryPatchNode(
 	const ModelPatchBase* modelPatch_, const char* name, SceneGraph* scene)
 	:	SceneNode(name, scene),
-		Spatial(&modelPatch->getBoundingShape()),
+		Spatial(&modelPatch->getBoundingShape(), getSceneAllocator()),
 		Renderable(getSceneAllocator()),
 		modelPatch(modelPatch_)
 {
@@ -36,17 +34,15 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(
 	// For all submeshes create a StaticGeometrySp[atialNode
 	if(modelPatch->getSubMeshesCount() > 1)
 	{
-		spatials.reserve(modelPatch->getSubMeshesCount());
+		spatialProtected.subSpatials.resize(modelPatch->getSubMeshesCount());
 
 		for(U i = 0; i < modelPatch->getSubMeshesCount(); i++)
 		{
-			std::string aName = name + std::to_string(i);
+			StaticGeometrySpatial* spatial =
+				ANKI_NEW(StaticGeometrySpatial, getSceneAllocator(),
+				modelPatch->getBoundingShapeSub(i), getSceneAllocator());
 
-			StaticGeometrySpatialNode* node =
-				ANKI_NEW(StaticGeometrySpatialNode, getSceneAllocator(),
-				modelPatch->getBoundingShapeSub(i), aName.c_str(), scene);
-
-			spatials.push_back(node);
+			spatialProtected.subSpatials[i] = spatial;
 		}
 	}
 }
@@ -54,9 +50,9 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(
 //==============================================================================
 StaticGeometryPatchNode::~StaticGeometryPatchNode()
 {
-	for(StaticGeometrySpatialNode* node : spatials)
+	for(Spatial* spatial : spatialProtected.subSpatials)
 	{
-		ANKI_DELETE(node, getSceneAllocator());
+		ANKI_DELETE(spatial, getSceneAllocator());
 	}
 }
 

@@ -66,7 +66,8 @@ public:
 	/// Get information for multiDraw rendering
 	void getRenderingDataSub(const PassLevelKey& key, U64 subMeshesMask,
 		const Vao*& vao, const ShaderProgram*& prog,
-		U32* indicesCountArray, U32* indicesOffsetArray, U32& primcount) const;
+		U32* indicesCountArray, void** indicesOffsetArray, 
+		U32& primcount) const;
 
 protected:
 	struct

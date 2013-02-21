@@ -14,8 +14,8 @@ struct MemoryBlockHeader
 };
 
 //==============================================================================
-StackMemoryPool::StackMemoryPool(PtrSize size_, U32 alignmentBits_)
-	: memsize(size_), alignmentBits(alignmentBits_)
+StackMemoryPool::StackMemoryPool(PtrSize size, U32 alignmentBits)
+	: alignmentBytes(alignmentBits / 8), memsize(calcAlignSize(size))
 {
 	ANKI_ASSERT(memsize > 0);
 	memory = (U8*)::malloc(memsize);
@@ -50,7 +50,7 @@ StackMemoryPool& StackMemoryPool::operator=(StackMemoryPool&& other)
 	memory = other.memory;
 	memsize = other.memsize;
 	top.store(other.top.load());
-	alignmentBits = other.alignmentBits;
+	alignmentBytes = other.alignmentBytes;
 
 	other.memory = nullptr;
 	other.memsize = 0;
@@ -142,7 +142,7 @@ void StackMemoryPool::reset()
 //==============================================================================
 PtrSize StackMemoryPool::calcAlignSize(PtrSize size) const
 {
-	return size + (size % (alignmentBits / 8));
+	return size + alignmentBytes - (size % alignmentBytes);
 }
 
 } // end namespace anki

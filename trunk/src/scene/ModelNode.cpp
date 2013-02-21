@@ -15,7 +15,8 @@ ModelPatchNode::ModelPatchNode(const ModelPatchBase *modelPatch_,
 	:	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Renderable(getSceneAllocator()),
-		Spatial(&obb), modelPatch(modelPatch_)
+		Spatial(&obb, getSceneAllocator()), 
+		modelPatch(modelPatch_)
 {
 	sceneNodeProtected.movable = this;
 	sceneNodeProtected.renderable = this;

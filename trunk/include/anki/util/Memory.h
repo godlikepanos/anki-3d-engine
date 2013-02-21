@@ -62,6 +62,9 @@ public:
 	void reset();
 
 private:
+	/// Alignment of allocations
+	U32 alignmentBytes;
+
 	/// Pre-allocated memory chunk
 	U8* memory = nullptr;
 
@@ -70,9 +73,6 @@ private:
 
 	/// Points to the memory and more specifically to the top of the stack
 	std::atomic<U8*> top = {nullptr};
-
-	/// Alignment of allocations
-	U32 alignmentBits;
 
 	/// Calculate tha aligned size of an allocation
 	PtrSize calcAlignSize(PtrSize size) const;

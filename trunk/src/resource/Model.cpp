@@ -109,7 +109,7 @@ void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
 //==============================================================================
 void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
 	U64 subMeshesMask, const Vao*& vao, const ShaderProgram*& prog,
-	U32* indicesCountArray, U32* indicesOffsetArray, U32& primcount) const
+	U32* indicesCountArray, void** indicesOffsetArray, U32& primcount) const
 {
 	const U meshLods = getMeshesCount();
 	ANKI_ASSERT(meshLods > 0);
@@ -144,10 +144,22 @@ void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
 	{
 		if(subMeshesMask & (1 << i))
 		{
+			U32 tmp;
 			indicesCountArray[primcount] =
-				meshBase.getIndicesCountSub(i, indicesOffsetArray[primcount]);
+				meshBase.getIndicesCountSub(i, tmp);
+
+			indicesOffsetArray[primcount] = 
+				reinterpret_cast<void*>((PtrSize)tmp);
 			++primcount;
 		}
+	}
+
+	// If all submeshes are covered by the mask then return the super mesh
+	if(primcount == subMeshesCount)
+	{
+		indicesCountArray[0] = meshBase.getIndicesCount();
+		indicesOffsetArray[0] = 0;
+		primcount = 1;
 	}
 }
 
