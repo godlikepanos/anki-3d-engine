@@ -21,7 +21,7 @@ StaticGeometrySpatial::StaticGeometrySpatial(const Obb& obb,
 StaticGeometryPatchNode::StaticGeometryPatchNode(
 	const ModelPatchBase* modelPatch_, const char* name, SceneGraph* scene)
 	:	SceneNode(name, scene),
-		Spatial(&modelPatch->getBoundingShape(), getSceneAllocator()),
+		Spatial(&modelPatch_->getBoundingShape(), getSceneAllocator()),
 		Renderable(getSceneAllocator()),
 		modelPatch(modelPatch_)
 {
@@ -63,7 +63,7 @@ StaticGeometryPatchNode::~StaticGeometryPatchNode()
 //==============================================================================
 StaticGeometryNode::StaticGeometryNode(const char* filename,
 	const char* name, SceneGraph* scene)
-	: SceneNode(name, scene)
+	: SceneNode(name, scene), patches(getSceneAllocator())
 {
 	model.load(filename);
 
