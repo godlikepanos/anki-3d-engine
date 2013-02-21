@@ -11,9 +11,9 @@ Light::Light(LightType t, // Light
 	const char* name, SceneGraph* scene, // Scene
 	U32 movableFlags, Movable* movParent, // Movable
 	CollisionShape* cs) // Spatial
-	: SceneNode(name, scene),
+	:	SceneNode(name, scene),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
-		Spatial(cs),
+		Spatial(cs, getSceneAllocator()),
 		type(t)
 {
 	sceneNodeProtected.movable = this;

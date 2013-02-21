@@ -47,6 +47,22 @@ struct VisibilityTestJob: ThreadJob
 				continue;
 			}
 
+			// Hierarchical spatial => check subspatials
+			U64 subSpatialsMask = 0;
+			for(auto it = sp->getSubSpatialsEnd() - 1; 
+				it >= sp->getSubSpatialsBegin(); --it)
+			{
+				Spatial* subsp = *it;
+
+				subSpatialsMask <<= 1;
+	
+				if(frustumable->insideFrustum(*subsp))
+				{
+					subSpatialsMask |= 1; 
+				}
+			}
+
+			// renderable
 			Renderable* r = node->getRenderable();
 			if(r)
 			{
@@ -56,6 +72,13 @@ struct VisibilityTestJob: ThreadJob
 					continue;
 				}
 				visible->renderables.push_back(node);
+
+				// Inform the renderable for the mask
+				if(subSpatialsMask)
+				{
+					ANKI_ASSERT(r->getSubMeshesCount() > 0);
+					r->setVisibleSubMeshesMask(node, subSpatialsMask);
+				}
 			}
 			else
 			{

@@ -205,7 +205,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
-		r->getSceneDrawer().render(*fr, RenderableDrawer::RS_MATERIAL,
+		r->getSceneDrawer().render(light, RenderableDrawer::RS_MATERIAL,
 			1, *(*it));
 	}
 

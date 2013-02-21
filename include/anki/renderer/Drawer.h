@@ -32,7 +32,7 @@ public:
 	void prepareDraw()
 	{}
 
-	void render(Frustumable& fr,
+	void render(SceneNode& frsn,
 		RenderingStage stage, U32 pass, SceneNode& renderableSceneNode);
 
 private:

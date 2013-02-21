@@ -228,7 +228,7 @@ ParticleEmitter::ParticleEmitter(
 	// Movable
 	U32 movableFlags, Movable* movParent)
 	:	SceneNode(name, scene),
-		Spatial(&aabb),
+		Spatial(&aabb, getSceneAllocator()),
 		Movable(movableFlags, movParent, *this, getSceneAllocator()),
 		Renderable(getSceneAllocator()),
 		particles(getSceneAllocator())

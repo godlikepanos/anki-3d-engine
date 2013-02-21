@@ -32,17 +32,25 @@ public:
 		SF_VISIBLE_CAMERA = 1 << 1,
 		SF_VISIBLE_LIGHT = 1 << 2,
 		/// Visible or not. The visibility tester sets it
-		SF_VISIBLE_ANY = SF_VISIBLE_CAMERA | SF_VISIBLE_LIGHT
+		SF_VISIBLE_ANY = SF_VISIBLE_CAMERA | SF_VISIBLE_LIGHT,
+
+		/// This is used for example in lights. If the light does not collide 
+		/// with any surface then it shouldn't be visible and be processed 
+		/// further. This flag is being used to check if we should test agains
+		/// near plane when using the tiler for visibility tests.
+		SF_FULLY_TRANSPARENT = 1 << 3
 	};
 
 	/// Pass the collision shape here so we can avoid the virtuals
-	Spatial(const CollisionShape* cs)
+	Spatial(const CollisionShape* cs, const SceneAllocator<U8>& alloc,
+		U32 flags = SF_NONE)
+		: spatialProtected(cs, alloc)
 	{
-		spatialProtected.spatialCs = cs;
+		enableFlags(flags);
 	}
 
 	// Remove from current OctreeNode
-	~Spatial();
+	virtual ~Spatial();
 
 	/// @name Accessors
 	/// @{
@@ -90,6 +98,27 @@ public:
 	{
 		return octreeNode;
 	}
+
+	SceneVector<Spatial*>::iterator getSubSpatialsBegin()
+	{
+		return spatialProtected.subSpatials.begin();
+	}
+	SceneVector<Spatial*>::const_iterator getSubSpatialsBegin() const
+	{
+		return spatialProtected.subSpatials.begin();
+	}
+	SceneVector<Spatial*>::iterator getSubSpatialsEnd()
+	{
+		return spatialProtected.subSpatials.end();
+	}
+	SceneVector<Spatial*>::const_iterator getSubSpatialsEnd() const
+	{
+		return spatialProtected.subSpatials.end();
+	}
+	PtrSize getSubSpatialsCount() const
+	{
+		return spatialProtected.subSpatials.size();
+	}
 	/// @}
 
 	/// The derived class has to manually set when the collision shape got
@@ -102,9 +131,15 @@ public:
 	}
 
 protected:
-	struct
+	struct SpatialProtected
 	{
+		SpatialProtected(const CollisionShape* spatialCs_, 
+			const SceneAllocator<U8>& alloc)
+			: spatialCs(spatialCs_), subSpatials(alloc)
+		{}
+
 		const CollisionShape* spatialCs = nullptr;
+		SceneVector<Spatial*> subSpatials;
 	} spatialProtected;
 
 private:

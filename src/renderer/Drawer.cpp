@@ -211,9 +211,11 @@ void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 }
 
 //==============================================================================
-void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
+void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	U32 pass, SceneNode& rsn)
 {
+	ANKI_ASSERT(frsn.getFrustumable());
+	Frustumable& fr = *frsn.getFrustumable();
 	Renderable* renderable = rsn.getRenderable();
 	ANKI_ASSERT(renderable);
 
@@ -261,10 +263,23 @@ void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
 	// Get rendering useful stuff
 	const ShaderProgram* prog;
 	const Vao* vao;
-	U32 indicesCount;
+	U32 indicesCountArray[64];
+	void* indicesOffsetArray[64];
+	U32 primCount = 1;
 
-	renderable->getRenderableModelPatchBase().getRenderingData(
-		key, vao, prog, indicesCount);
+	if(renderable->getSubMeshesCount() == 0)
+	{
+		renderable->getRenderableModelPatchBase().getRenderingData(
+			key, vao, prog, indicesCountArray[0]);
+	}
+	else
+	{
+		U64 mask = renderable->getVisibleSubMeshsMask(frsn);
+
+		renderable->getRenderableModelPatchBase().getRenderingDataSub(
+			key, mask, vao, prog, indicesCountArray, indicesOffsetArray,
+			primCount);
+	}
 
 	// Setup shader
 	setupShaderProg(key, fr, *prog, *renderable);
@@ -275,12 +290,31 @@ void RenderableDrawer::render(Frustumable& fr, RenderingStage stage,
 
 	if(instancesCount == 1)
 	{
-		glDrawElements(GL_TRIANGLES, indicesCount, GL_UNSIGNED_SHORT, 0);
+		if(primCount == 1)
+		{
+			glDrawElements(
+				GL_TRIANGLES, 
+				indicesCountArray[0], 
+				GL_UNSIGNED_SHORT, 
+				0);
+		}
+		else
+		{
+			glMultiDrawElements(GL_TRIANGLES, 
+				(GLsizei*)indicesCountArray, 
+				GL_UNSIGNED_SHORT, 
+				(const void**)indicesOffsetArray, 
+				primCount);
+		}
 	}
 	else
 	{
 		glDrawElementsInstanced(
-			GL_TRIANGLES, indicesCount, GL_UNSIGNED_SHORT, 0, instancesCount);
+			GL_TRIANGLES, 
+			indicesCountArray[0], 
+			GL_UNSIGNED_SHORT, 
+			0, 
+			instancesCount);
 	}
 }
 
