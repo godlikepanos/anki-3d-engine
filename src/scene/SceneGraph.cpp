@@ -95,7 +95,8 @@ SceneGraph::SceneGraph()
 	:	alloc(ANKI_CFG_SCENE_ALLOCATOR_SIZE),
 		frameAlloc(ANKI_CFG_SCENE_FRAME_ALLOCATOR_SIZE),
 		nodes(alloc),
-		sectorGroup(this)
+		sectorGroup(this),
+		events(this)
 {
 	nodes.reserve(ANKI_CFG_SCENE_NODES_AVERAGE_COUNT);
 

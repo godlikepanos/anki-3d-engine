@@ -22,7 +22,6 @@
 #include "anki/util/HighRezTimer.h"
 #include "anki/resource/Skin.h"
 #include "anki/event/EventManager.h"
-#include "anki/event/SceneColorEvent.h"
 #include "anki/event/MainRendererPpsHdrEvent.h"
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
@@ -436,7 +435,7 @@ void mainLoop()
 		mainLoopExtra();
 		SceneGraphSingleton::get().update(
 			prevUpdateTime, crntTime, MainRendererSingleton::get());
-		EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
+		//EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
 		MainRendererSingleton::get().render(SceneGraphSingleton::get());
 
 		if(InputSingleton::get().getKey(KC_ESCAPE))
