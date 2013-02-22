@@ -3,6 +3,8 @@
 
 namespace anki {
 
+#if 0
+
 //==============================================================================
 MainRendererPpsHdrEvent::MainRendererPpsHdrEvent(float startTime,
 	float duration,
@@ -57,5 +59,7 @@ void MainRendererPpsHdrEvent::updateSp(float /*prevUpdateTime*/, float crntTime)
 	/*hdr.setBlurringDistance(interpolate(originalData.blurringDist,
 		finalData.blurringDist, dp));*/
 }
+
+#endif
 
 } // end namespace

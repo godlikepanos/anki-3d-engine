@@ -6,6 +6,8 @@
 
 namespace anki {
 
+#if 0
+
 /// Change the HDR properties
 class MainRendererPpsHdrEvent: public Event
 {
@@ -34,6 +36,8 @@ private:
 	/// Implements Event::updateSp
 	void updateSp(float prevUpdateTime, float crntTime);
 };
+
+#endif
 
 } // end namespace
 

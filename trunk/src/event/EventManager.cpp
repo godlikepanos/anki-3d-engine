@@ -1,9 +1,12 @@
 #include "anki/event/EventManager.h"
+#include "anki/event/SceneAmbientColorEvent.h"
+#include "anki/scene/SceneGraph.h"
 
 namespace anki {
 
 //==============================================================================
-EventManager::EventManager()
+EventManager::EventManager(SceneGraph* scene_)
+	: scene(scene_), events(getSceneAllocator())
 {}
 
 //==============================================================================
@@ -11,37 +14,96 @@ EventManager::~EventManager()
 {}
 
 //==============================================================================
-void EventManager::updateAllEvents(float prevUpdateTime_, float crntTime_)
+SceneAllocator<U8> EventManager::getSceneAllocator() const
+{
+	return scene->getAllocator();
+}
+
+//==============================================================================
+SceneAllocator<U8> EventManager::getSceneFrameAllocator() const
+{
+	return scene->getFrameAllocator();
+}
+
+//==============================================================================
+std::shared_ptr<Event> EventManager::registerEvent(Event* event)
+{
+	ANKI_ASSERT(event);
+	SceneSharedPtrDeleter<Event> deleter;
+	std::shared_ptr<Event> ptr(event, deleter, getSceneAllocator());
+	events.push_back(ptr);
+	return ptr;
+}
+
+//==============================================================================
+void EventManager::unregisterEvent(Event* event)
+{
+	ANKI_ASSERT(event);
+	
+	EventsContainer::iterator it = events.begin();
+	for(; it != events.end(); it++)
+	{
+		if(it->get() == event)
+		{
+			break;
+		}
+	}
+
+	ANKI_ASSERT(it == events.end());
+	events.erase(it);
+}
+
+//==============================================================================
+void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 {
 	prevUpdateTime = prevUpdateTime_;
 	crntTime = crntTime_;
 
-	for(Event* event : events)
+	// Container to gather dead events
+	SceneFrameVector<EventsContainer::iterator> forDeletion(
+		getSceneFrameAllocator());
+	// XXX reserve on vector
+
+	EventsContainer::iterator it = events.begin();
+	for(; it != events.end(); it++)
 	{
-		if(!event->isDead(crntTime))
+		std::shared_ptr<Event>& pevent = *it;
+
+		// If not dead update it
+		if(!pevent->isDead(crntTime))
 		{
-			event->update(prevUpdateTime, crntTime);
+			if(pevent->getStartTime() <= crntTime)
+			{
+				pevent->update(prevUpdateTime, crntTime);
+			}
 		}
+		else
+		{
+			if(pevent->flagsEnabled(Event::EF_REANIMATE))
+			{
+				pevent->startTime = prevUpdateTime;
+				pevent->update(prevUpdateTime, crntTime);
+			}
+			else
+			{
+				forDeletion.push_back(it);
+			}
+		}
+	}
+
+	// Kick the dead events out
+	for(EventsContainer::iterator& it : forDeletion)
+	{
+		events.erase(it);
 	}
 }
 
 //==============================================================================
-EventManager::EventsContainer::iterator EventManager::
-	findADeadEvent(Event::EventType type)
+std::shared_ptr<Event> EventManager::newSceneAmbientColorEvent(
+	F32 startTime, F32 duration, const Vec3& finalColor)
 {
-	EventsContainer::iterator it = events.begin();
-
-	while(it != events.end())
-	{
-		Event* event = *it;
-		if(event->isDead(crntTime) && event->getEventType() == type)
-		{
-			break;
-		}
-		++it;
-	}
-
-	return it;
+	return registerEvent(new SceneAmbientColorEvent(startTime, duration, this, 
+		finalColor, scene));
 }
 
 } // end namespace anki

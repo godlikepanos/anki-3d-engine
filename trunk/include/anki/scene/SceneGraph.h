@@ -4,11 +4,13 @@
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Visibility.h"
-#include "anki/scene/Sector.h"
+#include "anki/core/Timestamp.h"
 #include "anki/math/Math.h"
 #include "anki/util/Singleton.h"
-#include "anki/core/Timestamp.h"
+
+#include "anki/scene/Sector.h"
 #include "anki/physics/PhysWorld.h"
+#include "anki/event/EventManager.h"
 
 namespace anki {
 
@@ -149,6 +151,8 @@ private:
 	PhysWorld physics;
 
 	SectorGroup sectorGroup;
+
+	EventManager events;
 
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);

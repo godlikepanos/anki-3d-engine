@@ -55,6 +55,18 @@ using SceneVector = Vector<T, SceneAllocator<T>>;
 template<typename T>
 using SceneFrameVector = Vector<T, SceneFrameAllocator<T>>;
 
+/// Deleter for shared pointers
+template<typename T>
+struct SceneSharedPtrDeleter
+{
+	void operator()(T* x)
+	{
+		ANKI_ASSERT(x);
+		SceneAllocator<U8> alloc = x->getSceneAllocator();
+		//ANKI_DELETE(x, alloc);
+	}
+};
+
 /// @}
 
 } // end namespace anki

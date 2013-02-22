@@ -1,36 +1,46 @@
 #include "anki/event/Event.h"
+#include "anki/event/EventManager.h"
 #include "anki/util/Assert.h"
 
 namespace anki {
 
 //==============================================================================
-Event::Event(EventType type_, float startTime_, float duration_)
-	: type(type_), startTime(startTime_), duration(duration_)
-{}
+Event::Event(F32 startTime_, F32 duration_, EventManager* manager_, U8 flags)
+	:	Flags<U8>(flags), 
+		startTime(startTime_),
+		duration(duration_),
+		manager(manager_)
+{
+	ANKI_ASSERT(manager);
+}
 
 //==============================================================================
-Event& Event::operator=(const Event& b)
+SceneAllocator<U8> Event::getSceneAllocator() const
 {
-	type = b.type;
-	startTime = b.startTime;
-	duration = b.duration;
-	return *this;
+	return manager->getSceneAllocator();
+}
+
+//==============================================================================
+SceneAllocator<U8> Event::getSceneFrameAllocator() const
+{
+	return manager->getSceneFrameAllocator();
 }
 
 //==============================================================================
 Event::~Event()
-{}
-
-//==============================================================================
-void Event::update(float prevUpdateTime, float crntTime)
 {
-	ANKI_ASSERT(!isDead(crntTime));
-
-	// Dont update if its not the right time yet
-	if(startTime <= crntTime)
+	if(manager)
 	{
-		updateSp(prevUpdateTime, crntTime);
+		manager->unregisterEvent(this);
 	}
 }
 
-} // end namespace
+//==============================================================================
+F32 Event::getDelta(F32 crntTime) const
+{
+	F32 d = crntTime - startTime; // delta
+	F32 dp = d / duration; // delta as persentage
+	return dp;
+}
+
+} // end namespace anki
