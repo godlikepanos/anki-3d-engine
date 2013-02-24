@@ -291,7 +291,7 @@ void main()
 #endif
 
 #if 0
-	fColor = fColor * 0.005 + vec3(vLimitsOfNearPlaneOpt, 1.0);
+	fColor = fColor * 0.005 + normal;
 #endif
 
 #if 0

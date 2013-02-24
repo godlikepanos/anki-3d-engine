@@ -9,7 +9,7 @@
 		<shader>
 			<type>vertex</type>
 			<includes>
-				<include>shaders/MaterialVertex.glsl</include>
+				<include>shaders/MaterialVertexCommon.glsl</include>
 			</includes>
 		
 			<inputs>

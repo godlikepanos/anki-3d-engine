@@ -29,6 +29,8 @@ namespace anki {
 /// If true then we can place spatials in a thread-safe way
 #define ANKI_CFG_OCTREE_THREAD_SAFE 1
 
+#define ANKI_CFG_SCENE_PROFILE 1
+
 /// @}
 /// @}
 

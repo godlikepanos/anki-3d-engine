@@ -126,8 +126,32 @@ public:
 	void spatialMarkForUpdate()
 	{
 		timestamp = Timestamp::getTimestamp();
+
+		for(Spatial* subsp : spatialProtected.subSpatials)
+		{
+			subsp->spatialMarkForUpdate();
+		}
+	}
+
+	void update()
+	{
 		spatialProtected.spatialCs->toAabb(aabb);
 		origin = (aabb.getMax() + aabb.getMin()) * 0.5;
+
+		for(Spatial* subsp : spatialProtected.subSpatials)
+		{
+			subsp->update();
+		}
+	}
+
+	void resetFrame()
+	{
+		disableFlags(SF_VISIBLE_ANY);
+
+		for(Spatial* subsp : spatialProtected.subSpatials)
+		{
+			subsp->disableFlags(SF_VISIBLE_ANY);
+		}
 	}
 
 protected:

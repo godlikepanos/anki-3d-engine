@@ -51,8 +51,8 @@ struct SetupRenderableVariableVisitor
 				*uni, x.get(), x.getArraySize());
 			break;
 		case BMV_MVP_MATRIX:
+			if(trfs)
 			{
-				ANKI_ASSERT(trfs != nullptr);
 				Array<Mat4, maxInstances> mvp;
 
 				for(U i = 0; i < size; i++)
@@ -61,6 +61,11 @@ struct SetupRenderableVariableVisitor
 				}
 
 				uniSet(*uni, &mvp[0], size);
+			}
+			else
+			{
+				ANKI_ASSERT(size == 1 && "Shouldn't instance that one");
+				uniSet(*uni, &vp, 1);
 			}
 			break;
 		case BMV_MV_MATRIX:
@@ -271,7 +276,12 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	const ShaderProgram* prog;
 	const Vao* vao;
 	U32 indicesCountArray[64];
-	void* indicesOffsetArray[64];
+	void* indicesOffsetArray[64] = {nullptr};
+#if ANKI_DEBUG
+	memset(indicesCountArray, 0, sizeof(indicesCountArray));
+	memset(indicesOffsetArray, 0, sizeof(indicesOffsetArray));
+#endif
+
 	U32 primCount = 1;
 
 	if(renderable->getSubMeshesCount() == 0)
@@ -281,7 +291,7 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	}
 	else
 	{
-		U64 mask = renderable->getVisibleSubMeshsMask(frsn);
+		U64 mask = renderable->getVisibleSubMeshesMask(frsn);
 
 		renderable->getRenderableModelPatchBase().getRenderingDataSub(
 			key, mask, vao, prog, indicesCountArray, indicesOffsetArray,
@@ -303,7 +313,7 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 				GL_TRIANGLES, 
 				indicesCountArray[0], 
 				GL_UNSIGNED_SHORT, 
-				0);
+				indicesOffsetArray[0]);
 		}
 		else
 		{

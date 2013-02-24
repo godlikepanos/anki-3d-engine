@@ -21,7 +21,7 @@ Frustum& Frustum::operator=(const Frustum& b)
 }
 
 //==============================================================================
-bool Frustum::insideFrustum(const CollisionShape& b) const
+Bool Frustum::insideFrustum(const CollisionShape& b) const
 {
 	for(const Plane& plane : planes)
 	{
@@ -32,6 +32,22 @@ bool Frustum::insideFrustum(const CollisionShape& b) const
 	}
 
 	return true;
+}
+
+//==============================================================================
+void Frustum::toAabb(Aabb& aabb) const
+{
+	switch(type)
+	{
+	case FT_PERSPECTIVE:
+		static_cast<const PerspectiveFrustum*>(this)->toAabb(aabb);
+		break;
+	case FT_ORTHOGRAPHIC:
+		static_cast<const OrthographicFrustum*>(this)->toAabb(aabb);
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
 }
 
 //==============================================================================

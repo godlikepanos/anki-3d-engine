@@ -90,7 +90,7 @@ public:
 	virtual void transform(const Transform& trf) = 0;
 
 	/// Get the AABB
-	virtual void toAabb(Aabb&) const = 0;
+	void toAabb(Aabb&) const;
 
 	/// Visitor accept
 	virtual void accept(MutableVisitor&) = 0;

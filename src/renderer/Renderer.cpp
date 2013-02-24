@@ -82,12 +82,40 @@ void Renderer::render(SceneGraph& scene_)
 
 	viewProjectionMat = cam.getViewProjectionMatrix();
 
+#if ANKI_CFG_RENDERER_PROFILE
+	HighRezTimer::Scalar timea, timeb;
+
+	timea = HighRezTimer::getCurrentTime();
+	tiler.updateTiles(scene->getActiveCamera());
+	timeb = HighRezTimer::getCurrentTime();
+	tilerTime += timeb - timea;
+
+	ms.run();
+	timea = HighRezTimer::getCurrentTime();
+	msTime += timea - timeb;
+
+	tiler.runMinMax(ms.getDepthFai());
+	timeb = HighRezTimer::getCurrentTime();
+	tilerTime += timeb - timea;
+
+	is.run();
+	timea = HighRezTimer::getCurrentTime();
+	isTime += timea - timeb;
+
+	bs.run();
+	timeb = HighRezTimer::getCurrentTime();
+
+	pps.run();
+	timea = HighRezTimer::getCurrentTime();
+	ppsTime += timea - timeb;
+#else
 	tiler.updateTiles(scene->getActiveCamera());
 	ms.run();
 	tiler.runMinMax(ms.getDepthFai());
 	is.run();
 	bs.run();
 	pps.run();
+#endif
 
 	ANKI_CHECK_GL_ERROR();
 	++framesNum;
@@ -205,6 +233,15 @@ void Renderer::clearAfterBindingFbo(const GLenum cap)
 	{
 		glClear(cap);
 	}
+}
+
+//==============================================================================
+void Renderer::printProfileInfo() const
+{
+#if ANKI_CFG_RENDERER_PROFILE
+	ANKI_LOGI("Renderer times: MS " << msTime << " IS " << isTime
+		<< " PPS " << ppsTime << " Tiler " << tilerTime);
+#endif
 }
 
 } // end namespace anki

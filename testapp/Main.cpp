@@ -222,22 +222,22 @@ void init()
 	}
 #endif
 
-	/*PointLight* point1 = new PointLight("point1", &scene, Movable::MF_NONE,
-		nullptr);
-	point1->setRadius(3.0);
-	point1->setDiffuseColor(Vec4(2.0, 2.0, 2.0, 0.0));
-	point1->setSpecularColor(Vec4(3.0, 3.0, 0.0, 0.0));
-	point1->setLocalTranslation(Vec3(-3.0, 2.0, 0.0));*/
-
 	// horse
 	horse = new ModelNode("data/models/horse/horse.mdl", "horse", &scene,
 		Movable::MF_NONE, nullptr);
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		0.7));
 
+	// barrel
+	ModelNode* redBarrel = new ModelNode("data/models/red_barrel/red_barrel.mdl",
+		"red_barrel", &scene, Movable::MF_NONE, nullptr);
+	redBarrel->setLocalTransform(Transform(Vec3(+2, 0, 0), Mat3::getIdentity(),
+		0.7));
+
 #if 1
 	StaticGeometryNode* sponzaModel = new StaticGeometryNode(
-		"data/maps/sponza/sponza_new.mdl",
+		//"data/maps/sponza/sponza_no_bmeshes.mdl",
+		"data/maps/sponza/sponza.mdl",
 		"sponza", &scene);
 
 	(void)sponzaModel;
@@ -447,7 +447,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -469,6 +469,8 @@ void mainLoop()
 
 	ANKI_LOGI("Exiting main loop (" << mainLoopTimer.getElapsedTime()
 		<< " sec)");
+	MainRendererSingleton::get().printProfileInfo();
+	SceneGraphSingleton::get().printProfileInfo();
 }
 
 //==============================================================================

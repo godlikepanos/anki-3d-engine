@@ -42,18 +42,19 @@ static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 	Spatial* sp = sn.getSpatial();
 	if(sp)
 	{
-		if(sp->getSpatialTimestamp() == Timestamp::getTimestamp())
+		if(sp->getSpatialTimestamp() >= Timestamp::getTimestamp())
 		{
+			sp->update();
 			sectorGroup.placeSceneNode(&sn);
 		}
-		sp->disableFlags(Spatial::SF_VISIBLE_ANY);
+		sp->resetFrame();
 	}
 
 	// Do some frustumable stuff
 	Frustumable* fr = sn.getFrustumable();
 	if(fr)
 	{
-		fr->setVisibilityTestResults(nullptr);
+		fr->resetFrame();
 	}
 
 	// Do some renderable stuff
@@ -124,6 +125,10 @@ void SceneGraph::unregisterNode(SceneNode* node)
 //==============================================================================
 void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 {
+#if ANKI_CFG_SCENE_PROFILE
+	HighRezTimer::Scalar startTime = HighRezTimer::getCurrentTime();
+#endif
+
 	frameAlloc.reset();
 
 	physics.update(prevUpdateTime, crntTime);
@@ -158,7 +163,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 #if 0
 	for(SceneNode* n : nodes)
 	{
-		updateSceneNode(*n, prevUpdateTime, crntTime, *sectorGroup);
+		updateSceneNode(*n, prevUpdateTime, crntTime, sectorGroup);
 	}
 #else
 	Array<UpdateSceneNodesJob, ThreadPool::MAX_THREADS> jobs2;
@@ -209,6 +214,10 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 		}
 	}
 #endif
+
+#if ANKI_CFG_SCENE_PROFILE
+	timeForUpdates += HighRezTimer::getCurrentTime() - startTime;
+#endif
 }
 
 //==============================================================================
@@ -223,6 +232,14 @@ SceneNode* SceneGraph::tryFindSceneNode(const char* name)
 {
 	Types<SceneNode>::NameToItemMap::iterator it = nameToNode.find(name);
 	return (it == nameToNode.end()) ? nullptr : it->second;
+}
+
+//==============================================================================
+void SceneGraph::printProfileInfo() const
+{
+#if ANKI_CFG_SCENE_PROFILE
+	ANKI_LOGI("Scene times: " << timeForUpdates);
+#endif
 }
 
 } // end namespace anki
