@@ -313,7 +313,6 @@ void CollisionDebugDrawer::visit(const Obb& obb)
 	tsl = Mat4::combineTransformations(trs, tsl);
 
 	dbg->setModelMatrix(tsl);
-	dbg->setColor(Vec3(1.0, 1.0, 0.0));
 	dbg->drawCube(2.0);
 }
 
@@ -362,7 +361,6 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 		break;
 	case Frustum::FT_PERSPECTIVE:
 		{
-			dbg->setColor(Vec4(0.5, 0.0, 0.5, 1.0));
 			const PerspectiveFrustum& pf =
 				static_cast<const PerspectiveFrustum&>(f);
 
@@ -504,6 +502,7 @@ void SceneDebugDrawer::draw(Frustumable& fr) const
 {
 	const Frustum& fs = fr.getFrustum();
 
+	dbg->setColor(Vec3(1.0, 1.0, 0.0));
 	CollisionDebugDrawer coldraw(dbg);
 	fs.accept(coldraw);
 }
@@ -511,8 +510,18 @@ void SceneDebugDrawer::draw(Frustumable& fr) const
 //==============================================================================
 void SceneDebugDrawer::draw(Spatial& x) const
 {
+	dbg->setColor(Vec3(1.0, 0.0, 1.0));
 	CollisionDebugDrawer coldraw(dbg);
 	x.getAabb().accept(coldraw);
+
+	dbg->setColor(Vec3(0.25, 0.0, 0.25));
+	for(auto it = x.getSubSpatialsBegin(); it != x.getSubSpatialsEnd(); ++it)
+	{
+		if((*it)->flagsEnabled(Spatial::SF_VISIBLE_CAMERA))
+		{
+			(*it)->getAabb().accept(coldraw);
+		}
+	}
 }
 
 //==============================================================================

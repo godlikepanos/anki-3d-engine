@@ -199,7 +199,7 @@ public:
 	void setVisibleSubMeshesMask(const SceneNode* frustumable, U64 mask);
 
 	/// Get the mask to render only the needed submeshess. Called on rendering
-	U64 getVisibleSubMeshsMask(const SceneNode& frustumable) const;
+	U64 getVisibleSubMeshesMask(const SceneNode& frustumable) const;
 
 	/// Reset on frame start
 	void resetFrame()

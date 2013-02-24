@@ -93,7 +93,7 @@ public:
 	}
 
 	/// Check if a collision shape @a b is inside the frustum
-	bool insideFrustum(const CollisionShape& b) const;
+	Bool insideFrustum(const CollisionShape& b) const;
 
 	/// Calculate the projection matrix
 	virtual Mat4 calculateProjectionMatrix() const = 0;
@@ -101,6 +101,9 @@ public:
 	/// Its like transform() but but with a difference. It doesn't transform
 	/// the @a trf, it just replaces it
 	virtual void setTransform(const Transform& trf) = 0;
+
+	/// Implements CollisionShape::toAbb
+	void toAabb(Aabb& aabb) const;
 
 protected:
 	/// @name Viewing variables

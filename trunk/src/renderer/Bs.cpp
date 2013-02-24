@@ -27,8 +27,8 @@ void Bs::run()
 	VisibilityTestResults& vi =
 		*scene.getActiveCamera().getFrustumable()->getVisibilityTestResults();
 
-	for(auto it = vi.getRenderablesEnd() - 1; it >= vi.getRenderablesBegin();
-		--it)
+	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd();
+		++it)
 	{
 		drawer.render(scene.getActiveCamera(), RenderableDrawer::RS_BLEND,
 			0, *(*it));

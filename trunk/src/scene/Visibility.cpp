@@ -3,6 +3,7 @@
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Light.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
@@ -58,11 +59,19 @@ struct VisibilityTestJob: ThreadJob
 			{
 				Spatial* subsp = *it;
 	
-				if(frustumable->insideFrustum(*subsp))
+				if(frustumable->insideFrustum(*subsp)
+					&& renderer->doVisibilityTests(
+					subsp->getOptimalCollisionShape()))
 				{
 					subSpatialsMask |= 1 << i;
+					subsp->enableFlags(Spatial::SF_VISIBLE_CAMERA);
 				}
 				++i;
+			}
+
+			if(ANKI_UNLIKELY(i > 0 && subSpatialsMask == 0))
+			{
+				continue;
 			}
 
 			// renderable
@@ -146,8 +155,14 @@ struct VisibilityTestJob: ThreadJob
 				if(frustumableSn->getFrustumable()->insideFrustum(*subsp))
 				{
 					subSpatialsMask |= 1 << i;
+					subsp->enableFlags(Spatial::SF_VISIBLE_LIGHT);
 				}
 				++i;
+			}
+
+			if(i > 0 && subSpatialsMask == 0)
+			{
+				continue;
 			}
 
 			sp->enableFlags(Spatial::SF_VISIBLE_LIGHT);
@@ -214,8 +229,8 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 		renderablesSize, 
 		lightsSize);
 
-	visible->renderables.resize(renderablesSize);
-	visible->lights.resize(lightsSize);
+	visible->renderables.resize(renderablesSize, nullptr);
+	visible->lights.resize(lightsSize, nullptr);
 
 	// Append thread results
 	renderablesSize = 0;
@@ -259,8 +274,9 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	}
 
 	// Sort the renderables in the main thread
-	std::sort(visible->renderables.begin(), 
-		visible->renderables.end(), MaterialSortFunctor());
+	DistanceSortFunctor dsfunc;
+	dsfunc.origin = fr->getFrustumableOrigin();
+	std::sort(visible->renderables.begin(), visible->renderables.end(), dsfunc);
 
 	threadPool.waitForAllJobsToFinish();
 }

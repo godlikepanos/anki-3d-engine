@@ -70,10 +70,12 @@ public:
 
 	void setVisibilityTestResults(VisibilityTestResults* visible_)
 	{
+		ANKI_ASSERT(visible == nullptr);
 		visible = visible_;
 	}
 	VisibilityTestResults* getVisibilityTestResults()
 	{
+		ANKI_ASSERT(visible);
 		return visible;
 	}
 	/// @}
@@ -93,6 +95,11 @@ public:
 	Bool insideFrustum(const CollisionShape& cs) const
 	{
 		return frustum->insideFrustum(cs);
+	}
+
+	void resetFrame()
+	{
+		visible = nullptr;
 	}
 
 protected:

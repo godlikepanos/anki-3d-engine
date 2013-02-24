@@ -136,6 +136,7 @@ void Renderable::init(PropertyMap& pmap)
 //==============================================================================
 void Renderable::setVisibleSubMeshesMask(const SceneNode* frustumable, U64 mask)
 {
+	ANKI_ASSERT(frustumable && mask != 0);
 	mtx.lock();
 
 	if(ANKI_UNLIKELY(perframe == nullptr))
@@ -150,7 +151,7 @@ void Renderable::setVisibleSubMeshesMask(const SceneNode* frustumable, U64 mask)
 }
 
 //==============================================================================
-U64 Renderable::getVisibleSubMeshsMask(const SceneNode& frustumable) const
+U64 Renderable::getVisibleSubMeshesMask(const SceneNode& frustumable) const
 {
 	ANKI_ASSERT(perframe);
 
