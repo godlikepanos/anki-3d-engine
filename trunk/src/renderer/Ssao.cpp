@@ -177,9 +177,7 @@ void Ssao::run()
 	// Blit from main pass FBO to vertical pass FBO
 	if(blit())
 	{
-		mpFbo.bind(Fbo::FT_READ);
-		vblurFbo.bind(Fbo::FT_DRAW);
-		glBlitFramebuffer(
+		vblurFbo.blit(mpFbo,
 			0, 0, mpWidth, mpHeight,
 			0, 0, bWidth, bHeight,
 			GL_COLOR_BUFFER_BIT, GL_LINEAR);

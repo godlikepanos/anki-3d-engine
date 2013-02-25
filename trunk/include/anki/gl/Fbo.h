@@ -71,6 +71,17 @@ public:
 	void setOtherAttachment(GLenum attachment, const Texture& tex, 
 		const I32 layer = -1, const I32 face = -1);
 
+	/// Blit framebuffer
+	void blit(const Fbo& source, U32 srcX0, U32 srcY0, U32 srcX1, U32 srcY1, 
+		U32 dstX0, U32 dstY0, U32 dstX1, U32 dstY1, GLbitfield mask,
+		GLenum filter)
+	{
+		source.bind(FT_READ);
+		bind(FT_DRAW);
+		glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, 
+			dstY1, mask, filter);
+	}
+
 	/// Creates a new FBO
 	void create();
 

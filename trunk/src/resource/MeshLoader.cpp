@@ -145,6 +145,7 @@ void MeshLoader::doPostLoad()
 	}
 
 	createAllNormals();
+	fixNormals();
 	if(texCoords.size() > 0)
 	{
 		createVertTangents();
@@ -263,6 +264,41 @@ void MeshLoader::createVertTangents()
 		float w = ((n.cross(t)).dot(b) < 0.0) ? 1.0 : -1.0;
 
 		vertTangents[i] = Vec4(t, w);
+	}
+}
+
+//==============================================================================
+void MeshLoader::fixNormals()
+{
+	const F32 positionsDistanceThresh = getEpsilon<F32>() * getEpsilon<F32>();
+	const F32 normalsDotThresh = cos(NORMALS_ANGLE_MERGE);
+
+	for(U i = 1; i < vertCoords.size(); i++)
+	{
+		const Vec3& crntPos = vertCoords[i];
+		Vec3& crntNormal = vertNormals[i];
+
+		// Check the previous
+		for(U j = 0; j < i; j++)
+		{
+			const Vec3& otherPos = vertCoords[j];
+			Vec3& otherNormal = vertNormals[j];
+
+			F32 distanceSq = crntPos.getDistanceSquared(otherPos);
+
+			if(distanceSq <= positionsDistanceThresh)
+			{
+				F32 dot = crntNormal.dot(otherNormal);
+
+				if(dot <= normalsDotThresh)
+				{
+					Vec3 newNormal = (crntNormal + otherNormal) * 0.5;
+					newNormal.normalize();
+
+					newNormal = otherNormal = newNormal;
+				}
+			}
+		}
 	}
 }
 
