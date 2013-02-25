@@ -5,9 +5,13 @@
 
 namespace anki {
 
+std::string lala;
+
 //==============================================================================
 void MeshLoader::load(const char* filename)
 {
+	lala = filename;
+
 	// Try
 	try
 	{
@@ -271,7 +275,6 @@ void MeshLoader::createVertTangents()
 void MeshLoader::fixNormals()
 {
 	const F32 positionsDistanceThresh = getEpsilon<F32>() * getEpsilon<F32>();
-	const F32 normalsDotThresh = cos(NORMALS_ANGLE_MERGE);
 
 	for(U i = 1; i < vertCoords.size(); i++)
 	{
@@ -289,13 +292,15 @@ void MeshLoader::fixNormals()
 			if(distanceSq <= positionsDistanceThresh)
 			{
 				F32 dot = crntNormal.dot(otherNormal);
+				F32 ang = acos(dot);
 
-				if(dot <= normalsDotThresh)
+				if(ang <= NORMALS_ANGLE_MERGE)
 				{
 					Vec3 newNormal = (crntNormal + otherNormal) * 0.5;
 					newNormal.normalize();
 
-					newNormal = otherNormal = newNormal;
+					crntNormal = newNormal;
+					otherNormal = newNormal;
 				}
 			}
 		}
