@@ -42,6 +42,10 @@ namespace anki {
 class MeshLoader
 {
 public:
+	/// If two vertices have the same position and normals under the angle 
+	/// specified by this constant then combine those normals
+	static constexpr F32 NORMALS_ANGLE_MERGE = getPi<F32>() / 6.0;
+
 	/// Vertex weight for skeletal animation
 	struct VertexWeight
 	{
@@ -182,6 +186,9 @@ private:
 	/// tangents, VBOs etc
 	/// @exception Exception
 	void doPostLoad();
+
+	/// It iterates all verts and fixes the normals on seams
+	void fixNormals();
 };
 
 } // end namespace anki
