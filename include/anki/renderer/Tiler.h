@@ -48,6 +48,13 @@ public:
 	Bool test(const CollisionShape& cs, 
 		const U32 tileId, const Bool skipNearPlaneCheck = false) const;
 
+	Bool test(
+		const Aabb& box,
+		const Mat4& projectionMatrix,
+		Bool skipNearPlaneCheck,
+		U32* tilesXAxisMask,
+		U32* tilesYAxisMask) const;
+
 private:
 	/// A screen tile
 	struct Tile

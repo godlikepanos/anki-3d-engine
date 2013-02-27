@@ -311,4 +311,29 @@ Bool Tiler::testAll(const CollisionShape& cs,
 	return tilesCount > 0;
 }
 
+//==============================================================================
+Bool Tiler::test(
+	const Aabb& box,
+	const Mat4& projectionMatrix,
+	Bool skipNearPlaneCheck,
+	U32* tilesXAxisMask,
+	U32* tilesYAxisMask) const
+{
+	/*const Vec3& min = box.getMin();
+	const Vec3& max = box.getMax();
+
+	Array<Vec4, 8> points = {{
+		Vec3(max.x(), max.y(), max.z(), 1.0),   // right top front
+		Vec3(min.x(), max.y(), max.z(), 1.0),   // left top front
+		Vec3(min.x(), min.y(), max.z(), 1.0),   // left bottom front
+		Vec3(max.x(), min.y(), max.z(), 1.0),   // right bottom front
+		Vec3(max.x(), max.y(), min.z(), 1.0),   // right top back
+		Vec3(min.x(), max.y(), min.z(), 1.0),   // left top back
+		Vec3(min.x(), min.y(), min.z(), 1.0),   // left bottom back
+		Vec3(max.x(), min.y(), min.z(), 1.0)}}; // right bottom back
+
+*/
+	return false;
+}
+
 } // end namespace anki
