@@ -44,9 +44,10 @@ Bool isLeft(const Vec2& p0, const Vec2& p1, const Vec2& p2)
 		- (p2.x() - p0.x()) * (p1.y() - p0.y()) > 0.0;
 }
 
-void calcConvexHull2D(const Vec2* points, const U32 n, Vec2* opoints, U32& on)
+void calcConvexHull2D(const Vec2* ANKI_RESTRICT points, 
+	const U32 n, Vec2* ANKI_RESTRICT opoints, U32& on)
 {
-	const U maxPoints = 8;
+	const U maxPoints = 9;
 	ANKI_ASSERT(n <= maxPoints && n > 3);
 	Array<Vec2, maxPoints * 2 + 1> deque;
 
@@ -71,37 +72,80 @@ void calcConvexHull2D(const Vec2* points, const U32 n, Vec2* opoints, U32& on)
 	{
 		// test if next vertex is inside the deque hull
 		if ((isLeft(deque[bot], deque[bot + 1], points[i]))
-			&& (isLeft(deque[top-1], deque[top], points[i])))
+			&& (isLeft(deque[top - 1], deque[top], points[i])))
 		{
 			continue; // skip an interior vertex
 		}
 
-		// incrementally add an exterior vertex to the deque hull
-		// get the rightmost tangent at the deque bot
+		while(!isLeft(deque[top - 1], deque[top], points[i]))
+		{
+			--top;
+		}
+		++top;
+		deque[top] = points[i];
+
 		while(!isLeft(deque[bot], deque[bot + 1], points[i]))
 		{
-			++bot; // remove bot of deque
+			++bot;
 		}
-
-		deque[--bot] = points[i]; // insert V[i] at bot of deque
-
-		// get the leftmost tangent at the deque top
-		while(!isLeft(deque[top-1], deque[top], points[i]))
-		{
-			--top; // pop top of deque
-		}
-
-		deque[++top] = points[i];          // push V[i] onto top of deque
+		--bot; 
+		deque[bot] = points[i];
 	}
 
-	// transcribe deque [] to the output hull array opoints
+	// transcribe deque to the output hull array opoints
 	U h;  // hull vertex counter
-	for( h = 0; h <= (top - bot); h++)
+	for(h = 0; h < (top - bot); h++)
 	{
 		opoints[h] = deque[bot + h];
 	}
 
-	on = h - 1;
+	on = h;
+}
+
+struct ShortLexicographicallyFunctor
+{
+	Bool operator()(const Vec2& a, const Vec2& b)
+	{
+		return a.x() < b.x() || (a.x() == b.x() && a.y() < b.y());
+	}
+};
+
+F32 cross(const Vec2& o, const Vec2& a, const Vec2& b)
+{
+	return (a.x() - o.x()) * (b.y() - o.y()) 
+		- (a.y() - o.y()) * (b.x() - o.x());
+}
+
+void calcConvexHull2D_(Vec2* ANKI_RESTRICT p, 
+	const U32 n, Vec2* ANKI_RESTRICT o, U32& outn)
+{
+	I k = 0;
+
+	std::sort(&p[0], &p[n], ShortLexicographicallyFunctor());
+	
+	// Build lower hull
+	for(I i = 0; i < n; i++)
+	{
+		while(k >= 2 && cross(o[k - 2], o[k - 1], p[i]) <= 0) 
+		{
+			--k;
+		}
+
+		o[k++] = p[i];
+	}
+ 
+	// Build upper hull
+	for(I i = n - 2, t = k + 1; i >= 0; i--)
+	{
+		while(k >= t && cross(o[k - 2], o[k - 1], p[i]) <= 0) 
+		{
+			--k;
+		}
+
+		o[k++] = p[i];
+	}
+
+	outn = k;
 }
 
 void Dbg::run()
@@ -156,7 +200,7 @@ void Dbg::run()
 #endif
 
 	{
-		drawer->setColor(Vec3(1.0, 0.0, 1.0));
+		drawer->setColor(Vec3(0.1, 0.1, 0.1));
 		Aabb box(Vec3(-1.0, 1.0, -1.0), Vec3(1.5, 2.0, 1.5));
 		CollisionDebugDrawer coldrawer(drawer.get());
 
@@ -183,7 +227,18 @@ void Dbg::run()
 		const Mat4& mat = r->getViewProjectionMatrix();
 
 		Array<Vec2, 8> points2D;
-		Array<Vec2, 8> hullPoints2D;
+		Array<Vec2, 8 * 2> hullPoints2D;
+		static const Array<Vec3, 9> colors = {{
+			Vec3(1.0, 0.0, 0.0),
+			Vec3(0.0, 1.0, 0.0),
+			Vec3(0.0, 0.0, 1.0),
+			Vec3(1.0, 0.0, 1.0),
+			Vec3(1.0, 1.0, 0.0),
+			Vec3(0.0, 1.0, 1.0),
+			Vec3(1.0, 1.0, 1.0),
+			Vec3(1.0, 0.5, 1.0),
+			Vec3(1.0, 0.5, 0.5)
+		}};
 
 		drawer->begin();
 		for(U i = 0; i < 8; i++)
@@ -194,22 +249,27 @@ void Dbg::run()
 
 			points2D[i] = point.xy();
 
-			//drawer->pushBackVertex(Vec3(point.x(), point.y(), -0.1));
+			/*drawer->setColor(colors[i]);
+			drawer->pushBackVertex(Vec3(point.x(), point.y(), -0.1));*/
 		}
 		drawer->end();
 
 		U32 outPoints;
-		calcConvexHull2D(&points2D[0], 8, &hullPoints2D[0], outPoints);
+		calcConvexHull2D_(&points2D[0], 8, &hullPoints2D[0], outPoints);
+
+		std::cout << outPoints << std::endl;
 
 		drawer->begin();
+		drawer->setColor(colors[0]);
 		for(U i = 0; i < outPoints - 1; i++)
 		{
 			drawer->pushBackVertex(Vec3(hullPoints2D[i], -0.1));
 			drawer->pushBackVertex(Vec3(hullPoints2D[i + 1], -0.1));
+			drawer->setColor(colors[i + 1]);
 		}
 
-		drawer->pushBackVertex(Vec3(hullPoints2D[outPoints - 1], -0.1));
-		drawer->pushBackVertex(Vec3(hullPoints2D[0], -0.1));
+		/*drawer->pushBackVertex(Vec3(hullPoints2D[outPoints - 1], -0.1));
+		drawer->pushBackVertex(Vec3(hullPoints2D[0], -0.1));*/
 
 		drawer->end();
 	}
