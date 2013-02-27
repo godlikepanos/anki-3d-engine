@@ -35,9 +35,11 @@
 #if defined(__GNUC__)
 #	define ANKI_LIKELY(x) __builtin_expect((x), 1)
 #	define ANKI_UNLIKELY(x) __builtin_expect((x), 0)
+#	define ANKI_RESTRICT __restrict
 #else
 #	define ANKI_LIKELY(x) ((x) == 1)
 #	define ANKI_UNLIKELY(x) ((x) == 1)
+#	define ANKI_RESTRICT
 #endif
 
 #endif
