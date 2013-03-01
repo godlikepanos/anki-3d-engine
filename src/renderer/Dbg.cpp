@@ -15,7 +15,7 @@ Dbg::~Dbg()
 void Dbg::init(const Renderer::Initializer& initializer)
 {
 	enabled = initializer.dbg.enabled;
-	enableFlags(DF_ALL);
+	enableBits(DF_ALL);
 
 	try
 	{

@@ -6,7 +6,7 @@ namespace anki {
 
 //==============================================================================
 Event::Event(F32 startTime_, F32 duration_, EventManager* manager_, U8 flags)
-	:	Flags<U8>(flags), 
+	:	Bitset<U8>(flags), 
 		startTime(startTime_),
 		duration(duration_),
 		manager(manager_)

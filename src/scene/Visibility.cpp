@@ -64,7 +64,7 @@ struct VisibilityTestJob: ThreadJob
 					subsp->getOptimalCollisionShape()))
 				{
 					subSpatialsMask |= 1 << i;
-					subsp->enableFlags(Spatial::SF_VISIBLE_CAMERA);
+					subsp->enableBits(Spatial::SF_VISIBLE_CAMERA);
 				}
 				++i;
 			}
@@ -106,7 +106,7 @@ struct VisibilityTestJob: ThreadJob
 				}
 			}
 
-			sp->enableFlags(Spatial::SF_VISIBLE_CAMERA);
+			sp->enableBits(Spatial::SF_VISIBLE_CAMERA);
 		} // end for
 	}
 
@@ -155,7 +155,7 @@ struct VisibilityTestJob: ThreadJob
 				if(frustumableSn->getFrustumable()->insideFrustum(*subsp))
 				{
 					subSpatialsMask |= 1 << i;
-					subsp->enableFlags(Spatial::SF_VISIBLE_LIGHT);
+					subsp->enableBits(Spatial::SF_VISIBLE_LIGHT);
 				}
 				++i;
 			}
@@ -165,7 +165,7 @@ struct VisibilityTestJob: ThreadJob
 				continue;
 			}
 
-			sp->enableFlags(Spatial::SF_VISIBLE_LIGHT);
+			sp->enableBits(Spatial::SF_VISIBLE_LIGHT);
 
 			Renderable* r = node->getRenderable();
 			if(r)

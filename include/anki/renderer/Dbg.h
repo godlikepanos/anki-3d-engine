@@ -3,13 +3,14 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
-#include <memory>
 #include "anki/renderer/DebugDrawer.h"
+#include "anki/util/Bitset.h"
+#include <memory>
 
 namespace anki {
 
 /// Debugging stage
-class Dbg: public SwitchableRenderingPass, public Flags<U8>
+class Dbg: public SwitchableRenderingPass, public Bitset<U8>
 {
 public:
 	enum DebugFlag

@@ -768,7 +768,7 @@ void ShaderProgram::initUniformBlocks()
 	{
 		/* Block index */
 		GLint blockIndex;
-		glGetActiveUniformsiv(glId, 1, &(uni.index),  GL_UNIFORM_BLOCK_INDEX, 
+		glGetActiveUniformsiv(glId, 1, &(uni.index), GL_UNIFORM_BLOCK_INDEX, 
 			&blockIndex);
 
 		if(blockIndex == -1)

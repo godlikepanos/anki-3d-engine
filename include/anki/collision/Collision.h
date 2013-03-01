@@ -11,4 +11,6 @@
 #include "anki/collision/Frustum.h"
 #include "anki/collision/Aabb.h"
 
+#include "anki/collision/Functions.h"
+
 #endif

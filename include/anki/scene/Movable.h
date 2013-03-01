@@ -2,7 +2,7 @@
 #define ANKI_SCENE_MOVABLE_H
 
 #include "anki/util/Object.h"
-#include "anki/util/Flags.h"
+#include "anki/util/Bitset.h"
 #include "anki/math/Math.h"
 #include "anki/core/Timestamp.h"
 #include "anki/scene/Common.h"
@@ -16,7 +16,7 @@ class PropertyMap;
 
 /// Interface for movable scene nodes
 class Movable: public Object<Movable, SceneAllocator<Movable>>,
-	public Flags<U8>
+	public Bitset<U8>
 {
 public:
 	typedef Object<Movable, SceneAllocator<Movable>> Base;
@@ -161,7 +161,7 @@ protected:
 	void movableMarkForUpdate()
 	{
 		timestamp = Timestamp::getTimestamp();
-		enableFlags(MF_TRANSFORM_DIRTY);
+		enableBits(MF_TRANSFORM_DIRTY);
 	}
 };
 /// @}

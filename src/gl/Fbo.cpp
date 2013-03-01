@@ -36,7 +36,7 @@ void Fbo::destroy()
 }
 
 //==============================================================================
-void Fbo::bind(const FboTarget target) const
+void Fbo::bind(const FboTarget target, Bool noReadbacks) const
 {
 	ANKI_ASSERT(isCreated());
 	checkNonSharable();
@@ -48,6 +48,14 @@ void Fbo::bind(const FboTarget target) const
 			glBindFramebuffer(GL_FRAMEBUFFER, glId);
 			currentDraw = currentRead = this;
 		}
+
+#if ANKI_GL == ANKI_GL_ES
+		if(noReadbacks)
+		{
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT 
+				| GL_STENCIL_BUFFER_BIT);
+		}
+#endif
 	}
 	else if(target == FT_DRAW)
 	{
@@ -56,6 +64,14 @@ void Fbo::bind(const FboTarget target) const
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, glId);
 			currentDraw = this;
 		}
+
+#if ANKI_GL == ANKI_GL_ES
+		if(noReadbacks)
+		{
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT 
+				| GL_STENCIL_BUFFER_BIT);
+		}
+#endif
 	}
 	else
 	{
@@ -65,6 +81,8 @@ void Fbo::bind(const FboTarget target) const
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, glId);
 			currentRead = this;
 		}
+
+		ANKI_ASSERT(noReadbacks == false && "Dosn't make sense");
 	}
 }
 
@@ -124,6 +142,9 @@ void Fbo::setColorAttachments(const std::initializer_list<const Texture*>&
 	{
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i,
 			GL_TEXTURE_2D, tex->getGlId(), 0);
+
+		attachments[attachmentsCount++] = GL_COLOR_ATTACHMENT0 + i;
+
 		++i;
 	}
 }
@@ -158,6 +179,8 @@ void Fbo::setOtherAttachment(GLenum attachment, const Texture& tex,
 		ANKI_ASSERT(0);
 		break;
 	}
+
+	attachments[attachmentsCount++] = attachment;
 }
 
 } // end namespace anki

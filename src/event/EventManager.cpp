@@ -79,7 +79,7 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 		}
 		else
 		{
-			if(pevent->flagsEnabled(Event::EF_REANIMATE))
+			if(pevent->bitsEnabled(Event::EF_REANIMATE))
 			{
 				pevent->startTime = prevUpdateTime;
 				pevent->update(prevUpdateTime, crntTime);

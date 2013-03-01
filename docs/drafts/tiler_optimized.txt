@@ -1,0 +1,75 @@
+
+algorithm cs aabb fr
+	MAX_POINTS = 8
+
+	pointsWorld[MAX_POINTS]
+
+	if cs.type is pespective frustum
+		pointsWorld[...] = get the 5 points
+		n = 5
+	else
+		pointsWorld[...] = get the 8 aabb points
+		n = 8
+	end
+
+	pointsNdc[MAX_POINTS]
+
+	minZ, maxZ
+	for i in (0, n)
+		pointsNdc[i] = fr.projectionMat * pointsWorld[i]
+		pointsNdc[i] /= pointsNdc[i].w
+
+		update minZ and maxZ
+	end
+
+	edges = convexHull2D(pointsNdc, n)
+
+
+	depth = log 2 TILES
+
+	for edge in edges
+		do_edge edge -1..1, -1..1 depth
+	end
+
+do_edge edge min max depth
+	if depth == 0
+		what?
+	endif
+
+	center = (min + max) / 2
+
+	if center left of edge
+		// right up
+		inside[4] = false
+		p = max
+		if p is left of edge
+			inside[0] = true;
+		end
+
+		// center top
+		p = center.x, max.y
+		if p is left of edge
+			inside[0] = true;
+			inside[1] = true;
+		end
+
+		// left top
+		p = min.x, max.y
+		if p is left of edge
+			inside[1] = true;
+		end
+
+		// blah blah
+
+		for all that inside
+			do edge ......... TODO
+		end
+ 
+	else
+		do edge min center depth - 1
+		do edge center max depth - 1
+		do edge min.x,center.y center.x,max.y depth - 1
+		do edge center.x,min.y max.x,center.y depth - 1
+	end
+end
+
