@@ -2,6 +2,7 @@
 #define ANKI_GL_FBO_H
 
 #include "anki/gl/GlObject.h"
+#include "anki/util/Array.h"
 #include <initializer_list>
 
 namespace anki {
@@ -16,6 +17,8 @@ class Texture;
 class Fbo: public GlObjectContextNonSharable
 {
 public:
+	static const U MAX_ATTACHMENTS = 8;
+
 	typedef GlObjectContextNonSharable Base;
 
 	/// FBO target
@@ -49,12 +52,14 @@ public:
 	{
 		destroy();
 		Base::operator=(std::forward<Base>(b));
+		attachmentsCount = b.attachmentsCount;
+		b.attachmentsCount = 0;
 		return *this;
 	}
 	/// @}
 
 	/// Binds FBO
-	void bind(const FboTarget target = FT_ALL) const;
+	void bind(const FboTarget target = FT_ALL, Bool noReadbacks = false) const;
 
 	/// Unbind all targets. Unbinds both draw and read FBOs so the active is
 	/// the default FBO
@@ -92,6 +97,9 @@ private:
 	static thread_local const Fbo* currentRead;
 	static thread_local const Fbo* currentDraw;
 
+	Array<GLenum, MAX_ATTACHMENTS> attachments;
+	U8 attachmentsCount;
+
 	static GLuint getCurrentFboGlId()
 	{
 		GLint i;
@@ -111,6 +119,12 @@ private:
 		GLint i;
 		glGetIntegerv(GL_READ_FRAMEBUFFER_BINDING, &i);
 		return i;
+	}
+
+	void invalidateInternal() const
+	{
+		glInvalidateFramebuffer(GL_FRAMEBUFFER, attachmentsCount, 
+			&attachments[0]);
 	}
 };
 /// @}

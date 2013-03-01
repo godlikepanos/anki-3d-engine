@@ -7,7 +7,6 @@
 #include "anki/resource/Resource.h"
 #include "anki/collision/CollisionShape.h"
 #include "anki/scene/SceneNode.h"
-#include "anki/util/Flags.h"
 #include "anki/util/Array.h"
 #include <unordered_map>
 #include <LinearMath/btIDebugDraw.h>

@@ -2,7 +2,7 @@
 #define ANKI_EVENT_EVENT_H
 
 #include "anki/scene/Common.h"
-#include "anki/util/Flags.h"
+#include "anki/util/Bitset.h"
 
 namespace anki {
 
@@ -10,7 +10,7 @@ namespace anki {
 class EventManager;
 
 /// Abstract class for all events
-class Event: public Flags<U8>
+class Event: public Bitset<U8>
 {
 	friend class EventManager;
 

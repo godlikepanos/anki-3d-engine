@@ -350,22 +350,22 @@ void mainLoopExtra()
 	}
 	if(in.getKey(KC_F2) == 1)
 	{
-		MainRendererSingleton::get().getDbg().switchFlags(
+		MainRendererSingleton::get().getDbg().switchBits(
 			Dbg::DF_SPATIAL);
 	}
 	if(in.getKey(KC_F3) == 1)
 	{
-		MainRendererSingleton::get().getDbg().switchFlags(
+		MainRendererSingleton::get().getDbg().switchBits(
 			Dbg::DF_PHYSICS);
 	}
 	if(in.getKey(KC_F4) == 1)
 	{
-		MainRendererSingleton::get().getDbg().switchFlags(
+		MainRendererSingleton::get().getDbg().switchBits(
 			Dbg::DF_SECTOR);
 	}
 	if(in.getKey(KC_F5) == 1)
 	{
-		MainRendererSingleton::get().getDbg().switchFlags(
+		MainRendererSingleton::get().getDbg().switchBits(
 			Dbg::DF_OCTREE);
 	}
 	if(in.getKey(KC_F12) == 1)

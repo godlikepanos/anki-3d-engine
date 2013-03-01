@@ -491,7 +491,7 @@ void SceneDebugDrawer::draw(SceneNode& node)
 
 	Spatial* sp;
 	if((sp = node.getSpatial())
-		&& sp->flagsEnabled(Spatial::SF_VISIBLE_CAMERA))
+		&& sp->bitsEnabled(Spatial::SF_VISIBLE_CAMERA))
 	{
 		draw(*sp);
 	}
@@ -517,7 +517,7 @@ void SceneDebugDrawer::draw(Spatial& x) const
 	dbg->setColor(Vec3(0.25, 0.0, 0.25));
 	for(auto it = x.getSubSpatialsBegin(); it != x.getSubSpatialsEnd(); ++it)
 	{
-		if((*it)->flagsEnabled(Spatial::SF_VISIBLE_CAMERA))
+		if((*it)->bitsEnabled(Spatial::SF_VISIBLE_CAMERA))
 		{
 			(*it)->getAabb().accept(coldraw);
 		}

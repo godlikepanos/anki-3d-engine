@@ -6,7 +6,7 @@ namespace anki {
 //==============================================================================
 Movable::Movable(U32 flags_, Movable* parent, PropertyMap& pmap,
 	const SceneAllocator<Movable>& alloc)
-	: Base(parent, alloc), Flags(flags_)
+	: Base(parent, alloc), Bitset(flags_)
 {
 	pmap.addNewProperty(
 		new ReadWritePointerProperty<Transform>("localTransform", &lTrf));
@@ -35,14 +35,14 @@ void Movable::updateWorldTransform()
 {
 	prevWTrf = wTrf;
 	const Movable* parent = getParent();
-	const Bool dirty = flagsEnabled(MF_TRANSFORM_DIRTY);
+	const Bool dirty = bitsEnabled(MF_TRANSFORM_DIRTY);
 
 	// If dirty then update world transform
 	if(dirty)
 	{
 		if(parent)
 		{
-			if(flagsEnabled(MF_IGNORE_LOCAL_TRANSFORM))
+			if(bitsEnabled(MF_IGNORE_LOCAL_TRANSFORM))
 			{
 				wTrf = parent->getWorldTransform();
 			}
@@ -74,7 +74,7 @@ void Movable::updateWorldTransform()
 	}
 
 	// Now it's a good time to cleanse parent
-	disableFlags(MF_TRANSFORM_DIRTY);
+	disableBits(MF_TRANSFORM_DIRTY);
 }
 
 } // end namespace anki

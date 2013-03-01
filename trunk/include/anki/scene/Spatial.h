@@ -3,7 +3,7 @@
 
 #include "anki/scene/Common.h"
 #include "anki/collision/Collision.h"
-#include "anki/util/Flags.h"
+#include "anki/util/Bitset.h"
 #include "anki/core/Timestamp.h"
 
 namespace anki {
@@ -18,7 +18,7 @@ class SceneNode;
 /// Spatial "interface" for scene nodes. It indicates scene nodes that need to 
 /// be placed in the scene's octree and they participate in the visibility 
 /// tests
-class Spatial: public Flags<U8>
+class Spatial: public Bitset<U8>
 {
 	friend class OctreeNode;
 	friend class Grid;
@@ -46,7 +46,7 @@ public:
 		U32 flags = SF_NONE)
 		: spatialProtected(cs, alloc)
 	{
-		enableFlags(flags);
+		enableBits(flags);
 	}
 
 	// Remove from current OctreeNode
@@ -146,11 +146,11 @@ public:
 
 	void resetFrame()
 	{
-		disableFlags(SF_VISIBLE_ANY);
+		disableBits(SF_VISIBLE_ANY);
 
 		for(Spatial* subsp : spatialProtected.subSpatials)
 		{
-			subsp->disableFlags(SF_VISIBLE_ANY);
+			subsp->disableBits(SF_VISIBLE_ANY);
 		}
 	}
 
