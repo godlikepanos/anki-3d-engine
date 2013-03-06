@@ -12,8 +12,9 @@ void akassert(bool expr, const char* exprTxt, const char* file, int line,
 {
 	if(!expr)
 	{
-		std::cerr << "(" << file << ":" << line << " " 
-			<< func << ") " << "Assertion failed: " << exprTxt << std::endl;
+		std::cerr << "\033[1;31m(" << file << ":" << line << " "
+			<< func << ") " << "Assertion failed: " << exprTxt << "\033[0m"
+			<< std::endl;
 
 		asm("int $3");
 		abort();
