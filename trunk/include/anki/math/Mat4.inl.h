@@ -999,4 +999,4 @@ inline std::ostream& operator<<(std::ostream& s, const Mat4& m)
 	return s;
 }
 
-} // end namespace
+} // end namespace anki

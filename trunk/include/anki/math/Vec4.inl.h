@@ -430,13 +430,23 @@ inline F32 Vec4::getLength() const
 // getNormalized
 inline Vec4 Vec4::getNormalized() const
 {
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
+	__m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(mm, mm, 0xFF));
+	return Vec4(_mm_mul_ps(mm, inverse_norm));
+#else
 	return (*this) / getLength();
+#endif
 }
 
 // normalize
 inline void Vec4::normalize()
 {
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
+	__m128 inverseNorm = _mm_rsqrt_ps(_mm_dp_ps(mm, mm, 0xFF));
+	mm = _mm_mul_ps(mm, inverseNorm);
+#else
 	(*this) /= getLength();
+#endif
 }
 
 //==============================================================================
@@ -474,4 +484,4 @@ inline std::ostream& operator<<(std::ostream& s, const Vec4& v)
 	return s;
 }
 
-} // end namespace
+} // end namespace anki
