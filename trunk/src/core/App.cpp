@@ -15,27 +15,29 @@ void App::handleLoggerMessages(const Logger::Info& info)
 {
 	std::ostream* out = NULL;
 	const char* x = NULL;
+	const char* terminalColor;
 
 	switch(info.type)
 	{
 	case Logger::LMT_NORMAL:
 		out = &std::cout;
 		x = "Info";
+		terminalColor = "\033[0;32m";
 		break;
-
 	case Logger::LMT_ERROR:
 		out = &std::cerr;
 		x = "Error";
+		terminalColor = "\033[0;31m";
 		break;
-
 	case Logger::LMT_WARNING:
 		out = &std::cerr;
 		x = "Warn";
+		terminalColor = "\033[0;33m";
 		break;
 	}
 
-	(*out) << "(" << info.file << ":" << info.line << " "<< info.func 
-		<< ") " << x << ": " << info.msg << std::endl;
+	(*out) << terminalColor << "(" << info.file << ":" << info.line << " "
+		<< info.func << ") " << x << ": " << info.msg << "\033[0m" << std::endl;
 }
 
 //==============================================================================

@@ -122,6 +122,84 @@ typedef Array<UpdateTilesPlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS>
 	UpdateJobArray;
 
 //==============================================================================
+// Convex hull and other stuff
+
+struct ShortLexicographicallyFunctor
+{
+	Bool operator()(const Vec2& a, const Vec2& b)
+	{
+		return a.x() < b.x() || (a.x() == b.x() && a.y() < b.y());
+	}
+};
+
+static F32 cross(const Vec2& o, const Vec2& a, const Vec2& b)
+{
+	return (a.x() - o.x()) * (b.y() - o.y())
+		- (a.y() - o.y()) * (b.x() - o.x());
+}
+
+static void convexHull2D(Vec2* ANKI_RESTRICT p,
+	const U32 n, Vec2* ANKI_RESTRICT o, const U32 on, U32& outn)
+{
+	ANKI_ASSERT(on > (2 * n) && "This algorithm needs some space");
+	I k = 0;
+
+	std::sort(&p[0], &p[n], ShortLexicographicallyFunctor());
+
+	// Build lower hull
+	for(I i = 0; i < n; i++)
+	{
+		while(k >= 2 && cross(o[k - 2], o[k - 1], p[i]) <= 0.0)
+		{
+			--k;
+		}
+
+		o[k++] = p[i];
+	}
+
+	// Build upper hull
+	for(I i = n - 2, t = k + 1; i >= 0; i--)
+	{
+		while(k >= t && cross(o[k - 2], o[k - 1], p[i]) <= 0.0)
+		{
+			--k;
+		}
+
+		o[k++] = p[i];
+	}
+
+	outn = k;
+}
+
+static Bool isLeft(const Vec2& p0, const Vec2& p1, const Vec2& p2)
+{
+	return (p1.x() - p0.x()) * (p2.y() - p0.y())
+		- (p2.x() - p0.x()) * (p1.y() - p0.y()) > 0.0;
+}
+
+static U getTilesCount(U maxDepth)
+{
+	if(maxDepth == 0)
+	{
+		return 1;
+	}
+
+	return getTilesCount(maxDepth - 1) + pow(4, maxDepth);
+}
+
+static U32 setNBits(U32 n)
+{
+	U32 res = 0;
+
+	for(U32 i = 0; i < n; i++)
+	{
+		res |= 0x80000000 >> i;
+	}
+
+	return res;
+}
+
+//==============================================================================
 Tiler::Tiler()
 {}
 
@@ -174,6 +252,88 @@ void Tiler::initInternal(Renderer* r_)
 	// Create PBO
 	pbo.create(GL_PIXEL_PACK_BUFFER, 
 		TILES_X_COUNT * TILES_Y_COUNT * 2 * sizeof(F32), nullptr);
+
+	// Tiles
+	initTiles();
+}
+
+//==============================================================================
+void Tiler::initTiles()
+{
+	// Init tiles
+	U maxDepth = log2(TILES_X_COUNT);
+	tiles_.resize(getTilesCount(maxDepth));
+
+	Tile_* tmpTiles = &tiles_[0];
+	for(U d = 0; d < maxDepth + 1; d++)
+	{
+		tiles0 = tmpTiles;
+		tmpTiles = initTilesInDepth(tmpTiles, d);
+	}
+
+	// Init hierarchy
+	U offset = 0;
+	tmpTiles = &tiles_[0];
+	for(U d = 0; d < maxDepth; d++)
+	{
+		U axisCount = pow(2, d);
+
+		U count = axisCount * axisCount;
+		offset += count;
+
+		for(U j = 0; j < axisCount; j++)
+		{
+			for(U i = 0; i < axisCount; i++)
+			{
+				U k = j * axisCount + i;
+				Tile_& tile = tmpTiles[k];
+
+				for(U j_ = 0; j_ < 2; j_++)
+				{
+					for(U i_ = 0; i_ < 2; i_++)
+					{
+						tile.children[j_ * 2 + i_] =
+							(2 * j + j_) * axisCount * 2 + (2 * i + i_)
+							+ offset;
+					}
+				}
+			}
+		}
+
+		tmpTiles = tmpTiles + count;
+	}
+}
+
+//==============================================================================
+Tiler::Tile_* Tiler::initTilesInDepth(Tile_* tiles, U depth)
+{
+	U crntDepthAxisCount = pow(2, depth);
+
+	F32 dim = (1.0 - (-1.0)) / crntDepthAxisCount;
+
+	const U bits = TILES_X_COUNT / crntDepthAxisCount;
+	const U32 maskOfTile = setNBits(bits);
+
+	for(U j = 0; j < crntDepthAxisCount; j++)
+	{
+		for(U i = 0; i < crntDepthAxisCount; i++)
+		{
+			Tile_& tile = tiles[j * crntDepthAxisCount + i];
+
+			tile.min[0] = -1.0 + i * dim;
+			tile.min[1] = -1.0 + j * dim;
+			tile.max[0] = tile.min[0] + dim;
+			tile.max[1] = tile.min[1] + dim;
+
+			tile.mask[0] = (maskOfTile >> (i * bits));
+			tile.mask[1] = (maskOfTile >> (j * bits));
+
+			tile.children[0] = tile.children[1] = tile.children[2] =
+				tile.children[3] = -1;
+		}
+	}
+
+	return tiles + (crntDepthAxisCount * crntDepthAxisCount);
 }
 
 //==============================================================================
@@ -193,6 +353,53 @@ void Tiler::runMinMax(const Texture& depthMap)
 	glReadPixels(0, 0, TILES_X_COUNT, TILES_Y_COUNT, GL_RG_INTEGER,
 		GL_UNSIGNED_INT, nullptr);
 	pbo.unbind();
+}
+
+//==============================================================================
+void Tiler::updateTilesInternal()
+{
+	//
+	// Read the results from the minmax job
+	//
+	Array<F32, TILES_X_COUNT * TILES_X_COUNT * 2> pixels;
+	pbo.read(&pixels[0]);
+
+	//
+	// Set the Z of the level 0 tiles
+	//
+	for(U i = 0; i < TILES_X_COUNT * TILES_X_COUNT; i++)
+	{
+		tiles0[i].min.z() = pixels[i * 2 + 0];
+		tiles0[i].max.z() = pixels[i * 2 + 1];
+	}
+
+	//
+	// Move to the other levels
+	//
+	updateTileMinMax(tiles_[0]);
+}
+
+//==============================================================================
+Vec2 Tiler::updateTileMinMax(Tile_& tile)
+{
+	// Have children?
+	if(tile.children[0] == -1)
+	{
+		return Vec2(tile.min.z(), tile.max.z());
+	}
+
+	Vec2 minMax(10.0, -10.0);
+	for(U i = 0; i < 4; i++)
+	{
+		Vec2 in = updateTileMinMax(tiles_[tile.children[i]]);
+		minMax.x() = std::min(minMax.x(), in.x());
+		minMax.y() = std::max(minMax.y(), in.y());
+	}
+
+	tile.min.z() = minMax.x();
+	tile.max.z() = minMax.y();
+
+	return minMax;
 }
 
 //==============================================================================
@@ -312,27 +519,58 @@ Bool Tiler::testAll(const CollisionShape& cs,
 }
 
 //==============================================================================
-Bool Tiler::test(
-	const Aabb& box,
+Bool Tiler::test(const Aabb& box,
+	const CollisionShape &cs,
 	const Mat4& projectionMatrix,
 	Bool skipNearPlaneCheck,
 	U32* tilesXAxisMask,
 	U32* tilesYAxisMask) const
 {
-	/*const Vec3& min = box.getMin();
+#if 0
+	//
+	// Get the points
+	//
+	const Vec3& min = box.getMin();
 	const Vec3& max = box.getMax();
 
-	Array<Vec4, 8> points = {{
-		Vec3(max.x(), max.y(), max.z(), 1.0),   // right top front
-		Vec3(min.x(), max.y(), max.z(), 1.0),   // left top front
-		Vec3(min.x(), min.y(), max.z(), 1.0),   // left bottom front
-		Vec3(max.x(), min.y(), max.z(), 1.0),   // right bottom front
-		Vec3(max.x(), max.y(), min.z(), 1.0),   // right top back
-		Vec3(min.x(), max.y(), min.z(), 1.0),   // left top back
-		Vec3(min.x(), min.y(), min.z(), 1.0),   // left bottom back
-		Vec3(max.x(), min.y(), min.z(), 1.0)}}; // right bottom back
+	Array<Vec4, 8> boxPoints = {{
+		Vec4(max.x(), max.y(), max.z(), 1.0),   // right top front
+		Vec4(min.x(), max.y(), max.z(), 1.0),   // left top front
+		Vec4(min.x(), min.y(), max.z(), 1.0),   // left bottom front
+		Vec4(max.x(), min.y(), max.z(), 1.0),   // right bottom front
+		Vec4(max.x(), max.y(), min.z(), 1.0),   // right top back
+		Vec4(min.x(), max.y(), min.z(), 1.0),   // left top back
+		Vec4(min.x(), min.y(), min.z(), 1.0),   // left bottom back
+		Vec4(max.x(), min.y(), min.z(), 1.0)}}; // right bottom back
 
-*/
+	//
+	// Project the points
+	//
+	Array<Vec2, 8> points2D;
+
+	for(U i = 0; i < 8; i++)
+	{
+		Vec4 point = mat * boxPoints[i];
+		points2D[i] = point.xy() / point.w();
+	}
+
+	//
+	// Calc the convex hull
+	//
+	Array<Vec2, 8 * 2> hullPoints2D;
+	U32 edgesCount;
+	convexHull2D(&points2D[0], points2D.getSize(),
+		&hullPoints2D[0], hullPoints2D.getSize(), edgesCount);
+
+	//
+	//
+	//
+	for(U i = 0; i < edgesCount; i++)
+	{
+
+	}
+#endif
+
 	return false;
 }
 

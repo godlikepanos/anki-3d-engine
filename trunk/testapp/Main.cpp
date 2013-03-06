@@ -561,7 +561,7 @@ int main(int argc, char* argv[])
 	}
 	catch(std::exception& e)
 	{
-		std::cerr << "Aborting: " << e.what() << std::endl;
+		ANKI_LOGE("Aborting: " << e.what());
 		exitCode = 1;
 	}
 	ANKI_LOGI("Bye!!");

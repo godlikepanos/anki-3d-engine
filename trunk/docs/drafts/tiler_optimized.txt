@@ -1,4 +1,10 @@
 
+
+function create_tiles
+	
+end
+
+
 algorithm cs aabb fr
 	MAX_POINTS = 8
 
@@ -24,23 +30,27 @@ algorithm cs aabb fr
 
 	edges = convexHull2D(pointsNdc, n)
 
-
 	depth = log 2 TILES
 
 	for edge in edges
 		do_edge edge -1..1, -1..1 depth
 	end
+end
 
 do_edge edge min max depth
+	if min and max not inside min max
+		return
+	end
+
 	if depth == 0
-		what?
+		mark visible
 	endif
 
 	center = (min + max) / 2
+	inside[4] = false
 
 	if center left of edge
 		// right up
-		inside[4] = false
 		p = max
 		if p is left of edge
 			inside[0] = true;
@@ -60,16 +70,12 @@ do_edge edge min max depth
 		end
 
 		// blah blah
-
-		for all that inside
-			do edge ......... TODO
-		end
- 
 	else
-		do edge min center depth - 1
-		do edge center max depth - 1
-		do edge min.x,center.y center.x,max.y depth - 1
-		do edge center.x,min.y max.x,center.y depth - 1
+		inside[all] = true
+	end
+ 
+	for all that are inside
+		do_edge new_min new_max depth - 1
 	end
 end
 

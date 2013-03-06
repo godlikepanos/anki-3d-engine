@@ -32,6 +32,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	Fbo()
+		: attachmentsCount(0)
 	{}
 
 	/// Move

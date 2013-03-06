@@ -50,6 +50,7 @@ public:
 
 	Bool test(
 		const Aabb& box,
+		const CollisionShape& cs,
 		const Mat4& projectionMatrix,
 		Bool skipNearPlaneCheck,
 		U32* tilesXAxisMask,
@@ -71,8 +72,8 @@ private:
 	{
 		Vec3 min;
 		Vec3 max;
-		U32 mask[2];
-		I16 children[4]; ///< Use small index to save memory
+		Array<U32, 2> mask;
+		Array<I16, 4> children; ///< Use small index to save memory
 	};
 
 	typedef F32 PixelArray[TILES_Y_COUNT][TILES_X_COUNT][2];
@@ -83,6 +84,9 @@ private:
 		Array<Array<Tile, TILES_X_COUNT>, TILES_Y_COUNT> tiles;
 		Array<Tile, TILES_X_COUNT * TILES_Y_COUNT> tiles1d;
 	};
+
+	Vector<Tile_> tiles_;
+	Tile_* tiles0; ///< Tiles last level
 
 	/// The timestamp of the 4 planes update
 	U32 planes4UpdateTimestamp = Timestamp::getTimestamp();
@@ -106,8 +110,11 @@ private:
 	const Camera* prevCam;
 
 	void initInternal(Renderer* r);
+	Tile_* initTilesInDepth(Tile_* tiles, U depth);
+	void initTiles();
 
-	void initTileDepth(Tile_* tiles, U depth);
+	void updateTilesInternal();
+	Vec2 updateTileMinMax(Tile_& tile);
 
 	Bool testInternal(const CollisionShape& cs, const Tile& tile, 
 		const U startPlane) const;
