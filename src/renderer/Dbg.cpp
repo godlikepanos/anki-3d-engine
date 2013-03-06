@@ -41,7 +41,7 @@ void Dbg::init(const Renderer::Initializer& initializer)
 Bool isLeft(const Vec2& p0, const Vec2& p1, const Vec2& p2)
 {
 	return (p1.x() - p0.x()) * (p2.y() - p0.y())
-		- (p2.x() - p0.x()) * (p1.y() - p0.y()) > 0.0;
+		> (p2.x() - p0.x()) * (p1.y() - p0.y());
 }
 
 void calcConvexHull2D(const Vec2* ANKI_RESTRICT points, 

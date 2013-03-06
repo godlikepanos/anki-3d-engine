@@ -66,6 +66,15 @@ private:
 		/// @}
 	};
 
+	/// XXX
+	struct Tile_
+	{
+		Vec3 min;
+		Vec3 max;
+		U32 mask[2];
+		I16 children[4]; ///< Use small index to save memory
+	};
+
 	typedef F32 PixelArray[TILES_Y_COUNT][TILES_X_COUNT][2];
 
 	/// @note The [0][0] is the bottom left tile
@@ -97,6 +106,8 @@ private:
 	const Camera* prevCam;
 
 	void initInternal(Renderer* r);
+
+	void initTileDepth(Tile_* tiles, U depth);
 
 	Bool testInternal(const CollisionShape& cs, const Tile& tile, 
 		const U startPlane) const;
