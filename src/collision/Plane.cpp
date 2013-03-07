@@ -39,23 +39,12 @@ void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 //==============================================================================
 void Plane::setFromPlaneEquation(F32 a, F32 b, F32 c, F32 d)
 {
-	// normalize for cheap distance checks
-	F32 lensq = a * a + b * b + c * c;
-	// length of normal had better not be zero
-	ANKI_ASSERT(!isZero(lensq));
+	normal = Vec3(a, b, c);
 
-	// recover gracefully
-	if(isZero(lensq))
-	{
-		normal = Vec3(1.0, 0.0, 0.0);
-		offset = 0.0;
-	}
-	else
-	{
-		F32 recip = 1.0 / sqrt(lensq);
-		normal = Vec3(a * recip, b * recip, c * recip);
-		offset = d * recip;
-	}
+	// length of normal had better not be zero
+	ANKI_ASSERT(isZero(normal.getLength() - 1.0));
+
+	offset = d;
 }
 
 //==============================================================================
@@ -79,4 +68,4 @@ void Plane::toAabb(Aabb&) const
 	ANKI_ASSERT(0 && "Can't do that");
 }
 
-} // end namespace
+} // end namespace anki

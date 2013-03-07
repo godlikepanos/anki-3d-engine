@@ -3,6 +3,7 @@
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/core/ThreadPool.h"
 #include "anki/scene/Camera.h"
+#include "anki/scene/Spatial.h"
 
 // Default should be 0
 #define ALTERNATIVE_MIN_MAX 0
@@ -122,8 +123,10 @@ typedef Array<UpdateTilesPlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS>
 	UpdateJobArray;
 
 //==============================================================================
-// Convex hull and other stuff
+// Statics                                                                     =
+//==============================================================================
 
+//==============================================================================
 struct ShortLexicographicallyFunctor
 {
 	Bool operator()(const Vec2& a, const Vec2& b)
@@ -132,51 +135,50 @@ struct ShortLexicographicallyFunctor
 	}
 };
 
-static F32 cross(const Vec2& o, const Vec2& a, const Vec2& b)
+//==============================================================================
+static Bool isLeft(const Vec2& p0, const Vec2& p1, const Vec2& p2)
 {
-	return (a.x() - o.x()) * (b.y() - o.y())
-		- (a.y() - o.y()) * (b.x() - o.x());
+	return (p1.x() - p0.x()) * (p2.y() - p0.y())
+		> (p2.x() - p0.x()) * (p1.y() - p0.y());
 }
 
-static void convexHull2D(Vec2* ANKI_RESTRICT p,
-	const U32 n, Vec2* ANKI_RESTRICT o, const U32 on, U32& outn)
+//==============================================================================
+static void convexHull2D(Vec2* ANKI_RESTRICT inPoints,
+	const U32 n, Vec2* ANKI_RESTRICT outPoints, const U32 on, U32& outn)
 {
 	ANKI_ASSERT(on > (2 * n) && "This algorithm needs some space");
 	I k = 0;
 
-	std::sort(&p[0], &p[n], ShortLexicographicallyFunctor());
+	std::sort(&inPoints[0], &inPoints[n], ShortLexicographicallyFunctor());
 
 	// Build lower hull
 	for(I i = 0; i < n; i++)
 	{
-		while(k >= 2 && cross(o[k - 2], o[k - 1], p[i]) <= 0.0)
+		while(k >= 2 
+			&& !isLeft(outPoints[k - 2], outPoints[k - 1], inPoints[i]))
 		{
 			--k;
 		}
 
-		o[k++] = p[i];
+		outPoints[k++] = inPoints[i];
 	}
 
 	// Build upper hull
 	for(I i = n - 2, t = k + 1; i >= 0; i--)
 	{
-		while(k >= t && cross(o[k - 2], o[k - 1], p[i]) <= 0.0)
+		while(k >= t 
+			&& !isLeft(outPoints[k - 2], outPoints[k - 1], inPoints[i]))
 		{
 			--k;
 		}
 
-		o[k++] = p[i];
+		outPoints[k++] = inPoints[i];
 	}
 
 	outn = k;
 }
 
-static Bool isLeft(const Vec2& p0, const Vec2& p1, const Vec2& p2)
-{
-	return (p1.x() - p0.x()) * (p2.y() - p0.y())
-		- (p2.x() - p0.x()) * (p1.y() - p0.y()) > 0.0;
-}
-
+//==============================================================================
 static U getTilesCount(U maxDepth)
 {
 	if(maxDepth == 0)
@@ -187,6 +189,7 @@ static U getTilesCount(U maxDepth)
 	return getTilesCount(maxDepth - 1) + pow(4, maxDepth);
 }
 
+//==============================================================================
 static U32 setNBits(U32 n)
 {
 	U32 res = 0;
@@ -198,6 +201,10 @@ static U32 setNBits(U32 n)
 
 	return res;
 }
+
+//==============================================================================
+// Tiler                                                                       =
+//==============================================================================
 
 //==============================================================================
 Tiler::Tiler()
@@ -519,59 +526,156 @@ Bool Tiler::testAll(const CollisionShape& cs,
 }
 
 //==============================================================================
-Bool Tiler::test(const Aabb& box,
-	const CollisionShape &cs,
-	const Mat4& projectionMatrix,
-	Bool skipNearPlaneCheck,
-	U32* tilesXAxisMask,
-	U32* tilesYAxisMask) const
+Bool Tiler::test(const Spatial& sp, const Frustumable& fr) const
 {
-#if 0
 	//
-	// Get the points
+	// Get points from sp
 	//
-	const Vec3& min = box.getMin();
-	const Vec3& max = box.getMax();
+	Array<Vec4, 8> points;
+	U pointsCount = 0;
 
-	Array<Vec4, 8> boxPoints = {{
-		Vec4(max.x(), max.y(), max.z(), 1.0),   // right top front
-		Vec4(min.x(), max.y(), max.z(), 1.0),   // left top front
-		Vec4(min.x(), min.y(), max.z(), 1.0),   // left bottom front
-		Vec4(max.x(), min.y(), max.z(), 1.0),   // right bottom front
-		Vec4(max.x(), max.y(), min.z(), 1.0),   // right top back
-		Vec4(min.x(), max.y(), min.z(), 1.0),   // left top back
-		Vec4(min.x(), min.y(), min.z(), 1.0),   // left bottom back
-		Vec4(max.x(), min.y(), min.z(), 1.0)}}; // right bottom back
+	const CollisionShape& cs = sp.getSpatialCollisionShape();
+	if(cs.getCollisionShapeType() != CollisionShape::CST_FRUSTUM)
+	{
+		const Aabb& aabb = sp.getAabb();
+		const Vec3& min = aabb.getMin();
+		const Vec3& max = aabb.getMax();
+
+		points[0] = Vec4(max.x(), max.y(), max.z(), 1.0); // right top front
+		points[1] = Vec4(min.x(), max.y(), max.z(), 1.0); // left top front
+		points[2] = Vec4(min.x(), min.y(), max.z(), 1.0); // left bottom front
+		points[3] = Vec4(max.x(), min.y(), max.z(), 1.0); // right bottom front
+		points[4] = Vec4(max.x(), max.y(), min.z(), 1.0); // right top back
+		points[5] = Vec4(min.x(), max.y(), min.z(), 1.0); // left top back
+		points[6] = Vec4(min.x(), min.y(), min.z(), 1.0); // left bottom back
+		points[7] = Vec4(max.x(), min.y(), min.z(), 1.0); // right bottom back
+
+		pointsCount = 0;
+	}
+	else
+	{
+		// XXX
+	}
 
 	//
-	// Project the points
+	// Transform those shapes
 	//
+	const Mat4& mat = fr.getViewProjectionMatrix();
 	Array<Vec2, 8> points2D;
 
-	for(U i = 0; i < 8; i++)
+	Vec2 minMax(10.0, -10.0); // The min and max z of the transformed shape
+	for(U i = 0; i < pointsCount; i++)
 	{
-		Vec4 point = mat * boxPoints[i];
-		points2D[i] = point.xy() / point.w();
+		Vec4 point = mat * points[i];
+		Vec3 v3 = point.xyz() / point.w();
+		points2D[i] = v3.xy();
+
+		minMax.x() = std::min(minMax.x(), v3.z());
+		minMax.y() = std::max(minMax.y(), v3.z());
 	}
 
 	//
 	// Calc the convex hull
 	//
-	Array<Vec2, 8 * 2> hullPoints2D;
-	U32 edgesCount;
-	convexHull2D(&points2D[0], points2D.getSize(),
-		&hullPoints2D[0], hullPoints2D.getSize(), edgesCount);
+	Array<Vec2, 8 * 2> convPoints;
+	U32 convPointsCount;
+	convexHull2D(&points2D[0], pointsCount, 
+			&convPoints[0], convPoints.getSize(), convPointsCount);
 
 	//
+	// Run the algorithm for every edge
 	//
-	//
-	for(U i = 0; i < edgesCount; i++)
+	Array<U32, 2> mask = {{0, 0}};
+	for(U i = 0; i < convPointsCount - 1; i++)
 	{
-
+		testTile(tiles_[0], minMax, convPoints[i], convPoints[i + 1], mask);
 	}
-#endif
 
-	return false;
+	return mask[0] != 0 && mask[1] != 0;
+}
+
+//==============================================================================
+void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b, 
+	const Vec2& objectMinMaxZ, Array<U32, 2>& mask) const
+{
+	// If edge not inside return
+	/*for(U i = 0; i < 2; i++)
+	{
+		if(a[i] < tile.min[i] || a[i] > tile.max[i])
+		{
+			return;
+		}
+
+		if(b[i] < tile.min[i] || b[i] > tile.max[i])
+		{
+			return;
+		}
+	}*/
+
+	Bool final = tile.children[0] == -1;
+
+	U inside = 0;
+
+	if(isLeft(a, b, Vec2(tile.max.x(), tile.max.y())))
+	{
+		if(final)
+		{
+			goto allIn;
+		}
+		++inside;
+	}
+
+	if(isLeft(a, b, Vec2(tile.min.x(), tile.max.y())))
+	{
+		if(final)
+		{
+			goto allIn;
+		}
+		++inside;
+	}
+
+	if(!isLeft(a, b, Vec2(tile.min.x(), tile.min.y())))
+	{
+		if(final)
+		{
+			goto allIn;
+		}
+		++inside;
+	}
+
+	if(!isLeft(a, b, Vec2(tile.max.x(), tile.min.y())))
+	{
+		if(final)
+		{
+			goto allIn;
+		}
+		++inside;
+	}
+
+	// None inside
+	if(inside == 0)
+	{
+		return;
+	}
+	else if(inside == 4) // All inside
+	{
+		goto allIn;
+	}
+	else // Some inside
+	{
+		ANKI_ASSERT(!final);
+
+		for(U i = 0; i < 4; i++)
+		{
+			testTile(tiles_[tile.children[i]], a, b, objectMinMaxZ, mask);
+		}
+	}
+
+	return;
+
+allIn:
+	mask[0] |= tile.mask[0];
+	mask[1] |= tile.mask[1];
 }
 
 } // end namespace anki

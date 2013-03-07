@@ -12,6 +12,8 @@ namespace anki {
 class Renderer;
 class Camera;
 class ShaderProgramUniformVariable;
+class Spatial;
+class Frustumable;
 
 /// Tiler used for visibility tests
 class Tiler
@@ -48,13 +50,7 @@ public:
 	Bool test(const CollisionShape& cs, 
 		const U32 tileId, const Bool skipNearPlaneCheck = false) const;
 
-	Bool test(
-		const Aabb& box,
-		const CollisionShape& cs,
-		const Mat4& projectionMatrix,
-		Bool skipNearPlaneCheck,
-		U32* tilesXAxisMask,
-		U32* tilesYAxisMask) const;
+	Bool test(const Spatial& sp, const Frustumable& fr) const;
 
 private:
 	/// A screen tile
@@ -104,7 +100,7 @@ private:
 	/// Main shader program
 	ShaderProgramResourcePointer prog;
 
-	const ShaderProgramUniformVariable* depthMapUniform;
+	const ShaderProgramUniformVariable* depthMapUniform; ///< Cache it
 
 	Renderer* r;
 	const Camera* prevCam;
@@ -114,10 +110,13 @@ private:
 	void initTiles();
 
 	void updateTilesInternal();
-	Vec2 updateTileMinMax(Tile_& tile);
+	Vec2 updateTileMinMax(Tile_& tile); ///< Recursive 
 
 	Bool testInternal(const CollisionShape& cs, const Tile& tile, 
 		const U startPlane) const;
+	void testTile(const Tile_& tile, const Vec2& a, const Vec2& b, 
+		const Vec2& objectMinMaxZ,
+		Array<U32, 2>& mask) const;
 };
 
 } // end namespace anki
