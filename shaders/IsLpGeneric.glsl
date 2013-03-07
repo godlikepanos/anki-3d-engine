@@ -290,8 +290,11 @@ void main()
 	fColor *= dot(normal, groundLightDir.xyz) + 1.0;
 #endif
 
-#if 0
-	fColor = fColor * 0.005 + normal;
+#if 1
+	if(tiles[vInstanceId].lightsCount[3] == 333)
+	{
+		fColor *= vec3(1.5);
+	}
 #endif
 
 #if 0

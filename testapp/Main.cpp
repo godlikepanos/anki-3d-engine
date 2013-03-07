@@ -139,7 +139,7 @@ void init()
 	scene.setActiveCamera(cam);
 
 	// lights
-#if 1
+#if 0
 	Vec3 lpos(-24.0, 0.1, -10.0);
 	for(int i = 0; i < 50; i++)
 	{
@@ -164,7 +164,11 @@ void init()
 	}
 #endif
 
-#if 1
+	PointLight* point = new PointLight("ll", &scene,
+		Movable::MF_NONE, nullptr);
+	point->setLocalTranslation(Vec3(1.0, 0.0, 0.0));
+
+#if 0
 	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
@@ -189,7 +193,7 @@ void init()
 	spot->setShadowEnabled(true);
 #endif
 
-#if 1
+#if 0
 	// Vase point lights
 	F32 x = 8.5;
 	F32 y = 2.25;

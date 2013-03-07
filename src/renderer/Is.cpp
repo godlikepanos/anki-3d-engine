@@ -212,6 +212,24 @@ struct WriteTilesUboJob: ThreadJob
 				lightIndices[id] = i;
 				++pointLightsInTileCount;
 			}
+
+			// XXX
+			if(tileId == 0)
+			{
+				Array<U32, 2> mask;
+				tiler.test(light, is->r->getSceneGraph().getActiveCamera(), mask);
+
+				U a = tileId % Tiler::TILES_X_COUNT;
+				U b = tileId / Tiler::TILES_X_COUNT;
+
+				std::cout << std::hex << mask[0] << std::endl;
+
+				if((mask[0] & 0x80000000 >> a) != 0
+					&& (mask[1] & 0x80000000 >> b) != 0 )
+				{
+					stile.lightsCount[3] = 333;
+				}
+			}
 		}
 
 		stile.lightsCount[0] = pointLightsInTileCount;
