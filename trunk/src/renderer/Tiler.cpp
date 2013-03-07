@@ -147,6 +147,7 @@ static void convexHull2D(Vec2* ANKI_RESTRICT inPoints,
 	const U32 n, Vec2* ANKI_RESTRICT outPoints, const U32 on, U32& outn)
 {
 	ANKI_ASSERT(on > (2 * n) && "This algorithm needs some space");
+	ANKI_ASSERT(n > 4);
 	I k = 0;
 
 	std::sort(&inPoints[0], &inPoints[n], ShortLexicographicallyFunctor());
@@ -463,6 +464,8 @@ void Tiler::updateTiles(Camera& cam)
 	// Misc
 	// 
 	prevCam = &cam;
+
+	updateTilesInternal();
 }
 
 //==============================================================================
@@ -526,7 +529,7 @@ Bool Tiler::testAll(const CollisionShape& cs,
 }
 
 //==============================================================================
-Bool Tiler::test(const Spatial& sp, const Frustumable& fr) const
+Bool Tiler::test(const Spatial& sp, const Frustumable& fr, Array<U32, 2>& mask) const
 {
 	//
 	// Get points from sp
@@ -550,23 +553,30 @@ Bool Tiler::test(const Spatial& sp, const Frustumable& fr) const
 		points[6] = Vec4(min.x(), min.y(), min.z(), 1.0); // left bottom back
 		points[7] = Vec4(max.x(), min.y(), min.z(), 1.0); // right bottom back
 
-		pointsCount = 0;
+		pointsCount = 8;
 	}
 	else
 	{
 		// XXX
 	}
 
+	return testPoints(&points[0], pointsCount, fr.getViewProjectionMatrix(),
+		mask);
+}
+
+//==============================================================================
+Bool Tiler::testPoints(Vec4* points, U pointsCount, const Mat4& projection,
+	Array<U32, 2>& mask) const
+{
 	//
 	// Transform those shapes
 	//
-	const Mat4& mat = fr.getViewProjectionMatrix();
 	Array<Vec2, 8> points2D;
 
 	Vec2 minMax(10.0, -10.0); // The min and max z of the transformed shape
 	for(U i = 0; i < pointsCount; i++)
 	{
-		Vec4 point = mat * points[i];
+		Vec4 point = projection * points[i];
 		Vec3 v3 = point.xyz() / point.w();
 		points2D[i] = v3.xy();
 
@@ -577,15 +587,15 @@ Bool Tiler::test(const Spatial& sp, const Frustumable& fr) const
 	//
 	// Calc the convex hull
 	//
-	Array<Vec2, 8 * 2> convPoints;
+	Array<Vec2, 8 * 2 + 1> convPoints;
 	U32 convPointsCount;
-	convexHull2D(&points2D[0], pointsCount, 
+	convexHull2D(&points2D[0], pointsCount,
 			&convPoints[0], convPoints.getSize(), convPointsCount);
 
 	//
 	// Run the algorithm for every edge
 	//
-	Array<U32, 2> mask = {{0, 0}};
+	mask = {{0, 0}};
 	for(U i = 0; i < convPointsCount - 1; i++)
 	{
 		testTile(tiles_[0], minMax, convPoints[i], convPoints[i + 1], mask);
@@ -634,7 +644,7 @@ void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b,
 		++inside;
 	}
 
-	if(!isLeft(a, b, Vec2(tile.min.x(), tile.min.y())))
+	if(isLeft(a, b, Vec2(tile.min.x(), tile.min.y())))
 	{
 		if(final)
 		{
@@ -643,7 +653,7 @@ void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b,
 		++inside;
 	}
 
-	if(!isLeft(a, b, Vec2(tile.max.x(), tile.min.y())))
+	if(isLeft(a, b, Vec2(tile.max.x(), tile.min.y())))
 	{
 		if(final)
 		{

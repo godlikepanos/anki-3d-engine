@@ -257,8 +257,6 @@ void Dbg::run()
 		U32 outPoints;
 		calcConvexHull2D_(&points2D[0], 8, &hullPoints2D[0], outPoints);
 
-		std::cout << outPoints << std::endl;
-
 		drawer->begin();
 		for(U i = 0; i < outPoints - 1; i++)
 		{
