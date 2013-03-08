@@ -50,10 +50,11 @@ public:
 	Bool test(const CollisionShape& cs, 
 		const U32 tileId, const Bool skipNearPlaneCheck = false) const;
 
-	Bool test(const Spatial& sp, const Frustumable& fr, Array<U32, 2>& mask) const;
-
-	Bool testPoints(Vec4* points, U pointsCount, const Mat4& projection,
-		Array<U32, 2>& mask) const;
+	Bool test(
+		const CollisionShape& cs, 
+		const Aabb& aabb, 
+		Bool skipNearPlane,
+		Array<U32, 2>* mask) const;
 
 private:
 	/// A screen tile
@@ -119,7 +120,7 @@ private:
 		const U startPlane) const;
 
 	void testTile(const Tile_& tile, const Vec2& a, const Vec2& b, 
-		const Vec2& objectMinMaxZ,
+		const Array<Vec3, 2>& objMinMax,
 		Array<U32, 2>& mask) const;
 };
 

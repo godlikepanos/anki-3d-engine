@@ -226,6 +226,7 @@ void init()
 	}
 #endif
 
+#if 0
 	// horse
 	horse = new ModelNode("data/models/horse/horse.mdl", "horse", &scene,
 		Movable::MF_NONE, nullptr);
@@ -237,8 +238,9 @@ void init()
 		"red_barrel", &scene, Movable::MF_NONE, nullptr);
 	redBarrel->setLocalTransform(Transform(Vec3(+2, 0, 0), Mat3::getIdentity(),
 		0.7));
+#endif
 
-#if 1
+#if 0
 	StaticGeometryNode* sponzaModel = new StaticGeometryNode(
 		//"data/maps/sponza/sponza_no_bmeshes.mdl",
 		"data/maps/sponza/sponza.mdl",
