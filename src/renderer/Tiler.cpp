@@ -529,7 +529,11 @@ Bool Tiler::testAll(const CollisionShape& cs,
 }
 
 //==============================================================================
-Bool Tiler::test(const Spatial& sp, const Frustumable& fr, Array<U32, 2>& mask) const
+Bool Tiler::test(
+	const CollisionShape& cs, 
+	const Aabb& aabb, 
+	Bool skipNearPlane,
+	Array<U32, 2>* outMask) const
 {
 	//
 	// Get points from sp
@@ -537,10 +541,8 @@ Bool Tiler::test(const Spatial& sp, const Frustumable& fr, Array<U32, 2>& mask) 
 	Array<Vec4, 8> points;
 	U pointsCount = 0;
 
-	const CollisionShape& cs = sp.getSpatialCollisionShape();
 	if(cs.getCollisionShapeType() != CollisionShape::CST_FRUSTUM)
 	{
-		const Aabb& aabb = sp.getAabb();
 		const Vec3& min = aabb.getMin();
 		const Vec3& max = aabb.getMax();
 
@@ -560,28 +562,23 @@ Bool Tiler::test(const Spatial& sp, const Frustumable& fr, Array<U32, 2>& mask) 
 		// XXX
 	}
 
-	return testPoints(&points[0], pointsCount, fr.getViewProjectionMatrix(),
-		mask);
-}
-
-//==============================================================================
-Bool Tiler::testPoints(Vec4* points, U pointsCount, const Mat4& projection,
-	Array<U32, 2>& mask) const
-{
 	//
 	// Transform those shapes
 	//
 	Array<Vec2, 8> points2D;
+	const Mat4& projection = prevCam->getViewProjectionMatrix();
+	Array<Vec3, 2> minMax = {{Vec3(10.0), Vec3(-1.0)}};
 
-	Vec2 minMax(10.0, -10.0); // The min and max z of the transformed shape
 	for(U i = 0; i < pointsCount; i++)
 	{
 		Vec4 point = projection * points[i];
 		Vec3 v3 = point.xyz() / point.w();
 		points2D[i] = v3.xy();
 
-		minMax.x() = std::min(minMax.x(), v3.z());
-		minMax.y() = std::max(minMax.y(), v3.z());
+		// Min z
+		minMax[0].z() = std::min(minMax[0].z(), v3.z());
+		// Max z
+		minMax[1].z() = std::max(minMax[1].z(), v3.z());
 	}
 
 	//
@@ -590,15 +587,47 @@ Bool Tiler::testPoints(Vec4* points, U pointsCount, const Mat4& projection,
 	Array<Vec2, 8 * 2 + 1> convPoints;
 	U32 convPointsCount;
 	convexHull2D(&points2D[0], pointsCount,
-			&convPoints[0], convPoints.getSize(), convPointsCount);
+		&convPoints[0], convPoints.getSize(), convPointsCount);
+
+	// Calc the x,y of the min max
+	minMax[0].x() = minMax[1].x() = convPoints[0].x();
+	minMax[0].y() = minMax[1].y() = convPoints[0].y();
+	for(U i = 1; i < convPointsCount - 1; i++)
+	{
+		for(U j = 0; j < 2; j++)
+		{
+			minMax[0][j] = std::min(minMax[0][j], convPoints[i][j]);
+			minMax[1][j] = std::max(minMax[1][j], convPoints[i][j]);
+		}
+	}
 
 	//
 	// Run the algorithm for every edge
 	//
-	mask = {{0, 0}};
+	Array<U32, 2> mask = {{0, 0}};
 	for(U i = 0; i < convPointsCount - 1; i++)
 	{
-		testTile(tiles_[0], minMax, convPoints[i], convPoints[i + 1], mask);
+		Array<U32, 2> edgemask = {{0, 0}};
+		testTile(tiles_[0], convPoints[i], convPoints[i + 1], minMax, edgemask);
+
+		std::cout << "-- " << edgemask[1] << std::endl;
+
+		if(i != 0)
+		{
+			mask[0] &= edgemask[0];
+			mask[1] &= edgemask[1];
+		}
+		else
+		{
+			mask[0] = edgemask[0];
+			mask[1] = edgemask[1];
+		}
+
+	}
+
+	if(outMask)
+	{
+		*outMask = mask;
 	}
 
 	return mask[0] != 0 && mask[1] != 0;
@@ -606,33 +635,32 @@ Bool Tiler::testPoints(Vec4* points, U pointsCount, const Mat4& projection,
 
 //==============================================================================
 void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b, 
-	const Vec2& objectMinMaxZ, Array<U32, 2>& mask) const
+	const Array<Vec3, 2>& objMinMax, Array<U32, 2>& mask) const
 {
 	// If edge not inside return
-	/*for(U i = 0; i < 2; i++)
+	for(U i = 0; i < 2; i++)
 	{
-		if(a[i] < tile.min[i] || a[i] > tile.max[i])
+		const F32 min = objMinMax[0][i];
+		const F32 max = objMinMax[1][i];
+
+		if(max < tile.min[i] || min > tile.max[i])
 		{
 			return;
 		}
+	}
 
-		if(b[i] < tile.min[i] || b[i] > tile.max[i])
-		{
-			return;
-		}
-	}*/
-
+	// Continue
 	Bool final = tile.children[0] == -1;
 
 	U inside = 0;
 
-	if(isLeft(a, b, Vec2(tile.max.x(), tile.max.y())))
+	if(isLeft(a, b, tile.max.xy()))
 	{
 		if(final)
 		{
 			goto allIn;
 		}
-		++inside;
+		inside |= 1;
 	}
 
 	if(isLeft(a, b, Vec2(tile.min.x(), tile.max.y())))
@@ -641,16 +669,16 @@ void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b,
 		{
 			goto allIn;
 		}
-		++inside;
+		inside |= 2;
 	}
 
-	if(isLeft(a, b, Vec2(tile.min.x(), tile.min.y())))
+	if(isLeft(a, b, tile.min.xy()))
 	{
 		if(final)
 		{
 			goto allIn;
 		}
-		++inside;
+		inside |= 4;
 	}
 
 	if(isLeft(a, b, Vec2(tile.max.x(), tile.min.y())))
@@ -659,7 +687,7 @@ void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b,
 		{
 			goto allIn;
 		}
-		++inside;
+		inside |= 8;
 	}
 
 	// None inside
@@ -667,7 +695,7 @@ void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b,
 	{
 		return;
 	}
-	else if(inside == 4) // All inside
+	else if(inside == 0xF) // All inside
 	{
 		goto allIn;
 	}
@@ -677,7 +705,7 @@ void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b,
 
 		for(U i = 0; i < 4; i++)
 		{
-			testTile(tiles_[tile.children[i]], a, b, objectMinMaxZ, mask);
+			testTile(tiles_[tile.children[i]], a, b, objMinMax, mask);
 		}
 	}
 

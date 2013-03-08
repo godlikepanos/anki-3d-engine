@@ -126,7 +126,7 @@ void calcConvexHull2D_(Vec2* ANKI_RESTRICT p,
 	// Build lower hull
 	for(I i = 0; i < n; i++)
 	{
-		while(k >= 2 && cross(o[k - 2], o[k - 1], p[i]) <= 0) 
+		while(k >= 2 && !isLeft(o[k - 2], o[k - 1], p[i])) 
 		{
 			--k;
 		}
@@ -137,7 +137,7 @@ void calcConvexHull2D_(Vec2* ANKI_RESTRICT p,
 	// Build upper hull
 	for(I i = n - 2, t = k + 1; i >= 0; i--)
 	{
-		while(k >= t && cross(o[k - 2], o[k - 1], p[i]) <= 0) 
+		while(k >= t && !isLeft(o[k - 2], o[k - 1], p[i])) 
 		{
 			--k;
 		}

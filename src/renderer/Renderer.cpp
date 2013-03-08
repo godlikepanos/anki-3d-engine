@@ -109,6 +109,7 @@ void Renderer::render(SceneGraph& scene_)
 	timea = HighRezTimer::getCurrentTime();
 	ppsTime += timea - timeb;
 #else
+	// Wrong time to update the tiler
 	tiler.updateTiles(scene->getActiveCamera());
 	ms.run();
 	tiler.runMinMax(ms.getDepthFai());
