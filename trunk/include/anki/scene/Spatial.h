@@ -5,6 +5,7 @@
 #include "anki/collision/Collision.h"
 #include "anki/util/Bitset.h"
 #include "anki/core/Timestamp.h"
+#include <bitset>
 
 namespace anki {
 
@@ -83,6 +84,15 @@ public:
 		return timestamp;
 	}
 
+	const std::bitset<256>& getTilerBitset() const
+	{
+		return tilerBitset;
+	}
+	void setTilerBitset(const std::bitset<256>& bitset)
+	{
+		tilerBitset = bitset;
+	}
+
 	/// Used for sorting spatials. In most object the origin is the center of
 	/// the bounding volume but for cameras the origin is the eye point
 	virtual const Vec3& getSpatialOrigin() const
@@ -152,6 +162,8 @@ public:
 		{
 			subsp->disableBits(SF_VISIBLE_ANY);
 		}
+
+		tilerBitset.reset();
 	}
 
 protected:
@@ -171,6 +183,7 @@ private:
 	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
 	Aabb aabb; ///< A faster shape
 	Vec3 origin; ///< Cached value
+	std::bitset<256> tilerBitset;
 };
 /// @}
 

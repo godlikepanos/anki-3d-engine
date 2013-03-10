@@ -13,7 +13,7 @@ struct VisibilityTestJob: ThreadJob
 	U nodesCount = 0;
 	SceneGraph::Types<SceneNode>::Container::iterator nodes;
 	SceneNode* frustumableSn = nullptr;
-	Renderer* renderer = nullptr;
+	Tiler* tiler = nullptr;
 	SceneAllocator<U8> frameAlloc;
 
 	VisibilityTestResults* visible;
@@ -60,8 +60,8 @@ struct VisibilityTestJob: ThreadJob
 				Spatial* subsp = *it;
 	
 				if(frustumable->insideFrustum(*subsp)
-					&& renderer->doVisibilityTests(
-					subsp->getOptimalCollisionShape()))
+					/*&& renderer->doVisibilityTests(
+					subsp->getOptimalCollisionShape())*/)
 				{
 					subSpatialsMask |= 1 << i;
 					subsp->enableBits(Spatial::SF_VISIBLE_CAMERA);
@@ -78,11 +78,11 @@ struct VisibilityTestJob: ThreadJob
 			Renderable* r = node->getRenderable();
 			if(r)
 			{
-				if(!renderer->doVisibilityTests(
+				/*if(!renderer->doVisibilityTests(
 					sp->getOptimalCollisionShape()))
 				{
 					continue;
-				}
+				}*/
 				visible->renderables.push_back(node);
 
 				// Inform the renderable for the mask
@@ -95,9 +95,14 @@ struct VisibilityTestJob: ThreadJob
 			else
 			{
 				Light* l = node->getLight();
-				if(l)
+				Tiler::Bitset tilerBitset;
+				if(l
+					&& tiler->test(sp->getSpatialCollisionShape(),
+					sp->getAabb(), false, &tilerBitset))
 				{
 					visible->lights.push_back(node);
+
+					sp->setTilerBitset(tilerBitset);
 
 					if(l->getShadowEnabled() && fr)
 					{
@@ -200,7 +205,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 		jobs[i].nodesCount = scene.getSceneNodesCount();
 		jobs[i].nodes = scene.getSceneNodesBegin();
 		jobs[i].frustumableSn = &fsn;
-		jobs[i].renderer = &r;
+		jobs[i].tiler = &r.getTiler();
 		jobs[i].frameAlloc = scene.getFrameAllocator();
 
 		threadPool.assignNewJob(i, &jobs[i]);

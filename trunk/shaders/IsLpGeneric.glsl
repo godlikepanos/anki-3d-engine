@@ -291,9 +291,9 @@ void main()
 #endif
 
 #if 1
-	if(tiles[vInstanceId].lightsCount[3] == 333)
+	if(tiles[vInstanceId].lightsCount[3] > 0)
 	{
-		fColor *= vec3(1.5);
+		fColor += vec3(0.1);
 	}
 #endif
 
@@ -323,7 +323,7 @@ void main()
 	}
 #endif
 
-#if 0
+#if 1
 	vec3 tmpc = vec3((vInstanceId % 4) / 3.0, (vInstanceId % 3) / 2.0, 
 		(vInstanceId % 2));
 	fColor += tmpc / 40.0;

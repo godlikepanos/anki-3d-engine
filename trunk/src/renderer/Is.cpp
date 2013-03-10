@@ -4,6 +4,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 #include "anki/core/ThreadPool.h"
+#include <bitset> // XXX remove it
 
 namespace anki {
 
@@ -200,6 +201,8 @@ struct WriteTilesUboJob: ThreadJob
 		// Point lights
 		//
 
+		stile.lightsCount[3] = 0;
+
 		U pointLightsInTileCount = 0;
 		for(U i = 0; i < visiblePointLightsCount; i++)
 		{
@@ -212,6 +215,22 @@ struct WriteTilesUboJob: ThreadJob
 				lightIndices[id] = i;
 				++pointLightsInTileCount;
 			}
+
+			// XXX
+				{
+					const Tiler::Bitset& bitset = light.getTilerBitset();
+
+					//std::cout << std::bitset<32>(mask[0]) << std::endl;
+
+					if(bitset.test(tileId))
+					{
+						stile.lightsCount[3] = 333;
+					}
+					else
+					{
+						stile.lightsCount[3] = 0;
+					}
+				}
 		}
 
 		stile.lightsCount[0] = pointLightsInTileCount;
