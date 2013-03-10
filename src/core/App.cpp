@@ -7,8 +7,26 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <execinfo.h>
+#include <signal.h>
 
 namespace anki {
+
+//==============================================================================
+/// Segfault signal handler
+void handler(int sig)
+{
+	void *array[10];
+	size_t size;
+
+	// get void*'s for all entries on the stack
+	size = backtrace(array, 10);
+
+	// print out all the frames to stderr
+	fprintf(stderr, "Error: signal %d:\n", sig);
+	backtrace_symbols_fd(array, size, 2);
+	exit(1);
+}
 
 //==============================================================================
 void App::handleLoggerMessages(const Logger::Info& info)
@@ -68,6 +86,9 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 //==============================================================================
 void App::init(int argc, char* argv[])
 {
+	// Install signal handler
+	signal(SIGSEGV, handler);
+
 	// send output to handleMessageHanlderMsgs
 	ANKI_CONNECT(&LoggerSingleton::get(), messageRecieved, 
 		this, handleLoggerMessages);

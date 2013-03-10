@@ -6,6 +6,7 @@
 #include "anki/gl/Gl.h"
 #include "anki/resource/Resource.h"
 #include "anki/core/Timestamp.h"
+#include <bitset>
 
 namespace anki {
 
@@ -25,6 +26,9 @@ public:
 	// mind that there are size limitations in uniform blocks.
 	static const U TILES_X_COUNT = 16;
 	static const U TILES_Y_COUNT = 16;
+	static const U TILES_COUNT = TILES_X_COUNT * TILES_X_COUNT;
+
+	typedef std::bitset<TILES_X_COUNT * TILES_X_COUNT> Bitset;
 
 	Tiler();
 	~Tiler();
@@ -54,7 +58,7 @@ public:
 		const CollisionShape& cs, 
 		const Aabb& aabb, 
 		Bool skipNearPlane,
-		Array<U32, 2>* mask) const;
+		Bitset* mask) const;
 
 private:
 	/// A screen tile
@@ -86,7 +90,7 @@ private:
 	};
 
 	Vector<Tile_> tiles_;
-	Tile_* tiles0; ///< Tiles last level
+	Tile_* tiles0 = nullptr; ///< Tiles last level
 
 	/// The timestamp of the 4 planes update
 	U32 planes4UpdateTimestamp = Timestamp::getTimestamp();
@@ -104,10 +108,10 @@ private:
 	/// Main shader program
 	ShaderProgramResourcePointer prog;
 
-	const ShaderProgramUniformVariable* depthMapUniform; ///< Cache it
+	const ShaderProgramUniformVariable* depthMapUniform = nullptr; ///< Cache it
 
-	Renderer* r;
-	const Camera* prevCam;
+	Renderer* r = nullptr;
+	const Camera* prevCam = nullptr;
 
 	void initInternal(Renderer* r);
 	Tile_* initTilesInDepth(Tile_* tiles, U depth);
@@ -119,9 +123,10 @@ private:
 	Bool testInternal(const CollisionShape& cs, const Tile& tile, 
 		const U startPlane) const;
 
-	void testTile(const Tile_& tile, const Vec2& a, const Vec2& b, 
-		const Array<Vec3, 2>& objMinMax,
-		Array<U32, 2>& mask) const;
+	void testTile(const Tile_& tile, const Vec2& a, const Vec2& b,
+		const Array<Vec3, 2>& objMinMax, Bitset &bitset) const;
+
+	void updateBitset(const Tile_& tile, Bitset &bitset) const;
 };
 
 } // end namespace anki

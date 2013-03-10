@@ -278,6 +278,7 @@ void Tiler::initTiles()
 		tiles0 = tmpTiles;
 		tmpTiles = initTilesInDepth(tmpTiles, d);
 	}
+	ANKI_ASSERT(tiles_.size() - (tiles0 - &tiles_[0]) == TILES_COUNT);
 
 	// Init hierarchy
 	U offset = 0;
@@ -347,11 +348,14 @@ Tiler::Tile_* Tiler::initTilesInDepth(Tile_* tiles, U depth)
 //==============================================================================
 void Tiler::runMinMax(const Texture& depthMap)
 {
+	ANKI_ASSERT(depthMap.getFiltering() == Texture::TFT_NEAREST);
+
 	// Issue the min/max job
 	fbo.bind();
 	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
 	r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
 	prog->bind();
+	ANKI_ASSERT(depthMapUniform);
 	depthMapUniform->set(depthMap);
 
 	r->drawQuad();
@@ -375,10 +379,17 @@ void Tiler::updateTilesInternal()
 	//
 	// Set the Z of the level 0 tiles
 	//
-	for(U i = 0; i < TILES_X_COUNT * TILES_X_COUNT; i++)
+	ANKI_ASSERT(tiles0);
+	Tile_* tile = tiles0;
+	Tile_* tileEnd = tile + TILES_COUNT;
+	F32* pixel = &pixels[0];
+	for(; tile != tileEnd; ++tile)
 	{
-		tiles0[i].min.z() = pixels[i * 2 + 0];
-		tiles0[i].max.z() = pixels[i * 2 + 1];
+		tile->min.z() = pixel[0];
+		tile->max.z() = pixel[1];
+		ANKI_ASSERT(tile->max.z() >= tile->min.z());
+
+		pixel += 2;
 	}
 
 	//
@@ -533,7 +544,7 @@ Bool Tiler::test(
 	const CollisionShape& cs, 
 	const Aabb& aabb, 
 	Bool skipNearPlane,
-	Array<U32, 2>* outMask) const
+	Bitset* outBitset) const
 {
 	//
 	// Get points from sp
@@ -566,13 +577,14 @@ Bool Tiler::test(
 	// Transform those shapes
 	//
 	Array<Vec2, 8> points2D;
+	ANKI_ASSERT(prevCam);
 	const Mat4& projection = prevCam->getViewProjectionMatrix();
-	Array<Vec3, 2> minMax = {{Vec3(10.0), Vec3(-1.0)}};
+	Array<Vec3, 2> minMax = {{Vec3(10.0), Vec3(-10.0)}};
 
 	for(U i = 0; i < pointsCount; i++)
 	{
 		Vec4 point = projection * points[i];
-		Vec3 v3 = point.xyz() / point.w();
+		Vec3 v3 = point.xyz() / fabs(point.w());
 		points2D[i] = v3.xy();
 
 		// Min z
@@ -604,38 +616,55 @@ Bool Tiler::test(
 	//
 	// Run the algorithm for every edge
 	//
-	Array<U32, 2> mask = {{0, 0}};
+	Bitset bitset;
 	for(U i = 0; i < convPointsCount - 1; i++)
 	{
-		Array<U32, 2> edgemask = {{0, 0}};
-		testTile(tiles_[0], convPoints[i], convPoints[i + 1], minMax, edgemask);
-
-		std::cout << "-- " << edgemask[1] << std::endl;
+		Bitset edgebitset;
+		testTile(tiles_[0], convPoints[i], convPoints[i + 1],
+			minMax, edgebitset);
 
 		if(i != 0)
 		{
-			mask[0] &= edgemask[0];
-			mask[1] &= edgemask[1];
+			bitset &= edgebitset;
 		}
 		else
 		{
-			mask[0] = edgemask[0];
-			mask[1] = edgemask[1];
+			bitset = edgebitset;
 		}
 
 	}
 
-	if(outMask)
+	//
+	// XXX
+	//
+	for(U i = 0; i < TILES_COUNT; i++)
 	{
-		*outMask = mask;
+		if(bitset.test(i))
+		{
+			ANKI_ASSERT(i < tiles_.size());
+
+			if(tiles0[i].max.z() > minMax[0].z())
+			{
+				// Keep it
+			}
+			else
+			{
+				bitset.set(i, false);
+			}
+		}
 	}
 
-	return mask[0] != 0 && mask[1] != 0;
+	if(outBitset)
+	{
+		*outBitset = bitset;
+	}
+
+	return bitset.any();
 }
 
 //==============================================================================
 void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b, 
-	const Array<Vec3, 2>& objMinMax, Array<U32, 2>& mask) const
+	const Array<Vec3, 2>& objMinMax, Bitset& bitset) const
 {
 	// If edge not inside return
 	for(U i = 0; i < 2; i++)
@@ -652,68 +681,82 @@ void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b,
 	// Continue
 	Bool final = tile.children[0] == -1;
 
-	U inside = 0;
-
-	if(isLeft(a, b, tile.max.xy()))
+	if(!final)
 	{
-		if(final)
+		U inside = 0;
+
+		if(isLeft(a, b, tile.max.xy()))
+		{
+			inside |= 1;
+		}
+
+		if(isLeft(a, b, Vec2(tile.min.x(), tile.max.y())))
+		{
+			inside |= 2;
+		}
+
+		if(isLeft(a, b, tile.min.xy()))
+		{
+			inside |= 4;
+		}
+
+		if(isLeft(a, b, Vec2(tile.max.x(), tile.min.y())))
+		{
+			inside |= 8;
+		}
+
+		// None inside
+		if(inside == 0)
+		{
+			return;
+		}
+		else if(inside == 0xF) // All inside
 		{
 			goto allIn;
 		}
-		inside |= 1;
-	}
+		else // Some inside
+		{
+			ANKI_ASSERT(!final);
 
-	if(isLeft(a, b, Vec2(tile.min.x(), tile.max.y())))
+			for(U i = 0; i < 4; i++)
+			{
+				testTile(tiles_[tile.children[i]], a, b, objMinMax, bitset);
+			}
+		}
+	}
+	else
 	{
-		if(final)
+		if(isLeft(a, b, tile.max.xy())
+			|| isLeft(a, b, Vec2(tile.min.x(), tile.max.y()))
+			|| isLeft(a, b, tile.min.xy())
+			|| isLeft(a, b, Vec2(tile.max.x(), tile.min.y())))
 		{
 			goto allIn;
-		}
-		inside |= 2;
-	}
-
-	if(isLeft(a, b, tile.min.xy()))
-	{
-		if(final)
-		{
-			goto allIn;
-		}
-		inside |= 4;
-	}
-
-	if(isLeft(a, b, Vec2(tile.max.x(), tile.min.y())))
-	{
-		if(final)
-		{
-			goto allIn;
-		}
-		inside |= 8;
-	}
-
-	// None inside
-	if(inside == 0)
-	{
-		return;
-	}
-	else if(inside == 0xF) // All inside
-	{
-		goto allIn;
-	}
-	else // Some inside
-	{
-		ANKI_ASSERT(!final);
-
-		for(U i = 0; i < 4; i++)
-		{
-			testTile(tiles_[tile.children[i]], a, b, objMinMax, mask);
 		}
 	}
 
 	return;
 
 allIn:
-	mask[0] |= tile.mask[0];
-	mask[1] |= tile.mask[1];
+	updateBitset(tile, bitset);
+}
+
+//==============================================================================
+void Tiler::updateBitset(const Tile_& tile, Bitset &bitset) const
+{
+	if(tile.children[0] != -1)
+	{
+		for(U i = 0; i < 4; i++)
+		{
+			updateBitset(tiles_[tile.children[i]], bitset);
+		}
+	}
+	else
+	{
+		U tileId = &tile - tiles0;
+		ANKI_ASSERT(tileId < TILES_COUNT);
+		bitset.set(tileId);
+	}
 }
 
 } // end namespace anki

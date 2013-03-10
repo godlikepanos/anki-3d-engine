@@ -85,10 +85,7 @@ void Renderer::render(SceneGraph& scene_)
 #if ANKI_CFG_RENDERER_PROFILE
 	HighRezTimer::Scalar timea, timeb;
 
-	timea = HighRezTimer::getCurrentTime();
-	tiler.updateTiles(scene->getActiveCamera());
 	timeb = HighRezTimer::getCurrentTime();
-	tilerTime += timeb - timea;
 
 	ms.run();
 	timea = HighRezTimer::getCurrentTime();
@@ -109,8 +106,6 @@ void Renderer::render(SceneGraph& scene_)
 	timea = HighRezTimer::getCurrentTime();
 	ppsTime += timea - timeb;
 #else
-	// Wrong time to update the tiler
-	tiler.updateTiles(scene->getActiveCamera());
 	ms.run();
 	tiler.runMinMax(ms.getDepthFai());
 	is.run();

@@ -161,7 +161,7 @@ void Dbg::run()
 	drawer->setModelMatrix(Mat4::getIdentity());
 	//drawer->drawGrid();
 
-#if 0
+#if 1
 	SceneGraph& scene = r->getSceneGraph();
 
 	for(auto it = scene.getSceneNodesBegin();
@@ -169,7 +169,7 @@ void Dbg::run()
 	{
 		SceneNode* node = *it;
 		Spatial* sp = node->getSpatial();
-		if(flagsEnabled(DF_SPATIAL) && sp)
+		if(bitsEnabled(DF_SPATIAL) && sp)
 		{
 			sceneDrawer->draw(*node);
 		}
@@ -180,12 +180,12 @@ void Dbg::run()
 	{
 		//if(sector->isVisible())
 		{
-			if(flagsEnabled(DF_SECTOR))
+			if(bitsEnabled(DF_SECTOR))
 			{
 				sceneDrawer->draw(*sector);
 			}
 
-			if(flagsEnabled(DF_OCTREE))
+			if(bitsEnabled(DF_OCTREE))
 			{
 				sceneDrawer->draw(sector->getOctree());
 			}
@@ -193,12 +193,13 @@ void Dbg::run()
 	}
 
 	// Physics
-	if(flagsEnabled(DF_PHYSICS))
+	if(bitsEnabled(DF_PHYSICS))
 	{
 		scene.getPhysics().debugDraw();
 	}
 #endif
 
+	if(0)
 	{
 		drawer->setColor(Vec3(0.1, 0.1, 0.1));
 		Aabb box(Vec3(-1.0, 1.0, -1.0), Vec3(1.5, 2.0, 1.5));

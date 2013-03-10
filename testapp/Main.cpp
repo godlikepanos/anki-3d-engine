@@ -240,7 +240,7 @@ void init()
 		0.7));
 #endif
 
-#if 0
+#if 1
 	StaticGeometryNode* sponzaModel = new StaticGeometryNode(
 		//"data/maps/sponza/sponza_no_bmeshes.mdl",
 		"data/maps/sponza/sponza.mdl",

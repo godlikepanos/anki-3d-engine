@@ -2,6 +2,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/util/Exception.h"
 #include "anki/core/ThreadPool.h"
+#include "anki/renderer/Renderer.h"
 
 namespace anki {
 
@@ -131,7 +132,9 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 
 	frameAlloc.reset();
 
+	// XXX Do that in parallel
 	physics.update(prevUpdateTime, crntTime);
+	renderer.getTiler().updateTiles(*mainCam);
 
 #if 0
 	// First do the movable updates
