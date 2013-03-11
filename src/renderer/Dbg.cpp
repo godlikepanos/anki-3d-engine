@@ -2,6 +2,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/scene/SceneGraph.h"
+#include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 #include "anki/core/Logger.h"
 
@@ -198,6 +199,38 @@ void Dbg::run()
 		scene.getPhysics().debugDraw();
 	}
 #endif
+
+	if(1)
+	{
+		drawer->setColor(Vec3(1, 0.0, 0));
+		Sphere s(Vec3(1.0, 0.1, 0.0), 2.0);
+
+		CollisionDebugDrawer coldrawer(drawer.get());
+
+		s.accept(coldrawer);
+
+		const Camera& cam = r->getSceneGraph().getActiveCamera();
+		Mat4 vm = cam.getViewMatrix();
+
+		Vec4 p(s.getCenter(), 1.0);
+		F32 r = s.getRadius();
+		Vec4 a(p.xyz() + vm.getTransposed().getColumn(1).xyz() * r, 1.0);
+		Mat4 vp = cam.getViewProjectionMatrix();
+
+		p = vp * p;
+		p /= p.w();
+		a = vp * a;
+		a /= a.w();
+
+		drawer->setViewProjectionMatrix(Mat4::getIdentity());
+		drawer->setModelMatrix(Mat4::getIdentity());
+
+		drawer->setColor(Vec3(1, 1.0, 1));
+		drawer->begin();
+		drawer->pushBackVertex(p.xyz());
+		drawer->pushBackVertex(a.xyz());
+		drawer->end();
+	}
 
 	if(0)
 	{

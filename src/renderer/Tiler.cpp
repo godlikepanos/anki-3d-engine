@@ -389,6 +389,10 @@ void Tiler::updateTilesInternal()
 		tile->max.z() = pixel[1];
 		ANKI_ASSERT(tile->max.z() >= tile->min.z());
 
+		// Convert to NDC (undo the viewport transform)
+		tile->min.z() = tile->min.z() * 2.0 - 1.0;
+		tile->max.z() = tile->max.z() * 2.0 - 1.0;
+
 		pixel += 2;
 	}
 
@@ -543,7 +547,7 @@ Bool Tiler::testAll(const CollisionShape& cs,
 Bool Tiler::test(
 	const CollisionShape& cs, 
 	const Aabb& aabb, 
-	Bool skipNearPlane,
+	Bool nearPlane,
 	Bitset* outBitset) const
 {
 	//
@@ -584,7 +588,7 @@ Bool Tiler::test(
 	for(U i = 0; i < pointsCount; i++)
 	{
 		Vec4 point = projection * points[i];
-		Vec3 v3 = point.xyz() / fabs(point.w());
+		Vec3 v3 = point.xyz() / point.w();
 		points2D[i] = v3.xy();
 
 		// Min z
@@ -635,17 +639,30 @@ Bool Tiler::test(
 	}
 
 	//
-	// XXX
+	// Check the z
 	//
 	for(U i = 0; i < TILES_COUNT; i++)
 	{
+		// If tile is visible
 		if(bitset.test(i))
 		{
 			ANKI_ASSERT(i < tiles_.size());
 
+			// Check far plane
 			if(tiles0[i].max.z() > minMax[0].z())
 			{
-				// Keep it
+				if(nearPlane)
+				{
+					// Check inear plane
+					if(tiles0[i].min.z() < minMax[1].z())
+					{
+						// Keep it
+					}
+					else
+					{
+						bitset.set(i, false);
+					}
+				}
 			}
 			else
 			{

@@ -201,7 +201,7 @@ struct WriteTilesUboJob: ThreadJob
 		// Point lights
 		//
 
-		stile.lightsCount[3] = 0;
+		stile.lightsCount[3] = 0; // XXX remove
 
 		U pointLightsInTileCount = 0;
 		for(U i = 0; i < visiblePointLightsCount; i++)
