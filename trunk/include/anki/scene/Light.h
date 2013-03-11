@@ -152,7 +152,7 @@ public:
 	/// @}
 
 public:
-	Sphere sphereW = Sphere(Vec3(0.0), 2.0);
+	Sphere sphereW = Sphere(Vec3(0.0), 1.0);
 };
 
 /// Spot light

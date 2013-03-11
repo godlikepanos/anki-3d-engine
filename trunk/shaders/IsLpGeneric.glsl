@@ -293,7 +293,12 @@ void main()
 #if 1
 	if(tiles[vInstanceId].lightsCount[3] > 0)
 	{
-		fColor += vec3(0.1);
+		fColor += vec3(0.0, 0.2, 0.0);
+	}
+
+	if(tiles[vInstanceId].lightsCount[0] > 0)
+	{
+		fColor += vec3(0.2, 0.0, 0.0);
 	}
 #endif
 

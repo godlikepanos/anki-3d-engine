@@ -57,7 +57,7 @@ public:
 	Bool test(
 		const CollisionShape& cs, 
 		const Aabb& aabb, 
-		Bool skipNearPlane,
+		Bool nearPlane,
 		Bitset* mask) const;
 
 private:

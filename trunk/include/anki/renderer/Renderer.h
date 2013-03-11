@@ -184,7 +184,7 @@ public:
 
 	const Mat4& getViewProjectionMatrix() const
 	{
-		return viewProjectionMat;
+		return viewProjectionMat; // XXX remove that crap
 	}
 
 	const SceneGraph& getSceneGraph() const

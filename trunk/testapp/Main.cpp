@@ -166,7 +166,8 @@ void init()
 
 	PointLight* point = new PointLight("ll", &scene,
 		Movable::MF_NONE, nullptr);
-	point->setLocalTranslation(Vec3(1.0, 0.0, 0.0));
+	point->setLocalTranslation(Vec3(1.0, 0.1, 0.0));
+	point->setRadius(2.0);
 
 #if 0
 	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
