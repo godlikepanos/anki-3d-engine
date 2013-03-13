@@ -98,16 +98,21 @@ public:
 	Vec3 getTransformed(const Vec3& translate, const Mat3& rotate,
 		F32 scale) const;
 	void transform(const Vec3& translate, const Mat3& rotate, F32 scale);
+
 	Vec3 getTransformed(const Vec3& translate, const Mat3& rotate) const;
 	void transform(const Vec3& translate, const Mat3& rotate);
+
 	Vec3 getTransformed(const Vec3& translate, const Quat& rotate,
 		F32 scale) const;
 	void transform(const Vec3& translate, const Quat& rotate, F32 scale);
+
 	Vec3 getTransformed(const Vec3& translate, const Quat& rotate) const;
 	void transform(const Vec3& translate, const Quat& rotate);
+
 	Vec3 getTransformed(const Mat4& transform) const;  ///< 9 muls, 9 adds
 	void transform(const Mat4& transform);
-	Vec3 getTransformed(const Transform& transform) const;
+
+	Vec3 getTransformed(const Transform& transform) const; ///< 12 muls, 9 adds
 	void transform(const Transform& transform);
 	/// @}
 

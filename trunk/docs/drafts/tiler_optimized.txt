@@ -1,3 +1,14 @@
+=============
+Update planes
+=============
+
+planetrf = 22* 14+
+
+updatealltileplanes = planetrf * (16 + 16 + 256 * 2)
+
+sum = 11968* 7616+
+
+
 
 
 function create_tiles

@@ -123,6 +123,161 @@ typedef Array<UpdateTilesPlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS>
 	UpdateJobArray;
 
 //==============================================================================
+#define CHECK_PLANE_PTR(p_) \
+	ANKI_ASSERT(p_ < &tiler->allPlanes[tiler->allPlanes.size()]);
+
+/// Job that updates the left, right, top and buttom tile planes
+struct UpdatePlanesPerspectiveCameraJob: ThreadJob
+{
+	Tiler* tiler = nullptr;
+	PerspectiveCamera* cam = nullptr;
+	Bool frustumChanged = nullptr;
+	const Tiler::PixelArray* pixels = nullptr;
+
+	void operator()(U threadId, U threadsCount)
+	{
+		U64 start, end;
+
+		Transform trf = Transform(cam->getWorldTransform());
+
+		if(frustumChanged)
+		{
+			const F32 fx = cam->getFovX();
+			const F32 fy = cam->getFovY();
+			const F32 n = cam->getNear();
+
+			F32 l = 2.0 * n * tan(fx / 2.0);
+			F32 l6 = l / Tiler::TILES_X_COUNT;
+			F32 o = 2.0 * n * tan(fy / 2.0);
+			F32 o6 = o / Tiler::TILES_Y_COUNT;
+
+			// First the bottom planes
+			choseStartEnd(
+				threadId, threadsCount, Tiler::TILES_Y_COUNT - 1, start, end);
+
+			for(U i = start; i < end; i++)
+			{
+				calcPlaneI(i, o6);
+
+				CHECK_PLANE_PTR(&tiler->planesIW[i]);
+				CHECK_PLANE_PTR(&tiler->planesI[i]);
+				tiler->planesIW[i] = tiler->planesI[i].getTransformed(trf);
+			}
+
+			// Then the left planes
+			choseStartEnd(
+				threadId, threadsCount, Tiler::TILES_X_COUNT - 1, start, end);
+
+			for(U j = start; j < end; j++)
+			{
+				calcPlaneJ(j, l6);
+
+				CHECK_PLANE_PTR(&tiler->planesJW[j]);
+				CHECK_PLANE_PTR(&tiler->planesJ[j]);
+				tiler->planesJW[j] = tiler->planesJ[j].getTransformed(trf);
+			}
+		}
+		else
+		{
+			// First the bottom planes
+			choseStartEnd(
+				threadId, threadsCount, Tiler::TILES_Y_COUNT - 1, start, end);
+
+			for(U i = start; i < end; i++)
+			{
+				CHECK_PLANE_PTR(&tiler->planesIW[i]);
+				CHECK_PLANE_PTR(&tiler->planesI[i]);
+				tiler->planesIW[i] = tiler->planesI[i].getTransformed(trf);
+			}
+
+			// Then the left planes
+			choseStartEnd(
+				threadId, threadsCount, Tiler::TILES_X_COUNT - 1, start, end);
+
+			for(U j = start; j < end; j++)
+			{
+				CHECK_PLANE_PTR(&tiler->planesJW[j]);
+				CHECK_PLANE_PTR(&tiler->planesJ[j]);
+				tiler->planesJW[j] = tiler->planesJ[j].getTransformed(trf);
+			}
+		}
+
+		// Update the near far planes
+		Vec2 rplanes;
+		Renderer::calcPlanes(Vec2(cam->getNear(), cam->getFar()), rplanes);
+
+		choseStartEnd(
+			threadId, threadsCount, Tiler::TILES_COUNT * 2, start, end);
+
+		Plane* planes = tiler->nearFarPlanes;
+		Plane* planesW = tiler->nearFarPlanesW;
+		for(U k = start; k < end; k += 2)
+		{
+			U j = (k / 2) % Tiler::TILES_X_COUNT;
+			U i = (k / 2) / Tiler::TILES_X_COUNT;
+
+			ANKI_ASSERT(planes < &tiler->allPlanes[tiler->allPlanes.size()]);
+			ANKI_ASSERT(planesW < &tiler->allPlanes[tiler->allPlanes.size()]);
+
+			// Calculate depth as you do it for the vertex position inside
+			// the shaders
+			F32 minZ = rplanes.y() / (rplanes.x() + (*pixels)[i][j][0]);
+			F32 maxZ = rplanes.y() / (rplanes.x() + (*pixels)[i][j][1]);
+
+			// Calc the planes
+			CHECK_PLANE_PTR(planes);
+			planes[0] = Plane(Vec3(0.0, 0.0, -1.0), minZ);
+			CHECK_PLANE_PTR(planes + 1);
+			planes[1] = Plane(Vec3(0.0, 0.0, 1.0), -maxZ);
+
+			// Tranform them
+			CHECK_PLANE_PTR(planesW);
+			planesW[0] = planes[0].getTransformed(trf);
+			CHECK_PLANE_PTR(planesW + 1);
+			planesW[1] = planes[1].getTransformed(trf);
+
+			// Advance
+			planes += 2;
+			planesW += 2;
+		}
+	}
+
+	/// Calculate and set a bottom plane
+	void calcPlaneI(U i, const F32 o6)
+	{
+		Vec3 a, b;
+		const F32 n = cam->getNear();
+		Plane& plane = tiler->planesI[i];
+		CHECK_PLANE_PTR(&plane);
+
+		// bottom
+		a = Vec3(0.0, (I(i + 1) - I(Tiler::TILES_Y_COUNT) / 2) * o6, -n);
+		b = Vec3(1.0, 0.0, 0.0).cross(a);
+		b.normalize();
+
+		plane = Plane(b, 0.0);
+	}
+
+	/// Calculate and set a bottom left
+	void calcPlaneJ(U j, const F32 l6)
+	{
+		Vec3 a, b;
+		const F32 n = cam->getNear();
+		Plane& plane = tiler->planesI[j];
+		CHECK_PLANE_PTR(&plane);
+
+		// bottom
+		a = Vec3((I(j + 1) - I(Tiler::TILES_X_COUNT) / 2) * l6, 0.0, -n);
+		b = a.cross(Vec3(0.0, 1.0, 0.0));
+		b.normalize();
+
+		plane = Plane(b, 0.0);
+	}
+};
+
+#undef CHECK_PLANE_PTR
+
+//==============================================================================
 // Statics                                                                     =
 //==============================================================================
 
@@ -260,6 +415,23 @@ void Tiler::initInternal(Renderer* r_)
 	// Create PBO
 	pbo.create(GL_PIXEL_PACK_BUFFER, 
 		TILES_X_COUNT * TILES_Y_COUNT * 2 * sizeof(F32), nullptr);
+
+	// Init planes
+	U planesCount = 
+		(TILES_X_COUNT - 1) // planes J
+		+ (TILES_Y_COUNT - 1)  // planes I
+		+ (TILES_COUNT * 2); // near far planes
+
+	allPlanes.resize(planesCount * 2);
+
+	planesJ = &allPlanes[0];
+	planesI = planesJ + TILES_X_COUNT - 1;
+	nearFarPlanes = planesI + (TILES_Y_COUNT - 1);
+
+	planesW = nearFarPlanes + TILES_COUNT * 2;
+	planesJW = planesW;
+	planesIW = planesJW + TILES_X_COUNT - 1;
+	nearFarPlanesW = planesIW + (TILES_Y_COUNT - 1);
 
 	// Tiles
 	initTiles();

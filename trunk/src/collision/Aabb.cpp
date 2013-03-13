@@ -14,8 +14,8 @@ Aabb Aabb::getTransformed(const Transform& transform) const
 		absM[i] = fabs(transform.getRotation()[i]);
 	}
 
-	Vec3 center = (min + max) / 2.0;
-	Vec3 extend = (max - min) / 2.0;
+	Vec3 center = (min + max) * 0.5;
+	Vec3 extend = (max - min) * 0.5;
 
 	Vec3 newC = center.getTransformed(transform);
 	Vec3 newE = absM * (extend * transform.getScale());

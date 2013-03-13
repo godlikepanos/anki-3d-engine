@@ -62,13 +62,13 @@ public:
 
 	/// @name Operators with F32
 	/// @{
-	Mat4  operator+(const F32 f) const;
+	Mat4 operator+(const F32 f) const;
 	Mat4& operator+=(const F32 f);
-	Mat4  operator-(const F32 f) const;
+	Mat4 operator-(const F32 f) const;
 	Mat4& operator-=(const F32 f);
-	Mat4  operator*(const F32 f) const;
+	Mat4 operator*(const F32 f) const;
 	Mat4& operator*=(const F32 f);
-	Mat4  operator/(const F32 f) const;
+	Mat4 operator/(const F32 f) const;
 	Mat4& operator/=(const F32 f);
 	/// @}
 
