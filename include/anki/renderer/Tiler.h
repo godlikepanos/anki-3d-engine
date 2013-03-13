@@ -20,6 +20,7 @@ class Frustumable;
 class Tiler
 {
 	friend struct UpdateTilesPlanesPerspectiveCameraJob;
+	friend struct UpdatePlanesPerspectiveCameraJob;
 
 public:
 	// Config. These values affect the size of the uniform blocks and keep in
@@ -60,6 +61,12 @@ public:
 		Bool nearPlane,
 		Bitset* mask) const;
 
+	Bool test2(
+		const CollisionShape& cs,
+		const Aabb& aabb,
+		Bool nearPlane,
+		Bitset* mask) const;
+
 private:
 	/// A screen tile
 	struct Tile
@@ -79,6 +86,15 @@ private:
 		Array<U32, 2> mask;
 		Array<I16, 4> children; ///< Use small index to save memory
 	};
+
+	Vector<Plane> allPlanes;
+	Plane* planesI = nullptr;
+	Plane* planesJ = nullptr;
+	Plane* nearFarPlanes = nullptr;
+	Plane* planesW = nullptr;
+	Plane* planesIW = nullptr;
+	Plane* planesJW = nullptr;
+	Plane* nearFarPlanesW = nullptr;
 
 	typedef F32 PixelArray[TILES_Y_COUNT][TILES_X_COUNT][2];
 
