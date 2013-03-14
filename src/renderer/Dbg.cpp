@@ -200,7 +200,7 @@ void Dbg::run()
 	}
 #endif
 
-	if(1)
+	if(0)
 	{
 		drawer->setColor(Vec3(1, 0.0, 0));
 		Sphere s(Vec3(1.0, 0.1, 0.0), 2.0);
