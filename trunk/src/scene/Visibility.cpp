@@ -97,9 +97,10 @@ struct VisibilityTestJob: ThreadJob
 				Light* l = node->getLight();
 				Tiler::Bitset tilerBitset;
 				if(l
-					&& tiler->test(sp->getSpatialCollisionShape(),
+					&& tiler->test2(sp->getSpatialCollisionShape(),
 					sp->getAabb(), true, &tilerBitset))
 				{
+					std::cout << "asdf" << std::endl;
 					visible->lights.push_back(node);
 
 					sp->setTilerBitset(tilerBitset);

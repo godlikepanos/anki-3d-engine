@@ -90,11 +90,12 @@ private:
 	Vector<Plane> allPlanes;
 	Plane* planesI = nullptr;
 	Plane* planesJ = nullptr;
-	Plane* nearFarPlanes = nullptr;
-	Plane* planesW = nullptr;
+	Plane* nearPlanes = nullptr;
+	Plane* farPlanes = nullptr;
 	Plane* planesIW = nullptr;
 	Plane* planesJW = nullptr;
-	Plane* nearFarPlanesW = nullptr;
+	Plane* nearPlanesW = nullptr;
+	Plane* farPlanesW = nullptr;
 
 	typedef F32 PixelArray[TILES_Y_COUNT][TILES_X_COUNT][2];
 
@@ -140,9 +141,12 @@ private:
 		const U startPlane) const;
 
 	void testTile(const Tile_& tile, const Vec2& a, const Vec2& b,
-		const Array<Vec3, 2>& objMinMax, Bitset &bitset) const;
+		const Array<Vec3, 2>& objMinMax, Bitset& bitset) const;
 
-	void updateBitset(const Tile_& tile, Bitset &bitset) const;
+	void updateBitset(const Tile_& tile, Bitset& bitset) const;
+
+	void testRange(const CollisionShape& cs, Bool nearPlane,
+		U iFrom, U iTo, U jFrom, U jTo, Bitset& bitset) const;
 };
 
 } // end namespace anki
