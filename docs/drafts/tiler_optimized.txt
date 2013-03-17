@@ -4,10 +4,31 @@ Update planes
 
 planetrf = 22* 14+
 
-updatealltileplanes = planetrf * (16 + 16 + 256 * 2)
+updatealltileplanes = planetrf * (15 + 15 + 256 * 2)
 
-sum = 11968* 7616+
+sum = 11924* 7588+
 
+
+=============
+transform everything else
+=============
+
+100 lights
+1000 other spatials
+
+trfaabb = 30* 27+
+
+lighttrf = 900* 600+
+otherspatialstrf = 30000* 27000+
+
+=============
+transform them for 2D checks
+=============
+
+mat4mulvec4 = 16* 12+
+
+alllights = 3200* 2400+
+otherspatial = 128000* 96000+
 
 
 

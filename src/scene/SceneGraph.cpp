@@ -135,6 +135,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	// XXX Do that in parallel
 	physics.update(prevUpdateTime, crntTime);
 	renderer.getTiler().updateTiles(*mainCam);
+	events.updateAllEvents(prevUpdateTime, crntTime);
 
 #if 0
 	// First do the movable updates

@@ -11,118 +11,6 @@
 namespace anki {
 
 //==============================================================================
-/// Job that updates the left, right, top and buttom tile planes
-struct UpdateTilesPlanesPerspectiveCameraJob: ThreadJob
-{
-	Tiler* tiler;
-	PerspectiveCamera* cam;
-	Bool frustumChanged;
-	const Tiler::PixelArray* pixels;
-
-	void operator()(U threadId, U threadsCount)
-	{
-		U64 start, end;
-		choseStartEnd(threadId, threadsCount, 
-			Tiler::TILES_X_COUNT * Tiler::TILES_Y_COUNT, start, end);
-
-		// Precalculate some stuff for update4Planes()
-		F32 l = 0.0, l6 = 0.0, o = 0.0, o6 = 0.0;
-
-		if(frustumChanged)
-		{
-			const F32 fx = cam->getFovX();
-			const F32 fy = cam->getFovY();
-			const F32 n = cam->getNear();
-
-			l = 2.0 * n * tan(fx / 2.0);
-			l6 = l / Tiler::TILES_X_COUNT;
-			o = 2.0 * n * tan(fy / 2.0);
-			o6 = o / Tiler::TILES_Y_COUNT;
-		}
-
-		// Precalculate some stuff for update2Planes()
-		Vec2 planes;
-		Renderer::calcPlanes(Vec2(cam->getNear(), cam->getFar()), planes);
-
-		Transform trf = Transform(cam->getWorldTransform());
-
-		for(U64 k = start; k < end; k++)
-		{
-			if(frustumChanged)
-			{
-				update4Planes(l, l6, o, o6, k);
-			}
-
-			update2Planes(k, planes);
-
-			// Transform planes
-			Tiler::Tile& tile = tiler->tiles1d[k];
-			for(U i = 0; i < Frustum::FP_COUNT; i++)
-			{
-				tile.planesWSpace[i] = tile.planes[i].getTransformed(trf);
-			}
-		}
-	}
-
-	void update4Planes(
-		const F32 l, const F32 l6, const F32 o, const F32 o6,
-		const U k)
-	{
-		Vec3 a, b;
-		const F32 n = cam->getNear();
-		Array<Plane, Frustum::FP_COUNT>& planes = tiler->tiles1d[k].planes;
-		const U i = k % Tiler::TILES_X_COUNT;
-		const U j = k / Tiler::TILES_X_COUNT;
-
-		// left
-		a = Vec3((I(i) - I(Tiler::TILES_X_COUNT) / 2) * l6, 0.0, -n);
-		b = a.cross(Vec3(0.0, 1.0, 0.0));
-		b.normalize();
-
-		planes[Frustum::FP_LEFT] = Plane(b, 0.0);
-
-		// right
-		a = Vec3((I(i) - I(Tiler::TILES_X_COUNT) / 2 + 1) * l6, 0.0, -n);
-		b = Vec3(0.0, 1.0, 0.0).cross(a);
-		b.normalize();
-
-		planes[Frustum::FP_RIGHT] = Plane(b, 0.0);
-
-		// bottom
-		a = Vec3(0.0, (I(j) - I(Tiler::TILES_Y_COUNT) / 2) * o6, -n);
-		b = Vec3(1.0, 0.0, 0.0).cross(a);
-		b.normalize();
-
-		planes[Frustum::FP_BOTTOM] = Plane(b, 0.0);
-
-		// bottom
-		a = Vec3(0.0, (I(j) - I(Tiler::TILES_Y_COUNT) / 2 + 1) * o6, -n);
-		b = a.cross(Vec3(1.0, 0.0, 0.0));
-		b.normalize();
-
-		planes[Frustum::FP_TOP] = Plane(b, 0.0);
-	}
-
-	void update2Planes(const U k, const Vec2& planes)
-	{
-		U i = k % Tiler::TILES_X_COUNT;
-		U j = k / Tiler::TILES_X_COUNT;
-		Tiler::Tile& tile = tiler->tiles1d[k];
-
-		// Calculate depth as you do it for the vertex position inside
-		// the shaders
-		F32 minZ = planes.y() / (planes.x() + (*pixels)[j][i][0]);
-		F32 maxZ = planes.y() / (planes.x() + (*pixels)[j][i][1]);
-
-		tile.planes[Frustum::FP_NEAR] = Plane(Vec3(0.0, 0.0, -1.0), minZ);
-		tile.planes[Frustum::FP_FAR] = Plane(Vec3(0.0, 0.0, 1.0), -maxZ);
-	}
-};
-
-typedef Array<UpdateTilesPlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS>
-	UpdateJobArray;
-
-//==============================================================================
 #define CHECK_PLANE_PTR(p_) \
 	ANKI_ASSERT(p_ < &tiler->allPlanes[tiler->allPlanes.size()]);
 
@@ -131,13 +19,14 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 {
 	Tiler* tiler = nullptr;
 	PerspectiveCamera* cam = nullptr;
-	Bool frustumChanged = nullptr;
+	Bool frustumChanged;
 	const Tiler::PixelArray* pixels = nullptr;
 
 	void operator()(U threadId, U threadsCount)
 	{
-		U64 start, end;
+		ANKI_ASSERT(tiler && cam && pixels);
 
+		U64 start, end;
 		Transform trf = Transform(cam->getWorldTransform());
 
 		if(frustumChanged)
@@ -164,7 +53,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 				tiler->planesIW[i] = tiler->planesI[i].getTransformed(trf);
 			}
 
-			// Then the left looking planes
+			// Then the right looking planes
 			choseStartEnd(
 				threadId, threadsCount, Tiler::TILES_X_COUNT - 1, start, end);
 
@@ -192,7 +81,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 				tiler->planesIW[i] = tiler->planesI[i].getTransformed(trf);
 			}
 
-			// Then the left looking planes
+			// Then the right looking planes
 			choseStartEnd(
 				threadId, threadsCount, Tiler::TILES_X_COUNT - 1, start, end);
 
@@ -211,10 +100,8 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 		choseStartEnd(
 			threadId, threadsCount, Tiler::TILES_COUNT, start, end);
 
-		Plane* nearPlanes = tiler->nearPlanes;
-		Plane* farPlanes = tiler->farPlanes;
-		Plane* nearPlanesW = tiler->nearPlanesW;
-		Plane* farPlanesW = tiler->farPlanesW;
+		Plane* nearPlanesW = tiler->nearPlanesW + start;
+		Plane* farPlanesW = tiler->farPlanesW + start;
 		for(U k = start; k < end; ++k)
 		{
 			U j = k % Tiler::TILES_X_COUNT;
@@ -226,20 +113,16 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 			F32 maxZ = rplanes.y() / (rplanes.x() + (*pixels)[i][j][1]);
 
 			// Calc the planes
-			CHECK_PLANE_PTR(nearPlanes);
-			*nearPlanes = Plane(Vec3(0.0, 0.0, -1.0), minZ);
-			CHECK_PLANE_PTR(farPlanes);
-			*farPlanes = Plane(Vec3(0.0, 0.0, 1.0), -maxZ);
+			Plane nearPlane = Plane(Vec3(0.0, 0.0, -1.0), minZ);
+			Plane farPlane = Plane(Vec3(0.0, 0.0, 1.0), -maxZ);
 
 			// Tranform them
 			CHECK_PLANE_PTR(nearPlanesW);
-			*nearPlanesW = nearPlanes->getTransformed(trf);
+			*nearPlanesW = nearPlane.getTransformed(trf);
 			CHECK_PLANE_PTR(farPlanesW);
-			*farPlanesW = farPlanes->getTransformed(trf);
+			*farPlanesW = farPlane.getTransformed(trf);
 
 			// Advance
-			++nearPlanes;
-			++farPlanes;
 			++nearPlanesW;
 			++farPlanesW;
 		}
@@ -253,19 +136,19 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 		Plane& plane = tiler->planesI[i];
 		CHECK_PLANE_PTR(&plane);
 
-		a = Vec3(0.0, (I(i + 1) - I(Tiler::TILES_Y_COUNT) / 2 + 1) * o6, -n);
-		b = a.cross(Vec3(1.0, 0.0, 0.0));
+		a = Vec3(0.0, (I(i + 1) - I(Tiler::TILES_Y_COUNT) / 2) * o6, -n);
+		b = Vec3(1.0, 0.0, 0.0).cross(a);
 		b.normalize();
 
 		plane = Plane(b, 0.0);
 	}
 
-	/// Calculate and set a left looking plane
+	/// Calculate and set a right looking plane
 	void calcPlaneJ(U j, const F32 l6)
 	{
 		Vec3 a, b;
 		const F32 n = cam->getNear();
-		Plane& plane = tiler->planesI[j];
+		Plane& plane = tiler->planesJ[j];
 		CHECK_PLANE_PTR(&plane);
 
 		a = Vec3((I(j + 1) - I(Tiler::TILES_X_COUNT) / 2) * l6, 0.0, -n);
@@ -277,87 +160,6 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 };
 
 #undef CHECK_PLANE_PTR
-
-//==============================================================================
-// Statics                                                                     =
-//==============================================================================
-
-//==============================================================================
-struct ShortLexicographicallyFunctor
-{
-	Bool operator()(const Vec2& a, const Vec2& b)
-	{
-		return a.x() < b.x() || (a.x() == b.x() && a.y() < b.y());
-	}
-};
-
-//==============================================================================
-static Bool isLeft(const Vec2& p0, const Vec2& p1, const Vec2& p2)
-{
-	return (p1.x() - p0.x()) * (p2.y() - p0.y())
-		> (p2.x() - p0.x()) * (p1.y() - p0.y());
-}
-
-//==============================================================================
-static void convexHull2D(Vec2* ANKI_RESTRICT inPoints,
-	const U32 n, Vec2* ANKI_RESTRICT outPoints, const U32 on, U32& outn)
-{
-	ANKI_ASSERT(on > (2 * n) && "This algorithm needs some space");
-	ANKI_ASSERT(n > 4);
-	I k = 0;
-
-	std::sort(&inPoints[0], &inPoints[n], ShortLexicographicallyFunctor());
-
-	// Build lower hull
-	for(I i = 0; i < n; i++)
-	{
-		while(k >= 2 
-			&& !isLeft(outPoints[k - 2], outPoints[k - 1], inPoints[i]))
-		{
-			--k;
-		}
-
-		outPoints[k++] = inPoints[i];
-	}
-
-	// Build upper hull
-	for(I i = n - 2, t = k + 1; i >= 0; i--)
-	{
-		while(k >= t 
-			&& !isLeft(outPoints[k - 2], outPoints[k - 1], inPoints[i]))
-		{
-			--k;
-		}
-
-		outPoints[k++] = inPoints[i];
-	}
-
-	outn = k;
-}
-
-//==============================================================================
-static U getTilesCount(U maxDepth)
-{
-	if(maxDepth == 0)
-	{
-		return 1;
-	}
-
-	return getTilesCount(maxDepth - 1) + pow(4, maxDepth);
-}
-
-//==============================================================================
-static U32 setNBits(U32 n)
-{
-	U32 res = 0;
-
-	for(U32 i = 0; i < n; i++)
-	{
-		res |= 0x80000000 >> i;
-	}
-
-	return res;
-}
 
 //==============================================================================
 // Tiler                                                                       =
@@ -419,104 +221,19 @@ void Tiler::initInternal(Renderer* r_)
 
 	// Init planes
 	U planesCount = 
-		(TILES_X_COUNT - 1) // planes J
-		+ (TILES_Y_COUNT - 1)  // planes I
+		(TILES_X_COUNT - 1) * 2 // planes J
+		+ (TILES_Y_COUNT - 1) * 2  // planes I
 		+ (TILES_COUNT * 2); // near far planes
 
-	allPlanes.resize(planesCount * 2);
+	allPlanes.resize(planesCount);
 
 	planesJ = &allPlanes[0];
 	planesI = planesJ + TILES_X_COUNT - 1;
-	nearPlanes = planesI + TILES_Y_COUNT - 1;
-	farPlanes = nearPlanes + TILES_COUNT;
 
-	planesJW = farPlanes + TILES_COUNT;
+	planesJW = planesI + TILES_Y_COUNT - 1;
 	planesIW = planesJW + TILES_X_COUNT - 1;
 	nearPlanesW = planesIW + TILES_Y_COUNT - 1;
 	farPlanesW = nearPlanesW + TILES_COUNT;
-
-	// Tiles
-	initTiles();
-}
-
-//==============================================================================
-void Tiler::initTiles()
-{
-	// Init tiles
-	U maxDepth = log2(TILES_X_COUNT);
-	tiles_.resize(getTilesCount(maxDepth));
-
-	Tile_* tmpTiles = &tiles_[0];
-	for(U d = 0; d < maxDepth + 1; d++)
-	{
-		tiles0 = tmpTiles;
-		tmpTiles = initTilesInDepth(tmpTiles, d);
-	}
-	ANKI_ASSERT(tiles_.size() - (tiles0 - &tiles_[0]) == TILES_COUNT);
-
-	// Init hierarchy
-	U offset = 0;
-	tmpTiles = &tiles_[0];
-	for(U d = 0; d < maxDepth; d++)
-	{
-		U axisCount = pow(2, d);
-
-		U count = axisCount * axisCount;
-		offset += count;
-
-		for(U j = 0; j < axisCount; j++)
-		{
-			for(U i = 0; i < axisCount; i++)
-			{
-				U k = j * axisCount + i;
-				Tile_& tile = tmpTiles[k];
-
-				for(U j_ = 0; j_ < 2; j_++)
-				{
-					for(U i_ = 0; i_ < 2; i_++)
-					{
-						tile.children[j_ * 2 + i_] =
-							(2 * j + j_) * axisCount * 2 + (2 * i + i_)
-							+ offset;
-					}
-				}
-			}
-		}
-
-		tmpTiles = tmpTiles + count;
-	}
-}
-
-//==============================================================================
-Tiler::Tile_* Tiler::initTilesInDepth(Tile_* tiles, U depth)
-{
-	U crntDepthAxisCount = pow(2, depth);
-
-	F32 dim = (1.0 - (-1.0)) / crntDepthAxisCount;
-
-	const U bits = TILES_X_COUNT / crntDepthAxisCount;
-	const U32 maskOfTile = setNBits(bits);
-
-	for(U j = 0; j < crntDepthAxisCount; j++)
-	{
-		for(U i = 0; i < crntDepthAxisCount; i++)
-		{
-			Tile_& tile = tiles[j * crntDepthAxisCount + i];
-
-			tile.min[0] = -1.0 + i * dim;
-			tile.min[1] = -1.0 + j * dim;
-			tile.max[0] = tile.min[0] + dim;
-			tile.max[1] = tile.min[1] + dim;
-
-			tile.mask[0] = (maskOfTile >> (i * bits));
-			tile.mask[1] = (maskOfTile >> (j * bits));
-
-			tile.children[0] = tile.children[1] = tile.children[2] =
-				tile.children[3] = -1;
-		}
-	}
-
-	return tiles + (crntDepthAxisCount * crntDepthAxisCount);
 }
 
 //==============================================================================
@@ -542,68 +259,10 @@ void Tiler::runMinMax(const Texture& depthMap)
 }
 
 //==============================================================================
-void Tiler::updateTilesInternal()
-{
-	//
-	// Read the results from the minmax job
-	//
-	Array<F32, TILES_X_COUNT * TILES_X_COUNT * 2> pixels;
-	pbo.read(&pixels[0]);
-
-	//
-	// Set the Z of the level 0 tiles
-	//
-	ANKI_ASSERT(tiles0);
-	Tile_* tile = tiles0;
-	Tile_* tileEnd = tile + TILES_COUNT;
-	F32* pixel = &pixels[0];
-	for(; tile != tileEnd; ++tile)
-	{
-		tile->min.z() = pixel[0];
-		tile->max.z() = pixel[1];
-		ANKI_ASSERT(tile->max.z() >= tile->min.z());
-
-		// Convert to NDC (undo the viewport transform)
-		tile->min.z() = tile->min.z() * 2.0 - 1.0;
-		tile->max.z() = tile->max.z() * 2.0 - 1.0;
-
-		pixel += 2;
-	}
-
-	//
-	// Move to the other levels
-	//
-	updateTileMinMax(tiles_[0]);
-}
-
-//==============================================================================
-Vec2 Tiler::updateTileMinMax(Tile_& tile)
-{
-	// Have children?
-	if(tile.children[0] == -1)
-	{
-		return Vec2(tile.min.z(), tile.max.z());
-	}
-
-	Vec2 minMax(10.0, -10.0);
-	for(U i = 0; i < 4; i++)
-	{
-		Vec2 in = updateTileMinMax(tiles_[tile.children[i]]);
-		minMax.x() = std::min(minMax.x(), in.x());
-		minMax.y() = std::max(minMax.y(), in.y());
-	}
-
-	tile.min.z() = minMax.x();
-	tile.max.z() = minMax.y();
-
-	return minMax;
-}
-
-//==============================================================================
 void Tiler::updateTiles(Camera& cam)
 {
 	//
-	// Read the results from the minmax job
+	// Read the results from the minmax job. It will block
 	//
 	PixelArray pixels;
 	pbo.read(&pixels[0][0]);
@@ -611,18 +270,15 @@ void Tiler::updateTiles(Camera& cam)
 	//
 	// Issue parallel jobs
 	//
-	UpdateJobArray jobs;
-
+	Array<UpdatePlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS> jobs;
 	U32 camTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
 
 	// Transform only the planes when:
 	// - it is the same camera as before and
 	// - the camera frustum have not changed
-	Bool update4Planes =
+	Bool frustumChanged =
 		camTimestamp >= planes4UpdateTimestamp || prevCam != &cam;
 
-	// Update the planes in parallel
-	//
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
 
 	switch(cam.getCameraType())
@@ -630,10 +286,10 @@ void Tiler::updateTiles(Camera& cam)
 	case Camera::CT_PERSPECTIVE:
 		for(U i = 0; i < threadPool.getThreadsCount(); i++)
 		{
-			jobs[i].pixels = &pixels;
 			jobs[i].tiler = this;
 			jobs[i].cam = static_cast<PerspectiveCamera*>(&cam);
-			jobs[i].frustumChanged = update4Planes;
+			jobs[i].pixels = &pixels;
+			jobs[i].frustumChanged = frustumChanged;
 			threadPool.assignNewJob(i, &jobs[i]);
 		}
 		break;
@@ -642,343 +298,17 @@ void Tiler::updateTiles(Camera& cam)
 		break;
 	}
 
-	if(update4Planes)
+	if(frustumChanged)
 	{
 		planes4UpdateTimestamp = Timestamp::getTimestamp();
 	}
 
 	threadPool.waitForAllJobsToFinish();
 
-	//
-	// XXX
-	//
-#if 1
-	{
-		Array<UpdatePlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS> jobs;
-
-		ThreadPool& threadPool = ThreadPoolSingleton::get();
-
-
-		switch(cam.getCameraType())
-		{
-		case Camera::CT_PERSPECTIVE:
-			for(U i = 0; i < threadPool.getThreadsCount(); i++)
-			{
-				jobs[i].tiler = this;
-				jobs[i].cam = static_cast<PerspectiveCamera*>(&cam);
-				jobs[i].pixels = &pixels;
-				jobs[i].frustumChanged = true;
-				threadPool.assignNewJob(i, &jobs[i]);
-			}
-			break;
-		default:
-			ANKI_ASSERT(0 && "Unimplemented");
-			break;
-		}
-
-		threadPool.waitForAllJobsToFinish();
-	}
-#endif
-
 	// 
 	// Misc
 	// 
 	prevCam = &cam;
-
-	//updateTilesInternal();
-}
-
-//==============================================================================
-Bool Tiler::testInternal(const CollisionShape& cs, const Tile& tile, 
-	const U startPlane) const
-{
-	for(U j = startPlane; j < Frustum::FP_COUNT; j++)
-	{
-		if(cs.testPlane(tile.planesWSpace[j]) < 0.0)
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-//==============================================================================
-Bool Tiler::test(const CollisionShape& cs, const U32 tileId,
-	const Bool skipNearPlaneCheck) const
-{
-	return testInternal(cs, tiles1d[tileId], (skipNearPlaneCheck) ? 1 : 0);
-}
-
-//==============================================================================
-Bool Tiler::testAll(const CollisionShape& cs, 
-	const Bool skipNearPlaneCheck) const
-{
-	static_assert(Frustum::FP_NEAR == 0, "Frustum::FP_NEAR should be 0");
-
-	U startPlane = (skipNearPlaneCheck) ? 1 : 0;
-
-	for(const Tile& tile : tiles1d)
-	{
-		if(testInternal(cs, tile, startPlane))
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-//==============================================================================
-Bool Tiler::testAll(const CollisionShape& cs,
- 	U32* tileIds, U32& tilesCount, const Bool skipNearPlaneCheck) const
-{
-	U startPlane = (skipNearPlaneCheck) ? 1 : 0;
-	tilesCount = 0;
-
-	for(U i = 0; i < tiles1d.getSize(); i++)
-	{
-		const Tile& tile = tiles1d[i];
-
-		if(testInternal(cs, tile, startPlane))
-		{
-			tileIds[tilesCount++] = i;
-		}
-	}
-
-	return tilesCount > 0;
-}
-
-//==============================================================================
-Bool Tiler::test(
-	const CollisionShape& cs, 
-	const Aabb& aabb, 
-	Bool nearPlane,
-	Bitset* outBitset) const
-{
-	//
-	// Get points from sp
-	//
-	Array<Vec4, 8> points;
-	U pointsCount = 0;
-
-	if(cs.getCollisionShapeType() != CollisionShape::CST_FRUSTUM)
-	{
-		const Vec3& min = aabb.getMin();
-		const Vec3& max = aabb.getMax();
-
-		points[0] = Vec4(max.x(), max.y(), max.z(), 1.0); // right top front
-		points[1] = Vec4(min.x(), max.y(), max.z(), 1.0); // left top front
-		points[2] = Vec4(min.x(), min.y(), max.z(), 1.0); // left bottom front
-		points[3] = Vec4(max.x(), min.y(), max.z(), 1.0); // right bottom front
-		points[4] = Vec4(max.x(), max.y(), min.z(), 1.0); // right top back
-		points[5] = Vec4(min.x(), max.y(), min.z(), 1.0); // left top back
-		points[6] = Vec4(min.x(), min.y(), min.z(), 1.0); // left bottom back
-		points[7] = Vec4(max.x(), min.y(), min.z(), 1.0); // right bottom back
-
-		pointsCount = 8;
-	}
-	else
-	{
-		// XXX
-	}
-
-	//
-	// Transform those shapes
-	//
-	Array<Vec2, 8> points2D;
-	ANKI_ASSERT(prevCam);
-	const Mat4& projection = prevCam->getViewProjectionMatrix();
-	Array<Vec3, 2> minMax = {{Vec3(10.0), Vec3(-10.0)}};
-
-	for(U i = 0; i < pointsCount; i++)
-	{
-		Vec4 point = projection * points[i];
-		Vec3 v3 = point.xyz() / point.w();
-		points2D[i] = v3.xy();
-
-		// Min z
-		minMax[0].z() = std::min(minMax[0].z(), v3.z());
-		// Max z
-		minMax[1].z() = std::max(minMax[1].z(), v3.z());
-	}
-
-	//
-	// Calc the convex hull
-	//
-	Array<Vec2, 8 * 2 + 1> convPoints;
-	U32 convPointsCount;
-	convexHull2D(&points2D[0], pointsCount,
-		&convPoints[0], convPoints.getSize(), convPointsCount);
-
-	// Calc the x,y of the min max
-	minMax[0].x() = minMax[1].x() = convPoints[0].x();
-	minMax[0].y() = minMax[1].y() = convPoints[0].y();
-	for(U i = 1; i < convPointsCount - 1; i++)
-	{
-		for(U j = 0; j < 2; j++)
-		{
-			minMax[0][j] = std::min(minMax[0][j], convPoints[i][j]);
-			minMax[1][j] = std::max(minMax[1][j], convPoints[i][j]);
-		}
-	}
-
-	//
-	// Run the algorithm for every edge
-	//
-	Bitset bitset;
-	for(U i = 0; i < convPointsCount - 1; i++)
-	{
-		Bitset edgebitset;
-		testTile(tiles_[0], convPoints[i], convPoints[i + 1],
-			minMax, edgebitset);
-
-		if(i != 0)
-		{
-			bitset &= edgebitset;
-		}
-		else
-		{
-			bitset = edgebitset;
-		}
-
-	}
-
-	//
-	// Check the z
-	//
-	for(U i = 0; i < TILES_COUNT; i++)
-	{
-		// If tile is visible
-		if(bitset.test(i))
-		{
-			ANKI_ASSERT(i < tiles_.size());
-
-			// Check far plane
-			if(tiles0[i].max.z() > minMax[0].z())
-			{
-				if(nearPlane)
-				{
-					// Check inear plane
-					if(tiles0[i].min.z() < minMax[1].z())
-					{
-						// Keep it
-					}
-					else
-					{
-						bitset.set(i, false);
-					}
-				}
-			}
-			else
-			{
-				bitset.set(i, false);
-			}
-		}
-	}
-
-	if(outBitset)
-	{
-		*outBitset = bitset;
-	}
-
-	return bitset.any();
-}
-
-//==============================================================================
-void Tiler::testTile(const Tile_& tile, const Vec2& a, const Vec2& b, 
-	const Array<Vec3, 2>& objMinMax, Bitset& bitset) const
-{
-	// If edge not inside return
-	for(U i = 0; i < 2; i++)
-	{
-		const F32 min = objMinMax[0][i];
-		const F32 max = objMinMax[1][i];
-
-		if(max < tile.min[i] || min > tile.max[i])
-		{
-			return;
-		}
-	}
-
-	// Continue
-	Bool final = tile.children[0] == -1;
-
-	if(!final)
-	{
-		U inside = 0;
-
-		if(isLeft(a, b, tile.max.xy()))
-		{
-			inside |= 1;
-		}
-
-		if(isLeft(a, b, Vec2(tile.min.x(), tile.max.y())))
-		{
-			inside |= 2;
-		}
-
-		if(isLeft(a, b, tile.min.xy()))
-		{
-			inside |= 4;
-		}
-
-		if(isLeft(a, b, Vec2(tile.max.x(), tile.min.y())))
-		{
-			inside |= 8;
-		}
-
-		// None inside
-		if(inside == 0)
-		{
-			return;
-		}
-		else if(inside == 0xF) // All inside
-		{
-			goto allIn;
-		}
-		else // Some inside
-		{
-			ANKI_ASSERT(!final);
-
-			for(U i = 0; i < 4; i++)
-			{
-				testTile(tiles_[tile.children[i]], a, b, objMinMax, bitset);
-			}
-		}
-	}
-	else
-	{
-		if(isLeft(a, b, tile.max.xy())
-			|| isLeft(a, b, Vec2(tile.min.x(), tile.max.y()))
-			|| isLeft(a, b, tile.min.xy())
-			|| isLeft(a, b, Vec2(tile.max.x(), tile.min.y())))
-		{
-			goto allIn;
-		}
-	}
-
-	return;
-
-allIn:
-	updateBitset(tile, bitset);
-}
-
-//==============================================================================
-void Tiler::updateBitset(const Tile_& tile, Bitset &bitset) const
-{
-	if(tile.children[0] != -1)
-	{
-		for(U i = 0; i < 4; i++)
-		{
-			updateBitset(tiles_[tile.children[i]], bitset);
-		}
-	}
-	else
-	{
-		U tileId = &tile - tiles0;
-		ANKI_ASSERT(tileId < TILES_COUNT);
-		bitset.set(tileId);
-	}
 }
 
 //==============================================================================
@@ -1007,12 +337,14 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 	U mi = (iTo - iFrom) / 2;
 	U mj = (jTo - jFrom) / 2;
 
+	ANKI_ASSERT(mi == mj && "Change the algorithm if they are not the same");
+
 	// Handle final
 	if(mi == 0 || mj == 0)
 	{
 		U tileId = iFrom * TILES_X_COUNT + jFrom;
 
-		Bool inside = false;
+		Bool inside = true;
 
 		if(cs.testPlane(farPlanesW[tileId]) >= 0.0)
 		{
@@ -1046,7 +378,7 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 	// Find the correct top lookin plane (i)
 	const Plane& topPlane = planesIW[iFrom + mi - 1];
 
-	// Find the correct right plane (j)
+	// Find the correct right looking plane (j)
 	const Plane& rightPlane = planesJW[jFrom + mj - 1];
 
 	// Do the checks
@@ -1075,7 +407,7 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		}
 	}
 
-	// Left looking plane check
+	// Right looking plane check
 	test = cs.testPlane(rightPlane);
 	if(test < 0.0)
 	{
@@ -1095,10 +427,13 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 	{
 		for(U j = 0; j < 2; j++)
 		{
-			testRange(cs, nearPlane,
-				iFrom + (i * mi), iFrom + ((i + 1) * mi),
-				jFrom + (j * mi), iFrom + ((j + 1) * mj),
-				bitset);
+			if(inside[i][j])
+			{
+				testRange(cs, nearPlane,
+					iFrom + (i * mi), iFrom + ((i + 1) * mi),
+					jFrom + (j * mj), jFrom + ((j + 1) * mj),
+					bitset);
+			}
 		}
 	}
 }

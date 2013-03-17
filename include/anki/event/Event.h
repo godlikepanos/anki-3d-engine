@@ -81,6 +81,6 @@ private:
 	EventManager* manager = nullptr; ///< Keep it here to access allocators etc
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

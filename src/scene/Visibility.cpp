@@ -60,8 +60,9 @@ struct VisibilityTestJob: ThreadJob
 				Spatial* subsp = *it;
 	
 				if(frustumable->insideFrustum(*subsp)
-					/*&& renderer->doVisibilityTests(
-					subsp->getOptimalCollisionShape())*/)
+					&& tiler->test2(
+					subsp->getSpatialCollisionShape(),
+					subsp->getAabb(), false, nullptr))
 				{
 					subSpatialsMask |= 1 << i;
 					subsp->enableBits(Spatial::SF_VISIBLE_CAMERA);
@@ -78,11 +79,12 @@ struct VisibilityTestJob: ThreadJob
 			Renderable* r = node->getRenderable();
 			if(r)
 			{
-				/*if(!renderer->doVisibilityTests(
-					sp->getOptimalCollisionShape()))
+				if(!tiler->test2(
+					sp->getSpatialCollisionShape(),
+					sp->getAabb(), false, nullptr))
 				{
 					continue;
-				}*/
+				}
 				visible->renderables.push_back(node);
 
 				// Inform the renderable for the mask
@@ -100,7 +102,6 @@ struct VisibilityTestJob: ThreadJob
 					&& tiler->test2(sp->getSpatialCollisionShape(),
 					sp->getAabb(), true, &tilerBitset))
 				{
-					std::cout << "asdf" << std::endl;
 					visible->lights.push_back(node);
 
 					sp->setTilerBitset(tilerBitset);
@@ -109,6 +110,10 @@ struct VisibilityTestJob: ThreadJob
 					{
 						testLight(*node);
 					}
+				}
+				else
+				{
+					continue;
 				}
 			}
 

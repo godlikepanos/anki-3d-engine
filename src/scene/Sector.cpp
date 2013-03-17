@@ -335,8 +335,8 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 			// First the renderables
 			for(SceneNode* renderable : testResult.renderables)
 			{
-				if(r->doVisibilityTests(
-					renderable->getSpatial()->getOptimalCollisionShape()))
+				/*XXX if(r->getTiler().test2(
+					renderable->getSpatial()->getOptimalCollisionShape()))*/
 				{
 					visible->renderables.push_back(renderable);
 				}
@@ -345,8 +345,8 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 			// Then the lights
 			for(SceneNode* light : testResult.lights)
 			{
-				if(r->doVisibilityTests(
-					light->getSpatial()->getOptimalCollisionShape()))
+				/*XXX if(r->doVisibilityTests(
+					light->getSpatial()->getOptimalCollisionShape()))*/
 				{
 					visible->lights.push_back(light);
 				}
