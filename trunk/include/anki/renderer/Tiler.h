@@ -27,9 +27,9 @@ public:
 	// mind that there are size limitations in uniform blocks.
 	static const U TILES_X_COUNT = 16;
 	static const U TILES_Y_COUNT = 16;
-	static const U TILES_COUNT = TILES_X_COUNT * TILES_X_COUNT;
+	static const U TILES_COUNT = TILES_X_COUNT * TILES_Y_COUNT;
 
-	typedef std::bitset<TILES_X_COUNT * TILES_X_COUNT> Bitset;
+	typedef std::bitset<TILES_COUNT> Bitset;
 
 	Tiler();
 	~Tiler();
@@ -43,24 +43,6 @@ public:
 	void updateTiles(Camera& cam);
 
 	/// Test against all tiles
-	Bool testAll(const CollisionShape& cs,
- 		const Bool skipNearPlaneCheck = false) const;
-
-	/// Test against all tiles and return affected tiles
-	Bool testAll(const CollisionShape& cs,
- 		U32* tileIds, U32& tilesCount, 
-		const Bool skipNearPlaneCheck = false) const;
- 
-	/// Test on a specific tile
-	Bool test(const CollisionShape& cs, 
-		const U32 tileId, const Bool skipNearPlaneCheck = false) const;
-
-	Bool test(
-		const CollisionShape& cs, 
-		const Aabb& aabb, 
-		Bool nearPlane,
-		Bitset* mask) const;
-
 	Bool test2(
 		const CollisionShape& cs,
 		const Aabb& aabb,
@@ -68,46 +50,16 @@ public:
 		Bitset* mask) const;
 
 private:
-	/// A screen tile
-	struct Tile
-	{
-		/// @name Frustum planes
-		/// @{
-		Array<Plane, Frustum::FP_COUNT> planes; ///< In local space
-		Array<Plane, Frustum::FP_COUNT> planesWSpace; ///< In world space
-		/// @}
-	};
-
-	/// XXX
-	struct Tile_
-	{
-		Vec3 min;
-		Vec3 max;
-		Array<U32, 2> mask;
-		Array<I16, 4> children; ///< Use small index to save memory
-	};
-
+	/// Tile planes
 	Vector<Plane> allPlanes;
 	Plane* planesI = nullptr;
 	Plane* planesJ = nullptr;
-	Plane* nearPlanes = nullptr;
-	Plane* farPlanes = nullptr;
 	Plane* planesIW = nullptr;
 	Plane* planesJW = nullptr;
 	Plane* nearPlanesW = nullptr;
 	Plane* farPlanesW = nullptr;
 
 	typedef F32 PixelArray[TILES_Y_COUNT][TILES_X_COUNT][2];
-
-	/// @note The [0][0] is the bottom left tile
-	union
-	{
-		Array<Array<Tile, TILES_X_COUNT>, TILES_Y_COUNT> tiles;
-		Array<Tile, TILES_X_COUNT * TILES_Y_COUNT> tiles1d;
-	};
-
-	Vector<Tile_> tiles_;
-	Tile_* tiles0 = nullptr; ///< Tiles last level
 
 	/// The timestamp of the 4 planes update
 	U32 planes4UpdateTimestamp = Timestamp::getTimestamp();
@@ -130,20 +82,7 @@ private:
 	Renderer* r = nullptr;
 	const Camera* prevCam = nullptr;
 
-	void initInternal(Renderer* r);
-	Tile_* initTilesInDepth(Tile_* tiles, U depth);
-	void initTiles();
-
-	void updateTilesInternal();
-	Vec2 updateTileMinMax(Tile_& tile); ///< Recursive 
-
-	Bool testInternal(const CollisionShape& cs, const Tile& tile, 
-		const U startPlane) const;
-
-	void testTile(const Tile_& tile, const Vec2& a, const Vec2& b,
-		const Array<Vec3, 2>& objMinMax, Bitset& bitset) const;
-
-	void updateBitset(const Tile_& tile, Bitset& bitset) const;
+	void initInternal(Renderer* r_);
 
 	void testRange(const CollisionShape& cs, Bool nearPlane,
 		U iFrom, U iTo, U jFrom, U jTo, Bitset& bitset) const;

@@ -1,6 +1,9 @@
 #include "anki/event/EventManager.h"
-#include "anki/event/SceneAmbientColorEvent.h"
 #include "anki/scene/SceneGraph.h"
+
+#include "anki/event/SceneAmbientColorEvent.h"
+#include "anki/event/LightEvent.h"
+#include "anki/event/MovableEvent.h"
 
 namespace anki {
 
@@ -104,6 +107,22 @@ std::shared_ptr<Event> EventManager::newSceneAmbientColorEvent(
 {
 	return registerEvent(new SceneAmbientColorEvent(startTime, duration, this, 
 		finalColor, scene));
+}
+
+//==============================================================================
+std::shared_ptr<Event> EventManager::newLightEvent(
+	F32 startTime, F32 duration, const LightEventData& data)
+{
+	return registerEvent(new LightEvent(startTime, duration, this,
+		Event::EF_NONE, data));
+}
+
+//==============================================================================
+std::shared_ptr<Event> EventManager::newMovableEvent(
+	F32 startTime, F32 duration, const MovableEventData& data)
+{
+	return registerEvent(new MovableEvent(startTime, duration, this,
+		Event::EF_NONE, data));
 }
 
 } // end namespace anki

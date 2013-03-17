@@ -122,6 +122,15 @@ public:
 		return physics;
 	}
 
+	EventManager& getEventManager()
+	{
+		return events;
+	}
+	const EventManager& getEventManager() const
+	{
+		return events;
+	}
+
 	SectorGroup& getSectorGroup()
 	{
 		return sectorGroup;

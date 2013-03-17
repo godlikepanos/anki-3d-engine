@@ -141,6 +141,44 @@ private:
 	}
 };
 
+/// XXX
+template<typename T, typename Alloc = Allocator<T>>
+class CleanupObject: public Object<T, Alloc>
+{
+public:
+	typedef T Value;
+	typedef Object<Value, Alloc> Base;
+
+	/// @see Object::Object
+	CleanupObject(Value* parent_, const Alloc& alloc = Alloc())
+		: Base(parent_, alloc)
+	{}
+
+	virtual ~CleanupObject()
+	{
+		if(Base::parent != nullptr)
+		{
+			Base::parent->removeChild(Base::getSelf());
+			Base::parent = nullptr;
+		}
+
+		Alloc alloc = Base::childs.get_allocator();
+
+		// Delete all children
+		for(Value* child : Base::childs)
+		{
+			// Set parent to null to prevent the child from removing itself
+			child->parent = nullptr;
+
+			// Destroy
+			alloc.destroy(child);
+			alloc.deallocate(child, 1);
+		}
+
+		Base::childs.clear();
+	}
+};
+
 /// @}
 /// @}
 

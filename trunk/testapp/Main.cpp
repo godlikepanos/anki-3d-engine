@@ -30,6 +30,8 @@
 #include "anki/core/NativeWindow.h"
 #include "anki/util/Functions.h"
 #include "anki/scene/Scene.h"
+#include "anki/event/LightEvent.h"
+#include "anki/event/MovableEvent.h"
 
 using namespace anki;
 
@@ -164,12 +166,7 @@ void init()
 	}
 #endif
 
-	PointLight* point = new PointLight("ll", &scene,
-		Movable::MF_NONE, nullptr);
-	point->setLocalTranslation(Vec3(1.0, 0.1, 0.0));
-	point->setRadius(2.0);
-
-#if 0
+#if 1
 	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
@@ -194,7 +191,7 @@ void init()
 	spot->setShadowEnabled(true);
 #endif
 
-#if 0
+#if 1
 	// Vase point lights
 	F32 x = 8.5;
 	F32 y = 2.25;
@@ -210,8 +207,23 @@ void init()
 			&scene, Movable::MF_NONE, nullptr);
 		point->setRadius(2.0);
 		point->setLocalTranslation(lightPos);
-		point->setDiffuseColor(Vec4(3.0, 0.0, 0.0, 0.0));
+		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
 		point->setSpecularColor(Vec4(1.0, 1.0, 0.0, 0.0));
+
+		LightEventData eventData;
+		eventData.light = point;
+		eventData.radiusMultiplier = 0.2;
+		eventData.intensityMultiplier = Vec4(-1.2, 0.0, 0.0, 0.0);
+		eventData.specularIntensityMultiplier = Vec4(0.1, 0.1, 0.0, 0.0);
+		auto event = scene.getEventManager().newLightEvent(0.0, 0.8, eventData);
+		event->enableBits(Event::EF_REANIMATE);
+
+		MovableEventData moveData;
+		moveData.movableSceneNode = point;
+		moveData.posMin = Vec3(-0.5, 0.0, -0.5);
+		moveData.posMax = Vec3(0.5, 0.0, 0.5);
+		auto mevent = scene.getEventManager().newMovableEvent(0.0, 2.0, moveData);
+		mevent->enableBits(Event::EF_REANIMATE);
 
 		ParticleEmitter* pe = new ParticleEmitter(
 			"data/particles/smoke.particles",
@@ -227,7 +239,7 @@ void init()
 	}
 #endif
 
-#if 0
+#if 1
 	// horse
 	horse = new ModelNode("data/models/horse/horse.mdl", "horse", &scene,
 		Movable::MF_NONE, nullptr);

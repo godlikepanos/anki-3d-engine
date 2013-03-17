@@ -6,6 +6,7 @@
 #include "anki/math/Math.h"
 #include "anki/core/Timestamp.h"
 #include "anki/scene/Common.h"
+#include <algorithm> // For std::find
 
 namespace anki {
 

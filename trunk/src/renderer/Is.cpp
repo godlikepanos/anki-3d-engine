@@ -196,41 +196,21 @@ struct WriteTilesUboJob: ThreadJob
 	void doTile(U tileId, ShaderTile& stile)
 	{
 		auto& lightIndices = stile.lightIndices;
-		const Tiler& tiler = is->r->getTiler();
 
 		// Point lights
 		//
-
-		stile.lightsCount[3] = 0; // XXX remove
-
 		U pointLightsInTileCount = 0;
 		for(U i = 0; i < visiblePointLightsCount; i++)
 		{
 			const PointLight& light = *visiblePointLights[i];
 
-			if(tiler.test(light.getSphere(), tileId))
+			if(light.getTilerBitset().test(tileId))
 			{
 				// Use % to avoid overflows
 				const U id = pointLightsInTileCount % Is::MAX_LIGHTS_PER_TILE;
 				lightIndices[id] = i;
 				++pointLightsInTileCount;
 			}
-
-			// XXX
-				{
-					const Tiler::Bitset& bitset = light.getTilerBitset();
-
-					//std::cout << std::bitset<32>(mask[0]) << std::endl;
-
-					if(bitset.test(tileId))
-					{
-						stile.lightsCount[3] = 333;
-					}
-					else
-					{
-						stile.lightsCount[3] = 0;
-					}
-				}
 		}
 
 		stile.lightsCount[0] = pointLightsInTileCount;
@@ -244,7 +224,7 @@ struct WriteTilesUboJob: ThreadJob
 		{
 			const SpotLight& light = *visibleSpotLights[i];
 
-			if(tiler.test(light.getFrustum(), tileId))
+			if(light.getTilerBitset().test(tileId))
 			{
 				const U id = (pointLightsInTileCount + spotLightsInTileCount 
 					+ spotLightsShadowInTileCount) 

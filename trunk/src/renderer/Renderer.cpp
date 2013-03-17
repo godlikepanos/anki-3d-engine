@@ -215,13 +215,6 @@ void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 	limitsOfNearPlane.x() = tan(0.5 * pcam.getFovX());
 }
 
-
-//==============================================================================
-Bool Renderer::doVisibilityTests(const CollisionShape& cs) const
-{
-	return tiler.testAll(cs, true);
-}
-
 //==============================================================================
 void Renderer::clearAfterBindingFbo(const GLenum cap)
 {

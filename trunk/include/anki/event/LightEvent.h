@@ -2,14 +2,24 @@
 #define ANKI_EVENT_LIGHT_EVENT_H
 
 #include "anki/event/Event.h"
+#include "anki/math/Math.h"
 
 namespace anki {
 
-/// @addtogroup event
-/// @{
+// Forward
+class Light;
 
-/// Light event
-class LightEvent: public Event
+/// Helper class
+struct LightEventData
+{
+	Light* light = nullptr;
+	F32 radiusMultiplier = 0.0;
+	Vec4 intensityMultiplier = Vec4(0.0);
+	Vec4 specularIntensityMultiplier = Vec4(0.0);
+};
+
+/// An event for light animation
+class LightEvent: public Event, private LightEventData
 {
 public:
 	/// @name Constructors/Destructor
@@ -17,12 +27,17 @@ public:
 
 	/// Constructor
 	LightEvent(F32 startTime, F32 duration, EventManager* manager,
-		const std::smart_ptr<SceneNode>& lightSn,
-		const F32* radiusFrom, const F32* radiusTo);
+		U8 flags, const LightEventData& data);
 	/// @}
-};
 
-/// @}
+	/// Implements Event::update
+	void update(F32 prevUpdateTime, F32 crntTime);
+
+private:
+	F32 originalRadius;
+	Vec4 originalDiffColor;
+	Vec4 originalSpecColor;
+};
 
 } // end namespace anki
 
