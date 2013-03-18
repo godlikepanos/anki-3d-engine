@@ -3,7 +3,7 @@
 #pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
-
+#pragma anki include "shaders/CommonFrag.glsl"
 #pragma anki include "shaders/Pack.glsl"
 
 /// @name Varyings
@@ -19,7 +19,7 @@ layout(location = 0) out float fColor;
 
 /// @name Uniforms
 /// @{
-layout(std140, row_major, binding = 0) uniform commonBlock
+layout(std140, row_major) uniform commonBlock
 {
 	/// Packs:
 	/// - x: zNear. For the calculation of frag pos in view space
@@ -38,7 +38,7 @@ layout(std140, row_major, binding = 0) uniform commonBlock
 #define limitsOfNearPlane2 limitsOfNearPlane_.zw
 
 uniform sampler2D msDepthFai;
-uniform usampler2D msGFai;
+uniform highp usampler2D msGFai;
 uniform sampler2D noiseMap; 
 /// @}
 
@@ -56,21 +56,23 @@ vec3 getNormal(in vec2 uv)
 
 vec2 getRandom(in vec2 uv)
 {
-	vec2 noise = texture2D(
-		noiseMap, vec2(WIDTH, HEIGHT) * uv / NOISE_MAP_SIZE / 2.0).xy;
+	vec2 noise = texture(
+		noiseMap, 
+		vec2(float(WIDTH), float(HEIGHT)) 
+		* uv / float(NOISE_MAP_SIZE) / 2.0).xy;
 	return normalize(noise * 2.0 - 1.0);
 }
 
 vec3 getPosition(in vec2 uv)
 {
-	float depth = texture2D(msDepthFai, uv).r;
+	float depth = texture(msDepthFai, uv).r;
 
 	vec3 fragPosVspace;
 	fragPosVspace.z = -planes.y / (planes.x + depth);
 	
 	fragPosVspace.xy = (uv * limitsOfNearPlane2) - limitsOfNearPlane;
 	
-	const float sc = -fragPosVspace.z;
+	float sc = -fragPosVspace.z;
 	fragPosVspace.xy *= sc;
 
 	return fragPosVspace;
@@ -113,6 +115,6 @@ void main(void)
 		fColor += calcAmbientOcclusionFactor(vTexCoords + coord, p, n);
 	}
 
-	fColor = 1.0 - fColor / KERNEL_SIZE;
+	fColor = 1.0 - fColor / float(KERNEL_SIZE);
 }
 

@@ -14,11 +14,13 @@ static Bool isCompressedInternalFormat(const GLenum internalFormat)
 	Bool out = false;
 	switch(internalFormat)
 	{
+#if ANKI_GL == ANKI_GL_DESKTOP
 	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
 	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
 	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
 		out = true;
 		break;
+#endif
 	default:
 		out = false;
 	}

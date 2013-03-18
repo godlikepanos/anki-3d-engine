@@ -92,6 +92,8 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	ssaoSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		"shaders/PpsSsao.glsl", pps.c_str()).c_str());
 
+	ssaoSProg->findUniformBlock("commonBlock").setBinding(0);
+
 	// blurring progs
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 

@@ -10,7 +10,7 @@ Hdr::~Hdr()
 //==============================================================================
 void Hdr::initFbo(Fbo& fbo, Texture& fai)
 {
-	Renderer::createFai(width, height, GL_RGB8, GL_RGB, GL_FLOAT, fai);
+	Renderer::createFai(width, height, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, fai);
 	fai.setFiltering(Texture::TFT_LINEAR);
 
 	// create FBO
@@ -48,6 +48,7 @@ void Hdr::initInternal(const Renderer::Initializer& initializer)
 	commonUbo.create(sizeof(Vec4), &block);
 
 	toneSProg.load("shaders/PpsHdr.glsl");
+	toneSProg->findUniformBlock("commonBlock").setBinding(0);
 
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 

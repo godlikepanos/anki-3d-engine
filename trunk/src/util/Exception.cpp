@@ -3,7 +3,7 @@
 #include <iostream>
 
 // Instead of throwing abort. Its easier to debug
-#define ANKI_ABORT_ON_THROW 0
+#define ANKI_ABORT_ON_THROW ANKI_DEBUG
 
 namespace anki {
 

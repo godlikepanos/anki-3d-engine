@@ -31,8 +31,9 @@ void TextureResource::load(const Image& img)
 	init.height = img.getHeight();
 	init.dataSize = img.getDataSize();
 
-	bool compressionEnabled = 
+	Bool compressionEnabled = 
 		TextureManagerSingleton::get().getCompressionEnabled();
+	(void)compressionEnabled;
 
 	switch(img.getColorType())
 	{
@@ -90,6 +91,9 @@ void TextureResource::load(const Image& img)
 	case Image::DC_DXT5:
 		init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		break;
+#else
+	default:
+		ANKI_ASSERT(0);
 #endif
 	}
 
