@@ -311,6 +311,10 @@ void Is::initInternal(const RendererInitializer& initializer)
 	{
 		pps += "#define PCF 1\n";
 	}
+	else
+	{
+		pps += "#define PCF 0\n";
+	}
 
 	// point light
 	lightPassProg.load(ShaderProgramResource::createSrcCodeToCache(
@@ -322,7 +326,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 
 	// IS FBO
 	Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB8,
-		GL_RGB, GL_UNSIGNED_INT, fai);
+		GL_RGB, GL_UNSIGNED_BYTE, fai);
 	fbo.create();
 	fbo.setColorAttachments({&fai});
 	fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, r->getMs().getDepthFai());
@@ -368,6 +372,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	const ShaderProgramUniformBlock* ublock;
 
 	ublock = &lightPassProg->findUniformBlock("commonBlock");
+	ublock->setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
 	if(ublock->getSize() != sizeof(ShaderCommonUniforms)
 		|| ublock->getBinding() != COMMON_UNIFORMS_BLOCK_BINDING)
 	{
@@ -375,6 +380,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	}
 
 	ublock = &lightPassProg->findUniformBlock("pointLightsBlock");
+	ublock->setBinding(POINT_LIGHTS_BLOCK_BINDING);
 	if(ublock->getSize() != sizeof(ShaderPointLights)
 		|| ublock->getBinding() != POINT_LIGHTS_BLOCK_BINDING)
 	{
@@ -382,13 +388,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	}
 
 	ublock = &lightPassProg->findUniformBlock("spotLightsBlock");
-	if(ublock->getSize() != sizeof(ShaderSpotLights)
-		|| ublock->getBinding() != SPOT_LIGHTS_BLOCK_BINDING)
-	{
-		throw ANKI_EXCEPTION("Problem with the spotLightsBlock");
-	}
-
-	ublock = &lightPassProg->findUniformBlock("spotLightsBlock");
+	ublock->setBinding(SPOT_LIGHTS_BLOCK_BINDING);
 	if(ublock->getSize() != sizeof(ShaderSpotLights)
 		|| ublock->getBinding() != SPOT_LIGHTS_BLOCK_BINDING)
 	{
@@ -396,6 +396,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	}
 
 	ublock = &lightPassProg->findUniformBlock("tilesBlock");
+	ublock->setBinding(TILES_BLOCK_BINDING);
 	if(ublock->getSize() != sizeof(ShaderTiles)
 		|| ublock->getBinding() != TILES_BLOCK_BINDING)
 	{

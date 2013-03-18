@@ -26,7 +26,7 @@ void Pps::initInternal(const RendererInitializer& initializer)
 
 	// FBO
 	Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
-		GL_FLOAT, fai);
+		GL_UNSIGNED_BYTE, fai);
 
 	fbo.create();
 	fbo.setColorAttachments({&fai});

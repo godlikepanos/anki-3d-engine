@@ -317,11 +317,22 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 		}
 		else
 		{
+#if ANKI_GL == ANKI_GL_DESKTOP
 			glMultiDrawElements(GL_TRIANGLES, 
 				(GLsizei*)indicesCountArray, 
 				GL_UNSIGNED_SHORT, 
 				(const void**)indicesOffsetArray, 
 				primCount);
+#else
+			for(U i = 0; i < primCount; i++)
+			{
+				glDrawElements(
+					GL_TRIANGLES, 
+					indicesCountArray[i],
+					GL_UNSIGNED_SHORT,
+					indicesOffsetArray[i]);
+			}
+#endif
 		}
 	}
 	else

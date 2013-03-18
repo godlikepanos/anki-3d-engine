@@ -141,7 +141,7 @@ void init()
 	scene.setActiveCamera(cam);
 
 	// lights
-#if 0
+#if 1
 	Vec3 lpos(-24.0, 0.1, -10.0);
 	for(int i = 0; i < 50; i++)
 	{
@@ -466,7 +466,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{

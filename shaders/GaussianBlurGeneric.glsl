@@ -29,15 +29,15 @@ precision mediump float;
 
 // Preprocessor switches sanity checks
 #if !defined(VPASS) && !defined(HPASS)
-#	error "See file"
+#	error See file
 #endif
 
 #if !(defined(COL_RGBA) || defined(COL_RGB) || defined(COL_R))
-#	error "See file"
+#	error See file
 #endif
 
 #if !defined(IMG_DIMENSION)
-#	error "See file"
+#	error See file
 #endif
 
 uniform mediump sampler2D img; ///< Input FAI
@@ -80,7 +80,7 @@ const float WEIGHTS[2] = float[](0.314208984375, 0.06982421875);
 void main()
 {
 	// the center (0,0) pixel
-	COL_TYPE col = texture2D(img, vTexCoords).TEX_FETCH * FIRST_WEIGHT;
+	COL_TYPE col = texture(img, vTexCoords).TEX_FETCH * FIRST_WEIGHT;
 
 	// side pixels
 	for(int i = 0; i < 2; i++)
@@ -88,17 +88,17 @@ void main()
 #if defined(HPASS)
 		vec2 tc = vec2(vTexCoords.x + BLURRING_DIST + BLURRING_OFFSET[i], 
 			vTexCoords.y);
-		col += texture2D(img, tc).TEX_FETCH * WEIGHTS[i];
+		col += texture(img, tc).TEX_FETCH * WEIGHTS[i];
 
 		tc.x = vTexCoords.x - BLURRING_DIST - BLURRING_OFFSET[i];
-		col += texture2D(img, tc).TEX_FETCH * WEIGHTS[i];
+		col += texture(img, tc).TEX_FETCH * WEIGHTS[i];
 #elif defined(VPASS)
 		vec2 tc = vec2(vTexCoords.x, 
 			vTexCoords.y + BLURRING_DIST + BLURRING_OFFSET[i]);
-		col += texture2D(img, tc).TEX_FETCH * WEIGHTS[i];
+		col += texture(img, tc).TEX_FETCH * WEIGHTS[i];
 
 		tc.y = vTexCoords.y - BLURRING_DIST - BLURRING_OFFSET[i];
-		col += texture2D(img, tc).TEX_FETCH * WEIGHTS[i];
+		col += texture(img, tc).TEX_FETCH * WEIGHTS[i];
 #endif
 	}
 

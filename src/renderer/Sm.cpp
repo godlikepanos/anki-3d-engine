@@ -37,7 +37,7 @@ void Sm::init(const RendererInitializer& initializer)
 	sminit.depth = initializer.is.sm.maxLights;
 	sminit.format = GL_DEPTH_COMPONENT;
 	sminit.internalFormat = GL_DEPTH_COMPONENT16;
-	sminit.type = GL_FLOAT;
+	sminit.type = GL_UNSIGNED_SHORT;
 	if(bilinearEnabled)
 	{
 		sminit.filteringType = Texture::TFT_LINEAR;

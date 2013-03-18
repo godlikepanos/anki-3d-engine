@@ -1,5 +1,5 @@
 #if !TILES_X_COUNT || !TILES_Y_COUNT
-#	error "See file"
+#	error See file
 #endif
 
 layout(location = 0) in vec2 position;
@@ -18,7 +18,8 @@ void main()
 
 	vInstanceId = int(gl_InstanceID);
 
-	const vec2 SIZES = vec2(1.0 / TILES_X_COUNT, 1.0 / TILES_Y_COUNT);
+	const vec2 SIZES = 
+		vec2(1.0 / float(TILES_X_COUNT), 1.0 / float(TILES_Y_COUNT));
 
 	vTexCoords = (position + ij) * SIZES;
 	vec2 vertPosNdc = vTexCoords * 2.0 - 1.0;

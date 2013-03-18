@@ -13,6 +13,7 @@ void main()
 }
 
 #pragma anki start fragmentShader
+#pragma anki include "shaders/CommonFrag.glsl"
 
 in vec3 vColor;
 

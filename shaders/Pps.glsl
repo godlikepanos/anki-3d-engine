@@ -3,7 +3,7 @@
 #pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
-
+#pragma anki include "shaders/CommonFrag.glsl"
 #pragma anki include "shaders/photoshop_filters.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
@@ -47,15 +47,15 @@ vec3 gammaCorrectionRgb(in vec3 gamma, in vec3 col)
 //==============================================================================
 void main(void)
 {
-	fColor = texture2D(isFai, vTexCoords).rgb;
+	fColor = texture(isFai, vTexCoords).rgb;
 
 #if defined(HDR_ENABLED)
-	vec3 hdr = texture2D(ppsHdrFai, vTexCoords).rgb;
+	vec3 hdr = texture(ppsHdrFai, vTexCoords).rgb;
 	fColor += hdr;
 #endif
 
 #if defined(SSAO_ENABLED)
-	float ssao = texture2D(ppsSsaoFai, vTexCoords).r;
+	float ssao = texture(ppsSsaoFai, vTexCoords).r;
 	fColor *= ssao;
 #endif
 

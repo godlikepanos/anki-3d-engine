@@ -10,7 +10,7 @@ MovableEvent::MovableEvent(F32 startTime, F32 duration, EventManager* manager,
 	U8 flags, const MovableEventData& data)
 	: Event(startTime, duration, manager, flags)
 {
-	ANKI_ASSERT(data.movableSceneNode.getMovable());
+	ANKI_ASSERT(data.movableSceneNode->getMovable());
 
 	*static_cast<MovableEventData*>(this) = data;
 

@@ -1,5 +1,5 @@
 /// Pack 3D normal to 2D vector
-/// See the clean code in commends in revision < r467
+/// See the clean code in comments in revision < r467
 vec2 packNormal(in vec3 normal)
 {
     const float SCALE = 1.7777;
@@ -67,3 +67,16 @@ vec4 unpackFloatTo4x8(in float val)
 	result -= result.xxyz * bitMsk;
 	return result;
 }
+
+//#if GL_ES
+uint _packUnorm4x8(in vec4 v)
+{
+	return floatBitsToUint(pack4x8ToFloat(v));
+}
+
+vec4 _unpackUnorm4x8(in uint u)
+{
+	return unpackFloatTo4x8(uintBitsToFloat(u));
+}
+
+//#endif

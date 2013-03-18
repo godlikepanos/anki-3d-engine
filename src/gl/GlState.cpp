@@ -133,8 +133,9 @@ void GlState::sync()
 	glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &clearStencilValue);
 
 	// blend funcs
-	glGetIntegerv(GL_BLEND_SRC, (GLint*)&blendFuncs[0]);
-	glGetIntegerv(GL_BLEND_DST, (GLint*)&blendFuncs[1]);
+	// XXX fix that. Separate alpha with RGB
+	glGetIntegerv(GL_BLEND_SRC_ALPHA, (GLint*)&blendFuncs[0]);
+	glGetIntegerv(GL_BLEND_DST_ALPHA, (GLint*)&blendFuncs[1]);
 
 	// depth mask
 	glGetIntegerv(GL_DEPTH_WRITEMASK, &depthMask);
@@ -209,9 +210,9 @@ void GlState::setBlendFunctions(const GLenum sFactor, const GLenum dFactor)
 {
 #if ANKI_DEBUG
 	GLint real;
-	glGetIntegerv(GL_BLEND_SRC, &real);
+	glGetIntegerv(GL_BLEND_SRC_ALPHA, &real);
 	ANKI_ASSERT(blendFuncs[0] == (GLenum)real);
-	glGetIntegerv(GL_BLEND_DST, &real);
+	glGetIntegerv(GL_BLEND_DST_ALPHA, &real);
 	ANKI_ASSERT(blendFuncs[1] == (GLenum)real);
 #endif
 

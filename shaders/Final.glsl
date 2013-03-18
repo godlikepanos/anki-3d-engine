@@ -5,19 +5,20 @@
 #pragma anki include shaders/SimpleVert.glsl
 
 #pragma anki start fragmentShader
+#pragma anki include shaders/CommonFrag.glsl
 
-uniform sampler2D rasterImage;
+uniform lowp sampler2D rasterImage;
 
 in vec2 vTexCoords;
-layout(location = 0) out vec3 fFragColor;
+layout(location = 0) out lowp vec3 fFragColor;
 
 void main()
 {
 #if 1
-	vec3 col = texture2D(rasterImage, vTexCoords).rgb;
+	lowp vec3 col = texture(rasterImage, vTexCoords).rgb;
 	fFragColor = col;
 #else
-	uvec2 msAll = texture2D(rasterImage, vTexCoords).rg;
+	uvec2 msAll = texture(rasterImage, vTexCoords).rg;
 	vec4 diffuseAndSpec = unpackUnorm4x8(msAll[0]);
 	fFragColor = vec3(diffuseAndSpec.rgb);
 #endif
