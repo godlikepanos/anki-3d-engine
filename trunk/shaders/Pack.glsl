@@ -68,15 +68,15 @@ vec4 unpackFloatTo4x8(in float val)
 	return result;
 }
 
-//#if GL_ES
-uint _packUnorm4x8(in vec4 v)
+#if GL_ES
+uint packUnorm4x8(in vec4 v)
 {
 	return floatBitsToUint(pack4x8ToFloat(v));
 }
 
-vec4 _unpackUnorm4x8(in uint u)
+vec4 unpackUnorm4x8(in uint u)
 {
 	return unpackFloatTo4x8(uintBitsToFloat(u));
 }
 
-//#endif
+#endif

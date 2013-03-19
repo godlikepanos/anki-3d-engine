@@ -15,8 +15,8 @@ void Deformer::init()
 {
 	// Load the shaders
 	//
-	tfHwSkinningAllSProg.load("shaders/TfHwSkinningPosNormTan.glsl");
-	tfHwSkinningPosSProg.load("shaders/TfHwSkinningPos.glsl");
+	/*tfHwSkinningAllSProg.load("shaders/TfHwSkinningPosNormTan.glsl");
+	tfHwSkinningPosSProg.load("shaders/TfHwSkinningPos.glsl");*/
 }
 
 //==============================================================================

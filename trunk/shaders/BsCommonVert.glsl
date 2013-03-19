@@ -1,13 +1,15 @@
+// Common code for all vertex shaders of BS
+
+#pragma anki include "shaders/MsBsCommon.glsl"
+
 layout(location = 0) in vec3 position;
 layout(location = 3) in vec2 texCoords;
 
 /// @name Varyings
 /// @{
 out vec2 vTexCoords;
-out flat uint vInstanceId;
+flat out uint vInstanceId;
 /// @}
-
-#pragma anki include "shaders/MaterialCommonFunctions.glsl"
 
 //==============================================================================
 #define setPositionVec3_DEFINED
@@ -36,5 +38,5 @@ void particle(in mat4 mvp)
 {
 	vTexCoords = texCoords;
 	gl_Position = mvp * vec4(position, 1);
-	vInstanceId = gl_InstanceID;
+	vInstanceId = uint(gl_InstanceID);
 }

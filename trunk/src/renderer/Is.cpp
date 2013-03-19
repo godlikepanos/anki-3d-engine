@@ -318,7 +318,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 
 	// point light
 	lightPassProg.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/IsLpGeneric.glsl", pps.c_str()).c_str());
+		"shaders/IsLp.glsl", pps.c_str()).c_str());
 
 	//
 	// Create FBOs
