@@ -9,7 +9,7 @@
 		<shader>
 			<type>vertex</type>
 			<includes>
-				<include>shaders/MaterialVertexCommon.glsl</include>
+				<include>shaders/MsCommonVert.glsl</include>
 			</includes>
 		
 			<inputs>
@@ -39,8 +39,7 @@
 			<type>fragment</type>
 
 			<includes>
-				<include>shaders/MaterialFragmentVariables.glsl</include>
-				<include>shaders/MaterialFragmentFunctions.glsl</include>
+				<include>shaders/MsCommonFrag.glsl</include>
 			</includes>
 			
 			<inputs>

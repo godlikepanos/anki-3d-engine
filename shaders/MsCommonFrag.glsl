@@ -1,8 +1,42 @@
-/// @file 
-/// The file contains common functions for fragment operations
+#pragma anki include "shaders/CommonFrag.glsl"
+
+//==============================================================================
+// Variables                                                                   =
+//==============================================================================
+
+/// @name Varyings
+/// @{
+#define vTexCoords_DEFINED
+in vec2 vTexCoords;
+
+#if defined(PASS_COLOR)
+in vec3 vNormal;
+#	define vNormal_DEFINED
+in vec3 vTangent;
+#	define vTangent_DEFINED
+in float vTangentW;
+#	define vTangentW_DEFINED
+in vec3 vVertPosViewSpace;
+#	define vVertPosViewSpace_DEFINED
+flat in float vSpecularComponent;
+#	define vSpecularComponent_DEFINED
+#endif
+/// @}
+
+/// @name Fragment out
+/// @{
+#if defined(PASS_COLOR)
+layout(location = 0) out uvec2 fMsFai0;
+#	define fMsFai0_DEFINED
+#endif
+/// @}
+
+//==============================================================================
+// Functions                                                                   =
+//==============================================================================
 
 #pragma anki include "shaders/Pack.glsl"
-#pragma anki include "shaders/MaterialCommonFunctions.glsl"
+#pragma anki include "shaders/MsBsCommon.glsl"
 
 /// @param[in] normal The fragment's normal in view space
 /// @param[in] tangent The tangent

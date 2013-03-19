@@ -1,14 +1,16 @@
+// Common code for all fragment shaders of BS
+#pragma anki include "shaders/CommonFrag.glsl"
+#pragma anki include "shaders/MsBsCommon.glsl"
+
 #define vTexCoords_DEFINED
 in vec2 vTexCoords;
 #define vInstanceId_DEFINED
-in flat uint vInstanceId;
+flat in uint vInstanceId;
 
 #if defined(PASS_COLOR)
 layout(location = 0) out vec4 fColor;
 #	define fColor_DEFINED
 #endif
-
-#pragma anki include "shaders/MaterialCommonFunctions.glsl"
 
 #if defined(PASS_COLOR)
 #	define texture_DEFINED
