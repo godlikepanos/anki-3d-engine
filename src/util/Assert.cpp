@@ -16,7 +16,9 @@ void akassert(bool expr, const char* exprTxt, const char* file, int line,
 			<< func << ") " << "Assertion failed: " << exprTxt << "\033[0m"
 			<< std::endl;
 
+#if ANKI_CPU_ARCH == ANKI_CPU_ARCH_INTEL
 		asm("int $3");
+#endif
 		abort();
 	}
 }

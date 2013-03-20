@@ -11,6 +11,12 @@ SET(ANKI_CPU "X86" CACHE STRING "The CPU arch (X86 or ARM)")
 MESSAGE("++ AnKi CPU: ${ANKI_CPU}")
 OPTION(ANKI_ENABLE_MATH_SIMD "Enable or not math SIMD optimizations" ON)
 
+IF(ANKI_CPU STREQUAL "X86")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4 ")
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4 ")
+ELSE()
+ENDIF()
+
 IF(ANKI_ENABLE_MATH_SIMD)
 	IF(ANKI_CPU STREQUAL "X86")
 		SET(ANKI_MATH_SIMD "SSE")
@@ -81,7 +87,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -static-libstdc++")
 # Build type
 IF(CMAKE_BUILD_TYPE STREQUAL Debug)
 ELSE()
-	SET(FLAGS " -ffast-math -march=native ")
+	SET(FLAGS " -ffast-math ")
 
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS}")
 	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS}")
@@ -171,9 +177,9 @@ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE
 ADD_DEFINITIONS("-Dthread_local=__thread")
 
 #
-# AnKi compiler flags
+# AnKi compiler flags (Mainly warnings)
 #
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic-errors -pedantic -ansi -Wall -W -Wextra -Wwrite-strings -Wno-unused -Wundef -Wunused-variable -Werror -msse4 -std=c++11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic-errors -pedantic -ansi -Wall -W -Wextra -Wwrite-strings -Wno-unused -Wundef -Wunused-variable -Werror -std=c++11")
 
 #
 # Include & lib directories

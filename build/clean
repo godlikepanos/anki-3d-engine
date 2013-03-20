@@ -1,2 +1,2 @@
 #!/bin/bash
-ls | xargs -I % echo % | grep -v clean | grep -v genmakefiledbg | grep -v genmakefilevithar | xargs -I % rm -rf %
+ls | xargs -I % echo % | grep -v clean | grep -v genmakefiledbg | grep -v genmakefilemali | grep -v genmakefilemalimodel | xargs -I % rm -rf %
