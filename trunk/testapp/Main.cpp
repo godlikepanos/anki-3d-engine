@@ -480,6 +480,8 @@ void mainLoop()
 		}
 #endif
 		Timestamp::increaseTimestamp();
+
+		std::cout << "frame ends" << std::endl;
 	}
 
 #if 0
@@ -566,6 +568,8 @@ void initSubsystems(int argc, char* argv[])
 int main(int argc, char* argv[])
 {
 	int exitCode;
+
+	std::cout << sizeof(Spatial) << std::endl;
 
 	try
 	{

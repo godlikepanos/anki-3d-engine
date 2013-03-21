@@ -1,4 +1,3 @@
-#include <boost/lexical_cast.hpp>
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/scene/Camera.h"

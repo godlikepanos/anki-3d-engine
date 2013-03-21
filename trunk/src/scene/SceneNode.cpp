@@ -8,7 +8,7 @@ namespace anki {
 
 //==============================================================================
 SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
-	: name(name_, scene_->getAllocator()), scene(scene_)
+	: scene(scene_), name(name_, scene_->getAllocator())
 {
 	name.shrink_to_fit(); // Do that first
 	scene->registerNode(this);

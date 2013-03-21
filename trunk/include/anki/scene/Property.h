@@ -11,7 +11,6 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/collision/Collision.h"
 #include "anki/util/ConstCharPtrHashMap.h"
-#include <boost/ptr_container/ptr_vector.hpp>
 
 namespace anki {
 
@@ -316,7 +315,7 @@ private:
 class PropertyMap
 {
 public:
-	typedef boost::ptr_vector<PropertyBase> Container;
+	typedef Vector<PropertyBase*> Container;
 	typedef ConstCharPtrHashMap<PropertyBase*>::Type NameToPropertyMap;
 
 	/// Add new property to the map. The map gets the ownership of this
