@@ -179,11 +179,11 @@ protected:
 	} spatialProtected;
 
 private:
-	U32 timestamp = Timestamp::getTimestamp();
 	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
 	Aabb aabb; ///< A faster shape
-	Vec3 origin; ///< Cached value
 	std::bitset<256> tilerBitset;
+	Vec3 origin; ///< Cached value
+	U32 timestamp = Timestamp::getTimestamp();
 };
 /// @}
 
