@@ -144,9 +144,13 @@ void App::printAppInfo()
 #else
 	msg << "Debug";
 #endif
-	msg << " build, ";
+	msg << " build,";
 
-	msg << "build date " __DATE__ ", " << "rev " << ANKI_REVISION;
+	msg << " " << ANKI_CPU_ARCH_STR;
+	msg << " " << ANKI_GL_STR;
+	msg << " " << ANKI_WINDOW_BACKEND_STR;
+
+	msg << " build date " __DATE__ ", " << "rev " << ANKI_REVISION;
 
 	ANKI_LOGI(msg.str());
 }

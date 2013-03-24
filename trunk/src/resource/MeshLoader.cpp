@@ -2,16 +2,42 @@
 #include "anki/util/BinaryStream.h"
 #include <fstream>
 #include <cstring>
+#include <unordered_map>
 
 namespace anki {
 
-std::string lala;
+//==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+/// The hash functor
+struct Hasher
+{
+	size_t operator()(const Vec3& pos) const
+	{
+		F32 sum = pos.x() * 100.0 + pos.y() * 10.0 + pos.z();
+		size_t hash = 0;
+		memcpy(&hash, &sum, sizeof(F32));
+		return hash;
+	}
+};
+
+/// The value of the hash map
+struct MapValue
+{
+	U8 indicesCount = 0;
+	Array<U32, 16> indices;
+};
+
+typedef std::unordered_map<Vec3, MapValue, Hasher> FixNormalsMap;
+
+//==============================================================================
+// MeshLoader                                                                  =
+//==============================================================================
 
 //==============================================================================
 void MeshLoader::load(const char* filename)
 {
-	lala = filename;
-
 	// Try
 	try
 	{
@@ -274,35 +300,58 @@ void MeshLoader::createVertTangents()
 //==============================================================================
 void MeshLoader::fixNormals()
 {
-	const F32 positionsDistanceThresh = getEpsilon<F32>() * getEpsilon<F32>();
+	FixNormalsMap map;
 
+	// For all verts
 	for(U i = 1; i < vertCoords.size(); i++)
 	{
-		const Vec3& crntPos = vertCoords[i];
-		Vec3& crntNormal = vertNormals[i];
+		const Vec3& pos = vertCoords[i];
+		Vec3& norm = vertNormals[i];
 
-		// Check the previous
-		for(U j = 0; j < i; j++)
+		// Find pos
+		FixNormalsMap::iterator it = map.find(pos);
+
+		// Check if found
+		if(it == map.end())
 		{
-			const Vec3& otherPos = vertCoords[j];
-			Vec3& otherNormal = vertNormals[j];
+			// Not found
 
-			F32 distanceSq = crntPos.getDistanceSquared(otherPos);
+			MapValue val;
+			val.indices[0] = i;
+			val.indicesCount = 1;
+			map[pos] = val;
+		}
+		else
+		{
+			// Found
 
-			if(distanceSq <= positionsDistanceThresh)
+			MapValue& mapVal = it->second;
+			ANKI_ASSERT(mapVal.indicesCount > 0);
+
+			// Search the verts with the same position
+			for(U j = 0; j < mapVal.indicesCount; j++)
 			{
-				F32 dot = crntNormal.dot(otherNormal);
+				const Vec3& posB = vertCoords[mapVal.indices[j]];
+				Vec3& normB = vertNormals[mapVal.indices[j]];
+
+				ANKI_ASSERT(posB == pos);
+				(void)posB;
+
+				F32 dot = norm.dot(normB);
 				F32 ang = acos(dot);
 
 				if(ang <= NORMALS_ANGLE_MERGE)
 				{
-					Vec3 newNormal = (crntNormal + otherNormal) * 0.5;
+					Vec3 newNormal = (norm + normB) * 0.5;
 					newNormal.normalize();
 
-					crntNormal = newNormal;
-					otherNormal = newNormal;
+					norm = newNormal;
+					normB = newNormal;
 				}
 			}
+
+			// Update the map
+			mapVal.indices[mapVal.indicesCount++] = i;
 		}
 	}
 }
