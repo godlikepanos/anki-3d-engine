@@ -16,6 +16,18 @@ in vec2 vTexCoords;
 
 layout(location = 0) out vec3 fColor;
 
+const vec2 TEX_OFFSET = vec2(1.0 / FBO_WIDTH, 1.0 / FBO_HEIGHT);
+
+vec2 KERNEL[8] = vec2[](
+	vec2(TEX_OFFSET.x, TEX_OFFSET.y),
+	vec2(0.0, TEX_OFFSET.y),
+	vec2(-TEX_OFFSET.x, TEX_OFFSET.y),
+	vec2(-TEX_OFFSET.x, 0.0),
+	vec2(-TEX_OFFSET.x, -TEX_OFFSET.y),
+	vec2(0.0, -TEX_OFFSET.y),
+	vec2(TEX_OFFSET.x, -TEX_OFFSET.y),
+	vec2(TEX_OFFSET.x, 0.0));
+
 //==============================================================================
 vec3 grayScale(in vec3 col)
 {
@@ -45,9 +57,44 @@ vec3 gammaCorrectionRgb(in vec3 gamma, in vec3 col)
 }
 
 //==============================================================================
+vec3 sharpen(in sampler2D tex, in vec2 texCoords)
+{
+	const vec2 TEX_OFFSET = vec2(1.0 / FBO_WIDTH, 1.0 / FBO_HEIGHT);
+
+	const float sharpenFactor = 0.25;
+
+	vec3 col = texture(tex, texCoords).rgb;
+
+	vec3 col2 = texture(tex, texCoords + KERNEL[0]).rgb;
+	for(int i = 1; i < 8; i++)
+	{
+		col2 += texture(tex, texCoords + KERNEL[i]).rgb;
+	}
+
+	return col * (9.0 * sharpenFactor + 1.0 - sharpenFactor) 
+		- sharpenFactor * col2;
+}
+
+//==============================================================================
+vec3 erosion(in sampler2D tex, in vec2 texCoords)
+{
+    vec3 minValue = texture(tex, texCoords).rgb;
+
+    for (int i = 0; i < 8; i++)
+    {
+        vec3 tmpCol = texture(tex, texCoords + KERNEL[i]).rgb;
+        minValue = min(tmpCol, minValue);
+    }
+
+    return minValue;
+}
+
+//==============================================================================
 void main(void)
 {
-	fColor = texture(isFai, vTexCoords).rgb;
+	fColor = sharpen(isFai, vTexCoords);
+	//fColor = erosion(isFai, vTexCoords);
+	//fColor = texture(isFai, vTexCoords).rgb;
 
 #if defined(HDR_ENABLED)
 	vec3 hdr = texture(ppsHdrFai, vTexCoords).rgb;
@@ -59,11 +106,6 @@ void main(void)
 	fColor *= ssao;
 #endif
 
-	/*float fog = 1.0 - readFromTextureAndLinearizeDepth(msDepthFai, 
-		vTexCoords, 0.1, 10.0);
-	fColor *= ;*/
-
-	//fColor = BlendHardLight(vec3(0.6, 0.62, 0.4), fColor);
 	fColor = gammaCorrectionRgb(vec3(0.9, 0.92, 0.75), fColor);
 
 #if 0

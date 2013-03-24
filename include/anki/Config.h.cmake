@@ -14,19 +14,39 @@
 #define ANKI_WINDOW_BACKEND_EGLX11 2
 #define ANKI_WINDOW_BACKEND_EGLFBDEV 3
 #define ANKI_WINDOW_BACKEND ANKI_WINDOW_BACKEND_${ANKI_WINDOW_BACKEND}
+#define ANKI_WINDOW_BACKEND_STR "ANKI_WINDOW_BACKEND_${ANKI_WINDOW_BACKEND}"
 
 #define ANKI_GL_DESKTOP 1
 #define ANKI_GL_ES 2
 #if ANKI_WINDOW_BACKEND == ANKI_WINDOW_BACKEND_GLXX11
 #	define ANKI_GL ANKI_GL_DESKTOP
+#	define ANKI_GL_STR "ANKI_GL_DESKTOP"
 #else
 #	define ANKI_GL ANKI_GL_ES
+#	define ANKI_GL_STR "ANKI_GL_ES"
 #endif
 
 #if defined(NDEBUG)
 #	define ANKI_DEBUG !NDEBUG
 #else
 #	define ANKI_DEBUG 1
+#endif
+
+#define ANKI_CPU_ARCH_INTEL 1
+#define ANKI_CPU_ARCH_ARM 2
+
+#if defined(__GNUC__)
+#	if defined(__arm__)
+#		define ANKI_CPU_ARCH ANKI_CPU_ARCH_ARM
+#		define ANKI_CPU_ARCH_STR "ANKI_CPU_ARCH_ARM"
+#	elif defined(__i386__) || defined(__amd64__)
+#		define ANKI_CPU_ARCH ANKI_CPU_ARCH_INTEL
+#		define ANKI_CPU_ARCH_STR "ANKI_CPU_ARCH_INTEL"
+#	else
+#		error "Unknown CPU arch"
+#	endif
+#else
+#	error "Unsupported compiler"
 #endif
 
 #define ANKI_FILE __FILE__
@@ -40,21 +60,6 @@
 #	define ANKI_LIKELY(x) ((x) == 1)
 #	define ANKI_UNLIKELY(x) ((x) == 1)
 #	define ANKI_RESTRICT
-#endif
-
-#define ANKI_CPU_ARCH_INTEL 1
-#define ANKI_CPU_ARCH_ARM 2
-
-#if defined(__GNUC__)
-#	if defined(__arm__)
-#		define ANKI_CPU_ARCH ANKI_CPU_ARCH_ARM
-#	elif defined(__i386__) || defined(__amd64__)
-#		define ANKI_CPU_ARCH ANKI_CPU_ARCH_INTEL
-#	else
-#		error "Unknown CPU arch"
-#	endif
-#else
-#	error "Unsupported compiler"
 #endif
 
 #endif

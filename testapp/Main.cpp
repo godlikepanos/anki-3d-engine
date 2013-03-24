@@ -466,7 +466,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -480,8 +480,6 @@ void mainLoop()
 		}
 #endif
 		Timestamp::increaseTimestamp();
-
-		std::cout << "frame ends" << std::endl;
 	}
 
 #if 0

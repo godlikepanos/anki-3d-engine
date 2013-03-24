@@ -47,6 +47,9 @@ void Pps::initInternal(const RendererInitializer& initializer)
 		pps += "#define HDR_ENABLED\n";
 	}
 
+	pps += "#define FBO_WIDTH " + std::to_string(r->getWidth()) + "\n";
+	pps += "#define FBO_HEIGHT " + std::to_string(r->getHeight()) + "\n";
+
 	prog.load(ShaderProgramResource::createSrcCodeToCache(
 		"shaders/Pps.glsl", pps.c_str()).c_str());
 }
