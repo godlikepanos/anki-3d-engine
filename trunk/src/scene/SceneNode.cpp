@@ -8,7 +8,7 @@ namespace anki {
 
 //==============================================================================
 SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
-	: scene(scene_), name(name_, scene_->getAllocator())
+	: SceneObject(nullptr, scene_), name(name_, scene_->getAllocator())
 {
 	name.shrink_to_fit(); // Do that first
 	scene->registerNode(this);
@@ -26,20 +26,6 @@ SceneNode::~SceneNode()
 	{
 		getSpatial()->octreeNode->removeSceneNode(this);
 	}
-}
-
-//==============================================================================
-SceneAllocator<U8> SceneNode::getSceneAllocator() const
-{
-	ANKI_ASSERT(scene);
-	return scene->getAllocator();
-}
-
-//==============================================================================
-SceneAllocator<U8> SceneNode::getSceneFrameAllocator() const
-{
-	ANKI_ASSERT(scene);
-	return scene->getFrameAllocator();
 }
 
 //==============================================================================

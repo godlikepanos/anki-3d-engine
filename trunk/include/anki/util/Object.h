@@ -15,8 +15,19 @@ namespace anki {
 /// @addtogroup patterns
 /// @{
 
+/// The default object deleter. It does nothing
+template<typename T>
+struct ObjectDeleter
+{
+	void operator()(T*)
+	{
+		// Do nothing
+	}
+};
+
 /// A hierarchical object
-template<typename T, typename Alloc = Allocator<T>>
+template<typename T, typename Alloc = Allocator<T>,
+	typename Deleter = ObjectDeleter<T>>
 class Object: public NonCopyable
 {
 public:
@@ -24,8 +35,9 @@ public:
 	typedef Vector<Value*, Alloc> Container;
 
 	/// Calls addChild if parent is not nullptr
-	Object(Value* parent_, const Alloc& alloc = Alloc())
-		: parent(nullptr), childs(alloc)
+	Object(Value* parent_, const Alloc& alloc = Alloc(),
+		const Deleter& del = Deleter())
+		: parent(nullptr), children(alloc), deleter(del)
 	{
 		if(parent_ != nullptr)
 		{
@@ -41,10 +53,14 @@ public:
 			parent->removeChild(getSelf());
 		}
 
+		Alloc alloc = children.get_allocator();
+
 		// Remove all children (fast version)
-		for(Value* child : childs)
+		for(Value* child : children)
 		{
 			child->parent = nullptr;
+
+			deleter(child);
 		}
 	}
 
@@ -61,24 +77,29 @@ public:
 
 	typename Container::const_iterator getChildrenBegin() const
 	{
-		return childs.begin();
+		return children.begin();
 	}
 	typename Container::iterator getChildrenBegin()
 	{
-		return childs.begin();
+		return children.begin();
 	}
 	typename Container::const_iterator getChildrenEnd() const
 	{
-		return childs.end();
+		return children.end();
 	}
 	typename Container::iterator getChildrenEnd()
 	{
-		return childs.end();
+		return children.end();
 	}
 
 	PtrSize getChildrenSize() const
 	{
-		return childs.size();
+		return children.size();
+	}
+
+	Alloc getAllocator() const
+	{
+		return children.get_allocator();
 	}
 	/// @}
 
@@ -88,12 +109,12 @@ public:
 		ANKI_ASSERT(child != nullptr && "Null arg");
 		ANKI_ASSERT(child != getSelf() && "Cannot put itself");
 		ANKI_ASSERT(child->parent == nullptr && "Child already has parent");
-		ANKI_ASSERT(child->findChild(getSelf()) == child->childs.end() 
+		ANKI_ASSERT(child->findChild(getSelf()) == child->children.end()
 			&& "Cyclic add");
-		ANKI_ASSERT(findChild(child) == childs.end() && "Already a child");
+		ANKI_ASSERT(findChild(child) == children.end() && "Already a child");
 
 		child->parent = getSelf();
-		childs.push_back(child);
+		children.push_back(child);
 	}
 
 	/// Remove a child
@@ -104,9 +125,9 @@ public:
 
 		typename Container::iterator it = findChild(child);
 
-		ANKI_ASSERT(it != childs.end() && "Child not found");
+		ANKI_ASSERT(it != children.end() && "Child not found");
 
-		childs.erase(it);
+		children.erase(it);
 		child->parent = nullptr;
 	}
 
@@ -116,7 +137,7 @@ public:
 	{
 		vis(*getSelf());
 
-		for(Value* c : childs)
+		for(Value* c : children)
 		{
 			c->visitTreeDepth(vis);
 		}
@@ -124,7 +145,8 @@ public:
 
 private:
 	Value* parent; ///< May be nullptr
-	Container childs;
+	Container children;
+	Deleter deleter;
 
 	/// Cast the Object to the given type
 	Value* getSelf()
@@ -136,46 +158,8 @@ private:
 	typename Container::iterator findChild(Value* child)
 	{
 		typename Container::iterator it =
-			std::find(childs.begin(), childs.end(), child);
+			std::find(children.begin(), children.end(), child);
 		return it;
-	}
-};
-
-/// XXX
-template<typename T, typename Alloc = Allocator<T>>
-class CleanupObject: public Object<T, Alloc>
-{
-public:
-	typedef T Value;
-	typedef Object<Value, Alloc> Base;
-
-	/// @see Object::Object
-	CleanupObject(Value* parent_, const Alloc& alloc = Alloc())
-		: Base(parent_, alloc)
-	{}
-
-	virtual ~CleanupObject()
-	{
-		if(Base::parent != nullptr)
-		{
-			Base::parent->removeChild(Base::getSelf());
-			Base::parent = nullptr;
-		}
-
-		Alloc alloc = Base::childs.get_allocator();
-
-		// Delete all children
-		for(Value* child : Base::childs)
-		{
-			// Set parent to null to prevent the child from removing itself
-			child->parent = nullptr;
-
-			// Destroy
-			alloc.destroy(child);
-			alloc.deallocate(child, 1);
-		}
-
-		Base::childs.clear();
 	}
 };
 
