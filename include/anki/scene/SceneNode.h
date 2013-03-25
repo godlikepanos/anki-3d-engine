@@ -3,6 +3,7 @@
 
 #include "anki/scene/Property.h"
 #include "anki/scene/Common.h"
+#include "anki/scene/SceneObject.h"
 #include <string>
 
 namespace anki {
@@ -21,7 +22,7 @@ class RigidBody;
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode: public PropertyMap
+class SceneNode: public SceneObject, public PropertyMap
 {
 public:
 	/// @name Constructors/Destructor
@@ -44,15 +45,6 @@ public:
 	{
 		return name.c_str();
 	}
-
-	SceneGraph& getSceneGraph()
-	{
-		return *scene;
-	}
-
-	SceneAllocator<U8> getSceneAllocator() const;
-
-	SceneAllocator<U8> getSceneFrameAllocator() const;
 	/// @}
 
 	/// @name Accessors of components
