@@ -64,7 +64,7 @@ inline Quat::Quat(const Quat& b)
 	w() = b.w();
 }
 
-// mat3
+// Mat3
 inline Quat::Quat(const Mat3& m3)
 {
 	F32 trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + 1.0;
@@ -391,8 +391,8 @@ inline const Quat& Quat::getIdentity()
 // print
 inline std::ostream& operator<<(std::ostream& s, const Quat& q)
 {
-	s << q.w() << ' ' << q.x() << ' ' << q.y() << ' ' << q.z();
+	s << q.x() << ' ' << q.y() << ' ' << q.z() << ' ' << q.w();
 	return s;
 }
 
-} // end namespace
+} // end namespace anki

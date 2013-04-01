@@ -3,6 +3,7 @@
 
 #include "anki/scene/Common.h"
 #include "anki/util/Bitset.h"
+#include "anki/math/Math.h"
 
 namespace anki {
 
@@ -54,29 +55,61 @@ public:
 	/// @}
 
 	/// This method should be implemented by the derived classes
-	/// @param[in] prevUpdateTime The time of the previous update (sec)
-	/// @param[in] crntTime The current time (sec)
+	/// @param prevUpdateTime The time of the previous update (sec)
+	/// @param crntTime The current time (sec)
 	virtual void update(F32 prevUpdateTime, F32 crntTime) = 0;
+
+	/// This is called when the event is killed
+	/// @param prevUpdateTime The time of the previous update (sec)
+	/// @param crntTime The current time (sec)
+	/// @return Return false if you don't want to be killed
+	virtual Bool onKilled(F32 prevUpdateTime, F32 crntTime)
+	{
+		return true;
+	}
 
 protected:
 	/// Linear interpolation between values
 	/// @param[in] from Starting value
 	/// @param[in] to Ending value
-	/// @param[in] delta The percentage from the from "from" value. Values
-	///                  from [0.0, 1.0]
+	/// @param[in] u The percentage from the from "from" value. Values
+	///              from [0.0, 1.0]
 	template<typename Type>
-	static Type interpolate(const Type& from, const Type& to, F32 delta)
+	static Type interpolate(const Type& from, const Type& to, F32 u)
 	{
-		ANKI_ASSERT(delta >= 0 && delta <= 1.0);
-		return from * (1.0 - delta) + to * delta;
+		//ANKI_ASSERT(u >= 0 && u <= 1.0);
+		return from * (1.0 - u) + to * u;
 	}
 
-	/// Return the delta between current time and when the event started
+	template<typename Type>
+	static Type cosInterpolate(const Type& from, const Type& to, F32 u)
+	{
+		F32 u2 = (1.0 - cos(u * getPi<F32>())) / 2.0;
+		return from * (1.0 - u2) + to * u2;
+	}
+
+	template<typename Type>
+	static Type cubicInterpolate(
+		const Type& a, const Type& b, const Type& c, 
+		const Type& d, F32 u)
+	{
+		F32 u2 = u * u;
+		Type a0 = d - c - a + b;
+		Type a1 = a - b - a0;
+		Type a2 = c - a;
+		Type a3 = b;
+
+		return(a0 * u * u2 + a1 * u2 + a2 * u + a3);
+	}
+
+	/// Return the u between current time and when the event started
 	/// @return A number [0.0, 1.0]
 	F32 getDelta(F32 crntTime) const;
 
 private:
-	F32 startTime; ///< The time the event will start. Eg 23:00
+	/// The time the event will start. Eg 23:00. If it's < 0 then start the 
+	/// event now
+	F32 startTime;
 	F32 duration; ///< The duration of the event
 	EventManager* manager = nullptr; ///< Keep it here to access allocators etc
 };

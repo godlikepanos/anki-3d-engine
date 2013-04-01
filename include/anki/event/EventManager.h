@@ -11,12 +11,15 @@ namespace anki {
 
 // Forward
 class SceneGraph;
+class Path;
+class SceneNode;
 
 class SceneAmbientColorEvent;
 class LightEvent;
 class LightEventData;
 class MovableEvent;
 class MovableEventData;
+class FollowPathEvent;
 
 /// This manager creates the events ands keeps tracks of them
 class EventManager
@@ -44,6 +47,10 @@ public:
 
 	std::shared_ptr<Event> newMovableEvent(
 		F32 startTime, F32 duration, const MovableEventData& data);
+
+	std::shared_ptr<Event> newFollowPathEvent(
+		F32 startTime, F32 duration,
+		SceneNode* movableSceneNode, Path* path, F32 distPerTime);
 	/// @}
 
 	/// Update

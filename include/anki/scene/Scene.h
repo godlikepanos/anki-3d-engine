@@ -8,5 +8,6 @@
 #include "anki/scene/ParticleEmitter.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
+#include "anki/scene/Path.h"
 
 #endif

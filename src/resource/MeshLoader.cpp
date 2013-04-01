@@ -53,7 +53,7 @@ void MeshLoader::load(const char* filename)
 
 		// Magic word
 		char magic[8];
-		bs.read(magic, 8);
+		bs.read(magic, sizeof(magic));
 		if(bs.fail() || memcmp(magic, "ANKIMESH", 8))
 		{
 			throw ANKI_EXCEPTION("Incorrect magic word");
@@ -69,20 +69,20 @@ void MeshLoader::load(const char* filename)
 		// Vert coords
 		for(Vec3& vertCoord : vertCoords)
 		{
-			for(uint j = 0; j < 3; j++)
+			for(U j = 0; j < 3; j++)
 			{
 				vertCoord[j] = bs.readFloat();
 			}
 		}
 
 		// Faces num
-		uint facesNum = bs.readUint();
+		U facesNum = bs.readUint();
 		tris.resize(facesNum);
 
 		// Faces IDs
 		for(Triangle& tri : tris)
 		{
-			for(uint j = 0; j < 3; j++)
+			for(U j = 0; j < 3; j++)
 			{
 				tri.vertIds[j] = bs.readUint();
 
@@ -95,7 +95,7 @@ void MeshLoader::load(const char* filename)
 		}
 
 		// Tex coords num
-		uint texCoordsNum = bs.readUint();
+		U texCoordsNum = bs.readUint();
 		texCoords.resize(texCoordsNum);
 
 		// Tex coords
@@ -108,7 +108,7 @@ void MeshLoader::load(const char* filename)
 		}
 
 		// Vert weights num
-		uint vertWeightsNum = bs.readUint();
+		U vertWeightsNum = bs.readUint();
 		vertWeights.resize(vertWeightsNum);
 
 		// Vert weights
@@ -187,11 +187,14 @@ void MeshLoader::doPostLoad()
 void MeshLoader::createVertIndeces()
 {
 	vertIndices.resize(tris.size() * 3);
-	for(uint i = 0; i < tris.size(); i++)
+	U j = 0;
+	for(U i = 0; i < tris.size(); ++i)
 	{
-		vertIndices[i * 3 + 0] = tris[i].vertIds[0];
-		vertIndices[i * 3 + 1] = tris[i].vertIds[1];
-		vertIndices[i * 3 + 2] = tris[i].vertIds[2];
+		vertIndices[j + 0] = tris[i].vertIds[0];
+		vertIndices[j + 1] = tris[i].vertIds[1];
+		vertIndices[j + 2] = tris[i].vertIds[2];
+
+		j += 3;
 	}
 }
 
@@ -206,7 +209,14 @@ void MeshLoader::createFaceNormals()
 
 		tri.normal = (v1 - v0).cross(v2 - v0);
 
-		tri.normal.normalize();
+		if(tri.normal != Vec3(0.0))
+		{
+			tri.normal.normalize();
+		}
+		else
+		{
+			tri.normal = Vec3(1.0, 0.0, 0.0);
+		}
 	}
 }
 

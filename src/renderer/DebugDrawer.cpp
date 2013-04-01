@@ -2,13 +2,7 @@
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/physics/Converters.h"
 #include "anki/collision/Collision.h"
-#include "anki/scene/Frustumable.h"
-#include "anki/scene/Octree.h"
-#include "anki/scene/Sector.h"
-#include "anki/resource/Material.h"
-#include "anki/scene/Renderable.h"
-#include "anki/scene/Camera.h"
-#include "anki/scene/ModelNode.h"
+#include "anki/scene/Scene.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/renderer/Renderer.h"
 
@@ -483,7 +477,7 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		dbg->setModelMatrix(Mat4::getIdentity());
 	}
 
-	Frustumable* fr;
+	/*Frustumable* fr;
 	if((fr = node.getFrustumable()))
 	{
 		draw(*fr);
@@ -494,6 +488,12 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		&& sp->bitsEnabled(Spatial::SF_VISIBLE_CAMERA))
 	{
 		draw(*sp);
+	}*/
+
+	Path* path = node.getPath();
+	if(path)
+	{
+		drawPath(*path);
 	}
 }
 
@@ -590,6 +590,24 @@ void SceneDebugDrawer::draw(const Sector& sector)
 			portal->shape.accept(v);
 		}
 	}
+}
+
+//==============================================================================
+void SceneDebugDrawer::drawPath(const Path& path) const
+{
+	const U count = path.getPoints().size();
+
+	dbg->setColor(Vec3(1.0, 1.0, 0.0));
+
+	dbg->begin();
+	
+	for(U i = 0; i < count - 1; i++)
+	{
+		dbg->pushBackVertex(path.getPoints()[i].getPosition());
+		dbg->pushBackVertex(path.getPoints()[i + 1].getPosition());
+	}
+
+	dbg->end();
 }
 
 }  // end namespace anki
