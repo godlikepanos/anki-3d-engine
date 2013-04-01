@@ -17,6 +17,7 @@ class Frustumable;
 class Spatial;
 class Light;
 class RigidBody;
+class Path;
 
 /// @addtogroup Scene
 /// @{
@@ -102,6 +103,15 @@ public:
 	{
 		return sceneNodeProtected.rigidBody;
 	}
+
+	Path* getPath()
+	{
+		return sceneNodeProtected.path;
+	}
+	const Path* getPath() const
+	{
+		return sceneNodeProtected.path;
+	}
 	/// @}
 
 	/// This is called by the scene every frame after logic and before
@@ -128,10 +138,10 @@ protected:
 		Spatial* spatial = nullptr;
 		Light* light = nullptr;
 		RigidBody* rigidBody = nullptr;
+		Path* path = nullptr;
 	} sceneNodeProtected;
 
 private:
-	SceneGraph* scene = nullptr; ///< Keep it here for unregistering
 	SceneString name; ///< A unique name
 };
 /// @}

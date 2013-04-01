@@ -616,7 +616,7 @@ void Is::run()
 	Vec3 groundLightDir;
 	if(groundLightEnabled)
 	{
-		groundLightDir = cam->getViewMatrix().getColumn(1).xyz();
+		groundLightDir = -cam->getViewMatrix().getColumn(1).xyz();
 	}
 
 	// Write common block

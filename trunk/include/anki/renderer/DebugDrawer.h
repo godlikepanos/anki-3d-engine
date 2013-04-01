@@ -163,12 +163,12 @@ public:
 		: dbg(d)
 	{}
 
-	virtual ~SceneDebugDrawer()
+	~SceneDebugDrawer()
 	{}
 
 	void draw(SceneNode& node);
 
-	virtual void draw(const Octree& octree) const;
+	void draw(const Octree& octree) const;
 
 	void draw(const Sector& sector);
 
@@ -180,12 +180,14 @@ public:
 private:
 	DebugDrawer* dbg;
 
-	virtual void draw(Frustumable& fr) const;
+	void draw(Frustumable& fr) const;
 
-	virtual void draw(Spatial& sp) const;
+	void draw(Spatial& sp) const;
 
-	virtual void draw(const OctreeNode& octnode,
+	void draw(const OctreeNode& octnode,
 		U32 depth, const Octree& octree) const;
+
+	void drawPath(const Path& path) const;
 };
 
 } // end namespace anki

@@ -4,6 +4,7 @@
 #include "anki/event/SceneAmbientColorEvent.h"
 #include "anki/event/LightEvent.h"
 #include "anki/event/MovableEvent.h"
+#include "anki/event/FollowPathEvent.h"
 
 namespace anki {
 
@@ -72,6 +73,12 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 	{
 		std::shared_ptr<Event>& pevent = *it;
 
+		// Audjust starting time
+		if(pevent->startTime < 0.0)
+		{
+			pevent->startTime = crntTime_;
+		}
+
 		// If not dead update it
 		if(!pevent->isDead(crntTime))
 		{
@@ -89,7 +96,10 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 			}
 			else
 			{
-				forDeletion.push_back(it);
+				if((*it)->onKilled(prevUpdateTime, crntTime))
+				{
+					forDeletion.push_back(it);
+				}
 			}
 		}
 	}
@@ -123,6 +133,15 @@ std::shared_ptr<Event> EventManager::newMovableEvent(
 {
 	return registerEvent(new MovableEvent(startTime, duration, this,
 		Event::EF_NONE, data));
+}
+
+//==============================================================================
+std::shared_ptr<Event> EventManager::newFollowPathEvent(
+	F32 startTime, F32 duration,
+	SceneNode* movableSceneNode, Path* path, F32 distPerTime)
+{
+	return registerEvent(new FollowPathEvent(startTime, duration, this,
+		Event::EF_NONE, movableSceneNode, path, distPerTime));
 }
 
 } // end namespace anki

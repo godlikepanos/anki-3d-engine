@@ -279,6 +279,15 @@ void init()
 
 	sgroup.createNewPortal(sectorA, sectorC, Obb(Vec3(-1.1, 2.0, -11.0),
 		Mat3::getIdentity(), Vec3(1.3, 1.8, 0.5)));
+
+	// Path
+	Path* path = new Path("todo", "path", &scene, Movable::MF_NONE, nullptr);
+	(void)path;
+
+	const F32 distPerSec = 2.0;
+	scene.getEventManager().newFollowPathEvent(-1.0, 
+		path->getDistance() / distPerSec, 
+		cam, path, distPerSec);
 }
 
 //==============================================================================
@@ -354,14 +363,6 @@ void mainLoopExtra()
 		static_cast<PointLight*>(l)->setRadius(10.0);
 	}
 
-	if(in.getKey(KC_P) == 1)
-	{
-		//MainRendererSingleton::get().getPps().getHdr().setExposure(20);
-		//in.hideCursor(true);
-		MainRendererSingleton::get().getDbg().setDepthTestEnabled(
-			!MainRendererSingleton::get().getDbg().getDepthTestEnabled());
-	}
-
 	if(in.getKey(KC_F1) == 1)
 	{
 		MainRendererSingleton::get().getDbg().setEnabled(
@@ -413,9 +414,11 @@ void mainLoopExtra()
 	{
 		mover->scale(-scale);
 	}
-	if(in.getKey(KC_P))
+	if(in.getKey(KC_P) == 1)
 	{
-		ANKI_LOGI("pos: " << mover->getWorldTransform().getOrigin());
+		std::cout << "{Vec3(" << mover->getWorldTransform().getOrigin()
+			<< "), Quat(" << Quat(mover->getWorldTransform().getRotation())
+			<< ")}," << std::endl;
 	}
 
 
@@ -531,7 +534,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.ms.ez.enabled = true;
 	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
-	initializer.is.groundLightEnabled = false;
+	initializer.is.groundLightEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = false;
 	initializer.is.sm.resolution = 512;

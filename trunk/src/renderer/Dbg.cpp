@@ -58,8 +58,8 @@ void Dbg::run()
 		it != scene.getSceneNodesEnd(); it++)
 	{
 		SceneNode* node = *it;
-		Spatial* sp = node->getSpatial();
-		if(bitsEnabled(DF_SPATIAL) && sp)
+		/*Spatial* sp = node->getSpatial();
+		if(bitsEnabled(DF_SPATIAL) && sp)*/
 		{
 			sceneDrawer->draw(*node);
 		}
