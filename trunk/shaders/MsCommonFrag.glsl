@@ -143,7 +143,7 @@ vec3 readRgbFromTexture(in sampler2D tex, in vec2 texCoords)
 #if defined(PASS_COLOR)
 #	define writeFais_DEFINED
 void writeFais(
-	in vec3 diffCol, // Normalized
+	in vec3 diffCol, // from 0 to 1
 	in vec3 normal, 
 	in float specularComponent, // Streangth and shininess
 	in float blurring)

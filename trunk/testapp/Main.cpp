@@ -287,7 +287,7 @@ void init()
 	const F32 distPerSec = 2.0;
 	scene.getEventManager().newFollowPathEvent(-1.0, 
 		path->getDistance() / distPerSec, 
-		cam, path, distPerSec);
+		horse, path, distPerSec);
 }
 
 //==============================================================================
@@ -534,7 +534,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.ms.ez.enabled = true;
 	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
-	initializer.is.groundLightEnabled = true;
+	initializer.is.groundLightEnabled = false;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = false;
 	initializer.is.sm.resolution = 512;
@@ -569,8 +569,6 @@ void initSubsystems(int argc, char* argv[])
 int main(int argc, char* argv[])
 {
 	int exitCode;
-
-	std::cout << sizeof(Spatial) << std::endl;
 
 	try
 	{

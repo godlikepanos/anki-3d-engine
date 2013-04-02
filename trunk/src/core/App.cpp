@@ -86,8 +86,9 @@ void App::parseCommandLineArgs(int argc, char* argv[])
 //==============================================================================
 void App::init(int argc, char* argv[])
 {
-	// Install signal handler
+	// Install signal handlers
 	signal(SIGSEGV, handler);
+	signal(SIGBUS, handler);
 
 	// send output to handleMessageHanlderMsgs
 	ANKI_CONNECT(&LoggerSingleton::get(), messageRecieved, 

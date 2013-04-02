@@ -67,14 +67,8 @@ void MainRenderer::initGl()
 	GlStateSingleton::get().setDepthMaskEnabled(true);
 	glDepthFunc(GL_LESS);
 
-	try
-	{
-		ANKI_CHECK_GL_ERROR();
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("OpenGL initialization failed") << e;
-	}
+	// Check for error
+	ANKI_CHECK_GL_ERROR();
 }
 
 //==============================================================================
@@ -110,11 +104,8 @@ void MainRenderer::render(SceneGraph& scene)
 		drawQuad();
 	}
 
-	GLenum glerr = glGetError();
-	if(glerr != GL_NO_ERROR)
-	{
-		throw ANKI_EXCEPTION("GL error");
-	}
+	// Check for error
+	ANKI_CHECK_GL_ERROR();
 }
 
 //==============================================================================
@@ -144,24 +135,34 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	fs.write((char*)tgaHeaderUncompressed, sizeof(tgaHeaderUncompressed));
 	fs.write((char*)&header[0], sizeof(header));
 
-	// get the buffer
-	Vector<U8> buffer;
-	buffer.resize(getWidth() * getHeight() * 3);
+	// Create the buffers
+	U outBufferSize = getWidth() * getHeight() * 3;
+	Vector<U8> outBuffer;
+	outBuffer.resize(outBufferSize);
 
-	glReadPixels(0, 0, getWidth(), getHeight(), GL_RGB, GL_UNSIGNED_BYTE,
-		&buffer[0]);
+	U rgbaBufferSize = getWidth() * getHeight() * 4;
+	Vector<U8> rgbaBuffer;
+	rgbaBuffer.resize(rgbaBufferSize);
 
-	for(U i = 0; i < getWidth() * getHeight() * 3; i += 3)
+	// Read pixels
+	glReadPixels(0, 0, getWidth(), getHeight(), GL_RGBA, GL_UNSIGNED_BYTE,
+		&rgbaBuffer[0]);
+
+	U j = 0;
+	for(U i = 0; i < outBufferSize; i += 3)
 	{
-		U8 temp = buffer[i];
-		buffer[i] = buffer[i + 2];
-		buffer[i + 2] = temp;
+		outBuffer[i] = rgbaBuffer[j + 2];
+		outBuffer[i + 1] = rgbaBuffer[j + 1];
+		outBuffer[i + 2] = rgbaBuffer[j];
+
+		j += 4;
 	}
 
-	fs.write((char*)&buffer[0], getWidth() * getHeight() * 3);
+	fs.write((char*)&outBuffer[0], outBufferSize);
 
 	// end
 	fs.close();
+	ANKI_CHECK_GL_ERROR();
 }
 
 //==============================================================================

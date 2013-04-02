@@ -123,9 +123,6 @@ void GlState::sync()
 	// viewport
 	glGetIntegerv(GL_VIEWPORT, &viewport[0]);
 
-	// clear color
-	glGetFloatv(GL_COLOR_CLEAR_VALUE, &clearColor[0]);
-
 	// clear depth value
 	glGetFloatv(GL_DEPTH_CLEAR_VALUE, &clearDepthValue);
 
@@ -160,17 +157,7 @@ void GlState::setViewport(U32 x, U32 y, U32 w, U32 h)
 //==============================================================================
 void GlState::setClearColor(const Vec4& color)
 {
-#if ANKI_DEBUG
-	Vec4 real;
-	glGetFloatv(GL_COLOR_CLEAR_VALUE, &real[0]);
-	ANKI_ASSERT(real == clearColor);
-#endif
-
-	if(clearColor != color)
-	{
-		glClearColor(color.x(), color.y(), color.z(), color.w());
-		clearColor == color;
-	}
+	glClearColor(color.x(), color.y(), color.z(), color.w());
 }
 
 //==============================================================================

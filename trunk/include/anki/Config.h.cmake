@@ -62,4 +62,37 @@
 #	define ANKI_RESTRICT
 #endif
 
+// Workaround some GCC C++11 problems
+#if ${ANKI_GCC_TO_STRING_WORKAROUND}
+#	include <sstream>
+
+namespace std {
+
+template<typename T>
+std::string to_string(const T x)
+{
+	stringstream ss;
+	ss << x;
+	return ss.str();
+}
+
+inline float stof(const string& str)
+{
+	stringstream ss(str);
+	float f;
+	ss >> f;
+	return f;
+}
+
+inline int stoi(const string& str)
+{
+	stringstream ss(str);
+	int i;
+	ss >> i;
+	return i;
+}
+
+} // end namespace std
+#endif
+
 #endif

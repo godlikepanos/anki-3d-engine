@@ -95,7 +95,6 @@ private:
 	/// @{
 	Array<Bool, 7> flags;
 	Array<GLint, 4> viewport;
-	Vec4 clearColor;
 	GLfloat clearDepthValue;
 	GLint clearStencilValue;
 	Array<GLenum, 2> blendFuncs;

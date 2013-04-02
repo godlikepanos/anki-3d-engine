@@ -42,41 +42,24 @@ vec2 unpackSpecular(in float f)
 		- r * (16.0 * MAX_SPECULARITY / 15.0));
 }
 
-/// Pack a vec4 to float
-/// @node The components of v should be inside [0.0, 1.0]
-float pack4x8ToFloat(in vec4 v)
-{
-	const vec4 unshift = vec4(
-		1.0 / (256.0 * 256.0 * 256.0), 
-		1.0 / (256.0 * 256.0), 
-		1.0 / 256.0, 1.0);
-	return dot(v, unshift);
-}
-
-/// Unpack a float to vec4
-vec4 unpackFloatTo4x8(in float val) 
-{
-	const vec4 bitSh = vec4(
-		256.0 * 256.0 * 256.0, 
-		256.0* 256.0, 
-		256.0, 
-		1.0);
-	const vec4 bitMsk = vec4(0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);
-
-	vec4 result = fract(val * bitSh);
-	result -= result.xxyz * bitMsk;
-	return result;
-}
-
 #if GL_ES
 uint packUnorm4x8(in vec4 v)
 {
-	return floatBitsToUint(pack4x8ToFloat(v));
-}
+	vec4 value = clamp(v, 0.0, 1.0) * 255.0;
 
+	return uint(value.x) | (uint(value.y) << 8) | (uint(value.z) << 16) |
+		(uint(value.w) << 24);
+}
+ 
 vec4 unpackUnorm4x8(in uint u)
 {
-	return unpackFloatTo4x8(uintBitsToFloat(u));
-}
+	vec4 value;
 
+	value.x = float(u & 0xffU);
+	value.y = float((u >> 8) & 0xffU);
+	value.z = float((u >> 16) & 0xffU);
+	value.w = float((u >> 24) & 0xffU);
+
+	return value * (1.0 / 255.0);
+}
 #endif

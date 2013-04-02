@@ -501,58 +501,67 @@ void Is::lightPass()
 	//
 
 	// Map points
-	ShaderPointLight* lightsMappedBuff = 
-		(ShaderPointLight*)pointLightsUbo.map(
-		0, 
-		sizeof(ShaderPointLight) * visiblePointLightsCount,
-		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-
-	WritePointLightsUbo jobs[ThreadPool::MAX_THREADS];
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	if(visiblePointLightsCount > 0)
 	{
-		jobs[i].shaderLights = lightsMappedBuff;
-		jobs[i].visibleLights = &visiblePointLights[0];
-		jobs[i].visibleLightsCount = visiblePointLightsCount;
-		jobs[i].is = this;
+		ShaderPointLight* lightsMappedBuff = 
+			(ShaderPointLight*)pointLightsUbo.map(
+			0, 
+			sizeof(ShaderPointLight) * visiblePointLightsCount,
+			GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-		threadPool.assignNewJob(i, &jobs[i]);
+		WritePointLightsUbo jobs[ThreadPool::MAX_THREADS];
+		for(U i = 0; i < threadPool.getThreadsCount(); i++)
+		{
+			jobs[i].shaderLights = lightsMappedBuff;
+			jobs[i].visibleLights = &visiblePointLights[0];
+			jobs[i].visibleLightsCount = visiblePointLightsCount;
+			jobs[i].is = this;
+
+			threadPool.assignNewJob(i, &jobs[i]);
+		}
+
+		// Done
+		threadPool.waitForAllJobsToFinish();
+		pointLightsUbo.unmap();
 	}
-
-	// Done
-	threadPool.waitForAllJobsToFinish();
-	pointLightsUbo.unmap();
 
 	// Map spots
-	ShaderSpotLight* shaderSpotLights = (ShaderSpotLight*)spotLightsUbo.map(
-		0,
-		sizeof(ShaderSpotLight) * visibleSpotLightsCount,
-		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-
-	WriteSpotLightsUbo jobs2[ThreadPool::MAX_THREADS];
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
+	if(visibleSpotLightsCount > 0)
 	{
-		jobs2[i].shaderLights = shaderSpotLights;
-		jobs2[i].visibleLights = &visibleSpotLights[0];
-		jobs2[i].visibleLightsCount = visibleSpotLightsCount;
-		jobs2[i].is = this;
+		ShaderSpotLight* shaderSpotLights = (ShaderSpotLight*)spotLightsUbo.map(
+			0,
+			sizeof(ShaderSpotLight) * visibleSpotLightsCount,
+			GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 
-		threadPool.assignNewJob(i, &jobs2[i]);
+		WriteSpotLightsUbo jobs2[ThreadPool::MAX_THREADS];
+		for(U i = 0; i < threadPool.getThreadsCount(); i++)
+		{
+			jobs2[i].shaderLights = shaderSpotLights;
+			jobs2[i].visibleLights = &visibleSpotLights[0];
+			jobs2[i].visibleLightsCount = visibleSpotLightsCount;
+			jobs2[i].is = this;
+
+			threadPool.assignNewJob(i, &jobs2[i]);
+		}
+
+		// Done
+		threadPool.waitForAllJobsToFinish();
+
+		// Set shadow layer IDs
+		U32 i = 0;
+		ShaderSpotLight* shaderSpotLight = 
+			shaderSpotLights + spotsNoShadowCount;
+
+		for(; shaderSpotLight != shaderSpotLights + visibleSpotLightsCount;
+			++shaderSpotLight)
+		{
+			shaderSpotLight->diffuseColorShadowmapId.w() = 
+				(F32)shadowmapLayers[i];
+			++i;
+		}
+
+		spotLightsUbo.unmap();
 	}
-
-	// Done
-	threadPool.waitForAllJobsToFinish();
-
-	// Set shadow layer IDs
-	U32 i = 0;
-	ShaderSpotLight* shaderSpotLight = shaderSpotLights + spotsNoShadowCount;
-	for(; shaderSpotLight != shaderSpotLights + visibleSpotLightsCount;
-		++shaderSpotLight)
-	{
-		shaderSpotLight->diffuseColorShadowmapId.w() = (F32)shadowmapLayers[i];
-		++i;
-	}
-
-	spotLightsUbo.unmap();
 
 	//
 	// Update the tiles UBO

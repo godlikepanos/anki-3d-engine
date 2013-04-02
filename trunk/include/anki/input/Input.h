@@ -20,7 +20,9 @@ class Input
 {
 public:
 	Input()
-	{}
+	{
+		reset();
+	}
 	~Input();
 
 	/// @name Acessors
