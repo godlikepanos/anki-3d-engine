@@ -142,7 +142,7 @@ void StackMemoryPool::reset()
 //==============================================================================
 PtrSize StackMemoryPool::calcAlignSize(PtrSize size) const
 {
-	return size + alignmentBytes - (size % alignmentBytes);
+	return (size + alignmentBytes - 1) & ~(alignmentBytes - 1);
 }
 
 } // end namespace anki

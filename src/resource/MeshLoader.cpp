@@ -41,6 +41,13 @@ void MeshLoader::load(const char* filename)
 	// Try
 	try
 	{
+		std::cout << filename << std::endl;
+
+		if(filename == std::string("data/maps/sponza/sponza_07.mesh"))
+		{
+			std::cout << "ahoy" << std::endl;
+		}
+
 		// Open the file
 		std::fstream file(filename, std::fstream::in | std::fstream::binary);
 
@@ -252,9 +259,9 @@ void MeshLoader::createVertTangents()
 	for(uint i = 0; i < tris.size(); i++)
 	{
 		const Triangle& tri = tris[i];
-		const int i0 = tri.vertIds[0];
-		const int i1 = tri.vertIds[1];
-		const int i2 = tri.vertIds[2];
+		const I i0 = tri.vertIds[0];
+		const I i1 = tri.vertIds[1];
+		const I i2 = tri.vertIds[2];
 		const Vec3& v0 = vertCoords[i0];
 		const Vec3& v1 = vertCoords[i1];
 		const Vec3& v2 = vertCoords[i2];
@@ -263,12 +270,12 @@ void MeshLoader::createVertTangents()
 		Vec2 uvedge01 = texCoords[i1] - texCoords[i0];
 		Vec2 uvedge02 = texCoords[i2] - texCoords[i0];
 
-
-		float det = (uvedge01.y() * uvedge02.x()) -
+		F32 det = (uvedge01.y() * uvedge02.x()) -
 			(uvedge01.x() * uvedge02.y());
 		if(isZero(det))
 		{
 			//ANKI_LOGW(getRsrcName() << ": det == " << fixed << det);
+			std::cout << "det sucks" << std::endl;
 			det = 0.0001;
 		}
 		else
@@ -278,8 +285,13 @@ void MeshLoader::createVertTangents()
 
 		Vec3 t = (edge02 * uvedge01.y() - edge01 * uvedge02.y()) * det;
 		Vec3 b = (edge02 * uvedge01.x() - edge01 * uvedge02.x()) * det;
-		t.normalize();
-		b.normalize();
+		//t.normalize();
+		//b.normalize();
+
+		if(i0 == 2 || i1 == 2 || i2 == 2)
+		{
+			std::cout << "t " << t << " b " << b << std::endl;
+		}
 
 		vertTangents[i0] += Vec4(t, 1.0);
 		vertTangents[i1] += Vec4(t, 1.0);
@@ -296,12 +308,26 @@ void MeshLoader::createVertTangents()
 		const Vec3& n = vertNormals[i];
 		Vec3& b = bitagents[i];
 
-		//t = t - n * n.dot(t);
+		if(t == Vec3(0.0))
+		{
+			std::cout << "t zero " << i << std::endl;
+		}
+		else
+		{
+			std::cout << "t NOT zero" << std::endl;
+		}
+
+		t = t - n * n.dot(t);
 		t.normalize();
+
+		if(!isZero(t.getLength() - 1.0))
+		{
+			std::cout << "t" << t << std::endl;
+		}
 
 		b.normalize();
 
-		float w = ((n.cross(t)).dot(b) < 0.0) ? 1.0 : -1.0;
+		F32 w = ((n.cross(t)).dot(b) < 0.0) ? 1.0 : -1.0;
 
 		vertTangents[i] = Vec4(t, w);
 	}

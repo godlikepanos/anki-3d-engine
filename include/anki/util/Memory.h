@@ -23,8 +23,18 @@ class Allocator;
 class StackMemoryPool: public NonCopyable
 {
 public:
+	static const U SAFE_ALIGNMENT = 
+#if ANKI_CPU_ARCH == ANKI_CPU_ARCH_INTEL
+		16
+#elif ANKI_CPU_ARCH == ANKI_CPU_ARCH_ARM
+		32
+#else
+#	error "See file"
+#endif
+		;
+
 	/// Default constructor
-	StackMemoryPool(PtrSize size, U32 alignmentBits = 16);
+	StackMemoryPool(PtrSize size, U32 alignmentBits = SAFE_ALIGNMENT);
 
 	/// Move
 	StackMemoryPool(StackMemoryPool&& other)

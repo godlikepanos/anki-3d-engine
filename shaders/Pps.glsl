@@ -16,7 +16,7 @@ in vec2 vTexCoords;
 
 layout(location = 0) out vec3 fColor;
 
-const vec2 TEX_OFFSET = vec2(1.0 / FBO_WIDTH, 1.0 / FBO_HEIGHT);
+const vec2 TEX_OFFSET = vec2(1.0 / float(FBO_WIDTH), 1.0 / float(FBO_HEIGHT));
 
 vec2 KERNEL[8] = vec2[](
 	vec2(TEX_OFFSET.x, TEX_OFFSET.y),

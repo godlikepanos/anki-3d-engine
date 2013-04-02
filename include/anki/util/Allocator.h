@@ -194,12 +194,7 @@ inline bool operator!=(const Allocator<T1>&, const AnotherAllocator&)
 /// @note Don't ever EVER remove the double copy constructor and the double
 ///       operator=. The compiler will create defaults
 template<typename T, Bool deallocationFlag = false,
-#if ANKI_CPU_ARCH == ANKI_CPU_ARCH_INTEL
-	U32 alignmentBits = 16
-#elif ANKI_CPU_ARCH == ANKI_CPU_ARCH_ARM
-	U32 alignmentBits = 32
-#endif
-	>
+	U32 alignmentBits = StackMemoryPool::SAFE_ALIGNMENT>
 class StackAllocator
 {
 	template<typename U, Bool deallocationFlag_, U32 alignmentBits_>

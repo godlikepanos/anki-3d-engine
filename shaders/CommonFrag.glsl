@@ -2,8 +2,8 @@
 #define ANKI_SHADERS_COMMON_FRAG_GLSL
 
 #ifdef GL_ES
-precision mediump float;
-precision mediump int;
+precision highp float;
+precision highp int;
 #endif
 
 #endif

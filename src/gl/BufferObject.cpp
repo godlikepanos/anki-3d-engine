@@ -66,12 +66,21 @@ void BufferObject::create(GLenum target_, U32 sizeInBytes_,
 //==============================================================================
 void* BufferObject::map(U32 offset, U32 length, GLuint flags)
 {
+	// XXX Remove this workaround
+#if ANKI_GL == ANKI_GL_ES
+	flags &= ~GL_MAP_INVALIDATE_BUFFER_BIT;
+#endif
+
+	// Precoditions
 	ANKI_ASSERT(isCreated());
 #if ANKI_DEBUG
 	ANKI_ASSERT(mapped == false);
 #endif
-	bind();
+	ANKI_ASSERT(length > 0);
 	ANKI_ASSERT(offset + length <= sizeInBytes);
+
+	// Do the mapping
+	bind();
 	void* mappedMem = glMapBufferRange(target, offset, length, flags);
 	ANKI_ASSERT(mappedMem != nullptr);
 #if ANKI_DEBUG
