@@ -59,8 +59,6 @@ vec3 gammaCorrectionRgb(in vec3 gamma, in vec3 col)
 //==============================================================================
 vec3 sharpen(in sampler2D tex, in vec2 texCoords)
 {
-	const vec2 TEX_OFFSET = vec2(1.0 / FBO_WIDTH, 1.0 / FBO_HEIGHT);
-
 	const float sharpenFactor = 0.25;
 
 	vec3 col = texture(tex, texCoords).rgb;

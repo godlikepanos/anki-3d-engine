@@ -316,7 +316,8 @@ void main()
 
 
 #if GROUND_LIGHT
-	fColor *= dot(normal, groundLightDir.xyz) + 1.0;
+	fColor += max(dot(normal, groundLightDir.xyz), 0.0) 
+		* vec3(0.1, 0.1, 0.0);
 #endif
 
 #if 0

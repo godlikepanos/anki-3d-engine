@@ -102,7 +102,7 @@ SceneGraph::SceneGraph()
 {
 	nodes.reserve(ANKI_CFG_SCENE_NODES_AVERAGE_COUNT);
 
-	ambientCol = Vec3(0.1, 0.05, 0.05) * 2;
+	ambientCol = Vec3(0.1, 0.05, 0.05) * 3;
 }
 
 //==============================================================================
