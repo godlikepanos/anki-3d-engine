@@ -41,13 +41,6 @@ void MeshLoader::load(const char* filename)
 	// Try
 	try
 	{
-		std::cout << filename << std::endl;
-
-		if(filename == std::string("data/maps/sponza/sponza_07.mesh"))
-		{
-			std::cout << "ahoy" << std::endl;
-		}
-
 		// Open the file
 		std::fstream file(filename, std::fstream::in | std::fstream::binary);
 
@@ -218,7 +211,7 @@ void MeshLoader::createFaceNormals()
 
 		if(tri.normal != Vec3(0.0))
 		{
-			tri.normal.normalize();
+			//tri.normal.normalize();
 		}
 		else
 		{
@@ -275,7 +268,6 @@ void MeshLoader::createVertTangents()
 		if(isZero(det))
 		{
 			//ANKI_LOGW(getRsrcName() << ": det == " << fixed << det);
-			std::cout << "det sucks" << std::endl;
 			det = 0.0001;
 		}
 		else
@@ -288,11 +280,6 @@ void MeshLoader::createVertTangents()
 		//t.normalize();
 		//b.normalize();
 
-		if(i0 == 2 || i1 == 2 || i2 == 2)
-		{
-			std::cout << "t " << t << " b " << b << std::endl;
-		}
-
 		vertTangents[i0] += Vec4(t, 1.0);
 		vertTangents[i1] += Vec4(t, 1.0);
 		vertTangents[i2] += Vec4(t, 1.0);
@@ -302,27 +289,18 @@ void MeshLoader::createVertTangents()
 		bitagents[i2] += b;
 	}
 
-	for(uint i = 0; i < vertTangents.size(); i++)
+	for(U i = 0; i < vertTangents.size(); i++)
 	{
-		Vec3 t = Vec3(vertTangents[i]);
+		Vec3 t = vertTangents[i].xyz();
 		const Vec3& n = vertNormals[i];
 		Vec3& b = bitagents[i];
-
-		if(t == Vec3(0.0))
-		{
-			std::cout << "t zero " << i << std::endl;
-		}
-		else
-		{
-			std::cout << "t NOT zero" << std::endl;
-		}
 
 		t = t - n * n.dot(t);
 		t.normalize();
 
 		if(!isZero(t.getLength() - 1.0))
 		{
-			std::cout << "t" << t << std::endl;
+			std::cout << "t " << std::endl;
 		}
 
 		b.normalize();

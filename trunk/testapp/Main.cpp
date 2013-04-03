@@ -287,7 +287,7 @@ void init()
 	const F32 distPerSec = 2.0;
 	scene.getEventManager().newFollowPathEvent(-1.0, 
 		path->getDistance() / distPerSec, 
-		horse, path, distPerSec);
+		cam, path, distPerSec);
 }
 
 //==============================================================================
@@ -514,7 +514,7 @@ void initSubsystems(int argc, char* argv[])
 	// Window
 	NativeWindowInitializer nwinit;
 	nwinit.width = 1280;
-	nwinit.height = 720;
+	nwinit.height = 800;
 	nwinit.majorVersion = glmajor;
 	nwinit.minorVersion = glminor;
 	nwinit.depthBits = 0;
@@ -534,7 +534,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.ms.ez.enabled = true;
 	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
-	initializer.is.groundLightEnabled = false;
+	initializer.is.groundLightEnabled = true;
 	initializer.is.sm.enabled = true;
 	initializer.is.sm.pcfEnabled = false;
 	initializer.is.sm.resolution = 512;
