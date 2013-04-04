@@ -18,8 +18,7 @@
 #include "anki/core/StdinListener.h"
 #include "anki/resource/Model.h"
 #include "anki/core/Logger.h"
-#include "anki/util/Filesystem.h"
-#include "anki/util/HighRezTimer.h"
+#include "anki/util/Util.h"
 #include "anki/resource/Skin.h"
 #include "anki/event/EventManager.h"
 #include "anki/event/MainRendererPpsHdrEvent.h"
@@ -28,7 +27,6 @@
 #include "anki/core/ThreadPool.h"
 #include "anki/core/Timestamp.h"
 #include "anki/core/NativeWindow.h"
-#include "anki/util/Functions.h"
 #include "anki/scene/Scene.h"
 #include "anki/event/LightEvent.h"
 #include "anki/event/MovableEvent.h"
@@ -562,7 +560,7 @@ void initSubsystems(int argc, char* argv[])
 	StdinListenerSingleton::get().start();
 
 	// Parallel jobs
-	ThreadPoolSingleton::get().init(8);
+	ThreadPoolSingleton::get().init(getCpuCoresCount());
 }
 
 //==============================================================================
