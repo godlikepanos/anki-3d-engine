@@ -272,7 +272,11 @@ void MeshLoader::createVertTangents()
 		}
 		else
 		{
+			// Calc the det
 			det = 1.0 / det;
+
+			// Add a noise to the det to avoid zero tangents on mirrored cases
+			det *= ((rand() % 10) * getEpsilon<F32>());
 		}
 
 		Vec3 t = (edge02 * uvedge01.y() - edge01 * uvedge02.y()) * det;
@@ -297,11 +301,6 @@ void MeshLoader::createVertTangents()
 
 		t = t - n * n.dot(t);
 		t.normalize();
-
-		if(!isZero(t.getLength() - 1.0))
-		{
-			std::cout << "t " << std::endl;
-		}
 
 		b.normalize();
 

@@ -71,7 +71,7 @@ public:
 	}
 
 	/// Copy is not permited
-	DynamicArray& operator=(const Foo&) = delete;
+	DynamicArray& operator=(const DynamicArray&) = delete;
 
 	/// Move
 	DynamicArray& operator=(DynamicArray&& other)

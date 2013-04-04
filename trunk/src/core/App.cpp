@@ -2,6 +2,7 @@
 #include "anki/core/Logger.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Filesystem.h"
+#include "anki/util/System.h"
 #include "anki/Config.h"
 #include <cstring>
 #include <sstream>
@@ -150,6 +151,7 @@ void App::printAppInfo()
 	msg << " " << ANKI_CPU_ARCH_STR;
 	msg << " " << ANKI_GL_STR;
 	msg << " " << ANKI_WINDOW_BACKEND_STR;
+	msg << " CPU cores " << getCpuCoresCount();
 
 	msg << " build date " __DATE__ ", " << "rev " << ANKI_REVISION;
 
