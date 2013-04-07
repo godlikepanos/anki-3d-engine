@@ -298,11 +298,12 @@ public:
 
 	ShaderProgram(const char* vertSource, const char* tcSource, 
 		const char* teSource, const char* geomSource, const char* fragSource,
+		const char* compSource,
 		const char* transformFeedbackVaryings[],
 		const GLenum xfbBufferMode = GL_SEPARATE_ATTRIBS)
 	{
 		create(vertSource, tcSource, teSource, geomSource, fragSource,
-			transformFeedbackVaryings, xfbBufferMode);
+			compSource, transformFeedbackVaryings, xfbBufferMode);
 	}
 
 	~ShaderProgram()
@@ -335,11 +336,13 @@ public:
 	/// @param teSource Tessellation evaluation shader source. Can be nullptr
 	/// @param geomSource Geometry shader source. Can be nullptr
 	/// @param fragSource Fragment shader source. Can be nullptr
+	/// @param compSource Compute shader source. Can be nullptr
 	/// @param xfbVaryings An array of varyings names. Eg 
 	///                    {"var0", "var1", nullptr}. Can be nullptr
 	/// @param xfbBufferMode GL_SEPARATE_ATTRIBS or GL_INTERLEAVED_ATTRIBS
-	void create(const char* vertSource, const char* tcSource, 
-		const char* teSource, const char* geomSource, const char* fragSource,
+	void create(
+		const char* vertSource, const char* tcSource, const char* teSource, 
+		const char* geomSource, const char* fragSource, const char* compSource,
 		const char* xfbVaryings[], 
 		const GLenum xfbBufferMode = GL_SEPARATE_ATTRIBS);
 
@@ -410,6 +413,7 @@ private:
 	GLuint teShaderGlId = 0; ///< Tessellation eval shader OpenGL id
 	GLuint geomShaderGlId = 0; ///< Geometry shader OpenGL id
 	GLuint fragShaderGlId = 0; ///< Fragment shader OpenGL id
+	GLuint compShaderGlId = 0; ///< Compute shader OpenGL id
 
 	/// @name Containers
 	/// @{

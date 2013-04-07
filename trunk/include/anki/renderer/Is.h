@@ -19,9 +19,6 @@ class Camera;
 class PerspectiveCamera;
 class PointLight;
 class SpotLight;
-struct ShaderPointLights;
-struct ShaderSpotLights;
-struct ShaderTiles;
 
 /// Illumination stage
 class Is: private RenderingPass

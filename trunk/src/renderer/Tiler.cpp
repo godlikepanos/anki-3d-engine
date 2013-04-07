@@ -6,7 +6,7 @@
 #include "anki/scene/Spatial.h"
 
 // Default should be 0
-#define ALTERNATIVE_MIN_MAX 0
+#define ANKI_TILER_ENABLE_GPU 0
 
 namespace anki {
 
@@ -20,7 +20,9 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 	Tiler* tiler = nullptr;
 	PerspectiveCamera* cam = nullptr;
 	Bool frustumChanged;
+#if ANKI_TILER_ENABLE_GPU
 	const Tiler::PixelArray* pixels = nullptr;
+#endif
 
 	void operator()(U threadId, U threadsCount)
 	{
@@ -94,6 +96,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 		}
 
 		// Update the near far planes
+#if ANKI_TILER_ENABLE_GPU
 		Vec2 rplanes;
 		Renderer::calcPlanes(Vec2(cam->getNear(), cam->getFar()), rplanes);
 
@@ -126,6 +129,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 			++nearPlanesW;
 			++farPlanesW;
 		}
+#endif
 	}
 
 	/// Calculate and set a top looking plane
@@ -239,6 +243,7 @@ void Tiler::initInternal(Renderer* r_)
 //==============================================================================
 void Tiler::runMinMax(const Texture& depthMap)
 {
+#if ANKI_TILER_ENABLE_GPU
 	ANKI_ASSERT(depthMap.getFiltering() == Texture::TFT_NEAREST);
 
 	// Issue the min/max job
@@ -256,6 +261,7 @@ void Tiler::runMinMax(const Texture& depthMap)
 	glReadPixels(0, 0, TILES_X_COUNT, TILES_Y_COUNT, GL_RG_INTEGER,
 		GL_UNSIGNED_INT, nullptr);
 	pbo.unbind();
+#endif
 }
 
 //==============================================================================
@@ -264,8 +270,10 @@ void Tiler::updateTiles(Camera& cam)
 	//
 	// Read the results from the minmax job. It will block
 	//
+#if ANKI_TILER_ENABLE_GPU
 	PixelArray pixels;
 	pbo.read(&pixels[0][0]);
+#endif
 
 	//
 	// Issue parallel jobs
@@ -288,7 +296,9 @@ void Tiler::updateTiles(Camera& cam)
 		{
 			jobs[i].tiler = this;
 			jobs[i].cam = static_cast<PerspectiveCamera*>(&cam);
+#if ANKI_TILER_ENABLE_GPU
 			jobs[i].pixels = &pixels;
+#endif
 			jobs[i].frustumChanged = frustumChanged;
 			threadPool.assignNewJob(i, &jobs[i]);
 		}
@@ -346,6 +356,7 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 
 		Bool inside = true;
 
+#if ANKI_TILER_ENABLE_GPU
 		if(cs.testPlane(farPlanesW[tileId]) >= 0.0)
 		{
 			// Inside on far but check near
@@ -370,6 +381,7 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		{
 			inside = false;
 		}
+#endif
 
 		bitset.set(tileId, inside);
 		return;
