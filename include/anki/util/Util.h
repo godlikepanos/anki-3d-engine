@@ -18,7 +18,6 @@
 #include "anki/util/NonCopyable.h"
 #include "anki/util/Object.h"
 #include "anki/util/Observer.h"
-#include "anki/util/Scanner.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/StringList.h"

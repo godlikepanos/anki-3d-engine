@@ -53,6 +53,7 @@ void ShaderProgramResource::load(const char* filename, const char* extraSrc)
 		nullptr,
 		nullptr,
 		fragSrc.c_str(),
+		nullptr,
 		&trfVarsArr[0],
 		xfbBufferMode);
 }

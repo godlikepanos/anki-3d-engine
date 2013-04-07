@@ -331,13 +331,21 @@ thread_local const ShaderProgram* ShaderProgram::current = nullptr;
 //==============================================================================
 void ShaderProgram::create(const char* vertSource, const char* tcSource, 
 	const char* teSource, const char* geomSource, const char* fragSource,
+	const char* compSource,
 	const char* xfbVaryings[], const GLenum xfbBufferMode)
 {
 	ANKI_ASSERT(!isCreated());
 	U32 minor = GlStateCommonSingleton::get().getMinorVersion();
 	U32 major = GlStateCommonSingleton::get().getMajorVersion();
 
-	// 1) create and compile the shaders
+	// 1) create program
+	glId = glCreateProgram();
+	if(glId == 0)
+	{
+		throw ANKI_EXCEPTION("glCreateProgram() failed");
+	}
+
+	// 2) create, compile and attach the shaders
 	//
 	std::string preprocSrc;
 #if ANKI_GL == ANKI_GL_DESKTOP
@@ -360,69 +368,75 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 		+ std::to_string(minor) + "0 es\n";
 #endif
 
-	ANKI_ASSERT(vertSource != nullptr);
-	vertShaderGlId = createAndCompileShader(vertSource, preprocSrc.c_str(),
-		GL_VERTEX_SHADER);
+	// Sanity check with the combination of shaders
+#if ANKI_GL == ANKI_GL_DESKTOP
+	if(compSource)
+	{
+		ANKI_ASSERT(vertSource == nullptr && tcSource == nullptr 
+			&& teSource == nullptr && geomSource == nullptr 
+			&& fragSource == nullptr);
 
+		ANKI_ASSERT(xfbVaryings == nullptr);
+	}
+	else
+	{
+		ANKI_ASSERT(vertSource != nullptr && fragSource != nullptr);
+	}
+#else
+	ANKI_ASSERT(teSource == nullptr && tcSource == nullptr 
+		&& geomSource == nullptr && compSource == nullptr);
+
+	ANKI_ASSERT(vertSource != nullptr && fragSource != nullptr);
+#endif
+
+	// Vert
+	if(vertSource)
+	{
+		vertShaderGlId = createAndCompileShader(vertSource, preprocSrc.c_str(),
+			GL_VERTEX_SHADER);
+		glAttachShader(glId, vertShaderGlId);
+	}
+
+	// Frag
+	if(fragSource)
+	{
+		fragShaderGlId = createAndCompileShader(fragSource, preprocSrc.c_str(),
+			GL_FRAGMENT_SHADER);
+		glAttachShader(glId, fragShaderGlId);
+	}
+
+#if ANKI_GL == ANKI_GL_DESKTOP
 	if(tcSource != nullptr)
 	{
-#if ANKI_GL == ANKI_GL_DESKTOP
 		ANKI_ASSERT(major > 3);
 		tcShaderGlId = createAndCompileShader(tcSource, preprocSrc.c_str(), 
 			GL_TESS_CONTROL_SHADER);
-#else
-		ANKI_ASSERT(0 && "Not allowed");
-#endif
-	}
-
-	if(teSource != nullptr)
-	{
-#if ANKI_GL == ANKI_GL_DESKTOP
-		ANKI_ASSERT(major > 3);
-		teShaderGlId = createAndCompileShader(teSource, preprocSrc.c_str(), 
-			GL_TESS_EVALUATION_SHADER);
-#else
-		ANKI_ASSERT(0 && "Not allowed");
-#endif
-	}
-
-	if(geomSource != nullptr)
-	{
-#if ANKI_GL == ANKI_GL_DESKTOP
-		geomShaderGlId = createAndCompileShader(geomSource, 
-			preprocSrc.c_str(), GL_GEOMETRY_SHADER);
-#else
-		ANKI_ASSERT(0 && "Not allowed");
-#endif
-	}
-
-	ANKI_ASSERT(fragSource != nullptr);
-	fragShaderGlId = createAndCompileShader(fragSource, preprocSrc.c_str(),
-		GL_FRAGMENT_SHADER);
-
-	// 2) create program and attach shaders
-	glId = glCreateProgram();
-	if(glId == 0)
-	{
-		throw ANKI_EXCEPTION("glCreateProgram() failed");
-	}
-	glAttachShader(glId, vertShaderGlId);
-	glAttachShader(glId, fragShaderGlId);
-
-	if(tcSource != nullptr)
-	{
 		glAttachShader(glId, tcShaderGlId);
 	}
 
 	if(teSource != nullptr)
 	{
+		ANKI_ASSERT(major > 3);
+		teShaderGlId = createAndCompileShader(teSource, preprocSrc.c_str(), 
+			GL_TESS_EVALUATION_SHADER);
 		glAttachShader(glId, teShaderGlId);
 	}
 
 	if(geomSource != nullptr)
 	{
+		geomShaderGlId = createAndCompileShader(geomSource, 
+			preprocSrc.c_str(), GL_GEOMETRY_SHADER);
 		glAttachShader(glId, geomShaderGlId);
 	}
+
+	if(compSource != nullptr)
+	{
+		ANKI_ASSERT(major > 3 && minor > 2);
+		compShaderGlId = createAndCompileShader(compSource, 
+			preprocSrc.c_str(), GL_COMPUTE_SHADER);
+		glAttachShader(glId, compShaderGlId);
+	}
+#endif
 
 	// 3) set the XFB varyings
 	U count = 0;
@@ -485,6 +499,12 @@ void ShaderProgram::destroy()
 	{
 		glDeleteShader(fragShaderGlId);
 		fragShaderGlId = 0;
+	}
+
+	if(compShaderGlId != 0)
+	{
+		glDeleteShader(compShaderGlId);
+		compShaderGlId = 0;
 	}
 
 	if(glId != 0)

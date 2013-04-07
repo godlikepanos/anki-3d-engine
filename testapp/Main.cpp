@@ -279,13 +279,13 @@ void init()
 		Mat3::getIdentity(), Vec3(1.3, 1.8, 0.5)));
 
 	// Path
-	Path* path = new Path("todo", "path", &scene, Movable::MF_NONE, nullptr);
+	/*Path* path = new Path("todo", "path", &scene, Movable::MF_NONE, nullptr);
 	(void)path;
 
 	const F32 distPerSec = 2.0;
 	scene.getEventManager().newFollowPathEvent(-1.0, 
 		path->getDistance() / distPerSec, 
-		cam, path, distPerSec);
+		cam, path, distPerSec);*/
 }
 
 //==============================================================================
@@ -467,7 +467,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -499,7 +499,7 @@ void mainLoop()
 void initSubsystems(int argc, char* argv[])
 {
 #if ANKI_GL == ANKI_GL_DESKTOP
-	U32 glmajor = 3;
+	U32 glmajor = 4;
 	U32 glminor = 3;
 #else
 	U32 glmajor = 3;
