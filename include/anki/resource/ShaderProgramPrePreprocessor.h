@@ -1,7 +1,6 @@
 #ifndef ANKI_RESOURCE_SHADER_PROGRAM_PRE_PREPROCESSOR_H
 #define ANKI_RESOURCE_SHADER_PROGRAM_PRE_PREPROCESSOR_H
 
-#include "anki/resource/ShaderProgramCommon.h"
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/StringList.h"
@@ -9,6 +8,18 @@
 #include <limits>
 
 namespace anki {
+
+/// Shader type
+enum ShaderType
+{
+	ST_VERTEX,
+	ST_TC,
+	ST_TE,
+	ST_GEOMETRY,
+	ST_FRAGMENT,
+	ST_COMPUTE,
+	ST_NUM
+};
 
 /// Helper class used for shader program loading
 ///
@@ -20,7 +31,7 @@ namespace anki {
 /// The preprocessor pragmas are:
 ///
 /// - #pragma anki start <vertexShader | tcShader | teShader |
-///                       geometryShader | fragmentShader>
+///                       geometryShader | fragmentShader | computeShader>
 /// - #pragma anki include "<filename>"
 /// - #pragma anki transformFeedbackVaryings <separate|interleaved>
 ///   <varName> <varName>
