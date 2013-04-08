@@ -45,17 +45,36 @@ void ShaderProgramResource::load(const char* filename, const char* extraSrc)
 		}
 	}
 
-	std::string vertSrc = extraSrc + pars.getShaderSource(ST_VERTEX);
-	std::string fragSrc = extraSrc + pars.getShaderSource(ST_FRAGMENT);
+	// XXX Fix that nonsense
+	if(pars.getShaderSource(ST_VERTEX).size() != 0)
+	{
+		std::string vertSrc = extraSrc + pars.getShaderSource(ST_VERTEX);
+		std::string fragSrc = extraSrc + pars.getShaderSource(ST_FRAGMENT);
 
-	create(vertSrc.c_str(),
-		nullptr,
-		nullptr,
-		nullptr,
-		fragSrc.c_str(),
-		nullptr,
-		&trfVarsArr[0],
-		xfbBufferMode);
+		create(
+			vertSrc.c_str(),
+			nullptr,
+			nullptr,
+			nullptr,
+			fragSrc.c_str(),
+			nullptr,
+			&trfVarsArr[0],
+			xfbBufferMode);
+	}
+	else
+	{
+		std::string computeSrc = extraSrc + pars.getShaderSource(ST_COMPUTE);
+
+		create(
+			nullptr,
+			nullptr,
+			nullptr,
+			nullptr,
+			nullptr,
+			computeSrc.c_str(),
+			nullptr,
+			xfbBufferMode);
+	}
 }
 
 //==============================================================================

@@ -323,6 +323,9 @@ void Is::initInternal(const RendererInitializer& initializer)
 	lightPassProg.load(ShaderProgramResource::createSrcCodeToCache(
 		"shaders/IsLp.glsl", pps.c_str()).c_str());
 
+	tilerProg.load(ShaderProgramResource::createSrcCodeToCache(
+		"shaders/IsUpdateTiles.glsl", pps.c_str()).c_str());
+
 	//
 	// Create FBOs
 	//

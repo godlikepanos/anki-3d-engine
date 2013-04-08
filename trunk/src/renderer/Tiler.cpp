@@ -26,7 +26,9 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 
 	void operator()(U threadId, U threadsCount)
 	{
+#if ANKI_TILER_ENABLE_GPU
 		ANKI_ASSERT(tiler && cam && pixels);
+#endif
 
 		U64 start, end;
 		Transform trf = Transform(cam->getWorldTransform());

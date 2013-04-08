@@ -12,12 +12,13 @@ namespace anki {
 
 // Keep the strings in that order so that the start pragmas will match to the
 // ShaderType enums
-static Array<const char*, 8> commands = {{
+static Array<const char*, 9> commands = {{
 	"#pragma anki start vertexShader",
 	"#pragma anki start teShader",
 	"#pragma anki start tcShader",
 	"#pragma anki start geometryShader",
 	"#pragma anki start fragmentShader",
+	"#pragma anki start computeShader",
 	"#pragma anki include",
 	"#pragma anki transformFeedbackVaryings separate",
 	"#pragma anki transformFeedbackVaryings interleaved"}};
@@ -87,22 +88,26 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 		{
 			parseStartPragma(ST_FRAGMENT, line);
 		}
-		else if((npos = line.find(commands[5])) == 0)
+		else if(line.find(commands[ST_COMPUTE]) == 0)
 		{
-			std::string filen = {line, strlen(commands[5]), std::string::npos};
+			parseStartPragma(ST_COMPUTE, line);
+		}
+		else if((npos = line.find(commands[6])) == 0)
+		{
+			std::string filen = {line, strlen(commands[6]), std::string::npos};
 			filen = trimString(filen, " \"");
 
 			parseFileForPragmas(filen, depth + 1);
 		}
-		else if((npos = line.find(commands[6])) == 0)
-		{
-			std::string slist = {line, strlen(commands[6]), std::string::npos};
-			trffbVaryings = StringList::splitString(slist.c_str(), ' ');
-			xfbBufferMode = XFBBM_SEPARATE;
-		}
 		else if((npos = line.find(commands[7])) == 0)
 		{
 			std::string slist = {line, strlen(commands[7]), std::string::npos};
+			trffbVaryings = StringList::splitString(slist.c_str(), ' ');
+			xfbBufferMode = XFBBM_SEPARATE;
+		}
+		else if((npos = line.find(commands[8])) == 0)
+		{
+			std::string slist = {line, strlen(commands[8]), std::string::npos};
 			trffbVaryings = StringList::splitString(slist.c_str(), ' ');
 			xfbBufferMode = XFBBM_INTERLEAVED;
 		}
@@ -140,16 +145,30 @@ void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 	parseFileForPragmas(filename);
 
 	// sanity checks
-	if(!shaderStarts[ST_VERTEX].isDefined())
+	if(!shaderStarts[ST_COMPUTE].isDefined())
 	{
-		throw ANKI_EXCEPTION(ENTRYPOINT_NOT_DEFINED 
-			+ commands[ST_VERTEX]);
-	}
+		if(!shaderStarts[ST_VERTEX].isDefined())
+		{
+			throw ANKI_EXCEPTION(ENTRYPOINT_NOT_DEFINED 
+				+ commands[ST_VERTEX]);
+		}
 
-	if(!shaderStarts[ST_FRAGMENT].isDefined())
+		if(!shaderStarts[ST_FRAGMENT].isDefined())
+		{
+			throw ANKI_EXCEPTION(ENTRYPOINT_NOT_DEFINED 
+				+ commands[ST_FRAGMENT]);
+		}
+	}
+	else
 	{
-		throw ANKI_EXCEPTION(ENTRYPOINT_NOT_DEFINED 
-			+ commands[ST_FRAGMENT]);
+		if(shaderStarts[ST_VERTEX].isDefined() 
+			|| shaderStarts[ST_TE].isDefined()
+			|| shaderStarts[ST_TC].isDefined()
+			|| shaderStarts[ST_FRAGMENT].isDefined()
+			|| shaderStarts[ST_GEOMETRY].isDefined())
+		{
+			throw ANKI_EXCEPTION("Compute shader should be alone");
+		}
 	}
 
 	// construct each shaders' source code
