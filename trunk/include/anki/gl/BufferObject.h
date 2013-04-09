@@ -47,13 +47,19 @@ public:
 
 	/// @name Accessors
 	/// @{
-	GLenum getBufferTarget() const
+	GLenum getTarget() const
 	{
 		ANKI_ASSERT(isCreated());
 		return target;
 	}
 
-	GLenum getBufferUsage() const
+	void setTarget(GLenum target_)
+	{
+		ANKI_ASSERT(isCreated());
+		target = target_;
+	}
+
+	GLenum getUsage() const
 	{
 		ANKI_ASSERT(isCreated());
 		return usage;
@@ -66,10 +72,18 @@ public:
 	}
 	/// @}
 
-	/// Bind BO
+	/// Bind
 	void bind() const
 	{
 		ANKI_ASSERT(isCreated());
+		glBindBuffer(target, glId);
+	}
+
+	/// Bind and change target
+	void bind(GLenum target_)
+	{
+		ANKI_ASSERT(isCreated());
+		setTarget(target_);
 		glBindBuffer(target, glId);
 	}
 
@@ -139,8 +153,15 @@ public:
 	/// Set the binding for this buffer
 	void setBinding(GLuint binding) const
 	{
-		ANKI_ASSERT(target == GL_TRANSFORM_FEEDBACK_BUFFER 
-			|| target == GL_UNIFORM_BUFFER);
+		Bool correctTarget = target == GL_TRANSFORM_FEEDBACK_BUFFER 
+#if ANKI_GL == ANKI_GL_DESKTOP
+			|| target == GL_SHADER_STORAGE_BUFFER
+#endif
+			|| target == GL_UNIFORM_BUFFER;
+
+		ANKI_ASSERT(correctTarget);
+		(void)correctTarget;
+		
 		bind();
 		glBindBufferBase(target, binding, glId);
 	}

@@ -23,7 +23,7 @@ static Array<const char*, 9> commands = {{
 	"#pragma anki transformFeedbackVaryings separate",
 	"#pragma anki transformFeedbackVaryings interleaved"}};
 
-static_assert(ST_VERTEX == 0 && ST_FRAGMENT == 4, "See file");
+static_assert(ST_VERTEX == 0 && ST_COMPUTE == 5, "See file");
 
 static const char* ENTRYPOINT_NOT_DEFINED = "Entry point not defined: ";
 
@@ -141,12 +141,16 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 //==============================================================================
 void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 {
-	// parse master file
+	ShaderType firstShader; // Before that shader there is global code
+
+	// Parse master file
 	parseFileForPragmas(filename);
 
-	// sanity checks
+	// Sanity checks and some calculations
 	if(!shaderStarts[ST_COMPUTE].isDefined())
 	{
+		// If not compute then vertex and fragment shaders should be defined
+
 		if(!shaderStarts[ST_VERTEX].isDefined())
 		{
 			throw ANKI_EXCEPTION(ENTRYPOINT_NOT_DEFINED 
@@ -158,9 +162,13 @@ void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 			throw ANKI_EXCEPTION(ENTRYPOINT_NOT_DEFINED 
 				+ commands[ST_FRAGMENT]);
 		}
+
+		firstShader = ST_VERTEX;
 	}
 	else
 	{
+		// If compute is defined everything else should not be
+
 		if(shaderStarts[ST_VERTEX].isDefined() 
 			|| shaderStarts[ST_TE].isDefined()
 			|| shaderStarts[ST_TC].isDefined()
@@ -169,9 +177,11 @@ void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 		{
 			throw ANKI_EXCEPTION("Compute shader should be alone");
 		}
+
+		firstShader = ST_COMPUTE;
 	}
 
-	// construct each shaders' source code
+	// Construct each shaders' source code
 	for(U i = 0; i < ST_NUM; i++)
 	{
 		// If not defined bb
@@ -183,7 +193,7 @@ void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 		std::string& src = shaderSources[i];
 		src = "";
 
-		// Sanity check: Check the correct order of i
+		// The i-nth shader should be defined after the [0, i-1]
 		I32 k = (I32)i - 1;
 		while(k > -1)
 		{
@@ -196,6 +206,7 @@ void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 			--k;
 		}
 
+		// And shouldn't be defined before the [i+1, ST_NUM-1]
 		k = (I32)i + 1;
 		while(k < ST_NUM)
 		{
@@ -208,16 +219,18 @@ void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 			++k;
 		}
 
-		// put global source code
-		for(I32 j = 0; j < shaderStarts[ST_VERTEX].definedLine; ++j)
+		// Append the global source code
+		ANKI_ASSERT(shaderStarts[firstShader].definedLine != -1);
+		for(I32 j = 0; j < shaderStarts[firstShader].definedLine; ++j)
 		{
 			src += sourceLines[j] + "\n";
 		}
 
-		// put the actual code
+		// Put the actual code
 		U32 from = i;
 		U32 to;
 
+		// Calculate the "to". If i is vertex the to could be anything
 		for(to = i + 1; to < ST_NUM; to++)
 		{
 			if(shaderStarts[to].definedLine != -1)
@@ -226,8 +239,8 @@ void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 			}
 		}
 
-		I32 toLine = (to == ST_NUM) ? sourceLines.size() 
-			: shaderStarts[to].definedLine;
+		I32 toLine = (to != ST_NUM) ? shaderStarts[to].definedLine
+			: sourceLines.size();
 
 		for(I32 j = shaderStarts[from].definedLine; j < toLine; ++j)
 		{

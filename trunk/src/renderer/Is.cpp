@@ -28,7 +28,8 @@ namespace shader {
 
 struct Light
 {
-	Vec4 posAndRadius; ///< xyz: Light pos in eye space. w: The radius
+	/// xyz: Light pos in eye space. w: The radius. In viewspace
+	Vec4 posAndRadius;
 	Vec4 diffuseColorShadowmapId;
 	Vec4 specularColor;
 };
@@ -506,7 +507,7 @@ void Is::lightPass()
 	// Write the lights UBOs
 	//
 
-	// Map points
+	// Write pointlights
 	if(visiblePointLightsCount > 0)
 	{
 		shader::PointLights clientBuffer;
@@ -531,7 +532,7 @@ void Is::lightPass()
 			sizeof(shader::PointLight) * visiblePointLightsCount);
 	}
 
-	// Map spots
+	// Write spots
 	if(visibleSpotLightsCount > 0)
 	{
 		shader::SpotLights clientBuffer;
@@ -594,7 +595,19 @@ void Is::lightPass()
 
 	threadPool.waitForAllJobsToFinish();
 
-	tilesUbo.write(&clientBuffer, 0, sizeof(shader::Tiles));
+	tilesUbo.write(&clientBuffer);
+
+	// XXX
+	{
+		tilesUbo.bind(GL_SHADER_STORAGE_BUFFER);
+		tilesUbo.setBinding(0);
+
+		tilerProg->bind();
+
+		glDispatchCompute(Tiler::TILES_X_COUNT, Tiler::TILES_Y_COUNT, 1);
+
+		tilesUbo.bind(GL_UNIFORM_BUFFER);
+	}
 
 	//
 	// Setup shader and draw

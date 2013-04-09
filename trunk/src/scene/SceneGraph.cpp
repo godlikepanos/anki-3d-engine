@@ -46,7 +46,7 @@ static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 		if(sp->getSpatialTimestamp() >= Timestamp::getTimestamp())
 		{
 			sp->update();
-			sectorGroup.placeSceneNode(&sn);
+			//sectorGroup.placeSceneNode(&sn);
 		}
 		sp->resetFrame();
 	}
