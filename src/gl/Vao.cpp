@@ -31,7 +31,7 @@ void Vao::attachArrayBufferVbo(const Vbo* vbo, const GLint attribVarLocation,
 {
 	ANKI_ASSERT(isCreated());
 	checkNonSharable();
-	ANKI_ASSERT(vbo->getBufferTarget() == GL_ARRAY_BUFFER
+	ANKI_ASSERT(vbo->getTarget() == GL_ARRAY_BUFFER
 		&& "Only GL_ARRAY_BUFFER is accepted");
 	ANKI_ASSERT(vbo->isCreated());
 
@@ -63,7 +63,7 @@ void Vao::attachElementArrayBufferVbo(const Vbo* vbo)
 {
 	ANKI_ASSERT(isCreated());
 	checkNonSharable();
-	ANKI_ASSERT(vbo->getBufferTarget() == GL_ELEMENT_ARRAY_BUFFER
+	ANKI_ASSERT(vbo->getTarget() == GL_ELEMENT_ARRAY_BUFFER
 		&& "Only GL_ELEMENT_ARRAY_BUFFER is accepted");
 	ANKI_ASSERT(vbo->isCreated());
 

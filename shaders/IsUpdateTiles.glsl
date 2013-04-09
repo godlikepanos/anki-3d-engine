@@ -16,5 +16,6 @@ layout(std140, binding = 0) buffer tilesBuffer
 
 void main()
 {
-	tiles[gl_WorkGroupID.x * TILES_Y_COUNT + gl_WorkGroupID.y] = 0.1;
+	tiles[gl_WorkGroupID.x * TILES_Y_COUNT + gl_WorkGroupID.y].
+		lightsCount.w = 665U;
 }

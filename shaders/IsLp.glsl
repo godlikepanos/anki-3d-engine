@@ -321,9 +321,9 @@ void main()
 #endif
 
 #if 0
-	if(tiles[vInstanceId].lightsCount[0] > 0)
+	if(tiles[vInstanceId].lightsCount[3] == 666U)
 	{
-		fColor += vec3(0.2, 0.0, 0.0);
+		fColor += vec3(0.5, 0.0, 0.0);
 	}
 #endif
 
