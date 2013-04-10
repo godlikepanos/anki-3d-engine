@@ -73,6 +73,9 @@ private:
 	/// Contains the indices of lights per tile
 	Ubo tilesUbo;
 
+	/// XXX
+	BufferObject tilegridBuffer;
+
 	/// Light shaders
 	ShaderProgramResourcePointer lightPassProg;
 	ShaderProgramResourcePointer tilerProg;

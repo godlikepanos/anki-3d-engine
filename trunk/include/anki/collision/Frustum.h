@@ -194,6 +194,11 @@ public:
 		far = far_;
 		recalculate();
 	}
+
+	const Array<Vec3, 4>& getDirections() const
+	{
+		return dirs;
+	}
 	/// @}
 
 	/// Copy
@@ -232,7 +237,7 @@ private:
 	/// @name Shape
 	/// @{
 	Vec3 eye; ///< The eye point
-	std::array<Vec3, 4> dirs; ///< Directions
+	Array<Vec3, 4> dirs; ///< Directions
 	/// @}
 
 	/// Implements CollisionShape::recalculate. Recalculate:

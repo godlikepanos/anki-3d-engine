@@ -74,7 +74,7 @@ F32 PerspectiveFrustum::testPlane(const Plane& p) const
 	LineSegment ls(eye, dirs[0]);
 	F32 o = ls.testPlane(p);
 
-	for(U i = 1; i < dirs.size(); i++)
+	for(U i = 1; i < dirs.getSize(); i++)
 	{
 		LineSegment ls(eye, dirs[i]);
 		F32 t = ls.testPlane(p);

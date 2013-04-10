@@ -22,16 +22,17 @@ static Bool groundVectorsEqual(const Vec3& prev, const Vec3& crnt)
 
 //==============================================================================
 
-// Shader structs and block representations
+// Shader structs and block representations. All positions and directions in
+// viewspace
 
 namespace shader {
 
 struct Light
 {
 	/// xyz: Light pos in eye space. w: The radius. In viewspace
-	Vec4 posAndRadius;
+	Vec4 posRadius;
 	Vec4 diffuseColorShadowmapId;
-	Vec4 specularColor;
+	Vec4 specularColorTexId;
 };
 
 struct PointLight: Light
@@ -39,9 +40,10 @@ struct PointLight: Light
 
 struct SpotLight: Light
 {
-	Vec4 lightDirection; ///< xyz: Dir vector
+	Vec4 lightDir; ///< xyz: Dir vector
 	Vec4 outerCosInnerCos; ///< x: outer angle cos, y: inner
-	Mat4 texProjectionMat;
+	Mat4 texProjectionMat; ///< Texture projection matrix
+	Vec4 extendPoints[4]; ///< The positions of the 4 camera points
 };
 
 struct PointLights
@@ -59,7 +61,7 @@ struct Tile
 	U32 lightsCount[3]; ///< 0: Point lights number, 1: Spot lights number
 	U32 padding[1];
 	// When change this change the writeTilesUbo as well
-	Array<U32, Is::MAX_LIGHTS_PER_TILE> lightIndices; 
+	Array<U32, Is::MAX_LIGHTS_PER_TILE> lightIndices;
 };
 
 struct Tiles
@@ -72,6 +74,22 @@ struct CommonUniforms
 	Vec4 planes;
 	Vec4 sceneAmbientColor;
 	Vec4 groundLightDir;
+};
+
+const U tilegridPlanesCount = 
+	(Tiler::TILES_X_COUNT - 1) * 2 // planes J
+	+ (Tiler::TILES_Y_COUNT - 1) * 2  // planes I
+	+ (Tiler::TILES_COUNT * 2); // near far planes
+
+struct Plane
+{
+	Vec3 normal;
+	F32 offset;
+};
+
+struct Tilegrid
+{
+	Array<Plane, tilegridPlanesCount> planes;
 };
 
 } // end namespace shader
@@ -106,9 +124,9 @@ struct WritePointLightsUbo: ThreadJob
 			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
 				cam->getViewMatrix());
 
-			pl.posAndRadius = Vec4(pos, light.getRadius());
+			pl.posRadius = Vec4(pos, light.getRadius());
 			pl.diffuseColorShadowmapId = light.getDiffuseColor();
-			pl.specularColor = light.getSpecularColor();
+			pl.specularColorTexId = light.getSpecularColor();
 		}
 	}
 };
@@ -139,16 +157,16 @@ struct WriteSpotLightsUbo: ThreadJob
 			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
 				cam->getViewMatrix());
 
-			slight.posAndRadius = Vec4(pos, light.getDistance());
+			slight.posRadius = Vec4(pos, light.getDistance());
 
-			slight.diffuseColorShadowmapId = Vec4(light.getDiffuseColor().xyz(),
-				0);
+			slight.diffuseColorShadowmapId = 
+				Vec4(light.getDiffuseColor().xyz(), 0);
 
-			slight.specularColor = light.getSpecularColor();
+			slight.specularColorTexId = light.getSpecularColor();
 
 			Vec3 lightDir = -light.getWorldTransform().getRotation().getZAxis();
 			lightDir = cam->getViewMatrix().getRotationPart() * lightDir;
-			slight.lightDirection = Vec4(lightDir, 0.0);
+			slight.lightDir = Vec4(lightDir, 0.0);
 			
 			slight.outerCosInnerCos = Vec4(light.getOuterAngleCos(),
 				light.getInnerAngleCos(), 1.0, 1.0);
@@ -165,6 +183,17 @@ struct WriteSpotLightsUbo: ThreadJob
 
 			// Transpose because of driver bug
 			slight.texProjectionMat.transpose();
+
+			// extend points
+			const PerspectiveFrustum& frustum = light.getFrustum();
+
+			for(U i = 0; i < 4; i++)
+			{
+				Vec3 dir = light.getWorldTransform().getOrigin() 
+					+ frustum.getDirections()[i];
+				dir.transform(cam->getViewMatrix());
+				slight.extendPoints[i] = Vec4(dir, 1.0);
+			}
 		}
 	}
 };
@@ -372,8 +401,12 @@ void Is::initInternal(const RendererInitializer& initializer)
 	pointLightsUbo.create(sizeof(shader::PointLights), nullptr);
 	spotLightsUbo.create(sizeof(shader::SpotLights), nullptr);
 
-	// lightIndices UBO
+	// tiles UBO
 	tilesUbo.create(sizeof(shader::Tiles), nullptr);
+
+	// tilegrid
+	tilegridBuffer.create(sizeof(shader::Tilegrid), GL_SHADER_STORAGE_BUFFER,
+		nullptr, GL_STATIC_DRAW);
 
 	// Sanity checks
 	const ShaderProgramUniformBlock* ublock;
