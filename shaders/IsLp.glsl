@@ -63,9 +63,9 @@ layout(std140, row_major) uniform commonBlock
 
 struct Light
 {
-	vec4 posAndRadius; ///< xyz: Light pos in eye space. w: The radius
+	vec4 posRadius; ///< xyz: Light pos in eye space. w: The radius
 	vec4 diffuseColorShadowmapId;
-	vec4 specularColor;
+	vec4 specularColorTexId;
 };
 
 struct SpotLight
@@ -74,6 +74,7 @@ struct SpotLight
 	vec4 lightDirection;
 	vec4 outerCosInnerCos;
 	mat4 texProjectionMat;
+	vec4 extendPoints[4];
 };
 
 layout(std140, row_major) uniform pointLightsBlock
@@ -137,7 +138,7 @@ float calcAttenuationFactor(
 	out vec3 rayDir)
 {
 	// get the vector from the frag to the light
-	vec3 frag2LightVec = light.posAndRadius.xyz - fragPosVspace;
+	vec3 frag2LightVec = light.posRadius.xyz - fragPosVspace;
 
 	// Instead of using normalize(frag2LightVec) we brake the operation 
 	// because we want fragLightDist for the calc of the attenuation
@@ -146,7 +147,7 @@ float calcAttenuationFactor(
 	rayDir = frag2LightVec / fragLightDist;
 
 	float att = max((1.0 + ATTENUATION_BOOST) 
-		- fragLightDist / light.posAndRadius.w, 0.0);
+		- fragLightDist / light.posRadius.w, 0.0);
 
 	return att;
 }
@@ -169,7 +170,8 @@ vec3 calcPhong(in vec3 fragPosVspace, in vec3 diffuse,
 	vec3 eyeVec = normalize(fragPosVspace);
 	vec3 h = normalize(rayDir - eyeVec);
 	float specIntensity = pow(max(0.0, dot(normal, h)), specularAll.g);
-	vec3 specCol = light.specularColor.rgb * (specIntensity * specularAll.r);
+	vec3 specCol = 
+		light.specularColorTexId.rgb * (specIntensity * specularAll.r);
 	
 	// end
 	return difCol + specCol;
@@ -178,7 +180,7 @@ vec3 calcPhong(in vec3 fragPosVspace, in vec3 diffuse,
 //==============================================================================
 float calcSpotFactor(in SpotLight light, in vec3 fragPosVspace)
 {
-	vec3 l = normalize(fragPosVspace - light.light.posAndRadius.xyz);
+	vec3 l = normalize(fragPosVspace - light.light.posRadius.xyz);
 
 	float costheta = dot(l, light.lightDirection.xyz);
 	float spotFactor = smoothstep(
