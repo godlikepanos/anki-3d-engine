@@ -631,7 +631,7 @@ void Is::lightPass()
 	tilesUbo.write(&clientBuffer);
 
 	// XXX
-	{
+	/*{
 		tilesUbo.bind(GL_SHADER_STORAGE_BUFFER);
 		tilesUbo.setBinding(0);
 
@@ -640,7 +640,7 @@ void Is::lightPass()
 		glDispatchCompute(Tiler::TILES_X_COUNT, Tiler::TILES_Y_COUNT, 1);
 
 		tilesUbo.bind(GL_UNIFORM_BUFFER);
-	}
+	}*/
 
 	//
 	// Setup shader and draw
