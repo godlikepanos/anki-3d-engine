@@ -2,7 +2,7 @@
 #define ANKI_RENDERER_TILER_H
 
 #include "anki/util/StdTypes.h"
-#include "anki/collision/Collision.h"
+#include "anki/Collision.h"
 #include "anki/gl/Gl.h"
 #include "anki/resource/Resource.h"
 #include "anki/core/Timestamp.h"
@@ -23,13 +23,7 @@ class Tiler
 	friend struct UpdatePlanesPerspectiveCameraJob;
 
 public:
-	// Config. These values affect the size of the uniform blocks and keep in
-	// mind that there are size limitations in uniform blocks.
-	static const U TILES_X_COUNT = 16;
-	static const U TILES_Y_COUNT = 16;
-	static const U TILES_COUNT = TILES_X_COUNT * TILES_Y_COUNT;
-
-	typedef std::bitset<TILES_COUNT> Bitset;
+	typedef std::bitset<ANKI_RENDERER_TILES_COUNT> Bitset;
 
 	Tiler();
 	~Tiler();
@@ -43,9 +37,8 @@ public:
 	void updateTiles(Camera& cam);
 
 	/// Test against all tiles
-	Bool test2(
+	Bool test(
 		const CollisionShape& cs,
-		const Aabb& aabb,
 		Bool nearPlane,
 		Bitset* mask) const;
 
@@ -58,8 +51,6 @@ private:
 	Plane* planesJW = nullptr;
 	Plane* nearPlanesW = nullptr;
 	Plane* farPlanesW = nullptr;
-
-	typedef F32 PixelArray[TILES_Y_COUNT][TILES_X_COUNT][2];
 
 	/// The timestamp of the 4 planes update
 	U32 planes4UpdateTimestamp = Timestamp::getTimestamp();

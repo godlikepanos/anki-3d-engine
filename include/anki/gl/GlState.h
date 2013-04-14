@@ -6,7 +6,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 
 namespace anki {
 

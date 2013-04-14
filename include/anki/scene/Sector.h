@@ -2,7 +2,7 @@
 #define ANKI_SCENE_SECTOR_H
 
 #include "anki/scene/Octree.h"
-#include "anki/collision/Collision.h"
+#include "anki/Collision.h"
 
 namespace anki {
 

@@ -5,7 +5,7 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Visibility.h"
 #include "anki/core/Timestamp.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/HighRezTimer.h"
 

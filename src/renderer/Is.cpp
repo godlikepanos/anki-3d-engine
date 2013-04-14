@@ -8,6 +8,8 @@
 namespace anki {
 
 //==============================================================================
+
+//==============================================================================
 static Bool groundVectorsEqual(const Vec3& prev, const Vec3& crnt)
 {
 	Bool out = true;
@@ -24,12 +26,39 @@ static Bool groundVectorsEqual(const Vec3& prev, const Vec3& crnt)
 
 // Shader structs and block representations. All positions and directions in
 // viewspace
+// For documentation see the shaders
 
 namespace shader {
 
+struct Plane
+{
+	Vec3 normal;
+	F32 offset;
+};
+
+struct Tilegrid
+{
+	Plane planesX[Is::TILES_X_COUNT - 1];
+	Plane planesY[Is::TILES_Y_COUNT - 1];
+	Plane planesNear[Is::TILES_Y_COUNT][Is::TILES_X_COUNT];
+	Plane planesFar[Is::TILES_Y_COUNT][Is::TILES_X_COUNT];
+};
+
+struct Tile
+{
+	U32 lightsCount[4]; 
+	U32 pointLightIndices[Is::MAX_POINT_LIGHTS_PER_TILE];
+	U32 spotLightIndices[Is::MAX_SPOT_LIGHTS_PER_TILE];
+	U32 spotTexLightndices[Is::MAX_SPOT_TEX_LIGHTS_PER_TILE];
+};
+
+struct Tiles
+{
+	Tile tiles[Is::TILES_Y_COUNT][Is::TILES_X_COUNT];
+};
+
 struct Light
 {
-	/// xyz: Light pos in eye space. w: The radius. In viewspace
 	Vec4 posRadius;
 	Vec4 diffuseColorShadowmapId;
 	Vec4 specularColorTexId;
@@ -40,33 +69,22 @@ struct PointLight: Light
 
 struct SpotLight: Light
 {
-	Vec4 lightDir; ///< xyz: Dir vector
-	Vec4 outerCosInnerCos; ///< x: outer angle cos, y: inner
+	Vec4 lightDir;
+	Vec4 outerCosInnerCos;
+	Vec4 extendPoints[4]; 
+};
+
+struct SpotTexLight: SpotLight
+{
 	Mat4 texProjectionMat; ///< Texture projection matrix
-	Vec4 extendPoints[4]; ///< The positions of the 4 camera points
 };
 
-struct PointLights
+struct Lights
 {
-	PointLight lights[Is::MAX_POINT_LIGHTS];
-};
-
-struct SpotLights
-{
-	SpotLight lights[Is::MAX_SPOT_LIGHTS];
-};
-
-struct Tile
-{
-	U32 lightsCount[3]; ///< 0: Point lights number, 1: Spot lights number
-	U32 padding[1];
-	// When change this change the writeTilesUbo as well
-	Array<U32, Is::MAX_LIGHTS_PER_TILE> lightIndices;
-};
-
-struct Tiles
-{
-	Array<Tile, Tiler::TILES_X_COUNT * Tiler::TILES_Y_COUNT> tiles;
+	U32 count[4];
+	PointLight pointLights[Is::MAX_POINT_LIGHTS];
+	SpotLight spotLights[Is::MAX_SPOT_LIGHTS];
+	SpotTexLight spotTexLights[Is::MAX_SPOT_TEX_LIGHTS];
 };
 
 struct CommonUniforms
@@ -76,101 +94,88 @@ struct CommonUniforms
 	Vec4 groundLightDir;
 };
 
-const U tilegridPlanesCount = 
-	(Tiler::TILES_X_COUNT - 1) * 2 // planes J
-	+ (Tiler::TILES_Y_COUNT - 1) * 2  // planes I
-	+ (Tiler::TILES_COUNT * 2); // near far planes
-
-struct Plane
-{
-	Vec3 normal;
-	F32 offset;
-};
-
-struct Tilegrid
-{
-	Array<Plane, tilegridPlanesCount> planes;
-};
-
 } // end namespace shader
 
 //==============================================================================
 
 // Threading jobs
 
-/// Job to update point lights
-struct WritePointLightsUbo: ThreadJob
+/// Write the lights to a client buffer
+struct WriteLights: ThreadJob
 {
-	shader::PointLight* shaderLights = nullptr; ///< Mapped UBO
-	PointLight** visibleLights = nullptr;
-	U32 visibleLightsCount = 0;
+	shader::Lights* gpuLights;
+	SceneVector<Light*>::iterator lightsBegin; // XXX Make them const
+	SceneVector<Light*>::iterator lightsEnd;
 	Is* is = nullptr;
+
+	std::atomic<U32>* pointLightsCount = nullptr;
+	std::atomic<U32>* spotLightsCount = nullptr;
+	std::atomic<U32>* spotTexLightsCount = nullptr;
 
 	void operator()(U threadId, U threadsCount)
 	{
-		U64 start, end;
-		choseStartEnd(threadId, threadsCount, visibleLightsCount, start, end);
-		
-		const Camera* cam = is->cam;
+		U ligthsCount = lightsEnd - lightsBegin;
 
+		// Count job bounds
+		U64 start, end;
+		choseStartEnd(threadId, threadsCount, ligthsCount, start, end);
+
+		// Run all lights
 		for(U64 i = start; i < end; i++)
 		{
-			ANKI_ASSERT(i < Is::MAX_POINT_LIGHTS);
-			ANKI_ASSERT(i < visibleLightsCount);
+			Light* light = lightsBegin + i;
 
-			shader::PointLight& pl = shaderLights[i];
-			const PointLight& light = *visibleLights[i];
-
-			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
-				cam->getViewMatrix());
-
-			pl.posRadius = Vec4(pos, light.getRadius());
-			pl.diffuseColorShadowmapId = light.getDiffuseColor();
-			pl.specularColorTexId = light.getSpecularColor();
+			switch(light->getLightType())
+			{
+			case Light::LT_POINT:
+				doLight(*static_cast<PointLight*>(light));
+				break;
+			case Light::LT_SPOT:
+				doLight(*static_cast<SpotLight*>(light));
+				break;
+			}
 		}
 	}
-};
 
-/// Job to update spot lights
-struct WriteSpotLightsUbo: ThreadJob
-{
-	shader::SpotLight* shaderLights = nullptr; ///< Mapped UBO
-	SpotLight** visibleLights = nullptr;
-	U32 visibleLightsCount = 0;
-	Is* is = nullptr;
-
-	void operator()(U threadId, U threadsCount)
+	/// Copy CPU light to GPU buffer
+	void doLight(PointLight& light)
 	{
-		U64 start, end;
-		choseStartEnd(threadId, threadsCount, visibleLightsCount, start, end);
+		// Get GPU light
+		U32 pos = pointLightsCount->fetch_add(1);
+		// Use % to avoid overflows
+		pos = pos % Is::MAX_POINT_LIGHTS;
+
+		shader::PointLight& slight = gpuLights->pointLights[pos];
 
 		const Camera* cam = is->cam;
+		ANKI_ASSERT(cam);
+	
+		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
+			cam->getViewMatrix());
 
-		for(U64 i = start; i < end; i++)
+		slight.posRadius = Vec4(pos, light.getRadius());
+		slight.diffuseColorShadowmapId = light.getDiffuseColor();
+		slight.specularColorTexId = light.getSpecularColor();
+	}
+
+	/// Copy CPU spot light to GPU buffer
+	void doLight(SpotLight& light)
+	{
+		Bool isTexLight = light.getShadowEnabled();
+
+		U32 pos;
+		shader::SpotLight* baseslight = nullptr;
+		if(isTexLight)
 		{
-			ANKI_ASSERT(i < Is::MAX_SPOT_LIGHTS);
-			ANKI_ASSERT(i < visibleLightsCount);
+			// Spot tex light
 
-			shader::SpotLight& slight = shaderLights[i];
-			const SpotLight& light = *visibleLights[i];
+			pos = spotTexLightsCount->fetch_add(1);
+			pos = pos % Is::MAX_SPOT_TEX_LIGHTS;
 
-			Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
-				cam->getViewMatrix());
+			shader::SpotTexLight& slight = gpuLights->spotTexLights[pos];
+			baseslight = &slight;
 
-			slight.posRadius = Vec4(pos, light.getDistance());
-
-			slight.diffuseColorShadowmapId = 
-				Vec4(light.getDiffuseColor().xyz(), 0);
-
-			slight.specularColorTexId = light.getSpecularColor();
-
-			Vec3 lightDir = -light.getWorldTransform().getRotation().getZAxis();
-			lightDir = cam->getViewMatrix().getRotationPart() * lightDir;
-			slight.lightDir = Vec4(lightDir, 0.0);
-			
-			slight.outerCosInnerCos = Vec4(light.getOuterAngleCos(),
-				light.getInnerAngleCos(), 1.0, 1.0);
-
+			// Write matrix
 			static const Mat4 biasMat4(
 				0.5, 0.0, 0.0, 0.5, 
 				0.0, 0.5, 0.0, 0.5, 
@@ -184,113 +189,122 @@ struct WriteSpotLightsUbo: ThreadJob
 			// Transpose because of driver bug
 			slight.texProjectionMat.transpose();
 
-			// extend points
-			const PerspectiveFrustum& frustum = light.getFrustum();
+			// Write tex IDs
+			slight.diffuseColorShadowmapId.w() = pos;
+		}
+		else
+		{
+			// Spot light
 
-			for(U i = 0; i < 4; i++)
-			{
-				Vec3 dir = light.getWorldTransform().getOrigin() 
-					+ frustum.getDirections()[i];
-				dir.transform(cam->getViewMatrix());
-				slight.extendPoints[i] = Vec4(dir, 1.0);
-			}
+			pos = spotLightsCount->fetch_add(1);
+			pos = pos % Is::MAX_SPOT_LIGHTS;
+
+			shader::SpotLight& slight = gpuLights->spotLights[pos];
+			baseslight = &slight;
+		}
+
+		// Write common stuff
+		ANKI_ASSERT(baseslight);
+
+		// Pos & dist
+		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
+				cam->getViewMatrix());
+		baseslight->posRadius = Vec4(pos, light.getDistance());
+
+		// Diff color
+		baseslight->diffuseColorShadowmapId = Vec4(
+			light.getDiffuseColor().xyz(), 
+			slight.diffuseColorShadowmapId.w());
+
+		// Spec color
+		slight.specularColorTexId = light.getSpecularColor();
+
+		// Light dir
+		Vec3 lightDir = -light.getWorldTransform().getRotation().getZAxis();
+		lightDir = cam->getViewMatrix().getRotationPart() * lightDir;
+		baseslight->lightDir = Vec4(lightDir, 0.0);
+		
+		// Angles
+		slight.outerCosInnerCos = Vec4(light.getOuterAngleCos(),
+			light.getInnerAngleCos(), 1.0, 1.0);
+
+		// extend points
+		const PerspectiveFrustum& frustum = light.getFrustum();
+
+		for(U i = 0; i < 4; i++)
+		{
+			Vec3 dir = light.getWorldTransform().getOrigin() 
+				+ frustum.getDirections()[i];
+			dir.transform(cam->getViewMatrix());
+			baseslight->extendPoints[i] = Vec4(dir, 1.0);
 		}
 	}
 };
 
 /// A job to write the tiles UBO
-struct WriteTilesUboJob: ThreadJob
+struct UpdateTilesJob: ThreadJob
 {
-	PointLight** visiblePointLights = nullptr;
-	U32 visiblePointLightsCount = 0;
-	
-	SpotLight** visibleSpotLights = nullptr;
-	U32 visibleSpotLightsCount = 0; ///< Both shadow and not
-
-	shader::Tile* shaderTiles = nullptr; ///< Mapped UBO
-	U32 maxLightsPerTile = 0;
+	Tiles* tiles = nullptr;
+	Lights* lights = nullptr;
 	Is* is = nullptr;
+	Tiler* tiler = nullptr;
+
+	std::atomic<U32> (*pointLightsCount)[Is::TILES_Y_COUNT][Is::TILES_X_COUNT];
+	std::atomic<U32> (*spotLightsCount)[Is::TILES_Y_COUNT][Is::TILES_X_COUNT];
+	std::atomic<U32> 
+		(*spotTexLightsCount)[Is::TILES_Y_COUNT][Is::TILES_X_COUNT];
 
 	void operator()(U threadId, U threadsCount)
 	{
+		U pointLightsCount = lights->count[0];
+		U spotLightsCount = lights->count[2];
+		U spotTexLightsCount = lights->count[3];
+
+		U lightsCount = pointLightsCount + spotLightsCount + spotTexLightsCount;
+		ANKI_ASSERT(lightsCount <= Is::MAX_LIGHTS);
+
 		U64 start, end;
-		choseStartEnd(threadId, threadsCount, 
-			Tiler::TILES_X_COUNT * Tiler::TILES_Y_COUNT, start, end);
+		choseStartEnd(threadId, threadsCount, lightsCount, start, end);
+
+		const Tiler& tiler = is->r.getTiler();
 
 		for(U32 i = start; i < end; i++)
 		{
-			shader::Tile& stile = shaderTiles[i];
-
-			doTile(i, stile);
-		}
-	}
-
-	/// Do a tile
-	void doTile(U tileId, shader::Tile& stile)
-	{
-		auto& lightIndices = stile.lightIndices;
-
-		// Point lights
-		//
-		U pointLightsInTileCount = 0;
-		for(U i = 0; i < visiblePointLightsCount; i++)
-		{
-			const PointLight& light = *visiblePointLights[i];
-
-			if(light.getTilerBitset().test(tileId))
+			if(i < pointLightsCount)
 			{
-				// Use % to avoid overflows
-				const U id = pointLightsInTileCount % Is::MAX_LIGHTS_PER_TILE;
-				lightIndices[id] = i;
-				++pointLightsInTileCount;
-			}
-		}
+				Sphere s(light.posRadius.xyz(), light.posRadius.w());
+				Tiler::Bitset bitset;
+				tiler->test(s, true, &bitset);
 
-		stile.lightsCount[0] = pointLightsInTileCount;
-
-		// Spot lights
-		//
-
-		U spotLightsInTileCount = 0;
-		U spotLightsShadowInTileCount = 0;
-		for(U i = 0; i < visibleSpotLightsCount; i++)
-		{
-			const SpotLight& light = *visibleSpotLights[i];
-
-			if(light.getTilerBitset().test(tileId))
-			{
-				const U id = (pointLightsInTileCount + spotLightsInTileCount 
-					+ spotLightsShadowInTileCount) 
-					% Is::MAX_LIGHTS_PER_TILE;
-
-				// Use % to avoid overflows
-				lightIndices[id] = i;
-
-				if(light.getShadowEnabled())
+				// For all tiles
+				for(U t = 0; t < Tiler::TILES_COUNT; t++)
 				{
-					++spotLightsShadowInTileCount;
-				}
-				else
-				{
-					++spotLightsInTileCount;
+					// If not in tile bye
+					if(!bitset.test(t))
+					{
+						continue;
+					}
+
+					U x = t % Tiler::TILES_X_COUNT;
+					U y = t / Tiler::TILES_X_COUNT;
+
+					U pos = (*pointLightsCount)[y][x].fetch_add(1);
+
+					if(pos < Is::MAX_POINT_LIGHTS_PER_TILE)
+					{
+						tiles->tiles[y][x].pointLightIndices[pos] = i;
+					}
 				}
 			}
+			else if(i < pointLightsCount + spotLightsCount)
+			{
+
+			}
+			else
+			{
+				ANKI_ASSERT(i < lightsCount);
+			}
 		}
-
-		stile.lightsCount[1] = spotLightsInTileCount;
-		stile.lightsCount[2] = spotLightsShadowInTileCount;
-
-#if 0
-		U totalLightsInTileCount = std::min(
-			pointLightsInTileCount + spotLightsInTileCount 
-			+ spotLightsShadowInTileCount,
-			Is::MAX_LIGHTS_PER_TILE);
-
-		if(pointLightsInTileCount + spotLightsInTileCount > maxLightsPerTile)
-		{
-			ANKI_LOGW("Too many lights per tile: " << lightsInTileCount);
-		}
-#endif
 	}
 };
 

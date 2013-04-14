@@ -2,7 +2,7 @@
 #define ANKI_SCENE_SPATIAL_H
 
 #include "anki/scene/Common.h"
-#include "anki/collision/Collision.h"
+#include "anki/Collision.h"
 #include "anki/util/Bitset.h"
 #include "anki/core/Timestamp.h"
 #include <bitset>

@@ -1,7 +1,7 @@
 #ifndef ANKI_RESOURCE_MESH_H
 #define ANKI_RESOURCE_MESH_H
 
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/gl/Vbo.h"
 #include "anki/collision/Obb.h"
 #include "anki/util/Vector.h"

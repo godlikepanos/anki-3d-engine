@@ -1,7 +1,7 @@
 #ifndef ANKI_RESOURCE_MESH_LOADER_H
 #define ANKI_RESOURCE_MESH_LOADER_H
 
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/util/Vector.h"
 #include "anki/util/Array.h"
 #include <string>

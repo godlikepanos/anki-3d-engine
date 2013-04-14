@@ -2,7 +2,7 @@
 #define ANKI_UI_UI_FONT_H
 
 #include <boost/ptr_container/ptr_vector.hpp>
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 
 namespace anki {
 

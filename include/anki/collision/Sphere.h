@@ -2,7 +2,7 @@
 #define ANKI_COLLISION_SPHERE_H
 
 #include "anki/collision/CollisionShape.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 
 namespace anki {
 

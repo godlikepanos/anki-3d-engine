@@ -1,7 +1,7 @@
 #ifndef ANKI_UI_UI_FT_FONT_LOADER_H
 #define ANKI_UI_UI_FT_FONT_LOADER_H
 
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/util/Vector.h"
 #include <boost/range/iterator_range.hpp>
 #include <ft2build.h>

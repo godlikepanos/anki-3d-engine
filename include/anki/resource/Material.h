@@ -5,7 +5,7 @@
 #include "anki/resource/Resource.h"
 #include "anki/util/ConstCharPtrHashMap.h"
 #include "anki/util/StringList.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/util/Visitor.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"

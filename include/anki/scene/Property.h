@@ -6,10 +6,10 @@
 #include "anki/util/Assert.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/util/Visitor.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/resource/Resource.h"
 #include "anki/resource/TextureResource.h"
-#include "anki/collision/Collision.h"
+#include "anki/Collision.h"
 #include "anki/util/ConstCharPtrHashMap.h"
 
 namespace anki {

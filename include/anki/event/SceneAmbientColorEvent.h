@@ -2,7 +2,7 @@
 #define ANKI_EVENT_SCENE_AMBIENT_COLOR_EVENT_H
 
 #include "anki/event/Event.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 
 namespace anki {
 

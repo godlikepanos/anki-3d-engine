@@ -1,7 +1,7 @@
 #ifndef ANKI_INPUT_INPUT_H
 #define ANKI_INPUT_INPUT_H
 
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/Array.h"
 #include "anki/util/StdTypes.h"

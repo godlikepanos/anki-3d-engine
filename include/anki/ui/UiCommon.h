@@ -1,7 +1,7 @@
 #ifndef ANKI_UI_UI_COMMON_H
 #define ANKI_UI_UI_COMMON_H
 
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/util/Allocator.h"
 
 namespace anki {

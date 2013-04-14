@@ -1,5 +1,5 @@
 #include "anki/script/MathCommon.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 
 namespace anki {
 

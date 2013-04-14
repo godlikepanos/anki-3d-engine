@@ -1,5 +1,5 @@
 #include "anki/collision/CollisionShape.h"
-#include "anki/collision/Collision.h"
+#include "anki/Collision.h"
 
 namespace anki {
 

@@ -3,7 +3,7 @@
 
 #include "anki/scene/Common.h"
 #include "anki/util/Bitset.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 
 namespace anki {
 

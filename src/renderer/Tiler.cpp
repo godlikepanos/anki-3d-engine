@@ -11,6 +11,14 @@
 namespace anki {
 
 //==============================================================================
+static const U TILES_X_COUNT = ANKI_RENDERER_TILES_X_COUNT;
+static const U TILES_Y_COUNT = ANKI_RENDERER_TILES_Y_COUNT;
+static const U TILES_COUNT = TILES_X_COUNT * TILES_Y_COUNT;
+
+typedef F32 
+	PixelArray[ANKI_RENDERER_TILES_Y_COUNT][ANKI_RENDERER_TILES_X_COUNT][2];
+
+//==============================================================================
 #define CHECK_PLANE_PTR(p_) \
 	ANKI_ASSERT(p_ < &tiler->allPlanes[tiler->allPlanes.size()]);
 
@@ -21,7 +29,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 	PerspectiveCamera* cam = nullptr;
 	Bool frustumChanged;
 #if ANKI_TILER_ENABLE_GPU
-	const Tiler::PixelArray* pixels = nullptr;
+	const PixelArray* pixels = nullptr;
 #endif
 
 	void operator()(U threadId, U threadsCount)
@@ -40,13 +48,13 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 			const F32 n = cam->getNear();
 
 			F32 l = 2.0 * n * tan(fx / 2.0);
-			F32 l6 = l / Tiler::TILES_X_COUNT;
+			F32 l6 = l / TILES_X_COUNT;
 			F32 o = 2.0 * n * tan(fy / 2.0);
-			F32 o6 = o / Tiler::TILES_Y_COUNT;
+			F32 o6 = o / TILES_Y_COUNT;
 
 			// First the top looking planes
 			choseStartEnd(
-				threadId, threadsCount, Tiler::TILES_Y_COUNT - 1, start, end);
+				threadId, threadsCount, TILES_Y_COUNT - 1, start, end);
 
 			for(U i = start; i < end; i++)
 			{
@@ -59,7 +67,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 
 			// Then the right looking planes
 			choseStartEnd(
-				threadId, threadsCount, Tiler::TILES_X_COUNT - 1, start, end);
+				threadId, threadsCount, TILES_X_COUNT - 1, start, end);
 
 			for(U j = start; j < end; j++)
 			{
@@ -76,7 +84,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 
 			// First the top looking planes
 			choseStartEnd(
-				threadId, threadsCount, Tiler::TILES_Y_COUNT - 1, start, end);
+				threadId, threadsCount, TILES_Y_COUNT - 1, start, end);
 
 			for(U i = start; i < end; i++)
 			{
@@ -87,7 +95,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 
 			// Then the right looking planes
 			choseStartEnd(
-				threadId, threadsCount, Tiler::TILES_X_COUNT - 1, start, end);
+				threadId, threadsCount, TILES_X_COUNT - 1, start, end);
 
 			for(U j = start; j < end; j++)
 			{
@@ -103,14 +111,14 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 		Renderer::calcPlanes(Vec2(cam->getNear(), cam->getFar()), rplanes);
 
 		choseStartEnd(
-			threadId, threadsCount, Tiler::TILES_COUNT, start, end);
+			threadId, threadsCount, TILES_COUNT, start, end);
 
 		Plane* nearPlanesW = tiler->nearPlanesW + start;
 		Plane* farPlanesW = tiler->farPlanesW + start;
 		for(U k = start; k < end; ++k)
 		{
-			U j = k % Tiler::TILES_X_COUNT;
-			U i = k / Tiler::TILES_X_COUNT;
+			U j = k % TILES_X_COUNT;
+			U i = k / TILES_X_COUNT;
 
 			// Calculate depth as you do it for the vertex position inside
 			// the shaders
@@ -142,7 +150,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 		Plane& plane = tiler->planesI[i];
 		CHECK_PLANE_PTR(&plane);
 
-		a = Vec3(0.0, (I(i + 1) - I(Tiler::TILES_Y_COUNT) / 2) * o6, -n);
+		a = Vec3(0.0, (I(i + 1) - I(TILES_Y_COUNT) / 2) * o6, -n);
 		b = Vec3(1.0, 0.0, 0.0).cross(a);
 		b.normalize();
 
@@ -157,7 +165,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 		Plane& plane = tiler->planesJ[j];
 		CHECK_PLANE_PTR(&plane);
 
-		a = Vec3((I(j + 1) - I(Tiler::TILES_X_COUNT) / 2) * l6, 0.0, -n);
+		a = Vec3((I(j + 1) - I(TILES_X_COUNT) / 2) * l6, 0.0, -n);
 		b = a.cross(Vec3(0.0, 1.0, 0.0));
 		b.normalize();
 
@@ -324,9 +332,8 @@ void Tiler::updateTiles(Camera& cam)
 }
 
 //==============================================================================
-Bool Tiler::test2(
+Bool Tiler::test(
 	const CollisionShape& cs, 
-	const Aabb& aabb, 
 	Bool nearPlane,
 	Bitset* outBitset) const
 {
