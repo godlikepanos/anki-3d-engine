@@ -38,9 +38,9 @@ layout(std430, binding = 2) buffer spotLightsCountBuffer
 {
 	atomic_uint spotLightsCount[TILES_Y_COUNT][TILES_X_COUNT];
 };
-layout(std430, binding = 3) buffer spotLightsTexCountBuffer
+layout(std430, binding = 3) buffer spotTexLightsCountBuffer
 {
-	atomic_uint spotLightsTexCount[TILES_Y_COUNT][TILES_X_COUNT];
+	atomic_uint spotTexLightsCount[TILES_Y_COUNT][TILES_X_COUNT];
 };
 
 //
@@ -60,7 +60,7 @@ bool pointLightInsidePlane(in PointLight light, in Plane plane)
 // Spot light inside plane
 bool spotLightInsidePlane(in SpotLight light, in Plane plane)
 {
-	if(pointLightInsidePlane(light.light, plane))
+	if(pointLightInsidePlane(light.lightBase, plane))
 	{
 		return true;
 	}
@@ -76,6 +76,12 @@ bool spotLightInsidePlane(in SpotLight light, in Plane plane)
 		}
 	}
 	return false;
+}
+
+// Spot tex light inside plane
+bool spotTexLightInsidePlane(in SpotTexLight light, in Plane plane)
+{
+	return pointLightInsidePlane(light.spotLightBase, plane);
 }
 
 // main

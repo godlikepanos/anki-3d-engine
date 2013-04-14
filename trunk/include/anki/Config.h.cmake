@@ -126,4 +126,20 @@ inline int stoi(const string& str)
 } // end namespace std
 #endif
 
+/// @addtogroup config
+/// @{
+
+#define ANKI_RENDERER_MAX_POINT_LIGHTS (512 - 16)
+#define ANKI_RENDERER_MAX_SPOT_LIGHTS 8
+#define ANKI_RENDERER_MAX_SPOT_TEX_LIGHTS 8
+
+#define ANKI_RENDERER_MAX_POINT_LIGHTS_PER_TILE 24
+#define ANKI_RENDERER_MAX_SPOT_LIGHTS_PER_TILE 4
+#define ANKI_RENDERER_MAX_SPOT_TEX_LIGHTS_PER_TILE 4
+
+#define ANKI_RENDERER_TILES_X_COUNT 16
+#define ANKI_RENDERER_TILES_Y_COUNT 16
+
+/// @}
+
 #endif

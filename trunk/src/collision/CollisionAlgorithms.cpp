@@ -1,7 +1,7 @@
 #include "anki/collision/CollisionAlgorithms.h"
-#include "anki/collision/Collision.h"
+#include "anki/Collision.h"
 #include "anki/util/Assert.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include <limits>
 
 namespace anki {

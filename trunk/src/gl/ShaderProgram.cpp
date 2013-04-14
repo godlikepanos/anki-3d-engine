@@ -1,7 +1,7 @@
 #include "anki/gl/ShaderProgram.h"
 #include "anki/gl/GlException.h"
 #include "anki/gl/GlState.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/util/Exception.h"
 #include "anki/gl/Texture.h"
 #include "anki/core/Logger.h"

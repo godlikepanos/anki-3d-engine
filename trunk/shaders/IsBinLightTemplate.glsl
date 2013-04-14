@@ -1,31 +1,50 @@
 // Template function that is used to bin lights to a tile
 
-#if !defined(LIGHT_TYPE) || !defined(PLANE_TEST_FUNC) || !defined(COUNTER)
+#if !defined(TYPE) || !defined(NAME)
 #	error See file
 #endif
 
-#define FUNC_NAME bin ## LIGHT_TYPE ## COUNTER
+#define CONCAT(x, y) x##y
 
-void FUNC_NAME(uint lightIndex)
+void CONCAT(bin, TYPE)(uint lightIndex)
 {
-	LIGHT_TYPE light = lights.
+	LIGHT_TYPE light = lights. CONCAT(NAME, Lights) [lightIndex];
 
 	uvec2 from = uvec2(0, 0);
 	uvec2 to = uvec2(TILES_X_COUNT, TILES_Y_COUNT);
 
 	while(1)
 	{
-		uvec2 m = (to - from) / uvec2(2);
+		uvec2 m = (to - from) / uvec2(2); // Middle dist
 
 		// Handle final
 		if(m.x == 0 || m.y == 0)
 		{
-			if(PLANE_TEST_FUNC(light, tilegrid.planesFar[tileY][tileX])
-				&& PLANE_TEST_FUNC(light, tilegrid.planesNear[tileY][tileX]))
+			if(CONCAT(NAME, LightInsidePlane)(
+				light, tilegrid.planesFar[tileY][tileX])
+				&& CONCAT(NAME, LightInsidePlane)(
+				light, tilegrid.planesNear[tileY][tileX]))
 			{
 				// It's inside tile
-				uint pos = atomicCounterIncrement(COUNTER);
+				uint pos = 
+					atomicCounterIncrement(CONCAT(NAME, LightsCounter));
+
+				// Bin it
+				tiles.tile[tileY][tileX]. CONCAT(NAME, LightIndices) [pos] = 
+					lightIndex;
 			}
+
+			break;
+		}
+
+		// do the plane checks
+		bool inside[2][2];
+
+		// Top looking plane check
+		if(CONCAT(NAME, LightInsidePlane)(
+			light, tilegrid.planesY[from.y + m.y - 1]))
+		{
+			inside[][]
 		}
 	}
 }

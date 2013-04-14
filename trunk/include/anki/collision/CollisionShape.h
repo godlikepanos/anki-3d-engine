@@ -25,7 +25,7 @@ public:
 		CST_SPHERE,
 		CST_AABB,
 		CST_OBB,
-		CST_FRUSTUM
+		CST_FRUSTUM,
 	};
 
 	/// Generic mutable visitor

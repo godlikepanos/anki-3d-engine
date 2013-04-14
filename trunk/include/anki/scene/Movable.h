@@ -3,7 +3,7 @@
 
 #include "anki/util/Object.h"
 #include "anki/util/Bitset.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/core/Timestamp.h"
 #include "anki/scene/Common.h"
 #include <algorithm> // For std::find

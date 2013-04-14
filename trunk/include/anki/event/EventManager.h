@@ -5,7 +5,7 @@
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
 #include "anki/scene/Common.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 
 namespace anki {
 

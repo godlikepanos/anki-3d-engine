@@ -6,7 +6,7 @@
 #include "anki/resource/Resource.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/gl/Gl.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/renderer/Sm.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
@@ -29,10 +29,15 @@ class Is: private RenderingPass
 	friend struct UpdateTilesJob;
 
 public:
-	static const U MAX_LIGHTS_PER_TILE = 32;
+	static const U MAX_POINT_LIGHTS_PER_TILE = 24;
+	static const U MAX_SPOT_LIGHTS_PER_TILE = 4;
+	static const U MAX_SPOT_TEX_LIGHTS_PER_TILE = 4;
 
-	static const U MAX_POINT_LIGHTS = 512;
+	static const U MAX_POINT_LIGHTS = 512 - 16;
 	static const U MAX_SPOT_LIGHTS = 8;
+	static const U MAX_SPOT_TEX_LIGHTS = 8;
+	static const U MAX_LIGHTS = MAX_POINT_LIGHTS + MAX_SPOT_LIGHTS 
+		+ MAX_SPOT_TEX_LIGHTS;
 
 	Is(Renderer* r);
 	~Is();
@@ -60,21 +65,24 @@ private:
 	/// The IS FBO
 	Fbo fbo;
 
+	/// @name GPU buffers
+	/// @{
+
 	/// Contains common data for all shader programs
 	Ubo commonUbo;
 
 	/// Track the updates of commonUbo
 	U32 commonUboUpdateTimestamp = Timestamp::getTimestamp();
 
-	/// Contains info of for lights
-	Ubo pointLightsUbo;
-	Ubo spotLightsUbo;
+	/// Contains info of lights
+	Ubo lightsUbo;
 
 	/// Contains the indices of lights per tile
 	Ubo tilesUbo;
 
 	/// XXX
 	BufferObject tilegridBuffer;
+	/// @}
 
 	/// Light shaders
 	ShaderProgramResourcePointer lightPassProg;

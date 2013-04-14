@@ -1,7 +1,7 @@
 #ifndef ANKI_PHYSICS_RIGID_BODY_H
 #define ANKI_PHYSICS_RIGID_BODY_H
 
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/physics/MotionState.h"
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>

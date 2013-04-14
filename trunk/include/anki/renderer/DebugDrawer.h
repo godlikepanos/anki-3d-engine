@@ -1,7 +1,7 @@
 #ifndef ANKI_RENDERER_DEBUG_DRAWER_H
 #define ANKI_RENDERER_DEBUG_DRAWER_H
 
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/gl/Vbo.h"
 #include "anki/gl/Vao.h"
 #include "anki/resource/Resource.h"

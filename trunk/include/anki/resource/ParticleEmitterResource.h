@@ -1,7 +1,7 @@
 #ifndef ANKI_RESOURCE_PARTICLE_EMITTER_RSRC_H
 #define ANKI_RESOURCE_PARTICLE_EMITTER_RSRC_H
 
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/resource/Resource.h"
 
 namespace anki {

@@ -6,7 +6,7 @@
 #include "anki/scene/Movable.h"
 #include "anki/scene/Spatial.h"
 #include "anki/resource/Model.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 
 namespace anki {
 

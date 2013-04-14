@@ -4,7 +4,7 @@
 #include "anki/collision/CollisionShape.h"
 #include "anki/collision/Plane.h"
 #include "anki/collision/Obb.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include <array>
 
 namespace anki {

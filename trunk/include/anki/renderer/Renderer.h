@@ -1,7 +1,7 @@
 #ifndef ANKI_RENDERER_RENDERER_H
 #define ANKI_RENDERER_RENDERER_H
 
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/Resource.h"
