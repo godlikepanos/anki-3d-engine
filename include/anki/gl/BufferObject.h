@@ -162,8 +162,24 @@ public:
 		ANKI_ASSERT(correctTarget);
 		(void)correctTarget;
 		
-		bind();
 		glBindBufferBase(target, binding, glId);
+	}
+
+	/// Set the binding point of this buffer with range
+	void setBindingRange(GLuint binding, PtrSize offset, PtrSize size) const
+	{
+		Bool correctTarget = target == GL_TRANSFORM_FEEDBACK_BUFFER 
+#if ANKI_GL == ANKI_GL_DESKTOP
+			|| target == GL_SHADER_STORAGE_BUFFER
+#endif
+			|| target == GL_UNIFORM_BUFFER;
+
+		ANKI_ASSERT(correctTarget);
+		(void)correctTarget;
+
+		ANKI_ASSERT(offset + size <= sizeInBytes);
+
+		glBindBufferRange(target, binding, glId, offset, size);
 	}
 
 private:
