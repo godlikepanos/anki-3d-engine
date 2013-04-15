@@ -29,16 +29,6 @@ class Is: private RenderingPass
 	friend struct UpdateTilesJob;
 
 public:
-	static const U MAX_POINT_LIGHTS_PER_TILE = 24;
-	static const U MAX_SPOT_LIGHTS_PER_TILE = 4;
-	static const U MAX_SPOT_TEX_LIGHTS_PER_TILE = 4;
-
-	static const U MAX_POINT_LIGHTS = 512 - 16;
-	static const U MAX_SPOT_LIGHTS = 8;
-	static const U MAX_SPOT_TEX_LIGHTS = 8;
-	static const U MAX_LIGHTS = MAX_POINT_LIGHTS + MAX_SPOT_LIGHTS 
-		+ MAX_SPOT_TEX_LIGHTS;
-
 	Is(Renderer* r);
 	~Is();
 
@@ -57,7 +47,8 @@ private:
 	static const U COMMON_UNIFORMS_BLOCK_BINDING = 0;
 	static const U POINT_LIGHTS_BLOCK_BINDING = 1;
 	static const U SPOT_LIGHTS_BLOCK_BINDING = 2;
-	static const U TILES_BLOCK_BINDING = 3;
+	static const U SPOT_TEX_LIGHTS_BLOCK_BINDING = 3;
+	static const U TILES_BLOCK_BINDING = 4;
 
 	/// The IS FAI
 	Texture fai;
@@ -74,7 +65,7 @@ private:
 	/// Track the updates of commonUbo
 	U32 commonUboUpdateTimestamp = Timestamp::getTimestamp();
 
-	/// Contains info of lights
+	/// Contains all the lights
 	Ubo lightsUbo;
 
 	/// Contains the indices of lights per tile
