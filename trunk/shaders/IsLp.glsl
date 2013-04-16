@@ -39,6 +39,7 @@ void main()
 #pragma anki include "shaders/CommonFrag.glsl"
 #pragma anki include "shaders/Pack.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
+#pragma anki include "shaders/IsCommon.glsl"
 
 #define ATTENUATION_FINE 0
 
@@ -61,41 +62,29 @@ layout(std140, row_major) uniform commonBlock
 
 #define planes planes_.xy
 
-struct Light
+layout(std140) uniform pointLightsBlock
 {
-	vec4 posRadius; ///< xyz: Light pos in eye space. w: The radius
-	vec4 diffuseColorShadowmapId;
-	vec4 specularColorTexId;
-};
-
-struct SpotLight
-{
-	Light light;
-	vec4 lightDirection;
-	vec4 outerCosInnerCos;
-	mat4 texProjectionMat;
-	vec4 extendPoints[4];
-};
-
-layout(std140, row_major) uniform pointLightsBlock
-{
-	Light plights[MAX_POINT_LIGHTS];
+	Light pointLights[MAX_POINT_LIGHTS];
 };
 
 layout(std140) uniform spotLightsBlock
 {
-	SpotLight slights[MAX_SPOT_LIGHTS];
+	SpotLight spotLights[MAX_SPOT_LIGHTS];
 };
 
-struct Tile
+layout(std140) uniform spotTexLightsBlock
 {
-	uvec4 lightsCount;
-	uvec4 lightIndices[MAX_LIGHTS_PER_TILE / 4];
+	SpotTexLight spotTexLights[MAX_SPOT_TEX_LIGHTS];
 };
 
-layout(std140, row_major) uniform tilesBlock
+#if __VERSION__ > 430
+layout(std430) 
+#else
+layout(std140) 
+#endif
+	uniform tilesBlock
 {
-	Tile tiles[TILES_X_COUNT * TILES_Y_COUNT];
+	Tile tiles[TILES_COUNT];
 };
 
 uniform highp usampler2D msFai0;
@@ -180,9 +169,9 @@ vec3 calcPhong(in vec3 fragPosVspace, in vec3 diffuse,
 //==============================================================================
 float calcSpotFactor(in SpotLight light, in vec3 fragPosVspace)
 {
-	vec3 l = normalize(fragPosVspace - light.light.posRadius.xyz);
+	vec3 l = normalize(fragPosVspace - light.lightBase.posRadius.xyz);
 
-	float costheta = dot(l, light.lightDirection.xyz);
+	float costheta = dot(l, light.lightDir.xyz);
 	float spotFactor = smoothstep(
 		light.outerCosInnerCos.x, 
 		light.outerCosInnerCos.y, 
@@ -211,7 +200,7 @@ float pcfLow(in sampler2DArrayShadow shadowMap, in vec3 shadowUv)
 #endif
 
 //==============================================================================
-float calcShadowFactor(in SpotLight light, in vec3 fragPosVspace, 
+float calcShadowFactor(in SpotTexLight light, in vec3 fragPosVspace, 
 	in mediump sampler2DArrayShadow shadowMapArr, in float layer)
 {
 	vec4 texCoords4 = light.texProjectionMat * vec4(fragPosVspace, 1.0);
@@ -248,69 +237,81 @@ void main()
 	uint pointLightsCount = tiles[vInstanceId].lightsCount[0];
 	for(uint i = 0U; i < pointLightsCount; ++i)
 	{
-		uint lightId = tiles[vInstanceId].lightIndices[i / 4U][i % 4U];
+#if __VERSION__ > 430
+		uint lightId = tiles[vInstanceId].pointLightIndices[i];
+#else
+		uint lightId = tiles[vInstanceId].pointLightIndices[i / 4U][i % 4U];
+#endif
+		PointLight light = pointLights[lightId];
 
 		vec3 ray;
-		float att = calcAttenuationFactor(fragPosVspace, 
-			plights[lightId], ray);
+		float att = calcAttenuationFactor(fragPosVspace, light, ray);
 
 		float lambert = calcLambertTerm(normal, ray);
 
 		fColor += calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
-			specularAll, normal, plights[lightId], ray) * (att * lambert);
+			specularAll, normal, light, ray) * (att * lambert);
 	}
 
 	// Spot lights
-	uint spotLightsCount = tiles[vInstanceId].lightsCount[1];
+	uint spotLightsCount = tiles[vInstanceId].lightsCount[2];
 
-	uint opt = pointLightsCount + spotLightsCount;
-	for(uint i = pointLightsCount; i < opt; ++i)
+	for(uint i = 0U; i < spotLightsCount; ++i)
 	{
-		uint lightId = tiles[vInstanceId].lightIndices[i / 4U][i % 4U];
+#if __VERSION__ > 430
+		uint lightId = tiles[vInstanceId].spotLightIndices[i];
+#else
+		uint lightId = tiles[vInstanceId].spotLightIndices[i / 4U][i % 4U];
+#endif
+		SpotLight light = spotLights[lightId];
 
 		vec3 ray;
 		float att = calcAttenuationFactor(fragPosVspace, 
-			slights[lightId].light, ray);
+			light.lightBase, ray);
 
 		float lambert = calcLambertTerm(normal, ray);
 
-		float spot = calcSpotFactor(slights[lightId], fragPosVspace);
+		float spot = calcSpotFactor(light, fragPosVspace);
 
 		vec3 col = calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
-			specularAll, normal, slights[lightId].light, ray);
+			specularAll, normal, light.lightBase, ray);
 
 		fColor += col * (att * lambert * spot);
 	}
 
 	// Spot lights with shadow
-	uint spotLightsShadowCount = tiles[vInstanceId].lightsCount[2];
-	opt = pointLightsCount + spotLightsCount;
+	uint spotTexLightsCount = tiles[vInstanceId].lightsCount[3];
 
-	for(uint i = 0U; i < spotLightsShadowCount; ++i)
+	for(uint i = 0U; i < spotTexLightsCount; ++i)
 	{
-		uint id = i + opt;
-		uint lightId = tiles[vInstanceId].lightIndices[id / 4U][id % 4U];
+#if __VERSION__ > 430
+		uint lightId = tiles[vInstanceId].spotTexLightIndices[i];
+#else
+		uint lightId = tiles[vInstanceId].spotTexLightIndices[i / 4U][i % 4U];
+#endif
+		SpotTexLight light = spotTexLights[lightId];
 
 		vec3 ray;
 		float att = calcAttenuationFactor(fragPosVspace, 
-			slights[lightId].light, ray);
+			light.spotLightBase.lightBase, ray);
 
 		float lambert = calcLambertTerm(normal, ray);
 
-		float spot = calcSpotFactor(slights[lightId], fragPosVspace);
+		float spot = 
+			calcSpotFactor(light.spotLightBase, fragPosVspace);
 
 		float midFactor = att * lambert * spot;
 
 		//if(midFactor > 0.0)
 		{
 			float shadowmapLayerId = 
-				slights[lightId].light.diffuseColorShadowmapId.w;
+				light.spotLightBase.lightBase.diffuseColorShadowmapId.w;
 
-			float shadow = calcShadowFactor(slights[lightId], 
+			float shadow = calcShadowFactor(light, 
 				fragPosVspace, shadowMapArr, shadowmapLayerId);
 
 			vec3 col = calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
-				specularAll, normal, slights[lightId].light, ray);
+				specularAll, normal, light.spotLightBase.lightBase, ray);
 
 			fColor += col * (midFactor * shadow);
 		}

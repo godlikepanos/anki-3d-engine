@@ -23,7 +23,8 @@ class Tiler
 	friend struct UpdatePlanesPerspectiveCameraJob;
 
 public:
-	typedef std::bitset<ANKI_RENDERER_TILES_COUNT> Bitset;
+	typedef std::bitset<
+		ANKI_RENDERER_TILES_X_COUNT * ANKI_RENDERER_TILES_Y_COUNT> Bitset;
 
 	Tiler();
 	~Tiler();

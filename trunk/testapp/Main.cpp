@@ -3,7 +3,7 @@
 #include <fstream>
 
 #include "anki/input/Input.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/App.h"
 #include "anki/resource/Mesh.h"

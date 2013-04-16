@@ -11,8 +11,8 @@ struct Tilegrid
 {
 	Plane planesX[TILES_X_COUNT - 1];
 	Plane planesY[TILES_Y_COUNT - 1];
-	Plane planesNear[TILES_Y_COUNT][TILES_X_COUNT];
-	Plane planesFar[TILES_Y_COUNT][TILES_X_COUNT];
+	Plane planesNear[TILES_COUNT];
+	Plane planesFar[TILES_COUNT];
 };
 
 // Representation of a tile
@@ -28,12 +28,6 @@ struct Tile
 	uvec4 spotLightIndices[MAX_SPOT_LIGHTS_PER_TILE / 4];
 	uvec4 spotTexLightIndices[MAX_SPOT_TEX_LIGHTS_PER_TILE / 4];
 #endif
-};
-
-// A container of tiles
-struct Tiles
-{
-	Tile tiles[TILES_Y_COUNT][TILES_X_COUNT];
 };
 
 // The base of all lights
@@ -59,7 +53,7 @@ struct SpotLight
 // Spot light with texture
 struct SpotTexLight
 {
-	SpotLight spotLightbase;
+	SpotLight spotLightBase;
 	mat4 texProjectionMat;
 };
 

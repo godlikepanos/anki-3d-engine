@@ -178,8 +178,10 @@ public:
 		(void)correctTarget;
 
 		ANKI_ASSERT(offset + size <= sizeInBytes);
+		ANKI_ASSERT(size > 0);
 
 		glBindBufferRange(target, binding, glId, offset, size);
+		ANKI_CHECK_GL_ERROR();
 	}
 
 private:
