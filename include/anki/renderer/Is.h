@@ -23,10 +23,7 @@ class SpotLight;
 /// Illumination stage
 class Is: private RenderingPass
 {
-	friend struct WritePointLightsUbo;
-	friend struct WriteSpotLightsUbo;
-	friend struct WriteTilesUboJob;
-	friend struct UpdateTilesJob;
+	friend struct WriteLightsJob;
 
 public:
 	Is(Renderer* r);
@@ -102,6 +99,9 @@ private:
 
 	// Do the actual pass
 	void lightPass();
+
+	// Prepare GL for rendering
+	void setState();
 };
 
 } // end namespace anki

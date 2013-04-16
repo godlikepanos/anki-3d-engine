@@ -1,6 +1,6 @@
 #include "tests/framework/Framework.h"
 #include "anki/script/ScriptManager.h"
-#include "anki/math/Math.h"
+#include "anki/Math.h"
 
 ANKI_TEST(Script, LuaBinder)
 {

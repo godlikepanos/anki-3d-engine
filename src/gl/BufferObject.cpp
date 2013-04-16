@@ -2,6 +2,7 @@
 #include "anki/gl/BufferObject.h"
 #include "anki/gl/GlException.h"
 #include "anki/util/Exception.h"
+#include "anki/core/Logger.h"
 
 /// Instead of map/unmap use glBufferSubData() when writing to the whole buffer
 #define USE_BUFFER_DATA_ON_WRITE 1

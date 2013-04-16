@@ -90,6 +90,7 @@ void App::init(int argc, char* argv[])
 	// Install signal handlers
 	signal(SIGSEGV, handler);
 	signal(SIGBUS, handler);
+	signal(SIGFPE, handler);
 
 	// send output to handleMessageHanlderMsgs
 	ANKI_CONNECT(&LoggerSingleton::get(), messageRecieved, 
