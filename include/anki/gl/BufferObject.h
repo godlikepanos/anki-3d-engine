@@ -184,6 +184,13 @@ public:
 		ANKI_CHECK_GL_ERROR();
 	}
 
+	static PtrSize getUniformBufferOffsetAlignment()
+	{
+		GLint64 offsetAlignment;
+		glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &offsetAlignment);
+		return offsetAlignment;
+	}
+
 private:
 	/// Used in glBindBuffer(target, glId) and its for easy access so we
 	/// wont have to query the GL driver. Its the type of the buffer eg
