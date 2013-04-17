@@ -184,6 +184,7 @@ public:
 		ANKI_CHECK_GL_ERROR();
 	}
 
+	/// Return GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT
 	static PtrSize getUniformBufferOffsetAlignment()
 	{
 		GLint64 offsetAlignment;

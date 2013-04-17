@@ -28,6 +28,14 @@ extern F64 randRange(F64 min, F64 max);
 
 extern F32 randFloat(F32 max);
 
+/// Align memory
+/// @param alignment The bytes of alignment
+/// @param size The value to align
+inline PtrSize alignSizeRoundUp(PtrSize alignment, PtrSize size)
+{
+	return (size + alignment - 1) & ~(alignment - 1);
+}
+
 /// Get the size in bytes of a vector
 template<typename Vec>
 inline PtrSize getVectorSizeInBytes(const Vec& v)

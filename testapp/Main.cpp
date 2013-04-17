@@ -467,7 +467,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -500,7 +500,7 @@ void initSubsystems(int argc, char* argv[])
 {
 #if ANKI_GL == ANKI_GL_DESKTOP
 	U32 glmajor = 4;
-	U32 glminor = 3;
+	U32 glminor = 2;
 #else
 	U32 glmajor = 3;
 	U32 glminor = 0;

@@ -64,9 +64,10 @@ private:
 
 	/// Contains all the lights
 	Ubo lightsUbo;
+	PtrSize uboAlignment;
 
 	/// Contains the indices of lights per tile
-	Ubo tilesUbo;
+	BufferObject tilesBuffer;
 
 	/// XXX
 	BufferObject tilegridBuffer;
@@ -97,10 +98,10 @@ private:
 	/// Called by init
 	void initInternal(const RendererInitializer& initializer);
 
-	// Do the actual pass
+	/// Do the actual pass
 	void lightPass();
 
-	// Prepare GL for rendering
+	/// Prepare GL for rendering
 	void setState();
 };
 
