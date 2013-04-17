@@ -477,7 +477,7 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		dbg->setModelMatrix(Mat4::getIdentity());
 	}
 
-	/*Frustumable* fr;
+	Frustumable* fr;
 	if((fr = node.getFrustumable()))
 	{
 		draw(*fr);
@@ -488,7 +488,7 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		&& sp->bitsEnabled(Spatial::SF_VISIBLE_CAMERA))
 	{
 		draw(*sp);
-	}*/
+	}
 
 	Path* path = node.getPath();
 	if(path)

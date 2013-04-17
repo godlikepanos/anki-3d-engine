@@ -40,12 +40,15 @@ void BufferObject::create(GLenum target_, U32 sizeInBytes_,
 {
 	ANKI_ASSERT(!isCreated());
 
-	ANKI_ASSERT(sizeInBytes_ > 0 && "Unacceptable sizeInBytes");
-
 	usage = usage_;
 	target = target_;
 	sizeInBytes = sizeInBytes_;
 
+	ANKI_ASSERT(sizeInBytes > 0 && "Unacceptable sizeInBytes");
+	ANKI_ASSERT(!(target == GL_UNIFORM_BUFFER && usage != GL_DYNAMIC_DRAW)
+		&& "Don't use UBOs like that");
+
+	// Create
 	glGenBuffers(1, &glId);
 	ANKI_ASSERT(glId != 0);
 	bind();
