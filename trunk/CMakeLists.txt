@@ -3,13 +3,41 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(ANKI_PROJ)
 
 #
+# Configuration
+#
+
+OPTION(ANKI_BUILD_TOOLS "Build tools" ON)
+OPTION(ANKI_BUILD_TESTS "Build Unit Tests" OFF)
+OPTION(ANKI_BUILD_TESTAPP "Build Test Application" ON)
+
+OPTION(ANKI_WITH_GPERFTOOLS_PROF "Link with gperftools profiler" OFF)
+
+OPTION(ANKI_STRIP "Srip the symbols from the executables" OFF)
+
+# Because we want different compiler flags for each platform
+SET(ANKI_CPU "X86" CACHE STRING "The CPU arch (X86 or ARM)")
+SET(ANKI_CPU_ADDR_SPACE "0" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
+OPTION(ANKI_ENABLE_MATH_SIMD "Enable or not math SIMD optimizations" ON)
+
+# libz and libpng
+OPTION(ANKI_SYSTEM_LIBZ "Use the system's libz" OFF)
+OPTION(ANKI_SYSTEM_LIBPNG "Use the system's libpng" OFF)
+
+# Take a wild guess on the windowing system
+IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+	SET(_WIN_BACKEND "GLXX11")
+ELSE()
+	SET(_WIN_BACKEND "DONT_KNOW")
+ENDIF()
+
+SET(ANKI_WINDOW_BACKEND "${_WIN_BACKEND}" CACHE STRING "The window backend (GLXX11 or EGLX11 or EGLFBDEV or DUMMY)")
+
+#
 # Options that affect anki and extern
 #
 
 # CPU
-SET(ANKI_CPU "X86" CACHE STRING "The CPU arch (X86 or ARM)")
 MESSAGE("++ AnKi CPU: ${ANKI_CPU}")
-OPTION(ANKI_ENABLE_MATH_SIMD "Enable or not math SIMD optimizations" ON)
 
 IF(ANKI_CPU STREQUAL "X86")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4 ")
@@ -31,19 +59,17 @@ ENDIF()
 
 MESSAGE("++ AnKi SIMD: ${ANKI_MATH_SIMD}")
 
-# Arch
-SET(ANKI_ARCH "0" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
-
-IF(ANKI_ARCH STREQUAL "0")
-	MESSAGE("++ AnKi arch: 0 (Native)")
+# CPU address space
+IF(ANKI_CPU_ADDR_SPACE STREQUAL "0")
+	MESSAGE("++ AnKi CPU address space: 0 (Native)")
 ELSE()
-	MESSAGE("++ AnKi arch: ${ANKI_ARCH}")
+	MESSAGE("++ AnKi CPU address space: ${ANKI_CPU_ADDR_SPACE}")
 ENDIF()
 
-IF(NOT ANKI_ARCH STREQUAL "0")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m${ANKI_ARCH} ")
-	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m${ANKI_ARCH} ")
-	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m${ANKI_ARCH} ")
+IF(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
+	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
+	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
 ENDIF()
 
 # platform
@@ -55,15 +81,12 @@ ENDIF()
 MESSAGE("++ AnKi platform: ${ANKI_PLATFORM}")
 
 # libz and libpng
-OPTION(ANKI_SYSTEM_LIBZ "Use the system's libz" OFF)
-OPTION(ANKI_SYSTEM_LIBPNG "Use the system's libpng" OFF)
-
 IF(ANKI_SYSTEM_LIBZ)
 	SET(_ANKI_LIBZ "z")
 	MESSAGE("++ Building with system libz")
 ELSE()
 	SET(_ANKI_LIBZ "ankiz")
-	MESSAGE("++ Building with AnKi libz")
+	MESSAGE("++ Building with AnKi provided libz")
 ENDIF()
 
 IF(ANKI_SYSTEM_LIBPNG)
@@ -71,11 +94,10 @@ IF(ANKI_SYSTEM_LIBPNG)
 	MESSAGE("++ Building with system libpng")
 ELSE()
 	SET(_ANKI_LIBPNG "ankipng")
-	MESSAGE("++ Building with AnKi libpng")
+	MESSAGE("++ Building with AnKi provided libpng")
 ENDIF()
 
 # Window backend
-SET(ANKI_WINDOW_BACKEND "GLXX11" CACHE STRING "The window backend (GLXX11 or EGLX11 or EGLFBDEV or DUMMY)")
 MESSAGE("++ AnKi window backend: ${ANKI_WINDOW_BACKEND}")
 
 #
@@ -86,6 +108,7 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -static-libstdc++")
 
 # Build type
 IF(CMAKE_BUILD_TYPE STREQUAL Debug)
+	# Do nothing
 ELSE()
 	SET(FLAGS " -ffast-math ")
 
@@ -95,7 +118,6 @@ ELSE()
 ENDIF()
 
 # Strip
-OPTION(ANKI_STRIP "Srip the symbols from the executables" OFF)
 IF(ANKI_STRIP)
 	MESSAGE("++ Stipping symbols: true")
 	SET(FLAGS " -s ")
@@ -108,7 +130,6 @@ ELSE()
 ENDIF()
 
 # gperftools
-OPTION(ANKI_WITH_GPERFTOOLS_PROF "Link with gperftools profiler" OFF)
 IF(ANKI_WITH_GPERFTOOLS_PROF)
 	LINK_DIRECTORIES("/home/godlike/src/more/gperftools/install/lib")
 	SET(ANKI_GPERFTOOLS_LIBS "profiler")
@@ -224,13 +245,15 @@ ENDIF()
 #
 ADD_SUBDIRECTORY(src)
 
-OPTION(ANKI_BUILD_TESTS "Build Unit Tests" OFF)
 IF(ANKI_BUILD_TESTS)
 	ENABLE_TESTING()
 	ADD_SUBDIRECTORY(tests)
 ENDIF()
 
-OPTION(ANKI_BUILD_TESTAPP "Build Test Application" ON)
+IF(ANKI_BUILD_TOOLS)
+	ADD_SUBDIRECTORY(tools)
+ENDIF()
+
 IF(ANKI_BUILD_TESTAPP)
 	ADD_SUBDIRECTORY(testapp)
 ENDIF()
