@@ -254,7 +254,8 @@ void init()
 #if 1
 	StaticGeometryNode* sponzaModel = new StaticGeometryNode(
 		//"data/maps/sponza/sponza_no_bmeshes.mdl",
-		"data/maps/sponza/sponza.mdl",
+		//"data/maps/sponza/sponza.mdl",
+		"data/maps/sponza_test/Mesh_267.mdl",
 		"sponza", &scene);
 
 	(void)sponzaModel;

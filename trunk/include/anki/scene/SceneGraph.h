@@ -44,6 +44,8 @@ public:
 	~SceneGraph();
 	/// @}
 
+	void load(const char* filename);
+
 	/// @name Accessors
 	/// @{
 

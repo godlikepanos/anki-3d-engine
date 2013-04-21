@@ -1,8 +1,10 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
+#include "anki/scene/ModelNode.h"
 #include "anki/util/Exception.h"
 #include "anki/core/ThreadPool.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/misc/Xml.h"
 
 namespace anki {
 
@@ -244,6 +246,57 @@ void SceneGraph::printProfileInfo() const
 #if ANKI_CFG_SCENE_PROFILE
 	ANKI_LOGI("Scene times: " << timeForUpdates);
 #endif
+}
+
+//==============================================================================
+void SceneGraph::load(const char* filename)
+{
+	try
+	{
+		XmlDocument doc;
+		doc.loadFile(filename);
+
+		XmlElement rootEl = doc.getChildElement("scene");
+
+		// Model nodes
+		//
+		XmlElement mdlNodeEl = rootEl.getChildElement("modelNode");
+
+		do
+		{
+			XmlElement el;
+	
+			// <model>
+			el = mdlNodeEl.getChildElement("model");
+
+			ModelNode* node = new ModelNode(el.getText(), "name", this, 
+				Movable::MF_NONE, nullptr);
+
+			// <transform>
+			el = mdlNodeEl.getChildElement("transform");
+			StringList list = StringList::splitString(el.getText(), ' ');
+
+			if(list.size() != 16)
+			{
+				throw ANKI_EXCEPTION("Expecting 16 floats for <transform>");
+			}
+
+			Mat4 trf;
+			for(U i = 0; i < 16; i++)
+			{
+				trf[i] = std::stof(list[i]);
+			}
+
+			node->setLocalTransform(Transform(trf));
+
+			// Advance
+			mdlNodeEl = mdlNodeEl.getNextSiblingElement("modelNode");
+		} while(mdlNodeEl);
+	}
+	catch(const std::exception& e)
+	{
+		throw ANKI_EXCEPTION("Sceno loading failed") << e;
+	}
 }
 
 } // end namespace anki
