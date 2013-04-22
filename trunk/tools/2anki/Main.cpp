@@ -206,7 +206,7 @@ void exportMesh(const aiMesh& mesh, const Config& config)
 		
 		if(face.mNumIndices != 3)
 		{
-			ERROR("For some reason the assimp didn't triangulate");
+			ERROR("For some reason the assimp didn't triangulate\n");
 		}
 
 		for(uint32_t j = 0; j < 3; j++)
@@ -224,7 +224,7 @@ void exportMesh(const aiMesh& mesh, const Config& config)
 	{
 		if(mesh.mNumUVComponents[ch] != 2)
 		{
-			ERROR("Incorrect number of UV components");
+			ERROR("Incorrect number of UV components\n");
 		}
 
 		// For all tex coords of this channel
@@ -294,8 +294,46 @@ void exportMesh(const aiMesh& mesh, const Config& config)
 }
 
 //==============================================================================
-void exportMaterial(const aiMaterial& mtl, const Config& config, 
-	uint32_t id)
+void exportSkeleton(const aiMesh& mesh, const Config& config)
+{
+	assert(mesh.HasBones());
+	std::string name = mesh.mName.C_Str();
+	std::fstream file;
+	LOGI("Exporting skeleton %s\n", name.c_str());
+
+	// Open file
+	file.open(config.outDir + name + ".skel", std::ios::out);
+	
+	file << xmlHeader << "\n";
+	file << "<skeleton>\n";
+	file << "\t<bones>\n";
+
+	for(uint32_t i = 0; i < mesh.mNumBones; i++)
+	{
+		const aiBone& bone = *mesh.mBones[i];
+
+		file << "\t\t<bone>\n";
+
+		// <name>
+		file << "\t\t\t<name>" << bone.mName.C_Str() << "</name>\n";
+
+		// <transform>
+		file << "\t\t\t<transform>";
+		for(uint32_t j = 0; j < 16; j++)
+		{
+			file << bone.mOffsetMatrix[j] << " ";
+		}
+		file << "</transform>\n";
+
+		file << "\t\t</bone>\n";
+	}
+
+	file << "\t</bones>\n";
+	file << "</skeleton>\n";
+}
+
+//==============================================================================
+void exportMaterial(const aiMaterial& mtl, const Config& config)
 {
 	std::string diffTex;
 	std::string normTex;
@@ -318,7 +356,7 @@ void exportMaterial(const aiMaterial& mtl, const Config& config,
 	// Diffuse texture
 	if(mtl.GetTextureCount(aiTextureType_DIFFUSE) < 1)
 	{
-		ERROR("Material has no diffuse textures");
+		ERROR("Material has no diffuse textures\n");
 	}
 
 	aiString path;
@@ -507,16 +545,21 @@ void exportScene(const aiScene& scene, const Config& config)
 {
 	LOGI("Exporting scene to %s\n", config.outDir.c_str());
 
-	// Meshes
+	// Meshes and skeletons
 	for(uint32_t i = 0; i < scene.mNumMeshes; i++)
 	{
 		exportMesh(*scene.mMeshes[i], config);
+
+		if(scene.mMeshes[i]->HasBones())
+		{
+			exportSkeleton(*scene.mMeshes[i], config);
+		}
 	}
 
 	// Materials
 	for(uint32_t i = 0; i < scene.mNumMaterials; i++)
 	{
-		exportMaterial(*scene.mMaterials[i], config, i);
+		exportMaterial(*scene.mMaterials[i], config);
 	}
 
 	// The nodes
