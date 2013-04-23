@@ -63,9 +63,9 @@ void parseConfig(int argc, char** argv, Config& config)
 {
 	static const char* usage = R"(Usage: 2anki in_file out_dir [options]
 Options:
--texpath <string>: Append a string to the paths of textures
--rpath <string>:   Append a string to the meshes and materials
--flipyz:           Flip y with z
+-texpath <string> : Append a string to the paths of textures
+-rpath <string>   : Append a string to the meshes and materials
+-flipyz           : Flip y with z (For blender exports)
 )";
 
 	// Parse config
@@ -308,6 +308,8 @@ void exportSkeleton(const aiMesh& mesh, const Config& config)
 	file << "<skeleton>\n";
 	file << "\t<bones>\n";
 
+	bool rootBoneFound = false;
+
 	for(uint32_t i = 0; i < mesh.mNumBones; i++)
 	{
 		const aiBone& bone = *mesh.mBones[i];
@@ -316,6 +318,11 @@ void exportSkeleton(const aiMesh& mesh, const Config& config)
 
 		// <name>
 		file << "\t\t\t<name>" << bone.mName.C_Str() << "</name>\n";
+
+		if(strcmp(bone.mName.C_Str(), "root") == 0)
+		{
+			rootBoneFound = true;
+		}
 
 		// <transform>
 		file << "\t\t\t<transform>";
@@ -326,6 +333,11 @@ void exportSkeleton(const aiMesh& mesh, const Config& config)
 		file << "</transform>\n";
 
 		file << "\t\t</bone>\n";
+	}
+
+	if(!rootBoneFound)
+	{
+		ERROR("There should be one bone named \"root\"\n");
 	}
 
 	file << "\t</bones>\n";
@@ -523,6 +535,77 @@ void exportModel(const aiScene& scene, const aiNode& node, const Config& config)
 }
 
 //==============================================================================
+void exportAnimation(const aiAnimation& anim, uint32_t index, 
+	const aiScene& scene, const Config& config)
+{
+	// Get name
+	std::string name = anim.mName.C_Str();
+	if(name.size() == 0)
+	{
+		name = std::string("animation_") + std::to_string(index);
+	}
+
+	// Find if it's skeleton animation
+	/*bool isSkeletalAnimation = false;
+	for(uint32_t i = 0; i < scene.mNumMeshes; i++)
+	{
+		const aiMesh& mesh = *scene.mMeshes[i];
+		if(mesh.HasBones())
+		{
+
+		}
+	}*/
+
+	std::fstream file;
+	LOGI("Exporting animation %s\n", name.c_str());
+
+	file.open(config.outDir + name + ".anim", std::ios::out);
+
+	file << xmlHeader << "\n";
+	file << "<animation>\n";
+
+	file << "\t<duration>" << anim.mDuration << "</duration>\n";
+
+	file << "\t<channels>\n";
+
+	for(uint32_t i = 0; i < anim.mNumChannels; i++)
+	{
+		const aiNodeAnim& nAnim = *anim.mChannels[i];
+
+		file << "\t\t<channel>\n";
+		
+		// Name
+		file << "\t\t\t<name>" << nAnim.mNodeName.C_Str() << "</name>\n";
+
+		// Positions
+		file << "\t\t\t<positionKeys>";
+		for(uint32_t j = 0; j < nAnim.mNumPositionKeys; j++)
+		{
+			const aiVectorKey& key = nAnim.mPositionKeys[j];
+			file << key.mTime << " " << key.mValue[0] << " " 
+				<< key.mValue[1] << " " << key.mValue[2] << " ";
+		}
+		file << "</positionKeys>\n";
+
+		// Rotations
+		file << "\t\t\t<rotationKeys>";
+		for(uint32_t j = 0; j < nAnim.mNumRotationKeys; j++)
+		{
+			const aiQuatKey& key = nAnim.mRotationKeys[j];
+			file << key.mTime << " " << key.mValue.x << " " 
+				<< key.mValue.y << " " << key.mValue.z << " "
+				<< key.mValue.w << " ";
+		}
+		file << "</rotationKeys>\n";
+
+		file << "\t\t</channel>\n";
+	}
+
+	file << "\t</channels>\n";
+	file << "</animation>\n";
+}
+
+//==============================================================================
 void exportNode(const aiScene& scene, const aiNode* node, const Config& config)
 {
 	if(node == nullptr)
@@ -564,6 +647,12 @@ void exportScene(const aiScene& scene, const Config& config)
 
 	// The nodes
 	exportNode(scene, scene.mRootNode, config);
+
+	// The animations
+	for(uint32_t i = 0; i < scene.mNumAnimations; i++)
+	{
+		exportAnimation(*scene.mAnimations[i], i, scene, config);	
+	}
 
 	LOGI("Done exporting scene!\n");
 }

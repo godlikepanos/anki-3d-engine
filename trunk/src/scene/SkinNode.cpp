@@ -229,6 +229,7 @@ void SkinNode::frameUpdate(float prevUpdateTime, float crntTime, int f)
 void SkinNode::interpolate(const SkelAnim& animation, float frame,
 	SceneVector<Vec3>& boneTranslations, SceneVector<Mat3>& boneRotations)
 {
+#if 0
 	ANKI_ASSERT(frame < animation.getFramesNum());
 
 	// calculate the t (used in slerp and lerp) using the keyframs and the
@@ -288,12 +289,14 @@ void SkinNode::interpolate(const SkelAnim& animation, float frame,
 			localTransl = Vec3(0.0, 0.0, 0.0);
 		}
 	}
+#endif
 }
 
 //==============================================================================
 void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 	SceneVector<Vec3>& boneTranslations, SceneVector<Mat3>& boneRotations)
 {
+#if 0
 	std::array<uint, 128> queue;
 	uint head = 0, tail = 0;
 
@@ -346,6 +349,7 @@ void SkinNode::updateBoneTransforms(const Skeleton& skeleton,
 			queue[tail++] = boned.getChild(i).getId();
 		}
 	}
+#endif
 }
 
 //==============================================================================
@@ -354,6 +358,7 @@ void SkinNode::deformHeadsTails(const Skeleton& skeleton,
     const SceneVector<Mat3>& boneRotations,
 	SceneVector<Vec3>& heads, SceneVector<Vec3>& tails)
 {
+#if 0
 	for(uint i = 0; i < skeleton.getBones().size(); i++)
 	{
 		const Mat3& rot = boneRotations[i];
@@ -362,6 +367,7 @@ void SkinNode::deformHeadsTails(const Skeleton& skeleton,
 		heads[i] = skeleton.getBones()[i].getHead().getTransformed(transl, rot);
 		tails[i] = skeleton.getBones()[i].getTail().getTransformed(transl, rot);
 	}
+#endif
 }
 
 } // end namespace
