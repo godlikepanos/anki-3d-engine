@@ -1,116 +1,60 @@
-#include <cstring>
-#include <fstream>
 #include "anki/resource/Skeleton.h"
-#include "anki/util/BinaryStream.h"
-
+#include "anki/misc/Xml.h"
+#include "anki/util/StringList.h"
 
 namespace anki {
 
-
-//==============================================================================
-// load                                                                        =
 //==============================================================================
 void Skeleton::load(const char* filename)
 {
-	std::ifstream fs;
-	fs.open(filename);
-	if(!fs.is_open())
-	{
-		throw ANKI_EXCEPTION("Cannot open \"" + filename + "\"");
-	}
+	XmlDocument doc;
+	doc.loadFile(filename);
 
-	try
-	{
-		BinaryStream bs(fs.rdbuf());
+	XmlElement rootEl = doc.getChildElement("skeleton");
+	XmlElement bonesEl = rootEl.getChildElement("bones");
 
-		// Magic word
-		char magic[8];
-		bs.read(magic, 8);
-		if(bs.fail() || memcmp(magic, "ANKISKEL", 8))
+	// count the bones count
+	U bonesCount = 0;
+
+	XmlElement boneEl = bonesEl.getChildElement("bone");
+
+	do
+	{
+		++bonesCount;
+		boneEl = boneEl.getNextSiblingElement("bone");
+	} while(boneEl);
+
+	// Alloc the vector
+	bones.resize(bonesCount);
+
+	// Load every bone
+	boneEl = bonesEl.getChildElement("bone");
+	bonesCount = 0;
+	do
+	{
+		Bone& bone = bones[bonesCount++];
+
+		// <name>
+		XmlElement nameEl = boneEl.getChildElement("name");
+		bone.name = nameEl.getText();
+
+		// <transform>
+		XmlElement trfEl = boneEl.getChildElement("transform");
+		StringList list = StringList::splitString(trfEl.getText(), ' ');
+
+		if(list.size() != 16)
 		{
-			throw ANKI_EXCEPTION("Incorrect magic word");
+			throw ANKI_EXCEPTION("Expecting 16 floats for <transform>");
 		}
 
-		// Bones num
-		uint bonesNum = bs.readUint();
-		bones.resize(bonesNum);
-
-		// For all bones
-		for(uint i=0; i<bones.size(); i++)
+		for(U i = 0; i < 16; i++)
 		{
-			Bone& bone = bones[i];
-			bone.id = i;
-
-			bone.name = bs.readString();
-
-			for(uint j=0; j<3; j++)
-			{
-				bone.head[j] = bs.readFloat();
-			}
-
-			for(uint j=0; j<3; j++)
-			{
-				bone.tail[j] = bs.readFloat();
-			}
-
-			// Matrix
-			Mat4 m4;
-			for(uint j=0; j<16; j++)
-			{
-				m4[j] = bs.readFloat();
-			}
-
-			// Matrix for real
-			bone.rotSkelSpace = m4.getRotationPart();
-			bone.tslSkelSpace = m4.getTranslationPart();
-			Mat4 MAi(m4.getInverse());
-			bone.rotSkelSpaceInv = MAi.getRotationPart();
-			bone.tslSkelSpaceInv = MAi.getTranslationPart();
-
-			// Parent
-			uint parentId = bs.readUint();
-			if(parentId == 0xFFFFFFFF)
-			{
-				bone.parent = NULL;
-			}
-			else if(parentId >= bonesNum)
-			{
-				throw ANKI_EXCEPTION("Incorrect parent id");
-			}
-			else
-			{
-				bone.parent = &bones[parentId];
-			}
-
-			// Children
-			uint childsNum = bs.readUint();
-
-			if(childsNum > Bone::MAX_CHILDS_PER_BONE)
-			{
-				throw ANKI_EXCEPTION("Children for bone \"" + bone.getName() +
-					"\" exceed the max");
-			}
-
-			bone.childsNum = childsNum;
-
-			for(uint j=0; j<bone.childsNum; j++)
-			{
-				uint id = bs.readUint();
-
-				if(id >= bonesNum)
-				{
-					throw ANKI_EXCEPTION("Incorrect child id");
-				}
-
-				bone.childs[j] = &bones[id];
-			}
+			bone.transform[i] = std::stof(list[i]);
 		}
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Skeleton \"" + filename + "\"") << e;
-	}
+
+		// Advance 
+		boneEl = boneEl.getNextSiblingElement("bone");
+	} while(boneEl);
 }
 
-
-} // end namespace
+} // end namespace anki

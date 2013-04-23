@@ -15,7 +15,7 @@ namespace anki {
 
 //==============================================================================
 /// Segfault signal handler
-void handler(int sig)
+static void handler(int sig)
 {
 	void *array[10];
 	size_t size;
