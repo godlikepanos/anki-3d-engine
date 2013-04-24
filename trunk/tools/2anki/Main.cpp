@@ -578,12 +578,14 @@ void exportAnimation(const aiAnimation& anim, uint32_t index,
 		file << "\t\t\t<name>" << nAnim.mNodeName.C_Str() << "</name>\n";
 
 		// Positions
-		file << "\t\t\t<positionKeys>";
+		file << "\t\t\t<positionKeys>\n";
 		for(uint32_t j = 0; j < nAnim.mNumPositionKeys; j++)
 		{
 			const aiVectorKey& key = nAnim.mPositionKeys[j];
-			file << key.mTime << " " << key.mValue[0] << " " 
-				<< key.mValue[1] << " " << key.mValue[2] << " ";
+
+			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
+				<< "<value>" << key.mValue[0] << " " 
+				<< key.mValue[1] << " " << key.mValue[2] << "</value></key>\n";
 		}
 		file << "</positionKeys>\n";
 
@@ -592,11 +594,26 @@ void exportAnimation(const aiAnimation& anim, uint32_t index,
 		for(uint32_t j = 0; j < nAnim.mNumRotationKeys; j++)
 		{
 			const aiQuatKey& key = nAnim.mRotationKeys[j];
-			file << key.mTime << " " << key.mValue.x << " " 
-				<< key.mValue.y << " " << key.mValue.z << " "
-				<< key.mValue.w << " ";
+
+			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
+				<< "<value>" << key.mValue.y << " " << key.mValue.z << " "
+				<< key.mValue.w << "</value></key>\n";
 		}
 		file << "</rotationKeys>\n";
+
+		// Scale
+		file << "\t\t\t<scalingKeys>";
+		for(uint32_t j = 0; j < nAnim.mNumScalingKeys; j++)
+		{
+			const aiVectorKey& key = nAnim.mScalingKeys[j];
+
+			// Note: only uniform scale
+			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
+				<< "<value>" 
+				<< ((key.mValue[0] + key.mValue[1] + key.mValue[2]) / 3.0)
+				<< "</value></key>\n";
+		}
+		file << "</scalingKeys>\n";
 
 		file << "\t\t</channel>\n";
 	}

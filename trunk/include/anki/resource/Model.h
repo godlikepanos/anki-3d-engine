@@ -6,12 +6,12 @@
 #include "anki/collision/Obb.h"
 #include "anki/resource/PassLevelKey.h"
 #include "anki/resource/Mesh.h"
+#include "anki/resource/Material.h"
+#include "anki/resource/Skeleton.h"
+#include "anki/resource/Animation.h"
 #include "anki/util/Vector.h"
 
 namespace anki {
-
-// Forward
-class ShaderProgram;
 
 /// Model patch interface class. Its very important class and it binds the
 /// material with the mesh
@@ -153,6 +153,11 @@ private:
 /// 		...
 /// 		<modelPatch>...</modelPatch>
 /// 	</modelPatches>
+/// 	[<skeleton>path/to/skeleton.skel</skeleton>]
+/// 	[<skeletonAnimations>
+/// 		<animation>path/to/animation.anim</animation>
+/// 		...
+/// 	</skeletonAnimations>]
 /// </model>
 /// @endcode
 ///
@@ -188,8 +193,10 @@ private:
 	/// The vector of ModelPatch
 	ModelPatchesContainer modelPatches;
 	Obb visibilityShape;
+	SkeletonResourcePointer skeleton;
+	Vector<AnimationResourcePointer> animations;
 };
 
-} // end namespace
+} // end namespace anki
 
 #endif

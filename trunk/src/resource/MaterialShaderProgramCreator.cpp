@@ -10,6 +10,15 @@
 namespace anki {
 
 //==============================================================================
+struct InputSortFunctor
+{
+	bool operator()(const Input* a, const Input* b)
+	{
+		return a->name < b->name;
+	}
+};
+
+//==============================================================================
 MaterialShaderProgramCreator::MaterialShaderProgramCreator(
 	const XmlElement& el, Bool enableUniformBlocks_)
 	: enableUniformBlocks(enableUniformBlocks_)
@@ -25,6 +34,10 @@ MaterialShaderProgramCreator::~MaterialShaderProgramCreator()
 void MaterialShaderProgramCreator::parseShaderProgramTag(
 	const XmlElement& shaderProgramEl)
 {
+	// First the inputs
+	parseInputs(shaderProgramEl);
+
+	// Then the shaders
 	XmlElement shaderEl = shaderProgramEl.getChildElement("shader");
 
 	do
@@ -78,6 +91,16 @@ void MaterialShaderProgramCreator::parseShaderTag(
 	std::string type = shaderEl.getChildElement("type").getText();
 	srcLines.push_back("#pragma anki start " + type + "Shader");
 
+	Shader shader;
+	if(type == "vertex")
+	{
+		shader = VERTEX;
+	}
+	else
+	{
+		shader = FRAGMENT;
+	}
+
 	// <includes></includes>
 	//
 	StringList includeLines;
@@ -94,32 +117,7 @@ void MaterialShaderProgramCreator::parseShaderTag(
 		includeEl = includeEl.getNextSiblingElement("include");
 	} while(includeEl);
 
-	//includeLines.sortAll();
 	srcLines.insert(srcLines.end(), includeLines.begin(), includeLines.end());
-
-	// <inputs></inputs>
-	//
-	XmlElement inputsEl = shaderEl.getChildElementOptional("inputs");
-	if(inputsEl)
-	{
-		// Store the source of the uniform vars
-		StringList uniformsLines;
-	
-		XmlElement inputEl = inputsEl.getChildElement("input");
-		do
-		{
-			std::string line;
-			parseInputTag(inputEl, line);
-			uniformsLines.push_back(line);
-
-			inputEl = inputEl.getNextSiblingElement("input");
-		} while(inputEl);
-
-		srcLines.push_back("");
-		uniformsLines.sortAll();
-		srcLines.insert(srcLines.end(), uniformsLines.begin(),
-			uniformsLines.end());
-	}
 
 	// <operations></operations>
 	//
@@ -129,7 +127,7 @@ void MaterialShaderProgramCreator::parseShaderTag(
 	XmlElement opEl = opsEl.getChildElement("operation");
 	do
 	{
-		parseOperationTag(opEl);
+		parseOperationTag(opEl, shader);
 
 		opEl = opEl.getNextSiblingElement("operation");
 	} while(opEl);
@@ -138,83 +136,99 @@ void MaterialShaderProgramCreator::parseShaderTag(
 }
 
 //==============================================================================
-void MaterialShaderProgramCreator::parseInputTag(
-	const XmlElement& inputEl, std::string& line)
+void MaterialShaderProgramCreator::parseInputTags(const XmlElement& programEl)
 {
-	Input* inpvar = new Input;
-
-	inpvar->name = inputEl.getChildElement("name").getText();
-	inpvar->type = inputEl.getChildElement("type").getText();
-	XmlElement constEl = inputEl.getChildElementOptional("const");
-	XmlElement valueEl = inputEl.getChildElement("value");
-	XmlElement arrSizeEl = inputEl.getChildElementOptional("arraySize");
-
-	// Is const?
-	if(constEl)
+	XmlElement inputsEl = programEl.getChildElementOptional("inputs");
+	if(!inputsEl)
 	{
-		inpvar->constant = constEl.getInt();
-	}
-	else
-	{
-		inpvar->constant = false;
+		return;
 	}
 
-	// Is array?
-	if(arrSizeEl)
+	XmlElement inputEl = inputsEl.getChildElement("input");
+	do
 	{
-		inpvar->arraySize = arrSizeEl.getInt();
-	}
-	else
-	{
-		inpvar->arraySize = 0;
-	}
+		Input* inpvar = new Input;
 
-	// Get value
-	if(valueEl.getText())
-	{
-		inpvar->value = StringList::splitString(valueEl.getText(), ' ');
-	}
+		inpvar->name = inputEl.getChildElement("name").getText();
+		inpvar->type = inputEl.getChildElement("type").getText();
+		XmlElement constEl = inputEl.getChildElementOptional("const");
+		XmlElement valueEl = inputEl.getChildElement("value");
+		XmlElement arrSizeEl = inputEl.getChildElementOptional("arraySize");
 
-	if(inpvar->constant == false)
-	{
-		// Handle non-consts
-
-		if(!(enableUniformBlocks && inpvar->type != "sampler2D"))
+		// Is const?
+		if(constEl)
 		{
-			line = "uniform " + inpvar->type + " " + inpvar->name;
-			
-			if(inpvar->arraySize > 1)
+			inpvar->constant = constEl.getInt();
+		}
+		else
+		{
+			inpvar->constant = false;
+		}
+
+		// Is array?
+		if(arrSizeEl)
+		{
+			inpvar->arraySize = arrSizeEl.getInt();
+		}
+		else
+		{
+			inpvar->arraySize = 0;
+		}
+
+		// Get value
+		if(valueEl.getText())
+		{
+			inpvar->value = StringList::splitString(valueEl.getText(), ' ');
+		}
+
+		if(inpvar->constant == false)
+		{
+			// Handle non-consts
+
+			if(!(enableUniformBlocks && inpvar->type != "sampler2D"))
 			{
-				line += "[" + std::to_string(inpvar->arraySize) + "U]";
+				inpvar->line = "uniform " + inpvar->type + " " + inpvar->name;
+				
+				if(inpvar->arraySize > 1)
+				{
+					inpvar->line += "[" + std::to_string(inpvar->arraySize) 
+						+ "U]";
+				}
+
+				inpvar->line += ";";
+			}
+		}
+		else
+		{
+			// Handle consts
+
+			if(inpvar->value.size() == 0)
+			{
+				throw ANKI_EXCEPTION("Empty value and const is illogical");
 			}
 
-			line += ";";
-		}
-	}
-	else
-	{
-		// Handle consts
+			if(inpvar->arraySize > 0)
+			{
+				throw ANKI_EXCEPTION("Const arrays currently cannot be handled");
+			}
 
-		if(inpvar->value.size() == 0)
-		{
-			throw ANKI_EXCEPTION("Empty value and const is illogical");
+			inpvar->line = "const " + inpvar->type + " " + inpvar->name 
+				+ " = " + inpvar->type + "(" + inpvar->value.join(", ") +  ");";
 		}
 
-		if(inpvar->arraySize > 0)
-		{
-			throw ANKI_EXCEPTION("Const arrays currently cannot be handled");
-		}
+		inputs.push_back(inpvar);
 
-		line = "const " + inpvar->type + " " + inpvar->name + " = "
-			+ inpvar->type + "(" + inpvar->value.join(", ") +  ");";
-	}
+		// Advance
+		inputEl = inputEl.getNextSiblingElement("input");
+	} while(inputEl);
 
-	inputs.push_back(inpvar);
+	// Sort them by name to decrease the change of creating unique shaders
+	std::sort(inputs.begin(), inputs.end(), InputSortFunctor);
 }
 
 //==============================================================================
 void MaterialShaderProgramCreator::parseOperationTag(
-	const XmlElement& operationTag)
+	const XmlElement& operationTag, Shader shader)
 {
 	// <id></id>
 	int id = operationTag.getChildElement("id").getInt();
@@ -241,7 +255,21 @@ void MaterialShaderProgramCreator::parseOperationTag(
 		XmlElement argEl = argsEl.getChildElement("argument");
 		do
 		{
+			// Search for all the inputs and mark the appropriate
+			Input* in = nullptr;
+			for(in : inputs)
+			{
+				if(in->name == argEl.getText())
+				{
+					in->shaders |= (U32)shader;
+					break;
+				}
+			}
+
+			// Add to a list
 			argsList.push_back(argEl.getText());
+
+			// Advance
 			argEl = argEl.getNextSiblingElement("argument");
 		} while(argEl);
 	}
@@ -250,11 +278,9 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	std::stringstream line;
 	line << "#if defined(" << funcName << "_DEFINED)";
 
-	// XXX Regexpr features still missing
-	//std::regex expr("^operationOut[0-9]*$");
+	// Write the defines for the operationOuts
 	for(const std::string& arg : argsList)
 	{
-		//if(std::regex_match(arg, expr))
 		if(arg.find("operationOut") == 0)
 		{
 			line << " && defined(" << arg << "_DEFINED)";
@@ -272,6 +298,7 @@ void MaterialShaderProgramCreator::parseOperationTag(
 		line << '\t';
 	}
 	
+	// write the blah = func(args...)
 	line << funcName << "(";
 	line << argsList.join(", ");
 	line << ");\n";
