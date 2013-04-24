@@ -21,6 +21,7 @@ ANKI_RESOURCE_TYPEDEFS(Mesh, MeshResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(BucketMesh, BucketMeshResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(Skeleton, SkeletonResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(SkelAnim, SkelAnimResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(Animation, AnimationResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(LightRsrc, LightRsrcResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(ParticleEmitterResource, ParticleEmitterResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(Script, ScriptResourcePointer)
@@ -28,6 +29,6 @@ ANKI_RESOURCE_TYPEDEFS(Model, ModelResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(Skin, SkinResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(DummyRsrc, DummyRsrcResourcePointer)
 
-} // end namespace
+} // end namespace anki
 
 #endif

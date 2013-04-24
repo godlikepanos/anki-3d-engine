@@ -1,9 +1,7 @@
 #include "anki/resource/Model.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Mesh.h"
-#include "anki/resource/SkelAnim.h"
 #include "anki/resource/MeshLoader.h"
-#include "anki/resource/Skeleton.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/misc/Xml.h"
 
@@ -326,5 +324,4 @@ void Model::load(const char* filename)
 	}
 }
 
-
-} // end namespace
+} // end namespace anki

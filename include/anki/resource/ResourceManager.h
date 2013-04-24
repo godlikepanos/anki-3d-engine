@@ -26,7 +26,7 @@ struct ResourceHook
 	}
 };
 
-/// XXX
+/// Manage resources of a certain type
 template<typename Type>
 class ResourceManager
 {
@@ -62,7 +62,7 @@ protected:
 	virtual void deallocRsrc(Type* rsrc);
 };
 
-} // end namespace
+} // end namespace anki
 
 #include "anki/resource/ResourceManager.inl.h"
 
