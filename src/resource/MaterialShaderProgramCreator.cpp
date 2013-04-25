@@ -10,13 +10,29 @@
 namespace anki {
 
 //==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+enum
+{
+	VERTEX = 1,
+	FRAGMENT = 2
+};
+
+//==============================================================================
 struct InputSortFunctor
 {
-	bool operator()(const Input* a, const Input* b)
+	bool operator()(const MaterialShaderProgramCreator::Input* a, 
+		const MaterialShaderProgramCreator::Input* b)
 	{
 		return a->name < b->name;
 	}
 };
+
+//==============================================================================
+// MaterialShaderProgramCreator                                                =
+//==============================================================================
 
 //==============================================================================
 MaterialShaderProgramCreator::MaterialShaderProgramCreator(
@@ -34,10 +50,10 @@ MaterialShaderProgramCreator::~MaterialShaderProgramCreator()
 void MaterialShaderProgramCreator::parseShaderProgramTag(
 	const XmlElement& shaderProgramEl)
 {
-	// First the inputs
-	parseInputs(shaderProgramEl);
+	// <inputs></inputs>
+	parseInputsTag(shaderProgramEl);
 
-	// Then the shaders
+	// <shaders></shaders>
 	XmlElement shaderEl = shaderProgramEl.getChildElement("shader");
 
 	do
@@ -47,51 +63,123 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 		shaderEl = shaderEl.getNextSiblingElement("shader");
 	} while(shaderEl);
 
-	// Create block
-	if(enableUniformBlocks && inputs.size() > 0)
+	// Sanity check: check that all the inputs are referenced
+	for(const Input* in : inputs)
 	{
-		StringList block;
-		
-		for(Input* in : inputs)
+		if(in->shaders == 0)
 		{
-			if(in->type == "sampler2D" || in->constant)
-			{
-				continue;
-			}
-
-			std::string line = "\tuniform " + in->type + " " + in->name;
-
-			if(in->arraySize > 1)
-			{
-				line += "[" + std::to_string(in->arraySize) + "U]";
-			}
-
-			line += ";";
-			block.push_back(line);
+			throw ANKI_EXCEPTION("Input not referenced: " + in->name);
 		}
-		block.sortAll();
-
-		std::string blockHead = "layout(shared, row_major, binding = 0) "
-			"uniform commonBlock\n{";
-
-		source = blockHead + block.join("\n") + "};\n" + srcLines.join("\n");
 	}
-	else
-	{
-		source = srcLines.join("\n");
-	}
+
+	// Write all
+	source  = srcLines.join("\n");
 }
 
 //==============================================================================
-void MaterialShaderProgramCreator::parseShaderTag(
-	const XmlElement& shaderEl)
+void MaterialShaderProgramCreator::parseInputsTag(const XmlElement& programEl)
+{
+	XmlElement inputsEl = programEl.getChildElementOptional("inputs");
+	XmlElement inputEl;
+	if(!inputsEl)
+	{
+		goto warning;
+	}
+
+	inputEl = inputsEl.getChildElement("input");
+	do
+	{
+		Input* inpvar = new Input;
+
+		inpvar->name = inputEl.getChildElement("name").getText();
+		inpvar->type = inputEl.getChildElement("type").getText();
+		XmlElement constEl = inputEl.getChildElementOptional("const");
+		XmlElement valueEl = inputEl.getChildElement("value");
+		XmlElement arrSizeEl = inputEl.getChildElementOptional("arraySize");
+
+		// <const>
+		inpvar->constant = (constEl) ? constEl.getInt() : false;
+
+		// <array>
+		inpvar->arraySize = (arrSizeEl) ? arrSizeEl.getInt() : 0;
+
+		// <value>
+		if(valueEl.getText())
+		{
+			inpvar->value = StringList::splitString(valueEl.getText(), ' ');
+		}
+
+		if(inpvar->constant == false)
+		{
+			// Handle non-consts
+
+			inpvar->line = inpvar->type + " " + inpvar->name;
+				
+			if(inpvar->arraySize > 1)
+			{
+				inpvar->line += "[" + std::to_string(inpvar->arraySize) 
+					+ "U]";
+			}
+
+			inpvar->line += ";";
+
+			// Can put it block
+			if(enableUniformBlocks && inpvar->type != "sampler2D")
+			{
+				inpvar->putInBlock = true;
+			}
+			else
+			{
+				inpvar->line = "uniform " + inpvar->line;
+			}
+		}
+		else
+		{
+			// Handle consts
+
+			if(inpvar->value.size() == 0)
+			{
+				throw ANKI_EXCEPTION("Empty value and const is illogical");
+			}
+
+			if(inpvar->arraySize > 0)
+			{
+				throw ANKI_EXCEPTION("Const arrays currently cannot "
+					"be handled");
+			}
+
+			inpvar->line = "const " + inpvar->type + " " + inpvar->name 
+				+ " = " + inpvar->type + "(" + inpvar->value.join(", ") 
+				+  ");";
+		}
+
+		inputs.push_back(inpvar);
+
+		// Advance
+		inputEl = inputEl.getNextSiblingElement("input");
+	} while(inputEl);
+
+	// Sort them by name to decrease the change of creating unique shaders
+	std::sort(inputs.begin(), inputs.end(), InputSortFunctor());
+
+	if(inputs.size() > 0)
+	{
+		return;
+	}
+
+warning:
+	ANKI_LOGW("No inputs found on material");
+}
+
+//==============================================================================
+void MaterialShaderProgramCreator::parseShaderTag(const XmlElement& shaderEl)
 {
 	// <type></type>
 	//
 	std::string type = shaderEl.getChildElement("type").getText();
 	srcLines.push_back("#pragma anki start " + type + "Shader");
 
-	Shader shader;
+	U32 shader;
 	if(type == "vertex")
 	{
 		shader = VERTEX;
@@ -121,114 +209,60 @@ void MaterialShaderProgramCreator::parseShaderTag(
 
 	// <operations></operations>
 	//
-	srcLines.push_back("\nvoid main()\n{");
+	StringList main;
+	main.push_back("\nvoid main()\n{");
 
 	XmlElement opsEl = shaderEl.getChildElement("operations");
 	XmlElement opEl = opsEl.getChildElement("operation");
 	do
 	{
-		parseOperationTag(opEl, shader);
+		std::string out;
+		parseOperationTag(opEl, shader, out);
+		
+		main.push_back(out);
 
+		// Advance
 		opEl = opEl.getNextSiblingElement("operation");
 	} while(opEl);
 
-	srcLines.push_back("}\n");
-}
+	main.push_back("}\n");
 
-//==============================================================================
-void MaterialShaderProgramCreator::parseInputTags(const XmlElement& programEl)
-{
-	XmlElement inputsEl = programEl.getChildElementOptional("inputs");
-	if(!inputsEl)
+	// Write inputs
+	//
+	
+	// First the uniform block
+	std::string uniformBlock;
+	for(Input* in : inputs)
 	{
-		return;
+		if((in->shaders & shader) && in->putInBlock)
+		{
+			uniformBlock += in->line + "\n";
+		}
 	}
 
-	XmlElement inputEl = inputsEl.getChildElement("input");
-	do
+	if(uniformBlock.size() > 0)
 	{
-		Input* inpvar = new Input;
+		srcLines.push_back("layout(shared) uniform " + type + "Block {");
+		srcLines.push_back(uniformBlock);
+		srcLines.push_back("};");
+	}
 
-		inpvar->name = inputEl.getChildElement("name").getText();
-		inpvar->type = inputEl.getChildElement("type").getText();
-		XmlElement constEl = inputEl.getChildElementOptional("const");
-		XmlElement valueEl = inputEl.getChildElement("value");
-		XmlElement arrSizeEl = inputEl.getChildElementOptional("arraySize");
-
-		// Is const?
-		if(constEl)
+	// Then the other uniforms
+	for(Input* in : inputs)
+	{
+		if((in->shaders & shader) && !in->putInBlock)
 		{
-			inpvar->constant = constEl.getInt();
+			srcLines.push_back(in->line);	
 		}
-		else
-		{
-			inpvar->constant = false;
-		}
+	}
 
-		// Is array?
-		if(arrSizeEl)
-		{
-			inpvar->arraySize = arrSizeEl.getInt();
-		}
-		else
-		{
-			inpvar->arraySize = 0;
-		}
-
-		// Get value
-		if(valueEl.getText())
-		{
-			inpvar->value = StringList::splitString(valueEl.getText(), ' ');
-		}
-
-		if(inpvar->constant == false)
-		{
-			// Handle non-consts
-
-			if(!(enableUniformBlocks && inpvar->type != "sampler2D"))
-			{
-				inpvar->line = "uniform " + inpvar->type + " " + inpvar->name;
-				
-				if(inpvar->arraySize > 1)
-				{
-					inpvar->line += "[" + std::to_string(inpvar->arraySize) 
-						+ "U]";
-				}
-
-				inpvar->line += ";";
-			}
-		}
-		else
-		{
-			// Handle consts
-
-			if(inpvar->value.size() == 0)
-			{
-				throw ANKI_EXCEPTION("Empty value and const is illogical");
-			}
-
-			if(inpvar->arraySize > 0)
-			{
-				throw ANKI_EXCEPTION("Const arrays currently cannot be handled");
-			}
-
-			inpvar->line = "const " + inpvar->type + " " + inpvar->name 
-				+ " = " + inpvar->type + "(" + inpvar->value.join(", ") +  ");";
-		}
-
-		inputs.push_back(inpvar);
-
-		// Advance
-		inputEl = inputEl.getNextSiblingElement("input");
-	} while(inputEl);
-
-	// Sort them by name to decrease the change of creating unique shaders
-	std::sort(inputs.begin(), inputs.end(), InputSortFunctor);
+	// Now put the main
+	srcLines.insert(srcLines.end(), main.begin(), main.end());
 }
 
 //==============================================================================
 void MaterialShaderProgramCreator::parseOperationTag(
-	const XmlElement& operationTag, Shader shader)
+	const XmlElement& operationTag, U32 shader, std::string& out)
 {
 	// <id></id>
 	int id = operationTag.getChildElement("id").getInt();
@@ -256,12 +290,12 @@ void MaterialShaderProgramCreator::parseOperationTag(
 		do
 		{
 			// Search for all the inputs and mark the appropriate
-			Input* in = nullptr;
-			for(in : inputs)
+			for(U i = 0; i < inputs.size(); i++)
 			{
-				if(in->name == argEl.getText())
+				// Check at least the first part of the string
+				if(std::string(argEl.getText()).find(inputs[i]->name) == 0)
 				{
-					in->shaders |= (U32)shader;
+					inputs[i]->shaders |= (U32)shader;
 					break;
 				}
 			}
@@ -275,37 +309,37 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	}
 
 	// Now write everything
-	std::stringstream line;
-	line << "#if defined(" << funcName << "_DEFINED)";
+	std::stringstream lines;
+	lines << "#if defined(" << funcName << "_DEFINED)";
 
 	// Write the defines for the operationOuts
 	for(const std::string& arg : argsList)
 	{
 		if(arg.find("operationOut") == 0)
 		{
-			line << " && defined(" << arg << "_DEFINED)";
+			lines << " && defined(" << arg << "_DEFINED)";
 		}
 	}
-	line << "\n";
+	lines << "\n";
 
 	if(retType != "void")
 	{
-		line << "#\tdefine " << operationOut << "_DEFINED\n";
-		line << '\t' << retTypeEl.getText() << " " << operationOut << " = ";
+		lines << "#\tdefine " << operationOut << "_DEFINED\n";
+		lines << '\t' << retTypeEl.getText() << " " << operationOut << " = ";
 	}
 	else
 	{
-		line << '\t';
+		lines << '\t';
 	}
 	
 	// write the blah = func(args...)
-	line << funcName << "(";
-	line << argsList.join(", ");
-	line << ");\n";
-	line << "#endif";
+	lines << funcName << "(";
+	lines << argsList.join(", ");
+	lines << ");\n";
+	lines << "#endif";
 
 	// Done
-	srcLines.push_back(line.str());
+	out = lines.str();
 }
 
 } // end namespace anki

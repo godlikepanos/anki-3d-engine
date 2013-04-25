@@ -24,7 +24,8 @@ public:
 		Bool constant;
 		U32 arraySize;
 		std::string line;
-		U32 foundIn = 0; ///< Found in shader
+		U32 shaders = 0; ///< Shader mask
+		Bool putInBlock = false;
 	};
 
 	explicit MaterialShaderProgramCreator(const XmlElement& pt, 
@@ -44,12 +45,6 @@ public:
 	}
 
 private:
-	enum Shader
-	{
-		VERTEX = 1,
-		FRAGMENT = 2
-	}
-
 	/// The lines of the shader program source
 	StringList srcLines;
 
@@ -71,7 +66,7 @@ private:
 	void parseInputsTag(const XmlElement& programEl);
 
 	/// Parse what is within the @code <operation></operation> @endcode
-	void parseOperationTag(const XmlElement& el, Shader shader);
+	void parseOperationTag(const XmlElement& el, U32 shader, std::string& out);
 };
 
 } // end namespace anki

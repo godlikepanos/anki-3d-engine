@@ -40,7 +40,7 @@ Character::Character(PhysWorld* masterContainer_,
 	motionState.reset(new MotionState(init.startTrf, init.movable));
 
 	btAxisSweep3* sweepBp =
-		dynamic_cast<btAxisSweep3*>(masterContainer->broadphase);
+		static_cast<btAxisSweep3*>(masterContainer->broadphase);
 	ANKI_ASSERT(sweepBp != nullptr);
 
 	ghostPairCallback = new btGhostPairCallback();
