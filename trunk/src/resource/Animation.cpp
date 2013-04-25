@@ -1,4 +1,4 @@
-#include "anki/resource/SkelAnim.h"
+#include "anki/resource/Animation.h"
 
 namespace anki {
 
