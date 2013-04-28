@@ -97,7 +97,7 @@ void TextureResource::load(const Image& img)
 #endif
 	}
 
-	init.data = img.getData();
+	init.data[0] = img.getData();
 	init.mipmapping = TextureManagerSingleton::get().getMipmappingEnabled();
 	init.filteringType = init.mipmapping ? TFT_TRILINEAR : TFT_LINEAR;
 	init.repeat = true;
@@ -106,4 +106,4 @@ void TextureResource::load(const Image& img)
 	create(init);
 }
 
-} // end namespace
+} // end namespace anki

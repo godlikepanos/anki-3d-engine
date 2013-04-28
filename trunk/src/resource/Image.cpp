@@ -3,15 +3,20 @@
 #include "anki/core/Logger.h"
 #include "anki/util/Filesystem.h"
 #include "anki/util/Assert.h"
+#include "anki/util/Array.h"
+#include "anki/misc/Xml.h"
 #include <png.h>
 #include <fstream>
 
 namespace anki {
 
 //==============================================================================
+// Image                                                                       =
+//==============================================================================
 
-uint8_t Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-uint8_t Image::tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//==============================================================================
+U8 Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+U8 Image::tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 //==============================================================================
 void Image::load(const char* filename)
@@ -51,10 +56,10 @@ void Image::load(const char* filename)
 }
 
 //==============================================================================
-void Image::loadUncompressedTga(std::fstream& fs, uint32_t& bpp)
+void Image::loadUncompressedTga(std::fstream& fs, U32& bpp)
 {
 	// read the info from header
-	uint8_t header6[6];
+	U8 header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
 	if(fs.gcount() != sizeof(header6))
 	{
@@ -91,7 +96,7 @@ void Image::loadUncompressedTga(std::fstream& fs, uint32_t& bpp)
 }
 
 //==============================================================================
-void Image::loadCompressedTga(std::fstream& fs, uint32_t& bpp)
+void Image::loadCompressedTga(std::fstream& fs, U32& bpp)
 {
 	unsigned char header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
@@ -116,7 +121,7 @@ void Image::loadCompressedTga(std::fstream& fs, uint32_t& bpp)
 	uint pixelcount = height * width;
 	uint currentpixel = 0;
 	uint currentbyte = 0;
-	uint8_t colorbuffer[4];
+	U8 colorbuffer[4];
 
 	do
 	{
@@ -683,6 +688,62 @@ void Image::loadDds(const char* filename)
 	height = hdr.data.dwHeight;
 
 	in.close();
+}
+
+//==============================================================================
+// MultiImage                                                                  =
+//==============================================================================
+
+//==============================================================================
+void MultiImage::load(const char* filename)
+{
+	// get the extension
+	const char* ext = getFileExtension(filename);
+	ANKI_ASSERT(ext);
+
+	// load from this extension
+	try
+	{
+		if(strcmp(ext, "cubemap") == 0)
+		{
+			type = MIT_CUBE;
+			loadCubemap(filename);
+		}
+		else
+		{
+			// Single image
+			type = MIT_SINGLE;
+			images.resize(1);
+			images[0].load(filename);
+		}
+	}
+	catch(std::exception& e)
+	{
+		throw ANKI_EXCEPTION("File " + filename) << e;
+	}
+}
+
+//==============================================================================
+void MultiImage::loadCubemap(const char* filename)
+{
+	// Resize
+	images.resize(6);
+
+	// Load XML
+	XmlDocument doc;
+	doc.loadFile(filename);
+
+	XmlElement rootEl = doc.getChildElement("cubemap");
+	static Array<const char*, 6> tags = {{
+		"positiveX", "negativeX", 
+		"positiveY", "negativeY", 
+		"positiveZ", "negativeZ"}};
+
+	for(U i = 0; i < 6; i++)
+	{
+		XmlElement el = rootEl.getChildElement(tags[i]);
+		images[i].load(el.getText());
+	}
 }
 
 } // end namespace anki

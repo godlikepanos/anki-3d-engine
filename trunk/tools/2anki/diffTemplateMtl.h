@@ -6,17 +6,18 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 	<passes>COLOR DEPTH</passes>
 
 	<shaderProgram>
+		<inputs>
+			<input><type>mat4</type><name>modelViewProjectionMat</name><value></value></input>
+			<input><type>mat3</type><name>normalMat</name><value></value></input>
+			<input><type>vec2</type><name>specular</name><value>1.0 90.0</value></input>
+			<input><type>sampler2D</type><name>diffuseMap</name><value>%diffuseMap%</value></input>
+		</inputs>
+
 		<shader>
 			<type>vertex</type>
 			<includes>
 				<include>shaders/MsCommonVert.glsl</include>
 			</includes>
-		
-			<inputs>
-				<input><type>mat4</type><name>modelViewProjectionMat</name><value></value></input>
-				<input><type>mat3</type><name>normalMat</name><value></value></input>
-				<input><type>vec2</type><name>specular</name><value>1.0 90.0</value></input>
-			</inputs>
 
 			<operations>
 				<operation>
@@ -41,10 +42,6 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 			<includes>
 				<include>shaders/MsCommonFrag.glsl</include>
 			</includes>
-			
-			<inputs>
-				<input><type>sampler2D</type><name>diffuseMap</name><value>%diffuseMap%</value></input>
-			</inputs>
 			
 			<operations>
 				<operation>

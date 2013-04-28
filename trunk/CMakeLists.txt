@@ -16,7 +16,15 @@ OPTION(ANKI_STRIP "Srip the symbols from the executables" OFF)
 
 # Because we want different compiler flags for each platform
 SET(ANKI_CPU "X86" CACHE STRING "The CPU arch (X86 or ARM)")
-SET(ANKI_CPU_ADDR_SPACE "0" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
+
+# Take a wild guess on CPU address space
+IF(${ANKI_CPU} STREQUAL "ARM")
+	SET(_ADDR_SPACE "32")
+ELSE()
+	SET(_ADDR_SPACE "0")
+ENDIF()
+
+SET(ANKI_CPU_ADDR_SPACE "${_ADDR_SPACE}" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
 OPTION(ANKI_ENABLE_MATH_SIMD "Enable or not math SIMD optimizations" ON)
 
 # libz and libpng
@@ -37,7 +45,7 @@ SET(ANKI_WINDOW_BACKEND "${_WIN_BACKEND}" CACHE STRING "The window backend (GLXX
 #
 
 # CPU
-MESSAGE("++ AnKi CPU: ${ANKI_CPU}")
+MESSAGE("++ Build for CPU: ${ANKI_CPU}")
 
 IF(ANKI_CPU STREQUAL "X86")
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4 ")
@@ -53,17 +61,18 @@ IF(ANKI_ENABLE_MATH_SIMD)
 	ELSE()
 		MESSAGE(FATAL "Wrong ANKI_CPU set")
 	ENDIF()
+
+	MESSAGE("++ SIMD: true")
 ELSE()
 	SET(ANKI_MATH_SIMD "NONE")
+	MESSAGE("++ SIMD: false")
 ENDIF()
-
-MESSAGE("++ AnKi SIMD: ${ANKI_MATH_SIMD}")
 
 # CPU address space
 IF(ANKI_CPU_ADDR_SPACE STREQUAL "0")
-	MESSAGE("++ AnKi CPU address space: 0 (Native)")
+	MESSAGE("++ CPU address space: 0 (Native)")
 ELSE()
-	MESSAGE("++ AnKi CPU address space: ${ANKI_CPU_ADDR_SPACE}")
+	MESSAGE("++ CPU address space: ${ANKI_CPU_ADDR_SPACE}")
 ENDIF()
 
 IF(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
@@ -78,7 +87,7 @@ IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 ELSEIF(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 	SET(ANKI_PLATFORM "WINDOWS")
 ENDIF()
-MESSAGE("++ AnKi platform: ${ANKI_PLATFORM}")
+MESSAGE("++ Platform: ${ANKI_PLATFORM}")
 
 # libz and libpng
 IF(ANKI_SYSTEM_LIBZ)
@@ -98,7 +107,7 @@ ELSE()
 ENDIF()
 
 # Window backend
-MESSAGE("++ AnKi window backend: ${ANKI_WINDOW_BACKEND}")
+MESSAGE("++ Window backend: ${ANKI_WINDOW_BACKEND}")
 
 #
 # Common compiler flags
@@ -184,9 +193,9 @@ SET(ANKI_VERSION_MINOR 1)
 MESSAGE("++ AnKi version: ${ANKI_VERSION_MAJOR}.${ANKI_VERSION_MINOR}")
 
 IF(CMAKE_BUILD_TYPE STREQUAL Debug)
-	MESSAGE("++ AnKi debug: true")
+	MESSAGE("++ Debug build: true")
 ELSE()
-	MESSAGE("++ AnKi debug: false")
+	MESSAGE("++ Debug build: false")
 ENDIF()
 
 SET(ANKI_GCC_TO_STRING_WORKAROUND "0" CACHE STRING "Enable workaround for C++11 GCC bug (0 or 1)")

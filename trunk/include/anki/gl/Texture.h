@@ -2,12 +2,14 @@
 #define ANKI_GL_TEXTURE_H
 
 #include "anki/util/Assert.h"
+#include "anki/util/Array.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"
 #include <cstdlib>
+#include <cstring>
 #include <limits>
 #include <thread>
 
@@ -147,8 +149,9 @@ class Texture: public NonCopyable
 	friend class TextureManager;
 
 public:
-	/// Texture filtering type
-	enum TextureFilteringType
+	// A fake enum: Texture filtering type
+	typedef U8 TextureFilteringType;
+	enum
 	{
 		TFT_NEAREST,
 		TFT_LINEAR,
@@ -166,12 +169,17 @@ public:
 		GLenum format = GL_NONE;
 		/// The type of the data. Not relevant if data is zero
 		GLenum type = GL_NONE; 
-		const void* data = nullptr;
+		Array<const void*, 256> data; ///< Data per layer/face
 		Bool mipmapping = false;
 		TextureFilteringType filteringType = TFT_NEAREST;
 		Bool repeat = true;
 		I anisotropyLevel = 0;
 		PtrSize dataSize = 0; ///< For compressed textures
+
+		Initializer()
+		{
+			memset(&data[0], 0, sizeof(data));
+		}
 	};
 
 	/// @name Constructors/Destructor

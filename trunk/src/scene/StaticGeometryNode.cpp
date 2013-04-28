@@ -31,7 +31,7 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(
 	ANKI_ASSERT(modelPatch);
 	Renderable::init(*this);
 
-	// For all submeshes create a StaticGeometrySp[atialNode
+	// For all submeshes create a StaticGeometrySp[atial
 	if(modelPatch->getSubMeshesCount() > 1)
 	{
 		spatialProtected.subSpatials.resize(modelPatch->getSubMeshesCount());
@@ -74,8 +74,8 @@ StaticGeometryNode::StaticGeometryNode(const char* filename,
 	{
 		std::string name_ = name + std::to_string(i);
 
-		StaticGeometryPatchNode* node = 
-			ANKI_NEW(StaticGeometryPatchNode, getSceneAllocator(),
+		StaticGeometryPatchNode* node = ANKI_NEW(
+			StaticGeometryPatchNode, getSceneAllocator(),
 			patch, name_.c_str(), scene);
 
 		patches.push_back(node);

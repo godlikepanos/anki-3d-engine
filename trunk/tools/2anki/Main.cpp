@@ -158,9 +158,13 @@ struct Vw
 };
 
 //==============================================================================
-void exportMesh(const aiMesh& mesh, const Config& config)
+void exportMesh(
+	const aiMesh& mesh, 
+	const std::string* name_,
+	const aiMatrix4x4* transform,
+	const Config& config)
 {
-	std::string name = mesh.mName.C_Str();
+	std::string name = (name_) ? *name_ : mesh.mName.C_Str();
 	std::fstream file;
 	LOGI("Exporting mesh %s\n", name.c_str());
 
@@ -183,6 +187,12 @@ void exportMesh(const aiMesh& mesh, const Config& config)
 	for(uint32_t i = 0; i < mesh.mNumVertices; i++)
 	{
 		aiVector3D pos = mesh.mVertices[i];
+
+		// Transform
+		if(transform)
+		{
+			pos = (*transform) * pos;
+		}
 
 		// flip
 		if(config.flipyz)
@@ -345,7 +355,8 @@ void exportSkeleton(const aiMesh& mesh, const Config& config)
 }
 
 //==============================================================================
-void exportMaterial(const aiMaterial& mtl, const Config& config)
+void exportMaterial(const aiScene& scene, const aiMaterial& mtl, 
+	const Config& config)
 {
 	std::string diffTex;
 	std::string normTex;
@@ -623,20 +634,39 @@ void exportAnimation(const aiAnimation& anim, uint32_t index,
 }
 
 //==============================================================================
-void exportNode(const aiScene& scene, const aiNode* node, const Config& config)
+void exportNode(
+	const aiScene& scene, 
+	const aiNode* node, 
+	const Config& config,
+	std::fstream& file)
 {
 	if(node == nullptr)
 	{
 		return;
 	}
 
-	// Write the .mdl
-	exportModel(scene, *node, config);
+	for(uint32_t i = 0; i < node->mNumMeshes; i++)
+	{
+		const aiMesh& mesh = *scene.mMeshes[node->mMeshes[i]];
+
+		std::string name = node->mName.C_Str() + std::to_string(i);
+
+		exportMesh(mesh, &name, &node->mTransformation, config);
+
+		exportMaterial(scene, *scene.mMaterials[mesh.mMaterialIndex], config);
+
+		file << "\t<modelPatch>\n";
+		file << "\t\t<mesh>" << config.outDir << name << ".mesh\n";
+		aiString ainame;
+		scene.mMaterials[mesh.mMaterialIndex]->Get(AI_MATKEY_NAME, ainame);
+		file << "\t\t<material>" << ainame.C_Str() << ".mtl\n";
+		file << "\t</modelPatch>\n";
+	}
 	
 	// Go to children
 	for(uint32_t i = 0; i < node->mNumChildren; i++)
 	{
-		exportNode(scene, node->mChildren[i], config);
+		exportNode(scene, node->mChildren[i], config, file);
 	}
 }
 
@@ -645,31 +675,26 @@ void exportScene(const aiScene& scene, const Config& config)
 {
 	LOGI("Exporting scene to %s\n", config.outDir.c_str());
 
-	// Meshes and skeletons
-	for(uint32_t i = 0; i < scene.mNumMeshes; i++)
-	{
-		exportMesh(*scene.mMeshes[i], config);
+	// Open file
+	std::fstream file;
+	file.open(config.outDir + "scene.scene", std::ios::out);
 
-		if(scene.mMeshes[i]->HasBones())
-		{
-			exportSkeleton(*scene.mMeshes[i], config);
-		}
-	}
+	// Write some stuff
+	file << xmlHeader << "\n";
+	file << "<scene>\n";
 
-	// Materials
-	for(uint32_t i = 0; i < scene.mNumMaterials; i++)
-	{
-		exportMaterial(*scene.mMaterials[i], config);
-	}
+	// TODO The sectors/portals
 
-	// The nodes
-	exportNode(scene, scene.mRootNode, config);
+	// Geometry
+	std::fstream modelFile;
+	modelFile.open(config.outDir + "static_geometry.mdl", std::ios::out);
+	modelFile << xmlHeader << "\n";
+	modelFile << "<model>\n";
+	exportNode(scene, scene.mRootNode, config, modelFile);
+	modelFile << "</model>\n";
 
-	// The animations
-	for(uint32_t i = 0; i < scene.mNumAnimations; i++)
-	{
-		exportAnimation(*scene.mAnimations[i], i, scene, config);	
-	}
+	// End
+	file << "</scene>\n";
 
 	LOGI("Done exporting scene!\n");
 }

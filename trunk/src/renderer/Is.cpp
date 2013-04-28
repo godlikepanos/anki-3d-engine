@@ -292,9 +292,9 @@ struct WriteLightsJob: ThreadJob
 				cam->getViewMatrix());
 		baseslight->posRadius = Vec4(pos, light.getDistance());
 
-		// Diff color. don't set the shadowmap ID now
+		// Diff color and shadowmap ID now
 		baseslight->diffuseColorShadowmapId = 
-			Vec4(light.getDiffuseColor().xyz(), (F32)i);
+			Vec4(light.getDiffuseColor().xyz(), (F32)light.getShadowMapIndex());
 
 		// Spec color
 		baseslight->specularColorTexId = light.getSpecularColor();
@@ -642,7 +642,7 @@ void Is::lightPass()
 	sm.run(&shadowCasters[0], visibleSpotTexLightsCount, shadowmapLayers);
 
 	//
-	// Write the ligths and tiles UBOs
+	// Write the lights and tiles UBOs
 	//
 
 	// Get the offsets and sizes of each uniform block

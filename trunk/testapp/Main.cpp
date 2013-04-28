@@ -251,7 +251,7 @@ void init()
 		0.7));
 #endif
 
-#if 1
+#if 0
 	StaticGeometryNode* sponzaModel = new StaticGeometryNode(
 		//"data/maps/sponza/sponza_no_bmeshes.mdl",
 		//"data/maps/sponza/sponza.mdl",
@@ -500,8 +500,8 @@ void mainLoop()
 void initSubsystems(int argc, char* argv[])
 {
 #if ANKI_GL == ANKI_GL_DESKTOP
-	U32 glmajor = 4;
-	U32 glminor = 2;
+	U32 glmajor = 3;
+	U32 glminor = 3;
 #else
 	U32 glmajor = 3;
 	U32 glminor = 0;
