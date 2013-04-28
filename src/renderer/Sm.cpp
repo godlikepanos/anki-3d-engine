@@ -193,6 +193,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 	}
 
 	sm.timestamp = Timestamp::getTimestamp();
+	light.setShadowMapIndex(&sm - &sms[0]);
 
 	//
 	// Render

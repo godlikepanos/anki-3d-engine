@@ -250,13 +250,19 @@ void Texture::create(const Initializer& init)
 		if(isLayeredTarget(target))
 		{
 			glCompressedTexImage3D(target, 0, internalFormat,
-				width, height, depth, 0, init.dataSize, init.data);
+				width, height, depth, 0, init.dataSize, init.data[0]);
+		}
+		else if(target == GL_TEXTURE_CUBE_MAP)
+		{
+			ANKI_ASSERT(depth == 0);
+			
+			ANKI_ASSERT(0 && "TODO");
 		}
 		else
 		{
 			ANKI_ASSERT(depth == 0);
 			glCompressedTexImage2D(target, 0, internalFormat,
-				width, height, 0, init.dataSize, init.data);
+				width, height, 0, init.dataSize, init.data[0]);
 		}
 	}
 	else
@@ -264,13 +270,31 @@ void Texture::create(const Initializer& init)
 		if(isLayeredTarget(target))
 		{
 			glTexImage3D(target, 0, internalFormat, width, height, depth,
-				0, format, type, init.data);
+				0, format, type, init.data[0]);
+		}
+		else if(target == GL_TEXTURE_CUBE_MAP)
+		{
+			ANKI_ASSERT(depth == 0);
+
+			U32 dataMask = 0;
+
+			for(U i = 0; i < 6; i++)
+			{
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, 
+					internalFormat, width,
+					height, 0, format, type, init.data[i]);
+
+				dataMask |= (init.data[i] != nullptr) ? (1 << i) : 0;
+			}
+
+			// Or all the faces have data or none
+			ANKI_ASSERT(dataMask == 0 || dataMask == 0x3F);
 		}
 		else
 		{
 			ANKI_ASSERT(depth == 0);
 			glTexImage2D(target, 0, internalFormat, width,
-				height, 0, format, type, init.data);
+				height, 0, format, type, init.data[0]);
 		}
 	}
 
@@ -288,7 +312,7 @@ void Texture::create(const Initializer& init)
 		glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 
-	if(init.mipmapping && init.data)
+	if(init.mipmapping && init.data[0])
 	{
 		glGenerateMipmap(target);
 	}

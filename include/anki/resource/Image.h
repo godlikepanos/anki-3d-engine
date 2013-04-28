@@ -48,12 +48,12 @@ public:
 
 	/// @name Accessors
 	/// @{
-	uint32_t getWidth() const
+	U32 getWidth() const
 	{
 		return width;
 	}
 
-	uint32_t getHeight() const
+	U32 getHeight() const
 	{
 		return height;
 	}
@@ -63,7 +63,7 @@ public:
 		return type;
 	}
 
-	const uint8_t* getData() const
+	const U8* getData() const
 	{
 		return &data[0];
 	}
@@ -86,16 +86,16 @@ public:
 	void load(const char* filename);
 
 private:
-	uint32_t width = 0; ///< Image width
-	uint32_t height = 0; ///< Image height
+	U32 width = 0; ///< Image width
+	U32 height = 0; ///< Image height
 	ColorType type; ///< Image color type
-	Vector<uint8_t> data; ///< Image data
+	Vector<U8> data; ///< Image data
 	DataCompression dataCompression;
 
 	/// @name TGA headers
 	/// @{
-	static uint8_t tgaHeaderUncompressed[12];
-	static uint8_t tgaHeaderCompressed[12];
+	static U8 tgaHeaderUncompressed[12];
+	static U8 tgaHeaderCompressed[12];
 	/// @}
 
 	/// Load a TGA
@@ -107,13 +107,13 @@ private:
 	/// @param[in] fs The input
 	/// @param[out] bpp Bits per pixel
 	/// @exception Exception
-	void loadUncompressedTga(std::fstream& fs, uint32_t& bpp);
+	void loadUncompressedTga(std::fstream& fs, U32& bpp);
 
 	/// Used by loadTga
 	/// @param[in] fs The input
 	/// @param[out] bpp Bits per pixel
 	/// @exception Exception
-	void loadCompressedTga(std::fstream& fs, uint32_t& bpp);
+	void loadCompressedTga(std::fstream& fs, U32& bpp);
 
 	/// Load PNG. Dont throw exception because libpng is in C
 	/// @param[in] filename The file to load
@@ -124,6 +124,48 @@ private:
 	/// Load a DDS file
 	/// @param[in] filename The file to load
 	void loadDds(const char* filename);
+};
+
+/// A super image that loads multiple images, used in cubemaps, 3D textures
+class MultiImage
+{
+public:
+	/// The type of the image
+	enum MultiImageType
+	{
+		MIT_SINGLE,
+		MIT_CUBE,
+		MIT_ARRAY
+	};
+
+	MultiImage(const char* filename)
+	{
+		load(filename);
+	}
+
+	void load(const char* filename);
+
+	/// Get single image
+	const Image& getImage() const
+	{
+		ANKI_ASSERT(images.size() == 1);
+		ANKI_ASSERT(type == MIT_SINGLE);
+		return images[0];
+	}
+
+	/// Get face image
+	const Image& getImageFace(U face) const
+	{
+		ANKI_ASSERT(images.size() == 6);
+		ANKI_ASSERT(type == MIT_CUBE);
+		return images[face];
+	}
+
+private:
+	Vector<Image> images;
+	MultiImageType type;
+
+	void loadCubemap(const char* filename);
 };
 
 } // end namespace anki

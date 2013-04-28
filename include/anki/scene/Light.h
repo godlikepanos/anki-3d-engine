@@ -79,17 +79,23 @@ public:
 		specColor = x;
 	}
 
-	bool getShadowEnabled() const
+	Bool getShadowEnabled() const
 	{
 		return shadow;
 	}
-	bool& getShadowEnabled()
-	{
-		return shadow;
-	}
-	void setShadowEnabled(const bool x)
+	void setShadowEnabled(const Bool x)
 	{
 		shadow = x;
+	}
+
+	U getShadowMapIndex() const
+	{
+		return (U)shadowMapIndex;
+	}
+	void setShadowMapIndex(const U i)
+	{
+		ANKI_ASSERT(i < 0xFF);
+		shadowMapIndex = (U8)i;
 	}
 	/// @}
 
@@ -107,7 +113,8 @@ private:
 	LightType type;
 	Vec4 color = Vec4(1.0);
 	Vec4 specColor = Vec4(1.0);
-	bool shadow = false;
+	Bool shadow = false;
+	U8 shadowMapIndex = 0xFF; ///< Used by the renderer
 };
 
 /// Point light

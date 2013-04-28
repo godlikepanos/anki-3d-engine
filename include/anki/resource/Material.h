@@ -272,6 +272,19 @@ protected:
 /// 	[<wireframe>0 | 1</wireframe>]
 ///
 /// 	<shaderProgram>
+///
+///			[<inputs> (3)
+///				<input>
+///					<name>xx</name>
+///					<type>any glsl type</type>
+///					<value> (4)
+///						[a_series_of_numbers |
+///						path/to/image.tga]
+///					</value>
+///					[<const>0 | 1</const>] (5)
+///				</input>
+///			</inputs>]
+///
 /// 		<shader> (2)
 /// 			<type>vertex | tc | te | geometry | fragment</type>
 ///
@@ -279,18 +292,6 @@ protected:
 /// 				<include>path/to/file.glsl</include>
 /// 				<include>path/to/file2.glsl</include>
 /// 			</includes>
-///
-/// 			[<inputs> (3)
-/// 				<input>
-/// 					<name>xx</name>
-/// 					<type>any glsl type</type>
-/// 					<value> (4)
-/// 						[a_series_of_numbers |
-/// 						path/to/image.tga]
-/// 					</value>
-/// 					[<const>0 | 1</const>] (5)
-/// 				</input>
-/// 			</inputs>]
 ///
 /// 			<operations>
 /// 				<operation>

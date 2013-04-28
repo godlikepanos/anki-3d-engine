@@ -292,8 +292,14 @@ void MaterialShaderProgramCreator::parseOperationTag(
 			// Search for all the inputs and mark the appropriate
 			for(U i = 0; i < inputs.size(); i++)
 			{
-				// Check at least the first part of the string
-				if(std::string(argEl.getText()).find(inputs[i]->name) == 0)
+				// Check that the first part of the string is equal to the 
+				// variable and the following char is '['
+				std::string text = argEl.getText();
+				const std::string& name = inputs[i]->name;
+				if(text == name 
+					|| (text.find(name) == 0 
+						&& text.size() > name.size()
+						&& text[name.size()] == '['))
 				{
 					inputs[i]->shaders |= (U32)shader;
 					break;
