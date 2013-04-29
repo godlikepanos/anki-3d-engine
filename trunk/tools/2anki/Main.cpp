@@ -49,6 +49,22 @@ std::string replaceAllString(const std::string& str, const std::string& from,
 }
 
 //==============================================================================
+std::string getFilename(const std::string& path)
+{
+	assert(path);
+
+	std::string out;
+
+	const size_t last = path.find_last_of("/");
+	if(std::string::npos != last)
+	{
+		out.insert(out.end(), path.begin() + last + 1, path.end());
+	}
+
+	return out;
+}
+
+//==============================================================================
 struct Config
 {
 	std::string inputFname;
@@ -385,7 +401,7 @@ void exportMaterial(const aiScene& scene, const aiMaterial& mtl,
 	aiString path;
 	if(mtl.GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS)
 	{
-		diffTex = path.C_Str();
+		diffTex = getFilename(path.C_Str());
 	}
 	else
 	{
@@ -397,7 +413,7 @@ void exportMaterial(const aiScene& scene, const aiMaterial& mtl,
 	{	
 		if(mtl.GetTexture(aiTextureType_NORMALS, 0, &path) == AI_SUCCESS)
 		{
-			normTex = path.C_Str();
+			normTex = getFilename(path.C_Str());
 		}
 		else
 		{
@@ -655,12 +671,15 @@ void exportNode(
 
 		exportMaterial(scene, *scene.mMaterials[mesh.mMaterialIndex], config);
 
-		file << "\t<modelPatch>\n";
-		file << "\t\t<mesh>" << config.outDir << name << ".mesh\n";
 		aiString ainame;
 		scene.mMaterials[mesh.mMaterialIndex]->Get(AI_MATKEY_NAME, ainame);
-		file << "\t\t<material>" << ainame.C_Str() << ".mtl\n";
-		file << "\t</modelPatch>\n";
+
+		file << "\t\t<modelPatch>\n"
+			<< "\t\t\t<mesh>" << config.rpath << config.outDir 
+			<< name << ".mesh</mesh>\n"
+			<< "\t\t\t<material>" << config.rpath << ainame.C_Str() 
+			<< ".mtl</material>\n"
+			<< "\t\t</modelPatch>\n";
 	}
 	
 	// Go to children
@@ -689,9 +708,9 @@ void exportScene(const aiScene& scene, const Config& config)
 	std::fstream modelFile;
 	modelFile.open(config.outDir + "static_geometry.mdl", std::ios::out);
 	modelFile << xmlHeader << "\n";
-	modelFile << "<model>\n";
+	modelFile << "<model>\n\t<modelPatches>\n";
 	exportNode(scene, scene.mRootNode, config, modelFile);
-	modelFile << "</model>\n";
+	modelFile << "\t</modelPatches>\n</model>\n";
 
 	// End
 	file << "</scene>\n";

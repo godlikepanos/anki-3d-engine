@@ -727,13 +727,6 @@ void Is::lightPass()
 	// Sync
 	threadPool.waitForAllJobsToFinish();
 
-	// Write the shadomap IDs
-	for(U i = 0; i < visibleSpotTexLightsCount; i++)
-	{
-		jobs[0].spotTexLights[i].diffuseColorShadowmapId.w() = 
-			(F32)shadowmapLayers[i];
-	}
-
 	// Write the light count for each tile
 	for(U y = 0; y < TILES_Y_COUNT; y++)
 	{
