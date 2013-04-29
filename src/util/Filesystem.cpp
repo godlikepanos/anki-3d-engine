@@ -7,6 +7,66 @@
 namespace anki {
 
 //==============================================================================
+// File                                                                        =
+//==============================================================================
+
+//==============================================================================
+void File::open(const char* filename, U8 flags)
+{
+	const char* openMode;
+
+	if(flags & READ)
+	{
+		openMode = "r";
+	}
+	else if(flags & WRITE)
+	{
+		openMode = "w";
+	}
+	else if(flags & APPEND)
+	{
+		openMode = "a+";
+	}
+	else
+	{
+		ANKI_ASSERT(0);
+		openMode = nullptr;
+	}
+	openFlags = flags;
+
+	// Open
+	file = (FILE*)fopen(filename, openMode);
+	if(!file)
+	{
+		throw ANKI_EXCEPTION("Failed to open file");
+	}
+	fileType = C_FILE;
+}
+
+//==============================================================================
+PtrSize File::read(void* buff, PtrSize size)
+{
+	ANKI_ASSERT(file);
+	ANKI_ASSERT(buff);
+	PtrSize readSize = 0;
+
+	switch(fileType)
+	{
+	case C_FILE:
+		readSize = fread(buff, 1, size, (FILE*)file);
+		break;
+	case ZIP_FILE:
+		break;
+	}
+
+	return readSize;
+}
+
+//==============================================================================
+// Functions                                                                   =
+//==============================================================================
+
+//==============================================================================
 const char* getFileExtension(const char* filename)
 {
 	ANKI_ASSERT(filename);

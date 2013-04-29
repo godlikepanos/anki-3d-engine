@@ -11,6 +11,36 @@ namespace anki {
 /// @addtogroup filesystem
 /// @{
 
+/// XXX
+class File
+{
+public:
+	enum
+	{
+		READ,
+		WRITE,
+		APPEND,
+		BINARY
+	};
+
+	void open(const char* filename, U8 openFlags);
+
+	PtrSize read(void* buff, PtrSize size);
+
+	PtrSize write(void* buff, PtrSize size);
+
+public:
+	enum
+	{
+		C_FILE,
+		ZIP_FILE
+	};
+
+	U8 openFlags; ///< Mainly for assertions
+	void* file = nullptr; ///< A native type
+	U8 fileType;
+};
+
 /// Get file extension
 /// @param[in] filename The file to open
 /// @return nullptr on failure and if the dot is the last character
