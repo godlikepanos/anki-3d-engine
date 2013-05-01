@@ -488,8 +488,9 @@ void mainLoop()
 	MainRendererSingleton::get().takeScreenshot("screenshot.tga");
 #endif
 
-	ANKI_LOGI("Exiting main loop (" << mainLoopTimer.getElapsedTime()
-		<< " sec)");
+	HighRezTimer::Scalar timePassed = mainLoopTimer.getElapsedTime();
+	ANKI_LOGI("Exiting main loop (" << timePassed
+		<< " sec) FPS: " << 1000.0 / timePassed);
 	MainRendererSingleton::get().printProfileInfo();
 	SceneGraphSingleton::get().printProfileInfo();
 }
@@ -512,12 +513,13 @@ void initSubsystems(int argc, char* argv[])
 
 	// Window
 	NativeWindowInitializer nwinit;
-	nwinit.width = 1280;
-	nwinit.height = 800;
+	nwinit.width = 1920;
+	nwinit.height = 1080;
 	nwinit.majorVersion = glmajor;
 	nwinit.minorVersion = glminor;
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
+	nwinit.fullscreenDesktopRez = true;
 	win = new NativeWindow;	
 	win->create(nwinit);
 
@@ -544,8 +546,8 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.hdr.exposure = 8.0;
 	initializer.pps.ssao.blurringIterationsNum = 4;
 	initializer.pps.ssao.enabled = true;
-	initializer.pps.ssao.mainPassRenderingQuality = 0.3;
-	initializer.pps.ssao.blurringRenderingQuality = 0.5;
+	initializer.pps.ssao.mainPassRenderingQuality = 0.5;
+	initializer.pps.ssao.blurringRenderingQuality = 0.7;
 	initializer.pps.enabled = true;
 	initializer.pps.bl.enabled = true;
 	initializer.pps.bl.blurringIterationsNum = 2;

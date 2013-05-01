@@ -1,5 +1,6 @@
 #include "anki/core/NativeWindowGlxX11.h"
 #include "anki/util/Exception.h"
+#include <cstring>
 
 namespace anki {
 
@@ -100,7 +101,7 @@ void NativeWindowImpl::createNativeWindow(NativeWindowInitializer& init)
 	/* creating colormap */
 	swa.colormap = xColormap = XCreateColormap(xDisplay, root, 
 		vi->visual, AllocNone);
-	swa.background_pixmap = None ;
+	swa.background_pixmap = None;
 	swa.border_pixel      = 0;
 	swa.event_mask        = StructureNotifyMask;
  
@@ -111,15 +112,39 @@ void NativeWindowImpl::createNativeWindow(NativeWindowInitializer& init)
 		CWBorderPixel | CWColormap | CWEventMask, 
 		&swa);
 
-	XFree(vi);
-
 	if(!xWindow)
 	{
+		XFree(vi);
 		throw ANKI_EXCEPTION("XCreateWindow() failed");
 	}
 
 	XStoreName(xDisplay, xWindow, init.title.c_str());
 	XMapWindow(xDisplay, xWindow);
+
+	// Toggle fullscreen
+	if(init.fullscreenDesktopRez)
+	{
+		XEvent xev;
+		memset(&xev, 0, sizeof(xev));
+
+		Atom wmState = XInternAtom(xDisplay, "_NET_WM_STATE", False);
+	    Atom fullscreen = 
+			XInternAtom(xDisplay, "_NET_WM_STATE_FULLSCREEN", False);
+
+		xev.type = ClientMessage;
+		xev.xclient.window = xWindow;
+		xev.xclient.message_type = wmState;
+		xev.xclient.format = 32;
+		xev.xclient.data.l[0] = 1;
+		xev.xclient.data.l[1] = fullscreen;
+		xev.xclient.data.l[2] = 0;
+
+		XSendEvent(xDisplay, RootWindow(xDisplay, vi->screen), 0,
+			SubstructureNotifyMask | SubstructureRedirectMask, &xev);
+	}
+
+	// Cleanup
+	XFree(vi);
 }
 
 //==============================================================================

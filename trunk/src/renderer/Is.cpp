@@ -228,7 +228,7 @@ struct WriteLightsJob: ThreadJob
 		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
 			cam->getViewMatrix());
 
-		slight.posRadius = Vec4(pos, light.getRadius());
+		slight.posRadius = Vec4(pos, -1.0 / light.getRadius());
 		slight.diffuseColorShadowmapId = light.getDiffuseColor();
 		slight.specularColorTexId = light.getSpecularColor();
 
@@ -290,7 +290,7 @@ struct WriteLightsJob: ThreadJob
 		// Pos & dist
 		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
 				cam->getViewMatrix());
-		baseslight->posRadius = Vec4(pos, light.getDistance());
+		baseslight->posRadius = Vec4(pos, -1.0 / light.getDistance());
 
 		// Diff color and shadowmap ID now
 		baseslight->diffuseColorShadowmapId = 

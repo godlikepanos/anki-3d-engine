@@ -18,6 +18,7 @@ struct NativeWindowInitializer
 	U32 stencilBits = 8;
 	U32 samplesCount = 0;
 	static const Bool doubleBuffer = true;
+	Bool fullscreenDesktopRez = false;
 
 	U32 minorVersion = 0;
 	U32 majorVersion = 0;
@@ -25,7 +26,7 @@ struct NativeWindowInitializer
 
 	U32 width = 640;
 	U32 height = 768;
-	std::string title = "Untitled";
+	std::string title = "Untitled window";
 };
 
 /// Native window with GL context
