@@ -124,27 +124,25 @@ vec3 getFragPosVSpace()
 float calcAttenuationFactor(
 	in vec3 fragPosVspace, 
 	in Light light,
-	out vec3 rayDir)
+	out vec3 frag2LightVec)
 {
 	// get the vector from the frag to the light
-	vec3 frag2LightVec = light.posRadius.xyz - fragPosVspace;
+	frag2LightVec = light.posRadius.xyz - fragPosVspace;
 
-	// Instead of using normalize(frag2LightVec) we brake the operation 
-	// because we want fragLightDist for the calc of the attenuation
-	float fragLightDistSquared = dot(frag2LightVec, frag2LightVec);
-	float fragLightDist = sqrt(fragLightDistSquared);
-	rayDir = frag2LightVec / fragLightDist;
+	float fragLightDist = length(frag2LightVec);
+	frag2LightVec = normalize(frag2LightVec);
 
-	float att = max((1.0 + ATTENUATION_BOOST) 
-		- fragLightDist / light.posRadius.w, 0.0);
+	float att = max(  
+		(fragLightDist * light.posRadius.w) + (1.0 + ATTENUATION_BOOST), 
+		0.0);
 
 	return att;
 }
 
 //==============================================================================
-float calcLambertTerm(in vec3 normal, in vec3 rayDir)
+float calcLambertTerm(in vec3 normal, in vec3 frag2LightVec)
 {
-	return max(0.0, dot(normal, rayDir));
+	return max(0.0, dot(normal, frag2LightVec));
 }
 
 //==============================================================================
@@ -152,9 +150,6 @@ float calcLambertTerm(in vec3 normal, in vec3 rayDir)
 vec3 calcPhong(in vec3 fragPosVspace, in vec3 diffuse, 
 	in vec2 specularAll, in vec3 normal, in Light light, in vec3 rayDir)
 {
-	// Diffuse
-	vec3 difCol = diffuse * light.diffuseColorShadowmapId.rgb;
-
 	// Specular
 	vec3 eyeVec = normalize(fragPosVspace);
 	vec3 h = normalize(rayDir - eyeVec);
@@ -162,14 +157,15 @@ vec3 calcPhong(in vec3 fragPosVspace, in vec3 diffuse,
 	vec3 specCol = 
 		light.specularColorTexId.rgb * (specIntensity * specularAll.r);
 	
-	// end
-	return difCol + specCol;
+	// Do a mad optimization
+	// diffCol = diffuse * light.diffuseColorShadowmapId.rgb
+	return (diffuse * light.diffuseColorShadowmapId.rgb) + specCol;
 }
 
 //==============================================================================
-float calcSpotFactor(in SpotLight light, in vec3 fragPosVspace)
+float calcSpotFactor(in SpotLight light, in vec3 frag2LightVec)
 {
-	vec3 l = normalize(fragPosVspace - light.lightBase.posRadius.xyz);
+	vec3 l = -frag2LightVec;
 
 	float costheta = dot(l, light.lightDir.xyz);
 	float spotFactor = smoothstep(
@@ -271,7 +267,7 @@ void main()
 
 		float lambert = calcLambertTerm(normal, ray);
 
-		float spot = calcSpotFactor(light, fragPosVspace);
+		float spot = calcSpotFactor(light, ray);
 
 		vec3 col = calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
 			specularAll, normal, light.lightBase, ray);
@@ -298,7 +294,7 @@ void main()
 		float lambert = calcLambertTerm(normal, ray);
 
 		float spot = 
-			calcSpotFactor(light.spotLightBase, fragPosVspace);
+			calcSpotFactor(light.spotLightBase, ray);
 
 		float midFactor = att * lambert * spot;
 
