@@ -32,10 +32,33 @@ enum VisibleBy
 	VB_LIGHT = 1 << 1
 };
 
+/// Visible node pointer with some more info
+struct VisibleNode
+{
+	SceneNode* node;
+	U64 subSpatialsMask; ///< The mask of the subspatials
+
+	VisibleNode()
+		: node(nullptr), subSpatialsMask(0)
+	{}
+
+	VisibleNode(SceneNode* node_, U64 subSpatialsMask_)
+		: node(node_), subSpatialsMask(subSpatialsMask_)
+	{
+		ANKI_ASSERT(node);
+	}
+
+	VisibleNode(const VisibleNode& other)
+		: node(other.node), subSpatialsMask(other.subSpatialsMask)
+	{
+		ANKI_ASSERT(node);
+	}
+};
+
 /// Its actually a container for visible entities. It should be per frame
 struct VisibilityTestResults
 {
-	typedef SceneFrameVector<SceneNode*> Container;
+	typedef SceneFrameVector<VisibleNode> Container;
 
 	Container renderables;
 	Container lights;
@@ -79,14 +102,17 @@ struct DistanceSortFunctor
 {
 	Vec3 origin;
 
-	Bool operator()(SceneNode* a, SceneNode* b)
+	Bool operator()(const VisibleNode& a, const VisibleNode& b)
 	{
-		ANKI_ASSERT(a->getSpatial() != nullptr && b->getSpatial() != nullptr);
+		ANKI_ASSERT(a.node && b.node);
+
+		ANKI_ASSERT(a.node->getSpatial() != nullptr 
+			&& b.node->getSpatial() != nullptr);
 
 		F32 dist0 = origin.getDistanceSquared(
-			a->getSpatial()->getSpatialOrigin());
+			a.node->getSpatial()->getSpatialOrigin());
 		F32 dist1 = origin.getDistanceSquared(
-			b->getSpatial()->getSpatialOrigin());
+			b.node->getSpatial()->getSpatialOrigin());
 
 		return dist0 < dist1;
 	}
@@ -95,13 +121,15 @@ struct DistanceSortFunctor
 /// Sort renderable scene nodes on material
 struct MaterialSortFunctor
 {
-	Bool operator()(SceneNode* a, SceneNode* b)
+	Bool operator()(const VisibleNode& a, const VisibleNode& b)
 	{
-		ANKI_ASSERT(a->getRenderable() != nullptr 
-			&& b->getRenderable() != nullptr);
+		ANKI_ASSERT(a.node && b.node);
 
-		return a->getRenderable()->getRenderableMaterial()
-			< b->getRenderable()->getRenderableMaterial();
+		ANKI_ASSERT(a.node->getRenderable() != nullptr 
+			&& b.node->getRenderable() != nullptr);
+
+		return a.node->getRenderable()->getRenderableMaterial()
+			< b.node->getRenderable()->getRenderableMaterial();
 	}
 };
 

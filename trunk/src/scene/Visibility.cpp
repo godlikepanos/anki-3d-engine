@@ -69,6 +69,7 @@ struct VisibilityTestJob: ThreadJob
 
 			if(ANKI_UNLIKELY(i > 0 && subSpatialsMask == 0))
 			{
+				// The camera is looking something in between all submeshes
 				continue;
 			}
 
@@ -76,21 +77,15 @@ struct VisibilityTestJob: ThreadJob
 			Renderable* r = node->getRenderable();
 			if(r)
 			{
-				visible->renderables.push_back(node);
-
-				// Inform the renderable for the mask
-				if(subSpatialsMask)
-				{
-					ANKI_ASSERT(r->getSubMeshesCount() > 0);
-					r->setVisibleSubMeshesMask(frustumableSn, subSpatialsMask);
-				}
+				visible->renderables.push_back(
+					VisibleNode(node, subSpatialsMask));
 			}
 			else
 			{
 				Light* l = node->getLight();
 				if(l)
 				{
-					visible->lights.push_back(node);
+					visible->lights.push_back(VisibleNode(node, 0));
 
 					if(l->getShadowEnabled() && fr)
 					{
@@ -167,14 +162,8 @@ struct VisibilityTestJob: ThreadJob
 			Renderable* r = node->getRenderable();
 			if(r)
 			{
-				lvisible->renderables.push_back(node);
-
-				// Inform the renderable for the mask
-				if(subSpatialsMask)
-				{
-					ANKI_ASSERT(r->getSubMeshesCount() > 0);
-					r->setVisibleSubMeshesMask(&lightSn, subSpatialsMask);
-				}
+				lvisible->renderables.push_back(
+					VisibleNode(node, subSpatialsMask));
 			}
 		}
 	}
@@ -226,8 +215,8 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 		renderablesSize, 
 		lightsSize);
 
-	visible->renderables.resize(renderablesSize, nullptr);
-	visible->lights.resize(lightsSize, nullptr);
+	visible->renderables.resize(renderablesSize);
+	visible->lights.resize(lightsSize);
 
 	// Append thread results
 	renderablesSize = 0;
@@ -238,13 +227,13 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 
 		memcpy(&visible->renderables[renderablesSize],
 			&from.renderables[0],
-			sizeof(SceneNode*) * from.renderables.size());
+			sizeof(VisibleNode) * from.renderables.size());
 
 		renderablesSize += from.renderables.size();
 
 		memcpy(&visible->lights[lightsSize],
 			&from.lights[0],
-			sizeof(SceneNode*) * from.lights.size());
+			sizeof(VisibleNode) * from.lights.size());
 
 		lightsSize += from.lights.size();
 	}

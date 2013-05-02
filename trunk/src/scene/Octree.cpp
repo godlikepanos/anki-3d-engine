@@ -318,14 +318,14 @@ void Octree::doVisibilityTestsInternal(SceneNode& fsn,
 				if(!((test & VT_ONLY_SHADOW_CASTERS) == true
 					&& !r->getRenderableMaterial().getShadow()))
 				{
-					visible.renderables.push_back(sn);
+					//visible.renderables.push_back(VisibleNode(sn, 0));
 				}
 			}
 
 			Light* l = sn->getLight();
 			if(l != nullptr && (test & VT_LIGHTS))
 			{
-				visible.lights.push_back(sn);
+				//visible.lights.push_back(VisibleNode(sn, 0));
 			}
 		}
 	}

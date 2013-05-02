@@ -51,8 +51,6 @@ std::string replaceAllString(const std::string& str, const std::string& from,
 //==============================================================================
 std::string getFilename(const std::string& path)
 {
-	assert(path);
-
 	std::string out;
 
 	const size_t last = path.find_last_of("/");

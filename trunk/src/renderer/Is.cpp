@@ -175,7 +175,7 @@ struct WriteLightsJob: ThreadJob
 		// Run all lights
 		for(U64 i = start; i < end; i++)
 		{
-			const SceneNode* snode = *(lightsBegin + i);
+			const SceneNode* snode = (*(lightsBegin + i)).node;
 			const Light* light = snode->getLight();
 			ANKI_ASSERT(light);
 
@@ -602,7 +602,7 @@ void Is::lightPass()
 
 	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
 	{
-		Light* light = (*it)->getLight();
+		Light* light = (*it).node->getLight();
 		ANKI_ASSERT(light);
 		switch(light->getLightType())
 		{

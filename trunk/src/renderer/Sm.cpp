@@ -164,7 +164,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
-		SceneNode* node = *it;
+		SceneNode* node = (*it).node;
 		Frustumable* bfr = node->getFrustumable();
 		Movable* bmov = node->getMovable();
 		Spatial* sp = node->getSpatial();
@@ -207,7 +207,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
 		r->getSceneDrawer().render(light, RenderableDrawer::RS_MATERIAL,
-			1, *(*it));
+			1, *(*it).node, (*it).subSpatialsMask);
 	}
 
 	return &sm;
