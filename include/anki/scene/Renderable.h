@@ -195,44 +195,17 @@ public:
 		return getRenderableModelPatchBase().getSubMeshesCount();
 	}
 
-	/// Set the visibility mask of submeshes. This is called on visibility tests
-	void setVisibleSubMeshesMask(const SceneNode* frustumable, U64 mask);
-
-	/// Get the mask to render only the needed submeshess. Called on rendering
-	U64 getVisibleSubMeshesMask(const SceneNode& frustumable) const;
-
 	/// Reset on frame start
 	void resetFrame()
-	{
-		perframe = nullptr;
-	}
+	{}
 
 protected:
 	/// The derived class needs to call that
 	void init(PropertyMap& pmap);
 
 private:
-	struct FrustumableMaskPair
-	{
-		const SceneNode* frustumable;
-		U64 mask;
-	};
-
-	/// Per frame data
-	struct PerFrame
-	{
-		PerFrame(const SceneAllocator<U8>& frameAlloc)
-			: pairs(frameAlloc)
-		{
-			pairs.reserve(3);
-		}
-
-		SceneFrameVector<FrustumableMaskPair> pairs;
-	};
-
 	RenderableVariables vars;
 	Ubo ubo;
-	PerFrame* perframe;
 	std::mutex mtx;
 };
 /// @}

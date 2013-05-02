@@ -133,40 +133,4 @@ void Renderable::init(PropertyMap& pmap)
 	}
 }
 
-//==============================================================================
-void Renderable::setVisibleSubMeshesMask(const SceneNode* frustumable, U64 mask)
-{
-	ANKI_ASSERT(frustumable && mask != 0);
-	mtx.lock();
-
-	if(ANKI_UNLIKELY(perframe == nullptr))
-	{
-		perframe = ANKI_NEW(PerFrame, frustumable->getSceneFrameAllocator(),
-			frustumable->getSceneFrameAllocator());
-	}
-
-	perframe->pairs.push_back(FrustumableMaskPair{frustumable, mask});
-
-	mtx.unlock();
-}
-
-//==============================================================================
-U64 Renderable::getVisibleSubMeshesMask(const SceneNode& frustumable) const
-{
-	ANKI_ASSERT(perframe);
-
-	SceneFrameVector<FrustumableMaskPair>::const_iterator it =
-		perframe->pairs.begin();
-	for(; it != perframe->pairs.end(); it++)
-	{
-		if(it->frustumable == &frustumable)
-		{
-			return it->mask;
-		}
-	}
-
-	ANKI_ASSERT(0 && "Shouldn't have come to this");
-	return 0;
-}
-
 }  // end namespace anki

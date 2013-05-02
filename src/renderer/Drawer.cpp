@@ -224,7 +224,7 @@ void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 
 //==============================================================================
 void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
-	U32 pass, SceneNode& rsn)
+	U32 pass, SceneNode& rsn, U64 subSpatialsMask)
 {
 	ANKI_ASSERT(frsn.getFrustumable());
 	Frustumable& fr = *frsn.getFrustumable();
@@ -284,18 +284,16 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 
 	U32 primCount = 1;
 
-	if(renderable->getSubMeshesCount() == 0)
+	if(subSpatialsMask == 0)
 	{
 		renderable->getRenderableModelPatchBase().getRenderingData(
 			key, vao, prog, indicesCountArray[0]);
 	}
 	else
 	{
-		U64 mask = renderable->getVisibleSubMeshesMask(frsn);
-
 		renderable->getRenderableModelPatchBase().getRenderingDataSub(
-			key, mask, vao, prog, indicesCountArray, indicesOffsetArray,
-			primCount);
+			key, subSpatialsMask, vao, prog, indicesCountArray, 
+			indicesOffsetArray, primCount);
 	}
 
 	// Setup shader

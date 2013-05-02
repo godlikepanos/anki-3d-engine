@@ -32,8 +32,12 @@ public:
 	void prepareDraw()
 	{}
 
-	void render(SceneNode& frsn,
-		RenderingStage stage, U32 pass, SceneNode& renderableSceneNode);
+	void render(
+		SceneNode& frsn,
+		RenderingStage stage, 
+		U32 pass, 
+		SceneNode& renderableSceneNode,
+		U64 subSpatialsMask);
 
 private:
 	Renderer* r;

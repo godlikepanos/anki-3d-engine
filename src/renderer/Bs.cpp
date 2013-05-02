@@ -31,7 +31,7 @@ void Bs::run()
 		++it)
 	{
 		drawer.render(scene.getActiveCamera(), RenderableDrawer::RS_BLEND,
-			0, *(*it));
+			0, *(*it).node, (*it).subSpatialsMask);
 	}
 
 	GlStateSingleton::get().setDepthMaskEnabled(true);

@@ -333,7 +333,7 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 		for(VisibilityTestResults& testResult : testResults)
 		{
 			// First the renderables
-			for(SceneNode* renderable : testResult.renderables)
+			for(VisibleNode& renderable : testResult.renderables)
 			{
 				/*XXX if(r->getTiler().test2(
 					renderable->getSpatial()->getOptimalCollisionShape()))*/
@@ -343,7 +343,7 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 			}
 
 			// Then the lights
-			for(SceneNode* light : testResult.lights)
+			for(VisibleNode& light : testResult.lights)
 			{
 				/*XXX if(r->doVisibilityTests(
 					light->getSpatial()->getOptimalCollisionShape()))*/
@@ -387,16 +387,16 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 	// Continue by testing the lights
 	//
 
-	for(SceneNode* lsn : visible->lights)
+	for(VisibleNode& lsn : visible->lights)
 	{
-		Light* l = lsn->getLight();
+		Light* l = lsn.node->getLight();
 		ANKI_ASSERT(l != nullptr);
 
 		if(l->getShadowEnabled())
 		{
-			ANKI_ASSERT(lsn->getFrustumable() != nullptr);
+			ANKI_ASSERT(lsn.node->getFrustumable() != nullptr);
 
-			doVisibilityTestsInternal(*lsn,
+			doVisibilityTestsInternal(*lsn.node,
 				(VisibilityTest)(VT_RENDERABLES | VT_ONLY_SHADOW_CASTERS),
 				nullptr, VB_LIGHT);
 		}
