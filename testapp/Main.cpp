@@ -468,7 +468,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{

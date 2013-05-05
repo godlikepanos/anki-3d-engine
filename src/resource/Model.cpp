@@ -106,8 +106,10 @@ void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
 
 //==============================================================================
 void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
-	U64 subMeshesMask, const Vao*& vao, const ShaderProgram*& prog,
-	U32* indicesCountArray, void** indicesOffsetArray, U32& primcount) const
+	const Vao*& vao, const ShaderProgram*& prog, 
+	const U32* subMeshIndexArray, U subMeshIndexCount,
+	U32* indicesCountArray, const void** indicesOffsetArray, 
+	U32& primcount) const
 {
 	const U meshLods = getMeshesCount();
 	ANKI_ASSERT(meshLods > 0);
@@ -117,10 +119,10 @@ void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
 	// VAO
 	U lodsCount = std::max(meshLods, mtlLods);
 
-	U index = key.pass + std::min((U)key.level, lodsCount - 1) * lodsCount;
+	U vaoindex = key.pass + std::min((U)key.level, lodsCount - 1) * lodsCount;
 
-	ANKI_ASSERT(index < modelPatchProtected.vaos.size());
-	vao = &modelPatchProtected.vaos[index];
+	ANKI_ASSERT(vaoindex < modelPatchProtected.vaos.size());
+	vao = &modelPatchProtected.vaos[vaoindex];
 
 	// Prog
 	PassLevelKey mtlKey;
@@ -136,28 +138,37 @@ void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
 
 	const MeshBase& meshBase = getMeshBase(meshKey);
 
-	U subMeshesCount = meshBase.getSubMeshesCount();
+	ANKI_ASSERT(subMeshIndexCount <= meshBase.getSubMeshesCount());
+
 	primcount = 0;
-	for(U i = 0; i < subMeshesCount; i++)
+	I prevIndex = -1;
+	for(U i = 0; i < subMeshIndexCount; i++)
 	{
-		if(subMeshesMask & (1 << i))
+		I index = (I)subMeshIndexArray[i];
+	
+		// Check if we can merge with the previous submesh
+		if(index > 0 && (index - 1) == prevIndex)
 		{
-			U32 tmp;
+			ANKI_ASSERT(primcount > 0);
+
+			// increase the indices count, leave offset alone
+			U32 offset;
+			indicesCountArray[primcount - 1] +=
+				meshBase.getIndicesCountSub((U)index, offset);
+		}
+		else
+		{
+			U32 offset;
 			indicesCountArray[primcount] =
-				meshBase.getIndicesCountSub(i, tmp);
+				meshBase.getIndicesCountSub((U)index, offset);
 
 			indicesOffsetArray[primcount] = 
-				reinterpret_cast<void*>((PtrSize)tmp);
+				reinterpret_cast<const void*>((PtrSize)offset);
+
 			++primcount;
 		}
-	}
 
-	// If all submeshes are covered by the mask then return the super mesh
-	if(primcount == subMeshesCount)
-	{
-		indicesCountArray[0] = meshBase.getIndicesCount();
-		indicesOffsetArray[0] = 0;
-		primcount = 1;
+		prevIndex = index;
 	}
 }
 

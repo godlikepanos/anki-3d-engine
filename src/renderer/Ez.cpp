@@ -35,7 +35,8 @@ void Ez::run()
 		it != vi.getRenderablesEnd() && count < maxObjectsToDraw; ++it)
 	{
 		r->getSceneDrawer().render(cam, RenderableDrawer::RS_MATERIAL,
-			0, *(*it).node, (*it).subSpatialsMask);
+			0, *(*it).node, (*it).subSpatialIndices, 
+			(*it).subSpatialIndicesCount);
 		++count;
 	}
 

@@ -63,6 +63,7 @@ public:
 		return meshProtected.obb;
 	}
 
+	/// Get indices count and offset of submesh
 	U32 getIndicesCountSub(U subMeshId, U32& offset) const
 	{
 		ANKI_ASSERT(subMeshId < meshProtected.subMeshes.size());
@@ -151,9 +152,6 @@ protected:
 class BucketMesh: public Mesh
 {
 public:
-	/// The absolute limit of submeshes
-	static const U MAX_SUB_MESHES = 64;
-
 	/// Default constructor. Do nothing
 	BucketMesh()
 	{}

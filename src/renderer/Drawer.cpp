@@ -224,7 +224,8 @@ void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 
 //==============================================================================
 void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
-	U32 pass, SceneNode& rsn, U64 subSpatialsMask)
+	U32 pass, SceneNode& rsn, U32* subSpatialIndices,
+	U subSpatialIndicesCount)
 {
 	ANKI_ASSERT(frsn.getFrustumable());
 	Frustumable& fr = *frsn.getFrustumable();
@@ -275,8 +276,8 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	// Get rendering useful stuff
 	const ShaderProgram* prog;
 	const Vao* vao;
-	U32 indicesCountArray[64];
-	void* indicesOffsetArray[64] = {nullptr};
+	U32 indicesCountArray[ANKI_MAX_MULTIDRAW_PRIMITIVES];
+	const void* indicesOffsetArray[ANKI_MAX_MULTIDRAW_PRIMITIVES];
 #if ANKI_DEBUG
 	memset(indicesCountArray, 0, sizeof(indicesCountArray));
 	memset(indicesOffsetArray, 0, sizeof(indicesOffsetArray));
@@ -284,16 +285,19 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 
 	U32 primCount = 1;
 
-	if(subSpatialsMask == 0)
+	if(subSpatialIndicesCount == 0)
 	{
 		renderable->getRenderableModelPatchBase().getRenderingData(
 			key, vao, prog, indicesCountArray[0]);
+
+		indicesOffsetArray[0] = nullptr;
 	}
 	else
 	{
 		renderable->getRenderableModelPatchBase().getRenderingDataSub(
-			key, subSpatialsMask, vao, prog, indicesCountArray, 
-			indicesOffsetArray, primCount);
+			key, vao, prog, 
+			subSpatialIndices, subSpatialIndicesCount,
+			indicesCountArray, indicesOffsetArray, primCount);
 	}
 
 	// Setup shader
@@ -303,45 +307,17 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	ANKI_ASSERT(vao->getAttachmentsCount() > 1);
 	vao->bind();
 
-	if(instancesCount == 1)
-	{
-		if(primCount == 1)
-		{
-			glDrawElements(
-				GL_TRIANGLES, 
-				indicesCountArray[0], 
-				GL_UNSIGNED_SHORT, 
-				indicesOffsetArray[0]);
-		}
-		else
-		{
-#if ANKI_GL == ANKI_GL_DESKTOP
-			glMultiDrawElements(GL_TRIANGLES, 
-				(GLsizei*)indicesCountArray, 
-				GL_UNSIGNED_SHORT, 
-				(const void**)indicesOffsetArray, 
-				primCount);
-#else
-			for(U i = 0; i < primCount; i++)
-			{
-				glDrawElements(
-					GL_TRIANGLES, 
-					indicesCountArray[i],
-					GL_UNSIGNED_SHORT,
-					indicesOffsetArray[i]);
-			}
-#endif
-		}
-	}
-	else
-	{
-		glDrawElementsInstanced(
-			GL_TRIANGLES, 
-			indicesCountArray[0], 
-			GL_UNSIGNED_SHORT, 
-			0, 
-			instancesCount);
-	}
+	// Draw call
+	Drawcall dc;
+
+	dc.primitiveType = GL_TRIANGLES;
+	dc.indicesType = GL_UNSIGNED_SHORT;
+	dc.instancesCount = instancesCount;
+	dc.indicesCountArray = (GLsizei*)indicesCountArray;
+	dc.offsetsArray = indicesOffsetArray;
+	dc.primCount = primCount;
+
+	dc.enque();
 }
 
 }  // end namespace anki

@@ -140,6 +140,11 @@ inline int stoi(const string& str)
 #define ANKI_RENDERER_TILES_X_COUNT 16
 #define ANKI_RENDERER_TILES_Y_COUNT 16
 
+#define ANKI_MAX_MULTIDRAW_PRIMITIVES 32
+#define ANKI_MAX_INSTANCES 16
+
+#define ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT 1024
+
 /// @}
 
 #endif

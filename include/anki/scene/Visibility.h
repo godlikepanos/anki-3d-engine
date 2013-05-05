@@ -36,23 +36,29 @@ enum VisibleBy
 struct VisibleNode
 {
 	SceneNode* node;
-	U64 subSpatialsMask; ///< The mask of the subspatials
+	/// An array of the visible sub spatials. Allocated but never deallocated
+	/// because it lives in the scene frame mem pool
+	U32* subSpatialIndices;
+	U32 subSpatialIndicesCount;
 
 	VisibleNode()
-		: node(nullptr), subSpatialsMask(0)
+		: node(nullptr), subSpatialIndices(nullptr), subSpatialIndicesCount(0)
 	{}
 
-	VisibleNode(SceneNode* node_, U64 subSpatialsMask_)
-		: node(node_), subSpatialsMask(subSpatialsMask_)
+	VisibleNode(SceneNode* node_, U32* subSpatialIndices_, 
+		U32 subSpatialIndicesCount_)
+		:	node(node_), 
+			subSpatialIndices(subSpatialIndices_), 
+			subSpatialIndicesCount(subSpatialIndicesCount_)
 	{
 		ANKI_ASSERT(node);
 	}
 
 	VisibleNode(const VisibleNode& other)
-		: node(other.node), subSpatialsMask(other.subSpatialsMask)
-	{
-		ANKI_ASSERT(node);
-	}
+		:	node(other.node), 
+			subSpatialIndices(other.subSpatialIndices),
+			subSpatialIndicesCount(other.subSpatialIndicesCount)
+	{}
 };
 
 /// Its actually a container for visible entities. It should be per frame

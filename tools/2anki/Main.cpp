@@ -11,6 +11,31 @@
 
 static const char* xmlHeader = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
+struct Mesh
+{
+	uint32_t index = 0xFFFFFFFF; ///< Mesh index in the scene
+	std::vector<aiMatrix4x4> transforms;
+	uint32_t mtlIndex = 0xFFFFFFFF;
+};
+
+struct Material
+{
+	uint32_t index = 0xFFFFFFFF;
+	std::vector<uint32_t> meshIndices;
+};
+
+struct Config
+{
+	std::string inputFname;
+	std::string outDir;
+	std::string rpath;
+	std::string texpath;
+	bool flipyz = false;
+
+	std::vector<Mesh> meshes;
+	std::vector<Material> materials;
+};
+
 //==============================================================================
 // Log and errors
 
@@ -63,23 +88,13 @@ std::string getFilename(const std::string& path)
 }
 
 //==============================================================================
-struct Config
-{
-	std::string inputFname;
-	std::string outDir;
-	std::string texturesAppend;
-	std::string rpath;
-	bool flipyz = false;
-};
-
-//==============================================================================
 void parseConfig(int argc, char** argv, Config& config)
 {
 	static const char* usage = R"(Usage: 2anki in_file out_dir [options]
 Options:
--texpath <string> : Append a string to the paths of textures
 -rpath <string>   : Append a string to the meshes and materials
 -flipyz           : Flip y with z (For blender exports)
+-texpath          : XXX
 )";
 
 	// Parse config
@@ -99,7 +114,7 @@ Options:
 
 			if(i < argc)
 			{
-				config.texturesAppend = argv[i] + std::string("/");
+				config.texpath = argv[i] + std::string("/");
 			}
 			else
 			{
@@ -142,13 +157,13 @@ const aiScene& load(const std::string& filename, Assimp::Importer& importer)
 {
 	LOGI("Loading file %s\n", filename.c_str());
 
-	const aiScene* scene = importer.ReadFile(filename,
-		aiProcess_Triangulate
+	const aiScene* scene = importer.ReadFile(filename, 0
+		| aiProcess_FindInstances
+		| aiProcess_Triangulate
 		| aiProcess_JoinIdenticalVertices
-		| aiProcess_SortByPType
+		//| aiProcess_SortByPType
 		| aiProcess_ImproveCacheLocality
 		| aiProcess_OptimizeMeshes
-		//| aiProcess_CalcTangentSpace
 		);
 
 	if(!scene)
@@ -369,13 +384,8 @@ void exportSkeleton(const aiMesh& mesh, const Config& config)
 }
 
 //==============================================================================
-void exportMaterial(const aiScene& scene, const aiMaterial& mtl, 
-	const Config& config)
+std::string getMaterialName(const aiMaterial& mtl)
 {
-	std::string diffTex;
-	std::string normTex;
-
-	// Find the name
 	aiString ainame;
 	std::string name;
 	if(mtl.Get(AI_MATKEY_NAME, ainame) == AI_SUCCESS)
@@ -386,6 +396,18 @@ void exportMaterial(const aiScene& scene, const aiMaterial& mtl,
 	{
 		ERROR("Material's name is missing\n");
 	}
+
+	return name;
+}
+
+//==============================================================================
+void exportMaterial(const aiScene& scene, const aiMaterial& mtl, 
+	const Config& config)
+{
+	std::string diffTex;
+	std::string normTex;
+
+	std::string name = getMaterialName(mtl);
 	
 
 	LOGI("Exporting material %s\n", name.c_str());
@@ -434,16 +456,16 @@ void exportMaterial(const aiScene& scene, const aiMaterial& mtl,
 	if(normTex.size() == 0)
 	{
 		file << replaceAllString(diffMtlStr, "%diffuseMap%", 
-			config.texturesAppend + diffTex);
+			config.texpath + diffTex);
 	}
 	else
 	{
 		std::string str;
 		
 		str = replaceAllString(diffNormMtlStr, "%diffuseMap%", 
-			config.texturesAppend + diffTex);
+			config.texpath + diffTex);
 		str = replaceAllString(str, "%normalMap%", 
-			config.texturesAppend + normTex);
+			config.texpath + normTex);
 
 		file << str;
 	}
@@ -688,30 +710,163 @@ void exportNode(
 }
 
 //==============================================================================
-void exportScene(const aiScene& scene, const Config& config)
+void visitNode(const aiNode* node, const aiScene& scene, Config& config)
+{
+	if(node == nullptr)
+	{
+		return;
+	}
+
+	// For every mesh of this node
+	for(uint32_t i = 0; i < node->mNumMeshes; i++)
+	{
+		uint32_t meshIndex = node->mMeshes[i];
+		const aiMesh& mesh = *scene.mMeshes[meshIndex];
+
+		// Is material set?
+		if(config.meshes[meshIndex].mtlIndex == 0xFFFFFFFF)
+		{
+			// Connect mesh with material
+			config.meshes[meshIndex].mtlIndex = mesh.mMaterialIndex;
+
+			// Connect material with mesh
+			config.materials[mesh.mMaterialIndex].meshIndices.push_back(
+				meshIndex);
+		}
+		else if(config.meshes[meshIndex].mtlIndex != mesh.mMaterialIndex)
+		{
+			ERROR("Previous material index conflict\n");
+		}
+
+		config.meshes[meshIndex].transforms.push_back(node->mTransformation);
+	}
+
+	// Go to children
+	for(uint32_t i = 0; i < node->mNumChildren; i++)
+	{
+		visitNode(node->mChildren[i], scene, config);
+	}
+}
+
+//==============================================================================
+void exportScene(const aiScene& scene, Config& config)
 {
 	LOGI("Exporting scene to %s\n", config.outDir.c_str());
 
-	// Open file
+	// Get all the data
+	config.meshes.resize(scene.mNumMeshes);
+	config.materials.resize(scene.mNumMaterials);
+
+	int i = 0;
+	for(Mesh& mesh : config.meshes)
+	{
+		mesh.index = i++;
+	}
+	i = 0;
+	for(Material& mtl : config.materials)
+	{
+		mtl.index = i++;
+	}
+
+	const aiNode* node = scene.mRootNode;
+
+	visitNode(node, scene, config);
+
+	// Export all meshes that are used
+	for(uint32_t i = 0; i < config.meshes.size(); i++)
+	{
+		// Check if used
+		if(config.meshes[i].transforms.size() < 1)
+		{
+			continue;
+		}
+
+		std::string name = "mesh_" + std::to_string(i);
+
+		for(uint32_t t = 0; t < config.meshes[i].transforms.size(); t++)
+		{
+			std::string nname = name + "_" + std::to_string(t);
+
+			exportMesh(*scene.mMeshes[i], &nname, 
+				&config.meshes[i].transforms[t], config);
+		}
+	}
+
+	// Export materials
+	for(uint32_t i = 0; i < config.materials.size(); i++)
+	{
+		// Check if used
+		if(config.materials[i].meshIndices.size() < 1)
+		{
+			continue;
+		}
+
+		exportMaterial(scene, *scene.mMaterials[i], config);
+	}
+
+	// Write bmeshes
+	for(uint32_t mtlId = 0; mtlId < config.materials.size(); mtlId++)
+	{
+		const Material& mtl = config.materials[mtlId];
+
+		// Check if used
+		if(mtl.meshIndices.size() < 1)
+		{
+			continue;
+		}
+
+		std::string name = getMaterialName(*scene.mMaterials[mtlId]) + ".bmesh";
+
+		std::fstream file;
+		file.open(config.outDir + name, std::ios::out);
+
+		file << xmlHeader << "\n";
+		file << "<bucketMesh>\n";
+		file << "\t<meshes>\n";
+		
+		for(uint32_t j = 0; j < mtl.meshIndices.size(); j++)
+		{
+			uint32_t meshId = mtl.meshIndices[j];
+			const Mesh& mesh = config.meshes[meshId];
+
+			for(uint32_t k = 0; k < mesh.transforms.size(); k++)
+			{
+				file << "\t\t<mesh>" << config.rpath 
+					<< "mesh_" + std::to_string(meshId) << "_" 
+					<< std::to_string(k)
+					<< ".mesh</mesh>\n";
+			}
+		}
+
+		file << "\t</meshes>\n";
+		file << "</bucketMesh>\n";
+	}
+
+	// Create the master model
 	std::fstream file;
-	file.open(config.outDir + "scene.scene", std::ios::out);
+	file.open(config.outDir + "static_geometry.mdl", std::ios::out);
 
-	// Write some stuff
 	file << xmlHeader << "\n";
-	file << "<scene>\n";
+	file << "<model>\n";
+	file << "\t<modelPatches>\n";
+	for(uint32_t i = 0; i < config.materials.size(); i++)
+	{
+		// Check if used
+		if(config.materials[i].meshIndices.size() < 1)
+		{
+			continue;
+		}
 
-	// TODO The sectors/portals
-
-	// Geometry
-	std::fstream modelFile;
-	modelFile.open(config.outDir + "static_geometry.mdl", std::ios::out);
-	modelFile << xmlHeader << "\n";
-	modelFile << "<model>\n\t<modelPatches>\n";
-	exportNode(scene, scene.mRootNode, config, modelFile);
-	modelFile << "\t</modelPatches>\n</model>\n";
-
-	// End
-	file << "</scene>\n";
+		file << "\t\t<modelPatch>\n";
+		file << "\t\t\t<bucketMesh>" << config.rpath 
+			<< getMaterialName(*scene.mMaterials[i]) << ".bmesh</bucketMesh>\n";
+		file << "\t\t\t<material>" << config.rpath 
+			<< getMaterialName(*scene.mMaterials[i]) 
+			<< ".mtl</material>\n";
+		file << "\t\t</modelPatch>\n";
+	}
+	file << "\t</modelPatches>\n";
+	file << "</model>\n";
 
 	LOGI("Done exporting scene!\n");
 }

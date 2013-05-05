@@ -80,7 +80,7 @@ void Ms::run()
 	{
 		r->getSceneDrawer().render(r->getSceneGraph().getActiveCamera(),
 			RenderableDrawer::RS_MATERIAL, 0, *(*it).node, 
-			(*it).subSpatialsMask);
+			(*it).subSpatialIndices, (*it).subSpatialIndicesCount);
 	}
 
 	// restore depth

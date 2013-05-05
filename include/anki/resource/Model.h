@@ -63,10 +63,17 @@ public:
 	void getRenderingData(const PassLevelKey& key, const Vao*& vao,
 		const ShaderProgram*& prog, U32& indicesCount) const;
 
-	/// Get information for multiDraw rendering
-	void getRenderingDataSub(const PassLevelKey& key, U64 subMeshesMask,
-		const Vao*& vao, const ShaderProgram*& prog,
-		U32* indicesCountArray, void** indicesOffsetArray, 
+	/// Get information for multiDraw rendering.
+	/// Given an array of submeshes that are visible return the correct indices
+	/// offsets and counts
+	void getRenderingDataSub(
+		const PassLevelKey& key, 
+		const Vao*& vao, 
+		const ShaderProgram*& prog,
+		const U32* subMeshIndicesArray,
+		U subMeshIndicesCount,
+		U32* indicesCountArray, 
+		const void** indicesOffsetArray, 
 		U32& primcount) const;
 
 protected:
