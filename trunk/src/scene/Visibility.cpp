@@ -52,40 +52,47 @@ struct VisibilityTestJob: ThreadJob
 			}
 
 			// Hierarchical spatial => check subspatials
-			U64 subSpatialsMask = 0;
-			U i = 0;
-			for(auto it = sp->getSubSpatialsBegin();
-				it != sp->getSubSpatialsEnd(); ++it)
+			U32* subSpatialIndices = nullptr;
+			U32 subSpatialIndicesCount = 0;
+			if(sp->getSubSpatialsCount())
 			{
-				Spatial* subsp = *it;
-	
-				if(frustumable->insideFrustum(*subsp))
-				{
-					subSpatialsMask |= 1 << i;
-					subsp->enableBits(Spatial::SF_VISIBLE_CAMERA);
-				}
-				++i;
-			}
+				subSpatialIndices = ANKI_NEW_ARRAY_0(
+					U32, frameAlloc, sp->getSubSpatialsCount());
 
-			if(ANKI_UNLIKELY(i > 0 && subSpatialsMask == 0))
-			{
-				// The camera is looking something in between all submeshes
-				continue;
+				U i = 0;
+				for(auto it = sp->getSubSpatialsBegin();
+					it != sp->getSubSpatialsEnd(); ++it)
+				{
+					Spatial* subsp = *it;
+		
+					if(frustumable->insideFrustum(*subsp))
+					{
+						subSpatialIndices[subSpatialIndicesCount++] = i;
+						subsp->enableBits(Spatial::SF_VISIBLE_CAMERA);
+					}
+					++i;
+				}
+
+				if(ANKI_UNLIKELY(subSpatialIndicesCount == 0))
+				{
+					// The camera is looking something in between all submeshes
+					continue;
+				}
 			}
 
 			// renderable
 			Renderable* r = node->getRenderable();
 			if(r)
 			{
-				visible->renderables.push_back(
-					VisibleNode(node, subSpatialsMask));
+				visible->renderables.push_back(VisibleNode(
+					node, subSpatialIndices, subSpatialIndicesCount));
 			}
 			else
 			{
 				Light* l = node->getLight();
 				if(l)
 				{
-					visible->lights.push_back(VisibleNode(node, 0));
+					visible->lights.push_back(VisibleNode(node, nullptr, 0));
 
 					if(l->getShadowEnabled() && fr)
 					{
@@ -137,24 +144,33 @@ struct VisibilityTestJob: ThreadJob
 			}
 
 			// Hierarchical spatial => check subspatials
-			U64 subSpatialsMask = 0;
-			U i = 0;
-			for(auto it = sp->getSubSpatialsBegin();
-				it != sp->getSubSpatialsEnd(); ++it)
+			U32* subSpatialIndices = nullptr;
+			U32 subSpatialIndicesCount = 0;
+			if(sp->getSubSpatialsCount())
 			{
-				Spatial* subsp = *it;
+				subSpatialIndices = ANKI_NEW_ARRAY_0(
+					U32, frameAlloc, sp->getSubSpatialsCount());
 
-				if(frustumableSn->getFrustumable()->insideFrustum(*subsp))
+				U i = 0;
+				for(auto it = sp->getSubSpatialsBegin();
+					it != sp->getSubSpatialsEnd(); ++it)
 				{
-					subSpatialsMask |= 1 << i;
-					subsp->enableBits(Spatial::SF_VISIBLE_LIGHT);
+					Spatial* subsp = *it;
+		
+					if(ref.insideFrustum(*subsp))
+					{
+						subSpatialIndices[subSpatialIndicesCount++] = i;
+						subsp->enableBits(Spatial::SF_VISIBLE_CAMERA);
+					}
+					++i;
 				}
-				++i;
-			}
 
-			if(i > 0 && subSpatialsMask == 0)
-			{
-				continue;
+				if(ANKI_UNLIKELY(subSpatialIndicesCount == 0))
+				{
+					// The camera is looking something in between all 
+					// subspatials
+					continue;
+				}
 			}
 
 			sp->enableBits(Spatial::SF_VISIBLE_LIGHT);
@@ -162,8 +178,8 @@ struct VisibilityTestJob: ThreadJob
 			Renderable* r = node->getRenderable();
 			if(r)
 			{
-				lvisible->renderables.push_back(
-					VisibleNode(node, subSpatialsMask));
+				lvisible->renderables.push_back(VisibleNode(
+					node, subSpatialIndices, subSpatialIndicesCount));
 			}
 		}
 	}

@@ -207,7 +207,8 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
 		r->getSceneDrawer().render(light, RenderableDrawer::RS_MATERIAL,
-			1, *(*it).node, (*it).subSpatialsMask);
+			1, *(*it).node, (*it).subSpatialIndices, 
+			(*it).subSpatialIndicesCount);
 	}
 
 	return &sm;

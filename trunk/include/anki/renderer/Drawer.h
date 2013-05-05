@@ -37,7 +37,8 @@ public:
 		RenderingStage stage, 
 		U32 pass, 
 		SceneNode& renderableSceneNode,
-		U64 subSpatialsMask);
+		U32* subSpatialIndices,
+		U subSpatialIndicesCount);
 
 private:
 	Renderer* r;

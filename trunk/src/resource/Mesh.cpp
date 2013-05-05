@@ -241,7 +241,7 @@ void BucketMesh::load(const char* filename)
 			if(i != 0)
 			{
 				// Sanity check
-				if(i > MAX_SUB_MESHES)
+				if(i > ANKI_MAX_MULTIDRAW_PRIMITIVES)
 				{
 					throw ANKI_EXCEPTION("Max number of submeshes exceeded");
 				}
