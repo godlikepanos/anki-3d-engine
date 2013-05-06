@@ -217,7 +217,7 @@ public:
 	{
 		return limitsOfNearPlane2;
 	}
-	U32 getPlanesUpdateTimestamp() const
+	Timestamp getPlanesUpdateTimestamp() const
 	{
 		return planesUpdateTimestamp;
 	}
@@ -307,7 +307,7 @@ protected:
 	/// @name Optimization vars
 	/// Used in other stages
 	/// @{
-	U32 planesUpdateTimestamp = Timestamp::getTimestamp();
+	Timestamp planesUpdateTimestamp = getGlobTimestamp();
 
 	/// Used to to calculate the frag pos in view space inside a few shader
 	/// programs

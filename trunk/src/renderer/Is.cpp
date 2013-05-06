@@ -834,7 +834,7 @@ void Is::run()
 
 		commonUbo.write(&blk);
 
-		commonUboUpdateTimestamp = Timestamp::getTimestamp();
+		commonUboUpdateTimestamp = getGlobTimestamp();
 	}
 
 	// Do the light pass including the shadow passes

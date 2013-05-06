@@ -38,7 +38,7 @@ public:
 		return *frustum;
 	}
 
-	U32 getFrustumableTimestamp() const
+	Timestamp getFrustumableTimestamp() const
 	{
 		return timestamp;
 	}
@@ -82,7 +82,7 @@ public:
 
 	void frustumableMarkUpdated()
 	{
-		timestamp = Timestamp::getTimestamp();
+		timestamp = getGlobTimestamp();
 	}
 
 	/// Is a spatial inside the frustum?
@@ -109,7 +109,7 @@ protected:
 	Mat4 viewProjectionMat = Mat4::getIdentity();
 
 private:
-	U32 timestamp = Timestamp::getTimestamp();
+	Timestamp timestamp = getGlobTimestamp();
 
 	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
 	/// frame and before any visibility tests are run

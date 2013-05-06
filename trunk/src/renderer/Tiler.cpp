@@ -320,7 +320,7 @@ void Tiler::updateTiles(Camera& cam)
 
 	if(frustumChanged)
 	{
-		planes4UpdateTimestamp = Timestamp::getTimestamp();
+		planes4UpdateTimestamp = getGlobTimestamp();
 	}
 
 	threadPool.waitForAllJobsToFinish();

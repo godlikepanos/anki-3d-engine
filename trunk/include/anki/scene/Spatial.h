@@ -79,7 +79,7 @@ public:
 		}
 	}
 
-	U32 getSpatialTimestamp() const
+	Timestamp getSpatialTimestamp() const
 	{
 		return timestamp;
 	}
@@ -126,7 +126,7 @@ public:
 	/// updated
 	void spatialMarkForUpdate()
 	{
-		timestamp = Timestamp::getTimestamp();
+		timestamp = getGlobTimestamp();
 
 		for(Spatial* subsp : spatialProtected.subSpatials)
 		{
@@ -171,7 +171,7 @@ private:
 	OctreeNode* octreeNode = nullptr; ///< What octree node includes this
 	Aabb aabb; ///< A faster shape
 	Vec3 origin; ///< Cached value
-	U32 timestamp = Timestamp::getTimestamp();
+	Timestamp timestamp = getGlobTimestamp();
 };
 /// @}
 

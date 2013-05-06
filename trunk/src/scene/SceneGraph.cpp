@@ -39,13 +39,13 @@ struct UpdateMovablesJob: ThreadJob
 static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 	F32 crntTime, SectorGroup& sectorGroup)
 {
-	sn.frameUpdate(prevUpdateTime, crntTime, Timestamp::getTimestamp());
+	sn.frameUpdate(prevUpdateTime, crntTime, getGlobTimestamp());
 
 	// Do some spatial stuff
 	Spatial* sp = sn.getSpatial();
 	if(sp)
 	{
-		if(sp->getSpatialTimestamp() >= Timestamp::getTimestamp())
+		if(sp->getSpatialTimestamp() >= getGlobTimestamp())
 		{
 			sp->update();
 			//sectorGroup.placeSceneNode(&sn);

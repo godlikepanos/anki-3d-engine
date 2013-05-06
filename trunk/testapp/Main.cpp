@@ -481,7 +481,7 @@ void mainLoop()
 			break;
 		}
 #endif
-		Timestamp::increaseTimestamp();
+		increaseGlobTimestamp();
 	}
 
 #if 0

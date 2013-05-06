@@ -159,7 +159,7 @@ void Ssao::run()
 			r->getLimitsOfNearPlane2());
 
 		commonUbo.write(&blk);
-		commonUboUpdateTimestamp = Timestamp::getTimestamp();
+		commonUboUpdateTimestamp = getGlobTimestamp();
 	}
 
 	// msDepthFai

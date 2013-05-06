@@ -72,8 +72,8 @@ void Hdr::initInternal(const Renderer::Initializer& initializer)
 		SHADER_FILENAME, pps.c_str()).c_str());
 
 	// Set timestamps
-	parameterUpdateTimestamp = Timestamp::getTimestamp();
-	commonUboUpdateTimestamp = Timestamp::getTimestamp();
+	parameterUpdateTimestamp = getGlobTimestamp();
+	commonUboUpdateTimestamp = getGlobTimestamp();
 }
 
 //==============================================================================
@@ -115,7 +115,7 @@ void Hdr::run()
 	{
 		Vec4 block(exposure, 0.0, 0.0, 0.0);
 		commonUbo.write(&block);
-		commonUboUpdateTimestamp = Timestamp::getTimestamp();
+		commonUboUpdateTimestamp = getGlobTimestamp();
 	}
 	commonUbo.setBinding(0);
 	toneSProg->findUniformVariable("fai").set(r->getIs().getFai());
