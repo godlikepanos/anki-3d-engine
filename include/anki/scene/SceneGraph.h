@@ -68,7 +68,7 @@ public:
 	void setAmbientColor(const Vec3& x)
 	{
 		ambientCol = x;
-		ambiendColorUpdateTimestamp = Timestamp::getTimestamp();
+		ambiendColorUpdateTimestamp = getGlobTimestamp();
 	}
 	U32 getAmbientColorUpdateTimestamp() const
 	{
@@ -87,7 +87,7 @@ public:
 	void setActiveCamera(Camera* cam)
 	{
 		mainCam = cam;
-		activeCameraChangeTimestamp = Timestamp::getTimestamp();
+		activeCameraChangeTimestamp = getGlobTimestamp();
 	}
 	U32 getActiveCameraChangeTimestamp() const
 	{
@@ -158,9 +158,9 @@ private:
 	Types<SceneNode>::NameToItemMap nameToNode;
 
 	Vec3 ambientCol = Vec3(1.0); ///< The global ambient color
-	U32 ambiendColorUpdateTimestamp = Timestamp::getTimestamp();
+	Timestamp ambiendColorUpdateTimestamp = getGlobTimestamp();
 	Camera* mainCam = nullptr;
-	U32 activeCameraChangeTimestamp = Timestamp::getTimestamp();
+	Timestamp activeCameraChangeTimestamp = getGlobTimestamp();
 
 	PhysWorld physics;
 

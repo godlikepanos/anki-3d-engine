@@ -81,7 +81,7 @@ public:
 		return prevWTrf;
 	}
 
-	U32 getMovableTimestamp() const
+	Timestamp getMovableTimestamp() const
 	{
 		return timestamp;
 	}
@@ -153,7 +153,7 @@ protected:
 	Transform prevWTrf = Transform::getIdentity();
 
 	/// The frame where it was last moved
-	U32 timestamp = Timestamp::getTimestamp();
+	Timestamp timestamp = getGlobTimestamp();
 
 	/// Called for every frame. It updates the @a wTrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.
@@ -161,7 +161,7 @@ protected:
 
 	void movableMarkForUpdate()
 	{
-		timestamp = Timestamp::getTimestamp();
+		timestamp = getGlobTimestamp();
 		enableBits(MF_TRANSFORM_DIRTY);
 	}
 };

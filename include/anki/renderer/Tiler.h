@@ -54,7 +54,7 @@ private:
 	Plane* farPlanesW = nullptr;
 
 	/// The timestamp of the 4 planes update
-	U32 planes4UpdateTimestamp = Timestamp::getTimestamp();
+	Timestamp planes4UpdateTimestamp = getGlobTimestamp();
 
 	/// A texture of TILES_X_COUNT*TILES_Y_COUNT size and format XXX. Used to
 	/// calculate the near and far planes of the tiles

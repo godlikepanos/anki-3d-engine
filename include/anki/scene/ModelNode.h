@@ -14,6 +14,11 @@ namespace anki {
 /// @addtogroup Scene
 /// @{
 
+/// XXX
+class ModelPatchNodeInstance: public Spatial, public Movable
+{
+};
+
 /// A fragment of the ModelNode
 class ModelPatchNode: public SceneNode, public Movable, public Renderable,
 	public Spatial

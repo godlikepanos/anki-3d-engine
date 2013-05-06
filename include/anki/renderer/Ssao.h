@@ -51,7 +51,7 @@ private:
 	ShaderProgramResourcePointer vblurSProg;
 	U32 bWidth, bHeight; ///< Blur passes size
 	U32 mpWidth, mpHeight; ///< Main pass size
-	U32 commonUboUpdateTimestamp = Timestamp::getTimestamp();
+	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
 	Ubo commonUbo;
 
 	static void createFbo(Fbo& fbo, Texture& fai, F32 width, F32 height);

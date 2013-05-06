@@ -9,6 +9,7 @@
 namespace anki {
 
 struct NativeWindowImpl;
+struct ContextImpl;
 
 /// Window initializer
 struct NativeWindowInitializer
@@ -23,6 +24,7 @@ struct NativeWindowInitializer
 	U32 minorVersion = 0;
 	U32 majorVersion = 0;
 	Bool useGles = false; ///< Use OpenGL ES
+	Bool debugContext = false; ///< Enables KHR_debug
 
 	U32 width = 640;
 	U32 height = 768;
@@ -61,6 +63,8 @@ public:
 	void create(NativeWindowInitializer& initializer);
 	void destroy();
 	void swapBuffers();
+	ContextImpl* createSharedContext();
+	void contextMakeCurrent(ContextImpl& ctx);
 	/// @}
 
 private:

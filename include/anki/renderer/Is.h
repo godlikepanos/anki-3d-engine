@@ -60,7 +60,7 @@ private:
 	Ubo commonUbo;
 
 	/// Track the updates of commonUbo
-	U32 commonUboUpdateTimestamp = Timestamp::getTimestamp();
+	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
 
 	/// Contains all the lights
 	Ubo lightsUbo;

@@ -77,7 +77,7 @@ void Renderer::render(SceneGraph& scene_)
 		calcLimitsOfNearPlane(pcam, limitsOfNearPlane);
 		limitsOfNearPlane2 = limitsOfNearPlane * 2.0;
 
-		planesUpdateTimestamp = Timestamp::getTimestamp();
+		planesUpdateTimestamp = getGlobTimestamp();
 	}
 
 	viewProjectionMat = cam.getViewProjectionMatrix();

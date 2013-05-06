@@ -35,7 +35,7 @@ public:
 	void setExposure(const F32 x)
 	{
 		exposure = x;
-		parameterUpdateTimestamp = Timestamp::getTimestamp();
+		parameterUpdateTimestamp = getGlobTimestamp();
 	}
 
 	U32 getBlurringIterationsCount() const
@@ -66,9 +66,9 @@ private:
 	Texture hblurFai; ///< pass0Fai with the horizontal blur FAI
 	Texture vblurFai; ///< The final FAI
 	/// When a parameter changed by the setters
-	U32 parameterUpdateTimestamp = Timestamp::getTimestamp();
+	Timestamp parameterUpdateTimestamp = getGlobTimestamp();
 	/// When the commonUbo got updated
-	U32 commonUboUpdateTimestamp = Timestamp::getTimestamp();
+	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
 	Ubo commonUbo;
 
 	void initFbo(Fbo& fbo, Texture& fai);
