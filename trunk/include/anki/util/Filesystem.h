@@ -11,33 +11,48 @@ namespace anki {
 /// @addtogroup filesystem
 /// @{
 
-/// XXX
+/// An abstraction over typical files and files in ziped archives.
 class File
 {
-public:
-	enum
+private:
+	/// Internal filetype
+	enum FileType
 	{
-		READ,
-		WRITE,
-		APPEND,
-		BINARY
+		FT_NONE,
+		FT_C, ///< C file
+		FT_ZIP ///< Ziped file
 	};
 
-	void open(const char* filename, U8 openFlags);
+public:
+	/// Open mode
+	enum OpenFlag
+	{
+		OF_READ = 1 << 0,
+		OF_WRITE = 1 << 1,
+		OF_APPEND = 1 << 2,
+		OF_BINARY = 1 << 3
+	};
 
+	/// Default constructor
+	File()
+		: openFlags(0), file(nullptr), fileType(FT_NONE)
+	{}
+
+	/// Closes the file if it's open
+	~File();
+
+	/// Open a file
+	void open(const char* filename, U8 openMask);
+
+	/// Read data from the file
 	PtrSize read(void* buff, PtrSize size);
 
+	/// Write data to the file
 	PtrSize write(void* buff, PtrSize size);
 
 public:
-	enum
-	{
-		C_FILE,
-		ZIP_FILE
-	};
-
 	U8 openFlags; ///< Mainly for assertions
-	void* file = nullptr; ///< A native type
+	void* file; ///< A native type
 	U8 fileType;
 };
 
