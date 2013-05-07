@@ -11,19 +11,38 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+File::~File()
+{
+	if(file)
+	{
+		switch(fileType)
+		{
+		case FT_C:
+			fclose((FILE*)file);
+			break;
+		case FT_ZIP:
+			ANKI_ASSERT(0 && "Not implemented");
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+	}
+}
+
+//==============================================================================
 void File::open(const char* filename, U8 flags)
 {
 	const char* openMode;
 
-	if(flags & READ)
+	if(flags & OF_READ)
 	{
 		openMode = "r";
 	}
-	else if(flags & WRITE)
+	else if(flags & OF_WRITE)
 	{
 		openMode = "w";
 	}
-	else if(flags & APPEND)
+	else if(flags & OF_APPEND)
 	{
 		openMode = "a+";
 	}
@@ -40,7 +59,7 @@ void File::open(const char* filename, U8 flags)
 	{
 		throw ANKI_EXCEPTION("Failed to open file");
 	}
-	fileType = C_FILE;
+	fileType = FT_C;
 }
 
 //==============================================================================
@@ -48,18 +67,47 @@ PtrSize File::read(void* buff, PtrSize size)
 {
 	ANKI_ASSERT(file);
 	ANKI_ASSERT(buff);
+	ANKI_ASSERT(size > 0);
+
 	PtrSize readSize = 0;
 
 	switch(fileType)
 	{
-	case C_FILE:
+	case FT_C:
 		readSize = fread(buff, 1, size, (FILE*)file);
 		break;
-	case ZIP_FILE:
+	case FT_ZIP:
+		ANKI_ASSERT(0 && "Not implemented");
 		break;
+	default:
+		ANKI_ASSERT(0);
 	}
 
 	return readSize;
+}
+
+//==============================================================================
+PtrSize File::write(void* buff, PtrSize size)
+{
+	ANKI_ASSERT(file);
+	ANKI_ASSERT(buff);
+	ANKI_ASSERT(size > 0);
+
+	PtrSize writeSize = 0;
+
+	switch(fileType)
+	{
+	case FT_C:
+		writeSize = fwrite(buff, 1, size, (FILE*)file);
+		break;
+	case FT_ZIP:
+		ANKI_ASSERT(0 && "Not implemented");
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return writeSize;
 }
 
 //==============================================================================
