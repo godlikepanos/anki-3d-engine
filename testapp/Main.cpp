@@ -30,6 +30,7 @@
 #include "anki/scene/Scene.h"
 #include "anki/event/LightEvent.h"
 #include "anki/event/MovableEvent.h"
+#include "anki/core/Counters.h"
 
 using namespace anki;
 
@@ -465,10 +466,11 @@ void mainLoop()
 		}
 
 		win->swapBuffers();
+		ANKI_COUNTERS_RESOLVE_FRAME();
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -487,6 +489,8 @@ void mainLoop()
 #if 0
 	MainRendererSingleton::get().takeScreenshot("screenshot.tga");
 #endif
+
+	ANKI_COUNTERS_FLUSH();
 
 	HighRezTimer::Scalar timePassed = mainLoopTimer.getElapsedTime();
 	ANKI_LOGI("Exiting main loop (" << timePassed
@@ -564,6 +568,9 @@ void initSubsystems(int argc, char* argv[])
 
 	// Parallel jobs
 	ThreadPoolSingleton::get().init(getCpuCoresCount());
+
+	// Init counters
+	CountersManagerSingleton::get();
 }
 
 //==============================================================================
