@@ -8,15 +8,88 @@
 namespace anki {
 
 //==============================================================================
+/// Sort spatial scene nodes on distance
+struct SortSubspatialsFunctor
+{
+	Vec3 origin; ///< The pos of the frustum
+	Spatial* sp;
+
+	Bool operator()(U32 a, U32 b)
+	{
+		ANKI_ASSERT(a != b 
+			&& a < sp->getSubSpatialsCount()
+			&& b < sp->getSubSpatialsCount());
+
+		const Spatial* spa = *(sp->getSubSpatialsBegin() + a);
+		const Spatial* spb = *(sp->getSubSpatialsBegin() + b);
+
+		F32 dist0 = origin.getDistanceSquared(
+			spa->getSpatialOrigin());
+		F32 dist1 = origin.getDistanceSquared(
+			spb->getSpatialOrigin());
+
+		return dist0 < dist1;
+	}
+};
+
+//==============================================================================
 struct VisibilityTestJob: ThreadJob
 {
 	U nodesCount = 0;
 	SceneGraph::Types<SceneNode>::Container::iterator nodes;
 	SceneNode* frustumableSn = nullptr;
 	Tiler* tiler = nullptr;
-	SceneAllocator<U8> frameAlloc;
+	SceneFrameAllocator<U8> frameAlloc;
 
 	VisibilityTestResults* visible;
+
+	/// Handle sub spatials
+	Bool handleSubspatials(
+		const Frustumable& fr,
+		Spatial& sp,
+		U32*& subSpatialIndices,
+		U32& subSpatialIndicesCount)
+	{
+		Bool fatherSpVisible = true;
+		subSpatialIndices = nullptr;
+		subSpatialIndicesCount = 0;
+
+		// Have subspatials?
+		if(sp.getSubSpatialsCount())
+		{
+			subSpatialIndices = ANKI_NEW_ARRAY_0(
+				U32, frameAlloc, sp.getSubSpatialsCount());
+
+			U i = 0;
+			for(auto it = sp.getSubSpatialsBegin();
+				it != sp.getSubSpatialsEnd(); ++it)
+			{
+				Spatial* subsp = *it;
+	
+				// Check
+				if(fr.insideFrustum(*subsp))
+				{
+					subSpatialIndices[subSpatialIndicesCount++] = i;
+					subsp->enableBits(Spatial::SF_VISIBLE_CAMERA);
+				}
+				++i;
+			}
+
+			// Sort them
+			SortSubspatialsFunctor functor;
+			functor.origin = fr.getFrustumableOrigin();
+			functor.sp = &sp;
+			std::sort(subSpatialIndices, 
+				subSpatialIndices + subSpatialIndicesCount,
+				functor);
+
+			// The subSpatialIndicesCount == 0 then the camera is looking 
+			// something in between all sub spatials
+			fatherSpVisible = subSpatialIndicesCount != 0;
+		}
+
+		return fatherSpVisible;
+	}
 
 	/// Do the tests
 	void operator()(U threadId, U threadsCount)
@@ -54,30 +127,10 @@ struct VisibilityTestJob: ThreadJob
 			// Hierarchical spatial => check subspatials
 			U32* subSpatialIndices = nullptr;
 			U32 subSpatialIndicesCount = 0;
-			if(sp->getSubSpatialsCount())
+			if(!handleSubspatials(*frustumable, *sp, subSpatialIndices, 
+				subSpatialIndicesCount))
 			{
-				subSpatialIndices = ANKI_NEW_ARRAY_0(
-					U32, frameAlloc, sp->getSubSpatialsCount());
-
-				U i = 0;
-				for(auto it = sp->getSubSpatialsBegin();
-					it != sp->getSubSpatialsEnd(); ++it)
-				{
-					Spatial* subsp = *it;
-		
-					if(frustumable->insideFrustum(*subsp))
-					{
-						subSpatialIndices[subSpatialIndicesCount++] = i;
-						subsp->enableBits(Spatial::SF_VISIBLE_CAMERA);
-					}
-					++i;
-				}
-
-				if(ANKI_UNLIKELY(subSpatialIndicesCount == 0))
-				{
-					// The camera is looking something in between all submeshes
-					continue;
-				}
+				continue;
 			}
 
 			// renderable
@@ -146,31 +199,10 @@ struct VisibilityTestJob: ThreadJob
 			// Hierarchical spatial => check subspatials
 			U32* subSpatialIndices = nullptr;
 			U32 subSpatialIndicesCount = 0;
-			if(sp->getSubSpatialsCount())
+			if(!handleSubspatials(ref, *sp, subSpatialIndices, 
+				subSpatialIndicesCount))
 			{
-				subSpatialIndices = ANKI_NEW_ARRAY_0(
-					U32, frameAlloc, sp->getSubSpatialsCount());
-
-				U i = 0;
-				for(auto it = sp->getSubSpatialsBegin();
-					it != sp->getSubSpatialsEnd(); ++it)
-				{
-					Spatial* subsp = *it;
-		
-					if(ref.insideFrustum(*subsp))
-					{
-						subSpatialIndices[subSpatialIndicesCount++] = i;
-						subsp->enableBits(Spatial::SF_VISIBLE_CAMERA);
-					}
-					++i;
-				}
-
-				if(ANKI_UNLIKELY(subSpatialIndicesCount == 0))
-				{
-					// The camera is looking something in between all 
-					// subspatials
-					continue;
-				}
+				continue;
 			}
 
 			sp->enableBits(Spatial::SF_VISIBLE_LIGHT);

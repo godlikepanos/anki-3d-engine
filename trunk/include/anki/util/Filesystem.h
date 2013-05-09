@@ -44,11 +44,17 @@ public:
 	/// Open a file
 	void open(const char* filename, U8 openMask);
 
+	/// Close the file
+	void close();
+
 	/// Read data from the file
 	PtrSize read(void* buff, PtrSize size);
 
 	/// Write data to the file
 	PtrSize write(void* buff, PtrSize size);
+
+	/// Wrtite text
+	void writeString(const char* format, ...);
 
 public:
 	U8 openFlags; ///< Mainly for assertions

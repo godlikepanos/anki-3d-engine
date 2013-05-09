@@ -3,6 +3,7 @@
 #include "anki/util/Assert.h"
 #include <fstream>
 #include <cstring>
+#include <cstdarg>
 
 namespace anki {
 
@@ -63,6 +64,26 @@ void File::open(const char* filename, U8 flags)
 }
 
 //==============================================================================
+void File::close()
+{
+	ANKI_ASSERT(file);
+
+	switch(fileType)
+	{
+	case FT_C:
+		fclose((FILE*)file);
+		break;
+	case FT_ZIP:
+		ANKI_ASSERT(0 && "Not implemented");
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	file = nullptr;
+}
+
+//==============================================================================
 PtrSize File::read(void* buff, PtrSize size)
 {
 	ANKI_ASSERT(file);
@@ -108,6 +129,30 @@ PtrSize File::write(void* buff, PtrSize size)
 	}
 
 	return writeSize;
+}
+
+//==============================================================================
+void File::writeString(const char* format, ...)
+{
+	ANKI_ASSERT(file);
+	ANKI_ASSERT(format);
+
+	va_list args;
+	va_start(args, format);
+
+	switch(fileType)
+	{
+	case FT_C:
+		vfprintf((FILE*)file, format, args);
+		break;
+	case FT_ZIP:
+		ANKI_ASSERT(0 && "Not implemented");
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	va_end(args);
 }
 
 //==============================================================================
