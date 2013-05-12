@@ -173,7 +173,6 @@ void init()
 		Mat3(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
 	spot->setDiffuseColor(Vec4(2.0));
 	spot->setSpecularColor(Vec4(-1.0));
-	spot->loadTexture("gfx/lights/flashlight.tga");
 	spot->setDistance(30.0);
 	spot->setShadowEnabled(true);
 
@@ -185,7 +184,6 @@ void init()
 		Mat3::getIdentity(), 1.0));
 	spot->setDiffuseColor(Vec4(3.0, 0.0, 0.0, 0.0));
 	spot->setSpecularColor(Vec4(3.0, 3.0, 0.0, 0.0));
-	spot->loadTexture("gfx/lights/flashlight.tga");
 	spot->setDistance(30.0);
 	spot->setShadowEnabled(true);
 #endif
