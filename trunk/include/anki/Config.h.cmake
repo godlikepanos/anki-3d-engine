@@ -1,6 +1,9 @@
 #ifndef ANKI_CONFIG_H
 #define ANKI_CONFIG_H
 
+/// @addtogroup config
+/// @{
+
 #define ANKI_VERSION_MINOR ${ANKI_VERSION_MINOR}
 #define ANKI_VERSION_MAJOR ${ANKI_VERSION_MAJOR}
 #define ANKI_REVISION ${ANKI_REVISION}
@@ -62,17 +65,20 @@
 #	error "Unsupported compiler"
 #endif
 
+// SIMD
 #define ANKI_MATH_SIMD_NONE 1
 #define ANKI_MATH_SIMD_SSE 2
 #define ANKI_MATH_SIMD_NEON 3
 #define ANKI_MATH_SIMD ANKI_MATH_SIMD_${ANKI_MATH_SIMD}
 
+// Window backend
 #define ANKI_WINDOW_BACKEND_GLXX11 1
 #define ANKI_WINDOW_BACKEND_EGLX11 2
 #define ANKI_WINDOW_BACKEND_EGLFBDEV 3
 #define ANKI_WINDOW_BACKEND ANKI_WINDOW_BACKEND_${ANKI_WINDOW_BACKEND}
 #define ANKI_WINDOW_BACKEND_STR "ANKI_WINDOW_BACKEND_${ANKI_WINDOW_BACKEND}"
 
+// OpenGL version
 #define ANKI_GL_DESKTOP 1
 #define ANKI_GL_ES 2
 #if ANKI_WINDOW_BACKEND == ANKI_WINDOW_BACKEND_GLXX11
@@ -83,6 +89,29 @@
 #	define ANKI_GL_STR "ANKI_GL_ES"
 #endif
 
+// Enable performance counters
+#define ANKI_ENABLE_COUNTERS ${_ANKI_ENABLE_COUNTERS}
+
+// General config
+#define ANKI_MAX_MULTIDRAW_PRIMITIVES 64
+#define ANKI_MAX_INSTANCES 16
+
+// Renderer config
+#define ANKI_RENDERER_MAX_POINT_LIGHTS (512 - 16)
+#define ANKI_RENDERER_MAX_SPOT_LIGHTS 8
+#define ANKI_RENDERER_MAX_SPOT_TEX_LIGHTS 8
+
+#define ANKI_RENDERER_MAX_POINT_LIGHTS_PER_TILE 48
+#define ANKI_RENDERER_MAX_SPOT_LIGHTS_PER_TILE 4
+#define ANKI_RENDERER_MAX_SPOT_TEX_LIGHTS_PER_TILE 4
+
+#define ANKI_RENDERER_TILES_X_COUNT 16
+#define ANKI_RENDERER_TILES_Y_COUNT 16
+
+// Scene config
+#define ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT 1024
+
+// Some compiler struff
 #if defined(__GNUC__)
 #	define ANKI_LIKELY(x) __builtin_expect((x), 1)
 #	define ANKI_UNLIKELY(x) __builtin_expect((x), 0)
@@ -92,6 +121,8 @@
 #	define ANKI_UNLIKELY(x) ((x) == 1)
 #	define ANKI_RESTRICT
 #endif
+
+/// @}
 
 // Workaround some GCC C++11 problems
 #if ${ANKI_GCC_TO_STRING_WORKAROUND}
@@ -125,26 +156,5 @@ inline int stoi(const string& str)
 
 } // end namespace std
 #endif
-
-/// @addtogroup config
-/// @{
-
-#define ANKI_RENDERER_MAX_POINT_LIGHTS (512 - 16)
-#define ANKI_RENDERER_MAX_SPOT_LIGHTS 8
-#define ANKI_RENDERER_MAX_SPOT_TEX_LIGHTS 8
-
-#define ANKI_RENDERER_MAX_POINT_LIGHTS_PER_TILE 48
-#define ANKI_RENDERER_MAX_SPOT_LIGHTS_PER_TILE 4
-#define ANKI_RENDERER_MAX_SPOT_TEX_LIGHTS_PER_TILE 4
-
-#define ANKI_RENDERER_TILES_X_COUNT 16
-#define ANKI_RENDERER_TILES_Y_COUNT 16
-
-#define ANKI_MAX_MULTIDRAW_PRIMITIVES 64
-#define ANKI_MAX_INSTANCES 16
-
-#define ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT 1024
-
-/// @}
 
 #endif

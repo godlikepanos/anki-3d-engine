@@ -148,8 +148,6 @@ public:
 	SceneNode& findSceneNode(const char* name);
 	SceneNode* tryFindSceneNode(const char* name);
 
-	void printProfileInfo() const;
-
 private:
 	SceneAllocator<U8> alloc;
 	SceneAllocator<U8> frameAlloc;
@@ -167,10 +165,6 @@ private:
 	SectorGroup sectorGroup;
 
 	EventManager events;
-
-#if ANKI_CFG_SCENE_PROFILE
-	HighRezTimer::Scalar timeForUpdates = 0.0;
-#endif
 
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);

@@ -267,7 +267,6 @@ void MeshLoader::createVertTangents()
 			(uvedge01.x() * uvedge02.y());
 		if(isZero(det))
 		{
-			//ANKI_LOGW(getRsrcName() << ": det == " << fixed << det);
 			det = 0.0001;
 		}
 		else
@@ -276,7 +275,8 @@ void MeshLoader::createVertTangents()
 			det = 1.0 / det;
 
 			// Add a noise to the det to avoid zero tangents on mirrored cases
-			det *= ((rand() % 10) * getEpsilon<F32>());
+			// Add 1 to the rand so that it's not zero
+			det *= ((rand() % 10 + 1) * getEpsilon<F32>());
 		}
 
 		Vec3 t = (edge02 * uvedge01.y() - edge01 * uvedge02.y()) * det;

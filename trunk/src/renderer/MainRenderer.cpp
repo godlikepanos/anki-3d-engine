@@ -2,6 +2,7 @@
 #include "anki/core/Logger.h"
 #include "anki/renderer/Deformer.h"
 #include "anki/util/Filesystem.h"
+#include "anki/core/Counters.h"
 #include <cstdlib>
 #include <cstdio>
 #include <fstream>
@@ -74,6 +75,8 @@ void MainRenderer::initGl()
 //==============================================================================
 void MainRenderer::render(SceneGraph& scene)
 {
+	ANKI_COUNTER_START_TIMER(C_MAIN_RENDERER_TIME);
+
 	Bool drawToDefaultFbo = renderingQuality > 0.9 && !dbg.getEnabled();
 
 	pps.setDrawToDefaultFbo(drawToDefaultFbo);
@@ -106,6 +109,8 @@ void MainRenderer::render(SceneGraph& scene)
 
 	// Check for error
 	ANKI_CHECK_GL_ERROR();
+
+	ANKI_COUNTER_STOP_TIMER_INC(C_MAIN_RENDERER_TIME);
 }
 
 //==============================================================================
