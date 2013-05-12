@@ -89,6 +89,7 @@ PtrSize File::read(void* buff, PtrSize size)
 	ANKI_ASSERT(file);
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(openFlags & OF_READ);
 
 	PtrSize readSize = 0;
 
@@ -108,11 +109,42 @@ PtrSize File::read(void* buff, PtrSize size)
 }
 
 //==============================================================================
+void File::readAll(std::string& txt)
+{
+	ANKI_ASSERT(file);
+	ANKI_ASSERT((openFlags & OF_BINARY) == false 
+		&& "Should not be binary file");
+	ANKI_ASSERT(openFlags & OF_READ);
+
+	switch(fileType)
+	{
+	case FT_C:
+		{
+			fseek((FILE*)file, 0, SEEK_END);
+			PtrSize size = ftell((FILE*)file);
+			rewind((FILE*)file);
+
+			txt.resize(size);
+			PtrSize readSize = fread(&txt[0], 1, size, (FILE*)file);
+			(void)readSize;
+			ANKI_ASSERT(readSize == size);
+			break;
+		}
+	case FT_ZIP:
+		ANKI_ASSERT(0 && "Not implemented");
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+}
+
+//==============================================================================
 PtrSize File::write(void* buff, PtrSize size)
 {
 	ANKI_ASSERT(file);
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(openFlags & OF_WRITE);
 
 	PtrSize writeSize = 0;
 
@@ -136,6 +168,7 @@ void File::writeString(const char* format, ...)
 {
 	ANKI_ASSERT(file);
 	ANKI_ASSERT(format);
+	ANKI_ASSERT(openFlags & OF_WRITE);
 
 	va_list args;
 	va_start(args, format);

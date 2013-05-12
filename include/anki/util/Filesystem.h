@@ -29,7 +29,7 @@ public:
 	{
 		OF_READ = 1 << 0,
 		OF_WRITE = 1 << 1,
-		OF_APPEND = 1 << 2,
+		OF_APPEND = OF_WRITE | (1 << 2),
 		OF_BINARY = 1 << 3
 	};
 
@@ -49,6 +49,9 @@ public:
 
 	/// Read data from the file
 	PtrSize read(void* buff, PtrSize size);
+
+	/// Read all the contents of a text file
+	void readAll(std::string& txt);
 
 	/// Write data to the file
 	PtrSize write(void* buff, PtrSize size);
