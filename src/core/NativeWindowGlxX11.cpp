@@ -1,4 +1,5 @@
 #include "anki/core/NativeWindowGlxX11.h"
+#include "anki/core/Counters.h"
 #include "anki/util/Exception.h"
 #include <cstring>
 
@@ -88,6 +89,16 @@ void NativeWindowImpl::createNativeWindow(NativeWindowInitializer& init)
 	XVisualInfo* vi;
 	XSetWindowAttributes swa;
 	Window root;
+
+	// If it's fullscreen override the resolution with the desktop one
+	if(init.fullscreenDesktopRez)
+	{
+		Screen* pscr = nullptr;
+		pscr = DefaultScreenOfDisplay(xDisplay);
+
+		init.width = pscr->width;
+		init.height = pscr->height;
+	}
 
 	vi = glXGetVisualFromFBConfig(xDisplay, glxConfig[0]);
 
@@ -282,6 +293,9 @@ void NativeWindow::create(NativeWindowInitializer& initializer)
 {
 	impl.reset(new NativeWindowImpl);
 	impl->create(initializer);
+
+	// Set the size after because the create may have changed it to something
+	// more nice
 	width = initializer.width;
 	height = initializer.height;
 }
@@ -295,8 +309,10 @@ void NativeWindow::destroy()
 //==============================================================================
 void NativeWindow::swapBuffers()
 {
+	ANKI_COUNTER_START_TIMER(C_SWAP_BUFFERS_TIME);
 	ANKI_ASSERT(isCreated());
 	glXSwapBuffers(impl->xDisplay, impl->xWindow);
+	ANKI_COUNTER_STOP_TIMER_INC(C_SWAP_BUFFERS_TIME);
 }
 
 } // end namespace anki

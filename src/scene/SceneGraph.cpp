@@ -3,6 +3,7 @@
 #include "anki/scene/ModelNode.h"
 #include "anki/util/Exception.h"
 #include "anki/core/ThreadPool.h"
+#include "anki/core/Counters.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/misc/Xml.h"
 
@@ -128,10 +129,10 @@ void SceneGraph::unregisterNode(SceneNode* node)
 //==============================================================================
 void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 {
-#if ANKI_CFG_SCENE_PROFILE
-	HighRezTimer::Scalar startTime = HighRezTimer::getCurrentTime();
-#endif
+	ANKI_COUNTER_START_TIMER(C_SCENE_UPDATE_TIME);
 
+	ThreadPool& threadPool = ThreadPoolSingleton::get();
+	(void)threadPool;
 	frameAlloc.reset();
 
 	// XXX Do that in parallel
@@ -139,7 +140,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	renderer.getTiler().updateTiles(*mainCam);
 	events.updateAllEvents(prevUpdateTime, crntTime);
 
-#if 0
+#if 1
 	// First do the movable updates
 	for(SceneNode* n : nodes)
 	{
@@ -151,7 +152,6 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 		}
 	}
 #else
-	ThreadPool& threadPool = ThreadPoolSingleton::get();
 	UpdateMovablesJob jobs[ThreadPool::MAX_THREADS];
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
@@ -166,7 +166,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 #endif
 
 	// Then the rest
-#if 0
+#if 1
 	for(SceneNode* n : nodes)
 	{
 		updateSceneNode(*n, prevUpdateTime, crntTime, sectorGroup);
@@ -195,35 +195,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	/*sectorGroup.doVisibilityTests(*mainCam,
 		VisibilityTest(VT_RENDERABLES | VT_LIGHTS), &r);*/
 
-#if 0
-	for(SceneNode* n : nodes)
-	{
-		if(n->getSpatial()
-			&& n->getSpatial()->getSpatialLastUpdateFrame() == frame)
-		{
-			std::cout << "Spatial updated on: " << n->getName()
-				<< std::endl;
-		}
-
-		if(n->getMovable()
-			&& n->getMovable()->getMovableLastUpdateFrame() == frame)
-		{
-			std::cout << "Movable updated on: " << n->getName()
-				<< std::endl;
-		}
-
-		if(n->getFrustumable()
-			&& n->getFrustumable()->getFrustumableLastUpdateFrame() == frame)
-		{
-			std::cout << "Frustumable updated on: " << n->getName()
-				<< std::endl;
-		}
-	}
-#endif
-
-#if ANKI_CFG_SCENE_PROFILE
-	timeForUpdates += HighRezTimer::getCurrentTime() - startTime;
-#endif
+	ANKI_COUNTER_STOP_TIMER_INC(C_SCENE_UPDATE_TIME);
 }
 
 //==============================================================================
@@ -238,14 +210,6 @@ SceneNode* SceneGraph::tryFindSceneNode(const char* name)
 {
 	Types<SceneNode>::NameToItemMap::iterator it = nameToNode.find(name);
 	return (it == nameToNode.end()) ? nullptr : it->second;
-}
-
-//==============================================================================
-void SceneGraph::printProfileInfo() const
-{
-#if ANKI_CFG_SCENE_PROFILE
-	ANKI_LOGI("Scene times: " << timeForUpdates);
-#endif
 }
 
 //==============================================================================

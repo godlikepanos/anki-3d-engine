@@ -14,6 +14,13 @@ OPTION(ANKI_WITH_GPERFTOOLS_PROF "Link with gperftools profiler" OFF)
 
 OPTION(ANKI_STRIP "Srip the symbols from the executables" OFF)
 
+OPTION(ANKI_ENABLE_COUNTERS "Enable performance counters. Small overhead" OFF)
+IF(ANKI_ENABLE_COUNTERS)
+	SET(_ANKI_ENABLE_COUNTERS 1)
+ELSE()
+	SET(_ANKI_ENABLE_COUNTERS 0)
+ENDIF()
+
 # Because we want different compiler flags for each platform
 SET(ANKI_CPU "X86" CACHE STRING "The CPU arch (X86 or ARM)")
 
@@ -105,6 +112,9 @@ ELSE()
 	SET(_ANKI_LIBPNG "ankipng")
 	MESSAGE("++ Building with AnKi provided libpng")
 ENDIF()
+
+# Disable GLU in GLEW
+ADD_DEFINITIONS(-DGLEW_NO_GLU)
 
 # Window backend
 MESSAGE("++ Window backend: ${ANKI_WINDOW_BACKEND}")

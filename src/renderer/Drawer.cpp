@@ -7,8 +7,20 @@
 #include "anki/scene/ModelNode.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/core/Counters.h"
 
 namespace anki {
+
+//==============================================================================
+static U64 countVerts(U32* indicesCount, I primCount)
+{
+	U64 sum = 0;
+	while(--primCount >= 0)
+	{
+		sum += indicesCount[primCount];
+	}
+	return sum;
+}
 
 //==============================================================================
 /// Visitor that sets a uniform
@@ -318,6 +330,9 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	dc.primCount = primCount;
 
 	dc.enque();
+	ANKI_COUNTER_INC(C_RENDERER_DRAWCALLS_COUNT, (U64)1);
+	ANKI_COUNTER_INC(C_RENDERER_VERTICES_COUNT, 
+		countVerts(indicesCountArray, (I)primCount));
 }
 
 }  // end namespace anki

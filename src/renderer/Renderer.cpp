@@ -2,6 +2,7 @@
 #include "anki/util/Exception.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
+#include "anki/core/Counters.h"
 
 namespace anki {
 
@@ -82,36 +83,21 @@ void Renderer::render(SceneGraph& scene_)
 
 	viewProjectionMat = cam.getViewProjectionMatrix();
 
-#if ANKI_CFG_RENDERER_PROFILE
-	HighRezTimer::Scalar timea, timeb;
-
-	timeb = HighRezTimer::getCurrentTime();
-
+	ANKI_COUNTER_START_TIMER(C_RENDERER_MS_TIME);
 	ms.run();
-	timea = HighRezTimer::getCurrentTime();
-	msTime += timea - timeb;
+	ANKI_COUNTER_STOP_TIMER_INC(C_RENDERER_MS_TIME);
 
 	tiler.runMinMax(ms.getDepthFai());
-	timeb = HighRezTimer::getCurrentTime();
-	tilerTime += timeb - timea;
 
+	ANKI_COUNTER_START_TIMER(C_RENDERER_IS_TIME);
 	is.run();
-	timea = HighRezTimer::getCurrentTime();
-	isTime += timea - timeb;
+	ANKI_COUNTER_STOP_TIMER_INC(C_RENDERER_IS_TIME);
 
 	bs.run();
-	timeb = HighRezTimer::getCurrentTime();
 
+	ANKI_COUNTER_START_TIMER(C_RENDERER_PPS_TIME);
 	pps.run();
-	timea = HighRezTimer::getCurrentTime();
-	ppsTime += timea - timeb;
-#else
-	ms.run();
-	tiler.runMinMax(ms.getDepthFai());
-	is.run();
-	bs.run();
-	pps.run();
-#endif
+	ANKI_COUNTER_STOP_TIMER_INC(C_RENDERER_PPS_TIME);
 
 	ANKI_CHECK_GL_ERROR();
 	++framesNum;
@@ -222,15 +208,6 @@ void Renderer::clearAfterBindingFbo(const GLenum cap)
 	{
 		glClear(cap);
 	}
-}
-
-//==============================================================================
-void Renderer::printProfileInfo() const
-{
-#if ANKI_CFG_RENDERER_PROFILE
-	ANKI_LOGI("Renderer times: MS " << msTime << " IS " << isTime
-		<< " PPS " << ppsTime << " Tiler " << tilerTime);
-#endif
 }
 
 } // end namespace anki

@@ -283,8 +283,6 @@ public:
 	/// skipped
 	void clearAfterBindingFbo(const GLenum cap);
 
-	void printProfileInfo() const;
-
 protected:
 	/// @name Rendering stages
 	/// @{
@@ -330,10 +328,6 @@ private:
 	Vbo quadVertIndecesVbo; ///< The VBO for quad array buffer elements
 	Vao quadVao; ///< This VAO is used everywhere except material stage
 	/// @}
-
-#if ANKI_CFG_RENDERER_PROFILE
-	HighRezTimer::Scalar tilerTime = 0, msTime = 0, isTime = 0, ppsTime = 0;
-#endif
 };
 
 

@@ -134,7 +134,7 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
-	cam->setLocalTransform(Transform(Vec3(20.0, 5.0, 0.0),
+	cam->setLocalTransform(Transform(Vec3(18.0, 5.2, 0.0),
 		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
@@ -169,8 +169,8 @@ void init()
 	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
-	spot->setLocalTransform(Transform(Vec3(1.3, 4.3, 3.0),
-		Mat3::getIdentity(), 1.0));
+	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
+		Mat3(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
 	spot->setDiffuseColor(Vec4(2.0));
 	spot->setSpecularColor(Vec4(-1.0));
 	spot->loadTexture("gfx/lights/flashlight.tga");
@@ -437,10 +437,10 @@ void mainLoop()
 {
 	ANKI_LOGI("Entering main loop");
 
-	HighRezTimer mainLoopTimer;
-	mainLoopTimer.start();
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar crntTime = prevUpdateTime;
+
+	ANKI_COUNTER_START_TIMER(C_FPS);
 
 	while(1)
 	{
@@ -478,7 +478,7 @@ void mainLoop()
 				- timer.getElapsedTime());
 		}
 #else
-		if(MainRendererSingleton::get().getFramesCount() == 1000)
+		if(MainRendererSingleton::get().getFramesCount() == 2000)
 		{
 			break;
 		}
@@ -490,13 +490,9 @@ void mainLoop()
 	MainRendererSingleton::get().takeScreenshot("screenshot.tga");
 #endif
 
-	ANKI_COUNTERS_FLUSH();
+	ANKI_COUNTER_STOP_TIMER_INC(C_FPS);
 
-	HighRezTimer::Scalar timePassed = mainLoopTimer.getElapsedTime();
-	ANKI_LOGI("Exiting main loop (" << timePassed
-		<< " sec) FPS: " << 1000.0 / timePassed);
-	MainRendererSingleton::get().printProfileInfo();
-	SceneGraphSingleton::get().printProfileInfo();
+	ANKI_COUNTERS_FLUSH();
 }
 
 //==============================================================================
@@ -517,8 +513,8 @@ void initSubsystems(int argc, char* argv[])
 
 	// Window
 	NativeWindowInitializer nwinit;
-	nwinit.width = 1920;
-	nwinit.height = 1080;
+	nwinit.width = 1280;
+	nwinit.height = 720;
 	nwinit.majorVersion = glmajor;
 	nwinit.minorVersion = glminor;
 	nwinit.depthBits = 0;
@@ -548,17 +544,17 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.hdr.blurringDist = 1.0;
 	initializer.pps.hdr.blurringIterationsCount = 2;
 	initializer.pps.hdr.exposure = 8.0;
-	initializer.pps.ssao.blurringIterationsNum = 4;
+	initializer.pps.ssao.blurringIterationsNum = 2;
 	initializer.pps.ssao.enabled = true;
 	initializer.pps.ssao.mainPassRenderingQuality = 0.5;
-	initializer.pps.ssao.blurringRenderingQuality = 0.7;
+	initializer.pps.ssao.blurringRenderingQuality = 0.5;
 	initializer.pps.enabled = true;
 	initializer.pps.bl.enabled = true;
 	initializer.pps.bl.blurringIterationsNum = 2;
 	initializer.pps.bl.sideBlurFactor = 1.0;
 	initializer.renderingQuality = 1.0;
-	initializer.width = nwinit.width;
-	initializer.height = nwinit.height;
+	initializer.width = win->getWidth();
+	initializer.height = win->getHeight();
 	initializer.lodDistance = 20.0;
 
 	MainRendererSingleton::get().init(initializer);
@@ -568,9 +564,6 @@ void initSubsystems(int argc, char* argv[])
 
 	// Parallel jobs
 	ThreadPoolSingleton::get().init(getCpuCoresCount());
-
-	// Init counters
-	CountersManagerSingleton::get();
 }
 
 //==============================================================================
