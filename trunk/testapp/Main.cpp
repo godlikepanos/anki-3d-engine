@@ -27,7 +27,7 @@
 #include "anki/core/ThreadPool.h"
 #include "anki/core/Timestamp.h"
 #include "anki/core/NativeWindow.h"
-#include "anki/scene/Scene.h"
+#include "anki/Scene.h"
 #include "anki/event/LightEvent.h"
 #include "anki/event/MovableEvent.h"
 #include "anki/core/Counters.h"
@@ -386,9 +386,13 @@ void mainLoopExtra()
 		MainRendererSingleton::get().getDbg().switchBits(
 			Dbg::DF_OCTREE);
 	}
-	if(in.getKey(KC_F12) == 1)
+	if(in.getKey(KC_F6) == 1)
 	{
 		MainRendererSingleton::get().getDbg().switchDepthTestEnabled();
+	}
+	if(in.getKey(KC_F12) == 1)
+	{
+		MainRendererSingleton::get().takeScreenshot("screenshot.tga");
 	}
 
 	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
@@ -540,7 +544,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.hdr.enabled = true;
 	initializer.pps.hdr.renderingQuality = 0.25;
 	initializer.pps.hdr.blurringDist = 1.0;
-	initializer.pps.hdr.blurringIterationsCount = 2;
+	initializer.pps.hdr.blurringIterationsCount = 1;
 	initializer.pps.hdr.exposure = 8.0;
 	initializer.pps.ssao.blurringIterationsNum = 2;
 	initializer.pps.ssao.enabled = true;

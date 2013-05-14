@@ -47,6 +47,8 @@ ENDIF()
 
 SET(ANKI_WINDOW_BACKEND "${_WIN_BACKEND}" CACHE STRING "The window backend (GLXX11 or EGLX11 or EGLFBDEV or DUMMY)")
 
+SET(ANKI_GCC_TO_STRING_WORKAROUND "0" CACHE STRING "Enable workaround for C++11 GCC bug (0 or 1)")
+
 #
 # Options that affect anki and extern
 #
@@ -204,11 +206,11 @@ MESSAGE("++ AnKi version: ${ANKI_VERSION_MAJOR}.${ANKI_VERSION_MINOR}")
 
 IF(CMAKE_BUILD_TYPE STREQUAL Debug)
 	MESSAGE("++ Debug build: true")
+	SET(ANKI_DEBUG 1)
 ELSE()
 	MESSAGE("++ Debug build: false")
+	SET(ANKI_DEBUG 0)
 ENDIF()
-
-SET(ANKI_GCC_TO_STRING_WORKAROUND "0" CACHE STRING "Enable workaround for C++11 GCC bug (0 or 1)")
 
 CONFIGURE_FILE("include/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
