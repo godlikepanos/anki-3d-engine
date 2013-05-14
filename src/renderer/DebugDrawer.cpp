@@ -2,7 +2,7 @@
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/physics/Converters.h"
 #include "anki/Collision.h"
-#include "anki/scene/Scene.h"
+#include "anki/Scene.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/renderer/Renderer.h"
 

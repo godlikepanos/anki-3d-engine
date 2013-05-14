@@ -94,17 +94,19 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	ssaoSProg->findUniformBlock("commonBlock").setBinding(0);
 
 	// blurring progs
-	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
+	const char* SHADER_FILENAME = "shaders/VariableSamplingBlurGeneric.glsl";
 
 	pps = "#define HPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " + std::to_string(bWidth) + ".0\n";
+		"#define IMG_DIMENSION " + std::to_string(bHeight) + "\n"
+		"#define SAMPLES 8\n";
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.c_str()).c_str());
 
 	pps = "#define VPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " + std::to_string(bHeight) + ".0 \n";
+		"#define IMG_DIMENSION " + std::to_string(bWidth) + "\n"
+		"#define SAMPLES 8\n";
 	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.c_str()).c_str());
 }

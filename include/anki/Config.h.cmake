@@ -8,11 +8,7 @@
 #define ANKI_VERSION_MAJOR ${ANKI_VERSION_MAJOR}
 #define ANKI_REVISION ${ANKI_REVISION}
 
-#if defined(NDEBUG)
-#	define ANKI_DEBUG !NDEBUG
-#else
-#	define ANKI_DEBUG 1
-#endif
+#define ANKI_DEBUG ${ANKI_DEBUG}
 
 #define ANKI_FILE __FILE__
 #define ANKI_FUNC __func__
