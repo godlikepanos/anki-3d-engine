@@ -546,7 +546,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.hdr.blurringDist = 1.0;
 	initializer.pps.hdr.blurringIterationsCount = 1;
 	initializer.pps.hdr.exposure = 8.0;
-	initializer.pps.ssao.blurringIterationsNum = 2;
+	initializer.pps.ssao.blurringIterationsNum = 1;
 	initializer.pps.ssao.enabled = true;
 	initializer.pps.ssao.mainPassRenderingQuality = 0.5;
 	initializer.pps.ssao.blurringRenderingQuality = 0.5;

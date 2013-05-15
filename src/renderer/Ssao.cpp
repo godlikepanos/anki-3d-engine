@@ -16,6 +16,8 @@ struct ShaderCommonUniforms
 void Ssao::createFbo(Fbo& fbo, Texture& fai, F32 width, F32 height)
 {
 	Renderer::createFai(width, height, GL_RED, GL_RED, GL_UNSIGNED_BYTE, fai);
+
+	// Set to bilinear because the blurring techniques take advantage of that
 	fai.setFiltering(Texture::TFT_LINEAR);
 
 	fbo.create();
@@ -99,14 +101,14 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	pps = "#define HPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION " + std::to_string(bHeight) + "\n"
-		"#define SAMPLES 8\n";
+		"#define SAMPLES 7\n";
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.c_str()).c_str());
 
 	pps = "#define VPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION " + std::to_string(bWidth) + "\n"
-		"#define SAMPLES 8\n";
+		"#define SAMPLES 7\n";
 	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.c_str()).c_str());
 }
