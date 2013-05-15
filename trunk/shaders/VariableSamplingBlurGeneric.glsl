@@ -1,7 +1,8 @@
 /// Defines: 
 /// - VPASS or HPASS
 /// - COL_RGBA or COL_RGB or COL_R
-/// - SAMPLES is a number of 2 or 4 or 6
+/// - SAMPLES is a number of 3 or 5 or 7 or 9
+/// - BLURRING_DIST is optional and it's extra pixels to move the blurring
 
 #pragma anki start vertexShader
 
@@ -40,6 +41,10 @@ uniform mediump sampler2D img; ///< Input FAI
 
 in vec2 vTexCoords;
 
+#if !defined(BLURRING_DIST)
+#	define BLURRING_DIST 0.0
+#endif
+
 // Determine color type
 #if defined(COL_RGBA)
 #	define COL_TYPE vec4
@@ -58,62 +63,62 @@ in vec2 vTexCoords;
 #	define TEX_FETCH r
 #endif
 
-// Calc the kernel
+// Calc the kernel. Use offsets of 3 to take advantage of bilinear filtering
 #if defined(VPASS)
-#	define BLURRING_OFFSET_X(val) (float(val) / float(IMG_DIMENSION))
-#	define BLURRING_OFFSET_Y(val) 0.0
+#	define BLURRING_OFFSET_X(val, sign_) ((float(val) * (BLURRING_DIST + 3.0) / float(IMG_DIMENSION)) * float(sign_))
+#	define BLURRING_OFFSET_Y(val, sign_) 0.0
 #else
-#	define BLURRING_OFFSET_X(val) 0.0
-#	define BLURRING_OFFSET_Y(val) (float(val) / float(IMG_DIMENSION))
+#	define BLURRING_OFFSET_X(val, sign_) 0.0
+#	define BLURRING_OFFSET_Y(val, sign_) ((float(val) * (BLURRING_DIST + 3.0) / float(IMG_DIMENSION)) * float(sign_))
 #endif
 
-#define BLURRING_OFFSET(v) vec2(BLURRING_OFFSET_X(v), BLURRING_OFFSET_Y(v))
+#define BLURRING_OFFSET(v, s) vec2(BLURRING_OFFSET_X(v, s), BLURRING_OFFSET_Y(v, s))
 
-#if SAMPLES == 2
-const vec2 kernel[3] = vec2[](
-	BLURRING_OFFSET(-1),
-	BLURRING_OFFSET(0),
-	BLURRING_OFFSET(1));
-#elif SAMPLES == 4
-const vec2 kernel[5] = vec2[](
-	BLURRING_OFFSET(-2),
-	BLURRING_OFFSET(-1),
-	BLURRING_OFFSET(0),
-	BLURRING_OFFSET(1),
-	BLURRING_OFFSET(2));
-#elif SAMPLES == 6
-const vec2 kernel[7] = vec2[](
-	BLURRING_OFFSET(-3),
-	BLURRING_OFFSET(-2),
-	BLURRING_OFFSET(-1),
-	BLURRING_OFFSET(0),
-	BLURRING_OFFSET(1),
-	BLURRING_OFFSET(2),
-	BLURRING_OFFSET(3));
-#elif SAMPLES == 8
-const vec2 kernel[9] = vec2[](
-	BLURRING_OFFSET(-4),
-	BLURRING_OFFSET(-3),
-	BLURRING_OFFSET(-2),
-	BLURRING_OFFSET(-1),
-	BLURRING_OFFSET(0),
-	BLURRING_OFFSET(1),
-	BLURRING_OFFSET(2),
-	BLURRING_OFFSET(3),
-	BLURRING_OFFSET(4));
+#if SAMPLES == 3
+const vec2 kernel[SAMPLES] = vec2[](
+	BLURRING_OFFSET(1, -1),
+	BLURRING_OFFSET(0, 1),
+	BLURRING_OFFSET(1, 1));
+#elif SAMPLES == 5
+const vec2 kernel[SAMPLES] = vec2[](
+	BLURRING_OFFSET(2, -1),
+	BLURRING_OFFSET(1, -1),
+	BLURRING_OFFSET(0, 0),
+	BLURRING_OFFSET(1, 1),
+	BLURRING_OFFSET(2, 1));
+#elif SAMPLES == 7
+const vec2 kernel[SAMPLES] = vec2[](
+	BLURRING_OFFSET(3, -1),
+	BLURRING_OFFSET(2, -1),
+	BLURRING_OFFSET(1, -1),
+	BLURRING_OFFSET(0, 1),
+	BLURRING_OFFSET(1, 1),
+	BLURRING_OFFSET(2, 1),
+	BLURRING_OFFSET(3, 1));
+#elif SAMPLES == 9
+const vec2 kernel[SAMPLES] = vec2[](
+	BLURRING_OFFSET(4, -1),
+	BLURRING_OFFSET(3, -1),
+	BLURRING_OFFSET(2, -1),
+	BLURRING_OFFSET(1, -1),
+	BLURRING_OFFSET(0, 1),
+	BLURRING_OFFSET(1, 1),
+	BLURRING_OFFSET(2, 1),
+	BLURRING_OFFSET(3, 1),
+	BLURRING_OFFSET(4, 1));
 #endif
 
 layout(location = 0) out COL_TYPE fFragColor;
 
 void main()
 {
-	// the color
-	COL_TYPE col = texture(img, vTexCoords + kernel[0]);
+	// Get the first
+	COL_TYPE col = texture(img, vTexCoords + kernel[0]).TEX_FETCH;
 
-	// Get the samples
+	// Get the rest of the samples
 	for(int i = 1; i < SAMPLES; i++)
 	{
-		col += texture(img, vTexCoords + kernel[i]);
+		col += texture(img, vTexCoords + kernel[i]).TEX_FETCH;
 	}
 
 	fFragColor = col * (1.0 / float(SAMPLES));

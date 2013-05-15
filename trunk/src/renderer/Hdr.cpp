@@ -11,6 +11,8 @@ Hdr::~Hdr()
 void Hdr::initFbo(Fbo& fbo, Texture& fai)
 {
 	Renderer::createFai(width, height, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, fai);
+
+	// Set to bilinear because the blurring techniques take advantage of that
 	fai.setFiltering(Texture::TFT_LINEAR);
 
 	// create FBO
@@ -52,22 +54,22 @@ void Hdr::initInternal(const Renderer::Initializer& initializer)
 
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
-	F32 blurringDistRealX = F32(blurringDist / width);
-	F32 blurringDistRealY = F32(blurringDist / height);
+	F32 blurringDistRealX = F32(blurringDist / width);// XXX
+	F32 blurringDistRealY = F32(blurringDist / height);// XXX
 
 	std::string pps =
 		"#define HPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST " + std::to_string(blurringDistRealX) + "\n"
-		"#define IMG_DIMENSION " + std::to_string(width) + ".0\n";
+		"#define BLURRING_DIST " + std::to_string(blurringDistRealX) + "\n" // XXX
+		"#define IMG_DIMENSION " + std::to_string(height) + ".0\n";
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.c_str()).c_str());
 
 	pps =
 		"#define VPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST " + std::to_string(blurringDistRealY) + "\n"
-		"#define IMG_DIMENSION " + std::to_string(height) + ".0\n";
+		"#define BLURRING_DIST " + std::to_string(blurringDistRealY) + "\n"// XXX
+		"#define IMG_DIMENSION " + std::to_string(width) + ".0\n";
 	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.c_str()).c_str());
 

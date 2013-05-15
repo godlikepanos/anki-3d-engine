@@ -14,9 +14,6 @@ layout(location = 0) in vec2 position;
 
 out vec2 vTexCoords;
 
-/// The offset of side pixels. Its actually a 2D array
-const vec2 BLURRING_OFFSET = vec2(1.3846153846, 3.2307692308); 
-
 void main()
 {
 	vTexCoords = position;
@@ -43,7 +40,6 @@ precision mediump float;
 uniform mediump sampler2D img; ///< Input FAI
 
 in vec2 vTexCoords;
-in vec2 vOffsets;
 
 #if !defined(BLURRING_DIST)
 #	define BLURRING_DIST 0.0
@@ -67,40 +63,41 @@ in vec2 vOffsets;
 #	define TEX_FETCH r
 #endif
 
-const float BLURRING_OFFSET_X = 1.3846153846 / IMG_DIMENSION;
-const float BLURRING_OFFSET_Y = 3.2307692308 / IMG_DIMENSION;
-const float BLURRING_OFFSET[2] = float[](BLURRING_OFFSET_X, 
-	BLURRING_OFFSET_Y); 
+// Weights
+const float first_weight = 0.2270270270;
+const float weights[4] = float[](
+	0.3162162162, 0.0702702703, 
+	0.3162162162, 0.0702702703);
 
+// Calc the kernel
+#if defined(VPASS)
+#	define BLURRING_OFFSET_X(val) (float(val) / float(IMG_DIMENSION))
+#	define BLURRING_OFFSET_Y(val) 0.0
+#else
+#	define BLURRING_OFFSET_X(val) 0.0
+#	define BLURRING_OFFSET_Y(val) (float(val) / float(IMG_DIMENSION))
+#endif
+
+#define BLURRING_OFFSET(v) vec2(BLURRING_OFFSET_X(v), BLURRING_OFFSET_Y(v))
+
+const vec2 kernel[4] = vec2[](
+	BLURRING_OFFSET(1.3846153846),
+	BLURRING_OFFSET(3.2307692308),
+	BLURRING_OFFSET(-1.3846153846),
+	BLURRING_OFFSET(-3.2307692308));
+
+// Output
 layout(location = 0) out COL_TYPE fFragColor;
-
-const float FIRST_WEIGHT = 0.2255859375;
-const float WEIGHTS[2] = float[](0.314208984375, 0.06982421875);
 
 void main()
 {
 	// the center (0,0) pixel
-	COL_TYPE col = texture(img, vTexCoords).TEX_FETCH * FIRST_WEIGHT;
+	fFragColor = texture(img, vTexCoords).TEX_FETCH * first_weight;
 
 	// side pixels
-	for(int i = 0; i < 2; i++)
+	for(int i = 0; i < 4; i++)
 	{
-#if defined(HPASS)
-		vec2 tc = vec2(vTexCoords.x + BLURRING_DIST + BLURRING_OFFSET[i], 
-			vTexCoords.y);
-		col += texture(img, tc).TEX_FETCH * WEIGHTS[i];
-
-		tc.x = vTexCoords.x - BLURRING_DIST - BLURRING_OFFSET[i];
-		col += texture(img, tc).TEX_FETCH * WEIGHTS[i];
-#elif defined(VPASS)
-		vec2 tc = vec2(vTexCoords.x, 
-			vTexCoords.y + BLURRING_DIST + BLURRING_OFFSET[i]);
-		col += texture(img, tc).TEX_FETCH * WEIGHTS[i];
-
-		tc.y = vTexCoords.y - BLURRING_DIST - BLURRING_OFFSET[i];
-		col += texture(img, tc).TEX_FETCH * WEIGHTS[i];
-#endif
+		fFragColor += 
+			texture(img, vTexCoords + kernel[i]).TEX_FETCH * weights[i];
 	}
-
-	fFragColor = col;
 }

@@ -106,8 +106,6 @@ void main(void)
 
 	fColor = gammaCorrectionRgb(vec3(0.9, 0.92, 0.75), fColor);
 
-	//fColor = clamp(fColor, 0.0, 1.0) * 0.0001 + vec3(ssao);
-
 #if 0
 	if(fColor.r != 0.00000001)
 	{
