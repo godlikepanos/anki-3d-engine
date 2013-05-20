@@ -37,6 +37,8 @@ static const Array<CounterInfo, C_COUNT> cinfo = {{
 	{"SWAP_BUFFERS_TIME", CF_PER_RUN | CF_F64}
 }};
 
+#define MAX_NAME "24"
+
 //==============================================================================
 CountersManager::CountersManager()
 {
@@ -67,16 +69,17 @@ CountersManager::CountersManager()
 		{
 			if(i != 0)
 			{
-				perrunFile.writeString(", %s", inf.name);
+				perrunFile.writeString(", %" MAX_NAME "s", inf.name);
 			}
 			else
 			{
-				perrunFile.writeString("%s", inf.name);
+				perrunFile.writeString("%" MAX_NAME "s", inf.name);
 			}
 
 			++i;
 		}
 	}
+	perrunFile.writeString("\n");
 }
 
 //==============================================================================
@@ -177,7 +180,6 @@ void CountersManager::resolveFrame()
 void CountersManager::flush()
 {
 	// Resolve per run counters
-	perrunFile.writeString("\n");
 	U i = 0;
 	U j = 0;
 	for(const CounterInfo& inf : cinfo)
@@ -191,18 +193,19 @@ void CountersManager::flush()
 
 			if(inf.flags & CF_U64)
 			{
-				perrunFile.writeString("%llu", perrunValues[i]);
+				perrunFile.writeString("%" MAX_NAME "llu", perrunValues[i]);
 			}
 			else if(inf.flags & CF_F64)
 			{
 				if(inf.flags & CF_FPS)
 				{
-					perrunFile.writeString("%f", 
+					perrunFile.writeString("%" MAX_NAME "f", 
 						(F64)getGlobTimestamp() / *((F64*)&perrunValues[i]));
 				}
 				else
 				{
-					perrunFile.writeString("%f", *((F64*)&perrunValues[i]));
+					perrunFile.writeString("%" MAX_NAME "f", 
+						*((F64*)&perrunValues[i]));
 				}
 			}
 			else
@@ -216,6 +219,7 @@ void CountersManager::flush()
 
 		++i;
 	}
+	perrunFile.writeString("\n");
 
 	// Close and flush files
 	perframeFile.close();

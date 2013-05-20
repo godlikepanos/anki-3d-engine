@@ -3,7 +3,7 @@
 
 #include "anki/collision/CollisionShape.h"
 #include "anki/Math.h"
-#include <array>
+#include "anki/util/Array.h"
 
 namespace anki {
 
@@ -119,7 +119,7 @@ public:
 	void set(const Container& container);
 
 	/// Get extreme points in 3D space
-	void getExtremePoints(std::array<Vec3, 8>& points) const;
+	void getExtremePoints(Array<Vec3, 8>& points) const;
 
 public:
 	/// @name Data

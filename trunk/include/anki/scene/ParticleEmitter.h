@@ -26,11 +26,9 @@ public:
 	};
 
 	ParticleBase(
-		ParticleType type,
-		// SceneNode
-		const char* name, SceneGraph* scene, 
-		// Movable
-		U32 movableFlags, Movable* movParent);
+		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+		U32 movableFlags, // Movable
+		ParticleType type); // Self
 
 	virtual ~ParticleBase();
 
@@ -103,10 +101,8 @@ class ParticleSimple: public ParticleBase
 {
 public:
 	ParticleSimple(
-		// SceneNode
-		const char* name, SceneGraph* scene, 
-		// Movable
-		U32 movableFlags, Movable* movParent);
+		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+		U32 movableFlags); // Movable
 
 	void revive(const ParticleEmitter& pe,
 		F32 prevUpdateTime, F32 crntTime);
@@ -124,10 +120,8 @@ class Particle: public ParticleBase, public RigidBody
 {
 public:
 	Particle(
-		// SceneNode
-		const char* name, SceneGraph* scene, 
-		// Movable
-		U32 movableFlags, Movable* movParent,
+		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+		U32 movableFlags, // Movable
 		// RigidBody
 		PhysWorld* masterContainer, const RigidBody::Initializer& init); 
 
@@ -153,11 +147,9 @@ class ParticleEmitter: public SceneNode, public Spatial, public Movable,
 
 public:
 	ParticleEmitter(
-		const char* filename,
-		// SceneNode
-		const char* name, SceneGraph* scene,
-		// Movable
-		U32 movableFlags, Movable* movParent);
+		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+		U32 movableFlags, // Movable
+		const char* filename); // Self
 
 	~ParticleEmitter();
 
@@ -172,19 +164,19 @@ public:
 	/// @{
 
 	/// Implements Renderable::getModelPatchBase
-	const ModelPatchBase& getRenderableModelPatchBase() const;
+	const ModelPatchBase& getRenderableModelPatchBase();
 
 	/// Implements  Renderable::getMaterial
-	const Material& getRenderableMaterial() const;
+	const Material& getRenderableMaterial();
 
 	/// Overrides Renderable::getRenderableWorldTransforms
-	const Transform* getRenderableWorldTransforms() const
+	const Transform* getRenderableWorldTransforms()
 	{
 		return &(*instancingTransformations)[0];
 	}
 
 	/// Overrides Renderable::getRenderableInstancesCount
-	U32 getRenderableInstancesCount() const
+	U32 getRenderableInstancesCount()
 	{
 		return instancesCount;
 	}

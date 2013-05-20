@@ -116,14 +116,24 @@ SceneGraph::~SceneGraph()
 void SceneGraph::registerNode(SceneNode* node)
 {
 	addC(nodes, node);
-	addDict(nameToNode, node);
+
+	// Add to dict if it has name
+	if(node->getName())
+	{
+		addDict(nameToNode, node);
+	}
 }
 
 //==============================================================================
 void SceneGraph::unregisterNode(SceneNode* node)
 {
 	removeC(nodes, node);
-	removeDict(nameToNode, node);
+
+	// Remove from dict if it has name
+	if(node->getName())
+	{
+		removeDict(nameToNode, node);
+	}
 }
 
 //==============================================================================
@@ -233,8 +243,8 @@ void SceneGraph::load(const char* filename)
 			// <model>
 			el = mdlNodeEl.getChildElement("model");
 
-			ModelNode* node = new ModelNode(el.getText(), "name", this, 
-				Movable::MF_NONE, nullptr);
+			ModelNode* node = new ModelNode("name", this, nullptr,
+				Movable::MF_NONE, el.getText());
 
 			// <transform>
 			el = mdlNodeEl.getChildElement("transform");

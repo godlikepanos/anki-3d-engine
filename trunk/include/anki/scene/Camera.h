@@ -27,10 +27,11 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	Camera(CameraType type_,
-		const char* name, SceneGraph* scene, // SceneNode
-		U32 movableFlags, Movable* movParent, // Movable
-		Frustum* frustum); // Spatial & Frustumable
+	Camera(
+		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+		U32 movableFlags, // Movable
+		Frustum* frustum, // Spatial & Frustumable
+		CameraType type_); // Self
 
 	virtual ~Camera();
 	/// @}
@@ -118,8 +119,9 @@ public:
 
 	/// @name Constructors
 	/// @{
-	PerspectiveCamera(const char* name, SceneGraph* scene,
-		uint movableFlags, Movable* movParent);
+	PerspectiveCamera(
+		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+		U32 movableFlags); // Movable
 	/// @}
 
 	/// @name Accessors
@@ -201,8 +203,9 @@ public:
 
 	/// @name Constructors
 	/// @{
-	OrthographicCamera(const char* name, SceneGraph* scene,
-		uint movableFlags, Movable* movParent);
+	OrthographicCamera(
+		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+		U32 movableFlags); // Movable
 	/// @}
 
 	/// @name Accessors

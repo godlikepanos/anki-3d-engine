@@ -14,21 +14,46 @@ namespace anki {
 /// @addtogroup Scene
 /// @{
 
-/// XXX
-class ModelPatchNodeInstance: public Spatial, public Movable
+/// A model instance
+class ModelPatchNodeInstance: public SceneNode, public Movable, public Spatial
 {
+	friend class ModelPatchNode;
+
+public:
+	ModelPatchNodeInstance(
+		const char* name, SceneGraph* scene, SceneNode* parent, // Scene
+		U32 movableFlags, // Movable
+		const ModelPatchBase* modelPatchResource); // Self
+
+	/// @name Movable virtuals
+	/// @{
+
+	/// Overrides Movable::moveUpdate(). This does:
+	/// - Update the collision shape
+	/// - If it's the last instance update the parent's CS.
+	void movableUpdate();
+	/// @}
+
+private:
+	Obb obb; ///< In world space
+	const ModelPatchBase* modelPatch; ///< Keep the resource for tha OBB
 };
 
 /// A fragment of the ModelNode
 class ModelPatchNode: public SceneNode, public Movable, public Renderable,
 	public Spatial
 {
+	friend class ModelPatchNodeInstance;
+
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	ModelPatchNode(const ModelPatchBase* modelPatch_,
-		const char* name, SceneGraph* scene, // Scene
-		U32 movableFlags, Movable* movParent); // Movable
+	ModelPatchNode(
+		const char* name, SceneGraph* scene, SceneNode* parent, // Scene
+		U32 movableFlags, // Movable
+		const ModelPatchBase* modelPatch, U instances); // Self
+
+	~ModelPatchNode();
 	/// @}
 
 	/// @name SceneNode virtuals
@@ -41,45 +66,48 @@ public:
 	}
 	/// @}
 
-	// @name Movable virtuals
+	/// @name Movable virtuals
 	/// @{
 
 	/// Overrides Movable::moveUpdate(). This does:
 	/// - Update the collision shape
-	void movableUpdate()
-	{
-		Movable::movableUpdate();
-		obb = modelPatch->getBoundingShape().getTransformed(
-			getWorldTransform());
-		spatialMarkForUpdate();
-	}
+	void movableUpdate();
 	/// @}
 
 	/// @name Renderable virtuals
 	/// @{
 
 	/// Implements Renderable::getModelPatchBase
-	const ModelPatchBase& getRenderableModelPatchBase() const
+	const ModelPatchBase& getRenderableModelPatchBase()
 	{
 		return *modelPatch;
 	}
 
 	/// Implements  Renderable::getMaterial
-	const Material& getRenderableMaterial() const
+	const Material& getRenderableMaterial()
 	{
 		return modelPatch->getMaterial();
 	}
 
 	/// Overrides Renderable::getRenderableWorldTransforms
-	const Transform* getRenderableWorldTransforms() const
+	const Transform* getRenderableWorldTransforms();
+
+	/// Overrides Renderable::getRenderableInstancesCount
+	U32 getRenderableInstancesCount()
 	{
-		return &getWorldTransform();
+		// return this and the instances 
+		return (transforms.size() > 0) ? transforms.size() : 1;
 	}
 	/// @}
 
 private:
-	Obb obb; ///< In world space
+	Obb obb; ///< In world space.
 	const ModelPatchBase* modelPatch; ///< The resource
+	SceneVector<ModelPatchNodeInstance*> instances;
+	SceneVector<Transform> transforms;
+
+	/// This is called by the last of the instances on it's movableUpdate()
+	void updateSpatialCs();
 };
 
 /// The model scene node
@@ -90,9 +118,10 @@ public:
 
 	/// @name Constructors/Destructor
 	/// @{
-	ModelNode(const char* modelFname,
-		const char* name, SceneGraph* scene, // SceneNode
-		uint movableFlags, Movable* movParent); // Movable
+	ModelNode(
+		const char* name, SceneGraph* scene, SceneNode* node, // SceneNode
+		U32 movableFlags, // Movable
+		const char* modelFname, U instances = 1); // Self
 
 	virtual ~ModelNode();
 	/// @}

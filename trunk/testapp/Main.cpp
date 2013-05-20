@@ -94,9 +94,8 @@ void initPhysics()
 					+ std::to_string(j) + std::to_string(k);
 
 				ModelNode* mnode = new ModelNode(
-					"data/models/crate0/crate0.mdl",
-					name.c_str(),
-					&SceneGraphSingleton::get(), Movable::MF_NONE, nullptr);
+					name.c_str(), &SceneGraphSingleton::get(), nullptr,
+					Movable::MF_NONE, "data/models/crate0/crate0.mdl");
 
 				init.movable = mnode;
 				ANKI_ASSERT(init.movable);
@@ -128,8 +127,8 @@ void init()
 #endif
 
 	// camera
-	cam = new PerspectiveCamera("main-camera", &scene,
-		Movable::MF_NONE, nullptr);
+	cam = new PerspectiveCamera("main-camera", &scene, nullptr,
+		Movable::MF_NONE);
 	const F32 ang = 45.0;
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
@@ -140,7 +139,7 @@ void init()
 	scene.setActiveCamera(cam);
 
 	// lights
-#if 1
+#if 0
 	Vec3 lpos(-24.0, 0.1, -10.0);
 	for(int i = 0; i < 50; i++)
 	{
@@ -148,14 +147,14 @@ void init()
 		{
 			std::string name = "plight" + std::to_string(i) + std::to_string(j);
 
-			PointLight* point = new PointLight(name.c_str(), &scene,
-				Movable::MF_NONE, nullptr);
+			PointLight* point = new PointLight(name.c_str(), &scene, nullptr,
+				Movable::MF_NONE);
 			point->setRadius(0.5);
 			point->setDiffuseColor(Vec4(randFloat(6.0) - 2.0, 
 				randFloat(6.0) - 2.0, randFloat(6.0) - 2.0, 0.0));
 			point->setSpecularColor(Vec4(randFloat(6.0) - 3.0, 
 				randFloat(6.0) - 3.0, randFloat(6.0) - 3.0, 0.0));
-			point->setLocalTranslation(lpos);
+			point->setLocalOrigin(lpos);
 
 			lpos.z() += 2.0;
 		}
@@ -165,8 +164,8 @@ void init()
 	}
 #endif
 
-#if 1
-	SpotLight* spot = new SpotLight("spot0", &scene, Movable::MF_NONE, nullptr);
+#if 0
+	SpotLight* spot = new SpotLight("spot0", &scene, nullptr, Movable::MF_NONE);
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
@@ -177,7 +176,7 @@ void init()
 	spot->setShadowEnabled(true);
 
 
-	spot = new SpotLight("spot1", &scene, Movable::MF_NONE, nullptr);
+	spot = new SpotLight("spot1", &scene, nullptr, Movable::MF_NONE);
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(5.3, 4.3, 3.0),
@@ -188,7 +187,7 @@ void init()
 	spot->setShadowEnabled(true);
 #endif
 
-#if 1
+#if 0
 	// Vase point lights
 	F32 x = 8.5;
 	F32 y = 2.25;
@@ -201,9 +200,9 @@ void init()
 
 		PointLight* point =
 			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
-			&scene, Movable::MF_NONE, nullptr);
+			&scene, nullptr, Movable::MF_NONE);
 		point->setRadius(2.0);
-		point->setLocalTranslation(lightPos);
+		point->setLocalOrigin(lightPos);
 		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
 		point->setSpecularColor(Vec4(1.0, 1.0, 0.0, 0.0));
 
@@ -223,39 +222,37 @@ void init()
 		mevent->enableBits(Event::EF_REANIMATE);
 
 		ParticleEmitter* pe = new ParticleEmitter(
-			"data/particles/smoke.particles",
-			("pe" + std::to_string(i)).c_str(), &scene,
-			Movable::MF_NONE, nullptr);
-		pe->setLocalTranslation(lightPos);
+			("pe" + std::to_string(i)).c_str(), &scene, nullptr,
+			Movable::MF_NONE, "data/particles/smoke.particles");
+		pe->setLocalOrigin(lightPos);
 
 		pe = new ParticleEmitter(
-			"data/particles/fire.particles",
-			("pef" + std::to_string(i)).c_str(), &scene,
-			Movable::MF_NONE, nullptr);
-		pe->setLocalTranslation(lightPos);
+			("pef" + std::to_string(i)).c_str(), &scene, nullptr,
+			Movable::MF_NONE, "data/particles/fire.particles");
+		pe->setLocalOrigin(lightPos);
 	}
 #endif
 
 #if 1
 	// horse
-	horse = new ModelNode("data/models/horse/horse.mdl", "horse", &scene,
-		Movable::MF_NONE, nullptr);
+	horse = new ModelNode("horse", &scene, nullptr,
+		Movable::MF_NONE, "data/models/horse/horse.mdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		0.7));
 
 	// barrel
-	ModelNode* redBarrel = new ModelNode("data/models/red_barrel/red_barrel.mdl",
-		"red_barrel", &scene, Movable::MF_NONE, nullptr);
+	ModelNode* redBarrel = new ModelNode(
+		"red_barrel", &scene, nullptr, Movable::MF_NONE, 
+		"data/models/red_barrel/red_barrel.mdl", 2);
 	redBarrel->setLocalTransform(Transform(Vec3(+2, 0, 0), Mat3::getIdentity(),
 		0.7));
 #endif
 
-#if 1
+#if 0
 	StaticGeometryNode* sponzaModel = new StaticGeometryNode(
 		//"data/maps/sponza/sponza_no_bmeshes.mdl",
 		//"data/maps/sponza/sponza.mdl",
-		"data/maps/sponza/static_geometry.mdl",
-		"sponza", &scene);
+		"sponza", &scene, "data/maps/sponza/static_geometry.mdl");
 
 	(void)sponzaModel;
 #endif
@@ -351,8 +348,7 @@ void mainLoopExtra()
 	}
 	if(in.getKey(KC_7))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("sponza").getMovable();
-		std::cout << mover->getWorldTransform() << std::endl;
+		mover = SceneGraphSingleton::get().findSceneNode("red_barrel").getMovable();
 	}
 
 	if(in.getKey(KC_L) == 1)

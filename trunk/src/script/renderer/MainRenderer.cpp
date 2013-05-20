@@ -18,7 +18,6 @@ static Pps& getPps(MainRenderer* self)
 ANKI_SCRIPT_WRAP(MainRenderer)
 {
 	ANKI_LUA_CLASS_BEGIN(lb, MainRenderer)
-		ANKI_LUA_CONSTRUCTOR()
 		ANKI_LUA_FUNCTION_AS_METHOD("getDbg", &getDbg)
 		ANKI_LUA_FUNCTION_AS_METHOD("getPps", &getPps)
 	ANKI_LUA_CLASS_END()

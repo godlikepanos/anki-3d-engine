@@ -1,27 +1,22 @@
 #ifndef ANKI_SCENE_MOVABLE_H
 #define ANKI_SCENE_MOVABLE_H
 
-#include "anki/util/Object.h"
 #include "anki/util/Bitset.h"
 #include "anki/Math.h"
 #include "anki/core/Timestamp.h"
 #include "anki/scene/Common.h"
-#include <algorithm> // For std::find
 
 namespace anki {
 
-class PropertyMap;
+class SceneNode;
 
 /// @addtogroup Scene
 /// @{
 
 /// Interface for movable scene nodes
-class Movable: public Object<Movable, SceneAllocator<Movable>>,
-	public Bitset<U8>
+class Movable: public Bitset<U8>
 {
 public:
-	typedef Object<Movable, SceneAllocator<Movable>> Base;
-
 	enum MovableFlag
 	{
 		MF_NONE = 0,
@@ -36,10 +31,8 @@ public:
 
 	/// The one and only constructor
 	/// @param flags The flags
-	/// @param parent The parent. It can be nullptr
-	/// @param pmap Property map to add a few variables
-	Movable(U32 flags, Movable* parent, PropertyMap& pmap,
-		const SceneAllocator<Movable>& alloc);
+	/// @param node Pass the scene node
+	Movable(U32 flags, SceneNode* node);
 
 	~Movable();
 	/// @}
@@ -55,7 +48,7 @@ public:
 		lTrf = x;
 		movableMarkForUpdate();
 	}
-	void setLocalTranslation(const Vec3& x)
+	void setLocalOrigin(const Vec3& x)
 	{
 		lTrf.setOrigin(x);
 		movableMarkForUpdate();
@@ -151,6 +144,8 @@ protected:
 
 	/// Keep the previous transformation for checking if it moved
 	Transform prevWTrf = Transform::getIdentity();
+
+	SceneNode* node;
 
 	/// The frame where it was last moved
 	Timestamp timestamp = getGlobTimestamp();

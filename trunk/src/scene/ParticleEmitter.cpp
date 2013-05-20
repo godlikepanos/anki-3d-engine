@@ -42,13 +42,11 @@ Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 
 //==============================================================================
 ParticleBase::ParticleBase(
-	ParticleType type_,
-	// SceneNode
-	const char* name, SceneGraph* scene, 
-	// Movable
-	U32 movableFlags, Movable* movParent)
-	:	SceneNode(name, scene),
-		Movable(movableFlags, movParent, *this, getSceneAllocator()),
+	const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+	U32 movableFlags, // Movable
+	ParticleType type_)
+	:	SceneNode(name, scene, parent),
+		Movable(movableFlags, this),
 		type(type_)
 {
 	sceneNodeProtected.movable = this;
@@ -77,11 +75,9 @@ void ParticleBase::revive(const ParticleEmitter& pe,
 
 //==============================================================================
 ParticleSimple::ParticleSimple(
-	// SceneNode
-	const char* name, SceneGraph* scene, 
-	// Movable
-	U32 movableFlags, Movable* movParent)
-	: ParticleBase(PT_SIMPLE, name, scene, movableFlags, movParent)
+	const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+	U32 movableFlags) // Movable
+	: ParticleBase(name, scene, parent, movableFlags, PT_SIMPLE)
 {}
 
 //==============================================================================
@@ -135,13 +131,11 @@ void ParticleSimple::revive(const ParticleEmitter& pe,
 
 //==============================================================================
 Particle::Particle(
-	// Scene
-	const char* name, SceneGraph* scene,
-	// Movable
-	U32 movableFlags, Movable* movParent, 
+	const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+	U32 movableFlags, // Movable
 	// RigidBody
 	PhysWorld* masterContainer, const Initializer& init)
-	: ParticleBase(PT_PHYSICS, name, scene, movableFlags, movParent),
+	:	ParticleBase(name, scene, parent, movableFlags, PT_PHYSICS),
 		RigidBody(masterContainer, init, this)
 {
 	sceneNodeProtected.rigidBody = this;
@@ -222,14 +216,12 @@ void Particle::revive(const ParticleEmitter& pe,
 
 //==============================================================================
 ParticleEmitter::ParticleEmitter(
-	const char* filename,
-	// SceneNode
-	const char* name, SceneGraph* scene, 
-	// Movable
-	U32 movableFlags, Movable* movParent)
-	:	SceneNode(name, scene),
+	const char* name, SceneGraph* scene, SceneNode* parent,
+	U32 movableFlags,
+	const char* filename)
+	:	SceneNode(name, scene, parent),
 		Spatial(&aabb, getSceneAllocator()),
-		Movable(movableFlags, movParent, *this, getSceneAllocator()),
+		Movable(movableFlags, this),
 		Renderable(getSceneAllocator()),
 		particles(getSceneAllocator())
 {
@@ -283,13 +275,13 @@ ParticleEmitter::~ParticleEmitter()
 }
 
 //==============================================================================
-const ModelPatchBase& ParticleEmitter::getRenderableModelPatchBase() const
+const ModelPatchBase& ParticleEmitter::getRenderableModelPatchBase()
 {
 	return *particleEmitterResource->getModel().getModelPatches()[0];
 }
 
 //==============================================================================
-const Material& ParticleEmitter::getRenderableMaterial() const
+const Material& ParticleEmitter::getRenderableMaterial()
 {
 	return
 		particleEmitterResource->getModel().getModelPatches()[0]->getMaterial();
@@ -319,8 +311,8 @@ void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 		binit.mass = getRandom(particle.mass, particle.massDeviation);
 
 		Particle* part = ANKI_NEW(Particle, getSceneAllocator(),
-			(getName() + std::to_string(i)).c_str(), scene,
-			Movable::MF_NONE, nullptr,
+			(getName() + std::to_string(i)).c_str(), scene, nullptr,
+			Movable::MF_NONE,
 			&scene->getPhysics(), binit);
 
 		part->size = getRandom(particle.size, particle.sizeDeviation);
@@ -337,8 +329,8 @@ void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
 	for(U i = 0; i < maxNumOfParticles; i++)
 	{
 		ParticleSimple* part = ANKI_NEW(ParticleSimple, getSceneAllocator(),
-			(getName() + std::to_string(i)).c_str(),
-			scene, Movable::MF_NONE, nullptr);
+			(getName() + std::to_string(i)).c_str(), scene, nullptr,
+			Movable::MF_NONE);
 
 		part->size = getRandom(particle.size, particle.sizeDeviation);
 		part->alpha = getRandom(particle.alpha, particle.alphaDeviation);

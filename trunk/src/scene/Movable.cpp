@@ -1,17 +1,18 @@
 #include "anki/scene/Movable.h"
-#include "anki/scene/Property.h"
+#include "anki/scene/SceneNode.h"
 
 namespace anki {
 
 //==============================================================================
-Movable::Movable(U32 flags_, Movable* parent, PropertyMap& pmap,
-	const SceneAllocator<Movable>& alloc)
-	: Base(parent, alloc), Bitset(flags_)
+Movable::Movable(U32 flags_, SceneNode* node_)
+	: Bitset(flags_), node(node_)
 {
-	pmap.addNewProperty(
+	ANKI_ASSERT(node);
+
+	/*pmap.addNewProperty(
 		new ReadWritePointerProperty<Transform>("localTransform", &lTrf));
 	pmap.addNewProperty(
-		new ReadPointerProperty<Transform>("worldTransform", &wTrf));
+		new ReadPointerProperty<Transform>("worldTransform", &wTrf));*/
 
 	movableMarkForUpdate();
 }
@@ -24,7 +25,7 @@ Movable::~Movable()
 void Movable::update()
 {
 	// If root begin updating
-	if(getParent() == nullptr)
+	if(node->getParent() == nullptr)
 	{
 		updateWorldTransform();
 	}
@@ -34,7 +35,10 @@ void Movable::update()
 void Movable::updateWorldTransform()
 {
 	prevWTrf = wTrf;
-	const Movable* parent = getParent();
+	const Movable* parent = 
+		node->getParent() 
+		? node->getParent()->getMovable() 
+		: nullptr;
 	const Bool dirty = bitsEnabled(MF_TRANSFORM_DIRTY);
 
 	// If dirty then update world transform
@@ -61,16 +65,24 @@ void Movable::updateWorldTransform()
 	}
 
 	// Update the children
-	Movable::Container::iterator it = getChildrenBegin();
-	for(; it != getChildrenEnd(); it++)
+	SceneNode::Base::Container::iterator it = node->getChildrenBegin();
+	for(; it != node->getChildrenEnd(); it++)
 	{
-		// If parent is dirty then make children dirty as well
-		if(dirty)
-		{
-			(*it)->movableMarkForUpdate();
-		}
+		SceneNode* sn = (*it);
+		ANKI_ASSERT(sn);
+		Movable* mov = sn->getMovable();
 
-		(*it)->updateWorldTransform();
+		// If child is movable update it
+		if(mov)
+		{
+			// If parent is dirty then make children dirty as well
+			if(dirty)
+			{
+				mov->movableMarkForUpdate();
+			}
+
+			mov->updateWorldTransform();
+		}
 	}
 
 	// Now it's a good time to cleanse parent

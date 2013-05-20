@@ -34,7 +34,7 @@ void App::handleLoggerMessages(const Logger::Info& info)
 {
 	std::ostream* out = NULL;
 	const char* x = NULL;
-	const char* terminalColor;
+	const char* terminalColor = nullptr;
 
 	switch(info.type)
 	{

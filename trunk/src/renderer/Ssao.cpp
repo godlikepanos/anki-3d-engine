@@ -72,7 +72,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	//
 	// noise map
 	//
-	noiseMap.load("engine-rsrc/noise.png");
+	noiseMap.load("engine-rsrc/noise3.png");
 	noiseMap->setFiltering(Texture::TFT_NEAREST);
 	if(noiseMap->getWidth() != noiseMap->getHeight())
 	{

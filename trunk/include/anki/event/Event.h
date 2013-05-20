@@ -65,6 +65,8 @@ public:
 	/// @return Return false if you don't want to be killed
 	virtual Bool onKilled(F32 prevUpdateTime, F32 crntTime)
 	{
+		(void)prevUpdateTime;
+		(void)crntTime;
 		return true;
 	}
 

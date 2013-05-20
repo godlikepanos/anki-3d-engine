@@ -7,12 +7,13 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-Camera::Camera(CameraType type_,
-	const char* name, SceneGraph* scene, // SceneNode
-	U32 movableFlags, Movable* movParent, // Movable
-	Frustum* frustum) // Spatial & Frustumable
-	:	SceneNode(name, scene),
-		Movable(movableFlags, movParent, *this, getSceneAllocator()),
+Camera::Camera(
+	const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+	U32 movableFlags, // Movable
+	Frustum* frustum, // Spatial & Frustumable
+	CameraType type_) 
+	:	SceneNode(name, scene, parent),
+		Movable(movableFlags, this),
 		Spatial(frustum, getSceneAllocator()),
 		Frustumable(frustum),
 		type(type_)
@@ -44,10 +45,10 @@ void Camera::lookAtPoint(const Vec3& point)
 //==============================================================================
 
 //==============================================================================
-PerspectiveCamera::PerspectiveCamera(const char* name, SceneGraph* scene,
-	uint movableFlags, Movable* movParent)
-	: Camera(CT_PERSPECTIVE, name, scene, movableFlags, movParent, 
-		&frustum)
+PerspectiveCamera::PerspectiveCamera(
+	const char* name, SceneGraph* scene, SceneNode* parent,
+	U32 movableFlags)
+	: Camera(name, scene, parent, movableFlags, &frustum, CT_PERSPECTIVE)
 {}
 
 //==============================================================================
@@ -55,10 +56,10 @@ PerspectiveCamera::PerspectiveCamera(const char* name, SceneGraph* scene,
 //==============================================================================
 
 //==============================================================================
-OrthographicCamera::OrthographicCamera(const char* name, SceneGraph* scene,
-	uint movableFlags, Movable* movParent)
-	: Camera(CT_ORTHOGRAPHIC, name, scene, movableFlags, movParent, 
-		&frustum)
+OrthographicCamera::OrthographicCamera(
+	const char* name, SceneGraph* scene, SceneNode* parent,
+	U32 movableFlags)
+	: Camera(name, scene, parent, movableFlags, &frustum, CT_ORTHOGRAPHIC)
 {}
 
 } // end namespace

@@ -3,11 +3,12 @@
 namespace anki {
 
 //==============================================================================
-Path::Path(const char* filename,
-	const char* name, SceneGraph* scene,
-	U32 movableFlags, Movable* movParent)
-	:	SceneNode(name, scene), 
-		Movable(movableFlags, movParent, *this, getSceneAllocator()),
+Path::Path(
+	const char* name, SceneGraph* scene, SceneNode* parent,
+	U32 movableFlags,
+	const char* filename)
+	:	SceneNode(name, scene, parent), 
+		Movable(movableFlags, this),
 		points(getSceneAllocator())
 {
 	// Set scene node related flags

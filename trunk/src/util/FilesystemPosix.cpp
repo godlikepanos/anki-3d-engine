@@ -41,8 +41,8 @@ bool directoryExists(const char* filename)
 }
 
 //==============================================================================
-static int rmDir(const char* fpath, const struct stat* sb, int typeflag,
-	struct FTW* ftwbuf)
+static int rmDir(const char* fpath, const struct stat* sb, int /*typeflag*/,
+	struct FTW* /*ftwbuf*/)
 {
 	(void)sb;
 	int rv = remove(fpath);
@@ -81,6 +81,7 @@ void createDirectory(const char* dir)
 void toNativePath(const char* path)
 {
 	ANKI_ASSERT(path);
+	(void)path;
 }
 
 } // end namespace anki

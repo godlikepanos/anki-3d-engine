@@ -60,13 +60,13 @@ Obb Obb::getCompoundShape(const Obb& b) const
 {
 	Obb out;
 
-	std::array<Vec3, 8> points0;
-	std::array<Vec3, 8> points1;
+	Array<Vec3, 8> points0;
+	Array<Vec3, 8> points1;
 
 	getExtremePoints(points0);
 	b.getExtremePoints(points1);
 
-	std::array<Vec3, 16> points;
+	Array<Vec3, 16> points;
 	for(U i = 0; i < 8; i++)
 	{
 		points[i] = points0[i];
@@ -78,7 +78,7 @@ Obb Obb::getCompoundShape(const Obb& b) const
 }
 
 //==============================================================================
-void Obb::getExtremePoints(std::array<Vec3, 8>& points) const
+void Obb::getExtremePoints(Array<Vec3, 8>& points) const
 {
 	// L: left, R: right, T: top, B: bottom, F: front, B: back
 	enum
@@ -112,10 +112,9 @@ void Obb::getExtremePoints(std::array<Vec3, 8>& points) const
 	points[RTB] = 2.0 * points[LTF].dot(yAxis) * yAxis - points[LTF];
 	points[RBF] = 2.0 * points[LTF].dot(zAxis) * zAxis - points[LTF];
 
-	std::array<Vec3, 8>::iterator it = points.begin();
-	for(; it != points.end(); ++it)
+	for(Vec3& point : points)
 	{
-		(*it) += center;
+		point += center;
 	}
 }
 

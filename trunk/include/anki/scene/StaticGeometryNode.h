@@ -17,7 +17,7 @@ class StaticGeometrySpatial: public Spatial
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	StaticGeometrySpatial(const Obb& obb, const SceneAllocator<U8>& alloc);
+	StaticGeometrySpatial(const Obb* obb, const SceneAllocator<U8>& alloc);
 	/// @}
 };
 
@@ -28,8 +28,9 @@ class StaticGeometryPatchNode: public SceneNode, public Spatial,
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	StaticGeometryPatchNode(const ModelPatchBase* modelPatch,
-		const char* name, SceneGraph* scene); // Scene
+	StaticGeometryPatchNode(
+		const char* name, SceneGraph* scene, // Scene
+		const ModelPatchBase* modelPatch); // Self
 
 	~StaticGeometryPatchNode();
 	/// @}
@@ -38,13 +39,13 @@ public:
 	/// @{
 
 	/// Implements Renderable::getModelPatchBase
-	const ModelPatchBase& getRenderableModelPatchBase() const
+	const ModelPatchBase& getRenderableModelPatchBase()
 	{
 		return *modelPatch;
 	}
 
 	/// Implements  Renderable::getMaterial
-	const Material& getRenderableMaterial() const
+	const Material& getRenderableMaterial()
 	{
 		return modelPatch->getMaterial();
 	}
@@ -58,8 +59,9 @@ private:
 class StaticGeometryNode: public SceneNode
 {
 public:
-	StaticGeometryNode(const char* filename,
-		const char* name, SceneGraph* scene); // Scene
+	StaticGeometryNode(
+		const char* name, SceneGraph* scene, // Scene
+		const char* filename); // Self
 
 	~StaticGeometryNode();
 

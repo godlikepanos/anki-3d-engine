@@ -112,5 +112,12 @@ void main(void)
 		fColor = vec3(ssao);
 	}
 #endif
+
+#if 0
+	if(fColor.r != 0.00000001)
+	{
+		fColor = hdr;
+	}
+#endif
 }
 

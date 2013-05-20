@@ -47,9 +47,10 @@ private:
 class Path: public SceneNode, public Movable
 {
 public:
-	Path(const char* filename,
-		const char* name, SceneGraph* scene, // SceneNode
-		U32 movableFlags, Movable* movParent); // Movable
+	Path(
+		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
+		U32 movableFlags, // Movable
+		const char* filename); // Self
 
 	const SceneVector<PathPoint>& getPoints() const
 	{

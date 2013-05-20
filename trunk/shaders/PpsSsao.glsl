@@ -45,7 +45,7 @@ uniform sampler2D noiseMap;
 #define SAMPLE_RAD 0.08
 #define SCALE 1.0
 #define INTENSITY 3.0
-#define BIAS 0.0
+#define BIAS 0.1
 
 vec3 getNormal(in vec2 uv)
 {
@@ -56,11 +56,13 @@ vec3 getNormal(in vec2 uv)
 
 vec2 getRandom(in vec2 uv)
 {
-	vec2 noise = texture(
-		noiseMap, 
-		vec2(float(WIDTH), float(HEIGHT)) 
-		* uv / float(NOISE_MAP_SIZE) / 2.0).xy;
-	return normalize(noise * 2.0 - 1.0);
+	const vec2 tmp = vec2(
+		float(WIDTH) / float(NOISE_MAP_SIZE), 
+		float(HEIGHT) / float(NOISE_MAP_SIZE));
+
+	vec2 noise = texture(noiseMap, tmp * uv).xy;
+	//return normalize(noise * 2.0 - 1.0);r
+	return noise;
 }
 
 vec3 getPosition(in vec2 uv)
@@ -105,7 +107,7 @@ void main(void)
 	vec3 p = getPosition(vTexCoords);
 	vec3 n = getNormal(vTexCoords);
 	vec2 rand = getRandom(vTexCoords);
-	//rand = rand - rand + vec2(0.0, 0.0);
+	//rand = rand * 0.000001 + vec2(0.0, 0.0);
 
 	fColor = 0.0;
 	
@@ -116,5 +118,7 @@ void main(void)
 	}
 
 	fColor = 1.0 - fColor / float(KERNEL_SIZE);
+
+	//fColor = fColor * 0.00001 + (rand.x + rand.y) / 2.0;
 }
 
