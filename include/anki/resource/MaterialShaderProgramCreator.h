@@ -11,8 +11,8 @@ class XmlElement;
 /// <shaderProgam></shaderProgram> located inside a <material></material>
 /// and creates the source of a custom program.
 ///
-/// @note Be carefull when you change the methods. Create as less unique 
-///       shaders as possible
+/// @note Be carefull when you change the methods. Some change may create more
+////      unique shaders and this is never good.
 class MaterialShaderProgramCreator
 {
 public:
@@ -26,6 +26,7 @@ public:
 		std::string line;
 		U32 shaders = 0; ///< Shader mask
 		Bool putInBlock = false;
+		Bool instanced = false;
 	};
 
 	explicit MaterialShaderProgramCreator(const XmlElement& pt, 

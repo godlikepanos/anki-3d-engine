@@ -71,20 +71,20 @@ const float weights[4] = float[](
 
 // Calc the kernel
 #if defined(VPASS)
-#	define BLURRING_OFFSET_X(val) (float(val) / float(IMG_DIMENSION))
-#	define BLURRING_OFFSET_Y(val) 0.0
+#	define BLURRING_OFFSET_X(val, sign_) ((float(val) + float(BLURRING_DIST)) * float(sign_) / float(IMG_DIMENSION))
+#	define BLURRING_OFFSET_Y(val, sign_) 0.0
 #else
-#	define BLURRING_OFFSET_X(val) 0.0
-#	define BLURRING_OFFSET_Y(val) (float(val) / float(IMG_DIMENSION))
+#	define BLURRING_OFFSET_X(val, sign_) 0.0
+#	define BLURRING_OFFSET_Y(val, sign_) ((float(val) + float(BLURRING_DIST)) * float(sign_) / float(IMG_DIMENSION))
 #endif
 
-#define BLURRING_OFFSET(v) vec2(BLURRING_OFFSET_X(v), BLURRING_OFFSET_Y(v))
+#define BLURRING_OFFSET(val, sign_) vec2(BLURRING_OFFSET_X(val, sign_), BLURRING_OFFSET_Y(val, sign_))
 
 const vec2 kernel[4] = vec2[](
-	BLURRING_OFFSET(1.3846153846),
-	BLURRING_OFFSET(3.2307692308),
-	BLURRING_OFFSET(-1.3846153846),
-	BLURRING_OFFSET(-3.2307692308));
+	BLURRING_OFFSET(1.3846153846, 1),
+	BLURRING_OFFSET(3.2307692308, 1),
+	BLURRING_OFFSET(1.3846153846, -1),
+	BLURRING_OFFSET(3.2307692308, -1));
 
 // Output
 layout(location = 0) out COL_TYPE fFragColor;

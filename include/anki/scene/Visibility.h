@@ -146,7 +146,7 @@ struct DistanceSortJob: ThreadJob
 	VisibilityTestResults::Container::iterator nodes;
 	Vec3 origin;
 
-	void operator()(U threadId, U threadsCount)
+	void operator()(U /*threadId*/, U /*threadsCount*/)
 	{
 		DistanceSortFunctor comp;
 		comp.origin = origin;
@@ -160,7 +160,7 @@ struct MaterialSortJob: ThreadJob
 	U nodesCount;
 	VisibilityTestResults::Container::iterator nodes;
 
-	void operator()(U threadId, U threadsCount)
+	void operator()(U /*threadId*/, U /*threadsCount*/)
 	{
 		std::sort(nodes, nodes + nodesCount, MaterialSortFunctor());
 	}

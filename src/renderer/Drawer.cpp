@@ -33,6 +33,10 @@ struct SetupRenderableVariableVisitor
 	RenderableVariable* rvar = nullptr;
 	const ShaderProgramUniformVariable* uni;
 
+	// Used for 
+	U32* subSpatialIndices = nullptr;
+	U32 subSpatialIndicesCount = 0;
+
 	/// Set a uniform in a client block
 	template<typename T>
 	void uniSet(const ShaderProgramUniformVariable& uni,
@@ -54,8 +58,6 @@ struct SetupRenderableVariableVisitor
 		const Mat4& vp = fr->getViewProjectionMatrix();
 		const Mat4& v = fr->getViewMatrix();
 
-		const U32 maxInstances = 32;
-
 		switch(x.getBuildinId())
 		{
 		case BMV_NO_BUILDIN:
@@ -65,7 +67,7 @@ struct SetupRenderableVariableVisitor
 		case BMV_MVP_MATRIX:
 			if(trfs)
 			{
-				Array<Mat4, maxInstances> mvp;
+				Array<Mat4, ANKI_MAX_INSTANCES> mvp;
 
 				for(U i = 0; i < size; i++)
 				{
@@ -83,7 +85,7 @@ struct SetupRenderableVariableVisitor
 		case BMV_MV_MATRIX:
 			{
 				ANKI_ASSERT(trfs != nullptr);
-				Array<Mat4, maxInstances> mv;
+				Array<Mat4, ANKI_MAX_INSTANCES> mv;
 
 				for(U i = 0; i < size; i++)
 				{
@@ -99,7 +101,7 @@ struct SetupRenderableVariableVisitor
 		case BMV_NORMAL_MATRIX:
 			if(trfs)
 			{
-				Array<Mat3, maxInstances> normm;
+				Array<Mat3, ANKI_MAX_INSTANCES> normm;
 
 				for(U i = 0; i < size; i++)
 				{
@@ -125,7 +127,7 @@ struct SetupRenderableVariableVisitor
 				Mat3 rot =
 					fr->getViewMatrix().getRotationPart().getTransposed();
 
-				Array<Mat4, maxInstances> bmvp;
+				Array<Mat4, ANKI_MAX_INSTANCES> bmvp;
 
 				for(U i = 0; i < size; i++)
 				{
@@ -191,7 +193,8 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 //==============================================================================
 void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 	const Frustumable& fr, const ShaderProgram &prog,
-	Renderable& renderable)
+	Renderable& renderable, 
+	U32* subSpatialIndices, U subSpatialIndicesCount)
 {
 	prog.bind();
 	
@@ -200,6 +203,8 @@ void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 	vis.fr = &fr;
 	vis.renderable = &renderable;
 	vis.r = r;
+	vis.subSpatialIndices = subSpatialIndices;
+	vis.subSpatialIndicesCount = subSpatialIndicesCount;
 
 	PassLevelKey key(key_.pass,
 		std::min(key_.level,
@@ -297,23 +302,35 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 
 	U32 primCount = 1;
 
-	if(subSpatialIndicesCount == 0)
+	const ModelPatchBase& resource = renderable->getRenderableModelPatchBase();
+	if(subSpatialIndicesCount == 0 || resource.getSubMeshesCount() == 0)
 	{
-		renderable->getRenderableModelPatchBase().getRenderingData(
+		// No multimesh
+
+		resource.getRenderingData(
 			key, vao, prog, indicesCountArray[0]);
 
 		indicesOffsetArray[0] = nullptr;
 	}
 	else
 	{
-		renderable->getRenderableModelPatchBase().getRenderingDataSub(
+		// It's a multimesh
+
+		resource.getRenderingDataSub(
 			key, vao, prog, 
 			subSpatialIndices, subSpatialIndicesCount,
 			indicesCountArray, indicesOffsetArray, primCount);
 	}
 
+	// Hack the instances count
+	if(subSpatialIndicesCount > 0 && instancesCount > 1)
+	{
+		instancesCount = subSpatialIndicesCount;
+	}
+
 	// Setup shader
-	setupShaderProg(key, fr, *prog, *renderable);
+	setupShaderProg(
+		key, fr, *prog, *renderable, subSpatialIndices, subSpatialIndicesCount);
 
 	// Render
 	ANKI_ASSERT(vao->getAttachmentsCount() > 1);

@@ -7,12 +7,13 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-Light::Light(LightType t, // Light
-	const char* name, SceneGraph* scene, // Scene
-	U32 movableFlags, Movable* movParent, // Movable
-	CollisionShape* cs) // Spatial
-	:	SceneNode(name, scene),
-		Movable(movableFlags, movParent, *this, getSceneAllocator()),
+Light::Light(
+	const char* name, SceneGraph* scene, SceneNode* parent, // Scene
+	U32 movableFlags, // Movable
+	CollisionShape* cs, // Spatial
+	LightType t) // Self
+	:	SceneNode(name, scene, parent),
+		Movable(movableFlags, this),
 		Spatial(cs, getSceneAllocator()),
 		type(t)
 {
@@ -37,9 +38,10 @@ Light::~Light()
 //==============================================================================
 
 //==============================================================================
-PointLight::PointLight(const char* name, SceneGraph* scene,
-	U32 movableFlags, Movable* movParent)
-	: Light(LT_POINT, name, scene, movableFlags, movParent, &sphereW)
+PointLight::PointLight(
+	const char* name, SceneGraph* scene, SceneNode* parent,
+	U32 movableFlags)
+	: Light(name, scene, parent, movableFlags, &sphereW, LT_POINT)
 {
 	F32& r = sphereW.getRadius();
 	addNewProperty(new ReadWritePointerProperty<F32>("radius", &r));
@@ -50,9 +52,10 @@ PointLight::PointLight(const char* name, SceneGraph* scene,
 //==============================================================================
 
 //==============================================================================
-SpotLight::SpotLight(const char* name, SceneGraph* scene,
-	U32 movableFlags, Movable* movParent)
-	: 	Light(LT_SPOT, name, scene, movableFlags, movParent, &frustum),
+SpotLight::SpotLight(
+	const char* name, SceneGraph* scene, SceneNode* parent,
+	U32 movableFlags)
+	: 	Light(name, scene, parent, movableFlags, &frustum, LT_SPOT),
 		Frustumable(&frustum)
 {
 	sceneNodeProtected.frustumable = this;

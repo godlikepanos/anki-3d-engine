@@ -8,9 +8,9 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-StaticGeometrySpatial::StaticGeometrySpatial(const Obb& obb,
+StaticGeometrySpatial::StaticGeometrySpatial(const Obb* obb,
 	const SceneAllocator<U8>& alloc)
-	: Spatial(&obb, alloc)
+	: Spatial(obb, alloc)
 {}
 
 //==============================================================================
@@ -19,8 +19,8 @@ StaticGeometrySpatial::StaticGeometrySpatial(const Obb& obb,
 
 //==============================================================================
 StaticGeometryPatchNode::StaticGeometryPatchNode(
-	const ModelPatchBase* modelPatch_, const char* name, SceneGraph* scene)
-	:	SceneNode(name, scene),
+	const char* name, SceneGraph* scene, const ModelPatchBase* modelPatch_)
+	:	SceneNode(name, scene, nullptr),
 		Spatial(&modelPatch_->getBoundingShape(), getSceneAllocator()),
 		Renderable(getSceneAllocator()),
 		modelPatch(modelPatch_)
@@ -40,7 +40,7 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(
 		{
 			StaticGeometrySpatial* spatial =
 				ANKI_NEW(StaticGeometrySpatial, getSceneAllocator(),
-				modelPatch->getBoundingShapeSub(i), getSceneAllocator());
+				&modelPatch->getBoundingShapeSub(i), getSceneAllocator());
 
 			spatialProtected.subSpatials[i] = spatial;
 		}
@@ -61,9 +61,9 @@ StaticGeometryPatchNode::~StaticGeometryPatchNode()
 //==============================================================================
 
 //==============================================================================
-StaticGeometryNode::StaticGeometryNode(const char* filename,
-	const char* name, SceneGraph* scene)
-	: SceneNode(name, scene), patches(getSceneAllocator())
+StaticGeometryNode::StaticGeometryNode(
+	const char* name, SceneGraph* scene, const char* filename)
+	: SceneNode(name, scene, nullptr), patches(getSceneAllocator())
 {
 	model.load(filename);
 
@@ -76,7 +76,7 @@ StaticGeometryNode::StaticGeometryNode(const char* filename,
 
 		StaticGeometryPatchNode* node = ANKI_NEW(
 			StaticGeometryPatchNode, getSceneAllocator(),
-			patch, name_.c_str(), scene);
+			name_.c_str(), scene, patch);
 
 		patches.push_back(node);
 		++i;

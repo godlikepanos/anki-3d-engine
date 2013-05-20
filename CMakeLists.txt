@@ -49,6 +49,10 @@ SET(ANKI_WINDOW_BACKEND "${_WIN_BACKEND}" CACHE STRING "The window backend (GLXX
 
 SET(ANKI_GCC_TO_STRING_WORKAROUND "0" CACHE STRING "Enable workaround for C++11 GCC bug (0 or 1)")
 
+# Extra directories
+SET(ANKI_EXTRA_INCLUDE_DIRS CACHE STRING "Some extra include paths (Needed for some weird builds)")
+SET(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for some weird builds)")
+
 #
 # Options that affect anki and extern
 #
@@ -160,6 +164,9 @@ ELSE()
 	MESSAGE("++ With gperftools profiler: false")
 ENDIF()
 
+INCLUDE_DIRECTORIES(${ANKI_EXTRA_INCLUDE_DIRS})
+LINK_DIRECTORIES(${ANKI_EXTRA_LIB_DIRS})
+
 #
 # Install
 #
@@ -223,17 +230,11 @@ ADD_DEFINITIONS("-Dthread_local=__thread")
 #
 # AnKi compiler flags (Mainly warnings)
 #
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic-errors -pedantic -ansi -Wall -W -Wextra -Wwrite-strings -Wno-unused -Wundef -Wunused-variable -Werror -std=c++11")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic-errors -pedantic -ansi -Wall -W -Wextra -Wwrite-strings -Wno-unused -Wno-unused-parameter -Wundef -Werror -std=c++11")
 
 #
 # Include & lib directories
 #
-SET(ANKI_EXTRA_INCLUDE_DIRS CACHE STRING "Some extra include paths (Needed for FBDEV)")
-SET(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for FBDEV)")
-
-INCLUDE_DIRECTORIES(${ANKI_EXTRA_INCLUDE_DIRS})
-LINK_DIRECTORIES(${ANKI_EXTRA_LIB_DIRS})
-
 INCLUDE_DIRECTORIES("extern/tinyxml2/include" "extern/lua" "extern/png" "extern/bullet" "include"
 	"${CMAKE_CURRENT_BINARY_DIR}")
 

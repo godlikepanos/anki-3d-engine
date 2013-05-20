@@ -96,12 +96,19 @@ void MaterialShaderProgramCreator::parseInputsTag(const XmlElement& programEl)
 		XmlElement constEl = inputEl.getChildElementOptional("const");
 		XmlElement valueEl = inputEl.getChildElement("value");
 		XmlElement arrSizeEl = inputEl.getChildElementOptional("arraySize");
+		XmlElement instancedEl = inputEl.getChildElementOptional("instanced");
 
 		// <const>
 		inpvar->constant = (constEl) ? constEl.getInt() : false;
 
 		// <array>
 		inpvar->arraySize = (arrSizeEl) ? arrSizeEl.getInt() : 0;
+
+		// instanced
+		if(inpvar->arraySize == 0)
+		{
+			inpvar->instanced = (instancedEl) ? instancedEl.getInt() : 0;
+		}
 
 		// <value>
 		if(valueEl.getText())
@@ -111,13 +118,19 @@ void MaterialShaderProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 		if(inpvar->constant == false)
 		{
-			// Handle non-consts
+			// Handle NON-consts
 
 			inpvar->line = inpvar->type + " " + inpvar->name;
 				
 			if(inpvar->arraySize > 1)
 			{
 				inpvar->line += "[" + std::to_string(inpvar->arraySize) 
+					+ "U]";
+			}
+
+			if(inpvar->instanced)
+			{
+				inpvar->line += "[" + std::to_string(ANKI_MAX_INSTANCES) 
 					+ "U]";
 			}
 
@@ -184,9 +197,13 @@ void MaterialShaderProgramCreator::parseShaderTag(const XmlElement& shaderEl)
 	{
 		shader = VERTEX;
 	}
-	else
+	else if(type == "fragment")
 	{
 		shader = FRAGMENT;
+	}
+	else
+	{
+		throw ANKI_EXCEPTION("Unknown <shader>");
 	}
 
 	// <includes></includes>
@@ -290,24 +307,39 @@ void MaterialShaderProgramCreator::parseOperationTag(
 		do
 		{
 			// Search for all the inputs and mark the appropriate
+			Input* input = nullptr;
 			for(U i = 0; i < inputs.size(); i++)
 			{
 				// Check that the first part of the string is equal to the 
 				// variable and the following char is '['
 				std::string text = argEl.getText();
 				const std::string& name = inputs[i]->name;
-				if(text == name 
-					|| (text.find(name) == 0 
-						&& text.size() > name.size()
-						&& text[name.size()] == '['))
+				if(text == name)
 				{
 					inputs[i]->shaders |= (U32)shader;
+					input = inputs[i];
 					break;
 				}
 			}
 
-			// Add to a list
-			argsList.push_back(argEl.getText());
+			// Add to a list and do something special if instanced
+			if(input && input->instanced)
+			{
+				if(shader == VERTEX)
+				{
+					argsList.push_back(std::string(argEl.getText()) 
+						+ "[gl_InstanceID]");
+				}
+				else
+				{
+					argsList.push_back(std::string(argEl.getText()) 
+						+ "[vInstanceId]");
+				}
+			}
+			else
+			{
+				argsList.push_back(argEl.getText());
+			}
 
 			// Advance
 			argEl = argEl.getNextSiblingElement("argument");

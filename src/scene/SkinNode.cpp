@@ -8,6 +8,8 @@ namespace anki {
 
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
+#if 0
+
 //==============================================================================
 // SkinMesh                                                                    =
 //==============================================================================
@@ -369,5 +371,7 @@ void SkinNode::deformHeadsTails(const Skeleton& skeleton,
 	}
 #endif
 }
+
+#endif
 
 } // end namespace

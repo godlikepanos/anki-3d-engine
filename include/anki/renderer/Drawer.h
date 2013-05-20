@@ -47,7 +47,9 @@ private:
 		const PassLevelKey& key,
 		const Frustumable& fr,
 		const ShaderProgram& prog,
-		Renderable& renderable);
+		Renderable& renderable,
+		U32* subSpatialIndices,
+		U subSpatialIndicesCount);
 };
 
 } // end namespace anki

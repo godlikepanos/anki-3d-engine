@@ -39,7 +39,7 @@ public:
 		/// with any surface then it shouldn't be visible and be processed 
 		/// further. This flag is being used to check if we should test agains
 		/// near plane when using the tiler for visibility tests.
-		SF_FULLY_TRANSPARENT = 1 << 3
+		SF_FULLY_TRANSPARENT = 1 << 3,
 	};
 
 	/// Pass the collision shape here so we can avoid the virtuals

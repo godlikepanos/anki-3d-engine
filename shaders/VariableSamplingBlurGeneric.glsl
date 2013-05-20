@@ -64,12 +64,14 @@ in vec2 vTexCoords;
 #endif
 
 // Calc the kernel. Use offsets of 3 to take advantage of bilinear filtering
+#define BLURRING(val, sign_) ((float(val) * (float(BLURRING_DIST) + 1.0) / float(IMG_DIMENSION)) * float(sign_))
+
 #if defined(VPASS)
-#	define BLURRING_OFFSET_X(val, sign_) ((float(val) * (BLURRING_DIST + 3.0) / float(IMG_DIMENSION)) * float(sign_))
+#	define BLURRING_OFFSET_X(val, sign_) BLURRING(val, sign_)
 #	define BLURRING_OFFSET_Y(val, sign_) 0.0
 #else
 #	define BLURRING_OFFSET_X(val, sign_) 0.0
-#	define BLURRING_OFFSET_Y(val, sign_) ((float(val) * (BLURRING_DIST + 3.0) / float(IMG_DIMENSION)) * float(sign_))
+#	define BLURRING_OFFSET_Y(val, sign_) BLURRING(val, sign_)
 #endif
 
 #define BLURRING_OFFSET(v, s) vec2(BLURRING_OFFSET_X(v, s), BLURRING_OFFSET_Y(v, s))

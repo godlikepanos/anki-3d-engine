@@ -21,6 +21,12 @@ struct Array
 	typedef Value& Reference;
 	typedef const Value& ConstReference;
 
+	// std compatible
+	typedef Iterator iterator;
+	typedef ConstIterator const_iterator;
+	typedef Reference reference;
+	typedef ConstReference const_reference;
+
 	Value data[N];
 
 	Reference operator[](const PtrSize n)
@@ -59,7 +65,37 @@ struct Array
 		return &data[0] + N;
 	}
 
+	/// Make it compatible with STL
+	Reference front() 
+	{
+		return data[0];
+	}
+
+	/// Make it compatible with STL
+	ConstReference front() const
+	{
+		return data[0];
+	}
+
+	/// Make it compatible with STL
+	Reference back() 
+	{
+		return data[N - 1];
+	}
+
+	/// Make it compatible with STL
+	ConstReference back() const
+	{
+		return data[N - 1];
+	}
+
 	static constexpr PtrSize getSize()
+	{
+		return N;
+	}
+
+	/// Make it compatible with STL
+	static constexpr PtrSize size()
 	{
 		return N;
 	}

@@ -54,22 +54,21 @@ void Hdr::initInternal(const Renderer::Initializer& initializer)
 
 	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
 
-	F32 blurringDistRealX = F32(blurringDist / width);// XXX
-	F32 blurringDistRealY = F32(blurringDist / height);// XXX
-
 	std::string pps =
 		"#define HPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST " + std::to_string(blurringDistRealX) + "\n" // XXX
-		"#define IMG_DIMENSION " + std::to_string(height) + ".0\n";
+		"#define BLURRING_DIST " + std::to_string(blurringDist) + "\n"
+		"#define IMG_DIMENSION " + std::to_string(height) + "\n"
+		"#define SAMPLES 7\n";
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.c_str()).c_str());
 
 	pps =
 		"#define VPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST " + std::to_string(blurringDistRealY) + "\n"// XXX
-		"#define IMG_DIMENSION " + std::to_string(width) + ".0\n";
+		"#define BLURRING_DIST " + std::to_string(blurringDist) + "\n"
+		"#define IMG_DIMENSION " + std::to_string(width) + "\n"
+		"#define SAMPLES 7\n";
 	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.c_str()).c_str());
 

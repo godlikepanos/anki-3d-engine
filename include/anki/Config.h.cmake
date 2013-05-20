@@ -90,7 +90,7 @@
 
 // General config
 #define ANKI_MAX_MULTIDRAW_PRIMITIVES 64
-#define ANKI_MAX_INSTANCES 16
+#define ANKI_MAX_INSTANCES 64
 
 // Renderer config
 #define ANKI_RENDERER_MAX_POINT_LIGHTS (512 - 16)

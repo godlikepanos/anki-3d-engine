@@ -3,8 +3,7 @@
 
 #include "anki/scene/Property.h"
 #include "anki/scene/Common.h"
-#include "anki/scene/SceneObject.h"
-#include <string>
+#include "anki/util/Object.h"
 
 namespace anki {
 
@@ -23,18 +22,24 @@ class Path;
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode: public SceneObject, public PropertyMap
+class SceneNode: public Object<SceneNode, SceneAllocator<SceneNode>>,
+	public PropertyMap
 {
 public:
+	typedef Object<SceneNode, SceneAllocator<SceneNode>> Base;
+
 	/// @name Constructors/Destructor
 	/// @{
 
 	/// The one and only constructor
-	/// @param name The unique name of the node
+	/// @param name The unique name of the node. If it's nullptr the the node
+	///             is not searchable
 	/// @param scene The scene that will register it
+	/// @param parent The parent of tha node. Used mainly in movable nodes
 	explicit SceneNode(
 		const char* name,
-		SceneGraph* scene);
+		SceneGraph* scene,
+		SceneNode* parent = nullptr);
 
 	/// Unregister node
 	virtual ~SceneNode();
@@ -42,9 +47,21 @@ public:
 
 	/// @name Accessors
 	/// @{
+
+	/// Return the name. It may be nullptr for nodes that we don't want to 
+	/// track
 	const char* getName() const
 	{
-		return name.c_str();
+		return name.length() > 0 ? name.c_str() : nullptr;
+	}
+
+	SceneAllocator<U8> getSceneAllocator() const;
+
+	SceneAllocator<U8> getSceneFrameAllocator() const;
+
+	SceneGraph& getSceneGraph()
+	{
+		return *scene;
 	}
 	/// @}
 
@@ -142,6 +159,7 @@ protected:
 	} sceneNodeProtected;
 
 private:
+	SceneGraph* scene;
 	SceneString name; ///< A unique name
 };
 /// @}

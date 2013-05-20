@@ -198,6 +198,11 @@ void NativeWindow::create(NativeWindowInitializer& initializer)
 {
 	impl.reset(new NativeWindowImpl);
 	impl->create(initializer);
+
+	// Set the size after because the create may have changed it to something
+	// more nice
+	width = initializer.width;
+	height = initializer.height;
 }
 
 //==============================================================================

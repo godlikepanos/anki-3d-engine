@@ -156,19 +156,19 @@ public:
 	virtual ~Renderable();
 
 	/// Access to VAOs
-	virtual const ModelPatchBase& getRenderableModelPatchBase() const = 0;
+	virtual const ModelPatchBase& getRenderableModelPatchBase() = 0;
 
 	/// Access the material
-	virtual const Material& getRenderableMaterial() const = 0;
+	virtual const Material& getRenderableMaterial() = 0;
 
 	/// Information for movables. It's actualy an array of transformations.
-	virtual const Transform* getRenderableWorldTransforms() const
+	virtual const Transform* getRenderableWorldTransforms()
 	{
 		return nullptr;
 	}
 
 	/// Number of instances. If greater than 1 then it's instanced
-	virtual U32 getRenderableInstancesCount() const
+	virtual U32 getRenderableInstancesCount()
 	{
 		return 1;
 	}
@@ -190,7 +190,7 @@ public:
 	}
 	/// @}
 
-	U32 getSubMeshesCount() const
+	U32 getSubMeshesCount()
 	{
 		return getRenderableModelPatchBase().getSubMeshesCount();
 	}
