@@ -220,4 +220,16 @@ ModelNode::~ModelNode()
 	}
 }
 
+//==============================================================================
+void ModelNode::setInstanceLocalTransform(U instanceIndex, const Transform& trf)
+{
+	ANKI_ASSERT(patches.size() > 0);
+	ANKI_ASSERT(instanceIndex < patches[0]->instances.size());
+
+	for(ModelPatchNode* patch : patches)
+	{
+		patch->instances[instanceIndex]->setLocalTransform(trf);
+	}
+}
+
 } // end namespace anki
