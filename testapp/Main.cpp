@@ -246,6 +246,9 @@ void init()
 		"data/models/red_barrel/red_barrel.mdl", 2);
 	redBarrel->setLocalTransform(Transform(Vec3(+2, 0, 0), Mat3::getIdentity(),
 		0.7));
+
+	redBarrel->setInstanceLocalTransform(1, 
+		Transform(Vec3(1.0), Mat3(Euler(getPi<F32>() / 2, 0.0, 0.0)), 2.0));
 #endif
 
 #if 0
@@ -517,7 +520,7 @@ void initSubsystems(int argc, char* argv[])
 	nwinit.minorVersion = glminor;
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
-	nwinit.fullscreenDesktopRez = true;
+	nwinit.fullscreenDesktopRez = false;
 	win = new NativeWindow;	
 	win->create(nwinit);
 

@@ -34,7 +34,7 @@ struct SetupRenderableVariableVisitor
 	const ShaderProgramUniformVariable* uni;
 
 	// Used for 
-	U32* subSpatialIndices = nullptr;
+	const U32* subSpatialIndices = nullptr;
 	U32 subSpatialIndicesCount = 0;
 
 	/// Set a uniform in a client block
@@ -50,7 +50,7 @@ struct SetupRenderableVariableVisitor
 	{
 		const U32 instancesCount = renderable->getRenderableInstancesCount();
 		const U32 uniArrSize = uni->getSize();
-		const U32 size = std::min(instancesCount, uniArrSize);
+		U32 size = std::min(instancesCount, uniArrSize);
 
 		// Set uniform
 		//
@@ -69,9 +69,21 @@ struct SetupRenderableVariableVisitor
 			{
 				Array<Mat4, ANKI_MAX_INSTANCES> mvp;
 
-				for(U i = 0; i < size; i++)
+				if(subSpatialIndicesCount == 0)
 				{
-					mvp[i] = vp * Mat4(trfs[i]);
+					for(U i = 0; i < size; i++)
+					{
+						mvp[i] = vp * Mat4(trfs[i]);
+					}
+				}
+				else
+				{
+					for(size = 0; size < subSpatialIndicesCount; size++)
+					{
+						ANKI_ASSERT(size < instancesCount 
+							&& size < uniArrSize);
+						mvp[size] = vp * Mat4(trfs[subSpatialIndices[size]]);
+					}
 				}
 
 				uniSet(*uni, &mvp[0], size);
@@ -87,9 +99,22 @@ struct SetupRenderableVariableVisitor
 				ANKI_ASSERT(trfs != nullptr);
 				Array<Mat4, ANKI_MAX_INSTANCES> mv;
 
-				for(U i = 0; i < size; i++)
+				if(subSpatialIndicesCount == 0)
 				{
-					mv[i] = v * Mat4(trfs[i]);
+					for(U i = 0; i < size; i++)
+					{
+						mv[i] = v * Mat4(trfs[i]);
+					}
+				}
+				else
+				{
+					for(size = 0; size < subSpatialIndicesCount; size++)
+					{
+						ANKI_ASSERT(size < instancesCount 
+							&& size < uniArrSize);
+
+						mv[size] = v * Mat4(trfs[subSpatialIndices[size]]);
+					}
 				}
 
 				uniSet(*uni, &mv[0], size);
@@ -103,10 +128,21 @@ struct SetupRenderableVariableVisitor
 			{
 				Array<Mat3, ANKI_MAX_INSTANCES> normm;
 
-				for(U i = 0; i < size; i++)
+				if(subSpatialIndicesCount == 0)
 				{
-					Mat4 mv = v * Mat4(trfs[i]);
-					normm[i] = mv.getRotationPart();
+					for(U i = 0; i < size; i++)
+					{
+						Mat4 mv = v * Mat4(trfs[i]);
+						normm[i] = mv.getRotationPart();
+					}
+				}
+				else
+				{
+					for(size = 0; size < subSpatialIndicesCount; size++)
+					{
+						Mat4 mv = v * Mat4(trfs[subSpatialIndices[size]]);
+						normm[size] = mv.getRotationPart();
+					}
 				}
 
 				uniSet(*uni, &normm[0], size);

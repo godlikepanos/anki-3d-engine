@@ -18,6 +18,7 @@ namespace anki {
 class ModelPatchNodeInstance: public SceneNode, public Movable, public Spatial
 {
 	friend class ModelPatchNode;
+	friend class ModelNode;
 
 public:
 	ModelPatchNodeInstance(
@@ -44,6 +45,7 @@ class ModelPatchNode: public SceneNode, public Movable, public Renderable,
 	public Spatial
 {
 	friend class ModelPatchNodeInstance;
+	friend class ModelNode;
 
 public:
 	/// @name Constructors/Destructor
@@ -54,16 +56,6 @@ public:
 		const ModelPatchBase* modelPatch, U instances); // Self
 
 	~ModelPatchNode();
-	/// @}
-
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::frameUpdate
-	void frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
-	{
-		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
-	}
 	/// @}
 
 	/// @name Movable virtuals
@@ -134,16 +126,6 @@ public:
 	}
 	/// @}
 
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::frameUpdate
-	void frameUpdate(float prevUpdateTime, float crntTime, int frame)
-	{
-		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
-	}
-	/// @}
-
 	/// @name Movable virtuals
 	/// @{
 
@@ -154,6 +136,9 @@ public:
 		Movable::movableUpdate();
 	}
 	/// @}
+
+	/// Set the local transform of one instance
+	void setInstanceLocalTransform(U instanceIndex, const Transform& trf);
 
 private:
 	ModelResourcePointer model; ///< The resource
