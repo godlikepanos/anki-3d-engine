@@ -139,7 +139,7 @@ void init()
 	scene.setActiveCamera(cam);
 
 	// lights
-#if 0
+#if 1
 	Vec3 lpos(-24.0, 0.1, -10.0);
 	for(int i = 0; i < 50; i++)
 	{
@@ -164,7 +164,7 @@ void init()
 	}
 #endif
 
-#if 0
+#if 1
 	SpotLight* spot = new SpotLight("spot0", &scene, nullptr, Movable::MF_NONE);
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
@@ -187,7 +187,7 @@ void init()
 	spot->setShadowEnabled(true);
 #endif
 
-#if 0
+#if 1
 	// Vase point lights
 	F32 x = 8.5;
 	F32 y = 2.25;
@@ -251,7 +251,7 @@ void init()
 		Transform(Vec3(1.0), Mat3(Euler(getPi<F32>() / 2, 0.0, 0.0)), 2.0));
 #endif
 
-#if 0
+#if 1
 	StaticGeometryNode* sponzaModel = new StaticGeometryNode(
 		//"data/maps/sponza/sponza_no_bmeshes.mdl",
 		//"data/maps/sponza/sponza.mdl",
@@ -502,7 +502,7 @@ void mainLoop()
 void initSubsystems(int argc, char* argv[])
 {
 #if ANKI_GL == ANKI_GL_DESKTOP
-	U32 glmajor = 3;
+	U32 glmajor = 4;
 	U32 glminor = 3;
 #else
 	U32 glmajor = 3;
@@ -520,7 +520,7 @@ void initSubsystems(int argc, char* argv[])
 	nwinit.minorVersion = glminor;
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
-	nwinit.fullscreenDesktopRez = false;
+	nwinit.fullscreenDesktopRez = true;
 	win = new NativeWindow;	
 	win->create(nwinit);
 

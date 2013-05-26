@@ -20,7 +20,7 @@ out vec3 vTangent;
 out float vTangentW;
 out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 /// Calculate it per vertex instead of per fragment
-flat out float vSpecularComponent; 
+flat out lowp float vSpecularComponent; 
 #endif
 /// @}
 
@@ -66,7 +66,7 @@ void setVertPosViewSpace(in mat4 modelViewMat)
 #define prepackSpecular_DEFINED
 void prepackSpecular(in vec2 specular)
 {
-	vSpecularComponent = packSpecular(specular);
+	vSpecularComponent = lowp float(packSpecular(specular));
 }
 #endif
 

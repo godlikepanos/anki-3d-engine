@@ -27,7 +27,7 @@ vec3 unpackNormal(in vec2 enc)
 #define packSpecular_DEFINED
 float packSpecular(in vec2 c)
 {
-	return round(c[0] * 15.0) * 16.0 / 255.0 
+	return round(c[0] * 15.0) * (16.0 / 255.0) 
 		+ round(c[1] / MAX_SPECULARITY * 15.0) / 255.0;
 }
 

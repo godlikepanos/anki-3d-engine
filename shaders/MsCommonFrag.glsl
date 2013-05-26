@@ -18,7 +18,7 @@ in float vTangentW;
 #	define vTangentW_DEFINED
 in vec3 vVertPosViewSpace;
 #	define vVertPosViewSpace_DEFINED
-flat in float vSpecularComponent;
+flat in lowp float vSpecularComponent;
 #	define vSpecularComponent_DEFINED
 #endif
 /// @}
@@ -51,13 +51,14 @@ vec3 getNormalFromTexture(in vec3 normal, in vec3 tangent, in float tangentW,
 #	if LOD > 0
 	return normalize(normal);
 #	else
+	// First read the texture
+	vec3 nAtTangentspace = (texture(map, texCoords).rgb - 0.5) * 2.0;
+
 	vec3 n = normalize(normal);
 	vec3 t = normalize(tangent);
 	vec3 b = cross(n, t) * tangentW;
 
 	mat3 tbnMat = mat3(t, b, n);
-
-	vec3 nAtTangentspace = (texture(map, texCoords).rgb - 0.5) * 2.0;
 
 	return normalize(tbnMat * nAtTangentspace);
 #	endif
