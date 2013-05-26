@@ -150,7 +150,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	renderer.getTiler().updateTiles(*mainCam);
 	events.updateAllEvents(prevUpdateTime, crntTime);
 
-#if 1
+#if 0
 	// First do the movable updates
 	for(SceneNode* n : nodes)
 	{
@@ -176,7 +176,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 #endif
 
 	// Then the rest
-#if 1
+#if 0
 	for(SceneNode* n : nodes)
 	{
 		updateSceneNode(*n, prevUpdateTime, crntTime, sectorGroup);

@@ -130,8 +130,8 @@ static PtrSize calcLigthsUboSize()
 // Use compute shaders on GL >= 4.3
 static Bool useCompute()
 {
-	return GlStateCommonSingleton::get().getMajorVersion() > 3
-		&& GlStateCommonSingleton::get().getMinorVersion() > 2;
+	return GlStateCommonSingleton::get().getMajorVersion() >= 4
+		&& GlStateCommonSingleton::get().getMinorVersion() >= 10; // XXX
 }
 
 //==============================================================================

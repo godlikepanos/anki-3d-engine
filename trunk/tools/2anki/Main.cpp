@@ -54,7 +54,9 @@ struct Config
 	fprintf(stderr, "[W] (" __FILE__ ":" XSTR(__LINE__) ") " __VA_ARGS__)
 
 //==============================================================================
-std::string replaceAllString(const std::string& str, const std::string& from, 
+static std::string replaceAllString(
+	const std::string& str, 
+	const std::string& from, 
 	const std::string& to)
 {
 	if(from.empty())
@@ -74,7 +76,7 @@ std::string replaceAllString(const std::string& str, const std::string& from,
 }
 
 //==============================================================================
-std::string getFilename(const std::string& path)
+static std::string getFilename(const std::string& path)
 {
 	std::string out;
 
@@ -88,7 +90,7 @@ std::string getFilename(const std::string& path)
 }
 
 //==============================================================================
-void parseConfig(int argc, char** argv, Config& config)
+static void parseConfig(int argc, char** argv, Config& config)
 {
 	static const char* usage = R"(Usage: 2anki in_file out_dir [options]
 Options:
@@ -153,7 +155,9 @@ error:
 
 //==============================================================================
 /// Load the scene
-const aiScene& load(const std::string& filename, Assimp::Importer& importer)
+static const aiScene& load(
+	const std::string& filename, 
+	Assimp::Importer& importer)
 {
 	LOGI("Loading file %s\n", filename.c_str());
 
@@ -187,7 +191,7 @@ struct Vw
 };
 
 //==============================================================================
-void exportMesh(
+static void exportMesh(
 	const aiMesh& mesh, 
 	const std::string* name_,
 	const aiMatrix4x4* transform,
@@ -333,7 +337,7 @@ void exportMesh(
 }
 
 //==============================================================================
-void exportSkeleton(const aiMesh& mesh, const Config& config)
+static void exportSkeleton(const aiMesh& mesh, const Config& config)
 {
 	assert(mesh.HasBones());
 	std::string name = mesh.mName.C_Str();
@@ -384,7 +388,7 @@ void exportSkeleton(const aiMesh& mesh, const Config& config)
 }
 
 //==============================================================================
-std::string getMaterialName(const aiMaterial& mtl)
+static std::string getMaterialName(const aiMaterial& mtl)
 {
 	aiString ainame;
 	std::string name;
@@ -401,13 +405,25 @@ std::string getMaterialName(const aiMaterial& mtl)
 }
 
 //==============================================================================
-void exportMaterial(const aiScene& scene, const aiMaterial& mtl, 
+static void exportMaterial(
+	const aiScene& scene, 
+	const aiMaterial& mtl, 
+	bool instanced,
+	const std::string* name_,
 	const Config& config)
 {
 	std::string diffTex;
 	std::string normTex;
 
-	std::string name = getMaterialName(mtl);
+	std::string name;
+	if(name_)
+	{
+		name = *name_;
+	}
+	else
+	{
+		name = getMaterialName(mtl);
+	}
 	
 
 	LOGI("Exporting material %s\n", name.c_str());
@@ -453,26 +469,28 @@ void exportMaterial(const aiScene& scene, const aiMaterial& mtl,
 	file.open(config.outDir + name + ".mtl", std::ios::out);
 
 	// Chose the correct template
+	std::string str;
 	if(normTex.size() == 0)
 	{
-		file << replaceAllString(diffMtlStr, "%diffuseMap%", 
-			config.texpath + diffTex);
+		str = diffMtlStr;
 	}
 	else
 	{
-		std::string str;
-		
-		str = replaceAllString(diffNormMtlStr, "%diffuseMap%", 
-			config.texpath + diffTex);
-		str = replaceAllString(str, "%normalMap%", 
+		str = replaceAllString(diffNormMtlStr, "%normalMap%", 
 			config.texpath + normTex);
-
-		file << str;
 	}
+
+	str = replaceAllString(str, "%instanced%", (instanced) ? "1" : "0");
+	str = replaceAllString(str, "%diffuseMap%", config.texpath + diffTex);
+
+	file << str;
 }
 
 //==============================================================================
-void exportLight(const aiLight& light, const Config& config, std::fstream& file)
+static void exportLight(
+	const aiLight& light, 
+	const Config& config, 
+	std::fstream& file)
 {
 	if(light.mType != aiLightSource_POINT || light.mType != aiLightSource_SPOT)
 	{
@@ -535,7 +553,10 @@ void exportLight(const aiLight& light, const Config& config, std::fstream& file)
 }
 
 //==============================================================================
-void exportModel(const aiScene& scene, const aiNode& node, const Config& config)
+static void exportModel(
+	const aiScene& scene, 
+	const aiNode& node, 
+	const Config& config)
 {
 	if(node.mNumMeshes == 0)
 	{
@@ -582,8 +603,11 @@ void exportModel(const aiScene& scene, const aiNode& node, const Config& config)
 }
 
 //==============================================================================
-void exportAnimation(const aiAnimation& anim, uint32_t index, 
-	const aiScene& scene, const Config& config)
+static void exportAnimation(
+	const aiAnimation& anim, 
+	uint32_t index, 
+	const aiScene& scene, 
+	const Config& config)
 {
 	// Get name
 	std::string name = anim.mName.C_Str();
@@ -670,47 +694,7 @@ void exportAnimation(const aiAnimation& anim, uint32_t index,
 }
 
 //==============================================================================
-void exportNode(
-	const aiScene& scene, 
-	const aiNode* node, 
-	const Config& config,
-	std::fstream& file)
-{
-	if(node == nullptr)
-	{
-		return;
-	}
-
-	for(uint32_t i = 0; i < node->mNumMeshes; i++)
-	{
-		const aiMesh& mesh = *scene.mMeshes[node->mMeshes[i]];
-
-		std::string name = node->mName.C_Str() + std::to_string(i);
-
-		exportMesh(mesh, &name, &node->mTransformation, config);
-
-		exportMaterial(scene, *scene.mMaterials[mesh.mMaterialIndex], config);
-
-		aiString ainame;
-		scene.mMaterials[mesh.mMaterialIndex]->Get(AI_MATKEY_NAME, ainame);
-
-		file << "\t\t<modelPatch>\n"
-			<< "\t\t\t<mesh>" << config.rpath << config.outDir 
-			<< name << ".mesh</mesh>\n"
-			<< "\t\t\t<material>" << config.rpath << ainame.C_Str() 
-			<< ".mtl</material>\n"
-			<< "\t\t</modelPatch>\n";
-	}
-	
-	// Go to children
-	for(uint32_t i = 0; i < node->mNumChildren; i++)
-	{
-		exportNode(scene, node->mChildren[i], config, file);
-	}
-}
-
-//==============================================================================
-void visitNode(const aiNode* node, const aiScene& scene, Config& config)
+static void visitNode(const aiNode* node, const aiScene& scene, Config& config)
 {
 	if(node == nullptr)
 	{
@@ -749,9 +733,16 @@ void visitNode(const aiNode* node, const aiScene& scene, Config& config)
 }
 
 //==============================================================================
-void exportScene(const aiScene& scene, Config& config)
+static void exportScene(const aiScene& scene, Config& config)
 {
 	LOGI("Exporting scene to %s\n", config.outDir.c_str());
+
+	// Open scene file
+	std::ofstream file;
+	file.open(config.outDir + "master.scene");
+
+	file << xmlHeader << "\n"
+		<< "<scene>\n";
 
 	// Get all the data
 	config.meshes.resize(scene.mNumMeshes);
@@ -772,6 +763,7 @@ void exportScene(const aiScene& scene, Config& config)
 
 	visitNode(node, scene, config);
 
+#if 0
 	// Export all meshes that are used
 	for(uint32_t i = 0; i < config.meshes.size(); i++)
 	{
@@ -803,7 +795,78 @@ void exportScene(const aiScene& scene, Config& config)
 
 		exportMaterial(scene, *scene.mMaterials[i], config);
 	}
+#endif
 
+	// Write the instanced meshes
+	for(uint32_t i = 0; i < config.meshes.size(); i++)
+	{
+		const Mesh& mesh = config.meshes[i];
+
+		// Skip meshes that are not instance candidates
+		if(mesh.transforms.size() < 2)
+		{
+			continue;
+		}
+
+		// Export the material
+		aiMaterial& aimtl = *scene.mMaterials[mesh.mtlIndex];
+		std::string mtlName = getMaterialName(aimtl) + "_instance";
+		exportMaterial(scene, aimtl, true, &mtlName, config);
+
+		// Export mesh
+		std::string meshName = mtlName + "_" + std::to_string(i);
+		exportMesh(*scene.mMeshes[i], &meshName, nullptr, config);
+
+		// Write model file
+		std::string modelName = mtlName + "_" + std::to_string(i);
+
+		{
+			std::ofstream file;
+			file.open(
+				config.outDir + modelName + ".mdl");
+
+			file << xmlHeader << "\n"
+				<< "<model>\n"
+				<< "\t<modelPatches>\n"
+				<< "\t\t<modelPatch>\n"
+				<< "\t\t\t<model>" << config.outDir << meshName 
+				<< ".mdl</model>\n"
+				<< "\t\t\t<material>" << config.outDir << mtlName 
+				<< ".mtl</material>\n"
+				<< "\t\t</modelPatch>\n"
+				<< "\t</modelPatches>\n"
+				<< "</model>\n";
+		}
+
+		// Write the scene file
+		file << "\t<modelNode>\n"
+			<< "\t\t<model>" << config.outDir << modelName << ".mdl</model>\n"
+			<< "\t\t<instancesCount>" 
+			<< mesh.transforms.size() << "</instancesCount>\n"
+			<< "\t\t<transforms>\n";
+
+		for(uint32_t j = 0; j < mesh.transforms.size(); j++)
+		{
+			file << "\t\t\t<transform>";
+
+			aiMatrix4x4 trf = mesh.transforms[j];
+			for(uint32_t a = 0; a < 4; a++)
+			{
+				for(uint32_t b = 0; b < 4; b++)
+				{
+					file << trf[b][a] << " ";
+				}
+			}
+
+			file << "</transform>\n";
+		}
+
+		file << "\t\t</transforms>\n"
+			"\t</modelNode>\n";
+	}
+
+
+#if 0
 	// Write bmeshes
 	for(uint32_t mtlId = 0; mtlId < config.materials.size(); mtlId++)
 	{
@@ -867,6 +930,9 @@ void exportScene(const aiScene& scene, Config& config)
 	}
 	file << "\t</modelPatches>\n";
 	file << "</model>\n";
+#endif
+
+	file << "</scene>\n";
 
 	LOGI("Done exporting scene!\n");
 }
