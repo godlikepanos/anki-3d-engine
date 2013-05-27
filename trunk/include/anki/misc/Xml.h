@@ -7,6 +7,7 @@
 #	error "Wrong tinyxml2 included"
 #endif
 #include <string>
+#include "anki/Math.h"
 
 namespace anki {
 
@@ -16,6 +17,7 @@ struct XmlElement
 	friend class XmlDocument;
 public:
 	XmlElement()
+		: el(nullptr)
 	{}
 	XmlElement(const XmlElement& b)
 		: el(b.el)
@@ -42,7 +44,10 @@ public:
 	}
 
 	/// Return the text inside as a string
-	int getInt() const;
+	I getInt() const;
+
+	/// Return a Mat4
+	Mat4 getMat4() const;
 
 	/// Get a child element quietly
 	XmlElement getChildElementOptional(const char* name) const;
@@ -55,7 +60,7 @@ public:
 	XmlElement getNextSiblingElement(const char* name) const;
 
 private:
-	tinyxml2::XMLElement* el = nullptr;
+	tinyxml2::XMLElement* el;
 
 	void check() const
 	{

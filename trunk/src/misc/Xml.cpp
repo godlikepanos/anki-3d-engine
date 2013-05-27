@@ -1,9 +1,10 @@
 #include "anki/misc/Xml.h"
+#include "anki/util/StringList.h"
 
 namespace anki {
 
 //==============================================================================
-int XmlElement::getInt() const
+I XmlElement::getInt() const
 {
 	check();
 	const char* txt = getText();
@@ -13,6 +14,40 @@ int XmlElement::getInt() const
 			+ el->Value());
 	}
 	return std::stoi(txt);
+}
+
+//==============================================================================
+Mat4 XmlElement::getMat4() const
+{
+	check();
+
+	const char* txt = getText();
+	if(txt == nullptr)
+	{
+		throw ANKI_EXCEPTION("Failed to return Mat4");
+	}
+
+	StringList list = StringList::splitString(txt, ' ');
+	if(list.size() != 16)
+	{
+		throw ANKI_EXCEPTION("Expecting 16 elements for Mat4");
+	}
+
+	Mat4 out;
+
+	try
+	{
+		for(U i = 0; i < 16; i++)
+		{
+			out[i] = std::stof(list[i]);
+		}
+	}
+	catch(const std::exception& e)
+	{
+		throw ANKI_EXCEPTION("Found non-float element for Mat4");
+	}
+
+	return out;
 }
 
 //==============================================================================

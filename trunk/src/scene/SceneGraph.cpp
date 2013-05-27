@@ -238,13 +238,22 @@ void SceneGraph::load(const char* filename)
 
 		do
 		{
-			XmlElement el;
+			XmlElement el, el1;
 	
 			// <model>
 			el = mdlNodeEl.getChildElement("model");
 
+			// <instancesCount>
+			el1 = mdlNodeEl.getChildElementOptional("instancesCount");
+			U32 instancesCount = (el1) ? el1.getInt() : 1;
+
+			if(instancesCount > ANKI_MAX_INSTANCES)
+			{
+				throw ANKI_EXCEPTION("Too many instances");
+			}
+
 			ModelNode* node = new ModelNode("name", this, nullptr,
-				Movable::MF_NONE, el.getText());
+				Movable::MF_NONE, el.getText(), instancesCount);
 
 			// <transform>
 			el = mdlNodeEl.getChildElement("transform");

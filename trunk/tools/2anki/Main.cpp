@@ -838,16 +838,20 @@ static void exportScene(const aiScene& scene, Config& config)
 				<< "</model>\n";
 		}
 
+		// Node name
+		std::string nodeName = getMaterialName(aimtl) + "_instanced_" 
+			+ std::to_string(i);
+
 		// Write the scene file
 		file << "\t<modelNode>\n"
+			<< "\t\t<name>" << nodeName << "</name>\n"
 			<< "\t\t<model>" << config.outDir << modelName << ".mdl</model>\n"
 			<< "\t\t<instancesCount>" 
-			<< mesh.transforms.size() << "</instancesCount>\n"
-			<< "\t\t<transforms>\n";
+			<< mesh.transforms.size() << "</instancesCount>\n";
 
 		for(uint32_t j = 0; j < mesh.transforms.size(); j++)
 		{
-			file << "\t\t\t<transform>";
+			file << "\t\t<transform>";
 
 			aiMatrix4x4 trf = mesh.transforms[j];
 			for(uint32_t a = 0; a < 4; a++)
@@ -861,8 +865,7 @@ static void exportScene(const aiScene& scene, Config& config)
 			file << "</transform>\n";
 		}
 
-		file << "\t\t</transforms>\n"
-			"\t</modelNode>\n";
+		file << "\t</modelNode>\n";
 	}
 
 
