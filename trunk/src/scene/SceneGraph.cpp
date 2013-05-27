@@ -257,20 +257,19 @@ void SceneGraph::load(const char* filename)
 
 			// <transform>
 			el = mdlNodeEl.getChildElement("transform");
-			StringList list = StringList::splitString(el.getText(), ' ');
+			node->setLocalTransform(Transform(el.getMat4()));
 
-			if(list.size() != 16)
+			U i = instancesCount - 1;
+			if(i > 0)
 			{
-				throw ANKI_EXCEPTION("Expecting 16 floats for <transform>");
-			}
+				do
+				{
 
-			Mat4 trf;
-			for(U i = 0; i < 16; i++)
-			{
-				trf[i] = std::stof(list[i]);
+					// Advance
+					el = mdlNodeEl.getNextSiblingElement("transform");
+				}
+				while(el && instancesCount > 0);
 			}
-
-			node->setLocalTransform(Transform(trf));
 
 			// Advance
 			mdlNodeEl = mdlNodeEl.getNextSiblingElement("modelNode");
