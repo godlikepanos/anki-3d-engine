@@ -97,13 +97,13 @@ struct UpdateSceneNodesJob: ThreadJob
 
 //==============================================================================
 SceneGraph::SceneGraph()
-	:	alloc(ANKI_CFG_SCENE_ALLOCATOR_SIZE),
-		frameAlloc(ANKI_CFG_SCENE_FRAME_ALLOCATOR_SIZE),
+	:	alloc(ANKI_SCENE_ALLOCATOR_SIZE),
+		frameAlloc(ANKI_SCENE_FRAME_ALLOCATOR_SIZE),
 		nodes(alloc),
 		sectorGroup(this),
 		events(this)
 {
-	nodes.reserve(ANKI_CFG_SCENE_NODES_AVERAGE_COUNT);
+	nodes.reserve(ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT);
 
 	ambientCol = Vec3(0.1, 0.05, 0.05) * 3;
 }
@@ -240,6 +240,10 @@ void SceneGraph::load(const char* filename)
 		{
 			XmlElement el, el1;
 	
+			// <name>
+			el = mdlNodeEl.getChildElement("name");
+			std::string name = el.getText();
+
 			// <model>
 			el = mdlNodeEl.getChildElement("model");
 
@@ -252,23 +256,35 @@ void SceneGraph::load(const char* filename)
 				throw ANKI_EXCEPTION("Too many instances");
 			}
 
-			ModelNode* node = new ModelNode("name", this, nullptr,
+			ModelNode* node = ANKI_NEW(ModelNode, alloc,
+				name.c_str(), this, nullptr,
 				Movable::MF_NONE, el.getText(), instancesCount);
 
 			// <transform>
 			el = mdlNodeEl.getChildElement("transform");
-			node->setLocalTransform(Transform(el.getMat4()));
+			U i = 0;
 
-			U i = instancesCount - 1;
-			if(i > 0)
+			do
 			{
-				do
+				if(i == 0)
 				{
-
-					// Advance
-					el = mdlNodeEl.getNextSiblingElement("transform");
+					node->setLocalTransform(Transform(el.getMat4()));
 				}
-				while(el && instancesCount > 0);
+				else
+				{
+					node->setInstanceLocalTransform(i, Transform(el.getMat4()));
+				}
+
+				// Advance
+				el = el.getNextSiblingElement("transform");
+				++i;
+			}
+			while(el && i < instancesCount);
+
+			if(i != instancesCount)
+			{
+				throw ANKI_EXCEPTION("instancesCount does not match "
+					"with transform");
 			}
 
 			// Advance
