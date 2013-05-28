@@ -44,10 +44,10 @@ void ModelPatchNodeInstance::movableUpdate()
 	ModelPatchNode* modelPatchNode = 
 #if ANKI_DEBUG
 		dynamic_cast<ModelPatchNode*>(parentNode);
-	ANKI_ASSERT(modelPatchNode);
 #else
 		static_cast<ModelPatchNode*>(parentNode);
 #endif
+	ANKI_ASSERT(modelPatchNode);
 
 	ANKI_ASSERT(modelPatchNode->instances.size() > 0);
 	if(this == modelPatchNode->instances.back())
@@ -127,7 +127,7 @@ const Transform* ModelPatchNode::getRenderableWorldTransforms()
 
 		ANKI_ASSERT(transforms.size() == instances.size());
 
-		// Set the transforms
+		// Set the transforms buffer
 		for(U i = 0; i < instances.size(); i++)
 		{
 			transforms[i] = instances[i]->getWorldTransform();
@@ -193,6 +193,10 @@ ModelNode::ModelNode(
 {
 	sceneNodeProtected.movable = this;
 
+	{
+		SceneVector<int> lala(getSceneAllocator());
+	}
+
 	model.load(modelFname);
 
 	patches.reserve(model->getModelPatches().size());
@@ -200,10 +204,8 @@ ModelNode::ModelNode(
 	U i = 0;
 	for(const ModelPatchBase* patch : model->getModelPatches())
 	{
-		std::string name_ = name + std::to_string(i);
-
 		ModelPatchNode* mpn = ANKI_NEW(ModelPatchNode, getSceneAllocator(),
-			name_.c_str(), scene, this,
+			nullptr, scene, this,
 			Movable::MF_IGNORE_LOCAL_TRANSFORM, patch, instances);
 
 		patches.push_back(mpn);

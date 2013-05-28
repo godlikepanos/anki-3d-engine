@@ -159,7 +159,7 @@ protected:
 	} sceneNodeProtected;
 
 private:
-	SceneGraph* scene;
+	SceneGraph* scene = nullptr;
 	SceneString name; ///< A unique name
 };
 /// @}

@@ -71,9 +71,9 @@ struct VisibilityTestResults
 
 	VisibilityTestResults(const SceneAllocator<U8>& frameAlloc,
 		U32 renderablesReservedSize = 
-		ANKI_CFG_FRUSTUMABLE_AVERAGE_VISIBLE_RENDERABLES_COUNT,
+		ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_RENDERABLES_COUNT,
 		U32 lightsReservedSize =
-		ANKI_CFG_FRUSTUMABLE_AVERAGE_VISIBLE_LIGHTS_COUNT)
+		ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_LIGHTS_COUNT)
 		: renderables(frameAlloc), lights(frameAlloc)
 	{
 		renderables.reserve(renderablesReservedSize);

@@ -95,8 +95,8 @@ static void parseConfig(int argc, char** argv, Config& config)
 	static const char* usage = R"(Usage: 2anki in_file out_dir [options]
 Options:
 -rpath <string>   : Append a string to the meshes and materials
+-texrpath         : Append a string to the textures paths
 -flipyz           : Flip y with z (For blender exports)
--texpath          : XXX
 )";
 
 	// Parse config
@@ -110,7 +110,7 @@ Options:
 
 	for(int i = 3; i < argc; i++)
 	{
-		if(strcmp(argv[i], "-texpath") == 0)
+		if(strcmp(argv[i], "-texrpath") == 0)
 		{
 			++i;
 
@@ -829,8 +829,8 @@ static void exportScene(const aiScene& scene, Config& config)
 				<< "<model>\n"
 				<< "\t<modelPatches>\n"
 				<< "\t\t<modelPatch>\n"
-				<< "\t\t\t<model>" << config.outDir << meshName 
-				<< ".mdl</model>\n"
+				<< "\t\t\t<mesh>" << config.outDir << meshName 
+				<< ".mesh</mesh>\n"
 				<< "\t\t\t<material>" << config.outDir << mtlName 
 				<< ".mtl</material>\n"
 				<< "\t\t</modelPatch>\n"
@@ -858,7 +858,7 @@ static void exportScene(const aiScene& scene, Config& config)
 			{
 				for(uint32_t b = 0; b < 4; b++)
 				{
-					file << trf[b][a] << " ";
+					file << trf[a][b] << " ";
 				}
 			}
 

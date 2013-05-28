@@ -182,8 +182,13 @@ private:
 	template<typename T>
 	void addDict(typename Types<T>::NameToItemMap& d, T* ptr)
 	{
-		ANKI_ASSERT(d.find(ptr->getName()) == d.end()
-			&& "Item with same name already exists");
+		ANKI_ASSERT(ptr && ptr->getName());
+
+		if(d.find(ptr->getName()) != d.end())
+		{
+			throw ANKI_EXCEPTION("Node with the same name already exists: "
+				+ ptr->getName());
+		}
 
 		d[ptr->getName()] = ptr;
 	}

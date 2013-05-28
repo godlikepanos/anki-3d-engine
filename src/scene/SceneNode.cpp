@@ -9,7 +9,8 @@ namespace anki {
 //==============================================================================
 SceneNode::SceneNode(const char* name_, SceneGraph* scene_, SceneNode* parent)
 	:	Base(parent, scene_->getAllocator()),
-		scene(scene_)
+		scene(scene_),
+		name(getSceneAllocator())
 {
 	ANKI_ASSERT(scene);
 
@@ -27,11 +28,14 @@ SceneNode::SceneNode(const char* name_, SceneGraph* scene_, SceneNode* parent)
 //==============================================================================
 SceneNode::~SceneNode()
 {
-	scene->unregisterNode(this);
-
-	if(getSpatial() && getSpatial()->octreeNode)
+	if(scene)
 	{
-		getSpatial()->octreeNode->removeSceneNode(this);
+		scene->unregisterNode(this);
+
+		if(getSpatial() && getSpatial()->octreeNode)
+		{
+			getSpatial()->octreeNode->removeSceneNode(this);
+		}
 	}
 }
 

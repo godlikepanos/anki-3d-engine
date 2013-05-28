@@ -251,7 +251,7 @@ void init()
 		Transform(Vec3(1.0), Mat3(Euler(getPi<F32>() / 2, 0.0, 0.0)), 2.0));
 #endif
 
-#if 1
+#if 0
 	StaticGeometryNode* sponzaModel = new StaticGeometryNode(
 		//"data/maps/sponza/sponza_no_bmeshes.mdl",
 		//"data/maps/sponza/sponza.mdl",
@@ -259,6 +259,7 @@ void init()
 
 	(void)sponzaModel;
 #endif
+	scene.load("data/maps/sponza/master.scene");
 
 	//initPhysics();
 
