@@ -47,6 +47,11 @@ void Pps::initInternal(const RendererInitializer& initializer)
 		pps += "#define HDR_ENABLED\n";
 	}
 
+	if(initializer.pps.sharpen)
+	{
+		pps += "#define SHARPEN_ENABLED\n";
+	}
+
 	pps += "#define FBO_WIDTH " + std::to_string(r->getWidth()) + "\n";
 	pps += "#define FBO_HEIGHT " + std::to_string(r->getHeight()) + "\n";
 

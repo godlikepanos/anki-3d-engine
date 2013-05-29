@@ -78,6 +78,7 @@ struct RendererInitializer
 			F32 sideBlurFactor = 1.0;
 		} bl;
 		Bool enabled = false;
+		Bool sharpen = false;
 	} pps;
 
 	// Dbg

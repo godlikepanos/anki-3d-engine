@@ -20,10 +20,16 @@ public:
 	enum MovableFlag
 	{
 		MF_NONE = 0,
+
 		/// Get the parent's world transform
 		MF_IGNORE_LOCAL_TRANSFORM = 1 << 1,
+
+		/// Dont make assumptions with the parent. Beeng a parent doesn't mean
+		/// that it needs to contribute to this movable position in any way
+		MF_IGNORE_PARENT = 1 << 2,
+
 		/// If dirty then is marked for update
-		MF_TRANSFORM_DIRTY = 1 << 2
+		MF_TRANSFORM_DIRTY = 1 << 3,
 	};
 
 	/// @name Constructors & destructor

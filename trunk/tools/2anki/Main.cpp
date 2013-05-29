@@ -162,7 +162,7 @@ static const aiScene& load(
 	LOGI("Loading file %s\n", filename.c_str());
 
 	const aiScene* scene = importer.ReadFile(filename, 0
-		| aiProcess_FindInstances
+		//| aiProcess_FindInstances
 		| aiProcess_Triangulate
 		| aiProcess_JoinIdenticalVertices
 		//| aiProcess_SortByPType
@@ -854,6 +854,7 @@ static void exportScene(const aiScene& scene, Config& config)
 			file << "\t\t<transform>";
 
 			aiMatrix4x4 trf = mesh.transforms[j];
+
 			for(uint32_t a = 0; a < 4; a++)
 			{
 				for(uint32_t b = 0; b < 4; b++)

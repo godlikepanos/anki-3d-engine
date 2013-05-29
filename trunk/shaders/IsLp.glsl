@@ -216,7 +216,7 @@ float calcShadowFactor(in SpotTexLight light, in vec3 fragPosVspace,
 void main()
 {
 	// Read texture first. Optimize for future out of order HW
-	uvec2 msAll = texture(msFai0, vTexCoords).rg;
+	uvec2 msAll = textureLod(msFai0, vTexCoords, 0.0).rg;
 
 	// get frag pos in view space
 	vec3 fragPosVspace = getFragPosVSpace();

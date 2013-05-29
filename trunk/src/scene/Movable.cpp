@@ -35,16 +35,17 @@ void Movable::update()
 void Movable::updateWorldTransform()
 {
 	prevWTrf = wTrf;
-	const Movable* parent = 
-		node->getParent() 
-		? node->getParent()->getMovable() 
-		: nullptr;
 	const Bool dirty = bitsEnabled(MF_TRANSFORM_DIRTY);
 
 	// If dirty then update world transform
 	if(dirty)
 	{
-		if(parent)
+		const Movable* parent = 
+			node->getParent() 
+			? node->getParent()->getMovable() 
+			: nullptr;
+
+		if(parent && !bitsEnabled(MF_IGNORE_PARENT))
 		{
 			if(bitsEnabled(MF_IGNORE_LOCAL_TRANSFORM))
 			{

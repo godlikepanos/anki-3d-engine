@@ -15,29 +15,47 @@ namespace anki {
 /// @addtogroup patterns
 /// @{
 
-/// The default object deleter. It does nothing
+/// The default set of callbacks. They do nothing
 template<typename T>
-struct ObjectDeleter
+struct ObjectCallbackCollection
 {
-	void operator()(T*)
+	/// Called when a child is been removed from a parent
+	void onChildRemoved(T* child, T* parent)
 	{
+		ANKI_ASSERT(child);
+		// Do nothing
+	}
+
+	/// Called when a child is been added to a parent
+	void onChildAdded(T* child, T* parent)
+	{
+		ANKI_ASSERT(child && parent);
 		// Do nothing
 	}
 };
 
 /// A hierarchical object
 template<typename T, typename Alloc = Allocator<T>,
-	typename Deleter = ObjectDeleter<T>>
+	typename TCallbackCollection = ObjectCallbackCollection<T>>
 class Object: public NonCopyable
 {
 public:
 	typedef T Value;
 	typedef Vector<Value*, Alloc> Container;
+	typedef TCallbackCollection CallbackCollection;
 
 	/// Calls addChild if parent is not nullptr
-	Object(Value* parent_, const Alloc& alloc = Alloc(),
-		const Deleter& del = Deleter())
-		: parent(nullptr), children(alloc), deleter(del)
+	///
+	/// @param parent_ The parent. Can be nullptr
+	/// @param alloc The allocator to use on internal allocations
+	/// @param callbacks_ A set of callbacks
+	Object(
+		Value* parent_, 
+		const Alloc& alloc = Alloc(),
+		const CallbackCollection& callbacks_ = CallbackCollection())
+		:	parent(nullptr), // Set to nullptr or prepare for assertion
+			children(alloc), 
+			callbacks(callbacks_)
 	{
 		if(parent_ != nullptr)
 		{
@@ -53,14 +71,14 @@ public:
 			parent->removeChild(getSelf());
 		}
 
-		Alloc alloc = children.get_allocator();
-
 		// Remove all children (fast version)
 		for(Value* child : children)
 		{
 			child->parent = nullptr;
 
-			deleter(child);
+			// Pass the parent as nullptr because at this point there is 
+			// nothing you should do with a deleteding parent
+			callbacks.onChildRemoved(child, nullptr);
 		}
 	}
 
@@ -115,6 +133,8 @@ public:
 
 		child->parent = getSelf();
 		children.push_back(child);
+
+		callbacks.onChildAdded(child, getSelf());
 	}
 
 	/// Remove a child
@@ -129,9 +149,11 @@ public:
 
 		children.erase(it);
 		child->parent = nullptr;
+
+		callbacks.onChildRemoved(child, getSelf());
 	}
 
-	/// Visit
+	/// Visit this object and move to the children
 	template<typename Visitor>
 	void visitTreeDepth(Visitor& vis)
 	{
@@ -146,7 +168,7 @@ public:
 private:
 	Value* parent; ///< May be nullptr
 	Container children;
-	Deleter deleter;
+	CallbackCollection callbacks; /// A set of callbacks
 
 	/// Cast the Object to the given type
 	Value* getSelf()

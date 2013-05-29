@@ -3,6 +3,8 @@
 
 namespace anki {
 
+#if 0
+
 //==============================================================================
 SceneObject::SceneObject(SceneObject* parent, SceneGraph* scene_)
 	: Base(parent, scene_->getAllocator()), scene(scene_)
@@ -21,5 +23,7 @@ SceneAllocator<U8> SceneObject::getSceneFrameAllocator() const
 	ANKI_ASSERT(scene);
 	return scene->getFrameAllocator();
 }
+
+#endif
 
 } // end namespace anki
