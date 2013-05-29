@@ -92,7 +92,7 @@ ModelPatchNode::ModelPatchNode(
 		{
 			ModelPatchNodeInstance* instance = ANKI_NEW(
 				ModelPatchNodeInstance, getSceneAllocator(), 
-				nullptr, scene, this, Movable::MF_NONE,
+				nullptr, scene, this, Movable::MF_IGNORE_PARENT,
 				modelPatch);
 
 			instance->setLocalOrigin(pos);
@@ -192,10 +192,6 @@ ModelNode::ModelNode(
 		patches(getSceneAllocator())
 {
 	sceneNodeProtected.movable = this;
-
-	{
-		SceneVector<int> lala(getSceneAllocator());
-	}
 
 	model.load(modelFname);
 

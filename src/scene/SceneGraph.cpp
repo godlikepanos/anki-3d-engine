@@ -269,6 +269,8 @@ void SceneGraph::load(const char* filename)
 				if(i == 0)
 				{
 					node->setLocalTransform(Transform(el.getMat4()));
+					node->setInstanceLocalTransform(
+						i, Transform(el.getMat4()));
 				}
 				else
 				{

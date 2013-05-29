@@ -6,6 +6,8 @@
 
 namespace anki {
 
+#if 0
+
 // Forward
 class SceneGraph;
 
@@ -44,6 +46,8 @@ public:
 public:
 	SceneGraph* scene;
 };
+
+#endif
 
 } // end namespace anki
 

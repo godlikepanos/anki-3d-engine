@@ -7,10 +7,10 @@
 #pragma anki include "shaders/photoshop_filters.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
-uniform sampler2D msDepthFai;
-uniform sampler2D isFai;
-uniform sampler2D ppsHdrFai;
-uniform sampler2D ppsSsaoFai;
+uniform highp sampler2D msDepthFai;
+uniform lowp sampler2D isFai;
+uniform lowp sampler2D ppsHdrFai;
+uniform lowp sampler2D ppsSsaoFai;
 
 in vec2 vTexCoords;
 
@@ -61,12 +61,12 @@ vec3 sharpen(in sampler2D tex, in vec2 texCoords)
 {
 	const float sharpenFactor = 0.25;
 
-	vec3 col = texture(tex, texCoords).rgb;
+	vec3 col = textureLod(tex, texCoords, 0.0).rgb;
 
-	vec3 col2 = texture(tex, texCoords + KERNEL[0]).rgb;
+	vec3 col2 = textureLod(tex, texCoords + KERNEL[0], 0.0).rgb;
 	for(int i = 1; i < 8; i++)
 	{
-		col2 += texture(tex, texCoords + KERNEL[i]).rgb;
+		col2 += textureLod(tex, texCoords + KERNEL[i], 0.0).rgb;
 	}
 
 	return col * (9.0 * sharpenFactor + 1.0 - sharpenFactor) 
@@ -80,7 +80,7 @@ vec3 erosion(in sampler2D tex, in vec2 texCoords)
 
     for (int i = 0; i < 8; i++)
     {
-        vec3 tmpCol = texture(tex, texCoords + KERNEL[i]).rgb;
+        vec3 tmpCol = textureLod(tex, texCoords + KERNEL[i], 0.0).rgb;
         minValue = min(tmpCol, minValue);
     }
 
@@ -90,17 +90,20 @@ vec3 erosion(in sampler2D tex, in vec2 texCoords)
 //==============================================================================
 void main(void)
 {
+#if SHARPEN_ENABLED
 	fColor = sharpen(isFai, vTexCoords);
+#else
+	fColor = textureLod(isFai, vTexCoords, 0.0).rgb;
+#endif
 	//fColor = erosion(isFai, vTexCoords);
-	//fColor = texture(isFai, vTexCoords).rgb;
 
 #if defined(HDR_ENABLED)
-	vec3 hdr = texture(ppsHdrFai, vTexCoords).rgb;
+	vec3 hdr = textureLod(ppsHdrFai, vTexCoords, 0.0).rgb;
 	fColor += hdr;
 #endif
 
 #if defined(SSAO_ENABLED)
-	float ssao = texture(ppsSsaoFai, vTexCoords).r;
+	float ssao = textureLod(ppsSsaoFai, vTexCoords, 0.0).r;
 	fColor *= ssao;
 #endif
 
