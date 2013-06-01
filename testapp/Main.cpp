@@ -243,12 +243,9 @@ void init()
 	// barrel
 	ModelNode* redBarrel = new ModelNode(
 		"red_barrel", &scene, nullptr, Movable::MF_NONE, 
-		"data/models/red_barrel/red_barrel.mdl", 2);
+		"data/models/red_barrel/red_barrel.mdl");
 	redBarrel->setLocalTransform(Transform(Vec3(+2, 0, 0), Mat3::getIdentity(),
 		0.7));
-
-	redBarrel->setInstanceLocalTransform(1, 
-		Transform(Vec3(1.0), Mat3(Euler(getPi<F32>() / 2, 0.0, 0.0)), 2.0));
 #endif
 
 #if 0
@@ -472,7 +469,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -554,6 +551,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.bl.enabled = true;
 	initializer.pps.bl.blurringIterationsNum = 2;
 	initializer.pps.bl.sideBlurFactor = 1.0;
+	initializer.pps.sharpen = true;
 	initializer.renderingQuality = 1.0;
 	initializer.width = win->getWidth();
 	initializer.height = win->getHeight();

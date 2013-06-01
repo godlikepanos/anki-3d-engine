@@ -222,11 +222,21 @@ ModelNode::~ModelNode()
 void ModelNode::setInstanceLocalTransform(U instanceIndex, const Transform& trf)
 {
 	ANKI_ASSERT(patches.size() > 0);
-	ANKI_ASSERT(instanceIndex < patches[0]->instances.size());
 
-	for(ModelPatchNode* patch : patches)
+	if(patches[0]->instances.size() > 0)
 	{
-		patch->instances[instanceIndex]->setLocalTransform(trf);
+		ANKI_ASSERT(instanceIndex < patches[0]->instances.size());
+
+		for(ModelPatchNode* patch : patches)
+		{
+			patch->instances[instanceIndex]->setLocalTransform(trf);
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(instanceIndex == 0);
+
+		setLocalTransform(trf);
 	}
 }
 

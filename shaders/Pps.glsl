@@ -90,7 +90,7 @@ vec3 erosion(in sampler2D tex, in vec2 texCoords)
 //==============================================================================
 void main(void)
 {
-#if SHARPEN_ENABLED
+#if defined(SHARPEN_ENABLED)
 	fColor = sharpen(isFai, vTexCoords);
 #else
 	fColor = textureLod(isFai, vTexCoords, 0.0).rgb;
