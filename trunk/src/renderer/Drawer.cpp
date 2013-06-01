@@ -12,6 +12,7 @@
 namespace anki {
 
 //==============================================================================
+#if ANKI_ENABLE_COUNTERS
 static U64 countVerts(U32* indicesCount, I primCount)
 {
 	U64 sum = 0;
@@ -21,6 +22,7 @@ static U64 countVerts(U32* indicesCount, I primCount)
 	}
 	return sum;
 }
+#endif
 
 //==============================================================================
 /// Visitor that sets a uniform

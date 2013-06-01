@@ -24,7 +24,7 @@ ENDIF()
 # Because we want different compiler flags for each platform
 SET(ANKI_CPU "X86" CACHE STRING "The CPU arch (X86 or ARM)")
 
-# Take a wild guess on CPU address space
+# Address space
 IF(${ANKI_CPU} STREQUAL "ARM")
 	SET(_ADDR_SPACE "32")
 ELSE()
@@ -32,7 +32,20 @@ ELSE()
 ENDIF()
 
 SET(ANKI_CPU_ADDR_SPACE "${_ADDR_SPACE}" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
+
+# SIMD
 OPTION(ANKI_ENABLE_MATH_SIMD "Enable or not math SIMD optimizations" ON)
+IF(ANKI_ENABLE_MATH_SIMD)
+	IF(ANKI_CPU STREQUAL "X86")
+		SET(ANKI_MATH_SIMD "SSE")
+	ELSEIF(ANKI_CPU STREQUAL "ARM")
+		SET(ANKI_MATH_SIMD "NEON")
+	ELSE()
+		MESSAGE(FATAL "Wrong ANKI_CPU set")
+	ENDIF()
+ELSE()
+	SET(ANKI_MATH_SIMD "NONE")
+ENDIF()
 
 # libz and libpng
 OPTION(ANKI_SYSTEM_LIBZ "Use the system's libz" OFF)
@@ -53,119 +66,86 @@ SET(ANKI_GCC_TO_STRING_WORKAROUND "0" CACHE STRING "Enable workaround for C++11 
 SET(ANKI_EXTRA_INCLUDE_DIRS CACHE STRING "Some extra include paths (Needed for some weird builds)")
 SET(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for some weird builds)")
 
+# Valgrind
+OPTION(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
+
 #
 # Options that affect anki and extern
 #
 
-# CPU
-MESSAGE("++ Build for CPU: ${ANKI_CPU}")
+SET(CXX_FLAGS "")
+SET(C_FLAGS "")
+SET(COMMON_FLAGS "")
+SET(LINKER_FLAGS "")
 
-IF(ANKI_CPU STREQUAL "X86")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4 ")
-	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4 ")
-ELSE()
-ENDIF()
-
-IF(ANKI_ENABLE_MATH_SIMD)
-	IF(ANKI_CPU STREQUAL "X86")
-		SET(ANKI_MATH_SIMD "SSE")
-	ELSEIF(ANKI_CPU STREQUAL "ARM")
-		SET(ANKI_MATH_SIMD "NEON")
-	ELSE()
-		MESSAGE(FATAL "Wrong ANKI_CPU set")
-	ENDIF()
-
-	MESSAGE("++ SIMD: true")
-ELSE()
-	SET(ANKI_MATH_SIMD "NONE")
-	MESSAGE("++ SIMD: false")
-ENDIF()
-
-# CPU address space
-IF(ANKI_CPU_ADDR_SPACE STREQUAL "0")
-	MESSAGE("++ CPU address space: 0 (Native)")
-ELSE()
-	MESSAGE("++ CPU address space: ${ANKI_CPU_ADDR_SPACE}")
-ENDIF()
-
+# address space
 IF(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
-	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
-	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
+	SET(LINKER_FLAGS "${LINKER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
+	SET(COMMON_FLAGS "${COMMON_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
 ENDIF()
 
-# platform
-IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-	SET(ANKI_PLATFORM "LINUX")
-ELSEIF(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
-	SET(ANKI_PLATFORM "WINDOWS")
+# static libstdc++
+SET(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
+
+# SSE
+IF(ANKI_CPU STREQUAL "X86")
+	SET(COMMON_FLAGS "${COMMON_FLAGS} -msse4 ")
 ENDIF()
-MESSAGE("++ Platform: ${ANKI_PLATFORM}")
+
+IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	# Debug
+
+	SET(COMMON_FLAGS "${COMMON_FLAGS} -g3 -O0 ")
+ELSE()
+	# Release
+
+	SET(COMMON_FLAGS "${COMMON_FLAGS} -ffast-math -O4 ")
+
+	SET(CXX_FLAGS "${CXX_FLAGS} -fno-rtti ")
+ENDIF()
+
+# Valgrind hacks
+IF(ANKI_VALGRIND_HAPPY)
+	ADD_DEFINITIONS("-DGLIBCXX_FORCE_NEW")
+ENDIF()
 
 # libz and libpng
 IF(ANKI_SYSTEM_LIBZ)
 	SET(_ANKI_LIBZ "z")
-	MESSAGE("++ Building with system libz")
 ELSE()
 	SET(_ANKI_LIBZ "ankiz")
-	MESSAGE("++ Building with AnKi provided libz")
 ENDIF()
 
 IF(ANKI_SYSTEM_LIBPNG)
 	SET(_ANKI_LIBPNG "png")
-	MESSAGE("++ Building with system libpng")
 ELSE()
 	SET(_ANKI_LIBPNG "ankipng")
-	MESSAGE("++ Building with AnKi provided libpng")
 ENDIF()
 
 # Disable GLU in GLEW
 ADD_DEFINITIONS(-DGLEW_NO_GLU)
 
-# Window backend
-MESSAGE("++ Window backend: ${ANKI_WINDOW_BACKEND}")
-
-#
-# Common compiler flags
-#
-
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -static-libstdc++")
-
-# Build type
-IF(CMAKE_BUILD_TYPE STREQUAL Debug)
-	# Do nothing
-ELSE()
-	SET(FLAGS " -ffast-math")
-
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS} -fno-rtti ")
-	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS}")
-	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FLAGS}")
-ENDIF()
-
 # Strip
 IF(ANKI_STRIP)
-	MESSAGE("++ Stipping symbols: true")
-	SET(FLAGS " -s ")
-
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FLAGS}")
-	SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FLAGS}")
-	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${FLAGS}")
-ELSE()
-	MESSAGE("++ Stipping symbols: false")
+	SET(LINKER_FLAGS "${LINKER_FLAGS} -s ")
+	SET(COMMON_FLAGS "${COMMON_FLAGS} -s ")
 ENDIF()
 
 # gperftools
 IF(ANKI_WITH_GPERFTOOLS_PROF)
 	LINK_DIRECTORIES("/home/godlike/src/more/gperftools/install/lib")
 	SET(ANKI_GPERFTOOLS_LIBS "profiler")
-	MESSAGE("++ With gperftools profiler: true")
 ELSE()
 	SET(ANKI_GPERFTOOLS_LIBS "")
-	MESSAGE("++ With gperftools profiler: false")
 ENDIF()
 
 INCLUDE_DIRECTORIES(${ANKI_EXTRA_INCLUDE_DIRS})
 LINK_DIRECTORIES(${ANKI_EXTRA_LIB_DIRS})
+
+# Set the flags to cmake now
+SET(CMAKE_CXX_FLAGS "${COMMON_FLAGS} ${CXX_FLAGS}")
+SET(CMAKE_C_FLAGS "${COMMON_FLAGS} ${C_FLAGS}")
+SET(CMAKE_EXE_LINKER_FLAGS "${LINKER_FLAGS}")
 
 #
 # Install
@@ -212,25 +192,13 @@ SET(ANKI_VERSION_MINOR 1)
 MESSAGE("++ AnKi version: ${ANKI_VERSION_MAJOR}.${ANKI_VERSION_MINOR}")
 
 IF(CMAKE_BUILD_TYPE STREQUAL Debug)
-	MESSAGE("++ Debug build: true")
 	SET(ANKI_DEBUG 1)
 ELSE()
-	MESSAGE("++ Debug build: false")
 	SET(ANKI_DEBUG 0)
 ENDIF()
 
 CONFIGURE_FILE("include/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
-
-#
-# Defines
-#
-ADD_DEFINITIONS("-Dthread_local=__thread")
-
-#
-# AnKi compiler flags (Mainly warnings)
-#
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic-errors -pedantic -ansi -Wall -W -Wextra -Wwrite-strings -Wno-unused -Wno-unused-parameter -Wundef -Werror -std=c++11")
 
 #
 # Include & lib directories
@@ -244,23 +212,15 @@ ELSE()
 	INCLUDE_DIRECTORIES("extern/GLES3/include")
 ENDIF()
 
-# Add a few compiler specific stuff 
-IF(${CMAKE_CXX_COMPILER} MATCHES ".*clang\\+\\+$")	
-	INCLUDE_DIRECTORIES("/opt/libcxx/include/c++/v1")
-	LINK_DIRECTORIES("/opt/libcxx/lib")
-ELSE()
-	# Dont use it. It produces warnings with -std=c++0x
-	#ADD_DEFINITIONS("-fsingle-precision-constant")
-ENDIF()
-
 #
-# Valgrind hacks
+# AnKi specific compiler flags
 #
-OPTION(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
 
-IF(ANKI_VALGRIND_HAPPY)
-	ADD_DEFINITIONS("-DGLIBCXX_FORCE_NEW")
-ENDIF()
+# thread local
+ADD_DEFINITIONS("-Dthread_local=__thread")
+
+# AnKi compiler flags (Mainly warnings)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -std=c++11 ")
 
 #
 # Add anki related dirs
@@ -279,3 +239,4 @@ ENDIF()
 IF(ANKI_BUILD_TESTAPP)
 	ADD_SUBDIRECTORY(testapp)
 ENDIF()
+

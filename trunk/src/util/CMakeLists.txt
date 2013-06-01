@@ -1,6 +1,6 @@
 SET(ANKI_UTIL_SOURCES Assert.cpp BinaryStream.cpp Exception.cpp Functions.cpp StringList.cpp Filesystem.cpp Allocator.cpp Memory.cpp System.cpp)
 
-IF(ANKI_PLATFORM STREQUAL "LINUX")
+IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 	SET(ANKI_UTIL_SOURCES ${ANKI_UTIL_SOURCES} HighRezTimerPosix.cpp FilesystemPosix.cpp)
 ELSE()
 	MESSAGE(FATAL "See file")
