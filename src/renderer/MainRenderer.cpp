@@ -1,7 +1,7 @@
 #include "anki/renderer/MainRenderer.h"
 #include "anki/core/Logger.h"
 #include "anki/renderer/Deformer.h"
-#include "anki/util/Filesystem.h"
+#include "anki/util/File.h"
 #include "anki/core/Counters.h"
 #include <cstdlib>
 #include <cstdio>
@@ -224,7 +224,7 @@ void MainRenderer::takeScreenshotJpeg(const char* filename)
 //==============================================================================
 void MainRenderer::takeScreenshot(const char* filename)
 {
-	std::string ext = getFileExtension(filename);
+	std::string ext = File::getFileExtension(filename);
 
 	// exec from this extension
 	if(ext == "tga")

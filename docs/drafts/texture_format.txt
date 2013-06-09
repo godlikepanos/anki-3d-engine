@@ -1,0 +1,57 @@
+
+======
+Header
+======
+
+ANKITEX1
+width
+height
+depth
+texture type  2D | cube | 3D | 2DArray
+internal_format  RGB8 | RGBA8
+compression_formats  RAW & ETC2 & S3TC
+normal
+miplevels
+
+
+===========
+Data layout
+===========
+
+- Format A
+	- Level 0
+		- Depth 0 or face 0
+		- Depth N or face N
+	- Level N
+- Format B
+
+
+================
+Helper functions
+================
+
+PtrSize getDataSectionSize()
+
+Get The size of all the texture data. header+data_section_size == file_size
+
+
+PtrSize getCompressedFormatSize(format)
+
+Get the size of the a compressed format
+
+
+UVec2 getLevelSize(width, height, level)
+
+
+UVec2 getSurfaceSize(data_compression, level);
+
+Given a data compression format and the level get the size that the data should 
+be
+
+=============
+Sanity checks
+=============
+
+- Compressed format and no mipmap should issue a warning
+- Get the total size of the file, sub the header, calculate the size and check 
+  if they match

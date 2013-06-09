@@ -13,34 +13,46 @@ namespace anki {
 class Image
 {
 public:
-	/// The acceptable color types of AnKi
-	enum ColorType
+	/// Texture type
+	enum TextureType
 	{
-		CT_R, ///< Red only
-		CT_RGB, ///< RGB
-		CT_RGBA ///< RGB plus alpha
+		TT_NONE,
+		TT_2D,
+		TT_CUBE,
+		TT_3D,
+		TT_2D_ARRAY
+	};
+
+	/// The acceptable color types of AnKi
+	enum ColorFormat
+	{
+		CF_NONE,
+		CF_RGB8, ///< RGB
+		CF_RGBA8 ///< RGB plus alpha
 	};
 
 	/// The data compression
 	enum DataCompression
 	{
 		DC_NONE,
+		DC_RAW,
 		DC_DXT1,
-		DC_DXT3,
-		DC_DXT5
+		DC_DXT5,
+		DC_ETC2
+	};
+
+	/// An image surface
+	struct Surface
+	{
+		U32 width;
+		U32 height;
+		U32 mipLevel;
+		Vector<U8> data;
 	};
 
 	/// Do nothing
 	Image()
 	{}
-
-	/// Load an image
-	/// @param[in] filename The image file to load
-	/// @exception Exception
-	Image(const char* filename)
-	{
-		load(filename);
-	}
 
 	/// Do nothing
 	~Image()
@@ -48,124 +60,55 @@ public:
 
 	/// @name Accessors
 	/// @{
-	U32 getWidth() const
+	ColorFormat getColorFormat() const
 	{
-		return width;
+		ANKI_ASSERT(colorFormat != CF_NONE);
+		return colorFormat;
 	}
 
-	U32 getHeight() const
+	DataCompression getCompression() const
 	{
-		return height;
+		ANKI_ASSERT(compression != DC_NONE);
+		return compression;
 	}
 
-	ColorType getColorType() const
+	U getMipLevelsCount() const
 	{
-		return type;
+		ANKI_ASSERT(mipLevels != 0);
+		return mipLevels;
 	}
 
-	const U8* getData() const
+	U getDepth() const
 	{
-		return &data[0];
+		ANKI_ASSERT(depth != 0);
+		return depth;
 	}
 
-	/// Get image size in bytes
-	size_t getDataSize() const
+	TextureType getTextureType() const
 	{
-		return getVectorSizeInBytes(data);
+		ANKI_ASSERT(textureType != TT_NONE);
+		return textureType;
 	}
 
-	DataCompression getDataCompression() const
-	{
-		return dataCompression;
-	}
+	const Surface& getSurface(U mipLevel, U depthOrFace) const;
 	/// @}
 
 	/// Load an image file
 	/// @param[in] filename The file to load
-	/// @exception Exception
 	void load(const char* filename);
 
-private:
-	U32 width = 0; ///< Image width
-	U32 height = 0; ///< Image height
-	ColorType type; ///< Image color type
-	Vector<U8> data; ///< Image data
-	DataCompression dataCompression;
-
-	/// @name TGA headers
-	/// @{
-	static U8 tgaHeaderUncompressed[12];
-	static U8 tgaHeaderCompressed[12];
-	/// @}
-
-	/// Load a TGA
-	/// @param[in] filename The file to load
-	/// @exception Exception
-	void loadTga(const char* filename);
-
-	/// Used by loadTga
-	/// @param[in] fs The input
-	/// @param[out] bpp Bits per pixel
-	/// @exception Exception
-	void loadUncompressedTga(std::fstream& fs, U32& bpp);
-
-	/// Used by loadTga
-	/// @param[in] fs The input
-	/// @param[out] bpp Bits per pixel
-	/// @exception Exception
-	void loadCompressedTga(std::fstream& fs, U32& bpp);
-
-	/// Load PNG. Dont throw exception because libpng is in C
-	/// @param[in] filename The file to load
-	/// @param[out] err The error message
-	/// @return true on success
-	bool loadPng(const char* filename, std::string& err) throw();
-
-	/// Load a DDS file
-	/// @param[in] filename The file to load
-	void loadDds(const char* filename);
-};
-
-/// A super image that loads multiple images, used in cubemaps, 3D textures
-class MultiImage
-{
-public:
-	/// The type of the image
-	enum MultiImageType
-	{
-		MIT_SINGLE,
-		MIT_CUBE,
-		MIT_ARRAY
-	};
-
-	MultiImage(const char* filename)
-	{
-		load(filename);
-	}
-
-	void load(const char* filename);
-
-	/// Get single image
-	const Image& getImage() const
-	{
-		ANKI_ASSERT(images.size() == 1);
-		ANKI_ASSERT(type == MIT_SINGLE);
-		return images[0];
-	}
-
-	/// Get face image
-	const Image& getImageFace(U face) const
-	{
-		ANKI_ASSERT(images.size() == 6);
-		ANKI_ASSERT(type == MIT_CUBE);
-		return images[face];
-	}
+	/// Load an image file
+	/// @param[in] filenames The 6 files to load
+	void loadCube(const char* filenames[6]);
 
 private:
-	Vector<Image> images;
-	MultiImageType type;
-
-	void loadCubemap(const char* filename);
+	/// [mip][depthFace]
+	Vector<Surface> surfaces;
+	U8 mipLevels = 0;
+	U8 depth = 0;
+	DataCompression compression = DC_NONE;
+	ColorFormat colorFormat = CF_NONE;
+	TextureType textureType = TT_NONE;
 };
 
 } // end namespace anki

@@ -1,4 +1,4 @@
-#include "anki/util/Filesystem.h"
+#include "anki/util/File.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
 #include <fstream>
@@ -11,7 +11,11 @@
 namespace anki {
 
 //==============================================================================
-bool fileExists(const char* filename)
+// File                                                                        =
+//==============================================================================
+
+//==============================================================================
+Bool File::fileExists(const char* filename)
 {
 	ANKI_ASSERT(filename);
 	struct stat s;
@@ -26,7 +30,11 @@ bool fileExists(const char* filename)
 }
 
 //==============================================================================
-bool directoryExists(const char* filename)
+// Functions                                                                   =
+//==============================================================================
+
+//==============================================================================
+Bool directoryExists(const char* filename)
 {
 	ANKI_ASSERT(filename);
 	struct stat s;
@@ -41,10 +49,9 @@ bool directoryExists(const char* filename)
 }
 
 //==============================================================================
-static int rmDir(const char* fpath, const struct stat* sb, int /*typeflag*/,
-	struct FTW* /*ftwbuf*/)
+static int rmDirCallback(const char* fpath, const struct stat* /*sb*/, 
+	int /*typeflag*/, struct FTW* /*ftwbuf*/)
 {
-	(void)sb;
 	int rv = remove(fpath);
 
 	if(rv)
@@ -57,7 +64,7 @@ static int rmDir(const char* fpath, const struct stat* sb, int /*typeflag*/,
 
 void removeDirectory(const char* dir)
 {
-	if(nftw(dir, rmDir, 64, FTW_DEPTH | FTW_PHYS))
+	if(nftw(dir, rmDirCallback, 64, FTW_DEPTH | FTW_PHYS))
 	{
 		throw ANKI_EXCEPTION(strerror(errno) + ": " + dir);
 	}
@@ -75,13 +82,6 @@ void createDirectory(const char* dir)
 	{
 		throw ANKI_EXCEPTION(strerror(errno) + ": " + dir);
 	}
-}
-
-//==============================================================================
-void toNativePath(const char* path)
-{
-	ANKI_ASSERT(path);
-	(void)path;
 }
 
 } // end namespace anki

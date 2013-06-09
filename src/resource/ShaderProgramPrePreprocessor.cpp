@@ -1,7 +1,7 @@
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
-#include "anki/util/Filesystem.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Functions.h"
+#include "anki/util/File.h"
 #include <iomanip>
 #include <cstring>
 #include <iostream>
@@ -51,7 +51,8 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	}
 
 	// load file in lines
-	StringList lines = readFileLines(filename.c_str());
+	StringList lines;
+	File(filename.c_str(), File::OF_READ).readAllTextLines(lines);
 	if(lines.size() < 1)
 	{
 		throw ANKI_EXCEPTION("File is empty: " + filename);

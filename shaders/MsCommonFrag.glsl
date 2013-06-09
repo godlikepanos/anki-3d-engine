@@ -1,3 +1,4 @@
+#define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/CommonFrag.glsl"
 
 //==============================================================================
@@ -7,7 +8,7 @@
 /// @name Varyings
 /// @{
 #define vTexCoords_DEFINED
-in vec2 vTexCoords;
+in highp vec2 vTexCoords;
 
 #if defined(PASS_COLOR)
 in vec3 vNormal;
@@ -46,13 +47,14 @@ layout(location = 0) out uvec2 fMsFai0;
 #if defined(PASS_COLOR)
 #	define getNormalFromTexture_DEFINED
 vec3 getNormalFromTexture(in vec3 normal, in vec3 tangent, in float tangentW,
-	in sampler2D map, in vec2 texCoords)
+	in sampler2D map, in highp vec2 texCoords)
 {
 #	if LOD > 0
 	return normalize(normal);
 #	else
 	// First read the texture
-	vec3 nAtTangentspace = (texture(map, texCoords).rgb - 0.5) * 2.0;
+	vec3 nAtTangentspace = 
+		(DEFAULT_FLOAT_PRECISION vec3(texture(map, texCoords)).rgb - 0.5) * 2.0;
 
 	vec3 n = normalize(normal);
 	vec3 t = normalize(tangent);
@@ -93,7 +95,7 @@ vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 	float m = 2.0 * length(r);
 	vec2 semTexCoords = r.xy / m + 0.5;
 
-	vec3 semCol = texture(map, semTexCoords).rgb;
+	vec3 semCol = DEFAULT_FLOAT_PRECISION vec3(texture(map, semTexCoords)).rgb;
 	return semCol;
 }
 #endif
@@ -107,11 +109,11 @@ vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 #define getDiffuseColorAndDoAlphaTesting_DEFINED
 vec3 getDiffuseColorAndDoAlphaTesting(
 	in sampler2D map,
-	in vec2 texCoords,
+	in highp vec2 texCoords,
 	in float tolerance)
 {
 #if defined(PASS_COLOR)
-	vec4 col = texture(map, texCoords);
+	vec4 col = DEFAULT_FLOAT_PRECISION vec4(texture(map, texCoords));
 	if(col.a < tolerance)
 	{
 		discard;
@@ -121,7 +123,7 @@ vec3 getDiffuseColorAndDoAlphaTesting(
 #	if LOD > 0
 	return vec3(0.0);
 #	else
-	float a = texture(map, texCoords).a;
+	float a = DEFAULT_FLOAT_PRECISION float(texture(map, texCoords).a);
 	if(a < tolerance)
 	{
 		discard;
@@ -134,9 +136,9 @@ vec3 getDiffuseColorAndDoAlphaTesting(
 /// Just read the RGB color from texture
 #if defined(PASS_COLOR)
 #	define readRgbFromTexture_DEFINED
-vec3 readRgbFromTexture(in sampler2D tex, in vec2 texCoords)
+vec3 readRgbFromTexture(in sampler2D tex, in highp vec2 texCoords)
 {
-	return texture(tex, texCoords).rgb;
+	return DEFAULT_FLOAT_PRECISION vec3(texture(tex, texCoords)).rgb;
 }
 #endif
 

@@ -15,10 +15,10 @@ layout(location = 2) in vec4 tangent;
 /// @{
 out vec2 vTexCoords;
 #if defined(PASS_COLOR)
-out vec3 vNormal;
-out vec3 vTangent;
-out float vTangentW;
-out vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
+out mediump vec3 vNormal;
+out mediump vec3 vTangent;
+out mediump float vTangentW;
+out mediump vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 /// Calculate it per vertex instead of per fragment
 flat out lowp float vSpecularComponent; 
 #endif
@@ -44,9 +44,9 @@ void setVaryings2(
 	in mat3 normalMat)
 {
 #if defined(PASS_COLOR)
-	vNormal = normalMat * normal;
-	vTangent = normalMat * vec3(tangent);
-	vTangentW = tangent.w;
+	vNormal = mediump vec3(normalMat * normal);
+	vTangent = mediump vec3(normalMat * vec3(tangent));
+	vTangentW = mediump float(tangent.w);
 #endif
 
 	setVaryings1(modelViewProjectionMat);
@@ -57,7 +57,7 @@ void setVaryings2(
 #define setVertPosViewSpace_DEFINED
 void setVertPosViewSpace(in mat4 modelViewMat)
 {
-	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
+	vVertPosViewSpace = mediump vec3(modelViewMat * vec4(position, 1.0));
 }
 #endif
 
