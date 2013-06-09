@@ -1,7 +1,7 @@
 #include "anki/resource/Image.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
-#include "anki/util/Filesystem.h"
+#include "anki/util/File.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Array.h"
 #include "anki/misc/Xml.h"
@@ -11,52 +11,16 @@
 namespace anki {
 
 //==============================================================================
-// Image                                                                       =
+// TGA                                                                         =
 //==============================================================================
 
 //==============================================================================
-U8 Image::tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-U8 Image::tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static U8 tgaHeaderUncompressed[12] = {0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 //==============================================================================
-void Image::load(const char* filename)
-{
-	// get the extension
-	const char* ext = getFileExtension(filename);
-	ANKI_ASSERT(ext);
-
-	// load from this extension
-	try
-	{
-		if(strcmp(ext, "tga") == 0)
-		{
-			loadTga(filename);
-		}
-		else if(strcmp(ext, "png") == 0)
-		{
-			std::string err;
-			if(!loadPng(filename, err))
-			{
-				throw ANKI_EXCEPTION(err);
-			}
-		}
-		else if(strcmp(ext, "dds") == 0)
-		{
-			loadDds(filename);
-		}
-		else
-		{
-			throw ANKI_EXCEPTION("Unsupported extension");
-		}
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("File " + filename) << e;
-	}
-}
-
-//==============================================================================
-void Image::loadUncompressedTga(std::fstream& fs, U32& bpp)
+static void loadUncompressedTga(
+	std::fstream& fs, U32& width, U32& height, U32& bpp, Vector<U8>& data)
 {
 	// read the info from header
 	U8 header6[6];
@@ -76,8 +40,8 @@ void Image::loadUncompressedTga(std::fstream& fs, U32& bpp)
 	}
 
 	// read the data
-	int bytesPerPxl	= (bpp / 8);
-	int imageSize = bytesPerPxl * width * height;
+	I bytesPerPxl	= (bpp / 8);
+	I imageSize = bytesPerPxl * width * height;
 	data.resize(imageSize);
 
 	fs.read(reinterpret_cast<char*>(&data[0]), imageSize);
@@ -89,16 +53,17 @@ void Image::loadUncompressedTga(std::fstream& fs, U32& bpp)
 	// swap red with blue
 	for(int i = 0; i < int(imageSize); i += bytesPerPxl)
 	{
-		uint temp = data[i];
+		U32 temp = data[i];
 		data[i] = data[i + 2];
 		data[i + 2] = temp;
 	}
 }
 
 //==============================================================================
-void Image::loadCompressedTga(std::fstream& fs, U32& bpp)
+static void loadCompressedTga(
+	std::fstream& fs, U32& width, U32& height, U32& bpp, Vector<U8>& data)
 {
-	unsigned char header6[6];
+	U8 header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
 	if(fs.gcount() != sizeof(header6))
 	{
@@ -114,21 +79,21 @@ void Image::loadCompressedTga(std::fstream& fs, U32& bpp)
 		throw ANKI_EXCEPTION("Invalid texture information");
 	}
 
-	int bytesPerPxl = (bpp / 8);
-	int imageSize = bytesPerPxl * width * height;
+	I bytesPerPxl = (bpp / 8);
+	I imageSize = bytesPerPxl * width * height;
 	data.resize(imageSize);
 
-	uint pixelcount = height * width;
-	uint currentpixel = 0;
-	uint currentbyte = 0;
+	U32 pixelcount = height * width;
+	U32 currentpixel = 0;
+	U32 currentbyte = 0;
 	U8 colorbuffer[4];
 
 	do
 	{
-		unsigned char chunkheader = 0;
+		U8 chunkheader = 0;
 
-		fs.read((char*)&chunkheader, sizeof(unsigned char));
-		if(fs.gcount() != sizeof(unsigned char))
+		fs.read((char*)&chunkheader, sizeof(U8));
+		if(fs.gcount() != sizeof(U8))
 		{
 			throw ANKI_EXCEPTION("Cannot read RLE header");
 		}
@@ -195,12 +160,12 @@ void Image::loadCompressedTga(std::fstream& fs, U32& bpp)
 }
 
 //==============================================================================
-void Image::loadTga(const char* filename)
+static void loadTga(const char* filename, 
+	U32& width, U32& height, U32& bpp, Vector<U8>& data)
 {
 	std::fstream fs;
 	char myTgaHeader[12];
 	fs.open(filename, std::ios::in | std::ios::binary);
-	uint bpp;
 
 	if(!fs.is_open())
 	{
@@ -216,50 +181,46 @@ void Image::loadTga(const char* filename)
 
 	if(memcmp(tgaHeaderUncompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
-		loadUncompressedTga(fs, bpp);
+		loadUncompressedTga(fs, width, height, bpp, data);
 	}
 	else if(memcmp(tgaHeaderCompressed, &myTgaHeader[0],
 		sizeof(myTgaHeader)) == 0)
 	{
-		loadCompressedTga(fs, bpp);
+		loadCompressedTga(fs, width, height, bpp, data);
 	}
 	else
 	{
 		throw ANKI_EXCEPTION("Invalid image header");
 	}
 
-	if(bpp == 32)
+	if(bpp != 32 && bpp != 24)
 	{
-		type = CT_RGBA;
-	}
-	else if(bpp == 24)
-	{
-		type = CT_RGB;
-	}
-	else
-	{
-		throw ANKI_EXCEPTION("Invalid bps");
+		throw ANKI_EXCEPTION("Invalid bpp");
 	}
 
 	fs.close();
-	dataCompression = DC_NONE;
 }
 
 //==============================================================================
-bool Image::loadPng(const char* filename, std::string& err) throw()
+// PNG                                                                         =
+//==============================================================================
+
+//==============================================================================
+static Bool loadPng(const char* filename, std::string& err, 
+	U32& bpp, U32& width, U32& height, Vector<U8>& data) throw()
 {
 	// All locals
 	//
-	const uint PNG_SIG_SIZE = 8; // PNG header size
+	const U32 PNG_SIG_SIZE = 8; // PNG header size
 	FILE* file = NULL;
 	png_structp pngPtr = NULL;
 	png_infop infoPtr = NULL;
-	bool ok = false;
-	size_t charsRead;
-	uint bitDepth;
-	uint channels;
-	uint rowbytes;
-	uint colorType;
+	Bool ok = false;
+	PtrSize charsRead;
+	U32 bitDepth;
+	//U32 channels;
+	U32 rowbytes;
+	U32 colorFormat;
 	Vector<png_bytep> rowPointers;
 
 	// Open file
@@ -327,11 +288,11 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 		width = png_get_image_width(pngPtr, infoPtr);
 		height = png_get_image_height(pngPtr, infoPtr);
 		bitDepth = png_get_bit_depth(pngPtr, infoPtr);
-		channels = png_get_channels(pngPtr, infoPtr);
-		colorType = png_get_color_type(pngPtr, infoPtr);
+		//channels = png_get_channels(pngPtr, infoPtr);
+		colorFormat = png_get_color_type(pngPtr, infoPtr);
 
 		// 1) Convert the color types
-		switch(colorType)
+		switch(colorFormat)
 		{
 		case PNG_COLOR_TYPE_PALETTE:
 			err = "Converting PNG_COLOR_TYPE_PALETTE to "
@@ -360,7 +321,7 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 		}
 
 		// 2) Convert the bit depths
-		if(colorType == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
+		if(colorFormat == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
 		{
 			err = "Converting bit depth";
 #if 0
@@ -383,9 +344,9 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 
 	// Sanity checks
 	if((bitDepth != 8)
-		|| (colorType != PNG_COLOR_TYPE_GRAY
-			&& colorType != PNG_COLOR_TYPE_RGB
-			&& colorType != PNG_COLOR_TYPE_RGBA))
+		|| (colorFormat != PNG_COLOR_TYPE_GRAY
+			&& colorFormat != PNG_COLOR_TYPE_RGB
+			&& colorFormat != PNG_COLOR_TYPE_RGBA))
 	{
 		err = "Sanity checks failed";
 		goto cleanup;
@@ -399,23 +360,23 @@ bool Image::loadPng(const char* filename, std::string& err) throw()
 
 	data.resize(rowbytes * height);
 
-	for (uint i = 0; i < height; ++i)
+	for (U i = 0; i < height; ++i)
 		rowPointers[height - 1 - i] = &data[i * rowbytes];
 
 	png_read_image(pngPtr, &rowPointers[0]);
 
 	// Finalize
 	//
-	switch(colorType)
+	switch(colorFormat)
 	{
 	case PNG_COLOR_TYPE_GRAY:
-		type = CT_R;
+		bpp = 8;
 		break;
 	case PNG_COLOR_TYPE_RGB:
-		type = CT_RGB;
+		bpp = 24;
 		break;
 	case PNG_COLOR_TYPE_RGBA:
-		type = CT_RGBA;
+		bpp = 32;
 		break;
 	default:
 		err = "See file";
@@ -445,276 +406,193 @@ cleanup:
 		fclose(file);
 	}
 
-	dataCompression = DC_NONE;
 	return ok;
 }
 
 //==============================================================================
-// DDS                                                                         =
+// ANKI                                                                        =
 //==============================================================================
 
-// little-endian, of course
-#define DDS_MAGIC 0x20534444
-
-// DdsHeader.dwFlags
-#define DDSD_CAPS                   0x00000001
-#define DDSD_HEIGHT                 0x00000002
-#define DDSD_WIDTH                  0x00000004
-#define DDSD_PITCH                  0x00000008
-#define DDSD_PIXELFORMAT            0x00001000
-#define DDSD_MIPMAPCOUNT            0x00020000
-#define DDSD_LINEARSIZE             0x00080000
-#define DDSD_DEPTH                  0x00800000
-
-// DdsHeader.sPixelFormat.dwFlags
-#define DDPF_ALPHAPIXELS            0x00000001
-#define DDPF_FOURCC                 0x00000004
-#define DDPF_INDEXED                0x00000020
-#define DDPF_RGB                    0x00000040
-
-// DdsHeader.sCaps.dwCaps1
-#define DDSCAPS_COMPLEX             0x00000008
-#define DDSCAPS_TEXTURE             0x00001000
-#define DDSCAPS_MIPMAP              0x00400000
-
-// DdsHeader.sCaps.dwCaps2
-#define DDSCAPS2_CUBEMAP            0x00000200
-#define DDSCAPS2_CUBEMAP_POSITIVEX  0x00000400
-#define DDSCAPS2_CUBEMAP_NEGATIVEX  0x00000800
-#define DDSCAPS2_CUBEMAP_POSITIVEY  0x00001000
-#define DDSCAPS2_CUBEMAP_NEGATIVEY  0x00002000
-#define DDSCAPS2_CUBEMAP_POSITIVEZ  0x00004000
-#define DDSCAPS2_CUBEMAP_NEGATIVEZ  0x00008000
-#define DDSCAPS2_VOLUME             0x00200000
-
-static uint toInt(const char* x)
+//==============================================================================
+enum CompressionFormatMask
 {
-	return x[3] | (x[2] << 8) | (x[1] << 16) | (x[0] << 24);
-}
-
-#define D3DFMT_DXT1 toInt("1TXD") //  DXT1 compression texture format
-#define D3DFMT_DXT2 toInt("2TXD") //  DXT2 compression texture format
-#define D3DFMT_DXT3 toInt("3TXD") //  DXT3 compression texture format
-#define D3DFMT_DXT4 toInt("4TXD") //  DXT4 compression texture format
-#define D3DFMT_DXT5 toInt("5TXD") //  DXT5 compression texture format
-
-#define PF_IS_DXT1(pf) \
-  ((pf.dwFlags & DDPF_FOURCC) && \
-   (pf.dwFourCC == D3DFMT_DXT1))
-
-#define PF_IS_DXT3(pf) \
-  ((pf.dwFlags & DDPF_FOURCC) && \
-   (pf.dwFourCC == D3DFMT_DXT3))
-
-#define PF_IS_DXT5(pf) \
-  ((pf.dwFlags & DDPF_FOURCC) && \
-   (pf.dwFourCC == D3DFMT_DXT5))
-
-#define PF_IS_BGRA8(pf) \
-  ((pf.dwFlags & DDPF_RGB) && \
-   (pf.dwFlags & DDPF_ALPHAPIXELS) && \
-   (pf.dwRGBBitCount == 32) && \
-   (pf.dwRBitMask == 0xff0000) && \
-   (pf.dwGBitMask == 0xff00) && \
-   (pf.dwBBitMask == 0xff) && \
-   (pf.dwAlphaBitMask == 0xff000000U))
-
-#define PF_IS_BGR8(pf) \
-  ((pf.dwFlags & DDPF_ALPHAPIXELS) && \
-  !(pf.dwFlags & DDPF_ALPHAPIXELS) && \
-   (pf.dwRGBBitCount == 24) && \
-   (pf.dwRBitMask == 0xff0000) && \
-   (pf.dwGBitMask == 0xff00) && \
-   (pf.dwBBitMask == 0xff))
-
-#define PF_IS_BGR5A1(pf) \
-  ((pf.dwFlags & DDPF_RGB) && \
-   (pf.dwFlags & DDPF_ALPHAPIXELS) && \
-   (pf.dwRGBBitCount == 16) && \
-   (pf.dwRBitMask == 0x00007c00) && \
-   (pf.dwGBitMask == 0x000003e0) && \
-   (pf.dwBBitMask == 0x0000001f) && \
-   (pf.dwAlphaBitMask == 0x00008000))
-
-#define PF_IS_BGR565(pf) \
-  ((pf.dwFlags & DDPF_RGB) && \
-  !(pf.dwFlags & DDPF_ALPHAPIXELS) && \
-   (pf.dwRGBBitCount == 16) && \
-   (pf.dwRBitMask == 0x0000f800) && \
-   (pf.dwGBitMask == 0x000007e0) && \
-   (pf.dwBBitMask == 0x0000001f))
-
-#define PF_IS_INDEX8(pf) \
-  ((pf.dwFlags & DDPF_INDEXED) && \
-   (pf.dwRGBBitCount == 8))
-
-union DdsHeader
-{
-	struct
-	{
-		uint dwMagic;
-		uint dwSize;
-		uint dwFlags;
-		uint dwHeight;
-		uint dwWidth;
-		uint dwPitchOrLinearSize;
-		uint dwDepth;
-		uint dwMipMapCount;
-		uint dwReserved1[11];
-
-		//  DDPIXELFORMAT
-		struct
-		{
-			uint dwSize;
-			uint dwFlags;
-			uint dwFourCC;
-			uint dwRGBBitCount;
-			uint dwRBitMask;
-			uint dwGBitMask;
-			uint dwBBitMask;
-			uint dwAlphaBitMask;
-		} sPixelFormat;
-
-		//  DDCAPS2
-		struct
-		{
-			uint dwCaps1;
-			uint dwCaps2;
-			uint dwDDSX;
-			uint dwReserved;
-		} sCaps;
-		uint dwReserved2;
-	} data;
-	char dataArr[128];
+	COMPRESSION_NONE,
+	COMPRESSION_RAW = 1 << 0,
+	COMPRESSION_S3TC = 1 << 1,
+	COMPRESSION_ETC2 = 1 << 2
 };
 
-struct DdsLoadInfo
+struct AnkiTextureHeader
 {
-	bool compressed;
-	bool swap;
-	bool palette;
-	unsigned int divSize;
-	unsigned int blockBytes;
+	Array<U8, 8> magic;
+	U32 width;
+	U32 height;
+	U32 depth;
+	U32 type;
+	U32 colorFormat;
+	U32 compressionFormats;
+	U32 normal;
+	U32 mipLevels;
+	U8 padding[88];
 };
 
-DdsLoadInfo loadInfoDXT1 = {true, false, false, 4, 8};
-DdsLoadInfo loadInfoDXT3 = {true, false, false, 4, 16};
-DdsLoadInfo loadInfoDXT5 = {true, false, false, 4, 16};
-DdsLoadInfo loadInfoBGRA8 = {false, false, false, 1, 4};
-DdsLoadInfo loadInfoBGR8 = {false, false, false, 1, 3};
-DdsLoadInfo loadInfoBGR5A1 = {false, true, false, 1, 2};
-DdsLoadInfo loadInfoBGR565 = {false, true, false, 1, 2};
-DdsLoadInfo loadInfoIndex8 = {false, false, true, 1, 1};
+static_assert(sizeof(AnkiTextureHeader) == 128, 
+	"Check sizeof AnkiTextureHeader");
 
-void Image::loadDds(const char* filename)
+//==============================================================================
+static void loadAnkiTexture(
+	const char* filename, 
+	CompressionFormatMask preferredCompression,
+	Vector<Image::Surface>& surfaces, 
+	U8& depth, 
+	U8& mipLevels, 
+	Image::TextureType& textureType)
 {
-	std::fstream in;
-	in.open(filename, std::ios::in | std::ios::binary);
+	File file(filename, 
+		File::OF_READ | File::OF_BINARY | File::E_LITTLE_ENDIAN);
 
-	if(!in.is_open())
-	{
-		throw ANKI_EXCEPTION("Cannot open file");
-	}
-
-	// Read header
 	//
-	DdsHeader hdr;
-	in.read((char*)&hdr, sizeof(hdr));
-
-	if(hdr.data.dwMagic != DDS_MAGIC || hdr.data.dwSize != 124
-		|| !(hdr.data.dwFlags & DDSD_PIXELFORMAT)
-		|| !(hdr.data.dwFlags & DDSD_CAPS))
-	{
-		throw ANKI_EXCEPTION("Incorrect DDS header");
-	}
-
-	// Determine the format
+	// Read and check the header
 	//
-	DdsLoadInfo * li;
+	AnkiTextureHeader header;
+	file.read(&header, sizeof(AnkiTextureHeader));
 
-	if(PF_IS_DXT1(hdr.data.sPixelFormat))
+	if(header.width == 0 || !isPowerOfTwo(header.width)
+		|| header.height == 0 || !isPowerOfTwo(header.height))
 	{
-		li = &loadInfoDXT1;
-		dataCompression = DC_DXT1;
-	}
-	else if(PF_IS_DXT3(hdr.data.sPixelFormat))
-	{
-		li = &loadInfoDXT3;
-		dataCompression = DC_DXT3;
-	}
-	else if(PF_IS_DXT5(hdr.data.sPixelFormat))
-	{
-		li = &loadInfoDXT5;
-		dataCompression = DC_DXT5;
-	}
-	else
-	{
-		throw ANKI_EXCEPTION("Unsupported DDS format");
+		throw ANKI_EXCEPTION("Incorrect width/height value");
 	}
 
-	// Load the data
-	//
-	uint mipMapCount = (hdr.data.dwFlags & DDSD_MIPMAPCOUNT) ?
-		hdr.data.dwMipMapCount : 1;
-	if(mipMapCount != 1)
+	if(header.width != header.height)
 	{
-		throw ANKI_EXCEPTION("Currently mipmaps are not supported in DDS");
+		throw ANKI_EXCEPTION("Only square textures are supported");
 	}
 
-	if(li->compressed)
+	if(header.depth == 0 || header.depth > 16)
 	{
-		size_t size = std::max(li->divSize, hdr.data.dwWidth)
-			/ li->divSize * std::max(li->divSize, hdr.data.dwHeight)
-			/ li->divSize * li->blockBytes;
-
-		if(size != hdr.data.dwPitchOrLinearSize)
-		{
-			throw ANKI_EXCEPTION("Size in header and the calculated are "
-				"not the same");
-		}
-
-		//assert( hdr.dwFlags & DDSD_LINEARSIZE );
-		data.resize(size);
-		in.read((char*)(&data[0]), size);
-
-		if(in.fail() || in.eof())
-		{
-			throw ANKI_EXCEPTION("Error reading file data");
-		}
+		throw ANKI_EXCEPTION("Zero or too big depth");
 	}
 
-	type = CT_RGBA;
-	width = hdr.data.dwWidth;
-	height = hdr.data.dwHeight;
+	if(header.type < Image::TT_2D || header.type > Image::TT_2D_ARRAY)
+	{
+		throw ANKI_EXCEPTION("Incorrect texture type");
+	}
 
-	in.close();
+	if(header.colorFormat < Image::CF_RGB8 
+		|| header.colorFormat > Image::CF_RGBA8)
+	{
+		throw ANKI_EXCEPTION("Incorrect color format");
+	}
+
+	if((header.compressionFormats & preferredCompression) == 0)
+	{
+		throw ANKI_EXCEPTION("File does not contain the wanted compression");
+	}
+
+	// Check mip levels
+	U size = header.width;
+	mipLevels = 0;
+	while(size >= 4)
+	{
+		++mipLevels;
+		size /= 2;
+	}
+
+	if(mipLevels != header.mipLevels)
+	{
+		throw ANKI_EXCEPTION("Incorrect number of mip levels");
+	}
+
+	// Allocate the surfaces
+	switch(header.type)
+	{
+		case Image::TT_2D:
+			depth = 1;
+			break;
+		case Image::TT_CUBE:
+			depth = 6;
+			break;
+		case Image::TT_3D:
+		case Image::TT_2D_ARRAY:
+			depth = header.depth;
+			break;
+		default:
+			ANKI_ASSERT(0);
+	}
+
+	surfaces.resize(mipLevels * depth);
+
+	depth = header.depth;
 }
 
 //==============================================================================
-// MultiImage                                                                  =
+// Image                                                                       =
 //==============================================================================
 
 //==============================================================================
-void MultiImage::load(const char* filename)
+void Image::load(const char* filename)
 {
 	// get the extension
-	const char* ext = getFileExtension(filename);
+	const char* ext = File::getFileExtension(filename);
 	ANKI_ASSERT(ext);
 
 	// load from this extension
 	try
 	{
-		if(strcmp(ext, "cubemap") == 0)
+		U32 bpp;
+		textureType = TT_2D;
+		compression = DC_RAW;
+
+		if(strcmp(ext, "tga") == 0)
 		{
-			type = MIT_CUBE;
-			loadCubemap(filename);
+			surfaces.resize(1);
+			mipLevels = 1;
+			depth = 1;
+			loadTga(filename, surfaces[0].width, surfaces[0].height, bpp, 
+				surfaces[0].data);
+
+			if(bpp == 32)
+			{
+				colorFormat = CF_RGBA8;
+			}
+			else if(bpp == 24)
+			{
+				colorFormat = CF_RGB8;
+			}
+			else
+			{
+				ANKI_ASSERT(0);
+			}
+		}
+		else if(strcmp(ext, "png") == 0)
+		{
+			std::string err;
+			surfaces.resize(1);
+			mipLevels = 1;
+			depth = 1;
+			if(!loadPng(filename, err, bpp, surfaces[0].width, 
+				surfaces[0].height, surfaces[0].data))
+			{
+				throw ANKI_EXCEPTION(err);
+			}
+
+			if(bpp == 32)
+			{
+				colorFormat = CF_RGBA8;
+			}
+			else if(bpp == 24)
+			{
+				colorFormat = CF_RGB8;
+			}
+			else
+			{
+				printf("%d\n", bpp);
+				throw ANKI_EXCEPTION("Unsupported color type");
+			}
 		}
 		else
 		{
-			// Single image
-			type = MIT_SINGLE;
-			images.resize(1);
-			images[0].load(filename);
+			throw ANKI_EXCEPTION("Unsupported extension");
 		}
 	}
 	catch(std::exception& e)
@@ -724,26 +602,35 @@ void MultiImage::load(const char* filename)
 }
 
 //==============================================================================
-void MultiImage::loadCubemap(const char* filename)
+const Image::Surface& Image::getSurface(U mipLevel, U depthOrFace) const
 {
-	// Resize
-	images.resize(6);
+	ANKI_ASSERT(mipLevel < mipLevels);
 
-	// Load XML
-	XmlDocument doc;
-	doc.loadFile(filename);
+	U depthSize = 0;
 
-	XmlElement rootEl = doc.getChildElement("cubemap");
-	static Array<const char*, 6> tags = {{
-		"positiveX", "negativeX", 
-		"positiveY", "negativeY", 
-		"positiveZ", "negativeZ"}};
-
-	for(U i = 0; i < 6; i++)
+	switch(textureType)
 	{
-		XmlElement el = rootEl.getChildElement(tags[i]);
-		images[i].load(el.getText());
+	case TT_2D:
+		depthSize = 1;
+		break;
+	case TT_CUBE:
+		depthSize = 6;
+		break;
+	case TT_3D:
+	case TT_2D_ARRAY:
+		depthSize = depth;
+		break;
+	default:
+		ANKI_ASSERT(0);
 	}
+
+
+	// [mip][depthFace]
+	U index = mipLevel * depthSize + depthOrFace;
+	
+	ANKI_ASSERT(index < surfaces.size());
+
+	return surfaces[index];
 }
 
 } // end namespace anki

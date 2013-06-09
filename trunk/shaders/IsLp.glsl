@@ -205,8 +205,9 @@ float calcShadowFactor(in SpotTexLight light, in vec3 fragPosVspace,
 #if PCF == 1
 	float shadowFactor = pcfLow(shadowMapArr, texCoords3);
 #else
-	float shadowFactor = texture(shadowMapArr, 
-		vec4(texCoords3.x, texCoords3.y, layer, texCoords3.z));
+	float shadowFactor = 
+		texture(shadowMapArr, 
+		vec4(texCoords3.x, texCoords3.y, layer, texCoords3.z)).r;
 #endif
 
 	return shadowFactor;

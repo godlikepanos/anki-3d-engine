@@ -1,6 +1,5 @@
 #include "anki/core/Counters.h"
 #include "anki/core/Timestamp.h"
-#include "anki/util/Filesystem.h"
 #include "anki/util/Array.h"
 #include <cstring>
 
@@ -49,13 +48,13 @@ CountersManager::CountersManager()
 	// Open and write the headers to the files
 	perframeFile.open("./perframe_counters.csv", File::OF_WRITE);
 
-	perframeFile.writeString("FRAME");
+	perframeFile.writeText("FRAME");
 
 	for(const CounterInfo& inf : cinfo)
 	{
 		if(inf.flags & CF_PER_FRAME)
 		{
-			perframeFile.writeString(", %s", inf.name);
+			perframeFile.writeText(", %s", inf.name);
 		}
 	}
 
@@ -69,17 +68,17 @@ CountersManager::CountersManager()
 		{
 			if(i != 0)
 			{
-				perrunFile.writeString(", %" MAX_NAME "s", inf.name);
+				perrunFile.writeText(", %" MAX_NAME "s", inf.name);
 			}
 			else
 			{
-				perrunFile.writeString("%" MAX_NAME "s", inf.name);
+				perrunFile.writeText("%" MAX_NAME "s", inf.name);
 			}
 
 			++i;
 		}
 	}
-	perrunFile.writeString("\n");
+	perrunFile.writeText("\n");
 }
 
 //==============================================================================
@@ -149,7 +148,7 @@ void CountersManager::stopTimerIncreaseCounter(Counter counter)
 void CountersManager::resolveFrame()
 {
 	// Write new line and frame no
-	perframeFile.writeString("\n%llu", getGlobTimestamp());
+	perframeFile.writeText("\n%llu", getGlobTimestamp());
 
 	U i = 0;
 	for(const CounterInfo& inf : cinfo)
@@ -158,11 +157,11 @@ void CountersManager::resolveFrame()
 		{
 			if(inf.flags & CF_U64)
 			{
-				perframeFile.writeString(", %llu", perframeValues[i]);
+				perframeFile.writeText(", %llu", perframeValues[i]);
 			}
 			else if(inf.flags & CF_F64)
 			{
-				perframeFile.writeString(", %f", *((F64*)&perframeValues[i]));
+				perframeFile.writeText(", %f", *((F64*)&perframeValues[i]));
 			}
 			else
 			{
@@ -188,23 +187,23 @@ void CountersManager::flush()
 		{
 			if(j != 0)
 			{
-				perrunFile.writeString(", ");
+				perrunFile.writeText(", ");
 			}
 
 			if(inf.flags & CF_U64)
 			{
-				perrunFile.writeString("%" MAX_NAME "llu", perrunValues[i]);
+				perrunFile.writeText("%" MAX_NAME "llu", perrunValues[i]);
 			}
 			else if(inf.flags & CF_F64)
 			{
 				if(inf.flags & CF_FPS)
 				{
-					perrunFile.writeString("%" MAX_NAME "f", 
+					perrunFile.writeText("%" MAX_NAME "f", 
 						(F64)getGlobTimestamp() / *((F64*)&perrunValues[i]));
 				}
 				else
 				{
-					perrunFile.writeString("%" MAX_NAME "f", 
+					perrunFile.writeText("%" MAX_NAME "f", 
 						*((F64*)&perrunValues[i]));
 				}
 			}
@@ -219,7 +218,7 @@ void CountersManager::flush()
 
 		++i;
 	}
-	perrunFile.writeString("\n");
+	perrunFile.writeText("\n");
 
 	// Close and flush files
 	perframeFile.close();

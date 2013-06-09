@@ -1,9 +1,9 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/MaterialShaderProgramCreator.h"
 #include "anki/core/App.h"
-#include "anki/util/Filesystem.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/TextureResource.h"
+#include "anki/util/File.h"
 #include "anki/misc/Xml.h"
 #include <functional>
 #include <algorithm>
@@ -308,10 +308,9 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 	// Create path
 	std::string newfPathName =
 		AppSingleton::get().getCachePath() + "/mtl_" + prefix + ".glsl";
-	toNativePath(newfPathName.c_str());
 
 	// If file not exists write it
-	if(!fileExists(newfPathName.c_str()))
+	if(!File::fileExists(newfPathName.c_str()))
 	{
 		// If not create it
 		std::ofstream f(newfPathName.c_str());

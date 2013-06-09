@@ -52,6 +52,16 @@ inline std::string trimString(const std::string& str, const char* what = " ")
 	return out;
 }
 
+/// Check if a number os a power of 2
+inline Bool isPowerOfTwo(U64 x)
+{
+	while(((x % 2) == 0) && x > 1)
+	{
+		x /= 2;
+	}
+	return (x == 1);
+}
+
 /// Replace substring. Substitute occurances of @a from into @a to inside the
 /// @a str string
 extern std::string replaceAllString(const std::string& str, 

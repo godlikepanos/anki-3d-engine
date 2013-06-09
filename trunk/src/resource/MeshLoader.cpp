@@ -1,5 +1,5 @@
 #include "anki/resource/MeshLoader.h"
-#include "anki/util/BinaryStream.h"
+#include "anki/util/File.h"
 #include <fstream>
 #include <cstring>
 #include <unordered_map>
@@ -42,28 +42,25 @@ void MeshLoader::load(const char* filename)
 	try
 	{
 		// Open the file
-		std::fstream file(filename, std::fstream::in | std::fstream::binary);
-
-		if(!file.is_open())
-		{
-			throw ANKI_EXCEPTION("Cannot open file:" + filename);
-		}
-
-		BinaryStream bs(file.rdbuf());
+		File file(filename, 
+			File::OF_READ | File::OF_BINARY | File::E_LITTLE_ENDIAN);
 
 		// Magic word
 		char magic[8];
-		bs.read(magic, sizeof(magic));
-		if(bs.fail() || memcmp(magic, "ANKIMESH", 8))
+		file.read(magic, sizeof(magic));
+		if(memcmp(magic, "ANKIMESH", 8))
 		{
 			throw ANKI_EXCEPTION("Incorrect magic word");
 		}
 
 		// Mesh name
-		std::string meshName = bs.readString();
+		{
+			U32 strLen = file.readU32();
+			file.seek(strLen, File::SO_CURRENT);
+		}
 
 		// Verts num
-		uint vertsNum = bs.readUint();
+		U vertsNum = file.readU32();
 		vertCoords.resize(vertsNum);
 
 		// Vert coords
@@ -71,12 +68,12 @@ void MeshLoader::load(const char* filename)
 		{
 			for(U j = 0; j < 3; j++)
 			{
-				vertCoord[j] = bs.readFloat();
+				vertCoord[j] = file.readF32();
 			}
 		}
 
 		// Faces num
-		U facesNum = bs.readUint();
+		U facesNum = file.readU32();
 		tris.resize(facesNum);
 
 		// Faces IDs
@@ -84,7 +81,7 @@ void MeshLoader::load(const char* filename)
 		{
 			for(U j = 0; j < 3; j++)
 			{
-				tri.vertIds[j] = bs.readUint();
+				tri.vertIds[j] = file.readU32();
 
 				// a sanity check
 				if(tri.vertIds[j] >= vertCoords.size())
@@ -95,7 +92,7 @@ void MeshLoader::load(const char* filename)
 		}
 
 		// Tex coords num
-		U texCoordsNum = bs.readUint();
+		U texCoordsNum = file.readU32();
 		texCoords.resize(texCoordsNum);
 
 		// Tex coords
@@ -103,19 +100,19 @@ void MeshLoader::load(const char* filename)
 		{
 			for(uint i = 0; i < 2; i++)
 			{
-				texCoord[i] = bs.readFloat();
+				texCoord[i] = file.readF32();
 			}
 		}
 
 		// Vert weights num
-		U vertWeightsNum = bs.readUint();
+		U vertWeightsNum = file.readU32();
 		vertWeights.resize(vertWeightsNum);
 
 		// Vert weights
 		for(VertexWeight& vw : vertWeights)
 		{
 			// get the bone connections num
-			uint boneConnections = bs.readUint();
+			uint boneConnections = file.readU32();
 
 			// we treat as error if one vert doesnt have a bone
 			if(boneConnections < 1)
@@ -136,11 +133,11 @@ void MeshLoader::load(const char* filename)
 			for(uint i = 0; i < vw.bonesNum; i++)
 			{
 				// read bone id
-				uint boneId = bs.readUint();
+				uint boneId = file.readU32();
 				vw.boneIds[i] = boneId;
 
 				// read the weight of that bone
-				float weight = bs.readFloat();
+				float weight = file.readF32();
 				vw.weights[i] = weight;
 			}
 		} // end for all vert weights

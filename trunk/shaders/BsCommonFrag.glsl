@@ -1,4 +1,6 @@
 // Common code for all fragment shaders of BS
+#define DEFAULT_FLOAT_PRECISION mediump
+
 #pragma anki include "shaders/CommonFrag.glsl"
 #pragma anki include "shaders/MsBsCommon.glsl"
 
@@ -27,7 +29,7 @@ void writeFais(in vec4 color)
 #define particleAlpha_DEFINED
 void particleAlpha(in sampler2D tex, in float alpha)
 {
-	vec4 color = texture(tex, vTexCoords);
+	vec4 color = DEFAULT_FLOAT_PRECISION vec4(texture(tex, vTexCoords));
 	color.w *= alpha;
 	writeFais(color);
 }

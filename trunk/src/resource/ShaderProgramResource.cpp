@@ -1,7 +1,7 @@
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/core/App.h" // To get cache dir
-#include "anki/util/Filesystem.h"
+#include "anki/util/File.h"
 #include "anki/util/Exception.h"
 #include <fstream>
 #include <sstream>
@@ -96,12 +96,13 @@ std::string ShaderProgramResource::createSrcCodeToCache(
 	std::string newfPathName = AppSingleton::get().getCachePath()
 		+ "/" + suffix + ".glsl";
 
-	if(fileExists(newfPathName.c_str()))
+	if(File::fileExists(newfPathName.c_str()))
 	{
 		return newfPathName;
 	}
 
-	std::string src_ = readFile(sProgFPathName);
+	std::string src_;
+	File(sProgFPathName, File::OF_READ).readAllText(src_);
 	std::string src = preAppendedSrcCode + src_;
 
 	std::ofstream f(newfPathName.c_str());

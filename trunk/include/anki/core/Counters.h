@@ -1,6 +1,6 @@
 #include "anki/util/StdTypes.h"
 #include "anki/util/Singleton.h"
-#include "anki/util/Filesystem.h"
+#include "anki/util/File.h"
 #include "anki/util/HighRezTimer.h"
 
 namespace anki {

@@ -15,7 +15,9 @@ void TextureResource::load(const char* filename)
 {
 	try
 	{
-		load(Image(filename));
+		Image img;
+		img.load(filename);
+		load(img);
 	}
 	catch(std::exception& e)
 	{
@@ -27,28 +29,17 @@ void TextureResource::load(const char* filename)
 void TextureResource::load(const Image& img)
 {
 	Initializer init;
-	init.width = img.getWidth();
-	init.height = img.getHeight();
-	init.dataSize = img.getDataSize();
+	init.width = img.getSurface(0, 0).width;
+	init.height = img.getSurface(0, 0).height;
+	init.dataSize = img.getSurface(0, 0).data.size();
 
 	Bool compressionEnabled = 
 		TextureManagerSingleton::get().getCompressionEnabled();
 	(void)compressionEnabled;
 
-	switch(img.getColorType())
+	switch(img.getColorFormat())
 	{
-	case Image::CT_R:
-#if DRIVER_CAN_COMPRESS
-		init.internalFormat = (compressionEnabled) 
-			? GL_COMPRESSED_RED : GL_RED;
-#else
-		init.internalFormat = GL_RED;
-#endif
-		init.format = GL_RED;
-		init.type = GL_UNSIGNED_BYTE;
-		break;
-
-	case Image::CT_RGB:
+	case Image::CF_RGB8:
 #if DRIVER_CAN_COMPRESS
 		init.internalFormat = (compressionEnabled) 
 			? GL_COMPRESSED_RGB : GL_RGB;
@@ -59,7 +50,7 @@ void TextureResource::load(const Image& img)
 		init.type = GL_UNSIGNED_BYTE;
 		break;
 
-	case Image::CT_RGBA:
+	case Image::CF_RGBA8:
 #if DRIVER_CAN_COMPRESS
 		init.internalFormat = (compressionEnabled) 
 			? GL_COMPRESSED_RGBA : GL_RGBA;
@@ -74,30 +65,43 @@ void TextureResource::load(const Image& img)
 		ANKI_ASSERT(0);
 	}
 
-	switch(img.getDataCompression())
+	switch(img.getCompression())
 	{
-	case Image::DC_NONE:
+	case Image::DC_RAW:
 		break;
 
-#if DRIVER_CAN_COMPRESS
+#if ANKI_GL == ANKI_GL_DESKTOP
 	case Image::DC_DXT1:
-		init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-		break;
-
-	case Image::DC_DXT3:
-		init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
+		if(img.getColorFormat() == Image::CF_RGB8)
+		{
+			init.internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+		}
+		else
+		{
+			ANKI_ASSERT(0 && "DXT1 should only be RGB");
+		}
 		break;
 
 	case Image::DC_DXT5:
-		init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+		if(img.getColorFormat() == Image::CF_RGBA8)
+		{
+			init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+		}
+		else
+		{
+			ANKI_ASSERT(0 && "DXT5 should only be RGB");
+		}
 		break;
 #else
+	case Image::DC_ETC2:
+		ANKI_ASSERT(0 && "ToDo");
+		break;
+#endif
 	default:
 		ANKI_ASSERT(0);
-#endif
 	}
 
-	init.data[0] = img.getData();
+	init.data[0] = &img.getSurface(0, 0).data[0];
 	init.mipmapping = TextureManagerSingleton::get().getMipmappingEnabled();
 	init.filteringType = init.mipmapping ? TFT_TRILINEAR : TFT_LINEAR;
 	init.repeat = true;
