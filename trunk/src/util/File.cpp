@@ -330,7 +330,10 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 
 	if(flags & FT_C)
 	{
-		fseek((FILE*)file, offset, origin);
+		if(fseek((FILE*)file, offset, origin) != 0)
+		{
+			throw ANKI_EXCEPTION("fseek() failed");
+		}
 	}
 	else if(flags & FT_ZIP)
 	{
