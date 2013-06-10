@@ -440,6 +440,41 @@ static_assert(sizeof(AnkiTextureHeader) == 128,
 	"Check sizeof AnkiTextureHeader");
 
 //==============================================================================
+/// Calculate the size of the raw color data
+static U calcSizeOfRawSegment(const AnkiTextureHeader& header)
+{
+	U out = 0;
+	U size = header.width;
+	U mips = header.mipLevels;
+	U colors = (header.type == Image::CF_RGB8) ? 3 : 4;
+
+	while(mips-- != 0)
+	{
+		out += size * size * colors;
+		size /= 2;
+	}
+
+	return out;
+}
+
+//==============================================================================
+static U calcSizeOfS3tcSegment(const AnkiTextureHeader& header)
+{
+	U out = 0;
+	U size = header.width;
+	U mips = header.mipLevels;
+	U blockSize = (header.type == Image::CF_RGB8) ? 4 : 8;
+
+	while(mips-- != 0)
+	{
+		out += ((size + 3) / 4) * ((size + 3) / 4) * blockSize;
+		size /= 2;
+	}
+
+	return out;
+}
+
+//==============================================================================
 static void loadAnkiTexture(
 	const char* filename, 
 	CompressionFormatMask preferredCompression,
@@ -457,8 +492,12 @@ static void loadAnkiTexture(
 	AnkiTextureHeader header;
 	file.read(&header, sizeof(AnkiTextureHeader));
 
-	if(header.width == 0 || !isPowerOfTwo(header.width)
-		|| header.height == 0 || !isPowerOfTwo(header.height))
+	if(header.width == 0 
+		|| !isPowerOfTwo(header.width) 
+		|| header.width > 4096
+		|| header.height == 0 
+		|| !isPowerOfTwo(header.height) 
+		|| header.height > 4096)
 	{
 		throw ANKI_EXCEPTION("Incorrect width/height value");
 	}
@@ -503,6 +542,41 @@ static void loadAnkiTexture(
 		throw ANKI_EXCEPTION("Incorrect number of mip levels");
 	}
 
+	//
+	// Move file pointer
+	//
+
+	if(preferredCompression == COMPRESSION_RAW)
+	{
+		// Do nothing
+	}
+	else if(preferredCompression == COMPRESSION_S3TC)
+	{
+		if(header.compressionFormats & COMPRESSION_RAW)
+		{
+			// If raw compression is present then skip it
+			file.seek(calcSizeOfRawSegment(header), File::SO_CURRENT);
+		}
+	}
+	else if(preferredCompression == COMPRESSION_ETC2)
+	{
+		if(header.compressionFormats & COMPRESSION_RAW)
+		{
+			// If raw compression is present then skip it
+			file.seek(calcSizeOfRawSegment(header), File::SO_CURRENT);
+		}
+
+		if(header.compressionFormats & COMPRESSION_S3TC)
+		{
+			// If s3tc compression is present then skip it
+			file.seek(calcSizeOfS3tcSegment(header), File::SO_CURRENT);
+		}
+	}
+
+	//
+	// It's time to read
+	//
+
 	// Allocate the surfaces
 	switch(header.type)
 	{
@@ -519,10 +593,45 @@ static void loadAnkiTexture(
 		default:
 			ANKI_ASSERT(0);
 	}
-
 	surfaces.resize(mipLevels * depth);
 
-	depth = header.depth;
+	// Read all surfaces
+	U mipSize = header.width;
+	U mip = header.mipLevels;
+	while(mip-- != 0)
+	{
+		U d = depth;
+
+		while(d-- != 0)
+		{
+			Image::Surface& surf = surfaces[mip * depth + d];
+			surf.width = mipSize;
+			surf.height = mipSize;
+			U dataSize = 0;
+
+			switch(preferredCompression)
+			{
+			case COMPRESSION_RAW:
+				dataSize = mipSize * mipSize 
+					* (header.type == Image::CF_RGB8) ? 3 : 4;
+				break;
+			case COMPRESSION_S3TC:
+				dataSize = ((mipSize + 3) / 4) * ((mipSize + 3) / 4)
+					* (header.type == Image::CF_RGB8) ? 4 : 8;
+				break;
+			case COMPRESSION_ETC2:
+				dataSize = (mipSize / 4) * (mipSize / 4) * 8;
+				break;
+			default:
+				ANKI_ASSERT(0);
+			}
+
+			surf.data.resize(dataSize);
+			file.read(&surf.data[0], dataSize);
+		}
+
+		mipSize /= 2;
+	}
 }
 
 //==============================================================================
@@ -589,6 +698,17 @@ void Image::load(const char* filename)
 				printf("%d\n", bpp);
 				throw ANKI_EXCEPTION("Unsupported color type");
 			}
+		}
+		else if(strcmp(ext, "ankitex") == 0)
+		{
+			loadAnkiTexture(filename, 
+#if ANKI_GL == ANKI_GL_DESKTOP
+					COMPRESSION_S3TC,
+#else
+					COMPRESSION_ETC,
+#endif
+					surfaces, depth, mipLevels, textureType);
+			// XXX forgot to set data compression
 		}
 		else
 		{
