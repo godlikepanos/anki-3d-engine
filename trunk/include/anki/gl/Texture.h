@@ -161,20 +161,26 @@ public:
 	/// Texture initializer struct
 	struct Initializer
 	{
+		struct Data
+		{
+			const void* location;
+			PtrSize size;
+		};
+
 		U width = 0;
 		U height = 0;
 		U depth = 0;
 		GLenum target = GL_TEXTURE_2D;
 		GLenum internalFormat = GL_NONE;
 		GLenum format = GL_NONE;
-		/// The type of the data. Not relevant if data is zero
-		GLenum type = GL_NONE; 
-		Array<const void*, 256> data; ///< Data per layer/face
-		Bool mipmapping = false;
+		GLenum type = GL_NONE;
+		U mipmapsCount = 0;
 		TextureFilteringType filteringType = TFT_NEAREST;
 		Bool repeat = true;
 		I anisotropyLevel = 0;
-		PtrSize dataSize = 0; ///< For compressed textures
+		Bool genMipmaps = false;
+
+		Array<Array<Data, 256>, 256> data; ///< Array of data in: [mip][layer]
 
 		Initializer()
 		{
