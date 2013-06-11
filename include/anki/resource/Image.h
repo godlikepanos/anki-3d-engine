@@ -35,10 +35,9 @@ public:
 	enum DataCompression
 	{
 		DC_NONE,
-		DC_RAW,
-		DC_DXT1,
-		DC_DXT5,
-		DC_ETC2
+		DC_RAW = 1 << 0,
+		DC_S3TC = 1 << 1,
+		DC_ETC = 1 << 2
 	};
 
 	/// An image surface
@@ -90,7 +89,7 @@ public:
 		return textureType;
 	}
 
-	const Surface& getSurface(U mipLevel, U depthOrFace) const;
+	const Surface& getSurface(U mipLevel, U layer) const;
 	/// @}
 
 	/// Load an image file

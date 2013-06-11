@@ -8,7 +8,7 @@ width
 height
 depth
 texture type  2D | cube | 3D | 2DArray
-internal_format  RGB8 | RGBA8
+color_format  RGB8 | RGBA8
 compression_formats  RAW & ETC2 & S3TC
 normal
 miplevels

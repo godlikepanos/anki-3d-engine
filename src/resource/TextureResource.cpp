@@ -29,84 +29,133 @@ void TextureResource::load(const char* filename)
 void TextureResource::load(const Image& img)
 {
 	Initializer init;
+	U layers = 0;
+	
+	// width + height
 	init.width = img.getSurface(0, 0).width;
 	init.height = img.getSurface(0, 0).height;
-	init.dataSize = img.getSurface(0, 0).data.size();
+	
+	// depth
+	if(img.getType() == Image::TT_2D_ARRAY || img.getType() == Image::TT_3D)
+	{
+		init.depth = img.getDepth();
+	}
+	else
+	{
+		init.depth = 0;
+	}
 
-	Bool compressionEnabled = 
-		TextureManagerSingleton::get().getCompressionEnabled();
-	(void)compressionEnabled;
+	// target
+	switch(img.getType())
+	{
+	case Image::TT_2D:
+		init.target = GL_TEXTURE_2D;
+		layers = 1;
+		break;
+	case Image::TT_CUBE:
+		init.target = GL_TEXTURE_CUBE_MAP;
+		layers = 6;
+		break;
+	case Image::TT_2D_ARRAY:
+		init.target = GL_TEXTURE_2D_ARRAY;
+		layers = init.depth;
+		break;
+	case Image::TT_3D:
+		init.target = GL_TEXTURE_3D;
+		layers = init.depth;
+	default:
+		ANKI_ASSERT(0);
+	}
 
+	// Internal format
+	if(img.getColorFormat() == Image::CF_RGB8)
+	{
+		switch(img.getCompression())
+		{
+		case Image::DC_RAW:
+#if DRIVER_CAN_COMPRESS
+			init.internalFormat = GL_COMPRESSED_RGB;
+#else
+			init.internalFormat = GL_RGB;
+#endif
+			break;
+#if ANKI_GL == ANKI_GL_DESKTOP
+		case Image::DC_S3TC:
+			init.internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+			break;
+#else
+		case Image::DC_ETC:
+			init.internalFormat = GL_COMPRESSED_RGB8_ETC2;
+			break;
+#endif
+		default:
+			ANKI_ASSERT(0);
+		}
+	}
+	else if(img.getColorFormat() == Image::CF_RGBA8)
+	{
+		switch(img.getCompression())
+		{
+		case Image::DC_RAW:
+#if DRIVER_CAN_COMPRESS
+			init.internalFormat = GL_COMPRESSED_RGBA;
+#else
+			init.internalFormat = GL_RGBA;
+#endif
+			break;
+#if ANKI_GL == ANKI_GL_DESKTOP
+		case Image::DC_S3TC:
+			init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+			break;
+#else
+		case Image::DC_ETC:
+			init.internalFormat = GL_COMPRESSED_RGBA8_ETC2_EAC;
+			break;
+#endif
+		default:
+			ANKI_ASSERT(0);
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(0);
+	}
+
+	// format
 	switch(img.getColorFormat())
 	{
 	case Image::CF_RGB8:
-#if DRIVER_CAN_COMPRESS
-		init.internalFormat = (compressionEnabled) 
-			? GL_COMPRESSED_RGB : GL_RGB;
-#else
-		init.internalFormat = GL_RGB;
-#endif
-		init.format = GL_RGB;
-		init.type = GL_UNSIGNED_BYTE;
+		init.target = GL_RGB;
 		break;
-
 	case Image::CF_RGBA8:
-#if DRIVER_CAN_COMPRESS
-		init.internalFormat = (compressionEnabled) 
-			? GL_COMPRESSED_RGBA : GL_RGBA;
-#else
-		init.internalFormat = GL_RGBA;
-#endif
-		init.format = GL_RGBA;
-		init.type = GL_UNSIGNED_BYTE;
+		init.target = GL_RGBA;
 		break;
-
 	default:
 		ANKI_ASSERT(0);
 	}
 
-	switch(img.getCompression())
-	{
-	case Image::DC_RAW:
-		break;
+	// type
+	init.type = GL_UNSIGNED_BYTE;
 
-#if ANKI_GL == ANKI_GL_DESKTOP
-	case Image::DC_DXT1:
-		if(img.getColorFormat() == Image::CF_RGB8)
-		{
-			init.internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-		}
-		else
-		{
-			ANKI_ASSERT(0 && "DXT1 should only be RGB");
-		}
-		break;
+	// mipmapsCount
+	init.mipmapsCount = img.getMipLevelsCount();
 
-	case Image::DC_DXT5:
-		if(img.getColorFormat() == Image::CF_RGBA8)
-		{
-			init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-		}
-		else
-		{
-			ANKI_ASSERT(0 && "DXT5 should only be RGB");
-		}
-		break;
-#else
-	case Image::DC_ETC2:
-		ANKI_ASSERT(0 && "ToDo");
-		break;
-#endif
-	default:
-		ANKI_ASSERT(0);
-	}
+	// filteringType
+	init.filteringType = TFT_TRILINEAR;
 
-	init.data[0] = &img.getSurface(0, 0).data[0];
-	init.mipmapping = TextureManagerSingleton::get().getMipmappingEnabled();
-	init.filteringType = init.mipmapping ? TFT_TRILINEAR : TFT_LINEAR;
-	init.repeat = true;
+	// anisotropyLevel
 	init.anisotropyLevel = TextureManagerSingleton::get().getAnisotropyLevel();
 
+	// Now assign the data
+	for(U layer = 0; layer < layers; layer++)
+	{
+		for(U level = 0; level < init.mipmapsCount; level++)
+		{
+			init.data[level][layer] = img.getSurface(level, layer);
+		}
+	}
+
+	// Finaly create
 	create(init);
 }
 
