@@ -15,7 +15,7 @@ struct ShaderCommonUniforms
 //==============================================================================
 void Ssao::createFbo(Fbo& fbo, Texture& fai, F32 width, F32 height)
 {
-	Renderer::createFai(width, height, GL_RED, GL_RED, GL_UNSIGNED_BYTE, fai);
+	fai.create2dFai(width, height, GL_RED, GL_RED, GL_UNSIGNED_BYTE);
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	fai.setFiltering(Texture::TFT_LINEAR);

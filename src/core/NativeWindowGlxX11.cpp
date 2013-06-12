@@ -164,7 +164,14 @@ void NativeWindowImpl::createContext(NativeWindowInitializer& init)
 	int ctxAttribs[] = {
 		GLX_CONTEXT_MAJOR_VERSION_ARB, (int)init.majorVersion,
 		GLX_CONTEXT_MINOR_VERSION_ARB, (int)init.minorVersion,
+		None, None,
 		None};
+
+	if(init.debugContext)
+	{
+		ctxAttribs[4] = GLX_CONTEXT_FLAGS_ARB;
+		ctxAttribs[5] = GLX_CONTEXT_DEBUG_BIT_ARB;
+	}
 
 	glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
 

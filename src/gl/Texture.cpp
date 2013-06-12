@@ -32,27 +32,6 @@ static Bool isCompressedInternalFormat(const GLenum internalFormat)
 }
 
 //==============================================================================
-static Bool isLayeredTarget(const GLenum target)
-{
-	Bool out = false;
-	switch(target)
-	{
-	case GL_TEXTURE_2D:
-	case GL_TEXTURE_CUBE_MAP:
-		out = false;
-		break;
-	case GL_TEXTURE_3D:
-	case GL_TEXTURE_2D_ARRAY:
-		out = true;
-		break;
-	default:
-		ANKI_ASSERT(0);
-		break;
-	}
-	return out;
-}
-
-//==============================================================================
 // TextureManager                                                              =
 //==============================================================================
 
@@ -252,6 +231,7 @@ void Texture::create(const Initializer& init)
 	// Load data
 	U w = width;
 	U h = height;
+	ANKI_ASSERT(init.mipmapsCount > 0);
 	for(U level = 0; level < init.mipmapsCount; level++)
 	{
 		switch(target)
@@ -271,6 +251,9 @@ void Texture::create(const Initializer& init)
 			}
 			else
 			{
+				ANKI_ASSERT(init.data[level][0].ptr 
+					&& init.data[level][0].size > 0);
+
 				glCompressedTexImage2D(
 					target, 
 					level, 
@@ -278,8 +261,8 @@ void Texture::create(const Initializer& init)
 					w, 
 					h, 
 					0, 
-					init.data[level][0].ptr, 
-					init.data[level][0].size);
+					init.data[level][0].size, 
+					init.data[level][0].ptr);
 			}
 			break;
 		case GL_TEXTURE_CUBE_MAP:
@@ -301,14 +284,14 @@ void Texture::create(const Initializer& init)
 				else
 				{
 					glCompressedTexImage2D(
-						target, 
+						GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 
 						level, 
 						internalFormat,
 						w, 
 						h, 
 						0, 
-						init.data[level][0].ptr, 
-						init.data[level][0].size);
+						init.data[level][0].size, 
+						init.data[level][0].ptr);
 				}
 			}
 			break;
@@ -344,7 +327,7 @@ void Texture::create(const Initializer& init)
 						0, 
 						format, 
 						type, 
-						(data.size()) > 0 ? &data[0] : nullptr);
+						(data.size() > 0) ? &data[0] : nullptr);
 				}
 				else
 				{
@@ -357,7 +340,7 @@ void Texture::create(const Initializer& init)
 						depth, 
 						0, 
 						data.size(), 
-						(data.size()) > 0 ? &data[0] : nullptr);
+						(data.size() > 0) ? &data[0] : nullptr);
 				}
 			}
 			break;
@@ -383,20 +366,13 @@ void Texture::create(const Initializer& init)
 		glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	}
 
-	if(init.mipmapping && init.data[0])
+	if(init.genMipmaps)
 	{
 		glGenerateMipmap(target);
 	}
 
-	// If not mipmapping then the filtering cannot be trilinear
-	if(init.filteringType == TFT_TRILINEAR && !init.mipmapping)
-	{
-		setFilteringNoBind(TFT_LINEAR);
-	}
-	else
-	{
-		setFilteringNoBind(init.filteringType);
-	}
+	// Set filtering type
+	setFilteringNoBind(init.filteringType);
 
 #if ANKI_GL == ANKI_GL_DESKTOP
 	if(init.anisotropyLevel > 1)
@@ -407,6 +383,28 @@ void Texture::create(const Initializer& init)
 #endif
 
 	ANKI_CHECK_GL_ERROR();
+}
+
+//==============================================================================
+void Texture::create2dFai(U w, U h, 
+	GLenum internalFormat_, GLenum format_, GLenum type_)
+{
+	Initializer init;
+
+	init.width = w;
+	init.height = h;
+	init.depth = 0;
+	init.target = GL_TEXTURE_2D;
+	init.internalFormat = internalFormat_;
+	init.format = format_;
+	init.type = type_;
+	init.mipmapsCount = 1;
+	init.filteringType = TFT_NEAREST;
+	init.repeat = false;
+	init.anisotropyLevel = 0;
+	init.genMipmaps = false;
+
+	create(init);
 }
 
 //==============================================================================

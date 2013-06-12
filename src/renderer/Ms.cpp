@@ -17,11 +17,11 @@ void Ms::init(const RendererInitializer& initializer)
 {
 	try
 	{
-		Renderer::createFai(r->getWidth(), r->getHeight(), GL_RG32UI,
-			GL_RG_INTEGER, GL_UNSIGNED_INT, fai0);
-		Renderer::createFai(r->getWidth(), r->getHeight(),
+		fai0.create2dFai(r->getWidth(), r->getHeight(), GL_RG32UI,
+			GL_RG_INTEGER, GL_UNSIGNED_INT);
+		depthFai.create2dFai(r->getWidth(), r->getHeight(),
 			GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
-			GL_UNSIGNED_INT_24_8, depthFai);
+			GL_UNSIGNED_INT_24_8);
 
 		fbo.create();
 		fbo.setColorAttachments({&fai0});

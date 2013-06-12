@@ -38,6 +38,7 @@ void Sm::init(const RendererInitializer& initializer)
 	sminit.format = GL_DEPTH_COMPONENT;
 	sminit.internalFormat = GL_DEPTH_COMPONENT16;
 	sminit.type = GL_UNSIGNED_SHORT;
+	sminit.mipmapsCount = 1;
 	if(bilinearEnabled)
 	{
 		sminit.filteringType = Texture::TFT_LINEAR;

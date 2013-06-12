@@ -30,15 +30,18 @@ void TextureResource::load(const Image& img)
 {
 	Initializer init;
 	U layers = 0;
+	Bool driverShouldGenMipmaps = false;
 	
 	// width + height
 	init.width = img.getSurface(0, 0).width;
 	init.height = img.getSurface(0, 0).height;
 	
 	// depth
-	if(img.getType() == Image::TT_2D_ARRAY || img.getType() == Image::TT_3D)
+	if(img.getTextureType() == Image::TT_2D_ARRAY 
+		|| img.getTextureType() == Image::TT_3D)
 	{
 		init.depth = img.getDepth();
+		ANKI_ASSERT(init.depth > 1);
 	}
 	else
 	{
@@ -46,7 +49,7 @@ void TextureResource::load(const Image& img)
 	}
 
 	// target
-	switch(img.getType())
+	switch(img.getTextureType())
 	{
 	case Image::TT_2D:
 		init.target = GL_TEXTURE_2D;
@@ -78,10 +81,11 @@ void TextureResource::load(const Image& img)
 #else
 			init.internalFormat = GL_RGB;
 #endif
+			driverShouldGenMipmaps = true;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case Image::DC_S3TC:
-			init.internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT
+			init.internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 			break;
 #else
 		case Image::DC_ETC:
@@ -102,10 +106,11 @@ void TextureResource::load(const Image& img)
 #else
 			init.internalFormat = GL_RGBA;
 #endif
+			driverShouldGenMipmaps = true;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case Image::DC_S3TC:
-			init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+			init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 			break;
 #else
 		case Image::DC_ETC:
@@ -125,10 +130,10 @@ void TextureResource::load(const Image& img)
 	switch(img.getColorFormat())
 	{
 	case Image::CF_RGB8:
-		init.target = GL_RGB;
+		init.format = GL_RGB;
 		break;
 	case Image::CF_RGBA8:
-		init.target = GL_RGBA;
+		init.format = GL_RGBA;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -143,15 +148,23 @@ void TextureResource::load(const Image& img)
 	// filteringType
 	init.filteringType = TFT_TRILINEAR;
 
+	// repeat
+	init.repeat = true;
+
 	// anisotropyLevel
 	init.anisotropyLevel = TextureManagerSingleton::get().getAnisotropyLevel();
+
+	// genMipmaps
+	init.genMipmaps = driverShouldGenMipmaps;
 
 	// Now assign the data
 	for(U layer = 0; layer < layers; layer++)
 	{
 		for(U level = 0; level < init.mipmapsCount; level++)
 		{
-			init.data[level][layer] = img.getSurface(level, layer);
+			init.data[level][layer].ptr = &img.getSurface(level, layer).data[0];
+			init.data[level][layer].size = 
+				img.getSurface(level, layer).data.size();
 		}
 	}
 

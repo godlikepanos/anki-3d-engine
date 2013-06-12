@@ -25,8 +25,8 @@ void Pps::initInternal(const RendererInitializer& initializer)
 	height = initializer.height / initializer.renderingQuality;
 
 	// FBO
-	Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
-		GL_UNSIGNED_BYTE, fai);
+	fai.create2dFai(r->getWidth(), r->getHeight(), GL_RGB, GL_RGB,
+		GL_UNSIGNED_BYTE);
 
 	fbo.create();
 	fbo.setColorAttachments({&fai});

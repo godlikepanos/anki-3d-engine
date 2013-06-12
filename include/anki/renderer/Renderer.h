@@ -250,10 +250,6 @@ public:
 	/// Used by blurring where we draw the same quad many times
 	void drawQuadMultiple(U times);
 
-	/// Create FAI texture
-	static void createFai(U32 width, U32 height, int internalFormat,
-		int format, int type, Texture& fai);
-
 	/// Calculate the planes needed for the calculation of the fragment
 	/// position z in view space. Having the fragment's depth, the camera's
 	/// zNear and zFar the z of the fragment is being calculated inside the

@@ -150,24 +150,27 @@ def parse_commandline():
 	parser = optparse.OptionParser("usage: %prog [options]")
 
 	parser.add_option("-i", "--input", dest = "inp",
-		type = "string", help = "specify the image(s) to convert. " \
+			type = "string", help = "specify the image(s) to convert. " \
 			"Seperate with :")
+
+	parser.add_option("-o", "--output", dest = "out",
+			type = "string", help = "specify new image. ")
 	
 	parser.add_option("-d", "--tmp-dir", dest = "tmp_dir",
-		type = "string", default = False, 
-		help = "temporary directory")
+			type = "string", default = False, 
+			help = "temporary directory")
 
 	parser.add_option("-t", "--type", dest = "type",
-		type = "string", default = "2D", 
-		help = "type of the image (2D or cube or 3D or 2DArray)")
+			type = "string", default = "2D", 
+			help = "type of the image (2D or cube or 3D or 2DArray)")
 
 	parser.add_option("-f", "--fast", dest = "fast",
-		action = "store_true", default = False, 
-		help = "run the fast version of the converters")
+			action = "store_true", default = False, 
+			help = "run the fast version of the converters")
 
 	parser.add_option("-n", "--normal", dest = "normal",
-		action = "store_true", default = False, 
-		help = "assume the texture is normal")
+			action = "store_true", default = False, 
+			help = "assume the texture is normal")
 
 	(options, args) = parser.parse_args()
 
@@ -185,7 +188,7 @@ def parse_commandline():
 	else:
 		parser.error("Unrecognized type: " + options.type)
 
-	return (options.inp.split(":"), options.tmp_dir, options.fast,
+	return (options.inp.split(":"), options.out, options.tmp_dir, options.fast,
 			typ, options.normal)
 
 def get_internal_format_and_size(in_file):
@@ -388,9 +391,9 @@ def write_s3tc(out_file, fname, width, height, internal_format):
 
 	# Read and write the data
 	if internal_format == COLOR_FORMAT_RGB8:
-		block_size = 4
-	else:
 		block_size = 8
+	else:
+		block_size = 16
 
 	data_size = ((width + 3) / 4) * ((height + 3) / 4) * block_size
 
@@ -421,7 +424,7 @@ def main():
 	""" The main """
 
 	# Parse cmd line args
-	(in_files, tmp_dir, fast, typ, normal) = parse_commandline();
+	(in_files, out, tmp_dir, fast, typ, normal) = parse_commandline();
 	tmp_dir = os.path.abspath(tmp_dir)
 
 	if typ == TYPE_CUBE and len(in_files) != 6:
@@ -464,7 +467,7 @@ def main():
 		create_dds_images(mips_fnames, tmp_dir, fast, internal_format, normal)
 
 	# Open file
-	fname = os.path.splitext(os.path.basename(in_file))[0] + ".ankitex"
+	fname = out
 	fname = os.path.join(tmp_dir,  fname)
 	tex_file = open(fname, "wb")
 

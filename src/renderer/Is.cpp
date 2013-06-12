@@ -468,8 +468,8 @@ void Is::initInternal(const RendererInitializer& initializer)
 	//
 
 	// IS FBO
-	Renderer::createFai(r->getWidth(), r->getHeight(), GL_RGB8,
-		GL_RGB, GL_UNSIGNED_BYTE, fai);
+	fai.create2dFai(r->getWidth(), r->getHeight(), GL_RGB8,
+		GL_RGB, GL_UNSIGNED_BYTE);
 	fbo.create();
 	fbo.setColorAttachments({&fai});
 	fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, r->getMs().getDepthFai());
