@@ -163,20 +163,20 @@ public:
 	{
 		struct Data
 		{
-			const void* location;
+			const void* ptr;
 			PtrSize size;
 		};
 
 		U width = 0;
 		U height = 0;
-		U depth = 0;
+		U depth = 0; ///< Relevant only for 3D and 2DArray textures
 		GLenum target = GL_TEXTURE_2D;
 		GLenum internalFormat = GL_NONE;
 		GLenum format = GL_NONE;
 		GLenum type = GL_NONE;
 		U mipmapsCount = 0;
 		TextureFilteringType filteringType = TFT_NEAREST;
-		Bool repeat = true;
+		Bool repeat = false;
 		I anisotropyLevel = 0;
 		Bool genMipmaps = false;
 
@@ -264,6 +264,10 @@ public:
 
 	/// Create a texture
 	void create(const Initializer& init);
+
+	/// Create a FAI
+	void create2dFai(
+		U w, U h, GLenum internalFormat, GLenum format, GLenum type);
 
 	/// Bind the texture to a unit that the texture unit system will decide
 	/// @return The texture init

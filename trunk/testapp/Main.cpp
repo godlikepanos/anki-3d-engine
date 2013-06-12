@@ -469,7 +469,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -492,6 +492,15 @@ void mainLoop()
 	ANKI_COUNTER_STOP_TIMER_INC(C_FPS);
 
 	ANKI_COUNTERS_FLUSH();
+}
+
+
+//==============================================================================
+void glDebugCallback(GLenum source,
+	GLenum type, GLuint id, GLenum severity, GLsizei length,
+	const char* message, GLvoid* userParam)
+{
+	ANKI_LOGI("GL driver reports: " << message);
 }
 
 //==============================================================================
@@ -519,11 +528,14 @@ void initSubsystems(int argc, char* argv[])
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
 	nwinit.fullscreenDesktopRez = true;
+	nwinit.debugContext = true;
 	win = new NativeWindow;	
 	win->create(nwinit);
 
 	// GL stuff
 	GlStateCommonSingleton::get().init(glmajor, glminor);
+
+	glDebugMessageCallback(glDebugCallback, nullptr);
 
 	// Input
 	InputSingleton::get().init(win);

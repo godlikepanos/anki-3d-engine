@@ -163,25 +163,6 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 }
 
 //==============================================================================
-void Renderer::createFai(U32 width, U32 height, int internalFormat,
-	int format, int type, Texture& fai)
-{
-	Texture::Initializer init;
-	init.width = width;
-	init.height = height;
-	init.internalFormat = internalFormat;
-	init.format = format;
-	init.type = type;
-	init.data[0] = nullptr;
-	init.mipmapping = false;
-	init.filteringType = Texture::TFT_NEAREST;
-	init.repeat = false;
-	init.anisotropyLevel = 0;
-
-	fai.create(init);
-}
-
-//==============================================================================
 void Renderer::calcPlanes(const Vec2& cameraRange, Vec2& planes)
 {
 	F32 zNear = cameraRange.x();

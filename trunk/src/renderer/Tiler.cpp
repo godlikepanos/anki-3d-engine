@@ -218,8 +218,8 @@ void Tiler::initInternal(Renderer* r_)
 	depthMapUniform = &(prog->findUniformVariable("depthMap"));
 
 	// Create FBO
-	Renderer::createFai(TILES_X_COUNT, TILES_Y_COUNT, GL_RG32UI,
-		GL_RG_INTEGER, GL_UNSIGNED_INT, fai);
+	fai.create2dFai(TILES_X_COUNT, TILES_Y_COUNT, GL_RG32UI,
+		GL_RG_INTEGER, GL_UNSIGNED_INT);
 	fai.setFiltering(Texture::TFT_NEAREST);
 
 	fbo.create();

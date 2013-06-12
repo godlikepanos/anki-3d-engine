@@ -445,7 +445,7 @@ static PtrSize calcSurfaceSize(const U width, const U height,
 		break;
 	case Image::DC_S3TC:
 		out = ((width + 3) / 4) * ((height + 3) / 4) 
-			* (cf == Image::CF_RGB8) ? 4 : 8; // This is the block size
+			* (cf == Image::CF_RGB8) ? 8 : 16; // This is the block size
 		break;
 	case Image::DC_ETC:
 		out = (width / 4) * (height / 4) * 8;
@@ -620,12 +620,9 @@ static void loadAnkiTexture(
 
 	// Read all surfaces
 	U mipSize = header.width;
-	U mip = header.mipLevels;
-	while(mip-- != 0)
+	for(U mip = 0; mip < header.mipLevels; mip++)
 	{
-		U d = depth;
-
-		while(d-- != 0)
+		for(U d = 0; d < depth; d++)
 		{
 			Image::Surface& surf = surfaces[mip * depth + d];
 			surf.width = mipSize;
@@ -636,11 +633,11 @@ static void loadAnkiTexture(
 			{
 			case Image::DC_RAW:
 				dataSize = mipSize * mipSize 
-					* (header.type == Image::CF_RGB8) ? 3 : 4;
+					* ((header.type == Image::CF_RGB8) ? 3 : 4);
 				break;
 			case Image::DC_S3TC:
 				dataSize = ((mipSize + 3) / 4) * ((mipSize + 3) / 4)
-					* (header.type == Image::CF_RGB8) ? 4 : 8;
+					* ((header.type == Image::CF_RGB8) ? 8 : 16);
 				break;
 			case Image::DC_ETC:
 				dataSize = (mipSize / 4) * (mipSize / 4) * 8;
@@ -746,23 +743,23 @@ void Image::load(const char* filename)
 }
 
 //==============================================================================
-const Image::Surface& Image::getSurface(U mipLevel, U depthOrFace) const
+const Image::Surface& Image::getSurface(U mipLevel, U layer) const
 {
 	ANKI_ASSERT(mipLevel < mipLevels);
 
-	U depthSize = 0;
+	U layers = 0;
 
 	switch(textureType)
 	{
 	case TT_2D:
-		depthSize = 1;
+		layers = 1;
 		break;
 	case TT_CUBE:
-		depthSize = 6;
+		layers = 6;
 		break;
 	case TT_3D:
 	case TT_2D_ARRAY:
-		depthSize = depth;
+		layers = depth;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -770,7 +767,7 @@ const Image::Surface& Image::getSurface(U mipLevel, U depthOrFace) const
 
 
 	// [mip][depthFace]
-	U index = mipLevel * depthSize + depthOrFace;
+	U index = mipLevel * layers + layer;
 	
 	ANKI_ASSERT(index < surfaces.size());
 
