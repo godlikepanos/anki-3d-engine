@@ -370,6 +370,11 @@ void Texture::create(const Initializer& init)
 	{
 		glGenerateMipmap(target);
 	}
+	else
+	{
+		// Make sure that the texture is complete
+		glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, init.mipmapsCount - 1);
+	}
 
 	// Set filtering type
 	setFilteringNoBind(init.filteringType);

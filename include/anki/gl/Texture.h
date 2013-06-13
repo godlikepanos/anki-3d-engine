@@ -123,7 +123,8 @@ private:
 	/// Texture units
 	Vector<Unit> units;
 
-	/// XXX
+	/// A map that goes from a texture name to it's bound unit. We don't keep 
+	/// the unit in the texture because it could be different for each context
 	Vector<I8> texIdToUnitId;
 
 	/// The active texture unit
