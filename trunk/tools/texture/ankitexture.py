@@ -6,25 +6,30 @@ import re
 import os
 import struct
 import copy
+import tempfile
+import shutil
 
 #
 # AnKi texture
 #
 
-TYPE_NONE = 0
-TYPE_2D = 1
-TYPE_CUBE = 2
-TYPE_3D = 3
-TYPE_2D_ARRAY = 4
+# Texture type
+TT_NONE = 0
+TT_2D = 1
+TT_CUBE = 2
+TT_3D = 3
+TT_2D_ARRAY = 4
 
-COLOR_FORMAT_NONE = 0
-COLOR_FORMAT_RGB8 = 1
-COLOR_FORMAT_RGBA8 = 2
+# Color format
+CF_NONE = 0
+CF_RGB8 = 1
+CF_RGBA8 = 2
 
-COMPRESSION_NONE = 0
-COMPRESSION_RAW = 1 << 0
-COMPRESSION_ETC2 = 1 << 1
-COMPRESSION_S3TC = 1 << 2
+# Data compression
+DC_NONE = 0
+DC_RAW = 1 << 0
+DC_ETC2 = 1 << 1
+DC_S3TC = 1 << 2
 
 #
 # DDS
@@ -155,10 +160,6 @@ def parse_commandline():
 
 	parser.add_option("-o", "--output", dest = "out",
 			type = "string", help = "specify new image. ")
-	
-	parser.add_option("-d", "--tmp-dir", dest = "tmp_dir",
-			type = "string", default = False, 
-			help = "temporary directory")
 
 	parser.add_option("-t", "--type", dest = "type",
 			type = "string", default = "2D", 
@@ -174,27 +175,27 @@ def parse_commandline():
 
 	(options, args) = parser.parse_args()
 
-	if not options.inp or not options.tmp_dir:
+	if not options.inp or not options.out:
 		parser.error("argument is missing")
 
 	if options.type == "2D":
-		typ = TYPE_2D
+		typ = TT_2D
 	elif options.type == "cube":
-		typ = TYPE_CUBE
+		typ = TT_CUBE
 	elif options.type == "3D":
-		typ = TYPE_3D
+		typ = TT_3D
 	elif options.type == "2DArray":
-		typ = TYPE_2D_ARRAY
+		typ = TT_2D_ARRAY
 	else:
 		parser.error("Unrecognized type: " + options.type)
 
-	return (options.inp.split(":"), options.out, options.tmp_dir, options.fast,
+	return (options.inp.split(":"), options.out, options.fast,
 			typ, options.normal)
 
 def get_internal_format_and_size(in_file):
 	""" Return the size of the input image and the internal format """
 
-	internal_format = COLOR_FORMAT_NONE
+	internal_format = CF_NONE
 	width = 0
 	height = 0
 
@@ -209,9 +210,9 @@ def get_internal_format_and_size(in_file):
 
 	print("-- Colorspace: %s" % reg.group(1))
 	if reg.group(1) == "RGB":
-		internal_format = COLOR_FORMAT_RGB8
+		internal_format = CF_RGB8
 	elif reg.group(1) == "RGBA":
-		internal_format = COLOR_FORMAT_RGBA8
+		internal_format = CF_RGBA8
 	else:
 		raise Exception("Unrecognized color format")
 
@@ -244,7 +245,7 @@ def create_mipmaps(in_file, tmp_dir, orig_size, internal_format):
 
 		args = ["convert", in_file, "-resize", size_str, "-alpha"]
 
-		if internal_format == COLOR_FORMAT_RGB8:
+		if internal_format == CF_RGB8:
 			args.append("deactivate")
 		else:
 			args.append("activate")
@@ -280,7 +281,7 @@ def create_etc_images(mips_fnames, tmp_dir, fast, internal_format):
 			args.append("fast")
 
 		args.append("-f")
-		if internal_format == COLOR_FORMAT_RGB8:
+		if internal_format == CF_RGB8:
 			args.append("RGB")
 		else:
 			args.append("RGBA")
@@ -294,7 +295,14 @@ def create_dds_images(mips_fnames, tmp_dir, fast, internal_format, \
 	print("-- Creating DDS images")
 
 	for fname in mips_fnames:
+		# Unfortunately we need to flip the image. Use convert again
 		in_fname = fname + ".tga"
+		flipped_fname = fname + "_flip.tga"
+		args = ["convert", in_fname, "-flip", flipped_fname]
+		subprocess.check_call(args)
+		in_fname = flipped_fname
+
+		# Continue
 		out_fname = os.path.join(tmp_dir, os.path.basename(fname) + ".dds")
 
 		print("  -- %s" % out_fname)
@@ -304,12 +312,12 @@ def create_dds_images(mips_fnames, tmp_dir, fast, internal_format, \
 		if fast:
 			args.append("-fast")
 
-		if internal_format == COLOR_FORMAT_RGB8:
+		if internal_format == CF_RGB8:
 			if not normal:
 				args.append("-bc1")
 			else:
 				args.append("-bc1n")
-		elif internal_format == COLOR_FORMAT_RGBA8:
+		elif internal_format == CF_RGBA8:
 			if not normal:
 				args.append("-bc3")
 			else:
@@ -341,8 +349,8 @@ def write_raw(tex_file, fname, width, height, internal_format):
 	img_height = header6[3] * 256 + header6[2]
 	img_bpp = header6[4];
 
-	if (internal_format != COLOR_FORMAT_RGB8 or img_bpp != 24) \
-			and (internal_format != COLOR_FORMAT_RGBA8 or img_bpp != 32):
+	if (internal_format != CF_RGB8 or img_bpp != 24) \
+			and (internal_format != CF_RGBA8 or img_bpp != 32):
 		raise Exception("Unexpected bpp")
 		
 	if img_width != width or img_height != height:
@@ -350,7 +358,7 @@ def write_raw(tex_file, fname, width, height, internal_format):
 
 	# Read the data
 	data_size = width * height
-	if internal_format == COLOR_FORMAT_RGB8:
+	if internal_format == CF_RGB8:
 		data_size *= 3
 	else:
 		data_size *= 4
@@ -374,6 +382,7 @@ def write_s3tc(out_file, fname, width, height, internal_format):
 	""" Append s3tc data to the AnKi texture file """
 
 	# Read header
+	print("  -- Appending %s" % fname)
 	in_file = open(fname, "rb")
 
 	dds_header = DdsHeader(in_file.read(DdsHeader.get_size()))
@@ -381,16 +390,16 @@ def write_s3tc(out_file, fname, width, height, internal_format):
 	if dds_header.dwWidth != width or dds_header.dwHeight != height:
 		raise Exception("Incorrect width")
 
-	if internal_format == COLOR_FORMAT_RGB8 \
+	if internal_format == CF_RGB8 \
 			and dds_header.dwFourCC != "DXT1":
 		raise Exception("Incorrect format. Expecting DXT1")
 
-	if internal_format == COLOR_FORMAT_RGBA8 \
+	if internal_format == CF_RGBA8 \
 			and dds_header.dwFourCC != "DXT5":
 		raise Exception("Incorrect format. Expecting DXT5")
 
 	# Read and write the data
-	if internal_format == COLOR_FORMAT_RGB8:
+	if internal_format == CF_RGB8:
 		block_size = 8
 	else:
 		block_size = 16
@@ -420,21 +429,8 @@ def write_etc(out_file, fname, width, height, internal_format):
 	data = in_file.read(data_size)
 	out_file.write(data)
 
-def main():
-	""" The main """
-
-	# Parse cmd line args
-	(in_files, out, tmp_dir, fast, typ, normal) = parse_commandline();
-	tmp_dir = os.path.abspath(tmp_dir)
-
-	if typ == TYPE_CUBE and len(in_files) != 6:
-		raise Exception("Not enough images for cube generation")
-
-	if (typ == TYPE_3D or typ == TYPE_2D_ARRAY) and len(in_files) < 2:
-		raise Exception("Not enough images for 2DArray/3D texture")
-
-	if typ == TYPE_2D and len(in_files) != 1:
-		raise Exception("Only one image for 2D textures needed")
+def convert(in_files, out, fast, typ, normal, tmp_dir):
+	""" This is the function that does all the work """
 
 	# Invoke app named "identify" to get internal format and width and height
 	(internal_format, width, height) = get_internal_format_and_size(in_files[0])
@@ -445,7 +441,7 @@ def main():
 	if not is_power2(width):
 		raise Exception("Image should power of 2")
 
-	if internal_format == COLOR_FORMAT_RGBA8 and normal:
+	if internal_format == CF_RGBA8 and normal:
 		raise Exception("RGBA image and normal does not make much sense")
 
 	for i in range(1, len(in_files)):
@@ -468,7 +464,7 @@ def main():
 
 	# Open file
 	fname = out
-	fname = os.path.join(tmp_dir,  fname)
+	print("-- Writing %s" % fname)
 	tex_file = open(fname, "wb")
 
 	# Write header
@@ -481,7 +477,7 @@ def main():
 			len(in_files),
 			typ,
 			internal_format,
-			COMPRESSION_RAW | COMPRESSION_S3TC | COMPRESSION_ETC2,
+			DC_RAW | DC_S3TC | DC_ETC2,
 			normal,
 			len(mips_fnames))
 
@@ -523,6 +519,30 @@ def main():
 							internal_format)
 				
 				size = size / 2
+
+def main():
+	""" The main """
+
+	# Parse cmd line args
+	(in_files, out, fast, typ, normal) = parse_commandline();
+
+	if typ == TT_CUBE and len(in_files) != 6:
+		raise Exception("Not enough images for cube generation")
+
+	if (typ == TT_3D or typ == TT_2D_ARRAY) and len(in_files) < 2:
+		raise Exception("Not enough images for 2DArray/3D texture")
+
+	if typ == TT_2D and len(in_files) != 1:
+		raise Exception("Only one image for 2D textures needed")
+
+	# Setup the temp dir
+	tmp_dir = tempfile.mkdtemp("_ankitex")
+
+	# Do the work
+	try:
+		convert(in_files, out, fast, typ, normal, tmp_dir)
+	finally:
+		shutil.rmtree(tmp_dir)
 		
 	# Done
 	print("-- Done!")
