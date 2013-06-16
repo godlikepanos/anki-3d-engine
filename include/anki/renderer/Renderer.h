@@ -77,6 +77,15 @@ struct RendererInitializer
 			U blurringIterationsNum = 2;
 			F32 sideBlurFactor = 1.0;
 		} bl;
+
+		// Lf
+		struct Lf
+		{
+			Bool enabled = true;
+			U8 maxLensFlareCount = 8;
+			U8 maxLightsWidthFlaresCount = 4;
+		} lf;
+
 		Bool enabled = false;
 		Bool sharpen = false;
 	} pps;

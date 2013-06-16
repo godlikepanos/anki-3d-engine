@@ -147,7 +147,8 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 	ANKI_ASSERT(getGlDataType() == GL_SAMPLER_2D 
 		|| getGlDataType() == GL_SAMPLER_2D_SHADOW
 		|| getGlDataType() == GL_UNSIGNED_INT_SAMPLER_2D
-		|| getGlDataType() == GL_SAMPLER_2D_ARRAY_SHADOW);
+		|| getGlDataType() == GL_SAMPLER_2D_ARRAY_SHADOW
+		|| getGlDataType() == GL_SAMPLER_2D_ARRAY);
 	
 	glUniform1i(getLocation(), tex.bind());
 }

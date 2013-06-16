@@ -68,6 +68,8 @@ void MainRenderer::initGl()
 	GlStateSingleton::get().setDepthMaskEnabled(true);
 	glDepthFunc(GL_LESS);
 
+	glDisable(GL_DITHER);
+
 	// Check for error
 	ANKI_CHECK_GL_ERROR();
 }

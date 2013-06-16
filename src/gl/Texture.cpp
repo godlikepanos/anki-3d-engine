@@ -16,6 +16,7 @@ static Bool isCompressedInternalFormat(const GLenum internalFormat)
 	{
 #if ANKI_GL == ANKI_GL_DESKTOP
 	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
 	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
 		out = true;
 		break;
@@ -302,17 +303,24 @@ void Texture::create(const Initializer& init)
 
 				// Gather the data
 				Vector<U8> data;
-				for(U d = 0; d < depth; d++)
-				{
-					if(init.data[level][d].size == 0)
-					{
-						break;
-					}
+				memset(&data[0], 0, data.size());
 
-					data.resize(init.data[level][d].size);
-					ANKI_ASSERT(init.data[level][d].ptr);
-					memcpy(&data[0], init.data[level][d].ptr, 
-						init.data[level][d].size);
+				// Check if there are data
+				if(init.data[level][0].ptr != nullptr)
+				{
+					PtrSize layerSize = init.data[level][0].size;
+					ANKI_ASSERT(layerSize > 0);
+					data.resize(layerSize * depth);
+
+					for(U d = 0; d < depth; d++)
+					{
+						ANKI_ASSERT(init.data[level][d].size == layerSize
+							&& init.data[level][d].ptr != nullptr);
+
+						memcpy(&data[0] + d * layerSize, 
+							init.data[level][d].ptr, 
+							layerSize);
+					}
 				}
 
 				if(!isCompressedInternalFormat(internalFormat))
@@ -331,6 +339,8 @@ void Texture::create(const Initializer& init)
 				}
 				else
 				{
+					ANKI_ASSERT(data.size() > 0);
+						
 					glCompressedTexImage3D(
 						target, 
 						level, 

@@ -45,7 +45,8 @@ public:
 		return gpu;
 	}
 
-	void init(const U32 major_, const U32 minor_);
+	void init(const U32 major_, const U32 minor_, 
+		Bool registerDebugMessages = false);
 
 private:
 	/// Minor major GL version

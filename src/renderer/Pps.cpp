@@ -8,7 +8,7 @@ namespace anki {
 
 //==============================================================================
 Pps::Pps(Renderer* r_)
-	: RenderingPass(r_), hdr(r_), ssao(r_), bl(r_)
+	: RenderingPass(r_), hdr(r_), ssao(r_), bl(r_), lf(r_)
 {}
 
 //==============================================================================
@@ -20,6 +20,7 @@ void Pps::initInternal(const RendererInitializer& initializer)
 {
 	ssao.init(initializer);
 	hdr.init(initializer);
+	lf.init(initializer);
 
 	width = initializer.width / initializer.renderingQuality;
 	height = initializer.height / initializer.renderingQuality;
@@ -115,9 +116,14 @@ void Pps::run()
 	{
 		prog->findUniformVariable("ppsHdrFai").set(hdr.getFai());
 	}
-	//prog->findUniformVariable("msDepthFai").set(r->getMs().getDepthFai());
 
 	r->drawQuad();
+
+	// Draw flares
+	if(lf.getEnabled())
+	{
+		lf.run();
+	}
 }
 
 } // end namespace anki

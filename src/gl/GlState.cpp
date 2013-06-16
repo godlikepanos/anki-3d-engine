@@ -3,6 +3,7 @@
 #include "anki/gl/Fbo.h"
 #include "anki/gl/Vao.h"
 #include "anki/util/Assert.h"
+#include "anki/core/Logger.h"
 #include <limits>
 #include <algorithm>
 
@@ -12,8 +13,70 @@ namespace anki {
 // GlStateCommon                                                               = 
 //==============================================================================
 
+struct GlDbg
+{
+	GLenum token;
+	const char* str;
+};
+
+static const GlDbg gldbgsource[] = {
+	{GL_DEBUG_SOURCE_API, "GL_DEBUG_SOURCE_API"},
+	{GL_DEBUG_SOURCE_WINDOW_SYSTEM, "GL_DEBUG_SOURCE_WINDOW_SYSTEM"},
+	{GL_DEBUG_SOURCE_SHADER_COMPILER, "GL_DEBUG_SOURCE_SHADER_COMPILER"}, 
+	{GL_DEBUG_SOURCE_THIRD_PARTY, "GL_DEBUG_SOURCE_THIRD_PARTY"},
+	{GL_DEBUG_SOURCE_APPLICATION, "GL_DEBUG_SOURCE_APPLICATION"},
+	{GL_DEBUG_SOURCE_OTHER, "GL_DEBUG_SOURCE_OTHER"}};
+
+static const GlDbg gldbgtype[] = {
+	{GL_DEBUG_TYPE_ERROR, "GL_DEBUG_TYPE_ERROR"},
+	{GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, "GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR"},
+	{GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, "GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR"},
+	{GL_DEBUG_TYPE_PORTABILITY, "GL_DEBUG_TYPE_PORTABILITY"},
+	{GL_DEBUG_TYPE_PERFORMANCE, "GL_DEBUG_TYPE_PERFORMANCE"},
+	{GL_DEBUG_TYPE_OTHER, "GL_DEBUG_TYPE_OTHER"}};
+
+static const GlDbg gldbgseverity[] = {
+	{GL_DEBUG_SEVERITY_LOW, "GL_DEBUG_SEVERITY_LOW"},
+	{GL_DEBUG_SEVERITY_MEDIUM, "GL_DEBUG_SEVERITY_MEDIUM"},
+	{GL_DEBUG_SEVERITY_HIGH, "GL_DEBUG_SEVERITY_HIGH"}};
+
 //==============================================================================
-void GlStateCommon::init(const U32 major_, const U32 minor_)
+static void oglMessagesCallback(GLenum source,
+	GLenum type, GLuint id, GLenum severity, GLsizei length,
+	const char* message, GLvoid* userParam)
+{
+	const GlDbg* sourced = &gldbgsource[0];
+	while(source != sourced->token)
+	{
+		++sourced;
+	}
+
+	const GlDbg* typed = &gldbgtype[0];
+	while(type != typed->token)
+	{
+		++typed;
+	}
+
+	switch(severity)
+	{
+	case GL_DEBUG_SEVERITY_LOW:
+		ANKI_LOGI("GL: " << sourced->str 
+			<< ", " << typed->str << ": " << message);
+		break;
+	case GL_DEBUG_SEVERITY_MEDIUM:
+		ANKI_LOGW("GL: " << sourced->str 
+			<< ", " << typed->str << ": " << message);
+		break;
+	case GL_DEBUG_SEVERITY_HIGH:
+		ANKI_LOGE("GL: " << sourced->str 
+			<< ", " << typed->str << ": " << message);
+		break;
+	}
+}
+
+//==============================================================================
+void GlStateCommon::init(const U32 major_, const U32 minor_, 
+	Bool registerDebugMessages)
 {
 	major = (I32)major_;
 	minor = (I32)minor_;
@@ -29,6 +92,25 @@ void GlStateCommon::init(const U32 major_, const U32 minor_)
 	else if(glstr.find("nvidia") != std::string::npos)
 	{
 		gpu = GPU_NVIDIA;
+	}
+
+	// Enable debug messages
+	if(registerDebugMessages)
+	{
+		glDebugMessageCallback(oglMessagesCallback, nullptr);
+
+		for(U s = 0; s < sizeof(gldbgsource) / sizeof(GlDbg); s++)
+		{
+			for(U t = 0; t < sizeof(gldbgtype) / sizeof(GlDbg); t++)
+			{
+				for(U sv = 0; sv < sizeof(gldbgseverity) / sizeof(GlDbg); sv++)
+				{
+					glDebugMessageControl(gldbgsource[s].token, 
+						gldbgtype[t].token, gldbgseverity[sv].token, 0, 
+						nullptr, GL_TRUE);
+				}
+			}
+		}
 	}
 }
 
@@ -82,7 +164,7 @@ U GlState::getIndexFromGlEnum(const GLenum cap)
 }
 
 //==============================================================================
-void GlState::enable(GLenum cap, bool enable)
+void GlState::enable(GLenum cap, Bool enable)
 {
 	U index = getIndexFromGlEnum(cap);
 	Bool state = flags[index];

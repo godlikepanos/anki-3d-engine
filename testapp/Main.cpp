@@ -494,15 +494,6 @@ void mainLoop()
 	ANKI_COUNTERS_FLUSH();
 }
 
-
-//==============================================================================
-void glDebugCallback(GLenum source,
-	GLenum type, GLuint id, GLenum severity, GLsizei length,
-	const char* message, GLvoid* userParam)
-{
-	ANKI_LOGI("GL driver reports: " << message);
-}
-
 //==============================================================================
 // initSubsystems                                                              =
 //==============================================================================
@@ -527,15 +518,13 @@ void initSubsystems(int argc, char* argv[])
 	nwinit.minorVersion = glminor;
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
-	nwinit.fullscreenDesktopRez = true;
-	nwinit.debugContext = true;
+	nwinit.fullscreenDesktopRez = false;
+	nwinit.debugContext = false;
 	win = new NativeWindow;	
 	win->create(nwinit);
 
 	// GL stuff
-	GlStateCommonSingleton::get().init(glmajor, glminor);
-
-	glDebugMessageCallback(glDebugCallback, nullptr);
+	GlStateCommonSingleton::get().init(glmajor, glminor, nwinit.debugContext);
 
 	// Input
 	InputSingleton::get().init(win);

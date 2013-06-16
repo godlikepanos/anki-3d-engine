@@ -26,7 +26,7 @@ protected:
 	Renderer* r; ///< Know your father
 };
 
-/// Rendering pass that can be enabled or disabled
+/// Rendering pass that can be enabled or disabled at runtime
 class SwitchableRenderingPass: public RenderingPass
 {
 public:
@@ -44,7 +44,7 @@ public:
 	}
 
 protected:
-	Bool enabled = false;
+	Bool8 enabled = false;
 };
 
 /// Rendering pass that can be enabled or disabled
@@ -61,7 +61,7 @@ public:
 	}
 
 protected:
-	Bool enabled = false;
+	Bool8 enabled = false;
 };
 
 } // end namespace anki
