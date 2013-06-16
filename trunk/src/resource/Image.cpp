@@ -438,13 +438,15 @@ static PtrSize calcSurfaceSize(const U width, const U height,
 {
 	PtrSize out = 0;
 
+	ANKI_ASSERT(width >= 4 || height >= 4);
+
 	switch(comp)
 	{
 	case Image::DC_RAW:
 		out = width * height * ((cf == Image::CF_RGB8) ? 3 : 4);
 		break;
 	case Image::DC_S3TC:
-		out = ((width + 3) / 4) * ((height + 3) / 4) 
+		out = (width / 4) * (height / 4) 
 			* (cf == Image::CF_RGB8) ? 8 : 16; // This is the block size
 		break;
 	case Image::DC_ETC:
@@ -465,14 +467,16 @@ static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header,
 	Image::DataCompression comp)
 {
 	PtrSize out = 0;
-	U size = header.width;
+	U width = header.width;
+	U height = header.height;
 	U mips = header.mipLevels;
 
 	while(mips-- != 0)
 	{
-		out += calcSurfaceSize(size, size, comp, 
+		out += calcSurfaceSize(width, height, comp, 
 			(Image::ColorFormat)header.colorFormat);
-		size /= 2;
+		width /= 2;
+		height /= 2;
 	}
 
 	return out;
@@ -512,11 +516,6 @@ static void loadAnkiTexture(
 		throw ANKI_EXCEPTION("Incorrect width/height value");
 	}
 
-	if(header.width != header.height)
-	{
-		throw ANKI_EXCEPTION("Only square textures are supported");
-	}
-
 	if(header.depth < 1 || header.depth > 16)
 	{
 		throw ANKI_EXCEPTION("Zero or too big depth");
@@ -544,7 +543,7 @@ static void loadAnkiTexture(
 	}
 
 	// Check mip levels
-	U size = header.width;
+	U size = std::min(header.width, header.height);
 	mipLevels = 0;
 	while(size >= 4) // The minimum size is 4x4
 	{
@@ -619,28 +618,29 @@ static void loadAnkiTexture(
 	surfaces.resize(mipLevels * depth);
 
 	// Read all surfaces
-	U mipSize = header.width;
+	U mipWidth = header.width;
+	U mipHeight = header.height;
 	for(U mip = 0; mip < header.mipLevels; mip++)
 	{
 		for(U d = 0; d < depth; d++)
 		{
 			Image::Surface& surf = surfaces[mip * depth + d];
-			surf.width = mipSize;
-			surf.height = mipSize;
+			surf.width = mipWidth;
+			surf.height = mipHeight;
 			U dataSize = 0;
 
 			switch(preferredCompression)
 			{
 			case Image::DC_RAW:
-				dataSize = mipSize * mipSize 
-					* ((header.type == Image::CF_RGB8) ? 3 : 4);
+				dataSize = mipWidth * mipHeight 
+					* ((header.colorFormat == Image::CF_RGB8) ? 3 : 4);
 				break;
 			case Image::DC_S3TC:
-				dataSize = ((mipSize + 3) / 4) * ((mipSize + 3) / 4)
-					* ((header.type == Image::CF_RGB8) ? 8 : 16);
+				dataSize = (mipWidth / 4) * (mipHeight / 4)
+					* ((header.colorFormat == Image::CF_RGB8) ? 8 : 16);
 				break;
 			case Image::DC_ETC:
-				dataSize = (mipSize / 4) * (mipSize / 4) * 8;
+				dataSize = (mipWidth / 4) * (mipHeight / 4) * 8;
 				break;
 			default:
 				ANKI_ASSERT(0);
@@ -650,7 +650,8 @@ static void loadAnkiTexture(
 			file.read(&surf.data[0], dataSize);
 		}
 
-		mipSize /= 2;
+		mipWidth /= 2;
+		mipHeight /= 2;
 	}
 }
 

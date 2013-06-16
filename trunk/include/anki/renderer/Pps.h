@@ -8,6 +8,7 @@
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Bl.h"
+#include "anki/renderer/Lf.h"
 
 namespace anki {
 
@@ -66,6 +67,7 @@ private:
 	Hdr hdr;
 	Ssao ssao;
 	Bl bl;
+	Lf lf;
 	/// @}
 
 	Fbo fbo;

@@ -173,9 +173,14 @@ def parse_commandline():
 			action = "store_true", default = False, 
 			help = "assume the texture is normal")
 
+	parser.add_option("-c", "--convert-path", dest = "convert_path", 
+			type = "string", default = "/usr/bin/convert", 
+			help = "The directory where convert tool is " \
+			"located. Stupid etcpack cannot get it from PATH")
+
 	(options, args) = parser.parse_args()
 
-	if not options.inp or not options.out:
+	if not options.inp or not options.out or not options.convert_path:
 		parser.error("argument is missing")
 
 	if options.type == "2D":
@@ -190,12 +195,12 @@ def parse_commandline():
 		parser.error("Unrecognized type: " + options.type)
 
 	return (options.inp.split(":"), options.out, options.fast,
-			typ, options.normal)
+			typ, options.normal, options.convert_path)
 
-def get_internal_format_and_size(in_file):
+def identify_image(in_file):
 	""" Return the size of the input image and the internal format """
 
-	internal_format = CF_NONE
+	color_format = CF_NONE
 	width = 0
 	height = 0
 
@@ -204,73 +209,80 @@ def get_internal_format_and_size(in_file):
 
 	stdout_str = proc.stdout.read()
 
+	# Make sure the colorspace is what we want
 	reg = re.search(r"Colorspace: (.*)", stdout_str)
-	if not reg:
-		raise Exception("Cannot extract colorspace")
+	if not reg or reg.group(1) != "RGB":
+		raise Exception("Something is wrong with the colorspace")
 
-	print("-- Colorspace: %s" % reg.group(1))
-	if reg.group(1) == "RGB":
-		internal_format = CF_RGB8
-	elif reg.group(1) == "RGBA":
-		internal_format = CF_RGBA8
-	else:
-		raise Exception("Unrecognized color format")
-
+	# Get the size of the iamge
 	reg = re.search(r"Geometry: ([0-9]*)x([0-9]*)\+", stdout_str)
 
 	if not reg:
 		raise Exception("Cannot extract size")
+	
+	# Identify the color space
+	if not re.search(r"red: 8-bit", stdout_str) \
+			or not re.search(r"green: 8-bit", stdout_str) \
+			or not re.search(r"blue: 8-bit", stdout_str):
+		raise Exception("Incorrect channel depths")
 
-	print("-- width: %s, height: %s" % (reg.group(1), reg.group(2)))
+	if re.search(r"alpha: 8-bit", stdout_str):
+		color_format = CF_RGBA8
+		color_format_str = "RGBA"
+	else:
+		color_format = CF_RGB8
+		color_format_str = "RGB"
 
-	return (internal_format, int(reg.group(1)), int(reg.group(2)))
+	# print some stuff and return
+	print("-- width: %s, height: %s color format: %s" % \
+			(reg.group(1), reg.group(2), color_format_str))
+	return (color_format, int(reg.group(1)), int(reg.group(2)))
 
-def create_mipmaps(in_file, tmp_dir, orig_size, internal_format):
+def create_mipmaps(in_file, tmp_dir, width_, height_, color_format):
 	""" Create a number of images for all mipmaps """
 
 	print("-- Generate mipmaps")
 
-	size = orig_size
+	width = width_
+	height = height_
 
 	mips_fnames = []
 
-	while size >= 4:
-		size_str = "%dx%d" % (size, size)
+	while width >= 4 and height >= 4:
+		size_str = "%dx%d" % (width, height)
 		out_file_str = os.path.join(tmp_dir, get_base_fname(in_file)) \
-				+ "." + str(size)
+				+ "." + size_str
 
-		print("  -- %s.(tga & ppm)" % out_file_str)
+		print("  -- %s.tga" % out_file_str)
 
 		mips_fnames.append(out_file_str)
 
 		args = ["convert", in_file, "-resize", size_str, "-alpha"]
 
-		if internal_format == CF_RGB8:
+		if color_format == CF_RGB8:
 			args.append("deactivate")
 		else:
 			args.append("activate")
 
-		# ppm
-		args_ppm = copy.deepcopy(args)
-		args_ppm.append(out_file_str + ".ppm")
-		subprocess.check_call(args_ppm)
+		args.append(out_file_str + ".tga")
+		subprocess.check_call(args)
 
-		# png
-		args_tga = copy.deepcopy(args)
-		args_tga.append(out_file_str + ".tga")
-		subprocess.check_call(args_tga)
-
-		size = size / 2
+		width = width / 2
+		height = height / 2
 
 	return mips_fnames
 
-def create_etc_images(mips_fnames, tmp_dir, fast, internal_format):
+def create_etc_images(mips_fnames, tmp_dir, fast, color_format, convert_path):
 	""" Create the etc files """
 
 	print("-- Creating ETC images")
 
+	# Copy the convert tool to the working dir so that etcpack will see it
+	shutil.copy2(convert_path, \
+			os.path.join(tmp_dir, os.path.basename(convert_path)))
+
 	for fname in mips_fnames:
-		fname = fname + ".ppm"
+		fname = fname + ".tga"
 
 		print("  -- %s" % fname)
 
@@ -281,14 +293,14 @@ def create_etc_images(mips_fnames, tmp_dir, fast, internal_format):
 			args.append("fast")
 
 		args.append("-f")
-		if internal_format == CF_RGB8:
+		if color_format == CF_RGB8:
 			args.append("RGB")
 		else:
 			args.append("RGBA")
 
-		subprocess.check_call(args, stdout = subprocess.PIPE)
+		subprocess.check_call(args, stdout = subprocess.PIPE, cwd = tmp_dir)
 
-def create_dds_images(mips_fnames, tmp_dir, fast, internal_format, \
+def create_dds_images(mips_fnames, tmp_dir, fast, color_format, \
 		normal):
 	""" Create the dds files """
 
@@ -312,12 +324,13 @@ def create_dds_images(mips_fnames, tmp_dir, fast, internal_format, \
 		if fast:
 			args.append("-fast")
 
-		if internal_format == CF_RGB8:
+		if color_format == CF_RGB8:
 			if not normal:
 				args.append("-bc1")
 			else:
 				args.append("-bc1n")
-		elif internal_format == CF_RGBA8:
+		elif color_format == CF_RGBA8:
+			args.append("-alpha")
 			if not normal:
 				args.append("-bc3")
 			else:
@@ -328,8 +341,10 @@ def create_dds_images(mips_fnames, tmp_dir, fast, internal_format, \
 
 		subprocess.check_call(args, stdout = subprocess.PIPE)
 
-def write_raw(tex_file, fname, width, height, internal_format):
+def write_raw(tex_file, fname, width, height, color_format):
 	""" Append raw data to the AnKi texture file """
+
+	print("  -- Appending %s" % fname)
 
 	# Read and check the header
 	uncompressed_tga_header = struct.pack("BBBBBBBBBBBB", \
@@ -349,8 +364,8 @@ def write_raw(tex_file, fname, width, height, internal_format):
 	img_height = header6[3] * 256 + header6[2]
 	img_bpp = header6[4];
 
-	if (internal_format != CF_RGB8 or img_bpp != 24) \
-			and (internal_format != CF_RGBA8 or img_bpp != 32):
+	if (color_format != CF_RGB8 or img_bpp != 24) \
+			and (color_format != CF_RGBA8 or img_bpp != 32):
 		raise Exception("Unexpected bpp")
 		
 	if img_width != width or img_height != height:
@@ -358,7 +373,7 @@ def write_raw(tex_file, fname, width, height, internal_format):
 
 	# Read the data
 	data_size = width * height
-	if internal_format == CF_RGB8:
+	if color_format == CF_RGB8:
 		data_size *= 3
 	else:
 		data_size *= 4
@@ -378,7 +393,7 @@ def write_raw(tex_file, fname, width, height, internal_format):
 	# Write data to tex_file
 	tex_file.write(data)
 
-def write_s3tc(out_file, fname, width, height, internal_format):
+def write_s3tc(out_file, fname, width, height, color_format):
 	""" Append s3tc data to the AnKi texture file """
 
 	# Read header
@@ -390,28 +405,30 @@ def write_s3tc(out_file, fname, width, height, internal_format):
 	if dds_header.dwWidth != width or dds_header.dwHeight != height:
 		raise Exception("Incorrect width")
 
-	if internal_format == CF_RGB8 \
+	if color_format == CF_RGB8 \
 			and dds_header.dwFourCC != "DXT1":
 		raise Exception("Incorrect format. Expecting DXT1")
 
-	if internal_format == CF_RGBA8 \
+	if color_format == CF_RGBA8 \
 			and dds_header.dwFourCC != "DXT5":
 		raise Exception("Incorrect format. Expecting DXT5")
 
 	# Read and write the data
-	if internal_format == CF_RGB8:
+	if color_format == CF_RGB8:
 		block_size = 8
 	else:
 		block_size = 16
 
-	data_size = ((width + 3) / 4) * ((height + 3) / 4) * block_size
+	data_size = (width / 4) * (height / 4) * block_size
 
 	data = in_file.read(data_size)
 	out_file.write(data)
 
-def write_etc(out_file, fname, width, height, internal_format):
+def write_etc(out_file, fname, width, height, color_format):
 	""" Append etc2 data to the AnKi texture file """
 	
+	print("  -- Appending %s" % fname)
+
 	# Read header
 	in_file = open(fname, "rb")
 
@@ -429,38 +446,37 @@ def write_etc(out_file, fname, width, height, internal_format):
 	data = in_file.read(data_size)
 	out_file.write(data)
 
-def convert(in_files, out, fast, typ, normal, tmp_dir):
+def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path):
 	""" This is the function that does all the work """
 
 	# Invoke app named "identify" to get internal format and width and height
-	(internal_format, width, height) = get_internal_format_and_size(in_files[0])
+	(color_format, width, height) = identify_image(in_files[0])
 
-	if width != height:
-		raise Exception("Only square images are accepted")
+	if not is_power2(width) or not is_power2(height):
+		raise Exception("Image width and height should power of 2")
 
-	if not is_power2(width):
-		raise Exception("Image should power of 2")
-
-	if internal_format == CF_RGBA8 and normal:
+	if color_format == CF_RGBA8 and normal:
 		raise Exception("RGBA image and normal does not make much sense")
 
 	for i in range(1, len(in_files)):
-		(internal_format_2, width_2, height_2) = \
-				get_internal_format_and_size(in_files[i])
+		(color_format_2, width_2, height_2) = \
+				identify_image(in_files[i])
 
 		if width != width_2 or height != height_2 \
-				or internal_format != internal_format_2:
+				or color_format != color_format_2:
 			raise Exception("Images are not same size and color space")
 
 	# Create images
 	for in_file in in_files:
-		mips_fnames = create_mipmaps(in_file, tmp_dir, width, internal_format)
+		mips_fnames = create_mipmaps(in_file, tmp_dir, width, height, \
+				color_format)
 
 		# Create etc images
-		create_etc_images(mips_fnames, tmp_dir, fast, internal_format)
+		create_etc_images(mips_fnames, tmp_dir, fast, color_format, \
+				convert_path)
 
 		# Create dds images
-		create_dds_images(mips_fnames, tmp_dir, fast, internal_format, normal)
+		create_dds_images(mips_fnames, tmp_dir, fast, color_format, normal)
 
 	# Open file
 	fname = out
@@ -476,7 +492,7 @@ def convert(in_files, out, fast, typ, normal, tmp_dir):
 			height,
 			len(in_files),
 			typ,
-			internal_format,
+			color_format,
 			DC_RAW | DC_S3TC | DC_ETC2,
 			normal,
 			len(mips_fnames))
@@ -496,35 +512,38 @@ def convert(in_files, out, fast, typ, normal, tmp_dir):
 	for compression in range(0, 3):
 		# For each image
 		for in_file in in_files:
-			size = width
+			tmp_width = width
+			tmp_height = height
 
 			# For each level
-			while size >= 4:
+			while tmp_width >= 4 and tmp_height >= 4:
+				size_str = "%dx%d" % (tmp_width, tmp_height)
 				in_base_fname = os.path.join(tmp_dir, get_base_fname(in_file)) \
-					+ "." + str(size)
+						+ "." + size_str
 
 				# Write RAW
 				if compression == 0:
-					write_raw(tex_file, in_base_fname + ".tga", size, size, \
-							internal_format)
+					write_raw(tex_file, in_base_fname + ".tga", \
+							tmp_width, tmp_height, color_format)
 
 				# Write S3TC
 				if compression == 1:
-					write_s3tc(tex_file, in_base_fname + ".dds", size, size, \
-							internal_format)
+					write_s3tc(tex_file, in_base_fname + ".dds", \
+							tmp_width, tmp_height, color_format)
 
 				# Write ETC
 				if compression == 2:
-					write_etc(tex_file, in_base_fname + ".pkm", size, size, \
-							internal_format)
+					write_etc(tex_file, in_base_fname + ".pkm", \
+							tmp_width, tmp_height, color_format)
 				
-				size = size / 2
+				tmp_width = tmp_width / 2
+				tmp_height = tmp_height / 2
 
 def main():
 	""" The main """
 
 	# Parse cmd line args
-	(in_files, out, fast, typ, normal) = parse_commandline();
+	(in_files, out, fast, typ, normal, convert_path) = parse_commandline();
 
 	if typ == TT_CUBE and len(in_files) != 6:
 		raise Exception("Not enough images for cube generation")
@@ -535,12 +554,15 @@ def main():
 	if typ == TT_2D and len(in_files) != 1:
 		raise Exception("Only one image for 2D textures needed")
 
+	if not os.path.isfile(convert_path):
+		raise Exception("Tool convert not found: " + convert_path)
+
 	# Setup the temp dir
 	tmp_dir = tempfile.mkdtemp("_ankitex")
 
 	# Do the work
 	try:
-		convert(in_files, out, fast, typ, normal, tmp_dir)
+		convert(in_files, out, fast, typ, normal, tmp_dir, convert_path)
 	finally:
 		shutil.rmtree(tmp_dir)
 		
