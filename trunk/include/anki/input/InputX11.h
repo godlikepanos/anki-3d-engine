@@ -9,6 +9,7 @@ namespace anki {
 struct InputImpl
 {
 	Cursor emptyCursor = 0;
+	Array<U16, 256> nativeKeyToAnki;
 };
 
 } // end namespace anki
