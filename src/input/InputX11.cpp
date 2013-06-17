@@ -122,7 +122,7 @@ static const X11KeyCodeToAnki x2a[] = {
 	{XK_Right, KC_RIGHT}
 };
 
-#define XKEYCODE2ANKI(k_) nativeKeyToAnki[k_ & 0xFF]
+#define XKEYCODE2ANKI(k_) impl->nativeKeyToAnki[k_ & 0xFF]
 
 //==============================================================================
 static Bool eventsPending(Display* display)
@@ -165,19 +165,20 @@ void Input::init(NativeWindow* nativeWindow_)
 		| PointerMotionMask | FocusChangeMask | EnterWindowMask 
 		| LeaveWindowMask);
 
-	memset(&nativeKeyToAnki[0], sizeof(nativeKeyToAnki), KC_UNKNOWN);
+	// Init native
+	impl.reset(new InputImpl);
+
+	memset(
+		&impl->nativeKeyToAnki[0], sizeof(impl->nativeKeyToAnki), KC_UNKNOWN);
 	for(const X11KeyCodeToAnki& a : x2a)
 	{
 		// Convert X11 keycode to something else
 		U32 somethingElse = a.x & 0xFF;
 
-		nativeKeyToAnki[somethingElse] = a.ak;
+		impl->nativeKeyToAnki[somethingElse] = a.ak;
 	}
 
 	reset();
-
-	// Init native
-	impl.reset(new InputImpl);
 }
 
 //==============================================================================

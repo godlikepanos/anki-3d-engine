@@ -10,14 +10,11 @@
 
 #define ANKI_DEBUG ${ANKI_DEBUG}
 
-#define ANKI_FILE __FILE__
-#define ANKI_FUNC __func__
-
 // Operating system
 #define ANKI_OS_LINUX 1 
 #define ANKI_OS_ANDROID 2
-#define ANKI_OS_APPLE 3
-#define ANKI_OS_APPLE_IOS 4
+#define ANKI_OS_MACOS 3
+#define ANKI_OS_IOS 4
 #define ANKI_OS_WINDOWS 5
 
 #if defined( __WIN32__ ) || defined( _WIN32 )
@@ -25,9 +22,9 @@
 #elif defined( __APPLE_CC__)
 #	if __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ >= 40000 \
 	|| __IPHONE_OS_VERSION_MIN_REQUIRED >= 40000
-#		define ANKI_OS ANKI_OS_APPLE_IOS
+#		define ANKI_OS ANKI_OS_IOS
 #	else
-#		define ANKI_OS ANKI_OS_APPLE
+#		define ANKI_OS ANKI_OS_MACOS
 #	endif
 #elif defined(__ANDROID__)
 #	define ANKI_OS ANKI_OS_ANDROID
@@ -37,7 +34,7 @@
 
 // POSIX system or not
 #if ANKI_OS == ANKI_OS_LINUX || ANKI_OS == ANKI_OS_ANDROID \
-	|| ANKI_OS == ANKI_OS_APPLE || ANKI_OS == ANKI_OS_APPLE_IOS
+	|| ANKI_OS == ANKI_OS_MACOS || ANKI_OS == ANKI_OS_IOS
 #	define ANKI_POSIX 1
 #else
 #	define ANKI_POSIX 0
@@ -71,13 +68,15 @@
 #define ANKI_WINDOW_BACKEND_GLXX11 1
 #define ANKI_WINDOW_BACKEND_EGLX11 2
 #define ANKI_WINDOW_BACKEND_EGLFBDEV 3
+#define ANKI_WINDOW_BACKEND_MACOS 4
 #define ANKI_WINDOW_BACKEND ANKI_WINDOW_BACKEND_${ANKI_WINDOW_BACKEND}
 #define ANKI_WINDOW_BACKEND_STR "ANKI_WINDOW_BACKEND_${ANKI_WINDOW_BACKEND}"
 
 // OpenGL version
 #define ANKI_GL_DESKTOP 1
 #define ANKI_GL_ES 2
-#if ANKI_WINDOW_BACKEND == ANKI_WINDOW_BACKEND_GLXX11
+#if ANKI_WINDOW_BACKEND == ANKI_WINDOW_BACKEND_GLXX11 \
+	|| ANKI_WINDOW_BACKEND == ANKI_WINDOW_BACKEND_MACOS
 #	define ANKI_GL ANKI_GL_DESKTOP
 #	define ANKI_GL_STR "ANKI_GL_DESKTOP"
 #else
@@ -87,6 +86,10 @@
 
 // Enable performance counters
 #define ANKI_ENABLE_COUNTERS ${_ANKI_ENABLE_COUNTERS}
+
+//==============================================================================
+// Engine config                                                               =
+//==============================================================================
 
 // General config
 #define ANKI_MAX_MULTIDRAW_PRIMITIVES 64
@@ -121,6 +124,13 @@
 
 /// If true then we can place spatials in a thread-safe way
 #define ANKI_CFG_OCTREE_THREAD_SAFE 1
+
+//==============================================================================
+// Other                                                                       =
+//==============================================================================
+
+#define ANKI_FILE __FILE__
+#define ANKI_FUNC __func__
 
 // Some compiler struff
 #if defined(__GNUC__)

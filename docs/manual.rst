@@ -1,6 +1,6 @@
 **AnKi 3D Engine**
 
-Copyright (C) 2009-2011 Panagiotis Christopoulos-Charitos
+Copyright (C) 2009-2013 Panagiotis Christopoulos-Charitos
 
 http://www.anki3d.org
 

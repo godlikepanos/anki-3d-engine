@@ -43,10 +43,21 @@ public:
 	}
 	/// @}
 
+	/// Initialize the platform's input system
 	void init(NativeWindow* nativeWindow);
+
+	/// Reset the keys and mouse buttons
 	void reset();
+
+	/// Populate the key and button with the new state
 	void handleEvents();
+
+	/// Move the mouse cursor to a position inside the window. Useful for 
+	/// locking the cursor into a fixed location (eg in the center of the 
+	/// screen)
 	void moveMouse(const Vec2& posNdc);
+
+	/// Hide the mouse cursor
 	void hideCursor(Bool hide);
 
 private:
@@ -66,8 +77,6 @@ private:
 	/// @}
 
 	Vec2 mousePosNdc; ///< The coords are in the NDC space
-
-	Array<U16, 256> nativeKeyToAnki;
 
 	std::shared_ptr<InputImpl> impl;
 };
