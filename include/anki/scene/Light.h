@@ -42,7 +42,7 @@ public:
 		const char* name, SceneGraph* scene, SceneNode* parent, // Scene
 		U32 movableFlags, // Movable
 		CollisionShape* cs, // Spatial
-		LightType t); // Self
+		LightType t, const char* lensFlareFile); // Self
 	/// @}
 
 	virtual ~Light();
@@ -98,6 +98,17 @@ public:
 		ANKI_ASSERT(i < 0xFF);
 		shadowMapIndex = (U8)i;
 	}
+
+	Bool hasLensFlare() const
+	{
+		return lensFlareTex.get() != nullptr;
+	}
+
+	const Texture& getLensFlareTexture() const
+	{
+		ANKI_ASSERT(hasLensFlare());
+		return *lensFlareTex;
+	}
 	/// @}
 
 	/// @name SceneNode virtuals
@@ -114,7 +125,8 @@ private:
 	LightType type;
 	Vec4 color = Vec4(1.0);
 	Vec4 specColor = Vec4(1.0);
-	Bool shadow = false;
+	TextureResourcePointer lensFlareTex;
+	Bool8 shadow = false;
 	U8 shadowMapIndex = 0xFF; ///< Used by the renderer
 };
 
@@ -125,7 +137,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	PointLight(const char* name, SceneGraph* scene, SceneNode* parent,
-		U32 movableFlags);
+		U32 movableFlags, const char* lensFlareFile = nullptr);
 	/// @}
 
 	/// @name Accessors
@@ -172,7 +184,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	SpotLight(const char* name, SceneGraph* scene, SceneNode* parent,
-		U32 movableFlags);
+		U32 movableFlags, const char* lensFlareFile = nullptr);
 	/// @}
 
 	/// @name Accessors

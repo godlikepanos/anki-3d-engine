@@ -11,7 +11,7 @@ Light::Light(
 	const char* name, SceneGraph* scene, SceneNode* parent, // Scene
 	U32 movableFlags, // Movable
 	CollisionShape* cs, // Spatial
-	LightType t) // Self
+	LightType t, const char* lensFlareFile) // Self
 	:	SceneNode(name, scene, parent),
 		Movable(movableFlags, this),
 		Spatial(cs, getSceneAllocator()),
@@ -21,12 +21,17 @@ Light::Light(
 	sceneNodeProtected.spatial = this;
 	sceneNodeProtected.light = this;
 
+	if(lensFlareFile)
+	{
+		lensFlareTex.load(lensFlareFile);
+	}
+
 	addNewProperty(new ReadWritePointerProperty<Vec4>("color", &color));
 
 	addNewProperty(
 		new ReadWritePointerProperty<Vec4>("specularColor", &specColor));
 
-	addNewProperty(new ReadWritePointerProperty<bool>("shadow", &shadow));
+	//addNewProperty(new ReadWritePointerProperty<bool>("shadow", &shadow));
 }
 
 //==============================================================================
@@ -40,8 +45,9 @@ Light::~Light()
 //==============================================================================
 PointLight::PointLight(
 	const char* name, SceneGraph* scene, SceneNode* parent,
-	U32 movableFlags)
-	: Light(name, scene, parent, movableFlags, &sphereW, LT_POINT)
+	U32 movableFlags, const char* lensFlareFile)
+	:	Light(name, scene, parent, movableFlags, &sphereW, LT_POINT,
+			lensFlareFile)
 {
 	F32& r = sphereW.getRadius();
 	addNewProperty(new ReadWritePointerProperty<F32>("radius", &r));
@@ -54,8 +60,9 @@ PointLight::PointLight(
 //==============================================================================
 SpotLight::SpotLight(
 	const char* name, SceneGraph* scene, SceneNode* parent,
-	U32 movableFlags)
-	: 	Light(name, scene, parent, movableFlags, &frustum, LT_SPOT),
+	U32 movableFlags, const char* lensFlareFile)
+	: 	Light(name, scene, parent, movableFlags, &frustum, LT_SPOT, 
+			lensFlareFile),
 		Frustumable(&frustum)
 {
 	sceneNodeProtected.frustumable = this;

@@ -485,7 +485,7 @@ static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header,
 //==============================================================================
 static void loadAnkiTexture(
 	const char* filename, 
-	Image::DataCompression preferredCompression,
+	Image::DataCompression& preferredCompression,
 	Vector<Image::Surface>& surfaces, 
 	U8& depth, 
 	U8& mipLevels, 
@@ -531,6 +531,13 @@ static void loadAnkiTexture(
 	{
 		throw ANKI_EXCEPTION("Incorrect header: color format");
 	}
+
+#if 1
+	if(header.type == Image::TT_2D_ARRAY)
+	{
+		preferredCompression = Image::DC_RAW;
+	}
+#endif
 
 	if((header.compressionFormats & preferredCompression) == 0)
 	{

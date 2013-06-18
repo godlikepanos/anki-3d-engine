@@ -3,17 +3,17 @@
 
 namespace anki {
 
-static void vec2SetX(Vec2* self, float x)
+static void vec2SetX(Vec2* self, F32 x)
 {
 	self->x() = x;
 }
 
-static void vec2SetY(Vec2* self, float y)
+static void vec2SetY(Vec2* self, F32 y)
 {
 	self->y() = y;
 }
 
-static void vec2SetAt(Vec2* self, int i, float f)
+static void vec2SetAt(Vec2* self, U i, F32 f)
 {
 	(*self)[i] = f;
 }
@@ -21,15 +21,15 @@ static void vec2SetAt(Vec2* self, int i, float f)
 ANKI_SCRIPT_WRAP(Vec2)
 {
 	ANKI_LUA_CLASS_BEGIN(lb, Vec2)
-		ANKI_LUA_CONSTRUCTOR(float, float)
+		ANKI_LUA_CONSTRUCTOR(F32, F32)
 		ANKI_LUA_METHOD("copy", &Vec2::operator=)
 		// Accessors
-		ANKI_LUA_METHOD("getX", (float (Vec2::*)() const)(&Vec2::x))
-		ANKI_LUA_METHOD("getY", (float (Vec2::*)() const)(&Vec2::y))
+		ANKI_LUA_METHOD("getX", (F32 (Vec2::*)() const)(&Vec2::x))
+		ANKI_LUA_METHOD("getY", (F32 (Vec2::*)() const)(&Vec2::y))
 		ANKI_LUA_FUNCTION_AS_METHOD("setX", &vec2SetX)
 		ANKI_LUA_FUNCTION_AS_METHOD("setY", &vec2SetY)
 		ANKI_LUA_METHOD("getAt",
-			(float (Vec2::*)(const size_t) const)(&Vec2::operator[]))
+			(F32 (Vec2::*)(const U) const)(&Vec2::operator[]))
 		ANKI_LUA_FUNCTION_AS_METHOD("setAt", &vec2SetAt)
 		// Ops with same
 		ANKI_LUA_METHOD("__add",

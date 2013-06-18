@@ -126,12 +126,12 @@ public:
 
 	void set(const Texture* const texes[], const U32 count) const;
 
-	void set(const F32 x[], uint size) const;
-	void set(const Vec2 x[], uint size) const;
-	void set(const Vec3 x[], uint size) const;
-	void set(const Vec4 x[], uint size) const;
-	void set(const Mat3 x[], uint size) const;
-	void set(const Mat4 x[], uint size) const;
+	void set(const F32 x[], U32 size) const;
+	void set(const Vec2 x[], U32 size) const;
+	void set(const Vec3 x[], U32 size) const;
+	void set(const Vec4 x[], U32 size) const;
+	void set(const Mat3 x[], U32 size) const;
+	void set(const Mat4 x[], U32 size) const;
 
 	/// @tparam Container It could be something like array<F32, X> or 
 	///         vector<Vec2> etc
