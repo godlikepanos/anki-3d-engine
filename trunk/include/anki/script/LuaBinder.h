@@ -18,7 +18,7 @@ namespace lua_detail {
 struct UserData
 {
 	void* ptr = nullptr;
-	Bool gc = false; ///< Garbage collection on?
+	Bool8 gc = false; ///< Garbage collection on?
 };
 
 //==============================================================================
@@ -27,15 +27,15 @@ constexpr U32 LF_NONE = 0;
 constexpr U32 LF_TRANFER_OWNERSHIP = 1;
 
 //==============================================================================
-/// Class proxy
+/// Class identification
 template<typename Class>
 struct ClassProxy
 {
-	static const char* NAME;
+	static const char* NAME; ///< Used to check the signature of the user data
 
 	static const char* getName()
 	{
-		ANKI_ASSERT(NAME != nullptr);
+		ANKI_ASSERT(NAME != nullptr && "Class already wrapped elsewhere");
 		return NAME;
 	}
 };
@@ -44,10 +44,18 @@ template<typename Class>
 const char* ClassProxy<Class>::NAME = nullptr;
 
 //==============================================================================
+
+/// Make sure that the arguments match the argsCount number
 extern void checkArgsCount(lua_State* l, I argsCount);
+
+/// Create a new LUA class
 extern void createClass(lua_State* l, const char* className);
+
+/// Add new function in a class that it's already in the stack
 extern void pushCFunctionMethod(lua_State* l, const char* name,
 	lua_CFunction luafunc);
+
+/// Add a new static function in the class
 extern void pushCFunctionStatic(lua_State* l, const char* className,
 	const char* name, lua_CFunction luafunc);
 

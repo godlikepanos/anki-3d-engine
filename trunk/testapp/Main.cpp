@@ -200,7 +200,8 @@ void init()
 
 		PointLight* point =
 			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
-			&scene, nullptr, Movable::MF_NONE);
+			&scene, nullptr, Movable::MF_NONE, 
+			"data/textures/lens_flare/flares0.ankitex");
 		point->setRadius(2.0);
 		point->setLocalOrigin(lightPos);
 		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
@@ -469,7 +470,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -518,7 +519,7 @@ void initSubsystems(int argc, char* argv[])
 	nwinit.minorVersion = glminor;
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
-	nwinit.fullscreenDesktopRez = false;
+	nwinit.fullscreenDesktopRez = true;
 	nwinit.debugContext = false;
 	win = new NativeWindow;	
 	win->create(nwinit);
@@ -552,6 +553,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.pps.bl.enabled = true;
 	initializer.pps.bl.blurringIterationsNum = 2;
 	initializer.pps.bl.sideBlurFactor = 1.0;
+	initializer.pps.lf.enabled = true;
 	initializer.pps.sharpen = true;
 	initializer.renderingQuality = 1.0;
 	initializer.width = win->getWidth();

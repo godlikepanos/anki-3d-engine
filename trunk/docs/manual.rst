@@ -13,10 +13,9 @@ godlike@ancient-ritual.com
 License
 =======
 
-Anki is dual licensed. The first option is GLPv3 and the second commercial
-license. If you want to use* AnKi to make opensource software (licensed under
-GLPv3) then AnKi is provited to you for free but if you want to use it* for
-non-GPLv3 licensed software then you have to apply for a commercial license.
+Anki is dual licensed. Simply put, you can use* it freely to create opensource 
+software under GPLv3 and if you want to use* it for commercial you need to 
+apply for a commercial licence. 
 
 \*: as a whole or parts of the source
 
@@ -31,11 +30,11 @@ To download the latest version of AnKi from the SVN repository type: ::
 
 	svn checkout http://anki-3d-engine.googlecode.com/svn/trunk/ anki
 
-to build (from the root directory): ::
+to build: ::
 
-	mkdir build
+	cd path/to/anki
 	cd build
-	cmake ..
+	cmake -DCMAKE_BUILD_TYPE=Release ..
 	make
 
 to build the doxygen documentation: ::
@@ -46,20 +45,14 @@ to build the doxygen documentation: ::
 Required external libraries
 ---------------------------
 
-AnKi requires a few up to date versions of some libraries. The libraries are:
-  
-- Bullet Physics 2.77 (provided)
-- SDL 1.3 (provided)
-- GLEW 1.5.5 (provided)
-- boost 1.46
-- libpng 1.2
-- libjpeg 6b
-- libpython 2.6
+A great effort was made to keep the number of external dependencies to minimum 
+so the only prerequisites are the following:
 
-Some of the above libraries are pretty standard and they are included in all 
-major Linux/Unix distributions. Some of them are not that standard though. The 
-non-standard are already build and located in the extern directory.
-  
+- X11 development files (Package name under Ubuntu: libx11-dev)
+- Mesa GL development files (Package name under Ubuntu: mesa-common-dev)
+
+All the other libraries are inside the source tree and you don't have to worry
+about them.
 
 ======
 Assets

@@ -3,22 +3,22 @@
 
 namespace anki {
 
-static void vec3SetX(Vec3* self, float x)
+static void vec3SetX(Vec3* self, F32 x)
 {
 	self->x() = x;
 }
 
-static void vec3SetY(Vec3* self, float y)
+static void vec3SetY(Vec3* self, F32 y)
 {
 	self->y() = y;
 }
 
-static void vec3SetZ(Vec3* self, float z)
+static void vec3SetZ(Vec3* self, F32 z)
 {
 	self->z() = z;
 }
 
-static void vec3SetAt(Vec3* self, int i, float f)
+static void vec3SetAt(Vec3* self, U i, F32 f)
 {
 	(*self)[i] = f;
 }
@@ -26,17 +26,17 @@ static void vec3SetAt(Vec3* self, int i, float f)
 ANKI_SCRIPT_WRAP(Vec3)
 {
 	ANKI_LUA_CLASS_BEGIN(lb, Vec3)
-		ANKI_LUA_CONSTRUCTOR(float, float, float)
+		ANKI_LUA_CONSTRUCTOR(F32, F32, F32)
 		ANKI_LUA_METHOD("copy", &Vec3::operator=)
 		// Accessors
-		ANKI_LUA_METHOD("getX", (float (Vec3::*)() const)(&Vec3::x))
-		ANKI_LUA_METHOD("getY", (float (Vec3::*)() const)(&Vec3::y))
-		ANKI_LUA_METHOD("getZ", (float (Vec3::*)() const)(&Vec3::z))
+		ANKI_LUA_METHOD("getX", (F32 (Vec3::*)() const)(&Vec3::x))
+		ANKI_LUA_METHOD("getY", (F32 (Vec3::*)() const)(&Vec3::y))
+		ANKI_LUA_METHOD("getZ", (F32 (Vec3::*)() const)(&Vec3::z))
 		ANKI_LUA_FUNCTION_AS_METHOD("setX", &vec3SetX)
 		ANKI_LUA_FUNCTION_AS_METHOD("setY", &vec3SetY)
 		ANKI_LUA_FUNCTION_AS_METHOD("setZ", &vec3SetZ)
 		ANKI_LUA_METHOD("getAt",
-			(float (Vec3::*)(const size_t) const)(&Vec3::operator[]))
+			(F32 (Vec3::*)(const U) const)(&Vec3::operator[]))
 		ANKI_LUA_FUNCTION_AS_METHOD("setAt", &vec3SetAt)
 		// Ops with same
 		ANKI_LUA_METHOD("__add",

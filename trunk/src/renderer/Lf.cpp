@@ -3,6 +3,7 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Movable.h"
 #include "anki/scene/Camera.h"
+#include "anki/scene/Light.h"
 
 namespace anki {
 
@@ -58,6 +59,24 @@ void Lf::run()
 {
 	ANKI_ASSERT(enabled);
 
+	// Retrive some things
+	SceneGraph& scene = r->getSceneGraph();
+	Camera& cam = scene.getActiveCamera();
+	VisibilityTestResults& vi = *cam.getVisibilityTestResults();
+
+	// Iterate the lights and update the UBO
+	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
+	{
+		SceneNode& sn = *(*it).node;
+		ANKI_ASSERT(sn.getLight());
+		Light& light = *sn.getLight();
+
+		if(!light.hasLensFlare())
+		{
+			continue;
+		}
+	}
+
 	// Update the UBO
 	{
 		SceneGraph& scene = r->getSceneGraph();
@@ -70,7 +89,7 @@ void Lf::run()
 
 		Flare flare;
 		flare.pos = posNdc;
-		flare.scale = Vec2(0.2 * 3.0, r->getAspectRatio() * 0.2);
+		flare.scale = Vec2(0.1 * 3.0, r->getAspectRatio() * 0.1);
 		//flare.alpha = 0.2;
 
 		flareDataUbo.write(&flare, 0, sizeof(Flare));
@@ -80,8 +99,8 @@ void Lf::run()
 	drawProg->findUniformVariable("images").set(*tex);
 	flareDataUbo.setBinding(0);
 
-	/*GlStateSingleton::get().enable(GL_BLEND);
-	GlStateSingleton::get().setBlendFunctions(GL_ONE, GL_ONE);*/
+	GlStateSingleton::get().enable(GL_BLEND);
+	GlStateSingleton::get().setBlendFunctions(GL_ONE, GL_ONE);
 	r->drawQuad();
 }
 
