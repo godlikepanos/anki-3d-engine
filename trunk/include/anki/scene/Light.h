@@ -101,7 +101,7 @@ public:
 
 	Bool hasLensFlare() const
 	{
-		return lensFlareTex.get() != nullptr;
+		return lensFlareTex.isLoaded();
 	}
 
 	const Texture& getLensFlareTexture() const

@@ -36,5 +36,5 @@ out vec3 fColor;
 
 void main()
 {
-	fColor = texture(images, vec3(vTexCoords.st, 0.0)).rgb;
+	fColor = texture(images, vTexCoords).rgb;
 }
