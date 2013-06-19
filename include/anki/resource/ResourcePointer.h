@@ -70,15 +70,18 @@ public:
 
 	const Value* get() const
 	{
+		ANKI_ASSERT(hook != nullptr);
 		return hook->resource;
 	}
 	Value* get()
 	{
+		ANKI_ASSERT(hook != nullptr);
 		return hook->resource;
 	}
 
 	const std::string& getResourceName() const
 	{
+		ANKI_ASSERT(hook != nullptr);
 		return hook->uuid;
 	}
 	/// @}
@@ -103,6 +106,11 @@ public:
 	{
 		ANKI_ASSERT(hook == nullptr);
 		hook = &ResourceManagerSingleton::get().load(filename);
+	}
+
+	Bool isLoaded() const
+	{
+		return hook != nullptr;
 	}
 
 private:

@@ -65,6 +65,12 @@ void Lf::run()
 	VisibilityTestResults& vi = *cam.getVisibilityTestResults();
 
 	// Iterate the lights and update the UBO
+	Array<Flare, 256> flareBuff; // XXX 256?
+	ANKI_ASSERT(
+		maxLensFlareCount * maxLightsWidthFlaresCount < flareBuff.size());
+
+	U count = 0;
+
 	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
 	{
 		SceneNode& sn = *(*it).node;
@@ -75,33 +81,37 @@ void Lf::run()
 		{
 			continue;
 		}
+
+		// Transform
+		Vec3 posworld = sn.getMovable()->getWorldTransform().getOrigin();
+		Vec4 posclip = cam.getViewProjectionMatrix() * Vec4(posworld, 1.0);
+		Vec2 posndc = (posclip.xyz() / posclip.w()).xy();
+
+		Vec2 dir = -posndc;
+		F32 len = dir.getLength() * 2.0;
+		dir /= len;
+
+		const Texture& tex = light.getLensFlareTexture();
+		const U depth = tex.getDepth();
+
+		for(U d = 0; d < depth; d++)
+		{
+			flareBuff[count].pos = posndc + dir * (len * (d / (F32)depth));
+			flareBuff[count].scale = Vec2(0.1 * 3.0, r->getAspectRatio() * 0.1);
+			++count;
+		}
 	}
 
-	// Update the UBO
-	{
-		SceneGraph& scene = r->getSceneGraph();
-		const Camera& cam = scene.getActiveCamera();
+	flareDataUbo.write(&flareBuff[0], 0, sizeof(Flare) * count);
 
-		SceneNode& sn = scene.findSceneNode("vase_plight0");
-		Vec4 snPos = Vec4(sn.getMovable()->getWorldTransform().getOrigin(), 1.0);
-		snPos = cam.getViewProjectionMatrix() * snPos;
-		Vec2 posNdc = snPos.xy() / snPos.w();
-
-		Flare flare;
-		flare.pos = posNdc;
-		flare.scale = Vec2(0.1 * 3.0, r->getAspectRatio() * 0.1);
-		//flare.alpha = 0.2;
-
-		flareDataUbo.write(&flare, 0, sizeof(Flare));
-	}
-	
+	// Draw
 	drawProg->bind();
 	drawProg->findUniformVariable("images").set(*tex);
 	flareDataUbo.setBinding(0);
 
 	GlStateSingleton::get().enable(GL_BLEND);
 	GlStateSingleton::get().setBlendFunctions(GL_ONE, GL_ONE);
-	r->drawQuad();
+	r->drawQuadInstanced(tex->getDepth());
 }
 
 } // end namespace anki
