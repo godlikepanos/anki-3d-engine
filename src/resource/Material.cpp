@@ -263,9 +263,9 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	XmlElement shaderProgramEl = materialEl.getChildElement("shaderProgram");
 	MaterialShaderProgramCreator mspc(shaderProgramEl, ENABLE_UBOS);
 
-	for(uint level = 0; level < levelsOfDetail; ++level)
+	for(U32 level = 0; level < levelsOfDetail; ++level)
 	{
-		for(uint pid = 0; pid < passes.size(); ++pid)
+		for(U32 pid = 0; pid < passes.size(); ++pid)
 		{
 			std::stringstream src;
 

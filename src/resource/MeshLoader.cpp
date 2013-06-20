@@ -98,7 +98,7 @@ void MeshLoader::load(const char* filename)
 		// Tex coords
 		for(Vec2& texCoord : texCoords)
 		{
-			for(uint i = 0; i < 2; i++)
+			for(U32 i = 0; i < 2; i++)
 			{
 				texCoord[i] = file.readF32();
 			}
@@ -112,7 +112,7 @@ void MeshLoader::load(const char* filename)
 		for(VertexWeight& vw : vertWeights)
 		{
 			// get the bone connections num
-			uint boneConnections = file.readU32();
+			U32 boneConnections = file.readU32();
 
 			// we treat as error if one vert doesnt have a bone
 			if(boneConnections < 1)
@@ -123,17 +123,17 @@ void MeshLoader::load(const char* filename)
 			// and here is another possible error
 			if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
 			{
-				uint tmp = VertexWeight::MAX_BONES_PER_VERT;
+				U32 tmp = VertexWeight::MAX_BONES_PER_VERT;
 				throw ANKI_EXCEPTION("Cannot have more than "
 					+ std::to_string(tmp) + " bones per vertex");
 			}
 			vw.bonesNum = boneConnections;
 
 			// for all the weights of the current vertes
-			for(uint i = 0; i < vw.bonesNum; i++)
+			for(U32 i = 0; i < vw.bonesNum; i++)
 			{
 				// read bone id
-				uint boneId = file.readU32();
+				U32 boneId = file.readU32();
 				vw.boneIds[i] = boneId;
 
 				// read the weight of that bone
@@ -246,7 +246,7 @@ void MeshLoader::createVertTangents()
 	vertTangents.resize(vertCoords.size(), Vec4(0.0)); // alloc
 	Vector<Vec3> bitagents(vertCoords.size(), Vec3(0.0));
 
-	for(uint i = 0; i < tris.size(); i++)
+	for(U32 i = 0; i < tris.size(); i++)
 	{
 		const Triangle& tri = tris[i];
 		const I i0 = tri.vertIds[0];

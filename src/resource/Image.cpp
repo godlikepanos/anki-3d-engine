@@ -470,11 +470,35 @@ static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header,
 	U width = header.width;
 	U height = header.height;
 	U mips = header.mipLevels;
+	U layers;
+
+	switch(header.type)
+	{
+	case Image::TT_2D:
+		layers = 1;
+		break;
+	case Image::TT_CUBE:
+		layers = 6;
+		break;
+	case Image::TT_2D_ARRAY:
+	case Image::TT_3D:
+		layers = header.depth;
+		break;
+	default:
+		ANKI_ASSERT(0);
+		break;
+	}
 
 	while(mips-- != 0)
 	{
-		out += calcSurfaceSize(width, height, comp, 
-			(Image::ColorFormat)header.colorFormat);
+		U l = layers;
+
+		while(l-- != 0)
+		{
+			out += calcSurfaceSize(width, height, comp, 
+				(Image::ColorFormat)header.colorFormat);
+		}
+
 		width /= 2;
 		height /= 2;
 	}
@@ -531,13 +555,6 @@ static void loadAnkiTexture(
 	{
 		throw ANKI_EXCEPTION("Incorrect header: color format");
 	}
-
-#if 1
-	if(header.type == Image::TT_2D_ARRAY)
-	{
-		preferredCompression = Image::DC_RAW;
-	}
-#endif
 
 	if((header.compressionFormats & preferredCompression) == 0)
 	{
@@ -723,7 +740,6 @@ void Image::load(const char* filename)
 			}
 			else
 			{
-				printf("%d\n", bpp);
 				throw ANKI_EXCEPTION("Unsupported color type");
 			}
 		}

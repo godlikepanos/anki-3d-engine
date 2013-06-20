@@ -90,12 +90,12 @@ class SkelAnim
 public:
 	/// @name Accessors
 	/// @{
-	const Vector<uint>& getKeyframes() const
+	const Vector<U32>& getKeyframes() const
 	{
 		return keyframes;
 	}
 
-	uint getFramesNum() const
+	U32 getFramesNum() const
 	{
 		return framesNum;
 	}
@@ -110,8 +110,8 @@ public:
 	void load(const char* filename);
 
 private:
-	Vector<uint> keyframes;
-	uint framesNum;
+	Vector<U32> keyframes;
+	U32 framesNum;
 	Vector<BoneAnim> boneAnims;
 };
 

@@ -138,7 +138,7 @@ public:
 	/// @{
 	SkinPatchNode(const ModelPatchBase* modelPatch_,
 		const char* name, SceneGraph* scene, // Scene
-		uint movableFlags, Movable* movParent, // Movable
+		U32 movableFlags, Movable* movParent, // Movable
 		CollisionShape* spatialCs); // Spatial
 	/// @}
 
@@ -188,7 +188,7 @@ public:
 	/// @{
 	SkinNode(const char* skinFname,
 		const char* name, SceneGraph* scene, // SceneNode
-		uint movableFlags, Movable* movParent); // Movable
+		U32 movableFlags, Movable* movParent); // Movable
 
 	~SkinNode();
 	/// @}

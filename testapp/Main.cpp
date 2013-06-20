@@ -189,7 +189,7 @@ void init()
 
 #if 1
 	// Vase point lights
-	F32 x = 8.5;
+	F32 x = 8.5; 
 	F32 y = 2.25;
 	F32 z = 2.49;
 	Array<Vec3, 4> vaseLightPos = {{Vec3(x, y, -z - 1.4), Vec3(x, y, z),
@@ -470,7 +470,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{

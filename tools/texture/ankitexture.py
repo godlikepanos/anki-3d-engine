@@ -510,13 +510,15 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path):
 
 	# For each compression
 	for compression in range(0, 3):
-		# For each image
-		for in_file in in_files:
-			tmp_width = width
-			tmp_height = height
 
-			# For each level
-			while tmp_width >= 4 and tmp_height >= 4:
+		tmp_width = width
+		tmp_height = height
+
+		# For each level
+		while tmp_width >= 4 and tmp_height >= 4:
+
+			# For each image
+			for in_file in in_files:
 				size_str = "%dx%d" % (tmp_width, tmp_height)
 				in_base_fname = os.path.join(tmp_dir, get_base_fname(in_file)) \
 						+ "." + size_str
@@ -535,9 +537,9 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path):
 				if compression == 2:
 					write_etc(tex_file, in_base_fname + ".pkm", \
 							tmp_width, tmp_height, color_format)
-				
-				tmp_width = tmp_width / 2
-				tmp_height = tmp_height / 2
+			
+			tmp_width = tmp_width / 2
+			tmp_height = tmp_height / 2
 
 def main():
 	""" The main """

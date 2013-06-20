@@ -155,7 +155,14 @@ void TextureResource::load(const Image& img)
 	init.anisotropyLevel = TextureManagerSingleton::get().getAnisotropyLevel();
 
 	// genMipmaps
-	init.genMipmaps = driverShouldGenMipmaps;
+	if(init.mipmapsCount == 1 || driverShouldGenMipmaps)
+	{
+		init.genMipmaps = true;
+	}
+	else
+	{
+		init.genMipmaps = false;
+	}
 
 	// Now assign the data
 	for(U layer = 0; layer < layers; layer++)
