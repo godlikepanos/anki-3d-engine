@@ -267,12 +267,12 @@ void DebugDrawer::drawCube(F32 size)
 		Vec3(maxPos.x(), minPos.y(), minPos.z())   // right bottom back
 	}};
 
-	static const Array<uint, 24> indeces = {{
+	static const Array<U32, 24> indeces = {{
 		0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 
 		6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
 	begin();
-		for(uint id : indeces)
+		for(U32 id : indeces)
 		{
 			pushBackVertex(points[id]);
 		}
@@ -333,7 +333,7 @@ void CollisionDebugDrawer::visit(const Aabb& aabb)
 
 	Mat4 trf = Mat4::getIdentity();
 	// Scale
-	for(uint i = 0; i < 3; ++i)
+	for(U32 i = 0; i < 3; ++i)
 	{
 		trf(i, i) = max[i] - min[i];
 	}
@@ -371,11 +371,11 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 				Vec3(tmp0, tmp1, -camLen) // 4: top right
 			};
 
-			const uint indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
+			const U32 indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
 				3, 3, 4, 4, 1};
 
 			dbg->begin();
-			for(uint i = 0; i < sizeof(indeces) / sizeof(uint); i++)
+			for(U32 i = 0; i < sizeof(indeces) / sizeof(U32); i++)
 			{
 				dbg->pushBackVertex(points[indeces[i]]);
 			}

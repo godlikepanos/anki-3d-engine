@@ -27,7 +27,7 @@ public:
 
 private:
 	std::string name; ///< The name of the bone
-	static const uint MAX_CHILDS_PER_BONE = 4; ///< Please dont change this
+	static const U32 MAX_CHILDS_PER_BONE = 4; ///< Please dont change this
 
 	// see the class notes
 	Mat4 transform;

@@ -14,20 +14,27 @@ struct ContextImpl;
 /// Window initializer
 struct NativeWindowInitializer
 {
+	U32 width = 640;
+	U32 height = 768;
 	Array<U32, 4> rgbaBits = {{8, 8, 8, 8}};
 	U32 depthBits = 24;
 	U32 stencilBits = 8;
 	U32 samplesCount = 0;
 	static const Bool doubleBuffer = true;
+	/// Create a fullscreen window with the desktop's resolution
 	Bool fullscreenDesktopRez = false;
 
+	/// @name GL context properties
+	/// @{
+
+	/// Minor OpenGL version. Used to create core profile context
 	U32 minorVersion = 0;
-	U32 majorVersion = 0;
+	/// Major OpenGL version. Used to create core profile context
+	U32 majorVersion = 0; 
 	Bool useGles = false; ///< Use OpenGL ES
 	Bool debugContext = false; ///< Enables KHR_debug
+	/// @}
 
-	U32 width = 640;
-	U32 height = 768;
 	std::string title = "Untitled window";
 };
 

@@ -177,7 +177,7 @@ class MaterialProperties
 public:
 	/// @name Accessors
 	/// @{
-	uint getRenderingStage() const
+	U32 getRenderingStage() const
 	{
 		return renderingStage;
 	}

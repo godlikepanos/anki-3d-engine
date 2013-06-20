@@ -107,7 +107,7 @@ public:
 		return vertWeights;
 	}
 
-	const Vector<ushort>& getIndices() const
+	const Vector<U16>& getIndices() const
 	{
 		return vertIndices;
 	}
