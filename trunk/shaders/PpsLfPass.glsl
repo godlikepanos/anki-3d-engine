@@ -6,10 +6,11 @@
 struct Flare
 {
 	vec4 posAndScale; // xy: Position, z: Scale, w: Scale again
+	vec4 alphaComponent; // x: alpha
 };
 
 // The block contains data for all flares
-layout(std140) uniform FlaresBlock
+layout(std140) uniform flaresBlock
 {
 	Flare flares[MAX_FLARES];
 };

@@ -82,8 +82,8 @@ struct RendererInitializer
 		struct Lf
 		{
 			Bool enabled = true;
-			U8 maxLensFlareCount = 8;
-			U8 maxLightsWidthFlaresCount = 4;
+			U8 maxFlaresPerLight = 8;
+			U8 maxLightsWithFlares = 4;
 		} lf;
 
 		Bool enabled = false;

@@ -25,11 +25,12 @@ public:
 private:
 	ShaderProgramResourcePointer drawProg;
 	Ubo flareDataUbo;
+	const ShaderProgramUniformBlock* ublock;
 
-	U8 maxLensFlareCount;
-	U8 maxLightsWidthFlaresCount;
+	U8 maxFlaresPerLight;
+	U8 maxLightsWithFlares;
 
-	TextureResourcePointer tex;
+	void initInternal(const RendererInitializer& initializer);
 };
 
 } // end namespace anki
