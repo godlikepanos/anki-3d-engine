@@ -11,12 +11,33 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
+// Some constants
+#define ANKI_MAX_LIGHTS_WITH_FLARE 16
+#define ANKI_MAX_FLARES_PER_LIGHT 8
+#define ANKI_MAX_FLARES (ANKI_MAX_LIGHTS_WITH_FLARE * ANKI_MAX_FLARES_PER_LIGHT)
+
 //==============================================================================
 struct Flare
 {
 	Vec2 pos; ///< Position in NDC
 	Vec2 scale; ///< Scale of the quad
-	//F32 alpha; ///< Difference in alpha
+	F32 alpha; ///< Alpha value
+	U32 padding[3];
+};
+
+//==============================================================================
+struct LightSortFunctor
+{
+	Bool operator()(const SceneNode* lightA, const SceneNode* lightB)
+	{
+		ANKI_ASSERT(lightA && lightB);
+		ANKI_ASSERT(lightA->getLight() && lightB->getLight());
+		ANKI_ASSERT(lightA->getLight()->hasLensFlare() 
+			&& lightB->getLight()->hasLensFlare());
+
+		return lightA->getLight()->getLensFlareTexture().getGlId() < 
+			lightB->getLight()->getLensFlareTexture().getGlId();
+	}
 };
 
 //==============================================================================
@@ -30,28 +51,56 @@ Lf::~Lf()
 //==============================================================================
 void Lf::init(const RendererInitializer& initializer)
 {
+	try
+	{
+		initInternal(initializer);
+	}
+	catch(const std::exception& e)
+	{
+		throw ANKI_EXCEPTION("Failed to init LF") << e;
+	}
+}
+
+//==============================================================================
+void Lf::initInternal(const RendererInitializer& initializer)
+{
 	enabled = initializer.pps.lf.enabled;
 	if(!enabled)
 	{
 		return;
 	}
 
-	tex.load("data/textures/lens_flare/flares0.ankitex");
+	maxFlaresPerLight = initializer.pps.lf.maxFlaresPerLight;
+	maxLightsWithFlares = initializer.pps.lf.maxLightsWithFlares;
 
-	maxLensFlareCount = initializer.pps.lf.maxLensFlareCount;
-	maxLightsWidthFlaresCount = initializer.pps.lf.maxLightsWidthFlaresCount;
+	if(maxLightsWithFlares > ANKI_MAX_LIGHTS_WITH_FLARE)
+	{
+		throw ANKI_EXCEPTION("Too big maxLightsWithFlares");
+	}
+
+	if(maxFlaresPerLight > ANKI_MAX_FLARES_PER_LIGHT)
+	{
+		throw ANKI_EXCEPTION("Too big maxFlaresPerLight");
+	}
 
 	// Load the shader
 	std::string pps = "#define MAX_FLARES " 
-		+ std::to_string(initializer.pps.lf.maxLensFlareCount) + "\n";
+		+ std::to_string(maxFlaresPerLight * maxLightsWithFlares) + "\n";
 	std::string fname = ShaderProgramResource::createSrcCodeToCache(
 		"shaders/PpsLfPass.glsl", pps.c_str());
 	drawProg.load(fname.c_str());
 
+	ublock = &drawProg->findUniformBlock("flaresBlock");
+	ublock->setBinding(0);
+
+	PtrSize blockSize = sizeof(Flare) * maxFlaresPerLight * maxLightsWithFlares;
+	if(ublock->getSize() != blockSize)
+	{
+		throw ANKI_EXCEPTION("Incorrect block size");
+	}
+
 	// Init UBO
-	flareDataUbo.create(
-		sizeof(Flare) * maxLensFlareCount * maxLightsWidthFlaresCount,
-		nullptr);
+	flareDataUbo.create(blockSize, nullptr);
 }
 
 //==============================================================================
@@ -64,13 +113,46 @@ void Lf::run()
 	Camera& cam = scene.getActiveCamera();
 	VisibilityTestResults& vi = *cam.getVisibilityTestResults();
 
-	// Iterate the lights and update the UBO
-	Array<Flare, 256> flareBuff; // XXX 256?
-	ANKI_ASSERT(
-		maxLensFlareCount * maxLightsWidthFlaresCount < flareBuff.size());
+	//
+	// Iterate the visible light and get those that have lens flare
+	//
+	Array<SceneNode*, ANKI_MAX_LIGHTS_WITH_FLARE> lights;
 
-	U count = 0;
+	U lightCount = 0;
+	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
+	{
+		SceneNode& sn = *(*it).node;
+		ANKI_ASSERT(sn.getLight());
+		Light& light = *sn.getLight();
 
+		if(light.hasLensFlare())
+		{
+			lights[lightCount % maxLightsWithFlares] = &light;
+			++lightCount;
+		}
+	}
+
+	lightCount = lightCount % (maxLightsWithFlares + 1);
+
+	//
+	// Sort the lights using the lens flare texture
+	//
+	std::sort(lights.begin(), lights.begin() + lightCount, LightSortFunctor());
+
+	//
+	// Write the UBO and get the groups
+	//
+
+	Array<Flare, ANKI_MAX_FLARES> flareBuff;
+	Array<U, ANKI_MAX_LIGHTS_WITH_FLARE> groups;
+	U groupsCount = 0;
+
+	while(lightCount-- != 0)
+	{
+		Light& light = *lights[lightCount]->getLight();
+	}
+
+#if 0
 	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
 	{
 		SceneNode& sn = *(*it).node;
@@ -112,6 +194,8 @@ void Lf::run()
 	GlStateSingleton::get().enable(GL_BLEND);
 	GlStateSingleton::get().setBlendFunctions(GL_ONE, GL_ONE);
 	r->drawQuadInstanced(tex->getDepth());
+
+#endif
 }
 
 } // end namespace anki
