@@ -22,21 +22,20 @@ struct Flare
 	Vec2 pos; ///< Position in NDC
 	Vec2 scale; ///< Scale of the quad
 	F32 alpha; ///< Alpha value
-	U32 padding[3];
+	F32 depth; ///< Texture depth
+	U32 padding[2];
 };
 
 //==============================================================================
 struct LightSortFunctor
 {
-	Bool operator()(const SceneNode* lightA, const SceneNode* lightB)
+	Bool operator()(const Light* lightA, const Light* lightB)
 	{
 		ANKI_ASSERT(lightA && lightB);
-		ANKI_ASSERT(lightA->getLight() && lightB->getLight());
-		ANKI_ASSERT(lightA->getLight()->hasLensFlare() 
-			&& lightB->getLight()->hasLensFlare());
+		ANKI_ASSERT(lightA->hasLensFlare() && lightB->hasLensFlare());
 
-		return lightA->getLight()->getLensFlareTexture().getGlId() < 
-			lightB->getLight()->getLensFlareTexture().getGlId();
+		return lightA->getLensFlareTexture().getGlId() < 
+			lightB->getLensFlareTexture().getGlId();
 	}
 };
 
@@ -108,7 +107,7 @@ void Lf::run()
 {
 	ANKI_ASSERT(enabled);
 
-	// Retrive some things
+	// Retrieve some things
 	SceneGraph& scene = r->getSceneGraph();
 	Camera& cam = scene.getActiveCamera();
 	VisibilityTestResults& vi = *cam.getVisibilityTestResults();
@@ -116,86 +115,121 @@ void Lf::run()
 	//
 	// Iterate the visible light and get those that have lens flare
 	//
-	Array<SceneNode*, ANKI_MAX_LIGHTS_WITH_FLARE> lights;
-
-	U lightCount = 0;
+	Array<Light*, ANKI_MAX_LIGHTS_WITH_FLARE> lights;
+	U lightsCount = 0;
 	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
 	{
 		SceneNode& sn = *(*it).node;
 		ANKI_ASSERT(sn.getLight());
-		Light& light = *sn.getLight();
+		Light* light = sn.getLight();
 
-		if(light.hasLensFlare())
+		if(light->hasLensFlare())
 		{
-			lights[lightCount % maxLightsWithFlares] = &light;
-			++lightCount;
+			lights[lightsCount % maxLightsWithFlares] = light;
+			++lightsCount;
 		}
 	}
 
-	lightCount = lightCount % (maxLightsWithFlares + 1);
+	// Early exit
+	if(lightsCount == 0)
+	{
+		return;
+	}
+
+	lightsCount = lightsCount % (maxLightsWithFlares + 1);
 
 	//
-	// Sort the lights using the lens flare texture
+	// Sort the lights using their lens flare texture
 	//
-	std::sort(lights.begin(), lights.begin() + lightCount, LightSortFunctor());
+	std::sort(lights.begin(), lights.begin() + lightsCount, LightSortFunctor());
 
 	//
 	// Write the UBO and get the groups
 	//
 
-	Array<Flare, ANKI_MAX_FLARES> flareBuff;
+	Array<Flare, ANKI_MAX_FLARES> flares;
+	U flaresCount = 0;
+
+	// Contains the number of flares per flare texture
 	Array<U, ANKI_MAX_LIGHTS_WITH_FLARE> groups;
+	Array<const Texture*, ANKI_MAX_LIGHTS_WITH_FLARE> texes;
 	U groupsCount = 0;
 
-	while(lightCount-- != 0)
+	GLuint lastTexId = 0;
+
+	// Iterate all lights and update the flares as well as the groups
+	while(lightsCount-- != 0)
 	{
-		Light& light = *lights[lightCount]->getLight();
-	}
-
-#if 0
-	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
-	{
-		SceneNode& sn = *(*it).node;
-		ANKI_ASSERT(sn.getLight());
-		Light& light = *sn.getLight();
-
-		if(!light.hasLensFlare())
-		{
-			continue;
-		}
-
-		// Transform
-		Vec3 posworld = sn.getMovable()->getWorldTransform().getOrigin();
-		Vec4 posclip = cam.getViewProjectionMatrix() * Vec4(posworld, 1.0);
-		Vec2 posndc = (posclip.xyz() / posclip.w()).xy();
-
-		Vec2 dir = -posndc;
-		F32 len = dir.getLength() * 2.0;
-		dir /= len;
-
+		Light& light = *lights[lightsCount];
 		const Texture& tex = light.getLensFlareTexture();
 		const U depth = tex.getDepth();
 
+		// Transform
+		Vec3 posWorld = light.getWorldTransform().getOrigin();
+		Vec4 posClip = cam.getViewProjectionMatrix() * Vec4(posWorld, 1.0);
+		Vec2 posNdc = (posClip.xyz() / posClip.w()).xy();
+
+		Vec2 dir = -posNdc;
+		F32 len = dir.getLength();
+		dir /= len; // Normalize dir
+
+		// New group?
+		if(lastTexId != tex.getGlId())
+		{
+			texes[groupsCount] = &tex;
+			groups[groupsCount] = 0;
+			lastTexId = tex.getGlId();
+
+			++groupsCount;
+		}
+
 		for(U d = 0; d < depth; d++)
 		{
-			flareBuff[count].pos = posndc + dir * (len * (d / (F32)depth));
-			flareBuff[count].scale = Vec2(0.1 * 3.0, r->getAspectRatio() * 0.1);
-			++count;
+			// Write the "flares"
+			F32 factor = d / ((F32)depth - 1.0);
+
+			flares[flaresCount].pos = 
+				posNdc + dir * (len * len * 2.0 * factor);
+
+			flares[flaresCount].scale = 
+				Vec2(0.1 * 3.0, r->getAspectRatio() * 0.1) 
+				* (factor * len + 1.0);
+
+			flares[flaresCount].depth = d;
+
+			// Advance
+			++flaresCount;
+			++groups[groupsCount - 1];
 		}
 	}
 
-	flareDataUbo.write(&flareBuff[0], 0, sizeof(Flare) * count);
+	//
+	// Time to render
+	//
 
-	// Draw
+	// Write the buffer
+	flareDataUbo.write(&flares[0], 0, sizeof(Flare) * flaresCount);
+
+	// Set the common state
 	drawProg->bind();
-	drawProg->findUniformVariable("images").set(*tex);
-	flareDataUbo.setBinding(0);
-
 	GlStateSingleton::get().enable(GL_BLEND);
 	GlStateSingleton::get().setBlendFunctions(GL_ONE, GL_ONE);
-	r->drawQuadInstanced(tex->getDepth());
 
-#endif
+	PtrSize offset = 0;
+	for(U i = 0; i < groupsCount; i++)
+	{
+		const Texture& tex = *texes[i];
+		U instances = groups[i];
+		PtrSize buffSize = sizeof(Flare) * instances;
+
+		drawProg->findUniformVariable("images").set(tex);
+
+		flareDataUbo.setBindingRange(0, offset, buffSize);
+		
+		r->drawQuadInstanced(instances);
+
+		offset += buffSize;
+	}
 }
 
 } // end namespace anki
