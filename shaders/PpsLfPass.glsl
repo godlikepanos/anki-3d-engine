@@ -18,6 +18,7 @@ layout(std140) uniform flaresBlock
 layout(location = 0) in vec2 position;
 
 out vec3 vTexCoords;
+out flat float vAlpha;
 
 void main()
 {
@@ -27,6 +28,8 @@ void main()
 
 	vec4 posScale = flare.posScale;
 	gl_Position = vec4(position * posScale.zw + posScale.xy , 0.0, 1.0);
+
+	vAlpha = flare.alphaDepth.x;
 }
 
 #pragma anki start fragmentShader
@@ -34,10 +37,11 @@ void main()
 uniform sampler2DArray images;
 
 in vec3 vTexCoords;
+in flat float vAlpha;
 
 out vec3 fColor;
 
 void main()
 {
-	fColor = texture(images, vTexCoords).rgb;
+	fColor = texture(images, vTexCoords).rgb * vAlpha;
 }
