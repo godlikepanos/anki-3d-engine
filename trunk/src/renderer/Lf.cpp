@@ -188,14 +188,18 @@ void Lf::run()
 			// Write the "flares"
 			F32 factor = d / ((F32)depth - 1.0);
 
+			F32 flen = len * 2.0 * factor;
+
 			flares[flaresCount].pos = 
-				posNdc + dir * (len * len * 2.0 * factor);
+				posNdc + dir * flen;
 
 			flares[flaresCount].scale = 
-				Vec2(0.1 * 3.0, r->getAspectRatio() * 0.1) 
-				* (factor * len + 1.0);
+				Vec2(0.1, r->getAspectRatio() * 0.1) 
+				* (flen);
 
 			flares[flaresCount].depth = d;
+
+			flares[flaresCount].alpha = flen / 2.0 + 0.1;
 
 			// Advance
 			++flaresCount;

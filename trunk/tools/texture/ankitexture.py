@@ -175,8 +175,12 @@ def parse_commandline():
 
 	parser.add_option("-c", "--convert-path", dest = "convert_path", 
 			type = "string", default = "/usr/bin/convert", 
-			help = "The directory where convert tool is " \
+			help = "the directory where convert tool is " \
 			"located. Stupid etcpack cannot get it from PATH")
+
+	parser.add_option("--no-alpha", dest = "no_alpha", 
+			action = "store_true", default = False, 
+			help = "remove alpha channel")
 
 	(options, args) = parser.parse_args()
 
@@ -195,7 +199,7 @@ def parse_commandline():
 		parser.error("Unrecognized type: " + options.type)
 
 	return (options.inp.split(":"), options.out, options.fast,
-			typ, options.normal, options.convert_path)
+			typ, options.normal, options.convert_path, options.no_alpha)
 
 def identify_image(in_file):
 	""" Return the size of the input image and the internal format """
@@ -221,10 +225,10 @@ def identify_image(in_file):
 		raise Exception("Cannot extract size")
 	
 	# Identify the color space
-	if not re.search(r"red: 8-bit", stdout_str) \
+	"""if not re.search(r"red: 8-bit", stdout_str) \
 			or not re.search(r"green: 8-bit", stdout_str) \
 			or not re.search(r"blue: 8-bit", stdout_str):
-		raise Exception("Incorrect channel depths")
+		raise Exception("Incorrect channel depths")"""
 
 	if re.search(r"alpha: 8-bit", stdout_str):
 		color_format = CF_RGBA8
@@ -446,7 +450,7 @@ def write_etc(out_file, fname, width, height, color_format):
 	data = in_file.read(data_size)
 	out_file.write(data)
 
-def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path):
+def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha):
 	""" This is the function that does all the work """
 
 	# Invoke app named "identify" to get internal format and width and height
@@ -465,6 +469,9 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path):
 		if width != width_2 or height != height_2 \
 				or color_format != color_format_2:
 			raise Exception("Images are not same size and color space")
+
+	if no_alpha:
+		color_format = CF_RGB8
 
 	# Create images
 	for in_file in in_files:
@@ -545,7 +552,8 @@ def main():
 	""" The main """
 
 	# Parse cmd line args
-	(in_files, out, fast, typ, normal, convert_path) = parse_commandline();
+	(in_files, out, fast, typ, normal, convert_path, \
+			no_alpha) = parse_commandline();
 
 	if typ == TT_CUBE and len(in_files) != 6:
 		raise Exception("Not enough images for cube generation")
@@ -564,7 +572,8 @@ def main():
 
 	# Do the work
 	try:
-		convert(in_files, out, fast, typ, normal, tmp_dir, convert_path)
+		convert(in_files, out, fast, typ, normal, tmp_dir, \
+				convert_path, no_alpha)
 	finally:
 		shutil.rmtree(tmp_dir)
 		

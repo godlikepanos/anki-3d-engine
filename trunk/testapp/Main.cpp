@@ -201,7 +201,7 @@ void init()
 		PointLight* point =
 			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
 			&scene, nullptr, Movable::MF_NONE, 
-			(i == 0) ? "data/textures/lens_flare/flares0.ankitex" : nullptr);
+			(i == 0) ? "data/textures/lens_flare/flares1.ankitex" : nullptr);
 		point->setRadius(2.0);
 		point->setLocalOrigin(lightPos);
 		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
