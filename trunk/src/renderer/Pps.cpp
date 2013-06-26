@@ -76,6 +76,12 @@ void Pps::init(const Renderer::Initializer& initializer)
 //==============================================================================
 void Pps::run()
 {
+	// Draw flares
+	if(lf.getEnabled())
+	{
+		lf.run();
+	}
+
 	GlStateSingleton::get().disable(GL_BLEND);
 
 	// First SSAO because it depends on MS where HDR depends on IS
@@ -118,12 +124,6 @@ void Pps::run()
 	}
 
 	r->drawQuad();
-
-	// Draw flares
-	if(lf.getEnabled())
-	{
-		lf.run();
-	}
 }
 
 } // end namespace anki
