@@ -141,6 +141,12 @@ class PkmHeader:
 # Functions
 # 
 
+def printi(s):
+	print("[I] %s" % s)
+
+def printw(s):
+	print("[W] %s" % s)
+
 def is_power2(num):
 	""" Returns true if a number is a power of two """
 	return num != 0 and ((num & (num - 1)) == 0)
@@ -152,7 +158,12 @@ def get_base_fname(path):
 def parse_commandline():
 	""" Parse the command line arguments """
 
-	parser = optparse.OptionParser("usage: %prog [options]")
+	parser = optparse.OptionParser(usage = "usage: %prog [options]", \
+			description = "This program converts a single image or a number " \
+			"of images to AnKi texture format. It requires 4 applications to " \
+			"operate: convert, identify, nvcompress and etcpack. These " \
+			"applications should be in PATH except the convert where you " \
+			"need to define the executable explicitly")
 
 	parser.add_option("-i", "--input", dest = "inp",
 			type = "string", help = "specify the image(s) to convert. " \
@@ -175,7 +186,7 @@ def parse_commandline():
 
 	parser.add_option("-c", "--convert-path", dest = "convert_path", 
 			type = "string", default = "/usr/bin/convert", 
-			help = "the directory where convert tool is " \
+			help = "the executable where convert tool is " \
 			"located. Stupid etcpack cannot get it from PATH")
 
 	parser.add_option("--no-alpha", dest = "no_alpha", 
@@ -238,14 +249,14 @@ def identify_image(in_file):
 		color_format_str = "RGB"
 
 	# print some stuff and return
-	print("-- width: %s, height: %s color format: %s" % \
+	printi("width: %s, height: %s color format: %s" % \
 			(reg.group(1), reg.group(2), color_format_str))
 	return (color_format, int(reg.group(1)), int(reg.group(2)))
 
 def create_mipmaps(in_file, tmp_dir, width_, height_, color_format):
 	""" Create a number of images for all mipmaps """
 
-	print("-- Generate mipmaps")
+	printi("Generate mipmaps")
 
 	width = width_
 	height = height_
@@ -257,7 +268,7 @@ def create_mipmaps(in_file, tmp_dir, width_, height_, color_format):
 		out_file_str = os.path.join(tmp_dir, get_base_fname(in_file)) \
 				+ "." + size_str
 
-		print("  -- %s.tga" % out_file_str)
+		printi("  %s.tga" % out_file_str)
 
 		mips_fnames.append(out_file_str)
 
@@ -279,7 +290,7 @@ def create_mipmaps(in_file, tmp_dir, width_, height_, color_format):
 def create_etc_images(mips_fnames, tmp_dir, fast, color_format, convert_path):
 	""" Create the etc files """
 
-	print("-- Creating ETC images")
+	printi("Creating ETC images")
 
 	# Copy the convert tool to the working dir so that etcpack will see it
 	shutil.copy2(convert_path, \
@@ -288,7 +299,7 @@ def create_etc_images(mips_fnames, tmp_dir, fast, color_format, convert_path):
 	for fname in mips_fnames:
 		fname = fname + ".tga"
 
-		print("  -- %s" % fname)
+		printi("  %s" % fname)
 
 		args = ["etcpack", fname, tmp_dir, "-c", "etc2"]
 
@@ -308,7 +319,7 @@ def create_dds_images(mips_fnames, tmp_dir, fast, color_format, \
 		normal):
 	""" Create the dds files """
 
-	print("-- Creating DDS images")
+	printi("Creating DDS images")
 
 	for fname in mips_fnames:
 		# Unfortunately we need to flip the image. Use convert again
@@ -321,7 +332,7 @@ def create_dds_images(mips_fnames, tmp_dir, fast, color_format, \
 		# Continue
 		out_fname = os.path.join(tmp_dir, os.path.basename(fname) + ".dds")
 
-		print("  -- %s" % out_fname)
+		printi("  %s" % out_fname)
 
 		args = ["nvcompress", "-silent", "-nomips"]
 
@@ -348,7 +359,7 @@ def create_dds_images(mips_fnames, tmp_dir, fast, color_format, \
 def write_raw(tex_file, fname, width, height, color_format):
 	""" Append raw data to the AnKi texture file """
 
-	print("  -- Appending %s" % fname)
+	printi("  Appending %s" % fname)
 
 	# Read and check the header
 	uncompressed_tga_header = struct.pack("BBBBBBBBBBBB", \
@@ -356,12 +367,19 @@ def write_raw(tex_file, fname, width, height, color_format):
 
 	in_file = open(fname, "rb")
 	tga_header = in_file.read(12)
+
+	if len(tga_header) != 12:
+		raise Exception("Failed reading TGA header")
 	
 	if uncompressed_tga_header != tga_header:
 		raise Exception("Incorrect TGA header")
 
 	# Read the size and bpp
 	header6_buff = in_file.read(6)
+
+	if len(header6_buff) != 6:
+		raise Exception("Failed reading TGA header #2")
+		
 	header6 = struct.unpack("BBBBBB", header6_buff)
 
 	img_width = header6[1] * 256 + header6[0]
@@ -387,6 +405,10 @@ def write_raw(tex_file, fname, width, height, color_format):
 	if len(data) != data_size:
 		raise Exception("Failed to read all data")
 
+	tmp = in_file.read(128)
+	if len(tmp) != 0:
+		printw("  File shouldn't contain more data")
+
 	# Swap colors
 	bpp = img_bpp / 8
 	for i in xrange(0, data_size, bpp):
@@ -401,10 +423,15 @@ def write_s3tc(out_file, fname, width, height, color_format):
 	""" Append s3tc data to the AnKi texture file """
 
 	# Read header
-	print("  -- Appending %s" % fname)
+	printi("  Appending %s" % fname)
 	in_file = open(fname, "rb")
 
-	dds_header = DdsHeader(in_file.read(DdsHeader.get_size()))
+	header = in_file.read(DdsHeader.get_size())
+
+	if len(header) != DdsHeader.get_size():
+		raise Exception("Failed to read DDS header")
+
+	dds_header = DdsHeader(header)
 
 	if dds_header.dwWidth != width or dds_header.dwHeight != height:
 		raise Exception("Incorrect width")
@@ -426,17 +453,30 @@ def write_s3tc(out_file, fname, width, height, color_format):
 	data_size = (width / 4) * (height / 4) * block_size
 
 	data = in_file.read(data_size)
+
+	if len(data) != data_size:
+		raise Exception("Failed to read DDS data")
+
+	tmp = in_file.read(128)
+	if len(tmp) != 0:
+		printw("  File shouldn't contain more data")
+
 	out_file.write(data)
 
 def write_etc(out_file, fname, width, height, color_format):
 	""" Append etc2 data to the AnKi texture file """
 	
-	print("  -- Appending %s" % fname)
+	printi("  Appending %s" % fname)
 
 	# Read header
 	in_file = open(fname, "rb")
 
-	pkm_header = PkmHeader(in_file.read(PkmHeader.get_size()))
+	header = in_file.read(PkmHeader.get_size())
+
+	if len(header) != PkmHeader.get_size():
+		raise Exception("Failed to read PKM header")
+
+	pkm_header = PkmHeader(header)
 
 	if pkm_header.magic != "PKM 20":
 		raise Exception("Incorrect PKM header")
@@ -448,6 +488,14 @@ def write_etc(out_file, fname, width, height, color_format):
 	data_size = (pkm_header.width / 4) * (pkm_header.height / 4) * 8
 
 	data = in_file.read(data_size)
+
+	if len(data) != data_size:
+		raise Exception("Failed to read PKM data")
+
+	tmp = in_file.read(data_size)
+	if len(tmp) != 0:
+		printw("  File shouldn't contain more data")
+
 	out_file.write(data)
 
 def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha):
@@ -487,7 +535,7 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha):
 
 	# Open file
 	fname = out
-	print("-- Writing %s" % fname)
+	printi("Writing %s" % fname)
 	tex_file = open(fname, "wb")
 
 	# Write header
@@ -578,7 +626,7 @@ def main():
 		shutil.rmtree(tmp_dir)
 		
 	# Done
-	print("-- Done!")
+	printi("Done!")
 
 if __name__ == "__main__":
 	main()

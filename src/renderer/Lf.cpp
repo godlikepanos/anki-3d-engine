@@ -167,7 +167,7 @@ void Lf::run()
 		// Transform
 		Vec3 posWorld = light.getWorldTransform().getOrigin();
 		Vec4 posClip = cam.getViewProjectionMatrix() * Vec4(posWorld, 1.0);
-		Vec2 posNdc = (posClip.xyz() / posClip.w()).xy();
+		Vec2 posNdc = posClip.xy() / posClip.w();
 
 		Vec2 dir = -posNdc;
 		F32 len = dir.getLength();
@@ -183,23 +183,32 @@ void Lf::run()
 			++groupsCount;
 		}
 
-		for(U d = 0; d < depth; d++)
+		// First flare 
+		flares[flaresCount].pos = posNdc;
+		flares[flaresCount].scale = 
+			Vec2(0.1, r->getAspectRatio() * 0.1);
+		flares[flaresCount].depth = 0.0;
+		flares[flaresCount].alpha = 0.5;
+		++flaresCount;
+		++groups[groupsCount - 1];
+
+		// The rest of the flares
+		for(U d = 1; d < depth; d++)
 		{
 			// Write the "flares"
 			F32 factor = d / ((F32)depth - 1.0);
 
 			F32 flen = len * 2.0 * factor;
 
-			flares[flaresCount].pos = 
-				posNdc + dir * flen;
+			flares[flaresCount].pos = posNdc + dir * flen;
 
 			flares[flaresCount].scale = 
 				Vec2(0.1, r->getAspectRatio() * 0.1) 
-				* (flen);
+				* (len - flen) * 2.0;
 
 			flares[flaresCount].depth = d;
 
-			flares[flaresCount].alpha = flen / 2.0 + 0.1;
+			flares[flaresCount].alpha = 0.1;
 
 			// Advance
 			++flaresCount;
@@ -216,6 +225,7 @@ void Lf::run()
 
 	// Set the common state
 	drawProg->bind();
+	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().enable(GL_BLEND);
 	GlStateSingleton::get().setBlendFunctions(GL_ONE, GL_ONE);
 
