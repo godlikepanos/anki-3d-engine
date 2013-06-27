@@ -50,6 +50,15 @@ public:
 		return bl;
 	}
 
+	const Lf& getLf() const
+	{
+		return lf;
+	}
+	Lf& getLf()
+	{
+		return lf;
+	}
+
 	const Texture& getFai() const
 	{
 		return fai;

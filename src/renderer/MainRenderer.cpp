@@ -101,7 +101,7 @@ void MainRenderer::render(SceneGraph& scene)
 		GlStateSingleton::get().disable(GL_BLEND);
 		sProg->bind();
 #if 0
-		const Texture& finalFai = pps.getHdr().getFai();
+		const Texture& finalFai = pps.getLf().fai;
 #else
 		const Texture& finalFai = pps.getFai();
 #endif

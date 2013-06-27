@@ -11,6 +11,7 @@ uniform highp sampler2D msDepthFai;
 uniform lowp sampler2D isFai;
 uniform lowp sampler2D ppsHdrFai;
 uniform lowp sampler2D ppsSsaoFai;
+uniform lowp sampler2D ppsLfFai;
 
 in vec2 vTexCoords;
 
@@ -105,6 +106,11 @@ void main(void)
 #if defined(SSAO_ENABLED)
 	float ssao = textureLod(ppsSsaoFai, vTexCoords, 0.0).r;
 	fColor *= ssao;
+#endif
+
+#if defined(LF_ENABLED)
+	vec3 lf = textureLod(ppsLfFai, vTexCoords, 0.0).rgb;
+	fColor += lf;
 #endif
 
 	fColor = gammaCorrectionRgb(vec3(0.9, 0.92, 0.75), fColor);
