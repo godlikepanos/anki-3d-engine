@@ -48,6 +48,11 @@ void Pps::initInternal(const RendererInitializer& initializer)
 		pps += "#define HDR_ENABLED\n";
 	}
 
+	if(lf.getEnabled())
+	{
+		pps += "#define LF_ENABLED\n";
+	}
+
 	if(initializer.pps.sharpen)
 	{
 		pps += "#define SHARPEN_ENABLED\n";
@@ -76,12 +81,6 @@ void Pps::init(const Renderer::Initializer& initializer)
 //==============================================================================
 void Pps::run()
 {
-	// Draw flares
-	if(lf.getEnabled())
-	{
-		lf.run();
-	}
-
 	GlStateSingleton::get().disable(GL_BLEND);
 
 	// First SSAO because it depends on MS where HDR depends on IS
@@ -93,6 +92,11 @@ void Pps::run()
 	if(hdr.getEnabled())
 	{
 		hdr.run();
+	}
+
+	if(lf.getEnabled())
+	{
+		lf.run();
 	}
 
 	if(drawToDefaultFbo)
@@ -121,6 +125,10 @@ void Pps::run()
 	if(hdr.getEnabled())
 	{
 		prog->findUniformVariable("ppsHdrFai").set(hdr.getFai());
+	}
+	if(lf.getEnabled())
+	{
+		prog->findUniformVariable("ppsLfFai").set(lf.getFai());
 	}
 
 	r->drawQuad();

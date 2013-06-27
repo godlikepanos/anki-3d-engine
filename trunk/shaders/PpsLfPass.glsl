@@ -2,46 +2,71 @@
 
 #pragma anki start vertexShader
 
-// Per flare information
-struct Flare
-{
-	vec4 posScale; // xy: Position, z: Scale, w: Scale again
-	vec4 alphaDepth; // x: alpha, y: texture depth
-};
-
-// The block contains data for all flares
-layout(std140) uniform flaresBlock
-{
-	Flare flares[MAX_FLARES];
-};
-
-layout(location = 0) in vec2 position;
-
-out vec3 vTexCoords;
-out flat float vAlpha;
-
-void main()
-{
-	Flare flare = flares[gl_InstanceID];
-
-	vTexCoords = vec3((position * 0.5) + 0.5, flare.alphaDepth.y);
-
-	vec4 posScale = flare.posScale;
-	gl_Position = vec4(position * posScale.zw + posScale.xy , 0.0, 1.0);
-
-	vAlpha = flare.alphaDepth.x;
-}
+#pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
 
-uniform sampler2DArray images;
+#define MAX_GHOSTS 4
+#define FMAX_GHOSTS (float(MAX_GHOSTS))
+#define GHOST_DISPERSAL (0.7)
+#define HALO_WIDTH 0.4
+#define DISTORTION 4.0
 
-in vec3 vTexCoords;
-in flat float vAlpha;
+uniform sampler2D tex;
+uniform sampler2D lensDirtTex;
+
+in vec2 vTexCoords;
 
 out vec3 fColor;
 
+vec3 textureDistorted(
+	in sampler2D tex,
+	in vec2 texcoord,
+	in vec2 direction, // direction of distortion
+	in vec3 distortion ) // per-channel distortion factor  
+{
+	return vec3(
+		texture(tex, texcoord + direction * distortion.r).r,
+		texture(tex, texcoord + direction * distortion.g).g,
+		texture(tex, texcoord + direction * distortion.b).b);
+}
+
 void main()
 {
-	fColor = texture(images, vTexCoords).rgb * vAlpha;
+	vec2 texcoord = -vTexCoords + vec2(1.0);
+
+	vec2 imgSize = vec2(textureSize(tex, 0));
+
+	vec2 ghostVec = (vec2(0.5) - texcoord) * GHOST_DISPERSAL;
+
+	const vec2 texelSize = 1.0 / vec2(TEX_DIMENSIONS);
+
+	const vec3 distortion = 
+		vec3(-texelSize.x * DISTORTION, 0.0, texelSize.x * DISTORTION);
+
+	// sample ghosts:  
+	vec3 result = vec3(0.0);
+	for(int i = 0; i < MAX_GHOSTS; ++i) 
+	{ 
+		vec2 offset = fract(texcoord + ghostVec * float(i));
+
+		float weight = length(vec2(0.5) - offset) / length(vec2(0.5));
+		weight = pow(1.0 - weight, 10.0);
+
+		result += textureDistorted(tex, offset, offset, distortion) * weight;
+	}
+
+	// sample halo:
+	vec2 haloVec = normalize(ghostVec) * HALO_WIDTH;
+	float weight = 
+		length(vec2(0.5) - fract(texcoord + haloVec)) / length(vec2(0.5));
+	weight = pow(1.0 - weight, 5.0);
+	result += textureDistorted(tex, texcoord + haloVec, haloVec, distortion) 
+		* weight;
+
+	// lens dirt
+	result *= texture(lensDirtTex, vTexCoords).rgb;
+
+	// Write
+	fColor = result;
 }

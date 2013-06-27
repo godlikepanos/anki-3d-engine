@@ -12,6 +12,8 @@ namespace anki {
 /// Lens flare rendering pass
 class Lf: public OptionalRenderingPass
 {
+	friend class MainRenderer;
+
 public:
 	Lf(Renderer* r_)
 		: OptionalRenderingPass(r_)
@@ -22,13 +24,16 @@ public:
 	void init(const RendererInitializer& initializer);
 	void run();
 
+	const Texture& getFai() const
+	{
+		return fai;
+	}
+
 private:
 	ShaderProgramResourcePointer drawProg;
-	Ubo flareDataUbo;
-	const ShaderProgramUniformBlock* ublock;
-
-	U8 maxFlaresPerLight;
-	U8 maxLightsWithFlares;
+	Texture fai;
+	Fbo fbo;
+	TextureResourcePointer lensDirtTex;
 
 	void initInternal(const RendererInitializer& initializer);
 };
