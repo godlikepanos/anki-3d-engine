@@ -90,7 +90,7 @@ void Lf::initInternal(const RendererInitializer& initializer)
 	}
 
 	// Textures
-	lensDirtTex.load("engine-rsrc/lens_dirt.ankitex");
+	lensDirtTex.load("engine_data/lens_dirt.ankitex");
 }
 
 //==============================================================================
