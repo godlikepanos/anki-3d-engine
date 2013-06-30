@@ -92,8 +92,7 @@ void Sm::afterDraw()
 }
 
 //==============================================================================
-void Sm::run(Light* shadowCasters[], U32 shadowCastersCount, 
-	Array<U32,  MAX_SHADOW_CASTERS>& shadowmapLayers)
+void Sm::run(Light* shadowCasters[], U32 shadowCastersCount)
 {
 	ANKI_ASSERT(enabled);
 
@@ -104,7 +103,7 @@ void Sm::run(Light* shadowCasters[], U32 shadowCastersCount,
 	{
 		Shadowmap* sm = doLight(*shadowCasters[i]);
 		ANKI_ASSERT(sm != nullptr);
-		shadowmapLayers[i] = sm->layerId;
+		(void)sm;
 	}
 
 	afterDraw();

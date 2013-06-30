@@ -28,6 +28,7 @@ static const U TILES_Y_COUNT = ANKI_RENDERER_TILES_Y_COUNT;
 static const U TILES_COUNT = TILES_X_COUNT * TILES_Y_COUNT;
 
 //==============================================================================
+/// Check if the prev ground light vector is almost equal to the current
 static Bool groundVectorsEqual(const Vec3& prev, const Vec3& crnt)
 {
 	Bool out = true;
@@ -38,6 +39,14 @@ static Bool groundVectorsEqual(const Vec3& prev, const Vec3& crnt)
 	}
 
 	return out;
+}
+
+//==============================================================================
+/// Clamp a value
+template<typename T, typename Y>
+void clamp(T& in, Y limit)
+{
+	in = std::min(in, (T)limit);
 }
 
 //==============================================================================
@@ -57,15 +66,7 @@ struct Tile
 
 struct Tiles
 {
-	Tile tiles[TILES_Y_COUNT][TILES_X_COUNT];
-};
-
-struct Tilegrid
-{
-	Plane planesX[TILES_X_COUNT - 1];
-	Plane planesY[TILES_Y_COUNT - 1];
-	Plane planesNear[TILES_Y_COUNT][TILES_X_COUNT];
-	Plane planesFar[TILES_Y_COUNT][TILES_X_COUNT];
+	Array<Array<Tile, TILES_X_COUNT>, TILES_Y_COUNT> tiles;
 };
 
 struct Light
@@ -151,12 +152,12 @@ struct WriteLightsJob: ThreadJob
 	std::atomic<U32>* spotLightsCount = nullptr;
 	std::atomic<U32>* spotTexLightsCount = nullptr;
 		
-	std::atomic<U32> 
-		(*tilePointLightsCount)[TILES_Y_COUNT][TILES_X_COUNT] = nullptr;
-	std::atomic<U32> 
-		(*tileSpotLightsCount)[TILES_Y_COUNT][TILES_X_COUNT] = nullptr;
-	std::atomic<U32> 
-		(*tileSpotTexLightsCount)[TILES_Y_COUNT][TILES_X_COUNT] = nullptr;
+	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>*
+		tilePointLightsCount = nullptr;
+	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>*
+		tileSpotLightsCount = nullptr;
+	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>*
+		tileSpotTexLightsCount = nullptr;
 
 	Tiler* tiler = nullptr;
 	Is* is = nullptr;
@@ -528,16 +529,6 @@ void Is::initInternal(const RendererInitializer& initializer)
 			GL_DYNAMIC_DRAW);
 	}
 
-	// tilegrid
-	if(gpuPath)
-	{
-		tilegridBuffer.create(
-			GL_SHADER_STORAGE_BUFFER, 
-			sizeof(shader::Tilegrid), 
-			nullptr, 
-			GL_STATIC_DRAW);
-	}
-
 	ANKI_LOGI("Creating BOs: lights: " << calcLigthsUboSize() << "B tiles: "
 		<< sizeof(shader::Tiles) << "B");
 
@@ -586,6 +577,18 @@ void Is::initInternal(const RendererInitializer& initializer)
 }
 
 //==============================================================================
+void Is::rejectLights()
+{
+#if ANKI_GL == ANKI_GL_DESKTOP
+	if(!useCompute())
+	{
+		return;
+	}
+
+#endif
+}
+
+//==============================================================================
 void Is::lightPass()
 {
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
@@ -630,16 +633,15 @@ void Is::lightPass()
 		}
 	}
 
-	// Sanitize the counts
-	visiblePointLightsCount = visiblePointLightsCount % MAX_POINT_LIGHTS;
-	visibleSpotLightsCount = visibleSpotLightsCount % MAX_SPOT_LIGHTS;
-	visibleSpotTexLightsCount = visibleSpotTexLightsCount % MAX_SPOT_TEX_LIGHTS;
+	// Sanitize the counters
+	clamp(visiblePointLightsCount, MAX_POINT_LIGHTS);
+	clamp(visibleSpotLightsCount, MAX_SPOT_LIGHTS);
+	clamp(visibleSpotTexLightsCount, MAX_SPOT_TEX_LIGHTS);
 
 	//
 	// Do shadows pass
 	//
-	Array<U32, Sm::MAX_SHADOW_CASTERS> shadowmapLayers;
-	sm.run(&shadowCasters[0], visibleSpotTexLightsCount, shadowmapLayers);
+	sm.run(&shadowCasters[0], visibleSpotTexLightsCount);
 
 	//
 	// Write the lights and tiles UBOs
@@ -664,7 +666,7 @@ void Is::lightPass()
 	ANKI_ASSERT(spotTexLightsOffset + spotTexLightsSize <= calcLigthsUboSize());
 
 	// Fire the super jobs
-	WriteLightsJob jobs[ThreadPool::MAX_THREADS];
+	Array<WriteLightsJob, ThreadPool::MAX_THREADS> jobs;
 
 	U8 clientBuffer[MIN_LIGHTS_UBO_SIZE * 2]; // Aproximate size
 	ANKI_ASSERT(MIN_LIGHTS_UBO_SIZE * 2 >= calcLigthsUboSize());
@@ -674,12 +676,12 @@ void Is::lightPass()
 	std::atomic<U32> spotLightsAtomicCount(0);
 	std::atomic<U32> spotTexLightsAtomicCount(0);
 
-	std::atomic<U32> 
-		tilePointLightsCount[TILES_Y_COUNT][TILES_X_COUNT];
-	std::atomic<U32> 
-		tileSpotLightsCount[TILES_Y_COUNT][TILES_X_COUNT];
-	std::atomic<U32> 
-		tileSpotTexLightsCount[TILES_Y_COUNT][TILES_X_COUNT];
+	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>
+		tilePointLightsCount;
+	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>
+		tileSpotLightsCount;
+	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>
+		tileSpotTexLightsCount;
 
 	for(U y = 0; y < TILES_Y_COUNT; y++)
 	{
@@ -733,14 +735,19 @@ void Is::lightPass()
 		for(U x = 0; x < TILES_X_COUNT; x++)
 		{
 			clientTiles.tiles[y][x].lightsCount[0] = 
-				tilePointLightsCount[y][x].load() % MAX_POINT_LIGHTS_PER_TILE;
+				tilePointLightsCount[y][x].load();
+			clamp(clientTiles.tiles[y][x].lightsCount[0], 
+				MAX_POINT_LIGHTS_PER_TILE);
 
 			clientTiles.tiles[y][x].lightsCount[2] = 
-				tileSpotLightsCount[y][x].load() % MAX_SPOT_LIGHTS_PER_TILE;
+				tileSpotLightsCount[y][x].load();
+			clamp(clientTiles.tiles[y][x].lightsCount[2], 
+				MAX_SPOT_LIGHTS_PER_TILE);
 
 			clientTiles.tiles[y][x].lightsCount[3] = 
-				tileSpotTexLightsCount[y][x].load() 
-				% MAX_SPOT_TEX_LIGHTS_PER_TILE;
+				tileSpotTexLightsCount[y][x].load();
+			clamp(clientTiles.tiles[y][x].lightsCount[3], 
+				MAX_SPOT_TEX_LIGHTS_PER_TILE);
 		}
 	}
 

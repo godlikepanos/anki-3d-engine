@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cstring>
 #include <cstdarg>
+#include <contrib/minizip/unzip.h>
 
 namespace anki {
 
@@ -56,6 +57,53 @@ void File::open(const char* filename, U8 flags_)
 
 	ANKI_ASSERT((flags_ & OF_READ) != (flags_ & OF_WRITE));
 
+	//
+	// In the following lines determine the file type and open it
+	//
+
+	const char* aext = ".ankizip";
+	const char* ptrToArchiveExt = strstr(filename, aext);
+
+	if(ptrToArchiveExt == nullptr)
+	{
+		// It's a C file
+		openCFile(filename, flags_);
+	}
+	else
+	{
+		// Maybe it's a file in a zipped archive
+
+		PtrSize fnameLen = strlen(filename);
+		PtrSize extLen = strlen(aext);
+		PtrSize archLen = (PtrSize)(ptrToArchiveExt - filename) + extLen;
+
+		if(archLen + 1 >= fnameLen)
+		{
+			throw ANKI_EXCEPTION("Wrong file inside the archive");
+		}
+
+		std::string archive(filename, archLen);
+
+		if(directoryExists(archive.c_str()))
+		{
+			// It's a directory so failback to C file
+			openCFile(filename, flags_);
+		}
+		else
+		{
+			// It's a ziped file
+
+			std::string filenameInArchive(
+				filename + archLen + 1, fnameLen - archLen);
+
+			openZipFile(archive.c_str(), filenameInArchive.c_str(), flags_);
+		}
+	}
+}
+
+//==============================================================================
+void File::openCFile(const char* filename, U8 flags_)
+{
 	const char* openMode;
 
 	if(flags_ & OF_READ)
@@ -78,23 +126,59 @@ void File::open(const char* filename, U8 flags_)
 
 	// Open
 	file = (FILE*)fopen(filename, openMode);
-	if(!file)
+	if(file == nullptr)
 	{
 		throw ANKI_EXCEPTION("Failed to open file");
 	}
 
-	flags |= flags_ | FT_C;
+	flags = flags_ | FT_C;
 
-	// Check endianness
+	// If the open() DIDN'T provided us the file endianess 
 	if((flags_ & (E_BIG_ENDIAN | E_LITTLE_ENDIAN)) == 0)
 	{
-		// Set the default endianness
+		// Set the machine's endianness
 		flags |= getMachineEndianness();
 	}
 	else
 	{
+		// Else just make sure that just one of the flags is set
 		ANKI_ASSERT((flags_ & E_BIG_ENDIAN) != (flags_ & E_LITTLE_ENDIAN));
 	}
+}
+
+//==============================================================================
+void File::openZipFile(const char* archive, const char* archived, U8 flags_)
+{
+	if(flags_ & OF_WRITE)
+	{
+		throw ANKI_EXCEPTION("Cannot write inside archives");
+	}
+
+	// Open archive
+	unzFile zfile = unzOpen(archive);
+	if(zfile == nullptr)
+	{
+		throw ANKI_EXCEPTION("Failed to open file");
+	}
+
+	// Locate archived
+	const int caseSensitive = 1;
+	if(unzLocateFile(zfile, archived, caseSensitive) != UNZ_OK)
+	{
+		unzClose(zfile);
+		throw ANKI_EXCEPTION("Failed to locate file in archive");
+	}
+
+	// Open file
+	if(unzOpenCurrentFile(zfile) != UNZ_OK )
+	{
+		unzClose(zfile);
+		throw ANKI_EXCEPTION("unzOpenCurrentFile failed");
+	}
+
+	static_assert(sizeof(file) == sizeof(zfile), "See file");
+	file = (void*)zfile;
+	flags = flags_ | FT_C;
 }
 
 //==============================================================================

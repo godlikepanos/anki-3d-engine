@@ -41,7 +41,7 @@ void TextureResource::load(const Image& img)
 		|| img.getTextureType() == Image::TT_3D)
 	{
 		init.depth = img.getDepth();
-		ANKI_ASSERT(init.depth > 1);
+		//ANKI_ASSERT(init.depth > 1);
 	}
 	else
 	{

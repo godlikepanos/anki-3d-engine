@@ -607,7 +607,8 @@ def main():
 		raise Exception("Not enough images for cube generation")
 
 	if (typ == TT_3D or typ == TT_2D_ARRAY) and len(in_files) < 2:
-		raise Exception("Not enough images for 2DArray/3D texture")
+		#raise Exception("Not enough images for 2DArray/3D texture")
+		printw("Not enough images for 2DArray/3D texture")
 
 	if typ == TT_2D and len(in_files) != 1:
 		raise Exception("Only one image for 2D textures needed")

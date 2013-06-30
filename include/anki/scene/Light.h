@@ -101,13 +101,37 @@ public:
 
 	Bool hasLensFlare() const
 	{
-		return lensFlareTex.isLoaded();
+		return flaresTex.isLoaded();
 	}
 
 	const Texture& getLensFlareTexture() const
 	{
 		ANKI_ASSERT(hasLensFlare());
-		return *lensFlareTex;
+		return *flaresTex;
+	}
+	const Vec2& getLensFlaresSize() const
+	{
+		return flaresSize;
+	}
+	void setLensFlaresSize(const Vec2& val)
+	{
+		flaresSize = val;
+	}
+	const Vec2& getLensFlaresStretchMultiplier() const
+	{
+		return flaresStretchMultiplier;
+	}
+	void setLensFlaresStretchMultiplier(const Vec2& val)
+	{
+		flaresStretchMultiplier = val;
+	}
+	F32 getLensFlaresAlpha() const
+	{
+		return flaresAlpha;
+	}
+	void setLensFlaresAlpha(F32 val)
+	{
+		flaresAlpha = val;
 	}
 	/// @}
 
@@ -125,7 +149,15 @@ private:
 	LightType type;
 	Vec4 color = Vec4(1.0);
 	Vec4 specColor = Vec4(1.0);
-	TextureResourcePointer lensFlareTex;
+
+	/// @name Flare struff
+	/// @{
+	TextureResourcePointer flaresTex;
+	Vec2 flaresSize = Vec2(0.2);
+	Vec2 flaresStretchMultiplier = Vec2(1.0);
+	F32 flaresAlpha = 1.0;
+	/// @}
+
 	Bool8 shadow = false;
 	U8 shadowMapIndex = 0xFF; ///< Used by the renderer
 };

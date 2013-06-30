@@ -101,6 +101,10 @@ private:
 	/// Do the actual pass
 	void lightPass();
 
+	/// Reject occluded lights. This pass issues a compute job to reject lights
+	/// from the tiles
+	void rejectLights();
+
 	/// Prepare GL for rendering
 	void setState();
 };

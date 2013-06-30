@@ -22,7 +22,7 @@ ELSE()
 	SET(_GL GLESv2 EGL mali)
 ENDIF()
 
-TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankibullet ${_ANKI_LIBPNG} ${ANKI_GPERFTOOLS_LIBS} pthread ${_GL})
+TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankibullet ankiz ankipng ${ANKI_GPERFTOOLS_LIBS} pthread ${_GL})
 
 SET_TARGET_PROPERTIES(anki PROPERTIES LINKER_LANGUAGE CXX)
 
