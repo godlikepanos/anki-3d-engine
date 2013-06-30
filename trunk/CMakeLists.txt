@@ -47,10 +47,6 @@ ELSE()
 	SET(ANKI_MATH_SIMD "NONE")
 ENDIF()
 
-# libz and libpng
-OPTION(ANKI_SYSTEM_LIBZ "Use the system's libz" OFF)
-OPTION(ANKI_SYSTEM_LIBPNG "Use the system's libpng" OFF)
-
 # Take a wild guess on the windowing system
 IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
 	SET(_WIN_BACKEND "GLXX11")
@@ -109,19 +105,6 @@ ENDIF()
 # Valgrind hacks
 IF(ANKI_VALGRIND_HAPPY)
 	ADD_DEFINITIONS("-DGLIBCXX_FORCE_NEW")
-ENDIF()
-
-# libz and libpng
-IF(ANKI_SYSTEM_LIBZ)
-	SET(_ANKI_LIBZ "z")
-ELSE()
-	SET(_ANKI_LIBZ "ankiz")
-ENDIF()
-
-IF(ANKI_SYSTEM_LIBPNG)
-	SET(_ANKI_LIBPNG "png")
-ELSE()
-	SET(_ANKI_LIBPNG "ankipng")
 ENDIF()
 
 # Disable GLU in GLEW
@@ -205,8 +188,7 @@ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE
 #
 # Include & lib directories
 #
-INCLUDE_DIRECTORIES("extern/tinyxml2/include" "extern/lua" "extern/png" "extern/bullet" "include"
-	"${CMAKE_CURRENT_BINARY_DIR}")
+INCLUDE_DIRECTORIES("extern/tinyxml2/include" "extern/lua" "extern/png" "extern/z" "extern/bullet" "include" "${CMAKE_CURRENT_BINARY_DIR}")
 
 IF(ANKI_WINDOW_BACKEND STREQUAL "GLXX11" OR ANKI_WINDOW_BACKEND STREQUAL "MACOS")
 	INCLUDE_DIRECTORIES("extern/GLEW/include")

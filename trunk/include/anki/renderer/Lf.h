@@ -30,10 +30,18 @@ public:
 	}
 
 private:
-	ShaderProgramResourcePointer drawProg;
+	/// Pseudo lens flare program
+	ShaderProgramResourcePointer pseudoProg;
+	/// Real lens flare program
+	ShaderProgramResourcePointer realProg;
 	Texture fai;
 	Fbo fbo;
 	TextureResourcePointer lensDirtTex;
+	U8 maxFlaresPerLight;
+	U8 maxLightsWithFlares;
+	Ubo flareDataUbo;
+	const ShaderProgramUniformBlock* ublock;
+	
 
 	void initInternal(const RendererInitializer& initializer);
 };

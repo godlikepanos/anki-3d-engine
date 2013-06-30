@@ -120,11 +120,19 @@ public:
 	/// @}
 
 private:
-	U8 flags; ///< All the flags
+	U8 flags; ///< All the flags. Initialy zero and set on open
 	void* file; ///< A native type
 
 	/// Get the current machine's endianness
 	static Endianness getMachineEndianness();
+
+	/// Open a C file
+	void openCFile(const char* filename, U8 flags);
+
+	/// Open an archive and the file inside
+	/// @param[in] archive The filename of the archive
+	/// @param[in] archived The filename of the file inside the archive
+	void openZipFile(const char* archive, const char* archived, U8 flags);
 };
 
 /// Directory exists?

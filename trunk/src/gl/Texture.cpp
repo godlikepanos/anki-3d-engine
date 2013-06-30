@@ -299,7 +299,8 @@ void Texture::create(const Initializer& init)
 		case GL_TEXTURE_2D_ARRAY:
 		case GL_TEXTURE_3D:
 			{
-				ANKI_ASSERT(depth > 1);
+				//ANKI_ASSERT(depth > 1);
+				ANKI_ASSERT(depth > 0);
 
 				// Gather the data
 				Vector<U8> data;

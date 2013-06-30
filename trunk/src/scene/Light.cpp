@@ -23,7 +23,7 @@ Light::Light(
 
 	if(lensFlareFile)
 	{
-		lensFlareTex.load(lensFlareFile);
+		flaresTex.load(lensFlareFile);
 	}
 
 	addNewProperty(new ReadWritePointerProperty<Vec4>("color", &color));

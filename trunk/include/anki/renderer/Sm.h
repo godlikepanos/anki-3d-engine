@@ -36,8 +36,7 @@ public:
 	/// @}
 
 	void init(const RendererInitializer& initializer);
-	void run(Light* shadowCasters[], U32 shadowCastersCount, 
-		Array<U32,  MAX_SHADOW_CASTERS>& shadowmapLayers);
+	void run(Light* shadowCasters[], U32 shadowCastersCount);
 
 private:
 	Texture sm2DArrayTex;

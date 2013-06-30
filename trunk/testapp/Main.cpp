@@ -201,11 +201,13 @@ void init()
 		PointLight* point =
 			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
 			&scene, nullptr, Movable::MF_NONE, 
-			(i == 0) ? "data/textures/lens_flare/flares1.ankitex" : nullptr);
+			(i != 100) ? "data/textures/lens_flare/flares0.ankitex" : nullptr);
 		point->setRadius(2.0);
 		point->setLocalOrigin(lightPos);
 		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
 		point->setSpecularColor(Vec4(1.0, 1.0, 0.0, 0.0));
+		point->setLensFlaresStretchMultiplier(Vec2(10.0, 1.0));
+		point->setLensFlaresAlpha(1.0);
 
 		LightEventData eventData;
 		eventData.light = point;
@@ -424,8 +426,10 @@ void mainLoopExtra()
 
 	if(in.getMousePosition() != Vec2(0.0))
 	{
-		mover->rotateLocalY(-ang * in.getMousePosition().x() * mouseSensivity *
-			MainRendererSingleton::get().getAspectRatio());
+		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity *
+			MainRendererSingleton::get().getAspectRatio();
+
+		mover->rotateLocalY(angY);
 		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
 	}
 

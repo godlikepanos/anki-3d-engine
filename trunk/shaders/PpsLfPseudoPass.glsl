@@ -1,4 +1,5 @@
-// XXX
+// Screen space lens flare. Used the technique from here
+// http://john-chapman-graphics.blogspot.no/2013/02/pseudo-lens-flare.html
 
 #pragma anki start vertexShader
 
@@ -7,10 +8,11 @@
 #pragma anki start fragmentShader
 
 #define MAX_GHOSTS 4
-#define FMAX_GHOSTS (float(MAX_GHOSTS))
 #define GHOST_DISPERSAL (0.7)
 #define HALO_WIDTH 0.4
-#define DISTORTION 4.0
+#define CHROMATIC_DISTORTION 4.0
+#define ENABLE_CHROMATIC_DISTORTION 1
+#define ENABLE_HALO 1
 
 uniform sampler2D tex;
 uniform sampler2D lensDirtTex;
@@ -23,12 +25,16 @@ vec3 textureDistorted(
 	in sampler2D tex,
 	in vec2 texcoord,
 	in vec2 direction, // direction of distortion
-	in vec3 distortion ) // per-channel distortion factor  
+	in vec3 distortion) // per-channel distortion factor  
 {
+#if ENABLE_CHROMATIC_DISTORTION
 	return vec3(
 		texture(tex, texcoord + direction * distortion.r).r,
 		texture(tex, texcoord + direction * distortion.g).g,
 		texture(tex, texcoord + direction * distortion.b).b);
+#else
+	return texture(tex, texcoord).rgb;
+#endif
 }
 
 void main()
@@ -41,28 +47,37 @@ void main()
 
 	const vec2 texelSize = 1.0 / vec2(TEX_DIMENSIONS);
 
-	const vec3 distortion = 
-		vec3(-texelSize.x * DISTORTION, 0.0, texelSize.x * DISTORTION);
+	const vec3 distortion = vec3(
+		-texelSize.x * CHROMATIC_DISTORTION, 
+		0.0, 
+		texelSize.x * CHROMATIC_DISTORTION);
+
+	const float lenOfHalf = length(vec2(0.5));
+
+	vec2 direction = normalize(ghostVec);
+
+	vec3 result = vec3(0.0);
 
 	// sample ghosts:  
-	vec3 result = vec3(0.0);
 	for(int i = 0; i < MAX_GHOSTS; ++i) 
 	{ 
 		vec2 offset = fract(texcoord + ghostVec * float(i));
 
-		float weight = length(vec2(0.5) - offset) / length(vec2(0.5));
+		float weight = length(vec2(0.5) - offset) / lenOfHalf;
 		weight = pow(1.0 - weight, 10.0);
 
-		result += textureDistorted(tex, offset, offset, distortion) * weight;
+		result += textureDistorted(tex, offset, direction, distortion) * weight;
 	}
 
-	// sample halo:
+	// sample halo
+#if ENABLE_HALO
 	vec2 haloVec = normalize(ghostVec) * HALO_WIDTH;
 	float weight = 
-		length(vec2(0.5) - fract(texcoord + haloVec)) / length(vec2(0.5));
-	weight = pow(1.0 - weight, 5.0);
-	result += textureDistorted(tex, texcoord + haloVec, haloVec, distortion) 
+		length(vec2(0.5) - fract(texcoord + haloVec)) / lenOfHalf;
+	weight = pow(1.0 - weight, 20.0);
+	result += textureDistorted(tex, texcoord + haloVec, direction, distortion) 
 		* weight;
+#endif
 
 	// lens dirt
 	result *= texture(lensDirtTex, vTexCoords).rgb;
