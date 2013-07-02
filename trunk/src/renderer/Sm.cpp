@@ -76,6 +76,7 @@ void Sm::prepareDraw()
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 	GlStateSingleton::get().enable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
+	GlStateSingleton::get().setDepthMaskEnabled(true);
 
 	// for artifacts
 	glPolygonOffset(2.0, 2.0); // keep the values as low as possible!!!!
@@ -207,7 +208,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
 		r->getSceneDrawer().render(light, RenderableDrawer::RS_MATERIAL,
-			1, *(*it).node, (*it).subSpatialIndices, 
+			DEPTH_PASS, *(*it).node, (*it).subSpatialIndices, 
 			(*it).subSpatialIndicesCount);
 	}
 

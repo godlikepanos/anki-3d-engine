@@ -43,33 +43,25 @@ void Ms::init(const RendererInitializer& initializer)
 //==============================================================================
 void Ms::run()
 {
+	GlState& gl = GlStateSingleton::get();
+
 	fbo.bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	/*if(ez.getEnabled())
+	gl.setViewport(0, 0, r->getWidth(), r->getHeight());
+	gl.disable(GL_BLEND);
+	gl.enable(GL_DEPTH_TEST);
+	gl.setDepthFunc(GL_LESS);
+	gl.setDepthMaskEnabled(true);
+
+	if(ez.getEnabled())
 	{
+		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 		ez.run();
-	}*/
-
-	/*if(!ez.getEnabled())
-	{
-		glClear(GL_DEPTH_BUFFER_BIT);
-	}*/
-
-	GlStateSingleton::get().setViewport(0, 0, r->getWidth(), r->getHeight());
-	GlStateSingleton::get().disable(GL_BLEND);
-	GlStateSingleton::get().enable(GL_DEPTH_TEST);
-
-	//GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, true);
-	//app->getSceneGraph().skybox.Render(cam.getViewMatrix().getRotationPart());
-	//glDepthFunc(GL_LEQUAL);
-
-	// if ez then change the default depth test and disable depth writing
-	/*if(ez.getEnabled())
-	{
-		glDepthMask(false);
-		glDepthFunc(GL_EQUAL);
-	}*/
+		gl.setDepthFunc(GL_LEQUAL);
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		//gl.setDepthMaskEnabled(false);
+	}
 
 	// render all
 	r->getSceneDrawer().prepareDraw();
@@ -79,16 +71,10 @@ void Ms::run()
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
 		r->getSceneDrawer().render(r->getSceneGraph().getActiveCamera(),
-			RenderableDrawer::RS_MATERIAL, 0, *(*it).node, 
+			RenderableDrawer::RS_MATERIAL, COLOR_PASS, *(*it).node, 
 			(*it).subSpatialIndices, (*it).subSpatialIndicesCount);
 	}
 
-	// restore depth
-	/*if(ez.getEnabled())
-	{
-		glDepthMask(true);
-		glDepthFunc(GL_LESS);
-	}*/
 	ANKI_CHECK_GL_ERROR();
 }
 

@@ -279,7 +279,7 @@ void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 
 //==============================================================================
 void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
-	U32 pass, SceneNode& rsn, U32* subSpatialIndices,
+	Pass pass, SceneNode& rsn, U32* subSpatialIndices,
 	U subSpatialIndicesCount)
 {
 	ANKI_ASSERT(frsn.getFrustumable());

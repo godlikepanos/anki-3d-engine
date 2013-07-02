@@ -31,7 +31,7 @@ void Bs::run()
 		++it)
 	{
 		drawer.render(scene.getActiveCamera(), RenderableDrawer::RS_BLEND,
-			0, *(*it).node, (*it).subSpatialIndices, 
+			COLOR_PASS, *(*it).node, (*it).subSpatialIndices, 
 			(*it).subSpatialIndicesCount);
 	}
 

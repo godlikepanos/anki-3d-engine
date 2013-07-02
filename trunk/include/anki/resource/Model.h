@@ -43,19 +43,19 @@ public:
 
 	const Obb& getBoundingShape() const
 	{
-		PassLevelKey key(0, 0);
+		PassLevelKey key(COLOR_PASS, 0);
 		return getMeshBase(key).getBoundingShape();
 	}
 
 	const Obb& getBoundingShapeSub(U32 subMeshId) const
 	{
-		PassLevelKey key(0, 0);
+		PassLevelKey key(COLOR_PASS, 0);
 		return getMeshBase(key).getBoundingShapeSub(subMeshId);
 	}
 
 	U32 getSubMeshesCount() const
 	{
-		PassLevelKey key(0, 0);
+		PassLevelKey key(COLOR_PASS, 0);
 		return getMeshBase(key).getSubMeshesCount();
 	}
 
