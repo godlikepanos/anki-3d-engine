@@ -89,6 +89,7 @@ public:
 	void setBlendFunctions(const GLenum sFactor, const GLenum dFactor);
 
 	void setDepthMaskEnabled(const Bool enable);
+	void setDepthFunc(const GLenum val);
 	/// @}
 
 private:
@@ -100,10 +101,9 @@ private:
 	GLint clearStencilValue;
 	Array<GLenum, 2> blendFuncs;
 
-	// XXX
-	GLenum depthFunc; 
 	Array<GLint, 4> colorMask;
 	GLint depthMask;
+	GLenum depthFunc;
 	/// @}
 
 	/// Sync the local members with the opengl ones

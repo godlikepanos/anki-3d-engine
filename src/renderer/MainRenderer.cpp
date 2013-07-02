@@ -66,7 +66,7 @@ void MainRenderer::initGl()
 	GlStateSingleton::get().disable(GL_STENCIL_TEST);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	GlStateSingleton::get().setDepthMaskEnabled(true);
-	glDepthFunc(GL_LESS);
+	GlStateSingleton::get().setDepthFunc(GL_LESS);
 
 	glDisable(GL_DITHER);
 

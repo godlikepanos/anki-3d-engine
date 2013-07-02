@@ -474,7 +474,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -537,7 +537,8 @@ void initSubsystems(int argc, char* argv[])
 
 	// Main renderer
 	RendererInitializer initializer;
-	initializer.ms.ez.enabled = true;
+	initializer.ms.ez.enabled = false;
+	initializer.ms.ez.maxObjectsToDraw = 100;
 	initializer.dbg.enabled = false;
 	initializer.is.sm.bilinearEnabled = true;
 	initializer.is.groundLightEnabled = true;

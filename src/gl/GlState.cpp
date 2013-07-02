@@ -218,6 +218,8 @@ void GlState::sync()
 
 	// depth mask
 	glGetIntegerv(GL_DEPTH_WRITEMASK, &depthMask);
+	// depth func
+	glGetIntegerv(GL_DEPTH_FUNC, (GLint*)&depthFunc);
 }
 
 //==============================================================================
@@ -306,6 +308,22 @@ void GlState::setDepthMaskEnabled(const Bool enable)
 	{
 		glDepthMask(enable);
 		depthMask = enable;
+	}
+}
+
+//==============================================================================
+void GlState::setDepthFunc(const GLenum val)
+{
+#if ANKI_DEBUG
+	GLint real;
+	glGetIntegerv(GL_DEPTH_FUNC, &real);
+	ANKI_ASSERT(real == depthFunc);
+#endif
+
+	if(val != depthFunc)
+	{
+		glDepthFunc(val);
+		depthFunc = val;
 	}
 }
 

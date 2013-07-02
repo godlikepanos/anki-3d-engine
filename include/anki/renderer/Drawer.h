@@ -2,6 +2,7 @@
 #define ANKI_RENDERER_DRAWER_H
 
 #include "anki/util/StdTypes.h"
+#include "anki/resource/PassLevelKey.h"
 
 namespace anki {
 
@@ -35,7 +36,7 @@ public:
 	void render(
 		SceneNode& frsn,
 		RenderingStage stage, 
-		U32 pass, 
+		Pass pass, 
 		SceneNode& renderableSceneNode,
 		U32* subSpatialIndices,
 		U subSpatialIndicesCount);

@@ -75,7 +75,6 @@ private:
 
 	/// Light shaders
 	ShaderProgramResourcePointer lightPassProg;
-	ShaderProgramResourcePointer tilerProg;
 
 	/// Shadow mapping
 	Sm sm;

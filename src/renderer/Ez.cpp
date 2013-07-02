@@ -35,30 +35,10 @@ void Ez::run()
 		it != vi.getRenderablesEnd() && count < maxObjectsToDraw; ++it)
 	{
 		r->getSceneDrawer().render(cam, RenderableDrawer::RS_MATERIAL,
-			0, *(*it).node, (*it).subSpatialIndices, 
+			DEPTH_PASS, *(*it).node, (*it).subSpatialIndices, 
 			(*it).subSpatialIndicesCount);
 		++count;
 	}
-
-	/*Camera& cam = r.getCamera();
-
-	fbo.bind();
-
-	GlStateMachineSingleton::get().setViewport(0, 0,
-		r.getWidth(), r.getHeight());
-
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	GlStateMachineSingleton::get().enable(GL_DEPTH_TEST, true);
-	GlStateMachineSingleton::get().enable(GL_BLEND, false);
-
-	glClear(GL_DEPTH_BUFFER_BIT);
-
-	for(RenderableNode* node, cam.getVisibleMsRenderableNodes())
-	{
-		r.getSceneDrawer().renderRenderableNode(cam, 1, *node);
-	}
-
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);*/
 }
 
 } // end namespace anki

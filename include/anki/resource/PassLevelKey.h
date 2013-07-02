@@ -7,13 +7,27 @@
 
 namespace anki {
 
+/// The AnKi passes
+enum Pass
+{
+	COLOR_PASS, ///< For MS
+	DEPTH_PASS, ///< For shadows
+
+	/// For MS color pass after early Z. It's different than COLOR because it
+	/// doesn't do any discard, earlyZ did it before
+	//COLOR_EARLYZ_PASS,
+
+	PASS_COUNT
+};
+
 /// A key that consistst of the rendering pass and the level of detail
 struct PassLevelKey
 {
-	U8 pass = 0;
-	U8 level = 0;
+	U8 pass;
+	U8 level;
 
 	PassLevelKey()
+		: pass(COLOR_PASS), level(0)
 	{}
 
 	PassLevelKey(const PassLevelKey& b)

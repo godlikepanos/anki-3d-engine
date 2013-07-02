@@ -580,11 +580,12 @@ void Is::initInternal(const RendererInitializer& initializer)
 void Is::rejectLights()
 {
 #if ANKI_GL == ANKI_GL_DESKTOP
-	if(!useCompute())
+	if(ANKI_UNLIKELY(!useCompute()))
 	{
 		return;
 	}
 
+	
 #endif
 }
 

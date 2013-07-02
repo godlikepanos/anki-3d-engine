@@ -470,7 +470,7 @@ static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header,
 	U width = header.width;
 	U height = header.height;
 	U mips = header.mipLevels;
-	U layers;
+	U layers = 0;
 
 	switch(header.type)
 	{

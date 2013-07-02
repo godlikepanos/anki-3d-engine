@@ -19,6 +19,11 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+static Array<const char*, PASS_COUNT> passNames = {{
+	"COLOR", "DEPTH"
+}};
+
+//==============================================================================
 struct SetMaterialVariableValuesVisitor
 {
 	const StringList& list;
@@ -228,6 +233,7 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	XmlElement blendFunctionsEl =
 		materialEl.getChildElementOptional("blendFunctions");
 
+	Bool disableDepthPass = false;
 	if(blendFunctionsEl)
 	{
 		// sFactor
@@ -237,6 +243,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 		// dFactor
 		blendingDfactor = blendToEnum(
 			blendFunctionsEl.getChildElement("dFactor").getText());
+
+		disableDepthPass = true;
 	}
 
 	// depthTesting
@@ -265,12 +273,17 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 
 	for(U32 level = 0; level < levelsOfDetail; ++level)
 	{
-		for(U32 pid = 0; pid < passes.size(); ++pid)
+		for(U32 pid = 0; pid < PASS_COUNT; ++pid)
 		{
+			if(disableDepthPass && pid == DEPTH_PASS)
+			{
+				continue;
+			}
+
 			std::stringstream src;
 
 			src << "#define LOD " << level << std::endl;
-			src << "#define PASS_" << passes[pid] << std::endl;
+			src << "#define PASS_" << passNames[pid] << std::endl;
 			src << mspc.getShaderProgramSource() << std::endl;
 
 			std::string filename =
