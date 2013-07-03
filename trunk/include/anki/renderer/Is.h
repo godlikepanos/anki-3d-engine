@@ -68,13 +68,11 @@ private:
 
 	/// Contains the indices of lights per tile
 	BufferObject tilesBuffer;
-
-	/// XXX
-	BufferObject tilegridBuffer;
 	/// @}
 
-	/// Light shaders
+	// Light shaders
 	ShaderProgramResourcePointer lightPassProg;
+	ShaderProgramResourcePointer rejectProg;
 
 	/// Shadow mapping
 	Sm sm;
@@ -99,10 +97,6 @@ private:
 
 	/// Do the actual pass
 	void lightPass();
-
-	/// Reject occluded lights. This pass issues a compute job to reject lights
-	/// from the tiles
-	void rejectLights();
 
 	/// Prepare GL for rendering
 	void setState();
