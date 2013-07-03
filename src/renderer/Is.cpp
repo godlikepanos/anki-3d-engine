@@ -132,7 +132,7 @@ static PtrSize calcLigthsUboSize()
 static Bool useCompute()
 {
 	return GlStateCommonSingleton::get().getMajorVersion() >= 4
-		&& GlStateCommonSingleton::get().getMinorVersion() >= 10; // XXX
+		&& GlStateCommonSingleton::get().getMinorVersion() >= 3;
 }
 
 //==============================================================================
@@ -423,8 +423,6 @@ void Is::initInternal(const RendererInitializer& initializer)
 {
 	groundLightEnabled = initializer.is.groundLightEnabled;
 
-	Bool gpuPath = useCompute();
-
 	//
 	// Init the passes
 	//
@@ -433,36 +431,51 @@ void Is::initInternal(const RendererInitializer& initializer)
 	//
 	// Load the programs
 	//
-	std::string pps =
-		"#define TILES_X_COUNT " + std::to_string(TILES_X_COUNT) + "\n"
-		"#define TILES_Y_COUNT " + std::to_string(TILES_Y_COUNT) + "\n"
-		"#define TILES_COUNT " + std::to_string(TILES_COUNT) + "\n"
-		"#define RENDERER_WIDTH " + std::to_string(r->getWidth()) + "\n"
-		"#define RENDERER_HEIGHT " + std::to_string(r->getHeight()) + "\n"
-		"#define MAX_POINT_LIGHTS_PER_TILE " 
-		+ std::to_string(MAX_POINT_LIGHTS_PER_TILE) + "\n"
-		"#define MAX_SPOT_LIGHTS_PER_TILE " 
-		+ std::to_string(MAX_SPOT_LIGHTS_PER_TILE) + "\n"
-		"#define MAX_SPOT_TEX_LIGHTS_PER_TILE " 
-		+ std::to_string(MAX_SPOT_TEX_LIGHTS_PER_TILE) + "\n"
-		"#define MAX_POINT_LIGHTS " + std::to_string(MAX_POINT_LIGHTS) + "\n"
-		"#define MAX_SPOT_LIGHTS " + std::to_string(MAX_SPOT_LIGHTS) + "\n"
-		"#define MAX_SPOT_TEX_LIGHTS " 
-		+ std::to_string(MAX_SPOT_TEX_LIGHTS) + "\n"
-		"#define GROUND_LIGHT " + std::to_string(groundLightEnabled) + "\n";
+	std::stringstream pps;
+
+	pps << "#define TILES_X_COUNT " << TILES_X_COUNT << "\n"
+		<< "#define TILES_Y_COUNT " << TILES_Y_COUNT << "\n"
+		<< "#define TILES_COUNT " << TILES_COUNT << "\n"
+		<< "#define RENDERER_WIDTH " << r->getWidth() << "\n"
+		<< "#define RENDERER_HEIGHT " << r->getHeight() << "\n"
+		<< "#define MAX_POINT_LIGHTS_PER_TILE " << MAX_POINT_LIGHTS_PER_TILE
+		<< "\n"
+		<< "#define MAX_SPOT_LIGHTS_PER_TILE " << MAX_SPOT_LIGHTS_PER_TILE
+		<< "\n"
+		<< "#define MAX_SPOT_TEX_LIGHTS_PER_TILE " 
+		<< MAX_SPOT_TEX_LIGHTS_PER_TILE << "\n"
+		<< "#define MAX_POINT_LIGHTS " << MAX_POINT_LIGHTS << "\n"
+		<< "#define MAX_SPOT_LIGHTS " << MAX_SPOT_LIGHTS << "\n"
+		<< "#define MAX_SPOT_TEX_LIGHTS " << MAX_SPOT_TEX_LIGHTS << "\n"
+		<< "#define GROUND_LIGHT " << groundLightEnabled << "\n";
 
 	if(sm.getPcfEnabled())
 	{
-		pps += "#define PCF 1\n";
+		pps << "#define PCF 1\n";
 	}
 	else
 	{
-		pps += "#define PCF 0\n";
+		pps << "#define PCF 0\n";
 	}
 
 	// point light
 	lightPassProg.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/IsLp.glsl", pps.c_str()).c_str());
+		"shaders/IsLp.glsl", pps.str().c_str()).c_str());
+
+#if ANKI_GL == ANKI_GL_DESKTOP
+	if(useCompute())
+	{
+		pps << "#define DEPTHMAP_WIDTH " 
+			<< r->getMs().getDepthFai().getWidth() << "\n"
+			<< "#define DEPTHMAP_HEIGHT " 
+			<< r->getMs().getDepthFai().getHeight() << "\n"
+			<< "#define TILES_BLOCK_BINDING " 
+			<< TILES_BLOCK_BINDING << "\n";
+
+		rejectProg.load(ShaderProgramResource::createSrcCodeToCache(
+			"shaders/IsRejectLights.glsl", pps.str().c_str()).c_str());
+	}
+#endif
 
 	//
 	// Create FBOs
@@ -510,24 +523,11 @@ void Is::initInternal(const RendererInitializer& initializer)
 	uboAlignment = BufferObject::getUniformBufferOffsetAlignment();
 
 	// tiles BO
-	if(gpuPath)
-	{
-		// as SSBO
-		tilesBuffer.create(
-			GL_SHADER_STORAGE_BUFFER, 
-			sizeof(shader::Tiles), 
-			nullptr, 
-			GL_STATIC_DRAW);
-	}
-	else
-	{
-		// as UBO
-		tilesBuffer.create(
-			GL_UNIFORM_BUFFER, 
-			sizeof(shader::Tiles), 
-			nullptr, 
-			GL_DYNAMIC_DRAW);
-	}
+	tilesBuffer.create(
+		GL_UNIFORM_BUFFER, 
+		sizeof(shader::Tiles), 
+		nullptr, 
+		GL_DYNAMIC_DRAW);
 
 	ANKI_LOGI("Creating BOs: lights: " << calcLigthsUboSize() << "B tiles: "
 		<< sizeof(shader::Tiles) << "B");
@@ -543,6 +543,19 @@ void Is::initInternal(const RendererInitializer& initializer)
 		throw ANKI_EXCEPTION("Problem with the commonBlock");
 	}
 
+#if ANKI_GL == ANKI_GL_DESKTOP
+	if(rejectProg.isLoaded())
+	{
+		ublock = &rejectProg->findUniformBlock("commonBlock");
+		ublock->setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
+		if(ublock->getSize() != sizeof(shader::CommonUniforms)
+			|| ublock->getBinding() != COMMON_UNIFORMS_BLOCK_BINDING)
+		{
+			throw ANKI_EXCEPTION("Problem with the commonBlock");
+		}
+	}
+#endif
+
 	ublock = &lightPassProg->findUniformBlock("pointLightsBlock");
 	ublock->setBinding(POINT_LIGHTS_BLOCK_BINDING);
 	if(ublock->getSize() != sizeof(shader::PointLight) * MAX_POINT_LIGHTS
@@ -550,6 +563,19 @@ void Is::initInternal(const RendererInitializer& initializer)
 	{
 		throw ANKI_EXCEPTION("Problem with the pointLightsBlock");
 	}
+
+#if ANKI_GL == ANKI_GL_DESKTOP
+	if(rejectProg.isLoaded())
+	{
+		ublock = &rejectProg->findUniformBlock("pointLightsBlock");
+		ublock->setBinding(POINT_LIGHTS_BLOCK_BINDING);
+		if(ublock->getSize() != sizeof(shader::PointLight) * MAX_POINT_LIGHTS
+			|| ublock->getBinding() != POINT_LIGHTS_BLOCK_BINDING)
+		{
+			throw ANKI_EXCEPTION("Problem with the pointLightsBlock");
+		}
+	}
+#endif
 
 	ublock = &lightPassProg->findUniformBlock("spotLightsBlock");
 	ublock->setBinding(SPOT_LIGHTS_BLOCK_BINDING);
@@ -574,18 +600,18 @@ void Is::initInternal(const RendererInitializer& initializer)
 	{
 		throw ANKI_EXCEPTION("Problem with the tilesBlock");
 	}
-}
 
-//==============================================================================
-void Is::rejectLights()
-{
-#if ANKI_GL == ANKI_GL_DESKTOP
-	if(ANKI_UNLIKELY(!useCompute()))
+#if ANKI_GL == ANKI_GL_DESKTOP && 0
+	if(rejectProg.isLoaded())
 	{
-		return;
+		ublock = &rejectProg->findUniformBlock("tilesBlock");
+		ublock->setBinding(TILES_BLOCK_BINDING);
+		if(ublock->getSize() != sizeof(shader::Tiles)
+			|| ublock->getBinding() != TILES_BLOCK_BINDING)
+		{
+			throw ANKI_EXCEPTION("Problem with the tilesBlock");
+		}
 	}
-
-	
 #endif
 }
 
@@ -756,6 +782,40 @@ void Is::lightPass()
 	lightsUbo.write(
 		&clientBuffer[0], 0, spotTexLightsOffset + spotTexLightsSize);
 	tilesBuffer.write(&clientTiles);
+
+	//
+	// Reject occluded lights. This operation issues a compute job to reject 
+	// lights from the tiles
+	//
+#if ANKI_GL == ANKI_GL_DESKTOP
+	if(ANKI_UNLIKELY(rejectProg.isLoaded()))
+	{
+		rejectProg->bind();
+
+		if(pointLightsSize > 0)
+		{
+			lightsUbo.setBindingRange(
+				POINT_LIGHTS_BLOCK_BINDING, pointLightsOffset, pointLightsSize);
+		}
+		/*if(spotLightsSize > 0)
+		{
+			lightsUbo.setBindingRange(SPOT_LIGHTS_BLOCK_BINDING, spotLightsOffset,
+				spotLightsSize);
+		}
+		if(spotTexLightsSize > 0)
+		{
+			lightsUbo.setBindingRange(SPOT_TEX_LIGHTS_BLOCK_BINDING, 
+				spotTexLightsOffset, spotTexLightsSize);
+		}*/
+		tilesBuffer.setTarget(GL_SHADER_STORAGE_BUFFER);
+		tilesBuffer.setBinding(TILES_BLOCK_BINDING);
+		tilesBuffer.setTarget(GL_UNIFORM_BUFFER);
+
+		commonUbo.setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
+
+		glDispatchCompute(TILES_X_COUNT, TILES_Y_COUNT, 1);
+	}
+#endif	
 
 	//
 	// Setup shader and draw

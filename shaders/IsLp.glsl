@@ -326,7 +326,7 @@ void main()
 #endif
 
 #if 0
-	if(tiles[vInstanceId].lightsCount[2] > 0)
+	if(tiles[vInstanceId].lightsCount[0] > 0)
 	{
 		uint lightId = 0;
 
@@ -344,14 +344,14 @@ void main()
 		slights[1].light.diffuseColorShadowmapId.w, 0.0);
 #endif
 
-#if 0
+#if 1
 	if(tiles[vInstanceId].lightsCount[0] > 0)
 	{
 		fColor += vec3(0.0, 0.1, 0.0);
 	}
 #endif
 
-#if 0
+#if 1
 	vec3 tmpc = vec3((vInstanceId % 4) / 3.0, (vInstanceId % 3) / 2.0, 
 		(vInstanceId % 2));
 	fColor += tmpc / 40.0;
