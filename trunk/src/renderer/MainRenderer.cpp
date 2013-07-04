@@ -56,7 +56,6 @@ void MainRenderer::initGl()
 	GlStateSingleton::get().setClearColor(Vec4(1.0, 0.0, 1.0, 1.0));
 	GlStateSingleton::get().setClearDepthValue(1.0);
 	GlStateSingleton::get().setClearStencilValue(0);
-	glDepthFunc(GL_LEQUAL);
 	// CullFace is always on
 	glCullFace(GL_BACK);
 	GlStateSingleton::get().enable(GL_CULL_FACE);

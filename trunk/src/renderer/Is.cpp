@@ -543,7 +543,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 		throw ANKI_EXCEPTION("Problem with the commonBlock");
 	}
 
-#if ANKI_GL == ANKI_GL_DESKTOP
+#if ANKI_GL == ANKI_GL_DESKTOP && 0
 	if(rejectProg.isLoaded())
 	{
 		ublock = &rejectProg->findUniformBlock("commonBlock");
@@ -564,7 +564,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 		throw ANKI_EXCEPTION("Problem with the pointLightsBlock");
 	}
 
-#if ANKI_GL == ANKI_GL_DESKTOP
+#if ANKI_GL == ANKI_GL_DESKTOP && 0
 	if(rejectProg.isLoaded())
 	{
 		ublock = &rejectProg->findUniformBlock("pointLightsBlock");
@@ -809,11 +809,15 @@ void Is::lightPass()
 		}*/
 		tilesBuffer.setTarget(GL_SHADER_STORAGE_BUFFER);
 		tilesBuffer.setBinding(TILES_BLOCK_BINDING);
-		tilesBuffer.setTarget(GL_UNIFORM_BUFFER);
 
 		commonUbo.setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
 
+		rejectProg->findUniformVariable("depthMap").set(
+			r->getMs().getDepthFai());
+
 		glDispatchCompute(TILES_X_COUNT, TILES_Y_COUNT, 1);
+
+		tilesBuffer.setTarget(GL_UNIFORM_BUFFER);
 	}
 #endif	
 

@@ -345,13 +345,18 @@ void main()
 #endif
 
 #if 1
+	fColor = fColor * 0.0001 
+		+ vec3(float(tiles[vInstanceId].lightsCount[1]));
+#endif
+
+#if 0
 	if(tiles[vInstanceId].lightsCount[0] > 0)
 	{
 		fColor += vec3(0.0, 0.1, 0.0);
 	}
 #endif
 
-#if 1
+#if 0
 	vec3 tmpc = vec3((vInstanceId % 4) / 3.0, (vInstanceId % 3) / 2.0, 
 		(vInstanceId % 2));
 	fColor += tmpc / 40.0;
