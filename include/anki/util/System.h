@@ -13,6 +13,9 @@ namespace anki {
 /// Get the number of CPU cores
 extern U32 getCpuCoresCount();
 
+/// Print the backtrace
+extern void printBacktrace();
+
 /// @}
 /// @}
 

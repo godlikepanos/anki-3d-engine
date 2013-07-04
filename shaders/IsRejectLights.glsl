@@ -16,7 +16,7 @@ uniform highp sampler2D depthMap;
 
 layout(std140, binding = TILES_BLOCK_BINDING) buffer tilesBlock
 {
-	Tile tiles[TILES_Y_COUNT][TILES_X_COUNT];
+	Tile tiles[TILES_Y_COUNT * TILES_X_COUNT];
 };
 
 layout(std140) uniform pointLightsBlock
@@ -37,10 +37,12 @@ layout(std140) uniform commonBlock
 
 void main()
 {
+	uint tileIndex = tileY * TILES_X_COUNT + tileX;
+
 	//
-	// First calculate the z of the near plane
+	// First calculate the z of the far plane
 	//
-	float minDepth = 10000.0; // min depth of tile
+	float maxDepth = -10000.0; // min depth of tile
 
 	const ivec2 COORD = ivec2(ivec2(tileX, tileY) * ivec2(TILE_W, TILE_H));
 
@@ -50,12 +52,12 @@ void main()
 		{
 			float depth = texelFetch(depthMap, COORD + ivec2(x, y), 0).r;
 
-			minDepth = min(depth, minDepth);
+			maxDepth = max(depth, maxDepth);
 		}
 	}
 
 	// Convert to view space
-	float nearZ = -planes.y / (planes.x + minDepth);
+	float z = -planes.y / (planes.x + maxDepth);
 
 	//
 	// Reject point lights
@@ -63,17 +65,22 @@ void main()
 	uint newPointLightIndices[MAX_POINT_LIGHTS_PER_TILE];
 	uint newPointLightsCount = 0;
 
-	uint pointLightsCount = tiles[tileY][tileX].lightsCount[0];
+	tiles[tileIndex].lightsCount[1] = 0;
+
+	uint pointLightsCount = tiles[tileIndex].lightsCount[0];
 	for(uint i = 0U; i < pointLightsCount; ++i)
 	{
-		uint lightId = tiles[tileY][tileX].pointLightIndices[i / 4U][i % 4U];
+		uint lightId = tiles[tileIndex].pointLightIndices[i / 4U][i % 4U];
 
 		vec4 posRadius = pointLights[lightId].posRadius;
 		vec3 pos = posRadius.xyz;
-		float radius = posRadius.w;
+		float radius = -1.0 / posRadius.w;
+
+		if(pos.z < 0.0)
+		tiles[tileIndex].lightsCount[1] += 1;
 		
 		// Should reject?
-		if(pos.z - radius <= nearZ)
+		if((pos.z - 0.5) <= z)
 		{
 			// No
 
@@ -84,8 +91,8 @@ void main()
 	// Copy back
 	for(uint i = 0U; i < newPointLightsCount; i++)
 	{
-		tiles[tileY][tileX].pointLightIndices[i / 4U][i % 4U] = 
+		tiles[tileIndex].pointLightIndices[i / 4U][i % 4U] = 
 			newPointLightIndices[i];
 	}
-	tiles[tileY][tileX].lightsCount[0] = newPointLightsCount;
+	tiles[tileIndex].lightsCount[0] = newPointLightsCount;
 }

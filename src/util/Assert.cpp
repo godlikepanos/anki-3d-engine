@@ -1,4 +1,5 @@
 #include "anki/util/Assert.h"
+#include "anki/util/System.h"
 #include <cstdlib>
 #include <iostream>
 
@@ -19,6 +20,7 @@ void akassert(bool expr, const char* exprTxt, const char* file, int line,
 #if ANKI_CPU_ARCH == ANKI_CPU_ARCH_INTEL
 		asm("int $3");
 #endif
+		printBacktrace();
 		abort();
 	}
 }
