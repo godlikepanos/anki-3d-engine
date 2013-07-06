@@ -344,9 +344,9 @@ void main()
 		slights[1].light.diffuseColorShadowmapId.w, 0.0);
 #endif
 
-#if 1
+#if 0
 	fColor = fColor * 0.0001 
-		+ vec3(float(tiles[vInstanceId].lightsCount[1]));
+		+ vec3(uintBitsToFloat(tiles[vInstanceId].lightsCount[1]));
 #endif
 
 #if 0
