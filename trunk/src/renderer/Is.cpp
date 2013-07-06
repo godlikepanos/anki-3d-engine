@@ -543,7 +543,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 		throw ANKI_EXCEPTION("Problem with the commonBlock");
 	}
 
-#if ANKI_GL == ANKI_GL_DESKTOP && 0
+#if ANKI_GL == ANKI_GL_DESKTOP
 	if(rejectProg.isLoaded())
 	{
 		ublock = &rejectProg->findUniformBlock("commonBlock");
@@ -564,7 +564,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 		throw ANKI_EXCEPTION("Problem with the pointLightsBlock");
 	}
 
-#if ANKI_GL == ANKI_GL_DESKTOP && 0
+#if ANKI_GL == ANKI_GL_DESKTOP
 	if(rejectProg.isLoaded())
 	{
 		ublock = &rejectProg->findUniformBlock("pointLightsBlock");

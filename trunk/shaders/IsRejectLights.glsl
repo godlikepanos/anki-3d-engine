@@ -42,30 +42,36 @@ void main()
 	//
 	// First calculate the z of the far plane
 	//
-	float maxDepth = -10000.0; // min depth of tile
+	vec2 minMaxDepth = vec2(10000.0, -10000.0); // max depth of tile
 
-	const ivec2 COORD = ivec2(ivec2(tileX, tileY) * ivec2(TILE_W, TILE_H));
+	const vec2 COORD = vec2(tileX, tileY) 
+		* (vec2(1.0) / vec2(float(TILES_X_COUNT), float(TILES_Y_COUNT)));
 
-	for(int x = 0; x < TILE_W; x++)
+	vec2 coord = COORD;
+
+	for(int x = 0; x < TILE_W; ++x)
 	{
-		for(int y = 0; y < TILE_H; y++)
+		for(int y = 0; y < TILE_H; ++y)
 		{
-			float depth = texelFetch(depthMap, COORD + ivec2(x, y), 0).r;
+			float depth = texture(depthMap, coord).r;
 
-			maxDepth = max(depth, maxDepth);
+			minMaxDepth[0] = min(depth, minMaxDepth[0]);
+			minMaxDepth[1] = max(depth, minMaxDepth[1]);
+
+			coord.y += 1.0 / float(DEPTHMAP_HEIGHT);
 		}
+
+		coord.x += 1.0 / float(DEPTHMAP_WIDTH);
 	}
 
 	// Convert to view space
-	float z = -planes.y / (planes.x + maxDepth);
+	vec2 z = -planes.y / (planes.x + minMaxDepth);
 
 	//
 	// Reject point lights
 	//
 	uint newPointLightIndices[MAX_POINT_LIGHTS_PER_TILE];
 	uint newPointLightsCount = 0;
-
-	tiles[tileIndex].lightsCount[1] = 0;
 
 	uint pointLightsCount = tiles[tileIndex].lightsCount[0];
 	for(uint i = 0U; i < pointLightsCount; ++i)
@@ -75,12 +81,9 @@ void main()
 		vec4 posRadius = pointLights[lightId].posRadius;
 		vec3 pos = posRadius.xyz;
 		float radius = -1.0 / posRadius.w;
-
-		if(pos.z < 0.0)
-		tiles[tileIndex].lightsCount[1] += 1;
 		
 		// Should reject?
-		if((pos.z - 0.5) <= z)
+		if((pos.z + radius) >= z[1] && (pos.z - radius) <= z[0])
 		{
 			// No
 
