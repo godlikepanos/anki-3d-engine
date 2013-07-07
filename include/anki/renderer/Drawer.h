@@ -17,8 +17,6 @@ class Renderable;
 class RenderableDrawer
 {
 public:
-	static const U UNIFORM_BLOCK_MAX_SIZE = 256;
-
 	enum RenderingStage
 	{
 		RS_MATERIAL,

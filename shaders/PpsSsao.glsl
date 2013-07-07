@@ -38,7 +38,11 @@ layout(std140, row_major) uniform commonBlock
 #define limitsOfNearPlane2 limitsOfNearPlane_.zw
 
 uniform sampler2D msDepthFai;
+#if USE_MRT
+uniform sampler2D msGFai;
+#else
 uniform highp usampler2D msGFai;
+#endif
 uniform sampler2D noiseMap; 
 /// @}
 
@@ -49,8 +53,12 @@ uniform sampler2D noiseMap;
 
 vec3 getNormal(in vec2 uv)
 {
+#if USE_MRT
+	vec3 normal = unpackNormal(texture(msGFai, uv).rg);
+#else
 	uvec2 msAll = texture(msGFai, uv).rg;
 	vec3 normal = unpackNormal(unpackHalf2x16(msAll[1]));
+#endif
 	return normal;
 }
 
@@ -61,7 +69,7 @@ vec2 getRandom(in vec2 uv)
 		float(HEIGHT) / float(NOISE_MAP_SIZE));
 
 	vec2 noise = texture(noiseMap, tmp * uv).xy;
-	//return normalize(noise * 2.0 - 1.0);r
+	//return normalize(noise * 2.0 - 1.0);
 	return noise;
 }
 

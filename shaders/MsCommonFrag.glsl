@@ -27,7 +27,12 @@ flat in lowp float vSpecularComponent;
 /// @name Fragment out
 /// @{
 #if defined(PASS_COLOR)
+#	if USE_MRT
+layout(location = 0) out vec4 fMsFai0;
+layout(location = 1) out vec2 fMsFai1;
+#	else
 layout(location = 0) out uvec2 fMsFai0;
+#	endif
 #	define fMsFai0_DEFINED
 #endif
 /// @}
@@ -151,10 +156,17 @@ void writeFais(
 	in float specularComponent, // Streangth and shininess
 	in float blurring)
 {
+#if USE_MRT
+	// Diffuse color and specular
+	fMsFai0 = vec4(diffCol, specularComponent);
+	// Normal
+	fMsFai1 = packNormal(normal);
+#else
 	// Diffuse color and specular
 	fMsFai0[0] = packUnorm4x8(vec4(diffCol, specularComponent));
 	// Normal
 	fMsFai0[1] = packHalf2x16(packNormal(normal));
+#endif
 }
 #endif
 

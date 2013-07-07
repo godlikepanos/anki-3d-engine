@@ -87,7 +87,13 @@ layout(std140)
 	Tile tiles[TILES_COUNT];
 };
 
+
+#if USE_MRT
+uniform sampler2D msFai0;
+uniform sampler2D msFai1;
+#else
 uniform highp usampler2D msFai0;
+#endif
 uniform sampler2D msDepthFai;
 
 //uniform sampler2D lightTextures[MAX_SPOT_LIGHTS];
@@ -216,15 +222,19 @@ float calcShadowFactor(in SpotTexLight light, in vec3 fragPosVspace,
 //==============================================================================
 void main()
 {
-	// Read texture first. Optimize for future out of order HW
-	uvec2 msAll = textureLod(msFai0, vTexCoords, 0.0).rg;
-
 	// get frag pos in view space
 	vec3 fragPosVspace = getFragPosVSpace();
 
 	// Decode MS
+#if USE_MRT
+	vec3 normal = unpackNormal(texture(msFai1, vTexCoords).rg);
+	vec4 diffuseAndSpec = texture(msFai0, vTexCoords);
+#else
+	uvec2 msAll = texture(msFai0, vTexCoords).rg;
+
 	vec3 normal = unpackNormal(unpackHalf2x16(msAll[1]));
 	vec4 diffuseAndSpec = unpackUnorm4x8(msAll[0]);
+#endif
 	vec2 specularAll = unpackSpecular(diffuseAndSpec.a);
 
 	// Ambient color

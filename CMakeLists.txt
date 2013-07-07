@@ -97,7 +97,7 @@ IF(CMAKE_BUILD_TYPE STREQUAL "Debug")
 ELSE()
 	# Release
 
-	SET(COMMON_FLAGS "${COMMON_FLAGS} -ffast-math -O4 ")
+	SET(COMMON_FLAGS "${COMMON_FLAGS} -ffast-math -O4 -flto ")
 
 	SET(CXX_FLAGS "${CXX_FLAGS} -fno-rtti ")
 ENDIF()

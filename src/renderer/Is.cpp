@@ -132,7 +132,8 @@ static PtrSize calcLigthsUboSize()
 static Bool useCompute()
 {
 	return GlStateCommonSingleton::get().getMajorVersion() >= 4
-		&& GlStateCommonSingleton::get().getMinorVersion() >= 3;
+		&& GlStateCommonSingleton::get().getMinorVersion() >= 3
+		&& false;
 }
 
 //==============================================================================
@@ -447,7 +448,8 @@ void Is::initInternal(const RendererInitializer& initializer)
 		<< "#define MAX_POINT_LIGHTS " << MAX_POINT_LIGHTS << "\n"
 		<< "#define MAX_SPOT_LIGHTS " << MAX_SPOT_LIGHTS << "\n"
 		<< "#define MAX_SPOT_TEX_LIGHTS " << MAX_SPOT_TEX_LIGHTS << "\n"
-		<< "#define GROUND_LIGHT " << groundLightEnabled << "\n";
+		<< "#define GROUND_LIGHT " << groundLightEnabled << "\n"
+		<< "#define USE_MRT " << ANKI_RENDERER_USE_MRT << "\n";
 
 	if(sm.getPcfEnabled())
 	{
@@ -466,9 +468,9 @@ void Is::initInternal(const RendererInitializer& initializer)
 	if(useCompute())
 	{
 		pps << "#define DEPTHMAP_WIDTH " 
-			<< r->getMs().getDepthFai().getWidth() << "\n"
+			<< (r->getMs().getDepthFai().getWidth()) << "\n"
 			<< "#define DEPTHMAP_HEIGHT " 
-			<< r->getMs().getDepthFai().getHeight() << "\n"
+			<< (r->getMs().getDepthFai().getHeight()) << "\n"
 			<< "#define TILES_BLOCK_BINDING " 
 			<< TILES_BLOCK_BINDING << "\n";
 
@@ -851,6 +853,9 @@ void Is::lightPass()
 	tilesBuffer.setBinding(TILES_BLOCK_BINDING);
 
 	lightPassProg->findUniformVariable("msFai0").set(r->getMs().getFai0());
+#if ANKI_RENDERER_USE_MRT
+	lightPassProg->findUniformVariable("msFai1").set(r->getMs().getFai1());
+#endif
 	lightPassProg->findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
 	lightPassProg->findUniformVariable("shadowMapArr").set(sm.sm2DArrayTex);

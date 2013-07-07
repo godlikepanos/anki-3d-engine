@@ -19,7 +19,7 @@ layout(location = 0) out vec3 fColor;
 
 const vec2 TEX_OFFSET = vec2(1.0 / float(FBO_WIDTH), 1.0 / float(FBO_HEIGHT));
 
-vec2 KERNEL[8] = vec2[](
+const vec2 KERNEL[8] = vec2[](
 	vec2(TEX_OFFSET.x, TEX_OFFSET.y),
 	vec2(0.0, TEX_OFFSET.y),
 	vec2(-TEX_OFFSET.x, TEX_OFFSET.y),
@@ -62,16 +62,15 @@ vec3 sharpen(in sampler2D tex, in vec2 texCoords)
 {
 	const float sharpenFactor = 0.25;
 
-	vec3 col = textureLod(tex, texCoords, 0.0).rgb;
+	vec3 col = texture(tex, texCoords).rgb;
 
-	vec3 col2 = textureLod(tex, texCoords + KERNEL[0], 0.0).rgb;
+	vec3 col2 = texture(tex, texCoords + KERNEL[0]).rgb;
 	for(int i = 1; i < 8; i++)
 	{
-		col2 += textureLod(tex, texCoords + KERNEL[i], 0.0).rgb;
+		col2 += texture(tex, texCoords + KERNEL[i]).rgb;
 	}
 
-	return col * (9.0 * sharpenFactor + 1.0 - sharpenFactor) 
-		- sharpenFactor * col2;
+	return col * (8.0 * sharpenFactor + 1.0) - sharpenFactor * col2;
 }
 
 //==============================================================================
@@ -94,22 +93,22 @@ void main(void)
 #if defined(SHARPEN_ENABLED)
 	fColor = sharpen(isFai, vTexCoords);
 #else
-	fColor = textureLod(isFai, vTexCoords, 0.0).rgb;
+	fColor = texture(isFai, vTexCoords).rgb;
 #endif
 	//fColor = erosion(isFai, vTexCoords);
 
 #if defined(HDR_ENABLED)
-	vec3 hdr = textureLod(ppsHdrFai, vTexCoords, 0.0).rgb;
+	vec3 hdr = texture(ppsHdrFai, vTexCoords).rgb;
 	fColor += hdr;
 #endif
 
 #if defined(SSAO_ENABLED)
-	float ssao = textureLod(ppsSsaoFai, vTexCoords, 0.0).r;
+	float ssao = texture(ppsSsaoFai, vTexCoords).r;
 	fColor *= ssao;
 #endif
 
 #if defined(LF_ENABLED)
-	vec3 lf = textureLod(ppsLfFai, vTexCoords, 0.0).rgb;
+	vec3 lf = texture(ppsLfFai, vTexCoords).rgb;
 	fColor += lf;
 #endif
 

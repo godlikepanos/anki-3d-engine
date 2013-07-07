@@ -249,17 +249,23 @@ void MaterialShaderProgramCreator::parseShaderTag(const XmlElement& shaderEl)
 	
 	// First the uniform block
 	std::string uniformBlock;
+	U inputsInBlockCount = 0;
 	for(Input* in : inputs)
 	{
-		if((in->shaders & shader) && in->putInBlock)
+		if(in->shaders & shader)
 		{
-			uniformBlock += in->line + "\n";
+			++inputsInBlockCount;
+		}
+
+		if(in->putInBlock)
+		{
+			uniformBlock += "\t" + in->line + "\n";
 		}
 	}
 
-	if(uniformBlock.size() > 0)
+	if(uniformBlock.size() > 0 && inputsInBlockCount > 0)
 	{
-		srcLines.push_back("layout(shared) uniform " + type + "Block {");
+		srcLines.push_back("layout(shared) uniform commonBlock {");
 		srcLines.push_back(uniformBlock);
 		srcLines.push_back("};");
 	}

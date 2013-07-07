@@ -17,14 +17,25 @@ void Ms::init(const RendererInitializer& initializer)
 {
 	try
 	{
+#if ANKI_RENDERER_USE_MRT
+		fai0.create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
+			GL_RGBA, GL_UNSIGNED_BYTE);
+		fai1.create2dFai(r->getWidth(), r->getHeight(), GL_RG16F,
+			GL_RG, GL_FLOAT);
+#else
 		fai0.create2dFai(r->getWidth(), r->getHeight(), GL_RG32UI,
 			GL_RG_INTEGER, GL_UNSIGNED_INT);
+#endif
 		depthFai.create2dFai(r->getWidth(), r->getHeight(),
 			GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
 			GL_UNSIGNED_INT_24_8);
 
 		fbo.create();
+#if ANKI_RENDERER_USE_MRT
+		fbo.setColorAttachments({&fai0, &fai1});
+#else
 		fbo.setColorAttachments({&fai0});
+#endif
 		fbo.setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT, depthFai);
 		if(!fbo.isComplete())
 		{
@@ -74,6 +85,9 @@ void Ms::run()
 			RenderableDrawer::RS_MATERIAL, COLOR_PASS, *(*it).node, 
 			(*it).subSpatialIndices, (*it).subSpatialIndicesCount);
 	}
+
+	// Gen mips
+	//fai0.generateMipmaps();
 
 	ANKI_CHECK_GL_ERROR();
 }

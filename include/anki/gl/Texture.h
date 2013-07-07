@@ -292,11 +292,16 @@ public:
 		glTexParameteri(target, param, value);
 	}
 
-	/// Generate new mipmaps
-	void genMipmap();
-
 	/// Read the data from the texture. Available only in GL desktop
 	void readPixels(void* data, U level = 0) const;
+
+	/// Set the range of the mipmaps
+	/// @param baseLevel The level of the base mipmap. By default is 0
+	/// @param maxLevel The level of the max mimap. Most of the time it's 1000.
+	void setMipmapsRange(U baseLevel, U maxLevel);
+
+	/// Generate mipmaps
+	void generateMipmaps();
 
 private:
 	GLuint glId = 0; ///< Identification for OGL
