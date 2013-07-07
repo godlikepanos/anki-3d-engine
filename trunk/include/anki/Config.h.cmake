@@ -95,7 +95,7 @@
 #define ANKI_MAX_MULTIDRAW_PRIMITIVES 64
 #define ANKI_MAX_INSTANCES 64
 
-// Renderer config
+// Renderer and rendering related config options
 #define ANKI_RENDERER_MAX_POINT_LIGHTS (512 - 16)
 #define ANKI_RENDERER_MAX_SPOT_LIGHTS 8
 #define ANKI_RENDERER_MAX_SPOT_TEX_LIGHTS 8
@@ -107,14 +107,16 @@
 #define ANKI_RENDERER_TILES_X_COUNT 16
 #define ANKI_RENDERER_TILES_Y_COUNT 16
 
+#define ANKI_RENDERER_USE_MRT 1
+
+#define ANKI_RENDERER_USE_MATERIAL_UBOS 0
+
 // Scene config
 #define ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT 1024
 
-/// 1MB
-#define ANKI_SCENE_ALLOCATOR_SIZE 0x100000 
+#define ANKI_SCENE_ALLOCATOR_SIZE (1024 * 1024) 
 
-// 512K
-#define ANKI_SCENE_FRAME_ALLOCATOR_SIZE 0x80000
+#define ANKI_SCENE_FRAME_ALLOCATOR_SIZE (1024 * 512)
 
 /// @{
 /// Used to optimize the initial vectors of VisibilityTestResults

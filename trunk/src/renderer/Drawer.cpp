@@ -12,6 +12,9 @@
 namespace anki {
 
 //==============================================================================
+static const U UNIFORM_BLOCK_MAX_SIZE = 1024 * 12;
+
+//==============================================================================
 #if ANKI_ENABLE_COUNTERS
 static U64 countVerts(U32* indicesCount, I primCount)
 {
@@ -28,10 +31,10 @@ static U64 countVerts(U32* indicesCount, I primCount)
 /// Visitor that sets a uniform
 struct SetupRenderableVariableVisitor
 {
+	Array<U32, UNIFORM_BLOCK_MAX_SIZE / sizeof(U32)> clientBlock;
 	const Frustumable* fr = nullptr;
 	Renderer* r = nullptr;
 	Renderable* renderable = nullptr;
-	Array<U8, RenderableDrawer::UNIFORM_BLOCK_MAX_SIZE> clientBlock;
 	RenderableVariable* rvar = nullptr;
 	const ShaderProgramUniformVariable* uni;
 
@@ -201,7 +204,7 @@ struct SetupRenderableVariableVisitor
 		if(uni.getUniformBlock()) \
 		{ \
 			uni.setClientMemory(&clientBlock[0], \
-				RenderableDrawer::UNIFORM_BLOCK_MAX_SIZE, \
+				sizeof(clientBlock), \
 				values, size); \
 		} \
 		else \

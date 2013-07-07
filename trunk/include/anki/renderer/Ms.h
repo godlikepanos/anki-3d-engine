@@ -25,6 +25,13 @@ public:
 		return fai0;
 	}
 
+#if ANKI_RENDERER_USE_MRT
+	const Texture& getFai1() const
+	{
+		return fai1;
+	}
+#endif
+
 	const Texture& getDepthFai() const
 	{
 		return depthFai;
@@ -38,6 +45,9 @@ private:
 	Ez ez; /// EarlyZ pass
 	Fbo fbo;
 	Texture fai0; ///< The FAI for diffuse color, normals and specular
+#if ANKI_RENDERER_USE_MRT
+	Texture fai1;
+#endif
 	Texture depthFai; ///< The FAI for depth
 };
 

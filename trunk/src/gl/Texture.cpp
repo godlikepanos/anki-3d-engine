@@ -457,13 +457,6 @@ U Texture::bind() const
 }
 
 //==============================================================================
-void Texture::genMipmap()
-{
-	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
-	glGenerateMipmap(target);
-}
-
-//==============================================================================
 void Texture::setFilteringNoBind(TextureFilteringType filterType)
 {
 	switch(filterType)
@@ -497,6 +490,21 @@ void Texture::readPixels(void* pixels, U level) const
 #else
 	ANKI_ASSERT(0 && "Not supported on GLES");
 #endif
+}
+
+//==============================================================================
+void Texture::setMipmapsRange(U baseLevel, U maxLevel)
+{	
+	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
+	glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevel);
+	glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevel);
+}
+
+//==============================================================================
+void Texture::generateMipmaps()
+{
+	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
+	glGenerateMipmap(target);
 }
 
 } // end namespace anki

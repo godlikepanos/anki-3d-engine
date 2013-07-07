@@ -84,33 +84,37 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	//
 	commonUbo.create(sizeof(ShaderCommonUniforms), nullptr);
 
-	std::string pps;
+	std::stringstream pps;
 
 	// main pass prog
-	pps = "#define NOISE_MAP_SIZE " + std::to_string(noiseMap->getWidth())
-		+ "\n#define WIDTH " + std::to_string(mpWidth)
-		+ "\n#define HEIGHT " + std::to_string(mpHeight) + "\n";
+	pps << "#define NOISE_MAP_SIZE " << noiseMap->getWidth()
+		<< "\n#define WIDTH " << mpWidth
+		<< "\n#define HEIGHT " << mpHeight
+		<< "\n#define USE_MRT " << ANKI_RENDERER_USE_MRT
+		<< "\n";
 	ssaoSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/PpsSsao.glsl", pps.c_str()).c_str());
+		"shaders/PpsSsao.glsl", pps.str().c_str()).c_str());
 
 	ssaoSProg->findUniformBlock("commonBlock").setBinding(0);
 
 	// blurring progs
 	const char* SHADER_FILENAME = "shaders/VariableSamplingBlurGeneric.glsl";
 
-	pps = "#define HPASS\n"
+	pps.clear();
+	pps << "#define HPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " + std::to_string(bHeight) + "\n"
+		"#define IMG_DIMENSION " << bHeight << "\n"
 		"#define SAMPLES 7\n";
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.c_str()).c_str());
+		SHADER_FILENAME, pps.str().c_str()).c_str());
 
-	pps = "#define VPASS\n"
+	pps.clear();
+	pps << "#define VPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " + std::to_string(bWidth) + "\n"
+		"#define IMG_DIMENSION " << bWidth << "\n"
 		"#define SAMPLES 7\n";
 	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.c_str()).c_str());
+		SHADER_FILENAME, pps.str().c_str()).c_str());
 }
 
 //==============================================================================
@@ -174,7 +178,11 @@ void Ssao::run()
 	ssaoSProg->findUniformVariable("noiseMap").set(*noiseMap);
 
 	// msGFai
+#if ANKI_RENDERER_USE_MRT
+	ssaoSProg->findUniformVariable("msGFai").set(r->getMs().getFai1());
+#else
 	ssaoSProg->findUniformVariable("msGFai").set(r->getMs().getFai0());
+#endif
 
 	// Draw
 	r->drawQuad();

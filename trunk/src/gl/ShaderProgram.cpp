@@ -220,7 +220,8 @@ void ShaderProgramUniformVariable::setClientMemorySanityChecks(
 	ANKI_ASSERT(checkType<T>(getGlDataType()));
 	ANKI_ASSERT(size <= getSize() && size > 0);
 	ANKI_ASSERT(offset != -1 && arrayStride != -1 && "Uniform is not in block");
-	ANKI_ASSERT(block->getSize() <= buffSize);
+	ANKI_ASSERT(block->getSize() <= buffSize 
+		&& "The client buffer is too small");
 	ANKI_ASSERT(size <= 1 || arrayStride != 0);
 }
 
@@ -229,6 +230,7 @@ template<typename T>
 void ShaderProgramUniformVariable::setClientMemoryInternal(
 	void* buff_, U32 buffSize, const T arr[], U32 size) const
 {
+	ANKI_ASSERT(arr);
 	setClientMemorySanityChecks<T>(buffSize, size);
 	U8* buff = (U8*)buff_ + offset;
 
@@ -245,6 +247,7 @@ template<typename T, typename Vec>
 void ShaderProgramUniformVariable::setClientMemoryInternalMatrix(
 	void* buff_, U32 buffSize, const T arr[], U32 size) const
 {
+	ANKI_ASSERT(arr);
 	setClientMemorySanityChecks<T>(buffSize, size);
 	ANKI_ASSERT(matrixStride >= (GLint)sizeof(Vec));
 	U8* buff = (U8*)buff_ + offset;
@@ -252,10 +255,12 @@ void ShaderProgramUniformVariable::setClientMemoryInternalMatrix(
 	for(U32 i = 0; i < size; i++)
 	{
 		U8* subbuff = buff;
+		T matrix = arr[i];
+		matrix.transpose();
 		for(U j = 0; j < sizeof(T) / sizeof(Vec); j++)
 		{
 			Vec* ptr = (Vec*)subbuff;
-			*ptr = arr[i].getRow(j);
+			*ptr = matrix.getRow(j);
 			subbuff += matrixStride;
 		}
 		buff += arrayStride;

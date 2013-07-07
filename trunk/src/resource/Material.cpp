@@ -10,8 +10,6 @@
 #include <map>
 #include <fstream>
 
-#define ENABLE_UBOS 0
-
 namespace anki {
 
 //==============================================================================
@@ -269,7 +267,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	// shaderProgram
 	//
 	XmlElement shaderProgramEl = materialEl.getChildElement("shaderProgram");
-	MaterialShaderProgramCreator mspc(shaderProgramEl, ENABLE_UBOS);
+	MaterialShaderProgramCreator mspc(
+		shaderProgramEl, ANKI_RENDERER_USE_MATERIAL_UBOS);
 
 	for(U32 level = 0; level < levelsOfDetail; ++level)
 	{
@@ -282,9 +281,10 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 
 			std::stringstream src;
 
-			src << "#define LOD " << level << std::endl;
-			src << "#define PASS_" << passNames[pid] << std::endl;
-			src << mspc.getShaderProgramSource() << std::endl;
+			src << "#define LOD " << level << "\n"
+				<< "#define PASS_" << passNames[pid] << "\n"
+				<< "#define USE_MRT " << ANKI_RENDERER_USE_MRT << "\n"
+				<< mspc.getShaderProgramSource() << std::endl;
 
 			std::string filename =
 				createShaderProgSourceToCache(src.str().c_str());
@@ -357,7 +357,7 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 		for(const ShaderProgramUniformVariable& v :
 			(*sProg)->getUniformVariables())
 		{
-#if ENABLE_UBOS
+#if ANKI_RENDERER_USE_MATERIAL_UBOS
 			const ShaderProgramUniformBlock* bl = v.getUniformBlock();
 			if(bl == nullptr)
 			{
