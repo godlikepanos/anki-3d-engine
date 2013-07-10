@@ -9,7 +9,7 @@ namespace anki {
 /// @{
 
 /// 4D vector. SIMD optimized
-class Vec4
+ANKI_ATTRIBUTE_ALIGNED(class, 16) Vec4
 {
 public:
 	/// @name Constructors
