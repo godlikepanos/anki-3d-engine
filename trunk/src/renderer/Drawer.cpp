@@ -29,9 +29,10 @@ static U64 countVerts(U32* indicesCount, I primCount)
 
 //==============================================================================
 /// Visitor that sets a uniform
-struct SetupRenderableVariableVisitor
+/// Align it because the clientBlock will store SIMD data
+ANKI_ATTRIBUTE_ALIGN(struct, 16) SetupRenderableVariableVisitor
 {
-	Array<U32, UNIFORM_BLOCK_MAX_SIZE / sizeof(U32)> clientBlock;
+	Array<U8, UNIFORM_BLOCK_MAX_SIZE> clientBlock;
 	const Frustumable* fr = nullptr;
 	Renderer* r = nullptr;
 	Renderable* renderable = nullptr;
