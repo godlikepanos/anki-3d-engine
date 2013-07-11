@@ -5,8 +5,6 @@
 #define ANKI_GL_GL_H
 
 #include "anki/gl/BufferObject.h"
-#include "anki/gl/Ubo.h"
-#include "anki/gl/Pbo.h"
 #include "anki/gl/Fbo.h"
 #include "anki/gl/GlException.h"
 #include "anki/gl/GlState.h"
@@ -14,7 +12,6 @@
 #include "anki/gl/ShaderProgram.h"
 #include "anki/gl/Texture.h"
 #include "anki/gl/Vao.h"
-#include "anki/gl/Vbo.h"
 #include "anki/gl/Drawcall.h"
 
 #include "anki/gl/Ogl.h"

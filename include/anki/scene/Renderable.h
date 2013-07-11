@@ -3,7 +3,7 @@
 
 #include "anki/scene/Property.h"
 #include "anki/scene/Common.h"
-#include "anki/gl/Ubo.h"
+#include "anki/gl/BufferObject.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Model.h"
 #include <mutex>

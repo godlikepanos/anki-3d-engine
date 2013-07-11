@@ -2,7 +2,7 @@
 #define ANKI_RENDERER_DEBUG_DRAWER_H
 
 #include "anki/Math.h"
-#include "anki/gl/Vbo.h"
+#include "anki/gl/BufferObject.h"
 #include "anki/gl/Vao.h"
 #include "anki/resource/Resource.h"
 #include "anki/collision/CollisionShape.h"
