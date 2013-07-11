@@ -4,10 +4,22 @@
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
 
+namespace anki {
+
+//==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+
 /// Instead of map/unmap use glBufferSubData() when writing to the whole buffer
 #define USE_BUFFER_DATA_ON_WRITE 1
 
-namespace anki {
+#define GL_ID glId[getGlobTimestamp() % objectsCount]
+
+//==============================================================================
+// BufferObject                                                                =
+//==============================================================================
 
 //==============================================================================
 BufferObject& BufferObject::operator=(BufferObject&& b)
@@ -29,41 +41,49 @@ void BufferObject::destroy()
 	if(isCreated())
 	{
 		unbind();
-		glDeleteBuffers(1, &glId);
-		glId = 0;
+		glDeleteBuffers(objectsCount, &glId[0]);
+		memset(&glId[0], sizeof(Base::glId), 0);
+		objectsCount = 0;
 	}
 }
 
 //==============================================================================
 void BufferObject::create(GLenum target_, U32 sizeInBytes_,
-	const void* dataPtr, GLenum usage_)
+	const void* dataPtr, GLenum usage_, U objectsCount_)
 {
 	ANKI_ASSERT(!isCreated());
 
 	usage = usage_;
 	target = target_;
 	sizeInBytes = sizeInBytes_;
+	objectsCount = objectsCount_;
 
 	ANKI_ASSERT(sizeInBytes > 0 && "Unacceptable sizeInBytes");
 	ANKI_ASSERT(!(target == GL_UNIFORM_BUFFER && usage != GL_DYNAMIC_DRAW)
 		&& "Don't use UBOs like that");
+	ANKI_ASSERT(objectsCount > 0 && objectsCount < MAX_OBJECTS);
+	ANKI_ASSERT(!(objectsCount > 1 && dataPtr != nullptr)
+		&& "Multibuffering with data is not making sence");
 
 	// Create
-	glGenBuffers(1, &glId);
-	ANKI_ASSERT(glId != 0);
-	bind();
-	glBufferData(target, sizeInBytes, dataPtr, usage);
+	glGenBuffers(objectsCount, &glId[0]);
 
-	// make a check
-	GLint bufferSize = 0;
-	glGetBufferParameteriv(target, GL_BUFFER_SIZE, &bufferSize);
-	if(sizeInBytes != (U32)bufferSize)
+	for(U i = 0; i < objectsCount; i++)
 	{
-		destroy();
-		throw ANKI_EXCEPTION("Data size mismatch");
+		glBindBuffer(target, glId[i]);
+		glBufferData(target, sizeInBytes, dataPtr, usage);
+
+		// make a check
+		GLint bufferSize = 0;
+		glGetBufferParameteriv(target, GL_BUFFER_SIZE, &bufferSize);
+		if(sizeInBytes != (U32)bufferSize)
+		{
+			destroy();
+			throw ANKI_EXCEPTION("Data size mismatch");
+		}
 	}
 
-	unbind();
+	glBindBuffer(target, 0);
 	ANKI_CHECK_GL_ERROR();
 }
 
@@ -138,6 +158,26 @@ void BufferObject::read(void* outBuff, U32 offset, U32 size)
 	void* mapped = map(offset, size, GL_MAP_READ_BIT);
 	memcpy(outBuff, mapped, size);
 	unmap();
+}
+
+//==============================================================================
+void BufferObject::setBinding(GLuint binding) const
+{
+	ANKI_ASSERT(isCreated());
+	glBindBufferBase(target, binding, GL_ID);
+	ANKI_CHECK_GL_ERROR();
+}
+
+//==============================================================================
+void BufferObject::setBindingRange(
+	GLuint binding, PtrSize offset, PtrSize size) const
+{
+	ANKI_ASSERT(isCreated());
+	ANKI_ASSERT(offset + size <= sizeInBytes);
+	ANKI_ASSERT(size > 0);
+
+	glBindBufferRange(target, binding, GL_ID, offset, size);
+	ANKI_CHECK_GL_ERROR();
 }
 
 } // end namespace anki

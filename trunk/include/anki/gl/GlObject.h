@@ -3,10 +3,12 @@
 
 #include "anki/gl/Ogl.h"
 #include "anki/gl/GlException.h"
+#include "anki/Config.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/util/Assert.h"
+#include "anki/util/Array.h"
 #include "anki/util/StdTypes.h"
-#include "anki/Config.h"
+#include "anki/core/Timestamp.h"
 #include <thread>
 
 namespace anki {
@@ -59,6 +61,84 @@ public:
 protected:
 	/// OpenGL name
 	GLuint glId = 0;
+};
+
+/// A compound GL object that supports buffering depending on the frame
+class GlMultiObject: public NonCopyable
+{
+public:
+	/// Buffering technique
+	enum
+	{
+		SINGLE_OBJECT = 1,
+		DOUBLE_OBJECT = 2,
+		TRIPLE_OBJECT = 3,
+		MAX_OBJECTS = 3
+	};
+
+	/// Default
+	GlMultiObject()
+	{}
+
+	/// Move
+	GlMultiObject(GlMultiObject&& b)
+	{
+		*this = std::move(b);
+	}
+
+	~GlMultiObject()
+	{
+		// The destructor of the derived GL object should pass 0 name
+		ANKI_ASSERT(!isCreated());
+	}
+
+	/// Move
+	GlMultiObject& operator=(GlMultiObject&& b)
+	{
+		ANKI_ASSERT(!isCreated());
+		
+		for(U i = 0; i < MAX_OBJECTS; i++)
+		{
+			glId[i] = b.glId[i];
+			b.glId[i] = 0;
+		}
+
+		objectsCount = b.objectsCount;
+		b.objectsCount = 0;
+		return *this;
+	}
+
+	/// Get the GL name
+	GLuint getGlId() const
+	{
+		ANKI_ASSERT(isCreated());
+		return glId[getGlobTimestamp() % MAX_OBJECTS];
+	}
+
+	/// GL object is created
+	Bool isCreated() const
+	{
+#if ANKI_DEBUG
+		U mask = 0;
+		for(U i = 0; i < MAX_OBJECTS; i++)
+		{
+			mask <<= 1;
+			mask |= (glId[i] != 0);
+		}
+
+		// If the mask is not zero then make sure that objectsCount is sane
+		ANKI_ASSERT(!(mask != 0 && __builtin_popcount(mask) != objectsCount));
+#endif
+
+		return objectsCount > 0;
+	}
+
+protected:
+	/// OpenGL names
+	Array<GLuint, MAX_OBJECTS> glId = {{0, 0, 0}};
+
+	/// The size of the glId array
+	U8 objectsCount = 0;
 };
 
 /// Defines an non sharable GL object. Used to avoid idiotic mistakes and more

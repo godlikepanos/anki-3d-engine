@@ -1,7 +1,6 @@
 #include "anki/resource/Mesh.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/MeshLoader.h"
-#include "anki/gl/Vbo.h"
 #include "anki/util/Functions.h"
 #include "anki/misc/Xml.h"
 

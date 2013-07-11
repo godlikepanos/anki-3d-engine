@@ -1,5 +1,5 @@
 #include "anki/gl/Vao.h"
-#include "anki/gl/Vbo.h"
+#include "anki/gl/BufferObject.h"
 #include "anki/util/Exception.h"
 #include "anki/gl/ShaderProgram.h"
 #include "anki/core/Logger.h"

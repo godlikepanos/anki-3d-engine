@@ -7,7 +7,7 @@
 #include "anki/resource/Resource.h"
 #include "anki/gl/Fbo.h"
 #include "anki/gl/Texture.h"
-#include "anki/gl/Ubo.h"
+#include "anki/gl/BufferObject.h"
 #include "anki/core/Timestamp.h"
 
 namespace anki {

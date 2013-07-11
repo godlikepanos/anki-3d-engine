@@ -3,11 +3,11 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
+#include "anki/gl/BufferObject.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/Resource.h"
 #include "anki/core/Timestamp.h"
-#include "anki/gl/Ubo.h"
 
 namespace anki {
 
