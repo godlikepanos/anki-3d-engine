@@ -256,9 +256,6 @@ public:
 
 	void drawQuadInstanced(U32 primitiveCount);
 
-	/// Used by blurring where we draw the same quad many times
-	void drawQuadMultiple(U times);
-
 	/// Calculate the planes needed for the calculation of the fragment
 	/// position z in view space. Having the fragment's depth, the camera's
 	/// zNear and zFar the z of the fragment is being calculated inside the
@@ -331,7 +328,6 @@ private:
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
 	Vbo quadPositionsVbo; ///< The VBO for quad positions
-	Vbo quadVertIndecesVbo; ///< The VBO for quad array buffer elements
 	Vao quadVao; ///< This VAO is used everywhere except material stage
 	/// @}
 };

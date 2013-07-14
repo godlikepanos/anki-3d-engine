@@ -5,35 +5,31 @@
 #pragma anki start fragmentShader
 #pragma anki include "shaders/CommonFrag.glsl"
 #pragma anki include "shaders/Pack.glsl"
+#pragma anki include "shaders/LinearDepth.glsl"
 
-/// @name Varyings
-/// @{
 in vec2 vTexCoords;
-/// @}
 
-/// @name Output
-/// @{
 layout(location = 0) out float fColor;
-/// @}
 
-
-/// @name Uniforms
-/// @{
 layout(std140, row_major) uniform commonBlock
 {
 	/// Packs:
 	/// - x: zNear. For the calculation of frag pos in view space
 	/// - zw: Planes. For the calculation of frag pos in view space
-	uniform vec4 nearPlanes;
+	vec4 nearPlanes;
 
 	/// For the calculation of frag pos in view space. The xy is the 
 	/// limitsOfNearPlane and the zw is an optimization see PpsSsao.glsl and 
 	/// r403 for the clean one
-	uniform vec4 limitsOfNearPlane_;
+	vec4 limitsOfNearPlane_;
+
+	/// The projection matrix
+	mat4 projectionMatrix;
 };
 
-#define planes nearPlanes.zw
 #define zNear nearPlanes.x
+#define zFar nearPlanes.y
+#define planes nearPlanes.zw
 #define limitsOfNearPlane limitsOfNearPlane_.xy
 #define limitsOfNearPlane2 limitsOfNearPlane_.zw
 
@@ -46,11 +42,9 @@ uniform highp usampler2D msGFai;
 uniform sampler2D noiseMap; 
 /// @}
 
-#define SAMPLE_RAD 0.08
-#define SCALE 1.0
-#define INTENSITY 3.0
-#define BIAS 0.1
+#define RADIUS 0.5
 
+// Get normal
 vec3 getNormal(in vec2 uv)
 {
 #if USE_MRT
@@ -62,17 +56,19 @@ vec3 getNormal(in vec2 uv)
 	return normal;
 }
 
-vec2 getRandom(in vec2 uv)
+// Read the noise tex
+vec3 getRandom(in vec2 uv)
 {
 	const vec2 tmp = vec2(
 		float(WIDTH) / float(NOISE_MAP_SIZE), 
 		float(HEIGHT) / float(NOISE_MAP_SIZE));
 
-	vec2 noise = texture(noiseMap, tmp * uv).xy;
+	vec3 noise = texture(noiseMap, tmp * uv).xyz;
 	//return normalize(noise * 2.0 - 1.0);
 	return noise;
 }
 
+// Get position in view space
 vec3 getPosition(in vec2 uv)
 {
 	float depth = texture(msDepthFai, uv).r;
@@ -88,45 +84,56 @@ vec3 getPosition(in vec2 uv)
 	return fragPosVspace;
 }
 
-float calcAmbientOcclusionFactor(in vec2 uv, in vec3 original, in vec3 cnorm)
+float getZ(in vec2 uv)
 {
-	vec3 newp = getPosition(uv);
-	vec3 diff = newp - original;
-	vec3 v = normalize(diff);
-	float d = length(diff) /* * SCALE*/;
-
-	float ret = max(0.0, dot(cnorm, v)  - BIAS) * (INTENSITY / (1.0 + d));
-	return ret;
+	float depth = texture(msDepthFai, uv).r;
+	float z = -planes.y / (planes.x + depth);
+	return z;
 }
-
-#define KERNEL_SIZE 16
-const vec2 KERNEL[KERNEL_SIZE] = vec2[](
-	vec2(0.53812504, 0.18565957), vec2(0.13790712, 0.24864247), 
-	vec2(0.33715037, 0.56794053), vec2(-0.6999805, -0.04511441),
-	vec2(0.06896307, -0.15983082), vec2(0.056099437, 0.006954967),
-	vec2(-0.014653638, 0.14027752), vec2(0.010019933, -0.1924225),
-	vec2(-0.35775623, -0.5301969), vec2(-0.3169221, 0.106360726),
-	vec2(0.010350345, -0.58698344), vec2(-0.08972908, -0.49408212),
-	vec2(0.7119986, -0.0154690035), vec2(-0.053382345, 0.059675813),
-	vec2(0.035267662, -0.063188605), vec2(-0.47761092, 0.2847911));
 
 void main(void)
 {
-	vec3 p = getPosition(vTexCoords);
-	vec3 n = getNormal(vTexCoords);
-	vec2 rand = getRandom(vTexCoords);
-	//rand = rand * 0.000001 + vec2(0.0, 0.0);
+	vec3 origin = getPosition(vTexCoords);
 
-	fColor = 0.0;
+	vec3 normal = getNormal(vTexCoords);
+	vec3 rvec = getRandom(vTexCoords);
 	
-	for(int j = 0; j < KERNEL_SIZE; ++j)
+	vec3 tangent = normalize(rvec - normal * dot(rvec, normal));
+	vec3 bitangent = cross(normal, tangent);
+	mat3 tbn = mat3(tangent, bitangent, normal);
+
+	// Iterate kernel
+	float factor = 0.0;
+	for(uint i = 0; i < KERNEL_SIZE; ++i) 
 	{
-		vec2 coord = reflect(KERNEL[j], rand) * SAMPLE_RAD;
-		fColor += calcAmbientOcclusionFactor(vTexCoords + coord, p, n);
+		// get position
+		vec3 sample_ = tbn * KERNEL[i];
+		sample_ = sample_ * RADIUS + origin;
+
+		// project sample position:
+		vec4 offset = vec4(sample_, 1.0);
+		offset = projectionMatrix * offset;
+		offset.xy /= offset.w;
+		offset.xy = offset.xy * 0.5 + 0.5;
+
+		// get sample depth:
+		float sampleDepth = getZ(offset.xy);
+
+		// range check & accumulate:
+		const float ADVANCE = 1.0 / float(KERNEL_SIZE);
+
+#if 1
+		float rangeCheck = 
+			abs(origin.z - sampleDepth) * (1.0 / (RADIUS * 10.0));
+		rangeCheck = 1.0 - rangeCheck;
+
+		factor += clamp(sampleDepth - sample_.z, 0.0, ADVANCE) * rangeCheck;
+#else
+		float rangeCheck = abs(origin.z - sampleDepth) < RADIUS ? 1.0 : 0.0;
+		factor += (sampleDepth > sample_.z ? ADVANCE : 0.0) * rangeCheck;
+#endif
 	}
 
-	fColor = 1.0 - fColor / float(KERNEL_SIZE);
-
-	//fColor = fColor * 0.00001 + (rand.x + rand.y) / 2.0;
+	fColor = 1.0 - factor;
 }
 

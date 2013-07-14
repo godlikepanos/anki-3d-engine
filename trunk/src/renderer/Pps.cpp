@@ -8,7 +8,7 @@ namespace anki {
 
 //==============================================================================
 Pps::Pps(Renderer* r_)
-	: RenderingPass(r_), hdr(r_), ssao(r_), bl(r_), lf(r_)
+	: OptionalRenderingPass(r_), hdr(r_), ssao(r_), bl(r_), lf(r_)
 {}
 
 //==============================================================================
@@ -18,6 +18,14 @@ Pps::~Pps()
 //==============================================================================
 void Pps::initInternal(const RendererInitializer& initializer)
 {
+	enabled = initializer.pps.enabled;
+	if(!enabled)
+	{
+		return;
+	}
+
+	ANKI_ASSERT("Initializing PPS");
+
 	ssao.init(initializer);
 	hdr.init(initializer);
 	lf.init(initializer);
@@ -81,6 +89,8 @@ void Pps::init(const Renderer::Initializer& initializer)
 //==============================================================================
 void Pps::run()
 {
+	ANKI_ASSERT(enabled);
+
 	GlStateSingleton::get().disable(GL_BLEND);
 
 	// First SSAO because it depends on MS where HDR depends on IS

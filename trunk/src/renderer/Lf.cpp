@@ -63,7 +63,7 @@ void Lf::init(const RendererInitializer& initializer)
 //==============================================================================
 void Lf::initInternal(const RendererInitializer& initializer)
 {
-	enabled = initializer.pps.lf.enabled;
+	enabled = initializer.pps.lf.enabled && initializer.pps.hdr.enabled;
 	if(!enabled)
 	{
 		return;

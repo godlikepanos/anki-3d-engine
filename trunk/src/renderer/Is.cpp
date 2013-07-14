@@ -499,19 +499,13 @@ void Is::initInternal(const RendererInitializer& initializer)
 	// Init the quad
 	//
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0},
-		{0.0, 0.0}, {1.0, 0.0}};
+		{1.0, 0.0}, {0.0, 0.0}};
 	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords),
 		quadVertCoords, GL_STATIC_DRAW);
-
-	static const U16 quadVertIndeces[2][3] =
-		{{0, 1, 3}, {1, 2, 3}}; // 2 triangles
-	quadVertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces),
-		quadVertIndeces, GL_STATIC_DRAW);
 
 	quadVao.create();
 	quadVao.attachArrayBufferVbo(
 		&quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, 0);
-	quadVao.attachElementArrayBufferVbo(&quadVertIndecesVbo);
 
 	//
 	// Create UBOs
@@ -861,8 +855,7 @@ void Is::lightPass()
 	lightPassProg->findUniformVariable("shadowMapArr").set(sm.sm2DArrayTex);
 
 	quadVao.bind();
-	glDrawElementsInstanced(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0,
-		TILES_COUNT);
+	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 6, TILES_COUNT);
 }
 
 //==============================================================================
