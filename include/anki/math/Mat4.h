@@ -10,7 +10,7 @@ namespace anki {
 
 /// 4x4 Matrix. Used mainly for transformations but not necessarily. Its
 /// row major. SSE optimized
-class Mat4
+ANKI_ATTRIBUTE_ALIGNED(class, 16) Mat4
 {
 public:
 	/// @name Constructors

@@ -16,7 +16,7 @@ class ShaderProgram;
 
 /// Post-processing stage.This stage is divided into 2 two parts. The first
 /// happens before blending stage and the second after
-class Pps: public RenderingPass
+class Pps: public OptionalRenderingPass
 {
 public:
 	Pps(Renderer* r);

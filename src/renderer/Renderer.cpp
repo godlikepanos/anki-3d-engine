@@ -41,19 +41,13 @@ void Renderer::init(const RendererInitializer& initializer)
 
 	// quad VBOs and VAO
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
-		{-1.0, -1.0}, {1.0, -1.0}};
+		{1.0, -1.0}, {-1.0, -1.0}};
 	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords),
 		quadVertCoords, GL_STATIC_DRAW);
-
-	static const U16 quadVertIndeces[2][3] = 
-		{{0, 1, 3}, {1, 2, 3}}; // 2 triangles
-	quadVertIndecesVbo.create(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadVertIndeces),
-		quadVertIndeces, GL_STATIC_DRAW);
 
 	quadVao.create();
 	quadVao.attachArrayBufferVbo(
 		&quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, 0);
-	quadVao.attachElementArrayBufferVbo(&quadVertIndecesVbo);
 }
 
 //==============================================================================
@@ -96,7 +90,10 @@ void Renderer::render(SceneGraph& scene_)
 	bs.run();
 
 	ANKI_COUNTER_START_TIMER(C_RENDERER_PPS_TIME);
-	pps.run();
+	if(pps.getEnabled())
+	{
+		pps.run();
+	}
 	ANKI_COUNTER_STOP_TIMER_INC(C_RENDERER_PPS_TIME);
 
 	ANKI_CHECK_GL_ERROR();
@@ -107,40 +104,14 @@ void Renderer::render(SceneGraph& scene_)
 void Renderer::drawQuad()
 {
 	quadVao.bind();
-	glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
 }
 
 //==============================================================================
 void Renderer::drawQuadInstanced(U32 primitiveCount)
 {
 	quadVao.bind();
-	glDrawElementsInstanced(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0,
-		primitiveCount);
-}
-
-//==============================================================================
-void Renderer::drawQuadMultiple(U times)
-{
-	quadVao.bind();
-#if ANKI_GL == ANKI_GL_DESKTOP
-	const U max_times = 16;
-	Array<GLsizei, max_times> count;
-	Array<const GLvoid*, max_times> indices;
-
-	for(U i = 0; i < times; i++)
-	{
-		count[i] = 2 * 3;
-		indices[i] = nullptr;
-	}
-
-	glMultiDrawElements(
-		GL_TRIANGLES, &count[0], GL_UNSIGNED_SHORT, &indices[0], times);
-#else
-	for(U i = 0; i < times; i++)
-	{
-		glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0);
-	}
-#endif
+	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 6, primitiveCount);
 }
 
 //==============================================================================

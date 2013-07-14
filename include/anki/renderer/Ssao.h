@@ -45,7 +45,7 @@ private:
 	Fbo mpFbo; ///< Main pass FBO. Not used if on non blit
 	Fbo vblurFbo;
 	Fbo hblurFbo;
-	TextureResourcePointer noiseMap;
+	Texture noiseTex;
 	ShaderProgramResourcePointer ssaoSProg;
 	ShaderProgramResourcePointer hblurSProg;
 	ShaderProgramResourcePointer vblurSProg;
