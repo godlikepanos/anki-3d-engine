@@ -36,14 +36,10 @@ constexpr F64 getEpsilon<F64>()
 	return 1.0e-6;
 }
 
-inline Bool isZero(const F32 f)
+template<typename T>
+inline Bool isZero(const T f)
 {
-	return fabs(f) < getEpsilon<F32>();
-}
-
-inline Bool isZero(const F64 f)
-{
-	return fabs(f) < getEpsilon<F64>();
+	return fabs(f) < getEpsilon<T>();
 }
 
 inline F32 toRad(const F32 degrees)

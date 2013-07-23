@@ -10,6 +10,30 @@
 
 namespace anki {
 
+/// XXX
+class FlareBatch
+{
+public:
+	static constexpr U MAX_FLARES = 10;
+
+	enum FlareFlag
+	{
+		POSITION_LIGHT = 1 << 0,
+		POSITION_FLOATING = 1 << 1
+	};
+
+private:
+	/// A 2D array texture with the flare textures
+	TextureResourcePointer flaresTex;
+
+	/// The size of each flare
+	Array<Vec2, MAX_FLARES> size;
+
+	Array<Vec2, MAX_FLARES> stretchMultiplier;
+
+	F32 flaresAlpha = 1.0;
+};
+
 /// Light scene node. It can be spot or point
 ///
 /// Explaining the lighting model:
