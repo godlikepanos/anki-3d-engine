@@ -104,14 +104,14 @@ void Renderer::render(SceneGraph& scene_)
 void Renderer::drawQuad()
 {
 	quadVao.bind();
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 //==============================================================================
 void Renderer::drawQuadInstanced(U32 primitiveCount)
 {
 	quadVao.bind();
-	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 6, primitiveCount);
+	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, primitiveCount);
 }
 
 //==============================================================================

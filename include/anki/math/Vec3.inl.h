@@ -2,6 +2,21 @@
 
 namespace anki {
 
+#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
+/*template<>
+TVec3<F32> TVec3<F32>::getTransformed(const TMat4<F32>& transform) const
+{
+	TVec3<F32> out;
+	TVec4<F32> v4((*this), 1.0);
+	for(U i = 0; i < 3; i++)
+	{
+		_mm_store_ss(
+			&out[i], _mm_dp_ps(transform.getSimd(i), v4.getSimd(), 0xF1));
+	}
+	return out;
+}*/
+#endif
+
 //==============================================================================
 // Constructors                                                                =
 //==============================================================================
