@@ -8,7 +8,7 @@ namespace anki {
 /// @addtogroup Math
 /// @{
 
-/// XXX
+/// 2D vector
 template<typename T>
 class TVec2
 {
@@ -29,10 +29,10 @@ public:
 		x() = y() = f;
 	}
 
-	explicit TVec2(const T arr[])
+	explicit TVec2(const T arr_[])
 	{
-		x() = arr[0];
-		y() = arr[1];
+		x() = arr_[0];
+		y() = arr_[1];
 	}
 
 	TVec2(const TVec2& b)
@@ -236,7 +236,7 @@ public:
 
 	T getLength() const
 	{
-		return sqrt(getLengthSquared());
+		return sqrt<T>(getLengthSquared());
 	}
 
 	TVec2 getNormalized() const
@@ -252,6 +252,11 @@ public:
 	T dot(const TVec2& b) const
 	{
 		return x() * b.x() + y() * b.y();
+	}
+
+	std::string toString() const
+	{
+		return std::to_string(x()) + " " + std::to_string(y());
 	}
 	/// @}
 
@@ -275,12 +280,6 @@ public:
 	{
 		return TVec2(f / v2.x(), f / v2.y());
 	}
-
-	friend std::ostream& operator<<(std::ostream& s, const TVec2& v)
-	{
-		s << v.x() << ' ' << v.y();
-		return s;
-	}
 	///@]
 
 private:
@@ -298,100 +297,18 @@ private:
 	/// @}
 };
 
-/// 2D vector
-class Vec2
-{
-public:
-	/// @name Constructors
-	/// @{
-	explicit Vec2();
-	explicit Vec2(const F32 x, const F32 y);
-	explicit Vec2(const F32 f);
-	explicit Vec2(const F32 arr[]);
-	Vec2(const Vec2& b);
-	explicit Vec2(const Vec3& v3);
-	explicit Vec2(const Vec4& v4);
-	/// @}
-
-	/// @name Accessors
-	/// @{
-	F32& x();
-	F32 x() const;
-	F32& y();
-	F32 y() const;
-	F32& operator[](const U i);
-	F32 operator[](const U i) const;
-	/// @}
-
-	/// @name Operators with same type
-	/// @{
-	Vec2& operator=(const Vec2& b);
-	Vec2 operator+(const Vec2& b) const;
-	Vec2& operator+=(const Vec2& b);
-	Vec2 operator-(const Vec2& b) const;
-	Vec2& operator-=(const Vec2& b);
-	Vec2 operator*(const Vec2& b) const;
-	Vec2& operator*=(const Vec2& b);
-	Vec2 operator/(const Vec2& b) const;
-	Vec2& operator/=(const Vec2& b);
-	Vec2 operator-() const;
-	Bool operator==(const Vec2& b) const;
-	Bool operator!=(const Vec2& b) const;
-	Bool operator<(const Vec2& b) const;
-	Bool operator<=(const Vec2& b) const;
-	Bool operator>(const Vec2& b) const;
-	Bool operator>=(const Vec2& b) const;
-	/// @}
-
-	/// @name Operators with F32
-	/// @{
-	Vec2 operator+(const F32 f) const;
-	Vec2& operator+=(const F32 f);
-	Vec2 operator-(const F32 f) const;
-	Vec2& operator-=(const F32 f);
-	Vec2 operator*(const F32 f) const;
-	Vec2& operator*=(const F32 f);
-	Vec2 operator/(const F32 f) const;
-	Vec2& operator/=(const F32 f);
-	/// @}
-
-	/// @name Other
-	/// @{
-	F32 getLengthSquared() const;
-	F32 getLength() const;
-	Vec2 getNormalized() const;
-	void normalize();
-	F32 dot(const Vec2& b) const;
-	/// @}
-
-	/// @name Friends
-	friend Vec2 operator+(const F32 f, const Vec2& v2);
-	friend Vec2 operator-(const F32 f, const Vec2& v2);
-	friend Vec2 operator*(const F32 f, const Vec2& v2);
-	friend Vec2 operator/(const F32 f, const Vec2& v2);
-	friend std::ostream& operator<<(std::ostream& s, const Vec2& v);
-	///@]
-
-private:
-	/// @name Data members
-	/// @{
-	union
-	{
-		struct
-		{
-			F32 x, y;
-		} vec;
-
-		Array<F32, 2> arr;
-	};
-	/// @}
-};
-/// @}
-
+/// F32 2D vector
+typedef TVec2<F32> Vec2;
 static_assert(sizeof(Vec2) == sizeof(F32) * 2, "Incorrect size");
 
-} // end namespace anki
+/// 32bit signed integer 2D vector 
+typedef TVec2<I32> IVec2;
 
-#include "anki/math/Vec2.inl.h"
+/// 32bit unsigned integer 2D vector 
+typedef TVec2<U32> UVec2;
+
+/// @}
+
+} // end namespace anki
 
 #endif

@@ -40,14 +40,14 @@ public:
 		T test = q.x() * q.y() + q.z() * q.w();
 		if(test > 0.499)
 		{
-			y() = 2.0 * atan2(q.x(), q.w());
+			y() = 2.0 * atan2<T>(q.x(), q.w());
 			z() = getPi<T>() / 2.0;
 			x() = 0.0;
 			return;
 		}
 		if(test < -0.499)
 		{
-			y() = -2.0 * atan2(q.x(), q.w());
+			y() = -2.0 * atan2<T>(q.x(), q.w());
 			z() = -getPi<T>() / 2.0;
 			x() = 0.0;
 			return;
@@ -56,10 +56,10 @@ public:
 		T sqx = q.x() * q.x();
 		T sqy = q.y() * q.y();
 		T sqz = q.z() * q.z();
-		y() = atan2(2.0 * q.y() * q.w() - 2.0 * q.x() * q.z(),
+		y() = atan2<T>(2.0 * q.y() * q.w() - 2.0 * q.x() * q.z(),
 			1.0 - 2.0 * sqy - 2.0 * sqz);
-		z() = asin(2.0 * test);
-		x() = atan2(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(),
+		z() = asin<T>(2.0 * test);
+		x() = atan2<T>(2.0 * q.x() * q.w() - 2.0 * q.y() * q.z(),
 			1.0 - 2.0 * sqx - 2.0 * sqz);
 	}
 
@@ -70,7 +70,7 @@ public:
 		T cz, sz;
 
 		sy = m3(0, 2);
-		cy = sqrt(1.0 - sy * sy);
+		cy = sqrt<T>(1.0 - sy * sy);
 		// normal case
 		if (!isZero<T>(cy))
 		{
@@ -89,9 +89,9 @@ public:
 			cx = m3(1, 1);
 		}
 
-		z() = atan2(sz, cz);
-		y() = atan2(sy, cy);
-		x() = atan2(sx, cx);
+		z() = atan2<T>(sz, cz);
+		y() = atan2<T>(sy, cy);
+		x() = atan2<T>(sx, cx);
 	}
 	/// @}
 
@@ -151,7 +151,12 @@ public:
 
 	/// @name Other
 	/// @{
-	std::string toString();
+	std::string toString() const
+	{
+		std::string s = std::to_string(x()) + " " + std::to_string(y())
+			+ " " + std::to_string(z());
+		return s;
+	}
 	/// @}
 
 private:
@@ -169,60 +174,11 @@ private:
 	/// @}
 };
 
-/// Euler angles. Used for rotations. It cannot describe a rotation
-/// accurately though
-class Euler
-{
-public:
-	/// @name Constructors
-	/// @{
-	explicit Euler();
-	explicit Euler(const F32 x, const F32 y, const F32 z);
-			 Euler(const Euler& b);
-	explicit Euler(const Quat& q);
-	explicit Euler(const Mat3& m3);
-	/// @}
+/// F32 Euler angles
+typedef TEuler<F32> Euler; 
 
-	/// @name Accessors
-	/// @{
-	F32& operator [](const U i);
-	F32 operator [](const U i) const;
-	F32& x();
-	F32 x() const;
-	F32& y();
-	F32 y() const;
-	F32& z();
-	F32 z() const;
-	/// @}
-
-	/// @name Operators with same type
-	/// @{
-	Euler& operator=(const Euler& b);
-	/// @}
-
-	/// @name Friends
-	/// @{
-	friend std::ostream& operator<<(std::ostream& s, const Euler& e);
-	/// @}
-
-private:
-	/// @name Data
-	/// @{
-	union
-	{
-		struct
-		{
-			F32 x, y, z;
-		} vec;
-
-		Array<F32, 3> arr;
-	};
-	/// @}
-};
 /// @}
 
-} // end namespace
-
-#include "anki/math/Euler.inl.h"
+} // end namespace anki
 
 #endif

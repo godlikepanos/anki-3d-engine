@@ -155,16 +155,6 @@ public:
 		return arr[i];
 	}
 
-	Simd& getSimd()
-	{
-		return simd;
-	}
-
-	const Simd& getSimd() const
-	{
-		return simd;
-	}
-
 	TVec2<T> xy() const
 	{
 		return TVec2<T>(x(), y());
@@ -173,6 +163,16 @@ public:
 	TVec3<T> xyz() const
 	{
 		return TVec3<T>(x(), y(), z());
+	}
+
+	Simd& getSimd()
+	{
+		return simd;
+	}
+
+	const Simd& getSimd() const
+	{
+		return simd;
 	}
 	/// @}
 
@@ -332,6 +332,8 @@ public:
 
 	/// @name Operators with other
 	/// @{
+
+	/// @note 16 muls 12 adds
 	TVec4 operator*(const TMat4<T>& m4) const
 	{
 		return TVec4(
@@ -346,7 +348,7 @@ public:
 	/// @{
 	T getLength() const
 	{
-		return sqrt(dot((*this)));
+		return sqrt<T>(dot(*this));
 	}
 
 	TVec4 getNormalized() const
@@ -368,16 +370,16 @@ public:
 	/// @name Friends
 	/// @{
 	template<typename Y>
-	friend TVec4 operator+(const Y f, const TVec4<Y>& v4);
+	friend TVec4<Y> operator+(const Y f, const TVec4<Y>& v4);
 
 	template<typename Y>
-	friend TVec4 operator-(const Y f, const TVec4<Y>& v4);
+	friend TVec4<Y> operator-(const Y f, const TVec4<Y>& v4);
 
 	template<typename Y>
-	friend TVec4 operator*(const Y f, const TVec4<Y>& v4);
+	friend TVec4<Y> operator*(const Y f, const TVec4<Y>& v4);
 
 	template<typename Y>
-	friend TVec4 operator/(const Y f, const TVec4<Y>& v4);
+	friend TVec4<Y> operator/(const Y f, const TVec4<Y>& v4);
 	/// @}
 
 private:
@@ -451,125 +453,19 @@ void TVec4<F32>::normalize();
 
 #endif
 
-
-/// 4D vector. SIMD optimized
-ANKI_ATTRIBUTE_ALIGNED(class, 16) Vec4
-{
-public:
-	/// @name Constructors
-	/// @{
-	explicit Vec4();
-	explicit Vec4(const F32 x, const F32 y, const F32 z,
-		const F32 w);
-	explicit Vec4(const F32 f);
-	explicit Vec4(const F32 arr[]);
-	explicit Vec4(const Vec2& v2, const F32 z, const F32 w);
-	explicit Vec4(const Vec2& av2, const Vec2& bv2);
-	explicit Vec4(const Vec3& v3, const F32 w);
-	Vec4(const Vec4& b);
-	explicit Vec4(const Quat& q);
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
-	explicit Vec4(const __m128& mm);
-#endif
-	/// @}
-
-	/// @name Accessors
-	/// @{
-	F32& x();
-	F32 x() const;
-	F32& y();
-	F32 y() const;
-	F32& z();
-	F32 z() const;
-	F32& w();
-	F32 w() const;
-	F32& operator[](const U i);
-	F32 operator[](const U i) const;
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
-	__m128& getMm();
-	const __m128& getMm() const;
-#endif
-	Vec2 xy() const;
-	Vec3 xyz() const;
-	/// @}
-
-	/// @name Operators with same type
-	/// @{
-	Vec4& operator=(const Vec4& b);
-	Vec4 operator+(const Vec4& b) const;
-	Vec4& operator+=(const Vec4& b);
-	Vec4 operator-(const Vec4& b) const;
-	Vec4& operator-=(const Vec4& b);
-	Vec4 operator*(const Vec4& b) const;
-	Vec4& operator*=(const Vec4& b);
-	Vec4 operator/(const Vec4& b) const;
-	Vec4& operator/=(const Vec4& b);
-	Vec4 operator-() const;
-	Bool operator==(const Vec4& b) const;
-	Bool operator!=(const Vec4& b) const;
-	Bool operator<(const Vec4& b) const;
-	Bool operator<=(const Vec4& b) const;
-	Bool operator>(const Vec4& b) const;
-	Bool operator>=(const Vec4& b) const;
-	/// @}
-
-	/// @name Operators with F32
-	/// @{
-	Vec4 operator+(const F32 f) const;
-	Vec4& operator+=(const F32 f);
-	Vec4 operator-(const F32 f) const;
-	Vec4& operator-=(const F32 f);
-	Vec4 operator*(const F32 f) const;
-	Vec4& operator*=(const F32 f);
-	Vec4 operator/(const F32 f) const;
-	Vec4& operator/=(const F32 f);
-	/// @}
-
-	/// @name Operators with other
-	/// @{
-	Vec4 operator*(const Mat4& m4) const;
-	/// @}
-
-	/// @name Other
-	/// @{
-	F32 getLength() const;
-	Vec4 getNormalized() const;
-	void normalize();
-	F32 dot(const Vec4& b) const;
-	/// @}
-
-	/// @name Friends
-	/// @{
-	friend Vec4 operator+(const F32 f, const Vec4& v4);
-	friend Vec4 operator-(const F32 f, const Vec4& v4);
-	friend Vec4 operator*(const F32 f, const Vec4& v4);
-	friend Vec4 operator/(const F32 f, const Vec4& v4);
-	friend std::ostream& operator<<(std::ostream& s, const Vec4& v);
-	/// @}
-
-private:
-	/// @name Data
-	/// @{
-	union
-	{
-		struct
-		{
-			F32 x, y, z, w;
-		} vec;
-
-		Array<F32, 4> arr;
-
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
-		__m128 mm;
-#endif
-	};
-	/// @}
-};
-/// @}
-
+/// F32 4D vector
+typedef TVec4<F32> Vec4;
 static_assert(sizeof(Vec4) == sizeof(F32) * 4, "Incorrect size");
 
-} // end namespace
+/// 32bit signed integer 4D vector
+typedef TVec4<I32> IVec4;
+
+/// 32bit unsigned integer 4D vector
+typedef TVec4<U32> UVec4;
+
+/// @}
+
+} // end namespace anki
 
 #include "anki/math/Vec4.inl.h"
 

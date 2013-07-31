@@ -6,6 +6,10 @@
 
 namespace anki {
 
+//==============================================================================
+// Math constants                                                              =
+//==============================================================================
+
 template<typename Scalar>
 constexpr Scalar getPi();
 
@@ -36,54 +40,88 @@ constexpr F64 getEpsilon<F64>()
 	return 1.0e-6;
 }
 
+//==============================================================================
+// Math functions                                                              =
+//==============================================================================
+
+template<typename T>
+inline T fabs(const T x)
+{
+	return std::fabs(x);
+}
+
+template<typename T>
+inline T sin(const T rad)
+{
+	return std::sin(rad);
+}
+
+template<typename T>
+inline T cos(const T rad)
+{
+	return std::cos(rad);
+}
+
+template<typename T>
+inline T tan(const T rad)
+{
+	return std::tan(rad);
+}
+
+template<typename T>
+inline T acos(const T x)
+{
+	return std::acos(x);
+}
+
+template<typename T>
+inline T asin(const T x)
+{
+	return std::asin(x);
+}
+
+template<typename T>
+inline T atan(const T x)
+{
+	return std::atan(x);
+}
+
+template<typename T>
+inline T atan2(const T x, const T y)
+{
+	return std::atan2(x, y);
+}
+
+void sinCos(const F32 a, F32& sina, F32& cosa);
+void sinCos(const F64 a, F64& sina, F64& cosa);
+
+template<typename T>
+inline T sqrt(const T x)
+{
+	return std::sqrt(x);
+}
+
+//==============================================================================
+// Other math functions                                                        =
+//==============================================================================
+
 template<typename T>
 inline Bool isZero(const T f)
 {
 	return fabs(f) < getEpsilon<T>();
 }
 
-inline F32 toRad(const F32 degrees)
+template<typename T>
+inline T toRad(const T degrees)
 {
-	return degrees * (getPi<F32>() / 180.0f);
+	return degrees * (getPi<T>() / T(180.0));
 }
 
-inline F64 toRad(const F64 degrees)
+template<typename T>
+inline T toDegrees(const T rad)
 {
-	return degrees * (getPi<F64>() / 180.0);
+	return rad * (T(180.0) / getPi<T>());
 }
-
-inline F32 toDegrees(const F32 rad)
-{
-	return rad * (180.0f / getPi<F32>());
-}
-
-inline F64 toDegrees(const F64 rad)
-{
-	return rad * (180.0 / getPi<F64>());
-}
-
-inline F32 sin(const F32 rad)
-{
-	return ::sin(rad);
-}
-
-inline F64 sin(const F64 rad)
-{
-	return ::sin(rad);
-}
-
-inline F32 cos(const F32 rad)
-{
-	return ::cos(rad);
-}
-
-inline F64 cos(const F64 rad)
-{
-	return ::cos(rad);
-}
-
-void sinCos(const F32 a, F32& sina, F32& cosa);
-void sinCos(const F64 a, F64& sina, F64& cosa);
 
 } // end namespace anki
 
