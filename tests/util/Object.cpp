@@ -6,7 +6,7 @@ using namespace anki;
 template<typename T, typename Alloc>
 struct Deleter
 {
-	void operator()(T* x)
+	void onChildRemoved(T* x, T* parent)
 	{
 		std::cout << __PRETTY_FUNCTION__ << std::endl;
 
@@ -15,6 +15,9 @@ struct Deleter
 		alloc.destroy(x);
 		alloc.deallocate(x, 1);
 	}
+
+	void onChildAdded(T*, T*)
+	{}
 };
 
 struct Foo2: public Object<Foo2, Allocator<Foo2>,
@@ -66,7 +69,6 @@ int Foo2::destructorCallCount = 0;
 
 ANKI_TEST(Object, Test)
 {
-
 	Foo2* a = new Foo2(nullptr);
 
 	Foo2* b = new Foo2(a);

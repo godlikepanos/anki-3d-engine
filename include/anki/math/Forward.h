@@ -5,15 +5,6 @@
 
 namespace anki {
 
-class Vec2;
-class Vec3;
-class Vec4;
-class Quat;
-class Euler;
-class Axisang;
-class Mat3;
-class Mat4;
-class Transform;
 class F16;
 
 template<typename T> class TVec2;
@@ -26,6 +17,6 @@ template<typename T> class TTransform;
 template<typename T> class TAxisang;
 template<typename T> class TEuler;
 
-} // end namespace
+} // end namespace anki
 
 #endif

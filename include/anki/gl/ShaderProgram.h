@@ -3,7 +3,7 @@
 
 #include "anki/gl/GlObject.h"
 #include "anki/util/ConstCharPtrHashMap.h"
-#include "anki/math/Forward.h"
+#include "anki/Math.h"
 #include "anki/util/Vector.h"
 #include <string>
 #include <memory>

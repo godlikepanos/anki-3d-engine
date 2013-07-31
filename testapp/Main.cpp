@@ -418,8 +418,10 @@ void mainLoopExtra()
 	}
 	if(in.getKey(KC_P) == 1)
 	{
-		std::cout << "{Vec3(" << mover->getWorldTransform().getOrigin()
-			<< "), Quat(" << Quat(mover->getWorldTransform().getRotation())
+		std::cout << "{Vec3(" 
+			<< mover->getWorldTransform().getOrigin().toString()
+			<< "), Quat(" 
+			<< Quat(mover->getWorldTransform().getRotation()).toString()
 			<< ")}," << std::endl;
 	}
 

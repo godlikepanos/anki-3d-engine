@@ -78,7 +78,7 @@ extern void deleteTesterSingleton();
 	do { \
 		if((x) != (y)) { \
 			std::stringstream ss; \
-			ss << #x << " != " << #y << " [" << x << " != " << y << "] (" \
+			ss << #x << " != " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
 			throw std::runtime_error(ss.str()); \
 		} \
@@ -89,7 +89,7 @@ extern void deleteTesterSingleton();
 	do { \
 		if((x) == (y)) { \
 			std::stringstream ss; \
-			ss << #x << " == " << #y << " [" << x << " == " << y << "] (" \
+			ss << #x << " == " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
 			throw std::runtime_error(ss.str()); \
 		} \
@@ -100,8 +100,7 @@ extern void deleteTesterSingleton();
 	do { \
 		if(fabs((x) - (y)) > (epsilon_)) { \
 			std::stringstream ss; \
-			ss << #x << " != " << #y << " [" << x << " - " << y << " > " \
-				<< epsilon_ << "] (" \
+			ss << #x << " != " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
 			throw std::runtime_error(ss.str()); \
 		} \

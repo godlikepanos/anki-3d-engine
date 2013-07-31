@@ -52,29 +52,30 @@ public:
 		const T m30, const T m31, const T m32,
 		const T m33)
 	{
-		arr2[0][0] = m00;
-		arr2[0][1] = m01;
-		arr2[0][2] = m02;
-		arr2[0][3] = m03;
-		arr2[1][0] = m10;
-		arr2[1][1] = m11;
-		arr2[1][2] = m12;
-		arr2[1][3] = m13;
-		arr2[2][0] = m20;
-		arr2[2][1] = m21;
-		arr2[2][2] = m22;
-		arr2[2][3] = m23;
-		arr2[3][0] = m30;
-		arr2[3][1] = m31;
-		arr2[3][2] = m32;
-		arr2[3][3] = m33;
+		TMat4& m = *this;
+		m(0, 0) = m00;
+		m(0, 1) = m01;
+		m(0, 2) = m02;
+		m(0, 3) = m03;
+		m(1, 0) = m10;
+		m(1, 1) = m11;
+		m(1, 2) = m12;
+		m(1, 3) = m13;
+		m(2, 0) = m20;
+		m(2, 1) = m21;
+		m(2, 2) = m22;
+		m(2, 3) = m23;
+		m(3, 0) = m30;
+		m(3, 1) = m31;
+		m(3, 2) = m32;
+		m(3, 3) = m33;
 	}
 
-	explicit TMat4(const T arr_[])
+	explicit TMat4(const T arr[])
 	{
 		for(U i = 0; i < 16; i++)
 		{
-			arr1[i] = arr_[i];
+			arr1[i] = arr[i];
 		}	
 	}
 
@@ -88,70 +89,74 @@ public:
 
 	explicit TMat4(const TMat3<T>& m3)
 	{
-		arr2[0][0] = m3(0, 0);
-		arr2[0][1] = m3(0, 1);
-		arr2[0][2] = m3(0, 2);
-		arr2[0][3] = 0.0;
-		arr2[1][0] = m3(1, 0);
-		arr2[1][1] = m3(1, 1);
-		arr2[1][2] = m3(1, 2);
-		arr2[1][3] = 0.0;
-		arr2[2][0] = m3(2, 0);
-		arr2[2][1] = m3(2, 1);
-		arr2[2][2] = m3(2, 2);
-		arr2[2][3] = 0.0;
-		arr2[3][0] = 0.0;
-		arr2[3][1] = 0.0;
-		arr2[3][2] = 0.0;
-		arr2[3][3] = 1.0;
+		TMat4& m = *this;
+		m(0, 0) = m3(0, 0);
+		m(0, 1) = m3(0, 1);
+		m(0, 2) = m3(0, 2);
+		m(0, 3) = 0.0;
+		m(1, 0) = m3(1, 0);
+		m(1, 1) = m3(1, 1);
+		m(1, 2) = m3(1, 2);
+		m(1, 3) = 0.0;
+		m(2, 0) = m3(2, 0);
+		m(2, 1) = m3(2, 1);
+		m(2, 2) = m3(2, 2);
+		m(2, 3) = 0.0;
+		m(3, 0) = 0.0;
+		m(3, 1) = 0.0;
+		m(3, 2) = 0.0;
+		m(3, 3) = 1.0;
 	}
 
 	explicit TMat4(const TVec3<T>& v)
 	{
-		arr2[0][0] = 1.0;
-		arr2[0][1] = 0.0;
-		arr2[0][2] = 0.0;
-		arr2[0][3] = v.x();
-		arr2[1][0] = 0.0;
-		arr2[1][1] = 1.0;
-		arr2[1][2] = 0.0;
-		arr2[1][3] = v.y();
-		arr2[2][0] = 0.0;
-		arr2[2][1] = 0.0;
-		arr2[2][2] = 1.0;
-		arr2[2][3] = v.z();
-		arr2[3][0] = 0.0;
-		arr2[3][1] = 0.0;
-		arr2[3][2] = 0.0;
-		arr2[3][3] = 1.0;
+		TMat4& m = *this;
+		m(0, 0) = 1.0;
+		m(0, 1) = 0.0;
+		m(0, 2) = 0.0;
+		m(0, 3) = v.x();
+		m(1, 0) = 0.0;
+		m(1, 1) = 1.0;
+		m(1, 2) = 0.0;
+		m(1, 3) = v.y();
+		m(2, 0) = 0.0;
+		m(2, 1) = 0.0;
+		m(2, 2) = 1.0;
+		m(2, 3) = v.z();
+		m(3, 0) = 0.0;
+		m(3, 1) = 0.0;
+		m(3, 2) = 0.0;
+		m(3, 3) = 1.0;
 	}
 
 	explicit TMat4(const TVec4<T>& v)
 	{
-		arr2[0][0] = 1.0;
-		arr2[0][1] = 0.0;
-		arr2[0][2] = 0.0;
-		arr2[0][3] = v.x();
-		arr2[1][0] = 0.0;
-		arr2[1][1] = 1.0;
-		arr2[1][2] = 0.0;
-		arr2[1][3] = v.y();
-		arr2[2][0] = 0.0;
-		arr2[2][1] = 0.0;
-		arr2[2][2] = 1.0;
-		arr2[2][3] = v.z();
-		arr2[3][0] = 0.0;
-		arr2[3][1] = 0.0;
-		arr2[3][2] = 0.0;
-		arr2[3][3] = v.w();
+		TMat4& m = *this;
+		m(0, 0) = 1.0;
+		m(0, 1) = 0.0;
+		m(0, 2) = 0.0;
+		m(0, 3) = v.x();
+		m(1, 0) = 0.0;
+		m(1, 1) = 1.0;
+		m(1, 2) = 0.0;
+		m(1, 3) = v.y();
+		m(2, 0) = 0.0;
+		m(2, 1) = 0.0;
+		m(2, 2) = 1.0;
+		m(2, 3) = v.z();
+		m(3, 0) = 0.0;
+		m(3, 1) = 0.0;
+		m(3, 2) = 0.0;
+		m(3, 3) = v.w();
 	}
 
 	explicit TMat4(const TVec3<T>& transl, const TMat3<T>& rot)
 	{
 		setRotationPart(rot);
 		setTranslationPart(transl);
-		arr2[3][0] = arr2[3][1] = arr2[3][2] = 0.0;
-		arr2[3][3] = 1.0;
+		TMat4& m = *this;
+		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
+		m(3, 3) = 1.0;
 	}
 
 	explicit TMat4(const TVec3<T>& transl, const TMat3<T>& rot, const T scale)
@@ -167,8 +172,9 @@ public:
 
 		setTranslationPart(transl);
 
-		arr2[3][0] = arr2[3][1] = arr2[3][2] = 0.0;
-		arr2[3][3] = 1.0;
+		TMat4& m = *this;
+		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
+		m(3, 3) = 1.0;
 	}
 
 	explicit TMat4(const TTransform<T>& t)
@@ -262,12 +268,13 @@ public:
 	TMat4 operator*(const TMat4& b) const
 	{
 		TMat4<T> c;
+		const TMat4& m = *this;
 		for(U i = 0; i < 4; i++)
 		{
 			for(U j = 0; j < 4; j++)
 			{
-				c(i, j) = arr2[i][0] * b(0, j) + arr2[i][1] * b(1, j) 
-					+ arr2[i][2] * b(2, j) + arr2[i][3] * b(3, j);
+				c(i, j) = m(i, 0) * b(0, j) + m(i, 1) * b(1, j) 
+					+ m(i, 2) * b(2, j) + m(i, 3) * b(3, j);
 			}
 		}
 		return c;
@@ -283,7 +290,7 @@ public:
 	{
 		for(U i = 0; i < 16; i++)
 		{
-			if(!isZero<T>(arr1[i] - b[i]))
+			if(!isZero<T>(arr1[i] - b.arr1[i]))
 			{
 				return false;
 			}
@@ -295,7 +302,7 @@ public:
 	{
 		for(U i = 0; i < 16; i++)
 		{
-			if(!isZero(arr1[i] - b[i]))
+			if(!isZero(arr1[i] - b.arr1[i]))
 			{
 				return true;
 			}
@@ -311,7 +318,7 @@ public:
 		TMat4 c;
 		for(U i = 0; i < 16; i++)
 		{
-			c[i] = arr1[i] + f;
+			c.arr1[i] = arr1[i] + f;
 		}
 		return c;
 	}
@@ -329,7 +336,7 @@ public:
 		TMat4 c;
 		for(U i = 0; i < 16; i++)
 		{
-			c[i] = arr1[i] - f;
+			c.arr1[i] = arr1[i] - f;
 		}
 		return c;
 	}
@@ -347,7 +354,7 @@ public:
 		TMat4 c;
 		for(U i = 0; i < 16; i++)
 		{
-			c[i] = arr1[i] * f;
+			c.arr1[i] = arr1[i] * f;
 		}
 		return c;
 	}
@@ -386,18 +393,19 @@ public:
 	TVec4<T> operator*(const TVec4<T>& v4) const
 	{
 		TVec4<T> out;
+		const TMat4& m = *this;
 
-		out.x() = arr2[0][0] * v4.x() + arr2[0][1] * v4.y() 
-			+ arr2[0][2] * v4.z() + arr2[0][3] * v4.w();
+		out.x() = m(0, 0) * v4.x() + m(0, 1) * v4.y() 
+			+ m(0, 2) * v4.z() + m(0, 3) * v4.w();
 
-		out.y() = arr2[1][0] * v4.x() + arr2[1][1] * v4.y() 
-			+ arr2[1][2] * v4.z() + arr2[1][3] * v4.w();
+		out.y() = m(1, 0) * v4.x() + m(1, 1) * v4.y() 
+			+ m(1, 2) * v4.z() + m(1, 3) * v4.w();
 
-		out.z() = arr2[2][0] * v4.x() + arr2[2][1] * v4.y() 
-			+ arr2[2][2] * v4.z() + arr2[2][3] * v4.w();
+		out.z() = m(2, 0) * v4.x() + m(2, 1) * v4.y() 
+			+ m(2, 2) * v4.z() + m(2, 3) * v4.w();
 
-		out.w() = arr2[3][0] * v4.x() + arr2[3][1] * v4.y() 
-			+ arr2[3][2] * v4.z() + arr2[3][3] * v4.w();
+		out.w() = m(3, 0) * v4.x() + m(3, 1) * v4.y() 
+			+ m(3, 2) * v4.z() + m(3, 3) * v4.w();
 
 		return out;
 	}
@@ -405,153 +413,155 @@ public:
 
 	/// @name Other
 	/// @{
+	void setRow(const U i, const TVec4<T>& v)
+	{
+		TMat4& m = *this;
+		m(i, 0) = v.x();
+		m(i, 1) = v.y();
+		m(i, 2) = v.z();
+		m(i, 3) = v.w();
+	}
+
 	void setRows(const TVec4<T>& a, const TVec4<T>& b, const TVec4<T>& c,
 		const TVec4<T>& d)
 	{
-		arr2[0][0] = a.x();
-		arr2[0][1] = a.y();
-		arr2[0][2] = a.z();
-		arr2[0][3] = a.w();
-		arr2[1][0] = b.x();
-		arr2[1][1] = b.y();
-		arr2[1][2] = b.z();
-		arr2[1][3] = b.w();
-		arr2[2][0] = c.x();
-		arr2[2][1] = c.y();
-		arr2[2][2] = c.z();
-		arr2[2][3] = c.w();
-		arr2[3][0] = d.x();
-		arr2[3][1] = d.y();
-		arr2[3][2] = d.z();
-		arr2[3][3] = d.w();
-	}
-
-	void setRow(const U i, const TVec4<T>& v)
-	{
-		arr2[i][0] = v.x();
-		arr2[i][1] = v.y();
-		arr2[i][2] = v.z();
-		arr2[i][3] = v.w();
+		setRow(0, a);
+		setRow(1, b);
+		setRow(2, c);
+		setRow(3, d);
 	}
 
 	TVec4<T> getRow(const U i) const
 	{
-		return TVec4<T>(arr2[i][0], arr2[i][1], arr2[i][2], arr2[i][3]);
+		const TMat4& m = *this;
+		return TVec4<T>(m(i, 0), m(i, 1), m(i, 2), m(i, 3));
+	}
+
+	void getRows(TVec4<T>& a, TVec4<T>& b, TVec4<T>& c, TVec4<T>& d) const
+	{
+		a = getRow(0);
+		b = getRow(1);
+		c = getRow(2);
+		d = getRow(3);
+	}
+
+	void setColumn(const U i, const TVec4<T>& v)
+	{
+		TMat4& m = *this;
+		m(0, i) = v.x();
+		m(1, i) = v.y();
+		m(2, i) = v.z();
+		m(3, i) = v.w();
 	}
 
 	void setColumns(const TVec4<T>& a, const TVec4<T>& b, const TVec4<T>& c,
 		const TVec4<T>& d)
 	{
-		arr2[0][0] = a.x();
-		arr2[1][0] = a.y();
-		arr2[2][0] = a.z();
-		arr2[3][0] = a.w();
-		arr2[0][1] = b.x();
-		arr2[1][1] = b.y();
-		arr2[2][1] = b.z();
-		arr2[3][1] = b.w();
-		arr2[0][2] = c.x();
-		arr2[1][2] = c.y();
-		arr2[2][2] = c.z();
-		arr2[3][2] = c.w();
-		arr2[0][3] = d.x();
-		arr2[1][3] = d.y();
-		arr2[2][3] = d.z();
-		arr2[3][3] = d.w();
-	}
-
-	void setColumn(const U i, const TVec4<T>& v)
-	{
-		arr2[0][i] = v.x();
-		arr2[1][i] = v.y();
-		arr2[2][i] = v.z();
-		arr2[3][i] = v.w();
+		setColumn(0, a);
+		setColumn(1, b);
+		setColumn(2, c);
+		setColumn(3, d);
 	}
 
 	TVec4<T> getColumn(const U i) const
 	{
-		return TVec4<T>(arr2[0][i], arr2[1][i], arr2[2][i], arr2[3][i]);
+		const TMat4& m = *this;
+		return TVec4<T>(m(0, i), m(1, i), m(2, i), m(3, i));
+	}
+
+	void getColumns(TVec4<T>& a, TVec4<T>& b, TVec4<T>& c, TVec4<T>& d) const
+	{
+		a = getColumn(0);
+		b = getColumn(1);
+		c = getColumn(2);
+		d = getColumn(3);
 	}
 
 	void setRotationPart(const TMat3<T>& m3)
 	{
-		arr2[0][0] = m3(0, 0);
-		arr2[0][1] = m3(0, 1);
-		arr2[0][2] = m3(0, 2);
-		arr2[1][0] = m3(1, 0);
-		arr2[1][1] = m3(1, 1);
-		arr2[1][2] = m3(1, 2);
-		arr2[2][0] = m3(2, 0);
-		arr2[2][1] = m3(2, 1);
-		arr2[2][2] = m3(2, 2);
+		TMat4& m = *this;
+		m(0, 0) = m3(0, 0);
+		m(0, 1) = m3(0, 1);
+		m(0, 2) = m3(0, 2);
+		m(1, 0) = m3(1, 0);
+		m(1, 1) = m3(1, 1);
+		m(1, 2) = m3(1, 2);
+		m(2, 0) = m3(2, 0);
+		m(2, 1) = m3(2, 1);
+		m(2, 2) = m3(2, 2);
 	}
 
 	TMat3<T> getRotationPart() const
 	{
+		const TMat4& m = *this;
 		TMat3<T> m3;
-		m3(0, 0) = arr2[0][0];
-		m3(0, 1) = arr2[0][1];
-		m3(0, 2) = arr2[0][2];
-		m3(1, 0) = arr2[1][0];
-		m3(1, 1) = arr2[1][1];
-		m3(1, 2) = arr2[1][2];
-		m3(2, 0) = arr2[2][0];
-		m3(2, 1) = arr2[2][1];
-		m3(2, 2) = arr2[2][2];
+		m3(0, 0) = m(0, 0);
+		m3(0, 1) = m(0, 1);
+		m3(0, 2) = m(0, 2);
+		m3(1, 0) = m(1, 0);
+		m3(1, 1) = m(1, 1);
+		m3(1, 2) = m(1, 2);
+		m3(2, 0) = m(2, 0);
+		m3(2, 1) = m(2, 1);
+		m3(2, 2) = m(2, 2);
 		return m3;
 	}
 
 	void setTranslationPart(const TVec4<T>& v)
 	{
-		arr2[0][3] = v.x();
-		arr2[1][3] = v.y();
-		arr2[2][3] = v.z();
-		arr2[3][3] = v.w();
+		TMat4& m = *this;
+		m(0, 3) = v.x();
+		m(1, 3) = v.y();
+		m(2, 3) = v.z();
+		m(3, 3) = v.w();
 	}
 
 	void setTranslationPart(const TVec3<T>& v)
 	{
-		arr2[0][3] = v.x();
-		arr2[1][3] = v.y();
-		arr2[2][3] = v.z();
-		arr2[3][3] = v.w();
+		TMat4& m = *this;
+		m(0, 3) = v.x();
+		m(1, 3) = v.y();
+		m(2, 3) = v.z();
 	}
 
 	TVec3<T> getTranslationPart() const
 	{
-		return TVec3<T>(arr2[0][3], arr2[1][3], arr2[2][3]);
+		const TMat4& m = *this;
+		return TVec3<T>(m(0, 3), m(1, 3), m(2, 3));
 	}
 
 	void transpose()
 	{
-		T tmp = arr2[0][1];
-		arr2[0][1] = arr2[1][0];
-		arr2[1][0] = tmp;
-		tmp = arr2[0][2];
-		arr2[0][2] = arr2[2][0];
-		arr2[2][0] = tmp;
-		tmp = arr2[0][3];
-		arr2[0][3] = arr2[3][0];
-		arr2[3][0] = tmp;
-		tmp = arr2[1][2];
-		arr2[1][2] = arr2[2][1];
-		arr2[2][1] = tmp;
-		tmp = arr2[1][3];
-		arr2[1][3] = arr2[3][1];
-		arr2[3][1] = tmp;
-		tmp = arr2[2][3];
-		arr2[2][3] = arr2[3][2];
-		arr2[3][2] = tmp;
+		TMat4& m = *this;
+		T tmp = m(0, 1);
+		m(0, 1) = m(1, 0);
+		m(1, 0) = tmp;
+		tmp = m(0, 2);
+		m(0, 2) = m(2, 0);
+		m(2, 0) = tmp;
+		tmp = m(0, 3);
+		m(0, 3) = m(3, 0);
+		m(3, 0) = tmp;
+		tmp = m(1, 2);
+		m(1, 2) = m(2, 1);
+		m(2, 1) = tmp;
+		tmp = m(1, 3);
+		m(1, 3) = m(3, 1);
+		m(3, 1) = tmp;
+		tmp = m(2, 3);
+		m(2, 3) = m(3, 2);
+		m(3, 2) = tmp;
 	}
 
 	TMat4 getTransposed() const
 	{
+		const TMat4& m = *this;
 		TMat4 out;
 		for(U i = 0; i < 4; i++)
 		{
 			for(U j = 0; j < 4; j++)
 			{
-				out(i, j) = arr2[j][i];
+				out(i, j) = m(j, i);
 			}
 		}
 		return out;
@@ -747,7 +757,20 @@ public:
 		return m4;
 	}
 
-	std::string toString() const;
+	std::string toString() const
+	{
+		const TMat4& m = *this;
+		std::string s;
+		for(U i = 0; i < 4; i++)
+		{
+			for(U j = 0; j < 4; j++)
+			{
+				s += std::to_string(m(i, j)) + " ";
+			}
+			s += "\n";
+		}
+		return s;
+	}
 	/// @}
 
 	/// @name Friends
@@ -772,8 +795,8 @@ private:
 	{
 		Array<T, 16> arr1;
 		Array<Array<T, 4>, 4> arr2;
-		T carr1[16]; ///< For gdb
-		T carr2[4][4]; ///< For gdb
+		T carr1[16]; ///< For easier debugging with gdb
+		T carr2[4][4]; ///< For easier debugging with gdb
 		Simd simd;
 	};
 	/// @}
@@ -852,137 +875,14 @@ TMat4<F32> operator/(const F32 f, const TMat4<F32>& m4);
 
 #endif
 
-
-/// 4x4 Matrix. Used mainly for transformations but not necessarily. Its
-/// row major. SSE optimized
-ANKI_ATTRIBUTE_ALIGNED(class, 16) Mat4
-{
-public:
-	/// @name Constructors
-	/// @{
-	explicit Mat4() {}
-	explicit Mat4(const F32 f);
-	explicit Mat4(const F32 m00, const F32 m01, const F32 m02,
-		const F32 m03, const F32 m10, const F32 m11,
-		const F32 m12, const F32 m13, const F32 m20,
-		const F32 m21, const F32 m22, const F32 m23,
-		const F32 m30, const F32 m31, const F32 m32,
-		const F32 m33);
-	explicit Mat4(const F32 arr[]);
-	Mat4(const Mat4& b);
-	explicit Mat4(const Mat3& m3);
-	explicit Mat4(const Vec3& v);
-	explicit Mat4(const Vec4& v);
-	explicit Mat4(const Vec3& transl, const Mat3& rot);
-	explicit Mat4(const Vec3& transl, const Mat3& rot, const F32 scale);
-	explicit Mat4(const Transform& t);
-	/// @}
-
-	/// @name Accessors
-	/// @{
-	F32& operator()(const U i, const U j);
-	const F32& operator()(const U i, const U j) const;
-	F32& operator[](const U i);
-	const F32& operator[](const U i) const;
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
-	__m128& getMm(const U i);
-	const __m128& getMm(const U i) const;
-#endif
-	/// @}
-
-	/// @name Operators with same type
-	/// @{
-	Mat4& operator=(const Mat4& b);
-	Mat4 operator+(const Mat4& b) const;
-	Mat4& operator+=(const Mat4& b);
-	Mat4 operator-(const Mat4& b) const;
-	Mat4& operator-=(const Mat4& b);
-	Mat4 operator*(const Mat4& b) const; ///< 64 muls, 48 adds
-	Mat4& operator*=(const Mat4& b);
-	Mat4 operator/(const Mat4& b) const;
-	Mat4& operator/=(const Mat4& b);
-	Bool operator==(const Mat4& b) const;
-	Bool operator!=(const Mat4& b) const;
-	/// @}
-
-	/// @name Operators with F32
-	/// @{
-	Mat4 operator+(const F32 f) const;
-	Mat4& operator+=(const F32 f);
-	Mat4 operator-(const F32 f) const;
-	Mat4& operator-=(const F32 f);
-	Mat4 operator*(const F32 f) const;
-	Mat4& operator*=(const F32 f);
-	Mat4 operator/(const F32 f) const;
-	Mat4& operator/=(const F32 f);
-	/// @}
-
-	/// @name Operators with other types
-	/// @{
-	Vec4 operator*(const Vec4& v4) const; ///< 16 muls, 12 adds
-	/// @}
-
-	/// @name Other
-	/// @{
-	void setRows(const Vec4& a, const Vec4& b, const Vec4& c,
-		const Vec4& d);
-	void setRow(const U i, const Vec4& v);
-	Vec4 getRow(const U i) const;
-	void setColumns(const Vec4& a, const Vec4& b, const Vec4& c,
-		const Vec4& d);
-	void setColumn(const U i, const Vec4& v);
-	Vec4 getColumn(const U i) const;
-	void setRotationPart(const Mat3& m3);
-	void setTranslationPart(const Vec4& v4);
-	Mat3 getRotationPart() const;
-	void setTranslationPart(const Vec3& v3);
-	Vec3 getTranslationPart() const;
-	void transpose();
-	Mat4 getTransposed() const;
-	F32 getDet() const;
-	Mat4 getInverse() const; ///< Invert using Cramer's rule
-	void invert(); ///< See getInverse
-	/// If we suppose this matrix represents a transformation, return the
-	/// inverted transformation
-	Mat4 getInverseTransformation() const;
-	Mat4 lerp(const Mat4& b, F32 t) const;
-	void setIdentity();
-	/// 12 muls, 27 adds. Something like m4 = m0 * m1 but without touching
-	/// the 4rth row and allot faster
-	static Mat4 combineTransformations(const Mat4& m0, const Mat4& m1);
-	static const Mat4& getIdentity();
-	static const Mat4& getZero();
-	/// @}
-
-	/// @name Friends
-	/// @{
-	friend Mat4 operator+(const F32 f, const Mat4& m4);
-	friend Mat4 operator-(const F32 f, const Mat4& m4);
-	friend Mat4 operator*(const F32 f, const Mat4& m4);
-	friend Mat4 operator/(const F32 f, const Mat4& m4);
-	friend std::ostream& operator<<(std::ostream& s, const Mat4& m);
-	/// @}
-
-private:
-	/// @name Data
-	/// @{
-	union
-	{
-		Array<F32, 16> arr1;
-		Array<Array<F32, 4>, 4> arr2;
-		F32 carr1[16]; ///< For gdb
-		F32 carr2[4][4]; ///< For gdb
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
-		Array<__m128, 4> arrMm;
-#endif
-	};
-	/// @}
-};
-/// @}
+/// F32 4x4 matrix
+typedef TMat4<F32> Mat4;
 
 static_assert(sizeof(Mat4) == sizeof(F32) * 4 * 4, "Incorrect size");
 
-} // end namespace
+/// @}
+
+} // end namespace anki
 
 #include "anki/math/Mat4.inl.h"
 

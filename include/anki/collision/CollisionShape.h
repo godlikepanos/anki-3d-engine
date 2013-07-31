@@ -3,7 +3,7 @@
 
 #include "anki/collision/Forward.h"
 #include "anki/collision/CollisionAlgorithms.h"
-#include "anki/math/Forward.h"
+#include "anki/Math.h"
 #include "anki/util/StdTypes.h"
 
 namespace anki {
