@@ -160,7 +160,8 @@ def parse_commandline():
 
 	parser = optparse.OptionParser(usage = "usage: %prog [options]", \
 			description = "This program converts a single image or a number " \
-			"of images to AnKi texture format. It requires 4 applications to " \
+			"of images (for 3D and 2DArray textures) to AnKi texture format." \
+			" It requires 4 different applications/executables to " \
 			"operate: convert, identify, nvcompress and etcpack. These " \
 			"applications should be in PATH except the convert where you " \
 			"need to define the executable explicitly")
@@ -209,7 +210,7 @@ def parse_commandline():
 	else:
 		parser.error("Unrecognized type: " + options.type)
 
-	return (options.inp.split(":"), options.out, options.fast,
+	return (options.inp.split(":"), options.out, options.fast, \
 			typ, options.normal, options.convert_path, options.no_alpha)
 
 def identify_image(in_file):
@@ -238,7 +239,7 @@ def identify_image(in_file):
 	# Identify the color space
 	"""if not re.search(r"red: 8-bit", stdout_str) \
 			or not re.search(r"green: 8-bit", stdout_str) \
-			or not re.search(r"blue: 8-bit", stdout_str):
+			or not re.search(r"blue: 8-bit", stdout_str): \
 		raise Exception("Incorrect channel depths")"""
 
 	if re.search(r"alpha: 8-bit", stdout_str):
@@ -251,6 +252,7 @@ def identify_image(in_file):
 	# print some stuff and return
 	printi("width: %s, height: %s color format: %s" % \
 			(reg.group(1), reg.group(2), color_format_str))
+
 	return (color_format, int(reg.group(1)), int(reg.group(2)))
 
 def create_mipmaps(in_file, tmp_dir, width_, height_, color_format):
@@ -315,8 +317,7 @@ def create_etc_images(mips_fnames, tmp_dir, fast, color_format, convert_path):
 
 		subprocess.check_call(args, stdout = subprocess.PIPE, cwd = tmp_dir)
 
-def create_dds_images(mips_fnames, tmp_dir, fast, color_format, \
-		normal):
+def create_dds_images(mips_fnames, tmp_dir, fast, color_format, normal):
 	""" Create the dds files """
 
 	printi("Creating DDS images")
@@ -511,8 +512,7 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha):
 		raise Exception("RGBA image and normal does not make much sense")
 
 	for i in range(1, len(in_files)):
-		(color_format_2, width_2, height_2) = \
-				identify_image(in_files[i])
+		(color_format_2, width_2, height_2) = identify_image(in_files[i])
 
 		if width != width_2 or height != height_2 \
 				or color_format != color_format_2:
@@ -582,14 +582,12 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha):
 				if compression == 0:
 					write_raw(tex_file, in_base_fname + ".tga", \
 							tmp_width, tmp_height, color_format)
-
 				# Write S3TC
-				if compression == 1:
+				elif compression == 1:
 					write_s3tc(tex_file, in_base_fname + ".dds", \
 							tmp_width, tmp_height, color_format)
-
 				# Write ETC
-				if compression == 2:
+				elif compression == 2:
 					write_etc(tex_file, in_base_fname + ".pkm", \
 							tmp_width, tmp_height, color_format)
 			

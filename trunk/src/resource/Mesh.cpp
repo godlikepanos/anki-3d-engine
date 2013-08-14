@@ -150,7 +150,7 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 		type = GL_FLOAT;
 		offset = sizeof(Vec3) * 2;
 		break;
-	case VA_TEXTURE_COORDS:
+	case VA_TEXTURE_COORD:
 		if(meshProtected.texChannelsCount > 0)
 		{
 			v = &vbo;
@@ -159,7 +159,7 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 			offset = sizeof(Vec3) * 2 + sizeof(Vec4);
 		}
 		break;
-	case VA_TEXTURE_COORDS_1:
+	case VA_TEXTURE_COORD_1:
 		if(meshProtected.texChannelsCount > 1)
 		{
 			v = &vbo;

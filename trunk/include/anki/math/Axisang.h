@@ -1,7 +1,6 @@
 #ifndef ANKI_MATH_AXISANG_H
 #define ANKI_MATH_AXISANG_H
 
-#include "anki/math/Vec3.h"
 #include "anki/math/CommonIncludes.h"
 
 namespace anki {
@@ -30,8 +29,8 @@ public:
 
 	explicit TAxisang(const TQuat<T>& q)
 	{
-		ang = 2.0 * acos(q.w());
-		T length = sqrt(1.0 - q.w() * q.w());
+		ang = 2.0 * acos<T>(q.w());
+		T length = sqrt<T>(1.0 - q.w() * q.w());
 		if(!isZero<T>(length))
 		{
 			length = 1.0 / length;
@@ -127,10 +126,10 @@ public:
 
 		if(fabs(s) < 0.001)
 		{
-			s = 1;
+			s = 1.0;
 		}
 
-		ang = acos((m3(0, 0) + m3(1, 1) + m3(2, 2) - 1.0) / 2.0);
+		ang = acos<T>((m3(0, 0) + m3(1, 1) + m3(2, 2) - 1.0) / 2.0);
 		axis.x() = (m3(2, 1) - m3(1, 2)) / s;
 		axis.y() = (m3(0, 2) - m3(2, 0)) / s;
 		axis.z() = (m3(1, 0) - m3(0, 1)) / s;		
@@ -203,6 +202,6 @@ typedef TAxisang<F32> Axisang;
 
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

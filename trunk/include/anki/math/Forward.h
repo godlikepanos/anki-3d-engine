@@ -1,8 +1,6 @@
 #ifndef ANKI_MATH_FORWARD_H
 #define ANKI_MATH_FORWARD_H
 
-#include <iosfwd>
-
 namespace anki {
 
 class F16;

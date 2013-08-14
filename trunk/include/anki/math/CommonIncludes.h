@@ -3,5 +3,5 @@
 #include "anki/math/Simd.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
-#include <iosfwd>
+#include "anki/util/Assert.h"
 #include <string>

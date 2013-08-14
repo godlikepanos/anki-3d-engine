@@ -22,6 +22,13 @@ struct TVec4Simd<F32>
 {
 	typedef __m128 Type;
 };
+#elif ANKI_MATH_SIMD == ANKI_MATH_SIMD_NEON
+// Specialize for F32
+template<>
+struct TVec4Simd<F32>
+{
+	typedef float32x4_t Type;
+};
 #endif
 
 /// 4D vector. SIMD optimized
@@ -441,6 +448,53 @@ TVec4<F32> TVec4<F32>::operator/(const TVec4<F32>& b) const;
 
 template<>
 TVec4<F32>& TVec4<F32>::operator/=(const TVec4<F32>& b);
+
+template<>
+F32 TVec4<F32>::dot(const TVec4<F32>& b) const;
+
+template<>
+TVec4<F32> TVec4<F32>::getNormalized() const;
+
+template<>
+void TVec4<F32>::normalize();
+
+#elif ANKI_MATH_SIMD == ANKI_MATH_SIMD_NEON
+
+template<>
+TVec4<F32>::TVec4(F32 f);
+
+template<>
+TVec4<F32>::TVec4(const F32 arr_[]);
+
+template<>
+TVec4<F32>::TVec4(const TVec4<F32>& b);
+
+template<>
+TVec4<F32>& TVec4<F32>::operator=(const TVec4<F32>& b);
+
+template<>
+TVec4<F32> TVec4<F32>::operator+(const TVec4<F32>& b) const;
+
+template<>
+TVec4<F32>& TVec4<F32>::operator+=(const TVec4<F32>& b);
+
+template<>
+TVec4<F32> TVec4<F32>::operator-(const TVec4<F32>& b) const;
+
+template<>
+TVec4<F32>& TVec4<F32>::operator-=(const TVec4<F32>& b);
+
+template<>
+TVec4<F32> TVec4<F32>::operator*(const TVec4<F32>& b) const;
+
+template<>
+TVec4<F32>& TVec4<F32>::operator*=(const TVec4<F32>& b);
+
+template<>
+TVec4<F32> operator*(const F32 f) const;
+
+template<>
+TVec4<F32>& operator*=(const F32 f);
 
 template<>
 F32 TVec4<F32>::dot(const TVec4<F32>& b) const;

@@ -21,8 +21,8 @@ static const Array<Attrib, MeshBase::VA_COUNT - 1> attribs = {{
 	{"position", MeshBase::VA_POSITION},
 	{"normal", MeshBase::VA_NORMAL},
 	{"tangent", MeshBase::VA_TANGENT},
-	{"texCoords", MeshBase::VA_TEXTURE_COORDS},
-	{"texCoords1", MeshBase::VA_TEXTURE_COORDS_1},
+	{"texCoord", MeshBase::VA_TEXTURE_COORD},
+	{"texCoord1", MeshBase::VA_TEXTURE_COORD_1},
 	{"bonesCount", MeshBase::VA_BONE_COUNT},
 	{"boneIds", MeshBase::VA_BONE_IDS},
 	{"boneWeights", MeshBase::VA_BONE_WEIGHTS}
