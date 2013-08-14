@@ -4,7 +4,7 @@
 /// @name Attributes
 /// @{
 layout(location = 0) in vec3 position;
-layout(location = 3) in vec2 texCoords;
+layout(location = 3) in vec2 texCoord;
 #if defined(PASS_COLOR)
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec4 tangent;
@@ -31,7 +31,7 @@ void setVaryings1(in mat4 modelViewProjectionMat)
 #if defined(PASS_DEPTH) && LOD > 0
 	// No tex coords for you
 #else
-	vTexCoords = texCoords;
+	vTexCoords = texCoord;
 #endif
 
 	gl_Position = modelViewProjectionMat * vec4(position, 1.0);
