@@ -225,6 +225,7 @@ void Texture::create(const Initializer& init)
 	internalFormat = init.internalFormat;
 	format = init.format;
 	type = init.type;
+	samples = init.samples;
 
 	// Bind
 	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
@@ -355,6 +356,15 @@ void Texture::create(const Initializer& init)
 				}
 			}
 			break;
+		case GL_TEXTURE_2D_MULTISAMPLE:
+			glTexImage2DMultisample(
+				target,
+				samples,
+				internalFormat,
+				w,
+				h,
+				GL_TRUE);
+			break;
 		default:
 			ANKI_ASSERT(0);
 		}
@@ -366,51 +376,54 @@ void Texture::create(const Initializer& init)
 	ANKI_CHECK_GL_ERROR();
 
 	// Set parameters
-	if(init.repeat)
+	if(samples == 1)
 	{
-		glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	}
-	else
-	{
-		glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	}
+		if(init.repeat)
+		{
+			glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		}
+		else
+		{
+			glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		}
 
-	if(init.genMipmaps)
-	{
-		glGenerateMipmap(target);
-	}
-	else
-	{
-		// Make sure that the texture is complete
-		glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, init.mipmapsCount - 1);
-	}
+		if(init.genMipmaps)
+		{
+			glGenerateMipmap(target);
+		}
+		else
+		{
+			// Make sure that the texture is complete
+			glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, init.mipmapsCount - 1);
+		}
 
-	// Set filtering type
-	setFilteringNoBind(init.filteringType);
+		// Set filtering type
+		setFilteringNoBind(init.filteringType);
 
 #if ANKI_GL == ANKI_GL_DESKTOP
-	if(init.anisotropyLevel > 1)
-	{
-		glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
-			GLint(init.anisotropyLevel));
-	}
+		if(init.anisotropyLevel > 1)
+		{
+			glTexParameteri(target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+				GLint(init.anisotropyLevel));
+		}
 #endif
+	}
 
 	ANKI_CHECK_GL_ERROR();
 }
 
 //==============================================================================
 void Texture::create2dFai(U w, U h, 
-	GLenum internalFormat_, GLenum format_, GLenum type_)
+	GLenum internalFormat_, GLenum format_, GLenum type_, U samples_)
 {
 	Initializer init;
 
 	init.width = w;
 	init.height = h;
 	init.depth = 0;
-	init.target = GL_TEXTURE_2D;
+	init.target = (samples_ == 1) ? GL_TEXTURE_2D : GL_TEXTURE_2D_MULTISAMPLE;
 	init.internalFormat = internalFormat_;
 	init.format = format_;
 	init.type = type_;
@@ -419,6 +432,7 @@ void Texture::create2dFai(U w, U h,
 	init.repeat = false;
 	init.anisotropyLevel = 0;
 	init.genMipmaps = false;
+	init.samples = samples_;
 
 	create(init);
 }

@@ -67,6 +67,8 @@ void MainRenderer::initGl()
 	GlStateSingleton::get().setDepthMaskEnabled(true);
 	GlStateSingleton::get().setDepthFunc(GL_LESS);
 
+	glEnable(GL_FRAMEBUFFER_SRGB);
+
 	glDisable(GL_DITHER);
 
 	// Check for error

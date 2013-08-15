@@ -484,7 +484,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	//
 
 	// IS FBO
-	fai.create2dFai(r->getWidth(), r->getHeight(), GL_RGB8,
+	fai.create2dFai(r->getWidth(), r->getHeight(), GL_SRGB8,
 		GL_RGB, GL_UNSIGNED_BYTE);
 	fbo.create();
 	fbo.setColorAttachments({&fai});

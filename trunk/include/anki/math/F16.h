@@ -11,6 +11,14 @@ namespace anki {
 /// Half float
 class F16
 {
+	/// @name Friends
+	/// @{
+	friend F32 operator+(const F32 f, const F16 h);
+	friend F32 operator-(const F32 f, const F16 h);
+	friend F32 operator*(const F32 f, const F16 h);
+	friend F32 operator/(const F32 f, const F16 h);
+	/// @}
+
 public:
 	/// @name Constructors
 	/// @{
@@ -172,35 +180,35 @@ public:
 	}
 	/// @}
 
-	/// @name Friends
-	/// @{
-	friend F32 operator+(const F32 f, const F16 h)
-	{
-		return f + h.toF32();
-	}
-
-	friend F32 operator-(const F32 f, const F16 h)
-	{
-		return f - h.toF32();
-	}
-
-	friend F32 operator*(const F32 f, const F16 h)
-	{
-		return f * h.toF32();
-	}
-
-	friend F32 operator/(const F32 f, const F16 h)
-	{
-		return f / h.toF32();
-	}
-	/// @}
-
 private:
 	U16 data;
 
 	static F32 toF32(F16 h);
 	static F16 toF16(F32 f);
 };
+
+/// @name F16 friends
+/// @{
+inline F32 operator+(const F32 f, const F16 h)
+{
+	return f + h.toF32();
+}
+
+inline F32 operator-(const F32 f, const F16 h)
+{
+	return f - h.toF32();
+}
+
+inline F32 operator*(const F32 f, const F16 h)
+{
+	return f * h.toF32();
+}
+
+inline F32 operator/(const F32 f, const F16 h)
+{
+	return f / h.toF32();
+}
+/// @}
 /// @}
 
 static_assert(sizeof(F16) == 2, "Incorrect size");

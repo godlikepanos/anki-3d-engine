@@ -29,6 +29,18 @@ struct TMat4Simd<F32>
 template<typename T>
 ANKI_ATTRIBUTE_ALIGNED(class, 16) TMat4
 {
+	/// @name Friends
+	/// @{
+	template<typename Y>
+	friend TMat4<Y> operator+(const Y f, const TMat4<Y>& m4);
+	template<typename Y>
+	friend TMat4<Y> operator-(const Y f, const TMat4<Y>& m4);
+	template<typename Y>
+	friend TMat4<Y> operator*(const Y f, const TMat4<Y>& m4);
+	template<typename Y>
+	friend TMat4<Y> operator/(const Y f, const TMat4<Y>& m4);
+	/// @}
+
 public:
 	typedef typename TMat4Simd<T>::Type Simd;
 
@@ -773,21 +785,6 @@ public:
 	}
 	/// @}
 
-	/// @name Friends
-	/// @{
-	template<typename Y>
-	friend TMat4<Y> operator+(const Y f, const TMat4<Y>& m4);
-
-	template<typename Y>
-	friend TMat4<Y> operator-(const Y f, const TMat4<Y>& m4);
-
-	template<typename Y>
-	friend TMat4<Y> operator*(const Y f, const TMat4<Y>& m4);
-
-	template<typename Y>
-	friend TMat4<Y> operator/(const Y f, const TMat4<Y>& m4);
-	/// @}
-
 private:
 	/// @name Data
 	/// @{
@@ -877,9 +874,7 @@ TMat4<F32> operator/(const F32 f, const TMat4<F32>& m4);
 
 /// F32 4x4 matrix
 typedef TMat4<F32> Mat4;
-
 static_assert(sizeof(Mat4) == sizeof(F32) * 4 * 4, "Incorrect size");
-
 /// @}
 
 } // end namespace anki

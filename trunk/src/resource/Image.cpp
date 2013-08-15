@@ -745,7 +745,9 @@ void Image::load(const char* filename)
 		}
 		else if(strcmp(ext, "ankitex") == 0)
 		{
-#if ANKI_GL == ANKI_GL_DESKTOP
+#if 0
+			compression = Image::DC_RAW;
+#elif ANKI_GL == ANKI_GL_DESKTOP
 			compression = Image::DC_S3TC;
 #else
 			compression = Image::DC_ETC;

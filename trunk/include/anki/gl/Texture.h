@@ -180,6 +180,7 @@ public:
 		Bool repeat = false;
 		I anisotropyLevel = 0;
 		Bool genMipmaps = false;
+		U samples = 1;
 
 		Array<Array<Data, 256>, 256> data; ///< Array of data in: [mip][layer]
 
@@ -268,7 +269,8 @@ public:
 
 	/// Create a FAI
 	void create2dFai(
-		U w, U h, GLenum internalFormat, GLenum format, GLenum type);
+		U w, U h, GLenum internalFormat, GLenum format, GLenum type,
+		U samples = 1);
 
 	/// Bind the texture to a unit that the texture unit system will decide
 	/// @return The texture init
@@ -311,6 +313,7 @@ private:
 	GLenum type = GL_NONE; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
 	GLuint width = 0, height = 0, depth = 0;
 	TextureFilteringType filtering;
+	U8 samples = 1;
 
 	Bool isCreated() const
 	{

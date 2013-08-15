@@ -18,8 +18,8 @@ void Ms::init(const RendererInitializer& initializer)
 	try
 	{
 #if ANKI_RENDERER_USE_MRT
-		fai0.create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
-			GL_RGBA, GL_UNSIGNED_BYTE);
+		fai0.create2dFai(r->getWidth(), r->getHeight(), GL_SRGB8_ALPHA8,
+			GL_RGBA, GL_UNSIGNED_BYTE, 16);
 		fai1.create2dFai(r->getWidth(), r->getHeight(), GL_RG16F,
 			GL_RG, GL_FLOAT);
 #else
