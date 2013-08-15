@@ -35,6 +35,18 @@ struct TVec4Simd<F32>
 template<typename T>
 ANKI_ATTRIBUTE_ALIGNED(class, 16) TVec4
 {
+	/// @name Friends
+	/// @{
+	template<typename Y>
+	friend TVec4<Y> operator+(const Y f, const TVec4<Y>& v4);
+	template<typename Y>
+	friend TVec4<Y> operator-(const Y f, const TVec4<Y>& v4);
+	template<typename Y>
+	friend TVec4<Y> operator*(const Y f, const TVec4<Y>& v4);
+	template<typename Y>
+	friend TVec4<Y> operator/(const Y f, const TVec4<Y>& v4);
+	/// @}
+
 public:
 	typedef typename TVec4Simd<T>::Type Simd;
 
@@ -374,21 +386,6 @@ public:
 	}
 	/// @}
 
-	/// @name Friends
-	/// @{
-	template<typename Y>
-	friend TVec4<Y> operator+(const Y f, const TVec4<Y>& v4);
-
-	template<typename Y>
-	friend TVec4<Y> operator-(const Y f, const TVec4<Y>& v4);
-
-	template<typename Y>
-	friend TVec4<Y> operator*(const Y f, const TVec4<Y>& v4);
-
-	template<typename Y>
-	friend TVec4<Y> operator/(const Y f, const TVec4<Y>& v4);
-	/// @}
-
 private:
 	/// @name Data
 	/// @{
@@ -516,7 +513,6 @@ typedef TVec4<I32> IVec4;
 
 /// 32bit unsigned integer 4D vector
 typedef TVec4<U32> UVec4;
-
 /// @}
 
 } // end namespace anki

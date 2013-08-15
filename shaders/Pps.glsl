@@ -112,6 +112,7 @@ void main(void)
 	fColor += lf;
 #endif
 
+	//fColor = BlendHardLight(vec3(0.7, 0.72, 0.4), fColor);
 	fColor = gammaCorrectionRgb(vec3(0.9, 0.92, 0.75), fColor);
 
 #if 0

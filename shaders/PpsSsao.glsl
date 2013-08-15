@@ -43,6 +43,8 @@ uniform sampler2D noiseMap;
 /// @}
 
 #define RADIUS 0.5
+#define DARKNESS_MULTIPLIER 2.0 // Initial is 1.0 but the bigger it is the more
+                                // darker the SSAO factor gets
 
 // Get normal
 vec3 getNormal(in vec2 uv)
@@ -120,7 +122,7 @@ void main(void)
 		float sampleDepth = getZ(offset.xy);
 
 		// range check & accumulate:
-		const float ADVANCE = 1.0 / float(KERNEL_SIZE);
+		const float ADVANCE = DARKNESS_MULTIPLIER / float(KERNEL_SIZE);
 
 #if 1
 		float rangeCheck = 

@@ -10,7 +10,7 @@ Hdr::~Hdr()
 //==============================================================================
 void Hdr::initFbo(Fbo& fbo, Texture& fai)
 {
-	fai.create2dFai(width, height, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
+	fai.create2dFai(width, height, GL_SRGB8, GL_RGB, GL_UNSIGNED_BYTE);
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	fai.setFiltering(Texture::TFT_LINEAR);

@@ -13,6 +13,18 @@ namespace anki {
 template<typename T>
 class TMat3
 {
+	/// @name Friends
+	/// @{
+	template<typename Y>
+	friend TMat3<Y> operator+(Y f, const TMat3<Y>& m3);
+	template<typename Y>
+	friend TMat3<Y> operator-(Y f, const TMat3<Y>& m3);
+	template<typename Y>
+	friend TMat3<Y> operator*(Y f, const TMat3<Y>& m3);
+	template<typename Y>
+	friend TMat3<Y> operator/(Y f, const TMat3<Y>& m3);
+	/// @}
+
 public:
 	/// @name Constructors
 	/// @{
@@ -699,39 +711,6 @@ public:
 	}
 	/// @}
 
-	/// @name Friends
-	/// @{
-	friend TMat3 operator+(T f, const TMat3& m3)
-	{
-		return m3 + f;
-	}
-
-	friend TMat3 operator-(T f, const TMat3& m3)
-	{
-		TMat3 out;
-		for(U i = 0; i < 9; i++)
-		{
-			out[i] = f - m3[i];
-		}
-		return out;
-	}
-
-	friend TMat3 operator*(T f, const TMat3& m3)
-	{
-		return m3 * f;
-	}
-
-	friend TMat3 operator/(T f, const TMat3& m3)
-	{
-		TMat3 out;
-		for(U i = 0; i < 9; i++)
-		{
-			out[i] = f / m3[i];
-		}
-		return out;
-	}
-	/// @}
-
 private:
 	/// @name Data members
 	/// @{
@@ -745,11 +724,46 @@ private:
 	/// @}
 };
 
+/// @name TMat3 friends
+/// @{
+template<typename T>
+TMat3<T> operator+(T f, const TMat3<T>& m3)
+{
+	return m3 + f;
+}
+
+template<typename T>
+TMat3<T> operator-(T f, const TMat3<T>& m3)
+{
+	TMat3<T> out;
+	for(U i = 0; i < 9; i++)
+	{
+		out[i] = f - m3[i];
+	}
+	return out;
+}
+
+template<typename T>
+TMat3<T> operator*(T f, const TMat3<T>& m3)
+{
+	return m3 * f;
+}
+
+template<typename T>
+TMat3<T> operator/(T f, const TMat3<T>& m3)
+{
+	TMat3<T> out;
+	for(U i = 0; i < 9; i++)
+	{
+		out[i] = f / m3[i];
+	}
+	return out;
+}
+/// @}
+
 /// F32 3x3 matrix
 typedef TMat3<F32> Mat3;
-
 static_assert(sizeof(Mat3) == sizeof(F32) * 3 * 3, "Incorrect size");
-
 /// @}
 
 } // end namespace anki

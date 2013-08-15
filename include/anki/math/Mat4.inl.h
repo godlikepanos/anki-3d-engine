@@ -139,20 +139,24 @@ inline TMat4<F32>& TMat4<F32>::operator-=(const TMat4<F32>& b)
 template<>
 inline TMat4<F32> TMat4<F32>::operator*(const TMat4<F32>& b) const
 {
-	TMat4<F32> c;
-	TMat4<F32> t(b);
-	t.transpose();
-	
-	// XXX See if this is optimal
+	TMat4<F32> out;
+	const TMat4<F32>& m = *this;
 	for(U i = 0; i < 4; i++)
 	{
-		for(U j = 0; j < 4; j++)
-		{
-			_mm_store_ss(&c(i, j), _mm_dp_ps(simd[i], t.simd[j], 0xF1));
-		}
-	}
+		__m128 t1, t2;
 
-	return c;
+		t1 = _mm_set1_ps(m(i, 0));
+		t2 = _mm_mul_ps(b.simd[0], t1);
+		t1 =_mm_set1_ps(m(i, 1));
+		t2 = _mm_add_ps(_mm_mul_ps(b.simd[1], t1), t2);
+		t1 =_mm_set1_ps(m(i, 2));
+		t2 = _mm_add_ps(_mm_mul_ps(b.simd[2], t1), t2);
+		t1 =_mm_set1_ps(m(i, 3));
+		t2 = _mm_add_ps(_mm_mul_ps(b.simd[3], t1), t2);
+
+		out.simd[i] = t2;
+	}
+	return out;
 }
 
 //==============================================================================

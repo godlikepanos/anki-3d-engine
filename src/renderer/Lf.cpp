@@ -102,7 +102,7 @@ void Lf::initInternal(const RendererInitializer& initializer)
 	// Create the FAI
 	fai.create2dFai(r->getPps().getHdr().getFai().getWidth(), 
 		r->getPps().getHdr().getFai().getHeight(), 
-		GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
+		GL_SRGB8, GL_RGB, GL_UNSIGNED_BYTE);
 
 	fbo.create();
 	fbo.setColorAttachments({&fai});
