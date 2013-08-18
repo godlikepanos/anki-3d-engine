@@ -101,6 +101,7 @@ struct RendererInitializer
 	U32 height;
 	F32 renderingQuality = 1.0; ///< Applies only to MainRenderer
 	F32 lodDistance = 10.0; ///< Distance that used to calculate the LOD
+	U32 samples = 1; ///< Enables multisampling
 
 	// funcs
 	RendererInitializer()
@@ -120,6 +121,8 @@ class ModelNode;
 /// external renderers for security cameras for example
 class Renderer
 {
+	friend class Ms;
+
 public:
 	typedef RendererInitializer Initializer;
 
@@ -323,7 +326,8 @@ protected:
 
 private:
 	U framesNum; ///< Frame number
-	Mat4 viewProjectionMat; ///< Precalculated in case anyone needs it
+	Mat4 viewProjectionMat; ///< Precalculated in case anyone needs it XXX
+	U8 samples;
 
 	/// @name For drawing a quad into the active framebuffer
 	/// @{

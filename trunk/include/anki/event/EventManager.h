@@ -40,7 +40,7 @@ public:
 	/// @{
 
 	std::shared_ptr<Event> newSceneAmbientColorEvent(
-		F32 startTime, F32 duration, const Vec3& finalColor);
+		F32 startTime, F32 duration, const Vec4& finalColor);
 
 	std::shared_ptr<Event> newLightEvent(
 		F32 startTime, F32 duration, const LightEventData& data);

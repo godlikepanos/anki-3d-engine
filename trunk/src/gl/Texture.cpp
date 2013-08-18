@@ -226,6 +226,7 @@ void Texture::create(const Initializer& init)
 	format = init.format;
 	type = init.type;
 	samples = init.samples;
+	ANKI_ASSERT(samples > 0);
 
 	// Bind
 	TextureUnitsSingleton::get().bindTextureAndActivateUnit(*this);
@@ -356,6 +357,7 @@ void Texture::create(const Initializer& init)
 				}
 			}
 			break;
+#if ANKI_GL == ANKI_GL_DESKTOP
 		case GL_TEXTURE_2D_MULTISAMPLE:
 			glTexImage2DMultisample(
 				target,
@@ -363,8 +365,9 @@ void Texture::create(const Initializer& init)
 				internalFormat,
 				w,
 				h,
-				GL_TRUE);
+				GL_FALSE);
 			break;
+#endif
 		default:
 			ANKI_ASSERT(0);
 		}
@@ -454,6 +457,11 @@ U Texture::bind() const
 	case GL_TEXTURE_2D_ARRAY:
 		bindingPoint = GL_TEXTURE_BINDING_2D_ARRAY;
 		break;
+#if ANKI_GL == ANKI_GL_DESKTOP
+	case GL_TEXTURE_2D_MULTISAMPLE:
+		bindingPoint = GL_TEXTURE_BINDING_2D_MULTISAMPLE;
+		break;
+#endif
 	default:
 		ANKI_ASSERT(0 && "Unimplemented");
 		break;

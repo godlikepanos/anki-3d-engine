@@ -34,7 +34,7 @@ void Pps::initInternal(const RendererInitializer& initializer)
 	height = initializer.height / initializer.renderingQuality;
 
 	// FBO
-	fai.create2dFai(r->getWidth(), r->getHeight(), GL_SRGB8, GL_RGB,
+	fai.create2dFai(r->getWidth(), r->getHeight(), GL_RGB8, GL_RGB,
 		GL_UNSIGNED_BYTE);
 
 	fbo.create();

@@ -15,8 +15,6 @@ namespace anki {
 /// Instead of map/unmap use glBufferSubData() when writing to the whole buffer
 #define USE_BUFFER_DATA_ON_WRITE 1
 
-#define GL_ID glId[getGlobTimestamp() % objectsCount]
-
 //==============================================================================
 // BufferObject                                                                =
 //==============================================================================
@@ -41,8 +39,8 @@ void BufferObject::destroy()
 	if(isCreated())
 	{
 		unbind();
-		glDeleteBuffers(objectsCount, &glId[0]);
-		memset(&glId[0], sizeof(Base::glId), 0);
+		glDeleteBuffers(objectsCount, &glIds[0]);
+		memset(&glIds[0], sizeof(Base::glIds), 0);
 		objectsCount = 0;
 	}
 }
@@ -66,11 +64,11 @@ void BufferObject::create(GLenum target_, U32 sizeInBytes_,
 		&& "Multibuffering with data is not making sence");
 
 	// Create
-	glGenBuffers(objectsCount, &glId[0]);
+	glGenBuffers(objectsCount, &glIds[0]);
 
 	for(U i = 0; i < objectsCount; i++)
 	{
-		glBindBuffer(target, glId[i]);
+		glBindBuffer(target, glIds[i]);
 		glBufferData(target, sizeInBytes, dataPtr, usage);
 
 		// make a check
@@ -164,7 +162,7 @@ void BufferObject::read(void* outBuff, U32 offset, U32 size)
 void BufferObject::setBinding(GLuint binding) const
 {
 	ANKI_ASSERT(isCreated());
-	glBindBufferBase(target, binding, GL_ID);
+	glBindBufferBase(target, binding, getGlId());
 	ANKI_CHECK_GL_ERROR();
 }
 
@@ -176,7 +174,7 @@ void BufferObject::setBindingRange(
 	ANKI_ASSERT(offset + size <= sizeInBytes);
 	ANKI_ASSERT(size > 0);
 
-	glBindBufferRange(target, binding, GL_ID, offset, size);
+	glBindBufferRange(target, binding, getGlId(), offset, size);
 	ANKI_CHECK_GL_ERROR();
 }
 

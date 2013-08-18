@@ -140,8 +140,15 @@ void Fbo::setColorAttachments(const std::initializer_list<const Texture*>&
 	U i = 0;
 	for(const Texture* tex : textures)
 	{
+#if ANKI_GL == ANKI_GL_DESKTOP
+		ANKI_ASSERT(tex->getTarget() == GL_TEXTURE_2D 
+			|| tex->getTarget() == GL_TEXTURE_2D_MULTISAMPLE);
+#else
+		ANKI_ASSERT(tex->getTarget() == GL_TEXTURE_2D);
+#endif
+
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i,
-			GL_TEXTURE_2D, tex->getGlId(), 0);
+			tex->getTarget(), tex->getGlId(), 0);
 
 		attachments[attachmentsCount++] = GL_COLOR_ATTACHMENT0 + i;
 
@@ -159,9 +166,10 @@ void Fbo::setOtherAttachment(GLenum attachment, const Texture& tex,
 	switch(tex.getTarget())
 	{
 	case GL_TEXTURE_2D:
+	case GL_TEXTURE_2D_MULTISAMPLE:
 		ANKI_ASSERT(layer < 0 && face < 0);
 		glFramebufferTexture2D(target, attachment,
-			GL_TEXTURE_2D, tex.getGlId(), 0);
+			tex.getTarget(), tex.getGlId(), 0);
 		break;
 	case GL_TEXTURE_CUBE_MAP:
 		ANKI_ASSERT(layer < 0 && face >= 0);

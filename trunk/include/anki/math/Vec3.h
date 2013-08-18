@@ -12,6 +12,18 @@ namespace anki {
 template<typename T>
 class TVec3
 {
+	/// @name Friends
+	/// @{
+	template<typename Y>
+	friend TVec3<Y> operator+(const Y f, const TVec3<Y>& v);
+	template<typename Y>
+	friend TVec3<Y> operator-(const Y f, const TVec3<Y>& v);
+	template<typename Y>
+	friend TVec3<Y> operator*(const Y f, const TVec3<Y>& v);
+	template<typename Y>
+	friend TVec3<Y> operator/(const Y f, const TVec3<Y>& v);
+	/// @}
+
 public:
 	/// @name Constructors
 	/// @{
@@ -424,29 +436,6 @@ public:
 	}
 	/// @}
 
-	/// @name Friends
-	/// @{
-	friend TVec3 operator+(const T f, const TVec3& v)
-	{
-		return v + f;
-	}
-
-	friend TVec3 operator-(const T f, const TVec3& v)
-	{
-		return TVec3(f) - v;
-	}
-
-	friend TVec3 operator*(const T f, const TVec3& v)
-	{
-		return v * f;
-	}
-
-	friend TVec3 operator/(const T f, const TVec3& v)
-	{
-		return TVec3(f) / v;
-	}
-	/// @}
-
 private:
 	/// @name Data
 	/// @{
@@ -462,6 +451,30 @@ private:
 	/// @}
 };
 
+template<typename T>
+TVec3<T> operator+(const T f, const TVec3<T>& v)
+{
+	return v + f;
+}
+
+template<typename T>
+TVec3<T> operator-(const T f, const TVec3<T>& v)
+{
+	return TVec3<T>(f) - v;
+}
+
+template<typename T>
+TVec3<T> operator*(const T f, const TVec3<T>& v)
+{
+	return v * f;
+}
+
+template<typename T>
+TVec3<T> operator/(const T f, const TVec3<T>& v)
+{
+	return TVec3<T>(f) / v;
+}
+
 /// F32 3D vector
 typedef TVec3<F32> Vec3;
 static_assert(sizeof(Vec3) == sizeof(F32) * 3, "Incorrect size");
@@ -471,7 +484,6 @@ typedef TVec3<I32> IVec3;
 
 /// 32bit unsigned integer 3D vector
 typedef TVec3<U32> UVec3;
-
 /// @}
 
 } // end namespace anki

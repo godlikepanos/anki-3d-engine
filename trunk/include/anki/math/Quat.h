@@ -70,7 +70,7 @@ public:
 		T trace = m3(0, 0) + m3(1, 1) + m3(2, 2) + 1.0;
 		if(trace > getEpsilon<T>())
 		{
-			T s = 0.5 / sqrt(trace);
+			T s = 0.5 / sqrt<T>(trace);
 			w() = 0.25 / s;
 			x() = (m3(2, 1) - m3(1, 2)) * s;
 			y() = (m3(0, 2) - m3(2, 0)) * s;
@@ -80,7 +80,7 @@ public:
 		{
 			if(m3(0, 0) > m3(1, 1) && m3(0, 0) > m3(2, 2))
 			{
-				T s = 0.5 / sqrt(1.0 + m3(0, 0) - m3(1, 1) - m3(2, 2));
+				T s = 0.5 / sqrt<T>(1.0 + m3(0, 0) - m3(1, 1) - m3(2, 2));
 				w() = (m3(1, 2) - m3(2, 1)) * s;
 				x() = 0.25 / s;
 				y() = (m3(0, 1) + m3(1, 0)) * s;
@@ -88,7 +88,7 @@ public:
 			}
 			else if(m3(1, 1) > m3(2, 2))
 			{
-				T s = 0.5 / sqrt(1.0 + m3(1, 1) - m3(0, 0) - m3(2, 2));
+				T s = 0.5 / sqrt<T>(1.0 + m3(1, 1) - m3(0, 0) - m3(2, 2));
 				w() = (m3(0, 2) - m3(2, 0)) * s;
 				x() = (m3(0, 1) + m3(1, 0)) * s;
 				y() = 0.25 / s;
@@ -96,7 +96,7 @@ public:
 			}
 			else
 			{
-				T s = 0.5 / sqrt(1.0 + m3(2, 2) - m3(0, 0) - m3(1, 1));
+				T s = 0.5 / sqrt<T>(1.0 + m3(2, 2) - m3(0, 0) - m3(1, 1));
 				w() = (m3(0, 1) - m3(1, 0)) * s;
 				x() = (m3(0, 2) + m3(2, 0)) * s;
 				y() = (m3(1, 2) + m3(2, 1)) * s;
@@ -260,7 +260,7 @@ public:
 
 	T getLength() const
 	{
-		return sqrt(w() * w() + x() * x() + y() * y() + z() * z());
+		return sqrt<T>(w() * w() + x() * x() + y() * y() + z() * z());
 	}
 
 	TQuat getInverted() const
@@ -308,17 +308,16 @@ public:
 	/// Returns slerp(this, q1, t)
 	TQuat slerp(const TQuat& q1_, const T t) const
 	{
-		const TQuat& q0 = *this;
-		TQuat q1(q1_);
-		T cosHalfTheta = q0.w() * q1.w() + q0.x() * q1.x() + q0.y() * q1.y() 
-			+ q0.z() * q1.z();
+		TVec4<T> q0(*this);
+		TVec4<T> q1(q1_);
+		T cosHalfTheta = q0.dot(q1);
 		if(cosHalfTheta < 0.0)
 		{
-			q1 = TQuat(-TVec4<T>(q1)); // quat changes
+			q1 = -q1; // quat changes
 			cosHalfTheta = -cosHalfTheta;
 		}
 
-		if(fabs(cosHalfTheta) >= 1.0f)
+		if(fabs<T>(cosHalfTheta) >= 1.0)
 		{
 			return TQuat(q0);
 		}
@@ -326,15 +325,15 @@ public:
 		T halfTheta = acos<T>(cosHalfTheta);
 		T sinHalfTheta = sqrt<T>(1.0 - cosHalfTheta * cosHalfTheta);
 
-		if(fabs(sinHalfTheta) < 0.001)
+		if(fabs<T>(sinHalfTheta) < 0.001)
 		{
-			return TQuat((TVec4<T>(q0) + TVec4<T>(q1)) * 0.5);
+			return TQuat((q0 + q1) * 0.5);
 		}
 		T ratioA = sin<T>((1.0 - t) * halfTheta) / sinHalfTheta;
 		T ratio_b = sin<T>(t * halfTheta) / sinHalfTheta;
 		TVec4<T> tmp, tmp1, sum;
-		tmp = TVec4<T>(q0) * ratioA;
-		tmp1 = TVec4<T>(q1) * ratio_b;
+		tmp = q0 * ratioA;
+		tmp1 = q1 * ratio_b;
 		sum = tmp + tmp1;
 		sum.normalize();
 		return TQuat(sum);

@@ -317,7 +317,7 @@ void GlState::setDepthFunc(const GLenum val)
 #if ANKI_DEBUG
 	GLint real;
 	glGetIntegerv(GL_DEPTH_FUNC, &real);
-	ANKI_ASSERT(real == depthFunc);
+	ANKI_ASSERT((GLenum)real == depthFunc);
 #endif
 
 	if(val != depthFunc)

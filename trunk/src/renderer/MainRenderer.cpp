@@ -67,7 +67,7 @@ void MainRenderer::initGl()
 	GlStateSingleton::get().setDepthMaskEnabled(true);
 	GlStateSingleton::get().setDepthFunc(GL_LESS);
 
-	glEnable(GL_FRAMEBUFFER_SRGB);
+	//glEnable(GL_FRAMEBUFFER_SRGB);
 
 	glDisable(GL_DITHER);
 
@@ -102,7 +102,7 @@ void MainRenderer::render(SceneGraph& scene)
 		GlStateSingleton::get().disable(GL_BLEND);
 		sProg->bind();
 #if 0
-		const Texture& finalFai = pps.getLf().fai;
+		const Texture& finalFai = ms.getFai1();
 #else
 		const Texture& finalFai = pps.getFai();
 #endif

@@ -104,13 +104,13 @@ void Obb::getExtremePoints(Array<Vec3, 8>& points) const
 
 	// Reflection: x1' = 2n|x1.n| - x1
 
-	points[RBB] = 2.0 * er.dot(xAxis) * xAxis - er;
-	points[LTB] = 2.0 * er.dot(yAxis) * yAxis - er;
-	points[LBF] = 2.0 * er.dot(zAxis) * zAxis - er;
+	points[RBB] = 2.0f * er.dot(xAxis) * xAxis - er;
+	points[LTB] = 2.0f * er.dot(yAxis) * yAxis - er;
+	points[LBF] = 2.0f * er.dot(zAxis) * zAxis - er;
 
-	points[LTF] = 2.0 * points[LBB].dot(-xAxis) * -xAxis - points[LBB];
-	points[RTB] = 2.0 * points[LTF].dot(yAxis) * yAxis - points[LTF];
-	points[RBF] = 2.0 * points[LTF].dot(zAxis) * zAxis - points[LTF];
+	points[LTF] = 2.0f * points[LBB].dot(-xAxis) * -xAxis - points[LBB];
+	points[RTB] = 2.0f * points[LTF].dot(yAxis) * yAxis - points[LTF];
+	points[RBF] = 2.0f * points[LTF].dot(zAxis) * zAxis - points[LTF];
 
 	for(Vec3& point : points)
 	{

@@ -119,7 +119,7 @@ void init()
 	ANKI_LOGI("Other init...");
 
 	SceneGraph& scene = SceneGraphSingleton::get();
-	scene.setAmbientColor(Vec3(0.04));
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 3);
 
 #if 0
 	painter = new UiPainter(Vec2(AppSingleton::get().getWindowWidth(),
@@ -527,7 +527,7 @@ void initSubsystems(int argc, char* argv[])
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
 	nwinit.fullscreenDesktopRez = true;
-	nwinit.debugContext = true;
+	nwinit.debugContext = false;
 	win = new NativeWindow;	
 	win->create(nwinit);
 
@@ -567,6 +567,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.width = win->getWidth();
 	initializer.height = win->getHeight();
 	initializer.lodDistance = 20.0;
+	initializer.samples = 16;
 
 	MainRendererSingleton::get().init(initializer);
 

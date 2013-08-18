@@ -19,6 +19,75 @@ vec3 unpackNormal(in vec2 enc)
 	return normal;
 }
 
+vec2 encodeUnormFloatToVec2(in float f)
+{
+	vec2 vec = vec2(1.0, 65025.0) * f;
+	return vec2(vec.x, fract(vec.y));
+	//return unpackSnorm2x16(floatBitsToUint(f));
+}
+
+float decodeVec2ToUnormFloat(in vec2 vec)
+{
+	//return uintBitsToFloat(packSnorm2x16(vec));
+	return dot(vec, vec2(1.0, 1.0 / 65025.0));
+}
+
+void packAndWriteNormal(in vec3 normal, out vec4 fai)
+{
+#if 1
+	vec3 unorm = normal * 0.5 + 0.5;
+	fai = vec4(unorm.xyz, 0.0);
+#endif
+
+#if 0
+	vec3 unorm = normal * 0.5 + 0.5;
+	float maxc = max(max(unorm.x, unorm.y), unorm.z);
+	fai = vec4(unorm.xyz * maxc, maxc);
+#endif
+
+#if 0
+	vec2 enc = packNormal(normal) * 0.5 + 0.5;
+	fai = vec4(encodeUnormFloatToVec2(enc.x), encodeUnormFloatToVec2(enc.y));
+#endif
+
+#if 0
+	vec2 unorm = normal.xy * 0.5 + 0.5;
+	vec2 x = encodeUnormFloatToVec2(unorm.x);
+	vec2 y = encodeUnormFloatToVec2(unorm.y);
+	fai = vec4(x, y);
+#endif
+	//fai = packNormal(normal_);
+}
+
+vec3 readAndUnpackNormal(in sampler2D fai, in vec2 texCoord)
+{
+#if 1
+	return normalize(texture(fai, texCoord).xyz * 2.0 - 1.0);
+#endif
+
+#if 0
+	vec4 enc = texture(fai, texCoord);
+	return normalize(enc.xyz * (2.0 / enc.w) - 1.0);
+#endif
+
+#if 0
+	vec4 enc = texture(fai, texCoord);
+	vec2 enc2 = vec2(decodeVec2ToUnormFloat(enc.xy), 
+		decodeVec2ToUnormFloat(enc.zw)) * 2.0 - 1.0;
+	return unpackNormal(enc2);
+#endif
+
+#if 0
+	vec4 enc = texture(fai, texCoord);
+	vec2 xy = vec2(decodeVec2ToUnormFloat(enc.xy),
+		decodeVec2ToUnormFloat(enc.zw)) * 2.0 - 1.0;
+	float z = sqrt(1.0 - dot(xy, xy)) ;
+	vec3 snorm = vec3(xy, z);
+	return snorm;
+#endif
+	//unpackNormal(texture(fai_, texCoord_).rg)
+}
+
 #define MAX_SPECULARITY 128.0
 
 /// Pack specular stuff

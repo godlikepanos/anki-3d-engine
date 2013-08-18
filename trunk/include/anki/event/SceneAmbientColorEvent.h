@@ -15,14 +15,14 @@ class SceneAmbientColorEvent: public Event
 public:
 	/// Constructor
 	SceneAmbientColorEvent(F32 startTime, F32 duration, EventManager* manager,
-		const Vec3& finalColor, SceneGraph* scene);
+		const Vec4& finalColor, SceneGraph* scene);
 
 	/// Implements Event::update
 	void update(F32 prevUpdateTime, F32 crntTime);
 
 private:
-	Vec3 originalColor; ///< Original scene color. The constructor sets it
-	Vec3 finalColor;
+	Vec4 originalColor; ///< Original scene color. The constructor sets it
+	Vec4 finalColor;
 	SceneGraph* scene = nullptr;
 };
 

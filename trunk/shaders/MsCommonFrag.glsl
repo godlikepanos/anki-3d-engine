@@ -29,7 +29,7 @@ flat in lowp float vSpecularComponent;
 #if defined(PASS_COLOR)
 #	if USE_MRT
 layout(location = 0) out vec4 fMsFai0;
-layout(location = 1) out vec2 fMsFai1;
+layout(location = 1) out vec4 fMsFai1;
 #	else
 layout(location = 0) out uvec2 fMsFai0;
 #	endif
@@ -160,7 +160,7 @@ void writeFais(
 	// Diffuse color and specular
 	fMsFai0 = vec4(diffCol, specularComponent);
 	// Normal
-	fMsFai1 = packNormal(normal);
+	packAndWriteNormal(normal, fMsFai1);
 #else
 	// Diffuse color and specular
 	fMsFai0[0] = packUnorm4x8(vec4(diffCol, specularComponent));
