@@ -61,13 +61,13 @@ public:
 		return SceneAllocator<U8>(frameAlloc);
 	}
 
-	const Vec3& getAmbientColor() const
+	Vec4 getAmbientColor() const
 	{
-		return ambientCol;
+		return Vec4(ambientCol, 1.0);
 	}
-	void setAmbientColor(const Vec3& x)
+	void setAmbientColor(const Vec4& x)
 	{
-		ambientCol = x;
+		ambientCol = x.xyz();
 		ambiendColorUpdateTimestamp = getGlobTimestamp();
 	}
 	U32 getAmbientColorUpdateTimestamp() const

@@ -5,7 +5,7 @@
 #pragma anki include "shaders/MsBsCommon.glsl"
 
 #define vTexCoords_DEFINED
-in vec2 vTexCoords;
+in vec2 vTexCoord;
 #define vInstanceId_DEFINED
 flat in uint vInstanceId;
 
@@ -29,7 +29,7 @@ void writeFais(in vec4 color)
 #define particleAlpha_DEFINED
 void particleAlpha(in sampler2D tex, in float alpha)
 {
-	vec4 color = DEFAULT_FLOAT_PRECISION vec4(texture(tex, vTexCoords));
+	vec4 color = DEFAULT_FLOAT_PRECISION vec4(texture(tex, vTexCoord));
 	color.w *= alpha;
 	writeFais(color);
 }

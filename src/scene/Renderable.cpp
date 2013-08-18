@@ -118,7 +118,7 @@ void Renderable::init(PropertyMap& pmap)
 
 	if(block)
 	{
-		ubo.create(block->getSize(), nullptr, GlMultiObject::DOUBLE_OBJECT);
+		ubo.create(block->getSize(), nullptr, GlObject::DOUBLE_OBJECT);
 	}
 
 	// Instancing sanity checks

@@ -12,6 +12,17 @@ namespace anki {
 template<typename T>
 class TVec2
 {
+	/// @name Friends
+	template<typename Y>
+	friend TVec2<Y> operator+(const Y f, const TVec2<Y>& v2);
+	template<typename Y>
+	friend TVec2<Y> operator-(const Y f, const TVec2<Y>& v2);
+	template<typename Y>
+	friend TVec2<Y> operator*(const Y f, const TVec2<Y>& v2);
+	template<typename Y>
+	friend TVec2<Y> operator/(const Y f, const TVec2<Y>& v2);
+	///@]
+
 public:
 	/// @name Constructors
 	/// @{
@@ -260,28 +271,6 @@ public:
 	}
 	/// @}
 
-	/// @name Friends
-	friend TVec2 operator+(const T f, const TVec2& v2)
-	{
-		return v2 + f;
-	}
-
-	friend TVec2 operator-(const T f, const TVec2& v2)
-	{
-		return TVec2(f - v2.x(), f - v2.y());
-	}
-
-	friend TVec2 operator*(const T f, const TVec2& v2)
-	{
-		return v2 * f;
-	}
-
-	friend TVec2 operator/(const T f, const TVec2& v2)
-	{
-		return TVec2(f / v2.x(), f / v2.y());
-	}
-	///@]
-
 private:
 	/// @name Data members
 	/// @{
@@ -296,6 +285,30 @@ private:
 	};
 	/// @}
 };
+
+template<typename T>
+TVec2<T> operator+(const T f, const TVec2<T>& v2)
+{
+	return v2 + f;
+}
+
+template<typename T>
+TVec2<T> operator-(const T f, const TVec2<T>& v2)
+{
+	return TVec2<T>(f - v2.x(), f - v2.y());
+}
+
+template<typename T>
+TVec2<T> operator*(const T f, const TVec2<T>& v2)
+{
+	return v2 * f;
+}
+
+template<typename T>
+TVec2<T> operator/(const T f, const TVec2<T>& v2)
+{
+	return TVec2<T>(f / v2.x(), f / v2.y());
+}
 
 /// F32 2D vector
 typedef TVec2<F32> Vec2;

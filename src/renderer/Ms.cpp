@@ -13,42 +13,53 @@ Ms::~Ms()
 {}
 
 //==============================================================================
+void Ms::createFbo(U index, U samples)
+{
+#if ANKI_RENDERER_USE_MRT
+	fai0[index].create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
+		GL_RGBA, GL_UNSIGNED_BYTE, samples);
+	fai1[index].create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
+		GL_RGBA, GL_UNSIGNED_BYTE, samples);
+#else
+	fai0[index].create2dFai(r->getWidth(), r->getHeight(), GL_RG32UI,
+		GL_RG_INTEGER, GL_UNSIGNED_INT, samples);
+#endif
+	depthFai[index].create2dFai(r->getWidth(), r->getHeight(),
+		GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
+		GL_UNSIGNED_INT_24_8, samples);
+
+	fbo[index].create();
+
+#if ANKI_RENDERER_USE_MRT
+	fbo[index].setColorAttachments({&fai0[index], &fai1[index]});
+#else
+	fbo[index].setColorAttachments({&fai0[index]});
+#endif
+	fbo[index].setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT, depthFai[index]);
+
+	if(!fbo[index].isComplete())
+	{
+		throw ANKI_EXCEPTION("FBO is incomplete");
+	}
+}
+
+//==============================================================================
 void Ms::init(const RendererInitializer& initializer)
 {
 	try
 	{
-#if ANKI_RENDERER_USE_MRT
-		fai0.create2dFai(r->getWidth(), r->getHeight(), GL_SRGB8_ALPHA8,
-			GL_RGBA, GL_UNSIGNED_BYTE, 16);
-		fai1.create2dFai(r->getWidth(), r->getHeight(), GL_RG16F,
-			GL_RG, GL_FLOAT);
-#else
-		fai0.create2dFai(r->getWidth(), r->getHeight(), GL_RG32UI,
-			GL_RG_INTEGER, GL_UNSIGNED_INT);
-#endif
-		depthFai.create2dFai(r->getWidth(), r->getHeight(),
-			GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
-			GL_UNSIGNED_INT_24_8);
-
-		fbo.create();
-#if ANKI_RENDERER_USE_MRT
-		fbo.setColorAttachments({&fai0, &fai1});
-#else
-		fbo.setColorAttachments({&fai0});
-#endif
-		fbo.setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT, depthFai);
-		if(!fbo.isComplete())
+		if(initializer.samples > 1)
 		{
-			throw ANKI_EXCEPTION("FBO is incomplete");
+			createFbo(0, initializer.samples);
 		}
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Cannot create deferred "
-			"shading material stage") << e;
-	}
+		createFbo(1, 1);
 
-	ez.init(initializer);
+		ez.init(initializer);
+	}
+	catch(const std::exception& e)
+	{
+		throw ANKI_EXCEPTION("Failed to initialize material stage") << e;
+	}
 }
 
 //==============================================================================
@@ -56,7 +67,16 @@ void Ms::run()
 {
 	GlState& gl = GlStateSingleton::get();
 
-	fbo.bind();
+	// Chose the multisampled or the singlesampled FBO
+	if(r->samples > 1)
+	{
+		fbo[0].bind();
+	}
+	else
+	{
+		fbo[1].bind();
+	}
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 	gl.setViewport(0, 0, r->getWidth(), r->getHeight());
@@ -84,6 +104,30 @@ void Ms::run()
 		r->getSceneDrawer().render(r->getSceneGraph().getActiveCamera(),
 			RenderableDrawer::RS_MATERIAL, COLOR_PASS, *(*it).node, 
 			(*it).subSpatialIndices, (*it).subSpatialIndicesCount);
+	}
+
+	// If there is multisampling then resolve to singlesampled
+	if(r->samples > 1)
+	{
+		fbo[0].bind(Fbo::FT_READ);
+		glReadBuffer(GL_COLOR_ATTACHMENT1);
+		fbo[1].bind(Fbo::FT_DRAW);
+		glDrawBuffer(GL_COLOR_ATTACHMENT1);
+
+		glBlitFramebuffer(
+			0, 0, r->width, r->height, 
+			0, 0, r->width, r->height,
+			GL_COLOR_BUFFER_BIT,
+			GL_NEAREST);
+
+		glReadBuffer(GL_COLOR_ATTACHMENT0);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+		glBlitFramebuffer(
+			0, 0, r->width, r->height, 
+			0, 0, r->width, r->height,
+			GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
+			GL_NEAREST);
 	}
 
 	// Gen mips

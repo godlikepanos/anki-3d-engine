@@ -148,7 +148,8 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 		|| getGlDataType() == GL_SAMPLER_2D_SHADOW
 		|| getGlDataType() == GL_UNSIGNED_INT_SAMPLER_2D
 		|| getGlDataType() == GL_SAMPLER_2D_ARRAY_SHADOW
-		|| getGlDataType() == GL_SAMPLER_2D_ARRAY);
+		|| getGlDataType() == GL_SAMPLER_2D_ARRAY
+		|| getGlDataType() == GL_SAMPLER_2D_MULTISAMPLE);
 	
 	glUniform1i(getLocation(), tex.bind());
 }

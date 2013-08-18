@@ -22,19 +22,19 @@ public:
 	/// @{
 	const Texture& getFai0() const
 	{
-		return fai0;
+		return fai0[1];
 	}
 
 #if ANKI_RENDERER_USE_MRT
 	const Texture& getFai1() const
 	{
-		return fai1;
+		return fai1[1];
 	}
 #endif
 
 	const Texture& getDepthFai() const
 	{
-		return depthFai;
+		return depthFai[1];
 	}
 	/// @}
 
@@ -43,12 +43,15 @@ public:
 
 private:
 	Ez ez; /// EarlyZ pass
-	Fbo fbo;
-	Texture fai0; ///< The FAI for diffuse color, normals and specular
+	Array<Fbo, 2> fbo;
+	Array<Texture, 2> fai0; ///< The FAI for diffuse color, normals and specular
 #if ANKI_RENDERER_USE_MRT
-	Texture fai1;
+	Array<Texture, 2> fai1;
 #endif
-	Texture depthFai; ///< The FAI for depth
+	Array<Texture, 2> depthFai; ///< The FAI for depth
+
+	/// Create a G buffer FBO
+	void createFbo(U index, U samples);
 };
 
 } // end namespace anki

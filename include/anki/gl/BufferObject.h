@@ -10,10 +10,10 @@ namespace anki {
 	
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
 /// to prevent us from making idiotic errors
-class BufferObject: public GlMultiObject
+class BufferObject: public GlObject
 {
 public:
-	typedef GlMultiObject Base;
+	typedef GlObject Base;
 
 	/// @name Constructors/Destructor
 	/// @{
@@ -69,7 +69,7 @@ public:
 	void bind() const
 	{
 		ANKI_ASSERT(isCreated());
-		glBindBuffer(target, glId[getGlobTimestamp() % objectsCount]);
+		glBindBuffer(target, getGlId());
 	}
 
 	/// Unbind BO

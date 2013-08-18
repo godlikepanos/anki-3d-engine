@@ -43,14 +43,14 @@ uniform sampler2D noiseMap;
 /// @}
 
 #define RADIUS 0.5
-#define DARKNESS_MULTIPLIER 2.0 // Initial is 1.0 but the bigger it is the more
+#define DARKNESS_MULTIPLIER 1.0 // Initial is 1.0 but the bigger it is the more
                                 // darker the SSAO factor gets
 
 // Get normal
 vec3 getNormal(in vec2 uv)
 {
 #if USE_MRT
-	vec3 normal = unpackNormal(texture(msGFai, uv).rg);
+	vec3 normal = readAndUnpackNormal(msGFai, uv);
 #else
 	uvec2 msAll = texture(msGFai, uv).rg;
 	vec3 normal = unpackNormal(unpackHalf2x16(msAll[1]));

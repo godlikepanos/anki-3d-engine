@@ -10,22 +10,40 @@
 #include "anki/util/StdTypes.h"
 #include "anki/core/Timestamp.h"
 #include <thread>
+#include <atomic>
+#include <cstring>
 
 namespace anki {
 
 /// @addtogroup OpenGL
 /// @{
 
-/// An OpenGL object. It is never copyable
+/// A compound GL object that supports buffering depending on the frame
 class GlObject: public NonCopyable
 {
 public:
+	/// Buffering technique
+	enum
+	{
+		SINGLE_OBJECT = 1,
+		DOUBLE_OBJECT = 2,
+		TRIPLE_OBJECT = 3,
+		MAX_OBJECTS = 3
+	};
+
 	/// Default
 	GlObject()
-	{}
+	{
+		memset(&glIds[0], 0, sizeof(glIds));
+		objectsCount = 1;
+#if ANKI_DEBUG
+		refCount.store(0);
+#endif
+	}
 
 	/// Move
 	GlObject(GlObject&& b)
+		: GlObject()
 	{
 		*this = std::move(b);
 	}
@@ -40,105 +58,64 @@ public:
 	GlObject& operator=(GlObject&& b)
 	{
 		ANKI_ASSERT(!isCreated());
-		glId = b.glId;
-		b.glId = 0;
-		return *this;
-	}
-
-	/// Get the GL name
-	GLuint getGlId() const
-	{
-		ANKI_ASSERT(isCreated());
-		return glId;
-	}
-
-	/// GL object is created
-	Bool isCreated() const
-	{
-		return glId != 0;
-	}
-
-protected:
-	/// OpenGL name
-	GLuint glId = 0;
-};
-
-/// A compound GL object that supports buffering depending on the frame
-class GlMultiObject: public NonCopyable
-{
-public:
-	/// Buffering technique
-	enum
-	{
-		SINGLE_OBJECT = 1,
-		DOUBLE_OBJECT = 2,
-		TRIPLE_OBJECT = 3,
-		MAX_OBJECTS = 3
-	};
-
-	/// Default
-	GlMultiObject()
-	{}
-
-	/// Move
-	GlMultiObject(GlMultiObject&& b)
-	{
-		*this = std::move(b);
-	}
-
-	~GlMultiObject()
-	{
-		// The destructor of the derived GL object should pass 0 name
-		ANKI_ASSERT(!isCreated());
-	}
-
-	/// Move
-	GlMultiObject& operator=(GlMultiObject&& b)
-	{
-		ANKI_ASSERT(!isCreated());
 		
 		for(U i = 0; i < MAX_OBJECTS; i++)
 		{
-			glId[i] = b.glId[i];
-			b.glId[i] = 0;
+			glIds[i] = b.glIds[i];
+			b.glIds[i] = 0;
 		}
 
 		objectsCount = b.objectsCount;
-		b.objectsCount = 0;
+		b.objectsCount = 1;
+#if ANKI_DEBUG
+		refCount.store(b.refCount.load());
+		b.refCount.store(0);
+#endif
 		return *this;
 	}
 
-	/// Get the GL name
+	/// Get the GL name for the current frame
 	GLuint getGlId() const
 	{
 		ANKI_ASSERT(isCreated());
-		return glId[getGlobTimestamp() % MAX_OBJECTS];
+		return glIds[getGlobTimestamp() % objectsCount];
 	}
 
 	/// GL object is created
 	Bool isCreated() const
 	{
+		ANKI_ASSERT(objectsCount > 0);
 #if ANKI_DEBUG
 		U mask = 0;
 		for(U i = 0; i < MAX_OBJECTS; i++)
 		{
 			mask <<= 1;
-			mask |= (glId[i] != 0);
+			mask |= (glIds[i] != 0);
 		}
 
 		// If the mask is not zero then make sure that objectsCount is sane
 		ANKI_ASSERT(!(mask != 0 && __builtin_popcount(mask) != objectsCount));
 #endif
 
-		return objectsCount > 0;
+		return glId != 0;
 	}
 
 protected:
 	/// OpenGL names
-	Array<GLuint, MAX_OBJECTS> glId = {{0, 0, 0}};
+	union
+	{
+		Array<GLuint, MAX_OBJECTS> glIds;
+		GLuint glId;
+	};
 
-	/// The size of the glId array
-	U8 objectsCount = 0;
+	/// The size of the glIds array
+	U8 objectsCount;
+
+#if ANKI_DEBUG
+	/// Textures and buffers can be attached so keep a refcount for sanity
+	/// checks
+	std::atomic<U32> refCount;
+#endif
 };
 
 /// Defines an non sharable GL object. Used to avoid idiotic mistakes and more

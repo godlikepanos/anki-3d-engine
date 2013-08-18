@@ -484,11 +484,10 @@ void Is::initInternal(const RendererInitializer& initializer)
 	//
 
 	// IS FBO
-	fai.create2dFai(r->getWidth(), r->getHeight(), GL_SRGB8,
+	fai.create2dFai(r->getWidth(), r->getHeight(), GL_RGB8,
 		GL_RGB, GL_UNSIGNED_BYTE);
 	fbo.create();
 	fbo.setColorAttachments({&fai});
-	fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, r->getMs().getDepthFai());
 
 	if(!fbo.isComplete())
 	{
@@ -894,7 +893,7 @@ void Is::run()
 	{
 		shader::CommonUniforms blk;
 		blk.planes = Vec4(r->getPlanes().x(), r->getPlanes().y(), 0.0, 0.0);
-		blk.sceneAmbientColor = Vec4(scene.getAmbientColor(), 0.0);
+		blk.sceneAmbientColor = scene.getAmbientColor();
 
 		if(groundLightEnabled)
 		{

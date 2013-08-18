@@ -113,7 +113,7 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 
 //==============================================================================
 std::shared_ptr<Event> EventManager::newSceneAmbientColorEvent(
-	F32 startTime, F32 duration, const Vec3& finalColor)
+	F32 startTime, F32 duration, const Vec4& finalColor)
 {
 	return registerEvent(new SceneAmbientColorEvent(startTime, duration, this, 
 		finalColor, scene));

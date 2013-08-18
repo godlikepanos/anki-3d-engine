@@ -87,7 +87,6 @@ layout(std140)
 	Tile tiles[TILES_COUNT];
 };
 
-
 #if USE_MRT
 uniform sampler2D msFai0;
 uniform sampler2D msFai1;
@@ -227,7 +226,7 @@ void main()
 
 	// Decode MS
 #if USE_MRT
-	vec3 normal = unpackNormal(texture(msFai1, vTexCoords).rg);
+	vec3 normal = readAndUnpackNormal(msFai1, vTexCoords);
 	vec4 diffuseAndSpec = texture(msFai0, vTexCoords);
 #else
 	uvec2 msAll = texture(msFai0, vTexCoords).rg;

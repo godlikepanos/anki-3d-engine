@@ -6,7 +6,7 @@ namespace anki {
 
 //==============================================================================
 SceneAmbientColorEvent::SceneAmbientColorEvent(F32 startTime, F32 duration, 
-	EventManager* manager, const Vec3& finalColor_, SceneGraph* scene_)
+	EventManager* manager, const Vec4& finalColor_, SceneGraph* scene_)
 	:	Event(startTime, duration, manager), 
 		finalColor(finalColor_), 
 		scene(scene_)

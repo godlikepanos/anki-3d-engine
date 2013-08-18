@@ -23,8 +23,15 @@ void Renderer::init(const RendererInitializer& initializer)
 	height = initializer.height;
 	lodDistance = initializer.lodDistance;
 	framesNum = 0;
+	samples = initializer.samples;
 
 	// a few sanity checks
+	if(samples != 1 && samples != 4 && samples != 8 && samples != 16
+		&& samples != 32)
+	{
+		throw ANKI_EXCEPTION("Incorrect samples");
+	}
+
 	if(width < 10 || height < 10)
 	{
 		throw ANKI_EXCEPTION("Incorrect sizes");

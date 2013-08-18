@@ -3,11 +3,11 @@
 #pragma anki include "shaders/MsBsCommon.glsl"
 
 layout(location = 0) in vec3 position;
-layout(location = 3) in vec2 texCoords;
+layout(location = 3) in vec2 texCoord;
 
 /// @name Varyings
 /// @{
-out vec2 vTexCoords;
+out vec2 vTexCoord;
 flat out uint vInstanceId;
 /// @}
 
@@ -29,14 +29,14 @@ void setPositionVec4(in vec4 pos)
 #define setTexCoords_DEFINED
 void setTexCoords(in vec2 x)
 {
-	vTexCoords = x;
+	vTexCoord = x;
 }
 
 //==============================================================================
 #define particle_DEFINED
 void particle(in mat4 mvp)
 {
-	vTexCoords = texCoords;
+	vTexCoord = texCoord;
 	gl_Position = mvp * vec4(position, 1);
 	vInstanceId = uint(gl_InstanceID);
 }

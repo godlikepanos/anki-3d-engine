@@ -216,16 +216,6 @@ public:
 	{
 		return arr1[i];
 	}
-
-	Simd& getSimd(const U i)
-	{
-		return simd[i];
-	}
-
-	const Simd& getSimd(const U i) const
-	{
-		return simd[i];
-	}
 	/// @}
 
 	/// @name Operators with same type

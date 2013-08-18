@@ -724,8 +724,6 @@ private:
 	/// @}
 };
 
-/// @name TMat3 friends
-/// @{
 template<typename T>
 TMat3<T> operator+(T f, const TMat3<T>& m3)
 {
@@ -759,7 +757,6 @@ TMat3<T> operator/(T f, const TMat3<T>& m3)
 	}
 	return out;
 }
-/// @}
 
 /// F32 3x3 matrix
 typedef TMat3<F32> Mat3;
