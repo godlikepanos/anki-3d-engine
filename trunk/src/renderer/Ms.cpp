@@ -112,7 +112,8 @@ void Ms::run()
 		fbo[0].bind(Fbo::FT_READ);
 		glReadBuffer(GL_COLOR_ATTACHMENT1);
 		fbo[1].bind(Fbo::FT_DRAW);
-		glDrawBuffer(GL_COLOR_ATTACHMENT1);
+		static const GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT1};
+		glDrawBuffers(1, drawBuffers);
 
 		glBlitFramebuffer(
 			0, 0, r->width, r->height, 
@@ -121,7 +122,8 @@ void Ms::run()
 			GL_NEAREST);
 
 		glReadBuffer(GL_COLOR_ATTACHMENT0);
-		glDrawBuffer(GL_COLOR_ATTACHMENT0);
+		static const GLenum drawBuffers2[] = {GL_COLOR_ATTACHMENT0};
+		glDrawBuffers(1, drawBuffers2);
 
 		glBlitFramebuffer(
 			0, 0, r->width, r->height, 

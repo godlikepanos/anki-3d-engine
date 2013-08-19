@@ -194,15 +194,7 @@ class Ubo: public BufferObject
 {
 public:
 	/// Create a UBO
-	void create(PtrSize size, const void* data, U objectCount = SINGLE_OBJECT)
-	{
-		GLint64 maxBufferSize;
-		glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBufferSize);
-		ANKI_ASSERT(size <= (PtrSize)maxBufferSize);
-
-		BufferObject::create(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW,
-			objectCount);
-	}
+	void create(PtrSize size, const void* data, U objectCount = SINGLE_OBJECT);
 };
 
 /// Pixel buffer object

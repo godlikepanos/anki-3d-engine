@@ -17,12 +17,6 @@ static const U MAX_SPOT_LIGHTS_PER_TILE =
 static const U MAX_SPOT_TEX_LIGHTS_PER_TILE = 
 	ANKI_RENDERER_MAX_SPOT_TEX_LIGHTS_PER_TILE;
 
-static const U MAX_POINT_LIGHTS = ANKI_RENDERER_MAX_POINT_LIGHTS;
-static const U MAX_SPOT_LIGHTS = ANKI_RENDERER_MAX_SPOT_LIGHTS;
-static const U MAX_SPOT_TEX_LIGHTS = ANKI_RENDERER_MAX_SPOT_TEX_LIGHTS;
-static const U MAX_LIGHTS = 
-	MAX_POINT_LIGHTS + MAX_SPOT_LIGHTS + MAX_SPOT_TEX_LIGHTS;
-
 static const U TILES_X_COUNT = ANKI_RENDERER_TILES_X_COUNT;
 static const U TILES_Y_COUNT = ANKI_RENDERER_TILES_Y_COUNT;
 static const U TILES_COUNT = TILES_X_COUNT * TILES_Y_COUNT;
@@ -99,33 +93,6 @@ struct CommonUniforms
 };
 
 } // end namespace shader
-
-//==============================================================================
-static const PtrSize MIN_LIGHTS_UBO_SIZE = 
-	MAX_POINT_LIGHTS * sizeof(shader::PointLight)
-	+ MAX_SPOT_LIGHTS * sizeof(shader::SpotLight)
-	+ MAX_SPOT_TEX_LIGHTS * sizeof(shader::SpotTexLight);
-
-/// Align everything to make UBOs happy
-static PtrSize calcLigthsUboSize()
-{
-	PtrSize size;
-	PtrSize uboAlignment = BufferObject::getUniformBufferOffsetAlignment();
-
-	size = alignSizeRoundUp(
-		uboAlignment,
-		MAX_POINT_LIGHTS * sizeof(shader::PointLight));
-
-	size += alignSizeRoundUp(
-		uboAlignment,
-		MAX_SPOT_LIGHTS * sizeof(shader::SpotLight));
-
-	size += alignSizeRoundUp(
-		uboAlignment,
-		MAX_SPOT_TEX_LIGHTS * sizeof(shader::SpotTexLight));
-
-	return size;
-}
 
 //==============================================================================
 // Use compute shaders on GL >= 4.3
@@ -217,7 +184,7 @@ struct WriteLightsJob: ThreadJob
 	{
 		// Get GPU light
 		I i = pointLightsCount->fetch_add(1);
-		if(i >= (I)MAX_POINT_LIGHTS)
+		if(i >= (I)is->maxPointLights)
 		{
 			return -1;
 		}
@@ -250,7 +217,7 @@ struct WriteLightsJob: ThreadJob
 			// Spot tex light
 
 			i = spotTexLightsCount->fetch_add(1);
-			if(i >= (I)MAX_SPOT_TEX_LIGHTS)
+			if(i >= (I)is->maxSpotTexLights)
 			{
 				return -1;
 			}
@@ -277,7 +244,7 @@ struct WriteLightsJob: ThreadJob
 			// Spot light without texture
 
 			i = spotLightsCount->fetch_add(1);
-			if(i >= (I)MAX_SPOT_LIGHTS)
+			if(i >= (I)is->maxSpotLights)
 			{
 				return -1;
 			}
@@ -423,6 +390,14 @@ void Is::init(const RendererInitializer& initializer)
 void Is::initInternal(const RendererInitializer& initializer)
 {
 	groundLightEnabled = initializer.is.groundLightEnabled;
+	maxPointLights = initializer.is.maxPointLights;
+	maxSpotLights = initializer.is.maxSpotLights;
+	maxSpotTexLights = initializer.is.maxSpotTexLights;
+
+	if(maxPointLights < 1 || maxSpotLights < 1 || maxSpotTexLights < 1)
+	{
+		throw ANKI_EXCEPTION("Incorrect number of max lights");
+	}
 
 	//
 	// Init the passes
@@ -445,9 +420,9 @@ void Is::initInternal(const RendererInitializer& initializer)
 		<< "\n"
 		<< "#define MAX_SPOT_TEX_LIGHTS_PER_TILE " 
 		<< MAX_SPOT_TEX_LIGHTS_PER_TILE << "\n"
-		<< "#define MAX_POINT_LIGHTS " << MAX_POINT_LIGHTS << "\n"
-		<< "#define MAX_SPOT_LIGHTS " << MAX_SPOT_LIGHTS << "\n"
-		<< "#define MAX_SPOT_TEX_LIGHTS " << MAX_SPOT_TEX_LIGHTS << "\n"
+		<< "#define MAX_POINT_LIGHTS " << (U32)maxPointLights << "\n"
+		<< "#define MAX_SPOT_LIGHTS " << (U32)maxSpotLights << "\n"
+		<< "#define MAX_SPOT_TEX_LIGHTS " << (U32)maxSpotTexLights << "\n"
 		<< "#define GROUND_LIGHT " << groundLightEnabled << "\n"
 		<< "#define USE_MRT " << ANKI_RENDERER_USE_MRT << "\n";
 
@@ -514,7 +489,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	commonUbo.create(sizeof(shader::CommonUniforms), nullptr);
 
 	// lights UBO
-	lightsUbo.create(calcLigthsUboSize(), nullptr);
+	lightsUbo.create(calcLightsUboSize(), nullptr);
 	uboAlignment = BufferObject::getUniformBufferOffsetAlignment();
 
 	// tiles BO
@@ -524,7 +499,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 		nullptr, 
 		GL_DYNAMIC_DRAW);
 
-	ANKI_LOGI("Creating BOs: lights: " << calcLigthsUboSize() << "B tiles: "
+	ANKI_LOGI("Creating BOs: lights: " << calcLightsUboSize() << "B tiles: "
 		<< sizeof(shader::Tiles) << "B");
 
 	// Sanity checks
@@ -553,7 +528,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 
 	ublock = &lightPassProg->findUniformBlock("pointLightsBlock");
 	ublock->setBinding(POINT_LIGHTS_BLOCK_BINDING);
-	if(ublock->getSize() != sizeof(shader::PointLight) * MAX_POINT_LIGHTS
+	if(ublock->getSize() != sizeof(shader::PointLight) * maxPointLights
 		|| ublock->getBinding() != POINT_LIGHTS_BLOCK_BINDING)
 	{
 		throw ANKI_EXCEPTION("Problem with the pointLightsBlock");
@@ -564,7 +539,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	{
 		ublock = &rejectProg->findUniformBlock("pointLightsBlock");
 		ublock->setBinding(POINT_LIGHTS_BLOCK_BINDING);
-		if(ublock->getSize() != sizeof(shader::PointLight) * MAX_POINT_LIGHTS
+		if(ublock->getSize() != sizeof(shader::PointLight) * maxPointLights
 			|| ublock->getBinding() != POINT_LIGHTS_BLOCK_BINDING)
 		{
 			throw ANKI_EXCEPTION("Problem with the pointLightsBlock");
@@ -574,7 +549,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 
 	ublock = &lightPassProg->findUniformBlock("spotLightsBlock");
 	ublock->setBinding(SPOT_LIGHTS_BLOCK_BINDING);
-	if(ublock->getSize() != sizeof(shader::SpotLight) * MAX_SPOT_LIGHTS
+	if(ublock->getSize() != sizeof(shader::SpotLight) * maxSpotLights
 		|| ublock->getBinding() != SPOT_LIGHTS_BLOCK_BINDING)
 	{
 		throw ANKI_EXCEPTION("Problem with the spotLightsBlock");
@@ -582,7 +557,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 
 	ublock = &lightPassProg->findUniformBlock("spotTexLightsBlock");
 	ublock->setBinding(SPOT_TEX_LIGHTS_BLOCK_BINDING);
-	if(ublock->getSize() != sizeof(shader::SpotTexLight) * MAX_SPOT_TEX_LIGHTS
+	if(ublock->getSize() != sizeof(shader::SpotTexLight) * maxSpotTexLights
 		|| ublock->getBinding() != SPOT_TEX_LIGHTS_BLOCK_BINDING)
 	{
 		throw ANKI_EXCEPTION("Problem with the spotTexLightsBlock");
@@ -656,9 +631,9 @@ void Is::lightPass()
 	}
 
 	// Sanitize the counters
-	clamp(visiblePointLightsCount, MAX_POINT_LIGHTS);
-	clamp(visibleSpotLightsCount, MAX_SPOT_LIGHTS);
-	clamp(visibleSpotTexLightsCount, MAX_SPOT_TEX_LIGHTS);
+	clamp(visiblePointLightsCount, maxPointLights);
+	clamp(visibleSpotLightsCount, maxSpotLights);
+	clamp(visibleSpotTexLightsCount, maxSpotTexLights);
 
 	//
 	// Do shadows pass
@@ -685,13 +660,13 @@ void Is::lightPass()
 		sizeof(shader::SpotTexLight) * visibleSpotTexLightsCount;
 	spotTexLightsSize = alignSizeRoundUp(uboAlignment, spotTexLightsSize);
 
-	ANKI_ASSERT(spotTexLightsOffset + spotTexLightsSize <= calcLigthsUboSize());
+	ANKI_ASSERT(spotTexLightsOffset + spotTexLightsSize <= calcLightsUboSize());
 
 	// Fire the super jobs
 	Array<WriteLightsJob, ThreadPool::MAX_THREADS> jobs;
 
-	U8 clientBuffer[MIN_LIGHTS_UBO_SIZE * 2]; // Aproximate size
-	ANKI_ASSERT(MIN_LIGHTS_UBO_SIZE * 2 >= calcLigthsUboSize());
+	U8 clientBuffer[32 * 1024]; // Aproximate size
+	ANKI_ASSERT(sizeof(clientBuffer) >= calcLightsUboSize());
 	shader::Tiles clientTiles;
 
 	std::atomic<U32> pointLightsAtomicCount(0);
@@ -908,6 +883,27 @@ void Is::run()
 
 	// Do the light pass including the shadow passes
 	lightPass();
+}
+
+//==============================================================================
+PtrSize Is::calcLightsUboSize() const
+{
+	PtrSize size;
+	PtrSize uboAlignment = BufferObject::getUniformBufferOffsetAlignment();
+
+	size = alignSizeRoundUp(
+		uboAlignment,
+		maxPointLights * sizeof(shader::PointLight));
+
+	size += alignSizeRoundUp(
+		uboAlignment,
+		maxSpotLights * sizeof(shader::SpotLight));
+
+	size += alignSizeRoundUp(
+		uboAlignment,
+		maxSpotTexLights * sizeof(shader::SpotTexLight));
+
+	return size;
 }
 
 } // end namespace anki
