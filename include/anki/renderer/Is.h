@@ -91,6 +91,10 @@ private:
 	Vao quadVao; ///< This VAO is used everywhere except material stage
 	/// @}
 
+	U16 maxPointLights;
+	U8 maxSpotLights;
+	U8 maxSpotTexLights;
+
 	/// Called by init
 	void initInternal(const RendererInitializer& initializer);
 
@@ -99,6 +103,9 @@ private:
 
 	/// Prepare GL for rendering
 	void setState();
+
+	/// Calculate the size of the lights UBO
+	PtrSize calcLightsUboSize() const;
 };
 
 } // end namespace anki

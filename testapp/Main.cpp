@@ -569,6 +569,11 @@ void initSubsystems(int argc, char* argv[])
 	initializer.lodDistance = 20.0;
 	initializer.samples = 16;
 
+#if ANKI_GL == ANKI_GL_ES
+	initializer.samples = 1;
+	initializer.pps.enabled = false;
+#endif
+
 	MainRendererSingleton::get().init(initializer);
 
 	// Stdin listener

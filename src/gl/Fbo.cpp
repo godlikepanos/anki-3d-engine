@@ -166,7 +166,9 @@ void Fbo::setOtherAttachment(GLenum attachment, const Texture& tex,
 	switch(tex.getTarget())
 	{
 	case GL_TEXTURE_2D:
+#if ANKI_GL == ANKI_GL_DESKTOP
 	case GL_TEXTURE_2D_MULTISAMPLE:
+#endif
 		ANKI_ASSERT(layer < 0 && face < 0);
 		glFramebufferTexture2D(target, attachment,
 			tex.getTarget(), tex.getGlId(), 0);

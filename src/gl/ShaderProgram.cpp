@@ -144,12 +144,21 @@ void ShaderProgramUniformVariable::set(const Mat4 x[], U32 size) const
 void ShaderProgramUniformVariable::set(const Texture& tex) const
 {
 	doCommonSetCode();
-	ANKI_ASSERT(getGlDataType() == GL_SAMPLER_2D 
+
+	// Don't put that inside the assert because the compiler complains that 
+	// it's inside a macro
+	Bool correctSamplerType = getGlDataType() == GL_SAMPLER_2D 
 		|| getGlDataType() == GL_SAMPLER_2D_SHADOW
 		|| getGlDataType() == GL_UNSIGNED_INT_SAMPLER_2D
 		|| getGlDataType() == GL_SAMPLER_2D_ARRAY_SHADOW
 		|| getGlDataType() == GL_SAMPLER_2D_ARRAY
-		|| getGlDataType() == GL_SAMPLER_2D_MULTISAMPLE);
+#if ANKI_GL == ANKI_GL_DESKTOP
+		|| getGlDataType() == GL_SAMPLER_2D_MULTISAMPLE
+#endif
+		;
+	(void)correctSamplerType;
+
+	ANKI_ASSERT(correctSamplerType);
 	
 	glUniform1i(getLocation(), tex.bind());
 }

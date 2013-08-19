@@ -3,6 +3,7 @@
 
 #include "anki/core/Logger.h"
 #include "anki/util/Singleton.h"
+#include "anki/util/StringList.h"
 
 namespace anki {
 
@@ -42,15 +43,15 @@ public:
 
 	/// @name Accessors
 	/// @{
-	float getTimerTick() const
+	F32 getTimerTick() const
 	{
 		return timerTick;
 	}
-	float& getTimerTick()
+	F32& getTimerTick()
 	{
 		return timerTick;
 	}
-	void setTimerTick(const float x)
+	void setTimerTick(const F32 x)
 	{
 		timerTick = x;
 	}
@@ -64,6 +65,11 @@ public:
 	{
 		return cachePath;
 	}
+
+	const StringList& getDataPaths() const
+	{
+		return dataPaths;
+	}
 	/// @}
 
 private:
@@ -71,7 +77,8 @@ private:
 	std::string settingsPath;
 	/// This is used as a cache
 	std::string cachePath;
-	float timerTick;
+	StringList dataPaths;
+	F32 timerTick;
 
 	void parseCommandLineArgs(int argc, char* argv[]);
 

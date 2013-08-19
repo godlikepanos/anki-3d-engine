@@ -46,6 +46,9 @@ struct RendererInitializer
 			U32 maxLights = 4;
 		} sm;
 		Bool groundLightEnabled = true;
+		U32 maxPointLights = 512 - 16;
+		U32 maxSpotLights = 8;
+		U32 maxSpotTexLights = 4;
 	} is;
 
 	// Pps

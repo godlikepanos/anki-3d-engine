@@ -51,6 +51,16 @@ void BufferObject::create(GLenum target_, U32 sizeInBytes_,
 {
 	ANKI_ASSERT(!isCreated());
 
+	if(target_ == GL_UNIFORM_BUFFER)
+	{
+		GLint64 maxBufferSize;
+		glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBufferSize);
+		if(sizeInBytes_ > (PtrSize)maxBufferSize)
+		{
+			throw ANKI_EXCEPTION("Buffer size exceeds GL implementation max");
+		}
+	}
+
 	usage = usage_;
 	target = target_;
 	sizeInBytes = sizeInBytes_;
@@ -176,6 +186,17 @@ void BufferObject::setBindingRange(
 
 	glBindBufferRange(target, binding, getGlId(), offset, size);
 	ANKI_CHECK_GL_ERROR();
+}
+
+//==============================================================================
+// Ubo                                                                         =
+//==============================================================================
+
+//==============================================================================
+void Ubo::create(PtrSize size, const void* data, U objectCount)
+{
+	BufferObject::create(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW,
+		objectCount);
 }
 
 } // end namespace anki

@@ -226,6 +226,7 @@ public:
 		{
 			arr1[i] = b.arr1[i];
 		}
+		return *this;
 	}
 
 	TMat4 operator+(const TMat4& b) const
@@ -367,6 +368,7 @@ public:
 		{
 			arr1[i] *= f;
 		}
+		return *this;
 	}
 
 	TMat4 operator/(const T f) const

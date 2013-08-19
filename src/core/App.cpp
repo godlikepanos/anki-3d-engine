@@ -106,6 +106,7 @@ void App::init(int argc, char* argv[])
 //==============================================================================
 void App::initDirs()
 {
+	// Settings path
 	settingsPath = std::string(getenv("HOME")) + "/.anki";
 	if(!directoryExists(settingsPath.c_str()))
 	{
@@ -113,6 +114,7 @@ void App::initDirs()
 		createDirectory(settingsPath.c_str());
 	}
 
+	// Cache
 	cachePath = settingsPath + "/cache";
 	if(directoryExists(cachePath.c_str()))
 	{
@@ -122,19 +124,21 @@ void App::initDirs()
 
 	ANKI_LOGI("Creating cache dir: " << cachePath);
 	createDirectory(cachePath.c_str());
+
+	// Data
+	if(getenv("ANKI_DATA_PATH"))
+	{
+		dataPaths = StringList::splitString(getenv("ANKI_DATA_PATH"), ':');
+	}
+	else
+	{
+		dataPaths.push_back("./");
+	}
 }
 
 //==============================================================================
 void App::quit(int code)
-{
-#if 0
-	SDL_FreeSurface(iconImage);
-	SDL_GL_DeleteContext(glContext);
-	SDL_DestroyWindow(windowId);
-	SDL_Quit();
-	exit(code);
-#endif
-}
+{}
 
 //==============================================================================
 void App::printAppInfo()

@@ -426,7 +426,12 @@ void Texture::create2dFai(U w, U h,
 	init.width = w;
 	init.height = h;
 	init.depth = 0;
+#if ANKI_GL == ANKI_GL_DESKTOP
 	init.target = (samples_ == 1) ? GL_TEXTURE_2D : GL_TEXTURE_2D_MULTISAMPLE;
+#else
+	ANKI_ASSERT(samples_ == 1);
+	init.target = GL_TEXTURE_2D;
+#endif
 	init.internalFormat = internalFormat_;
 	init.format = format_;
 	init.type = type_;

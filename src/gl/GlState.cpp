@@ -13,6 +13,7 @@ namespace anki {
 // GlStateCommon                                                               = 
 //==============================================================================
 
+#if ANKI_GL == ANKI_GL_DESKTOP
 struct GlDbg
 {
 	GLenum token;
@@ -73,6 +74,7 @@ static void oglMessagesCallback(GLenum source,
 		break;
 	}
 }
+#endif
 
 //==============================================================================
 void GlStateCommon::init(const U32 major_, const U32 minor_, 
@@ -95,6 +97,7 @@ void GlStateCommon::init(const U32 major_, const U32 minor_,
 	}
 
 	// Enable debug messages
+#if ANKI_GL == ANKI_GL_DESKTOP
 	if(registerDebugMessages)
 	{
 		glDebugMessageCallback(oglMessagesCallback, nullptr);
@@ -112,6 +115,7 @@ void GlStateCommon::init(const U32 major_, const U32 minor_,
 			}
 		}
 	}
+#endif
 }
 
 //==============================================================================
