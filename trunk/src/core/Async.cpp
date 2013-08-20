@@ -42,7 +42,7 @@ void Async::assignNewJobInternal(AsyncJob* job)
 	ANKI_ASSERT(started == true);
 
 #if DEBUG_ASYNC
-	ANKI_LOGI("Assigning new job: " << job);
+	ANKI_LOGI("Assigning new job: %p", (void*)job);
 #endif
 	pendingJobsMtx.lock();
 	pendingJobs.push_back(job);
@@ -88,10 +88,10 @@ void Async::workingFunc()
 		}
 		catch(const std::exception& e)
 		{
-			ANKI_LOGE("Job failed: " << e.what());
+			ANKI_LOGE("Job failed: %s", e.what());
 		}
 #if DEBUG_ASYNC
-		ANKI_LOGI("Job finished: " << job);
+		ANKI_LOGI("Job finished: %p", (void*)job);
 #endif
 
 		// Put back the response
@@ -124,7 +124,7 @@ void Async::cleanupFinishedJobs(F32 maxTime)
 
 		AsyncJob* job = finishedJobs.front();
 #if DEBUG_ASYNC
-		ANKI_LOGI("Executing post for job: " << job);
+		ANKI_LOGI("Executing post for job: %p", (void*)job);
 #endif
 		job->post();
 

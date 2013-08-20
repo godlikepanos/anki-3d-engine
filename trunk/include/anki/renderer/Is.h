@@ -91,9 +91,16 @@ private:
 	Vao quadVao; ///< This VAO is used everywhere except material stage
 	/// @}
 
+	/// @name Limits
+	/// @{
 	U16 maxPointLights;
 	U8 maxSpotLights;
 	U8 maxSpotTexLights;
+
+	U8 maxPointLightsPerTile;
+	U8 maxSpotLightsPerTile;
+	U8 maxSpotTexLightsPerTile;
+	/// @}
 
 	/// Called by init
 	void initInternal(const RendererInitializer& initializer);
@@ -106,6 +113,12 @@ private:
 
 	/// Calculate the size of the lights UBO
 	PtrSize calcLightsUboSize() const;
+
+	/// Calculate the size of the tiles UBO
+	PtrSize calcTileSize() const;
+
+	/// Calculate the size of the tiles UBO
+	PtrSize calcTilesUboSize() const;
 };
 
 } // end namespace anki

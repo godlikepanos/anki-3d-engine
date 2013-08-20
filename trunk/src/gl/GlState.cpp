@@ -61,16 +61,13 @@ static void oglMessagesCallback(GLenum source,
 	switch(severity)
 	{
 	case GL_DEBUG_SEVERITY_LOW:
-		ANKI_LOGI("GL: " << sourced->str 
-			<< ", " << typed->str << ": " << message);
+		ANKI_LOGI("GL: %s, %s: %s", sourced->str, typed->str, message);
 		break;
 	case GL_DEBUG_SEVERITY_MEDIUM:
-		ANKI_LOGW("GL: " << sourced->str 
-			<< ", " << typed->str << ": " << message);
+		ANKI_LOGW("GL: %s, %s: %s", sourced->str, typed->str, message);
 		break;
 	case GL_DEBUG_SEVERITY_HIGH:
-		ANKI_LOGE("GL: " << sourced->str 
-			<< ", " << typed->str << ": " << message);
+		ANKI_LOGE("GL: %s, %s: %s", sourced->str, typed->str, message);
 		break;
 	}
 }

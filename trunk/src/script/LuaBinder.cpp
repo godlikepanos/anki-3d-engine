@@ -53,7 +53,7 @@ void pushCFunctionStatic(lua_State* l, const char* className,
 static int luaPanic(lua_State* l)
 {
 	std::string err(lua_tostring(l, -1));
-	ANKI_LOGE("Lua panic attack: " << err);
+	ANKI_LOGE("Lua panic attack: %s", err.c_str());
 	abort();
 }
 

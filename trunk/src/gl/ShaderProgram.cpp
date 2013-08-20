@@ -843,7 +843,7 @@ void ShaderProgram::initUniformBlocks()
 		if(isRowMajor)
 		{
 			ANKI_LOGW("The engine is designed to work with column major "
-				"matrices: " << uni.name);
+				"matrices: %s", uni.name.c_str());
 		}
 	}
 }

@@ -49,6 +49,9 @@ struct RendererInitializer
 		U32 maxPointLights = 512 - 16;
 		U32 maxSpotLights = 8;
 		U32 maxSpotTexLights = 4;
+		U32 maxPointLightsPerTile = 48;
+		U32 maxSpotLightsPerTile = 4;
+		U32 maxSpotTexLightsPerTile = 4;
 	} is;
 
 	// Pps

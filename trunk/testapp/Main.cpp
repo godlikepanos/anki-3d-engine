@@ -572,6 +572,7 @@ void initSubsystems(int argc, char* argv[])
 #if ANKI_GL == ANKI_GL_ES
 	initializer.samples = 1;
 	initializer.pps.enabled = false;
+	initializer.is.maxPointLights = 64;
 #endif
 
 	MainRendererSingleton::get().init(initializer);
@@ -601,7 +602,7 @@ int main(int argc, char* argv[])
 	}
 	catch(std::exception& e)
 	{
-		ANKI_LOGE("Aborting: " << e.what());
+		ANKI_LOGE("Aborting: %s", e.what());
 		exitCode = 1;
 	}
 	ANKI_LOGI("Bye!!");
