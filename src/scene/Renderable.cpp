@@ -64,8 +64,8 @@ RenderableVariable::RenderableVariable(
 	// Sanity checks
 	if(!mvar->hasValues() && buildinId == BMV_NO_BUILDIN)
 	{
-		ANKI_LOGW("Material variable no buildin and not initialized: "
-			<< name);
+		ANKI_LOGW("Material variable no buildin and not initialized: %s",
+			name.c_str());
 	}
 }
 

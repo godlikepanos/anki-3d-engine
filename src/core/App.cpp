@@ -92,10 +92,6 @@ void App::init(int argc, char* argv[])
 	signal(SIGBUS, handler);
 	signal(SIGFPE, handler);
 
-	// send output to handleMessageHanlderMsgs
-	ANKI_CONNECT(&LoggerSingleton::get(), messageRecieved, 
-		this, handleLoggerMessages);
-
 	parseCommandLineArgs(argc, argv);
 	printAppInfo();
 	initDirs();
@@ -110,7 +106,7 @@ void App::initDirs()
 	settingsPath = std::string(getenv("HOME")) + "/.anki";
 	if(!directoryExists(settingsPath.c_str()))
 	{
-		ANKI_LOGI("Creating settings dir: " << settingsPath);
+		ANKI_LOGI("Creating settings dir: %s", settingsPath.c_str());
 		createDirectory(settingsPath.c_str());
 	}
 
@@ -118,11 +114,11 @@ void App::initDirs()
 	cachePath = settingsPath + "/cache";
 	if(directoryExists(cachePath.c_str()))
 	{
-		ANKI_LOGI("Deleting dir: " << cachePath);
+		ANKI_LOGI("Deleting dir: %s", cachePath.c_str());
 		removeDirectory(cachePath.c_str());
 	}
 
-	ANKI_LOGI("Creating cache dir: " << cachePath);
+	ANKI_LOGI("Creating cache dir: %s", cachePath.c_str());
 	createDirectory(cachePath.c_str());
 
 	// Data
@@ -160,7 +156,7 @@ void App::printAppInfo()
 
 	msg << " build date " __DATE__ ", " << "rev " << ANKI_REVISION;
 
-	ANKI_LOGI(msg.str());
+	ANKI_LOGI(msg.str().c_str());
 }
 
 } // end namespace anki

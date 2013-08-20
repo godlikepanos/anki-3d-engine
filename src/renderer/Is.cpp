@@ -10,13 +10,6 @@ namespace anki {
 //==============================================================================
 // Consts
 
-static const U MAX_POINT_LIGHTS_PER_TILE = 
-	ANKI_RENDERER_MAX_POINT_LIGHTS_PER_TILE;
-static const U MAX_SPOT_LIGHTS_PER_TILE = 
-	ANKI_RENDERER_MAX_SPOT_LIGHTS_PER_TILE;
-static const U MAX_SPOT_TEX_LIGHTS_PER_TILE = 
-	ANKI_RENDERER_MAX_SPOT_TEX_LIGHTS_PER_TILE;
-
 static const U TILES_X_COUNT = ANKI_RENDERER_TILES_X_COUNT;
 static const U TILES_Y_COUNT = ANKI_RENDERER_TILES_Y_COUNT;
 static const U TILES_COUNT = TILES_X_COUNT * TILES_Y_COUNT;
@@ -49,19 +42,6 @@ void clamp(T& in, Y limit)
 // For documentation see the shaders
 
 namespace shader {
-
-struct Tile
-{
-	Array<U32, 4> lightsCount; 
-	Array<U32, MAX_POINT_LIGHTS_PER_TILE> pointLightIndices;
-	Array<U32, MAX_SPOT_LIGHTS_PER_TILE> spotLightIndices;
-	Array<U32, MAX_SPOT_TEX_LIGHTS_PER_TILE> spotTexLightIndices;
-};
-
-struct Tiles
-{
-	Array<Array<Tile, TILES_X_COUNT>, TILES_Y_COUNT> tiles;
-};
 
 struct Light
 {
@@ -111,7 +91,7 @@ struct WriteLightsJob: ThreadJob
 	shader::SpotLight* spotLights = nullptr;
 	shader::SpotTexLight* spotTexLights = nullptr;
 
-	shader::Tiles* tiles = nullptr;
+	U8* tileBuffer = nullptr;
 
 	VisibilityTestResults::Container::const_iterator lightsBegin;
 	VisibilityTestResults::Container::const_iterator lightsEnd;
@@ -130,7 +110,7 @@ struct WriteLightsJob: ThreadJob
 	Tiler* tiler = nullptr;
 	Is* is = nullptr;
 
-	/// Bin ligths on CPU path
+	/// Bin lights on CPU path
 	Bool binLights = true;
 
 	void operator()(U threadId, U threadsCount)
@@ -316,9 +296,9 @@ struct WriteLightsJob: ThreadJob
 
 			U tilePos = (*tilePointLightsCount)[y][x].fetch_add(1);
 
-			if(tilePos < MAX_POINT_LIGHTS_PER_TILE)
+			if(tilePos < is->maxPointLightsPerTile)
 			{
-				tiles->tiles[y][x].pointLightIndices[tilePos] = pos;
+				writeIndexToTileBuffer(0, pos, tilePos, x, y);
 			}
 		}
 	}
@@ -346,21 +326,57 @@ struct WriteLightsJob: ThreadJob
 			{
 				U tilePos = (*tileSpotTexLightsCount)[y][x].fetch_add(1);
 
-				if(tilePos < MAX_SPOT_TEX_LIGHTS_PER_TILE)
+				if(tilePos < is->maxSpotTexLightsPerTile)
 				{
-					tiles->tiles[y][x].spotTexLightIndices[tilePos] = pos;
+					writeIndexToTileBuffer(2, pos, tilePos, x, y);
 				}
 			}
 			else
 			{
 				U tilePos = (*tileSpotLightsCount)[y][x].fetch_add(1);
 
-				if(tilePos < MAX_SPOT_LIGHTS_PER_TILE)
+				if(tilePos < is->maxSpotLightsPerTile)
 				{
-					tiles->tiles[y][x].spotLightIndices[tilePos] = pos;
+					writeIndexToTileBuffer(1, pos, tilePos, x, y);
 				}
 			}
 		}
+	}
+
+	/// XXX
+	void writeIndexToTileBuffer(
+		U lightType, U lightIndex, U i, U tileX, U tileY)
+	{
+		const PtrSize tileSize = is->calcTileSize();
+		PtrSize offset;
+
+		// Calc the start of the tile
+		offset = (tileY * TILES_X_COUNT + tileX) * tileSize;
+
+		// Skip the lightsCount header
+		offset += sizeof(Vec4);
+
+		// Move to the correct light section
+		switch(lightType)
+		{
+		case 0:
+			break;
+		case 1:
+			offset += sizeof(U32) * is->maxPointLightsPerTile;
+			break;
+		case 2:
+			offset += sizeof(U32) * is->maxPointLightsPerTile
+				+ sizeof(U32) * is->maxSpotLightsPerTile;
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+
+		// Move to the array offset
+		offset += sizeof(U32) * i;
+
+		// Write the lightIndex
+		*((U32*)(tileBuffer + offset)) = lightIndex;
 	}
 };
 
@@ -399,6 +415,18 @@ void Is::initInternal(const RendererInitializer& initializer)
 		throw ANKI_EXCEPTION("Incorrect number of max lights");
 	}
 
+	maxPointLightsPerTile = initializer.is.maxPointLightsPerTile;
+	maxSpotLightsPerTile = initializer.is.maxSpotLightsPerTile;
+	maxSpotTexLightsPerTile = initializer.is.maxSpotTexLightsPerTile;
+
+	if(maxPointLightsPerTile < 1 || maxSpotLightsPerTile < 1 
+		|| maxSpotTexLightsPerTile < 1
+		|| maxPointLightsPerTile % 4 != 0 || maxSpotLightsPerTile % 4 != 0
+		|| maxSpotTexLightsPerTile % 4 != 0)
+	{
+		throw ANKI_EXCEPTION("Incorrect number of max lights");
+	}
+
 	//
 	// Init the passes
 	//
@@ -414,12 +442,12 @@ void Is::initInternal(const RendererInitializer& initializer)
 		<< "#define TILES_COUNT " << TILES_COUNT << "\n"
 		<< "#define RENDERER_WIDTH " << r->getWidth() << "\n"
 		<< "#define RENDERER_HEIGHT " << r->getHeight() << "\n"
-		<< "#define MAX_POINT_LIGHTS_PER_TILE " << MAX_POINT_LIGHTS_PER_TILE
+		<< "#define MAX_POINT_LIGHTS_PER_TILE " << (U32)maxPointLightsPerTile
 		<< "\n"
-		<< "#define MAX_SPOT_LIGHTS_PER_TILE " << MAX_SPOT_LIGHTS_PER_TILE
+		<< "#define MAX_SPOT_LIGHTS_PER_TILE " << (U32)maxSpotLightsPerTile
 		<< "\n"
 		<< "#define MAX_SPOT_TEX_LIGHTS_PER_TILE " 
-		<< MAX_SPOT_TEX_LIGHTS_PER_TILE << "\n"
+		<< (U32)maxSpotTexLightsPerTile << "\n"
 		<< "#define MAX_POINT_LIGHTS " << (U32)maxPointLights << "\n"
 		<< "#define MAX_SPOT_LIGHTS " << (U32)maxSpotLights << "\n"
 		<< "#define MAX_SPOT_TEX_LIGHTS " << (U32)maxSpotTexLights << "\n"
@@ -495,12 +523,12 @@ void Is::initInternal(const RendererInitializer& initializer)
 	// tiles BO
 	tilesBuffer.create(
 		GL_UNIFORM_BUFFER, 
-		sizeof(shader::Tiles), 
+		calcTilesUboSize(), 
 		nullptr, 
 		GL_DYNAMIC_DRAW);
 
-	ANKI_LOGI("Creating BOs: lights: " << calcLightsUboSize() << "B tiles: "
-		<< sizeof(shader::Tiles) << "B");
+	ANKI_LOGI("Creating BOs: lights: %uB, tiles: %uB", calcLightsUboSize(), 
+		calcTilesUboSize());
 
 	// Sanity checks
 	const ShaderProgramUniformBlock* ublock;
@@ -565,7 +593,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 
 	ublock = &lightPassProg->findUniformBlock("tilesBlock");
 	ublock->setBinding(TILES_BLOCK_BINDING);
-	if(ublock->getSize() != sizeof(shader::Tiles)
+	if(ublock->getSize() != calcTilesUboSize()
 		|| ublock->getBinding() != TILES_BLOCK_BINDING)
 	{
 		throw ANKI_EXCEPTION("Problem with the tilesBlock");
@@ -667,7 +695,9 @@ void Is::lightPass()
 
 	U8 clientBuffer[32 * 1024]; // Aproximate size
 	ANKI_ASSERT(sizeof(clientBuffer) >= calcLightsUboSize());
-	shader::Tiles clientTiles;
+
+	U8 tilesClientBuffer[64 * 1024]; // Aproximate size
+	ANKI_ASSERT(sizeof(tilesClientBuffer) >= calcTilesUboSize());
 
 	std::atomic<U32> pointLightsAtomicCount(0);
 	std::atomic<U32> spotLightsAtomicCount(0);
@@ -701,7 +731,7 @@ void Is::lightPass()
 		job.spotTexLights = 
 			(shader::SpotTexLight*)(&clientBuffer[0] + spotTexLightsOffset);
 
-		job.tiles = &clientTiles;
+		job.tileBuffer = &tilesClientBuffer[0];
 
 		job.lightsBegin = vi.getLightsBegin();
 		job.lightsEnd = vi.getLightsEnd();
@@ -731,27 +761,29 @@ void Is::lightPass()
 	{
 		for(U x = 0; x < TILES_X_COUNT; x++)
 		{
-			clientTiles.tiles[y][x].lightsCount[0] = 
-				tilePointLightsCount[y][x].load();
-			clamp(clientTiles.tiles[y][x].lightsCount[0], 
-				MAX_POINT_LIGHTS_PER_TILE);
+			const PtrSize tileSize = calcTileSize();
+			UVec4* vec;
 
-			clientTiles.tiles[y][x].lightsCount[2] = 
-				tileSpotLightsCount[y][x].load();
-			clamp(clientTiles.tiles[y][x].lightsCount[2], 
-				MAX_SPOT_LIGHTS_PER_TILE);
+			vec = (UVec4*)(
+				&tilesClientBuffer[0] + (y * TILES_X_COUNT + x) * tileSize);
 
-			clientTiles.tiles[y][x].lightsCount[3] = 
-				tileSpotTexLightsCount[y][x].load();
-			clamp(clientTiles.tiles[y][x].lightsCount[3], 
-				MAX_SPOT_TEX_LIGHTS_PER_TILE);
+			vec->x() = tilePointLightsCount[y][x].load();
+			clamp(vec->x(), maxPointLightsPerTile);
+
+			vec->y() = 0;
+
+			vec->z() = tileSpotLightsCount[y][x].load();
+			clamp(vec->z(), maxSpotLightsPerTile);
+
+			vec->w() = tileSpotTexLightsCount[y][x].load();
+			clamp(vec->w(), maxSpotTexLightsPerTile);
 		}
 	}
 
 	// Write BOs
 	lightsUbo.write(
 		&clientBuffer[0], 0, spotTexLightsOffset + spotTexLightsSize);
-	tilesBuffer.write(&clientTiles);
+	tilesBuffer.write(&tilesClientBuffer[0]);
 
 	//
 	// Reject occluded lights. This operation issues a compute job to reject 
@@ -904,6 +936,24 @@ PtrSize Is::calcLightsUboSize() const
 		maxSpotTexLights * sizeof(shader::SpotTexLight));
 
 	return size;
+}
+
+//==============================================================================
+PtrSize Is::calcTileSize() const
+{
+	PtrSize size =
+		sizeof(Vec4) // lightsCount
+		+ maxPointLightsPerTile * sizeof(U32) // pointLightIndices
+		+ maxSpotLightsPerTile * sizeof(U32) // spotLightIndices
+		+ maxSpotTexLightsPerTile * sizeof(U32); // spotTexLightIndices
+
+	return size;
+}
+
+//==============================================================================
+PtrSize Is::calcTilesUboSize() const
+{
+	return calcTileSize() * TILES_COUNT;
 }
 
 } // end namespace anki
