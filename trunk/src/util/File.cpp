@@ -178,7 +178,7 @@ void File::openZipFile(const char* archive, const char* archived, U8 flags_)
 
 	static_assert(sizeof(file) == sizeof(zfile), "See file");
 	file = (void*)zfile;
-	flags = flags_ | FT_C;
+	flags = flags_ | FT_ZIP;
 }
 
 //==============================================================================
@@ -192,7 +192,7 @@ void File::close()
 	}
 	else if(flags & FT_ZIP)
 	{
-		ANKI_ASSERT(0 && "Not implemented");
+		unzClose(file);
 	}
 	else
 	{
@@ -219,7 +219,7 @@ void File::read(void* buff, PtrSize size)
 	}
 	else if(flags & FT_ZIP)
 	{
-		ANKI_ASSERT(0 && "Not implemented");
+		readSize = unzReadCurrentFile(file, buff, size);
 	}
 	else
 	{
@@ -255,7 +255,28 @@ void File::readAllText(std::string& txt)
 	}
 	else if(flags & FT_ZIP)
 	{
-		ANKI_ASSERT(0 && "Not implemented");
+		char buff[256];
+		I readSize;
+
+		while(true)
+		{
+			readSize = unzReadCurrentFile(file, buff, sizeof(buff) - 1);
+
+			if(readSize > 0)
+			{
+				buff[readSize] = '\0';
+				txt += buff;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		if(readSize < 0)
+		{
+			throw ANKI_EXCEPTION("unzReadCurrentFile() failed");
+		}
 	}
 	else
 	{
@@ -370,7 +391,7 @@ void File::write(void* buff, PtrSize size)
 	}
 	else if(flags & FT_ZIP)
 	{
-		ANKI_ASSERT(0 && "Not implemented");
+		throw ANKI_EXCEPTION("Writting to archives is not supported");
 	}
 	else
 	{
@@ -396,7 +417,7 @@ void File::writeText(const char* format, ...)
 	}
 	else if(flags & FT_ZIP)
 	{
-		ANKI_ASSERT(0 && "Not implemented");
+		throw ANKI_EXCEPTION("Writting to archives is not supported");
 	}
 	else
 	{
@@ -421,7 +442,17 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 	}
 	else if(flags & FT_ZIP)
 	{
-		ANKI_ASSERT(0 && "Not implemented");
+		// Rewind if needed
+		if(origin == SO_BEGINNING)
+		{
+			if(unzCloseCurrentFile(file)
+				|| unzOpenCurrentFile(file))
+			{
+				throw ANKI_EXCEPTION("Rewinde failed");
+			}
+			
+			// XXX
+		}
 	}
 	else
 	{

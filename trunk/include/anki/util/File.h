@@ -49,12 +49,12 @@ public:
 
 	/// Default constructor
 	File()
-		: flags(0), file(nullptr)
+		: file(nullptr), flags(0)
 	{}
 
 	/// Open file
 	File(const char* filename, U8 openMask)
-		: flags(0), file(nullptr)
+		: file(nullptr), flags(0)
 	{
 		open(filename, openMask);
 	}
@@ -120,8 +120,8 @@ public:
 	/// @}
 
 private:
-	U8 flags; ///< All the flags. Initialy zero and set on open
 	void* file; ///< A native type
+	U8 flags; ///< All the flags. Initialy zero and set on open
 
 	/// Get the current machine's endianness
 	static Endianness getMachineEndianness();

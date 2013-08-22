@@ -1,7 +1,12 @@
 #include "anki/misc/Xml.h"
 #include "anki/util/StringList.h"
+#include "anki/util/File.h"
 
 namespace anki {
+
+//==============================================================================
+// XmlElement                                                                  =
+//==============================================================================
 
 //==============================================================================
 I XmlElement::getInt() const
@@ -78,6 +83,25 @@ XmlElement XmlElement::getNextSiblingElement(const char* name) const
 	XmlElement out;
 	out.el = el->NextSiblingElement(name);
 	return out;
+}
+
+//==============================================================================
+// XmlDocument                                                                 =
+//==============================================================================
+
+//==============================================================================
+void XmlDocument::loadFile(const char* filename)
+{
+	File file(filename, File::OF_READ);
+	std::string text;
+	file.readAllText(text);
+
+	if(doc.Parse(text.c_str()))
+	{
+		throw ANKI_EXCEPTION("Cannot parse file. Reason: "
+			+ ((doc.GetErrorStr1() == nullptr)
+			? "unknown" : doc.GetErrorStr1()));
+	}
 }
 
 } // end namespace anki

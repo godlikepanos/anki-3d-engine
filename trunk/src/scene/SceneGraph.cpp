@@ -228,7 +228,7 @@ void SceneGraph::load(const char* filename)
 	try
 	{
 		XmlDocument doc;
-		doc.loadFile(filename);
+		doc.loadFile(ANKI_R(filename));
 
 		XmlElement rootEl = doc.getChildElement("scene");
 

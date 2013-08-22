@@ -9,7 +9,7 @@ namespace anki {
 
 #define ANKI_RESOURCE_TYPEDEFS(rsrc, name) \
 	class rsrc; \
-	typedef ResourceManager<rsrc> rsrc ## ResourceManager; \
+	typedef TypeResourceManager<rsrc> rsrc ## ResourceManager; \
 	typedef Singleton<rsrc ## ResourceManager> \
 		rsrc ## ResourceManagerSingleton; \
 	typedef ResourcePointer<rsrc, rsrc ## ResourceManagerSingleton> name;
