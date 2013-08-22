@@ -95,7 +95,7 @@ void initPhysics()
 
 				ModelNode* mnode = new ModelNode(
 					name.c_str(), &SceneGraphSingleton::get(), nullptr,
-					Movable::MF_NONE, "data/models/crate0/crate0.mdl");
+					Movable::MF_NONE, "models/crate0/crate0.mdl");
 
 				init.movable = mnode;
 				ANKI_ASSERT(init.movable);
@@ -202,7 +202,7 @@ void init()
 		PointLight* point =
 			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
 			&scene, nullptr, Movable::MF_NONE, 
-			(i != 100) ? "data/textures/lens_flare/flares0.ankitex" : nullptr);
+			(i != 100) ? "textures/lens_flare/flares0.ankitex" : nullptr);
 		point->setRadius(2.0);
 		point->setLocalOrigin(lightPos);
 		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
@@ -227,12 +227,12 @@ void init()
 
 		ParticleEmitter* pe = new ParticleEmitter(
 			("pe" + std::to_string(i)).c_str(), &scene, nullptr,
-			Movable::MF_NONE, "data/particles/smoke.particles");
+			Movable::MF_NONE, "particles/smoke.ankipart");
 		pe->setLocalOrigin(lightPos);
 
 		pe = new ParticleEmitter(
 			("pef" + std::to_string(i)).c_str(), &scene, nullptr,
-			Movable::MF_NONE, "data/particles/fire.particles");
+			Movable::MF_NONE, "particles/fire.ankipart");
 		pe->setLocalOrigin(lightPos);
 	}
 #endif
@@ -240,14 +240,14 @@ void init()
 #if 1
 	// horse
 	horse = new ModelNode("horse", &scene, nullptr,
-		Movable::MF_NONE, "data/models/horse/horse.mdl");
+		Movable::MF_NONE, "models/horse/horse.mdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		0.7));
 
 	// barrel
 	ModelNode* redBarrel = new ModelNode(
 		"red_barrel", &scene, nullptr, Movable::MF_NONE, 
-		"data/models/red_barrel/red_barrel.mdl");
+		"models/red_barrel/red_barrel.mdl");
 	redBarrel->setLocalTransform(Transform(Vec3(+2, 0, 0), Mat3::getIdentity(),
 		0.7));
 #endif
@@ -260,7 +260,7 @@ void init()
 
 	(void)sponzaModel;
 #endif
-	scene.load("data/maps/sponza/master.scene");
+	scene.load("maps/sponza/master.scene");
 
 	//initPhysics();
 
@@ -573,6 +573,9 @@ void initSubsystems(int argc, char* argv[])
 	initializer.samples = 1;
 	initializer.pps.enabled = false;
 	initializer.is.maxPointLights = 64;
+	initializer.is.maxPointLightsPerTile = 4;
+	initializer.is.maxSpotLightsPerTile = 4;
+	initializer.is.maxSpotTexLightsPerTile = 4;
 #endif
 
 	MainRendererSingleton::get().init(initializer);

@@ -75,15 +75,7 @@ private:
 class XmlDocument
 {
 public:
-	void loadFile(const char* filename)
-	{
-		if(doc.LoadFile(filename))
-		{
-			throw ANKI_EXCEPTION("Cannot parse file. Reason: "
-				+ ((doc.GetErrorStr1() == nullptr)
-				? "unknown" : doc.GetErrorStr1()));
-		}
-	}
+	void loadFile(const char* filename);
 
 	XmlElement getChildElement(const char* name)
 	{

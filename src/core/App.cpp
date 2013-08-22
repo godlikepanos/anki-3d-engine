@@ -120,16 +120,6 @@ void App::initDirs()
 
 	ANKI_LOGI("Creating cache dir: %s", cachePath.c_str());
 	createDirectory(cachePath.c_str());
-
-	// Data
-	if(getenv("ANKI_DATA_PATH"))
-	{
-		dataPaths = StringList::splitString(getenv("ANKI_DATA_PATH"), ':');
-	}
-	else
-	{
-		dataPaths.push_back("./");
-	}
 }
 
 //==============================================================================

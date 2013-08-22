@@ -65,11 +65,6 @@ public:
 	{
 		return cachePath;
 	}
-
-	const StringList& getDataPaths() const
-	{
-		return dataPaths;
-	}
 	/// @}
 
 private:
@@ -77,7 +72,6 @@ private:
 	std::string settingsPath;
 	/// This is used as a cache
 	std::string cachePath;
-	StringList dataPaths;
 	F32 timerTick;
 
 	void parseCommandLineArgs(int argc, char* argv[]);

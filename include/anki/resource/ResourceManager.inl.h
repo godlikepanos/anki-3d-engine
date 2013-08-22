@@ -1,15 +1,16 @@
 #include "anki/resource/ResourceManager.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
+#include "anki/util/Exception.h"
 
 namespace anki {
 
 //==============================================================================
 template<typename Type>
-void ResourceManager<Type>::
+void TypeResourceManager<Type>::
 	allocAndLoadRsrc(const char* filename, Type*& newInstance)
 {
-	newInstance = NULL;
+	newInstance = nullptr;
+	std::string newFname;
 
 	// Alloc
 	try
@@ -24,17 +25,20 @@ void ResourceManager<Type>::
 	// Load
 	try
 	{
-		newInstance->load(filename);
+		newFname = 
+			ResourceManagerSingleton::get().fixResourcePath(filename);
+
+		newInstance->load(newFname.c_str());
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot load: " + filename) << e;
+		throw ANKI_EXCEPTION("Cannot load: " + newFname) << e;
 	}
 }
 
 //==============================================================================
 template<typename Type>
-typename ResourceManager<Type>::Hook& ResourceManager<Type>::
+typename TypeResourceManager<Type>::Hook& TypeResourceManager<Type>::
 	load(const char* filename)
 {
 	Iterator it = find(filename);
@@ -48,7 +52,7 @@ typename ResourceManager<Type>::Hook& ResourceManager<Type>::
 	// else create new, load it and update the container
 	else
 	{
-		Hook* hook = NULL;
+		Hook* hook = nullptr;
 		hook = new Hook;
 		hook->uuid = filename;
 		hook->referenceCounter = 1;
@@ -59,11 +63,7 @@ typename ResourceManager<Type>::Hook& ResourceManager<Type>::
 		}
 		catch(std::exception& e)
 		{
-			if(hook != NULL)
-			{
-				delete hook;
-			}
-
+			delete hook;
 			throw ANKI_EXCEPTION("Cannot load: " + filename) << e;
 		}
 
@@ -74,14 +74,14 @@ typename ResourceManager<Type>::Hook& ResourceManager<Type>::
 
 //==============================================================================
 template<typename Type>
-void ResourceManager<Type>::deallocRsrc(Type* rsrc)
+void TypeResourceManager<Type>::deallocRsrc(Type* rsrc)
 {
 	propperDelete(rsrc);
 }
 
 //==============================================================================
 template<typename Type>
-void ResourceManager<Type>::unload(const Hook& hook)
+void TypeResourceManager<Type>::unload(const Hook& hook)
 {
 	// Find
 	Iterator it = find(hook.uuid.c_str());
@@ -89,11 +89,11 @@ void ResourceManager<Type>::unload(const Hook& hook)
 	// If not found
 	if(it == hooks.end())
 	{
-		throw ANKI_EXCEPTION("Resource hook incorrect (\"" 
-			+ hook.uuid + "\")");
+		throw ANKI_EXCEPTION("Resource hook not found: " + hook.uuid);
 	}
 
 	ANKI_ASSERT(*(*it) == hook);
+	ANKI_ASSERT((*it)->referenceCounter > 0);
 
 	--(*it)->referenceCounter;
 
@@ -107,7 +107,7 @@ void ResourceManager<Type>::unload(const Hook& hook)
 
 //==============================================================================
 template<typename Type>
-typename ResourceManager<Type>::Iterator ResourceManager<Type>::
+typename TypeResourceManager<Type>::Iterator TypeResourceManager<Type>::
 	find(const char* filename)
 {
 	Iterator it = hooks.begin();
@@ -122,4 +122,4 @@ typename ResourceManager<Type>::Iterator ResourceManager<Type>::
 	return it;
 }
 
-} // end namespace
+} // end namespace anki

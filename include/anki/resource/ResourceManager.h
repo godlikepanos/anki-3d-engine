@@ -3,6 +3,7 @@
 
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
+#include "anki/util/Singleton.h"
 #include <string>
 
 namespace anki {
@@ -12,8 +13,8 @@ template<typename Type>
 struct ResourceHook
 {
 	std::string uuid; ///< Unique identifier
-	U32 referenceCounter;
-	Type* resource;
+	U32 referenceCounter = 0;
+	Type* resource = nullptr;
 
 	~ResourceHook()
 	{}
@@ -26,18 +27,42 @@ struct ResourceHook
 	}
 };
 
-/// Manage resources of a certain type
-template<typename Type>
+/// Resource manager. It holds a few global variables
 class ResourceManager
 {
 public:
-	typedef ResourceManager<Type> Self;
+	ResourceManager();
+
+	const std::string& getDataPath() const
+	{
+		return dataPath;
+	}
+
+	std::string fixResourcePath(const char* filename) const;
+
+private:
+	std::string dataPath;
+};
+
+/// The singleton of resource manager
+typedef Singleton<ResourceManager> ResourceManagerSingleton;
+
+/// XXX
+#define ANKI_R(x_) \
+	ResourceManagerSingleton::get().fixResourcePath(x_).c_str()
+
+/// Manage resources of a certain type
+template<typename Type>
+class TypeResourceManager
+{
+public:
+	typedef TypeResourceManager<Type> Self;
 	typedef ResourceHook<Type> Hook;
 	typedef PtrVector<Hook> Container;
 	typedef typename Container::iterator Iterator;
 	typedef typename Container::const_iterator ConstIterator;
 
-	virtual ~ResourceManager()
+	virtual ~TypeResourceManager()
 	{}
 
 	Hook& load(const char* filename);
