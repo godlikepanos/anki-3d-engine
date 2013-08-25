@@ -3,10 +3,14 @@
 
 #if ANKI_POSIX
 #	include <unistd.h>
-#	include <execinfo.h>
 #	include <signal.h>
 #else
 #	error "Unimplemented"
+#endif
+
+// For print backtrace
+#if ANKI_POSIX && ANKI_OS != ANKI_OS_ANDROID
+#	include <execinfo.h>
 #endif
 
 namespace anki {
@@ -24,7 +28,7 @@ U32 getCpuCoresCount()
 //==============================================================================
 void printBacktrace()
 {
-#if ANKI_POSIX
+#if ANKI_POSIX && ANKI_OS != ANKI_OS_ANDROID
 	void *array[10];
 	size_t size;
 
@@ -34,7 +38,7 @@ void printBacktrace()
 	// print out all the frames to stderr
 	backtrace_symbols_fd(array, size, 2);	
 #else
-#	error "Unimplemented"
+	// No nothing
 #endif
 }
 

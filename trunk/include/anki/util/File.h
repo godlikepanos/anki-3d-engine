@@ -4,6 +4,11 @@
 #include "anki/util/StringList.h"
 #include <string>
 
+// Forward
+#if ANKI_OS == ANKI_OS_ANDROID
+struct AAssetManager;
+#endif
+
 namespace anki {
 
 /// @addtogroup util
@@ -19,24 +24,25 @@ private:
 	enum FileType
 	{
 		FT_C = 1 << 0, ///< C file
-		FT_ZIP = 1 << 1 ///< Ziped file
+		FT_ZIP = 1 << 1, ///< Ziped file
+		FT_SPECIAL = 1 << 2 ///< For example file located in the android apk 
 	};
 
 public:
 	/// Open mode
 	enum OpenFlag
 	{
-		OF_READ = 1 << 2,
-		OF_WRITE = 1 << 3,
-		OF_APPEND = OF_WRITE | (1 << 4),
-		OF_BINARY = 1 << 5
+		OF_READ = 1 << 3,
+		OF_WRITE = 1 << 4,
+		OF_APPEND = OF_WRITE | (1 << 5),
+		OF_BINARY = 1 << 6
 	};
 
 	/// The 2 available byte orders. Used in binary files.
 	enum Endianness
 	{
-		E_LITTLE_ENDIAN = 1 << 6, ///< The default
-		E_BIG_ENDIAN = 1 << 7
+		E_LITTLE_ENDIAN = 1 << 7, ///< The default
+		E_BIG_ENDIAN = 1 << 8
 	};
 
 	/// Passed to seek function
@@ -53,7 +59,7 @@ public:
 	{}
 
 	/// Open file
-	File(const char* filename, U8 openMask)
+	File(const char* filename, U16 openMask)
 		: file(nullptr), flags(0)
 	{
 		open(filename, openMask);
@@ -66,7 +72,7 @@ public:
 	/// @param[in] filename The file to open
 	/// @param[in] openMask The open flags. It's a combination of OpenFlag and 
 	///                     Endianness enums
-	void open(const char* filename, U8 openMask);
+	void open(const char* filename, U16 openMask);
 
 	/// Close the file
 	void close();
@@ -117,22 +123,36 @@ public:
 
 	/// File exists?
 	static Bool fileExists(const char* filename);
+
+#if ANKI_OS == ANKI_OS_ANDROID
+	static void setAndroidAssetManager(AAssetManager* manager)
+	{
+		andAssetManager = manager;
+	}
+#endif
 	/// @}
 
 private:
 	void* file; ///< A native type
-	U8 flags; ///< All the flags. Initialy zero and set on open
+	U16 flags; ///< All the flags. Initialy zero and set on open
 
 	/// Get the current machine's endianness
 	static Endianness getMachineEndianness();
 
 	/// Open a C file
-	void openCFile(const char* filename, U8 flags);
+	void openCFile(const char* filename, U16 flags);
 
 	/// Open an archive and the file inside
 	/// @param[in] archive The filename of the archive
 	/// @param[in] archived The filename of the file inside the archive
-	void openZipFile(const char* archive, const char* archived, U8 flags);
+	void openZipFile(const char* archive, const char* archived, U16 flags);
+
+#if ANKI_OS == ANKI_OS_ANDROID
+	static AAssetManager* andAssetManager;
+
+	/// Open an Android file
+	void openAndFile(const char* filename, U16 flags);
+#endif
 };
 
 /// Directory exists?

@@ -5,8 +5,6 @@
 #include "anki/util/Assert.h"
 #include "anki/util/Array.h"
 #include "anki/misc/Xml.h"
-#include <png.h>
-#include <fstream>
 
 namespace anki {
 
@@ -20,15 +18,11 @@ static U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 //==============================================================================
 static void loadUncompressedTga(
-	std::fstream& fs, U32& width, U32& height, U32& bpp, Vector<U8>& data)
+	File& fs, U32& width, U32& height, U32& bpp, Vector<U8>& data)
 {
 	// read the info from header
 	U8 header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
-	if(fs.gcount() != sizeof(header6))
-	{
-		throw ANKI_EXCEPTION("Cannot read info header");
-	}
 
 	width  = header6[1] * 256 + header6[0];
 	height = header6[3] * 256 + header6[2];
@@ -45,10 +39,6 @@ static void loadUncompressedTga(
 	data.resize(imageSize);
 
 	fs.read(reinterpret_cast<char*>(&data[0]), imageSize);
-	if(fs.gcount() != imageSize)
-	{
-		throw ANKI_EXCEPTION("Cannot read image data");
-	}
 
 	// swap red with blue
 	for(int i = 0; i < int(imageSize); i += bytesPerPxl)
@@ -61,14 +51,10 @@ static void loadUncompressedTga(
 
 //==============================================================================
 static void loadCompressedTga(
-	std::fstream& fs, U32& width, U32& height, U32& bpp, Vector<U8>& data)
+	File& fs, U32& width, U32& height, U32& bpp, Vector<U8>& data)
 {
 	U8 header6[6];
 	fs.read((char*)&header6[0], sizeof(header6));
-	if(fs.gcount() != sizeof(header6))
-	{
-		throw ANKI_EXCEPTION("Cannot read info header");
-	}
 
 	width  = header6[1] * 256 + header6[0];
 	height = header6[3] * 256 + header6[2];
@@ -93,10 +79,6 @@ static void loadCompressedTga(
 		U8 chunkheader = 0;
 
 		fs.read((char*)&chunkheader, sizeof(U8));
-		if(fs.gcount() != sizeof(U8))
-		{
-			throw ANKI_EXCEPTION("Cannot read RLE header");
-		}
 
 		if(chunkheader < 128)
 		{
@@ -104,10 +86,6 @@ static void loadCompressedTga(
 			for(int counter = 0; counter < chunkheader; counter++)
 			{
 				fs.read((char*)&colorbuffer[0], bytesPerPxl);
-				if(fs.gcount() != bytesPerPxl)
-				{
-					throw ANKI_EXCEPTION("Cannot read image data");
-				}
 
 				data[currentbyte] = colorbuffer[2];
 				data[currentbyte + 1] = colorbuffer[1];
@@ -131,10 +109,6 @@ static void loadCompressedTga(
 		{
 			chunkheader -= 127;
 			fs.read((char*)&colorbuffer[0], bytesPerPxl);
-			if(fs.gcount() != bytesPerPxl)
-			{
-				throw ANKI_EXCEPTION("Cannot read from file");
-			}
 
 			for(int counter = 0; counter < chunkheader; counter++)
 			{
@@ -163,21 +137,10 @@ static void loadCompressedTga(
 static void loadTga(const char* filename, 
 	U32& width, U32& height, U32& bpp, Vector<U8>& data)
 {
-	std::fstream fs;
+	File fs(filename, File::OF_READ | File::OF_BINARY);
 	char myTgaHeader[12];
-	fs.open(filename, std::ios::in | std::ios::binary);
-
-	if(!fs.is_open())
-	{
-		throw ANKI_EXCEPTION("Cannot open file");
-	}
 
 	fs.read(&myTgaHeader[0], sizeof(myTgaHeader));
-	if(fs.gcount() != sizeof(myTgaHeader))
-	{
-		fs.close();
-		throw ANKI_EXCEPTION("Cannot read file header");
-	}
 
 	if(memcmp(tgaHeaderUncompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
@@ -197,216 +160,6 @@ static void loadTga(const char* filename,
 	{
 		throw ANKI_EXCEPTION("Invalid bpp");
 	}
-
-	fs.close();
-}
-
-//==============================================================================
-// PNG                                                                         =
-//==============================================================================
-
-//==============================================================================
-static Bool loadPng(const char* filename, std::string& err, 
-	U32& bpp, U32& width, U32& height, Vector<U8>& data) throw()
-{
-	// All locals
-	//
-	const U32 PNG_SIG_SIZE = 8; // PNG header size
-	FILE* file = NULL;
-	png_structp pngPtr = NULL;
-	png_infop infoPtr = NULL;
-	Bool ok = false;
-	PtrSize charsRead;
-	U32 bitDepth;
-	//U32 channels;
-	U32 rowbytes;
-	U32 colorFormat;
-	Vector<png_bytep> rowPointers;
-
-	// Open file
-	//
-	file = fopen(filename, "rb");
-	if(file == NULL)
-	{
-		err = "Cannot open file";
-		goto cleanup;
-	}
-
-	// Validate PNG header
-	//
-	png_byte pngsig[PNG_SIG_SIZE];
-	charsRead = fread(pngsig, 1, PNG_SIG_SIZE, file);
-	if(charsRead != PNG_SIG_SIZE)
-	{
-		err = "Cannot read PNG header";
-		goto cleanup;
-	}
-
-	if(png_sig_cmp(pngsig, 0, PNG_SIG_SIZE) != 0)
-	{
-		err = "File not PNG image";
-		goto cleanup;
-	}
-
-	// Crete some PNG structs
-	//
-	pngPtr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if(!pngPtr)
-	{
-		throw ANKI_EXCEPTION("png_create_read_struct failed");
-		goto cleanup;
-	}
-
-	infoPtr = png_create_info_struct(pngPtr);
-	if(!infoPtr)
-	{
-		err = "png_create_info_struct failed";
-		goto cleanup;
-	}
-
-	// Set error handling
-	//
-	if(setjmp(png_jmpbuf(pngPtr)))
-	{
-		err = "Reading PNG file failed";
-		goto cleanup;
-	}
-
-	// Init io
-	//
-	png_init_io(pngPtr, file);
-	// PNG lib knows that we already have read the header
-	png_set_sig_bytes(pngPtr, PNG_SIG_SIZE);
-
-	// Read info and make conversions
-	// This loop reads info, if not acceptable it calls libpng funcs to change
-	// them and re-runs the loop
-	//
-	png_read_info(pngPtr, infoPtr);
-	while(true)
-	{
-		width = png_get_image_width(pngPtr, infoPtr);
-		height = png_get_image_height(pngPtr, infoPtr);
-		bitDepth = png_get_bit_depth(pngPtr, infoPtr);
-		//channels = png_get_channels(pngPtr, infoPtr);
-		colorFormat = png_get_color_type(pngPtr, infoPtr);
-
-		// 1) Convert the color types
-		switch(colorFormat)
-		{
-		case PNG_COLOR_TYPE_PALETTE:
-			err = "Converting PNG_COLOR_TYPE_PALETTE to "
-				"PNG_COLOR_TYPE_RGB or PNG_COLOR_TYPE_RGBA";
-			png_set_palette_to_rgb(pngPtr);
-			goto again;
-			break;
-		case PNG_COLOR_TYPE_GRAY:
-			// do nothing
-			break;
-		case PNG_COLOR_TYPE_GRAY_ALPHA:
-			err = "Cannot accept PNG_COLOR_TYPE_GRAY_ALPHA. "
-				"Converting to PNG_COLOR_TYPE_GRAY";
-			png_set_strip_alpha(pngPtr);
-			goto again;
-			break;
-		case PNG_COLOR_TYPE_RGB:
-			// do nothing
-			break;
-		case PNG_COLOR_TYPE_RGBA:
-			// do nothing
-			break;
-		default:
-			throw ANKI_EXCEPTION("Forgot to handle a color type");
-			break;
-		}
-
-		// 2) Convert the bit depths
-		if(colorFormat == PNG_COLOR_TYPE_GRAY && bitDepth < 8)
-		{
-			err = "Converting bit depth";
-#if 0
-			png_set_gray_1_2_4_to_8(pngPtr);
-#endif
-			goto again;
-		}
-
-		if(bitDepth > 8)
-		{
-			err = "Converting bit depth";
-			png_set_strip_16(pngPtr);
-		}
-
-		break;
-
-		again:
-			png_read_update_info(pngPtr, infoPtr);
-	}
-
-	// Sanity checks
-	if((bitDepth != 8)
-		|| (colorFormat != PNG_COLOR_TYPE_GRAY
-			&& colorFormat != PNG_COLOR_TYPE_RGB
-			&& colorFormat != PNG_COLOR_TYPE_RGBA))
-	{
-		err = "Sanity checks failed";
-		goto cleanup;
-	}
-
-	// Read this sucker
-	//
-	rowbytes = png_get_rowbytes(pngPtr, infoPtr);
-
-	rowPointers.resize(height * sizeof(png_bytep));
-
-	data.resize(rowbytes * height);
-
-	for (U i = 0; i < height; ++i)
-		rowPointers[height - 1 - i] = &data[i * rowbytes];
-
-	png_read_image(pngPtr, &rowPointers[0]);
-
-	// Finalize
-	//
-	switch(colorFormat)
-	{
-	case PNG_COLOR_TYPE_GRAY:
-		bpp = 8;
-		break;
-	case PNG_COLOR_TYPE_RGB:
-		bpp = 24;
-		break;
-	case PNG_COLOR_TYPE_RGBA:
-		bpp = 32;
-		break;
-	default:
-		err = "See file";
-		goto cleanup;
-	}
-
-	ok = true;
-
-	// Cleanup
-	//
-cleanup:
-
-	if(pngPtr)
-	{
-		if(infoPtr)
-		{
-			png_destroy_read_struct(&pngPtr, &infoPtr, NULL);
-		}
-		else
-		{
-			png_destroy_read_struct(&pngPtr, NULL, NULL);
-		}
-	}
-
-	if(file)
-	{
-		fclose(file);
-	}
-
-	return ok;
 }
 
 //==============================================================================
@@ -716,31 +469,6 @@ void Image::load(const char* filename)
 			else
 			{
 				ANKI_ASSERT(0);
-			}
-		}
-		else if(strcmp(ext, "png") == 0)
-		{
-			std::string err;
-			surfaces.resize(1);
-			mipLevels = 1;
-			depth = 1;
-			if(!loadPng(filename, err, bpp, surfaces[0].width, 
-				surfaces[0].height, surfaces[0].data))
-			{
-				throw ANKI_EXCEPTION(err);
-			}
-
-			if(bpp == 32)
-			{
-				colorFormat = CF_RGBA8;
-			}
-			else if(bpp == 24)
-			{
-				colorFormat = CF_RGB8;
-			}
-			else
-			{
-				throw ANKI_EXCEPTION("Unsupported color type");
 			}
 		}
 		else if(strcmp(ext, "ankitex") == 0)

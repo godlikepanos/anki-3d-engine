@@ -40,8 +40,8 @@ void BufferObject::destroy()
 	{
 		unbind();
 		glDeleteBuffers(objectsCount, &glIds[0]);
-		memset(&glIds[0], sizeof(Base::glIds), 0);
-		objectsCount = 0;
+		memset(&glIds[0], 0, sizeof(Base::glIds));
+		objectsCount = 1;
 	}
 }
 

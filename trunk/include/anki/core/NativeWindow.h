@@ -3,6 +3,7 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
+#include "anki/util/Singleton.h"
 #include <string>
 #include <memory>
 
@@ -36,6 +37,9 @@ struct NativeWindowInitializer
 	/// @}
 
 	std::string title = "Untitled window";
+
+	/// System specific data (nedeed in Android)
+	void* systemData = nullptr;
 };
 
 /// Native window with GL context
@@ -85,6 +89,9 @@ private:
 		return impl.get() != nullptr;
 	}
 };
+
+/// Native window singleton
+typedef Singleton<NativeWindow> NativeWindowSingleton;
 
 } // end namespace anki
 

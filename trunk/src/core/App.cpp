@@ -1,9 +1,14 @@
 #include "anki/core/App.h"
+#include "anki/Config.h"
 #include "anki/core/Logger.h"
 #include "anki/util/Exception.h"
 #include "anki/util/File.h"
 #include "anki/util/System.h"
-#include "anki/Config.h"
+#include "anki/scene/SceneGraph.h"
+#include "anki/renderer/MainRenderer.h"
+#include "anki/input/Input.h"
+#include "anki/core/NativeWindow.h"
+#include "anki/core/Counters.h"
 #include <cstring>
 #include <sstream>
 #include <iostream>
@@ -14,7 +19,7 @@
 namespace anki {
 
 //==============================================================================
-/// Segfault signal handler
+/// Bad things signal handler
 static void handler(int sig)
 {
 	void *array[10];
@@ -30,78 +35,23 @@ static void handler(int sig)
 }
 
 //==============================================================================
-void App::handleLoggerMessages(const Logger::Info& info)
-{
-	std::ostream* out = NULL;
-	const char* x = NULL;
-	const char* terminalColor = nullptr;
-
-	switch(info.type)
-	{
-	case Logger::LMT_NORMAL:
-		out = &std::cout;
-		x = "Info";
-		terminalColor = "\033[0;32m";
-		break;
-	case Logger::LMT_ERROR:
-		out = &std::cerr;
-		x = "Error";
-		terminalColor = "\033[0;31m";
-		break;
-	case Logger::LMT_WARNING:
-		out = &std::cerr;
-		x = "Warn";
-		terminalColor = "\033[0;33m";
-		break;
-	}
-
-	(*out) << terminalColor << "(" << info.file << ":" << info.line << " "
-		<< info.func << ") " << x << ": " << info.msg << "\033[0m" << std::endl;
-}
-
-//==============================================================================
-void App::parseCommandLineArgs(int argc, char* argv[])
-{
-#if 0
-	for(int i = 1; i < argc; i++)
-	{
-		char* arg = argv[i];
-		if(strcmp(arg, "--terminal-coloring") == 0)
-		{
-			terminalColoringEnabled = true;
-		}
-		else if(strcmp(arg, "--no-terminal-coloring") == 0)
-		{
-			terminalColoringEnabled = false;
-		}
-		else
-		{
-			std::cerr << "Incorrect command line argument: " << arg
-				<< std::endl;
-			abort();
-		}
-	}
-#endif
-}
-
-//==============================================================================
-void App::init(int argc, char* argv[])
+void App::init(void* systemSpecificData)
 {
 	// Install signal handlers
 	signal(SIGSEGV, handler);
 	signal(SIGBUS, handler);
 	signal(SIGFPE, handler);
 
-	parseCommandLineArgs(argc, argv);
 	printAppInfo();
-	initDirs();
+	initDirs(systemSpecificData);
 
 	timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 }
 
 //==============================================================================
-void App::initDirs()
+void App::initDirs(void* systemSpecificData)
 {
+#if ANKI_OS != ANKI_OS_ANDROID
 	// Settings path
 	settingsPath = std::string(getenv("HOME")) + "/.anki";
 	if(!directoryExists(settingsPath.c_str()))
@@ -120,6 +70,29 @@ void App::initDirs()
 
 	ANKI_LOGI("Creating cache dir: %s", cachePath.c_str());
 	createDirectory(cachePath.c_str());
+#else
+	ANKI_ASSERT(systemSpecificData);
+	ANativeActivity* activity = (ANativeActivity*)systemSpecificData;
+
+	// Settings path
+	settingsPath = std::string(activity->internalDataPath);
+	if(!directoryExists(settingsPath.c_str()))
+	{
+		ANKI_LOGI("Creating settings dir: %s", settingsPath.c_str());
+		createDirectory(settingsPath.c_str());
+	}
+
+	// Cache
+	cachePath = settingsPath + "/cache";
+	if(directoryExists(cachePath.c_str()))
+	{
+		ANKI_LOGI("Deleting dir: %s", cachePath.c_str());
+		removeDirectory(cachePath.c_str());
+	}
+
+	ANKI_LOGI("Creating cache dir: %s", cachePath.c_str());
+	createDirectory(cachePath.c_str());
+#endif
 }
 
 //==============================================================================
@@ -147,6 +120,53 @@ void App::printAppInfo()
 	msg << " build date " __DATE__ ", " << "rev " << ANKI_REVISION;
 
 	ANKI_LOGI(msg.str().c_str());
+}
+
+//==============================================================================
+void App::mainLoop()
+{
+	ANKI_LOGI("Entering main loop");
+
+	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
+	HighRezTimer::Scalar crntTime = prevUpdateTime;
+
+	SceneGraph& scene = SceneGraphSingleton::get();
+	MainRenderer& renderer = MainRendererSingleton::get();
+	Input& input = InputSingleton::get();
+	NativeWindow& window = NativeWindowSingleton::get();
+
+	ANKI_COUNTER_START_TIMER(C_FPS);
+	while(true)
+	{
+		HighRezTimer timer;
+		timer.start();
+
+		prevUpdateTime = crntTime;
+		crntTime = HighRezTimer::getCurrentTime();
+
+		// Update
+		input.handleEvents();
+		scene.update(
+			prevUpdateTime, crntTime, MainRendererSingleton::get());
+		renderer.render(SceneGraphSingleton::get());
+
+		window.swapBuffers();
+		ANKI_COUNTERS_RESOLVE_FRAME();
+
+		// Sleep
+		timer.stop();
+		if(timer.getElapsedTime() < getTimerTick())
+		{
+			HighRezTimer::sleep(getTimerTick() - timer.getElapsedTime());
+		}
+
+		// Timestamp
+		increaseGlobTimestamp();
+	}
+
+	// Counters end
+	ANKI_COUNTER_STOP_TIMER_INC(C_FPS);
+	ANKI_COUNTERS_FLUSH();
 }
 
 } // end namespace anki

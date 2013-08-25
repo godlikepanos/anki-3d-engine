@@ -34,7 +34,7 @@ TVec4<T> operator/(const T f, const TVec4<T>& v4)
 	return TVec4<T>(f) / v4;
 }
 
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
+#if ANKI_SIMD == ANKI_SIMD_SSE
 
 //==============================================================================
 // SSE specializations                                                         =
@@ -173,7 +173,7 @@ inline void TVec4<F32>::normalize()
 	simd = _mm_mul_ps(simd, inverseNorm);
 }
 
-#elif ANKI_MATH_SIMD == ANKI_MATH_SIMD_NEON
+#elif ANKI_SIMD == ANKI_SIMD_NEON
 
 //==============================================================================
 // NEON specializations                                                        =

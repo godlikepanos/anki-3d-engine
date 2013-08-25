@@ -269,10 +269,16 @@ skipXNextEvent:
 			break;
 		}
 	}
+
+	// Lock mouse
+	if(lockCurs)
+	{
+		moveCursor(Vec2(0.0));
+	}
 }
 
 //==============================================================================
-void Input::moveMouse(const Vec2& pos)
+void Input::moveCursor(const Vec2& pos)
 {
 	DBG_LOGI("Moving to: " << pos.x() << " " << pos.y());
 

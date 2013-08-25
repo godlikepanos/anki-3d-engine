@@ -460,7 +460,6 @@ void mainLoop()
 		// Update
 		//
 		InputSingleton::get().handleEvents();
-		InputSingleton::get().moveMouse(Vec2(0.0));
 		mainLoopExtra();
 		SceneGraphSingleton::get().update(
 			prevUpdateTime, crntTime, MainRendererSingleton::get());
@@ -516,7 +515,7 @@ void initSubsystems(int argc, char* argv[])
 #endif
 
 	// App
-	AppSingleton::get().init(argc, argv);
+	AppSingleton::get().init(nullptr);
 
 	// Window
 	NativeWindowInitializer nwinit;
@@ -536,7 +535,9 @@ void initSubsystems(int argc, char* argv[])
 
 	// Input
 	InputSingleton::get().init(win);
+	InputSingleton::get().lockCursor(true);
 	InputSingleton::get().hideCursor(true);
+	InputSingleton::get().moveCursor(Vec2(0.0));
 
 	// Main renderer
 	RendererInitializer initializer;

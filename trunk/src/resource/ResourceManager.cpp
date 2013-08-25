@@ -21,10 +21,14 @@ ResourceManager::ResourceManager()
 	else
 	{
 		// Assume working directory
-#if ANKI_POSIX
-		dataPath = "./";
+#if ANKI_OS == ANKI_OS_ANDROID
+		dataPath = "$";
 #else
+#	if ANKI_POSIX
+		dataPath = "./";
+#	else
 		dataPath = ".\\";
+#	endif
 #endif
 	}
 }
@@ -42,7 +46,7 @@ std::string ResourceManager::fixResourcePath(const char* filename) const
 	}
 	else
 	{
-		newFname = ResourceManagerSingleton::get().getDataPath() + filename;
+		newFname = dataPath + filename;
 	}
 
 	return newFname;
