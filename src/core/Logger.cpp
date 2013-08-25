@@ -29,7 +29,7 @@ void Logger::write(const char* file, int line, const char* func,
 void Logger::writeFormated(const char* file, int line, const char* func,
 	LoggerMessageType type, const char* fmt, ...)
 {
-	char buffer[1024];
+	char buffer[1024 * 10];
 	va_list args;
 
 	va_start(args, fmt);

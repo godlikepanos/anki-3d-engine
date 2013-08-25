@@ -5,7 +5,7 @@
 #include <cstring>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <ftw.h>
+//#include <ftw.h>
 #include <cerrno>
 
 namespace anki {

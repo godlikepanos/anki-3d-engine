@@ -47,7 +47,7 @@ private:
 /// The singleton of resource manager
 typedef Singleton<ResourceManager> ResourceManagerSingleton;
 
-/// XXX
+/// Convenience macro to sanitize resources
 #define ANKI_R(x_) \
 	ResourceManagerSingleton::get().fixResourcePath(x_).c_str()
 

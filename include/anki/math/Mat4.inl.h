@@ -44,7 +44,7 @@ TMat4<T> operator/(const T f, const TMat4<T>& m4)
 	return out;
 }
 
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
+#if ANKI_SIMD == ANKI_SIMD_SSE
 
 //==============================================================================
 // SSE specializations                                                         =

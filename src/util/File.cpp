@@ -5,6 +5,9 @@
 #include <cstring>
 #include <cstdarg>
 #include <contrib/minizip/unzip.h>
+#if ANKI_OS == ANKI_OS_ANDROID
+#	include <android/asset_manager.h>
+#endif
 
 namespace anki {
 
@@ -12,97 +15,101 @@ namespace anki {
 // File                                                                        =
 //==============================================================================
 
+#if ANKI_OS == ANKI_OS_ANDROID
+AAssetManager* File::andAssetManager = nullptr;
+#endif
+
 //==============================================================================
 File::~File()
 {
-	if(file)
-	{
-		if(flags & FT_C)
-		{
-			fclose((FILE*)file);
-		}
-		else if(flags & FT_ZIP)
-		{
-			ANKI_ASSERT(0 && "Not implemented");
-		}
-		else
-		{
-			ANKI_ASSERT(0);
-		}
-	}
+	close();
 }
 
 //==============================================================================
-File::Endianness File::getMachineEndianness()
-{
-	I32 num = 1;
-	if(*(char*)&num == 1)
-	{
-		return E_LITTLE_ENDIAN;
-	}
-	else
-	{
-		return E_BIG_ENDIAN;
-	}
-}
-
-//==============================================================================
-void File::open(const char* filename, U8 flags_)
+void File::open(const char* filename, U16 flags_)
 {
 	ANKI_ASSERT(filename);
+	ANKI_ASSERT(strlen(filename) > 0);
 	ANKI_ASSERT(file == nullptr && flags == 0);
 
+	// Only these flags are accepted
 	ANKI_ASSERT((flags_ & (OF_READ | OF_WRITE | OF_APPEND | OF_BINARY 
 		| E_LITTLE_ENDIAN | E_BIG_ENDIAN)) != 0);
 
+	// Cannot be both
 	ANKI_ASSERT((flags_ & OF_READ) != (flags_ & OF_WRITE));
 
 	//
 	// In the following lines determine the file type and open it
 	//
 
-	const char* aext = ".ankizip";
-	const char* ptrToArchiveExt = strstr(filename, aext);
-
-	if(ptrToArchiveExt == nullptr)
+#if ANKI_OS == ANKI_OS_ANDROID
+	if(filename[0] == '$')
 	{
-		// It's a C file
-		openCFile(filename, flags_);
+		openAndFile(filename, flags_);
 	}
 	else
+#endif
 	{
-		// Maybe it's a file in a zipped archive
+		const char* aext = ".ankizip";
+		const char* ptrToArchiveExt = strstr(filename, aext);
 
-		PtrSize fnameLen = strlen(filename);
-		PtrSize extLen = strlen(aext);
-		PtrSize archLen = (PtrSize)(ptrToArchiveExt - filename) + extLen;
-
-		if(archLen + 1 >= fnameLen)
+		if(ptrToArchiveExt == nullptr)
 		{
-			throw ANKI_EXCEPTION("Wrong file inside the archive");
-		}
-
-		std::string archive(filename, archLen);
-
-		if(directoryExists(archive.c_str()))
-		{
-			// It's a directory so failback to C file
+			// It's a C file
 			openCFile(filename, flags_);
 		}
 		else
 		{
-			// It's a ziped file
+			// Maybe it's a file in a zipped archive
 
-			std::string filenameInArchive(
-				filename + archLen + 1, fnameLen - archLen);
+			PtrSize fnameLen = strlen(filename);
+			PtrSize extLen = strlen(aext);
+			PtrSize archLen = (PtrSize)(ptrToArchiveExt - filename) + extLen;
 
-			openZipFile(archive.c_str(), filenameInArchive.c_str(), flags_);
+			if(archLen + 1 >= fnameLen)
+			{
+				throw ANKI_EXCEPTION("Wrong file inside the archive");
+			}
+
+			std::string archive(filename, archLen);
+
+			if(directoryExists(archive.c_str()))
+			{
+				// It's a directory so failback to C file
+				openCFile(filename, flags_);
+			}
+			else
+			{
+				// It's a ziped file
+
+				std::string filenameInArchive(
+					filename + archLen + 1, fnameLen - archLen);
+
+				openZipFile(archive.c_str(), filenameInArchive.c_str(), flags_);
+			}
 		}
+	}
+
+	//
+	// Set endianess
+	//
+
+	// If the open() DIDN'T provided us the file endianess 
+	if((flags_ & (E_BIG_ENDIAN | E_LITTLE_ENDIAN)) == 0)
+	{
+		// Set the machine's endianness
+		flags |= getMachineEndianness();
+	}
+	else
+	{
+		// Else just make sure that only one of the flags is set
+		ANKI_ASSERT((flags_ & E_BIG_ENDIAN) != (flags_ & E_LITTLE_ENDIAN));
 	}
 }
 
 //==============================================================================
-void File::openCFile(const char* filename, U8 flags_)
+void File::openCFile(const char* filename, U16 flags_)
 {
 	const char* openMode;
 
@@ -132,26 +139,19 @@ void File::openCFile(const char* filename, U8 flags_)
 	}
 
 	flags = flags_ | FT_C;
-
-	// If the open() DIDN'T provided us the file endianess 
-	if((flags_ & (E_BIG_ENDIAN | E_LITTLE_ENDIAN)) == 0)
-	{
-		// Set the machine's endianness
-		flags |= getMachineEndianness();
-	}
-	else
-	{
-		// Else just make sure that just one of the flags is set
-		ANKI_ASSERT((flags_ & E_BIG_ENDIAN) != (flags_ & E_LITTLE_ENDIAN));
-	}
 }
 
 //==============================================================================
-void File::openZipFile(const char* archive, const char* archived, U8 flags_)
+void File::openZipFile(const char* archive, const char* archived, U16 flags_)
 {
 	if(flags_ & OF_WRITE)
 	{
 		throw ANKI_EXCEPTION("Cannot write inside archives");
+	}
+
+	if(!(flags_ & OF_READ))
+	{
+		throw ANKI_EXCEPTION("Missing OF_READ flag");
 	}
 
 	// Open archive
@@ -182,21 +182,57 @@ void File::openZipFile(const char* archive, const char* archived, U8 flags_)
 }
 
 //==============================================================================
+#if ANKI_OS == ANKI_OS_ANDROID
+void File::openAndFile(const char* filename, U16 flags_)
+{
+	if(flags_ & OF_WRITE)
+	{
+		throw ANKI_EXCEPTION("Cannot write inside archives");
+	}
+
+	if(!(flags_ & OF_READ))
+	{
+		throw ANKI_EXCEPTION("Missing OF_READ flag");
+	}
+
+	// Open file
+	ANKI_ASSERT(andAssetManager != nullptr 
+		&& "You should call setAndroidAssetManager() on engine initialization");
+	file = AAssetManager_open(
+		andAssetManager, filename + 1, AASSET_MODE_STREAMING);
+
+	if(file == nullptr)
+	{
+		throw ANKI_EXCEPTION("Failed to open file");
+	}
+
+	flags = flags_ | FT_SPECIAL;
+}
+#endif
+
+//==============================================================================
 void File::close()
 {
-	ANKI_ASSERT(file);
-
-	if(flags & FT_C)
+	if(file)
 	{
-		fclose((FILE*)file);
-	}
-	else if(flags & FT_ZIP)
-	{
-		unzClose(file);
-	}
-	else
-	{
-		ANKI_ASSERT(0);
+		if(flags & FT_C)
+		{
+			fclose((FILE*)file);
+		}
+		else if(flags & FT_ZIP)
+		{
+			unzClose(file);
+		}
+#if ANKI_OS == ANKI_OS_ANDROID
+		else if(flags & FT_SPECIAL)
+		{
+			AAsset_close((AAsset*)file);
+		}
+#endif
+		else
+		{
+			ANKI_ASSERT(0);
+		}
 	}
 
 	file = nullptr;
@@ -211,7 +247,7 @@ void File::read(void* buff, PtrSize size)
 	ANKI_ASSERT(file);
 	ANKI_ASSERT(flags & OF_READ);
 
-	PtrSize readSize = 0;
+	I64 readSize = 0;
 
 	if(flags & FT_C)
 	{
@@ -221,12 +257,18 @@ void File::read(void* buff, PtrSize size)
 	{
 		readSize = unzReadCurrentFile(file, buff, size);
 	}
+#if ANKI_OS == ANKI_OS_ANDROID
+	else if(flags & FT_SPECIAL)
+	{
+		readSize = AAsset_read((AAsset*)file, buff, size);
+	}
+#endif
 	else
 	{
 		ANKI_ASSERT(0);
 	}
 
-	if(size != readSize)
+	if((I64)size != readSize)
 	{
 		throw ANKI_EXCEPTION("File read failed");
 	}
@@ -244,19 +286,23 @@ void File::readAllText(std::string& txt)
 	{
 		// Get file size
 		fseek((FILE*)file, 0, SEEK_END);
-		PtrSize size = ftell((FILE*)file);
+		I64 size = ftell((FILE*)file);
+		if(size < 1)
+		{
+			throw ANKI_EXCEPTION("ftell() failed");
+		}
 		rewind((FILE*)file);
 
 		// Read and write
-		txt.resize(size);
+		txt.resize(size + 1);
 		PtrSize readSize = fread(&txt[0], 1, size, (FILE*)file);
-		(void)readSize;
-		ANKI_ASSERT(readSize == size);
+		ANKI_ASSERT(readSize == (PtrSize)size);
+		txt[readSize] = '\0';
 	}
 	else if(flags & FT_ZIP)
 	{
 		char buff[256];
-		I readSize;
+		I64 readSize;
 
 		while(true)
 		{
@@ -278,6 +324,19 @@ void File::readAllText(std::string& txt)
 			throw ANKI_EXCEPTION("unzReadCurrentFile() failed");
 		}
 	}
+#if ANKI_OS == ANKI_OS_ANDROID
+	else if(flags & FT_SPECIAL)
+	{
+		PtrSize size = AAsset_getLength((AAsset*)file);
+		AAsset_seek((AAsset*)file, 0, SEEK_SET);
+
+		txt.resize(size + 1);
+		I readSize = AAsset_read((AAsset*)file, &txt[0], size);
+		ANKI_ASSERT((PtrSize)readSize == size);
+
+		txt[readSize] = '\0';
+	}
+#endif
 	else
 	{
 		ANKI_ASSERT(0);
@@ -313,9 +372,15 @@ void File::readAllTextLines(StringList& lines)
 			}			
 		}
 	}
-	else if(flags & FT_ZIP)
+	else if(flags & FT_ZIP
+#if ANKI_OS == ANKI_OS_ANDROID
+		|| flags & FT_SPECIAL
+#endif
+		)
 	{
-		ANKI_ASSERT(0 && "Not implemented");
+		std::string txt;
+		readAllText(txt);
+		lines = StringList::splitString(txt.c_str(), '\n');
 	}
 	else
 	{
@@ -348,12 +413,12 @@ U32 File::readU32()
 	else if(machineEndianness == E_BIG_ENDIAN 
 		&& fileEndianness == E_LITTLE_ENDIAN)
 	{
-		U8* c = (U8*)&out;
+		U16* c = (U16*)&out;
 		out = (c[0] | (c[1] << 8) | (c[2] << 16) | (c[3] << 24));
 	}
 	else
 	{
-		U8* c = (U8*)&out;
+		U16* c = (U16*)&out;
 		out = ((c[0] << 24) | (c[1] << 16) | (c[2] << 8) | c[3]);
 	}
 
@@ -389,7 +454,11 @@ void File::write(void* buff, PtrSize size)
 			throw ANKI_EXCEPTION("Failed to write on file");
 		}
 	}
-	else if(flags & FT_ZIP)
+	else if(flags & FT_ZIP
+#if ANKI_OS == ANKI_OS_ANDROID
+		|| flags & FT_SPECIAL
+#endif
+		)
 	{
 		throw ANKI_EXCEPTION("Writting to archives is not supported");
 	}
@@ -415,7 +484,11 @@ void File::writeText(const char* format, ...)
 	{
 		vfprintf((FILE*)file, format, args);
 	}
-	else if(flags & FT_ZIP)
+	else if(flags & FT_ZIP
+#if ANKI_OS == ANKI_OS_ANDROID
+		|| flags & FT_SPECIAL
+#endif
+		)
 	{
 		throw ANKI_EXCEPTION("Writting to archives is not supported");
 	}
@@ -448,15 +521,45 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 			if(unzCloseCurrentFile(file)
 				|| unzOpenCurrentFile(file))
 			{
-				throw ANKI_EXCEPTION("Rewinde failed");
+				throw ANKI_EXCEPTION("Rewind failed");
 			}
-			
-			// XXX
+		}
+
+		// Move forward by reading dummy data
+		char buff[256];
+		while(offset != 0)
+		{
+			PtrSize toRead = std::min(offset, sizeof(buff));
+			read(buff, toRead);
+			offset -= toRead;
 		}
 	}
+#if ANKI_OS == ANKI_OS_ANDROID
+	else if(flags & FT_SPECIAL)
+	{
+		if(AAsset_seek((AAsset*)file, offset, origin) != 0)
+		{
+			throw ANKI_EXCEPTION("AAsset_seek() failed");
+		}
+	}
+#endif
 	else
 	{
 		ANKI_ASSERT(0);
+	}
+}
+
+//==============================================================================
+File::Endianness File::getMachineEndianness()
+{
+	I32 num = 1;
+	if(*(char*)&num == 1)
+	{
+		return E_LITTLE_ENDIAN;
+	}
+	else
+	{
+		return E_BIG_ENDIAN;
 	}
 }
 

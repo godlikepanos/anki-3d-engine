@@ -1,16 +1,10 @@
 #ifndef ANKI_CORE_APP_H
 #define ANKI_CORE_APP_H
 
-#include "anki/core/Logger.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/StringList.h"
 
 namespace anki {
-
-class StdinListener;
-class SceneGraph;
-class Camera;
-class Input;
 
 /// The core class of the engine.
 ///
@@ -20,26 +14,13 @@ class Input;
 class App
 {
 public:
-	ANKI_HAS_SLOTS(App)
-
 	App()
 	{}
 	~App()
 	{}
 
-	/// This method:
-	/// - Initialize the window
-	/// - Initialize the main renderer
-	/// - Initialize and start the stdin listener
-	/// - Initialize the scripting engine
-	void init(int argc, char* argv[]);
-
-	/// What it does:
-	/// - Destroy the window
-	/// - call exit()
-	void quit(int code);
-
-	static void printAppInfo();
+	/// Initialize the app
+	void init(void* systemSpecificData);
 
 	/// @name Accessors
 	/// @{
@@ -67,6 +48,16 @@ public:
 	}
 	/// @}
 
+	/// What it does:
+	/// - Destroy the window
+	/// - call exit()
+	void quit(int code);
+
+	/// Run the main loop
+	void mainLoop();
+
+	static void printAppInfo();
+
 private:
 	/// The path that holds the configuration
 	std::string settingsPath;
@@ -74,19 +65,11 @@ private:
 	std::string cachePath;
 	F32 timerTick;
 
-	void parseCommandLineArgs(int argc, char* argv[]);
-
-	/// A slot to handle the messageHandler's signal
-	void handleLoggerMessages(const Logger::Info& info);
-	ANKI_SLOT(handleLoggerMessages, const Logger::Info&)
-
-	void initWindow();
-	void initDirs();
-	void initRenderer();
+	void initDirs(void* systemSpecificData);
 };
 
 typedef Singleton<App> AppSingleton;
 
-} // end namespace
+} // end namespace anki
 
 #endif

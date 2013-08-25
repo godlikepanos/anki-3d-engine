@@ -55,10 +55,16 @@ public:
 	/// Move the mouse cursor to a position inside the window. Useful for 
 	/// locking the cursor into a fixed location (eg in the center of the 
 	/// screen)
-	void moveMouse(const Vec2& posNdc);
+	void moveCursor(const Vec2& posNdc);
 
 	/// Hide the mouse cursor
 	void hideCursor(Bool hide);
+
+	/// Lock mouse to (0, 0)
+	void lockCursor(Bool lock)
+	{
+		lockCurs = lock;
+	}
 
 private:
 	NativeWindow* nativeWindow = nullptr;
@@ -76,9 +82,11 @@ private:
 	Array<U32, 8> mouseBtns;
 	/// @}
 
-	Vec2 mousePosNdc; ///< The coords are in the NDC space
+	Vec2 mousePosNdc = Vec2(2.0); ///< The coords are in the NDC space
 
 	std::shared_ptr<InputImpl> impl;
+
+	Bool8 lockCurs = false;
 };
 
 typedef Singleton<Input> InputSingleton;

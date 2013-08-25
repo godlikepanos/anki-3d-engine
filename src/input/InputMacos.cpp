@@ -20,7 +20,7 @@ void Input::handleEvents()
 }
 
 //==============================================================================
-void Input::moveMouse(const Vec2& pos)
+void Input::moveCursor(const Vec2& pos)
 {
 	// XXX Add platform code
 }

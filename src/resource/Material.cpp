@@ -1,6 +1,7 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/MaterialShaderProgramCreator.h"
 #include "anki/core/App.h"
+#include "anki/core/Logger.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/util/File.h"

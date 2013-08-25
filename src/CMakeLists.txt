@@ -10,19 +10,23 @@ FOREACH(TMP ${ANKI_SUB_DIRS})
 	SET(ANKI_LIBS ${ANKI_LIBS} anki${TMP})
 ENDFOREACH()
 
-ADD_LIBRARY(anki Dummy.cpp)
-
-# Set the platform GL libraries
+# Set the platform libraries
 IF(ANKI_WINDOW_BACKEND STREQUAL "GLXX11")
-	SET(_GL GL ankiglew)
+	SET(_SYS GL ankiglew)
 ELSEIF(ANKI_WINDOW_BACKEND STREQUAL "MACOS")
 	FIND_PACKAGE(OpenGL REQUIRED)
-	SET(_GL ${OPENGL_LIBRARIES} ankiglew)
+	SET(_SYS ${OPENGL_LIBRARIES} ankiglew)
+ELSEIF(ANKI_WINDOW_BACKEND STREQUAL "ANDROID")
+	SET(_SYS GLESv2 EGL log android)
+	INCLUDE_DIRECTORIES("${ANDROID_NDK}/sources/android/native_app_glue")
+	SET(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
 ELSE()
-	SET(_GL GLESv2 EGL mali)
+	SET(_SYS GLESv2 EGL mali)
 ENDIF()
 
-TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankibullet ankiz ankipng ${ANKI_GPERFTOOLS_LIBS} pthread ${_GL})
+ADD_LIBRARY(anki Dummy.cpp "${_SYS_SRC}")
+
+TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankibullet ankiz ankipng ${ANKI_GPERFTOOLS_LIBS} pthread ${_SYS})
 
 SET_TARGET_PROPERTIES(anki PROPERTIES LINKER_LANGUAGE CXX)
 

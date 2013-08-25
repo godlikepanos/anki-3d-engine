@@ -15,14 +15,14 @@ struct TVec4Simd
 	typedef Array<T, 4> Type;
 };
 
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
+#if ANKI_SIMD == ANKI_SIMD_SSE
 // Specialize for F32
 template<>
 struct TVec4Simd<F32>
 {
 	typedef __m128 Type;
 };
-#elif ANKI_MATH_SIMD == ANKI_MATH_SIMD_NEON
+#elif ANKI_SIMD == ANKI_SIMD_NEON
 // Specialize for F32
 template<>
 struct TVec4Simd<F32>
@@ -403,7 +403,7 @@ private:
 	/// @}
 };
 
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
+#if ANKI_SIMD == ANKI_SIMD_SSE
 
 // Forward declare specializations
 
@@ -455,7 +455,7 @@ TVec4<F32> TVec4<F32>::getNormalized() const;
 template<>
 void TVec4<F32>::normalize();
 
-#elif ANKI_MATH_SIMD == ANKI_MATH_SIMD_NEON
+#elif ANKI_SIMD == ANKI_SIMD_NEON
 
 template<>
 TVec4<F32>::TVec4(F32 f);

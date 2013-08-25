@@ -12,6 +12,8 @@ void TypeResourceManager<Type>::
 	newInstance = nullptr;
 	std::string newFname;
 
+	newFname = ResourceManagerSingleton::get().fixResourcePath(filename);
+
 	// Alloc
 	try
 	{
@@ -19,15 +21,12 @@ void TypeResourceManager<Type>::
 	}
 	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Constructor failed for: " + filename) << e;
+		throw ANKI_EXCEPTION("Constructor failed for: " + newFname) << e;
 	}
 
 	// Load
 	try
 	{
-		newFname = 
-			ResourceManagerSingleton::get().fixResourcePath(filename);
-
 		newInstance->load(newFname.c_str());
 	}
 	catch(std::exception& e)

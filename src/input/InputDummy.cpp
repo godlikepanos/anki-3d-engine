@@ -15,7 +15,7 @@ void Input::init(NativeWindow* nativeWindow)
 }
 
 //==============================================================================
-void Input::moveMouse(const Vec2& posNdc)
+void Input::moveCursor(const Vec2& posNdc)
 {
 	// You are dummy... do nothing
 }

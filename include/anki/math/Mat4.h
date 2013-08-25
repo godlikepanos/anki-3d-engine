@@ -15,7 +15,7 @@ struct TMat4Simd
 	typedef Array<T, 16> Type;
 };
 
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
+#if ANKI_SIMD == ANKI_SIMD_SSE
 // Specialize for F32
 template<>
 struct TMat4Simd<F32>
@@ -791,7 +791,7 @@ private:
 	/// @}
 };
 
-#if ANKI_MATH_SIMD == ANKI_MATH_SIMD_SSE
+#if ANKI_SIMD == ANKI_SIMD_SSE
 
 // Forward declare specializations
 
