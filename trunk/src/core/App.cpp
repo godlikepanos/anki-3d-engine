@@ -13,14 +13,17 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <execinfo.h>
+//#include <execinfo.h> XXX
 #include <signal.h>
+#if ANKI_OS == ANKI_OS_ANDROID
+#	include <android_native_app_glue.h>
+#endif
 
 namespace anki {
 
 //==============================================================================
 /// Bad things signal handler
-static void handler(int sig)
+/*static void handler(int sig)
 {
 	void *array[10];
 	size_t size;
@@ -32,15 +35,15 @@ static void handler(int sig)
 	fprintf(stderr, "Error: signal %d:\n", sig);
 	backtrace_symbols_fd(array, size, 2);
 	exit(1);
-}
+}*/
 
 //==============================================================================
 void App::init(void* systemSpecificData)
 {
 	// Install signal handlers
-	signal(SIGSEGV, handler);
+	/*signal(SIGSEGV, handler);
 	signal(SIGBUS, handler);
-	signal(SIGFPE, handler);
+	signal(SIGFPE, handler);*/
 
 	printAppInfo();
 	initDirs(systemSpecificData);

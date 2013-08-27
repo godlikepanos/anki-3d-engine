@@ -5,7 +5,7 @@
 #include <cstring>
 #include <sys/stat.h>
 #include <sys/types.h>
-//#include <ftw.h>
+#include <dirent.h>
 #include <cerrno>
 
 namespace anki {
@@ -48,26 +48,44 @@ Bool directoryExists(const char* filename)
 	}
 }
 
-//==============================================================================
-static int rmDirCallback(const char* fpath, const struct stat* /*sb*/, 
-	int /*typeflag*/, struct FTW* /*ftwbuf*/)
+void removeDirectory(const char* dirname)
 {
-	int rv = remove(fpath);
+	DIR* dir;
+	struct dirent* entry;
+	char path[PATH_MAX];
 
-	if(rv)
+	if(path == NULL) 
 	{
-		throw ANKI_EXCEPTION(strerror(errno) + ": " + fpath);
+		fprintf(stderr, "Out of memory error\n");
+		throw ANKI_EXCEPTION("Out of memory error");
 	}
 
-	return rv;
-}
-
-void removeDirectory(const char* dir)
-{
-	if(nftw(dir, rmDirCallback, 64, FTW_DEPTH | FTW_PHYS))
+	dir = opendir(dirname);
+	if(dir == NULL) 
 	{
-		throw ANKI_EXCEPTION(strerror(errno) + ": " + dir);
+		throw ANKI_EXCEPTION("opendir() failed");
 	}
+
+	entry = readdir(dir);
+	while(entry != NULL) 
+	{
+		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) 
+		{
+			snprintf(path, (size_t)PATH_MAX, "%s/%s", dirname, entry->d_name);
+			if(entry->d_type == DT_DIR) 
+			{
+				removeDirectory(path);
+			}
+			else
+			{
+				remove(path);
+			}
+		}
+
+	}
+
+	closedir(dir);
+	remove(dirname);
 }
 
 //==============================================================================

@@ -16,6 +16,7 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 	U attr = 0;
 	EGLint configsCount;
 	EGLint format;
+	EGLConfig config;
 
 	ANKI_ASSERT(init.systemData != nullptr);
 	andApp = (android_app*)init.systemData;
@@ -126,7 +127,7 @@ void NativeWindowImpl::destroy()
 			eglDestroyContext(display, context);
 		}
 
-		if(engine->surface != EGL_NO_SURFACE) 
+		if(surface != EGL_NO_SURFACE) 
 		{
 			eglDestroySurface(display, surface);
 		}
