@@ -1,4 +1,6 @@
 #include "anki/core/NativeWindowAndroid.h"
+#include "anki/core/App.h"
+#include "anki/core/Logger.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Array.h"
 #include "anki/util/StdTypes.h"
@@ -18,8 +20,9 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 	EGLint format;
 	EGLConfig config;
 
-	ANKI_ASSERT(init.systemData != nullptr);
-	andApp = (android_app*)init.systemData;
+	ANKI_LOGI("Creating native window");
+
+	android_app& andApp = AppSingleton::get().getAndroidApp();
 
 	// EGL init
 	//
@@ -79,12 +82,12 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 
 	eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
 
-	ANKI_ASSERT(andApp->window);
-	ANativeWindow_setBuffersGeometry(andApp->window, 0, 0, format);
+	ANKI_ASSERT(andApp.window);
+	ANativeWindow_setBuffersGeometry(andApp.window, 0, 0, format);
 
 	// Surface
 	//
-	surface = eglCreateWindowSurface(display, config, andApp->window, NULL);
+	surface = eglCreateWindowSurface(display, config, andApp.window, NULL);
 	if(surface == EGL_NO_SURFACE)
 	{
 		throw ANKI_EXCEPTION("Cannot create surface");

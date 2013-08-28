@@ -56,7 +56,6 @@ void removeDirectory(const char* dirname)
 
 	if(path == NULL) 
 	{
-		fprintf(stderr, "Out of memory error\n");
 		throw ANKI_EXCEPTION("Out of memory error");
 	}
 
@@ -66,8 +65,7 @@ void removeDirectory(const char* dirname)
 		throw ANKI_EXCEPTION("opendir() failed");
 	}
 
-	entry = readdir(dir);
-	while(entry != NULL) 
+	while((entry = readdir(dir)) != NULL) 
 	{
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) 
 		{

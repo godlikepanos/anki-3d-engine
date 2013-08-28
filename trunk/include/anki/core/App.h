@@ -1,8 +1,12 @@
 #ifndef ANKI_CORE_APP_H
 #define ANKI_CORE_APP_H
 
+#include "anki/Config.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/StringList.h"
+#if ANKI_OS == ANKI_OS_ANDROID
+#	include <android_native_app_glue.h>
+#endif
 
 namespace anki {
 
@@ -46,6 +50,14 @@ public:
 	{
 		return cachePath;
 	}
+
+#if ANKI_OS == ANKI_OS_ANDROID
+	android_app& getAndroidApp()
+	{
+		ANKI_ASSERT(andApp);
+		return *andApp;
+	}
+#endif
 	/// @}
 
 	/// What it does:
@@ -65,7 +77,11 @@ private:
 	std::string cachePath;
 	F32 timerTick;
 
-	void initDirs(void* systemSpecificData);
+#if ANKI_OS == ANKI_OS_ANDROID
+	android_app* andApp = nullptr;
+#endif
+
+	void initDirs();
 };
 
 typedef Singleton<App> AppSingleton;

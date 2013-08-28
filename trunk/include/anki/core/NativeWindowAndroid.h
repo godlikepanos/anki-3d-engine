@@ -14,7 +14,6 @@ struct NativeWindowImpl
 	EGLDisplay display = EGL_NO_DISPLAY;
 	EGLSurface surface = EGL_NO_SURFACE;
 	EGLContext context = EGL_NO_CONTEXT;
-	android_app* andApp = nullptr;
 
 	~NativeWindowImpl()
 	{
