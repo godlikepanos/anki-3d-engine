@@ -40,19 +40,24 @@ namespace anki {
 //==============================================================================
 void App::init(void* systemSpecificData)
 {
+#if ANKI_OS == ANKI_OS_ANDROID
+	ANKI_ASSERT(systemSpecificData);
+	andApp = (android_app*)systemSpecificData;
+#endif
+
 	// Install signal handlers
 	/*signal(SIGSEGV, handler);
 	signal(SIGBUS, handler);
 	signal(SIGFPE, handler);*/
 
 	printAppInfo();
-	initDirs(systemSpecificData);
+	initDirs();
 
 	timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 }
 
 //==============================================================================
-void App::initDirs(void* systemSpecificData)
+void App::initDirs()
 {
 #if ANKI_OS != ANKI_OS_ANDROID
 	// Settings path
@@ -74,8 +79,7 @@ void App::initDirs(void* systemSpecificData)
 	ANKI_LOGI("Creating cache dir: %s", cachePath.c_str());
 	createDirectory(cachePath.c_str());
 #else
-	ANKI_ASSERT(systemSpecificData);
-	ANativeActivity* activity = (ANativeActivity*)systemSpecificData;
+	ANativeActivity* activity = andApp->activity;
 
 	// Settings path
 	settingsPath = std::string(activity->internalDataPath);

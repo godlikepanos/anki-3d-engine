@@ -37,9 +37,6 @@ struct NativeWindowInitializer
 	/// @}
 
 	std::string title = "Untitled window";
-
-	/// System specific data (nedeed in Android)
-	void* systemData = nullptr;
 };
 
 /// Native window with GL context
