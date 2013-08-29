@@ -3,7 +3,6 @@
 #include "anki/core/App.h" // To get cache dir
 #include "anki/util/File.h"
 #include "anki/util/Exception.h"
-#include <fstream>
 #include <sstream>
 #include <unordered_map>
 
@@ -105,14 +104,8 @@ std::string ShaderProgramResource::createSrcCodeToCache(
 	File(sProgFPathName, File::OF_READ).readAllText(src_);
 	std::string src = preAppendedSrcCode + src_;
 
-	std::ofstream f(newfPathName.c_str());
-	if(!f.is_open())
-	{
-		throw ANKI_EXCEPTION("Cannot open file for writing: "
-			+ newfPathName);
-	}
-
-	f.write(src.c_str(), src.length());
+	File f(newfPathName.c_str(), File::OF_READ);
+	f.writeText(src.c_str());
 
 	return newfPathName;
 }
