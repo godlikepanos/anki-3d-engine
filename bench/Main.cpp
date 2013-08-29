@@ -26,6 +26,7 @@
 #include "anki/resource/Material.h"
 #include "anki/core/ThreadPool.h"
 #include "anki/core/NativeWindow.h"
+#include "anki/core/Counters.h"
 #include "anki/Scene.h"
 #include <android_native_app_glue.h>
 #include <android/log.h>
@@ -114,18 +115,109 @@ void initSubsystems(android_app* app)
 }
 
 //==============================================================================
-void android_main(struct android_app* app)
+static void handleEvents(android_app* app, int32_t cmd) 
+{
+	switch(cmd) 
+	{
+	case APP_CMD_SAVE_STATE:
+		ANKI_LOGI("APP_CMD_SAVE_STATE");
+		break;
+	case APP_CMD_INIT_WINDOW:
+		ANKI_LOGI("APP_CMD_INIT_WINDOW");
+		break;
+	case APP_CMD_TERM_WINDOW:
+		ANKI_LOGI("APP_CMD_TERM_WINDOW");
+		break;
+	case APP_CMD_GAINED_FOCUS:
+		ANKI_LOGI("APP_CMD_GAINED_FOCUS");
+		break;
+	case APP_CMD_LOST_FOCUS:
+		ANKI_LOGI("APP_CMD_LOST_FOCUS");
+		break;
+	}
+}
+
+//==============================================================================
+void mainLoop()
+{
+	ANKI_LOGI("Entering main loop");
+
+	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
+	HighRezTimer::Scalar crntTime = prevUpdateTime;
+
+	SceneGraph& scene = SceneGraphSingleton::get();
+	MainRenderer& renderer = MainRendererSingleton::get();
+	Input& input = InputSingleton::get();
+	NativeWindow& window = NativeWindowSingleton::get();
+
+	ANKI_COUNTER_START_TIMER(C_FPS);
+	while(true)
+	{
+		HighRezTimer timer;
+		timer.start();
+
+		prevUpdateTime = crntTime;
+		crntTime = HighRezTimer::getCurrentTime();
+
+		// Update
+		input.handleEvents();
+		scene.update(
+			prevUpdateTime, crntTime, MainRendererSingleton::get());
+		renderer.render(SceneGraphSingleton::get());
+
+		window.swapBuffers();
+		ANKI_COUNTERS_RESOLVE_FRAME();
+
+		// Sleep
+		timer.stop();
+		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
+		{
+			HighRezTimer::sleep(
+				AppSingleton::get().getTimerTick() - timer.getElapsedTime());
+		}
+
+		// Timestamp
+		increaseGlobTimestamp();
+	}
+
+	// Counters end
+	ANKI_COUNTER_STOP_TIMER_INC(C_FPS);
+	ANKI_COUNTERS_FLUSH();
+}
+
+//==============================================================================
+void loopUntilWindowIsReady(android_app* app)
+{
+	while(app->window == nullptr) 
+	{
+		int ident;
+		int events;
+		android_poll_source* source;
+
+		while((ident=ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0) 
+		{
+			if (source != NULL) 
+			{
+				source->process(app, source);
+			}
+		}
+	}
+}
+
+//==============================================================================
+void android_main(android_app* app)
 {
 	app_dummy();
+
+	app->onAppCmd = handleEvents;
+	loopUntilWindowIsReady(app);
 
 	try
 	{
 		initSubsystems(app);
-
-		AppSingleton::get().mainLoop();
+		mainLoop();
 
 		ANKI_LOGI("Exiting...");
-		abort();
 	}
 	catch(std::exception& e)
 	{
@@ -133,4 +225,5 @@ void android_main(struct android_app* app)
 	}
 
 	ANKI_LOGI("Bye!!");
+	exit(1);
 }

@@ -1,7 +1,6 @@
 #include "anki/util/File.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
-#include <fstream>
 #include <cstring>
 #include <sys/stat.h>
 #include <sys/types.h>

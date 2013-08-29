@@ -1,6 +1,5 @@
 #include "anki/resource/MeshLoader.h"
 #include "anki/util/File.h"
-#include <fstream>
 #include <cstring>
 #include <unordered_map>
 

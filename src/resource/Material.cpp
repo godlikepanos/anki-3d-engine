@@ -9,7 +9,6 @@
 #include <functional>
 #include <algorithm>
 #include <map>
-#include <fstream>
 
 namespace anki {
 
@@ -327,15 +326,8 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 	if(!File::fileExists(newfPathName.c_str()))
 	{
 		// If not create it
-		std::ofstream f(newfPathName.c_str());
-		if(!f.is_open())
-		{
-			throw ANKI_EXCEPTION("Cannot open file for writing: " 
-				+ newfPathName);
-		}
-
-		f.write(source.c_str(), source.length());
-		f.close();
+		File f(newfPathName.c_str(), File::OF_READ);
+		f.writeText(source.c_str());
 	}
 
 	return newfPathName;

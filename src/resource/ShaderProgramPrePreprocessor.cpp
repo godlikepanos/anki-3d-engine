@@ -1,4 +1,5 @@
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Functions.h"
 #include "anki/util/File.h"
@@ -97,6 +98,9 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 		{
 			std::string filen = {line, strlen(commands[6]), std::string::npos};
 			filen = trimString(filen, " \"");
+
+			filen = 
+				ResourceManagerSingleton::get().fixResourcePath(filen.c_str());
 
 			parseFileForPragmas(filen, depth + 1);
 		}
