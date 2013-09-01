@@ -213,7 +213,7 @@ void Tiler::initInternal(Renderer* r_)
 		"#define RENDERER_HEIGHT " + std::to_string(r->getHeight()) + "\n";
 
 	prog.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/TilerMinMax.glsl", pps.c_str()).c_str());
+		"shaders/TilerMinMax.glsl", pps.c_str(), "r_").c_str());
 
 	depthMapUniform = &(prog->findUniformVariable("depthMap"));
 

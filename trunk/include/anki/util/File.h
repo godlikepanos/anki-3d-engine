@@ -4,11 +4,6 @@
 #include "anki/util/StringList.h"
 #include <string>
 
-// Forward
-#if ANKI_OS == ANKI_OS_ANDROID
-struct AAssetManager;
-#endif
-
 namespace anki {
 
 /// @addtogroup util
@@ -74,6 +69,12 @@ public:
 	///                     Endianness enums
 	void open(const char* filename, U16 openMask);
 
+	/// Return true if the file is oppen
+	Bool isOpen() const
+	{
+		return file != nullptr;
+	}
+
 	/// Close the file
 	void close();
 
@@ -124,12 +125,6 @@ public:
 	/// File exists?
 	static Bool fileExists(const char* filename);
 
-#if ANKI_OS == ANKI_OS_ANDROID
-	static void setAndroidAssetManager(AAssetManager* manager)
-	{
-		andAssetManager = manager;
-	}
-#endif
 	/// @}
 
 private:
@@ -148,8 +143,6 @@ private:
 	void openZipFile(const char* archive, const char* archived, U16 flags);
 
 #if ANKI_OS == ANKI_OS_ANDROID
-	static AAssetManager* andAssetManager;
-
 	/// Open an Android file
 	void openAndFile(const char* filename, U16 flags);
 #endif

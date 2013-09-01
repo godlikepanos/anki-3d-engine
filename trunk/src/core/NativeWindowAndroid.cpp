@@ -8,6 +8,27 @@
 namespace anki {
 
 //==============================================================================
+static void loopUntilWindowIsReady(android_app& app)
+{
+	while(app.window == nullptr) 
+	{
+		int ident;
+		int events;
+		android_poll_source* source;
+
+		const U timeoutMs = 5;
+		while((ident = 
+			ALooper_pollAll(timeoutMs, NULL, &events, (void**)&source)) >= 0) 
+		{
+			if (source != NULL) 
+			{
+				source->process(&app, source);
+			}
+		}
+	}
+}
+
+//==============================================================================
 // NativeWindowImpl                                                            =
 //==============================================================================
 
@@ -22,7 +43,9 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 
 	ANKI_LOGI("Creating native window");
 
-	android_app& andApp = AppSingleton::get().getAndroidApp();
+	ANKI_ASSERT(gAndroidApp);
+	android_app& andApp = *gAndroidApp;
+	loopUntilWindowIsReady(andApp);
 
 	// EGL init
 	//

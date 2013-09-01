@@ -10,6 +10,10 @@
 
 namespace anki {
 
+#if ANKI_OS == ANKI_OS_ANDROID
+extern android_app* gAndroidApp;
+#endif
+
 /// The core class of the engine.
 ///
 /// - It initializes the window
@@ -24,7 +28,7 @@ public:
 	{}
 
 	/// Initialize the app
-	void init(void* systemSpecificData);
+	void init();
 
 	/// @name Accessors
 	/// @{
@@ -50,14 +54,6 @@ public:
 	{
 		return cachePath;
 	}
-
-#if ANKI_OS == ANKI_OS_ANDROID
-	android_app& getAndroidApp()
-	{
-		ANKI_ASSERT(andApp);
-		return *andApp;
-	}
-#endif
 	/// @}
 
 	/// What it does:
@@ -76,10 +72,6 @@ private:
 	/// This is used as a cache
 	std::string cachePath;
 	F32 timerTick;
-
-#if ANKI_OS == ANKI_OS_ANDROID
-	android_app* andApp = nullptr;
-#endif
 
 	void initDirs();
 };

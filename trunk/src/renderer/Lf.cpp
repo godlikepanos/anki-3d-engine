@@ -78,13 +78,13 @@ void Lf::initInternal(const RendererInitializer& initializer)
 		+ std::to_string(r->getPps().getHdr().getFai().getHeight()) + ".0)\n";
 
 	pseudoProg.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/PpsLfPseudoPass.glsl", pps.c_str()).c_str());
+		"shaders/PpsLfPseudoPass.glsl", pps.c_str(), "r_").c_str());
 
 	// Load program 2
 	pps = "#define MAX_FLARES "
 		+ std::to_string(maxFlaresPerLight * maxLightsWithFlares) + "\n";
 	std::string fname = ShaderProgramResource::createSrcCodeToCache(
-		"shaders/PpsLfSpritePass.glsl", pps.c_str());
+		"shaders/PpsLfSpritePass.glsl", pps.c_str(), "r_");
 	realProg.load(fname.c_str());
 
 	ublock = &realProg->findUniformBlock("flaresBlock");

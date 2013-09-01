@@ -83,6 +83,7 @@ void MainRenderer::render(SceneGraph& scene)
 	Bool drawToDefaultFbo = renderingQuality > 0.9 && !dbg.getEnabled();
 
 	pps.setDrawToDefaultFbo(drawToDefaultFbo);
+	is.setDrawToDefaultFbo(drawToDefaultFbo && !pps.getEnabled());
 
 	Renderer::render(scene);
 

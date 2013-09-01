@@ -465,7 +465,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 
 	// point light
 	lightPassProg.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/IsLp.glsl", pps.str().c_str()).c_str());
+		"shaders/IsLp.glsl", pps.str().c_str(), "r_").c_str());
 
 #if ANKI_GL == ANKI_GL_DESKTOP
 	if(useCompute())
@@ -478,7 +478,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 			<< TILES_BLOCK_BINDING << "\n";
 
 		rejectProg.load(ShaderProgramResource::createSrcCodeToCache(
-			"shaders/IsRejectLights.glsl", pps.str().c_str()).c_str());
+			"shaders/IsRejectLights.glsl", pps.str().c_str(), "r_").c_str());
 	}
 #endif
 
@@ -867,7 +867,15 @@ void Is::lightPass()
 //==============================================================================
 void Is::setState()
 {
-	fbo.bind();
+	if(drawToDefaultFbo)
+	{
+		Fbo::bindDefault();
+	}
+	else
+	{
+		fbo.bind();
+	}
+
 	r->clearAfterBindingFbo(
 		GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	GlStateSingleton::get().setViewport(

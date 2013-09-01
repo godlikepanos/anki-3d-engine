@@ -105,7 +105,7 @@
 
 // General config
 #define ANKI_MAX_MULTIDRAW_PRIMITIVES 64
-#define ANKI_MAX_INSTANCES 64
+#define ANKI_MAX_INSTANCES 32
 
 // Renderer and rendering related config options
 #define ANKI_RENDERER_TILES_X_COUNT 16
@@ -154,7 +154,7 @@
 /// @}
 
 // Workaround some GCC C++11 problems
-#if ${ANKI_GCC_TO_STRING_WORKAROUND}
+#if ${_ANKI_GCC_TO_STRING_WORKAROUND}
 #	include <sstream>
 
 namespace std {

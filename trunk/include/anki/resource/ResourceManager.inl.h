@@ -10,9 +10,6 @@ void TypeResourceManager<Type>::
 	allocAndLoadRsrc(const char* filename, Type*& newInstance)
 {
 	newInstance = nullptr;
-	std::string newFname;
-
-	newFname = ResourceManagerSingleton::get().fixResourcePath(filename);
 
 	// Alloc
 	try
@@ -21,17 +18,17 @@ void TypeResourceManager<Type>::
 	}
 	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Constructor failed for: " + newFname) << e;
+		throw ANKI_EXCEPTION("Constructor failed for: " + filename) << e;
 	}
 
 	// Load
 	try
 	{
-		newInstance->load(newFname.c_str());
+		newInstance->load(filename);
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot load: " + newFname) << e;
+		throw ANKI_EXCEPTION("Cannot load: " + filename) << e;
 	}
 }
 
@@ -55,15 +52,17 @@ typename TypeResourceManager<Type>::Hook& TypeResourceManager<Type>::
 		hook = new Hook;
 		hook->uuid = filename;
 		hook->referenceCounter = 1;
+		std::string newFname =
+			ResourceManagerSingleton::get().fixResourcePath(filename);
 
 		try
 		{
-			allocAndLoadRsrc(filename, hook->resource);
+			allocAndLoadRsrc(newFname.c_str(), hook->resource);
 		}
 		catch(std::exception& e)
 		{
 			delete hook;
-			throw ANKI_EXCEPTION("Cannot load: " + filename) << e;
+			throw ANKI_EXCEPTION("Cannot load: " + newFname) << e;
 		}
 
 		hooks.push_back(hook);

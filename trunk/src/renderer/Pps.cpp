@@ -70,7 +70,7 @@ void Pps::initInternal(const RendererInitializer& initializer)
 	pps += "#define FBO_HEIGHT " + std::to_string(r->getHeight()) + "\n";
 
 	prog.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/Pps.glsl", pps.c_str()).c_str());
+		"shaders/Pps.glsl", pps.c_str(), "r_").c_str());
 }
 
 //==============================================================================

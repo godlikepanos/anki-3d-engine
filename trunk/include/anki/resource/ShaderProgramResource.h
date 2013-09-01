@@ -5,6 +5,9 @@
 
 namespace anki {
 
+/// @addtogroup Resource
+/// @{
+
 /// Shader program resource
 class ShaderProgramResource: public ShaderProgram
 {
@@ -22,15 +25,20 @@ public:
 
 	/// Used by @ref Material and @ref Renderer to create custom shaders in
 	/// the cache
-	/// @param sProgFPathName The file pathname of the shader prog
+	/// @param filename The file pathname of the shader prog
 	/// @param preAppendedSrcCode The source code we want to write on top
 	///        of the shader prog
+	/// @param filenamePrefix Add that at the base filename for additional 
+	///        ways to identify the file in the cache
 	/// @return The file pathname of the new shader prog. Its
-	///         $HOME/.anki/cache/newFNamePrefix_fName
-	static std::string createSrcCodeToCache(const char* sProgFPathName,
-		const char* preAppendedSrcCode);
+	///         $HOME/.anki/cache/ + filenamePrefix + hash + .glsl
+	static std::string createSrcCodeToCache(
+		const char* filename,
+		const char* preAppendedSrcCode,
+		const char* filenamePrefix);
 }; 
+/// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

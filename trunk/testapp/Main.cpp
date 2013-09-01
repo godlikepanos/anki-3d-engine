@@ -515,7 +515,7 @@ void initSubsystems(int argc, char* argv[])
 #endif
 
 	// App
-	AppSingleton::get().init(nullptr);
+	AppSingleton::get().init();
 
 	// Window
 	NativeWindowInitializer nwinit;

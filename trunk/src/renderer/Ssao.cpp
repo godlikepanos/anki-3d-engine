@@ -176,7 +176,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 		<< "\n" << kernelStr.str() 
 		<< "\n";
 	ssaoSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/PpsSsao.glsl", pps.str().c_str()).c_str());
+		"shaders/PpsSsao.glsl", pps.str().c_str(), "r_").c_str());
 
 	ssaoSProg->findUniformBlock("commonBlock").setBinding(0);
 
@@ -189,7 +189,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 		"#define IMG_DIMENSION " << bHeight << "\n"
 		"#define SAMPLES 7\n";
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.str().c_str()).c_str());
+		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
 
 	pps.clear();
 	pps << "#define VPASS\n"
@@ -197,7 +197,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 		"#define IMG_DIMENSION " << bWidth << "\n"
 		"#define SAMPLES 7\n";
 	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.str().c_str()).c_str());
+		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
 }
 
 //==============================================================================

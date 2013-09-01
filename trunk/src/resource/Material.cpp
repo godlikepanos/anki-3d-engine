@@ -326,8 +326,8 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 	if(!File::fileExists(newfPathName.c_str()))
 	{
 		// If not create it
-		File f(newfPathName.c_str(), File::OF_READ);
-		f.writeText(source.c_str());
+		File f(newfPathName.c_str(), File::OF_WRITE);
+		f.writeText("%s\n", source.c_str());
 	}
 
 	return newfPathName;
