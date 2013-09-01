@@ -61,7 +61,7 @@ void Hdr::initInternal(const Renderer::Initializer& initializer)
 		"#define IMG_DIMENSION " + std::to_string(height) + "\n"
 		"#define SAMPLES 7\n";
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.c_str()).c_str());
+		SHADER_FILENAME, pps.c_str(), "r_").c_str());
 
 	pps =
 		"#define VPASS\n"
@@ -70,7 +70,7 @@ void Hdr::initInternal(const Renderer::Initializer& initializer)
 		"#define IMG_DIMENSION " + std::to_string(width) + "\n"
 		"#define SAMPLES 7\n";
 	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.c_str()).c_str());
+		SHADER_FILENAME, pps.c_str(), "r_").c_str());
 
 	// Set timestamps
 	parameterUpdateTimestamp = getGlobTimestamp();

@@ -1,12 +1,12 @@
 #include "anki/util/File.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
-#include "anki/core/Logger.h" // XXX
 #include <fstream>
 #include <cstring>
 #include <cstdarg>
 #include <contrib/minizip/unzip.h>
 #if ANKI_OS == ANKI_OS_ANDROID
+#	include <android_native_app_glue.h>
 #	include <android/asset_manager.h>
 #endif
 
@@ -17,7 +17,7 @@ namespace anki {
 //==============================================================================
 
 #if ANKI_OS == ANKI_OS_ANDROID
-AAssetManager* File::andAssetManager = nullptr;
+extern android_app* gAndroidApp;
 #endif
 
 //==============================================================================
@@ -197,10 +197,13 @@ void File::openAndFile(const char* filename, U16 flags_)
 	}
 
 	// Open file
-	ANKI_ASSERT(andAssetManager != nullptr 
-		&& "You should call setAndroidAssetManager() on engine initialization");
+	ANKI_ASSERT(gAndroidApp != nullptr && gAndroidApp->activity 
+		&& gAndroidApp->activity->assetManager);
+
 	file = AAssetManager_open(
-		andAssetManager, filename + 1, AASSET_MODE_STREAMING);
+		gAndroidApp->activity->assetManager, 
+		filename + 1, 
+		AASSET_MODE_STREAMING);
 
 	if(file == nullptr)
 	{
@@ -538,7 +541,7 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 #if ANKI_OS == ANKI_OS_ANDROID
 	else if(flags & FT_SPECIAL)
 	{
-		if(AAsset_seek((AAsset*)file, offset, origin) != 0)
+		if(AAsset_seek((AAsset*)file, offset, origin) == (off_t)-1)
 		{
 			throw ANKI_EXCEPTION("AAsset_seek() failed");
 		}

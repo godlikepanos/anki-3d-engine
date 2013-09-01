@@ -1,2 +1,6 @@
-ADD_LIBRARY(ankibench SHARED Main.cpp)
+IF(ANDROID)
+	ADD_LIBRARY(ankibench SHARED Main.cpp)
+ELSE()
+	ADD_EXECUTABLE(ankibench Main.cpp)
+ENDIF()
 TARGET_LINK_LIBRARIES(ankibench anki) 

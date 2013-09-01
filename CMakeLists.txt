@@ -6,6 +6,8 @@ PROJECT(anki)
 # Configuration
 #
 
+SET(ANKI_BUILD_TYPE "Release" CACHE STRING "Like CMAKE_BUILD_TYPE (Release or Debug)")
+
 OPTION(ANKI_BUILD_TOOLS "Build tools" ON)
 OPTION(ANKI_BUILD_TESTS "Build unit tests" OFF)
 OPTION(ANKI_BUILD_TESTAPP "Build test application" ON)
@@ -21,9 +23,6 @@ IF(ANKI_ENABLE_COUNTERS)
 ELSE()
 	SET(_ANKI_ENABLE_COUNTERS 0)
 ENDIF()
-
-# Because we want different compiler flags for each platform
-SET(ANKI_CPU "X86" CACHE STRING "The CPU arch (X86 or ARM)")
 
 # Address space
 SET(ANKI_CPU_ADDR_SPACE "0" CACHE STRING 
@@ -53,7 +52,13 @@ ENDIF()
 
 SET(ANKI_WINDOW_BACKEND "${_WIN_BACKEND}" CACHE STRING "The window backend (GLXX11 or EGLX11 or EGLFBDEV or MACOS or or ANDROID or DUMMY)")
 
-SET(ANKI_GCC_TO_STRING_WORKAROUND "0" CACHE STRING "Enable workaround for C++11 GCC bug (0 or 1)")
+OPTION(ANKI_GCC_TO_STRING_WORKAROUND "Enable workaround for C++11 GCC bug" OFF)
+IF(ANKI_GCC_TO_STRING_WORKAROUND)
+	SET(_ANKI_GCC_TO_STRING_WORKAROUND 1)
+ELSE()
+	SET(_ANKI_GCC_TO_STRING_WORKAROUND 0)
+ENDIF()
+
 
 # Extra directories
 SET(ANKI_EXTRA_INCLUDE_DIRS CACHE STRING "Some extra include paths (Needed for some weird builds)")
@@ -77,14 +82,14 @@ IF(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
 ENDIF()
 
 # static libstdc++
-#SET(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
+SET(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
 
 # SSE
-IF(${ANKI_CPU} STREQUAL "X86")
+IF(NOT ${ANKI_WINDOW_BACKEND} STREQUAL "ANDROID")
 	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -msse4 ")
 ENDIF()
 
-IF(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+IF(${ANKI_BUILD_TYPE} STREQUAL "Debug")
 	# Debug
 
 	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -g3 -O0 ")
@@ -92,6 +97,11 @@ ELSE()
 	# Release
 
 	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O4 -flto ")
+
+	# Add this because Android compiler complains
+	IF(ANDROID)
+		SET(COMPILER_FLAGS "${COMPILER_FLAGS} -fno-data-sections ")
+	ENDIF()
 
 	SET(CXX_FLAGS "${CXX_FLAGS} -fno-rtti ")
 ENDIF()
@@ -144,6 +154,7 @@ ADD_SUBDIRECTORY(extern)
 # Doxygen
 #
 FIND_PACKAGE(Doxygen)
+
 IF(DOXYGEN_FOUND)
 	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY)
 	
@@ -170,7 +181,7 @@ SET(ANKI_VERSION_MAJOR 0)
 SET(ANKI_VERSION_MINOR 1)
 MESSAGE("++ AnKi version: ${ANKI_VERSION_MAJOR}.${ANKI_VERSION_MINOR}")
 
-IF(${CMAKE_BUILD_TYPE} STREQUAL Debug)
+IF(${ANKI_BUILD_TYPE} STREQUAL "Debug")
 	SET(ANKI_DEBUG 1)
 ELSE()
 	SET(ANKI_DEBUG 0)

@@ -139,6 +139,8 @@ void SceneGraph::unregisterNode(SceneNode* node)
 //==============================================================================
 void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 {
+	ANKI_ASSERT(mainCam);
+
 	ANKI_COUNTER_START_TIMER(C_SCENE_UPDATE_TIME);
 
 	ThreadPool& threadPool = ThreadPoolSingleton::get();

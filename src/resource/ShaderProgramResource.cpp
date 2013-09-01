@@ -1,5 +1,6 @@
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/core/App.h" // To get cache dir
 #include "anki/util/File.h"
 #include "anki/util/Exception.h"
@@ -44,7 +45,7 @@ void ShaderProgramResource::load(const char* filename, const char* extraSrc)
 		}
 	}
 
-	// XXX Fix that nonsense
+	// Create the program
 	if(pars.getShaderSource(ST_VERTEX).size() != 0)
 	{
 		std::string vertSrc = extraSrc + pars.getShaderSource(ST_VERTEX);
@@ -78,36 +79,41 @@ void ShaderProgramResource::load(const char* filename, const char* extraSrc)
 
 //==============================================================================
 std::string ShaderProgramResource::createSrcCodeToCache(
-	const char* sProgFPathName, const char* preAppendedSrcCode)
+	const char* filename, const char* preAppendedSrcCode, 
+	const char* filenamePrefix)
 {
+	ANKI_ASSERT(filename && preAppendedSrcCode && filenamePrefix);
+
 	if(strlen(preAppendedSrcCode) < 1)
 	{
-		return sProgFPathName;
+		return filename;
 	}
 
 	// Create suffix
 	std::hash<std::string> stringHash;
-	std::size_t h = stringHash(std::string(sProgFPathName) 
-		+ preAppendedSrcCode);
+	std::size_t h = stringHash(std::string(filename) + preAppendedSrcCode);
 	std::string suffix = std::to_string(h);
 
-	//
-	std::string newfPathName = AppSingleton::get().getCachePath()
-		+ "/" + suffix + ".glsl";
+	// Compose cached filename
+	std::string newFilename = AppSingleton::get().getCachePath()
+		+ "/" + filenamePrefix + suffix + ".glsl";
 
-	if(File::fileExists(newfPathName.c_str()))
+	if(File::fileExists(newFilename.c_str()))
 	{
-		return newfPathName;
+		return newFilename;
 	}
 
-	std::string src_;
-	File(sProgFPathName, File::OF_READ).readAllText(src_);
-	std::string src = preAppendedSrcCode + src_;
+	// Read file and append code
+	std::string src;
+	File(ResourceManagerSingleton::get().fixResourcePath(filename).c_str(), 
+		File::OF_READ).readAllText(src);
+	src = preAppendedSrcCode + src;
 
-	File f(newfPathName.c_str(), File::OF_READ);
-	f.writeText(src.c_str());
+	// Write cached file
+	File f(newFilename.c_str(), File::OF_WRITE);
+	f.writeText("%s\n", src.c_str());
 
-	return newfPathName;
+	return newFilename;
 }
 
-} // end namespace
+} // end namespace anki

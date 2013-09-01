@@ -534,11 +534,12 @@ void ShaderProgram::destroy()
 GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 	const char* preproc, GLenum type)
 {
-	GLuint glId = 0;
+	GLuint shader = 0;
 	const char* sourceStrs[1] = {nullptr};
 
 	// create the shader
-	glId = glCreateShader(type);
+	shader = glCreateShader(type);
+	ANKI_ASSERT(shader);
 
 	// attach the source
 	std::string fullSrc = preproc;
@@ -546,11 +547,11 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 	sourceStrs[0] = fullSrc.c_str();
 
 	// compile
-	glShaderSource(glId, 1, sourceStrs, NULL);
-	glCompileShader(glId);
+	glShaderSource(shader, 1, sourceStrs, NULL);
+	glCompileShader(shader);
 
-	GLint success;
-	glGetShaderiv(glId, GL_COMPILE_STATUS, &success);
+	GLint success = GL_FALSE;
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
 	if(!success)
 	{
@@ -559,9 +560,9 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 		GLint charsWritten = 0;
 		Vector<char> infoLog;
 
-		glGetShaderiv(glId, GL_INFO_LOG_LENGTH, &infoLen);
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLen);
 		infoLog.resize(infoLen + 1);
-		glGetShaderInfoLog(glId, infoLen, &charsWritten, &infoLog[0]);
+		glGetShaderInfoLog(shader, infoLen, &charsWritten, &infoLog[0]);
 		infoLog[charsWritten] = '\0';
 
 		std::stringstream err;
@@ -583,9 +584,10 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 		// Throw
 		throw ANKI_EXCEPTION(err.str());
 	}
-	ANKI_ASSERT(glId != 0);
+	ANKI_ASSERT(shader != 0);
+	ANKI_CHECK_GL_ERROR();
 
-	return glId;
+	return shader;
 }
 
 //==============================================================================
@@ -595,19 +597,19 @@ void ShaderProgram::link() const
 	glLinkProgram(glId);
 
 	// check if linked correctly
-	GLint success;
+	GLint success = GL_FALSE;
 	glGetProgramiv(glId, GL_LINK_STATUS, &success);
 
 	if(!success)
 	{
-		int info_len = 0;
+		int infoLen = 0;
 		int charsWritten = 0;
 		std::string infoLogTxt;
 
-		glGetProgramiv(glId, GL_INFO_LOG_LENGTH, &info_len);
+		glGetProgramiv(glId, GL_INFO_LOG_LENGTH, &infoLen);
 
-		infoLogTxt.resize(info_len + 1);
-		glGetProgramInfoLog(glId, info_len, &charsWritten, &infoLogTxt[0]);
+		infoLogTxt.resize(infoLen + 1);
+		glGetProgramInfoLog(glId, infoLen, &charsWritten, &infoLogTxt[0]);
 		throw ANKI_EXCEPTION("Link error log follows:\n" 
 			+ infoLogTxt);
 	}

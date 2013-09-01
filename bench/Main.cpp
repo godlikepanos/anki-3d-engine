@@ -28,28 +28,65 @@
 #include "anki/core/NativeWindow.h"
 #include "anki/core/Counters.h"
 #include "anki/Scene.h"
-#include <android_native_app_glue.h>
-#include <android/log.h>
+#include "anki/event/LightEvent.h"
+#include "anki/event/MovableEvent.h"
 
 using namespace anki;
 
 //==============================================================================
-void initSubsystems(android_app* app)
+struct LogFile 
 {
-	U glmajor = 3, glminor = 0;
+	ANKI_HAS_SLOTS(LogFile)
+
+	void handler(const Logger::Info& info)
+	{
+		const char* x;
+		switch(info.type)
+		{
+		case Logger::LMT_NORMAL:
+			x = "Info";
+			break;
+		case Logger::LMT_ERROR:
+			x = "Error";
+			break;
+		case Logger::LMT_WARNING:
+			x = "Warn";
+			break;
+		}
+
+		file.writeText("(%s:%d %s) %s: %s\n", 
+			info.file, info.line, info.func, x, info.msg);
+	}
+	ANKI_SLOT(handler, const Logger::Info&)
+
+	File file;
+};
+
+static LogFile logfile;
+
+//==============================================================================
+void initSubsystems()
+{
+#if ANKI_OS == ANKI_OS_ANDROID
+	// Log file
+	logfile.file.open("/sdcard/anki.log", File::OF_WRITE);
+	ANKI_CONNECT(&LoggerSingleton::get(), messageRecieved, &logfile, handler);
+#endif
 
 	// App
-	AppSingleton::get().init(app);
-
-	// Util
-	File::setAndroidAssetManager(app->activity->assetManager);
+	AppSingleton::get().init();
 
 	// Window
 	NativeWindowInitializer nwinit;
 	nwinit.width = 1280;
 	nwinit.height = 720;
-	nwinit.majorVersion = glmajor;
-	nwinit.minorVersion = glminor;
+#if ANKI_GL == ANKI_GL_ES
+	nwinit.majorVersion = 3;
+	nwinit.minorVersion = 0;
+#else
+	nwinit.majorVersion = 4;
+	nwinit.minorVersion = 3;
+#endif
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
 	nwinit.fullscreenDesktopRez = true;
@@ -57,7 +94,8 @@ void initSubsystems(android_app* app)
 	NativeWindowSingleton::get().create(nwinit);
 
 	// GL stuff
-	GlStateCommonSingleton::get().init(glmajor, glminor, nwinit.debugContext);
+	GlStateCommonSingleton::get().init(
+		nwinit.majorVersion, nwinit.minorVersion, nwinit.debugContext);
 
 	// Input
 	InputSingleton::get().init(&NativeWindowSingleton::get());
@@ -98,11 +136,11 @@ void initSubsystems(android_app* app)
 
 #if ANKI_GL == ANKI_GL_ES
 	initializer.samples = 1;
-	initializer.pps.enabled = false;
 	initializer.is.maxPointLights = 64;
 	initializer.is.maxPointLightsPerTile = 4;
 	initializer.is.maxSpotLightsPerTile = 4;
 	initializer.is.maxSpotTexLightsPerTile = 4;
+	initializer.pps.enabled = false;
 #endif
 
 	MainRendererSingleton::get().init(initializer);
@@ -115,6 +153,95 @@ void initSubsystems(android_app* app)
 }
 
 //==============================================================================
+void initScene()
+{
+	SceneGraph& scene = SceneGraphSingleton::get();
+
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 2);
+
+	PerspectiveCamera* cam = new PerspectiveCamera(
+		"main_camera", &scene, nullptr, Movable::MF_NONE);
+
+	const F32 ang = 45.0;
+	cam->setAll(
+		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
+		toRad(ang), 0.5, 500.0);
+	cam->setLocalTransform(Transform(Vec3(18.0, 5.2, 0.0),
+		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
+		1.0));
+	scene.setActiveCamera(cam);
+
+#if 1
+	F32 x = 8.5; 
+	F32 y = 2.25;
+	F32 z = 2.49;
+	Array<Vec3, 4> vaseLightPos = {{Vec3(x, y, -z - 1.4), Vec3(x, y, z),
+		Vec3(-x - 2.3, y, z), Vec3(-x - 2.3, y, -z - 1.4)}};
+	for(U i = 0; i < vaseLightPos.getSize(); i++)
+	{
+		Vec3 lightPos = vaseLightPos[i];
+
+		PointLight* point =
+			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
+			&scene, nullptr, Movable::MF_NONE, 
+			(i != 100) ? "textures/lens_flare/flares0.ankitex" : nullptr);
+		point->setRadius(2.0);
+		point->setLocalOrigin(lightPos);
+		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
+		point->setSpecularColor(Vec4(1.0, 1.0, 0.0, 0.0));
+		point->setLensFlaresStretchMultiplier(Vec2(10.0, 1.0));
+		point->setLensFlaresAlpha(1.0);
+
+		LightEventData eventData;
+		eventData.light = point;
+		eventData.radiusMultiplier = 0.2;
+		eventData.intensityMultiplier = Vec4(-1.2, 0.0, 0.0, 0.0);
+		eventData.specularIntensityMultiplier = Vec4(0.1, 0.1, 0.0, 0.0);
+		auto event = scene.getEventManager().newLightEvent(0.0, 0.8, eventData);
+		event->enableBits(Event::EF_REANIMATE);
+
+		MovableEventData moveData;
+		moveData.movableSceneNode = point;
+		moveData.posMin = Vec3(-0.5, 0.0, -0.5);
+		moveData.posMax = Vec3(0.5, 0.0, 0.5);
+		auto mevent = scene.getEventManager().newMovableEvent(0.0, 2.0, moveData);
+		mevent->enableBits(Event::EF_REANIMATE);
+
+		ParticleEmitter* pe = new ParticleEmitter(
+			("pe" + std::to_string(i)).c_str(), &scene, nullptr,
+			Movable::MF_NONE, "particles/smoke.ankipart");
+		pe->setLocalOrigin(lightPos);
+
+		pe = new ParticleEmitter(
+			("pef" + std::to_string(i)).c_str(), &scene, nullptr,
+			Movable::MF_NONE, "particles/fire.ankipart");
+		pe->setLocalOrigin(lightPos);
+	}
+#endif
+
+	scene.load("maps/sponza/master.scene");
+
+	PointLight* pl = new PointLight("pl0", &scene, nullptr, Movable::MF_NONE);
+	pl->setRadius(12.5);
+	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
+	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(10, 2.0, -0.8));
+
+	pl = new PointLight("pl1", &scene, nullptr, Movable::MF_NONE);
+	pl->setRadius(12.5);
+	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
+	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(0, 2.0, -0.8));
+
+	pl = new PointLight("pl2", &scene, nullptr, Movable::MF_NONE);
+	pl->setRadius(12.5);
+	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
+	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(-11, 2.0, -0.8));
+}
+
+//==============================================================================
+#if ANKI_OS == ANKI_OS_ANDROID
 static void handleEvents(android_app* app, int32_t cmd) 
 {
 	switch(cmd) 
@@ -136,9 +263,53 @@ static void handleEvents(android_app* app, int32_t cmd)
 		break;
 	}
 }
+#endif
 
 //==============================================================================
-void mainLoop()
+static Bool mainLoopExtra()
+{
+	const F32 dist = 0.2;
+	const F32 ang = toRad(3.0);
+	const F32 scale = 0.01;
+	const F32 mouseSensivity = 9.0;
+
+	Input& in = InputSingleton::get();
+
+	Movable* mover = SceneGraphSingleton::get().getActiveCamera().getMovable();
+
+	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
+	if(in.getKey(KC_DOWN)) mover->rotateLocalX(-ang);
+	if(in.getKey(KC_LEFT)) mover->rotateLocalY(ang);
+	if(in.getKey(KC_RIGHT)) mover->rotateLocalY(-ang);
+
+	if(in.getKey(KC_A)) mover->moveLocalX(-dist);
+	if(in.getKey(KC_D)) mover->moveLocalX(dist);
+	if(in.getKey(KC_Z)) mover->moveLocalY(dist);
+	if(in.getKey(KC_SPACE)) mover->moveLocalY(-dist);
+	if(in.getKey(KC_W)) mover->moveLocalZ(-dist);
+	if(in.getKey(KC_S)) mover->moveLocalZ(dist);
+	if(in.getKey(KC_Q)) mover->rotateLocalZ(ang);
+	if(in.getKey(KC_E)) mover->rotateLocalZ(-ang);
+
+	if(in.getMousePosition() != Vec2(0.0))
+	{
+		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity *
+			MainRendererSingleton::get().getAspectRatio();
+
+		mover->rotateLocalY(angY);
+		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
+	}
+
+	if(InputSingleton::get().getKey(KC_ESCAPE))
+	{
+		return false;
+	}
+
+	return true;
+}
+
+//==============================================================================
+static void mainLoop()
 {
 	ANKI_LOGI("Entering main loop");
 
@@ -161,9 +332,12 @@ void mainLoop()
 
 		// Update
 		input.handleEvents();
-		scene.update(
-			prevUpdateTime, crntTime, MainRendererSingleton::get());
-		renderer.render(SceneGraphSingleton::get());
+		if(!mainLoopExtra())
+		{
+			break;
+		}
+		scene.update(prevUpdateTime, crntTime, renderer);
+		renderer.render(scene);
 
 		window.swapBuffers();
 		ANKI_COUNTERS_RESOLVE_FRAME();
@@ -186,35 +360,24 @@ void mainLoop()
 }
 
 //==============================================================================
-void loopUntilWindowIsReady(android_app* app)
-{
-	while(app->window == nullptr) 
-	{
-		int ident;
-		int events;
-		android_poll_source* source;
-
-		while((ident=ALooper_pollAll(0, NULL, &events, (void**)&source)) >= 0) 
-		{
-			if (source != NULL) 
-			{
-				source->process(app, source);
-			}
-		}
-	}
-}
-
-//==============================================================================
+#if ANKI_OS == ANKI_OS_ANDROID
 void android_main(android_app* app)
 {
 	app_dummy();
 
+	// First thing to do
+	gAndroidApp = app;
+
 	app->onAppCmd = handleEvents;
-	loopUntilWindowIsReady(app);
+#else
+int main(int, char**)
+{
+#endif
 
 	try
 	{
-		initSubsystems(app);
+		initSubsystems();
+		initScene();
 		mainLoop();
 
 		ANKI_LOGI("Exiting...");
@@ -225,5 +388,9 @@ void android_main(android_app* app)
 	}
 
 	ANKI_LOGI("Bye!!");
-	exit(1);
+#if ANKI_OS == ANKI_OS_ANDROID
+	exit(0);
+#else
+	return 0;
+#endif
 }

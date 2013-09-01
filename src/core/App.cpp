@@ -21,6 +21,11 @@
 
 namespace anki {
 
+#if ANKI_OS == ANKI_OS_ANDROID
+/// The one and only android hack
+android_app* gAndroidApp = nullptr;
+#endif
+
 //==============================================================================
 /// Bad things signal handler
 /*static void handler(int sig)
@@ -38,13 +43,8 @@ namespace anki {
 }*/
 
 //==============================================================================
-void App::init(void* systemSpecificData)
+void App::init()
 {
-#if ANKI_OS == ANKI_OS_ANDROID
-	ANKI_ASSERT(systemSpecificData);
-	andApp = (android_app*)systemSpecificData;
-#endif
-
 	// Install signal handlers
 	/*signal(SIGSEGV, handler);
 	signal(SIGBUS, handler);
@@ -79,10 +79,12 @@ void App::initDirs()
 	ANKI_LOGI("Creating cache dir: %s", cachePath.c_str());
 	createDirectory(cachePath.c_str());
 #else
-	ANativeActivity* activity = andApp->activity;
+	ANKI_ASSERT(gAndroidApp);
+	ANativeActivity* activity = gAndroidApp->activity;
 
 	// Settings path
-	settingsPath = std::string(activity->internalDataPath);
+	//settingsPath = std::string(activity->internalDataPath);
+	settingsPath = std::string("/sdcard/.anki/");
 	if(!directoryExists(settingsPath.c_str()))
 	{
 		ANKI_LOGI("Creating settings dir: %s", settingsPath.c_str());
