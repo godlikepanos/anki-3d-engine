@@ -1,6 +1,9 @@
 #define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/CommonFrag.glsl"
 
+#pragma anki include "shaders/Pack.glsl"
+#pragma anki include "shaders/MsBsCommon.glsl"
+
 //==============================================================================
 // Variables                                                                   =
 //==============================================================================
@@ -40,9 +43,6 @@ layout(location = 0) out uvec2 fMsFai0;
 //==============================================================================
 // Functions                                                                   =
 //==============================================================================
-
-#pragma anki include "shaders/Pack.glsl"
-#pragma anki include "shaders/MsBsCommon.glsl"
 
 /// @param[in] normal The fragment's normal in view space
 /// @param[in] tangent The tangent
@@ -150,34 +150,17 @@ vec3 readRgbFromTexture(in sampler2D tex, in highp vec2 texCoords)
 #if defined(PASS_COLOR)
 #	define writeFais_DEFINED
 void writeFais(
-	in vec3 diffCol, // from 0 to 1
+	in vec3 diffColor, // from 0 to 1
 	in vec3 normal, 
-	in float specularComponent, // Streangth and shininess
+	in vec2 specularComponent, // Streangth and shininess
 	in float blurring)
 {
+	writeGBuffer(
+		diffColor, normal, specularComponent.x, specularComponent.y,
+		fMsFai0
 #if USE_MRT
-	// Diffuse color and specular
-	fMsFai0 = vec4(diffCol, specularComponent);
-	// Normal
-	packAndWriteNormal(normal, fMsFai1);
-#else
-	// Diffuse color and specular
-	fMsFai0[0] = packUnorm4x8(vec4(diffCol, specularComponent));
-	// Normal
-	fMsFai0[1] = packHalf2x16(packNormal(normal));
+		, fMsFai1
 #endif
-}
-#endif
-
-/// Write the data to FAIs
-#if defined(PASS_COLOR)
-#	define writeFaisPackSpecular_DEFINED
-void writeFaisPackSpecular(
-	in vec3 diffCol, // Normalized
-	in vec3 normal, 
-	in vec2 specular, // Streangth and shininess
-	in float blurring)
-{
-	writeFais(diffCol, normal, packSpecular(specular), blurring);
+		);
 }
 #endif

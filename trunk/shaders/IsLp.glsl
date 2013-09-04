@@ -153,14 +153,15 @@ float calcLambertTerm(in vec3 normal, in vec3 frag2LightVec)
 //==============================================================================
 /// Performs phong lighting using the MS FAIs and a few other things
 vec3 calcPhong(in vec3 fragPosVspace, in vec3 diffuse, 
-	in vec2 specularAll, in vec3 normal, in Light light, in vec3 rayDir)
+	in float specColor, in float specPower, in vec3 normal, in Light light, 
+	in vec3 rayDir)
 {
 	// Specular
 	vec3 eyeVec = normalize(fragPosVspace);
 	vec3 h = normalize(rayDir - eyeVec);
-	float specIntensity = pow(max(0.0, dot(normal, h)), specularAll.g);
+	float specIntensity = pow(max(0.0, dot(normal, h)), specPower);
 	vec3 specCol = 
-		light.specularColorTexId.rgb * (specIntensity * specularAll.r);
+		light.specularColorTexId.rgb * (specIntensity * specColor);
 	
 	// Do a mad optimization
 	// diffCol = diffuse * light.diffuseColorShadowmapId.rgb
@@ -223,20 +224,21 @@ void main()
 	// get frag pos in view space
 	vec3 fragPosVspace = getFragPosVSpace();
 
-	// Decode MS
-#if USE_MRT
-	vec3 normal = readAndUnpackNormal(msFai1, vTexCoords);
-	vec4 diffuseAndSpec = texture(msFai0, vTexCoords);
-#else
-	uvec2 msAll = texture(msFai0, vTexCoords).rg;
+	// Decode GBuffer
+	vec3 normal;
+	vec3 diffColor;
+	float specColor;
+	float specPower;
 
-	vec3 normal = unpackNormal(unpackHalf2x16(msAll[1]));
-	vec4 diffuseAndSpec = unpackUnorm4x8(msAll[0]);
+	readGBuffer(
+		msFai0,
+#if USE_MRT
+		msFai1,
 #endif
-	vec2 specularAll = unpackSpecular(diffuseAndSpec.a);
+		vTexCoords, diffColor, normal, specColor, specPower);
 
 	// Ambient color
-	fColor = diffuseAndSpec.rgb * sceneAmbientColor.rgb;
+	fColor = diffColor * sceneAmbientColor.rgb;
 
 	// Point lights
 	uint pointLightsCount = tiles[vInstanceId].lightsCount[0];
@@ -254,8 +256,8 @@ void main()
 
 		float lambert = calcLambertTerm(normal, ray);
 
-		fColor += calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
-			specularAll, normal, light, ray) * (att * lambert);
+		fColor += calcPhong(fragPosVspace, diffColor, 
+			specColor, specPower, normal, light, ray) * (att * lambert);
 	}
 
 	// Spot lights
@@ -278,8 +280,8 @@ void main()
 
 		float spot = calcSpotFactor(light, ray);
 
-		vec3 col = calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
-			specularAll, normal, light.lightBase, ray);
+		vec3 col = calcPhong(fragPosVspace, diffColor, 
+			specColor, specPower, normal, light.lightBase, ray);
 
 		fColor += col * (att * lambert * spot);
 	}
@@ -315,8 +317,9 @@ void main()
 			float shadow = calcShadowFactor(light, 
 				fragPosVspace, shadowMapArr, shadowmapLayerId);
 
-			vec3 col = calcPhong(fragPosVspace, diffuseAndSpec.rgb, 
-				specularAll, normal, light.spotLightBase.lightBase, ray);
+			vec3 col = calcPhong(fragPosVspace, diffColor, 
+				specColor, specPower, normal, light.spotLightBase.lightBase, 
+				ray);
 
 			fColor += col * (midFactor * shadow);
 		}

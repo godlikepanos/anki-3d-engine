@@ -19,8 +19,6 @@ out mediump vec3 vNormal;
 out mediump vec3 vTangent;
 out mediump float vTangentW;
 out mediump vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
-/// Calculate it per vertex instead of per fragment
-flat out float vSpecularComponent; 
 #endif
 /// @}
 
@@ -58,15 +56,6 @@ void setVaryings2(
 void setVertPosViewSpace(in mat4 modelViewMat)
 {
 	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
-}
-#endif
-
-//==============================================================================
-#if defined(PASS_COLOR)
-#define prepackSpecular_DEFINED
-void prepackSpecular(in vec2 specular)
-{
-	vSpecularComponent = float(packSpecular(specular));
 }
 #endif
 

@@ -132,3 +132,72 @@ vec4 unpackUnorm4x8(in uint u)
 	return value * (1.0 / 255.0);
 }
 #endif
+
+// Populate the G buffer
+void writeGBuffer(
+	in vec3 diffColor, in vec3 normal, in float specColor, in float specPower,
+	out vec4 fai0
+#if USE_MRT
+	,out vec4 fai1
+#endif
+	)
+{
+	vec3 unorm = normal * 0.5 + 0.5;
+#if USE_MRT
+	fai0 = vec4(diffColor, specColor);
+	fai1 = vec4(unorm.xyz, specPower / MAX_SPECULARITY);
+#else
+	fai0.x = packUnorm4x8(vec4(diffColor, specColor));
+	fai0.y = packUnorm4x8(vec4(unorm, specPower / MAX_SPECULARITY));
+#endif
+}
+
+// Read from the G buffer
+void readGBuffer(
+#if USE_MRT
+	in sampler2D fai0, in sampler2D fai1,
+#else
+	in highp usampler2D fai0,
+#endif
+	in vec2 texCoord,
+	out vec3 diffColor, out vec3 normal, out float specColor, 
+	out float specPower)
+{
+#if USE_MRT
+	vec4 comp = texture(fai0, texCoord);
+	diffColor = comp.rgb;
+	specColor = comp.a;
+
+	comp = texture(fai1, texCoord);
+	normal = normalize(comp.xyz * 2.0 - 1.0);
+	specPower = comp.w * MAX_SPECULARITY;
+#else
+	uvec2 all_ = texture(fai0, texCoord).rg;
+
+	vec4 v = unpackUnorm4x8(all_[0]);
+	diffColor = v.rgb;
+	specColor = v.a * MAX_SPECULARITY;
+
+	v = unpackUnorm4x8(all_[1]);
+	normal = normalize(v.xyz * 2.0 - 1.0);
+	specPower = v.xyz;
+#endif
+}
+
+// Read only normal from G buffer
+void readNormalFromGBuffer(
+#if USE_MRT
+	in sampler2D fai1,
+#else
+	in highp usampler2D fai0,
+#endif
+	in vec2 texCoord,
+	out vec3 normal)
+{
+#if USE_MRT
+	normal = normalize(readAndUnpackNormal(fai1, texCoord).xyz);
+#else
+	vec4 v = unpackUnorm4x8(texture(fai0, texCoord).g);
+	normal = normalize(v.xyz * 2.0 - 1.0);
+#endif
+}

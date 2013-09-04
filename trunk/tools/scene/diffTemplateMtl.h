@@ -9,10 +9,9 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 		<inputs>
 			<input><type>mat4</type><name>modelViewProjectionMat</name><value></value><instanced>%instanced%</instanced></input>
 			<input><type>mat3</type><name>normalMat</name><value></value><instanced>%instanced%</instanced></input>
-			<input><type>vec2</type><name>specular</name><value>1.0 90.0</value></input>
 
+			<input><type>vec2</type><name>specular</name><value>1.0 90.0</value></input>
 			<input><type>sampler2D</type><name>diffuseMap</name><value>%diffuseMap%</value></input>
-			<input><type>sampler2D</type><name>normalMap</name><value>%normalMap%</value></input>
 		</inputs>
 
 		<shader>
@@ -22,13 +21,6 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 			</includes>
 
 			<operations>
-				<operation>
-					<id>0</id>
-					<returnType>void</returnType>
-					<function>prepackSpecular</function>
-					<arguments><argument>specular</argument></arguments>
-				</operation>
-
 				<operation>
 					<id>1</id>
 					<returnType>void</returnType>
@@ -58,13 +50,9 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 				<operation>
 					<id>1</id>
 					<returnType>vec3</returnType>
-					<function>getNormalFromTexture</function>
+					<function>getNormalSimple</function>
 					<arguments>
 						<argument>vNormal</argument>
-						<argument>vTangent</argument>
-						<argument>vTangentW</argument>
-						<argument>normalMap</argument>
-						<argument>vTexCoords</argument>
 					</arguments>
 				</operation>
 				<operation>
@@ -74,7 +62,7 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 					<arguments>
 						<argument>operationOut0</argument>
 						<argument>operationOut1</argument>
-						<argument>vSpecularComponent</argument>
+						<argument>specular</argument>
 						<argument>0.0</argument>
 					</arguments>
 				</operation>
