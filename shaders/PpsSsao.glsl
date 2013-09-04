@@ -49,12 +49,8 @@ uniform sampler2D noiseMap;
 // Get normal
 vec3 getNormal(in vec2 uv)
 {
-#if USE_MRT
-	vec3 normal = readAndUnpackNormal(msGFai, uv);
-#else
-	uvec2 msAll = texture(msGFai, uv).rg;
-	vec3 normal = unpackNormal(unpackHalf2x16(msAll[1]));
-#endif
+	vec3 normal;
+	readNormalFromGBuffer(msGFai, uv, normal);
 	return normal;
 }
 

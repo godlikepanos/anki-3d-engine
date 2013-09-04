@@ -119,11 +119,11 @@ static aiMatrix4x4 toAnkiMatrix(const aiMatrix4x4& in)
 //==============================================================================
 static void parseConfig(int argc, char** argv)
 {
-	static const char* usage = R"(Usage: 2anki in_file out_dir [options]
+	static const char* usage = R"(Usage: %s in_file out_dir [options]
 Options:
--rpath <string>   : Append a string to the meshes and materials
--texrpath         : Append a string to the textures paths
--flipyz           : Flip y with z (For blender exports)
+-rpath <string>    : Append a string to the meshes and materials
+-texrpath <string> : Append a string to the textures paths
+-flipyz            : Flip y with z (For blender exports)
 )";
 
 	// Parse config
@@ -173,10 +173,20 @@ Options:
 		}
 	}
 
+	if(config.rpath.empty())
+	{
+		config.rpath = config.outDir;
+	}
+
+	if(config.texpath.empty())
+	{
+		config.texpath = config.outDir;
+	}
+
 	return;
 
 error:
-	printf("%s", usage);
+	printf(usage, argv[0]);
 	exit(0);
 }
 
@@ -231,7 +241,7 @@ static void exportMesh(
 	uint32_t vertsCount = mesh.mNumVertices;
 
 	// Open file
-	file.open(config.outDir + name + ".mesh",
+	file.open(config.outDir + name + ".ankimesh",
 		std::ios::out | std::ios::binary);
 
 	// Write magic word
@@ -496,7 +506,7 @@ static void exportMaterial(
 		;
 
 	std::fstream file;
-	file.open(config.outDir + name + ".mtl", std::ios::out);
+	file.open(config.outDir + name + ".ankimtl", std::ios::out);
 
 	// Chose the correct template
 	std::string str;
@@ -596,7 +606,7 @@ static void exportModel(
 	LOGI("Exporting model %s\n", name.c_str());
 
 	std::fstream file;
-	file.open(config.outDir + name + ".mdl", std::ios::out);
+	file.open(config.outDir + name + ".ankimdl", std::ios::out);
 
 	file << xmlHeader << '\n';
 	file << "<model>\n";
@@ -612,7 +622,7 @@ static void exportModel(
 
 		// Write mesh
 		file << "\t\t\t<mesh>" << config.rpath 
-			<< mesh.mName.C_Str() << ".mesh</mesh>\n";
+			<< mesh.mName.C_Str() << ".ankimesh</mesh>\n";
 
 		// Write material
 		const aiMaterial& mtl = *scene.mMaterials[mesh.mMaterialIndex];
@@ -620,7 +630,7 @@ static void exportModel(
 		mtl.Get(AI_MATKEY_NAME, mtlname);
 
 		file << "\t\t\t<material>" << config.rpath 
-			<< mtlname.C_Str() << ".mtl</material>\n";
+			<< mtlname.C_Str() << ".ankimtl</material>\n";
 
 		// end
 		file << "\t\t</modelPatch>\n";
@@ -856,16 +866,16 @@ static void exportScene(const aiScene& scene)
 		{
 			std::ofstream file;
 			file.open(
-				config.outDir + modelName + ".mdl");
+				config.outDir + modelName + ".ankimdl");
 
 			file << xmlHeader << "\n"
 				<< "<model>\n"
 				<< "\t<modelPatches>\n"
 				<< "\t\t<modelPatch>\n"
-				<< "\t\t\t<mesh>" << config.outDir << meshName 
-				<< ".mesh</mesh>\n"
-				<< "\t\t\t<material>" << config.outDir << mtlName 
-				<< ".mtl</material>\n"
+				<< "\t\t\t<mesh>" << config.rpath << meshName 
+				<< ".ankimesh</mesh>\n"
+				<< "\t\t\t<material>" << config.rpath << mtlName 
+				<< ".ankimtl</material>\n"
 				<< "\t\t</modelPatch>\n"
 				<< "\t</modelPatches>\n"
 				<< "</model>\n";
@@ -878,7 +888,8 @@ static void exportScene(const aiScene& scene)
 		// Write the scene file
 		file << "\t<modelNode>\n"
 			<< "\t\t<name>" << nodeName << "</name>\n"
-			<< "\t\t<model>" << config.outDir << modelName << ".mdl</model>\n"
+			<< "\t\t<model>" << config.rpath << modelName 
+			<< ".ankimdl</model>\n"
 			<< "\t\t<instancesCount>" 
 			<< mesh.transforms.size() << "</instancesCount>\n";
 
