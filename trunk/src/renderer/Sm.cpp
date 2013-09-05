@@ -10,21 +10,21 @@ namespace anki {
 //==============================================================================
 void Sm::init(const RendererInitializer& initializer)
 {
-	enabled = initializer.is.sm.enabled;
+	enabled = initializer.get("is.sm.enabled");
 
 	if(!enabled)
 	{
 		return;
 	}
 
-	pcfEnabled = initializer.is.sm.pcfEnabled;
-	bilinearEnabled = initializer.is.sm.bilinearEnabled;
-	resolution = initializer.is.sm.resolution;
+	pcfEnabled = initializer.get("is.sm.pcfEnabled");
+	bilinearEnabled = initializer.get("is.sm.bilinearEnabled");
+	resolution = initializer.get("is.sm.resolution");
 
 	//
 	// Init the shadowmaps
 	//
-	if(initializer.is.sm.maxLights > MAX_SHADOW_CASTERS)
+	if(initializer.get("is.sm.maxLights") > MAX_SHADOW_CASTERS)
 	{
 		throw ANKI_EXCEPTION("Too many shadow casters");
 	}
@@ -34,7 +34,7 @@ void Sm::init(const RendererInitializer& initializer)
 	sminit.target = GL_TEXTURE_2D_ARRAY;
 	sminit.width = resolution;
 	sminit.height = resolution;
-	sminit.depth = initializer.is.sm.maxLights;
+	sminit.depth = initializer.get("is.sm.maxLights");
 	sminit.format = GL_DEPTH_COMPONENT;
 	sminit.internalFormat = GL_DEPTH_COMPONENT16;
 	sminit.type = GL_UNSIGNED_SHORT;
@@ -55,7 +55,7 @@ void Sm::init(const RendererInitializer& initializer)
 
 	// Init sms
 	U32 layer = 0;
-	sms.resize(initializer.is.sm.maxLights);
+	sms.resize(initializer.get("is.sm.maxLights"));
 	for(Shadowmap& sm : sms)
 	{
 		sm.layerId = layer;

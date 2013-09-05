@@ -48,9 +48,9 @@ void Ms::init(const RendererInitializer& initializer)
 {
 	try
 	{
-		if(initializer.samples > 1)
+		if(initializer.get("samples") > 1)
 		{
-			createFbo(0, initializer.samples);
+			createFbo(0, initializer.get("samples"));
 		}
 		createFbo(1, 1);
 
@@ -68,7 +68,7 @@ void Ms::run()
 	GlState& gl = GlStateSingleton::get();
 
 	// Chose the multisampled or the singlesampled FBO
-	if(r->samples > 1)
+	if(r->getSamples() > 1)
 	{
 		fbo[0].bind();
 	}
@@ -107,7 +107,7 @@ void Ms::run()
 	}
 
 	// If there is multisampling then resolve to singlesampled
-	if(r->samples > 1)
+	if(r->getSamples() > 1)
 	{
 		fbo[0].bind(Fbo::FT_READ);
 		glReadBuffer(GL_COLOR_ATTACHMENT1);
@@ -116,8 +116,8 @@ void Ms::run()
 		glDrawBuffers(1, drawBuffers);
 
 		glBlitFramebuffer(
-			0, 0, r->width, r->height, 
-			0, 0, r->width, r->height,
+			0, 0, r->getWidth(), r->getHeight(), 
+			0, 0, r->getWidth(), r->getHeight(),
 			GL_COLOR_BUFFER_BIT,
 			GL_NEAREST);
 
@@ -126,8 +126,8 @@ void Ms::run()
 		glDrawBuffers(1, drawBuffers2);
 
 		glBlitFramebuffer(
-			0, 0, r->width, r->height, 
-			0, 0, r->width, r->height,
+			0, 0, r->getWidth(), r->getHeight(), 
+			0, 0, r->getWidth(), r->getHeight(),
 			GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
 			GL_NEAREST);
 	}

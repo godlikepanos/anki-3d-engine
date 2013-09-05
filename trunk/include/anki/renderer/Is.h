@@ -38,11 +38,6 @@ public:
 	{
 		return fai;
 	}
-
-	void setDrawToDefaultFbo(Bool x)
-	{
-		drawToDefaultFbo = x;
-	}
 	/// @}
 
 private:
@@ -106,8 +101,6 @@ private:
 	U8 maxSpotLightsPerTile;
 	U8 maxSpotTexLightsPerTile;
 	/// @}
-
-	Bool8 drawToDefaultFbo = false;
 
 	/// Called by init
 	void initInternal(const RendererInitializer& initializer);

@@ -405,19 +405,19 @@ void Is::init(const RendererInitializer& initializer)
 //==============================================================================
 void Is::initInternal(const RendererInitializer& initializer)
 {
-	groundLightEnabled = initializer.is.groundLightEnabled;
-	maxPointLights = initializer.is.maxPointLights;
-	maxSpotLights = initializer.is.maxSpotLights;
-	maxSpotTexLights = initializer.is.maxSpotTexLights;
+	groundLightEnabled = initializer.get("is.groundLightEnabled");
+	maxPointLights = initializer.get("is.maxPointLights");
+	maxSpotLights = initializer.get("is.maxSpotLights");
+	maxSpotTexLights = initializer.get("is.maxSpotTexLights");
 
 	if(maxPointLights < 1 || maxSpotLights < 1 || maxSpotTexLights < 1)
 	{
 		throw ANKI_EXCEPTION("Incorrect number of max lights");
 	}
 
-	maxPointLightsPerTile = initializer.is.maxPointLightsPerTile;
-	maxSpotLightsPerTile = initializer.is.maxSpotLightsPerTile;
-	maxSpotTexLightsPerTile = initializer.is.maxSpotTexLightsPerTile;
+	maxPointLightsPerTile = initializer.get("is.maxPointLightsPerTile");
+	maxSpotLightsPerTile = initializer.get("is.maxSpotLightsPerTile");
+	maxSpotTexLightsPerTile = initializer.get("is.maxSpotTexLightsPerTile");
 
 	if(maxPointLightsPerTile < 1 || maxSpotLightsPerTile < 1 
 		|| maxSpotTexLightsPerTile < 1
@@ -867,19 +867,27 @@ void Is::lightPass()
 //==============================================================================
 void Is::setState()
 {
+	Bool drawToDefaultFbo = !r->getPps().getEnabled() 
+		&& !r->getDbg().getEnabled() 
+		&& !r->getIsOffscreen();
+
 	if(drawToDefaultFbo)
 	{
 		Fbo::bindDefault();
+
+		GlStateSingleton::get().setViewport(
+			0, 0, r->getWindowWidth(), r->getWindowHeight());
 	}
 	else
 	{
 		fbo.bind();
+
+		GlStateSingleton::get().setViewport(
+			0, 0, r->getWidth(), r->getHeight());
 	}
 
 	r->clearAfterBindingFbo(
 		GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	GlStateSingleton::get().setViewport(
-		0, 0, r->getWidth(), r->getHeight());
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
 }
