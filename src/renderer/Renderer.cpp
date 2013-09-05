@@ -7,8 +7,75 @@
 namespace anki {
 
 //==============================================================================
+// RendererInitializer                                                         =
+//==============================================================================
+
+//==============================================================================
+RendererInitializer::RendererInitializer()
+{
+	// Ms
+	newOption("ms.ez.enabled", false);
+	newOption("ms.ez.maxObjectsToDraw", 10);
+
+	// Is
+	newOption("is.sm.enabled", true);
+	newOption("is.sm.pcfEnabled", true);
+	newOption("is.sm.bilinearEnabled", true);
+	newOption("is.sm.resolution", 512);
+	newOption("is.sm.maxLights", 4);
+
+	newOption("is.groundLightEnabled", true);
+	newOption("is.maxPointLights", 512 - 16);
+	newOption("is.maxSpotLights", 8);
+	newOption("is.maxSpotTexLights", 4);
+	newOption("is.maxPointLightsPerTile", 48);
+	newOption("is.maxSpotLightsPerTile", 4);
+	newOption("is.maxSpotTexLightsPerTile", 4);
+
+	// Pps
+	newOption("pps.hdr.enabled", true);
+	newOption("pps.hdr.renderingQuality", 0.25);
+	newOption("pps.hdr.blurringDist", 1.0);
+	newOption("pps.hdr.blurringIterationsCount", 2);
+	newOption("pps.hdr.exposure", 4.0);
+
+	newOption("pps.ssao.enabled", true);
+	newOption("pps.ssao.mainPassRenderingQuality", 0.3);
+	newOption("pps.ssao.blurringRenderingQuality", 0.3);
+	newOption("pps.ssao.blurringIterationsNum", 2);
+
+	newOption("pps.bl.enabled", true);
+	newOption("pps.bl.blurringIterationsNum", 2);
+	newOption("pps.bl.sideBlurFactor", 1.0);
+
+	newOption("pps.lf.enabled", true);
+	newOption("pps.lf.maxFlaresPerLight", 8);
+	newOption("pps.lf.maxLightsWithFlares", 4);
+
+	newOption("pps.enabled", true);
+	newOption("pps.sharpen", true);
+
+	// Dbg
+	newOption("dbg.enabled", false);
+
+	// Globals
+	newOption("width", 0);
+	newOption("height", 0);
+	newOption("renderingQuality", 1.0); // Applies only to MainRenderer
+	newOption("lodDistance", 10.0); // Distance that used to calculate the LOD
+	newOption("samples", 1);
+	newOption("useMrt", true); // Pack or not the GBuffer
+	newOption("maxTextureSize", 1048576); // Cap to limit quality in resources
+	newOption("offscreen", false);
+}
+
+//==============================================================================
+// Renderer                                                                    =
+//==============================================================================
+
+//==============================================================================
 Renderer::Renderer()
-	: ms(this), is(this), pps(this), bs(this), sceneDrawer(this)
+	: ms(this), is(this), pps(this), bs(this), dbg(this), sceneDrawer(this)
 {}
 
 //==============================================================================
@@ -19,11 +86,15 @@ Renderer::~Renderer()
 void Renderer::init(const RendererInitializer& initializer)
 {
 	// set from the initializer
-	width = initializer.width;
-	height = initializer.height;
-	lodDistance = initializer.lodDistance;
+	width = initializer.get("width");
+	height = initializer.get("height");
+	lodDistance = initializer.get("lodDistance");
 	framesNum = 0;
-	samples = initializer.samples;
+	samples = initializer.get("samples");
+	useMrt = initializer.get("useMrt");
+	isOffscreen = initializer.get("offscreen");
+	renderingQuality = initializer.get("renderingQuality");
+	maxTextureSize = initializer.get("maxTextureSize");
 
 	// a few sanity checks
 	if(samples != 1 && samples != 4 && samples != 8 && samples != 16
@@ -45,6 +116,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	bs.init(initializer);
 	pps.init(initializer);
 	bs.init(initializer);
+	dbg.init(initializer);
 
 	// quad VBOs and VAO
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
@@ -82,8 +154,6 @@ void Renderer::render(SceneGraph& scene_)
 		planesUpdateTimestamp = getGlobTimestamp();
 	}
 
-	viewProjectionMat = cam.getViewProjectionMatrix();
-
 	ANKI_COUNTER_START_TIMER(C_RENDERER_MS_TIME);
 	ms.run();
 	ANKI_COUNTER_STOP_TIMER_INC(C_RENDERER_MS_TIME);
@@ -102,6 +172,11 @@ void Renderer::render(SceneGraph& scene_)
 		pps.run();
 	}
 	ANKI_COUNTER_STOP_TIMER_INC(C_RENDERER_PPS_TIME);
+
+	if(dbg.getEnabled())
+	{
+		dbg.run();
+	}
 
 	ANKI_CHECK_GL_ERROR();
 	++framesNum;

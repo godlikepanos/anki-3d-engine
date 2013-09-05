@@ -9,14 +9,8 @@ namespace anki {
 //==============================================================================
 void Ez::init(const RendererInitializer& initializer)
 {
-	enabled = initializer.ms.ez.enabled;
-
-	if(!enabled)
-	{
-		return;
-	}
-
-	maxObjectsToDraw = initializer.ms.ez.maxObjectsToDraw;
+	enabled = initializer.get("ms.ez.enabled");
+	maxObjectsToDraw = initializer.get("ms.ez.maxObjectsToDraw");
 }
 
 //==============================================================================

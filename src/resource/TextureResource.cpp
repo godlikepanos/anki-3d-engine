@@ -1,6 +1,7 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Image.h"
 #include "anki/util/Exception.h"
+#include "anki/renderer/MainRenderer.h"
 
 #if ANKI_GL == ANKI_GL_DESKTOP
 #	define DRIVER_CAN_COMPRESS 1
@@ -16,7 +17,7 @@ void TextureResource::load(const char* filename)
 	try
 	{
 		Image img;
-		img.load(filename);
+		img.load(filename, MainRendererSingleton::get().getMaxTextureSize());
 		load(img);
 	}
 	catch(std::exception& e)

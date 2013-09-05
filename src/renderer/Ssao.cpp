@@ -80,20 +80,20 @@ void Ssao::createFbo(Fbo& fbo, Texture& fai, F32 width, F32 height)
 //==============================================================================
 void Ssao::initInternal(const RendererInitializer& initializer)
 {
-	enabled = initializer.pps.ssao.enabled;
+	enabled = initializer.get("pps.ssao.enabled");
 
 	if(!enabled)
 	{
 		return;
 	}
 
-	blurringIterationsCount = initializer.pps.ssao.blurringIterationsNum;
+	blurringIterationsCount = initializer.get("pps.ssao.blurringIterationsNum");
 
 	//
 	// Init the widths/heights
 	//
-	const F32 bQuality = initializer.pps.ssao.blurringRenderingQuality;
-	const F32 mpQuality = initializer.pps.ssao.mainPassRenderingQuality;
+	const F32 bQuality = initializer.get("pps.ssao.blurringRenderingQuality");
+	const F32 mpQuality = initializer.get("pps.ssao.mainPassRenderingQuality");
 
 	if(mpQuality > bQuality)
 	{

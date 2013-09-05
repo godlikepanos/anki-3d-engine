@@ -5,7 +5,6 @@
 #include "anki/core/Counters.h"
 #include <cstdlib>
 #include <cstdio>
-#include <fstream>
 
 #define glewGetContext() (&glContext)
 
@@ -21,20 +20,12 @@ void MainRenderer::init(const Renderer::Initializer& initializer_)
 	ANKI_LOGI("Initializing main renderer...");
 	initGl();
 
-	renderingQuality = initializer_.renderingQuality;
-	windowWidth = initializer_.width;
-	windowHeight = initializer_.height;
-
-	// init the offscreen Renderer
-	//
-	RendererInitializer initializer = initializer_;
-	initializer.width *= renderingQuality;
-	initializer.height *= renderingQuality;
-
-	sProg.load("shaders/Final.glsl");
+	Renderer::Initializer initializer = initializer_;
+	initializer.set("offscreen", false);
+	initializer.get("width") *= initializer.get("renderingQuality");
+	initializer.get("height") *= initializer.get("renderingQuality");
 
 	Renderer::init(initializer);
-	dbg.init(initializer);
 	deformer.reset(new Deformer);
 
 	ANKI_LOGI("Main renderer initialized");
@@ -76,57 +67,18 @@ void MainRenderer::initGl()
 }
 
 //==============================================================================
-void MainRenderer::render(SceneGraph& scene)
-{
-	ANKI_COUNTER_START_TIMER(C_MAIN_RENDERER_TIME);
-
-	Bool drawToDefaultFbo = renderingQuality > 0.9 && !dbg.getEnabled();
-
-	pps.setDrawToDefaultFbo(drawToDefaultFbo);
-	is.setDrawToDefaultFbo(drawToDefaultFbo && !pps.getEnabled());
-
-	Renderer::render(scene);
-
-	if(dbg.getEnabled())
-	{
-		dbg.run();
-	}
-
-	// Render the PPS FAI to the framebuffer
-	//
-	if(!drawToDefaultFbo)
-	{
-		Fbo::bindDefault(); // Bind the window framebuffer
-
-		GlStateSingleton::get().setViewport(0, 0, windowWidth, windowHeight);
-		GlStateSingleton::get().disable(GL_DEPTH_TEST);
-		GlStateSingleton::get().disable(GL_BLEND);
-		sProg->bind();
-#if 0
-		const Texture& finalFai = ms.getFai1();
-#else
-		const Texture& finalFai = pps.getFai();
-#endif
-		sProg->findUniformVariable("rasterImage").set(finalFai);
-		drawQuad();
-	}
-
-	// Check for error
-	ANKI_CHECK_GL_ERROR();
-
-	ANKI_COUNTER_STOP_TIMER_INC(C_MAIN_RENDERER_TIME);
-}
-
-//==============================================================================
 void MainRenderer::takeScreenshotTga(const char* filename)
 {
 	// open file and check
-	std::fstream fs;
-	fs.open(filename, std::ios::out | std::ios::binary);
-	if(!fs.is_open())
+	File fs;
+	try
+	{
+		fs.open(filename, File::OF_WRITE | File::OF_BINARY);
+	}
+	catch(const std::exception& e)
 	{
 		throw ANKI_EXCEPTION("Cannot write screenshot file:"
-			+ filename);
+			+ filename) << e;
 	}
 
 	// write headers
@@ -170,59 +122,7 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	fs.write((char*)&outBuffer[0], outBufferSize);
 
 	// end
-	fs.close();
 	ANKI_CHECK_GL_ERROR();
-}
-
-//==============================================================================
-void MainRenderer::takeScreenshotJpeg(const char* filename)
-{
-#if 0
-	// open file
-	FILE* outfile = fopen(filename, "wb");
-
-	if(!outfile)
-	{
-		throw ANKI_EXCEPTION("Cannot open file: " + filename);
-	}
-
-	// set jpg params
-	jpeg_compress_struct cinfo;
-	jpeg_error_mgr       jerr;
-
-	cinfo.err = jpeg_std_error(&jerr);
-	jpeg_create_compress(&cinfo);
-	jpeg_stdio_dest(&cinfo, outfile);
-
-	cinfo.image_width      = getWidth();
-	cinfo.image_height     = getHeight();
-	cinfo.input_components = 3;
-	cinfo.in_color_space   = JCS_RGB;
-	jpeg_set_defaults(&cinfo);
-	jpeg_set_quality (&cinfo, screenshotJpegQuality, true);
-	jpeg_start_compress(&cinfo, true);
-
-	// read from OGL
-	char* buffer = (char*)malloc(getWidth()*getHeight()*3*sizeof(char));
-	glReadPixels(0, 0, getWidth(), getHeight(), GL_RGB, GL_UNSIGNED_BYTE,
-		buffer);
-
-	// write buffer to file
-	JSAMPROW row_pointer;
-
-	while(cinfo.next_scanline < cinfo.image_height)
-	{
-		row_pointer = (JSAMPROW)&buffer[(getHeight() - 1 -
-			cinfo.next_scanline) * 3 * getWidth()];
-		jpeg_write_scanlines(&cinfo, &row_pointer, 1);
-	}
-
-	jpeg_finish_compress(&cinfo);
-
-	// done
-	free(buffer);
-	fclose(outfile);
-#endif
 }
 
 //==============================================================================
@@ -234,10 +134,6 @@ void MainRenderer::takeScreenshot(const char* filename)
 	if(ext == "tga")
 	{
 		takeScreenshotTga(filename);
-	}
-	else if(ext == "jpg" || ext == "jpeg")
-	{
-		takeScreenshotJpeg(filename);
 	}
 	else
 	{

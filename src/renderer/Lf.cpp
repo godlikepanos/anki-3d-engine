@@ -63,14 +63,15 @@ void Lf::init(const RendererInitializer& initializer)
 //==============================================================================
 void Lf::initInternal(const RendererInitializer& initializer)
 {
-	enabled = initializer.pps.lf.enabled && initializer.pps.hdr.enabled;
+	enabled = initializer.get("pps.lf.enabled") 
+		&& initializer.get("pps.hdr.enabled");
 	if(!enabled)
 	{
 		return;
 	}
 
-	maxFlaresPerLight = initializer.pps.lf.maxFlaresPerLight;
-	maxLightsWithFlares = initializer.pps.lf.maxLightsWithFlares;
+	maxFlaresPerLight = initializer.get("pps.lf.maxFlaresPerLight");
+	maxLightsWithFlares = initializer.get("pps.lf.maxLightsWithFlares");
 
 	// Load program 1
 	std::string pps = "#define TEX_DIMENSIONS vec2(" 

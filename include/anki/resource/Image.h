@@ -5,6 +5,7 @@
 #include "anki/util/Vector.h"
 #include <iosfwd>
 #include <cstdint>
+#include <limits>
 
 namespace anki {
 
@@ -94,7 +95,10 @@ public:
 
 	/// Load an image file
 	/// @param[in] filename The file to load
-	void load(const char* filename);
+	/// @param[in] maxTextureSize Only load mipmaps less or equal to that. Used
+	///                           with AnKi textures
+	void load(const char* filename, 
+		U32 maxTextureSize = std::numeric_limits<U32>::max());
 
 	/// Load an image file
 	/// @param[in] filenames The 6 files to load

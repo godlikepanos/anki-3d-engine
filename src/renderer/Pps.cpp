@@ -18,7 +18,7 @@ Pps::~Pps()
 //==============================================================================
 void Pps::initInternal(const RendererInitializer& initializer)
 {
-	enabled = initializer.pps.enabled;
+	enabled = initializer.get("pps.enabled");
 	if(!enabled)
 	{
 		return;
@@ -29,9 +29,6 @@ void Pps::initInternal(const RendererInitializer& initializer)
 	ssao.init(initializer);
 	hdr.init(initializer);
 	lf.init(initializer);
-
-	width = initializer.width / initializer.renderingQuality;
-	height = initializer.height / initializer.renderingQuality;
 
 	// FBO
 	fai.create2dFai(r->getWidth(), r->getHeight(), GL_RGB8, GL_RGB,
@@ -61,7 +58,7 @@ void Pps::initInternal(const RendererInitializer& initializer)
 		pps += "#define LF_ENABLED\n";
 	}
 
-	if(initializer.pps.sharpen)
+	if(initializer.get("pps.sharpen"))
 	{
 		pps += "#define SHARPEN_ENABLED\n";
 	}
@@ -109,11 +106,12 @@ void Pps::run()
 		lf.run();
 	}
 
+	Bool drawToDefaultFbo = !r->getDbg().getEnabled() && !r->getIsOffscreen();
 	if(drawToDefaultFbo)
 	{
 		Fbo::bindDefault();
 		GlStateSingleton::get().setViewport(
-			0, 0, width, height);
+			0, 0, r->getWindowWidth(), r->getWindowHeight());
 	}
 	else
 	{

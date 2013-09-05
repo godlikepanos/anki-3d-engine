@@ -262,6 +262,7 @@ static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header,
 //==============================================================================
 static void loadAnkiTexture(
 	const char* filename, 
+	U32 maxTextureSize,
 	Image::DataCompression& preferredCompression,
 	Vector<Image::Surface>& surfaces, 
 	U8& depth, 
@@ -321,14 +322,23 @@ static void loadAnkiTexture(
 
 	// Check mip levels
 	U size = std::min(header.width, header.height);
+	U maxsize = std::max(header.width, header.height);
 	mipLevels = 0;
+	U tmpMipLevels = 0;
 	while(size >= 4) // The minimum size is 4x4
 	{
-		++mipLevels;
+		++tmpMipLevels;
+
+		if(maxsize <= maxTextureSize)
+		{
+			++mipLevels;
+		}
+
 		size /= 2;
+		maxsize /= 2;
 	}
 
-	if(mipLevels != header.mipLevels)
+	if(tmpMipLevels != header.mipLevels)
 	{
 		throw ANKI_EXCEPTION("Incorrect number of mip levels");
 	}
@@ -401,11 +411,7 @@ static void loadAnkiTexture(
 	{
 		for(U d = 0; d < depth; d++)
 		{
-			Image::Surface& surf = surfaces[mip * depth + d];
-			surf.width = mipWidth;
-			surf.height = mipHeight;
 			U dataSize = 0;
-
 			switch(preferredCompression)
 			{
 			case Image::DC_RAW:
@@ -423,8 +429,21 @@ static void loadAnkiTexture(
 				ANKI_ASSERT(0);
 			}
 
-			surf.data.resize(dataSize);
-			file.read(&surf.data[0], dataSize);
+			if(std::max(mipWidth, mipHeight) <= maxTextureSize)
+			{
+				U index = (mip - tmpMipLevels + mipLevels) * depth + d;
+				ANKI_ASSERT(index < surfaces.size());
+				Image::Surface& surf = surfaces[index];
+				surf.width = mipWidth;
+				surf.height = mipHeight;
+
+				surf.data.resize(dataSize);
+				file.read(&surf.data[0], dataSize);
+			}
+			else
+			{
+				file.seek(dataSize, File::SO_CURRENT);
+			}
 		}
 
 		mipWidth /= 2;
@@ -437,7 +456,7 @@ static void loadAnkiTexture(
 //==============================================================================
 
 //==============================================================================
-void Image::load(const char* filename)
+void Image::load(const char* filename, U32 maxTextureSize)
 {
 	// get the extension
 	const char* ext = File::getFileExtension(filename);
@@ -481,7 +500,8 @@ void Image::load(const char* filename)
 			compression = Image::DC_ETC;
 #endif
 
-			loadAnkiTexture(filename, compression, surfaces, depth, 
+			loadAnkiTexture(filename, maxTextureSize, 
+				compression, surfaces, depth, 
 				mipLevels, textureType, colorFormat);
 
 		}

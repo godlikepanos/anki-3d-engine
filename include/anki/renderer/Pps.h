@@ -63,11 +63,6 @@ public:
 	{
 		return fai;
 	}
-
-	void setDrawToDefaultFbo(Bool x)
-	{
-		drawToDefaultFbo = x;
-	}
 	/// @}
 
 private:
@@ -82,10 +77,6 @@ private:
 	Fbo fbo;
 	ShaderProgramResourcePointer prog;
 	Texture fai;
-
-	Bool drawToDefaultFbo;
-	/// Used only if rendering to default FBO
-	U32 width, height;
 
 	void initInternal(const RendererInitializer& initializer);
 };

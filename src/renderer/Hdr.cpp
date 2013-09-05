@@ -27,20 +27,21 @@ void Hdr::initFbo(Fbo& fbo, Texture& fai)
 //==============================================================================
 void Hdr::initInternal(const Renderer::Initializer& initializer)
 {
-	enabled = initializer.pps.hdr.enabled;
+	enabled = initializer.get("pps.hdr.enabled");
 
 	if(!enabled)
 	{
 		return;
 	}
 
-	const F32 renderingQuality = initializer.pps.hdr.renderingQuality;
+	const F32 renderingQuality = initializer.get("pps.hdr.renderingQuality");
 
 	width = renderingQuality * (F32)r->getWidth();
 	height = renderingQuality * (F32)r->getHeight();
-	exposure = initializer.pps.hdr.exposure;
-	blurringDist = initializer.pps.hdr.blurringDist;
-	blurringIterationsCount = initializer.pps.hdr.blurringIterationsCount;
+	exposure = initializer.get("pps.hdr.exposure");
+	blurringDist = initializer.get("pps.hdr.blurringDist");
+	blurringIterationsCount = 
+		initializer.get("pps.hdr.blurringIterationsCount");
 
 	initFbo(hblurFbo, hblurFai);
 	initFbo(vblurFbo, vblurFai);

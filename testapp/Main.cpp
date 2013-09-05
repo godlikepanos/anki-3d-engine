@@ -541,42 +541,42 @@ void initSubsystems(int argc, char* argv[])
 
 	// Main renderer
 	RendererInitializer initializer;
-	initializer.ms.ez.enabled = false;
-	initializer.ms.ez.maxObjectsToDraw = 100;
-	initializer.dbg.enabled = false;
-	initializer.is.sm.bilinearEnabled = true;
-	initializer.is.groundLightEnabled = true;
-	initializer.is.sm.enabled = true;
-	initializer.is.sm.pcfEnabled = false;
-	initializer.is.sm.resolution = 512;
-	initializer.pps.enabled = true;
-	initializer.pps.hdr.enabled = true;
-	initializer.pps.hdr.renderingQuality = 0.5;
-	initializer.pps.hdr.blurringDist = 1.0;
-	initializer.pps.hdr.blurringIterationsCount = 1;
-	initializer.pps.hdr.exposure = 8.0;
-	initializer.pps.ssao.blurringIterationsNum = 1;
-	initializer.pps.ssao.enabled = true;
-	initializer.pps.ssao.mainPassRenderingQuality = 0.35;
-	initializer.pps.ssao.blurringRenderingQuality = 0.35;
-	initializer.pps.bl.enabled = true;
-	initializer.pps.bl.blurringIterationsNum = 2;
-	initializer.pps.bl.sideBlurFactor = 1.0;
-	initializer.pps.lf.enabled = true;
-	initializer.pps.sharpen = true;
-	initializer.renderingQuality = 1.0;
-	initializer.width = win->getWidth();
-	initializer.height = win->getHeight();
-	initializer.lodDistance = 20.0;
-	initializer.samples = 16;
+	initializer.get("ms.ez.enabled") = false;
+	initializer.get("ms.ez.maxObjectsToDraw") = 100;
+	initializer.get("dbg.enabled") = false;
+	initializer.get("is.sm.bilinearEnabled") = true;
+	initializer.get("is.groundLightEnabled") = true;
+	initializer.get("is.sm.enabled") = true;
+	initializer.get("is.sm.pcfEnabled") = false;
+	initializer.get("is.sm.resolution") = 512;
+	initializer.get("pps.enabled") = true;
+	initializer.get("pps.hdr.enabled") = true;
+	initializer.get("pps.hdr.renderingQuality") = 0.5;
+	initializer.get("pps.hdr.blurringDist") = 1.0;
+	initializer.get("pps.hdr.blurringIterationsCount") = 1;
+	initializer.get("pps.hdr.exposure") = 8.0;
+	initializer.get("pps.ssao.blurringIterationsNum") = 1;
+	initializer.get("pps.ssao.enabled") = true;
+	initializer.get("pps.ssao.mainPassRenderingQuality") = 0.35;
+	initializer.get("pps.ssao.blurringRenderingQuality") = 0.35;
+	initializer.get("pps.bl.enabled") = true;
+	initializer.get("pps.bl.blurringIterationsNum") = 2;
+	initializer.get("pps.bl.sideBlurFactor") = 1.0;
+	initializer.get("pps.lf.enabled") = true;
+	initializer.get("pps.sharpen") = true;
+	initializer.get("renderingQuality") = 1.0;
+	initializer.get("width") = win->getWidth();
+	initializer.get("height") = win->getHeight();
+	initializer.get("lodDistance") = 20.0;
+	initializer.get("samples") = 16;
 
 #if ANKI_GL == ANKI_GL_ES
-	initializer.samples = 1;
-	initializer.pps.enabled = false;
-	initializer.is.maxPointLights = 64;
-	initializer.is.maxPointLightsPerTile = 4;
-	initializer.is.maxSpotLightsPerTile = 4;
-	initializer.is.maxSpotTexLightsPerTile = 4;
+	initializer.get("samples") = 1;
+	initializer.get("pps.enabled") = false;
+	initializer.get("is.maxPointLights") = 64;
+	initializer.get("is.maxPointLightsPerTile") = 4;
+	initializer.get("is.maxSpotLightsPerTile") = 4;
+	initializer.get("is.maxSpotTexLightsPerTile") = 4;
 #endif
 
 	MainRendererSingleton::get().init(initializer);
