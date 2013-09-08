@@ -200,7 +200,7 @@ static PtrSize calcSurfaceSize(const U width, const U height,
 		break;
 	case Image::DC_S3TC:
 		out = (width / 4) * (height / 4) 
-			* (cf == Image::CF_RGB8) ? 8 : 16; // This is the block size
+			* ((cf == Image::CF_RGB8) ? 8 : 16); // This is the block size
 		break;
 	case Image::DC_ETC:
 		out = (width / 4) * (height / 4) * 8;
@@ -411,24 +411,11 @@ static void loadAnkiTexture(
 	{
 		for(U d = 0; d < depth; d++)
 		{
-			U dataSize = 0;
-			switch(preferredCompression)
-			{
-			case Image::DC_RAW:
-				dataSize = mipWidth * mipHeight 
-					* ((header.colorFormat == Image::CF_RGB8) ? 3 : 4);
-				break;
-			case Image::DC_S3TC:
-				dataSize = (mipWidth / 4) * (mipHeight / 4)
-					* ((header.colorFormat == Image::CF_RGB8) ? 8 : 16);
-				break;
-			case Image::DC_ETC:
-				dataSize = (mipWidth / 4) * (mipHeight / 4) * 8;
-				break;
-			default:
-				ANKI_ASSERT(0);
-			}
+			U dataSize = calcSurfaceSize(
+				mipWidth, mipHeight, preferredCompression, 
+				(Image::ColorFormat)header.colorFormat);
 
+			// Check if this mipmap can be skipped because of size
 			if(std::max(mipWidth, mipHeight) <= maxTextureSize)
 			{
 				U index = (mip - tmpMipLevels + mipLevels) * depth + d;
@@ -492,7 +479,7 @@ void Image::load(const char* filename, U32 maxTextureSize)
 		}
 		else if(strcmp(ext, "ankitex") == 0)
 		{
-#if 0
+#if 1
 			compression = Image::DC_RAW;
 #elif ANKI_GL == ANKI_GL_DESKTOP
 			compression = Image::DC_S3TC;

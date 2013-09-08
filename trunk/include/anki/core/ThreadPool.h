@@ -9,6 +9,9 @@
 
 namespace anki {
 
+/// Debug flag to disable threadpool threading capabilities
+#define ANKI_DISABLE_THREADPOOL_THREADING 0
+
 // Forward
 class ThreadPool;
 
@@ -41,7 +44,7 @@ struct ThreadJobDummy: ThreadJob
 	}
 };
 
-/// The thread that executes a ThreadJobCallback
+/// The thread that executes a ThreadJob
 class ThreadWorker
 {
 public:
@@ -109,7 +112,9 @@ public:
 	/// Wait for all jobs to finish
 	void waitForAllJobsToFinish()
 	{
+#if !ANKI_DISABLE_THREADPOOL_THREADING
 		barrier->wait();
+#endif
 	}
 
 	U32 getThreadsCount() const

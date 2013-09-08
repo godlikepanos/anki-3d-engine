@@ -33,16 +33,6 @@ public:
 class Renderer
 {
 public:
-	typedef RendererInitializer Initializer;
-
-	/// The types of rendering a ModelNode
-	enum ModelNodeRenderType
-	{
-		MNRT_MS, ///< In material stage
-		MNRT_DP, ///< In a depth pass
-		MNRT_BS  ///< In blending stage
-	};
-
 	Renderer();
 	~Renderer();
 
@@ -234,7 +224,7 @@ public:
 	/// skipped
 	void clearAfterBindingFbo(const GLenum cap);
 
-protected:
+private:
 	/// @name Rendering stages
 	/// @{
 	Ms ms; ///< Material rendering stage
@@ -242,17 +232,27 @@ protected:
 	Pps pps; ///< Postprocessing rendering stage
 	Bs bs; ///< Blending stage
 	Dbg dbg; ///< Debug stage
-	/// @}
-
 	Tiler tiler;
+	/// @}
 
 	/// Width of the rendering. Don't confuse with the window width
 	U32 width;
-	/// Height of the rendering. Don't confuse with the window width
+	/// Height of the rendering. Don't confuse with the window height
 	U32 height;
-	SceneGraph* scene; ///< Current scene
-	RenderableDrawer sceneDrawer;
 	F32 lodDistance; ///< Distance that used to calculate the LOD
+	U8 samples; ///< Number of sample in multisampling
+	Bool8 useMrt; ///< Use MRT or pack things inside the G buffer
+	Bool8 isOffscreen; ///< Is offscreen renderer?
+	F32 renderingQuality; ///< Rendering quality. Relevant for offscreen 
+	U32 maxTextureSize; ///< Texture size limit. Just kept here.
+	U16 tilesXCount;
+	U16 tilesYCount;
+
+	/// @name For drawing a quad into the active framebuffer
+	/// @{
+	Vbo quadPositionsVbo; ///< The VBO for quad positions
+	Vao quadVao; ///< This VAO is used everywhere except material stage
+	/// @}
 
 	/// @name Optimization vars
 	/// Used in other stages
@@ -270,19 +270,10 @@ protected:
 	Vec2 limitsOfNearPlane2;
 	/// @}
 
-private:
-	U framesNum; ///< Frame number
-	U8 samples;
-	Bool8 useMrt; ///< Use MRT or pack things inside the G buffer
-	Bool8 isOffscreen;
-	F32 renderingQuality;
-	U32 maxTextureSize;
+	SceneGraph* scene; ///< Current scene
+	RenderableDrawer sceneDrawer;
 
-	/// @name For drawing a quad into the active framebuffer
-	/// @{
-	Vbo quadPositionsVbo; ///< The VBO for quad positions
-	Vao quadVao; ///< This VAO is used everywhere except material stage
-	/// @}
+	U framesNum; ///< Frame number
 };
 
 } // end namespace anki

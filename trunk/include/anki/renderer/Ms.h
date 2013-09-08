@@ -8,7 +8,7 @@
 
 namespace anki {
 
-/// Material stage
+/// Material stage also known as G buffer stage. It populates the G buffer
 class Ms: public RenderingPass
 {
 public:
@@ -25,12 +25,7 @@ public:
 		return fai0[1];
 	}
 
-#if ANKI_RENDERER_USE_MRT
-	const Texture& getFai1() const
-	{
-		return fai1[1];
-	}
-#endif
+	const Texture& getFai1() const;
 
 	const Texture& getDepthFai() const
 	{
@@ -45,9 +40,8 @@ private:
 	Ez ez; /// EarlyZ pass
 	Array<Fbo, 2> fbo;
 	Array<Texture, 2> fai0; ///< The FAI for diffuse color, normals and specular
-#if ANKI_RENDERER_USE_MRT
+	/// Contains the normal and spec power on the MRT case
 	Array<Texture, 2> fai1;
-#endif
 	Array<Texture, 2> depthFai; ///< The FAI for depth
 
 	/// Create a G buffer FBO

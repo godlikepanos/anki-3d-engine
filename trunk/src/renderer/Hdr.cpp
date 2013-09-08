@@ -25,7 +25,7 @@ void Hdr::initFbo(Fbo& fbo, Texture& fai)
 }
 
 //==============================================================================
-void Hdr::initInternal(const Renderer::Initializer& initializer)
+void Hdr::initInternal(const RendererInitializer& initializer)
 {
 	enabled = initializer.get("pps.hdr.enabled");
 

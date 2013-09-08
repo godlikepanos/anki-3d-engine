@@ -19,6 +19,14 @@ class NativeWindow;
 class Input
 {
 public:
+	enum Event
+	{
+		WINDOW_FOCUS_LOST_EVENT,
+		WINDOW_FOCUS_GAINED_EVENT,
+		WINDOW_CLOSED_EVENT,
+		EVENTS_COUNT
+	};
+
 	Input()
 	{
 		reset();
@@ -27,12 +35,12 @@ public:
 
 	/// @name Acessors
 	/// @{
-	U32 getKey(U32 i) const
+	U getKey(U32 i) const
 	{
 		return keys[i];
 	}
 
-	U32 getMouseButton(U32 i) const
+	U getMouseButton(U32 i) const
 	{
 		return mouseBtns[i];
 	}
@@ -40,6 +48,12 @@ public:
 	const Vec2& getMousePosition() const
 	{
 		return mousePosNdc;
+	}
+
+	/// Get the times an event was triggered and resets the counter
+	U getEvent(Event eventId) const
+	{
+		return events[eventId];
 	}
 	/// @}
 
@@ -66,6 +80,12 @@ public:
 		lockCurs = lock;
 	}
 
+	/// Add a new event
+	void addEvent(Event eventId)
+	{
+		++events[eventId];
+	}
+
 private:
 	NativeWindow* nativeWindow = nullptr;
 
@@ -83,6 +103,8 @@ private:
 	/// @}
 
 	Vec2 mousePosNdc = Vec2(2.0); ///< The coords are in the NDC space
+
+	Array<U8, EVENTS_COUNT> events;
 
 	std::shared_ptr<InputImpl> impl;
 

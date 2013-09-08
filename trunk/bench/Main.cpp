@@ -134,6 +134,7 @@ void initSubsystems()
 	initializer.get("lodDistance") = 20.0;
 	initializer.get("samples") = 16;
 
+//#if ANKI_GL == ANKI_GL_ES
 #if 1
 	initializer.get("samples") = 1;
 	initializer.get("is.maxPointLights") = 64;
@@ -141,8 +142,9 @@ void initSubsystems()
 	initializer.get("is.maxSpotLightsPerTile") = 4;
 	initializer.get("is.maxSpotTexLightsPerTile") = 4;
 	initializer.get("pps.enabled") = false;
-	initializer.get("renderingQuality") = 0.8;
+	//initializer.get("renderingQuality") = 0.25;
 	initializer.get("maxTextureSize") = 256;
+	initializer.get("mrt") = false;
 #endif
 
 	MainRendererSingleton::get().init(initializer);
@@ -334,10 +336,17 @@ static void mainLoop()
 
 		// Update
 		input.handleEvents();
+
+		if(input.getEvent(Input::WINDOW_CLOSED_EVENT) > 0)
+		{
+			break;
+		}
+
 		if(!mainLoopExtra())
 		{
 			break;
 		}
+
 		scene.update(prevUpdateTime, crntTime, renderer);
 		renderer.render(scene);
 

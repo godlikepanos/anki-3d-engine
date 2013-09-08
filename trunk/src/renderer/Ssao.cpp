@@ -171,7 +171,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	pps << "#define NOISE_MAP_SIZE " << NOISE_TEX_SIZE
 		<< "\n#define WIDTH " << mpWidth
 		<< "\n#define HEIGHT " << mpHeight
-		<< "\n#define USE_MRT " << ANKI_RENDERER_USE_MRT
+		<< "\n#define USE_MRT " << r->getUseMrt()
 		<< "\n#define KERNEL_SIZE " << KERNEL_SIZE
 		<< "\n" << kernelStr.str() 
 		<< "\n";
@@ -266,11 +266,14 @@ void Ssao::run()
 	ssaoSProg->findUniformVariable("noiseMap").set(noiseTex);
 
 	// msGFai
-#if ANKI_RENDERER_USE_MRT
-	ssaoSProg->findUniformVariable("msGFai").set(r->getMs().getFai1());
-#else
-	ssaoSProg->findUniformVariable("msGFai").set(r->getMs().getFai0());
-#endif
+	if(r->getUseMrt())
+	{
+		ssaoSProg->findUniformVariable("msGFai").set(r->getMs().getFai1());
+	}
+	else
+	{
+		ssaoSProg->findUniformVariable("msGFai").set(r->getMs().getFai0());
+	}
 
 	// Draw
 	r->drawQuad();

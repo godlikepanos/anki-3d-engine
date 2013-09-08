@@ -71,7 +71,7 @@ void Pps::initInternal(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Pps::init(const Renderer::Initializer& initializer)
+void Pps::init(const RendererInitializer& initializer)
 {
 	try
 	{

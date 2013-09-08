@@ -331,8 +331,9 @@ void main()
 #endif
 
 #if 0
+	if(vInstanceId != 99999)
 	{
-		fColor += fColor * 0.1 + normal * 0.9;
+		fColor = vec3(diffColor);
 	}
 #endif
 

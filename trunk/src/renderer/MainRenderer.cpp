@@ -15,20 +15,22 @@ MainRenderer::~MainRenderer()
 {}
 
 //==============================================================================
-void MainRenderer::init(const Renderer::Initializer& initializer_)
+void MainRenderer::init(const RendererInitializer& initializer_)
 {
 	ANKI_LOGI("Initializing main renderer...");
-	initGl();
 
-	Renderer::Initializer initializer = initializer_;
+	RendererInitializer initializer = initializer_;
 	initializer.set("offscreen", false);
 	initializer.get("width") *= initializer.get("renderingQuality");
 	initializer.get("height") *= initializer.get("renderingQuality");
 
+	initGl();
+
 	Renderer::init(initializer);
 	deformer.reset(new Deformer);
 
-	ANKI_LOGI("Main renderer initialized");
+	ANKI_LOGI("Main renderer initialized. Rendering size %dx%d", 
+		getWidth(), getHeight());
 }
 
 //==============================================================================

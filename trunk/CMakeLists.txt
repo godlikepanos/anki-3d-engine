@@ -193,7 +193,7 @@ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE
 #
 # Include & lib directories
 #
-INCLUDE_DIRECTORIES("extern/tinyxml2/include" "extern/lua" "extern/png" "extern/z" "extern/bullet" "include" "${CMAKE_CURRENT_BINARY_DIR}")
+INCLUDE_DIRECTORIES("extern/tinyxml2/include" "extern/lua" "extern/z" "extern/bullet" "include" "${CMAKE_CURRENT_BINARY_DIR}")
 
 IF(${ANKI_WINDOW_BACKEND} STREQUAL "GLXX11" OR ${ANKI_WINDOW_BACKEND} STREQUAL "MACOS")
 	INCLUDE_DIRECTORIES("extern/GLEW/include")

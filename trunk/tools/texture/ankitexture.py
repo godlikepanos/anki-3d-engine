@@ -315,6 +315,8 @@ def create_etc_images(mips_fnames, tmp_dir, fast, color_format, convert_path):
 		else:
 			args.append("RGBA")
 
+		# Call the executable AND change the working directory so that etcpack
+		# will find convert
 		subprocess.check_call(args, stdout = subprocess.PIPE, cwd = tmp_dir)
 
 def create_dds_images(mips_fnames, tmp_dir, fast, color_format, normal):
@@ -458,7 +460,8 @@ def write_s3tc(out_file, fname, width, height, color_format):
 	if len(data) != data_size:
 		raise Exception("Failed to read DDS data")
 
-	tmp = in_file.read(128)
+	# Make sure that the file doesn't contain any more data
+	tmp = in_file.read(1)
 	if len(tmp) != 0:
 		printw("  File shouldn't contain more data")
 
@@ -493,7 +496,8 @@ def write_etc(out_file, fname, width, height, color_format):
 	if len(data) != data_size:
 		raise Exception("Failed to read PKM data")
 
-	tmp = in_file.read(data_size)
+	# Make sure that the file doesn't contain any more data
+	tmp = in_file.read(1)
 	if len(tmp) != 0:
 		printw("  File shouldn't contain more data")
 
