@@ -28,7 +28,7 @@ ENDIF()
 
 ADD_LIBRARY(anki Dummy.cpp "${_SYS_SRC}")
 
-TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankibullet ankiz ankipng ${ANKI_GPERFTOOLS_LIBS} ${_SYS})
+TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankibullet ankiz ${ANKI_GPERFTOOLS_LIBS} ${_SYS})
 
 SET_TARGET_PROPERTIES(anki PROPERTIES LINKER_LANGUAGE CXX)
 

@@ -13,29 +13,43 @@ Ms::~Ms()
 {}
 
 //==============================================================================
+const Texture& Ms::getFai1() const
+{
+	ANKI_ASSERT(r->getUseMrt());
+	return fai1[1];
+}
+
+//==============================================================================
 void Ms::createFbo(U index, U samples)
 {
-#if ANKI_RENDERER_USE_MRT
-	fai0[index].create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
-		GL_RGBA, GL_UNSIGNED_BYTE, samples);
-	fai1[index].create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
-		GL_RGBA, GL_UNSIGNED_BYTE, samples);
-#else
-	fai0[index].create2dFai(r->getWidth(), r->getHeight(), GL_RG32UI,
-		GL_RG_INTEGER, GL_UNSIGNED_INT, samples);
-#endif
+	if(r->getUseMrt())
+	{
+		fai0[index].create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
+			GL_RGBA, GL_UNSIGNED_BYTE, samples);
+		fai1[index].create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
+			GL_RGBA, GL_UNSIGNED_BYTE, samples);
+	}
+	else
+	{
+		fai0[index].create2dFai(r->getWidth(), r->getHeight(), GL_RG32UI,
+			GL_RG_INTEGER, GL_UNSIGNED_INT, samples);
+	}
+
 	depthFai[index].create2dFai(r->getWidth(), r->getHeight(),
-		GL_DEPTH24_STENCIL8, GL_DEPTH_STENCIL,
-		GL_UNSIGNED_INT_24_8, samples);
+		GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
+		GL_UNSIGNED_INT, samples);
 
 	fbo[index].create();
 
-#if ANKI_RENDERER_USE_MRT
-	fbo[index].setColorAttachments({&fai0[index], &fai1[index]});
-#else
-	fbo[index].setColorAttachments({&fai0[index]});
-#endif
-	fbo[index].setOtherAttachment(GL_DEPTH_STENCIL_ATTACHMENT, depthFai[index]);
+	if(r->getUseMrt())
+	{
+		fbo[index].setColorAttachments({&fai0[index], &fai1[index]});
+	}
+	else
+	{
+		fbo[index].setColorAttachments({&fai0[index]});
+	}
+	fbo[index].setOtherAttachment(GL_DEPTH_ATTACHMENT, depthFai[index]);
 
 	if(!fbo[index].isComplete())
 	{

@@ -79,8 +79,8 @@ void App::initDirs()
 	ANKI_LOGI("Creating cache dir: %s", cachePath.c_str());
 	createDirectory(cachePath.c_str());
 #else
-	ANKI_ASSERT(gAndroidApp);
-	ANativeActivity* activity = gAndroidApp->activity;
+	//ANKI_ASSERT(gAndroidApp);
+	//ANativeActivity* activity = gAndroidApp->activity;
 
 	// Settings path
 	//settingsPath = std::string(activity->internalDataPath);

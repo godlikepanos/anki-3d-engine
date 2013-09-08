@@ -13,7 +13,7 @@ Dbg::~Dbg()
 {}
 
 //==============================================================================
-void Dbg::init(const Renderer::Initializer& initializer)
+void Dbg::init(const RendererInitializer& initializer)
 {
 	enabled = initializer.get("dbg.enabled");
 	enableBits(DF_ALL);

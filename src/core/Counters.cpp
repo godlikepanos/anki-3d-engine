@@ -1,5 +1,6 @@
 #include "anki/core/Counters.h"
 #include "anki/core/Timestamp.h"
+#include "anki/core/App.h"
 #include "anki/util/Array.h"
 #include <cstring>
 
@@ -46,7 +47,9 @@ CountersManager::CountersManager()
 	counterTimes.resize(C_COUNT, 0.0);
 
 	// Open and write the headers to the files
-	perframeFile.open("./perframe_counters.csv", File::OF_WRITE);
+	perframeFile.open(
+		(AppSingleton::get().getSettingsPath() + "/frame_counters.csv").c_str(), 
+		File::OF_WRITE);
 
 	perframeFile.writeText("FRAME");
 
@@ -59,7 +62,9 @@ CountersManager::CountersManager()
 	}
 
 	// Open and write the headers to the other file
-	perrunFile.open("./perrun_counters.csv", File::OF_WRITE);
+	perrunFile.open(
+		(AppSingleton::get().getSettingsPath() + "/run_counters.csv").c_str(), 
+		File::OF_WRITE);
 
 	U i = 0;
 	for(const CounterInfo& inf : cinfo)

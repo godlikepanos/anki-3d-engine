@@ -240,16 +240,16 @@ void init()
 #if 1
 	// horse
 	horse = new ModelNode("horse", &scene, nullptr,
-		Movable::MF_NONE, "models/horse/horse.mdl");
+		Movable::MF_NONE, "models/horse/horse.ankimdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		0.7));
 
 	// barrel
-	ModelNode* redBarrel = new ModelNode(
+	/*ModelNode* redBarrel = new ModelNode(
 		"red_barrel", &scene, nullptr, Movable::MF_NONE, 
 		"models/red_barrel/red_barrel.mdl");
 	redBarrel->setLocalTransform(Transform(Vec3(+2, 0, 0), Mat3::getIdentity(),
-		0.7));
+		0.7));*/
 #endif
 
 #if 0
@@ -476,7 +476,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -568,16 +568,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.get("width") = win->getWidth();
 	initializer.get("height") = win->getHeight();
 	initializer.get("lodDistance") = 20.0;
-	initializer.get("samples") = 16;
-
-#if ANKI_GL == ANKI_GL_ES
 	initializer.get("samples") = 1;
-	initializer.get("pps.enabled") = false;
-	initializer.get("is.maxPointLights") = 64;
-	initializer.get("is.maxPointLightsPerTile") = 4;
-	initializer.get("is.maxSpotLightsPerTile") = 4;
-	initializer.get("is.maxSpotTexLightsPerTile") = 4;
-#endif
 
 	MainRendererSingleton::get().init(initializer);
 

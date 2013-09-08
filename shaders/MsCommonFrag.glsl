@@ -22,8 +22,6 @@ in float vTangentW;
 #	define vTangentW_DEFINED
 in vec3 vVertPosViewSpace;
 #	define vVertPosViewSpace_DEFINED
-flat in float vSpecularComponent;
-#	define vSpecularComponent_DEFINED
 #endif
 /// @}
 
@@ -110,8 +108,8 @@ vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 /// @param[in] tolerance Tolerance value
 /// @param[in] texCoords Texture coordinates
 /// @return The RGB channels of the map
-#define getDiffuseColorAndDoAlphaTesting_DEFINED
-vec3 getDiffuseColorAndDoAlphaTesting(
+#define readTextureRgbAlphaTesting_DEFINED
+vec3 readTextureRgbAlphaTesting(
 	in sampler2D map,
 	in highp vec2 texCoords,
 	in float tolerance)

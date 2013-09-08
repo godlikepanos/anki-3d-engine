@@ -6,6 +6,7 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/util/File.h"
 #include "anki/misc/Xml.h"
+#include "anki/renderer/MainRenderer.h"
 #include <functional>
 #include <algorithm>
 #include <map>
@@ -283,7 +284,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 
 			src << "#define LOD " << level << "\n"
 				<< "#define PASS_" << passNames[pid] << "\n"
-				<< "#define USE_MRT " << ANKI_RENDERER_USE_MRT << "\n"
+				<< "#define USE_MRT " 
+				<< MainRendererSingleton::get().getUseMrt() << "\n"
 				<< mspc.getShaderProgramSource() << std::endl;
 
 			std::string filename =

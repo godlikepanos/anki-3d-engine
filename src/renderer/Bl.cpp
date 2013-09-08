@@ -5,7 +5,7 @@
 namespace anki {
 
 //==============================================================================
-void Bl::init(const Renderer::Initializer& initializer)
+void Bl::init(const RendererInitializer& initializer)
 {
 #if 0
 	enabled = initializer.pps.bl.enabled;

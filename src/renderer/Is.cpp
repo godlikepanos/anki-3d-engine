@@ -345,7 +345,7 @@ struct WriteLightsJob: ThreadJob
 
 	/// XXX
 	void writeIndexToTileBuffer(
-		U lightType, U lightIndex, U i, U tileX, U tileY)
+		U lightType, U lightIndex, U indexInTileArray, U tileX, U tileY)
 	{
 		const PtrSize tileSize = is->calcTileSize();
 		PtrSize offset;
@@ -373,7 +373,7 @@ struct WriteLightsJob: ThreadJob
 		}
 
 		// Move to the array offset
-		offset += sizeof(U32) * i;
+		offset += sizeof(U32) * indexInTileArray;
 
 		// Write the lightIndex
 		*((U32*)(tileBuffer + offset)) = lightIndex;
@@ -452,7 +452,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 		<< "#define MAX_SPOT_LIGHTS " << (U32)maxSpotLights << "\n"
 		<< "#define MAX_SPOT_TEX_LIGHTS " << (U32)maxSpotTexLights << "\n"
 		<< "#define GROUND_LIGHT " << groundLightEnabled << "\n"
-		<< "#define USE_MRT " << ANKI_RENDERER_USE_MRT << "\n";
+		<< "#define USE_MRT " << r->getUseMrt() << "\n";
 
 	if(sm.getPcfEnabled())
 	{
@@ -853,9 +853,10 @@ void Is::lightPass()
 	tilesBuffer.setBinding(TILES_BLOCK_BINDING);
 
 	lightPassProg->findUniformVariable("msFai0").set(r->getMs().getFai0());
-#if ANKI_RENDERER_USE_MRT
-	lightPassProg->findUniformVariable("msFai1").set(r->getMs().getFai1());
-#endif
+	if(r->getUseMrt())
+	{
+		lightPassProg->findUniformVariable("msFai1").set(r->getMs().getFai1());
+	}
 	lightPassProg->findUniformVariable("msDepthFai").set(
 		r->getMs().getDepthFai());
 	lightPassProg->findUniformVariable("shadowMapArr").set(sm.sm2DArrayTex);

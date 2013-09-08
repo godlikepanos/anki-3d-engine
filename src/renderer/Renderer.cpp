@@ -64,7 +64,16 @@ RendererInitializer::RendererInitializer()
 	newOption("renderingQuality", 1.0); // Applies only to MainRenderer
 	newOption("lodDistance", 10.0); // Distance that used to calculate the LOD
 	newOption("samples", 1);
-	newOption("useMrt", true); // Pack or not the GBuffer
+
+	if(GlStateCommonSingleton::get().getGpu() == GlStateCommon::GPU_ARM)
+	{
+		newOption("mrt", false); // Pack or not the GBuffer
+	}
+	else
+	{
+		newOption("mrt", true); // Pack or not the GBuffer
+	}
+
 	newOption("maxTextureSize", 1048576); // Cap to limit quality in resources
 	newOption("offscreen", false);
 }
@@ -91,7 +100,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	lodDistance = initializer.get("lodDistance");
 	framesNum = 0;
 	samples = initializer.get("samples");
-	useMrt = initializer.get("useMrt");
+	useMrt = initializer.get("mrt");
 	isOffscreen = initializer.get("offscreen");
 	renderingQuality = initializer.get("renderingQuality");
 	maxTextureSize = initializer.get("maxTextureSize");

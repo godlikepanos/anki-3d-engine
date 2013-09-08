@@ -82,7 +82,7 @@ void Fbo::bind(const FboTarget target, Bool noReadbacks) const
 			currentRead = this;
 		}
 
-		ANKI_ASSERT(noReadbacks == false && "Dosn't make sense");
+		ANKI_ASSERT(noReadbacks == false && "Doesn't make sense");
 	}
 }
 
