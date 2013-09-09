@@ -479,7 +479,7 @@ void Image::load(const char* filename, U32 maxTextureSize)
 		}
 		else if(strcmp(ext, "ankitex") == 0)
 		{
-#if 1
+#if 0
 			compression = Image::DC_RAW;
 #elif ANKI_GL == ANKI_GL_DESKTOP
 			compression = Image::DC_S3TC;

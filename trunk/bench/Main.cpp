@@ -142,7 +142,7 @@ void initSubsystems()
 	initializer.get("is.maxSpotLightsPerTile") = 4;
 	initializer.get("is.maxSpotTexLightsPerTile") = 4;
 	initializer.get("pps.enabled") = false;
-	//initializer.get("renderingQuality") = 0.25;
+	initializer.get("renderingQuality") = 0.25;
 	initializer.get("maxTextureSize") = 256;
 	initializer.get("mrt") = false;
 #endif
