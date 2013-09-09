@@ -22,7 +22,7 @@ vec3 unpackNormal(in vec2 enc)
 #if GL_ES
 uint packUnorm4x8(in vec4 v)
 {
-	vec4 a = clamp(v, 0.0, 1.0) * 255.0;
+	highp vec4 a = clamp(v, 0.0, 1.0) * 255.0;
 	return uint(a.x) | (uint(a.y) << 8) | (uint(a.z) << 16) | (uint(a.w) << 24);
 }
  

@@ -20,6 +20,8 @@ public:
 	/// @see Renderer::init
 	void init(const RendererInitializer& initializer);
 
+	void render(SceneGraph& scene);
+
 	/// Save the color buffer to a tga (lossless & uncompressed & slow)
 	/// or jpeg (lossy & compressed fast)
 	/// @param filename The file to save

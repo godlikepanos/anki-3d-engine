@@ -34,6 +34,14 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 }
 
 //==============================================================================
+void MainRenderer::render(SceneGraph& scene)
+{
+	ANKI_COUNTER_START_TIMER(C_MAIN_RENDERER_TIME);
+	Renderer::render(scene);
+	ANKI_COUNTER_STOP_TIMER_INC(C_MAIN_RENDERER_TIME);
+}
+
+//==============================================================================
 void MainRenderer::initGl()
 {
 	// Ignore the first error
