@@ -87,7 +87,7 @@ void Fbo::bind(const FboTarget target, Bool noReadbacks) const
 }
 
 //==============================================================================
-void Fbo::bindDefault(const FboTarget target)
+void Fbo::bindDefault(const FboTarget target, Bool noReadbacks)
 {
 	if(target == FT_ALL)
 	{
@@ -96,6 +96,14 @@ void Fbo::bindDefault(const FboTarget target)
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			currentDraw = currentRead = nullptr;
 		}
+
+#if ANKI_GL == ANKI_GL_ES
+		if(noReadbacks)
+		{
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT 
+				| GL_STENCIL_BUFFER_BIT);
+		}
+#endif
 	}
 	else if(target == FT_DRAW)
 	{
@@ -104,6 +112,14 @@ void Fbo::bindDefault(const FboTarget target)
 			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 			currentDraw = nullptr;
 		}
+
+#if ANKI_GL == ANKI_GL_ES
+		if(noReadbacks)
+		{
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT 
+				| GL_STENCIL_BUFFER_BIT);
+		}
+#endif
 	}
 	else
 	{
@@ -113,6 +129,8 @@ void Fbo::bindDefault(const FboTarget target)
 			glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 			currentRead = nullptr;
 		}
+
+		ANKI_ASSERT(noReadbacks == false && "Doesn't make sense");
 	}
 }
 

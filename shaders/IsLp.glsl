@@ -18,9 +18,11 @@ out vec2 vLimitsOfNearPlaneOpt;
 
 void main()
 {
+	float instIdF = float(gl_InstanceID);
+
 	vec2 ij = vec2(
-		float(gl_InstanceID % TILES_X_COUNT), 
-		float(gl_InstanceID / TILES_X_COUNT));
+		mod(instIdF, float(TILES_X_COUNT)), 
+		floor(instIdF / float(TILES_X_COUNT)));
 
 	vInstanceId = int(gl_InstanceID);
 
@@ -171,9 +173,7 @@ vec3 calcPhong(in vec3 fragPosVspace, in vec3 diffuse,
 //==============================================================================
 float calcSpotFactor(in SpotLight light, in vec3 frag2LightVec)
 {
-	vec3 l = -frag2LightVec;
-
-	float costheta = dot(l, light.lightDir.xyz);
+	float costheta = -dot(frag2LightVec, light.lightDir.xyz);
 	float spotFactor = smoothstep(
 		light.outerCosInnerCos.x, 
 		light.outerCosInnerCos.y, 
@@ -240,14 +240,17 @@ void main()
 	// Ambient color
 	fColor = diffColor * sceneAmbientColor.rgb;
 
+	//Tile tile = tiles[vInstanceId];
+	#define tile tiles[vInstanceId]
+
 	// Point lights
-	uint pointLightsCount = tiles[vInstanceId].lightsCount[0];
+	uint pointLightsCount = tile.lightsCount[0];
 	for(uint i = 0U; i < pointLightsCount; ++i)
 	{
 #if __VERSION__ > 430
-		uint lightId = tiles[vInstanceId].pointLightIndices[i];
+		uint lightId = tile.pointLightIndices[i];
 #else
-		uint lightId = tiles[vInstanceId].pointLightIndices[i / 4U][i % 4U];
+		uint lightId = tile.pointLightIndices[i / 4U][i % 4U];
 #endif
 		PointLight light = pointLights[lightId];
 
@@ -261,14 +264,14 @@ void main()
 	}
 
 	// Spot lights
-	uint spotLightsCount = tiles[vInstanceId].lightsCount[2];
+	uint spotLightsCount = tile.lightsCount[2];
 
 	for(uint i = 0U; i < spotLightsCount; ++i)
 	{
 #if __VERSION__ > 430
-		uint lightId = tiles[vInstanceId].spotLightIndices[i];
+		uint lightId = tile.spotLightIndices[i];
 #else
-		uint lightId = tiles[vInstanceId].spotLightIndices[i / 4U][i % 4U];
+		uint lightId = tile.spotLightIndices[i / 4U][i % 4U];
 #endif
 		SpotLight light = spotLights[lightId];
 
@@ -287,14 +290,14 @@ void main()
 	}
 
 	// Spot lights with shadow
-	uint spotTexLightsCount = tiles[vInstanceId].lightsCount[3];
+	uint spotTexLightsCount = tile.lightsCount[3];
 
 	for(uint i = 0U; i < spotTexLightsCount; ++i)
 	{
 #if __VERSION__ > 430
-		uint lightId = tiles[vInstanceId].spotTexLightIndices[i];
+		uint lightId = tile.spotTexLightIndices[i];
 #else
-		uint lightId = tiles[vInstanceId].spotTexLightIndices[i / 4U][i % 4U];
+		uint lightId = tile.spotTexLightIndices[i / 4U][i % 4U];
 #endif
 		SpotTexLight light = spotTexLights[lightId];
 

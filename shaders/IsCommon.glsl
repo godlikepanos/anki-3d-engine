@@ -33,7 +33,7 @@ struct Tile
 // The base of all lights
 struct Light
 {
-	vec4 posRadius; // xyz: Light pos in eye space. w: The radius
+	vec4 posRadius; // xyz: Light pos in eye space. w: The -1/radius
 	vec4 diffuseColorShadowmapId; // xyz: diff color, w: shadowmap tex ID
 	vec4 specularColorTexId; // xyz: spec color, w: diffuse tex ID
 };

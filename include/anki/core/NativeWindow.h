@@ -17,9 +17,9 @@ struct NativeWindowInitializer
 {
 	U32 width = 640;
 	U32 height = 768;
-	Array<U32, 4> rgbaBits = {{8, 8, 8, 8}};
-	U32 depthBits = 24;
-	U32 stencilBits = 8;
+	Array<U32, 4> rgbaBits = {{8, 8, 8, 0}};
+	U32 depthBits = 0;
+	U32 stencilBits = 0;
 	U32 samplesCount = 0;
 	static const Bool doubleBuffer = true;
 	/// Create a fullscreen window with the desktop's resolution
