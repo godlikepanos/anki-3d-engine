@@ -64,7 +64,8 @@ public:
 
 	/// Unbind all targets. Unbinds both draw and read FBOs so the active is
 	/// the default FBO
-	static void bindDefault(const FboTarget target = FT_ALL);
+	static void bindDefault(const FboTarget target = FT_ALL,
+		Bool noReadbacks = false);
 
 	/// Returns true if the FBO is ready for draw calls
 	Bool isComplete() const;

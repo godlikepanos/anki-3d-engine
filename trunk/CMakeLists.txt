@@ -98,7 +98,8 @@ IF(${ANKI_BUILD_TYPE} STREQUAL "Debug")
 ELSE()
 	# Release
 
-	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O4 -flto -DNODEBUG ")
+	# -flto ?
+	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O4 -DNODEBUG ")
 
 	# Add this because Android compiler complains
 	IF(ANDROID)

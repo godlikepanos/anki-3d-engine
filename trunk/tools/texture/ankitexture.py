@@ -299,11 +299,16 @@ def create_etc_images(mips_fnames, tmp_dir, fast, color_format, convert_path):
 			os.path.join(tmp_dir, os.path.basename(convert_path)))
 
 	for fname in mips_fnames:
-		fname = fname + ".tga"
+		# Unfortunately we need to flip the image. Use convert again
+		in_fname = fname + ".tga"
+		flipped_fname = fname + "_flip.tga"
+		args = ["convert", in_fname, "-flip", flipped_fname]
+		subprocess.check_call(args)
+		in_fname = flipped_fname
 
-		printi("  %s" % fname)
+		printi("  %s" % in_fname)
 
-		args = ["etcpack", fname, tmp_dir, "-c", "etc2"]
+		args = ["etcpack", in_fname, tmp_dir, "-c", "etc2"]
 
 		if fast:
 			args.append("-s")
@@ -592,7 +597,7 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha):
 							tmp_width, tmp_height, color_format)
 				# Write ETC
 				elif compression == 2:
-					write_etc(tex_file, in_base_fname + ".pkm", \
+					write_etc(tex_file, in_base_fname + "_flip.pkm", \
 							tmp_width, tmp_height, color_format)
 			
 			tmp_width = tmp_width / 2

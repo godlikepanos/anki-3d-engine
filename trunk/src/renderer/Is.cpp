@@ -830,10 +830,10 @@ void Is::lightPass()
 	// shader prog
 	lightPassProg->bind();
 
+	commonUbo.setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
+
 	lightPassProg->findUniformVariable("limitsOfNearPlane").set(
 		Vec4(r->getLimitsOfNearPlane(), r->getLimitsOfNearPlane2()));
-
-	commonUbo.setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
 
 	if(pointLightsSize > 0)
 	{
@@ -874,21 +874,19 @@ void Is::setState()
 
 	if(drawToDefaultFbo)
 	{
-		Fbo::bindDefault();
+		Fbo::bindDefault(Fbo::FT_ALL, true);
 
 		GlStateSingleton::get().setViewport(
 			0, 0, r->getWindowWidth(), r->getWindowHeight());
 	}
 	else
 	{
-		fbo.bind();
+		fbo.bind(Fbo::FT_ALL, true);
 
 		GlStateSingleton::get().setViewport(
 			0, 0, r->getWidth(), r->getHeight());
 	}
 
-	r->clearAfterBindingFbo(
-		GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	GlStateSingleton::get().disable(GL_DEPTH_TEST);
 	GlStateSingleton::get().disable(GL_BLEND);
 }

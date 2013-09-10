@@ -4,6 +4,7 @@
 #include "anki/util/Exception.h"
 #include "anki/util/Array.h"
 #include "anki/util/StdTypes.h"
+#include "anki/core/Counters.h"
 
 namespace anki {
 
@@ -65,7 +66,7 @@ void NativeWindowImpl::create(NativeWindowInitializer& init)
 	// EGL config
 	//  
 	attribs[attr++] = EGL_SURFACE_TYPE;
-	attribs[attr++] = EGL_WINDOW_BIT,
+	attribs[attr++] = EGL_WINDOW_BIT;
 
 	attribs[attr++] = EGL_RENDERABLE_TYPE;
 	attribs[attr++] = EGL_OPENGL_ES2_BIT;
@@ -192,11 +193,13 @@ void NativeWindow::destroy()
 //==============================================================================
 void NativeWindow::swapBuffers()
 {
+	ANKI_COUNTER_START_TIMER(C_SWAP_BUFFERS_TIME);
 	ANKI_ASSERT(isCreated());
 	if(eglSwapBuffers(impl->display, impl->surface) == EGL_FALSE)
 	{
 		throw ANKI_EXCEPTION("eglSwapBuffers() failed");
 	}
+	ANKI_COUNTER_STOP_TIMER_INC(C_SWAP_BUFFERS_TIME);
 }
 
 } // end namespace anki

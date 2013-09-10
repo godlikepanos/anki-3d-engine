@@ -10,6 +10,13 @@
 #include <sstream>
 #include <iomanip>
 
+#define ANKI_DUMP_SHADERS ANKI_DEBUG
+
+#if ANKI_DUMP_SHADERS
+#	include "anki/core/App.h"
+#	include "anki/util/File.h"
+#endif
+
 namespace anki {
 
 //==============================================================================
@@ -545,6 +552,44 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 	std::string fullSrc = preproc;
 	fullSrc += sourceCode;
 	sourceStrs[0] = fullSrc.c_str();
+
+#if ANKI_DUMP_SHADERS
+	{
+		const char* ext = nullptr;
+		switch(type)
+		{
+		case GL_VERTEX_SHADER:
+			ext = ".vert";
+			break;
+		case GL_FRAGMENT_SHADER:
+			ext = ".frag";
+			break;
+#	if ANKI_GL == ANKI_GL_DESKTOP
+		case GL_TESS_EVALUATION_SHADER:
+			ext = ".te";
+			break;
+		case GL_TESS_CONTROL_SHADER:
+			ext = ".tc";
+			break;
+		case GL_GEOMETRY_SHADER:
+			ext = ".geom";
+			break;
+		case GL_COMPUTE_SHADER:
+			ext = ".comp";
+			break;
+#	endif
+		default:
+			ANKI_ASSERT(0);
+		}
+
+		File file(
+			(AppSingleton::get().getCachePath() + "/" 
+			+ std::to_string(shader) + ext).c_str(), 
+			File::OF_WRITE);
+
+		file.writeText("%s", fullSrc.c_str());
+	}
+#endif
 
 	// compile
 	glShaderSource(shader, 1, sourceStrs, NULL);
