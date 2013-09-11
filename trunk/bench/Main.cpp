@@ -121,8 +121,7 @@ void initSubsystems()
 	initializer.get("pps.hdr.exposure") = 8.0;
 	initializer.get("pps.ssao.blurringIterationsNum") = 1;
 	initializer.get("pps.ssao.enabled") = true;
-	initializer.get("pps.ssao.mainPassRenderingQuality") = 0.35;
-	initializer.get("pps.ssao.blurringRenderingQuality") = 0.35;
+	initializer.get("pps.ssao.renderingQuality") = 0.25;
 	initializer.get("pps.bl.enabled") = true;
 	initializer.get("pps.bl.blurringIterationsNum") = 2;
 	initializer.get("pps.bl.sideBlurFactor") = 1.0;
@@ -141,7 +140,6 @@ void initSubsystems()
 	initializer.get("is.maxPointLightsPerTile") = 4;
 	initializer.get("is.maxSpotLightsPerTile") = 4;
 	initializer.get("is.maxSpotTexLightsPerTile") = 4;
-	initializer.get("pps.enabled") = false;
 	initializer.get("renderingQuality") = 0.25;
 	initializer.get("maxTextureSize") = 256;
 	initializer.get("mrt") = false;

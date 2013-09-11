@@ -6,6 +6,7 @@
 #pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
+#pragma anki include "shaders/CommonFrag.glsl"
 
 #define MAX_GHOSTS 4
 #define GHOST_DISPERSAL (0.7)

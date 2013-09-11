@@ -1,4 +1,4 @@
-#define DEFAULT_FLOAT_PRECISION mediump
+#define DEFAULT_FLOAT_PRECISION highp
 #pragma anki include "shaders/CommonFrag.glsl"
 
 #pragma anki include "shaders/Pack.glsl"
