@@ -53,7 +53,7 @@ void MainRenderer::render(SceneGraph& scene)
 		GlStateSingleton::get().disable(GL_BLEND);
 		blitProg->bind();
 
-		const Texture* fai;
+		Texture* fai;
 
 		if(getPps().getEnabled())
 		{
@@ -63,6 +63,8 @@ void MainRenderer::render(SceneGraph& scene)
 		{
 			fai = &getIs().getFai();
 		}
+
+		fai->setFiltering(Texture::TFT_LINEAR);
 
 		blitProg->findUniformVariable("rasterImage").set(*fai);
 		drawQuad();

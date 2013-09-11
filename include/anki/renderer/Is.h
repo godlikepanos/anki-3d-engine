@@ -38,6 +38,11 @@ public:
 	{
 		return fai;
 	}
+
+	Texture& getFai()
+	{
+		return fai;
+	}
 	/// @}
 
 private:

@@ -40,8 +40,7 @@ RendererInitializer::RendererInitializer()
 	newOption("pps.hdr.exposure", 4.0);
 
 	newOption("pps.ssao.enabled", true);
-	newOption("pps.ssao.mainPassRenderingQuality", 0.3);
-	newOption("pps.ssao.blurringRenderingQuality", 0.3);
+	newOption("pps.ssao.renderingQuality", 0.3);
 	newOption("pps.ssao.blurringIterationsNum", 2);
 
 	newOption("pps.bl.enabled", true);

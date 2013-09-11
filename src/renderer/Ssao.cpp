@@ -61,7 +61,7 @@ struct ShaderCommonUniforms
 //==============================================================================
 
 //==============================================================================
-void Ssao::createFbo(Fbo& fbo, Texture& fai, F32 width, F32 height)
+void Ssao::createFbo(Fbo& fbo, Texture& fai, U width, U height)
 {
 	fai.create2dFai(width, height, GL_RED, GL_RED, GL_UNSIGNED_BYTE);
 
@@ -92,30 +92,16 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	//
 	// Init the widths/heights
 	//
-	const F32 bQuality = initializer.get("pps.ssao.blurringRenderingQuality");
-	const F32 mpQuality = initializer.get("pps.ssao.mainPassRenderingQuality");
+	const F32 quality = initializer.get("pps.ssao.renderingQuality");
 
-	if(mpQuality > bQuality)
-	{
-		throw ANKI_EXCEPTION("SSAO blur quality shouldn't be less than "
-			"main pass SSAO quality");
-	}
-
-	bWidth = bQuality * (F32)r->getWidth();
-	bHeight = bQuality * (F32)r->getHeight();
-	mpWidth =  mpQuality * (F32)r->getWidth();
-	mpHeight =  mpQuality * (F32)r->getHeight();
+	width = quality * (F32)r->getWidth();
+	height = quality * (F32)r->getHeight();
 
 	//
 	// create FBOs
 	//
-	createFbo(hblurFbo, hblurFai, bWidth, bHeight);
-	createFbo(vblurFbo, vblurFai, bWidth, bHeight);
-
-	if(blit())
-	{
-		createFbo(mpFbo, mpFai, mpWidth, mpHeight);
-	}
+	createFbo(hblurFbo, hblurFai, width, height);
+	createFbo(vblurFbo, vblurFai, width, height);
 
 	//
 	// noise texture
@@ -169,8 +155,8 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 
 	// main pass prog
 	pps << "#define NOISE_MAP_SIZE " << NOISE_TEX_SIZE
-		<< "\n#define WIDTH " << mpWidth
-		<< "\n#define HEIGHT " << mpHeight
+		<< "\n#define WIDTH " << width
+		<< "\n#define HEIGHT " << height
 		<< "\n#define USE_MRT " << r->getUseMrt()
 		<< "\n#define KERNEL_SIZE " << KERNEL_SIZE
 		<< "\n" << kernelStr.str() 
@@ -186,7 +172,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	pps.clear();
 	pps << "#define HPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " << bHeight << "\n"
+		"#define IMG_DIMENSION " << height << "\n"
 		"#define SAMPLES 7\n";
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
@@ -194,7 +180,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	pps.clear();
 	pps << "#define VPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " << bWidth << "\n"
+		"#define IMG_DIMENSION " << width << "\n"
 		"#define SAMPLES 7\n";
 	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
@@ -225,17 +211,8 @@ void Ssao::run()
 
 	// 1st pass
 	//
-	if(blit())
-	{
-		mpFbo.bind();
-		GlStateSingleton::get().setViewport(0, 0, mpWidth, mpHeight);
-	}
-	else
-	{
-		vblurFbo.bind();
-		GlStateSingleton::get().setViewport(0, 0, bWidth, bHeight);
-	}
-	r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
+	vblurFbo.bind(Fbo::FT_ALL, true);
+	GlStateSingleton::get().setViewport(0, 0, width, height);
 	ssaoSProg->bind();
 	commonUbo.setBinding(0);
 
@@ -278,40 +255,20 @@ void Ssao::run()
 	// Draw
 	r->drawQuad();
 
-	// Blit from main pass FBO to vertical pass FBO
-	if(blit())
-	{
-		vblurFbo.blit(mpFbo,
-			0, 0, mpWidth, mpHeight,
-			0, 0, bWidth, bHeight,
-			GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-		// Set the correct viewport
-		GlStateSingleton::get().setViewport(0, 0, bWidth, bHeight);
-	}
-
 	// Blurring passes
 	//
 	for(U32 i = 0; i < blurringIterationsCount; i++)
 	{
 		// hpass
-		hblurFbo.bind();
-		r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
+		hblurFbo.bind(Fbo::FT_ALL, true);
 		hblurSProg->bind();
-		if(i == 0)
-		{
-			hblurSProg->findUniformVariable("img").set(vblurFai);
-		}
+		hblurSProg->findUniformVariable("img").set(vblurFai);
 		r->drawQuad();
 
 		// vpass
-		vblurFbo.bind();
-		r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
+		vblurFbo.bind(Fbo::FT_ALL, true);
 		vblurSProg->bind();
-		if(i == 0)
-		{
-			vblurSProg->findUniformVariable("img").set(hblurFai);
-		}
+		vblurSProg->findUniformVariable("img").set(hblurFai);
 		r->drawQuad();
 	}
 }

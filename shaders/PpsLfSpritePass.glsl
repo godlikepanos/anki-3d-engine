@@ -18,7 +18,7 @@ layout(std140) uniform flaresBlock
 layout(location = 0) in vec2 position;
 
 out vec3 vTexCoords;
-out flat float vAlpha;
+flat out float vAlpha;
 
 void main()
 {
@@ -33,15 +33,19 @@ void main()
 }
 
 #pragma anki start fragmentShader
+#define DEFAULT_FLOAT_PRECISION mediump
+#pragma anki include "shaders/CommonFrag.glsl"
+
+#define SINGLE_FLARE 0
 
 #if SINGLE_FLARE
 uniform sampler2D image;
 #else
-uniform sampler2DArray images;
+uniform DEFAULT_FLOAT_PRECISION sampler2DArray images;
 #endif
 
 in vec3 vTexCoords;
-in flat float vAlpha;
+flat in float vAlpha;
 
 out vec3 fColor;
 

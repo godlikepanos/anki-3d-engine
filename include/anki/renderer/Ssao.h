@@ -38,30 +38,21 @@ public:
 	/// @}
 
 private:
-	Texture mpFai; ///< Main pass FAI. Not used if on non blit
+	U32 width, height; ///< Blur passes size
 	Texture vblurFai;
 	Texture hblurFai;
 	U32 blurringIterationsCount;
-	Fbo mpFbo; ///< Main pass FBO. Not used if on non blit
 	Fbo vblurFbo;
 	Fbo hblurFbo;
 	Texture noiseTex;
 	ShaderProgramResourcePointer ssaoSProg;
 	ShaderProgramResourcePointer hblurSProg;
 	ShaderProgramResourcePointer vblurSProg;
-	U32 bWidth, bHeight; ///< Blur passes size
-	U32 mpWidth, mpHeight; ///< Main pass size
 	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
 	Ubo commonUbo;
 
-	static void createFbo(Fbo& fbo, Texture& fai, F32 width, F32 height);
+	static void createFbo(Fbo& fbo, Texture& fai, U width, U height);
 	void initInternal(const RendererInitializer& initializer);
-
-	/// This means that a bliting rendering will happen
-	Bool blit() const
-	{
-		return mpWidth != bWidth;
-	}
 };
 
 } // end namespace anki

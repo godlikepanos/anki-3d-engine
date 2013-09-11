@@ -6,6 +6,7 @@
 
 #include "anki/util/StdTypes.h"
 #include <string>
+#include <cmath>
 
 namespace anki {
 
@@ -60,6 +61,14 @@ inline Bool isPowerOfTwo(U64 x)
 		x /= 2;
 	}
 	return (x == 1);
+}
+
+/// Get the next power of two number. For example if x is 130 this will return
+/// 256
+template<typename Int>
+inline Int nextPowerOfTwo(Int x)
+{
+	return pow(2, ceil(log(x) / log(2)));
 }
 
 /// Replace substring. Substitute occurances of @a from into @a to inside the
