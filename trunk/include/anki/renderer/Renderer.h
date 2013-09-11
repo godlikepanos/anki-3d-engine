@@ -165,6 +165,11 @@ public:
 		return isOffscreen;
 	}
 
+	F32 getRenderingQuality() const
+	{
+		return renderingQuality;
+	}
+
 	U32 getMaxTextureSize() const
 	{
 		return maxTextureSize;

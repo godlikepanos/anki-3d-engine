@@ -26,6 +26,8 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 
 	initGl();
 
+	blitProg.load("shaders/Final.glsl");
+
 	Renderer::init(initializer);
 	deformer.reset(new Deformer);
 
@@ -38,6 +40,35 @@ void MainRenderer::render(SceneGraph& scene)
 {
 	ANKI_COUNTER_START_TIMER(C_MAIN_RENDERER_TIME);
 	Renderer::render(scene);
+
+	Bool alreadyDrawn = getRenderingQuality() == 1.0;
+
+	if(!alreadyDrawn)
+	{
+		Fbo::bindDefault(Fbo::FT_ALL, true); // Bind the window framebuffer
+
+		GlStateSingleton::get().setViewport(
+			0, 0, getWindowWidth(), getWindowHeight());
+		GlStateSingleton::get().disable(GL_DEPTH_TEST);
+		GlStateSingleton::get().disable(GL_BLEND);
+		blitProg->bind();
+
+		const Texture* fai;
+
+		if(getPps().getEnabled())
+		{
+			fai = &getPps().getFai();
+		}
+		else
+		{
+			fai = &getIs().getFai();
+		}
+
+		blitProg->findUniformVariable("rasterImage").set(*fai);
+		drawQuad();
+	}
+	
+
 	ANKI_COUNTER_STOP_TIMER_INC(C_MAIN_RENDERER_TIME);
 }
 

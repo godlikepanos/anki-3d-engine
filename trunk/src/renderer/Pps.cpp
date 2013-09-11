@@ -106,16 +106,20 @@ void Pps::run()
 		lf.run();
 	}
 
-	Bool drawToDefaultFbo = !r->getDbg().getEnabled() && !r->getIsOffscreen();
+	Bool drawToDefaultFbo = 
+		!r->getDbg().getEnabled() 
+		&& !r->getIsOffscreen()
+		&& r->getRenderingQuality() == 1.0;
+
 	if(drawToDefaultFbo)
 	{
-		Fbo::bindDefault();
+		Fbo::bindDefault(Fbo::FT_ALL, true);
 		GlStateSingleton::get().setViewport(
 			0, 0, r->getWindowWidth(), r->getWindowHeight());
 	}
 	else
 	{
-		fbo.bind();
+		fbo.bind(Fbo::FT_ALL, true);
 		GlStateSingleton::get().setViewport(
 			0, 0, r->getWidth(), r->getHeight());
 	}

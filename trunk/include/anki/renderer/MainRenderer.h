@@ -29,6 +29,7 @@ public:
 
 private:
 	std::unique_ptr<Deformer> deformer;
+	ShaderProgramResourcePointer blitProg;
 
 	void takeScreenshotTga(const char* filename);
 	void initGl();

@@ -870,7 +870,8 @@ void Is::setState()
 {
 	Bool drawToDefaultFbo = !r->getPps().getEnabled() 
 		&& !r->getDbg().getEnabled() 
-		&& !r->getIsOffscreen();
+		&& !r->getIsOffscreen()
+		&& r->getRenderingQuality() == 1.0;
 
 	if(drawToDefaultFbo)
 	{
