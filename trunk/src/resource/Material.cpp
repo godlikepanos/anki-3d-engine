@@ -186,10 +186,6 @@ void Material::load(const char* filename)
 //==============================================================================
 void Material::parseMaterialTag(const XmlElement& materialEl)
 {
-	// renderingStage
-	//
-	renderingStage = materialEl.getChildElement("renderingStage").getInt();
-
 	// passes
 	//
 	XmlElement passEl = materialEl.getChildElementOptional("passes");

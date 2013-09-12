@@ -13,6 +13,9 @@
 #define vTexCoords_DEFINED
 in highp vec2 vTexCoords;
 
+#define vInstanceId_DEFINED
+flat in mediump uint vInstanceId;
+
 #if defined(PASS_COLOR)
 in vec3 vNormal;
 #	define vNormal_DEFINED
