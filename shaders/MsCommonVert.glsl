@@ -14,7 +14,12 @@ layout(location = 2) in mediump vec4 tangent;
 /// @name Varyings
 /// @{
 out highp vec2 vTexCoords;
-#if defined(PASS_COLOR)
+
+#ifdef INSTANCING
+flat out uint vInstanceId;
+#endif
+
+#ifdef PASS_COLOR
 out mediump vec3 vNormal;
 out mediump vec3 vTangent;
 out mediump float vTangentW;
@@ -58,4 +63,3 @@ void setVertPosViewSpace(in mat4 modelViewMat)
 	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
 }
 #endif
-

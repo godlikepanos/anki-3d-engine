@@ -5,7 +5,8 @@
 	package="org.godlike.ankibench">
 	<application
 		android:label="AnKi Bench"
-		android:hasCode="false">
+		android:hasCode="false"
+		android:debuggable="true">
 		<activity 
 			android:name="android.app.NativeActivity"
 			android:label="AnKi Bench"

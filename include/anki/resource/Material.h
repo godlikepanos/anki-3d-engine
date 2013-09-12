@@ -177,11 +177,6 @@ class MaterialProperties
 public:
 	/// @name Accessors
 	/// @{
-	U32 getRenderingStage() const
-	{
-		return renderingStage;
-	}
-
 	const StringList& getPasses() const
 	{
 		return passes;
@@ -223,21 +218,18 @@ public:
 	{
 		return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;
 	}
-protected:
-	U32 renderingStage = 0;
 
+protected:
 	StringList passes;
 
 	U32 levelsOfDetail = 1;
 
-	Bool shadow = true;
-
 	GLenum blendingSfactor = GL_ONE; ///< Default GL_ONE
 	GLenum blendingDfactor = GL_ZERO; ///< Default GL_ZERO
 
-	Bool depthTesting = true;
-
-	Bool wireframe = false;
+	Bool8 depthTesting = true;
+	Bool8 wireframe = false;
+	Bool8 shadow = true;
 };
 
 /// Material resource
@@ -254,8 +246,6 @@ protected:
 /// Material XML file format:
 /// @code
 /// <material>
-/// 	<renderingStage>N</renderingStage> (1)
-///
 /// 	[<passes>COLOR DEPTH</passes>]
 ///
 /// 	[<levelsOfDetail>N</levelsOfDetail>]
@@ -310,7 +300,6 @@ protected:
 /// 	</shaderProgram>
 /// </material>
 /// @endcode
-/// (1): For the moment 0 means MS, 1 BS, 2 IS (aka light)
 /// (2): The order of the shaders is crucial
 /// (3): AKA uniforms
 /// (4): The \<value\> can be left empty for build-in variables

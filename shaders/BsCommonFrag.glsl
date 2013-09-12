@@ -26,10 +26,12 @@ void writeFais(in vec4 color)
 }
 #endif
 
-#define particleAlpha_DEFINED
+#if defined(PASS_COLOR)
+#	define particleAlpha_DEFINED
 void particleAlpha(in sampler2D tex, in float alpha)
 {
 	vec4 color = texture(tex, vTexCoord);
 	color.w *= alpha;
 	writeFais(color);
 }
+#endif

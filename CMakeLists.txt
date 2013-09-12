@@ -68,6 +68,23 @@ SET(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for some weir
 OPTION(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
 
 #
+# XXX
+#
+IF(${ANDROID})
+	# 1. generate Android.mk
+	FILE(WRITE ./jni/Android.mk "APP_ABI := ${ANDROID_NDK_ABI_NAME}\n")
+
+	# 2. generate gdb.setup
+	GET_DIRECTORY_PROPERTY(INCLUDE_DIRECTORIES DIRECTORY . INCLUDE_DIRECTORIES)
+	STRING(REGEX REPLACE ";" " " INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES}")
+	FILE(WRITE ./libs/${ANDROID_NDK_ABI_NAME}/gdb.setup "set solib-search-path ./libs/${ANDROID_NDK_ABI_NAME}\n")
+	FILE(APPEND ./libs/${ANDROID_NDK_ABI_NAME}/gdb.setup "directory ${INCLUDE_DIRECTORIES}\n")
+
+	# 3. copy gdbserver executable
+	FILE(COPY ${ANDROID_NDK}/prebuilt/android-arm/gdbserver/gdbserver DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}/)
+ENDIF()
+
+#
 # Options that affect anki and extern
 #
 
