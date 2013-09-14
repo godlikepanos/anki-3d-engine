@@ -557,8 +557,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.get("pps.hdr.exposure") = 8.0;
 	initializer.get("pps.ssao.blurringIterationsNum") = 1;
 	initializer.get("pps.ssao.enabled") = true;
-	initializer.get("pps.ssao.mainPassRenderingQuality") = 0.35;
-	initializer.get("pps.ssao.blurringRenderingQuality") = 0.35;
+	initializer.get("pps.ssao.renderingQuality") = 0.35;
 	initializer.get("pps.bl.enabled") = true;
 	initializer.get("pps.bl.blurringIterationsNum") = 2;
 	initializer.get("pps.bl.sideBlurFactor") = 1.0;

@@ -7,6 +7,8 @@
 #pragma anki include "shaders/Pack.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
+const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY;
+
 in vec2 vTexCoords;
 
 layout(location = 0) out float fColor;
@@ -102,7 +104,7 @@ void main(void)
 
 	// Iterate kernel
 	float factor = 0.0;
-	for(uint i = 0; i < KERNEL_SIZE; ++i) 
+	for(uint i = 0U; i < KERNEL_SIZE; ++i) 
 	{
 		// get position
 		vec3 sample_ = tbn * KERNEL[i];
