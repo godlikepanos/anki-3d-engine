@@ -4,6 +4,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 #include "anki/core/ThreadPool.h"
+#include "anki/core/Counters.h"
 
 namespace anki {
 
@@ -662,6 +663,10 @@ void Is::lightPass()
 	clamp(visiblePointLightsCount, maxPointLights);
 	clamp(visibleSpotLightsCount, maxSpotLights);
 	clamp(visibleSpotTexLightsCount, maxSpotTexLights);
+
+	ANKI_COUNTER_INC(C_RENDERER_LIGHTS_COUNT, 
+		U64(visiblePointLightsCount + visibleSpotLightsCount 
+		+ visibleSpotTexLightsCount));
 
 	//
 	// Do shadows pass

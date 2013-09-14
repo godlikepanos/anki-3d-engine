@@ -130,7 +130,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	Array<Vec3, KERNEL_SIZE> kernel;
 
 	genKernel(kernel.begin(), kernel.end());
-	kernelStr << "const vec3 KERNEL[" << KERNEL_SIZE << "] = vec3[](";
+	kernelStr << "vec3[](";
 	for(U i = 0; i < kernel.size(); i++)
 	{
 		kernelStr << "vec3(" << kernel[i].x() << ", " << kernel[i].y()
@@ -142,7 +142,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 		}
 		else
 		{
-			kernelStr << ");";
+			kernelStr << ")";
 		}
 	}
 
@@ -158,8 +158,8 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 		<< "\n#define WIDTH " << width
 		<< "\n#define HEIGHT " << height
 		<< "\n#define USE_MRT " << r->getUseMrt()
-		<< "\n#define KERNEL_SIZE " << KERNEL_SIZE
-		<< "\n" << kernelStr.str() 
+		<< "\n#define KERNEL_SIZE " << KERNEL_SIZE << "U"
+		<< "\n#define KERNEL_ARRAY " << kernelStr.str() 
 		<< "\n";
 	ssaoSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		"shaders/PpsSsao.glsl", pps.str().c_str(), "r_").c_str());
@@ -169,7 +169,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	// blurring progs
 	const char* SHADER_FILENAME = "shaders/VariableSamplingBlurGeneric.glsl";
 
-	pps.clear();
+	pps.str("");
 	pps << "#define HPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION " << height << "\n"
@@ -177,7 +177,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
 
-	pps.clear();
+	pps.str("");
 	pps << "#define VPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION " << width << "\n"

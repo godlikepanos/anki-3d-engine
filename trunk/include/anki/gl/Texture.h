@@ -182,11 +182,11 @@ public:
 		Bool genMipmaps = false;
 		U samples = 1;
 
-		Array<Array<Data, 256>, 256> data; ///< Array of data in: [mip][layer]
+		Array<Array<Data, 128>, 128> data; ///< Array of data in: [mip][layer]
 
 		Initializer()
 		{
-			memset(&data[0], 0, sizeof(data));
+			memset(&data[0][0], 0, sizeof(data));
 		}
 	};
 

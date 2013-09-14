@@ -64,10 +64,11 @@ void main()
 	{ 
 		vec2 offset = fract(texcoord + ghostVec * float(i));
 
-		float weight = length(vec2(0.5) - offset) / lenOfHalf;
-		weight = pow(1.0 - weight, 10.0);
+		float weight_ = length(vec2(0.5) - offset) / lenOfHalf;
+		weight_ = pow(1.0 - weight_, 10.0);
 
-		result += textureDistorted(tex, offset, direction, distortion) * weight;
+		result += 
+			textureDistorted(tex, offset, direction, distortion) * weight_;
 	}
 
 	// sample halo
