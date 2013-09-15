@@ -667,7 +667,7 @@ static void exportAnimation(
 	std::fstream file;
 	LOGI("Exporting animation %s\n", name.c_str());
 
-	file.open(config.outDir + name + ".anim", std::ios::out);
+	file.open(config.outDir + name + ".ankianim", std::ios::out);
 
 	file << xmlHeader << "\n";
 	file << "<animation>\n";
@@ -695,22 +695,23 @@ static void exportAnimation(
 				<< "<value>" << key.mValue[0] << " " 
 				<< key.mValue[1] << " " << key.mValue[2] << "</value></key>\n";
 		}
-		file << "</positionKeys>\n";
+		file << "\t\t\t</positionKeys>\n";
 
 		// Rotations
-		file << "\t\t\t<rotationKeys>";
+		file << "\t\t\t<rotationKeys>\n";
 		for(uint32_t j = 0; j < nAnim.mNumRotationKeys; j++)
 		{
 			const aiQuatKey& key = nAnim.mRotationKeys[j];
 
 			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-				<< "<value>" << key.mValue.y << " " << key.mValue.z << " "
+				<< "<value>" << key.mValue.x << " " << key.mValue.y 
+				<< " " << key.mValue.z << " "
 				<< key.mValue.w << "</value></key>\n";
 		}
-		file << "</rotationKeys>\n";
+		file << "\t\t\t</rotationKeys>\n";
 
 		// Scale
-		file << "\t\t\t<scalingKeys>";
+		file << "\t\t\t<scalingKeys>\n";
 		for(uint32_t j = 0; j < nAnim.mNumScalingKeys; j++)
 		{
 			const aiVectorKey& key = nAnim.mScalingKeys[j];
@@ -721,7 +722,7 @@ static void exportAnimation(
 				<< ((key.mValue[0] + key.mValue[1] + key.mValue[2]) / 3.0)
 				<< "</value></key>\n";
 		}
-		file << "</scalingKeys>\n";
+		file << "\t\t\t</scalingKeys>\n";
 
 		file << "\t\t</channel>\n";
 	}
@@ -778,7 +779,7 @@ static void exportScene(const aiScene& scene)
 	// Open scene file
 	//
 	std::ofstream file;
-	file.open(config.outDir + "master.scene");
+	file.open(config.outDir + "master.ankiscene");
 
 	file << xmlHeader << "\n"
 		<< "<scene>\n";
@@ -979,6 +980,14 @@ static void exportScene(const aiScene& scene)
 	file << "\t</modelPatches>\n";
 	file << "</model>\n";
 #endif
+
+	//
+	// Animations
+	//
+	for(unsigned i = 0; i < scene.mNumAnimations; i++)
+	{
+		exportAnimation(*scene.mAnimations[i], i, scene);
+	}
 
 	file << "</scene>\n";
 

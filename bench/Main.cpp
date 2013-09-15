@@ -221,7 +221,7 @@ void initScene()
 	}
 #endif
 
-	scene.load("maps/sponza/master.scene");
+	scene.load("maps/sponza/master.ankiscene");
 
 	PointLight* pl = new PointLight("pl0", &scene, nullptr, Movable::MF_NONE);
 	pl->setRadius(12.5);
