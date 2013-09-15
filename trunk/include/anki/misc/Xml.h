@@ -43,11 +43,20 @@ public:
 		return el->GetText();
 	}
 
-	/// Return the text inside as a string
+	/// Return the text inside as an int
 	I getInt() const;
 
-	/// Return a Mat4
+	/// Return the text inside as a float
+	F64 getFloat() const;
+
+	/// Return the text inside as a Mat4
 	Mat4 getMat4() const;
+
+	/// Return the text inside as a Vec3
+	Vec3 getVec3() const;
+
+	/// Return the text inside as a Vec4
+	Vec4 getVec4() const;
 
 	/// Get a child element quietly
 	XmlElement getChildElementOptional(const char* name) const;

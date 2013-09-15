@@ -6,6 +6,11 @@
 
 namespace anki {
 
+class XmlElement;
+
+/// @addtogroup Resources
+/// @{
+
 /// A keyframe 
 template<typename T> 
 class Key
@@ -13,7 +18,7 @@ class Key
 	friend class Animation;
 
 public:
-	F64 getTime() const
+	F32 getTime() const
 	{
 		return time;
 	}
@@ -24,7 +29,7 @@ public:
 	}
 
 private:
-	F64 time;
+	F32 time;
 	T value;
 };
 
@@ -41,20 +46,38 @@ struct AnimationChannel
 	Vector<Key<F32>> cameraFovs;
 };
 
-/// Animation
+/// Animation consists of keyframe data
 class Animation
 {
 public:
 	void load(const char* filename);
 
+	/// @name Accessors
+	/// @{
 	const Vector<AnimationChannel>& getChannels() const
 	{
 		return channels;
 	}
 
+	F32 getDuration() const
+	{
+		return duration;
+	}
+
+	F32 getStartingTime() const
+	{
+		return startingTime;
+	}
+	/// @}
+
 private:
 	Vector<AnimationChannel> channels;
+	F32 duration;
+	F32 startingTime;
+
+	void loadInternal(const XmlElement& el);
 };
+/// @}
 
 } // end namespace anki
 

@@ -438,22 +438,22 @@ void Is::initInternal(const RendererInitializer& initializer)
 	//
 	std::stringstream pps;
 
-	pps << "#define TILES_X_COUNT " << TILES_X_COUNT << "\n"
-		<< "#define TILES_Y_COUNT " << TILES_Y_COUNT << "\n"
-		<< "#define TILES_COUNT " << TILES_COUNT << "\n"
-		<< "#define RENDERER_WIDTH " << r->getWidth() << "\n"
-		<< "#define RENDERER_HEIGHT " << r->getHeight() << "\n"
-		<< "#define MAX_POINT_LIGHTS_PER_TILE " << (U32)maxPointLightsPerTile
-		<< "\n"
-		<< "#define MAX_SPOT_LIGHTS_PER_TILE " << (U32)maxSpotLightsPerTile
-		<< "\n"
-		<< "#define MAX_SPOT_TEX_LIGHTS_PER_TILE " 
-		<< (U32)maxSpotTexLightsPerTile << "\n"
-		<< "#define MAX_POINT_LIGHTS " << (U32)maxPointLights << "\n"
-		<< "#define MAX_SPOT_LIGHTS " << (U32)maxSpotLights << "\n"
-		<< "#define MAX_SPOT_TEX_LIGHTS " << (U32)maxSpotTexLights << "\n"
-		<< "#define GROUND_LIGHT " << groundLightEnabled << "\n"
-		<< "#define USE_MRT " << r->getUseMrt() << "\n";
+	pps << "\n#define TILES_X_COUNT " << TILES_X_COUNT
+		<< "\n#define TILES_Y_COUNT " << TILES_Y_COUNT 
+		<< "\n#define TILES_COUNT " << TILES_COUNT
+		<< "\n#define RENDERER_WIDTH " << r->getWidth()
+		<< "\n#define RENDERER_HEIGHT " << r->getHeight()
+		<< "\n#define MAX_POINT_LIGHTS_PER_TILE " << (U32)maxPointLightsPerTile
+		<< "\n#define MAX_SPOT_LIGHTS_PER_TILE " << (U32)maxSpotLightsPerTile
+		<< "\n#define MAX_SPOT_TEX_LIGHTS_PER_TILE " 
+		<< (U32)maxSpotTexLightsPerTile
+		<< "\n#define MAX_POINT_LIGHTS " << (U32)maxPointLights
+		<< "\n#define MAX_SPOT_LIGHTS " << (U32)maxSpotLights 
+		<< "\n#define MAX_SPOT_TEX_LIGHTS " << (U32)maxSpotTexLights
+		<< "\n#define GROUND_LIGHT " << groundLightEnabled
+		<< "\n#define USE_MRT " << r->getUseMrt()
+		<< "\n#define TILES_BLOCK_BINDING " << TILES_BLOCK_BINDING
+		<< "\n";
 
 	if(sm.getPcfEnabled())
 	{

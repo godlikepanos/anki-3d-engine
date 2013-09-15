@@ -297,7 +297,7 @@ void SceneGraph::load(const char* filename)
 	}
 	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Sceno loading failed") << e;
+		throw ANKI_EXCEPTION("Scene loading failed") << e;
 	}
 }
 

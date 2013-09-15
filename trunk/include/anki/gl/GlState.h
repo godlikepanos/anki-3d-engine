@@ -45,6 +45,11 @@ public:
 		return gpu;
 	}
 
+	Bool isStd430Supported() const
+	{
+		return major >= 4 && minor >= 3;
+	}
+
 	void init(const U32 major_, const U32 minor_, 
 		Bool registerDebugMessages = false);
 
