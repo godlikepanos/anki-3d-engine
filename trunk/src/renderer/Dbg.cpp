@@ -64,16 +64,14 @@ void Dbg::run()
 	drawer->setModelMatrix(Mat4::getIdentity());
 	//drawer->drawGrid();
 
-	for(auto it = scene.getSceneNodesBegin();
-		it != scene.getSceneNodesEnd(); it++)
+	scene.iterateSceneNodes([&](SceneNode& node)
 	{
-		SceneNode* node = *it;
-		Spatial* sp = node->getSpatial();
+		Spatial* sp = node.getSpatial();
 		if(bitsEnabled(DF_SPATIAL) && sp)
 		{
-			sceneDrawer->draw(*node);
+			sceneDrawer->draw(node);
 		}
-	}
+	});
 
 	// Draw sectors
 	for(const Sector* sector : scene.getSectorGroup().getSectors())

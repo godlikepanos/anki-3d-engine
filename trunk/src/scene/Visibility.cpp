@@ -36,7 +36,7 @@ struct SortSubspatialsFunctor
 struct VisibilityTestJob: ThreadJob
 {
 	U nodesCount = 0;
-	SceneGraph::Types<SceneNode>::Container::iterator nodes;
+	SceneGraph* scene = nullptr;
 	SceneNode* frustumableSn = nullptr;
 	Tiler* tiler = nullptr;
 	SceneFrameAllocator<U8> frameAlloc;
@@ -102,26 +102,25 @@ struct VisibilityTestJob: ThreadJob
 		Frustumable* frustumable = frustumableSn->getFrustumable();
 		ANKI_ASSERT(frustumable);
 
-		for(auto it = nodes + start; it != nodes + end; it++)
+		scene->iterateSceneNodes(start, end, [&](SceneNode& node)
 		{
-			SceneNode* node = *it;
+			Frustumable* fr = node.getFrustumable();
 
-			Frustumable* fr = node->getFrustumable();
 			// Skip if it is the same
 			if(ANKI_UNLIKELY(frustumable == fr))
 			{
-				continue;
+				return;
 			}
 
-			Spatial* sp = node->getSpatial();
+			Spatial* sp = node.getSpatial();
 			if(!sp)
 			{
-				continue;
+				return;
 			}
 
 			if(!frustumable->insideFrustum(*sp))
 			{
-				continue;
+				return;
 			}
 
 			// Hierarchical spatial => check subspatials
@@ -130,36 +129,36 @@ struct VisibilityTestJob: ThreadJob
 			if(!handleSubspatials(*frustumable, *sp, subSpatialIndices, 
 				subSpatialIndicesCount))
 			{
-				continue;
+				return;
 			}
 
 			// renderable
-			Renderable* r = node->getRenderable();
+			Renderable* r = node.getRenderable();
 			if(r)
 			{
 				visible->renderables.push_back(VisibleNode(
-					node, subSpatialIndices, subSpatialIndicesCount));
+					&node, subSpatialIndices, subSpatialIndicesCount));
 			}
 			else
 			{
-				Light* l = node->getLight();
+				Light* l = node.getLight();
 				if(l)
 				{
-					visible->lights.push_back(VisibleNode(node, nullptr, 0));
+					visible->lights.push_back(VisibleNode(&node, nullptr, 0));
 
 					if(l->getShadowEnabled() && fr)
 					{
-						testLight(*node);
+						testLight(node);
 					}
 				}
 				else
 				{
-					continue;
+					return;
 				}
 			}
 
 			sp->enableBits(Spatial::SF_VISIBLE_CAMERA);
-		} // end for
+		}); // end for
 	}
 
 	/// Test an individual light
@@ -174,26 +173,24 @@ struct VisibilityTestJob: ThreadJob
 
 		ref.setVisibilityTestResults(lvisible);
 
-		for(auto it = nodes; it != nodes + nodesCount; it++)
+		scene->iterateSceneNodes([&](SceneNode& node)
 		{
-			SceneNode* node = *it;
-
-			Frustumable* fr = node->getFrustumable();
+			Frustumable* fr = node.getFrustumable();
 			// Wont check the same
 			if(ANKI_UNLIKELY(&ref == fr))
 			{
-				continue;
+				return;
 			}
 
-			Spatial* sp = node->getSpatial();
+			Spatial* sp = node.getSpatial();
 			if(!sp)
 			{
-				continue;
+				return;
 			}
 
 			if(!ref.insideFrustum(*sp))
 			{
-				continue;
+				return;
 			}
 
 			// Hierarchical spatial => check subspatials
@@ -202,18 +199,18 @@ struct VisibilityTestJob: ThreadJob
 			if(!handleSubspatials(ref, *sp, subSpatialIndices, 
 				subSpatialIndicesCount))
 			{
-				continue;
+				return;
 			}
 
 			sp->enableBits(Spatial::SF_VISIBLE_LIGHT);
 
-			Renderable* r = node->getRenderable();
+			Renderable* r = node.getRenderable();
 			if(r)
 			{
 				lvisible->renderables.push_back(VisibleNode(
-					node, subSpatialIndices, subSpatialIndicesCount));
+					&node, subSpatialIndices, subSpatialIndicesCount));
 			}
-		}
+		}); // end lambda
 	}
 };
 
@@ -232,7 +229,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		jobs[i].nodesCount = scene.getSceneNodesCount();
-		jobs[i].nodes = scene.getSceneNodesBegin();
+		jobs[i].scene = &scene;
 		jobs[i].frustumableSn = &fsn;
 		jobs[i].tiler = &r.getTiler();
 		jobs[i].frameAlloc = scene.getFrameAllocator();

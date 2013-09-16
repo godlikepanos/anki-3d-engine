@@ -185,7 +185,7 @@ inline bool operator!=(const Allocator<T1>&, const AnotherAllocator&)
 /// @tparam deallocationFlag If true then the allocator will try to deallocate
 ///                          the memory. This is extremely important to
 ///                          understand when it should be true. See notes
-/// @tparam alignmentBits Set the alighment in bits
+/// @tparam alignmentBytes Set the alighment in bytes
 ///
 /// @note The deallocationFlag can brake the allocator when the deallocations
 ///       are not in the correct order. For example when deallocationFlag==true
@@ -194,10 +194,10 @@ inline bool operator!=(const Allocator<T1>&, const AnotherAllocator&)
 /// @note Don't ever EVER remove the double copy constructor and the double
 ///       operator=. The compiler will create defaults
 template<typename T, Bool deallocationFlag = false,
-	U32 alignmentBits = StackMemoryPool::SAFE_ALIGNMENT>
+	U32 alignmentBytes = StackMemoryPool::SAFE_ALIGNMENT>
 class StackAllocator
 {
-	template<typename U, Bool deallocationFlag_, U32 alignmentBits_>
+	template<typename U, Bool deallocationFlag_, U32 alignmentBytes_>
 	friend class StackAllocator;
 
 public:
@@ -221,14 +221,14 @@ public:
 	/// Copy constructor
 	template<typename U>
 	StackAllocator(
-		const StackAllocator<U, deallocationFlag, alignmentBits>& b) throw()
+		const StackAllocator<U, deallocationFlag, alignmentBytes>& b) throw()
 	{
 		*this = b;
 	}
 	/// Constuctor with size
 	StackAllocator(size_type size) throw()
 	{
-		mpool.reset(new StackMemoryPool(size, alignmentBits));
+		mpool.reset(new StackMemoryPool(size, alignmentBytes));
 	}
 
 	/// Destructor
@@ -244,7 +244,7 @@ public:
 	/// Copy
 	template<typename U>
 	StackAllocator& operator=(
-		const StackAllocator<U, deallocationFlag, alignmentBits>& b)
+		const StackAllocator<U, deallocationFlag, alignmentBytes>& b)
 	{
 		mpool = b.mpool;
 		return *this;
@@ -338,7 +338,7 @@ public:
 	template<typename U>
 	struct rebind
 	{
-		typedef StackAllocator<U, deallocationFlag, alignmentBits> other;
+		typedef StackAllocator<U, deallocationFlag, alignmentBytes> other;
 	};
 
 	/// Reinit the allocator. All existing allocated memory will be lost
@@ -359,38 +359,38 @@ private:
 };
 
 /// Another allocator of the same type can deallocate from this one
-template<typename T1, typename T2, Bool deallocationFlag, U32 alignmentBits>
+template<typename T1, typename T2, Bool deallocationFlag, U32 alignmentBytes>
 inline bool operator==(
-	const StackAllocator<T1, deallocationFlag, alignmentBits>&,
-	const StackAllocator<T2, deallocationFlag, alignmentBits>&)
+	const StackAllocator<T1, deallocationFlag, alignmentBytes>&,
+	const StackAllocator<T2, deallocationFlag, alignmentBytes>&)
 {
 	return true;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
 template<typename T1, typename AnotherAllocator, Bool deallocationFlag,
-	U32 alignmentBits>
+	U32 alignmentBytes>
 inline bool operator==(
-	const StackAllocator<T1, deallocationFlag, alignmentBits>&,
+	const StackAllocator<T1, deallocationFlag, alignmentBytes>&,
 	const AnotherAllocator&)
 {
 	return false;
 }
 
 /// Another allocator of the same type can deallocate from this one
-template<typename T1, typename T2, Bool deallocationFlag, U32 alignmentBits>
+template<typename T1, typename T2, Bool deallocationFlag, U32 alignmentBytes>
 inline bool operator!=(
-	const StackAllocator<T1, deallocationFlag, alignmentBits>&,
-	const StackAllocator<T2, deallocationFlag, alignmentBits>&)
+	const StackAllocator<T1, deallocationFlag, alignmentBytes>&,
+	const StackAllocator<T2, deallocationFlag, alignmentBytes>&)
 {
 	return false;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
 template<typename T1, typename AnotherAllocator, Bool deallocationFlag,
-	U32 alignmentBits>
+	U32 alignmentBytes>
 inline bool operator!=(
-	const StackAllocator<T1, deallocationFlag, alignmentBits>&,
+	const StackAllocator<T1, deallocationFlag, alignmentBytes>&,
 	const AnotherAllocator&)
 {
 	return true;

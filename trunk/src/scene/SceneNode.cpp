@@ -54,7 +54,7 @@ SceneAllocator<U8> SceneNode::getSceneFrameAllocator() const
 }
 
 //==============================================================================
-U32 SceneNode::getLastUpdateFrame()
+U32 SceneNode::getLastUpdateFrame() const
 {
 	U32 max = 0;
 

@@ -144,7 +144,7 @@ public:
 	}
 
 	/// Return the last frame the node was updated. It checks all components
-	U32 getLastUpdateFrame();
+	U32 getLastUpdateFrame() const;
 
 protected:
 	struct
