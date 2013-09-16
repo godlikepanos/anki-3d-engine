@@ -94,22 +94,6 @@ public:
 		return activeCameraChangeTimestamp;
 	}
 
-	Types<SceneNode>::ConstIterator getSceneNodesBegin() const
-	{
-		return nodes.begin();
-	}
-	Types<SceneNode>::Iterator getSceneNodesBegin()
-	{
-		return nodes.begin();
-	}
-	Types<SceneNode>::ConstIterator getSceneNodesEnd() const
-	{
-		return nodes.end();
-	}
-	Types<SceneNode>::Iterator getSceneNodesEnd()
-	{
-		return nodes.end();
-	}
 	U32 getSceneNodesCount() const
 	{
 		return nodes.size();
@@ -147,6 +131,36 @@ public:
 
 	SceneNode& findSceneNode(const char* name);
 	SceneNode* tryFindSceneNode(const char* name);
+
+	/// Iterate the scene nodes using a lambda
+	template<typename Func>
+	void iterateSceneNodes(Func func)
+	{
+		for(SceneNode* psn : nodes)
+		{
+			func(*psn);
+		}
+	}
+
+	/// Iterate the scene nodes using a lambda
+	template<typename Func>
+	void iterateSceneNodes(PtrSize begin, PtrSize count, Func func)
+	{
+		ANKI_ASSERT(begin < nodes.size() && count <= nodes.size());
+		for(auto it = nodes.begin() + begin; it != nodes.begin() + count; it++)
+		{
+			func(*(*it));
+		}
+	}
+
+	/// Create a new SceneNode
+	template<typename Node, typename... Args>
+	void newSceneNode(Node*& node, Args&&... args)
+	{
+		SceneAllocator<Node> al = alloc;
+		node = al.allocate(1);
+		al.construct(node, std::forward<Args>(args)...);
+	}
 
 private:
 	SceneAllocator<U8> alloc;

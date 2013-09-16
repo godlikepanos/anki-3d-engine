@@ -161,8 +161,9 @@ void initScene()
 
 	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 2);
 
-	PerspectiveCamera* cam = new PerspectiveCamera(
-		"main_camera", &scene, nullptr, Movable::MF_NONE);
+	PerspectiveCamera* cam = nullptr;
+	scene.newSceneNode(
+		cam, "main_camera", &scene, nullptr, (U32)Movable::MF_NONE);
 
 	const F32 ang = 45.0;
 	cam->setAll(
