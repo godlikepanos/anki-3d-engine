@@ -1,7 +1,6 @@
 #include "anki/util/Memory.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
-#include "anki/util/Functions.h"
 #include <limits>
 #include <cstdlib>
 #include <cstring>
@@ -16,14 +15,16 @@ struct MemoryBlockHeader
 
 //==============================================================================
 StackMemoryPool::StackMemoryPool(PtrSize size, U32 alignmentBytes_)
-	: alignmentBytes(alignmentBytes_), memsize(calcAlignSize(size))
+	:	alignmentBytes(alignmentBytes_), 
+		memsize(getAlignedRoundUp(alignmentBytes, size))
 {
 	ANKI_ASSERT(memsize > 0);
 	memory = (U8*)::malloc(memsize);
 
 	if(memory != nullptr)
 	{
-		top = (U8*)calcAlignSize((PtrSize)memory);
+		// Align allocated memory
+		top = getAlignedRoundUp(alignmentBytes, memory);
 	}
 	else
 	{
@@ -50,8 +51,8 @@ StackMemoryPool& StackMemoryPool::operator=(StackMemoryPool&& other)
 
 	memory = other.memory;
 	memsize = other.memsize;
-	top.store(other.top.load());
 	alignmentBytes = other.alignmentBytes;
+	top.store(other.top.load());
 
 	other.memory = nullptr;
 	other.memsize = 0;
@@ -72,9 +73,10 @@ void* StackMemoryPool::allocate(PtrSize size_) throw()
 	// memory is nullptr if moved
 	ANKI_ASSERT(memory != nullptr);
 
-	PtrSize memBlockSize = calcAlignSize(sizeof(MemoryBlockHeader));
+	PtrSize memBlockSize = 
+		getAlignedRoundUp(alignmentBytes, sizeof(MemoryBlockHeader));
 	PtrSize size = 
-		calcAlignSize(size_ + memBlockSize);
+		getAlignedRoundUp(alignmentBytes, size_ + memBlockSize);
 
 	ANKI_ASSERT(size < std::numeric_limits<U32>::max() && "Too big allocation");
 
@@ -104,7 +106,8 @@ Bool StackMemoryPool::free(void* ptr) throw()
 	ANKI_ASSERT(memory != nullptr);
 
 	// Correct the p
-	PtrSize memBlockSize = calcAlignSize(sizeof(MemoryBlockHeader));
+	PtrSize memBlockSize = 
+		getAlignedRoundUp(alignmentBytes, sizeof(MemoryBlockHeader));
 	U8* realptr = (U8*)ptr - memBlockSize;
 
 	// realptr should be inside the pool's preallocated memory
@@ -140,13 +143,7 @@ void StackMemoryPool::reset()
 	memset(memory, 0xCC, memsize);
 #endif
 
-	top = (U8*)calcAlignSize((PtrSize)memory);
-}
-
-//==============================================================================
-PtrSize StackMemoryPool::calcAlignSize(PtrSize size) const
-{
-	return alignSizeRoundUp(alignmentBytes, size);
+	top = getAlignedRoundUp(alignmentBytes, memory);
 }
 
 } // end namespace anki
