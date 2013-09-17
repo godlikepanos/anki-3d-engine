@@ -681,17 +681,17 @@ void Is::lightPass()
 	PtrSize pointLightsOffset = 0;
 	PtrSize pointLightsSize = 
 		sizeof(shader::PointLight) * visiblePointLightsCount;
-	pointLightsSize = alignSizeRoundUp(uboAlignment, pointLightsSize);
+	pointLightsSize = getAlignedRoundUp(uboAlignment, pointLightsSize);
 
 	PtrSize spotLightsOffset = pointLightsSize;
 	PtrSize spotLightsSize = 
 		sizeof(shader::SpotLight) * visibleSpotLightsCount;
-	spotLightsSize = alignSizeRoundUp(uboAlignment, spotLightsSize);
+	spotLightsSize = getAlignedRoundUp(uboAlignment, spotLightsSize);
 
 	PtrSize spotTexLightsOffset = spotLightsOffset + spotLightsSize;
 	PtrSize spotTexLightsSize = 
 		sizeof(shader::SpotTexLight) * visibleSpotTexLightsCount;
-	spotTexLightsSize = alignSizeRoundUp(uboAlignment, spotTexLightsSize);
+	spotTexLightsSize = getAlignedRoundUp(uboAlignment, spotTexLightsSize);
 
 	ANKI_ASSERT(spotTexLightsOffset + spotTexLightsSize <= calcLightsUboSize());
 
@@ -944,15 +944,15 @@ PtrSize Is::calcLightsUboSize() const
 	PtrSize size;
 	PtrSize uboAlignment = BufferObject::getUniformBufferOffsetAlignment();
 
-	size = alignSizeRoundUp(
+	size = getAlignedRoundUp(
 		uboAlignment,
 		maxPointLights * sizeof(shader::PointLight));
 
-	size += alignSizeRoundUp(
+	size += getAlignedRoundUp(
 		uboAlignment,
 		maxSpotLights * sizeof(shader::SpotLight));
 
-	size += alignSizeRoundUp(
+	size += getAlignedRoundUp(
 		uboAlignment,
 		maxSpotTexLights * sizeof(shader::SpotTexLight));
 

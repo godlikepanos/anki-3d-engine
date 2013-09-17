@@ -29,12 +29,15 @@ extern F64 randRange(F64 min, F64 max);
 
 extern F32 randFloat(F32 max);
 
-/// Align memory
+/// Get align number
 /// @param alignment The bytes of alignment
-/// @param size The value to align
-inline PtrSize alignSizeRoundUp(PtrSize alignment, PtrSize size)
+/// @param value The value to align
+template<typename Type>
+Type getAlignedRoundUp(PtrSize alignment, Type value)
 {
-	return (size + alignment - 1) & ~(alignment - 1);
+	PtrSize v = (PtrSize)value;
+	v = (v + alignment - 1) & ~(alignment - 1);
+	return (Type)v;
 }
 
 /// Get the size in bytes of a vector

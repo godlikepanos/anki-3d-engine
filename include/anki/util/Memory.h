@@ -23,6 +23,8 @@ class Allocator;
 class StackMemoryPool: public NonCopyable
 {
 public:
+
+	/// Safe alignment in bytes
 	static const U SAFE_ALIGNMENT = 
 #if ANKI_CPU_ARCH == ANKI_CPU_ARCH_INTEL
 		16
@@ -83,10 +85,39 @@ private:
 
 	/// Points to the memory and more specifically to the top of the stack
 	std::atomic<U8*> top = {nullptr};
-
-	/// Calculate tha aligned size of an allocation
-	PtrSize calcAlignSize(PtrSize size) const;
 };
+
+/// XXX
+template<typename Type, typename Alloc = Allocator<Type>, typename... Args>
+Type* newObject(Alloc alloc, Args&&... args)
+{
+	typename Alloc::template rebind<Type>::other allocc(alloc);
+
+	Type* x = allocc.allocate(1);
+	allocc.construct(x, std::forward<Args>(args)...);
+	return x;
+}
+
+/// XXX
+template<typename Type, typename Alloc = Allocator<Type>, typename... Args>
+Type* newArray(PtrSize n, Alloc alloc, Args&&... args)
+{
+	typename Alloc::template rebind<Type>::other allocc(alloc);
+
+	Type* x = allocc.allocate(n);
+	allocc.construct(x, std::forward<Args>(args)...);
+	return x;
+}
+
+/// XXX
+template<typename Type, typename Alloc = Allocator<Type>>
+void deleteObject(Alloc alloc, Type* x)
+{
+	typename Alloc::template rebind<Type>::other allocc(alloc);
+
+	allocc.destroy(x);
+	allocc.deallocate(x, 1);
+}
 
 /// Functior that imitates the new operator. The functior allocates memory for
 /// a number of elements and calls their constructor. The interesting thing is
