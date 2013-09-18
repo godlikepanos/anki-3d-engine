@@ -21,11 +21,14 @@ class MovableEvent;
 class MovableEventData;
 class FollowPathEvent;
 
+/// @addtogroup Events
+/// @{
+
 /// This manager creates the events ands keeps tracks of them
 class EventManager
 {
 public:
-	typedef SceneVector<std::shared_ptr<Event>> EventsContainer;
+	typedef SceneVector<Event> EventsContainer;
 
 	EventManager(SceneGraph* scene);
 	~EventManager();
@@ -34,39 +37,52 @@ public:
 	/// @{
 	SceneAllocator<U8> getSceneAllocator() const;
 	SceneAllocator<U8> getSceneFrameAllocator() const;
+
+	SceneGraph& getScene()
+	{
+		return *scene;
+	}
+	const SceneGraph& getScene() const
+	{
+		return *scene;
+	}
 	/// @}
 
-	/// @name Creators
-	/// @{
+	/// Create a new event
+	template<typename T, typename... Args>
+	void newEvent(T*& event, Args&&.. args)
+	{
+		SceneAllocator<T> al = getSceneAllocator();
+		event = al.allocate(1);
+		al.construct(event, this, std::forward<Args>(args)...);
 
-	std::shared_ptr<Event> newSceneAmbientColorEvent(
-		F32 startTime, F32 duration, const Vec4& finalColor);
+		registerEvent(event);
+	}
 
-	std::shared_ptr<Event> newLightEvent(
-		F32 startTime, F32 duration, const LightEventData& data);
-
-	std::shared_ptr<Event> newMovableEvent(
-		F32 startTime, F32 duration, const MovableEventData& data);
-
-	std::shared_ptr<Event> newFollowPathEvent(
-		F32 startTime, F32 duration,
-		SceneNode* movableSceneNode, Path* path, F32 distPerTime);
-	/// @}
+	/// Delete an event. It actualy marks it for deletion
+	void deleteEvent(Event* event)
+	{
+		event->markForDeletion();
+		++eventsMarkedForDeletionCount;
+	}
 
 	/// Update
 	void updateAllEvents(F32 prevUpdateTime, F32 crntTime);
-
-	/// Remove an event from the container
-	void unregisterEvent(Event* event);
 
 private:
 	SceneGraph* scene = nullptr;
 	EventsContainer events;
 	F32 prevUpdateTime;
 	F32 crntTime;
+	U32 eventsMarkedForDeletionCount = 0;
 
-	std::shared_ptr<Event> registerEvent(Event* event);
+	/// Add an event to the local container
+	void registerEvent(Event* event);
+
+	/// Remove an event from the container
+	void unregisterEvent(Event* event);
 };
+/// @}
 
 } // end namespace anki
 

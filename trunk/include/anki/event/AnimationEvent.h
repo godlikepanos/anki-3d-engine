@@ -3,14 +3,14 @@
 
 namespace anki {
 
-/// @addtogroup Event
+/// @addtogroup Events
 /// @{
 
 /// Event controled by animation resource
 class AnimationEvent: public Event
 {
 public:
-	AnimationEvent(const AnimationResourcePointer& anim, 
+	AnimationEvent(EventManager* manager, const AnimationResourcePointer& anim, 
 		SceneNode* movableSceneNode);
 
 	/// Implements Event::update

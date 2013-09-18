@@ -1,4 +1,5 @@
 #include "anki/scene/ModelNode.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/Skeleton.h"
 
@@ -90,10 +91,9 @@ ModelPatchNode::ModelPatchNode(
 
 		for(U i = 0; i < instancesCount; i++)
 		{
-			ModelPatchNodeInstance* instance = ANKI_NEW(
-				ModelPatchNodeInstance, getSceneAllocator(), 
-				nullptr, scene, this, Movable::MF_IGNORE_PARENT,
-				modelPatch);
+			ModelPatchNodeInstance* instance;
+			getSceneGraph().newSceneNode(instance, nullptr, this, 
+				Movable::MF_IGNORE_PARENT, modelPatch);
 
 			instance->setLocalOrigin(pos);
 			pos.x() += 2.0;
@@ -109,7 +109,7 @@ ModelPatchNode::~ModelPatchNode()
 {
 	for(ModelPatchNodeInstance* instance : instances)
 	{
-		ANKI_DELETE(instance, getSceneAllocator());
+		getSceneGraph().deleteSceneNode(instance);
 	}
 }
 
@@ -200,8 +200,8 @@ ModelNode::ModelNode(
 	U i = 0;
 	for(const ModelPatchBase* patch : model->getModelPatches())
 	{
-		ModelPatchNode* mpn = ANKI_NEW(ModelPatchNode, getSceneAllocator(),
-			nullptr, scene, this,
+		ModelPatchNode* mpn;
+		getSceneGraph().newSceneNode(mpn, nullptr, this,
 			Movable::MF_IGNORE_LOCAL_TRANSFORM, patch, instances);
 
 		patches.push_back(mpn);
@@ -214,7 +214,7 @@ ModelNode::~ModelNode()
 {
 	for(ModelPatchNode* patch : patches)
 	{
-		ANKI_DELETE(patch, getSceneAllocator());
+		getSceneGraph().deleteSceneNode(patch);
 	}
 }
 

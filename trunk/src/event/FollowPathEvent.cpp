@@ -7,7 +7,7 @@ namespace anki {
 FollowPathEvent::FollowPathEvent(
 	F32 startTime, F32 duration, EventManager* manager, U8 flags,
 	SceneNode* movableSceneNode_, Path* path_, F32 distPerTime_)
-	:	Event(startTime, duration, manager, flags),
+	:	Event(manager, startTime, duration, nullptr, flags),
 		distPerTime(distPerTime_),
 		movableSceneNode(movableSceneNode_),
 		path(path_)

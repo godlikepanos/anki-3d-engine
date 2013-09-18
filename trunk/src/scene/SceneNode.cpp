@@ -10,7 +10,8 @@ namespace anki {
 SceneNode::SceneNode(const char* name_, SceneGraph* scene_, SceneNode* parent)
 	:	Base(parent, scene_->getAllocator()),
 		scene(scene_),
-		name(getSceneAllocator())
+		name(getSceneAllocator()),
+		markedForDeletion(false)
 {
 	ANKI_ASSERT(scene);
 
@@ -19,25 +20,13 @@ SceneNode::SceneNode(const char* name_, SceneGraph* scene_, SceneNode* parent)
 		name = SceneString(name_, scene->getAllocator());
 	}
 	
-	scene->registerNode(this);
-
 	/// Add the first property
 	//addNewProperty(new ReadPointerProperty<std::string>("name", &name));
 }
 
 //==============================================================================
 SceneNode::~SceneNode()
-{
-	if(scene)
-	{
-		scene->unregisterNode(this);
-
-		if(getSpatial() && getSpatial()->octreeNode)
-		{
-			getSpatial()->octreeNode->removeSceneNode(this);
-		}
-	}
-}
+{}
 
 //==============================================================================
 SceneAllocator<U8> SceneNode::getSceneAllocator() const

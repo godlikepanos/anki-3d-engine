@@ -3,7 +3,7 @@
 
 #include "anki/resource/MaterialCommon.h"
 #include "anki/resource/Resource.h"
-#include "anki/util/ConstCharPtrHashMap.h"
+#include "anki/util/Dictionary.h"
 #include "anki/util/StringList.h"
 #include "anki/Math.h"
 #include "anki/util/Visitor.h"
@@ -365,8 +365,7 @@ public:
 	}
 
 private:
-	typedef ConstCharPtrHashMap<MaterialVariable*>::Type
-		NameToVariableHashMap;
+	typedef Dictionary<MaterialVariable*> NameToVariableHashMap;
 
 	std::string fname; ///< filename
 

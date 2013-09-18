@@ -9,8 +9,12 @@ namespace anki {
 
 // Forward
 class EventManager;
+class SceneNode;
 
-/// Abstract class for all events
+/// @addtogroup Events
+/// @{
+
+/// The base class for all events
 class Event: public Bitset<U8>
 {
 	friend class EventManager;
@@ -27,8 +31,8 @@ public:
 	/// @{
 
 	/// Constructor
-	Event(F32 startTime, F32 duration, EventManager* manager, 
-		U8 flags = EF_NONE);
+	Event(EventManager* manager, F32 startTime, F32 duration,  
+		SceneNode* snode = nullptr, U8 flags = EF_NONE);
 
 	virtual ~Event();
 	/// @}
@@ -52,6 +56,24 @@ public:
 
 	SceneAllocator<U8> getSceneAllocator() const;
 	SceneAllocator<U8> getSceneFrameAllocator() const;
+
+	EventManager& getEventManager()
+	{
+		return *manager;
+	}
+	const EventManager& getEventManager() const
+	{
+		return *manager;
+	}
+
+	SceneNode* getSceneNode()
+	{
+		return snode;
+	}
+	const SceneNode* getSceneNode() const
+	{
+		return snode;
+	}
 	/// @}
 
 	/// This method should be implemented by the derived classes
@@ -70,7 +92,24 @@ public:
 		return true;
 	}
 
+	/// Mark event for deletion
+	void markForDeletion()
+	{
+		markedForDeletion = true;
+	}
+
+	/// Ask if event is marked for deletion
+	Bool isMarkedForDeletion() const
+	{
+		return markedForDeletion;
+	}
+
 protected:
+	/// The time the event will start. Eg 23:00. If it's < 0 then start the 
+	/// event now
+	F32 startTime;
+	F32 duration; ///< The duration of the event
+
 	/// Linear interpolation between values
 	/// @param[in] from Starting value
 	/// @param[in] to Ending value
@@ -109,12 +148,11 @@ protected:
 	F32 getDelta(F32 crntTime) const;
 
 private:
-	/// The time the event will start. Eg 23:00. If it's < 0 then start the 
-	/// event now
-	F32 startTime;
-	F32 duration; ///< The duration of the event
 	EventManager* manager = nullptr; ///< Keep it here to access allocators etc
+	SceneNode* node = nullptr; ///< Optional scene node
+	Bool8 markedForDeletion = false;
 };
+/// @}
 
 } // end namespace anki
 

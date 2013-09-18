@@ -14,7 +14,7 @@ public:
 
 	/// Constructor
 	FollowPathEvent(
-		F32 startTime, F32 duration, EventManager* manager, U8 flags, // Event
+		EventManager* manager, F32 startTime, F32 duration, U8 flags, // Event
 		SceneNode* movableSceneNode, Path* path, F32 distPerTime);
 	/// @}
 

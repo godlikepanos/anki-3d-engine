@@ -4,9 +4,9 @@
 namespace anki {
 
 //==============================================================================
-LightEvent::LightEvent(F32 startTime, F32 duration, EventManager* manager,
-	U8 flags, const LightEventData& data)
-	: Event(startTime, duration, manager, flags)
+LightEvent::LightEvent(EventManager* manager, F32 startTime, F32 duration,
+	U8 flags, Light* light, const LightEventData& data)
+	: Event(manager, startTime, duration, light, flags)
 {
 	*static_cast<LightEventData*>(this) = data;
 

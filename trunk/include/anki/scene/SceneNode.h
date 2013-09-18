@@ -146,6 +146,16 @@ public:
 	/// Return the last frame the node was updated. It checks all components
 	U32 getLastUpdateFrame() const;
 
+	/// Mark a node for deletion
+	void markForDeletion()
+	{
+		markedForDeletion = true;
+	}
+	Bool isMarkedForDeletion()
+	{
+		return markedForDeletion;
+	}
+
 protected:
 	struct
 	{
@@ -161,6 +171,7 @@ protected:
 private:
 	SceneGraph* scene = nullptr;
 	SceneString name; ///< A unique name
+	Bool8 markedForDeletion;
 };
 /// @}
 

@@ -268,7 +268,7 @@ ParticleEmitter::~ParticleEmitter()
 {
 	for(ParticleBase* part : particles)
 	{
-		ANKI_DELETE(part, getSceneAllocator());
+		getSceneGraph().deleteSceneNode(part);
 	}
 
 	ANKI_DELETE(collShape, getSceneAllocator());
@@ -310,8 +310,9 @@ void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 	{
 		binit.mass = getRandom(particle.mass, particle.massDeviation);
 
-		Particle* part = ANKI_NEW(Particle, getSceneAllocator(),
-			(getName() + std::to_string(i)).c_str(), scene, nullptr,
+		Particle* part;
+		getSceneGraph().newSceneNode(part,
+			(getName() + std::to_string(i)).c_str(), nullptr,
 			Movable::MF_NONE,
 			&scene->getPhysics(), binit);
 
@@ -328,8 +329,10 @@ void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
 {
 	for(U i = 0; i < maxNumOfParticles; i++)
 	{
-		ParticleSimple* part = ANKI_NEW(ParticleSimple, getSceneAllocator(),
-			(getName() + std::to_string(i)).c_str(), scene, nullptr,
+		ParticleSimple* part;
+		
+		getSceneGraph().newSceneNode(part,
+			(getName() + std::to_string(i)).c_str(), nullptr,
 			Movable::MF_NONE);
 
 		part->size = getRandom(particle.size, particle.sizeDeviation);
