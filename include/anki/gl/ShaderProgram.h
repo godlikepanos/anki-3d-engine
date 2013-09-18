@@ -2,7 +2,7 @@
 #define ANKI_GL_SHADER_PROGRAM_H
 
 #include "anki/gl/GlObject.h"
-#include "anki/util/ConstCharPtrHashMap.h"
+#include "anki/util/Dictionary.h"
 #include "anki/Math.h"
 #include "anki/util/Vector.h"
 #include <string>
@@ -397,13 +397,13 @@ public:
 		const ShaderProgram& x);
 
 private:
-	typedef ConstCharPtrHashMap<ShaderProgramUniformVariable*>::Type
+	typedef Dictionary<ShaderProgramUniformVariable*>
 		NameToUniVarHashMap;
 
-	typedef ConstCharPtrHashMap<ShaderProgramAttributeVariable*>::Type
+	typedef Dictionary<ShaderProgramAttributeVariable*>
 		NameToAttribVarHashMap;
 
-	typedef ConstCharPtrHashMap<ShaderProgramUniformBlock*>::Type
+	typedef Dictionary<ShaderProgramUniformBlock*>
 		NameToUniformBlockHashMap;
 
 	static thread_local const ShaderProgram* current;

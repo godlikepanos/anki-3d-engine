@@ -163,7 +163,7 @@ void initScene()
 
 	PerspectiveCamera* cam = nullptr;
 	scene.newSceneNode(
-		cam, "main_camera", &scene, nullptr, (U32)Movable::MF_NONE);
+		cam, "main_camera", nullptr, (U32)Movable::MF_NONE);
 
 	const F32 ang = 45.0;
 	cam->setAll(
@@ -184,9 +184,9 @@ void initScene()
 	{
 		Vec3 lightPos = vaseLightPos[i];
 
-		PointLight* point =
-			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
-			&scene, nullptr, Movable::MF_NONE, 
+		PointLight* point;
+		scene.newSceneNode(point, ("vase_plight" + std::to_string(i)).c_str(),
+			nullptr, Movable::MF_NONE, 
 			(i != 100) ? "textures/lens_flare/flares0.ankitex" : nullptr);
 		point->setRadius(2.0);
 		point->setLocalOrigin(lightPos);
@@ -210,13 +210,14 @@ void initScene()
 		auto mevent = scene.getEventManager().newMovableEvent(0.0, 2.0, moveData);
 		mevent->enableBits(Event::EF_REANIMATE);
 
-		ParticleEmitter* pe = new ParticleEmitter(
-			("pe" + std::to_string(i)).c_str(), &scene, nullptr,
+		ParticleEmitter* pe;
+		scene.newSceneNode(pe,
+			("pe" + std::to_string(i)).c_str(), nullptr,
 			Movable::MF_NONE, "particles/smoke.ankipart");
 		pe->setLocalOrigin(lightPos);
 
-		pe = new ParticleEmitter(
-			("pef" + std::to_string(i)).c_str(), &scene, nullptr,
+		scene.newSceneNode(pe,
+			("pef" + std::to_string(i)).c_str(), nullptr,
 			Movable::MF_NONE, "particles/fire.ankipart");
 		pe->setLocalOrigin(lightPos);
 	}
@@ -224,19 +225,20 @@ void initScene()
 
 	scene.load("maps/sponza/master.ankiscene");
 
-	PointLight* pl = new PointLight("pl0", &scene, nullptr, Movable::MF_NONE);
+	PointLight* pl;
+	scene.newSceneNode(pl, "pl0", nullptr, Movable::MF_NONE);
 	pl->setRadius(12.5);
 	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
 	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
 	pl->setLocalOrigin(Vec3(10, 2.0, -0.8));
 
-	pl = new PointLight("pl1", &scene, nullptr, Movable::MF_NONE);
+	scene.newSceneNode(pl, "pl1", nullptr, Movable::MF_NONE);
 	pl->setRadius(12.5);
 	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
 	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
 	pl->setLocalOrigin(Vec3(0, 2.0, -0.8));
 
-	pl = new PointLight("pl2", &scene, nullptr, Movable::MF_NONE);
+	scene.newSceneNode(pl, "pl2", nullptr, Movable::MF_NONE);
 	pl->setRadius(12.5);
 	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
 	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));

@@ -30,13 +30,11 @@ SceneAllocator<U8> EventManager::getSceneFrameAllocator() const
 }
 
 //==============================================================================
-std::shared_ptr<Event> EventManager::registerEvent(Event* event)
+void EventManager::registerEvent(Event* event)
 {
 	ANKI_ASSERT(event);
-	SceneSharedPtrDeleter<Event> deleter;
-	std::shared_ptr<Event> ptr(event, deleter, getSceneAllocator());
-	events.push_back(ptr);
-	return ptr;
+	ANKI_ASSERT(std::find(events.begin(), events.end(), event) == events.end());
+	events.push_back(event);
 }
 
 //==============================================================================
@@ -64,14 +62,14 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 	crntTime = crntTime_;
 
 	// Container to gather dead events
-	SceneFrameVector<EventsContainer::iterator> forDeletion(
-		getSceneFrameAllocator());
+	SceneFrameVector<EventsContainer::iterator> 
+		forDeletion(getSceneFrameAllocator());
 	// XXX reserve on vector
 
 	EventsContainer::iterator it = events.begin();
 	for(; it != events.end(); it++)
 	{
-		std::shared_ptr<Event>& pevent = *it;
+		Event* pevent = *it;
 
 		// Audjust starting time
 		if(pevent->startTime < 0.0)
@@ -109,39 +107,6 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 	{
 		events.erase(it);
 	}
-}
-
-//==============================================================================
-std::shared_ptr<Event> EventManager::newSceneAmbientColorEvent(
-	F32 startTime, F32 duration, const Vec4& finalColor)
-{
-	return registerEvent(new SceneAmbientColorEvent(startTime, duration, this, 
-		finalColor, scene));
-}
-
-//==============================================================================
-std::shared_ptr<Event> EventManager::newLightEvent(
-	F32 startTime, F32 duration, const LightEventData& data)
-{
-	return registerEvent(new LightEvent(startTime, duration, this,
-		Event::EF_NONE, data));
-}
-
-//==============================================================================
-std::shared_ptr<Event> EventManager::newMovableEvent(
-	F32 startTime, F32 duration, const MovableEventData& data)
-{
-	return registerEvent(new MovableEvent(startTime, duration, this,
-		Event::EF_NONE, data));
-}
-
-//==============================================================================
-std::shared_ptr<Event> EventManager::newFollowPathEvent(
-	F32 startTime, F32 duration,
-	SceneNode* movableSceneNode, Path* path, F32 distPerTime)
-{
-	return registerEvent(new FollowPathEvent(startTime, duration, this,
-		Event::EF_NONE, movableSceneNode, path, distPerTime));
 }
 
 } // end namespace anki

@@ -5,11 +5,13 @@
 namespace anki {
 
 //==============================================================================
-Event::Event(F32 startTime_, F32 duration_, EventManager* manager_, U8 flags)
+Event::Event(EventManager* manager_, F32 startTime_, F32 duration_, 
+	SceneNode* snode_, U8 flags)
 	:	Bitset<U8>(flags), 
 		startTime(startTime_),
 		duration(duration_),
-		manager(manager_)
+		manager(manager_),
+		snode(snode_)
 {
 	ANKI_ASSERT(manager);
 }

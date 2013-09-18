@@ -4,6 +4,8 @@
 #include "anki/util/Allocator.h"
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
+#include "anki/util/Dictionary.h"
+#include <memory>
 
 namespace anki {
 
@@ -30,6 +32,11 @@ using SceneVector = Vector<T, SceneAllocator<T>>;
 template<typename T>
 using SceneFrameVector = Vector<T, SceneFrameAllocator<T>>;
 
+/// Scene dictionary
+template<typename T>
+using SceneDictionary = 
+	Dictionary<T, SceneAllocator<std::pair<const char*, T>>>;
+
 /// Deleter for shared pointers
 template<typename T>
 struct SceneSharedPtrDeleter
@@ -38,9 +45,13 @@ struct SceneSharedPtrDeleter
 	{
 		ANKI_ASSERT(x);
 		SceneAllocator<U8> alloc = x->getSceneAllocator();
-		//ANKI_DELETE(x, alloc);
+		deleteObject(alloc, x);
 	}
 };
+
+/// Shared pointer in scene
+template<typename T>
+using SceneSharedPointer = std::shared_ptr<T>;
 
 /// @}
 

@@ -6,9 +6,9 @@
 namespace anki {
 
 //==============================================================================
-MovableEvent::MovableEvent(F32 startTime, F32 duration, EventManager* manager,
-	U8 flags, const MovableEventData& data)
-	: Event(startTime, duration, manager, flags)
+MovableEvent::MovableEvent(EventManager* manager, F32 startTime, F32 duration,
+	U8 flags, SceneNode* movableSceneNode, const MovableEventData& data)
+	: Event(manager, startTime, duration, movableSceneNode, flags)
 {
 	ANKI_ASSERT(data.movableSceneNode->getMovable());
 
@@ -27,6 +27,9 @@ MovableEvent::MovableEvent(F32 startTime, F32 duration, EventManager* manager,
 //==============================================================================
 void MovableEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
+	SceneNode* movableSceneNode = getSceneNode();
+	ANKI_ASSERT(movableSceneNode);
+
 	Transform trf = movableSceneNode->getMovable()->getLocalTransform();
 
 	F32 factor = sin(getDelta(crntTime) * getPi<F32>());

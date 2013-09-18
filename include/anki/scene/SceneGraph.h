@@ -28,16 +28,6 @@ class SceneGraph
 	friend class SceneNode;
 
 public:
-	template<typename T>
-	struct Types
-	{
-		typedef SceneVector<T*> Container;
-		typedef typename Container::iterator Iterator;
-		typedef typename Container::const_iterator ConstIterator;
-		// XXX Change the map with map with allocator
-		typedef typename ConstCharPtrHashMap<T*>::Type NameToItemMap;
-	};
-
 	/// @name Constructors/Destructor
 	/// @{
 	SceneGraph();
@@ -142,7 +132,7 @@ public:
 		}
 	}
 
-	/// Iterate the scene nodes using a lambda
+	/// Iterate a range of scene nodes using a lambda
 	template<typename Func>
 	void iterateSceneNodes(PtrSize begin, PtrSize count, Func func)
 	{
@@ -155,19 +145,28 @@ public:
 
 	/// Create a new SceneNode
 	template<typename Node, typename... Args>
-	void newSceneNode(Node*& node, Args&&... args)
+	void newSceneNode(Node*& node, const char* name, Args&&... args)
 	{
 		SceneAllocator<Node> al = alloc;
 		node = al.allocate(1);
-		al.construct(node, std::forward<Args>(args)...);
+		al.construct(node, name, this, std::forward<Args>(args)...);
+
+		registerNode(node);
+	}
+
+	/// Delete a scene node. It actualy marks it for deletion
+	void deleteSceneNode(SceneNode* node)
+	{
+		node->markForDeletion();
+		++nodesMarkedForDeletionCount;
 	}
 
 private:
 	SceneAllocator<U8> alloc;
 	SceneAllocator<U8> frameAlloc;
 
-	Types<SceneNode>::Container nodes;
-	Types<SceneNode>::NameToItemMap nameToNode;
+	SceneVector<SceneNode*> nodes;
+	SceneDictionary<SceneNode*> dict;
 
 	Vec3 ambientCol = Vec3(1.0); ///< The global ambient color
 	Timestamp ambiendColorUpdateTimestamp = getGlobTimestamp();
@@ -180,60 +179,14 @@ private:
 
 	EventManager events;
 
+	U32 nodesMarkedForDeletionCount = 0;
+
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);
 	void unregisterNode(SceneNode* node);
 
-	/// Add to a container
-	template<typename T>
-	void addC(typename Types<T>::Container& c, T* ptr)
-	{
-		ANKI_ASSERT(std::find(c.begin(), c.end(), ptr) == c.end());
-		c.push_back(ptr);
-	}
-
-	/// Add to a dictionary
-	template<typename T>
-	void addDict(typename Types<T>::NameToItemMap& d, T* ptr)
-	{
-		ANKI_ASSERT(ptr && ptr->getName());
-
-		if(d.find(ptr->getName()) != d.end())
-		{
-			throw ANKI_EXCEPTION("Node with the same name already exists: "
-				+ ptr->getName());
-		}
-
-		d[ptr->getName()] = ptr;
-	}
-
-	/// Remove from a container
-	template<typename T>
-	void removeC(typename Types<T>::Container& c, T* ptr)
-	{
-		typename Types<T>::Iterator it = c.begin();
-		for(; it != c.end(); ++it)
-		{
-			if(*it == ptr)
-			{
-				break;
-			}
-		}
-
-		ANKI_ASSERT(it != c.end());
-		c.erase(it);
-	}
-
-	/// Remove from a dictionary
-	template<typename T>
-	void removeDict(typename Types<T>::NameToItemMap& d, T* ptr)
-	{
-		typename Types<T>::NameToItemMap::iterator it =
-			d.find(ptr->getName());
-
-		ANKI_ASSERT(it != d.end());
-		d.erase(it);
-	}
+	/// Delete the nodes that are marked for deletion
+	void deleteNodesMarkedForDeletion();
 };
 
 typedef Singleton<SceneGraph> SceneGraphSingleton;

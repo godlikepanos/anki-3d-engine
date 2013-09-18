@@ -6,7 +6,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/Barrier.h"
 #include "anki/util/Bitset.h"
-#include "anki/util/ConstCharPtrHashMap.h"
+#include "anki/util/Dictionary.h"
 #include "anki/util/DynamicArray.h"
 #include "anki/util/Exception.h"
 #include "anki/util/File.h"

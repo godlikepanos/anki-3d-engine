@@ -10,7 +10,7 @@
 #include "anki/resource/Resource.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/Collision.h"
-#include "anki/util/ConstCharPtrHashMap.h"
+#include "anki/util/Dictionary.h"
 
 namespace anki {
 
@@ -316,7 +316,7 @@ class PropertyMap
 {
 public:
 	typedef Vector<PropertyBase*> Container;
-	typedef ConstCharPtrHashMap<PropertyBase*>::Type NameToPropertyMap;
+	typedef Dictionary<PropertyBase*> NameToPropertyMap;
 
 	/// Add new property to the map. The map gets the ownership of this
 	/// property

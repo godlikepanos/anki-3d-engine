@@ -5,11 +5,10 @@
 namespace anki {
 
 //==============================================================================
-SceneAmbientColorEvent::SceneAmbientColorEvent(F32 startTime, F32 duration, 
-	EventManager* manager, const Vec4& finalColor_, SceneGraph* scene_)
-	:	Event(startTime, duration, manager), 
-		finalColor(finalColor_), 
-		scene(scene_)
+SceneAmbientColorEvent::SceneAmbientColorEvent(EventManager* manager,
+	F32 startTime, F32 duration, const Vec4& finalColor_)
+	:	Event(manager, startTime, duration), 
+		finalColor(finalColor_)
 {
 	ANKI_ASSERT(scene);
 	originalColor = scene->getAmbientColor();
@@ -18,7 +17,7 @@ SceneAmbientColorEvent::SceneAmbientColorEvent(F32 startTime, F32 duration,
 //==============================================================================
 void SceneAmbientColorEvent::update(F32 /*prevUpdateTime*/, F32 crntTime)
 {
-	scene->setAmbientColor(
+	getEventManager().getScene().setAmbientColor(
 		interpolate(originalColor, finalColor, getDelta(crntTime)));
 }
 

@@ -6,16 +6,16 @@
 
 namespace anki {
 
-// Forward
-class SceneGraph;
+/// @addtogroup Events
+/// @{
 
 /// Change the scene color
 class SceneAmbientColorEvent: public Event
 {
 public:
 	/// Constructor
-	SceneAmbientColorEvent(F32 startTime, F32 duration, EventManager* manager,
-		const Vec4& finalColor, SceneGraph* scene);
+	SceneAmbientColorEvent(EventManager* manager, F32 startTime, F32 duration,
+		const Vec4& finalColor);
 
 	/// Implements Event::update
 	void update(F32 prevUpdateTime, F32 crntTime);
@@ -23,8 +23,8 @@ public:
 private:
 	Vec4 originalColor; ///< Original scene color. The constructor sets it
 	Vec4 finalColor;
-	SceneGraph* scene = nullptr;
 };
+/// @}
 
 } // end namespace anki
 

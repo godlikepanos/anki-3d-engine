@@ -1,5 +1,5 @@
-#ifndef ANKI_UTIL_CONST_CHAR_PTR_HASH_MAP_H
-#define ANKI_UTIL_CONST_CHAR_PTR_HASH_MAP_H
+#ifndef ANKI_UTIL_DICTIONARY_H
+#define ANKI_UTIL_DICTIONARY_H
 
 #include "anki/util/Allocator.h"
 #include <unordered_map>
@@ -13,7 +13,7 @@ namespace anki {
 /// @{
 
 /// The hash function
-struct CreateCharPtrHashMapKey
+struct DictionaryHasher
 {
 	size_t operator()(const char* str) const
 	{
@@ -27,7 +27,7 @@ struct CreateCharPtrHashMapKey
 };
 
 /// The collision evaluation function
-struct CompareCharPtrHashMapKeys
+struct DictionaryEqual
 {
 	bool operator()(const char* a, const char* b) const
 	{
@@ -38,18 +38,15 @@ struct CompareCharPtrHashMapKeys
 /// The hash map that has as key an old school C string. When inserting the
 /// char MUST NOT point to a temporary or the evaluation function will fail.
 /// Its template struct because C++ does not offer template typedefs
-template<
-	typename T,
-	typename Alloc = Allocator<std::pair<const char*, T>>>
-struct ConstCharPtrHashMap
-{
-	typedef std::unordered_map<
+template<typename T, typename Alloc = Allocator<std::pair<const char*, T>>>
+using Dictionary = 
+	std::unordered_map<
 		const char*,
 		T,
-		CreateCharPtrHashMapKey,
-		CompareCharPtrHashMapKeys,
-		Alloc> Type;
-};
+		DictionaryHasher,
+		DictionaryEqual,
+		Alloc>;
+
 /// @}
 /// @}
 

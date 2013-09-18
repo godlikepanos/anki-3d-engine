@@ -74,9 +74,8 @@ StaticGeometryNode::StaticGeometryNode(
 	{
 		std::string name_ = name + std::to_string(i);
 
-		StaticGeometryPatchNode* node = ANKI_NEW(
-			StaticGeometryPatchNode, getSceneAllocator(),
-			name_.c_str(), scene, patch);
+		StaticGeometryPatchNode* node;
+		getSceneGraph().newSceneNode(node, name_.c_str(), patch);
 
 		patches.push_back(node);
 		++i;
@@ -88,7 +87,7 @@ StaticGeometryNode::~StaticGeometryNode()
 {
 	for(StaticGeometryPatchNode* patch : patches)
 	{
-		ANKI_DELETE(patch, getSceneAllocator());
+		getSceneGraph().deleteSceneNode(patch);
 	}
 }
 
