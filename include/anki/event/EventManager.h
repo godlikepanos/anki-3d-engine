@@ -11,15 +11,6 @@ namespace anki {
 
 // Forward
 class SceneGraph;
-class Path;
-class SceneNode;
-
-class SceneAmbientColorEvent;
-class LightEvent;
-class LightEventData;
-class MovableEvent;
-class MovableEventData;
-class FollowPathEvent;
 
 /// @addtogroup Events
 /// @{
@@ -28,16 +19,13 @@ class FollowPathEvent;
 class EventManager
 {
 public:
-	typedef SceneVector<Event> EventsContainer;
+	typedef SceneVector<Event*> EventsContainer;
 
 	EventManager(SceneGraph* scene);
 	~EventManager();
 
 	/// @name Accessors
 	/// @{
-	SceneAllocator<U8> getSceneAllocator() const;
-	SceneAllocator<U8> getSceneFrameAllocator() const;
-
 	SceneGraph& getScene()
 	{
 		return *scene;
@@ -46,11 +34,24 @@ public:
 	{
 		return *scene;
 	}
+
+	SceneAllocator<U8> getSceneAllocator() const;
+	SceneAllocator<U8> getSceneFrameAllocator() const;
 	/// @}
+
+	/// Iterate events
+	template<typename Func>
+	void iterateEvents(Func func)
+	{
+		for(Event* e : events)
+		{
+			func(*e);
+		}
+	}
 
 	/// Create a new event
 	template<typename T, typename... Args>
-	void newEvent(T*& event, Args&&.. args)
+	void newEvent(T*& event, Args&&... args)
 	{
 		SceneAllocator<T> al = getSceneAllocator();
 		event = al.allocate(1);
@@ -63,7 +64,6 @@ public:
 	void deleteEvent(Event* event)
 	{
 		event->markForDeletion();
-		++eventsMarkedForDeletionCount;
 	}
 
 	/// Update
@@ -74,7 +74,6 @@ private:
 	EventsContainer events;
 	F32 prevUpdateTime;
 	F32 crntTime;
-	U32 eventsMarkedForDeletionCount = 0;
 
 	/// Add an event to the local container
 	void registerEvent(Event* event);

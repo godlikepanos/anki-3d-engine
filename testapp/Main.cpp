@@ -211,18 +211,18 @@ void init()
 		point->setLensFlaresAlpha(1.0);
 
 		LightEventData eventData;
-		eventData.light = point;
 		eventData.radiusMultiplier = 0.2;
 		eventData.intensityMultiplier = Vec4(-1.2, 0.0, 0.0, 0.0);
 		eventData.specularIntensityMultiplier = Vec4(0.1, 0.1, 0.0, 0.0);
-		auto event = scene.getEventManager().newLightEvent(0.0, 0.8, eventData);
+		LightEvent* event;
+		scene.getEventManager().newEvent(event, 0.0, 0.8, point, eventData);
 		event->enableBits(Event::EF_REANIMATE);
 
 		MovableEventData moveData;
-		moveData.movableSceneNode = point;
 		moveData.posMin = Vec3(-0.5, 0.0, -0.5);
 		moveData.posMax = Vec3(0.5, 0.0, 0.5);
-		auto mevent = scene.getEventManager().newMovableEvent(0.0, 2.0, moveData);
+		MovableEvent* mevent;
+		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
 		mevent->enableBits(Event::EF_REANIMATE);
 
 		ParticleEmitter* pe = new ParticleEmitter(

@@ -123,6 +123,54 @@ inline T toDegrees(const T rad)
 	return rad * (T(180.0) / getPi<T>());
 }
 
+//==============================================================================
+// Interpolation                                                               =
+//==============================================================================
+
+/// Linear interpolation between values
+/// @param[in] from Starting value
+/// @param[in] to Ending value
+/// @param[in] u The percentage from the from "from" value. Values
+///              from [0.0, 1.0]
+template<typename Type>
+static Type linearInterpolate(const Type& from, const Type& to, F32 u)
+{
+	return from * (1.0 - u) + to * u;
+}
+
+/// Cosine interpolation
+/// @param[in] from Starting value
+/// @param[in] to Ending value
+/// @param[in] u The percentage from the from "from" value. Values
+///              from [0.0, 1.0]
+template<typename Type>
+static Type cosInterpolate(const Type& from, const Type& to, F32 u)
+{
+	F32 u2 = (1.0 - cos<F32>(u * getPi<F32>())) / 2.0;
+	return from * (1.0 - u2) + to * u2;
+}
+
+/// Cubic interpolation
+/// @param[in] a Point a
+/// @param[in] b Point b
+/// @param[in] c Point c
+/// @param[in] d Point d
+/// @param[in] u The percentage from the from b point to d point. Value
+///              from [0.0, 1.0]
+template<typename Type>
+static Type cubicInterpolate(
+	const Type& a, const Type& b, const Type& c, 
+	const Type& d, F32 u)
+{
+	F32 u2 = u * u;
+	Type a0 = d - c - a + b;
+	Type a1 = a - b - a0;
+	Type a2 = c - a;
+	Type a3 = b;
+
+	return(a0 * u * u2 + a1 * u2 + a2 * u + a3);
+}
+
 } // end namespace anki
 
 #endif

@@ -7,11 +7,10 @@ namespace anki {
 
 //==============================================================================
 MovableEvent::MovableEvent(EventManager* manager, F32 startTime, F32 duration,
-	U8 flags, SceneNode* movableSceneNode, const MovableEventData& data)
-	: Event(manager, startTime, duration, movableSceneNode, flags)
+	SceneNode* movableSceneNode, const MovableEventData& data)
+	: Event(manager, startTime, duration, movableSceneNode, EF_NONE)
 {
-	ANKI_ASSERT(data.movableSceneNode->getMovable());
-
+	ANKI_ASSERT(movableSceneNode);
 	*static_cast<MovableEventData*>(this) = data;
 
 	originalPos =

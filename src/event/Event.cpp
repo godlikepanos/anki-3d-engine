@@ -11,10 +11,14 @@ Event::Event(EventManager* manager_, F32 startTime_, F32 duration_,
 		startTime(startTime_),
 		duration(duration_),
 		manager(manager_),
-		snode(snode_)
+		node(snode_)
 {
 	ANKI_ASSERT(manager);
 }
+
+//==============================================================================
+Event::~Event()
+{}
 
 //==============================================================================
 SceneAllocator<U8> Event::getSceneAllocator() const
@@ -26,15 +30,6 @@ SceneAllocator<U8> Event::getSceneAllocator() const
 SceneAllocator<U8> Event::getSceneFrameAllocator() const
 {
 	return manager->getSceneFrameAllocator();
-}
-
-//==============================================================================
-Event::~Event()
-{
-	if(manager)
-	{
-		manager->unregisterEvent(this);
-	}
 }
 
 //==============================================================================

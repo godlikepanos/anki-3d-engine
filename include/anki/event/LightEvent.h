@@ -29,7 +29,7 @@ public:
 
 	/// Constructor
 	LightEvent(EventManager* manager, F32 startTime, F32 duration,
-		U8 flags, Light* light, const LightEventData& data);
+		Light* light, const LightEventData& data);
 	/// @}
 
 	/// Implements Event::update
