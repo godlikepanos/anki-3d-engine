@@ -66,14 +66,18 @@ public:
 
 	F32 getStartingTime() const
 	{
-		return startingTime;
+		return startTime;
 	}
 	/// @}
+
+	/// Get the interpolated data
+	void interpolate(U channelIndex, F32 time, 
+		Vec3& position, Quat& rotation, F32& scale) const;
 
 private:
 	Vector<AnimationChannel> channels;
 	F32 duration;
-	F32 startingTime;
+	F32 startTime;
 
 	void loadInternal(const XmlElement& el);
 };

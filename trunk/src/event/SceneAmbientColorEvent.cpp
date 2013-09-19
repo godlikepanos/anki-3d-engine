@@ -10,8 +10,7 @@ SceneAmbientColorEvent::SceneAmbientColorEvent(EventManager* manager,
 	:	Event(manager, startTime, duration), 
 		finalColor(finalColor_)
 {
-	ANKI_ASSERT(scene);
-	originalColor = scene->getAmbientColor();
+	originalColor = getEventManager().getScene().getAmbientColor();
 }
 
 //==============================================================================

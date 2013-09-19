@@ -132,6 +132,7 @@ void SceneGraph::registerNode(SceneNode* node)
 	}
 
 	// Add to vector
+	ANKI_ASSERT(std::find(nodes.begin(), nodes.end(), node) == nodes.end());
 	nodes.push_back(node);
 }
 
@@ -195,6 +196,16 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 		// Now delete
 		for(auto& it : forDeletion)
 		{
+			// Disable events for that node
+			events.iterateEvents([&](Event& e)
+			{
+				if(e.getSceneNode() == *it)
+				{
+					e.markForDeletion();
+				}
+			});
+
+			// Remove it
 			unregisterNode(*it);
 
 			SceneAllocator<SceneNode> al = alloc;

@@ -20,16 +20,13 @@
 #include "anki/core/Logger.h"
 #include "anki/Util.h"
 #include "anki/resource/Skin.h"
-#include "anki/event/EventManager.h"
-#include "anki/event/MainRendererPpsHdrEvent.h"
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
 #include "anki/core/ThreadPool.h"
 #include "anki/core/NativeWindow.h"
 #include "anki/core/Counters.h"
 #include "anki/Scene.h"
-#include "anki/event/LightEvent.h"
-#include "anki/event/MovableEvent.h"
+#include "anki/Event.h"
 
 using namespace anki;
 
@@ -175,6 +172,13 @@ void initScene()
 	scene.setActiveCamera(cam);
 
 #if 1
+	AnimationResourcePointer anim;
+	anim.load("maps/sponza/animation_0.ankianim");
+	AnimationEvent* event;
+	scene.getEventManager().newEvent(event, anim, cam);
+#endif
+
+#if 1
 	F32 x = 8.5; 
 	F32 y = 2.25;
 	F32 z = 2.49;
@@ -196,18 +200,18 @@ void initScene()
 		point->setLensFlaresAlpha(1.0);
 
 		LightEventData eventData;
-		eventData.light = point;
 		eventData.radiusMultiplier = 0.2;
 		eventData.intensityMultiplier = Vec4(-1.2, 0.0, 0.0, 0.0);
 		eventData.specularIntensityMultiplier = Vec4(0.1, 0.1, 0.0, 0.0);
-		auto event = scene.getEventManager().newLightEvent(0.0, 0.8, eventData);
+		LightEvent* event;
+		scene.getEventManager().newEvent(event, 0.0, 0.8, point, eventData);
 		event->enableBits(Event::EF_REANIMATE);
 
 		MovableEventData moveData;
-		moveData.movableSceneNode = point;
 		moveData.posMin = Vec3(-0.5, 0.0, -0.5);
 		moveData.posMax = Vec3(0.5, 0.0, 0.5);
-		auto mevent = scene.getEventManager().newMovableEvent(0.0, 2.0, moveData);
+		MovableEvent* mevent;
+		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
 		mevent->enableBits(Event::EF_REANIMATE);
 
 		ParticleEmitter* pe;

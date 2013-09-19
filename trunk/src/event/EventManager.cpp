@@ -45,13 +45,13 @@ void EventManager::unregisterEvent(Event* event)
 	EventsContainer::iterator it = events.begin();
 	for(; it != events.end(); it++)
 	{
-		if(it->get() == event)
+		if((*it) == event)
 		{
 			break;
 		}
 	}
 
-	ANKI_ASSERT(it == events.end());
+	ANKI_ASSERT(it == events.end() && "Trying to unreg non-existing event");
 	events.erase(it);
 }
 
@@ -64,12 +64,21 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 	// Container to gather dead events
 	SceneFrameVector<EventsContainer::iterator> 
 		forDeletion(getSceneFrameAllocator());
-	// XXX reserve on vector
 
 	EventsContainer::iterator it = events.begin();
 	for(; it != events.end(); it++)
 	{
 		Event* pevent = *it;
+
+		// If event or the node's event is marked for deletion then dont 
+		// do anything else for that event
+		if(pevent->isMarkedForDeletion() 
+			|| (pevent->getSceneNode() != nullptr 
+				&& pevent->getSceneNode()->isMarkedForDeletion()))
+		{
+			forDeletion.push_back(it);
+			continue;
+		}
 
 		// Audjust starting time
 		if(pevent->startTime < 0.0)
@@ -94,7 +103,7 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 			}
 			else
 			{
-				if((*it)->onKilled(prevUpdateTime, crntTime))
+				if(pevent->onKilled(prevUpdateTime, crntTime))
 				{
 					forDeletion.push_back(it);
 				}

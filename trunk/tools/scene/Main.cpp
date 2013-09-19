@@ -691,9 +691,20 @@ static void exportAnimation(
 		{
 			const aiVectorKey& key = nAnim.mPositionKeys[j];
 
-			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-				<< "<value>" << key.mValue[0] << " " 
-				<< key.mValue[1] << " " << key.mValue[2] << "</value></key>\n";
+			if(config.flipyz)
+			{
+				file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
+					<< "<value>" << key.mValue[0] << " " 
+					<< key.mValue[2] << " " << -key.mValue[1] 
+					<< "</value></key>\n";
+			}
+			else
+			{
+				file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
+					<< "<value>" << key.mValue[0] << " " 
+					<< key.mValue[1] << " " << key.mValue[2] 
+					<< "</value></key>\n";
+			}
 		}
 		file << "\t\t\t</positionKeys>\n";
 

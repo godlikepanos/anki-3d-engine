@@ -5,8 +5,8 @@ namespace anki {
 
 //==============================================================================
 LightEvent::LightEvent(EventManager* manager, F32 startTime, F32 duration,
-	U8 flags, Light* light, const LightEventData& data)
-	: Event(manager, startTime, duration, light, flags)
+	Light* light, const LightEventData& data)
+	: Event(manager, startTime, duration, light, EF_NONE)
 {
 	*static_cast<LightEventData*>(this) = data;
 
@@ -34,6 +34,7 @@ LightEvent::LightEvent(EventManager* manager, F32 startTime, F32 duration,
 void LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
 	F32 factor = sin(getDelta(crntTime) * getPi<F32>());
+	Light* light = static_cast<Light*>(getSceneNode());
 
 	switch(light->getLightType())
 	{

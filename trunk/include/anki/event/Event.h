@@ -24,7 +24,8 @@ public:
 	enum EventFlags
 	{
 		EF_NONE = 0,
-		EF_REANIMATE = 1 << 0
+		EF_REANIMATE = 1 << 0,
+		EF_MARKED_FOR_DELETION = 1 << 1
 	};
 
 	/// @name Constructors/Destructor
@@ -54,9 +55,6 @@ public:
 		return crntTime >= startTime + duration;
 	}
 
-	SceneAllocator<U8> getSceneAllocator() const;
-	SceneAllocator<U8> getSceneFrameAllocator() const;
-
 	EventManager& getEventManager()
 	{
 		return *manager;
@@ -68,12 +66,15 @@ public:
 
 	SceneNode* getSceneNode()
 	{
-		return snode;
+		return node;
 	}
 	const SceneNode* getSceneNode() const
 	{
-		return snode;
+		return node;
 	}
+
+	SceneAllocator<U8> getSceneAllocator() const;
+	SceneAllocator<U8> getSceneFrameAllocator() const;
 	/// @}
 
 	/// This method should be implemented by the derived classes
@@ -95,13 +96,14 @@ public:
 	/// Mark event for deletion
 	void markForDeletion()
 	{
-		markedForDeletion = true;
+		enableBits(EF_MARKED_FOR_DELETION);
+		node = nullptr;
 	}
 
 	/// Ask if event is marked for deletion
 	Bool isMarkedForDeletion() const
 	{
-		return markedForDeletion;
+		return bitsEnabled(EF_MARKED_FOR_DELETION);
 	}
 
 protected:
@@ -150,7 +152,6 @@ protected:
 private:
 	EventManager* manager = nullptr; ///< Keep it here to access allocators etc
 	SceneNode* node = nullptr; ///< Optional scene node
-	Bool8 markedForDeletion = false;
 };
 /// @}
 

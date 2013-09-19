@@ -28,7 +28,7 @@ public:
 
 	/// Constructor
 	MovableEvent(EventManager* manager, F32 startTime, F32 duration,
-		U8 flags, SceneNode* movableSceneNode, const MovableEventData& data);
+		SceneNode* movableSceneNode, const MovableEventData& data);
 	/// @}
 
 	/// Implements Event::update
