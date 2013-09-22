@@ -381,10 +381,6 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 			"#extension GL_ARB_shading_language_packing : enable\n"
 			"#extension GL_ARB_gpu_shader5 : enable\n";
 	}
-	else
-	{
-		preprocSrc += "#extension GL_ARB_gpu_shader5 : enable\n";
-	}
 
 #else
 	preprocSrc = "#version " + std::to_string(major) 

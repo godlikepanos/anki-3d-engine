@@ -41,7 +41,8 @@ static Array<const char*, BMV_COUNT - 1> buildinNames = {{
 	"viewProjectionMat",
 	"normalMat",
 	"billboardMvpMatrix",
-	"blurring"}};
+	"blurring",
+	"msDepthMap"}};
 
 //==============================================================================
 RenderableVariable::RenderableVariable(
