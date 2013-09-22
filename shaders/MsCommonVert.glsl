@@ -21,8 +21,7 @@ flat out uint vInstanceId;
 
 #ifdef PASS_COLOR
 out mediump vec3 vNormal;
-out mediump vec3 vTangent;
-out mediump float vTangentW;
+out mediump vec4 vTangent;
 out mediump vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
 #endif
 /// @}
@@ -48,8 +47,8 @@ void setVaryings2(
 {
 #if defined(PASS_COLOR)
 	vNormal = vec3(normalMat * normal);
-	vTangent = vec3(normalMat * vec3(tangent));
-	vTangentW = float(tangent.w);
+	vTangent.xyz = vec3(normalMat * tangent.xyz);
+	vTangent.w = tangent.w;
 #endif
 
 	setVaryings1(modelViewProjectionMat);

@@ -187,6 +187,9 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 				uniSet(*uni, &blurring, 1);
 			}
 			break;
+		case BMV_MS_DEPTH_MAP:
+			uni->set(r->getMs().getDepthFai());
+			break;
 		default:
 			ANKI_ASSERT(0);
 			break;

@@ -3,8 +3,9 @@
 
 #pragma anki include "shaders/CommonFrag.glsl"
 #pragma anki include "shaders/MsBsCommon.glsl"
+#pragma anki include "shaders/LinearDepth.glsl"
 
-#define vTexCoords_DEFINED
+#define vTexCoord_DEFINED
 in highp vec2 vTexCoord;
 #define vInstanceId_DEFINED
 flat in highp uint vInstanceId;
@@ -35,3 +36,19 @@ void particleAlpha(in sampler2D tex, in float alpha)
 	writeFais(color);
 }
 #endif
+
+#if defined(PASS_COLOR)
+#	define softness_DEFINED
+float softness(in sampler2D depthMap)
+{
+	float depth = texture(depthMap, gl_FragCoord.xy / vec2(960.0, 540.0)).r;
+
+	float delta = depth - gl_FragCoord.z;
+	
+	if (delta > 0)
+		return 1.0;
+	else
+		return 0.0;
+}
+#endif
+

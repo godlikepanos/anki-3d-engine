@@ -19,10 +19,8 @@ flat in mediump uint vInstanceId;
 #if defined(PASS_COLOR)
 in vec3 vNormal;
 #	define vNormal_DEFINED
-in vec3 vTangent;
+in vec4 vTangent;
 #	define vTangent_DEFINED
-in float vTangentW;
-#	define vTangentW_DEFINED
 in vec3 vVertPosViewSpace;
 #	define vVertPosViewSpace_DEFINED
 #endif
@@ -52,22 +50,22 @@ layout(location = 0) out uvec2 fMsFai0;
 /// @param[in] texCoords Texture coordinates
 #if defined(PASS_COLOR)
 #	define getNormalFromTexture_DEFINED
-vec3 getNormalFromTexture(in vec3 normal, in vec3 tangent, in float tangentW,
+vec3 getNormalFromTexture(in vec3 normal, in vec4 tangent,
 	in sampler2D map, in highp vec2 texCoords)
 {
 #	if LOD > 0
 	return normalize(normal);
 #	else
 	// First read the texture
-	vec3 nAtTangentspace = (texture(map, texCoords).rgb - 0.5) * 2.0;
+	vec3 nAtTangentspace = normalize((texture(map, texCoords).rgb - 0.5) * 2.0);
 
 	vec3 n = normalize(normal);
-	vec3 t = normalize(tangent);
-	vec3 b = cross(n, t) * tangentW;
+	vec3 t = normalize(tangent.xyz);
+	vec3 b = cross(n, t) * tangent.w;
 
 	mat3 tbnMat = mat3(t, b, n);
 
-	return normalize(tbnMat * nAtTangentspace);
+	return tbnMat * nAtTangentspace;
 #	endif
 }
 #endif

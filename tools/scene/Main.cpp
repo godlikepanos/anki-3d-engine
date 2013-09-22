@@ -117,6 +117,29 @@ static aiMatrix4x4 toAnkiMatrix(const aiMatrix4x4& in)
 }
 
 //==============================================================================
+static aiMatrix3x3 toAnkiMatrix(const aiMatrix3x3& in)
+{
+	static const aiMatrix3x3 toLeftHanded(
+		1, 0, 0,
+		0, 0, 1, 
+		0, -1, 0);
+
+	static const aiMatrix3x3 toLeftHandedInv(
+		1, 0, 0, 
+		0, 0, -1, 
+		0, 1, 0);
+
+	if(config.flipyz)
+	{
+		return toLeftHanded * in;
+	}
+	else
+	{
+		return in;
+	}
+}
+
+//==============================================================================
 static void parseConfig(int argc, char** argv)
 {
 	static const char* usage = R"(Usage: %s in_file out_dir [options]
@@ -714,10 +737,14 @@ static void exportAnimation(
 		{
 			const aiQuatKey& key = nAnim.mRotationKeys[j];
 
+			aiMatrix3x3 mat = toAnkiMatrix(key.mValue.GetMatrix());
+			aiQuaternion quat(mat);
+			//aiQuaternion quat(key.mValue);
+
 			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-				<< "<value>" << key.mValue.x << " " << key.mValue.y 
-				<< " " << key.mValue.z << " "
-				<< key.mValue.w << "</value></key>\n";
+				<< "<value>" << quat.x << " " << quat.y 
+				<< " " << quat.z << " "
+				<< quat.w << "</value></key>\n";
 		}
 		file << "\t\t\t</rotationKeys>\n";
 

@@ -55,7 +55,6 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 					<arguments>
 						<argument>vNormal</argument>
 						<argument>vTangent</argument>
-						<argument>vTangentW</argument>
 						<argument>normalMap</argument>
 						<argument>vTexCoords</argument>
 					</arguments>

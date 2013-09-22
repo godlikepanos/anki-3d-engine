@@ -22,6 +22,12 @@ void Animation::load(const char* filename)
 //==============================================================================
 void Animation::loadInternal(const XmlElement& el)
 {
+	// Count the number of identity keys. If all of the keys are identities
+	// drop a vector
+	U identPosCount = 0;
+	U identRotCount = 0;
+	U identScaleCount = 0;
+
 	// <duration>
 	duration = el.getChildElement("duration").getFloat();
 
@@ -37,50 +43,65 @@ void Animation::loadInternal(const XmlElement& el)
 		// <name>
 		ch.name = chEl.getChildElement("name").getText();
 
+		XmlElement keysEl, keyEl;
+
 		// <positionKeys>
-		XmlElement keysEl = chEl.getChildElement("positionKeys");
-		XmlElement keyEl = keysEl.getChildElement("key");
-		do
+		keysEl = chEl.getChildElementOptional("positionKeys");
+		if(keysEl)
 		{
-			Key<Vec3> key;
+			keyEl = keysEl.getChildElement("key");
+			do
+			{
+				Key<Vec3> key;
 
-			// <time>
-			key.time = keyEl.getChildElement("time").getFloat();
+				// <time>
+				key.time = keyEl.getChildElement("time").getFloat();
 
-			// <value>
-			key.value = keyEl.getChildElement("value").getVec3();
+				// <value>
+				key.value = keyEl.getChildElement("value").getVec3();
 
-			// push_back
-			ch.positions.push_back(key);
+				// push_back
+				ch.positions.push_back(key);
 
-			// Move to next
-			keyEl = keyEl.getNextSiblingElement("key");
-		} while(keyEl);
+				// Check ident
+				if(key.value == Vec3(0.0))
+				{
+					++identPosCount;
+				}
+
+				// Move to next
+				keyEl = keyEl.getNextSiblingElement("key");
+			} while(keyEl);
+		}
 
 		// <rotationKeys>
 		keysEl = chEl.getChildElement("rotationKeys");
-		keyEl = keysEl.getChildElement("key");
-		do
+		if(keysEl)
 		{
-			Key<Quat> key;
+			keyEl = keysEl.getChildElement("key");
+			do
+			{
+				Key<Quat> key;
 
-			// <time>
-			key.time = keyEl.getChildElement("time").getFloat();
+				// <time>
+				key.time = keyEl.getChildElement("time").getFloat();
 
-			// <value>
-			Quat a = Quat(keyEl.getChildElement("value").getVec4());
-			key.value.x() = a.w();
-			key.value.y() = a.x();
-			key.value.z() = a.y();
-			key.value.w() = a.z();
-			// XXX
+				// <value>
+				key.value = Quat(keyEl.getChildElement("value").getVec4());
 
-			// push_back
-			ch.rotations.push_back(key);
+				// push_back
+				ch.rotations.push_back(key);
 
-			// Move to next
-			keyEl = keyEl.getNextSiblingElement("key");
-		} while(keyEl);
+				// Check ident
+				if(key.value == Quat::getIdentity())
+				{
+					++identRotCount;
+				}
+
+				// Move to next
+				keyEl = keyEl.getNextSiblingElement("key");
+			} while(keyEl);
+		}
 
 		// <scalingKeys>
 		keysEl = chEl.getChildElementOptional("scalingKeys");
@@ -100,9 +121,29 @@ void Animation::loadInternal(const XmlElement& el)
 				// push_back
 				ch.scales.push_back(key);
 
+				// Check ident
+				if(isZero(key.value - 1.0))
+				{
+					++identScaleCount;
+				}
+
 				// Move to next
 				keyEl = keyEl.getNextSiblingElement("key");
 			} while(keyEl);
+		}
+
+		// Remove identity vectors
+		if(identPosCount == ch.positions.size())
+		{
+			ch.positions.clear();
+		}
+		if(identRotCount == ch.rotations.size())
+		{
+			ch.rotations.clear();
+		}
+		if(identScaleCount == ch.scales.size())
+		{
+			ch.scales.clear();
 		}
 
 		// Move to next channel
@@ -130,6 +171,10 @@ void Animation::interpolate(U channelIndex, F32 time,
 
 		ANKI_ASSERT(next != channel.positions.end());
 		auto prev = next - 1;
+		/*auto prevprev = 
+			(prev == channel.positions.begin()) ? prev : prev - 1;
+		auto nextnext = 
+			(next == channel.positions.end() - 1) ? next : next + 1;*/
 
 		F32 u = (time - prev->time) / (next->time - prev->time);
 		pos = linearInterpolate(prev->value, next->value, u);

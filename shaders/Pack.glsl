@@ -20,21 +20,23 @@ vec3 unpackNormal(in vec2 enc)
 }
 
 #if GL_ES
+// Vectorized version. See clean one at <= r1048
 uint packUnorm4x8(in vec4 v)
 {
-	highp vec4 a = clamp(v, 0.0, 1.0) * 255.0;
-	return uint(a.x) | (uint(a.y) << 8) | (uint(a.z) << 16) | (uint(a.w) << 24);
+	vec4 a = clamp(v, 0.0, 1.0) * 255.0;
+	uvec4 b = uvec4(a) << uvec4(0U, 8U, 16U, 24U);
+	uvec2 c = b.xy | b.zw;
+	return c.x | c.y;
 }
- 
+
+// Vectorized version. See clean one at <= r1048
 vec4 unpackUnorm4x8(in highp uint u)
 {
-	vec4 v;
-	v.x = float(u & 0xffU);
-	v.y = float((u >> 8) & 0xffU);
-	v.z = float((u >> 16) & 0xffU);
-	v.w = float((u >> 24) & 0xffU);
+	uvec4 a = uvec4(u) >> uvec4(0U, 8U, 16U, 24U);
+	uvec4 b = a & uvec4(0xFFU);
+	vec4 c = vec4(b);
 
-	return v * (1.0 / 255.0);
+	return c * (1.0 / 255.0);
 }
 #endif
 

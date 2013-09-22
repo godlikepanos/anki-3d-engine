@@ -116,8 +116,8 @@ void initSubsystems()
 	initializer.get("pps.hdr.blurringDist") = 1.0;
 	initializer.get("pps.hdr.blurringIterationsCount") = 1;
 	initializer.get("pps.hdr.exposure") = 8.0;
+	initializer.get("pps.ssao.enabled") = false;
 	initializer.get("pps.ssao.blurringIterationsNum") = 1;
-	initializer.get("pps.ssao.enabled") = true;
 	initializer.get("pps.ssao.renderingQuality") = 0.25;
 	initializer.get("pps.bl.enabled") = true;
 	initializer.get("pps.bl.blurringIterationsNum") = 2;
@@ -137,9 +137,10 @@ void initSubsystems()
 	initializer.get("is.maxPointLightsPerTile") = 4;
 	initializer.get("is.maxSpotLightsPerTile") = 4;
 	initializer.get("is.maxSpotTexLightsPerTile") = 4;
-	initializer.get("renderingQuality") = 0.25;
-	initializer.get("maxTextureSize") = 256;
+	initializer.get("renderingQuality") = 0.5;
+	initializer.get("maxTextureSize") = 1024;
 	initializer.get("mrt") = false;
+	initializer.get("pps.sharpen") = false;
 #endif
 
 	MainRendererSingleton::get().init(initializer);
@@ -171,7 +172,7 @@ void initScene()
 		1.0));
 	scene.setActiveCamera(cam);
 
-#if 1
+#if 0
 	AnimationResourcePointer anim;
 	anim.load("maps/sponza/animation_0.ankianim");
 	AnimationEvent* event;
@@ -227,6 +228,26 @@ void initScene()
 	}
 #endif
 
+	// horse
+	ModelNode* horse;
+	scene.newSceneNode(horse, "horse", nullptr, 
+		Movable::MF_NONE, "models/horse/horse.ankimdl");
+	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
+		0.7));
+
+	// Light
+	SpotLight* spot;
+	scene.newSceneNode(spot, "spot0", nullptr, Movable::MF_NONE);
+	spot->setOuterAngle(toRad(45.0));
+	spot->setInnerAngle(toRad(15.0));
+	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
+		Mat3(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
+	spot->setDiffuseColor(Vec4(2.0));
+	spot->setSpecularColor(Vec4(1.0, 0.0, 1.0, 1.0));
+	spot->setDistance(30.0);
+	spot->setShadowEnabled(true);
+
+	// Scene
 	scene.load("maps/sponza/master.ankiscene");
 
 	PointLight* pl;
