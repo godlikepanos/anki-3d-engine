@@ -174,6 +174,17 @@ public:
 	{
 		return maxTextureSize;
 	}
+
+	const UVec2& getTilesCount() const
+	{
+		return tilesCount;
+	}
+
+	/// Get string to pass to the material shaders
+	const std::string& getShaderPostProcessorString() const
+	{
+		return shaderPostProcessorString;
+	}
 	/// @}
 
 	/// Init the renderer given an initialization class
@@ -250,8 +261,7 @@ private:
 	Bool8 isOffscreen; ///< Is offscreen renderer?
 	F32 renderingQuality; ///< Rendering quality. Relevant for offscreen 
 	U32 maxTextureSize; ///< Texture size limit. Just kept here.
-	U16 tilesXCount;
-	U16 tilesYCount;
+	UVec2 tilesCount;
 
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
@@ -279,6 +289,9 @@ private:
 	RenderableDrawer sceneDrawer;
 
 	U framesNum; ///< Frame number
+
+	/// String to pass to the material shaders
+	std::string shaderPostProcessorString;
 };
 
 } // end namespace anki

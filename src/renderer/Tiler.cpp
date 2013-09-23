@@ -11,14 +11,6 @@
 namespace anki {
 
 //==============================================================================
-static const U TILES_X_COUNT = ANKI_RENDERER_TILES_X_COUNT;
-static const U TILES_Y_COUNT = ANKI_RENDERER_TILES_Y_COUNT;
-static const U TILES_COUNT = TILES_X_COUNT * TILES_Y_COUNT;
-
-typedef F32 
-	PixelArray[ANKI_RENDERER_TILES_Y_COUNT][ANKI_RENDERER_TILES_X_COUNT][2];
-
-//==============================================================================
 #define CHECK_PLANE_PTR(p_) \
 	ANKI_ASSERT(p_ < &tiler->allPlanes[tiler->allPlanes.size()]);
 
@@ -48,13 +40,14 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 			const F32 n = cam->getNear();
 
 			F32 l = 2.0 * n * tan(fx / 2.0);
-			F32 l6 = l / TILES_X_COUNT;
+			F32 l6 = l / tiler->r->getTilesCount().x();
 			F32 o = 2.0 * n * tan(fy / 2.0);
-			F32 o6 = o / TILES_Y_COUNT;
+			F32 o6 = o / tiler->r->getTilesCount().y();
 
 			// First the top looking planes
 			choseStartEnd(
-				threadId, threadsCount, TILES_Y_COUNT - 1, start, end);
+				threadId, threadsCount, tiler->r->getTilesCount().y() - 1, 
+				start, end);
 
 			for(U i = start; i < end; i++)
 			{
@@ -67,7 +60,8 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 
 			// Then the right looking planes
 			choseStartEnd(
-				threadId, threadsCount, TILES_X_COUNT - 1, start, end);
+				threadId, threadsCount, tiler->r->getTilesCount().x() - 1, 
+				start, end);
 
 			for(U j = start; j < end; j++)
 			{
@@ -84,7 +78,8 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 
 			// First the top looking planes
 			choseStartEnd(
-				threadId, threadsCount, TILES_Y_COUNT - 1, start, end);
+				threadId, threadsCount, tiler->r->getTilesCount().y() - 1, 
+				start, end);
 
 			for(U i = start; i < end; i++)
 			{
@@ -95,7 +90,8 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 
 			// Then the right looking planes
 			choseStartEnd(
-				threadId, threadsCount, TILES_X_COUNT - 1, start, end);
+				threadId, threadsCount, tiler->r->getTilesCount().x() - 1, 
+				start, end);
 
 			for(U j = start; j < end; j++)
 			{
@@ -111,14 +107,16 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 		Renderer::calcPlanes(Vec2(cam->getNear(), cam->getFar()), rplanes);
 
 		choseStartEnd(
-			threadId, threadsCount, TILES_COUNT, start, end);
+			threadId, threadsCount, 
+			tiler->r->getTilesCount().x() * tiler->r->getTilesCount().y(), 
+			start, end);
 
 		Plane* nearPlanesW = tiler->nearPlanesW + start;
 		Plane* farPlanesW = tiler->farPlanesW + start;
 		for(U k = start; k < end; ++k)
 		{
-			U j = k % TILES_X_COUNT;
-			U i = k / TILES_X_COUNT;
+			U j = k % tiler->r->getTilesCount().x();
+			U i = k / tiler->r->getTilesCount().x();
 
 			// Calculate depth as you do it for the vertex position inside
 			// the shaders
@@ -150,7 +148,10 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 		Plane& plane = tiler->planesI[i];
 		CHECK_PLANE_PTR(&plane);
 
-		a = Vec3(0.0, (I(i + 1) - I(TILES_Y_COUNT) / 2) * o6, -n);
+		a = Vec3(0.0, 
+			(I(i + 1) - I(tiler->r->getTilesCount().y()) / 2) * o6, 
+			-n);
+
 		b = Vec3(1.0, 0.0, 0.0).cross(a);
 		b.normalize();
 
@@ -165,7 +166,10 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 		Plane& plane = tiler->planesJ[j];
 		CHECK_PLANE_PTR(&plane);
 
-		a = Vec3((I(j + 1) - I(TILES_X_COUNT) / 2) * l6, 0.0, -n);
+		a = Vec3((I(j + 1) - I(tiler->r->getTilesCount().x()) / 2) * l6, 
+			0.0, 
+			-n);
+
 		b = a.cross(Vec3(0.0, 1.0, 0.0));
 		b.normalize();
 
@@ -206,20 +210,20 @@ void Tiler::initInternal(Renderer* r_)
 	r = r_;
 
 	// Load the program
-	std::string pps =
-		"#define TILES_X_COUNT " + std::to_string(TILES_X_COUNT) + "\n"
-		"#define TILES_Y_COUNT " + std::to_string(TILES_Y_COUNT) + "\n"
-		"#define RENDERER_WIDTH " + std::to_string(r->getWidth()) + "\n"
-		"#define RENDERER_HEIGHT " + std::to_string(r->getHeight()) + "\n";
+	std::stringstream pps;
+	pps << "#define TILES_X_COUNT " << r->getTilesCount().x() << "\n"
+		<< "#define TILES_Y_COUNT " << r->getTilesCount().y() << "\n"
+		<< "#define RENDERER_WIDTH " << r->getWidth() << "\n"
+		<< "#define RENDERER_HEIGHT " << r->getHeight() << "\n";
 
 	prog.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/TilerMinMax.glsl", pps.c_str(), "r_").c_str());
+		"shaders/TilerMinMax.glsl", pps.str().c_str(), "r_").c_str());
 
 	depthMapUniform = &(prog->findUniformVariable("depthMap"));
 
 	// Create FBO
-	fai.create2dFai(TILES_X_COUNT, TILES_Y_COUNT, GL_RG32UI,
-		GL_RG_INTEGER, GL_UNSIGNED_INT);
+	fai.create2dFai(r->getTilesCount().x(), r->getTilesCount().y(), 
+		GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT);
 	fai.setFiltering(Texture::TFT_NEAREST);
 
 	fbo.create();
@@ -231,23 +235,25 @@ void Tiler::initInternal(Renderer* r_)
 
 	// Create PBO
 	pbo.create(GL_PIXEL_PACK_BUFFER, 
-		TILES_X_COUNT * TILES_Y_COUNT * 2 * sizeof(F32), nullptr);
+		r->getTilesCount().x() * r->getTilesCount().y() * 2 * sizeof(F32), 
+		nullptr);
 
 	// Init planes
 	U planesCount = 
-		(TILES_X_COUNT - 1) * 2 // planes J
-		+ (TILES_Y_COUNT - 1) * 2  // planes I
-		+ (TILES_COUNT * 2); // near far planes
+		(r->getTilesCount().x() - 1) * 2 // planes J
+		+ (r->getTilesCount().y() - 1) * 2  // planes I
+		+ (r->getTilesCount().x() * r->getTilesCount().y() * 2); 
+		// near far planes
 
 	allPlanes.resize(planesCount);
 
 	planesJ = &allPlanes[0];
-	planesI = planesJ + TILES_X_COUNT - 1;
+	planesI = planesJ + r->getTilesCount().x() - 1;
 
-	planesJW = planesI + TILES_Y_COUNT - 1;
-	planesIW = planesJW + TILES_X_COUNT - 1;
-	nearPlanesW = planesIW + TILES_Y_COUNT - 1;
-	farPlanesW = nearPlanesW + TILES_COUNT;
+	planesJW = planesI + r->getTilesCount().y() - 1;
+	planesIW = planesJW + r->getTilesCount().x() - 1;
+	nearPlanesW = planesIW + r->getTilesCount().y() - 1;
+	farPlanesW = nearPlanesW + r->getTilesCount().x() * r->getTilesCount().y();
 }
 
 //==============================================================================
@@ -258,7 +264,8 @@ void Tiler::runMinMax(const Texture& depthMap)
 
 	// Issue the min/max job
 	fbo.bind();
-	GlStateSingleton::get().setViewport(0, 0, TILES_X_COUNT, TILES_Y_COUNT);
+	GlStateSingleton::get().setViewport(
+		0, 0, r->getTilesCount().x(), r->getTilesCount().y());
 	r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
 	prog->bind();
 	ANKI_ASSERT(depthMapUniform);
@@ -268,8 +275,8 @@ void Tiler::runMinMax(const Texture& depthMap)
 
 	// Issue the async pixel read
 	pbo.bind();
-	glReadPixels(0, 0, TILES_X_COUNT, TILES_Y_COUNT, GL_RG_INTEGER,
-		GL_UNSIGNED_INT, nullptr);
+	glReadPixels(0, 0, r->getTilesCount().x(), r->getTilesCount().y(), 
+		GL_RG_INTEGER, GL_UNSIGNED_INT, nullptr);
 	pbo.unbind();
 #endif
 }
@@ -339,7 +346,8 @@ Bool Tiler::test(
 {
 	Bitset bitset;
 
-	testRange(cs, nearPlane, 0, TILES_Y_COUNT, 0, TILES_X_COUNT, bitset);
+	testRange(cs, nearPlane, 0, r->getTilesCount().y(), 0, 
+		r->getTilesCount().x(), bitset);
 
 	if(outBitset)
 	{
@@ -361,7 +369,7 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 	// Handle final
 	if(mi == 0 || mj == 0)
 	{
-		U tileId = iFrom * TILES_X_COUNT + jFrom;
+		U tileId = iFrom * r->getTilesCount().x() + jFrom;
 
 		Bool inside = true;
 

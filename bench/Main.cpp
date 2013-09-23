@@ -133,11 +133,13 @@ void initSubsystems()
 //#if ANKI_GL == ANKI_GL_ES
 #if 1
 	initializer.get("samples") = 1;
+	initializer.get("is.groundLightEnabled") = false;
 	initializer.get("is.maxPointLights") = 64;
 	initializer.get("is.maxPointLightsPerTile") = 4;
 	initializer.get("is.maxSpotLightsPerTile") = 4;
 	initializer.get("is.maxSpotTexLightsPerTile") = 4;
 	initializer.get("renderingQuality") = 0.5;
+	initializer.get("pps.hdr.renderingQuality") = 0.3;
 	initializer.get("maxTextureSize") = 1024;
 	initializer.get("mrt") = false;
 	initializer.get("pps.sharpen") = false;
@@ -172,7 +174,7 @@ void initScene()
 		1.0));
 	scene.setActiveCamera(cam);
 
-#if 0
+#if 1
 	AnimationResourcePointer anim;
 	anim.load("maps/sponza/animation_0.ankianim");
 	AnimationEvent* event;
