@@ -806,8 +806,8 @@ void Is::lightPass()
 		}
 		/*if(spotLightsSize > 0)
 		{
-			lightsUbo.setBindingRange(SPOT_LIGHTS_BLOCK_BINDING, spotLightsOffset,
-				spotLightsSize);
+			lightsUbo.setBindingRange(SPOT_LIGHTS_BLOCK_BINDING, 
+				spotLightsOffset, spotLightsSize);
 		}
 		if(spotTexLightsSize > 0)
 		{

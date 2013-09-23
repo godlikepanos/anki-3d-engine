@@ -38,17 +38,19 @@ void particleAlpha(in sampler2D tex, in float alpha)
 #endif
 
 #if defined(PASS_COLOR)
-#	define softness_DEFINED
-float softness(in sampler2D depthMap)
+#	define particleSoft_DEFINED
+void particleSoft(in sampler2D depthMap, in sampler2D tex, in float alpha)
 {
-	float depth = texture(depthMap, gl_FragCoord.xy / vec2(960.0, 540.0)).r;
+	const vec2 screenSize = 
+		vec2(1.0 / float(RENDERING_WIDTH), 1.0 / float(RENDERING_HEIGHT));
+	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
 
 	float delta = depth - gl_FragCoord.z;
-	
-	if (delta > 0)
-		return 1.0;
-	else
-		return 0.0;
+	float softalpha = clamp(delta * 100.0, 0.0, 1.0);
+
+	vec4 color = texture(tex, vTexCoord);
+	color.w *= alpha * softalpha;
+	writeFais(color);
 }
 #endif
 

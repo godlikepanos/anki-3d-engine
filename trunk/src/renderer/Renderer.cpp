@@ -63,6 +63,8 @@ RendererInitializer::RendererInitializer()
 	newOption("renderingQuality", 1.0); // Applies only to MainRenderer
 	newOption("lodDistance", 10.0); // Distance that used to calculate the LOD
 	newOption("samples", 1);
+	newOption("tilesXCount", 16);
+	newOption("tilesYCount", 16);
 
 	if(GlStateCommonSingleton::get().getGpu() == GlStateCommon::GPU_ARM)
 	{
@@ -103,6 +105,8 @@ void Renderer::init(const RendererInitializer& initializer)
 	isOffscreen = initializer.get("offscreen");
 	renderingQuality = initializer.get("renderingQuality");
 	maxTextureSize = initializer.get("maxTextureSize");
+	tilesCount.x() = initializer.get("tilesXCount");
+	tilesCount.y() = initializer.get("tilesYCount");
 
 	// a few sanity checks
 	if(samples != 1 && samples != 4 && samples != 8 && samples != 16
@@ -135,6 +139,13 @@ void Renderer::init(const RendererInitializer& initializer)
 	quadVao.create();
 	quadVao.attachArrayBufferVbo(
 		&quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, 0);
+
+	// Init the shaderPostProcessorString
+	std::stringstream ss;
+	ss << "#define USE_MRT " << (U)useMrt << "\n"
+		<< "#define RENDERING_WIDTH " << width << "\n"
+		<< "#define RENDERING_HEIGHT " << height << "\n";
+	shaderPostProcessorString = ss.str();
 }
 
 //==============================================================================

@@ -280,8 +280,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 
 			src << "#define LOD " << level << "\n"
 				<< "#define PASS_" << passNames[pid] << "\n"
-				<< "#define USE_MRT " 
-				<< MainRendererSingleton::get().getUseMrt() << "\n"
+				<< MainRendererSingleton::get().getShaderPostProcessorString() 
+				<< "\n"
 				<< mspc.getShaderProgramSource() << std::endl;
 
 			std::string filename =
