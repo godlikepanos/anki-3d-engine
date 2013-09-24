@@ -9,6 +9,12 @@
 #	include <android_native_app_glue.h>
 #	include <android/asset_manager.h>
 #endif
+#if ANKI_POSIX
+#	include <sys/stat.h>
+#	include <sys/types.h>
+#	include <dirent.h>
+#	include <cerrno>
+#endif
 
 namespace anki {
 
@@ -41,55 +47,27 @@ void File::open(const char* filename, U16 flags_)
 	ANKI_ASSERT((flags_ & OF_READ) != (flags_ & OF_WRITE));
 
 	//
-	// In the following lines determine the file type and open it
+	// Determine the file type and open it
 	//
 
+	std::string archive, filenameInArchive;
+	FileType ft = identifyFile(filename, &archive, &filenameInArchive);
+
+	switch(ft)
+	{
 #if ANKI_OS == ANKI_OS_ANDROID
-	if(filename[0] == '$')
-	{
+	case FT_SPECIAL:
 		openAndFile(filename, flags_);
-	}
-	else
+		break;
 #endif
-	{
-		const char* aext = ".ankizip";
-		const char* ptrToArchiveExt = strstr(filename, aext);
-
-		if(ptrToArchiveExt == nullptr)
-		{
-			// It's a C file
-			openCFile(filename, flags_);
-		}
-		else
-		{
-			// Maybe it's a file in a zipped archive
-
-			PtrSize fnameLen = strlen(filename);
-			PtrSize extLen = strlen(aext);
-			PtrSize archLen = (PtrSize)(ptrToArchiveExt - filename) + extLen;
-
-			if(archLen + 1 >= fnameLen)
-			{
-				throw ANKI_EXCEPTION("Wrong file inside the archive");
-			}
-
-			std::string archive(filename, archLen);
-
-			if(directoryExists(archive.c_str()))
-			{
-				// It's a directory so failback to C file
-				openCFile(filename, flags_);
-			}
-			else
-			{
-				// It's a ziped file
-
-				std::string filenameInArchive(
-					filename + archLen + 1, fnameLen - archLen);
-
-				openZipFile(archive.c_str(), filenameInArchive.c_str(), flags_);
-			}
-		}
+	case FT_C:
+		openCFile(filename, flags_);
+		break;
+	case FT_ZIP:
+		openZipFile(archive.c_str(), filenameInArchive.c_str(), flags_);
+		break;
+	default:
+		ANKI_ASSERT(0);
 	}
 
 	//
@@ -551,6 +529,74 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 	{
 		ANKI_ASSERT(0);
 	}
+}
+
+//==============================================================================
+File::FileType File::identifyFile(const char* filename, 
+	std::string* archive_, std::string* filenameInArchive_)
+{
+	ANKI_ASSERT(filename && strlen(filename) > 1);
+
+#if ANKI_OS == ANKI_OS_ANDROID
+	if(filename[0] == '$')
+	{
+		return FT_SPECIAL;
+	}
+	else
+#endif
+	{
+		static const char aext[] = {".ankizip"};
+		const char* ptrToArchiveExt = strstr(filename, aext);
+
+		if(ptrToArchiveExt == nullptr)
+		{
+			// It's a C file
+			return FT_C;
+		}
+		else
+		{
+			// Maybe it's a file in a zipped archive
+
+			PtrSize fnameLen = strlen(filename);
+			const PtrSize extLen = sizeof(aext) - 1;
+			PtrSize archLen = (PtrSize)(ptrToArchiveExt - filename) + extLen;
+
+			if(archLen + 1 >= fnameLen)
+			{
+				throw ANKI_EXCEPTION("To sort archived filename");
+			}
+
+			std::string archive(filename, archLen);
+
+			if(directoryExists(archive.c_str()))
+			{
+				// It's a directory so failback to C file
+				return FT_C;
+			}
+			else
+			{
+				// It's a ziped file
+
+				std::string filenameInArchive(
+					filename + archLen + 1, fnameLen - archLen);
+
+				if(archive_)
+				{
+					*archive_ = archive;
+				}
+
+				if(filenameInArchive_)
+				{
+					*filenameInArchive_ = filenameInArchive;
+				}
+
+				return FT_ZIP;
+			}
+		}
+	}
+
+	ANKI_ASSERT(0);
+	return FT_C;
 }
 
 //==============================================================================

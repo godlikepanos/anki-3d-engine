@@ -19,7 +19,7 @@ vec3 unpackNormal(in vec2 enc)
 	return normal;
 }
 
-#if GL_ES
+#if GL_ES || __VERSION__ < 400
 // Vectorized version. See clean one at <= r1048
 uint packUnorm4x8(in vec4 v)
 {

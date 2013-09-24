@@ -377,9 +377,9 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 
 	if(major == 3)
 	{
-		preprocSrc += "#extension GL_ARB_shading_language_420pack : enable\n"
+		/*preprocSrc += "#extension GL_ARB_shading_language_420pack : enable\n"
 			"#extension GL_ARB_shading_language_packing : enable\n"
-			"#extension GL_ARB_gpu_shader5 : enable\n";
+			"#extension GL_ARB_gpu_shader5 : enable\n";*/
 	}
 
 #else

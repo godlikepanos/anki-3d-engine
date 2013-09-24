@@ -81,7 +81,7 @@ void initSubsystems()
 	nwinit.majorVersion = 3;
 	nwinit.minorVersion = 0;
 #else
-	nwinit.majorVersion = 4;
+	nwinit.majorVersion = 3;
 	nwinit.minorVersion = 3;
 #endif
 	nwinit.depthBits = 0;

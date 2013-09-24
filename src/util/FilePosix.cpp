@@ -47,6 +47,7 @@ Bool directoryExists(const char* filename)
 	}
 }
 
+//==============================================================================
 void removeDirectory(const char* dirname)
 {
 	DIR* dir;

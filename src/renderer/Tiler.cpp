@@ -11,6 +11,10 @@
 namespace anki {
 
 //==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
 #define CHECK_PLANE_PTR(p_) \
 	ANKI_ASSERT(p_ < &tiler->allPlanes[tiler->allPlanes.size()]);
 
@@ -35,10 +39,13 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 
 		if(frustumChanged)
 		{
+			// Re-calculate the planes in local space
+
 			const F32 fx = cam->getFovX();
 			const F32 fy = cam->getFovY();
 			const F32 n = cam->getNear();
 
+			// Calculate l6 and o6 used to rotate the planes
 			F32 l = 2.0 * n * tan(fx / 2.0);
 			F32 l6 = l / tiler->r->getTilesCount().x();
 			F32 o = 2.0 * n * tan(fy / 2.0);
@@ -53,9 +60,9 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 			{
 				calcPlaneI(i, o6);
 
-				CHECK_PLANE_PTR(&tiler->planesIW[i]);
-				CHECK_PLANE_PTR(&tiler->planesI[i]);
-				tiler->planesIW[i] = tiler->planesI[i].getTransformed(trf);
+				CHECK_PLANE_PTR(&tiler->planesYW[i]);
+				CHECK_PLANE_PTR(&tiler->planesY[i]);
+				tiler->planesYW[i] = tiler->planesY[i].getTransformed(trf);
 			}
 
 			// Then the right looking planes
@@ -67,9 +74,9 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 			{
 				calcPlaneJ(j, l6);
 
-				CHECK_PLANE_PTR(&tiler->planesJW[j]);
-				CHECK_PLANE_PTR(&tiler->planesJ[j]);
-				tiler->planesJW[j] = tiler->planesJ[j].getTransformed(trf);
+				CHECK_PLANE_PTR(&tiler->planesXW[j]);
+				CHECK_PLANE_PTR(&tiler->planesX[j]);
+				tiler->planesXW[j] = tiler->planesX[j].getTransformed(trf);
 			}
 		}
 		else
@@ -83,9 +90,9 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 
 			for(U i = start; i < end; i++)
 			{
-				CHECK_PLANE_PTR(&tiler->planesIW[i]);
-				CHECK_PLANE_PTR(&tiler->planesI[i]);
-				tiler->planesIW[i] = tiler->planesI[i].getTransformed(trf);
+				CHECK_PLANE_PTR(&tiler->planesYW[i]);
+				CHECK_PLANE_PTR(&tiler->planesY[i]);
+				tiler->planesYW[i] = tiler->planesY[i].getTransformed(trf);
 			}
 
 			// Then the right looking planes
@@ -95,9 +102,9 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 
 			for(U j = start; j < end; j++)
 			{
-				CHECK_PLANE_PTR(&tiler->planesJW[j]);
-				CHECK_PLANE_PTR(&tiler->planesJ[j]);
-				tiler->planesJW[j] = tiler->planesJ[j].getTransformed(trf);
+				CHECK_PLANE_PTR(&tiler->planesXW[j]);
+				CHECK_PLANE_PTR(&tiler->planesX[j]);
+				tiler->planesXW[j] = tiler->planesX[j].getTransformed(trf);
 			}
 		}
 
@@ -145,7 +152,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 	{
 		Vec3 a, b;
 		const F32 n = cam->getNear();
-		Plane& plane = tiler->planesI[i];
+		Plane& plane = tiler->planesY[i];
 		CHECK_PLANE_PTR(&plane);
 
 		a = Vec3(0.0, 
@@ -163,7 +170,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 	{
 		Vec3 a, b;
 		const F32 n = cam->getNear();
-		Plane& plane = tiler->planesJ[j];
+		Plane& plane = tiler->planesX[j];
 		CHECK_PLANE_PTR(&plane);
 
 		a = Vec3((I(j + 1) - I(tiler->r->getTilesCount().x()) / 2) * l6, 
@@ -247,12 +254,12 @@ void Tiler::initInternal(Renderer* r_)
 
 	allPlanes.resize(planesCount);
 
-	planesJ = &allPlanes[0];
-	planesI = planesJ + r->getTilesCount().x() - 1;
+	planesX = &allPlanes[0];
+	planesY = planesX + r->getTilesCount().x() - 1;
 
-	planesJW = planesI + r->getTilesCount().y() - 1;
-	planesIW = planesJW + r->getTilesCount().x() - 1;
-	nearPlanesW = planesIW + r->getTilesCount().y() - 1;
+	planesXW = planesY + r->getTilesCount().y() - 1;
+	planesYW = planesXW + r->getTilesCount().x() - 1;
+	nearPlanesW = planesYW + r->getTilesCount().y() - 1;
 	farPlanesW = nearPlanesW + r->getTilesCount().x() * r->getTilesCount().y();
 }
 
@@ -298,7 +305,7 @@ void Tiler::updateTiles(Camera& cam)
 	Array<UpdatePlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS> jobs;
 	U32 camTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
 
-	// Transform only the planes when:
+	// Do a job that transforms only the planes when:
 	// - it is the same camera as before and
 	// - the camera frustum have not changed
 	Bool frustumChanged =
@@ -325,11 +332,13 @@ void Tiler::updateTiles(Camera& cam)
 		break;
 	}
 
+	// Update timestamp
 	if(frustumChanged)
 	{
 		planes4UpdateTimestamp = getGlobTimestamp();
 	}
 
+	// Sync threads
 	threadPool.waitForAllJobsToFinish();
 
 	// 
@@ -346,6 +355,7 @@ Bool Tiler::test(
 {
 	Bitset bitset;
 
+	/// Call the recursive function
 	testRange(cs, nearPlane, 0, r->getTilesCount().y(), 0, 
 		r->getTilesCount().x(), bitset);
 
@@ -359,17 +369,17 @@ Bool Tiler::test(
 
 //==============================================================================
 void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
-	U iFrom, U iTo, U jFrom, U jTo, Bitset& bitset) const
+	U yFrom, U yTo, U xFrom, U xTo, Bitset& bitset) const
 {
-	U mi = (iTo - iFrom) / 2;
-	U mj = (jTo - jFrom) / 2;
+	U mi = (yTo - yFrom) / 2;
+	U mj = (xTo - xFrom) / 2;
 
 	ANKI_ASSERT(mi == mj && "Change the algorithm if they are not the same");
 
 	// Handle final
 	if(mi == 0 || mj == 0)
 	{
-		U tileId = iFrom * r->getTilesCount().x() + jFrom;
+		U tileId = yFrom * r->getTilesCount().x() + xFrom;
 
 		Bool inside = true;
 
@@ -404,11 +414,11 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		return;
 	}
 
-	// Find the correct top lookin plane (i)
-	const Plane& topPlane = planesIW[iFrom + mi - 1];
+	// Pick the correct top lookin plane (y)
+	const Plane& topPlane = planesYW[yFrom + mi - 1];
 
-	// Find the correct right looking plane (j)
-	const Plane& rightPlane = planesJW[jFrom + mj - 1];
+	// Pick the correct right looking plane (x)
+	const Plane& rightPlane = planesXW[xFrom + mj - 1];
 
 	// Do the checks
 	Bool inside[2][2] = {{false, false}, {false, false}};
@@ -459,8 +469,8 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 			if(inside[i][j])
 			{
 				testRange(cs, nearPlane,
-					iFrom + (i * mi), iFrom + ((i + 1) * mi),
-					jFrom + (j * mj), jFrom + ((j + 1) * mj),
+					yFrom + (i * mi), yFrom + ((i + 1) * mi),
+					xFrom + (j * mj), xFrom + ((j + 1) * mj),
 					bitset);
 			}
 		}
