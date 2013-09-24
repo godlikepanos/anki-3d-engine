@@ -1,5 +1,5 @@
 #!/bin/sh
 rm data.ankizip
-cd data
-zip -r ../data.ankizip . -i '*.mtl' '*.mdl' '*.mesh' '*.scene' '*.ankitex' '*.tga' '*.ttf' '*.ogg' '*.glsl' '*.ankipart'
+cd assets
+zip -r ../data.ankizip . -i '*.ankimtl' '*.ankimdl' '*.ankimesh' '*.ankiscene' '*.ankitex' '*.tga' '*.ttf' '*.ogg' '*.glsl' '*.ankipart'
 cd -

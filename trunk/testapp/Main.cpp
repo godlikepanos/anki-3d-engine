@@ -128,7 +128,7 @@ void init()
 #endif
 
 	// camera
-	cam = new PerspectiveCamera("main-camera", &scene, nullptr,
+	scene.newSceneNode(cam, "main-camera", nullptr,
 		Movable::MF_NONE);
 	const F32 ang = 45.0;
 	cam->setAll(
@@ -148,7 +148,8 @@ void init()
 		{
 			std::string name = "plight" + std::to_string(i) + std::to_string(j);
 
-			PointLight* point = new PointLight(name.c_str(), &scene, nullptr,
+			PointLight* point;
+			scene.newSceneNode(point, name.c_str(), nullptr,
 				Movable::MF_NONE);
 			point->setRadius(0.5);
 			point->setDiffuseColor(Vec4(randFloat(6.0) - 2.0, 
@@ -166,7 +167,8 @@ void init()
 #endif
 
 #if 1
-	SpotLight* spot = new SpotLight("spot0", &scene, nullptr, Movable::MF_NONE);
+	SpotLight* spot;
+	scene.newSceneNode(spot, "spot0", nullptr, Movable::MF_NONE);
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
@@ -177,7 +179,7 @@ void init()
 	spot->setShadowEnabled(true);
 
 
-	spot = new SpotLight("spot1", &scene, nullptr, Movable::MF_NONE);
+	scene.newSceneNode(spot, "spot1", nullptr, Movable::MF_NONE);
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(5.3, 4.3, 3.0),
@@ -199,9 +201,9 @@ void init()
 	{
 		Vec3 lightPos = vaseLightPos[i];
 
-		PointLight* point =
-			new PointLight(("vase_plight" + std::to_string(i)).c_str(),
-			&scene, nullptr, Movable::MF_NONE, 
+		PointLight* point;
+		scene.newSceneNode(point, ("vase_plight" + std::to_string(i)).c_str(),
+			nullptr, Movable::MF_NONE, 
 			(i != 100) ? "textures/lens_flare/flares0.ankitex" : nullptr);
 		point->setRadius(2.0);
 		point->setLocalOrigin(lightPos);
@@ -225,13 +227,13 @@ void init()
 		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
 		mevent->enableBits(Event::EF_REANIMATE);
 
-		ParticleEmitter* pe = new ParticleEmitter(
-			("pe" + std::to_string(i)).c_str(), &scene, nullptr,
+		ParticleEmitter* pe;
+		scene.newSceneNode(pe,
+			("pe" + std::to_string(i)).c_str(), nullptr,
 			Movable::MF_NONE, "particles/smoke.ankipart");
 		pe->setLocalOrigin(lightPos);
 
-		pe = new ParticleEmitter(
-			("pef" + std::to_string(i)).c_str(), &scene, nullptr,
+		scene.newSceneNode(pe, ("pef" + std::to_string(i)).c_str(), nullptr,
 			Movable::MF_NONE, "particles/fire.ankipart");
 		pe->setLocalOrigin(lightPos);
 	}
@@ -239,7 +241,7 @@ void init()
 
 #if 1
 	// horse
-	horse = new ModelNode("horse", &scene, nullptr,
+	scene.newSceneNode(horse, "horse", nullptr,
 		Movable::MF_NONE, "models/horse/horse.ankimdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		0.7));

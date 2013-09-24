@@ -9,11 +9,8 @@
 namespace anki {
 
 //==============================================================================
-// Consts
-
-static const U TILES_X_COUNT = ANKI_RENDERER_TILES_X_COUNT;
-static const U TILES_Y_COUNT = ANKI_RENDERER_TILES_Y_COUNT;
-static const U TILES_COUNT = TILES_X_COUNT * TILES_Y_COUNT;
+// Misc                                                                        =
+//==============================================================================
 
 //==============================================================================
 /// Check if the prev ground light vector is almost equal to the current
@@ -101,12 +98,12 @@ struct WriteLightsJob: ThreadJob
 	std::atomic<U32>* spotLightsCount = nullptr;
 	std::atomic<U32>* spotTexLightsCount = nullptr;
 		
-	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>*
-		tilePointLightsCount = nullptr;
-	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>*
-		tileSpotLightsCount = nullptr;
-	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>*
-		tileSpotTexLightsCount = nullptr;
+	Array2d<std::atomic<U32>, 
+		ANKI_RENDERER_MAX_TILES_Y, 
+		ANKI_RENDERER_MAX_TILES_X>
+		* tilePointLightsCount = nullptr,
+		* tileSpotLightsCount = nullptr,
+		* tileSpotTexLightsCount = nullptr;
 
 	Tiler* tiler = nullptr;
 	Is* is = nullptr;
@@ -284,7 +281,9 @@ struct WriteLightsJob: ThreadJob
 		tiler->test(light.getSpatialCollisionShape(), true, &bitset);
 
 		// Bin to the correct tiles
-		for(U t = 0; t < TILES_COUNT; t++)
+		PtrSize tilesCount = 
+			is->r->getTilesCount().x() * is->r->getTilesCount().y();
+		for(U t = 0; t < tilesCount; t++)
 		{
 			// If not in tile bye
 			if(!bitset.test(t))
@@ -292,8 +291,8 @@ struct WriteLightsJob: ThreadJob
 				continue;
 			}
 
-			U x = t % TILES_X_COUNT;
-			U y = t / TILES_X_COUNT;
+			U x = t % is->r->getTilesCount().x();
+			U y = t / is->r->getTilesCount().x();
 
 			U tilePos = (*tilePointLightsCount)[y][x].fetch_add(1);
 
@@ -312,7 +311,9 @@ struct WriteLightsJob: ThreadJob
 		tiler->test(light.getSpatialCollisionShape(), true, &bitset);
 
 		// Bin to the correct tiles
-		for(U t = 0; t < TILES_COUNT; t++)
+		PtrSize tilesCount = 
+			is->r->getTilesCount().x() * is->r->getTilesCount().y();
+		for(U t = 0; t < tilesCount; t++)
 		{
 			// If not in tile bye
 			if(!bitset.test(t))
@@ -320,8 +321,8 @@ struct WriteLightsJob: ThreadJob
 				continue;
 			}
 
-			U x = t % TILES_X_COUNT;
-			U y = t / TILES_X_COUNT;
+			U x = t % is->r->getTilesCount().x();
+			U y = t / is->r->getTilesCount().x();
 
 			if(light.getShadowEnabled())
 			{
@@ -352,7 +353,7 @@ struct WriteLightsJob: ThreadJob
 		PtrSize offset;
 
 		// Calc the start of the tile
-		offset = (tileY * TILES_X_COUNT + tileX) * tileSize;
+		offset = (tileY * is->r->getTilesCount().x() + tileX) * tileSize;
 
 		// Skip the lightsCount header
 		offset += sizeof(Vec4);
@@ -438,9 +439,10 @@ void Is::initInternal(const RendererInitializer& initializer)
 	//
 	std::stringstream pps;
 
-	pps << "\n#define TILES_X_COUNT " << TILES_X_COUNT
-		<< "\n#define TILES_Y_COUNT " << TILES_Y_COUNT 
-		<< "\n#define TILES_COUNT " << TILES_COUNT
+	pps << "\n#define TILES_X_COUNT " << r->getTilesCount().x()
+		<< "\n#define TILES_Y_COUNT " << r->getTilesCount().y()
+		<< "\n#define TILES_COUNT " 
+		<< (r->getTilesCount().x() * r->getTilesCount().y())
 		<< "\n#define RENDERER_WIDTH " << r->getWidth()
 		<< "\n#define RENDERER_HEIGHT " << r->getHeight()
 		<< "\n#define MAX_POINT_LIGHTS_PER_TILE " << (U32)maxPointLightsPerTile
@@ -708,16 +710,16 @@ void Is::lightPass()
 	std::atomic<U32> spotLightsAtomicCount(0);
 	std::atomic<U32> spotTexLightsAtomicCount(0);
 
-	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>
-		tilePointLightsCount;
-	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>
-		tileSpotLightsCount;
-	Array<Array<std::atomic<U32>, TILES_X_COUNT>, TILES_Y_COUNT>
+	Array2d<std::atomic<U32>, 
+		ANKI_RENDERER_MAX_TILES_Y, 
+		ANKI_RENDERER_MAX_TILES_X> 
+		tilePointLightsCount,
+		tileSpotLightsCount,
 		tileSpotTexLightsCount;
 
-	for(U y = 0; y < TILES_Y_COUNT; y++)
+	for(U y = 0; y < r->getTilesCount().y(); y++)
 	{
-		for(U x = 0; x < TILES_X_COUNT; x++)
+		for(U x = 0; x < r->getTilesCount().x(); x++)
 		{
 			tilePointLightsCount[y][x].store(0);
 			tileSpotLightsCount[y][x].store(0);
@@ -762,15 +764,16 @@ void Is::lightPass()
 	threadPool.waitForAllJobsToFinish();
 
 	// Write the light count for each tile
-	for(U y = 0; y < TILES_Y_COUNT; y++)
+	for(U y = 0; y < r->getTilesCount().y(); y++)
 	{
-		for(U x = 0; x < TILES_X_COUNT; x++)
+		for(U x = 0; x < r->getTilesCount().x(); x++)
 		{
 			const PtrSize tileSize = calcTileSize();
 			UVec4* vec;
 
 			vec = (UVec4*)(
-				&tilesClientBuffer[0] + (y * TILES_X_COUNT + x) * tileSize);
+				&tilesClientBuffer[0] + (y * r->getTilesCount().x() + x) 
+				* tileSize);
 
 			vec->x() = tilePointLightsCount[y][x].load();
 			clamp(vec->x(), maxPointLightsPerTile);
@@ -822,7 +825,7 @@ void Is::lightPass()
 		rejectProg->findUniformVariable("depthMap").set(
 			r->getMs().getDepthFai());
 
-		glDispatchCompute(TILES_X_COUNT, TILES_Y_COUNT, 1);
+		glDispatchCompute(r->getTilesCount().x(), r->getTilesCount().y(), 1);
 
 		tilesBuffer.setTarget(GL_UNIFORM_BUFFER);
 	}
@@ -867,7 +870,8 @@ void Is::lightPass()
 	lightPassProg->findUniformVariable("shadowMapArr").set(sm.sm2DArrayTex);
 
 	quadVao.bind();
-	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, TILES_COUNT);
+	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, 
+		r->getTilesCount().x() * r->getTilesCount().y());
 }
 
 //==============================================================================
@@ -974,7 +978,7 @@ PtrSize Is::calcTileSize() const
 //==============================================================================
 PtrSize Is::calcTilesUboSize() const
 {
-	return calcTileSize() * TILES_COUNT;
+	return calcTileSize() * r->getTilesCount().x() * r->getTilesCount().y();
 }
 
 } // end namespace anki

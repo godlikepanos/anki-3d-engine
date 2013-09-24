@@ -108,8 +108,8 @@
 #define ANKI_MAX_INSTANCES 32
 
 // Renderer and rendering related config options
-#define ANKI_RENDERER_TILES_X_COUNT 16
-#define ANKI_RENDERER_TILES_Y_COUNT 16
+#define ANKI_RENDERER_MAX_TILES_X 16
+#define ANKI_RENDERER_MAX_TILES_Y 16
 
 #define ANKI_RENDERER_USE_MATERIAL_UBOS 0
 

@@ -224,11 +224,21 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 
 	ANKI_COUNTER_START_TIMER(C_SCENE_UPDATE_TIME);
 
+	//
+	// Sync point. Here we wait for all scene's threads
+	//
+
+	// XXX
+
+	//
+	// Reset the frame mem pool
+	//
+	frameAlloc.reset();
+
 	deleteNodesMarkedForDeletion();
 
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
 	(void)threadPool;
-	frameAlloc.reset();
 
 	// XXX Do that in parallel
 	physics.update(prevUpdateTime, crntTime);

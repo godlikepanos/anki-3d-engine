@@ -11,7 +11,15 @@ namespace anki {
 /// @addtogroup filesystem
 /// @{
 
-/// An abstraction over typical files and files in ziped archives.
+/// An abstraction over typical files and files in ziped archives. This class
+/// can read from regular C files, zip files and on Android from the packed
+/// asset files.
+/// To identify the file:
+/// - If the path contains ".ankizip" (eg /path/to/arch.ankizip/path/file.ext) 
+///   it tries to open the archive and read the file from there.
+/// - If the filename starts with '$' it will try to load a system specific 
+///   file. For Android this is a file in the .apk
+/// - If the above are false then try to load a regular C file
 class File
 {
 private:
@@ -20,7 +28,7 @@ private:
 	{
 		FT_C = 1 << 0, ///< C file
 		FT_ZIP = 1 << 1, ///< Ziped file
-		FT_SPECIAL = 1 << 2 ///< For example file located in the android apk 
+		FT_SPECIAL = 1 << 2 ///< For example file is located in the android apk 
 	};
 
 public:
@@ -134,6 +142,10 @@ private:
 	/// Get the current machine's endianness
 	static Endianness getMachineEndianness();
 
+	/// Get the type of the file
+	FileType identifyFile(const char* filename,
+		std::string* archive, std::string* filenameInArchive);
+
 	/// Open a C file
 	void openCFile(const char* filename, U16 flags);
 
@@ -148,13 +160,13 @@ private:
 #endif
 };
 
-/// Directory exists?
-extern Bool directoryExists(const char* filename);
+/// Return true if directory exists?
+extern Bool directoryExists(const char* dir);
 
-/// rm -rf
+/// Equivalent to: rm -rf dir
 extern void removeDirectory(const char* dir);
 
-/// mkdir
+/// Equivalent to: mkdir dir
 extern void createDirectory(const char* dir);
 
 /// @}
