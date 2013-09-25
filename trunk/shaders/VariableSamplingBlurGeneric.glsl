@@ -18,7 +18,8 @@ void main()
 
 #pragma anki start fragmentShader
 
-precision mediump float;
+#define DEFAULT_FLOAT_PRECISION mediump
+#pragma anki include "shaders/Common.glsl"
 
 // Preprocessor switches sanity checks
 #if !defined(VPASS) && !defined(HPASS)
@@ -115,12 +116,12 @@ layout(location = 0) out COL_TYPE fFragColor;
 void main()
 {
 	// Get the first
-	COL_TYPE col = texture(img, vTexCoords + kernel[0]).TEX_FETCH;
+	COL_TYPE col = textureFai(img, vTexCoords + kernel[0]).TEX_FETCH;
 
 	// Get the rest of the samples
 	for(int i = 1; i < SAMPLES; i++)
 	{
-		col += texture(img, vTexCoords + kernel[i]).TEX_FETCH;
+		col += textureFai(img, vTexCoords + kernel[i]).TEX_FETCH;
 	}
 
 	fFragColor = col * (1.0 / float(SAMPLES));

@@ -5,17 +5,18 @@
 #pragma anki include shaders/SimpleVert.glsl
 
 #pragma anki start fragmentShader
-#pragma anki include shaders/CommonFrag.glsl
+#define DEFAULT_FLOAT_PRECISION lowp
+#pragma anki include shaders/Common.glsl
 #pragma anki include shaders/Pack.glsl
 
-uniform lowp sampler2D rasterImage;
+uniform sampler2D rasterImage;
 
-in vec2 vTexCoords;
-layout(location = 0) out lowp vec3 fFragColor;
+in highp vec2 vTexCoords;
+layout(location = 0) out vec3 fFragColor;
 
 void main()
 {
-	lowp vec3 col = texture(rasterImage, vTexCoords).rgb;
+	vec3 col = textureFai(rasterImage, vTexCoords).rgb;
 	//lowp vec3 col = vec3(readAndUnpackNormal(rasterImage, vTexCoords) * 0.5 + 0.5);
 	fFragColor = col;
 }

@@ -1,7 +1,7 @@
 // Common code for all fragment shaders of BS
 #define DEFAULT_FLOAT_PRECISION mediump
 
-#pragma anki include "shaders/CommonFrag.glsl"
+#pragma anki include "shaders/Common.glsl"
 #pragma anki include "shaders/MsBsCommon.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 

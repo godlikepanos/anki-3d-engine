@@ -3,7 +3,7 @@
 #pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
-#pragma anki include shaders/CommonFrag.glsl
+#pragma anki include shaders/Common.glsl
 
 #if !defined(TILES_X_COUNT) || !defined(TILES_Y_COUNT) || !defined(RENDERER_WIDTH) || !defined(RENDERER_HEIGHT)
 #error Forgot to define something

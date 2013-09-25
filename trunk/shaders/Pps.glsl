@@ -3,7 +3,7 @@
 #pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
-#pragma anki include "shaders/CommonFrag.glsl"
+#pragma anki include "shaders/Common.glsl"
 #pragma anki include "shaders/photoshop_filters.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
@@ -62,12 +62,12 @@ vec3 sharpen(in sampler2D tex, in vec2 texCoords)
 {
 	const float sharpenFactor = 0.25;
 
-	vec3 col = texture(tex, texCoords).rgb;
+	vec3 col = textureFai(tex, texCoords).rgb;
 
-	vec3 col2 = texture(tex, texCoords + KERNEL[0]).rgb;
+	vec3 col2 = textureFai(tex, texCoords + KERNEL[0]).rgb;
 	for(int i = 1; i < 8; i++)
 	{
-		col2 += texture(tex, texCoords + KERNEL[i]).rgb;
+		col2 += textureFai(tex, texCoords + KERNEL[i]).rgb;
 	}
 
 	return col * (8.0 * sharpenFactor + 1.0) - sharpenFactor * col2;
@@ -76,11 +76,11 @@ vec3 sharpen(in sampler2D tex, in vec2 texCoords)
 //==============================================================================
 vec3 erosion(in sampler2D tex, in vec2 texCoords)
 {
-    vec3 minValue = texture(tex, texCoords).rgb;
+    vec3 minValue = textureFai(tex, texCoords).rgb;
 
     for (int i = 0; i < 8; i++)
     {
-        vec3 tmpCol = textureLod(tex, texCoords + KERNEL[i], 0.0).rgb;
+        vec3 tmpCol = textureFai(tex, texCoords + KERNEL[i]).rgb;
         minValue = min(tmpCol, minValue);
     }
 
@@ -93,22 +93,22 @@ void main(void)
 #if defined(SHARPEN_ENABLED)
 	fColor = sharpen(isFai, vTexCoords);
 #else
-	fColor = texture(isFai, vTexCoords).rgb;
+	fColor = textureFai(isFai, vTexCoords).rgb;
 #endif
 	//fColor = erosion(isFai, vTexCoords);
 
 #if defined(HDR_ENABLED)
-	vec3 hdr = texture(ppsHdrFai, vTexCoords).rgb;
+	vec3 hdr = textureFai(ppsHdrFai, vTexCoords).rgb;
 	fColor += hdr;
 #endif
 
 #if defined(SSAO_ENABLED)
-	float ssao = texture(ppsSsaoFai, vTexCoords).r;
+	float ssao = textureFai(ppsSsaoFai, vTexCoords).r;
 	fColor *= ssao;
 #endif
 
 #if defined(LF_ENABLED)
-	vec3 lf = texture(ppsLfFai, vTexCoords).rgb;
+	vec3 lf = textureFai(ppsLfFai, vTexCoords).rgb;
 	fColor += lf;
 #endif
 

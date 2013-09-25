@@ -6,7 +6,7 @@
 #pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
-#pragma anki include "shaders/CommonFrag.glsl"
+#pragma anki include "shaders/Common.glsl"
 
 #define MAX_GHOSTS 4
 #define GHOST_DISPERSAL (0.7)
@@ -30,17 +30,17 @@ vec3 textureDistorted(
 {
 #if ENABLE_CHROMATIC_DISTORTION
 	return vec3(
-		texture(tex, texcoord + direction * distortion.r).r,
-		texture(tex, texcoord + direction * distortion.g).g,
-		texture(tex, texcoord + direction * distortion.b).b);
+		textureFai(tex, texcoord + direction * distortion.r).r,
+		textureFai(tex, texcoord + direction * distortion.g).g,
+		textureFai(tex, texcoord + direction * distortion.b).b);
 #else
-	return texture(tex, texcoord).rgb;
+	return textureFai(tex, texcoord).rgb;
 #endif
 }
 
 void main()
 {
-	vec2 texcoord = -vTexCoords + vec2(1.0);
+	vec2 texcoord = vec2(1.0) - vTexCoords;
 
 	vec2 imgSize = vec2(textureSize(tex, 0));
 

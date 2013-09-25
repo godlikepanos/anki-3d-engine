@@ -3,7 +3,7 @@
 #pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
-#pragma anki include "shaders/CommonFrag.glsl"
+#pragma anki include "shaders/Common.glsl"
 #pragma anki include "shaders/Pack.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
@@ -71,7 +71,7 @@ vec3 getRandom(in vec2 uv)
 // Get position in view space
 vec3 getPosition(in vec2 uv)
 {
-	float depth = texture(msDepthFai, uv).r;
+	float depth = textureFai(msDepthFai, uv).r;
 
 	vec3 fragPosVspace;
 	fragPosVspace.z = -planes.y / (planes.x + depth);
@@ -86,7 +86,7 @@ vec3 getPosition(in vec2 uv)
 
 float getZ(in vec2 uv)
 {
-	float depth = texture(msDepthFai, uv).r;
+	float depth = textureFai(msDepthFai, uv).r;
 	float z = -planes.y / (planes.x + depth);
 	return z;
 }
