@@ -1,6 +1,7 @@
 // Debug stage shader program
 
 #pragma anki start vertexShader
+#pragma anki include "shaders/Common.glsl"
 #pragma anki include "shaders/Pack.glsl"
 
 layout(location = 0) in vec3 position;
@@ -16,7 +17,7 @@ void main()
 }
 
 #pragma anki start fragmentShader
-#pragma anki include "shaders/CommonFrag.glsl"
+#pragma anki include "shaders/Common.glsl"
 
 in vec3 vColor;
 

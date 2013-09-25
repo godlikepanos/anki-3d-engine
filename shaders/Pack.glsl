@@ -79,15 +79,15 @@ void readGBuffer(
 	out float specPower)
 {
 #if USE_MRT
-	vec4 comp = texture(fai0, texCoord);
+	vec4 comp = textureFai(fai0, texCoord);
 	diffColor = comp.rgb;
 	specColor = comp.a;
 
-	comp = texture(fai1, texCoord);
+	comp = textureFai(fai1, texCoord);
 	normal = normalize(comp.xyz * 2.0 - 1.0);
 	specPower = comp.w * MAX_SPECULARITY;
 #else
-	highp uvec2 all_ = texture(fai0, texCoord).rg;
+	highp uvec2 all_ = textureFai(fai0, texCoord).rg;
 
 	vec4 v = unpackUnorm4x8(all_[0]);
 	diffColor = v.rgb;
@@ -110,9 +110,9 @@ void readNormalFromGBuffer(
 	out vec3 normal)
 {
 #if USE_MRT
-	normal = normalize(texture(fai1, texCoord).xyz);
+	normal = normalize(textureFai(fai1, texCoord).xyz);
 #else
-	vec4 v = unpackUnorm4x8(texture(fai0, texCoord).g);
+	vec4 v = unpackUnorm4x8(textureFai(fai0, texCoord).g);
 	normal = normalize(v.xyz * 2.0 - 1.0);
 #endif
 }

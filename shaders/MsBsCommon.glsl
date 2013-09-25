@@ -1,3 +1,5 @@
+#pragma anki include "shaders/Common.glsl"
+
 /// Generic add
 #define add_DEFINED
 #define add(a, b) ((a) + (b))

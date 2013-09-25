@@ -155,8 +155,9 @@ public:
 	void checkNonSharable() const
 	{
 #if ANKI_DEBUG
-		ANKI_ASSERT(creationThreadId == std::this_thread::get_id() && 
-				"Object is not context sharable");
+		ANKI_ASSERT((!isCreated() 
+			|| creationThreadId == std::this_thread::get_id())
+			&& "Object is not context sharable");
 #endif
 	}
 

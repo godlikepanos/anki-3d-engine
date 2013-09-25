@@ -3,7 +3,7 @@
 #pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
-#pragma anki include "shaders/CommonFrag.glsl"
+#pragma anki include "shaders/Common.glsl"
 
 uniform lowp sampler2D fai; ///< Its the IS FAI
 
@@ -22,7 +22,7 @@ const float brightMax = 4.0;
 
 void main()
 {
-	vec3 color = texture(fai, vTexCoords).rgb;
+	vec3 color = textureFai(fai, vTexCoords).rgb;
 
 	float luminance = dot(vec3(0.30, 0.59, 0.11), color);
 	float yd = exposure * (exposure / brightMax + 1.0) /

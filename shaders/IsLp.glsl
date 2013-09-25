@@ -38,7 +38,7 @@ void main()
 }
 
 #pragma anki start fragmentShader
-#pragma anki include "shaders/CommonFrag.glsl"
+#pragma anki include "shaders/Common.glsl"
 #pragma anki include "shaders/Pack.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 #pragma anki include "shaders/IsCommon.glsl"
@@ -117,7 +117,7 @@ out vec3 fColor;
 /// @return frag pos in view space
 vec3 getFragPosVSpace()
 {
-	float depth = texture(msDepthFai, vTexCoords).r;
+	float depth = textureFai(msDepthFai, vTexCoords).r;
 
 	vec3 fragPosVspace;
 	fragPosVspace.z = planes.y / (planes.x + depth);

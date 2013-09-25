@@ -34,7 +34,7 @@ void main()
 
 #pragma anki start fragmentShader
 #define DEFAULT_FLOAT_PRECISION mediump
-#pragma anki include "shaders/CommonFrag.glsl"
+#pragma anki include "shaders/Common.glsl"
 
 #define SINGLE_FLARE 0
 
