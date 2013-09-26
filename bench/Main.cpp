@@ -143,6 +143,7 @@ void initSubsystems()
 	initializer.get("maxTextureSize") = 1024;
 	initializer.get("mrt") = false;
 	initializer.get("pps.sharpen") = false;
+	initializer.get("pps.gammaCorrection") = false;
 #endif
 
 	MainRendererSingleton::get().init(initializer);

@@ -53,6 +53,7 @@ RendererInitializer::RendererInitializer()
 
 	newOption("pps.enabled", true);
 	newOption("pps.sharpen", true);
+	newOption("pps.gammaCorrection", true);
 
 	// Dbg
 	newOption("dbg.enabled", false);

@@ -3,6 +3,7 @@
 #pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
+#define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/Common.glsl"
 
 uniform lowp sampler2D fai; ///< Its the IS FAI

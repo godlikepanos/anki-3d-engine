@@ -3,6 +3,37 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(anki)
 
 #
+# Determin the system to build for. Do that first
+#
+
+if(WIN32)
+	if(NOT WINDOWS)
+		set(WINDOWS TRUE)
+		message("++ Building for windows")
+	endif()
+elseif(UNIX AND NOT APPLE)
+	if(CMAKE_SYSTEM_NAME MATCHES ".*Linux")
+		if(NOT ANDROID)
+			set(LINUX TRUE)
+			message("++ Building for Linux")
+		else()
+			message("++ Building for Android")
+		endif()
+	else()
+		message(FATAL_ERROR "Unknown unix")
+	endif()
+elseif(APPLE)
+	if(CMAKE_SYSTEM_NAME MATCHES ".*MacOS.*")
+		set(MACOS TRUE)
+		message("++ Building for MacOS")
+	else()
+		message(FATAL_ERROR "Unknown apple")
+	endif()
+else()
+	message(FATAL_ERROR "Unknown system")
+endif()
+
+#
 # Configuration
 #
 
@@ -38,17 +69,15 @@ ELSE()
 ENDIF()
 
 # Take a wild guess on the windowing system
-IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-	IF(${ANDROID})
-		SET(_WIN_BACKEND "ANDROID")
-	ELSE()
-		SET(_WIN_BACKEND "GLXX11")
-	ENDIF()
-ELSEIF(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-	SET(_WIN_BACKEND "MACOS")
-ELSE()
-	MESSAGE(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually")
-ENDIF()
+if(LINUX)
+	set(_WIN_BACKEND "GLXX11")
+elseif(ANDROID)
+	set(_WIN_BACKEND "ANDROID")
+elseif(MACOS)
+	set(_WIN_BACKEND "MACOS")
+else()
+	message(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually")
+endif()
 
 SET(ANKI_WINDOW_BACKEND "${_WIN_BACKEND}" CACHE STRING "The window backend (GLXX11 or EGLX11 or EGLFBDEV or MACOS or or ANDROID or DUMMY)")
 

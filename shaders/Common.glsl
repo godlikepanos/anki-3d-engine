@@ -17,5 +17,6 @@ precision DEFAULT_FLOAT_PRECISION int;
 
 // Read from a render target texture
 #define textureFai(tex_, texc_) texture(tex_, texc_)
+//#define textureFai(tex_, texc_) textureLod(tex_, texc_, 0.0)
 
 #endif
