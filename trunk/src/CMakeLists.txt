@@ -26,6 +26,10 @@ ELSE()
 	MESSAGE(FATAL_ERROR "Unrecognized ANKI_WINDOW_BACKEND: ${ANKI_WINDOW_BACKEND}")
 ENDIF()
 
+if(ANKI_USE_SDL)
+	SET(ANKI_LIBS ${ANKI_LIBS} ankisdl)
+endif()
+
 ADD_LIBRARY(anki Dummy.cpp "${_SYS_SRC}")
 
 TARGET_LINK_LIBRARIES(anki ${ANKI_LIBS} ankitinyxml2 ankilua ankibullet ankiz ${ANKI_GPERFTOOLS_LIBS} ${_SYS})
