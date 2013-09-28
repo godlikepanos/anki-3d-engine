@@ -1,32 +1,30 @@
 #
 # Add anki sub libraries
 #
-SET(ANKI_SUB_DIRS script renderer scene event input physics resource core misc gl collision math util)
+set(ANKI_SUB_DIRS script renderer scene event input physics resource core misc gl collision math util)
 
-SET(ANKI_LIBS "")
+set(ANKI_LIBS "")
 
-FOREACH(TMP ${ANKI_SUB_DIRS})
-	ADD_SUBDIRECTORY(${TMP})
-	SET(ANKI_LIBS ${ANKI_LIBS} anki${TMP})
-ENDFOREACH()
+foreach(TMP ${ANKI_SUB_DIRS})
+	add_subdirectory(${TMP})
+	set(ANKI_LIBS ${ANKI_LIBS} anki${TMP})
+endforeach()
 
 # Set the platform libraries
-IF(${ANKI_WINDOW_BACKEND} STREQUAL "GLXX11")
-	SET(_SYS GL ankiglew pthread)
-ELSEIF(${ANKI_WINDOW_BACKEND} STREQUAL "MACOS")
-	FIND_PACKAGE(OpenGL REQUIRED)
-	SET(_SYS ${OPENGL_LIBRARIES} ankiglew pthread)
-ELSEIF(${ANKI_WINDOW_BACKEND} STREQUAL "ANDROID")
-	SET(_SYS GLESv3 EGL log android)
-	INCLUDE_DIRECTORIES("${ANDROID_NDK}/sources/android/native_app_glue")
-	SET(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
-ELSEIF(${ANKI_WINDOW_BACKEND} STREQUAL "EGLFBDEV")
-	SET(_SYS GLESv2 EGL mali pthread)
-ELSE()
-	MESSAGE(FATAL_ERROR "Unrecognized ANKI_WINDOW_BACKEND: ${ANKI_WINDOW_BACKEND}")
-ENDIF()
+if(LINUX)
+	set(_SYS GL ankiglew pthread)
+elseif(MACOS)
+	find_package(OpenGL REQUIRED)
+	set(_SYS ${OPENGL_LIBRARIES} ankiglew pthread)
+elseif(ANDROID)
+	set(_SYS GLESv3 EGL log android)
+	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
+	set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
+else()
+	message(FATAL_ERROR "Unhandled case")
+endif()
 
-if(ANKI_USE_SDL)
+if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
 	SET(ANKI_LIBS ${ANKI_LIBS} ankisdl)
 endif()
 

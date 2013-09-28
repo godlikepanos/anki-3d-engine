@@ -1,9 +1,9 @@
-SET(ANKI_UTIL_SOURCES Assert.cpp Exception.cpp Functions.cpp StringList.cpp File.cpp Allocator.cpp Memory.cpp System.cpp HighRezTimer.cpp)
+set(ANKI_UTIL_SOURCES Assert.cpp Exception.cpp Functions.cpp StringList.cpp File.cpp Allocator.cpp Memory.cpp System.cpp HighRezTimer.cpp)
 
-IF(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-	SET(ANKI_UTIL_SOURCES ${ANKI_UTIL_SOURCES} HighRezTimerPosix.cpp FilePosix.cpp)
-ELSE()
-	MESSAGE(FATAL "See file")
-ENDIF()
+if(LINUX OR ANDROID OR MACOS)
+	set(ANKI_UTIL_SOURCES ${ANKI_UTIL_SOURCES} HighRezTimerPosix.cpp FilePosix.cpp)
+else()
+	message(FATAL "See file")
+endif()
 
-ADD_LIBRARY(ankiutil ${ANKI_UTIL_SOURCES})
+add_library(ankiutil ${ANKI_UTIL_SOURCES})

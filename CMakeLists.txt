@@ -37,187 +37,188 @@ endif()
 # Configuration
 #
 
-SET(ANKI_BUILD_TYPE "Release" CACHE STRING "Like CMAKE_BUILD_TYPE (Release or Debug)")
+set(ANKI_BUILD_TYPE "Release" CACHE STRING "Like CMAKE_BUILD_TYPE (Release or Debug)")
 
-OPTION(ANKI_BUILD_TOOLS "Build tools" ON)
-OPTION(ANKI_BUILD_TESTS "Build unit tests" OFF)
-OPTION(ANKI_BUILD_TESTAPP "Build test application" ON)
-OPTION(ANKI_BUILD_BENCH "Build benchmark application" OFF)
+option(ANKI_BUILD_TOOLS "Build tools" ON)
+option(ANKI_BUILD_TESTS "Build unit tests" OFF)
+option(ANKI_BUILD_TESTAPP "Build test application" ON)
+option(ANKI_BUILD_BENCH "Build benchmark application" OFF)
 
-OPTION(ANKI_WITH_GPERFTOOLS_PROF "Link with gperftools profiler" OFF)
+option(ANKI_WITH_GPERFTOOLS_PROF "Link with gperftools profiler" OFF)
 
-OPTION(ANKI_STRIP "Srip the symbols from the executables" OFF)
+option(ANKI_STRIP "Srip the symbols from the executables" OFF)
 
-OPTION(ANKI_ENABLE_COUNTERS "Enable performance counters. Small overhead" OFF)
-IF(ANKI_ENABLE_COUNTERS)
-	SET(_ANKI_ENABLE_COUNTERS 1)
-ELSE()
-	SET(_ANKI_ENABLE_COUNTERS 0)
-ENDIF()
+option(ANKI_ENABLE_COUNTERS "Enable performance counters. Small overhead" OFF)
+if(ANKI_ENABLE_COUNTERS)
+	set(_ANKI_ENABLE_COUNTERS 1)
+else()
+	set(_ANKI_ENABLE_COUNTERS 0)
+endif()
 
 # Address space
-SET(ANKI_CPU_ADDR_SPACE "0" CACHE STRING 
-	"The CPU architecture (0 or 32 or 64). If zero go native")
+set(ANKI_CPU_ADDR_SPACE "0" CACHE STRING "The CPU architecture (0 or 32 or 64). If zero go native")
 
 # SIMD
-OPTION(ANKI_ENABLE_SIMD "Enable or not SIMD optimizations" ON)
+option(ANKI_ENABLE_SIMD "Enable or not SIMD optimizations" ON)
 
-IF(ANKI_ENABLE_SIMD)
-	SET(_ANKI_ENABLE_SIMD 1)
-ELSE()
-	SET(_ANKI_ENABLE_SIMD 0)
-ENDIF()
+if(ANKI_ENABLE_SIMD)
+	set(_ANKI_ENABLE_SIMD 1)
+else()
+	set(_ANKI_ENABLE_SIMD 0)
+endif()
 
 # Take a wild guess on the windowing system
 if(LINUX)
-	set(_WIN_BACKEND "GLXX11")
+	#set(_WIN_BACKEND "GLXX11")
+	set(_WIN_BACKEND "SDL")
+else(WINDOWS)
+	set(_WIN_BACKEND "SDL")
 elseif(ANDROID)
 	set(_WIN_BACKEND "ANDROID")
 elseif(MACOS)
-	set(_WIN_BACKEND "MACOS")
+	set(_WIN_BACKEND "SDL")
 else()
 	message(FATAL_ERROR "Couldn't determine the window backend. You need to specify it manually")
 endif()
 
-SET(ANKI_WINDOW_BACKEND "${_WIN_BACKEND}" CACHE STRING "The window backend (GLXX11 or EGLX11 or EGLFBDEV or MACOS or or ANDROID or DUMMY)")
+set(ANKI_WINDOW_BACKEND "${_WIN_BACKEND}" CACHE STRING "The window backend (GLXX11 or EGLX11 or EGLFBDEV or ANDROID or SDL or DUMMY)")
 
-OPTION(ANKI_GCC_TO_STRING_WORKAROUND "Enable workaround for C++11 GCC bug" OFF)
-IF(ANKI_GCC_TO_STRING_WORKAROUND)
-	SET(_ANKI_GCC_TO_STRING_WORKAROUND 1)
-ELSE()
-	SET(_ANKI_GCC_TO_STRING_WORKAROUND 0)
-ENDIF()
-
+option(ANKI_GCC_TO_STRING_WORKAROUND "Enable workaround for C++11 GCC bug" OFF)
+if(ANKI_GCC_TO_STRING_WORKAROUND)
+	set(_ANKI_GCC_TO_STRING_WORKAROUND 1)
+else()
+	set(_ANKI_GCC_TO_STRING_WORKAROUND 0)
+endif()
 
 # Extra directories
-SET(ANKI_EXTRA_INCLUDE_DIRS CACHE STRING "Some extra include paths (Needed for some weird builds)")
-SET(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for some weird builds)")
+set(ANKI_EXTRA_INCLUDE_DIRS CACHE STRING "Some extra include paths (Needed for some weird builds)")
+set(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for some weird builds)")
 
 # Valgrind
-OPTION(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
+option(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
 
 #
 # Options that affect anki and extern
 #
 
-SET(CXX_FLAGS "")
-SET(COMPILER_FLAGS "")
-SET(LINKER_FLAGS "")
+set(CXX_FLAGS "")
+set(COMPILER_FLAGS "")
+set(LINKER_FLAGS "")
 
 # address space
-IF(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
-	SET(LINKER_FLAGS "${LINKER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
-	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
-ENDIF()
+if(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
+	set(LINKER_FLAGS "${LINKER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
+endif()
 
 # static libstdc++
-SET(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
+set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
 
 # SSE
-IF(${ANKI_WINDOW_BACKEND} STREQUAL "GLXX11" OR ${ANKI_WINDOW_BACKEND} STREQUAL "MACOS")
-	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -msse4 ")
-ELSE()
-	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -mfpu=neon ")
-ENDIF()
+if(LINUX OR MACOS OR WINDOWS)
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -msse4 ")
+else()
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -mfpu=neon ")
+endif()
 
-IF(${ANKI_BUILD_TYPE} STREQUAL "Debug")
+if(${ANKI_BUILD_TYPE} STREQUAL "Debug")
 	# Debug
 
-	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -g3 -O0 ")
-ELSE()
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -g3 -O0 ")
+else()
 	# Release
 
 	# -flto ?
-	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O4 -DNODEBUG ")
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O4 -DNODEBUG ")
 
 	# Add this because Android compiler complains
-	IF(ANDROID)
-		SET(COMPILER_FLAGS "${COMPILER_FLAGS} -fno-data-sections ")
-	ENDIF()
+	if(ANDROID)
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -fno-data-sections ")
+	endif()
 
-	SET(CXX_FLAGS "${CXX_FLAGS} -fno-rtti ")
-ENDIF()
+	set(CXX_FLAGS "${CXX_FLAGS} -fno-rtti ")
+endif()
 
 # Valgrind hacks
-IF(ANKI_VALGRIND_HAPPY)
-	ADD_DEFINITIONS("-DGLIBCXX_FORCE_NEW")
-ENDIF()
+if(ANKI_VALGRIND_HAPPY)
+	add_definitions("-DGLIBCXX_FORCE_NEW")
+endif()
 
 # Disable GLU in GLEW
-ADD_DEFINITIONS(-DGLEW_NO_GLU)
+add_definitions(-DGLEW_NO_GLU)
 
 # Strip
-IF(ANKI_STRIP)
-	SET(LINKER_FLAGS "${LINKER_FLAGS} -s ")
-	SET(COMPILER_FLAGS "${COMPILER_FLAGS} -s ")
-ENDIF()
+if(ANKI_STRIP)
+	set(LINKER_FLAGS "${LINKER_FLAGS} -s ")
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -s ")
+endif()
 
 # gperftools
-IF(ANKI_WITH_GPERFTOOLS_PROF)
+if(ANKI_WITH_GPERFTOOLS_PROF)
 	LINK_DIRECTORIES("/home/godlike/src/more/gperftools/install/lib")
-	SET(ANKI_GPERFTOOLS_LIBS "profiler")
-ELSE()
-	SET(ANKI_GPERFTOOLS_LIBS "")
-ENDIF()
+	set(ANKI_GPERFTOOLS_LIBS "profiler")
+else()
+	set(ANKI_GPERFTOOLS_LIBS "")
+endif()
 
-INCLUDE_DIRECTORIES(${ANKI_EXTRA_INCLUDE_DIRS})
-LINK_DIRECTORIES(${ANKI_EXTRA_LIB_DIRS})
+include_directories(${ANKI_EXTRA_INCLUDE_DIRS})
+link_directories(${ANKI_EXTRA_LIB_DIRS})
 
 # Set the flags to cmake now
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_FLAGS} ${COMPILER_FLAGS}")
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMPILER_FLAGS}")
-SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_FLAGS} ${COMPILER_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMPILER_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
 
 #
 # Install
 #
-SET(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include/" CACHE PATH "The subdirectory to the header prefix")
-SET(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Library install path")
+set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include/" CACHE PATH "The subdirectory to the header prefix")
+set(LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/lib" CACHE PATH "Library install path")
 
-MESSAGE("++ Include install dir: ${INCLUDE_INSTALL_DIR}")
-MESSAGE("++ Lib install dir: ${LIB_INSTALL_DIR}")
+message("++ Include install dir: ${INCLUDE_INSTALL_DIR}")
+message("++ Lib install dir: ${LIB_INSTALL_DIR}")
 
 #
 # First the extern
 #
-ADD_SUBDIRECTORY(extern)
+add_subdirectory(extern)
 
 #
 # Doxygen
 #
-FIND_PACKAGE(Doxygen)
+find_package(Doxygen)
 
-IF(DOXYGEN_FOUND)
-	CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY)
+if(DOXYGEN_FOUND)
+	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/docs/doxyfile ${CMAKE_CURRENT_BINARY_DIR}/doxyfile @ONLY)
 	
-	ADD_CUSTOM_TARGET(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} 
+	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} 
 		COMMENT "Generating API documentation with Doxygen" VERBATIM)
-ENDIF()
+endif()
 
 #
 # Revision
 #
-FIND_PACKAGE(Subversion 1.6)
+find_package(Subversion 1.6)
 
-IF(Subversion_FOUND)
+if(Subversion_FOUND)
 	Subversion_WC_INFO(${CMAKE_CURRENT_SOURCE_DIR} ER)
-	SET(ANKI_REVISION ${ER_WC_REVISION})
-ELSE()
-	SET(ANKI_REVISION "-1")
-ENDIF()
+	set(ANKI_REVISION ${ER_WC_REVISION})
+else()
+	set(ANKI_REVISION "-1")
+endif()
 
 # 
 # Config.h
 #
-SET(ANKI_VERSION_MAJOR 0)
-SET(ANKI_VERSION_MINOR 1)
-MESSAGE("++ AnKi version: ${ANKI_VERSION_MAJOR}.${ANKI_VERSION_MINOR}")
+set(ANKI_VERSION_MAJOR 0)
+set(ANKI_VERSION_MINOR 1)
+message("++ AnKi version: ${ANKI_VERSION_MAJOR}.${ANKI_VERSION_MINOR}")
 
-IF(${ANKI_BUILD_TYPE} STREQUAL "Debug")
-	SET(ANKI_DEBUG 1)
-ELSE()
-	SET(ANKI_DEBUG 0)
-ENDIF()
+if(${ANKI_BUILD_TYPE} STREQUAL "Debug")
+	set(ANKI_DEBUG 1)
+else()
+	set(ANKI_DEBUG 0)
+endif()
 
 CONFIGURE_FILE("include/anki/Config.h.cmake" "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h")
 INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE_INSTALL_DIR}/anki")
@@ -225,62 +226,62 @@ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE
 #
 # Include & lib directories
 #
-INCLUDE_DIRECTORIES("extern/tinyxml2/include" "extern/lua" "extern/z" "extern/bullet" "include" "${CMAKE_CURRENT_BINARY_DIR}")
+include_directories("extern/tinyxml2/include" "extern/lua" "extern/z" "extern/bullet" "extern/SDL2/include" "include" "${CMAKE_CURRENT_BINARY_DIR}")
 
-IF(${ANKI_WINDOW_BACKEND} STREQUAL "GLXX11" OR ${ANKI_WINDOW_BACKEND} STREQUAL "MACOS")
-	INCLUDE_DIRECTORIES("extern/GLEW/include")
-ELSE()
-	#INCLUDE_DIRECTORIES("extern/GLES3/include")
-ENDIF()
+if(LINUX OR MACOS OR WINDOWS)
+	include_directories("extern/GLEW/include")
+else()
+	#include_directories("extern/GLES3/include")
+endif()
 
-IF(${ANKI_WINDOW_BACKEND} STREQUAL "ANDROID")
-	INCLUDE_DIRECTORIES("${ANDROID_NDK}/sources/android/native_app_glue")
-ENDIF()
+if(ANDROID)
+	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
+endif()
 
 #
 # AnKi specific compiler flags
 #
 
 # thread local
-ADD_DEFINITIONS("-Dthread_local=__thread")
+add_definitions("-Dthread_local=__thread")
 
 # AnKi compiler flags (Mainly warnings)
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -std=c++11 ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -std=c++11 ")
 
 #
 # Add anki related dirs
 #
-ADD_SUBDIRECTORY(src)
+add_subdirectory(src)
 
-IF(ANKI_BUILD_TESTS)
+if(ANKI_BUILD_TESTS)
 	ENABLE_TESTING()
-	ADD_SUBDIRECTORY(tests)
-ENDIF()
+	add_subdirectory(tests)
+endif()
 
-IF(ANKI_BUILD_TOOLS)
-	ADD_SUBDIRECTORY(tools)
-ENDIF()
+if(ANKI_BUILD_TOOLS)
+	add_subdirectory(tools)
+endif()
 
-IF(ANKI_BUILD_TESTAPP)
-	ADD_SUBDIRECTORY(testapp)
-ENDIF()
+if(ANKI_BUILD_TESTAPP)
+	add_subdirectory(testapp)
+endif()
 
-IF(ANKI_BUILD_BENCH)
-	ADD_SUBDIRECTORY(bench)
-ENDIF()
+if(ANKI_BUILD_BENCH)
+	add_subdirectory(bench)
+endif()
 
 #
 # XXX
 #
-IF(${ANDROID})
+if(${ANDROID})
 	# 1. generate Android.mk
 	FILE(WRITE ./jni/Android.mk "APP_ABI := ${ANDROID_NDK_ABI_NAME}\n")
 
 	# 2. generate gdb.setup
-	GET_DIRECTORY_PROPERTY(INCLUDE_DIRECTORIES DIRECTORY . INCLUDE_DIRECTORIES)
-	STRING(REGEX REPLACE ";" " " INCLUDE_DIRECTORIES "${INCLUDE_DIRECTORIES}")
+	GET_DIRECTORY_PROPERTY(include_directories DIRECTORY . include_directories)
+	STRING(REGEX REPLACE ";" " " include_directories "${include_directories}")
 	FILE(WRITE ./libs/${ANDROID_NDK_ABI_NAME}/gdb.setup "set solib-search-path ./libs/${ANDROID_NDK_ABI_NAME}\n")
-	FILE(APPEND ./libs/${ANDROID_NDK_ABI_NAME}/gdb.setup "directory ${INCLUDE_DIRECTORIES} ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}\n")
+	FILE(APPEND ./libs/${ANDROID_NDK_ABI_NAME}/gdb.setup "directory ${include_directories} ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}\n")
 
 	# 3. copy gdbserver executable
 	FILE(COPY ${ANDROID_NDK}/prebuilt/android-arm/gdbserver/gdbserver DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/libs/${ANDROID_NDK_ABI_NAME}/)
@@ -290,4 +291,4 @@ IF(${ANDROID})
 	# 4. copy lib to obj
 	#ADD_CUSTOM_COMMAND(TARGET ${LIBRARY_NAME} POST_BUILD COMMAND mkdir -p ./obj/local/${ANDROID_NDK_ABI_NAME}/)
 	#ADD_CUSTOM_COMMAND(TARGET ${LIBRARY_NAME} POST_BUILD COMMAND cp ./libs/${ANDROID_NDK_ABI_NAME}/lib${LIBRARY_NAME}.so ./obj/local/${ANDROID_NDK_ABI_NAME}/)
-ENDIF()
+endif()

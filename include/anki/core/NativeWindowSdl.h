@@ -10,7 +10,7 @@ namespace anki {
 struct NativeWindowImpl
 {
 	SDL_Window* window = nullptr;
-	SDL_GLContext ctx = 0;
+	SDL_GLContext context = 0;
 };
 
 } // end namespace anki
