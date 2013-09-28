@@ -237,7 +237,7 @@ void NativeWindowImpl::createInternal(NativeWindowInitializer& init)
 	glewExperimental = GL_TRUE;
 	if(glewInit() != GLEW_OK)
 	{
-		throw ANKI_EXCEPTION("GL initialization failed");
+		throw ANKI_EXCEPTION("GLEW initialization failed");
 	}
 	glGetError();
 }
