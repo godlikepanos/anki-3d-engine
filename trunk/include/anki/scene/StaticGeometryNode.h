@@ -3,7 +3,7 @@
 
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/scene/Renderable.h"
 
 namespace anki {
@@ -12,7 +12,7 @@ namespace anki {
 /// @{
 
 /// Part of the static geometry. Used only for visibility tests
-class StaticGeometrySpatial: public Spatial
+class StaticGeometrySpatial: public SpatialComponent
 {
 public:
 	/// @name Constructors/Destructor
@@ -22,7 +22,7 @@ public:
 };
 
 /// Static geometry scene node patch
-class StaticGeometryPatchNode: public SceneNode, public Spatial,
+class StaticGeometryPatchNode: public SceneNode, public SpatialComponent,
 	public Renderable
 {
 public:

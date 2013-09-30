@@ -1,10 +1,9 @@
-#include "anki/scene/Spatial.h"
-#include "anki/scene/Octree.h"
+#include "anki/scene/SpatialComponent.h"
 
 namespace anki {
 
 //==============================================================================
-Spatial::~Spatial()
+SpatialComponent::~SpatialComponent()
 {}
 
 } // end namespace anki

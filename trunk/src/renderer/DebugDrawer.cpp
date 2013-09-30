@@ -483,9 +483,9 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		draw(*fr);
 	}
 
-	Spatial* sp;
+	SpatialComponent* sp;
 	if((sp = node.getSpatial())
-		&& sp->bitsEnabled(Spatial::SF_VISIBLE_CAMERA))
+		&& sp->bitsEnabled(SpatialComponent::SF_VISIBLE_CAMERA))
 	{
 		draw(*sp);
 	}
@@ -508,20 +508,20 @@ void SceneDebugDrawer::draw(Frustumable& fr) const
 }
 
 //==============================================================================
-void SceneDebugDrawer::draw(Spatial& x) const
+void SceneDebugDrawer::draw(SpatialComponent& x) const
 {
 	dbg->setColor(Vec3(1.0, 0.0, 1.0));
 	CollisionDebugDrawer coldraw(dbg);
 	x.getAabb().accept(coldraw);
 
 	dbg->setColor(Vec3(0.25, 0.0, 0.25));
-	for(auto it = x.getSubSpatialsBegin(); it != x.getSubSpatialsEnd(); ++it)
+	x.visitChildren([&](SpatialComponent& sp)
 	{
-		if((*it)->bitsEnabled(Spatial::SF_VISIBLE_CAMERA))
+		if(sp.bitsEnabled(SpatialComponent::SF_VISIBLE_CAMERA))
 		{
-			(*it)->getAabb().accept(coldraw);
+			sp.getAabb().accept(coldraw);
 		}
-	}
+	});
 }
 
 //==============================================================================

@@ -1,7 +1,7 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Movable.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/scene/Frustumable.h"
 
 namespace anki {
@@ -59,7 +59,7 @@ U32 SceneNode::getLastUpdateFrame() const
 		max = fr->getFrustumableTimestamp();
 	}
 
-	const Spatial* s = getSpatial();
+	const SpatialComponent* s = getSpatial();
 	if(s && s->getSpatialTimestamp() > max)
 	{
 		max = s->getSpatialTimestamp();

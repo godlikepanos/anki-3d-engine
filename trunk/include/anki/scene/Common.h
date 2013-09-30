@@ -5,6 +5,7 @@
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Dictionary.h"
+#include "anki/util/Object.h"
 #include <memory>
 
 namespace anki {
@@ -52,6 +53,10 @@ struct SceneSharedPtrDeleter
 /// Shared pointer in scene
 template<typename T>
 using SceneSharedPointer = std::shared_ptr<T>;
+
+/// Scene object
+template<typename T>
+using SceneHierarchicalObject = Object<T, SceneAllocator<T>>;
 
 /// @}
 

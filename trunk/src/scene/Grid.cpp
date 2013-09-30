@@ -1,5 +1,5 @@
 #include "anki/scene/Grid.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/scene/SceneNode.h"
 
 namespace anki {

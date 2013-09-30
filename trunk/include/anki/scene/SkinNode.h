@@ -4,7 +4,7 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Movable.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/resource/Model.h"
 #include "anki/Math.h"
 
@@ -131,7 +131,7 @@ private:
 
 /// A fragment of the SkinNode
 class SkinPatchNode: public SceneNode, public Movable, public Renderable,
-	public Spatial
+	public SpatialComponent
 {
 public:
 	/// @name Constructors/Destructor
@@ -139,7 +139,7 @@ public:
 	SkinPatchNode(const ModelPatchBase* modelPatch_,
 		const char* name, SceneGraph* scene, // Scene
 		U32 movableFlags, Movable* movParent, // Movable
-		CollisionShape* spatialCs); // Spatial
+		CollisionShape* spatialCs); // SpatialComponent
 	/// @}
 
 	/// @name Accessors

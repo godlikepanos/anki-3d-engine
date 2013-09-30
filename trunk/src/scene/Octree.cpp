@@ -1,5 +1,5 @@
 #include "anki/scene/Octree.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/scene/Light.h"
 #include "anki/scene/Sector.h"
@@ -9,6 +9,8 @@
 #include "anki/scene/Renderable.h"
 
 namespace anki {
+
+#if 0
 
 //==============================================================================
 // OctreeNode                                                                  =
@@ -47,7 +49,7 @@ void OctreeNode::addSceneNode(SceneNode* sn)
 {
 	ANKI_ASSERT(sn != nullptr);
 
-	Spatial* sp = sn->getSpatial();
+	SpatialComponent* sp = sn->getSpatial();
 	ANKI_ASSERT(sp != nullptr);
 
 	if(this == sp->octreeNode)
@@ -157,7 +159,7 @@ Octree::~Octree()
 //==============================================================================
 void Octree::placeSceneNode(SceneNode* sn)
 {
-	Spatial* sp = sn->getSpatial();
+	SpatialComponent* sp = sn->getSpatial();
 	ANKI_ASSERT(sp != nullptr);
 	OctreeNode* toBePlacedNode = place(sp->getAabb());
 
@@ -307,7 +309,7 @@ void Octree::doVisibilityTestsInternal(SceneNode& fsn,
 	// Put node's scene nodes
 	for(SceneNode* sn : node.sceneNodes)
 	{
-		Spatial* sp = sn->getSpatial();
+		SpatialComponent* sp = sn->getSpatial();
 		ANKI_ASSERT(sp);
 
 		if(fr.insideFrustum(*sp))
@@ -339,5 +341,7 @@ void Octree::doVisibilityTestsInternal(SceneNode& fsn,
 		}
 	}
 }
+
+#endif
 
 } // end namespace anki

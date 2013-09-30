@@ -13,7 +13,6 @@ namespace anki {
 class Renderer;
 class Camera;
 class ShaderProgramUniformVariable;
-class Spatial;
 class Frustumable;
 
 /// Tiler used for visibility tests

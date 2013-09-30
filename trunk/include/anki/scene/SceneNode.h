@@ -13,7 +13,7 @@ class SceneGraph; // Don't include
 class Movable;
 class Renderable;
 class Frustumable;
-class Spatial;
+class SpatialComponent;
 class Light;
 class RigidBody;
 class Path;
@@ -94,11 +94,11 @@ public:
 		return sceneNodeProtected.frustumable;
 	}
 
-	Spatial* getSpatial()
+	SpatialComponent* getSpatial()
 	{
 		return sceneNodeProtected.spatial;
 	}
-	const Spatial* getSpatial() const
+	const SpatialComponent* getSpatial() const
 	{
 		return sceneNodeProtected.spatial;
 	}
@@ -162,7 +162,7 @@ protected:
 		Movable* movable = nullptr;
 		Renderable* renderable = nullptr;
 		Frustumable* frustumable = nullptr;
-		Spatial* spatial = nullptr;
+		SpatialComponent* spatial = nullptr;
 		Light* light = nullptr;
 		RigidBody* rigidBody = nullptr;
 		Path* path = nullptr;

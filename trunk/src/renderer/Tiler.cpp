@@ -3,7 +3,6 @@
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/core/ThreadPool.h"
 #include "anki/scene/Camera.h"
-#include "anki/scene/Spatial.h"
 
 // Default should be 0
 #define ANKI_TILER_ENABLE_GPU 0

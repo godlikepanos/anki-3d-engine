@@ -4,7 +4,7 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Movable.h"
 #include "anki/scene/Frustumable.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/resource/Resource.h"
 #include "anki/resource/TextureResource.h"
 
@@ -50,7 +50,7 @@ private:
 /// Specular intensity of light:    Sl
 /// Specular intensity of material: Sm
 /// @endcode
-class Light: public SceneNode, public Movable, public Spatial
+class Light: public SceneNode, public Movable, public SpatialComponent
 {
 public:
 	enum LightType

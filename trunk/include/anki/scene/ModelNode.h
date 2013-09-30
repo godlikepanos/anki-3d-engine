@@ -4,7 +4,7 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Movable.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/resource/Resource.h"
 #include "anki/resource/Model.h"
 #include "anki/collision/Obb.h"
@@ -15,7 +15,8 @@ namespace anki {
 /// @{
 
 /// A model instance
-class ModelPatchNodeInstance: public SceneNode, public Movable, public Spatial
+class ModelPatchNodeInstance: public SceneNode, public Movable, 
+	public SpatialComponent
 {
 	friend class ModelPatchNode;
 	friend class ModelNode;
@@ -42,7 +43,7 @@ private:
 
 /// A fragment of the ModelNode
 class ModelPatchNode: public SceneNode, public Movable, public Renderable,
-	public Spatial
+	public SpatialComponent
 {
 	friend class ModelPatchNodeInstance;
 	friend class ModelNode;

@@ -14,7 +14,7 @@ Light::Light(
 	LightType t, const char* lensFlareFile) // Self
 	:	SceneNode(name, scene, parent),
 		Movable(movableFlags, this),
-		Spatial(cs, getSceneAllocator()),
+		SpatialComponent(cs, getSceneAllocator()),
 		type(t)
 {
 	sceneNodeProtected.movable = this;
