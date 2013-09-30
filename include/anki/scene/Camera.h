@@ -2,7 +2,7 @@
 #define ANKI_SCENE_CAMERA_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/scene/Movable.h"
 #include "anki/scene/Frustumable.h"
 #include "anki/core/Logger.h"
@@ -13,7 +13,7 @@ namespace anki {
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode, public Movable, public Spatial, 
+class Camera: public SceneNode, public Movable, public SpatialComponent, 
 	public Frustumable
 {
 public:

@@ -168,7 +168,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 		SceneNode* node = (*it).node;
 		Frustumable* bfr = node->getFrustumable();
 		Movable* bmov = node->getMovable();
-		Spatial* sp = node->getSpatial();
+		SpatialComponent* sp = node->getSpatial();
 
 		if(bfr)
 		{

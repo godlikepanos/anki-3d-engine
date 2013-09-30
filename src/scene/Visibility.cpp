@@ -12,7 +12,7 @@ namespace anki {
 struct SortSubspatialsFunctor
 {
 	Vec3 origin; ///< The pos of the frustum
-	Spatial* sp;
+	SpatialComponent* sp;
 
 	Bool operator()(U32 a, U32 b)
 	{
@@ -20,13 +20,13 @@ struct SortSubspatialsFunctor
 			&& a < sp->getSubSpatialsCount()
 			&& b < sp->getSubSpatialsCount());
 
-		const Spatial* spa = *(sp->getSubSpatialsBegin() + a);
-		const Spatial* spb = *(sp->getSubSpatialsBegin() + b);
+		const SpatialComponent& spa = sp->getSubSpatial(a);
+		const SpatialComponent& spb = sp->getSubSpatial(b);
 
-		F32 dist0 = origin.getDistanceSquared(
-			spa->getSpatialOrigin());
-		F32 dist1 = origin.getDistanceSquared(
-			spb->getSpatialOrigin());
+		F32 dist0 = 
+			origin.getDistanceSquared(spa.getSpatialOrigin());
+		F32 dist1 = 
+			origin.getDistanceSquared(spb.getSpatialOrigin());
 
 		return dist0 < dist1;
 	}

@@ -1,5 +1,5 @@
 #include "anki/scene/Sector.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Renderable.h"
 #include "anki/scene/Light.h"

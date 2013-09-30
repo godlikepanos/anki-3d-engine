@@ -93,26 +93,20 @@ public:
 		return parent;
 	}
 
-	typename Container::const_iterator getChildrenBegin() const
-	{
-		return children.begin();
-	}
-	typename Container::iterator getChildrenBegin()
-	{
-		return children.begin();
-	}
-	typename Container::const_iterator getChildrenEnd() const
-	{
-		return children.end();
-	}
-	typename Container::iterator getChildrenEnd()
-	{
-		return children.end();
-	}
-
 	PtrSize getChildrenSize() const
 	{
 		return children.size();
+	}
+
+	Value& getChild(PtrSize i)
+	{
+		ANKI_ASSERT(i < children.size());
+		return *children[i];
+	}
+	const Value& getChild(PtrSize i) const
+	{
+		ANKI_ASSERT(i < children.size());
+		return *children[i];
 	}
 
 	Alloc getAllocator() const
@@ -153,16 +147,37 @@ public:
 		callbacks.onChildRemoved(child, getSelf());
 	}
 
-	/// Visit this object and move to the children
-	template<typename Visitor>
-	void visitTreeDepth(Visitor& vis)
+	/// Visit the children and the children's children. Use it with lambda
+	template<typename VisitorFunc>
+	void visitChildren(VisitorFunc vis)
+	{
+		for(Value* c : children)
+		{
+			vis(*c);
+		}
+	}
+
+	/// Visit this object and move to the children. Use it with lambda
+	template<typename VisitorFunc>
+	void visitThisAndChildren(VisitorFunc vis)
 	{
 		vis(*getSelf());
 
-		for(Value* c : children)
+		visitChildren(vis);
+	}
+
+	/// Visit the whole tree. Use it with lambda
+	template<typename VisitorFunc>
+	void visitTree(VisitorFunc vis)
+	{
+		// Move to root
+		Value* root = getSelf();
+		while(root->parent != nullptr)
 		{
-			c->visitTreeDepth(vis);
+			root = root->parent;
 		}
+
+		root->visitThisAndChildren(vis);
 	}
 
 private:
@@ -184,7 +199,6 @@ private:
 		return it;
 	}
 };
-
 /// @}
 /// @}
 

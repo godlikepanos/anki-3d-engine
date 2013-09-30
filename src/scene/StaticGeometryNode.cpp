@@ -10,7 +10,7 @@ namespace anki {
 //==============================================================================
 StaticGeometrySpatial::StaticGeometrySpatial(const Obb* obb,
 	const SceneAllocator<U8>& alloc)
-	: Spatial(obb, alloc)
+	: SpatialComponent(obb, alloc)
 {}
 
 //==============================================================================
@@ -21,7 +21,7 @@ StaticGeometrySpatial::StaticGeometrySpatial(const Obb* obb,
 StaticGeometryPatchNode::StaticGeometryPatchNode(
 	const char* name, SceneGraph* scene, const ModelPatchBase* modelPatch_)
 	:	SceneNode(name, scene, nullptr),
-		Spatial(&modelPatch_->getBoundingShape(), getSceneAllocator()),
+		SpatialComponent(&modelPatch_->getBoundingShape(), getSceneAllocator()),
 		Renderable(getSceneAllocator()),
 		modelPatch(modelPatch_)
 {
@@ -34,15 +34,13 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(
 	// For all submeshes create a StaticGeometrySp[atial
 	if(modelPatch->getSubMeshesCount() > 1)
 	{
-		spatialProtected.subSpatials.resize(modelPatch->getSubMeshesCount());
-
 		for(U i = 0; i < modelPatch->getSubMeshesCount(); i++)
 		{
 			StaticGeometrySpatial* spatial =
 				ANKI_NEW(StaticGeometrySpatial, getSceneAllocator(),
 				&modelPatch->getBoundingShapeSub(i), getSceneAllocator());
 
-			spatialProtected.subSpatials[i] = spatial;
+			SpatialComponent::addChild(spatial);
 		}
 	}
 }
@@ -50,10 +48,11 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(
 //==============================================================================
 StaticGeometryPatchNode::~StaticGeometryPatchNode()
 {
-	for(Spatial* spatial : spatialProtected.subSpatials)
+	/*for(SpatialComponent* spatial : spatialProtected.subSpatials)
 	{
 		ANKI_DELETE(spatial, getSceneAllocator());
-	}
+	}*/
+	// XXX
 }
 
 //==============================================================================

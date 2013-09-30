@@ -2,7 +2,7 @@
 #define ANKI_SCENE_FRUSTUMABLE_H
 
 #include "anki/collision/Frustum.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/scene/Common.h"
 
 namespace anki {
@@ -86,7 +86,7 @@ public:
 	}
 
 	/// Is a spatial inside the frustum?
-	Bool insideFrustum(const Spatial& sp) const
+	Bool insideFrustum(const SpatialComponent& sp) const
 	{
 		return frustum->insideFrustum(sp.getSpatialCollisionShape());
 	}

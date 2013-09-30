@@ -66,12 +66,9 @@ void Movable::updateWorldTransform()
 	}
 
 	// Update the children
-	SceneNode::Base::Container::iterator it = node->getChildrenBegin();
-	for(; it != node->getChildrenEnd(); it++)
+	node->visitChildren([&](SceneNode& node)
 	{
-		SceneNode* sn = (*it);
-		ANKI_ASSERT(sn);
-		Movable* mov = sn->getMovable();
+		Movable* mov = node.getMovable();
 
 		// If child is movable update it
 		if(mov)
@@ -84,7 +81,7 @@ void Movable::updateWorldTransform()
 
 			mov->updateWorldTransform();
 		}
-	}
+	});
 
 	// Now it's a good time to cleanse parent
 	disableBits(MF_TRANSFORM_DIRTY);

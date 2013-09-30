@@ -3,7 +3,7 @@
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/Movable.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/scene/Renderable.h"
 #include "anki/physics/RigidBody.h"
 #include "anki/resource/ParticleEmitterResource.h"
@@ -138,8 +138,8 @@ public:
 };
 
 /// The particle emitter scene node. This scene node emitts
-class ParticleEmitter: public SceneNode, public Spatial, public Movable,
-	public Renderable, private ParticleEmitterProperties
+class ParticleEmitter: public SceneNode, public SpatialComponent, 
+	public Movable, public Renderable, private ParticleEmitterProperties
 {
 	friend class ParticleBase;
 	friend class Particle;

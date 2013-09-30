@@ -16,7 +16,7 @@ ModelPatchNodeInstance::ModelPatchNodeInstance(
 	const ModelPatchBase* modelPatchResource) // Self
 	:	SceneNode(name, scene, parent),
 		Movable(movableFlags, this),
-		Spatial(&obb, getSceneAllocator()),
+		SpatialComponent(&obb, getSceneAllocator()),
 		modelPatch(modelPatchResource)
 {
 	sceneNodeProtected.movable = this;
@@ -39,7 +39,7 @@ void ModelPatchNodeInstance::movableUpdate()
 	spatialMarkForUpdate();
 
 	// If this instance is the last update the parent's collision shape
-	SceneNode* parentNode = getParent();
+	SceneNode* parentNode = SceneNode::getParent();
 	ANKI_ASSERT(parentNode);
 
 	ModelPatchNode* modelPatchNode = 
@@ -69,7 +69,7 @@ ModelPatchNode::ModelPatchNode(
 	:	SceneNode(name, scene, parent),
 		Movable(movableFlags, this),
 		Renderable(getSceneAllocator()),
-		Spatial(&obb, getSceneAllocator()), 
+		SpatialComponent(&obb, getSceneAllocator()), 
 		modelPatch(modelPatch_),
 		instances(getSceneAllocator()),
 		transforms(getSceneAllocator())
@@ -83,7 +83,6 @@ ModelPatchNode::ModelPatchNode(
 	// Create the instances as ModelPatchNodeInstance
 	if(instancesCount > 1)
 	{
-		spatialProtected.subSpatials.resize(instancesCount, nullptr);
 		instances.resize(instancesCount, nullptr);
 		transforms.resize(instancesCount, Transform::getIdentity());
 
@@ -98,7 +97,7 @@ ModelPatchNode::ModelPatchNode(
 			instance->setLocalOrigin(pos);
 			pos.x() += 2.0;
 
-			spatialProtected.subSpatials[i] = instance;
+			SpatialComponent::addChild(instance);
 			instances[i] = instance;
 		}
 	}

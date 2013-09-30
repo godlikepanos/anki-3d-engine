@@ -4,7 +4,7 @@
 #include "anki/scene/Common.h"
 #include "anki/collision/Forward.h"
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Spatial.h"
+#include "anki/scene/SpatialComponent.h"
 #include "anki/scene/Renderable.h"
 #include "anki/core/ThreadPool.h"
 

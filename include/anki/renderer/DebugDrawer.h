@@ -182,7 +182,7 @@ private:
 
 	void draw(Frustumable& fr) const;
 
-	void draw(Spatial& sp) const;
+	void draw(SpatialComponent& sp) const;
 
 	void draw(const OctreeNode& octnode,
 		U32 depth, const Octree& octree) const;

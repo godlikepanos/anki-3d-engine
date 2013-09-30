@@ -220,7 +220,7 @@ ParticleEmitter::ParticleEmitter(
 	U32 movableFlags,
 	const char* filename)
 	:	SceneNode(name, scene, parent),
-		Spatial(&aabb, getSceneAllocator()),
+		SpatialComponent(&aabb, getSceneAllocator()),
 		Movable(movableFlags, this),
 		Renderable(getSceneAllocator()),
 		particles(getSceneAllocator())

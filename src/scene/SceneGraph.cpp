@@ -44,7 +44,7 @@ static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 	sn.frameUpdate(prevUpdateTime, crntTime, getGlobTimestamp());
 
 	// Do some spatial stuff
-	Spatial* sp = sn.getSpatial();
+	SpatialComponent* sp = sn.getSpatial();
 	if(sp)
 	{
 		if(sp->getSpatialTimestamp() >= getGlobTimestamp())
