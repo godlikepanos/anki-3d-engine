@@ -12,8 +12,7 @@ namespace anki {
 /// @{
 
 /// Spatial component for scene nodes. It indicates scene nodes that need to 
-/// be placed in the scene's octree and they participate in the visibility 
-/// tests
+/// be placed in the a sector and they participate in the visibility tests
 class SpatialComponent: 
 	public SceneHierarchicalObject<SpatialComponent>, 
 	public Bitset<U8>
@@ -27,6 +26,7 @@ public:
 		SF_NONE = 0,
 		SF_VISIBLE_CAMERA = 1 << 1,
 		SF_VISIBLE_LIGHT = 1 << 2,
+
 		/// Visible or not. The visibility tester sets it
 		SF_VISIBLE_ANY = SF_VISIBLE_CAMERA | SF_VISIBLE_LIGHT,
 
@@ -40,12 +40,11 @@ public:
 	};
 
 	/// Pass the collision shape here so we can avoid the virtuals
-	SpatialComponent(const CollisionShape* cs, const SceneAllocator<U8>& alloc,
-		U32 flags = SF_NONE)
-		: Base(nullptr, alloc), spatialCs(cs)
-	{
-		enableBits(flags | SF_MARKED_FOR_UPDATE);
-	}
+	/// @param node The scene node. Used only to steal it's allocators
+	/// @param cs The collision shape
+	/// @param flags A mask of SpatialFlag
+	SpatialComponent(SceneNode* node, const CollisionShape* cs,
+		U32 flags = SF_NONE);
 
 	// Remove from current OctreeNode
 	virtual ~SpatialComponent();
@@ -106,34 +105,16 @@ public:
 	template<typename VisitorFunc>
 	void visitSubSpatials(VisitorFunc vis)
 	{
-		SceneHierarchicalObject<SpatialComponent>::visitChildren(vis);
+		Base::visitChildren(vis);
 	}
 
-	/// The derived class has to manually set when the collision shape got
-	/// updated
-	void spatialMarkForUpdate()
-	{
-		visitThisAndChildren([](SpatialComponent& sp)
-		{
-			sp.enableBits(SF_MARKED_FOR_UPDATE);
-		});
-	}
+	/// The derived class has to manually call this method when the collision 
+	/// shape got updated
+	void spatialMarkForUpdate();
 
-	void update()
-	{
-		visitThisAndChildren([](SpatialComponent& sp)
-		{
-			sp.updateInternal();
-		});
-	}
+	void update();
 
-	void resetFrame()
-	{
-		visitThisAndChildren([](SpatialComponent& sp)
-		{
-			sp.disableBits(SF_VISIBLE_ANY);
-		});
-	}
+	void resetFrame();
 
 protected:
 	const CollisionShape* spatialCs = nullptr;

@@ -1,5 +1,5 @@
-#ifndef ANKI_SCENE_MOVABLE_H
-#define ANKI_SCENE_MOVABLE_H
+#ifndef ANKI_SCENE_MOVE_COMPONENT_H
+#define ANKI_SCENE_MOVE_COMPONENT_H
 
 #include "anki/util/Bitset.h"
 #include "anki/Math.h"
@@ -8,39 +8,37 @@
 
 namespace anki {
 
-class SceneNode;
-
 /// @addtogroup Scene
 /// @{
 
 /// Interface for movable scene nodes
-class Movable: public Bitset<U8>
+class MoveComponent: 
+	public SceneHierarchicalObject<MoveComponent>, 
+	public Bitset<U8>
 {
 public:
-	enum MovableFlag
+	typedef SceneHierarchicalObject<MoveComponent> Base;
+
+	enum MoveComponentFlag
 	{
 		MF_NONE = 0,
 
 		/// Get the parent's world transform
 		MF_IGNORE_LOCAL_TRANSFORM = 1 << 1,
 
-		/// Dont make assumptions with the parent. Beeng a parent doesn't mean
-		/// that it needs to contribute to this movable position in any way
-		MF_IGNORE_PARENT = 1 << 2,
-
 		/// If dirty then is marked for update
-		MF_TRANSFORM_DIRTY = 1 << 3,
+		MF_MARKED_FOR_UPDATE = 1 << 3,
 	};
 
 	/// @name Constructors & destructor
 	/// @{
 
 	/// The one and only constructor
+	/// @param node The scene node to steal it's allocators
 	/// @param flags The flags
-	/// @param node Pass the scene node
-	Movable(U32 flags, SceneNode* node);
+	MoveComponent(SceneNode* node, U32 flags = MF_NONE);
 
-	~Movable();
+	~MoveComponent();
 	/// @}
 
 	/// @name Accessors
@@ -80,7 +78,7 @@ public:
 		return prevWTrf;
 	}
 
-	Timestamp getMovableTimestamp() const
+	Timestamp getMoveComponentTimestamp() const
 	{
 		return timestamp;
 	}
@@ -130,7 +128,7 @@ public:
 
 	/// This is called by the @a update() method only when the object had
 	/// actually moved. It's overridable
-	virtual void movableUpdate()
+	virtual void moveUpdate()
 	{}
 
 	/// Update self and children world transform recursively, if root node.
@@ -151,19 +149,16 @@ protected:
 	/// Keep the previous transformation for checking if it moved
 	Transform prevWTrf = Transform::getIdentity();
 
-	SceneNode* node;
-
 	/// The frame where it was last moved
 	Timestamp timestamp = getGlobTimestamp();
 
-	/// Called for every frame. It updates the @a wTrf if @a shouldUpdateWTrf
+	/// Called every frame. It updates the @a wTrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.
 	void updateWorldTransform();
 
 	void movableMarkForUpdate()
 	{
-		timestamp = getGlobTimestamp();
-		enableBits(MF_TRANSFORM_DIRTY);
+		enableBits(MF_MARKED_FOR_UPDATE);
 	}
 };
 /// @}

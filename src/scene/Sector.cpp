@@ -12,6 +12,8 @@
 
 namespace anki {
 
+#if 0
+
 //==============================================================================
 // Portal                                                                      =
 //==============================================================================
@@ -130,7 +132,7 @@ Portal* SectorGroup::createNewPortal(Sector* a, Sector* b,
 void SectorGroup::placeSceneNode(SceneNode* sn)
 {
 	ANKI_ASSERT(sn != nullptr);
-	Spatial* sp = sn->getSpatial();
+	SpatialComponent* sp = sn->getSpatial();
 	ANKI_ASSERT(sp);
 	const Vec3& spPos = sp->getSpatialOrigin();
 
@@ -210,7 +212,7 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 	ANKI_ASSERT(fr != nullptr && "sn should be frustumable");
 	fr->visible = nullptr;
 
-	Spatial* sp = sn.getSpatial();
+	SpatialComponent* sp = sn.getSpatial();
 	ANKI_ASSERT(sp != nullptr && "sn should be spatial as well");
 
 	// sn is not placed in any octree
@@ -402,5 +404,7 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 		}
 	}
 }
+
+#endif
 
 } // end namespace anki

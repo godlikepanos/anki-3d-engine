@@ -10,6 +10,9 @@
 
 namespace anki {
 
+// Forward
+class SceneNode;
+
 /// @addtogroup Scene
 /// @{
 
