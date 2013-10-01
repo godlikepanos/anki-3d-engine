@@ -1,4 +1,4 @@
-#include "anki/scene/Renderable.h"
+#include "anki/scene/RenderingComponent.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/gl/ShaderProgram.h"
@@ -7,34 +7,29 @@
 namespace anki {
 
 //==============================================================================
-// CreateNewRenderableVariableVisitor                                          =
+// Misc                                                                        =
 //==============================================================================
 
-/// Create a new RenderableVariable given a MaterialVariable
-struct CreateNewRenderableVariableVisitor
+/// Create a new RenderingComponentVariable given a MaterialVariable
+struct CreateNewRenderingComponentVariableVisitor
 {
 	const MaterialVariable* mvar = nullptr;
 	PropertyMap* pmap = nullptr;
-	Renderable::RenderableVariables* vars = nullptr;
+	RenderingComponent::RenderingComponentVariables* vars = nullptr;
 
 	template<typename TMaterialVariableTemplate>
 	void visit(const TMaterialVariableTemplate&) const
 	{
 		typedef typename TMaterialVariableTemplate::Type Type;
 
-		RenderableVariableTemplate<Type>* rvar =
-			new RenderableVariableTemplate<Type>(mvar);
+		RenderingComponentVariableTemplate<Type>* rvar =
+			new RenderingComponentVariableTemplate<Type>(mvar);
 
 		vars->push_back(rvar);
 	}
 };
 
-//==============================================================================
-// RenderableVariable                                                          =
-//==============================================================================
-
-//==============================================================================
-
+/// The names of the buildins
 static Array<const char*, BMV_COUNT - 1> buildinNames = {{
 	"modelViewProjectionMat",
 	"modelViewMat",
@@ -45,10 +40,16 @@ static Array<const char*, BMV_COUNT - 1> buildinNames = {{
 	"msDepthMap"}};
 
 //==============================================================================
-RenderableVariable::RenderableVariable(
+// RenderingComponentVariable                                                  =
+//==============================================================================
+
+//==============================================================================
+RenderingComponentVariable::RenderingComponentVariable(
 	const MaterialVariable* mvar_)
 	: mvar(mvar_)
 {
+	ANKI_ASSERT(mvar);
+
 	// Set buildin id
 	const std::string& name = getName();
 
@@ -71,34 +72,34 @@ RenderableVariable::RenderableVariable(
 }
 
 //==============================================================================
-RenderableVariable::~RenderableVariable()
+RenderingComponentVariable::~RenderingComponentVariable()
 {}
 
 //==============================================================================
-// Renderable                                                                  =
+// RenderingComponent                                                          =
 //==============================================================================
 
 //==============================================================================
-Renderable::Renderable(const SceneAllocator<U8>& alloc)
-	: vars(alloc)
+RenderingComponent::RenderingComponent(SceneNode* node)
+	: vars(node->getSceneAllocator())
 {}
 
 //==============================================================================
-Renderable::~Renderable()
+RenderingComponent::~RenderingComponent()
 {
-	for(RenderableVariable* var : vars)
+	for(RenderingComponentVariable* var : vars)
 	{
 		delete var;
 	}
 }
 
 //==============================================================================
-void Renderable::init(PropertyMap& pmap)
+void RenderingComponent::init(PropertyMap& pmap)
 {
-	const Material& mtl = getRenderableMaterial();
+	const Material& mtl = getRenderingComponentMaterial();
 
 	// Create the material variables using a visitor
-	CreateNewRenderableVariableVisitor vis;
+	CreateNewRenderingComponentVariableVisitor vis;
 	vis.pmap = &pmap;
 	vis.vars = &vars;
 
@@ -123,7 +124,7 @@ void Renderable::init(PropertyMap& pmap)
 	}
 
 	// Instancing sanity checks
-	U32 instancesCount = getRenderableInstancesCount();
+	U32 instancesCount = getRenderingComponentInstancesCount();
 	const MaterialVariable* mv =
 		mtl.findVariableByName("instancingModelViewProjectionMatrices");
 

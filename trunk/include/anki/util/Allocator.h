@@ -34,12 +34,6 @@ public:
 protected:
 	/// Keep track of the allocated size. Relevant only when debugging
 	static PtrSize allocatedSize;
-
-	/// Allocate memory
-	static void* gmalloc(PtrSize size);
-
-	/// Free memory
-	static void gfree(void* p, PtrSize size);
 };
 
 } // end namespace detail
@@ -50,7 +44,7 @@ template<typename T>
 class Allocator: public detail::AllocatorInternal
 {
 public:
-	// Typedefs
+	// STL Typedefs
 	typedef size_t size_type;
 	typedef ptrdiff_t difference_type;
 	typedef T* pointer;
@@ -100,15 +94,15 @@ public:
 	/// Allocate memory
 	pointer allocate(size_type n, const void* = 0)
 	{
-		size_type size = n * sizeof(value_type);
-		return (pointer)detail::AllocatorInternal::gmalloc(size);
+		return static_cast<T*>(::operator new(n * sizeof(T)));
+		allocatedSize += n * sizeof(T);
 	}
 
 	/// Deallocate memory
 	void deallocate(void* p, size_type n)
 	{
-		size_type size = n * sizeof(T);
-		detail::AllocatorInternal::gfree(p, size);
+		::operator delete(p);
+		allocatedSize -= n * sizeof(T);
 	}
 
 	/// Call constructor
@@ -149,6 +143,60 @@ public:
 	{ 
 		typedef Allocator<U> other; 
 	};
+
+	/// Allocate a new object and call it's constructor
+	/// @note This is AnKi specific
+	template<typename U, typename... Args>
+	U* newInstance(Args&&... args)
+	{
+		typename rebind<U>::other alloc(*this);
+
+		U* x = alloc.allocate(1);
+		alloc.construct(x, std::forward<Args>(args)...);
+		return x;
+	}
+
+	/// Allocate a new array of objects and call their constructor
+	/// @note This is AnKi specific
+	template<typename U, typename... Args>
+	U* newArray(size_type n, Args&&... args)
+	{
+		typename rebind<U>::other alloc(*this);
+
+		U* x = alloc.allocate(n);
+		// Call the constuctors
+		for(size_type i = 0; i < n; i++)
+		{
+			alloc.construct(&x[i], std::forward<Args>(args)...);
+		}
+		return x;
+	}
+
+	/// Call the destructor and deallocate an object
+	/// @note This is AnKi specific
+	template<typename U>
+	void deleteInstance(U* x)
+	{
+		typename rebind<U>::other alloc(*this);
+
+		alloc.destroy(x);
+		alloc.deallocate(x, 1);
+	}
+
+	/// Call the destructor and deallocate an array of objects
+	/// @note This is AnKi specific
+	template<typename U>
+	void deleteArray(U* x, size_type n)
+	{
+		typename rebind<U>::other alloc(*this);
+
+		// Call the destructors
+		for(size_type i = 0; i < n; i++)
+		{
+			alloc.destroy(&x[i]);
+		}
+		alloc.deallocate(x);
+	}
 };
 
 /// Another allocator of the same type can deallocate from this one
@@ -352,6 +400,60 @@ public:
 	{
 		ANKI_ASSERT(mpool != nullptr);
 		return *mpool;
+	}
+
+	/// Allocate a new object and call it's constructor
+	/// @note This is AnKi specific
+	template<typename U, typename... Args>
+	U* newInstance(Args&&... args)
+	{
+		typename rebind<U>::other alloc(*this);
+
+		U* x = alloc.allocate(1);
+		alloc.construct(x, std::forward<Args>(args)...);
+		return x;
+	}
+
+	/// Allocate a new array of objects and call their constructor
+	/// @note This is AnKi specific
+	template<typename U, typename... Args>
+	U* newArray(size_type n, Args&&... args)
+	{
+		typename rebind<U>::other alloc(*this);
+
+		U* x = alloc.allocate(n);
+		// Call the constuctors
+		for(size_type i = 0; i < n; i++)
+		{
+			alloc.construct(&x[i], std::forward<Args>(args)...);
+		}
+		return x;
+	}
+
+	/// Call the destructor and deallocate an object
+	/// @note This is AnKi specific
+	template<typename U>
+	void deleteInstance(U* x)
+	{
+		typename rebind<U>::other alloc(*this);
+
+		alloc.destroy(x);
+		alloc.deallocate(x, 1);
+	}
+
+	/// Call the destructor and deallocate an array of objects
+	/// @note This is AnKi specific
+	template<typename U>
+	void deleteArray(U* x, size_type n)
+	{
+		typename rebind<U>::other alloc(*this);
+
+		// Call the destructors
+		for(size_type i = 0; i < n; i++)
+		{
+			alloc.destroy(&x[i]);
+		}
+		alloc.deallocate(x);
 	}
 
 private:

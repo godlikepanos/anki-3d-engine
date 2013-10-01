@@ -87,9 +87,9 @@ private:
 	std::atomic<U8*> top = {nullptr};
 };
 
-/// XXX
+/// Allocate a new object and call it's constructor
 template<typename Type, typename Alloc = Allocator<Type>, typename... Args>
-Type* newObject(Alloc alloc, Args&&... args)
+Type* newInstance(Alloc alloc, Args&&... args)
 {
 	typename Alloc::template rebind<Type>::other allocc(alloc);
 

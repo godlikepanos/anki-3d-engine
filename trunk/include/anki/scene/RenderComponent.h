@@ -1,5 +1,5 @@
-#ifndef ANKI_SCENE_RENDERABLE_H
-#define ANKI_SCENE_RENDERABLE_H
+#ifndef ANKI_SCENE_RENDER_COMPONENT_H
+#define ANKI_SCENE_RENDER_COMPONENT_H
 
 #include "anki/scene/Property.h"
 #include "anki/scene/Common.h"
@@ -30,31 +30,31 @@ enum BuildinMaterialVariableId
 };
 
 // Forward
-class RenderableVariable;
+class RenderingComponentVariable;
 
 template<typename T>
-class RenderableVariableTemplate;
+class RenderingComponentVariableTemplate;
 
-/// Renderable variable base. Its a visitable
+/// RenderingComponent variable base. Its a visitable
 typedef VisitableCommonBase<
-	RenderableVariable,
-	RenderableVariableTemplate<F32>,
-	RenderableVariableTemplate<Vec2>,
-	RenderableVariableTemplate<Vec3>,
-	RenderableVariableTemplate<Vec4>,
-	RenderableVariableTemplate<Mat3>,
-	RenderableVariableTemplate<Mat4>,
-	RenderableVariableTemplate<TextureResourcePointer>>
-	RenderableVariableVisitable;
+	RenderingComponentVariable, //< The base
+	RenderingComponentVariableTemplate<F32>,
+	RenderingComponentVariableTemplate<Vec2>,
+	RenderingComponentVariableTemplate<Vec3>,
+	RenderingComponentVariableTemplate<Vec4>,
+	RenderingComponentVariableTemplate<Mat3>,
+	RenderingComponentVariableTemplate<Mat4>,
+	RenderingComponentVariableTemplate<TextureResourcePointer>>
+	RenderingComponentVariableVisitable;
 
 /// A wrapper on top of MaterialVariable
-class RenderableVariable: public RenderableVariableVisitable
+class RenderingComponentVariable: public RenderingComponentVariableVisitable
 {
 public:
-	typedef RenderableVariableVisitable Base;
+	typedef RenderingComponentVariableVisitable Base;
 
-	RenderableVariable(const MaterialVariable* mvar_);
-	virtual ~RenderableVariable();
+	RenderingComponentVariable(const MaterialVariable* mvar_);
+	virtual ~RenderingComponentVariable();
 
 	/// @name Accessors
 	/// @{
@@ -71,18 +71,21 @@ public:
 	template<typename T>
 	const T* getValues() const
 	{
-		ANKI_ASSERT(Base::getVariadicTypeId<RenderableVariableTemplate<T>>()
+		ANKI_ASSERT(
+			Base::getVariadicTypeId<RenderingComponentVariableTemplate<T>>()
 			== Base::getVisitableTypeId());
-		return static_cast<const RenderableVariableTemplate<T>*>(this)->get();
+		return static_cast<const RenderingComponentVariableTemplate<T>*>(
+			this)->get();
 	}
 
 	/// This will trigger copy on write
 	template<typename T>
 	void setValues(const T* values, U32 size)
 	{
-		ANKI_ASSERT(Base::getVariadicTypeId<RenderableVariableTemplate<T>>()
+		ANKI_ASSERT(
+			Base::getVariadicTypeId<RenderingComponentVariableTemplate<T>>()
 			== Base::getVisitableTypeId());
-		static_cast<RenderableVariableTemplate<T>*>(this)->set(
+		static_cast<RenderingComponentVariableTemplate<T>*>(this)->set(
 			values, size);
 	}
 
@@ -105,20 +108,20 @@ private:
 	BuildinMaterialVariableId buildinId;
 };
 
-/// Renderable variable
+/// RenderingComponent variable
 template<typename T>
-class RenderableVariableTemplate: public RenderableVariable
+class RenderingComponentVariableTemplate: public RenderingComponentVariable
 {
 public:
 	typedef T Type;
 
-	RenderableVariableTemplate(const MaterialVariable* mvar_)
-		: RenderableVariable(mvar_)
+	RenderingComponentVariableTemplate(const MaterialVariable* mvar_)
+		: RenderingComponentVariable(mvar_)
 	{
 		setupVisitable(this);
 	}
 
-	~RenderableVariableTemplate()
+	~RenderingComponentVariableTemplate()
 	{
 		if(copy)
 		{
@@ -146,54 +149,60 @@ private:
 	T* copy = nullptr;
 };
 
-/// Renderable interface. Implemented by renderable scene nodes
-class Renderable
+/// RenderingComponent interface. Implemented by renderable scene nodes
+class RenderingComponent
 {
 public:
-	typedef SceneVector<RenderableVariable*> RenderableVariables;
+	typedef SceneVector<RenderingComponentVariable*> Variables;
 
-	Renderable(const SceneAllocator<U8>& alloc);
+	/// @param node Pass note to steal it's allocator
+	RenderingComponent(SceneNode* node);
 
-	virtual ~Renderable();
+	virtual ~RenderingComponent();
 
 	/// Access to VAOs
-	virtual const ModelPatchBase& getRenderableModelPatchBase() = 0;
+	virtual const ModelPatchBase& getRenderingComponentModelPatchBase() = 0;
 
 	/// Access the material
-	virtual const Material& getRenderableMaterial() = 0;
+	virtual const Material& getRenderingComponentMaterial() = 0;
 
 	/// Information for movables. It's actualy an array of transformations.
-	virtual const Transform* getRenderableWorldTransforms()
+	virtual const Transform* getRenderingComponentWorldTransforms()
 	{
 		return nullptr;
 	}
 
 	/// Number of instances. If greater than 1 then it's instanced
-	virtual U32 getRenderableInstancesCount()
+	virtual U32 getRenderingComponentInstancesCount()
 	{
 		return 1;
 	}
 
 	/// @name Accessors
 	/// @{
-	RenderableVariables::iterator getVariablesBegin()
+	Variables::iterator getVariablesBegin()
 	{
 		return vars.begin();
 	}
-	RenderableVariables::iterator getVariablesEnd()
+	Variables::iterator getVariablesEnd()
 	{
 		return vars.end();
 	}
-
-	Ubo& getUbo()
-	{
-		return ubo;
-	}
 	/// @}
+
+	/// Iterate variables using a lambda
+	template<typename Func>
+	void iterateRenderingComponentVariables(Func func)
+	{
+		for(auto var : vars)
+		{
+			func(*var);
+		}
+	}
 
 	U32 getSubMeshesCount()
 	{
-		return getRenderableModelPatchBase().getSubMeshesCount();
+		return getRenderingComponentModelPatchBase().getSubMeshesCount();
 	}
 
 	/// Reset on frame start
@@ -205,9 +214,7 @@ protected:
 	void init(PropertyMap& pmap);
 
 private:
-	RenderableVariables vars;
-	Ubo ubo;
-	std::mutex mtx;
+	Variables vars;
 };
 /// @}
 

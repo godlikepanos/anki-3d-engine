@@ -46,7 +46,7 @@ struct VisibilityTestJob: ThreadJob
 	/// Handle sub spatials
 	Bool handleSubspatials(
 		const Frustumable& fr,
-		Spatial& sp,
+		SpatialComponent& sp,
 		U32*& subSpatialIndices,
 		U32& subSpatialIndicesCount)
 	{
@@ -57,23 +57,20 @@ struct VisibilityTestJob: ThreadJob
 		// Have subspatials?
 		if(sp.getSubSpatialsCount())
 		{
-			subSpatialIndices = ANKI_NEW_ARRAY_0(
-				U32, frameAlloc, sp.getSubSpatialsCount());
+			subSpatialIndices = 
+				frameAlloc.newArray<U32>(sp.getSubSpatialsCount());
 
 			U i = 0;
-			for(auto it = sp.getSubSpatialsBegin();
-				it != sp.getSubSpatialsEnd(); ++it)
-			{
-				Spatial* subsp = *it;
-	
+			sp.visitChildren([&](SpatialComponent& subsp)
+			{	
 				// Check
-				if(fr.insideFrustum(*subsp))
+				if(fr.insideFrustum(subsp))
 				{
 					subSpatialIndices[subSpatialIndicesCount++] = i;
-					subsp->enableBits(Spatial::SF_VISIBLE_CAMERA);
+					subsp.enableBits(SpatialComponent::SF_VISIBLE_CAMERA);
 				}
 				++i;
-			}
+			});
 
 			// Sort them
 			SortSubspatialsFunctor functor;
@@ -97,7 +94,7 @@ struct VisibilityTestJob: ThreadJob
 		U64 start, end;
 		choseStartEnd(threadId, threadsCount, nodesCount, start, end);
 
-		visible = ANKI_NEW(VisibilityTestResults, frameAlloc, frameAlloc);
+		visible = frameAlloc.newInstance<VisibilityTestResults>(frameAlloc);
 
 		Frustumable* frustumable = frustumableSn->getFrustumable();
 		ANKI_ASSERT(frustumable);
@@ -112,7 +109,7 @@ struct VisibilityTestJob: ThreadJob
 				return;
 			}
 
-			Spatial* sp = node.getSpatial();
+			SpatialComponent* sp = node.getSpatial();
 			if(!sp)
 			{
 				return;
@@ -157,7 +154,7 @@ struct VisibilityTestJob: ThreadJob
 				}
 			}
 
-			sp->enableBits(Spatial::SF_VISIBLE_CAMERA);
+			sp->enableBits(SpatialComponent::SF_VISIBLE_CAMERA);
 		}); // end for
 	}
 
@@ -169,7 +166,7 @@ struct VisibilityTestJob: ThreadJob
 
 		// Allocate new visibles
 		VisibilityTestResults* lvisible = 
-			ANKI_NEW(VisibilityTestResults, frameAlloc, frameAlloc);
+			frameAlloc.newInstance<VisibilityTestResults>(frameAlloc);
 
 		ref.setVisibilityTestResults(lvisible);
 
@@ -182,7 +179,7 @@ struct VisibilityTestJob: ThreadJob
 				return;
 			}
 
-			Spatial* sp = node.getSpatial();
+			SpatialComponent* sp = node.getSpatial();
 			if(!sp)
 			{
 				return;
@@ -202,7 +199,7 @@ struct VisibilityTestJob: ThreadJob
 				return;
 			}
 
-			sp->enableBits(Spatial::SF_VISIBLE_LIGHT);
+			sp->enableBits(SpatialComponent::SF_VISIBLE_LIGHT);
 
 			Renderable* r = node.getRenderable();
 			if(r)
@@ -255,7 +252,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 
 	// Allocate
 	VisibilityTestResults* visible = 
-		ANKI_NEW(VisibilityTestResults, scene.getFrameAllocator(), 
+		scene.getFrameAllocator().newInstance<VisibilityTestResults>(
 		scene.getFrameAllocator(), 
 		renderablesSize, 
 		lightsSize);
