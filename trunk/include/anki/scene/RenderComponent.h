@@ -10,8 +10,6 @@
 
 namespace anki {
 
-class SceneNode;
-
 /// @addtogroup Scene
 /// @{
 
@@ -30,31 +28,31 @@ enum BuildinMaterialVariableId
 };
 
 // Forward
-class RenderingComponentVariable;
+class RenderComponentVariable;
 
 template<typename T>
-class RenderingComponentVariableTemplate;
+class RenderComponentVariableTemplate;
 
-/// RenderingComponent variable base. Its a visitable
+/// RenderComponent variable base. Its a visitable
 typedef VisitableCommonBase<
-	RenderingComponentVariable, //< The base
-	RenderingComponentVariableTemplate<F32>,
-	RenderingComponentVariableTemplate<Vec2>,
-	RenderingComponentVariableTemplate<Vec3>,
-	RenderingComponentVariableTemplate<Vec4>,
-	RenderingComponentVariableTemplate<Mat3>,
-	RenderingComponentVariableTemplate<Mat4>,
-	RenderingComponentVariableTemplate<TextureResourcePointer>>
-	RenderingComponentVariableVisitable;
+	RenderComponentVariable, //< The base
+	RenderComponentVariableTemplate<F32>,
+	RenderComponentVariableTemplate<Vec2>,
+	RenderComponentVariableTemplate<Vec3>,
+	RenderComponentVariableTemplate<Vec4>,
+	RenderComponentVariableTemplate<Mat3>,
+	RenderComponentVariableTemplate<Mat4>,
+	RenderComponentVariableTemplate<TextureResourcePointer>>
+	RenderComponentVariableVisitable;
 
 /// A wrapper on top of MaterialVariable
-class RenderingComponentVariable: public RenderingComponentVariableVisitable
+class RenderComponentVariable: public RenderComponentVariableVisitable
 {
 public:
-	typedef RenderingComponentVariableVisitable Base;
+	typedef RenderComponentVariableVisitable Base;
 
-	RenderingComponentVariable(const MaterialVariable* mvar_);
-	virtual ~RenderingComponentVariable();
+	RenderComponentVariable(const MaterialVariable* mvar_);
+	virtual ~RenderComponentVariable();
 
 	/// @name Accessors
 	/// @{
@@ -72,9 +70,9 @@ public:
 	const T* getValues() const
 	{
 		ANKI_ASSERT(
-			Base::getVariadicTypeId<RenderingComponentVariableTemplate<T>>()
+			Base::getVariadicTypeId<RenderComponentVariableTemplate<T>>()
 			== Base::getVisitableTypeId());
-		return static_cast<const RenderingComponentVariableTemplate<T>*>(
+		return static_cast<const RenderComponentVariableTemplate<T>*>(
 			this)->get();
 	}
 
@@ -83,9 +81,9 @@ public:
 	void setValues(const T* values, U32 size)
 	{
 		ANKI_ASSERT(
-			Base::getVariadicTypeId<RenderingComponentVariableTemplate<T>>()
+			Base::getVariadicTypeId<RenderComponentVariableTemplate<T>>()
 			== Base::getVisitableTypeId());
-		static_cast<RenderingComponentVariableTemplate<T>*>(this)->set(
+		static_cast<RenderComponentVariableTemplate<T>*>(this)->set(
 			values, size);
 	}
 
@@ -101,6 +99,8 @@ public:
 		return mvar->findShaderProgramUniformVariable(key);
 	}
 
+	virtual void cleanup(SceneAllocator<U8> alloc) = 0;
+
 protected:
 	const MaterialVariable* mvar = nullptr;
 
@@ -108,25 +108,22 @@ private:
 	BuildinMaterialVariableId buildinId;
 };
 
-/// RenderingComponent variable
+/// RenderComponent variable
 template<typename T>
-class RenderingComponentVariableTemplate: public RenderingComponentVariable
+class RenderComponentVariableTemplate: public RenderComponentVariable
 {
 public:
 	typedef T Type;
 
-	RenderingComponentVariableTemplate(const MaterialVariable* mvar_)
-		: RenderingComponentVariable(mvar_)
+	RenderComponentVariableTemplate(const MaterialVariable* mvar_)
+		: RenderComponentVariable(mvar_)
 	{
 		setupVisitable(this);
 	}
 
-	~RenderingComponentVariableTemplate()
+	~RenderComponentVariableTemplate()
 	{
-		if(copy)
-		{
-			propperDelete(copy);
-		}
+		ANKI_ASSERT(copy == nullptr && "Forgot to delete");
 	}
 
 	const T* get() const
@@ -136,44 +133,55 @@ public:
 		return (copy) ? copy : mvar->getValues<T>();
 	}
 
-	void set(const T* values, U32 size)
+	void set(const T* values, U32 size, SceneAllocator<U8> alloc)
 	{
 		ANKI_ASSERT(size <= mvar->getArraySize());
 		if(copy == nullptr)
 		{
-			copy = new T[mvar->getArraySize()];
+			copy = alloc.newArray<T>(getArraySize());
 		}
 		memcpy(copy, values, sizeof(T) * size);
 	}
+
+	/// Call that manualy
+	void cleanup(SceneAllocator<U8> alloc)
+	{
+		if(copy)
+		{
+			alloc.deleteArray(copy, getArraySize());
+			copy = nullptr;
+		}
+	}
+
 private:
 	T* copy = nullptr;
 };
 
-/// RenderingComponent interface. Implemented by renderable scene nodes
-class RenderingComponent
+/// RenderComponent interface. Implemented by renderable scene nodes
+class RenderComponent
 {
 public:
-	typedef SceneVector<RenderingComponentVariable*> Variables;
+	typedef SceneVector<RenderComponentVariable*> Variables;
 
 	/// @param node Pass note to steal it's allocator
-	RenderingComponent(SceneNode* node);
+	RenderComponent(SceneNode* node);
 
-	virtual ~RenderingComponent();
+	virtual ~RenderComponent();
 
 	/// Access to VAOs
-	virtual const ModelPatchBase& getRenderingComponentModelPatchBase() = 0;
+	virtual const ModelPatchBase& getRenderComponentModelPatchBase() = 0;
 
 	/// Access the material
-	virtual const Material& getRenderingComponentMaterial() = 0;
+	virtual const Material& getRenderComponentMaterial() = 0;
 
 	/// Information for movables. It's actualy an array of transformations.
-	virtual const Transform* getRenderingComponentWorldTransforms()
+	virtual const Transform* getRenderComponentWorldTransforms()
 	{
 		return nullptr;
 	}
 
 	/// Number of instances. If greater than 1 then it's instanced
-	virtual U32 getRenderingComponentInstancesCount()
+	virtual U32 getRenderComponentInstancesCount()
 	{
 		return 1;
 	}
@@ -192,7 +200,7 @@ public:
 
 	/// Iterate variables using a lambda
 	template<typename Func>
-	void iterateRenderingComponentVariables(Func func)
+	void iterateRenderComponentVariables(Func func)
 	{
 		for(auto var : vars)
 		{
@@ -202,7 +210,7 @@ public:
 
 	U32 getSubMeshesCount()
 	{
-		return getRenderingComponentModelPatchBase().getSubMeshesCount();
+		return getRenderComponentModelPatchBase().getSubMeshesCount();
 	}
 
 	/// Reset on frame start
@@ -211,7 +219,7 @@ public:
 
 protected:
 	/// The derived class needs to call that
-	void init(PropertyMap& pmap);
+	void init();
 
 private:
 	Variables vars;

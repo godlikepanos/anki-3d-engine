@@ -1,4 +1,4 @@
-#include "anki/scene/RenderingComponent.h"
+#include "anki/scene/RenderComponent.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/gl/ShaderProgram.h"
@@ -10,20 +10,21 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
-/// Create a new RenderingComponentVariable given a MaterialVariable
-struct CreateNewRenderingComponentVariableVisitor
+/// Create a new RenderComponentVariable given a MaterialVariable
+struct CreateNewRenderComponentVariableVisitor
 {
 	const MaterialVariable* mvar = nullptr;
-	PropertyMap* pmap = nullptr;
-	RenderingComponent::RenderingComponentVariables* vars = nullptr;
+	RenderComponent::Variables* vars = nullptr;
 
 	template<typename TMaterialVariableTemplate>
 	void visit(const TMaterialVariableTemplate&) const
 	{
 		typedef typename TMaterialVariableTemplate::Type Type;
 
-		RenderingComponentVariableTemplate<Type>* rvar =
-			new RenderingComponentVariableTemplate<Type>(mvar);
+		SceneAllocator<U8> alloc = vars->get_allocator();
+
+		RenderComponentVariableTemplate<Type>* rvar =
+			alloc.newInstance<RenderComponentVariableTemplate<Type>>(mvar);
 
 		vars->push_back(rvar);
 	}
@@ -40,11 +41,11 @@ static Array<const char*, BMV_COUNT - 1> buildinNames = {{
 	"msDepthMap"}};
 
 //==============================================================================
-// RenderingComponentVariable                                                  =
+// RenderComponentVariable                                                     =
 //==============================================================================
 
 //==============================================================================
-RenderingComponentVariable::RenderingComponentVariable(
+RenderComponentVariable::RenderComponentVariable(
 	const MaterialVariable* mvar_)
 	: mvar(mvar_)
 {
@@ -72,35 +73,37 @@ RenderingComponentVariable::RenderingComponentVariable(
 }
 
 //==============================================================================
-RenderingComponentVariable::~RenderingComponentVariable()
+RenderComponentVariable::~RenderComponentVariable()
 {}
 
 //==============================================================================
-// RenderingComponent                                                          =
+// RenderComponent                                                             =
 //==============================================================================
 
 //==============================================================================
-RenderingComponent::RenderingComponent(SceneNode* node)
+RenderComponent::RenderComponent(SceneNode* node)
 	: vars(node->getSceneAllocator())
 {}
 
 //==============================================================================
-RenderingComponent::~RenderingComponent()
+RenderComponent::~RenderComponent()
 {
-	for(RenderingComponentVariable* var : vars)
+	SceneAllocator<U8> alloc = vars.get_allocator();
+
+	for(RenderComponentVariable* var : vars)
 	{
-		delete var;
+		var->cleanup(alloc);
+		alloc.deleteInstance(var);
 	}
 }
 
 //==============================================================================
-void RenderingComponent::init(PropertyMap& pmap)
+void RenderComponent::init()
 {
-	const Material& mtl = getRenderingComponentMaterial();
+	const Material& mtl = getRenderComponentMaterial();
 
 	// Create the material variables using a visitor
-	CreateNewRenderingComponentVariableVisitor vis;
-	vis.pmap = &pmap;
+	CreateNewRenderComponentVariableVisitor vis;
 	vis.vars = &vars;
 
 	vars.reserve(mtl.getVariables().size());
@@ -111,28 +114,16 @@ void RenderingComponent::init(PropertyMap& pmap)
 		mv->acceptVisitor(vis);
 	}
 
-	// FUTURE if the material is simple (only viewprojection matrix and samlers)
-	// then use a common UBO. It will save the copying to the UBO and the 
-	// binding
-
-	// Init the UBO
-	const ShaderProgramUniformBlock* block = mtl.getCommonUniformBlock();
-
-	if(block)
-	{
-		ubo.create(block->getSize(), nullptr, GlObject::DOUBLE_OBJECT);
-	}
-
 	// Instancing sanity checks
-	U32 instancesCount = getRenderingComponentInstancesCount();
-	const MaterialVariable* mv =
-		mtl.findVariableByName("instancingModelViewProjectionMatrices");
-
-	if(mv && mv->getAShaderProgramUniformVariable().getSize() < instancesCount)
+	U32 instancesCount = getRenderComponentInstancesCount();
+	iterateRenderComponentVariables([&](RenderComponentVariable& var)
 	{
-		throw ANKI_EXCEPTION("The renderable needs more instances that the "
-			"shader program can handle");
-	}
+		if(var.getArraySize() < instancesCount)
+		{
+			throw ANKI_EXCEPTION("The renderable needs more instances that "
+				"the shader program can handle");
+		}
+	});
 }
 
 }  // end namespace anki

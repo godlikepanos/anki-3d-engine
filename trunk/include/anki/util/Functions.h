@@ -40,6 +40,13 @@ Type getAlignedRoundUp(PtrSize alignment, Type value)
 	return (Type)v;
 }
 
+/// Check if a number is aligned
+template<typename Type>
+bool isAligned(PtrSize alignment, Type value)
+{
+	return ((PtrSize)value % alignment) == 0;
+}
+
 /// Get the size in bytes of a vector
 template<typename Vec>
 inline PtrSize getVectorSizeInBytes(const Vec& v)

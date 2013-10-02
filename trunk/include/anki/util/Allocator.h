@@ -195,7 +195,7 @@ public:
 		{
 			alloc.destroy(&x[i]);
 		}
-		alloc.deallocate(x);
+		alloc.deallocate(x, n);
 	}
 };
 
@@ -453,7 +453,7 @@ public:
 		{
 			alloc.destroy(&x[i]);
 		}
-		alloc.deallocate(x);
+		alloc.deallocate(x, n);
 	}
 
 private:
