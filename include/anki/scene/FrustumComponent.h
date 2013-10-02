@@ -1,5 +1,5 @@
-#ifndef ANKI_SCENE_FRUSTUMABLE_H
-#define ANKI_SCENE_FRUSTUMABLE_H
+#ifndef ANKI_SCENE_FRUSTUM_COMPONENT_H
+#define ANKI_SCENE_FRUSTUM_COMPONENT_H
 
 #include "anki/collision/Frustum.h"
 #include "anki/scene/SpatialComponent.h"
@@ -8,27 +8,25 @@
 namespace anki {
 
 // Forward
-class SectorGroup;
-class Sector;
 struct VisibilityTestResults;
 
 /// @addtogroup Scene
 /// @{
 
-/// Frustumable interface for scene nodes
-class Frustumable
+/// Frustum component interface for scene nodes. Useful for nodes that are 
+/// frustums like cameras and lights
+class FrustumComponent
 {
-	friend class SectorGroup;
-	friend class Sector;
-
 public:
 	/// @name Constructors
 	/// @{
 
 	/// Pass the frustum here so we can avoid the virtuals
-	Frustumable(Frustum* fr)
+	FrustumComponent(Frustum* fr)
 		: frustum(fr)
-	{}
+	{
+		ANKI_ASSERT(frustum);
+	}
 	/// @}
 
 	/// @name Accessors
@@ -38,7 +36,7 @@ public:
 		return *frustum;
 	}
 
-	Timestamp getFrustumableTimestamp() const
+	Timestamp getFrustumComponentTimestamp() const
 	{
 		return timestamp;
 	}
@@ -58,29 +56,23 @@ public:
 		return viewProjectionMat;
 	}
 
-	/// Call this after the tests. Before it will point to junk
-	const VisibilityTestResults& getVisibilityTestResults() const
-	{
-		ANKI_ASSERT(visible != nullptr);
-		return *visible;
-	}
-
 	/// Get the origin for sorting and visibility tests
-	virtual const Vec3& getFrustumableOrigin() const = 0;
+	virtual const Vec3& getFrustumComponentOrigin() const = 0;
 
 	void setVisibilityTestResults(VisibilityTestResults* visible_)
 	{
 		ANKI_ASSERT(visible == nullptr);
 		visible = visible_;
 	}
-	VisibilityTestResults* getVisibilityTestResults()
+	/// Call this after the tests. Before it will point to junk
+	VisibilityTestResults& getVisibilityTestResults()
 	{
-		ANKI_ASSERT(visible);
-		return visible;
+		ANKI_ASSERT(visible != nullptr);
+		return *visible;
 	}
 	/// @}
 
-	void frustumableMarkUpdated()
+	void frustumMarkForUpdate()
 	{
 		timestamp = getGlobTimestamp();
 	}
@@ -115,7 +107,6 @@ private:
 	/// frame and before any visibility tests are run
 	VisibilityTestResults* visible = nullptr;
 };
-
 /// @}
 
 } // end namespace anki
