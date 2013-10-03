@@ -1,6 +1,7 @@
 #include "anki/util/Memory.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
+#include "anki/util/Functions.h"
 #include <limits>
 #include <cstdlib>
 #include <cstring>
@@ -93,6 +94,9 @@ void* StackMemoryPool::allocate(PtrSize size_) throw()
 
 		// Set the correct output
 		out += headerSize;
+
+		// Check alignment
+		ANKI_ASSERT(isAligned(alignmentBytes, out));
 	}
 	else
 	{
@@ -106,8 +110,12 @@ void* StackMemoryPool::allocate(PtrSize size_) throw()
 //==============================================================================
 Bool StackMemoryPool::free(void* ptr) throw()
 {
+	// ptr shouldn't be null or not aligned. If not aligned it was not 
+	// allocated by this class
+	ANKI_ASSERT(ptr != nullptr && isAligned(alignmentBytes, ptr));
+
 	// memory is nullptr if moved
-	ANKI_ASSERT(memory != nullptr && ptr != nullptr);
+	ANKI_ASSERT(memory != nullptr);
 
 	// Correct the p
 	PtrSize headerSize = 
@@ -147,7 +155,7 @@ void StackMemoryPool::reset()
 	memset(memory, 0xCC, memsize);
 #endif
 
-	top = getAlignedRoundUp(alignmentBytes, memory);
+	top = memory;
 }
 
 //==============================================================================

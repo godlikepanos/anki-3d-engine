@@ -8,19 +8,18 @@ namespace anki {
 
 //==============================================================================
 Camera::Camera(
-	const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-	U32 movableFlags, // Movable
+	const char* name, SceneGraph* scene, // SceneNode
 	Frustum* frustum, // Spatial & Frustumable
 	CameraType type_) 
-	:	SceneNode(name, scene, parent),
-		Movable(movableFlags, this),
-		SpatialComponent(frustum, getSceneAllocator()),
-		Frustumable(frustum),
+	:	SceneNode(name, scene),
+		MoveComponent(this),
+		SpatialComponent(this, frustum),
+		FrustumComponent(frustum),
 		type(type_)
 {
-	sceneNodeProtected.movable = this;
-	sceneNodeProtected.spatial = this;
-	sceneNodeProtected.frustumable = this;
+	sceneNodeProtected.moveC = this;
+	sceneNodeProtected.spatialC = this;
+	sceneNodeProtected.frustumC = this;
 }
 
 //==============================================================================
@@ -45,10 +44,8 @@ void Camera::lookAtPoint(const Vec3& point)
 //==============================================================================
 
 //==============================================================================
-PerspectiveCamera::PerspectiveCamera(
-	const char* name, SceneGraph* scene, SceneNode* parent,
-	U32 movableFlags)
-	: Camera(name, scene, parent, movableFlags, &frustum, CT_PERSPECTIVE)
+PerspectiveCamera::PerspectiveCamera(const char* name, SceneGraph* scene)
+	: Camera(name, scene, &frustum, CT_PERSPECTIVE)
 {}
 
 //==============================================================================
@@ -56,10 +53,8 @@ PerspectiveCamera::PerspectiveCamera(
 //==============================================================================
 
 //==============================================================================
-OrthographicCamera::OrthographicCamera(
-	const char* name, SceneGraph* scene, SceneNode* parent,
-	U32 movableFlags)
-	: Camera(name, scene, parent, movableFlags, &frustum, CT_ORTHOGRAPHIC)
+OrthographicCamera::OrthographicCamera(const char* name, SceneGraph* scene)
+	: Camera(name, scene, &frustum, CT_ORTHOGRAPHIC)
 {}
 
 } // end namespace

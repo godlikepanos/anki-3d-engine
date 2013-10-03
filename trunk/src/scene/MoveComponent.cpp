@@ -8,7 +8,7 @@ MoveComponent::MoveComponent(SceneNode* node, U32 flags)
 	:	Base(nullptr, node->getSceneAllocator()),
 		Bitset<U8>(flags)
 {
-	movableMarkForUpdate();
+	markForUpdate();
 }
 
 //==============================================================================
@@ -19,10 +19,11 @@ MoveComponent::~MoveComponent()
 void MoveComponent::update()
 {
 	// Call this only on roots
-	ANKI_ASSERT(getParent() == nullptr);
-
-	// If root begin updating
-	updateWorldTransform();
+	if(getParent() == nullptr)
+	{
+		// If root begin updating
+		updateWorldTransform();
+	}
 }
 
 //==============================================================================
@@ -62,7 +63,7 @@ void MoveComponent::updateWorldTransform()
 		// If parent is dirty then make children dirty as well
 		if(dirty)
 		{
-			mov.movableMarkForUpdate();
+			mov.markForUpdate();
 		}
 
 		mov.updateWorldTransform();

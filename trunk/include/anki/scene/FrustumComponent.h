@@ -36,7 +36,7 @@ public:
 		return *frustum;
 	}
 
-	Timestamp getFrustumComponentTimestamp() const
+	Timestamp getTimestamp() const
 	{
 		return timestamp;
 	}
@@ -57,7 +57,7 @@ public:
 	}
 
 	/// Get the origin for sorting and visibility tests
-	virtual const Vec3& getFrustumComponentOrigin() const = 0;
+	virtual const Vec3& getFrustumOrigin() const = 0;
 
 	void setVisibilityTestResults(VisibilityTestResults* visible_)
 	{
@@ -72,7 +72,7 @@ public:
 	}
 	/// @}
 
-	void frustumMarkForUpdate()
+	void markForUpdate()
 	{
 		timestamp = getGlobTimestamp();
 	}

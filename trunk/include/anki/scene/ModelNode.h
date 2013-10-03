@@ -2,8 +2,8 @@
 #define ANKI_SCENE_MODEL_NODE_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Renderable.h"
-#include "anki/scene/Movable.h"
+#include "anki/scene/RenderComponent.h"
+#include "anki/scene/MoveComponent.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/resource/Resource.h"
 #include "anki/resource/Model.h"
@@ -15,7 +15,7 @@ namespace anki {
 /// @{
 
 /// A model instance
-class ModelPatchNodeInstance: public SceneNode, public Movable, 
+class ModelPatchNodeInstance: public SceneNode, public MoveComponent, 
 	public SpatialComponent
 {
 	friend class ModelPatchNode;
@@ -23,27 +23,26 @@ class ModelPatchNodeInstance: public SceneNode, public Movable,
 
 public:
 	ModelPatchNodeInstance(
-		const char* name, SceneGraph* scene, SceneNode* parent, // Scene
-		U32 movableFlags, // Movable
+		const char* name, SceneGraph* scene, // SceneNode
 		const ModelPatchBase* modelPatchResource); // Self
 
-	/// @name Movable virtuals
+	/// @name MoveComponent virtuals
 	/// @{
 
-	/// Overrides Movable::moveUpdate(). This does:
+	/// Overrides MoveComponent::moveUpdate(). This does:
 	/// - Update the collision shape
 	/// - If it's the last instance update the parent's CS.
-	void movableUpdate();
+	void moveUpdate();
 	/// @}
 
 private:
 	Obb obb; ///< In world space
-	const ModelPatchBase* modelPatch; ///< Keep the resource for tha OBB
+	const ModelPatchBase* modelPatch; ///< Keep the resource for the OBB
 };
 
 /// A fragment of the ModelNode
-class ModelPatchNode: public SceneNode, public Movable, public Renderable,
-	public SpatialComponent
+class ModelPatchNode: public SceneNode, public MoveComponent, 
+	public RenderComponent, public SpatialComponent
 {
 	friend class ModelPatchNodeInstance;
 	friend class ModelNode;
@@ -52,41 +51,40 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	ModelPatchNode(
-		const char* name, SceneGraph* scene, SceneNode* parent, // Scene
-		U32 movableFlags, // Movable
+		const char* name, SceneGraph* scene, // Scene
 		const ModelPatchBase* modelPatch, U instances); // Self
 
 	~ModelPatchNode();
 	/// @}
 
-	/// @name Movable virtuals
+	/// @name MoveComponent virtuals
 	/// @{
 
-	/// Overrides Movable::moveUpdate(). This does:
+	/// Overrides MoveComponent::moveUpdate(). This does:
 	/// - Update the collision shape
-	void movableUpdate();
+	void moveUpdate();
 	/// @}
 
-	/// @name Renderable virtuals
+	/// @name RenderComponent virtuals
 	/// @{
 
-	/// Implements Renderable::getModelPatchBase
-	const ModelPatchBase& getRenderableModelPatchBase()
+	/// Implements RenderComponent::getModelPatchBase
+	const ModelPatchBase& getModelPatchBase()
 	{
 		return *modelPatch;
 	}
 
-	/// Implements  Renderable::getMaterial
-	const Material& getRenderableMaterial()
+	/// Implements  RenderComponent::getMaterial
+	const Material& getMaterial()
 	{
 		return modelPatch->getMaterial();
 	}
 
-	/// Overrides Renderable::getRenderableWorldTransforms
-	const Transform* getRenderableWorldTransforms();
+	/// Overrides RenderComponent::getRenderComponentWorldTransforms
+	const Transform* getRenderWorldTransforms();
 
-	/// Overrides Renderable::getRenderableInstancesCount
-	U32 getRenderableInstancesCount()
+	/// Overrides RenderComponent::getRenderComponentInstancesCount
+	U32 getRenderInstancesCount()
 	{
 		// return this and the instances 
 		return (transforms.size() > 0) ? transforms.size() : 1;
@@ -104,7 +102,7 @@ private:
 };
 
 /// The model scene node
-class ModelNode: public SceneNode, public Movable
+class ModelNode: public SceneNode, public MoveComponent
 {
 public:
 	typedef SceneVector<ModelPatchNode*> ModelPatchNodes;
@@ -112,8 +110,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	ModelNode(
-		const char* name, SceneGraph* scene, SceneNode* node, // SceneNode
-		U32 movableFlags, // Movable
+		const char* name, SceneGraph* scene, // SceneNode
 		const char* modelFname, U instances = 1); // Self
 
 	virtual ~ModelNode();
@@ -124,17 +121,6 @@ public:
 	const Model& getModel() const
 	{
 		return *model;
-	}
-	/// @}
-
-	/// @name Movable virtuals
-	/// @{
-
-	/// Overrides Movable::moveUpdate(). This does:
-	/// - Update collision shape
-	void movableUpdate()
-	{
-		Movable::movableUpdate();
 	}
 	/// @}
 

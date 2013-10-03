@@ -8,30 +8,17 @@ namespace anki {
 
 //==============================================================================
 Light::Light(
-	const char* name, SceneGraph* scene, SceneNode* parent, // Scene
-	U32 movableFlags, // Movable
+	const char* name, SceneGraph* scene, // SceneNode
 	CollisionShape* cs, // Spatial
-	LightType t, const char* lensFlareFile) // Self
-	:	SceneNode(name, scene, parent),
-		Movable(movableFlags, this),
-		SpatialComponent(cs, getSceneAllocator()),
+	LightType t) // Self
+	:	SceneNode(name, scene),
+		MoveComponent(this),
+		SpatialComponent(this, cs),
 		type(t)
 {
-	sceneNodeProtected.movable = this;
-	sceneNodeProtected.spatial = this;
-	sceneNodeProtected.light = this;
-
-	if(lensFlareFile)
-	{
-		flaresTex.load(lensFlareFile);
-	}
-
-	addNewProperty(new ReadWritePointerProperty<Vec4>("color", &color));
-
-	addNewProperty(
-		new ReadWritePointerProperty<Vec4>("specularColor", &specColor));
-
-	//addNewProperty(new ReadWritePointerProperty<bool>("shadow", &shadow));
+	sceneNodeProtected.moveC = this;
+	sceneNodeProtected.spatialC = this;
+	sceneNodeProtected.lightC = this;
 }
 
 //==============================================================================
@@ -43,29 +30,20 @@ Light::~Light()
 //==============================================================================
 
 //==============================================================================
-PointLight::PointLight(
-	const char* name, SceneGraph* scene, SceneNode* parent,
-	U32 movableFlags, const char* lensFlareFile)
-	:	Light(name, scene, parent, movableFlags, &sphereW, LT_POINT,
-			lensFlareFile)
-{
-	F32& r = sphereW.getRadius();
-	addNewProperty(new ReadWritePointerProperty<F32>("radius", &r));
-}
+PointLight::PointLight(const char* name, SceneGraph* scene)
+	:	Light(name, scene, &sphereW, LT_POINT)
+{}
 
 //==============================================================================
 // SpotLight                                                                   =
 //==============================================================================
 
 //==============================================================================
-SpotLight::SpotLight(
-	const char* name, SceneGraph* scene, SceneNode* parent,
-	U32 movableFlags, const char* lensFlareFile)
-	: 	Light(name, scene, parent, movableFlags, &frustum, LT_SPOT, 
-			lensFlareFile),
-		Frustumable(&frustum)
+SpotLight::SpotLight(const char* name, SceneGraph* scene)
+	:	Light(name, scene, &frustum, LT_SPOT),
+		FrustumComponent(&frustum)
 {
-	sceneNodeProtected.frustumable = this;
+	sceneNodeProtected.frustumC = this;
 
 	const F32 ang = toRad(45.0);
 	setOuterAngle(ang / 2.0);

@@ -3,9 +3,8 @@
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SpatialComponent.h"
-#include "anki/scene/Movable.h"
-#include "anki/scene/Frustumable.h"
-#include "anki/core/Logger.h"
+#include "anki/scene/MoveComponent.h"
+#include "anki/scene/FrustumComponent.h"
 
 namespace anki {
 
@@ -13,8 +12,8 @@ namespace anki {
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode, public Movable, public SpatialComponent, 
-	public Frustumable
+class Camera: public SceneNode, public MoveComponent, public SpatialComponent, 
+	public FrustumComponent
 {
 public:
 	/// @note Don't EVER change the order
@@ -28,10 +27,9 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	Camera(
-		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-		U32 movableFlags, // Movable
+		const char* name, SceneGraph* scene, // SceneNode
 		Frustum* frustum, // Spatial & Frustumable
-		CameraType type_); // Self
+		CameraType type); // Self
 
 	virtual ~Camera();
 	/// @}
@@ -54,21 +52,11 @@ public:
 	virtual F32 getFar() const = 0;
 	/// @}
 
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::frameUpdate
-	void frameUpdate(F32 prevUpdateTime, F32 crntTime, int frame)
-	{
-		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
-	}
-	/// @}
-
 	/// @name Frustumable virtuals
 	/// @{
 
 	/// Override Frustumable::getFrustumableOrigin()
-	const Vec3& getFrustumableOrigin() const
+	const Vec3& getFrustumOrigin() const
 	{
 		return getWorldTransform().getOrigin();
 	}
@@ -115,13 +103,9 @@ private:
 class PerspectiveCamera: public Camera
 {
 public:
-	ANKI_HAS_SLOTS(PerspectiveCamera)
-
 	/// @name Constructors
 	/// @{
-	PerspectiveCamera(
-		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-		U32 movableFlags); // Movable
+	PerspectiveCamera(const char* name, SceneGraph* scene);
 	/// @}
 
 	/// @name Accessors
@@ -142,8 +126,8 @@ public:
 	}
 	void setFovX(F32 x)
 	{
-		frustumUpdate();
 		frustum.setFovX(x);
+		frustumUpdate();
 	}
 
 	F32 getFovY() const
@@ -152,8 +136,8 @@ public:
 	}
 	void setFovY(F32 x)
 	{
-		frustumUpdate();
 		frustum.setFovY(x);
+		frustumUpdate();
 	}
 
 	void setAll(F32 fovX_, F32 fovY_, F32 near_, F32 far_)
@@ -169,14 +153,14 @@ public:
 	/// Overrides Movable::moveUpdate(). This does:
 	/// @li Update view matrix
 	/// @li Update view-projection matrix
-	/// @li Update frustum
-	void movableUpdate()
+	/// @li Move the frustum
+	void moveUpdate()
 	{
-		Movable::movableUpdate();
 		updateViewMatrix();
 		updateViewProjectionMatrix();
 		frustum.setTransform(getWorldTransform());
-		spatialMarkForUpdate();
+
+		SpatialComponent::markForUpdate();
 	}
 	/// @}
 
@@ -186,12 +170,12 @@ private:
 	/// Called when something changes in the frustum
 	void frustumUpdate()
 	{
-		frustumableMarkUpdated();
-
 		projectionMat = frustum.calculateProjectionMatrix();
 		invProjectionMat = projectionMat.getInverse();
 		updateViewProjectionMatrix();
-		spatialMarkForUpdate();
+
+		SpatialComponent::markForUpdate();
+		FrustumComponent::markForUpdate();
 	}
 };
 
@@ -199,13 +183,9 @@ private:
 class OrthographicCamera: public Camera
 {
 public:
-	ANKI_HAS_SLOTS(OrthographicCamera)
-
 	/// @name Constructors
 	/// @{
-	OrthographicCamera(
-		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-		U32 movableFlags); // Movable
+	OrthographicCamera(const char* name, SceneGraph* scene);
 	/// @}
 
 	/// @name Accessors
@@ -243,6 +223,7 @@ public:
 	void setAll(F32 left, F32 right, F32 near, F32 far, F32 top, F32 bottom)
 	{
 		frustum.setAll(left, right, near, far, top, bottom);
+		frustumUpdate();
 	}
 	/// @}
 
@@ -255,10 +236,7 @@ public:
 	/// @li Update frustum
 	void movableUpdate()
 	{
-		Movable::movableUpdate();
-		updateViewMatrix();
-		updateViewProjectionMatrix();
-		frustum.setTransform(getWorldTransform());
+		ANKI_ASSERT(0 && "TODO");
 	}
 	/// @}
 
@@ -268,12 +246,7 @@ private:
 	/// Called when something changes in the frustum
 	void frustumUpdate()
 	{
-		frustumableMarkUpdated();
-
-		projectionMat = frustum.calculateProjectionMatrix();
-		invProjectionMat = projectionMat.getInverse();
-		updateViewProjectionMatrix();
-		spatialMarkForUpdate();
+		ANKI_ASSERT(0 && "TODO");
 	}
 };
 /// @}

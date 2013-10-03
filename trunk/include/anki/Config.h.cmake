@@ -108,6 +108,7 @@
 // General config
 #define ANKI_MAX_MULTIDRAW_PRIMITIVES 64
 #define ANKI_MAX_INSTANCES 32
+#define ANKI_SAFE_ALIGNMENT 16
 
 // Renderer and rendering related config options
 #define ANKI_RENDERER_MAX_TILES_X 16

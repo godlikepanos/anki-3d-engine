@@ -169,19 +169,19 @@ public:
 	virtual ~RenderComponent();
 
 	/// Access to VAOs
-	virtual const ModelPatchBase& getRenderComponentModelPatchBase() = 0;
+	virtual const ModelPatchBase& getModelPatchBase() = 0;
 
 	/// Access the material
-	virtual const Material& getRenderComponentMaterial() = 0;
+	virtual const Material& getMaterial() = 0;
 
 	/// Information for movables. It's actualy an array of transformations.
-	virtual const Transform* getRenderComponentWorldTransforms()
+	virtual const Transform* getRenderWorldTransforms()
 	{
 		return nullptr;
 	}
 
 	/// Number of instances. If greater than 1 then it's instanced
-	virtual U32 getRenderComponentInstancesCount()
+	virtual U32 getRenderInstancesCount()
 	{
 		return 1;
 	}
@@ -200,7 +200,7 @@ public:
 
 	/// Iterate variables using a lambda
 	template<typename Func>
-	void iterateRenderComponentVariables(Func func)
+	void iterateVariables(Func func)
 	{
 		for(auto var : vars)
 		{
@@ -210,7 +210,7 @@ public:
 
 	U32 getSubMeshesCount()
 	{
-		return getRenderComponentModelPatchBase().getSubMeshesCount();
+		return getModelPatchBase().getSubMeshesCount();
 	}
 
 	/// Reset on frame start

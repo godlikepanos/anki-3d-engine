@@ -11,25 +11,24 @@ namespace anki {
 
 //==============================================================================
 ModelPatchNodeInstance::ModelPatchNodeInstance(
-	const char* name, SceneGraph* scene, SceneNode* parent, // Scene
-	U32 movableFlags, // Movable
+	const char* name, SceneGraph* scene, // Scene
 	const ModelPatchBase* modelPatchResource) // Self
-	:	SceneNode(name, scene, parent),
-		Movable(movableFlags, this),
-		SpatialComponent(&obb, getSceneAllocator()),
+	:	SceneNode(name, scene),
+		MoveComponent(this),
+		SpatialComponent(this, &obb),
 		modelPatch(modelPatchResource)
 {
-	sceneNodeProtected.movable = this;
+	sceneNodeProtected.moveC = this;
 
 	// Dont mark it as spatial because it's sub-spatial and don't want to 
 	// be updated by the scene
-	sceneNodeProtected.spatial = nullptr;
+	sceneNodeProtected.spatialC = nullptr;
 
 	ANKI_ASSERT(modelPatch);
 }
 
 //==============================================================================
-void ModelPatchNodeInstance::movableUpdate()
+void ModelPatchNodeInstance::moveUpdate()
 {
 	ANKI_ASSERT(modelPatch);
 
@@ -39,14 +38,14 @@ void ModelPatchNodeInstance::movableUpdate()
 	spatialMarkForUpdate();
 
 	// If this instance is the last update the parent's collision shape
-	SceneNode* parentNode = SceneNode::getParent();
-	ANKI_ASSERT(parentNode);
+	MoveComponent* parentM = MoveComponent::getParent();
+	ANKI_ASSERT(parentM);
 
 	ModelPatchNode* modelPatchNode = 
 #if ANKI_DEBUG
-		dynamic_cast<ModelPatchNode*>(parentNode);
+		dynamic_cast<ModelPatchNode*>(parentM);
 #else
-		static_cast<ModelPatchNode*>(parentNode);
+		static_cast<ModelPatchNode*>(parentM);
 #endif
 	ANKI_ASSERT(modelPatchNode);
 
@@ -63,22 +62,21 @@ void ModelPatchNodeInstance::movableUpdate()
 
 //==============================================================================
 ModelPatchNode::ModelPatchNode(
-	const char* name, SceneGraph* scene, SceneNode* parent,
-	U32 movableFlags,
+	const char* name, SceneGraph* scene,
 	const ModelPatchBase* modelPatch_, U instancesCount)
-	:	SceneNode(name, scene, parent),
-		Movable(movableFlags, this),
-		Renderable(getSceneAllocator()),
-		SpatialComponent(&obb, getSceneAllocator()), 
+	:	SceneNode(name, scene),
+		MoveComponent(this, MoveComponent::MF_IGNORE_LOCAL_TRANSFORM),
+		RenderComponent(this),
+		SpatialComponent(this, &obb), 
 		modelPatch(modelPatch_),
 		instances(getSceneAllocator()),
 		transforms(getSceneAllocator())
 {
-	sceneNodeProtected.movable = this;
-	sceneNodeProtected.renderable = this;
-	sceneNodeProtected.spatial = this;
+	sceneNodeProtected.moveC = this;
+	sceneNodeProtected.renderC = this;
+	sceneNodeProtected.spatialC = this;
 
-	Renderable::init(*this);
+	RenderComponent::init(*this);
 
 	// Create the instances as ModelPatchNodeInstance
 	if(instancesCount > 1)
@@ -91,8 +89,7 @@ ModelPatchNode::ModelPatchNode(
 		for(U i = 0; i < instancesCount; i++)
 		{
 			ModelPatchNodeInstance* instance;
-			getSceneGraph().newSceneNode(instance, nullptr, this, 
-				Movable::MF_IGNORE_PARENT, modelPatch);
+			getSceneGraph().newSceneNode(instance, nullptr, modelPatch);
 
 			instance->setLocalOrigin(pos);
 			pos.x() += 2.0;
@@ -113,7 +110,7 @@ ModelPatchNode::~ModelPatchNode()
 }
 
 //==============================================================================
-const Transform* ModelPatchNode::getRenderableWorldTransforms()
+const Transform* ModelPatchNode::getRenderWorldTransforms()
 {
 	if(transforms.size() == 0)
 	{
@@ -137,10 +134,8 @@ const Transform* ModelPatchNode::getRenderableWorldTransforms()
 }
 
 //==============================================================================
-void ModelPatchNode::movableUpdate()
+void ModelPatchNode::moveUpdate()
 {
-	Movable::movableUpdate();
-
 	if(instances.size() == 0)
 	{
 		// NO instancing
@@ -183,14 +178,13 @@ void ModelPatchNode::updateSpatialCs()
 
 //==============================================================================
 ModelNode::ModelNode(
-	const char* name, SceneGraph* scene, SceneNode* parent,
-	U32 movableFlags,
+	const char* name, SceneGraph* scene,
 	const char* modelFname, U instances)
-	: 	SceneNode(name, scene, parent),
-		Movable(movableFlags, this),
+	: 	SceneNode(name, scene),
+		MoveComponent(this),
 		patches(getSceneAllocator())
 {
-	sceneNodeProtected.movable = this;
+	sceneNodeProtected.moveC = this;
 
 	model.load(modelFname);
 
@@ -200,8 +194,7 @@ ModelNode::ModelNode(
 	for(const ModelPatchBase* patch : model->getModelPatches())
 	{
 		ModelPatchNode* mpn;
-		getSceneGraph().newSceneNode(mpn, nullptr, this,
-			Movable::MF_IGNORE_LOCAL_TRANSFORM, patch, instances);
+		getSceneGraph().newSceneNode(mpn, nullptr, this, patch, instances);
 
 		patches.push_back(mpn);
 		++i;

@@ -1,15 +1,14 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SceneGraph.h"
-#include "anki/scene/Movable.h"
+#include "anki/scene/MoveComponent.h"
 #include "anki/scene/SpatialComponent.h"
-#include "anki/scene/Frustumable.h"
+#include "anki/scene/FrustumComponent.h"
 
 namespace anki {
 
 //==============================================================================
-SceneNode::SceneNode(const char* name_, SceneGraph* scene_, SceneNode* parent)
-	:	Base(parent, scene_->getAllocator()),
-		scene(scene_),
+SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
+	:	scene(scene_),
 		name(getSceneAllocator()),
 		markedForDeletion(false)
 {
@@ -19,9 +18,6 @@ SceneNode::SceneNode(const char* name_, SceneGraph* scene_, SceneNode* parent)
 	{
 		name = SceneString(name_, scene->getAllocator());
 	}
-	
-	/// Add the first property
-	//addNewProperty(new ReadPointerProperty<std::string>("name", &name));
 }
 
 //==============================================================================
@@ -47,22 +43,22 @@ U32 SceneNode::getLastUpdateFrame() const
 {
 	U32 max = 0;
 
-	const Movable* m = getMovable();
-	if(m && m->getMovableTimestamp() > max)
+	const MoveComponent* m = getMoveComponent();
+	if(m && m->getTimestamp() > max)
 	{
-		max = m->getMovableTimestamp();
+		max = m->getTimestamp();
 	}
 
-	const Frustumable* fr = getFrustumable();
-	if(fr && fr->getFrustumableTimestamp() > max)
+	const FrustumComponent* fr = getFrustumComponent();
+	if(fr && fr->getTimestamp() > max)
 	{
-		max = fr->getFrustumableTimestamp();
+		max = fr->getTimestamp();
 	}
 
-	const SpatialComponent* s = getSpatial();
-	if(s && s->getSpatialTimestamp() > max)
+	const SpatialComponent* s = getSpatialComponent();
+	if(s && s->getTimestamp() > max)
 	{
-		max = s->getSpatialTimestamp();
+		max = s->getTimestamp();
 	}
 
 	return max;
