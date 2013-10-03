@@ -4,9 +4,8 @@
 #include "anki/util/StdTypes.h"
 #include "anki/util/Assert.h"
 #include "anki/util/NonCopyable.h"
-#include "anki/util/Functions.h"
 #include <atomic>
-#include <algorithm>
+#include <algorithm> // For the std::move
 
 namespace anki {
 
@@ -23,20 +22,8 @@ class Allocator;
 class StackMemoryPool: public NonCopyable
 {
 public:
-
-	/// Safe alignment in bytes
-	static const U SAFE_ALIGNMENT = 
-#if ANKI_CPU_ARCH == ANKI_CPU_ARCH_INTEL
-		16
-#elif ANKI_CPU_ARCH == ANKI_CPU_ARCH_ARM
-		16
-#else
-#	error "See file"
-#endif
-		;
-
 	/// Default constructor
-	StackMemoryPool(PtrSize size, U32 alignmentBytes = SAFE_ALIGNMENT);
+	StackMemoryPool(PtrSize size, U32 alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Move
 	StackMemoryPool(StackMemoryPool&& other)

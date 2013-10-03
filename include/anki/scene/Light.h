@@ -2,8 +2,8 @@
 #define ANKI_SCENE_LIGHT_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Movable.h"
-#include "anki/scene/Frustumable.h"
+#include "anki/scene/MoveComponent.h"
+#include "anki/scene/FrustumComponent.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/resource/Resource.h"
 #include "anki/resource/TextureResource.h"
@@ -50,7 +50,7 @@ private:
 /// Specular intensity of light:    Sl
 /// Specular intensity of material: Sm
 /// @endcode
-class Light: public SceneNode, public Movable, public SpatialComponent
+class Light: public SceneNode, public MoveComponent, public SpatialComponent
 {
 public:
 	enum LightType
@@ -63,10 +63,9 @@ public:
 	/// @name Constructors
 	/// @{
 	Light(
-		const char* name, SceneGraph* scene, SceneNode* parent, // Scene
-		U32 movableFlags, // Movable
-		CollisionShape* cs, // Spatial
-		LightType t, const char* lensFlareFile); // Self
+		const char* name, SceneGraph* scene, // SceneNode
+		CollisionShape* cs, // SpatialComponent
+		LightType t); // Self
 	/// @}
 
 	virtual ~Light();
@@ -169,6 +168,12 @@ public:
 	}
 	/// @}
 
+	void loadLensFlare(const char* filename)
+	{
+		ANKI_ASSERT(!hasLensFlare());
+		flaresTex.load(filename);
+	}
+
 private:
 	LightType type;
 	Vec4 color = Vec4(1.0);
@@ -192,8 +197,7 @@ class PointLight: public Light
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	PointLight(const char* name, SceneGraph* scene, SceneNode* parent,
-		U32 movableFlags, const char* lensFlareFile = nullptr);
+	PointLight(const char* name, SceneGraph* scene);
 	/// @}
 
 	/// @name Accessors
@@ -205,7 +209,7 @@ public:
 	void setRadius(const F32 x)
 	{
 		sphereW.setRadius(x);
-		spatialMarkForUpdate();
+		SpatialComponent::markForUpdate();
 	}
 
 	const Sphere& getSphere() const
@@ -214,16 +218,15 @@ public:
 	}
 	/// @}
 
-	/// @name Movable virtuals
+	/// @name MoveComponent virtuals
 	/// @{
 
-	/// Overrides Movable::moveUpdate(). This does:
+	/// Overrides MoveComponent::moveUpdate(). This does:
 	/// - Update the collision shape
 	void movableUpdate()
 	{
-		Movable::movableUpdate();
 		sphereW.setCenter(getWorldTransform().getOrigin());
-		spatialMarkForUpdate();
+		SpatialComponent::markForUpdate();
 	}
 	/// @}
 
@@ -232,15 +235,12 @@ public:
 };
 
 /// Spot light
-class SpotLight: public Light, public Frustumable
+class SpotLight: public Light, public FrustumComponent
 {
 public:
-	ANKI_HAS_SLOTS(SpotLight)
-
 	/// @name Constructors/Destructor
 	/// @{
-	SpotLight(const char* name, SceneGraph* scene, SceneNode* parent,
-		U32 movableFlags, const char* lensFlareFile = nullptr);
+	SpotLight(const char* name, SceneGraph* scene);
 	/// @}
 
 	/// @name Accessors
@@ -296,27 +296,26 @@ public:
 	}
 	/// @}
 
-	/// @name Movable virtuals
+	/// @name MoveComponent virtuals
 	/// @{
 
-	/// Overrides Movable::moveUpdate(). This does:
+	/// Overrides MoveComponent::moveUpdate(). This does:
 	/// - Update the collision shape
-	void movableUpdate()
+	void moveUpdate()
 	{
-		Movable::movableUpdate();
 		frustum.setTransform(getWorldTransform());
 		viewMat = Mat4(getWorldTransform().getInverse());
 		viewProjectionMat = projectionMat * viewMat;
 
-		spatialMarkForUpdate();
+		SpatialComponent::markForUpdate();
 	}
 	/// @}
 
-	/// @name Frustumable virtuals
+	/// @name FrustumComponent virtuals
 	/// @{
 
-	/// Override Frustumable::getFrustumableOrigin()
-	const Vec3& getFrustumableOrigin() const
+	/// Override FrustumComponent::getFrustumComponentOrigin()
+	const Vec3& getFrustumComponentOrigin() const
 	{
 		return getWorldTransform().getOrigin();
 	}
@@ -338,8 +337,8 @@ private:
 		projectionMat = frustum.calculateProjectionMatrix();
 		viewProjectionMat = projectionMat * viewMat;
 
-		spatialMarkForUpdate();
-		frustumableMarkUpdated();
+		SpatialComponent::markForUpdate();
+		FrustumComponent::markForUpdate();
 	}
 };
 

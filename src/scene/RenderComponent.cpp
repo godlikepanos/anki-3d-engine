@@ -100,7 +100,7 @@ RenderComponent::~RenderComponent()
 //==============================================================================
 void RenderComponent::init()
 {
-	const Material& mtl = getRenderComponentMaterial();
+	const Material& mtl = getMaterial();
 
 	// Create the material variables using a visitor
 	CreateNewRenderComponentVariableVisitor vis;
@@ -115,8 +115,8 @@ void RenderComponent::init()
 	}
 
 	// Instancing sanity checks
-	U32 instancesCount = getRenderComponentInstancesCount();
-	iterateRenderComponentVariables([&](RenderComponentVariable& var)
+	U32 instancesCount = getRenderInstancesCount();
+	iterateVariables([&](RenderComponentVariable& var)
 	{
 		if(var.getArraySize() < instancesCount)
 		{

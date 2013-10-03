@@ -5,7 +5,7 @@
 #include "anki/collision/Forward.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SpatialComponent.h"
-#include "anki/scene/Renderable.h"
+#include "anki/scene/RenderComponent.h"
 #include "anki/core/ThreadPool.h"
 
 namespace anki {
@@ -112,13 +112,13 @@ struct DistanceSortFunctor
 	{
 		ANKI_ASSERT(a.node && b.node);
 
-		ANKI_ASSERT(a.node->getSpatial() != nullptr 
-			&& b.node->getSpatial() != nullptr);
+		ANKI_ASSERT(a.node->getSpatialComponent() != nullptr 
+			&& b.node->getSpatialComponent() != nullptr);
 
 		F32 dist0 = origin.getDistanceSquared(
-			a.node->getSpatial()->getSpatialOrigin());
+			a.node->getSpatialComponent()->getSpatialOrigin());
 		F32 dist1 = origin.getDistanceSquared(
-			b.node->getSpatial()->getSpatialOrigin());
+			b.node->getSpatialComponent()->getSpatialOrigin());
 
 		return dist0 < dist1;
 	}
@@ -134,8 +134,8 @@ struct MaterialSortFunctor
 		ANKI_ASSERT(a.node->getRenderable() != nullptr 
 			&& b.node->getRenderable() != nullptr);
 
-		return a.node->getRenderable()->getRenderableMaterial()
-			< b.node->getRenderable()->getRenderableMaterial();
+		return a.node->getRenderComponent()->getRenderableMaterial()
+			< b.node->getRenderComponent()->getRenderableMaterial();
 	}
 };
 

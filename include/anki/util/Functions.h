@@ -40,6 +40,15 @@ Type getAlignedRoundUp(PtrSize alignment, Type value)
 	return (Type)v;
 }
 
+/// Align number
+/// @param alignment The bytes of alignment
+/// @param value The value to align
+template<typename Type>
+void alignRoundUp(PtrSize alignment, Type& value)
+{
+	value = getAlignedRoundUp(alignment, value);
+}
+
 /// Check if a number is aligned
 template<typename Type>
 bool isAligned(PtrSize alignment, Type value)

@@ -50,22 +50,22 @@ public:
 	void setLocalTransform(const Transform& x)
 	{
 		lTrf = x;
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 	void setLocalOrigin(const Vec3& x)
 	{
 		lTrf.setOrigin(x);
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 	void setLocalRotation(const Mat3& x)
 	{
 		lTrf.setRotation(x);
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 	void setLocalScale(F32 x)
 	{
 		lTrf.setScale(x);
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 
 	const Transform& getWorldTransform() const
@@ -78,7 +78,7 @@ public:
 		return prevWTrf;
 	}
 
-	Timestamp getMoveComponentTimestamp() const
+	Timestamp getTimestamp() const
 	{
 		return timestamp;
 	}
@@ -89,40 +89,40 @@ public:
 	void rotateLocalX(F32 angDegrees)
 	{
 		lTrf.getRotation().rotateXAxis(angDegrees);
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 	void rotateLocalY(F32 angDegrees)
 	{
 		lTrf.getRotation().rotateYAxis(angDegrees);
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 	void rotateLocalZ(F32 angDegrees)
 	{
 		lTrf.getRotation().rotateZAxis(angDegrees);
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 	void moveLocalX(F32 distance)
 	{
 		Vec3 x_axis = lTrf.getRotation().getColumn(0);
 		lTrf.getOrigin() += x_axis * distance;
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 	void moveLocalY(F32 distance)
 	{
 		Vec3 y_axis = lTrf.getRotation().getColumn(1);
 		lTrf.getOrigin() += y_axis * distance;
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 	void moveLocalZ(F32 distance)
 	{
 		Vec3 z_axis = lTrf.getRotation().getColumn(2);
 		lTrf.getOrigin() += z_axis * distance;
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 	void scale(F32 s)
 	{
 		lTrf.getScale() *= s;
-		movableMarkForUpdate();
+		markForUpdate();
 	}
 	/// @}
 
@@ -138,7 +138,7 @@ public:
 	///       parent
 	void update();
 
-protected:
+private:
 	/// The transformation in local space
 	Transform lTrf = Transform::getIdentity();
 
@@ -156,7 +156,7 @@ protected:
 	/// is true. Then it moves to the children.
 	void updateWorldTransform();
 
-	void movableMarkForUpdate()
+	void markForUpdate()
 	{
 		enableBits(MF_MARKED_FOR_UPDATE);
 	}

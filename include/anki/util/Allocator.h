@@ -94,14 +94,17 @@ public:
 	/// Allocate memory
 	pointer allocate(size_type n, const void* = 0)
 	{
-		return static_cast<T*>(::operator new(n * sizeof(T)));
+		// operator new doesn't respect alignment (in GCC at least) so use 
+		// custom mem allocation function
+		PtrSize size = n * sizeof(T);
 		allocatedSize += n * sizeof(T);
+		return (T*)mallocAligned(size, alignof(T));
 	}
 
 	/// Deallocate memory
 	void deallocate(void* p, size_type n)
 	{
-		::operator delete(p);
+		freeAligned(p);
 		allocatedSize -= n * sizeof(T);
 	}
 
@@ -242,7 +245,7 @@ inline bool operator!=(const Allocator<T1>&, const AnotherAllocator&)
 /// @note Don't ever EVER remove the double copy constructor and the double
 ///       operator=. The compiler will create defaults
 template<typename T, Bool deallocationFlag = false,
-	U32 alignmentBytes = StackMemoryPool::SAFE_ALIGNMENT>
+	U32 alignmentBytes = ANKI_SAFE_ALIGNMENT>
 class StackAllocator
 {
 	template<typename U, Bool deallocationFlag_, U32 alignmentBytes_>

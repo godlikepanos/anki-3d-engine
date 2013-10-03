@@ -10,24 +10,19 @@ namespace anki {
 class SceneGraph; // Don't include
 
 // Components forward. Don't include
-class Movable;
-class Renderable;
-class Frustumable;
+class MoveComponent;
+class RenderComponent;
+class FrustumComponent;
 class SpatialComponent;
 class Light;
-class RigidBody;
-class Path;
 
 /// @addtogroup Scene
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode: public Object<SceneNode, SceneAllocator<SceneNode>>,
-	public PropertyMap
+class SceneNode
 {
 public:
-	typedef Object<SceneNode, SceneAllocator<SceneNode>> Base;
-
 	/// @name Constructors/Destructor
 	/// @{
 
@@ -35,11 +30,9 @@ public:
 	/// @param name The unique name of the node. If it's nullptr the the node
 	///             is not searchable
 	/// @param scene The scene that will register it
-	/// @param parent The parent of tha node. Used mainly in movable nodes
 	explicit SceneNode(
 		const char* name,
-		SceneGraph* scene,
-		SceneNode* parent = nullptr);
+		SceneGraph* scene);
 
 	/// Unregister node
 	virtual ~SceneNode();
@@ -67,67 +60,49 @@ public:
 
 	/// @name Accessors of components
 	/// @{
-	Movable* getMovable()
+	MoveComponent* getMoveComponent()
 	{
-		return sceneNodeProtected.movable;
+		return sceneNodeProtected.moveC;
 	}
-	const Movable* getMovable() const
+	const MoveComponent* getMoveComponent() const
 	{
-		return sceneNodeProtected.movable;
-	}
-
-	Renderable* getRenderable()
-	{
-		return sceneNodeProtected.renderable;
-	}
-	const Renderable* getRenderable() const
-	{
-		return sceneNodeProtected.renderable;
+		return sceneNodeProtected.moveC;
 	}
 
-	Frustumable* getFrustumable()
+	RenderComponent* getRenderComponent()
 	{
-		return sceneNodeProtected.frustumable;
+		return sceneNodeProtected.renderC;
 	}
-	const Frustumable* getFrustumable() const
+	const RenderComponent* getRenderComponent() const
 	{
-		return sceneNodeProtected.frustumable;
+		return sceneNodeProtected.renderC;
 	}
 
-	SpatialComponent* getSpatial()
+	FrustumComponent* getFrustumComponent()
 	{
-		return sceneNodeProtected.spatial;
+		return sceneNodeProtected.frustumC;
 	}
-	const SpatialComponent* getSpatial() const
+	const FrustumComponent* getFrustumComponent() const
 	{
-		return sceneNodeProtected.spatial;
+		return sceneNodeProtected.frustumC;
+	}
+
+	SpatialComponent* getSpatialComponent()
+	{
+		return sceneNodeProtected.spatialC;
+	}
+	const SpatialComponent* getSpatialComponent() const
+	{
+		return sceneNodeProtected.spatialC;
 	}
 
 	Light* getLight()
 	{
-		return sceneNodeProtected.light;
+		return sceneNodeProtected.lightC;
 	}
 	const Light* getLight() const 
 	{
-		return sceneNodeProtected.light;
-	}
-
-	RigidBody* getRigidBody()
-	{
-		return sceneNodeProtected.rigidBody;
-	}
-	const RigidBody* getRigidBody() const
-	{
-		return sceneNodeProtected.rigidBody;
-	}
-
-	Path* getPath()
-	{
-		return sceneNodeProtected.path;
-	}
-	const Path* getPath() const
-	{
-		return sceneNodeProtected.path;
+		return sceneNodeProtected.lightC;
 	}
 	/// @}
 
@@ -159,13 +134,11 @@ public:
 protected:
 	struct
 	{
-		Movable* movable = nullptr;
-		Renderable* renderable = nullptr;
-		Frustumable* frustumable = nullptr;
-		SpatialComponent* spatial = nullptr;
-		Light* light = nullptr;
-		RigidBody* rigidBody = nullptr;
-		Path* path = nullptr;
+		MoveComponent* moveC = nullptr;
+		RenderComponent* renderC = nullptr;
+		FrustumComponent* frustumC = nullptr;
+		SpatialComponent* spatialC = nullptr;
+		Light* lightC = nullptr;
 	} sceneNodeProtected;
 
 private:

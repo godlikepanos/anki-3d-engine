@@ -34,9 +34,7 @@ public:
 		/// with any surface then it shouldn't be visible and be processed 
 		/// further. This flag is being used to check if we should test agains
 		/// near plane when using the tiler for visibility tests.
-		SF_FULLY_TRANSPARENT = 1 << 3,
-
-		SF_MARKED_FOR_UPDATE = 1 << 4
+		SF_FULLY_TRANSPARENT = 1 << 3
 	};
 
 	/// Pass the collision shape here so we can avoid the virtuals
@@ -62,7 +60,7 @@ public:
 	}
 
 	/// Get optimal collision shape for visibility tests
-	const CollisionShape& getOptimalCollisionShape() const
+	const CollisionShape& getVisibilityCollisionShape() const
 	{
 		if(spatialCs->getCollisionShapeType() == CollisionShape::CST_SPHERE)
 		{
@@ -74,7 +72,7 @@ public:
 		}
 	}
 
-	Timestamp getSpatialTimestamp() const
+	Timestamp getTimestamp() const
 	{
 		return timestamp;
 	}
@@ -110,9 +108,7 @@ public:
 
 	/// The derived class has to manually call this method when the collision 
 	/// shape got updated
-	void spatialMarkForUpdate();
-
-	void update();
+	void markForUpdate();
 
 	void resetFrame();
 
@@ -124,13 +120,7 @@ private:
 	Vec3 origin; ///< Cached value
 	Timestamp timestamp = getGlobTimestamp();
 
-	void updateInternal()
-	{
-		spatialCs->toAabb(aabb);
-		origin = (aabb.getMax() + aabb.getMin()) * 0.5;
-		timestamp = getGlobTimestamp();
-		disableBits(SF_MARKED_FOR_UPDATE);
-	}
+	void updateInternal();
 };
 /// @}
 
