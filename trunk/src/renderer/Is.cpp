@@ -5,6 +5,8 @@
 #include "anki/scene/Light.h"
 #include "anki/core/ThreadPool.h"
 #include "anki/core/Counters.h"
+#include "anki/core/Logger.h"
+#include <sstream>
 
 namespace anki {
 
@@ -621,7 +623,7 @@ void Is::lightPass()
 {
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
 	VisibilityTestResults& vi = 
-		*cam->getFrustumable()->getVisibilityTestResults();
+		cam->getFrustumComponent()->getVisibilityTestResults();
 
 	//
 	// Quickly get the lights

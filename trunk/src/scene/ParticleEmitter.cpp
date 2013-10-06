@@ -42,14 +42,13 @@ Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 
 //==============================================================================
 ParticleBase::ParticleBase(
-	const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-	U32 movableFlags, // Movable
+	const char* name, SceneGraph* scene, // SceneNode
 	ParticleType type_)
-	:	SceneNode(name, scene, parent),
-		Movable(movableFlags, this),
+	:	SceneNode(name, scene),
+		MoveComponent(this),
 		type(type_)
 {
-	sceneNodeProtected.movable = this;
+	sceneNodeProtected.moveC = this;
 }
 
 //==============================================================================
@@ -75,9 +74,8 @@ void ParticleBase::revive(const ParticleEmitter& pe,
 
 //==============================================================================
 ParticleSimple::ParticleSimple(
-	const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-	U32 movableFlags) // Movable
-	: ParticleBase(name, scene, parent, movableFlags, PT_SIMPLE)
+	const char* name, SceneGraph* scene)
+	: ParticleBase(name, scene, PT_SIMPLE)
 {}
 
 //==============================================================================
@@ -131,14 +129,13 @@ void ParticleSimple::revive(const ParticleEmitter& pe,
 
 //==============================================================================
 Particle::Particle(
-	const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-	U32 movableFlags, // Movable
+	const char* name, SceneGraph* scene, // SceneNode
 	// RigidBody
 	PhysWorld* masterContainer, const Initializer& init)
-	:	ParticleBase(name, scene, parent, movableFlags, PT_PHYSICS),
+	:	ParticleBase(name, scene, PT_PHYSICS),
 		RigidBody(masterContainer, init, this)
 {
-	sceneNodeProtected.rigidBody = this;
+	sceneNodeProtected.rigidBodyC = this;
 }
 
 //==============================================================================
@@ -216,19 +213,17 @@ void Particle::revive(const ParticleEmitter& pe,
 
 //==============================================================================
 ParticleEmitter::ParticleEmitter(
-	const char* name, SceneGraph* scene, SceneNode* parent,
-	U32 movableFlags,
+	const char* name, SceneGraph* scene,
 	const char* filename)
-	:	SceneNode(name, scene, parent),
-		SpatialComponent(&aabb, getSceneAllocator()),
-		Movable(movableFlags, this),
-		Renderable(getSceneAllocator()),
+	:	SceneNode(name, scene),
+		SpatialComponent(this, &aabb),
+		MoveComponent(this),
+		RenderComponent(this),
 		particles(getSceneAllocator())
 {
-	sceneNodeProtected.spatial = this;
-	sceneNodeProtected.movable = this;
-	sceneNodeProtected.renderable = this;
-	sceneNodeProtected.renderable = this;
+	sceneNodeProtected.spatialC = this;
+	sceneNodeProtected.moveC = this;
+	sceneNodeProtected.renderC = this;
 
 	// Load resource
 	particleEmitterResource.load(filename);
@@ -250,15 +245,15 @@ ParticleEmitter::ParticleEmitter(
 
 	timeLeftForNextEmission = 0.0;
 	instancesCount = particles.size();
-	Renderable::init(*this);
+	RenderComponent::init();
 
 	// Find the "alpha" material variable
-	for(auto it = Renderable::getVariablesBegin();
-		it != Renderable::getVariablesEnd(); ++it)
+	for(auto it = RenderComponent::getVariablesBegin();
+		it != RenderComponent::getVariablesEnd(); ++it)
 	{
 		if((*it)->getName() == "alpha")
 		{
-			alphaRenderableVar = *it;
+			alphaRenderComponentVar = *it;
 		}
 	}
 }
@@ -271,24 +266,24 @@ ParticleEmitter::~ParticleEmitter()
 		getSceneGraph().deleteSceneNode(part);
 	}
 
-	ANKI_DELETE(collShape, getSceneAllocator());
+	getSceneAllocator().deleteInstance(collShape);
 }
 
 //==============================================================================
-const ModelPatchBase& ParticleEmitter::getRenderableModelPatchBase()
+const ModelPatchBase& ParticleEmitter::getModelPatchBase()
 {
 	return *particleEmitterResource->getModel().getModelPatches()[0];
 }
 
 //==============================================================================
-const Material& ParticleEmitter::getRenderableMaterial()
+const Material& ParticleEmitter::getMaterial()
 {
 	return
 		particleEmitterResource->getModel().getModelPatches()[0]->getMaterial();
 }
 
 //==============================================================================
-void ParticleEmitter::movableUpdate()
+void ParticleEmitter::moveUpdate()
 {
 	identityRotation =
 		getWorldTransform().getRotation() == Mat3::getIdentity();
@@ -297,7 +292,7 @@ void ParticleEmitter::movableUpdate()
 //==============================================================================
 void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 {
-	collShape = ANKI_NEW(btSphereShape, getSceneAllocator(), particle.size);
+	collShape = getSceneAllocator().newInstance<btSphereShape>(particle.size);
 
 	RigidBody::Initializer binit;
 	binit.shape = collShape;
@@ -312,9 +307,7 @@ void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 
 		Particle* part;
 		getSceneGraph().newSceneNode(part,
-			(getName() + std::to_string(i)).c_str(), nullptr,
-			Movable::MF_NONE,
-			&scene->getPhysics(), binit);
+			nullptr, &scene->getPhysics(), binit);
 
 		part->size = getRandom(particle.size, particle.sizeDeviation);
 		part->alpha = getRandom(particle.alpha, particle.alphaDeviation);
@@ -331,9 +324,7 @@ void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
 	{
 		ParticleSimple* part;
 		
-		getSceneGraph().newSceneNode(part,
-			(getName() + std::to_string(i)).c_str(), nullptr,
-			Movable::MF_NONE);
+		getSceneGraph().newSceneNode(part, nullptr);
 
 		part->size = getRandom(particle.size, particle.sizeDeviation);
 		part->alpha = getRandom(particle.alpha, particle.alphaDeviation);
@@ -345,8 +336,6 @@ void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
 //==============================================================================
 void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 {
-	SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
-
 	// - Deactivate the dead particles
 	// - Calc the AABB
 	// - Calc the instancing stuff
@@ -355,8 +344,8 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	Vec3 aabbmax(-std::numeric_limits<F32>::max());
 
 	// Create the transformations vector
-	instancingTransformations = ANKI_NEW(SceneFrameVector<Transform>,
-		getSceneFrameAllocator(), getSceneFrameAllocator());
+	instancingTransformations = getSceneFrameAllocator().
+		newInstance<SceneFrameVector<Transform>>(getSceneFrameAllocator());
 
 	instancingTransformations->reserve(particles.size());
 
@@ -383,7 +372,8 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			p->simulate(*this, prevUpdateTime, crntTime);
 
 			// An alive
-			const Vec3& origin = p->Movable::getWorldTransform().getOrigin();
+			const Vec3& origin = 
+				p->MoveComponent::getWorldTransform().getOrigin();
 
 			for(U i = 0; i < 3; i++)
 			{
@@ -394,7 +384,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			F32 lifePercent = (crntTime - p->getTimeOfBirth())
 				/ (p->getTimeOfDeath() - p->getTimeOfBirth());
 
-			Transform trf = p->Movable::getWorldTransform();
+			Transform trf = p->MoveComponent::getWorldTransform();
 			// XXX set a flag for scale
 			trf.setScale(
 				p->size + (lifePercent * particle.sizeAnimation));
@@ -402,7 +392,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			instancingTransformations->push_back(trf);
 
 			// Set alpha
-			if(alphaRenderableVar)
+			if(alphaRenderComponentVar)
 			{
 				alpha.push_back(
 					sin((lifePercent) * getPi<F32>())
@@ -420,11 +410,12 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 	{
 		aabb = Aabb(Vec3(0.0), Vec3(0.01));
 	}
-	spatialMarkForUpdate();
+	SpatialComponent::markForUpdate();
 
-	if(alphaRenderableVar)
+	if(alphaRenderComponentVar)
 	{
-		alphaRenderableVar->setValues(&alpha[0], alpha.size());
+		alphaRenderComponentVar->setValues(
+			&alpha[0], alpha.size(), getSceneAllocator());
 	}
 
 	//

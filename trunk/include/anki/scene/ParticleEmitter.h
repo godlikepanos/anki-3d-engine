@@ -2,9 +2,9 @@
 #define ANKI_SCENE_PARTICLE_EMITTER_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Movable.h"
+#include "anki/scene/MoveComponent.h"
 #include "anki/scene/SpatialComponent.h"
-#include "anki/scene/Renderable.h"
+#include "anki/scene/RenderComponent.h"
 #include "anki/physics/RigidBody.h"
 #include "anki/resource/ParticleEmitterResource.h"
 
@@ -14,7 +14,7 @@ class ParticleEmitter;
 
 /// Particle base
 /// XXX Remove SceneNode
-class ParticleBase: public SceneNode, public Movable
+class ParticleBase: public SceneNode, public MoveComponent
 {
 	friend class ParticleEmitter;
 
@@ -26,8 +26,7 @@ public:
 	};
 
 	ParticleBase(
-		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-		U32 movableFlags, // Movable
+		const char* name, SceneGraph* scene, // SceneNode
 		ParticleType type); // Self
 
 	virtual ~ParticleBase();
@@ -101,8 +100,7 @@ class ParticleSimple: public ParticleBase
 {
 public:
 	ParticleSimple(
-		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-		U32 movableFlags); // Movable
+		const char* name, SceneGraph* scene); // SceneNode
 
 	void revive(const ParticleEmitter& pe,
 		F32 prevUpdateTime, F32 crntTime);
@@ -120,8 +118,7 @@ class Particle: public ParticleBase, public RigidBody
 {
 public:
 	Particle(
-		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-		U32 movableFlags, // Movable
+		const char* name, SceneGraph* scene, // SceneNode
 		// RigidBody
 		PhysWorld* masterContainer, const RigidBody::Initializer& init); 
 
@@ -139,7 +136,8 @@ public:
 
 /// The particle emitter scene node. This scene node emitts
 class ParticleEmitter: public SceneNode, public SpatialComponent, 
-	public Movable, public Renderable, private ParticleEmitterProperties
+	public MoveComponent, public RenderComponent, 
+	private ParticleEmitterProperties
 {
 	friend class ParticleBase;
 	friend class Particle;
@@ -147,8 +145,7 @@ class ParticleEmitter: public SceneNode, public SpatialComponent,
 
 public:
 	ParticleEmitter(
-		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-		U32 movableFlags, // Movable
+		const char* name, SceneGraph* scene, // SceneNode
 		const char* filename); // Self
 
 	~ParticleEmitter();
@@ -160,33 +157,33 @@ public:
 	void frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame);
 	/// @}
 
-	/// @name Renderable virtuals
+	/// @name RenderComponent virtuals
 	/// @{
 
-	/// Implements Renderable::getModelPatchBase
-	const ModelPatchBase& getRenderableModelPatchBase();
+	/// Implements RenderComponent::getModelPatchBase
+	const ModelPatchBase& getModelPatchBase();
 
-	/// Implements  Renderable::getMaterial
-	const Material& getRenderableMaterial();
+	/// Implements  RenderComponent::getMaterial
+	const Material& getMaterial();
 
-	/// Overrides Renderable::getRenderableWorldTransforms
-	const Transform* getRenderableWorldTransforms()
+	/// Overrides RenderComponent::getRenderWorldTransforms
+	const Transform* getRenderWorldTransforms()
 	{
 		return &(*instancingTransformations)[0];
 	}
 
-	/// Overrides Renderable::getRenderableInstancesCount
-	U32 getRenderableInstancesCount()
+	/// Overrides RenderComponent::getRenderInstancesCount
+	U32 getRenderInstancesCount()
 	{
 		return instancesCount;
 	}
 	/// @}
 
-	/// @name Movable virtuals
+	/// @name MoveComponent virtuals
 	/// @{
 
-	/// Overrides Movable::movableUpdate. Calculates an optimization
-	void movableUpdate();
+	/// Overrides MoveComponent::moveUpdate. Calculates an optimization
+	void moveUpdate();
 	/// @}
 
 private:
@@ -207,7 +204,7 @@ private:
 	/// rendering.
 	SceneFrameVector<Transform>* instancingTransformations;
 
-	RenderableVariable* alphaRenderableVar = nullptr;
+	RenderComponentVariable* alphaRenderComponentVar = nullptr;
 
 	void createParticlesSimulation(SceneGraph* scene);
 	void createParticlesSimpleSimulation(SceneGraph* scene);

@@ -111,7 +111,7 @@ void Ms::run()
 	// render all
 	r->getSceneDrawer().prepareDraw();
 	VisibilityTestResults& vi =
-		*r->getSceneGraph().getActiveCamera().getVisibilityTestResults();
+		r->getSceneGraph().getActiveCamera().getVisibilityTestResults();
 
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{

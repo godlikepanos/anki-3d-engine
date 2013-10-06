@@ -149,11 +149,10 @@ private:
 };
 
 // Forward
-class Octree;
-class OctreeNode;
 class Renderer;
 class Camera;
 class Sector;
+class Path;
 
 /// This is a drawer for some scene nodes that need debug
 class SceneDebugDrawer
@@ -168,8 +167,6 @@ public:
 
 	void draw(SceneNode& node);
 
-	void draw(const Octree& octree) const;
-
 	void draw(const Sector& sector);
 
 	void setViewProjectionMatrix(const Mat4& m)
@@ -180,12 +177,9 @@ public:
 private:
 	DebugDrawer* dbg;
 
-	void draw(Frustumable& fr) const;
+	void draw(FrustumComponent& fr) const;
 
 	void draw(SpatialComponent& sp) const;
-
-	void draw(const OctreeNode& octnode,
-		U32 depth, const Octree& octree) const;
 
 	void drawPath(const Path& path) const;
 };

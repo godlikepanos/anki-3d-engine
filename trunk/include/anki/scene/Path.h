@@ -3,7 +3,7 @@
 
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Movable.h"
+#include "anki/scene/MoveComponent.h"
 
 namespace anki {
 
@@ -44,12 +44,11 @@ private:
 };
 
 /// XXX
-class Path: public SceneNode, public Movable
+class Path: public SceneNode, public MoveComponent
 {
 public:
 	Path(
-		const char* name, SceneGraph* scene, SceneNode* parent, // SceneNode
-		U32 movableFlags, // Movable
+		const char* name, SceneGraph* scene, // SceneNode
 		const char* filename); // Self
 
 	const SceneVector<PathPoint>& getPoints() const

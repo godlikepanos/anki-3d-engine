@@ -1,7 +1,7 @@
 #include "anki/renderer/Lf.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/scene/SceneGraph.h"
-#include "anki/scene/Movable.h"
+#include "anki/scene/MoveComponent.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 
@@ -147,7 +147,7 @@ void Lf::run()
 	// Retrieve some things
 	SceneGraph& scene = r->getSceneGraph();
 	Camera& cam = scene.getActiveCamera();
-	VisibilityTestResults& vi = *cam.getVisibilityTestResults();
+	VisibilityTestResults& vi = cam.getVisibilityTestResults();
 
 	// Iterate the visible light and get those that have lens flare
 	Array<Light*, ANKI_MAX_LIGHTS_WITH_FLARE> lights;

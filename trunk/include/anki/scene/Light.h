@@ -223,7 +223,7 @@ public:
 
 	/// Overrides MoveComponent::moveUpdate(). This does:
 	/// - Update the collision shape
-	void movableUpdate()
+	void moveUpdate()
 	{
 		sphereW.setCenter(getWorldTransform().getOrigin());
 		SpatialComponent::markForUpdate();
@@ -314,8 +314,8 @@ public:
 	/// @name FrustumComponent virtuals
 	/// @{
 
-	/// Override FrustumComponent::getFrustumComponentOrigin()
-	const Vec3& getFrustumComponentOrigin() const
+	/// Override FrustumComponent::getFrustumOrigin()
+	const Vec3& getFrustumOrigin() const
 	{
 		return getWorldTransform().getOrigin();
 	}

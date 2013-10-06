@@ -18,7 +18,7 @@ FollowPathEvent::FollowPathEvent(
 //==============================================================================
 void FollowPathEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
-	Movable* mov = movableSceneNode->getMovable();
+	MoveComponent* mov = movableSceneNode->getMoveComponent();
 	ANKI_ASSERT(mov);
 
 	I pointA = 0;

@@ -8,7 +8,7 @@
 
 namespace anki {
 
-class Movable;
+class MoveComponent;
 class PhysWorld;
 
 /// Wrapper for rigid body
@@ -21,14 +21,14 @@ public:
 		F32 mass = 0.0;
 		Transform startTrf = Transform::getIdentity();
 		btCollisionShape* shape = nullptr;
-		Movable* movable = nullptr;
+		MoveComponent* movable = nullptr;
 		I32 group = -1;
 		I32 mask = -1;
 	};
 
 	/// Init and register
 	RigidBody(PhysWorld* masterContainer, const Initializer& init, 
-		Movable* movable = nullptr);
+		MoveComponent* movable = nullptr);
 
 	/// Unregister
 	~RigidBody();

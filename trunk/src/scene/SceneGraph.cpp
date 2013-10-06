@@ -14,10 +14,9 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-struct UpdateMovablesJob: ThreadJob
+struct UpdateMoveComponentsJob: ThreadJob
 {
 	SceneGraph* scene = nullptr;
-	U32 movablesCount;
 
 	void operator()(U threadId, U threadsCount)
 	{
@@ -28,7 +27,7 @@ struct UpdateMovablesJob: ThreadJob
 
 		scene->iterateSceneNodes(start, end, [](SceneNode& sn)
 		{
-			Movable* m = sn.getMovable();
+			MoveComponent* m = sn.getMoveComponent();
 			if(m)
 			{
 				m->update();
@@ -44,26 +43,21 @@ static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 	sn.frameUpdate(prevUpdateTime, crntTime, getGlobTimestamp());
 
 	// Do some spatial stuff
-	SpatialComponent* sp = sn.getSpatial();
+	SpatialComponent* sp = sn.getSpatialComponent();
 	if(sp)
 	{
-		if(sp->getSpatialTimestamp() >= getGlobTimestamp())
-		{
-			sp->update();
-			//sectorGroup.placeSceneNode(&sn);
-		}
 		sp->resetFrame();
 	}
 
 	// Do some frustumable stuff
-	Frustumable* fr = sn.getFrustumable();
+	FrustumComponent* fr = sn.getFrustumComponent();
 	if(fr)
 	{
 		fr->resetFrame();
 	}
 
 	// Do some renderable stuff
-	Renderable* r = sn.getRenderable();
+	RenderComponent* r = sn.getRenderComponent();
 	if(r)
 	{
 		r->resetFrame();
@@ -249,7 +243,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	// First do the movable updates
 	for(SceneNode* n : nodes)
 	{
-		Movable* m = n->getMovable();
+		MoveComponent* m = n->getMoveComponent();
 
 		if(m)
 		{
@@ -257,7 +251,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 		}
 	}
 #else
-	UpdateMovablesJob jobs[ThreadPool::MAX_THREADS];
+	UpdateMoveComponentsJob jobs[ThreadPool::MAX_THREADS];
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
@@ -336,8 +330,7 @@ void SceneGraph::load(const char* filename)
 			}
 
 			ModelNode* node;
-			newSceneNode(node, name.c_str(), nullptr,
-				Movable::MF_NONE, el.getText(), instancesCount);
+			newSceneNode(node, name.c_str(), el.getText(), instancesCount);
 
 			// <transform>
 			el = mdlNodeEl.getChildElement("transform");

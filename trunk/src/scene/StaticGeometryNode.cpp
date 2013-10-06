@@ -9,8 +9,8 @@ namespace anki {
 
 //==============================================================================
 StaticGeometrySpatial::StaticGeometrySpatial(const Obb* obb,
-	const SceneAllocator<U8>& alloc)
-	: SpatialComponent(obb, alloc)
+	SceneNode& node)
+	: SpatialComponent(&node, obb)
 {}
 
 //==============================================================================
@@ -20,16 +20,16 @@ StaticGeometrySpatial::StaticGeometrySpatial(const Obb* obb,
 //==============================================================================
 StaticGeometryPatchNode::StaticGeometryPatchNode(
 	const char* name, SceneGraph* scene, const ModelPatchBase* modelPatch_)
-	:	SceneNode(name, scene, nullptr),
-		SpatialComponent(&modelPatch_->getBoundingShape(), getSceneAllocator()),
-		Renderable(getSceneAllocator()),
+	:	SceneNode(name, scene),
+		SpatialComponent(this, &modelPatch_->getBoundingShape()),
+		RenderComponent(this),
 		modelPatch(modelPatch_)
 {
-	sceneNodeProtected.spatial = this;
-	sceneNodeProtected.renderable = this;
+	sceneNodeProtected.spatialC = this;
+	sceneNodeProtected.renderC = this;
 
 	ANKI_ASSERT(modelPatch);
-	Renderable::init(*this);
+	RenderComponent::init();
 
 	// For all submeshes create a StaticGeometrySp[atial
 	if(modelPatch->getSubMeshesCount() > 1)
@@ -37,8 +37,8 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(
 		for(U i = 0; i < modelPatch->getSubMeshesCount(); i++)
 		{
 			StaticGeometrySpatial* spatial =
-				ANKI_NEW(StaticGeometrySpatial, getSceneAllocator(),
-				&modelPatch->getBoundingShapeSub(i), getSceneAllocator());
+				getSceneAllocator().newInstance<StaticGeometrySpatial>(
+				&modelPatch->getBoundingShapeSub(i), *this);
 
 			SpatialComponent::addChild(spatial);
 		}
@@ -48,11 +48,10 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(
 //==============================================================================
 StaticGeometryPatchNode::~StaticGeometryPatchNode()
 {
-	/*for(SpatialComponent* spatial : spatialProtected.subSpatials)
+	visitSubSpatials([&](SpatialComponent& spatial)
 	{
-		ANKI_DELETE(spatial, getSceneAllocator());
-	}*/
-	// XXX
+		getSceneAllocator().deleteInstance(&spatial);
+	});
 }
 
 //==============================================================================
@@ -62,7 +61,7 @@ StaticGeometryPatchNode::~StaticGeometryPatchNode()
 //==============================================================================
 StaticGeometryNode::StaticGeometryNode(
 	const char* name, SceneGraph* scene, const char* filename)
-	: SceneNode(name, scene, nullptr), patches(getSceneAllocator())
+	: SceneNode(name, scene), patches(getSceneAllocator())
 {
 	model.load(filename);
 

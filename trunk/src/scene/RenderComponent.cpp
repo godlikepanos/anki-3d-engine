@@ -116,14 +116,17 @@ void RenderComponent::init()
 
 	// Instancing sanity checks
 	U32 instancesCount = getRenderInstancesCount();
-	iterateVariables([&](RenderComponentVariable& var)
+	if(instancesCount > 1)
 	{
-		if(var.getArraySize() < instancesCount)
+		iterateVariables([&](RenderComponentVariable& var)
 		{
-			throw ANKI_EXCEPTION("The renderable needs more instances that "
-				"the shader program can handle");
-		}
-	});
+			if(var.getArraySize() > 1 && instancesCount > var.getArraySize())
+			{
+				throw ANKI_EXCEPTION("The renderable needs more instances "
+					"that the shader program can handle");
+			}
+		});
+	}
 }
 
 }  // end namespace anki

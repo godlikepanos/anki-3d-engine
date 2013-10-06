@@ -3,6 +3,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/core/Counters.h"
+#include <sstream>
 
 namespace anki {
 
@@ -157,7 +158,7 @@ void Renderer::render(SceneGraph& scene_)
 
 	// Calc a few vars
 	//
-	U32 camUpdateTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
+	U32 camUpdateTimestamp = cam.getFrustumComponent()->getTimestamp();
 	if(planesUpdateTimestamp < scene->getActiveCameraChangeTimestamp()
 		|| planesUpdateTimestamp < camUpdateTimestamp
 		|| planesUpdateTimestamp == 1)

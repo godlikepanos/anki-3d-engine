@@ -2,8 +2,8 @@
 #define ANKI_SCENE_SKIN_NODE_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Renderable.h"
-#include "anki/scene/Movable.h"
+#include "anki/scene/RenderComponent.h"
+#include "anki/scene/MoveComponent.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/resource/Model.h"
 #include "anki/Math.h"
@@ -130,7 +130,7 @@ private:
 };
 
 /// A fragment of the SkinNode
-class SkinPatchNode: public SceneNode, public Movable, public Renderable,
+class SkinPatchNode: public SceneNode, public MoveComponent, public RenderComponent,
 	public SpatialComponent
 {
 public:
@@ -138,7 +138,7 @@ public:
 	/// @{
 	SkinPatchNode(const ModelPatchBase* modelPatch_,
 		const char* name, SceneGraph* scene, // Scene
-		U32 movableFlags, Movable* movParent, // Movable
+		U32 movableFlags, MoveComponent* movParent, // MoveComponent
 		CollisionShape* spatialCs); // SpatialComponent
 	/// @}
 
@@ -154,23 +154,23 @@ public:
 	}
 	/// @}
 
-	/// @name Renderable virtuals
+	/// @name RenderComponent virtuals
 	/// @{
 
-	/// Implements Renderable::getModelPatchBase
-	const ModelPatchBase& getRenderableModelPatchBase() const
+	/// Implements RenderComponent::getModelPatchBase
+	const ModelPatchBase& getRenderComponentModelPatchBase() const
 	{
 		return *skinModelPatch;
 	}
 
-	/// Implements Renderable::getMaterial
-	const Material& getRenderableMaterial() const
+	/// Implements RenderComponent::getMaterial
+	const Material& getRenderComponentMaterial() const
 	{
 		return skinModelPatch->getMaterial();
 	}
 
-	/// Overrides Renderable::getRenderableWorldTransforms
-	const Transform* getRenderableWorldTransforms() const
+	/// Overrides RenderComponent::getRenderComponentWorldTransforms
+	const Transform* getRenderComponentWorldTransforms() const
 	{
 		return &getWorldTransform();
 	}
@@ -181,14 +181,14 @@ private:
 };
 
 /// A skin scene node
-class SkinNode: public SceneNode, public Movable
+class SkinNode: public SceneNode, public MoveComponent
 {
 public:
 	/// @name Constructors/Destructor
 	/// @{
 	SkinNode(const char* skinFname,
 		const char* name, SceneGraph* scene, // SceneNode
-		U32 movableFlags, Movable* movParent); // Movable
+		U32 movableFlags, MoveComponent* movParent); // MoveComponent
 
 	~SkinNode();
 	/// @}
@@ -200,12 +200,12 @@ public:
 	void frameUpdate(F32 prevUpdateTime, F32 crntTime, int frame);
 	/// @}
 
-	/// @name Movable virtuals
+	/// @name MoveComponent virtuals
 	/// @{
 
 	/// Update boundingShapeWSpace from bone tails (not heads as well
 	/// cause its faster that way). The tails come from the previous frame
-	void movableUpdate();
+	void moveUpdate();
 	/// @}
 
 	/// @name Accessors

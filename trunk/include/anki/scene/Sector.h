@@ -1,7 +1,8 @@
 #ifndef ANKI_SCENE_SECTOR_H
 #define ANKI_SCENE_SECTOR_H
 
-#include "anki/scene/Octree.h"
+#include "anki/scene/Common.h"
+#include "anki/scene/Visibility.h"
 #include "anki/Collision.h"
 
 namespace anki {
@@ -40,7 +41,7 @@ public:
 
 	const Aabb& getAabb() const
 	{
-		return octree.getRoot().getAabb();
+		return aabb;
 	}
 
 	const SectorGroup& getSectorGroup() const
@@ -50,11 +51,6 @@ public:
 	SectorGroup& getSectorGroup()
 	{
 		return *group;
-	}
-
-	const Octree& getOctree() const
-	{
-		return octree;
 	}
 
 	U8 getVisibleByMask() const
@@ -67,9 +63,9 @@ public:
 
 private:
 	SectorGroup* group; ///< Know your father
-	Octree octree;
 	SceneVector<Portal*> portals;
 	U8 visibleBy;
+	Aabb aabb;
 
 	/// Sector does not take ownership of the portal
 	void addNewPortal(Portal* portal);
@@ -131,7 +127,6 @@ private:
 	void doVisibilityTestsInternal(SceneNode& fr, VisibilityTest test,
 		Renderer* r, VisibleBy visibleBy);
 };
-
 /// @}
 
 } // end namespace anki

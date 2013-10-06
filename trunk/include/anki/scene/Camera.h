@@ -234,7 +234,7 @@ public:
 	/// @li Update view matrix
 	/// @li Update view-projection matrix
 	/// @li Update frustum
-	void movableUpdate()
+	void moveUpdate()
 	{
 		ANKI_ASSERT(0 && "TODO");
 	}

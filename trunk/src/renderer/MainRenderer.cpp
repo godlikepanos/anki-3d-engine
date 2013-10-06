@@ -41,9 +41,10 @@ void MainRenderer::render(SceneGraph& scene)
 	ANKI_COUNTER_START_TIMER(C_MAIN_RENDERER_TIME);
 	Renderer::render(scene);
 
-	Bool alreadyDrawn = getRenderingQuality() == 1.0;
+	Bool notDrawnToDefault = 
+		getRenderingQuality() != 1.0 || getDbg().getEnabled();
 
-	if(!alreadyDrawn)
+	if(notDrawnToDefault)
 	{
 		Fbo::bindDefault(Fbo::FT_ALL, true); // Bind the window framebuffer
 

@@ -4,7 +4,7 @@
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SpatialComponent.h"
-#include "anki/scene/Renderable.h"
+#include "anki/scene/RenderComponent.h"
 
 namespace anki {
 
@@ -17,13 +17,15 @@ class StaticGeometrySpatial: public SpatialComponent
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	StaticGeometrySpatial(const Obb* obb, const SceneAllocator<U8>& alloc);
+
+	/// @note The node is only to steal the allocator
+	StaticGeometrySpatial(const Obb* obb, SceneNode& node);
 	/// @}
 };
 
 /// Static geometry scene node patch
 class StaticGeometryPatchNode: public SceneNode, public SpatialComponent,
-	public Renderable
+	public RenderComponent
 {
 public:
 	/// @name Constructors/Destructor
@@ -35,17 +37,17 @@ public:
 	~StaticGeometryPatchNode();
 	/// @}
 
-	/// @name Renderable virtuals
+	/// @name RenderComponent virtuals
 	/// @{
 
-	/// Implements Renderable::getModelPatchBase
-	const ModelPatchBase& getRenderableModelPatchBase()
+	/// Implements RenderComponent::getModelPatchBase
+	const ModelPatchBase& getModelPatchBase()
 	{
 		return *modelPatch;
 	}
 
-	/// Implements  Renderable::getMaterial
-	const Material& getRenderableMaterial()
+	/// Implements  RenderComponent::getMaterial
+	const Material& getMaterial()
 	{
 		return modelPatch->getMaterial();
 	}

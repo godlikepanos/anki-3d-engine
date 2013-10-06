@@ -1,6 +1,6 @@
 #include "anki/scene/Visibility.h"
 #include "anki/scene/SceneGraph.h"
-#include "anki/scene/Frustumable.h"
+#include "anki/scene/FrustumComponent.h"
 #include "anki/scene/Light.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/Logger.h"
@@ -45,7 +45,7 @@ struct VisibilityTestJob: ThreadJob
 
 	/// Handle sub spatials
 	Bool handleSubspatials(
-		const Frustumable& fr,
+		const FrustumComponent& fr,
 		SpatialComponent& sp,
 		U32*& subSpatialIndices,
 		U32& subSpatialIndicesCount)
@@ -74,7 +74,7 @@ struct VisibilityTestJob: ThreadJob
 
 			// Sort them
 			SortSubspatialsFunctor functor;
-			functor.origin = fr.getFrustumableOrigin();
+			functor.origin = fr.getFrustumOrigin();
 			functor.sp = &sp;
 			std::sort(subSpatialIndices, 
 				subSpatialIndices + subSpatialIndicesCount,
@@ -96,12 +96,12 @@ struct VisibilityTestJob: ThreadJob
 
 		visible = frameAlloc.newInstance<VisibilityTestResults>(frameAlloc);
 
-		Frustumable* frustumable = frustumableSn->getFrustumable();
+		FrustumComponent* frustumable = frustumableSn->getFrustumComponent();
 		ANKI_ASSERT(frustumable);
 
 		scene->iterateSceneNodes(start, end, [&](SceneNode& node)
 		{
-			Frustumable* fr = node.getFrustumable();
+			FrustumComponent* fr = node.getFrustumComponent();
 
 			// Skip if it is the same
 			if(ANKI_UNLIKELY(frustumable == fr))
@@ -109,7 +109,7 @@ struct VisibilityTestJob: ThreadJob
 				return;
 			}
 
-			SpatialComponent* sp = node.getSpatial();
+			SpatialComponent* sp = node.getSpatialComponent();
 			if(!sp)
 			{
 				return;
@@ -130,7 +130,7 @@ struct VisibilityTestJob: ThreadJob
 			}
 
 			// renderable
-			Renderable* r = node.getRenderable();
+			RenderComponent* r = node.getRenderComponent();
 			if(r)
 			{
 				visible->renderables.push_back(VisibleNode(
@@ -161,8 +161,8 @@ struct VisibilityTestJob: ThreadJob
 	/// Test an individual light
 	void testLight(SceneNode& lightSn)
 	{
-		ANKI_ASSERT(lightSn.getFrustumable() != nullptr);
-		Frustumable& ref = *lightSn.getFrustumable();
+		ANKI_ASSERT(lightSn.getFrustumComponent() != nullptr);
+		FrustumComponent& ref = *lightSn.getFrustumComponent();
 
 		// Allocate new visibles
 		VisibilityTestResults* lvisible = 
@@ -172,14 +172,14 @@ struct VisibilityTestJob: ThreadJob
 
 		scene->iterateSceneNodes([&](SceneNode& node)
 		{
-			Frustumable* fr = node.getFrustumable();
+			FrustumComponent* fr = node.getFrustumComponent();
 			// Wont check the same
 			if(ANKI_UNLIKELY(&ref == fr))
 			{
 				return;
 			}
 
-			SpatialComponent* sp = node.getSpatial();
+			SpatialComponent* sp = node.getSpatialComponent();
 			if(!sp)
 			{
 				return;
@@ -201,7 +201,7 @@ struct VisibilityTestJob: ThreadJob
 
 			sp->enableBits(SpatialComponent::SF_VISIBLE_LIGHT);
 
-			Renderable* r = node.getRenderable();
+			RenderComponent* r = node.getRenderComponent();
 			if(r)
 			{
 				lvisible->renderables.push_back(VisibleNode(
@@ -215,7 +215,7 @@ struct VisibilityTestJob: ThreadJob
 void doVisibilityTests(SceneNode& fsn, SceneGraph& scene, 
 	Renderer& r)
 {
-	Frustumable* fr = fsn.getFrustumable();
+	FrustumComponent* fr = fsn.getFrustumComponent();
 	ANKI_ASSERT(fr);
 
 	//
@@ -291,7 +291,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	DistanceSortJob dsjob;
 	dsjob.nodes = visible->lights.begin();
 	dsjob.nodesCount = visible->lights.size();
-	dsjob.origin = fr->getFrustumableOrigin();
+	dsjob.origin = fr->getFrustumOrigin();
 	threadPool.assignNewJob(0, &dsjob);
 
 	// The rest of the jobs are dummy
@@ -303,7 +303,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 
 	// Sort the renderables in the main thread
 	DistanceSortFunctor dsfunc;
-	dsfunc.origin = fr->getFrustumableOrigin();
+	dsfunc.origin = fr->getFrustumOrigin();
 	std::sort(visible->renderables.begin(), visible->renderables.end(), dsfunc);
 
 	threadPool.waitForAllJobsToFinish();

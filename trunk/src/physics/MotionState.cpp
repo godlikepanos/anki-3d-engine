@@ -11,7 +11,7 @@ MotionState::MotionState()
 }
 
 //==============================================================================
-MotionState::MotionState(const Transform& initialTransform, Movable* node_)
+MotionState::MotionState(const Transform& initialTransform, MoveComponent* node_)
 	: worldTransform(toBt(initialTransform)), node(node_)
 {}
 

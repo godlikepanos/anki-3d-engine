@@ -3,26 +3,22 @@
 
 #include "anki/Math.h"
 
-
 namespace anki {
-
 
 /// Path @ref Resource resource
 class Path
 {
 	public:
 		Vector<Vec3> positions; ///< AKA translations
-		Vector<Mat3> rotations;
-		Vector<float>  scales;
-		float         step;
+		Vector<Quat> rotations;
+		Vector<F32> scales;
+		F32 step;
 
 		Path() {}
 		~Path() {}
 		bool load(const char* filename);
 };
 
-
-} // end namespace
-
+} // end namespace anki
 
 #endif

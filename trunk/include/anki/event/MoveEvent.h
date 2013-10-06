@@ -1,5 +1,5 @@
-#ifndef ANKI_EVENT_MOVABLE_EVENT_H
-#define ANKI_EVENT_MOVABLE_EVENT_H
+#ifndef ANKI_EVENT_MOVE_EVENT_H
+#define ANKI_EVENT_MOVE_EVENT_H
 
 #include "anki/event/Event.h"
 #include "anki/Math.h"
@@ -13,22 +13,22 @@ class SceneNode;
 /// @{
 
 /// Helper class
-struct MovableEventData
+struct MoveEventData
 {
 	Vec3 posMin;
 	Vec3 posMax;
 };
 
 /// An event for simple movable animations
-class MovableEvent: public Event, private MovableEventData
+class MoveEvent: public Event, private MoveEventData
 {
 public:
 	/// @name Constructors/Destructor
 	/// @{
 
 	/// Constructor
-	MovableEvent(EventManager* manager, F32 startTime, F32 duration,
-		SceneNode* movableSceneNode, const MovableEventData& data);
+	MoveEvent(EventManager* manager, F32 startTime, F32 duration,
+		SceneNode* movableSceneNode, const MoveEventData& data);
 	/// @}
 
 	/// Implements Event::update
