@@ -167,7 +167,8 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 {
 #if ANKI_POSIX
 	void* out;
-	int err = posix_memalign(&out, alignmentBytes, size);
+	int err = posix_memalign(
+		&out, getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
 
 	if(!err)
 	{
@@ -177,6 +178,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
+		throw ANKI_EXCEPTION("mallocAligned() failed");
 		return nullptr;
 	}
 #else

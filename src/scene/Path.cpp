@@ -4,16 +4,15 @@ namespace anki {
 
 //==============================================================================
 Path::Path(
-	const char* name, SceneGraph* scene, SceneNode* parent,
-	U32 movableFlags,
+	const char* name, SceneGraph* scene, 
 	const char* filename)
-	:	SceneNode(name, scene, parent), 
-		Movable(movableFlags, this),
+	:	SceneNode(name, scene), 
+		MoveComponent(this),
 		points(getSceneAllocator())
 {
 	// Set scene node related flags
-	sceneNodeProtected.movable = this;
-	sceneNodeProtected.path = this;
+	sceneNodeProtected.moveC = this;
+	sceneNodeProtected.pathC = this;
 
 	// XXX Fix the dummy load 
 	Vector<std::pair<Vec3, Quat>> tmp = {

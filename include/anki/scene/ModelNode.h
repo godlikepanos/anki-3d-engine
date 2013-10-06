@@ -11,6 +11,9 @@
 
 namespace anki {
 
+// Forward
+class ModelPatchNode;
+
 /// @addtogroup Scene
 /// @{
 
@@ -24,7 +27,7 @@ class ModelPatchNodeInstance: public SceneNode, public MoveComponent,
 public:
 	ModelPatchNodeInstance(
 		const char* name, SceneGraph* scene, // SceneNode
-		const ModelPatchBase* modelPatchResource); // Self
+		ModelPatchNode* modelPatchNode); // Self
 
 	/// @name MoveComponent virtuals
 	/// @{
@@ -37,7 +40,7 @@ public:
 
 private:
 	Obb obb; ///< In world space
-	const ModelPatchBase* modelPatch; ///< Keep the resource for the OBB
+	ModelPatchNode* modelPatchNode; ///< Keep the father here
 };
 
 /// A fragment of the ModelNode
@@ -97,7 +100,7 @@ private:
 	SceneVector<ModelPatchNodeInstance*> instances;
 	SceneVector<Transform> transforms;
 
-	/// This is called by the last of the instances on it's movableUpdate()
+	/// This is called by the last of the instances on it's moveUpdate()
 	void updateSpatialCs();
 };
 

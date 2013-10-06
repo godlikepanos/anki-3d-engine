@@ -78,13 +78,13 @@ public:
 
 	/// This will trigger copy on write
 	template<typename T>
-	void setValues(const T* values, U32 size)
+	void setValues(const T* values, U32 size, SceneAllocator<U8> alloc)
 	{
 		ANKI_ASSERT(
 			Base::getVariadicTypeId<RenderComponentVariableTemplate<T>>()
 			== Base::getVisitableTypeId());
 		static_cast<RenderComponentVariableTemplate<T>*>(this)->set(
-			values, size);
+			values, size, alloc);
 	}
 
 	U32 getArraySize() const

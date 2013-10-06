@@ -66,7 +66,7 @@ void Dbg::run()
 
 	scene.iterateSceneNodes([&](SceneNode& node)
 	{
-		SpatialComponent* sp = node.getSpatial();
+		SpatialComponent* sp = node.getSpatialComponent();
 		if(bitsEnabled(DF_SPATIAL) && sp)
 		{
 			sceneDrawer->draw(node);
@@ -81,11 +81,6 @@ void Dbg::run()
 			if(bitsEnabled(DF_SECTOR))
 			{
 				sceneDrawer->draw(*sector);
-			}
-
-			if(bitsEnabled(DF_OCTREE))
-			{
-				sceneDrawer->draw(sector->getOctree());
 			}
 		}
 	}

@@ -11,7 +11,7 @@ class btGhostPairCallback;
 
 namespace anki {
 
-class Movable;
+class MoveComponent;
 class PhysWorld;
 class MotionState;
 
@@ -24,12 +24,12 @@ public:
 	/// Initializer class
 	struct Initializer
 	{
-		float characterHeight;
-		float characterWidth;
-		float stepHeight;
-		float jumpSpeed;
-		float maxJumpHeight;
-		Movable* movable; ///< For the MotionState
+		F32 characterHeight;
+		F32 characterWidth;
+		F32 stepHeight;
+		F32 jumpSpeed;
+		F32 maxJumpHeight;
+		MoveComponent* movable; ///< For the MotionState
 		Transform startTrf;
 
 		Initializer();
@@ -37,8 +37,8 @@ public:
 
 	Character(PhysWorld* masterContainer, const Initializer& init);
 	~Character();
-	void rotate(float angle);
-	void moveForward(float distance);
+	void rotate(F32 angle);
+	void moveForward(F32 distance);
 	void jump();
 
 private:

@@ -1,8 +1,8 @@
 #include "anki/renderer/Drawer.h"
 #include "anki/resource/ShaderProgramResource.h"
-#include "anki/scene/Frustumable.h"
+#include "anki/scene/FrustumComponent.h"
 #include "anki/resource/Material.h"
-#include "anki/scene/Renderable.h"
+#include "anki/scene/RenderComponent.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/ModelNode.h"
 #include "anki/resource/TextureResource.h"
@@ -33,10 +33,10 @@ static U64 countVerts(U32* indicesCount, I primCount)
 ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 {
 	Array<U8, UNIFORM_BLOCK_MAX_SIZE> clientBlock;
-	const Frustumable* fr = nullptr;
+	const FrustumComponent* fr = nullptr;
 	Renderer* r = nullptr;
-	Renderable* renderable = nullptr;
-	RenderableVariable* rvar = nullptr;
+	RenderComponent* renderable = nullptr;
+	RenderComponentVariable* rvar = nullptr;
 	const ShaderProgramUniformVariable* uni;
 
 	// Used for 
@@ -54,13 +54,13 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 	template<typename TRenderableVariableTemplate>
 	void visit(TRenderableVariableTemplate& x)
 	{
-		const U32 instancesCount = renderable->getRenderableInstancesCount();
+		const U32 instancesCount = renderable->getRenderInstancesCount();
 		const U32 uniArrSize = uni->getSize();
 		U32 size = std::min(instancesCount, uniArrSize);
 
 		// Set uniform
 		//
-		const Transform* trfs = renderable->getRenderableWorldTransforms();
+		const Transform* trfs = renderable->getRenderWorldTransforms();
 		const Mat4& vp = fr->getViewProjectionMatrix();
 		const Mat4& v = fr->getViewMatrix();
 
@@ -237,8 +237,8 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 
 //==============================================================================
 void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
-	const Frustumable& fr, const ShaderProgram &prog,
-	Renderable& renderable, 
+	const FrustumComponent& fr, const ShaderProgram &prog,
+	RenderComponent& renderable, 
 	U32* subSpatialIndices, U subSpatialIndicesCount)
 {
 	prog.bind();
@@ -253,13 +253,13 @@ void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 
 	PassLevelKey key(key_.pass,
 		std::min(key_.level,
-		U8(renderable.getRenderableMaterial().getLevelsOfDetail() - 1)));
+		U8(renderable.getMaterial().getLevelsOfDetail() - 1)));
 
 	// Set the uniforms
 	for(auto it = renderable.getVariablesBegin();
 		it != renderable.getVariablesEnd(); ++it)
 	{
-		RenderableVariable* rvar = *it;
+		RenderComponentVariable* rvar = *it;
 
 		const ShaderProgramUniformVariable* uni =
 			rvar->tryFindShaderProgramUniformVariable(key);
@@ -273,15 +273,15 @@ void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 	}
 
 	// Write the block
-	const ShaderProgramUniformBlock* block =
-		renderable.getRenderableMaterial().getCommonUniformBlock();
+	/*const ShaderProgramUniformBlock* block =
+		renderable.getMaterial().getCommonUniformBlock();
 	if(block)
 	{
 		ANKI_ASSERT(block->getSize() <= UNIFORM_BLOCK_MAX_SIZE);
 		ANKI_ASSERT(block->getBinding() == 0);
 		renderable.getUbo().write(&vis.clientBlock[0]);
 		renderable.getUbo().setBinding(0);
-	}
+	}*/
 }
 
 //==============================================================================
@@ -289,13 +289,13 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	Pass pass, SceneNode& rsn, U32* subSpatialIndices,
 	U subSpatialIndicesCount)
 {
-	ANKI_ASSERT(frsn.getFrustumable());
-	Frustumable& fr = *frsn.getFrustumable();
-	Renderable* renderable = rsn.getRenderable();
+	ANKI_ASSERT(frsn.getFrustumComponent());
+	FrustumComponent& fr = *frsn.getFrustumComponent();
+	RenderComponent* renderable = rsn.getRenderComponent();
 	ANKI_ASSERT(renderable);
 
 	/* Instancing */
-	U32 instancesCount = renderable->getRenderableInstancesCount();
+	U32 instancesCount = renderable->getRenderInstancesCount();
 
 	if(ANKI_UNLIKELY(instancesCount < 1))
 	{
@@ -303,7 +303,7 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	}
 
 	/* Blending */
-	const Material& mtl = renderable->getRenderableMaterial();
+	const Material& mtl = renderable->getMaterial();
 
 	Bool blending = mtl.isBlendingEnabled();
 
@@ -328,9 +328,10 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	GlStateSingleton::get().enable(GL_BLEND, blending);
 
 	// Calculate the LOD
-	Vec3 camPos = fr.getFrustumableOrigin();
+	Vec3 camPos = fr.getFrustumOrigin();
 
-	F32 dist = (rsn.getSpatial()->getSpatialOrigin() - camPos).getLength();
+	F32 dist = 
+		(rsn.getSpatialComponent()->getSpatialOrigin() - camPos).getLength();
 	U8 lod = r->calculateLod(dist);
 
 	PassLevelKey key(pass, lod);
@@ -347,7 +348,7 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 
 	U32 primCount = 1;
 
-	const ModelPatchBase& resource = renderable->getRenderableModelPatchBase();
+	const ModelPatchBase& resource = renderable->getModelPatchBase();
 	if(subSpatialIndicesCount == 0 || resource.getSubMeshesCount() == 0)
 	{
 		// No multimesh

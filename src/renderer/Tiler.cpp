@@ -3,6 +3,7 @@
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/core/ThreadPool.h"
 #include "anki/scene/Camera.h"
+#include <sstream>
 
 // Default should be 0
 #define ANKI_TILER_ENABLE_GPU 0
@@ -302,7 +303,7 @@ void Tiler::updateTiles(Camera& cam)
 	// Issue parallel jobs
 	//
 	Array<UpdatePlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS> jobs;
-	U32 camTimestamp = cam.getFrustumable()->getFrustumableTimestamp();
+	U32 camTimestamp = cam.FrustumComponent::getTimestamp();
 
 	// Do a job that transforms only the planes when:
 	// - it is the same camera as before and

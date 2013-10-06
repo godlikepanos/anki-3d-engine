@@ -7,7 +7,7 @@ namespace anki {
 
 //==============================================================================
 RigidBody::RigidBody(PhysWorld* masterContainer_, const Initializer& init,
-	Movable* movable)
+	MoveComponent* movable)
 	: btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, nullptr, 
 		nullptr, btVector3(0.0, 0.0, 0.0))), // dummy init
 		masterContainer(masterContainer_)

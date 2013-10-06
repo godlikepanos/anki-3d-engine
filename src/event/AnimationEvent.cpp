@@ -1,7 +1,7 @@
 #include "anki/event/AnimationEvent.h"
 #include "anki/resource/Animation.h"
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Movable.h"
+#include "anki/scene/MoveComponent.h"
 
 namespace anki {
 
@@ -11,7 +11,7 @@ AnimationEvent::AnimationEvent(EventManager* manager,
 	:	Event(manager, 0.0, 0.0, movableSceneNode),
 		anim(anim_)
 {
-	ANKI_ASSERT(movableSceneNode && movableSceneNode->getMovable());
+	ANKI_ASSERT(movableSceneNode && movableSceneNode->getMoveComponent());
 
 	startTime = anim->getStartingTime();
 	duration = anim->getDuration();
@@ -21,7 +21,7 @@ AnimationEvent::AnimationEvent(EventManager* manager,
 void AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
 	ANKI_ASSERT(getSceneNode());
-	Movable* mov = getSceneNode()->getMovable();
+	MoveComponent* mov = getSceneNode()->getMoveComponent();
 	ANKI_ASSERT(mov);
 
 	Vec3 pos;

@@ -97,7 +97,7 @@ public:
 		// operator new doesn't respect alignment (in GCC at least) so use 
 		// custom mem allocation function
 		PtrSize size = n * sizeof(T);
-		allocatedSize += n * sizeof(T);
+		allocatedSize += size;
 		return (T*)mallocAligned(size, alignof(T));
 	}
 

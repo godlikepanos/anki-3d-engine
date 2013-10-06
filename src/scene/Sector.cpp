@@ -1,18 +1,16 @@
 #include "anki/scene/Sector.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/Renderable.h"
+#include "anki/scene/RenderComponent.h"
 #include "anki/scene/Light.h"
 #include "anki/scene/Visibility.h"
-#include "anki/scene/Frustumable.h"
+#include "anki/scene/FrustumComponent.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/core/Logger.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/ThreadPool.h"
 
 namespace anki {
-
-#if 0
 
 //==============================================================================
 // Portal                                                                      =
@@ -31,7 +29,7 @@ Portal::Portal()
 
 //==============================================================================
 Sector::Sector(SectorGroup* group_, const Aabb& box)
-	: group(group_), octree(this, box, 3),
+	:	group(group_),
 		portals(group->getSceneGraph().getAllocator())
 {
 	// Reserve some space for portals
@@ -41,14 +39,18 @@ Sector::Sector(SectorGroup* group_, const Aabb& box)
 //==============================================================================
 Bool Sector::placeSceneNode(SceneNode* sn)
 {
+#if 0
 	// XXX Optimize
 
-	if(!sn->getSpatial()->getAabb().collide(octree.getRoot().getAabb()))
+	SpatialComponent* sp = sn->getSpatialComponent();
+	ANKI_ASSERT(sp);
+	if(!sp->getAabb().collide(octree.getRoot().getAabb()))
 	{
 		return false;
 	}
 
 	octree.placeSceneNode(sn);
+#endif
 	return true;
 }
 
@@ -90,6 +92,7 @@ SectorGroup::SectorGroup(SceneGraph* scene_)
 //==============================================================================
 SectorGroup::~SectorGroup()
 {
+#if 0
 	for(Sector* sector : sectors)
 	{
 		ANKI_DELETE(sector, scene->getAllocator());
@@ -99,20 +102,25 @@ SectorGroup::~SectorGroup()
 	{
 		ANKI_DELETE(portal, scene->getAllocator());
 	}
+#endif
 }
 
 //==============================================================================
 Sector* SectorGroup::createNewSector(const Aabb& aabb)
 {
+#if 0
 	Sector* out = ANKI_NEW(Sector, scene->getAllocator(), this, aabb);
 	sectors.push_back(out);
 	return out;
+#endif
+	return nullptr;
 }
 
 //==============================================================================
 Portal* SectorGroup::createNewPortal(Sector* a, Sector* b, 
 	const Obb& collisionShape)
 {
+#if 0
 	ANKI_ASSERT(a && b);
 	Portal* out = ANKI_NEW_0(Portal, scene->getAllocator());
 
@@ -126,11 +134,14 @@ Portal* SectorGroup::createNewPortal(Sector* a, Sector* b,
 	b->addNewPortal(out);
 
 	return out;
+#endif
+	return nullptr;
 }
 
 //==============================================================================
 void SectorGroup::placeSceneNode(SceneNode* sn)
 {
+#if 0
 	ANKI_ASSERT(sn != nullptr);
 	SpatialComponent* sp = sn->getSpatial();
 	ANKI_ASSERT(sp);
@@ -189,12 +200,14 @@ void SectorGroup::placeSceneNode(SceneNode* sn)
 	{
 		ANKI_LOGW("Spatial outside all sectors");
 	}
+#endif
 }
 
 //==============================================================================
 void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 	Renderer* r)
 {
+#if 0
 	// Set all sectors to not visible
 	for(Sector* sector : sectors)
 	{
@@ -202,12 +215,14 @@ void SectorGroup::doVisibilityTests(SceneNode& sn, VisibilityTest test,
 	}
 
 	doVisibilityTestsInternal(sn, test, r, VB_CAMERA);
+#endif
 }
 
 //==============================================================================
 void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 	Renderer* r, VisibleBy visibleBy)
 {
+#if 0
 	Frustumable* fr = sn.getFrustumable();
 	ANKI_ASSERT(fr != nullptr && "sn should be frustumable");
 	fr->visible = nullptr;
@@ -403,8 +418,7 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 				nullptr, VB_LIGHT);
 		}
 	}
-}
-
 #endif
+}
 
 } // end namespace anki

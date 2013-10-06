@@ -12,11 +12,11 @@ namespace anki {
 //==============================================================================
 ModelPatchNodeInstance::ModelPatchNodeInstance(
 	const char* name, SceneGraph* scene, // Scene
-	const ModelPatchBase* modelPatchResource) // Self
+	ModelPatchNode* modelPatchNode_) // Self
 	:	SceneNode(name, scene),
 		MoveComponent(this),
 		SpatialComponent(this, &obb),
-		modelPatch(modelPatchResource)
+		modelPatchNode(modelPatchNode_)
 {
 	sceneNodeProtected.moveC = this;
 
@@ -24,31 +24,20 @@ ModelPatchNodeInstance::ModelPatchNodeInstance(
 	// be updated by the scene
 	sceneNodeProtected.spatialC = nullptr;
 
-	ANKI_ASSERT(modelPatch);
+	ANKI_ASSERT(modelPatchNode);
 }
 
 //==============================================================================
 void ModelPatchNodeInstance::moveUpdate()
 {
-	ANKI_ASSERT(modelPatch);
-
-	// Update the obb of self
-	obb = modelPatch->getBoundingShape().getTransformed(
-		getWorldTransform());
-	spatialMarkForUpdate();
-
-	// If this instance is the last update the parent's collision shape
-	MoveComponent* parentM = MoveComponent::getParent();
-	ANKI_ASSERT(parentM);
-
-	ModelPatchNode* modelPatchNode = 
-#if ANKI_DEBUG
-		dynamic_cast<ModelPatchNode*>(parentM);
-#else
-		static_cast<ModelPatchNode*>(parentM);
-#endif
 	ANKI_ASSERT(modelPatchNode);
 
+	// Update the obb of self
+	obb = modelPatchNode->getModelPatchBase().getBoundingShape().getTransformed(
+		getWorldTransform());
+	SpatialComponent::markForUpdate();
+
+	// If this instance is the last update the parent's collision shape
 	ANKI_ASSERT(modelPatchNode->instances.size() > 0);
 	if(this == modelPatchNode->instances.back())
 	{
@@ -76,7 +65,7 @@ ModelPatchNode::ModelPatchNode(
 	sceneNodeProtected.renderC = this;
 	sceneNodeProtected.spatialC = this;
 
-	RenderComponent::init(*this);
+	RenderComponent::init();
 
 	// Create the instances as ModelPatchNodeInstance
 	if(instancesCount > 1)
@@ -89,7 +78,9 @@ ModelPatchNode::ModelPatchNode(
 		for(U i = 0; i < instancesCount; i++)
 		{
 			ModelPatchNodeInstance* instance;
-			getSceneGraph().newSceneNode(instance, nullptr, modelPatch);
+			getSceneGraph().newSceneNode(instance, nullptr, this);
+
+			//MoveComponent::addChild(instance);
 
 			instance->setLocalOrigin(pos);
 			pos.x() += 2.0;
@@ -143,7 +134,7 @@ void ModelPatchNode::moveUpdate()
 		obb = modelPatch->getBoundingShape().getTransformed(
 			getWorldTransform());
 
-		spatialMarkForUpdate();
+		SpatialComponent::markForUpdate();
 	}
 	else
 	{
@@ -169,7 +160,7 @@ void ModelPatchNode::updateSpatialCs()
 		obb = obb.getCompoundShape(instances[i]->obb);
 	}
 
-	spatialMarkForUpdate();
+	SpatialComponent::markForUpdate();
 }
 
 //==============================================================================
@@ -194,7 +185,9 @@ ModelNode::ModelNode(
 	for(const ModelPatchBase* patch : model->getModelPatches())
 	{
 		ModelPatchNode* mpn;
-		getSceneGraph().newSceneNode(mpn, nullptr, this, patch, instances);
+		getSceneGraph().newSceneNode(mpn, nullptr, patch, instances);
+
+		MoveComponent::addChild(mpn);
 
 		patches.push_back(mpn);
 		++i;

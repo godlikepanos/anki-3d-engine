@@ -467,7 +467,7 @@ void PhysicsDebugDrawer::draw3dText(const btVector3& /*location*/,
 //==============================================================================
 void SceneDebugDrawer::draw(SceneNode& node)
 {
-	Movable* mv = node.getMovable();
+	MoveComponent* mv = node.getMoveComponent();
 	if(mv)
 	{
 		dbg->setModelMatrix(Mat4(mv->getWorldTransform()));
@@ -477,14 +477,14 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		dbg->setModelMatrix(Mat4::getIdentity());
 	}
 
-	Frustumable* fr;
-	if((fr = node.getFrustumable()))
+	FrustumComponent* fr;
+	if((fr = node.getFrustumComponent()))
 	{
 		draw(*fr);
 	}
 
 	SpatialComponent* sp;
-	if((sp = node.getSpatial())
+	if((sp = node.getSpatialComponent())
 		&& sp->bitsEnabled(SpatialComponent::SF_VISIBLE_CAMERA))
 	{
 		draw(*sp);
@@ -498,7 +498,7 @@ void SceneDebugDrawer::draw(SceneNode& node)
 }
 
 //==============================================================================
-void SceneDebugDrawer::draw(Frustumable& fr) const
+void SceneDebugDrawer::draw(FrustumComponent& fr) const
 {
 	const Frustum& fs = fr.getFrustum();
 
@@ -522,41 +522,6 @@ void SceneDebugDrawer::draw(SpatialComponent& x) const
 			sp.getAabb().accept(coldraw);
 		}
 	});
-}
-
-//==============================================================================
-void SceneDebugDrawer::draw(const Octree& octree) const
-{
-	dbg->setColor(Vec3(1.0));
-	draw(octree.getRoot(), 0, octree);
-}
-
-//==============================================================================
-void SceneDebugDrawer::draw(const OctreeNode& octnode, U32 depth,
-	const Octree& octree) const
-{
-	PtrSize nodesCount =
-		octnode.getSceneNodesEnd() - octnode.getSceneNodesBegin();
-
-	// Draw if it has spatials
-	if(nodesCount != 0)
-	{
-		//Vec3 color = Vec3(1.0 - F32(depth) / F32(octree.getMaxDepth()));
-		Vec3 color(1.0);
-		dbg->setColor(color);
-
-		CollisionDebugDrawer v(dbg);
-		octnode.getAabb().accept(v);
-	}
-
-	// Children
-	for(U32 i = 0; i < 8; ++i)
-	{
-		if(octnode.getChild(i) != nullptr)
-		{
-			draw(*octnode.getChild(i), depth + 1, octree);
-		}
-	}
 }
 
 //==============================================================================

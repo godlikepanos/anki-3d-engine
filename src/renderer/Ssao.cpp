@@ -3,6 +3,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/util/Functions.h"
+#include <sstream>
 
 namespace anki {
 
@@ -218,7 +219,7 @@ void Ssao::run()
 
 	// Write common block
 	if(commonUboUpdateTimestamp < r->getPlanesUpdateTimestamp()
-		|| commonUboUpdateTimestamp < cam.getFrustumableTimestamp()
+		|| commonUboUpdateTimestamp < cam.FrustumComponent::getTimestamp()
 		|| commonUboUpdateTimestamp == 1)
 	{
 		ShaderCommonUniforms blk;

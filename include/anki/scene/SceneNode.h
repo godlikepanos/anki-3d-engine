@@ -15,6 +15,8 @@ class RenderComponent;
 class FrustumComponent;
 class SpatialComponent;
 class Light;
+class RigidBody;
+class Path;
 
 /// @addtogroup Scene
 /// @{
@@ -104,6 +106,24 @@ public:
 	{
 		return sceneNodeProtected.lightC;
 	}
+
+	RigidBody* getRigidBody()
+	{
+		return sceneNodeProtected.rigidBodyC;
+	}
+	const RigidBody* getRigidBody() const 
+	{
+		return sceneNodeProtected.rigidBodyC;
+	}
+
+	Path* getPath()
+	{
+		return sceneNodeProtected.pathC;
+	}
+	const Path* getPath() const 
+	{
+		return sceneNodeProtected.pathC;
+	}
 	/// @}
 
 	/// This is called by the scene every frame after logic and before
@@ -139,6 +159,8 @@ protected:
 		FrustumComponent* frustumC = nullptr;
 		SpatialComponent* spatialC = nullptr;
 		Light* lightC = nullptr;
+		RigidBody* rigidBodyC = nullptr;
+		Path* pathC = nullptr;
 	} sceneNodeProtected;
 
 private:

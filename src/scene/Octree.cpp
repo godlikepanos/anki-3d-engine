@@ -1,12 +1,12 @@
 #include "anki/scene/Octree.h"
 #include "anki/scene/SpatialComponent.h"
-#include "anki/scene/Frustumable.h"
+#include "anki/scene/FrustumComponent.h"
 #include "anki/scene/Light.h"
 #include "anki/scene/Sector.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
-#include "anki/scene/Renderable.h"
+#include "anki/scene/RenderComponent.h"
 
 namespace anki {
 

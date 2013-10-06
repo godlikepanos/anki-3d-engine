@@ -131,11 +131,11 @@ struct MaterialSortFunctor
 	{
 		ANKI_ASSERT(a.node && b.node);
 
-		ANKI_ASSERT(a.node->getRenderable() != nullptr 
-			&& b.node->getRenderable() != nullptr);
+		ANKI_ASSERT(a.node->getRenderComponent() != nullptr 
+			&& b.node->getRenderComponent() != nullptr);
 
-		return a.node->getRenderComponent()->getRenderableMaterial()
-			< b.node->getRenderComponent()->getRenderableMaterial();
+		return a.node->getRenderComponent()->getMaterial()
+			< b.node->getRenderComponent()->getMaterial();
 	}
 };
 

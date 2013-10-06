@@ -153,36 +153,36 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 {
 	Shadowmap& sm = bestCandidate(light);
 
-	Frustumable* fr = light.getFrustumable();
+	FrustumComponent* fr = light.getFrustumComponent();
 	ANKI_ASSERT(fr != nullptr);
-	VisibilityTestResults& vi = *fr->getVisibilityTestResults();
+	VisibilityTestResults& vi = fr->getVisibilityTestResults();
 
 	//
 	// Find last update
 	//
-	U32 lastUpdate = light.getMovableTimestamp();
-	lastUpdate = std::max(lastUpdate, fr->getFrustumableTimestamp());
+	U32 lastUpdate = light.MoveComponent::getTimestamp();
+	lastUpdate = std::max(lastUpdate, fr->getTimestamp());
 
 	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
 	{
 		SceneNode* node = (*it).node;
-		Frustumable* bfr = node->getFrustumable();
-		Movable* bmov = node->getMovable();
-		SpatialComponent* sp = node->getSpatial();
+		FrustumComponent* bfr = node->getFrustumComponent();
+		MoveComponent* bmov = node->getMoveComponent();
+		SpatialComponent* sp = node->getSpatialComponent();
 
 		if(bfr)
 		{
-			lastUpdate = std::max(lastUpdate, bfr->getFrustumableTimestamp());
+			lastUpdate = std::max(lastUpdate, bfr->getTimestamp());
 		}
 
 		if(bmov)
 		{
-			lastUpdate = std::max(lastUpdate, bmov->getMovableTimestamp());
+			lastUpdate = std::max(lastUpdate, bmov->getTimestamp());
 		}
 
 		if(sp)
 		{
-			lastUpdate = std::max(lastUpdate, sp->getSpatialTimestamp());
+			lastUpdate = std::max(lastUpdate, sp->getTimestamp());
 		}
 	}
 

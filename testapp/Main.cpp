@@ -29,7 +29,7 @@
 #include "anki/core/NativeWindow.h"
 #include "anki/Scene.h"
 #include "anki/event/LightEvent.h"
-#include "anki/event/MovableEvent.h"
+#include "anki/event/MoveEvent.h"
 #include "anki/core/Counters.h"
 
 using namespace anki;
@@ -63,7 +63,7 @@ void initPhysics()
 
 	new RigidBody(&SceneGraphSingleton::get().getPhysics(), init);
 
-#if 1
+#if 0
 	btCollisionShape* colShape = new btBoxShape(
 	    btVector3(1, 1, 1));
 
@@ -95,7 +95,7 @@ void initPhysics()
 
 				ModelNode* mnode = new ModelNode(
 					name.c_str(), &SceneGraphSingleton::get(), nullptr,
-					Movable::MF_NONE, "models/crate0/crate0.mdl");
+					MoveComponent::MF_NONE, "models/crate0/crate0.mdl");
 
 				init.movable = mnode;
 				ANKI_ASSERT(init.movable);
@@ -128,8 +128,7 @@ void init()
 #endif
 
 	// camera
-	scene.newSceneNode(cam, "main-camera", nullptr,
-		Movable::MF_NONE);
+	scene.newSceneNode(cam, "main-camera");
 	const F32 ang = 45.0;
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
@@ -149,8 +148,7 @@ void init()
 			std::string name = "plight" + std::to_string(i) + std::to_string(j);
 
 			PointLight* point;
-			scene.newSceneNode(point, name.c_str(), nullptr,
-				Movable::MF_NONE);
+			scene.newSceneNode(point, name.c_str());
 			point->setRadius(0.5);
 			point->setDiffuseColor(Vec4(randFloat(6.0) - 2.0, 
 				randFloat(6.0) - 2.0, randFloat(6.0) - 2.0, 0.0));
@@ -168,7 +166,7 @@ void init()
 
 #if 1
 	SpotLight* spot;
-	scene.newSceneNode(spot, "spot0", nullptr, Movable::MF_NONE);
+	scene.newSceneNode(spot, "spot0");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
@@ -179,7 +177,7 @@ void init()
 	spot->setShadowEnabled(true);
 
 
-	scene.newSceneNode(spot, "spot1", nullptr, Movable::MF_NONE);
+	scene.newSceneNode(spot, "spot1");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(5.3, 4.3, 3.0),
@@ -202,9 +200,10 @@ void init()
 		Vec3 lightPos = vaseLightPos[i];
 
 		PointLight* point;
-		scene.newSceneNode(point, ("vase_plight" + std::to_string(i)).c_str(),
-			nullptr, Movable::MF_NONE, 
-			(i != 100) ? "textures/lens_flare/flares0.ankitex" : nullptr);
+		scene.newSceneNode(point, ("vase_plight" + std::to_string(i)).c_str());
+
+		point->loadLensFlare("textures/lens_flare/flares0.ankitex");
+
 		point->setRadius(2.0);
 		point->setLocalOrigin(lightPos);
 		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
@@ -220,35 +219,34 @@ void init()
 		scene.getEventManager().newEvent(event, 0.0, 0.8, point, eventData);
 		event->enableBits(Event::EF_REANIMATE);
 
-		MovableEventData moveData;
+		MoveEventData moveData;
 		moveData.posMin = Vec3(-0.5, 0.0, -0.5);
 		moveData.posMax = Vec3(0.5, 0.0, 0.5);
-		MovableEvent* mevent;
+		MoveEvent* mevent;
 		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
 		mevent->enableBits(Event::EF_REANIMATE);
 
 		ParticleEmitter* pe;
 		scene.newSceneNode(pe,
-			("pe" + std::to_string(i)).c_str(), nullptr,
-			Movable::MF_NONE, "particles/smoke.ankipart");
+			("pe" + std::to_string(i)).c_str(),
+			"particles/smoke.ankipart");
 		pe->setLocalOrigin(lightPos);
 
-		scene.newSceneNode(pe, ("pef" + std::to_string(i)).c_str(), nullptr,
-			Movable::MF_NONE, "particles/fire.ankipart");
+		scene.newSceneNode(pe, ("pef" + std::to_string(i)).c_str(), 
+			"particles/fire.ankipart");
 		pe->setLocalOrigin(lightPos);
 	}
 #endif
 
 #if 1
 	// horse
-	scene.newSceneNode(horse, "horse", nullptr,
-		Movable::MF_NONE, "models/horse/horse.ankimdl");
+	scene.newSceneNode(horse, "horse", "models/horse/horse.ankimdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		0.7));
 
 	// barrel
 	/*ModelNode* redBarrel = new ModelNode(
-		"red_barrel", &scene, nullptr, Movable::MF_NONE, 
+		"red_barrel", &scene, nullptr, MoveComponent::MF_NONE, 
 		"models/red_barrel/red_barrel.mdl");
 	redBarrel->setLocalTransform(Transform(Vec3(+2, 0, 0), Mat3::getIdentity(),
 		0.7));*/
@@ -267,6 +265,7 @@ void init()
 	//initPhysics();
 
 	// Sectors
+#if 0
 	SectorGroup& sgroup = scene.getSectorGroup();
 
 	Sector* sectorA = sgroup.createNewSector(
@@ -281,9 +280,10 @@ void init()
 
 	sgroup.createNewPortal(sectorA, sectorC, Obb(Vec3(-1.1, 2.0, -11.0),
 		Mat3::getIdentity(), Vec3(1.3, 1.8, 0.5)));
+#endif
 
 	// Path
-	/*Path* path = new Path("todo", "path", &scene, Movable::MF_NONE, nullptr);
+	/*Path* path = new Path("todo", "path", &scene, MoveComponent::MF_NONE, nullptr);
 	(void)path;
 
 	const F32 distPerSec = 2.0;
@@ -326,7 +326,7 @@ void mainLoopExtra()
 	F32 mouseSensivity = 9.0;
 
 	// move the camera
-	static Movable* mover = SceneGraphSingleton::get().getActiveCamera().getMovable();
+	static MoveComponent* mover = SceneGraphSingleton::get().getActiveCamera().getMoveComponent();
 	Input& in = InputSingleton::get();
 
 	if(in.getKey(KC_1))
@@ -335,27 +335,27 @@ void mainLoopExtra()
 	}
 	if(in.getKey(KC_2))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("horse").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("horse").getMoveComponent();
 	}
 	if(in.getKey(KC_3))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("spot0").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("spot0").getMoveComponent();
 	}
 	if(in.getKey(KC_4))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("spot1").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("spot1").getMoveComponent();
 	}
 	if(in.getKey(KC_5))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("pe").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("pe").getMoveComponent();
 	}
 	if(in.getKey(KC_6))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("vase_plight0").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("vase_plight0").getMoveComponent();
 	}
 	if(in.getKey(KC_7))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("red_barrel").getMovable();
+		mover = SceneGraphSingleton::get().findSceneNode("red_barrel").getMoveComponent();
 	}
 
 	if(in.getKey(KC_L) == 1)

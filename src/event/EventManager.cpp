@@ -1,11 +1,6 @@
 #include "anki/event/EventManager.h"
 #include "anki/scene/SceneGraph.h"
 
-#include "anki/event/SceneAmbientColorEvent.h"
-#include "anki/event/LightEvent.h"
-#include "anki/event/MovableEvent.h"
-#include "anki/event/FollowPathEvent.h"
-
 namespace anki {
 
 //==============================================================================
