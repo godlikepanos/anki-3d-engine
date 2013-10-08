@@ -177,14 +177,13 @@ void ModelPatchBase::create()
 {
 	U i = 0;
 	const Material& mtl = getMaterial();
-	U lodsCount = std::max(getMeshesCount(), mtl.getLevelsOfDetail());
-	U passesCount = mtl.getPasses().size();
+	U lodsCount = std::max<U>(getMeshesCount(), mtl.getLevelsOfDetail());
 
-	modelPatchProtected.vaos.resize(lodsCount * passesCount);
+	modelPatchProtected.vaos.resize(lodsCount * mtl.getPassesCount());
 
 	for(U lod = 0; lod < lodsCount; ++lod)
 	{
-		for(U pass = 0; pass < passesCount; ++pass)
+		for(U pass = 0; pass < mtl.getPassesCount(); ++pass)
 		{
 			PassLevelKey key(pass, lod);
 			const ShaderProgram* prog;
@@ -201,7 +200,7 @@ void ModelPatchBase::create()
 			PassLevelKey shaderKey = key;
 			shaderKey.level = std::min(key.level,
 				(U8)(getMaterial().getLevelsOfDetail() - 1));
-			prog = &getMaterial().findShaderProgram(shaderKey);
+			prog = getMaterial().tryFindShaderProgram(shaderKey);
 
 			Vao vao;
 			createVao(*prog, *mesh, vao);

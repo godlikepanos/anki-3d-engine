@@ -1,10 +1,6 @@
 R"(<?xml version="1.0" encoding="UTF-8" ?>
 
 <material>
-	<renderingStage>0</renderingStage>
-	
-	<passes>COLOR DEPTH</passes>
-
 	<shaderProgram>
 		<inputs>
 			<input><type>mat4</type><name>modelViewProjectionMat</name><value></value><instanced>%instanced%</instanced></input>
@@ -24,7 +20,7 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 				<operation>
 					<id>1</id>
 					<returnType>void</returnType>
-					<function>setVaryings2</function>
+					<function>writePositionNormalTangentTexCoord</function>
 					<arguments><argument>modelViewProjectionMat</argument><argument>normalMat</argument></arguments>
 				</operation>
 			</operations>
@@ -60,8 +56,8 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 					<returnType>void</returnType>
 					<function>writeFais</function>
 					<arguments>
-						<argument>operationOut0</argument>
-						<argument>operationOut1</argument>
+						<argument>out0</argument>
+						<argument>out1</argument>
 						<argument>specular</argument>
 						<argument>0.0</argument>
 					</arguments>

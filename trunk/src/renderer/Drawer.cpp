@@ -294,7 +294,7 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	RenderComponent* renderable = rsn.getRenderComponent();
 	ANKI_ASSERT(renderable);
 
-	/* Instancing */
+	// Instancing
 	U32 instancesCount = renderable->getRenderInstancesCount();
 
 	if(ANKI_UNLIKELY(instancesCount < 1))
@@ -302,7 +302,9 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 		return;
 	}
 
-	/* Blending */
+	GlState& gl = GlStateSingleton::get();
+
+	// Blending
 	const Material& mtl = renderable->getMaterial();
 
 	Bool blending = mtl.isBlendingEnabled();
@@ -321,11 +323,13 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 			return;
 		}
 
-		GlStateSingleton::get().setBlendFunctions(
+		gl.setBlendFunctions(
 			mtl.getBlendingSfactor(), mtl.getBlendingDfactor());
 	}
 
-	GlStateSingleton::get().enable(GL_BLEND, blending);
+	gl.enable(GL_BLEND, blending);
+
+	gl.setPolygonMode(mtl.getWireframe() ? GL_LINE : GL_FILL);
 
 	// Calculate the LOD
 	Vec3 camPos = fr.getFrustumOrigin();

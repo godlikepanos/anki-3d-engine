@@ -95,6 +95,8 @@ public:
 
 	void setDepthMaskEnabled(const Bool enable);
 	void setDepthFunc(const GLenum val);
+
+	void setPolygonMode(const GLenum mode);
 	/// @}
 
 private:
@@ -109,6 +111,10 @@ private:
 	Array<GLint, 4> colorMask;
 	GLint depthMask;
 	GLenum depthFunc;
+
+#if ANKI_GL == ANKI_GL_DESKTOP
+	GLenum polyMode;
+#endif
 	/// @}
 
 	/// Sync the local members with the opengl ones

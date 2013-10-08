@@ -16,7 +16,7 @@ in highp vec2 vTexCoords;
 #define vInstanceId_DEFINED
 flat in mediump uint vInstanceId;
 
-#if defined(PASS_COLOR)
+#if PASS_COLOR
 in vec3 vNormal;
 #	define vNormal_DEFINED
 in vec4 vTangent;
@@ -28,7 +28,7 @@ in vec3 vVertPosViewSpace;
 
 /// @name Fragment out
 /// @{
-#if defined(PASS_COLOR)
+#if PASS_COLOR
 #	if USE_MRT
 layout(location = 0) out vec4 fMsFai0;
 layout(location = 1) out vec4 fMsFai1;
@@ -48,7 +48,7 @@ layout(location = 0) out uvec2 fMsFai0;
 /// @param[in] tangent Extra stuff for the tangent
 /// @param[in] map The map
 /// @param[in] texCoords Texture coordinates
-#if defined(PASS_COLOR)
+#if PASS_COLOR
 #	define getNormalFromTexture_DEFINED
 vec3 getNormalFromTexture(in vec3 normal, in vec4 tangent,
 	in sampler2D map, in highp vec2 texCoords)
@@ -71,7 +71,7 @@ vec3 getNormalFromTexture(in vec3 normal, in vec4 tangent,
 #endif
 
 /// Just normalize
-#if defined(PASS_COLOR)
+#if PASS_COLOR
 #	define getNormalSimple_DEFINED
 vec3 getNormalSimple(in vec3 normal)
 {
@@ -84,7 +84,7 @@ vec3 getNormalSimple(in vec3 normal)
 /// @param[in] normal Fragment's normal in view space as well
 /// @param[in] map The env map
 /// @return The color
-#if defined(PASS_COLOR)
+#if PASS_COLOR
 #	define getEnvironmentColor_DEFINED
 vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 	in sampler2D map)
@@ -115,7 +115,7 @@ vec3 readTextureRgbAlphaTesting(
 	in highp vec2 texCoords,
 	in float tolerance)
 {
-#if defined(PASS_COLOR)
+#if PASS_COLOR
 	vec4 col = vec4(texture(map, texCoords));
 	if(col.a < tolerance)
 	{
@@ -137,7 +137,7 @@ vec3 readTextureRgbAlphaTesting(
 }
 
 /// Just read the RGB color from texture
-#if defined(PASS_COLOR)
+#if PASS_COLOR
 #	define readRgbFromTexture_DEFINED
 vec3 readRgbFromTexture(in sampler2D tex, in highp vec2 texCoords)
 {
@@ -146,7 +146,7 @@ vec3 readRgbFromTexture(in sampler2D tex, in highp vec2 texCoords)
 #endif
 
 /// Write the data to FAIs
-#if defined(PASS_COLOR)
+#if PASS_COLOR
 #	define writeFais_DEFINED
 void writeFais(
 	in vec3 diffColor, // from 0 to 1

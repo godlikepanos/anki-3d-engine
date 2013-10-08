@@ -221,6 +221,11 @@ void GlState::sync()
 	glGetIntegerv(GL_DEPTH_WRITEMASK, &depthMask);
 	// depth func
 	glGetIntegerv(GL_DEPTH_FUNC, (GLint*)&depthFunc);
+
+	// Polygon mode
+#if ANKI_GL == ANKI_GL_DESKTOP
+	glGetIntegerv(GL_POLYGON_MODE, (GLint*)&polyMode);
+#endif
 }
 
 //==============================================================================
@@ -326,6 +331,25 @@ void GlState::setDepthFunc(const GLenum val)
 		glDepthFunc(val);
 		depthFunc = val;
 	}
+}
+
+//==============================================================================
+void GlState::setPolygonMode(const GLenum mode)
+{
+#if ANKI_GL == ANKI_GL_DESKTOP
+
+#if ANKI_DEBUG
+	GLint real;
+	glGetIntegerv(GL_POLYGON_MODE, &real);
+	ANKI_ASSERT((GLenum)real == polyMode);
+#endif
+
+	if(mode != polyMode)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, mode);
+		polyMode = mode;
+	}
+#endif
 }
 
 } // end namespace anki

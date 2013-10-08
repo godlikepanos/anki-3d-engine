@@ -17,7 +17,10 @@ namespace anki {
 enum
 {
 	VERTEX = 1,
-	FRAGMENT = 2
+	TESSC,
+	TESSE,
+	GEOM,
+	FRAGMENT
 };
 
 //==============================================================================
@@ -197,6 +200,18 @@ void MaterialShaderProgramCreator::parseShaderTag(const XmlElement& shaderEl)
 	{
 		shader = VERTEX;
 	}
+	else if(type == "tessellationControl")
+	{
+		shader = TESSC;
+	}
+	else if(type == "tessellationEvaluation")
+	{
+		shader = TESSE;
+	}
+	else if(type == "geometry")
+	{
+		shader = GEOM;
+	}
 	else if(type == "fragment")
 	{
 		shader = FRAGMENT;
@@ -296,7 +311,7 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	std::string operationOut;
 	if(retType != "void")
 	{
-		operationOut = "operationOut" + std::to_string(id);
+		operationOut = "out" + std::to_string(id);
 	}
 	
 	// <function>functionName</function>
@@ -336,10 +351,15 @@ void MaterialShaderProgramCreator::parseOperationTag(
 					argsList.push_back(std::string(argEl.getText()) 
 						+ "[gl_InstanceID]");
 				}
-				else
+				else if(shader == FRAGMENT)
 				{
 					argsList.push_back(std::string(argEl.getText()) 
 						+ "[vInstanceId]");
+				}
+				else
+				{
+					throw ANKI_EXCEPTION(
+						"Cannot access the instance ID all shaders");
 				}
 			}
 			else
@@ -359,7 +379,7 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	// Write the defines for the operationOuts
 	for(const std::string& arg : argsList)
 	{
-		if(arg.find("operationOut") == 0)
+		if(arg.find("out") == 0)
 		{
 			lines << " && defined(" << arg << "_DEFINED)";
 		}
