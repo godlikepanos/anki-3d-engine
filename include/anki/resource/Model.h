@@ -104,9 +104,6 @@ template<typename MeshResourcePointerType>
 class ModelPatch: public ModelPatchBase
 {
 public:
-	/// Map to get the VAO given a PassLod key
-	typedef PassLevelHashMap<Vao> PassLevelToVaoMap;
-
 	ModelPatch(const char* meshFNames[], U32 meshesCount,
 		const char* mtlFName)
 	{

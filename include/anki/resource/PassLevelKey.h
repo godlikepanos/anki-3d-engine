@@ -2,8 +2,8 @@
 #define ANKI_RESOURCE_PASS_LEVEL_KEY_H
 
 #include "anki/util/StdTypes.h"
-#include <unordered_map>
-#include <cstdlib>
+#include "anki/util/Assert.h"
+#include "anki/util/Array.h"
 
 namespace anki {
 
@@ -13,12 +13,11 @@ enum Pass
 	COLOR_PASS, ///< For MS
 	DEPTH_PASS, ///< For shadows
 
-	/// For MS color pass after early Z. It's different than COLOR because it
-	/// doesn't do any discard, earlyZ did it before
-	//COLOR_EARLYZ_PASS,
-
 	PASS_COUNT
 };
+
+/// Max level of detail
+const U MAX_LOD = 3;
 
 /// A key that consistst of the rendering pass and the level of detail
 struct PassLevelKey
@@ -28,41 +27,26 @@ struct PassLevelKey
 
 	PassLevelKey()
 		: pass(COLOR_PASS), level(0)
-	{}
+	{
+		ANKI_ASSERT(level <= MAX_LOD);
+	}
 
 	PassLevelKey(const PassLevelKey& b)
 		: pass(b.pass), level(b.level)
-	{}
+	{
+		ANKI_ASSERT(level <= MAX_LOD);
+	}
 
 	explicit PassLevelKey(const U8 pass_, const U8 level_)
 		: pass(pass_), level(level_)
-	{}
-};
-
-/// Create hash functor
-struct PassLevelKeyCreateHash
-{
-	size_t operator()(const PassLevelKey& b) const
 	{
-		return ((U32)b.pass << 16) | (U32)b.level;
+		ANKI_ASSERT(level <= MAX_LOD);
 	}
 };
 
-/// Values comparisons functor
-struct PassLevelKeyComparision
-{
-	Bool operator()(const PassLevelKey& a,
-		const PassLevelKey& b) const
-	{
-		return a.pass == b.pass && a.level == b.level;
-	}
-};
-
-/// Define an unorderer map with key the PassLevelKey and type given by a
-/// template parameter
+/// An array to store based on pass and LOD
 template<typename T>
-using PassLevelHashMap = std::unordered_map<
-	PassLevelKey, T, PassLevelKeyCreateHash, PassLevelKeyComparision>;
+using PassLodArray = Array2d<T, PASS_COUNT, MAX_LOD + 1>;
 
 } // end namespace anki
 

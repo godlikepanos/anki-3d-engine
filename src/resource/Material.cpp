@@ -84,6 +84,23 @@ static GLenum blendToEnum(const char* str)
 }
 
 //==============================================================================
+/// Iterate loaded programs
+template<typename Func>
+void iterateProgs(PassLodArray<ShaderProgramResourcePointer>& progs, Func func)
+{
+	for(U i = 0; i < PASS_COUNT; i++)
+	{
+		for(U j = 0; j < MAX_LOD + 1; j++)
+		{
+			if(progs[i][j].isLoaded())
+			{
+				func(progs[i][j], (Pass)i, j);
+			}
+		}
+	}
+}
+
+//==============================================================================
 // MaterialVariable                                                            =
 //==============================================================================
 
@@ -105,23 +122,21 @@ const std::string& MaterialVariable::getName() const
 
 //==============================================================================
 void MaterialVariable::init(const char* shaderProgVarName,
-	PassLevelToShaderProgramHashMap& progs)
+	PassLodArray<ShaderProgramResourcePointer>& progs)
 {
 	oneSProgVar = NULL;
+	memset(&progVars, 0, sizeof(progVars));
 
 	// For all programs
-	PassLevelToShaderProgramHashMap::iterator it = progs.begin();
-	for(; it != progs.end(); ++it)
+	iterateProgs(progs, [&](ShaderProgramResourcePointer& prog, Pass p, U lod)
 	{
-		const ShaderProgram& sProg = *(it->second);
-		const PassLevelKey& key = it->first;
-
 		// Variable exists put it the map
 		const ShaderProgramUniformVariable* uni = 
-			sProg.tryFindUniformVariable(shaderProgVarName);
+			prog->tryFindUniformVariable(shaderProgVarName);
+
 		if(uni)
 		{
-			sProgVars[key] = uni;
+			progVars[p][lod] = uni;
 
 			// Set oneSProgVar
 			if(!oneSProgVar)
@@ -138,7 +153,7 @@ void MaterialVariable::init(const char* shaderProgVarName,
 					+ shaderProgVarName);
 			}
 		}
-	}
+	});
 
 	// Extra sanity checks
 	if(!oneSProgVar)
@@ -186,32 +201,18 @@ void Material::load(const char* filename)
 //==============================================================================
 void Material::parseMaterialTag(const XmlElement& materialEl)
 {
-	// passes
-	//
-	XmlElement passEl = materialEl.getChildElementOptional("passes");
-
-	if(passEl)
-	{
-		passes = StringList::splitString(passEl.getText(), ' ');
-	}
-	else
-	{
-		ANKI_LOGW("<passes> is not defined. Expect errors later");
-		passes.push_back("DUMMY");
-	}
-
 	// levelsOfDetail
 	//
 	XmlElement lodEl = materialEl.getChildElementOptional("levelsOfDetail");
 
 	if(lodEl)
 	{
-		int tmp = lodEl.getInt();
-		levelsOfDetail = (tmp < 1) ? 1 : tmp;
+		I tmp = lodEl.getInt();
+		lodsCount = (tmp < 1) ? 1 : tmp;
 	}
 	else
 	{
-		levelsOfDetail = 1;
+		lodsCount = 1;
 	}
 
 	// shadow
@@ -241,6 +242,10 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 
 		disableDepthPass = true;
 	}
+	else
+	{
+		passesCount = 2;
+	}
 
 	// depthTesting
 	//
@@ -267,9 +272,9 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	MaterialShaderProgramCreator mspc(
 		shaderProgramEl, ANKI_RENDERER_USE_MATERIAL_UBOS);
 
-	for(U32 level = 0; level < levelsOfDetail; ++level)
+	for(U level = 0; level < lodsCount; ++level)
 	{
-		for(U32 pid = 0; pid < PASS_COUNT; ++pid)
+		for(U pid = 0; pid < PASS_COUNT; ++pid)
 		{
 			if(disableDepthPass && pid == DEPTH_PASS)
 			{
@@ -278,25 +283,30 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 
 			std::stringstream src;
 
-			src << "#define LOD " << level << "\n"
-				<< "#define PASS_" << passNames[pid] << "\n"
-				<< MainRendererSingleton::get().getShaderPostProcessorString() 
+			src << "#define LOD " << level << "\n";
+
+			for(U i = 0; i < PASS_COUNT; i++)
+			{
+				src << "#define PASS_" << passNames[i];
+
+				if(pid == i)
+				{
+					src << " 1\n";
+				}
+				else
+				{
+					src << " 0\n";
+				}
+			}
+
+			src << MainRendererSingleton::get().getShaderPostProcessorString() 
 				<< "\n"
 				<< mspc.getShaderProgramSource() << std::endl;
 
 			std::string filename =
 				createShaderProgSourceToCache(src.str().c_str());
 
-			ShaderProgramResourcePointer* pptr =
-				new ShaderProgramResourcePointer;
-
-			pptr->load(filename.c_str());
-
-			ShaderProgram* sprog = pptr->get();
-
-			progs.push_back(pptr);
-
-			eSProgs[PassLevelKey(pid, level)] = sprog;
+			progs[pid][level].load(filename.c_str());
 		}
 	}
 
@@ -337,16 +347,16 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 	const char* blockName = "commonBlock";
 
 	// Get default block
-	commonUniformBlock = (*progs[0])->tryFindUniformBlock(blockName);
+	commonUniformBlock = progs[0][0]->tryFindUniformBlock(blockName);
 
 	// Get all names of all the uniforms. Dont duplicate
 	//
 	std::map<std::string, GLenum> allVarNames;
 
-	for(const ShaderProgramResourcePointer* sProg : progs)
+	iterateProgs(progs, [&](ShaderProgramResourcePointer& prog, Pass, U)
 	{
 		for(const ShaderProgramUniformVariable& v :
-			(*sProg)->getUniformVariables())
+			prog->getUniformVariables())
 		{
 #if ANKI_RENDERER_USE_MATERIAL_UBOS
 			const ShaderProgramUniformBlock* bl = v.getUniformBlock();
@@ -362,7 +372,7 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 
 			allVarNames[v.getName()] = v.getGlDataType();
 		}
-	}
+	});
 
 	// Now combine
 	//
@@ -397,31 +407,31 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 		// sampler2D
 		case GL_SAMPLER_2D:
 			v = new MaterialVariableTemplate<TextureResourcePointer>(
-				n, eSProgs);
+				n, progs);
 			break;
 		// F32
 		case GL_FLOAT:
-			v = new MaterialVariableTemplate<F32>(n, eSProgs);
+			v = new MaterialVariableTemplate<F32>(n, progs);
 			break;
 		// vec2
 		case GL_FLOAT_VEC2:
-			v = new MaterialVariableTemplate<Vec2>(n, eSProgs);
+			v = new MaterialVariableTemplate<Vec2>(n, progs);
 			break;
 		// vec3
 		case GL_FLOAT_VEC3:
-			v = new MaterialVariableTemplate<Vec3>(n, eSProgs);
+			v = new MaterialVariableTemplate<Vec3>(n, progs);
 			break;
 		// vec4
 		case GL_FLOAT_VEC4:
-			v = new MaterialVariableTemplate<Vec4>(n, eSProgs);
+			v = new MaterialVariableTemplate<Vec4>(n, progs);
 			break;
 		// mat3
 		case GL_FLOAT_MAT3:
-			v = new MaterialVariableTemplate<Mat3>(n, eSProgs);
+			v = new MaterialVariableTemplate<Mat3>(n, progs);
 			break;
 		// mat4
 		case GL_FLOAT_MAT4:
-			v = new MaterialVariableTemplate<Mat4>(n, eSProgs);
+			v = new MaterialVariableTemplate<Mat4>(n, progs);
 			break;
 		// default is error
 		default:

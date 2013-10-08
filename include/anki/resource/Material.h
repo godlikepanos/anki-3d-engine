@@ -1,12 +1,12 @@
 #ifndef ANKI_RESOURCE_MATERIAL_H
 #define ANKI_RESOURCE_MATERIAL_H
 
-#include "anki/resource/MaterialCommon.h"
 #include "anki/resource/Resource.h"
-#include "anki/util/Dictionary.h"
-#include "anki/util/StringList.h"
+#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/PassLevelKey.h"
 #include "anki/Math.h"
 #include "anki/util/Visitor.h"
+#include "anki/util/Dictionary.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/gl/Ogl.h"
 #include <memory>
@@ -14,15 +14,8 @@
 namespace anki {
 
 // Forward
-class ShaderProgram;
-class ShaderProgramUniformVariable;
 class XmlElement;
 class MaterialShaderProgramCreator;
-class ShaderProgramUniformBlock;
-
-// A few consts
-const U32 MATERIAL_MAX_PASSES = 4;
-const U32 MATERIAL_MAX_LODS = 4;
 
 // Forward
 template<typename T>
@@ -49,16 +42,11 @@ class MaterialVariable: public MateriaVariableVisitable, public NonCopyable
 public:
 	typedef MateriaVariableVisitable Base;
 
-	/// Given a pair of pass and level it returns a pointer to a
-	/// shader program uniform variable. The pointer may be nullptr
-	typedef PassLevelHashMap<const ShaderProgramUniformVariable*>
-		PassLevelToShaderProgramUniformVariableHashMap;
-
 	/// @name Constructors & destructor
 	/// @{
 	MaterialVariable(
 		const char* shaderProgVarName,
-		PassLevelToShaderProgramHashMap& progs)
+		PassLodArray<ShaderProgramResourcePointer>& progs)
 	{
 		init(shaderProgVarName, progs);
 	}
@@ -91,9 +79,7 @@ public:
 	const ShaderProgramUniformVariable* findShaderProgramUniformVariable(
 		const PassLevelKey& key) const
 	{
-		PassLevelToShaderProgramUniformVariableHashMap::const_iterator it =
-			sProgVars.find(key);
-		return (it == sProgVars.end()) ? nullptr : it->second;
+		return progVars[key.pass][key.level];
 	}
 
 	/// Get the GL data type of all the shader program variables
@@ -113,7 +99,7 @@ public:
 	/// @}
 
 private:
-	PassLevelToShaderProgramUniformVariableHashMap sProgVars;
+	PassLodArray<const ShaderProgramUniformVariable*> progVars;
 
 	/// Keep one ShaderProgramVariable here for easy access of the common
 	/// variable stuff like name or GL data type etc
@@ -121,7 +107,7 @@ private:
 
 	/// Common constructor code
 	void init(const char* shaderProgVarName,
-		PassLevelToShaderProgramHashMap& shaderProgsArr);
+		PassLodArray<ShaderProgramResourcePointer>& progs);
 };
 
 /// Material variable with data. A complete type
@@ -135,7 +121,7 @@ public:
 	/// @{
 	MaterialVariableTemplate(
 		const char* shaderProgVarName,
-		PassLevelToShaderProgramHashMap& progs)
+		PassLodArray<ShaderProgramResourcePointer>& progs)
 		: MaterialVariable(shaderProgVarName, progs)
 	{
 		setupVisitable(this);
@@ -177,14 +163,14 @@ class MaterialProperties
 public:
 	/// @name Accessors
 	/// @{
-	const StringList& getPasses() const
+	U getLevelsOfDetail() const
 	{
-		return passes;
+		return lodsCount;
 	}
 
-	U32 getLevelsOfDetail() const
+	U getPassesCount() const
 	{
-		return levelsOfDetail;
+		return passesCount;
 	}
 
 	Bool getShadow() const
@@ -220,16 +206,15 @@ public:
 	}
 
 protected:
-	StringList passes;
-
-	U32 levelsOfDetail = 1;
-
 	GLenum blendingSfactor = GL_ONE; ///< Default GL_ONE
 	GLenum blendingDfactor = GL_ZERO; ///< Default GL_ZERO
 
 	Bool8 depthTesting = true;
 	Bool8 wireframe = false;
 	Bool8 shadow = true;
+
+	U8 passesCount = 1;
+	U8 lodsCount = 1;
 };
 
 /// Material resource
@@ -310,9 +295,6 @@ class Material: public MaterialProperties, public NonCopyable
 public:
 	typedef PtrVector<MaterialVariable> VarsContainer;
 
-	/// Type for garbage collection
-	typedef PtrVector<ShaderProgramResourcePointer> ShaderPrograms;
-
 	Material();
 	~Material();
 
@@ -335,17 +317,24 @@ public:
 	{
 		return commonUniformBlock;
 	}
-
-	const ShaderPrograms& getShaderPrograms() const
-	{
-		return progs;
-	}
 	/// @}
 
 	const ShaderProgram& findShaderProgram(const PassLevelKey& key) const
 	{
-		ANKI_ASSERT(eSProgs.find(key) != eSProgs.end());
-		return *eSProgs.at(key);
+		ANKI_ASSERT(progs[key.pass][key.level].isLoaded());
+		return *progs[key.pass][key.level];
+	}
+
+	const ShaderProgram* tryFindShaderProgram(const PassLevelKey& key) const
+	{
+		if(progs[key.pass][key.level].isLoaded())
+		{
+			return progs[key.pass][key.level].get();
+		}
+		else
+		{
+			return nullptr;
+		}
 	}
 
 	/// Get by name
@@ -377,10 +366,7 @@ private:
 	/// The most important aspect of materials. These are all the shader
 	/// programs per level and per pass. Their number are NP * NL where
 	/// NP is the number of passes and NL the number of levels of detail
-	ShaderPrograms progs;
-
-	/// For searching
-	PassLevelToShaderProgramHashMap eSProgs;
+	PassLodArray<ShaderProgramResourcePointer> progs;
 
 	/// Used for sorting
 	std::size_t hash;
