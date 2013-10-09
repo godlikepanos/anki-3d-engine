@@ -389,7 +389,16 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	// Draw call
 	Drawcall dc;
 
-	dc.primitiveType = GL_TRIANGLES;
+	if(mtl.getTessellation())
+	{
+		glPatchParameteri(GL_PATCH_VERTICES, 3);
+		dc.primitiveType = GL_PATCHES;
+	}
+	else
+	{
+		dc.primitiveType = GL_TRIANGLES;
+	}
+
 	dc.indicesType = GL_UNSIGNED_SHORT;
 	dc.instancesCount = instancesCount;
 	dc.indicesCountArray = (GLsizei*)indicesCountArray;

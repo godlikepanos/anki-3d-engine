@@ -1,5 +1,4 @@
 #pragma anki include "shaders/MsBsCommon.glsl"
-#pragma anki include "shaders/Pack.glsl"
 
 /// @name Attributes
 /// @{
@@ -15,7 +14,7 @@ layout(location = 2) in mediump vec4 tangent;
 /// @{
 out highp vec2 vTexCoords;
 
-#ifdef INSTANCING
+#if INSTANCING
 flat out uint vInstanceId;
 #endif
 
@@ -23,6 +22,10 @@ flat out uint vInstanceId;
 out mediump vec3 vNormal;
 out mediump vec4 vTangent;
 out mediump vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
+#endif
+
+#if TESSELLATION
+out highp vec3 vPosition;
 #endif
 /// @}
 
@@ -36,7 +39,11 @@ void writePositionTexCoord(in mat4 mvp)
 	vTexCoords = texCoord;
 #endif
 
+#if TESSELLATION
+	vPosition = position;
+#else
 	gl_Position = mvp * vec4(position, 1.0);
+#endif
 }
 
 //==============================================================================
@@ -44,9 +51,15 @@ void writePositionTexCoord(in mat4 mvp)
 void writePositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat)
 {
 #if PASS_COLOR
-	vNormal = vec3(normalMat * normal);
-	vTangent.xyz = vec3(normalMat * tangent.xyz);
+#	if TESSELLATION
+	// Passthrough
+	vNormal = normal;
+	vTangent = tangent;
+#	else
+	vNormal = normalMat * normal;
+	vTangent.xyz = normalMat * tangent.xyz;
 	vTangent.w = tangent.w;
+#	endif
 #endif
 
 	writePositionTexCoord(mvp);

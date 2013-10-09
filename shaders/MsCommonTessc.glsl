@@ -1,22 +1,35 @@
+#pragma anki include "shaders/MsBsCommon.glsl"
+
 layout(vertices = 3) out;
 
 // Varyings in
-in vec3 vPosition[];
-in vec2 vTexCoords;
-in vec3 vNormal[];
-in vec3 vTangent[];
-in float vTangentW[];
+in highp vec3 vPosition[];
+in highp vec2 vTexCoords[];
+#if PASS_COLOR
+in mediump vec3 vNormal[];
+in mediump vec4 vTangent[];
+#endif
 
 // Varyings out
-out vec3 tcPosition[];
-out vec2 tcTexCoords;
-out vec3 tcNormal[];
-out vec3 tcTangent[];
-out float tcTangentW[];
+out highp vec3 tcPosition[];
+out highp vec2 tcTexCoords[];
+#if PASS_COLOR
+out mediump vec3 tcNormal[];
+out mediump vec4 tcTangent[];
+#endif
 
-#define tessellate_DEFINED
-void tessellate(in float tessLevelInner, in float tessLevelOuter)
+#define tessellatePositionNormalTangentTexCoord_DEFINED
+void tessellatePositionNormalTangentTexCoord(
+	in float tessLevelInner, 
+	in float tessLevelOuter)
 {
+	tcPosition[gl_InvocationID] = vPosition[gl_InvocationID];
+	tcTexCoords[gl_InvocationID] = vTexCoords[gl_InvocationID];
+#if PASS_COLOR
+	tcNormal[gl_InvocationID] = vNormal[gl_InvocationID];
+	tcTangent[gl_InvocationID] = vTangent[gl_InvocationID];
+#endif
+
 	if(gl_InvocationID == 0) 
 	{
 		gl_TessLevelInner[0] = tessLevelInner;
@@ -26,22 +39,3 @@ void tessellate(in float tessLevelInner, in float tessLevelOuter)
 	}
 }
 
-#define tessellatePosition_DEFINED
-void tessellatePosition()
-{
-	tcPosition[gl_InvocationID] = vPosition[gl_InvocationID];
-}
-
-#define tessellateTexCoords_DEFINED
-void tessellateTexCoords()
-{
-	tcTexCoords[gl_InvocationID] = vTexCoords[gl_InvocationID];
-}
-
-#define tessellatieNormalTangent_DEFINED
-void tessellatieNormalTangent()
-{
-	tcNormal[gl_InvocationID] = vNormal[gl_InvocationID];
-	tcTangent[gl_InvocationID] = vTangent[gl_InvocationID];
-	tcTangentW[gl_InvocationID] = vTangentW[gl_InvocationID];
-}

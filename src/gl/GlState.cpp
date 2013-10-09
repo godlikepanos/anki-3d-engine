@@ -74,11 +74,10 @@ static void oglMessagesCallback(GLenum source,
 #endif
 
 //==============================================================================
-void GlStateCommon::init(const U32 major_, const U32 minor_, 
+void GlStateCommon::init(const U32 major, const U32 minor, 
 	Bool registerDebugMessages)
 {
-	major = (I32)major_;
-	minor = (I32)minor_;
+	version = major * 100 + minor * 10;
 
 	std::string glstr = (const char*)glGetString(GL_VENDOR);
 	glstr += (const char*)glGetString(GL_RENDERER);

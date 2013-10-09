@@ -17,7 +17,7 @@ class ShaderProgram;
 /// @addtogroup OpenGL
 /// @{
 
-/// Common stuff for all states
+/// Common stuff for all GL states
 class GlStateCommon
 {
 public:
@@ -29,15 +29,11 @@ public:
 		GPU_NVIDIA
 	};
 
-	U32 getMajorVersion() const
+	/// Return something like 430
+	U32 getVersion() const
 	{
-		ANKI_ASSERT(major != -1);
-		return (U32)major;
-	}
-	U32 getMinorVersion() const
-	{
-		ANKI_ASSERT(minor != -1);
-		return (U32)minor;
+		ANKI_ASSERT(version != -1);
+		return version;
 	}
 
 	Gpu getGpu() const
@@ -45,17 +41,22 @@ public:
 		return gpu;
 	}
 
-	Bool isStd430Supported() const
+	Bool isTessellationSupported() const
 	{
-		return major >= 4 && minor >= 3;
+		return version >= 400;
 	}
 
-	void init(const U32 major_, const U32 minor_, 
+	Bool isComputeShaderSupported() const
+	{
+		return version >= 430;
+	}
+
+	void init(const U32 major, const U32 minor, 
 		Bool registerDebugMessages = false);
 
 private:
 	/// Minor major GL version
-	I32 major = -1, minor = -1;
+	I32 version = -1;
 	Gpu gpu = GPU_UNKNOWN;
 };
 

@@ -45,6 +45,18 @@ public:
 		return inputs;
 	}
 
+	/// At least one variable is instanced
+	Bool usesInstancing() const
+	{
+		return instanced;
+	}
+
+	/// It has tessellation shaders
+	Bool hasTessellation() const
+	{
+		return tessellation;
+	}
+
 private:
 	/// The lines of the shader program source
 	StringList srcLines;
@@ -54,6 +66,10 @@ private:
 	PtrVector<Input> inputs;
 
 	Bool enableUniformBlocks;
+
+	Bool instanced = false;
+
+	Bool tessellation = false;
 
 	/// Parse what is within the
 	/// @code <shaderProgram></shaderProgram> @endcode

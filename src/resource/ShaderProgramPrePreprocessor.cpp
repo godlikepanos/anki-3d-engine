@@ -15,8 +15,8 @@ namespace anki {
 // ShaderType enums
 static Array<const char*, 9> commands = {{
 	"#pragma anki start vertexShader",
-	"#pragma anki start teShader",
 	"#pragma anki start tcShader",
+	"#pragma anki start teShader",
 	"#pragma anki start geometryShader",
 	"#pragma anki start fragmentShader",
 	"#pragma anki start computeShader",
