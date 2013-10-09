@@ -272,6 +272,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	MaterialShaderProgramCreator mspc(
 		shaderProgramEl, ANKI_RENDERER_USE_MATERIAL_UBOS);
 
+	tessellation = mspc.hasTessellation();
+
 	for(U level = 0; level < lodsCount; ++level)
 	{
 		for(U pid = 0; pid < PASS_COUNT; ++pid)
@@ -282,6 +284,9 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 			}
 
 			std::stringstream src;
+
+			src << "#define INSTANCING " << (U)mspc.usesInstancing() << "\n";
+			src << "#define TESSELLATION " << (U)tessellation << "\n";
 
 			src << "#define LOD " << level << "\n";
 

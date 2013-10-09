@@ -197,6 +197,11 @@ public:
 	{
 		return wireframe;
 	}
+
+	Bool getTessellation() const
+	{
+		return tessellation;
+	}
 	/// @}
 
 	/// Check if blending is enabled
@@ -212,6 +217,7 @@ protected:
 	Bool8 depthTesting = true;
 	Bool8 wireframe = false;
 	Bool8 shadow = true;
+	Bool8 tessellation = false;
 
 	U8 passesCount = 1;
 	U8 lodsCount = 1;

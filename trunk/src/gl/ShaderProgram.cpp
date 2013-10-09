@@ -358,8 +358,7 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	const char* xfbVaryings[], const GLenum xfbBufferMode)
 {
 	ANKI_ASSERT(!isCreated());
-	U32 minor = GlStateCommonSingleton::get().getMinorVersion();
-	U32 major = GlStateCommonSingleton::get().getMajorVersion();
+	U32 version = GlStateCommonSingleton::get().getVersion();
 
 	// 1) create program
 	glId = glCreateProgram();
@@ -372,19 +371,9 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 	//
 	std::string preprocSrc;
 #if ANKI_GL == ANKI_GL_DESKTOP
-	preprocSrc = "#version " + std::to_string(major) 
-		+ std::to_string(minor) + "0 core\n";
-
-	if(major == 3)
-	{
-		/*preprocSrc += "#extension GL_ARB_shading_language_420pack : enable\n"
-			"#extension GL_ARB_shading_language_packing : enable\n"
-			"#extension GL_ARB_gpu_shader5 : enable\n";*/
-	}
-
+	preprocSrc = "#version " + std::to_string(version) + " core\n";
 #else
-	preprocSrc = "#version " + std::to_string(major) 
-		+ std::to_string(minor) + "0 es\n";
+	preprocSrc = "#version " + std::to_string(version) + " es\n";
 #endif
 
 	// Sanity check with the combination of shaders
@@ -427,7 +416,7 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 #if ANKI_GL == ANKI_GL_DESKTOP
 	if(tcSource != nullptr)
 	{
-		ANKI_ASSERT(major > 3);
+		ANKI_ASSERT(version >= 400);
 		tcShaderGlId = createAndCompileShader(tcSource, preprocSrc.c_str(), 
 			GL_TESS_CONTROL_SHADER);
 		glAttachShader(glId, tcShaderGlId);
@@ -435,7 +424,7 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 
 	if(teSource != nullptr)
 	{
-		ANKI_ASSERT(major > 3);
+		ANKI_ASSERT(version >= 400);
 		teShaderGlId = createAndCompileShader(teSource, preprocSrc.c_str(), 
 			GL_TESS_EVALUATION_SHADER);
 		glAttachShader(glId, teShaderGlId);
@@ -450,7 +439,7 @@ void ShaderProgram::create(const char* vertSource, const char* tcSource,
 
 	if(compSource != nullptr)
 	{
-		ANKI_ASSERT(major > 3 && minor > 2);
+		ANKI_ASSERT(version >= 430);
 		compShaderGlId = createAndCompileShader(compSource, 
 			preprocSrc.c_str(), GL_COMPUTE_SHADER);
 		glAttachShader(glId, compShaderGlId);

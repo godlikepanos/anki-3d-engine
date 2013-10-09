@@ -14,13 +14,14 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+// This is a mask
 enum
 {
-	VERTEX = 1,
-	TESSC,
-	TESSE,
-	GEOM,
-	FRAGMENT
+	VERTEX = 1 << 0,
+	TESSC = 1 << 1,
+	TESSE = 1 << 2,
+	GEOM = 1 << 3,
+	FRAGMENT = 1 << 4
 };
 
 //==============================================================================
@@ -111,6 +112,13 @@ void MaterialShaderProgramCreator::parseInputsTag(const XmlElement& programEl)
 		if(inpvar->arraySize == 0)
 		{
 			inpvar->instanced = (instancedEl) ? instancedEl.getInt() : 0;
+
+			// If one input var is instanced notify the whole program that 
+			// it's instanced
+			if(inpvar->instanced)
+			{
+				instanced = true;
+			}
 		}
 
 		// <value>
@@ -200,13 +208,15 @@ void MaterialShaderProgramCreator::parseShaderTag(const XmlElement& shaderEl)
 	{
 		shader = VERTEX;
 	}
-	else if(type == "tessellationControl")
+	else if(type == "tc")
 	{
 		shader = TESSC;
+		tessellation = true;
 	}
-	else if(type == "tessellationEvaluation")
+	else if(type == "te")
 	{
 		shader = TESSE;
+		tessellation = true;
 	}
 	else if(type == "geometry")
 	{
@@ -302,6 +312,8 @@ void MaterialShaderProgramCreator::parseShaderTag(const XmlElement& shaderEl)
 void MaterialShaderProgramCreator::parseOperationTag(
 	const XmlElement& operationTag, U32 shader, std::string& out)
 {
+	static const char OUT[] = {"out"};
+
 	// <id></id>
 	int id = operationTag.getChildElement("id").getInt();
 	
@@ -311,7 +323,7 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	std::string operationOut;
 	if(retType != "void")
 	{
-		operationOut = "out" + std::to_string(id);
+		operationOut = OUT + std::to_string(id);
 	}
 	
 	// <function>functionName</function>
@@ -337,10 +349,17 @@ void MaterialShaderProgramCreator::parseOperationTag(
 				const std::string& name = inputs[i]->name;
 				if(text == name)
 				{
-					inputs[i]->shaders |= (U32)shader;
 					input = inputs[i];
+					input->shaders |= (U32)shader;
 					break;
 				}
+			}
+
+			// The argument should be an input variable or an outXX
+			if(!(input != nullptr 
+				|| strncmp(argEl.getText(), OUT, sizeof(OUT) - 1) == 0))
+			{
+				throw ANKI_EXCEPTION("Incorrect argument: " + argEl.getText());
 			}
 
 			// Add to a list and do something special if instanced
@@ -359,7 +378,7 @@ void MaterialShaderProgramCreator::parseOperationTag(
 				else
 				{
 					throw ANKI_EXCEPTION(
-						"Cannot access the instance ID all shaders");
+						"Cannot access the instance ID in all shaders");
 				}
 			}
 			else
@@ -379,7 +398,7 @@ void MaterialShaderProgramCreator::parseOperationTag(
 	// Write the defines for the operationOuts
 	for(const std::string& arg : argsList)
 	{
-		if(arg.find("out") == 0)
+		if(arg.find(OUT) == 0)
 		{
 			lines << " && defined(" << arg << "_DEFINED)";
 		}

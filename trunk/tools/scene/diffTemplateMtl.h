@@ -7,6 +7,7 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 			<input><type>mat3</type><name>normalMat</name><value></value><instanced>%instanced%</instanced></input>
 
 			<input><type>vec2</type><name>specular</name><value>1.0 90.0</value></input>
+			<input><type>float</type><name>blurring</name><value>0.0</value><const>1</const></input>
 			<input><type>sampler2D</type><name>diffuseMap</name><value>%diffuseMap%</value></input>
 		</inputs>
 
@@ -36,30 +37,34 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 			<operations>
 				<operation>
 					<id>0</id>
-					<returnType>vec3</returnType>
-					<function>readRgbFromTexture</function>
-					<arguments>
-						<argument>diffuseMap</argument>
-						<argument>vTexCoords</argument>
-					</arguments>
+					<returnType>vec2</returnType>
+					<function>getTextureCoord</function>
 				</operation>
 				<operation>
 					<id>1</id>
 					<returnType>vec3</returnType>
-					<function>getNormalSimple</function>
+					<function>getNormal</function>
+				</operation>
+
+				<operation>
+					<id>10</id>
+					<returnType>vec3</returnType>
+					<function>readRgbFromTexture</function>
 					<arguments>
-						<argument>vNormal</argument>
+						<argument>diffuseMap</argument>
+						<argument>out0</argument>
 					</arguments>
 				</operation>
+
 				<operation>
-					<id>2</id>
+					<id>20</id>
 					<returnType>void</returnType>
 					<function>writeFais</function>
 					<arguments>
-						<argument>out0</argument>
+						<argument>out10</argument>
 						<argument>out1</argument>
 						<argument>specular</argument>
-						<argument>0.0</argument>
+						<argument>blurring</argument>
 					</arguments>
 				</operation>
 			</operations>

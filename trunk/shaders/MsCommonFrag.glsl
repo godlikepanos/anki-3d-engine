@@ -8,26 +8,32 @@
 // Variables                                                                   =
 //==============================================================================
 
-/// @name Varyings
-/// @{
-#define vTexCoords_DEFINED
-in highp vec2 vTexCoords;
+/// Input
+#if TESSELLATION
 
-#define vInstanceId_DEFINED
-flat in mediump uint vInstanceId;
-
+in highp vec2 teTexCoords;
 #if PASS_COLOR
-in vec3 vNormal;
-#	define vNormal_DEFINED
-in vec4 vTangent;
-#	define vTangent_DEFINED
-in vec3 vVertPosViewSpace;
-#	define vVertPosViewSpace_DEFINED
+in mediump vec3 teNormal;
+in mediump vec4 teTangent;
+in mediump vec3 teVertPosViewSpace;
 #endif
-/// @}
 
-/// @name Fragment out
-/// @{
+#else // no TESSELLATION
+
+#if INSTANCING
+flat in mediump uint vInstanceId;
+#endif
+
+in highp vec2 vTexCoords;
+#if PASS_COLOR
+in mediump vec3 vNormal;
+in mediump vec4 vTangent;
+in mediump vec3 vVertPosViewSpace;
+#endif
+
+#endif // TESSELLATION
+
+// Output
 #if PASS_COLOR
 #	if USE_MRT
 layout(location = 0) out vec4 fMsFai0;
@@ -37,17 +43,62 @@ layout(location = 0) out uvec2 fMsFai0;
 #	endif
 #	define fMsFai0_DEFINED
 #endif
-/// @}
 
 //==============================================================================
 // Functions                                                                   =
 //==============================================================================
 
-/// @param[in] normal The fragment's normal in view space
-/// @param[in] tangent The tangent
-/// @param[in] tangent Extra stuff for the tangent
-/// @param[in] map The map
-/// @param[in] texCoords Texture coordinates
+// Getter
+#if PASS_COLOR
+#	define getNormal_DEFINED
+vec3 getNormal()
+{
+#if TESSELLATION
+	return normalize(teNormal);
+#else
+	return normalize(vNormal);
+#endif
+}
+#endif
+
+// Getter
+#if PASS_COLOR
+#	define getTangent_DEFINED
+vec4 getTangent()
+{
+#if TESSELLATION
+	return teTangent;
+#else
+	return vTangent;
+#endif
+}
+#endif
+
+// Getter
+#define getTextureCoord_DEFINED
+vec2 getTextureCoord()
+{
+#if TESSELLATION
+	return teTexCoords;
+#else
+	return vTexCoords;
+#endif
+}
+
+// Getter
+#if PASS_COLOR
+#	define getPositionViewSpace_DEFINED
+vec3 getPositionViewSpace()
+{
+#if TESSELLATION
+	return vec3(0.0);
+#else
+	return vVertPosViewSpace;
+#endif
+}
+#endif
+
+// Do normal mapping
 #if PASS_COLOR
 #	define getNormalFromTexture_DEFINED
 vec3 getNormalFromTexture(in vec3 normal, in vec4 tangent,
@@ -59,7 +110,7 @@ vec3 getNormalFromTexture(in vec3 normal, in vec4 tangent,
 	// First read the texture
 	vec3 nAtTangentspace = normalize((texture(map, texCoords).rgb - 0.5) * 2.0);
 
-	vec3 n = normalize(normal);
+	vec3 n = normal; // Assume that getNormal() is called
 	vec3 t = normalize(tangent.xyz);
 	vec3 b = cross(n, t) * tangent.w;
 
@@ -70,20 +121,7 @@ vec3 getNormalFromTexture(in vec3 normal, in vec4 tangent,
 }
 #endif
 
-/// Just normalize
-#if PASS_COLOR
-#	define getNormalSimple_DEFINED
-vec3 getNormalSimple(in vec3 normal)
-{
-	return normalize(normal);
-}
-#endif
-
-/// Environment mapping calculations
-/// @param[in] vertPosViewSpace Fragment position in view space
-/// @param[in] normal Fragment's normal in view space as well
-/// @param[in] map The env map
-/// @return The color
+// Do environment mapping
 #if PASS_COLOR
 #	define getEnvironmentColor_DEFINED
 vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
@@ -103,12 +141,8 @@ vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 }
 #endif
 
-/// Using a 4-channel texture and a tolerance discard the fragment if the 
-/// texture's alpha is less than the tolerance
-/// @param[in] map The diffuse map
-/// @param[in] tolerance Tolerance value
-/// @param[in] texCoords Texture coordinates
-/// @return The RGB channels of the map
+// Using a 4-channel texture and a tolerance discard the fragment if the 
+// texture's alpha is less than the tolerance
 #define readTextureRgbAlphaTesting_DEFINED
 vec3 readTextureRgbAlphaTesting(
 	in sampler2D map,
@@ -136,7 +170,7 @@ vec3 readTextureRgbAlphaTesting(
 #endif
 }
 
-/// Just read the RGB color from texture
+// Just read the RGB color from texture
 #if PASS_COLOR
 #	define readRgbFromTexture_DEFINED
 vec3 readRgbFromTexture(in sampler2D tex, in highp vec2 texCoords)
@@ -145,7 +179,7 @@ vec3 readRgbFromTexture(in sampler2D tex, in highp vec2 texCoords)
 }
 #endif
 
-/// Write the data to FAIs
+// Write the data to FAIs
 #if PASS_COLOR
 #	define writeFais_DEFINED
 void writeFais(

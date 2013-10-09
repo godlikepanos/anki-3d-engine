@@ -78,8 +78,7 @@ struct CommonUniforms
 // Use compute shaders on GL >= 4.3
 static Bool useCompute()
 {
-	return GlStateCommonSingleton::get().getMajorVersion() >= 4
-		&& GlStateCommonSingleton::get().getMinorVersion() >= 3
+	return GlStateCommonSingleton::get().isComputeShaderSupported()
 		&& false;
 }
 

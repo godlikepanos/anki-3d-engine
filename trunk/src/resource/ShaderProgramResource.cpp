@@ -51,11 +51,29 @@ void ShaderProgramResource::load(const char* filename, const char* extraSrc)
 		std::string vertSrc = extraSrc + pars.getShaderSource(ST_VERTEX);
 		std::string fragSrc = extraSrc + pars.getShaderSource(ST_FRAGMENT);
 
+		std::string tcSrc;
+		if(pars.getShaderSource(ST_TC).size() > 0)
+		{
+			tcSrc = extraSrc + pars.getShaderSource(ST_TC);
+		}
+
+		std::string teSrc;
+		if(pars.getShaderSource(ST_TE).size() > 0)
+		{
+			teSrc = extraSrc + pars.getShaderSource(ST_TE);
+		}
+
+		std::string geomSrc;
+		if(pars.getShaderSource(ST_GEOMETRY).size() > 0)
+		{
+			geomSrc = extraSrc + pars.getShaderSource(ST_GEOMETRY);
+		}
+
 		create(
 			vertSrc.c_str(),
-			nullptr,
-			nullptr,
-			nullptr,
+			tcSrc.size() ? tcSrc.c_str() : nullptr,
+			teSrc.size() ? teSrc.c_str() : nullptr,
+			geomSrc.size() ? geomSrc.c_str() : nullptr,
 			fragSrc.c_str(),
 			nullptr,
 			&trfVarsArr[0],
