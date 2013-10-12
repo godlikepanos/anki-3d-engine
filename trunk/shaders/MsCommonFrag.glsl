@@ -11,7 +11,7 @@
 /// Input
 #if TESSELLATION
 
-in highp vec2 teTexCoords;
+in mediump vec2 teTexCoords;
 #if PASS_COLOR
 in mediump vec3 teNormal;
 in mediump vec4 teTangent;
@@ -20,11 +20,11 @@ in mediump vec3 teVertPosViewSpace;
 
 #else // no TESSELLATION
 
-#if INSTANCING
+#if INSTANCE_ID_FRAGMENT_SHADER
 flat in mediump uint vInstanceId;
 #endif
 
-in highp vec2 vTexCoords;
+in mediump vec2 vTexCoords;
 #if PASS_COLOR
 in mediump vec3 vNormal;
 in mediump vec4 vTangent;

@@ -567,10 +567,11 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 			ANKI_ASSERT(0);
 		}
 
-		File file(
-			(AppSingleton::get().getCachePath() + "/" 
-			+ std::to_string(shader) + ext).c_str(), 
-			File::OF_WRITE);
+		std::stringstream fname;
+		fname << AppSingleton::get().getCachePath() << "/" 
+			<< std::setfill('0') << std::setw(4) << (U32)shader << ext;
+
+		File file(fname.str().c_str(), File::OF_WRITE);
 
 		file.writeText("%s", fullSrc.c_str());
 	}

@@ -9,16 +9,7 @@
 /// This is an optimized version. See the clean one at r213
 
 #pragma anki start vertexShader
-
-layout(location = 0) in vec2 position;
-
-out vec2 vTexCoords;
-
-void main()
-{
-	vTexCoords = position;
-	gl_Position = vec4(position * 2.0 - 1.0, 0.0, 1.0);
-}
+#pragma anki include "shaders/SimpleVert.glsl"
 
 #pragma anki start fragmentShader
 

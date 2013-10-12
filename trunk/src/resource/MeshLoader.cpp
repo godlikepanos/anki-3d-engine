@@ -60,10 +60,10 @@ void MeshLoader::load(const char* filename)
 
 		// Verts num
 		U vertsNum = file.readU32();
-		vertCoords.resize(vertsNum);
+		positions.resize(vertsNum);
 
 		// Vert coords
-		for(Vec3& vertCoord : vertCoords)
+		for(Vec3& vertCoord : positions)
 		{
 			for(U j = 0; j < 3; j++)
 			{
@@ -83,7 +83,7 @@ void MeshLoader::load(const char* filename)
 				tri.vertIds[j] = file.readU32();
 
 				// a sanity check
-				if(tri.vertIds[j] >= vertCoords.size())
+				if(tri.vertIds[j] >= positions.size())
 				{
 					throw ANKI_EXCEPTION("Vert index out of bounds");
 				}
@@ -104,11 +104,11 @@ void MeshLoader::load(const char* filename)
 		}
 
 		// Vert weights num
-		U vertWeightsNum = file.readU32();
-		vertWeights.resize(vertWeightsNum);
+		U weightsNum = file.readU32();
+		weights.resize(weightsNum);
 
 		// Vert weights
-		for(VertexWeight& vw : vertWeights)
+		for(VertexWeight& vw : weights)
 		{
 			// get the bone connections num
 			U32 boneConnections = file.readU32();
@@ -154,17 +154,17 @@ void MeshLoader::load(const char* filename)
 void MeshLoader::doPostLoad()
 {
 	// Sanity checks
-	if(vertCoords.size() < 1 || tris.size() < 1)
+	if(positions.size() < 1 || tris.size() < 1)
 	{
 		throw ANKI_EXCEPTION("Vert coords and tris must be filled");
 	}
-	if(texCoords.size() != 0 && texCoords.size() != vertCoords.size())
+	if(texCoords.size() != 0 && texCoords.size() != positions.size())
 	{
 		throw ANKI_EXCEPTION("Tex coords num must be "
 			"zero or equal to the vertex "
 			"coords num");
 	}
-	if(vertWeights.size() != 0 && vertWeights.size() != vertCoords.size())
+	if(weights.size() != 0 && weights.size() != positions.size())
 	{
 		throw ANKI_EXCEPTION("Vert weights num must be zero or equal to the "
 			"vertex coords num");
@@ -177,6 +177,7 @@ void MeshLoader::doPostLoad()
 		createVertTangents();
 	}
 	createVertIndeces();
+	compressBuffers();
 }
 
 //==============================================================================
@@ -199,9 +200,9 @@ void MeshLoader::createFaceNormals()
 {
 	for(Triangle& tri : tris)
 	{
-		const Vec3& v0 = vertCoords[tri.vertIds[0]];
-		const Vec3& v1 = vertCoords[tri.vertIds[1]];
-		const Vec3& v2 = vertCoords[tri.vertIds[2]];
+		const Vec3& v0 = positions[tri.vertIds[0]];
+		const Vec3& v1 = positions[tri.vertIds[1]];
+		const Vec3& v2 = positions[tri.vertIds[2]];
 
 		tri.normal = (v1 - v0).cross(v2 - v0);
 
@@ -219,21 +220,21 @@ void MeshLoader::createFaceNormals()
 //==============================================================================
 void MeshLoader::createVertNormals()
 {
-	vertNormals.resize(vertCoords.size());
+	normals.resize(positions.size());
 
-	for(Vec3& vertNormal : vertNormals)
+	for(Vec3& vertNormal : normals)
 	{
 		vertNormal = Vec3(0.0, 0.0, 0.0);
 	}
 
 	for(Triangle& tri : tris)
 	{
-		vertNormals[tri.vertIds[0]] += tri.normal;
-		vertNormals[tri.vertIds[1]] += tri.normal;
-		vertNormals[tri.vertIds[2]] += tri.normal;
+		normals[tri.vertIds[0]] += tri.normal;
+		normals[tri.vertIds[1]] += tri.normal;
+		normals[tri.vertIds[2]] += tri.normal;
 	}
 
-	for(Vec3& vertNormal : vertNormals)
+	for(Vec3& vertNormal : normals)
 	{
 		vertNormal.normalize();
 	}
@@ -242,8 +243,8 @@ void MeshLoader::createVertNormals()
 //==============================================================================
 void MeshLoader::createVertTangents()
 {
-	vertTangents.resize(vertCoords.size(), Vec4(0.0)); // alloc
-	Vector<Vec3> bitagents(vertCoords.size(), Vec3(0.0));
+	tangents.resize(positions.size(), Vec4(0.0)); // alloc
+	Vector<Vec3> bitagents(positions.size(), Vec3(0.0));
 
 	for(U32 i = 0; i < tris.size(); i++)
 	{
@@ -251,9 +252,9 @@ void MeshLoader::createVertTangents()
 		const I i0 = tri.vertIds[0];
 		const I i1 = tri.vertIds[1];
 		const I i2 = tri.vertIds[2];
-		const Vec3& v0 = vertCoords[i0];
-		const Vec3& v1 = vertCoords[i1];
-		const Vec3& v2 = vertCoords[i2];
+		const Vec3& v0 = positions[i0];
+		const Vec3& v1 = positions[i1];
+		const Vec3& v2 = positions[i2];
 		Vec3 edge01 = v1 - v0;
 		Vec3 edge02 = v2 - v0;
 		Vec2 uvedge01 = texCoords[i1] - texCoords[i0];
@@ -280,19 +281,19 @@ void MeshLoader::createVertTangents()
 		//t.normalize();
 		//b.normalize();
 
-		vertTangents[i0] += Vec4(t, 1.0);
-		vertTangents[i1] += Vec4(t, 1.0);
-		vertTangents[i2] += Vec4(t, 1.0);
+		tangents[i0] += Vec4(t, 1.0);
+		tangents[i1] += Vec4(t, 1.0);
+		tangents[i2] += Vec4(t, 1.0);
 
 		bitagents[i0] += b;
 		bitagents[i1] += b;
 		bitagents[i2] += b;
 	}
 
-	for(U i = 0; i < vertTangents.size(); i++)
+	for(U i = 0; i < tangents.size(); i++)
 	{
-		Vec3 t = vertTangents[i].xyz();
-		const Vec3& n = vertNormals[i];
+		Vec3 t = tangents[i].xyz();
+		const Vec3& n = normals[i];
 		Vec3& b = bitagents[i];
 
 		t = t - n * n.dot(t);
@@ -302,7 +303,7 @@ void MeshLoader::createVertTangents()
 
 		F32 w = ((n.cross(t)).dot(b) < 0.0) ? 1.0 : -1.0;
 
-		vertTangents[i] = Vec4(t, w);
+		tangents[i] = Vec4(t, w);
 	}
 }
 
@@ -312,10 +313,10 @@ void MeshLoader::fixNormals()
 	FixNormalsMap map;
 
 	// For all verts
-	for(U i = 1; i < vertCoords.size(); i++)
+	for(U i = 1; i < positions.size(); i++)
 	{
-		const Vec3& pos = vertCoords[i];
-		Vec3& norm = vertNormals[i];
+		const Vec3& pos = positions[i];
+		Vec3& norm = normals[i];
 
 		// Find pos
 		FixNormalsMap::iterator it = map.find(pos);
@@ -340,8 +341,8 @@ void MeshLoader::fixNormals()
 			// Search the verts with the same position
 			for(U j = 0; j < mapVal.indicesCount; j++)
 			{
-				const Vec3& posB = vertCoords[mapVal.indices[j]];
-				Vec3& normB = vertNormals[mapVal.indices[j]];
+				const Vec3& posB = positions[mapVal.indices[j]];
+				Vec3& normB = normals[mapVal.indices[j]];
 
 				ANKI_ASSERT(posB == pos);
 				(void)posB;
@@ -361,6 +362,80 @@ void MeshLoader::fixNormals()
 
 			// Update the map
 			mapVal.indices[mapVal.indicesCount++] = i;
+		}
+	}
+}
+
+//==============================================================================
+void MeshLoader::append(const MeshLoader& other)
+{
+	positions.insert(
+		positions.end(), other.positions.begin(), other.positions.end());
+
+	//normals.insert(
+	//	normals.end(), other.normals.begin(), other.normals.end());
+
+	normalsF16.insert(
+		normalsF16.end(), other.normalsF16.begin(), other.normalsF16.end());
+
+	//tangents.insert(
+	//	tangents.end(), other.tangents.begin(), other.tangents.end());
+
+	tangentsF16.insert(
+		tangentsF16.end(), other.tangentsF16.begin(), other.tangentsF16.end());
+
+	//texCoords.insert(
+	//	texCoords.end(), other.texCoords.begin(), other.texCoords.end());
+
+	texCoordsF16.insert(
+		texCoordsF16.end(), other.texCoordsF16.begin(), 
+		other.texCoordsF16.end());
+
+	weights.insert(
+		weights.end(), other.weights.begin(), other.weights.end());
+
+	U16 bias = positions.size();
+	for(U16 index : other.vertIndices)
+	{
+		vertIndices.push_back(bias + index);
+	}
+}
+
+//==============================================================================
+void MeshLoader::compressBuffers()
+{
+	ANKI_ASSERT(positions.size() > 0);
+
+	// Normals
+	normalsF16.resize(normals.size());
+
+	for(U i = 0; i < normals.size(); i++)
+	{
+		for(U j = 0; j < 3; j++)
+		{
+			normalsF16[i][j] = F16(normals[i][j]);
+		}
+	}
+
+	// Tangents
+	tangentsF16.resize(tangents.size());
+
+	for(U i = 0; i < tangents.size(); i++)
+	{
+		for(U j = 0; j < 4; j++)
+		{
+			tangentsF16[i][j] = F16(tangents[i][j]);
+		}
+	}
+
+	// Texture coords
+	texCoordsF16.resize(texCoords.size());	
+
+	for(U i = 0; i < texCoords.size(); i++)
+	{
+		for(U j = 0; j < 2; j++)
+		{
+			texCoordsF16[i][j] = F16(texCoords[i][j]);
 		}
 	}
 }

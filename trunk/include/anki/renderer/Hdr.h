@@ -47,7 +47,7 @@ public:
 		blurringIterationsCount = x;
 	}
 
-	const Texture& getFai() const
+	Texture& getFai()
 	{
 		return vblurFai;
 	}

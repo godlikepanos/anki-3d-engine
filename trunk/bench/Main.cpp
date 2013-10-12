@@ -37,7 +37,7 @@ struct LogFile
 
 	void handler(const Logger::Info& info)
 	{
-		const char* x;
+		const char* x = nullptr;
 		switch(info.type)
 		{
 		case Logger::LMT_NORMAL:
@@ -164,7 +164,7 @@ void initScene()
 
 	PerspectiveCamera* cam = nullptr;
 	scene.newSceneNode(
-		cam, "main_camera", nullptr, (U32)Movable::MF_NONE);
+		cam, "main_camera");
 
 	const F32 ang = 45.0;
 	cam->setAll(
@@ -193,9 +193,9 @@ void initScene()
 		Vec3 lightPos = vaseLightPos[i];
 
 		PointLight* point;
-		scene.newSceneNode(point, ("vase_plight" + std::to_string(i)).c_str(),
-			nullptr, Movable::MF_NONE, 
-			(i != 100) ? "textures/lens_flare/flares0.ankitex" : nullptr);
+		scene.newSceneNode(point, ("vase_plight" + std::to_string(i)).c_str());
+
+		point->loadLensFlare("textures/lens_flare/flares0.ankitex");
 		point->setRadius(2.0);
 		point->setLocalOrigin(lightPos);
 		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
@@ -211,36 +211,33 @@ void initScene()
 		scene.getEventManager().newEvent(event, 0.0, 0.8, point, eventData);
 		event->enableBits(Event::EF_REANIMATE);
 
-		MovableEventData moveData;
+		MoveEventData moveData;
 		moveData.posMin = Vec3(-0.5, 0.0, -0.5);
 		moveData.posMax = Vec3(0.5, 0.0, 0.5);
-		MovableEvent* mevent;
+		MoveEvent* mevent;
 		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
 		mevent->enableBits(Event::EF_REANIMATE);
 
 		ParticleEmitter* pe;
 		scene.newSceneNode(pe,
-			("pe" + std::to_string(i)).c_str(), nullptr,
-			Movable::MF_NONE, "particles/smoke.ankipart");
+			("pe" + std::to_string(i)).c_str(), "particles/smoke.ankipart");
 		pe->setLocalOrigin(lightPos);
 
 		scene.newSceneNode(pe,
-			("pef" + std::to_string(i)).c_str(), nullptr,
-			Movable::MF_NONE, "particles/fire.ankipart");
+			("pef" + std::to_string(i)).c_str(), "particles/fire.ankipart");
 		pe->setLocalOrigin(lightPos);
 	}
 #endif
 
 	// horse
 	ModelNode* horse;
-	scene.newSceneNode(horse, "horse", nullptr, 
-		Movable::MF_NONE, "models/horse/horse.ankimdl");
+	scene.newSceneNode(horse, "horse", "models/horse/horse.ankimdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		0.7));
 
 	// Light
 	SpotLight* spot;
-	scene.newSceneNode(spot, "spot0", nullptr, Movable::MF_NONE);
+	scene.newSceneNode(spot, "spot0");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
@@ -254,19 +251,19 @@ void initScene()
 	scene.load("maps/sponza/master.ankiscene");
 
 	PointLight* pl;
-	scene.newSceneNode(pl, "pl0", nullptr, Movable::MF_NONE);
+	scene.newSceneNode(pl, "pl0");
 	pl->setRadius(12.5);
 	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
 	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
 	pl->setLocalOrigin(Vec3(10, 2.0, -0.8));
 
-	scene.newSceneNode(pl, "pl1", nullptr, Movable::MF_NONE);
+	scene.newSceneNode(pl, "pl1");
 	pl->setRadius(12.5);
 	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
 	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
 	pl->setLocalOrigin(Vec3(0, 2.0, -0.8));
 
-	scene.newSceneNode(pl, "pl2", nullptr, Movable::MF_NONE);
+	scene.newSceneNode(pl, "pl2");
 	pl->setRadius(12.5);
 	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
 	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
@@ -303,12 +300,12 @@ static Bool mainLoopExtra()
 {
 	const F32 dist = 0.2;
 	const F32 ang = toRad(3.0);
-	const F32 scale = 0.01;
 	const F32 mouseSensivity = 9.0;
 
 	Input& in = InputSingleton::get();
 
-	Movable* mover = SceneGraphSingleton::get().getActiveCamera().getMovable();
+	MoveComponent* mover = 
+		SceneGraphSingleton::get().getActiveCamera().getMoveComponent();
 
 	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
 	if(in.getKey(KC_DOWN)) mover->rotateLocalX(-ang);

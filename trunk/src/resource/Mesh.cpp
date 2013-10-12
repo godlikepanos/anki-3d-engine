@@ -52,12 +52,14 @@ void Mesh::load(const char* filename)
 //==============================================================================
 U32 Mesh::calcVertexSize() const
 {
-	U32 a = sizeof(Vec3) + sizeof(Vec3) + sizeof(Vec4) 
-		+ meshProtected.texChannelsCount * sizeof(Vec2);
+	U32 a = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
+		+ meshProtected.texChannelsCount * sizeof(HVec2);
 	if(meshProtected.weights)
 	{
 		a += sizeof(MeshLoader::VertexWeight);
 	}
+
+	alignRoundUp(sizeof(F32), a);
 	return a;
 }
 
@@ -75,24 +77,25 @@ void Mesh::createVbos(const MeshLoader& loader)
 	// Create a temp buffer and populate it
 	Vector<U8> buff(vbosize, 0);
 
-	U8* ptr = &buff[0];
+	U8* ptra = &buff[0];
 	for(U i = 0; i < meshProtected.vertsCount; i++)
 	{
+		U8* ptr = ptra;
 		ANKI_ASSERT(ptr + vertexsize <= &buff[0] + vbosize);
 
 		memcpy(ptr, &loader.getPositions()[i], sizeof(Vec3));
 		ptr += sizeof(Vec3);
 
-		memcpy(ptr, &loader.getNormals()[i], sizeof(Vec3));
-		ptr += sizeof(Vec3);
+		memcpy(ptr, &loader.getNormals()[i], sizeof(HVec3));
+		ptr += sizeof(HVec3);
 
-		memcpy(ptr, &loader.getTangents()[i], sizeof(Vec4));
-		ptr += sizeof(Vec4);
+		memcpy(ptr, &loader.getTangents()[i], sizeof(HVec4));
+		ptr += sizeof(HVec4);
 
 		for(U j = 0; j < meshProtected.texChannelsCount; j++)
 		{
-			memcpy(ptr, &loader.getTextureCoordinates(j)[i], sizeof(Vec2));
-			ptr += sizeof(Vec2);
+			memcpy(ptr, &loader.getTextureCoordinates(j)[i], sizeof(HVec2));
+			ptr += sizeof(HVec2);
 		}
 
 		if(meshProtected.weights)
@@ -101,6 +104,8 @@ void Mesh::createVbos(const MeshLoader& loader)
 				sizeof(MeshLoader::VertexWeight));
 			ptr += sizeof(MeshLoader::VertexWeight);
 		}
+
+		ptra += vertexsize;
 	}
 
 	// Create VBO
@@ -141,22 +146,22 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 	case VA_NORMAL:
 		v = &vbo;
 		size = 3;
-		type = GL_FLOAT;
+		type = GL_HALF_FLOAT;
 		offset = sizeof(Vec3);
 		break;
 	case VA_TANGENT:
 		v = &vbo;
 		size = 4;
-		type = GL_FLOAT;
-		offset = sizeof(Vec3) * 2;
+		type = GL_HALF_FLOAT;
+		offset = sizeof(Vec3) + sizeof(HVec3);
 		break;
 	case VA_TEXTURE_COORD:
 		if(meshProtected.texChannelsCount > 0)
 		{
 			v = &vbo;
 			size = 2;
-			type = GL_FLOAT;
-			offset = sizeof(Vec3) * 2 + sizeof(Vec4);
+			type = GL_HALF_FLOAT;
+			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4);
 		}
 		break;
 	case VA_TEXTURE_COORD_1:
@@ -164,8 +169,9 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 		{
 			v = &vbo;
 			size = 2;
-			type = GL_FLOAT;
-			offset = sizeof(Vec3) * 2 + sizeof(Vec4) + sizeof(Vec2);
+			type = GL_HALF_FLOAT;
+			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
+				+ sizeof(HVec2);
 		}
 		break;
 	case VA_BONE_COUNT:
@@ -173,9 +179,9 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 		{
 			v = &vbo;
 			size = 1;
-			type = GL_UNSIGNED_INT;
-			offset = sizeof(Vec3) * 2 + sizeof(Vec4) 
-				+ meshProtected.texChannelsCount * sizeof(Vec2);
+			type = GL_UNSIGNED_SHORT;
+			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
+				+ meshProtected.texChannelsCount * sizeof(HVec2);
 		}
 		break;
 	case VA_BONE_IDS:
@@ -183,9 +189,9 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 		{
 			v = &vbo;
 			size = 4;
-			type = GL_UNSIGNED_INT;
-			offset = sizeof(Vec3) * 2 + sizeof(Vec4) 
-				+ meshProtected.texChannelsCount * sizeof(Vec2) + sizeof(U32);
+			type = GL_UNSIGNED_SHORT;
+			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
+				+ meshProtected.texChannelsCount * sizeof(HVec2) + sizeof(U16);
 		}
 		break;
 	case VA_BONE_WEIGHTS:
@@ -193,10 +199,10 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 		{
 			v = &vbo;
 			size = 4;
-			type = GL_FLOAT;
-			offset = sizeof(Vec3) * 2 + sizeof(Vec4) 
-				+ meshProtected.texChannelsCount * sizeof(Vec2) + sizeof(U32) 
-				+ sizeof(U32) * 4;
+			type = GL_HALF_FLOAT;
+			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
+				+ meshProtected.texChannelsCount * sizeof(HVec2) + sizeof(U16) 
+				+ sizeof(U16) * 4;
 		}
 	case VA_INDICES:
 		v = &indicesVbo;
@@ -264,23 +270,7 @@ void BucketMesh::load(const char* filename)
 				}
 
 				// Append
-				fullLoader.appendPositions(subLoader.getPositions());
-				fullLoader.appendNormals(subLoader.getNormals());
-				fullLoader.appendTangents(subLoader.getTangents());
-
-				for(U j = 0; j < meshProtected.texChannelsCount; j++)
-				{
-					fullLoader.appendTextureCoordinates(
-						subLoader.getTextureCoordinates(j), j);
-				}
-
-				if(meshProtected.weights)
-				{
-					fullLoader.appendWeights(subLoader.getWeights());
-				}
-
-				fullLoader.appendIndices(loader->getIndices(), 
-					meshProtected.vertsCount);
+				fullLoader.append(subLoader);
 			}
 			else
 			{

@@ -374,6 +374,7 @@ void MaterialShaderProgramCreator::parseOperationTag(
 				{
 					argsList.push_back(std::string(argEl.getText()) 
 						+ "[vInstanceId]");
+					instanceIdInFragmentShader = true;
 				}
 				else
 				{

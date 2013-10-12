@@ -286,6 +286,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 			std::stringstream src;
 
 			src << "#define INSTANCING " << (U)mspc.usesInstancing() << "\n";
+			src << "#define INSTANCE_ID_FRAGMENT_SHADER " 
+				<< (U)mspc.usesInstanceIdInFragmentShader() << "\n";
 			src << "#define TESSELLATION " << (U)tessellation << "\n";
 
 			src << "#define LOD " << level << "\n";

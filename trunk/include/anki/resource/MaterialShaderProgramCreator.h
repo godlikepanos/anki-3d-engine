@@ -57,6 +57,12 @@ public:
 		return tessellation;
 	}
 
+	/// The fragment shader needs the vInstanceId
+	Bool usesInstanceIdInFragmentShader() const
+	{
+		return instanceIdInFragmentShader;
+	}
+
 private:
 	/// The lines of the shader program source
 	StringList srcLines;
@@ -70,6 +76,8 @@ private:
 	Bool instanced = false;
 
 	Bool tessellation = false;
+
+	Bool instanceIdInFragmentShader = false;
 
 	/// Parse what is within the
 	/// @code <shaderProgram></shaderProgram> @endcode

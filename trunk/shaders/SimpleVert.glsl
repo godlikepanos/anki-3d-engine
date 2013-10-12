@@ -1,4 +1,4 @@
-/// Simple vertex shader for IS and PPS stages. It is used for rendering a quad 
+/// Simple vertex shader for quad rendering. It is used for rendering a quad 
 /// in the screen. Notice that it does not use ftransform(). We dont need it 
 /// because we can get the Normalized Display Coordinates ([-1,1]) simply by 
 /// looking in the vertex position. The vertex positions of the quad are from 

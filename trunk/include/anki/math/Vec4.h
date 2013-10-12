@@ -508,6 +508,9 @@ void TVec4<F32>::normalize();
 typedef TVec4<F32> Vec4;
 static_assert(sizeof(Vec4) == sizeof(F32) * 4, "Incorrect size");
 
+/// Half float 4D vector
+typedef TVec4<F16> HVec4;
+
 /// 32bit signed integer 4D vector
 typedef TVec4<I32> IVec4;
 
