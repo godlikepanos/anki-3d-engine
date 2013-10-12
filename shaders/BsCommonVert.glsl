@@ -8,7 +8,7 @@ layout(location = 3) in vec2 texCoord;
 /// @name Varyings
 /// @{
 out vec2 vTexCoord;
-flat out uint vInstanceId;
+flat out int vInstanceId;
 /// @}
 
 //==============================================================================
@@ -38,5 +38,5 @@ void particle(in mat4 mvp)
 {
 	vTexCoord = texCoord;
 	gl_Position = mvp * vec4(position, 1);
-	vInstanceId = uint(gl_InstanceID);
+	vInstanceId = gl_InstanceID;
 }

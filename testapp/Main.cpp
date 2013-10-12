@@ -478,7 +478,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -494,7 +494,7 @@ void mainLoop()
 		increaseGlobTimestamp();
 	}
 
-#if 0
+#if 1
 	MainRendererSingleton::get().takeScreenshot("screenshot.tga");
 #endif
 

@@ -3,7 +3,7 @@
 /// @name Attributes
 /// @{
 layout(location = 0) in highp vec3 position;
-layout(location = 3) in highp vec2 texCoord;
+layout(location = 3) in mediump vec2 texCoord;
 
 #if PASS_COLOR || TESSELLATION
 layout(location = 1) in mediump vec3 normal;
@@ -16,9 +16,9 @@ layout(location = 2) in mediump vec4 tangent;
 
 /// @name Varyings
 /// @{
-out highp vec2 vTexCoords;
+out mediump vec2 vTexCoords;
 
-#if INSTANCING
+#if INSTANCE_ID_FRAGMENT_SHADER
 flat out uint vInstanceId;
 #endif
 

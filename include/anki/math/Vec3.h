@@ -479,6 +479,9 @@ TVec3<T> operator/(const T f, const TVec3<T>& v)
 typedef TVec3<F32> Vec3;
 static_assert(sizeof(Vec3) == sizeof(F32) * 3, "Incorrect size");
 
+/// Half float 3D vector
+typedef TVec3<F16> HVec3;
+
 /// 32bit signed integer 3D vector
 typedef TVec3<I32> IVec3;
 

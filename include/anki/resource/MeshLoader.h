@@ -53,10 +53,9 @@ public:
 		/// shader
 		static const U32 MAX_BONES_PER_VERT = 4;
 
-		/// @todo change the vals to U32 when change drivers
-		F32 bonesNum;
-		Array<F32, MAX_BONES_PER_VERT> boneIds;
-		Array<F32, MAX_BONES_PER_VERT> weights;
+		U16 bonesNum;
+		Array<U16, MAX_BONES_PER_VERT> boneIds;
+		Array<F16, MAX_BONES_PER_VERT> weights;
 	};
 
 	/// Triangle
@@ -80,22 +79,22 @@ public:
 	/// @{
 	const Vector<Vec3>& getPositions() const
 	{
-		return vertCoords;
+		return positions;
 	}
 
-	const Vector<Vec3>& getNormals() const
+	const Vector<HVec3>& getNormals() const
 	{
-		return vertNormals;
+		return normalsF16;
 	}
 
-	const Vector<Vec4>& getTangents() const
+	const Vector<HVec4>& getTangents() const
 	{
-		return vertTangents;
+		return tangentsF16;
 	}
 
-	const Vector<Vec2>& getTextureCoordinates(const U32 channel) const
+	const Vector<HVec2>& getTextureCoordinates(const U32 channel) const
 	{
-		return texCoords;
+		return texCoordsF16;
 	}
 	U getTextureChannelsCount() const
 	{
@@ -104,7 +103,7 @@ public:
 
 	const Vector<VertexWeight>& getWeights() const
 	{
-		return vertWeights;
+		return weights;
 	}
 
 	const Vector<U16>& getIndices() const
@@ -113,46 +112,8 @@ public:
 	}
 	/// @}
 
-	/// @name BucketMesh methods
-	/// @{
-	void appendPositions(const Vector<Vec3>& positions)
-	{
-		vertCoords.insert(
-			vertCoords.end(), positions.begin(), positions.end());
-	}
-
-	void appendNormals(const Vector<Vec3>& normals)
-	{
-		vertNormals.insert(
-			vertNormals.end(), normals.begin(), normals.end());
-	}
-
-	void appendTangents(const Vector<Vec4>& tangents)
-	{
-		vertTangents.insert(
-			vertTangents.end(), tangents.begin(), tangents.end());
-	}
-
-	void appendTextureCoordinates(const Vector<Vec2>& coords, U32 channel)
-	{
-		ANKI_ASSERT(channel == 0 && "Currently only one channel is supported");
-		texCoords.insert(texCoords.end(), coords.begin(), coords.end());
-	}
-
-	void appendWeights(const Vector<VertexWeight>& weights)
-	{
-		vertWeights.insert(vertWeights.end(), weights.begin(), weights.end());
-	}
-
-	/// This will adjust the indices bias
-	void appendIndices(const Vector<U16>& indices, U16 bias)
-	{
-		for(U16 index : indices)
-		{
-			vertIndices.push_back(bias + index);
-		}
-	}
-	/// @}
+	/// Append data from another mesh loader. BucketMesh method
+	void append(const MeshLoader& other);
 
 	/// Load the mesh data from a binary file
 	/// @exception Exception
@@ -161,13 +122,22 @@ public:
 private:
 	/// @name Data
 	/// @{
-	Vector<Vec3> vertCoords; ///< Loaded from file
-	Vector<Vec3> vertNormals; ///< Generated
-	Vector<Vec4> vertTangents; ///< Generated
+	Vector<Vec3> positions; ///< Loaded from file
+
+	Vector<Vec3> normals; ///< Generated
+	Vector<HVec3> normalsF16;
+
+	Vector<Vec4> tangents; ///< Generated
+	Vector<HVec4> tangentsF16;
+
 	/// Optional. One for every vert so we can use vertex arrays & VBOs
 	Vector<Vec2> texCoords;
-	Vector<VertexWeight> vertWeights; ///< Optional
+	Vector<HVec2> texCoordsF16;
+
+	Vector<VertexWeight> weights; ///< Optional
+
 	Vector<Triangle> tris; ///< Required
+
 	/// Generated. Used for vertex arrays & VBOs
 	Vector<U16> vertIndices;
 	/// @}
@@ -189,6 +159,9 @@ private:
 
 	/// It iterates all verts and fixes the normals on seams
 	void fixNormals();
+
+	/// Compress some buffers for increased BW performance
+	void compressBuffers();
 };
 
 } // end namespace anki

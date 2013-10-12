@@ -8,7 +8,7 @@
 #define vTexCoord_DEFINED
 in highp vec2 vTexCoord;
 #define vInstanceId_DEFINED
-flat in highp uint vInstanceId;
+flat in highp int vInstanceId;
 
 #if defined(PASS_COLOR)
 layout(location = 0) out vec4 fColor;

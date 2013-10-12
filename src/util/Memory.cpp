@@ -165,7 +165,8 @@ void StackMemoryPool::reset()
 //==============================================================================
 void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 {
-#if ANKI_POSIX
+#if ANKI_POSIX 
+#	if ANKI_OS != ANKI_OS_ANDROID
 	void* out;
 	int err = posix_memalign(
 		&out, getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
@@ -181,6 +182,22 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 		throw ANKI_EXCEPTION("mallocAligned() failed");
 		return nullptr;
 	}
+#	else
+	void* out = memalign(
+		getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
+
+	if(out)
+	{
+		// Make sure it's aligned
+		ANKI_ASSERT(isAligned(alignmentBytes, out));
+		return out;
+	}
+	else
+	{
+		throw ANKI_EXCEPTION("mallocAligned() failed");
+		return nullptr;
+	}
+#	endif
 #else
 #	error "Unimplemented"
 #endif

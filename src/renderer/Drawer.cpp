@@ -329,7 +329,9 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 
 	gl.enable(GL_BLEND, blending);
 
+#if ANKI_GL == ANKI_GL_DESKTOP
 	gl.setPolygonMode(mtl.getWireframe() ? GL_LINE : GL_FILL);
+#endif
 
 	// Calculate the LOD
 	Vec3 camPos = fr.getFrustumOrigin();
@@ -389,12 +391,14 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	// Draw call
 	Drawcall dc;
 
+#if ANKI_GL == ANKI_GL_DESKTOP
 	if(mtl.getTessellation())
 	{
 		glPatchParameteri(GL_PATCH_VERTICES, 3);
 		dc.primitiveType = GL_PATCHES;
 	}
 	else
+#endif
 	{
 		dc.primitiveType = GL_TRIANGLES;
 	}
@@ -406,6 +410,7 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	dc.primCount = primCount;
 
 	dc.enque();
+
 	ANKI_COUNTER_INC(C_RENDERER_DRAWCALLS_COUNT, (U64)1);
 	ANKI_COUNTER_INC(C_RENDERER_VERTICES_COUNT, 
 		countVerts(indicesCountArray, (I)primCount));

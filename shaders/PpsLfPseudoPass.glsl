@@ -42,8 +42,6 @@ void main()
 {
 	vec2 texcoord = vec2(1.0) - vTexCoords;
 
-	vec2 imgSize = vec2(textureSize(tex, 0));
-
 	vec2 ghostVec = (vec2(0.5) - texcoord) * GHOST_DISPERSAL;
 
 	const vec2 texelSize = 1.0 / vec2(TEX_DIMENSIONS);

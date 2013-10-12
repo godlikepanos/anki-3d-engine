@@ -314,6 +314,9 @@ TVec2<T> operator/(const T f, const TVec2<T>& v2)
 typedef TVec2<F32> Vec2;
 static_assert(sizeof(Vec2) == sizeof(F32) * 2, "Incorrect size");
 
+/// Half float 2D vector
+typedef TVec2<F16> HVec2;
+
 /// 32bit signed integer 2D vector 
 typedef TVec2<I32> IVec2;
 
