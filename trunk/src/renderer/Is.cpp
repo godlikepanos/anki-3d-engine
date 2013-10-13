@@ -14,6 +14,8 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
+const PtrSize TILE_SIZE = sizeof(UVec4);
+
 //==============================================================================
 /// Check if the prev ground light vector is almost equal to the current
 static Bool groundVectorsEqual(const Vec3& prev, const Vec3& crnt)
@@ -91,6 +93,8 @@ struct WriteLightsJob: ThreadJob
 	shader::SpotTexLight* spotTexLights = nullptr;
 
 	U8* tileBuffer = nullptr;
+	U8* plightsIdsBuffer = nullptr;
+	U8* slightsIdsBuffer = nullptr;
 
 	VisibilityTestResults::Container::const_iterator lightsBegin;
 	VisibilityTestResults::Container::const_iterator lightsEnd;
@@ -350,36 +354,38 @@ struct WriteLightsJob: ThreadJob
 	void writeIndexToTileBuffer(
 		U lightType, U lightIndex, U indexInTileArray, U tileX, U tileY)
 	{
-		const PtrSize tileSize = is->calcTileSize();
-		PtrSize offset;
-
-		// Calc the start of the tile
-		offset = (tileY * is->r->getTilesCount().x() + tileX) * tileSize;
-
-		// Skip the lightsCount header
-		offset += sizeof(Vec4);
+		U8* storage = nullptr;
+		U tileIndex = tileY * is->r->getTilesCount().x() + tileX;
 
 		// Move to the correct light section
 		switch(lightType)
 		{
 		case 0:
+			storage = plightsIdsBuffer 
+				+ tileIndex * is->maxPointLightsPerTile * sizeof(U32);
 			break;
 		case 1:
-			offset += sizeof(U32) * is->maxPointLightsPerTile;
+			storage = slightsIdsBuffer 
+				+ tileIndex 
+				* (is->maxSpotLightsPerTile + is->maxSpotTexLightsPerTile) 
+				* sizeof(U32);
 			break;
 		case 2:
-			offset += sizeof(U32) * is->maxPointLightsPerTile
-				+ sizeof(U32) * is->maxSpotLightsPerTile;
+			storage = slightsIdsBuffer 
+				+ tileIndex 
+				* (is->maxSpotLightsPerTile + is->maxSpotTexLightsPerTile) 
+				* sizeof(U32)
+				+ is->maxSpotLightsPerTile * sizeof(U32);
 			break;
 		default:
 			ANKI_ASSERT(0);
 		}
 
 		// Move to the array offset
-		offset += sizeof(U32) * indexInTileArray;
+		storage += sizeof(U32) * indexInTileArray;
 
 		// Write the lightIndex
-		*((U32*)(tileBuffer + offset)) = lightIndex;
+		*((U32*)(storage)) = lightIndex;
 	}
 };
 
@@ -517,104 +523,54 @@ void Is::initInternal(const RendererInitializer& initializer)
 	// Create UBOs
 	//
 
-	// Common UBO
-	commonUbo.create(sizeof(shader::CommonUniforms), nullptr);
-
-	// lights UBO
-	lightsUbo.create(calcLightsUboSize(), nullptr);
 	uboAlignment = BufferObject::getUniformBufferOffsetAlignment();
 
-	// tiles BO
+	commonUbo.create(sizeof(shader::CommonUniforms), nullptr);
+
+	lightsUbo.create(calcLightsUboSize(), nullptr);
+
 	tilesBuffer.create(
 		GL_UNIFORM_BUFFER, 
-		calcTilesUboSize(), 
+		r->getTilesCount().x() * r->getTilesCount().y() * sizeof(UVec4),
 		nullptr, 
 		GL_DYNAMIC_DRAW);
 
-	ANKI_LOGI("Creating BOs: lights: %uB, tiles: %uB", calcLightsUboSize(), 
-		calcTilesUboSize());
+	pointLightIndicesBuffer.create(
+		GL_UNIFORM_BUFFER, 
+		calcPointLightIndicesBufferSize(),
+		nullptr, 
+		GL_DYNAMIC_DRAW);
+
+	spotLightIndicesBuffer.create(
+		GL_UNIFORM_BUFFER, 
+		calcSpotLightIndicesBufferSize(),
+		nullptr, 
+		GL_DYNAMIC_DRAW);
 
 	// Sanity checks
-	const ShaderProgramUniformBlock* ublock;
+	blockSetupAndSanityCheck("commonBlock", COMMON_UNIFORMS_BLOCK_BINDING,
+		commonUbo.getSizeInBytes());
 
-	ublock = &lightPassProg->findUniformBlock("commonBlock");
-	ublock->setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
-	if(ublock->getSize() != sizeof(shader::CommonUniforms)
-		|| ublock->getBinding() != COMMON_UNIFORMS_BLOCK_BINDING)
-	{
-		throw ANKI_EXCEPTION("Problem with the commonBlock");
-	}
+	blockSetupAndSanityCheck("pointLightsBlock", POINT_LIGHTS_BLOCK_BINDING,
+		sizeof(shader::PointLight) * maxPointLights);
 
-#if ANKI_GL == ANKI_GL_DESKTOP
-	if(rejectProg.isLoaded())
-	{
-		ublock = &rejectProg->findUniformBlock("commonBlock");
-		ublock->setBinding(COMMON_UNIFORMS_BLOCK_BINDING);
-		if(ublock->getSize() != sizeof(shader::CommonUniforms)
-			|| ublock->getBinding() != COMMON_UNIFORMS_BLOCK_BINDING)
-		{
-			throw ANKI_EXCEPTION("Problem with the commonBlock");
-		}
-	}
-#endif
+	blockSetupAndSanityCheck("spotLightsBlock", SPOT_LIGHTS_BLOCK_BINDING,
+		sizeof(shader::SpotLight) * maxSpotLights);
 
-	ublock = &lightPassProg->findUniformBlock("pointLightsBlock");
-	ublock->setBinding(POINT_LIGHTS_BLOCK_BINDING);
-	if(ublock->getSize() != sizeof(shader::PointLight) * maxPointLights
-		|| ublock->getBinding() != POINT_LIGHTS_BLOCK_BINDING)
-	{
-		throw ANKI_EXCEPTION("Problem with the pointLightsBlock");
-	}
+	blockSetupAndSanityCheck("spotTexLightsBlock", 
+		SPOT_TEX_LIGHTS_BLOCK_BINDING,
+		sizeof(shader::SpotTexLight) * maxSpotTexLights);
 
-#if ANKI_GL == ANKI_GL_DESKTOP
-	if(rejectProg.isLoaded())
-	{
-		ublock = &rejectProg->findUniformBlock("pointLightsBlock");
-		ublock->setBinding(POINT_LIGHTS_BLOCK_BINDING);
-		if(ublock->getSize() != sizeof(shader::PointLight) * maxPointLights
-			|| ublock->getBinding() != POINT_LIGHTS_BLOCK_BINDING)
-		{
-			throw ANKI_EXCEPTION("Problem with the pointLightsBlock");
-		}
-	}
-#endif
+	blockSetupAndSanityCheck("tilesBlock", TILES_BLOCK_BINDING,
+		tilesBuffer.getSizeInBytes());
 
-	ublock = &lightPassProg->findUniformBlock("spotLightsBlock");
-	ublock->setBinding(SPOT_LIGHTS_BLOCK_BINDING);
-	if(ublock->getSize() != sizeof(shader::SpotLight) * maxSpotLights
-		|| ublock->getBinding() != SPOT_LIGHTS_BLOCK_BINDING)
-	{
-		throw ANKI_EXCEPTION("Problem with the spotLightsBlock");
-	}
+	blockSetupAndSanityCheck("pointLightIndicesBlock", 
+		TILES_POINT_LIGHT_INDICES_BLOCK_BINDING,
+		pointLightIndicesBuffer.getSizeInBytes());
 
-	ublock = &lightPassProg->findUniformBlock("spotTexLightsBlock");
-	ublock->setBinding(SPOT_TEX_LIGHTS_BLOCK_BINDING);
-	if(ublock->getSize() != sizeof(shader::SpotTexLight) * maxSpotTexLights
-		|| ublock->getBinding() != SPOT_TEX_LIGHTS_BLOCK_BINDING)
-	{
-		throw ANKI_EXCEPTION("Problem with the spotTexLightsBlock");
-	}
-
-	ublock = &lightPassProg->findUniformBlock("tilesBlock");
-	ublock->setBinding(TILES_BLOCK_BINDING);
-	if(ublock->getSize() != calcTilesUboSize()
-		|| ublock->getBinding() != TILES_BLOCK_BINDING)
-	{
-		throw ANKI_EXCEPTION("Problem with the tilesBlock");
-	}
-
-#if ANKI_GL == ANKI_GL_DESKTOP && 0
-	if(rejectProg.isLoaded())
-	{
-		ublock = &rejectProg->findUniformBlock("tilesBlock");
-		ublock->setBinding(TILES_BLOCK_BINDING);
-		if(ublock->getSize() != sizeof(shader::Tiles)
-			|| ublock->getBinding() != TILES_BLOCK_BINDING)
-		{
-			throw ANKI_EXCEPTION("Problem with the tilesBlock");
-		}
-	}
-#endif
+	blockSetupAndSanityCheck("spotLightIndicesBlock", 
+		TILES_SPOT_LIGHT_INDICES_BLOCK_BINDING,
+		spotLightIndicesBuffer.getSizeInBytes());
 }
 
 //==============================================================================
@@ -623,6 +579,8 @@ void Is::lightPass()
 	ThreadPool& threadPool = ThreadPoolSingleton::get();
 	VisibilityTestResults& vi = 
 		cam->getFrustumComponent()->getVisibilityTestResults();
+
+	SceneFrameAllocator<U8> alloc = r->getSceneGraph().getFrameAllocator();
 
 	//
 	// Quickly get the lights
@@ -639,7 +597,6 @@ void Is::lightPass()
 		switch(light->getLightType())
 		{
 		case Light::LT_POINT:
-			// Use % to avoid overflows
 			++visiblePointLightsCount;
 			break;
 		case Light::LT_SPOT:
@@ -684,28 +641,32 @@ void Is::lightPass()
 	PtrSize pointLightsOffset = 0;
 	PtrSize pointLightsSize = 
 		sizeof(shader::PointLight) * visiblePointLightsCount;
-	pointLightsSize = getAlignedRoundUp(uboAlignment, pointLightsSize);
+	alignRoundUp(uboAlignment, pointLightsSize);
 
 	PtrSize spotLightsOffset = pointLightsSize;
 	PtrSize spotLightsSize = 
 		sizeof(shader::SpotLight) * visibleSpotLightsCount;
-	spotLightsSize = getAlignedRoundUp(uboAlignment, spotLightsSize);
+	alignRoundUp(uboAlignment, spotLightsSize);
 
 	PtrSize spotTexLightsOffset = spotLightsOffset + spotLightsSize;
 	PtrSize spotTexLightsSize = 
 		sizeof(shader::SpotTexLight) * visibleSpotTexLightsCount;
-	spotTexLightsSize = getAlignedRoundUp(uboAlignment, spotTexLightsSize);
+	alignRoundUp(uboAlignment, spotTexLightsSize);
 
 	ANKI_ASSERT(spotTexLightsOffset + spotTexLightsSize <= calcLightsUboSize());
 
 	// Fire the super jobs
 	Array<WriteLightsJob, ThreadPool::MAX_THREADS> jobs;
 
-	U8 clientBuffer[32 * 1024]; // Aproximate size
-	ANKI_ASSERT(sizeof(clientBuffer) >= calcLightsUboSize());
+	U8* lightsClientBuffer = alloc.allocate(lightsUbo.getSizeInBytes());
 
-	U8 tilesClientBuffer[64 * 1024]; // Aproximate size
-	ANKI_ASSERT(sizeof(tilesClientBuffer) >= calcTilesUboSize());
+	U8* tilesClientBuffer = alloc.allocate(tilesBuffer.getSizeInBytes());
+
+	U8* plightIdsClientBuffer = 
+		alloc.allocate(pointLightIndicesBuffer.getSizeInBytes());
+
+	U8* slightIdsClientBuffer = 
+		alloc.allocate(spotLightIndicesBuffer.getSizeInBytes());
 
 	std::atomic<U32> pointLightsAtomicCount(0);
 	std::atomic<U32> spotLightsAtomicCount(0);
@@ -733,13 +694,16 @@ void Is::lightPass()
 		WriteLightsJob& job = jobs[i];
 
 		job.pointLights = 
-			(shader::PointLight*)(&clientBuffer[0] + pointLightsOffset);
+			(shader::PointLight*)(&lightsClientBuffer[0] + pointLightsOffset);
 		job.spotLights = 
-			(shader::SpotLight*)(&clientBuffer[0] + spotLightsOffset);
+			(shader::SpotLight*)(&lightsClientBuffer[0] + spotLightsOffset);
 		job.spotTexLights = 
-			(shader::SpotTexLight*)(&clientBuffer[0] + spotTexLightsOffset);
+			(shader::SpotTexLight*)(
+			&lightsClientBuffer[0] + spotTexLightsOffset);
 
-		job.tileBuffer = &tilesClientBuffer[0];
+		job.tileBuffer = tilesClientBuffer;
+		job.plightsIdsBuffer = plightIdsClientBuffer;
+		job.slightsIdsBuffer = slightIdsClientBuffer;
 
 		job.lightsBegin = vi.getLightsBegin();
 		job.lightsEnd = vi.getLightsEnd();
@@ -769,7 +733,7 @@ void Is::lightPass()
 	{
 		for(U x = 0; x < r->getTilesCount().x(); x++)
 		{
-			const PtrSize tileSize = calcTileSize();
+			const PtrSize tileSize = TILE_SIZE;
 			UVec4* vec;
 
 			vec = (UVec4*)(
@@ -791,8 +755,10 @@ void Is::lightPass()
 
 	// Write BOs
 	lightsUbo.write(
-		&clientBuffer[0], 0, spotTexLightsOffset + spotTexLightsSize);
+		&lightsClientBuffer[0], 0, spotTexLightsOffset + spotTexLightsSize);
 	tilesBuffer.write(&tilesClientBuffer[0]);
+	pointLightIndicesBuffer.write(plightIdsClientBuffer);
+	spotLightIndicesBuffer.write(slightIdsClientBuffer);
 
 	//
 	// Reject occluded lights. This operation issues a compute job to reject 
@@ -860,6 +826,8 @@ void Is::lightPass()
 			spotTexLightsOffset, spotTexLightsSize);
 	}
 	tilesBuffer.setBinding(TILES_BLOCK_BINDING);
+	pointLightIndicesBuffer.setBinding(TILES_POINT_LIGHT_INDICES_BLOCK_BINDING);
+	spotLightIndicesBuffer.setBinding(TILES_SPOT_LIGHT_INDICES_BLOCK_BINDING);
 
 	lightPassProg->findUniformVariable("msFai0").set(r->getMs().getFai0());
 	if(r->getUseMrt())
@@ -946,8 +914,8 @@ void Is::run()
 //==============================================================================
 PtrSize Is::calcLightsUboSize() const
 {
+	ANKI_ASSERT(uboAlignment != MAX_PTR_SIZE);
 	PtrSize size;
-	PtrSize uboAlignment = BufferObject::getUniformBufferOffsetAlignment();
 
 	size = getAlignedRoundUp(
 		uboAlignment,
@@ -965,21 +933,30 @@ PtrSize Is::calcLightsUboSize() const
 }
 
 //==============================================================================
-PtrSize Is::calcTileSize() const
+PtrSize Is::calcPointLightIndicesBufferSize() const
 {
-	PtrSize size =
-		sizeof(Vec4) // lightsCount
-		+ maxPointLightsPerTile * sizeof(U32) // pointLightIndices
-		+ maxSpotLightsPerTile * sizeof(U32) // spotLightIndices
-		+ maxSpotTexLightsPerTile * sizeof(U32); // spotTexLightIndices
-
-	return size;
+	return maxPointLightsPerTile * sizeof(U32) 
+		* r->getTilesCount().x() * r->getTilesCount().y();
 }
 
 //==============================================================================
-PtrSize Is::calcTilesUboSize() const
+PtrSize Is::calcSpotLightIndicesBufferSize() const
 {
-	return calcTileSize() * r->getTilesCount().x() * r->getTilesCount().y();
+	return (maxSpotLightsPerTile + maxSpotTexLightsPerTile) * sizeof(U32) 
+		* r->getTilesCount().x() * r->getTilesCount().y();
+}
+
+//==============================================================================
+void Is::blockSetupAndSanityCheck(const char* name, U binding, PtrSize size)
+{
+	const ShaderProgramUniformBlock* ublock;
+
+	ublock = &lightPassProg->findUniformBlock(name);
+	ublock->setBinding(binding);
+	if(ublock->getSize() != size || ublock->getBinding() != binding)
+	{
+		throw ANKI_EXCEPTION("Problem with the block: " + name);
+	}
 }
 
 } // end namespace anki

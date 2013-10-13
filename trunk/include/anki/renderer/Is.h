@@ -51,6 +51,8 @@ private:
 	static const U SPOT_LIGHTS_BLOCK_BINDING = 2;
 	static const U SPOT_TEX_LIGHTS_BLOCK_BINDING = 3;
 	static const U TILES_BLOCK_BINDING = 4;
+	static const U TILES_POINT_LIGHT_INDICES_BLOCK_BINDING = 5;
+	static const U TILES_SPOT_LIGHT_INDICES_BLOCK_BINDING = 6;
 
 	/// The IS FAI
 	Texture fai;
@@ -61,6 +63,8 @@ private:
 	/// @name GPU buffers
 	/// @{
 
+	PtrSize uboAlignment = MAX_PTR_SIZE; ///< Cache the value here
+
 	/// Contains common data for all shader programs
 	Ubo commonUbo;
 
@@ -69,10 +73,12 @@ private:
 
 	/// Contains all the lights
 	Ubo lightsUbo;
-	PtrSize uboAlignment;
 
-	/// Contains the indices of lights per tile
+	/// Contains the number of lights per tile
 	BufferObject tilesBuffer;
+
+	BufferObject pointLightIndicesBuffer;
+	BufferObject spotLightIndicesBuffer;
 	/// @}
 
 	// Light shaders
@@ -119,11 +125,14 @@ private:
 	/// Calculate the size of the lights UBO
 	PtrSize calcLightsUboSize() const;
 
-	/// Calculate the size of the tiles UBO
-	PtrSize calcTileSize() const;
+	/// Calculate the size of the indices of point lights
+	PtrSize calcPointLightIndicesBufferSize() const;
 
-	/// Calculate the size of the tiles UBO
-	PtrSize calcTilesUboSize() const;
+	/// Calculate the size of the indices of spot lights
+	PtrSize calcSpotLightIndicesBufferSize() const;
+
+	/// Setup the binding of the block and do some sanity checks on the size
+	void blockSetupAndSanityCheck(const char* name, U binding, PtrSize size);
 };
 
 } // end namespace anki
