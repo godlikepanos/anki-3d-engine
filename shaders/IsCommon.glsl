@@ -19,15 +19,17 @@ struct Tilegrid
 struct Tile
 {
 	uvec4 lightsCount;
-#if __VERSION__ > 430
-	uint pointLightIndices[MAX_POINT_LIGHTS_PER_TILE];
-	uint spotLightIndices[MAX_SPOT_LIGHTS_PER_TILE];
-	uint spotTexLightndices[MAX_SPOT_TEX_LIGHTS_PER_TILE];
-#else
-	uvec4 pointLightIndices[MAX_POINT_LIGHTS_PER_TILE / 4];
-	uvec4 spotLightIndices[MAX_SPOT_LIGHTS_PER_TILE / 4];
-	uvec4 spotTexLightIndices[MAX_SPOT_TEX_LIGHTS_PER_TILE / 4];
-#endif
+};
+
+struct PointLightIndices
+{
+	uvec4 indices[MAX_POINT_LIGHTS_PER_TILE / 4];
+};
+
+struct SpotLightIndices
+{
+	uvec4 indices[MAX_SPOT_LIGHTS_PER_TILE / 4];
+	uvec4 indicesTex[MAX_SPOT_TEX_LIGHTS_PER_TILE / 4];	
 };
 
 // The base of all lights

@@ -79,14 +79,19 @@ layout(std140) uniform spotTexLightsBlock
 	SpotTexLight spotTexLights[MAX_SPOT_TEX_LIGHTS];
 };
 
-#if __VERSION__ > 430
-layout(std430) 
-#else
-layout(std140) 
-#endif
-	uniform tilesBlock
+layout(std140) uniform tilesBlock
 {
 	Tile tiles[TILES_COUNT];
+};
+
+layout(std140) uniform pointLightIndicesBlock
+{
+	PointLightIndices pointLightIndices[TILES_COUNT];
+};
+
+layout(std140) uniform spotLightIndicesBlock
+{
+	SpotLightIndices spotLightIndices[TILES_COUNT];
 };
 
 #if USE_MRT
@@ -247,11 +252,7 @@ void main()
 	uint pointLightsCount = tile.lightsCount[0];
 	for(uint i = 0U; i < pointLightsCount; ++i)
 	{
-#if __VERSION__ > 430
-		uint lightId = tile.pointLightIndices[i];
-#else
-		uint lightId = tile.pointLightIndices[i / 4U][i % 4U];
-#endif
+		uint lightId = pointLightIndices[vInstanceId].indices[i / 4U][i % 4U];
 		PointLight light = pointLights[lightId];
 
 		vec3 ray;
@@ -268,11 +269,7 @@ void main()
 
 	for(uint i = 0U; i < spotLightsCount; ++i)
 	{
-#if __VERSION__ > 430
-		uint lightId = tile.spotLightIndices[i];
-#else
-		uint lightId = tile.spotLightIndices[i / 4U][i % 4U];
-#endif
+		uint lightId = spotLightIndices[vInstanceId].indices[i / 4U][i % 4U];
 		SpotLight light = spotLights[lightId];
 
 		vec3 ray;
@@ -294,11 +291,7 @@ void main()
 
 	for(uint i = 0U; i < spotTexLightsCount; ++i)
 	{
-#if __VERSION__ > 430
-		uint lightId = tile.spotTexLightIndices[i];
-#else
-		uint lightId = tile.spotTexLightIndices[i / 4U][i % 4U];
-#endif
+		uint lightId = spotLightIndices[vInstanceId].indicesTex[i / 4U][i % 4U];
 		SpotTexLight light = spotTexLights[lightId];
 
 		vec3 ray;
