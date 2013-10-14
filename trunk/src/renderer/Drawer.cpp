@@ -140,6 +140,7 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 					{
 						Mat4 mv = v * Mat4(trfs[i]);
 						normm[i] = mv.getRotationPart();
+						normm[i].reorthogonalize();
 					}
 				}
 				else
@@ -148,6 +149,7 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 					{
 						Mat4 mv = v * Mat4(trfs[subSpatialIndices[size]]);
 						normm[size] = mv.getRotationPart();
+						normm[size].reorthogonalize();
 					}
 				}
 
