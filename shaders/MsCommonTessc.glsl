@@ -42,8 +42,19 @@ struct PhongPatch
 #endif
 };
 
+struct DispMapPatch
+{
+	vec3 positions[3];
+	vec2 texCoord[3];
+	vec3 normal[3];
+#if PASS_COLOR
+	vec4 tangent[3];
+#endif
+};
+
 out patch PNPatch pnPatch;
 out patch PhongPatch phongPatch;
+out patch DispMapPatch dispPatch;
 
 // Project point to plane
 vec3 projectToPlane(vec3 point, vec3 planePoint, vec3 planeNormal)
@@ -100,6 +111,44 @@ vec3 calcFaceNormal(in vec3 v0, in vec3 v1, in vec3 v2)
 	return normalize(cross(v1 - v0, v2 - v0));
 }
 
+/*float calcEdgeTessLevel(in vec3 n0, in vec3 n1, in float maxTessLevel)
+{
+	vec3 norm = normalize(n0 + n1);
+	return (1.0 - norm.z) * (maxTessLevel - 1.0) + 1.0;
+}*/
+
+float calcEdgeTessLevel(in vec2 p0, in vec2 p1, in float maxTessLevel)
+{
+	float dist = distance(p0, p1) * 10.0;
+	return dist * (maxTessLevel - 1.0) + 1.0;
+}
+
+// Given the face positions in NDC caclulate if the face is front facing or not
+bool isFaceFrontFacing(in vec2 posNdc[3])
+{
+	vec2 a = posNdc[1] - posNdc[0];
+	vec2 b = posNdc[2] - posNdc[1];
+	vec2 c = a.xy * b.yx;
+	return (c.x - c.y) > 0.0;
+}
+
+// Check if a single NDC position is outside the clip space
+bool posOutsideClipSpace(in vec2 posNdc)
+{
+	bvec2 compa = lessThan(posNdc, vec2(-1.0));
+	bvec2 compb = greaterThan(posNdc, vec2(1.0));
+	return all(bvec4(compa, compb));
+}
+
+// Check if a face in NDC is outside the clip space
+bool isFaceOutsideClipSpace(in vec2 posNdc[3])
+{
+	return any(bvec3(
+		posOutsideClipSpace(posNdc[0]), 
+		posOutsideClipSpace(posNdc[1]), 
+		posOutsideClipSpace(posNdc[2])));
+}
+
 // This function is part of the point-normal tessellation method
 #define tessellatePNPositionNormalTangentTexCoord_DEFINED
 void tessellatePNPositionNormalTangentTexCoord(
@@ -152,15 +201,18 @@ void tessellatePhongPositionNormalTangentTexCoord(
 	in mat4 mvp,
 	in mat3 normalMat)
 {
-	float tessLevel = 0.0;
-
-	// Calculate the face normal in view space
-	vec3 faceNorm = calcFaceNormal(vPosition[0], vPosition[1], vPosition[2]);
-	faceNorm = (normalMat * faceNorm);
-
-	if(faceNorm.z >= -0.0)
+	// Calculate clip positions
+	vec2 clip[3];
+	for(int i = 0 ; i < 3 ; i++) 
 	{
-		// The face is front facing
+		vec4 v = mvp * vec4(vPosition[i], 1.0);
+		clip[i] = v.xy / v.w;
+	}
+
+	// Check the face orientation and clipping
+	if(isFaceFrontFacing(clip) && !isFaceOutsideClipSpace(clip))
+	{
+		// The face is front facing and inside the clip space
 
 		for(int i = 0 ; i < 3 ; i++) 
 		{
@@ -179,15 +231,46 @@ void tessellatePhongPositionNormalTangentTexCoord(
 				calcTerm(i, 2, vPosition[0]) + calcTerm(i, 0, vPosition[2]);
 		}
 
-		// Calculate the tessLevel. It's 1.0 when the normal is facing the cam
-		// and maxTessLevel when it's facing away. This gives high tessellation
-		// on silhouettes
-		tessLevel = (1.0 - faceNorm.z) * (maxTessLevel - 1.0) + 1.0;
-	}
+		// Calculate the normals in view space
+		vec3 nv[3];
+		for(int i = 0; i < 3; i++)
+		{
+			nv[i] = normalMat * vNormal[i];
+		}
 
-	gl_TessLevelOuter[0] = tessLevel;
-	gl_TessLevelOuter[1] = tessLevel;
-	gl_TessLevelOuter[2] = tessLevel;
-	gl_TessLevelInner[0] = tessLevel;
+		gl_TessLevelOuter[0] = maxTessLevel;
+		gl_TessLevelOuter[1] = maxTessLevel;
+		gl_TessLevelOuter[2] = maxTessLevel;
+		gl_TessLevelInner[0] = maxTessLevel;
+	}
+	else
+	{
+		gl_TessLevelOuter[0] = 0.0;
+		gl_TessLevelOuter[1] = 0.0;
+		gl_TessLevelOuter[2] = 0.0;
+		gl_TessLevelInner[0] = 0.0;
+	}
 }
 
+
+#define tessellateDispMapPositionNormalTangentTexCoord_DEFINED
+void tessellateDispMapPositionNormalTangentTexCoord(
+	in float maxTessLevel,
+	in mat4 mvp,
+	in mat3 normalMat)
+{
+	for(int i = 0 ; i < 3 ; i++) 
+	{
+		phongPatch.positions[i] = vPosition[i];
+		phongPatch.texCoord[i] = vTexCoords[i];
+		phongPatch.normal[i] = vNormal[i];
+#if PASS_COLOR
+		phongPatch.tangent[i] = vTangent[i];
+#endif
+	}
+
+	gl_TessLevelOuter[0] = maxTessLevel;
+	gl_TessLevelOuter[1] = maxTessLevel;
+	gl_TessLevelOuter[2] = maxTessLevel;
+	gl_TessLevelInner[0] = maxTessLevel;
+}
