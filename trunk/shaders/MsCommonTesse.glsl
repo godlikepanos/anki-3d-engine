@@ -32,8 +32,19 @@ struct PhongPatch
 #endif
 };
 
+struct DispMapPatch
+{
+	vec3 positions[3];
+	vec2 texCoord[3];
+	vec3 normal[3];
+#if PASS_COLOR
+	vec4 tangent[3];
+#endif
+};
+
 in patch PNPatch pnPatch;
 in patch PhongPatch phongPatch;
+in patch DispMapPatch dispPatch;
 
 // Varyings out
 out highp vec2 teTexCoords;
@@ -126,4 +137,25 @@ void tessellatePhongPositionNormalTangentTexCoord(
 	vec3 finalPos = (1.0 - uTessAlpha) * barPos + uTessAlpha * phongPos;
 	gl_Position = mvp * vec4(finalPos, 1.0);
 }
+
+#define tessellateDispMapPositionNormalTangentTexCoord_DEFINED
+void tessellateDispMapPositionNormalTangentTexCoord(
+	in mat4 mvp, in mat3 normalMat, in sampler2D dispMap)
+{
+	vec3 norm = INTERPOLATE(dispPatch.normal);
+#if PASS_COLOR
+	teNormal = normalize(normalMat * norm);
+	teTangent = INTERPOLATE(dispPatch.tangent);
+	teTangent.xyz = normalize(normalMat * teTangent.xyz);
+#endif
+
+	teTexCoords = INTERPOLATE(dispPatch.texCoord);
+
+	float height = texture(dispMap, teTexCoords).r;
+	height *= 0.1;
+
+	vec3 pos = INTERPOLATE(dispPatch.positions) + norm * height;
+	gl_Position = mvp * vec4(pos, 1.0);
+}
+
 
