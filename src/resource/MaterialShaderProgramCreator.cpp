@@ -77,7 +77,13 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	}
 
 	// Write all
-	source  = srcLines.join("\n");
+	std::stringstream defines;
+	defines << "#define INSTANCING " << (U)instanced << "\n";
+	defines << "#define INSTANCE_ID_FRAGMENT_SHADER " 
+		<< (U)instanceIdInFragmentShader << "\n";
+	defines << "#define TESSELLATION " << (U)tessellation << "\n";
+
+	source  = defines.str() + srcLines.join("\n");
 }
 
 //==============================================================================
