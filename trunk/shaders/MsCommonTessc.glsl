@@ -9,52 +9,47 @@ in mediump vec3 vNormal[];
 #if PASS_COLOR
 in mediump vec4 vTangent[];
 #endif
+#if INSTANCE_ID_FRAGMENT_SHADER
+uint vInstanceId[];
+#endif
 
-struct PNPatch
+// Out
+struct CommonPatch
 {
-	vec3 pos030;
-	vec3 pos021;
-	vec3 pos012;
-	vec3 pos003;
-	vec3 pos102;
-	vec3 pos201;
-	vec3 pos300;
-	vec3 pos210;
-	vec3 pos120;
-	vec3 pos111;
-
+	vec3 positions[3];
 	vec2 texCoord[3];
 	vec3 normal[3];
 #if PASS_COLOR
 	vec4 tangent[3];
 #endif
+#if INSTANCE_ID_FRAGMENT_SHADER
+	uint instanceId;
+#endif
 };
+
+struct PNPatch
+{
+	vec3 pos021;
+	vec3 pos012;
+	vec3 pos102;
+	vec3 pos201;
+	vec3 pos210;
+	vec3 pos120;
+	vec3 pos111;
+};
+
+#define pos030 positions[0]
+#define pos003 positions[1]
+#define pos300 positions[2]
 
 struct PhongPatch
 {
 	vec3 terms[3];
-
-	vec3 positions[3];
-	vec2 texCoord[3];
-	vec3 normal[3];
-#if PASS_COLOR
-	vec4 tangent[3];
-#endif
-};
-
-struct DispMapPatch
-{
-	vec3 positions[3];
-	vec2 texCoord[3];
-	vec3 normal[3];
-#if PASS_COLOR
-	vec4 tangent[3];
-#endif
 };
 
 out patch PNPatch pnPatch;
 out patch PhongPatch phongPatch;
-out patch DispMapPatch dispPatch;
+out patch CommonPatch commonPatch;
 
 // Project point to plane
 vec3 projectToPlane(vec3 point, vec3 planePoint, vec3 planeNormal)
@@ -69,38 +64,39 @@ vec3 projectToPlane(vec3 point, vec3 planePoint, vec3 planeNormal)
 void calcPositions()
 {
 	// The original vertices stay the same
-	pnPatch.pos030 = vPosition[0];
-	pnPatch.pos003 = vPosition[1];
-	pnPatch.pos300 = vPosition[2];
+	commonPatch.pos030 = vPosition[0];
+	commonPatch.pos003 = vPosition[1];
+	commonPatch.pos300 = vPosition[2];
 
 	// edges are names according to the opposing vertex
-	vec3 edgeB300 = pnPatch.pos003 - pnPatch.pos030;
-	vec3 edgeB030 = pnPatch.pos300 - pnPatch.pos003;
-	vec3 edgeB003 = pnPatch.pos030 - pnPatch.pos300;
+	vec3 edgeB300 = commonPatch.pos003 - commonPatch.pos030;
+	vec3 edgeB030 = commonPatch.pos300 - commonPatch.pos003;
+	vec3 edgeB003 = commonPatch.pos030 - commonPatch.pos300;
 
 	// Generate two midpoints on each edge
-	pnPatch.pos021 = pnPatch.pos030 + edgeB300 / 3.0;
-	pnPatch.pos012 = pnPatch.pos030 + edgeB300 * 2.0 / 3.0;
-	pnPatch.pos102 = pnPatch.pos003 + edgeB030 / 3.0;
-	pnPatch.pos201 = pnPatch.pos003 + edgeB030 * 2.0 / 3.0;
-	pnPatch.pos210 = pnPatch.pos300 + edgeB003 / 3.0;
-	pnPatch.pos120 = pnPatch.pos300 + edgeB003 * 2.0 / 3.0;
+	pnPatch.pos021 = commonPatch.pos030 + edgeB300 / 3.0;
+	pnPatch.pos012 = commonPatch.pos030 + edgeB300 * 2.0 / 3.0;
+	pnPatch.pos102 = commonPatch.pos003 + edgeB030 / 3.0;
+	pnPatch.pos201 = commonPatch.pos003 + edgeB030 * 2.0 / 3.0;
+	pnPatch.pos210 = commonPatch.pos300 + edgeB003 / 3.0;
+	pnPatch.pos120 = commonPatch.pos300 + edgeB003 * 2.0 / 3.0;
 
-	pnPatch.pos021 = 
-		projectToPlane(pnPatch.pos021, pnPatch.pos030, pnPatch.normal[0]);
-	pnPatch.pos012 =
-		projectToPlane(pnPatch.pos012, pnPatch.pos003, pnPatch.normal[1]);
-	pnPatch.pos102 = 
-		projectToPlane(pnPatch.pos102, pnPatch.pos003, pnPatch.normal[1]);
-	pnPatch.pos201 = 
-		projectToPlane(pnPatch.pos201, pnPatch.pos300, pnPatch.normal[2]);
-	pnPatch.pos210 = 
-		projectToPlane(pnPatch.pos210, pnPatch.pos300, pnPatch.normal[2]);
-	pnPatch.pos120 = 
-		projectToPlane(pnPatch.pos120, pnPatch.pos030, pnPatch.normal[0]);
+	pnPatch.pos021 = projectToPlane(
+		pnPatch.pos021, commonPatch.pos030, commonPatch.normal[0]);
+	pnPatch.pos012 = projectToPlane(
+		pnPatch.pos012, commonPatch.pos003, commonPatch.normal[1]);
+	pnPatch.pos102 = projectToPlane(
+		pnPatch.pos102, commonPatch.pos003, commonPatch.normal[1]);
+	pnPatch.pos201 = projectToPlane(
+		pnPatch.pos201, commonPatch.pos300, commonPatch.normal[2]);
+	pnPatch.pos210 = projectToPlane(
+		pnPatch.pos210, commonPatch.pos300, commonPatch.normal[2]);
+	pnPatch.pos120 = projectToPlane(
+		pnPatch.pos120, commonPatch.pos030, commonPatch.normal[0]);
 
 	// Handle the center
-	vec3 center = (pnPatch.pos003 + pnPatch.pos030 + pnPatch.pos300) / 3.0;
+	vec3 center = (commonPatch.pos003 + commonPatch.pos030 
+		+ commonPatch.pos300) / 3.0;
 	pnPatch.pos111 = (pnPatch.pos021 + pnPatch.pos012 + pnPatch.pos102 +
 		pnPatch.pos201 + pnPatch.pos210 + pnPatch.pos120) / 6.0;
 	pnPatch.pos111 += (pnPatch.pos111 - center) / 2.0;
@@ -168,10 +164,10 @@ void tessellatePNPositionNormalTangentTexCoord(
 
 		for(int i = 0 ; i < 3 ; i++) 
 		{		
-			pnPatch.texCoord[i] = vTexCoords[i];
-			pnPatch.normal[i] = vNormal[i];
+			commonPatch.texCoord[i] = vTexCoords[i];
+			commonPatch.normal[i] = vNormal[i];
 #if PASS_COLOR
-			pnPatch.tangent[i] = vTangent[i];
+			commonPatch.tangent[i] = vTangent[i];
 #endif
 		}
 
@@ -216,11 +212,11 @@ void tessellatePhongPositionNormalTangentTexCoord(
 
 		for(int i = 0 ; i < 3 ; i++) 
 		{
-			phongPatch.positions[i] = vPosition[i];
-			phongPatch.texCoord[i] = vTexCoords[i];
-			phongPatch.normal[i] = vNormal[i];
+			commonPatch.positions[i] = vPosition[i];
+			commonPatch.texCoord[i] = vTexCoords[i];
+			commonPatch.normal[i] = vNormal[i];
 #if PASS_COLOR
-			phongPatch.tangent[i] = vTangent[i];
+			commonPatch.tangent[i] = vTangent[i];
 #endif
 
 			phongPatch.terms[i][0] = 
@@ -261,13 +257,17 @@ void tessellateDispMapPositionNormalTangentTexCoord(
 {
 	for(int i = 0 ; i < 3 ; i++) 
 	{
-		phongPatch.positions[i] = vPosition[i];
-		phongPatch.texCoord[i] = vTexCoords[i];
-		phongPatch.normal[i] = vNormal[i];
+		commonPatch.positions[i] = vPosition[i];
+		commonPatch.texCoord[i] = vTexCoords[i];
+		commonPatch.normal[i] = vNormal[i];
 #if PASS_COLOR
-		phongPatch.tangent[i] = vTangent[i];
+		commonPatch.tangent[i] = vTangent[i];
 #endif
 	}
+
+#if INSTANCE_ID_FRAGMENT_SHADER
+	commonPatch.instanceId = vInstanceId[0];
+#endif
 
 	gl_TessLevelOuter[0] = maxTessLevel;
 	gl_TessLevelOuter[1] = maxTessLevel;
