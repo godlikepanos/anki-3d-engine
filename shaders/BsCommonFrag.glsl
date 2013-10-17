@@ -5,10 +5,8 @@
 #pragma anki include "shaders/MsBsCommon.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
-#define vTexCoord_DEFINED
-in highp vec2 vTexCoord;
-#define vInstanceId_DEFINED
-flat in highp int vInstanceId;
+in vec2 vTexCoord;
+flat in float vAlpha;
 
 #if defined(PASS_COLOR)
 layout(location = 0) out vec4 fColor;
@@ -18,6 +16,12 @@ layout(location = 0) out vec4 fColor;
 #if defined(PASS_COLOR)
 #	define texture_DEFINED
 #endif
+
+#define getAlpha_DEFINED
+float getAlpha()
+{
+	return vAlpha;
+}
 
 #if defined(PASS_COLOR)
 #	define writeFais_DEFINED

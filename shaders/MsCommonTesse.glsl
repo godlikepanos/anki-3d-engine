@@ -28,6 +28,9 @@ struct CommonPatch
 #if PASS_COLOR
 	vec4 tangent[3];
 #endif
+#if INSTANCE_ID_FRAGMENT_SHADER
+	uint instanceId;
+#endif
 };
 
 in patch PNPatch pnPatch;
@@ -140,7 +143,7 @@ void tessellateDispMapPositionNormalTangentTexCoord(
 	teTexCoords = INTERPOLATE(commonPatch.texCoord);
 
 	float height = texture(dispMap, teTexCoords).r;
-	height *= 0.1;
+	height *= 1.0;
 
 	vec3 pos = INTERPOLATE(commonPatch.positions) + norm * height;
 	gl_Position = mvp * vec4(pos, 1.0);

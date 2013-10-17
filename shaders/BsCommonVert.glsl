@@ -1,5 +1,6 @@
 // Common code for all vertex shaders of BS
 
+#define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/MsBsCommon.glsl"
 
 layout(location = 0) in vec3 position;
@@ -8,7 +9,7 @@ layout(location = 3) in vec2 texCoord;
 /// @name Varyings
 /// @{
 out vec2 vTexCoord;
-flat out int vInstanceId;
+out flat float vAlpha;
 /// @}
 
 //==============================================================================
@@ -38,5 +39,11 @@ void particle(in mat4 mvp)
 {
 	vTexCoord = texCoord;
 	gl_Position = mvp * vec4(position, 1);
-	vInstanceId = gl_InstanceID;
+}
+
+//==============================================================================
+#define writeAlpha_DEFINED
+void writeAlpha(in float alpha)
+{
+	vAlpha = alpha;
 }

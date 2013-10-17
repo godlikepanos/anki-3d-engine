@@ -20,7 +20,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Texture& getFai0() const
+	Texture& getFai0()
 	{
 		return fai0[1];
 	}
