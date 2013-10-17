@@ -551,10 +551,10 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 			break;
 #	if ANKI_GL == ANKI_GL_DESKTOP
 		case GL_TESS_EVALUATION_SHADER:
-			ext = ".te";
+			ext = ".tesse";
 			break;
 		case GL_TESS_CONTROL_SHADER:
-			ext = ".tc";
+			ext = ".tessc";
 			break;
 		case GL_GEOMETRY_SHADER:
 			ext = ".geom";

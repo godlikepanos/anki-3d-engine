@@ -376,6 +376,18 @@ void MaterialShaderProgramCreator::parseOperationTag(
 					argsList.push_back(std::string(argEl.getText()) 
 						+ "[gl_InstanceID]");
 				}
+				else if(shader == TESSC)
+				{
+					argsList.push_back(std::string(argEl.getText()) 
+						+ "[vInstanceId[0]]");
+					instanceIdInFragmentShader = true;
+				}
+				else if(shader == TESSE)
+				{
+					argsList.push_back(std::string(argEl.getText()) 
+						+ "[commonPatch.instanceId]");
+					instanceIdInFragmentShader = true;
+				}
 				else if(shader == FRAGMENT)
 				{
 					argsList.push_back(std::string(argEl.getText()) 

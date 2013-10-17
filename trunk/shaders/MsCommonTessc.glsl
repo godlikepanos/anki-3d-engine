@@ -10,7 +10,7 @@ in mediump vec3 vNormal[];
 in mediump vec4 vTangent[];
 #endif
 #if INSTANCE_ID_FRAGMENT_SHADER
-uint vInstanceId[];
+flat in uint vInstanceId[];
 #endif
 
 // Out
@@ -107,17 +107,18 @@ vec3 calcFaceNormal(in vec3 v0, in vec3 v1, in vec3 v2)
 	return normalize(cross(v1 - v0, v2 - v0));
 }
 
-/*float calcEdgeTessLevel(in vec3 n0, in vec3 n1, in float maxTessLevel)
+float calcEdgeTessLevel(in vec3 n0, in vec3 n1, in float maxTessLevel)
 {
 	vec3 norm = normalize(n0 + n1);
-	return (1.0 - norm.z) * (maxTessLevel - 1.0) + 1.0;
-}*/
+	float tess = (1.0 - norm.z) * (maxTessLevel - 1.0) + 1.0;
+	return tess;
+}
 
-float calcEdgeTessLevel(in vec2 p0, in vec2 p1, in float maxTessLevel)
+/*float calcEdgeTessLevel(in vec2 p0, in vec2 p1, in float maxTessLevel)
 {
 	float dist = distance(p0, p1) * 10.0;
 	return dist * (maxTessLevel - 1.0) + 1.0;
-}
+}*/
 
 // Given the face positions in NDC caclulate if the face is front facing or not
 bool isFaceFrontFacing(in vec2 posNdc[3])
@@ -234,10 +235,12 @@ void tessellatePhongPositionNormalTangentTexCoord(
 			nv[i] = normalMat * vNormal[i];
 		}
 
-		gl_TessLevelOuter[0] = maxTessLevel;
-		gl_TessLevelOuter[1] = maxTessLevel;
-		gl_TessLevelOuter[2] = maxTessLevel;
-		gl_TessLevelInner[0] = maxTessLevel;
+		gl_TessLevelOuter[0] = calcEdgeTessLevel(nv[1], nv[2], maxTessLevel);
+		gl_TessLevelOuter[1] = calcEdgeTessLevel(nv[2], nv[0], maxTessLevel);
+		gl_TessLevelOuter[2] = calcEdgeTessLevel(nv[0], nv[1], maxTessLevel);
+		gl_TessLevelInner[0] = 1.0;
+		gl_TessLevelInner[0] = (gl_TessLevelOuter[0] + gl_TessLevelOuter[1]
+			+ gl_TessLevelOuter[2]) / 3.0;
 	}
 	else
 	{
