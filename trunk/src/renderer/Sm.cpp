@@ -1,6 +1,7 @@
 #include "anki/renderer/Sm.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/App.h"
+#include "anki/core/Counters.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
@@ -211,6 +212,8 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 			DEPTH_PASS, *(*it).node, (*it).subSpatialIndices, 
 			(*it).subSpatialIndicesCount);
 	}
+
+	ANKI_COUNTER_INC(C_RENDERER_SHADOW_PASSES, (U64)1);
 
 	return &sm;
 }

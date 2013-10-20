@@ -14,23 +14,23 @@ namespace anki {
 struct Attrib
 {
 	const char* name;
-	MeshBase::VertexAttribute id;
+	Mesh::VertexAttribute id;
 };
 
-static const Array<Attrib, MeshBase::VA_COUNT - 1> attribs = {{
-	{"position", MeshBase::VA_POSITION},
-	{"normal", MeshBase::VA_NORMAL},
-	{"tangent", MeshBase::VA_TANGENT},
-	{"texCoord", MeshBase::VA_TEXTURE_COORD},
-	{"texCoord1", MeshBase::VA_TEXTURE_COORD_1},
-	{"bonesCount", MeshBase::VA_BONE_COUNT},
-	{"boneIds", MeshBase::VA_BONE_IDS},
-	{"boneWeights", MeshBase::VA_BONE_WEIGHTS}
+static const Array<Attrib, Mesh::VA_COUNT - 1> attribs = {{
+	{"position", Mesh::VA_POSITION},
+	{"normal", Mesh::VA_NORMAL},
+	{"tangent", Mesh::VA_TANGENT},
+	{"texCoord", Mesh::VA_TEXTURE_COORD},
+	{"texCoord1", Mesh::VA_TEXTURE_COORD_1},
+	{"bonesCount", Mesh::VA_BONE_COUNT},
+	{"boneIds", Mesh::VA_BONE_IDS},
+	{"boneWeights", Mesh::VA_BONE_WEIGHTS}
 }};
 
 //==============================================================================
 void ModelPatchBase::createVao(const ShaderProgram& prog,
-	const MeshBase& meshb, Vao& vao)
+	const Mesh& meshb, Vao& vao)
 {
 	vao.create();
 
@@ -64,7 +64,7 @@ void ModelPatchBase::createVao(const ShaderProgram& prog,
 	}
 
 	// The indices VBO
-	meshb.getVboInfo(MeshBase::VA_INDICES, vbo, size, type,
+	meshb.getVboInfo(Mesh::VA_INDICES, vbo, size, type,
 			stride, offset);
 
 	ANKI_ASSERT(vbo != nullptr);
@@ -93,8 +93,8 @@ void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
 	meshKey.pass = key.pass;
 	meshKey.level = std::min(key.level, (U8)(meshLods - 1));
 
-	const MeshBase& meshBase = getMeshBase(meshKey);
-	indicesCount = meshBase.getIndicesCount();
+	const Mesh& mesh = getMesh(meshKey);
+	indicesCount = mesh.getIndicesCount();
 
 	// Prog
 	PassLevelKey mtlKey;
@@ -108,8 +108,9 @@ void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
 void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
 	const Vao*& vao, const ShaderProgram*& prog, 
 	const U32* subMeshIndexArray, U subMeshIndexCount,
-	U32* indicesCountArray, const void** indicesOffsetArray, 
-	U32& primcount) const
+	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
+	Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
+	U32& drawcallCount) const
 {
 	const U meshLods = getMeshesCount();
 	ANKI_ASSERT(meshLods > 0);
@@ -136,39 +137,51 @@ void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
 	meshKey.pass = key.pass;
 	meshKey.level = std::min(key.level, (U8)(meshLods - 1));
 
-	const MeshBase& meshBase = getMeshBase(meshKey);
+	const Mesh& mesh = getMesh(meshKey);
 
-	ANKI_ASSERT(subMeshIndexCount <= meshBase.getSubMeshesCount());
-
-	primcount = 0;
-	I prevIndex = -1;
-	for(U i = 0; i < subMeshIndexCount; i++)
+	if(subMeshIndexCount == 0 || subMeshIndexArray == nullptr
+		|| mesh.getSubMeshesCount() == 0)
 	{
-		I index = (I)subMeshIndexArray[i];
-	
-		// Check if we can merge with the previous submesh
-		if(index > 0 && (index - 1) == prevIndex)
+		drawcallCount = 1;
+		indicesOffsetArray[0] = nullptr;
+		indicesCountArray[0] = mesh.getIndicesCount();
+	}
+	else
+	{
+		ANKI_ASSERT(subMeshIndexCount <= mesh.getSubMeshesCount());
+
+		drawcallCount = 0;
+		I prevIndex = -1;
+		for(U i = 0; i < subMeshIndexCount; i++)
 		{
-			ANKI_ASSERT(primcount > 0);
+			I index = (subMeshIndexArray == nullptr) 
+				? (I)i
+				: (I)subMeshIndexArray[i];
+		
+			// Check if we can merge with the previous submesh
+			if(index > 0 && (index - 1) == prevIndex)
+			{
+				ANKI_ASSERT(drawcallCount > 0);
 
-			// increase the indices count, leave offset alone
-			U32 offset;
-			indicesCountArray[primcount - 1] +=
-				meshBase.getIndicesCountSub((U)index, offset);
+				// increase the indices count, leave offset alone
+				U32 offset;
+				indicesCountArray[drawcallCount - 1] +=
+					mesh.getIndicesCountSub((U)index, offset);
+			}
+			else
+			{
+				U32 offset;
+				indicesCountArray[drawcallCount] =
+					mesh.getIndicesCountSub((U)index, offset);
+
+				indicesOffsetArray[drawcallCount] = 
+					reinterpret_cast<const void*>((PtrSize)offset);
+
+				++drawcallCount;
+			}
+
+			prevIndex = index;
 		}
-		else
-		{
-			U32 offset;
-			indicesCountArray[primcount] =
-				meshBase.getIndicesCountSub((U)index, offset);
-
-			indicesOffsetArray[primcount] = 
-				reinterpret_cast<const void*>((PtrSize)offset);
-
-			++primcount;
-		}
-
-		prevIndex = index;
 	}
 }
 
@@ -187,13 +200,13 @@ void ModelPatchBase::create()
 		{
 			PassLevelKey key(pass, lod);
 			const ShaderProgram* prog;
-			const MeshBase* mesh;
+			const Mesh* mesh;
 
 			// Get mesh
 			ANKI_ASSERT(getMeshesCount() > 0);
 			PassLevelKey meshKey = key;
 			meshKey.level = std::min(key.level, (U8)(getMeshesCount() - 1));
-			mesh = &getMeshBase(meshKey);
+			mesh = &getMesh(meshKey);
 
 			// Get shader prog
 			ANKI_ASSERT(getMaterial().getLevelsOfDetail() > 0);
@@ -318,14 +331,14 @@ void Model::load(const char* filename)
 		// Calculate compound bounding volume
 		PassLevelKey key;
 		key.level = 0;
-		visibilityShape = modelPatches[0]->getMeshBase(key).getBoundingShape();
+		visibilityShape = modelPatches[0]->getMesh(key).getBoundingShape();
 
 		for(ModelPatchesContainer::const_iterator it = modelPatches.begin() + 1;
 			it != modelPatches.end();
 			++it)
 		{
 			visibilityShape = visibilityShape.getCompoundShape(
-				(*it)->getMeshBase(key).getBoundingShape());
+				(*it)->getMesh(key).getBoundingShape());
 		}
 	}
 	catch(std::exception& e)

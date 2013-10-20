@@ -12,6 +12,8 @@ namespace anki {
 
 class Skin;
 
+#if 0
+
 /// Skin specific mesh. It contains a number of VBOs for transform feedback
 class SkinMesh: public MeshBase
 {
@@ -314,6 +316,8 @@ private:
 		const SceneVector<Mat3>& boneRotations,
 		SceneVector<Vec3>& heads, SceneVector<Vec3>& tails);
 };
+
+#endif
 
 } // end namespace
 

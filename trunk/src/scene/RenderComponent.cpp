@@ -37,6 +37,7 @@ static Array<const char*, BMV_COUNT - 1> buildinNames = {{
 	"viewProjectionMat",
 	"normalMat",
 	"billboardMvpMatrix",
+	"maxTessLevel",
 	"blurring",
 	"msDepthMap"}};
 

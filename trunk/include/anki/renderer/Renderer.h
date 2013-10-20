@@ -230,7 +230,7 @@ public:
 		Vec2& limitsOfNearPlane);
 
 	/// Get the LOD given the distance of an object from the camera
-	U calculateLod(F32 distance) const
+	F32 calculateLod(F32 distance) const
 	{
 		return distance / lodDistance;
 	}

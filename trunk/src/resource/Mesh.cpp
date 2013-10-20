@@ -7,19 +7,15 @@
 namespace anki {
 
 //==============================================================================
-// MeshBase                                                                    =
+// Mesh                                                                        =
 //==============================================================================
 
 //==============================================================================
-Bool MeshBase::isCompatible(const MeshBase& other) const
+Bool Mesh::isCompatible(const Mesh& other) const
 {
 	return hasWeights() == other.hasWeights() 
 		&& getSubMeshesCount() == other.getSubMeshesCount(); 
 }
-
-//==============================================================================
-// Mesh                                                                        =
-//==============================================================================
 
 //==============================================================================
 void Mesh::load(const char* filename)
@@ -28,18 +24,18 @@ void Mesh::load(const char* filename)
 	{
 		MeshLoader loader(filename);
 
-		meshProtected.indicesCount = loader.getIndices().size();
-		meshProtected.obb.set(loader.getPositions());
-		ANKI_ASSERT(meshProtected.indicesCount > 0);
-		ANKI_ASSERT(meshProtected.indicesCount % 3 == 0 
+		indicesCount = loader.getIndices().size();
+		obb.set(loader.getPositions());
+		ANKI_ASSERT(indicesCount > 0);
+		ANKI_ASSERT(indicesCount % 3 == 0 
 			&& "Expecting triangles");
 
 		// Set the non-VBO members
-		meshProtected.vertsCount = loader.getPositions().size();
-		ANKI_ASSERT(meshProtected.vertsCount > 0);
+		vertsCount = loader.getPositions().size();
+		ANKI_ASSERT(vertsCount > 0);
 
-		meshProtected.texChannelsCount = loader.getTextureChannelsCount();
-		meshProtected.weights = loader.getWeights().size() > 1;
+		texChannelsCount = loader.getTextureChannelsCount();
+		weights = loader.getWeights().size() > 1;
 
 		createVbos(loader);
 	}
@@ -53,8 +49,8 @@ void Mesh::load(const char* filename)
 U32 Mesh::calcVertexSize() const
 {
 	U32 a = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-		+ meshProtected.texChannelsCount * sizeof(HVec2);
-	if(meshProtected.weights)
+		+ texChannelsCount * sizeof(HVec2);
+	if(weights)
 	{
 		a += sizeof(MeshLoader::VertexWeight);
 	}
@@ -66,19 +62,19 @@ U32 Mesh::calcVertexSize() const
 //==============================================================================
 void Mesh::createVbos(const MeshLoader& loader)
 {
-	ANKI_ASSERT(meshProtected.vertsCount == loader.getPositions().size()
-		&& meshProtected.vertsCount == loader.getNormals().size()
-		&& meshProtected.vertsCount == loader.getTangents().size());
+	ANKI_ASSERT(vertsCount == loader.getPositions().size()
+		&& vertsCount == loader.getNormals().size()
+		&& vertsCount == loader.getTangents().size());
 
 	// Calculate VBO size
 	U32 vertexsize = calcVertexSize();
-	U32 vbosize = vertexsize * meshProtected.vertsCount;
+	U32 vbosize = vertexsize * vertsCount;
 
 	// Create a temp buffer and populate it
 	Vector<U8> buff(vbosize, 0);
 
 	U8* ptra = &buff[0];
-	for(U i = 0; i < meshProtected.vertsCount; i++)
+	for(U i = 0; i < vertsCount; i++)
 	{
 		U8* ptr = ptra;
 		ANKI_ASSERT(ptr + vertexsize <= &buff[0] + vbosize);
@@ -92,13 +88,13 @@ void Mesh::createVbos(const MeshLoader& loader)
 		memcpy(ptr, &loader.getTangents()[i], sizeof(HVec4));
 		ptr += sizeof(HVec4);
 
-		for(U j = 0; j < meshProtected.texChannelsCount; j++)
+		for(U j = 0; j < texChannelsCount; j++)
 		{
 			memcpy(ptr, &loader.getTextureCoordinates(j)[i], sizeof(HVec2));
 			ptr += sizeof(HVec2);
 		}
 
-		if(meshProtected.weights)
+		if(weights)
 		{
 			memcpy(ptr, &loader.getWeights()[i], 
 				sizeof(MeshLoader::VertexWeight));
@@ -156,7 +152,7 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 		offset = sizeof(Vec3) + sizeof(HVec3);
 		break;
 	case VA_TEXTURE_COORD:
-		if(meshProtected.texChannelsCount > 0)
+		if(texChannelsCount > 0)
 		{
 			v = &vbo;
 			size = 2;
@@ -165,7 +161,7 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 		}
 		break;
 	case VA_TEXTURE_COORD_1:
-		if(meshProtected.texChannelsCount > 1)
+		if(texChannelsCount > 1)
 		{
 			v = &vbo;
 			size = 2;
@@ -175,33 +171,33 @@ void Mesh::getVboInfo(const VertexAttribute attrib, const Vbo*& v, U32& size,
 		}
 		break;
 	case VA_BONE_COUNT:
-		if(meshProtected.weights)
+		if(weights)
 		{
 			v = &vbo;
 			size = 1;
 			type = GL_UNSIGNED_SHORT;
 			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-				+ meshProtected.texChannelsCount * sizeof(HVec2);
+				+ texChannelsCount * sizeof(HVec2);
 		}
 		break;
 	case VA_BONE_IDS:
-		if(meshProtected.weights)
+		if(weights)
 		{
 			v = &vbo;
 			size = 4;
 			type = GL_UNSIGNED_SHORT;
 			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-				+ meshProtected.texChannelsCount * sizeof(HVec2) + sizeof(U16);
+				+ texChannelsCount * sizeof(HVec2) + sizeof(U16);
 		}
 		break;
 	case VA_BONE_WEIGHTS:
-		if(meshProtected.weights)
+		if(weights)
 		{
 			v = &vbo;
 			size = 4;
 			type = GL_HALF_FLOAT;
 			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-				+ meshProtected.texChannelsCount * sizeof(HVec2) + sizeof(U16) 
+				+ texChannelsCount * sizeof(HVec2) + sizeof(U16) 
 				+ sizeof(U16) * 4;
 		}
 	case VA_INDICES:
@@ -229,9 +225,9 @@ void BucketMesh::load(const char* filename)
 		XmlElement meshesEl = rootEl.getChildElement("meshes");
 		XmlElement meshEl = meshesEl.getChildElement("mesh");
 
-		meshProtected.vertsCount = 0;
-		meshProtected.subMeshes.reserve(4); // XXX
-		meshProtected.indicesCount = 0;
+		vertsCount = 0;
+		subMeshes.reserve(4);
+		indicesCount = 0;
 
 		MeshLoader fullLoader;
 		U i = 0;
@@ -256,13 +252,13 @@ void BucketMesh::load(const char* filename)
 				loader = &subLoader;
 
 				// Sanity checks
-				if(meshProtected.weights != (loader->getWeights().size() > 1))
+				if(weights != (loader->getWeights().size() > 1))
 				{
 					throw ANKI_EXCEPTION("All sub meshes should have or not "
 						"have vertex weights");
 				}
 
-				if(meshProtected.texChannelsCount 
+				if(texChannelsCount 
 					!= loader->getTextureChannelsCount())
 				{
 					throw ANKI_EXCEPTION("All sub meshes should have the "
@@ -279,8 +275,8 @@ void BucketMesh::load(const char* filename)
 				loader = &fullLoader;
 
 				// Set properties
-				meshProtected.weights = loader->getWeights().size() > 1;
-				meshProtected.texChannelsCount = 
+				weights = loader->getWeights().size() > 1;
+				texChannelsCount = 
 					loader->getTextureChannelsCount();
 			}
 
@@ -288,14 +284,14 @@ void BucketMesh::load(const char* filename)
 			SubMesh submesh;
 
 			submesh.indicesCount = loader->getIndices().size();
-			submesh.indicesOffset = meshProtected.indicesCount * sizeof(U16);
+			submesh.indicesOffset = indicesCount * sizeof(U16);
 			submesh.obb.set(loader->getPositions());
 
-			meshProtected.subMeshes.push_back(submesh);
+			subMeshes.push_back(submesh);
 
 			// Set the global numbers
-			meshProtected.vertsCount += loader->getPositions().size();
-			meshProtected.indicesCount += loader->getIndices().size();
+			vertsCount += loader->getPositions().size();
+			indicesCount += loader->getIndices().size();
 
 			// Move to next
 			meshEl = meshEl.getNextSiblingElement("mesh");
@@ -304,7 +300,7 @@ void BucketMesh::load(const char* filename)
 
 		// Create the bucket mesh
 		createVbos(fullLoader);
-		meshProtected.obb.set(fullLoader.getPositions());
+		obb.set(fullLoader.getPositions());
 	}
 	catch(std::exception& e)
 	{

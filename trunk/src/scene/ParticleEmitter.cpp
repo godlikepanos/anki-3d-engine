@@ -270,9 +270,18 @@ ParticleEmitter::~ParticleEmitter()
 }
 
 //==============================================================================
-const ModelPatchBase& ParticleEmitter::getModelPatchBase()
+void ParticleEmitter::getRenderingData(
+	const PassLevelKey& key, 
+	const Vao*& vao, const ShaderProgram*& prog,
+	const U32* subMeshIndicesArray, U subMeshIndicesCount,
+	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
+	Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
+	U32& drawcallCount) const
 {
-	return *particleEmitterResource->getModel().getModelPatches()[0];
+	particleEmitterResource->getModel().getModelPatches()[0]->
+		getRenderingDataSub(key, vao, prog, 
+		subMeshIndicesArray, subMeshIndicesCount, 
+		indicesCountArray, indicesOffsetArray, drawcallCount);
 }
 
 //==============================================================================
