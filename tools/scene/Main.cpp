@@ -87,6 +87,10 @@ static std::string getFilename(const std::string& path)
 	{
 		out.insert(out.end(), path.begin() + last + 1, path.end());
 	}
+	else
+	{
+		out = path;
+	}
 
 	return out;
 }

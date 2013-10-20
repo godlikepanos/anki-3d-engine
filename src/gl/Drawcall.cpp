@@ -6,7 +6,7 @@ namespace anki {
 //==============================================================================
 void Drawcall::enque()
 {
-	ANKI_ASSERT(primitiveType && instancesCount > 0 && primCount > 0
+	ANKI_ASSERT(primitiveType && instancesCount > 0 && drawcallCount > 0
 		&& offsetsArray);
 
 	if(indicesCountArray != nullptr)
@@ -19,7 +19,7 @@ void Drawcall::enque()
 		{
 			// No  instancing
 
-			if(primCount == 1)
+			if(drawcallCount == 1)
 			{
 				// No multidraw
 
@@ -39,9 +39,9 @@ void Drawcall::enque()
 					indicesCountArray, 
 					indicesType, 
 					offsetsArray, 
-					primCount);
+					drawcallCount);
 #else
-				for(U i = 0; i < primCount; i++)
+				for(U i = 0; i < drawcallCount; i++)
 				{
 					glDrawElements(
 						primitiveType, 

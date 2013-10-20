@@ -22,6 +22,7 @@ enum BuildinMaterialVariableId
 	BMV_VP_MATRIX,
 	BMV_NORMAL_MATRIX,
 	BMV_BILLBOARD_MVP_MATRIX,
+	BMV_MAX_TESS_LEVEL,
 	BMV_BLURRING,
 	BMV_MS_DEPTH_MAP,
 	BMV_COUNT
@@ -163,13 +164,21 @@ class RenderComponent
 public:
 	typedef SceneVector<RenderComponentVariable*> Variables;
 
-	/// @param node Pass note to steal it's allocator
+	/// @param node Pass node to steal it's allocator
 	RenderComponent(SceneNode* node);
 
 	virtual ~RenderComponent();
 
-	/// Access to VAOs
-	virtual const ModelPatchBase& getModelPatchBase() = 0;
+	/// Get information for rendering.
+	/// Given an array of submeshes that are visible return the correct indices
+	/// offsets and counts
+	virtual void getRenderingData(
+		const PassLevelKey& key, 
+		const Vao*& vao, const ShaderProgram*& prog,
+		const U32* subMeshIndicesArray, U subMeshIndicesCount,
+		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
+		Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
+		U32& drawcallCount) const = 0;
 
 	/// Access the material
 	virtual const Material& getMaterial() = 0;
@@ -206,11 +215,6 @@ public:
 		{
 			func(*var);
 		}
-	}
-
-	U32 getSubMeshesCount()
-	{
-		return getModelPatchBase().getSubMeshesCount();
 	}
 
 	/// Reset on frame start

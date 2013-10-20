@@ -71,10 +71,18 @@ public:
 	/// @name RenderComponent virtuals
 	/// @{
 
-	/// Implements RenderComponent::getModelPatchBase
-	const ModelPatchBase& getModelPatchBase()
+	/// Implements RenderComponent::getRenderingData
+	void getRenderingData(
+		const PassLevelKey& key, 
+		const Vao*& vao, const ShaderProgram*& prog,
+		const U32* subMeshIndicesArray, U subMeshIndicesCount,
+		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
+		Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
+		U32& drawcallCount) const
 	{
-		return *modelPatch;
+		modelPatch->getRenderingDataSub(key, vao, prog, 
+			subMeshIndicesArray, subMeshIndicesCount, 
+			indicesCountArray, indicesOffsetArray, drawcallCount);
 	}
 
 	/// Implements  RenderComponent::getMaterial

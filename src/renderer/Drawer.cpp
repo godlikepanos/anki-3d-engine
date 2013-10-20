@@ -16,12 +16,14 @@ static const U UNIFORM_BLOCK_MAX_SIZE = 1024 * 12;
 
 //==============================================================================
 #if ANKI_ENABLE_COUNTERS
-static U64 countVerts(U32* indicesCount, I primCount)
+static U64 countVerts(
+	const Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCount, 
+	I drawcallCount)
 {
 	U64 sum = 0;
-	while(--primCount >= 0)
+	while(--drawcallCount >= 0)
 	{
-		sum += indicesCount[primCount];
+		sum += indicesCount[drawcallCount];
 	}
 	return sum;
 }
@@ -38,6 +40,7 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 	RenderComponent* renderable = nullptr;
 	RenderComponentVariable* rvar = nullptr;
 	const ShaderProgramUniformVariable* uni;
+	F32 flod;
 
 	// Used for 
 	const U32* subSpatialIndices = nullptr;
@@ -183,6 +186,25 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 				uniSet(*uni, &bmvp[0], size);
 			}
 			break;
+		case BMV_MAX_TESS_LEVEL:
+			{
+				RenderComponentVariable& tmp = x;
+				F32 maxtess = tmp.getValues<F32>()[0];
+				F32 tess;
+				
+				if(flod >= 1.0)
+				{
+					tess = 1.0;
+				}
+				else
+				{
+					tess = maxtess - flod * maxtess;
+					tess = std::max(tess, 1.0f);
+				}
+				
+				uniSet(*uni, &tess, 1);
+			}
+			break;
 		case BMV_BLURRING:
 			{
 				F32 blurring = 0.0;
@@ -241,7 +263,8 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 	const FrustumComponent& fr, const ShaderProgram &prog,
 	RenderComponent& renderable, 
-	U32* subSpatialIndices, U subSpatialIndicesCount)
+	U32* subSpatialIndices, U subSpatialIndicesCount,
+	F32 flod)
 {
 	prog.bind();
 	
@@ -252,6 +275,7 @@ void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 	vis.r = r;
 	vis.subSpatialIndices = subSpatialIndices;
 	vis.subSpatialIndicesCount = subSpatialIndicesCount;
+	vis.flod = flod;
 
 	PassLevelKey key(key_.pass,
 		std::min(key_.level,
@@ -340,41 +364,26 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 
 	F32 dist = 
 		(rsn.getSpatialComponent()->getSpatialOrigin() - camPos).getLength();
-	U8 lod = r->calculateLod(dist);
+	F32 lod = r->calculateLod(dist);
 
 	PassLevelKey key(pass, lod);
 
 	// Get rendering useful stuff
 	const ShaderProgram* prog;
 	const Vao* vao;
-	U32 indicesCountArray[ANKI_MAX_MULTIDRAW_PRIMITIVES];
-	const void* indicesOffsetArray[ANKI_MAX_MULTIDRAW_PRIMITIVES];
+	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES> indicesCountArray;
+	Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES> indicesOffsetArray;
 #if ANKI_DEBUG
-	memset(indicesCountArray, 0, sizeof(indicesCountArray));
-	memset(indicesOffsetArray, 0, sizeof(indicesOffsetArray));
+	memset(&indicesCountArray[0], 0, sizeof(indicesCountArray));
+	memset(&indicesOffsetArray[0], 0, sizeof(indicesOffsetArray));
 #endif
 
-	U32 primCount = 1;
+	U32 drawcallCount = 1;
 
-	const ModelPatchBase& resource = renderable->getModelPatchBase();
-	if(subSpatialIndicesCount == 0 || resource.getSubMeshesCount() == 0)
-	{
-		// No multimesh
-
-		resource.getRenderingData(
-			key, vao, prog, indicesCountArray[0]);
-
-		indicesOffsetArray[0] = nullptr;
-	}
-	else
-	{
-		// It's a multimesh
-
-		resource.getRenderingDataSub(
-			key, vao, prog, 
-			subSpatialIndices, subSpatialIndicesCount,
-			indicesCountArray, indicesOffsetArray, primCount);
-	}
+	renderable->getRenderingData(
+		key, vao, prog, 
+		subSpatialIndices, subSpatialIndicesCount,
+		indicesCountArray, indicesOffsetArray, drawcallCount);
 
 	// Hack the instances count
 	if(subSpatialIndicesCount > 0 && instancesCount > 1)
@@ -384,7 +393,8 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 
 	// Setup shader
 	setupShaderProg(
-		key, fr, *prog, *renderable, subSpatialIndices, subSpatialIndicesCount);
+		key, fr, *prog, *renderable, subSpatialIndices, subSpatialIndicesCount,
+		lod);
 
 	// Render
 	ANKI_ASSERT(vao->getAttachmentsCount() > 1);
@@ -407,15 +417,15 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 
 	dc.indicesType = GL_UNSIGNED_SHORT;
 	dc.instancesCount = instancesCount;
-	dc.indicesCountArray = (GLsizei*)indicesCountArray;
-	dc.offsetsArray = indicesOffsetArray;
-	dc.primCount = primCount;
+	dc.indicesCountArray = (GLsizei*)&indicesCountArray[0];
+	dc.offsetsArray = &indicesOffsetArray[0];
+	dc.drawcallCount = drawcallCount;
 
 	dc.enque();
 
 	ANKI_COUNTER_INC(C_RENDERER_DRAWCALLS_COUNT, (U64)1);
 	ANKI_COUNTER_INC(C_RENDERER_VERTICES_COUNT, 
-		countVerts(indicesCountArray, (I)primCount));
+		countVerts(indicesCountArray, (I)drawcallCount));
 }
 
 }  // end namespace anki

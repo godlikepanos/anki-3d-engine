@@ -17,7 +17,7 @@ struct Drawcall
 	U32 instancesCount = 1;
 	GLsizei* indicesCountArray = nullptr;
 	const GLvoid** offsetsArray = nullptr;
-	U32 primCount = 1;
+	U32 drawcallCount = 1;
 
 	/// Execute the dracall
 	void enque();

@@ -30,7 +30,7 @@ public:
 		return *modelPatchProtected.mtl;
 	}
 
-	const MeshBase& getMeshBase(const PassLevelKey& key) const
+	const Mesh& getMesh(const PassLevelKey& key) const
 	{
 		ANKI_ASSERT(key.level < modelPatchProtected.meshes.size());
 		return *modelPatchProtected.meshes[key.level];
@@ -44,19 +44,19 @@ public:
 	const Obb& getBoundingShape() const
 	{
 		PassLevelKey key(COLOR_PASS, 0);
-		return getMeshBase(key).getBoundingShape();
+		return getMesh(key).getBoundingShape();
 	}
 
 	const Obb& getBoundingShapeSub(U32 subMeshId) const
 	{
 		PassLevelKey key(COLOR_PASS, 0);
-		return getMeshBase(key).getBoundingShapeSub(subMeshId);
+		return getMesh(key).getBoundingShapeSub(subMeshId);
 	}
 
 	U32 getSubMeshesCount() const
 	{
 		PassLevelKey key(COLOR_PASS, 0);
-		return getMeshBase(key).getSubMeshesCount();
+		return getMesh(key).getSubMeshesCount();
 	}
 
 	/// Given a pass lod key retrieve variables useful for rendering
@@ -70,11 +70,10 @@ public:
 		const PassLevelKey& key, 
 		const Vao*& vao, 
 		const ShaderProgram*& prog,
-		const U32* subMeshIndicesArray,
-		U subMeshIndicesCount,
-		U32* indicesCountArray, 
-		const void** indicesOffsetArray, 
-		U32& primcount) const;
+		const U32* subMeshIndicesArray, U subMeshIndicesCount,
+		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
+		Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
+		U32& drawcallCount) const;
 
 protected:
 	struct
@@ -82,7 +81,7 @@ protected:
 		/// Array [lod][pass]
 		VaosContainer vaos;
 		Material* mtl = nullptr;
-		Vector<MeshBase*> meshes;
+		Vector<Mesh*> meshes;
 	} modelPatchProtected;
 
 	/// Create VAOs using a material and a mesh. It writes a VaosContainer and
@@ -94,7 +93,7 @@ private:
 	/// VAO
 	static void createVao(
 		const ShaderProgram &prog,
-		const MeshBase& mesh,
+		const Mesh& mesh,
 		Vao& vao);
 };
 

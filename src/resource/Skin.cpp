@@ -75,7 +75,7 @@ void Skin::load(const char* filename)
 			{
 				PassLevelKey key;
 				key.level = i;
-				const MeshBase& meshBase = patch->getMeshBase(key);
+				const Mesh& meshBase = patch->getMesh(key);
 				if(!meshBase.hasWeights())
 				{
 					throw ANKI_EXCEPTION("Mesh does not support HW skinning");

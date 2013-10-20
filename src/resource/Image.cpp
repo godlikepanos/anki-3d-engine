@@ -447,7 +447,11 @@ void Image::load(const char* filename, U32 maxTextureSize)
 {
 	// get the extension
 	const char* ext = File::getFileExtension(filename);
-	ANKI_ASSERT(ext);
+	
+	if(ext == nullptr)
+	{
+		throw ANKI_EXCEPTION("Wrong filename: " + filename);
+	}
 
 	// load from this extension
 	try

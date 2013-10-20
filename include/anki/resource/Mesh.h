@@ -10,9 +10,8 @@ namespace anki {
 
 class MeshLoader;
 
-/// This is the interface class for meshes. Its interface because the skin
-/// nodes override it
-class MeshBase
+/// Mesh Resource. It contains the geometry packed in VBOs
+class Mesh
 {
 public:
 	enum VertexAttribute
@@ -29,62 +28,71 @@ public:
 		VA_COUNT
 	};
 
-	virtual ~MeshBase()
+	/// Default constructor. Do nothing
+	Mesh()
 	{}
 
-	/// Get info on how to attach a VBO to a VAO
-	virtual void getVboInfo(
-		const VertexAttribute attrib, const Vbo*& vbo,
-		U32& size, GLenum& type, U32& stride, U32& offset) const = 0;
+	/// Does nothing
+	~Mesh()
+	{}
 
 	U32 getTextureChannelsCount() const
 	{
-		return meshProtected.texChannelsCount;
+		return texChannelsCount;
 	}
 
 	Bool hasWeights() const
 	{
-		return meshProtected.weights;
+		return weights;
 	}
 
 	/// Used only to clone the VBO
 	U32 getVerticesCount() const
 	{
-		return meshProtected.vertsCount;
+		return vertsCount;
 	}
 
 	U32 getIndicesCount() const
 	{
-		return meshProtected.indicesCount;
+		return indicesCount;
 	}
 
 	const Obb& getBoundingShape() const
 	{
-		return meshProtected.obb;
+		return obb;
 	}
 
 	/// Get indices count and offset of submesh
 	U32 getIndicesCountSub(U subMeshId, U32& offset) const
 	{
-		ANKI_ASSERT(subMeshId < meshProtected.subMeshes.size());
-		const SubMesh& sm = meshProtected.subMeshes[subMeshId];
+		ANKI_ASSERT(subMeshId < subMeshes.size());
+		const SubMesh& sm = subMeshes[subMeshId];
 		offset = sm.indicesOffset;
 		return sm.indicesCount;
 	}
 
 	const Obb& getBoundingShapeSub(U subMeshId) const
 	{
-		ANKI_ASSERT(subMeshId < meshProtected.subMeshes.size());
-		return meshProtected.subMeshes[subMeshId].obb;
+		ANKI_ASSERT(subMeshId < subMeshes.size());
+		return subMeshes[subMeshId].obb;
 	}
 
+	/// If returns zero then the mesh is a single uniform mesh
 	U32 getSubMeshesCount() const
 	{
-		return meshProtected.subMeshes.size();
+		return subMeshes.size();
 	}
 
+	/// Get info on how to attach a VBO to a VAO
+	void getVboInfo(
+		const VertexAttribute attrib, const Vbo*& vbo,
+		U32& size, GLenum& type, U32& stride, U32& offset) const;
+
 	/// Helper function for correct loading
-	Bool isCompatible(const MeshBase& other) const;
+	Bool isCompatible(const Mesh& other) const;
+
+	/// Load from a .mesh file
+	void load(const char* filename);
 
 protected:
 	/// Per sub mesh data
@@ -95,50 +103,13 @@ protected:
 		Obb obb;
 	};
 
-	struct
-	{
-		Vector<SubMesh> subMeshes;
-		U32 indicesCount;
-		U32 vertsCount;
-		Obb obb;
-		U8 texChannelsCount;
-		Bool8 weights;
-	} meshProtected;
-};
+	Vector<SubMesh> subMeshes;
+	U32 indicesCount;
+	U32 vertsCount;
+	Obb obb;
+	U8 texChannelsCount;
+	Bool8 weights;
 
-/// Mesh Resource. It contains the geometry packed in VBOs
-class Mesh: public MeshBase
-{
-public:
-	/// @name Constructors
-	/// @{
-
-	/// Default constructor. Do nothing
-	Mesh()
-	{}
-
-	/// Load file
-	Mesh(const char* filename)
-	{
-		load(filename);
-	}
-	/// @}
-
-	/// Does nothing
-	~Mesh()
-	{}
-
-	/// @name MeshBase implementers
-	/// @{
-	void getVboInfo(
-		const VertexAttribute attrib, const Vbo*& vbo,
-		U32& size, GLenum& type, U32& stride, U32& offset) const;
-	/// @}
-
-	/// Load from a .mesh file
-	void load(const char* filename);
-
-protected:
 	Vbo vbo;
 	Vbo indicesVbo;
 

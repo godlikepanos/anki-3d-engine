@@ -48,7 +48,8 @@ private:
 		const ShaderProgram& prog,
 		RenderComponent& renderable,
 		U32* subSpatialIndices,
-		U subSpatialIndicesCount);
+		U subSpatialIndicesCount,
+		F32 flod);
 };
 
 } // end namespace anki

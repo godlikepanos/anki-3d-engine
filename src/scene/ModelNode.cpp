@@ -33,7 +33,7 @@ void ModelPatchNodeInstance::moveUpdate()
 	ANKI_ASSERT(modelPatchNode);
 
 	// Update the obb of self
-	obb = modelPatchNode->getModelPatchBase().getBoundingShape().getTransformed(
+	obb = modelPatchNode->modelPatch->getBoundingShape().getTransformed(
 		getWorldTransform());
 	SpatialComponent::markForUpdate();
 
