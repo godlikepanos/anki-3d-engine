@@ -164,9 +164,9 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 	U32 lastUpdate = light.MoveComponent::getTimestamp();
 	lastUpdate = std::max(lastUpdate, fr->getTimestamp());
 
-	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
+	for(auto it : vi.renderables)
 	{
-		SceneNode* node = (*it).node;
+		SceneNode* node = it.node;
 		FrustumComponent* bfr = node->getFrustumComponent();
 		MoveComponent* bmov = node->getMoveComponent();
 		SpatialComponent* sp = node->getSpatialComponent();
@@ -206,11 +206,11 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 
 	//std::cout << "Shadowmap for: " << &sm << std::endl;
 
-	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
+	for(auto it : vi.renderables)
 	{
 		r->getSceneDrawer().render(light, RenderableDrawer::RS_MATERIAL,
-			DEPTH_PASS, *(*it).node, (*it).subSpatialIndices, 
-			(*it).subSpatialIndicesCount);
+			DEPTH_PASS, *it.node, it.subSpatialIndices, 
+			it.subSpatialIndicesCount);
 	}
 
 	ANKI_COUNTER_INC(C_RENDERER_SHADOW_PASSES, (U64)1);

@@ -152,9 +152,9 @@ void Lf::run()
 	// Iterate the visible light and get those that have lens flare
 	Array<Light*, ANKI_MAX_LIGHTS_WITH_FLARE> lights;
 	U lightsCount = 0;
-	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
+	for(auto it : vi.lights)
 	{
-		SceneNode& sn = *(*it).node;
+		SceneNode& sn = *it.node;
 		ANKI_ASSERT(sn.getLight());
 		Light* light = sn.getLight();
 

@@ -25,12 +25,11 @@ void Ez::run()
 		cam.getFrustumComponent()->getVisibilityTestResults();
 
 	U count = 0;
-	for(auto it = vi.getRenderablesBegin();
-		it != vi.getRenderablesEnd() && count < maxObjectsToDraw; ++it)
+	for(auto it : vi.renderables)
 	{
 		r->getSceneDrawer().render(cam, RenderableDrawer::RS_MATERIAL,
-			DEPTH_PASS, *(*it).node, (*it).subSpatialIndices, 
-			(*it).subSpatialIndicesCount);
+			DEPTH_PASS, *it.node, it.subSpatialIndices, 
+			it.subSpatialIndicesCount);
 		++count;
 	}
 }

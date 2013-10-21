@@ -79,28 +79,6 @@ struct VisibilityTestResults
 		renderables.reserve(renderablesReservedSize);
 		lights.reserve(lightsReservedSize);
 	}
-
-	Container::iterator getRenderablesBegin()
-	{
-		return renderables.begin();
-	}
-	Container::iterator getRenderablesEnd()
-	{
-		return renderables.end();
-	}
-	U32 getRenderablesCount() const
-	{
-		return renderables.size();
-	}
-
-	Container::iterator getLightsBegin()
-	{
-		return lights.begin();
-	}
-	Container::iterator getLightsEnd()
-	{
-		return lights.end();
-	}
 };
 
 /// Sort spatial scene nodes on distance
