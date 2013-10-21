@@ -183,6 +183,11 @@ public:
 	/// Access the material
 	virtual const Material& getMaterial() = 0;
 
+	Bool castsShadow()
+	{
+		return getMaterial().getShadow() && !getMaterial().isBlendingEnabled();
+	}
+
 	/// Information for movables. It's actualy an array of transformations.
 	virtual const Transform* getRenderWorldTransforms()
 	{

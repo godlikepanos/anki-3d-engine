@@ -173,6 +173,8 @@ struct VisibilityTestJob: ThreadJob
 		scene->iterateSceneNodes([&](SceneNode& node)
 		{
 			FrustumComponent* fr = node.getFrustumComponent();
+			RenderComponent* r = node.getRenderComponent();
+
 			// Wont check the same
 			if(ANKI_UNLIKELY(&ref == fr))
 			{
@@ -201,8 +203,7 @@ struct VisibilityTestJob: ThreadJob
 
 			sp->enableBits(SpatialComponent::SF_VISIBLE_LIGHT);
 
-			RenderComponent* r = node.getRenderComponent();
-			if(r)
+			if(r && r->castsShadow())
 			{
 				lvisible->renderables.push_back(VisibleNode(
 					&node, subSpatialIndices, subSpatialIndicesCount));

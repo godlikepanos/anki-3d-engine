@@ -590,9 +590,9 @@ void Is::lightPass()
 	U visibleSpotTexLightsCount = 0;
 	Array<Light*, Sm::MAX_SHADOW_CASTERS> shadowCasters;
 
-	for(auto it = vi.getLightsBegin(); it != vi.getLightsEnd(); ++it)
+	for(auto it : vi.lights)
 	{
-		Light* light = (*it).node->getLight();
+		Light* light = it.node->getLight();
 		ANKI_ASSERT(light);
 		switch(light->getLightType())
 		{
@@ -705,8 +705,8 @@ void Is::lightPass()
 		job.plightsIdsBuffer = plightIdsClientBuffer;
 		job.slightsIdsBuffer = slightIdsClientBuffer;
 
-		job.lightsBegin = vi.getLightsBegin();
-		job.lightsEnd = vi.getLightsEnd();
+		job.lightsBegin = vi.lights.begin();
+		job.lightsEnd = vi.lights.end();
 
 		job.pointLightsCount = &pointLightsAtomicCount;
 		job.spotLightsCount = &spotLightsAtomicCount;

@@ -28,12 +28,11 @@ void Bs::run()
 		scene.getActiveCamera().getFrustumComponent()->
 		getVisibilityTestResults();
 
-	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd();
-		++it)
+	for(auto it : vi.renderables)
 	{
 		drawer.render(scene.getActiveCamera(), RenderableDrawer::RS_BLEND,
-			COLOR_PASS, *(*it).node, (*it).subSpatialIndices, 
-			(*it).subSpatialIndicesCount);
+			COLOR_PASS, *it.node, it.subSpatialIndices, 
+			it.subSpatialIndicesCount);
 	}
 
 	GlStateSingleton::get().setDepthMaskEnabled(true);

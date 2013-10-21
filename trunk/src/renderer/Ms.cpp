@@ -113,11 +113,11 @@ void Ms::run()
 	VisibilityTestResults& vi =
 		r->getSceneGraph().getActiveCamera().getVisibilityTestResults();
 
-	for(auto it = vi.getRenderablesBegin(); it != vi.getRenderablesEnd(); ++it)
+	for(auto it : vi.renderables)
 	{
 		r->getSceneDrawer().render(r->getSceneGraph().getActiveCamera(),
-			RenderableDrawer::RS_MATERIAL, COLOR_PASS, *(*it).node, 
-			(*it).subSpatialIndices, (*it).subSpatialIndicesCount);
+			RenderableDrawer::RS_MATERIAL, COLOR_PASS, *it.node, 
+			it.subSpatialIndices, it.subSpatialIndicesCount);
 	}
 
 	// If there is multisampling then resolve to singlesampled

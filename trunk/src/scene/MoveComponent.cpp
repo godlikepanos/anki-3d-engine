@@ -55,6 +55,10 @@ void MoveComponent::updateWorldTransform()
 		}
 
 		moveUpdate();
+
+		// Now it's a good time to cleanse parent
+		disableBits(MF_MARKED_FOR_UPDATE);
+		timestamp = getGlobTimestamp();
 	}
 
 	// Update the children
@@ -68,10 +72,6 @@ void MoveComponent::updateWorldTransform()
 
 		mov.updateWorldTransform();
 	});
-
-	// Now it's a good time to cleanse parent
-	disableBits(MF_MARKED_FOR_UPDATE);
-	timestamp = getGlobTimestamp();
 }
 
 } // end namespace anki
