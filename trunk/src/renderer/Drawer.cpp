@@ -260,7 +260,7 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 }
 
 //==============================================================================
-void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
+void RenderableDrawer::setupShaderProg(const PassLodKey& key_,
 	const FrustumComponent& fr, const ShaderProgram &prog,
 	RenderComponent& renderable, 
 	U32* subSpatialIndices, U subSpatialIndicesCount,
@@ -277,7 +277,7 @@ void RenderableDrawer::setupShaderProg(const PassLevelKey& key_,
 	vis.subSpatialIndicesCount = subSpatialIndicesCount;
 	vis.flod = flod;
 
-	PassLevelKey key(key_.pass,
+	PassLodKey key(key_.pass,
 		std::min(key_.level,
 		U8(renderable.getMaterial().getLevelsOfDetail() - 1)));
 
@@ -366,7 +366,7 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 		(rsn.getSpatialComponent()->getSpatialOrigin() - camPos).getLength();
 	F32 lod = r->calculateLod(dist);
 
-	PassLevelKey key(pass, lod);
+	PassLodKey key(pass, lod);
 
 	// Get rendering useful stuff
 	const ShaderProgram* prog;

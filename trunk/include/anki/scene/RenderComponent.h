@@ -95,7 +95,7 @@ public:
 	/// @}
 
 	const ShaderProgramUniformVariable* tryFindShaderProgramUniformVariable(
-		const PassLevelKey key) const
+		const PassLodKey key) const
 	{
 		return mvar->findShaderProgramUniformVariable(key);
 	}
@@ -173,7 +173,7 @@ public:
 	/// Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts
 	virtual void getRenderingData(
-		const PassLevelKey& key, 
+		const PassLodKey& key, 
 		const Vao*& vao, const ShaderProgram*& prog,
 		const U32* subMeshIndicesArray, U subMeshIndicesCount,
 		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,

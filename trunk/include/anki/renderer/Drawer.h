@@ -2,11 +2,11 @@
 #define ANKI_RENDERER_DRAWER_H
 
 #include "anki/util/StdTypes.h"
-#include "anki/resource/PassLevelKey.h"
+#include "anki/resource/PassLodKey.h"
 
 namespace anki {
 
-class PassLevelKey;
+class PassLodKey;
 class Renderer;
 class FrustumComponent;
 class SceneNode;
@@ -43,7 +43,7 @@ private:
 	Renderer* r;
 
 	void setupShaderProg(
-		const PassLevelKey& key,
+		const PassLodKey& key,
 		const FrustumComponent& fr,
 		const ShaderProgram& prog,
 		RenderComponent& renderable,

@@ -71,7 +71,7 @@ SkinModelPatch::SkinModelPatch(const ModelPatchBase* mpatch_,
 	skinMeshes.resize(mpatch->getMeshesCount());
 	for(U i = 0; i < mpatch->getMeshesCount(); i++)
 	{
-		PassLevelKey key;
+		PassLodKey key;
 		key.level = i;
 		skinMeshes[i].reset(new SkinMesh(&mpatch->getMeshBase(key)));
 	}
@@ -99,7 +99,7 @@ SkinModelPatch::SkinModelPatch(const ModelPatchBase* mpatch_,
 		U i = 0;
 		for(auto a : attribs)
 		{
-			PassLevelKey key;
+			PassLodKey key;
 			key.level = i;
 
 			mpatch->getMeshBase(key).getVboInfo(

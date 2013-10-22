@@ -68,7 +68,14 @@ public:
 
 	const std::string& getShaderSource(ShaderType type)
 	{
-		return shaderSources[type];
+		if((type == ST_TC || type == ST_TE) && !enableTess)
+		{
+			return emptyString;
+		}
+		else
+		{
+			return shaderSources[type];
+		}
 	}
 
 	XfbBufferMode getXfbBufferMode() const
@@ -100,6 +107,10 @@ protected:
 	/// The parseFileForPragmas fills this
 	StringList sourceLines;
 	Array<CodeBeginningPragma, ST_NUM> shaderStarts;
+
+	Bool enableTess = true;
+
+	std::string emptyString;
 
 	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get 
 	/// the output

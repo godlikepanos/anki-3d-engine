@@ -1,6 +1,10 @@
 #define DEFAULT_FLOAT_PRECISION highp
 #pragma anki include "shaders/Common.glsl"
 
+#if !GL_ES && __VERSION__ > 400
+layout(early_fragment_tests) in;
+#endif
+
 #pragma anki include "shaders/Pack.glsl"
 #pragma anki include "shaders/MsBsCommon.glsl"
 

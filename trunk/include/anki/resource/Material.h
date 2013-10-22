@@ -3,7 +3,7 @@
 
 #include "anki/resource/Resource.h"
 #include "anki/resource/ShaderProgramResource.h"
-#include "anki/resource/PassLevelKey.h"
+#include "anki/resource/PassLodKey.h"
 #include "anki/Math.h"
 #include "anki/util/Visitor.h"
 #include "anki/util/Dictionary.h"
@@ -77,7 +77,7 @@ public:
 	/// Given a key return the uniform. If the uniform is not present in the
 	/// LOD pass key then returns nullptr
 	const ShaderProgramUniformVariable* findShaderProgramUniformVariable(
-		const PassLevelKey& key) const
+		const PassLodKey& key) const
 	{
 		return progVars[key.pass][key.level];
 	}
@@ -325,13 +325,13 @@ public:
 	}
 	/// @}
 
-	const ShaderProgram& findShaderProgram(const PassLevelKey& key) const
+	const ShaderProgram& findShaderProgram(const PassLodKey& key) const
 	{
 		ANKI_ASSERT(progs[key.pass][key.level].isLoaded());
 		return *progs[key.pass][key.level];
 	}
 
-	const ShaderProgram* tryFindShaderProgram(const PassLevelKey& key) const
+	const ShaderProgram* tryFindShaderProgram(const PassLodKey& key) const
 	{
 		if(progs[key.pass][key.level].isLoaded())
 		{
