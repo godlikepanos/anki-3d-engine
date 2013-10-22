@@ -63,6 +63,11 @@ void ModelPatchBase::createVao(const ShaderProgram& prog,
 			offset);
 	}
 
+	if(vao.getAttachmentsCount() < 1)
+	{
+		throw ANKI_EXCEPTION("The program doesn't have any attributes");
+	}
+
 	// The indices VBO
 	meshb.getVboInfo(Mesh::VA_INDICES, vbo, size, type,
 			stride, offset);

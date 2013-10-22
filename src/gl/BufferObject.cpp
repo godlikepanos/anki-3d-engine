@@ -59,6 +59,12 @@ void BufferObject::create(GLenum target_, U32 sizeInBytes_,
 		{
 			throw ANKI_EXCEPTION("Buffer size exceeds GL implementation max");
 		}
+
+		if(sizeInBytes_ > 16384)
+		{
+			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
+				"than the spec's min", sizeInBytes_);
+		}
 	}
 
 	usage = usage_;

@@ -142,6 +142,8 @@ void initSubsystems()
 	initializer.get("pps.hdr.renderingQuality") = 0.3;
 	initializer.get("maxTextureSize") = 1024;
 	initializer.get("mrt") = false;
+	initializer.get("tilesXCount") = 32;
+	initializer.get("tilesYCount") = 32;
 	initializer.get("pps.sharpen") = false;
 	initializer.get("pps.gammaCorrection") = false;
 #endif

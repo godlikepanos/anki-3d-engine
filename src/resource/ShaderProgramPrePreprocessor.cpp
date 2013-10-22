@@ -22,7 +22,7 @@ static Array<const char*, 10> commands = {{
 	"#pragma anki start computeShader",
 	"#pragma anki include",
 	"#pragma anki transformFeedbackVaryings separate",
-	"#pragma anki transformFeedbackVaryings interleaved"
+	"#pragma anki transformFeedbackVaryings interleaved",
 	"#pragma anki disable tess"}};
 
 static_assert(ST_VERTEX == 0 && ST_COMPUTE == 5, "See file");
