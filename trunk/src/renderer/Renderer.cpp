@@ -67,6 +67,7 @@ RendererInitializer::RendererInitializer()
 	newOption("samples", 1);
 	newOption("tilesXCount", 16);
 	newOption("tilesYCount", 16);
+	newOption("tessellation", true);
 
 	if(GlStateCommonSingleton::get().getGpu() == GlStateCommon::GPU_ARM)
 	{
@@ -110,6 +111,9 @@ void Renderer::init(const RendererInitializer& initializer)
 	tilesCount.x() = initializer.get("tilesXCount");
 	tilesCount.y() = initializer.get("tilesYCount");
 
+	tessellation = GlStateCommonSingleton::get().isTessellationSupported() 
+		&& (U)initializer.get("tessellation");
+
 	// a few sanity checks
 	if(samples != 1 && samples != 4 && samples != 8 && samples != 16
 		&& samples != 32)
@@ -147,6 +151,7 @@ void Renderer::init(const RendererInitializer& initializer)
 	ss << "#define USE_MRT " << (U)useMrt << "\n"
 		<< "#define RENDERING_WIDTH " << width << "\n"
 		<< "#define RENDERING_HEIGHT " << height << "\n";
+
 	shaderPostProcessorString = ss.str();
 }
 

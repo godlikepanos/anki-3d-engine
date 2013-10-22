@@ -478,7 +478,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 1
+#if 0
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -570,6 +570,9 @@ void initSubsystems(int argc, char* argv[])
 	initializer.get("height") = win->getHeight();
 	initializer.get("lodDistance") = 20.0;
 	initializer.get("samples") = 1;
+	initializer.get("tessellation") = true;
+	initializer.get("tilesXCount") = 16;
+	initializer.get("tilesYCount") = 16;
 
 	MainRendererSingleton::get().init(initializer);
 

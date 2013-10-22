@@ -165,6 +165,11 @@ public:
 		return isOffscreen;
 	}
 
+	Bool usesTessellation() const
+	{
+		return tessellation;
+	}
+
 	F32 getRenderingQuality() const
 	{
 		return renderingQuality;
@@ -259,6 +264,7 @@ private:
 	U8 samples; ///< Number of sample in multisampling
 	Bool8 useMrt; ///< Use MRT or pack things inside the G buffer
 	Bool8 isOffscreen; ///< Is offscreen renderer?
+	Bool8 tessellation;
 	F32 renderingQuality; ///< Rendering quality. Relevant for offscreen 
 	U32 maxTextureSize; ///< Texture size limit. Just kept here.
 	UVec2 tilesCount;

@@ -4,6 +4,8 @@
 #include "anki/util/StringList.h"
 #include "anki/misc/Xml.h"
 #include "anki/core/Logger.h"
+#include "anki/renderer/MainRenderer.h"
+
 #include <algorithm>
 #include <sstream>
 
@@ -77,11 +79,19 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	}
 
 	// Write all
+	tessellation = 
+		tessellation && MainRendererSingleton::get().usesTessellation();
+
 	std::stringstream defines;
 	defines << "#define INSTANCING " << (U)instanced << "\n";
 	defines << "#define INSTANCE_ID_FRAGMENT_SHADER " 
 		<< (U)instanceIdInFragmentShader << "\n";
 	defines << "#define TESSELLATION " << (U)tessellation << "\n";
+
+	if(!tessellation)
+	{
+		defines << "#pragma anki disable tess\n";
+	}
 
 	source  = defines.str() + srcLines.join("\n");
 }

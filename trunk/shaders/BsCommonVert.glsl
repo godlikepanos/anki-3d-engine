@@ -9,7 +9,7 @@ layout(location = 3) in vec2 texCoord;
 /// @name Varyings
 /// @{
 out vec2 vTexCoord;
-out flat float vAlpha;
+flat out float vAlpha;
 /// @}
 
 //==============================================================================
