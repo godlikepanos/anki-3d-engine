@@ -92,16 +92,16 @@ public:
 
 	/// @name Accessors
 	/// @{
-	SkinMesh& getSkinMesh(const PassLevelKey& key)
+	SkinMesh& getSkinMesh(const PassLodKey& key)
 	{
 		return *skinMeshes[key.level];
 	}
-	const SkinMesh& getSkinMesh(const PassLevelKey& key) const
+	const SkinMesh& getSkinMesh(const PassLodKey& key) const
 	{
 		return *skinMeshes[key.level];
 	}
 
-	const Vao& getTransformFeedbackVao(const PassLevelKey& key) const
+	const Vao& getTransformFeedbackVao(const PassLodKey& key) const
 	{
 		return xfbVaos[key.level];
 	}
@@ -109,7 +109,7 @@ public:
 
 	/// @name Implementations of ModelPatchBase virtuals
 	/// @{
-	const MeshBase& getMeshBase(const PassLevelKey& key) const
+	const MeshBase& getMeshBase(const PassLodKey& key) const
 	{
 		return *skinMeshes[key.level];
 	}

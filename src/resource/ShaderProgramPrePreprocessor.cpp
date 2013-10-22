@@ -13,7 +13,7 @@ namespace anki {
 
 // Keep the strings in that order so that the start pragmas will match to the
 // ShaderType enums
-static Array<const char*, 9> commands = {{
+static Array<const char*, 10> commands = {{
 	"#pragma anki start vertexShader",
 	"#pragma anki start tcShader",
 	"#pragma anki start teShader",
@@ -22,7 +22,8 @@ static Array<const char*, 9> commands = {{
 	"#pragma anki start computeShader",
 	"#pragma anki include",
 	"#pragma anki transformFeedbackVaryings separate",
-	"#pragma anki transformFeedbackVaryings interleaved"}};
+	"#pragma anki transformFeedbackVaryings interleaved"
+	"#pragma anki disable tess"}};
 
 static_assert(ST_VERTEX == 0 && ST_COMPUTE == 5, "See file");
 
@@ -115,6 +116,10 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 			std::string slist = {line, strlen(commands[8]), std::string::npos};
 			trffbVaryings = StringList::splitString(slist.c_str(), ' ');
 			xfbBufferMode = XFBBM_INTERLEAVED;
+		}
+		else if((npos = line.find(commands[9])) == 0)
+		{
+			enableTess = false;	
 		}
 		else
 		{

@@ -32,8 +32,8 @@ void Deformer::deform(SkinNode& skinNode, SkinPatchNode& node) const
 	//
 	const ShaderProgram* sProg;
 
-	/*if(mtl.variableExistsAndInKey("normal", PassLevelKey(0, 0))
-		&& mtl.variableExistsAndInKey("tangent", PassLevelKey(0, 0)))
+	/*if(mtl.variableExistsAndInKey("normal", PassLodKey(0, 0))
+		&& mtl.variableExistsAndInKey("tangent", PassLodKey(0, 0)))
 	{*/
 		sProg = tfHwSkinningAllSProg.get();
 	/*}

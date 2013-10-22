@@ -72,7 +72,7 @@ void ModelPatchBase::createVao(const ShaderProgram& prog,
 }
 
 //==============================================================================
-void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
+void ModelPatchBase::getRenderingData(const PassLodKey& key, const Vao*& vao,
 	const ShaderProgram*& prog, U32& indicesCount) const
 {
 	const U meshLods = getMeshesCount();
@@ -89,7 +89,7 @@ void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
 	vao = &modelPatchProtected.vaos[index];
 
 	// Mesh and indices
-	PassLevelKey meshKey;
+	PassLodKey meshKey;
 	meshKey.pass = key.pass;
 	meshKey.level = std::min(key.level, (U8)(meshLods - 1));
 
@@ -97,7 +97,7 @@ void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
 	indicesCount = mesh.getIndicesCount();
 
 	// Prog
-	PassLevelKey mtlKey;
+	PassLodKey mtlKey;
 	mtlKey.pass = key.pass;
 	mtlKey.level = std::min(key.level, (U8)(mtlLods - 1));
 
@@ -105,7 +105,7 @@ void ModelPatchBase::getRenderingData(const PassLevelKey& key, const Vao*& vao,
 }
 
 //==============================================================================
-void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
+void ModelPatchBase::getRenderingDataSub(const PassLodKey& key,
 	const Vao*& vao, const ShaderProgram*& prog, 
 	const U32* subMeshIndexArray, U subMeshIndexCount,
 	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
@@ -126,14 +126,14 @@ void ModelPatchBase::getRenderingDataSub(const PassLevelKey& key,
 	vao = &modelPatchProtected.vaos[vaoindex];
 
 	// Prog
-	PassLevelKey mtlKey;
+	PassLodKey mtlKey;
 	mtlKey.pass = key.pass;
 	mtlKey.level = std::min(key.level, (U8)(mtlLods - 1));
 
 	prog = &getMaterial().findShaderProgram(mtlKey);
 
 	// Mesh and indices
-	PassLevelKey meshKey;
+	PassLodKey meshKey;
 	meshKey.pass = key.pass;
 	meshKey.level = std::min(key.level, (U8)(meshLods - 1));
 
@@ -198,19 +198,19 @@ void ModelPatchBase::create()
 	{
 		for(U pass = 0; pass < mtl.getPassesCount(); ++pass)
 		{
-			PassLevelKey key(pass, lod);
+			PassLodKey key(pass, lod);
 			const ShaderProgram* prog;
 			const Mesh* mesh;
 
 			// Get mesh
 			ANKI_ASSERT(getMeshesCount() > 0);
-			PassLevelKey meshKey = key;
+			PassLodKey meshKey = key;
 			meshKey.level = std::min(key.level, (U8)(getMeshesCount() - 1));
 			mesh = &getMesh(meshKey);
 
 			// Get shader prog
 			ANKI_ASSERT(getMaterial().getLevelsOfDetail() > 0);
-			PassLevelKey shaderKey = key;
+			PassLodKey shaderKey = key;
 			shaderKey.level = std::min(key.level,
 				(U8)(getMaterial().getLevelsOfDetail() - 1));
 			prog = getMaterial().tryFindShaderProgram(shaderKey);
@@ -329,7 +329,7 @@ void Model::load(const char* filename)
 		}
 
 		// Calculate compound bounding volume
-		PassLevelKey key;
+		PassLodKey key;
 		key.level = 0;
 		visibilityShape = modelPatches[0]->getMesh(key).getBoundingShape();
 

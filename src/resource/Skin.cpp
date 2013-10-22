@@ -3,7 +3,7 @@
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/SkelAnim.h"
 #include "anki/resource/Mesh.h"
-#include "anki/resource/PassLevelKey.h"
+#include "anki/resource/PassLodKey.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/Material.h"
 #include "anki/misc/Xml.h"
@@ -73,7 +73,7 @@ void Skin::load(const char* filename)
 		{
 			for(U i = 0; i < patch->getMeshesCount(); i++)
 			{
-				PassLevelKey key;
+				PassLodKey key;
 				key.level = i;
 				const Mesh& meshBase = patch->getMesh(key);
 				if(!meshBase.hasWeights())

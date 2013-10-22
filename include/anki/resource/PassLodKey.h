@@ -20,24 +20,24 @@ enum Pass
 const U MAX_LOD = 3;
 
 /// A key that consistst of the rendering pass and the level of detail
-struct PassLevelKey
+struct PassLodKey
 {
 	U8 pass;
 	U8 level;
 
-	PassLevelKey()
+	PassLodKey()
 		: pass(COLOR_PASS), level(0)
 	{
 		ANKI_ASSERT(level <= MAX_LOD);
 	}
 
-	PassLevelKey(const PassLevelKey& b)
+	PassLodKey(const PassLodKey& b)
 		: pass(b.pass), level(b.level)
 	{
 		ANKI_ASSERT(level <= MAX_LOD);
 	}
 
-	explicit PassLevelKey(const U8 pass_, const U8 level_)
+	explicit PassLodKey(const U8 pass_, const U8 level_)
 		: pass(pass_), level(level_)
 	{
 		ANKI_ASSERT(level <= MAX_LOD);

@@ -4,7 +4,7 @@
 #include "anki/resource/Resource.h"
 #include "anki/gl/Vao.h"
 #include "anki/collision/Obb.h"
-#include "anki/resource/PassLevelKey.h"
+#include "anki/resource/PassLodKey.h"
 #include "anki/resource/Mesh.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Skeleton.h"
@@ -30,7 +30,7 @@ public:
 		return *modelPatchProtected.mtl;
 	}
 
-	const Mesh& getMesh(const PassLevelKey& key) const
+	const Mesh& getMesh(const PassLodKey& key) const
 	{
 		ANKI_ASSERT(key.level < modelPatchProtected.meshes.size());
 		return *modelPatchProtected.meshes[key.level];
@@ -43,31 +43,31 @@ public:
 
 	const Obb& getBoundingShape() const
 	{
-		PassLevelKey key(COLOR_PASS, 0);
+		PassLodKey key(COLOR_PASS, 0);
 		return getMesh(key).getBoundingShape();
 	}
 
 	const Obb& getBoundingShapeSub(U32 subMeshId) const
 	{
-		PassLevelKey key(COLOR_PASS, 0);
+		PassLodKey key(COLOR_PASS, 0);
 		return getMesh(key).getBoundingShapeSub(subMeshId);
 	}
 
 	U32 getSubMeshesCount() const
 	{
-		PassLevelKey key(COLOR_PASS, 0);
+		PassLodKey key(COLOR_PASS, 0);
 		return getMesh(key).getSubMeshesCount();
 	}
 
 	/// Given a pass lod key retrieve variables useful for rendering
-	void getRenderingData(const PassLevelKey& key, const Vao*& vao,
+	void getRenderingData(const PassLodKey& key, const Vao*& vao,
 		const ShaderProgram*& prog, U32& indicesCount) const;
 
 	/// Get information for multiDraw rendering.
 	/// Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts
 	void getRenderingDataSub(
-		const PassLevelKey& key, 
+		const PassLodKey& key, 
 		const Vao*& vao, 
 		const ShaderProgram*& prog,
 		const U32* subMeshIndicesArray, U subMeshIndicesCount,
