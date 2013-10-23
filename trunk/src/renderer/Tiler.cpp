@@ -1,7 +1,7 @@
 #include "anki/renderer/Tiler.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ShaderProgramResource.h"
-#include "anki/core/ThreadPool.h"
+#include "anki/core/Threadpool.h"
 #include "anki/scene/Camera.h"
 #include <sstream>
 
@@ -19,7 +19,7 @@ namespace anki {
 	ANKI_ASSERT(p_ < &tiler->allPlanes[tiler->allPlanes.size()]);
 
 /// Job that updates the left, right, top and buttom tile planes
-struct UpdatePlanesPerspectiveCameraJob: ThreadJob
+struct UpdatePlanesPerspectiveCameraJob: ThreadpoolTask
 {
 	Tiler* tiler = nullptr;
 	PerspectiveCamera* cam = nullptr;
@@ -28,13 +28,13 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadJob
 	const PixelArray* pixels = nullptr;
 #endif
 
-	void operator()(U threadId, U threadsCount)
+	void operator()(ThreadId threadId, U threadsCount)
 	{
 #if ANKI_TILER_ENABLE_GPU
 		ANKI_ASSERT(tiler && cam && pixels);
 #endif
 
-		U64 start, end;
+		PtrSize start, end;
 		Transform trf = Transform(cam->getWorldTransform());
 
 		if(frustumChanged)
@@ -302,7 +302,7 @@ void Tiler::updateTiles(Camera& cam)
 	//
 	// Issue parallel jobs
 	//
-	Array<UpdatePlanesPerspectiveCameraJob, ThreadPool::MAX_THREADS> jobs;
+	Array<UpdatePlanesPerspectiveCameraJob, Threadpool::MAX_THREADS> jobs;
 	U32 camTimestamp = cam.FrustumComponent::getTimestamp();
 
 	// Do a job that transforms only the planes when:
@@ -311,7 +311,7 @@ void Tiler::updateTiles(Camera& cam)
 	Bool frustumChanged =
 		camTimestamp >= planes4UpdateTimestamp || prevCam != &cam;
 
-	ThreadPool& threadPool = ThreadPoolSingleton::get();
+	Threadpool& threadPool = ThreadpoolSingleton::get();
 
 	switch(cam.getCameraType())
 	{
@@ -324,7 +324,7 @@ void Tiler::updateTiles(Camera& cam)
 			jobs[i].pixels = &pixels;
 #endif
 			jobs[i].frustumChanged = frustumChanged;
-			threadPool.assignNewJob(i, &jobs[i]);
+			threadPool.assignNewTask(i, &jobs[i]);
 		}
 		break;
 	default:
@@ -339,7 +339,7 @@ void Tiler::updateTiles(Camera& cam)
 	}
 
 	// Sync threads
-	threadPool.waitForAllJobsToFinish();
+	threadPool.waitForAllThreadsToFinish();
 
 	// 
 	// Misc

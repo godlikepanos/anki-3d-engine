@@ -6,7 +6,7 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/RenderComponent.h"
-#include "anki/core/ThreadPool.h"
+#include "anki/core/Threadpool.h"
 
 namespace anki {
 
@@ -118,13 +118,13 @@ struct MaterialSortFunctor
 };
 
 /// Thread job to short scene nodes by distance
-struct DistanceSortJob: ThreadJob
+struct DistanceSortJob: ThreadpoolTask
 {
 	U nodesCount;
 	VisibilityTestResults::Container::iterator nodes;
 	Vec3 origin;
 
-	void operator()(U /*threadId*/, U /*threadsCount*/)
+	void operator()(ThreadId /*threadId*/, U /*threadsCount*/)
 	{
 		DistanceSortFunctor comp;
 		comp.origin = origin;
@@ -133,12 +133,12 @@ struct DistanceSortJob: ThreadJob
 };
 
 /// Thread job to short renderable scene nodes by material
-struct MaterialSortJob: ThreadJob
+struct MaterialSortJob: ThreadpoolTask
 {
 	U nodesCount;
 	VisibilityTestResults::Container::iterator nodes;
 
-	void operator()(U /*threadId*/, U /*threadsCount*/)
+	void operator()(ThreadId /*threadId*/, U /*threadsCount*/)
 	{
 		std::sort(nodes, nodes + nodesCount, MaterialSortFunctor());
 	}

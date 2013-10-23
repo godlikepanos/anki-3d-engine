@@ -22,7 +22,7 @@
 #include "anki/resource/Skin.h"
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
-#include "anki/core/ThreadPool.h"
+#include "anki/core/Threadpool.h"
 #include "anki/core/NativeWindow.h"
 #include "anki/core/Counters.h"
 #include "anki/Scene.h"
@@ -154,7 +154,7 @@ void initSubsystems()
 	StdinListenerSingleton::get().start();
 
 	// Parallel jobs
-	ThreadPoolSingleton::get().init(getCpuCoresCount());
+	ThreadpoolSingleton::get().init(getCpuCoresCount());
 }
 
 //==============================================================================

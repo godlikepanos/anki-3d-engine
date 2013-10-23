@@ -3,7 +3,7 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
-#include "anki/core/ThreadPool.h"
+#include "anki/core/Threadpool.h"
 #include "anki/core/Counters.h"
 #include "anki/core/Logger.h"
 #include <sstream>
@@ -86,7 +86,7 @@ static Bool useCompute()
 
 //==============================================================================
 /// Write the lights to a client buffer
-struct WriteLightsJob: ThreadJob
+struct WriteLightsJob: ThreadpoolTask
 {
 	shader::PointLight* pointLights = nullptr;
 	shader::SpotLight* spotLights = nullptr;
@@ -116,7 +116,7 @@ struct WriteLightsJob: ThreadJob
 	/// Bin lights on CPU path
 	Bool binLights = true;
 
-	void operator()(U threadId, U threadsCount)
+	void operator()(ThreadId threadId, U threadsCount)
 	{
 		U ligthsCount = lightsEnd - lightsBegin;
 
@@ -576,7 +576,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 //==============================================================================
 void Is::lightPass()
 {
-	ThreadPool& threadPool = ThreadPoolSingleton::get();
+	Threadpool& threadPool = ThreadpoolSingleton::get();
 	VisibilityTestResults& vi = 
 		cam->getFrustumComponent()->getVisibilityTestResults();
 
@@ -656,7 +656,7 @@ void Is::lightPass()
 	ANKI_ASSERT(spotTexLightsOffset + spotTexLightsSize <= calcLightsUboSize());
 
 	// Fire the super jobs
-	Array<WriteLightsJob, ThreadPool::MAX_THREADS> jobs;
+	Array<WriteLightsJob, Threadpool::MAX_THREADS> jobs;
 
 	U8* lightsClientBuffer = alloc.allocate(lightsUbo.getSizeInBytes());
 
@@ -719,14 +719,14 @@ void Is::lightPass()
 		job.tiler = &r->getTiler();
 		job.is = this;
 
-		threadPool.assignNewJob(i, &job);
+		threadPool.assignNewTask(i, &job);
 	}
 
 	// In the meantime set the state
 	setState();
 
 	// Sync
-	threadPool.waitForAllJobsToFinish();
+	threadPool.waitForAllThreadsToFinish();
 
 	// Write the light count for each tile
 	for(U y = 0; y < r->getTilesCount().y(); y++)

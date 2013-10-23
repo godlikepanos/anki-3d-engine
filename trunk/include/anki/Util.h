@@ -4,7 +4,7 @@
 #include "anki/util/Allocator.h"
 #include "anki/util/Array.h"
 #include "anki/util/Assert.h"
-#include "anki/util/Barrier.h"
+#include "anki/util/Thread.h"
 #include "anki/util/Bitset.h"
 #include "anki/util/Dictionary.h"
 #include "anki/util/DynamicArray.h"
