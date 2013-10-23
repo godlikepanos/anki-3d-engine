@@ -8,7 +8,7 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/core/Logger.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/core/ThreadPool.h"
+#include "anki/core/Threadpool.h"
 
 namespace anki {
 
@@ -378,7 +378,7 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 	// Sort
 	//
 
-	ThreadPool& threadPool = ThreadPoolSingleton::get();
+	Threadpool.h& threadPool = Threadpool.hSingleton::get();
 
 	// Sort the renderables in a another thread
 	DistanceSortJob dsjob;
@@ -388,7 +388,7 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 	threadPool.assignNewJob(0, &dsjob);
 
 	// The rest of the jobs are dummy
-	Array<ThreadJobDummy, ThreadPool::MAX_THREADS>  dummyjobs;
+	Array<ThreadJobDummy, Threadpool.h::MAX_THREADS>  dummyjobs;
 	for(U i = 1; i < threadPool.getThreadsCount(); i++)
 	{
 		threadPool.assignNewJob(i, &dummyjobs[i]);

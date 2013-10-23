@@ -33,7 +33,7 @@ struct SortSubspatialsFunctor
 };
 
 //==============================================================================
-struct VisibilityTestJob: ThreadJob
+struct VisibilityTestJob: ThreadpoolTask
 {
 	U nodesCount = 0;
 	SceneGraph* scene = nullptr;
@@ -89,7 +89,7 @@ struct VisibilityTestJob: ThreadJob
 	}
 
 	/// Do the tests
-	void operator()(U threadId, U threadsCount)
+	void operator()(ThreadId threadId, U threadsCount)
 	{
 		U64 start, end;
 		choseStartEnd(threadId, threadsCount, nodesCount, start, end);
@@ -222,8 +222,8 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	//
 	// Do the tests in parallel
 	//
-	ThreadPool& threadPool = ThreadPoolSingleton::get();
-	VisibilityTestJob jobs[ThreadPool::MAX_THREADS];
+	Threadpool& threadPool = ThreadpoolSingleton::get();
+	VisibilityTestJob jobs[Threadpool::MAX_THREADS];
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		jobs[i].nodesCount = scene.getSceneNodesCount();
@@ -232,10 +232,10 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 		jobs[i].tiler = &r.getTiler();
 		jobs[i].frameAlloc = scene.getFrameAllocator();
 
-		threadPool.assignNewJob(i, &jobs[i]);
+		threadPool.assignNewTask(i, &jobs[i]);
 	}
 
-	threadPool.waitForAllJobsToFinish();
+	threadPool.waitForAllThreadsToFinish();
 
 	//
 	// Combine results
@@ -293,13 +293,13 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	dsjob.nodes = visible->lights.begin();
 	dsjob.nodesCount = visible->lights.size();
 	dsjob.origin = fr->getFrustumOrigin();
-	threadPool.assignNewJob(0, &dsjob);
+	threadPool.assignNewTask(0, &dsjob);
 
 	// The rest of the jobs are dummy
-	ThreadJobDummy dummyjobs[ThreadPool::MAX_THREADS];
+	DummyThreadpoolTask dummyjobs[Threadpool::MAX_THREADS];
 	for(U i = 1; i < threadPool.getThreadsCount(); i++)
 	{
-		threadPool.assignNewJob(i, &dummyjobs[i]);
+		threadPool.assignNewTask(i, &dummyjobs[i]);
 	}
 
 	// Sort the renderables in the main thread
@@ -307,7 +307,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	dsfunc.origin = fr->getFrustumOrigin();
 	std::sort(visible->renderables.begin(), visible->renderables.end(), dsfunc);
 
-	threadPool.waitForAllJobsToFinish();
+	threadPool.waitForAllThreadsToFinish();
 }
 
 } // end namespace anki

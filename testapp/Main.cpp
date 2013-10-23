@@ -24,7 +24,6 @@
 #include "anki/event/MainRendererPpsHdrEvent.h"
 #include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
-#include "anki/core/ThreadPool.h"
 #include "anki/core/Timestamp.h"
 #include "anki/core/NativeWindow.h"
 #include "anki/Scene.h"
@@ -580,7 +579,7 @@ void initSubsystems(int argc, char* argv[])
 	StdinListenerSingleton::get().start();
 
 	// Parallel jobs
-	ThreadPoolSingleton::get().init(getCpuCoresCount());
+	ThreadpoolSingleton::get().init(getCpuCoresCount());
 }
 
 //==============================================================================

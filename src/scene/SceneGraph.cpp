@@ -2,7 +2,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/ModelNode.h"
 #include "anki/util/Exception.h"
-#include "anki/core/ThreadPool.h"
+#include "anki/core/Threadpool.h"
 #include "anki/core/Counters.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/misc/Xml.h"
@@ -14,11 +14,11 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-struct UpdateMoveComponentsJob: ThreadJob
+struct UpdateMoveComponentsJob: ThreadpoolTask
 {
 	SceneGraph* scene = nullptr;
 
-	void operator()(U threadId, U threadsCount)
+	void operator()(ThreadId threadId, U threadsCount)
 	{
 		U64 start, end;
 		ANKI_ASSERT(scene);
@@ -65,14 +65,14 @@ static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 }
 
 //==============================================================================
-struct UpdateSceneNodesJob: ThreadJob
+struct UpdateSceneNodesJob: ThreadpoolTask
 {
 	SceneGraph* scene = nullptr;
 	F32 prevUpdateTime;
 	F32 crntTime;
 	SectorGroup* sectorGroup;
 
-	void operator()(U threadId, U threadsCount)
+	void operator()(ThreadId threadId, U threadsCount)
 	{
 		ANKI_ASSERT(scene);
 		U64 start, end;
@@ -231,7 +231,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 
 	deleteNodesMarkedForDeletion();
 
-	ThreadPool& threadPool = ThreadPoolSingleton::get();
+	Threadpool& threadPool = ThreadpoolSingleton::get();
 	(void)threadPool;
 
 	// XXX Do that in parallel
@@ -251,16 +251,16 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 		}
 	}
 #else
-	UpdateMoveComponentsJob jobs[ThreadPool::MAX_THREADS];
+	UpdateMoveComponentsJob jobs[Threadpool::MAX_THREADS];
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		jobs[i].scene = this;
 
-		threadPool.assignNewJob(i, &jobs[i]);
+		threadPool.assignNewTask(i, &jobs[i]);
 	}
 
-	threadPool.waitForAllJobsToFinish();
+	threadPool.waitForAllThreadsToFinish();
 #endif
 
 	// Then the rest
@@ -270,7 +270,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 		updateSceneNode(*n, prevUpdateTime, crntTime, sectorGroup);
 	}
 #else
-	Array<UpdateSceneNodesJob, ThreadPool::MAX_THREADS> jobs2;
+	Array<UpdateSceneNodesJob, Threadpool::MAX_THREADS> jobs2;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
@@ -281,10 +281,10 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 		job.crntTime = crntTime;
 		job.sectorGroup = &sectorGroup;
 
-		threadPool.assignNewJob(i, &job);
+		threadPool.assignNewTask(i, &job);
 	}
 
-	threadPool.waitForAllJobsToFinish();
+	threadPool.waitForAllThreadsToFinish();
 #endif
 
 	doVisibilityTests(*mainCam, *this, renderer);
