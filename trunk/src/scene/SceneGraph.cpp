@@ -46,6 +46,7 @@ static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 	SpatialComponent* sp = sn.getSpatialComponent();
 	if(sp)
 	{
+		sp->update();
 		sp->resetFrame();
 	}
 

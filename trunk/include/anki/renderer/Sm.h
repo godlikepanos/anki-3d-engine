@@ -29,9 +29,9 @@ public:
 		return enabled;
 	}
 
-	Bool getPcfEnabled() const
+	Bool getPoissonEnabled() const
 	{
-		return pcfEnabled;
+		return poissonEnabled;
 	}
 	/// @}
 
@@ -55,8 +55,8 @@ private:
 	/// If false then disable SM at all
 	Bool enabled; 
 
-	/// Enable Percentage Closer Filtering for all the levels
-	Bool pcfEnabled;
+	/// Enable Poisson for all the levels
+	Bool poissonEnabled;
 
 	/// Shadowmap bilinear filtering for the first level. Better quality
 	Bool bilinearEnabled;

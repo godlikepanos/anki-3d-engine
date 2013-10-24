@@ -19,20 +19,28 @@ SpatialComponent::~SpatialComponent()
 {}
 
 //==============================================================================
-void SpatialComponent::markForUpdate()
+void SpatialComponent::update()
 {
-	visitThisAndChildren([](SpatialComponent& sp)
+	if(getParent() == nullptr)
 	{
-		sp.updateInternal();
-	});
+		visitThisAndChildren([](SpatialComponent& sp)
+		{
+			sp.updateInternal();
+		});	
+	}
 }
 
 //==============================================================================
 void SpatialComponent::updateInternal()
 {
-	spatialCs->toAabb(aabb);
-	origin = (aabb.getMax() + aabb.getMin()) * 0.5;
-	timestamp = getGlobTimestamp();
+	if(bitsEnabled(SF_MARKED_FOR_UPDATE))
+	{
+		spatialCs->toAabb(aabb);
+		origin = (aabb.getMax() + aabb.getMin()) * 0.5;
+		timestamp = getGlobTimestamp();
+
+		disableBits(SF_MARKED_FOR_UPDATE);
+	}
 }
 
 //==============================================================================
