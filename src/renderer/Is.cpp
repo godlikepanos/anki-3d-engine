@@ -464,13 +464,13 @@ void Is::initInternal(const RendererInitializer& initializer)
 		<< "\n#define TILES_BLOCK_BINDING " << TILES_BLOCK_BINDING
 		<< "\n";
 
-	if(sm.getPcfEnabled())
+	if(sm.getPoissonEnabled())
 	{
-		pps << "#define PCF 1\n";
+		pps << "#define POISSON 1\n";
 	}
 	else
 	{
-		pps << "#define PCF 0\n";
+		pps << "#define POISSON 0\n";
 	}
 
 	// point light

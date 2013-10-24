@@ -18,7 +18,7 @@ void Sm::init(const RendererInitializer& initializer)
 		return;
 	}
 
-	pcfEnabled = initializer.get("is.sm.pcfEnabled");
+	poissonEnabled = initializer.get("is.sm.poissonEnabled");
 	bilinearEnabled = initializer.get("is.sm.bilinearEnabled");
 	resolution = initializer.get("is.sm.resolution");
 

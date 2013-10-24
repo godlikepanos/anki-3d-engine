@@ -20,7 +20,7 @@ RendererInitializer::RendererInitializer()
 
 	// Is
 	newOption("is.sm.enabled", true);
-	newOption("is.sm.pcfEnabled", true);
+	newOption("is.sm.poissonEnabled", true);
 	newOption("is.sm.bilinearEnabled", true);
 	newOption("is.sm.resolution", 512);
 	newOption("is.sm.maxLights", 4);

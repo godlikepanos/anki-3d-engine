@@ -188,39 +188,38 @@ float calcSpotFactor(in SpotLight light, in vec3 frag2LightVec)
 }
 
 //==============================================================================
-#if PCF == 1
-float pcfLow(in sampler2DArrayShadow shadowMap, in vec3 shadowUv)
-{
-	float shadowCol = textureOffset(shadowMap, shadowUv, ivec2(-1, -1));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, -1));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, -1));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(-1, 0));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, 0));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, 0));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(-1, 1));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(0, 1));
-	shadowCol += textureOffset(shadowMap, shadowUv, ivec2(1, 1));
-
-	shadowCol *= (1.0 / 9.0);
-	return shadowCol;
-}
-#endif
-
-//==============================================================================
 float calcShadowFactor(in SpotTexLight light, in vec3 fragPosVspace, 
 	in mediump sampler2DArrayShadow shadowMapArr, in float layer)
 {
 	vec4 texCoords4 = light.texProjectionMat * vec4(fragPosVspace, 1.0);
 	vec3 texCoords3 = texCoords4.xyz / texCoords4.w;
 
-#if PCF == 1
-	float shadowFactor = pcfLow(shadowMapArr, texCoords3);
+#if POISSON == 1
+	const vec2 poissonDisk[4] = vec2[](
+		vec2(-0.94201624, -0.39906216),
+		vec2(0.94558609, -0.76890725),
+		vec2(-0.094184101, -0.92938870),
+		vec2(0.34495938, 0.29387760));
+
+	float shadowFactor = 0.0;
+
+	vec2 cordpart0 = vec2(layer, texCoords3.z);
+
+	for(int i = 0; i < 4; i++)
+	{
+		vec2 cordpart1 = texCoords3.xy + poissonDisk[i] / (300.0);
+		vec4 tcoord = vec4(cordpart1, cordpart0);
+		
+		shadowFactor += texture(shadowMapArr, tcoord);
+	}
+
+	return shadowFactor / 4.0;
 #else
 	vec4 tcoord = vec4(texCoords3.x, texCoords3.y, layer, texCoords3.z);
 	float shadowFactor = texture(shadowMapArr, tcoord);
-#endif
 
 	return shadowFactor;
+#endif
 }
 
 //==============================================================================

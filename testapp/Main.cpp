@@ -477,7 +477,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -548,7 +548,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.get("is.sm.bilinearEnabled") = true;
 	initializer.get("is.groundLightEnabled") = true;
 	initializer.get("is.sm.enabled") = true;
-	initializer.get("is.sm.pcfEnabled") = false;
+	initializer.get("is.sm.poissonEnabled") = true;
 	initializer.get("is.sm.resolution") = 512;
 	initializer.get("pps.enabled") = true;
 	initializer.get("pps.hdr.enabled") = true;
