@@ -87,6 +87,26 @@ public:
 		return vec.y;
 	}
 
+	TVec2 xx() const
+	{
+		return TVec2(vec.x, vec.x);
+	}
+
+	TVec2 yy() const
+	{
+		return TVec2(vec.y, vec.y);
+	}
+
+	TVec2 xy() const
+	{
+		return *this;
+	}
+
+	TVec2 yx() const
+	{
+		return TVec2(vec.y, vec.x);
+	}
+
 	T& operator[](const U i)
 	{
 		return arr[i];

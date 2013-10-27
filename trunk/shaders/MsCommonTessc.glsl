@@ -190,7 +190,7 @@ bool isFaceVisible(in mat4 mvp)
 	for(int i = 0 ; i < 3 ; i++) 
 	{
 		vec4 v = mvp * vec4(vPosition[i], 1.0);
-		clip[i] = v.xy / v.w;
+		clip[i] = v.xy / abs(v.w);
 	}
 
 	// Check the face orientation and clipping

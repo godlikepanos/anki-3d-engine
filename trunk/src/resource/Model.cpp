@@ -4,6 +4,7 @@
 #include "anki/resource/MeshLoader.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/misc/Xml.h"
+#include <btBulletCollisionCommon.h>
 
 namespace anki {
 
@@ -234,11 +235,15 @@ void ModelPatchBase::create()
 //==============================================================================
 
 //==============================================================================
+Model::Model()
+{}
+
+//==============================================================================
 Model::~Model()
 {
 	for(ModelPatchBase* patch : modelPatches)
 	{
-		delete patch;
+		propperDelete(patch);
 	}
 }
 
@@ -254,7 +259,30 @@ void Model::load(const char* filename)
 
 		XmlElement rootEl = doc.getChildElement("model");
 
-		// modelPatches
+		// <collisionShape>
+		XmlElement collEl = doc.getChildElement("collisionShape");
+		if(collEl)
+		{
+			std::string type = collEl.getChildElement("type").getText();
+			XmlElement valEl = collEl.getChildElement("value");
+
+			if(type == "sphere")
+			{
+				collShape.reset(new btSphereShape(valEl.getFloat()));
+			}
+			else if(type == "box")
+			{
+			}
+			else if(type == "mesh")
+			{
+			}
+			else
+			{
+				throw ANKI_EXCEPTION("Incorrect collision type: " + type);
+			}
+		}
+
+		// <modelPatches>
 		XmlElement modelPatchesEl =
 			rootEl.getChildElement("modelPatches");
 		XmlElement modelPatchEl =

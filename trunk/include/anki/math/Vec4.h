@@ -384,6 +384,14 @@ public:
 	{
 		return x() * b.x() + y() * b.y() + z() * b.z() + w() * b.w();
 	}
+
+	std::string toString() const
+	{
+		return std::to_string(x()) 
+			+ " " + std::to_string(y())
+			+ " " + std::to_string(z())
+			+ " " + std::to_string(w());
+	}
 	/// @}
 
 private:

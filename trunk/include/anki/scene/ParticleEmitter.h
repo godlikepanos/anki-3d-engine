@@ -114,24 +114,27 @@ private:
 };
 
 /// Particle for bullet simulations
-class Particle: public ParticleBase, public RigidBody
+class Particle: public ParticleBase
 {
 public:
 	Particle(
 		const char* name, SceneGraph* scene, // SceneNode
 		// RigidBody
-		PhysWorld* masterContainer, const RigidBody::Initializer& init); 
+		PhysicsWorld* masterContainer, const RigidBody::Initializer& init); 
 
 	~Particle();
 
 	void kill()
 	{
 		ParticleBase::kill();
-		setActivationState(DISABLE_SIMULATION);
+		body->setActivationState(DISABLE_SIMULATION);
 	}
 
 	void revive(const ParticleEmitter& pe,
 		F32 prevUpdateTime, F32 crntTime);
+
+private:
+	RigidBody* body;
 };
 
 /// The particle emitter scene node. This scene node emitts

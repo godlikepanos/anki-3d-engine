@@ -34,6 +34,36 @@ F64 XmlElement::getFloat() const
 	return std::stof(txt);
 }
 
+//==============================================================================V
+Vector<F64> XmlElement::getFloats() const
+{
+	check();
+	const char* txt = getText();
+	if(txt == nullptr)
+	{
+		throw ANKI_EXCEPTION(std::string("Failed to return floats. Element: ")
+			+ el->Value());
+	}
+
+	StringList list = StringList::splitString(txt, ' ');
+	Vector<F64> out;
+	out.resize(list.size());
+
+	try
+	{
+		for(U i = 0; i < out.size(); i++)
+		{
+			out[i] = std::stof(list[i]);
+		}
+	}
+	catch(const std::exception& e)
+	{
+		throw ANKI_EXCEPTION("Found non-float element for Mat4");
+	}
+
+	return out;
+}
+
 //==============================================================================
 Mat4 XmlElement::getMat4() const
 {

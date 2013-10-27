@@ -1,5 +1,6 @@
 #include "anki/core/NativeWindowSdl.h"
 #include "anki/core/Counters.h"
+#include "anki/core/Logger.h"
 #include "anki/util/Exception.h"
 #include <GL/glew.h>
 
@@ -76,6 +77,11 @@ void NativeWindow::create(NativeWindowInitializer& init)
 
 		width = w;
 		height = h;
+	}
+	else
+	{
+		width = init.width;
+		height = init.height;
 	}
 
 	//

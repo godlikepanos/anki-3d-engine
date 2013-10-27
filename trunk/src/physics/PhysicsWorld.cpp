@@ -1,4 +1,5 @@
-#include "anki/physics/PhysWorld.h"
+#include "anki/physics/PhysicsWorld.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/physics/Character.h"
 #include "anki/physics/MotionState.h"
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
@@ -6,28 +7,52 @@
 namespace anki {
 
 //==============================================================================
-PhysWorld::PhysWorld()
-	: defaultContactProcessingThreshold(BT_LARGE_FLOAT)
+PhysicsWorld::PhysicsWorld(SceneGraph* scene_)
+	:	scene(scene_),
+		defaultContactProcessingThreshold(BT_LARGE_FLOAT),
+		characters(getSceneAllocator())
+
 {
-	collisionConfiguration = new btDefaultCollisionConfiguration();
-	dispatcher = new btCollisionDispatcher(collisionConfiguration);
-	broadphase = new btAxisSweep3(
+	SceneAllocator<U8> alloc = getSceneAllocator();
+
+	collisionConfiguration = 
+		alloc.newInstance<btDefaultCollisionConfiguration>();
+
+	dispatcher = alloc.newInstance<btCollisionDispatcher>(
+		collisionConfiguration);
+
+	broadphase = alloc.newInstance<btAxisSweep3>(
 		btVector3(-1000, -1000, -1000),
 		btVector3(1000, 1000, 1000));
-	sol = new btSequentialImpulseConstraintSolver;
-	dynamicsWorld = new btDiscreteDynamicsWorld(
+
+	sol = alloc.newInstance<btSequentialImpulseConstraintSolver>();
+
+	dynamicsWorld = alloc.newInstance<btDiscreteDynamicsWorld>(
 		dispatcher, broadphase, sol, collisionConfiguration);
+
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));
 }
 
 //==============================================================================
-PhysWorld::~PhysWorld()
+PhysicsWorld::~PhysicsWorld()
 {
-	/// XXX
+	SceneAllocator<U8> alloc = getSceneAllocator();
+
+	alloc.deleteInstance(dynamicsWorld);
+	alloc.deleteInstance(sol);
+	alloc.deleteInstance(broadphase);
+	alloc.deleteInstance(dispatcher);
+	alloc.deleteInstance(collisionConfiguration);
 }
 
 //==============================================================================
-void PhysWorld::setDebugDrawer(btIDebugDraw* newDebugDrawer)
+SceneAllocator<U8> PhysicsWorld::getSceneAllocator() const
+{
+	return scene->getAllocator();
+}
+
+//==============================================================================
+void PhysicsWorld::setDebugDrawer(btIDebugDraw* newDebugDrawer)
 {
 	debugDrawer.reset(newDebugDrawer);
 	dynamicsWorld->setDebugDrawer(debugDrawer.get());
@@ -35,7 +60,7 @@ void PhysWorld::setDebugDrawer(btIDebugDraw* newDebugDrawer)
 }
 
 //==============================================================================
-void PhysWorld::update(F32 prevUpdateTime, F32 crntTime)
+void PhysicsWorld::update(F32 prevUpdateTime, F32 crntTime)
 {
 	F32 dt = crntTime - prevUpdateTime;
 	dynamicsWorld->stepSimulation(dt);
@@ -49,7 +74,7 @@ void PhysWorld::update(F32 prevUpdateTime, F32 crntTime)
 }
 
 //==============================================================================
-void PhysWorld::debugDraw()
+void PhysicsWorld::debugDraw()
 {
 	dynamicsWorld->debugDrawWorld();
 }

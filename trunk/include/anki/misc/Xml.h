@@ -2,12 +2,13 @@
 #define ANKI_XML_H
 
 #include "anki/util/Exception.h"
+#include "anki/util/Vector.h"
+#include "anki/Math.h"
 #include <tinyxml2.h>
 #if !ANKI_TINYXML2
 #	error "Wrong tinyxml2 included"
 #endif
 #include <string>
-#include "anki/Math.h"
 
 namespace anki {
 
@@ -48,6 +49,9 @@ public:
 
 	/// Return the text inside as a float
 	F64 getFloat() const;
+
+	/// Get a number of floats
+	Vector<F64> getFloats() const;
 
 	/// Return the text inside as a Mat4
 	Mat4 getMat4() const;

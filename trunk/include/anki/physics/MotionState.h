@@ -20,17 +20,19 @@ public:
 
 	/// @name Bullet implementation of virtuals
 	/// @{
-	void getWorldTransform(btTransform& worldTrans) const
-	{
-		worldTrans = worldTransform;
-	}
+	void getWorldTransform(btTransform& worldTrans) const;
 
 	void setWorldTransform(const btTransform& worldTrans);
 	/// @}
 
+	/// This function will actualy update the transform of the node. It is 
+	/// called
+	void sync();
+
 private:
 	btTransform worldTransform;
 	MoveComponent* node; ///< Pointer cause it may be NULL
+	Bool8 needsUpdate;
 };
 
 } // end namespace anki

@@ -2,7 +2,7 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/resource/Model.h"
 #include "anki/util/Functions.h"
-#include "anki/physics/PhysWorld.h"
+#include "anki/physics/PhysicsWorld.h"
 #include <limits>
 
 namespace anki {
@@ -131,16 +131,22 @@ void ParticleSimple::revive(const ParticleEmitter& pe,
 Particle::Particle(
 	const char* name, SceneGraph* scene, // SceneNode
 	// RigidBody
-	PhysWorld* masterContainer, const Initializer& init)
-	:	ParticleBase(name, scene, PT_PHYSICS),
-		RigidBody(masterContainer, init, this)
+	PhysicsWorld* masterContainer, const RigidBody::Initializer& init_)
+	:	ParticleBase(name, scene, PT_PHYSICS)
 {
-	sceneNodeProtected.rigidBodyC = this;
+	RigidBody::Initializer init = init_;
+	init.movable = this;
+
+	getSceneGraph().getPhysics().newPhysicsObject<RigidBody>(body, init);
+
+	sceneNodeProtected.rigidBodyC = body;
 }
 
 //==============================================================================
 Particle::~Particle()
-{}
+{
+	getSceneGraph().getPhysics().deletePhysicsObject(body);
+}
 
 //==============================================================================
 void Particle::revive(const ParticleEmitter& pe,
@@ -150,18 +156,16 @@ void Particle::revive(const ParticleEmitter& pe,
 
 	const ParticleEmitterProperties& props = pe;
 
-	RigidBody& body = *this;
-
 	// pre calculate
 	Bool forceFlag = props.forceEnabled;
 	Bool worldGravFlag = props.wordGravityEnabled;
 
 	// activate it (Bullet stuff)
-	body.forceActivationState(ACTIVE_TAG);
-	body.activate();
-	body.clearForces();
-	body.setLinearVelocity(btVector3(0.0, 0.0, 0.0));
-	body.setAngularVelocity(btVector3(0.0, 0.0, 0.0));
+	body->forceActivationState(ACTIVE_TAG);
+	body->activate();
+	body->clearForces();
+	body->setLinearVelocity(btVector3(0.0, 0.0, 0.0));
+	body->setAngularVelocity(btVector3(0.0, 0.0, 0.0));
 
 	// force
 	if(forceFlag)
@@ -179,13 +183,13 @@ void Particle::revive(const ParticleEmitter& pe,
 		F32 forceMag = getRandom(props.particle.forceMagnitude,
 			props.particle.forceMagnitudeDeviation);
 
-		body.applyCentralForce(toBt(forceDir * forceMag));
+		body->applyCentralForce(toBt(forceDir * forceMag));
 	}
 
 	// gravity
 	if(!worldGravFlag)
 	{
-		body.setGravity(toBt(getRandom(props.particle.gravity,
+		body->setGravity(toBt(getRandom(props.particle.gravity,
 			props.particle.gravityDeviation)));
 	}
 
@@ -204,7 +208,7 @@ void Particle::revive(const ParticleEmitter& pe,
 
 	btTransform trf(
 		toBt(Transform(pos, pe.getWorldTransform().getRotation(), 1.0)));
-	body.setWorldTransform(trf);
+	body->setWorldTransform(trf);
 }
 
 //==============================================================================
@@ -305,8 +309,8 @@ void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 
 	RigidBody::Initializer binit;
 	binit.shape = collShape;
-	binit.group = PhysWorld::CG_PARTICLE;
-	binit.mask = PhysWorld::CG_MAP;
+	binit.group = PhysicsWorld::CG_PARTICLE;
+	binit.mask = PhysicsWorld::CG_MAP;
 
 	particles.reserve(maxNumOfParticles);
 
@@ -320,7 +324,7 @@ void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 
 		part->size = getRandom(particle.size, particle.sizeDeviation);
 		part->alpha = getRandom(particle.alpha, particle.alphaDeviation);
-		part->forceActivationState(DISABLE_SIMULATION);
+		part->getRigidBody()->forceActivationState(DISABLE_SIMULATION);
 
 		particles.push_back(part);
 	}

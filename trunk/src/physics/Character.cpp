@@ -1,8 +1,8 @@
 #include "anki/physics/Character.h"
-#include "anki/physics/PhysWorld.h"
+#include "anki/physics/PhysicsWorld.h"
 #include "anki/physics/MotionState.h"
 #include "anki/physics/RigidBody.h"
-#include "anki/physics/PhysWorld.h"
+#include "anki/physics/PhysicsWorld.h"
 #include <algorithm>
 #include <btBulletCollisionCommon.h>
 #include <btBulletDynamicsCommon.h>
@@ -31,7 +31,7 @@ inline Character::Initializer::Initializer()
 //==============================================================================
 
 //==============================================================================
-Character::Character(PhysWorld* masterContainer_,
+Character::Character(PhysicsWorld* masterContainer_,
 	const Initializer& init)
 	: masterContainer(masterContainer_)
 {
