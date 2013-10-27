@@ -10,7 +10,7 @@
 #include "anki/util/HighRezTimer.h"
 
 #include "anki/scene/Sector.h"
-#include "anki/physics/PhysWorld.h"
+#include "anki/physics/PhysicsWorld.h"
 #include "anki/event/EventManager.h"
 
 namespace anki {
@@ -89,11 +89,11 @@ public:
 		return nodes.size();
 	}
 
-	PhysWorld& getPhysics()
+	PhysicsWorld& getPhysics()
 	{
 		return physics;
 	}
-	const PhysWorld& getPhysics() const
+	const PhysicsWorld& getPhysics() const
 	{
 		return physics;
 	}
@@ -173,7 +173,7 @@ private:
 	Camera* mainCam = nullptr;
 	Timestamp activeCameraChangeTimestamp = getGlobTimestamp();
 
-	PhysWorld physics;
+	PhysicsWorld physics;
 
 	SectorGroup sectorGroup;
 

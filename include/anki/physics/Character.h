@@ -12,13 +12,13 @@ class btGhostPairCallback;
 namespace anki {
 
 class MoveComponent;
-class PhysWorld;
+class PhysicsWorld;
 class MotionState;
 
 /// Its basically a wrapper around bullet character
 class Character
 {
-friend class PhysWorld;
+friend class PhysicsWorld;
 
 public:
 	/// Initializer class
@@ -35,14 +35,14 @@ public:
 		Initializer();
 	};
 
-	Character(PhysWorld* masterContainer, const Initializer& init);
+	Character(PhysicsWorld* masterContainer, const Initializer& init);
 	~Character();
 	void rotate(F32 angle);
 	void moveForward(F32 distance);
 	void jump();
 
 private:
-	PhysWorld* masterContainer; ///< Know your father
+	PhysicsWorld* masterContainer; ///< Know your father
 	btPairCachingGhostObject* ghostObject;
 	btConvexShape* convexShape;
 	btKinematicCharacterController* character;

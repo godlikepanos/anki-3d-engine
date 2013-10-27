@@ -8,12 +8,16 @@ MotionState::MotionState()
 {
 	worldTransform = toBt(Transform::getIdentity());
 	node = nullptr;
+	needsUpdate = true;
 }
 
 //==============================================================================
-MotionState::MotionState(const Transform& initialTransform, MoveComponent* node_)
+MotionState::MotionState(const Transform& initialTransform, 
+	MoveComponent* node_)
 	: worldTransform(toBt(initialTransform)), node(node_)
-{}
+{
+	needsUpdate = true;
+}
 
 //==============================================================================
 MotionState& MotionState::operator=(const MotionState& b)
@@ -24,18 +28,32 @@ MotionState& MotionState::operator=(const MotionState& b)
 }
 
 //==============================================================================
+void MotionState::getWorldTransform(btTransform& worldTrans) const
+{
+	worldTrans = worldTransform;
+}
+
+//==============================================================================
 void MotionState::setWorldTransform(const btTransform& worldTrans)
 {
 	worldTransform = worldTrans;
+	needsUpdate = true;
+}
 
-	if(node)
+//==============================================================================
+void MotionState::sync()
+{
+	if(node && needsUpdate)
 	{
 		// Set local transform and preserve scale
 		Transform newTrf;
 		F32 originalScale = node->getLocalTransform().getScale();
-		newTrf = toAnki(worldTrans);
+		newTrf = toAnki(worldTransform);
 		newTrf.setScale(originalScale);
 		node->setLocalTransform(newTrf);
+
+		// Set the flag
+		needsUpdate = false;
 	}
 }
 

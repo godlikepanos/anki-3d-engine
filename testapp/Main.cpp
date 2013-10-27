@@ -57,8 +57,8 @@ void initPhysics()
 	init.mass = 0.0;
 	init.shape = groundShape;
 	init.startTrf = groundTransform;
-	init.group = PhysWorld::CG_MAP;
-	init.mask = PhysWorld::CG_ALL;
+	init.group = PhysicsWorld::CG_MAP;
+	init.mask = PhysicsWorld::CG_ALL;
 
 	new RigidBody(&SceneGraphSingleton::get().getPhysics(), init);
 
@@ -526,7 +526,7 @@ void initSubsystems(int argc, char* argv[])
 	nwinit.minorVersion = glminor;
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
-	nwinit.fullscreenDesktopRez = true;
+	nwinit.fullscreenDesktopRez = false;
 	nwinit.debugContext = false;
 	win = new NativeWindow;	
 	win->create(nwinit);
@@ -549,7 +549,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.get("is.groundLightEnabled") = true;
 	initializer.get("is.sm.enabled") = true;
 	initializer.get("is.sm.poissonEnabled") = true;
-	initializer.get("is.sm.resolution") = 512;
+	initializer.get("is.sm.resolution") = 1024;
 	initializer.get("pps.enabled") = true;
 	initializer.get("pps.hdr.enabled") = true;
 	initializer.get("pps.hdr.renderingQuality") = 0.5;

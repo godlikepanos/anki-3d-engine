@@ -11,6 +11,8 @@
 #include "anki/resource/Animation.h"
 #include "anki/util/Vector.h"
 
+class btCollisionShape;
+
 namespace anki {
 
 /// Model patch interface class. Its very important class and it binds the
@@ -161,6 +163,10 @@ private:
 /// 		<animation>path/to/animation.anim</animation>
 /// 		...
 /// 	</skeletonAnimations>]
+/// 	[<collisionShape>
+/// 		<type>sphere | box | mesh</type>
+/// 		<value>...</value>
+/// 	</collisionShape>]
 /// </model>
 /// @endcode
 ///
@@ -173,8 +179,7 @@ class Model
 public:
 	typedef Vector<ModelPatchBase*> ModelPatchesContainer;
 
-	Model()
-	{}
+	Model();
 	~Model();
 
 	/// @name Accessors
@@ -198,6 +203,7 @@ private:
 	Obb visibilityShape;
 	SkeletonResourcePointer skeleton;
 	Vector<AnimationResourcePointer> animations;
+	std::unique_ptr<btCollisionShape> collShape;
 };
 
 } // end namespace anki

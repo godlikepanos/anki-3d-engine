@@ -1,6 +1,7 @@
 #ifndef ANKI_PHYSICS_RIGID_BODY_H
 #define ANKI_PHYSICS_RIGID_BODY_H
 
+#include "anki/physics/PhysicsObject.h"
 #include "anki/Math.h"
 #include "anki/physics/MotionState.h"
 #include <btBulletDynamicsCommon.h>
@@ -9,11 +10,12 @@
 namespace anki {
 
 class MoveComponent;
-class PhysWorld;
 
 /// Wrapper for rigid body
-class RigidBody: public btRigidBody
+class RigidBody: public PhysicsObject, public btRigidBody
 {
+	friend class PhysicsWorld;
+
 public:
 	/// Initializer class
 	struct Initializer
@@ -26,15 +28,13 @@ public:
 		I32 mask = -1;
 	};
 
-	/// Init and register
-	RigidBody(PhysWorld* masterContainer, const Initializer& init, 
-		MoveComponent* movable = nullptr);
+	/// Init and register. Only the PhysicsWorld can construct it
+	RigidBody(PhysicsWorld* world, const Initializer& init);
 
-	/// Unregister
+	/// Unregister. Only the PhysicsWorld can destroy it
 	~RigidBody();
 
 private:
-	PhysWorld* masterContainer; ///< Know your father
 	MotionState motionState;
 };
 

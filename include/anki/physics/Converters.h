@@ -1,5 +1,5 @@
-#ifndef ANKI_PHYSICS_CONVERTORS_H
-#define ANKI_PHYSICS_CONVERTORS_H
+#ifndef ANKI_PHYSICS_CONVERTERS_H
+#define ANKI_PHYSICS_CONVERTERS_H
 
 #include "anki/Math.h"
 #include <btBulletCollisionCommon.h>

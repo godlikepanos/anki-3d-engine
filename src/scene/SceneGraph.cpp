@@ -97,6 +97,7 @@ SceneGraph::SceneGraph()
 		frameAlloc(ANKI_SCENE_FRAME_ALLOCATOR_SIZE),
 		nodes(alloc),
 		dict(10, DictionaryHasher(), DictionaryEqual(), alloc),
+		physics(this),
 		sectorGroup(this),
 		events(this)
 {
