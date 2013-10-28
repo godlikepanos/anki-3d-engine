@@ -42,10 +42,6 @@ void initPhysics()
 {
 	SceneGraph& scene = SceneGraphSingleton::get();
 
-	scene.getPhysics().setDebugDrawer(
-		new PhysicsDebugDrawer(
-			&MainRendererSingleton::get().getDbg().getDebugDrawer()));
-
 	btCollisionShape* groundShape = new btBoxShape(
 	    btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
 
@@ -243,6 +239,11 @@ void init()
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		0.7));
 
+
+	scene.newSceneNode(horse, "crate", "models/crate0/crate0.ankimdl");
+	horse->setLocalTransform(Transform(Vec3(2, 10.0, 0), Mat3::getIdentity(),
+		1.0));
+
 	// barrel
 	/*ModelNode* redBarrel = new ModelNode(
 		"red_barrel", &scene, nullptr, MoveComponent::MF_NONE, 
@@ -261,7 +262,12 @@ void init()
 #endif
 	scene.load("maps/sponza/master.ankiscene");
 
-	//initPhysics();
+	// Physics debug
+	scene.getPhysics().setDebugDrawer(
+		new PhysicsDebugDrawer(
+			&MainRendererSingleton::get().getDbg().getDebugDrawer()));
+
+	initPhysics();
 
 	// Sectors
 #if 0
