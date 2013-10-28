@@ -2,6 +2,8 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/Skeleton.h"
+#include "anki/physics/RigidBody.h"
+#include "anki/physics/PhysicsWorld.h"
 
 namespace anki {
 
@@ -192,6 +194,23 @@ ModelNode::ModelNode(
 		patches.push_back(mpn);
 		++i;
 	}
+
+	// Load rigid body
+	if(model->getCollisionShape() != nullptr)
+	{
+		RigidBody::Initializer init;
+		init.mass = 1.0;
+		init.shape = const_cast<btCollisionShape*>(model->getCollisionShape());
+		init.startTrf.getOrigin().y() = 20.0;
+		init.movable = this;
+
+		RigidBody* body;
+		
+		getSceneGraph().getPhysics().newPhysicsObject<RigidBody>(
+			body, init);
+
+		sceneNodeProtected.rigidBodyC = body;
+	}
 }
 
 //==============================================================================
@@ -200,6 +219,12 @@ ModelNode::~ModelNode()
 	for(ModelPatchNode* patch : patches)
 	{
 		getSceneGraph().deleteSceneNode(patch);
+	}
+
+	if(sceneNodeProtected.rigidBodyC)
+	{
+		getSceneGraph().getPhysics().deletePhysicsObject(
+			sceneNodeProtected.rigidBodyC);
 	}
 }
 

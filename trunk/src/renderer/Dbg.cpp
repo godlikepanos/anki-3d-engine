@@ -92,7 +92,7 @@ void Dbg::run()
 	}
 
 	// XXX
-	if(1)
+	if(0)
 	{
 		Vec3 tri[3] = {
 			Vec3{10.0 , 7.0, -2.0}, 

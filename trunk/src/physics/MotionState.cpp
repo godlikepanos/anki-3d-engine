@@ -38,6 +38,9 @@ void MotionState::setWorldTransform(const btTransform& worldTrans)
 {
 	worldTransform = worldTrans;
 	needsUpdate = true;
+
+	/// XXX
+	sync();
 }
 
 //==============================================================================

@@ -4,6 +4,7 @@
 #include "anki/resource/MeshLoader.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/misc/Xml.h"
+#include "anki/physics/Converters.h"
 #include <btBulletCollisionCommon.h>
 
 namespace anki {
@@ -260,7 +261,7 @@ void Model::load(const char* filename)
 		XmlElement rootEl = doc.getChildElement("model");
 
 		// <collisionShape>
-		XmlElement collEl = doc.getChildElement("collisionShape");
+		XmlElement collEl = rootEl.getChildElementOptional("collisionShape");
 		if(collEl)
 		{
 			std::string type = collEl.getChildElement("type").getText();
@@ -272,6 +273,8 @@ void Model::load(const char* filename)
 			}
 			else if(type == "box")
 			{
+				Vec3 extend = valEl.getVec3();
+				collShape.reset(new btBoxShape(toBt(extend)));
 			}
 			else if(type == "mesh")
 			{

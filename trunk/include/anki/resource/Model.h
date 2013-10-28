@@ -193,6 +193,11 @@ public:
 	{
 		return visibilityShape;
 	}
+
+	const btCollisionShape* getCollisionShape() const
+	{
+		return collShape.get();
+	}
 	/// @}
 
 	void load(const char* filename);

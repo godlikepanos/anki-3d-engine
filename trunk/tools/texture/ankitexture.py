@@ -226,9 +226,9 @@ def identify_image(in_file):
 	stdout_str = proc.stdout.read()
 
 	# Make sure the colorspace is what we want
-	reg = re.search(r"Colorspace: (.*)", stdout_str)
+	"""reg = re.search(r"Colorspace: (.*)", stdout_str)
 	if not reg or reg.group(1) != "RGB":
-		raise Exception("Something is wrong with the colorspace")
+		raise Exception("Something is wrong with the colorspace")"""
 
 	# Get the size of the iamge
 	reg = re.search(r"Geometry: ([0-9]*)x([0-9]*)\+", stdout_str)
