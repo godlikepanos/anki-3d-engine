@@ -202,7 +202,6 @@ ModelNode::ModelNode(
 		init.mass = 1.0;
 		init.shape = const_cast<btCollisionShape*>(model->getCollisionShape());
 		init.startTrf.getOrigin().y() = 20.0;
-		init.movable = this;
 
 		RigidBody* body;
 		
