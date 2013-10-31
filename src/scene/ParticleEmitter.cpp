@@ -135,7 +135,6 @@ Particle::Particle(
 	:	ParticleBase(name, scene, PT_PHYSICS)
 {
 	RigidBody::Initializer init = init_;
-	init.movable = this;
 
 	getSceneGraph().getPhysics().newPhysicsObject<RigidBody>(body, init);
 

@@ -6,6 +6,7 @@
 #include "anki/core/Counters.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/misc/Xml.h"
+#include "anki/physics/RigidBody.h"
 
 namespace anki {
 
@@ -224,7 +225,18 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	// Sync point. Here we wait for all scene's threads
 	//
 
-	// XXX
+	iterateSceneNodes([&](SceneNode& sn)
+	{
+		RigidBody* body = sn.getRigidBody();
+		if(body)
+		{
+			MoveComponent* move = sn.getMoveComponent();
+			if(move)
+			{
+				body->syncUpdate(sn, prevUpdateTime, crntTime);
+			}
+		}
+	});
 
 	//
 	// Reset the frame mem pool

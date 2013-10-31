@@ -365,8 +365,13 @@ void mainLoopExtra()
 
 	if(in.getKey(KC_L) == 1)
 	{
-		Light* l = SceneGraphSingleton::get().findSceneNode("point1").getLight();
-		static_cast<PointLight*>(l)->setRadius(10.0);
+		SceneNode& l = 
+			SceneGraphSingleton::get().findSceneNode("crate");
+		
+		Transform trf;
+		trf.setIdentity();
+		trf.getOrigin().y() = 20.0;
+		l.getMoveComponent()->setLocalTransform(trf);
 	}
 
 	if(in.getKey(KC_F1) == 1)
