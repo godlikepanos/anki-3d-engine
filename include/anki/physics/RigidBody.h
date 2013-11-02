@@ -36,7 +36,7 @@ public:
 	/// Unregister. Only the PhysicsWorld can destroy it
 	~RigidBody();
 
-	void syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime);
+	Bool syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime);
 
 private:
 	MotionState motionState;

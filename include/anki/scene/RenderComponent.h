@@ -3,6 +3,7 @@
 
 #include "anki/scene/Property.h"
 #include "anki/scene/Common.h"
+#include "anki/scene/SceneComponent.h"
 #include "anki/gl/BufferObject.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Model.h"
@@ -159,7 +160,7 @@ private:
 };
 
 /// RenderComponent interface. Implemented by renderable scene nodes
-class RenderComponent
+class RenderComponent: public SceneComponent
 {
 public:
 	typedef SceneVector<RenderComponentVariable*> Variables;
@@ -221,10 +222,6 @@ public:
 			func(*var);
 		}
 	}
-
-	/// Reset on frame start
-	void resetFrame()
-	{}
 
 protected:
 	/// The derived class needs to call that

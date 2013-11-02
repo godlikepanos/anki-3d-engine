@@ -1,10 +1,10 @@
 #ifndef ANKI_SCENE_MOVE_COMPONENT_H
 #define ANKI_SCENE_MOVE_COMPONENT_H
 
+#include "anki/scene/Common.h"
+#include "anki/scene/SceneComponent.h"
 #include "anki/util/Bitset.h"
 #include "anki/Math.h"
-#include "anki/core/Timestamp.h"
-#include "anki/scene/Common.h"
 
 namespace anki {
 
@@ -13,6 +13,7 @@ namespace anki {
 
 /// Interface for movable scene nodes
 class MoveComponent: 
+	public SceneComponent,
 	public SceneHierarchicalObject<MoveComponent>, 
 	public Bitset<U8>
 {
@@ -77,11 +78,17 @@ public:
 	{
 		return prevWTrf;
 	}
+	/// @}
 
-	Timestamp getTimestamp() const
-	{
-		return timestamp;
-	}
+	/// @name SceneComponent overrides
+	/// @{
+
+	/// Update self and children world transform recursively, if root node.
+	/// Need to call this at every frame.
+	/// @note Don't update if child because we start from roots and go to
+	///       children and we don't want a child to be updated before the
+	///       parent
+	Bool update(SceneNode&, F32, F32);
 	/// @}
 
 	/// @name Mess with the local transform
@@ -131,13 +138,6 @@ public:
 	virtual void moveUpdate()
 	{}
 
-	/// Update self and children world transform recursively, if root node.
-	/// Need to call this at every frame.
-	/// @note Don't update if child because we start from roots and go to
-	///       children and we don't want a child to be updated before the
-	///       parent
-	void update();
-
 private:
 	/// The transformation in local space
 	Transform lTrf = Transform::getIdentity();
@@ -149,17 +149,14 @@ private:
 	/// Keep the previous transformation for checking if it moved
 	Transform prevWTrf = Transform::getIdentity();
 
-	/// The frame where it was last moved
-	Timestamp timestamp = getGlobTimestamp();
-
-	/// Called every frame. It updates the @a wTrf if @a shouldUpdateWTrf
-	/// is true. Then it moves to the children.
-	void updateWorldTransform();
-
 	void markForUpdate()
 	{
 		enableBits(MF_MARKED_FOR_UPDATE);
 	}
+
+	/// Called every frame. It updates the @a wTrf if @a shouldUpdateWTrf
+	/// is true. Then it moves to the children.
+	Bool updateWorldTransform();
 };
 /// @}
 
