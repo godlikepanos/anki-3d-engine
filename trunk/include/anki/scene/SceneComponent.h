@@ -3,26 +3,63 @@
 
 #include "anki/scene/Common.h"
 #include "anki/core/Timestamp.h"
+#include "anki/util/Visitor.h"
 
 namespace anki {
 
+// Forward of all components
+class FrustumComponent;
+class MoveComponent;
+class RenderComponent;
+class SpatialComponent;
+class RigidBody;
+
+class SceneComponent;
+
+typedef VisitableCommonBase<
+	SceneComponent, // Base
+	FrustumComponent,
+	MoveComponent,
+	RenderComponent,
+	SpatialComponent,
+	RigidBody> SceneComponentVisitable;
+
 /// Scene node component
-class SceneComponent
+class SceneComponent: public SceneComponentVisitable
 {
 public:
-	/// Do some updating on the thread safe sync section
-	virtual void syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
+	/// Construct the scene component. The x is bogus
+	template<typename T>
+	SceneComponent(const T* x)
+	{
+		setupVisitable<T>(x);
+	}
+
+	/// Do some reseting before frame starts
+	virtual void reset()
 	{}
 
+	/// Do some updating on the thread safe sync section
+	/// @return true if an update happened
+	virtual Bool syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
+	{
+		return false;
+	}
+
 	/// Do some updating
-	virtual void update(SceneNode& node, F32 prevTime, F32 crntTime)
-	{}
+	/// @return true if an update happened
+	virtual Bool update(SceneNode& node, F32 prevTime, F32 crntTime)
+	{
+		return false;
+	}
 
 	/// Called only by the SceneGraph
 	void updateReal(SceneNode& node, F32 prevTime, F32 crntTime)
 	{
-		update(node, prevTime, crntTime);
-		timestamp = getTimestamp();
+		if(update(node, prevTime, crntTime))
+		{
+			timestamp = getGlobTimestamp();
+		}
 	}
 
 	Timestamp getTimestamp() const
@@ -30,7 +67,7 @@ public:
 		return timestamp;
 	}
 
-private:
+protected:
 	Timestamp timestamp;
 };
 

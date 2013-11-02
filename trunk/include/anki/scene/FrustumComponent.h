@@ -4,6 +4,7 @@
 #include "anki/collision/Frustum.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/Common.h"
+#include "anki/scene/SceneComponent.h"
 
 namespace anki {
 
@@ -15,7 +16,7 @@ struct VisibilityTestResults;
 
 /// Frustum component interface for scene nodes. Useful for nodes that are 
 /// frustums like cameras and lights
-class FrustumComponent
+class FrustumComponent: public SceneComponent
 {
 public:
 	/// @name Constructors
@@ -23,9 +24,10 @@ public:
 
 	/// Pass the frustum here so we can avoid the virtuals
 	FrustumComponent(Frustum* fr)
-		: frustum(fr)
+		: SceneComponent(this), frustum(fr)
 	{
 		ANKI_ASSERT(frustum);
+		markForUpdate();
 	}
 	/// @}
 
@@ -34,11 +36,6 @@ public:
 	const Frustum& getFrustum() const
 	{
 		return *frustum;
-	}
-
-	Timestamp getTimestamp() const
-	{
-		return timestamp;
 	}
 
 	const Mat4& getProjectionMatrix() const
@@ -74,7 +71,7 @@ public:
 
 	void markForUpdate()
 	{
-		timestamp = getGlobTimestamp();
+		markedForUpdate = true;
 	}
 
 	/// Is a spatial inside the frustum?
@@ -89,10 +86,20 @@ public:
 		return frustum->insideFrustum(cs);
 	}
 
-	void resetFrame()
+	/// @name SceneComponent overrides
+	/// @{
+	Bool update(SceneNode&, F32, F32)
+	{
+		Bool out = markedForUpdate;
+		markedForUpdate = false;
+		return out;
+	}
+
+	void reset()
 	{
 		visible = nullptr;
 	}
+	/// @}
 
 protected:
 	Frustum* frustum = nullptr;
@@ -101,11 +108,11 @@ protected:
 	Mat4 viewProjectionMat = Mat4::getIdentity();
 
 private:
-	Timestamp timestamp = getGlobTimestamp();
-
 	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
 	/// frame and before any visibility tests are run
 	VisibilityTestResults* visible = nullptr;
+
+	Bool8 markedForUpdate;
 };
 /// @}
 

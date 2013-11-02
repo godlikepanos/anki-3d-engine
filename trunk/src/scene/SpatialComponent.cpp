@@ -6,7 +6,8 @@ namespace anki {
 //==============================================================================
 SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* cs,
 	U32 flags)
-	:	Base(nullptr, node->getSceneAllocator()), 
+	:	SceneComponent(this),
+		Base(nullptr, node->getSceneAllocator()), 
 		Bitset<U8>(flags),
 		spatialCs(cs)
 {
@@ -19,7 +20,7 @@ SpatialComponent::~SpatialComponent()
 {}
 
 //==============================================================================
-void SpatialComponent::update()
+Bool SpatialComponent::update(SceneNode&, F32, F32)
 {
 	if(getParent() == nullptr)
 	{
@@ -28,6 +29,8 @@ void SpatialComponent::update()
 			sp.updateInternal();
 		});	
 	}
+
+	return false;
 }
 
 //==============================================================================
@@ -44,7 +47,7 @@ void SpatialComponent::updateInternal()
 }
 
 //==============================================================================
-void SpatialComponent::resetFrame()
+void SpatialComponent::reset()
 {
 	// Call this only on roots
 	if(getParent() == nullptr)

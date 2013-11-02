@@ -2,6 +2,7 @@
 #define ANKI_SCENE_SPATIAL_COMPONENT_H
 
 #include "anki/scene/Common.h"
+#include "anki/scene/SceneComponent.h"
 #include "anki/Collision.h"
 #include "anki/util/Bitset.h"
 #include "anki/core/Timestamp.h"
@@ -14,6 +15,7 @@ namespace anki {
 /// Spatial component for scene nodes. It indicates scene nodes that need to 
 /// be placed in the a sector and they participate in the visibility tests
 class SpatialComponent: 
+	public SceneComponent,
 	public SceneHierarchicalObject<SpatialComponent>, 
 	public Bitset<U8>
 {
@@ -74,11 +76,6 @@ public:
 		}
 	}
 
-	Timestamp getTimestamp() const
-	{
-		return timestamp;
-	}
-
 	/// Used for sorting spatials. In most object the origin is the center of
 	/// the bounding volume but for cameras the origin is the eye point
 	virtual const Vec3& getSpatialOrigin() const
@@ -115,11 +112,13 @@ public:
 		enableBits(SF_MARKED_FOR_UPDATE);
 	}
 
-	/// Update
-	void update();
+	/// @name SceneComponent overrides
+	/// @{
+	Bool update(SceneNode&, F32, F32);
 
 	/// Disable some flags
-	void resetFrame();
+	void reset();
+	/// @}
 
 protected:
 	const CollisionShape* spatialCs = nullptr;
@@ -127,7 +126,6 @@ protected:
 private:
 	Aabb aabb; ///< A faster shape
 	Vec3 origin; ///< Cached value
-	Timestamp timestamp = getGlobTimestamp();
 
 	void updateInternal();
 };

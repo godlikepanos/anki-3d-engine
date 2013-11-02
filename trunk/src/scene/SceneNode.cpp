@@ -10,9 +10,12 @@ namespace anki {
 SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
 	:	scene(scene_),
 		name(getSceneAllocator()),
-		markedForDeletion(false)
+		markedForDeletion(false),
+		components(getSceneAllocator())
 {
 	ANKI_ASSERT(scene);
+
+	components.reserve(2);
 
 	if(name_)
 	{
@@ -22,7 +25,13 @@ SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
 
 //==============================================================================
 SceneNode::~SceneNode()
-{}
+{
+	SceneAllocator<SceneComponent*> alloc = getSceneAllocator();
+	for(auto comp : components)
+	{
+		alloc.deleteInstance(comp);
+	}
+}
 
 //==============================================================================
 SceneAllocator<U8> SceneNode::getSceneAllocator() const

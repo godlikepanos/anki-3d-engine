@@ -21,7 +21,7 @@ struct UpdateMoveComponentsJob: ThreadpoolTask
 
 	void operator()(ThreadId threadId, U threadsCount)
 	{
-		U64 start, end;
+		/*U64 start, end;
 		ANKI_ASSERT(scene);
 		choseStartEnd(
 			threadId, threadsCount, scene->getSceneNodesCount(), start, end);
@@ -33,7 +33,7 @@ struct UpdateMoveComponentsJob: ThreadpoolTask
 			{
 				m->update();
 			}
-		});
+		});*/
 	}
 };
 
@@ -43,26 +43,36 @@ static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 {
 	sn.frameUpdate(prevUpdateTime, crntTime, getGlobTimestamp());
 
+	// Movable
+	MoveComponent* m = sn.getMoveComponent();
+	if(m)
+	{
+		m->reset();
+		m->updateReal(sn, prevUpdateTime, crntTime);
+	}
+
 	// Do some spatial stuff
 	SpatialComponent* sp = sn.getSpatialComponent();
 	if(sp)
 	{
-		sp->update();
-		sp->resetFrame();
+		sp->reset();
+		sp->updateReal(sn, prevUpdateTime, crntTime);
 	}
 
 	// Do some frustumable stuff
 	FrustumComponent* fr = sn.getFrustumComponent();
 	if(fr)
 	{
-		fr->resetFrame();
+		fr->reset();
+		fr->updateReal(sn, prevUpdateTime, crntTime);
 	}
 
 	// Do some renderable stuff
 	RenderComponent* r = sn.getRenderComponent();
 	if(r)
 	{
-		r->resetFrame();
+		r->reset();
+		r->updateReal(sn, prevUpdateTime, crntTime);
 	}
 }
 
@@ -225,25 +235,21 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	// Sync point. Here we wait for all scene's threads
 	//
 
+	// Reset the framepool
+	frameAlloc.reset();
+
+	// Delete nodes
+	deleteNodesMarkedForDeletion();
+
+	// Sync updates
 	iterateSceneNodes([&](SceneNode& sn)
 	{
 		RigidBody* body = sn.getRigidBody();
 		if(body)
 		{
-			MoveComponent* move = sn.getMoveComponent();
-			if(move)
-			{
-				body->syncUpdate(sn, prevUpdateTime, crntTime);
-			}
+			body->syncUpdate(sn, prevUpdateTime, crntTime);
 		}
 	});
-
-	//
-	// Reset the frame mem pool
-	//
-	frameAlloc.reset();
-
-	deleteNodesMarkedForDeletion();
 
 	Threadpool& threadPool = ThreadpoolSingleton::get();
 	(void)threadPool;
@@ -252,30 +258,6 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	physics.update(prevUpdateTime, crntTime);
 	renderer.getTiler().updateTiles(*mainCam);
 	events.updateAllEvents(prevUpdateTime, crntTime);
-
-#if 0
-	// First do the movable updates
-	for(SceneNode* n : nodes)
-	{
-		MoveComponent* m = n->getMoveComponent();
-
-		if(m)
-		{
-			m->update();
-		}
-	}
-#else
-	UpdateMoveComponentsJob jobs[Threadpool::MAX_THREADS];
-
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
-	{
-		jobs[i].scene = this;
-
-		threadPool.assignNewTask(i, &jobs[i]);
-	}
-
-	threadPool.waitForAllThreadsToFinish();
-#endif
 
 	// Then the rest
 #if 0

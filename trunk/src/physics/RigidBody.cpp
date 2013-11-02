@@ -9,7 +9,8 @@ namespace anki {
 RigidBody::RigidBody(PhysicsWorld* world, const Initializer& init)
 	:	PhysicsObject(world),
 		btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, nullptr, 
-			nullptr, btVector3(0.0, 0.0, 0.0))) // dummy init
+			nullptr, btVector3(0.0, 0.0, 0.0))), // dummy init
+		SceneComponent(this)
 {
 	ANKI_ASSERT(init.shape != nullptr 
 		&& init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
@@ -62,19 +63,21 @@ RigidBody::~RigidBody()
 }
 
 //==============================================================================
-void RigidBody::syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
+Bool RigidBody::syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
 {
 	MoveComponent* move = node.getMoveComponent();
 	if(ANKI_UNLIKELY(move == nullptr))
 	{
-		return;
+		return false;
 	}
 
-	Bool updated = move->bitsEnabled(MoveComponent::MF_MARKED_FOR_UPDATE);
+	Bool moveUpdated = move->bitsEnabled(MoveComponent::MF_MARKED_FOR_UPDATE);
 	Transform oldTrf = move->getLocalTransform();
 
+	Bool mstateUpdated = motionState.getUpdated();
+
 	// Sync from motion state to move component
-	if(motionState.getUpdated())
+	if(mstateUpdated)
 	{
 		// Set local transform and preserve scale
 		Transform newTrf;
@@ -91,7 +94,7 @@ void RigidBody::syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
 	}
 
 	// Sync from move component to motion state
-	if(updated)
+	if(moveUpdated)
 	{
 		std::cout << "Activating again " << oldTrf.getOrigin().toString() << std::endl;
 
@@ -105,6 +108,8 @@ void RigidBody::syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
 
 		//setGravity(getPhysicsWorld().dynamicsWorld->getGravity());
 	}
+
+	return mstateUpdated;
 }
 
 } // end namespace anki
