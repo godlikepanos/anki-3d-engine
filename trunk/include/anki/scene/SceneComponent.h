@@ -12,6 +12,7 @@ class FrustumComponent;
 class MoveComponent;
 class RenderComponent;
 class SpatialComponent;
+class LightComponent;
 class RigidBody;
 
 class SceneComponent;
@@ -22,6 +23,7 @@ typedef VisitableCommonBase<
 	MoveComponent,
 	RenderComponent,
 	SpatialComponent,
+	LightComponent,
 	RigidBody> SceneComponentVisitable;
 
 /// Scene node component
