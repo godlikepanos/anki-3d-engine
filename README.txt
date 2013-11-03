@@ -1,6 +1,16 @@
 
 AnKi 3D engine is a Linux opensource game engine buld using OpenGL.
 
+=======
+License
+=======
+
+AnKi's license is GPLv3. This practicaly means that AnKi as a whole or parts of
+it can be used only in software that is licensed under GPLv3 or GPLv3 compatible
+licenses.
+
+In the future the license will change into a BSD-like to allow more freedom.
+
 =============
 Building AnKi
 =============
@@ -13,20 +23,19 @@ of external dependencies to minimum so the only prerequisites are the following:
 
 AnKi is using the C++11 standard so the supported compilers are:
 
-- GCC 4.7 or greater 
-- clang 3.2 or greater 
+- GCC 4.8 or greater 
+- clang 3.3 or greater 
 
 To build the release version:
 
-- cd <path_to_anki>/build
-- cmake -DCMAKE_BUILD_TYPE=Release ..
-- make
+$cd <path_to_anki>/build
+$cmake -DANKI_BUILD_TYPE=Release ..
+$make
 
-To view and configure the build options you can use ccmake tool:
+To view and configure the build options you can use ccmake tool or similar app:
 
-- cd <path_to_anki>/build
-- cmake -DCMAKE_BUILD_TYPE=Release ..
-- ccmake .
+$cd <path_to_anki>/build
+$ccmake .
 
 This will open an interface with all the available options.
 
@@ -36,7 +45,7 @@ Supported hardware and software
 
 AnKi has 3 codepaths: 
 
-- OpenGL 3.x core
+- OpenGL 3.3 core
 - OpenGL 4.4
 - OpenGL ES 3.0
 
