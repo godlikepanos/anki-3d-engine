@@ -108,7 +108,6 @@ void initSubsystems()
 	initializer.get("is.sm.bilinearEnabled") = true;
 	initializer.get("is.groundLightEnabled") = true;
 	initializer.get("is.sm.enabled") = true;
-	initializer.get("is.sm.pcfEnabled") = false;
 	initializer.get("is.sm.resolution") = 512;
 	initializer.get("pps.enabled") = true;
 	initializer.get("pps.hdr.enabled") = true;
