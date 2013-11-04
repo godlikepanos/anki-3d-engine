@@ -306,18 +306,10 @@ public:
 		frustum.setTransform(getWorldTransform());
 		viewMat = Mat4(getWorldTransform().getInverse());
 		viewProjectionMat = projectionMat * viewMat;
+		FrustumComponent::setOrigin(getWorldTransform().getOrigin());
+		FrustumComponent::markForUpdate();
 
 		SpatialComponent::markForUpdate();
-	}
-	/// @}
-
-	/// @name FrustumComponent virtuals
-	/// @{
-
-	/// Override FrustumComponent::getFrustumOrigin()
-	const Vec3& getFrustumOrigin() const
-	{
-		return getWorldTransform().getOrigin();
 	}
 	/// @}
 

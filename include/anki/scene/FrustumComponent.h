@@ -24,7 +24,7 @@ public:
 
 	/// Pass the frustum here so we can avoid the virtuals
 	FrustumComponent(Frustum* fr)
-		: SceneComponent(this), frustum(fr)
+		: SceneComponent(this), frustum(fr), origin(0.0)
 	{
 		ANKI_ASSERT(frustum);
 		markForUpdate();
@@ -54,7 +54,10 @@ public:
 	}
 
 	/// Get the origin for sorting and visibility tests
-	virtual const Vec3& getFrustumOrigin() const = 0;
+	const Vec3& getFrustumOrigin() const
+	{
+		return origin;
+	}
 
 	void setVisibilityTestResults(VisibilityTestResults* visible_)
 	{
@@ -107,10 +110,19 @@ protected:
 	Mat4 viewMat = Mat4::getIdentity();
 	Mat4 viewProjectionMat = Mat4::getIdentity();
 
+	/// You need to mark it for update after calling this
+	void setOrigin(const Vec3& ori)
+	{
+		origin = ori;
+	}
+
 private:
 	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
 	/// frame and before any visibility tests are run
 	VisibilityTestResults* visible = nullptr;
+
+	/// A cached value
+	Vec3 origin;
 
 	Bool8 markedForUpdate;
 };

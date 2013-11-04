@@ -41,25 +41,10 @@ public:
 		return type;
 	}
 
-	const Mat4& getInverseProjectionMatrix() const
-	{
-		return invProjectionMat;
-	}
-
 	/// Needed by the renderer
 	virtual F32 getNear() const = 0;
 	/// Needed by the renderer
 	virtual F32 getFar() const = 0;
-	/// @}
-
-	/// @name Frustumable virtuals
-	/// @{
-
-	/// Override Frustumable::getFrustumableOrigin()
-	const Vec3& getFrustumOrigin() const
-	{
-		return getWorldTransform().getOrigin();
-	}
 	/// @}
 
 	/// @name Spatial virtuals
@@ -75,14 +60,6 @@ public:
 	void lookAtPoint(const Vec3& point);
 
 protected:
-	/// Used in deferred shading for the calculation of view vector (see
-	/// CalcViewVector). The reason we store this matrix here is that we
-	/// don't want it to be re-calculated all the time but only when the
-	/// projection params (fovX, fovY, zNear, zFar) change. Fortunately
-	/// the projection params change rarely. Note that the Camera as we all
-	/// know re-calculates the matrices only when the parameters change!!
-	Mat4 invProjectionMat = Mat4::getIdentity();
-
 	/// Calculate the @a viewMat. The view matrix is the inverse world 
 	/// transformation
 	void updateViewMatrix()
@@ -159,6 +136,8 @@ public:
 		updateViewMatrix();
 		updateViewProjectionMatrix();
 		frustum.setTransform(getWorldTransform());
+		FrustumComponent::setOrigin(getWorldTransform().getOrigin());
+		FrustumComponent::markForUpdate();
 
 		SpatialComponent::markForUpdate();
 	}
@@ -171,11 +150,10 @@ private:
 	void frustumUpdate()
 	{
 		projectionMat = frustum.calculateProjectionMatrix();
-		invProjectionMat = projectionMat.getInverse();
 		updateViewProjectionMatrix();
+		FrustumComponent::markForUpdate();
 
 		SpatialComponent::markForUpdate();
-		FrustumComponent::markForUpdate();
 	}
 };
 
