@@ -139,6 +139,12 @@ public:
 		(void)frame;
 	}
 
+	/// Called when a component got updated
+	virtual void componentUpdated(SceneComponent& component)
+	{
+		(void)component;
+	}
+
 	/// Return the last frame the node was updated. It checks all components
 	U32 getLastUpdateFrame() const;
 

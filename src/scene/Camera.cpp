@@ -20,6 +20,10 @@ Camera::Camera(
 	sceneNodeProtected.moveC = this;
 	sceneNodeProtected.spatialC = this;
 	sceneNodeProtected.frustumC = this;
+
+	// Init components
+	newComponent<MoveComponent>(this);
+	newComponent<SpatialComponent>(this, frustum);
 }
 
 //==============================================================================
@@ -57,4 +61,4 @@ OrthographicCamera::OrthographicCamera(const char* name, SceneGraph* scene)
 	: Camera(name, scene, &frustum, CT_ORTHOGRAPHIC)
 {}
 
-} // end namespace
+} // end namespace anki

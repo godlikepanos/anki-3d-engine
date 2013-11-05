@@ -41,8 +41,6 @@ struct UpdateMoveComponentsJob: ThreadpoolTask
 static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 	F32 crntTime, SectorGroup& sectorGroup)
 {
-	sn.frameUpdate(prevUpdateTime, crntTime, getGlobTimestamp());
-
 	// Movable
 	MoveComponent* m = sn.getMoveComponent();
 	if(m)
@@ -74,6 +72,9 @@ static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
 		r->reset();
 		r->updateReal(sn, prevUpdateTime, crntTime);
 	}
+
+	// Update the node
+	sn.frameUpdate(prevUpdateTime, crntTime, getGlobTimestamp());
 }
 
 //==============================================================================
