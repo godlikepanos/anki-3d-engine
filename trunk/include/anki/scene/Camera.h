@@ -12,8 +12,7 @@ namespace anki {
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode, public MoveComponent, public SpatialComponent, 
-	public FrustumComponent
+class Camera: public SceneNode
 {
 public:
 	/// @note Don't EVER change the order
@@ -47,30 +46,14 @@ public:
 	virtual F32 getFar() const = 0;
 	/// @}
 
-	/// @name Spatial virtuals
-	/// @{
-
-	/// Override Spatial::getSpatialOrigin
-	const Vec3& getSpatialOrigin() const
-	{
-		return getWorldTransform().getOrigin();
-	}
-	/// @}
-
 	void lookAtPoint(const Vec3& point);
 
 protected:
-	/// Calculate the @a viewMat. The view matrix is the inverse world 
-	/// transformation
-	void updateViewMatrix()
-	{
-		viewMat = Mat4(getWorldTransform().getInverse());
-	}
+	/// Called when something changes in the frustum
+	void frustumUpdate();
 
-	void updateViewProjectionMatrix()
-	{
-		viewProjectionMat = projectionMat * viewMat;
-	}
+	/// Called when the world transform got updated
+	void moveUpdate(MoveComponent& move);
 
 private:
 	CameraType type;
@@ -124,37 +107,8 @@ public:
 	}
 	/// @}
 
-	/// @name Movable virtuals
-	/// @{
-
-	/// Overrides Movable::moveUpdate(). This does:
-	/// @li Update view matrix
-	/// @li Update view-projection matrix
-	/// @li Move the frustum
-	void moveUpdate()
-	{
-		updateViewMatrix();
-		updateViewProjectionMatrix();
-		frustum.setTransform(getWorldTransform());
-		FrustumComponent::setOrigin(getWorldTransform().getOrigin());
-		FrustumComponent::markForUpdate();
-
-		SpatialComponent::markForUpdate();
-	}
-	/// @}
-
 private:
 	PerspectiveFrustum frustum;
-
-	/// Called when something changes in the frustum
-	void frustumUpdate()
-	{
-		projectionMat = frustum.calculateProjectionMatrix();
-		updateViewProjectionMatrix();
-		FrustumComponent::markForUpdate();
-
-		SpatialComponent::markForUpdate();
-	}
 };
 
 /// Orthographic camera
@@ -205,27 +159,8 @@ public:
 	}
 	/// @}
 
-	/// @name Movable virtuals
-	/// @{
-
-	/// Overrides Movable::moveUpdate(). This does:
-	/// @li Update view matrix
-	/// @li Update view-projection matrix
-	/// @li Update frustum
-	void moveUpdate()
-	{
-		ANKI_ASSERT(0 && "TODO");
-	}
-	/// @}
-
 private:
 	OrthographicFrustum frustum;
-
-	/// Called when something changes in the frustum
-	void frustumUpdate()
-	{
-		ANKI_ASSERT(0 && "TODO");
-	}
 };
 /// @}
 
