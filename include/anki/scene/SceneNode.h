@@ -182,9 +182,9 @@ public:
 		}
 	}
 
-	/// Get a pointer to the first component of the requested type
+	/// Try geting a pointer to the first component of the requested type
 	template<typename Component>
-	Component* getComponent()
+	Component* tryGetComponent()
 	{
 		I id = SceneComponent::getVariadicTypeId<Component>();
 		for(auto comp : components)
@@ -195,6 +195,39 @@ public:
 			}
 		}
 		return nullptr;
+	}
+
+	/// Try geting a pointer to the first component of the requested type
+	template<typename Component>
+	const Component* tryGetComponent() const
+	{
+		I id = SceneComponent::getVariadicTypeId<Component>();
+		for(auto comp : components)
+		{
+			if(comp->getVisitableTypeId() == id)
+			{
+				return comp;
+			}
+		}
+		return nullptr;
+	}
+
+	/// Get a pointer to the first component of the requested type
+	template<typename Component>
+	Component& getComponent()
+	{
+		Component* out = tryGetComponent<Component>();
+		ANKI_ASSERT(out != nullptr);
+		return *out;
+	}
+
+	/// Get a pointer to the first component of the requested type
+	template<typename Component>
+	const Component& getComponent() const
+	{
+		Component* out = tryGetComponent<Component>();
+		ANKI_ASSERT(out != nullptr);
+		return *out;
 	}
 
 protected:
