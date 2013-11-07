@@ -30,6 +30,17 @@ typedef VisitableCommonBase<
 class SceneComponent: public SceneComponentVisitable
 {
 public:
+	/// The update type
+	enum UpdateType
+	{
+		/// The update happens in the thread safe sync section
+		SYNC_UPDATE, 
+		
+		/// The update happens in a thread. This should not touch data that 
+		/// belong to other nodes
+		ASYNC_UPDATE 
+	};
+
 	/// Construct the scene component. The x is bogus
 	template<typename T>
 	SceneComponent(const T* x)
@@ -41,32 +52,26 @@ public:
 	virtual void reset()
 	{}
 
-	/// Do some updating on the thread safe sync section
-	/// @return true if an update happened
-	virtual Bool syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
-	{
-		return false;
-	}
-
 	/// Do some updating
 	/// @return true if an update happened
-	virtual Bool update(SceneNode& node, F32 prevTime, F32 crntTime)
+	virtual Bool update(SceneNode& node, F32 prevTime, F32 crntTime, 
+		UpdateType updateType)
 	{
 		return false;
 	}
 
 	/// Called only by the SceneGraph
-	void updateReal(SceneNode& node, F32 prevTime, F32 crntTime)
-	{
-		if(update(node, prevTime, crntTime))
-		{
-			timestamp = getGlobTimestamp();
-		}
-	}
+	Bool updateReal(SceneNode& node, F32 prevTime, F32 crntTime,
+		UpdateType updateType);
 
 	Timestamp getTimestamp() const
 	{
 		return timestamp;
+	}
+
+	I getId() const
+	{
+		return getVisitableTypeId();
 	}
 
 protected:

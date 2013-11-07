@@ -10,8 +10,8 @@ namespace anki {
 SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
 	:	scene(scene_),
 		name(getSceneAllocator()),
-		markedForDeletion(false),
-		components(getSceneAllocator())
+		components(getSceneAllocator()),
+		markedForDeletion(false)
 {
 	ANKI_ASSERT(scene);
 
@@ -52,23 +52,10 @@ U32 SceneNode::getLastUpdateFrame() const
 {
 	U32 max = 0;
 
-	const MoveComponent* m = getMoveComponent();
-	if(m && m->getTimestamp() > max)
+	iterateComponents([&](const SceneComponent& comp)
 	{
-		max = m->getTimestamp();
-	}
-
-	const FrustumComponent* fr = getFrustumComponent();
-	if(fr && fr->getTimestamp() > max)
-	{
-		max = fr->getTimestamp();
-	}
-
-	const SpatialComponent* s = getSpatialComponent();
-	if(s && s->getTimestamp() > max)
-	{
-		max = s->getTimestamp();
-	}
+		max = std::max(max, comp.getTimestamp());
+	});
 
 	return max;
 }

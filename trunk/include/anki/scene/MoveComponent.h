@@ -88,7 +88,7 @@ public:
 	/// @note Don't update if child because we start from roots and go to
 	///       children and we don't want a child to be updated before the
 	///       parent
-	Bool update(SceneNode&, F32, F32);
+	Bool update(SceneNode&, F32, F32, UpdateType uptype);
 	/// @}
 
 	/// @name Mess with the local transform
@@ -133,11 +133,6 @@ public:
 	}
 	/// @}
 
-	/// This is called by the @a update() method only when the object had
-	/// actually moved. It's overridable
-	virtual void moveUpdate()
-	{}
-
 private:
 	/// The transformation in local space
 	Transform lTrf = Transform::getIdentity();
@@ -148,6 +143,9 @@ private:
 
 	/// Keep the previous transformation for checking if it moved
 	Transform prevWTrf = Transform::getIdentity();
+
+	/// Hold the node
+	SceneNode* node;
 
 	void markForUpdate()
 	{

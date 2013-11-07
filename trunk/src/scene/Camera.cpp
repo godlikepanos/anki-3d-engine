@@ -11,16 +11,12 @@ Camera::Camera(
 	const char* name, SceneGraph* scene, // SceneNode
 	Frustum* frustum, // SpatialComponent & FrustumComponent
 	CameraType type_) 
-	:	SceneNode(name, scene),
-		MoveComponent(this),
-		SpatialComponent(this, frustum),
-		FrustumComponent(frustum),
-		type(type_)
+	: SceneNode(name, scene), type(type_)
 {
 	// Init components
 	newComponent<MoveComponent>(this);
 	newComponent<SpatialComponent>(this, frustum);
-	newComponent<FrustumComponent>(this, frustum);
+	newComponent<FrustumComponent>(frustum);
 }
 
 //==============================================================================
@@ -61,7 +57,7 @@ void Camera::moveUpdate(MoveComponent& move)
 {
 	// Frustum
 	FrustumComponent& fr = getComponent<FrustumComponent>();
-	fr.setViewMatrix(move.getWorldTransform().getInverse());
+	fr.setViewMatrix(Mat4(move.getWorldTransform().getInverse()));
 	fr.setViewProjectionMatrix(fr.getProjectionMatrix() * fr.getViewMatrix());
 	fr.setOrigin(move.getWorldTransform().getOrigin());
 	fr.markForUpdate();

@@ -4,10 +4,11 @@
 namespace anki {
 
 //==============================================================================
-MoveComponent::MoveComponent(SceneNode* node, U32 flags)
+MoveComponent::MoveComponent(SceneNode* node_, U32 flags)
 	:	SceneComponent(this),
-		Base(nullptr, node->getSceneAllocator()),
-		Bitset<U8>(flags)
+		Base(nullptr, node_->getSceneAllocator()),
+		Bitset<U8>(flags),
+		node(node_)
 {
 	markForUpdate();
 }
@@ -17,12 +18,11 @@ MoveComponent::~MoveComponent()
 {}
 
 //==============================================================================
-Bool MoveComponent::update(SceneNode&, F32, F32)
+Bool MoveComponent::update(SceneNode&, F32, F32, UpdateType uptype)
 {
-	// Call this only on roots
-	if(getParent() == nullptr)
+	if(uptype == SYNC_UPDATE && getParent() == nullptr)
 	{
-		// If root begin updating
+		// Call this only on roots
 		return updateWorldTransform();
 	}
 

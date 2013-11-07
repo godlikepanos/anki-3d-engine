@@ -10,15 +10,6 @@ namespace anki {
 
 class SceneGraph; // Don't include
 
-// Components forward. Don't include
-class MoveComponent;
-class RenderComponent;
-class FrustumComponent;
-class SpatialComponent;
-class Light;
-class RigidBody;
-class Path;
-
 /// @addtogroup Scene
 /// @{
 
@@ -26,6 +17,13 @@ class Path;
 class SceneNode
 {
 public:
+	/// Scene node update type
+	enum UpdateType
+	{
+		SYNC_UPDATE,
+		ASYNC_UPDATE
+	};
+
 	/// @name Constructors/Destructor
 	/// @{
 
@@ -61,88 +59,25 @@ public:
 	}
 	/// @}
 
-	/// @name Accessors of components
-	/// @{
-	MoveComponent* getMoveComponent()
-	{
-		return sceneNodeProtected.moveC;
-	}
-	const MoveComponent* getMoveComponent() const
-	{
-		return sceneNodeProtected.moveC;
-	}
-
-	RenderComponent* getRenderComponent()
-	{
-		return sceneNodeProtected.renderC;
-	}
-	const RenderComponent* getRenderComponent() const
-	{
-		return sceneNodeProtected.renderC;
-	}
-
-	FrustumComponent* getFrustumComponent()
-	{
-		return sceneNodeProtected.frustumC;
-	}
-	const FrustumComponent* getFrustumComponent() const
-	{
-		return sceneNodeProtected.frustumC;
-	}
-
-	SpatialComponent* getSpatialComponent()
-	{
-		return sceneNodeProtected.spatialC;
-	}
-	const SpatialComponent* getSpatialComponent() const
-	{
-		return sceneNodeProtected.spatialC;
-	}
-
-	Light* getLight()
-	{
-		return sceneNodeProtected.lightC;
-	}
-	const Light* getLight() const 
-	{
-		return sceneNodeProtected.lightC;
-	}
-
-	RigidBody* getRigidBody()
-	{
-		return sceneNodeProtected.rigidBodyC;
-	}
-	const RigidBody* getRigidBody() const 
-	{
-		return sceneNodeProtected.rigidBodyC;
-	}
-
-	Path* getPath()
-	{
-		return sceneNodeProtected.pathC;
-	}
-	const Path* getPath() const 
-	{
-		return sceneNodeProtected.pathC;
-	}
-	/// @}
-
 	/// This is called by the scene every frame after logic and before
 	/// rendering. By default it does nothing
 	/// @param[in] prevUpdateTime Timestamp of the previous update
 	/// @param[in] crntTime Timestamp of this update
-	/// @param[in] frame Frame number
-	virtual void frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
+	/// @param[in] uptype The type of this update
+	virtual void frameUpdate(F32 prevUpdateTime, F32 crntTime, 
+		UpdateType uptype)
 	{
 		(void)prevUpdateTime;
 		(void)crntTime;
-		(void)frame;
+		(void)uptype;
 	}
 
 	/// Called when a component got updated
-	virtual void componentUpdated(SceneComponent& component)
+	virtual void componentUpdated(SceneComponent& component, 
+		SceneComponent::UpdateType uptype)
 	{
 		(void)component;
+		(void)uptype;
 	}
 
 	/// Return the last frame the node was updated. It checks all components
@@ -161,6 +96,16 @@ public:
 	/// Iterate all components
 	template<typename Func>
 	void iterateComponents(Func func)
+	{
+		for(auto comp : components)
+		{
+			func(*comp);
+		}
+	}
+
+	/// Iterate all components. Const version
+	template<typename Func>
+	void iterateComponents(Func func) const
 	{
 		for(auto comp : components)
 		{
@@ -191,7 +136,7 @@ public:
 		{
 			if(comp->getVisitableTypeId() == id)
 			{
-				return comp;
+				return static_cast<Component*>(comp);
 			}
 		}
 		return nullptr;
@@ -206,7 +151,7 @@ public:
 		{
 			if(comp->getVisitableTypeId() == id)
 			{
-				return comp;
+				return static_cast<Component*>(comp);
 			}
 		}
 		return nullptr;
@@ -231,25 +176,6 @@ public:
 	}
 
 protected:
-	struct
-	{
-		MoveComponent* moveC = nullptr;
-		RenderComponent* renderC = nullptr;
-		FrustumComponent* frustumC = nullptr;
-		SpatialComponent* spatialC = nullptr;
-		Light* lightC = nullptr;
-		RigidBody* rigidBodyC = nullptr;
-		Path* pathC = nullptr;
-	} sceneNodeProtected;
-
-private:
-	SceneGraph* scene = nullptr;
-	SceneString name; ///< A unique name
-	Bool8 markedForDeletion;
-
-protected:
-	SceneVector<SceneComponent*> components;
-
 	/// Create a new component and append it to the components container
 	template<typename T, typename... Args>
 	T* newComponent(Args&&... args)
@@ -263,6 +189,12 @@ protected:
 		components.push_back(comp);
 		return comp;
 	}
+
+private:
+	SceneGraph* scene = nullptr;
+	SceneString name; ///< A unique name
+	SceneVector<SceneComponent*> components;
+	Bool8 markedForDeletion;
 };
 /// @}
 

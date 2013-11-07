@@ -37,26 +37,47 @@ public:
 	{
 		return *frustum;
 	}
+	Frustum& getFrustum()
+	{
+		return *frustum;
+	}
 
 	const Mat4& getProjectionMatrix() const
 	{
 		return projectionMat;
+	}
+	void setProjectionMatrix(const Mat4& m)
+	{
+		projectionMat = m;
 	}
 
 	const Mat4& getViewMatrix() const
 	{
 		return viewMat;
 	}
+	void setViewMatrix(const Mat4& m)
+	{
+		viewMat = m;
+	}
 
 	const Mat4& getViewProjectionMatrix() const
 	{
 		return viewProjectionMat;
 	}
+	void setViewProjectionMatrix(const Mat4& m)
+	{
+		viewProjectionMat = m;
+	}
 
 	/// Get the origin for sorting and visibility tests
-	const Vec3& getFrustumOrigin() const
+	const Vec3& getOrigin() const
 	{
 		return origin;
+	}
+	/// You need to mark it for update after calling this
+	void setOrigin(const Vec3& ori)
+	{
+		origin = ori;
 	}
 
 	void setVisibilityTestResults(VisibilityTestResults* visible_)
@@ -91,11 +112,18 @@ public:
 
 	/// @name SceneComponent overrides
 	/// @{
-	Bool update(SceneNode&, F32, F32)
+	Bool update(SceneNode&, F32, F32, UpdateType updateType)
 	{
-		Bool out = markedForUpdate;
-		markedForUpdate = false;
-		return out;
+		if(updateType == ASYNC_UPDATE)
+		{
+			Bool out = markedForUpdate;
+			markedForUpdate = false;
+			return out;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	void reset()
@@ -103,26 +131,18 @@ public:
 		visible = nullptr;
 	}
 	/// @}
-
-protected:
+private:
 	Frustum* frustum = nullptr;
 	Mat4 projectionMat = Mat4::getIdentity();
 	Mat4 viewMat = Mat4::getIdentity();
 	Mat4 viewProjectionMat = Mat4::getIdentity();
 
-	/// You need to mark it for update after calling this
-	void setOrigin(const Vec3& ori)
-	{
-		origin = ori;
-	}
+	/// A cached value
+	Vec3 origin;
 
-private:
 	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
 	/// frame and before any visibility tests are run
 	VisibilityTestResults* visible = nullptr;
-
-	/// A cached value
-	Vec3 origin;
 
 	Bool8 markedForUpdate;
 };
