@@ -46,6 +46,17 @@ public:
 	virtual F32 getFar() const = 0;
 	/// @}
 
+	/// @name SceneNode virtuals
+	/// @{
+	void componentUpdated(SceneComponent& comp)
+	{
+		if(comp.getId() == SceneComponent::getVariadicTypeId<MoveComponent>())
+		{
+			moveUpdate(static_cast<MoveComponent&>(comp));
+		}
+	}
+	/// @}
+
 	void lookAtPoint(const Vec3& point);
 
 protected:

@@ -5,7 +5,6 @@
 #include "anki/scene/SceneComponent.h"
 #include "anki/Collision.h"
 #include "anki/util/Bitset.h"
-#include "anki/core/Timestamp.h"
 
 namespace anki {
 
@@ -14,14 +13,9 @@ namespace anki {
 
 /// Spatial component for scene nodes. It indicates scene nodes that need to 
 /// be placed in the a sector and they participate in the visibility tests
-class SpatialComponent: 
-	public SceneComponent,
-	public SceneHierarchicalObject<SpatialComponent>, 
-	public Bitset<U8>
+class SpatialComponent: public SceneComponent, public Bitset<U8>
 {
 public:
-	typedef SceneHierarchicalObject<SpatialComponent> Base;
-
 	/// Spatial flags
 	enum SpatialFlag
 	{
@@ -77,33 +71,16 @@ public:
 	}
 
 	/// Used for sorting spatials. In most object the origin is the center of
-	/// the bounding volume but for cameras the origin is the eye point
-	virtual const Vec3& getSpatialOrigin() const
+	/// mess but for cameras the origin is the eye point
+	const Vec3& getOrigin() const
 	{
 		return origin;
 	}
-
-	PtrSize getSubSpatialsCount() const
+	void setOrigin(const Vec3& o)
 	{
-		return getChildrenSize();
-	}
-
-	SpatialComponent& getSubSpatial(PtrSize i)
-	{
-		return getChild(i);
-	}
-	const SpatialComponent& getSubSpatial(PtrSize i) const
-	{
-		return getChild(i);
+		origin = o;
 	}
 	/// @}
-
-	/// Visit this an the rest of the tree spatials
-	template<typename VisitorFunc>
-	void visitSubSpatials(VisitorFunc vis)
-	{
-		Base::visitChildren(vis);
-	}
 
 	/// The derived class has to manually call this method when the collision 
 	/// shape got updated
@@ -120,14 +97,10 @@ public:
 	void reset();
 	/// @}
 
-protected:
-	const CollisionShape* spatialCs = nullptr;
-
 private:
+	const CollisionShape* spatialCs = nullptr;
 	Aabb aabb; ///< A faster shape
 	Vec3 origin; ///< Cached value
-
-	void updateInternal();
 };
 /// @}
 
