@@ -6,7 +6,7 @@ namespace anki {
 //==============================================================================
 SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* cs,
 	U32 flags)
-	:	SceneComponent(this),
+	:	SceneComponent(this, node),
 		Bitset<U8>(flags),
 		spatialCs(cs)
 {
@@ -19,16 +19,21 @@ SpatialComponent::~SpatialComponent()
 {}
 
 //==============================================================================
-Bool SpatialComponent::update(SceneNode&, F32, F32)
+Bool SpatialComponent::update(SceneNode&, F32, F32, UpdateType updateType)
 {
-	Bool needsUpdate = bitsEnabled(SF_MARKED_FOR_UPDATE);
-	if(needsUpdate)
+	Bool updated = false;
+
+	if(uptype == ASYNC_UPDATE)
 	{
-		spatialCs->toAabb(aabb);
-		disableBits(SF_MARKED_FOR_UPDATE);
+		updated = bitsEnabled(SF_MARKED_FOR_UPDATE);
+		if(updated)
+		{
+			spatialCs->toAabb(aabb);
+			disableBits(SF_MARKED_FOR_UPDATE);
+		}
 	}
 
-	return needsUpdate;
+	return updated;
 }
 
 //==============================================================================

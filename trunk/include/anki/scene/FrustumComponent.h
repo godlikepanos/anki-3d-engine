@@ -23,8 +23,8 @@ public:
 	/// @{
 
 	/// Pass the frustum here so we can avoid the virtuals
-	FrustumComponent(Frustum* fr)
-		: SceneComponent(this), frustum(fr), origin(0.0)
+	FrustumComponent(SceneNode* node, Frustum* fr)
+		: SceneComponent(this, node), frustum(fr), origin(0.0)
 	{
 		ANKI_ASSERT(frustum);
 		markForUpdate();
@@ -112,7 +112,7 @@ public:
 
 	/// @name SceneComponent overrides
 	/// @{
-	Bool update(SceneNode&, F32, F32, UpdateType updateType)
+	Bool update(SceneNode&, F32, F32, UpdateType updateType) override
 	{
 		if(updateType == ASYNC_UPDATE)
 		{

@@ -122,7 +122,7 @@ public:
 		{
 			if(comp->getVisitableTypeId() == id)
 			{
-				func(*comp);
+				func(static_cast<Component&>(*comp));
 			}
 		}
 	}
@@ -146,10 +146,10 @@ public:
 	template<typename Component>
 	const Component* tryGetComponent() const
 	{
-		I id = SceneComponent::getVariadicTypeId<Component>();
+		I id = SceneComponent::getTypeIdOf<Component>();
 		for(auto comp : components)
 		{
-			if(comp->getVisitableTypeId() == id)
+			if(comp->getTypeId() == id)
 			{
 				return static_cast<Component*>(comp);
 			}

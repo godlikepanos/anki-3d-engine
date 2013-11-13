@@ -10,6 +10,15 @@
 
 namespace anki {
 
+/// Light component. It's a dummy component used to identify lights
+class LightComponent: public SceneComponent
+{
+public:
+	LightComponent(SceneNode* node)
+		: SceneComponent(this, node)
+	{}
+};
+
 /// XXX
 class FlareBatch
 {
@@ -50,7 +59,7 @@ private:
 /// Specular intensity of light:    Sl
 /// Specular intensity of material: Sm
 /// @endcode
-class Light: public SceneNode, public MoveComponent, public SpatialComponent
+class Light: public SceneNode
 {
 public:
 	enum LightType
@@ -158,21 +167,18 @@ public:
 	}
 	/// @}
 
-	/// @name SceneNode virtuals
-	/// @{
-
-	/// Override SceneNode::frameUpdate
-	void frameUpdate(F32 prevUpdateTime, F32 crntTime, int frame)
-	{
-		SceneNode::frameUpdate(prevUpdateTime, crntTime, frame);
-	}
-	/// @}
-
 	void loadLensFlare(const char* filename)
 	{
 		ANKI_ASSERT(!hasLensFlare());
 		flaresTex.load(filename);
 	}
+
+protected:
+	/// One of the frustums got updated
+	void frustumUpdate();
+
+	/// Called when moved
+	void moveUpdate(MoveComponent& move);
 
 private:
 	LightType type;
@@ -209,7 +215,7 @@ public:
 	void setRadius(const F32 x)
 	{
 		sphereW.setRadius(x);
-		SpatialComponent::markForUpdate();
+		frustumUpdate();
 	}
 
 	const Sphere& getSphere() const
@@ -218,16 +224,10 @@ public:
 	}
 	/// @}
 
-	/// @name MoveComponent virtuals
+	/// @name SceneNode virtuals
 	/// @{
-
-	/// Overrides MoveComponent::moveUpdate(). This does:
-	/// - Update the collision shape
-	void moveUpdate()
-	{
-		sphereW.setCenter(getWorldTransform().getOrigin());
-		SpatialComponent::markForUpdate();
-	}
+	void componentUpdated(SceneComponent& comp, 
+		SceneComponent::UpdateType uptype) override;
 	/// @}
 
 public:
@@ -235,7 +235,7 @@ public:
 };
 
 /// Spot light
-class SpotLight: public Light, public FrustumComponent
+class SpotLight: public Light
 {
 public:
 	/// @name Constructors/Destructor
@@ -296,21 +296,10 @@ public:
 	}
 	/// @}
 
-	/// @name MoveComponent virtuals
+	/// @name SceneNode virtuals
 	/// @{
-
-	/// Overrides MoveComponent::moveUpdate(). This does:
-	/// - Update the collision shape
-	void moveUpdate()
-	{
-		frustum.setTransform(getWorldTransform());
-		viewMat = Mat4(getWorldTransform().getInverse());
-		viewProjectionMat = projectionMat * viewMat;
-		FrustumComponent::setOrigin(getWorldTransform().getOrigin());
-		FrustumComponent::markForUpdate();
-
-		SpatialComponent::markForUpdate();
-	}
+	void componentUpdated(SceneComponent& comp,
+		SceneComponent::UpdateType uptype) override;
 	/// @}
 
 	void loadTexture(const char* filename)
@@ -323,15 +312,6 @@ private:
 	TextureResourcePointer tex;
 	F32 cosOuterAngle;
 	F32 cosInnerAngle;
-
-	void frustumUpdate()
-	{
-		projectionMat = frustum.calculateProjectionMatrix();
-		viewProjectionMat = projectionMat * viewMat;
-
-		SpatialComponent::markForUpdate();
-		FrustumComponent::markForUpdate();
-	}
 };
 
 } // end namespace anki

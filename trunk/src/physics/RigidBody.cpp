@@ -10,7 +10,7 @@ RigidBody::RigidBody(PhysicsWorld* world, const Initializer& init)
 	:	PhysicsObject(world),
 		btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, nullptr, 
 			nullptr, btVector3(0.0, 0.0, 0.0))), // dummy init
-		SceneComponent(this)
+		SceneComponent(this, init.node)
 {
 	ANKI_ASSERT(init.shape != nullptr 
 		&& init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);
@@ -63,16 +63,22 @@ RigidBody::~RigidBody()
 }
 
 //==============================================================================
-Bool RigidBody::syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
+Bool RigidBody::update(SceneNode& node, F32 prevTime, F32 crntTime,
+	UpdateType updateType)
 {
-	MoveComponent* move = node.getMoveComponent();
+	if(updateType == ASYNC_UPDATE)
+	{
+		return false;
+	}
+
+	MoveComponent* move = node.tryGetComponent<MoveComponent>();
 	if(ANKI_UNLIKELY(move == nullptr))
 	{
 		return false;
 	}
 
-	Bool moveUpdated = move->bitsEnabled(MoveComponent::MF_MARKED_FOR_UPDATE);
-	Transform oldTrf = move->getLocalTransform();
+	//Bool moveUpdated = move->bitsEnabled(MoveComponent::MF_MARKED_FOR_UPDATE);
+	//Transform oldTrf = move->getLocalTransform();
 
 	Bool mstateUpdated = motionState.getUpdated();
 
@@ -84,30 +90,18 @@ Bool RigidBody::syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
 		F32 originalScale = move->getLocalTransform().getScale();
 		newTrf = toAnki(motionState.getWorldTransform2());
 		newTrf.setScale(originalScale);
-		std::cout << newTrf.getOrigin().toString() << std::endl;
 		move->setLocalTransform(newTrf);
 
 		// Set the flag
 		motionState.setUpdated(false);
-
-		std::cout << "From motion state to move component" << std::endl;
 	}
 
 	// Sync from move component to motion state
-	if(moveUpdated)
+	/*if(moveUpdated)
 	{
-		std::cout << "Activating again " << oldTrf.getOrigin().toString() << std::endl;
-
 		setWorldTransform(toBt(oldTrf));
-		//motionState.setWorldTransform(toBt(oldTrf));
-		//forceActivationState(ACTIVE_TAG);
 		activate();
-		//clearForces();
-		//setLinearVelocity(btVector3(0.0, 0.0, 0.0));
-		//setAngularVelocity(btVector3(0.0, 0.0, 0.0));
-
-		//setGravity(getPhysicsWorld().dynamicsWorld->getGravity());
-	}
+	}*/
 
 	return mstateUpdated;
 }

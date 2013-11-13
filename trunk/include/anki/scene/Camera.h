@@ -48,7 +48,8 @@ public:
 
 	/// @name SceneNode virtuals
 	/// @{
-	void componentUpdated(SceneComponent& comp)
+	void componentUpdated(SceneComponent& comp, 
+		SceneComponent::UpdateType) override
 	{
 		if(comp.getId() == SceneComponent::getVariadicTypeId<MoveComponent>())
 		{

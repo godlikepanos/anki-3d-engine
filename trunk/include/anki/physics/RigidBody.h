@@ -28,6 +28,7 @@ public:
 		I32 group = -1;
 		I32 mask = -1;
 		Bool kinematic = false;
+		SceneNode* node = nullptr;
 	};
 
 	/// Init and register. Only the PhysicsWorld can construct it
@@ -36,7 +37,9 @@ public:
 	/// Unregister. Only the PhysicsWorld can destroy it
 	~RigidBody();
 
-	Bool syncUpdate(SceneNode& node, F32 prevTime, F32 crntTime);
+	/// Override SceneComponent::update
+	Bool update(SceneNode& node, F32 prevTime, F32 crntTime,
+		UpdateType updateType) override;
 
 private:
 	MotionState motionState;

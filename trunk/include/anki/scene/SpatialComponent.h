@@ -43,7 +43,7 @@ public:
 		U32 flags = SF_NONE);
 
 	// Remove from current OctreeNode
-	virtual ~SpatialComponent();
+	~SpatialComponent();
 
 	/// @name Accessors
 	/// @{
@@ -91,10 +91,10 @@ public:
 
 	/// @name SceneComponent overrides
 	/// @{
-	Bool update(SceneNode&, F32, F32);
+	Bool update(SceneNode&, F32, F32, UpdateType) override;
 
 	/// Disable some flags
-	void reset();
+	void reset() override;
 	/// @}
 
 private:

@@ -84,7 +84,9 @@ RenderComponentVariable::~RenderComponentVariable()
 //==============================================================================
 RenderComponent::RenderComponent(SceneNode* node)
 	: SceneComponent(this), vars(node->getSceneAllocator())
-{}
+{
+	init(*node);
+}
 
 //==============================================================================
 RenderComponent::~RenderComponent()
@@ -99,9 +101,9 @@ RenderComponent::~RenderComponent()
 }
 
 //==============================================================================
-void RenderComponent::init()
+void RenderComponent::init(SceneNode& node)
 {
-	const Material& mtl = getMaterial();
+	const Material& mtl = getMaterial(node);
 
 	// Create the material variables using a visitor
 	CreateNewRenderComponentVariableVisitor vis;
@@ -113,20 +115,6 @@ void RenderComponent::init()
 	{
 		vis.mvar = mv;
 		mv->acceptVisitor(vis);
-	}
-
-	// Instancing sanity checks
-	U32 instancesCount = getRenderInstancesCount();
-	if(instancesCount > 1)
-	{
-		iterateVariables([&](RenderComponentVariable& var)
-		{
-			if(var.getArraySize() > 1 && instancesCount > var.getArraySize())
-			{
-				throw ANKI_EXCEPTION("The renderable needs more instances "
-					"that the shader program can handle");
-			}
-		});
 	}
 }
 
