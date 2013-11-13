@@ -15,9 +15,9 @@ struct Drawcall
 	GLenum primitiveType = 0;
 	GLenum indicesType = 0;
 	U32 instancesCount = 1;
-	GLsizei* indicesCountArray = nullptr;
-	const GLvoid** offsetsArray = nullptr;
 	U32 drawcallCount = 1;
+	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES> indicesCountArray;
+	Array<PtrSize, ANKI_MAX_MULTIDRAW_PRIMITIVES> offsetsArray;
 
 	/// Execute the dracall
 	void enque();

@@ -88,7 +88,7 @@ public:
 	/// @note Don't update if child because we start from roots and go to
 	///       children and we don't want a child to be updated before the
 	///       parent
-	Bool update(SceneNode&, F32, F32, UpdateType uptype);
+	Bool update(SceneNode&, F32, F32, UpdateType uptype) override;
 	/// @}
 
 	/// @name Mess with the local transform
@@ -134,6 +134,8 @@ public:
 	/// @}
 
 private:
+	SceneNode* node;
+
 	/// The transformation in local space
 	Transform lTrf = Transform::getIdentity();
 
@@ -144,9 +146,6 @@ private:
 	/// Keep the previous transformation for checking if it moved
 	Transform prevWTrf = Transform::getIdentity();
 
-	/// Hold the node
-	SceneNode* node;
-
 	void markForUpdate()
 	{
 		enableBits(MF_MARKED_FOR_UPDATE);
@@ -154,7 +153,7 @@ private:
 
 	/// Called every frame. It updates the @a wTrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.
-	Bool updateWorldTransform();
+	void updateWorldTransform();
 };
 /// @}
 

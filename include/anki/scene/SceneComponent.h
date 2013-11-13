@@ -43,7 +43,7 @@ public:
 
 	/// Construct the scene component. The x is bogus
 	template<typename T>
-	SceneComponent(const T* x)
+	SceneComponent(const T* x, SceneNode* node)
 	{
 		setupVisitable<T>(x);
 	}
@@ -69,9 +69,16 @@ public:
 		return timestamp;
 	}
 
-	I getId() const
+	I getTypeId() const
 	{
 		return getVisitableTypeId();
+	}
+
+	/// Get the type ID of a derived class
+	template<typename ComponentDerived>
+	static I getTypeIdOf()
+	{
+		return getVariadicTypeId<ComponentDerived>();
 	}
 
 protected:

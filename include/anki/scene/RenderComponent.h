@@ -7,9 +7,10 @@
 #include "anki/gl/BufferObject.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Model.h"
-#include <mutex>
 
 namespace anki {
+
+class Drawcall;
 
 /// @addtogroup Scene
 /// @{
@@ -175,30 +176,17 @@ public:
 	/// offsets and counts
 	virtual void getRenderingData(
 		const PassLodKey& key, 
-		const Vao*& vao, const ShaderProgram*& prog,
 		const U32* subMeshIndicesArray, U subMeshIndicesCount,
-		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
-		Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
-		U32& drawcallCount) const = 0;
+		const Vao*& vao, const ShaderProgram*& prog,
+		Drawcall& drawcall) const = 0;
 
 	/// Access the material
 	virtual const Material& getMaterial() = 0;
-
-	Bool castsShadow()
-	{
-		return getMaterial().getShadow() && !getMaterial().isBlendingEnabled();
-	}
 
 	/// Information for movables. It's actualy an array of transformations.
 	virtual const Transform* getRenderWorldTransforms()
 	{
 		return nullptr;
-	}
-
-	/// Number of instances. If greater than 1 then it's instanced
-	virtual U32 getRenderInstancesCount()
-	{
-		return 1;
 	}
 
 	/// @name Accessors
@@ -223,12 +211,10 @@ public:
 		}
 	}
 
-protected:
-	/// The derived class needs to call that
-	void init();
-
 private:
 	Variables vars;
+
+	void init(SceneNode& node);
 };
 /// @}
 

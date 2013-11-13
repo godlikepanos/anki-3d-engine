@@ -16,7 +16,7 @@ Camera::Camera(
 	// Init components
 	newComponent<MoveComponent>(this);
 	newComponent<SpatialComponent>(this, frustum);
-	newComponent<FrustumComponent>(frustum);
+	newComponent<FrustumComponent>(this, frustum);
 }
 
 //==============================================================================

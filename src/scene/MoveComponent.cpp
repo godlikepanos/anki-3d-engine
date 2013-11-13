@@ -5,7 +5,7 @@ namespace anki {
 
 //==============================================================================
 MoveComponent::MoveComponent(SceneNode* node_, U32 flags)
-	:	SceneComponent(this),
+	:	SceneComponent(this, node_),
 		Base(nullptr, node_->getSceneAllocator()),
 		Bitset<U8>(flags),
 		node(node_)
@@ -23,14 +23,15 @@ Bool MoveComponent::update(SceneNode&, F32, F32, UpdateType uptype)
 	if(uptype == SYNC_UPDATE && getParent() == nullptr)
 	{
 		// Call this only on roots
-		return updateWorldTransform();
+		updateWorldTransform();
 	}
 
+	// move component does it's own updates
 	return false;
 }
 
 //==============================================================================
-Bool MoveComponent::updateWorldTransform()
+void MoveComponent::updateWorldTransform()
 {
 	prevWTrf = wTrf;
 	const Bool dirty = bitsEnabled(MF_MARKED_FOR_UPDATE);
@@ -57,7 +58,8 @@ Bool MoveComponent::updateWorldTransform()
 			wTrf = lTrf;
 		}
 
-		moveUpdate();
+		node->componentUpdated(*this, SYNC_UPDATE);
+		timestamp = getGlobTimestamp();
 
 		// Now it's a good time to cleanse parent
 		disableBits(MF_MARKED_FOR_UPDATE);
@@ -72,13 +74,8 @@ Bool MoveComponent::updateWorldTransform()
 			mov.markForUpdate();
 		}
 
-		if(mov.updateWorldTransform())
-		{
-			mov.timestamp = getGlobTimestamp();
-		}
+		mov.updateWorldTransform();
 	});
-
-	return dirty;
 }
 
 } // end namespace anki

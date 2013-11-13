@@ -90,13 +90,10 @@ struct DistanceSortFunctor
 	{
 		ANKI_ASSERT(a.node && b.node);
 
-		ANKI_ASSERT(a.node->getSpatialComponent() != nullptr 
-			&& b.node->getSpatialComponent() != nullptr);
-
 		F32 dist0 = origin.getDistanceSquared(
-			a.node->getSpatialComponent()->getSpatialOrigin());
+			a.node->getComponent<SpatialComponent>().getOrigin());
 		F32 dist1 = origin.getDistanceSquared(
-			b.node->getSpatialComponent()->getSpatialOrigin());
+			b.node->getComponent<SpatialComponent>().getOrigin());
 
 		return dist0 < dist1;
 	}
@@ -109,11 +106,8 @@ struct MaterialSortFunctor
 	{
 		ANKI_ASSERT(a.node && b.node);
 
-		ANKI_ASSERT(a.node->getRenderComponent() != nullptr 
-			&& b.node->getRenderComponent() != nullptr);
-
-		return a.node->getRenderComponent()->getMaterial()
-			< b.node->getRenderComponent()->getMaterial();
+		return a.node->getComponent<RenderComponent>().getMaterial()
+			< b.node->getComponent<RenderComponent>().getMaterial();
 	}
 };
 
