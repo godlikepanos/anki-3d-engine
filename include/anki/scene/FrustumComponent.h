@@ -23,24 +23,16 @@ public:
 	/// @{
 
 	/// Pass the frustum here so we can avoid the virtuals
-	FrustumComponent(SceneNode* node, Frustum* fr)
-		: SceneComponent(this, node), frustum(fr), origin(0.0)
+	FrustumComponent(SceneNode* node)
+		: SceneComponent(this, node)
 	{
-		ANKI_ASSERT(frustum);
 		markForUpdate();
 	}
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	const Frustum& getFrustum() const
-	{
-		return *frustum;
-	}
-	Frustum& getFrustum()
-	{
-		return *frustum;
-	}
+	virtual Frustum& getFrustum() = 0;
 
 	const Mat4& getProjectionMatrix() const
 	{
@@ -70,15 +62,7 @@ public:
 	}
 
 	/// Get the origin for sorting and visibility tests
-	const Vec3& getOrigin() const
-	{
-		return origin;
-	}
-	/// You need to mark it for update after calling this
-	void setOrigin(const Vec3& ori)
-	{
-		origin = ori;
-	}
+	virtual Vec3 getFrustumOrigin() = 0;
 
 	void setVisibilityTestResults(VisibilityTestResults* visible_)
 	{
@@ -99,19 +83,18 @@ public:
 	}
 
 	/// Is a spatial inside the frustum?
-	Bool insideFrustum(const SpatialComponent& sp) const
+	Bool insideFrustum(SpatialComponent& sp)
 	{
-		return frustum->insideFrustum(sp.getSpatialCollisionShape());
+		return getFrustum().insideFrustum(sp.getSpatialCollisionShape());
 	}
 
 	/// Is a collision shape inside the frustum?
-	Bool insideFrustum(const CollisionShape& cs) const
+	Bool insideFrustum(const CollisionShape& cs)
 	{
-		return frustum->insideFrustum(cs);
+		return getFrustum().insideFrustum(cs);
 	}
 
-	/// @name SceneComponent overrides
-	/// @{
+	/// Override SceneComponent::update
 	Bool update(SceneNode&, F32, F32, UpdateType updateType) override
 	{
 		if(updateType == ASYNC_UPDATE)
@@ -126,19 +109,16 @@ public:
 		}
 	}
 
-	void reset()
+	/// Override SceneComponent::reset
+	void reset() override
 	{
 		visible = nullptr;
 	}
-	/// @}
+
 private:
-	Frustum* frustum = nullptr;
 	Mat4 projectionMat = Mat4::getIdentity();
 	Mat4 viewMat = Mat4::getIdentity();
 	Mat4 viewProjectionMat = Mat4::getIdentity();
-
-	/// A cached value
-	Vec3 origin;
 
 	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
 	/// frame and before any visibility tests are run

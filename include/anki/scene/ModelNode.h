@@ -18,36 +18,17 @@ class ModelPatchNode;
 /// @{
 
 /// A model instance
-class ModelPatchNodeInstance: public SceneNode, public MoveComponent, 
-	public SpatialComponent
+class Instance: public SceneNode, public MoveComponent
 {
-	friend class ModelPatchNode;
-	friend class ModelNode;
-
 public:
 	ModelPatchNodeInstance(
-		const char* name, SceneGraph* scene, // SceneNode
-		ModelPatchNode* modelPatchNode); // Self
-
-	/// @name MoveComponent virtuals
-	/// @{
-
-	/// Overrides MoveComponent::moveUpdate(). This does:
-	/// - Update the collision shape
-	/// - If it's the last instance update the parent's CS.
-	void moveUpdate();
-	/// @}
-
-private:
-	Obb obb; ///< In world space
-	ModelPatchNode* modelPatchNode; ///< Keep the father here
+		const char* name, SceneGraph* scene);
 };
 
 /// A fragment of the ModelNode
-class ModelPatchNode: public SceneNode, public MoveComponent, 
+class ModelPatchNode: public SceneNode, 
 	public RenderComponent, public SpatialComponent
 {
-	friend class ModelPatchNodeInstance;
 	friend class ModelNode;
 
 public:
@@ -60,14 +41,6 @@ public:
 	~ModelPatchNode();
 	/// @}
 
-	/// @name MoveComponent virtuals
-	/// @{
-
-	/// Overrides MoveComponent::moveUpdate(). This does:
-	/// - Update the collision shape
-	void moveUpdate();
-	/// @}
-
 	/// @name RenderComponent virtuals
 	/// @{
 
@@ -76,14 +49,7 @@ public:
 		const PassLodKey& key, 
 		const Vao*& vao, const ShaderProgram*& prog,
 		const U32* subMeshIndicesArray, U subMeshIndicesCount,
-		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
-		Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
-		U32& drawcallCount) const
-	{
-		modelPatch->getRenderingDataSub(key, vao, prog, 
-			subMeshIndicesArray, subMeshIndicesCount, 
-			indicesCountArray, indicesOffsetArray, drawcallCount);
-	}
+		Drawcall& dracall);
 
 	/// Implements  RenderComponent::getMaterial
 	const Material& getMaterial()
@@ -93,13 +59,6 @@ public:
 
 	/// Overrides RenderComponent::getRenderComponentWorldTransforms
 	const Transform* getRenderWorldTransforms();
-
-	/// Overrides RenderComponent::getRenderComponentInstancesCount
-	U32 getRenderInstancesCount()
-	{
-		// return this and the instances 
-		return (transforms.size() > 0) ? transforms.size() : 1;
-	}
 	/// @}
 
 private:

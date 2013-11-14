@@ -12,7 +12,8 @@ namespace anki {
 /// @{
 
 /// Camera SceneNode interface class
-class Camera: public SceneNode
+class Camera: public SceneNode, public MoveComponent, public FrustumComponent,
+	public SpatialComponent
 {
 public:
 	/// @note Don't EVER change the order
@@ -27,7 +28,6 @@ public:
 	/// @{
 	Camera(
 		const char* name, SceneGraph* scene, // SceneNode
-		Frustum* frustum, // Spatial & Frustumable
 		CameraType type); // Self
 
 	virtual ~Camera();
@@ -51,10 +51,26 @@ public:
 	void componentUpdated(SceneComponent& comp, 
 		SceneComponent::UpdateType) override
 	{
-		if(comp.getId() == SceneComponent::getVariadicTypeId<MoveComponent>())
+		if(comp.getTypeId() == SceneComponent::getTypeIdOf<MoveComponent>())
 		{
 			moveUpdate(static_cast<MoveComponent&>(comp));
 		}
+	}
+	/// @}
+
+	/// @name SpatialComponent virtuals
+	/// @{
+	Vec3 getSpatialOrigin()
+	{
+		return getWorldTransform().getOrigin();
+	}
+	/// @}
+
+	/// @name FrustumComponent virtuals
+	/// @{
+	Vec3 getFrustumOrigin()
+	{
+		return getWorldTransform().getOrigin();
 	}
 	/// @}
 
@@ -119,6 +135,22 @@ public:
 	}
 	/// @}
 
+	/// @name SpatialComponent virtuals
+	/// @{
+	CollisionShape& getSpatialCollisionShape()
+	{
+		return frustum;
+	}
+	/// @}
+
+	/// @name FrustumComponent virtuals
+	/// @{
+	Frustum& getFrustum()
+	{
+		return frustum;
+	}
+	/// @}
+
 private:
 	PerspectiveFrustum frustum;
 };
@@ -168,6 +200,22 @@ public:
 	{
 		frustum.setAll(left, right, near, far, top, bottom);
 		frustumUpdate();
+	}
+	/// @}
+
+	/// @name SpatialComponent virtuals
+	/// @{
+	CollisionShape& getSpatialCollisionShape()
+	{
+		return frustum;
+	}
+	/// @}
+
+	/// @name FrustumComponent virtuals
+	/// @{
+	Frustum& getFrustum()
+	{
+		return frustum;
 	}
 	/// @}
 

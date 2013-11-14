@@ -83,9 +83,9 @@ RenderComponentVariable::~RenderComponentVariable()
 
 //==============================================================================
 RenderComponent::RenderComponent(SceneNode* node)
-	: SceneComponent(this), vars(node->getSceneAllocator())
+	: SceneComponent(this, node), vars(node->getSceneAllocator())
 {
-	init(*node);
+	init();
 }
 
 //==============================================================================
@@ -101,9 +101,9 @@ RenderComponent::~RenderComponent()
 }
 
 //==============================================================================
-void RenderComponent::init(SceneNode& node)
+void RenderComponent::init()
 {
-	const Material& mtl = getMaterial(node);
+	const Material& mtl = getMaterial();
 
 	// Create the material variables using a visitor
 	CreateNewRenderComponentVariableVisitor vis;

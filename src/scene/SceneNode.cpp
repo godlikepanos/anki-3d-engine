@@ -60,4 +60,11 @@ U32 SceneNode::getLastUpdateFrame() const
 	return max;
 }
 
+//==============================================================================
+void SceneNode::addComponent(SceneComponent* comp)
+{
+	ANKI_ASSERT(comp);
+	components.push_back(comp);
+}
+
 } // end namespace anki

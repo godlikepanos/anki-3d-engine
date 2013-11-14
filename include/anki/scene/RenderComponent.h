@@ -169,7 +169,7 @@ public:
 	/// @param node Pass node to steal it's allocator
 	RenderComponent(SceneNode* node);
 
-	virtual ~RenderComponent();
+	~RenderComponent();
 
 	/// Get information for rendering.
 	/// Given an array of submeshes that are visible return the correct indices
@@ -178,7 +178,7 @@ public:
 		const PassLodKey& key, 
 		const U32* subMeshIndicesArray, U subMeshIndicesCount,
 		const Vao*& vao, const ShaderProgram*& prog,
-		Drawcall& drawcall) const = 0;
+		Drawcall& drawcall) = 0;
 
 	/// Access the material
 	virtual const Material& getMaterial() = 0;
@@ -211,10 +211,11 @@ public:
 		}
 	}
 
+protected:
+	void init();
+
 private:
 	Variables vars;
-
-	void init(SceneNode& node);
 };
 /// @}
 
