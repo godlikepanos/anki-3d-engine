@@ -59,7 +59,8 @@ private:
 /// Specular intensity of light:    Sl
 /// Specular intensity of material: Sm
 /// @endcode
-class Light: public SceneNode
+class Light: public SceneNode, public LightComponent, public MoveComponent, 
+	public SpatialComponent
 {
 public:
 	enum LightType
@@ -73,7 +74,6 @@ public:
 	/// @{
 	Light(
 		const char* name, SceneGraph* scene, // SceneNode
-		CollisionShape* cs, // SpatialComponent
 		LightType t); // Self
 	/// @}
 
@@ -173,6 +173,14 @@ public:
 		flaresTex.load(filename);
 	}
 
+	/// @name SpatialComponent virtuals
+	/// @{
+	Vec3 getSpatialOrigin()
+	{
+		return getWorldTransform().getOrigin();
+	}
+	/// @}
+
 protected:
 	/// One of the frustums got updated
 	void frustumUpdate();
@@ -230,12 +238,20 @@ public:
 		SceneComponent::UpdateType uptype) override;
 	/// @}
 
+	/// @name SpatialComponent virtuals
+	/// @{
+	CollisionShape& getSpatialCollisionShape()
+	{
+		return sphereW;
+	}
+	/// @}
+
 public:
 	Sphere sphereW = Sphere(Vec3(0.0), 1.0);
 };
 
 /// Spot light
-class SpotLight: public Light
+class SpotLight: public Light, public FrustumComponent
 {
 public:
 	/// @name Constructors/Destructor
@@ -300,6 +316,27 @@ public:
 	/// @{
 	void componentUpdated(SceneComponent& comp,
 		SceneComponent::UpdateType uptype) override;
+	/// @}
+
+	/// @name SpatialComponent virtuals
+	/// @{
+	CollisionShape& getSpatialCollisionShape()
+	{
+		return frustum;
+	}
+	/// @}
+
+	/// @name FrustumVirtuals
+	/// @{
+	Vec3 getFrustumOrigin()
+	{
+		return getWorldTransform().getOrigin();
+	}
+
+	Frustum& getFrustum()
+	{
+		return frustum;
+	}
 	/// @}
 
 	void loadTexture(const char* filename)

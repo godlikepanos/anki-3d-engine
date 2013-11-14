@@ -9,13 +9,17 @@ namespace anki {
 //==============================================================================
 Light::Light(
 	const char* name, SceneGraph* scene, // SceneNode
-	CollisionShape* cs, // Spatial
 	LightType t) // Self
-	: SceneNode(name, scene), type(t)
+	:	SceneNode(name, scene),
+		LightComponent(this),
+		MoveComponent(this),
+		SpatialComponent(this),
+		type(t)
 {
-	newComponent<MoveComponent>(this);
-	newComponent<SpatialComponent>(this, cs);
-	newComponent<LightComponent>(this);
+	// Init components
+	addComponent(static_cast<LightComponent*>(this));
+	addComponent(static_cast<MoveComponent*>(this));
+	addComponent(static_cast<SpatialComponent*>(this));
 }
 
 //==============================================================================
@@ -48,7 +52,6 @@ void Light::moveUpdate(MoveComponent& move)
 		fr.setProjectionMatrix(fr.getFrustum().calculateProjectionMatrix());
 		fr.setViewProjectionMatrix(
 			fr.getProjectionMatrix() * fr.getViewMatrix());
-		fr.setOrigin(move.getWorldTransform().getOrigin());
 		fr.getFrustum().setTransform(move.getWorldTransform());
 
 		fr.markForUpdate();
@@ -56,7 +59,6 @@ void Light::moveUpdate(MoveComponent& move)
 
 	// Update the spatial
 	SpatialComponent& sp = getComponent<SpatialComponent>();
-	sp.setOrigin(move.getWorldTransform().getOrigin());
 	sp.markForUpdate();
 }
 
@@ -66,7 +68,7 @@ void Light::moveUpdate(MoveComponent& move)
 
 //==============================================================================
 PointLight::PointLight(const char* name, SceneGraph* scene)
-	:	Light(name, scene, &sphereW, LT_POINT)
+	:	Light(name, scene, LT_POINT)
 {}
 
 //==============================================================================
@@ -87,9 +89,11 @@ void PointLight::componentUpdated(SceneComponent& comp,
 
 //==============================================================================
 SpotLight::SpotLight(const char* name, SceneGraph* scene)
-	: Light(name, scene, &frustum, LT_SPOT)
+	:	Light(name, scene, LT_SPOT),
+		FrustumComponent(this)
 {
-	newComponent<FrustumComponent>(this, &frustum);
+	// Init components
+	addComponent(static_cast<FrustumComponent*>(this));
 
 	const F32 ang = toRad(45.0);
 	setOuterAngle(ang / 2.0);

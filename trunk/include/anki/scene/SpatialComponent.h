@@ -37,20 +37,15 @@ public:
 
 	/// Pass the collision shape here so we can avoid the virtuals
 	/// @param node The scene node. Used only to steal it's allocators
-	/// @param cs The collision shape
 	/// @param flags A mask of SpatialFlag
-	SpatialComponent(SceneNode* node, const CollisionShape* cs,
-		U32 flags = SF_NONE);
+	SpatialComponent(SceneNode* node, U32 flags = SF_NONE);
 
 	// Remove from current OctreeNode
 	~SpatialComponent();
 
 	/// @name Accessors
 	/// @{
-	const CollisionShape& getSpatialCollisionShape() const
-	{
-		return *spatialCs;
-	}
+	virtual CollisionShape& getSpatialCollisionShape() = 0;
 
 	const Aabb& getAabb() const
 	{
@@ -58,11 +53,12 @@ public:
 	}
 
 	/// Get optimal collision shape for visibility tests
-	const CollisionShape& getVisibilityCollisionShape() const
+	CollisionShape& getVisibilityCollisionShape()
 	{
-		if(spatialCs->getCollisionShapeType() == CollisionShape::CST_SPHERE)
+		CollisionShape& cs = getSpatialCollisionShape();
+		if(cs.getCollisionShapeType() == CollisionShape::CST_SPHERE)
 		{
-			return *spatialCs;
+			return cs;
 		}
 		else
 		{
@@ -72,14 +68,7 @@ public:
 
 	/// Used for sorting spatials. In most object the origin is the center of
 	/// mess but for cameras the origin is the eye point
-	const Vec3& getOrigin() const
-	{
-		return origin;
-	}
-	void setOrigin(const Vec3& o)
-	{
-		origin = o;
-	}
+	virtual Vec3 getSpatialOrigin() = 0;
 	/// @}
 
 	/// The derived class has to manually call this method when the collision 
@@ -98,9 +87,7 @@ public:
 	/// @}
 
 private:
-	const CollisionShape* spatialCs = nullptr;
 	Aabb aabb; ///< A faster shape
-	Vec3 origin; ///< Cached value
 };
 /// @}
 

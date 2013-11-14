@@ -4,13 +4,10 @@
 namespace anki {
 
 //==============================================================================
-SpatialComponent::SpatialComponent(SceneNode* node, const CollisionShape* cs,
-	U32 flags)
+SpatialComponent::SpatialComponent(SceneNode* node, U32 flags)
 	:	SceneComponent(this, node),
-		Bitset<U8>(flags),
-		spatialCs(cs)
+		Bitset<U8>(flags)
 {
-	ANKI_ASSERT(spatialCs);
 	markForUpdate();
 }
 
@@ -19,7 +16,7 @@ SpatialComponent::~SpatialComponent()
 {}
 
 //==============================================================================
-Bool SpatialComponent::update(SceneNode&, F32, F32, UpdateType updateType)
+Bool SpatialComponent::update(SceneNode&, F32, F32, UpdateType uptype)
 {
 	Bool updated = false;
 
@@ -28,7 +25,7 @@ Bool SpatialComponent::update(SceneNode&, F32, F32, UpdateType updateType)
 		updated = bitsEnabled(SF_MARKED_FOR_UPDATE);
 		if(updated)
 		{
-			spatialCs->toAabb(aabb);
+			getSpatialCollisionShape().toAabb(aabb);
 			disableBits(SF_MARKED_FOR_UPDATE);
 		}
 	}

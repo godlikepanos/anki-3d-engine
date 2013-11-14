@@ -82,7 +82,7 @@ public:
 	}
 
 protected:
-	Timestamp timestamp;
+	Timestamp timestamp; ///< Indicates when an update happened
 };
 
 } // end namespace anki

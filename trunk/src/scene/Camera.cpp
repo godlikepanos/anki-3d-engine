@@ -9,14 +9,17 @@ namespace anki {
 //==============================================================================
 Camera::Camera(
 	const char* name, SceneGraph* scene, // SceneNode
-	Frustum* frustum, // SpatialComponent & FrustumComponent
 	CameraType type_) 
-	: SceneNode(name, scene), type(type_)
+	:	SceneNode(name, scene), 
+		MoveComponent(this),
+		FrustumComponent(this),
+		SpatialComponent(this),
+		type(type_)
 {
 	// Init components
-	newComponent<MoveComponent>(this);
-	newComponent<SpatialComponent>(this, frustum);
-	newComponent<FrustumComponent>(this, frustum);
+	addComponent(static_cast<MoveComponent*>(this));
+	addComponent(static_cast<SpatialComponent*>(this));
+	addComponent(static_cast<FrustumComponent*>(this));
 }
 
 //==============================================================================
@@ -26,7 +29,7 @@ Camera::~Camera()
 //==============================================================================
 void Camera::lookAtPoint(const Vec3& point)
 {
-	MoveComponent& move = getComponent<MoveComponent>();
+	MoveComponent& move = *this;
 
 	const Vec3& j = Vec3(0.0, 1.0, 0.0);
 	Vec3 vdir = (point - move.getLocalTransform().getOrigin()).getNormalized();
@@ -42,13 +45,13 @@ void Camera::lookAtPoint(const Vec3& point)
 void Camera::frustumUpdate()
 {
 	// Frustum
-	FrustumComponent& fr = getComponent<FrustumComponent>();
+	FrustumComponent& fr = *this;
 	fr.setProjectionMatrix(fr.getFrustum().calculateProjectionMatrix());
 	fr.setViewProjectionMatrix(fr.getProjectionMatrix() * fr.getViewMatrix());
 	fr.markForUpdate();
 
 	// Spatial
-	SpatialComponent& sp = getComponent<SpatialComponent>();
+	SpatialComponent& sp = *this;
 	sp.markForUpdate();
 }
 
@@ -56,16 +59,14 @@ void Camera::frustumUpdate()
 void Camera::moveUpdate(MoveComponent& move)
 {
 	// Frustum
-	FrustumComponent& fr = getComponent<FrustumComponent>();
+	FrustumComponent& fr = *this;
 	fr.setViewMatrix(Mat4(move.getWorldTransform().getInverse()));
 	fr.setViewProjectionMatrix(fr.getProjectionMatrix() * fr.getViewMatrix());
-	fr.setOrigin(move.getWorldTransform().getOrigin());
 	fr.markForUpdate();
 	fr.getFrustum().setTransform(move.getWorldTransform());
 
 	// Spatial
-	SpatialComponent& sp = getComponent<SpatialComponent>();
-	sp.setOrigin(move.getWorldTransform().getOrigin());
+	SpatialComponent& sp = *this;
 	sp.markForUpdate();
 }
 
@@ -75,7 +76,7 @@ void Camera::moveUpdate(MoveComponent& move)
 
 //==============================================================================
 PerspectiveCamera::PerspectiveCamera(const char* name, SceneGraph* scene)
-	: Camera(name, scene, &frustum, CT_PERSPECTIVE)
+	: Camera(name, scene, CT_PERSPECTIVE)
 {}
 
 //==============================================================================
@@ -84,7 +85,7 @@ PerspectiveCamera::PerspectiveCamera(const char* name, SceneGraph* scene)
 
 //==============================================================================
 OrthographicCamera::OrthographicCamera(const char* name, SceneGraph* scene)
-	: Camera(name, scene, &frustum, CT_ORTHOGRAPHIC)
+	: Camera(name, scene, CT_ORTHOGRAPHIC)
 {}
 
 } // end namespace anki

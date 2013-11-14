@@ -176,19 +176,8 @@ public:
 	}
 
 protected:
-	/// Create a new component and append it to the components container
-	template<typename T, typename... Args>
-	T* newComponent(Args&&... args)
-	{
-		T* comp = nullptr;
-		SceneAllocator<T> al = getSceneAllocator();
-
-		comp = al.allocate(1);
-		al.construct(comp, std::forward<Args>(args)...);
-
-		components.push_back(comp);
-		return comp;
-	}
+	/// Append a component to the components container
+	void addComponent(SceneComponent* comp);
 
 private:
 	SceneGraph* scene = nullptr;

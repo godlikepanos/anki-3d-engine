@@ -1,33 +1,40 @@
 #include "anki/gl/Drawcall.h"
 #include "anki/util/Assert.h"
+#include <cstring>
 
 namespace anki {
 
 //==============================================================================
+Drawcall::Drawcall()
+{
+	memset(this, 0, sizeof(Drawcall));
+	instancesCount = 1;
+	drawCount = 1;
+}
+
+//==============================================================================
 void Drawcall::enque()
 {
-	ANKI_ASSERT(primitiveType && instancesCount > 0 && drawcallCount > 0
-		&& offsetsArray);
+	ANKI_ASSERT(primitiveType && instancesCount > 0);
+	ANKI_ASSERT(drawCount > 0 && drawCount <= ANKI_MAX_MULTIDRAW_PRIMITIVES);
 
-	if(indicesCountArray != nullptr)
+	if(indicesType != 0)
 	{
 		// DrawElements
-
-		ANKI_ASSERT(indicesCountArray && indicesType);
 
 		if(instancesCount == 1)
 		{
 			// No  instancing
 
-			if(drawcallCount == 1)
+			if(drawCount == 1)
 			{
 				// No multidraw
 
 				glDrawElements(
 					primitiveType, 
-					indicesCountArray[0], 
+					countArray[0], 
 					indicesType, 
-					offsetsArray[0]);
+					(const void*)offsetArray[0]);
 			}
 			else
 			{
@@ -36,18 +43,18 @@ void Drawcall::enque()
 #if ANKI_GL == ANKI_GL_DESKTOP
 				glMultiDrawElements(
 					primitiveType, 
-					indicesCountArray, 
+					(int*)&countArray[0],
 					indicesType, 
-					offsetsArray, 
-					drawcallCount);
+					(const void**)&offsetArray[0], 
+					drawCount);
 #else
-				for(U i = 0; i < drawcallCount; i++)
+				for(U i = 0; i < drawCount; i++)
 				{
 					glDrawElements(
 						primitiveType, 
-						indicesCountArray[i],
+						countArray[i],
 						indicesType,
-						offsetsArray[i]);
+						offsetArray[i]);
 				}
 #endif
 			}
@@ -57,16 +64,38 @@ void Drawcall::enque()
 			// Instancing
 			glDrawElementsInstanced(
 				primitiveType, 
-				indicesCountArray[0], 
+				countArray[0], 
 				indicesType, 
-				offsetsArray[0], 
+				(const void*)offsetArray[0], 
 				instancesCount);
 		}
 	}
 	else
 	{
-		// Draw arrays
-		ANKI_ASSERT(0 && "ToDo");
+		// DrawArrays
+
+		if(instancesCount == 1)
+		{
+			// No instancing
+
+			if(drawCount == 1)
+			{
+				// No multidraw
+
+				glDrawArrays(primitiveType, 0, countArray[0]);
+			}
+			else
+			{
+				// Multidraw
+
+				ANKI_ASSERT(0 && "TODO");
+			}
+		}
+		else
+		{
+			// Instancing
+			ANKI_ASSERT(0 && "TODO");
+		}
 	}
 }
 

@@ -8,43 +8,16 @@
 namespace anki {
 
 //==============================================================================
-// ModelPatchNodeInstance                                                      =
+// Instance                                                                    =
 //==============================================================================
 
 //==============================================================================
-ModelPatchNodeInstance::ModelPatchNodeInstance(
-	const char* name, SceneGraph* scene, // Scene
-	ModelPatchNode* modelPatchNode_) // Self
+Instance::Instance(
+	const char* name, SceneGraph* scene)
 	:	SceneNode(name, scene),
-		MoveComponent(this),
-		SpatialComponent(this, &obb),
-		modelPatchNode(modelPatchNode_)
+		MoveComponent(this)
 {
-	sceneNodeProtected.moveC = this;
-
-	// Dont mark it as spatial because it's sub-spatial and don't want to 
-	// be updated by the scene
-	sceneNodeProtected.spatialC = nullptr;
-
-	ANKI_ASSERT(modelPatchNode);
-}
-
-//==============================================================================
-void ModelPatchNodeInstance::moveUpdate()
-{
-	ANKI_ASSERT(modelPatchNode);
-
-	// Update the obb of self
-	obb = modelPatchNode->modelPatch->getBoundingShape().getTransformed(
-		getWorldTransform());
-	SpatialComponent::markForUpdate();
-
-	// If this instance is the last update the parent's collision shape
-	ANKI_ASSERT(modelPatchNode->instances.size() > 0);
-	if(this == modelPatchNode->instances.back())
-	{
-		modelPatchNode->updateSpatialCs();
-	}
+	addComponent(static_cast<MoveComponent*>(this));
 }
 
 //==============================================================================
@@ -100,6 +73,20 @@ ModelPatchNode::~ModelPatchNode()
 	{
 		getSceneGraph().deleteSceneNode(instance);
 	}
+}
+
+//==============================================================================
+void ModelPatchNode::getRenderingData(
+	const PassLodKey& key, 
+	const Vao*& vao, const ShaderProgram*& prog,
+	const U32* subMeshIndicesArray, U subMeshIndicesCount,
+	Drawcall& dracall)
+{
+	drawcall.prim
+
+	modelPatch->getRenderingDataSub(key, vao, prog, 
+		subMeshIndicesArray, subMeshIndicesCount, 
+		indicesCountArray, indicesOffsetArray, drawcallCount);
 }
 
 //==============================================================================
