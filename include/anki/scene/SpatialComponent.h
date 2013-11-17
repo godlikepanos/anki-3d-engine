@@ -45,7 +45,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	virtual CollisionShape& getSpatialCollisionShape() = 0;
+	virtual const CollisionShape& getSpatialCollisionShape() = 0;
 
 	const Aabb& getAabb() const
 	{
@@ -53,9 +53,9 @@ public:
 	}
 
 	/// Get optimal collision shape for visibility tests
-	CollisionShape& getVisibilityCollisionShape()
+	const CollisionShape& getVisibilityCollisionShape()
 	{
-		CollisionShape& cs = getSpatialCollisionShape();
+		const CollisionShape& cs = getSpatialCollisionShape();
 		if(cs.getCollisionShapeType() == CollisionShape::CST_SPHERE)
 		{
 			return cs;

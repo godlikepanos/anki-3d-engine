@@ -7,6 +7,8 @@
 
 namespace anki {
 
+#if 0
+
 //==============================================================================
 // Misc                                                                        =
 //==============================================================================
@@ -41,12 +43,8 @@ Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 //==============================================================================
 
 //==============================================================================
-ParticleBase::ParticleBase(
-	const char* name, SceneGraph* scene, // SceneNode
-	ParticleType type_)
-	:	SceneNode(name, scene),
-		MoveComponent(this),
-		type(type_)
+ParticleBase::ParticleBase(ParticleType type_)
+	: type(type_)
 {
 	sceneNodeProtected.moveC = this;
 }
@@ -73,9 +71,8 @@ void ParticleBase::revive(const ParticleEmitter& pe,
 //==============================================================================
 
 //==============================================================================
-ParticleSimple::ParticleSimple(
-	const char* name, SceneGraph* scene)
-	: ParticleBase(name, scene, PT_SIMPLE)
+ParticleSimple::ParticleSimple()
+	: ParticleBase(PT_SIMPLE)
 {}
 
 //==============================================================================
@@ -88,13 +85,10 @@ void ParticleSimple::simulate(const ParticleEmitter& pe,
 		static_cast<const ParticleEmitterProperties&>(pe).
 		particle.gravity.getLength() > 0.0);
 
-	Transform trf = getWorldTransform();
-	Vec3 xp = trf.getOrigin();
+	Vec3 xp = position;
 	Vec3 xc = acceleration * (dt * dt) + velocity * dt + xp;
 
-	trf.setOrigin(xc);
-
-	setLocalTransform(trf);
+	position = xc;
 
 	velocity += acceleration * dt;
 }
@@ -112,20 +106,17 @@ void ParticleSimple::revive(const ParticleEmitter& pe,
 			props.particle.gravityDeviation);
 
 	// Set the initial position
-	Vec3 pos = getRandom(props.particle.startingPos,
+	position = getRandom(props.particle.startingPos,
 		props.particle.startingPosDeviation);
 
-	pos += pe.getWorldTransform().getOrigin();
-
-	Transform trf;
-	trf.setIdentity();
-	trf.setOrigin(pos);
-	setLocalTransform(trf);
+	position += pe.getWorldTransform().getOrigin();
 }
 
 //==============================================================================
 // Particle                                                                    =
 //==============================================================================
+
+#if 0
 
 //==============================================================================
 Particle::Particle(
@@ -209,6 +200,7 @@ void Particle::revive(const ParticleEmitter& pe,
 		toBt(Transform(pos, pe.getWorldTransform().getRotation(), 1.0)));
 	body->setWorldTransform(trf);
 }
+#endif
 
 //==============================================================================
 // ParticleEmitter                                                             =
@@ -224,9 +216,9 @@ ParticleEmitter::ParticleEmitter(
 		RenderComponent(this),
 		particles(getSceneAllocator())
 {
-	sceneNodeProtected.spatialC = this;
-	sceneNodeProtected.moveC = this;
-	sceneNodeProtected.renderC = this;
+	addComponent(static_cast<MoveComponent>(this));
+	addComponent(static_cast<SpatialComponent>(this));
+	addComponent(static_cast<RenderComponent>(this));
 
 	// Load resource
 	particleEmitterResource.load(filename);
@@ -304,6 +296,7 @@ void ParticleEmitter::moveUpdate()
 //==============================================================================
 void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 {
+#if 0
 	collShape = getSceneAllocator().newInstance<btSphereShape>(particle.size);
 
 	RigidBody::Initializer binit;
@@ -327,6 +320,7 @@ void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 
 		particles.push_back(part);
 	}
+#endif
 }
 
 //==============================================================================
@@ -462,5 +456,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 		timeLeftForNextEmission -= crntTime - prevUpdateTime;
 	}
 }
+
+#endif
 
 } // end namespace anki

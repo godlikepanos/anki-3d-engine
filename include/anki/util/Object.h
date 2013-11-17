@@ -154,6 +154,7 @@ public:
 		for(Value* c : children)
 		{
 			vis(*c);
+			c->visitChildren(vis);
 		}
 	}
 

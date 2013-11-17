@@ -132,6 +132,17 @@ struct RemovePointer<T*>
 	typedef T Type;
 };
 
+/// Perform a static cast
+template<typename To, typename From>
+To staticCast(From from)
+{
+#if ANKI_DEBUG
+	return dynamic_cast<To>(from);
+#else
+	return static_cast<To>(from);
+#endif
+}
+
 /// @}
 /// @}
 

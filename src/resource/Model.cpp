@@ -116,7 +116,7 @@ void ModelPatchBase::getRenderingDataSub(const PassLodKey& key,
 	const Vao*& vao, const ShaderProgram*& prog, 
 	const U32* subMeshIndexArray, U subMeshIndexCount,
 	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
-	Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
+	Array<PtrSize, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
 	U32& drawcallCount) const
 {
 	const U meshLods = getMeshesCount();
@@ -150,7 +150,7 @@ void ModelPatchBase::getRenderingDataSub(const PassLodKey& key,
 		|| mesh.getSubMeshesCount() == 0)
 	{
 		drawcallCount = 1;
-		indicesOffsetArray[0] = nullptr;
+		indicesOffsetArray[0] = 0;
 		indicesCountArray[0] = mesh.getIndicesCount();
 	}
 	else
@@ -181,8 +181,7 @@ void ModelPatchBase::getRenderingDataSub(const PassLodKey& key,
 				indicesCountArray[drawcallCount] =
 					mesh.getIndicesCountSub((U)index, offset);
 
-				indicesOffsetArray[drawcallCount] = 
-					reinterpret_cast<const void*>((PtrSize)offset);
+				indicesOffsetArray[drawcallCount] = (PtrSize)offset;
 
 				++drawcallCount;
 			}

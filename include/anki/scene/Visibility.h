@@ -91,9 +91,9 @@ struct DistanceSortFunctor
 		ANKI_ASSERT(a.node && b.node);
 
 		F32 dist0 = origin.getDistanceSquared(
-			a.node->getComponent<SpatialComponent>().getOrigin());
+			a.node->getComponent<SpatialComponent>().getSpatialOrigin());
 		F32 dist1 = origin.getDistanceSquared(
-			b.node->getComponent<SpatialComponent>().getOrigin());
+			b.node->getComponent<SpatialComponent>().getSpatialOrigin());
 
 		return dist0 < dist1;
 	}
