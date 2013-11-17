@@ -14,6 +14,7 @@ class RenderComponent;
 class SpatialComponent;
 class LightComponent;
 class RigidBody;
+class InstanceComponent;
 
 class SceneComponent;
 
@@ -24,7 +25,8 @@ typedef VisitableCommonBase<
 	RenderComponent,
 	SpatialComponent,
 	LightComponent,
-	RigidBody> SceneComponentVisitable;
+	RigidBody,
+	InstanceComponent> SceneComponentVisitable;
 
 /// Scene node component
 class SceneComponent: public SceneComponentVisitable

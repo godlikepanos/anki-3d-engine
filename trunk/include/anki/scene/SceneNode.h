@@ -3,8 +3,8 @@
 
 #include "anki/scene/Property.h"
 #include "anki/scene/Common.h"
+#include "anki/scene/SceneObject.h"
 #include "anki/scene/SceneComponent.h"
-#include "anki/util/Object.h"
 
 namespace anki {
 
@@ -14,7 +14,7 @@ class SceneGraph; // Don't include
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode
+class SceneNode: public SceneObject
 {
 public:
 	/// Scene node update type
@@ -48,15 +48,6 @@ public:
 	{
 		return name.length() > 0 ? name.c_str() : nullptr;
 	}
-
-	SceneAllocator<U8> getSceneAllocator() const;
-
-	SceneAllocator<U8> getSceneFrameAllocator() const;
-
-	SceneGraph& getSceneGraph()
-	{
-		return *scene;
-	}
 	/// @}
 
 	/// This is called by the scene every frame after logic and before
@@ -82,16 +73,6 @@ public:
 
 	/// Return the last frame the node was updated. It checks all components
 	U32 getLastUpdateFrame() const;
-
-	/// Mark a node for deletion
-	void markForDeletion()
-	{
-		markedForDeletion = true;
-	}
-	Bool isMarkedForDeletion()
-	{
-		return markedForDeletion;
-	}
 
 	/// Iterate all components
 	template<typename Func>
@@ -179,11 +160,12 @@ protected:
 	/// Append a component to the components container
 	void addComponent(SceneComponent* comp);
 
+	/// Remove a component from the container
+	void removeComponent(SceneComponent* comp);
+
 private:
-	SceneGraph* scene = nullptr;
 	SceneString name; ///< A unique name
 	SceneVector<SceneComponent*> components;
-	Bool8 markedForDeletion;
 };
 /// @}
 

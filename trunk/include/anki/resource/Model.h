@@ -74,7 +74,7 @@ public:
 		const ShaderProgram*& prog,
 		const U32* subMeshIndicesArray, U subMeshIndicesCount,
 		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
-		Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
+		Array<PtrSize, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
 		U32& drawcallCount) const;
 
 protected:

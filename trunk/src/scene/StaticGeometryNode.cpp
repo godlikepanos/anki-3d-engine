@@ -1,5 +1,6 @@
 #include "anki/scene/StaticGeometryNode.h"
 #include "anki/scene/SceneGraph.h"
+#include "anki/gl/Drawcall.h"
 
 namespace anki {
 
@@ -8,9 +9,9 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-StaticGeometrySpatial::StaticGeometrySpatial(const Obb* obb,
-	SceneNode& node)
-	: SpatialComponent(&node, obb)
+StaticGeometrySpatial::StaticGeometrySpatial(
+	SceneNode* node, const Obb* obb_)
+	: SpatialComponent(node), obb(obb_)
 {}
 
 //==============================================================================
@@ -21,37 +22,75 @@ StaticGeometrySpatial::StaticGeometrySpatial(const Obb* obb,
 StaticGeometryPatchNode::StaticGeometryPatchNode(
 	const char* name, SceneGraph* scene, const ModelPatchBase* modelPatch_)
 	:	SceneNode(name, scene),
-		SpatialComponent(this, &modelPatch_->getBoundingShape()),
+		SpatialComponent(this),
 		RenderComponent(this),
 		modelPatch(modelPatch_)
 {
-	sceneNodeProtected.spatialC = this;
-	sceneNodeProtected.renderC = this;
+	addComponent(static_cast<SpatialComponent*>(this));
+	addComponent(static_cast<RenderComponent*>(this));
 
 	ANKI_ASSERT(modelPatch);
 	RenderComponent::init();
 
-	// For all submeshes create a StaticGeometrySp[atial
+	// Check if multimesh
 	if(modelPatch->getSubMeshesCount() > 1)
 	{
-		for(U i = 0; i < modelPatch->getSubMeshesCount(); i++)
+		// If multimesh create additional spatial components
+
+		obb = &modelPatch->getBoundingShapeSub(0);
+
+		for(U i = 1; i < modelPatch->getSubMeshesCount(); i++)
 		{
 			StaticGeometrySpatial* spatial =
 				getSceneAllocator().newInstance<StaticGeometrySpatial>(
-				&modelPatch->getBoundingShapeSub(i), *this);
+				this, &modelPatch->getBoundingShapeSub(i));
 
-			SpatialComponent::addChild(spatial);
+			addComponent(static_cast<SpatialComponent*>(spatial));
 		}
+	}
+	else
+	{
+		// If not multimesh then set the current spatial component
+
+		obb = &modelPatch->getBoundingShape();
 	}
 }
 
 //==============================================================================
 StaticGeometryPatchNode::~StaticGeometryPatchNode()
 {
-	visitSubSpatials([&](SpatialComponent& spatial)
+	U i = 0;
+	iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& spatial)
 	{
-		getSceneAllocator().deleteInstance(&spatial);
+		if(i != 0)
+		{
+			getSceneAllocator().deleteInstance(&spatial);
+		}
+		++i;
 	});
+}
+
+//==============================================================================
+void StaticGeometryPatchNode::getRenderingData(
+	const PassLodKey& key, 
+	const U32* subMeshIndicesArray, U subMeshIndicesCount,
+	const Vao*& vao, const ShaderProgram*& prog,
+	Drawcall& dc)
+{
+	dc.primitiveType = GL_TRIANGLES;
+	dc.indicesType = GL_UNSIGNED_SHORT;
+
+	U spatialsCount = 0;
+	iterateComponentsOfType<SpatialComponent>([&](SpatialComponent&)
+	{
+		++spatialsCount;
+	});
+
+	dc.instancesCount = spatialsCount;
+
+	modelPatch->getRenderingDataSub(key, vao, prog, 
+		subMeshIndicesArray, subMeshIndicesCount, 
+		dc.countArray, dc.offsetArray, dc.drawCount);
 }
 
 //==============================================================================
@@ -61,11 +100,9 @@ StaticGeometryPatchNode::~StaticGeometryPatchNode()
 //==============================================================================
 StaticGeometryNode::StaticGeometryNode(
 	const char* name, SceneGraph* scene, const char* filename)
-	: SceneNode(name, scene), patches(getSceneAllocator())
+	: SceneNode(name, scene)
 {
 	model.load(filename);
-
-	patches.reserve(model->getModelPatches().size());
 
 	U i = 0;
 	for(const ModelPatchBase* patch : model->getModelPatches())
@@ -75,18 +112,12 @@ StaticGeometryNode::StaticGeometryNode(
 		StaticGeometryPatchNode* node;
 		getSceneGraph().newSceneNode(node, name_.c_str(), patch);
 
-		patches.push_back(node);
 		++i;
 	}
 }
 
 //==============================================================================
 StaticGeometryNode::~StaticGeometryNode()
-{
-	for(StaticGeometryPatchNode* patch : patches)
-	{
-		getSceneGraph().deleteSceneNode(patch);
-	}
-}
+{}
 
 } // end namespace anki

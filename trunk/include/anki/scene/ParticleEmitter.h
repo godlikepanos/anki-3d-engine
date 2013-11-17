@@ -10,11 +10,13 @@
 
 namespace anki {
 
+#if 0
+
 class ParticleEmitter;
 
 /// Particle base
 /// XXX Remove SceneNode
-class ParticleBase: public SceneNode, public MoveComponent
+class ParticleBase
 {
 	friend class ParticleEmitter;
 
@@ -25,9 +27,7 @@ public:
 		PT_PHYSICS
 	};
 
-	ParticleBase(
-		const char* name, SceneGraph* scene, // SceneNode
-		ParticleType type); // Self
+	ParticleBase(ParticleType type);
 
 	virtual ~ParticleBase();
 
@@ -111,9 +111,11 @@ private:
 	/// The velocity
 	Vec3 velocity = Vec3(0.0);
 	Vec3 acceleration = Vec3(0.0);
+	Vec3 position;
 };
 
 /// Particle for bullet simulations
+#if 0
 class Particle: public ParticleBase
 {
 public:
@@ -136,6 +138,7 @@ public:
 private:
 	RigidBody* body;
 };
+#endif
 
 /// The particle emitter scene node. This scene node emitts
 class ParticleEmitter: public SceneNode, public SpatialComponent, 
@@ -168,15 +171,13 @@ public:
 		const PassLodKey& key, 
 		const Vao*& vao, const ShaderProgram*& prog,
 		const U32* subMeshIndicesArray, U subMeshIndicesCount,
-		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
-		Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
-		U32& drawcallCount) const;
+		Drawcall& drawcall);
 
 	/// Implements  RenderComponent::getMaterial
 	const Material& getMaterial();
 
 	/// Overrides RenderComponent::getRenderWorldTransforms
-	const Transform* getRenderWorldTransforms()
+	const Transform* getRenderWorldTransforms() override
 	{
 		return &(*instancingTransformations)[0];
 	}
@@ -200,7 +201,6 @@ private:
 	btCollisionShape* collShape = nullptr;
 	SceneVector<ParticleBase*> particles;
 	F32 timeLeftForNextEmission;
-	/// The resource
 	Aabb aabb;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's
@@ -218,6 +218,8 @@ private:
 	void createParticlesSimulation(SceneGraph* scene);
 	void createParticlesSimpleSimulation(SceneGraph* scene);
 };
+
+#endif
 
 } // end namespace anki
 

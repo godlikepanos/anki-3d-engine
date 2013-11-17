@@ -6,31 +6,17 @@
 
 namespace anki {
 
-#if 0
-
 // Forward
 class SceneGraph;
 
-/// The SceneObject deleter
-template<typename T, typename Alloc>
-struct SceneObjectDeleter
-{
-	void operator()(T* x)
-	{
-		Alloc alloc = x->getSceneAllocator();
-
-		alloc.destroy(x);
-		alloc.deallocate(x, 1);
-	}
-};
+/// @addtogroup Scene
+/// @{
 
 /// The base of all scene related objects
-class SceneObject: public Object<SceneObject, SceneAllocator<SceneObject>,
-	SceneObjectDeleter<SceneObject, SceneAllocator<SceneObject>>>
+class SceneObject: public Object<SceneObject, SceneAllocator<SceneObject>>
 {
 public:
-	typedef Object<SceneObject, SceneAllocator<SceneObject>,
-		SceneObjectDeleter<SceneObject, SceneAllocator<SceneObject>>> Base;
+	typedef Object<SceneObject, SceneAllocator<SceneObject>> Base;
 
 	SceneObject(SceneObject* parent, SceneGraph* scene);
 
@@ -43,11 +29,17 @@ public:
 		return *scene;
 	}
 
+	Bool isMarkedForDeletion() const
+	{
+		return markedForDeletion;
+	}
+	void markForDeletion();
+
 public:
 	SceneGraph* scene;
+	Bool8 markedForDeletion;
 };
-
-#endif
+/// @}
 
 } // end namespace anki
 

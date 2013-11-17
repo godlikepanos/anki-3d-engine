@@ -8,10 +8,9 @@ namespace anki {
 
 //==============================================================================
 SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
-	:	scene(scene_),
+	:	SceneObject(nullptr, scene_),
 		name(getSceneAllocator()),
-		components(getSceneAllocator()),
-		markedForDeletion(false)
+		components(getSceneAllocator())
 {
 	ANKI_ASSERT(scene);
 
@@ -34,20 +33,6 @@ SceneNode::~SceneNode()
 }
 
 //==============================================================================
-SceneAllocator<U8> SceneNode::getSceneAllocator() const
-{
-	ANKI_ASSERT(scene);
-	return scene->getAllocator();
-}
-
-//==============================================================================
-SceneAllocator<U8> SceneNode::getSceneFrameAllocator() const
-{
-	ANKI_ASSERT(scene);
-	return scene->getFrameAllocator();
-}
-
-//==============================================================================
 U32 SceneNode::getLastUpdateFrame() const
 {
 	U32 max = 0;
@@ -65,6 +50,14 @@ void SceneNode::addComponent(SceneComponent* comp)
 {
 	ANKI_ASSERT(comp);
 	components.push_back(comp);
+}
+
+//==============================================================================
+void SceneNode::removeComponent(SceneComponent* comp)
+{
+	auto it = std::find(components.begin(), components.end(), comp);
+	ANKI_ASSERT(it != components.end());
+	components.erase(it);
 }
 
 } // end namespace anki

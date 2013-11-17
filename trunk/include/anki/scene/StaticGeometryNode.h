@@ -15,12 +15,20 @@ namespace anki {
 class StaticGeometrySpatial: public SpatialComponent
 {
 public:
-	/// @name Constructors/Destructor
-	/// @{
+	StaticGeometrySpatial(SceneNode* node, const Obb* obb);
 
-	/// @note The node is only to steal the allocator
-	StaticGeometrySpatial(const Obb* obb, SceneNode& node);
-	/// @}
+	const CollisionShape& getSpatialCollisionShape()
+	{
+		return *obb;
+	}
+
+	Vec3 getSpatialOrigin()
+	{
+		return obb->getCenter();
+	}
+
+private:
+	const Obb* obb;
 };
 
 /// Static geometry scene node patch
@@ -37,22 +45,28 @@ public:
 	~StaticGeometryPatchNode();
 	/// @}
 
+	/// @name SpatialComponent virtuals
+	/// @{
+	const CollisionShape& getSpatialCollisionShape()
+	{
+		return *obb;
+	}
+
+	Vec3 getSpatialOrigin()
+	{
+		return obb->getCenter();
+	}
+	/// @}
+
 	/// @name RenderComponent virtuals
 	/// @{
 
 	/// Implements RenderComponent::getRenderingData
 	void getRenderingData(
 		const PassLodKey& key, 
-		const Vao*& vao, const ShaderProgram*& prog,
 		const U32* subMeshIndicesArray, U subMeshIndicesCount,
-		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
-		Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
-		U32& drawcallCount) const
-	{
-		modelPatch->getRenderingDataSub(key, vao, prog, 
-			subMeshIndicesArray, subMeshIndicesCount, 
-			indicesCountArray, indicesOffsetArray, drawcallCount);
-	}
+		const Vao*& vao, const ShaderProgram*& prog,
+		Drawcall& drawcall);
 
 	/// Implements  RenderComponent::getMaterial
 	const Material& getMaterial()
@@ -63,6 +77,7 @@ public:
 
 private:
 	const ModelPatchBase* modelPatch;
+	const Obb* obb; 
 };
 
 /// Static geometry scene node
@@ -77,7 +92,6 @@ public:
 
 private:
 	ModelResourcePointer model;
-	SceneVector<StaticGeometryPatchNode*> patches;
 };
 
 /// @}

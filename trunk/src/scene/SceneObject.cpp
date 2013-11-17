@@ -3,12 +3,14 @@
 
 namespace anki {
 
-#if 0
-
 //==============================================================================
 SceneObject::SceneObject(SceneObject* parent, SceneGraph* scene_)
-	: Base(parent, scene_->getAllocator()), scene(scene_)
-{}
+	:	Base(parent, scene_->getAllocator()),
+		scene(scene_),
+		markedForDeletion(false)
+{
+	ANKI_ASSERT(scene);
+}
 
 //==============================================================================
 SceneAllocator<U8> SceneObject::getSceneAllocator() const
@@ -24,6 +26,15 @@ SceneAllocator<U8> SceneObject::getSceneFrameAllocator() const
 	return scene->getFrameAllocator();
 }
 
-#endif
+//==============================================================================
+void SceneObject::markForDeletion()
+{
+	markedForDeletion = true;
+
+	visitChildren([](SceneObject& obj)
+	{
+		obj.markForDeletion();
+	});
+}
 
 } // end namespace anki

@@ -137,7 +137,7 @@ public:
 
 	/// @name SpatialComponent virtuals
 	/// @{
-	CollisionShape& getSpatialCollisionShape()
+	const CollisionShape& getSpatialCollisionShape()
 	{
 		return frustum;
 	}
@@ -205,7 +205,7 @@ public:
 
 	/// @name SpatialComponent virtuals
 	/// @{
-	CollisionShape& getSpatialCollisionShape()
+	const CollisionShape& getSpatialCollisionShape()
 	{
 		return frustum;
 	}
