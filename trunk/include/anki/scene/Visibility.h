@@ -36,29 +36,18 @@ enum VisibleBy
 struct VisibleNode
 {
 	SceneNode* node;
-	/// An array of the visible sub spatials. Allocated but never deallocated
-	/// because it lives in the scene frame mem pool
-	U32* subSpatialIndices;
-	U32 subSpatialIndicesCount;
+	/// An array of the visible spatials.
+	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES> spatialIndices;
+	U32 spatialsCount;
 
 	VisibleNode()
-		: node(nullptr), subSpatialIndices(nullptr), subSpatialIndicesCount(0)
+		: node(nullptr), subSpatialIndicesCount(0)
 	{}
-
-	VisibleNode(SceneNode* node_, U32* subSpatialIndices_, 
-		U32 subSpatialIndicesCount_)
-		:	node(node_), 
-			subSpatialIndices(subSpatialIndices_), 
-			subSpatialIndicesCount(subSpatialIndicesCount_)
-	{
-		ANKI_ASSERT(node);
-	}
 
 	VisibleNode(const VisibleNode& other)
-		:	node(other.node), 
-			subSpatialIndices(other.subSpatialIndices),
-			subSpatialIndicesCount(other.subSpatialIndicesCount)
-	{}
+	{
+		memcpy(this, &other, sizeof(VisibleNode));
+	}
 };
 
 /// Its actually a container for visible entities. It should be per frame
