@@ -7,6 +7,8 @@
 
 namespace anki {
 
+#if 0
+
 /// XXX
 class PathPoint
 {
@@ -65,6 +67,8 @@ private:
 	SceneVector<PathPoint> points;
 	F32 distance;
 };
+
+#endif
 
 } // end namespace anki
 

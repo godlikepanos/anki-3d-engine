@@ -2,6 +2,8 @@
 
 namespace anki {
 
+#if 0
+
 //==============================================================================
 Path::Path(
 	const char* name, SceneGraph* scene, 
@@ -69,5 +71,7 @@ Path::Path(
 		points.push_back(pp);
 	}
 }
+
+#endif
 
 } // end namespace anki

@@ -171,6 +171,18 @@ public:
 
 	~RenderComponent();
 
+	/// @name Accessors
+	/// @{
+	Variables::iterator getVariablesBegin()
+	{
+		return vars.begin();
+	}
+	Variables::iterator getVariablesEnd()
+	{
+		return vars.end();
+	}
+	/// @}
+
 	/// Get information for rendering.
 	/// Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts
@@ -189,17 +201,11 @@ public:
 		return nullptr;
 	}
 
-	/// @name Accessors
-	/// @{
-	Variables::iterator getVariablesBegin()
+	Bool getCastsShadow()
 	{
-		return vars.begin();
+		const Material& mtl = getMaterial();
+		return mtl.getShadow() && !mtl.isBlendingEnabled();
 	}
-	Variables::iterator getVariablesEnd()
-	{
-		return vars.end();
-	}
-	/// @}
 
 	/// Iterate variables using a lambda
 	template<typename Func>
