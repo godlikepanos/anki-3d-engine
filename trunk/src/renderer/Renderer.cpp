@@ -163,7 +163,7 @@ void Renderer::render(SceneGraph& scene_)
 
 	// Calc a few vars
 	//
-	U32 camUpdateTimestamp = cam.getFrustumComponent()->getTimestamp();
+	Timestamp camUpdateTimestamp = cam.FrustumComponent::getTimestamp();
 	if(planesUpdateTimestamp < scene->getActiveCameraChangeTimestamp()
 		|| planesUpdateTimestamp < camUpdateTimestamp
 		|| planesUpdateTimestamp == 1)

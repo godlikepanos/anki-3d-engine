@@ -21,13 +21,14 @@ struct VisibilityTestTask: ThreadpoolTask
 	void test(SceneNode& testedNode, Bool isLight, 
 		ThreadId threadId, U threadsCount)
 	{
-		ANKI_ASSERT(isLight == testedNode.tryGetComponent<LightComponent>());
+		ANKI_ASSERT(isLight == 
+			(testedNode.tryGetComponent<LightComponent>() != nullptr));
 
 		VisibilityTestResults* visible = 
 			frameAlloc.newInstance<VisibilityTestResults>(frameAlloc);
 
 		FrustumComponent& testedFr = 
-			testedNode->getComponent<FrustumComponent>();
+			testedNode.getComponent<FrustumComponent>();
 
 		// Chose the test range and a few other things
 		U64 start, end;
@@ -76,7 +77,7 @@ struct VisibilityTestTask: ThreadpoolTask
 					// Inside
 					sps[count++] = SpatialTemp{&sp, i};
 
-					sp->enableBits(isLight 
+					sp.enableBits(isLight 
 						? SpatialComponent::SF_VISIBLE_LIGHT 
 						: SpatialComponent::SF_VISIBLE_CAMERA);
 				}
@@ -90,7 +91,7 @@ struct VisibilityTestTask: ThreadpoolTask
 			}
 
 			// Sort spatials
-			Vec3 origin = frustumable.getFrustumOrigin();
+			Vec3 origin = testedFr.getFrustumOrigin();
 			std::sort(sps.begin(), sps.begin() + count, 
 				[&](const SpatialTemp& a, const SpatialTemp& b) -> Bool
 			{
@@ -114,7 +115,7 @@ struct VisibilityTestTask: ThreadpoolTask
 			RenderComponent* r = node.tryGetComponent<RenderComponent>();
 			if(isLight)
 			{
-				if(r && r->castsShadow())
+				if(r && r->getCastsShadow())
 				{
 					visible->renderables.push_back(visibleNode);
 				}
@@ -130,12 +131,13 @@ struct VisibilityTestTask: ThreadpoolTask
 					LightComponent* l = node.tryGetComponent<LightComponent>();
 					if(l)
 					{
-						visible->lights.push_back(
-							VisibleNode(&node, nullptr, 0));
+						Light* light = staticCast<Light*>(&node);
 
-						if(l->getShadowEnabled() && fr)
+						visible->lights.push_back(visibleNode);
+
+						if(light->getShadowEnabled() && fr)
 						{
-							test(node, true);
+							test(node, true, 0, 0);
 						}
 					}
 				}
@@ -146,7 +148,7 @@ struct VisibilityTestTask: ThreadpoolTask
 	/// Do the tests
 	void operator()(ThreadId threadId, U threadsCount)
 	{
-		test(*frustumableSn, threadId, threadsCount);
+		test(*frustumableSn, false, threadId, threadsCount);
 	}
 };
 
@@ -154,8 +156,7 @@ struct VisibilityTestTask: ThreadpoolTask
 void doVisibilityTests(SceneNode& fsn, SceneGraph& scene, 
 	Renderer& r)
 {
-	FrustumComponent* fr = fsn.getFrustumComponent();
-	ANKI_ASSERT(fr);
+	FrustumComponent& fr = fsn.getComponent<FrustumComponent>();
 
 	//
 	// Do the tests in parallel
@@ -184,8 +185,8 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	U32 lightsSize = 0;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		renderablesSize += jobs[i].visible->renderables.size();
-		lightsSize += jobs[i].visible->lights.size();
+		renderablesSize += jobs[i].cameraVisible->renderables.size();
+		lightsSize += jobs[i].cameraVisible->lights.size();
 	}
 
 	// Allocate
@@ -203,7 +204,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	lightsSize = 0;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		const VisibilityTestResults& from = *jobs[i].visible;
+		const VisibilityTestResults& from = *jobs[i].cameraVisible;
 
 		memcpy(&visible->renderables[renderablesSize],
 			&from.renderables[0],
@@ -219,7 +220,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	}
 
 	// Set the frustumable
-	fr->setVisibilityTestResults(visible);
+	fr.setVisibilityTestResults(visible);
 
 	//
 	// Sort
@@ -229,7 +230,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	DistanceSortJob dsjob;
 	dsjob.nodes = visible->lights.begin();
 	dsjob.nodesCount = visible->lights.size();
-	dsjob.origin = fr->getFrustumOrigin();
+	dsjob.origin = fr.getFrustumOrigin();
 	threadPool.assignNewTask(0, &dsjob);
 
 	// The rest of the jobs are dummy
@@ -241,7 +242,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 
 	// Sort the renderables in the main thread
 	DistanceSortFunctor dsfunc;
-	dsfunc.origin = fr->getFrustumOrigin();
+	dsfunc.origin = fr.getFrustumOrigin();
 	std::sort(visible->renderables.begin(), visible->renderables.end(), dsfunc);
 
 	threadPool.waitForAllThreadsToFinish();

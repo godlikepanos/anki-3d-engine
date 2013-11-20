@@ -41,7 +41,7 @@ struct VisibleNode
 	U32 spatialsCount;
 
 	VisibleNode()
-		: node(nullptr), subSpatialIndicesCount(0)
+		: node(nullptr), spatialsCount(0)
 	{}
 
 	VisibleNode(const VisibleNode& other)

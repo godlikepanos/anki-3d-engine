@@ -15,75 +15,13 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-struct UpdateMoveComponentsJob: ThreadpoolTask
-{
-	SceneGraph* scene = nullptr;
-
-	void operator()(ThreadId threadId, U threadsCount)
-	{
-		/*U64 start, end;
-		ANKI_ASSERT(scene);
-		choseStartEnd(
-			threadId, threadsCount, scene->getSceneNodesCount(), start, end);
-
-		scene->iterateSceneNodes(start, end, [](SceneNode& sn)
-		{
-			MoveComponent* m = sn.getMoveComponent();
-			if(m)
-			{
-				m->update();
-			}
-		});*/
-	}
-};
-
-//==============================================================================
-static void updateSceneNode(SceneNode& sn, F32 prevUpdateTime,
-	F32 crntTime, SectorGroup& sectorGroup)
-{
-	// Movable
-	MoveComponent* m = sn.getMoveComponent();
-	if(m)
-	{
-		m->reset();
-		m->updateReal(sn, prevUpdateTime, crntTime);
-	}
-
-	// Do some spatial stuff
-	SpatialComponent* sp = sn.getSpatialComponent();
-	if(sp)
-	{
-		sp->reset();
-		sp->updateReal(sn, prevUpdateTime, crntTime);
-	}
-
-	// Do some frustumable stuff
-	FrustumComponent* fr = sn.getFrustumComponent();
-	if(fr)
-	{
-		fr->reset();
-		fr->updateReal(sn, prevUpdateTime, crntTime);
-	}
-
-	// Do some renderable stuff
-	RenderComponent* r = sn.getRenderComponent();
-	if(r)
-	{
-		r->reset();
-		r->updateReal(sn, prevUpdateTime, crntTime);
-	}
-
-	// Update the node
-	sn.frameUpdate(prevUpdateTime, crntTime, getGlobTimestamp());
-}
-
-//==============================================================================
 struct UpdateSceneNodesJob: ThreadpoolTask
 {
 	SceneGraph* scene = nullptr;
 	F32 prevUpdateTime;
 	F32 crntTime;
-	SectorGroup* sectorGroup;
+	Barrier* barrier;
+	
 
 	void operator()(ThreadId threadId, U threadsCount)
 	{
@@ -92,9 +30,32 @@ struct UpdateSceneNodesJob: ThreadpoolTask
 		choseStartEnd(
 			threadId, threadsCount, scene->getSceneNodesCount(), start, end);
 
-		scene->iterateSceneNodes(start, end, [&](SceneNode& sn)
+		// First update the move components
+		scene->iterateSceneNodes(start, end, [&](SceneNode& node)
 		{
-			updateSceneNode(sn, prevUpdateTime, crntTime, *sectorGroup);	
+			MoveComponent* move = node.tryGetComponent<MoveComponent>();
+
+			if(move)
+			{
+				move->updateReal(node, prevUpdateTime, crntTime,
+					SceneComponent::ASYNC_UPDATE);
+			}
+		});
+
+		barrier->wait();
+
+		// Update the rest of the components
+		auto moveComponentTypeId = SceneComponent::getTypeIdOf<MoveComponent>();
+		scene->iterateSceneNodes(start, end, [&](SceneNode& node)
+		{
+			node.iterateComponents([&](SceneComponent& comp)
+			{
+				if(comp.getTypeId() != moveComponentTypeId)
+				{
+					comp.updateReal(node, prevUpdateTime, crntTime, 
+						SceneComponent::ASYNC_UPDATE);
+				}
+			});
 		});
 	}
 };
@@ -243,13 +204,14 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	deleteNodesMarkedForDeletion();
 
 	// Sync updates
-	iterateSceneNodes([&](SceneNode& sn)
+	iterateSceneNodes([&](SceneNode& node)
 	{
-		RigidBody* body = sn.getRigidBody();
-		if(body)
+		node.iterateComponents([&](SceneComponent& comp)
 		{
-			body->syncUpdate(sn, prevUpdateTime, crntTime);
-		}
+			comp.reset();
+			comp.updateReal(node, prevUpdateTime, crntTime, 
+				SceneComponent::SYNC_UPDATE);
+		});	
 	});
 
 	Threadpool& threadPool = ThreadpoolSingleton::get();
@@ -261,12 +223,6 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	events.updateAllEvents(prevUpdateTime, crntTime);
 
 	// Then the rest
-#if 0
-	for(SceneNode* n : nodes)
-	{
-		updateSceneNode(*n, prevUpdateTime, crntTime, sectorGroup);
-	}
-#else
 	Array<UpdateSceneNodesJob, Threadpool::MAX_THREADS> jobs2;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
@@ -276,18 +232,13 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 		job.scene = this;
 		job.prevUpdateTime = prevUpdateTime;
 		job.crntTime = crntTime;
-		job.sectorGroup = &sectorGroup;
 
 		threadPool.assignNewTask(i, &job);
 	}
 
 	threadPool.waitForAllThreadsToFinish();
-#endif
 
 	doVisibilityTests(*mainCam, *this, renderer);
-
-	/*sectorGroup.doVisibilityTests(*mainCam,
-		VisibilityTest(VT_RENDERABLES | VT_LIGHTS), &r);*/
 
 	ANKI_COUNTER_STOP_TIMER_INC(C_SCENE_UPDATE_TIME);
 }
@@ -327,7 +278,7 @@ void SceneGraph::load(const char* filename)
 			}
 
 			ModelNode* node;
-			newSceneNode(node, name.c_str(), el.getText(), instancesCount);
+			newSceneNode(node, name.c_str(), el.getText());
 
 			// <transform>
 			el = mdlNodeEl.getChildElement("transform");
@@ -338,12 +289,13 @@ void SceneGraph::load(const char* filename)
 				if(i == 0)
 				{
 					node->setLocalTransform(Transform(el.getMat4()));
-					node->setInstanceLocalTransform(
-						i, Transform(el.getMat4()));
+					//node->setInstanceLocalTransform(
+					//	i, Transform(el.getMat4()));
 				}
 				else
 				{
-					node->setInstanceLocalTransform(i, Transform(el.getMat4()));
+					// TODO
+					//node->setInstanceLocalTransform(i, Transform(el.getMat4()));
 				}
 
 				// Advance
