@@ -44,8 +44,13 @@ public:
 		return modelPatch->getMaterial();
 	}
 
-	/// Overrides RenderComponent::getRenderComponentWorldTransforms
-	const Transform* getRenderWorldTransforms() override;
+	/// Overrides RenderComponent::getRenderComponentWorldTransform
+	void getRenderWorldTransform(U index, Transform& trf) override;
+
+	Bool getHasWorldTransforms() override
+	{
+		return true;
+	}
 	/// @}
 
 	/// Override SceneNode::frameUpdate

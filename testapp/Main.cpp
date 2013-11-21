@@ -221,7 +221,7 @@ void init()
 		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
 		mevent->enableBits(Event::EF_REANIMATE);
 
-		ParticleEmitter* pe;
+		/*ParticleEmitter* pe;
 		scene.newSceneNode(pe,
 			("pe" + std::to_string(i)).c_str(),
 			"particles/smoke.ankipart");
@@ -229,7 +229,7 @@ void init()
 
 		scene.newSceneNode(pe, ("pef" + std::to_string(i)).c_str(), 
 			"particles/fire.ankipart");
-		pe->setLocalOrigin(lightPos);
+		pe->setLocalOrigin(lightPos);*/
 	}
 #endif
 
@@ -331,7 +331,8 @@ void mainLoopExtra()
 	F32 mouseSensivity = 9.0;
 
 	// move the camera
-	static MoveComponent* mover = SceneGraphSingleton::get().getActiveCamera().getMoveComponent();
+	static MoveComponent* mover = 
+		&SceneGraphSingleton::get().getActiveCamera().getComponent<MoveComponent>();
 	Input& in = InputSingleton::get();
 
 	if(in.getKey(KC_1))
@@ -340,27 +341,27 @@ void mainLoopExtra()
 	}
 	if(in.getKey(KC_2))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("horse").getMoveComponent();
+		mover = &SceneGraphSingleton::get().findSceneNode("horse").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KC_3))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("spot0").getMoveComponent();
+		mover = &SceneGraphSingleton::get().findSceneNode("spot0").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KC_4))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("spot1").getMoveComponent();
+		mover = &SceneGraphSingleton::get().findSceneNode("spot1").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KC_5))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("pe").getMoveComponent();
+		mover = &SceneGraphSingleton::get().findSceneNode("pe").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KC_6))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("vase_plight0").getMoveComponent();
+		mover = &SceneGraphSingleton::get().findSceneNode("vase_plight0").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KC_7))
 	{
-		mover = SceneGraphSingleton::get().findSceneNode("red_barrel").getMoveComponent();
+		mover = &SceneGraphSingleton::get().findSceneNode("red_barrel").getComponent<MoveComponent>();
 	}
 
 	if(in.getKey(KC_L) == 1)
@@ -371,7 +372,7 @@ void mainLoopExtra()
 		Transform trf;
 		trf.setIdentity();
 		trf.getOrigin().y() = 20.0;
-		l.getMoveComponent()->setLocalTransform(trf);
+		l.getComponent<MoveComponent>().setLocalTransform(trf);
 	}
 
 	if(in.getKey(KC_F1) == 1)

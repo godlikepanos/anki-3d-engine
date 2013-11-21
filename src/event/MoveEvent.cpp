@@ -13,14 +13,15 @@ MoveEvent::MoveEvent(EventManager* manager, F32 startTime, F32 duration,
 	ANKI_ASSERT(node);
 	*static_cast<MoveEventData*>(this) = data;
 
-	originalPos =
-		node->getMoveComponent()->getLocalTransform().getOrigin();
+	const MoveComponent& move = node->getComponent<MoveComponent>();
+
+	originalPos = move.getLocalTransform().getOrigin();
 
 	for(U i = 0; i < 3; i++)
 	{
 		newPos[i] = randRange(posMin[i], posMax[i]);
 	}
-	newPos += node->getMoveComponent()->getLocalTransform().getOrigin();
+	newPos += move.getLocalTransform().getOrigin();
 }
 
 //==============================================================================
@@ -29,13 +30,15 @@ void MoveEvent::update(F32 prevUpdateTime, F32 crntTime)
 	SceneNode* node = getSceneNode();
 	ANKI_ASSERT(node);
 
-	Transform trf = node->getMoveComponent()->getLocalTransform();
+	MoveComponent& move = node->getComponent<MoveComponent>();
+
+	Transform trf = move.getLocalTransform();
 
 	F32 factor = sin(getDelta(crntTime) * getPi<F32>());
 
 	trf.getOrigin() = interpolate(originalPos, newPos, factor);
 
-	node->getMoveComponent()->setLocalTransform(trf);
+	move.setLocalTransform(trf);
 }
 
 } // end namespace anki

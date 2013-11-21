@@ -84,9 +84,7 @@ RenderComponentVariable::~RenderComponentVariable()
 //==============================================================================
 RenderComponent::RenderComponent(SceneNode* node)
 	: SceneComponent(this, node), vars(node->getSceneAllocator())
-{
-	init();
-}
+{}
 
 //==============================================================================
 RenderComponent::~RenderComponent()

@@ -467,7 +467,7 @@ void PhysicsDebugDrawer::draw3dText(const btVector3& /*location*/,
 //==============================================================================
 void SceneDebugDrawer::draw(SceneNode& node)
 {
-	MoveComponent* mv = node.getMoveComponent();
+	MoveComponent* mv = node.tryGetComponent<MoveComponent>();
 	if(mv)
 	{
 		dbg->setModelMatrix(Mat4(mv->getWorldTransform()));
@@ -477,24 +477,16 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		dbg->setModelMatrix(Mat4::getIdentity());
 	}
 
-	FrustumComponent* fr;
-	if((fr = node.getFrustumComponent()))
+	FrustumComponent* fr = node.tryGetComponent<FrustumComponent>();
+	if(fr)
 	{
 		draw(*fr);
 	}
 
-	SpatialComponent* sp;
-	if((sp = node.getSpatialComponent())
-		&& sp->bitsEnabled(SpatialComponent::SF_VISIBLE_CAMERA))
+	node.iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp)
 	{
-		draw(*sp);
-	}
-
-	Path* path = node.getPath();
-	if(path)
-	{
-		drawPath(*path);
-	}
+		draw(sp);
+	});
 }
 
 //==============================================================================
@@ -513,15 +505,6 @@ void SceneDebugDrawer::draw(SpatialComponent& x) const
 	dbg->setColor(Vec3(1.0, 0.0, 1.0));
 	CollisionDebugDrawer coldraw(dbg);
 	x.getAabb().accept(coldraw);
-
-	dbg->setColor(Vec3(0.25, 0.0, 0.25));
-	x.visitChildren([&](SpatialComponent& sp)
-	{
-		if(sp.bitsEnabled(SpatialComponent::SF_VISIBLE_CAMERA))
-		{
-			sp.getAabb().accept(coldraw);
-		}
-	});
 }
 
 //==============================================================================
@@ -560,7 +543,7 @@ void SceneDebugDrawer::draw(const Sector& sector)
 //==============================================================================
 void SceneDebugDrawer::drawPath(const Path& path) const
 {
-	const U count = path.getPoints().size();
+	/*const U count = path.getPoints().size();
 
 	dbg->setColor(Vec3(1.0, 1.0, 0.0));
 
@@ -572,7 +555,7 @@ void SceneDebugDrawer::drawPath(const Path& path) const
 		dbg->pushBackVertex(path.getPoints()[i + 1].getPosition());
 	}
 
-	dbg->end();
+	dbg->end();*/
 }
 
 }  // end namespace anki

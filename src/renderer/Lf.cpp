@@ -155,8 +155,8 @@ void Lf::run()
 	for(auto it : vi.lights)
 	{
 		SceneNode& sn = *it.node;
-		ANKI_ASSERT(sn.getLight());
-		Light* light = sn.getLight();
+		ANKI_ASSERT(sn.tryGetComponent<LightComponent>() != nullptr);
+		Light* light = staticCast<Light*>(&sn);
 
 		if(light->hasLensFlare())
 		{

@@ -196,9 +196,19 @@ public:
 	virtual const Material& getMaterial() = 0;
 
 	/// Information for movables. It's actualy an array of transformations.
-	virtual const Transform* getRenderWorldTransforms()
+	/// @param index The index of the transform to get
+	/// @param[out] trf The transform to set
+	virtual void getRenderWorldTransform(U index, Transform& trf)
 	{
-		return nullptr;
+		ANKI_ASSERT(getHasWorldTransforms());
+		(void)index;
+		(void)trf;
+	}
+
+	/// Return true if the renderable has world transforms
+	virtual Bool getHasWorldTransforms()
+	{
+		return false;
 	}
 
 	Bool getCastsShadow()

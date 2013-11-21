@@ -41,10 +41,11 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 	RenderComponentVariable* rvar = nullptr;
 	const ShaderProgramUniformVariable* uni;
 	F32 flod;
+	Drawcall* dc = nullptr;
 
 	// Used for 
-	const U32* subSpatialIndices = nullptr;
-	U32 subSpatialIndicesCount = 0;
+	const U32* spatialIndices = nullptr;
+	U32 spatialsCount = 0;
 
 	/// Set a uniform in a client block
 	template<typename T>
@@ -57,13 +58,13 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 	template<typename TRenderableVariableTemplate>
 	void visit(TRenderableVariableTemplate& x)
 	{
-		const U32 instancesCount = renderable->getRenderInstancesCount();
+		const U32 drawCount = std::max(dc->drawCount, dc->instancesCount);
 		const U32 uniArrSize = uni->getSize();
-		U32 size = std::min(instancesCount, uniArrSize);
+		U32 size = std::min(drawCount, uniArrSize);
 
 		// Set uniform
 		//
-		const Transform* trfs = renderable->getRenderWorldTransforms();
+		Bool hasWorldTrfs = renderable->getHasWorldTransforms();
 		const Mat4& vp = fr->getViewProjectionMatrix();
 		const Mat4& v = fr->getViewMatrix();
 
@@ -74,25 +75,18 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 				*uni, x.get(), x.getArraySize());
 			break;
 		case BMV_MVP_MATRIX:
-			if(trfs)
+			if(hasWorldTrfs)
 			{
 				Array<Mat4, ANKI_MAX_INSTANCES> mvp;
 
-				if(subSpatialIndicesCount == 0)
+				for(U i = 0; i < size; i++)
 				{
-					for(U i = 0; i < size; i++)
-					{
-						mvp[i] = vp * Mat4(trfs[i]);
-					}
-				}
-				else
-				{
-					for(size = 0; size < subSpatialIndicesCount; size++)
-					{
-						ANKI_ASSERT(size < instancesCount 
-							&& size < uniArrSize);
-						mvp[size] = vp * Mat4(trfs[subSpatialIndices[size]]);
-					}
+					Transform worldTrf;
+
+					renderable->getRenderWorldTransform(
+						spatialIndices[i], worldTrf);
+
+					mvp[i] = vp * Mat4(worldTrf);
 				}
 
 				uniSet(*uni, &mvp[0], size);
@@ -105,25 +99,17 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 			break;
 		case BMV_MV_MATRIX:
 			{
-				ANKI_ASSERT(trfs != nullptr);
+				ANKI_ASSERT(hasWorldTrfs);
 				Array<Mat4, ANKI_MAX_INSTANCES> mv;
 
-				if(subSpatialIndicesCount == 0)
+				for(U i = 0; i < size; i++)
 				{
-					for(U i = 0; i < size; i++)
-					{
-						mv[i] = v * Mat4(trfs[i]);
-					}
-				}
-				else
-				{
-					for(size = 0; size < subSpatialIndicesCount; size++)
-					{
-						ANKI_ASSERT(size < instancesCount 
-							&& size < uniArrSize);
+					Transform worldTrf;
 
-						mv[size] = v * Mat4(trfs[subSpatialIndices[size]]);
-					}
+					renderable->getRenderWorldTransform(
+						spatialIndices[i], worldTrf);
+
+					mv[i] = v * Mat4(worldTrf);
 				}
 
 				uniSet(*uni, &mv[0], size);
@@ -133,39 +119,32 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 			uniSet(*uni, &vp, 1);
 			break;
 		case BMV_NORMAL_MATRIX:
-			if(trfs)
+			if(hasWorldTrfs)
 			{
-				Array<Mat3, ANKI_MAX_INSTANCES> normm;
+				Array<Mat3, ANKI_MAX_INSTANCES> normMats;
 
-				if(subSpatialIndicesCount == 0)
+				for(U i = 0; i < size; i++)
 				{
-					for(U i = 0; i < size; i++)
-					{
-						Mat4 mv = v * Mat4(trfs[i]);
-						normm[i] = mv.getRotationPart();
-						normm[i].reorthogonalize();
-					}
-				}
-				else
-				{
-					for(size = 0; size < subSpatialIndicesCount; size++)
-					{
-						Mat4 mv = v * Mat4(trfs[subSpatialIndices[size]]);
-						normm[size] = mv.getRotationPart();
-						normm[size].reorthogonalize();
-					}
+					Transform worldTrf;
+
+					renderable->getRenderWorldTransform(
+						spatialIndices[i], worldTrf);
+
+					Mat4 mv = v * Mat4(worldTrf);
+					normMats[i] = mv.getRotationPart();
+					normMats[i].reorthogonalize();
 				}
 
-				uniSet(*uni, &normm[0], size);
+				uniSet(*uni, &normMats[0], size);
 			}
 			else
 			{
 				ANKI_ASSERT(uniArrSize == 1
 					&& "Having that instanced doesn't make sense");
 
-				Mat3 norm = v.getRotationPart();
+				Mat3 normMat = v.getRotationPart();
 
-				uniSet(*uni, &norm, 1);
+				uniSet(*uni, &normMat, 1);
 			}
 			break;
 		case BMV_BILLBOARD_MVP_MATRIX:
@@ -178,7 +157,8 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 
 				for(U i = 0; i < size; i++)
 				{
-					Transform trf = trfs[i];
+					Transform trf;
+					renderable->getRenderWorldTransform(i, trf);
 					trf.setRotation(rot);
 					bmvp[i] = vp * Mat4(trf);
 				}
@@ -263,8 +243,9 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 void RenderableDrawer::setupShaderProg(const PassLodKey& key_,
 	const FrustumComponent& fr, const ShaderProgram &prog,
 	RenderComponent& renderable, 
-	U32* subSpatialIndices, U subSpatialIndicesCount,
-	F32 flod)
+	U32* spatialIndices, U spatialsCount,
+	F32 flod,
+	Drawcall* dc)
 {
 	prog.bind();
 	
@@ -273,9 +254,10 @@ void RenderableDrawer::setupShaderProg(const PassLodKey& key_,
 	vis.fr = &fr;
 	vis.renderable = &renderable;
 	vis.r = r;
-	vis.subSpatialIndices = subSpatialIndices;
-	vis.subSpatialIndicesCount = subSpatialIndicesCount;
+	vis.spatialIndices = spatialIndices;
+	vis.spatialsCount = spatialsCount;
 	vis.flod = flod;
+	vis.dc = dc;
 
 	PassLodKey key(key_.pass,
 		std::min(key_.level,
@@ -312,26 +294,29 @@ void RenderableDrawer::setupShaderProg(const PassLodKey& key_,
 
 //==============================================================================
 void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
-	Pass pass, SceneNode& rsn, U32* subSpatialIndices,
-	U subSpatialIndicesCount)
+	Pass pass, SceneNode& rsn, U32* spatialIndices,
+	U spatialsCount)
 {
-	ANKI_ASSERT(frsn.getFrustumComponent());
-	FrustumComponent& fr = *frsn.getFrustumComponent();
-	RenderComponent* renderable = rsn.getRenderComponent();
-	ANKI_ASSERT(renderable);
+	// Preconditions
+	ANKI_ASSERT(spatialIndices);
+	ANKI_ASSERT(spatialsCount > 0);
 
-	// Instancing
-	U32 instancesCount = renderable->getRenderInstancesCount();
+	// Get components
+	FrustumComponent& fr = frsn.getComponent<FrustumComponent>();
+	RenderComponent& renderable = rsn.getComponent<RenderComponent>();
 
-	if(ANKI_UNLIKELY(instancesCount < 1))
-	{
-		return;
-	}
+	// Calculate the key
+	Vec3 camPos = fr.getFrustumOrigin();
 
-	GlState& gl = GlStateSingleton::get();
+	F32 dist = (rsn.getComponent<SpatialComponent>().getSpatialOrigin() 
+		- camPos).getLength();
+	F32 lod = r->calculateLod(dist);
+
+	PassLodKey key(pass, lod);
 
 	// Blending
-	const Material& mtl = renderable->getMaterial();
+	GlState& gl = GlStateSingleton::get();
+	const Material& mtl = renderable.getMaterial();
 
 	Bool blending = mtl.isBlendingEnabled();
 
@@ -359,50 +344,25 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	gl.setPolygonMode(mtl.getWireframe() ? GL_LINE : GL_FILL);
 #endif
 
-	// Calculate the LOD
-	Vec3 camPos = fr.getFrustumOrigin();
-
-	F32 dist = 
-		(rsn.getSpatialComponent()->getSpatialOrigin() - camPos).getLength();
-	F32 lod = r->calculateLod(dist);
-
-	PassLodKey key(pass, lod);
-
-	// Get rendering useful stuff
+	// Get rendering useful drawing stuff
 	const ShaderProgram* prog;
 	const Vao* vao;
-	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES> indicesCountArray;
-	Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES> indicesOffsetArray;
-#if ANKI_DEBUG
-	memset(&indicesCountArray[0], 0, sizeof(indicesCountArray));
-	memset(&indicesOffsetArray[0], 0, sizeof(indicesOffsetArray));
-#endif
+	Drawcall dc;
 
-	U32 drawcallCount = 1;
-
-	renderable->getRenderingData(
-		key, vao, prog, 
-		subSpatialIndices, subSpatialIndicesCount,
-		indicesCountArray, indicesOffsetArray, drawcallCount);
-
-	// Hack the instances count
-	if(subSpatialIndicesCount > 0 && instancesCount > 1)
-	{
-		instancesCount = subSpatialIndicesCount;
-	}
+	renderable.getRenderingData(
+		key, spatialIndices, spatialsCount, // in
+		vao, prog, dc); //out
 
 	// Setup shader
 	setupShaderProg(
-		key, fr, *prog, *renderable, subSpatialIndices, subSpatialIndicesCount,
-		lod);
+		key, fr, *prog, renderable, spatialIndices, spatialsCount,
+		lod, &dc);
 
 	// Render
 	ANKI_ASSERT(vao->getAttachmentsCount() > 1);
 	vao->bind();
 
-	// Draw call
-	Drawcall dc;
-
+	// Tessellation
 #if ANKI_GL == ANKI_GL_DESKTOP
 	if(mtl.getTessellation())
 	{
@@ -411,16 +371,8 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	}
 	else
 #endif
-	{
-		dc.primitiveType = GL_TRIANGLES;
-	}
 
-	dc.indicesType = GL_UNSIGNED_SHORT;
-	dc.instancesCount = instancesCount;
-	dc.indicesCountArray = (GLsizei*)&indicesCountArray[0];
-	dc.offsetsArray = &indicesOffsetArray[0];
-	dc.drawcallCount = drawcallCount;
-
+	// Start drawcall
 	dc.enque();
 
 	ANKI_COUNTER_INC(C_RENDERER_DRAWCALLS_COUNT, (U64)1);
