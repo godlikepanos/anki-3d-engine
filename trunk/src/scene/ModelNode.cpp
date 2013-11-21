@@ -56,16 +56,16 @@ void ModelPatchNode::getRenderingData(
 }
 
 //==============================================================================
-const Transform* ModelPatchNode::getRenderWorldTransforms()
+void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 {
 	SceneNode* parent = staticCast<SceneNode*>(getParent());
 	ANKI_ASSERT(parent);
 	MoveComponent& move = parent->getComponent<MoveComponent>();
 
-	if(1) // XXX
+	if(index == 0)
 	{
 		// NO instancing
-		return &move.getWorldTransform();
+		trf = move.getWorldTransform();
 	}
 	else
 	{

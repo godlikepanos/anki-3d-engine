@@ -20,8 +20,7 @@ struct UpdateSceneNodesJob: ThreadpoolTask
 	SceneGraph* scene = nullptr;
 	F32 prevUpdateTime;
 	F32 crntTime;
-	Barrier* barrier;
-	
+	Barrier* barrier = nullptr;
 
 	void operator()(ThreadId threadId, U threadsCount)
 	{
@@ -224,6 +223,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 
 	// Then the rest
 	Array<UpdateSceneNodesJob, Threadpool::MAX_THREADS> jobs2;
+	Barrier barrier(threadPool.getThreadsCount());
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
@@ -232,6 +232,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 		job.scene = this;
 		job.prevUpdateTime = prevUpdateTime;
 		job.crntTime = crntTime;
+		job.barrier = &barrier;
 
 		threadPool.assignNewTask(i, &job);
 	}

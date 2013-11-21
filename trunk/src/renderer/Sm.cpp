@@ -154,22 +154,21 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 {
 	Shadowmap& sm = bestCandidate(light);
 
-	FrustumComponent* fr = light.getFrustumComponent();
-	ANKI_ASSERT(fr != nullptr);
-	VisibilityTestResults& vi = fr->getVisibilityTestResults();
+	FrustumComponent& fr = light.getComponent<FrustumComponent>();
+	VisibilityTestResults& vi = fr.getVisibilityTestResults();
 
 	//
 	// Find last update
 	//
 	U32 lastUpdate = light.MoveComponent::getTimestamp();
-	lastUpdate = std::max(lastUpdate, fr->getTimestamp());
+	lastUpdate = std::max(lastUpdate, fr.getTimestamp());
 
 	for(auto it : vi.renderables)
 	{
 		SceneNode* node = it.node;
-		FrustumComponent* bfr = node->getFrustumComponent();
-		MoveComponent* bmov = node->getMoveComponent();
-		SpatialComponent* sp = node->getSpatialComponent();
+		MoveComponent* bmov = node->tryGetComponent<MoveComponent>();
+		FrustumComponent* bfr = node->tryGetComponent<FrustumComponent>();
+		SpatialComponent* sp = node->tryGetComponent<SpatialComponent>();
 
 		if(bfr)
 		{
@@ -209,8 +208,8 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 	for(auto it : vi.renderables)
 	{
 		r->getSceneDrawer().render(light, RenderableDrawer::RS_MATERIAL,
-			DEPTH_PASS, *it.node, it.subSpatialIndices, 
-			it.subSpatialIndicesCount);
+			DEPTH_PASS, *it.node, &it.spatialIndices[0], 
+			it.spatialsCount);
 	}
 
 	ANKI_COUNTER_INC(C_RENDERER_SHADOW_PASSES, (U64)1);

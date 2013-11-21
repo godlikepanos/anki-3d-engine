@@ -66,7 +66,7 @@ void Dbg::run()
 
 	scene.iterateSceneNodes([&](SceneNode& node)
 	{
-		SpatialComponent* sp = node.getSpatialComponent();
+		SpatialComponent* sp = node.tryGetComponent<SpatialComponent>();
 		if(bitsEnabled(DF_SPATIAL) && sp)
 		{
 			sceneDrawer->draw(node);

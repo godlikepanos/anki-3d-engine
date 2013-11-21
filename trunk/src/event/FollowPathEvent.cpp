@@ -3,6 +3,8 @@
 
 namespace anki {
 
+#if 0
+
 //==============================================================================
 FollowPathEvent::FollowPathEvent(
 	EventManager* manager, F32 startTime, F32 duration, U8 flags,
@@ -18,8 +20,7 @@ FollowPathEvent::FollowPathEvent(
 //==============================================================================
 void FollowPathEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
-	MoveComponent* mov = movableSceneNode->getMoveComponent();
-	ANKI_ASSERT(mov);
+	MoveComponent& move = movableSceneNode->getComponent<MoveComponent>();
 
 	I pointA = 0;
 	I pointB = 0;
@@ -104,12 +105,14 @@ void FollowPathEvent::update(F32 prevUpdateTime, F32 crntTime)
 			path->getPoints()[pointB].getRotation(),
 			u);
 
-	F32 scale = mov->getLocalTransform().getScale();
+	F32 scale = move.getLocalTransform().getScale();
 	Transform trf;
 	trf.setOrigin(newPos);
 	trf.setRotation(Mat3(newRot));
 	trf.setScale(scale);
-	mov->setLocalTransform(trf);
+	move.setLocalTransform(trf);
 }
+
+#endif
 
 } // end namespace anki

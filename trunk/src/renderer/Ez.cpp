@@ -21,15 +21,13 @@ void Ez::run()
 	SceneGraph& scene = r->getSceneGraph();
 	Camera& cam = scene.getActiveCamera();
 
-	VisibilityTestResults& vi = 
-		cam.getFrustumComponent()->getVisibilityTestResults();
+	VisibilityTestResults& vi = cam.getVisibilityTestResults();
 
 	U count = 0;
 	for(auto it : vi.renderables)
 	{
 		r->getSceneDrawer().render(cam, RenderableDrawer::RS_MATERIAL,
-			DEPTH_PASS, *it.node, it.subSpatialIndices, 
-			it.subSpatialIndicesCount);
+			DEPTH_PASS, *it.node, &it.spatialIndices[0], it.spatialsCount);
 		++count;
 	}
 }

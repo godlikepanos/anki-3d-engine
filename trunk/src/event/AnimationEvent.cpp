@@ -11,7 +11,7 @@ AnimationEvent::AnimationEvent(EventManager* manager,
 	:	Event(manager, 0.0, 0.0, movableSceneNode),
 		anim(anim_)
 {
-	ANKI_ASSERT(movableSceneNode && movableSceneNode->getMoveComponent());
+	ANKI_ASSERT(movableSceneNode);
 
 	startTime = anim->getStartingTime();
 	duration = anim->getDuration();
@@ -21,8 +21,7 @@ AnimationEvent::AnimationEvent(EventManager* manager,
 void AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
 	ANKI_ASSERT(getSceneNode());
-	MoveComponent* mov = getSceneNode()->getMoveComponent();
-	ANKI_ASSERT(mov);
+	MoveComponent& move = getSceneNode()->getComponent<MoveComponent>();
 
 	Vec3 pos;
 	Quat rot;
@@ -33,7 +32,7 @@ void AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
 	trf.setOrigin(pos);
 	trf.setRotation(Mat3(rot));
 	trf.setScale(scale);
-	mov->setLocalTransform(trf);
+	move.setLocalTransform(trf);
 }
 
 } // end namespace anki

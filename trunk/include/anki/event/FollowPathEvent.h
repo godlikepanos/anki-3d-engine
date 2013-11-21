@@ -6,6 +6,8 @@
 
 namespace anki {
 
+#if 0
+
 class FollowPathEvent: public Event
 {
 public:
@@ -26,6 +28,8 @@ private:
 	SceneNode* movableSceneNode;
 	Path* path;
 };
+
+#endif
 
 } // end namespace anki
 

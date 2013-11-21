@@ -3,6 +3,7 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/resource/PassLodKey.h"
+#include "anki/gl/Drawcall.h"
 
 namespace anki {
 
@@ -49,7 +50,8 @@ private:
 		RenderComponent& renderable,
 		U32* subSpatialIndices,
 		U subSpatialIndicesCount,
-		F32 flod);
+		F32 flod,
+		Drawcall* dc);
 };
 
 } // end namespace anki

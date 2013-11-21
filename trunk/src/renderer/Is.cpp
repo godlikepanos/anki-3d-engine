@@ -127,16 +127,16 @@ struct WriteLightsJob: ThreadpoolTask
 		// Run all lights
 		for(U64 i = start; i < end; i++)
 		{
-			const SceneNode* snode = (*(lightsBegin + i)).node;
-			const Light* light = snode->getLight();
+			SceneNode* snode = (*(lightsBegin + i)).node;
+			Light* light = staticCast<Light*>(snode);
 			ANKI_ASSERT(light);
 
 			switch(light->getLightType())
 			{
 			case Light::LT_POINT:
 				{
-					const PointLight& l = 
-						*static_cast<const PointLight*>(light);
+					PointLight& l = 
+						*staticCast<PointLight*>(light);
 					I pos = doLight(l);
 					if(binLights && pos != -1)
 					{
@@ -146,8 +146,7 @@ struct WriteLightsJob: ThreadpoolTask
 				break;
 			case Light::LT_SPOT:
 				{
-					const SpotLight& l = 
-						*static_cast<const SpotLight*>(light);
+					SpotLight& l = *staticCast<SpotLight*>(light);
 					I pos = doLight(l);
 					if(binLights && pos != -1)
 					{
@@ -279,7 +278,7 @@ struct WriteLightsJob: ThreadpoolTask
 	}
 
 	// Bin point light
-	void binLight(const PointLight& light, U pos)
+	void binLight(PointLight& light, U pos)
 	{
 		// Do the tests
 		Tiler::Bitset bitset;
@@ -309,7 +308,7 @@ struct WriteLightsJob: ThreadpoolTask
 	}
 
 	// Bin spot light
-	void binLight(const SpotLight& light, U pos)
+	void binLight(SpotLight& light, U pos)
 	{
 		// Do the tests
 		Tiler::Bitset bitset;
@@ -578,7 +577,7 @@ void Is::lightPass()
 {
 	Threadpool& threadPool = ThreadpoolSingleton::get();
 	VisibilityTestResults& vi = 
-		cam->getFrustumComponent()->getVisibilityTestResults();
+		cam->getVisibilityTestResults();
 
 	SceneFrameAllocator<U8> alloc = r->getSceneGraph().getFrameAllocator();
 
@@ -592,8 +591,7 @@ void Is::lightPass()
 
 	for(auto it : vi.lights)
 	{
-		Light* light = it.node->getLight();
-		ANKI_ASSERT(light);
+		Light* light = staticCast<Light*>(it.node);
 		switch(light->getLightType())
 		{
 		case Light::LT_POINT:
