@@ -98,12 +98,12 @@ public:
 	template<typename Component, typename Func>
 	void iterateComponentsOfType(Func func)
 	{
-		I id = SceneComponent::getVariadicTypeId<Component>();
+		SceneComponent::Type type = Component::getGlobType();
 		for(auto comp : components)
 		{
-			if(comp->getVisitableTypeId() == id)
+			if(comp->getType() == type)
 			{
-				func(static_cast<Component&>(*comp));
+				func(comp->downCast<Component>());
 			}
 		}
 	}
@@ -112,12 +112,12 @@ public:
 	template<typename Component>
 	Component* tryGetComponent()
 	{
-		I id = SceneComponent::getVariadicTypeId<Component>();
+		SceneComponent::Type type = Component::getGlobType();
 		for(auto comp : components)
 		{
-			if(comp->getVisitableTypeId() == id)
+			if(comp->getType() == type)
 			{
-				return static_cast<Component*>(comp);
+				return &comp->downCast<Component>();
 			}
 		}
 		return nullptr;
@@ -127,12 +127,12 @@ public:
 	template<typename Component>
 	const Component* tryGetComponent() const
 	{
-		I id = SceneComponent::getTypeIdOf<Component>();
+		SceneComponent::Type type = Component::getGlobType();
 		for(auto comp : components)
 		{
-			if(comp->getTypeId() == id)
+			if(comp->getType() == type)
 			{
-				return static_cast<Component*>(comp);
+				return &comp->downCast<Component>();
 			}
 		}
 		return nullptr;

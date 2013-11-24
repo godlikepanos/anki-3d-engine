@@ -24,7 +24,7 @@ public:
 
 	/// Pass the frustum here so we can avoid the virtuals
 	FrustumComponent(SceneNode* node)
-		: SceneComponent(this, node)
+		: SceneComponent(FRUSTUM_COMPONENT, node)
 	{
 		markForUpdate();
 	}
@@ -113,6 +113,11 @@ public:
 	void reset() override
 	{
 		visible = nullptr;
+	}
+
+	static Type getGlobType()
+	{
+		return FRUSTUM_COMPONENT;
 	}
 
 private:

@@ -27,7 +27,7 @@ void Ez::run()
 	for(auto it : vi.renderables)
 	{
 		r->getSceneDrawer().render(cam, RenderableDrawer::RS_MATERIAL,
-			DEPTH_PASS, *it.node, &it.spatialIndices[0], it.spatialsCount);
+			DEPTH_PASS, it);
 		++count;
 	}
 }

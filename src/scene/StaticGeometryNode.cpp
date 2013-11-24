@@ -73,7 +73,7 @@ StaticGeometryPatchNode::~StaticGeometryPatchNode()
 //==============================================================================
 void StaticGeometryPatchNode::getRenderingData(
 	const PassLodKey& key, 
-	const U32* subMeshIndicesArray, U subMeshIndicesCount,
+	const U8* subMeshIndicesArray, U subMeshIndicesCount,
 	const Vao*& vao, const ShaderProgram*& prog,
 	Drawcall& dc)
 {

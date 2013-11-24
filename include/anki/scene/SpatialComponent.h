@@ -86,6 +86,11 @@ public:
 	void reset() override;
 	/// @}
 
+	static Type getGlobType()
+	{
+		return SPATIAL_COMPONENT;
+	}
+
 private:
 	Aabb aabb; ///< A faster shape
 };

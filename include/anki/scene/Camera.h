@@ -51,9 +51,9 @@ public:
 	void componentUpdated(SceneComponent& comp, 
 		SceneComponent::UpdateType) override
 	{
-		if(comp.getTypeId() == SceneComponent::getTypeIdOf<MoveComponent>())
+		if(comp.getType() == MoveComponent::getGlobType())
 		{
-			moveUpdate(static_cast<MoveComponent&>(comp));
+			moveUpdate(comp.downCast<MoveComponent>());
 		}
 	}
 	/// @}

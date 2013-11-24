@@ -6,7 +6,7 @@
 #include "anki/gl/Vao.h"
 #include "anki/resource/Resource.h"
 #include "anki/collision/CollisionShape.h"
-#include "anki/scene/SceneNode.h"
+#include "anki/scene/Forward.h"
 #include "anki/util/Array.h"
 #include <unordered_map>
 #include <LinearMath/btIDebugDraw.h>
@@ -150,9 +150,6 @@ private:
 
 // Forward
 class Renderer;
-class Camera;
-class Sector;
-class Path;
 
 /// This is a drawer for some scene nodes that need debug
 class SceneDebugDrawer

@@ -502,6 +502,11 @@ void SceneDebugDrawer::draw(FrustumComponent& fr) const
 //==============================================================================
 void SceneDebugDrawer::draw(SpatialComponent& x) const
 {
+	if(!x.bitsEnabled(SpatialComponent::SF_VISIBLE_CAMERA))
+	{
+		return;
+	}
+
 	dbg->setColor(Vec3(1.0, 0.0, 1.0));
 	CollisionDebugDrawer coldraw(dbg);
 	x.getAabb().accept(coldraw);

@@ -15,8 +15,13 @@ class LightComponent: public SceneComponent
 {
 public:
 	LightComponent(SceneNode* node)
-		: SceneComponent(this, node)
+		: SceneComponent(LIGHT_COMPONENT, node)
 	{}
+
+	static Type getGlobType()
+	{
+		return LIGHT_COMPONENT;
+	}
 };
 
 /// XXX

@@ -10,7 +10,7 @@ RigidBody::RigidBody(PhysicsWorld* world, const Initializer& init)
 	:	PhysicsObject(world),
 		btRigidBody(btRigidBody::btRigidBodyConstructionInfo(0.0, nullptr, 
 			nullptr, btVector3(0.0, 0.0, 0.0))), // dummy init
-		SceneComponent(this, init.node)
+		SceneComponent(RIGID_BODY, init.node)
 {
 	ANKI_ASSERT(init.shape != nullptr 
 		&& init.shape->getShapeType() != INVALID_SHAPE_PROXYTYPE);

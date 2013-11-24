@@ -208,8 +208,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 	for(auto it : vi.renderables)
 	{
 		r->getSceneDrawer().render(light, RenderableDrawer::RS_MATERIAL,
-			DEPTH_PASS, *it.node, &it.spatialIndices[0], 
-			it.spatialsCount);
+			DEPTH_PASS, it);
 	}
 
 	ANKI_COUNTER_INC(C_RENDERER_SHADOW_PASSES, (U64)1);

@@ -8,6 +8,7 @@
 #include "anki/gl/Gl.h"
 #include "anki/util/HighRezTimer.h"
 #include "anki/misc/ConfigSet.h"
+#include "anki/scene/Forward.h"
 
 #include "anki/renderer/Common.h"
 #include "anki/renderer/Ms.h"

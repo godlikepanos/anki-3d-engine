@@ -188,7 +188,7 @@ public:
 	/// offsets and counts
 	virtual void getRenderingData(
 		const PassLodKey& key, 
-		const U32* subMeshIndicesArray, U subMeshIndicesCount,
+		const U8* subMeshIndicesArray, U subMeshIndicesCount,
 		const Vao*& vao, const ShaderProgram*& prog,
 		Drawcall& drawcall) = 0;
 
@@ -225,6 +225,11 @@ public:
 		{
 			func(*var);
 		}
+	}
+
+	static Type getGlobType()
+	{
+		return RENDER_COMPONENT;
 	}
 
 protected:

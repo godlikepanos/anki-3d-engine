@@ -30,8 +30,7 @@ void Bs::run()
 	for(auto it : vi.renderables)
 	{
 		drawer.render(scene.getActiveCamera(), RenderableDrawer::RS_BLEND,
-			COLOR_PASS, *it.node, &it.spatialIndices[0], 
-			it.spatialsCount);
+			COLOR_PASS, it);
 	}
 
 	GlStateSingleton::get().setDepthMaskEnabled(true);

@@ -1,6 +1,7 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/ModelNode.h"
+#include "anki/scene/InstanceNode.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Threadpool.h"
 #include "anki/core/Counters.h"
@@ -44,17 +45,22 @@ struct UpdateSceneNodesJob: ThreadpoolTask
 		barrier->wait();
 
 		// Update the rest of the components
-		auto moveComponentTypeId = SceneComponent::getTypeIdOf<MoveComponent>();
+		auto moveComponentTypeId = MoveComponent::getGlobType();
 		scene->iterateSceneNodes(start, end, [&](SceneNode& node)
 		{
+			// Components update
 			node.iterateComponents([&](SceneComponent& comp)
 			{
-				if(comp.getTypeId() != moveComponentTypeId)
+				if(comp.getType() != moveComponentTypeId)
 				{
 					comp.updateReal(node, prevUpdateTime, crntTime, 
 						SceneComponent::ASYNC_UPDATE);
 				}
 			});
+
+			// Frame update
+			node.frameUpdate(prevUpdateTime, crntTime, 
+				SceneNode::ASYNC_UPDATE);
 		});
 	}
 };
@@ -290,13 +296,17 @@ void SceneGraph::load(const char* filename)
 				if(i == 0)
 				{
 					node->setLocalTransform(Transform(el.getMat4()));
-					//node->setInstanceLocalTransform(
-					//	i, Transform(el.getMat4()));
 				}
 				else
 				{
-					// TODO
-					//node->setInstanceLocalTransform(i, Transform(el.getMat4()));
+					InstanceNode* instance;
+					std::string instName = name + "_inst" 
+						+ std::to_string(i - 1);
+					newSceneNode(instance, instName.c_str());
+
+					instance->setLocalTransform(Transform(el.getMat4()));
+
+					node->SceneNode::addChild(instance);
 				}
 
 				// Advance

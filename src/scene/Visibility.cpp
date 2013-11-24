@@ -63,11 +63,11 @@ struct VisibilityTestTask: ThreadpoolTask
 			struct SpatialTemp
 			{
 				SpatialComponent* sp;
-				U32 idx;
+				U8 idx;
 			};
 			Array<SpatialTemp, ANKI_MAX_MULTIDRAW_PRIMITIVES> sps;
 
-			U32 i = 0;
+			U spIdx = 0;
 			U count = 0;
 			node.iterateComponentsOfType<SpatialComponent>(
 				[&](SpatialComponent& sp)
@@ -75,14 +75,15 @@ struct VisibilityTestTask: ThreadpoolTask
 				if(testedFr.insideFrustum(sp))
 				{
 					// Inside
-					sps[count++] = SpatialTemp{&sp, i};
+					ANKI_ASSERT(spIdx < MAX_U8);
+					sps[count++] = SpatialTemp{&sp, (U8)spIdx};
 
 					sp.enableBits(isLight 
 						? SpatialComponent::SF_VISIBLE_LIGHT 
 						: SpatialComponent::SF_VISIBLE_CAMERA);
 				}
 
-				++i;
+				++spIdx;
 			});
 
 			if(count == 0)
@@ -105,8 +106,10 @@ struct VisibilityTestTask: ThreadpoolTask
 			});
 
 			// Update the visibleNode
+			ANKI_ASSERT(count < MAX_U8);
 			visibleNode.spatialsCount = count;
-			for(i = 0; i < count; i++)
+			visibleNode.spatialIndices = frameAlloc.newArray<U8>(count);
+			for(U i = 0; i < count; i++)
 			{
 				visibleNode.spatialIndices[i] = sps[i].idx;
 			}
