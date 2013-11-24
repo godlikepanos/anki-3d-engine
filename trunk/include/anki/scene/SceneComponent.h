@@ -3,35 +3,27 @@
 
 #include "anki/scene/Common.h"
 #include "anki/core/Timestamp.h"
-#include "anki/util/Visitor.h"
 
 namespace anki {
 
-// Forward of all components
-class FrustumComponent;
-class MoveComponent;
-class RenderComponent;
-class SpatialComponent;
-class LightComponent;
-class RigidBody;
-class InstanceComponent;
-
-class SceneComponent;
-
-typedef VisitableCommonBase<
-	SceneComponent, // Base
-	FrustumComponent,
-	MoveComponent,
-	RenderComponent,
-	SpatialComponent,
-	LightComponent,
-	RigidBody,
-	InstanceComponent> SceneComponentVisitable;
-
 /// Scene node component
-class SceneComponent: public SceneComponentVisitable
+class SceneComponent
 {
 public:
+	// The type of the components
+	enum Type
+	{
+		COMPONENT_NONE,
+		FRUSTUM_COMPONENT,
+		MOVE_COMPONENT,
+		RENDER_COMPONENT,
+		SPATIAL_COMPONENT,
+		LIGHT_COMPONENT,
+		INSTANCE_COMPONENT,
+		RIGID_BODY,
+		LAST_COMPONENT_ID = RIGID_BODY
+	};
+
 	/// The update type
 	enum UpdateType
 	{
@@ -44,10 +36,18 @@ public:
 	};
 
 	/// Construct the scene component. The x is bogus
-	template<typename T>
-	SceneComponent(const T* x, SceneNode* node)
+	SceneComponent(Type type_, SceneNode* node)
+		: type(type_)
+	{}
+
+	Type getType() const
 	{
-		setupVisitable<T>(x);
+		return (Type)type;
+	}
+
+	Timestamp getTimestamp() const
+	{
+		return timestamp;
 	}
 
 	/// Do some reseting before frame starts
@@ -66,25 +66,19 @@ public:
 	Bool updateReal(SceneNode& node, F32 prevTime, F32 crntTime,
 		UpdateType updateType);
 
-	Timestamp getTimestamp() const
+	template<typename TComponent>
+	TComponent& downCast()
 	{
-		return timestamp;
-	}
-
-	I getTypeId() const
-	{
-		return getVisitableTypeId();
-	}
-
-	/// Get the type ID of a derived class
-	template<typename ComponentDerived>
-	static I getTypeIdOf()
-	{
-		return getVariadicTypeId<ComponentDerived>();
+		ANKI_ASSERT(TComponent::getGlobType() == getType());
+		TComponent* out = staticCast<TComponent*>(this);
+		return *out;
 	}
 
 protected:
 	Timestamp timestamp; ///< Indicates when an update happened
+
+private:
+	U8 type;
 };
 
 } // end namespace anki

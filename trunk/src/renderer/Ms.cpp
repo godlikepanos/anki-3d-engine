@@ -116,8 +116,7 @@ void Ms::run()
 	for(auto it : vi.renderables)
 	{
 		r->getSceneDrawer().render(r->getSceneGraph().getActiveCamera(),
-			RenderableDrawer::RS_MATERIAL, COLOR_PASS, *it.node, 
-			&it.spatialIndices[0], it.spatialsCount);
+			RenderableDrawer::RS_MATERIAL, COLOR_PASS, it);
 	}
 
 	// If there is multisampling then resolve to singlesampled

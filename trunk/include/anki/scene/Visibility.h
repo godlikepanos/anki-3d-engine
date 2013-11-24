@@ -33,20 +33,46 @@ enum VisibleBy
 };
 
 /// Visible node pointer with some more info
+/// @note Keep this structore as small as possible
 struct VisibleNode
 {
 	SceneNode* node;
-	/// An array of the visible spatials.
-	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES> spatialIndices;
-	U32 spatialsCount;
+	/// An array of the visible spatials
+	U8* spatialIndices;
+	U8 spatialsCount;
 
 	VisibleNode()
-		: node(nullptr), spatialsCount(0)
+		: node(nullptr), spatialIndices(nullptr), spatialsCount(0)
 	{}
 
 	VisibleNode(const VisibleNode& other)
 	{
-		memcpy(this, &other, sizeof(VisibleNode));
+		operator=(other);
+	}
+
+	VisibleNode(VisibleNode&& other)
+	{
+		node = other.node;
+		spatialIndices = other.spatialIndices;
+		spatialsCount = other.spatialsCount;
+
+		other.node = nullptr;
+		other.spatialIndices = nullptr;
+		other.spatialsCount = 0;
+	}
+
+	VisibleNode& operator=(const VisibleNode& other)
+	{
+		node = other.node;
+		spatialIndices = other.spatialIndices;
+		spatialsCount = other.spatialsCount;
+		return *this;
+	}
+
+	U8 getSpatialIndex(U i)
+	{
+		ANKI_ASSERT(spatialsCount != 0 && i < spatialsCount);
+		return spatialIndices[i];
 	}
 };
 

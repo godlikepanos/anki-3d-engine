@@ -5,8 +5,7 @@ namespace anki {
 
 //==============================================================================
 SpatialComponent::SpatialComponent(SceneNode* node, U32 flags)
-	:	SceneComponent(this, node),
-		Bitset<U8>(flags)
+	: SceneComponent(SPATIAL_COMPONENT, node), Bitset<U8>(flags)
 {
 	markForUpdate();
 }

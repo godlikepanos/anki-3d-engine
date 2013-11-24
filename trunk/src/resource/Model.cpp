@@ -114,7 +114,7 @@ void ModelPatchBase::getRenderingData(const PassLodKey& key, const Vao*& vao,
 //==============================================================================
 void ModelPatchBase::getRenderingDataSub(const PassLodKey& key,
 	const Vao*& vao, const ShaderProgram*& prog, 
-	const U32* subMeshIndexArray, U subMeshIndexCount,
+	const U8* subMeshIndexArray, U subMeshIndexCount,
 	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
 	Array<PtrSize, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
 	U32& drawcallCount) const

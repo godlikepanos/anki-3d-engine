@@ -72,7 +72,7 @@ public:
 		const PassLodKey& key, 
 		const Vao*& vao, 
 		const ShaderProgram*& prog,
-		const U32* subMeshIndicesArray, U subMeshIndicesCount,
+		const U8* subMeshIndicesArray, U subMeshIndicesCount,
 		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
 		Array<PtrSize, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
 		U32& drawcallCount) const;

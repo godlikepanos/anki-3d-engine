@@ -10,6 +10,33 @@
 namespace anki {
 
 //==============================================================================
+// ModelPatchNodeSpatial                                                       =
+//==============================================================================
+
+/// A class that holds spatial information for the instances of ModelPatchNode
+class ModelPatchNodeSpatial: public SpatialComponent
+{
+public:
+	Obb obb;
+
+	ModelPatchNodeSpatial(SceneNode* node)
+		: SpatialComponent(node)
+	{}
+
+	/// Implement SpatialComponent::getSpatialCollisionShape
+	const CollisionShape& getSpatialCollisionShape()
+	{
+		return obb;
+	}
+
+	/// Implement SpatialComponent::getSpatialOrigin
+	Vec3 getSpatialOrigin()
+	{
+		return obb.getCenter();
+	}
+};
+
+//==============================================================================
 // ModelPatchNode                                                              =
 //==============================================================================
 
@@ -35,7 +62,7 @@ ModelPatchNode::~ModelPatchNode()
 //==============================================================================
 void ModelPatchNode::getRenderingData(
 	const PassLodKey& key, 
-	const U32* subMeshIndicesArray, U subMeshIndicesCount,
+	const U8* subMeshIndicesArray, U subMeshIndicesCount,
 	const Vao*& vao, const ShaderProgram*& prog,
 	Drawcall& dc)
 {
@@ -48,7 +75,7 @@ void ModelPatchNode::getRenderingData(
 		++spatialsCount;
 	});
 
-	dc.instancesCount = spatialsCount;
+	dc.instancesCount = std::min(spatialsCount, subMeshIndicesCount);
 
 	modelPatch->getRenderingDataSub(key, vao, prog, 
 		subMeshIndicesArray, subMeshIndicesCount, 
@@ -70,9 +97,13 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 	else
 	{
 		// Instancing
+		SceneNode* parent = staticCast<SceneNode*>(getParent());
+		ANKI_ASSERT(parent);
+		ModelNode* mnode = staticCast<ModelNode*>(parent);
 
-		// XXX
-		ANKI_ASSERT(0 && "todo");
+		--index;
+		ANKI_ASSERT(index < mnode->transforms.size());
+		trf = mnode->transforms[index];
 	}
 }
 
@@ -87,34 +118,101 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 	SceneNode* parent = staticCast<SceneNode*>(getParent());
 	ANKI_ASSERT(parent);
 
-	// Count the instances of the parent
-	U instancesCount = 0;
+	// Update first OBB
+	const MoveComponent& parentMove = parent->getComponent<MoveComponent>();
+	if(parentMove.getTimestamp() == getGlobTimestamp())
+	{
+		obb = modelPatch->getBoundingShape().getTransformed(
+			parentMove.getWorldTransform());
+
+		SpatialComponent::markForUpdate();
+	}
+
+	// Get the move components of the instances of the parent
+	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
+	Timestamp instancesTimestamp = 0;
 	parent->visitThisAndChildren([&](SceneObject& so)
 	{
 		SceneNode* sn = staticCast<SceneNode*>(&so);
 		
 		if(sn->tryGetComponent<InstanceComponent>())
 		{
-			++instancesCount;
+			MoveComponent& move = sn->getComponent<MoveComponent>();
+
+			instanceMoves.push_back(&move);
+
+			instancesTimestamp = 
+				std::max(instancesTimestamp, move.getTimestamp());
 		}
 	});
 
-	if(instancesCount == 0)
+	// Instancing?
+	if(instanceMoves.size() != 0)
 	{
-		// No instances
-		const MoveComponent& parentMove = parent->getComponent<MoveComponent>();
+		Bool needsUpdate = false;
 
-		if(parentMove.getTimestamp() == getGlobTimestamp())
+		// Get the spatials and their update time
+		SceneFrameVector<ModelPatchNodeSpatial*> 
+			spatials(getSceneFrameAllocator());
+
+		Timestamp spatialsTimestamp = 0;
+		U count = 0;
+
+		iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp)
 		{
-			obb = modelPatch->getBoundingShape().getTransformed(
-				parentMove.getWorldTransform());
+			// Skip the first
+			if(count != 0)	
+			{
+				ModelPatchNodeSpatial* msp = 
+					staticCast<ModelPatchNodeSpatial*>(&sp);
+		
+				spatialsTimestamp = 
+					std::max(spatialsTimestamp, msp->getTimestamp());
+
+				spatials.push_back(msp);
+			}
+			++count;
+		});
+
+		// If we need to add spatials
+		if(spatials.size() < instanceMoves.size())
+		{
+			needsUpdate = true;
+			U diff = instanceMoves.size() - spatials.size();
+
+			while(diff-- != 0)
+			{
+				ModelPatchNodeSpatial* newSpatial = getSceneAllocator().
+					newInstance<ModelPatchNodeSpatial>(this);
+
+				addComponent(newSpatial);
+
+				spatials.push_back(newSpatial);
+			}
 		}
-	}
-	else
-	{
-		// XXX
-		ANKI_ASSERT(0 && "todo");
-	}
+		// If we need to remove spatials
+		else if(spatials.size() > instanceMoves.size())
+		{
+			needsUpdate = true;
+
+			// XXX
+			ANKI_ASSERT(0 && "todo");
+		}
+		
+		// Now update all spatials if needed
+		if(needsUpdate || spatialsTimestamp < instancesTimestamp)
+		{
+			for(U i = 0; i < spatials.size(); i++)
+			{
+				ModelPatchNodeSpatial* sp = spatials[i];
+
+				sp->obb = modelPatch->getBoundingShape().getTransformed(
+					instanceMoves[i]->getWorldTransform());
+
+				sp->markForUpdate();
+			}
+		}
+	} // end instancing
 }
 
 //==============================================================================
@@ -127,7 +225,8 @@ ModelNode::ModelNode(
 	const char* modelFname)
 	: 	SceneNode(name, scene),
 		MoveComponent(this),
-		transforms(getSceneAllocator())
+		transforms(getSceneAllocator()),
+		transformsTimestamp(0)
 {
 	addComponent(static_cast<MoveComponent*>(this));
 
@@ -165,6 +264,55 @@ ModelNode::~ModelNode()
 	if(body)
 	{
 		getSceneGraph().getPhysics().deletePhysicsObject(body);
+	}
+}
+
+//==============================================================================
+void ModelNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
+{
+	if(uptype != SceneNode::ASYNC_UPDATE)
+	{
+		return;
+	}
+
+	// Get the move components of the instances of the parent
+	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
+	Timestamp instancesTimestamp = 0;
+	SceneNode::visitThisAndChildren([&](SceneObject& so)
+	{
+		SceneNode* sn = staticCast<SceneNode*>(&so);
+		
+		if(sn->tryGetComponent<InstanceComponent>())
+		{
+			MoveComponent& move = sn->getComponent<MoveComponent>();
+
+			instanceMoves.push_back(&move);
+
+			instancesTimestamp = 
+				std::max(instancesTimestamp, move.getTimestamp());
+		}
+	});
+
+	// If instancing
+	if(instanceMoves.size() != 0)
+	{
+		Bool transformsNeedUpdate = false;
+
+		if(instanceMoves.size() != transforms.size())
+		{
+			transformsNeedUpdate = true;
+			transforms.resize(instanceMoves.size());
+		}
+
+		if(transformsNeedUpdate || transformsTimestamp < instancesTimestamp)
+		{
+			transformsTimestamp = instancesTimestamp;
+
+			for(U i = 0; i < instanceMoves.size(); i++)
+			{
+				transforms[i] = instanceMoves[i]->getWorldTransform();
+			}
+		}
 	}
 }
 

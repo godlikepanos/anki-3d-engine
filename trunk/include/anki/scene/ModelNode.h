@@ -34,7 +34,7 @@ public:
 	/// Implements RenderComponent::getRenderingData
 	void getRenderingData(
 		const PassLodKey& key, 
-		const U32* subMeshIndicesArray, U subMeshIndicesCount,
+		const U8* subMeshIndicesArray, U subMeshIndicesCount,
 		const Vao*& vao, const ShaderProgram*& prog,
 		Drawcall& dracall);
 
@@ -76,6 +76,8 @@ private:
 /// The model scene node
 class ModelNode: public SceneNode, public MoveComponent
 {
+	friend class ModelPatchNode;
+
 public:
 	/// @name Constructors/Destructor
 	/// @{
@@ -94,9 +96,13 @@ public:
 	}
 	/// @}
 
+	/// Override SceneNode::frameUpdate
+	void frameUpdate(F32, F32, SceneNode::UpdateType uptype) override;
+
 private:
 	ModelResourcePointer model; ///< The resource
-	SceneVector<Transform> transforms;
+	SceneVector<Transform> transforms; ///< Cache the transforms of instances
+	Timestamp transformsTimestamp;
 };
 
 /// @}

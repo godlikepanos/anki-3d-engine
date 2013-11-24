@@ -50,8 +50,10 @@ void Light::moveUpdate(MoveComponent& move)
 	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr)
 	{
 		fr.setProjectionMatrix(fr.getFrustum().calculateProjectionMatrix());
+		fr.setViewMatrix(Mat4(move.getWorldTransform().getInverse()));
 		fr.setViewProjectionMatrix(
 			fr.getProjectionMatrix() * fr.getViewMatrix());
+
 		fr.getFrustum().setTransform(move.getWorldTransform());
 
 		fr.markForUpdate();
@@ -75,9 +77,9 @@ PointLight::PointLight(const char* name, SceneGraph* scene)
 void PointLight::componentUpdated(SceneComponent& comp, 
 	SceneComponent::UpdateType)
 {
-	if(comp.getTypeId() == SceneComponent::getTypeIdOf<MoveComponent>())
+	if(comp.getType() == MoveComponent::getGlobType())
 	{
-		MoveComponent& move = static_cast<MoveComponent&>(comp);
+		MoveComponent& move = comp.downCast<MoveComponent>();
 		sphereW.setCenter(move.getWorldTransform().getOrigin());
 		moveUpdate(move);
 	}
@@ -96,22 +98,18 @@ SpotLight::SpotLight(const char* name, SceneGraph* scene)
 	addComponent(static_cast<FrustumComponent*>(this));
 
 	const F32 ang = toRad(45.0);
-	setOuterAngle(ang / 2.0);
 	const F32 dist = 1.0;
 
-	// Fix frustum
-	//
 	frustum.setAll(ang, ang, 0.1, dist);
-	frustumUpdate();
 }
 
 //==============================================================================
 void SpotLight::componentUpdated(SceneComponent& comp,
 	SceneComponent::UpdateType)
 {
-	if(comp.getTypeId() == SceneComponent::getTypeIdOf<MoveComponent>())
+	if(comp.getType() == MoveComponent::getGlobType())
 	{
-		MoveComponent& move = static_cast<MoveComponent&>(comp);
+		MoveComponent& move = comp.downCast<MoveComponent>();
 		frustum.setTransform(move.getWorldTransform());
 		moveUpdate(move);
 	}

@@ -3,16 +3,16 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/resource/PassLodKey.h"
-#include "anki/gl/Drawcall.h"
 
 namespace anki {
 
-class PassLodKey;
 class Renderer;
 class FrustumComponent;
 class SceneNode;
 class ShaderProgram;
 class RenderComponent;
+class Drawcall;
+class VisibleNode;
 
 /// It includes all the functions to render a Renderable
 class RenderableDrawer
@@ -35,10 +35,8 @@ public:
 	void render(
 		SceneNode& frsn,
 		RenderingStage stage, 
-		Pass pass, 
-		SceneNode& renderableSceneNode,
-		U32* subSpatialIndices,
-		U subSpatialIndicesCount);
+		Pass pass,
+		VisibleNode& visible);
 
 private:
 	Renderer* r;
@@ -48,8 +46,7 @@ private:
 		const FrustumComponent& fr,
 		const ShaderProgram& prog,
 		RenderComponent& renderable,
-		U32* subSpatialIndices,
-		U subSpatialIndicesCount,
+		VisibleNode& visible,
 		F32 flod,
 		Drawcall* dc);
 };

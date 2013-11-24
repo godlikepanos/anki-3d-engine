@@ -3,8 +3,7 @@
 #include "anki/scene/FrustumComponent.h"
 #include "anki/resource/Material.h"
 #include "anki/scene/RenderComponent.h"
-#include "anki/scene/Camera.h"
-#include "anki/scene/ModelNode.h"
+#include "anki/scene/Visibility.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/Counters.h"
@@ -44,8 +43,7 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 	Drawcall* dc = nullptr;
 
 	// Used for 
-	const U32* spatialIndices = nullptr;
-	U32 spatialsCount = 0;
+	VisibleNode* visibleNode;
 
 	/// Set a uniform in a client block
 	template<typename T>
@@ -84,7 +82,7 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 					Transform worldTrf;
 
 					renderable->getRenderWorldTransform(
-						spatialIndices[i], worldTrf);
+						visibleNode->getSpatialIndex(i), worldTrf);
 
 					mvp[i] = vp * Mat4(worldTrf);
 				}
@@ -107,7 +105,7 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 					Transform worldTrf;
 
 					renderable->getRenderWorldTransform(
-						spatialIndices[i], worldTrf);
+						visibleNode->getSpatialIndex(i), worldTrf);
 
 					mv[i] = v * Mat4(worldTrf);
 				}
@@ -128,7 +126,7 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 					Transform worldTrf;
 
 					renderable->getRenderWorldTransform(
-						spatialIndices[i], worldTrf);
+						visibleNode->getSpatialIndex(i), worldTrf);
 
 					Mat4 mv = v * Mat4(worldTrf);
 					normMats[i] = mv.getRotationPart();
@@ -243,7 +241,7 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 void RenderableDrawer::setupShaderProg(const PassLodKey& key_,
 	const FrustumComponent& fr, const ShaderProgram &prog,
 	RenderComponent& renderable, 
-	U32* spatialIndices, U spatialsCount,
+	VisibleNode& visibleNode,
 	F32 flod,
 	Drawcall* dc)
 {
@@ -254,8 +252,7 @@ void RenderableDrawer::setupShaderProg(const PassLodKey& key_,
 	vis.fr = &fr;
 	vis.renderable = &renderable;
 	vis.r = r;
-	vis.spatialIndices = spatialIndices;
-	vis.spatialsCount = spatialsCount;
+	vis.visibleNode = &visibleNode;
 	vis.flod = flod;
 	vis.dc = dc;
 
@@ -294,22 +291,18 @@ void RenderableDrawer::setupShaderProg(const PassLodKey& key_,
 
 //==============================================================================
 void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
-	Pass pass, SceneNode& rsn, U32* spatialIndices,
-	U spatialsCount)
+	Pass pass, VisibleNode& visibleNode)
 {
-	// Preconditions
-	ANKI_ASSERT(spatialIndices);
-	ANKI_ASSERT(spatialsCount > 0);
-
 	// Get components
 	FrustumComponent& fr = frsn.getComponent<FrustumComponent>();
-	RenderComponent& renderable = rsn.getComponent<RenderComponent>();
+	RenderComponent& renderable = 
+		visibleNode.node->getComponent<RenderComponent>();
 
 	// Calculate the key
 	Vec3 camPos = fr.getFrustumOrigin();
 
-	F32 dist = (rsn.getComponent<SpatialComponent>().getSpatialOrigin() 
-		- camPos).getLength();
+	F32 dist = (visibleNode.node->getComponent<SpatialComponent>().
+		getSpatialOrigin() - camPos).getLength();
 	F32 lod = r->calculateLod(dist);
 
 	PassLodKey key(pass, lod);
@@ -350,13 +343,12 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	Drawcall dc;
 
 	renderable.getRenderingData(
-		key, spatialIndices, spatialsCount, // in
+		key, visibleNode.spatialIndices, visibleNode.spatialsCount, // in
 		vao, prog, dc); //out
 
 	// Setup shader
 	setupShaderProg(
-		key, fr, *prog, renderable, spatialIndices, spatialsCount,
-		lod, &dc);
+		key, fr, *prog, renderable, visibleNode, lod, &dc);
 
 	// Render
 	ANKI_ASSERT(vao->getAttachmentsCount() > 1);
@@ -369,7 +361,6 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 		glPatchParameteri(GL_PATCH_VERTICES, 3);
 		dc.primitiveType = GL_PATCHES;
 	}
-	else
 #endif
 
 	// Start drawcall

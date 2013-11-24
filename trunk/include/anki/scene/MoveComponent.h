@@ -133,6 +133,11 @@ public:
 	}
 	/// @}
 
+	static Type getGlobType()
+	{
+		return MOVE_COMPONENT;
+	}
+
 private:
 	SceneNode* node;
 

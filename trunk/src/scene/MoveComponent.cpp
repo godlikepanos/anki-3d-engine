@@ -5,7 +5,7 @@ namespace anki {
 
 //==============================================================================
 MoveComponent::MoveComponent(SceneNode* node_, U32 flags)
-	:	SceneComponent(this, node_),
+	:	SceneComponent(MOVE_COMPONENT, node_),
 		Base(nullptr, node_->getSceneAllocator()),
 		Bitset<U8>(flags),
 		node(node_)
@@ -20,7 +20,7 @@ MoveComponent::~MoveComponent()
 //==============================================================================
 Bool MoveComponent::update(SceneNode&, F32, F32, UpdateType uptype)
 {
-	if(uptype == SYNC_UPDATE && getParent() == nullptr)
+	if(uptype == ASYNC_UPDATE && getParent() == nullptr)
 	{
 		// Call this only on roots
 		updateWorldTransform();
@@ -58,7 +58,7 @@ void MoveComponent::updateWorldTransform()
 			wTrf = lTrf;
 		}
 
-		node->componentUpdated(*this, SYNC_UPDATE);
+		node->componentUpdated(*this, ASYNC_UPDATE);
 		timestamp = getGlobTimestamp();
 
 		// Now it's a good time to cleanse parent

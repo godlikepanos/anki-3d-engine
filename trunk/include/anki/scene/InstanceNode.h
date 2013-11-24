@@ -13,8 +13,13 @@ class InstanceComponent: public SceneComponent
 {
 public:
 	InstanceComponent(SceneNode* node)
-		: SceneComponent(this, node)
+		: SceneComponent(INSTANCE_COMPONENT, node)
 	{}
+
+	static Type getGlobType()
+	{
+		return INSTANCE_COMPONENT;
+	}
 };
 
 /// Instance scene node
