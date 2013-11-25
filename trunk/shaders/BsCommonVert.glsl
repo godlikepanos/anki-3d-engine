@@ -3,8 +3,10 @@
 #define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/MsBsCommon.glsl"
 
-layout(location = 0) in vec3 position;
-layout(location = 3) in vec2 texCoord;
+layout(location = POSITION_LOCATION) in vec3 position;
+layout(location = TEXTURE_COORDINATE_LOCATION) in vec2 texCoord;
+layout(location = SCALE_LOCATION) in float scale;
+layout(location = ALPHA_LOCATION) in float alpha;
 
 /// @name Varyings
 /// @{

@@ -3,11 +3,10 @@
 #include "anki/resource/Model.h"
 #include "anki/util/Functions.h"
 #include "anki/physics/PhysicsWorld.h"
+#include "anki/gl/Drawcall.h"
 #include <limits>
 
 namespace anki {
-
-#if 0
 
 //==============================================================================
 // Misc                                                                        =
@@ -45,9 +44,7 @@ Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 //==============================================================================
 ParticleBase::ParticleBase(ParticleType type_)
 	: type(type_)
-{
-	sceneNodeProtected.moveC = this;
-}
+{}
 
 //==============================================================================
 ParticleBase::~ParticleBase()
@@ -211,14 +208,14 @@ ParticleEmitter::ParticleEmitter(
 	const char* name, SceneGraph* scene,
 	const char* filename)
 	:	SceneNode(name, scene),
-		SpatialComponent(this, &aabb),
+		SpatialComponent(this),
 		MoveComponent(this),
 		RenderComponent(this),
 		particles(getSceneAllocator())
 {
-	addComponent(static_cast<MoveComponent>(this));
-	addComponent(static_cast<SpatialComponent>(this));
-	addComponent(static_cast<RenderComponent>(this));
+	addComponent(static_cast<MoveComponent*>(this));
+	addComponent(static_cast<SpatialComponent*>(this));
+	addComponent(static_cast<RenderComponent*>(this));
 
 	// Load resource
 	particleEmitterResource.load(filename);
@@ -239,58 +236,76 @@ ParticleEmitter::ParticleEmitter(
 	}
 
 	timeLeftForNextEmission = 0.0;
-	instancesCount = particles.size();
 	RenderComponent::init();
 
-	// Find the "alpha" material variable
-	for(auto it = RenderComponent::getVariablesBegin();
-		it != RenderComponent::getVariablesEnd(); ++it)
-	{
-		if((*it)->getName() == "alpha")
-		{
-			alphaRenderComponentVar = *it;
-		}
-	}
+	// Create the vertex buffer and object
+	//
+	const U components = 3 + 1 + 1;
+	PtrSize vertSize = components * sizeof(F32);
+
+	vbo.create(GL_ARRAY_BUFFER, maxNumOfParticles * vertSize,
+		nullptr, GL_DYNAMIC_DRAW);
+
+	vao.create();
+	// Position
+	vao.attachArrayBufferVbo(&vbo, 0, 3, GL_FLOAT, GL_FALSE, vertSize, 0);
+
+	// Scale
+	vao.attachArrayBufferVbo(&vbo, 6, 1, GL_FLOAT, GL_FALSE, vertSize, 
+		sizeof(F32) * 3);
+
+	// Alpha
+	vao.attachArrayBufferVbo(&vbo, 7, 1, GL_FLOAT, GL_FALSE, vertSize, 
+		sizeof(F32) * 4);
 }
 
 //==============================================================================
 ParticleEmitter::~ParticleEmitter()
 {
-	for(ParticleBase* part : particles)
+	// XXX delete particles
+	/*for(ParticleBase* part : particles)
 	{
 		getSceneGraph().deleteSceneNode(part);
 	}
 
-	getSceneAllocator().deleteInstance(collShape);
+	getSceneAllocator().deleteInstance(collShape);*/
 }
 
 //==============================================================================
 void ParticleEmitter::getRenderingData(
 	const PassLodKey& key, 
-	const Vao*& vao, const ShaderProgram*& prog,
-	const U32* subMeshIndicesArray, U subMeshIndicesCount,
-	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
-	Array<const void*, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
-	U32& drawcallCount) const
+	const U8* subMeshIndicesArray, U subMeshIndicesCount,
+	const Vao*& vao_, const ShaderProgram*& prog,
+	Drawcall& dc)
 {
-	particleEmitterResource->getModel().getModelPatches()[0]->
-		getRenderingDataSub(key, vao, prog, 
-		subMeshIndicesArray, subMeshIndicesCount, 
-		indicesCountArray, indicesOffsetArray, drawcallCount);
+	vao_ = &vao;
+	prog = &getMaterial().findShaderProgram(key);
+
+	dc.primitiveType = GL_POINTS;
+	dc.indicesType = 0;
+
+	dc.instancesCount = 1;
+	dc.drawCount = 1;
+
+	dc.count = aliveParticlesCount;
+	dc.offset = 0;
 }
 
 //==============================================================================
 const Material& ParticleEmitter::getMaterial()
 {
-	return
-		particleEmitterResource->getModel().getModelPatches()[0]->getMaterial();
+	return particleEmitterResource->getMaterial();
 }
 
 //==============================================================================
-void ParticleEmitter::moveUpdate()
+void ParticleEmitter::componentUpdated(SceneComponent& comp, 
+	SceneComponent::UpdateType)
 {
-	identityRotation =
-		getWorldTransform().getRotation() == Mat3::getIdentity();
+	if(comp.getType() == MoveComponent::getGlobType())
+	{
+		identityRotation =
+			getWorldTransform().getRotation() == Mat3::getIdentity();
+	}
 }
 
 //==============================================================================
@@ -328,9 +343,8 @@ void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
 {
 	for(U i = 0; i < maxNumOfParticles; i++)
 	{
-		ParticleSimple* part;
-		
-		getSceneGraph().newSceneNode(part, nullptr);
+		ParticleSimple* part = 
+			getSceneAllocator().newInstance<ParticleSimple>();
 
 		part->size = getRandom(particle.size, particle.sizeDeviation);
 		part->alpha = getRandom(particle.alpha, particle.alphaDeviation);
@@ -340,24 +354,27 @@ void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
 }
 
 //==============================================================================
-void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
+void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, 
+	SceneNode::UpdateType uptype)
 {
+	if(uptype != SceneNode::ASYNC_UPDATE)
+	{
+		return;
+	}
+
 	// - Deactivate the dead particles
 	// - Calc the AABB
 	// - Calc the instancing stuff
 	//
 	Vec3 aabbmin(std::numeric_limits<F32>::max());
 	Vec3 aabbmax(-std::numeric_limits<F32>::max());
-
-	// Create the transformations vector
-	instancingTransformations = getSceneFrameAllocator().
-		newInstance<SceneFrameVector<Transform>>(getSceneFrameAllocator());
-
-	instancingTransformations->reserve(particles.size());
+	aliveParticlesCount = 0;
 
 	// Create the alpha vectors
 	SceneFrameVector<F32> alpha(getSceneFrameAllocator());
 	alpha.reserve(particles.size());
+
+	F32* verts = (F32*)vbo.map(GL_MAP_WRITE_BIT);
 
 	for(ParticleBase* p : particles)
 	{
@@ -378,8 +395,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			p->simulate(*this, prevUpdateTime, crntTime);
 
 			// An alive
-			const Vec3& origin = 
-				p->MoveComponent::getWorldTransform().getOrigin();
+			const Vec3& origin = p->getPosition();
 
 			for(U i = 0; i < 3; i++)
 			{
@@ -390,25 +406,24 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 			F32 lifePercent = (crntTime - p->getTimeOfBirth())
 				/ (p->getTimeOfDeath() - p->getTimeOfBirth());
 
-			Transform trf = p->MoveComponent::getWorldTransform();
-			// XXX set a flag for scale
-			trf.setScale(
-				p->size + (lifePercent * particle.sizeAnimation));
+			verts[0] = origin.x();
+			verts[1] = origin.y();
+			verts[2] = origin.z();
 
-			instancingTransformations->push_back(trf);
+			// XXX set a flag for scale
+			verts[3] = p->size + (lifePercent * particle.sizeAnimation);
 
 			// Set alpha
-			if(alphaRenderComponentVar)
-			{
-				alpha.push_back(
-					sin((lifePercent) * getPi<F32>())
-					* p->alpha);
-			}
+			verts[4] = sin((lifePercent) * getPi<F32>()) * p->alpha;
+
+			++aliveParticlesCount;
+			verts += 4;
 		}
 	}
 
-	instancesCount = instancingTransformations->size();
-	if(instancesCount != 0)
+	vbo.unmap();
+
+	if(aliveParticlesCount != 0)
 	{
 		aabb = Aabb(aabbmin - particle.size, aabbmax + particle.size);
 	}
@@ -417,12 +432,6 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 		aabb = Aabb(Vec3(0.0), Vec3(0.01));
 	}
 	SpatialComponent::markForUpdate();
-
-	if(alphaRenderComponentVar)
-	{
-		alphaRenderComponentVar->setValues(
-			&alpha[0], alpha.size(), getSceneAllocator());
-	}
 
 	//
 	// Emit new particles
@@ -456,7 +465,5 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame)
 		timeLeftForNextEmission -= crntTime - prevUpdateTime;
 	}
 }
-
-#endif
 
 } // end namespace anki

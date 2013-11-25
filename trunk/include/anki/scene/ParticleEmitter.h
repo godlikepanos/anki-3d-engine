@@ -10,12 +10,9 @@
 
 namespace anki {
 
-#if 0
-
 class ParticleEmitter;
 
 /// Particle base
-/// XXX Remove SceneNode
 class ParticleBase
 {
 	friend class ParticleEmitter;
@@ -85,6 +82,8 @@ public:
 		(void)crntTime;
 	}
 
+	virtual const Vec3& getPosition() const = 0;
+
 protected:
 	F32 timeOfBirth; ///< Keep the time of birth for nice effects
 	F32 timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead. In seconds
@@ -99,13 +98,18 @@ private:
 class ParticleSimple: public ParticleBase
 {
 public:
-	ParticleSimple(
-		const char* name, SceneGraph* scene); // SceneNode
+	ParticleSimple();
 
 	void revive(const ParticleEmitter& pe,
-		F32 prevUpdateTime, F32 crntTime);
+		F32 prevUpdateTime, F32 crntTime) override;
 
-	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, F32 crntTime);
+	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, 
+		F32 crntTime) override;
+
+	const Vec3& getPosition() const
+	{
+		return position;
+	}
 
 private:
 	/// The velocity
@@ -159,8 +163,11 @@ public:
 	/// @name SceneNode virtuals
 	/// @{
 
-	/// Override SceneNode::frameUpdate()
-	void frameUpdate(F32 prevUpdateTime, F32 crntTime, I frame);
+	void frameUpdate(F32 prevUpdateTime, F32 crntTime, 
+		SceneNode::UpdateType uptype) override;
+
+	void componentUpdated(SceneComponent& comp, 
+		SceneComponent::UpdateType) override;
 	/// @}
 
 	/// @name RenderComponent virtuals
@@ -169,31 +176,24 @@ public:
 	/// Implements RenderComponent::getRenderingData
 	void getRenderingData(
 		const PassLodKey& key, 
+		const U8* subMeshIndicesArray, U subMeshIndicesCount,
 		const Vao*& vao, const ShaderProgram*& prog,
-		const U32* subMeshIndicesArray, U subMeshIndicesCount,
 		Drawcall& drawcall);
 
 	/// Implements  RenderComponent::getMaterial
 	const Material& getMaterial();
 
-	/// Overrides RenderComponent::getRenderWorldTransforms
-	const Transform* getRenderWorldTransforms() override
+	/// Overrides RenderComponent::getRenderWorldTransform
+	void getRenderWorldTransform(U index, Transform& trf) override
 	{
-		return &(*instancingTransformations)[0];
+		ANKI_ASSERT(index < 1);
+		trf = getWorldTransform();
 	}
 
-	/// Overrides RenderComponent::getRenderInstancesCount
-	U32 getRenderInstancesCount()
+	Bool getHasWorldTransforms() override
 	{
-		return instancesCount;
+		return true;
 	}
-	/// @}
-
-	/// @name MoveComponent virtuals
-	/// @{
-
-	/// Overrides MoveComponent::moveUpdate. Calculates an optimization
-	void moveUpdate();
 	/// @}
 
 private:
@@ -207,19 +207,14 @@ private:
 	// rotation is the identity
 	Bool identityRotation = true;
 
-	U32 instancesCount; ///< AKA alive count
+	U32 aliveParticlesCount;
 
-	/// The transformations. Calculated on frameUpdate() and consumed on
-	/// rendering.
-	SceneFrameVector<Transform>* instancingTransformations;
-
-	RenderComponentVariable* alphaRenderComponentVar = nullptr;
+	Vao vao; ///< Hold the VBO
+	Vbo vbo; ///< Hold the vertex data
 
 	void createParticlesSimulation(SceneGraph* scene);
 	void createParticlesSimpleSimulation(SceneGraph* scene);
 };
-
-#endif
 
 } // end namespace anki
 

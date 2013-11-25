@@ -157,8 +157,8 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
 	xmlReadU(rootel, "usePhysicsEngine", u);
 	usePhysicsEngine = u;
 
-	XmlElement el = rootel.getChildElement("model");
-	model.load(el.getText());
+	XmlElement el = rootel.getChildElement("material");
+	material.load(el.getText());
 
 	// sanity checks
 	//

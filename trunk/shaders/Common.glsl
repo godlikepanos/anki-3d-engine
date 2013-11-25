@@ -19,4 +19,13 @@ precision DEFAULT_FLOAT_PRECISION int;
 #define textureFai(tex_, texc_) texture(tex_, texc_)
 //#define textureFai(tex_, texc_) textureLod(tex_, texc_, 0.0)
 
+#define POSITION_LOCATION 0
+#define NORMAL_LOCATION 1
+#define TANGENT_LOCATION 2
+#define TEXTURE_COORDINATE_LOCATION 3
+#define TEXTURE_COORDINATE_LOCATION_1 4
+#define TEXTURE_COORDINATE_LOCATION_2 5
+#define SCALE_LOCATION 6
+#define ALPHA_LOCATION 7
+
 #endif
