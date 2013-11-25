@@ -84,16 +84,16 @@ public:
 		return *this;
 	}
 
-	const Model& getModel() const
+	const Material& getMaterial() const
 	{
-		return *model;
+		return *material;
 	}
 
 	/// Load it
 	void load(const char* filename);
 
 private:
-	ModelResourcePointer model;
+	MaterialResourcePointer material;
 
 	void loadInternal(const XmlElement& el);
 };
