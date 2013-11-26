@@ -15,7 +15,8 @@ namespace anki {
 //==============================================================================
 F32 getRandom(F32 initial, F32 deviation)
 {
-	return (deviation == 0.0) ? initial
+	return (deviation == 0.0) 
+		? initial
 		: initial + randFloat(deviation) * 2.0 - deviation;
 }
 
@@ -43,7 +44,7 @@ Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 
 //==============================================================================
 ParticleBase::ParticleBase(ParticleType type_)
-	: type(type_)
+	: type((U8)type_)
 {}
 
 //==============================================================================
@@ -211,7 +212,8 @@ ParticleEmitter::ParticleEmitter(
 		SpatialComponent(this),
 		MoveComponent(this),
 		RenderComponent(this),
-		particles(getSceneAllocator())
+		particles(getSceneAllocator()),
+		clientBuffer(getSceneAllocator())
 {
 	addComponent(static_cast<MoveComponent*>(this));
 	addComponent(static_cast<SpatialComponent*>(this));
@@ -245,6 +247,8 @@ ParticleEmitter::ParticleEmitter(
 
 	vbo.create(GL_ARRAY_BUFFER, maxNumOfParticles * vertSize,
 		nullptr, GL_DYNAMIC_DRAW);
+
+	clientBuffer.resize(maxNumOfParticles * components, 0.0);
 
 	vao.create();
 	// Position
@@ -287,7 +291,7 @@ void ParticleEmitter::getRenderingData(
 	dc.instancesCount = 1;
 	dc.drawCount = 1;
 
-	dc.count = aliveParticlesCount;
+	dc.count = aliveParticlesCountDraw;
 	dc.offset = 0;
 }
 
@@ -357,8 +361,13 @@ void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
 void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, 
 	SceneNode::UpdateType uptype)
 {
-	if(uptype != SceneNode::ASYNC_UPDATE)
+	if(uptype == SceneNode::SYNC_UPDATE)
 	{
+		// In main thread update the client buffer
+
+		vbo.write(&clientBuffer[0]);
+		aliveParticlesCountDraw = aliveParticlesCount;
+
 		return;
 	}
 
@@ -370,11 +379,8 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 	Vec3 aabbmax(-std::numeric_limits<F32>::max());
 	aliveParticlesCount = 0;
 
-	// Create the alpha vectors
-	SceneFrameVector<F32> alpha(getSceneFrameAllocator());
-	alpha.reserve(particles.size());
-
-	F32* verts = (F32*)vbo.map(GL_MAP_WRITE_BIT);
+	F32* verts = &clientBuffer[0];
+	F32* verts_base = verts;
 
 	for(ParticleBase* p : particles)
 	{
@@ -417,11 +423,13 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 			verts[4] = sin((lifePercent) * getPi<F32>()) * p->alpha;
 
 			++aliveParticlesCount;
-			verts += 4;
+			verts += 5;
+
+			// Do checks
+			ANKI_ASSERT(
+				((PtrSize)verts - (PtrSize)verts_base) <= vbo.getSizeInBytes());
 		}
 	}
-
-	vbo.unmap();
 
 	if(aliveParticlesCount != 0)
 	{

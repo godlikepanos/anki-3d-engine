@@ -151,6 +151,7 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
 		particle.startingPosDeviation);
 
 	xmlReadU(rootel, "maxNumberOfParticles", maxNumOfParticles);
+
 	xmlReadFloat(rootel, "emissionPeriod", emissionPeriod);
 	xmlReadU(rootel, "particlesPerEmittion", particlesPerEmittion);
 	U32 u = usePhysicsEngine;

@@ -91,7 +91,7 @@ protected:
 	F32 alpha = 1.0;
 
 private:
-	ParticleType type;
+	U8 type;
 };
 
 /// Simple particle for simple simulation
@@ -170,6 +170,19 @@ public:
 		SceneComponent::UpdateType) override;
 	/// @}
 
+	/// @name SpatialComponent virtuals
+	/// @{
+	const CollisionShape& getSpatialCollisionShape()
+	{
+		return aabb;
+	}
+
+	Vec3 getSpatialOrigin()
+	{
+		return getWorldTransform().getOrigin();
+	}
+	/// @}
+
 	/// @name RenderComponent virtuals
 	/// @{
 
@@ -183,16 +196,9 @@ public:
 	/// Implements  RenderComponent::getMaterial
 	const Material& getMaterial();
 
-	/// Overrides RenderComponent::getRenderWorldTransform
-	void getRenderWorldTransform(U index, Transform& trf) override
-	{
-		ANKI_ASSERT(index < 1);
-		trf = getWorldTransform();
-	}
-
 	Bool getHasWorldTransforms() override
 	{
-		return true;
+		return false;
 	}
 	/// @}
 
@@ -207,10 +213,12 @@ private:
 	// rotation is the identity
 	Bool identityRotation = true;
 
-	U32 aliveParticlesCount;
+	U32 aliveParticlesCount = 0;
+	U32 aliveParticlesCountDraw = 0;
 
 	Vao vao; ///< Hold the VBO
 	Vbo vbo; ///< Hold the vertex data
+	SceneVector<F32> clientBuffer;
 
 	void createParticlesSimulation(SceneGraph* scene);
 	void createParticlesSimpleSimulation(SceneGraph* scene);

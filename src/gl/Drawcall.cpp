@@ -15,7 +15,7 @@ Drawcall::Drawcall()
 //==============================================================================
 void Drawcall::enque()
 {
-	ANKI_ASSERT(primitiveType && instancesCount > 0);
+	ANKI_ASSERT(instancesCount > 0);
 	ANKI_ASSERT(drawCount > 0 && drawCount <= ANKI_MAX_MULTIDRAW_PRIMITIVES);
 
 	if(indicesType != 0)
