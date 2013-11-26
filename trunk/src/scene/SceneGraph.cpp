@@ -216,7 +216,9 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 			comp.reset();
 			comp.updateReal(node, prevUpdateTime, crntTime, 
 				SceneComponent::SYNC_UPDATE);
-		});	
+		});
+
+		node.frameUpdate(prevUpdateTime, crntTime, SceneNode::SYNC_UPDATE);
 	});
 
 	Threadpool& threadPool = ThreadpoolSingleton::get();

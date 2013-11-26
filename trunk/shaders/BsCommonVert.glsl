@@ -39,8 +39,9 @@ void setTexCoords(in vec2 x)
 #define particle_DEFINED
 void particle(in mat4 mvp)
 {
-	vTexCoord = texCoord;
 	gl_Position = mvp * vec4(position, 1);
+	vAlpha = alpha;
+	gl_PointSize = scale * float(RENDERING_WIDTH) / gl_Position.w;
 }
 
 //==============================================================================

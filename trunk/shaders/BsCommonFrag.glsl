@@ -35,8 +35,8 @@ void writeFais(in vec4 color)
 #	define particleAlpha_DEFINED
 void particleAlpha(in sampler2D tex, in float alpha)
 {
-	vec4 color = texture(tex, vTexCoord);
-	color.w *= alpha;
+	vec4 color = texture(tex, gl_PointCoord);
+	color.a *= alpha;
 	writeFais(color);
 }
 #endif
@@ -52,9 +52,10 @@ void particleSoft(in sampler2D depthMap, in sampler2D tex, in float alpha)
 	float delta = depth - gl_FragCoord.z;
 	float softalpha = clamp(delta * 100.0, 0.0, 1.0);
 
-	vec4 color = texture(tex, vTexCoord);
-	color.w *= alpha * softalpha;
+	vec4 color = texture(tex, gl_PointCoord);
+	color.a *= alpha * softalpha;
 	writeFais(color);
+	//writeFais(color * 0.0001 + vec4(1.0, 0.0, 1.0, 1.0));
 }
 #endif
 

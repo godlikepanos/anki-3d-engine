@@ -221,15 +221,18 @@ void init()
 		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
 		mevent->enableBits(Event::EF_REANIMATE);
 
-		/*ParticleEmitter* pe;
-		scene.newSceneNode(pe,
+		ParticleEmitter* pe;
+		/*scene.newSceneNode(pe,
 			("pe" + std::to_string(i)).c_str(),
 			"particles/smoke.ankipart");
-		pe->setLocalOrigin(lightPos);
+		pe->setLocalOrigin(lightPos);*/
 
+		if(i == 0)
+		{
 		scene.newSceneNode(pe, ("pef" + std::to_string(i)).c_str(), 
 			"particles/fire.ankipart");
-		pe->setLocalOrigin(lightPos);*/
+		pe->setLocalOrigin(lightPos);
+		}
 	}
 #endif
 
