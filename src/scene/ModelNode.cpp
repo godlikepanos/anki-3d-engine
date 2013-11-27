@@ -1,6 +1,7 @@
 #include "anki/scene/ModelNode.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/InstanceNode.h"
+#include "anki/scene/Misc.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/Skeleton.h"
 #include "anki/physics/RigidBody.h"
@@ -8,33 +9,6 @@
 #include "anki/gl/Drawcall.h"
 
 namespace anki {
-
-//==============================================================================
-// ModelPatchNodeSpatial                                                       =
-//==============================================================================
-
-/// A class that holds spatial information for the instances of ModelPatchNode
-class ModelPatchNodeSpatial: public SpatialComponent
-{
-public:
-	Obb obb;
-
-	ModelPatchNodeSpatial(SceneNode* node)
-		: SpatialComponent(node)
-	{}
-
-	/// Implement SpatialComponent::getSpatialCollisionShape
-	const CollisionShape& getSpatialCollisionShape()
-	{
-		return obb;
-	}
-
-	/// Implement SpatialComponent::getSpatialOrigin
-	Vec3 getSpatialOrigin()
-	{
-		return obb.getCenter();
-	}
-};
 
 //==============================================================================
 // ModelPatchNode                                                              =
@@ -152,7 +126,7 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 		Bool needsUpdate = false;
 
 		// Get the spatials and their update time
-		SceneFrameVector<ModelPatchNodeSpatial*> 
+		SceneFrameVector<ObbSpatialComponent*> 
 			spatials(getSceneFrameAllocator());
 
 		Timestamp spatialsTimestamp = 0;
@@ -163,8 +137,8 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 			// Skip the first
 			if(count != 0)	
 			{
-				ModelPatchNodeSpatial* msp = 
-					staticCast<ModelPatchNodeSpatial*>(&sp);
+				ObbSpatialComponent* msp = 
+					staticCast<ObbSpatialComponent*>(&sp);
 		
 				spatialsTimestamp = 
 					std::max(spatialsTimestamp, msp->getTimestamp());
@@ -182,8 +156,8 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 
 			while(diff-- != 0)
 			{
-				ModelPatchNodeSpatial* newSpatial = getSceneAllocator().
-					newInstance<ModelPatchNodeSpatial>(this);
+				ObbSpatialComponent* newSpatial = getSceneAllocator().
+					newInstance<ObbSpatialComponent>(this);
 
 				addComponent(newSpatial);
 
@@ -195,8 +169,8 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 		{
 			needsUpdate = true;
 
-			// XXX
-			ANKI_ASSERT(0 && "todo");
+			// TODO
+			ANKI_ASSERT(0 && "TODO");
 		}
 		
 		// Now update all spatials if needed
@@ -204,7 +178,7 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 		{
 			for(U i = 0; i < spatials.size(); i++)
 			{
-				ModelPatchNodeSpatial* sp = spatials[i];
+				ObbSpatialComponent* sp = spatials[i];
 
 				sp->obb = modelPatch->getBoundingShape().getTransformed(
 					instanceMoves[i]->getWorldTransform());

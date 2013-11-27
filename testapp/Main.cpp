@@ -222,16 +222,34 @@ void init()
 		mevent->enableBits(Event::EF_REANIMATE);
 
 		ParticleEmitter* pe;
-		/*scene.newSceneNode(pe,
-			("pe" + std::to_string(i)).c_str(),
-			"particles/smoke.ankipart");
-		pe->setLocalOrigin(lightPos);*/
+		/**/
 
 		if(i == 0)
 		{
-		scene.newSceneNode(pe, ("pef" + std::to_string(i)).c_str(), 
-			"particles/fire.ankipart");
-		pe->setLocalOrigin(lightPos);
+			scene.newSceneNode(pe, "pefire", "particles/fire.ankipart");
+			pe->setLocalOrigin(lightPos);
+
+			scene.newSceneNode(pe, "pesmoke", "particles/smoke.ankipart");
+			pe->setLocalOrigin(lightPos);
+		}
+		else
+		{
+			InstanceNode* instance;
+			scene.newSceneNode(instance, 
+				("pefire_inst" + std::to_string(i)).c_str());
+
+			instance->setLocalOrigin(lightPos);
+
+			SceneNode& sn = scene.findSceneNode("pefire");
+			sn.addChild(instance);
+
+
+			scene.newSceneNode(instance, 
+				("pesmoke_inst" + std::to_string(i)).c_str());
+
+			instance->setLocalOrigin(lightPos);
+
+			scene.findSceneNode("pesmoke").addChild(instance);
 		}
 	}
 #endif

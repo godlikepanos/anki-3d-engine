@@ -18,15 +18,11 @@ class ParticleBase
 	friend class ParticleEmitter;
 
 public:
-	enum ParticleType
-	{
-		PT_SIMPLE,
-		PT_PHYSICS
-	};
+	ParticleBase()
+	{}
 
-	ParticleBase(ParticleType type);
-
-	virtual ~ParticleBase();
+	virtual ~ParticleBase()
+	{}
 
 	/// @name Accessors
 	/// @{
@@ -98,7 +94,8 @@ private:
 class ParticleSimple: public ParticleBase
 {
 public:
-	ParticleSimple();
+	ParticleSimple()
+	{}
 
 	void revive(const ParticleEmitter& pe,
 		F32 prevUpdateTime, F32 crntTime) override;
@@ -174,40 +171,46 @@ public:
 	/// @{
 	const CollisionShape& getSpatialCollisionShape()
 	{
-		return aabb;
+		return obb;
 	}
 
 	Vec3 getSpatialOrigin()
 	{
-		return getWorldTransform().getOrigin();
+		return obb.getCenter();
 	}
 	/// @}
 
 	/// @name RenderComponent virtuals
 	/// @{
 
-	/// Implements RenderComponent::getRenderingData
 	void getRenderingData(
 		const PassLodKey& key, 
 		const U8* subMeshIndicesArray, U subMeshIndicesCount,
 		const Vao*& vao, const ShaderProgram*& prog,
 		Drawcall& drawcall);
 
-	/// Implements  RenderComponent::getMaterial
 	const Material& getMaterial();
 
-	Bool getHasWorldTransforms() override
-	{
-		return false;
-	}
+	void getRenderWorldTransform(U index, Transform& trf) override;
+
+	Bool getHasWorldTransforms() override;
 	/// @}
 
 private:
+	enum SimulationType
+	{
+		UNDEFINED_SIMULATION,
+		SIMPLE_SIMULATION,
+		PHYSICS_ENGINE_SIMULATION
+	};
+
 	ParticleEmitterResourcePointer particleEmitterResource;
 	btCollisionShape* collShape = nullptr;
 	SceneVector<ParticleBase*> particles;
 	F32 timeLeftForNextEmission;
-	Aabb aabb;
+	Obb obb;
+	SceneVector<Transform> transforms; ///< InstanceTransforms
+	Timestamp transformsTimestamp = 0;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's
 	// rotation is the identity
@@ -220,8 +223,12 @@ private:
 	Vbo vbo; ///< Hold the vertex data
 	SceneVector<F32> clientBuffer;
 
+	U8 simulationType = UNDEFINED_SIMULATION;
+
 	void createParticlesSimulation(SceneGraph* scene);
 	void createParticlesSimpleSimulation(SceneGraph* scene);
+
+	void doInstancingCalcs();
 };
 
 } // end namespace anki
