@@ -9,5 +9,6 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 #include "anki/scene/Path.h"
+#include "anki/scene/InstanceNode.h"
 
 #endif

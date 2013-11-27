@@ -82,7 +82,7 @@ void Drawcall::enque()
 			{
 				// No multidraw
 
-				glDrawArrays(primitiveType, 0, countArray[0]);
+				glDrawArrays(primitiveType, offsetArray[0], countArray[0]);
 			}
 			else
 			{
@@ -94,7 +94,9 @@ void Drawcall::enque()
 		else
 		{
 			// Instancing
-			ANKI_ASSERT(0 && "TODO");
+			
+			glDrawArraysInstanced(primitiveType, offsetArray[0], 
+				countArray[0], instancesCount);
 		}
 	}
 }

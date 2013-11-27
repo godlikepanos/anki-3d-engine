@@ -1,5 +1,7 @@
 #include "anki/scene/ParticleEmitter.h"
 #include "anki/scene/SceneGraph.h"
+#include "anki/scene/InstanceNode.h"
+#include "anki/scene/Misc.h"
 #include "anki/resource/Model.h"
 #include "anki/util/Functions.h"
 #include "anki/physics/PhysicsWorld.h"
@@ -43,15 +45,6 @@ Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 //==============================================================================
 
 //==============================================================================
-ParticleBase::ParticleBase(ParticleType type_)
-	: type((U8)type_)
-{}
-
-//==============================================================================
-ParticleBase::~ParticleBase()
-{}
-
-//==============================================================================
 void ParticleBase::revive(const ParticleEmitter& pe,
 	F32 /*prevUpdateTime*/, F32 crntTime)
 {
@@ -67,11 +60,6 @@ void ParticleBase::revive(const ParticleEmitter& pe,
 //==============================================================================
 // ParticleSimple                                                              =
 //==============================================================================
-
-//==============================================================================
-ParticleSimple::ParticleSimple()
-	: ParticleBase(PT_SIMPLE)
-{}
 
 //==============================================================================
 void ParticleSimple::simulate(const ParticleEmitter& pe,
@@ -213,6 +201,7 @@ ParticleEmitter::ParticleEmitter(
 		MoveComponent(this),
 		RenderComponent(this),
 		particles(getSceneAllocator()),
+		transforms(getSceneAllocator()),
 		clientBuffer(getSceneAllocator())
 {
 	addComponent(static_cast<MoveComponent*>(this));
@@ -231,10 +220,12 @@ ParticleEmitter::ParticleEmitter(
 	if(usePhysicsEngine)
 	{
 		createParticlesSimulation(scene);
+		simulationType = PHYSICS_ENGINE_SIMULATION;
 	}
 	else
 	{
 		createParticlesSimpleSimulation(scene);
+		simulationType = SIMPLE_SIMULATION;
 	}
 
 	timeLeftForNextEmission = 0.0;
@@ -266,13 +257,14 @@ ParticleEmitter::ParticleEmitter(
 //==============================================================================
 ParticleEmitter::~ParticleEmitter()
 {
-	// XXX delete particles
-	/*for(ParticleBase* part : particles)
+	// Delete simple particles
+	if(simulationType == SIMPLE_SIMULATION)
 	{
-		getSceneGraph().deleteSceneNode(part);
+		for(ParticleBase* part : particles)
+		{
+			getSceneAllocator().deleteInstance(part);
+		}
 	}
-
-	getSceneAllocator().deleteInstance(collShape);*/
 }
 
 //==============================================================================
@@ -282,13 +274,14 @@ void ParticleEmitter::getRenderingData(
 	const Vao*& vao_, const ShaderProgram*& prog,
 	Drawcall& dc)
 {
+	ANKI_ASSERT(subMeshIndicesCount <= transforms.size() + 1);
 	vao_ = &vao;
 	prog = &getMaterial().findShaderProgram(key);
 
 	dc.primitiveType = GL_POINTS;
 	dc.indicesType = 0;
 
-	dc.instancesCount = 1;
+	dc.instancesCount = subMeshIndicesCount;
 	dc.drawCount = 1;
 
 	dc.count = aliveParticlesCountDraw;
@@ -433,11 +426,15 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 
 	if(aliveParticlesCount != 0)
 	{
-		aabb = Aabb(aabbmin - particle.size, aabbmax + particle.size);
+		Vec3 min = aabbmin - particle.size;
+		Vec3 max = aabbmax + particle.size;
+		Vec3 center = (min + max) / 2.0;
+
+		obb = Obb(center, Mat3::getIdentity(), max - center);
 	}
 	else
 	{
-		aabb = Aabb(Vec3(0.0), Vec3(0.01));
+		obb = Obb(Vec3(0.0), Mat3::getIdentity(), Vec3(0.001));
 	}
 	SpatialComponent::markForUpdate();
 
@@ -471,6 +468,138 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 	else
 	{
 		timeLeftForNextEmission -= crntTime - prevUpdateTime;
+	}
+
+	// Do something more
+	doInstancingCalcs();
+}
+
+//==============================================================================
+void ParticleEmitter::doInstancingCalcs()
+{
+	// Gather the move components of the instances
+	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
+	Timestamp instancesTimestamp = 0;
+	SceneNode::visitThisAndChildren([&](SceneObject& so)
+	{
+		SceneNode* sn = staticCast<SceneNode*>(&so);
+		
+		if(sn->tryGetComponent<InstanceComponent>())
+		{
+			MoveComponent& move = sn->getComponent<MoveComponent>();
+
+			instanceMoves.push_back(&move);
+
+			instancesTimestamp = 
+				std::max(instancesTimestamp, move.getTimestamp());
+		}
+	});
+
+	// If instancing
+	if(instanceMoves.size() != 0)
+	{
+		Bool transformsNeedUpdate = false;
+
+		// Check if an instance was added or removed and reset the spatials and
+		// the transforms
+		if(instanceMoves.size() != transforms.size())
+		{
+			transformsNeedUpdate = true;
+
+			// Check if instances added or removed
+			if(transforms.size() < instanceMoves.size())
+			{
+				// Instances added
+
+				U diff = instanceMoves.size() - transforms.size();
+
+				while(diff-- != 0)
+				{
+					ObbSpatialComponent* newSpatial = getSceneAllocator().
+						newInstance<ObbSpatialComponent>(this);
+
+					addComponent(newSpatial);
+				}
+			}
+			else
+			{
+				// Instances removed
+
+				// TODO
+				ANKI_ASSERT(0 && "TODO");
+			}
+
+			transforms.resize(instanceMoves.size());
+		}
+
+		if(transformsNeedUpdate || transformsTimestamp < instancesTimestamp)
+		{
+			transformsTimestamp = instancesTimestamp;
+
+			// Update the transforms
+			for(U i = 0; i < instanceMoves.size(); i++)
+			{
+				transforms[i] = instanceMoves[i]->getWorldTransform();
+			}
+		}
+
+		// Update the spatials anyway
+		U count = 0;
+		iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp)
+		{
+			// Skip the first
+			if(count != 0)	
+			{
+				ObbSpatialComponent* msp = 
+					staticCast<ObbSpatialComponent*>(&sp);
+		
+				Obb aobb = obb;
+				aobb.setCenter(Vec3(0.0));
+				msp->obb = aobb.getTransformed(transforms[count - 1]);
+
+				msp->markForUpdate();
+			}
+
+			++count;
+		});
+
+		ANKI_ASSERT(count - 1 == transforms.size());
+	} // end if instancing
+}
+
+//==============================================================================
+Bool ParticleEmitter::getHasWorldTransforms()
+{
+	if(transforms.size() == 0)
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+}
+
+//==============================================================================
+void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf)
+{
+	ANKI_ASSERT(transforms.size() > 0);
+
+	if(index == 0)
+	{
+		// Don't transform the particle positions. They are already in world 
+		// space
+		trf = Transform::getIdentity();
+	}
+	else
+	{
+		--index;
+		ANKI_ASSERT(index < transforms.size());
+
+		// The particle positions are already in word space. Move them back to
+		// local space
+		Transform invTrf = getWorldTransform().getInverse();
+		trf = Transform::combineTransformations(transforms[index], invTrf);
 	}
 }
 
