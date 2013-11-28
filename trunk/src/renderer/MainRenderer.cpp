@@ -121,8 +121,7 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 	}
 	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot write screenshot file:"
-			+ filename) << e;
+		throw ANKI_EXCEPTION("Cannot write screenshot file") << e;
 	}
 
 	// write headers
@@ -181,9 +180,9 @@ void MainRenderer::takeScreenshot(const char* filename)
 	}
 	else
 	{
-		throw ANKI_EXCEPTION("Unsupported file extension: " + filename);
+		throw ANKI_EXCEPTION("Unsupported file extension");
 	}
-	//ANKI_LOGI("Screenshot \"" << filename << "\" saved");
+	ANKI_LOGI("Screenshot %s saved", filename);
 }
 
 } // end namespace anki

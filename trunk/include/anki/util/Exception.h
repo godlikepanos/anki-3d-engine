@@ -16,12 +16,8 @@ class Exception: public std::exception
 {
 public:
 	/// Constructor
-	explicit Exception(const char* error, const char* file = "unknown",
-		I line = -1, const char* func = "unknown");
-
-	/// Constructor 2
-	explicit Exception(const std::string& error, const char* file = "unknown",
-		I line = -1, const char* func = "unknown");
+	explicit Exception(const char* file, I line, const char* func, 
+		const char* errorFmt, ...);
 
 	/// Copy constructor
 	Exception(const Exception& e);
@@ -56,7 +52,7 @@ private:
 } // end namespace anki
 
 /// Macro for easy throwing
-#define ANKI_EXCEPTION(x) \
-	Exception(std::string() + x, ANKI_FILE, __LINE__, ANKI_FUNC)
+#define ANKI_EXCEPTION(...) \
+	Exception(ANKI_FILE, __LINE__, ANKI_FUNC, __VA_ARGS__)
 
 #endif

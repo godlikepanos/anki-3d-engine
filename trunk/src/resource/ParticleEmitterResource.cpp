@@ -12,9 +12,8 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-static const char* errMsg = "Incorrect or missing value ";
-
-#define PE_EXCEPTION(x) ANKI_EXCEPTION("Particle emmiter: " + x)
+#define PE_EXCEPTION(x) ANKI_EXCEPTION("Particle emmiter: " \
+	"Incorrect or missing value %s", x)
 
 //==============================================================================
 static void xmlReadVec3(const XmlElement& el_, const char* str, Vec3& out)
@@ -114,7 +113,7 @@ void ParticleEmitterResource::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Failed to load file: " + filename) << e;
+		throw ANKI_EXCEPTION("Failed to load particles") << e;
 	}
 }
 
@@ -166,32 +165,32 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
 
 	if(particle.life <= 0.0)
 	{
-		throw PE_EXCEPTION(errMsg + "life");
+		throw PE_EXCEPTION("life");
 	}
 
 	if(particle.life - particle.lifeDeviation <= 0.0)
 	{
-		throw PE_EXCEPTION(errMsg + "lifeDeviation");
+		throw PE_EXCEPTION("lifeDeviation");
 	}
 
 	if(particle.size <= 0.0)
 	{
-		throw PE_EXCEPTION(errMsg + "size");
+		throw PE_EXCEPTION("size");
 	}
 
 	if(maxNumOfParticles < 1)
 	{
-		throw PE_EXCEPTION(errMsg + "maxNumOfParticles");
+		throw PE_EXCEPTION("maxNumOfParticles");
 	}
 
 	if(emissionPeriod <= 0.0)
 	{
-		throw PE_EXCEPTION(errMsg + "emissionPeriod");
+		throw PE_EXCEPTION("emissionPeriod");
 	}
 
 	if(particlesPerEmittion < 1)
 	{
-		throw PE_EXCEPTION(errMsg + "particlesPerEmission");
+		throw PE_EXCEPTION("particlesPerEmission");
 	}
 
 	// Calc some stuff

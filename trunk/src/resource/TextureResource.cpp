@@ -22,7 +22,7 @@ void TextureResource::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("File \"" + filename + "\"") << e;
+		throw ANKI_EXCEPTION("Failed to load texture") << e;
 	}
 }
 

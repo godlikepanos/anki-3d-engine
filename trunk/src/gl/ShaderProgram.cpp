@@ -613,7 +613,7 @@ GLuint ShaderProgram::createAndCompileShader(const char* sourceCode,
 		err << padding;
 		
 		// Throw
-		throw ANKI_EXCEPTION(err.str());
+		throw ANKI_EXCEPTION(err.str().c_str());
 	}
 	ANKI_ASSERT(shader != 0);
 	ANKI_CHECK_GL_ERROR();
@@ -641,8 +641,9 @@ void ShaderProgram::link() const
 
 		infoLogTxt.resize(infoLen + 1);
 		glGetProgramInfoLog(glId, infoLen, &charsWritten, &infoLogTxt[0]);
-		throw ANKI_EXCEPTION("Link error log follows:\n" 
-			+ infoLogTxt);
+		std::string linkLog = std::string("Link error log follows:\n")
+			+ infoLogTxt; 
+		throw ANKI_EXCEPTION(linkLog.c_str());
 	}
 }
 
@@ -898,7 +899,7 @@ const ShaderProgramAttributeVariable&
 	const ShaderProgramAttributeVariable* var = tryFindAttributeVariable(name);
 	if(var == nullptr)
 	{
-		throw ANKI_EXCEPTION("Attribute variable not found: " + name);
+		throw ANKI_EXCEPTION("Attribute variable not found");
 	}
 	return *var;
 }
@@ -924,7 +925,7 @@ const ShaderProgramUniformVariable& ShaderProgram::findUniformVariable(
 	const ShaderProgramUniformVariable* var = tryFindUniformVariable(name);
 	if(var == nullptr)
 	{
-		throw ANKI_EXCEPTION("Uniform variable not found: " + name);
+		throw ANKI_EXCEPTION("Uniform variable not found");
 	}
 	return *var;
 }
@@ -946,7 +947,7 @@ const ShaderProgramUniformBlock& ShaderProgram::findUniformBlock(
 	const ShaderProgramUniformBlock* block = tryFindUniformBlock(name);
 	if(block == nullptr)
 	{
-		throw ANKI_EXCEPTION("Block not found: " + name);
+		throw ANKI_EXCEPTION("Block not found");
 	}
 	return *block;
 }

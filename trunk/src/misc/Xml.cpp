@@ -15,8 +15,7 @@ I XmlElement::getInt() const
 	const char* txt = getText();
 	if(txt == nullptr)
 	{
-		throw ANKI_EXCEPTION(std::string("Failed to return int. Element: ")
-			+ el->Value());
+		throw ANKI_EXCEPTION("Failed to return int. Element: %s", el->Value());
 	}
 	return std::stoi(txt);
 }
@@ -28,8 +27,8 @@ F64 XmlElement::getFloat() const
 	const char* txt = getText();
 	if(txt == nullptr)
 	{
-		throw ANKI_EXCEPTION(std::string("Failed to return float. Element: ")
-			+ el->Value());
+		throw ANKI_EXCEPTION("Failed to return float. Element: %s", 
+			el->Value());
 	}
 	return std::stof(txt);
 }
@@ -41,8 +40,8 @@ Vector<F64> XmlElement::getFloats() const
 	const char* txt = getText();
 	if(txt == nullptr)
 	{
-		throw ANKI_EXCEPTION(std::string("Failed to return floats. Element: ")
-			+ el->Value());
+		throw ANKI_EXCEPTION("Failed to return floats. Element: %s",
+			el->Value());
 	}
 
 	StringList list = StringList::splitString(txt, ' ');
@@ -181,7 +180,7 @@ XmlElement XmlElement::getChildElement(const char* name) const
 	const XmlElement out = getChildElementOptional(name);
 	if(!out)
 	{
-		throw ANKI_EXCEPTION("Cannot find <" + name + ">");
+		throw ANKI_EXCEPTION("Cannot find tag %s", name);
 	}
 	return out;
 }
@@ -208,8 +207,8 @@ void XmlDocument::loadFile(const char* filename)
 
 	if(doc.Parse(text.c_str()))
 	{
-		throw ANKI_EXCEPTION("Cannot parse file. Reason: "
-			+ ((doc.GetErrorStr1() == nullptr)
+		throw ANKI_EXCEPTION("Cannot parse file. Reason: %s",
+			((doc.GetErrorStr1() == nullptr)
 			? "unknown" : doc.GetErrorStr1()));
 	}
 }

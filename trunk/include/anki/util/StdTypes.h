@@ -1,6 +1,7 @@
 #ifndef ANKI_UTIL_STD_TYPES_H
 #define ANKI_UTIL_STD_TYPES_H
 
+#include "anki/Config.h"
 #include <cstdint>
 #include <cstddef>
 #include <limits>

@@ -96,7 +96,7 @@ void createDirectory(const char* dir)
 
 	if(mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
 	{
-		throw ANKI_EXCEPTION(strerror(errno) + ": " + dir);
+		throw ANKI_EXCEPTION("%s : %s", strerror(errno), dir);
 	}
 }
 

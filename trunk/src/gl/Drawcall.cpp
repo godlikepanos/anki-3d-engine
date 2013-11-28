@@ -54,7 +54,7 @@ void Drawcall::enque()
 						primitiveType, 
 						countArray[i],
 						indicesType,
-						offsetArray[i]);
+						(const void*)offsetArray[i]);
 				}
 #endif
 			}

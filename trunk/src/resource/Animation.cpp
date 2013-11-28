@@ -15,7 +15,7 @@ void Animation::load(const char* filename)
 	}
 	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Animation loading failed: " + filename) << e;
+		throw ANKI_EXCEPTION("Failed to load animation") << e;
 	}
 }
 

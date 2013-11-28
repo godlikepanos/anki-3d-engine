@@ -123,8 +123,8 @@ void MeshLoader::load(const char* filename)
 			if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
 			{
 				U32 tmp = VertexWeight::MAX_BONES_PER_VERT;
-				throw ANKI_EXCEPTION("Cannot have more than "
-					+ std::to_string(tmp) + " bones per vertex");
+				throw ANKI_EXCEPTION("Cannot have more than %d "
+					"bones per vertex", tmp);
 			}
 			vw.bonesNum = boneConnections;
 
@@ -145,7 +145,7 @@ void MeshLoader::load(const char* filename)
 	}
 	catch(Exception& e)
 	{
-		throw ANKI_EXCEPTION("Loading of file failed: " + filename) << e;
+		throw ANKI_EXCEPTION("Loading of mesh failed") << e;
 	}
 }
 

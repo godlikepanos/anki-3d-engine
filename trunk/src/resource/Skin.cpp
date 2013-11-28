@@ -61,10 +61,11 @@ void Skin::load(const char* filename)
 			if(skelAnim->getBoneAnimations().size() !=
 				skeleton->getBones().size())
 			{
-				throw ANKI_EXCEPTION("Skeleton animation \"" 
-					+ skelAnim.getResourceName() + "\" and skeleton \"" 
-					+ skeleton.getResourceName() 
-					+ "\" dont have equal bone count");
+				throw ANKI_EXCEPTION(
+					"Skeleton animation %s and skeleton %s "
+					"dont have equal bone count", 
+					skelAnim.getResourceName().c_str(),
+					skeleton.getResourceName().c_str());
 			}
 		}
 
@@ -74,7 +75,7 @@ void Skin::load(const char* filename)
 			for(U i = 0; i < patch->getMeshesCount(); i++)
 			{
 				PassLodKey key;
-				key.level = i;
+				key.lod = i;
 				const Mesh& meshBase = patch->getMesh(key);
 				if(!meshBase.hasWeights())
 				{
@@ -85,7 +86,7 @@ void Skin::load(const char* filename)
 	}
 	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Skin loading failed: " + filename) << e;
+		throw ANKI_EXCEPTION("Failed to load skin") << e;
 	}
 }
 

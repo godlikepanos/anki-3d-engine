@@ -121,7 +121,7 @@ struct WriteLightsJob: ThreadpoolTask
 		U ligthsCount = lightsEnd - lightsBegin;
 
 		// Count job bounds
-		U64 start, end;
+		PtrSize start, end;
 		choseStartEnd(threadId, threadsCount, ligthsCount, start, end);
 
 		// Run all lights
@@ -953,7 +953,7 @@ void Is::blockSetupAndSanityCheck(const char* name, U binding, PtrSize size)
 	ublock->setBinding(binding);
 	if(ublock->getSize() != size || ublock->getBinding() != binding)
 	{
-		throw ANKI_EXCEPTION("Problem with the block: " + name);
+		throw ANKI_EXCEPTION("Problem with block");
 	}
 }
 

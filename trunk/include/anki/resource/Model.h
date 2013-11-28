@@ -34,8 +34,8 @@ public:
 
 	const Mesh& getMesh(const PassLodKey& key) const
 	{
-		ANKI_ASSERT(key.level < modelPatchProtected.meshes.size());
-		return *modelPatchProtected.meshes[key.level];
+		ANKI_ASSERT(key.lod < modelPatchProtected.meshes.size());
+		return *modelPatchProtected.meshes[key.lod];
 	}
 
 	U32 getMeshesCount() const

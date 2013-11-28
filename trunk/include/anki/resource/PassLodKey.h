@@ -23,24 +23,24 @@ const U MAX_LOD = 3;
 struct PassLodKey
 {
 	U8 pass;
-	U8 level;
+	U8 lod;
 
 	PassLodKey()
-		: pass(COLOR_PASS), level(0)
+		: pass(COLOR_PASS), lod(0)
 	{
-		ANKI_ASSERT(level <= MAX_LOD);
+		ANKI_ASSERT(lod <= MAX_LOD);
 	}
 
 	PassLodKey(const PassLodKey& b)
-		: pass(b.pass), level(b.level)
+		: pass(b.pass), lod(b.lod)
 	{
-		ANKI_ASSERT(level <= MAX_LOD);
+		ANKI_ASSERT(lod <= MAX_LOD);
 	}
 
-	explicit PassLodKey(const U8 pass_, const U8 level_)
-		: pass(pass_), level(level_)
+	explicit PassLodKey(const U8 pass_, const U8 lod_)
+		: pass(pass_), lod(lod_)
 	{
-		ANKI_ASSERT(level <= MAX_LOD);
+		ANKI_ASSERT(lod <= MAX_LOD);
 	}
 };
 

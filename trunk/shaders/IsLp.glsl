@@ -47,6 +47,8 @@ void main()
 
 #define ATTENUATION_BOOST (0.05)
 
+#define LAMBERT_MIN (0.1)
+
 /// @name Uniforms
 /// @{
 
@@ -154,7 +156,7 @@ float calcAttenuationFactor(
 //==============================================================================
 float calcLambertTerm(in vec3 normal, in vec3 frag2LightVec)
 {
-	return max(0.0, dot(normal, frag2LightVec));
+	return max(LAMBERT_MIN, dot(normal, frag2LightVec));
 }
 
 //==============================================================================
