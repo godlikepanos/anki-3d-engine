@@ -26,7 +26,7 @@ struct UpdateSceneNodesJob: ThreadpoolTask
 	void operator()(ThreadId threadId, U threadsCount)
 	{
 		ANKI_ASSERT(scene);
-		U64 start, end;
+		PtrSize start, end;
 		choseStartEnd(
 			threadId, threadsCount, scene->getSceneNodesCount(), start, end);
 
@@ -98,8 +98,7 @@ void SceneGraph::registerNode(SceneNode* node)
 	{
 		if(dict.find(node->getName()) != dict.end())
 		{
-			throw ANKI_EXCEPTION("Node with the same name already exists: "
-				+ node->getName());
+			throw ANKI_EXCEPTION("Node with the same name already exists");
 		}
 
 		dict[node->getName()] = node;

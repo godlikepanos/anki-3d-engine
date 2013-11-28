@@ -88,7 +88,7 @@ private:
 		if(PropertyVisitable::getVariadicTypeId<Property<TValue>>() !=
 			getVisitableTypeId())
 		{
-			throw ANKI_EXCEPTION("Types do not match: " + name);
+			throw ANKI_EXCEPTION("Types do not match: %s", name.c_str());
 		}
 	}
 };
@@ -116,14 +116,14 @@ public:
 	/// @{
 	virtual const Value& getValue() const
 	{
-		throw ANKI_EXCEPTION("Property is not readable: " + getName());
+		throw ANKI_EXCEPTION("Property is not readable: %s", getName().c_str());
 	}
 
 	/// Set the value and emit the signal valueChanged
 	virtual void setValue(const Value& x)
 	{
 		(void)x;
-		throw ANKI_EXCEPTION("Property is not writable: " + getName());
+		throw ANKI_EXCEPTION("Property is not writable: %s", getName().c_str());
 	}
 	/// @}
 
@@ -325,7 +325,8 @@ public:
 	{
 		if(propertyExists(newp->getName().c_str()))
 		{
-			throw ANKI_EXCEPTION("Property already exists: " + newp->getName());
+			throw ANKI_EXCEPTION("Property already exists: %s", 
+				newp->getName().c_str());
 		}
 
 		props.push_back(newp);
@@ -340,7 +341,7 @@ public:
 		NameToPropertyMap::const_iterator it = map.find(name);
 		if(it == map.end())
 		{
-			throw ANKI_EXCEPTION("Property not found: " + name);
+			throw ANKI_EXCEPTION("Property not found: %s", name);
 		}
 		return *(it->second);
 	}
@@ -351,7 +352,7 @@ public:
 		NameToPropertyMap::iterator it = map.find(name);
 		if(it == map.end())
 		{
-			throw ANKI_EXCEPTION("Property not found: " + name);
+			throw ANKI_EXCEPTION("Property not found: %s", name);
 		}
 		return *(it->second);
 	}

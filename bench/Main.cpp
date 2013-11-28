@@ -31,44 +31,12 @@
 using namespace anki;
 
 //==============================================================================
-struct LogFile 
-{
-	ANKI_HAS_SLOTS(LogFile)
-
-	void handler(const Logger::Info& info)
-	{
-		const char* x = nullptr;
-		switch(info.type)
-		{
-		case Logger::LMT_NORMAL:
-			x = "Info";
-			break;
-		case Logger::LMT_ERROR:
-			x = "Error";
-			break;
-		case Logger::LMT_WARNING:
-			x = "Warn";
-			break;
-		}
-
-		file.writeText("(%s:%d %s) %s: %s\n", 
-			info.file, info.line, info.func, x, info.msg);
-	}
-	ANKI_SLOT(handler, const Logger::Info&)
-
-	File file;
-};
-
-static LogFile logfile;
-
-//==============================================================================
 void initSubsystems()
 {
-#if ANKI_OS == ANKI_OS_ANDROID
-	// Log file
-	logfile.file.open("/sdcard/anki.log", File::OF_WRITE);
-	ANKI_CONNECT(&LoggerSingleton::get(), messageRecieved, &logfile, handler);
-#endif
+	// Logger
+	LoggerSingleton::get().init(
+		Logger::INIT_SYSTEM_MESSAGE_HANDLER 
+		| Logger::INIT_LOG_FILE_MESSAGE_HANDLER);
 
 	// App
 	AppSingleton::get().init();
@@ -137,12 +105,14 @@ void initSubsystems()
 	initializer.get("is.maxPointLightsPerTile") = 4;
 	initializer.get("is.maxSpotLightsPerTile") = 4;
 	initializer.get("is.maxSpotTexLightsPerTile") = 4;
+	initializer.get("is.sm.poissonEnabled") = false;
+	initializer.get("is.sm.bilinearEnabled") = false;
 	initializer.get("renderingQuality") = 0.5;
 	initializer.get("pps.hdr.renderingQuality") = 0.3;
 	initializer.get("maxTextureSize") = 1024;
 	initializer.get("mrt") = false;
-	initializer.get("tilesXCount") = 32;
-	initializer.get("tilesYCount") = 32;
+	initializer.get("tilesXCount") = 16;
+	initializer.get("tilesYCount") = 16;
 	initializer.get("pps.sharpen") = false;
 	initializer.get("pps.gammaCorrection") = false;
 #endif
@@ -219,14 +189,34 @@ void initScene()
 		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
 		mevent->enableBits(Event::EF_REANIMATE);
 
-		ParticleEmitter* pe;
-		scene.newSceneNode(pe,
-			("pe" + std::to_string(i)).c_str(), "particles/smoke.ankipart");
-		pe->setLocalOrigin(lightPos);
+		if(i == 0)
+		{
+			ParticleEmitter* pe;
+			scene.newSceneNode(pe, "pefire", "particles/fire.ankipart");
+			pe->setLocalOrigin(lightPos);
 
-		scene.newSceneNode(pe,
-			("pef" + std::to_string(i)).c_str(), "particles/fire.ankipart");
-		pe->setLocalOrigin(lightPos);
+			scene.newSceneNode(pe, "pesmoke", "particles/smoke.ankipart");
+			pe->setLocalOrigin(lightPos);
+		}
+		else
+		{
+			InstanceNode* instance;
+			scene.newSceneNode(instance, 
+				("pefire_inst" + std::to_string(i)).c_str());
+
+			instance->setLocalOrigin(lightPos);
+
+			SceneNode& sn = scene.findSceneNode("pefire");
+			sn.addChild(instance);
+
+
+			scene.newSceneNode(instance, 
+				("pesmoke_inst" + std::to_string(i)).c_str());
+
+			instance->setLocalOrigin(lightPos);
+
+			scene.findSceneNode("pesmoke").addChild(instance);
+		}
 	}
 #endif
 
@@ -305,30 +295,31 @@ static Bool mainLoopExtra()
 
 	Input& in = InputSingleton::get();
 
-	MoveComponent* mover = 
-		SceneGraphSingleton::get().getActiveCamera().getMoveComponent();
+	MoveComponent& mover = 
+		SceneGraphSingleton::get().getActiveCamera().
+		getComponent<MoveComponent>();
 
-	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
-	if(in.getKey(KC_DOWN)) mover->rotateLocalX(-ang);
-	if(in.getKey(KC_LEFT)) mover->rotateLocalY(ang);
-	if(in.getKey(KC_RIGHT)) mover->rotateLocalY(-ang);
+	if(in.getKey(KC_UP)) mover.rotateLocalX(ang);
+	if(in.getKey(KC_DOWN)) mover.rotateLocalX(-ang);
+	if(in.getKey(KC_LEFT)) mover.rotateLocalY(ang);
+	if(in.getKey(KC_RIGHT)) mover.rotateLocalY(-ang);
 
-	if(in.getKey(KC_A)) mover->moveLocalX(-dist);
-	if(in.getKey(KC_D)) mover->moveLocalX(dist);
-	if(in.getKey(KC_Z)) mover->moveLocalY(dist);
-	if(in.getKey(KC_SPACE)) mover->moveLocalY(-dist);
-	if(in.getKey(KC_W)) mover->moveLocalZ(-dist);
-	if(in.getKey(KC_S)) mover->moveLocalZ(dist);
-	if(in.getKey(KC_Q)) mover->rotateLocalZ(ang);
-	if(in.getKey(KC_E)) mover->rotateLocalZ(-ang);
+	if(in.getKey(KC_A)) mover.moveLocalX(-dist);
+	if(in.getKey(KC_D)) mover.moveLocalX(dist);
+	if(in.getKey(KC_Z)) mover.moveLocalY(dist);
+	if(in.getKey(KC_SPACE)) mover.moveLocalY(-dist);
+	if(in.getKey(KC_W)) mover.moveLocalZ(-dist);
+	if(in.getKey(KC_S)) mover.moveLocalZ(dist);
+	if(in.getKey(KC_Q)) mover.rotateLocalZ(ang);
+	if(in.getKey(KC_E)) mover.rotateLocalZ(-ang);
 
 	if(in.getMousePosition() != Vec2(0.0))
 	{
 		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity *
 			MainRendererSingleton::get().getAspectRatio();
 
-		mover->rotateLocalY(angY);
-		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
+		mover.rotateLocalY(angY);
+		mover.rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
 	}
 
 	if(InputSingleton::get().getKey(KC_ESCAPE))

@@ -27,7 +27,7 @@ static Array<const char*, 10> commands = {{
 
 static_assert(ST_VERTEX == 0 && ST_COMPUTE == 5, "See file");
 
-static const char* ENTRYPOINT_NOT_DEFINED = "Entry point not defined: ";
+static const char* ENTRYPOINT_NOT_DEFINED = "Entry point not defined: %s";
 
 const U32 MAX_DEPTH = 8;
 
@@ -49,7 +49,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	if(depth > MAX_DEPTH)
 	{
 		throw ANKI_EXCEPTION("The include depth is too high. "
-			"Probably circular includance. Last: " + filename);
+			"Probably circular includance");
 	}
 
 	// load file in lines
@@ -57,7 +57,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 	File(filename.c_str(), File::OF_READ).readAllTextLines(lines);
 	if(lines.size() < 1)
 	{
-		throw ANKI_EXCEPTION("File is empty: " + filename);
+		throw ANKI_EXCEPTION("File is empty: %s", filename.c_str());
 	}
 
 	for(const std::string& line : lines)
@@ -130,7 +130,7 @@ void ShaderProgramPrePreprocessor::parseFileForPragmas(
 		// Sanity check
 		if(expectPragmaAnki && !gotPragmaAnki)
 		{
-			throw ANKI_EXCEPTION("Malformed pragma anki: " + line);
+			throw ANKI_EXCEPTION("Malformed pragma anki: %s", line.c_str());
 		}
 	}
 }
@@ -144,7 +144,7 @@ void ShaderProgramPrePreprocessor::parseFile(const char* filename)
 	}
 	catch(Exception& e)
 	{
-		throw ANKI_EXCEPTION("Loading file failed: " + filename) << e;
+		throw ANKI_EXCEPTION("Loading file failed: %s", filename) << e;
 	}
 }
 
@@ -163,14 +163,12 @@ void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 
 		if(!shaderStarts[ST_VERTEX].isDefined())
 		{
-			throw ANKI_EXCEPTION(ENTRYPOINT_NOT_DEFINED 
-				+ commands[ST_VERTEX]);
+			throw ANKI_EXCEPTION(ENTRYPOINT_NOT_DEFINED, commands[ST_VERTEX]);
 		}
 
 		if(!shaderStarts[ST_FRAGMENT].isDefined())
 		{
-			throw ANKI_EXCEPTION(ENTRYPOINT_NOT_DEFINED 
-				+ commands[ST_FRAGMENT]);
+			throw ANKI_EXCEPTION(ENTRYPOINT_NOT_DEFINED, commands[ST_FRAGMENT]);
 		}
 
 		firstShader = ST_VERTEX;
@@ -210,8 +208,8 @@ void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 			if(shaderStarts[k].isDefined() 
 				&& shaderStarts[k].definedLine >= shaderStarts[i].definedLine)
 			{
-				throw ANKI_EXCEPTION(commands[i] + " must be after " 
-					+ commands[k]);
+				throw ANKI_EXCEPTION("%s must be after %s", 
+					commands[i], commands[k]);
 			}
 			--k;
 		}
@@ -223,8 +221,8 @@ void ShaderProgramPrePreprocessor::parseFileInternal(const char* filename)
 			if(shaderStarts[k].isDefined() 
 				&& shaderStarts[k].definedLine <= shaderStarts[i].definedLine)
 			{
-				throw ANKI_EXCEPTION(commands[k] + " must be after " 
-					+ commands[i]);
+				throw ANKI_EXCEPTION("%s must be after %s", 
+					commands[k], commands[i]);
 			}
 			++k;
 		}
@@ -272,7 +270,7 @@ void ShaderProgramPrePreprocessor::parseStartPragma(U32 shaderType,
 
 	if(pragma.definedLine != -1)
 	{
-		throw ANKI_EXCEPTION("Redefinition of: " + commands[shaderType]);
+		throw ANKI_EXCEPTION("Redefinition of: %s", commands[shaderType]);
 	}
 
 	pragma.definedLine = sourceLines.size();

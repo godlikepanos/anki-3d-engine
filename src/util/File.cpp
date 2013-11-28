@@ -51,13 +51,13 @@ void File::open(const char* filename, U16 flags_)
 	//
 
 	std::string archive, filenameInArchive;
-	FileType ft = identifyFile(filename, &archive, &filenameInArchive);
+	FileType ft = identifyFile(filename, archive, filenameInArchive);
 
 	switch(ft)
 	{
 #if ANKI_OS == ANKI_OS_ANDROID
 	case FT_SPECIAL:
-		openAndFile(filename, flags_);
+		openAndroidFile(filename, flags_);
 		break;
 #endif
 	case FT_C:
@@ -96,13 +96,13 @@ void File::openCFile(const char* filename, U16 flags_)
 	{
 		openMode = "r";
 	}
+	else if((flags_ & OF_APPEND) == OF_APPEND)
+	{
+		openMode = "a+";
+	}
 	else if(flags_ & OF_WRITE)
 	{
 		openMode = "w";
-	}
-	else if(flags_ & OF_APPEND)
-	{
-		openMode = "a+";
 	}
 	else
 	{
@@ -162,7 +162,7 @@ void File::openZipFile(const char* archive, const char* archived, U16 flags_)
 
 //==============================================================================
 #if ANKI_OS == ANKI_OS_ANDROID
-void File::openAndFile(const char* filename, U16 flags_)
+void File::openAndroidFile(const char* filename, U16 flags_)
 {
 	if(flags_ & OF_WRITE)
 	{
@@ -219,6 +219,36 @@ void File::close()
 
 	file = nullptr;
 	flags = 0;
+}
+
+//==============================================================================
+void File::flush()
+{
+	ANKI_ASSERT(file);
+
+	if(flags & OF_WRITE)
+	{
+		if(flags & FT_C)
+		{
+			I err = fflush((FILE*)file);
+			if(err)
+			{
+				throw ANKI_EXCEPTION("fflush() failed");
+			}
+		}
+		else if(flags & FT_ZIP
+#if ANKI_OS == ANKI_OS_ANDROID
+			|| flags & FT_SPECIAL
+#endif
+			)
+		{
+			ANKI_ASSERT(0 && "Cannot have write these file types");
+		}
+		else
+		{
+			ANKI_ASSERT(0);
+		}
+	}
 }
 
 //==============================================================================
@@ -533,9 +563,10 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 
 //==============================================================================
 File::FileType File::identifyFile(const char* filename, 
-	std::string* archive_, std::string* filenameInArchive_)
+	std::string& archive, std::string& filenameInArchive)
 {
-	ANKI_ASSERT(filename && strlen(filename) > 1);
+	ANKI_ASSERT(filename);
+	ANKI_ASSERT(strlen(filename) > 1);
 
 #if ANKI_OS == ANKI_OS_ANDROID
 	if(filename[0] == '$')
@@ -563,10 +594,10 @@ File::FileType File::identifyFile(const char* filename,
 
 			if(archLen + 1 >= fnameLen)
 			{
-				throw ANKI_EXCEPTION("To sort archived filename");
+				throw ANKI_EXCEPTION("Too sort archived filename");
 			}
 
-			std::string archive(filename, archLen);
+			archive = std::string(filename, archLen);
 
 			if(directoryExists(archive.c_str()))
 			{
@@ -577,18 +608,8 @@ File::FileType File::identifyFile(const char* filename,
 			{
 				// It's a ziped file
 
-				std::string filenameInArchive(
+				filenameInArchive = std::string(
 					filename + archLen + 1, fnameLen - archLen);
-
-				if(archive_)
-				{
-					*archive_ = archive;
-				}
-
-				if(filenameInArchive_)
-				{
-					*filenameInArchive_ = filenameInArchive;
-				}
 
 				return FT_ZIP;
 			}

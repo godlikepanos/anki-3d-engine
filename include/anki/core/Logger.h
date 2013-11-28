@@ -2,11 +2,9 @@
 #define ANKI_CORE_LOGGER_H
 
 #include "anki/Config.h"
-#include "anki/util/Observer.h"
 #include "anki/util/Singleton.h"
-#include <array>
+#include "anki/util/File.h"
 #include <mutex>
-#include <sstream> // For the macros
 
 namespace anki {
 
@@ -16,18 +14,23 @@ namespace anki {
 /// The logger singleton class. The logger cannot print errors or throw
 /// exceptions, it has to recover somehow. Its thread safe
 /// To add a new signal: 
-/// @code ANKI_CONNECT(&logger, messageRecieved, &instance, handle) @endcode
+/// @code logger.addMessageHandler((void*)obj, &function) @endcode
 class Logger
 {
 public:
-	ANKI_HAS_SLOTS(Logger)
-
 	/// Logger message type
 	enum LoggerMessageType
 	{
 		LMT_NORMAL,
 		LMT_ERROR,
 		LMT_WARNING
+	};
+
+	/// Logger init mask
+	enum LoggerInitFlags
+	{
+		INIT_SYSTEM_MESSAGE_HANDLER = 1 << 0,
+		INIT_LOG_FILE_MESSAGE_HANDLER  = 1 << 1
 	};
 
 	/// Used as parammeter when emitting the signal
@@ -40,7 +43,14 @@ public:
 		const char* msg;
 	};
 
-	Logger();
+	/// The message handler callback
+	using MessageHandlerCallback = void (*)(void*, const Info& info);
+
+	/// Initialize the logger
+	void init(U32 flags);
+
+	/// Add a new message handler
+	void addMessageHandler(void* data, MessageHandlerCallback callback);
 
 	/// Send a message
 	void write(const char* file, int line, const char* func,
@@ -50,15 +60,21 @@ public:
 	void writeFormated(const char* file, int line, const char* func,
 		LoggerMessageType type, const char* fmt, ...);
 
-	ANKI_SIGNAL(const Info&, messageRecieved)
-
 private:
 	std::mutex mutex; ///< For thread safety
 
-	/// Depending on the OS implement a different handler. This one is the 
-	/// default one
-	void defaultSystemMessageHandler(const Info& info);
-	ANKI_SLOT(defaultSystemMessageHandler, const Logger::Info&)
+	struct Handler
+	{
+		void* data;
+		MessageHandlerCallback callback;
+	};
+
+	Vector<Handler> handlers;
+
+	File logfile;
+	
+	static void defaultSystemMessageHandler(void*, const Info& info);
+	static void logfileMessageHandler(void* vlogger, const Info& info);
 };
 
 typedef Singleton<Logger> LoggerSingleton;

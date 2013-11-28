@@ -41,7 +41,7 @@ void Mesh::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Mesh loading failed: " + filename) << e;
+		throw ANKI_EXCEPTION("Failed to load mesh") << e;
 	}
 }
 
@@ -304,7 +304,7 @@ void BucketMesh::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("BucketMesh loading failed: " + filename) << e;
+		throw ANKI_EXCEPTION("Failed to load bucket mesh") << e;
 	}
 }
 

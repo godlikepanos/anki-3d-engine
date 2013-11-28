@@ -39,7 +39,7 @@ void glConditionalThrowException(const char* file, int line, const char* func)
 	const char tmp[] = "OpenGL exception: ";
 	memcpy(errStr, tmp, sizeof(tmp));
 	strcat(errStr, glerr);
-	throw Exception(errStr, file, line, func);
+	throw Exception(file, line, func, errStr);
 }
 
 } // end namespace

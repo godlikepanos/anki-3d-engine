@@ -1,4 +1,5 @@
 #include "anki/core/Logger.h"
+#include "anki/core/App.h"
 #include <cstring>
 #include <cstdarg>
 #if ANKI_OS == ANKI_OS_ANDROID
@@ -8,9 +9,23 @@
 namespace anki {
 
 //==============================================================================
-Logger::Logger()
+void Logger::init(U32 flags)
 {
-	ANKI_CONNECT(this, messageRecieved, this, defaultSystemMessageHandler);
+	if(flags & INIT_SYSTEM_MESSAGE_HANDLER)
+	{
+		addMessageHandler(this, &defaultSystemMessageHandler);
+	}
+
+	if(flags & INIT_LOG_FILE_MESSAGE_HANDLER)
+	{
+		addMessageHandler(this, &logfileMessageHandler);
+	}
+}
+
+//==============================================================================
+void Logger::addMessageHandler(void* data, MessageHandlerCallback callback)
+{
+	handlers.push_back(Handler{data, callback});
 }
 
 //==============================================================================
@@ -20,7 +35,11 @@ void Logger::write(const char* file, int line, const char* func,
 	mutex.lock();
 
 	Info inf = {file, line, func, type, msg};
-	ANKI_EMIT messageRecieved(inf);
+
+	for(Handler& handler : handlers)
+	{
+		handler.callback(handler.data, inf);
+	}
 
 	mutex.unlock();
 }
@@ -39,7 +58,7 @@ void Logger::writeFormated(const char* file, int line, const char* func,
 }
 
 //==============================================================================
-void Logger::defaultSystemMessageHandler(const Info& info)
+void Logger::defaultSystemMessageHandler(void*, const Info& info)
 {
 #if ANKI_OS == ANKI_OS_LINUX
 	std::ostream* out = NULL;
@@ -91,6 +110,47 @@ void Logger::defaultSystemMessageHandler(const Info& info)
 	std::cout << "(" << info.file << ":" << info.line << " "
 		<< info.func << ") " << x << ": " << info.msg << std::endl;
 #endif
+}
+
+//==============================================================================
+void Logger::logfileMessageHandler(void* vlogger, const Info& info)
+{
+	Logger* logger = (Logger*)vlogger;
+
+	// Init the file
+	if(!logger->logfile.isOpen())
+	{
+		const std::string& filename = AppSingleton::get().getSettingsPath();
+
+		if(!filename.empty())
+		{
+			logger->logfile.open((filename + "/anki.log").c_str(), 
+				File::OF_WRITE);
+		}
+		else
+		{
+			return;
+		}
+	}
+
+	const char* x = nullptr;
+	switch(info.type)
+	{
+	case Logger::LMT_NORMAL:
+		x = "Info";
+		break;
+	case Logger::LMT_ERROR:
+		x = "Error";
+		break;
+	case Logger::LMT_WARNING:
+		x = "Warn";
+		break;
+	}
+
+	logger->logfile.writeText("(%s:%d %s) %s: %s\n", 
+		info.file, info.line, info.func, x, info.msg);
+
+	logger->logfile.flush();
 }
 
 } // end namespace anki

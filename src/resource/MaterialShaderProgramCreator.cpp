@@ -74,7 +74,7 @@ void MaterialShaderProgramCreator::parseShaderProgramTag(
 	{
 		if(in->shaders == 0)
 		{
-			throw ANKI_EXCEPTION("Input not referenced: " + in->name);
+			throw ANKI_EXCEPTION("Input not referenced: %s", in->name.c_str());
 		}
 	}
 
@@ -375,7 +375,8 @@ void MaterialShaderProgramCreator::parseOperationTag(
 			if(!(input != nullptr 
 				|| strncmp(argEl.getText(), OUT, sizeof(OUT) - 1) == 0))
 			{
-				throw ANKI_EXCEPTION("Incorrect argument: " + argEl.getText());
+				throw ANKI_EXCEPTION("Incorrect argument: %s", 
+					argEl.getText());
 			}
 
 			// Add to a list and do something special if instanced

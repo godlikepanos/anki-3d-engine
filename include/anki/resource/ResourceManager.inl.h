@@ -18,7 +18,7 @@ void TypeResourceManager<Type>::
 	}
 	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Constructor failed for: " + filename) << e;
+		throw ANKI_EXCEPTION("Constructor failed") << e;
 	}
 
 	// Load
@@ -28,7 +28,7 @@ void TypeResourceManager<Type>::
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Cannot load: " + filename) << e;
+		throw ANKI_EXCEPTION("load() failed") << e;
 	}
 }
 
@@ -62,7 +62,7 @@ typename TypeResourceManager<Type>::Hook& TypeResourceManager<Type>::
 		catch(std::exception& e)
 		{
 			delete hook;
-			throw ANKI_EXCEPTION("Cannot load: " + newFname) << e;
+			throw ANKI_EXCEPTION("Cannot load: %s", newFname.c_str()) << e;
 		}
 
 		hooks.push_back(hook);
@@ -87,7 +87,7 @@ void TypeResourceManager<Type>::unload(const Hook& hook)
 	// If not found
 	if(it == hooks.end())
 	{
-		throw ANKI_EXCEPTION("Resource hook not found: " + hook.uuid);
+		throw ANKI_EXCEPTION("Resource hook not found: %s", hook.uuid.c_str());
 	}
 
 	ANKI_ASSERT(*(*it) == hook);

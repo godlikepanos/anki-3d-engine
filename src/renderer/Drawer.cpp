@@ -15,14 +15,13 @@ static const U UNIFORM_BLOCK_MAX_SIZE = 1024 * 12;
 
 //==============================================================================
 #if ANKI_ENABLE_COUNTERS
-static U64 countVerts(
-	const Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCount, 
-	I drawcallCount)
+static U64 countVerts(const Drawcall& dc)
 {
 	U64 sum = 0;
-	while(--drawcallCount >= 0)
+	I drawCount = dc.drawCount;
+	while(--drawCount >= 0)
 	{
-		sum += indicesCount[drawcallCount];
+		sum += dc.countArray[drawCount] * dc.instancesCount;
 	}
 	return sum;
 }
@@ -257,7 +256,7 @@ void RenderableDrawer::setupShaderProg(const PassLodKey& key_,
 	vis.dc = dc;
 
 	PassLodKey key(key_.pass,
-		std::min(key_.level,
+		std::min(key_.lod,
 		U8(renderable.getMaterial().getLevelsOfDetail() - 1)));
 
 	// Set the uniforms
@@ -367,8 +366,7 @@ void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
 	dc.enque();
 
 	ANKI_COUNTER_INC(C_RENDERER_DRAWCALLS_COUNT, (U64)1);
-	ANKI_COUNTER_INC(C_RENDERER_VERTICES_COUNT, 
-		countVerts(indicesCountArray, (I)drawcallCount));
+	ANKI_COUNTER_INC(C_RENDERER_VERTICES_COUNT, countVerts(dc));
 }
 
 }  // end namespace anki

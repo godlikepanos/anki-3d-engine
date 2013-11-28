@@ -58,7 +58,7 @@ void ModelPatchBase::createVao(const ShaderProgram& prog,
 		if(vbo == nullptr)
 		{
 			throw ANKI_EXCEPTION("Material asks for attribute that the mesh "
-				"does not have: " + attrib.name);
+				"does not have: %s", attrib.name);
 		}
 
 		vao.attachArrayBufferVbo(vbo, *attr, size, type, false, stride,
@@ -90,7 +90,7 @@ void ModelPatchBase::getRenderingData(const PassLodKey& key, const Vao*& vao,
 	// VAO
 	U lodsCount = std::max(meshLods, mtlLods);
 
-	U index = key.pass + std::min((U)key.level, lodsCount - 1) * lodsCount;
+	U index = key.pass + std::min((U)key.lod, lodsCount - 1) * lodsCount;
 
 	ANKI_ASSERT(index < modelPatchProtected.vaos.size());
 	vao = &modelPatchProtected.vaos[index];
@@ -98,7 +98,7 @@ void ModelPatchBase::getRenderingData(const PassLodKey& key, const Vao*& vao,
 	// Mesh and indices
 	PassLodKey meshKey;
 	meshKey.pass = key.pass;
-	meshKey.level = std::min(key.level, (U8)(meshLods - 1));
+	meshKey.lod = std::min(key.lod, (U8)(meshLods - 1));
 
 	const Mesh& mesh = getMesh(meshKey);
 	indicesCount = mesh.getIndicesCount();
@@ -106,7 +106,7 @@ void ModelPatchBase::getRenderingData(const PassLodKey& key, const Vao*& vao,
 	// Prog
 	PassLodKey mtlKey;
 	mtlKey.pass = key.pass;
-	mtlKey.level = std::min(key.level, (U8)(mtlLods - 1));
+	mtlKey.lod = std::min(key.lod, (U8)(mtlLods - 1));
 
 	prog = &getMaterial().findShaderProgram(mtlKey);
 }
@@ -127,7 +127,7 @@ void ModelPatchBase::getRenderingDataSub(const PassLodKey& key,
 	// VAO
 	U lodsCount = std::max(meshLods, mtlLods);
 
-	U vaoindex = key.pass + std::min((U)key.level, lodsCount - 1) * lodsCount;
+	U vaoindex = key.pass + std::min((U)key.lod, lodsCount - 1) * lodsCount;
 
 	ANKI_ASSERT(vaoindex < modelPatchProtected.vaos.size());
 	vao = &modelPatchProtected.vaos[vaoindex];
@@ -135,14 +135,14 @@ void ModelPatchBase::getRenderingDataSub(const PassLodKey& key,
 	// Prog
 	PassLodKey mtlKey;
 	mtlKey.pass = key.pass;
-	mtlKey.level = std::min(key.level, (U8)(mtlLods - 1));
+	mtlKey.lod = std::min(key.lod, (U8)(mtlLods - 1));
 
 	prog = &getMaterial().findShaderProgram(mtlKey);
 
 	// Mesh and indices
 	PassLodKey meshKey;
 	meshKey.pass = key.pass;
-	meshKey.level = std::min(key.level, (U8)(meshLods - 1));
+	meshKey.lod = std::min(key.lod, (U8)(meshLods - 1));
 
 	const Mesh& mesh = getMesh(meshKey);
 
@@ -211,13 +211,13 @@ void ModelPatchBase::create()
 			// Get mesh
 			ANKI_ASSERT(getMeshesCount() > 0);
 			PassLodKey meshKey = key;
-			meshKey.level = std::min(key.level, (U8)(getMeshesCount() - 1));
+			meshKey.lod = std::min(key.lod, (U8)(getMeshesCount() - 1));
 			mesh = &getMesh(meshKey);
 
 			// Get shader prog
 			ANKI_ASSERT(getMaterial().getLevelsOfDetail() > 0);
 			PassLodKey shaderKey = key;
-			shaderKey.level = std::min(key.level,
+			shaderKey.lod = std::min(key.lod,
 				(U8)(getMaterial().getLevelsOfDetail() - 1));
 			prog = getMaterial().tryFindShaderProgram(shaderKey);
 
@@ -280,7 +280,7 @@ void Model::load(const char* filename)
 			}
 			else
 			{
-				throw ANKI_EXCEPTION("Incorrect collision type: " + type);
+				throw ANKI_EXCEPTION("Incorrect collision type");
 			}
 		}
 
@@ -365,7 +365,7 @@ void Model::load(const char* filename)
 
 		// Calculate compound bounding volume
 		PassLodKey key;
-		key.level = 0;
+		key.lod = 0;
 		visibilityShape = modelPatches[0]->getMesh(key).getBoundingShape();
 
 		for(ModelPatchesContainer::const_iterator it = modelPatches.begin() + 1;
@@ -378,7 +378,7 @@ void Model::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Model loading failed: " + filename) << e;
+		throw ANKI_EXCEPTION("Failed to load model") << e;
 	}
 }
 

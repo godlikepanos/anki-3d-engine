@@ -86,6 +86,9 @@ public:
 	/// Close the file
 	void close();
 
+	/// Flush pending operations
+	void flush();
+
 	/// @name Read methods
 	/// @{
 
@@ -144,7 +147,7 @@ private:
 
 	/// Get the type of the file
 	FileType identifyFile(const char* filename,
-		std::string* archive, std::string* filenameInArchive);
+		std::string& archive, std::string& filenameInArchive);
 
 	/// Open a C file
 	void openCFile(const char* filename, U16 flags);
@@ -156,7 +159,7 @@ private:
 
 #if ANKI_OS == ANKI_OS_ANDROID
 	/// Open an Android file
-	void openAndFile(const char* filename, U16 flags);
+	void openAndroidFile(const char* filename, U16 flags);
 #endif
 };
 

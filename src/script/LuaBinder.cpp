@@ -79,7 +79,7 @@ void LuaBinder::evalString(const char* str)
 	{
 		std::string str(lua_tostring(l, -1));
 		lua_pop(l, 1);
-		throw ANKI_EXCEPTION(str);
+		throw ANKI_EXCEPTION("%s", str.c_str());
 	}
 }
 

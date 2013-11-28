@@ -6,7 +6,6 @@
 #include "anki/util/Functions.h"
 #include "anki/physics/PhysicsWorld.h"
 #include "anki/gl/Drawcall.h"
-#include <limits>
 
 namespace anki {
 
@@ -269,12 +268,16 @@ ParticleEmitter::~ParticleEmitter()
 
 //==============================================================================
 void ParticleEmitter::getRenderingData(
-	const PassLodKey& key, 
+	const PassLodKey& key_, 
 	const U8* subMeshIndicesArray, U subMeshIndicesCount,
 	const Vao*& vao_, const ShaderProgram*& prog,
 	Drawcall& dc)
 {
 	ANKI_ASSERT(subMeshIndicesCount <= transforms.size() + 1);
+
+	PassLodKey key = key_;
+	key.lod = 0;
+
 	vao_ = &vao;
 	prog = &getMaterial().findShaderProgram(key);
 
@@ -368,12 +371,13 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 	// - Calc the AABB
 	// - Calc the instancing stuff
 	//
-	Vec3 aabbmin(std::numeric_limits<F32>::max());
-	Vec3 aabbmax(-std::numeric_limits<F32>::max());
+	Vec3 aabbmin(MAX_F32);
+	Vec3 aabbmax(MIN_F32);
 	aliveParticlesCount = 0;
 
 	F32* verts = &clientBuffer[0];
 	F32* verts_base = verts;
+	(void)verts_base;
 
 	for(ParticleBase* p : particles)
 	{

@@ -79,7 +79,7 @@ public:
 	const ShaderProgramUniformVariable* findShaderProgramUniformVariable(
 		const PassLodKey& key) const
 	{
-		return progVars[key.pass][key.level];
+		return progVars[key.pass][key.lod];
 	}
 
 	/// Get the GL data type of all the shader program variables
@@ -327,15 +327,15 @@ public:
 
 	const ShaderProgram& findShaderProgram(const PassLodKey& key) const
 	{
-		ANKI_ASSERT(progs[key.pass][key.level].isLoaded());
-		return *progs[key.pass][key.level];
+		ANKI_ASSERT(progs[key.pass][key.lod].isLoaded());
+		return *progs[key.pass][key.lod];
 	}
 
 	const ShaderProgram* tryFindShaderProgram(const PassLodKey& key) const
 	{
-		if(progs[key.pass][key.level].isLoaded())
+		if(progs[key.pass][key.lod].isLoaded())
 		{
-			return progs[key.pass][key.level].get();
+			return progs[key.pass][key.lod].get();
 		}
 		else
 		{

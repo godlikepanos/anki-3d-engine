@@ -9,6 +9,7 @@
 #include "anki/renderer/MainRenderer.h"
 #include <functional>
 #include <algorithm>
+#include <sstream>
 #include <map>
 
 namespace anki {
@@ -78,7 +79,7 @@ static GLenum blendToEnum(const char* str)
 	TXT_AND_ENUM(GL_SRC_COLOR)
 	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
 	ANKI_ASSERT(0);
-	throw ANKI_EXCEPTION("Incorrect blend enum: " + str);
+	throw ANKI_EXCEPTION("Incorrect blend enum");
 
 #undef TXT_AND_ENUM
 }
@@ -149,8 +150,7 @@ void MaterialVariable::init(const char* shaderProgVarName,
 				|| oneSProgVar->getType() != uni->getType())
 			{
 				throw ANKI_EXCEPTION("Incompatible shader "
-					"program variables: " 
-					+ shaderProgVarName);
+					"program variables: %s", shaderProgVarName);
 			}
 		}
 	});
@@ -159,8 +159,7 @@ void MaterialVariable::init(const char* shaderProgVarName,
 	if(!oneSProgVar)
 	{
 		throw ANKI_EXCEPTION("Variable not found in "
-			"any of the shader programs: " 
-			+ shaderProgVarName);
+			"any of the shader programs: %s", shaderProgVarName);
 	}
 }
 
@@ -194,7 +193,7 @@ void Material::load(const char* filename)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Failed to load file: " + filename) << e;
+		throw ANKI_EXCEPTION("Failed to load material") << e;
 	}
 }
 
@@ -398,7 +397,8 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 
 		if(inpvar == nullptr)
 		{
-			throw ANKI_EXCEPTION("Uniform not found in the inputs: " + name);
+			throw ANKI_EXCEPTION("Uniform not found in the inputs: %s", 
+				name.c_str());
 		}
 
 		MaterialVariable* v = nullptr;

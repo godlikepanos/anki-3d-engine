@@ -31,7 +31,7 @@ struct VisibilityTestTask: ThreadpoolTask
 			testedNode.getComponent<FrustumComponent>();
 
 		// Chose the test range and a few other things
-		U64 start, end;
+		PtrSize start, end;
 		if(!isLight)
 		{
 			choseStartEnd(threadId, threadsCount, nodesCount, start, end);

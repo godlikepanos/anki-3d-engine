@@ -450,7 +450,7 @@ void Image::load(const char* filename, U32 maxTextureSize)
 	
 	if(ext == nullptr)
 	{
-		throw ANKI_EXCEPTION("Wrong filename: " + filename);
+		throw ANKI_EXCEPTION("Failed to get filename extension");
 	}
 
 	// load from this extension
@@ -503,7 +503,7 @@ void Image::load(const char* filename, U32 maxTextureSize)
 	}
 	catch(std::exception& e)
 	{
-		throw ANKI_EXCEPTION("File " + filename) << e;
+		throw ANKI_EXCEPTION("Failed to load image") << e;
 	}
 }
 
