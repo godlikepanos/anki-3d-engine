@@ -299,7 +299,7 @@ protected:
 class Material: public MaterialProperties, public NonCopyable
 {
 public:
-	typedef PtrVector<MaterialVariable> VarsContainer;
+	typedef Vector<MaterialVariable*> VarsContainer;
 
 	Material();
 	~Material();

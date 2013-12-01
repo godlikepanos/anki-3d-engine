@@ -61,21 +61,25 @@ const float weights[4] = float[](
 	0.3162162162, 0.0702702703);
 
 // Calc the kernel
+#define BLURRING_OFFSET_DIM(val, sign_) ((val + float(BLURRING_DIST)) * float(sign_) / float(IMG_DIMENSION))
+
+#define BLURRING_OFFSET(valx, valy, sign_) vec2(BLURRING_OFFSET_DIM(valx, sign_), BLURRING_OFFSET_DIM(valy, sign_))
+
+#define KERNEL_SIZE 4
+
+const vec2 kernel[KERNEL_SIZE] = vec2[](
 #if defined(VPASS)
-#	define BLURRING_OFFSET_X(val, sign_) ((float(val) + float(BLURRING_DIST)) * float(sign_) / float(IMG_DIMENSION))
-#	define BLURRING_OFFSET_Y(val, sign_) 0.0
-#else
-#	define BLURRING_OFFSET_X(val, sign_) 0.0
-#	define BLURRING_OFFSET_Y(val, sign_) ((float(val) + float(BLURRING_DIST)) * float(sign_) / float(IMG_DIMENSION))
+	BLURRING_OFFSET(1.3846153846, 0.0, 1),
+	BLURRING_OFFSET(3.2307692308, 0.0, 1),
+	BLURRING_OFFSET(1.3846153846, 0.0, -1),
+	BLURRING_OFFSET(3.2307692308, 0.0, -1)
+#elif defined(HPASS)
+	BLURRING_OFFSET(0.0, 1.3846153846, 1),
+	BLURRING_OFFSET(0.0, 3.2307692308, 1),
+	BLURRING_OFFSET(0.0, 1.3846153846, -1),
+	BLURRING_OFFSET(0.0, 3.2307692308, -1)
 #endif
-
-#define BLURRING_OFFSET(val, sign_) vec2(BLURRING_OFFSET_X(val, sign_), BLURRING_OFFSET_Y(val, sign_))
-
-const vec2 kernel[4] = vec2[](
-	BLURRING_OFFSET(1.3846153846, 1),
-	BLURRING_OFFSET(3.2307692308, 1),
-	BLURRING_OFFSET(1.3846153846, -1),
-	BLURRING_OFFSET(3.2307692308, -1));
+);
 
 // Output
 layout(location = 0) out COL_TYPE fFragColor;
@@ -86,7 +90,7 @@ void main()
 	fFragColor = texture(img, vTexCoords).TEX_FETCH * first_weight;
 
 	// side pixels
-	for(int i = 0; i < 4; i++)
+	for(int i = 0; i < KERNEL_SIZE; i++)
 	{
 		fFragColor += 
 			texture(img, vTexCoords + kernel[i]).TEX_FETCH * weights[i];

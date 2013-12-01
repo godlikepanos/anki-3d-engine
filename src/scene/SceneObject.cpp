@@ -4,10 +4,10 @@
 namespace anki {
 
 //==============================================================================
-SceneObject::SceneObject(SceneObject* parent, SceneGraph* scene_)
+SceneObject::SceneObject(Type type, SceneObject* parent, SceneGraph* scene_)
 	:	Base(parent, scene_->getAllocator()),
 		scene(scene_),
-		markedForDeletion(false)
+		flags((U8)type)
 {
 	ANKI_ASSERT(scene);
 }
@@ -29,7 +29,7 @@ SceneAllocator<U8> SceneObject::getSceneFrameAllocator() const
 //==============================================================================
 void SceneObject::markForDeletion()
 {
-	markedForDeletion = true;
+	flags |= MARKED_FOR_DELETION;
 
 	visitChildren([](SceneObject& obj)
 	{

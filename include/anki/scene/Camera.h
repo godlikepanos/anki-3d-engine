@@ -51,7 +51,7 @@ public:
 	void componentUpdated(SceneComponent& comp, 
 		SceneComponent::UpdateType) override
 	{
-		if(comp.getType() == MoveComponent::getGlobType())
+		if(comp.getType() == MoveComponent::getClassType())
 		{
 			moveUpdate(comp.downCast<MoveComponent>());
 		}

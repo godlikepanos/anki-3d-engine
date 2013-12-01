@@ -13,7 +13,7 @@
 namespace anki {
 
 /// XML element
-struct XmlElement
+class XmlElement
 {
 	friend class XmlDocument;
 public:

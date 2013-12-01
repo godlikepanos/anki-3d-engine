@@ -3,6 +3,15 @@
 namespace anki {
 
 //==============================================================================
+// LightComponent                                                              =
+//==============================================================================
+
+//==============================================================================
+LightComponent::LightComponent(Light* node)
+	: SceneComponent(LIGHT_COMPONENT, node)
+{}
+
+//==============================================================================
 // Light                                                                       =
 //==============================================================================
 
@@ -77,7 +86,7 @@ PointLight::PointLight(const char* name, SceneGraph* scene)
 void PointLight::componentUpdated(SceneComponent& comp, 
 	SceneComponent::UpdateType)
 {
-	if(comp.getType() == MoveComponent::getGlobType())
+	if(comp.getType() == MoveComponent::getClassType())
 	{
 		MoveComponent& move = comp.downCast<MoveComponent>();
 		sphereW.setCenter(move.getWorldTransform().getOrigin());
@@ -107,7 +116,7 @@ SpotLight::SpotLight(const char* name, SceneGraph* scene)
 void SpotLight::componentUpdated(SceneComponent& comp,
 	SceneComponent::UpdateType)
 {
-	if(comp.getType() == MoveComponent::getGlobType())
+	if(comp.getType() == MoveComponent::getClassType())
 	{
 		MoveComponent& move = comp.downCast<MoveComponent>();
 		frustum.setTransform(move.getWorldTransform());

@@ -1,6 +1,9 @@
 #include "anki/util/Exception.h"
+#include "anki/util/Vector.h"
 #include <sstream>
 #include <iostream>
+#include <cstring>
+#include <cstdarg>
 
 // Instead of throwing abort. Its easier to debug
 #define ANKI_ABORT_ON_THROW 0
@@ -9,16 +12,38 @@ namespace anki {
 
 //==============================================================================
 Exception::Exception(const char* file, I line, const char* func, 
-	const char* fmt, ...)
+	const char* fmt, ...) throw()
 {
 	char buffer[1024];
+	const char* out = &buffer[0];
+	Vector<char> largeStr;
 	va_list args;
 
 	va_start(args, fmt);
-	vsnprintf(buffer, sizeof(buffer), fmt, args);
+	I len = vsnprintf(buffer, sizeof(buffer), fmt, args);
 	va_end(args);
 
-	err = synthErr(buffer, file, line, func);
+	if(len < 0)
+	{
+		// Error in vsnprintf()
+		strcpy(buffer, "Error when throwing exception. vsnprintf() failed");
+	}
+	else if((PtrSize)len >= sizeof(buffer))
+	{
+		// The buffer is not big enough
+
+		// Create a huge string
+		largeStr.resize(len + 1, '-');
+		out = &largeStr[0];
+
+		va_start(args, fmt);
+		len = vsnprintf(&largeStr[0], largeStr.size(), fmt, args);
+		va_end(args);
+
+		ANKI_ASSERT(len < largeStr.size());
+	}
+
+	err = synthErr(out, file, line, func);
 
 #if ANKI_ABORT_ON_THROW
 	std::cerr << err << std::endl;

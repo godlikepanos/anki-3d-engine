@@ -102,7 +102,7 @@ struct Array
 };
 
 /// 2D Array. @code Array2d<X, 10, 2> a; @endcode is equivelent to 
-/// @code X a[10][2];
+/// @code X a[10][2]; @endcode
 template<typename T, PtrSize I, PtrSize J>
 using Array2d = Array<Array<T, J>, I>;
 /// @}

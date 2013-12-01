@@ -50,7 +50,12 @@ MaterialShaderProgramCreator::MaterialShaderProgramCreator(
 
 //==============================================================================
 MaterialShaderProgramCreator::~MaterialShaderProgramCreator()
-{}
+{
+	for(auto it : inputs)
+	{
+		propperDelete(it);
+	}
+}
 
 //==============================================================================
 void MaterialShaderProgramCreator::parseShaderProgramTag(

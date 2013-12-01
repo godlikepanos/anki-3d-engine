@@ -78,7 +78,7 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 		// Audjust starting time
 		if(pevent->startTime < 0.0)
 		{
-			pevent->startTime = crntTime_;
+			pevent->startTime = crntTime;
 		}
 
 		// If not dead update it

@@ -15,6 +15,8 @@ AnimationEvent::AnimationEvent(EventManager* manager,
 
 	startTime = anim->getStartingTime();
 	duration = anim->getDuration();
+
+	enableBits(EF_REANIMATE, anim->getRepeat());
 }
 
 //==============================================================================

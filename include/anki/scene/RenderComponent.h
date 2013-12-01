@@ -10,7 +10,7 @@
 
 namespace anki {
 
-class Drawcall;
+struct Drawcall;
 
 /// @addtogroup Scene
 /// @{
@@ -227,7 +227,7 @@ public:
 		}
 	}
 
-	static Type getGlobType()
+	static constexpr Type getClassType()
 	{
 		return RENDER_COMPONENT;
 	}

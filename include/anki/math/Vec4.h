@@ -397,15 +397,15 @@ public:
 private:
 	/// @name Data
 	/// @{
+	struct Vec
+	{
+		T x, y, z, w;
+	};
+
 	union
 	{
-		struct
-		{
-			T x, y, z, w;
-		} vec;
-
+		Vec vec;	
 		Array<T, 4> arr;
-
 		Simd simd;
 	};
 	/// @}

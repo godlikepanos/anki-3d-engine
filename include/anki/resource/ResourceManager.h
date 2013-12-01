@@ -4,6 +4,7 @@
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Singleton.h"
+#include "anki/util/Functions.h"
 #include <string>
 
 namespace anki {
@@ -47,7 +48,7 @@ private:
 /// The singleton of resource manager
 typedef Singleton<ResourceManager> ResourceManagerSingleton;
 
-/// Convenience macro to sanitize resources
+/// Convenience macro to sanitize resources path
 #define ANKI_R(x_) \
 	ResourceManagerSingleton::get().fixResourcePath(x_).c_str()
 
@@ -58,12 +59,17 @@ class TypeResourceManager
 public:
 	typedef TypeResourceManager<Type> Self;
 	typedef ResourceHook<Type> Hook;
-	typedef PtrVector<Hook> Container;
+	typedef Vector<Hook*> Container;
 	typedef typename Container::iterator Iterator;
 	typedef typename Container::const_iterator ConstIterator;
 
 	virtual ~TypeResourceManager()
-	{}
+	{
+		for(auto it : hooks)
+		{
+			propperDelete(it);
+		}
+	}
 
 	Hook& load(const char* filename);
 

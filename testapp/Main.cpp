@@ -164,7 +164,7 @@ void init()
 	scene.newSceneNode(spot, "spot0");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
-	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
+	spot->setLocalTransform(Transform(Vec3(-1.434199, 5.474161, -10.774253),
 		Mat3(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
 	spot->setDiffuseColor(Vec4(2.0));
 	spot->setSpecularColor(Vec4(-1.0));
@@ -250,6 +250,12 @@ void init()
 			instance->setLocalOrigin(lightPos);
 
 			scene.findSceneNode("pesmoke").addChild(instance);
+		}
+
+		{
+			scene.newSceneNode(pe, ("pesparks" + std::to_string(i)).c_str(), 
+				"particles/sparks.ankipart");
+			pe->setLocalOrigin(lightPos);
 		}
 	}
 #endif
@@ -526,13 +532,13 @@ void mainLoop()
 		increaseGlobTimestamp();
 	}
 
-#if 1
-	MainRendererSingleton::get().takeScreenshot("screenshot.tga");
-#endif
-
 	ANKI_COUNTER_STOP_TIMER_INC(C_FPS);
 
 	ANKI_COUNTERS_FLUSH();
+
+#if 0
+	MainRendererSingleton::get().takeScreenshot("screenshot.tga");
+#endif
 }
 
 //==============================================================================
@@ -548,6 +554,9 @@ void initSubsystems(int argc, char* argv[])
 	U32 glminor = 0;
 #endif
 
+	// Logger
+	LoggerSingleton::get().init(Logger::INIT_SYSTEM_MESSAGE_HANDLER);
+
 	// App
 	AppSingleton::get().init();
 
@@ -559,7 +568,7 @@ void initSubsystems(int argc, char* argv[])
 	nwinit.minorVersion = glminor;
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
-	nwinit.fullscreenDesktopRez = false;
+	nwinit.fullscreenDesktopRez = true;
 	nwinit.debugContext = false;
 	win = new NativeWindow;	
 	win->create(nwinit);
@@ -589,6 +598,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.get("pps.hdr.blurringDist") = 1.0;
 	initializer.get("pps.hdr.blurringIterationsCount") = 1;
 	initializer.get("pps.hdr.exposure") = 8.0;
+	initializer.get("pps.hdr.samples") = 9;
 	initializer.get("pps.ssao.blurringIterationsNum") = 1;
 	initializer.get("pps.ssao.enabled") = true;
 	initializer.get("pps.ssao.renderingQuality") = 0.35;
@@ -602,7 +612,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.get("height") = win->getHeight();
 	initializer.get("lodDistance") = 20.0;
 	initializer.get("samples") = 1;
-	initializer.get("tessellation") = true;
+	initializer.get("tessellation") = false;
 	initializer.get("tilesXCount") = 16;
 	initializer.get("tilesYCount") = 16;
 

@@ -77,52 +77,47 @@ in vec2 vTexCoords;
 
 #define BLURRING_OFFSET(v, s) vec2(BLURRING_OFFSET_X(v, s), BLURRING_OFFSET_Y(v, s))
 
-#if SAMPLES == 3
-const vec2 kernel[SAMPLES] = vec2[](
+const vec2 kernel[SAMPLES - 1] = vec2[](
 	BLURRING_OFFSET(1, -1),
-	BLURRING_OFFSET(0, 1),
-	BLURRING_OFFSET(1, 1));
-#elif SAMPLES == 5
-const vec2 kernel[SAMPLES] = vec2[](
-	BLURRING_OFFSET(2, -1),
-	BLURRING_OFFSET(1, -1),
-	BLURRING_OFFSET(0, 0),
-	BLURRING_OFFSET(1, 1),
-	BLURRING_OFFSET(2, 1));
-#elif SAMPLES == 7
-const vec2 kernel[SAMPLES] = vec2[](
-	BLURRING_OFFSET(3, -1),
-	BLURRING_OFFSET(2, -1),
-	BLURRING_OFFSET(1, -1),
-	BLURRING_OFFSET(0, 1),
-	BLURRING_OFFSET(1, 1),
-	BLURRING_OFFSET(2, 1),
-	BLURRING_OFFSET(3, 1));
-#elif SAMPLES == 9
-const vec2 kernel[SAMPLES] = vec2[](
-	BLURRING_OFFSET(4, -1),
-	BLURRING_OFFSET(3, -1),
-	BLURRING_OFFSET(2, -1),
-	BLURRING_OFFSET(1, -1),
-	BLURRING_OFFSET(0, 1),
-	BLURRING_OFFSET(1, 1),
-	BLURRING_OFFSET(2, 1),
-	BLURRING_OFFSET(3, 1),
-	BLURRING_OFFSET(4, 1));
+	BLURRING_OFFSET(1, 1)
+#if SAMPLES > 3
+	,BLURRING_OFFSET(2, -1),
+	BLURRING_OFFSET(2, 1)
 #endif
+#if SAMPLES > 5
+	,BLURRING_OFFSET(3, -1),
+	BLURRING_OFFSET(3, 1)
+#endif
+#if SAMPLES > 7
+	,BLURRING_OFFSET(4, -1),
+	BLURRING_OFFSET(4, 1)
+#endif
+#if SAMPLES > 9
+	,BLURRING_OFFSET(5, -1),
+	BLURRING_OFFSET(5, 1)
+#endif
+#if SAMPLES > 11
+	,BLURRING_OFFSET(6, -1),
+	BLURRING_OFFSET(6, 1)
+#endif
+#if SAMPLES > 13
+	,BLURRING_OFFSET(7, -1),
+	BLURRING_OFFSET(7, 1)
+#endif
+	);
 
 layout(location = 0) out COL_TYPE fFragColor;
 
 void main()
 {
 	// Get the first
-	COL_TYPE col = textureFai(img, vTexCoords + kernel[0]).TEX_FETCH;
+	COL_TYPE col = textureFai(img, vTexCoords).TEX_FETCH;
 
 	// Get the rest of the samples
-	for(int i = 1; i < SAMPLES; i++)
+	for(int i = 0; i < SAMPLES - 1; i++)
 	{
 		col += textureFai(img, vTexCoords + kernel[i]).TEX_FETCH;
 	}
 
-	fFragColor = col * (1.0 / float(SAMPLES));
+	fFragColor = col / float(SAMPLES);
 }

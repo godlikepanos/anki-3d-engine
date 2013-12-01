@@ -3,6 +3,7 @@
 
 #include "anki/scene/Common.h"
 #include "anki/core/Timestamp.h"
+#include "anki/util/Functions.h"
 
 namespace anki {
 
@@ -69,8 +70,8 @@ public:
 	template<typename TComponent>
 	TComponent& downCast()
 	{
-		ANKI_ASSERT(TComponent::getGlobType() == getType());
-		TComponent* out = staticCast<TComponent*>(this);
+		ANKI_ASSERT(TComponent::getClassType() == getType());
+		TComponent* out = staticCastPtr<TComponent*>(this);
 		return *out;
 	}
 

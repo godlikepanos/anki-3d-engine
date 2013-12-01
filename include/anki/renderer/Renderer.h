@@ -10,7 +10,6 @@
 #include "anki/misc/ConfigSet.h"
 #include "anki/scene/Forward.h"
 
-#include "anki/renderer/Common.h"
 #include "anki/renderer/Ms.h"
 #include "anki/renderer/Is.h"
 #include "anki/renderer/Pps.h"

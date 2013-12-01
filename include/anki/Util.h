@@ -7,7 +7,6 @@
 #include "anki/util/Thread.h"
 #include "anki/util/Bitset.h"
 #include "anki/util/Dictionary.h"
-#include "anki/util/DynamicArray.h"
 #include "anki/util/Exception.h"
 #include "anki/util/File.h"
 #include "anki/util/Functions.h"

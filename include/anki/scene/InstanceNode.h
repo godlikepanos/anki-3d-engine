@@ -16,7 +16,7 @@ public:
 		: SceneComponent(INSTANCE_COMPONENT, node)
 	{}
 
-	static Type getGlobType()
+	static constexpr Type getClassType()
 	{
 		return INSTANCE_COMPONENT;
 	}

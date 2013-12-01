@@ -24,7 +24,7 @@ namespace anki {
 
 namespace detail {
 
-/// Internal methods for the #Allocator class
+/// Internal methods for the Allocator class
 class AllocatorInternal
 {
 public:

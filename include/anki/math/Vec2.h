@@ -294,13 +294,14 @@ public:
 private:
 	/// @name Data members
 	/// @{
+	struct Vec
+	{
+		T x, y;
+	};
+
 	union
 	{
-		struct
-		{
-			T x, y;
-		} vec;
-
+		Vec vec;
 		Array<T, 2> arr;
 	};
 	/// @}

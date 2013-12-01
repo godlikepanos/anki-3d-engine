@@ -22,19 +22,31 @@ void Animation::load(const char* filename)
 //==============================================================================
 void Animation::loadInternal(const XmlElement& el)
 {
+	startTime = MAX_F32;
+	F32 maxTime = MIN_F32;
+
 	// Count the number of identity keys. If all of the keys are identities
 	// drop a vector
 	U identPosCount = 0;
 	U identRotCount = 0;
 	U identScaleCount = 0;
 
-	// <duration>
-	duration = el.getChildElement("duration").getFloat();
+	// <repeat>
+	XmlElement repel = el.getChildElementOptional("repeat");
+	if(repel)
+	{
+		repeat = repel.getInt();
+	}
+	else
+	{
+		repeat = false;
+	}
 
 	// <channels>
 	XmlElement channelsEl = el.getChildElement("channels");
 	XmlElement chEl = channelsEl.getChildElement("channel");
 
+	// For all channels
 	do
 	{
 		channels.push_back(AnimationChannel());	
@@ -56,6 +68,8 @@ void Animation::loadInternal(const XmlElement& el)
 
 				// <time>
 				key.time = keyEl.getChildElement("time").getFloat();
+				startTime = std::min(startTime, key.time);
+				maxTime = std::max(maxTime, key.time);
 
 				// <value>
 				key.value = keyEl.getChildElement("value").getVec3();
@@ -85,6 +99,8 @@ void Animation::loadInternal(const XmlElement& el)
 
 				// <time>
 				key.time = keyEl.getChildElement("time").getFloat();
+				startTime = std::min(startTime, key.time);
+				maxTime = std::max(maxTime, key.time);
 
 				// <value>
 				key.value = Quat(keyEl.getChildElement("value").getVec4());
@@ -114,6 +130,8 @@ void Animation::loadInternal(const XmlElement& el)
 
 				// <time>
 				key.time = keyEl.getChildElement("time").getFloat();
+				startTime = std::min(startTime, key.time);
+				maxTime = std::max(maxTime, key.time);
 
 				// <value>
 				key.value = keyEl.getChildElement("value").getFloat();
@@ -149,15 +167,23 @@ void Animation::loadInternal(const XmlElement& el)
 		// Move to next channel
 		chEl = chEl.getNextSiblingElement("channel");
 	} while(chEl);
+
+	duration = maxTime - startTime;
 }
 
 //==============================================================================
 void Animation::interpolate(U channelIndex, F32 time, 
 	Vec3& pos, Quat& rot, F32& scale) const
 {
+	// Audjust time
+	if(repeat && time > startTime + duration)
+	{
+		time = mod(time - startTime, duration) + startTime;
+	}
+
 	ANKI_ASSERT(time >= startTime && time <= startTime + duration);
 	ANKI_ASSERT(channelIndex < channels.size());
-	
+
 	const AnimationChannel& channel = channels[channelIndex];
 
 	// Position

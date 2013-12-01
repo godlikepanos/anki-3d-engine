@@ -8,6 +8,11 @@
 
 namespace anki {
 
+/// @addtogroup util
+/// @{
+/// @addtogroup misc
+/// @{
+
 /// Mother of all AnKi exceptions.
 ///
 /// Custom exception that takes file, line and function that throw it. Throw 
@@ -17,7 +22,7 @@ class Exception: public std::exception
 public:
 	/// Constructor
 	explicit Exception(const char* file, I line, const char* func, 
-		const char* errorFmt, ...);
+		const char* errorFmt, ...) throw();
 
 	/// Copy constructor
 	Exception(const Exception& e);
@@ -49,10 +54,13 @@ private:
 		I line, const char* func);
 };
 
-} // end namespace anki
-
 /// Macro for easy throwing
 #define ANKI_EXCEPTION(...) \
 	Exception(ANKI_FILE, __LINE__, ANKI_FUNC, __VA_ARGS__)
+
+/// @}
+/// @}
+
+} // end namespace anki
 
 #endif

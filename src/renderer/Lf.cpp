@@ -156,7 +156,7 @@ void Lf::run()
 	{
 		SceneNode& sn = *it.node;
 		ANKI_ASSERT(sn.tryGetComponent<LightComponent>() != nullptr);
-		Light* light = staticCast<Light*>(&sn);
+		Light* light = staticCastPtr<Light*>(&sn);
 
 		if(light->hasLensFlare())
 		{

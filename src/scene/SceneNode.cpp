@@ -8,7 +8,7 @@ namespace anki {
 
 //==============================================================================
 SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
-	:	SceneObject(nullptr, scene_),
+	:	SceneObject(SCENE_NODE_TYPE, nullptr, scene_),
 		name(getSceneAllocator()),
 		components(getSceneAllocator())
 {

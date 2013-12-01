@@ -6,6 +6,9 @@
 
 namespace anki {
 
+/// @addtogroup Math
+/// @{
+
 //==============================================================================
 // Math constants                                                              =
 //==============================================================================
@@ -101,6 +104,18 @@ inline T sqrt(const T x)
 	return std::sqrt(x);
 }
 
+template<typename T>
+inline T fract(const T x)
+{
+	return x - std::floor(x);
+}
+
+template<typename T>
+inline T mod(const T x, const T y)
+{
+	return x - y * std::floor(x / y);
+}       
+
 //==============================================================================
 // Other math functions                                                        =
 //==============================================================================
@@ -170,6 +185,8 @@ static Type cubicInterpolate(
 
 	return(a0 * u * u2 + a1 * u2 + a2 * u + a3);
 }
+
+/// @}
 
 } // end namespace anki
 

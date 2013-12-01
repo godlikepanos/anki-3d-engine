@@ -162,13 +162,14 @@ public:
 private:
 	/// @name Data
 	/// @{
+	struct Vec
+	{
+		T x, y, z;
+	};
+
 	union
 	{
-		struct
-		{
-			T x, y, z;
-		} vec;
-
+		Vec vec;
 		Array<T, 3> arr;
 	};
 	/// @}

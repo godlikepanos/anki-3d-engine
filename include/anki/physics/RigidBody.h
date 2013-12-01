@@ -41,7 +41,7 @@ public:
 	Bool update(SceneNode& node, F32 prevTime, F32 crntTime,
 		UpdateType updateType) override;
 
-	static Type getGlobType()
+	static constexpr Type getClassType()
 	{
 		return RIGID_BODY;
 	}

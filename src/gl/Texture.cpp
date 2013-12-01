@@ -283,7 +283,7 @@ void Texture::create(const Initializer& init)
 						0, 
 						format, 
 						type, 
-						init.data[level][0].ptr);
+						init.data[level][face].ptr);
 				}
 				else
 				{
@@ -294,8 +294,8 @@ void Texture::create(const Initializer& init)
 						w, 
 						h, 
 						0, 
-						init.data[level][0].size, 
-						init.data[level][0].ptr);
+						init.data[level][face].size, 
+						init.data[level][face].ptr);
 				}
 			}
 			break;
@@ -462,6 +462,9 @@ U Texture::bind() const
 		break;
 	case GL_TEXTURE_2D_ARRAY:
 		bindingPoint = GL_TEXTURE_BINDING_2D_ARRAY;
+		break;
+	case GL_TEXTURE_CUBE_MAP:
+		bindingPoint = GL_TEXTURE_BINDING_CUBE_MAP;
 		break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 	case GL_TEXTURE_2D_MULTISAMPLE:

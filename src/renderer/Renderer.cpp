@@ -35,9 +35,10 @@ RendererInitializer::RendererInitializer()
 
 	// Pps
 	newOption("pps.hdr.enabled", true);
-	newOption("pps.hdr.renderingQuality", 0.25);
+	newOption("pps.hdr.renderingQuality", 0.5);
 	newOption("pps.hdr.blurringDist", 1.0);
-	newOption("pps.hdr.blurringIterationsCount", 2);
+	newOption("pps.hdr.samples", 5);
+	newOption("pps.hdr.blurringIterationsCount", 1);
 	newOption("pps.hdr.exposure", 4.0);
 
 	newOption("pps.ssao.enabled", true);

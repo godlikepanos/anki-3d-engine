@@ -11,9 +11,9 @@ void ScriptManager::init()
 	ANKI_LOGI("Initializing scripting engine...");
 
 	// Math
-	ANKI_SCRIPT_CALL_WRAP(Vec2);
+	/*ANKI_SCRIPT_CALL_WRAP(Vec2);
 	ANKI_SCRIPT_CALL_WRAP(Vec3);
-	ANKI_SCRIPT_CALL_WRAP(Vec4);
+	ANKI_SCRIPT_CALL_WRAP(Vec4);*/
 
 	// Renderer
 	ANKI_SCRIPT_CALL_WRAP(Dbg);

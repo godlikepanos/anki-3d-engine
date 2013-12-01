@@ -159,6 +159,7 @@ void ShaderProgramUniformVariable::set(const Texture& tex) const
 		|| getGlDataType() == GL_UNSIGNED_INT_SAMPLER_2D
 		|| getGlDataType() == GL_SAMPLER_2D_ARRAY_SHADOW
 		|| getGlDataType() == GL_SAMPLER_2D_ARRAY
+		|| getGlDataType() == GL_SAMPLER_CUBE
 #if ANKI_GL == ANKI_GL_DESKTOP
 		|| getGlDataType() == GL_SAMPLER_2D_MULTISAMPLE
 #endif
@@ -641,9 +642,8 @@ void ShaderProgram::link() const
 
 		infoLogTxt.resize(infoLen + 1);
 		glGetProgramInfoLog(glId, infoLen, &charsWritten, &infoLogTxt[0]);
-		std::string linkLog = std::string("Link error log follows:\n")
-			+ infoLogTxt; 
-		throw ANKI_EXCEPTION(linkLog.c_str());
+		throw ANKI_EXCEPTION("Link error log follows:\n%s", 
+			infoLogTxt.c_str());
 	}
 }
 

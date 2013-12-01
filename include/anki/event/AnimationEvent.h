@@ -14,7 +14,7 @@ public:
 		SceneNode* movableSceneNode);
 
 	/// Implements Event::update
-	void update(F32 prevUpdateTime, F32 crntTime);
+	void update(F32 prevUpdateTime, F32 crntTime) override;
 
 private:
 	AnimationResourcePointer anim;
