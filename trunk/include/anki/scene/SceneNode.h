@@ -98,7 +98,7 @@ public:
 	template<typename Component, typename Func>
 	void iterateComponentsOfType(Func func)
 	{
-		SceneComponent::Type type = Component::getGlobType();
+		SceneComponent::Type type = Component::getClassType();
 		for(auto comp : components)
 		{
 			if(comp->getType() == type)
@@ -112,7 +112,7 @@ public:
 	template<typename Component>
 	Component* tryGetComponent()
 	{
-		SceneComponent::Type type = Component::getGlobType();
+		SceneComponent::Type type = Component::getClassType();
 		for(auto comp : components)
 		{
 			if(comp->getType() == type)
@@ -127,7 +127,7 @@ public:
 	template<typename Component>
 	const Component* tryGetComponent() const
 	{
-		SceneComponent::Type type = Component::getGlobType();
+		SceneComponent::Type type = Component::getClassType();
 		for(auto comp : components)
 		{
 			if(comp->getType() == type)
@@ -154,6 +154,11 @@ public:
 		Component* out = tryGetComponent<Component>();
 		ANKI_ASSERT(out != nullptr);
 		return *out;
+	}
+
+	static constexpr SceneObject::Type getClassType()
+	{
+		return SCENE_NODE_TYPE;
 	}
 
 protected:

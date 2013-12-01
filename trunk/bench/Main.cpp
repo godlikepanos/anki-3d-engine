@@ -54,7 +54,7 @@ void initSubsystems()
 #endif
 	nwinit.depthBits = 0;
 	nwinit.stencilBits = 0;
-	nwinit.fullscreenDesktopRez = true;
+	nwinit.fullscreenDesktopRez = false;
 	nwinit.debugContext = false;
 	NativeWindowSingleton::get().create(nwinit);
 
@@ -85,7 +85,7 @@ void initSubsystems()
 	initializer.get("pps.hdr.exposure") = 8.0;
 	initializer.get("pps.ssao.enabled") = false;
 	initializer.get("pps.ssao.blurringIterationsNum") = 1;
-	initializer.get("pps.ssao.renderingQuality") = 0.25;
+	initializer.get("pps.ssao.renderingQuality") = 0.5;
 	initializer.get("pps.bl.enabled") = true;
 	initializer.get("pps.bl.blurringIterationsNum") = 2;
 	initializer.get("pps.bl.sideBlurFactor") = 1.0;
@@ -102,19 +102,24 @@ void initSubsystems()
 	initializer.get("samples") = 1;
 	initializer.get("is.groundLightEnabled") = false;
 	initializer.get("is.maxPointLights") = 64;
-	initializer.get("is.maxPointLightsPerTile") = 4;
+	initializer.get("is.maxPointLightsPerTile") = 8;
 	initializer.get("is.maxSpotLightsPerTile") = 4;
 	initializer.get("is.maxSpotTexLightsPerTile") = 4;
 	initializer.get("is.sm.poissonEnabled") = false;
 	initializer.get("is.sm.bilinearEnabled") = false;
 	initializer.get("renderingQuality") = 0.5;
-	initializer.get("pps.hdr.renderingQuality") = 0.3;
+	initializer.get("pps.hdr.enabled") = true;
+	initializer.get("pps.hdr.renderingQuality") = 0.4;
+	initializer.get("pps.hdr.blurringDist") = 1.0;
+	initializer.get("pps.hdr.samples") = 5;
+	initializer.get("pps.hdr.blurringIterationsCount") = 1;
+	initializer.get("pps.hdr.exposure") = 8.0;
 	initializer.get("maxTextureSize") = 1024;
 	initializer.get("mrt") = false;
 	initializer.get("tilesXCount") = 16;
 	initializer.get("tilesYCount") = 16;
 	initializer.get("pps.sharpen") = false;
-	initializer.get("pps.gammaCorrection") = false;
+	initializer.get("pps.gammaCorrection") = true;
 #endif
 
 	MainRendererSingleton::get().init(initializer);
@@ -217,6 +222,13 @@ void initScene()
 
 			scene.findSceneNode("pesmoke").addChild(instance);
 		}
+
+		{
+			ParticleEmitter* pe;
+			scene.newSceneNode(pe, ("pesparks" + std::to_string(i)).c_str(), 
+				"particles/sparks.ankipart");
+			pe->setLocalOrigin(lightPos);
+		}
 	}
 #endif
 
@@ -231,8 +243,8 @@ void initScene()
 	scene.newSceneNode(spot, "spot0");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
-	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
-		Mat3(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
+	spot->setLocalTransform(Transform(Vec3(10.769279, 13.472027, -0.324927),
+		Mat3(Quat(-0.267508, 0.664765, 0.244565, 0.653239)), 1.0));
 	spot->setDiffuseColor(Vec4(2.0));
 	spot->setSpecularColor(Vec4(1.0, 0.0, 1.0, 1.0));
 	spot->setDistance(30.0);

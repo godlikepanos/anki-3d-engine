@@ -134,7 +134,7 @@ struct VisibilityTestTask: ThreadpoolTask
 					LightComponent* l = node.tryGetComponent<LightComponent>();
 					if(l)
 					{
-						Light* light = staticCast<Light*>(&node);
+						Light* light = staticCastPtr<Light*>(&node);
 
 						visible->lights.push_back(visibleNode);
 

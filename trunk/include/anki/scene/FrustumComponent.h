@@ -115,7 +115,7 @@ public:
 		visible = nullptr;
 	}
 
-	static Type getGlobType()
+	static constexpr Type getClassType()
 	{
 		return FRUSTUM_COMPONENT;
 	}

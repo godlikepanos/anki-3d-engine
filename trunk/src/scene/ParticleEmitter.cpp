@@ -301,7 +301,7 @@ const Material& ParticleEmitter::getMaterial()
 void ParticleEmitter::componentUpdated(SceneComponent& comp, 
 	SceneComponent::UpdateType)
 {
-	if(comp.getType() == MoveComponent::getGlobType())
+	if(comp.getType() == MoveComponent::getClassType())
 	{
 		identityRotation =
 			getWorldTransform().getRotation() == Mat3::getIdentity();
@@ -417,7 +417,14 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 			verts[3] = p->size + (lifePercent * particle.sizeAnimation);
 
 			// Set alpha
-			verts[4] = sin((lifePercent) * getPi<F32>()) * p->alpha;
+			if(particle.alphaAnimation)
+			{
+				verts[4] = sin((lifePercent) * getPi<F32>()) * p->alpha;
+			}
+			else
+			{
+				verts[4] = p->alpha;
+			}
 
 			++aliveParticlesCount;
 			verts += 5;
@@ -484,13 +491,11 @@ void ParticleEmitter::doInstancingCalcs()
 	// Gather the move components of the instances
 	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
 	Timestamp instancesTimestamp = 0;
-	SceneNode::visitThisAndChildren([&](SceneObject& so)
-	{
-		SceneNode* sn = staticCast<SceneNode*>(&so);
-		
-		if(sn->tryGetComponent<InstanceComponent>())
+	SceneObject::visitThisAndChildren<SceneNode>([&](SceneNode& sn)
+	{	
+		if(sn.tryGetComponent<InstanceComponent>())
 		{
-			MoveComponent& move = sn->getComponent<MoveComponent>();
+			MoveComponent& move = sn.getComponent<MoveComponent>();
 
 			instanceMoves.push_back(&move);
 
@@ -555,7 +560,7 @@ void ParticleEmitter::doInstancingCalcs()
 			if(count != 0)	
 			{
 				ObbSpatialComponent* msp = 
-					staticCast<ObbSpatialComponent*>(&sp);
+					staticCastPtr<ObbSpatialComponent*>(&sp);
 		
 				Obb aobb = obb;
 				aobb.setCenter(Vec3(0.0));

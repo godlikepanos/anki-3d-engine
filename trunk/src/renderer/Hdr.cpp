@@ -1,5 +1,6 @@
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Renderer.h"
+#include <sstream>
 
 namespace anki {
 
@@ -53,25 +54,25 @@ void Hdr::initInternal(const RendererInitializer& initializer)
 	toneSProg.load("shaders/PpsHdr.glsl");
 	toneSProg->findUniformBlock("commonBlock").setBinding(0);
 
-	const char* SHADER_FILENAME = "shaders/GaussianBlurGeneric.glsl";
+	const char* SHADER_FILENAME = "shaders/VariableSamplingBlurGeneric.glsl";
 
-	std::string pps =
-		"#define HPASS\n"
+	std::stringstream pps;
+	pps << "#define HPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST " + std::to_string(blurringDist) + "\n"
-		"#define IMG_DIMENSION " + std::to_string(height) + "\n"
-		"#define SAMPLES 7\n";
+		"#define BLURRING_DIST float(" << blurringDist << ")\n"
+		"#define IMG_DIMENSION " << height << "\n"
+		"#define SAMPLES " << (U)initializer.get("pps.hdr.samples") << "\n";
 	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.c_str(), "r_").c_str());
+		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
 
-	pps =
-		"#define VPASS\n"
+	pps.str("");
+	pps << "#define VPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST " + std::to_string(blurringDist) + "\n"
-		"#define IMG_DIMENSION " + std::to_string(width) + "\n"
-		"#define SAMPLES 7\n";
+		"#define BLURRING_DIST float(" << blurringDist << ")\n"
+		"#define IMG_DIMENSION " << width << "\n"
+		"#define SAMPLES " << (U)initializer.get("pps.hdr.samples") << "\n";
 	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.c_str(), "r_").c_str());
+		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
 
 	// Set timestamps
 	parameterUpdateTimestamp = getGlobTimestamp();

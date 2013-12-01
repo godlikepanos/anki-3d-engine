@@ -45,7 +45,7 @@ struct UpdateSceneNodesJob: ThreadpoolTask
 		barrier->wait();
 
 		// Update the rest of the components
-		auto moveComponentTypeId = MoveComponent::getGlobType();
+		auto moveComponentTypeId = MoveComponent::getClassType();
 		scene->iterateSceneNodes(start, end, [&](SceneNode& node)
 		{
 			// Components update

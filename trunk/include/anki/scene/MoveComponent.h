@@ -133,7 +133,7 @@ public:
 	}
 	/// @}
 
-	static Type getGlobType()
+	static constexpr Type getClassType()
 	{
 		return MOVE_COMPONENT;
 	}

@@ -35,6 +35,7 @@ struct ParticleEmitterProperties
 		/// this
 		F32 alpha = 1.0;
 		F32 alphaDeviation = 0.0;
+		Bool8 alphaAnimation = false;
 
 		/// Initial force. If not set only the gravity applies
 		Vec3 forceDirection = Vec3(0.0, 1.0, 0.0);

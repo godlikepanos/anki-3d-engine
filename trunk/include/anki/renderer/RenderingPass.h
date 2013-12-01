@@ -6,7 +6,7 @@
 namespace anki {
 
 class Renderer;
-struct RendererInitializer;
+class RendererInitializer;
 
 /// Rendering pass
 class RenderingPass

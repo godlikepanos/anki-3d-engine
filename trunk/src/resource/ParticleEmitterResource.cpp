@@ -134,6 +134,9 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
 
 	xmlReadFloat(rootel, "alpha", particle.alpha);
 	xmlReadFloat(rootel, "alphaDeviation", particle.alphaDeviation);
+	U32 tmp;
+	xmlReadU(rootel, "alphaAnimationEnabled", tmp);
+	particle.alphaAnimation = tmp;
 
 	xmlReadVec3(rootel, "forceDirection", particle.forceDirection);
 	xmlReadVec3(rootel, "forceDirectionDeviation", 

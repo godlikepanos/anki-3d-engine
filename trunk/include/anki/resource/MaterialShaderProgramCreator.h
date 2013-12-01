@@ -40,7 +40,7 @@ public:
 		return source;
 	}
 
-	const PtrVector<Input>& getInputVariables() const
+	const Vector<Input*>& getInputVariables() const
 	{
 		return inputs;
 	}
@@ -69,7 +69,7 @@ private:
 
 	std::string source; ///< Shader program final source
 
-	PtrVector<Input> inputs;
+	Vector<Input*> inputs;
 
 	Bool enableUniformBlocks;
 

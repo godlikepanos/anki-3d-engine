@@ -179,7 +179,12 @@ Material::Material()
 
 //==============================================================================
 Material::~Material()
-{}
+{
+	for(auto it : vars)
+	{
+		propperDelete(it);
+	}
+}
 
 //==============================================================================
 void Material::load(const char* filename)
@@ -377,7 +382,7 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 
 	// Now combine
 	//
-	const PtrVector<MaterialShaderProgramCreator::Input>& invars =
+	const Vector<MaterialShaderProgramCreator::Input*>& invars =
 		mspc.getInputVariables();
 	for(std::map<std::string, GLenum>::value_type& it : allVarNames)
 	{
@@ -406,8 +411,9 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 
 		switch(dataType)
 		{
-		// sampler2D
+		// samplers
 		case GL_SAMPLER_2D:
+		case GL_SAMPLER_CUBE:
 			v = new MaterialVariableTemplate<TextureResourcePointer>(
 				n, progs);
 			break;
@@ -451,6 +457,7 @@ void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
 			{
 			// sampler2D
 			case GL_SAMPLER_2D:
+			case GL_SAMPLER_CUBE:
 				{
 					TextureResourcePointer tp(value[0].c_str());
 					v->setValues(&tp, 1);

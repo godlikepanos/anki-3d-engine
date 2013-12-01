@@ -128,7 +128,7 @@ struct WriteLightsJob: ThreadpoolTask
 		for(U64 i = start; i < end; i++)
 		{
 			SceneNode* snode = (*(lightsBegin + i)).node;
-			Light* light = staticCast<Light*>(snode);
+			Light* light = staticCastPtr<Light*>(snode);
 			ANKI_ASSERT(light);
 
 			switch(light->getLightType())
@@ -136,7 +136,7 @@ struct WriteLightsJob: ThreadpoolTask
 			case Light::LT_POINT:
 				{
 					PointLight& l = 
-						*staticCast<PointLight*>(light);
+						*staticCastPtr<PointLight*>(light);
 					I pos = doLight(l);
 					if(binLights && pos != -1)
 					{
@@ -146,7 +146,7 @@ struct WriteLightsJob: ThreadpoolTask
 				break;
 			case Light::LT_SPOT:
 				{
-					SpotLight& l = *staticCast<SpotLight*>(light);
+					SpotLight& l = *staticCastPtr<SpotLight*>(light);
 					I pos = doLight(l);
 					if(binLights && pos != -1)
 					{
@@ -591,7 +591,7 @@ void Is::lightPass()
 
 	for(auto it : vi.lights)
 	{
-		Light* light = staticCast<Light*>(it.node);
+		Light* light = staticCastPtr<Light*>(it.node);
 		switch(light->getLightType())
 		{
 		case Light::LT_POINT:

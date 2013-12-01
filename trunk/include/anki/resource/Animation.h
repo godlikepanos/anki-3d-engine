@@ -54,19 +54,29 @@ public:
 
 	/// @name Accessors
 	/// @{
+
+	/// Get a vector of all animation channels
 	const Vector<AnimationChannel>& getChannels() const
 	{
 		return channels;
 	}
 
+	/// Get the duration of the animation in seconds
 	F32 getDuration() const
 	{
 		return duration;
 	}
 
+	/// Get the time (in seconds) the animation should start
 	F32 getStartingTime() const
 	{
 		return startTime;
+	}
+
+	/// The animation repeats
+	Bool getRepeat() const
+	{
+		return repeat;
 	}
 	/// @}
 
@@ -78,6 +88,7 @@ private:
 	Vector<AnimationChannel> channels;
 	F32 duration;
 	F32 startTime;
+	Bool8 repeat;
 
 	void loadInternal(const XmlElement& el);
 };

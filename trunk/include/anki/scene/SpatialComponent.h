@@ -86,7 +86,7 @@ public:
 	void reset() override;
 	/// @}
 
-	static Type getGlobType()
+	static constexpr Type getClassType()
 	{
 		return SPATIAL_COMPONENT;
 	}

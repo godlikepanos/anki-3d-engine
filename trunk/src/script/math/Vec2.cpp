@@ -3,6 +3,7 @@
 
 namespace anki {
 
+#if 0
 static void vec2SetX(Vec2* self, F32 x)
 {
 	self->x() = x;
@@ -50,5 +51,6 @@ ANKI_SCRIPT_WRAP(Vec2)
 		ANKI_LUA_METHOD("dot", &Vec2::dot)
 	ANKI_LUA_CLASS_END()
 }
+#endif
 
 } // end namespace anki

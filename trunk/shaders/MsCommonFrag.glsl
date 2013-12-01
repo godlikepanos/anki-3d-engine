@@ -183,6 +183,15 @@ vec3 readRgbFromTexture(in sampler2D tex, in highp vec2 texCoords)
 }
 #endif
 
+// Just read the RGB color from cube texture
+#if PASS_COLOR
+#	define readRgbFromCubeTexture_DEFINED
+vec3 readRgbFromCubeTexture(in samplerCube tex, in mediump vec3 texCoord)
+{
+	return texture(tex, texCoord).rgb;
+}
+#endif
+
 // Write the data to FAIs
 #if PASS_COLOR
 #	define writeFais_DEFINED

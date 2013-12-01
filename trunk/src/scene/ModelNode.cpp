@@ -59,7 +59,7 @@ void ModelPatchNode::getRenderingData(
 //==============================================================================
 void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 {
-	SceneNode* parent = staticCast<SceneNode*>(getParent());
+	SceneNode* parent = &getParent()->downCast<SceneNode>();
 	ANKI_ASSERT(parent);
 	MoveComponent& move = parent->getComponent<MoveComponent>();
 
@@ -71,9 +71,9 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 	else
 	{
 		// Instancing
-		SceneNode* parent = staticCast<SceneNode*>(getParent());
+		SceneNode* parent = &getParent()->downCast<SceneNode>();
 		ANKI_ASSERT(parent);
-		ModelNode* mnode = staticCast<ModelNode*>(parent);
+		ModelNode* mnode = staticCastPtr<ModelNode*>(parent);
 
 		--index;
 		ANKI_ASSERT(index < mnode->transforms.size());
@@ -89,7 +89,7 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 		return;
 	}
 
-	SceneNode* parent = staticCast<SceneNode*>(getParent());
+	SceneNode* parent = &getParent()->downCast<SceneNode>();
 	ANKI_ASSERT(parent);
 
 	// Update first OBB
@@ -105,13 +105,11 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 	// Get the move components of the instances of the parent
 	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
 	Timestamp instancesTimestamp = 0;
-	parent->visitThisAndChildren([&](SceneObject& so)
-	{
-		SceneNode* sn = staticCast<SceneNode*>(&so);
-		
-		if(sn->tryGetComponent<InstanceComponent>())
+	parent->visitThisAndChildren<SceneNode>([&](SceneNode& sn)
+	{		
+		if(sn.tryGetComponent<InstanceComponent>())
 		{
-			MoveComponent& move = sn->getComponent<MoveComponent>();
+			MoveComponent& move = sn.getComponent<MoveComponent>();
 
 			instanceMoves.push_back(&move);
 
@@ -138,7 +136,7 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 			if(count != 0)	
 			{
 				ObbSpatialComponent* msp = 
-					staticCast<ObbSpatialComponent*>(&sp);
+					staticCastPtr<ObbSpatialComponent*>(&sp);
 		
 				spatialsTimestamp = 
 					std::max(spatialsTimestamp, msp->getTimestamp());
@@ -252,13 +250,11 @@ void ModelNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 	// Get the move components of the instances of the parent
 	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
 	Timestamp instancesTimestamp = 0;
-	SceneNode::visitThisAndChildren([&](SceneObject& so)
-	{
-		SceneNode* sn = staticCast<SceneNode*>(&so);
-		
-		if(sn->tryGetComponent<InstanceComponent>())
+	SceneObject::visitThisAndChildren<SceneNode>([&](SceneNode& sn)
+	{		
+		if(sn.tryGetComponent<InstanceComponent>())
 		{
-			MoveComponent& move = sn->getComponent<MoveComponent>();
+			MoveComponent& move = sn.getComponent<MoveComponent>();
 
 			instanceMoves.push_back(&move);
 

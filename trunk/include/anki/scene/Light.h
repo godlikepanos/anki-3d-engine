@@ -5,6 +5,7 @@
 #include "anki/scene/MoveComponent.h"
 #include "anki/scene/FrustumComponent.h"
 #include "anki/scene/SpatialComponent.h"
+#include "anki/scene/Forward.h"
 #include "anki/resource/Resource.h"
 #include "anki/resource/TextureResource.h"
 
@@ -14,11 +15,9 @@ namespace anki {
 class LightComponent: public SceneComponent
 {
 public:
-	LightComponent(SceneNode* node)
-		: SceneComponent(LIGHT_COMPONENT, node)
-	{}
+	LightComponent(Light* node);
 
-	static Type getGlobType()
+	static constexpr Type getClassType()
 	{
 		return LIGHT_COMPONENT;
 	}

@@ -3,16 +3,13 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/resource/PassLodKey.h"
+#include "anki/scene/Forward.h"
 
 namespace anki {
 
 class Renderer;
-class FrustumComponent;
-class SceneNode;
 class ShaderProgram;
-class RenderComponent;
-class Drawcall;
-class VisibleNode;
+struct Drawcall;
 
 /// It includes all the functions to render a Renderable
 class RenderableDrawer
