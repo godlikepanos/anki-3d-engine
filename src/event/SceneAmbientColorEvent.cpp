@@ -10,13 +10,13 @@ SceneAmbientColorEvent::SceneAmbientColorEvent(EventManager* manager,
 	:	Event(manager, startTime, duration), 
 		finalColor(finalColor_)
 {
-	originalColor = getEventManager().getScene().getAmbientColor();
+	originalColor = getSceneGraph().getAmbientColor();
 }
 
 //==============================================================================
 void SceneAmbientColorEvent::update(F32 /*prevUpdateTime*/, F32 crntTime)
 {
-	getEventManager().getScene().setAmbientColor(
+	getSceneGraph().setAmbientColor(
 		interpolate(originalColor, finalColor, getDelta(crntTime)));
 }
 

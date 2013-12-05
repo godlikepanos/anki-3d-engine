@@ -2,6 +2,7 @@
 #define ANKI_EVENT_EVENT_H
 
 #include "anki/scene/Common.h"
+#include "anki/scene/SceneObject.h"
 #include "anki/util/Bitset.h"
 #include "anki/Math.h"
 
@@ -15,7 +16,7 @@ class SceneNode;
 /// @{
 
 /// The base class for all events
-class Event: public Bitset<U8>
+class Event: public SceneObject, public Bitset<U8>
 {
 	friend class EventManager;
 
@@ -24,8 +25,7 @@ public:
 	enum EventFlags
 	{
 		EF_NONE = 0,
-		EF_REANIMATE = 1 << 0,
-		EF_MARKED_FOR_DELETION = 1 << 1
+		EF_REANIMATE = 1 << 0
 	};
 
 	/// @name Constructors/Destructor
@@ -55,26 +55,11 @@ public:
 		return crntTime >= startTime + duration;
 	}
 
-	EventManager& getEventManager()
-	{
-		return *manager;
-	}
-	const EventManager& getEventManager() const
-	{
-		return *manager;
-	}
+	EventManager& getEventManager();
+	const EventManager& getEventManager() const;
 
-	SceneNode* getSceneNode()
-	{
-		return node;
-	}
-	const SceneNode* getSceneNode() const
-	{
-		return node;
-	}
-
-	SceneAllocator<U8> getSceneAllocator() const;
-	SceneAllocator<U8> getSceneFrameAllocator() const;
+	SceneNode* getSceneNode();
+	const SceneNode* getSceneNode() const;
 	/// @}
 
 	/// This method should be implemented by the derived classes
@@ -91,19 +76,6 @@ public:
 		(void)prevUpdateTime;
 		(void)crntTime;
 		return true;
-	}
-
-	/// Mark event for deletion
-	void markForDeletion()
-	{
-		enableBits(EF_MARKED_FOR_DELETION);
-		node = nullptr;
-	}
-
-	/// Ask if event is marked for deletion
-	Bool isMarkedForDeletion() const
-	{
-		return bitsEnabled(EF_MARKED_FOR_DELETION);
 	}
 
 protected:
@@ -148,10 +120,6 @@ protected:
 	/// Return the u between current time and when the event started
 	/// @return A number [0.0, 1.0]
 	F32 getDelta(F32 crntTime) const;
-
-private:
-	EventManager* manager = nullptr; ///< Keep it here to access allocators etc
-	SceneNode* node = nullptr; ///< Optional scene node
 };
 /// @}
 

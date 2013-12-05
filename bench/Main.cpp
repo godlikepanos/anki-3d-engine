@@ -100,7 +100,7 @@ void initSubsystems()
 //#if ANKI_GL == ANKI_GL_ES
 #if 1
 	initializer.get("samples") = 1;
-	initializer.get("is.groundLightEnabled") = false;
+	initializer.get("is.groundLightEnabled") = true;
 	initializer.get("is.maxPointLights") = 64;
 	initializer.get("is.maxPointLightsPerTile") = 8;
 	initializer.get("is.maxSpotLightsPerTile") = 4;
@@ -243,7 +243,7 @@ void initScene()
 	scene.newSceneNode(spot, "spot0");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
-	spot->setLocalTransform(Transform(Vec3(10.769279, 13.472027, -0.324927),
+	spot->setLocalTransform(Transform(Vec3(7.769279, 8.472027, -0.324927),
 		Mat3(Quat(-0.267508, 0.664765, 0.244565, 0.653239)), 1.0));
 	spot->setDiffuseColor(Vec4(2.0));
 	spot->setSpecularColor(Vec4(1.0, 0.0, 1.0, 1.0));
@@ -255,22 +255,128 @@ void initScene()
 
 	PointLight* pl;
 	scene.newSceneNode(pl, "pl0");
-	pl->setRadius(12.5);
+	pl->setRadius(8.5);
 	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
 	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
 	pl->setLocalOrigin(Vec3(10, 2.0, -0.8));
 
-	scene.newSceneNode(pl, "pl1");
+	/*scene.newSceneNode(pl, "pl1");
 	pl->setRadius(12.5);
 	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
 	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
-	pl->setLocalOrigin(Vec3(0, 2.0, -0.8));
+	pl->setLocalOrigin(Vec3(0, 2.0, -0.8));*/
 
 	scene.newSceneNode(pl, "pl2");
-	pl->setRadius(12.5);
+	pl->setRadius(8.5);
 	pl->setDiffuseColor(Vec4(0.5, 0.3, 0.2, 1.0));
 	pl->setSpecularColor(Vec4(0.1, 0.0, 0.0, 1.0));
 	pl->setLocalOrigin(Vec3(-11, 2.0, -0.8));
+
+
+	// bounce lights
+	const F32 bounceRadius = 2.0;
+	const F32 lightPower = 0.3;
+	const F32 posy = 9.844058;
+	F32 posz = -5.550180;
+	scene.newSceneNode(pl, "bpl0");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(0.0, lightPower, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(10.270232, posy, posz));
+
+	scene.newSceneNode(pl, "bpl1");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(0.0, lightPower, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(6.570232, posy, posz));
+
+	scene.newSceneNode(pl, "bpl2");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(0.0, 0.0, lightPower, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(10.270232 - 6.5, posy, posz));
+
+	scene.newSceneNode(pl, "bpl3");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(0.0, 0.0, lightPower, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(6.570232 - 6.5, posy, posz));
+
+	scene.newSceneNode(pl, "bpl4");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(lightPower, 0.0, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(10.270232 - 13, posy, posz));
+
+	scene.newSceneNode(pl, "bpl5");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(lightPower, 0.0, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(6.570232 - 13, posy, posz));
+
+	scene.newSceneNode(pl, "bpl6");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(lightPower, 0.0, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(10.270232 - 13 - 6.5, posy, posz));
+
+	scene.newSceneNode(pl, "bpl7");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(lightPower, 0.0, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(6.570232 - 13 - 6.5, posy, posz));
+
+
+	posz = 4.050180;
+
+
+	scene.newSceneNode(pl, "bpl0_");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(0.0, 0.0, lightPower, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(10.270232, posy, posz));
+
+	/*scene.newSceneNode(pl, "bpl1_");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(0.0, 0.0, lightPower, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(6.570232, posy, posz));*/
+
+	scene.newSceneNode(pl, "bpl2_");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(lightPower, 0.0, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(10.270232 - 6.5, posy, posz));
+
+	scene.newSceneNode(pl, "bpl3_");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(lightPower, 0.0, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(6.570232 - 6.5, posy, posz));
+
+	scene.newSceneNode(pl, "bpl4_");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(0.0, lightPower, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(10.270232 - 13, posy, posz));
+
+	scene.newSceneNode(pl, "bpl5_");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(0.0, lightPower, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(6.570232 - 13, posy, posz));
+
+	scene.newSceneNode(pl, "bpl6_");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(0.0, 0.0, lightPower, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(10.270232 - 13 - 6.5, posy, posz));
+
+	/*scene.newSceneNode(pl, "bpl7_");
+	pl->setRadius(bounceRadius);
+	pl->setDiffuseColor(Vec4(0.0, lightPower, 0.0, 1.0));
+	pl->setSpecularColor(Vec4(0.0, 0.0, 0.0, 1.0));
+	pl->setLocalOrigin(Vec3(6.570232 - 13 - 6.5, posy, posz));*/
 }
 
 //==============================================================================
@@ -332,6 +438,12 @@ static Bool mainLoopExtra()
 
 		mover.rotateLocalY(angY);
 		mover.rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
+	}
+
+	if(in.getKey(KC_F1) == 1)
+	{
+		MainRendererSingleton::get().getDbg().setEnabled(
+			!MainRendererSingleton::get().getDbg().getEnabled());
 	}
 
 	if(InputSingleton::get().getKey(KC_ESCAPE))
