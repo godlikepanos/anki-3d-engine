@@ -9,223 +9,15 @@
 #include <sstream>
 #include <cassert>
 
-static const char* xmlHeader = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
-
-struct Mesh
-{
-	uint32_t index = 0xFFFFFFFF; ///< Mesh index in the scene
-	std::vector<aiMatrix4x4> transforms;
-	uint32_t mtlIndex = 0xFFFFFFFF;
-};
-
-struct Material
-{
-	uint32_t index = 0xFFFFFFFF;
-	std::vector<uint32_t> meshIndices;
-};
-
-struct Config
-{
-	std::string inputFname;
-	std::string outDir;
-	std::string rpath;
-	std::string texpath;
-	bool flipyz = false;
-
-	std::vector<Mesh> meshes;
-	std::vector<Material> materials;
-};
-
-Config config;
-
-//==============================================================================
-// Log and errors
-
-#define STR(s) #s
-#define XSTR(s) STR(s)
-#define LOGI(...) \
-	printf("[I] (" __FILE__ ":" XSTR(__LINE__) ") " __VA_ARGS__)
-
-#define ERROR(...) \
-	do { \
-		fprintf(stderr, "[E] (" __FILE__ ":" XSTR(__LINE__) ") " __VA_ARGS__); \
-		exit(0); \
-	} while(0)
-
-#define LOGW(...) \
-	fprintf(stderr, "[W] (" __FILE__ ":" XSTR(__LINE__) ") " __VA_ARGS__)
-
-//==============================================================================
-static std::string replaceAllString(
-	const std::string& str, 
-	const std::string& from, 
-	const std::string& to)
-{
-	if(from.empty())
-	{
-		return str;
-	}
-
-	std::string out = str;
-	size_t start_pos = 0;
-	while((start_pos = out.find(from, start_pos)) != std::string::npos) 
-	{
-		out.replace(start_pos, from.length(), to);
-		start_pos += to.length();
-	}
-
-	return out;
-}
-
-//==============================================================================
-static std::string getFilename(const std::string& path)
-{
-	std::string out;
-
-	const size_t last = path.find_last_of("/");
-	if(std::string::npos != last)
-	{
-		out.insert(out.end(), path.begin() + last + 1, path.end());
-	}
-	else
-	{
-		out = path;
-	}
-
-	return out;
-}
-
-//==============================================================================
-static aiMatrix4x4 toAnkiMatrix(const aiMatrix4x4& in)
-{
-	static const aiMatrix4x4 toLeftHanded(
-		1, 0, 0, 0, 
-		0, 0, 1, 0, 
-		0, -1, 0, 0, 
-		0, 0, 0, 1);
-
-	static const aiMatrix4x4 toLeftHandedInv(
-		1, 0, 0, 0, 
-		0, 0, -1, 0, 
-		0, 1, 0, 0, 
-		0, 0, 0, 1);
-
-	if(config.flipyz)
-	{
-		return toLeftHanded * in * toLeftHandedInv;
-	}
-	else
-	{
-		return in;
-	}
-}
-
-//==============================================================================
-static aiMatrix3x3 toAnkiMatrix(const aiMatrix3x3& in)
-{
-	static const aiMatrix3x3 toLeftHanded(
-		1, 0, 0,
-		0, 0, 1, 
-		0, -1, 0);
-
-	static const aiMatrix3x3 toLeftHandedInv(
-		1, 0, 0, 
-		0, 0, -1, 
-		0, 1, 0);
-
-	if(config.flipyz)
-	{
-		return toLeftHanded * in;
-	}
-	else
-	{
-		return in;
-	}
-}
-
-//==============================================================================
-static void parseConfig(int argc, char** argv)
-{
-	static const char* usage = R"(Usage: %s in_file out_dir [options]
-Options:
--rpath <string>    : Append a string to the meshes and materials
--texrpath <string> : Append a string to the textures paths
--flipyz            : Flip y with z (For blender exports)
-)";
-
-	// Parse config
-	if(argc < 3)
-	{
-		goto error;
-	}
-
-	config.inputFname = argv[1];
-	config.outDir = argv[2] + std::string("/");
-
-	for(int i = 3; i < argc; i++)
-	{
-		if(strcmp(argv[i], "-texrpath") == 0)
-		{
-			++i;
-
-			if(i < argc)
-			{
-				config.texpath = argv[i] + std::string("/");
-			}
-			else
-			{
-				goto error;
-			}
-		}
-		else if(strcmp(argv[i], "-rpath") == 0)
-		{
-			++i;
-
-			if(i < argc)
-			{
-				config.rpath = argv[i] + std::string("/");
-			}
-			else
-			{
-				goto error;
-			}
-		}
-		else if(strcmp(argv[i], "-flipyz") == 0)
-		{
-			config.flipyz = true;
-		}
-		else
-		{
-			goto error;
-		}
-	}
-
-	if(config.rpath.empty())
-	{
-		config.rpath = config.outDir;
-	}
-
-	if(config.texpath.empty())
-	{
-		config.texpath = config.outDir;
-	}
-
-	return;
-
-error:
-	printf(usage, argv[0]);
-	exit(0);
-}
-
 //==============================================================================
 /// Load the scene
-static const aiScene& load(
-	const std::string& filename, 
-	Assimp::Importer& importer)
+static const void load(
+	const std::string& filename,
+	Exporter& exporter)
 {
 	LOGI("Loading file %s\n", filename.c_str());
 
-	const aiScene* scene = importer.ReadFile(filename, 0
+	const aiScene* scene = exporter.importer.ReadFile(filename, 0
 		//| aiProcess_FindInstances
 		| aiProcess_Triangulate
 		| aiProcess_JoinIdenticalVertices
@@ -240,382 +32,84 @@ static const aiScene& load(
 		ERROR("%s\n", importer.GetErrorString());
 	}
 
+	exporter.scene = scene;
+
 	LOGI("File loaded successfully!\n");
 	return *scene;
 }
 
 //==============================================================================
-static const uint32_t MAX_BONES_PER_VERTEX = 4;
-
-/// Bone/weight info per vertex
-struct Vw
+static void parseCommandLineArgs(int argc, char** argv, Exporter& exporter)
 {
-	uint32_t boneIds[MAX_BONES_PER_VERTEX];
-	float weigths[MAX_BONES_PER_VERTEX];
-	uint32_t bonesCount;
-};
+	static const char* usage = R"(Usage: %s in_file out_dir [options]
+Options:
+-rpath <string>    : Append a string to the meshes and materials
+-texrpath <string> : Append a string to the textures paths
+-flipyz            : Flip y with z (For blender exports)
+)";
 
-//==============================================================================
-static void exportMesh(
-	const aiMesh& mesh, 
-	const std::string* name_,
-	const aiMatrix4x4* transform)
-{
-	std::string name = (name_) ? *name_ : mesh.mName.C_Str();
-	std::fstream file;
-	LOGI("Exporting mesh %s\n", name.c_str());
-
-	uint32_t vertsCount = mesh.mNumVertices;
-
-	// Open file
-	file.open(config.outDir + name + ".ankimesh",
-		std::ios::out | std::ios::binary);
-
-	// Write magic word
-	file.write("ANKIMESH", 8);
-
-	// Write the name
-	uint32_t size = name.size();
-	file.write((char*)&size, sizeof(uint32_t));
-	file.write(&name[0], size);
-
-	// Write positions
-	file.write((char*)&vertsCount, sizeof(uint32_t));
-	for(uint32_t i = 0; i < mesh.mNumVertices; i++)
+	// Parse config
+	if(argc < 3)
 	{
-		aiVector3D pos = mesh.mVertices[i];
-
-		// Transform
-		if(transform)
-		{
-			pos = (*transform) * pos;
-		}
-
-		// flip
-		if(config.flipyz)
-		{
-			static const aiMatrix4x4 toLefthanded(
-				1, 0, 0, 0, 
-				0, 0, 1, 0, 
-				0, -1, 0, 0, 
-				0, 0, 0, 1);
-
-			pos = toLefthanded * pos;
-		}
-
-		for(uint32_t j = 0; j < 3; j++)
-		{
-			file.write((char*)&pos[j], sizeof(float));
-		}
+		goto error;
 	}
 
-	// Write the indices
-	file.write((char*)&mesh.mNumFaces, sizeof(uint32_t));
-	for(uint32_t i = 0; i < mesh.mNumFaces; i++)
+	exporter.inputFname = argv[1];
+	exporter.outDir = argv[2] + std::string("/");
+
+	for(int i = 3; i < argc; i++)
 	{
-		const aiFace& face = mesh.mFaces[i];
-		
-		if(face.mNumIndices != 3)
+		if(strcmp(argv[i], "-texrpath") == 0)
 		{
-			ERROR("For some reason the assimp didn't triangulate\n");
-		}
+			++i;
 
-		for(uint32_t j = 0; j < 3; j++)
-		{
-			uint32_t index = face.mIndices[j];
-			file.write((char*)&index, sizeof(uint32_t));
-		}
-	}
-
-	// Write the tex coords
-	file.write((char*)&vertsCount, sizeof(uint32_t));
-
-	// For all channels
-	for(uint32_t ch = 0; ch < mesh.GetNumUVChannels(); ch++)
-	{
-		if(mesh.mNumUVComponents[ch] != 2)
-		{
-			ERROR("Incorrect number of UV components\n");
-		}
-
-		// For all tex coords of this channel
-		for(uint32_t i = 0; i < vertsCount; i++)
-		{
-			aiVector3D texCoord = mesh.mTextureCoords[ch][i];
-
-			for(uint32_t j = 0; j < 2; j++)
+			if(i < argc)
 			{
-				file.write((char*)&texCoord[j], sizeof(float));
+				exporter.texrpath = argv[i] + std::string("/");
+			}
+			else
+			{
+				goto error;
 			}
 		}
-	}
-
-	// Write bone weigths count
-	if(mesh.HasBones())
-	{
-#if 0
-		// Write file
-		file.write((char*)&vertsCount, sizeof(uint32_t));
-
-		// Gather info for each vertex
-		std::vector<Vw> vw;
-		vw.resize(vertsCount);
-		memset(&vw[0], 0, sizeof(Vw) * vertsCount);
-
-		// For all bones
-		for(uint32_t i = 0; i < mesh.mNumBones; i++)
+		else if(strcmp(argv[i], "-rpath") == 0)
 		{
-			const aiBone& bone = *mesh.mBones[i];
+			++i;
 
-			// for every weights of the bone
-			for(uint32_t j = 0; j < bone.mWeightsCount; j++)
+			if(i < argc)
 			{
-				const aiVertexWeight& weigth = bone.mWeights[j];
-
-				// Sanity check
-				if(weight.mVertexId >= vertCount)
-				{
-					ERROR("Out of bounds vert ID");
-				}
-
-				Vm& a = vm[weight.mVertexId];
-
-				// Check out of bounds
-				if(a.bonesCount >= MAX_BONES_PER_VERTEX)
-				{
-					LOGW("Too many bones for vertex %d\n", weigth.mVertexId);
-					continue;
-				}
-
-				// Write to vertex
-				a.boneIds[a.bonesCount] = i;
-				a.weigths[a.bonesCount] = weigth.mWeigth;
-				++a.bonesCount;
+				exporter.rpath = argv[i] + std::string("/");
 			}
-
-			// Now write the file
+			else
+			{
+				goto error;
+			}
 		}
-#endif
-	}
-	else
-	{
-		uint32_t num = 0;
-		file.write((char*)&num, sizeof(uint32_t));
-	}
-}
-
-//==============================================================================
-static void exportSkeleton(const aiMesh& mesh)
-{
-	assert(mesh.HasBones());
-	std::string name = mesh.mName.C_Str();
-	std::fstream file;
-	LOGI("Exporting skeleton %s\n", name.c_str());
-
-	// Open file
-	file.open(config.outDir + name + ".skel", std::ios::out);
-	
-	file << xmlHeader << "\n";
-	file << "<skeleton>\n";
-	file << "\t<bones>\n";
-
-	bool rootBoneFound = false;
-
-	for(uint32_t i = 0; i < mesh.mNumBones; i++)
-	{
-		const aiBone& bone = *mesh.mBones[i];
-
-		file << "\t\t<bone>\n";
-
-		// <name>
-		file << "\t\t\t<name>" << bone.mName.C_Str() << "</name>\n";
-
-		if(strcmp(bone.mName.C_Str(), "root") == 0)
+		else if(strcmp(argv[i], "-flipyz") == 0)
 		{
-			rootBoneFound = true;
-		}
-
-		// <transform>
-		file << "\t\t\t<transform>";
-		for(uint32_t j = 0; j < 16; j++)
-		{
-			file << bone.mOffsetMatrix[j] << " ";
-		}
-		file << "</transform>\n";
-
-		file << "\t\t</bone>\n";
-	}
-
-	if(!rootBoneFound)
-	{
-		ERROR("There should be one bone named \"root\"\n");
-	}
-
-	file << "\t</bones>\n";
-	file << "</skeleton>\n";
-}
-
-//==============================================================================
-static std::string getMaterialName(const aiMaterial& mtl)
-{
-	aiString ainame;
-	std::string name;
-	if(mtl.Get(AI_MATKEY_NAME, ainame) == AI_SUCCESS)
-	{
-		name = ainame.C_Str();
-	}
-	else
-	{
-		ERROR("Material's name is missing\n");
-	}
-
-	return name;
-}
-
-//==============================================================================
-static void exportMaterial(
-	const aiScene& scene, 
-	const aiMaterial& mtl, 
-	bool instanced,
-	const std::string* name_)
-{
-	std::string diffTex;
-	std::string normTex;
-
-	std::string name;
-	if(name_)
-	{
-		name = *name_;
-	}
-	else
-	{
-		name = getMaterialName(mtl);
-	}
-	
-
-	LOGI("Exporting material %s\n", name.c_str());
-
-	// Diffuse texture
-	if(mtl.GetTextureCount(aiTextureType_DIFFUSE) < 1)
-	{
-		ERROR("Material has no diffuse textures\n");
-	}
-
-	aiString path;
-	if(mtl.GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS)
-	{
-		diffTex = getFilename(path.C_Str());
-	}
-	else
-	{
-		ERROR("Failed to retrieve texture\n");
-	}
-
-	// Normal texture
-	if(mtl.GetTextureCount(aiTextureType_NORMALS) > 0)
-	{	
-		if(mtl.GetTexture(aiTextureType_NORMALS, 0, &path) == AI_SUCCESS)
-		{
-			normTex = getFilename(path.C_Str());
+			exporter.flipyz = true;
 		}
 		else
 		{
-			ERROR("Failed to retrieve texture\n");
+			goto error;
 		}
 	}
 
-	// Write file
-	static const char* diffMtlStr = 
-#include "diffTemplateMtl.h"
-		;
-	static const char* diffNormMtlStr = 
-#include "diffNormTemplateMtl.h"
-		;
-
-	std::fstream file;
-	file.open(config.outDir + name + ".ankimtl", std::ios::out);
-
-	// Chose the correct template
-	std::string str;
-	if(normTex.size() == 0)
+	if(exporter.rpath.empty())
 	{
-		str = diffMtlStr;
-	}
-	else
-	{
-		str = replaceAllString(diffNormMtlStr, "%normalMap%", 
-			config.texpath + normTex);
+		exporter.rpath = exporter.outDir;
 	}
 
-	str = replaceAllString(str, "%instanced%", (instanced) ? "1" : "0");
-	str = replaceAllString(str, "%diffuseMap%", config.texpath + diffTex);
-
-	file << str;
-}
-
-//==============================================================================
-static void exportLight(
-	const aiLight& light, 
-	std::fstream& file)
-{
-	if(light.mType != aiLightSource_POINT || light.mType != aiLightSource_SPOT)
+	if(exporter.texrpath.empty())
 	{
-		LOGW("Skipping light %s. Unsupported type\n", light.mName.C_Str());
-		return;
+		exporter.texrpath = exporter.outDir;
 	}
 
-	file << "\t<light>\n";
+	return;
 
-	file << "\t\t<name>" << light.mName.C_Str() << "</name>\n";
-
-	file << "\t\t<diffuseColor>" 
-		<< light.mColorDiffuse[0] << " " 
-		<< light.mColorDiffuse[1] << " " 
-		<< light.mColorDiffuse[2] << " " 
-		<< light.mColorDiffuse[3]
-		<< "</diffuseColor>\n";
-
-	file << "\t\t<specularColor>" 
-		<< light.mColorSpecular[0] << " " 
-		<< light.mColorSpecular[1] << " " 
-		<< light.mColorSpecular[2] << " " 
-		<< light.mColorSpecular[3]
-		<< "</specularColor>\n";
-
-	aiMatrix4x4 trf;
-	aiMatrix4x4::Translation(light.mPosition, trf);
-
-	switch(light.mType)
-	{
-	case aiLightSource_POINT:
-		{
-			file << "\t\t<type>point</type>\n";
-
-			// At this point I want the radius and have the attenuation factors
-			// att = Ac + Al*d + Aq*d^2. When d = r then att = 0.0. Also if we 
-			// assume that Ac is 0 then:
-			// 0 = Al*r + Aq*r^2. Solving by r is easy
-			float r = -light.mAttenuationLinear / light.mAttenuationQuadratic;
-			file << "\t\t<radius>" << r << "</radius>\n";
-			break;
-		}
-	case aiLightSource_SPOT:
-		file << "\t\t<type>spot</type>\n";
-		break;
-	default:
-		assert(0);
-		break;
-	}
-
-	// <transform>
-	file << "\t\t<transform>";
-	for(uint32_t i = 0; i < 16; i++)
-	{
-		file << trf[i] << " ";
-	}
-	file << "</transform>\n";
-
-	file << "\t</light>\n";
+error:
+	printf(usage, argv[0]);
+	exit(1);
 }
 
 //==============================================================================
@@ -665,112 +159,6 @@ static void exportModel(
 
 	file << "\t</modelPatches>\n";
 	file << "</model>\n";
-}
-
-//==============================================================================
-static void exportAnimation(
-	const aiAnimation& anim, 
-	uint32_t index, 
-	const aiScene& scene)
-{
-	// Get name
-	std::string name = anim.mName.C_Str();
-	if(name.size() == 0)
-	{
-		name = std::string("animation_") + std::to_string(index);
-	}
-
-	// Find if it's skeleton animation
-	/*bool isSkeletalAnimation = false;
-	for(uint32_t i = 0; i < scene.mNumMeshes; i++)
-	{
-		const aiMesh& mesh = *scene.mMeshes[i];
-		if(mesh.HasBones())
-		{
-
-		}
-	}*/
-
-	std::fstream file;
-	LOGI("Exporting animation %s\n", name.c_str());
-
-	file.open(config.outDir + name + ".ankianim", std::ios::out);
-
-	file << xmlHeader << "\n";
-	file << "<animation>\n";
-
-	file << "\t<duration>" << anim.mDuration << "</duration>\n";
-
-	file << "\t<channels>\n";
-
-	for(uint32_t i = 0; i < anim.mNumChannels; i++)
-	{
-		const aiNodeAnim& nAnim = *anim.mChannels[i];
-
-		file << "\t\t<channel>\n";
-		
-		// Name
-		file << "\t\t\t<name>" << nAnim.mNodeName.C_Str() << "</name>\n";
-
-		// Positions
-		file << "\t\t\t<positionKeys>\n";
-		for(uint32_t j = 0; j < nAnim.mNumPositionKeys; j++)
-		{
-			const aiVectorKey& key = nAnim.mPositionKeys[j];
-
-			if(config.flipyz)
-			{
-				file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-					<< "<value>" << key.mValue[0] << " " 
-					<< key.mValue[2] << " " << -key.mValue[1] 
-					<< "</value></key>\n";
-			}
-			else
-			{
-				file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-					<< "<value>" << key.mValue[0] << " " 
-					<< key.mValue[1] << " " << key.mValue[2] 
-					<< "</value></key>\n";
-			}
-		}
-		file << "\t\t\t</positionKeys>\n";
-
-		// Rotations
-		file << "\t\t\t<rotationKeys>\n";
-		for(uint32_t j = 0; j < nAnim.mNumRotationKeys; j++)
-		{
-			const aiQuatKey& key = nAnim.mRotationKeys[j];
-
-			aiMatrix3x3 mat = toAnkiMatrix(key.mValue.GetMatrix());
-			aiQuaternion quat(mat);
-			//aiQuaternion quat(key.mValue);
-
-			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-				<< "<value>" << quat.x << " " << quat.y 
-				<< " " << quat.z << " "
-				<< quat.w << "</value></key>\n";
-		}
-		file << "\t\t\t</rotationKeys>\n";
-
-		// Scale
-		file << "\t\t\t<scalingKeys>\n";
-		for(uint32_t j = 0; j < nAnim.mNumScalingKeys; j++)
-		{
-			const aiVectorKey& key = nAnim.mScalingKeys[j];
-
-			// Note: only uniform scale
-			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-				<< "<value>" 
-				<< ((key.mValue[0] + key.mValue[1] + key.mValue[2]) / 3.0)
-				<< "</value></key>\n";
-		}
-		file << "\t\t\t</scalingKeys>\n";
-
-		file << "\t\t</channel>\n";
-	}
-
-	file << "\t</channels>\n";
-	file << "</animation>\n";
 }
 
 //==============================================================================
@@ -1041,14 +429,15 @@ int main(int argc, char** argv)
 {
 	try
 	{
-		parseConfig(argc, argv);
+		Exporter exporter;
 
-		// Load
-		Assimp::Importer importer;
-		const aiScene& scene = load(config.inputFname, importer);
+		parseCommandLineArgs(argc, argv, exporter);
+
+		// Load file
+		load(exporter.inputFname, exporter);
 
 		// Export
-		exportScene(scene);
+		exportScene(exporter);
 	}
 	catch(std::exception& e)
 	{

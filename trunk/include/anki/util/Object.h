@@ -35,7 +35,7 @@ struct ObjectCallbackCollection
 };
 
 /// A hierarchical object
-template<typename T, typename Alloc = Allocator<T>,
+template<typename T, typename Alloc = HeapAllocator<T>,
 	typename TCallbackCollection = ObjectCallbackCollection<T>>
 class Object: public NonCopyable
 {

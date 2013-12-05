@@ -19,10 +19,10 @@ namespace anki {
 namespace detail {
 
 //==============================================================================
-PtrSize AllocatorInternal::allocatedSize = 0;
+PtrSize HeapAllocatorInternal::allocatedSize = 0;
 
 //==============================================================================
-void AllocatorInternal::dump()
+void HeapAllocatorInternal::dump()
 {
 #if ANKI_DEBUG_ALLOCATORS
 	if(allocatedSize > 0)

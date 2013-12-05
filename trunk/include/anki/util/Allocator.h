@@ -25,7 +25,7 @@ namespace anki {
 namespace detail {
 
 /// Internal methods for the Allocator class
-class AllocatorInternal
+class HeapAllocatorInternal
 {
 public:
 	/// Print a few debugging messages
@@ -41,7 +41,7 @@ protected:
 /// The default allocator. It uses malloc and free for 
 /// allocations/deallocations. It's STL compatible
 template<typename T>
-class Allocator: public detail::AllocatorInternal
+class HeapAllocator: public detail::HeapAllocatorInternal
 {
 public:
 	// STL Typedefs
@@ -54,28 +54,28 @@ public:
 	typedef T value_type;
 
 	/// Default constructor
-	Allocator() throw()
+	HeapAllocator() throw()
 	{}
 	/// Copy constructor
-	Allocator(const Allocator&) throw()
+	HeapAllocator(const HeapAllocator&) throw()
 	{}
 	/// Copy constructor with another type
 	template<typename U>
-	Allocator(const Allocator<U>&) throw()
+	HeapAllocator(const HeapAllocator<U>&) throw()
 	{}
 
 	/// Destructor
-	~Allocator()
+	~HeapAllocator()
 	{}
 
 	/// Copy
-	Allocator<T>& operator=(const Allocator&)
+	HeapAllocator<T>& operator=(const HeapAllocator&)
 	{
 		return *this;
 	}
 	/// Copy with another type
 	template<typename U>
-	Allocator& operator=(const Allocator<U>&) 
+	HeapAllocator& operator=(const HeapAllocator<U>&) 
 	{
 		return *this;
 	}
@@ -144,7 +144,7 @@ public:
 	template<typename U>
 	struct rebind
 	{ 
-		typedef Allocator<U> other; 
+		typedef HeapAllocator<U> other; 
 	};
 
 	/// Allocate a new object and call it's constructor
@@ -204,28 +204,28 @@ public:
 
 /// Another allocator of the same type can deallocate from this one
 template<typename T1, typename T2>
-inline bool operator==(const Allocator<T1>&, const Allocator<T2>&)
+inline bool operator==(const HeapAllocator<T1>&, const HeapAllocator<T2>&)
 {
 	return true;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
 template<typename T1, typename AnotherAllocator>
-inline bool operator==(const Allocator<T1>&, const AnotherAllocator&)
+inline bool operator==(const HeapAllocator<T1>&, const AnotherAllocator&)
 {
 	return false;
 }
 
 /// Another allocator of the same type can deallocate from this one
 template<typename T1, typename T2>
-inline bool operator!=(const Allocator<T1>&, const Allocator<T2>&)
+inline bool operator!=(const HeapAllocator<T1>&, const HeapAllocator<T2>&)
 {
 	return false;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
 template<typename T1, typename AnotherAllocator>
-inline bool operator!=(const Allocator<T1>&, const AnotherAllocator&)
+inline bool operator!=(const HeapAllocator<T1>&, const AnotherAllocator&)
 {
 	return true;
 }

@@ -12,7 +12,7 @@ namespace anki {
 /// @addtogroup containers
 /// @{
 
-template<typename T, typename Alloc = Allocator<T>>
+template<typename T, typename Alloc = HeapAllocator<T>>
 using Vector = std::vector<T, Alloc>;
 
 /// @}

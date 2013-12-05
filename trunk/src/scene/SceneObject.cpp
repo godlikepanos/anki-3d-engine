@@ -14,7 +14,9 @@ SceneObject::SceneObject(Type type, SceneObject* parent, SceneGraph* scene_)
 
 //==============================================================================
 SceneObject::~SceneObject()
-{}
+{
+	scene->decreaseObjectsMarkedForDeletion();
+}
 
 //==============================================================================
 SceneAllocator<U8> SceneObject::getSceneAllocator() const
@@ -33,7 +35,13 @@ SceneAllocator<U8> SceneObject::getSceneFrameAllocator() const
 //==============================================================================
 void SceneObject::markForDeletion()
 {
-	flags |= MARKED_FOR_DELETION;
+	// Mark for deletion only when it's not already marked because we don't 
+	// want to increase the counter again
+	if(!isMarkedForDeletion())
+	{
+		flags |= MARKED_FOR_DELETION;
+		scene->increaseObjectsMarkedForDeletion();
+	}
 
 	visitChildren([](SceneObject& obj)
 	{

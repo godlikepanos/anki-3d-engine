@@ -69,6 +69,9 @@ public:
 	/// Update
 	void updateAllEvents(F32 prevUpdateTime, F32 crntTime);
 
+	/// Delete events that pending deletion
+	void deleteEventsMarkedForDeletion();
+
 private:
 	SceneGraph* scene = nullptr;
 	EventsContainer events;
