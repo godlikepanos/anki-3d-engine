@@ -45,6 +45,8 @@ public:
 
 	SceneObject(Type type, SceneObject* parent, SceneGraph* scene);
 
+	virtual ~SceneObject();
+
 	/// @name Accessors
 	/// @{
 	Type getType() const
@@ -57,6 +59,10 @@ public:
 	SceneAllocator<U8> getSceneFrameAllocator() const;
 
 	SceneGraph& getSceneGraph()
+	{
+		return *scene;
+	}
+	const SceneGraph& getSceneGraph() const
 	{
 		return *scene;
 	}
@@ -112,7 +118,7 @@ public:
 	const ScObj& downCast() const
 	{
 		ANKI_ASSERT(ScObj::getClassType() == getType());
-		ScObj* out = staticCastPtr<ScObj*>(this);
+		const ScObj* out = staticCastPtr<const ScObj*>(this);
 		return *out;
 	}
 

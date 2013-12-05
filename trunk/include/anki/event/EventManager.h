@@ -26,11 +26,11 @@ public:
 
 	/// @name Accessors
 	/// @{
-	SceneGraph& getScene()
+	SceneGraph& getSceneGraph()
 	{
 		return *scene;
 	}
-	const SceneGraph& getScene() const
+	const SceneGraph& getSceneGraph() const
 	{
 		return *scene;
 	}

@@ -13,6 +13,10 @@ SceneObject::SceneObject(Type type, SceneObject* parent, SceneGraph* scene_)
 }
 
 //==============================================================================
+SceneObject::~SceneObject()
+{}
+
+//==============================================================================
 SceneAllocator<U8> SceneObject::getSceneAllocator() const
 {
 	ANKI_ASSERT(scene);

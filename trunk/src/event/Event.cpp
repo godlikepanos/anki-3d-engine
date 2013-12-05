@@ -1,35 +1,57 @@
 #include "anki/event/Event.h"
 #include "anki/event/EventManager.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/util/Assert.h"
 
 namespace anki {
 
 //==============================================================================
-Event::Event(EventManager* manager_, F32 startTime_, F32 duration_, 
-	SceneNode* snode_, U8 flags)
-	:	Bitset<U8>(flags), 
+Event::Event(EventManager* manager, F32 startTime_, F32 duration_, 
+	SceneNode* node, U8 flags)
+	:	SceneObject(EVENT_TYPE, node, &manager->getSceneGraph()),
+		Bitset<U8>(flags), 
 		startTime(startTime_),
-		duration(duration_),
-		manager(manager_),
-		node(snode_)
-{
-	ANKI_ASSERT(manager);
-}
+		duration(duration_)
+{}
 
 //==============================================================================
 Event::~Event()
 {}
 
 //==============================================================================
-SceneAllocator<U8> Event::getSceneAllocator() const
+EventManager& Event::getEventManager()
 {
-	return manager->getSceneAllocator();
+	return getSceneGraph().getEventManager();
 }
 
 //==============================================================================
-SceneAllocator<U8> Event::getSceneFrameAllocator() const
+const EventManager& Event::getEventManager() const
 {
-	return manager->getSceneFrameAllocator();
+	return getSceneGraph().getEventManager();
+}
+
+//==============================================================================
+SceneNode* Event::getSceneNode()
+{
+	SceneObject* parent = getParent();
+	if(parent)
+	{
+		return &parent->downCast<SceneNode>();
+	}
+
+	return nullptr;
+}
+
+//==============================================================================
+const SceneNode* Event::getSceneNode() const
+{
+	const SceneObject* parent = getParent();
+	if(parent)
+	{
+		return &parent->downCast<SceneNode>();
+	}
+
+	return nullptr;
 }
 
 //==============================================================================
