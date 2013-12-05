@@ -164,7 +164,7 @@ void init()
 	scene.newSceneNode(spot, "spot0");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
-	spot->setLocalTransform(Transform(Vec3(-1.434199, 5.474161, -10.774253),
+	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
 		Mat3(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
 	spot->setDiffuseColor(Vec4(2.0));
 	spot->setSpecularColor(Vec4(-1.0));

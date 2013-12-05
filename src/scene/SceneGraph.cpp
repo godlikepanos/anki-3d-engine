@@ -81,6 +81,8 @@ SceneGraph::SceneGraph()
 {
 	nodes.reserve(ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT);
 
+	objectsMarkedForDeletionCount.store(0);
+
 	ambientCol = Vec3(0.0);
 }
 
@@ -152,11 +154,13 @@ SceneNode* SceneGraph::tryFindSceneNode(const char* name)
 //==============================================================================
 void SceneGraph::deleteNodesMarkedForDeletion()
 {
+	SceneAllocator<SceneNode> al = alloc;
+
 	/// Delete all nodes pending deletion. At this point all scene threads 
 	/// should have finished their tasks
-	while(nodesMarkedForDeletionCount > 0)
+	while(objectsMarkedForDeletionCount > 0)
 	{
-		// First gather the nodes that will be de
+		// First gather the nodes that will be deleted
 		SceneFrameVector<decltype(nodes)::iterator> forDeletion;
 		for(auto it = nodes.begin(); it != nodes.end(); it++)
 		{
@@ -166,27 +170,17 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 			}
 		}
 
-		// Now delete
+		// Now delete nodes
 		for(auto& it : forDeletion)
 		{
-			// Disable events for that node
-			events.iterateEvents([&](Event& e)
-			{
-				if(e.getSceneNode() == *it)
-				{
-					e.markForDeletion();
-				}
-			});
-
 			// Remove it
 			unregisterNode(*it);
 
-			SceneAllocator<SceneNode> al = alloc;
-			alloc.destroy(*it);
-			alloc.deallocate(*it, 1);
-
-			++nodesMarkedForDeletionCount;
+			alloc.deleteInstance(*it);
 		}
+
+		// Do the same for events
+		events.deleteEventsMarkedForDeletion();
 	}
 }
 

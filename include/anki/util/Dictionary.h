@@ -38,7 +38,7 @@ struct DictionaryEqual
 /// The hash map that has as key an old school C string. When inserting the
 /// char MUST NOT point to a temporary or the evaluation function will fail.
 /// Its template struct because C++ does not offer template typedefs
-template<typename T, typename Alloc = Allocator<std::pair<const char*, T>>>
+template<typename T, typename Alloc = HeapAllocator<std::pair<const char*, T>>>
 using Dictionary = 
 	std::unordered_map<
 		const char*,

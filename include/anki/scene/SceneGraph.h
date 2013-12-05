@@ -158,7 +158,14 @@ public:
 	void deleteSceneNode(SceneNode* node)
 	{
 		node->markForDeletion();
-		++nodesMarkedForDeletionCount;
+	}
+	void increaseObjectsMarkedForDeletion()
+	{
+		++objectsMarkedForDeletionCount;
+	}
+	void decreaseObjectsMarkedForDeletion()
+	{
+		++objectsMarkedForDeletionCount;
 	}
 
 private:
@@ -179,7 +186,7 @@ private:
 
 	EventManager events;
 
-	U32 nodesMarkedForDeletionCount = 0;
+	std::atomic<U32> objectsMarkedForDeletionCount;
 
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);

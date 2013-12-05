@@ -40,7 +40,7 @@ Exception::Exception(const char* file, I line, const char* func,
 		len = vsnprintf(&largeStr[0], largeStr.size(), fmt, args);
 		va_end(args);
 
-		ANKI_ASSERT(len < largeStr.size());
+		ANKI_ASSERT(len < (I)largeStr.size());
 	}
 
 	err = synthErr(out, file, line, func);

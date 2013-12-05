@@ -56,10 +56,6 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 	prevUpdateTime = prevUpdateTime_;
 	crntTime = crntTime_;
 
-	// Container to gather dead events
-	SceneFrameVector<EventsContainer::iterator> 
-		forDeletion(getSceneFrameAllocator());
-
 	EventsContainer::iterator it = events.begin();
 	for(; it != events.end(); it++)
 	{
@@ -71,7 +67,7 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 			|| (pevent->getSceneNode() != nullptr 
 				&& pevent->getSceneNode()->isMarkedForDeletion()))
 		{
-			forDeletion.push_back(it);
+			pevent->markForDeletion();
 			continue;
 		}
 
@@ -81,9 +77,11 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 			pevent->startTime = crntTime;
 		}
 
-		// If not dead update it
+		// Check if dead
 		if(!pevent->isDead(crntTime))
 		{
+			// If not dead update it
+
 			if(pevent->getStartTime() <= crntTime)
 			{
 				pevent->update(prevUpdateTime, crntTime);
@@ -91,6 +89,8 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 		}
 		else
 		{
+			// Dead
+
 			if(pevent->bitsEnabled(Event::EF_REANIMATE))
 			{
 				pevent->startTime = prevUpdateTime;
@@ -100,16 +100,38 @@ void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
 			{
 				if(pevent->onKilled(prevUpdateTime, crntTime))
 				{
-					forDeletion.push_back(it);
+					pevent->markForDeletion();
 				}
 			}
 		}
 	}
+}
 
-	// Kick the dead events out
-	for(EventsContainer::iterator& it : forDeletion)
+//==============================================================================
+void EventManager::deleteEventsMarkedForDeletion()
+{
+	SceneAllocator<Event> al = getSceneAllocator();
+
+	// Gather events for deletion
+	SceneFrameVector<EventsContainer::iterator> 
+		forDeletion(getSceneFrameAllocator());
+
+	for(EventsContainer::iterator it = events.begin(); it != events.end(); ++it)
 	{
-		events.erase(it);
+		Event* event = *it;
+		if(event->isMarkedForDeletion())
+		{
+			forDeletion.push_back(it);
+		}
+	}
+
+	// Delete events
+	for(auto it : forDeletion)
+	{
+		Event* event = *it;
+
+		unregisterEvent(event);
+		al.deleteInstance(event);
 	}
 }
 
