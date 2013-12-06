@@ -64,7 +64,7 @@ private:
 
 	Array<Vertex, MAX_POINTS_PER_DRAW> clientVerts;
 
-	Vbo vbo;
+	BufferObject vbo;
 	Vao vao;
 
 	/// This is a container of some precalculated spheres. Its a map that

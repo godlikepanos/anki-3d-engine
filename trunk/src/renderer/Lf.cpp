@@ -98,7 +98,7 @@ void Lf::initInternal(const RendererInitializer& initializer)
 	}
 
 	// Init UBO
-	flareDataUbo.create(blockSize, nullptr);
+	flareDataUbo.create(GL_UNIFORM_BUFFER, blockSize, nullptr, GL_DYNAMIC_DRAW);
 
 	// Create the FAI
 	fai.create2dFai(r->getPps().getHdr().getFai().getWidth(), 

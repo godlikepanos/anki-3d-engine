@@ -85,7 +85,7 @@ public:
 
 	/// Get info on how to attach a VBO to a VAO
 	void getVboInfo(
-		const VertexAttribute attrib, const Vbo*& vbo,
+		const VertexAttribute attrib, const BufferObject*& vbo,
 		U32& size, GLenum& type, U32& stride, U32& offset) const;
 
 	/// Helper function for correct loading
@@ -110,8 +110,8 @@ protected:
 	U8 texChannelsCount;
 	Bool8 weights;
 
-	Vbo vbo;
-	Vbo indicesVbo;
+	BufferObject vbo;
+	BufferObject indicesVbo;
 
 	/// Create the VBOs using the mesh data
 	void createVbos(const MeshLoader& loader);

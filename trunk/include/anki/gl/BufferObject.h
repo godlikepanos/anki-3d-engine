@@ -89,7 +89,7 @@ public:
 	///		   GL_DYNAMIC_DRAW only!!!!!!!!!
 	/// @param objectCount The number of objects
 	void create(GLenum target, U32 sizeInBytes, const void* dataPtr,
-		GLenum usage, U objectCount = SINGLE_OBJECT);
+		GLenum usage);
 
 	/// Delete the BO
 	void destroy();
@@ -161,58 +161,6 @@ private:
 #if ANKI_DEBUG
 	Bool mapped = false; ///< Only in debug
 #endif
-};
-
-/// This is a wrapper for Vertex Buffer Objects to prevent us from making
-/// idiotic errors
-class Vbo: public BufferObject
-{
-public:
-	/// The same as BufferObject::create but it only accepts
-	/// GL_ARRAY_BUFFER or GL_ELEMENT_ARRAY_BUFFER in target
-	/// @see BufferObject::create
-	void create(GLenum target, PtrSize sizeInBytes, const void* dataPtr,
-		GLenum usage, U objectCount = SINGLE_OBJECT)
-	{
-		// unacceptable target_
-		ANKI_ASSERT(target == GL_ARRAY_BUFFER
-			|| target == GL_ELEMENT_ARRAY_BUFFER);
-		BufferObject::create(target, sizeInBytes, dataPtr, usage, objectCount);
-	}
-
-	/// Unbinds all VBOs, meaning both GL_ARRAY_BUFFER and
-	/// GL_ELEMENT_ARRAY_BUFFER targets
-	static void unbindAllTargets()
-	{
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	}
-};
-
-/// Uniform buffer object
-class Ubo: public BufferObject
-{
-public:
-	/// Create a UBO
-	void create(PtrSize size, const void* data, U objectCount = SINGLE_OBJECT);
-};
-
-/// Pixel buffer object
-class Pbo: public BufferObject
-{
-public:
-	/// Create a PBO
-	void create(GLenum target, PtrSize size, const void* data, 
-		U objectCount = SINGLE_OBJECT)
-	{
-		ANKI_ASSERT(target == GL_PIXEL_PACK_BUFFER 
-			|| target == GL_PIXEL_UNPACK_BUFFER);
-
-		GLenum pboUsage = (target == GL_PIXEL_PACK_BUFFER) 
-			? GL_DYNAMIC_READ : GL_DYNAMIC_DRAW;
-
-		BufferObject::create(target, size, data, pboUsage, objectCount);
-	}
 };
 
 /// @}

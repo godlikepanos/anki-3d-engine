@@ -25,7 +25,8 @@ void Vao::destroy()
 }
 
 //==============================================================================
-void Vao::attachArrayBufferVbo(const Vbo* vbo, const GLint attribVarLocation,
+void Vao::attachArrayBufferVbo(const BufferObject* vbo, 
+	const GLint attribVarLocation,
 	const PtrSize size, const GLenum type, const Bool normalized, 
 	const PtrSize stride, const PtrSize offset)
 {
@@ -49,7 +50,7 @@ void Vao::attachArrayBufferVbo(const Vbo* vbo, const GLint attribVarLocation,
 }
 
 //==============================================================================
-void Vao::attachArrayBufferVbo(const Vbo* vbo,
+void Vao::attachArrayBufferVbo(const BufferObject* vbo,
 	const ShaderProgramAttributeVariable& attribVar,
 	const PtrSize size, const GLenum type, const Bool normalized, 
 	const PtrSize stride, const PtrSize offset)
@@ -59,7 +60,7 @@ void Vao::attachArrayBufferVbo(const Vbo* vbo,
 }
 
 //==============================================================================
-void Vao::attachElementArrayBufferVbo(const Vbo* vbo)
+void Vao::attachElementArrayBufferVbo(const BufferObject* vbo)
 {
 	ANKI_ASSERT(isCreated());
 	checkNonSharable();
