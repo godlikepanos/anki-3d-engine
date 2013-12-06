@@ -524,9 +524,11 @@ void Is::initInternal(const RendererInitializer& initializer)
 
 	uboAlignment = BufferObject::getUniformBufferOffsetAlignment();
 
-	commonUbo.create(sizeof(shader::CommonUniforms), nullptr);
+	commonUbo.create(GL_UNIFORM_BUFFER, sizeof(shader::CommonUniforms), 
+		nullptr, GL_DYNAMIC_DRAW);
 
-	lightsUbo.create(calcLightsUboSize(), nullptr);
+	lightsUbo.create(GL_UNIFORM_BUFFER, calcLightsUboSize(), nullptr,
+		GL_DYNAMIC_DRAW);
 
 	tilesBuffer.create(
 		GL_UNIFORM_BUFFER, 

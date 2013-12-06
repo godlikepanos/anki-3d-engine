@@ -64,7 +64,7 @@ private:
 	Fbo fbo;
 
 	/// PBO buffer that is used to read the data of fai asynchronously
-	Pbo pbo;
+	BufferObject pbo;
 
 	/// Main shader program
 	ShaderProgramResourcePointer prog;

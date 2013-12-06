@@ -243,7 +243,7 @@ void Tiler::initInternal(Renderer* r_)
 	// Create PBO
 	pbo.create(GL_PIXEL_PACK_BUFFER, 
 		r->getTilesCount().x() * r->getTilesCount().y() * 2 * sizeof(F32), 
-		nullptr);
+		nullptr, GL_DYNAMIC_READ);
 
 	// Init planes
 	U planesCount = 

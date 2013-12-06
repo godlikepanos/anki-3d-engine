@@ -150,7 +150,8 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	//
 	// Shaders
 	//
-	commonUbo.create(sizeof(ShaderCommonUniforms), nullptr);
+	commonUbo.create(GL_UNIFORM_BUFFER, sizeof(ShaderCommonUniforms), nullptr,
+		GL_DYNAMIC_DRAW);
 
 	std::stringstream pps;
 

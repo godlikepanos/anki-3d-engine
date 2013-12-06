@@ -49,7 +49,7 @@ private:
 	ShaderProgramResourcePointer hblurSProg;
 	ShaderProgramResourcePointer vblurSProg;
 	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
-	Ubo commonUbo;
+	BufferObject commonUbo;
 
 	static void createFbo(Fbo& fbo, Texture& fai, U width, U height);
 	void initInternal(const RendererInitializer& initializer);

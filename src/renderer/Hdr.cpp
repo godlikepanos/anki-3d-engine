@@ -49,7 +49,7 @@ void Hdr::initInternal(const RendererInitializer& initializer)
 
 	// init shaders
 	Vec4 block(exposure, 0.0, 0.0, 0.0);
-	commonUbo.create(sizeof(Vec4), &block);
+	commonUbo.create(GL_UNIFORM_BUFFER, sizeof(Vec4), &block, GL_DYNAMIC_DRAW);
 
 	toneSProg.load("shaders/PpsHdr.glsl");
 	toneSProg->findUniformBlock("commonBlock").setBinding(0);

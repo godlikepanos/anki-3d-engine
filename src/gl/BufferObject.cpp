@@ -39,15 +39,14 @@ void BufferObject::destroy()
 	if(isCreated())
 	{
 		unbind();
-		glDeleteBuffers(objectsCount, &glIds[0]);
-		memset(&glIds[0], 0, sizeof(glIds));
-		objectsCount = 1;
+		glDeleteBuffers(1, &glId);
+		glId = 0;
 	}
 }
 
 //==============================================================================
 void BufferObject::create(GLenum target_, U32 sizeInBytes_,
-	const void* dataPtr, GLenum usage_, U objectsCount_)
+	const void* dataPtr, GLenum usage_)
 {
 	ANKI_ASSERT(!isCreated());
 
@@ -70,31 +69,24 @@ void BufferObject::create(GLenum target_, U32 sizeInBytes_,
 	usage = usage_;
 	target = target_;
 	sizeInBytes = sizeInBytes_;
-	objectsCount = objectsCount_;
 
 	ANKI_ASSERT(sizeInBytes > 0 && "Unacceptable sizeInBytes");
 	ANKI_ASSERT(!(target == GL_UNIFORM_BUFFER && usage != GL_DYNAMIC_DRAW)
 		&& "Don't use UBOs like that");
-	ANKI_ASSERT(objectsCount > 0 && objectsCount < MAX_OBJECTS);
-	ANKI_ASSERT(!(objectsCount > 1 && dataPtr != nullptr)
-		&& "Multibuffering with data is not making sence");
 
 	// Create
-	glGenBuffers(objectsCount, &glIds[0]);
+	glGenBuffers(1, &glId);
 
-	for(U i = 0; i < objectsCount; i++)
+	glBindBuffer(target, glId);
+	glBufferData(target, sizeInBytes, dataPtr, usage);
+
+	// make a check
+	GLint bufferSize = 0;
+	glGetBufferParameteriv(target, GL_BUFFER_SIZE, &bufferSize);
+	if(sizeInBytes != (U32)bufferSize)
 	{
-		glBindBuffer(target, glIds[i]);
-		glBufferData(target, sizeInBytes, dataPtr, usage);
-
-		// make a check
-		GLint bufferSize = 0;
-		glGetBufferParameteriv(target, GL_BUFFER_SIZE, &bufferSize);
-		if(sizeInBytes != (U32)bufferSize)
-		{
-			destroy();
-			throw ANKI_EXCEPTION("Data size mismatch");
-		}
+		destroy();
+		throw ANKI_EXCEPTION("Data size mismatch");
 	}
 
 	glBindBuffer(target, 0);
@@ -192,17 +184,6 @@ void BufferObject::setBindingRange(
 
 	glBindBufferRange(target, binding, getGlId(), offset, size);
 	ANKI_CHECK_GL_ERROR();
-}
-
-//==============================================================================
-// Ubo                                                                         =
-//==============================================================================
-
-//==============================================================================
-void Ubo::create(PtrSize size, const void* data, U objectCount)
-{
-	BufferObject::create(GL_UNIFORM_BUFFER, size, data, GL_DYNAMIC_DRAW,
-		objectCount);
 }
 
 } // end namespace anki

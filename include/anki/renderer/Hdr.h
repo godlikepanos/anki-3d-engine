@@ -69,7 +69,7 @@ private:
 	Timestamp parameterUpdateTimestamp = getGlobTimestamp();
 	/// When the commonUbo got updated
 	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
-	Ubo commonUbo;
+	BufferObject commonUbo;
 
 	void initFbo(Fbo& fbo, Texture& fai);
 	void initInternal(const RendererInitializer& initializer);

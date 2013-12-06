@@ -7,7 +7,7 @@
 namespace anki {
 
 class ShaderProgramAttributeVariable;
-class Vbo;
+class BufferObject;
 
 /// @addtogroup OpenGL
 /// @{
@@ -81,7 +81,7 @@ public:
 	/// @param offset Specifies a offset of the first component of the
 	///        first generic vertex attribute in the array
 	void attachArrayBufferVbo(
-	    const Vbo* vbo,
+	    const BufferObject* vbo,
 	    const ShaderProgramAttributeVariable& attribVar,
 	    const PtrSize size,
 	    const GLenum type,
@@ -104,7 +104,7 @@ public:
 	/// @param pointer Specifies a offset of the first component of the
 	///        first generic vertex attribute in the array
 	void attachArrayBufferVbo(
-	    const Vbo* vbo,
+	    const BufferObject* vbo,
 	    const GLint attribVarLocation,
 	    const PtrSize size,
 	    const GLenum type,
@@ -119,7 +119,7 @@ public:
 	}
 
 	/// Attach an element array buffer VBO
-	void attachElementArrayBufferVbo(const Vbo* vbo);
+	void attachElementArrayBufferVbo(const BufferObject* vbo);
 
 	/// Bind it
 	void bind() const
