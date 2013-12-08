@@ -107,7 +107,26 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 	__android_log_print(andMsgType, "AnKi", "(%s:%d %s) %s", info.file,
 		info.line, info.func, info.msg);
 #else
-	std::cout << "(" << info.file << ":" << info.line << " "
+	std::ostream* out = NULL;
+	const char* x = NULL;
+
+	switch(info.type)
+	{
+	case Logger::LMT_NORMAL:
+		out = &std::cout;
+		x = "Info";
+		break;
+	case Logger::LMT_ERROR:
+		out = &std::cerr;
+		x = "Error";
+		break;
+	case Logger::LMT_WARNING:
+		out = &std::cerr;
+		x = "Warn";
+		break;
+	}
+
+	(*out) << "(" << info.file << ":" << info.line << " "
 		<< info.func << ") " << x << ": " << info.msg << std::endl;
 #endif
 }

@@ -262,13 +262,4 @@ void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 	limitsOfNearPlane.x() = tan(0.5 * pcam.getFovX());
 }
 
-//==============================================================================
-void Renderer::clearAfterBindingFbo(const GLenum cap)
-{
-	if(GlStateCommonSingleton::get().getGpu() == GlStateCommon::GPU_ARM)
-	{
-		glClear(cap);
-	}
-}
-
 } // end namespace anki

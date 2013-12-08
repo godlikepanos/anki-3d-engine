@@ -34,12 +34,7 @@ void Pps::initInternal(const RendererInitializer& initializer)
 	fai.create2dFai(r->getWidth(), r->getHeight(), GL_RGB8, GL_RGB,
 		GL_UNSIGNED_BYTE);
 
-	fbo.create();
-	fbo.setColorAttachments({&fai});
-	if(!fbo.isComplete())
-	{
-		throw ANKI_EXCEPTION("Fbo not complete");
-	}
+	fbo.create({{&fai, GL_COLOR_ATTACHMENT0}});
 
 	// SProg
 	std::string pps = "";
@@ -118,13 +113,13 @@ void Pps::run()
 
 	if(drawToDefaultFbo)
 	{
-		Fbo::bindDefault(Fbo::FT_ALL, true);
+		Fbo::bindDefault(true);
 		GlStateSingleton::get().setViewport(
 			0, 0, r->getWindowWidth(), r->getWindowHeight());
 	}
 	else
 	{
-		fbo.bind(Fbo::FT_ALL, true);
+		fbo.bind(true);
 		GlStateSingleton::get().setViewport(
 			0, 0, r->getWidth(), r->getHeight());
 	}

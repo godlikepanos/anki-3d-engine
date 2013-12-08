@@ -7,6 +7,11 @@
 #include <dirent.h>
 #include <cerrno>
 
+// Define PATH_MAX if needed
+#ifndef PATH_MAX
+#	define PATH_MAX 4096
+#endif
+
 namespace anki {
 
 //==============================================================================
@@ -54,18 +59,18 @@ void removeDirectory(const char* dirname)
 	struct dirent* entry;
 	char path[PATH_MAX];
 
-	if(path == NULL) 
+	if(path == nullptr) 
 	{
 		throw ANKI_EXCEPTION("Out of memory error");
 	}
 
 	dir = opendir(dirname);
-	if(dir == NULL) 
+	if(dir == nullptr) 
 	{
 		throw ANKI_EXCEPTION("opendir() failed");
 	}
 
-	while((entry = readdir(dir)) != NULL) 
+	while((entry = readdir(dir)) != nullptr) 
 	{
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) 
 		{

@@ -68,14 +68,7 @@ void Ssao::createFbo(Fbo& fbo, Texture& fai, U width, U height)
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	fai.setFiltering(Texture::TFT_LINEAR);
-
-	fbo.create();
-	fbo.setColorAttachments({&fai});
-
-	if(!fbo.isComplete())
-	{
-		throw ANKI_EXCEPTION("Fbo not complete");
-	}
+	fbo.create({{&fai, GL_COLOR_ATTACHMENT0}});
 }
 
 //==============================================================================
@@ -213,7 +206,7 @@ void Ssao::run()
 
 	// 1st pass
 	//
-	vblurFbo.bind(Fbo::FT_ALL, true);
+	vblurFbo.bind(true);
 	GlStateSingleton::get().setViewport(0, 0, width, height);
 	ssaoSProg->bind();
 	commonUbo.setBinding(0);
@@ -262,13 +255,13 @@ void Ssao::run()
 	for(U32 i = 0; i < blurringIterationsCount; i++)
 	{
 		// hpass
-		hblurFbo.bind(Fbo::FT_ALL, true);
+		hblurFbo.bind(true);
 		hblurSProg->bind();
 		hblurSProg->findUniformVariable("img").set(vblurFai);
 		r->drawQuad();
 
 		// vpass
-		vblurFbo.bind(Fbo::FT_ALL, true);
+		vblurFbo.bind(true);
 		vblurSProg->bind();
 		vblurSProg->findUniformVariable("img").set(hblurFai);
 		r->drawQuad();

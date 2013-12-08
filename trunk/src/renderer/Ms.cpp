@@ -39,21 +39,18 @@ void Ms::createFbo(U index, U samples)
 		GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
 		GL_UNSIGNED_INT, samples);
 
-	fbo[index].create();
-
 	if(r->getUseMrt())
 	{
-		fbo[index].setColorAttachments({&fai0[index], &fai1[index]});
+		fbo[index].create({
+			{&fai0[index], GL_COLOR_ATTACHMENT0}, 
+			{&fai1[index], GL_COLOR_ATTACHMENT1},
+			{&depthFai[index], GL_DEPTH_ATTACHMENT}});
 	}
 	else
 	{
-		fbo[index].setColorAttachments({&fai0[index]});
-	}
-	fbo[index].setOtherAttachment(GL_DEPTH_ATTACHMENT, depthFai[index]);
-
-	if(!fbo[index].isComplete())
-	{
-		throw ANKI_EXCEPTION("FBO is incomplete");
+		fbo[index].create({
+			{&fai0[index], GL_COLOR_ATTACHMENT0}, 
+			{&depthFai[index], GL_DEPTH_ATTACHMENT}});
 	}
 }
 
@@ -84,14 +81,22 @@ void Ms::run()
 	// Chose the multisampled or the singlesampled FBO
 	if(r->getSamples() > 1)
 	{
-		fbo[0].bind();
+		fbo[0].bind(true);
 	}
 	else
 	{
-		fbo[1].bind();
+		fbo[1].bind(true);
 	}
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	if(GlStateCommonSingleton::get().getGpu() == GlStateCommon::GPU_ARM)
+	{
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT 
+			| GL_STENCIL_BUFFER_BIT);
+	}
+	else
+	{
+		glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	}
 
 	gl.setViewport(0, 0, r->getWidth(), r->getHeight());
 	gl.disable(GL_BLEND);
@@ -122,7 +127,8 @@ void Ms::run()
 	// If there is multisampling then resolve to singlesampled
 	if(r->getSamples() > 1)
 	{
-		fbo[0].bind(Fbo::FT_READ);
+#if 0
+		fbo[0].bind(false, Fbo::FT_READ);
 		glReadBuffer(GL_COLOR_ATTACHMENT1);
 		fbo[1].bind(Fbo::FT_DRAW);
 		static const GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT1};
@@ -143,6 +149,8 @@ void Ms::run()
 			0, 0, r->getWidth(), r->getHeight(),
 			GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
 			GL_NEAREST);
+#endif
+		ANKI_ASSERT(0 && "TODO");
 	}
 
 	// Gen mips

@@ -3,6 +3,7 @@
 
 #include "anki/gl/GlObject.h"
 #include "anki/util/Array.h"
+#include "anki/Math.h"
 #include <initializer_list>
 
 namespace anki {
@@ -13,30 +14,56 @@ class Texture;
 /// @{
 
 /// Frame buffer object. The class is actually a wrapper to avoid common 
-/// mistakes. It only supports binding at both draw and read targets
+/// mistakes
 class Fbo: public GlObjectContextNonSharable
 {
 public:
-	static const U MAX_ATTACHMENTS = 8;
+	static const U MAX_COLOR_ATTACHMENTS = 4;
 
 	typedef GlObjectContextNonSharable Base;
 
-	/// FBO target
-	enum FboTarget
+	/// Used as an argument on FBO creation
+	struct Attachment
 	{
-		FT_DRAW = 1 << 1,
-		FT_READ = 1 << 2,
-		FT_ALL = FT_DRAW | FT_READ
+		const Texture* texture;
+		GLenum attachmentPoint;
+		I32 layer; ///< Layer or face
+
+		Attachment(const Texture* tex, GLenum attachmentPoint_)
+			:	texture(tex),
+				attachmentPoint(attachmentPoint_),
+				layer(-1)
+		{
+			ANKI_ASSERT(texture != nullptr);
+		}
+
+		Attachment(const Texture* tex, GLenum attachmentPoint_, I32 layer_)
+			:	texture(tex), 
+				attachmentPoint(attachmentPoint_), 
+				layer(layer_)
+		{
+			ANKI_ASSERT(texture != nullptr);
+			ANKI_ASSERT(layer != -1);
+		}
+	};
+
+	/// FBO target
+	enum Target
+	{
+		DRAW_TARGET = 1 << 1,
+		READ_TARGET = 1 << 2,
+		ALL_TARGETS = DRAW_TARGET | READ_TARGET
 	};
 
 	/// @name Constructors/Destructor
 	/// @{
 	Fbo()
-		: attachmentsCount(0)
+		: colorAttachmentsCount(0)
 	{}
 
 	/// Move
 	Fbo(Fbo&& b)
+		: Fbo()
 	{
 		*this = std::move(b);
 	}
@@ -53,54 +80,50 @@ public:
 	{
 		destroy();
 		Base::operator=(std::forward<Base>(b));
-		attachmentsCount = b.attachmentsCount;
-		b.attachmentsCount = 0;
+		colorAttachmentsCount = b.colorAttachmentsCount;
+		b.colorAttachmentsCount = 0;
 		return *this;
 	}
 	/// @}
 
-	/// Binds FBO
-	void bind(const FboTarget target = FT_ALL, Bool noReadbacks = false) const;
-
-	/// Unbind all targets. Unbinds both draw and read FBOs so the active is
-	/// the default FBO
-	static void bindDefault(const FboTarget target = FT_ALL,
-		Bool noReadbacks = false);
-
-	/// Returns true if the FBO is ready for draw calls
-	Bool isComplete() const;
-
-	/// Set the color attachments of this FBO
-	void setColorAttachments(
-		const std::initializer_list<const Texture*>& textures);
-
-	/// Set other attachment
-	void setOtherAttachment(GLenum attachment, const Texture& tex, 
-		const I32 layer = -1, const I32 face = -1);
-
-	/// Blit framebuffer
-	void blit(const Fbo& source, U32 srcX0, U32 srcY0, U32 srcX1, U32 srcY1, 
-		U32 dstX0, U32 dstY0, U32 dstX1, U32 dstY1, GLbitfield mask,
-		GLenum filter)
-	{
-		source.bind(FT_READ);
-		bind(FT_DRAW);
-		glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, 
-			dstY1, mask, filter);
-	}
-
 	/// Creates a new FBO
-	void create();
+	void create(const std::initializer_list<Attachment>& attachments);
 
 	/// Destroy it
 	void destroy();
+
+	/// Binds FBO
+	void bind(Bool invalidate, const Target target = ALL_TARGETS) const
+	{
+		ANKI_ASSERT(isCreated());
+		checkNonSharable();
+		bindInternal(this, invalidate, target);
+	}
+
+	/// Unbind all targets. Unbinds both draw and read FBOs so the active is
+	/// the default FBO
+	static void bindDefault(
+		Bool invalidate, const Target target = ALL_TARGETS)
+	{
+		bindInternal(nullptr, invalidate, target);
+	}
+
+	/// Blit another framebuffer to this one
+	void blitFrom(const Fbo& source, const UVec2& srcMin, const UVec2& srcMax, 
+		const UVec2& dstMin, const UVec2& dstMax, 
+		GLbitfield mask, GLenum filter)
+	{
+		source.bind(false, READ_TARGET);
+		bind(false, DRAW_TARGET);
+		glBlitFramebuffer(srcMin.x(), srcMin.y(), srcMax.x(), srcMax.y(), 
+			dstMin.x(), dstMin.y(), dstMax.x(), dstMax.y(), mask, filter);
+	}	
 
 private:
 	static thread_local const Fbo* currentRead;
 	static thread_local const Fbo* currentDraw;
 
-	Array<GLenum, MAX_ATTACHMENTS> attachments;
-	U8 attachmentsCount;
+	U8 colorAttachmentsCount;
 
 	static GLuint getCurrentFboGlId()
 	{
@@ -123,11 +146,14 @@ private:
 		return i;
 	}
 
-	void invalidateInternal() const
-	{
-		glInvalidateFramebuffer(GL_FRAMEBUFFER, attachmentsCount, 
-			&attachments[0]);
-	}
+	/// Bind an FBO
+	/// @param fbo May be nullptr
+	static void bindInternal(const Fbo* fbo, Bool invalidate, 
+		const Target target);
+
+	/// Attach texture internal
+	void attachTextureInternal(GLenum attachment, const Texture& tex, 
+		const I32 layer);
 };
 /// @}
 

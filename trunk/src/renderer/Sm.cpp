@@ -60,8 +60,7 @@ void Sm::init(const RendererInitializer& initializer)
 	for(Shadowmap& sm : sms)
 	{
 		sm.layerId = layer;
-		sm.fbo.create();
-		sm.fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, sm2DArrayTex, layer, -1);
+		sm.fbo.create({{&sm2DArrayTex, GL_DEPTH_ATTACHMENT, (I32)layer}});
 
 		++layer;
 	}
@@ -199,8 +198,7 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 	//
 	// Render
 	//
-	sm.fbo.bind();
-	r->clearAfterBindingFbo(GL_DEPTH_BUFFER_BIT);
+	sm.fbo.bind(true);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	//std::cout << "Shadowmap for: " << &sm << std::endl;

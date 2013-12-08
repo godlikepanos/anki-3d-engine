@@ -233,12 +233,7 @@ void Tiler::initInternal(Renderer* r_)
 		GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT);
 	fai.setFiltering(Texture::TFT_NEAREST);
 
-	fbo.create();
-	fbo.setColorAttachments({&fai});
-	if(!fbo.isComplete())
-	{
-		throw ANKI_EXCEPTION("FBO not complete");
-	}
+	fbo.create({{&fai, GL_COLOR_ATTACHMENT0}});
 
 	// Create PBO
 	pbo.create(GL_PIXEL_PACK_BUFFER, 

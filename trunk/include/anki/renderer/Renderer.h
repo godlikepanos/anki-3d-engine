@@ -240,11 +240,6 @@ public:
 		return distance / lodDistance;
 	}
 
-	/// On some GPUs its optimal to clean after binding to an FBO and there is
-	/// no use for it's previous contents. For other GPUs the clear will be 
-	/// skipped
-	void clearAfterBindingFbo(const GLenum cap);
-
 private:
 	/// @name Rendering stages
 	/// @{
