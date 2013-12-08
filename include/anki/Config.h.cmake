@@ -17,11 +17,13 @@
 #define ANKI_OS_IOS 4
 #define ANKI_OS_WINDOWS 5
 
-#if defined( __WIN32__ ) || defined( _WIN32 )
+#if defined(__WIN32__) || defined(_WIN32)
 #	define ANKI_OS ANKI_OS_WINDOWS
-#elif defined( __APPLE_CC__)
-#	if __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ >= 40000 \
-	|| __IPHONE_OS_VERSION_MIN_REQUIRED >= 40000
+#elif defined(__APPLE_CC__)
+#	if (defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__) \
+		&& __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ >= 40000) \
+	|| (defined(__IPHONE_OS_VERSION_MIN_REQUIRED) \
+		&& __IPHONE_OS_VERSION_MIN_REQUIRED >= 40000)
 #		define ANKI_OS ANKI_OS_IOS
 #	else
 #		define ANKI_OS ANKI_OS_MACOS

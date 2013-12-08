@@ -46,7 +46,7 @@ void MainRenderer::render(SceneGraph& scene)
 
 	if(notDrawnToDefault)
 	{
-		Fbo::bindDefault(Fbo::FT_ALL, true); // Bind the window framebuffer
+		Fbo::bindDefault(true, Fbo::ALL_TARGETS); // Bind the window framebuffer
 
 		GlStateSingleton::get().setViewport(
 			0, 0, getWindowWidth(), getWindowHeight());
@@ -64,6 +64,8 @@ void MainRenderer::render(SceneGraph& scene)
 		{
 			fai = &getIs().getFai();
 		}
+
+		//fai = &getPps().getHdr().getFai();
 
 		fai->setFiltering(Texture::TFT_LINEAR);
 

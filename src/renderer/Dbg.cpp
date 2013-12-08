@@ -20,23 +20,18 @@ void Dbg::init(const RendererInitializer& initializer)
 
 	try
 	{
-		fbo.create();
-
 		// Chose the correct color FAI
 		if(r->getPps().getEnabled())
 		{
-			fbo.setColorAttachments({&r->getPps().getFai()});
+			fbo.create({
+				{&r->getPps().getFai(), GL_COLOR_ATTACHMENT0},
+				{&r->getMs().getDepthFai(), GL_DEPTH_ATTACHMENT}});
 		}
 		else
 		{
-			fbo.setColorAttachments({&r->getIs().getFai()});
-		}
-
-		fbo.setOtherAttachment(GL_DEPTH_ATTACHMENT, r->getMs().getDepthFai());
-
-		if(!fbo.isComplete())
-		{
-			throw ANKI_EXCEPTION("FBO is incomplete");
+			fbo.create({
+				{&r->getIs().getFai(), GL_COLOR_ATTACHMENT0},
+				{&r->getMs().getDepthFai(), GL_DEPTH_ATTACHMENT}});
 		}
 
 		drawer.reset(new DebugDrawer);
@@ -53,7 +48,7 @@ void Dbg::run()
 {
 	ANKI_ASSERT(enabled);
 
-	fbo.bind();
+	fbo.bind(false);
 	SceneGraph& scene = r->getSceneGraph();
 
 	GlStateSingleton::get().disable(GL_BLEND);

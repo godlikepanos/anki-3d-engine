@@ -105,13 +105,8 @@ void Lf::initInternal(const RendererInitializer& initializer)
 		r->getPps().getHdr().getFai().getHeight(), 
 		GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
 
-	fbo.create();
-	fbo.setColorAttachments({&fai});
-	if(!fbo.isComplete())
-	{
-		throw ANKI_EXCEPTION("Fbo not complete");
-	}
-
+	fbo.create({{&fai, GL_COLOR_ATTACHMENT0}});
+	
 	// Textures
 	lensDirtTex.load("engine_data/lens_dirt.ankitex");
 }
@@ -128,7 +123,7 @@ void Lf::run()
 	// Set the common state
 	const Texture& inTex = r->getPps().getHdr().getFai();
 
-	fbo.bind();
+	fbo.bind(true);
 	pseudoProg->bind();
 	pseudoProg->findUniformVariable("tex").set(inTex);
 	pseudoProg->findUniformVariable("lensDirtTex").set(*lensDirtTex);

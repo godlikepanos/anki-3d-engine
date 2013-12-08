@@ -17,12 +17,7 @@ void Hdr::initFbo(Fbo& fbo, Texture& fai)
 	fai.setFiltering(Texture::TFT_LINEAR);
 
 	// create FBO
-	fbo.create();
-	fbo.setColorAttachments({&fai});
-	if(!fbo.isComplete())
-	{
-		throw ANKI_EXCEPTION("Fbo not complete");
-	}
+	fbo.create({{&fai, GL_COLOR_ATTACHMENT0}});
 }
 
 //==============================================================================
@@ -110,8 +105,7 @@ void Hdr::run()
 	//vblurFai.setFiltering(Texture::TFT_NEAREST);
 
 	// pass 0
-	vblurFbo.bind();
-	r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
+	vblurFbo.bind(true);
 	toneSProg->bind();
 
 	if(parameterUpdateTimestamp > commonUboUpdateTimestamp)
@@ -128,8 +122,7 @@ void Hdr::run()
 	for(U32 i = 0; i < blurringIterationsCount; i++)
 	{
 		// hpass
-		hblurFbo.bind();
-		r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
+		hblurFbo.bind(true);
 		hblurSProg->bind();
 		if(i == 0)
 		{
@@ -138,8 +131,7 @@ void Hdr::run()
 		r->drawQuad();
 
 		// vpass
-		vblurFbo.bind();
-		r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
+		vblurFbo.bind(true);
 		vblurSProg->bind();
 		if(i == 0)
 		{
