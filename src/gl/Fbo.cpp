@@ -172,4 +172,52 @@ void Fbo::attachTextureInternal(GLenum attachment, const Texture& tex,
 	}
 }
 
+//==============================================================================
+void Fbo::blitFrom(const Fbo& source, const UVec2& srcMin, const UVec2& srcMax, 
+	const UVec2& dstMin, const UVec2& dstMax, 
+	GLbitfield mask, GLenum filter)
+{
+	ANKI_ASSERT(colorAttachmentsCount == source.colorAttachmentsCount 
+		&& "For now only the same FBOs are supported");
+
+	GLenum drawBuffer;
+
+	this->bind(false, DRAW_TARGET);
+	source.bind(false, READ_TARGET);
+
+	U count = colorAttachmentsCount;
+
+	// First blit the color targets of attachments 1 and more
+	if(mask & GL_COLOR_BUFFER_BIT)
+	{
+		Array<GLenum, MAX_COLOR_ATTACHMENTS> drawBuffers;
+
+		while(count-- > 1)
+		{
+			drawBuffer = GL_COLOR_ATTACHMENT0 + count;
+			
+			// Set the array of drawbuffers
+			ANKI_ASSERT(0 == GL_NONE); // Just make sure
+			memset(&drawBuffers[0], GL_NONE, sizeof(drawBuffers));
+			drawBuffers[count] = drawBuffer;
+
+			glReadBuffer(drawBuffer);
+			glDrawBuffers(count + 1, &drawBuffers[0]);
+
+			glBlitFramebuffer(srcMin.x(), srcMin.y(), srcMax.x(), srcMax.y(), 
+				dstMin.x(), dstMin.y(), dstMax.x(), dstMax.y(), 
+				GL_COLOR_BUFFER_BIT, filter);
+		}
+	}
+
+	// Blit the color attachment 0 and depth and stencil
+	drawBuffer = GL_COLOR_ATTACHMENT0;
+	glReadBuffer(drawBuffer);
+	glDrawBuffers(1, &drawBuffer);
+
+	glBlitFramebuffer(srcMin.x(), srcMin.y(), srcMax.x(), srcMax.y(), 
+		dstMin.x(), dstMin.y(), dstMax.x(), dstMax.y(), 
+		mask, filter);
+}
+
 } // end namespace anki

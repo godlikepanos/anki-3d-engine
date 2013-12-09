@@ -22,25 +22,17 @@ const Texture& Ms::getFai1() const
 //==============================================================================
 void Ms::createFbo(U index, U samples)
 {
-	if(r->getUseMrt())
-	{
-		fai0[index].create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
-			GL_RGBA, GL_UNSIGNED_BYTE, samples);
-		fai1[index].create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
-			GL_RGBA, GL_UNSIGNED_BYTE, samples);
-	}
-	else
-	{
-		fai0[index].create2dFai(r->getWidth(), r->getHeight(), GL_RG32UI,
-			GL_RG_INTEGER, GL_UNSIGNED_INT, samples);
-	}
-
 	depthFai[index].create2dFai(r->getWidth(), r->getHeight(),
 		GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
 		GL_UNSIGNED_INT, samples);
 
 	if(r->getUseMrt())
 	{
+		fai0[index].create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
+			GL_RGBA, GL_UNSIGNED_BYTE, samples);
+		fai1[index].create2dFai(r->getWidth(), r->getHeight(), GL_RGBA8,
+			GL_RGBA, GL_UNSIGNED_BYTE, samples);
+
 		fbo[index].create({
 			{&fai0[index], GL_COLOR_ATTACHMENT0}, 
 			{&fai1[index], GL_COLOR_ATTACHMENT1},
@@ -48,6 +40,9 @@ void Ms::createFbo(U index, U samples)
 	}
 	else
 	{
+		fai0[index].create2dFai(r->getWidth(), r->getHeight(), GL_RG32UI,
+			GL_RG_INTEGER, GL_UNSIGNED_INT, samples);
+
 		fbo[index].create({
 			{&fai0[index], GL_COLOR_ATTACHMENT0}, 
 			{&depthFai[index], GL_DEPTH_ATTACHMENT}});
@@ -127,30 +122,10 @@ void Ms::run()
 	// If there is multisampling then resolve to singlesampled
 	if(r->getSamples() > 1)
 	{
-#if 0
-		fbo[0].bind(false, Fbo::FT_READ);
-		glReadBuffer(GL_COLOR_ATTACHMENT1);
-		fbo[1].bind(Fbo::FT_DRAW);
-		static const GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT1};
-		glDrawBuffers(1, drawBuffers);
-
-		glBlitFramebuffer(
-			0, 0, r->getWidth(), r->getHeight(), 
-			0, 0, r->getWidth(), r->getHeight(),
-			GL_COLOR_BUFFER_BIT,
-			GL_NEAREST);
-
-		glReadBuffer(GL_COLOR_ATTACHMENT0);
-		static const GLenum drawBuffers2[] = {GL_COLOR_ATTACHMENT0};
-		glDrawBuffers(1, drawBuffers2);
-
-		glBlitFramebuffer(
-			0, 0, r->getWidth(), r->getHeight(), 
-			0, 0, r->getWidth(), r->getHeight(),
+		fbo[1].blitFrom(fbo[0], UVec2(0U), UVec2(r->getWidth(), r->getHeight()),
+			UVec2(0U), UVec2(r->getWidth(), r->getHeight()),
 			GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
 			GL_NEAREST);
-#endif
-		ANKI_ASSERT(0 && "TODO");
 	}
 
 	// Gen mips

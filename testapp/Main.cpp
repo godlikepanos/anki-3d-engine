@@ -594,7 +594,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.get("is.sm.resolution") = 1024;
 	initializer.get("pps.enabled") = true;
 	initializer.get("pps.hdr.enabled") = true;
-	initializer.get("pps.hdr.renderingQuality") = 0.5;
+	initializer.get("pps.hdr.renderingQuality") = 0.6;
 	initializer.get("pps.hdr.blurringDist") = 1.0;
 	initializer.get("pps.hdr.blurringIterationsCount") = 1;
 	initializer.get("pps.hdr.exposure") = 8.0;
@@ -611,7 +611,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.get("width") = win->getWidth();
 	initializer.get("height") = win->getHeight();
 	initializer.get("lodDistance") = 20.0;
-	initializer.get("samples") = 1;
+	initializer.get("samples") = 16;
 	initializer.get("tessellation") = false;
 	initializer.get("tilesXCount") = 16;
 	initializer.get("tilesYCount") = 16;

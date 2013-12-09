@@ -1,6 +1,7 @@
 #include "anki/gl/Texture.h"
 #include "anki/gl/GlException.h"
 #include "anki/util/Exception.h"
+#include "anki/util/Functions.h"
 #include "anki/core/Logger.h"
 
 namespace anki {
@@ -421,7 +422,12 @@ void Texture::create(const Initializer& init)
 //==============================================================================
 void Texture::create2dFai(U w, U h, 
 	GLenum internalFormat_, GLenum format_, GLenum type_, U samples_)
-{		
+{
+	// Not very important but keep the resulution of render targets aligned to
+	// 16
+	ANKI_ASSERT(isAligned(16, w));
+	ANKI_ASSERT(isAligned(16, h));
+
 	Initializer init;
 
 	init.width = w;

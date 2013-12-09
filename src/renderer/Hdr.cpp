@@ -33,7 +33,10 @@ void Hdr::initInternal(const RendererInitializer& initializer)
 	const F32 renderingQuality = initializer.get("pps.hdr.renderingQuality");
 
 	width = renderingQuality * (F32)r->getWidth();
+	alignRoundUp(16, width);
 	height = renderingQuality * (F32)r->getHeight();
+	alignRoundUp(16, height);
+
 	exposure = initializer.get("pps.hdr.exposure");
 	blurringDist = initializer.get("pps.hdr.blurringDist");
 	blurringIterationsCount = 

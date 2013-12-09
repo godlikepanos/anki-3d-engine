@@ -111,13 +111,7 @@ public:
 	/// Blit another framebuffer to this one
 	void blitFrom(const Fbo& source, const UVec2& srcMin, const UVec2& srcMax, 
 		const UVec2& dstMin, const UVec2& dstMax, 
-		GLbitfield mask, GLenum filter)
-	{
-		source.bind(false, READ_TARGET);
-		bind(false, DRAW_TARGET);
-		glBlitFramebuffer(srcMin.x(), srcMin.y(), srcMax.x(), srcMax.y(), 
-			dstMin.x(), dstMin.y(), dstMax.x(), dstMax.y(), mask, filter);
-	}	
+		GLbitfield mask, GLenum filter);
 
 private:
 	static thread_local const Fbo* currentRead;
