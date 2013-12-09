@@ -101,7 +101,9 @@ void Renderer::init(const RendererInitializer& initializer)
 {
 	// set from the initializer
 	width = initializer.get("width");
+	alignRoundUp(16, width);
 	height = initializer.get("height");
+	alignRoundUp(16, height);
 	lodDistance = initializer.get("lodDistance");
 	framesNum = 0;
 	samples = initializer.get("samples");

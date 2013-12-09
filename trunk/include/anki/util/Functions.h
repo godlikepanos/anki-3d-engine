@@ -73,7 +73,8 @@ inline std::string trimString(const std::string& str, const char* what = " ")
 }
 
 /// Check if a number os a power of 2
-inline Bool isPowerOfTwo(U64 x)
+template<typename Int>
+inline Bool isPowerOfTwo(Int x)
 {
 	while(((x % 2) == 0) && x > 1)
 	{

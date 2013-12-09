@@ -89,7 +89,9 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	const F32 quality = initializer.get("pps.ssao.renderingQuality");
 
 	width = quality * (F32)r->getWidth();
+	alignRoundUp(16, width);
 	height = quality * (F32)r->getHeight();
+	alignRoundUp(16, height);
 
 	//
 	// create FBOs
