@@ -83,7 +83,7 @@ void Ms::run()
 		fbo[1].bind(true);
 	}
 
-	if(GlStateCommonSingleton::get().getGpu() == GlStateCommon::GPU_ARM)
+	if(GlStateCommonSingleton::get().isDeferredRenderer())
 	{
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT 
 			| GL_STENCIL_BUFFER_BIT);

@@ -1,7 +1,6 @@
 #include "anki/util/Exception.h"
 #include "anki/util/Vector.h"
 #include <sstream>
-#include <iostream>
 #include <cstring>
 #include <cstdarg>
 

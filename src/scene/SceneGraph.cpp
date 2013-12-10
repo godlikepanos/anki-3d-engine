@@ -15,6 +15,8 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
+namespace {
+
 //==============================================================================
 struct UpdateSceneNodesJob: ThreadpoolTask
 {
@@ -64,6 +66,8 @@ struct UpdateSceneNodesJob: ThreadpoolTask
 		});
 	}
 };
+
+} // end namespace anonymous
 
 //==============================================================================
 // Scene                                                                       =

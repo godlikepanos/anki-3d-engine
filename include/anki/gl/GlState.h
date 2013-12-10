@@ -51,6 +51,11 @@ public:
 		return version >= 430;
 	}
 
+	Bool isDeferredRenderer() const
+	{
+		return gpu == GPU_ARM;
+	}
+
 	void init(const U32 major, const U32 minor, 
 		Bool registerDebugMessages = false);
 
