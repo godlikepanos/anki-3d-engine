@@ -5,7 +5,6 @@
 #include "anki/util/File.h"
 #include <iomanip>
 #include <cstring>
-#include <iostream>
 
 namespace anki {
 

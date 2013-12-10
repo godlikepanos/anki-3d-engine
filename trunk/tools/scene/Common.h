@@ -30,18 +30,20 @@
 /// A string
 extern const char* XML_HEADER;
 
+const uint32_t INVALID_INDEX = 0xFFFFFFFF;
+
 /// Thin mesh wrapper
 struct Mesh
 {
-	uint32_t index = 0xFFFFFFFF; ///< Mesh index in the scene
+	uint32_t index = INVALID_INDEX; ///< Mesh index in the scene
 	std::vector<aiMatrix4x4> transforms;
-	uint32_t mtlIndex = 0xFFFFFFFF;
+	uint32_t mtlIndex = INVALID_INDEX;
 };
 
 /// Thin material wrapper
 struct Material
 {
-	uint32_t index = 0xFFFFFFFF;
+	uint32_t index = INVALID_INDEX;
 	std::vector<uint32_t> meshIndices;
 };
 

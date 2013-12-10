@@ -1,7 +1,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/System.h"
 #include <cstdlib>
-#include <iostream>
+#include <cstdio>
 #if ANKI_OS == ANKI_OS_ANDROID
 #	include <android/log.h>
 #endif
@@ -17,17 +17,15 @@ void akassert(bool expr, const char* exprTxt, const char* file, int line,
 	if(!expr)
 	{
 #if ANKI_OS == ANKI_OS_LINUX
-		std::cerr << "\033[1;31m(" << file << ":" << line << " "
-			<< func << ") " << "Assertion failed: " << exprTxt << "\033[0m"
-			<< std::endl;
+		fprintf(stderr, "\033[1;31m(%s:%d %s) Assertion failed: %s\033[0m\n",
+			file, line , func, exprTxt);
 #elif ANKI_OS == ANKI_OS_ANDROID
 		__android_log_print(ANDROID_LOG_ERROR, "AnKi",
 			"(%s:%d %s) Assertion failed: %s", file, line,
 			func, exprTxt);
 #else
-		std::cerr << "(" << file << ":" << line << " "
-			<< func << ") " << "Assertion failed: " << exprTxt
-			<< std::endl;
+		fprintf(stderr, "(%s:%d %s) Assertion failed: %s\n",
+			file, line , func, exprTxt);
 #endif
 
 #if ANKI_CPU_ARCH == ANKI_CPU_ARCH_INTEL

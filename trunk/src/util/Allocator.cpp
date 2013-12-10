@@ -1,5 +1,4 @@
 #include "anki/util/Allocator.h"
-#include <iostream>
 #include <cstring>
 
 namespace anki {

@@ -63,15 +63,6 @@ inline PtrSize getVectorSizeInBytes(const Vec& v)
 	return v.size() * sizeof(typename Vec::value_type);
 }
 
-/// Trim a string
-inline std::string trimString(const std::string& str, const char* what = " ")
-{
-	std::string out = str;
-	out.erase(0, out.find_first_not_of(what));
-	out.erase(out.find_last_not_of(what) + 1);
-	return out;
-}
-
 /// Check if a number os a power of 2
 template<typename Int>
 inline Bool isPowerOfTwo(Int x)
@@ -89,6 +80,16 @@ template<typename Int>
 inline Int nextPowerOfTwo(Int x)
 {
 	return pow(2, ceil(log(x) / log(2)));
+}
+
+/// Trim a string
+/// Remove the @p what from the front and back of @p str
+inline std::string trimString(const std::string& str, const char* what = " ")
+{
+	std::string out = str;
+	out.erase(0, out.find_first_not_of(what));
+	out.erase(out.find_last_not_of(what) + 1);
+	return out;
 }
 
 /// Replace substring. Substitute occurances of @a from into @a to inside the
@@ -133,7 +134,7 @@ struct RemovePointer<T*>
 	typedef T Type;
 };
 
-/// Perform a static cast
+/// Perform a static cast of a pointer
 template<typename To, typename From>
 To staticCastPtr(From from)
 {

@@ -20,11 +20,13 @@
 namespace anki {
 
 //==============================================================================
+namespace {
+
 // The first ticks value of the application
 #if HAVE_CLOCK_GETTIME
-static struct timespec gstart;
+struct timespec gstart;
 #else
-static struct timeval gstart;
+struct timeval gstart;
 #endif
 
 /// A dummy struct that inits the timer
@@ -40,7 +42,9 @@ struct DummyInitTimer
 	}
 };
 
-static DummyInitTimer dummy;
+DummyInitTimer dummy;
+
+} // end namespace anonymous 
 
 //==============================================================================
 static U32 getMs()

@@ -176,7 +176,7 @@ static void visitNode(const aiNode* node, const aiScene& scene)
 		const aiMesh& mesh = *scene.mMeshes[meshIndex];
 
 		// Is material set?
-		if(config.meshes[meshIndex].mtlIndex == 0xFFFFFFFF)
+		if(config.meshes[meshIndex].mtlIndex == INVALID_INDEX)
 		{
 			// Connect mesh with material
 			config.meshes[meshIndex].mtlIndex = mesh.mMaterialIndex;

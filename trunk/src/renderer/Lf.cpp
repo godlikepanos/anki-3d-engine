@@ -11,6 +11,8 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
+namespace {
+
 // Some constants
 #define ANKI_MAX_LIGHTS_WITH_FLARE 16
 #define ANKI_MAX_FLARES_PER_LIGHT 8
@@ -38,6 +40,8 @@ struct LightSortFunctor
 			lightB->getLensFlareTexture().getGlId();
 	}
 };
+
+} // end namespace anonymous
 
 //==============================================================================
 // Lf                                                                          =

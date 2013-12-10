@@ -30,6 +30,7 @@ void Fbo::create(const std::initializer_list<Attachment>& attachments)
 
 	// Attach textures
 	colorAttachmentsCount = 0;
+	UVec2 minSize(MAX_U32), maxSize(MIN_U32);
 	for(const Attachment& attachment : attachments)
 	{
 		// Set some values
@@ -52,7 +53,16 @@ void Fbo::create(const std::initializer_list<Attachment>& attachments)
 
 		attachTextureInternal(attachment.attachmentPoint, *attachment.texture,
 			attachment.layer);
+
+		minSize[0] = std::min(minSize[0], attachment.texture->getWidth());
+		minSize[1] = std::min(minSize[1], attachment.texture->getHeight());
+
+		maxSize[0] = std::max(maxSize[0], attachment.texture->getWidth());
+		maxSize[1] = std::max(maxSize[1], attachment.texture->getHeight());
 	}
+
+	// Only same size render targets allowed
+	ANKI_ASSERT(minSize[0] == maxSize[0] && minSize[1] == maxSize[1]);
 
 	// Check completeness
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -124,8 +134,7 @@ void Fbo::bindInternal(const Fbo* fbo, Bool invalidate, const Target target)
 				glTarget, ATTACHMENT_TOKENS.size(), &ATTACHMENT_TOKENS[0]);
 
 			if(name == 0
-				&& GlStateCommonSingleton::get().getGpu() == 
-					GlStateCommon::GPU_ARM)
+				&& GlStateCommonSingleton::get().isDeferredRenderer())
 			{
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
 					| GL_STENCIL_BUFFER_BIT);

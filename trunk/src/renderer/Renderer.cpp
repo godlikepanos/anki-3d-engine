@@ -70,7 +70,7 @@ RendererInitializer::RendererInitializer()
 	newOption("tilesYCount", 16);
 	newOption("tessellation", true);
 
-	if(GlStateCommonSingleton::get().getGpu() == GlStateCommon::GPU_ARM)
+	if(GlStateCommonSingleton::get().isDeferredRenderer())
 	{
 		newOption("mrt", false); // Pack or not the GBuffer
 	}
