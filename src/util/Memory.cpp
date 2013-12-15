@@ -83,7 +83,7 @@ void* StackMemoryPool::allocate(PtrSize size_) throw()
 	PtrSize size = 
 		getAlignedRoundUp(alignmentBytes, size_ + headerSize);
 
-	ANKI_ASSERT(size < std::numeric_limits<U32>::max() && "Too big allocation");
+	ANKI_ASSERT(size < MAX_U32 && "Too big allocation");
 
 	U8* out = top.fetch_add(size);
 
@@ -123,10 +123,13 @@ Bool StackMemoryPool::free(void* ptr) throw()
 	U8* realptr = (U8*)ptr - headerSize;
 
 	// realptr should be inside the pool's preallocated memory
-	ANKI_ASSERT(realptr >= memory && realptr < memory + memsize);
+	ANKI_ASSERT(realptr >= memory);
 
 	// Get block size
 	U32 size = ((MemoryBlockHeader*)realptr)->size;
+
+	// Check if the size is ok
+	ANKI_ASSERT(realptr + size <= memory + memsize);
 
 	// Atomic stuff
 	U8* expected = realptr + size;

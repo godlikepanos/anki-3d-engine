@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <unordered_map>
 
 //==============================================================================
 // Log and errors
@@ -33,18 +34,18 @@ extern const char* XML_HEADER;
 const uint32_t INVALID_INDEX = 0xFFFFFFFF;
 
 /// Thin mesh wrapper
-struct Mesh
+struct Model
 {
-	uint32_t index = INVALID_INDEX; ///< Mesh index in the scene
-	std::vector<aiMatrix4x4> transforms;
+	uint32_t meshIndex = INVALID_INDEX; ///< Mesh index in the scene
 	uint32_t mtlIndex = INVALID_INDEX;
+	bool instanced = false;
 };
 
-/// Thin material wrapper
-struct Material
+/// Scene node
+struct Node
 {
-	uint32_t index = INVALID_INDEX;
-	std::vector<uint32_t> meshIndices;
+	uint32_t modelIndex; ///< Index inside Exporter::models
+	std::vector<aiMatrix4x4> transforms;
 };
 
 const uint32_t MAX_BONES_PER_VERTEX = 4;
@@ -69,8 +70,8 @@ struct Exporter
 	aiScene* scene = nullptr;
 	Assimp::Importer* importer;
 
-	std::vector<Mesh> meshes;
-	std::vector<Material> materials;
+	std::vector<Model> models;
+	std::vector<Node> nodes;
 };
 
 /// Replace all @a from substrings in @a str to @a to
@@ -98,21 +99,23 @@ extern void exportAnimation(
 extern void exportMesh(
 	const Exporter& exporter,
 	const aiMesh& mesh, 
-	const std::string* name,
 	const aiMatrix4x4* transform);
 
 /// Export a skeleton
-extern void exportSkeleton(const Exporter& exporter, const aiMesh& mesh);
-
-/// Helper function
-extern std::string getMaterialName(const aiMaterial& mtl);
+extern void exportSkeleton(
+	const Exporter& exporter, 
+	const aiMesh& mesh);
 
 /// Export material
 extern void exportMaterial(
 	const Exporter& exporter, 
 	const aiMaterial& mtl, 
-	bool instanced,
-	const std::string* name);
+	bool instanced);
+
+/// Export model
+extern void exportModel(
+	const Exporter& exporter, 
+	const Model& model);
 
 /// Write light to the scene file
 extern void exportLight(

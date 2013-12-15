@@ -2,13 +2,65 @@
 #include <cassert>
 
 //==============================================================================
+static const aiMesh& getMesh(const Exporter& exporter, unsigned index)
+{
+	assert(index < exporter.scene->mNumMeshes);
+	return *exporter.scene->mMeshes[index];
+}
+
+//==============================================================================
+static const aiMaterial& getMaterial(const Exporter& exporter, unsigned index)
+{
+	assert(index < exporter.scene->mNumMaterials);
+	return *exporter.scene->mMaterials[index];
+}
+
+//==============================================================================
+static std::string getMeshName(const aiMesh& mesh)
+{
+	return std::string(mesh.mName.C_Str());
+}
+
+//==============================================================================
+static std::string getMaterialName(const aiMaterial& mtl, bool instanced)
+{
+	aiString ainame;
+	std::string name;
+	if(mtl.Get(AI_MATKEY_NAME, ainame) == AI_SUCCESS)
+	{
+		name = ainame.C_Str();
+
+		if(instanced)
+		{
+			name += "_inst";
+		}
+	}
+	else
+	{
+		ERROR("Material's name is missing\n");
+	}
+
+	return name;
+}
+
+//==============================================================================
+static std::string getModelName(const Exporter& exporter, const Model& model)
+{
+	std::string name = 
+		getMeshName(getMesh(exporter, model.meshIndex)) + "_"
+		+ getMaterialName(getMaterial(exporter, model.mtlIndex), 
+			model.instanced);
+
+	return name;
+}
+
+//==============================================================================
 void exportMesh(
 	const Exporter& exporter,
 	const aiMesh& mesh, 
-	const std::string* name_,
 	const aiMatrix4x4* transform)
 {
-	std::string name = (name_) ? *name_ : mesh.mName.C_Str();
+	std::string name = getMeshName(mesh);
 	std::fstream file;
 	LOGI("Exporting mesh %s\n", name.c_str());
 
@@ -203,42 +255,15 @@ void exportSkeleton(const Exporter& exporter, const aiMesh& mesh)
 }
 
 //==============================================================================
-std::string getMaterialName(const aiMaterial& mtl)
-{
-	aiString ainame;
-	std::string name;
-	if(mtl.Get(AI_MATKEY_NAME, ainame) == AI_SUCCESS)
-	{
-		name = ainame.C_Str();
-	}
-	else
-	{
-		ERROR("Material's name is missing\n");
-	}
-
-	return name;
-}
-
-//==============================================================================
 void exportMaterial(
 	const Exporter& exporter, 
 	const aiMaterial& mtl, 
-	bool instanced,
-	const std::string* name_)
+	bool instanced)
 {
 	std::string diffTex;
 	std::string normTex;
 
-	std::string name;
-	if(name_)
-	{
-		name = *name_;
-	}
-	else
-	{
-		name = getMaterialName(mtl);
-	}
-
+	std::string name = getMaterialName(mtl, instanced);
 	LOGI("Exporting material %s\n", name.c_str());
 
 	// Diffuse texture
@@ -297,4 +322,38 @@ void exportMaterial(
 	str = replaceAllString(str, "%diffuseMap%", exporter.texrpath + diffTex);
 
 	file << str;
+}
+
+//==============================================================================
+void exportModel(const Exporter& exporter, const Model& model)
+{
+	std::string name = getModelName(exporter, model);
+	LOGI("Exporting model %s\n", name.c_str());
+
+	std::fstream file;
+	file.open(exporter.outDir + name + ".ankimdl", std::ios::out);
+
+	file << XML_HEADER << '\n';
+	file << "<model>\n";
+	file << "\t<modelPatches>\n";
+	
+	// start
+	file << "\t\t<modelPatch>\n";
+
+	// Write mesh
+	file << "\t\t\t<mesh>" << exporter.rpath 
+		<< getMeshName(getMesh(exporter, model.meshIndex)) 
+		<< ".ankimesh</mesh>\n";
+
+	// Write material
+	file << "\t\t\t<material>" << exporter.rpath 
+		<< getMaterialName(getMaterial(exporter, model.mtlIndex),
+			model.instanced) 
+		<< ".ankimtl</material>\n";
+
+	// end
+	file << "\t\t</modelPatch>\n";
+
+	file << "\t</modelPatches>\n";
+	file << "</model>\n";
 }

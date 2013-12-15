@@ -113,67 +113,55 @@ error:
 }
 
 //==============================================================================
-static void exportModel(
-	const aiScene& scene, 
-	const aiNode& node)
+static void visitNode(Exporter& exporter, const aiNode* ainode)
 {
-	if(node.mNumMeshes == 0)
+	if(ainode == nullptr)
 	{
 		return;
 	}
 
-	std::string name = node.mName.C_Str();
-
-	LOGI("Exporting model %s\n", name.c_str());
-
-	std::fstream file;
-	file.open(config.outDir + name + ".ankimdl", std::ios::out);
-
-	file << xmlHeader << '\n';
-	file << "<model>\n";
-	file << "\t<modelPatches>\n";
-
-	for(uint32_t i = 0; i < node.mNumMeshes; i++)
-	{
-		uint32_t meshIndex = node.mMeshes[i];
-		const aiMesh& mesh = *scene.mMeshes[meshIndex];
-	
-		// start
-		file << "\t\t<modelPatch>\n";
-
-		// Write mesh
-		file << "\t\t\t<mesh>" << config.rpath 
-			<< mesh.mName.C_Str() << ".ankimesh</mesh>\n";
-
-		// Write material
-		const aiMaterial& mtl = *scene.mMaterials[mesh.mMaterialIndex];
-		aiString mtlname;
-		mtl.Get(AI_MATKEY_NAME, mtlname);
-
-		file << "\t\t\t<material>" << config.rpath 
-			<< mtlname.C_Str() << ".ankimtl</material>\n";
-
-		// end
-		file << "\t\t</modelPatch>\n";
-	}
-
-	file << "\t</modelPatches>\n";
-	file << "</model>\n";
-}
-
-//==============================================================================
-static void visitNode(const aiNode* node, const aiScene& scene)
-{
-	if(node == nullptr)
-	{
-		return;
-	}
+	assert(ainode->mNumMeshes > 0);
 
 	// For every mesh of this node
-	for(uint32_t i = 0; i < node->mNumMeshes; i++)
+	for(unsigned i = 0; i < ainode->mNumMeshes; i++)
 	{
-		uint32_t meshIndex = node->mMeshes[i];
-		const aiMesh& mesh = *scene.mMeshes[meshIndex];
+		unsigned meshIndex = ainode->mMeshes[i];
+		unsigned mtlIndex =  scene.mMeshes[meshIndex]->mMaterialIndex;
+
+		// Find if there is another node with the same model
+		std::vector<Node>::iterator it;
+		for(it = exporter.nodes.begin(); it != exporter.nodes.end(); it++)
+		{
+			const Node& node = *it;
+			const Model& model = exporter.models[node.modelIndex];
+
+			if(model.meshIndex == meshIndex && model.mtlIndex = mtlIndex)
+			{
+				break;
+			}
+		}
+
+		if(it != exporter.node.end())
+		{
+			// A node with the same model exists. It's instanced
+
+			Node& node = *it;
+			Model& model = exporter.models[tmpnode.modelIndex];
+
+			assert(node.transforms.size() > 0);
+			node.transforms.push_back(node.mTransformation);
+			
+			model.instanced = true;
+			break;
+		}
+
+		// Search if model exists
+		std::vector<Model>::iterator it2;
+		for(it2 = exporter.models.begin(); it2 != exporter.models.end(); it2++)
+		{
+			Model& model = *it;
+			if(model.meshIndex == )
+		}
 
 		// Is material set?
 		if(config.meshes[meshIndex].mtlIndex == INVALID_INDEX)
@@ -201,40 +189,24 @@ static void visitNode(const aiNode* node, const aiScene& scene)
 }
 
 //==============================================================================
-static void exportScene(const aiScene& scene)
+static void exportScene(const Exporter& exporter)
 {
-	LOGI("Exporting scene to %s\n", config.outDir.c_str());
+	LOGI("Exporting scene to %s\n", exporter.outDir.c_str());
 
 	//
 	// Open scene file
 	//
 	std::ofstream file;
-	file.open(config.outDir + "master.ankiscene");
+	file.open(exporter.outDir + "master.ankiscene");
 
-	file << xmlHeader << "\n"
-		<< "<scene>\n";
+	file << XML_HEADER << "\n<scene>\n";
 
 	//
 	// Get all the data
 	//
 
-	config.meshes.resize(scene.mNumMeshes);
-	config.materials.resize(scene.mNumMaterials);
-
-	int i = 0;
-	for(Mesh& mesh : config.meshes)
-	{
-		mesh.index = i++;
-	}
-	i = 0;
-	for(Material& mtl : config.materials)
-	{
-		mtl.index = i++;
-	}
-
 	const aiNode* node = scene.mRootNode;
-
-	visitNode(node, scene);
+	visitNode(exporter, node);
 
 #if 0
 	//
