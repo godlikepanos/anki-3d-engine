@@ -1,2 +1,2 @@
 #!/bin/sh
-cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_SHARED_LIBS=ON ..
+cmake -DANKI_BUILD_TYPE=Debug ..

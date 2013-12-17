@@ -59,7 +59,7 @@ private:
 	Mat4 mMat;
 	Mat4 vpMat;
 	Mat4 mvpMat; ///< Optimization
-	U vertexPointer;
+	U32 vertexPointer;
 	Vec3 crntCol;
 
 	Array<Vertex, MAX_POINTS_PER_DRAW> clientVerts;

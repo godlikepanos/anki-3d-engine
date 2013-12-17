@@ -1,2 +1,0 @@
-#!/bin/bash
-ls | xargs -I % echo % | grep -v clean | grep -v .sh | xargs -I % rm -rf %

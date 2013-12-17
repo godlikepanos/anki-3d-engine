@@ -215,14 +215,27 @@ void Renderer::render(SceneGraph& scene_)
 void Renderer::drawQuad()
 {
 	quadVao.bind();
-	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	
+	Drawcall dc;
+	dc.primitiveType = GL_TRIANGLE_STRIP;
+	dc.indicesType = 0;
+	dc.count = 4;
+
+	dc.enque();
 }
 
 //==============================================================================
 void Renderer::drawQuadInstanced(U32 primitiveCount)
 {
 	quadVao.bind();
-	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, primitiveCount);
+
+	Drawcall dc;
+	dc.primitiveType = GL_TRIANGLE_STRIP;
+	dc.indicesType = 0;
+	dc.count = 4;
+	dc.instancesCount = primitiveCount;
+
+	dc.enque();
 }
 
 //==============================================================================

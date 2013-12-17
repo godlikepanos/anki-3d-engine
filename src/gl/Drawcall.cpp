@@ -8,6 +8,8 @@ namespace anki {
 Drawcall::Drawcall()
 {
 	memset(this, 0, sizeof(Drawcall));
+
+	primitiveType = MAX_U32; // Chose something big cause GL_POINTS==0
 	instancesCount = 1;
 	drawCount = 1;
 }
@@ -15,6 +17,7 @@ Drawcall::Drawcall()
 //==============================================================================
 void Drawcall::enque()
 {
+	ANKI_ASSERT(primitiveType != MAX_U32 && "Forgot to set primitiveType");
 	ANKI_ASSERT(instancesCount > 0);
 	ANKI_ASSERT(drawCount > 0 && drawCount <= ANKI_MAX_MULTIDRAW_PRIMITIVES);
 

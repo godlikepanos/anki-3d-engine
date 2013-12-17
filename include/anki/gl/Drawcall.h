@@ -13,14 +13,17 @@ namespace anki {
 /// A GL drawcall
 struct Drawcall
 {
+	/// The GL primitive type (eg GL_POINTS). Need to set it
 	GLenum primitiveType;
 	
-	/// Type of the indices. If zero then draw with glDrawArraysXXX
+	/// Type of the indices. If zero then draw with glDrawArraysXXX. Default is
+	/// zero
 	GLenum indicesType; 
 
+	/// Used in instanced drawcalls. Default is 1
 	U32 instancesCount;
 
-	/// Used in glMultiDrawXXX
+	/// Used in glMultiDrawXXX. Default is 1
 	U32 drawCount;
 
 	/// The indices or elements
