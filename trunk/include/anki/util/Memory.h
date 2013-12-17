@@ -19,6 +19,9 @@ class Allocator;
 /// @{
 
 /// Thread safe memory pool
+///
+/// It's a preallocated memory pool that is used for memory allocations on top
+/// of that preallocated memory. It is mainly used by fast stack allocators
 class StackMemoryPool: public NonCopyable
 {
 public:

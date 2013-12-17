@@ -99,7 +99,12 @@ void DebugDrawer::flush()
 
 	prog->bind();
 	vao.bind();
-	glDrawArrays(GL_LINES, 0, vertexPointer);
+
+	Drawcall dc;
+	dc.primitiveType = GL_LINES;
+	dc.count = vertexPointer;
+	dc.enque();
+	
 	vertexPointer = 0;
 }
 

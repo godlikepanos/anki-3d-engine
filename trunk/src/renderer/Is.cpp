@@ -833,8 +833,13 @@ void Is::lightPass()
 	lightPassProg->findUniformVariable("shadowMapArr").set(sm.sm2DArrayTex);
 
 	quadVao.bind();
-	glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, 
-		r->getTilesCount().x() * r->getTilesCount().y());
+
+	Drawcall dc;
+	dc.primitiveType = GL_TRIANGLE_STRIP;
+	dc.count = 4;
+	dc.instancesCount = r->getTilesCount().x() * r->getTilesCount().y();
+
+	dc.enque();
 }
 
 //==============================================================================
