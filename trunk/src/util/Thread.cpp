@@ -1,5 +1,6 @@
 #include "anki/util/Thread.h"
 #include "anki/util/Assert.h"
+#include "anki/util/Exception.h"
 
 namespace anki {
 
@@ -88,23 +89,30 @@ void ThreadpoolThread::workingFunc()
 //==============================================================================
 Threadpool::~Threadpool()
 {
-	for(ThreadpoolThread* thread : threads)
+	while(threadsCount-- != 0)
 	{
-		delete thread;
+		delete threads[threadsCount];
+	}
+
+	if(threads)
+	{
+		delete[] threads;
 	}
 }
 
 //==============================================================================
-void Threadpool::init(U threadsCount)
+void Threadpool::init(U count)
 {
+	threadsCount = count;
 	ANKI_ASSERT(threadsCount <= MAX_THREADS && threadsCount > 0);
 
 	barrier.reset(new Barrier(threadsCount + 1));
 
-	threads.resize(threadsCount);
-	for(U i = 0; i < threadsCount; i++)
+	threads = new ThreadpoolThread*[threadsCount];
+
+	while(count-- != 0)
 	{
-		threads[i] = new ThreadpoolThread(i, barrier.get(), this);
+		threads[count] = new ThreadpoolThread(count, barrier.get(), this);
 	}
 }
 

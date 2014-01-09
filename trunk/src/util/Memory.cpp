@@ -9,6 +9,61 @@
 namespace anki {
 
 //==============================================================================
+// Other                                                                       =
+//==============================================================================
+
+//==============================================================================
+void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
+{
+#if ANKI_POSIX 
+#	if ANKI_OS != ANKI_OS_ANDROID
+	void* out;
+	int err = posix_memalign(
+		&out, getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
+
+	if(!err)
+	{
+		// Make sure it's aligned
+		ANKI_ASSERT(isAligned(alignmentBytes, out));
+		return out;
+	}
+	else
+	{
+		throw ANKI_EXCEPTION("mallocAligned() failed");
+		return nullptr;
+	}
+#	else
+	void* out = memalign(
+		getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
+
+	if(out)
+	{
+		// Make sure it's aligned
+		ANKI_ASSERT(isAligned(alignmentBytes, out));
+		return out;
+	}
+	else
+	{
+		throw ANKI_EXCEPTION("mallocAligned() failed");
+		return nullptr;
+	}
+#	endif
+#else
+#	error "Unimplemented"
+#endif
+}
+
+//==============================================================================
+void freeAligned(void* ptr)
+{
+#if ANKI_POSIX
+	::free(ptr);
+#else
+#	error "Unimplemented"
+#endif
+}
+
+//==============================================================================
 // StackMemoryPool                                                             =
 //==============================================================================
 
@@ -162,58 +217,130 @@ void StackMemoryPool::reset()
 }
 
 //==============================================================================
-// Other                                                                       =
+// ChainMemoryPool                                                             =
 //==============================================================================
 
 //==============================================================================
-void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
+ChainMemoryPool::ChainMemoryPool(
+	NextChunkAllocationMethod allocMethod, 
+	U32 allocMethodValue, 
+	U32 alignmentBytes_)
+	:	alignmentBytes(alignmentBytes_), 
+		chAllocMethodValue(allocMethodValue),
+		chAllocMethod(allocMethod)
+{}
+
+//==============================================================================
+ChainMemoryPool::~ChainMemoryPool()
 {
-#if ANKI_POSIX 
-#	if ANKI_OS != ANKI_OS_ANDROID
-	void* out;
-	int err = posix_memalign(
-		&out, getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
-
-	if(!err)
-	{
-		// Make sure it's aligned
-		ANKI_ASSERT(isAligned(alignmentBytes, out));
-		return out;
-	}
-	else
-	{
-		throw ANKI_EXCEPTION("mallocAligned() failed");
-		return nullptr;
-	}
-#	else
-	void* out = memalign(
-		getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
-
-	if(out)
-	{
-		// Make sure it's aligned
-		ANKI_ASSERT(isAligned(alignmentBytes, out));
-		return out;
-	}
-	else
-	{
-		throw ANKI_EXCEPTION("mallocAligned() failed");
-		return nullptr;
-	}
-#	endif
-#else
-#	error "Unimplemented"
-#endif
+	// TODO
 }
 
 //==============================================================================
-void freeAligned(void* ptr)
+void* ChainMemoryPool::allocateFromChunk(Chunk* ch, PtrSize size) throw()
 {
-#if ANKI_POSIX
-	::free(ptr);
-#else
-#	error "Unimplemented"
-#endif
+	ANKI_ASSERT(ch);
+	void* mem = ch->pool.allocate(size);
+
+	if(mem)
+	{
+		++ch->allocationsCount;
+	}
+
+	return mem;
+}
+
+//==============================================================================
+ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size) throw()
+{
+	//
+	// Calculate preferred size
+	//
+	
+	// Get the size of the next chunk
+	PtrSize crntMaxSize;
+	if(chAllocMethod == FIXED)
+	{
+		crntMaxSize = chAllocMethodValue;
+	}
+	else
+	{
+		// Get the size of the previous max chunk
+		crntMaxSize = 0;
+		for(Chunk* c : chunks)
+		{
+			if(c)
+			{
+				PtrSize poolSize = c->pool.getSize();
+				crntMaxSize = std::max(crntMaxSize, poolSize);
+			}
+		}
+
+		// Increase it
+		if(chAllocMethod == MULTIPLY)
+		{
+			crntMaxSize *= chAllocMethodValue;
+		}
+		else
+		{
+			ANKI_ASSERT(chAllocMethod == ADD);
+			crntMaxSize += chAllocMethodValue;
+		}
+	}
+
+	// Fix the size
+	size = std::max(crntMaxSize, size * 2);
+
+	//
+	// Create the chunk
+	//
+	Chunk* chunk = new Chunk(size, alignmentBytes);
+
+	if(chunk)
+	{
+		chunks.push_back(chunk);
+	}
+	
+	return chunk;
+}
+
+//==============================================================================
+void* ChainMemoryPool::allocate(PtrSize size) throw()
+{
+	Chunk* ch;
+	void* mem = nullptr;
+
+	// Get chunk
+	lock.lock();
+	ch = crntChunk;
+	lock.unlock();
+
+	// Create new chunk if needed
+	if(ch == nullptr || (mem = allocateFromChunk(ch, size)) == nullptr)
+	{
+		// Create new chunk
+		lock.lock();
+
+		crntChunk = createNewChunk(size);
+		ch = crntChunk;
+
+		lock.unlock();
+
+		// Chunk creation failed
+		if(ch == nullptr)
+		{
+			return mem;
+		}
+	}
+
+	if(mem == nullptr)
+	{
+		ANKI_ASSERT(ch != nullptr);
+		mem = allocateFromChunk(ch, size);
+		ANKI_ASSERT(mem != nullptr && "The chunk should have space");
+	}
+
+	return mem;
 }
 
 } // end namespace anki

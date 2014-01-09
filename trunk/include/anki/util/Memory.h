@@ -4,24 +4,28 @@
 #include "anki/util/StdTypes.h"
 #include "anki/util/Assert.h"
 #include "anki/util/NonCopyable.h"
+#include "anki/util/Thread.h"
 #include <atomic>
+#include <vector>
+#include <memory>
 #include <algorithm> // For the std::move
 
 namespace anki {
-
-// Forward
-template<typename T>
-class Allocator;
 
 /// @addtogroup util
 /// @{
 /// @addtogroup memory
 /// @{
 
-/// Thread safe memory pool
-///
-/// It's a preallocated memory pool that is used for memory allocations on top
-/// of that preallocated memory. It is mainly used by fast stack allocators
+/// Allocate aligned memory
+void* mallocAligned(PtrSize size, PtrSize alignmentBytes);
+
+/// Free aligned memory
+void freeAligned(void* ptr);
+
+/// Thread safe memory pool. It's a preallocated memory pool that is used for 
+/// memory allocations on top of that preallocated memory. It is mainly used by 
+/// fast stack allocators
 class StackMemoryPool: public NonCopyable
 {
 public:
@@ -77,11 +81,76 @@ private:
 	std::atomic<U8*> top = {nullptr};
 };
 
-/// Allocate aligned memory
-extern void* mallocAligned(PtrSize size, PtrSize alignmentBytes);
+/// Chain memory pool. Almost similar to StackMemoryPool but more flexible and 
+/// at the same time a bit slower.
+class ChainMemoryPool: public NonCopyable
+{
+public:
+	/// Chunk allocation method
+	enum NextChunkAllocationMethod
+	{
+		FIXED,
+		MULTIPLY,
+		ADD
+	};
 
-/// Free aligned memory
-extern void freeAligned(void* ptr);
+	/// Default constructor
+	ChainMemoryPool(
+		NextChunkAllocationMethod allocMethod, 
+		U32 allocMethodValue, 
+		U32 alignmentBytes = ANKI_SAFE_ALIGNMENT);
+
+	/// Destroy
+	~ChainMemoryPool();
+
+	/// Allocate memory. This operation is thread safe
+	/// @return The allocated memory or nullptr on failure
+	void* allocate(PtrSize size) throw();
+
+	/// Free memory. If the ptr is not the last allocation of the chunk
+	/// then nothing happens and the method returns false
+	///
+	/// @param[in, out] ptr Memory block to deallocate
+	/// @return True if the deallocation actually happened and false otherwise
+	Bool free(void* ptr) throw();
+
+private:
+	/// A chunk of memory
+	class Chunk
+	{
+	public:
+		StackMemoryPool pool;
+		std::atomic<U32> allocationsCount;
+
+		Chunk(PtrSize size, U32 alignmentBytes)
+			: pool(size, alignmentBytes), allocationsCount{0}
+		{}
+	};
+
+	/// Alignment of allocations
+	U32 alignmentBytes;
+
+	/// A list of chunks
+	std::vector<Chunk*> chunks;
+
+	/// Current chunk to allocate from
+	Chunk* crntChunk = nullptr;
+
+	/// Fast thread locking
+	SpinLock lock;
+
+	/// Chunk allocation method value
+	U32 chAllocMethodValue;
+
+	/// Chunk allocation method
+	U8 chAllocMethod;
+
+	/// Allocate memory from a chunk
+	void* allocateFromChunk(Chunk* ch, PtrSize size) throw();
+
+	/// Create a new chunk
+	Chunk* createNewChunk(PtrSize minSize) throw();
+};
 
 /// @}
 /// @}

@@ -98,7 +98,7 @@ public:
 		// custom mem allocation function
 		PtrSize size = n * sizeof(T);
 		allocatedSize += size;
-		return (T*)mallocAligned(size, alignof(T));
+		return (pointer)mallocAligned(size, alignof(T));
 	}
 
 	/// Deallocate memory
