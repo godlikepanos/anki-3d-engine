@@ -1,21 +1,49 @@
 #ifndef ANKI_UTIL_THREAD_H
 #define ANKI_UTIL_THREAD_H
 
-#include "anki/Config.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
-#include "anki/util/Vector.h"
+#include "anki/util/NonCopyable.h"
+#include <thread>
 #include <condition_variable>
 #include <mutex>
-#include <thread>
-
-namespace anki {
+#include <atomic>
 
 #define ANKI_DISABLE_THREADPOOL_THREADING 0
 
+namespace anki {
+
+// Forward
 class Threadpool;
 
+/// @addtogroup util
+/// @{
+/// @addtogroup thread
+/// @{
+
 typedef U32 ThreadId;
+
+/// Spin lock. Good if the critical section will be executed in a short period
+/// of time
+class SpinLock
+{
+public:
+	/// Lock 
+	void lock()
+	{
+		while(l.test_and_set(std::memory_order_acquire))
+		{}
+	}
+
+	/// Unlock
+	void unlock()
+	{
+		l.clear(std::memory_order_release);
+	}
+
+private:
+	std::atomic_flag l = ATOMIC_FLAG_INIT;	
+};
 
 /// A barrier for thread synchronization. It works just like boost::barrier
 class Barrier
@@ -165,7 +193,7 @@ private:
 
 /// Parallel task dispatcher.You feed it with tasks and sends them for
 /// execution in parallel and then waits for all to finish
-class Threadpool
+class Threadpool: public NonCopyable
 {
 public:
 	static constexpr U MAX_THREADS = 32; ///< An absolute limit
@@ -188,6 +216,7 @@ public:
 	/// Assign a task to a working thread
 	void assignNewTask(U taskId, ThreadpoolTask* task)
 	{
+		ANKI_ASSERT(taskId < getThreadsCount());
 		threads[taskId]->assignNewTask(task);
 	}
 
@@ -199,15 +228,19 @@ public:
 #endif
 	}
 
-	U32 getThreadsCount() const
+	U getThreadsCount() const
 	{
-		return threads.size();
+		return threadsCount;
 	}
 
 private:
-	Vector<ThreadpoolThread*> threads; ///< Worker threads
+	ThreadpoolThread** threads = nullptr; ///< Worker threads array
+	U8 threadsCount = 0;
 	std::unique_ptr<Barrier> barrier; ///< Synchronization barrier
 };
+
+/// @}
+/// @}
 
 } // end namespace anki
 

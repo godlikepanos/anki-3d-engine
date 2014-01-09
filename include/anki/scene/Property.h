@@ -1,6 +1,8 @@
 #ifndef ANKI_SCENE_PROPERTY_H
 #define ANKI_SCENE_PROPERTY_H
 
+#if 0
+
 #include "anki/util/Observer.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
@@ -388,5 +390,7 @@ private:
 };
 
 } // end namespace anki
+
+#endif
 
 #endif
