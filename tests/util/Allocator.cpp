@@ -3,7 +3,7 @@
 #include "anki/util/Allocator.h"
 #include <string>
 
-ANKI_TEST(Allocator, StackAllocator)
+ANKI_TEST(Allocators, StackAllocator)
 {
 	Foo::reset();
 
@@ -21,8 +21,11 @@ ANKI_TEST(Allocator, StackAllocator)
 
 	// With vector
 	{
-		StackAllocator<Foo> alloc(128);
-		std::vector<Foo, StackAllocator<Foo>> vec(alloc);
+		typedef StackAllocator<Foo, false> All;
+		All alloc(StackMemoryPool((sizeof(Foo) + 1) * 10, 1));
+		std::vector<Foo, All> vec(alloc);
+
+		vec.reserve(10);
 
 		U sumi = 0;
 		for(U i = 0; i < 10; i++)

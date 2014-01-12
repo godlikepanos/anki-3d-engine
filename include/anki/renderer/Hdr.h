@@ -3,7 +3,7 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/gl/Fbo.h"
-#include "anki/gl/BufferObject.h"
+#include "anki/gl/GlBuffer.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/ShaderProgramResource.h"
 #include "anki/resource/Resource.h"
@@ -69,7 +69,7 @@ private:
 	Timestamp parameterUpdateTimestamp = getGlobTimestamp();
 	/// When the commonUbo got updated
 	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
-	BufferObject commonUbo;
+	GlBuffer commonUbo;
 
 	void initFbo(Fbo& fbo, Texture& fai);
 	void initInternal(const RendererInitializer& initializer);

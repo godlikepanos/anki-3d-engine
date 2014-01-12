@@ -4,7 +4,7 @@
 #ifndef ANKI_GL_GL_H
 #define ANKI_GL_GL_H
 
-#include "anki/gl/BufferObject.h"
+#include "anki/gl/GlBuffer.h"
 #include "anki/gl/Fbo.h"
 #include "anki/gl/GlException.h"
 #include "anki/gl/GlState.h"
@@ -14,6 +14,6 @@
 #include "anki/gl/Vao.h"
 #include "anki/gl/Drawcall.h"
 
-#include "anki/gl/Ogl.h"
+#include "anki/gl/Common.h"
 
 #endif

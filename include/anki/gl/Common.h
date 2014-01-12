@@ -1,5 +1,5 @@
-#ifndef ANKI_GL_OGL_H
-#define ANKI_GL_OGL_H
+#ifndef ANKI_GL_COMMON_H
+#define ANKI_GL_COMMON_H
 
 #include "anki/Config.h"
 

@@ -3,9 +3,9 @@
 #include "anki/util/Memory.h"
 #include <type_traits>
 
-ANKI_TEST(Memory, Test)
+ANKI_TEST(Memory, StackMemoryPool)
 {
-	constexpr U n = 4;
+	/*constexpr U n = 4;
 	StackAllocator<U8, true> alloc(sizeof(Foo) * n + sizeof(PtrSize));
 
 	Foo* f = ANKI_NEW(Foo, alloc, 123);
@@ -29,6 +29,46 @@ ANKI_TEST(Memory, Test)
 
 	ANKI_DELETE_ARRAY(f, alloc);
 
-	ANKI_TEST_EXPECT_EQ(alloc.getMemoryPool().getAllocatedSize(), 0);
+	ANKI_TEST_EXPECT_EQ(alloc.getMemoryPool().getAllocatedSize(), 0);*/
 }
 
+ANKI_TEST(Memory, ChainMemoryPool)
+{
+	// Basic test
+	{
+		const U size = sizeof(PtrSize) + 10;
+		ChainMemoryPool pool(
+			size, size, ChainMemoryPool::MULTIPLY, 2, 1);
+
+		void* mem = pool.allocate(1);
+		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
+		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 1);
+
+		void* mem1 = pool.allocate(10);
+		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
+		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 2);
+
+		pool.free(mem1);
+		pool.free(mem);
+		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 0);
+	}
+
+	// Basic test 2
+	{
+		const U size = sizeof(PtrSize) + 10;
+		ChainMemoryPool pool(
+			size, size, ChainMemoryPool::MULTIPLY, 2, 1);
+
+		void* mem = pool.allocate(1);
+		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
+		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 1);
+
+		void* mem1 = pool.allocate(10);
+		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
+		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 2);
+
+		pool.free(mem);
+		pool.free(mem1);
+		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 0);
+	}
+}

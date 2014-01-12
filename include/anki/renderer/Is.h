@@ -66,19 +66,19 @@ private:
 	PtrSize uboAlignment = MAX_PTR_SIZE; ///< Cache the value here
 
 	/// Contains common data for all shader programs
-	BufferObject commonUbo;
+	GlBuffer commonUbo;
 
 	/// Track the updates of commonUbo
 	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
 
 	/// Contains all the lights
-	BufferObject lightsUbo;
+	GlBuffer lightsUbo;
 
 	/// Contains the number of lights per tile
-	BufferObject tilesBuffer;
+	GlBuffer tilesBuffer;
 
-	BufferObject pointLightIndicesBuffer;
-	BufferObject spotLightIndicesBuffer;
+	GlBuffer pointLightIndicesBuffer;
+	GlBuffer spotLightIndicesBuffer;
 	/// @}
 
 	// Light shaders
@@ -98,7 +98,7 @@ private:
 
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
-	BufferObject quadPositionsVbo; ///< The VBO for quad positions
+	GlBuffer quadPositionsVbo; ///< The VBO for quad positions
 	Vao quadVao; ///< This VAO is used everywhere except material stage
 	/// @}
 

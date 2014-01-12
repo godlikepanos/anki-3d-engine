@@ -2,7 +2,7 @@
 #define ANKI_RENDERER_DEBUG_DRAWER_H
 
 #include "anki/Math.h"
-#include "anki/gl/BufferObject.h"
+#include "anki/gl/GlBuffer.h"
 #include "anki/gl/Vao.h"
 #include "anki/resource/Resource.h"
 #include "anki/collision/CollisionShape.h"
@@ -64,7 +64,7 @@ private:
 
 	Array<Vertex, MAX_POINTS_PER_DRAW> clientVerts;
 
-	BufferObject vbo;
+	GlBuffer vbo;
 	Vao vao;
 
 	/// This is a container of some precalculated spheres. Its a map that

@@ -2,7 +2,7 @@
 #define ANKI_RESOURCE_MESH_H
 
 #include "anki/Math.h"
-#include "anki/gl/BufferObject.h"
+#include "anki/gl/GlBuffer.h"
 #include "anki/collision/Obb.h"
 #include "anki/util/Vector.h"
 
@@ -85,7 +85,7 @@ public:
 
 	/// Get info on how to attach a VBO to a VAO
 	void getVboInfo(
-		const VertexAttribute attrib, const BufferObject*& vbo,
+		const VertexAttribute attrib, const GlBuffer*& vbo,
 		U32& size, GLenum& type, U32& stride, U32& offset) const;
 
 	/// Helper function for correct loading
@@ -110,8 +110,8 @@ protected:
 	U8 texChannelsCount;
 	Bool8 weights;
 
-	BufferObject vbo;
-	BufferObject indicesVbo;
+	GlBuffer vbo;
+	GlBuffer indicesVbo;
 
 	/// Create the VBOs using the mesh data
 	void createVbos(const MeshLoader& loader);

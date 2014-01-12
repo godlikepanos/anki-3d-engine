@@ -39,7 +39,7 @@ private:
 	TextureResourcePointer lensDirtTex;
 	U8 maxFlaresPerLight;
 	U8 maxLightsWithFlares;
-	BufferObject flareDataUbo;
+	GlBuffer flareDataUbo;
 	const ShaderProgramUniformBlock* ublock;
 	
 

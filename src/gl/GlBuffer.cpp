@@ -1,5 +1,5 @@
 #include <cstring>
-#include "anki/gl/BufferObject.h"
+#include "anki/gl/GlBuffer.h"
 #include "anki/gl/GlException.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
@@ -16,11 +16,11 @@ namespace anki {
 #define USE_BUFFER_DATA_ON_WRITE 1
 
 //==============================================================================
-// BufferObject                                                                =
+// GlBuffer                                                                    =
 //==============================================================================
 
 //==============================================================================
-BufferObject& BufferObject::operator=(BufferObject&& b)
+GlBuffer& GlBuffer::operator=(GlBuffer&& b)
 {
 	destroy();
 	Base::operator=(std::forward<Base>(b));
@@ -34,7 +34,7 @@ BufferObject& BufferObject::operator=(BufferObject&& b)
 }
 
 //==============================================================================
-void BufferObject::destroy()
+void GlBuffer::destroy()
 {
 	if(isCreated())
 	{
@@ -45,7 +45,7 @@ void BufferObject::destroy()
 }
 
 //==============================================================================
-void BufferObject::create(GLenum target_, U32 sizeInBytes_,
+void GlBuffer::create(GLenum target_, U32 sizeInBytes_,
 	const void* dataPtr, GLenum usage_)
 {
 	ANKI_ASSERT(!isCreated());
@@ -94,7 +94,7 @@ void BufferObject::create(GLenum target_, U32 sizeInBytes_,
 }
 
 //==============================================================================
-void* BufferObject::map(U32 offset, U32 length, GLuint flags)
+void* GlBuffer::map(U32 offset, U32 length, GLuint flags)
 {
 	// XXX Remove this workaround
 #if ANKI_GL == ANKI_GL_ES
@@ -120,7 +120,7 @@ void* BufferObject::map(U32 offset, U32 length, GLuint flags)
 }
 
 //==============================================================================
-void BufferObject::unmap()
+void GlBuffer::unmap()
 {
 	ANKI_ASSERT(isCreated());
 #if ANKI_DEBUG
@@ -134,7 +134,7 @@ void BufferObject::unmap()
 }
 
 //==============================================================================
-void BufferObject::write(void* buff, U32 offset, U32 size)
+void GlBuffer::write(void* buff, U32 offset, U32 size)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(usage != GL_STATIC_DRAW);
@@ -154,7 +154,7 @@ void BufferObject::write(void* buff, U32 offset, U32 size)
 }
 
 //==============================================================================
-void BufferObject::read(void* outBuff, U32 offset, U32 size)
+void GlBuffer::read(void* outBuff, U32 offset, U32 size)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(usage != GL_STATIC_DRAW);
@@ -167,7 +167,7 @@ void BufferObject::read(void* outBuff, U32 offset, U32 size)
 }
 
 //==============================================================================
-void BufferObject::setBinding(GLuint binding) const
+void GlBuffer::setBinding(GLuint binding) const
 {
 	ANKI_ASSERT(isCreated());
 	glBindBufferBase(target, binding, getGlId());
@@ -175,7 +175,7 @@ void BufferObject::setBinding(GLuint binding) const
 }
 
 //==============================================================================
-void BufferObject::setBindingRange(
+void GlBuffer::setBindingRange(
 	GLuint binding, PtrSize offset, PtrSize size) const
 {
 	ANKI_ASSERT(isCreated());

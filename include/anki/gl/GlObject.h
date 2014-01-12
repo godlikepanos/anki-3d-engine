@@ -1,7 +1,7 @@
 #ifndef ANKI_GL_GL_OBJECT_H
 #define ANKI_GL_GL_OBJECT_H
 
-#include "anki/gl/Ogl.h"
+#include "anki/gl/Common.h"
 #include "anki/gl/GlException.h"
 #include "anki/Config.h"
 #include "anki/util/NonCopyable.h"

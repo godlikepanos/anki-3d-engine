@@ -7,7 +7,7 @@
 #include "anki/util/Vector.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/NonCopyable.h"
-#include "anki/gl/Ogl.h"
+#include "anki/gl/Common.h"
 #include <cstdlib>
 #include <cstring>
 #include <limits>

@@ -7,7 +7,7 @@
 #include "anki/resource/Resource.h"
 #include "anki/gl/Fbo.h"
 #include "anki/gl/Texture.h"
-#include "anki/gl/BufferObject.h"
+#include "anki/gl/GlBuffer.h"
 #include "anki/core/Timestamp.h"
 
 namespace anki {
@@ -49,7 +49,7 @@ private:
 	ShaderProgramResourcePointer hblurSProg;
 	ShaderProgramResourcePointer vblurSProg;
 	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
-	BufferObject commonUbo;
+	GlBuffer commonUbo;
 
 	static void createFbo(Fbo& fbo, Texture& fai, U width, U height);
 	void initInternal(const RendererInitializer& initializer);

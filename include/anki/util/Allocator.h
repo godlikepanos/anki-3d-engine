@@ -6,7 +6,6 @@
 #include "anki/util/Memory.h"
 #include <cstddef> // For ptrdiff_t
 #include <utility> // For forward
-#include <memory> // For shared_ptr
 
 #define ANKI_DEBUG_ALLOCATORS ANKI_DEBUG
 #define ANKI_PRINT_ALLOCATOR_MESSAGES 1
@@ -230,26 +229,25 @@ inline bool operator!=(const HeapAllocator<T1>&, const AnotherAllocator&)
 	return true;
 }
 
-/// Stack based allocator
+/// Pool based allocator
+///
+/// This is a template that accepts memory pools with a specific interface
 ///
 /// @tparam T The type
 /// @tparam deallocationFlag If true then the allocator will try to deallocate
-///                          the memory. This is extremely important to
+///                          the memory. It is extremely important to
 ///                          understand when it should be true. See notes
-/// @tparam alignmentBytes Set the alighment in bytes
 ///
-/// @note The deallocationFlag can brake the allocator when the deallocations
-///       are not in the correct order. For example when deallocationFlag==true
-///       and the allocator is used in vector it is likely to fail.
+/// @note The deallocationFlag can brake the allocator when used with stack 
+///       pools and the deallocations are not in the correct order.
 ///
 /// @note Don't ever EVER remove the double copy constructor and the double
 ///       operator=. The compiler will create defaults
-template<typename T, Bool deallocationFlag = false,
-	U32 alignmentBytes = ANKI_SAFE_ALIGNMENT>
-class StackAllocator
+template<typename T, typename TPool, Bool deallocationFlag = false>
+class GenericPoolAllocator
 {
-	template<typename U, Bool deallocationFlag_, U32 alignmentBytes_>
-	friend class StackAllocator;
+	template<typename U, typename TPool_, Bool deallocationFlag_>
+	friend class GenericPoolAllocator;
 
 public:
 	// Typedefs
@@ -262,40 +260,43 @@ public:
 	typedef T value_type;
 
 	/// Default constructor
-	StackAllocator() throw()
+	GenericPoolAllocator() throw()
 	{}
+
 	/// Copy constructor
-	StackAllocator(const StackAllocator& b) throw()
+	GenericPoolAllocator(const GenericPoolAllocator& b) throw()
 	{
 		*this = b;
-	}
-	/// Copy constructor
-	template<typename U>
-	StackAllocator(
-		const StackAllocator<U, deallocationFlag, alignmentBytes>& b) throw()
-	{
-		*this = b;
-	}
-	/// Constuctor with size
-	StackAllocator(size_type size) throw()
-	{
-		mpool.reset(new StackMemoryPool(size, alignmentBytes));
 	}
 
+	/// Copy constructor
+	template<typename U>
+	GenericPoolAllocator(const GenericPoolAllocator<
+		U, TPool, deallocationFlag>& b) throw()
+	{
+		*this = b;
+	}
+
+	/// Constuctor that accepts a pool
+	GenericPoolAllocator(const TPool& pool) throw()
+		: mpool(pool)
+	{}
+
 	/// Destructor
-	~StackAllocator()
+	~GenericPoolAllocator()
 	{}
 
 	/// Copy
-	StackAllocator& operator=(const StackAllocator& b)
+	GenericPoolAllocator& operator=(const GenericPoolAllocator& b)
 	{
 		mpool = b.mpool;
 		return *this;
 	}
+
 	/// Copy
 	template<typename U>
-	StackAllocator& operator=(
-		const StackAllocator<U, deallocationFlag, alignmentBytes>& b)
+	GenericPoolAllocator& operator=(const GenericPoolAllocator<
+		U, TPool, deallocationFlag>& b)
 	{
 		mpool = b.mpool;
 		return *this;
@@ -306,6 +307,7 @@ public:
 	{
 		return &x;
 	}
+
 	/// Get the const address of a const reference
 	const_pointer address(const_reference x) const
 	{
@@ -315,11 +317,10 @@ public:
 	/// Allocate memory
 	pointer allocate(size_type n, const void* hint = 0)
 	{
-		ANKI_ASSERT(mpool != nullptr);
 		(void)hint;
 		size_type size = n * sizeof(value_type);
 		
-		void* out = mpool->allocate(size);
+		void* out = mpool.allocate(size);
 
 		if(out != nullptr)
 		{
@@ -336,18 +337,17 @@ public:
 	/// Deallocate memory
 	void deallocate(void* p, size_type n)
 	{
-		ANKI_ASSERT(mpool != nullptr);
 		(void)p;
 		(void)n;
 
 		if(deallocationFlag)
 		{
-			Bool ok = mpool->free(p);
+			Bool ok = mpool.free(p);
 
 			if(!ok)
 			{
 				throw ANKI_EXCEPTION("Freeing wrong pointer. "
-					"The deallocations on StackAllocator should be in order");
+					"Pool's free returned false");
 			}
 		}
 	}
@@ -358,6 +358,7 @@ public:
 		// Placement new
 		new ((T*)p) T(val);
 	}
+
 	/// Call constructor with many arguments
 	template<typename U, typename... Args>
 	void construct(U* p, Args&&... args)
@@ -371,6 +372,7 @@ public:
 	{
 		p->~T();
 	}
+
 	/// Call destructor
 	template<typename U>
 	void destroy(U* p)
@@ -381,28 +383,25 @@ public:
 	/// Get the max allocation size
 	size_type max_size() const
 	{
-		ANKI_ASSERT(mpool != nullptr);
-		return mpool->getSize();
+		return mpool.getTotalSize();
 	}
 
 	/// A struct to rebind the allocator to another allocator of type U
 	template<typename U>
 	struct rebind
 	{
-		typedef StackAllocator<U, deallocationFlag, alignmentBytes> other;
+		typedef GenericPoolAllocator<U, TPool, deallocationFlag> other;
 	};
 
 	/// Reinit the allocator. All existing allocated memory will be lost
 	void reset()
 	{
-		ANKI_ASSERT(mpool != nullptr);
-		mpool->reset();
+		mpool.reset();
 	}
 
-	const StackMemoryPool& getMemoryPool() const
+	const TPool& getMemoryPool() const
 	{
-		ANKI_ASSERT(mpool != nullptr);
-		return *mpool;
+		return mpool;
 	}
 
 	/// Allocate a new object and call it's constructor
@@ -460,46 +459,56 @@ public:
 	}
 
 private:
-	std::shared_ptr<StackMemoryPool> mpool;
+	TPool mpool;
 };
 
 /// Another allocator of the same type can deallocate from this one
-template<typename T1, typename T2, Bool deallocationFlag, U32 alignmentBytes>
+template<typename T1, typename T2, typename TPool, Bool deallocationFlag>
 inline bool operator==(
-	const StackAllocator<T1, deallocationFlag, alignmentBytes>&,
-	const StackAllocator<T2, deallocationFlag, alignmentBytes>&)
+	const GenericPoolAllocator<T1, TPool, deallocationFlag>&,
+	const GenericPoolAllocator<T2, TPool, deallocationFlag>&)
 {
 	return true;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
-template<typename T1, typename AnotherAllocator, Bool deallocationFlag,
-	U32 alignmentBytes>
+template<typename T1, typename AnotherAllocator, typename TPool, 
+	Bool deallocationFlag>
 inline bool operator==(
-	const StackAllocator<T1, deallocationFlag, alignmentBytes>&,
+	const GenericPoolAllocator<T1, TPool, deallocationFlag>&,
 	const AnotherAllocator&)
 {
 	return false;
 }
 
 /// Another allocator of the same type can deallocate from this one
-template<typename T1, typename T2, Bool deallocationFlag, U32 alignmentBytes>
+template<typename T1, typename T2, typename TPool, Bool deallocationFlag>
 inline bool operator!=(
-	const StackAllocator<T1, deallocationFlag, alignmentBytes>&,
-	const StackAllocator<T2, deallocationFlag, alignmentBytes>&)
+	const GenericPoolAllocator<T1, TPool, deallocationFlag>&,
+	const GenericPoolAllocator<T2, TPool, deallocationFlag>&)
 {
 	return false;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
-template<typename T1, typename AnotherAllocator, Bool deallocationFlag,
-	U32 alignmentBytes>
+template<typename T1, typename AnotherAllocator, typename TPool, 
+	Bool deallocationFlag>
 inline bool operator!=(
-	const StackAllocator<T1, deallocationFlag, alignmentBytes>&,
+	const GenericPoolAllocator<T1, TPool, deallocationFlag>&,
 	const AnotherAllocator&)
 {
 	return true;
 }
+
+/// Allocator that uses a StackMemoryPool
+template<typename T, Bool deallocationFlag = false>
+using StackAllocator = 
+	GenericPoolAllocator<T, StackMemoryPool, deallocationFlag>;
+
+/// Allocator that uses a ChainMemoryPool
+template<typename T, Bool deallocationFlag = true>
+using ChainAllocator = 
+	GenericPoolAllocator<T, ChainMemoryPool, deallocationFlag>;
 
 /// @}
 /// @}

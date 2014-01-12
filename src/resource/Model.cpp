@@ -36,7 +36,7 @@ void ModelPatchBase::createVao(const ShaderProgram& prog,
 {
 	vao.create();
 
-	const BufferObject* vbo;
+	const GlBuffer* vbo;
 	U32 size;
 	GLenum type;
 	U32 stride;

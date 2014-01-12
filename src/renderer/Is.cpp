@@ -516,7 +516,7 @@ void Is::initInternal(const RendererInitializer& initializer)
 	// Create UBOs
 	//
 
-	uboAlignment = BufferObject::getUniformBufferOffsetAlignment();
+	uboAlignment = GlBuffer::getUniformBufferOffsetAlignment();
 
 	commonUbo.create(GL_UNIFORM_BUFFER, sizeof(shader::CommonUniforms), 
 		nullptr, GL_DYNAMIC_DRAW);

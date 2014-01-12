@@ -1,5 +1,5 @@
 #include "anki/gl/Vao.h"
-#include "anki/gl/BufferObject.h"
+#include "anki/gl/GlBuffer.h"
 #include "anki/util/Exception.h"
 #include "anki/gl/ShaderProgram.h"
 #include "anki/core/Logger.h"
@@ -25,7 +25,7 @@ void Vao::destroy()
 }
 
 //==============================================================================
-void Vao::attachArrayBufferVbo(const BufferObject* vbo, 
+void Vao::attachArrayBufferVbo(const GlBuffer* vbo, 
 	const GLint attribVarLocation,
 	const PtrSize size, const GLenum type, const Bool normalized, 
 	const PtrSize stride, const PtrSize offset)
@@ -50,7 +50,7 @@ void Vao::attachArrayBufferVbo(const BufferObject* vbo,
 }
 
 //==============================================================================
-void Vao::attachArrayBufferVbo(const BufferObject* vbo,
+void Vao::attachArrayBufferVbo(const GlBuffer* vbo,
 	const ShaderProgramAttributeVariable& attribVar,
 	const PtrSize size, const GLenum type, const Bool normalized, 
 	const PtrSize stride, const PtrSize offset)
@@ -60,7 +60,7 @@ void Vao::attachArrayBufferVbo(const BufferObject* vbo,
 }
 
 //==============================================================================
-void Vao::attachElementArrayBufferVbo(const BufferObject* vbo)
+void Vao::attachElementArrayBufferVbo(const GlBuffer* vbo)
 {
 	ANKI_ASSERT(isCreated());
 	checkNonSharable();

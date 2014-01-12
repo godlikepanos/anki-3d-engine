@@ -3,6 +3,8 @@
 
 using namespace anki;
 
+#if 0
+
 template<typename T, typename Alloc>
 struct Deleter
 {
@@ -79,4 +81,5 @@ ANKI_TEST(Object, Test)
 	delete a;
 }
 
+#endif
 

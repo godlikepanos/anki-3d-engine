@@ -23,7 +23,9 @@ typedef void (*TestCallback)(Test&);
 struct TestSuite
 {
 	std::string name;
-	PtrVector<Test> tests;
+	Vector<Test*> tests;
+
+	~TestSuite();
 };
 
 /// Test
@@ -39,7 +41,7 @@ struct Test
 /// A container of test suites
 struct Tester
 {
-	PtrVector<TestSuite> suites;
+	Vector<TestSuite*> suites;
 	std::string programName;
 
 	void addTest(const char* name, const char* suite, TestCallback callback);
@@ -47,6 +49,14 @@ struct Tester
 	int run(int argc, char** argv);
 
 	int listTests();
+
+	~Tester()
+	{
+		for(TestSuite* s : suites)
+		{
+			delete s;
+		}
+	}
 };
 
 /// Singleton so we can do the ANKI_TEST trick
