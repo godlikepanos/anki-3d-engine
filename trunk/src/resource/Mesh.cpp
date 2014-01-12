@@ -120,7 +120,7 @@ void Mesh::createVbos(const MeshLoader& loader)
 }
 
 //==============================================================================
-void Mesh::getVboInfo(const VertexAttribute attrib, const BufferObject*& v, 
+void Mesh::getVboInfo(const VertexAttribute attrib, const GlBuffer*& v, 
 	U32& size, GLenum& type, U32& stride, U32& offset) const
 {
 	stride = calcVertexSize();

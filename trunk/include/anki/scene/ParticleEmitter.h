@@ -220,7 +220,7 @@ private:
 	U32 aliveParticlesCountDraw = 0;
 
 	Vao vao; ///< Hold the VBO
-	BufferObject vbo; ///< Hold the vertex data
+	GlBuffer vbo; ///< Hold the vertex data
 	SceneVector<F32> clientBuffer;
 
 	U8 simulationType = UNDEFINED_SIMULATION;

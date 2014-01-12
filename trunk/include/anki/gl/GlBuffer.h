@@ -1,5 +1,5 @@
-#ifndef ANKI_GL_BUFFER_OBJECT_H
-#define ANKI_GL_BUFFER_OBJECT_H
+#ifndef ANKI_GL_GL_BUFFER_H
+#define ANKI_GL_GL_BUFFER_H
 
 #include "anki/gl/GlObject.h"
 
@@ -10,7 +10,7 @@ namespace anki {
 	
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
 /// to prevent us from making idiotic errors
-class BufferObject: public GlObject
+class GlBuffer: public GlObject
 {
 public:
 	typedef GlObject Base;
@@ -19,24 +19,24 @@ public:
 	/// @{
 
 	/// Default
-	BufferObject()
+	GlBuffer()
 	{}
 
 	/// Move
-	BufferObject(BufferObject&& b)	
+	GlBuffer(GlBuffer&& b)	
 	{
 		*this = std::move(b);
 	}
 
 	/// It deletes the BO
-	~BufferObject()
+	~GlBuffer()
 	{
 		destroy();
 	}
 	/// @}
 
 	/// Move
-	BufferObject& operator=(BufferObject&& b);
+	GlBuffer& operator=(GlBuffer&& b);
 
 	/// @name Accessors
 	/// @{

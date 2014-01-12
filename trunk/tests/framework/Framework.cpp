@@ -6,6 +6,15 @@
 namespace anki {
 
 //==============================================================================
+TestSuite::~TestSuite()
+{
+	for(Test* t : tests)
+	{
+		delete t;
+	}
+}
+
+//==============================================================================
 void Test::run()
 {
 	std::cout << "========\nRunning " << suite->name << " " << name
@@ -28,7 +37,7 @@ void Test::run()
 void Tester::addTest(const char* name, const char* suiteName,
 	TestCallback callback)
 {
-	PtrVector<TestSuite>::iterator it;
+	Vector<TestSuite*>::iterator it;
 	for(it = suites.begin(); it != suites.end(); it++)
 	{
 		if((*it)->name == suiteName)
@@ -51,7 +60,7 @@ void Tester::addTest(const char* name, const char* suiteName,
 	}
 
 	// Sanity check
-	PtrVector<Test>::iterator it1;
+	Vector<Test*>::iterator it1;
 	for(it1 = suite->tests.begin(); it1 != suite->tests.end(); it1++)
 	{
 		if((*it)->name == name)
@@ -178,8 +187,18 @@ Options:
 		}
 	}
 
-	std::cout << "========\nRun " << run << " tests, failed " << (run - passed)
-		<< "\n" << std::endl;
+	int failed = run - passed;
+	std::cout << "========\nRun " << run << " tests, failed " << failed
+		<< std::endl;
+
+	if(failed == 0)
+	{
+		std::cout << "SUCCESS!" << std::endl;
+	}
+	else
+	{
+		std::cout << "FAILURE" << std::endl;
+	}
 
 	return run - passed;
 }

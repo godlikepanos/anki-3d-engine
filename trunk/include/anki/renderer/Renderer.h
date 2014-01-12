@@ -266,7 +266,7 @@ private:
 
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
-	BufferObject quadPositionsVbo; ///< The VBO for quad positions
+	GlBuffer quadPositionsVbo; ///< The VBO for quad positions
 	Vao quadVao; ///< This VAO is used everywhere except material stage
 	/// @}
 

@@ -8,7 +8,6 @@
 #include "anki/util/Visitor.h"
 #include "anki/util/Dictionary.h"
 #include "anki/util/NonCopyable.h"
-#include "anki/gl/Ogl.h"
 #include <memory>
 
 namespace anki {

@@ -2,7 +2,7 @@
 #define ANKI_GL_GL_STATE_H
 
 #include "anki/util/Singleton.h"
-#include "anki/gl/Ogl.h"
+#include "anki/gl/Common.h"
 #include "anki/util/Assert.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"

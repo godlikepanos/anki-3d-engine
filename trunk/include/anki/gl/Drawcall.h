@@ -1,7 +1,7 @@
 #ifndef ANKI_GL_DRAWCALL_H
 #define ANKI_GL_DRAWCALL_H
 
-#include "anki/gl/Ogl.h"
+#include "anki/gl/Common.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
 

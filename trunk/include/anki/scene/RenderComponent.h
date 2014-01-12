@@ -4,7 +4,7 @@
 #include "anki/scene/Property.h"
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneComponent.h"
-#include "anki/gl/BufferObject.h"
+#include "anki/gl/GlBuffer.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Model.h"
 
