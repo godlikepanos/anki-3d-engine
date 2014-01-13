@@ -12,10 +12,27 @@ namespace anki {
 /// @{
 
 /// Allocate aligned memory
-void* mallocAligned(PtrSize size, PtrSize alignmentBytes);
+void* mallocAligned(PtrSize size, PtrSize alignmentBytes) throw();
 
 /// Free aligned memory
-void freeAligned(void* ptr);
+void freeAligned(void* ptr) throw();
+
+/// A dummy interface to match the StackMemoryPool and ChainMemoryPool 
+/// interfaces in order to be used by the same allocator template
+class HeapMemoryPool
+{
+public:
+	static void* allocate(PtrSize size, PtrSize alignment) throw()
+	{
+		return mallocAligned(size, alignment);
+	}
+
+	static Bool free(void* ptr) throw()
+	{
+		freeAligned(ptr);
+		return true;
+	}
+};
 
 /// Thread safe memory pool. It's a preallocated memory pool that is used for 
 /// memory allocations on top of that preallocated memory. It is mainly used by 
@@ -57,7 +74,7 @@ public:
 
 	/// Allocate memory
 	/// @return The allocated memory or nullptr on failure
-	void* allocate(PtrSize size) throw();
+	void* allocate(PtrSize size, PtrSize alignmentBytes) throw();
 
 	/// Free memory in StackMemoryPool. If the ptr is not the last allocation
 	/// then nothing happens and the method returns false
@@ -70,7 +87,8 @@ public:
 	void reset();
 
 private:
-	// Forward
+	// Forward. Hide the implementation because Memory.h is the base of other
+	// files and should not include them
 	class Implementation;
 
 	/// The actual implementation
@@ -124,7 +142,7 @@ public:
 
 	/// Allocate memory. This operation is thread safe
 	/// @return The allocated memory or nullptr on failure
-	void* allocate(PtrSize size) throw();
+	void* allocate(PtrSize size, PtrSize alignmentBytes) throw();
 
 	/// Free memory. If the ptr is not the last allocation of the chunk
 	/// then nothing happens and the method returns false
@@ -139,7 +157,8 @@ public:
 	/// @}
 
 private:
-	// Forward
+	// Forward. Hide the implementation because Memory.h is the base of other
+	// files and should not include them
 	class Implementation;
 
 	/// The actual implementation

@@ -40,11 +40,11 @@ ANKI_TEST(Memory, ChainMemoryPool)
 		ChainMemoryPool pool(
 			size, size, ChainMemoryPool::MULTIPLY, 2, 1);
 
-		void* mem = pool.allocate(1);
+		void* mem = pool.allocate(1, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
 		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 1);
 
-		void* mem1 = pool.allocate(10);
+		void* mem1 = pool.allocate(10, 1);
 		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
 		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 2);
 
@@ -59,11 +59,11 @@ ANKI_TEST(Memory, ChainMemoryPool)
 		ChainMemoryPool pool(
 			size, size, ChainMemoryPool::MULTIPLY, 2, 1);
 
-		void* mem = pool.allocate(1);
+		void* mem = pool.allocate(1, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
 		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 1);
 
-		void* mem1 = pool.allocate(10);
+		void* mem1 = pool.allocate(10, 1);
 		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
 		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 2);
 
