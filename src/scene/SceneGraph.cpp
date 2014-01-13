@@ -200,7 +200,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	//
 
 	// Reset the framepool
-	frameAlloc.reset();
+	frameAlloc.getMemoryPool().reset();
 
 	// Delete nodes
 	deleteNodesMarkedForDeletion();

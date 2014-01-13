@@ -15,7 +15,7 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
+void* mallocAligned(PtrSize size, PtrSize alignmentBytes) throw()
 {
 #if ANKI_POSIX 
 #	if ANKI_OS != ANKI_OS_ANDROID
@@ -31,7 +31,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
-		throw ANKI_EXCEPTION("mallocAligned() failed");
+		ANKI_ASSERT(0 && "mallocAligned() failed");
 		return nullptr;
 	}
 #	else
@@ -46,7 +46,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 	}
 	else
 	{
-		throw ANKI_EXCEPTION("mallocAligned() failed");
+		ANKI_ASSERT(0 && "mallocAligned() failed");
 		return nullptr;
 	}
 #	endif
@@ -56,7 +56,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 }
 
 //==============================================================================
-void freeAligned(void* ptr)
+void freeAligned(void* ptr) throw()
 {
 #if ANKI_POSIX
 	::free(ptr);
@@ -76,11 +76,16 @@ public:
 	/// The header of each allocation
 	struct MemoryBlockHeader
 	{
-		U32 size;
+		U8 size[4]; ///< It's U8 to allow whatever alignment
 	};
+
+	static_assert(alignof(MemoryBlockHeader) == 1, "Alignment error");
 
 	/// Alignment of allocations
 	U32 alignmentBytes;
+
+	/// Aligned size of MemoryBlockHeader
+	U32 headerSize;
 
 	/// Pre-allocated memory chunk
 	U8* memory = nullptr;
@@ -97,12 +102,17 @@ public:
 			memsize(getAlignedRoundUp(alignmentBytes, size))
 	{
 		ANKI_ASSERT(memsize > 0);
+		ANKI_ASSERT(alignmentBytes > 0);
 		memory = (U8*)mallocAligned(memsize, alignmentBytes);
 
 		if(memory != nullptr)
 		{
 			// Align allocated memory
 			top = memory;
+
+			// Calc header size
+			headerSize = 
+				getAlignedRoundUp(alignmentBytes, sizeof(MemoryBlockHeader));
 		}
 		else
 		{
@@ -137,15 +147,13 @@ public:
 	}
 
 	/// Allocate
-	void* allocate(PtrSize size_) throw()
+	void* allocate(PtrSize size, PtrSize alignment) throw()
 	{
-		// memory is nullptr if moved
 		ANKI_ASSERT(memory != nullptr);
+		ANKI_ASSERT(alignment <= alignmentBytes);
+		(void)alignment;
 
-		PtrSize headerSize = 
-			getAlignedRoundUp(alignmentBytes, sizeof(MemoryBlockHeader));
-		PtrSize size = 
-			getAlignedRoundUp(alignmentBytes, size_ + headerSize);
+		size = getAlignedRoundUp(alignmentBytes, size + headerSize);
 
 		ANKI_ASSERT(size < MAX_U32 && "Too big allocation");
 
@@ -154,7 +162,9 @@ public:
 		if(out + size <= memory + memsize)
 		{
 			// Write the block header
-			((MemoryBlockHeader*)out)->size = size;
+			MemoryBlockHeader* header = (MemoryBlockHeader*)out;
+			U32 size32 = size;
+			memcpy(&header->size[0], &size32, sizeof(U32));
 
 			// Set the correct output
 			out += headerSize;
@@ -182,17 +192,17 @@ public:
 		ANKI_ASSERT(memory != nullptr);
 
 		// Correct the p
-		PtrSize headerSize = 
-			getAlignedRoundUp(alignmentBytes, sizeof(MemoryBlockHeader));
 		U8* realptr = (U8*)ptr - headerSize;
 
 		// realptr should be inside the pool's preallocated memory
 		ANKI_ASSERT(realptr >= memory);
 
 		// Get block size
-		U32 size = ((MemoryBlockHeader*)realptr)->size;
+		MemoryBlockHeader* header = (MemoryBlockHeader*)realptr;
+		U32 size;
+		memcpy(&size, &header->size[0], sizeof(U32));
 
-		// Check if the size is ok
+		// Check if the size is within limits
 		ANKI_ASSERT(realptr + size <= memory + memsize);
 
 		// Atomic stuff
@@ -251,10 +261,10 @@ PtrSize StackMemoryPool::getAllocatedSize() const
 }
 
 //==============================================================================
-void* StackMemoryPool::allocate(PtrSize size) throw()
+void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment) throw()
 {
 	ANKI_ASSERT(impl.get() != nullptr);
-	return impl->allocate(size);
+	return impl->allocate(size, alignment);
 }
 
 //==============================================================================
@@ -419,11 +429,11 @@ public:
 	}
 
 	/// Allocate from chunk
-	void* allocateFromChunk(Chunk* ch, PtrSize size) throw()
+	void* allocateFromChunk(Chunk* ch, PtrSize size, PtrSize alignment) throw()
 	{
 		ANKI_ASSERT(ch);
 		ANKI_ASSERT(size <= maxSize);
-		void* mem = ch->pool.allocate(size);
+		void* mem = ch->pool.allocate(size, alignment);
 
 		if(mem)
 		{
@@ -434,7 +444,7 @@ public:
 	}
 
 	/// Allocate memory
-	void* allocate(PtrSize size) throw()
+	void* allocate(PtrSize size, PtrSize alignment) throw()
 	{
 		Chunk* ch;
 		void* mem = nullptr;
@@ -445,7 +455,8 @@ public:
 		ch = crntChunk;
 
 		// Create new chunk if needed
-		if(ch == nullptr || (mem = allocateFromChunk(ch, size)) == nullptr)
+		if(ch == nullptr 
+			|| (mem = allocateFromChunk(ch, size, alignment)) == nullptr)
 		{
 			// Create new chunk
 			crntChunk = createNewChunk(size);
@@ -461,7 +472,7 @@ public:
 
 		if(mem == nullptr)
 		{
-			mem = allocateFromChunk(ch, size);
+			mem = allocateFromChunk(ch, size, alignment);
 			ANKI_ASSERT(mem != nullptr && "The chunk should have space");
 		}
 
@@ -547,9 +558,9 @@ ChainMemoryPool::~ChainMemoryPool()
 {}
 
 //==============================================================================
-void* ChainMemoryPool::allocate(PtrSize size) throw()
+void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment) throw()
 {
-	return impl->allocate(size);
+	return impl->allocate(size, alignment);
 }
 
 //==============================================================================

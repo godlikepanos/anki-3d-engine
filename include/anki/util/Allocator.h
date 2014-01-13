@@ -21,214 +21,6 @@ namespace anki {
 /// @addtogroup memory
 /// @{
 
-namespace detail {
-
-/// Internal methods for the Allocator class
-class HeapAllocatorInternal
-{
-public:
-	/// Print a few debugging messages
-	static void dump();
-
-protected:
-	/// Keep track of the allocated size. Relevant only when debugging
-	static PtrSize allocatedSize;
-};
-
-} // end namespace detail
-
-/// The default allocator. It uses malloc and free for 
-/// allocations/deallocations. It's STL compatible
-template<typename T>
-class HeapAllocator: public detail::HeapAllocatorInternal
-{
-public:
-	// STL Typedefs
-	typedef size_t size_type;
-	typedef ptrdiff_t difference_type;
-	typedef T* pointer;
-	typedef const T* const_pointer;
-	typedef T& reference;
-	typedef const T& const_reference;
-	typedef T value_type;
-
-	/// Default constructor
-	HeapAllocator() throw()
-	{}
-	/// Copy constructor
-	HeapAllocator(const HeapAllocator&) throw()
-	{}
-	/// Copy constructor with another type
-	template<typename U>
-	HeapAllocator(const HeapAllocator<U>&) throw()
-	{}
-
-	/// Destructor
-	~HeapAllocator()
-	{}
-
-	/// Copy
-	HeapAllocator<T>& operator=(const HeapAllocator&)
-	{
-		return *this;
-	}
-	/// Copy with another type
-	template<typename U>
-	HeapAllocator& operator=(const HeapAllocator<U>&) 
-	{
-		return *this;
-	}
-
-	/// Get address of reference
-	pointer address(reference x) const 
-	{
-		return &x; 
-	}
-	/// Get const address of const reference
-	const_pointer address(const_reference x) const 
-	{
-		return &x;
-	}
-
-	/// Allocate memory
-	pointer allocate(size_type n, const void* = 0)
-	{
-		// operator new doesn't respect alignment (in GCC at least) so use 
-		// custom mem allocation function
-		PtrSize size = n * sizeof(T);
-		allocatedSize += size;
-		return (pointer)mallocAligned(size, alignof(T));
-	}
-
-	/// Deallocate memory
-	void deallocate(void* p, size_type n)
-	{
-		freeAligned(p);
-		allocatedSize -= n * sizeof(T);
-	}
-
-	/// Call constructor
-	void construct(pointer p, const T& val)
-	{
-		// Placement new
-		new ((T*)p) T(val); 
-	}
-	/// Call constructor with more arguments
-	template<typename U, typename... Args>
-	void construct(U* p, Args&&... args)
-	{
-		// Placement new
-		::new((void*)p) U(std::forward<Args>(args)...);
-	}
-
-	/// Call the destructor of p
-	void destroy(pointer p) 
-	{
-		p->~T();
-	}
-	/// Call the destructor of p of type U
-	template<typename U>
-	void destroy(U* p)
-	{
-		p->~U();
-	}
-
-	/// Get the max allocation size
-	size_type max_size() const 
-	{
-		return size_type(-1); 
-	}
-
-	/// A struct to rebind the allocator to another allocator of type U
-	template<typename U>
-	struct rebind
-	{ 
-		typedef HeapAllocator<U> other; 
-	};
-
-	/// Allocate a new object and call it's constructor
-	/// @note This is AnKi specific
-	template<typename U, typename... Args>
-	U* newInstance(Args&&... args)
-	{
-		typename rebind<U>::other alloc(*this);
-
-		U* x = alloc.allocate(1);
-		alloc.construct(x, std::forward<Args>(args)...);
-		return x;
-	}
-
-	/// Allocate a new array of objects and call their constructor
-	/// @note This is AnKi specific
-	template<typename U, typename... Args>
-	U* newArray(size_type n, Args&&... args)
-	{
-		typename rebind<U>::other alloc(*this);
-
-		U* x = alloc.allocate(n);
-		// Call the constuctors
-		for(size_type i = 0; i < n; i++)
-		{
-			alloc.construct(&x[i], std::forward<Args>(args)...);
-		}
-		return x;
-	}
-
-	/// Call the destructor and deallocate an object
-	/// @note This is AnKi specific
-	template<typename U>
-	void deleteInstance(U* x)
-	{
-		typename rebind<U>::other alloc(*this);
-
-		alloc.destroy(x);
-		alloc.deallocate(x, 1);
-	}
-
-	/// Call the destructor and deallocate an array of objects
-	/// @note This is AnKi specific
-	template<typename U>
-	void deleteArray(U* x, size_type n)
-	{
-		typename rebind<U>::other alloc(*this);
-
-		// Call the destructors
-		for(size_type i = 0; i < n; i++)
-		{
-			alloc.destroy(&x[i]);
-		}
-		alloc.deallocate(x, n);
-	}
-};
-
-/// Another allocator of the same type can deallocate from this one
-template<typename T1, typename T2>
-inline bool operator==(const HeapAllocator<T1>&, const HeapAllocator<T2>&)
-{
-	return true;
-}
-
-/// Another allocator of the another type cannot deallocate from this one
-template<typename T1, typename AnotherAllocator>
-inline bool operator==(const HeapAllocator<T1>&, const AnotherAllocator&)
-{
-	return false;
-}
-
-/// Another allocator of the same type can deallocate from this one
-template<typename T1, typename T2>
-inline bool operator!=(const HeapAllocator<T1>&, const HeapAllocator<T2>&)
-{
-	return false;
-}
-
-/// Another allocator of the another type cannot deallocate from this one
-template<typename T1, typename AnotherAllocator>
-inline bool operator!=(const HeapAllocator<T1>&, const AnotherAllocator&)
-{
-	return true;
-}
-
 /// Pool based allocator
 ///
 /// This is a template that accepts memory pools with a specific interface
@@ -318,9 +110,12 @@ public:
 	pointer allocate(size_type n, const void* hint = 0)
 	{
 		(void)hint;
+
 		size_type size = n * sizeof(value_type);
 		
-		void* out = mpool.allocate(size);
+		// Operator new doesn't respect alignment (in GCC at least) so use 
+		// the allocation
+		void* out = mpool.allocate(size, alignof(value_type));
 
 		if(out != nullptr)
 		{
@@ -383,7 +178,7 @@ public:
 	/// Get the max allocation size
 	size_type max_size() const
 	{
-		return mpool.getTotalSize();
+		return MAX_PTR_SIZE;
 	}
 
 	/// A struct to rebind the allocator to another allocator of type U
@@ -393,13 +188,16 @@ public:
 		typedef GenericPoolAllocator<U, TPool, deallocationFlag> other;
 	};
 
-	/// Reinit the allocator. All existing allocated memory will be lost
-	void reset()
+	/// Get the memory pool
+	/// @note This is AnKi specific
+	const TPool& getMemoryPool() const
 	{
-		mpool.reset();
+		return mpool;
 	}
 
-	const TPool& getMemoryPool() const
+	/// Get the memory pool
+	/// @note This is AnKi specific
+	TPool& getMemoryPool()
 	{
 		return mpool;
 	}
@@ -499,6 +297,12 @@ inline bool operator!=(
 {
 	return true;
 }
+
+/// Heap based allocator. The default allocator. It uses malloc and free for 
+/// allocations/deallocations
+template<typename T>
+using HeapAllocator = 
+	GenericPoolAllocator<T, HeapMemoryPool, true>;
 
 /// Allocator that uses a StackMemoryPool
 template<typename T, Bool deallocationFlag = false>
