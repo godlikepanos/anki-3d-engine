@@ -260,6 +260,9 @@ private:
 	TPool mpool;
 };
 
+/// @name GenericPoolAllocator global functions
+/// @{
+
 /// Another allocator of the same type can deallocate from this one
 template<typename T1, typename T2, typename TPool, Bool deallocationFlag>
 inline bool operator==(
@@ -297,6 +300,8 @@ inline bool operator!=(
 {
 	return true;
 }
+
+/// @}
 
 /// Heap based allocator. The default allocator. It uses malloc and free for 
 /// allocations/deallocations
