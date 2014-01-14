@@ -70,22 +70,24 @@ void freeAligned(void* ptr) throw()
 //==============================================================================
 
 //==============================================================================
+/// The hidden implementation of StackMemoryPool
 class StackMemoryPool::Implementation: public NonCopyable
 {
 public:
 	/// The header of each allocation
 	struct MemoryBlockHeader
 	{
-		U8 size[4]; ///< It's U8 to allow whatever alignment
+		U8 size[sizeof(U32)]; ///< It's U8 to allow whatever alignment
 	};
 
 	static_assert(alignof(MemoryBlockHeader) == 1, "Alignment error");
+	static_assert(sizeof(MemoryBlockHeader) == sizeof(U32), "Size error");
 
 	/// Alignment of allocations
-	U32 alignmentBytes;
+	PtrSize alignmentBytes;
 
 	/// Aligned size of MemoryBlockHeader
-	U32 headerSize;
+	PtrSize headerSize;
 
 	/// Pre-allocated memory chunk
 	U8* memory = nullptr;
@@ -97,7 +99,7 @@ public:
 	std::atomic<U8*> top = {nullptr};
 
 	// Construct
-	Implementation(PtrSize size, U32 alignmentBytes_)
+	Implementation(PtrSize size, PtrSize alignmentBytes_)
 		:	alignmentBytes(alignmentBytes_), 
 			memsize(getAlignedRoundUp(alignmentBytes, size))
 	{
@@ -107,6 +109,11 @@ public:
 
 		if(memory != nullptr)
 		{
+#if ANKI_DEBUG
+			// Invalidate the memory
+			memset(memory, 0xCC, memsize);
+#endif
+
 			// Align allocated memory
 			top = memory;
 
@@ -161,6 +168,11 @@ public:
 
 		if(out + size <= memory + memsize)
 		{
+#if ANKI_DEBUG
+			// Invalidate the block
+			memset(out, 0xCC, size);
+#endif
+
 			// Write the block header
 			MemoryBlockHeader* header = (MemoryBlockHeader*)out;
 			U32 size32 = size;
@@ -237,7 +249,7 @@ public:
 };
 
 //==============================================================================
-StackMemoryPool::StackMemoryPool(PtrSize size, U32 alignmentBytes)
+StackMemoryPool::StackMemoryPool(PtrSize size, PtrSize alignmentBytes)
 {
 	impl.reset(new Implementation(size, alignmentBytes));
 }
@@ -286,6 +298,7 @@ void StackMemoryPool::reset()
 //==============================================================================
 
 //==============================================================================
+/// The hidden implementation of ChainMemoryPool
 class ChainMemoryPool::Implementation: public NonCopyable
 {
 public:
@@ -294,15 +307,15 @@ public:
 	{
 	public:
 		StackMemoryPool::Implementation pool;
-		U32 allocationsCount;
+		U32 allocationsCount; ///< Used to identify if the chunk can be deleted
 
-		Chunk(PtrSize size, U32 alignmentBytes)
+		Chunk(PtrSize size, PtrSize alignmentBytes)
 			: pool(size, alignmentBytes), allocationsCount(0)
 		{}
 	};
 
 	/// Alignment of allocations
-	U32 alignmentBytes;
+	PtrSize alignmentBytes;
 
 	/// A list of chunks
 	Vector<Chunk*> chunks;
@@ -314,10 +327,10 @@ public:
 	SpinLock lock;
 
 	/// Chunk first chunk size
-	U32 initSize;
+	PtrSize initSize;
 
 	/// Chunk max size
-	U32 maxSize;
+	PtrSize maxSize;
 
 	/// Chunk allocation method value
 	U32 step;
@@ -327,15 +340,15 @@ public:
 
 	/// Construct
 	Implementation(
-		U32 initialChunkSize,
-		U32 maxChunkSize,
+		PtrSize initialChunkSize,
+		PtrSize maxChunkSize,
 		ChunkAllocationStepMethod chunkAllocStepMethod, 
-		U32 chunkAllocStep, 
-		U32 alignmentBytes_)
+		PtrSize chunkAllocStep, 
+		PtrSize alignmentBytes_)
 		:	alignmentBytes(alignmentBytes_), 
 			initSize(initialChunkSize),
 			maxSize(maxChunkSize),
-			step(chunkAllocStep),
+			step((U32)chunkAllocStep),
 			method(chunkAllocStepMethod)
 	{
 		// Initial size should be > 0
@@ -542,11 +555,11 @@ public:
 
 //==============================================================================
 ChainMemoryPool::ChainMemoryPool(
-	U32 initialChunkSize,
-	U32 maxChunkSize,
+	PtrSize initialChunkSize,
+	PtrSize maxChunkSize,
 	ChunkAllocationStepMethod chunkAllocStepMethod, 
-	U32 chunkAllocStep, 
-	U32 alignmentBytes)
+	PtrSize chunkAllocStep, 
+	PtrSize alignmentBytes)
 {
 	impl.reset(new Implementation(
 		initialChunkSize, maxChunkSize, chunkAllocStepMethod, chunkAllocStep,

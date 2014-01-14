@@ -31,7 +31,7 @@ public:
 	~Exception() throw()
 	{}
 
-	/// For re-throws
+	/// For re-throws.
 	/// Usage:
 	/// @code
 	/// catch(std::exception& e) {

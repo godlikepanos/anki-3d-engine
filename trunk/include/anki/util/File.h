@@ -116,7 +116,7 @@ public:
 	/// Write data to the file
 	void write(void* buff, PtrSize size);
 
-	/// Write text
+	/// Write formated text
 	void writeText(const char* format, ...);
 	/// @}
 
@@ -139,7 +139,7 @@ public:
 	/// @}
 
 private:
-	void* file; ///< A native type
+	void* file; ///< A native file type
 	U16 flags; ///< All the flags. Initialy zero and set on open
 
 	/// Get the current machine's endianness

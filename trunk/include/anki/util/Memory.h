@@ -22,11 +22,13 @@ void freeAligned(void* ptr) throw();
 class HeapMemoryPool
 {
 public:
+	/// Allocate memory
 	static void* allocate(PtrSize size, PtrSize alignment) throw()
 	{
 		return mallocAligned(size, alignment);
 	}
 
+	/// Free memory
 	static Bool free(void* ptr) throw()
 	{
 		freeAligned(ptr);
@@ -53,7 +55,10 @@ public:
 	}
 
 	/// Constructor with parameters
-	StackMemoryPool(PtrSize size, U32 alignmentBytes = ANKI_SAFE_ALIGNMENT);
+	/// @param size The size of the pool
+	/// @param alignmentBytes The maximum supported alignment for returned
+	///                       memory
+	StackMemoryPool(PtrSize size, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Destroy
 	~StackMemoryPool();
@@ -66,25 +71,27 @@ public:
 		return *this;
 	}
 
-	/// Access the total size
-	PtrSize getTotalSize() const;
-
-	/// Get the allocated size
-	PtrSize getAllocatedSize() const;
-
-	/// Allocate memory
+	/// Allocate aligned memory. The operation is thread safe
+	/// @param size The size to allocate
+	/// @param alignmentBytes The alignment of the returned address
 	/// @return The allocated memory or nullptr on failure
 	void* allocate(PtrSize size, PtrSize alignmentBytes) throw();
 
 	/// Free memory in StackMemoryPool. If the ptr is not the last allocation
-	/// then nothing happens and the method returns false
-	///
+	/// then nothing happens and the method returns false. The operation is
+	/// threadsafe
 	/// @param[in, out] ptr Memory block to deallocate
 	/// @return True if the deallocation actually happened and false otherwise
 	Bool free(void* ptr) throw();
 
 	/// Reinit the pool. All existing allocated memory will be lost
 	void reset();
+
+	/// Get the total size
+	PtrSize getTotalSize() const;
+
+	/// Get the allocated size
+	PtrSize getAllocatedSize() const;
 
 private:
 	// Forward. Hide the implementation because Memory.h is the base of other
@@ -100,8 +107,9 @@ private:
 class ChainMemoryPool
 {
 public:
-	/// Chunk allocation method. Defines the size a newely created has chunk 
-	/// compared to the last created
+	/// Chunk allocation method. Defines the size a newely created chunk should
+	/// have compared to the last created. Used to grow chunks over the time of
+	/// allocations
 	enum ChunkAllocationStepMethod
 	{
 		FIXED, ///< All chunks have the same size
@@ -121,13 +129,14 @@ public:
 	/// @param chunkAllocStepMethod How new chunks grow compared to the old ones
 	/// @param chunkAllocStep Used along with chunkAllocStepMethod and defines
 	///                       the ammount of chunk size increase 
-	/// @param alignmentBytes The standard alignment of the allocations
+	/// @param alignmentBytes The maximum supported alignment for returned
+	///                       memory
 	ChainMemoryPool(
-		U32 initialChunkSize,
-		U32 maxChunkSize,
+		PtrSize initialChunkSize,
+		PtrSize maxChunkSize,
 		ChunkAllocationStepMethod chunkAllocStepMethod = MULTIPLY, 
-		U32 chunkAllocStep = 2, 
-		U32 alignmentBytes = ANKI_SAFE_ALIGNMENT);
+		PtrSize chunkAllocStep = 2, 
+		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Destroy
 	~ChainMemoryPool();
@@ -141,12 +150,13 @@ public:
 	}
 
 	/// Allocate memory. This operation is thread safe
+	/// @param size The size to allocate
+	/// @param alignmentBytes The alignment of the returned address
 	/// @return The allocated memory or nullptr on failure
 	void* allocate(PtrSize size, PtrSize alignmentBytes) throw();
 
 	/// Free memory. If the ptr is not the last allocation of the chunk
 	/// then nothing happens and the method returns false
-	///
 	/// @param[in, out] ptr Memory block to deallocate
 	/// @return True if the deallocation actually happened and false otherwise
 	Bool free(void* ptr) throw();
