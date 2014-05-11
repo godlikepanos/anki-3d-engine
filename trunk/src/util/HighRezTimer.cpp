@@ -6,30 +6,30 @@ namespace anki {
 //==============================================================================
 void HighRezTimer::start()
 {
-	ANKI_ASSERT(startTime == 0);
-	ANKI_ASSERT(stopTime == 0);
-	startTime = getCurrentTime();
-	stopTime = 0.0;
+	ANKI_ASSERT(m_startTime == 0);
+	ANKI_ASSERT(m_stopTime == 0);
+	m_startTime = getCurrentTime();
+	m_stopTime = 0.0;
 }
 
 //==============================================================================
 void HighRezTimer::stop()
 {
-	ANKI_ASSERT(startTime != 0.0);
-	ANKI_ASSERT(stopTime == 0.0);
-	stopTime = getCurrentTime();
+	ANKI_ASSERT(m_startTime != 0.0);
+	ANKI_ASSERT(m_stopTime == 0.0);
+	m_stopTime = getCurrentTime();
 }
 
 //==============================================================================
 HighRezTimer::Scalar HighRezTimer::getElapsedTime() const
 {
-	if(stopTime == 0.0)
+	if(m_stopTime == 0.0)
 	{
-		return getCurrentTime() - startTime;
+		return getCurrentTime() - m_startTime;
 	}
 	else
 	{
-		return stopTime - startTime;
+		return m_stopTime - m_startTime;
 	}
 }
 

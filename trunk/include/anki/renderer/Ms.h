@@ -2,51 +2,72 @@
 #define ANKI_RENDERER_MS_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/gl/Texture.h"
-#include "anki/gl/Fbo.h"
+#include "anki/Gl.h"
 #include "anki/renderer/Ez.h"
 
 namespace anki {
+
+/// @addtogroup renderer
+/// @{
 
 /// Material stage also known as G buffer stage. It populates the G buffer
 class Ms: public RenderingPass
 {
 public:
-	Ms(Renderer* r_)
-		: RenderingPass(r_), ez(r_)
+	Ms(Renderer* r)
+		: RenderingPass(r), m_ez(r)
 	{}
 
 	~Ms();
 
 	/// @name Accessors
 	/// @{
-	Texture& getFai0()
+	GlTextureHandle& getRt0()
 	{
-		return fai0[1];
+		return m_planes[1].m_rt0;
 	}
 
-	const Texture& getFai1() const;
-
-	const Texture& getDepthFai() const
+	GlTextureHandle& getRt1()
 	{
-		return depthFai[1];
+		return m_planes[1].m_rt1;
+	}
+
+	GlTextureHandle& getDepthRt()
+	{
+		return m_planes[1].m_depthRt;
 	}
 	/// @}
 
 	void init(const RendererInitializer& initializer);
-	void run();
+	void run(GlJobChainHandle& jobs);
 
 private:
-	Ez ez; /// EarlyZ pass
-	Array<Fbo, 2> fbo;
-	Array<Texture, 2> fai0; ///< The FAI for diffuse color, normals and specular
-	/// Contains the normal and spec power on the MRT case
-	Array<Texture, 2> fai1;
-	Array<Texture, 2> depthFai; ///< The FAI for depth
+	/// A collection of data
+	class Plane
+	{
+	public:
+		GlFramebufferHandle m_fb;
+
+		/// Contains diffuse color and part of specular
+		GlTextureHandle m_rt0; 
+
+		/// Contains the normal and spec power
+		GlTextureHandle m_rt1;
+
+		/// Depth stencil
+		GlTextureHandle m_depthRt; 
+	};
+
+	Ez m_ez; /// EarlyZ pass
+
+	/// One for multisampled and one for not. 0: multisampled, 1: not
+	Array<Plane, 2> m_planes;
 
 	/// Create a G buffer FBO
-	void createFbo(U index, U samples);
+	void createRt(U32 index, U32 samples);
 };
+
+/// @}
 
 } // end namespace anki
 

@@ -18,17 +18,21 @@ public:
 
 	/// Default constructor
 	Sphere()
-		: CollisionShape(CST_SPHERE)
+		: CollisionShape(Type::SPHERE)
 	{}
 
 	/// Copy constructor
 	Sphere(const Sphere& b)
-		: CollisionShape(CST_SPHERE), center(b.center), radius(b.radius)
+		:	CollisionShape(Type::SPHERE), 
+			center(b.center), 
+			radius(b.radius)
 	{}
 
 	/// Constructor
 	Sphere(const Vec3& center_, F32 radius_)
-		: CollisionShape(CST_SPHERE), center(center_), radius(radius_)
+		:	CollisionShape(Type::SPHERE), 
+			center(center_), 
+			radius(radius_)
 	{}
 	/// @}
 
@@ -98,8 +102,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::toAabb
-	void toAabb(Aabb& b) const;
+	/// Implements CollisionShape::computeAabb
+	void computeAabb(Aabb& b) const;
 
 	Sphere getTransformed(const Transform& transform) const;
 

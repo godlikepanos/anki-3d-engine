@@ -2,15 +2,16 @@
 #define ANKI_MATH_VEC3_H
 
 #include "anki/math/CommonIncludes.h"
+#include "anki/math/Vec.h"
 
 namespace anki {
 
-/// @addtogroup Math
+/// @addtogroup math
 /// @{
 
 /// 3D vector template. One of the most used classes
 template<typename T>
-class TVec3
+class TVec3: public TVec<T, 3, Array<T, 3>, TVec3<T>>
 {
 	/// @name Friends
 	/// @{
@@ -25,252 +26,38 @@ class TVec3
 	/// @}
 
 public:
+	using Base = TVec<T, 3, Array<T, 3>, TVec3<T>>;
+
+	using Base::x;
+	using Base::y;
+	using Base::z;
+	using Base::operator*;
+
 	/// @name Constructors
 	/// @{
 	explicit TVec3()
+		: Base()
+	{}
+
+	TVec3(const TVec3& b)
+		: Base(b)
 	{}
 
 	explicit TVec3(const T x_, const T y_, const T z_)
-	{
-		x() = x_;
-		y() = y_;
-		z() = z_;
-	}
+		: Base(x_, y_, z_)
+	{}
 
 	explicit TVec3(const T f)
-	{
-		arr[0] = arr[1] = arr[2] = f;
-	}
+		: Base(f)
+	{}
 
-	explicit TVec3(const T arr_[])
-	{
-		arr[0] = arr_[0];
-		arr[1] = arr_[1];
-		arr[2] = arr_[2];
-	}
+	explicit TVec3(const T arr[])
+		: Base(arr)
+	{}
 
-	explicit TVec3(const TVec2<T>& v2, const T z_)
-	{
-		x() = v2.x();
-		y() = v2.y();
-		z() = z_;
-	}
-
-	TVec3(const TVec3& b)
-	{
-		arr[0] = b.arr[0];
-		arr[1] = b.arr[1];
-		arr[2] = b.arr[2];
-	}
-
-	explicit TVec3(const TVec4<T>& v4)
-	{
-		arr[0] = v4[0];
-		arr[1] = v4[1];
-		arr[2] = v4[2];
-	}
-
-	explicit TVec3(const TQuat<T>& q)
-	{
-		x() = q.x();
-		y() = q.y();
-		z() = q.z();
-	}
-	/// @}
-
-	/// @name Accessors
-	/// @{
-	T& x()
-	{
-		return vec.x;
-	}
-
-	T x() const
-	{
-		return vec.x;
-	}
-
-	T& y()
-	{
-		return vec.y;
-	}
-
-	T y() const
-	{
-		return vec.y;
-	}
-
-	T& z()
-	{
-		return vec.z;
-	}
-
-	T z() const
-	{
-		return vec.z;
-	}
-
-	T& operator[](const U i)
-	{
-		return arr[i];
-	}
-
-	T operator[](const U i) const
-	{
-		return arr[i];
-	}
-
-	TVec2<T> xy() const
-	{
-		return TVec2<T>(x(), y());
-	}
-	/// @}
-
-	/// @name Operators with same type
-	/// @{
-	TVec3& operator=(const TVec3& b)
-	{
-		arr[0] = b.arr[0];
-		arr[1] = b.arr[1];
-		arr[2] = b.arr[2];
-		return (*this);
-	}
-
-	TVec3 operator+(const TVec3& b) const
-	{
-		return TVec3(x() + b.x(), y() + b.y(), z() + b.z());
-	}
-
-	TVec3& operator+=(const TVec3& b)
-	{
-		x() += b.x();
-		y() += b.y();
-		z() += b.z();
-		return *this;
-	}
-
-	TVec3 operator-(const TVec3& b) const
-	{
-		return TVec3(x() - b.x(), y() - b.y(), z() - b.z());
-	}
-
-	TVec3& operator-=(const TVec3& b)
-	{
-		x() -= b.x();
-		y() -= b.y();
-		z() -= b.z();
-		return (*this);
-	}
-
-	TVec3 operator*(const TVec3& b) const
-	{
-		return TVec3(x() * b.x(), y() * b.y(), z() * b.z());
-	}
-
-	TVec3& operator*=(const TVec3& b)
-	{
-		x() *= b.x();
-		y() *= b.y();
-		z() *= b.z();
-		return (*this);
-	}
-
-	TVec3 operator/(const TVec3& b) const
-	{
-		return TVec3(x() / b.x(), y() / b.y(), z() / b.z());
-	}
-
-	TVec3& operator/=(const TVec3& b)
-	{
-		x() /= b.x();
-		y() /= b.y();
-		z() /= b.z();
-		return (*this);
-	}
-
-	TVec3 operator-() const
-	{
-		return TVec3(-x(), -y(), -z());
-	}
-
-	Bool operator==(const TVec3& b) const
-	{
-		return isZero<T>(x() - b.x()) 
-			&& isZero<T>(y() - b.y()) 
-			&& isZero<T>(z() - b.z());
-	}
-
-	Bool operator!=(const TVec3& b) const
-	{
-		return !operator==(b);
-	}
-
-	Bool operator<(const TVec3& b) const
-	{
-		return x() < b.x() && y() < b.y() && z() < b.z();
-	}
-
-	Bool operator<=(const TVec3& b) const
-	{
-		return x() <= b.x() && y() <= b.y() && z() <= b.z();
-	}
-
-	Bool operator>(const TVec3& b) const
-	{
-		return x() > b.x() && y() > b.y() && z() > b.z();
-	}
-
-	Bool operator>=(const TVec3& b) const
-	{
-		return x() >= b.x() && y() >= b.y() && z() >= b.z();
-	}
-	/// @}
-
-	/// @name Operators with T
-	/// @{
-	TVec3 operator+(const T f) const
-	{
-		return (*this) + TVec3(f);
-	}
-
-	TVec3& operator+=(const T f)
-	{
-		(*this) += TVec3(f);
-		return (*this);
-	}
-
-	TVec3 operator-(const T f) const
-	{
-		return (*this) - TVec3(f);
-	}
-
-	TVec3& operator-=(const T f)
-	{
-		(*this) -= TVec3(f);
-		return (*this);
-	}
-
-	TVec3 operator*(const T f) const
-	{
-		return (*this) * TVec3(f);
-	}
-
-	TVec3& operator*=(const T f)
-	{
-		(*this) *= TVec3(f);
-		return (*this);
-	}
-
-	TVec3 operator/(const T f) const
-	{
-		return (*this) / TVec3(f);
-	}
-
-	TVec3& operator/=(const T f)
-	{
-		(*this) /= TVec3(f);
-		return (*this);
-	}
+	explicit TVec3(const TVec2<T>& v, const T z_)
+		: Base(v.x(), v.y(), z_)
+	{}
 	/// @}
 
 	/// @name Operators with other types
@@ -285,43 +72,12 @@ public:
 	/// @name Other
 	/// @{
 
-	/// 3 muls, 2 adds
-	T dot(const TVec3& b) const
-	{
-		return x() * b.x() + y() * b.y() + z() * b.z();
-	}
-
 	/// 6 muls, 3 adds
 	TVec3 cross(const TVec3& b) const
 	{
 		return TVec3(y() * b.z() - z() * b.y(),
 			z() * b.x() - x() * b.z(),
 			x() * b.y() - y() * b.x());
-	}
-
-	T getLengthSquared() const
-	{
-		return x() * x() + y() * y() + z() * z();
-	}
-
-	T getLength() const
-	{
-		return sqrt(getLengthSquared());
-	}
-
-	T getDistanceSquared(const TVec3& b) const
-	{
-		return ((*this) - b).getLengthSquared();
-	}
-
-	void normalize()
-	{
-		(*this) /= getLength();
-	}
-
-	TVec3 getNormalized() const
-	{
-		return (*this) / getLength();
 	}
 
 	TVec3 getProjection(const TVec3& toThis) const
@@ -334,7 +90,7 @@ public:
 	TVec3 getRotated(const TQuat<T>& q) const
 	{
 		ANKI_ASSERT(isZero<T>(1.0 - q.getLength())); // Not normalized quat
-		TVec3 qXyz(q);
+		TVec3 qXyz(q.x(), q.y(), q.z());
 		return 
 			(*this) + qXyz.cross(qXyz.cross((*this)) + (*this) * q.w()) * 2.0;
 	}
@@ -342,12 +98,6 @@ public:
 	void rotate(const TQuat<T>& q)
 	{
 		(*this) = getRotated(q);
-	}
-
-	/// Return lerp(this, v1, t)
-	TVec3 lerp(const TVec3& v1, T t) const
-	{
-		return ((*this) * (1.0 - t)) + (v1 * t);
 	}
 	/// @}
 
@@ -428,48 +178,31 @@ public:
 	{
 		(*this) = getTransformed(transform);
 	}
-
-	std::string toString() const
-	{
-		return std::to_string(x()) + " " + std::to_string(y()) + " " 
-			+ std::to_string(z());
-	}
-	/// @}
-
-private:
-	/// @name Data
-	/// @{
-	struct Vec
-	{
-		T x, y, z;
-	};
-
-	union
-	{
-		Vec vec;
-		Array<T, 3> arr;
-	};
 	/// @}
 };
 
+/// @memberof TVec3
 template<typename T>
 TVec3<T> operator+(const T f, const TVec3<T>& v)
 {
 	return v + f;
 }
 
+/// @memberof TVec3
 template<typename T>
 TVec3<T> operator-(const T f, const TVec3<T>& v)
 {
 	return TVec3<T>(f) - v;
 }
 
+/// @memberof TVec3
 template<typename T>
 TVec3<T> operator*(const T f, const TVec3<T>& v)
 {
 	return v * f;
 }
 
+/// @memberof TVec3
 template<typename T>
 TVec3<T> operator/(const T f, const TVec3<T>& v)
 {

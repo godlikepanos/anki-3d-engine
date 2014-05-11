@@ -3,9 +3,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup patterns
+/// @addtogroup util_patterns
 /// @{
 
 /// This template makes a class singleton
@@ -26,15 +24,24 @@ public:
 	/// Get instance
 	static Value& get()
 	{
-		return *(instance ? instance : (instance = new Value));
+		return *(m_instance ? m_instance : (m_instance = new Value));
+	}
+
+	/// Cleanup
+	void destroy()
+	{
+		if(m_instance)
+		{
+			delete m_instance;
+		}
 	}
 
 private:
-	static Value* instance;
+	static Value* m_instance;
 };
 
 template <typename T>
-typename Singleton<T>::Value* Singleton<T>::instance = nullptr;
+typename Singleton<T>::Value* Singleton<T>::m_instance = nullptr;
 
 /// This template makes a class singleton with thread local instance
 template<typename T>
@@ -54,18 +61,26 @@ public:
 	/// Get instance
 	static Value& get()
 	{
-		return *(instance ? instance : (instance = new Value));
+		return *(m_instance ? m_instance : (m_instance = new Value));
+	}
+
+	/// Cleanup
+	void destroy()
+	{
+		if(m_instance)
+		{
+			delete m_instance;
+		}
 	}
 
 private:
-	static thread_local Value* instance;
+	static thread_local Value* m_instance;
 };
 
 template <typename T>
 thread_local typename SingletonThreadSafe<T>::Value* 
-	SingletonThreadSafe<T>::instance = nullptr;
+	SingletonThreadSafe<T>::m_instance = nullptr;
 
-/// @}
 /// @}
 
 } // end namespace anki

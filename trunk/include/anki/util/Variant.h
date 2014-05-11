@@ -8,9 +8,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup patterns
+/// @addtogroup util_patterns
 /// @{
 
 // Forwards
@@ -340,7 +338,6 @@ private:
 	/// The only data member, a pointer to a VariantBase class
 	std::unique_ptr<VariantBaseType> ptr;
 };
-/// @}
 /// @}
 
 } // end namespace anki

@@ -24,20 +24,19 @@ void Mesh::load(const char* filename)
 	{
 		MeshLoader loader(filename);
 
-		indicesCount = loader.getIndices().size();
-		obb.set(loader.getPositions());
-		ANKI_ASSERT(indicesCount > 0);
-		ANKI_ASSERT(indicesCount % 3 == 0 
-			&& "Expecting triangles");
+		m_indicesCount = loader.getIndices().size();
+		m_obb.set(loader.getPositions());
+		ANKI_ASSERT(m_indicesCount > 0);
+		ANKI_ASSERT(m_indicesCount % 3 == 0 && "Expecting triangles");
 
 		// Set the non-VBO members
-		vertsCount = loader.getPositions().size();
-		ANKI_ASSERT(vertsCount > 0);
+		m_vertsCount = loader.getPositions().size();
+		ANKI_ASSERT(m_vertsCount > 0);
 
-		texChannelsCount = loader.getTextureChannelsCount();
-		weights = loader.getWeights().size() > 1;
+		m_texChannelsCount = loader.getTextureChannelsCount();
+		m_weights = loader.getWeights().size() > 1;
 
-		createVbos(loader);
+		createBuffers(loader);
 	}
 	catch(std::exception& e)
 	{
@@ -49,8 +48,8 @@ void Mesh::load(const char* filename)
 U32 Mesh::calcVertexSize() const
 {
 	U32 a = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-		+ texChannelsCount * sizeof(HVec2);
-	if(weights)
+		+ m_texChannelsCount * sizeof(HVec2);
+	if(m_weights)
 	{
 		a += sizeof(MeshLoader::VertexWeight);
 	}
@@ -60,21 +59,21 @@ U32 Mesh::calcVertexSize() const
 }
 
 //==============================================================================
-void Mesh::createVbos(const MeshLoader& loader)
+void Mesh::createBuffers(const MeshLoader& loader)
 {
-	ANKI_ASSERT(vertsCount == loader.getPositions().size()
-		&& vertsCount == loader.getNormals().size()
-		&& vertsCount == loader.getTangents().size());
+	ANKI_ASSERT(m_vertsCount == loader.getPositions().size()
+		&& m_vertsCount == loader.getNormals().size()
+		&& m_vertsCount == loader.getTangents().size());
 
 	// Calculate VBO size
 	U32 vertexsize = calcVertexSize();
-	U32 vbosize = vertexsize * vertsCount;
+	U32 vbosize = vertexsize * m_vertsCount;
 
 	// Create a temp buffer and populate it
 	Vector<U8> buff(vbosize, 0);
 
 	U8* ptra = &buff[0];
-	for(U i = 0; i < vertsCount; i++)
+	for(U i = 0; i < m_vertsCount; i++)
 	{
 		U8* ptr = ptra;
 		ANKI_ASSERT(ptr + vertexsize <= &buff[0] + vbosize);
@@ -88,13 +87,13 @@ void Mesh::createVbos(const MeshLoader& loader)
 		memcpy(ptr, &loader.getTangents()[i], sizeof(HVec4));
 		ptr += sizeof(HVec4);
 
-		for(U j = 0; j < texChannelsCount; j++)
+		for(U j = 0; j < m_texChannelsCount; j++)
 		{
 			memcpy(ptr, &loader.getTextureCoordinates(j)[i], sizeof(HVec2));
 			ptr += sizeof(HVec2);
 		}
 
-		if(weights)
+		if(m_weights)
 		{
 			memcpy(ptr, &loader.getWeights()[i], 
 				sizeof(MeshLoader::VertexWeight));
@@ -104,104 +103,107 @@ void Mesh::createVbos(const MeshLoader& loader)
 		ptra += vertexsize;
 	}
 
-	// Create VBO
-	vbo.create(
-		GL_ARRAY_BUFFER,
-		vbosize,
-		&buff[0],
-		GL_STATIC_DRAW);
+	// Create GL buffers
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
+	
+	GlClientBufferHandle clientVertBuff(jobs, vbosize, &buff[0]);
+	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, clientVertBuff, 0);
 
-	/// Create the indices VBO
-	indicesVbo.create(
-		GL_ELEMENT_ARRAY_BUFFER,
-		getVectorSizeInBytes(loader.getIndices()),
-		&loader.getIndices()[0],
-		GL_STATIC_DRAW);
+	GlClientBufferHandle clientIndexBuff(
+		jobs, 
+		getVectorSizeInBytes(loader.getIndices()), 
+		(void*)&loader.getIndices()[0]);
+	m_indicesBuff = GlBufferHandle(
+		jobs, GL_ELEMENT_ARRAY_BUFFER, clientIndexBuff, 0);
+
+	jobs.finish();
 }
 
 //==============================================================================
-void Mesh::getVboInfo(const VertexAttribute attrib, const GlBuffer*& v, 
-	U32& size, GLenum& type, U32& stride, U32& offset) const
+void Mesh::getBufferInfo(const VertexAttribute attrib, 
+	GlBufferHandle& v, U32& size, GLenum& type, 
+	U32& stride, U32& offset) const
 {
 	stride = calcVertexSize();
 
 	// Set all to zero
-	v = nullptr;
+	v = GlBufferHandle();
 	size = 0;
 	type = GL_NONE;
 	offset = 0;
 
 	switch(attrib)
 	{
-	case VA_POSITION:
-		v = &vbo;
+	case VertexAttribute::POSITION:
+		v = m_vertBuff;
 		size = 3;
 		type = GL_FLOAT;
 		offset = 0;
 		break;
-	case VA_NORMAL:
-		v = &vbo;
+	case VertexAttribute::NORMAL:
+		v = m_vertBuff;
 		size = 3;
 		type = GL_HALF_FLOAT;
 		offset = sizeof(Vec3);
 		break;
-	case VA_TANGENT:
-		v = &vbo;
+	case VertexAttribute::TANGENT:
+		v = m_vertBuff;
 		size = 4;
 		type = GL_HALF_FLOAT;
 		offset = sizeof(Vec3) + sizeof(HVec3);
 		break;
-	case VA_TEXTURE_COORD:
-		if(texChannelsCount > 0)
+	case VertexAttribute::TEXTURE_COORD:
+		if(m_texChannelsCount > 0)
 		{
-			v = &vbo;
+			v = m_vertBuff;
 			size = 2;
 			type = GL_HALF_FLOAT;
 			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4);
 		}
 		break;
-	case VA_TEXTURE_COORD_1:
-		if(texChannelsCount > 1)
+	case VertexAttribute::TEXTURE_COORD_1:
+		if(m_texChannelsCount > 1)
 		{
-			v = &vbo;
+			v = m_vertBuff;
 			size = 2;
 			type = GL_HALF_FLOAT;
 			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
 				+ sizeof(HVec2);
 		}
 		break;
-	case VA_BONE_COUNT:
-		if(weights)
+	case VertexAttribute::BONE_COUNT:
+		if(m_weights)
 		{
-			v = &vbo;
+			v = m_vertBuff;
 			size = 1;
 			type = GL_UNSIGNED_SHORT;
 			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-				+ texChannelsCount * sizeof(HVec2);
+				+ m_texChannelsCount * sizeof(HVec2);
 		}
 		break;
-	case VA_BONE_IDS:
-		if(weights)
+	case VertexAttribute::BONE_IDS:
+		if(m_weights)
 		{
-			v = &vbo;
+			v = m_vertBuff;
 			size = 4;
 			type = GL_UNSIGNED_SHORT;
 			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-				+ texChannelsCount * sizeof(HVec2) + sizeof(U16);
+				+ m_texChannelsCount * sizeof(HVec2) + sizeof(U16);
 		}
 		break;
-	case VA_BONE_WEIGHTS:
-		if(weights)
+	case VertexAttribute::BONE_WEIGHTS:
+		if(m_weights)
 		{
-			v = &vbo;
+			v = m_vertBuff;
 			size = 4;
 			type = GL_HALF_FLOAT;
 			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-				+ texChannelsCount * sizeof(HVec2) + sizeof(U16) 
+				+ m_texChannelsCount * sizeof(HVec2) + sizeof(U16) 
 				+ sizeof(U16) * 4;
 		}
-	case VA_INDICES:
-		v = &indicesVbo;
+	case VertexAttribute::INDICES:
+		v = m_indicesBuff;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -225,9 +227,9 @@ void BucketMesh::load(const char* filename)
 		XmlElement meshesEl = rootEl.getChildElement("meshes");
 		XmlElement meshEl = meshesEl.getChildElement("mesh");
 
-		vertsCount = 0;
-		subMeshes.reserve(4);
-		indicesCount = 0;
+		m_vertsCount = 0;
+		m_subMeshes.reserve(4);
+		m_indicesCount = 0;
 
 		MeshLoader fullLoader;
 		U i = 0;
@@ -242,7 +244,7 @@ void BucketMesh::load(const char* filename)
 			if(i != 0)
 			{
 				// Sanity check
-				if(i > ANKI_MAX_MULTIDRAW_PRIMITIVES)
+				if(i > ANKI_GL_MAX_SUB_DRAWCALLS)
 				{
 					throw ANKI_EXCEPTION("Max number of submeshes exceeded");
 				}
@@ -252,13 +254,13 @@ void BucketMesh::load(const char* filename)
 				loader = &subLoader;
 
 				// Sanity checks
-				if(weights != (loader->getWeights().size() > 1))
+				if(m_weights != (loader->getWeights().size() > 1))
 				{
 					throw ANKI_EXCEPTION("All sub meshes should have or not "
 						"have vertex weights");
 				}
 
-				if(texChannelsCount 
+				if(m_texChannelsCount 
 					!= loader->getTextureChannelsCount())
 				{
 					throw ANKI_EXCEPTION("All sub meshes should have the "
@@ -275,23 +277,23 @@ void BucketMesh::load(const char* filename)
 				loader = &fullLoader;
 
 				// Set properties
-				weights = loader->getWeights().size() > 1;
-				texChannelsCount = 
+				m_weights = loader->getWeights().size() > 1;
+				m_texChannelsCount = 
 					loader->getTextureChannelsCount();
 			}
 
 			// Push back the new submesh
 			SubMesh submesh;
 
-			submesh.indicesCount = loader->getIndices().size();
-			submesh.indicesOffset = indicesCount * sizeof(U16);
-			submesh.obb.set(loader->getPositions());
+			submesh.m_indicesCount = loader->getIndices().size();
+			submesh.m_indicesOffset = m_indicesCount * sizeof(U16);
+			submesh.m_obb.set(loader->getPositions());
 
-			subMeshes.push_back(submesh);
+			m_subMeshes.push_back(submesh);
 
 			// Set the global numbers
-			vertsCount += loader->getPositions().size();
-			indicesCount += loader->getIndices().size();
+			m_vertsCount += loader->getPositions().size();
+			m_indicesCount += loader->getIndices().size();
 
 			// Move to next
 			meshEl = meshEl.getNextSiblingElement("mesh");
@@ -299,8 +301,8 @@ void BucketMesh::load(const char* filename)
 		} while(meshEl);
 
 		// Create the bucket mesh
-		createVbos(fullLoader);
-		obb.set(fullLoader.getPositions());
+		createBuffers(fullLoader);
+		m_obb.set(fullLoader.getPositions());
 	}
 	catch(std::exception& e)
 	{

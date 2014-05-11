@@ -4,39 +4,40 @@
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
 #include "anki/util/Singleton.h"
+#include "anki/util/String.h"
 #include <string>
 #include <memory>
 
 namespace anki {
 
-struct NativeWindowImpl;
-struct ContextImpl;
+class NativeWindowImpl;
+typedef void* Context;
 
 /// Window initializer
 struct NativeWindowInitializer
 {
-	U32 width = 640;
-	U32 height = 768;
-	Array<U32, 4> rgbaBits = {{8, 8, 8, 0}};
-	U32 depthBits = 0;
-	U32 stencilBits = 0;
-	U32 samplesCount = 0;
-	static const Bool doubleBuffer = true;
+	U32 m_width = 640;
+	U32 m_height = 768;
+	Array<U32, 4> m_rgbaBits = {{8, 8, 8, 0}};
+	U32 m_depthBits = 0;
+	U32 m_stencilBits = 0;
+	U32 m_samplesCount = 0;
+	static const Bool m_doubleBuffer = true;
 	/// Create a fullscreen window with the desktop's resolution
-	Bool fullscreenDesktopRez = false;
+	Bool8 m_fullscreenDesktopRez = false;
 
 	/// @name GL context properties
 	/// @{
 
 	/// Minor OpenGL version. Used to create core profile context
-	U32 minorVersion = 0;
+	U32 m_minorVersion = 0;
 	/// Major OpenGL version. Used to create core profile context
-	U32 majorVersion = 0; 
-	Bool useGles = false; ///< Use OpenGL ES
-	Bool debugContext = false; ///< Enables KHR_debug
+	U32 m_majorVersion = 0;
+	Bool8 m_useGles = false; ///< Use OpenGL ES
+	Bool8 m_debugContext = false; ///< Enables KHR_debug
 	/// @}
 
-	std::string title = "Untitled window";
+	String m_title = "Untitled window";
 };
 
 /// Native window with GL context
@@ -52,16 +53,16 @@ public:
 	NativeWindowImpl& getNative()
 	{
 		ANKI_ASSERT(isCreated());
-		return *impl;
+		return *m_impl;
 	}
 
 	U32 getWidth() const
 	{
-		return width;
+		return m_width;
 	}
 	U32 getHeight() const
 	{
-		return height;
+		return m_height;
 	}
 	/// @}
 
@@ -71,19 +72,20 @@ public:
 	void create(NativeWindowInitializer& initializer);
 	void destroy();
 	void swapBuffers();
-	ContextImpl* createSharedContext();
-	void contextMakeCurrent(ContextImpl& ctx);
+	Context createSharedContext();
+	Context getCurrentContext();
+	void contextMakeCurrent(Context ctx);
 	/// @}
 
 private:
-	U32 width;
-	U32 height;
+	U32 m_width;
+	U32 m_height;
 
-	std::shared_ptr<NativeWindowImpl> impl;
+	std::shared_ptr<NativeWindowImpl> m_impl;
 
 	Bool isCreated() const
 	{
-		return impl.get() != nullptr;
+		return m_impl.get() != nullptr;
 	}
 };
 

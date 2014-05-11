@@ -1,8 +1,25 @@
 #include "anki/util/Thread.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
+#if ANKI_POSIX
+#	include <pthread.h>
+#endif
 
 namespace anki {
+
+//==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+void setCurrentThreadName(const char* name)
+{
+#if ANKI_POSIX
+	pthread_setname_np(pthread_self(), name);
+#else
+	printf("Unimplemented\n");
+#endif
+}
 
 //==============================================================================
 // DualSyncThread                                                              =
@@ -11,10 +28,10 @@ namespace anki {
 //==============================================================================
 void DualSyncThread::workingFunc()
 {
-	while(task)
+	while(m_task)
 	{
 		// Exec the task
-		(*task)(id);
+		(*m_task)(m_id);
 
 		// Wait for the other thread to sync
 		sync(0);
@@ -31,9 +48,9 @@ void DualSyncThread::workingFunc()
 //==============================================================================
 
 //==============================================================================
-ThreadpoolThread::ThreadpoolThread(U32 id_, Barrier* barrier_, 
-	Threadpool* threadpool_)
-	: id(id_), barrier(barrier_), task(nullptr), threadpool(threadpool_)
+ThreadpoolThread::ThreadpoolThread(U32 id, Barrier* barrier, 
+	Threadpool* threadpool)
+	: m_id(id), m_barrier(barrier), m_task(nullptr), m_threadpool(threadpool)
 {
 	ANKI_ASSERT(barrier && threadpool);
 #if !ANKI_DISABLE_THREADPOOL_THREADING
@@ -42,43 +59,45 @@ ThreadpoolThread::ThreadpoolThread(U32 id_, Barrier* barrier_,
 }
 
 //==============================================================================
-void ThreadpoolThread::assignNewTask(ThreadpoolTask* task_)
+void ThreadpoolThread::assignNewTask(ThreadpoolTask* task)
 {
 #if !ANKI_DISABLE_THREADPOOL_THREADING
-	mutex.lock();
-	ANKI_ASSERT(task == nullptr && "Probably forgot to wait for all tasks");
-	task = task_;
-	mutex.unlock();
-	condVar.notify_one(); // Wake the thread
+	m_mutex.lock();
+	ANKI_ASSERT(m_task == nullptr && "Probably forgot to wait for all tasks");
+	m_task = task;
+	m_mutex.unlock();
+	m_condVar.notify_one(); // Wake the thread
 #else
-	(*task_)(id, threadpool->getThreadsCount());
+	(*task)(id, m_threadpool->getThreadsCount());
 #endif
 }
 
 //==============================================================================
 void ThreadpoolThread::workingFunc()
 {
+	setCurrentThreadName("anki_threadpool");
+
 	while(1)
 	{
 		// Wait for something
 		{
-			std::unique_lock<std::mutex> lock(mutex);
-			while(task == nullptr)
+			std::unique_lock<std::mutex> lock(m_mutex);
+			while(m_task == nullptr)
 			{
-				condVar.wait(lock);
+				m_condVar.wait(lock);
 			}
 		}
 
 		// Exec
-		(*task)(id, threadpool->getThreadsCount());
+		(*m_task)(m_id, m_threadpool->getThreadsCount());
 
 		// Nullify
 		{
-			std::lock_guard<std::mutex> lock(mutex);
-			task = nullptr;
+			std::lock_guard<std::mutex> lock(m_mutex);
+			m_task = nullptr;
 		}
 
-		barrier->wait();
+		m_barrier->wait();
 	}
 }
 
@@ -89,31 +108,31 @@ void ThreadpoolThread::workingFunc()
 //==============================================================================
 Threadpool::~Threadpool()
 {
-	while(threadsCount-- != 0)
+	while(m_threadsCount-- != 0)
 	{
-		delete threads[threadsCount];
+		delete m_threads[m_threadsCount];
 	}
 
-	if(threads)
+	if(m_threads)
 	{
-		delete[] threads;
+		delete[] m_threads;
 	}
 }
 
 //==============================================================================
 void Threadpool::init(U count)
 {
-	threadsCount = count;
-	ANKI_ASSERT(threadsCount <= MAX_THREADS && threadsCount > 0);
+	m_threadsCount = count;
+	ANKI_ASSERT(m_threadsCount <= MAX_THREADS && m_threadsCount > 0);
 
-	barrier.reset(new Barrier(threadsCount + 1));
+	m_barrier.reset(new Barrier(m_threadsCount + 1));
 
-	threads = new ThreadpoolThread*[threadsCount];
+	m_threads = new ThreadpoolThread*[m_threadsCount];
 
 	while(count-- != 0)
 	{
-		threads[count] = new ThreadpoolThread(count, barrier.get(), this);
+		m_threads[count] = new ThreadpoolThread(count, m_barrier.get(), this);
 	}
 }
 
-} // end namespace
+} // end namespace anki

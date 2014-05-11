@@ -56,7 +56,7 @@ public:
 	const CollisionShape& getVisibilityCollisionShape()
 	{
 		const CollisionShape& cs = getSpatialCollisionShape();
-		if(cs.getCollisionShapeType() == CollisionShape::CST_SPHERE)
+		if(cs.getType() == CollisionShape::Type::SPHERE)
 		{
 			return cs;
 		}

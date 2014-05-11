@@ -44,7 +44,7 @@ static std::string getMaterialName(const aiMaterial& mtl, bool instanced)
 }
 
 //==============================================================================
-static std::string getModelName(const Exporter& exporter, const Model& model)
+std::string getModelName(const Exporter& exporter, const Model& model)
 {
 	std::string name = 
 		getMeshName(getMesh(exporter, model.meshIndex)) + "_"

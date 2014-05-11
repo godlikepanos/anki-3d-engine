@@ -28,41 +28,41 @@ public:
 	/// @{
 	F32 getTimeOfBirth() const
 	{
-		return timeOfBirth;
+		return m_timeOfBirth;
 	}
 	F32& getTimeOfBirth()
 	{
-		return timeOfBirth;
+		return m_timeOfBirth;
 	}
 	void setTimeOfBirth(const F32 x)
 	{
-		timeOfBirth = x;
+		m_timeOfBirth = x;
 	}
 
 	F32 getTimeOfDeath() const
 	{
-		return timeOfDeath;
+		return m_timeOfDeath;
 	}
 	F32& getTimeOfDeath()
 	{
-		return timeOfDeath;
+		return m_timeOfDeath;
 	}
 	void setTimeOfDeath(const F32 x)
 	{
-		timeOfDeath = x;
+		m_timeOfDeath = x;
 	}
 	/// @}
 
 	Bool isDead() const
 	{
-		return timeOfDeath < 0.0;
+		return m_timeOfDeath < 0.0;
 	}
 
 	/// Kill the particle
 	virtual void kill()
 	{
-		ANKI_ASSERT(timeOfDeath > 0.0);
-		timeOfDeath = -1.0;
+		ANKI_ASSERT(m_timeOfDeath > 0.0);
+		m_timeOfDeath = -1.0;
 	}
 
 	/// Revive the particle
@@ -81,13 +81,10 @@ public:
 	virtual const Vec3& getPosition() const = 0;
 
 protected:
-	F32 timeOfBirth; ///< Keep the time of birth for nice effects
-	F32 timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead. In seconds
-	F32 size = 1.0;
-	F32 alpha = 1.0;
-
-private:
-	U8 type;
+	F32 m_timeOfBirth; ///< Keep the time of birth for nice effects
+	F32 m_timeOfDeath = -1.0; ///< Time of death. If < 0.0 then dead
+	F32 m_size = 1.0;
+	F32 m_alpha = 1.0;
 };
 
 /// Simple particle for simple simulation
@@ -105,14 +102,14 @@ public:
 
 	const Vec3& getPosition() const
 	{
-		return position;
+		return m_position;
 	}
 
 private:
 	/// The velocity
-	Vec3 velocity = Vec3(0.0);
-	Vec3 acceleration = Vec3(0.0);
-	Vec3 position;
+	Vec3 m_velocity = Vec3(0.0);
+	Vec3 m_acceleration = Vec3(0.0);
+	Vec3 m_position;
 };
 
 /// Particle for bullet simulations
@@ -137,7 +134,7 @@ public:
 		F32 prevUpdateTime, F32 crntTime);
 
 private:
-	RigidBody* body;
+	RigidBody* m_body;
 };
 #endif
 
@@ -171,23 +168,19 @@ public:
 	/// @{
 	const CollisionShape& getSpatialCollisionShape()
 	{
-		return obb;
+		return m_obb;
 	}
 
 	Vec3 getSpatialOrigin()
 	{
-		return obb.getCenter();
+		return m_obb.getCenter();
 	}
 	/// @}
 
 	/// @name RenderComponent virtuals
 	/// @{
 
-	void getRenderingData(
-		const PassLodKey& key, 
-		const U8* subMeshIndicesArray, U subMeshIndicesCount,
-		const Vao*& vao, const ShaderProgram*& prog,
-		Drawcall& drawcall);
+	void buildRendering(RenderingBuildData& data);
 
 	const Material& getMaterial();
 
@@ -197,33 +190,30 @@ public:
 	/// @}
 
 private:
-	enum SimulationType
+	enum class SimulationType: U8
 	{
-		UNDEFINED_SIMULATION,
-		SIMPLE_SIMULATION,
-		PHYSICS_ENGINE_SIMULATION
+		UNDEFINED,
+		SIMPLE,
+		PHYSICS_ENGINE
 	};
 
-	ParticleEmitterResourcePointer particleEmitterResource;
-	btCollisionShape* collShape = nullptr;
-	SceneVector<ParticleBase*> particles;
-	F32 timeLeftForNextEmission;
-	Obb obb;
-	SceneVector<Transform> transforms; ///< InstanceTransforms
-	Timestamp transformsTimestamp = 0;
+	ParticleEmitterResourcePointer m_particleEmitterResource;
+	SceneVector<ParticleBase*> m_particles;
+	F32 m_timeLeftForNextEmission;
+	Obb m_obb;
+	SceneVector<Transform> m_transforms; ///< InstanceTransforms
+	Timestamp m_transformsTimestamp = 0;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's
 	// rotation is the identity
-	Bool identityRotation = true;
+	Bool8 m_identityRotation = true;
 
-	U32 aliveParticlesCount = 0;
-	U32 aliveParticlesCountDraw = 0;
+	U32 m_aliveParticlesCount = 0;
 
-	Vao vao; ///< Hold the VBO
-	GlBuffer vbo; ///< Hold the vertex data
-	SceneVector<F32> clientBuffer;
+	GlBufferHandle m_vertBuff; ///< Hold the vertex data
+	U8* m_vertBuffMapping = nullptr; 
 
-	U8 simulationType = UNDEFINED_SIMULATION;
+	SimulationType m_simulationType = SimulationType::UNDEFINED;
 
 	void createParticlesSimulation(SceneGraph* scene);
 	void createParticlesSimpleSimulation(SceneGraph* scene);

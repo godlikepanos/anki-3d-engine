@@ -1,13 +1,13 @@
 #include "anki/renderer/Bl.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/ProgramResource.h"
 
 namespace anki {
 
+#if 0
 //==============================================================================
 void Bl::init(const RendererInitializer& initializer)
 {
-#if 0
 	enabled = initializer.pps.bl.enabled;
 	blurringIterationsNum = initializer.pps.bl.blurringIterationsNum;
 	sideBlurFactor = initializer.pps.bl.sideBlurFactor;
@@ -33,7 +33,7 @@ void Bl::init(const RendererInitializer& initializer)
 			"post-processing stage FBO") << e;
 	}
 
-	hBlurSProg.load(ShaderProgramResource::createSrcCodeToCache(
+	hBlurSProg.load(ProgramResource::createSrcCodeToCache(
 		"shaders/PpsBlurGeneric.glsl", "#define HPASS\n").c_str());
 
 	// Vertical
@@ -49,7 +49,7 @@ void Bl::init(const RendererInitializer& initializer)
 			"post-processing stage FBO") << e;
 	}
 
-	vBlurSProg.load(ShaderProgramResource::createSrcCodeToCache(
+	vBlurSProg.load(ProgramResource::createSrcCodeToCache(
 		"shaders/PpsBlurGeneric.glsl", "#define VPASS\n").c_str());
 
 	// Side blur
@@ -67,13 +67,11 @@ void Bl::init(const RendererInitializer& initializer)
 
 	sideBlurMap.load("engine-rsrc/side-blur.png");
 	sideBlurSProg.load("shaders/PpsSideBlur.glsl");
-#endif
 }
 
 //==============================================================================
 void Bl::runSideBlur()
 {
-#if 0
 	if(sideBlurFactor == 0.0)
 	{
 		return;
@@ -90,13 +88,11 @@ void Bl::runSideBlur()
 	sideBlurSProg->findUniformVariable("factor").set(sideBlurFactor);
 
 	r->drawQuad();
-#endif
 }
 
 //==============================================================================
 void Bl::runBlur()
 {
-#if 0
 	GlStateSingleton::get().disable(GL_BLEND);
 
 	// Setup programs here. Reverse order
@@ -127,7 +123,6 @@ void Bl::runBlur()
 		vBlurSProg->bind();
 		r->drawQuad();
 	}
-#endif
 }
 
 //==============================================================================
@@ -141,5 +136,6 @@ void Bl::run()
 	runSideBlur();
 	runBlur();
 }
+#endif
 
-} // end namespace
+} // end namespace anki

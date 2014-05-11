@@ -1,38 +1,39 @@
 R"(<?xml version="1.0" encoding="UTF-8" ?>
 
 <material>
-	<shaderProgram>
-		<inputs>
-			<input><type>mat4</type><name>modelViewProjectionMat</name><value></value><instanced>%instanced%</instanced></input>
-			<input><type>mat3</type><name>normalMat</name><value></value><instanced>%instanced%</instanced></input>
-
-			<input><type>vec2</type><name>specular</name><value>1.0 90.0</value></input>
-			<input><type>float</type><name>blurring</name><value>0.0</value><const>1</const></input>
-			<input><type>sampler2D</type><name>diffuseMap</name><value>%diffuseMap%</value></input>
-		</inputs>
-
-		<shader>
-			<type>vertex</type>
+	<programs>
+		<program>
+			<type>vert</type>
 			<includes>
 				<include>shaders/MsCommonVert.glsl</include>
 			</includes>
+
+			<inputs>
+				<input><type>mat4</type><name>uMvp</name><value></value><instanced>%instanced%</instanced></input>
+				<input><type>mat3</type><name>uN</name><value></value><instanced>%instanced%</instanced></input>
+			</inputs>
 
 			<operations>
 				<operation>
 					<id>1</id>
 					<returnType>void</returnType>
 					<function>writePositionNormalTangentTexCoord</function>
-					<arguments><argument>modelViewProjectionMat</argument><argument>normalMat</argument></arguments>
+					<arguments><argument>uMvp</argument><argument>uN</argument></arguments>
 				</operation>
 			</operations>
-		</shader>
+		</program>
 
-		<shader>
-			<type>fragment</type>
-
+		<program>
+			<type>frag</type>
 			<includes>
 				<include>shaders/MsCommonFrag.glsl</include>
 			</includes>
+
+			<inputs>
+				<input><type>vec2</type><name>uSpecular</name><value>1.0 90.0</value></input>
+				<input><type>float</type><name>uBlurring</name><value>0.0</value><const>1</const></input>
+				<input><type>sampler2D</type><name>uDiffuseMap</name><value>%diffuseMap%</value></input>
+			</inputs>
 			
 			<operations>
 				<operation>
@@ -51,7 +52,7 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 					<returnType>vec3</returnType>
 					<function>readRgbFromTexture</function>
 					<arguments>
-						<argument>diffuseMap</argument>
+						<argument>uDiffuseMap</argument>
 						<argument>out0</argument>
 					</arguments>
 				</operation>
@@ -59,16 +60,16 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 				<operation>
 					<id>20</id>
 					<returnType>void</returnType>
-					<function>writeFais</function>
+					<function>writeRts</function>
 					<arguments>
 						<argument>out10</argument>
 						<argument>out1</argument>
-						<argument>specular</argument>
-						<argument>blurring</argument>
+						<argument>uSpecular</argument>
+						<argument>uBlurring</argument>
 					</arguments>
 				</operation>
 			</operations>
-		</shader>
-	</shaderProgram>
+		</program>
+	</programs>
 </material>)"
 

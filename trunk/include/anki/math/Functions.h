@@ -3,10 +3,11 @@
 
 #include "anki/util/StdTypes.h"
 #include <cmath>
+#include <cstdlib>
 
 namespace anki {
 
-/// @addtogroup Math
+/// @addtogroup math
 /// @{
 
 //==============================================================================
@@ -29,7 +30,11 @@ inline constexpr F64 getPi<F64>()
 }
 
 template<typename Scalar>
-constexpr Scalar getEpsilon();
+constexpr Scalar getEpsilon()
+{
+	static_assert(1, "Shouldn't instantiate");
+	return Scalar(0);
+}
 
 template<>
 constexpr F32 getEpsilon<F32>()
@@ -121,21 +126,59 @@ inline T mod(const T x, const T y)
 //==============================================================================
 
 template<typename T>
+inline T abs(const T f)
+{ 
+	return ::fabs(f);
+}
+
+#define ANKI_SPECIALIZE_ABS_INT(type_) \
+	template<> \
+	inline type_ abs(const type_ f) \
+	{ \
+		return ::abs(f); \
+	}
+
+ANKI_SPECIALIZE_ABS_INT(I8)
+ANKI_SPECIALIZE_ABS_INT(I16)
+ANKI_SPECIALIZE_ABS_INT(I32)
+ANKI_SPECIALIZE_ABS_INT(I64)
+
+#undef ANKI_SPECIALIZE_ABS_INT
+
+template<typename T>
 inline Bool isZero(const T f)
 {
-	return fabs(f) < getEpsilon<T>();
+	return abs<T>(f) < getEpsilon<T>();
 }
+
+#define ANKI_SPECIALIZE_IS_ZERO_INT(type_) \
+	template<> \
+	inline Bool isZero(const type_ x) \
+	{ \
+		return x == type_(0); \
+	}
+
+ANKI_SPECIALIZE_IS_ZERO_INT(I8)
+ANKI_SPECIALIZE_IS_ZERO_INT(I16)
+ANKI_SPECIALIZE_IS_ZERO_INT(I32)
+ANKI_SPECIALIZE_IS_ZERO_INT(I64)
+ANKI_SPECIALIZE_IS_ZERO_INT(U8)
+ANKI_SPECIALIZE_IS_ZERO_INT(U16)
+ANKI_SPECIALIZE_IS_ZERO_INT(U32)
+ANKI_SPECIALIZE_IS_ZERO_INT(U64)
+
+#undef ANKI_SPECIALIZE_IS_ZERO_INT
 
 template<typename T>
 inline T toRad(const T degrees)
 {
-	return degrees * (getPi<T>() / T(180.0));
+	return degrees * (getPi<T>() / T(180));
 }
 
 template<typename T>
 inline T toDegrees(const T rad)
 {
-	return rad * (T(180.0) / getPi<T>());
+	return rad * (T(180) / getPi<T>());
 }
 
 //==============================================================================

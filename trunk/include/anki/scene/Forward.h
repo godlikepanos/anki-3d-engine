@@ -20,7 +20,7 @@ class Path;
 
 // Other
 class SceneGraph;
-struct VisibleNode;
+class VisibleNode;
 class Sector;
 
 } // end namespace anki

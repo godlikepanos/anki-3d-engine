@@ -10,30 +10,33 @@ Bs::~Bs()
 {}
 
 //==============================================================================
-void Bs::init(const RendererInitializer& /*initializer*/)
+void Bs::init(const RendererInitializer&)
 {
 	// Do nothing
 }
 
 //==============================================================================
-void Bs::run()
+void Bs::run(GlJobChainHandle& jobs)
 {
-	GlStateSingleton::get().enable(GL_DEPTH_TEST);
-	GlStateSingleton::get().setDepthMaskEnabled(false);
+	jobs.enableDepthTest(true);
+	jobs.setDepthWriteMask(false);
+	jobs.enableBlend(true);
 
-	RenderableDrawer& drawer = r->getSceneDrawer();
-	drawer.prepareDraw();
-	SceneGraph& scene = r->getSceneGraph();
-	VisibilityTestResults& vi =
-		scene.getActiveCamera().getVisibilityTestResults();
+	RenderableDrawer& drawer = m_r->getSceneDrawer();
+	drawer.prepareDraw(RenderingStage::BLEND, Pass::COLOR, jobs);
 
-	for(auto it : vi.renderables)
+	Camera& cam = m_r->getSceneGraph().getActiveCamera();
+
+	for(auto& it : cam.getVisibilityTestResults().m_renderables)
 	{
-		drawer.render(scene.getActiveCamera(), RenderableDrawer::RS_BLEND,
-			COLOR_PASS, it);
+		drawer.render(cam, it);
 	}
 
-	GlStateSingleton::get().setDepthMaskEnabled(true);
+	drawer.finishDraw();
+
+	jobs.enableDepthTest(false);
+	jobs.setDepthWriteMask(true);
+	jobs.enableBlend(false);
 }
 
 } // end namespace anki

@@ -7,6 +7,7 @@
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/RenderComponent.h"
 #include "anki/core/Threadpool.h"
+#include "anki/util/NonCopyable.h"
 
 namespace anki {
 
@@ -34,122 +35,122 @@ enum VisibleBy
 
 /// Visible node pointer with some more info
 /// @note Keep this structore as small as possible
-struct VisibleNode
+class VisibleNode: public NonCopyable
 {
-	SceneNode* node;
+public:
+	SceneNode* m_node;
 	/// An array of the visible spatials
-	U8* spatialIndices;
-	U8 spatialsCount;
+	U8* m_spatialIndices;
+	U8 m_spatialsCount;
 
 	VisibleNode()
-		: node(nullptr), spatialIndices(nullptr), spatialsCount(0)
+		: m_node(nullptr), m_spatialIndices(nullptr), m_spatialsCount(0)
 	{}
-
-	VisibleNode(const VisibleNode& other)
-	{
-		operator=(other);
-	}
 
 	VisibleNode(VisibleNode&& other)
 	{
-		node = other.node;
-		spatialIndices = other.spatialIndices;
-		spatialsCount = other.spatialsCount;
-
-		other.node = nullptr;
-		other.spatialIndices = nullptr;
-		other.spatialsCount = 0;
+		*this = std::move(other);
 	}
 
-	VisibleNode& operator=(const VisibleNode& other)
+	VisibleNode& operator=(VisibleNode&& other)
 	{
-		node = other.node;
-		spatialIndices = other.spatialIndices;
-		spatialsCount = other.spatialsCount;
+		m_node = other.m_node;
+		m_spatialIndices = other.m_spatialIndices;
+		m_spatialsCount = other.m_spatialsCount;
+
+		other.m_node = nullptr;
+		other.m_spatialIndices = nullptr;
+		other.m_spatialsCount = 0;
+
 		return *this;
 	}
 
 	U8 getSpatialIndex(U i)
 	{
-		ANKI_ASSERT(spatialsCount != 0 && i < spatialsCount);
-		return spatialIndices[i];
+		ANKI_ASSERT(m_spatialsCount != 0 && i < m_spatialsCount);
+		return m_spatialIndices[i];
 	}
 };
 
 /// Its actually a container for visible entities. It should be per frame
-struct VisibilityTestResults
+class VisibilityTestResults
 {
+public:
 	typedef SceneFrameVector<VisibleNode> Container;
 
-	Container renderables;
-	Container lights;
+	Container m_renderables;
+	Container m_lights;
 
 	VisibilityTestResults(const SceneAllocator<U8>& frameAlloc,
 		U32 renderablesReservedSize = 
-		ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_RENDERABLES_COUNT,
+			ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_RENDERABLES_COUNT,
 		U32 lightsReservedSize =
-		ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_LIGHTS_COUNT)
-		: renderables(frameAlloc), lights(frameAlloc)
+			ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_LIGHTS_COUNT)
+		: m_renderables(frameAlloc), m_lights(frameAlloc)
 	{
-		renderables.reserve(renderablesReservedSize);
-		lights.reserve(lightsReservedSize);
+		m_renderables.reserve(renderablesReservedSize);
+		m_lights.reserve(lightsReservedSize);
 	}
 };
 
 /// Sort spatial scene nodes on distance
-struct DistanceSortFunctor
+class DistanceSortFunctor
 {
-	Vec3 origin;
+public:
+	Vec3 m_origin;
 
 	Bool operator()(const VisibleNode& a, const VisibleNode& b)
 	{
-		ANKI_ASSERT(a.node && b.node);
+		ANKI_ASSERT(a.m_node && b.m_node);
 
-		F32 dist0 = origin.getDistanceSquared(
-			a.node->getComponent<SpatialComponent>().getSpatialOrigin());
-		F32 dist1 = origin.getDistanceSquared(
-			b.node->getComponent<SpatialComponent>().getSpatialOrigin());
+		F32 dist0 = m_origin.getDistanceSquared(
+			a.m_node->getComponent<SpatialComponent>().getSpatialOrigin());
+		F32 dist1 = m_origin.getDistanceSquared(
+			b.m_node->getComponent<SpatialComponent>().getSpatialOrigin());
 
 		return dist0 < dist1;
 	}
 };
 
 /// Sort renderable scene nodes on material
-struct MaterialSortFunctor
+class MaterialSortFunctor
 {
+public:
 	Bool operator()(const VisibleNode& a, const VisibleNode& b)
 	{
-		ANKI_ASSERT(a.node && b.node);
+		ANKI_ASSERT(a.m_node && b.m_node);
 
-		return a.node->getComponent<RenderComponent>().getMaterial()
-			< b.node->getComponent<RenderComponent>().getMaterial();
+		return a.m_node->getComponent<RenderComponent>().getMaterial()
+			< b.m_node->getComponent<RenderComponent>().getMaterial();
 	}
 };
 
 /// Thread job to short scene nodes by distance
-struct DistanceSortJob: ThreadpoolTask
+class DistanceSortJob: public ThreadpoolTask					
 {
-	U nodesCount;
-	VisibilityTestResults::Container::iterator nodes;
-	Vec3 origin;
+public:
+	U32 m_nodesCount;
+	VisibilityTestResults::Container::iterator m_nodes;
+	Vec3 m_origin;
 
 	void operator()(ThreadId /*threadId*/, U /*threadsCount*/)
 	{
 		DistanceSortFunctor comp;
-		comp.origin = origin;
-		std::sort(nodes, nodes + nodesCount, comp);
+		comp.m_origin = m_origin;
+		std::sort(m_nodes, m_nodes + m_nodesCount, comp);
 	}
 };
 
 /// Thread job to short renderable scene nodes by material
-struct MaterialSortJob: ThreadpoolTask
+class MaterialSortJob: public ThreadpoolTask
 {
-	U nodesCount;
-	VisibilityTestResults::Container::iterator nodes;
+public:
+	U32 m_nodesCount;
+	VisibilityTestResults::Container::iterator m_nodes;
 
 	void operator()(ThreadId /*threadId*/, U /*threadsCount*/)
 	{
-		std::sort(nodes, nodes + nodesCount, MaterialSortFunctor());
+		std::sort(m_nodes, m_nodes + m_nodesCount, MaterialSortFunctor());
 	}
 };
 

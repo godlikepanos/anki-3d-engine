@@ -12,13 +12,18 @@
 namespace anki {
 
 //==============================================================================
+void deleteImageCallback(void* data)
+{
+	Image* image = (Image*)data;
+	delete image;
+}
+
+//==============================================================================
 void TextureResource::load(const char* filename)
 {
 	try
 	{
-		Image img;
-		img.load(filename, MainRendererSingleton::get().getMaxTextureSize());
-		load(img);
+		loadInternal(filename);
 	}
 	catch(std::exception& e)
 	{
@@ -27,46 +32,54 @@ void TextureResource::load(const char* filename)
 }
 
 //==============================================================================
-void TextureResource::load(const Image& img)
+void TextureResource::loadInternal(const char* filename)
 {
-	Initializer init;
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl); // Always first to avoid assertions (because of
+	                            // the check of the allocator)
+
+	GlTextureHandle::Initializer init;
 	U layers = 0;
 	Bool driverShouldGenMipmaps = false;
+
+	// Load image
+	Image* imgPtr = new Image;
+	Image& img = *imgPtr;
+	img.load(filename, MainRendererSingleton::get().getMaxTextureSize());
 	
 	// width + height
-	init.width = img.getSurface(0, 0).width;
-	init.height = img.getSurface(0, 0).height;
+	init.m_width = img.getSurface(0, 0).width;
+	init.m_height = img.getSurface(0, 0).height;
 	
 	// depth
 	if(img.getTextureType() == Image::TT_2D_ARRAY 
 		|| img.getTextureType() == Image::TT_3D)
 	{
-		init.depth = img.getDepth();
-		//ANKI_ASSERT(init.depth > 1);
+		init.m_depth = img.getDepth();
 	}
 	else
 	{
-		init.depth = 0;
+		init.m_depth = 0;
 	}
 
 	// target
 	switch(img.getTextureType())
 	{
 	case Image::TT_2D:
-		init.target = GL_TEXTURE_2D;
+		init.m_target = GL_TEXTURE_2D;
 		layers = 1;
 		break;
 	case Image::TT_CUBE:
-		init.target = GL_TEXTURE_CUBE_MAP;
+		init.m_target = GL_TEXTURE_CUBE_MAP;
 		layers = 6;
 		break;
 	case Image::TT_2D_ARRAY:
-		init.target = GL_TEXTURE_2D_ARRAY;
-		layers = init.depth;
+		init.m_target = GL_TEXTURE_2D_ARRAY;
+		layers = init.m_depth;
 		break;
 	case Image::TT_3D:
-		init.target = GL_TEXTURE_3D;
-		layers = init.depth;
+		init.m_target = GL_TEXTURE_3D;
+		layers = init.m_depth;
 	default:
 		ANKI_ASSERT(0);
 	}
@@ -78,19 +91,19 @@ void TextureResource::load(const Image& img)
 		{
 		case Image::DC_RAW:
 #if DRIVER_CAN_COMPRESS
-			init.internalFormat = GL_COMPRESSED_RGB;
+			init.m_internalFormat = GL_COMPRESSED_RGB;
 #else
-			init.internalFormat = GL_RGB;
+			init.m_internalFormat = GL_RGB;
 #endif
 			driverShouldGenMipmaps = true;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case Image::DC_S3TC:
-			init.internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			init.m_internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 			break;
 #else
 		case Image::DC_ETC:
-			init.internalFormat = GL_COMPRESSED_RGB8_ETC2;
+			init.m_internalFormat = GL_COMPRESSED_RGB8_ETC2;
 			break;
 #endif
 		default:
@@ -103,19 +116,19 @@ void TextureResource::load(const Image& img)
 		{
 		case Image::DC_RAW:
 #if DRIVER_CAN_COMPRESS
-			init.internalFormat = GL_COMPRESSED_RGBA;
+			init.m_internalFormat = GL_COMPRESSED_RGBA;
 #else
-			init.internalFormat = GL_RGBA;
+			init.m_internalFormat = GL_RGBA;
 #endif
 			driverShouldGenMipmaps = true;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case Image::DC_S3TC:
-			init.internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			init.m_internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 			break;
 #else
 		case Image::DC_ETC:
-			init.internalFormat = GL_COMPRESSED_RGBA8_ETC2_EAC;
+			init.m_internalFormat = GL_COMPRESSED_RGBA8_ETC2_EAC;
 			break;
 #endif
 		default:
@@ -131,53 +144,63 @@ void TextureResource::load(const Image& img)
 	switch(img.getColorFormat())
 	{
 	case Image::CF_RGB8:
-		init.format = GL_RGB;
+		init.m_format = GL_RGB;
 		break;
 	case Image::CF_RGBA8:
-		init.format = GL_RGBA;
+		init.m_format = GL_RGBA;
 		break;
 	default:
 		ANKI_ASSERT(0);
 	}
 
 	// type
-	init.type = GL_UNSIGNED_BYTE;
+	init.m_type = GL_UNSIGNED_BYTE;
 
 	// mipmapsCount
-	init.mipmapsCount = img.getMipLevelsCount();
+	init.m_mipmapsCount = img.getMipLevelsCount();
 
 	// filteringType
-	init.filteringType = TFT_TRILINEAR;
+	init.m_filterType = GlTextureHandle::Filter::TRILINEAR;
 
 	// repeat
-	init.repeat = true;
+	init.m_repeat = true;
 
 	// anisotropyLevel
-	init.anisotropyLevel = TextureManagerSingleton::get().getAnisotropyLevel();
+	//init.anisotropyLevel = XXX;
+	printf("TODO\n");
 
 	// genMipmaps
-	if(init.mipmapsCount == 1 || driverShouldGenMipmaps)
+	if(init.m_mipmapsCount == 1 || driverShouldGenMipmaps)
 	{
-		init.genMipmaps = true;
+		init.m_genMipmaps = true;
 	}
 	else
 	{
-		init.genMipmaps = false;
+		init.m_genMipmaps = false;
 	}
 
 	// Now assign the data
 	for(U layer = 0; layer < layers; layer++)
 	{
-		for(U level = 0; level < init.mipmapsCount; level++)
+		for(U level = 0; level < init.m_mipmapsCount; level++)
 		{
-			init.data[level][layer].ptr = &img.getSurface(level, layer).data[0];
-			init.data[level][layer].size = 
-				img.getSurface(level, layer).data.size();
+			GlClientBufferHandle& buff = init.m_data[level][layer];
+
+			buff = GlClientBufferHandle(
+				jobs, 
+				img.getSurface(level, layer).data.size(), 
+				(void*)&img.getSurface(level, layer).data[0]);
 		}
 	}
 
-	// Finaly create
-	create(init);
+	// Add the GL job to create the texture
+	m_tex = GlTextureHandle(jobs, init);
+
+	// Add cleanup job
+	jobs.pushBackUserJob(deleteImageCallback, imgPtr);
+
+	// Finaly enque the GL job chain
+	jobs.flush();
 }
 
 } // end namespace anki

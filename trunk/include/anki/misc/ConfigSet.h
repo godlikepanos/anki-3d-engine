@@ -25,20 +25,6 @@ public:
 		}
 	}
 
-	/// Find an option and return it's value
-	F64& get(const char* name)
-	{
-		std::unordered_map<std::string, F64>::iterator it = map.find(name);
-		if(it != map.end())
-		{
-			return it->second;
-		}
-		else
-		{
-			throw ANKI_EXCEPTION("Option not found");
-		}
-	}
-
 	// Set an option
 	void set(const char* name, F64 value)
 	{

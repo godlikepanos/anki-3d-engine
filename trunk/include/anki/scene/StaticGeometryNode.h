@@ -19,16 +19,16 @@ public:
 
 	const CollisionShape& getSpatialCollisionShape()
 	{
-		return *obb;
+		return *m_obb;
 	}
 
 	Vec3 getSpatialOrigin()
 	{
-		return obb->getCenter();
+		return m_obb->getCenter();
 	}
 
 private:
-	const Obb* obb;
+	const Obb* m_obb;
 };
 
 /// Static geometry scene node patch
@@ -49,35 +49,31 @@ public:
 	/// @{
 	const CollisionShape& getSpatialCollisionShape()
 	{
-		return *obb;
+		return *m_obb;
 	}
 
 	Vec3 getSpatialOrigin()
 	{
-		return obb->getCenter();
+		return m_obb->getCenter();
 	}
 	/// @}
 
 	/// @name RenderComponent virtuals
 	/// @{
 
-	/// Implements RenderComponent::getRenderingData
-	void getRenderingData(
-		const PassLodKey& key, 
-		const U8* subMeshIndicesArray, U subMeshIndicesCount,
-		const Vao*& vao, const ShaderProgram*& prog,
-		Drawcall& drawcall);
+	/// Implements RenderComponent::buildRendering
+	void buildRendering(RenderingBuildData& data);
 
 	/// Implements  RenderComponent::getMaterial
 	const Material& getMaterial()
 	{
-		return modelPatch->getMaterial();
+		return m_modelPatch->getMaterial();
 	}
 	/// @}
 
 private:
-	const ModelPatchBase* modelPatch;
-	const Obb* obb; 
+	const ModelPatchBase* m_modelPatch;
+	const Obb* m_obb; 
 };
 
 /// Static geometry scene node
@@ -91,7 +87,7 @@ public:
 	~StaticGeometryNode();
 
 private:
-	ModelResourcePointer model;
+	ModelResourcePointer m_model;
 };
 
 /// @}

@@ -9,27 +9,35 @@ namespace anki {
 //==============================================================================
 void Ez::init(const RendererInitializer& initializer)
 {
-	enabled = initializer.get("ms.ez.enabled");
-	maxObjectsToDraw = initializer.get("ms.ez.maxObjectsToDraw");
+	m_enabled = initializer.get("ms.ez.enabled");
+	m_maxObjectsToDraw = initializer.get("ms.ez.maxObjectsToDraw");
 }
 
 //==============================================================================
-void Ez::run()
+void Ez::run(GlJobChainHandle& jobs)
 {
-	ANKI_ASSERT(enabled);
+	ANKI_ASSERT(m_enabled);
 
-	SceneGraph& scene = r->getSceneGraph();
+	SceneGraph& scene = m_r->getSceneGraph();
 	Camera& cam = scene.getActiveCamera();
 
 	VisibilityTestResults& vi = cam.getVisibilityTestResults();
 
-	U count = 0;
-	for(auto it : vi.renderables)
+	m_r->getSceneDrawer().prepareDraw(
+		RenderingStage::MATERIAL, Pass::DEPTH, jobs);
+
+	U count = m_maxObjectsToDraw;
+	for(auto& it : vi.m_renderables)
 	{
-		r->getSceneDrawer().render(cam, RenderableDrawer::RS_MATERIAL,
-			DEPTH_PASS, it);
-		++count;
+		m_r->getSceneDrawer().render(cam, it);
+
+		if(--count == 0)
+		{
+			break;
+		}
 	}
+
+	m_r->getSceneDrawer().finishDraw();
 }
 
 } // end namespace anki

@@ -1,12 +1,12 @@
-#ifndef ANKI_UI_UI_FT_FONT_LOADER_H
-#define ANKI_UI_UI_FT_FONT_LOADER_H
+#ifndef ANKI_UI_UI_FrustumType::FONT_LOADER_H
+#define ANKI_UI_UI_FrustumType::FONT_LOADER_H
 
 #include "anki/Math.h"
 #include "anki/util/Vector.h"
 #include <boost/range/iterator_range.hpp>
 #include <ft2build.h>
-#include FT_FREETYPE_H
-#include FT_GLYPH_H
+#include FrustumType::FREETYPE_H
+#include FrustumType::GLYPH_H
 
 namespace anki {
 
@@ -21,14 +21,14 @@ public:
 		friend class UiFtFontLoader;
 
 	public:
-		FT_Glyph_Metrics getMetrics() const
+		FrustumType::Glyph_Metrics getMetrics() const
 		{
 			return metrics;
 		}
 
 	private:
-		FT_Glyph glyph;
-		FT_Glyph_Metrics metrics;
+		FrustumType::Glyph glyph;
+		FrustumType::Glyph_Metrics metrics;
 	};
 
 	enum
@@ -39,7 +39,7 @@ public:
 	};
 
 	/// One and only constructor
-	UiFtFontLoader(const char* filename, const FT_Vector& fontSize)
+	UiFtFontLoader(const char* filename, const FrustumType::Vector& fontSize)
 	{
 		createImage(filename, fontSize);
 	}
@@ -51,7 +51,7 @@ public:
 		return &img[0];
 	}
 
-	const FT_Vector& getImageSize() const
+	const FrustumType::Vector& getImageSize() const
 	{
 		return imgSize;
 	}
@@ -72,7 +72,7 @@ public:
 	/// Save the image (img) to TGA. Its for debugging purposes
 	void saveImage(const char* filename) const;
 
-	static FT_Int toPixels(FT_Int a)
+	static FrustumType::Int toPixels(FrustumType::Int a)
 	{
 		return a >> 6;
 	}
@@ -80,11 +80,11 @@ public:
 private:
 	/// @name Data
 	/// @{
-	FT_Library library;
-	FT_Face face;
+	FrustumType::Library library;
+	FrustumType::Face face;
 	Vector<Glyph> glyphs;
 	Vector<uint8_t> img;
-	FT_Vector imgSize;
+	FrustumType::Vector imgSize;
 	uint32_t lineHeight; ///< Calculated as the max height among all glyphs
 	/// @}
 
@@ -92,14 +92,14 @@ private:
 	void getAllGlyphs();
 
 	/// Copy one bitmap to img
-	void copyBitmap(const uint8_t* srcImg, const FT_Vector& srcSize,
-		const FT_Vector& pos);
+	void copyBitmap(const uint8_t* srcImg, const FrustumType::Vector& srcSize,
+		const FrustumType::Vector& pos);
 
 	/// Compute image size (imgSize) using the glyphs set
 	void computeImageSize();
 
 	/// Given a filename and a font size create an image with all the glyphs
-	void createImage(const char* filename, const FT_Vector& fontSize);
+	void createImage(const char* filename, const FrustumType::Vector& fontSize);
 };
 
 } // end namespace

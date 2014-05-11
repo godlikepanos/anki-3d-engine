@@ -98,7 +98,7 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 }
 
 //==============================================================================
-void Sphere::toAabb(Aabb& aabb) const
+void Sphere::computeAabb(Aabb& aabb) const
 {
 	aabb.setMin(center - radius);
 	aabb.setMax(center + radius);

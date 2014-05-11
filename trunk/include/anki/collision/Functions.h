@@ -16,7 +16,7 @@ namespace anki {
 ///
 /// @note plane_count * 8 muls, plane_count sqrt
 extern void extractClipPlanes(const Mat4& mvp, 
-	Plane* planes[Frustum::FP_COUNT]);
+	Plane* planes[(U)FrustumPlane::COUNT]);
 
 /// @}
 

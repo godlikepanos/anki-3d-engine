@@ -2,7 +2,7 @@
 #define ANKI_RENDERER_PPS_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/gl/Fbo.h"
+#include "anki/Gl.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
 #include "anki/renderer/Hdr.h"
@@ -14,6 +14,9 @@ namespace anki {
 
 class ShaderProgram;
 
+/// @addtogroup renderer
+/// @{
+
 /// Post-processing stage.This stage is divided into 2 two parts. The first
 /// happens before blending stage and the second after
 class Pps: public OptionalRenderingPass
@@ -23,67 +26,74 @@ public:
 	~Pps();
 
 	void init(const RendererInitializer& initializer);
-	void run();
+	void run(GlJobChainHandle& jobs);
 
 	/// @name Accessors
 	/// @{
 	const Hdr& getHdr() const
 	{
-		return hdr;
+		return m_hdr;
 	}
 	Hdr& getHdr()
 	{
-		return hdr;
+		return m_hdr;
 	}
 
 	const Ssao& getSsao() const
 	{
-		return ssao;
+		return m_ssao;
+	}
+	Ssao& getSsao()
+	{
+		return m_ssao;
 	}
 
 	const Bl& getBl() const
 	{
-		return bl;
+		return m_bl;
 	}
 	Bl& getBl()
 	{
-		return bl;
+		return m_bl;
 	}
 
 	const Lf& getLf() const
 	{
-		return lf;
+		return m_lf;
 	}
 	Lf& getLf()
 	{
-		return lf;
+		return m_lf;
 	}
 
-	const Texture& getFai() const
+	const GlTextureHandle& getRt() const
 	{
-		return fai;
+		return m_rt;
 	}
-	Texture& getFai()
+	GlTextureHandle& getRt()
 	{
-		return fai;
+		return m_rt;
 	}
 	/// @}
 
 private:
 	/// @name Passes
 	/// @{
-	Hdr hdr;
-	Ssao ssao;
-	Bl bl;
-	Lf lf;
+	Hdr m_hdr;
+	Ssao m_ssao;
+	Bl m_bl;
+	Lf m_lf;
 	/// @}
 
-	Fbo fbo;
-	ShaderProgramResourcePointer prog;
-	Texture fai;
+	GlFramebufferHandle m_fb;
+	ProgramResourcePointer m_frag;
+	GlProgramPipelineHandle m_ppline;
+	GlTextureHandle m_rt;
 
 	void initInternal(const RendererInitializer& initializer);
 };
+
+/// @}
 
 } // end namespace anki
 

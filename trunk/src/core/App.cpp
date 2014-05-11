@@ -45,6 +45,7 @@ android_app* gAndroidApp = nullptr;
 //==============================================================================
 void App::init()
 {
+	setCurrentThreadName("anki_main");
 	// Install signal handlers
 	/*signal(SIGSEGV, handler);
 	signal(SIGBUS, handler);
@@ -59,9 +60,11 @@ void App::init()
 //==============================================================================
 void App::initDirs()
 {
+	HeapAllocator<U8> alloc(HeapMemoryPool(0));
+
 #if ANKI_OS != ANKI_OS_ANDROID
 	// Settings path
-	settingsPath = std::string(getenv("HOME")) + "/.anki";
+	settingsPath = String(getenv("HOME")) + "/.anki";
 	if(!directoryExists(settingsPath.c_str()))
 	{
 		ANKI_LOGI("Creating settings dir: %s", settingsPath.c_str());
@@ -83,8 +86,8 @@ void App::initDirs()
 	//ANativeActivity* activity = gAndroidApp->activity;
 
 	// Settings path
-	//settingsPath = std::string(activity->internalDataPath);
-	settingsPath = std::string("/sdcard/.anki/");
+	//settingsPath = String(activity->internalDataPath, alloc);
+	settingsPath = String("/sdcard/.anki/");
 	if(!directoryExists(settingsPath.c_str()))
 	{
 		ANKI_LOGI("Creating settings dir: %s", settingsPath.c_str());
@@ -144,7 +147,7 @@ void App::mainLoop()
 	Input& input = InputSingleton::get();
 	NativeWindow& window = NativeWindowSingleton::get();
 
-	ANKI_COUNTER_START_TIMER(C_FPS);
+	ANKI_COUNTER_START_TIMER(FPS);
 	while(true)
 	{
 		HighRezTimer timer;
@@ -174,7 +177,7 @@ void App::mainLoop()
 	}
 
 	// Counters end
-	ANKI_COUNTER_STOP_TIMER_INC(C_FPS);
+	ANKI_COUNTER_STOP_TIMER_INC(FPS);
 	ANKI_COUNTERS_FLUSH();
 }
 

@@ -6,9 +6,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup memory
+/// @addtogroup util_memory
 /// @{
 
 /// Allocate aligned memory
@@ -22,18 +20,53 @@ void freeAligned(void* ptr) throw();
 class HeapMemoryPool
 {
 public:
-	/// Allocate memory
-	static void* allocate(PtrSize size, PtrSize alignment) throw()
+	/// Default constructor
+	/// @note It does _nothing_ and it should stay that way. First of all,
+	///       this class should have the same interface with the other pools
+	///       and secondly, the default constructors of the allocators that use
+	///       that pool will call that constructor and that happens a lot.
+	///       If that constructor does some actual job then we have a problem.
+	HeapMemoryPool()
+	{}
+
+	/// Copy constructor. It's not copying any data
+	HeapMemoryPool(const HeapMemoryPool& other)
 	{
-		return mallocAligned(size, alignment);
+		*this = other;
 	}
 
-	/// Free memory
-	static Bool free(void* ptr) throw()
+	/// The real constructor
+	/// @note The parameter is dummy and used to differentiate it from the 
+	///       default constructor
+	HeapMemoryPool(I);
+
+	/// Destroy
+	~HeapMemoryPool();
+
+	/// Copy. It will not copy any data, what it will do is add visibility of
+	/// other's pool to this instance as well
+	HeapMemoryPool& operator=(const HeapMemoryPool& other)
 	{
-		freeAligned(ptr);
-		return true;
+		m_impl = other.m_impl;
+		return *this;
 	}
+
+	/// Allocate memory
+	void* allocate(PtrSize size, PtrSize alignment) throw();
+
+	/// Free memory
+	Bool free(void* ptr) throw();
+
+	/// Return number of allocations
+	U32 getAllocationsCount() const;
+
+private:
+	// Forward. Hide the implementation because Memory.h is the base of other
+	// files and should not include them
+	class Implementation;
+
+	/// The actual implementation
+	std::shared_ptr<Implementation> m_impl;
 };
 
 /// Thread safe memory pool. It's a preallocated memory pool that is used for 
@@ -67,7 +100,7 @@ public:
 	/// other's pool to this instance as well
 	StackMemoryPool& operator=(const StackMemoryPool& other)
 	{
-		impl = other.impl;
+		m_impl = other.m_impl;
 		return *this;
 	}
 
@@ -93,13 +126,19 @@ public:
 	/// Get the allocated size
 	PtrSize getAllocatedSize() const;
 
+	/// Get the number of users for this pool
+	U32 getUsersCount() const
+	{
+		return m_impl.use_count();
+	}
+
 private:
 	// Forward. Hide the implementation because Memory.h is the base of other
 	// files and should not include them
 	class Implementation;
 
 	/// The actual implementation
-	std::shared_ptr<Implementation> impl;
+	std::shared_ptr<Implementation> m_impl;
 };
 
 /// Chain memory pool. Almost similar to StackMemoryPool but more flexible and 
@@ -116,6 +155,10 @@ public:
 		MULTIPLY, ///< Next chuck's size will be old_chuck_size * a_value
 		ADD ///< Next chuck's size will be old_chuck_size + a_value
 	};
+
+	/// Default constructor
+	ChainMemoryPool()
+	{}
 
 	/// Copy constructor. It's not copying any data
 	ChainMemoryPool(const ChainMemoryPool& other)
@@ -145,7 +188,7 @@ public:
 	/// other's pool to this instance as well
 	ChainMemoryPool& operator=(const ChainMemoryPool& other)
 	{
-		impl = other.impl;
+		m_impl = other.m_impl;
 		return *this;
 	}
 
@@ -161,9 +204,17 @@ public:
 	/// @return True if the deallocation actually happened and false otherwise
 	Bool free(void* ptr) throw();
 
-	/// @name Methods used for debugging
+	/// Get the number of users for this pool
+	U32 getUsersCount() const
+	{
+		return m_impl.use_count();
+	}
+
+	/// @name Methods used for optimizing future chains
 	/// @{
 	PtrSize getChunksCount() const;
+
+	PtrSize getAllocatedSize() const;
 	/// @}
 
 private:
@@ -172,10 +223,9 @@ private:
 	class Implementation;
 
 	/// The actual implementation
-	std::shared_ptr<Implementation> impl;
+	std::shared_ptr<Implementation> m_impl;
 };
 
-/// @}
 /// @}
 
 } // end namespace anki

@@ -1,6 +1,6 @@
 #include "anki/renderer/Dbg.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/ProgramResource.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
@@ -15,27 +15,32 @@ Dbg::~Dbg()
 //==============================================================================
 void Dbg::init(const RendererInitializer& initializer)
 {
-	enabled = initializer.get("dbg.enabled");
+	m_enabled = initializer.get("dbg.enabled");
 	enableBits(DF_ALL);
 
 	try
 	{
+		GlManager& gl = GlManagerSingleton::get();
+		GlJobChainHandle jobs(&gl);
+
 		// Chose the correct color FAI
-		if(r->getPps().getEnabled())
+		if(m_r->getPps().getEnabled())
 		{
-			fbo.create({
-				{&r->getPps().getFai(), GL_COLOR_ATTACHMENT0},
-				{&r->getMs().getDepthFai(), GL_DEPTH_ATTACHMENT}});
+			m_fb = GlFramebufferHandle(jobs, 
+				{{m_r->getPps().getRt(), GL_COLOR_ATTACHMENT0},
+				{m_r->getMs().getDepthRt(), GL_DEPTH_ATTACHMENT}});
 		}
 		else
 		{
-			fbo.create({
-				{&r->getIs().getFai(), GL_COLOR_ATTACHMENT0},
-				{&r->getMs().getDepthFai(), GL_DEPTH_ATTACHMENT}});
+			m_fb = GlFramebufferHandle(jobs, 
+				{{m_r->getIs().getRt(), GL_COLOR_ATTACHMENT0},
+				{m_r->getMs().getDepthRt(), GL_DEPTH_ATTACHMENT}});
 		}
 
-		drawer.reset(new DebugDrawer);
-		sceneDrawer.reset(new SceneDebugDrawer(drawer.get()));
+		m_drawer.reset(new DebugDrawer);
+		m_sceneDrawer.reset(new SceneDebugDrawer(m_drawer.get()));
+
+		jobs.flush();
 	}
 	catch(std::exception& e)
 	{
@@ -44,19 +49,20 @@ void Dbg::init(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Dbg::run()
+void Dbg::run(GlJobChainHandle& jobs)
 {
-	ANKI_ASSERT(enabled);
+	ANKI_ASSERT(m_enabled);
 
-	fbo.bind(false);
-	SceneGraph& scene = r->getSceneGraph();
+	SceneGraph& scene = m_r->getSceneGraph();
 
-	GlStateSingleton::get().disable(GL_BLEND);
-	GlStateSingleton::get().enable(GL_DEPTH_TEST, depthTest);
+	m_fb.bind(jobs, false);
+	jobs.enableBlend(true);
+	jobs.enableDepthTest(m_depthTest);
 
-	drawer->setViewProjectionMatrix(
+	m_drawer->prepareDraw(jobs);
+	m_drawer->setViewProjectionMatrix(
 		scene.getActiveCamera().getViewProjectionMatrix());
-	drawer->setModelMatrix(Mat4::getIdentity());
+	m_drawer->setModelMatrix(Mat4::getIdentity());
 	//drawer->drawGrid();
 
 	scene.iterateSceneNodes([&](SceneNode& node)
@@ -64,7 +70,7 @@ void Dbg::run()
 		SpatialComponent* sp = node.tryGetComponent<SpatialComponent>();
 		if(bitsEnabled(DF_SPATIAL) && sp)
 		{
-			sceneDrawer->draw(node);
+			m_sceneDrawer->draw(node);
 		}
 	});
 
@@ -75,7 +81,7 @@ void Dbg::run()
 		{
 			if(bitsEnabled(DF_SECTOR))
 			{
-				sceneDrawer->draw(*sector);
+				m_sceneDrawer->draw(*sector);
 			}
 		}
 	}
@@ -87,6 +93,7 @@ void Dbg::run()
 	}
 
 	// XXX
+#if 0
 	if(0)
 	{
 		Vec3 tri[3] = {
@@ -162,8 +169,13 @@ void Dbg::run()
 		}
 	}
 	// XXX
+#endif
 
-	drawer->flush();
+	jobs.enableBlend(false);
+	jobs.enableDepthTest(false);
+
+	m_drawer->flush();
+	m_drawer->finishDraw();
 }
 
 } // end namespace anki

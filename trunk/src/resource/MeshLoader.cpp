@@ -42,7 +42,8 @@ void MeshLoader::load(const char* filename)
 	{
 		// Open the file
 		File file(filename, 
-			File::OF_READ | File::OF_BINARY | File::E_LITTLE_ENDIAN);
+			File::OpenFlag::READ | File::OpenFlag::BINARY 
+			| File::OpenFlag::LITTLE_ENDIAN);
 
 		// Magic word
 		char magic[8];
@@ -55,7 +56,7 @@ void MeshLoader::load(const char* filename)
 		// Mesh name
 		{
 			U32 strLen = file.readU32();
-			file.seek(strLen, File::SO_CURRENT);
+			file.seek(strLen, File::SeekOrigin::CURRENT);
 		}
 
 		// Verts num
@@ -224,7 +225,7 @@ void MeshLoader::createVertNormals()
 
 	for(Vec3& vertNormal : normals)
 	{
-		vertNormal = Vec3(0.0, 0.0, 0.0);
+		vertNormal = Vec3(0.0);
 	}
 
 	for(Triangle& tri : tris)
@@ -236,7 +237,10 @@ void MeshLoader::createVertNormals()
 
 	for(Vec3& vertNormal : normals)
 	{
-		vertNormal.normalize();
+		if(vertNormal != Vec3(0.0))
+		{
+			vertNormal.normalize();
+		}
 	}
 }
 
@@ -297,9 +301,16 @@ void MeshLoader::createVertTangents()
 		Vec3& b = bitagents[i];
 
 		t = t - n * n.dot(t);
-		t.normalize();
 
-		b.normalize();
+		if(t != Vec3(0.0))
+		{
+			t.normalize();
+		}
+
+		if(b != Vec3(0.0))
+		{
+			b.normalize();
+		}
 
 		F32 w = ((n.cross(t)).dot(b) < 0.0) ? 1.0 : -1.0;
 

@@ -11,16 +11,16 @@ namespace anki {
 //==============================================================================
 void Sm::init(const RendererInitializer& initializer)
 {
-	enabled = initializer.get("is.sm.enabled");
+	m_enabled = initializer.get("is.sm.enabled");
 
-	if(!enabled)
+	if(!m_enabled)
 	{
 		return;
 	}
 
-	poissonEnabled = initializer.get("is.sm.poissonEnabled");
-	bilinearEnabled = initializer.get("is.sm.bilinearEnabled");
-	resolution = initializer.get("is.sm.resolution");
+	m_poissonEnabled = initializer.get("is.sm.poissonEnabled");
+	m_bilinearEnabled = initializer.get("is.sm.bilinearEnabled");
+	m_resolution = initializer.get("is.sm.resolution");
 
 	//
 	// Init the shadowmaps
@@ -31,125 +31,133 @@ void Sm::init(const RendererInitializer& initializer)
 	}
 
 	// Create shadowmaps array
-	Texture::Initializer sminit;
-	sminit.target = GL_TEXTURE_2D_ARRAY;
-	sminit.width = resolution;
-	sminit.height = resolution;
-	sminit.depth = initializer.get("is.sm.maxLights");
-	sminit.format = GL_DEPTH_COMPONENT;
-	sminit.internalFormat = GL_DEPTH_COMPONENT16;
-	sminit.type = GL_UNSIGNED_SHORT;
-	sminit.mipmapsCount = 1;
-	if(bilinearEnabled)
+	GlTextureHandle::Initializer sminit;
+	sminit.m_target = GL_TEXTURE_2D_ARRAY;
+	sminit.m_width = m_resolution;
+	sminit.m_height = m_resolution;
+	sminit.m_depth = initializer.get("is.sm.maxLights");
+	sminit.m_format = GL_DEPTH_COMPONENT;
+	sminit.m_internalFormat = GL_DEPTH_COMPONENT16;
+	sminit.m_type = GL_UNSIGNED_SHORT;
+	sminit.m_mipmapsCount = 1;
+	if(m_bilinearEnabled)
 	{
-		sminit.filteringType = Texture::TFT_LINEAR;
+		sminit.m_filterType = GlTextureHandle::Filter::LINEAR;
 	}
 	else
 	{
-		sminit.filteringType = Texture::TFT_NEAREST;
+		sminit.m_filterType = GlTextureHandle::Filter::NEAREST;
 	}
-	sm2DArrayTex.create(sminit);
 
-	sm2DArrayTex.setParameter(GL_TEXTURE_COMPARE_MODE, 
-		GL_COMPARE_REF_TO_TEXTURE);
-	sm2DArrayTex.setParameter(GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
+
+	m_sm2DArrayTex = GlTextureHandle(jobs, sminit);
+
+	m_sm2DArrayTex.setParameter(jobs, 
+		GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+	m_sm2DArrayTex.setParameter(jobs, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
 	// Init sms
 	U32 layer = 0;
-	sms.resize(initializer.get("is.sm.maxLights"));
-	for(Shadowmap& sm : sms)
+	m_sms.resize(initializer.get("is.sm.maxLights"));
+	for(Shadowmap& sm : m_sms)
 	{
-		sm.layerId = layer;
-		sm.fbo.create({{&sm2DArrayTex, GL_DEPTH_ATTACHMENT, (I32)layer}});
+		sm.m_layerId = layer;
+		sm.m_fb = GlFramebufferHandle(jobs, 
+			{{m_sm2DArrayTex, GL_DEPTH_ATTACHMENT, (U32)layer}});
 
 		++layer;
 	}
+
+	jobs.flush();
 }
 
 //==============================================================================
-void Sm::prepareDraw()
+void Sm::prepareDraw(GlJobChainHandle& jobs)
 {
-	// set GL
-	GlStateSingleton::get().setViewport(0, 0, resolution, resolution);
-
 	// disable color & blend & enable depth test
-	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-	GlStateSingleton::get().enable(GL_DEPTH_TEST);
-	GlStateSingleton::get().disable(GL_BLEND);
-	GlStateSingleton::get().setDepthMaskEnabled(true);
+
+	jobs.enableDepthTest(true);
+	jobs.setColorWriteMask(false, false, false, false);
 
 	// for artifacts
-	glPolygonOffset(2.0, 2.0); // keep the values as low as possible!!!!
-	GlStateSingleton::get().enable(GL_POLYGON_OFFSET_FILL);
+	jobs.setPolygonOffset(2.0, 2.0); // keep both as low as possible!!!!
+	jobs.enablePolygonOffset(true);
 
-	r->getSceneDrawer().prepareDraw();
+	m_r->getSceneDrawer().prepareDraw(
+		RenderingStage::MATERIAL, Pass::DEPTH, jobs);
 }
 
 //==============================================================================
-void Sm::afterDraw()
+void Sm::finishDraw(GlJobChainHandle& jobs)
 {
-	GlStateSingleton::get().disable(GL_POLYGON_OFFSET_FILL);
-	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	m_r->getSceneDrawer().finishDraw();
+
+	jobs.enableDepthTest(false);
+	jobs.enablePolygonOffset(false);
+	jobs.setColorWriteMask(true, true, true, true);
 }
 
 //==============================================================================
-void Sm::run(Light* shadowCasters[], U32 shadowCastersCount)
+void Sm::run(Light* shadowCasters[], U32 shadowCastersCount, 
+	GlJobChainHandle& jobs)
 {
-	ANKI_ASSERT(enabled);
+	ANKI_ASSERT(m_enabled);
 
-	prepareDraw();
+	prepareDraw(jobs);
 
 	// render all
 	for(U32 i = 0; i < shadowCastersCount; i++)
 	{
-		Shadowmap* sm = doLight(*shadowCasters[i]);
+		Shadowmap* sm = doLight(*shadowCasters[i], jobs);
 		ANKI_ASSERT(sm != nullptr);
 		(void)sm;
 	}
 
-	afterDraw();
+	finishDraw(jobs);
 }
 
 //==============================================================================
 Sm::Shadowmap& Sm::bestCandidate(Light& light)
 {
 	// Allready there
-	for(Shadowmap& sm : sms)
+	for(Shadowmap& sm : m_sms)
 	{
-		if(&light == sm.light)
+		if(&light == sm.m_light)
 		{
 			return sm;
 		}
 	}
 
 	// Find a null
-	for(Shadowmap& sm : sms)
+	for(Shadowmap& sm : m_sms)
 	{
-		if(sm.light == nullptr)
+		if(sm.m_light == nullptr)
 		{
-			sm.light = &light;
-			sm.timestamp = 0;
+			sm.m_light = &light;
+			sm.m_timestamp = 0;
 			return sm;
 		}
 	}
 
 	// Find an old and replace it
-	Shadowmap* sm = &sms[0];
-	for(U i = 1; i < sms.size(); i++)
+	Shadowmap* sm = &m_sms[0];
+	for(U i = 1; i < m_sms.size(); i++)
 	{
-		if(sms[i].timestamp < sm->timestamp)
+		if(m_sms[i].m_timestamp < sm->m_timestamp)
 		{
-			sm = &sms[i];
+			sm = &m_sms[i];
 		}
 	}
 
-	sm->light = &light;
-	sm->timestamp = 0;
+	sm->m_light = &light;
+	sm->m_timestamp = 0;
 	return *sm;
 }
 
 //==============================================================================
-Sm::Shadowmap* Sm::doLight(Light& light)
+Sm::Shadowmap* Sm::doLight(Light& light, GlJobChainHandle& jobs)
 {
 	Shadowmap& sm = bestCandidate(light);
 
@@ -162,9 +170,9 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 	U32 lastUpdate = light.MoveComponent::getTimestamp();
 	lastUpdate = std::max(lastUpdate, fr.getTimestamp());
 
-	for(auto it : vi.renderables)
+	for(auto& it : vi.m_renderables)
 	{
-		SceneNode* node = it.node;
+		SceneNode* node = it.m_node;
 		MoveComponent* bmov = node->tryGetComponent<MoveComponent>();
 		FrustumComponent* bfr = node->tryGetComponent<FrustumComponent>();
 		SpatialComponent* sp = node->tryGetComponent<SpatialComponent>();
@@ -185,31 +193,28 @@ Sm::Shadowmap* Sm::doLight(Light& light)
 		}
 	}
 
-	Bool shouldUpdate = lastUpdate >= sm.timestamp;
-
+	Bool shouldUpdate = lastUpdate >= sm.m_timestamp;
 	if(!shouldUpdate)
 	{
 		return &sm;
 	}
 
-	sm.timestamp = getGlobTimestamp();
-	light.setShadowMapIndex(&sm - &sms[0]);
+	sm.m_timestamp = getGlobTimestamp();
+	light.setShadowMapIndex(&sm - &m_sms[0]);
 
 	//
 	// Render
 	//
-	sm.fbo.bind(true);
-	glClear(GL_DEPTH_BUFFER_BIT);
+	sm.m_fb.bind(jobs, true);
+	jobs.setViewport(0, 0, m_resolution, m_resolution);
+	jobs.clearBuffers(GL_DEPTH_BUFFER_BIT);
 
-	//std::cout << "Shadowmap for: " << &sm << std::endl;
-
-	for(auto it : vi.renderables)
+	for(auto& it : vi.m_renderables)
 	{
-		r->getSceneDrawer().render(light, RenderableDrawer::RS_MATERIAL,
-			DEPTH_PASS, it);
+		m_r->getSceneDrawer().render(light, it);
 	}
 
-	ANKI_COUNTER_INC(C_RENDERER_SHADOW_PASSES, (U64)1);
+	ANKI_COUNTER_INC(RENDERER_SHADOW_PASSES, (U64)1);
 
 	return &sm;
 }

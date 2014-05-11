@@ -5,12 +5,12 @@ namespace anki {
 
 //==============================================================================
 Plane::Plane(const Plane& b)
-	: CollisionShape(CST_PLANE), normal(b.normal), offset(b.offset)
+	: CollisionShape(Type::PLANE), normal(b.normal), offset(b.offset)
 {}
 
 //==============================================================================
 Plane::Plane(const Vec3& normal_, F32 offset_)
-	: CollisionShape(CST_PLANE), normal(normal_), offset(offset_)
+	: CollisionShape(Type::PLANE), normal(normal_), offset(offset_)
 {}
 
 //==============================================================================
@@ -63,7 +63,7 @@ Plane Plane::getTransformed(const Transform& trf) const
 }
 
 //==============================================================================
-void Plane::toAabb(Aabb&) const
+void Plane::computeAabb(Aabb&) const
 {
 	ANKI_ASSERT(0 && "Can't do that");
 }

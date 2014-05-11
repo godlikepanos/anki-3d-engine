@@ -6,21 +6,23 @@
 namespace anki {
 
 /// Enumeration of counters
-enum Counter
+enum class Counter
 {
-	C_FPS,
-	C_MAIN_RENDERER_TIME,
-	C_RENDERER_MS_TIME,
-	C_RENDERER_IS_TIME,
-	C_RENDERER_PPS_TIME,
-	C_RENDERER_SHADOW_PASSES,
-	C_RENDERER_DRAWCALLS_COUNT,
-	C_RENDERER_VERTICES_COUNT,
-	C_RENDERER_LIGHTS_COUNT,
-	C_SCENE_UPDATE_TIME,
-	C_SWAP_BUFFERS_TIME,
+	FPS,
+	MAIN_RENDERER_TIME,
+	RENDERER_MS_TIME,
+	RENDERER_IS_TIME,
+	RENDERER_PPS_TIME,
+	RENDERER_SHADOW_PASSES,
+	RENDERER_LIGHTS_COUNT,
+	SCENE_UPDATE_TIME,
+	SWAP_BUFFERS_TIME,
+	GL_CLIENT_WAIT_TIME,
+	GL_SERVER_WAIT_TIME,
+	GL_DRAWCALLS_COUNT,
+	GL_VERTICES_COUNT,
 
-	C_COUNT
+	COUNT
 };
 
 /// The counters manager. It's been used with a singleton
@@ -47,11 +49,11 @@ public:
 	void stopTimerIncreaseCounter(Counter counter);
 
 private:
-	File perframeFile;
-	File perrunFile;
-	Vector<U64> perframeValues;
-	Vector<U64> perrunValues;
-	Vector<HighRezTimer::Scalar> counterTimes;
+	File m_perframeFile;
+	File m_perrunFile;
+	Vector<U64> m_perframeValues;
+	Vector<U64> m_perrunValues;
+	Vector<HighRezTimer::Scalar> m_counterTimes;
 };
 
 /// The singleton of the counters manager
@@ -61,13 +63,14 @@ typedef Singleton<CountersManager> CountersManagerSingleton;
 
 #if ANKI_ENABLE_COUNTERS
 #	define ANKI_COUNTER_INC(counter_, val_) \
-		CountersManagerSingleton::get().increaseCounter(counter_, val_)
+		CountersManagerSingleton::get().increaseCounter(Counter::counter_, val_)
 
 #	define ANKI_COUNTER_START_TIMER(counter_) \
-		CountersManagerSingleton::get().startTimer(counter_)
+		CountersManagerSingleton::get().startTimer(Counter::counter_)
 
 #	define ANKI_COUNTER_STOP_TIMER_INC(counter_) \
-		CountersManagerSingleton::get().stopTimerIncreaseCounter(counter_)
+		CountersManagerSingleton::get(). \
+		stopTimerIncreaseCounter(Counter::counter_)
 
 #	define ANKI_COUNTERS_RESOLVE_FRAME() \
 		CountersManagerSingleton::get().resolveFrame()

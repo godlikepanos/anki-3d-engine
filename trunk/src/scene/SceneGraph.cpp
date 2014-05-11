@@ -193,7 +193,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 {
 	ANKI_ASSERT(mainCam);
 
-	ANKI_COUNTER_START_TIMER(C_SCENE_UPDATE_TIME);
+	ANKI_COUNTER_START_TIMER(SCENE_UPDATE_TIME);
 
 	//
 	// Sync point. Here we wait for all scene's threads
@@ -246,7 +246,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 
 	doVisibilityTests(*mainCam, *this, renderer);
 
-	ANKI_COUNTER_STOP_TIMER_INC(C_SCENE_UPDATE_TIME);
+	ANKI_COUNTER_STOP_TIMER_INC(SCENE_UPDATE_TIME);
 }
 
 //==============================================================================
@@ -278,13 +278,13 @@ void SceneGraph::load(const char* filename)
 			el1 = mdlNodeEl.getChildElementOptional("instancesCount");
 			U32 instancesCount = (el1) ? el1.getInt() : 1;
 
-			if(instancesCount > ANKI_MAX_INSTANCES)
+			if(instancesCount > ANKI_GL_MAX_INSTANCES)
 			{
 				throw ANKI_EXCEPTION("Too many instances");
 			}
 
-			ModelNode* node;
-			newSceneNode(node, name.c_str(), el.getText());
+			ModelNode* node = 
+				newSceneNode<ModelNode>(name.c_str(), el.getText());
 
 			// <transform>
 			el = mdlNodeEl.getChildElement("transform");
@@ -298,10 +298,11 @@ void SceneGraph::load(const char* filename)
 				}
 				else
 				{
-					InstanceNode* instance;
 					std::string instName = name + "_inst" 
 						+ std::to_string(i - 1);
-					newSceneNode(instance, instName.c_str());
+
+					InstanceNode* instance = 
+						newSceneNode<InstanceNode>(instName.c_str());
 
 					instance->setLocalTransform(Transform(el.getMat4()));
 

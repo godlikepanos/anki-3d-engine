@@ -1,8 +1,8 @@
 #include "anki/resource/Material.h"
-#include "anki/resource/MaterialShaderProgramCreator.h"
+#include "anki/resource/MaterialProgramCreator.h"
 #include "anki/core/App.h"
 #include "anki/core/Logger.h"
-#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/ProgramResource.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/util/File.h"
 #include "anki/misc/Xml.h"
@@ -10,7 +10,6 @@
 #include <functional>
 #include <algorithm>
 #include <sstream>
-#include <map>
 
 namespace anki {
 
@@ -19,43 +18,51 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-static Array<const char*, PASS_COUNT> passNames = {{
-	"COLOR", "DEPTH"
-}};
-
-//==============================================================================
-struct SetMaterialVariableValuesVisitor
+/// Create an numeric material variable
+template<typename T>
+static MaterialVariable* newMaterialVariable(
+	const GlProgramVariable& glvar, const MaterialProgramCreator::Input& in)
 {
-	const StringList& list;
+	MaterialVariable* out;
 
-	SetMaterialVariableValuesVisitor(const StringList& list_)
-		: list(list_)
-	{}
-
-	template<typename TMaterialVariableTemplate>
-	void visit(TMaterialVariableTemplate& mv)
+	if(in.m_value.size() > 0)
 	{
-		typedef typename TMaterialVariableTemplate::Type Type;
+		// Has values
 
-		U32 floatsNeeded = mv.getAShaderProgramUniformVariable().getSize()
-			* (sizeof(Type) / sizeof(F32));
+		U floatsNeeded = glvar.getArraySize() * (sizeof(T) / sizeof(F32));
 
-		if(list.size() != floatsNeeded)
+		if(in.m_value.size() != floatsNeeded)
 		{
-			throw ANKI_EXCEPTION("Incorrect number of values");
+			throw ANKI_EXCEPTION("Incorrect number of values. Variable %s",
+				glvar.getName());
 		}
 
 		Vector<F32> floatvec;
 		floatvec.resize(floatsNeeded);
 		for(U i = 0; i < floatsNeeded; ++i)
 		{
-			floatvec[i] = std::stof(list[i]);
+			floatvec[i] = std::stof(in.m_value[i]);
 		}
 
-		mv.set((Type*)&floatvec[0],
-			mv.getAShaderProgramUniformVariable().getSize());
+		out = new MaterialVariableTemplate<T>(
+			&glvar, 
+			in.m_instanced,
+			(T*)&floatvec[0],
+			glvar.getArraySize());
 	}
-};
+	else
+	{
+		// Buildin
+
+		out = new MaterialVariableTemplate<T>(
+			&glvar, 
+			in.m_instanced,
+			nullptr,
+			0);
+	}
+
+	return out;
+}
 
 //==============================================================================
 /// Given a string that defines blending return the GLenum
@@ -85,23 +92,6 @@ static GLenum blendToEnum(const char* str)
 }
 
 //==============================================================================
-/// Iterate loaded programs
-template<typename Func>
-void iterateProgs(PassLodArray<ShaderProgramResourcePointer>& progs, Func func)
-{
-	for(U i = 0; i < PASS_COUNT; i++)
-	{
-		for(U j = 0; j < MAX_LOD + 1; j++)
-		{
-			if(progs[i][j].isLoaded())
-			{
-				func(progs[i][j], (Pass)i, j);
-			}
-		}
-	}
-}
-
-//==============================================================================
 // MaterialVariable                                                            =
 //==============================================================================
 
@@ -110,63 +100,15 @@ MaterialVariable::~MaterialVariable()
 {}
 
 //==============================================================================
-GLenum MaterialVariable::getGlDataType() const
+const char* MaterialVariable::getName() const
 {
-	return oneSProgVar->getGlDataType();
-}
-
-//==============================================================================
-const std::string& MaterialVariable::getName() const
-{
-	return oneSProgVar->getName();
-}
-
-//==============================================================================
-void MaterialVariable::init(const char* shaderProgVarName,
-	PassLodArray<ShaderProgramResourcePointer>& progs)
-{
-	oneSProgVar = NULL;
-	memset(&progVars, 0, sizeof(progVars));
-
-	// For all programs
-	iterateProgs(progs, [&](ShaderProgramResourcePointer& prog, Pass p, U lod)
-	{
-		// Variable exists put it the map
-		const ShaderProgramUniformVariable* uni = 
-			prog->tryFindUniformVariable(shaderProgVarName);
-
-		if(uni)
-		{
-			progVars[p][lod] = uni;
-
-			// Set oneSProgVar
-			if(!oneSProgVar)
-			{
-				oneSProgVar = uni;
-			}
-
-			// Sanity check: All the sprog vars need to have same GL data type
-			if(oneSProgVar->getGlDataType() != uni->getGlDataType() 
-				|| oneSProgVar->getType() != uni->getType())
-			{
-				throw ANKI_EXCEPTION("Incompatible shader "
-					"program variables: %s", shaderProgVarName);
-			}
-		}
-	});
-
-	// Extra sanity checks
-	if(!oneSProgVar)
-	{
-		throw ANKI_EXCEPTION("Variable not found in "
-			"any of the shader programs: %s", shaderProgVarName);
-	}
+	return m_progVar->getName();
 }
 
 //==============================================================================
 U32 MaterialVariable::getArraySize() const
 {
-	return oneSProgVar->getSize();
+	return m_progVar->getArraySize();
 }
 
 //==============================================================================
@@ -180,16 +122,134 @@ Material::Material()
 //==============================================================================
 Material::~Material()
 {
-	for(auto it : vars)
+	for(auto it : m_vars)
 	{
-		propperDelete(it);
+		delete it;
 	}
+}
+
+//==============================================================================
+ProgramResourcePointer& Material::getProgram(
+	const RenderingKey key, U32 shaderId)
+{
+	ANKI_ASSERT((U)key.m_pass < m_passesCount);
+	ANKI_ASSERT(key.m_lod < m_lodsCount);
+
+	if(key.m_tessellation)
+	{
+		ANKI_ASSERT(m_tessellation);
+	}
+
+	// Calc the count that are before this shader
+	U tessCount = m_tessellation ? 2 : 1;
+	U count = 0;
+	switch(shaderId)
+	{
+	case 4:
+		// Count of geom
+		count += 0;
+	case 3:
+		// Count of tess
+		if(m_tessellation)
+		{
+			count += m_passesCount * m_lodsCount;
+		}
+	case 2:
+		// Count of tess
+		if(m_tessellation)
+		{
+			count += m_passesCount * m_lodsCount;
+		}
+	case 1:
+		// Count of vert
+		count += m_passesCount * m_lodsCount * tessCount;
+	case 0:
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	// Calc the idx
+	U idx = 0;
+	switch(shaderId)
+	{
+	case 0:
+		idx = (U)key.m_pass * m_lodsCount * tessCount + key.m_lod * tessCount 
+			+ (key.m_tessellation ? 1 : 0);
+		break;
+	case 1:
+	case 2:
+	case 4:
+		idx = (U)key.m_pass * m_lodsCount + key.m_lod;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	idx += count;
+	ANKI_ASSERT(idx < m_progs.size());
+	ProgramResourcePointer& out = m_progs[idx];
+
+	if(out.isLoaded())
+	{
+		ANKI_ASSERT(
+			computeShaderTypeIndex(out->getGlProgram().getType()) == shaderId);
+	}
+
+	return out;
+}
+
+//==============================================================================
+GlProgramPipelineHandle Material::getProgramPipeline(
+	const RenderingKey& key)
+{
+	ANKI_ASSERT((U)key.m_pass < m_passesCount);
+	ANKI_ASSERT(key.m_lod < m_lodsCount);
+
+	U tessCount = 1;
+	if(key.m_tessellation)
+	{
+		ANKI_ASSERT(m_tessellation);
+		tessCount = 2;
+	}
+
+	U idx = (U)key.m_pass * m_lodsCount * tessCount
+		+ key.m_lod * tessCount + key.m_tessellation;
+
+	ANKI_ASSERT(idx < m_pplines.size());
+	GlProgramPipelineHandle& ppline = m_pplines[idx];
+
+	// Lazily create it
+	if(ANKI_UNLIKELY(!ppline.isCreated()))
+	{
+		Array<GlProgramHandle, 5> progs;
+		U progCount = 0;
+
+		progs[progCount++] = getProgram(key, 0)->getGlProgram();
+
+		if(key.m_tessellation)
+		{
+			progs[progCount++] = getProgram(key, 1)->getGlProgram();
+			progs[progCount++] = getProgram(key, 2)->getGlProgram();
+		}
+
+		progs[progCount++] = getProgram(key, 4)->getGlProgram();
+
+		GlManager& gl = GlManagerSingleton::get();
+		GlJobChainHandle jobs(&gl);
+
+		ppline = GlProgramPipelineHandle(
+			jobs, &progs[0], &progs[0] + progCount);
+
+		jobs.flush();
+	}
+
+	return ppline;
 }
 
 //==============================================================================
 void Material::load(const char* filename)
 {
-	fname = filename;
 	try
 	{
 		XmlDocument doc;
@@ -212,11 +272,11 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	if(lodEl)
 	{
 		I tmp = lodEl.getInt();
-		lodsCount = (tmp < 1) ? 1 : tmp;
+		m_lodsCount = (tmp < 1) ? 1 : tmp;
 	}
 	else
 	{
-		lodsCount = 1;
+		m_lodsCount = 1;
 	}
 
 	// shadow
@@ -225,7 +285,7 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 
 	if(shadowEl)
 	{
-		shadow = shadowEl.getInt();
+		m_shadow = shadowEl.getInt();
 	}
 
 	// blendFunctions
@@ -233,22 +293,19 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	XmlElement blendFunctionsEl =
 		materialEl.getChildElementOptional("blendFunctions");
 
-	Bool disableDepthPass = false;
 	if(blendFunctionsEl)
 	{
 		// sFactor
-		blendingSfactor = blendToEnum(
+		m_blendingSfactor = blendToEnum(
 			blendFunctionsEl.getChildElement("sFactor").getText());
 
 		// dFactor
-		blendingDfactor = blendToEnum(
+		m_blendingDfactor = blendToEnum(
 			blendFunctionsEl.getChildElement("dFactor").getText());
-
-		disableDepthPass = true;
 	}
 	else
 	{
-		passesCount = 2;
+		m_passesCount = 2;
 	}
 
 	// depthTesting
@@ -258,7 +315,7 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 
 	if(depthTestingEl)
 	{
-		depthTesting = depthTestingEl.getInt();
+		m_depthTesting = depthTestingEl.getInt();
 	}
 
 	// wireframe
@@ -267,69 +324,88 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 
 	if(wireframeEl)
 	{
-		wireframe = wireframeEl.getInt();
+		m_wireframe = wireframeEl.getInt();
 	}
 
 	// shaderProgram
 	//
-	XmlElement shaderProgramEl = materialEl.getChildElement("shaderProgram");
-	MaterialShaderProgramCreator mspc(
-		shaderProgramEl, ANKI_RENDERER_USE_MATERIAL_UBOS);
+	MaterialProgramCreator mspc(
+		materialEl.getChildElement("programs"));
 
-	tessellation = mspc.hasTessellation();
+	m_tessellation = mspc.hasTessellation();
+	U tessCount = m_tessellation ? 2 : 1;
 
-	for(U level = 0; level < lodsCount; ++level)
+	// Alloc program vector
+	U progCount = 0;
+	progCount += m_passesCount * m_lodsCount * tessCount;
+	if(m_tessellation)
 	{
-		for(U pid = 0; pid < PASS_COUNT; ++pid)
+		progCount += m_passesCount * m_lodsCount * 2;
+	}
+	progCount += m_passesCount * m_lodsCount;
+	m_progs.resize(progCount);
+
+	// Aloc progam descriptors
+	m_pplines.resize(m_passesCount * m_lodsCount * tessCount);
+
+	m_hash = 0;
+	for(U shader = 0; shader < 5; shader++)
+	{
+		if(!m_tessellation && (shader == 1 || shader == 2))
 		{
-			if(disableDepthPass && pid == DEPTH_PASS)
+			continue;
+		}
+
+		if(shader == 3)
+		{
+			continue;
+		}
+
+		for(U level = 0; level < m_lodsCount; ++level)
+		{
+			for(U pid = 0; pid < m_passesCount; ++pid)
 			{
-				continue;
-			}
-
-			std::stringstream src;
-
-			src << "#define LOD " << level << "\n";
-
-			for(U i = 0; i < PASS_COUNT; i++)
-			{
-				src << "#define PASS_" << passNames[i];
-
-				if(pid == i)
+				for(U tess = 0; tess < tessCount; ++tess)
 				{
-					src << " 1\n";
-				}
-				else
-				{
-					src << " 0\n";
+					std::stringstream src;
+
+					src << "#define LOD " << level << "\n";
+					src << "#define PASS " << pid << "\n";
+					src << "#define TESSELLATION " << tess << "\n";
+
+					src << MainRendererSingleton::get().
+						getShaderPostProcessorString() << "\n"
+						<< mspc.getProgramSource(shader) << std::endl;
+
+					std::string filename =
+						createProgramSourceToChache(src.str().c_str());
+
+					RenderingKey key((Pass)pid, level, tess);
+					ProgramResourcePointer& progr = getProgram(key, shader);
+					progr.load(filename.c_str());
+
+					// Update the hash
+					std::hash<std::string> stringHasher;
+					m_hash ^= stringHasher(src.str());
 				}
 			}
-
-			src << MainRendererSingleton::get().getShaderPostProcessorString() 
-				<< "\n"
-				<< mspc.getShaderProgramSource() << std::endl;
-
-			std::string filename =
-				createShaderProgSourceToCache(src.str().c_str());
-
-			progs[pid][level].load(filename.c_str());
 		}
 	}
 
 	populateVariables(mspc);
 
-	// Create hash
-	//
-	std::hash<std::string> stringHash;
-	hash = stringHash(mspc.getShaderProgramSource());
+	// Get uniform block size
+	ANKI_ASSERT(m_progs.size() > 0);
+	m_shaderBlockSize = 
+		m_progs[0]->getGlProgram().findBlock("bDefaultBlock").getSize();
 }
 
 //==============================================================================
-std::string Material::createShaderProgSourceToCache(const std::string& source)
+std::string Material::createProgramSourceToChache(const std::string& source)
 {
 	// Create the hash
-	std::hash<std::string> stringHash;
-	std::size_t h = stringHash(source);
+	std::hash<std::string> stringHasher;
+	PtrSize h = stringHasher(source);
 	std::string prefix = std::to_string(h);
 
 	// Create path
@@ -340,7 +416,7 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 	if(!File::fileExists(newfPathName.c_str()))
 	{
 		// If not create it
-		File f(newfPathName.c_str(), File::OF_WRITE);
+		File f(newfPathName.c_str(), File::OpenFlag::WRITE);
 		f.writeText("%s\n", source.c_str());
 	}
 
@@ -348,139 +424,84 @@ std::string Material::createShaderProgSourceToCache(const std::string& source)
 }
 
 //==============================================================================
-void Material::populateVariables(const MaterialShaderProgramCreator& mspc)
+void Material::populateVariables(const MaterialProgramCreator& mspc)
 {
-	const char* blockName = "commonBlock";
-
-	// Get default block
-	commonUniformBlock = progs[0][0]->tryFindUniformBlock(blockName);
-
-	// Get all names of all the uniforms. Dont duplicate
-	//
-	std::map<std::string, GLenum> allVarNames;
-
-	iterateProgs(progs, [&](ShaderProgramResourcePointer& prog, Pass, U)
+	for(auto in : mspc.getInputVariables())
 	{
-		for(const ShaderProgramUniformVariable& v :
-			prog->getUniformVariables())
+		if(in.m_constant)
 		{
-#if ANKI_RENDERER_USE_MATERIAL_UBOS
-			const ShaderProgramUniformBlock* bl = v.getUniformBlock();
-			if(bl == nullptr)
-			{
-				ANKI_ASSERT(v.getGlDataType() == GL_SAMPLER_2D);
-			}
-			else
-			{
-				ANKI_ASSERT(bl->getName() == blockName);
-			}
-#endif
-
-			allVarNames[v.getName()] = v.getGlDataType();
+			continue;
 		}
-	});
 
-	// Now combine
-	//
-	const Vector<MaterialShaderProgramCreator::Input*>& invars =
-		mspc.getInputVariables();
-	for(std::map<std::string, GLenum>::value_type& it : allVarNames)
-	{
-		const std::string& name = it.first;
-		GLenum dataType = it.second;
+		MaterialVariable* mtlvar = nullptr;
+		const GlProgramVariable* glvar = nullptr;
 
-		// Find var from XML
-		const MaterialShaderProgramCreator::Input* inpvar = nullptr;
-		for(auto x : invars)
+		// Find the input variable in one of the programs
+		for(const ProgramResourcePointer& progr : m_progs)
 		{
-			if(name == x->name)
+			const GlProgramHandle& prog = progr->getGlProgram();
+
+			glvar = prog.tryFindVariable(in.m_name.c_str());
+			if(glvar)
 			{
-				inpvar = x;
 				break;
 			}
 		}
 
-		if(inpvar == nullptr)
+		// Check if variable found
+		if(glvar == nullptr)
 		{
-			throw ANKI_EXCEPTION("Uniform not found in the inputs: %s", 
-				name.c_str());
+			throw ANKI_EXCEPTION("Variable not found in "
+				"at least one program: %s", in.m_name.c_str());
 		}
 
-		MaterialVariable* v = nullptr;
-		const char* n = name.c_str(); // Var name
-
-		switch(dataType)
+		switch(glvar->getDataType())
 		{
 		// samplers
 		case GL_SAMPLER_2D:
 		case GL_SAMPLER_CUBE:
-			v = new MaterialVariableTemplate<TextureResourcePointer>(
-				n, progs);
+			{
+				TextureResourcePointer tp;
+				
+				if(in.m_value.size() > 0)
+				{
+					tp = TextureResourcePointer(in.m_value[0].c_str());
+				}
+
+				mtlvar = new MaterialVariableTemplate<TextureResourcePointer>(
+					glvar, false, &tp, 1);
+			}
 			break;
 		// F32
 		case GL_FLOAT:
-			v = new MaterialVariableTemplate<F32>(n, progs);
+			mtlvar = newMaterialVariable<F32>(*glvar, in);
 			break;
 		// vec2
 		case GL_FLOAT_VEC2:
-			v = new MaterialVariableTemplate<Vec2>(n, progs);
+			mtlvar = newMaterialVariable<Vec2>(*glvar, in);
 			break;
 		// vec3
 		case GL_FLOAT_VEC3:
-			v = new MaterialVariableTemplate<Vec3>(n, progs);
+			mtlvar = newMaterialVariable<Vec3>(*glvar, in);
 			break;
 		// vec4
 		case GL_FLOAT_VEC4:
-			v = new MaterialVariableTemplate<Vec4>(n, progs);
+			mtlvar = newMaterialVariable<Vec4>(*glvar, in);
 			break;
 		// mat3
 		case GL_FLOAT_MAT3:
-			v = new MaterialVariableTemplate<Mat3>(n, progs);
+			mtlvar = newMaterialVariable<Mat3>(*glvar, in);
 			break;
 		// mat4
 		case GL_FLOAT_MAT4:
-			v = new MaterialVariableTemplate<Mat4>(n, progs);
+			mtlvar = newMaterialVariable<Mat4>(*glvar, in);
 			break;
 		// default is error
 		default:
 			ANKI_ASSERT(0);
 		}
 
-		// Set value
-		if(inpvar->value.size() != 0)
-		{
-			const StringList& value = inpvar->value;
-			ANKI_ASSERT(inpvar->arraySize <= 1 && "Arrays not supported");
-
-			// Get the value
-			switch(dataType)
-			{
-			// sampler2D
-			case GL_SAMPLER_2D:
-			case GL_SAMPLER_CUBE:
-				{
-					TextureResourcePointer tp(value[0].c_str());
-					v->setValues(&tp, 1);
-				}
-				break;
-			// Math types
-			case GL_FLOAT:
-			case GL_FLOAT_VEC2:
-			case GL_FLOAT_VEC3:
-			case GL_FLOAT_VEC4:
-				{
-					SetMaterialVariableValuesVisitor vis(value);
-					v->acceptVisitor(vis);
-				}
-				break;
-			// default is error
-			default:
-				ANKI_ASSERT(0);
-			}
-		}
-
-		vars.push_back(v);
-		nameToVar[v->getName().c_str()] = v;
+		m_vars.push_back(mtlvar);
 	}
 }
 

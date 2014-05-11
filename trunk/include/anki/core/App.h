@@ -45,12 +45,12 @@ public:
 		timerTick = x;
 	}
 
-	const std::string& getSettingsPath() const
+	const String& getSettingsPath() const
 	{
 		return settingsPath;
 	}
 
-	const std::string& getCachePath() const
+	const String& getCachePath() const
 	{
 		return cachePath;
 	}
@@ -68,9 +68,9 @@ public:
 
 private:
 	/// The path that holds the configuration
-	std::string settingsPath;
+	String settingsPath;
 	/// This is used as a cache
-	std::string cachePath;
+	String cachePath;
 	F32 timerTick;
 
 	void initDirs();

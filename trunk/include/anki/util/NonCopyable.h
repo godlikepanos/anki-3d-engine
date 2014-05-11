@@ -3,9 +3,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup patterns
+/// @addtogroup util_patterns
 /// @{
 
 /// Makes a derived class non copyable
@@ -20,7 +18,6 @@ struct NonCopyable
 	~NonCopyable()
 	{}
 };
-/// @}
 /// @}
 
 } // end namespace anki

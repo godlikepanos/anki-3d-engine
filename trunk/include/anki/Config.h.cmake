@@ -9,6 +9,7 @@
 #define ANKI_REVISION ${ANKI_REVISION}
 
 #define ANKI_DEBUG ${ANKI_DEBUG}
+#define ANKI_ASSERTIONS ANKI_DEBUG
 
 // Operating system
 #define ANKI_OS_LINUX 1 
@@ -108,8 +109,6 @@
 //==============================================================================
 
 // General config
-#define ANKI_MAX_MULTIDRAW_PRIMITIVES 64
-#define ANKI_MAX_INSTANCES 32
 #define ANKI_SAFE_ALIGNMENT 16
 
 // Renderer and rendering related config options
@@ -133,6 +132,12 @@
 
 /// If true then we can place spatials in a thread-safe way
 #define ANKI_CFG_OCTREE_THREAD_SAFE 1
+
+// GL
+#define ANKI_GL_MAX_MIPMAPS 32
+#define ANKI_GL_MAX_TEXTURE_LAYERS 32
+#define ANKI_GL_MAX_SUB_DRAWCALLS 64
+#define ANKI_GL_MAX_INSTANCES 32
 
 //==============================================================================
 // Other                                                                       =

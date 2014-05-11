@@ -14,8 +14,8 @@ Aabb Aabb::getTransformed(const Transform& transform) const
 		absM[i] = fabs(transform.getRotation()[i]);
 	}
 
-	Vec3 center = (min + max) * 0.5;
-	Vec3 extend = (max - min) * 0.5;
+	Vec3 center = (m_min + m_max) * 0.5;
+	Vec3 extend = (m_max - m_min) * 0.5;
 
 	Vec3 newC = center.getTransformed(transform);
 	Vec3 newE = absM * (extend * transform.getScale());
@@ -70,8 +70,8 @@ Aabb Aabb::getCompoundShape(const Aabb& b) const
 
 	for(U i = 0; i < 3; i++)
 	{
-		out.min[i] = (min[i] < b.min[i]) ? min[i] : b.min[i];
-		out.max[i] = (max[i] > b.max[i]) ? max[i] : b.max[i];
+		out.m_min[i] = (m_min[i] < b.m_min[i]) ? m_min[i] : b.m_min[i];
+		out.m_max[i] = (m_max[i] > b.m_max[i]) ? m_max[i] : b.m_max[i];
 	}
 
 	return out;

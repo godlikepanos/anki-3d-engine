@@ -8,7 +8,7 @@
 
 namespace anki {
 
-#if ANKI_DEBUG
+#if ANKI_ASSERTIONS
 
 //==============================================================================
 void akassert(bool expr, const char* exprTxt, const char* file, int line,

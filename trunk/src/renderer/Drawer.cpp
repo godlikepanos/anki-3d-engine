@@ -1,195 +1,204 @@
 #include "anki/renderer/Drawer.h"
-#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/ProgramResource.h"
 #include "anki/scene/FrustumComponent.h"
 #include "anki/resource/Material.h"
 #include "anki/scene/RenderComponent.h"
 #include "anki/scene/Visibility.h"
+#include "anki/scene/SceneGraph.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/Counters.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
 //==============================================================================
-static const U UNIFORM_BLOCK_MAX_SIZE = 1024 * 12;
-
-//==============================================================================
-#if ANKI_ENABLE_COUNTERS
-static U64 countVerts(const Drawcall& dc)
-{
-	U64 sum = 0;
-	I drawCount = dc.drawCount;
-	while(--drawCount >= 0)
-	{
-		sum += dc.countArray[drawCount] * dc.instancesCount;
-	}
-	return sum;
-}
-#endif
-
-//==============================================================================
 /// Visitor that sets a uniform
-/// Align it because the clientBlock will store SIMD data
-ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
+class SetupRenderableVariableVisitor
 {
-	Array<U8, UNIFORM_BLOCK_MAX_SIZE> clientBlock;
-	const FrustumComponent* fr = nullptr;
-	Renderer* r = nullptr;
-	RenderComponent* renderable = nullptr;
-	RenderComponentVariable* rvar = nullptr;
-	const ShaderProgramUniformVariable* uni;
-	F32 flod;
-	Drawcall* dc = nullptr;
+public:
+	// Used to get the visible spatials
+	Ptr<VisibleNode> m_visibleNode;
 
-	// Used for 
-	VisibleNode* visibleNode;
+	Ptr<RenderComponent> m_renderable; ///< To get the transforms
+	Ptr<RenderComponentVariable> m_rvar;
+	Ptr<const FrustumComponent> m_fr;
+	Ptr<RenderableDrawer> m_drawer;
+	U8 m_instanceCount;
+	GlJobChainHandle m_jobs;
+
+	F32 m_flod;
 
 	/// Set a uniform in a client block
 	template<typename T>
-	void uniSet(const ShaderProgramUniformVariable& uni,
+	void uniSet(const GlProgramVariable& uni,
 		const T* value, U32 size)
 	{
-		ANKI_ASSERT(0);
+		uni.writeClientMemory(
+			m_drawer->m_uniformPtr,
+			m_renderable->getMaterial().getDefaultBlockSize(),
+			value, 
+			size);
 	}
 
 	template<typename TRenderableVariableTemplate>
-	void visit(TRenderableVariableTemplate& x)
+	void visit(const TRenderableVariableTemplate& rvar)
 	{
-		const U32 drawCount = std::max(dc->drawCount, dc->instancesCount);
-		const U32 uniArrSize = uni->getSize();
-		U32 size = std::min(drawCount, uniArrSize);
+		typedef typename TRenderableVariableTemplate::Type DataType;
+		const GlProgramVariable& glvar = rvar.getGlProgramVariable();
+
+		// Array size
+		U arraySize;
+		if(rvar.isInstanced())
+		{
+			arraySize = std::min<U>(m_instanceCount, glvar.getArraySize());
+		}
+		else
+		{
+			arraySize = glvar.getArraySize();
+		}
 
 		// Set uniform
 		//
-		Bool hasWorldTrfs = renderable->getHasWorldTransforms();
-		const Mat4& vp = fr->getViewProjectionMatrix();
-		const Mat4& v = fr->getViewMatrix();
+		Bool hasWorldTrfs = m_renderable->getHasWorldTransforms();
+		const Mat4& vp = m_fr->getViewProjectionMatrix();
+		const Mat4& v = m_fr->getViewMatrix();
 
-		switch(x.getBuildinId())
+		switch(rvar.getBuildinId())
 		{
-		case BMV_NO_BUILDIN:
-			uniSet<typename TRenderableVariableTemplate::Type>(
-				*uni, x.get(), x.getArraySize());
+		case BuildinMaterialVariableId::NO_BUILDIN:
+			uniSet<DataType>(
+				glvar, rvar.begin(), arraySize);
 			break;
-		case BMV_MVP_MATRIX:
+		case BuildinMaterialVariableId::MVP_MATRIX:
 			if(hasWorldTrfs)
 			{
-				Array<Mat4, ANKI_MAX_INSTANCES> mvp;
+				Mat4* mvp = m_drawer->m_r->getSceneGraph().getFrameAllocator().
+					newInstance<Mat4>(arraySize);
 
-				for(U i = 0; i < size; i++)
+				for(U i = 0; i < arraySize; i++)
 				{
 					Transform worldTrf;
 
-					renderable->getRenderWorldTransform(
-						visibleNode->getSpatialIndex(i), worldTrf);
+					m_renderable->getRenderWorldTransform(
+						m_visibleNode->getSpatialIndex(i), worldTrf);
 
 					mvp[i] = vp * Mat4(worldTrf);
 				}
 
-				uniSet(*uni, &mvp[0], size);
+				uniSet(glvar, &mvp[0], arraySize);
 			}
 			else
 			{
-				ANKI_ASSERT(size == 1 && "Shouldn't instance that one");
-				uniSet(*uni, &vp, 1);
+				ANKI_ASSERT(arraySize == 1 && "Shouldn't instance that one");
+				uniSet(glvar, &vp, 1);
 			}
 			break;
-		case BMV_MV_MATRIX:
+		case BuildinMaterialVariableId::MV_MATRIX:
 			{
 				ANKI_ASSERT(hasWorldTrfs);
-				Array<Mat4, ANKI_MAX_INSTANCES> mv;
+				Mat4* mv = m_drawer->m_r->getSceneGraph().getFrameAllocator().
+					newInstance<Mat4>(arraySize);
 
-				for(U i = 0; i < size; i++)
+				for(U i = 0; i < arraySize; i++)
 				{
 					Transform worldTrf;
 
-					renderable->getRenderWorldTransform(
-						visibleNode->getSpatialIndex(i), worldTrf);
+					m_renderable->getRenderWorldTransform(
+						m_visibleNode->getSpatialIndex(i), worldTrf);
 
 					mv[i] = v * Mat4(worldTrf);
 				}
 
-				uniSet(*uni, &mv[0], size);
+				uniSet(glvar, &mv[0], arraySize);
 			}
 			break;
-		case BMV_VP_MATRIX:
-			uniSet(*uni, &vp, 1);
+		case BuildinMaterialVariableId::VP_MATRIX:
+			uniSet(glvar, &vp, 1);
 			break;
-		case BMV_NORMAL_MATRIX:
+		case BuildinMaterialVariableId::NORMAL_MATRIX:
 			if(hasWorldTrfs)
 			{
-				Array<Mat3, ANKI_MAX_INSTANCES> normMats;
+				Mat3* normMats = 
+					m_drawer->m_r->getSceneGraph().getFrameAllocator().
+					newInstance<Mat3>(arraySize);
 
-				for(U i = 0; i < size; i++)
+				for(U i = 0; i < arraySize; i++)
 				{
 					Transform worldTrf;
 
-					renderable->getRenderWorldTransform(
-						visibleNode->getSpatialIndex(i), worldTrf);
+					m_renderable->getRenderWorldTransform(
+						m_visibleNode->getSpatialIndex(i), worldTrf);
 
 					Mat4 mv = v * Mat4(worldTrf);
 					normMats[i] = mv.getRotationPart();
 					normMats[i].reorthogonalize();
 				}
 
-				uniSet(*uni, &normMats[0], size);
+				uniSet(glvar, &normMats[0], arraySize);
 			}
 			else
 			{
-				ANKI_ASSERT(uniArrSize == 1
+				ANKI_ASSERT(arraySize == 1
 					&& "Having that instanced doesn't make sense");
 
 				Mat3 normMat = v.getRotationPart();
 
-				uniSet(*uni, &normMat, 1);
+				uniSet(glvar, &normMat, 1);
 			}
 			break;
-		case BMV_BILLBOARD_MVP_MATRIX:
+		case BuildinMaterialVariableId::BILLBOARD_MVP_MATRIX:
 			{
 				// Calc the billboard rotation matrix
 				Mat3 rot =
-					fr->getViewMatrix().getRotationPart().getTransposed();
+					m_fr->getViewMatrix().getRotationPart().getTransposed();
 
-				Array<Mat4, ANKI_MAX_INSTANCES> bmvp;
+				Mat4* bmvp = 
+					m_drawer->m_r->getSceneGraph().getFrameAllocator().
+					newInstance<Mat4>(arraySize);
 
-				for(U i = 0; i < size; i++)
+				for(U i = 0; i < arraySize; i++)
 				{
 					Transform trf;
-					renderable->getRenderWorldTransform(i, trf);
+					m_renderable->getRenderWorldTransform(i, trf);
 					trf.setRotation(rot);
 					bmvp[i] = vp * Mat4(trf);
 				}
 
-				uniSet(*uni, &bmvp[0], size);
+				uniSet(glvar, &bmvp[0], arraySize);
 			}
 			break;
-		case BMV_MAX_TESS_LEVEL:
+		case BuildinMaterialVariableId::MAX_TESS_LEVEL:
 			{
-				RenderComponentVariable& tmp = x;
-				F32 maxtess = tmp.getValues<F32>()[0];
-				F32 tess;
+				F32 maxtess = 
+					rvar.RenderComponentVariable:: template operator[]<F32>(0);
+				F32 tess = 0.0;
 				
-				if(flod >= 1.0)
+				if(m_flod >= 1.0)
 				{
 					tess = 1.0;
 				}
 				else
 				{
-					tess = maxtess - flod * maxtess;
+					tess = maxtess - m_flod * maxtess;
 					tess = std::max(tess, 1.0f);
 				}
 				
-				uniSet(*uni, &tess, 1);
+				uniSet(glvar, &tess, 1);
 			}
 			break;
-		case BMV_BLURRING:
+		case BuildinMaterialVariableId::BLURRING:
 			{
 				F32 blurring = 0.0;
-				uniSet(*uni, &blurring, 1);
+				uniSet(glvar, &blurring, 1);
 			}
 			break;
-		case BMV_MS_DEPTH_MAP:
-			uni->set(r->getMs().getDepthFai());
+		case BuildinMaterialVariableId::MS_DEPTH_MAP:
+			{
+				auto unit = glvar.getTextureUnit();
+
+				m_drawer->m_r->getMs().getDepthRt().bind(m_jobs, unit);
+			}
 			break;
 		default:
 			ANKI_ASSERT(0);
@@ -198,175 +207,188 @@ ANKI_ATTRIBUTE_ALIGNED(struct, 16) SetupRenderableVariableVisitor
 	}
 };
 
-/// Specialize the material accepted types. The un-specialized will be used for
-/// all Property types like strings, we don't need strings in our case
-#define TEMPLATE_SPECIALIZATION(type) \
-	template<> \
-	void SetupRenderableVariableVisitor::uniSet<type>( \
-		const ShaderProgramUniformVariable& uni, const type* values, \
-		U32 size) \
-	{ \
-		if(uni.getUniformBlock()) \
-		{ \
-			uni.setClientMemory(&clientBlock[0], \
-				sizeof(clientBlock), \
-				values, size); \
-		} \
-		else \
-		{ \
-			uni.set(values, size); \
-		} \
-	}
-
-TEMPLATE_SPECIALIZATION(F32)
-TEMPLATE_SPECIALIZATION(Vec2)
-TEMPLATE_SPECIALIZATION(Vec3)
-TEMPLATE_SPECIALIZATION(Vec4)
-TEMPLATE_SPECIALIZATION(Mat3)
-TEMPLATE_SPECIALIZATION(Mat4)
-
 // Texture specialization
 template<>
 void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
-	const ShaderProgramUniformVariable& uni, 
+	const GlProgramVariable& uni, 
 	const TextureResourcePointer* values, U32 size)
 {
 	ANKI_ASSERT(size == 1);
-	const Texture* tex = values->get();
-	uni.set(*tex);
+	GlTextureHandle tex = (*values)->getGlTexture();
+	auto unit = uni.getTextureUnit();
+
+	tex.bind(m_jobs, unit);
 }
 
 //==============================================================================
-void RenderableDrawer::setupShaderProg(const PassLodKey& key_,
-	const FrustumComponent& fr, const ShaderProgram &prog,
-	RenderComponent& renderable, 
-	VisibleNode& visibleNode,
-	F32 flod,
-	Drawcall* dc)
+RenderableDrawer::RenderableDrawer(Renderer* r)
+	: m_r(r)
 {
-	prog.bind();
-	
+	// Create the uniform buffer
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
+	m_uniformBuff = GlBufferHandle(jobs, GL_UNIFORM_BUFFER, 
+		MAX_UNIFORM_BUFFER_SIZE,
+		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	jobs.flush();
+
+	m_uniformPtr = (U8*)m_uniformBuff.getPersistentMappingAddress();
+	ANKI_ASSERT(m_uniformPtr != nullptr);
+	ANKI_ASSERT(isAligned(gl.getBufferOffsetAlignment(
+		m_uniformBuff.getTarget()), m_uniformPtr));
+
+	// Set some other values
+	m_uniformsUsedSize = 0;
+	m_uniformsUsedSizeFrame = 0;
+}
+
+//==============================================================================
+void RenderableDrawer::setupUniforms(
+	VisibleNode& visibleNode, 
+	RenderComponent& renderable,
+	FrustumComponent& fr,
+	F32 flod)
+{
+	const Material& mtl = renderable.getMaterial();
+	U blockSize = mtl.getDefaultBlockSize();
+	U8* persistent = (U8*)m_uniformBuff.getPersistentMappingAddress();
+
+	// Find a place to write the uniforms
+	//
+	U8* prevUniformPtr = m_uniformPtr;
+	alignRoundUp(GlManagerSingleton::get().getBufferOffsetAlignment(
+		m_uniformBuff.getTarget()), m_uniformPtr);
+	U diff = m_uniformPtr - prevUniformPtr;
+
+	if(m_uniformPtr + blockSize >= persistent + m_uniformBuff.getSize())
+	{
+		// Rewind
+		m_uniformPtr = persistent;
+		diff = 0;
+	}
+
+	// Call the visitor
+	//
 	SetupRenderableVariableVisitor vis;
+	
+	vis.m_visibleNode = &visibleNode;
+	vis.m_renderable = &renderable;
+	vis.m_fr = &fr;
+	vis.m_drawer = this;
+	vis.m_instanceCount = visibleNode.m_spatialsCount;
+	vis.m_jobs = m_jobs;
+	vis.m_flod = flod;
 
-	vis.fr = &fr;
-	vis.renderable = &renderable;
-	vis.r = r;
-	vis.visibleNode = &visibleNode;
-	vis.flod = flod;
-	vis.dc = dc;
-
-	PassLodKey key(key_.pass,
-		std::min(key_.lod,
-		U8(renderable.getMaterial().getLevelsOfDetail() - 1)));
-
-	// Set the uniforms
 	for(auto it = renderable.getVariablesBegin();
 		it != renderable.getVariablesEnd(); ++it)
 	{
 		RenderComponentVariable* rvar = *it;
 
-		const ShaderProgramUniformVariable* uni =
-			rvar->tryFindShaderProgramUniformVariable(key);
-
-		if(uni)
-		{
-			vis.rvar = rvar;
-			vis.uni = uni;
-			rvar->acceptVisitor(vis);
-		}
+		vis.m_rvar = rvar;
+		rvar->acceptVisitor(vis);
 	}
 
-	// Write the block
-	/*const ShaderProgramUniformBlock* block =
-		renderable.getMaterial().getCommonUniformBlock();
-	if(block)
-	{
-		ANKI_ASSERT(block->getSize() <= UNIFORM_BLOCK_MAX_SIZE);
-		ANKI_ASSERT(block->getBinding() == 0);
-		renderable.getUbo().write(&vis.clientBlock[0]);
-		renderable.getUbo().setBinding(0);
-	}*/
+	// Update the uniform descriptor
+	//
+	m_uniformBuff.bindShaderBuffer(
+		m_jobs, 
+		m_uniformPtr - persistent,
+		mtl.getDefaultBlockSize(),
+		0);
+
+	// Advance the uniform ptr
+	m_uniformPtr += blockSize;
+	m_uniformsUsedSize += blockSize + diff;
 }
 
 //==============================================================================
-void RenderableDrawer::render(SceneNode& frsn, RenderingStage stage,
-	Pass pass, VisibleNode& visibleNode)
+void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 {
+	RenderingBuildData build;
+
 	// Get components
 	FrustumComponent& fr = frsn.getComponent<FrustumComponent>();
 	RenderComponent& renderable = 
-		visibleNode.node->getComponent<RenderComponent>();
-
-	// Calculate the key
-	Vec3 camPos = fr.getFrustumOrigin();
-
-	F32 dist = (visibleNode.node->getComponent<SpatialComponent>().
-		getSpatialOrigin() - camPos).getLength();
-	F32 lod = r->calculateLod(dist);
-
-	PassLodKey key(pass, lod);
-
-	// Blending
-	GlState& gl = GlStateSingleton::get();
+		visibleNode.m_node->getComponent<RenderComponent>();
 	const Material& mtl = renderable.getMaterial();
 
-	Bool blending = mtl.isBlendingEnabled();
+	// Calculate the key
+	RenderingKey key;
 
+	Vec3 camPos = fr.getFrustumOrigin();
+
+	F32 dist = (visibleNode.m_node->getComponent<SpatialComponent>().
+		getSpatialOrigin() - camPos).getLength();
+	F32 flod = m_r->calculateLod(dist);
+	build.m_key.m_lod = flod;
+	build.m_key.m_pass = m_pass;
+	build.m_key.m_tessellation = 
+		m_r->usesTessellation() 
+		&& mtl.getTessellation()
+		&& build.m_key.m_lod == 0;
+
+	// Blending
+	Bool blending = mtl.isBlendingEnabled();
 	if(!blending)
 	{
-		if(stage == RS_BLEND)
+		if(m_stage == RenderingStage::BLEND)
 		{
 			return;
 		}
 	}
 	else
 	{
-		if(stage != RS_BLEND)
+		if(m_stage != RenderingStage::BLEND)
 		{
 			return;
 		}
 
-		gl.setBlendFunctions(
+		m_jobs.setBlendFunctions(
 			mtl.getBlendingSfactor(), mtl.getBlendingDfactor());
 	}
 
-	gl.enable(GL_BLEND, blending);
-
 #if ANKI_GL == ANKI_GL_DESKTOP
-	gl.setPolygonMode(mtl.getWireframe() ? GL_LINE : GL_FILL);
+	// TODO Set wireframe
 #endif
 
-	// Get rendering useful drawing stuff
-	const ShaderProgram* prog;
-	const Vao* vao;
-	Drawcall dc;
+	// Enqueue uniform state updates
+	setupUniforms(visibleNode, renderable, fr, flod);
 
-	renderable.getRenderingData(
-		key, visibleNode.spatialIndices, visibleNode.spatialsCount, // in
-		vao, prog, dc); //out
+	// Enqueue vertex, program and drawcall
+	build.m_subMeshIndicesArray = &visibleNode.m_spatialIndices[0];
+	build.m_subMeshIndicesCount = visibleNode.m_spatialsCount;
+	build.m_jobs = m_jobs;
 
-	// Setup shader
-	setupShaderProg(
-		key, fr, *prog, renderable, visibleNode, lod, &dc);
+	renderable.buildRendering(build);
+}
 
-	// Render
-	ANKI_ASSERT(vao->getAttachmentsCount() > 1);
-	vao->bind();
+//==============================================================================
+void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
+	GlJobChainHandle& jobs)
+{
+	// Set some numbers
+	m_stage = stage;
+	m_pass = pass;
+	m_jobs = jobs;
 
-	// Tessellation
-#if ANKI_GL == ANKI_GL_DESKTOP
-	if(mtl.getTessellation())
+	if(m_r->getFramesCount() > m_uniformsUsedSizeFrame)
 	{
-		glPatchParameteri(GL_PATCH_VERTICES, 3);
-		dc.primitiveType = GL_PATCHES;
+		// New frame, reset used size
+		m_uniformsUsedSize = 0;
+		m_uniformsUsedSizeFrame = m_r->getFramesCount();
 	}
-#endif
+}
 
-	// Start drawcall
-	dc.enque();
+//==============================================================================
+void RenderableDrawer::finishDraw()
+{
+	// Release the job chain
+	m_jobs = GlJobChainHandle();
 
-	ANKI_COUNTER_INC(C_RENDERER_DRAWCALLS_COUNT, (U64)1);
-	ANKI_COUNTER_INC(C_RENDERER_VERTICES_COUNT, countVerts(dc));
+	if(m_uniformsUsedSize > MAX_UNIFORM_BUFFER_SIZE / 3)
+	{
+		ANKI_LOGW("Increase the uniform buffer to avoid corruption");
+	}
 }
 
 }  // end namespace anki

@@ -63,6 +63,11 @@ public:
 		return false;
 	}
 
+	/// Method called when the component got updated
+	virtual void updated(SceneNode& node, F32 prevTime, F32 crntTime, 
+		UpdateType updateType)
+	{}
+
 	/// Called only by the SceneGraph
 	Bool updateReal(SceneNode& node, F32 prevTime, F32 crntTime,
 		UpdateType updateType);

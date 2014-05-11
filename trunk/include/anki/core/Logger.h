@@ -19,59 +19,76 @@ class Logger
 {
 public:
 	/// Logger message type
-	enum LoggerMessageType
+	enum class MessageType: U8
 	{
-		LMT_NORMAL,
-		LMT_ERROR,
-		LMT_WARNING
+		NORMAL,
+		ERROR,
+		WARNING
 	};
 
 	/// Logger init mask
-	enum LoggerInitFlags
+	enum class InitFlags: U8
 	{
-		INIT_SYSTEM_MESSAGE_HANDLER = 1 << 0,
-		INIT_LOG_FILE_MESSAGE_HANDLER  = 1 << 1
+		NONE = 0,
+		WITH_SYSTEM_MESSAGE_HANDLER = 1 << 0,
+		WITH_LOG_FILE_MESSAGE_HANDLER  = 1 << 1
 	};
 
-	/// Used as parammeter when emitting the signal
-	struct Info
+	friend InitFlags operator|(InitFlags a, InitFlags b)
 	{
-		const char* file;
-		int line;
-		const char* func;
-		LoggerMessageType type;
-		const char* msg;
+		typedef std::underlying_type<InitFlags>::type Int;
+		return 
+			static_cast<InitFlags>(static_cast<Int>(a) | static_cast<Int>(b));
+	}
+
+	friend InitFlags operator&(InitFlags a, InitFlags b)
+	{
+		typedef std::underlying_type<InitFlags>::type Int;
+		return 
+			static_cast<InitFlags>(static_cast<Int>(a) & static_cast<Int>(b));
+	}
+
+	/// Used as parammeter when emitting the signal
+	class Info
+	{
+	public:
+		const char* m_file;
+		I32 m_line;
+		const char* m_func;
+		MessageType m_type;
+		const char* m_msg;
 	};
 
 	/// The message handler callback
 	using MessageHandlerCallback = void (*)(void*, const Info& info);
 
 	/// Initialize the logger
-	void init(U32 flags);
+	void init(InitFlags flags, HeapAllocator<U8>& alloc);
 
 	/// Add a new message handler
 	void addMessageHandler(void* data, MessageHandlerCallback callback);
 
 	/// Send a message
 	void write(const char* file, int line, const char* func,
-		LoggerMessageType type, const char* msg);
+		MessageType type, const char* msg);
 
 	/// Send a formated message
 	void writeFormated(const char* file, int line, const char* func,
-		LoggerMessageType type, const char* fmt, ...);
+		MessageType type, const char* fmt, ...);
 
 private:
-	std::mutex mutex; ///< For thread safety
+	std::mutex m_mutex; ///< For thread safety
 
-	struct Handler
+	class Handler
 	{
-		void* data;
-		MessageHandlerCallback callback;
+	public:
+		void* m_data;
+		MessageHandlerCallback m_callback;
 	};
 
-	Vector<Handler> handlers;
+	Vector<Handler> m_handlers;
 
-	File logfile;
+	File m_logfile;
 	
 	static void defaultSystemMessageHandler(void*, const Info& info);
 	static void logfileMessageHandler(void* vlogger, const Info& info);
@@ -93,10 +110,13 @@ typedef Singleton<Logger> LoggerSingleton;
 			t, __VA_ARGS__); \
 	} while(false);
 
-#define ANKI_LOGI(...) ANKI_LOGGER_MESSAGE(Logger::LMT_NORMAL, __VA_ARGS__)
+#define ANKI_LOGI(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::NORMAL, \
+	__VA_ARGS__)
 
-#define ANKI_LOGW(...) ANKI_LOGGER_MESSAGE(Logger::LMT_WARNING, __VA_ARGS__)
+#define ANKI_LOGW(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::WARNING, \
+	__VA_ARGS__)
 
-#define ANKI_LOGE(...) ANKI_LOGGER_MESSAGE(Logger::LMT_ERROR, __VA_ARGS__)
+#define ANKI_LOGE(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::ERROR, \
+	__VA_ARGS__)
 
 #endif

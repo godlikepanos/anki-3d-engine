@@ -13,6 +13,6 @@ class Ray;
 class Sphere;
 class Aabb;
 
-} // end namespace
+} // end namespace anki
 
 #endif

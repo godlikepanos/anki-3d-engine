@@ -16,9 +16,7 @@ class Obb: public CollisionShape
 public:
 	/// @name Constructors
 	/// @{
-	Obb()
-		: CollisionShape(CST_OBB)
-	{}
+	Obb();
 
 	Obb(const Obb& b);
 
@@ -29,41 +27,41 @@ public:
 	/// @{
 	const Vec3& getCenter() const
 	{
-		return center;
+		return m_center;
 	}
 	Vec3& getCenter()
 	{
-		return center;
+		return m_center;
 	}
 	void setCenter(const Vec3& x)
 	{
-		center = x;
+		m_center = x;
 	}
 
 	const Mat3& getRotation() const
 	{
-		return rotation;
+		return m_rotation;
 	}
 	Mat3& getRotation()
 	{
-		return rotation;
+		return m_rotation;
 	}
 	void setRotation(const Mat3& x)
 	{
-		rotation = x;
+		m_rotation = x;
 	}
 
 	const Vec3& getExtend() const
 	{
-		return extends;
+		return m_extends;
 	}
 	Vec3& getExtend()
 	{
-		return extends;
+		return m_extends;
 	}
 	void setExtend(const Vec3& x)
 	{
-		extends = x;
+		m_extends = x;
 	}
 	/// @}
 
@@ -71,9 +69,9 @@ public:
 	/// @{
 	Obb& operator=(const Obb& b)
 	{
-		center = b.center;
-		rotation = b.rotation;
-		extends = b.extends;
+		m_center = b.m_center;
+		m_rotation = b.m_rotation;
+		m_extends = b.m_extends;
 		return *this;
 	}
 	/// @}
@@ -105,8 +103,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::toAabb
-	void toAabb(Aabb& aabb) const;
+	/// Implements CollisionShape::computeAabb
+	void computeAabb(Aabb& aabb) const;
 
 	Obb getTransformed(const Transform& transform) const;
 
@@ -124,11 +122,11 @@ public:
 public:
 	/// @name Data
 	/// @{
-	Vec3 center;
-	Mat3 rotation;
+	Vec3 m_center;
+	Mat3 m_rotation;
 	/// With identity rotation this points to max (front, right, top in
 	/// our case)
-	Vec3 extends;
+	Vec3 m_extends;
 	/// @}
 };
 /// @}
@@ -162,9 +160,9 @@ void Obb::set(const Container& container)
 	}
 
 	// set the locals
-	center = (max + min) / 2.0;
-	rotation = Mat3::getIdentity();
-	extends = max - center;
+	m_center = (max + min) / 2.0;
+	m_rotation = Mat3::getIdentity();
+	m_extends = max - m_center;
 }
 
 } // end namespace

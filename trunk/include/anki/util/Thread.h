@@ -16,12 +16,13 @@ namespace anki {
 // Forward
 class Threadpool;
 
-/// @addtogroup util
-/// @{
-/// @addtogroup thread
+/// @addtogroup util_thread
 /// @{
 
 typedef U32 ThreadId;
+
+/// Set the name of the current thead
+void setCurrentThreadName(const char* name);
 
 /// Spin lock. Good if the critical section will be executed in a short period
 /// of time
@@ -31,61 +32,62 @@ public:
 	/// Lock 
 	void lock()
 	{
-		while(l.test_and_set(std::memory_order_acquire))
+		while(m_lock.test_and_set(std::memory_order_acquire))
 		{}
 	}
 
 	/// Unlock
 	void unlock()
 	{
-		l.clear(std::memory_order_release);
+		m_lock.clear(std::memory_order_release);
 	}
 
 private:
-	std::atomic_flag l = ATOMIC_FLAG_INIT;	
+	std::atomic_flag m_lock = ATOMIC_FLAG_INIT;	
 };
 
 /// A barrier for thread synchronization. It works just like boost::barrier
-class Barrier
+class Barrier: public NonCopyable
 {
 public:
-	Barrier(U32 count_)
-		: threshold(count_), count(count_), generation(0)
+	Barrier(U32 count)
+		: m_threshold(count), m_count(count), m_generation(0)
 	{
-		ANKI_ASSERT(count_ != 0);
+		ANKI_ASSERT(count != 0);
 	}
 
 	Bool wait()
 	{
-		std::unique_lock<std::mutex> lock(mtx);
-		U32 gen = generation;
+		std::unique_lock<std::mutex> lock(m_mtx);
+		U32 gen = m_generation;
 
-		if(--count == 0)
+		if(--m_count == 0)
 		{
-			generation++;
-			count = threshold;
-			cond.notify_all();
+			m_generation++;
+			m_count = m_threshold;
+			m_cond.notify_all();
 			return true;
 		}
 
-		while(gen == generation)
+		while(gen == m_generation)
 		{
-			cond.wait(lock);
+			m_cond.wait(lock);
 		}
 		return false;
 	}
 
 private:
-	std::mutex mtx;
-	std::condition_variable cond;
-	U32 threshold;
-	U32 count;
-	U32 generation;
+	std::mutex m_mtx;
+	std::condition_variable m_cond;
+	U32 m_threshold;
+	U32 m_count;
+	U32 m_generation;
 };
 
 /// A task assignment to threads
-struct ThreadTask
+class ThreadTask
 {
+public:
 	virtual ~ThreadTask()
 	{}
 
@@ -96,45 +98,46 @@ struct ThreadTask
 class DualSyncThread
 {
 public:
-	DualSyncThread(ThreadId threadId_)
-		:	id(threadId_),
-			barriers{{{2}, {2}}},
-			task(nullptr)
+	DualSyncThread(ThreadId threadId)
+		:	m_id(threadId),
+			m_barriers{{{2}, {2}}},
+			m_task(nullptr)
 	{}
 
 	/// The thread does not own the task
 	/// @note This operation is not thread safe. Call it between syncs
-	/// @note This class will not own the task_
-	void setTask(ThreadTask* task_)
+	/// @note This class will not own the task
+	void setTask(ThreadTask* task)
 	{
-		task = task_;
+		m_task = task;
 	}
 
 	/// Start the thread
 	void start()
 	{
-		thread = std::thread(&DualSyncThread::workingFunc, this);
+		m_thread = std::thread(&DualSyncThread::workingFunc, this);
 	}
 
 	/// Sync with one of the 2 sync points
 	void sync(U syncPoint)
 	{
-		barriers[syncPoint].wait();
+		m_barriers[syncPoint].wait();
 	}
 
 private:
-	ThreadId id;
-	std::thread thread; ///< Runs the workingFunc
-	Array<Barrier, 2> barriers;
-	ThreadTask* task; ///< Its nullptr if there are no pending task
+	ThreadId m_id;
+	std::thread m_thread; ///< Runs the workingFunc
+	Array<Barrier, 2> m_barriers;
+	ThreadTask* m_task; ///< Its nullptr if there are no pending task
 
 	/// Thread loop
 	void workingFunc();
 };
 
 /// A task assignment for a ThreadpoolThread
-struct ThreadpoolTask
+class ThreadpoolTask
 {
+public:
 	virtual ~ThreadpoolTask()
 	{}
 
@@ -152,8 +155,9 @@ struct ThreadpoolTask
 };
 
 /// A dummy thread pool task
-struct DummyThreadpoolTask: ThreadpoolTask
+class DummyThreadpoolTask: public ThreadpoolTask
 {
+public:
 	void operator()(ThreadId threadId, U threadsCount)
 	{
 		(void)threadId;
@@ -173,18 +177,18 @@ public:
 	void assignNewTask(ThreadpoolTask* task);
 
 private:
-	ThreadId id; ///< An ID
-	std::thread thread; ///< Runs the workingFunc
-	std::mutex mutex; ///< Protect the task
-	std::condition_variable condVar; ///< To wake up the thread
-	Barrier* barrier; ///< For synchronization
-	ThreadpoolTask* task; ///< Its NULL if there are no pending task
-	Threadpool* threadpool;
+	ThreadId m_id; ///< An ID
+	std::thread m_thread; ///< Runs the workingFunc
+	std::mutex m_mutex; ///< Protect the task
+	std::condition_variable m_condVar; ///< To wake up the thread
+	Barrier* m_barrier; ///< For synchronization
+	ThreadpoolTask* m_task; ///< Its NULL if there are no pending task
+	Threadpool* m_threadpool;
 
 	/// Start thread
 	void start()
 	{
-		thread = std::thread(&ThreadpoolThread::workingFunc, this);
+		m_thread = std::thread(&ThreadpoolThread::workingFunc, this);
 	}
 
 	/// Thread loop
@@ -217,29 +221,28 @@ public:
 	void assignNewTask(U taskId, ThreadpoolTask* task)
 	{
 		ANKI_ASSERT(taskId < getThreadsCount());
-		threads[taskId]->assignNewTask(task);
+		m_threads[taskId]->assignNewTask(task);
 	}
 
 	/// Wait for all tasks to finish
 	void waitForAllThreadsToFinish()
 	{
 #if !ANKI_DISABLE_THREADPOOL_THREADING
-		barrier->wait();
+		m_barrier->wait();
 #endif
 	}
 
 	U getThreadsCount() const
 	{
-		return threadsCount;
+		return m_threadsCount;
 	}
 
 private:
-	ThreadpoolThread** threads = nullptr; ///< Worker threads array
-	U8 threadsCount = 0;
-	std::unique_ptr<Barrier> barrier; ///< Synchronization barrier
+	ThreadpoolThread** m_threads = nullptr; ///< Worker threads array
+	U8 m_threadsCount = 0;
+	std::unique_ptr<Barrier> m_barrier; ///< Synchronization barrier
 };
 
-/// @}
 /// @}
 
 } // end namespace anki

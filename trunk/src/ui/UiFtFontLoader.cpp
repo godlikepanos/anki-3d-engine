@@ -13,20 +13,20 @@ void UiFtFontLoader::getAllGlyphs()
 	{
 		char c = ' ' + n;
 
-		FT_UInt glyphIndex = FT_Get_Char_Index(face, c);
+		FrustumType::UInt glyphIndex = FrustumType::Get_Char_Index(face, c);
 
-		FT_Error error = FT_Load_Glyph(face, glyphIndex, FT_LOAD_DEFAULT);
+		FrustumType::Error error = FrustumType::Load_Glyph(face, glyphIndex, FrustumType::LOAD_DEFAULT);
 		if(error)
 		{
-			throw ANKI_EXCEPTION("FT_Load_Glyph failed");
+			throw ANKI_EXCEPTION("FrustumType::Load_Glyph failed");
 		}
 
 		glyphs[n].metrics = face->glyph->metrics;
 
-		error = FT_Get_Glyph(face->glyph, &glyphs[n].glyph);
+		error = FrustumType::Get_Glyph(face->glyph, &glyphs[n].glyph);
 		if(error)
 		{
-			throw ANKI_EXCEPTION("FT_Get_Glyph failed");
+			throw ANKI_EXCEPTION("FrustumType::Get_Glyph failed");
 		}
 	}
 
@@ -35,7 +35,7 @@ void UiFtFontLoader::getAllGlyphs()
 
 //==============================================================================
 void UiFtFontLoader::copyBitmap(const uint8_t* srcImg,
-	const FT_Vector& srcSize, const FT_Vector& pos)
+	const FrustumType::Vector& srcSize, const FrustumType::Vector& pos)
 {
 	for(int i = 0; i < srcSize.y; i++)
 	{
@@ -94,28 +94,28 @@ void UiFtFontLoader::computeImageSize()
 
 //==============================================================================
 void UiFtFontLoader::createImage(const char* filename,
-	const FT_Vector& fontSize)
+	const FrustumType::Vector& fontSize)
 {
-	FT_Error error;
+	FrustumType::Error error;
 
 	// Create lib
-	error = FT_Init_FreeType(&library);
+	error = FrustumType::Init_FreeType(&library);
 	if(error)
 	{
-		throw ANKI_EXCEPTION("FT_Init_FreeType failed");
+		throw ANKI_EXCEPTION("FrustumType::Init_FreeType failed");
 	}
 
 	// Create face and set glyph size
-	error = FT_New_Face(library, filename, 0, &face);
+	error = FrustumType::New_Face(library, filename, 0, &face);
 	if(error)
 	{
-		throw ANKI_EXCEPTION("FT_New_Face() failed with filename: " + filename);
+		throw ANKI_EXCEPTION("FrustumType::New_Face() failed with filename: " + filename);
 	}
 
-	error = FT_Set_Pixel_Sizes(face, fontSize.x, fontSize.y);
+	error = FrustumType::Set_Pixel_Sizes(face, fontSize.x, fontSize.y);
 	if(error)
 	{
-		throw ANKI_EXCEPTION("FT_Set_Pixel_Sizes() failed");
+		throw ANKI_EXCEPTION("FrustumType::Set_Pixel_Sizes() failed");
 	}
 
 	// Get all glyphs
@@ -128,7 +128,7 @@ void UiFtFontLoader::createImage(const char* filename,
 	img.resize(size, 128);
 
 	// Draw all glyphs to the image
-	FT_Vector pos = {0, 0}; // the (0,0) is the top left
+	FrustumType::Vector pos = {0, 0}; // the (0,0) is the top left
 	// For all rows
 	for(uint32_t i = 0; i < GLYPH_ROWS; i++)
 	{
@@ -140,10 +140,10 @@ void UiFtFontLoader::createImage(const char* filename,
 			// If not ' '
 			if(i != 0 || j != 0)
 			{
-				FT_Glyph_To_Bitmap(&glyph.glyph, FT_RENDER_MODE_NORMAL, 0, 0);
-				FT_BitmapGlyph bit = (FT_BitmapGlyph) glyph.glyph;
+				FrustumType::Glyph_To_Bitmap(&glyph.glyph, FrustumType::RENDER_MODE_NORMAL, 0, 0);
+				FrustumType::BitmapGlyph bit = (FrustumType::BitmapGlyph) glyph.glyph;
 
-				FT_Vector srcSize = {toPixels(glyph.metrics.width),
+				FrustumType::Vector srcSize = {toPixels(glyph.metrics.width),
 					toPixels(glyph.metrics.height)};
 
 				copyBitmap(bit->bitmap.buffer, srcSize, pos);
@@ -170,11 +170,11 @@ void UiFtFontLoader::createImage(const char* filename,
 	// Clean
 	for(Glyph& glyph : glyphs)
 	{
-		FT_Done_Glyph(glyph.glyph);
+		FrustumType::Done_Glyph(glyph.glyph);
 	}
 
-	FT_Done_Face(face);
-	FT_Done_FreeType(library);
+	FrustumType::Done_Face(face);
+	FrustumType::Done_FreeType(library);
 }
 
 //==============================================================================

@@ -5,9 +5,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup system
+/// @addtogroup util_system
 /// @{
 
 /// Get the number of CPU cores
@@ -16,7 +14,6 @@ extern U32 getCpuCoresCount();
 /// Print the backtrace
 extern void printBacktrace();
 
-/// @}
 /// @}
 
 } // end namespace anki

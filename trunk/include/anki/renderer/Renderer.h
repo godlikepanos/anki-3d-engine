@@ -3,9 +3,9 @@
 
 #include "anki/Math.h"
 #include "anki/resource/TextureResource.h"
-#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/ProgramResource.h"
 #include "anki/resource/Resource.h"
-#include "anki/gl/Gl.h"
+#include "anki/Gl.h"
 #include "anki/util/HighRezTimer.h"
 #include "anki/misc/ConfigSet.h"
 #include "anki/scene/Forward.h"
@@ -19,6 +19,9 @@
 #include "anki/renderer/Drawer.h"
 
 namespace anki {
+
+/// @addtogroup renderer
+/// @{
 
 /// A struct to initialize the renderer. It contains a few extra params for
 /// the MainRenderer. Open Renderer.cpp to see all the options
@@ -40,155 +43,160 @@ public:
 	/// @{
 	const Ms& getMs() const
 	{
-		return ms;
+		return m_ms;
 	}
 	Ms& getMs()
 	{
-		return ms;
+		return m_ms;
 	}
 
 	const Is& getIs() const
 	{
-		return is;
+		return m_is;
 	}
 	Is& getIs()
 	{
-		return is;
+		return m_is;
 	}
 
 	const Tiler& getTiler() const
 	{
-		return tiler;
+		return m_tiler;
 	}
 	Tiler& getTiler()
 	{
-		return tiler;
+		return m_tiler;
 	}
 
 	const Pps& getPps() const
 	{
-		return pps;
+		return m_pps;
 	}
 	Pps& getPps()
 	{
-		return pps;
+		return m_pps;
 	}
 
 	const Dbg& getDbg() const
 	{
-		return dbg;
+		return m_dbg;
 	}
 	Dbg& getDbg()
 	{
-		return dbg;
+		return m_dbg;
 	}
 
 	U32 getWidth() const
 	{
-		return width;
+		return m_width;
 	}
 
 	U32 getHeight() const
 	{
-		return height;
+		return m_height;
 	}
 
 	U32 getWindowWidth() const
 	{
-		ANKI_ASSERT(!isOffscreen);
-		return width / renderingQuality;
+		ANKI_ASSERT(!m_isOffscreen);
+		return m_width / m_renderingQuality;
 	}
 
 	U32 getWindowHeight() const
 	{
-		ANKI_ASSERT(!isOffscreen);
-		return height / renderingQuality;
+		ANKI_ASSERT(!m_isOffscreen);
+		return m_height / m_renderingQuality;
 	}
 
 	F32 getAspectRatio() const
 	{
-		return F32(width) / height;
+		return F32(m_width) / m_height;
 	}
 
 	U32 getFramesCount() const
 	{
-		return framesNum;
+		return m_framesNum;
 	}
 
 	const SceneGraph& getSceneGraph() const
 	{
-		return *scene;
+		return *m_scene;
 	}
 	SceneGraph& getSceneGraph()
 	{
-		return *scene;
+		return *m_scene;
 	}
 
 	const RenderableDrawer& getSceneDrawer() const
 	{
-		return sceneDrawer;
+		return m_sceneDrawer;
 	}
 	RenderableDrawer& getSceneDrawer()
 	{
-		return sceneDrawer;
+		return m_sceneDrawer;
 	}
 
 	const Vec2& getPlanes() const
 	{
-		return planes;
+		return m_planes;
 	}
 	const Vec2& getLimitsOfNearPlane() const
 	{
-		return limitsOfNearPlane;
+		return m_limitsOfNearPlane;
 	}
 	const Vec2& getLimitsOfNearPlane2() const
 	{
-		return limitsOfNearPlane2;
+		return m_limitsOfNearPlane2;
 	}
 	Timestamp getPlanesUpdateTimestamp() const
 	{
-		return planesUpdateTimestamp;
+		return m_planesUpdateTimestamp;
 	}
 
 	U getSamples() const
 	{
-		return samples;
-	}
-
-	Bool getUseMrt() const
-	{
-		return useMrt;
+		return m_samples;
 	}
 
 	Bool getIsOffscreen() const
 	{
-		return isOffscreen;
+		return m_isOffscreen;
 	}
 
 	Bool usesTessellation() const
 	{
-		return tessellation;
+		return m_tessellation;
 	}
 
 	F32 getRenderingQuality() const
 	{
-		return renderingQuality;
+		return m_renderingQuality;
 	}
 
 	U32 getMaxTextureSize() const
 	{
-		return maxTextureSize;
+		return m_maxTextureSize;
 	}
 
 	const UVec2& getTilesCount() const
 	{
-		return tilesCount;
+		return m_tilesCount;
 	}
 
 	/// Get string to pass to the material shaders
 	const std::string& getShaderPostProcessorString() const
 	{
-		return shaderPostProcessorString;
+		return m_shaderPostProcessorString;
+	}
+
+	const GlProgramHandle& getDrawQuadVertexProgram() const
+	{
+		return m_drawQuadVert->getGlProgram();
+	}
+
+	GlFramebufferHandle& getDefaultFramebuffer()
+	{
+		return m_defaultFb;
 	}
 	/// @}
 
@@ -197,7 +205,7 @@ public:
 	void init(const RendererInitializer& initializer);
 
 	/// This function does all the rendering stages and produces a final FAI
-	void render(SceneGraph& scene);
+	void render(SceneGraph& scene, GlJobChainHandle& jobs);
 
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
@@ -211,9 +219,9 @@ public:
 
 	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no
 	/// longer support quads
-	void drawQuad();
+	void drawQuad(GlJobChainHandle& jobs);
 
-	void drawQuadInstanced(U32 primitiveCount);
+	void drawQuadInstanced(GlJobChainHandle& jobs, U32 primitiveCount);
 
 	/// Calculate the planes needed for the calculation of the fragment
 	/// position z in view space. Having the fragment's depth, the camera's
@@ -237,63 +245,76 @@ public:
 	/// Get the LOD given the distance of an object from the camera
 	F32 calculateLod(F32 distance) const
 	{
-		return distance / lodDistance;
+		return distance / m_lodDistance;
 	}
+
+	/// Create a framebuffer attachment texture
+	void createRenderTarget(U32 w, U32 h, GLenum internalFormat, 
+		GLenum format, GLenum type, U32 samples, GlTextureHandle& rt);
+
+	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
+	/// and the given fragment progam
+	GlProgramPipelineHandle createDrawQuadProgramPipeline(
+		GlProgramHandle frag);
 
 private:
 	/// @name Rendering stages
 	/// @{
-	Ms ms; ///< Material rendering stage
-	Is is; ///< Illumination rendering stage
-	Pps pps; ///< Postprocessing rendering stage
-	Bs bs; ///< Blending stage
-	Dbg dbg; ///< Debug stage
-	Tiler tiler;
+	Ms m_ms; ///< Material rendering stage
+	Is m_is; ///< Illumination rendering stage
+	Pps m_pps; ///< Postprocessing rendering stage
+	Bs m_bs; ///< Blending stage
+	Dbg m_dbg; ///< Debug stage
+	Tiler m_tiler;
 	/// @}
 
 	/// Width of the rendering. Don't confuse with the window width
-	U32 width;
+	U32 m_width;
 	/// Height of the rendering. Don't confuse with the window height
-	U32 height;
-	F32 lodDistance; ///< Distance that used to calculate the LOD
-	U8 samples; ///< Number of sample in multisampling
-	Bool8 useMrt; ///< Use MRT or pack things inside the G buffer
-	Bool8 isOffscreen; ///< Is offscreen renderer?
-	Bool8 tessellation;
-	F32 renderingQuality; ///< Rendering quality. Relevant for offscreen 
-	U32 maxTextureSize; ///< Texture size limit. Just kept here.
-	UVec2 tilesCount;
+	U32 m_height;
+	F32 m_lodDistance; ///< Distance that used to calculate the LOD
+	U8 m_samples; ///< Number of sample in multisampling
+	Bool8 m_isOffscreen; ///< Is offscreen renderer?
+	Bool8 m_tessellation;
+	F32 m_renderingQuality; ///< Rendering quality. Relevant for offscreen 
+	U32 m_maxTextureSize; ///< Texture size limit. Just kept here.
+	UVec2 m_tilesCount;
 
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
-	GlBuffer quadPositionsVbo; ///< The VBO for quad positions
-	Vao quadVao; ///< This VAO is used everywhere except material stage
+	GlBufferHandle m_quadPositionsBuff; ///< The VBO for quad positions
+
+	ProgramResourcePointer m_drawQuadVert;
 	/// @}
 
 	/// @name Optimization vars
 	/// Used in other stages
 	/// @{
-	Timestamp planesUpdateTimestamp = getGlobTimestamp();
+	Timestamp m_planesUpdateTimestamp = getGlobTimestamp();
 
 	/// Used to to calculate the frag pos in view space inside a few shader
 	/// programs
-	Vec2 planes;
+	Vec2 m_planes;
 	/// Used to to calculate the frag pos in view space inside a few shader
 	/// programs
-	Vec2 limitsOfNearPlane;
+	Vec2 m_limitsOfNearPlane;
 	/// Used to to calculate the frag pos in view space inside a few shader
 	/// programs
-	Vec2 limitsOfNearPlane2;
+	Vec2 m_limitsOfNearPlane2;
 	/// @}
 
-	SceneGraph* scene; ///< Current scene
-	RenderableDrawer sceneDrawer;
+	SceneGraph* m_scene; ///< Current scene
+	RenderableDrawer m_sceneDrawer;
 
-	U framesNum; ///< Frame number
+	U m_framesNum; ///< Frame number
 
 	/// String to pass to the material shaders
-	std::string shaderPostProcessorString;
+	std::string m_shaderPostProcessorString;
+
+	GlFramebufferHandle m_defaultFb;
 };
+
+/// @}
 
 } // end namespace anki
 

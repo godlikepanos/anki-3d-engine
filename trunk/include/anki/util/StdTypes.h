@@ -8,9 +8,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup misc
+/// @addtogroup util_other
 /// @{
 
 typedef int8_t I8; ///< Integer 8bit
@@ -68,7 +66,6 @@ const F64 MIN_F64 = -std::numeric_limits<F64>::max();
 typedef bool Bool; ///< Fast boolean type
 typedef U8 Bool8; ///< Small 8bit boolean type
 
-/// @}
 /// @}
 
 } // end namespace anki

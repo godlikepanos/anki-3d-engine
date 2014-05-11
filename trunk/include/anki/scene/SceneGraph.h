@@ -145,13 +145,14 @@ public:
 
 	/// Create a new SceneNode
 	template<typename Node, typename... Args>
-	void newSceneNode(Node*& node, const char* name, Args&&... args)
+	Node* newSceneNode(const char* name, Args&&... args)
 	{
+		Node* node;
 		SceneAllocator<Node> al = alloc;
-		node = al.allocate(1);
-		al.construct(node, name, this, std::forward<Args>(args)...);
-
+		node = al.template newInstance<Node>(
+			name, this, std::forward<Args>(args)...);
 		registerNode(node);
+		return node;
 	}
 
 	/// Delete a scene node. It actualy marks it for deletion

@@ -2,12 +2,15 @@
 #define ANKI_CORE_STDIN_LISTENER_H
 
 #include "anki/util/Singleton.h"
+#include "anki/util/String.h"
 #include <thread>
 #include <mutex>
-#include <string>
 #include <queue>
 
 namespace anki {
+
+/// @addtogroup core
+/// @{
 
 /// The listener of the stdin.
 /// It initiates a thread that constantly reads the stdin and puts the results
@@ -16,21 +19,23 @@ class StdinListener
 {
 public:
 	/// Get line from the queue or return an empty string
-	std::string getLine();
+	String getLine();
 
 	/// Start reading
 	void start();
 
 private:
-	std::queue<std::string> q;
-	std::mutex mtx; ///< Protect the queue
-	std::thread thrd; ///< The thread
+	std::queue<String> m_q;
+	std::mutex m_mtx; ///< Protect the queue
+	std::thread m_thrd; ///< The thread
 
 	void workingFunc(); ///< The thread function
 };
 
 /// Singleton
 typedef Singleton<StdinListener> StdinListenerSingleton;
+
+/// @}
 
 } // end namespace anki
 

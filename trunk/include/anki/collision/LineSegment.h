@@ -17,15 +17,19 @@ public:
 	/// @name Constructors
 	/// @{
 	LineSegment()
-		: CollisionShape(CST_LINE_SEG)
+		: CollisionShape(Type::LINE_SEG)
 	{}
 
 	LineSegment(const Vec3& origin_, const Vec3& direction)
-		: CollisionShape(CST_LINE_SEG), origin(origin_), dir(direction)
+		:	CollisionShape(Type::LINE_SEG), 
+			origin(origin_), 
+			dir(direction)
 	{}
 
 	LineSegment(const LineSegment& b)
-		: CollisionShape(CST_LINE_SEG), origin(b.origin), dir(b.dir)
+		:	CollisionShape(Type::LINE_SEG), 
+			origin(b.origin), 
+			dir(b.dir)
 	{}
 	/// @}
 
@@ -95,8 +99,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::toAabb
-	void toAabb(Aabb& b) const;
+	/// Implements CollisionShape::computeAabb
+	void computeAabb(Aabb& b) const;
 
 	LineSegment getTransformed(const Transform& transform) const;
 

@@ -2,6 +2,13 @@
 #include "anki/script/ScriptManager.h"
 #include "anki/Math.h"
 
+static const char* script = R"(
+b = Vec2.new(3.0, 4.0)
+v2:copy(v2 * b)
+
+v3:setZ(0.1)
+)";
+
 ANKI_TEST(Script, LuaBinder)
 {
 	ScriptManager sm;
@@ -10,13 +17,6 @@ ANKI_TEST(Script, LuaBinder)
 
 	sm.exposeVariable("v2", &v2);
 	sm.exposeVariable("v3", &v3);
-
-	const char* script = R"(
-b = Vec2.new(3.0, 4.0)
-v2:copy(v2 * b)
-
-v3:setZ(0.1)
-)";
 
 	sm.evalString(script);
 

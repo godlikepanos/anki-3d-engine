@@ -14,27 +14,27 @@ static Bool tcollide(const CollisionShape& a, const CollisionShape& b)
 	const T& t = static_cast<const T&>(a);
 	Bool out = false;
 
-	switch(b.getCollisionShapeType())
+	switch(b.getType())
 	{
-	case CollisionShape::CST_LINE_SEG:
+	case CollisionShape::Type::LINE_SEG:
 		out = collide(t, static_cast<const LineSegment&>(b));
 		break;
-	case CollisionShape::CST_RAY:
+	case CollisionShape::Type::RAY:
 		out = collide(t, static_cast<const Ray&>(b));
 		break;
-	case CollisionShape::CST_PLANE:
+	case CollisionShape::Type::PLANE:
 		out = collide(t, static_cast<const Plane&>(b));
 		break;
-	case CollisionShape::CST_SPHERE:
+	case CollisionShape::Type::SPHERE:
 		out = collide(t, static_cast<const Sphere&>(b));
 		break;
-	case CollisionShape::CST_AABB:
+	case CollisionShape::Type::AABB:
 		out = collide(t, static_cast<const Aabb&>(b));
 		break;
-	case CollisionShape::CST_OBB:
+	case CollisionShape::Type::OBB:
 		out = collide(t, static_cast<const Obb&>(b));
 		break;
-	case CollisionShape::CST_FRUSTUM:
+	case CollisionShape::Type::FRUSTUM:
 		out = collide(t, static_cast<const Frustum&>(b));
 		break;
 	default:
@@ -50,27 +50,27 @@ Bool collide(const CollisionShape& a, const CollisionShape& b)
 {
 	Bool out = false;
 
-	switch(a.getCollisionShapeType())
+	switch(a.getType())
 	{
-	case CollisionShape::CST_LINE_SEG:
+	case CollisionShape::Type::LINE_SEG:
 		out = tcollide<LineSegment>(a, b);
 		break;
-	case CollisionShape::CST_RAY:
+	case CollisionShape::Type::RAY:
 		out = tcollide<Ray>(a, b);
 		break;
-	case CollisionShape::CST_PLANE:
+	case CollisionShape::Type::PLANE:
 		out = tcollide<Plane>(a, b);
 		break;
-	case CollisionShape::CST_SPHERE:
+	case CollisionShape::Type::SPHERE:
 		out = tcollide<Sphere>(a, b);
 		break;
-	case CollisionShape::CST_AABB:
+	case CollisionShape::Type::AABB:
 		out = tcollide<Aabb>(a, b);
 		break;
-	case CollisionShape::CST_OBB:
+	case CollisionShape::Type::OBB:
 		out = tcollide<Obb>(a, b);
 		break;
-	case CollisionShape::CST_FRUSTUM:
+	case CollisionShape::Type::FRUSTUM:
 		out = tcollide<Frustum>(a, b);
 		break;
 	default:

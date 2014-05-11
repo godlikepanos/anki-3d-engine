@@ -13,7 +13,7 @@ NativeWindow::~NativeWindow()
 //==============================================================================
 void NativeWindow::create(NativeWindowInitializer& init)
 {
-	impl.reset(new NativeWindowImpl);
+	m_impl.reset(new NativeWindowImpl);
 
 	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS 
 		| SDL_INIT_GAMECONTROLLER) != 0)
@@ -24,23 +24,23 @@ void NativeWindow::create(NativeWindowInitializer& init)
 	//
 	// Set GL attributes
 	//
-	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.rgbaBits[0]) != 0
-		|| SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, init.rgbaBits[1]) != 0
-		|| SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, init.rgbaBits[2]) != 0
-		|| SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, init.rgbaBits[3]) != 0
-		|| SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, init.depthBits) != 0
-		|| SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, init.doubleBuffer) != 0
+	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0]) != 0
+		|| SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, init.m_rgbaBits[1]) != 0
+		|| SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, init.m_rgbaBits[2]) != 0
+		|| SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, init.m_rgbaBits[3]) != 0
+		|| SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, init.m_depthBits) != 0
+		|| SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, init.m_doubleBuffer) != 0
 		|| SDL_GL_SetAttribute(
-			SDL_GL_CONTEXT_MAJOR_VERSION, init.majorVersion) != 0
+			SDL_GL_CONTEXT_MAJOR_VERSION, init.m_majorVersion) != 0
 		|| SDL_GL_SetAttribute(
-			SDL_GL_CONTEXT_MINOR_VERSION, init.minorVersion) != 0
+			SDL_GL_CONTEXT_MINOR_VERSION, init.m_minorVersion) != 0
 		|| SDL_GL_SetAttribute(
 			SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) != 0)
 	{
 		throw ANKI_EXCEPTION("SDL_GL_SetAttribute() failed");
 	}
 
-	if(init.debugContext)
+	if(init.m_debugContext)
 	{
 		if(SDL_GL_SetAttribute(
 			SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG) != 0)
@@ -54,42 +54,42 @@ void NativeWindow::create(NativeWindowInitializer& init)
 	//
 	U32 flags = SDL_WINDOW_OPENGL;
 
-	if(init.fullscreenDesktopRez)
+	if(init.m_fullscreenDesktopRez)
 	{
 		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
 	}
 
-	impl->window = SDL_CreateWindow(
-    	init.title.c_str(), 
+	m_impl->m_window = SDL_CreateWindow(
+    	init.m_title.c_str(),
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
-		init.width, init.height, flags);
+		init.m_width, init.m_height, flags);
 
-	if(impl->window == nullptr)
+	if(m_impl->m_window == nullptr)
 	{
 		throw ANKI_EXCEPTION("SDL_CreateWindow() failed");
 	}
 
 	// Set the size after loading a fullscreen window
-	if(init.fullscreenDesktopRez)
+	if(init.m_fullscreenDesktopRez)
 	{
 		int w, h;
-		SDL_GetWindowSize(impl->window, &w, &h);
+		SDL_GetWindowSize(m_impl->m_window, &w, &h);
 
-		width = w;
-		height = h;
+		m_width = w;
+		m_height = h;
 	}
 	else
 	{
-		width = init.width;
-		height = init.height;
+		m_width = init.m_width;
+		m_height = init.m_height;
 	}
 
 	//
 	// Create context
 	//
-	impl->context = SDL_GL_CreateContext(impl->window);
+	m_impl->m_context = SDL_GL_CreateContext(m_impl->m_window);
 
-	if(impl->context == nullptr)
+	if(m_impl->m_context == nullptr)
 	{
 		throw ANKI_EXCEPTION("SDL_GL_CreateContext() failed");
 	}
@@ -108,29 +108,43 @@ void NativeWindow::create(NativeWindowInitializer& init)
 //==============================================================================
 void NativeWindow::destroy()
 {
-	if(impl.get())
+	if(m_impl.get())
 	{
-		if(impl->context)
+		if(m_impl->m_context)
 		{
-			SDL_GL_DeleteContext(impl->context);
+			SDL_GL_DeleteContext(m_impl->m_context);
 		}
 
-		if(impl->window)
+		if(m_impl->m_window)
 		{
-			SDL_DestroyWindow(impl->window);
+			SDL_DestroyWindow(m_impl->m_window);
 		}
 	}
 
-	impl.reset();
+	m_impl.reset();
 }
 
 //==============================================================================
 void NativeWindow::swapBuffers()
 {
-	ANKI_COUNTER_START_TIMER(C_SWAP_BUFFERS_TIME);
+	ANKI_COUNTER_START_TIMER(SWAP_BUFFERS_TIME);
 	ANKI_ASSERT(isCreated());
-	SDL_GL_SwapWindow(impl->window);
-	ANKI_COUNTER_STOP_TIMER_INC(C_SWAP_BUFFERS_TIME);
+	SDL_GL_SwapWindow(m_impl->m_window);
+	ANKI_COUNTER_STOP_TIMER_INC(SWAP_BUFFERS_TIME);
+}
+
+//==============================================================================
+Context NativeWindow::getCurrentContext()
+{
+	SDL_GLContext sdlCtx = SDL_GL_GetCurrentContext();
+	return sdlCtx;
+}
+
+//==============================================================================
+void NativeWindow::contextMakeCurrent(Context ctx)
+{
+	SDL_GLContext sdlCtx = ctx;
+	SDL_GL_MakeCurrent(m_impl->m_window, sdlCtx);
 }
 
 } // end namespace anki

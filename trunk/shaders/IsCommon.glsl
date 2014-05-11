@@ -1,35 +1,12 @@
 // Contains common structures for IS
 
-// Plane
-struct Plane
-{
-	vec4 normalOffset;
-};
-
-// Contains the plane grid
-struct Tilegrid
-{
-	Plane planesX[TILES_X_COUNT - 1];
-	Plane planesY[TILES_Y_COUNT - 1];
-	Plane planesNear[TILES_COUNT];
-	Plane planesFar[TILES_COUNT];
-};
-
 // Representation of a tile
 struct Tile
 {
 	uvec4 lightsCount;
-};
-
-struct PointLightIndices
-{
-	uvec4 indices[MAX_POINT_LIGHTS_PER_TILE / 4];
-};
-
-struct SpotLightIndices
-{
-	uvec4 indices[MAX_SPOT_LIGHTS_PER_TILE / 4];
-	uvec4 indicesTex[MAX_SPOT_TEX_LIGHTS_PER_TILE / 4];	
+	uint pointLightIndices[MAX_POINT_LIGHTS_PER_TILE];
+	uint spotLightIndices[MAX_SPOT_LIGHTS_PER_TILE];
+	uint spotTexLightIndices[MAX_SPOT_TEX_LIGHTS_PER_TILE];
 };
 
 // The base of all lights
@@ -67,3 +44,19 @@ struct Lights
 	SpotLight spotLights[MAX_SPOT_LIGHTS];
 	SpotTexLight spotTexLights[MAX_SPOT_TEX_LIGHTS];
 };
+
+// Common uniforms between lights
+layout(std140, row_major, binding = 0) readonly buffer commonBlock
+{
+	/// Packs:
+	/// - xy: Planes. For the calculation of frag pos in view space
+	vec4 uPlanesComp;
+
+	vec4 uSceneAmbientColor;
+
+	vec4 uGroundLightDir;
+
+	vec4 uLimitsOfNearPlane;
+};
+
+#define uPlanes uPlanesComp.xy

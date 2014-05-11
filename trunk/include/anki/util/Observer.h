@@ -6,9 +6,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup patterns
+/// @addtogroup util_patterns
 /// @{
 
 /// The observer interface template
@@ -150,7 +148,6 @@ private:
 		(_sender)->_signal.addNewObserver(observer); \
 	} while(false);
 
-/// @}
 /// @}
 
 } // end namespace anki

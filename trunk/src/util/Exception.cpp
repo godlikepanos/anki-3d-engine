@@ -1,6 +1,6 @@
 #include "anki/util/Exception.h"
 #include "anki/util/Vector.h"
-#include <sstream>
+#include "anki/util/Memory.h"
 #include <cstring>
 #include <cstdarg>
 
@@ -11,7 +11,7 @@ namespace anki {
 
 //==============================================================================
 Exception::Exception(const char* file, I line, const char* func, 
-	const char* fmt, ...) throw()
+	const char* fmt, ...) noexcept
 {
 	char buffer[1024];
 	const char* out = &buffer[0];
@@ -37,44 +37,91 @@ Exception::Exception(const char* file, I line, const char* func,
 
 		va_start(args, fmt);
 		len = vsnprintf(&largeStr[0], largeStr.size(), fmt, args);
+		(void)len;
 		va_end(args);
 
 		ANKI_ASSERT(len < (I)largeStr.size());
 	}
 
-	err = synthErr(out, file, line, func);
+	m_err = synthErr(out, file, line, func);
 
 #if ANKI_ABORT_ON_THROW
-	std::cerr << err << std::endl;
+	std::cerr << m_err << std::endl;
 	abort();
 #endif
 }
 
 //==============================================================================
-Exception::Exception(const Exception& e)
-	: err(e.err)
+Exception::Exception(const Exception& e) noexcept
 {
+	ANKI_ASSERT(e.m_err);
+
+	m_err = (char*)mallocAligned(strlen(e.m_err) + 1, 1);
+	strcpy(m_err, e.m_err);
+
 #if ANKI_ABORT_ON_THROW
-	std::cerr << err << std::endl;
+	std::cerr << m_err << std::endl;
 	abort();
 #endif
 }
 
 //==============================================================================
-std::string Exception::synthErr(const char* error, const char* file,
-	I line, const char* func)
+Exception::~Exception() noexcept
 {
-	std::stringstream ss;
-	ss << "(" << file << ':' << line << ' ' << func << ") " << error;
-	return ss.str();
+	if(m_err)
+	{
+		freeAligned(m_err);
+		m_err = nullptr;
+	}
+}
+
+//==============================================================================
+Exception& Exception::operator=(Exception&& b) noexcept
+{
+	if(m_err)
+	{
+		freeAligned(m_err);
+	}
+
+	m_err = b.m_err;
+	b.m_err = nullptr;
+	return *this;
+}
+
+//==============================================================================
+char* Exception::synthErr(const char* error, const char* file,
+	I line, const char* func) noexcept
+{
+	// The length of all strings plus some extra chars for the formating 
+	// plus 10 to be safe
+	U len = strlen(error) + strlen(file) + 5 + strlen(func) + 5 + 10;
+
+	char* out = (char*)mallocAligned(len + 1, 1);
+	I olen = snprintf(out, len + 1, "(%s:%lu %s) %s", file, line, func, error);
+	ANKI_ASSERT(olen >= 0 && (U)olen <= len);
+	(void)olen;
+
+	return out;
 }
 
 //==============================================================================
 Exception Exception::operator<<(const std::exception& e) const
 {
-	Exception out(*this);
-	out.err += "\nFrom: ";
-	out.err += e.what();
+	ANKI_ASSERT(m_err);
+	ANKI_ASSERT(e.what());
+
+	static const char* filling = "\nFrom: ";
+	Exception out;
+
+	U len = strlen(filling);
+	len += strlen(m_err);
+	len += strlen(e.what());
+
+	out.m_err = (char*)mallocAligned(len + 1, 1);
+	I olen = snprintf(out.m_err, len + 1, "%s%s%s", m_err, filling, e.what());
+	ANKI_ASSERT(olen >= 0 && (U)olen <= len);
+	(void)olen;
+
 	return out;
 }
 

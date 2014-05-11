@@ -4,4 +4,4 @@
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
 #include "anki/util/Assert.h"
-#include <string>
+#include "anki/util/String.h"
