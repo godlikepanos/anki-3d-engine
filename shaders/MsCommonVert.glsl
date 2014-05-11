@@ -1,55 +1,58 @@
 #pragma anki include "shaders/MsBsCommon.glsl"
 
-/// @name Attributes
-/// @{
-layout(location = POSITION_LOCATION) in highp vec3 position;
-layout(location = TEXTURE_COORDINATE_LOCATION) in mediump vec2 texCoord;
+//
+// Attributes
+//
+layout(location = POSITION_LOCATION) in highp vec3 inPosition;
+layout(location = TEXTURE_COORDINATE_LOCATION) in mediump vec2 inTexCoord;
 
-#if PASS_COLOR || TESSELLATION
-layout(location = NORMAL_LOCATION) in mediump vec3 normal;
+#if PASS == COLOR || TESSELLATION
+layout(location = NORMAL_LOCATION) in mediump vec3 inNormal;
 #endif
 
-#if PASS_COLOR
-layout(location = TANGENT_LOCATION) in mediump vec4 tangent;
+#if PASS == COLOR
+layout(location = TANGENT_LOCATION) in mediump vec4 inTangent;
 #endif
-/// @}
 
-/// @name Varyings
-/// @{
-out mediump vec2 vTexCoords;
+//
+// Varyings
+//
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
+layout(location = 0) out mediump vec2 outTexCoords;
+
+#if PASS == COLOR || TESSELLATION
+layout(location = 1) out mediump vec3 outNormal;
+#endif
+
+#if PASS == COLOR
+layout(location = 2) out mediump vec4 outTangent;
+
+// For env mapping. AKA view vector
+layout(location = 3) out mediump vec3 outVertPosViewSpace; 
+#endif
 
 #if INSTANCE_ID_FRAGMENT_SHADER
-flat out uint vInstanceId;
+layout(location = 4) flat out uint outInstanceId;
 #endif
-
-#if PASS_COLOR || TESSELLATION
-out mediump vec3 vNormal;
-#endif
-
-#if PASS_COLOR
-out mediump vec4 vTangent;
-out mediump vec3 vVertPosViewSpace; ///< For env mapping. AKA view vector
-#endif
-
-#if TESSELLATION
-out highp vec3 vPosition;
-#endif
-/// @}
 
 //==============================================================================
 #define writePositionTexCoord_DEFINED
 void writePositionTexCoord(in mat4 mvp)
 {
-#if PASS_DEPTH && LOD > 0
+#if PASS == DEPTH && LOD > 0
 	// No tex coords for you
 #else
-	vTexCoords = texCoord;
+	outTexCoords = inTexCoord;
 #endif
 
 #if TESSELLATION
-	vPosition = position;
+	gl_Position = vec4(inPosition, 1.0);
 #else
-	gl_Position = mvp * vec4(position, 1.0);
+	gl_Position = mvp * vec4(inPosition, 1.0);
 #endif
 }
 
@@ -61,17 +64,17 @@ void writePositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat)
 #if TESSELLATION
 
 	// Passthrough
-	vNormal = normal;
-#	if PASS_COLOR
-	vTangent = tangent;
+	outNormal = inNormal;
+#	if PASS == COLOR
+	outTangent = inTangent;
 #	endif
 
 #else
 
-#	if PASS_COLOR
-	vNormal = normalMat * normal;
-	vTangent.xyz = normalMat * tangent.xyz;
-	vTangent.w = tangent.w;
+#	if PASS == COLOR
+	outNormal = normalMat * inNormal;
+	outTangent.xyz = normalMat * inTangent.xyz;
+	outTangent.w = inTangent.w;
 #	endif
 
 #endif
@@ -80,10 +83,10 @@ void writePositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat)
 }
 
 //==============================================================================
-#if PASS_COLOR
-#define setVertPosViewSpace_DEFINED
-void setVertPosViewSpace(in mat4 modelViewMat)
+#if PASS == COLOR
+#define writeVertPosViewSpace_DEFINED
+void writeVertPosViewSpace(in mat4 modelViewMat)
 {
-	vVertPosViewSpace = vec3(modelViewMat * vec4(position, 1.0));
+	outVertPosViewSpace = vec3(modelViewMat * vec4(inPosition, 1.0));
 }
 #endif

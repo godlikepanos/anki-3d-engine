@@ -4,8 +4,8 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
-#include "anki/resource/ShaderProgramResource.h"
-#include "anki/gl/Gl.h"
+#include "anki/resource/ProgramResource.h"
+#include "anki/Gl.h"
 #include "anki/Math.h"
 #include "anki/renderer/Sm.h"
 #include "anki/util/StdTypes.h"
@@ -20,120 +20,127 @@ class PerspectiveCamera;
 class PointLight;
 class SpotLight;
 
+/// @addtogroup renderer
+/// @{
+
 /// Illumination stage
 class Is: private RenderingPass
 {
-	friend struct WriteLightsJob;
+	friend class WriteLightsJob;
 
 public:
 	Is(Renderer* r);
 	~Is();
 
 	void init(const RendererInitializer& initializer);
-	void run();
+	void run(GlJobChainHandle& jobs);
 
 	/// @name Accessors
 	/// @{
-	const Texture& getFai() const
+	const GlTextureHandle& getRt() const
 	{
-		return fai;
+		return m_rt;
 	}
 
-	Texture& getFai()
+	GlTextureHandle& getRt()
 	{
-		return fai;
+		return m_rt;
 	}
 	/// @}
 
 private:
-	static const U COMMON_UNIFORMS_BLOCK_BINDING = 0;
-	static const U POINT_LIGHTS_BLOCK_BINDING = 1;
-	static const U SPOT_LIGHTS_BLOCK_BINDING = 2;
-	static const U SPOT_TEX_LIGHTS_BLOCK_BINDING = 3;
-	static const U TILES_BLOCK_BINDING = 4;
-	static const U TILES_POINT_LIGHT_INDICES_BLOCK_BINDING = 5;
-	static const U TILES_SPOT_LIGHT_INDICES_BLOCK_BINDING = 6;
+	enum
+	{
+		COMMON_UNIFORMS_BLOCK_BINDING = 0,
+		POINT_LIGHTS_BLOCK_BINDING = 1,
+		SPOT_LIGHTS_BLOCK_BINDING = 2,
+		SPOT_TEX_LIGHTS_BLOCK_BINDING = 3,
+		TILES_BLOCK_BINDING = 4
+	};
 
-	/// The IS FAI
-	Texture fai;
+	enum
+	{
+		MS_RT0_TEX_UNIT = 0,
+		MS_RT1_TEX_UNIT = 1,
+		MS_DEPTH_RT_TEX_UNIT = 2,
+		SM_ARRAY_TEX_UNIT = 3
+	};
+
+	/// The IS render target
+	GlTextureHandle m_rt;
 
 	/// The IS FBO
-	Fbo fbo;
+	GlFramebufferHandle m_fb;
 
 	/// @name GPU buffers
 	/// @{
 
-	PtrSize uboAlignment = MAX_PTR_SIZE; ///< Cache the value here
-
 	/// Contains common data for all shader programs
-	GlBuffer commonUbo;
+	GlBufferHandle m_commonBuff;
 
 	/// Track the updates of commonUbo
-	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
+	Timestamp m_commonBuffUpdateTimestamp = getGlobTimestamp();
 
 	/// Contains all the lights
-	GlBuffer lightsUbo;
+	GlBufferHandle m_lightsBuff;
 
 	/// Contains the number of lights per tile
-	GlBuffer tilesBuffer;
-
-	GlBuffer pointLightIndicesBuffer;
-	GlBuffer spotLightIndicesBuffer;
+	GlBufferHandle m_tilesBuff;
 	/// @}
 
 	// Light shaders
-	ShaderProgramResourcePointer lightPassProg;
-	ShaderProgramResourcePointer rejectProg;
+	ProgramResourcePointer m_lightVert;
+	ProgramResourcePointer m_lightFrag;
+	GlProgramPipelineHandle m_lightPpline;
 
 	/// Shadow mapping
-	Sm sm;
+	Sm m_sm;
 
 	/// Opt because many ask for it
-	Camera* cam;
+	Camera* m_cam;
 
 	/// If enabled the ground emmits a light
-	Bool groundLightEnabled;
+	Bool8 m_groundLightEnabled;
 	/// Keep the prev light dir to avoid uniform block updates
-	Vec3 prevGroundLightDir = Vec3(0.0);
+	Vec3 m_prevGroundLightDir = Vec3(0.0);
 
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
-	GlBuffer quadPositionsVbo; ///< The VBO for quad positions
-	Vao quadVao; ///< This VAO is used everywhere except material stage
+	GlBufferHandle m_quadPositionsVertBuff;
 	/// @}
 
 	/// @name Limits
 	/// @{
-	U16 maxPointLights;
-	U8 maxSpotLights;
-	U8 maxSpotTexLights;
+	U16 m_maxPointLights;
+	U8 m_maxSpotLights;
+	U8 m_maxSpotTexLights;
 
-	U8 maxPointLightsPerTile;
-	U8 maxSpotLightsPerTile;
-	U8 maxSpotTexLightsPerTile;
+	U8 m_maxPointLightsPerTile;
+	U8 m_maxSpotLightsPerTile;
+	U8 m_maxSpotTexLightsPerTile;
 	/// @}
+
+	U32 m_tileSize; ///< Cache the value here
 
 	/// Called by init
 	void initInternal(const RendererInitializer& initializer);
 
 	/// Do the actual pass
-	void lightPass();
+	void lightPass(GlJobChainHandle& jobs);
 
 	/// Prepare GL for rendering
-	void setState();
+	void setState(GlJobChainHandle& jobs);
 
 	/// Calculate the size of the lights UBO
-	PtrSize calcLightsUboSize() const;
+	PtrSize calcLightsBufferSize() const;
 
-	/// Calculate the size of the indices of point lights
-	PtrSize calcPointLightIndicesBufferSize() const;
+	/// Calculate the size of the tile
+	PtrSize calcTileSize() const;
 
-	/// Calculate the size of the indices of spot lights
-	PtrSize calcSpotLightIndicesBufferSize() const;
-
-	/// Setup the binding of the block and do some sanity checks on the size
-	void blockSetupAndSanityCheck(const char* name, U binding, PtrSize size);
+	void updateCommonBlock(GlJobChainHandle& jobs);
 };
+
+/// @}
 
 } // end namespace anki
 

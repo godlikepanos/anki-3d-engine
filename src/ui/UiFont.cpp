@@ -10,7 +10,7 @@ namespace anki {
 void UiFont::create(const char* fontFilename, uint32_t nominalWidth,
 	uint32_t NominalHeight)
 {
-	FT_Vector ftSize = {nominalWidth, NominalHeight};
+	FrustumType::Vector ftSize = {nominalWidth, NominalHeight};
 	UiFtFontLoader ft(fontFilename, ftSize);
 
 	lineHeight = ft.getLineHeight();
@@ -83,7 +83,7 @@ void UiFont::create(const char* fontFilename, uint32_t nominalWidth,
 	tinit.type = GL_UNSIGNED_BYTE;
 	tinit.data = &ft.getImage()[0];
 	tinit.mipmapping = false;
-	tinit.filteringType = Texture::TFT_NEAREST;
+	tinit.filteringType = Texture::TFrustumType::NEAREST;
 	tinit.anisotropyLevel = 0;
 	tinit.repeat = false;
 

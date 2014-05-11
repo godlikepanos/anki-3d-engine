@@ -6,7 +6,6 @@
 #include "anki/resource/Skeleton.h"
 #include "anki/physics/RigidBody.h"
 #include "anki/physics/PhysicsWorld.h"
-#include "anki/gl/Drawcall.h"
 
 namespace anki {
 
@@ -17,11 +16,11 @@ namespace anki {
 //==============================================================================
 ModelPatchNode::ModelPatchNode(
 	const char* name, SceneGraph* scene,
-	const ModelPatchBase* modelPatch_)
+	const ModelPatchBase* modelPatch)
 	:	SceneNode(name, scene),
 		RenderComponent(this),
 		SpatialComponent(this), 
-		modelPatch(modelPatch_)
+		m_modelPatch(modelPatch)
 {
 	addComponent(static_cast<RenderComponent*>(this));
 	addComponent(static_cast<SpatialComponent*>(this));
@@ -34,26 +33,42 @@ ModelPatchNode::~ModelPatchNode()
 {}
 
 //==============================================================================
-void ModelPatchNode::getRenderingData(
-	const PassLodKey& key, 
-	const U8* subMeshIndicesArray, U subMeshIndicesCount,
-	const Vao*& vao, const ShaderProgram*& prog,
-	Drawcall& dc)
+void ModelPatchNode::buildRendering(RenderingBuildData& data)
 {
-	dc.primitiveType = GL_TRIANGLES;
-	dc.indicesType = GL_UNSIGNED_SHORT;
+	// That will not work on multi-draw and instanced at the same time. Make
+	// sure that there is no multi-draw anywhere
+	ANKI_ASSERT(m_modelPatch->getSubMeshesCount() == 0);
 
-	U spatialsCount = 0;
-	iterateComponentsOfType<SpatialComponent>([&](SpatialComponent&)
-	{
-		++spatialsCount;
-	});
+	auto instancesCount = data.m_subMeshIndicesCount;
 
-	dc.instancesCount = std::min(spatialsCount, subMeshIndicesCount);
+	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
+	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
+	U32 drawcallCount;
 
-	modelPatch->getRenderingDataSub(key, vao, prog, 
-		subMeshIndicesArray, subMeshIndicesCount, 
-		dc.countArray, dc.offsetArray, dc.drawCount);
+	GlJobChainHandle vertJobs;
+	GlProgramPipelineHandle ppline;
+
+	m_modelPatch->getRenderingDataSub(
+		data.m_key, vertJobs, ppline, 
+		nullptr, 0,
+		indicesCountArray, indicesOffsetArray, drawcallCount);
+
+	// Cannot accept multi-draw
+	ANKI_ASSERT(drawcallCount == 1);
+
+	// Drawcall
+	U32 offset = indicesOffsetArray[0] / sizeof(U16);
+	GlDrawcallElements dc(
+		data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
+		sizeof(U16),
+		indicesCountArray[0],
+		instancesCount,
+		offset);
+
+	// Set jobs
+	ppline.bind(data.m_jobs);
+	data.m_jobs.pushBackOtherJobChain(vertJobs);
+	dc.draw(data.m_jobs);
 }
 
 //==============================================================================
@@ -65,19 +80,19 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 
 	if(index == 0)
 	{
-		// NO instancing
+		// Asking for the first instance which is this
 		trf = move.getWorldTransform();
 	}
 	else
 	{
-		// Instancing
+		// Asking for a next instance
 		SceneNode* parent = &getParent()->downCast<SceneNode>();
 		ANKI_ASSERT(parent);
 		ModelNode* mnode = staticCastPtr<ModelNode*>(parent);
 
 		--index;
-		ANKI_ASSERT(index < mnode->transforms.size());
-		trf = mnode->transforms[index];
+		ANKI_ASSERT(index < mnode->m_transforms.size());
+		trf = mnode->m_transforms[index];
 	}
 }
 
@@ -96,7 +111,7 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 	const MoveComponent& parentMove = parent->getComponent<MoveComponent>();
 	if(parentMove.getTimestamp() == getGlobTimestamp())
 	{
-		obb = modelPatch->getBoundingShape().getTransformed(
+		m_obb = m_modelPatch->getBoundingShape().getTransformed(
 			parentMove.getWorldTransform());
 
 		SpatialComponent::markForUpdate();
@@ -178,7 +193,7 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 			{
 				ObbSpatialComponent* sp = spatials[i];
 
-				sp->obb = modelPatch->getBoundingShape().getTransformed(
+				sp->obb = m_modelPatch->getBoundingShape().getTransformed(
 					instanceMoves[i]->getWorldTransform());
 
 				sp->markForUpdate();
@@ -197,27 +212,27 @@ ModelNode::ModelNode(
 	const char* modelFname)
 	: 	SceneNode(name, scene),
 		MoveComponent(this),
-		transforms(getSceneAllocator()),
-		transformsTimestamp(0)
+		m_transforms(getSceneAllocator()),
+		m_transformsTimestamp(0)
 {
 	addComponent(static_cast<MoveComponent*>(this));
 
-	model.load(modelFname);
+	m_model.load(modelFname);
 
-	for(const ModelPatchBase* patch : model->getModelPatches())
+	for(const ModelPatchBase* patch : m_model->getModelPatches())
 	{
-		ModelPatchNode* mpn;
-		getSceneGraph().newSceneNode(mpn, nullptr, patch);
+		ModelPatchNode* mpn = 
+			getSceneGraph().newSceneNode<ModelPatchNode>(nullptr, patch);
 
 		SceneObject::addChild(mpn);
 	}
 
 	// Load rigid body
-	if(model->getCollisionShape() != nullptr)
+	if(m_model->getCollisionShape() != nullptr)
 	{
 		RigidBody::Initializer init;
 		init.mass = 1.0;
-		init.shape = const_cast<btCollisionShape*>(model->getCollisionShape());
+		init.shape = const_cast<btCollisionShape*>(m_model->getCollisionShape());
 		init.node = this;
 
 		RigidBody* body;
@@ -268,19 +283,19 @@ void ModelNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 	{
 		Bool transformsNeedUpdate = false;
 
-		if(instanceMoves.size() != transforms.size())
+		if(instanceMoves.size() != m_transforms.size())
 		{
 			transformsNeedUpdate = true;
-			transforms.resize(instanceMoves.size());
+			m_transforms.resize(instanceMoves.size());
 		}
 
-		if(transformsNeedUpdate || transformsTimestamp < instancesTimestamp)
+		if(transformsNeedUpdate || m_transformsTimestamp < instancesTimestamp)
 		{
-			transformsTimestamp = instancesTimestamp;
+			m_transformsTimestamp = instancesTimestamp;
 
 			for(U i = 0; i < instanceMoves.size(); i++)
 			{
-				transforms[i] = instanceMoves[i]->getWorldTransform();
+				m_transforms[i] = instanceMoves[i]->getWorldTransform();
 			}
 		}
 	}

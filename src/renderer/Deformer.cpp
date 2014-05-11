@@ -1,5 +1,5 @@
 #include "anki/renderer/Deformer.h"
-#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/ProgramResource.h"
 #include "anki/resource/Material.h"
 #include "anki/scene/SkinNode.h"
 #include "anki/gl/GlState.h"

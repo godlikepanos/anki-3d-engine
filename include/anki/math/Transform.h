@@ -7,7 +7,7 @@
 
 namespace anki {
 
-/// @addtogroup Math
+/// @addtogroup math
 /// @{
 
 /// Transformation
@@ -21,19 +21,19 @@ public:
 	{}
 
 	TTransform(const TTransform& b)
-		: origin(b.origin), rotation(b.rotation), scale(b.scale)
+		: m_origin(b.m_origin), m_rotation(b.m_rotation), m_scale(b.m_scale)
 	{}
 
 	explicit TTransform(const Mat4& m4)
 	{
-		rotation = m4.getRotationPart();
-		origin = m4.getTranslationPart();
-		scale = 1.0;
+		m_rotation = m4.getRotationPart();
+		m_origin = m4.getTranslationPart().xyz();
+		m_scale = 1.0;
 	}
 
-	explicit TTransform(const TVec3<T>& origin_, const TMat3<T>& rotation_,
-		const T scale_)
-		: origin(origin_), rotation(rotation_), scale(scale_)
+	explicit TTransform(const TVec3<T>& origin, const TMat3<T>& rotation,
+		const T scale)
+		: m_origin(origin), m_rotation(rotation), m_scale(scale)
 	{}
 	/// @}
 
@@ -41,47 +41,47 @@ public:
 	/// @{
 	const TVec3<T>& getOrigin() const
 	{
-		return origin;
+		return m_origin;
 	}
 
 	TVec3<T>& getOrigin()
 	{
-		return origin;
+		return m_origin;
 	}
 
-	void setOrigin(const TVec3<T> o)
+	void setOrigin(const TVec3<T>& o)
 	{
-		origin = o;
+		m_origin = o;
 	}
 
 	const TMat3<T>& getRotation() const
 	{
-		return rotation;
+		return m_rotation;
 	}
 
 	TMat3<T>& getRotation()
 	{
-		return rotation;
+		return m_rotation;
 	}
 
 	void setRotation(const TMat3<T>& r)
 	{
-		rotation = r;
+		m_rotation = r;
 	}
 
 	T getScale() const
 	{
-		return scale;
+		return m_scale;
 	}
 
 	T& getScale()
 	{
-		return scale;
+		return m_scale;
 	}
 
 	void setScale(const T s)
 	{
-		scale = s;
+		m_scale = s;
 	}
 	/// @}
 
@@ -89,15 +89,16 @@ public:
 	/// @{
 	TTransform& operator=(const TTransform& b)
 	{
-		origin = b.origin;
-		rotation = b.rotation;
-		scale = b.scale;
+		m_origin = b.m_origin;
+		m_rotation = b.m_rotation;
+		m_scale = b.m_scale;
 		return *this;
 	}
 
 	Bool operator==(const TTransform& b) const
 	{
-		return origin == b.origin && rotation == b.rotation && scale == b.scale;
+		return m_origin == b.m_origin && m_rotation == b.m_rotation 
+			&& m_scale == b.m_scale;
 	}
 
 	Bool operator!=(const TTransform& b) const
@@ -145,9 +146,10 @@ public:
 	{
 		TTransform out;
 
-		out.origin = b.origin.getTransformed(a.origin, a.rotation, a.scale);
-		out.rotation = a.rotation * b.rotation;
-		out.scale = a.scale * b.scale;
+		out.m_origin = 
+			b.m_origin.getTransformed(a.m_origin, a.m_rotation, a.m_scale);
+		out.m_rotation = a.m_rotation * b.m_rotation;
+		out.m_scale = a.m_scale * b.m_scale;
 
 		return out;
 	}
@@ -156,9 +158,9 @@ public:
 	TTransform getInverse() const
 	{
 		TTransform o;
-		o.rotation = rotation.getTransposed(); // Rotation
-		o.scale = 1.0 / scale; // Apply scale
-		o.origin = -((o.rotation * o.scale) * origin); // Translation
+		o.m_rotation = m_rotation.getTransposed(); // Rotation
+		o.m_scale = 1.0 / m_scale; // Apply scale
+		o.m_origin = -((o.m_rotation * o.m_scale) * m_origin); // Translation
 		return o;
 	}
 
@@ -169,24 +171,24 @@ public:
 
 	void transform(const TTransform& b)
 	{
-		origin = b.origin.getTransformed(origin, rotation, scale);
-		rotation = rotation * b.rotation;
-		scale *= b.scale;
+		m_origin = b.m_origin.getTransformed(m_origin, m_rotation, m_scale);
+		m_rotation = m_rotation * b.m_rotation;
+		m_scale *= b.m_scale;
 	}
 
 	std::string toString() const
 	{
-		return origin.toString() + " " + rotation.toString() + " " + 
-			std::to_string(scale);
+		return m_origin.toString() + " " + m_rotation.toString() + " " + 
+			std::to_string(m_scale);
 	}
 	/// @}
 
 private:
 	/// @name Data
 	/// @{
-	TVec3<T> origin; ///< The rotation
-	TMat3<T> rotation; ///< The translation
-	T scale; ///< The uniform scaling
+	TVec3<T> m_origin; ///< The rotation
+	TMat3<T> m_rotation; ///< The translation
+	T m_scale; ///< The uniform scaling
 	/// @}
 };
 

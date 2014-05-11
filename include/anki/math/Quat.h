@@ -2,68 +2,66 @@
 #define ANKI_MATH_QUAT_H
 
 #include "anki/math/CommonIncludes.h"
+#include "anki/math/Vec4.h"
 
 namespace anki {
 
-/// @addtogroup Math
+/// @addtogroup math
 /// @{
 
 /// Quaternion. Used in rotations
 template<typename T>
-ANKI_ATTRIBUTE_ALIGNED(class, 16) TQuat
+class alignas(16) TQuat: public TVec4<T>
 {
 public:
+	using Base = TVec4<T>;
+	
+	using Base::Base;
+	using Base::x;
+	using Base::y;
+	using Base::z;
+	using Base::w;
+	using Base::operator=;
+	using Base::getLengthSquared;
+	using Base::normalize;
+
 	/// @name Constructors
 	/// @{
 	explicit TQuat()
-	{
-		x() = y() = z() = w() = 0.0;
-	}
+		: Base()
+	{}
 
-	explicit TQuat(const T f)
-	{
-		x() = y() = z() = w() = f;
-	}
+	TQuat(const TQuat& b)
+		: Base(b)
+	{}
 
 	explicit TQuat(const T x_, const T y_, const T z_, const T w_)
-	{
-		x() = x_;
-		y() = y_;
-		z() = z_;
-		w() = w_;
-	}
+		: Base(x_, y_, z_, w_)
+	{}
 
-	explicit TQuat(const TVec2<T>& v2, const T z_, const T w_)
-	{
-		x() = v2.x();
-		y() = v2.y();
-		z() = z_;
-		w() = w_;
-	}
+	explicit TQuat(const T f)
+		: Base(f)
+	{}
 
-	explicit TQuat(const TVec3<T>& v3, const T w_)
-	{
-		x() = v3.x();
-		y() = v3.y();
-		z() = v3.z();
-		w() = w_;
-	}
+	explicit TQuat(const T arr[])
+		: Base(arr)
+	{}
 
-	explicit TQuat(const TVec4<T>& v4)
-	{
-		x() = v4.x();
-		y() = v4.y();
-		z() = v4.z();
-		w() = v4.w();
-	}
-	
-	TQuat(const TQuat& b)
-	{
-		x() = b.x();
-		y() = b.y();
-		z() = b.z();
-		w() = b.w();
-	}
+	explicit TQuat(const typename Base::Simd& simd)
+		: Base(simd)
+	{}
+
+	explicit TQuat(const TVec2<T>& v, const T z_, const T w_)
+		: Base(v, z_, w_)
+	{}
+
+	explicit TQuat(const TVec3<T>& v, const T w_)
+		: Base(v, w_)
+	{}
+
+	explicit TQuat(const TVec4<T>& v)
+		: Base(v)
+	{}
 
 	explicit TQuat(const TMat3<T>& m3)
 	{
@@ -147,92 +145,6 @@ public:
 	}
 	/// @}
 
-	/// @name Accessors
-	/// @{
-	T x() const
-	{
-		return vec.x;
-	}
-
-	T& x()
-	{
-		return vec.x;
-	}
-
-	T y() const
-	{
-		return vec.y;
-	}
-
-	T& y()
-	{
-		return vec.y;
-	}
-
-	T z() const
-	{
-		return vec.z;
-	}
-
-	T& z()
-	{
-		return vec.z;
-	}
-
-	T w() const
-	{
-		return vec.w;
-	}
-
-	T& w()
-	{
-		return vec.w;
-	}
-	/// @}
-
-	/// Operators with same type
-	/// @{
-	TQuat& operator=(const TQuat& b)
-	{
-		x() = b.x();
-		y() = b.y();
-		z() = b.z();
-		w() = b.w();
-		return *this;
-	}
-
-	/// 16 muls, 12 adds
-	TQuat operator*(const TQuat& b) const
-	{
-		// XXX See if this can be optimized
-		TQuat out;
-		out.vec.x = x() * b.w() + y() * b.z() - z() * b.y() + w() * b.x();
-		out.vec.y = -x() * b.z() + y() * b.w() + z() * b.x() + w() * b.y();
-		out.vec.z = x() * b.y() - y() * b.x() + z() * b.w() + w() * b.z();
-		out.vec.w = -x() * b.x() - y() * b.y() - z() * b.z() + w() * b.w();
-		return out;
-	}
-
-	TQuat& operator*=(const TQuat& b)
-	{
-		(*this) = (*this) * b;
-		return (*this);
-	}
-
-	Bool operator==(const TQuat& b) const
-	{
-		return isZero<T>(x() - b.x()) &&
-			isZero<T>(y() - b.y()) &&
-			isZero<T>(z() - b.z()) &&
-			isZero<T>(w() - b.w());
-	}
-
-	Bool operator!=(const TQuat& b) const
-	{
-		return !((*this) == b);
-	}
-	/// @}
-
 	/// @name Other
 	/// @{
 
@@ -240,7 +152,7 @@ public:
 	void setFrom2Vec3(const TVec3<T>& from, const TVec3<T>& to)
 	{
 		TVec3<T> axis(from.cross(to));
-		(*this) = TQuat(axis.x(), axis.y(), axis.z(), from.dot(to));
+		*this = TQuat(axis.x(), axis.y(), axis.z(), from.dot(to));
 		normalize();
 		w() += 1.0;
 
@@ -248,24 +160,19 @@ public:
 		{
 			if(from.z() * from.z() > from.x() * from.x())
 			{
-				(*this) = TQuat(0.0, from.z(), -from.y(), 0.0);
+				*this = TQuat(0.0, from.z(), -from.y(), 0.0);
 			}
 			else
 			{
-				(*this) = TQuat(from.y(), -from.x(), 0.0, 0.0);
+				*this = TQuat(from.y(), -from.x(), 0.0, 0.0);
 			}
 		}
 		normalize();
 	}
 
-	T getLength() const
-	{
-		return sqrt<T>(w() * w() + x() * x() + y() * y() + z() * z());
-	}
-
 	TQuat getInverted() const
 	{
-		T norm = w() * w() + x() * x() + y() * y() + z() * z();
+		T norm = getLengthSquared();
 
 		ANKI_ASSERT(!isZero<T>(norm)); // Norm is zero
 
@@ -290,26 +197,11 @@ public:
 		return TQuat(-x(), -y(), -z(), w());
 	}
 
-	void normalize()
-	{
-		(*this) = getNormalized();
-	}
-
-	TQuat getNormalized() const
-	{
-		return TQuat(TVec4<T>(*this).getNormalized());
-	}
-
-	T dot(const TQuat& b) const
-	{
-		return w() * b.w() + x() * b.x() + y() * b.y() + z() * b.z();
-	}
-
 	/// Returns slerp(this, q1, t)
 	TQuat slerp(const TQuat& q1_, const T t) const
 	{
-		TVec4<T> q0(*this);
-		TVec4<T> q1(q1_);
+		TQuat q1 = q1_;
+		const TQuat& q0 = *this;
 		T cosHalfTheta = q0.dot(q1);
 		if(cosHalfTheta < 0.0)
 		{
@@ -329,54 +221,44 @@ public:
 		{
 			return TQuat((q0 + q1) * 0.5);
 		}
+
 		T ratioA = sin<T>((1.0 - t) * halfTheta) / sinHalfTheta;
-		T ratio_b = sin<T>(t * halfTheta) / sinHalfTheta;
-		TVec4<T> tmp, tmp1, sum;
+		T ratioB = sin<T>(t * halfTheta) / sinHalfTheta;
+		TQuat tmp, tmp1, sum;
 		tmp = q0 * ratioA;
-		tmp1 = q1 * ratio_b;
+		tmp1 = q1 * ratioB;
 		sum = tmp + tmp1;
 		sum.normalize();
 		return TQuat(sum);
 	}
 
-	/// The same as TQuat * TQuat
+	/// @note 16 muls, 12 adds
 	TQuat getRotated(const TQuat& b) const 
 	{
-		return (*this) * b;
+		// XXX See if this can be optimized
+		TQuat out;
+		out.x() = x() * b.w() + y() * b.z() - z() * b.y() + w() * b.x();
+		out.y() = -x() * b.z() + y() * b.w() + z() * b.x() + w() * b.y();
+		out.z() = x() * b.y() - y() * b.x() + z() * b.w() + w() * b.z();
+		out.w() = -x() * b.x() - y() * b.y() - z() * b.z() + w() * b.w();
+		return out;
 	}
 
 	/// @see getRotated
 	void rotate(const TQuat& b)
 	{
-		(*this) = getRotated(b);
+		*this = getRotated(b);
 	}
 
 	void setIdentity()
 	{
-		x() = y() = z() = 0.0;
-		w() = 1.0;
+		*this = getIdentity();
 	}
 
-	static const TQuat& getIdentity()
+	static TQuat getIdentity()
 	{
-		static TQuat ident(0.0, 0.0, 0.0, 1.0);
-		return ident;
+		return TQuat(0.0, 0.0, 0.0, 1.0);
 	}
-
-	std::string toString() const
-	{
-		return std::to_string(x()) + " " + std::to_string(y()) + " "
-			+ std::to_string(z()) + " " + std::to_string(w());
-	}
-	/// @}
-
-private:
-	/// @name Data
-	/// @{
-	struct
-	{
-		T x, y, z, w;
-	} vec;
 	/// @}
 };
 

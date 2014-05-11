@@ -16,17 +16,19 @@ public:
 	/// @name Constructors
 	/// @{
 	Aabb()
-		: CollisionShape(CST_AABB)
+		: CollisionShape(Type::AABB)
 	{}
 
-	Aabb(const Vec3& min_, const Vec3& max_)
-		: CollisionShape(CST_AABB), min(min_), max(max_)
+	Aabb(const Vec3& min, const Vec3& max)
+		: CollisionShape(Type::AABB), m_min(min), m_max(max)
 	{
-		ANKI_ASSERT(min < max);
+		ANKI_ASSERT(m_min < m_max);
 	}
 
 	Aabb(const Aabb& b)
-		: CollisionShape(CST_AABB), min(b.min), max(b.max)
+		:	CollisionShape(Type::AABB), 
+			m_min(b.m_min), 
+			m_max(b.m_max)
 	{}
 	/// @}
 
@@ -34,28 +36,28 @@ public:
 	/// @{
 	const Vec3& getMin() const
 	{
-		return min;
+		return m_min;
 	}
 	Vec3& getMin()
 	{
-		return min;
+		return m_min;
 	}
 	void setMin(const Vec3& x)
 	{
-		min = x;
+		m_min = x;
 	}
 
 	const Vec3& getMax() const
 	{
-		return max;
+		return m_max;
 	}
 	Vec3& getMax()
 	{
-		return max;
+		return m_max;
 	}
 	void setMax(const Vec3& x)
 	{
-		max = x;
+		m_max = x;
 	}
 	/// @}
 
@@ -63,8 +65,8 @@ public:
 	/// @{
 	Aabb& operator=(const Aabb& b)
 	{
-		min = b.min;
-		max = b.max;
+		m_min = b.m_min;
+		m_max = b.m_max;
 		return *this;
 	}
 	/// @}
@@ -96,8 +98,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::toAabb
-	void toAabb(Aabb& b) const
+	/// Implements CollisionShape::computeAabb
+	void computeAabb(Aabb& b) const
 	{
 		b = *this;
 	}
@@ -116,8 +118,8 @@ public:
 private:
 	/// @name Data
 	/// @{
-	Vec3 min;
-	Vec3 max;
+	Vec3 m_min;
+	Vec3 m_max;
 	/// @}
 };
 /// @}
@@ -128,8 +130,8 @@ void Aabb::set(const Container& container)
 {
 	ANKI_ASSERT(container.size() >= 1);
 
-	min = container.front();
-	max = min;
+	m_min = container.front();
+	m_max = m_min;
 
 	// for all the Vec3s calc the max and min
 	typename Container::const_iterator it = container.begin() + 1;
@@ -137,18 +139,18 @@ void Aabb::set(const Container& container)
 	{
 		for(U j = 0; j < 3; j++)
 		{
-			if((*it)[j] > max[j])
+			if((*it)[j] > m_max[j])
 			{
-				max[j] = (*it)[j];
+				m_max[j] = (*it)[j];
 			}
-			else if((*it)[j] < min[j])
+			else if((*it)[j] < m_min[j])
 			{
-				min[j] = (*it)[j];
+				m_min[j] = (*it)[j];
 			}
 		}
 	}
 }
 
-} // end namespace
+} // end namespace anki
 
 #endif

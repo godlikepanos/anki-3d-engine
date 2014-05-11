@@ -4,30 +4,27 @@
 #include "anki/scene/Property.h"
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneComponent.h"
-#include "anki/gl/GlBuffer.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Model.h"
 
 namespace anki {
 
-struct Drawcall;
-
 /// @addtogroup Scene
 /// @{
 
 /// The ID of a buildin material variable
-enum BuildinMaterialVariableId
+enum class BuildinMaterialVariableId: U8
 {
-	BMV_NO_BUILDIN = 0,
-	BMV_MVP_MATRIX,
-	BMV_MV_MATRIX,
-	BMV_VP_MATRIX,
-	BMV_NORMAL_MATRIX,
-	BMV_BILLBOARD_MVP_MATRIX,
-	BMV_MAX_TESS_LEVEL,
-	BMV_BLURRING,
-	BMV_MS_DEPTH_MAP,
-	BMV_COUNT
+	NO_BUILDIN = 0,
+	MVP_MATRIX,
+	MV_MATRIX,
+	VP_MATRIX,
+	NORMAL_MATRIX,
+	BILLBOARD_MVP_MATRIX,
+	MAX_TESS_LEVEL,
+	BLURRING,
+	MS_DEPTH_MAP,
+	COUNT
 };
 
 // Forward
@@ -54,110 +51,170 @@ class RenderComponentVariable: public RenderComponentVariableVisitable
 public:
 	typedef RenderComponentVariableVisitable Base;
 
-	RenderComponentVariable(const MaterialVariable* mvar_);
+	RenderComponentVariable(const MaterialVariable* mvar);
 	virtual ~RenderComponentVariable();
 
 	/// @name Accessors
 	/// @{
 	BuildinMaterialVariableId getBuildinId() const
 	{
-		return buildinId;
+		return m_buildinId;
 	}
 
-	const std::string& getName() const
+	const char* getName() const
 	{
-		return mvar->getName();
+		return m_mvar->getName();
 	}
 
 	template<typename T>
-	const T* getValues() const
+	const T* begin() const
 	{
-		ANKI_ASSERT(
-			Base::getVariadicTypeId<RenderComponentVariableTemplate<T>>()
-			== Base::getVisitableTypeId());
-		return static_cast<const RenderComponentVariableTemplate<T>*>(
-			this)->get();
+		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
+		auto derived = 
+			static_cast<const RenderComponentVariableTemplate<T>*>(this);
+		return derived->begin();
+	}
+
+	template<typename T>
+	const T* end() const
+	{
+		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
+		auto derived = 
+			static_cast<const RenderComponentVariableTemplate<T>*>(this);
+		return derived->end();
+	}
+
+	template<typename T>
+	const T& operator[](U idx) const
+	{
+		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
+		auto derived = 
+			static_cast<const RenderComponentVariableTemplate<T>*>(this);
+		return (*derived)[idx];
 	}
 
 	/// This will trigger copy on write
 	template<typename T>
 	void setValues(const T* values, U32 size, SceneAllocator<U8> alloc)
 	{
-		ANKI_ASSERT(
-			Base::getVariadicTypeId<RenderComponentVariableTemplate<T>>()
-			== Base::getVisitableTypeId());
-		static_cast<RenderComponentVariableTemplate<T>*>(this)->set(
-			values, size, alloc);
+		ANKI_ASSERT(Base::isTypeOf<RenderComponentVariableTemplate<T>>());
+		auto derived = static_cast<RenderComponentVariableTemplate<T>*>(this);
+		derived->setValues(values, size, alloc);
 	}
 
 	U32 getArraySize() const
 	{
-		return mvar->getArraySize();
+		return m_mvar->getArraySize();
+	}
+
+	const GlProgramVariable& getGlProgramVariable() const
+	{
+		return m_mvar->getGlProgramVariable();
+	}
+
+	Bool isInstanced() const
+	{
+		return m_mvar->isInstanced();
 	}
 	/// @}
 
-	const ShaderProgramUniformVariable* tryFindShaderProgramUniformVariable(
-		const PassLodKey key) const
-	{
-		return mvar->findShaderProgramUniformVariable(key);
-	}
-
+	/// A custom cleanup method
 	virtual void cleanup(SceneAllocator<U8> alloc) = 0;
 
 protected:
-	const MaterialVariable* mvar = nullptr;
+	const MaterialVariable* m_mvar = nullptr;
 
 private:
-	BuildinMaterialVariableId buildinId;
+	BuildinMaterialVariableId m_buildinId;
 };
 
-/// RenderComponent variable
+/// RenderComponent variable. This class should not be visible to other 
+/// interfaces except render component
 template<typename T>
 class RenderComponentVariableTemplate: public RenderComponentVariable
 {
 public:
 	typedef T Type;
 
-	RenderComponentVariableTemplate(const MaterialVariable* mvar_)
-		: RenderComponentVariable(mvar_)
+	RenderComponentVariableTemplate(const MaterialVariable* mvar)
+		: RenderComponentVariable(mvar)
 	{
 		setupVisitable(this);
 	}
 
 	~RenderComponentVariableTemplate()
 	{
-		ANKI_ASSERT(copy == nullptr && "Forgot to delete");
+		ANKI_ASSERT(m_copy == nullptr && "Forgot to delete");
 	}
 
-	const T* get() const
+	const T* begin() const
 	{
-		ANKI_ASSERT((mvar->hasValues() || copy != nullptr)
+		ANKI_ASSERT((m_mvar->hasValues() || m_copy != nullptr)
 			&& "Variable does not have any values");
-		return (copy) ? copy : mvar->getValues<T>();
+		return (m_copy) ? m_copy : m_mvar->template begin<T>();
 	}
 
-	void set(const T* values, U32 size, SceneAllocator<U8> alloc)
+	const T* end() const
 	{
-		ANKI_ASSERT(size <= mvar->getArraySize());
-		if(copy == nullptr)
-		{
-			copy = alloc.newArray<T>(getArraySize());
-		}
-		memcpy(copy, values, sizeof(T) * size);
+		ANKI_ASSERT((m_mvar->hasValues() || m_copy != nullptr)
+			&& "Variable does not have any values");
+		return (m_copy) ? (m_copy + getArraySize()) : m_mvar->template end<T>();
 	}
 
-	/// Call that manualy
+	const T& operator[](U idx) const
+	{
+		ANKI_ASSERT((m_mvar->hasValues() || m_copy != nullptr)
+			&& "Variable does not have any values");
+		ANKI_ASSERT(idx < getArraySize());
+
+		// NOTE Working on GCC is wrong
+		if(m_copy)
+		{
+			return m_copy[idx];
+		}
+		else
+		{
+			return m_mvar->template operator[]<T>(idx);
+		}
+	}
+
+	void setValues(const T* values, U32 size, SceneAllocator<U8> alloc)
+	{
+		ANKI_ASSERT(size <= m_mvar->getArraySize());
+		if(m_copy == nullptr)
+		{
+			m_copy = alloc.newArray<T>(getArraySize());
+		}
+
+		for(U i = 0; i < size; i++)
+		{
+			m_copy[i] = values[i];
+		}
+	}
+
+	/// Call that manually
 	void cleanup(SceneAllocator<U8> alloc)
 	{
-		if(copy)
+		if(m_copy)
 		{
-			alloc.deleteArray(copy, getArraySize());
-			copy = nullptr;
+			alloc.deleteArray(m_copy, getArraySize());
+			m_copy = nullptr;
 		}
 	}
 
 private:
-	T* copy = nullptr;
+	T* m_copy = nullptr; ///< Copy of the data
+};
+
+/// Rendering data input and output. This is a structure because we don't want
+/// to change what buildRendering accepts all the time
+class RenderingBuildData
+{
+public:
+	RenderingKey m_key;
+	const U8* m_subMeshIndicesArray; ///< @note indices != drawing indices
+	U32 m_subMeshIndicesCount;
+	GlJobChainHandle m_jobs; ///< A job chain 
 };
 
 /// RenderComponent interface. Implemented by renderable scene nodes
@@ -175,22 +232,18 @@ public:
 	/// @{
 	Variables::iterator getVariablesBegin()
 	{
-		return vars.begin();
+		return m_vars.begin();
 	}
 	Variables::iterator getVariablesEnd()
 	{
-		return vars.end();
+		return m_vars.end();
 	}
 	/// @}
 
-	/// Get information for rendering.
-	/// Given an array of submeshes that are visible return the correct indices
-	/// offsets and counts
-	virtual void getRenderingData(
-		const PassLodKey& key, 
-		const U8* subMeshIndicesArray, U subMeshIndicesCount,
-		const Vao*& vao, const ShaderProgram*& prog,
-		Drawcall& drawcall) = 0;
+	/// Build up the rendering.
+	/// Given an array of submeshes that are visible append jobs to the GL
+	/// job chain
+	virtual void buildRendering(RenderingBuildData& data) = 0;
 
 	/// Access the material
 	virtual const Material& getMaterial() = 0;
@@ -221,7 +274,7 @@ public:
 	template<typename Func>
 	void iterateVariables(Func func)
 	{
-		for(auto var : vars)
+		for(auto var : m_vars)
 		{
 			func(*var);
 		}
@@ -236,7 +289,7 @@ protected:
 	void init();
 
 private:
-	Variables vars;
+	Variables m_vars;
 };
 /// @}
 

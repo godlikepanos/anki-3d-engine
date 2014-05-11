@@ -6,9 +6,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup containers
+/// @addtogroup util_containers
 /// @{
 
 /// Like std::array but with some additions
@@ -27,66 +25,66 @@ struct Array
 	typedef Reference reference;
 	typedef ConstReference const_reference;
 
-	Value data[N];
+	Value m_data[N];
 
 	Reference operator[](const PtrSize n)
 	{
 		ANKI_ASSERT(n < N);
-		return data[n];
+		return m_data[n];
 	}
 
 	ConstReference operator[](const PtrSize n) const
 	{
 		ANKI_ASSERT(n < N);
-		return data[n];
+		return m_data[n];
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	Iterator begin()
 	{
-		return &data[0];
+		return &m_data[0];
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	ConstIterator begin() const
 	{
-		return &data[0];
+		return &m_data[0];
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	Iterator end()
 	{
-		return &data[0] + N;
+		return &m_data[0] + N;
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	ConstIterator end() const
 	{
-		return &data[0] + N;
+		return &m_data[0] + N;
 	}
 
 	/// Make it compatible with STL
 	Reference front() 
 	{
-		return data[0];
+		return m_data[0];
 	}
 
 	/// Make it compatible with STL
 	ConstReference front() const
 	{
-		return data[0];
+		return m_data[0];
 	}
 
 	/// Make it compatible with STL
 	Reference back() 
 	{
-		return data[N - 1];
+		return m_data[N - 1];
 	}
 
 	/// Make it compatible with STL
 	ConstReference back() const
 	{
-		return data[N - 1];
+		return m_data[N - 1];
 	}
 
 	static constexpr PtrSize getSize()
@@ -105,7 +103,12 @@ struct Array
 /// @code X a[10][2]; @endcode
 template<typename T, PtrSize I, PtrSize J>
 using Array2d = Array<Array<T, J>, I>;
-/// @}
+
+/// 3D Array. @code Array3d<X, 10, 2, 3> a; @endcode is equivelent to 
+/// @code X a[10][2][3]; @endcode
+template<typename T, PtrSize I, PtrSize J, PtrSize K>
+using Array3d = Array<Array<Array<T, K>, J>, I>;
+
 /// @}
 
 } // end namespace anki

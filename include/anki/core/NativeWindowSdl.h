@@ -6,11 +6,14 @@
 
 namespace anki {
 
+static_assert(sizeof(SDL_GLContext) == sizeof(void*), "Incorrect assumption");
+
 /// Native window implementation for SDL
-struct NativeWindowImpl
+class NativeWindowImpl
 {
-	SDL_Window* window = nullptr;
-	SDL_GLContext context = 0;
+public:
+	SDL_Window* m_window = nullptr;
+	SDL_GLContext m_context = 0;
 };
 
 } // end namespace anki

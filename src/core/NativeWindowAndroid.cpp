@@ -193,13 +193,13 @@ void NativeWindow::destroy()
 //==============================================================================
 void NativeWindow::swapBuffers()
 {
-	ANKI_COUNTER_START_TIMER(C_SWAP_BUFFERS_TIME);
+	ANKI_COUNTER_START_TIMER(SWAP_BUFFERS_TIME);
 	ANKI_ASSERT(isCreated());
 	if(eglSwapBuffers(impl->display, impl->surface) == EGL_FALSE)
 	{
 		throw ANKI_EXCEPTION("eglSwapBuffers() failed");
 	}
-	ANKI_COUNTER_STOP_TIMER_INC(C_SWAP_BUFFERS_TIME);
+	ANKI_COUNTER_STOP_TIMER_INC(SWAP_BUFFERS_TIME);
 }
 
 } // end namespace anki

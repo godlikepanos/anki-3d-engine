@@ -140,10 +140,10 @@ public:
 		return flaresTex.isLoaded();
 	}
 
-	const Texture& getLensFlareTexture() const
+	const GlTextureHandle& getLensFlareTexture() const
 	{
 		ANKI_ASSERT(hasLensFlare());
-		return *flaresTex;
+		return flaresTex->getGlTexture();
 	}
 	const Vec2& getLensFlaresSize() const
 	{
@@ -265,13 +265,13 @@ public:
 
 	/// @name Accessors
 	/// @{
-	Texture& getTexture()
+	GlTextureHandle& getTexture()
 	{
-		return *tex;
+		return tex->getGlTexture();
 	}
-	const Texture& getTexture() const
+	const GlTextureHandle& getTexture() const
 	{
-		return *tex;
+		return tex->getGlTexture();
 	}
 
 	F32 getOuterAngle() const

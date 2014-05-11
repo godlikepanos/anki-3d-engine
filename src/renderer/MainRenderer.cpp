@@ -21,15 +21,19 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 
 	RendererInitializer initializer = initializer_;
 	initializer.set("offscreen", false);
-	initializer.get("width") *= initializer.get("renderingQuality");
-	initializer.get("height") *= initializer.get("renderingQuality");
+	initializer.set("width", 
+		initializer.get("width") * initializer.get("renderingQuality"));
+	initializer.set("height", 
+		initializer.get("height") * initializer.get("renderingQuality"));
 
 	initGl();
 
-	blitProg.load("shaders/Final.glsl");
-
 	Renderer::init(initializer);
-	deformer.reset(new Deformer);
+	m_deformer.reset(new Deformer);
+
+	m_blitFrag.load("shaders/Final.frag.glsl");
+	m_blitPpline = createDrawQuadProgramPipeline(
+		m_blitFrag->getGlProgram());
 
 	ANKI_LOGI("Main renderer initialized. Rendering size %dx%d", 
 		getWidth(), getHeight());
@@ -38,83 +42,66 @@ void MainRenderer::init(const RendererInitializer& initializer_)
 //==============================================================================
 void MainRenderer::render(SceneGraph& scene)
 {
-	ANKI_COUNTER_START_TIMER(C_MAIN_RENDERER_TIME);
-	Renderer::render(scene);
+	ANKI_COUNTER_START_TIMER(MAIN_RENDERER_TIME);
+
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl, m_jobsInitHints);
+
+	Renderer::render(scene, jobs);
 
 	Bool notDrawnToDefault = 
 		getRenderingQuality() != 1.0 || getDbg().getEnabled();
 
 	if(notDrawnToDefault)
 	{
-		Fbo::bindDefault(true, Fbo::ALL_TARGETS); // Bind the window framebuffer
+		getDefaultFramebuffer().bind(jobs, false);
+		jobs.setViewport(0, 0, getWindowWidth(), getWindowHeight());
 
-		GlStateSingleton::get().setViewport(
-			0, 0, getWindowWidth(), getWindowHeight());
-		GlStateSingleton::get().disable(GL_DEPTH_TEST);
-		GlStateSingleton::get().disable(GL_BLEND);
-		blitProg->bind();
+		m_blitPpline.bind(jobs);
 
-		Texture* fai;
+		GlTextureHandle* rt;
 
 		if(getPps().getEnabled())
 		{
-			fai = &getPps().getFai();
+			rt = &getPps().getRt();
 		}
 		else
 		{
-			fai = &getIs().getFai();
+			rt = &getIs().getRt();
 		}
 
-		//fai = &getPps().getHdr().getFai();
+		//rt = &getPps().getHdr().getRt();
 
-		fai->setFiltering(Texture::TFT_LINEAR);
+		rt->setFilter(jobs, GlTextureHandle::Filter::LINEAR);
+		rt->bind(jobs, 0);
 
-		blitProg->findUniformVariable("rasterImage").set(*fai);
-		drawQuad();
+		drawQuad(jobs);
 	}
-	
 
-	ANKI_COUNTER_STOP_TIMER_INC(C_MAIN_RENDERER_TIME);
+	ANKI_ASSERT(jobs.getReferenceCount() == 1);
+	jobs.flush();
+	m_jobsInitHints = jobs.computeInitHints();
+
+	ANKI_COUNTER_STOP_TIMER_INC(MAIN_RENDERER_TIME);
 }
 
 //==============================================================================
 void MainRenderer::initGl()
 {
-	// Ignore the first error
-	glGetError();
-
-	// print GL info
-	ANKI_LOGI("OpenGL info: OGL %s, GLSL %s",
-		reinterpret_cast<const char*>(glGetString(GL_VERSION)),
-		reinterpret_cast<const char*>(
-		glGetString(GL_SHADING_LANGUAGE_VERSION)));
-
 	// get max texture units
-	GlStateSingleton::get().setClearColor(Vec4(1.0, 0.0, 1.0, 1.0));
-	GlStateSingleton::get().setClearDepthValue(1.0);
-	GlStateSingleton::get().setClearStencilValue(0);
-	// CullFace is always on
-	glCullFace(GL_BACK);
-	GlStateSingleton::get().enable(GL_CULL_FACE);
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
 
-	// defaults
-	GlStateSingleton::get().disable(GL_BLEND);
-	GlStateSingleton::get().disable(GL_STENCIL_TEST);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	GlStateSingleton::get().setDepthMaskEnabled(true);
-	GlStateSingleton::get().setDepthFunc(GL_LESS);
+	jobs.enableCulling(true);
+	jobs.setCullFace(GL_BACK);
 
-	//glEnable(GL_FRAMEBUFFER_SRGB);
-
-	glDisable(GL_DITHER);
-
-	// Check for error
-	ANKI_CHECK_GL_ERROR();
+	jobs.flush();
 }
 
 //==============================================================================
 void MainRenderer::takeScreenshotTga(const char* filename)
 {
+#if 0
 	// open file and check
 	File fs;
 	try
@@ -168,6 +155,7 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 
 	// end
 	ANKI_CHECK_GL_ERROR();
+#endif
 }
 
 //==============================================================================

@@ -50,11 +50,12 @@ static void genNoise(Vec3* ANKI_RESTRICT arr,
 }
 
 //==============================================================================
-struct ShaderCommonUniforms
+class ShaderCommonUniforms
 {
-	Vec4 nearPlanes;
-	Vec4 limitsOfNearPlane;
-	Mat4 projectionMatrix;
+public:
+	Vec4 m_nearPlanes;
+	Vec4 m_limitsOfNearPlane;
+	Mat4 m_projectionMatrix;
 };
 
 //==============================================================================
@@ -62,62 +63,77 @@ struct ShaderCommonUniforms
 //==============================================================================
 
 //==============================================================================
-void Ssao::createFbo(Fbo& fbo, Texture& fai, U width, U height)
+void Ssao::createFb(GlFramebufferHandle & fb, GlTextureHandle& rt)
 {
-	fai.create2dFai(width, height, GL_RED, GL_RED, GL_UNSIGNED_BYTE);
+	GlManager& gl = GlManagerSingleton::get();
+
+	m_r->createRenderTarget(m_width, m_height, GL_RED, GL_RED, 
+		GL_UNSIGNED_BYTE, 1, rt);
 
 	// Set to bilinear because the blurring techniques take advantage of that
-	fai.setFiltering(Texture::TFT_LINEAR);
-	fbo.create({{&fai, GL_COLOR_ATTACHMENT0}});
+	GlJobChainHandle jobs(&gl);
+	rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
+
+	// create FB
+	fb = GlFramebufferHandle(jobs, {{rt, GL_COLOR_ATTACHMENT0}});
+
+	jobs.flush();
 }
 
 //==============================================================================
 void Ssao::initInternal(const RendererInitializer& initializer)
 {
-	enabled = initializer.get("pps.ssao.enabled");
+	m_enabled = initializer.get("pps.ssao.enabled");
 
-	if(!enabled)
+	if(!m_enabled)
 	{
 		return;
 	}
 
-	blurringIterationsCount = initializer.get("pps.ssao.blurringIterationsNum");
+	m_blurringIterationsCount = 
+		initializer.get("pps.ssao.blurringIterationsNum");
 
 	//
 	// Init the widths/heights
 	//
 	const F32 quality = initializer.get("pps.ssao.renderingQuality");
 
-	width = quality * (F32)r->getWidth();
-	alignRoundUp(16, width);
-	height = quality * (F32)r->getHeight();
-	alignRoundUp(16, height);
+	m_width = quality * (F32)m_r->getWidth();
+	alignRoundUp(16, m_width);
+	m_height = quality * (F32)m_r->getHeight();
+	alignRoundUp(16, m_height);
 
 	//
 	// create FBOs
 	//
-	createFbo(hblurFbo, hblurFai, width, height);
-	createFbo(vblurFbo, vblurFai, width, height);
+	createFb(m_hblurFb, m_hblurRt);
+	createFb(m_vblurFb, m_vblurRt);
 
 	//
 	// noise texture
 	//
-	Array<Vec3, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
-	Texture::Initializer tinit;
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
 
-	genNoise(noise.begin(), noise.end());
+	GlClientBufferHandle noise(
+		jobs, sizeof(Vec3) * NOISE_TEX_SIZE * NOISE_TEX_SIZE, nullptr);
 
-	tinit.width = tinit.height = NOISE_TEX_SIZE;
-	tinit.target = GL_TEXTURE_2D;
-	tinit.internalFormat = GL_RGB32F;
-	tinit.format = GL_RGB;
-	tinit.type = GL_FLOAT;
-	tinit.filteringType = Texture::TFT_NEAREST;
-	tinit.repeat = true;
-	tinit.mipmapsCount = 1;
-	tinit.data[0][0] = {&noise[0], sizeof(noise)};
+	genNoise((Vec3*)noise.getBaseAddress(), 
+		(Vec3*)((U8*)noise.getBaseAddress() + noise.getSize()));
 
-	noiseTex.create(tinit);
+	GlTextureHandle::Initializer tinit;
+
+	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
+	tinit.m_target = GL_TEXTURE_2D;
+	tinit.m_internalFormat = GL_RGB32F;
+	tinit.m_format = GL_RGB;
+	tinit.m_type = GL_FLOAT;
+	tinit.m_filterType = GlTextureHandle::Filter::NEAREST;
+	tinit.m_repeat = true;
+	tinit.m_mipmapsCount = 1;
+	tinit.m_data[0][0] = noise;
+
+	m_noiseTex = GlTextureHandle(jobs, tinit);
 
 	//
 	// Kernel
@@ -145,42 +161,54 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	//
 	// Shaders
 	//
-	commonUbo.create(GL_UNIFORM_BUFFER, sizeof(ShaderCommonUniforms), nullptr,
-		GL_DYNAMIC_DRAW);
+	m_uniformsBuff = GlBufferHandle(jobs, GL_SHADER_STORAGE_BUFFER, 
+		sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT);
 
 	std::stringstream pps;
 
 	// main pass prog
 	pps << "#define NOISE_MAP_SIZE " << NOISE_TEX_SIZE
-		<< "\n#define WIDTH " << width
-		<< "\n#define HEIGHT " << height
-		<< "\n#define USE_MRT " << r->getUseMrt()
+		<< "\n#define WIDTH " << m_width
+		<< "\n#define HEIGHT " << m_height
 		<< "\n#define KERNEL_SIZE " << KERNEL_SIZE << "U"
 		<< "\n#define KERNEL_ARRAY " << kernelStr.str() 
 		<< "\n";
-	ssaoSProg.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/PpsSsao.glsl", pps.str().c_str(), "r_").c_str());
 
-	ssaoSProg->findUniformBlock("commonBlock").setBinding(0);
+	m_ssaoFrag.load(ProgramResource::createSrcCodeToCache(
+		"shaders/PpsSsao.frag.glsl", pps.str().c_str(), "r_").c_str());
+
+	m_ssaoPpline = m_r->createDrawQuadProgramPipeline(
+		m_ssaoFrag->getGlProgram());
 
 	// blurring progs
-	const char* SHADER_FILENAME = "shaders/VariableSamplingBlurGeneric.glsl";
+	const char* SHADER_FILENAME = 
+		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
 	pps.str("");
 	pps << "#define HPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " << height << "\n"
+		"#define IMG_DIMENSION " << m_height << "\n"
 		"#define SAMPLES 7\n";
-	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
+
+	m_hblurFrag.load(ProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
+
+	m_hblurPpline = m_r->createDrawQuadProgramPipeline(
+		m_hblurFrag->getGlProgram());
 
 	pps.str("");
 	pps << "#define VPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " << width << "\n"
+		"#define IMG_DIMENSION " << m_width << "\n"
 		"#define SAMPLES 7\n";
-	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
+
+	m_vblurFrag.load(ProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
+
+	m_vblurPpline = m_r->createDrawQuadProgramPipeline(
+		m_vblurFrag->getGlProgram());
+
+	jobs.flush();
 }
 
 //==============================================================================
@@ -197,76 +225,70 @@ void Ssao::init(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Ssao::run()
+void Ssao::run(GlJobChainHandle& jobs)
 {
-	ANKI_ASSERT(enabled);
+	ANKI_ASSERT(m_enabled);
 
-	const Camera& cam = r->getSceneGraph().getActiveCamera();
+	const Camera& cam = m_r->getSceneGraph().getActiveCamera();
 
-	GlStateSingleton::get().disable(GL_BLEND);
-	GlStateSingleton::get().disable(GL_DEPTH_TEST);
+	jobs.setViewport(0, 0, m_width, m_height);
 
 	// 1st pass
 	//
-	vblurFbo.bind(true);
-	GlStateSingleton::get().setViewport(0, 0, width, height);
-	ssaoSProg->bind();
-	commonUbo.setBinding(0);
+	m_vblurFb.bind(jobs, true);
+	m_ssaoPpline.bind(jobs);
+
+	m_uniformsBuff.bindShaderBuffer(jobs, 0);
+	m_r->getMs().getDepthRt().bind(jobs, 0); // Depth
+	m_r->getMs().getRt1().bind(jobs, 1); // Normals
+	m_noiseTex.bind(jobs, 2);
 
 	// Write common block
-	if(commonUboUpdateTimestamp < r->getPlanesUpdateTimestamp()
-		|| commonUboUpdateTimestamp < cam.FrustumComponent::getTimestamp()
-		|| commonUboUpdateTimestamp == 1)
+	if(m_commonUboUpdateTimestamp < m_r->getPlanesUpdateTimestamp()
+		|| m_commonUboUpdateTimestamp < cam.FrustumComponent::getTimestamp()
+		|| m_commonUboUpdateTimestamp == 1)
 	{
-		ShaderCommonUniforms blk;
+		GlClientBufferHandle tmpBuff(jobs, sizeof(ShaderCommonUniforms),
+			nullptr);
 
-		blk.nearPlanes = Vec4(cam.getNear(), cam.getFar(), r->getPlanes().x(),
-			r->getPlanes().y());
+		ShaderCommonUniforms& blk = 
+			*((ShaderCommonUniforms*)tmpBuff.getBaseAddress());
 
-		blk.limitsOfNearPlane = Vec4(r->getLimitsOfNearPlane(),
-			r->getLimitsOfNearPlane2());
+		blk.m_nearPlanes = Vec4(cam.getNear(), cam.getFar(), 
+			m_r->getPlanes().x(), m_r->getPlanes().y());
 
-		blk.projectionMatrix = cam.getProjectionMatrix().getTransposed();
+		blk.m_limitsOfNearPlane = Vec4(m_r->getLimitsOfNearPlane(),
+			m_r->getLimitsOfNearPlane2().x(),
+			m_r->getLimitsOfNearPlane2().y());
 
-		commonUbo.write(&blk);
-		commonUboUpdateTimestamp = getGlobTimestamp();
-	}
+		blk.m_projectionMatrix = cam.getProjectionMatrix().getTransposed();
 
-	// msDepthFai
-	ssaoSProg->findUniformVariable("msDepthFai").set(
-		r->getMs().getDepthFai());
-
-	// noiseMap
-	ssaoSProg->findUniformVariable("noiseMap").set(noiseTex);
-
-	// msGFai
-	if(r->getUseMrt())
-	{
-		ssaoSProg->findUniformVariable("msGFai").set(r->getMs().getFai1());
-	}
-	else
-	{
-		ssaoSProg->findUniformVariable("msGFai").set(r->getMs().getFai0());
+		m_uniformsBuff.write(jobs, tmpBuff, 0, 0, tmpBuff.getSize());
+		m_commonUboUpdateTimestamp = getGlobTimestamp();
 	}
 
 	// Draw
-	r->drawQuad();
+	m_r->drawQuad(jobs);
 
 	// Blurring passes
 	//
-	for(U32 i = 0; i < blurringIterationsCount; i++)
+	for(U i = 0; i < m_blurringIterationsCount; i++)
 	{
+		if(i == 0)
+		{
+			m_vblurRt.bind(jobs, 1); // H pass input
+			m_hblurRt.bind(jobs, 0); // V pass input
+		}
+
 		// hpass
-		hblurFbo.bind(true);
-		hblurSProg->bind();
-		hblurSProg->findUniformVariable("img").set(vblurFai);
-		r->drawQuad();
+		m_hblurFb.bind(jobs, true);
+		m_hblurPpline.bind(jobs);
+		m_r->drawQuad(jobs);
 
 		// vpass
-		vblurFbo.bind(true);
-		vblurSProg->bind();
-		vblurSProg->findUniformVariable("img").set(hblurFai);
-		r->drawQuad();
+		m_vblurFb.bind(jobs, true);
+		m_vblurPpline.bind(jobs);
+		m_r->drawQuad(jobs);
 	}
 }
 

@@ -31,17 +31,13 @@ public:
 	/// @name RenderComponent virtuals
 	/// @{
 
-	/// Implements RenderComponent::getRenderingData
-	void getRenderingData(
-		const PassLodKey& key, 
-		const U8* subMeshIndicesArray, U subMeshIndicesCount,
-		const Vao*& vao, const ShaderProgram*& prog,
-		Drawcall& dracall);
+	/// Implements RenderComponent::buildRendering
+	void buildRendering(RenderingBuildData& data);
 
 	/// Implements  RenderComponent::getMaterial
 	const Material& getMaterial()
 	{
-		return modelPatch->getMaterial();
+		return m_modelPatch->getMaterial();
 	}
 
 	/// Overrides RenderComponent::getRenderComponentWorldTransform
@@ -59,18 +55,18 @@ public:
 	/// Implement SpatialComponent::getSpatialCollisionShape
 	const CollisionShape& getSpatialCollisionShape()
 	{
-		return obb;
+		return m_obb;
 	}
 
 	/// Implement SpatialComponent::getSpatialOrigin
 	Vec3 getSpatialOrigin()
 	{
-		return obb.getCenter();
+		return m_obb.getCenter();
 	}
 
 private:
-	Obb obb; ///< In world space
-	const ModelPatchBase* modelPatch; ///< The resource
+	Obb m_obb; ///< In world space
+	const ModelPatchBase* m_modelPatch; ///< The resource
 };
 
 /// The model scene node
@@ -92,7 +88,7 @@ public:
 	/// @{
 	const Model& getModel() const
 	{
-		return *model;
+		return *m_model;
 	}
 	/// @}
 
@@ -100,9 +96,9 @@ public:
 	void frameUpdate(F32, F32, SceneNode::UpdateType uptype) override;
 
 private:
-	ModelResourcePointer model; ///< The resource
-	SceneVector<Transform> transforms; ///< Cache the transforms of instances
-	Timestamp transformsTimestamp;
+	ModelResourcePointer m_model; ///< The resource
+	SceneVector<Transform> m_transforms; ///< Cache the transforms of instances
+	Timestamp m_transformsTimestamp;
 };
 
 /// @}

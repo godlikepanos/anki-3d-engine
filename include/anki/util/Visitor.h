@@ -14,9 +14,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup patterns
+/// @addtogroup util_patterns
 /// @{
 
 /// Namespace for visitor internal classes
@@ -27,9 +25,9 @@ namespace visitor_detail {
 ///
 /// Example of usage:
 /// @code
-/// GetVariadicTypeId<int, float, std::string>::get<float> == 1
-/// GetVariadicTypeId<int, float, std::string>::get<int> == 0
-/// GetVariadicTypeId<int, float, std::string>::get<char> // Compiler error
+/// GetVariadicTypeId<int, float, std::string>::get<float>() == 1
+/// GetVariadicTypeId<int, float, std::string>::get<int>() == 0
+/// GetVariadicTypeId<int, float, std::string>::get<char>() // Compiler error
 /// @endcode
 template<typename... Types>
 struct GetVariadicTypeId
@@ -107,7 +105,7 @@ public:
 
 	I getVisitableTypeId() const
 	{
-		return what;
+		return m_what;
 	}
 
 	template<typename T>
@@ -120,7 +118,7 @@ public:
 	template<typename TVisitor>
 	void acceptVisitor(TVisitor& v)
 	{
-		ANKI_ASSERT(what != -1 && address != nullptr);
+		ANKI_ASSERT(m_what != -1 && address != nullptr);
 		acceptVisitorInternal<TVisitor, Types...>(v);
 	}
 
@@ -128,7 +126,7 @@ public:
 	template<typename TVisitor>
 	void acceptVisitor(TVisitor& v) const
 	{
-		ANKI_ASSERT(what != -1 && address != nullptr);
+		ANKI_ASSERT(m_what != -1 && address != nullptr);
 		acceptVisitorInternalConst<TVisitor, Types...>(v);
 	}
 
@@ -138,13 +136,13 @@ public:
 	{
 		ANKI_ASSERT(t != nullptr); // Null arg
 		// Setting for second time? Now allowed
-		ANKI_ASSERT(address == nullptr && what == -1);
+		ANKI_ASSERT(address == nullptr && m_what == -1);
 		address = t;
-		what = visitor_detail::GetVariadicTypeId<Types...>::template get<T>();
+		m_what = visitor_detail::GetVariadicTypeId<Types...>::template get<T>();
 	}
 
 private:
-	I what = -1; ///< The type ID
+	I m_what = -1; ///< The type ID
 	void* address = nullptr; ///< The address to the data
 
 	/// @name Accept visitor template methods
@@ -152,7 +150,7 @@ private:
 	template<typename TVisitor, typename TFirst>
 	void acceptVisitorInternal(TVisitor& v)
 	{
-		switch(what)
+		switch(m_what)
 		{
 		case 0:
 			v.template visit(*reinterpret_cast<TFirst*>(address));
@@ -169,7 +167,7 @@ private:
 	{
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
-		switch(what)
+		switch(m_what)
 		{
 		case i:
 			v.template visit(*reinterpret_cast<TSecond*>(address));
@@ -183,7 +181,7 @@ private:
 	template<typename TVisitor, typename TFirst>
 	void acceptVisitorInternalConst(TVisitor& v) const
 	{
-		switch(what)
+		switch(m_what)
 		{
 		case 0:
 			v.template visit(*reinterpret_cast<const TFirst*>(address));
@@ -200,7 +198,7 @@ private:
 	{
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
-		switch(what)
+		switch(m_what)
 		{
 		case i:
 			v.template visit(*reinterpret_cast<const TSecond*>(address));
@@ -232,7 +230,8 @@ public:
 
 	I getVisitableTypeId() const
 	{
-		return what;
+		ANKI_ASSERT(m_what != -1);
+		return m_what;
 	}
 
 	template<typename T>
@@ -241,11 +240,18 @@ public:
 		return visitor_detail::GetVariadicTypeId<Types...>::template get<T>();
 	}
 
+	/// Check if this is of type
+	template<typename T>
+	Bool isTypeOf() const
+	{
+		return getVariadicTypeId<T>() == getVisitableTypeId();
+	}
+
 	/// Apply mutable visitor
 	template<typename TVisitor>
 	void acceptVisitor(TVisitor& v)
 	{
-		ANKI_ASSERT(what != -1);
+		ANKI_ASSERT(m_what != -1);
 		acceptVisitorInternal<TVisitor, Types...>(v);
 	}
 
@@ -253,7 +259,7 @@ public:
 	template<typename TVisitor>
 	void acceptVisitor(TVisitor& v) const
 	{
-		ANKI_ASSERT(what != -1);
+		ANKI_ASSERT(m_what != -1);
 		acceptVisitorInternalConst<TVisitor, Types...>(v);
 	}
 
@@ -261,19 +267,19 @@ public:
 	template<typename T>
 	void setupVisitable(const T*)
 	{
-		ANKI_ASSERT(what == -1); // Setting for second time not allowed
-		what = visitor_detail::GetVariadicTypeId<Types...>::template get<T>();
+		ANKI_ASSERT(m_what == -1); // Setting for second time not allowed
+		m_what = visitor_detail::GetVariadicTypeId<Types...>::template get<T>();
 	}
 
 private:
-	I what = -1; ///< The type ID
+	I m_what = -1; ///< The type ID
 
 	/// @name Accept visitor template methods
 	/// @{
 	template<typename TVisitor, typename TFirst>
 	void acceptVisitorInternal(TVisitor& v)
 	{
-		switch(what)
+		switch(m_what)
 		{
 		case 0:
 			{
@@ -298,7 +304,7 @@ private:
 	{
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
-		switch(what)
+		switch(m_what)
 		{
 		case i:
 			{
@@ -320,7 +326,7 @@ private:
 	template<typename TVisitor, typename TFirst>
 	void acceptVisitorInternalConst(TVisitor& v) const
 	{
-		switch(what)
+		switch(m_what)
 		{
 		case 0:
 			{
@@ -345,7 +351,7 @@ private:
 	{
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
-		switch(what)
+		switch(m_what)
 		{
 		case i:
 			{
@@ -365,7 +371,6 @@ private:
 	}
 	/// @}
 };
-/// @}
 /// @}
 
 } // end namespace anki

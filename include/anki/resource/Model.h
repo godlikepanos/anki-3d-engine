@@ -2,9 +2,9 @@
 #define ANKI_RESOURCE_MODEL_H
 
 #include "anki/resource/Resource.h"
-#include "anki/gl/Vao.h"
+#include "anki/Gl.h"
 #include "anki/collision/Obb.h"
-#include "anki/resource/PassLodKey.h"
+#include "anki/resource/RenderingKey.h"
 #include "anki/resource/Mesh.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Skeleton.h"
@@ -20,83 +20,78 @@ namespace anki {
 class ModelPatchBase
 {
 public:
-	/// VAOs container
-	typedef Vector<Vao> VaosContainer;
-
 	virtual ~ModelPatchBase()
 	{}
 
 	const Material& getMaterial() const
 	{
-		ANKI_ASSERT(modelPatchProtected.mtl);
-		return *modelPatchProtected.mtl;
+		ANKI_ASSERT(m_mtl);
+		return *m_mtl;
 	}
 
-	const Mesh& getMesh(const PassLodKey& key) const
+	const Mesh& getMesh(const RenderingKey& key) const
 	{
-		ANKI_ASSERT(key.lod < modelPatchProtected.meshes.size());
-		return *modelPatchProtected.meshes[key.lod];
+		ANKI_ASSERT(key.m_lod < m_meshes.size());
+		return *m_meshes[key.m_lod];
 	}
 
 	U32 getMeshesCount() const
 	{
-		return modelPatchProtected.meshes.size();
+		return m_meshes.size();
 	}
 
 	const Obb& getBoundingShape() const
 	{
-		PassLodKey key(COLOR_PASS, 0);
+		RenderingKey key(Pass::COLOR, 0, false);
 		return getMesh(key).getBoundingShape();
 	}
 
 	const Obb& getBoundingShapeSub(U32 subMeshId) const
 	{
-		PassLodKey key(COLOR_PASS, 0);
+		RenderingKey key(Pass::COLOR, 0, false);
 		return getMesh(key).getBoundingShapeSub(subMeshId);
 	}
 
 	U32 getSubMeshesCount() const
 	{
-		PassLodKey key(COLOR_PASS, 0);
+		RenderingKey key(Pass::COLOR, 0, false);
 		return getMesh(key).getSubMeshesCount();
 	}
-
-	/// Given a pass lod key retrieve variables useful for rendering
-	void getRenderingData(const PassLodKey& key, const Vao*& vao,
-		const ShaderProgram*& prog, U32& indicesCount) const;
 
 	/// Get information for multiDraw rendering.
 	/// Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts
 	void getRenderingDataSub(
-		const PassLodKey& key, 
-		const Vao*& vao, 
-		const ShaderProgram*& prog,
-		const U8* subMeshIndicesArray, U subMeshIndicesCount,
-		Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
-		Array<PtrSize, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
+		const RenderingKey& key, 
+		GlJobChainHandle& vertJobs,
+		GlProgramPipelineHandle& ppline,
+		const U8* subMeshIndicesArray, 
+		U32 subMeshIndicesCount,
+		Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
+		Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray, 
 		U32& drawcallCount) const;
 
 protected:
-	struct
-	{
-		/// Array [lod][pass]
-		VaosContainer vaos;
-		Material* mtl = nullptr;
-		Vector<Mesh*> meshes;
-	} modelPatchProtected;
+	/// Array [lod][pass]
+	Vector<GlJobChainHandle> m_vertJobs;
+	Material* m_mtl = nullptr;
+	Vector<Mesh*> m_meshes; ///< One for each LOD
 
-	/// Create VAOs using a material and a mesh. It writes a VaosContainer and
-	/// a hash map
+	/// Create vertex descriptors using a material and a mesh
 	void create();
 
 private:
-	/// Called by @a createVaos multiple times to create and populate a single
-	/// VAO
-	static void createVao(
-		const ShaderProgram &prog,
+	/// Called by @a create multiple times to create and populate a single
+	/// vertex descriptor
+	static void createVertexDesc(
+		const GlProgramHandle& prog,
 		const Mesh& mesh,
-		Vao& vao);
+		GlJobChainHandle& vertexJobs);
+
+	/// Return the maximum number of LODs
+	U getLodsCount() const;
+
+	U getVertexDescIdx(const RenderingKey& key) const;
 };
 
 /// Its a chunk of a model. Its very important class and it binds the material
@@ -105,38 +100,16 @@ template<typename MeshResourcePointerType>
 class ModelPatch: public ModelPatchBase
 {
 public:
+	/// Accepts a number of mesh filenames, one for each LOD
 	ModelPatch(const char* meshFNames[], U32 meshesCount,
-		const char* mtlFName)
-	{
-		// Load
-		ANKI_ASSERT(meshesCount > 0);
-		meshes.resize(meshesCount);
-		modelPatchProtected.meshes.resize(meshesCount);
-
-		for(U32 i = 0; i < meshesCount; i++)
-		{
-			meshes[i].load(meshFNames[i]);
-			modelPatchProtected.meshes[i] = meshes[i].get();
-
-			if(i > 0 && !meshes[i]->isCompatible(*meshes[i - 1]))
-			{
-				throw ANKI_EXCEPTION("Meshes not compatible");
-			}
-		}
-
-		mtl.load(mtlFName);
-		modelPatchProtected.mtl = mtl.get();
-
-		/// Create VAOs
-		create();
-	}
+		const char* mtlFName);
 
 	~ModelPatch()
 	{}
 
 private:
-	Vector<MeshResourcePointerType> meshes; ///< The geometries
-	MaterialResourcePointer mtl; ///< Material
+	Vector<MeshResourcePointerType> m_meshResources; ///< The geometries
+	MaterialResourcePointer m_mtlResource; ///< Material
 };
 
 /// Model is an entity that acts as a container for other resources. Models are
@@ -177,26 +150,24 @@ private:
 class Model
 {
 public:
-	typedef Vector<ModelPatchBase*> ModelPatchesContainer;
-
 	Model();
 	~Model();
 
 	/// @name Accessors
 	/// @{
-	const ModelPatchesContainer& getModelPatches() const
+	const Vector<ModelPatchBase*>& getModelPatches() const
 	{
-		return modelPatches;
+		return m_modelPatches;
 	}
 
 	const Obb& getVisibilityShape() const
 	{
-		return visibilityShape;
+		return m_visibilityShape;
 	}
 
 	const btCollisionShape* getCollisionShape() const
 	{
-		return collShape.get();
+		return m_collShape.get();
 	}
 	/// @}
 
@@ -204,11 +175,11 @@ public:
 
 private:
 	/// The vector of ModelPatch
-	ModelPatchesContainer modelPatches;
-	Obb visibilityShape;
-	SkeletonResourcePointer skeleton;
-	Vector<AnimationResourcePointer> animations;
-	std::unique_ptr<btCollisionShape> collShape;
+	Vector<ModelPatchBase*> m_modelPatches;
+	Obb m_visibilityShape;
+	SkeletonResourcePointer m_skeleton;
+	Vector<AnimationResourcePointer> m_animations;
+	std::unique_ptr<btCollisionShape> m_collShape;
 };
 
 } // end namespace anki

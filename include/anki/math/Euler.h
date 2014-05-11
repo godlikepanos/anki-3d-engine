@@ -5,7 +5,7 @@
 
 namespace anki {
 
-/// @addtogroup Math
+/// @addtogroup math
 /// @{
 
 /// Euler angles. Used for rotations. It cannot describe a rotation
@@ -99,42 +99,42 @@ public:
 	/// @{
 	T& operator [](const U i)
 	{
-		return arr[i];
+		return m_arr[i];
 	}
 
 	T operator [](const U i) const
 	{
-		return arr[i];
+		return m_arr[i];
 	}
 
 	T& x()
 	{
-		return vec.x;
+		return m_vec.m_x;
 	}
 
 	T x() const
 	{
-		return vec.x;
+		return m_vec.m_x;
 	}
 
 	T& y()
 	{
-		return vec.y;
+		return m_vec.m_y;
 	}
 
 	T y() const
 	{
-		return vec.y;
+		return m_vec.m_y;
 	}
 
 	T& z()
 	{
-		return vec.z;
+		return m_vec.m_z;
 	}
 
 	T z() const
 	{
-		return vec.z;
+		return m_vec.m_z;
 	}
 	/// @}
 
@@ -164,13 +164,13 @@ private:
 	/// @{
 	struct Vec
 	{
-		T x, y, z;
+		T m_x, m_y, m_z;
 	};
 
 	union
 	{
-		Vec vec;
-		Array<T, 3> arr;
+		Vec m_vec;
+		Array<T, 3> m_arr;
 	};
 	/// @}
 };

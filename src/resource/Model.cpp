@@ -1,8 +1,7 @@
 #include "anki/resource/Model.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Mesh.h"
-#include "anki/resource/MeshLoader.h"
-#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/ProgramResource.h"
 #include "anki/misc/Xml.h"
 #include "anki/physics/Converters.h"
 #include <btBulletCollisionCommon.h>
@@ -13,136 +12,101 @@ namespace anki {
 // ModelPatchBase                                                              =
 //==============================================================================
 
-struct Attrib
+class Attrib
 {
-	const char* name;
-	Mesh::VertexAttribute id;
+public:
+	const char* m_name;
+	VertexAttribute m_location;
 };
 
-static const Array<Attrib, Mesh::VA_COUNT - 1> attribs = {{
-	{"position", Mesh::VA_POSITION},
-	{"normal", Mesh::VA_NORMAL},
-	{"tangent", Mesh::VA_TANGENT},
-	{"texCoord", Mesh::VA_TEXTURE_COORD},
-	{"texCoord1", Mesh::VA_TEXTURE_COORD_1},
-	{"bonesCount", Mesh::VA_BONE_COUNT},
-	{"boneIds", Mesh::VA_BONE_IDS},
-	{"boneWeights", Mesh::VA_BONE_WEIGHTS}
+static const Array<Attrib, (U)VertexAttribute::COUNT - 1> attribs = {{
+	{"inPosition", VertexAttribute::POSITION},
+	{"inNormal", VertexAttribute::NORMAL},
+	{"inTangent", VertexAttribute::TANGENT},
+	{"inTexCoord", VertexAttribute::TEXTURE_COORD},
+	{"inTexCoord1", VertexAttribute::TEXTURE_COORD_1},
+	{"inBoneCount", VertexAttribute::BONE_COUNT},
+	{"inBoneIds", VertexAttribute::BONE_IDS},
+	{"inBoneWeights", VertexAttribute::BONE_WEIGHTS}
 }};
 
 //==============================================================================
-void ModelPatchBase::createVao(const ShaderProgram& prog,
-	const Mesh& meshb, Vao& vao)
+void ModelPatchBase::createVertexDesc(
+	const GlProgramHandle& prog,
+	const Mesh& mesh,
+	GlJobChainHandle& vertexJobs)
 {
-	vao.create();
-
-	const GlBuffer* vbo;
+	GlBufferHandle vbo;
 	U32 size;
 	GLenum type;
 	U32 stride;
 	U32 offset;
 
+	U32 count = 0;
 	for(const Attrib& attrib : attribs)
 	{
-		const ShaderProgramAttributeVariable* attr = 
-			prog.tryFindAttributeVariable(attrib.name);
+		const GlProgramVariable* attr = 
+			prog.tryFindVariable(attrib.m_name);
 
 		if(attr == nullptr)
 		{
 			continue;
 		}
 
-		meshb.getVboInfo(attrib.id, vbo, size, type,
+		ANKI_ASSERT(attr->getType() == GlProgramVariable::Type::INPUT);
+
+		mesh.getBufferInfo(attrib.m_location, vbo, size, type,
 			stride, offset);
 
-		if(vbo == nullptr)
+		if(!vbo.isCreated())
 		{
 			throw ANKI_EXCEPTION("Material asks for attribute that the mesh "
-				"does not have: %s", attrib.name);
+				"does not have: %s", attrib.m_name);
 		}
+		
+		vbo.bindVertexBuffer(vertexJobs, size, type, false, stride,
+			offset, (U)attrib.m_location);
 
-		vao.attachArrayBufferVbo(vbo, *attr, size, type, false, stride,
-			offset);
+		++count;
 	}
 
-	if(vao.getAttachmentsCount() < 1)
+	if(count < 1)
 	{
 		throw ANKI_EXCEPTION("The program doesn't have any attributes");
 	}
 
 	// The indices VBO
-	meshb.getVboInfo(Mesh::VA_INDICES, vbo, size, type,
+	mesh.getBufferInfo(VertexAttribute::INDICES, vbo, size, type,
 			stride, offset);
 
-	ANKI_ASSERT(vbo != nullptr);
-	vao.attachElementArrayBufferVbo(vbo);
+	ANKI_ASSERT(vbo.isCreated());
+	vbo.bindIndexBuffer(vertexJobs);
 }
 
 //==============================================================================
-void ModelPatchBase::getRenderingData(const PassLodKey& key, const Vao*& vao,
-	const ShaderProgram*& prog, U32& indicesCount) const
-{
-	const U meshLods = getMeshesCount();
-	ANKI_ASSERT(meshLods > 0);
-	const U mtlLods = getMaterial().getLevelsOfDetail();
-	ANKI_ASSERT(mtlLods > 0);
-
-	// VAO
-	U lodsCount = std::max(meshLods, mtlLods);
-
-	U index = key.pass + std::min((U)key.lod, lodsCount - 1) * lodsCount;
-
-	ANKI_ASSERT(index < modelPatchProtected.vaos.size());
-	vao = &modelPatchProtected.vaos[index];
-
-	// Mesh and indices
-	PassLodKey meshKey;
-	meshKey.pass = key.pass;
-	meshKey.lod = std::min(key.lod, (U8)(meshLods - 1));
-
-	const Mesh& mesh = getMesh(meshKey);
-	indicesCount = mesh.getIndicesCount();
-
-	// Prog
-	PassLodKey mtlKey;
-	mtlKey.pass = key.pass;
-	mtlKey.lod = std::min(key.lod, (U8)(mtlLods - 1));
-
-	prog = &getMaterial().findShaderProgram(mtlKey);
-}
-
-//==============================================================================
-void ModelPatchBase::getRenderingDataSub(const PassLodKey& key,
-	const Vao*& vao, const ShaderProgram*& prog, 
-	const U8* subMeshIndexArray, U subMeshIndexCount,
-	Array<U32, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesCountArray,
-	Array<PtrSize, ANKI_MAX_MULTIDRAW_PRIMITIVES>& indicesOffsetArray, 
+void ModelPatchBase::getRenderingDataSub(
+	const RenderingKey& key, 
+	GlJobChainHandle& vertJobs, 
+	GlProgramPipelineHandle& ppline,
+	const U8* subMeshIndexArray, 
+	U32 subMeshIndexCount,
+	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
+	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray, 
 	U32& drawcallCount) const
 {
-	const U meshLods = getMeshesCount();
-	ANKI_ASSERT(meshLods > 0);
-	const U mtlLods = getMaterial().getLevelsOfDetail();
-	ANKI_ASSERT(mtlLods > 0);
-
-	// VAO
-	U lodsCount = std::max(meshLods, mtlLods);
-
-	U vaoindex = key.pass + std::min((U)key.lod, lodsCount - 1) * lodsCount;
-
-	ANKI_ASSERT(vaoindex < modelPatchProtected.vaos.size());
-	vao = &modelPatchProtected.vaos[vaoindex];
+	// Vertex descr
+	vertJobs = m_vertJobs[getVertexDescIdx(key)];
 
 	// Prog
-	PassLodKey mtlKey;
-	mtlKey.pass = key.pass;
-	mtlKey.lod = std::min(key.lod, (U8)(mtlLods - 1));
+	RenderingKey mtlKey = key;
+	mtlKey.m_lod = 
+		std::min(key.m_lod, (U8)(getMaterial().getLevelsOfDetail() - 1));
 
-	prog = &getMaterial().findShaderProgram(mtlKey);
+	ppline = m_mtl->getProgramPipeline(mtlKey);
 
 	// Mesh and indices
-	PassLodKey meshKey;
-	meshKey.pass = key.pass;
-	meshKey.lod = std::min(key.lod, (U8)(meshLods - 1));
+	RenderingKey meshKey = key;
+	meshKey.m_lod = std::min(key.m_lod, (U8)(getMeshesCount() - 1));
 
 	const Mesh& mesh = getMesh(meshKey);
 
@@ -194,40 +158,100 @@ void ModelPatchBase::getRenderingDataSub(const PassLodKey& key,
 //==============================================================================
 void ModelPatchBase::create()
 {
-	U i = 0;
 	const Material& mtl = getMaterial();
-	U lodsCount = std::max<U>(getMeshesCount(), mtl.getLevelsOfDetail());
+	U lodsCount = getLodsCount();
 
-	modelPatchProtected.vaos.resize(lodsCount * mtl.getPassesCount());
+	m_vertJobs.resize(lodsCount * mtl.getPassesCount());
 
 	for(U lod = 0; lod < lodsCount; ++lod)
 	{
 		for(U pass = 0; pass < mtl.getPassesCount(); ++pass)
 		{
-			PassLodKey key(pass, lod);
-			const ShaderProgram* prog;
+			RenderingKey key((Pass)pass, lod, false);
+			GlProgramHandle prog;
 			const Mesh* mesh;
 
 			// Get mesh
 			ANKI_ASSERT(getMeshesCount() > 0);
-			PassLodKey meshKey = key;
-			meshKey.lod = std::min(key.lod, (U8)(getMeshesCount() - 1));
+			RenderingKey meshKey = key;
+			meshKey.m_lod = std::min(key.m_lod, (U8)(getMeshesCount() - 1));
 			mesh = &getMesh(meshKey);
 
 			// Get shader prog
 			ANKI_ASSERT(getMaterial().getLevelsOfDetail() > 0);
-			PassLodKey shaderKey = key;
-			shaderKey.lod = std::min(key.lod,
+			RenderingKey shaderKey = key;
+			shaderKey.m_lod = std::min(key.m_lod, 
 				(U8)(getMaterial().getLevelsOfDetail() - 1));
-			prog = getMaterial().tryFindShaderProgram(shaderKey);
 
-			Vao vao;
-			createVao(*prog, *mesh, vao);
+			GlProgramPipelineHandle ppline =
+				m_mtl->getProgramPipeline(shaderKey);
+			prog = ppline.getAttachedProgram(GL_VERTEX_SHADER);
+			
+			// Create vert descriptor
+			GlManager& gl = GlManagerSingleton::get();
+			GlJobChainHandle vertJobs(&gl);
+			createVertexDesc(prog, *mesh, vertJobs);
 
-			modelPatchProtected.vaos[i] = std::move(vao);
-			++i;
+			m_vertJobs[getVertexDescIdx(key)] = vertJobs;
 		}
 	}
+}
+
+//==============================================================================
+U ModelPatchBase::getLodsCount() const
+{
+	U meshLods = getMeshesCount();
+	U mtlLods = getMaterial().getLevelsOfDetail();
+	return std::max(meshLods, mtlLods);
+}
+
+//==============================================================================
+U ModelPatchBase::getVertexDescIdx(const RenderingKey& key) const
+{
+	U passesCount = getMaterial().getPassesCount();
+	ANKI_ASSERT((U)key.m_pass < passesCount);
+
+	// Sanitize LOD
+	U lod = std::min((U)key.m_lod, getLodsCount() - 1);
+
+	U idx = lod * passesCount + (U)key.m_pass;
+	ANKI_ASSERT(idx < m_vertJobs.size());
+	return idx;
+}
+
+//==============================================================================
+// ModelPatch                                                                  =
+//==============================================================================
+
+//==============================================================================
+template<typename MeshResourcePointerType>
+ModelPatch<MeshResourcePointerType>::ModelPatch(
+	const char* meshFNames[], U32 meshesCount, const char* mtlFName)
+{
+	ANKI_ASSERT(meshesCount > 0);
+	m_meshes.resize(meshesCount);
+	m_meshResources.resize(meshesCount);
+
+	// Load meshes
+	for(U32 i = 0; i < meshesCount; i++)
+	{
+		m_meshResources[i].load(meshFNames[i]);
+		m_meshes[i] = m_meshResources[i].get();
+
+		// Sanity check
+		if(i > 0 
+			&& !m_meshResources[i]->isCompatible(*m_meshResources[i - 1]))
+		{
+			throw ANKI_EXCEPTION("Meshes not compatible");
+		}
+	}
+
+	// Load material
+	m_mtlResource.load(mtlFName);
+	m_mtl = m_mtlResource.get();
+
+	// Create VAOs
+	create();
 }
 
 //==============================================================================
@@ -241,9 +265,9 @@ Model::Model()
 //==============================================================================
 Model::~Model()
 {
-	for(ModelPatchBase* patch : modelPatches)
+	for(ModelPatchBase* patch : m_modelPatches)
 	{
-		propperDelete(patch);
+		delete patch;
 	}
 }
 
@@ -268,15 +292,16 @@ void Model::load(const char* filename)
 
 			if(type == "sphere")
 			{
-				collShape.reset(new btSphereShape(valEl.getFloat()));
+				m_collShape.reset(new btSphereShape(valEl.getFloat()));
 			}
 			else if(type == "box")
 			{
 				Vec3 extend = valEl.getVec3();
-				collShape.reset(new btBoxShape(toBt(extend)));
+				m_collShape.reset(new btBoxShape(toBt(extend)));
 			}
 			else if(type == "mesh")
 			{
+				ANKI_ASSERT(0 && "TODO");
 			}
 			else
 			{
@@ -292,7 +317,7 @@ void Model::load(const char* filename)
 		do
 		{
 			XmlElement materialEl =
-			modelPatchEl.getChildElement("material");
+				modelPatchEl.getChildElement("material");
 
 			Array<const char*, 3> meshesFnames;
 			U meshesCount = 1;
@@ -351,28 +376,28 @@ void Model::load(const char* filename)
 					&meshesFnames[0], meshesCount, materialEl.getText());
 			}
 
-			modelPatches.push_back(patch);
+			m_modelPatches.push_back(patch);
 
 			// Move to next
 			modelPatchEl = modelPatchEl.getNextSiblingElement("modelPatch");
 		} while(modelPatchEl);
 
 		// Check number of model patches
-		if(modelPatches.size() < 1)
+		if(m_modelPatches.size() < 1)
 		{
 			throw ANKI_EXCEPTION("Zero number of model patches");
 		}
 
 		// Calculate compound bounding volume
-		PassLodKey key;
-		key.lod = 0;
-		visibilityShape = modelPatches[0]->getMesh(key).getBoundingShape();
+		RenderingKey key;
+		key.m_lod = 0;
+		m_visibilityShape = m_modelPatches[0]->getMesh(key).getBoundingShape();
 
-		for(ModelPatchesContainer::const_iterator it = modelPatches.begin() + 1;
-			it != modelPatches.end();
+		for(auto it = m_modelPatches.begin() + 1;
+			it != m_modelPatches.end();
 			++it)
 		{
-			visibilityShape = visibilityShape.getCompoundShape(
+			m_visibilityShape = m_visibilityShape.getCompoundShape(
 				(*it)->getMesh(key).getBoundingShape());
 		}
 	}

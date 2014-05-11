@@ -1,6 +1,5 @@
 #include "anki/scene/StaticGeometryNode.h"
 #include "anki/scene/SceneGraph.h"
-#include "anki/gl/Drawcall.h"
 
 namespace anki {
 
@@ -10,8 +9,8 @@ namespace anki {
 
 //==============================================================================
 StaticGeometrySpatial::StaticGeometrySpatial(
-	SceneNode* node, const Obb* obb_)
-	: SpatialComponent(node), obb(obb_)
+	SceneNode* node, const Obb* obb)
+	: SpatialComponent(node), m_obb(obb)
 {}
 
 //==============================================================================
@@ -20,30 +19,30 @@ StaticGeometrySpatial::StaticGeometrySpatial(
 
 //==============================================================================
 StaticGeometryPatchNode::StaticGeometryPatchNode(
-	const char* name, SceneGraph* scene, const ModelPatchBase* modelPatch_)
+	const char* name, SceneGraph* scene, const ModelPatchBase* modelPatch)
 	:	SceneNode(name, scene),
 		SpatialComponent(this),
 		RenderComponent(this),
-		modelPatch(modelPatch_)
+		m_modelPatch(modelPatch)
 {
 	addComponent(static_cast<SpatialComponent*>(this));
 	addComponent(static_cast<RenderComponent*>(this));
 
-	ANKI_ASSERT(modelPatch);
+	ANKI_ASSERT(m_modelPatch);
 	RenderComponent::init();
 
 	// Check if multimesh
-	if(modelPatch->getSubMeshesCount() > 1)
+	if(m_modelPatch->getSubMeshesCount() > 1)
 	{
 		// If multimesh create additional spatial components
 
-		obb = &modelPatch->getBoundingShapeSub(0);
+		m_obb = &m_modelPatch->getBoundingShapeSub(0);
 
-		for(U i = 1; i < modelPatch->getSubMeshesCount(); i++)
+		for(U i = 1; i < m_modelPatch->getSubMeshesCount(); i++)
 		{
 			StaticGeometrySpatial* spatial =
 				getSceneAllocator().newInstance<StaticGeometrySpatial>(
-				this, &modelPatch->getBoundingShapeSub(i));
+				this, &m_modelPatch->getBoundingShapeSub(i));
 
 			addComponent(static_cast<SpatialComponent*>(spatial));
 		}
@@ -52,7 +51,7 @@ StaticGeometryPatchNode::StaticGeometryPatchNode(
 	{
 		// If not multimesh then set the current spatial component
 
-		obb = &modelPatch->getBoundingShape();
+		m_obb = &modelPatch->getBoundingShape();
 	}
 }
 
@@ -71,26 +70,42 @@ StaticGeometryPatchNode::~StaticGeometryPatchNode()
 }
 
 //==============================================================================
-void StaticGeometryPatchNode::getRenderingData(
-	const PassLodKey& key, 
-	const U8* subMeshIndicesArray, U subMeshIndicesCount,
-	const Vao*& vao, const ShaderProgram*& prog,
-	Drawcall& dc)
+void StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 {
-	dc.primitiveType = GL_TRIANGLES;
-	dc.indicesType = GL_UNSIGNED_SHORT;
+	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
+	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
+	U32 drawCount;
+	GlJobChainHandle vertJobs;
+	GlProgramPipelineHandle ppline;
 
-	U spatialsCount = 0;
-	iterateComponentsOfType<SpatialComponent>([&](SpatialComponent&)
+	m_modelPatch->getRenderingDataSub(
+		data.m_key, vertJobs, ppline, 
+		data.m_subMeshIndicesArray, data.m_subMeshIndicesCount, 
+		indicesCountArray, indicesOffsetArray, drawCount);
+
+	ppline.bind(data.m_jobs);
+	data.m_jobs.pushBackOtherJobChain(vertJobs);
+
+	if(drawCount == 1)
 	{
-		++spatialsCount;
-	});
+		GlDrawcallElements dc = GlDrawcallElements(
+			data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
+			sizeof(U16),
+			indicesCountArray[0],
+			1,
+			indicesOffsetArray[0] / sizeof(U16));
 
-	dc.instancesCount = spatialsCount;
-
-	modelPatch->getRenderingDataSub(key, vao, prog, 
-		subMeshIndicesArray, subMeshIndicesCount, 
-		dc.countArray, dc.offsetArray, dc.drawCount);
+		dc.draw(data.m_jobs);
+	}
+	else if(drawCount == 0)
+	{
+		ANKI_ASSERT(0);
+	}
+	else
+	{
+		// TODO Make it indirect
+		ANKI_ASSERT(0 && "TODO");
+	}
 }
 
 //==============================================================================
@@ -102,15 +117,17 @@ StaticGeometryNode::StaticGeometryNode(
 	const char* name, SceneGraph* scene, const char* filename)
 	: SceneNode(name, scene)
 {
-	model.load(filename);
+	m_model.load(filename);
 
 	U i = 0;
-	for(const ModelPatchBase* patch : model->getModelPatches())
+	for(const ModelPatchBase* patch : m_model->getModelPatches())
 	{
-		std::string name_ = name + std::to_string(i);
+		std::string newname = name + std::to_string(i);
 
-		StaticGeometryPatchNode* node;
-		getSceneGraph().newSceneNode(node, name_.c_str(), patch);
+		StaticGeometryPatchNode* node = 
+			getSceneGraph().newSceneNode<StaticGeometryPatchNode>(
+			newname.c_str(), patch);
+		(void)node;
 
 		++i;
 	}

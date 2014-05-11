@@ -7,8 +7,12 @@
 namespace anki {
 
 //==============================================================================
-Pps::Pps(Renderer* r_)
-	: OptionalRenderingPass(r_), hdr(r_), ssao(r_), bl(r_), lf(r_)
+Pps::Pps(Renderer* r)
+	:	OptionalRenderingPass(r), 
+		m_hdr(r), 
+		m_ssao(r), 
+		m_bl(r), 
+		m_lf(r)
 {}
 
 //==============================================================================
@@ -18,56 +22,46 @@ Pps::~Pps()
 //==============================================================================
 void Pps::initInternal(const RendererInitializer& initializer)
 {
-	enabled = initializer.get("pps.enabled");
-	if(!enabled)
+	m_enabled = initializer.get("pps.enabled");
+	if(!m_enabled)
 	{
 		return;
 	}
 
 	ANKI_ASSERT("Initializing PPS");
 
-	ssao.init(initializer);
-	hdr.init(initializer);
-	lf.init(initializer);
+	m_ssao.init(initializer);
+	m_hdr.init(initializer);
+	m_lf.init(initializer);
 
 	// FBO
-	fai.create2dFai(r->getWidth(), r->getHeight(), GL_RGB8, GL_RGB,
-		GL_UNSIGNED_BYTE);
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
 
-	fbo.create({{&fai, GL_COLOR_ATTACHMENT0}});
+	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8, GL_RGB,
+		GL_UNSIGNED_BYTE, 1, m_rt);
+
+	m_fb = GlFramebufferHandle(jobs, {{m_rt, GL_COLOR_ATTACHMENT0}});
 
 	// SProg
-	std::string pps = "";
-	if(ssao.getEnabled())
-	{
-		pps += "#define SSAO_ENABLED\n";
-	}
+	std::stringstream pps;
 
-	if(hdr.getEnabled())
-	{
-		pps += "#define HDR_ENABLED\n";
-	}
+	pps << "#define SSAO_ENABLED " << (U)m_ssao.getEnabled() << "\n"
+		<< "#define HDR_ENABLED " << (U)m_hdr.getEnabled() << "\n"
+		<< "#define LF_ENABLED " << (U)m_lf.getEnabled() << "\n"
+		<< "#define SHARPEN_ENABLED " << (U)initializer.get("pps.sharpen") 
+			<< "\n"
+		<< "#define GAMMA_CORRECTION_ENABLED " 
+			<< (U)initializer.get("pps.gammaCorrection") << "\n"
+		<< "#define FBO_WIDTH " << (U)m_r->getWidth() << "\n"
+		<< "#define FBO_HEIGHT " << (U)m_r->getHeight() << "\n";
 
-	if(lf.getEnabled())
-	{
-		pps += "#define LF_ENABLED\n";
-	}
+	m_frag.load(ProgramResource::createSrcCodeToCache(
+		"shaders/Pps.frag.glsl", pps.str().c_str(), "r_").c_str());
 
-	if(initializer.get("pps.sharpen"))
-	{
-		pps += "#define SHARPEN_ENABLED\n";
-	}
+	m_ppline = m_r->createDrawQuadProgramPipeline(m_frag->getGlProgram());
 
-	if(initializer.get("pps.gammaCorrection"))
-	{
-		pps += "#define GAMMA_CORRECTION_ENABLED\n";
-	}
-
-	pps += "#define FBO_WIDTH " + std::to_string(r->getWidth()) + "\n";
-	pps += "#define FBO_HEIGHT " + std::to_string(r->getHeight()) + "\n";
-
-	prog.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/Pps.glsl", pps.c_str(), "r_").c_str());
+	jobs.flush();
 }
 
 //==============================================================================
@@ -84,66 +78,60 @@ void Pps::init(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Pps::run()
+void Pps::run(GlJobChainHandle& jobs)
 {
-	ANKI_ASSERT(enabled);
-
-	GlStateSingleton::get().disable(GL_BLEND);
+	ANKI_ASSERT(m_enabled);
 
 	// First SSAO because it depends on MS where HDR depends on IS
-	if(ssao.getEnabled())
+	if(m_ssao.getEnabled())
 	{
-		ssao.run();
+		m_ssao.run(jobs);
 	}
 
-	if(hdr.getEnabled())
+	if(m_hdr.getEnabled())
 	{
-		hdr.run();
+		m_hdr.run(jobs);
 	}
 
-	if(lf.getEnabled())
+	if(m_lf.getEnabled())
 	{
-		lf.run();
+		m_lf.run(jobs);
 	}
 
 	Bool drawToDefaultFbo = 
-		!r->getDbg().getEnabled() 
-		&& !r->getIsOffscreen()
-		&& r->getRenderingQuality() == 1.0;
+		!m_r->getDbg().getEnabled() 
+		&& !m_r->getIsOffscreen()
+		&& m_r->getRenderingQuality() == 1.0;
 
 	if(drawToDefaultFbo)
 	{
-		Fbo::bindDefault(true);
-		GlStateSingleton::get().setViewport(
-			0, 0, r->getWindowWidth(), r->getWindowHeight());
+		m_r->getDefaultFramebuffer().bind(jobs, true);
+		jobs.setViewport(0, 0, m_r->getWindowWidth(), m_r->getWindowHeight());
 	}
 	else
 	{
-		fbo.bind(true);
-		GlStateSingleton::get().setViewport(
-			0, 0, r->getWidth(), r->getHeight());
+		m_fb.bind(jobs, true);
+		jobs.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	}
 
-	GlStateSingleton::get().enable(GL_DEPTH_TEST, false);
-	GlStateSingleton::get().enable(GL_BLEND, false);
+	m_ppline.bind(jobs);
 
-	prog->bind();
-	prog->findUniformVariable("isFai").set(r->getIs().getFai());
+	m_r->getIs().getRt().bind(jobs, 0);
 
-	if(ssao.getEnabled())
+	if(m_ssao.getEnabled())
 	{
-		prog->findUniformVariable("ppsSsaoFai").set(ssao.getFai());
+		m_ssao.getRt().bind(jobs, 1);
 	}
-	if(hdr.getEnabled())
+	if(m_hdr.getEnabled())
 	{
-		prog->findUniformVariable("ppsHdrFai").set(hdr.getFai());
+		m_hdr.getRt().bind(jobs, 2);
 	}
-	if(lf.getEnabled())
+	if(m_lf.getEnabled())
 	{
-		prog->findUniformVariable("ppsLfFai").set(lf.getFai());
+		m_lf.getRt().bind(jobs, 3);
 	}
 
-	r->drawQuad();
+	m_r->drawQuad(jobs);
 }
 
 } // end namespace anki

@@ -5,4 +5,7 @@
 #include "anki/math/CommonSrc.h"
 #include "anki/math/Functions.h"
 
+/// @defgroup math Math library
+/// @ingroup anki_public
+
 #endif

@@ -16,9 +16,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup memory
+/// @addtogroup util_memory
 /// @{
 
 /// Pool based allocator
@@ -51,6 +49,18 @@ public:
 	typedef const T& const_reference;
 	typedef T value_type;
 
+	/// Move assignments between containers will copy the allocator as well. 
+	/// If propagate_on_container_move_assignment is not defined then not moves
+	/// are going to happen
+	typedef std::true_type propagate_on_container_move_assignment;
+
+	/// A struct to rebind the allocator to another allocator of type U
+	template<typename U>
+	struct rebind
+	{
+		typedef GenericPoolAllocator<U, TPool, deallocationFlag> other;
+	};
+
 	/// Default constructor
 	GenericPoolAllocator() throw()
 	{}
@@ -71,7 +81,7 @@ public:
 
 	/// Constuctor that accepts a pool
 	GenericPoolAllocator(const TPool& pool) throw()
-		: mpool(pool)
+		: m_pool(pool)
 	{}
 
 	/// Destructor
@@ -81,7 +91,7 @@ public:
 	/// Copy
 	GenericPoolAllocator& operator=(const GenericPoolAllocator& b)
 	{
-		mpool = b.mpool;
+		m_pool = b.m_pool;
 		return *this;
 	}
 
@@ -90,7 +100,7 @@ public:
 	GenericPoolAllocator& operator=(const GenericPoolAllocator<
 		U, TPool, deallocationFlag>& b)
 	{
-		mpool = b.mpool;
+		m_pool = b.m_pool;
 		return *this;
 	}
 
@@ -115,7 +125,7 @@ public:
 		
 		// Operator new doesn't respect alignment (in GCC at least) so use 
 		// the allocation
-		void* out = mpool.allocate(size, alignof(value_type));
+		void* out = m_pool.allocate(size, alignof(value_type));
 
 		if(out != nullptr)
 		{
@@ -137,7 +147,7 @@ public:
 
 		if(deallocationFlag)
 		{
-			Bool ok = mpool.free(p);
+			Bool ok = m_pool.free(p);
 
 			if(!ok)
 			{
@@ -181,25 +191,18 @@ public:
 		return MAX_PTR_SIZE;
 	}
 
-	/// A struct to rebind the allocator to another allocator of type U
-	template<typename U>
-	struct rebind
-	{
-		typedef GenericPoolAllocator<U, TPool, deallocationFlag> other;
-	};
-
 	/// Get the memory pool
 	/// @note This is AnKi specific
 	const TPool& getMemoryPool() const
 	{
-		return mpool;
+		return m_pool;
 	}
 
 	/// Get the memory pool
 	/// @note This is AnKi specific
 	TPool& getMemoryPool()
 	{
-		return mpool;
+		return m_pool;
 	}
 
 	/// Allocate a new object and call it's constructor
@@ -257,7 +260,7 @@ public:
 	}
 
 private:
-	TPool mpool;
+	TPool m_pool;
 };
 
 /// @name GenericPoolAllocator global functions
@@ -319,7 +322,6 @@ template<typename T, Bool deallocationFlag = true>
 using ChainAllocator = 
 	GenericPoolAllocator<T, ChainMemoryPool, deallocationFlag>;
 
-/// @}
 /// @}
 
 } // end namespace anki

@@ -5,46 +5,45 @@
 #pragma anki include "shaders/MsBsCommon.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
-in vec2 vTexCoord;
-flat in float vAlpha;
+layout(location = 1) flat in float inAlpha;
 
-#if defined(PASS_COLOR)
-layout(location = 0) out vec4 fColor;
-#	define fColor_DEFINED
+#if PASS == COLOR
+layout(location = 0) out vec4 outColor;
+#	define outColor_DEFINED
 #endif
 
-#if defined(PASS_COLOR)
+#if PASS == COLOR
 #	define texture_DEFINED
 #endif
 
 #define getAlpha_DEFINED
 float getAlpha()
 {
-	return vAlpha;
+	return inAlpha;
 }
 
 #define getPointCoord_DEFINED
 #define getPointCoord() gl_PointCoord
 
-#if defined(PASS_COLOR)
-#	define writeFais_DEFINED
-void writeFais(in vec4 color)
+#if PASS == COLOR
+#	define writeGBuffer_DEFINED
+void writeGBuffer(in vec4 color)
 {
-	fColor = color;
+	outColor = color;
 }
 #endif
 
-#if defined(PASS_COLOR)
+#if PASS == COLOR
 #	define particleAlpha_DEFINED
 void particleAlpha(in sampler2D tex, in float alpha)
 {
 	vec4 color = texture(tex, gl_PointCoord);
 	color.a *= alpha;
-	writeFais(color);
+	writeGBuffer(color);
 }
 #endif
 
-#if defined(PASS_COLOR)
+#if PASS == COLOR
 #	define particleSoftTextureAlpha_DEFINED
 void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex, 
 	in float alpha)
@@ -58,11 +57,11 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 
 	vec4 color = texture(tex, gl_PointCoord);
 	color.a *= alpha * softalpha;
-	writeFais(color);
+	writeGBuffer(color);
 }
 #endif
 
-#if defined(PASS_COLOR)
+#if PASS == COLOR
 #	define particleSoftColorAlpha_DEFINED
 void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor, 
 	in float alpha)
@@ -80,6 +79,6 @@ void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor,
 	vec4 color;
 	color.rgb = icolor;
 	color.a = alpha * softalpha * roundFactor;
-	writeFais(color);
+	writeGBuffer(color);
 }
 #endif

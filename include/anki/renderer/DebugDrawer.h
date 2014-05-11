@@ -2,8 +2,7 @@
 #define ANKI_RENDERER_DEBUG_DRAWER_H
 
 #include "anki/Math.h"
-#include "anki/gl/GlBuffer.h"
-#include "anki/gl/Vao.h"
+#include "anki/Gl.h"
 #include "anki/resource/Resource.h"
 #include "anki/collision/CollisionShape.h"
 #include "anki/scene/Forward.h"
@@ -12,6 +11,9 @@
 #include <LinearMath/btIDebugDraw.h>
 
 namespace anki {
+
+/// @addtogroup renderer
+/// @{
 
 /// Draws simple primitives
 class DebugDrawer
@@ -25,6 +27,16 @@ public:
 	void drawCube(F32 size = 1.0);
 	void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 
+	void prepareDraw(GlJobChainHandle& jobs)
+	{
+		m_jobs = jobs;
+	}
+
+	void finishDraw()
+	{
+		m_jobs = GlJobChainHandle(); // Release job chain
+	}
+
 	/// @name Render functions. Imitate the GL 1.1 immediate mode
 	/// @{
 	void begin(); ///< Initiates the draw
@@ -33,12 +45,12 @@ public:
 	/// Something like glColor
 	void setColor(const Vec3& col)
 	{
-		crntCol = col;
+		m_crntCol = col;
 	}
 	/// Something like glColor
 	void setColor(const Vec4& col)
 	{
-		crntCol = Vec3(col);
+		m_crntCol = col.xyz();
 	}
 	void setModelMatrix(const Mat4& m);
 	void setViewProjectionMatrix(const Mat4& m);
@@ -50,27 +62,30 @@ public:
 private:
 	struct Vertex
 	{
-		Vec4 positionAndColor;
-		Mat4 matrix;
+		Vec4 m_positionAndColor;
+		Mat4 m_matrix;
 	};
 
-	ShaderProgramResourcePointer prog;
+	ProgramResourcePointer m_frag;
+	ProgramResourcePointer m_vert;
+	GlProgramPipelineHandle m_ppline;
+	GlJobChainHandle m_jobs;
+
 	static const U MAX_POINTS_PER_DRAW = 256;
-	Mat4 mMat;
-	Mat4 vpMat;
-	Mat4 mvpMat; ///< Optimization
-	U32 vertexPointer;
-	Vec3 crntCol;
+	Mat4 m_mMat;
+	Mat4 m_vpMat;
+	Mat4 m_mvpMat; ///< Optimization
+	U32 m_vertexPointer;
+	Vec3 m_crntCol;
 
-	Array<Vertex, MAX_POINTS_PER_DRAW> clientVerts;
+	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientVerts;
 
-	GlBuffer vbo;
-	Vao vao;
+	GlBufferHandle m_vertBuff;
 
 	/// This is a container of some precalculated spheres. Its a map that
 	/// from sphere complexity it returns a vector of lines (Vec3s in
 	/// pairs)
-	std::unordered_map<U32, Vector<Vec3>> complexityToPreCalculatedSphere;
+	std::unordered_map<U32, Vector<Vec3>> m_complexityToPreCalculatedSphere;
 };
 
 /// Contains methods to render the collision shapes
@@ -78,8 +93,8 @@ class CollisionDebugDrawer: public CollisionShape::ConstVisitor
 {
 public:
 	/// Constructor
-	CollisionDebugDrawer(DebugDrawer* dbg_)
-		: dbg(dbg_)
+	CollisionDebugDrawer(DebugDrawer* dbg)
+		: m_dbg(dbg)
 	{}
 
 	void visit(const LineSegment&)
@@ -104,7 +119,7 @@ public:
 	void visit(const Aabb&);
 
 private:
-	DebugDrawer* dbg; ///< The debug drawer
+	DebugDrawer* m_dbg; ///< The debug drawer
 };
 
 /// An implementation of btIDebugDraw used for debugging Bullet. See Bullet
@@ -112,8 +127,8 @@ private:
 class PhysicsDebugDrawer: public btIDebugDraw
 {
 public:
-	PhysicsDebugDrawer(DebugDrawer* dbg_)
-		: dbg(dbg_)
+	PhysicsDebugDrawer(DebugDrawer* dbg)
+		: m_dbg(dbg)
 	{}
 
 	void drawLine(const btVector3& from, const btVector3& to,
@@ -134,18 +149,18 @@ public:
 
 	void reportErrorWarning(const char* warningString);
 	void draw3dText(const btVector3& location, const char* textString);
-	void setDebugMode(int debugMode_)
+	void setDebugMode(int debugMode)
 	{
-		debugMode = debugMode_;
+		m_debugMode = debugMode;
 	}
 	int getDebugMode() const
 	{
-		return debugMode;
+		return m_debugMode;
 	}
 
 private:
-	int debugMode;
-	DebugDrawer* dbg;
+	int m_debugMode;
+	DebugDrawer* m_dbg;
 };
 
 // Forward
@@ -156,7 +171,7 @@ class SceneDebugDrawer
 {
 public:
 	SceneDebugDrawer(DebugDrawer* d)
-		: dbg(d)
+		: m_dbg(d)
 	{}
 
 	~SceneDebugDrawer()
@@ -168,11 +183,11 @@ public:
 
 	void setViewProjectionMatrix(const Mat4& m)
 	{
-		dbg->setViewProjectionMatrix(m);
+		m_dbg->setViewProjectionMatrix(m);
 	}
 
 private:
-	DebugDrawer* dbg;
+	DebugDrawer* m_dbg;
 
 	void draw(FrustumComponent& fr) const;
 
@@ -180,6 +195,8 @@ private:
 
 	void drawPath(const Path& path) const;
 };
+
+/// @}
 
 } // end namespace anki
 

@@ -4,6 +4,7 @@
 #include "anki/scene/MoveComponent.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
+#include <sstream>
 
 namespace anki {
 
@@ -13,31 +14,28 @@ namespace anki {
 
 namespace {
 
-// Some constants
-#define ANKI_MAX_LIGHTS_WITH_FLARE 16
-#define ANKI_MAX_FLARES_PER_LIGHT 8
-#define ANKI_MAX_FLARES (ANKI_MAX_LIGHTS_WITH_FLARE * ANKI_MAX_FLARES_PER_LIGHT)
-
 //==============================================================================
-struct Flare
+class Flare
 {
-	Vec2 pos; ///< Position in NDC
-	Vec2 scale; ///< Scale of the quad
-	F32 alpha; ///< Alpha value
-	F32 depth; ///< Texture depth
-	U32 padding[2];
+public:
+	Vec2 m_pos; ///< Position in NDC
+	Vec2 m_scale; ///< Scale of the quad
+	F32 m_alpha; ///< Alpha value
+	F32 m_depth; ///< Texture depth
+	U32 m_padding[2];
 };
 
 //==============================================================================
-struct LightSortFunctor
+class LightSortFunctor
 {
+public:
 	Bool operator()(const Light* lightA, const Light* lightB)
 	{
 		ANKI_ASSERT(lightA && lightB);
 		ANKI_ASSERT(lightA->hasLensFlare() && lightB->hasLensFlare());
 
-		return lightA->getLensFlareTexture().getGlId() < 
-			lightB->getLensFlareTexture().getGlId();
+		return lightA->getLensFlareTexture() <
+			lightB->getLensFlareTexture();
 	}
 };
 
@@ -60,107 +58,128 @@ void Lf::init(const RendererInitializer& initializer)
 	}
 	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Failed to init LF") << e;
+		throw ANKI_EXCEPTION("Failed to init lens flare pass") << e;
 	}
 }
 
 //==============================================================================
 void Lf::initInternal(const RendererInitializer& initializer)
 {
-	enabled = initializer.get("pps.lf.enabled") 
+	m_enabled = initializer.get("pps.lf.enabled") 
 		&& initializer.get("pps.hdr.enabled");
-	if(!enabled)
+	if(!m_enabled)
 	{
 		return;
 	}
 
-	maxFlaresPerLight = initializer.get("pps.lf.maxFlaresPerLight");
-	maxLightsWithFlares = initializer.get("pps.lf.maxLightsWithFlares");
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
+
+	m_maxFlaresPerLight = initializer.get("pps.lf.maxFlaresPerLight");
+	m_maxLightsWithFlares = initializer.get("pps.lf.maxLightsWithFlares");
 
 	// Load program 1
-	std::string pps = "#define TEX_DIMENSIONS vec2(" 
-		+ std::to_string(r->getPps().getHdr().getFai().getWidth()) + ".0, "
-		+ std::to_string(r->getPps().getHdr().getFai().getHeight()) + ".0)\n";
+	std::stringstream pps;
+	pps << "#define TEX_DIMENSIONS vec2(" 
+		<< (U)m_r->getPps().getHdr().getRt().getWidth() << ".0, "
+		<< (U)m_r->getPps().getHdr().getRt().getHeight() << ".0)\n";
 
-	pseudoProg.load(ShaderProgramResource::createSrcCodeToCache(
-		"shaders/PpsLfPseudoPass.glsl", pps.c_str(), "r_").c_str());
+	std::string fname = ProgramResource::createSrcCodeToCache(
+		"shaders/PpsLfPseudoPass.frag.glsl", pps.str().c_str(), "r_");
+	m_pseudoFrag.load(fname.c_str());
+	m_pseudoPpline = m_r->createDrawQuadProgramPipeline(
+		m_pseudoFrag->getGlProgram());
 
 	// Load program 2
-	pps = "#define MAX_FLARES "
-		+ std::to_string(maxFlaresPerLight * maxLightsWithFlares) + "\n";
-	std::string fname = ShaderProgramResource::createSrcCodeToCache(
-		"shaders/PpsLfSpritePass.glsl", pps.c_str(), "r_");
-	realProg.load(fname.c_str());
+	pps.str("");
+	pps << "#define MAX_FLARES "
+		<< (U)(m_maxFlaresPerLight * m_maxLightsWithFlares) << "\n";
 
-	ublock = &realProg->findUniformBlock("flaresBlock");
-	ublock->setBinding(0);
+	fname = ProgramResource::createSrcCodeToCache(
+		"shaders/PpsLfSpritePass.vert.glsl", pps.str().c_str(), "r_");
+	m_realVert.load(fname.c_str());
 
-	PtrSize blockSize = sizeof(Flare) * maxFlaresPerLight * maxLightsWithFlares;
-	if(ublock->getSize() != blockSize)
+	fname = ProgramResource::createSrcCodeToCache(
+		"shaders/PpsLfSpritePass.frag.glsl", pps.str().c_str(), "r_");
+	m_realFrag.load(fname.c_str());
+
+	m_realPpline = GlProgramPipelineHandle(jobs,
+		{m_realVert->getGlProgram(), m_realFrag->getGlProgram()});
+
+	PtrSize blockSize = 
+		sizeof(Flare) * m_maxFlaresPerLight * m_maxLightsWithFlares;
+	if(m_realVert->getGlProgram().findBlock("bFlares").getSize() 
+		!= blockSize)
 	{
 		throw ANKI_EXCEPTION("Incorrect block size");
 	}
 
-	// Init UBO
-	flareDataUbo.create(GL_UNIFORM_BUFFER, blockSize, nullptr, GL_DYNAMIC_DRAW);
+	// Init buffer
+	m_flareDataBuff = GlBufferHandle(
+		jobs, GL_SHADER_STORAGE_BUFFER, blockSize, GL_DYNAMIC_STORAGE_BIT);
 
-	// Create the FAI
-	fai.create2dFai(r->getPps().getHdr().getFai().getWidth(), 
-		r->getPps().getHdr().getFai().getHeight(), 
-		GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
+	// Create the render target
+	m_r->createRenderTarget(m_r->getPps().getHdr().getRt().getWidth(), 
+		m_r->getPps().getHdr().getRt().getHeight(), 
+		GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
 
-	fbo.create({{&fai, GL_COLOR_ATTACHMENT0}});
+	m_fb = GlFramebufferHandle(jobs, {{m_rt, GL_COLOR_ATTACHMENT0}}); 
 	
 	// Textures
-	lensDirtTex.load("engine_data/lens_dirt.ankitex");
+	m_lensDirtTex.load("engine_data/lens_dirt.ankitex");
+
+	jobs.flush();
 }
 
 //==============================================================================
-void Lf::run()
+void Lf::run(GlJobChainHandle& jobs)
 {
-	ANKI_ASSERT(enabled);
+	ANKI_ASSERT(m_enabled);
 
 	//
 	// First pass
 	//
 
 	// Set the common state
-	const Texture& inTex = r->getPps().getHdr().getFai();
+	m_fb.bind(jobs, true);
+	jobs.setViewport(0, 0, m_r->getPps().getHdr().getRt().getWidth(), 
+		m_r->getPps().getHdr().getRt().getHeight());
 
-	fbo.bind(true);
-	pseudoProg->bind();
-	pseudoProg->findUniformVariable("tex").set(inTex);
-	pseudoProg->findUniformVariable("lensDirtTex").set(*lensDirtTex);
+	m_pseudoPpline.bind(jobs);
 
-	GlStateSingleton::get().setViewport(
-		0, 0, inTex.getWidth(), inTex.getHeight());
-	GlStateSingleton::get().disable(GL_DEPTH_TEST);
-	GlStateSingleton::get().disable(GL_BLEND);
+	m_r->getPps().getHdr().getRt().bind(jobs, 0);
+	m_lensDirtTex->getGlTexture().bind(jobs, 1);
 
-	r->drawQuad();
+	m_r->drawQuad(jobs);
 
 	//
 	// Rest of the passes
 	//
 
 	// Retrieve some things
-	SceneGraph& scene = r->getSceneGraph();
+	SceneGraph& scene = m_r->getSceneGraph();
 	Camera& cam = scene.getActiveCamera();
 	VisibilityTestResults& vi = cam.getVisibilityTestResults();
 
 	// Iterate the visible light and get those that have lens flare
-	Array<Light*, ANKI_MAX_LIGHTS_WITH_FLARE> lights;
+	SceneFrameVector<Light*> lights(
+		m_maxLightsWithFlares, nullptr, scene.getFrameAllocator());
+
 	U lightsCount = 0;
-	for(auto it : vi.lights)
+	for(auto& it : vi.m_lights)
 	{
-		SceneNode& sn = *it.node;
+		SceneNode& sn = *it.m_node;
 		ANKI_ASSERT(sn.tryGetComponent<LightComponent>() != nullptr);
 		Light* light = staticCastPtr<Light*>(&sn);
 
 		if(light->hasLensFlare())
 		{
-			lights[lightsCount % maxLightsWithFlares] = light;
-			++lightsCount;
+			lights[lightsCount++] = light;
+
+			if(lightsCount == m_maxLightsWithFlares)
+			{
+				break;
+			}
 		}
 	}
 
@@ -170,28 +189,29 @@ void Lf::run()
 		return;
 	}
 
-	lightsCount = lightsCount % (maxLightsWithFlares + 1);
-
 	// Sort the lights using their lens flare texture
 	std::sort(lights.begin(), lights.begin() + lightsCount, LightSortFunctor());
 
 	// Write the UBO and get the groups
 	//
-	Array<Flare, ANKI_MAX_FLARES> flares;
+	GlClientBufferHandle flaresCBuff(jobs,
+		sizeof(Flare) * lightsCount * m_maxFlaresPerLight, nullptr);
+	Flare* flares = (Flare*)flaresCBuff.getBaseAddress();
 	U flaresCount = 0;
 
 	// Contains the number of flares per flare texture
-	Array<U, ANKI_MAX_LIGHTS_WITH_FLARE> groups;
-	Array<const Texture*, ANKI_MAX_LIGHTS_WITH_FLARE> texes;
+	SceneFrameVector<U> groups(lightsCount, 0U, scene.getFrameAllocator());
+	SceneFrameVector<const GlTextureHandle*> texes(
+		lightsCount, nullptr, scene.getFrameAllocator());
 	U groupsCount = 0;
 
-	GLuint lastTexId = 0;
+	GlTextureHandle lastTex;
 
 	// Iterate all lights and update the flares as well as the groups
 	while(lightsCount-- != 0)
 	{
 		Light& light = *lights[lightsCount];
-		const Texture& tex = light.getLensFlareTexture();
+		const GlTextureHandle& tex = light.getLensFlareTexture();
 		const U depth = tex.getDepth();
 
 		// Transform
@@ -201,6 +221,7 @@ void Lf::run()
 		if(posClip.x() > posClip.w() || posClip.x() < -posClip.w()
 			|| posClip.y() > posClip.w() || posClip.y() < -posClip.w())
 		{
+			// Outside clip
 			continue;
 		}
 
@@ -211,11 +232,10 @@ void Lf::run()
 		dir /= len; // Normalize dir
 
 		// New group?
-		if(lastTexId != tex.getGlId())
+		if(lastTex != tex)
 		{
 			texes[groupsCount] = &tex;
-			groups[groupsCount] = 0;
-			lastTexId = tex.getGlId();
+			lastTex = tex;
 
 			++groupsCount;
 		}
@@ -226,12 +246,13 @@ void Lf::run()
 
 		Vec2 stretch = light.getLensFlaresStretchMultiplier() * stretchFactor;
 
-		flares[flaresCount].pos = posNdc;
-		flares[flaresCount].scale = 
-			light.getLensFlaresSize() * Vec2(1.0, r->getAspectRatio()) 
+		flares[flaresCount].m_pos = posNdc;
+		flares[flaresCount].m_scale =
+			light.getLensFlaresSize() * Vec2(1.0, m_r->getAspectRatio())
 			* stretch;
-		flares[flaresCount].depth = 0.0;
-		flares[flaresCount].alpha = light.getLensFlaresAlpha() * stretchFactor;
+		flares[flaresCount].m_depth = 0.0;
+		flares[flaresCount].m_alpha = 
+			light.getLensFlaresAlpha() * stretchFactor;
 		++flaresCount;
 		++groups[groupsCount - 1];
 
@@ -243,15 +264,15 @@ void Lf::run()
 
 			F32 flen = len * 2.0 * factor;
 
-			flares[flaresCount].pos = posNdc + dir * flen;
+			flares[flaresCount].m_pos = posNdc + dir * flen;
 
-			flares[flaresCount].scale = 
-				light.getLensFlaresSize() * Vec2(1.0, r->getAspectRatio())
+			flares[flaresCount].m_scale =
+				light.getLensFlaresSize() * Vec2(1.0, m_r->getAspectRatio())
 				* ((len - flen) * 2.0);
 
-			flares[flaresCount].depth = d;
+			flares[flaresCount].m_depth = d;
 
-			flares[flaresCount].alpha = light.getLensFlaresAlpha();
+			flares[flaresCount].m_alpha = light.getLensFlaresAlpha();
 
 			// Advance
 			++flaresCount;
@@ -263,29 +284,31 @@ void Lf::run()
 	//
 
 	// Write the buffer
-	flareDataUbo.write(&flares[0], 0, sizeof(Flare) * flaresCount);
+	m_flareDataBuff.write(
+		jobs, flaresCBuff, 0, 0, sizeof(Flare) * flaresCount);
 
 	// Set the common state
-	realProg->bind();
-	GlStateSingleton::get().disable(GL_DEPTH_TEST);
-	GlStateSingleton::get().enable(GL_BLEND);
-	GlStateSingleton::get().setBlendFunctions(GL_ONE, GL_ONE);
+	m_realPpline.bind(jobs);
+
+	jobs.enableBlend(true);
+	jobs.setBlendFunctions(GL_ONE, GL_ONE);
 
 	PtrSize offset = 0;
 	for(U i = 0; i < groupsCount; i++)
 	{
-		const Texture& tex = *texes[i];
+		GlTextureHandle tex = *texes[i];
 		U instances = groups[i];
 		PtrSize buffSize = sizeof(Flare) * instances;
 
-		realProg->findUniformVariable("images").set(tex);
+		tex.bind(jobs, 0);
+		m_flareDataBuff.bindShaderBuffer(jobs, offset, buffSize, 0);
 
-		flareDataUbo.setBindingRange(0, offset, buffSize);
-		
-		r->drawQuadInstanced(instances);
+		m_r->drawQuadInstanced(jobs, instances);
 
 		offset += buffSize;
 	}
+
+	jobs.enableBlend(false);
 }
 
 } // end namespace anki

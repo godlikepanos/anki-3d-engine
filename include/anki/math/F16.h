@@ -5,7 +5,7 @@
 
 namespace anki {
 
-/// @addtogroup Math
+/// @addtogroup math
 /// @{
 
 /// Half float
@@ -27,7 +27,7 @@ public:
 
 	F16(const F16& b)
 	{
-		data = b.data;
+		m_data = b.m_data;
 	}
 
 	explicit F16(const F32 f)
@@ -37,7 +37,7 @@ public:
 
 	explicit F16(const U16 ui)
 	{
-		data = ui;
+		m_data = ui;
 	}
 	/// @}
 
@@ -45,7 +45,7 @@ public:
 	/// @{
 	F16& operator=(const F16 b)
 	{
-		data = b.data;
+		m_data = b.m_data;
 		return *this;
 	}
 
@@ -95,12 +95,12 @@ public:
 
 	Bool operator==(const F16 b) const
 	{
-		return data == b.data;
+		return m_data == b.m_data;
 	}
 
 	Bool operator!=(const F16 b) const
 	{
-		return data != b.data;
+		return m_data != b.m_data;
 	}
 	/// @}
 
@@ -176,12 +176,12 @@ public:
 
 	U16 toU16() const
 	{
-		return data;
+		return m_data;
 	}
 	/// @}
 
 private:
-	U16 data;
+	U16 m_data;
 
 	static F32 toF32(F16 h);
 	static F16 toF16(F32 f);

@@ -18,7 +18,7 @@ public:
 
 	/// Default constructor
 	Plane()
-		: CollisionShape(CST_PLANE)
+		: CollisionShape(Type::PLANE)
 	{}
 
 	/// Copy constructor
@@ -29,14 +29,14 @@ public:
 
 	/// @see setFrom3Points
 	Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2)
-		: CollisionShape(CST_PLANE)
+		: CollisionShape(Type::PLANE)
 	{
 		setFrom3Points(p0, p1, p2);
 	}
 
 	/// @see setFromPlaneEquation
 	Plane(F32 a, F32 b, F32 c, F32 d)
-		: CollisionShape(CST_PLANE)
+		: CollisionShape(Type::PLANE)
 	{
 		setFromPlaneEquation(a, b, c, d);
 	}
@@ -108,8 +108,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::toAabb
-	void toAabb(Aabb& b) const;
+	/// Implements CollisionShape::computeAabb
+	void computeAabb(Aabb& b) const;
 
 	/// Return the transformed
 	Plane getTransformed(const Transform& trf) const;

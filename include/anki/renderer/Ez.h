@@ -2,9 +2,12 @@
 #define ANKI_RENDERER_EZ_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/gl/Fbo.h"
+#include "anki/Gl.h"
 
 namespace anki {
+
+/// @addtogroup renderer
+/// @{
 
 /// Material stage EarlyZ pass
 class Ez: public OptionalRenderingPass
@@ -15,11 +18,13 @@ public:
 	{}
 
 	void init(const RendererInitializer& initializer);
-	void run();
+	void run(GlJobChainHandle& jobs);
 
 private:
-	U maxObjectsToDraw;
+	U32 m_maxObjectsToDraw;
 };
+
+/// @}
 
 } // end namespace anki
 

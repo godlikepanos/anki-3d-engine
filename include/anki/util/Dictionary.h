@@ -7,9 +7,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup containers
+/// @addtogroup util_containers
 /// @{
 
 /// The hash function
@@ -38,7 +36,7 @@ struct DictionaryEqual
 /// The hash map that has as key an old school C string. When inserting the
 /// char MUST NOT point to a temporary or the evaluation function will fail.
 /// Its template struct because C++ does not offer template typedefs
-template<typename T, typename Alloc = HeapAllocator<std::pair<const char*, T>>>
+template<typename T, typename Alloc = std::allocator<std::pair<const char*, T>>>
 using Dictionary = 
 	std::unordered_map<
 		const char*,
@@ -47,7 +45,6 @@ using Dictionary =
 		DictionaryEqual,
 		Alloc>;
 
-/// @}
 /// @}
 
 } // end namespace anki

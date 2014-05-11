@@ -2,58 +2,61 @@
 #define ANKI_RENDERER_SSAO_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/ProgramResource.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
-#include "anki/gl/Fbo.h"
-#include "anki/gl/Texture.h"
-#include "anki/gl/GlBuffer.h"
+#include "anki/Gl.h"
 #include "anki/core/Timestamp.h"
 
 namespace anki {
 
+/// @addtogroup renderer
+/// @{
+
 /// Screen space ambient occlusion pass
-///
-/// Three passes:
-/// @li Calc ssao factor
-/// @li Blur vertically
-/// @li Blur horizontally
-/// @li Repeat from 2
 class Ssao: public SwitchableRenderingPass
 {
 public:
-	Ssao(Renderer* r_)
-		: SwitchableRenderingPass(r_)
+	Ssao(Renderer* r)
+		: SwitchableRenderingPass(r)
 	{}
 
 	void init(const RendererInitializer& initializer);
-	void run();
+	void run(GlJobChainHandle& jobs);
 
 	/// @name Accessors
 	/// @{
-	const Texture& getFai() const
+	GlTextureHandle& getRt()
 	{
-		return vblurFai;
+		return m_vblurRt;
 	}
 	/// @}
 
 private:
-	U32 width, height; ///< Blur passes size
-	Texture vblurFai;
-	Texture hblurFai;
-	U32 blurringIterationsCount;
-	Fbo vblurFbo;
-	Fbo hblurFbo;
-	Texture noiseTex;
-	ShaderProgramResourcePointer ssaoSProg;
-	ShaderProgramResourcePointer hblurSProg;
-	ShaderProgramResourcePointer vblurSProg;
-	Timestamp commonUboUpdateTimestamp = getGlobTimestamp();
-	GlBuffer commonUbo;
+	U32 m_width, m_height; ///< Blur passes size
+	U8 m_blurringIterationsCount;
 
-	static void createFbo(Fbo& fbo, Texture& fai, U width, U height);
+	GlTextureHandle m_vblurRt;
+	GlTextureHandle m_hblurRt;
+	GlFramebufferHandle m_vblurFb;
+	GlFramebufferHandle m_hblurFb;
+
+	ProgramResourcePointer m_ssaoFrag;
+	ProgramResourcePointer m_hblurFrag;
+	ProgramResourcePointer m_vblurFrag;
+	GlProgramPipelineHandle m_ssaoPpline;
+	GlProgramPipelineHandle m_hblurPpline;
+	GlProgramPipelineHandle m_vblurPpline;
+	
+	Timestamp m_commonUboUpdateTimestamp = getGlobTimestamp();
+	GlBufferHandle m_uniformsBuff;
+	GlTextureHandle m_noiseTex;
+
+	void createFb(GlFramebufferHandle& fb, GlTextureHandle& rt);
 	void initInternal(const RendererInitializer& initializer);
 };
+
+/// @}
 
 } // end namespace anki
 

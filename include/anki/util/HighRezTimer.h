@@ -5,9 +5,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup time
+/// @addtogroup util_time
 /// @{
 
 /// High resolution timer. All time in seconds
@@ -34,10 +32,9 @@ public:
 	static void sleep(Scalar seconds);
 
 private:
-	Scalar startTime = 0.0;
-	Scalar stopTime = 0.0;
+	Scalar m_startTime = 0.0;
+	Scalar m_stopTime = 0.0;
 };
-/// @}
 /// @}
 
 } // end namespace anki

@@ -4,12 +4,12 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
-#include "anki/resource/ShaderProgramResource.h"
-#include "anki/gl/Fbo.h"
+#include "anki/resource/ProgramResource.h"
+#include "anki/Gl.h"
 
 namespace anki {
 
-class ShaderProgramResource;
+class ProgramResource;
 
 /// Blurring rendering pass
 class Bl: public SwitchableRenderingPass
@@ -22,17 +22,18 @@ public:
 	void init(const RendererInitializer& initializer);
 	void run();
 
+#if 0
 	/// @name Accessors
 	/// @{
-	float getSideBlurFactor() const
+	F32 getSideBlurFactor() const
 	{
 		return sideBlurFactor;
 	}
-	float& getSideBlurFactor()
+	F32& getSideBlurFactor()
 	{
 		return sideBlurFactor;
 	}
-	void setSideBlurFactor(const float x)
+	void setSideBlurFactor(const F32 x)
 	{
 		sideBlurFactor = x;
 	}
@@ -50,15 +51,17 @@ public:
 		blurringIterationsNum = x;
 	}
 	/// @}
+#endif
 
 private:
+#if 0
 	Fbo hBlurFbo; ///< Fbo that writes to blurFai
 	Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
 	Fbo sideBlurFbo;
 
-	ShaderProgramResourcePointer hBlurSProg;
-	ShaderProgramResourcePointer vBlurSProg;
-	ShaderProgramResourcePointer sideBlurSProg;
+	ProgramResourcePointer hBlurSProg;
+	ProgramResourcePointer vBlurSProg;
+	ProgramResourcePointer sideBlurSProg;
 
 	Texture blurFai; ///< Temp FAI for blurring
 	TextureResourcePointer sideBlurMap;
@@ -68,6 +71,7 @@ private:
 
 	void runBlur();
 	void runSideBlur();
+#endif
 };
 
 } // end namespace

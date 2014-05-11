@@ -8,61 +8,63 @@ namespace anki {
 class Renderer;
 class RendererInitializer;
 
+/// @addtogroup renderer
+/// @{
+
 /// Rendering pass
 class RenderingPass
 {
 public:
-	RenderingPass(Renderer* r_)
-		: r(r_)
+	RenderingPass(Renderer* r)
+		: m_r(r)
 	{}
 
-	virtual ~RenderingPass()
+	~RenderingPass()
 	{}
-
-	/// All passes should have an init
-	virtual void init(const RendererInitializer& initializer) = 0;
 
 protected:
-	Renderer* r; ///< Know your father
+	Renderer* m_r; ///< Know your father
 };
 
 /// Rendering pass that can be enabled or disabled at runtime
 class SwitchableRenderingPass: public RenderingPass
 {
 public:
-	SwitchableRenderingPass(Renderer* r_)
-		: RenderingPass(r_)
+	SwitchableRenderingPass(Renderer* r)
+		: RenderingPass(r)
 	{}
 
 	Bool getEnabled() const
 	{
-		return enabled;
+		return m_enabled;
 	}
 	void setEnabled(Bool e)
 	{
-		enabled = e;
+		m_enabled = e;
 	}
 
 protected:
-	Bool8 enabled = false;
+	Bool8 m_enabled = false;
 };
 
 /// Rendering pass that can be enabled or disabled
 class OptionalRenderingPass: public RenderingPass
 {
 public:
-	OptionalRenderingPass(Renderer* r_)
-		: RenderingPass(r_)
+	OptionalRenderingPass(Renderer* r)
+		: RenderingPass(r)
 	{}
 
 	Bool getEnabled() const
 	{
-		return enabled;
+		return m_enabled;
 	}
 
 protected:
-	Bool8 enabled = false;
+	Bool8 m_enabled = false;
 };
+
+/// @}
 
 } // end namespace anki
 

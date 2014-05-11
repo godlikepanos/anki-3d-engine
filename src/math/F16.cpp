@@ -25,7 +25,7 @@ F16 F16::toF16(F32 f)
 	{
 		if(e < -10)
 		{
-			out.data = 0;
+			out.m_data = 0;
 		}
 		else
 		{
@@ -36,19 +36,19 @@ F16 F16::toF16(F32 f)
 				m += 0x00002000;
 			}
 
-			out.data = s | (m >> 13);
+			out.m_data = s | (m >> 13);
 		}
 	}
 	else if(e == 0xff - (127 - 15))
 	{
 		if(m == 0)
 		{
-			out.data = s | 0x7c00;
+			out.m_data = s | 0x7c00;
 		}
 		else
 		{
 			m >>= 13;
-			out.data = s | 0x7c00 | m | (m == 0);
+			out.m_data = s | 0x7c00 | m | (m == 0);
 		}
 	}
 	else
@@ -67,11 +67,11 @@ F16 F16::toF16(F32 f)
 		if (e > 30)
 		{
 			ANKI_ASSERT(0 && "Overflow");
-			out.data = s | 0x7c00;
+			out.m_data = s | 0x7c00;
 		}
 		else
 		{
-			out.data = s | (e << 10) | (m >> 13);
+			out.m_data = s | (e << 10) | (m >> 13);
 		}
 	}
 
@@ -81,9 +81,9 @@ F16 F16::toF16(F32 f)
 //==============================================================================
 F32 F16::toF32(F16 h)
 {
-	I32 s = (h.data >> 15) & 0x00000001;
-	I32 e = (h.data >> 10) & 0x0000001f;
-	I32 m = h.data & 0x000003ff;
+	I32 s = (h.m_data >> 15) & 0x00000001;
+	I32 e = (h.m_data >> 10) & 0x0000001f;
+	I32 m = h.m_data & 0x000003ff;
 
 	if(e == 0)
 	{

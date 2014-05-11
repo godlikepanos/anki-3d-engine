@@ -3,16 +3,17 @@
 #define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/MsBsCommon.glsl"
 
-layout(location = POSITION_LOCATION) in vec3 position;
-layout(location = TEXTURE_COORDINATE_LOCATION) in vec2 texCoord;
-layout(location = SCALE_LOCATION) in float scale;
-layout(location = ALPHA_LOCATION) in float alpha;
+layout(location = POSITION_LOCATION) in vec3 inPosition;
+layout(location = SCALE_LOCATION) in float inScale;
+layout(location = ALPHA_LOCATION) in float inAlpha;
 
-/// @name Varyings
-/// @{
-out vec2 vTexCoord;
-flat out float vAlpha;
-/// @}
+layout(location = 1) flat out float outAlpha;
+
+out gl_PerVertex
+{
+	vec4 gl_Position;
+	float gl_PointSize;
+};
 
 //==============================================================================
 #define setPositionVec3_DEFINED
@@ -29,24 +30,17 @@ void setPositionVec4(in vec4 pos)
 }
 
 //==============================================================================
-#define setTexCoords_DEFINED
-void setTexCoords(in vec2 x)
-{
-	vTexCoord = x;
-}
-
-//==============================================================================
 #define particle_DEFINED
 void particle(in mat4 mvp)
 {
-	gl_Position = mvp * vec4(position, 1);
-	vAlpha = alpha;
-	gl_PointSize = scale * float(RENDERING_WIDTH) / gl_Position.w;
+	gl_Position = mvp * vec4(inPosition, 1);
+	outAlpha = inAlpha;
+	gl_PointSize = inScale * float(RENDERING_WIDTH) / gl_Position.w;
 }
 
 //==============================================================================
 #define writeAlpha_DEFINED
 void writeAlpha(in float alpha)
 {
-	vAlpha = alpha;
+	outAlpha = alpha;
 }

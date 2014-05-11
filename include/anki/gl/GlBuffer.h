@@ -5,11 +5,11 @@
 
 namespace anki {
 
-/// @addtogroup OpenGL
+/// @addtogroup opengl_private
 /// @{
 	
 /// A wrapper for OpenGL buffer objects (vertex arrays, texture buffers etc)
-/// to prevent us from making idiotic errors
+/// to prevent us from making idiotic errors. It's storage immutable
 class GlBuffer: public GlObject
 {
 public:
@@ -22,8 +22,21 @@ public:
 	GlBuffer()
 	{}
 
+	/// Creates a new BO with the given parameters and checks if everything
+	/// went OK. Throws exception if fails
+	/// @param target Depends on the BO
+	/// @param sizeInBytes The size of the buffer that we will allocate in bytes
+	/// @param dataPtr Points to the data buffer to copy to the VGA memory.
+	///		   Put NULL if you want just to allocate memory
+	/// @param flags GL access flags
+	GlBuffer(GLenum target, U32 sizeInBytes, const void* dataPtr,
+		GLbitfield flags)
+	{
+		create(target, sizeInBytes, dataPtr, flags);
+	}
+
 	/// Move
-	GlBuffer(GlBuffer&& b)	
+	GlBuffer(GlBuffer&& b)
 	{
 		*this = std::move(b);
 	}
@@ -43,25 +56,28 @@ public:
 	GLenum getTarget() const
 	{
 		ANKI_ASSERT(isCreated());
-		return target;
+		return m_target;
 	}
 
-	void setTarget(GLenum target_)
+	void setTarget(GLenum target)
 	{
 		ANKI_ASSERT(isCreated());
-		target = target_;
+		unbind(); // Unbind from the previous target
+		m_target = target;
 	}
 
-	GLenum getUsage() const
+	U32 getSize() const
 	{
 		ANKI_ASSERT(isCreated());
-		return usage;
+		return m_size;
 	}
 
-	U32 getSizeInBytes() const
+	/// Return the prersistent mapped address
+	void* getPersistentMappingAddress()
 	{
 		ANKI_ASSERT(isCreated());
-		return sizeInBytes;
+		ANKI_ASSERT(m_persistentMapping);
+		return m_persistentMapping;
 	}
 	/// @}
 
@@ -69,39 +85,27 @@ public:
 	void bind() const
 	{
 		ANKI_ASSERT(isCreated());
-		glBindBuffer(target, getGlId());
+		glBindBuffer(m_target, m_glName);
 	}
 
 	/// Unbind BO
 	void unbind() const
 	{
 		ANKI_ASSERT(isCreated());
+		bindDefault(m_target);
+	}
+
+	/// Bind the default to a target
+	static void bindDefault(GLenum target)
+	{
 		glBindBuffer(target, 0);
 	}
 
-	/// Creates a new BO with the given parameters and checks if everything
-	/// went OK. Throws exception if fails
-	/// @param target Depends on the BO
-	/// @param sizeInBytes The size of the buffer that we will allocate in bytes
-	/// @param dataPtr Points to the data buffer to copy to the VGA memory.
-	///		   Put NULL if you want just to allocate memory
-	/// @param usage It should be: GL_STREAM_DRAW or GL_STATIC_DRAW or
-	///		   GL_DYNAMIC_DRAW only!!!!!!!!!
-	/// @param objectCount The number of objects
-	void create(GLenum target, U32 sizeInBytes, const void* dataPtr,
-		GLenum usage);
-
-	/// Delete the BO
-	void destroy();
-
-	/// Write data to buffer. This means that maps the BO to local memory,
-	/// writes the local memory and unmaps it. Throws exception if the
-	/// given size and the BO size are not equal. It throws an exception if
-	/// the usage is GL_STATIC_DRAW
+	/// Write data to buffer. 
 	/// @param[in] buff The buffer to copy to BO
 	void write(void* buff)
 	{
-		write(buff, 0, sizeInBytes);
+		write(buff, 0, m_size);
 	}
 
 	/// The same as the other write but it maps only a subset of the data
@@ -110,57 +114,23 @@ public:
 	/// @param[in] size The size in bytes we want to write
 	void write(void* buff, U32 offset, U32 size);
 
-	/// Read the containts of the buffer
-	/// @param[out] outBuff The buffer to copy from BO
-	void read(void* outBuff)
-	{
-		read(outBuff, 0, sizeInBytes);
-	}
-
-	/// Read the containts of the buffer
-	/// @param[in] outBuff The buffer to copy from BO
-	/// @param[in] offset The offset
-	/// @param[in] size The size in bytes we want to write
-	void read(void* buff, U32 offset, U32 size);
-
-	/// Map part of the buffer
-	void* map(U32 offset, U32 length, GLuint flags);
-
-	/// Map the entire buffer
-	void* map(GLuint flags)
-	{
-		return map(0, sizeInBytes, flags);
-	}
-
-	/// Unmap buffer
-	void unmap();
-
 	/// Set the binding for this buffer
 	void setBinding(GLuint binding) const;
 
 	/// Set the binding point of this buffer with range
 	void setBindingRange(GLuint binding, PtrSize offset, PtrSize size) const;
 
-	/// Return GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT
-	static PtrSize getUniformBufferOffsetAlignment()
-	{
-		GLint64 offsetAlignment;
-		glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &offsetAlignment);
-		return offsetAlignment;
-	}
-
 private:
-	/// Used in glBindBuffer(target, glId) and its for easy access so we
-	/// wont have to query the GL driver. Its the type of the buffer eg
-	/// GL_TEXTURE_BUFFER or GL_ELEMENT_ARRAY_BUFFER etc
-	GLenum target;
+	GLenum m_target; ///< GL_TEXTURE_BUFFER or GL_ELEMENT_ARRAY_BUFFER etc
+	U32 m_size; ///< The size of the buffer
+	void* m_persistentMapping = nullptr;
 
-	GLenum usage; ///< GL_STREAM_DRAW or GL_STATIC_DRAW or GL_DYNAMIC_DRAW
-	U32 sizeInBytes; ///< The size of the buffer
+	/// Create
+	void create(GLenum target, U32 sizeInBytes, const void* dataPtr,
+		GLbitfield flags);
 
-#if ANKI_DEBUG
-	Bool mapped = false; ///< Only in debug
-#endif
+	/// Delete the BO
+	void destroy();
 };
 
 /// @}

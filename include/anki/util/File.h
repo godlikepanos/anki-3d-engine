@@ -6,9 +6,16 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup filesystem
+// Undefine some flags because someone else is polluting the global namespace
+#if defined(LITTLE_ENDIAN)
+#	undef LITTLE_ENDIAN
+#endif
+
+#if defined(BIG_ENDIAN)
+#	undef BIG_ENDIAN
+#endif
+
+/// @addtogroup util_file
 /// @{
 
 /// An abstraction over typical files and files in ziped archives. This class
@@ -22,48 +29,47 @@ namespace anki {
 /// - If the above are false then try to load a regular C file
 class File
 {
-private:
-	/// Internal filetype
-	enum FileType
-	{
-		FT_C = 1 << 0, ///< C file
-		FT_ZIP = 1 << 1, ///< Ziped file
-		FT_SPECIAL = 1 << 2 ///< For example file is located in the android apk 
-	};
-
 public:
 	/// Open mode
-	enum OpenFlag
+	enum class OpenFlag: U8
 	{
-		OF_READ = 1 << 3,
-		OF_WRITE = 1 << 4,
-		OF_APPEND = OF_WRITE | (1 << 5),
-		OF_BINARY = 1 << 6
+		NONE = 0,
+		READ = 1 << 0,
+		WRITE = 1 << 1,
+		APPEND = WRITE | (1 << 3),
+		BINARY = 1 << 4,
+		LITTLE_ENDIAN = 1 << 5, ///< The default
+		BIG_ENDIAN = 1 << 6
 	};
 
-	/// The 2 available byte orders. Used in binary files.
-	enum Endianness
+	friend OpenFlag operator|(OpenFlag a, OpenFlag b)
 	{
-		E_LITTLE_ENDIAN = 1 << 7, ///< The default
-		E_BIG_ENDIAN = 1 << 8
-	};
+		typedef std::underlying_type<OpenFlag>::type Int;
+		return static_cast<OpenFlag>(static_cast<Int>(a) | static_cast<Int>(b));
+	}
+
+	friend OpenFlag operator&(OpenFlag a, OpenFlag b)
+	{
+		typedef std::underlying_type<OpenFlag>::type Int;
+		return static_cast<OpenFlag>(static_cast<Int>(a) & static_cast<Int>(b));
+	}
 
 	/// Passed to seek function
-	enum SeekOrigin
+	enum class SeekOrigin
 	{
-		SO_BEGINNING = SEEK_SET,
-		SO_CURRENT = SEEK_CUR,
-		SO_END = SEEK_END
+		BEGINNING = SEEK_SET,
+		CURRENT = SEEK_CUR,
+		END = SEEK_END
 	};
 
 	/// Default constructor
 	File()
-		: file(nullptr), flags(0)
+		: m_file(nullptr), m_type(Type::NONE), m_flags(OpenFlag::NONE)
 	{}
 
 	/// Open file
-	File(const char* filename, U16 openMask)
-		: file(nullptr), flags(0)
+	File(const char* filename, OpenFlag openMask)
+		: m_file(nullptr), m_type(Type::NONE), m_flags(OpenFlag::NONE)
 	{
 		open(filename, openMask);
 	}
@@ -73,14 +79,13 @@ public:
 
 	/// Open a file
 	/// @param[in] filename The file to open
-	/// @param[in] openMask The open flags. It's a combination of OpenFlag and 
-	///                     Endianness enums
-	void open(const char* filename, U16 openMask);
+	/// @param[in] openMask The open flags. It's a combination of OpenFlag enum
+	void open(const char* filename, OpenFlag openMask);
 
 	/// Return true if the file is oppen
 	Bool isOpen() const
 	{
-		return file != nullptr;
+		return m_file != nullptr;
 	}
 
 	/// Close the file
@@ -96,7 +101,7 @@ public:
 	void read(void* buff, PtrSize size);
 
 	/// Read all the contents of a text file
-	void readAllText(std::string& out);
+	void readAllText(String& out);
 
 	/// Read all the contents of a text file and return the result in lines
 	void readAllTextLines(StringList& lines);
@@ -139,27 +144,38 @@ public:
 	/// @}
 
 private:
-	void* file; ///< A native file type
-	U16 flags; ///< All the flags. Initialy zero and set on open
+	/// Internal filetype
+	enum class Type: U8
+	{
+		NONE = 0,
+		C, ///< C file
+		ZIP, ///< Ziped file
+		SPECIAL ///< For example file is located in the android apk 
+	};
+
+	void* m_file; ///< A native file type
+	Type m_type;
+	OpenFlag m_flags; ///< All the flags. Initialy zero and set on open
 
 	/// Get the current machine's endianness
-	static Endianness getMachineEndianness();
+	static OpenFlag getMachineEndianness();
 
 	/// Get the type of the file
-	FileType identifyFile(const char* filename,
-		std::string& archive, std::string& filenameInArchive);
+	Type identifyFile(const char* filename,
+		String& archive, String& filenameInArchive);
 
 	/// Open a C file
-	void openCFile(const char* filename, U16 flags);
+	void openCFile(const char* filename, OpenFlag flags);
 
 	/// Open an archive and the file inside
 	/// @param[in] archive The filename of the archive
 	/// @param[in] archived The filename of the file inside the archive
-	void openZipFile(const char* archive, const char* archived, U16 flags);
+	void openZipFile(const char* archive, const char* archived, 
+		OpenFlag flags);
 
 #if ANKI_OS == ANKI_OS_ANDROID
 	/// Open an Android file
-	void openAndroidFile(const char* filename, U16 flags);
+	void openAndroidFile(const char* filename, OpenFlag flags);
 #endif
 };
 
@@ -172,7 +188,6 @@ extern void removeDirectory(const char* dir);
 /// Equivalent to: mkdir dir
 extern void createDirectory(const char* dir);
 
-/// @}
 /// @}
 
 } // end namespace anki

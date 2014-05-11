@@ -5,7 +5,7 @@
 
 namespace anki {
 
-/// @addtogroup Math
+/// @addtogroup math
 /// @{
 
 /// Axis angles. Used for rotations
@@ -16,29 +16,29 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit TAxisang()
-		: ang(0.0), axis(0.0)
+		: m_ang(0.0), m_axis(0.0)
 	{}
 	
 	TAxisang(const TAxisang& b)
-		: ang(b.ang), axis(b.axis)
+		: m_ang(b.ang), m_axis(b.axis)
 	{}
 
-	explicit TAxisang(const T rad, const TVec3<T>& axis_)
-		: ang(rad), axis(axis_)
+	explicit TAxisang(const T rad, const TVec3<T>& axis)
+		: m_ang(rad), m_axis(axis)
 	{}
 
 	explicit TAxisang(const TQuat<T>& q)
 	{
-		ang = 2.0 * acos<T>(q.w());
+		m_ang = 2.0 * acos<T>(q.w());
 		T length = sqrt<T>(1.0 - q.w() * q.w());
 		if(!isZero<T>(length))
 		{
 			length = 1.0 / length;
-			axis = TVec3<T>(q.x() * length, q.y() * length, q.z() * length);
+			m_axis = TVec3<T>(q.x() * length, q.y() * length, q.z() * length);
 		}
 		else
 		{
-			axis = TVec3<T>(0.0);
+			m_axis = TVec3<T>(0.0);
 		}
 	}
 
@@ -54,44 +54,44 @@ public:
 				&& (fabs<T>(m3(1, 2) + m3(2, 1)) < 0.1) 
 				&& (fabs<T>(m3(0, 0) + m3(1, 1) + m3(2, 2)) - 3) < 0.1)
 			{
-				axis = TVec3<T>(1.0, 0.0, 0.0);
-				ang = 0.0;
+				m_axis = TVec3<T>(1.0, 0.0, 0.0);
+				m_ang = 0.0;
 				return;
 			}
 
-			ang = getPi<T>();
-			axis.x() = (m3(0, 0) + 1.0) / 2.0;
-			if(axis.x() > 0.0)
+			m_ang = getPi<T>();
+			m_axis.x() = (m3(0, 0) + 1.0) / 2.0;
+			if(m_axis.x() > 0.0)
 			{
-				axis.x() = sqrt(axis.x());
+				m_axis.x() = sqrt(m_axis.x());
 			}
 			else
 			{
-				axis.x() = 0.0;
+				m_axis.x() = 0.0;
 			}
-			axis.y() = (m3(1, 1) + 1.0) / 2.0;
-			if(axis.y() > 0.0)
+			m_axis.y() = (m3(1, 1) + 1.0) / 2.0;
+			if(m_axis.y() > 0.0)
 			{
-				axis.y() = sqrt(axis.y());
+				m_axis.y() = sqrt(m_axis.y());
 			}
 			else
 			{
-				axis.y() = 0.0;
+				m_axis.y() = 0.0;
 			}
 
-			axis.z() = (m3(2, 2) + 1.0) / 2.0;
-			if(axis.z() > 0.0)
+			m_axis.z() = (m3(2, 2) + 1.0) / 2.0;
+			if(m_axis.z() > 0.0)
 			{
-				axis.z() = sqrt(axis.z());
+				m_axis.z() = sqrt(m_axis.z());
 			}
 			else
 			{
-				axis.z() = 0.0;
+				m_axis.z() = 0.0;
 			}
 
-			Bool xZero = isZero<T>(axis.x());
-			Bool yZero = isZero<T>(axis.y());
-			Bool zZero = isZero<T>(axis.z());
+			Bool xZero = isZero<T>(m_axis.x());
+			Bool yZero = isZero<T>(m_axis.y());
+			Bool zZero = isZero<T>(m_axis.z());
 			Bool xyPositive = (m3(0, 1) > 0);
 			Bool xzPositive = (m3(0, 2) > 0);
 			Bool yzPositive = (m3(1, 2) > 0);
@@ -99,21 +99,21 @@ public:
 			{
 				if(!yzPositive)
 				{
-					axis.y() = -axis.y();
+					m_axis.y() = -m_axis.y();
 				}
 			}
 			else if(yZero && !zZero)
 			{
 				if(!xzPositive)
 				{
-					axis.z() = -axis.z();
+					m_axis.z() = -m_axis.z();
 				}
 			}
 			else if(zZero)
 			{
 				if(!xyPositive)
 				{
-					axis.x() = -axis.x();
+					m_axis.x() = -m_axis.x();
 				}
 			}
 
@@ -129,10 +129,10 @@ public:
 			s = 1.0;
 		}
 
-		ang = acos<T>((m3(0, 0) + m3(1, 1) + m3(2, 2) - 1.0) / 2.0);
-		axis.x() = (m3(2, 1) - m3(1, 2)) / s;
-		axis.y() = (m3(0, 2) - m3(2, 0)) / s;
-		axis.z() = (m3(1, 0) - m3(0, 1)) / s;		
+		m_ang = acos<T>((m3(0, 0) + m3(1, 1) + m3(2, 2) - 1.0) / 2.0);
+		m_axis.x() = (m3(2, 1) - m3(1, 2)) / s;
+		m_axis.y() = (m3(0, 2) - m3(2, 0)) / s;
+		m_axis.z() = (m3(1, 0) - m3(0, 1)) / s;		
 	}
 	/// @}
 
@@ -140,32 +140,32 @@ public:
 	/// @{
 	T getAngle() const
 	{
-		return ang;
+		return m_ang;
 	}
 
 	T& getAngle()
 	{
-		return ang;
+		return m_ang;
 	}
 
 	void setAngle(const T a)
 	{
-		ang = a;
+		m_ang = a;
 	}
 
 	const TVec3<T>& getAxis() const
 	{
-		return axis;
+		return m_axis;
 	}
 
 	TVec3<T>& getAxis()
 	{
-		return axis;
+		return m_axis;
 	}
 
 	void setAxis(const TVec3<T>& a)
 	{
-		axis = a;
+		m_axis = a;
 	}
 	/// @}
 
@@ -173,8 +173,8 @@ public:
 	/// @{
 	TAxisang& operator=(const TAxisang& b)
 	{
-		ang = b.ang;
-		axis = b.axis;
+		m_ang = b.m_ang;
+		m_axis = b.m_axis;
 		return *this;
 	}
 	/// @}
@@ -183,8 +183,8 @@ public:
 	/// @{
 	std::string toString() const
 	{
-		std::string s = "axis: " + axis.toString() 
-			+ ", angle: " + std::to_string(ang);
+		std::string s = "axis: " + m_axis.toString() 
+			+ ", angle: " + std::to_string(m_ang);
 		return s;
 	}
 	/// @}
@@ -192,8 +192,8 @@ public:
 private:
 	/// @name Data
 	/// @{
-	T ang;
-	TVec3<T> axis;
+	T m_ang;
+	TVec3<T> m_axis;
 	/// @}
 };
 

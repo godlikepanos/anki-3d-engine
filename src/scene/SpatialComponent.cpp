@@ -24,7 +24,7 @@ Bool SpatialComponent::update(SceneNode&, F32, F32, UpdateType uptype)
 		updated = bitsEnabled(SF_MARKED_FOR_UPDATE);
 		if(updated)
 		{
-			getSpatialCollisionShape().toAabb(aabb);
+			getSpatialCollisionShape().computeAabb(aabb);
 			disableBits(SF_MARKED_FOR_UPDATE);
 		}
 	}

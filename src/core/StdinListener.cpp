@@ -1,5 +1,6 @@
 #include "anki/core/StdinListener.h"
-#include <array>
+#include "anki/util/Array.h"
+#include "anki/util/Thread.h"
 #include <unistd.h>
 
 namespace anki {
@@ -7,31 +8,29 @@ namespace anki {
 //==============================================================================
 void StdinListener::workingFunc()
 {
-	std::array<char, 512> buff;
+	setCurrentThreadName("anki_stdin");
+	Array<char, 512> buff;
 
 	while(1)
 	{
 		int m = read(0, &buff[0], sizeof(buff));
 		buff[m] = '\0';
-		//cout << "read: " << buff << endl;
 		{
-			std::lock_guard<std::mutex> lock(mtx);
-			q.push(&buff[0]);
-			//cout << "size:" << q.size() << endl;
+			std::lock_guard<std::mutex> lock(m_mtx);
+			m_q.push(String(&buff[0]));
 		}
 	}
 }
 
 //==============================================================================
-std::string StdinListener::getLine()
+String StdinListener::getLine()
 {
-	std::string ret;
-	std::lock_guard<std::mutex> lock(mtx);
-	//cout << "_size:" << q.size() << endl;
-	if(!q.empty())
+	String ret;
+	std::lock_guard<std::mutex> lock(m_mtx);
+	if(!m_q.empty())
 	{
-		ret = q.front();
-		q.pop();
+		ret = m_q.front();
+		m_q.pop();
 	}
 	return ret;
 }
@@ -39,7 +38,8 @@ std::string StdinListener::getLine()
 //==============================================================================
 void StdinListener::start()
 {
-	thrd = std::thread(&StdinListener::workingFunc, this);
+	m_thrd = std::thread(&StdinListener::workingFunc, this);
 }
 
-} // end namespace
+} // end namespace anki
+

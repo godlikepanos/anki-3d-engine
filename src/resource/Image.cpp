@@ -137,7 +137,7 @@ static void loadCompressedTga(
 static void loadTga(const char* filename, 
 	U32& width, U32& height, U32& bpp, Vector<U8>& data)
 {
-	File fs(filename, File::OF_READ | File::OF_BINARY);
+	File fs(filename, File::OpenFlag::READ | File::OpenFlag::BINARY);
 	char myTgaHeader[12];
 
 	fs.read(&myTgaHeader[0], sizeof(myTgaHeader));
@@ -271,7 +271,8 @@ static void loadAnkiTexture(
 	Image::ColorFormat& colorFormat)
 {
 	File file(filename, 
-		File::OF_READ | File::OF_BINARY | File::E_LITTLE_ENDIAN);
+		File::OpenFlag::READ | File::OpenFlag::BINARY 
+		| File::OpenFlag::LITTLE_ENDIAN);
 
 	//
 	// Read and check the header
@@ -377,7 +378,8 @@ static void loadAnkiTexture(
 		{
 			// If raw compression is present then skip it
 			file.seek(
-				calcSizeOfSegment(header, Image::DC_RAW), File::SO_CURRENT);
+				calcSizeOfSegment(header, Image::DC_RAW), 
+				File::SeekOrigin::CURRENT);
 		}
 	}
 	else if(preferredCompression == Image::DC_ETC)
@@ -386,14 +388,16 @@ static void loadAnkiTexture(
 		{
 			// If raw compression is present then skip it
 			file.seek(
-				calcSizeOfSegment(header, Image::DC_RAW), File::SO_CURRENT);
+				calcSizeOfSegment(header, Image::DC_RAW), 
+				File::SeekOrigin::CURRENT);
 		}
 
 		if(header.compressionFormats & Image::DC_S3TC)
 		{
 			// If s3tc compression is present then skip it
 			file.seek(
-				calcSizeOfSegment(header, Image::DC_S3TC), File::SO_CURRENT);
+				calcSizeOfSegment(header, Image::DC_S3TC), 
+				File::SeekOrigin::CURRENT);
 		}
 	}
 
@@ -429,7 +433,7 @@ static void loadAnkiTexture(
 			}
 			else
 			{
-				file.seek(dataSize, File::SO_CURRENT);
+				file.seek(dataSize, File::SeekOrigin::CURRENT);
 			}
 		}
 

@@ -22,7 +22,6 @@
 #include "anki/resource/Skin.h"
 #include "anki/event/EventManager.h"
 #include "anki/event/MainRendererPpsHdrEvent.h"
-#include "anki/resource/ShaderProgramPrePreprocessor.h"
 #include "anki/resource/Material.h"
 #include "anki/core/Timestamp.h"
 #include "anki/core/NativeWindow.h"
@@ -36,6 +35,7 @@ using namespace anki;
 ModelNode* horse;
 PerspectiveCamera* cam;
 NativeWindow* win;
+HeapAllocator<U8> globAlloc;
 
 //==============================================================================
 void initPhysics()
@@ -123,7 +123,7 @@ void init()
 #endif
 
 	// camera
-	scene.newSceneNode(cam, "main-camera");
+	cam = scene.newSceneNode<PerspectiveCamera>("main-camera");
 	const F32 ang = 45.0;
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
@@ -142,8 +142,7 @@ void init()
 		{
 			std::string name = "plight" + std::to_string(i) + std::to_string(j);
 
-			PointLight* point;
-			scene.newSceneNode(point, name.c_str());
+			PointLight* point = scene.newSceneNode<PointLight>(name.c_str());
 			point->setRadius(0.5);
 			point->setDiffuseColor(Vec4(randFloat(6.0) - 2.0, 
 				randFloat(6.0) - 2.0, randFloat(6.0) - 2.0, 0.0));
@@ -160,8 +159,7 @@ void init()
 #endif
 
 #if 1
-	SpotLight* spot;
-	scene.newSceneNode(spot, "spot0");
+	SpotLight* spot = scene.newSceneNode<SpotLight>("spot0");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
@@ -172,7 +170,7 @@ void init()
 	spot->setShadowEnabled(true);
 
 
-	scene.newSceneNode(spot, "spot1");
+	spot = scene.newSceneNode<SpotLight>("spot1");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(5.3, 4.3, 3.0),
@@ -194,8 +192,8 @@ void init()
 	{
 		Vec3 lightPos = vaseLightPos[i];
 
-		PointLight* point;
-		scene.newSceneNode(point, ("vase_plight" + std::to_string(i)).c_str());
+		PointLight* point = scene.newSceneNode<PointLight>(
+			("vase_plight" + std::to_string(i)).c_str());
 
 		point->loadLensFlare("textures/lens_flare/flares0.ankitex");
 
@@ -226,13 +224,13 @@ void init()
 
 		if(i == 0)
 		{
-			scene.newSceneNode(pe, "pefire", "particles/fire.ankipart");
+			/*scene.newSceneNode(pe, "pefire", "particles/fire.ankipart");
 			pe->setLocalOrigin(lightPos);
 
 			scene.newSceneNode(pe, "pesmoke", "particles/smoke.ankipart");
-			pe->setLocalOrigin(lightPos);
+			pe->setLocalOrigin(lightPos);*/
 		}
-		else
+		/*else
 		{
 			InstanceNode* instance;
 			scene.newSceneNode(instance, 
@@ -256,18 +254,18 @@ void init()
 			scene.newSceneNode(pe, ("pesparks" + std::to_string(i)).c_str(), 
 				"particles/sparks.ankipart");
 			pe->setLocalOrigin(lightPos);
-		}
+		}*/
 	}
 #endif
 
 #if 1
 	// horse
-	scene.newSceneNode(horse, "horse", "models/horse/horse.ankimdl");
+	horse = scene.newSceneNode<ModelNode>("horse", "models/horse/horse.ankimdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
 		0.7));
 
 
-	scene.newSceneNode(horse, "crate", "models/crate0/crate0.ankimdl");
+	horse = scene.newSceneNode<ModelNode>("crate", "models/crate0/crate0.ankimdl");
 	horse->setLocalTransform(Transform(Vec3(2, 10.0, 0), Mat3::getIdentity(),
 		1.0));
 
@@ -287,7 +285,13 @@ void init()
 
 	(void)sponzaModel;
 #endif
-	scene.load("maps/sponza/master.ankiscene");
+	//scene.load("maps/sponza/master.ankiscene");
+	{
+		String str;
+		File file(ANKI_R("maps/sponza/scene.lua"), File::OpenFlag::READ);
+		file.readAllText(str);
+		ScriptManagerSingleton::get().evalString(str.c_str());
+	}
 
 	// Physics debug
 	scene.getPhysics().setDebugDrawer(
@@ -391,7 +395,7 @@ void mainLoopExtra()
 		mover = &SceneGraphSingleton::get().findSceneNode("red_barrel").getComponent<MoveComponent>();
 	}
 
-	if(in.getKey(KC_L) == 1)
+	/*if(in.getKey(KC_L) == 1)
 	{
 		SceneNode& l = 
 			SceneGraphSingleton::get().findSceneNode("crate");
@@ -400,7 +404,7 @@ void mainLoopExtra()
 		trf.setIdentity();
 		trf.getOrigin().y() = 20.0;
 		l.getComponent<MoveComponent>().setLocalTransform(trf);
-	}
+	}*/
 
 	if(in.getKey(KC_F1) == 1)
 	{
@@ -466,6 +470,25 @@ void mainLoopExtra()
 			<< ")}," << std::endl;
 	}
 
+	if(in.getKey(KC_L) == 1)
+	{
+		try
+		{
+			ScriptManagerSingleton::get().evalString(
+R"(scene = SceneGraphSingleton.get()
+node = scene:tryFindSceneNode("horse")
+if Anki.userDataValid(node) == 1 then
+	print("valid")
+else 
+	print("invalid")
+end)");
+		}
+		catch(Exception& e)
+		{
+			ANKI_LOGE(e.what());
+		}
+	}
+
 
 	if(in.getMousePosition() != Vec2(0.0))
 	{
@@ -487,7 +510,7 @@ void mainLoop()
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar crntTime = prevUpdateTime;
 
-	ANKI_COUNTER_START_TIMER(C_FPS);
+	ANKI_COUNTER_START_TIMER(FPS);
 
 	while(1)
 	{
@@ -501,6 +524,7 @@ void mainLoop()
 		//
 		InputSingleton::get().handleEvents();
 		mainLoopExtra();
+
 		SceneGraphSingleton::get().update(
 			prevUpdateTime, crntTime, MainRendererSingleton::get());
 		//EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
@@ -511,12 +535,12 @@ void mainLoop()
 			break;
 		}
 
-		win->swapBuffers();
+		GlManagerSingleton::get().swapBuffers();
 		ANKI_COUNTERS_RESOLVE_FRAME();
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{
@@ -532,7 +556,7 @@ void mainLoop()
 		increaseGlobTimestamp();
 	}
 
-	ANKI_COUNTER_STOP_TIMER_INC(C_FPS);
+	ANKI_COUNTER_STOP_TIMER_INC(FPS);
 
 	ANKI_COUNTERS_FLUSH();
 
@@ -544,37 +568,56 @@ void mainLoop()
 //==============================================================================
 // initSubsystems                                                              =
 //==============================================================================
+
+void makeCurrent(void* ctx)
+{
+	ANKI_ASSERT(ctx);
+	win->contextMakeCurrent(ctx);
+}
+
+void swapBuffers(void* wind)
+{
+	NativeWindow* win = (NativeWindow*)wind;
+	win->swapBuffers();
+}
+
 void initSubsystems(int argc, char* argv[])
 {
 #if ANKI_GL == ANKI_GL_DESKTOP
 	U32 glmajor = 4;
-	U32 glminor = 3;
+	U32 glminor = 4;
 #else
 	U32 glmajor = 3;
 	U32 glminor = 0;
 #endif
 
+	globAlloc = HeapAllocator<U8>(HeapMemoryPool(0));
+
 	// Logger
-	LoggerSingleton::get().init(Logger::INIT_SYSTEM_MESSAGE_HANDLER);
+	LoggerSingleton::get().init(
+		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER, globAlloc);
 
 	// App
 	AppSingleton::get().init();
 
 	// Window
 	NativeWindowInitializer nwinit;
-	nwinit.width = 1280;
-	nwinit.height = 720;
-	nwinit.majorVersion = glmajor;
-	nwinit.minorVersion = glminor;
-	nwinit.depthBits = 0;
-	nwinit.stencilBits = 0;
-	nwinit.fullscreenDesktopRez = true;
-	nwinit.debugContext = false;
+	nwinit.m_width = 1280;
+	nwinit.m_height = 720;
+	nwinit.m_majorVersion = glmajor;
+	nwinit.m_minorVersion = glminor;
+	nwinit.m_depthBits = 0;
+	nwinit.m_stencilBits = 0;
+	nwinit.m_fullscreenDesktopRez = true;
+	nwinit.m_debugContext = ANKI_DEBUG;
 	win = new NativeWindow;	
 	win->create(nwinit);
+	void* context = win->getCurrentContext();
+	win->contextMakeCurrent(nullptr);
 
 	// GL stuff
-	GlStateCommonSingleton::get().init(glmajor, glminor, nwinit.debugContext);
+	GlManagerSingleton::get().init(makeCurrent, context,
+		swapBuffers, win, nwinit.m_debugContext);
 
 	// Input
 	InputSingleton::get().init(win);
@@ -584,37 +627,37 @@ void initSubsystems(int argc, char* argv[])
 
 	// Main renderer
 	RendererInitializer initializer;
-	initializer.get("ms.ez.enabled") = false;
-	initializer.get("ms.ez.maxObjectsToDraw") = 100;
-	initializer.get("dbg.enabled") = false;
-	initializer.get("is.sm.bilinearEnabled") = true;
-	initializer.get("is.groundLightEnabled") = true;
-	initializer.get("is.sm.enabled") = true;
-	initializer.get("is.sm.poissonEnabled") = true;
-	initializer.get("is.sm.resolution") = 1024;
-	initializer.get("pps.enabled") = true;
-	initializer.get("pps.hdr.enabled") = true;
-	initializer.get("pps.hdr.renderingQuality") = 0.6;
-	initializer.get("pps.hdr.blurringDist") = 1.0;
-	initializer.get("pps.hdr.blurringIterationsCount") = 1;
-	initializer.get("pps.hdr.exposure") = 8.0;
-	initializer.get("pps.hdr.samples") = 9;
-	initializer.get("pps.ssao.blurringIterationsNum") = 1;
-	initializer.get("pps.ssao.enabled") = true;
-	initializer.get("pps.ssao.renderingQuality") = 0.35;
-	initializer.get("pps.bl.enabled") = true;
-	initializer.get("pps.bl.blurringIterationsNum") = 2;
-	initializer.get("pps.bl.sideBlurFactor") = 1.0;
-	initializer.get("pps.lf.enabled") = true;
-	initializer.get("pps.sharpen") = true;
-	initializer.get("renderingQuality") = 1.0;
-	initializer.get("width") = win->getWidth();
-	initializer.get("height") = win->getHeight();
-	initializer.get("lodDistance") = 20.0;
-	initializer.get("samples") = 16;
-	initializer.get("tessellation") = false;
-	initializer.get("tilesXCount") = 16;
-	initializer.get("tilesYCount") = 16;
+	initializer.set("ms.ez.enabled", false);
+	initializer.set("ms.ez.maxObjectsToDraw", 100);
+	initializer.set("dbg.enabled", false);
+	initializer.set("is.sm.bilinearEnabled", true);
+	initializer.set("is.groundLightEnabled", true);
+	initializer.set("is.sm.enabled", true);
+	initializer.set("is.sm.poissonEnabled", true);
+	initializer.set("is.sm.resolution", 1024);
+	initializer.set("pps.enabled", true);
+	initializer.set("pps.hdr.enabled", true);
+	initializer.set("pps.hdr.renderingQuality", 0.6);
+	initializer.set("pps.hdr.blurringDist", 1.0);
+	initializer.set("pps.hdr.blurringIterationsCount", 1);
+	initializer.set("pps.hdr.exposure", 8.0);
+	initializer.set("pps.hdr.samples", 9);
+	initializer.set("pps.ssao.blurringIterationsNum", 1);
+	initializer.set("pps.ssao.enabled", true);
+	initializer.set("pps.ssao.renderingQuality", 0.35);
+	initializer.set("pps.bl.enabled", true);
+	initializer.set("pps.bl.blurringIterationsNum", 2);
+	initializer.set("pps.bl.sideBlurFactor", 1.0);
+	initializer.set("pps.lf.enabled", true);
+	initializer.set("pps.sharpen", true);
+	initializer.set("renderingQuality", 1.0);
+	initializer.set("width", win->getWidth());
+	initializer.set("height", win->getHeight());
+	initializer.set("lodDistance", 20.0);
+	initializer.set("samples", 1);
+	initializer.set("tessellation", false);
+	initializer.set("tilesXCount", 16);
+	initializer.set("tilesYCount", 16);
 
 	MainRendererSingleton::get().init(initializer);
 

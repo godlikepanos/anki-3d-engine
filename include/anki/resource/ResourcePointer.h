@@ -105,6 +105,7 @@ public:
 	void load(const char* filename)
 	{
 		ANKI_ASSERT(hook == nullptr);
+		ANKI_ASSERT(filename != nullptr);
 		hook = &ResourceManagerSingleton::get().load(filename);
 	}
 

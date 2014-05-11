@@ -9,7 +9,7 @@
 namespace anki {
 
 // Forward
-struct VisibilityTestResults;
+class VisibilityTestResults;
 
 /// @addtogroup Scene
 /// @{

@@ -44,7 +44,7 @@ F32 Ray::testPlane(const Plane& p) const
 }
 
 //==============================================================================
-void Ray::toAabb(Aabb&) const
+void Ray::computeAabb(Aabb&) const
 {
 	ANKI_ASSERT(0 && "Can't do that");
 }

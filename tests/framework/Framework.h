@@ -20,8 +20,9 @@ class Tester;
 typedef void (*TestCallback)(Test&);
 
 /// Test suite
-struct TestSuite
+class TestSuite
 {
+public:
 	std::string name;
 	Vector<Test*> tests;
 
@@ -29,8 +30,9 @@ struct TestSuite
 };
 
 /// Test
-struct Test
+class Test
 {
+public:
 	std::string name;
 	TestSuite* suite = nullptr;
 	TestCallback callback = nullptr;
@@ -39,8 +41,9 @@ struct Test
 };
 
 /// A container of test suites
-struct Tester
+class Tester
 {
+public:
 	Vector<TestSuite*> suites;
 	std::string programName;
 
@@ -88,7 +91,7 @@ extern void deleteTesterSingleton();
 	do { \
 		if((x) != (y)) { \
 			std::stringstream ss; \
-			ss << #x << " != " << #y << " (" \
+			ss << "FAILURE: " << #x << " != " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
 			throw std::runtime_error(ss.str()); \
 		} \
@@ -99,7 +102,7 @@ extern void deleteTesterSingleton();
 	do { \
 		if((x) == (y)) { \
 			std::stringstream ss; \
-			ss << #x << " == " << #y << " (" \
+			ss << "FAILURE: " << #x << " == " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
 			throw std::runtime_error(ss.str()); \
 		} \
@@ -108,9 +111,9 @@ extern void deleteTesterSingleton();
 /// Intermediate macro
 #define ANKI_TEST_EXPECT_NEAR_IMPL(file_, line_, func_, x, y, epsilon_) \
 	do { \
-		if(fabs((x) - (y)) > (epsilon_)) { \
+		if(abs((x) - (y)) > (epsilon_)) { \
 			std::stringstream ss; \
-			ss << #x << " != " << #y << " (" \
+			ss << "FAILURE: " << #x << " != " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
 			throw std::runtime_error(ss.str()); \
 		} \
@@ -124,7 +127,7 @@ extern void deleteTesterSingleton();
 #define ANKI_TEST_EXPECT_NEQ(x_, y_) \
 	ANKI_TEST_EXPECT_NEQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
 
-/// XXX
+/// Compare floats with epsilon
 #define ANKI_TEST_EXPECT_NEAR(x_, y_, e_) \
 	ANKI_TEST_EXPECT_NEAR_IMPL(__FILE__, __LINE__, __func__, x_, y_, e_)
 

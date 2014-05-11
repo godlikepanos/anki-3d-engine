@@ -58,15 +58,27 @@ public:
 		lTrf.setOrigin(x);
 		markForUpdate();
 	}
+	const Vec3& getLocalOrigin() const
+	{
+		return lTrf.getOrigin();
+	}
 	void setLocalRotation(const Mat3& x)
 	{
 		lTrf.setRotation(x);
 		markForUpdate();
 	}
+	const Mat3& getLocalRotation() const
+	{
+		return lTrf.getRotation();
+	}
 	void setLocalScale(F32 x)
 	{
 		lTrf.setScale(x);
 		markForUpdate();
+	}
+	F32 getLocalScale() const
+	{
+		return lTrf.getScale();
 	}
 
 	const Transform& getWorldTransform() const

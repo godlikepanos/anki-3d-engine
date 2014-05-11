@@ -37,23 +37,23 @@ public:
 	/// @{
 	U getKey(U32 i) const
 	{
-		return keys[i];
+		return m_keys[i];
 	}
 
 	U getMouseButton(U32 i) const
 	{
-		return mouseBtns[i];
+		return m_mouseBtns[i];
 	}
 
 	const Vec2& getMousePosition() const
 	{
-		return mousePosNdc;
+		return m_mousePosNdc;
 	}
 
 	/// Get the times an event was triggered and resets the counter
 	U getEvent(Event eventId) const
 	{
-		return events[eventId];
+		return m_events[eventId];
 	}
 	/// @}
 
@@ -77,17 +77,17 @@ public:
 	/// Lock mouse to (0, 0)
 	void lockCursor(Bool lock)
 	{
-		lockCurs = lock;
+		m_lockCurs = lock;
 	}
 
 	/// Add a new event
 	void addEvent(Event eventId)
 	{
-		++events[eventId];
+		++m_events[eventId];
 	}
 
 private:
-	NativeWindow* nativeWindow = nullptr;
+	NativeWindow* m_nativeWindow = nullptr;
 
 	/// @name Keys and btns
 	/// @{
@@ -96,19 +96,19 @@ private:
 	/// - 0 times: unpressed
 	/// - 1 times: pressed once
 	/// - >1 times: Kept pressed 'n' times continuously
-	Array<U32, KC_COUNT> keys;
+	Array<U32, KC_COUNT> m_keys;
 
 	/// Mouse btns. Supporting 3 btns & wheel. @see keys
-	Array<U32, 8> mouseBtns;
+	Array<U32, 8> m_mouseBtns;
 	/// @}
 
-	Vec2 mousePosNdc = Vec2(2.0); ///< The coords are in the NDC space
+	Vec2 m_mousePosNdc = Vec2(2.0); ///< The coords are in the NDC space
 
-	Array<U8, EVENTS_COUNT> events;
+	Array<U8, EVENTS_COUNT> m_events;
 
-	std::shared_ptr<InputImpl> impl;
+	std::shared_ptr<InputImpl> m_impl;
 
-	Bool8 lockCurs = false;
+	Bool8 m_lockCurs = false;
 };
 
 typedef Singleton<Input> InputSingleton;

@@ -10,7 +10,7 @@ namespace anki {
 /// SDL input implementation
 struct InputImpl
 {
-	std::unordered_map<SDL_Keycode, KeyCode> sdlKeyToAnki;
+	std::unordered_map<SDL_Keycode, KeyCode> m_sdlKeyToAnki;
 };
 
 } // end namespace anki

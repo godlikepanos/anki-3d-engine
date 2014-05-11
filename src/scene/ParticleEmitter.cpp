@@ -5,7 +5,7 @@
 #include "anki/resource/Model.h"
 #include "anki/util/Functions.h"
 #include "anki/physics/PhysicsWorld.h"
-#include "anki/gl/Drawcall.h"
+#include "anki/Gl.h"
 
 namespace anki {
 
@@ -13,8 +13,11 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
+const U COMPONENTS = 3 + 1 + 1; // 3 position, 1 size, 1 alpha
+const PtrSize VERT_SIZE = COMPONENTS * sizeof(F32);
+
 //==============================================================================
-F32 getRandom(F32 initial, F32 deviation)
+static F32 getRandom(F32 initial, F32 deviation)
 {
 	return (deviation == 0.0) 
 		? initial
@@ -22,7 +25,7 @@ F32 getRandom(F32 initial, F32 deviation)
 }
 
 //==============================================================================
-Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
+static Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 {
 	if(deviation == Vec3(0.0))
 	{
@@ -51,9 +54,9 @@ void ParticleBase::revive(const ParticleEmitter& pe,
 	const ParticleEmitterProperties& props = pe;
 
 	// life
-	timeOfDeath = getRandom(crntTime + props.particle.life,
-		props.particle.lifeDeviation);
-	timeOfBirth = crntTime;
+	m_timeOfDeath = getRandom(crntTime + props.m_particle.m_life,
+		props.m_particle.m_lifeDeviation);
+	m_timeOfBirth = crntTime;
 }
 
 //==============================================================================
@@ -68,14 +71,14 @@ void ParticleSimple::simulate(const ParticleEmitter& pe,
 
 	ANKI_ASSERT(
 		static_cast<const ParticleEmitterProperties&>(pe).
-		particle.gravity.getLength() > 0.0);
+		m_particle.m_gravity.getLength() > 0.0);
 
-	Vec3 xp = position;
-	Vec3 xc = acceleration * (dt * dt) + velocity * dt + xp;
+	Vec3 xp = m_position;
+	Vec3 xc = m_acceleration * (dt * dt) + m_velocity * dt + xp;
 
-	position = xc;
+	m_position = xc;
 
-	velocity += acceleration * dt;
+	m_velocity += m_acceleration * dt;
 }
 
 //==============================================================================
@@ -83,18 +86,18 @@ void ParticleSimple::revive(const ParticleEmitter& pe,
 	F32 prevUpdateTime, F32 crntTime)
 {
 	ParticleBase::revive(pe, prevUpdateTime, crntTime);
-	velocity = Vec3(0.0);
+	m_velocity = Vec3(0.0);
 
 	const ParticleEmitterProperties& props = pe;
 
-	acceleration = getRandom(props.particle.gravity,
-			props.particle.gravityDeviation);
+	m_acceleration = getRandom(props.m_particle.m_gravity,
+			props.m_particle.m_gravityDeviation);
 
 	// Set the initial position
-	position = getRandom(props.particle.startingPos,
-		props.particle.startingPosDeviation);
+	m_position = getRandom(props.m_particle.m_startingPos,
+		props.m_particle.m_startingPosDeviation);
 
-	position += pe.getWorldTransform().getOrigin();
+	m_position += pe.getWorldTransform().getOrigin();
 }
 
 //==============================================================================
@@ -199,67 +202,62 @@ ParticleEmitter::ParticleEmitter(
 		SpatialComponent(this),
 		MoveComponent(this),
 		RenderComponent(this),
-		particles(getSceneAllocator()),
-		transforms(getSceneAllocator()),
-		clientBuffer(getSceneAllocator())
+		m_particles(getSceneAllocator()),
+		m_transforms(getSceneAllocator())
 {
 	addComponent(static_cast<MoveComponent*>(this));
 	addComponent(static_cast<SpatialComponent*>(this));
 	addComponent(static_cast<RenderComponent*>(this));
 
+	m_obb.setCenter(Vec3(0.0));
+	m_obb.setExtend(Vec3(1.0));
+	m_obb.setRotation(Mat3::getIdentity());
+
 	// Load resource
-	particleEmitterResource.load(filename);
+	m_particleEmitterResource.load(filename);
 
 	// copy the resource to me
 	ParticleEmitterProperties& me = *this;
 	const ParticleEmitterProperties& other =
-		particleEmitterResource->getProperties();
+		m_particleEmitterResource->getProperties();
 	me = other;
 
-	if(usePhysicsEngine)
+	if(m_usePhysicsEngine)
 	{
 		createParticlesSimulation(scene);
-		simulationType = PHYSICS_ENGINE_SIMULATION;
+		m_simulationType = SimulationType::PHYSICS_ENGINE;
 	}
 	else
 	{
 		createParticlesSimpleSimulation(scene);
-		simulationType = SIMPLE_SIMULATION;
+		m_simulationType = SimulationType::SIMPLE;
 	}
 
-	timeLeftForNextEmission = 0.0;
+	m_timeLeftForNextEmission = 0.0;
 	RenderComponent::init();
 
 	// Create the vertex buffer and object
 	//
-	const U components = 3 + 1 + 1;
-	PtrSize vertSize = components * sizeof(F32);
+	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
 
-	vbo.create(GL_ARRAY_BUFFER, maxNumOfParticles * vertSize,
-		nullptr, GL_DYNAMIC_DRAW);
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
 
-	clientBuffer.resize(maxNumOfParticles * components, 0.0);
+	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, buffSize, 
+		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
-	vao.create();
-	// Position
-	vao.attachArrayBufferVbo(&vbo, 0, 3, GL_FLOAT, GL_FALSE, vertSize, 0);
+	jobs.flush();
 
-	// Scale
-	vao.attachArrayBufferVbo(&vbo, 6, 1, GL_FLOAT, GL_FALSE, vertSize, 
-		sizeof(F32) * 3);
-
-	// Alpha
-	vao.attachArrayBufferVbo(&vbo, 7, 1, GL_FLOAT, GL_FALSE, vertSize, 
-		sizeof(F32) * 4);
+	m_vertBuffMapping = (U8*)m_vertBuff.getPersistentMappingAddress();
 }
 
 //==============================================================================
 ParticleEmitter::~ParticleEmitter()
 {
 	// Delete simple particles
-	if(simulationType == SIMPLE_SIMULATION)
+	if(m_simulationType == SimulationType::SIMPLE)
 	{
-		for(ParticleBase* part : particles)
+		for(ParticleBase* part : m_particles)
 		{
 			getSceneAllocator().deleteInstance(part);
 		}
@@ -267,34 +265,49 @@ ParticleEmitter::~ParticleEmitter()
 }
 
 //==============================================================================
-void ParticleEmitter::getRenderingData(
-	const PassLodKey& key_, 
-	const U8* subMeshIndicesArray, U subMeshIndicesCount,
-	const Vao*& vao_, const ShaderProgram*& prog,
-	Drawcall& dc)
+void ParticleEmitter::buildRendering(RenderingBuildData& data)
 {
-	ANKI_ASSERT(subMeshIndicesCount <= transforms.size() + 1);
+	ANKI_ASSERT(data.m_subMeshIndicesCount <= m_transforms.size() + 1);
 
-	PassLodKey key = key_;
-	key.lod = 0;
+	if(m_aliveParticlesCount == 0)
+	{
+		return;
+	}
 
-	vao_ = &vao;
-	prog = &getMaterial().findShaderProgram(key);
+	RenderingKey key = data.m_key;
+	key.m_lod = 0;
 
-	dc.primitiveType = GL_POINTS;
-	dc.indicesType = 0;
+	GlProgramPipelineHandle ppline = 
+		m_particleEmitterResource->getMaterial().getProgramPipeline(key);
 
-	dc.instancesCount = subMeshIndicesCount;
-	dc.drawCount = 1;
+	ppline.bind(data.m_jobs);
 
-	dc.count = aliveParticlesCountDraw;
-	dc.offset = 0;
+	PtrSize offset = (getGlobTimestamp() % 3) * (m_vertBuff.getSize() / 3);
+
+	// Position
+	m_vertBuff.bindVertexBuffer(data.m_jobs, 
+		3, GL_FLOAT, false, VERT_SIZE, offset + 0, 0);
+
+	// Scale
+	m_vertBuff.bindVertexBuffer(data.m_jobs, 
+		1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 3, 6);
+
+	// Alpha
+	m_vertBuff.bindVertexBuffer(data.m_jobs, 
+		1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 4, 7);
+
+	GlDrawcallArrays dc = GlDrawcallArrays(
+		GL_POINTS, 
+		m_aliveParticlesCount,
+		data.m_subMeshIndicesCount);
+
+	dc.draw(data.m_jobs);
 }
 
 //==============================================================================
 const Material& ParticleEmitter::getMaterial()
 {
-	return particleEmitterResource->getMaterial();
+	return m_particleEmitterResource->getMaterial();
 }
 
 //==============================================================================
@@ -303,7 +316,7 @@ void ParticleEmitter::componentUpdated(SceneComponent& comp,
 {
 	if(comp.getType() == MoveComponent::getClassType())
 	{
-		identityRotation =
+		m_identityRotation =
 			getWorldTransform().getRotation() == Mat3::getIdentity();
 	}
 }
@@ -325,8 +338,7 @@ void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 	{
 		binit.mass = getRandom(particle.mass, particle.massDeviation);
 
-		Particle* part;
-		getSceneGraph().newSceneNode(part,
+		Particle* part = getSceneGraph().newSceneNode<Particle>(
 			nullptr, &scene->getPhysics(), binit);
 
 		part->size = getRandom(particle.size, particle.sizeDeviation);
@@ -341,15 +353,18 @@ void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 //==============================================================================
 void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
 {
-	for(U i = 0; i < maxNumOfParticles; i++)
+	m_particles.resize(m_maxNumOfParticles);
+
+	for(U i = 0; i < m_maxNumOfParticles; i++)
 	{
 		ParticleSimple* part = 
 			getSceneAllocator().newInstance<ParticleSimple>();
 
-		part->size = getRandom(particle.size, particle.sizeDeviation);
-		part->alpha = getRandom(particle.alpha, particle.alphaDeviation);
+		part->m_size = getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
+		part->m_alpha = 
+			getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
 
-		particles.push_back(part);
+		m_particles[i] = part;
 	}
 }
 
@@ -359,11 +374,6 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 {
 	if(uptype == SceneNode::SYNC_UPDATE)
 	{
-		// In main thread update the client buffer
-
-		vbo.write(&clientBuffer[0]);
-		aliveParticlesCountDraw = aliveParticlesCount;
-
 		return;
 	}
 
@@ -373,13 +383,14 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 	//
 	Vec3 aabbmin(MAX_F32);
 	Vec3 aabbmax(MIN_F32);
-	aliveParticlesCount = 0;
+	m_aliveParticlesCount = 0;
 
-	F32* verts = &clientBuffer[0];
+	F32* verts = (F32*)(m_vertBuffMapping 
+		+ (getGlobTimestamp() % 3) * m_vertBuff.getSize());
 	F32* verts_base = verts;
 	(void)verts_base;
 
-	for(ParticleBase* p : particles)
+	for(ParticleBase* p : m_particles)
 	{
 		if(p->isDead())
 		{
@@ -394,10 +405,11 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 		}
 		else
 		{
+			// It's alive
+
 			// This will calculate a new world transformation
 			p->simulate(*this, prevUpdateTime, crntTime);
 
-			// An alive
 			const Vec3& origin = p->getPosition();
 
 			for(U i = 0; i < 3; i++)
@@ -414,48 +426,48 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 			verts[2] = origin.z();
 
 			// XXX set a flag for scale
-			verts[3] = p->size + (lifePercent * particle.sizeAnimation);
+			verts[3] = p->m_size + (lifePercent * m_particle.m_sizeAnimation);
 
 			// Set alpha
-			if(particle.alphaAnimation)
+			if(m_particle.m_alphaAnimation)
 			{
-				verts[4] = sin((lifePercent) * getPi<F32>()) * p->alpha;
+				verts[4] = sin((lifePercent) * getPi<F32>()) * p->m_alpha;
 			}
 			else
 			{
-				verts[4] = p->alpha;
+				verts[4] = p->m_alpha;
 			}
 
-			++aliveParticlesCount;
+			++m_aliveParticlesCount;
 			verts += 5;
 
 			// Do checks
 			ANKI_ASSERT(
-				((PtrSize)verts - (PtrSize)verts_base) <= vbo.getSizeInBytes());
+				((PtrSize)verts - (PtrSize)verts_base) <= m_vertBuff.getSize());
 		}
 	}
 
-	if(aliveParticlesCount != 0)
+	if(m_aliveParticlesCount != 0)
 	{
-		Vec3 min = aabbmin - particle.size;
-		Vec3 max = aabbmax + particle.size;
+		Vec3 min = aabbmin - m_particle.m_size;
+		Vec3 max = aabbmax + m_particle.m_size;
 		Vec3 center = (min + max) / 2.0;
 
-		obb = Obb(center, Mat3::getIdentity(), max - center);
+		m_obb = Obb(center, Mat3::getIdentity(), max - center);
 	}
 	else
 	{
-		obb = Obb(Vec3(0.0), Mat3::getIdentity(), Vec3(0.001));
+		m_obb = Obb(Vec3(0.0), Mat3::getIdentity(), Vec3(0.001));
 	}
 	SpatialComponent::markForUpdate();
 
 	//
 	// Emit new particles
 	//
-	if(timeLeftForNextEmission <= 0.0)
+	if(m_timeLeftForNextEmission <= 0.0)
 	{
 		U particlesCount = 0; // How many particles I am allowed to emmit
-		for(ParticleBase* pp : particles)
+		for(ParticleBase* pp : m_particles)
 		{
 			ParticleBase& p = *pp;
 			if(!p.isDead())
@@ -468,17 +480,17 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 
 			// do the rest
 			++particlesCount;
-			if(particlesCount >= particlesPerEmittion)
+			if(particlesCount >= m_particlesPerEmittion)
 			{
 				break;
 			}
 		} // end for all particles
 
-		timeLeftForNextEmission = emissionPeriod;
+		m_timeLeftForNextEmission = m_emissionPeriod;
 	} // end if can emit
 	else
 	{
-		timeLeftForNextEmission -= crntTime - prevUpdateTime;
+		m_timeLeftForNextEmission -= crntTime - prevUpdateTime;
 	}
 
 	// Do something more
@@ -511,16 +523,16 @@ void ParticleEmitter::doInstancingCalcs()
 
 		// Check if an instance was added or removed and reset the spatials and
 		// the transforms
-		if(instanceMoves.size() != transforms.size())
+		if(instanceMoves.size() != m_transforms.size())
 		{
 			transformsNeedUpdate = true;
 
 			// Check if instances added or removed
-			if(transforms.size() < instanceMoves.size())
+			if(m_transforms.size() < instanceMoves.size())
 			{
 				// Instances added
 
-				U diff = instanceMoves.size() - transforms.size();
+				U diff = instanceMoves.size() - m_transforms.size();
 
 				while(diff-- != 0)
 				{
@@ -538,17 +550,17 @@ void ParticleEmitter::doInstancingCalcs()
 				ANKI_ASSERT(0 && "TODO");
 			}
 
-			transforms.resize(instanceMoves.size());
+			m_transforms.resize(instanceMoves.size());
 		}
 
-		if(transformsNeedUpdate || transformsTimestamp < instancesTimestamp)
+		if(transformsNeedUpdate || m_transformsTimestamp < instancesTimestamp)
 		{
-			transformsTimestamp = instancesTimestamp;
+			m_transformsTimestamp = instancesTimestamp;
 
 			// Update the transforms
 			for(U i = 0; i < instanceMoves.size(); i++)
 			{
-				transforms[i] = instanceMoves[i]->getWorldTransform();
+				m_transforms[i] = instanceMoves[i]->getWorldTransform();
 			}
 		}
 
@@ -562,9 +574,9 @@ void ParticleEmitter::doInstancingCalcs()
 				ObbSpatialComponent* msp = 
 					staticCastPtr<ObbSpatialComponent*>(&sp);
 		
-				Obb aobb = obb;
+				Obb aobb = m_obb;
 				aobb.setCenter(Vec3(0.0));
-				msp->obb = aobb.getTransformed(transforms[count - 1]);
+				msp->obb = aobb.getTransformed(m_transforms[count - 1]);
 
 				msp->markForUpdate();
 			}
@@ -572,14 +584,14 @@ void ParticleEmitter::doInstancingCalcs()
 			++count;
 		});
 
-		ANKI_ASSERT(count - 1 == transforms.size());
+		ANKI_ASSERT(count - 1 == m_transforms.size());
 	} // end if instancing
 }
 
 //==============================================================================
 Bool ParticleEmitter::getHasWorldTransforms()
 {
-	if(transforms.size() == 0)
+	if(m_transforms.size() == 0)
 	{
 		return false;
 	}
@@ -592,7 +604,7 @@ Bool ParticleEmitter::getHasWorldTransforms()
 //==============================================================================
 void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf)
 {
-	ANKI_ASSERT(transforms.size() > 0);
+	ANKI_ASSERT(m_transforms.size() > 0);
 
 	if(index == 0)
 	{
@@ -603,12 +615,12 @@ void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf)
 	else
 	{
 		--index;
-		ANKI_ASSERT(index < transforms.size());
+		ANKI_ASSERT(index < m_transforms.size());
 
 		// The particle positions are already in word space. Move them back to
 		// local space
 		Transform invTrf = getWorldTransform().getInverse();
-		trf = Transform::combineTransformations(transforms[index], invTrf);
+		trf = Transform::combineTransformations(m_transforms[index], invTrf);
 	}
 }
 

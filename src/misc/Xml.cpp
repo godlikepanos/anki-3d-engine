@@ -201,7 +201,7 @@ XmlElement XmlElement::getNextSiblingElement(const char* name) const
 //==============================================================================
 void XmlDocument::loadFile(const char* filename)
 {
-	File file(filename, File::OF_READ);
+	File file(filename, File::OpenFlag::READ);
 	std::string text;
 	file.readAllText(text);
 

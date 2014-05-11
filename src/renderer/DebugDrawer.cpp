@@ -1,5 +1,5 @@
 #include "anki/renderer/DebugDrawer.h"
-#include "anki/resource/ShaderProgramResource.h"
+#include "anki/resource/ProgramResource.h"
 #include "anki/physics/Converters.h"
 #include "anki/Collision.h"
 #include "anki/Scene.h"
@@ -15,41 +15,26 @@ namespace anki {
 //==============================================================================
 DebugDrawer::DebugDrawer()
 {
-	prog.load("shaders/Dbg.glsl");
+	GlManager& gl = GlManagerSingleton::get();
 
-	vbo.create(GL_ARRAY_BUFFER, sizeof(clientVerts), nullptr,
-		GL_DYNAMIC_DRAW);
+	m_vert.load("shaders/Dbg.vert.glsl");
+	m_frag.load("shaders/Dbg.frag.glsl");
 
-	vao.create();
-	vao.attachArrayBufferVbo(
-		&vbo, prog->findAttributeVariable("position"), 3, GL_FLOAT,
-		false, sizeof(Vertex), 0);
+	GlJobChainHandle jobs(&gl);
 
-	vao.attachArrayBufferVbo(
-		&vbo, prog->findAttributeVariable("color"), 1, GL_FLOAT,
-		false, sizeof(Vertex), sizeof(Vec3));
+	m_ppline = GlProgramPipelineHandle(jobs, 
+		{m_vert->getGlProgram(), m_frag->getGlProgram()});
 
-	GLint loc =
-		prog->findAttributeVariable("modelViewProjectionMat").getLocation();
+	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, 
+		sizeof(m_clientVerts), GL_DYNAMIC_STORAGE_BIT);
 
-	vao.attachArrayBufferVbo(
-		&vbo, loc, 4, GL_FLOAT, false, sizeof(Vertex), 
-		1 * sizeof(Vec4));
-	vao.attachArrayBufferVbo(
-		&vbo, loc + 1, 4, GL_FLOAT, false, sizeof(Vertex), 
-		2 * sizeof(Vec4));
-	vao.attachArrayBufferVbo(
-		&vbo, loc + 2, 4, GL_FLOAT, false, sizeof(Vertex), 
-		3 * sizeof(Vec4));
-	vao.attachArrayBufferVbo(
-		&vbo, loc + 3, 4, GL_FLOAT, false, sizeof(Vertex), 
-		4 * sizeof(Vec4));
+	m_vertexPointer = 0;
+	m_mMat.setIdentity();
+	m_vpMat.setIdentity();
+	m_mvpMat.setIdentity();
+	m_crntCol = Vec3(1.0, 0.0, 0.0);
 
-	vertexPointer = 0;
-	mMat.setIdentity();
-	vpMat.setIdentity();
-	mvpMat.setIdentity();
-	crntCol = Vec3(1.0, 0.0, 0.0);
+	jobs.flush();
 }
 
 //==============================================================================
@@ -59,15 +44,15 @@ DebugDrawer::~DebugDrawer()
 //==============================================================================
 void DebugDrawer::setModelMatrix(const Mat4& m)
 {
-	mMat = m;
-	mvpMat = vpMat * mMat;
+	m_mMat = m;
+	m_mvpMat = m_vpMat * m_mMat;
 }
 
 //==============================================================================
 void DebugDrawer::setViewProjectionMatrix(const Mat4& m)
 {
-	vpMat = m;
-	mvpMat = vpMat * mMat;
+	m_vpMat = m;
+	m_mvpMat = m_vpMat * m_mMat;
 }
 
 //==============================================================================
@@ -79,42 +64,58 @@ void DebugDrawer::begin()
 //==============================================================================
 void DebugDrawer::end()
 {
-	if(vertexPointer % 2 != 0)
+	if(m_vertexPointer % 2 != 0)
 	{
 		// push back the previous vertex to close the loop
-		pushBackVertex(clientVerts[vertexPointer].positionAndColor.xyz());
+		pushBackVertex(m_clientVerts[m_vertexPointer].m_positionAndColor.xyz());
 	}
 }
 
 //==============================================================================
 void DebugDrawer::flush()
 {
-	if(vertexPointer == 0)
+	if(m_vertexPointer == 0)
 	{
 		// Early exit
 		return;
 	}
 
-	vbo.write(&clientVerts[0], 0, sizeof(clientVerts));
+	GlClientBufferHandle tmpBuff(m_jobs, sizeof(m_clientVerts), nullptr);
+	memcpy(tmpBuff.getBaseAddress(), &m_clientVerts[0], sizeof(m_clientVerts));
 
-	prog->bind();
-	vao.bind();
+	m_vertBuff.write(m_jobs, tmpBuff, 0, 0, sizeof(m_clientVerts));
 
-	Drawcall dc;
-	dc.primitiveType = GL_LINES;
-	dc.count = vertexPointer;
-	dc.enque();
-	
-	vertexPointer = 0;
+	m_ppline.bind(m_jobs);
+
+	m_vertBuff.bindVertexBuffer(m_jobs, 
+		3, GL_FLOAT, false, sizeof(Vertex), 0, 0); // Pos
+
+	m_vertBuff.bindVertexBuffer(m_jobs, 
+		4, GL_UNSIGNED_BYTE, true, sizeof(Vertex), sizeof(Vec3), 1); // Color
+
+	m_vertBuff.bindVertexBuffer(m_jobs, 
+		4, GL_FLOAT, false, sizeof(Vertex), 1 * sizeof(Vec4), 2);
+	m_vertBuff.bindVertexBuffer(m_jobs, 
+		4, GL_FLOAT, false, sizeof(Vertex), 2 * sizeof(Vec4), 3);
+	m_vertBuff.bindVertexBuffer(m_jobs, 
+		4, GL_FLOAT, false, sizeof(Vertex), 3 * sizeof(Vec4), 4);
+	m_vertBuff.bindVertexBuffer(m_jobs, 
+		4, GL_FLOAT, false, sizeof(Vertex), 4 * sizeof(Vec4), 5);
+
+	GlDrawcallArrays dc(GL_LINES, m_vertexPointer);
+
+	dc.draw(m_jobs);
+
+	m_vertexPointer = 0;
 }
 
 //==============================================================================
 void DebugDrawer::pushBackVertex(const Vec3& pos)
 {
 	U32 color = (U8)(1.0 * 255.0);
-	color = (color << 8) | (U8)(crntCol.z() * 255.0);
-	color = (color << 8) | (U8)(crntCol.y() * 255.0);
-	color = (color << 8) | (U8)(crntCol.x() * 255.0);
+	color = (color << 8) | (U8)(m_crntCol.z() * 255.0);
+	color = (color << 8) | (U8)(m_crntCol.y() * 255.0);
+	color = (color << 8) | (U8)(m_crntCol.x() * 255.0);
 
 	union
 	{
@@ -124,12 +125,12 @@ void DebugDrawer::pushBackVertex(const Vec3& pos)
 
 	uni.u = color;
 
-	clientVerts[vertexPointer].positionAndColor = Vec4(pos, uni.f);
-	clientVerts[vertexPointer].matrix = mvpMat.getTransposed();
+	m_clientVerts[m_vertexPointer].m_positionAndColor = Vec4(pos, uni.f);
+	m_clientVerts[m_vertexPointer].m_matrix = m_mvpMat.getTransposed();
 
-	++vertexPointer;
+	++m_vertexPointer;
 
-	if(vertexPointer == MAX_POINTS_PER_DRAW)
+	if(m_vertexPointer == MAX_POINTS_PER_DRAW)
 	{
 		flush();
 	}
@@ -198,16 +199,16 @@ void DebugDrawer::drawSphere(F32 radius, int complexity)
 	// Pre-calculate the sphere points5
 	//
 	std::unordered_map<U32, Vector<Vec3>>::iterator it =
-		complexityToPreCalculatedSphere.find(complexity);
+		m_complexityToPreCalculatedSphere.find(complexity);
 
-	if(it != complexityToPreCalculatedSphere.end()) // Found
+	if(it != m_complexityToPreCalculatedSphere.end()) // Found
 	{
 		sphereLines = &(it->second);
 	}
 	else // Not found
 	{
-		complexityToPreCalculatedSphere[complexity] = Vector<Vec3>();
-		sphereLines = &complexityToPreCalculatedSphere[complexity];
+		m_complexityToPreCalculatedSphere[complexity] = Vector<Vec3>();
+		sphereLines = &m_complexityToPreCalculatedSphere[complexity];
 
 		F32 fi = getPi<F32>() / complexity;
 
@@ -238,10 +239,10 @@ void DebugDrawer::drawSphere(F32 radius, int complexity)
 
 	// Render
 	//
-	Mat4 oldMMat = mMat;
-	Mat4 oldVpMat = vpMat;
+	Mat4 oldMMat = m_mMat;
+	Mat4 oldVpMat = m_vpMat;
 
-	setModelMatrix(mMat * Mat4(Vec3(0.0), Mat3::getIdentity(), radius));
+	setModelMatrix(m_mMat * Mat4(Vec3(0.0), Mat3::getIdentity(), radius));
 
 	begin();
 	for(const Vec3& p : *sphereLines)
@@ -251,8 +252,8 @@ void DebugDrawer::drawSphere(F32 radius, int complexity)
 	end();
 
 	// restore
-	mMat = oldMMat;
-	vpMat = oldVpMat;
+	m_mMat = oldMMat;
+	m_vpMat = oldVpMat;
 }
 
 //==============================================================================
@@ -291,8 +292,8 @@ void DebugDrawer::drawCube(F32 size)
 //==============================================================================
 void CollisionDebugDrawer::visit(const Sphere& sphere)
 {
-	dbg->setModelMatrix(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
-	dbg->drawSphere(sphere.getRadius());
+	m_dbg->setModelMatrix(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
+	m_dbg->drawSphere(sphere.getRadius());
 }
 
 //==============================================================================
@@ -311,8 +312,8 @@ void CollisionDebugDrawer::visit(const Obb& obb)
 	tsl = Mat4::combineTransformations(rot, scale);
 	tsl = Mat4::combineTransformations(trs, tsl);
 
-	dbg->setModelMatrix(tsl);
-	dbg->drawCube(2.0);
+	m_dbg->setModelMatrix(tsl);
+	m_dbg->drawCube(2.0);
 }
 
 //==============================================================================
@@ -326,8 +327,8 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 	rot.rotateXAxis(getPi<F32>() / 2.0);
 	Mat4 trf(n * o, rot);
 
-	dbg->setModelMatrix(trf);
-	dbg->drawGrid();
+	m_dbg->setModelMatrix(trf);
+	m_dbg->drawGrid();
 }
 
 //==============================================================================
@@ -344,10 +345,10 @@ void CollisionDebugDrawer::visit(const Aabb& aabb)
 	}
 
 	// Translation
-	trf.setTranslationPart((max + min) / 2.0);
+	trf.setTranslationPart(Vec4((max + min) / 2.0, 1.0));
 
-	dbg->setModelMatrix(trf);
-	dbg->drawCube();
+	m_dbg->setModelMatrix(trf);
+	m_dbg->drawCube();
 }
 
 //==============================================================================
@@ -355,10 +356,10 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 {
 	switch(f.getFrustumType())
 	{
-	case Frustum::FT_ORTHOGRAPHIC:
+	case FrustumType::ORTHOGRAPHIC:
 		visit(static_cast<const OrthographicFrustum&>(f).getObb());
 		break;
-	case Frustum::FT_PERSPECTIVE:
+	case FrustumType::PERSPECTIVE:
 		{
 			const PerspectiveFrustum& pf =
 				static_cast<const PerspectiveFrustum&>(f);
@@ -379,12 +380,12 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 			const U32 indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
 				3, 3, 4, 4, 1};
 
-			dbg->begin();
+			m_dbg->begin();
 			for(U32 i = 0; i < sizeof(indeces) / sizeof(U32); i++)
 			{
-				dbg->pushBackVertex(points[indeces[i]]);
+				m_dbg->pushBackVertex(points[indeces[i]]);
 			}
-			dbg->end();
+			m_dbg->end();
 			break;
 		}
 	}
@@ -398,7 +399,7 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 void PhysicsDebugDrawer::drawLine(const btVector3& from, const btVector3& to,
 	const btVector3& color)
 {
-	dbg->drawLine(toAnki(from), toAnki(to), Vec4(toAnki(color), 1.0));
+	m_dbg->drawLine(toAnki(from), toAnki(to), Vec4(toAnki(color), 1.0));
 }
 
 //==============================================================================
@@ -406,9 +407,9 @@ void PhysicsDebugDrawer::drawSphere(btScalar radius,
 	const btTransform& transform,
 	const btVector3& color)
 {
-	dbg->setColor(toAnki(color));
-	dbg->setModelMatrix(Mat4(toAnki(transform)));
-	dbg->drawSphere(radius);
+	m_dbg->setColor(toAnki(color));
+	m_dbg->setModelMatrix(Mat4(toAnki(transform)));
+	m_dbg->drawSphere(radius);
 }
 
 //==============================================================================
@@ -422,9 +423,9 @@ void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
 	trf(0, 3) = (max.getX() + min.getX()) / 2.0;
 	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
 	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
-	dbg->setModelMatrix(trf);
-	dbg->setColor(toAnki(color));
-	dbg->drawCube(1.0);
+	m_dbg->setModelMatrix(trf);
+	m_dbg->setColor(toAnki(color));
+	m_dbg->drawCube(1.0);
 }
 
 //==============================================================================
@@ -439,9 +440,9 @@ void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
 	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
 	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
 	trf = Mat4::combineTransformations(Mat4(toAnki(trans)), trf);
-	dbg->setModelMatrix(trf);
-	dbg->setColor(toAnki(color));
-	dbg->drawCube(1.0);
+	m_dbg->setModelMatrix(trf);
+	m_dbg->setColor(toAnki(color));
+	m_dbg->drawCube(1.0);
 }
 
 //==============================================================================
@@ -475,11 +476,11 @@ void SceneDebugDrawer::draw(SceneNode& node)
 	MoveComponent* mv = node.tryGetComponent<MoveComponent>();
 	if(mv)
 	{
-		dbg->setModelMatrix(Mat4(mv->getWorldTransform()));
+		m_dbg->setModelMatrix(Mat4(mv->getWorldTransform()));
 	}
 	else
 	{
-		dbg->setModelMatrix(Mat4::getIdentity());
+		m_dbg->setModelMatrix(Mat4::getIdentity());
 	}
 
 	FrustumComponent* fr = node.tryGetComponent<FrustumComponent>();
@@ -499,8 +500,8 @@ void SceneDebugDrawer::draw(FrustumComponent& fr) const
 {
 	const Frustum& fs = fr.getFrustum();
 
-	dbg->setColor(Vec3(1.0, 1.0, 0.0));
-	CollisionDebugDrawer coldraw(dbg);
+	m_dbg->setColor(Vec3(1.0, 1.0, 0.0));
+	CollisionDebugDrawer coldraw(m_dbg);
 	fs.accept(coldraw);
 }
 
@@ -512,8 +513,8 @@ void SceneDebugDrawer::draw(SpatialComponent& x) const
 		return;
 	}
 
-	dbg->setColor(Vec3(1.0, 0.0, 1.0));
-	CollisionDebugDrawer coldraw(dbg);
+	m_dbg->setColor(Vec3(1.0, 0.0, 1.0));
+	CollisionDebugDrawer coldraw(m_dbg);
 	x.getAabb().accept(coldraw);
 }
 
@@ -523,24 +524,24 @@ void SceneDebugDrawer::draw(const Sector& sector)
 	// Draw the sector
 	if(sector.getVisibleByMask() == VB_NONE)
 	{
-		dbg->setColor(Vec3(1.0, 0.5, 0.5));
+		m_dbg->setColor(Vec3(1.0, 0.5, 0.5));
 	}
 	else
 	{
 		if(sector.getVisibleByMask() & VB_CAMERA)
 		{
-			dbg->setColor(Vec3(0.5, 1.0, 0.5));
+			m_dbg->setColor(Vec3(0.5, 1.0, 0.5));
 		}
 		else
 		{
-			dbg->setColor(Vec3(0.5, 0.5, 1.0));
+			m_dbg->setColor(Vec3(0.5, 0.5, 1.0));
 		}
 	}
-	CollisionDebugDrawer v(dbg);
+	CollisionDebugDrawer v(m_dbg);
 	sector.getAabb().accept(v);
 
 	// Draw the portals
-	dbg->setColor(Vec3(0.0, 0.0, 1.0));
+	m_dbg->setColor(Vec3(0.0, 0.0, 1.0));
 	for(const Portal* portal : sector.getSectorGroup().getPortals())
 	{
 		if(portal->sectors[0] == &sector || portal->sectors[1] == &sector)
@@ -555,17 +556,17 @@ void SceneDebugDrawer::drawPath(const Path& path) const
 {
 	/*const U count = path.getPoints().size();
 
-	dbg->setColor(Vec3(1.0, 1.0, 0.0));
+	m_dbg->setColor(Vec3(1.0, 1.0, 0.0));
 
-	dbg->begin();
+	m_dbg->begin();
 	
 	for(U i = 0; i < count - 1; i++)
 	{
-		dbg->pushBackVertex(path.getPoints()[i].getPosition());
-		dbg->pushBackVertex(path.getPoints()[i + 1].getPosition());
+		m_dbg->pushBackVertex(path.getPoints()[i].getPosition());
+		m_dbg->pushBackVertex(path.getPoints()[i + 1].getPosition());
 	}
 
-	dbg->end();*/
+	m_dbg->end();*/
 }
 
 }  // end namespace anki

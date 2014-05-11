@@ -2,7 +2,7 @@
 #define ANKI_RESOURCE_MESH_H
 
 #include "anki/Math.h"
-#include "anki/gl/GlBuffer.h"
+#include "anki/Gl.h"
 #include "anki/collision/Obb.h"
 #include "anki/util/Vector.h"
 
@@ -10,24 +10,25 @@ namespace anki {
 
 class MeshLoader;
 
+/// Vertex attributes. This should match the shaders
+enum class VertexAttribute: U8
+{
+	POSITION,
+	NORMAL,
+	TANGENT,
+	TEXTURE_COORD,
+	TEXTURE_COORD_1,
+	BONE_COUNT,
+	BONE_IDS,
+	BONE_WEIGHTS,
+	INDICES,
+	COUNT
+};
+
 /// Mesh Resource. It contains the geometry packed in VBOs
 class Mesh
 {
 public:
-	enum VertexAttribute
-	{
-		VA_POSITION,
-		VA_NORMAL,
-		VA_TANGENT,
-		VA_TEXTURE_COORD,
-		VA_TEXTURE_COORD_1,
-		VA_BONE_COUNT,
-		VA_BONE_IDS,
-		VA_BONE_WEIGHTS,
-		VA_INDICES, 
-		VA_COUNT
-	};
-
 	/// Default constructor. Do nothing
 	Mesh()
 	{}
@@ -38,54 +39,54 @@ public:
 
 	U32 getTextureChannelsCount() const
 	{
-		return texChannelsCount;
+		return m_texChannelsCount;
 	}
 
 	Bool hasWeights() const
 	{
-		return weights;
+		return m_weights;
 	}
 
 	/// Used only to clone the VBO
 	U32 getVerticesCount() const
 	{
-		return vertsCount;
+		return m_vertsCount;
 	}
 
 	U32 getIndicesCount() const
 	{
-		return indicesCount;
+		return m_indicesCount;
 	}
 
 	const Obb& getBoundingShape() const
 	{
-		return obb;
+		return m_obb;
 	}
 
 	/// Get indices count and offset of submesh
 	U32 getIndicesCountSub(U subMeshId, U32& offset) const
 	{
-		ANKI_ASSERT(subMeshId < subMeshes.size());
-		const SubMesh& sm = subMeshes[subMeshId];
-		offset = sm.indicesOffset;
-		return sm.indicesCount;
+		ANKI_ASSERT(subMeshId < m_subMeshes.size());
+		const SubMesh& sm = m_subMeshes[subMeshId];
+		offset = sm.m_indicesOffset;
+		return sm.m_indicesCount;
 	}
 
 	const Obb& getBoundingShapeSub(U subMeshId) const
 	{
-		ANKI_ASSERT(subMeshId < subMeshes.size());
-		return subMeshes[subMeshId].obb;
+		ANKI_ASSERT(subMeshId < m_subMeshes.size());
+		return m_subMeshes[subMeshId].m_obb;
 	}
 
 	/// If returns zero then the mesh is a single uniform mesh
 	U32 getSubMeshesCount() const
 	{
-		return subMeshes.size();
+		return m_subMeshes.size();
 	}
 
-	/// Get info on how to attach a VBO to a VAO
-	void getVboInfo(
-		const VertexAttribute attrib, const GlBuffer*& vbo,
+	/// Get info on how to attach a GL buffer to the state
+	void getBufferInfo(
+		const VertexAttribute attrib, GlBufferHandle& buffer,
 		U32& size, GLenum& type, U32& stride, U32& offset) const;
 
 	/// Helper function for correct loading
@@ -96,25 +97,26 @@ public:
 
 protected:
 	/// Per sub mesh data
-	struct SubMesh
+	class SubMesh
 	{
-		U32 indicesCount;
-		U32 indicesOffset;
-		Obb obb;
+	public:
+		U32 m_indicesCount;
+		U32 m_indicesOffset;
+		Obb m_obb;
 	};
 
-	Vector<SubMesh> subMeshes;
-	U32 indicesCount;
-	U32 vertsCount;
-	Obb obb;
-	U8 texChannelsCount;
-	Bool8 weights;
+	Vector<SubMesh> m_subMeshes;
+	U32 m_indicesCount;
+	U32 m_vertsCount;
+	Obb m_obb;
+	U8 m_texChannelsCount;
+	Bool8 m_weights;
 
-	GlBuffer vbo;
-	GlBuffer indicesVbo;
+	GlBufferHandle m_vertBuff;
+	GlBufferHandle m_indicesBuff;
 
 	/// Create the VBOs using the mesh data
-	void createVbos(const MeshLoader& loader);
+	void createBuffers(const MeshLoader& loader);
 
 	U32 calcVertexSize() const;
 };

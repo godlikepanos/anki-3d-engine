@@ -5,41 +5,41 @@
 #include "anki/collision/Plane.h"
 #include "anki/collision/Obb.h"
 #include "anki/Math.h"
-#include <array>
+#include "anki/util/Array.h"
 
 namespace anki {
 
 /// @addtogroup Collision
 /// @{
 
+/// Frustum type
+enum class FrustumType: U8
+{
+	PERSPECTIVE,
+	ORTHOGRAPHIC
+};
+
+/// The 6 frustum planes
+enum class FrustumPlane: U8
+{
+	NEAR,
+	FAR,
+	LEFT,
+	RIGHT,
+	TOP,
+	BOTTOM,
+	COUNT ///< Number of planes
+};
+
 /// Frustum collision shape. This shape consists from 6 planes. The planes are
 /// being used to find shapes that are inside the frustum
 class Frustum: public CollisionShape
 {
 public:
-	/// Frustum type
-	enum FrustumType
-	{
-		FT_PERSPECTIVE,
-		FT_ORTHOGRAPHIC
-	};
-
-	/// The 6 planes
-	enum FrustrumPlane
-	{
-		FP_NEAR,
-		FP_FAR,
-		FP_LEFT,
-		FP_RIGHT,
-		FP_TOP,
-		FP_BOTTOM,
-		FP_COUNT ///< Number of planes
-	};
-
 	/// @name Constructors
 	/// @{
-	Frustum(FrustumType type_)
-		: CollisionShape(CST_FRUSTUM), type(type_)
+	Frustum(FrustumType type)
+		: CollisionShape(Type::FRUSTUM), m_type(type)
 	{}
 
 	virtual ~Frustum()
@@ -50,26 +50,26 @@ public:
 	/// @{
 	FrustumType getFrustumType() const
 	{
-		return type;
+		return m_type;
 	}
 
 	F32 getNear() const
 	{
-		return near;
+		return m_near;
 	}
 	void setNear(const F32 x)
 	{
-		near = x;
+		m_near = x;
 		recalculate();
 	}
 
 	F32 getFar() const
 	{
-		return far;
+		return m_far;
 	}
 	void setFar(const F32 x)
 	{
-		far = x;
+		m_far = x;
 		recalculate();
 	}
 	/// @}
@@ -103,19 +103,19 @@ public:
 	virtual void setTransform(const Transform& trf) = 0;
 
 	/// Implements CollisionShape::toAbb
-	void toAabb(Aabb& aabb) const;
+	void computeAabb(Aabb& aabb) const;
 
 protected:
 	/// @name Viewing variables
 	/// @{
-	F32 near = 0.0;
-	F32 far = 0.0;
+	F32 m_near = 0.0;
+	F32 m_far = 0.0;
 	/// @}
 
 	/// Used to check against the frustum
-	std::array<Plane, FP_COUNT> planes;
+	Array<Plane, (U)FrustumPlane::COUNT> m_planes;
 
-	Transform trf = Transform::getIdentity(); ///< Retain the transformation
+	Transform m_trf = Transform::getIdentity(); ///< Retain the transformation
 
 	/// Called when a viewing variable changes. It recalculates the planes and
 	/// the other variables
@@ -126,14 +126,14 @@ protected:
 
 	void transformPlanes()
 	{
-		for(Plane& p : planes)
+		for(Plane& p : m_planes)
 		{
-			p.transform(trf);
+			p.transform(m_trf);
 		}
 	}
 
 private:
-	FrustumType type;
+	FrustumType m_type;
 };
 
 /// Frustum shape for perspective cameras
@@ -145,21 +145,21 @@ public:
 
 	/// Default
 	PerspectiveFrustum()
-		: Frustum(FT_PERSPECTIVE)
+		: Frustum(FrustumType::PERSPECTIVE)
 	{}
 
 	/// Copy
 	PerspectiveFrustum(const PerspectiveFrustum& b)
-		: Frustum(FT_PERSPECTIVE)
+		: Frustum(FrustumType::PERSPECTIVE)
 	{
 		*this = b;
 	}
 
 	/// Set all
-	PerspectiveFrustum(F32 fovX_, F32 fovY_, F32 near_, F32 far_)
-		: Frustum(FT_PERSPECTIVE)
+	PerspectiveFrustum(F32 fovX, F32 fovY, F32 near, F32 far)
+		: Frustum(FrustumType::PERSPECTIVE)
 	{
-		setAll(fovX_, fovY_, near_, far_);
+		setAll(fovX, fovY, near, far);
 	}
 	/// @}
 
@@ -167,37 +167,37 @@ public:
 	/// @{
 	F32 getFovX() const
 	{
-		return fovX;
+		return m_fovX;
 	}
 	void setFovX(F32 ang)
 	{
-		fovX = ang;
+		m_fovX = ang;
 		recalculate();
 	}
 
 	F32 getFovY() const
 	{
-		return fovY;
+		return m_fovY;
 	}
 	void setFovY(F32 ang)
 	{
-		fovY = ang;
+		m_fovY = ang;
 		recalculate();
 	}
 
 	/// Set all the parameters and recalculate the planes and shape
-	void setAll(F32 fovX_, F32 fovY_, F32 near_, F32 far_)
+	void setAll(F32 fovX, F32 fovY, F32 near, F32 far)
 	{
-		fovX = fovX_;
-		fovY = fovY_,
-		near = near_;
-		far = far_;
+		m_fovX = fovX;
+		m_fovY = fovY,
+		m_near = near;
+		m_far = far;
 		recalculate();
 	}
 
 	const Array<Vec3, 4>& getDirections() const
 	{
-		return dirs;
+		return m_dirs;
 	}
 	/// @}
 
@@ -224,20 +224,20 @@ public:
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const;
 
-	/// Implements CollisionShape::toAabb
-	void toAabb(Aabb& aabb) const;
+	/// Implements CollisionShape::computeAabb
+	void computeAabb(Aabb& aabb) const;
 
 private:
 	/// @name Viewing variables
 	/// @{
-	F32 fovX = 0.0;
-	F32 fovY = 0.0;
+	F32 m_fovX = 0.0;
+	F32 m_fovY = 0.0;
 	/// @}
 
 	/// @name Shape
 	/// @{
-	Vec3 eye; ///< The eye point
-	Array<Vec3, 4> dirs; ///< Directions
+	Vec3 m_eye; ///< The eye point
+	Array<Vec3, 4> m_dirs; ///< Directions
 	/// @}
 
 	/// Implements CollisionShape::recalculate. Recalculate:
@@ -259,22 +259,22 @@ public:
 
 	/// Default
 	OrthographicFrustum()
-		: Frustum(FT_ORTHOGRAPHIC)
+		: Frustum(FrustumType::ORTHOGRAPHIC)
 	{}
 
 	/// Copy
 	OrthographicFrustum(const OrthographicFrustum& b)
-		: Frustum(FT_ORTHOGRAPHIC)
+		: Frustum(FrustumType::ORTHOGRAPHIC)
 	{
 		*this = b;
 	}
 
 	/// Set all
-	OrthographicFrustum(F32 left_, F32 right_, F32 near_,
-		F32 far_, F32 top_, F32 bottom_)
-		: Frustum(FT_ORTHOGRAPHIC)
+	OrthographicFrustum(F32 left, F32 right, F32 near,
+		F32 far, F32 top, F32 bottom)
+		: Frustum(FrustumType::ORTHOGRAPHIC)
 	{
-		setAll(left_, right_, near_, far_, top_, bottom_);
+		setAll(left, right, near, far, top, bottom);
 	}
 	/// @}
 
@@ -282,61 +282,61 @@ public:
 	/// @{
 	F32 getLeft() const
 	{
-		return left;
+		return m_left;
 	}
 	void setLeft(F32 f)
 	{
-		left = f;
+		m_left = f;
 		recalculate();
 	}
 
 	F32 getRight() const
 	{
-		return right;
+		return m_right;
 	}
 	void setRight(F32 f)
 	{
-		right = f;
+		m_right = f;
 		recalculate();
 	}
 
 	F32 getTop() const
 	{
-		return top;
+		return m_top;
 	}
 	void setTop(F32 f)
 	{
-		top = f;
+		m_top = f;
 		recalculate();
 	}
 
 	F32 getBottom() const
 	{
-		return bottom;
+		return m_bottom;
 	}
 	void setBottom(F32 f)
 	{
-		bottom = f;
+		m_bottom = f;
 		recalculate();
 	}
 
 	/// Set all
-	void setAll(F32 left_, F32 right_, F32 near_,
-		F32 far_, F32 top_, F32 bottom_)
+	void setAll(F32 left, F32 right, F32 near,
+		F32 far, F32 top, F32 bottom)
 	{
-		left = left_;
-		right = right_;
-		near = near_;
-		far = far_;
-		top = top_;
-		bottom = bottom_;
+		m_left = left;
+		m_right = right;
+		m_near = near;
+		m_far = far;
+		m_top = top;
+		m_bottom = bottom;
 		recalculate();
 	}
 
 	/// Needed for debug drawing
 	const Obb& getObb() const
 	{
-		return obb;
+		return m_obb;
 	}
 	/// @}
 
@@ -346,7 +346,7 @@ public:
 	/// Implements CollisionShape::testPlane
 	F32 testPlane(const Plane& p) const
 	{
-		return obb.testPlane(p);
+		return m_obb.testPlane(p);
 	}
 
 	/// Override Frustum::transform
@@ -355,10 +355,10 @@ public:
 	/// Implements Frustum::setTransform
 	void setTransform(const Transform& trf);
 
-	/// Implements CollisionShape::toAabb
-	void toAabb(Aabb& aabb) const
+	/// Implements CollisionShape::computeAabb
+	void computeAabb(Aabb& aabb) const
 	{
-		obb.toAabb(aabb);
+		m_obb.computeAabb(aabb);
 	}
 
 	/// Implements Frustum::calculateProjectionMatrix
@@ -375,12 +375,12 @@ public:
 private:
 	/// @name Viewing variables
 	/// @{
-	F32 left = 0.0, right = 0.0, top = 0.0, bottom = 0.0;
+	F32 m_left = 0.0, m_right = 0.0, m_top = 0.0, m_bottom = 0.0;
 	/// @}
 
 	/// @name Shape
 	/// @{
-	Obb obb; ///< Including shape
+	Obb m_obb; ///< Including shape
 	/// @}
 
 	/// Implements CollisionShape::recalculate. Recalculate @a planes and
@@ -390,7 +390,7 @@ private:
 	/// Transform the @a obb using @a Frustrum::trf
 	void transformShape()
 	{
-		obb.transform(trf);
+		m_obb.transform(m_trf);
 	}
 };
 /// @}

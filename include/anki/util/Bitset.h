@@ -5,9 +5,7 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup containers
+/// @addtogroup util_containers
 /// @{
 
 /// Easy bit manipulation
@@ -18,50 +16,49 @@ public:
 	typedef T Value;
 
 	Bitset()
-		: bitmask(0)
+		: m_bitmask(0)
 	{}
 
-	Bitset(T bitmask_)
-		: bitmask(bitmask_)
+	Bitset(T bitmask)
+		: m_bitmask(bitmask)
 	{}
 
 	/// @name Bits manipulation
 	/// @{
 	void enableBits(Value mask)
 	{
-		bitmask |= mask;
+		m_bitmask |= mask;
 	}
 	void enableBits(Value mask, Bool enable)
 	{
-		bitmask = (enable) ? bitmask | mask : bitmask & ~mask;
+		m_bitmask = (enable) ? m_bitmask | mask : m_bitmask & ~mask;
 	}
 
 	void disableBits(Value mask)
 	{
-		bitmask &= ~mask;
+		m_bitmask &= ~mask;
 	}
 
 	void switchBits(Value mask)
 	{
-		bitmask ^= mask;
+		m_bitmask ^= mask;
 	}
 
 	Bool bitsEnabled(Value mask) const
 	{
-		return bitmask & mask;
+		return m_bitmask & mask;
 	}
 
 	Value getBitmask() const
 	{
-		return bitmask;
+		return m_bitmask;
 	}
 	/// @}
 
 protected:
-	Value bitmask;
+	Value m_bitmask;
 };
 
-/// @}
 /// @}
 
 } // end namespace anki

@@ -3,28 +3,86 @@
 
 #include "anki/util/Assert.h"
 #include "anki/util/StdTypes.h"
+#include "anki/util/Allocator.h"
 #include <lua.hpp>
 #ifndef ANKI_LUA_HPP
-#	error "See file"
+#	error "Wrong LUA header included"
 #endif
+#include <functional>
 
 namespace anki {
 
+//==============================================================================
+// Flags
+enum BinderFlag: U8
+{
+	NONE = 0,
+	TRANFER_OWNERSHIP = 1 ///< Transfer owneship to LUA garbage collector
+};
+
+inline BinderFlag operator|(BinderFlag a, BinderFlag b)
+{
+	typedef std::underlying_type<BinderFlag>::type Int;
+	return static_cast<BinderFlag>(static_cast<Int>(a) | static_cast<Int>(b));
+}
+
+inline BinderFlag operator&(BinderFlag a, BinderFlag b)
+{
+	typedef std::underlying_type<BinderFlag>::type Int;
+	return static_cast<BinderFlag>(static_cast<Int>(a) & static_cast<Int>(b));
+}
+
+/// Lua binder class. A wrapper on top of LUA
+class LuaBinder
+{
+public:
+	template<typename T>
+	using Allocator = HeapAllocator<T>;
+
+	LuaBinder();
+	~LuaBinder();
+
+	/// @name Accessors
+	/// {
+	lua_State* _getLuaState()
+	{
+		return m_l;
+	}
+
+	Allocator<U8> _getAllocator() const
+	{
+		return m_alloc;
+	}
+	/// }
+
+	/// Expose a variable to the lua state
+	template<typename T>
+	void exposeVariable(const char* name, T* y);
+
+	/// Evaluate a file
+	void evalFile(const char* filename);
+	/// Evaluate a string
+	void evalString(const char* str);
+
+	/// For debugging purposes
+	static void stackDump(lua_State* l);
+
+private:
+	Allocator<U8> m_alloc;
+	lua_State* m_l = nullptr;
+};
+
 /// Internal lua stuff
-namespace lua_detail {
+namespace detail {
 
 //==============================================================================
 /// lua userdata
-struct UserData
+class UserData
 {
-	void* ptr = nullptr;
-	Bool8 gc = false; ///< Garbage collection on?
+public:
+	void* m_ptr = nullptr;
+	Bool8 m_gc = false; ///< Garbage collection on?
 };
-
-//==============================================================================
-// Flags
-constexpr U32 LF_NONE = 0;
-constexpr U32 LF_TRANFER_OWNERSHIP = 1;
 
 //==============================================================================
 /// Class identification
@@ -33,9 +91,15 @@ struct ClassProxy
 {
 	static const char* NAME; ///< Used to check the signature of the user data
 
+	static void setName(const char* name)
+	{
+		ANKI_ASSERT(NAME == nullptr && "Class already wrapped elsewhere");
+		NAME = name;
+	}
+
 	static const char* getName()
 	{
-		ANKI_ASSERT(NAME != nullptr && "Class already wrapped elsewhere");
+		ANKI_ASSERT(NAME != nullptr && "Class not wrapped");
 		return NAME;
 	}
 };
@@ -46,87 +110,92 @@ const char* ClassProxy<Class>::NAME = nullptr;
 //==============================================================================
 
 /// Make sure that the arguments match the argsCount number
-extern void checkArgsCount(lua_State* l, I argsCount);
+void checkArgsCount(lua_State* l, I argsCount);
 
 /// Create a new LUA class
-extern void createClass(lua_State* l, const char* className);
+void createClass(lua_State* l, const char* className);
 
 /// Add new function in a class that it's already in the stack
-extern void pushCFunctionMethod(lua_State* l, const char* name,
+void pushCFunctionMethod(lua_State* l, const char* name,
 	lua_CFunction luafunc);
 
 /// Add a new static function in the class
-extern void pushCFunctionStatic(lua_State* l, const char* className,
+void pushCFunctionStatic(lua_State* l, const char* className,
 	const char* name, lua_CFunction luafunc);
 
 //==============================================================================
 /// Used mainly to push a method's return value to the stack
-template<typename Class, U32 flags>
+template<typename Class, BinderFlag flags>
 struct PushStack
 {
 	void operator()(lua_State* l, Class& x)
 	{
 		UserData* d = (UserData*)lua_newuserdata(l, sizeof(UserData));
 		luaL_setmetatable(l, ClassProxy<Class>::getName());
-		d->ptr = new Class(x);
-		d->gc = true;
+
+		LuaBinder* binder = (LuaBinder*)lua_getuserdata(l);
+		ANKI_ASSERT(binder);
+		LuaBinder::Allocator<U8> alloc = binder->_getAllocator();
+
+		d->m_ptr = alloc.template newInstance<Class>(x);
+		d->m_gc = true;
 	}
 };
 
 // Specialization ref
-template<typename Class, U32 flags>
+template<typename Class, BinderFlag flags>
 struct PushStack<Class&, flags>
 {
 	void operator()(lua_State* l, Class& x)
 	{
 		UserData* d = (UserData*)lua_newuserdata(l, sizeof(UserData));
 		luaL_setmetatable(l, ClassProxy<Class>::getName());
-		d->ptr = &x;
-		d->gc = flags & LF_TRANFER_OWNERSHIP;
+		d->m_ptr = &x;
+		d->m_gc = (flags & BinderFlag::TRANFER_OWNERSHIP) != BinderFlag::NONE;
 	}
 };
 
 // Specialization const ref
-template<typename Class, U32 flags>
+template<typename Class, BinderFlag flags>
 struct PushStack<const Class&, flags>
 {
 	void operator()(lua_State* l, const Class& x)
 	{
 		UserData* d = (UserData*)lua_newuserdata(l, sizeof(UserData));
 		luaL_setmetatable(l, ClassProxy<Class>::getName());
-		d->ptr = &const_cast<Class&>(x);
-		d->gc = flags & LF_TRANFER_OWNERSHIP;
+		d->m_ptr = &const_cast<Class&>(x);
+		d->m_gc = (flags & BinderFlag::TRANFER_OWNERSHIP) != BinderFlag::NONE;
 	}
 };
 
 // Specialization ptr
-template<typename Class, U32 flags>
+template<typename Class, BinderFlag flags>
 struct PushStack<Class*, flags>
 {
 	void operator()(lua_State* l, Class* x)
 	{
 		UserData* d = (UserData*)lua_newuserdata(l, sizeof(UserData));
 		luaL_setmetatable(l, ClassProxy<Class>::getName());
-		d->ptr = x;
-		d->gc = flags & LF_TRANFER_OWNERSHIP;
+		d->m_ptr = x;
+		d->m_gc = (flags & BinderFlag::TRANFER_OWNERSHIP) != BinderFlag::NONE;
 	}
 };
 
 // Specialization const ptr
-template<typename Class, U32 flags>
+template<typename Class, BinderFlag flags>
 struct PushStack<const Class*, flags>
 {
 	void operator()(lua_State* l, Class* x)
 	{
 		UserData* d = (UserData*)lua_newuserdata(l, sizeof(UserData));
 		luaL_setmetatable(l, ClassProxy<Class>::getName());
-		d->ptr = const_cast<Class*>(x);
-		d->gc = flags & LF_TRANFER_OWNERSHIP;
+		d->m_ptr = const_cast<Class*>(x);
+		d->m_gc = (flags & BinderFlag::TRANFER_OWNERSHIP) != BinderFlag::NONE;
 	}
 };
 
 // Specialization const char*
-template<U32 flags>
+template<BinderFlag flags>
 struct PushStack<const char*, flags>
 {
 	void operator()(lua_State* l, const char* x)
@@ -136,7 +205,7 @@ struct PushStack<const char*, flags>
 };
 
 #define ANKI_PUSH_STACK_TEMPLATE_SPECIALIZATION(Type_, luafunc_) \
-	template<U32 flags> \
+	template<BinderFlag flags> \
 	struct PushStack<Type_, flags> \
 	{ \
 		void operator()(lua_State* l, Type_ x) \
@@ -167,7 +236,7 @@ struct StackGet
 		UserData* udata = (UserData*)luaL_checkudata(l, stackIndex, 
 			ClassProxy<Class>::getName());
 
-		const Class* a = reinterpret_cast<const Class*>(udata->ptr);
+		const Class* a = reinterpret_cast<const Class*>(udata->m_ptr);
 		return Class(*a);
 	}
 };
@@ -181,7 +250,7 @@ struct StackGet<const Class&, stackIndex>
 		UserData* udata = (UserData*)luaL_checkudata(l, stackIndex, 
 			ClassProxy<Class>::getName());
 
-		const Class* a = reinterpret_cast<const Class*>(udata->ptr);
+		const Class* a = reinterpret_cast<const Class*>(udata->m_ptr);
 		return *a;
 	}
 };
@@ -195,7 +264,7 @@ struct StackGet<Class&, stackIndex>
 		UserData* udata = (UserData*)luaL_checkudata(l, stackIndex, 
 			ClassProxy<Class>::getName());
 
-		Class* a = reinterpret_cast<Class*>(udata->ptr);
+		Class* a = reinterpret_cast<Class*>(udata->m_ptr);
 		return *a;
 	}
 };
@@ -209,7 +278,7 @@ struct StackGet<const Class*, stackIndex>
 		UserData* udata = (UserData*)luaL_checkudata(l, stackIndex, 
 			ClassProxy<Class>::getName());
 
-		const Class* a = reinterpret_cast<const Class*>(udata->ptr);
+		const Class* a = reinterpret_cast<const Class*>(udata->m_ptr);
 		return a;
 	}
 };
@@ -223,7 +292,7 @@ struct StackGet<Class*, stackIndex>
 		UserData* udata = (UserData*)luaL_checkudata(l, stackIndex, 
 			ClassProxy<Class>::getName());
 
-		Class* a = reinterpret_cast<Class*>(udata->ptr);
+		Class* a = reinterpret_cast<Class*>(udata->m_ptr);
 		return a;
 	}
 };
@@ -231,6 +300,30 @@ struct StackGet<Class*, stackIndex>
 #define ANKI_STACK_GET_TEMPLATE_SPECIALIZATION(Type_, luafunc_) \
 	template<I stackIndex> \
 	struct StackGet<Type_, stackIndex> \
+	{ \
+		Type_ operator()(lua_State* l) \
+		{ \
+			return luafunc_(l, stackIndex); \
+		} \
+	}; \
+	template<I stackIndex> \
+	struct StackGet<Type_&&, stackIndex> \
+	{ \
+		Type_ operator()(lua_State* l) \
+		{ \
+			return luafunc_(l, stackIndex); \
+		} \
+	}; \
+	template<I stackIndex> \
+	struct StackGet<Type_&, stackIndex> \
+	{ \
+		Type_ operator()(lua_State* l) \
+		{ \
+			return luafunc_(l, stackIndex); \
+		} \
+	}; \
+	template<I stackIndex> \
+	struct StackGet<Type_*, stackIndex> \
 	{ \
 		Type_ operator()(lua_State* l) \
 		{ \
@@ -253,11 +346,11 @@ ANKI_STACK_GET_TEMPLATE_SPECIALIZATION(Bool, luaL_checkunsigned)
 
 //==============================================================================
 /// Call a function
-template<typename T, U32 flags>
+template<typename T, BinderFlag flags>
 struct CallFunction;
 
 // R (_1)
-template<typename TReturn, typename Arg0, U32 flags>
+template<typename TReturn, typename Arg0, BinderFlag flags>
 struct CallFunction<TReturn (*)(Arg0), flags>
 {
 	int operator()(lua_State* l, TReturn (*func)(Arg0))
@@ -270,7 +363,7 @@ struct CallFunction<TReturn (*)(Arg0), flags>
 };
 
 // R (_1, _2)
-template<typename TReturn, typename Arg0, typename Arg1, U32 flags>
+template<typename TReturn, typename Arg0, typename Arg1, BinderFlag flags>
 struct CallFunction<TReturn (*)(Arg0, Arg1), flags>
 {
 	int operator()(lua_State* l, TReturn (*func)(Arg0, Arg1))
@@ -285,7 +378,7 @@ struct CallFunction<TReturn (*)(Arg0, Arg1), flags>
 
 // R (_1, _2, _3)
 template<typename TReturn, typename Arg0, typename Arg1, typename Arg2,
-	U32 flags>
+	BinderFlag flags>
 struct CallFunction<TReturn (*)(Arg0, Arg1, Arg2), flags>
 {
 	int operator()(lua_State* l, TReturn (*func)(Arg0, Arg1, Arg2))
@@ -299,7 +392,7 @@ struct CallFunction<TReturn (*)(Arg0, Arg1, Arg2), flags>
 };
 
 // void (_1)
-template<typename Arg0, U32 flags>
+template<typename Arg0, BinderFlag flags>
 struct CallFunction<void (*)(Arg0), flags>
 {
 	int operator()(lua_State* l, void (*func)(Arg0))
@@ -310,7 +403,7 @@ struct CallFunction<void (*)(Arg0), flags>
 };
 
 // void (_1, _2)
-template<typename Arg0, typename Arg1, U32 flags>
+template<typename Arg0, typename Arg1, BinderFlag flags>
 struct CallFunction<void (*)(Arg0, Arg1), flags>
 {
 	int operator()(lua_State* l, void (*func)(Arg0, Arg1))
@@ -321,7 +414,7 @@ struct CallFunction<void (*)(Arg0, Arg1), flags>
 };
 
 // void (_1, _2, _3)
-template<typename Arg0, typename Arg1, typename Arg2, U32 flags>
+template<typename Arg0, typename Arg1, typename Arg2, BinderFlag flags>
 struct CallFunction<void (*)(Arg0, Arg1, Arg2), flags>
 {
 	int operator()(lua_State* l, void (*func)(Arg0, Arg1, Arg2))
@@ -332,8 +425,21 @@ struct CallFunction<void (*)(Arg0, Arg1, Arg2), flags>
 	}
 };
 
+// void (_1, _2, _3, _4)
+template<typename Arg0, typename Arg1, typename Arg2, typename Arg3, 
+	BinderFlag flags>
+struct CallFunction<void (*)(Arg0, Arg1, Arg2, Arg3), flags>
+{
+	int operator()(lua_State* l, void (*func)(Arg0, Arg1, Arg2, Arg3))
+	{
+		(*func)(StackGet<Arg0, 1>()(l), StackGet<Arg1, 2>()(l),
+			StackGet<Arg2, 3>()(l), StackGet<Arg3, 4>()(l));
+		return 0;
+	}
+};
+
 // R (void)
-template<typename TReturn, U32 flags>
+template<typename TReturn, BinderFlag flags>
 struct CallFunction<TReturn (*)(void), flags>
 {
 	int operator()(lua_State* l, TReturn (*func)(void))
@@ -346,7 +452,7 @@ struct CallFunction<TReturn (*)(void), flags>
 };
 
 // void (void)
-template<U32 flags>
+template<BinderFlag flags>
 struct CallFunction<void (*)(void), flags>
 {
 	int operator()(lua_State* /*l*/, void (*func)(void))
@@ -365,9 +471,12 @@ struct CallConstructor;
 template<typename Class>
 struct CallConstructor<Class>
 {
-	Class* operator()(lua_State*)
+	Class* operator()(lua_State* l)
 	{
-		return new Class();
+		LuaBinder* binder = (LuaBinder*)lua_getuserdata(l);
+		ANKI_ASSERT(binder);
+		LuaBinder::Allocator<U8> alloc = binder->_getAllocator();
+		return alloc.template newInstance<Class>();
 	}
 };
 
@@ -377,7 +486,10 @@ struct CallConstructor<Class, Arg0>
 {
 	Class* operator()(lua_State* l)
 	{
-		return new Class(StackGet<Arg0, 1>()(l));
+		LuaBinder* binder = (LuaBinder*)lua_getuserdata(l);
+		ANKI_ASSERT(binder);
+		LuaBinder::Allocator<U8> alloc = binder->_getAllocator();
+		return alloc.template newInstance<Class>(StackGet<Arg0, 1>()(l));
 	}
 };
 
@@ -387,7 +499,11 @@ struct CallConstructor<Class, Arg0, Arg1>
 {
 	Class* operator()(lua_State* l)
 	{
-		return new Class(StackGet<Arg0, 1>()(l), StackGet<Arg1, 2>()(l));
+		LuaBinder* binder = (LuaBinder*)lua_getuserdata(l);
+		ANKI_ASSERT(binder);
+		LuaBinder::Allocator<U8> alloc = binder->_getAllocator();
+		return alloc.template newInstance<Class>(StackGet<Arg0, 1>()(l),
+			StackGet<Arg1, 2>()(l));
 	}
 };
 
@@ -397,8 +513,11 @@ struct CallConstructor<Class, Arg0, Arg1, Arg2>
 {
 	Class* operator()(lua_State* l)
 	{
-		return new Class(StackGet<Arg0, 1>()(l), StackGet<Arg1, 2>()(l),
-			StackGet<Arg2, 3>()(l));
+		LuaBinder* binder = (LuaBinder*)lua_getuserdata(l);
+		ANKI_ASSERT(binder);
+		LuaBinder::Allocator<U8> alloc = binder->_getAllocator();
+		return alloc.template newInstance<Class>(StackGet<Arg0, 1>()(l),
+			StackGet<Arg1, 2>()(l), StackGet<Arg2, 3>()(l));
 	}
 };
 
@@ -409,8 +528,12 @@ struct CallConstructor<Class, Arg0, Arg1, Arg2, Arg3>
 {
 	Class* operator()(lua_State* l)
 	{
-		return new Class(StackGet<Arg0, 1>()(l), StackGet<Arg1, 2>()(l),
-			StackGet<Arg2, 3>()(l), StackGet<Arg3, 4>()(l));
+		LuaBinder* binder = (LuaBinder*)lua_getuserdata(l);
+		ANKI_ASSERT(binder);
+		LuaBinder::Allocator<U8> alloc = binder->_getAllocator();
+		return alloc.template newInstance<Class>(StackGet<Arg0, 1>()(l),
+			StackGet<Arg1, 2>()(l), StackGet<Arg2, 3>()(l),
+			StackGet<Arg3, 4>()(l));
 	}
 };
 
@@ -418,37 +541,28 @@ struct CallConstructor<Class, Arg0, Arg1, Arg2, Arg3>
 /// Make a method function. Used like this:
 /// @code
 /// Foo foo; // An instance
-/// MethodFunctionalizer<decltype(Foo::bar)>::In<Foo::bar>::func(&foo, 123);
+/// MethodFunctionalizer<decltype(&Foo::bar), &Foo::bar>::func(&foo, 123);
 /// // Equivelent of:
 /// foo.bar(123);
 /// @endcode
-template<typename T>
-struct MethodFunctionalizer;
+template <typename T, T> struct MethodFunctionalizer;
 
-template<typename Class, typename TReturn, typename... Args>
-struct MethodFunctionalizer<TReturn (Class::*)(Args...)>
+template <typename T, typename R, typename ...Args, R (T::* mf)(Args...)>
+struct MethodFunctionalizer<R (T::*)(Args...), mf>
 {
-	template<TReturn (Class::* method)(Args...)>
-	struct In
-	{
-		static TReturn func(Class* self, Args... args)
-		{
-			return (self->*method)(args...);
-		}
-	};
+    static R func(T* obj, Args&&... args)
+    {
+        return (obj->*mf)(std::forward<Args>(args)...);
+    }
 };
 
-template<typename Class, typename TReturn, typename... Args>
-struct MethodFunctionalizer<TReturn (Class::*)(Args...) const>
+template <typename T, typename R, typename ...Args, R (T::* mf)(Args...) const>
+struct MethodFunctionalizer<R (T::*)(Args...) const, mf>
 {
-	template<TReturn (Class::* method)(Args...) const>
-	struct In
-	{
-		static TReturn func(const Class* self, Args... args)
-		{
-			return (self->*method)(args...);
-		}
-	};
+    static R func(const T* obj, Args&&... args)
+    {
+        return (obj->*mf)(std::forward<Args>(args)...);
+    }
 };
 
 //==============================================================================
@@ -463,8 +577,8 @@ struct ConstructorSignature
 
 		luaL_setmetatable(l, ClassProxy<Class>::getName());
 
-		d->ptr = CallConstructor<Class, Args...>()(l);
-		d->gc = true;
+		d->m_ptr = CallConstructor<Class, Args...>()(l);
+		d->m_gc = true;
 		return 1;
 	}
 };
@@ -479,10 +593,14 @@ struct DestructorSignature
 		checkArgsCount(l, 1);
 		UserData* d = (UserData*)luaL_checkudata(l, 1, 
 			ClassProxy<Class>::getName());
-		if(d->gc)
+		if(d->m_gc)
 		{
-			Class* obj = reinterpret_cast<Class*>(d->ptr);
-			delete obj;
+			Class* obj = reinterpret_cast<Class*>(d->m_ptr);
+
+			LuaBinder* binder = (LuaBinder*)lua_getuserdata(l);
+			ANKI_ASSERT(binder);
+			LuaBinder::Allocator<U8> alloc = binder->_getAllocator();
+			alloc.deleteInstance(obj);
 		}
 		return 0;
 	}
@@ -490,39 +608,38 @@ struct DestructorSignature
 
 //==============================================================================
 /// Function signature
-template<U32 flags, typename T>
+template<BinderFlag flags, typename T, T>
 struct FunctionSignature;
 
-template<U32 flags, typename TReturn, typename... Args>
-struct FunctionSignature<flags, TReturn (*)(Args...)>
+template<BinderFlag flags, typename TReturn, typename... TArgs, 
+	TReturn (*f)(TArgs...)>
+struct FunctionSignature<flags, TReturn (*)(TArgs...), f>
 {
-	template<TReturn (* func)(Args...)>
 	static int luafunc(lua_State* l)
 	{
-		checkArgsCount(l, sizeof...(Args));
-		auto ff = func; // A hack that saves GCC
-		CallFunction<decltype(ff), flags> cf;
-		return cf(l, func);
+		checkArgsCount(l, sizeof...(TArgs));
+		CallFunction<decltype(f), flags> cf;
+		return cf(l, f);
 	}
 };
 
-} // end namespace lua_detail
+} // end namespace detail
 
 //==============================================================================
 // Macros
 
 /// Don't use it directly
 #define ANKI_LUA_DESTRUCTOR() \
-	lua_detail::pushCFunctionMethod(l_, "__gc", \
-		&lua_detail::DestructorSignature<Class>::luafunc);
+	detail::pushCFunctionMethod(l_, "__gc", \
+		&detail::DestructorSignature<Class>::luafunc);
 
 /// Start wrapping a class. Don't add a destructor (if for example the class 
 /// has a private derstructor)
 #define ANKI_LUA_CLASS_BEGIN_NO_DESTRUCTOR(luaBinder_, Class_) { \
 	typedef Class_ Class; \
 	lua_State* l_ = luaBinder_._getLuaState(); \
-	lua_detail::ClassProxy<Class>::NAME = #Class_; \
-	lua_detail::createClass(l_, lua_detail::ClassProxy<Class>::getName());
+	detail::ClassProxy<Class>::setName(#Class_); \
+	detail::createClass(l_, detail::ClassProxy<Class>::getName());
 
 /// Start wrapping a class
 #define ANKI_LUA_CLASS_BEGIN(luaBinder_, Class_) \
@@ -534,81 +651,66 @@ struct FunctionSignature<flags, TReturn (*)(Args...)>
 
 /// Define a constructor. Call it from lua @code a = Foo.new(...) @endcode.
 #define ANKI_LUA_CONSTRUCTOR(...) \
-	lua_detail::pushCFunctionStatic(l_, \
-		lua_detail::ClassProxy<Class>::getName(), "new", \
-		&lua_detail::ConstructorSignature<Class, __VA_ARGS__>::luafunc);
+	detail::pushCFunctionStatic(l_, \
+		detail::ClassProxy<Class>::getName(), "new", \
+		&detail::ConstructorSignature<Class, __VA_ARGS__>::luafunc);
+
+/// Define an empty constructor. Call it from lua @code a = Foo.new() @endcode.
+#define ANKI_LUA_EMPTY_CONSTRUCTOR() \
+	detail::pushCFunctionStatic(l_, \
+		detail::ClassProxy<Class>::getName(), "new", \
+		&detail::ConstructorSignature<Class>::luafunc);
 
 /// Define a static method with flags
-#define ANKI_LUA_STATIC_METHOD_FLAGS(name_, smethodPtr_, flags_) \
-	lua_detail::pushCFunctionStatic(l_, \
-		lua_detail::ClassProxy<Class>::getName(), name_, \
-		&lua_detail::FunctionSignature<flags_, \
-		decltype(smethodPtr_)>::luafunc<smethodPtr_>);
+#define ANKI_LUA_STATIC_METHOD_DETAIL( \
+	name_, SMethodType_, smethodPtr_, flags_) \
+	detail::pushCFunctionStatic(l_, \
+		detail::ClassProxy<Class>::getName(), name_, \
+		(&detail::FunctionSignature<flags_, \
+		SMethodType_, smethodPtr_>::luafunc));
 
 /// Define a static method no flags
 #define ANKI_LUA_STATIC_METHOD(name_, smethodPtr_) \
-	ANKI_LUA_STATIC_METHOD_FLAGS(name_, smethodPtr_, lua_detail::LF_NONE)
+	ANKI_LUA_STATIC_METHOD_DETAIL(name_, decltype(smethodPtr_), smethodPtr_, \
+		BinderFlag::NONE)
 
 /// Define a function as method with flags
-#define ANKI_LUA_FUNCTION_AS_METHOD_FLAGS(name_, funcPtr_, flags_) \
-	lua_detail::pushCFunctionMethod(l_, name_, \
-		&lua_detail::FunctionSignature<flags_, \
-		decltype(funcPtr_)>::luafunc<funcPtr_>);
+#define ANKI_LUA_FUNCTION_AS_METHOD_DETAIL( \
+	name_, FuncType_, funcPtr_, flags_) \
+	detail::pushCFunctionMethod(l_, name_, \
+		(&detail::FunctionSignature<flags_, FuncType_, \
+			funcPtr_>::luafunc));
 
 /// Define a function as method no flags
 #define ANKI_LUA_FUNCTION_AS_METHOD(name_, funcPtr_) \
-	ANKI_LUA_FUNCTION_AS_METHOD_FLAGS(name_, funcPtr_, lua_detail::LF_NONE)
+	ANKI_LUA_FUNCTION_AS_METHOD_DETAIL( \
+		name_, decltype(funcPtr_), funcPtr_, BinderFlag::NONE)
 
 /// Define a method with flags
-#define ANKI_LUA_METHOD_FLAGS(name_, methodPtr_, flags_) \
-	ANKI_LUA_FUNCTION_AS_METHOD_FLAGS(name_, \
-		&lua_detail::MethodFunctionalizer< \
-		decltype(methodPtr_)>::In<methodPtr_>::func, flags_)
+#define ANKI_LUA_METHOD_DETAIL(name_, MethodType_, methodPtr_, flags_) \
+	ANKI_LUA_FUNCTION_AS_METHOD_DETAIL(name_, \
+		decltype(&detail::MethodFunctionalizer< \
+			MethodType_, methodPtr_>::func), \
+		(&detail::MethodFunctionalizer<MethodType_, methodPtr_>::func), \
+		flags_)
 
 /// Define a method no flags
 #define ANKI_LUA_METHOD(name_, methodPtr_) \
-	ANKI_LUA_METHOD_FLAGS(name_, methodPtr_, lua_detail::LF_NONE)
+	ANKI_LUA_METHOD_DETAIL(name_, decltype(methodPtr_), \
+		methodPtr_, BinderFlag::NONE)
 
 //==============================================================================
-/// Lua binder class. A wrapper on top of LUA
-class LuaBinder
+template<typename T>
+void LuaBinder::exposeVariable(const char* name, T* y)
 {
-public:
-	LuaBinder();
-	~LuaBinder();
+	using namespace detail;
 
-	/// @name Accessors
-	/// {
-	lua_State* _getLuaState()
-	{
-		return l;
-	}
-	/// }
-
-	/// Expose a variable to the lua state
-	template<typename T>
-	void exposeVariable(const char* name, T* y)
-	{
-		using namespace lua_detail;
-
-		UserData* d = (UserData*)lua_newuserdata(l, sizeof(UserData));
-		d->ptr = y;
-		d->gc = false;
-		luaL_setmetatable(l, ClassProxy<T>::getName());
-		lua_setglobal(l, name);
-	}
-
-	/// Evaluate a file
-	void evalFile(const char* filename);
-	/// Evaluate a string
-	void evalString(const char* str);
-
-	/// For debugging purposes
-	static void stackDump(lua_State* l);
-
-private:
-	lua_State* l = nullptr;
-};
+	UserData* d = (UserData*)lua_newuserdata(m_l, sizeof(UserData));
+	d->m_ptr = y;
+	d->m_gc = false;
+	luaL_setmetatable(m_l, ClassProxy<T>::getName());
+	lua_setglobal(m_l, name);
+}
 
 } // end namespace anki
 

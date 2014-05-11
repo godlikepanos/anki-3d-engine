@@ -1,0 +1,266 @@
+#include "anki/gl/GlBufferHandle.h"
+#include "anki/gl/GlHandleDeferredDeleter.h"
+#include "anki/gl/GlClientBufferHandle.h"
+#include "anki/gl/GlBuffer.h"
+#include "anki/gl/GlManager.h"
+
+namespace anki {
+
+//==============================================================================
+/// Create buffer job
+class GlBufferCreateJob: public GlJob
+{
+public:
+	GlBufferHandle m_buff;
+	GLenum m_target;
+	GlClientBufferHandle m_data;
+	PtrSize m_size;
+	GLbitfield m_flags;
+	Bool8 m_empty;
+
+	GlBufferCreateJob(
+		GlBufferHandle buff, GLenum target, GlClientBufferHandle data, 
+		GLenum flags)
+		:	m_buff(buff), m_target(target), m_data(data), m_flags(flags), 
+			m_empty(false)
+	{}
+
+	GlBufferCreateJob(
+		GlBufferHandle buff, GLenum target, PtrSize size, GLenum flags)
+		:	m_buff(buff), m_target(target), m_size(size), m_flags(flags), 
+			m_empty(true)
+	{}
+
+	void operator()(GlJobChain*)
+	{
+		if(!m_empty)
+		{
+			GlBuffer newBuff(m_target, m_data.getSize(), 
+				m_data.getBaseAddress(), m_flags);
+			m_buff._get() = std::move(newBuff);
+		}
+		else
+		{
+			GlBuffer newBuff(m_target, m_size, nullptr, m_flags);
+			m_buff._get() = std::move(newBuff);
+		}
+
+		GlHandleState oldState = m_buff._setState(GlHandleState::CREATED);
+		(void)oldState;
+		ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
+	}
+};
+
+//==============================================================================
+GlBufferHandle::GlBufferHandle()
+{}
+
+//==============================================================================
+GlBufferHandle::GlBufferHandle(GlJobChainHandle& jobs,
+	GLenum target, GlClientBufferHandle& data, GLenum flags)
+{
+	ANKI_ASSERT(!isCreated());
+
+	typedef GlGlobalHeapAllocator<GlBuffer> Alloc;
+
+	typedef GlDeleteObjectJob<GlBuffer, GlGlobalHeapAllocator<U8>> DeleteJob;
+
+	typedef GlHandleDeferredDeleter<GlBuffer, Alloc, DeleteJob> Deleter;
+
+	*static_cast<Base::Base*>(this) = Base::Base(
+		&jobs._getJobManager().getManager(),
+		jobs._getJobManager().getManager()._getAllocator(), 
+		Deleter());
+	_setState(GlHandleState::TO_BE_CREATED);
+
+	// Fire the job
+	jobs._pushBackNewJob<GlBufferCreateJob>(*this, target, data, flags);
+}
+
+//==============================================================================
+GlBufferHandle::GlBufferHandle(GlJobChainHandle& jobs,
+	GLenum target, PtrSize size, GLenum flags)
+{
+	ANKI_ASSERT(!isCreated());
+
+	typedef GlGlobalHeapAllocator<GlBuffer> Alloc;
+
+	typedef GlDeleteObjectJob<GlBuffer, GlGlobalHeapAllocator<U8>> DeleteJob;
+
+	typedef GlHandleDeferredDeleter<GlBuffer, Alloc, DeleteJob>	Deleter;
+
+	*static_cast<Base::Base*>(this) = Base::Base(
+		&jobs._getJobManager().getManager(),
+		jobs._getJobManager().getManager()._getAllocator(), 
+		Deleter());
+	_setState(GlHandleState::TO_BE_CREATED);
+
+	// Fire the job
+	jobs._pushBackNewJob<GlBufferCreateJob>(*this, target, size, flags);
+}
+
+//==============================================================================
+GlBufferHandle::~GlBufferHandle()
+{}
+
+//==============================================================================
+void GlBufferHandle::write(GlJobChainHandle& chain, GlClientBufferHandle& data, 
+	PtrSize readOffset, PtrSize writeOffset, PtrSize size)
+{
+	class Job: public GlJob
+	{
+	public:
+		GlBufferHandle m_buff;
+		GlClientBufferHandle m_data;
+		PtrSize m_readOffset;
+		PtrSize m_writeOffset;
+		PtrSize m_size;
+
+		Job(GlBufferHandle& buff, GlClientBufferHandle& data, 
+			PtrSize readOffset, PtrSize writeOffset, PtrSize size)
+			:	m_buff(buff), m_data(data), m_readOffset(readOffset), 
+				m_writeOffset(writeOffset), m_size(size)
+		{}
+
+		void operator()(GlJobChain*)
+		{
+			ANKI_ASSERT(m_readOffset + m_size <= m_data.getSize());
+
+			m_buff._get().write(
+				(U8*)m_data.getBaseAddress() + m_readOffset, 
+				m_writeOffset, 
+				m_size);
+		}
+	};
+
+	ANKI_ASSERT(isCreated());
+	chain._pushBackNewJob<Job>(*this, data, readOffset, writeOffset, size);
+}
+
+//==============================================================================
+void GlBufferHandle::bindShaderBufferInternal(GlJobChainHandle& jobs,
+	I32 offset, I32 size, U32 bindingPoint)
+{
+	class Job: public GlJob
+	{
+	public:
+		GlBufferHandle m_buff;
+		I32 m_offset;
+		I32 m_size;
+		U8 m_binding;
+
+		Job(GlBufferHandle& buff, I32 offset, I32 size, U8 binding)
+			: m_buff(buff), m_offset(offset), m_size(size), m_binding(binding)
+		{}
+
+		void operator()(GlJobChain*)
+		{
+			U32 offset = (m_offset != -1) ? m_offset : 0;
+			U32 size = (m_size != -1) ? m_size : m_buff._get().getSize();
+
+			m_buff._get().setBindingRange(m_binding, offset, size);
+		}
+	};
+
+	ANKI_ASSERT(isCreated());
+	jobs._pushBackNewJob<Job>(*this, offset, size, bindingPoint);
+}
+
+//==============================================================================
+void GlBufferHandle::bindVertexBuffer(
+	GlJobChainHandle& jobs, 
+	U32 elementSize,
+	GLenum type,
+	Bool normalized,
+	PtrSize stride,
+	PtrSize offset,
+	U32 attribLocation)
+{
+	class Job: public GlJob
+	{
+	public:
+		GlBufferHandle m_buff;
+		U32 m_elementSize;
+		GLenum m_type;
+		Bool8 m_normalized;
+		U32 m_stride;
+		U32 m_offset;
+		U32 m_attribLocation;
+
+		Job(GlBufferHandle& buff, U32 elementSize, GLenum type, 
+			Bool8 normalized, U32 stride, U32 offset, U32 attribLocation)
+			:	m_buff(buff), m_elementSize(elementSize), m_type(type), 
+				m_normalized(normalized), m_stride(stride),	m_offset(offset),
+				m_attribLocation(attribLocation)
+		{}
+
+		void operator()(GlJobChain*)
+		{
+			GlBuffer& buff = m_buff._get();
+			ANKI_ASSERT(m_offset < m_buff.getSize());
+			
+			buff.setTarget(GL_ARRAY_BUFFER);
+			buff.bind();
+
+			glEnableVertexAttribArray(m_attribLocation);
+			glVertexAttribPointer(
+				m_attribLocation, 
+				m_elementSize, 
+				m_type, 
+				m_normalized,
+				m_stride, 
+				reinterpret_cast<const GLvoid*>(m_offset));
+		}
+	};
+
+	ANKI_ASSERT(isCreated());
+	jobs._pushBackNewJob<Job>(*this, elementSize, type, normalized, stride,
+		offset, attribLocation);
+}
+
+//==============================================================================
+void GlBufferHandle::bindIndexBuffer(GlJobChainHandle& jobs)
+{
+	class Job: public GlJob
+	{
+	public:
+		GlBufferHandle m_buff;
+
+		Job(GlBufferHandle& buff)
+			: m_buff(buff)
+		{}
+
+		void operator()(GlJobChain*)
+		{
+			GlBuffer& buff = m_buff._get();
+			buff.setTarget(GL_ELEMENT_ARRAY_BUFFER);
+			buff.bind();
+		}
+	};
+
+	ANKI_ASSERT(isCreated());
+	jobs._pushBackNewJob<Job>(*this);
+}
+
+//==============================================================================
+PtrSize GlBufferHandle::getSize() const
+{
+	serializeOnGetter();
+	return _get().getSize();
+}
+
+//==============================================================================
+GLenum GlBufferHandle::getTarget() const
+{
+	serializeOnGetter();
+	return _get().getTarget();
+}
+
+//==============================================================================
+void* GlBufferHandle::getPersistentMappingAddress()
+{
+	serializeOnGetter();
+	return _get().getPersistentMappingAddress();
+}
+
+} // end namespace anki

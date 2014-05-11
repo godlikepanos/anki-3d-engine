@@ -2,333 +2,82 @@
 #define ANKI_MATH_VEC2_H
 
 #include "anki/math/CommonIncludes.h"
+#include "anki/math/Vec.h"
 
 namespace anki {
 
-/// @addtogroup Math
+/// @addtogroup math
 /// @{
 
 /// 2D vector
 template<typename T>
-class TVec2
+class TVec2: public TVec<T, 2, Array<T, 2>, TVec2<T>>
 {
 	/// @name Friends
+	/// @{
 	template<typename Y>
-	friend TVec2<Y> operator+(const Y f, const TVec2<Y>& v2);
+	friend TVec2<Y> operator+(const Y f, const TVec2<Y>& b);
 	template<typename Y>
-	friend TVec2<Y> operator-(const Y f, const TVec2<Y>& v2);
+	friend TVec2<Y> operator-(const Y f, const TVec2<Y>& b);
 	template<typename Y>
-	friend TVec2<Y> operator*(const Y f, const TVec2<Y>& v2);
+	friend TVec2<Y> operator*(const Y f, const TVec2<Y>& b);
 	template<typename Y>
-	friend TVec2<Y> operator/(const Y f, const TVec2<Y>& v2);
-	///@]
+	friend TVec2<Y> operator/(const Y f, const TVec2<Y>& b);
+	///@}
 
 public:
+	using Base = TVec<T, 2, Array<T, 2>, TVec2<T>>;
+
 	/// @name Constructors
 	/// @{
 	explicit TVec2()
+		: Base()
+	{}
+
+	TVec2(const TVec2& b)
+		: Base(b)
 	{}
 
 	explicit TVec2(const T x_, const T y_)
-	{
-		x() = x_;
-		y() = y_;
-	}
-	
+		: Base(x_, y_)
+	{}
+
 	explicit TVec2(const T f)
-	{
-		x() = y() = f;
-	}
+		: Base(f)
+	{}
 
-	explicit TVec2(const T arr_[])
-	{
-		x() = arr_[0];
-		y() = arr_[1];
-	}
-
-	TVec2(const TVec2& b)
-	{
-		x() = b.x();
-		y() = b.y();
-	}
-
-	explicit TVec2(const TVec3<T>& v3)
-	{
-		x() = v3.x();
-		y() = v3.y();
-	}
-
-	explicit TVec2(const TVec4<T>& v4)
-	{
-		x() = v4.x();
-		y() = v4.y();
-	}
-	/// @}
-
-	/// @name Accessors
-	/// @{
-	T& x()
-	{
-		return vec.x;
-	}
-
-	T x() const
-	{
-		return vec.x;
-	}
-
-	T& y()
-	{
-		return vec.y;
-	}
-
-	T y() const
-	{
-		return vec.y;
-	}
-
-	TVec2 xx() const
-	{
-		return TVec2(vec.x, vec.x);
-	}
-
-	TVec2 yy() const
-	{
-		return TVec2(vec.y, vec.y);
-	}
-
-	TVec2 xy() const
-	{
-		return *this;
-	}
-
-	TVec2 yx() const
-	{
-		return TVec2(vec.y, vec.x);
-	}
-
-	T& operator[](const U i)
-	{
-		return arr[i];
-	}
-
-	T operator[](const U i) const
-	{
-		return arr[i];
-	}
-	/// @}
-
-	/// @name Operators with same type
-	/// @{
-	TVec2& operator=(const TVec2& b)
-	{
-		x() = b.x();
-		y() = b.y();
-		return *this;
-	}
-
-	TVec2 operator+(const TVec2& b) const
-	{
-		return TVec2(x() + b.x(), y() + b.y());
-	}
-
-	TVec2& operator+=(const TVec2& b)
-	{
-		x() += b.x();
-		y() += b.y();
-		return (*this);
-	}
-
-	TVec2 operator-(const TVec2& b) const
-	{
-		return TVec2(x() - b.x(), y() - b.y());
-	}
-
-	TVec2& operator-=(const TVec2& b)
-	{
-		x() -= b.x();
-		y() -= b.y();
-		return (*this);
-	}
-
-	TVec2 operator*(const TVec2& b) const
-	{
-		return TVec2(x() * b.x(), y() * b.y());
-	}
-
-	TVec2& operator*=(const TVec2& b)
-	{
-		x() *= b.x();
-		y() *= b.y();
-		return (*this);
-	}
-
-	TVec2 operator/(const TVec2& b) const
-	{
-		return TVec2(x() / b.x(), y() / b.y());
-	}
-
-	TVec2& operator/=(const TVec2& b)
-	{
-		x() /= b.x();
-		y() /= b.y();
-		return (*this);
-	}
-
-	TVec2 operator-() const
-	{
-		return TVec2(-x(), -y());
-	}
-
-	Bool operator==(const TVec2& b) const
-	{
-		return isZero<T>(x() - b.x()) && isZero<T>(y() - b.y());
-	}
-
-	Bool operator!=(const TVec2& b) const
-	{
-		return !(*this == b);
-	}
-
-	Bool operator<(const TVec2& b) const
-	{
-		return vec.x < b.vec.x && vec.y < b.vec.y;
-	}
-
-	Bool operator<=(const TVec2& b) const
-	{
-		return vec.x <= b.vec.x && vec.y <= b.vec.y;
-	}
-
-	Bool operator>(const TVec2& b) const
-	{
-		return vec.x > b.vec.x && vec.y > b.vec.y;
-	}
-
-	Bool operator>=(const TVec2& b) const
-	{
-		return vec.x >= b.vec.x && vec.y >= b.vec.y;
-	}
-	/// @}
-
-	/// @name Operators with T
-	/// @{
-	TVec2 operator+(const T f) const
-	{
-		return (*this) + TVec2(f);
-	}
-
-	TVec2& operator+=(const T f)
-	{
-		(*this) += TVec2(f);
-		return (*this);
-	}
-
-	TVec2 operator-(const T f) const
-	{
-		return (*this) - TVec2(f);
-	}
-
-	TVec2& operator-=(const T f)
-	{
-		(*this) -= TVec2(f);
-		return (*this);
-	}
-
-	TVec2 operator*(const T f) const
-	{
-		return (*this) * TVec2(f);
-	}
-
-	TVec2& operator*=(const T f)
-	{
-		(*this) *= TVec2(f);
-		return (*this);
-	}
-
-	TVec2 operator/(const T f) const
-	{
-		return (*this) / TVec2(f);
-	}
-
-	TVec2& operator/=(const T f)
-	{
-		(*this) /= TVec2(f);
-		return (*this);
-	}
-	/// @}
-
-	/// @name Other
-	/// @{
-	T getLengthSquared() const
-	{
-		return x() * x() + y() * y();
-	}
-
-	T getLength() const
-	{
-		return sqrt<T>(getLengthSquared());
-	}
-
-	TVec2 getNormalized() const
-	{
-		return (*this) / getLength();
-	}
-
-	void normalize()
-	{
-		(*this) /= getLength();
-	}
-
-	T dot(const TVec2& b) const
-	{
-		return x() * b.x() + y() * b.y();
-	}
-
-	std::string toString() const
-	{
-		return std::to_string(x()) + " " + std::to_string(y());
-	}
-	/// @}
-
-private:
-	/// @name Data members
-	/// @{
-	struct Vec
-	{
-		T x, y;
-	};
-
-	union
-	{
-		Vec vec;
-		Array<T, 2> arr;
-	};
+	explicit TVec2(const T arr[])
+		: Base(arr)
+	{}
 	/// @}
 };
 
+/// @memberof TVec2
 template<typename T>
-TVec2<T> operator+(const T f, const TVec2<T>& v2)
+TVec2<T> operator+(const T f, const TVec2<T>& b)
 {
-	return v2 + f;
+	return b + f;
 }
 
+/// @memberof TVec2
 template<typename T>
-TVec2<T> operator-(const T f, const TVec2<T>& v2)
+TVec2<T> operator-(const T f, const TVec2<T>& b)
 {
-	return TVec2<T>(f - v2.x(), f - v2.y());
+	return TVec2<T>(f - b.x(), f - b.y());
 }
 
+/// @memberof TVec2
 template<typename T>
-TVec2<T> operator*(const T f, const TVec2<T>& v2)
+TVec2<T> operator*(const T f, const TVec2<T>& b)
 {
-	return v2 * f;
+	return b * f;
 }
 
+/// @memberof TVec2
 template<typename T>
-TVec2<T> operator/(const T f, const TVec2<T>& v2)
+TVec2<T> operator/(const T f, const TVec2<T>& b)
 {
-	return TVec2<T>(f / v2.x(), f / v2.y());
+	return TVec2<T>(f / b.x(), f / b.y());
 }
 
 /// F32 2D vector

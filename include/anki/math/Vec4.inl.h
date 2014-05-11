@@ -7,6 +7,7 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+/// @memberof TVec4
 template<typename T>
 TVec4<T> operator+(const T f, const TVec4<T>& v4)
 {
@@ -14,6 +15,7 @@ TVec4<T> operator+(const T f, const TVec4<T>& v4)
 }
 
 //==============================================================================
+/// @memberof TVec4
 template<typename T>
 TVec4<T> operator-(const T f, const TVec4<T>& v4)
 {
@@ -21,6 +23,7 @@ TVec4<T> operator-(const T f, const TVec4<T>& v4)
 }
 
 //==============================================================================
+/// @memberof TVec4
 template<typename T>
 TVec4<T> operator*(const T f, const TVec4<T>& v4)
 {
@@ -28,6 +31,7 @@ TVec4<T> operator*(const T f, const TVec4<T>& v4)
 }
 
 //==============================================================================
+/// @memberof TVec4
 template<typename T>
 TVec4<T> operator/(const T f, const TVec4<T>& v4)
 {
@@ -48,28 +52,30 @@ TVec4<T> operator/(const T f, const TVec4<T>& v4)
 template<>
 inline TVec4<F32>::TVec4(F32 f)
 {
-	simd = _mm_set1_ps(f);
+	m_simd = _mm_set1_ps(f);
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32>::TVec4(const F32 arr_[])
+inline TVec4<F32>::TVec4(const F32 arr[])
 {
-	simd = _mm_load_ps(arr_);
+	m_simd = _mm_load_ps(arr);
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32>::TVec4(const F32 x_, const F32 y_, const F32 z_, const F32 w_)
+inline TVec4<F32>::TVec4(const F32 x_, const F32 y_, const F32 z_, 
+	const F32 w_)
 {
-	simd = _mm_set_ps(w_, z_, y_, x_);
+	m_simd = _mm_set_ps(w_, z_, y_, x_);
 }
 
 //==============================================================================
 template<>
 inline TVec4<F32>::TVec4(const TVec4<F32>& b)
+	: Base()
 {
-	simd = b.simd;
+	m_simd = b.m_simd;
 }
 
 //==============================================================================
@@ -78,70 +84,70 @@ inline TVec4<F32>::TVec4(const TVec4<F32>& b)
 
 //==============================================================================
 template<>
-inline TVec4<F32>& TVec4<F32>::operator=(const TVec4<F32>& b)
+inline TVec4<F32>& TVec4<F32>::Base::operator=(const TVec4<F32>& b)
 {
-	simd = b.simd;
-	return (*this);
+	m_simd = b.m_simd;
+	return static_cast<TVec4<F32>&>(*this);
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32> TVec4<F32>::operator+(const TVec4<F32>& b) const
+inline TVec4<F32> TVec4<F32>::Base::operator+(const TVec4<F32>& b) const
 {
-	return TVec4<F32>(_mm_add_ps(simd, b.simd));
+	return TVec4<F32>(_mm_add_ps(m_simd, b.m_simd));
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32>& TVec4<F32>::operator+=(const TVec4<F32>& b)
+inline TVec4<F32>& TVec4<F32>::Base::operator+=(const TVec4<F32>& b)
 {
-	simd = _mm_add_ps(simd, b.simd);
-	return (*this);
+	m_simd = _mm_add_ps(m_simd, b.m_simd);
+	return static_cast<TVec4<F32>&>(*this);
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32> TVec4<F32>::operator-(const TVec4<F32>& b) const
+inline TVec4<F32> TVec4<F32>::Base::operator-(const TVec4<F32>& b) const
 {
-	return TVec4<F32>(_mm_sub_ps(simd, b.simd));
+	return TVec4<F32>(_mm_sub_ps(m_simd, b.m_simd));
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32>& TVec4<F32>::operator-=(const TVec4<F32>& b)
+inline TVec4<F32>& TVec4<F32>::Base::operator-=(const TVec4<F32>& b)
 {
-	simd = _mm_sub_ps(simd, b.simd);
-	return (*this);
+	m_simd = _mm_sub_ps(m_simd, b.m_simd);
+	return static_cast<TVec4<F32>&>(*this);
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32> TVec4<F32>::operator*(const TVec4<F32>& b) const
+inline TVec4<F32> TVec4<F32>::Base::operator*(const TVec4<F32>& b) const
 {
-	return TVec4<F32>(_mm_mul_ps(simd, b.simd));
+	return TVec4<F32>(_mm_mul_ps(m_simd, b.m_simd));
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32>& TVec4<F32>::operator*=(const TVec4<F32>& b)
+inline TVec4<F32>& TVec4<F32>::Base::operator*=(const TVec4<F32>& b)
 {
-	simd = _mm_mul_ps(simd, b.simd);
-	return (*this);
+	m_simd = _mm_mul_ps(m_simd, b.m_simd);
+	return static_cast<TVec4<F32>&>(*this);
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32> TVec4<F32>::operator/(const TVec4<F32>& b) const
+inline TVec4<F32> TVec4<F32>::Base::operator/(const TVec4<F32>& b) const
 {
-	return TVec4<F32>(_mm_div_ps(simd, b.simd));
+	return TVec4<F32>(_mm_div_ps(m_simd, b.m_simd));
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32>& TVec4<F32>::operator/=(const TVec4<F32>& b)
+inline TVec4<F32>& TVec4<F32>::Base::operator/=(const TVec4<F32>& b)
 {
-	simd = _mm_div_ps(simd, b.simd);
-	return (*this);
+	m_simd = _mm_div_ps(m_simd, b.m_simd);
+	return static_cast<TVec4<F32>&>(*this);
 }
 
 //==============================================================================
@@ -150,27 +156,27 @@ inline TVec4<F32>& TVec4<F32>::operator/=(const TVec4<F32>& b)
 
 //==============================================================================
 template<>
-inline F32 TVec4<F32>::dot(const TVec4<F32>& b) const
+inline F32 TVec4<F32>::Base::dot(const TVec4<F32>& b) const
 {
 	F32 o;
-	_mm_store_ss(&o, _mm_dp_ps(simd, b.simd, 0xF1));
+	_mm_store_ss(&o, _mm_dp_ps(m_simd, b.m_simd, 0xF1));
 	return o;
 }
 
 //==============================================================================
 template<>
-inline TVec4<F32> TVec4<F32>::getNormalized() const
+inline TVec4<F32> TVec4<F32>::Base::getNormalized() const
 {
-	__m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(simd, simd, 0xFF));
-	return TVec4<F32>(_mm_mul_ps(simd, inverse_norm));
+	__m128 inverse_norm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
+	return TVec4<F32>(_mm_mul_ps(m_simd, inverse_norm));
 }
 
 //==============================================================================
 template<>
-inline void TVec4<F32>::normalize()
+inline void TVec4<F32>::Base::normalize()
 {
-	__m128 inverseNorm = _mm_rsqrt_ps(_mm_dp_ps(simd, simd, 0xFF));
-	simd = _mm_mul_ps(simd, inverseNorm);
+	__m128 inverseNorm = _mm_rsqrt_ps(_mm_dp_ps(m_simd, m_simd, 0xFF));
+	m_simd = _mm_mul_ps(m_simd, inverseNorm);
 }
 
 #elif ANKI_SIMD == ANKI_SIMD_NEON
@@ -179,133 +185,7 @@ inline void TVec4<F32>::normalize()
 // NEON specializations                                                        =
 //==============================================================================
 
-//==============================================================================
-// Constructors                                                                =
-//==============================================================================
-
-//==============================================================================
-template<>
-inline TVec4<F32>::TVec4(F32 f)
-{
-	simd = vdupq_n_f32(f);
-}
-
-//==============================================================================
-template<>
-inline TVec4<F32>::TVec4(const F32 arr_[])
-{
-	simd = vld1q_f32(arr_);
-}
-
-//==============================================================================
-template<>
-inline TVec4<F32>::TVec4(const TVec4<F32>& b)
-{
-	simd = b.simd;
-}
-
-//==============================================================================
-// Operators with same                                                         =
-//==============================================================================
-
-//==============================================================================
-template<>
-inline TVec4<F32>& TVec4<F32>::operator=(const TVec4<F32>& b)
-{
-	simd = b.simd;
-	return (*this);
-}
-
-//==============================================================================
-template<>
-inline TVec4<F32> TVec4<F32>::operator+(const TVec4<F32>& b) const
-{
-	return TVec4<F32>(vaddq_f32(simd, b.simd));
-}
-
-//==============================================================================
-template<>
-inline TVec4<F32>& TVec4<F32>::operator+=(const TVec4<F32>& b)
-{
-	simd = vaddq_f32(simd, b.simd);
-	return (*this);
-}
-
-//==============================================================================
-template<>
-inline TVec4<F32> TVec4<F32>::operator-(const TVec4<F32>& b) const
-{
-	return TVec4<F32>(vsubq_f32(simd, b.simd));
-}
-
-//==============================================================================
-template<>
-inline TVec4<F32>& TVec4<F32>::operator-=(const TVec4<F32>& b)
-{
-	simd = vsubq_f32(simd, b.simd);
-	return (*this);
-}
-
-//==============================================================================
-template<>
-inline TVec4<F32> TVec4<F32>::operator*(const TVec4<F32>& b) const
-{
-	return TVec4<F32>(vmulq_f32(simd, b.simd));
-}
-
-//==============================================================================
-template<>
-inline TVec4<F32>& TVec4<F32>::operator*=(const TVec4<F32>& b)
-{
-	simd = vmulq_f32(simd, b.simd);
-	return (*this);
-}
-
-//==============================================================================
-// Operators with F32                                                          =
-//==============================================================================
-
-//==============================================================================
-template<>
-inline TVec4<F32> operator*(const F32 f) const
-{
-	return TVec4<F32>(vmulq_n_f32(simd, f));
-}
-
-//==============================================================================
-template<>
-inline TVec4<F32>& operator*=(const F32 f)
-{
-	simd = vmulq_n_f32(simd, f);
-	return *this;
-}
-
-//==============================================================================
-// Other                                                                       =
-//==============================================================================
-
-//==============================================================================
-template<>
-inline F32 TVec4<F32>::dot(const TVec4<F32>& b) const
-{
-	F32 o;
-	// XXX
-	return o;
-}
-
-//==============================================================================
-template<>
-inline TVec4<F32> TVec4<F32>::getNormalized() const
-{
-	// XXX
-}
-
-//==============================================================================
-template<>
-inline void TVec4<F32>::normalize()
-{
-	// XXX
-}
+#	error "TODO"
 
 #endif
 

@@ -15,7 +15,7 @@ namespace anki {
 	typedef ResourcePointer<rsrc, rsrc ## ResourceManagerSingleton> name;
 
 ANKI_RESOURCE_TYPEDEFS(TextureResource, TextureResourcePointer)
-ANKI_RESOURCE_TYPEDEFS(ShaderProgramResource, ShaderProgramResourcePointer)
+ANKI_RESOURCE_TYPEDEFS(ProgramResource, ProgramResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(Material, MaterialResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(Mesh, MeshResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(BucketMesh, BucketMeshResourcePointer)

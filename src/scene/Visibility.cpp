@@ -8,10 +8,11 @@
 namespace anki {
 
 //==============================================================================
-struct VisibilityTestTask: ThreadpoolTask
+class VisibilityTestTask: public ThreadpoolTask
 {
-	U nodesCount = 0;
-	SceneGraph* scene = nullptr;
+public:
+	U m_nodesCount = 0;
+	SceneGraph* m_scene = nullptr;
 	SceneNode* frustumableSn = nullptr;
 	SceneFrameAllocator<U8> frameAlloc;
 
@@ -34,19 +35,19 @@ struct VisibilityTestTask: ThreadpoolTask
 		PtrSize start, end;
 		if(!isLight)
 		{
-			choseStartEnd(threadId, threadsCount, nodesCount, start, end);
+			choseStartEnd(threadId, threadsCount, m_nodesCount, start, end);
 			cameraVisible = visible;
 		}
 		else
 		{
 			// Is light
 			start = 0;
-			end = nodesCount;
+			end = m_nodesCount;
 			testedFr.setVisibilityTestResults(visible);
 		}
 
 		// Iterate range of nodes
-		scene->iterateSceneNodes(start, end, [&](SceneNode& node)
+		m_scene->iterateSceneNodes(start, end, [&](SceneNode& node)
 		{
 			FrustumComponent* fr = node.tryGetComponent<FrustumComponent>();
 
@@ -57,7 +58,7 @@ struct VisibilityTestTask: ThreadpoolTask
 			}
 
 			VisibleNode visibleNode;
-			visibleNode.node = &node;
+			visibleNode.m_node = &node;
 
 			// Test all spatial components of that node
 			struct SpatialTemp
@@ -65,7 +66,7 @@ struct VisibilityTestTask: ThreadpoolTask
 				SpatialComponent* sp;
 				U8 idx;
 			};
-			Array<SpatialTemp, ANKI_MAX_MULTIDRAW_PRIMITIVES> sps;
+			Array<SpatialTemp, ANKI_GL_MAX_SUB_DRAWCALLS> sps;
 
 			U spIdx = 0;
 			U count = 0;
@@ -107,11 +108,11 @@ struct VisibilityTestTask: ThreadpoolTask
 
 			// Update the visibleNode
 			ANKI_ASSERT(count < MAX_U8);
-			visibleNode.spatialsCount = count;
-			visibleNode.spatialIndices = frameAlloc.newArray<U8>(count);
+			visibleNode.m_spatialsCount = count;
+			visibleNode.m_spatialIndices = frameAlloc.newArray<U8>(count);
 			for(U i = 0; i < count; i++)
 			{
-				visibleNode.spatialIndices[i] = sps[i].idx;
+				visibleNode.m_spatialIndices[i] = sps[i].idx;
 			}
 
 			// Do something with the result
@@ -120,14 +121,14 @@ struct VisibilityTestTask: ThreadpoolTask
 			{
 				if(r && r->getCastsShadow())
 				{
-					visible->renderables.push_back(visibleNode);
+					visible->m_renderables.emplace_back(std::move(visibleNode));
 				}
 			}
 			else
 			{
 				if(r)
 				{
-					visible->renderables.push_back(visibleNode);
+					visible->m_renderables.emplace_back(std::move(visibleNode));
 				}
 				else
 				{
@@ -136,7 +137,7 @@ struct VisibilityTestTask: ThreadpoolTask
 					{
 						Light* light = staticCastPtr<Light*>(&node);
 
-						visible->lights.push_back(visibleNode);
+						visible->m_lights.emplace_back(std::move(visibleNode));
 
 						if(light->getShadowEnabled() && fr)
 						{
@@ -168,8 +169,8 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	VisibilityTestTask jobs[Threadpool::MAX_THREADS];
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		jobs[i].nodesCount = scene.getSceneNodesCount();
-		jobs[i].scene = &scene;
+		jobs[i].m_nodesCount = scene.getSceneNodesCount();
+		jobs[i].m_scene = &scene;
 		jobs[i].frustumableSn = &fsn;
 		jobs[i].frameAlloc = scene.getFrameAllocator();
 
@@ -188,8 +189,8 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	U32 lightsSize = 0;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		renderablesSize += jobs[i].cameraVisible->renderables.size();
-		lightsSize += jobs[i].cameraVisible->lights.size();
+		renderablesSize += jobs[i].cameraVisible->m_renderables.size();
+		lightsSize += jobs[i].cameraVisible->m_lights.size();
 	}
 
 	// Allocate
@@ -199,8 +200,13 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 		renderablesSize, 
 		lightsSize);
 
-	visible->renderables.resize(renderablesSize);
-	visible->lights.resize(lightsSize);
+	if(renderablesSize == 0)
+	{
+		ANKI_LOGW("No visible renderables");
+	}
+
+	visible->m_renderables.resize(renderablesSize);
+	visible->m_lights.resize(lightsSize);
 
 	// Append thread results
 	renderablesSize = 0;
@@ -209,17 +215,23 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	{
 		const VisibilityTestResults& from = *jobs[i].cameraVisible;
 
-		memcpy(&visible->renderables[renderablesSize],
-			&from.renderables[0],
-			sizeof(VisibleNode) * from.renderables.size());
+		if(from.m_renderables.size() > 0)
+		{
+			memcpy(&visible->m_renderables[renderablesSize],
+				&from.m_renderables[0],
+				sizeof(VisibleNode) * from.m_renderables.size());
 
-		renderablesSize += from.renderables.size();
+			renderablesSize += from.m_renderables.size();
+		}
 
-		memcpy(&visible->lights[lightsSize],
-			&from.lights[0],
-			sizeof(VisibleNode) * from.lights.size());
+		if(from.m_lights.size() > 0)
+		{
+			memcpy(&visible->m_lights[lightsSize],
+				&from.m_lights[0],
+				sizeof(VisibleNode) * from.m_lights.size());
 
-		lightsSize += from.lights.size();
+			lightsSize += from.m_lights.size();
+		}
 	}
 
 	// Set the frustumable
@@ -231,9 +243,9 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 
 	// The lights
 	DistanceSortJob dsjob;
-	dsjob.nodes = visible->lights.begin();
-	dsjob.nodesCount = visible->lights.size();
-	dsjob.origin = fr.getFrustumOrigin();
+	dsjob.m_nodes = visible->m_lights.begin();
+	dsjob.m_nodesCount = visible->m_lights.size();
+	dsjob.m_origin = fr.getFrustumOrigin();
 	threadPool.assignNewTask(0, &dsjob);
 
 	// The rest of the jobs are dummy
@@ -245,8 +257,9 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 
 	// Sort the renderables in the main thread
 	DistanceSortFunctor dsfunc;
-	dsfunc.origin = fr.getFrustumOrigin();
-	std::sort(visible->renderables.begin(), visible->renderables.end(), dsfunc);
+	dsfunc.m_origin = fr.getFrustumOrigin();
+	std::sort(
+		visible->m_renderables.begin(), visible->m_renderables.end(), dsfunc);
 
 	threadPool.waitForAllThreadsToFinish();
 }

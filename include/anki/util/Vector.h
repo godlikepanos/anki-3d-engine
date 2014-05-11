@@ -7,15 +7,32 @@
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup containers
+/// @addtogroup util_containers
 /// @{
 
-template<typename T, typename Alloc = HeapAllocator<T>>
-using Vector = std::vector<T, Alloc>;
+/// A semi-custom implementation of vector
+template<typename T, typename Alloc = std::allocator<T>>
+class Vector: public std::vector<T, Alloc>
+{
+public:
+	typedef std::vector<T, Alloc> Base;
 
-/// @}
+	using Base::Base;
+	using Base::operator=;
+
+	typename Base::reference operator[](typename Base::size_type i)
+	{
+		ANKI_ASSERT(i < Base::size() && "Vector out of bounds");
+		return Base::operator[](i);
+	}
+
+	typename Base::const_reference operator[](typename Base::size_type i) const
+	{
+		ANKI_ASSERT(i < Base::size() && "Vector out of bounds");
+		return Base::operator[](i);
+	}
+};
+
 /// @}
 
 } // end namespace anki

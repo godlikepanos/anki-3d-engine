@@ -9,72 +9,95 @@ Hdr::~Hdr()
 {}
 
 //==============================================================================
-void Hdr::initFbo(Fbo& fbo, Texture& fai)
+void Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 {
-	fai.create2dFai(width, height, GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE);
+	GlManager& gl = GlManagerSingleton::get();
+
+	m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
+		GL_UNSIGNED_BYTE, 1, rt);
 
 	// Set to bilinear because the blurring techniques take advantage of that
-	fai.setFiltering(Texture::TFT_LINEAR);
+	GlJobChainHandle jobs(&gl);
+	rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
 
-	// create FBO
-	fbo.create({{&fai, GL_COLOR_ATTACHMENT0}});
+	// Create FB
+	fb = GlFramebufferHandle(jobs, {{rt, GL_COLOR_ATTACHMENT0}});
+	jobs.flush();
 }
 
 //==============================================================================
 void Hdr::initInternal(const RendererInitializer& initializer)
 {
-	enabled = initializer.get("pps.hdr.enabled");
+	m_enabled = initializer.get("pps.hdr.enabled");
 
-	if(!enabled)
+	if(!m_enabled)
 	{
 		return;
 	}
 
 	const F32 renderingQuality = initializer.get("pps.hdr.renderingQuality");
 
-	width = renderingQuality * (F32)r->getWidth();
-	alignRoundUp(16, width);
-	height = renderingQuality * (F32)r->getHeight();
-	alignRoundUp(16, height);
+	m_width = renderingQuality * (F32)m_r->getWidth();
+	alignRoundUp(16, m_width);
+	m_height = renderingQuality * (F32)m_r->getHeight();
+	alignRoundUp(16, m_height);
 
-	exposure = initializer.get("pps.hdr.exposure");
-	blurringDist = initializer.get("pps.hdr.blurringDist");
-	blurringIterationsCount = 
+	m_exposure = initializer.get("pps.hdr.exposure");
+	m_blurringDist = initializer.get("pps.hdr.blurringDist");
+	m_blurringIterationsCount = 
 		initializer.get("pps.hdr.blurringIterationsCount");
 
-	initFbo(hblurFbo, hblurFai);
-	initFbo(vblurFbo, vblurFai);
+	initFb(m_hblurFb, m_hblurRt);
+	initFb(m_vblurFb, m_vblurRt);
 
 	// init shaders
-	Vec4 block(exposure, 0.0, 0.0, 0.0);
-	commonUbo.create(GL_UNIFORM_BUFFER, sizeof(Vec4), &block, GL_DYNAMIC_DRAW);
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
 
-	toneSProg.load("shaders/PpsHdr.glsl");
-	toneSProg->findUniformBlock("commonBlock").setBinding(0);
+	m_commonBuff = GlBufferHandle(jobs, GL_SHADER_STORAGE_BUFFER, 
+		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
 
-	const char* SHADER_FILENAME = "shaders/VariableSamplingBlurGeneric.glsl";
+	updateDefaultBlock(jobs);
+
+	jobs.flush();
+
+	m_toneFrag.load("shaders/PpsHdr.frag.glsl");
+
+	m_tonePpline = 
+		m_r->createDrawQuadProgramPipeline(m_toneFrag->getGlProgram());
+
+	const char* SHADER_FILENAME = 
+		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
 	std::stringstream pps;
 	pps << "#define HPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST float(" << blurringDist << ")\n"
-		"#define IMG_DIMENSION " << height << "\n"
+		"#define BLURRING_DIST float(" << m_blurringDist << ")\n"
+		"#define IMG_DIMENSION " << m_height << "\n"
 		"#define SAMPLES " << (U)initializer.get("pps.hdr.samples") << "\n";
-	hblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
+
+	m_hblurFrag.load(ProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
+
+	m_hblurPpline = 
+		m_r->createDrawQuadProgramPipeline(m_hblurFrag->getGlProgram());
 
 	pps.str("");
 	pps << "#define VPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST float(" << blurringDist << ")\n"
-		"#define IMG_DIMENSION " << width << "\n"
+		"#define BLURRING_DIST float(" << m_blurringDist << ")\n"
+		"#define IMG_DIMENSION " << m_width << "\n"
 		"#define SAMPLES " << (U)initializer.get("pps.hdr.samples") << "\n";
-	vblurSProg.load(ShaderProgramResource::createSrcCodeToCache(
+
+	m_vblurFrag.load(ProgramResource::createSrcCodeToCache(
 		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
 
+	m_vblurPpline = 
+		m_r->createDrawQuadProgramPipeline(m_vblurFrag->getGlProgram());
+
 	// Set timestamps
-	parameterUpdateTimestamp = getGlobTimestamp();
-	commonUboUpdateTimestamp = getGlobTimestamp();
+	m_parameterUpdateTimestamp = getGlobTimestamp();
+	m_commonUboUpdateTimestamp = getGlobTimestamp();
 }
 
 //==============================================================================
@@ -91,60 +114,61 @@ void Hdr::init(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Hdr::run()
+void Hdr::run(GlJobChainHandle& jobs)
 {
-	ANKI_ASSERT(enabled);
-	/*if(r->getFramesCount() % 2 == 0)
-	{
-		return;
-	}*/
-
-	GlStateSingleton::get().setViewport(0, 0, width, height);
-
-	GlStateSingleton::get().disable(GL_BLEND);
-	GlStateSingleton::get().disable(GL_DEPTH_TEST);
+	ANKI_ASSERT(m_enabled);
 
 	// For the passes it should be NEAREST
-	//vblurFai.setFiltering(Texture::TFT_NEAREST);
+	//vblurFai.setFiltering(Texture::TFrustumType::NEAREST);
 
 	// pass 0
-	vblurFbo.bind(true);
-	toneSProg->bind();
+	m_vblurFb.bind(jobs, true);
+	jobs.setViewport(0, 0, m_width, m_height);
+	m_tonePpline.bind(jobs);
 
-	if(parameterUpdateTimestamp > commonUboUpdateTimestamp)
+	if(m_parameterUpdateTimestamp > m_commonUboUpdateTimestamp)
 	{
-		Vec4 block(exposure, 0.0, 0.0, 0.0);
-		commonUbo.write(&block);
-		commonUboUpdateTimestamp = getGlobTimestamp();
+		updateDefaultBlock(jobs);
+		m_commonUboUpdateTimestamp = getGlobTimestamp();
 	}
-	commonUbo.setBinding(0);
-	toneSProg->findUniformVariable("fai").set(r->getIs().getFai());
-	r->drawQuad();
 
-	// blurring passes
-	for(U32 i = 0; i < blurringIterationsCount; i++)
+	m_r->getIs().getRt().bind(jobs, 0);
+	m_commonBuff.bindShaderBuffer(jobs, 0);
+
+	m_r->drawQuad(jobs);
+
+	// Blurring passes
+	for(U32 i = 0; i < m_blurringIterationsCount; i++)
 	{
-		// hpass
-		hblurFbo.bind(true);
-		hblurSProg->bind();
 		if(i == 0)
 		{
-			hblurSProg->findUniformVariable("img").set(vblurFai);
+			m_vblurRt.bind(jobs, 1); // H pass input
+			m_hblurRt.bind(jobs, 0); // V pass input
 		}
-		r->drawQuad();
+
+		// hpass
+		m_hblurFb.bind(jobs, true);
+		m_hblurPpline.bind(jobs);		
+		m_r->drawQuad(jobs);
 
 		// vpass
-		vblurFbo.bind(true);
-		vblurSProg->bind();
-		if(i == 0)
-		{
-			vblurSProg->findUniformVariable("img").set(hblurFai);
-		}
-		r->drawQuad();
+		m_vblurFb.bind(jobs, true);
+		m_vblurPpline.bind(jobs);
+		m_r->drawQuad(jobs);
 	}
 
 	// For the next stage it should be LINEAR though
-	//vblurFai.setFiltering(Texture::TFT_LINEAR);
+	//vblurFai.setFiltering(Texture::TFrustumType::LINEAR);
+}
+
+//==============================================================================
+void Hdr::updateDefaultBlock(GlJobChainHandle& jobs)
+{
+	GlClientBufferHandle tempBuff(jobs, sizeof(Vec4), nullptr);
+	
+	*((Vec4*)tempBuff.getBaseAddress()) = Vec4(m_exposure, 0.0, 0.0, 0.0);
+
+	m_commonBuff.write(jobs, tempBuff, 0, 0, tempBuff.getSize());
 }
 
 } // end namespace anki

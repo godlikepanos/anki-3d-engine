@@ -18,17 +18,17 @@ public:
 
 	/// Default constructor
 	Ray()
-		: CollisionShape(CST_RAY)
+		: CollisionShape(Type::RAY)
 	{}
 
 	/// Copy constructor
 	Ray(const Ray& b)
-		: CollisionShape(CST_RAY), origin(b.origin), dir(b.dir)
+		: CollisionShape(Type::RAY), origin(b.origin), dir(b.dir)
 	{}
 
 	/// Constructor
 	Ray(const Vec3& origin_, const Vec3& direction_)
-		: CollisionShape(CST_RAY), origin(origin_), dir(direction_)
+		: CollisionShape(Type::RAY), origin(origin_), dir(direction_)
 	{}
 	/// @}
 
@@ -98,8 +98,8 @@ public:
 		*this = getTransformed(trf);
 	}
 
-	/// Implements CollisionShape::toAabb
-	void toAabb(Aabb& aabb) const;
+	/// Implements CollisionShape::computeAabb
+	void computeAabb(Aabb& aabb) const;
 
 	Ray getTransformed(const Transform& transform) const;
 

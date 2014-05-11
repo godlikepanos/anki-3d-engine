@@ -49,7 +49,7 @@ LineSegment LineSegment::getTransformed(const Transform& transform) const
 }
 
 //==============================================================================
-void LineSegment::toAabb(Aabb& aabb) const
+void LineSegment::computeAabb(Aabb& aabb) const
 {
 	Vec3 min = origin;
 	Vec3 max = origin + dir;

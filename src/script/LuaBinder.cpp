@@ -5,12 +5,12 @@
 
 namespace anki {
 
-namespace lua_detail {
+namespace detail {
 
 //==============================================================================
 void checkArgsCount(lua_State* l, I argsCount)
 {
-	int actualArgsCount = lua_gettop(l);
+	I actualArgsCount = lua_gettop(l);
 	if(argsCount != actualArgsCount)
 	{
 		luaL_error(l, "Expecting %d arguments, got %d", argsCount, 
@@ -39,7 +39,7 @@ void pushCFunctionMethod(lua_State* l, const char* name, lua_CFunction luafunc)
 
 //==============================================================================
 void pushCFunctionStatic(lua_State* l, const char* className,
-	const char* name, lua_CFunction luafunc)
+	const char* name, lua_CFunction luafunc) 
 {
 	lua_getglobal(l, className);
 	lua_pushcfunction(l, luafunc);
@@ -60,25 +60,31 @@ static int luaPanic(lua_State* l)
 //==============================================================================
 LuaBinder::LuaBinder()
 {
-	l = luaL_newstate();
-	luaL_openlibs(l);
-	lua_atpanic(l, &luaPanic);
+	m_alloc = Allocator<U8>(HeapMemoryPool(0));
+
+	m_l = luaL_newstate();
+	luaL_openlibs(m_l);
+	lua_atpanic(m_l, &luaPanic);
+	lua_setuserdata(m_l, this);
 }
 
 //==============================================================================
 LuaBinder::~LuaBinder()
 {
-	lua_close(l);
+	lua_close(m_l);
+
+	ANKI_ASSERT(m_alloc.getMemoryPool().getAllocationsCount() == 0 
+		&& "Leaking memory");
 }
 
 //==============================================================================
 void LuaBinder::evalString(const char* str)
 {
-	int e = luaL_dostring(l, str);
+	int e = luaL_dostring(m_l, str);
 	if(e)
 	{
-		std::string str(lua_tostring(l, -1));
-		lua_pop(l, 1);
+		std::string str(lua_tostring(m_l, -1));
+		lua_pop(m_l, 1);
 		throw ANKI_EXCEPTION("%s", str.c_str());
 	}
 }

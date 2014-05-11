@@ -80,14 +80,14 @@ ParticleEmitterProperties& ParticleEmitterProperties::operator=(
 //==============================================================================
 void ParticleEmitterProperties::updateFlags()
 {
-	forceEnabled = !isZero(particle.forceDirection.getLengthSquared());
-	forceEnabled = forceEnabled
-		|| !isZero(particle.forceDirectionDeviation.getLengthSquared());
-	forceEnabled = forceEnabled
-		&& (particle.forceMagnitude != 0.0
-		|| particle.forceMagnitudeDeviation != 0.0);
+	m_forceEnabled = !isZero(m_particle.m_forceDirection.getLengthSquared());
+	m_forceEnabled = m_forceEnabled
+		|| !isZero(m_particle.m_forceDirectionDeviation.getLengthSquared());
+	m_forceEnabled = m_forceEnabled
+		&& (m_particle.m_forceMagnitude != 0.0
+		|| m_particle.m_forceMagnitudeDeviation != 0.0);
 
-	wordGravityEnabled = isZero(particle.gravity.getLengthSquared());
+	m_wordGravityEnabled = isZero(m_particle.m_gravity.getLengthSquared());
 }
 
 //==============================================================================
@@ -122,76 +122,76 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
 {
 	// XML load
 	//
-	xmlReadFloat(rootel, "life", particle.life);
-	xmlReadFloat(rootel, "lifeDeviation", particle.lifeDeviation);
+	xmlReadFloat(rootel, "life", m_particle.m_life);
+	xmlReadFloat(rootel, "lifeDeviation", m_particle.m_lifeDeviation);
 	
-	xmlReadFloat(rootel, "mass", particle.mass);
-	xmlReadFloat(rootel, "massDeviation", particle.massDeviation);
+	xmlReadFloat(rootel, "mass", m_particle.m_mass);
+	xmlReadFloat(rootel, "massDeviation", m_particle.m_massDeviation);
 
-	xmlReadFloat(rootel, "size", particle.size);
-	xmlReadFloat(rootel, "sizeDeviation", particle.sizeDeviation);
-	xmlReadFloat(rootel, "sizeAnimation", particle.sizeAnimation);
+	xmlReadFloat(rootel, "size", m_particle.m_size);
+	xmlReadFloat(rootel, "sizeDeviation", m_particle.m_sizeDeviation);
+	xmlReadFloat(rootel, "sizeAnimation", m_particle.m_sizeAnimation);
 
-	xmlReadFloat(rootel, "alpha", particle.alpha);
-	xmlReadFloat(rootel, "alphaDeviation", particle.alphaDeviation);
-	U32 tmp;
+	xmlReadFloat(rootel, "alpha", m_particle.m_alpha);
+	xmlReadFloat(rootel, "alphaDeviation", m_particle.m_alphaDeviation);
+	U32 tmp = m_particle.m_alphaAnimation;
 	xmlReadU(rootel, "alphaAnimationEnabled", tmp);
-	particle.alphaAnimation = tmp;
+	m_particle.m_alphaAnimation = tmp;
 
-	xmlReadVec3(rootel, "forceDirection", particle.forceDirection);
+	xmlReadVec3(rootel, "forceDirection", m_particle.m_forceDirection);
 	xmlReadVec3(rootel, "forceDirectionDeviation", 
-		particle.forceDirectionDeviation);
-	xmlReadFloat(rootel, "forceMagnitude", particle.forceMagnitude);
+		m_particle.m_forceDirectionDeviation);
+	xmlReadFloat(rootel, "forceMagnitude", m_particle.m_forceMagnitude);
 	xmlReadFloat(rootel, "forceMagnitudeDeviation", 
-		particle.forceMagnitudeDeviation);
+		m_particle.m_forceMagnitudeDeviation);
 
-	xmlReadVec3(rootel, "gravity", particle.gravity);
-	xmlReadVec3(rootel, "gravityDeviation", particle.gravityDeviation);
+	xmlReadVec3(rootel, "gravity", m_particle.m_gravity);
+	xmlReadVec3(rootel, "gravityDeviation", m_particle.m_gravityDeviation);
 
-	xmlReadVec3(rootel, "startingPosition", particle.startingPos);
+	xmlReadVec3(rootel, "startingPosition", m_particle.m_startingPos);
 	xmlReadVec3(rootel, "startingPositionDeviation", 
-		particle.startingPosDeviation);
+		m_particle.m_startingPosDeviation);
 
-	xmlReadU(rootel, "maxNumberOfParticles", maxNumOfParticles);
+	xmlReadU(rootel, "maxNumberOfParticles", m_maxNumOfParticles);
 
-	xmlReadFloat(rootel, "emissionPeriod", emissionPeriod);
-	xmlReadU(rootel, "particlesPerEmittion", particlesPerEmittion);
-	U32 u = usePhysicsEngine;
-	xmlReadU(rootel, "usePhysicsEngine", u);
-	usePhysicsEngine = u;
+	xmlReadFloat(rootel, "emissionPeriod", m_emissionPeriod);
+	xmlReadU(rootel, "particlesPerEmittion", m_particlesPerEmittion);
+	tmp = m_usePhysicsEngine;
+	xmlReadU(rootel, "usePhysicsEngine", tmp);
+	m_usePhysicsEngine = tmp;
 
 	XmlElement el = rootel.getChildElement("material");
-	material.load(el.getText());
+	m_material.load(el.getText());
 
 	// sanity checks
 	//
 
-	if(particle.life <= 0.0)
+	if(m_particle.m_life <= 0.0)
 	{
 		throw PE_EXCEPTION("life");
 	}
 
-	if(particle.life - particle.lifeDeviation <= 0.0)
+	if(m_particle.m_life - m_particle.m_lifeDeviation <= 0.0)
 	{
 		throw PE_EXCEPTION("lifeDeviation");
 	}
 
-	if(particle.size <= 0.0)
+	if(m_particle.m_size <= 0.0)
 	{
 		throw PE_EXCEPTION("size");
 	}
 
-	if(maxNumOfParticles < 1)
+	if(m_maxNumOfParticles < 1)
 	{
 		throw PE_EXCEPTION("maxNumOfParticles");
 	}
 
-	if(emissionPeriod <= 0.0)
+	if(m_emissionPeriod <= 0.0)
 	{
 		throw PE_EXCEPTION("emissionPeriod");
 	}
 
-	if(particlesPerEmittion < 1)
+	if(m_particlesPerEmittion < 1)
 	{
 		throw PE_EXCEPTION("particlesPerEmission");
 	}

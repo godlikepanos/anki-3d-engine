@@ -4,13 +4,11 @@
 #include "anki/Config.h"
 #include "anki/util/StdTypes.h"
 #include <exception>
-#include <string>
+#include <utility>
 
 namespace anki {
 
-/// @addtogroup util
-/// @{
-/// @addtogroup misc
+/// @addtogroup util_other
 /// @{
 
 /// Mother of all AnKi exceptions.
@@ -22,14 +20,22 @@ class Exception: public std::exception
 public:
 	/// Constructor
 	explicit Exception(const char* file, I line, const char* func, 
-		const char* errorFmt, ...) throw();
+		const char* errorFmt, ...) noexcept;
 
 	/// Copy constructor
-	Exception(const Exception& e);
+	Exception(const Exception& e) noexcept;
+
+	/// Move constructor
+	Exception(Exception&& e) noexcept
+	{
+		*this = std::move(e);
+	}
 
 	/// Destructor. Do nothing
-	~Exception() throw()
-	{}
+	~Exception() noexcept;
+
+	/// Move
+	Exception& operator=(Exception&& b) noexcept;
 
 	/// For re-throws.
 	/// Usage:
@@ -41,24 +47,27 @@ public:
 	Exception operator<<(const std::exception& e) const;
 
 	/// Implements std::exception::what()
-	const char* what() const throw()
+	const char* what() const noexcept
 	{
-		return err.c_str();
+		return m_err;
 	}
 
 private:
-	std::string err;
+	char* m_err;
+
+	Exception() noexcept
+		: m_err(nullptr)
+	{}
 
 	/// Synthesize the error string
-	static std::string synthErr(const char* error, const char* file,
-		I line, const char* func);
+	static char* synthErr(const char* error, const char* file,
+		I line, const char* func) noexcept;
 };
 
 /// Macro for easy throwing
 #define ANKI_EXCEPTION(...) \
 	Exception(ANKI_FILE, __LINE__, ANKI_FUNC, __VA_ARGS__)
 
-/// @}
 /// @}
 
 } // end namespace anki

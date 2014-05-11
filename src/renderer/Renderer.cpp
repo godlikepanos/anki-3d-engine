@@ -70,15 +70,6 @@ RendererInitializer::RendererInitializer()
 	newOption("tilesYCount", 16);
 	newOption("tessellation", true);
 
-	if(GlStateCommonSingleton::get().isDeferredRenderer())
-	{
-		newOption("mrt", false); // Pack or not the GBuffer
-	}
-	else
-	{
-		newOption("mrt", true); // Pack or not the GBuffer
-	}
-
 	newOption("maxTextureSize", 1048576); // Cap to limit quality in resources
 	newOption("offscreen", false);
 }
@@ -89,7 +80,12 @@ RendererInitializer::RendererInitializer()
 
 //==============================================================================
 Renderer::Renderer()
-	: ms(this), is(this), pps(this), bs(this), dbg(this), sceneDrawer(this)
+	:	m_ms(this), 
+		m_is(this),
+		m_pps(this),
+		m_bs(this),
+		m_dbg(this), 
+		m_sceneDrawer(this)
 {}
 
 //==============================================================================
@@ -99,143 +95,137 @@ Renderer::~Renderer()
 //==============================================================================
 void Renderer::init(const RendererInitializer& initializer)
 {
-	// set from the initializer
-	width = initializer.get("width");
-	alignRoundUp(16, width);
-	height = initializer.get("height");
-	alignRoundUp(16, height);
-	lodDistance = initializer.get("lodDistance");
-	framesNum = 0;
-	samples = initializer.get("samples");
-	useMrt = initializer.get("mrt");
-	isOffscreen = initializer.get("offscreen");
-	renderingQuality = initializer.get("renderingQuality");
-	maxTextureSize = initializer.get("maxTextureSize");
-	tilesCount.x() = initializer.get("tilesXCount");
-	tilesCount.y() = initializer.get("tilesYCount");
+	// Set from the initializer
+	m_width = initializer.get("width");
+	alignRoundUp(16, m_width);
+	m_height = initializer.get("height");
+	alignRoundUp(16, m_height);
+	m_lodDistance = initializer.get("lodDistance");
+	m_framesNum = 0;
+	m_samples = initializer.get("samples");
+	m_isOffscreen = initializer.get("offscreen");
+	m_renderingQuality = initializer.get("renderingQuality");
+	m_maxTextureSize = initializer.get("maxTextureSize");
+	m_tilesCount.x() = initializer.get("tilesXCount");
+	m_tilesCount.y() = initializer.get("tilesYCount");
 
-	tessellation = GlStateCommonSingleton::get().isTessellationSupported() 
-		&& (U)initializer.get("tessellation");
+	m_tessellation = initializer.get("tessellation");
 
-	// a few sanity checks
-	if(samples != 1 && samples != 4 && samples != 8 && samples != 16
-		&& samples != 32)
+	// A few sanity checks
+	if(m_samples != 1 && m_samples != 4 && m_samples != 8 && m_samples != 16
+		&& m_samples != 32)
 	{
 		throw ANKI_EXCEPTION("Incorrect samples");
 	}
 
-	if(width < 10 || height < 10)
+	if(m_width < 10 || m_height < 10)
 	{
 		throw ANKI_EXCEPTION("Incorrect sizes");
 	}
 
-	// init the stages. Careful with the order!!!!!!!!!!
-	tiler.init(this);
-
-	ms.init(initializer);;
-	is.init(initializer);
-	bs.init(initializer);
-	pps.init(initializer);
-	bs.init(initializer);
-	dbg.init(initializer);
-
-	// quad VBOs and VAO
+	// quad setup
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
 		{1.0, -1.0}, {-1.0, -1.0}};
-	quadPositionsVbo.create(GL_ARRAY_BUFFER, sizeof(quadVertCoords),
-		quadVertCoords, GL_STATIC_DRAW);
 
-	quadVao.create();
-	quadVao.attachArrayBufferVbo(
-		&quadPositionsVbo, 0, 2, GL_FLOAT, false, 0, 0);
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
+
+	GlClientBufferHandle tmpBuff = GlClientBufferHandle(jobs, 
+		sizeof(quadVertCoords), (void*)&quadVertCoords[0][0]);
+
+	m_quadPositionsBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, 
+		tmpBuff, 0);
+
+	m_drawQuadVert.load("shaders/Quad.vert.glsl");
+
+	// Init the stages. Careful with the order!!!!!!!!!!
+	m_tiler.init(this);
+
+	m_ms.init(initializer);;
+	m_is.init(initializer);
+	m_bs.init(initializer);
+	m_pps.init(initializer);
+	m_bs.init(initializer);
+	m_dbg.init(initializer);
 
 	// Init the shaderPostProcessorString
 	std::stringstream ss;
-	ss << "#define USE_MRT " << (U)useMrt << "\n"
-		<< "#define RENDERING_WIDTH " << width << "\n"
-		<< "#define RENDERING_HEIGHT " << height << "\n";
+	ss << "#define RENDERING_WIDTH " << m_width << "\n"
+		<< "#define RENDERING_HEIGHT " << m_height << "\n";
 
-	shaderPostProcessorString = ss.str();
+	m_shaderPostProcessorString = ss.str();
+
+	// Default FB
+	m_defaultFb = GlFramebufferHandle(jobs, {});
+
+	jobs.flush();
 }
 
 //==============================================================================
-void Renderer::render(SceneGraph& scene_)
+void Renderer::render(SceneGraph& scene, GlJobChainHandle& jobs)
 {
-	scene = &scene_;
-	Camera& cam = scene->getActiveCamera();
+	m_scene = &scene;
+	Camera& cam = m_scene->getActiveCamera();
 
 	// Calc a few vars
 	//
 	Timestamp camUpdateTimestamp = cam.FrustumComponent::getTimestamp();
-	if(planesUpdateTimestamp < scene->getActiveCameraChangeTimestamp()
-		|| planesUpdateTimestamp < camUpdateTimestamp
-		|| planesUpdateTimestamp == 1)
+	if(m_planesUpdateTimestamp < m_scene->getActiveCameraChangeTimestamp()
+		|| m_planesUpdateTimestamp < camUpdateTimestamp
+		|| m_planesUpdateTimestamp == 1)
 	{
-		calcPlanes(Vec2(cam.getNear(), cam.getFar()), planes);
+		calcPlanes(Vec2(cam.getNear(), cam.getFar()), m_planes);
 
 		ANKI_ASSERT(cam.getCameraType() == Camera::CT_PERSPECTIVE);
 		const PerspectiveCamera& pcam =
 			static_cast<const PerspectiveCamera&>(cam);
 
-		calcLimitsOfNearPlane(pcam, limitsOfNearPlane);
-		limitsOfNearPlane2 = limitsOfNearPlane * 2.0;
+		calcLimitsOfNearPlane(pcam, m_limitsOfNearPlane);
+		m_limitsOfNearPlane2 = m_limitsOfNearPlane * 2.0;
 
-		planesUpdateTimestamp = getGlobTimestamp();
+		m_planesUpdateTimestamp = getGlobTimestamp();
 	}
 
-	ANKI_COUNTER_START_TIMER(C_RENDERER_MS_TIME);
-	ms.run();
-	ANKI_COUNTER_STOP_TIMER_INC(C_RENDERER_MS_TIME);
+	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
+	m_ms.run(jobs);
+	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
-	tiler.runMinMax(ms.getDepthFai());
+	m_tiler.runMinMax(m_ms.getDepthRt());
 
-	ANKI_COUNTER_START_TIMER(C_RENDERER_IS_TIME);
-	is.run();
-	ANKI_COUNTER_STOP_TIMER_INC(C_RENDERER_IS_TIME);
+	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
+	m_is.run(jobs);
+	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
-	bs.run();
+	m_bs.run(jobs);
 
-	ANKI_COUNTER_START_TIMER(C_RENDERER_PPS_TIME);
-	if(pps.getEnabled())
+	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
+	if(m_pps.getEnabled())
 	{
-		pps.run();
+		m_pps.run(jobs);
 	}
-	ANKI_COUNTER_STOP_TIMER_INC(C_RENDERER_PPS_TIME);
+	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_PPS_TIME);
 
-	if(dbg.getEnabled())
+	if(m_dbg.getEnabled())
 	{
-		dbg.run();
+		m_dbg.run(jobs);
 	}
 
-	ANKI_CHECK_GL_ERROR();
-	++framesNum;
+	++m_framesNum;
 }
 
 //==============================================================================
-void Renderer::drawQuad()
+void Renderer::drawQuad(GlJobChainHandle& jobs)
 {
-	quadVao.bind();
-	
-	Drawcall dc;
-	dc.primitiveType = GL_TRIANGLE_STRIP;
-	dc.indicesType = 0;
-	dc.count = 4;
-
-	dc.enque();
+	drawQuadInstanced(jobs, 1);
 }
 
 //==============================================================================
-void Renderer::drawQuadInstanced(U32 primitiveCount)
+void Renderer::drawQuadInstanced(GlJobChainHandle& jobs, U32 primitiveCount)
 {
-	quadVao.bind();
+	m_quadPositionsBuff.bindVertexBuffer(jobs, 2, GL_FLOAT, false, 0, 0, 0);
 
-	Drawcall dc;
-	dc.primitiveType = GL_TRIANGLE_STRIP;
-	dc.indicesType = 0;
-	dc.count = 4;
-	dc.instancesCount = primitiveCount;
-
-	dc.enque();
+	GlDrawcallArrays dc(GL_TRIANGLE_STRIP, 4, primitiveCount);
+	dc.draw(jobs);
 }
 
 //==============================================================================
@@ -252,9 +242,9 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 	vec.z() = 2.0 * windowCoords.z() - 1.0;
 	vec.w() = 1.0;
 
-	Vec4 final = invPm * vec;
-	final /= final.w();
-	return Vec3(final);
+	Vec4 out = invPm * vec;
+	out /= out.w();
+	return out.xyz();
 }
 
 //==============================================================================
@@ -275,6 +265,57 @@ void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 {
 	limitsOfNearPlane.y() = tan(0.5 * pcam.getFovY());
 	limitsOfNearPlane.x() = tan(0.5 * pcam.getFovX());
+}
+
+//==============================================================================
+void Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat, 
+	GLenum format, GLenum type, U32 samples, GlTextureHandle& rt)
+{
+	// Not very important but keep the resulution of render targets aligned to
+	// 16
+	ANKI_ASSERT(isAligned(16, w));
+	ANKI_ASSERT(isAligned(16, h));
+
+	GlTextureHandle::Initializer init;
+
+	init.m_width = w;
+	init.m_height = h;
+	init.m_depth = 0;
+#if ANKI_GL == ANKI_GL_DESKTOP
+	init.m_target = (samples == 1) ? GL_TEXTURE_2D : GL_TEXTURE_2D_MULTISAMPLE;
+#else
+	ANKI_ASSERT(samples == 1);
+	init.m_target = GL_TEXTURE_2D;
+#endif
+	init.m_internalFormat = internalFormat;
+	init.m_format = format;
+	init.m_type = type;
+	init.m_mipmapsCount = 1;
+	init.m_filterType = GlTextureHandle::Filter::NEAREST;
+	init.m_repeat = false;
+	init.m_anisotropyLevel = 0;
+	init.m_genMipmaps = false;
+	init.m_samples = samples;
+
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
+	rt = GlTextureHandle(jobs, init);
+	jobs.flush();
+}
+
+//==============================================================================
+GlProgramPipelineHandle Renderer::createDrawQuadProgramPipeline(
+	GlProgramHandle frag)
+{
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
+
+	Array<GlProgramHandle, 2> progs = {{m_drawQuadVert->getGlProgram(), frag}};
+
+	GlProgramPipelineHandle ppline(jobs, &progs[0], &progs[0] + 2);
+	jobs.finish();
+
+	return ppline;
 }
 
 } // end namespace anki

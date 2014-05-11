@@ -8,12 +8,13 @@
 #include <cstdint>
 #include <sstream>
 #include <cassert>
+#include "Common.h"
 
 //==============================================================================
 /// Load the scene
-static const void load(
-	const std::string& filename,
-	Exporter& exporter)
+static void load(
+	Exporter& exporter,
+	const std::string& filename)
 {
 	LOGI("Loading file %s\n", filename.c_str());
 
@@ -29,13 +30,12 @@ static const void load(
 
 	if(!scene)
 	{
-		ERROR("%s\n", importer.GetErrorString());
+		ERROR("%s\n", exporter.importer.GetErrorString());
 	}
 
 	exporter.scene = scene;
 
 	LOGI("File loaded successfully!\n");
-	return *scene;
 }
 
 //==============================================================================
@@ -120,13 +120,11 @@ static void visitNode(Exporter& exporter, const aiNode* ainode)
 		return;
 	}
 
-	assert(ainode->mNumMeshes > 0);
-
 	// For every mesh of this node
 	for(unsigned i = 0; i < ainode->mNumMeshes; i++)
 	{
 		unsigned meshIndex = ainode->mMeshes[i];
-		unsigned mtlIndex =  scene.mMeshes[meshIndex]->mMaterialIndex;
+		unsigned mtlIndex =  exporter.scene->mMeshes[meshIndex]->mMaterialIndex;
 
 		// Find if there is another node with the same model
 		std::vector<Node>::iterator it;
@@ -135,61 +133,78 @@ static void visitNode(Exporter& exporter, const aiNode* ainode)
 			const Node& node = *it;
 			const Model& model = exporter.models[node.modelIndex];
 
-			if(model.meshIndex == meshIndex && model.mtlIndex = mtlIndex)
+			if(model.meshIndex == meshIndex && model.mtlIndex == mtlIndex)
 			{
 				break;
 			}
 		}
 
-		if(it != exporter.node.end())
+		if(it != exporter.nodes.end())
 		{
 			// A node with the same model exists. It's instanced
 
 			Node& node = *it;
-			Model& model = exporter.models[tmpnode.modelIndex];
+			Model& model = exporter.models[node.modelIndex];
 
 			assert(node.transforms.size() > 0);
-			node.transforms.push_back(node.mTransformation);
+			node.transforms.push_back(ainode->mTransformation);
 			
 			model.instanced = true;
 			break;
 		}
 
-		// Search if model exists
-		std::vector<Model>::iterator it2;
-		for(it2 = exporter.models.begin(); it2 != exporter.models.end(); it2++)
-		{
-			Model& model = *it;
-			if(model.meshIndex == )
-		}
+		// Create new model
+		Model mdl;
+		mdl.meshIndex = meshIndex;
+		mdl.mtlIndex = mtlIndex;
+		exporter.models.push_back(mdl);
 
-		// Is material set?
-		if(config.meshes[meshIndex].mtlIndex == INVALID_INDEX)
-		{
-			// Connect mesh with material
-			config.meshes[meshIndex].mtlIndex = mesh.mMaterialIndex;
-
-			// Connect material with mesh
-			config.materials[mesh.mMaterialIndex].meshIndices.push_back(
-				meshIndex);
-		}
-		else if(config.meshes[meshIndex].mtlIndex != mesh.mMaterialIndex)
-		{
-			ERROR("Previous material index conflict\n");
-		}
-
-		config.meshes[meshIndex].transforms.push_back(node->mTransformation);
+		// Create new node
+		Node node;
+		node.modelIndex = exporter.models.size() - 1;
+		node.transforms.push_back(ainode->mTransformation);
+		exporter.nodes.push_back(node);
 	}
 
 	// Go to children
-	for(uint32_t i = 0; i < node->mNumChildren; i++)
+	for(uint32_t i = 0; i < ainode->mNumChildren; i++)
 	{
-		visitNode(node->mChildren[i], scene);
+		visitNode(exporter, ainode->mChildren[i]);
 	}
 }
 
 //==============================================================================
-static void exportScene(const Exporter& exporter)
+static void writeNodeTransform(const Exporter& exporter, std::ofstream& file, 
+	const std::string& node, const aiMatrix4x4& mat)
+{
+	aiMatrix4x4 m = toAnkiMatrix(mat, exporter.flipyz);
+
+	float pos[3];
+	pos[0] = m[0][3];
+	pos[1] = m[1][3];
+	pos[2] = m[2][3];
+
+	file << "pos = Vec3.new()\n";
+	file << "pos:setX(" << pos[0] << ")\n";
+	file << "pos:setY(" << pos[1] << ")\n";
+	file << "pos:setZ(" << pos[2] << ")\n";
+	file << node 
+		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(pos)\n";
+
+	file << "rot = Mat3.new()\n";
+	for(unsigned j = 0; j < 3; j++)
+	{
+		for(unsigned i = 0; i < 3; i++)
+		{
+			file << "rot:setAt(" << j << ", " << i << ", " << m[j][i] << ")\n";
+		}
+	}
+	file << node 
+		<< ":getSceneNodeBase():getMoveComponent():setLocalRotation(rot)\n";
+}
+
+//==============================================================================
+static void exportScene(Exporter& exporter)
 {
 	LOGI("Exporting scene to %s\n", exporter.outDir.c_str());
 
@@ -197,201 +212,60 @@ static void exportScene(const Exporter& exporter)
 	// Open scene file
 	//
 	std::ofstream file;
-	file.open(exporter.outDir + "master.ankiscene");
+	file.open(exporter.outDir + "scene.lua");
 
-	file << XML_HEADER << "\n<scene>\n";
+	file << "scene = SceneGraphSingleton.get()\n";
 
 	//
 	// Get all the data
 	//
 
-	const aiNode* node = scene.mRootNode;
+	const aiNode* node = exporter.scene->mRootNode;
 	visitNode(exporter, node);
 
-#if 0
 	//
-	// Export non instanced static meshes
+	// Export nodes
 	//
-	for(uint32_t i = 0; i < config.meshes.size(); i++)
+	for(uint32_t i = 0; i < exporter.nodes.size(); i++)
 	{
-		// Check if instance is one
-		if(config.meshes[i].transforms.size() == 1)
+		Node& node = exporter.nodes[i];
+
+		Model& model = exporter.models[node.modelIndex];
+
+		exportMesh(exporter, 
+			*exporter.scene->mMeshes[model.meshIndex], nullptr);
+
+		exportMaterial(exporter, 
+			*exporter.scene->mMaterials[model.mtlIndex], 
+			model.instanced);
+
+		exportModel(exporter, model);
+		std::string name = getModelName(exporter, model);
+
+		// Write the main node
+		file << "\nnode = scene:newModelNode(\"" << name << "\", \"" 
+			<< exporter.rpath << name << ".ankimdl" << "\")\n"; 
+		writeNodeTransform(exporter, file, "node", node.transforms[0]);
+
+		// Write instance nodes
+		for(unsigned j = 1; j < node.transforms.size(); j++)
 		{
-			continue;
-		}
+			file << "inst = scene:newInstanceNode(\"" 
+				<< name << "_inst" << (j - 1) << "\")\n"
+				<< "node:getSceneNodeBase():addChild("
+				<< "inst:getSceneNodeBase())\n";
 
-		// Export the material
-		aiMaterial& aimtl = *scene.mMaterials[mesh.mtlIndex];
-		std::string mtlName = getMaterialName(aimtl);
-		exportMaterial(scene, aimtl, false, &mtlName);
-
-		// Export mesh
-		std::string meshName = std::string(scene.mMeshes[i]->mName.C_Str())
-			+ "_static_" + std::to_string(i);
-		exportMesh(*scene.mMeshes[i], &meshName, nullptr);
-
-		for(uint32_t t = 0; t < config.meshes[i].transforms.size(); t++)
-		{
-			std::string nname = name + "_" + std::to_string(t);
-
-			exportMesh(*scene.mMeshes[i], &nname, 
-				&config.meshes[i].transforms[t], config);
+			writeNodeTransform(exporter, file, "inst", node.transforms[j]);
 		}
 	}
-#endif
-
-	//
-	// Write the instanced meshes
-	//
-	for(uint32_t i = 0; i < config.meshes.size(); i++)
-	{
-		const Mesh& mesh = config.meshes[i];
-
-		// Skip meshes that are not instance candidates
-		if(mesh.transforms.size() == 0)
-		{
-			continue;
-		}
-
-		// Export the material
-		aiMaterial& aimtl = *scene.mMaterials[mesh.mtlIndex];
-		std::string mtlName = getMaterialName(aimtl) + "_instanced";
-		exportMaterial(scene, aimtl, true, &mtlName);
-
-		// Export mesh
-		std::string meshName = std::string(scene.mMeshes[i]->mName.C_Str())
-			+ "_instanced_" + std::to_string(i);
-		exportMesh(*scene.mMeshes[i], &meshName, nullptr);
-
-		// Write model file
-		std::string modelName = mtlName + "_" + std::to_string(i);
-
-		{
-			std::ofstream file;
-			file.open(
-				config.outDir + modelName + ".ankimdl");
-
-			file << xmlHeader << "\n"
-				<< "<model>\n"
-				<< "\t<modelPatches>\n"
-				<< "\t\t<modelPatch>\n"
-				<< "\t\t\t<mesh>" << config.rpath << meshName 
-				<< ".ankimesh</mesh>\n"
-				<< "\t\t\t<material>" << config.rpath << mtlName 
-				<< ".ankimtl</material>\n"
-				<< "\t\t</modelPatch>\n"
-				<< "\t</modelPatches>\n"
-				<< "</model>\n";
-		}
-
-		// Node name
-		std::string nodeName = getMaterialName(aimtl) + "_instanced_" 
-			+ std::to_string(i);
-
-		// Write the scene file
-		file << "\t<modelNode>\n"
-			<< "\t\t<name>" << nodeName << "</name>\n"
-			<< "\t\t<model>" << config.rpath << modelName 
-			<< ".ankimdl</model>\n"
-			<< "\t\t<instancesCount>" 
-			<< mesh.transforms.size() << "</instancesCount>\n";
-
-		for(uint32_t j = 0; j < mesh.transforms.size(); j++)
-		{
-			file << "\t\t<transform>";
-
-			aiMatrix4x4 trf = toAnkiMatrix(mesh.transforms[j]);
-
-			for(uint32_t a = 0; a < 4; a++)
-			{
-				for(uint32_t b = 0; b < 4; b++)
-				{
-					file << trf[a][b] << " ";
-				}
-			}
-
-			file << "</transform>\n";
-		}
-
-		file << "\t</modelNode>\n";
-	}
-
-
-#if 0
-	// Write bmeshes
-	for(uint32_t mtlId = 0; mtlId < config.materials.size(); mtlId++)
-	{
-		const Material& mtl = config.materials[mtlId];
-
-		// Check if used
-		if(mtl.meshIndices.size() < 1)
-		{
-			continue;
-		}
-
-		std::string name = getMaterialName(*scene.mMaterials[mtlId]) + ".bmesh";
-
-		std::fstream file;
-		file.open(config.outDir + name, std::ios::out);
-
-		file << xmlHeader << "\n";
-		file << "<bucketMesh>\n";
-		file << "\t<meshes>\n";
-		
-		for(uint32_t j = 0; j < mtl.meshIndices.size(); j++)
-		{
-			uint32_t meshId = mtl.meshIndices[j];
-			const Mesh& mesh = config.meshes[meshId];
-
-			for(uint32_t k = 0; k < mesh.transforms.size(); k++)
-			{
-				file << "\t\t<mesh>" << config.rpath 
-					<< "mesh_" + std::to_string(meshId) << "_" 
-					<< std::to_string(k)
-					<< ".mesh</mesh>\n";
-			}
-		}
-
-		file << "\t</meshes>\n";
-		file << "</bucketMesh>\n";
-	}
-
-	// Create the master model
-	std::fstream file;
-	file.open(config.outDir + "static_geometry.mdl", std::ios::out);
-
-	file << xmlHeader << "\n";
-	file << "<model>\n";
-	file << "\t<modelPatches>\n";
-	for(uint32_t i = 0; i < config.materials.size(); i++)
-	{
-		// Check if used
-		if(config.materials[i].meshIndices.size() < 1)
-		{
-			continue;
-		}
-
-		file << "\t\t<modelPatch>\n";
-		file << "\t\t\t<bucketMesh>" << config.rpath 
-			<< getMaterialName(*scene.mMaterials[i]) << ".bmesh</bucketMesh>\n";
-		file << "\t\t\t<material>" << config.rpath 
-			<< getMaterialName(*scene.mMaterials[i]) 
-			<< ".mtl</material>\n";
-		file << "\t\t</modelPatch>\n";
-	}
-	file << "\t</modelPatches>\n";
-	file << "</model>\n";
-#endif
 
 	//
 	// Animations
 	//
-	for(unsigned i = 0; i < scene.mNumAnimations; i++)
+	for(unsigned i = 0; i < exporter.scene->mNumAnimations; i++)
 	{
-		exportAnimation(*scene.mAnimations[i], i, scene);
+		exportAnimation(exporter, *exporter.scene->mAnimations[i], i);
 	}
-
-	file << "</scene>\n";
 
 	LOGI("Done exporting scene!\n");
 }
@@ -406,7 +280,7 @@ int main(int argc, char** argv)
 		parseCommandLineArgs(argc, argv, exporter);
 
 		// Load file
-		load(exporter.inputFname, exporter);
+		load(exporter, exporter.inputFname);
 
 		// Export
 		exportScene(exporter);

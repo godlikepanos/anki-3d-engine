@@ -1,35 +1,24 @@
 #include <cstring>
 #include "anki/gl/GlBuffer.h"
-#include "anki/gl/GlException.h"
+#include "anki/gl/GlError.h"
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
+#include <cmath>
 
 namespace anki {
-
-//==============================================================================
-// Misc                                                                        =
-//==============================================================================
-
-//==============================================================================
-
-/// Instead of map/unmap use glBufferSubData() when writing to the whole buffer
-#define USE_BUFFER_DATA_ON_WRITE 1
-
-//==============================================================================
-// GlBuffer                                                                    =
-//==============================================================================
 
 //==============================================================================
 GlBuffer& GlBuffer::operator=(GlBuffer&& b)
 {
 	destroy();
 	Base::operator=(std::forward<Base>(b));
-	target = b.target;
-	usage = b.usage;
-	sizeInBytes = b.sizeInBytes;
-#if ANKI_DEBUG
-	mapped = b.mapped;
-#endif
+	m_target = b.m_target;
+	m_size = b.m_size;
+	m_persistentMapping = b.m_persistentMapping;
+
+	b.m_target = 0;
+	b.m_size = 0;
+	b.m_persistentMapping = nullptr;
 	return *this;
 }
 
@@ -38,140 +27,92 @@ void GlBuffer::destroy()
 {
 	if(isCreated())
 	{
-		unbind();
-		glDeleteBuffers(1, &glId);
-		glId = 0;
+		glDeleteBuffers(1, &m_glName);
+		m_glName = 0;
 	}
 }
 
 //==============================================================================
-void GlBuffer::create(GLenum target_, U32 sizeInBytes_,
-	const void* dataPtr, GLenum usage_)
+void GlBuffer::create(GLenum target, U32 sizeInBytes,
+	const void* dataPtr, GLbitfield flags)
 {
 	ANKI_ASSERT(!isCreated());
 
-	if(target_ == GL_UNIFORM_BUFFER)
+	if(target == GL_UNIFORM_BUFFER)
 	{
 		GLint64 maxBufferSize;
 		glGetInteger64v(GL_MAX_UNIFORM_BLOCK_SIZE, &maxBufferSize);
-		if(sizeInBytes_ > (PtrSize)maxBufferSize)
-		{
-			throw ANKI_EXCEPTION("Buffer size exceeds GL implementation max");
-		}
 
-		if(sizeInBytes_ > 16384)
+		if(sizeInBytes > 16384)
 		{
 			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
-				"than the spec's min", sizeInBytes_);
+				"than the spec's min", sizeInBytes);
+		} 
+		else if(sizeInBytes > (PtrSize)maxBufferSize)
+		{
+			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
+				"than the implementation's min (%u)", sizeInBytes, 
+				maxBufferSize);
+		}
+	}
+	else if(target == GL_SHADER_STORAGE_BUFFER)
+	{
+		GLint64 maxBufferSize;
+		glGetInteger64v(GL_MAX_SHADER_STORAGE_BLOCK_SIZE, &maxBufferSize);
+
+		if(sizeInBytes > pow(2, 24))
+		{
+			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
+				"than the spec's min", sizeInBytes);
+		} 
+		else if(sizeInBytes > (PtrSize)maxBufferSize)
+		{
+			ANKI_LOGW("The size (%u) of the shader storage buffer is greater "
+				"than the implementation's min (%u)", sizeInBytes, 
+				maxBufferSize);
 		}
 	}
 
-	usage = usage_;
-	target = target_;
-	sizeInBytes = sizeInBytes_;
+	m_target = target;
+	m_size = sizeInBytes;
 
-	ANKI_ASSERT(sizeInBytes > 0 && "Unacceptable sizeInBytes");
-	ANKI_ASSERT(!(target == GL_UNIFORM_BUFFER && usage != GL_DYNAMIC_DRAW)
-		&& "Don't use UBOs like that");
+	ANKI_ASSERT(m_size > 0 && "Unacceptable size");
 
 	// Create
-	glGenBuffers(1, &glId);
+	glGenBuffers(1, &m_glName);
 
-	glBindBuffer(target, glId);
-	glBufferData(target, sizeInBytes, dataPtr, usage);
+	glBindBuffer(m_target, m_glName);
+	glBufferStorage(m_target, m_size, dataPtr, flags);
 
-	// make a check
-	GLint bufferSize = 0;
-	glGetBufferParameteriv(target, GL_BUFFER_SIZE, &bufferSize);
-	if(sizeInBytes != (U32)bufferSize)
+	// Map if needed
+	if((flags & GL_MAP_PERSISTENT_BIT) && (flags & GL_MAP_COHERENT_BIT))
 	{
-		destroy();
-		throw ANKI_EXCEPTION("Data size mismatch");
+		const GLbitfield mapbits = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT 
+			| GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+
+		m_persistentMapping = 
+			glMapBufferRange(m_target, 0, sizeInBytes, flags & mapbits);
+		ANKI_ASSERT(m_persistentMapping != nullptr);
 	}
-
-	glBindBuffer(target, 0);
-	ANKI_CHECK_GL_ERROR();
-}
-
-//==============================================================================
-void* GlBuffer::map(U32 offset, U32 length, GLuint flags)
-{
-	// XXX Remove this workaround
-#if ANKI_GL == ANKI_GL_ES
-	flags &= ~GL_MAP_INVALIDATE_BUFFER_BIT;
-#endif
-
-	// Precoditions
-	ANKI_ASSERT(isCreated());
-#if ANKI_DEBUG
-	ANKI_ASSERT(mapped == false);
-#endif
-	ANKI_ASSERT(length > 0);
-	ANKI_ASSERT(offset + length <= sizeInBytes);
-
-	// Do the mapping
-	bind();
-	void* mappedMem = glMapBufferRange(target, offset, length, flags);
-	ANKI_ASSERT(mappedMem != nullptr);
-#if ANKI_DEBUG
-	mapped = true;
-#endif
-	return mappedMem;
-}
-
-//==============================================================================
-void GlBuffer::unmap()
-{
-	ANKI_ASSERT(isCreated());
-#if ANKI_DEBUG
-	ANKI_ASSERT(mapped == true);
-#endif
-	bind();
-	glUnmapBuffer(target);
-#if ANKI_DEBUG
-	mapped = false;
-#endif
 }
 
 //==============================================================================
 void GlBuffer::write(void* buff, U32 offset, U32 size)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(usage != GL_STATIC_DRAW);
-	ANKI_ASSERT(offset + size <= sizeInBytes);
+	ANKI_ASSERT(offset + size <= size);
+
 	bind();
-
-#if USE_BUFFER_DATA_ON_WRITE
-	glBufferSubData(target, offset, sizeInBytes, buff);
-#else
-	void* mapped = map(offset, size, 
-		GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT 
-		| GL_MAP_UNSYNCHRONIZED_BIT);
-	
-	memcpy(mapped, buff, size);
-	unmap();
-#endif
-}
-
-//==============================================================================
-void GlBuffer::read(void* outBuff, U32 offset, U32 size)
-{
-	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(usage != GL_STATIC_DRAW);
-	ANKI_ASSERT(offset + size <= sizeInBytes);
-	bind();
-
-	void* mapped = map(offset, size, GL_MAP_READ_BIT);
-	memcpy(outBuff, mapped, size);
-	unmap();
+	glBufferSubData(m_target, offset, size, buff);
 }
 
 //==============================================================================
 void GlBuffer::setBinding(GLuint binding) const
 {
 	ANKI_ASSERT(isCreated());
-	glBindBufferBase(target, binding, getGlId());
-	ANKI_CHECK_GL_ERROR();
+	ANKI_ASSERT(m_target == GL_SHADER_STORAGE_BUFFER 
+		|| m_target == GL_UNIFORM_BUFFER);
+	glBindBufferBase(m_target, binding, m_glName);
 }
 
 //==============================================================================
@@ -179,11 +120,12 @@ void GlBuffer::setBindingRange(
 	GLuint binding, PtrSize offset, PtrSize size) const
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(offset + size <= sizeInBytes);
+	ANKI_ASSERT(offset + size <= m_size);
 	ANKI_ASSERT(size > 0);
+	ANKI_ASSERT(m_target == GL_SHADER_STORAGE_BUFFER
+		|| m_target == GL_UNIFORM_BUFFER);
 
-	glBindBufferRange(target, binding, getGlId(), offset, size);
-	ANKI_CHECK_GL_ERROR();
+	glBindBufferRange(m_target, binding, m_glName, offset, size);
 }
 
 } // end namespace anki

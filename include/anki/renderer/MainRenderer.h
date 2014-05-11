@@ -7,6 +7,9 @@
 
 namespace anki {
 
+/// @addtogroup renderer
+/// @{
+
 /// Main onscreen renderer
 class MainRenderer: public Renderer
 {
@@ -28,14 +31,19 @@ public:
 	void takeScreenshot(const char* filename);
 
 private:
-	std::unique_ptr<Deformer> deformer;
-	ShaderProgramResourcePointer blitProg;
+	std::unique_ptr<Deformer> m_deformer;
+	ProgramResourcePointer m_blitFrag;
+	GlProgramPipelineHandle m_blitPpline;
+
+	GlJobChainInitHints m_jobsInitHints; ///< Optimize job chain
 
 	void takeScreenshotTga(const char* filename);
 	void initGl();
 };
 
 typedef Singleton<MainRenderer> MainRendererSingleton;
+
+/// @}
 
 } // end namespace anki
 

@@ -3,7 +3,7 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/Collision.h"
-#include "anki/gl/Gl.h"
+#include "anki/Gl.h"
 #include "anki/resource/Resource.h"
 #include "anki/core/Timestamp.h"
 #include <bitset>
@@ -14,6 +14,9 @@ class Renderer;
 class Camera;
 class ShaderProgramUniformVariable;
 class Frustumable;
+
+/// @addtogroup renderer
+/// @{
 
 /// Tiler used for visibility tests
 class Tiler
@@ -31,7 +34,7 @@ public:
 	void init(Renderer* r);
 
 	/// Issue the GPU job
-	void runMinMax(const Texture& depthMap);
+	void runMinMax(const GlTextureHandle& depthMap);
 
 	/// Update the tiles before doing visibility tests
 	void updateTiles(Camera& cam);
@@ -48,42 +51,43 @@ public:
 
 private:
 	/// Tile planes
-	Vector<Plane> allPlanes;
-	Plane* planesY = nullptr;
-	Plane* planesX = nullptr;
-	Plane* planesYW = nullptr;
-	Plane* planesXW = nullptr;
-	Plane* nearPlanesW = nullptr;
-	Plane* farPlanesW = nullptr;
+	Vector<Plane> m_allPlanes;
+	Plane* m_planesY = nullptr;
+	Plane* m_planesX = nullptr;
+	Plane* m_planesYW = nullptr;
+	Plane* m_planesXW = nullptr;
+	Plane* m_nearPlanesW = nullptr;
+	Plane* m_farPlanesW = nullptr;
 
 	/// A texture of tilesXCount * tilesYCount size and format RG32UI. Used to
 	/// calculate the near and far planes of the tiles
-	Texture fai;
+	GlTextureHandle m_rt;
 
-	/// Main FBO for the fai
-	Fbo fbo;
+	/// Main FB for the fai
+	GlFramebufferHandle m_fb;
 
 	/// PBO buffer that is used to read the data of fai asynchronously
-	GlBuffer pbo;
+	GlBufferHandle m_pixelBuff;
 
 	/// Main shader program
-	ShaderProgramResourcePointer prog;
+	ProgramResourcePointer m_frag;
+	GlProgramPipelineHandle m_ppline;
 
-	const ShaderProgramUniformVariable* depthMapUniform = nullptr; ///< Cache it
-
-	Renderer* r = nullptr;
+	Renderer* m_r = nullptr;
 
 	/// Used to check if the camera is changed and we need to update the planes
-	const Camera* prevCam = nullptr;
+	const Camera* m_prevCam = nullptr;
 
 	/// Timestamp for the same reason as prevCam
-	Timestamp planes4UpdateTimestamp = getGlobTimestamp();
+	Timestamp m_planes4UpdateTimestamp = getGlobTimestamp();
 
-	void initInternal(Renderer* r_);
+	void initInternal(Renderer* r);
 
 	void testRange(const CollisionShape& cs, Bool nearPlane,
 		U iFrom, U iTo, U jFrom, U jTo, Bitset& bitset) const;
 };
+
+/// @}
 
 } // end namespace anki
 

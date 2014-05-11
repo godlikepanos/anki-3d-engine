@@ -5,15 +5,27 @@
 namespace anki {
 
 //==============================================================================
-Obb::Obb(const Obb& b)
-	: CollisionShape(CST_OBB), center(b.center), rotation(b.rotation),
-		extends(b.extends)
+Obb::Obb()
+	:	CollisionShape(Type::OBB),
+		m_center(Vec3(0.0)),
+		m_rotation(Mat3::getIdentity()),
+		m_extends(Vec3(getEpsilon<F32>()))
 {}
 
 //==============================================================================
-Obb::Obb(const Vec3& center_, const Mat3& rotation_, const Vec3& extends_)
-	: CollisionShape(CST_OBB), center(center_), rotation(rotation_),
-		extends(extends_)
+Obb::Obb(const Obb& b)
+	: 	CollisionShape(Type::OBB), 
+		m_center(b.m_center), 
+		m_rotation(b.m_rotation),
+		m_extends(b.m_extends)
+{}
+
+//==============================================================================
+Obb::Obb(const Vec3& center, const Mat3& rotation, const Vec3& extends)
+	:	CollisionShape(Type::OBB), 
+		m_center(center), 
+		m_rotation(rotation),
+		m_extends(extends)
 {}
 
 //==============================================================================
@@ -49,9 +61,9 @@ F32 Obb::testPlane(const Plane& p) const
 Obb Obb::getTransformed(const Transform& transform) const
 {
 	Obb out;
-	out.extends = extends * transform.getScale();
-	out.center = center.getTransformed(transform);
-	out.rotation = transform.getRotation() * rotation;
+	out.m_extends = m_extends * transform.getScale();
+	out.m_center = m_center.getTransformed(transform);
+	out.m_rotation = transform.getRotation() * m_rotation;
 	return out;
 }
 
@@ -93,14 +105,14 @@ void Obb::getExtremePoints(Array<Vec3, 8>& points) const
 		RBB
 	};
 
-	Vec3 er = rotation * extends; // extend rotated
+	Vec3 er = m_rotation * m_extends; // extend rotated
 
 	points[RTF] = er;
 	points[LBB] = -er;
 
-	Vec3 xAxis = rotation.getColumn(0);
-	Vec3 yAxis = rotation.getColumn(1);
-	Vec3 zAxis = rotation.getColumn(2);
+	Vec3 xAxis = m_rotation.getColumn(0);
+	Vec3 yAxis = m_rotation.getColumn(1);
+	Vec3 zAxis = m_rotation.getColumn(2);
 
 	// Reflection: x1' = 2n|x1.n| - x1
 
@@ -114,23 +126,24 @@ void Obb::getExtremePoints(Array<Vec3, 8>& points) const
 
 	for(Vec3& point : points)
 	{
-		point += center;
+		point += m_center;
 	}
 }
 
 //==============================================================================
-void Obb::toAabb(Aabb& aabb) const
+void Obb::computeAabb(Aabb& aabb) const
 {
 	Mat3 absM;
 	for(U i = 0; i < 9; ++i)
 	{
-		absM[i] = fabs(rotation[i]);
+		absM[i] = fabs(m_rotation[i]);
 	}
 
-	Vec3 newE = absM * extends;
+	Vec3 newE = absM * m_extends;
 
 	// Add a small epsilon to avoid some assertions
-	aabb = Aabb(center - newE, center + newE + Vec3(getEpsilon<F32>() * 100.0));
+	aabb = Aabb(m_center - newE, 
+		m_center + newE + Vec3(getEpsilon<F32>() * 100.0));
 }
 
-} // end namespace
+} // end namespace anki

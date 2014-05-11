@@ -5,6 +5,7 @@
 #include "anki/collision/CollisionAlgorithms.h"
 #include "anki/Math.h"
 #include "anki/util/StdTypes.h"
+#include "anki/util/Visitor.h"
 
 namespace anki {
 
@@ -17,20 +18,21 @@ class CollisionShape
 {
 public:
 	/// Collision shape type
-	enum CollisionShapeType
+	enum class Type: U8
 	{
-		CST_LINE_SEG,
-		CST_RAY,
-		CST_PLANE,
-		CST_SPHERE,
-		CST_AABB,
-		CST_OBB,
-		CST_FRUSTUM,
+		LINE_SEG,
+		RAY,
+		PLANE,
+		SPHERE,
+		AABB,
+		OBB,
+		FRUSTUM,
 	};
 
 	/// Generic mutable visitor
-	struct MutableVisitor
+	class MutableVisitor
 	{
+	public:
 		virtual ~MutableVisitor()
 		{}
 
@@ -44,8 +46,9 @@ public:
 	};
 
 	/// Generic const visitor
-	struct ConstVisitor
+	class ConstVisitor
 	{
+	public:
 		virtual ~ConstVisitor()
 		{}
 
@@ -60,16 +63,19 @@ public:
 
 	/// @name Constructors & destructor
 	/// @{
-	CollisionShape(CollisionShapeType cid_)
-		: cid(cid_)
+	CollisionShape(Type cid)
+		: m_cid(cid)
+	{}
+
+	virtual ~CollisionShape()
 	{}
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	CollisionShapeType getCollisionShapeType() const
+	Type getType() const
 	{
-		return cid;
+		return m_cid;
 	}
 	/// @}
 
@@ -90,7 +96,7 @@ public:
 	virtual void transform(const Transform& trf) = 0;
 
 	/// Get the AABB
-	void toAabb(Aabb&) const;
+	virtual void computeAabb(Aabb&) const = 0;
 
 	/// Visitor accept
 	virtual void accept(MutableVisitor&) = 0;
@@ -100,7 +106,7 @@ public:
 private:
 	/// Keep an ID to avoid (in some cases) the visitor and thus the cost of
 	/// virtuals
-	CollisionShapeType cid;
+	Type m_cid;
 };
 /// @}
 

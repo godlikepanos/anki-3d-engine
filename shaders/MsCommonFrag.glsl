@@ -12,40 +12,24 @@ layout(early_fragment_tests) in;
 // Variables                                                                   =
 //==============================================================================
 
-/// Input
-#if TESSELLATION
-
-in mediump vec2 teTexCoords;
-#if PASS_COLOR
-in mediump vec3 teNormal;
-in mediump vec4 teTangent;
-in mediump vec3 teVertPosViewSpace;
+//
+// Input
+//
+layout(location = 0) in mediump vec2 inTexCoord;
+#if PASS == COLOR
+layout(location = 1) in mediump vec3 inNormal;
+layout(location = 2) in mediump vec4 inTangent;
+layout(location = 3) in mediump vec3 inVertPosViewSpace;
 #endif
 
-#else // no TESSELLATION
-
-#if INSTANCE_ID_FRAGMENT_SHADER
-flat in mediump uint vInstanceId;
-#endif
-
-in mediump vec2 vTexCoords;
-#if PASS_COLOR
-in mediump vec3 vNormal;
-in mediump vec4 vTangent;
-in mediump vec3 vVertPosViewSpace;
-#endif
-
-#endif // TESSELLATION
-
+//
 // Output
-#if PASS_COLOR
-#	if USE_MRT
-layout(location = 0) out vec4 fMsFai0;
-layout(location = 1) out vec4 fMsFai1;
-#	else
-layout(location = 0) out uvec2 fMsFai0;
-#	endif
-#	define fMsFai0_DEFINED
+//
+#if PASS == COLOR
+layout(location = 0) out vec4 outMsRt0;
+layout(location = 1) out vec4 outMsRt1;
+#	define outMsRt0_DEFINED
+#	define outMsRt1_DEFINED
 #endif
 
 //==============================================================================
@@ -53,28 +37,20 @@ layout(location = 0) out uvec2 fMsFai0;
 //==============================================================================
 
 // Getter
-#if PASS_COLOR
+#if PASS == COLOR
 #	define getNormal_DEFINED
 vec3 getNormal()
 {
-#if TESSELLATION
-	return normalize(teNormal);
-#else
-	return normalize(vNormal);
-#endif
+	return normalize(inNormal);
 }
 #endif
 
 // Getter
-#if PASS_COLOR
+#if PASS == COLOR
 #	define getTangent_DEFINED
 vec4 getTangent()
 {
-#if TESSELLATION
-	return teTangent;
-#else
-	return vTangent;
-#endif
+	return inTangent;
 }
 #endif
 
@@ -82,30 +58,26 @@ vec4 getTangent()
 #define getTextureCoord_DEFINED
 vec2 getTextureCoord()
 {
-#if TESSELLATION
-	return teTexCoords;
-#else
-	return vTexCoords;
-#endif
+	return inTexCoord;
 }
 
 // Getter
-#if PASS_COLOR
+#if PASS == COLOR
 #	define getPositionViewSpace_DEFINED
 vec3 getPositionViewSpace()
 {
 #if TESSELLATION
 	return vec3(0.0);
 #else
-	return vVertPosViewSpace;
+	return inVertPosViewSpace;
 #endif
 }
 #endif
 
 // Do normal mapping
-#if PASS_COLOR
-#	define getNormalFromTexture_DEFINED
-vec3 getNormalFromTexture(in vec3 normal, in vec4 tangent,
+#if PASS == COLOR
+#	define readNormalFromTexture_DEFINED
+vec3 readNormalFromTexture(in vec3 normal, in vec4 tangent,
 	in sampler2D map, in highp vec2 texCoords)
 {
 #	if LOD > 0
@@ -126,9 +98,9 @@ vec3 getNormalFromTexture(in vec3 normal, in vec4 tangent,
 #endif
 
 // Do environment mapping
-#if PASS_COLOR
-#	define getEnvironmentColor_DEFINED
-vec3 getEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
+#if PASS == COLOR
+#	define readEnvironmentColor_DEFINED
+vec3 readEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 	in sampler2D map)
 {
 	// In case of normal mapping I could play with vertex's normal but this 
@@ -153,7 +125,7 @@ vec3 readTextureRgbAlphaTesting(
 	in highp vec2 texCoords,
 	in float tolerance)
 {
-#if PASS_COLOR
+#if PASS == COLOR
 	vec4 col = vec4(texture(map, texCoords));
 	if(col.a < tolerance)
 	{
@@ -175,7 +147,7 @@ vec3 readTextureRgbAlphaTesting(
 }
 
 // Just read the RGB color from texture
-#if PASS_COLOR
+#if PASS == COLOR
 #	define readRgbFromTexture_DEFINED
 vec3 readRgbFromTexture(in sampler2D tex, in highp vec2 texCoords)
 {
@@ -184,7 +156,7 @@ vec3 readRgbFromTexture(in sampler2D tex, in highp vec2 texCoords)
 #endif
 
 // Just read the RGB color from cube texture
-#if PASS_COLOR
+#if PASS == COLOR
 #	define readRgbFromCubeTexture_DEFINED
 vec3 readRgbFromCubeTexture(in samplerCube tex, in mediump vec3 texCoord)
 {
@@ -193,20 +165,15 @@ vec3 readRgbFromCubeTexture(in samplerCube tex, in mediump vec3 texCoord)
 #endif
 
 // Write the data to FAIs
-#if PASS_COLOR
-#	define writeFais_DEFINED
-void writeFais(
+#if PASS == COLOR
+#	define writeRts_DEFINED
+void writeRts(
 	in vec3 diffColor, // from 0 to 1
 	in vec3 normal, 
 	in vec2 specularComponent, // Streangth and shininess
 	in float blurring)
 {
-	writeGBuffer(
-		diffColor, normal, specularComponent.x, specularComponent.y,
-		fMsFai0
-#if USE_MRT
-		, fMsFai1
-#endif
-		);
+	writeGBuffer(diffColor, normal, specularComponent.x, specularComponent.y,
+		outMsRt0, outMsRt1);
 }
 #endif

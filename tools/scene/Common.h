@@ -67,8 +67,8 @@ struct Exporter
 	std::string texrpath;
 	bool flipyz = false; ///< Handle blender's annoying coordinate system
 
-	aiScene* scene = nullptr;
-	Assimp::Importer* importer;
+	const aiScene* scene = nullptr;
+	Assimp::Importer importer;
 
 	std::vector<Model> models;
 	std::vector<Node> nodes;
@@ -113,9 +113,12 @@ extern void exportMaterial(
 	bool instanced);
 
 /// Export model
-extern void exportModel(
+void exportModel(
 	const Exporter& exporter, 
 	const Model& model);
+
+/// Get model name
+std::string getModelName(const Exporter& exporter, const Model& model);
 
 /// Write light to the scene file
 extern void exportLight(

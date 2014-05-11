@@ -2,8 +2,8 @@
 #define ANKI_RESOURCE_MATERIAL_H
 
 #include "anki/resource/Resource.h"
-#include "anki/resource/ShaderProgramResource.h"
-#include "anki/resource/PassLodKey.h"
+#include "anki/resource/ProgramResource.h"
+#include "anki/resource/RenderingKey.h"
 #include "anki/Math.h"
 #include "anki/util/Visitor.h"
 #include "anki/util/Dictionary.h"
@@ -14,9 +14,8 @@ namespace anki {
 
 // Forward
 class XmlElement;
-class MaterialShaderProgramCreator;
+class MaterialProgramCreator;
 
-// Forward
 template<typename T>
 class MaterialVariableTemplate;
 
@@ -43,11 +42,10 @@ public:
 
 	/// @name Constructors & destructor
 	/// @{
-	MaterialVariable(
-		const char* shaderProgVarName,
-		PassLodArray<ShaderProgramResourcePointer>& progs)
+	MaterialVariable(const GlProgramVariable* glvar, Bool instanced)
+		: m_progVar(glvar), m_instanced(instanced)
 	{
-		init(shaderProgVarName, progs);
+		ANKI_ASSERT(m_progVar);
 	}
 
 	virtual ~MaterialVariable();
@@ -56,74 +54,75 @@ public:
 	/// @name Accessors
 	/// @{
 	template<typename T>
-	const T* getValues() const
+	const T* begin() const
 	{
-		ANKI_ASSERT(Base::getVariadicTypeId<MaterialVariableTemplate<T>>()
-			== Base::getVisitableTypeId());
-		return static_cast<const MaterialVariableTemplate<T>*>(this)->get();
+		ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
+		auto derived = static_cast<const MaterialVariableTemplate<T>*>(this);
+		return derived->begin();
+	}
+	template<typename T>
+	const T* end() const
+	{
+		ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
+		auto derived = static_cast<const MaterialVariableTemplate<T>*>(this);
+		return derived->end();
 	}
 
 	template<typename T>
-	void setValues(const T* x, U32 size)
+	const T& operator[](U idx) const
 	{
-		ANKI_ASSERT(Base::getVariadicTypeId<MaterialVariableTemplate<T>>()
-			== Base::getVisitableTypeId());
-		static_cast<MaterialVariableTemplate<T>*>(this)->set(x, size);
+		ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
+		auto derived = static_cast<const MaterialVariableTemplate<T>*>(this);
+		return (*derived)[idx];
 	}
 
-	U32 getArraySize() const;
-
-	/// Given a key return the uniform. If the uniform is not present in the
-	/// LOD pass key then returns nullptr
-	const ShaderProgramUniformVariable* findShaderProgramUniformVariable(
-		const PassLodKey& key) const
+	const GlProgramVariable& getGlProgramVariable() const
 	{
-		return progVars[key.pass][key.lod];
+		return *m_progVar;
 	}
-
-	/// Get the GL data type of all the shader program variables
-	GLenum getGlDataType() const;
 
 	/// Get the name of all the shader program variables
-	const std::string& getName() const;
-
-	const ShaderProgramUniformVariable&
-		getAShaderProgramUniformVariable() const
-	{
-		return *oneSProgVar;
-	}
+	const char* getName() const;
 
 	/// If false then it should be buildin
 	virtual Bool hasValues() const = 0;
+
+	U32 getArraySize() const;
+
+	Bool isInstanced() const
+	{
+		return m_instanced;
+	}
 	/// @}
 
 private:
-	PassLodArray<const ShaderProgramUniformVariable*> progVars;
-
-	/// Keep one ShaderProgramVariable here for easy access of the common
+	/// Keep one program variable here for easy access of the common
 	/// variable stuff like name or GL data type etc
-	const ShaderProgramUniformVariable* oneSProgVar;
+	const GlProgramVariable* m_progVar;
 
-	/// Common constructor code
-	void init(const char* shaderProgVarName,
-		PassLodArray<ShaderProgramResourcePointer>& progs);
+	Bool8 m_instanced;
 };
 
 /// Material variable with data. A complete type
-template<typename Data>
+template<typename TData>
 class MaterialVariableTemplate: public MaterialVariable
 {
 public:
-	typedef Data Type;
+	typedef TData Type;
 
 	/// @name Constructors/Destructor
 	/// @{
 	MaterialVariableTemplate(
-		const char* shaderProgVarName,
-		PassLodArray<ShaderProgramResourcePointer>& progs)
-		: MaterialVariable(shaderProgVarName, progs)
+		const GlProgramVariable* glvar, Bool instanced, 
+		const TData* x, U32 size)
+		: MaterialVariable(glvar, instanced)
 	{
 		setupVisitable(this);
+
+		if(size > 0)
+		{
+			m_data.insert(m_data.begin(), x, x + size);
+		}
 	}
 
 	~MaterialVariableTemplate()
@@ -132,27 +131,33 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Data* get() const
+	const TData* begin() const
 	{
-		return (data.size() > 0) ? &data[0] : nullptr;
+		ANKI_ASSERT(hasValues());
+		return &(*m_data.begin());
+	}
+	const TData* end() const
+	{
+		ANKI_ASSERT(hasValues());
+		return &(*m_data.end());
 	}
 
-	void set(const Data* x, U32 size)
+	const TData& operator[](U idx) const
 	{
-		if(size > 0)
-		{
-			data.insert(data.begin(), x, x + size);
-		}
+		ANKI_ASSERT(hasValues());
+		ANKI_ASSERT(idx < m_data.size());
+		return m_data[idx];
 	}
 
+	/// Implements hasValues
 	Bool hasValues() const
 	{
-		return data.size() > 0;
+		return m_data.size() > 0;
 	}
 	/// @}
 
 private:
-	Vector<Data> data;
+	Vector<TData> m_data;
 };
 
 /// Contains a few properties that other classes may use. For an explanation of
@@ -164,62 +169,62 @@ public:
 	/// @{
 	U getLevelsOfDetail() const
 	{
-		return lodsCount;
+		return m_lodsCount;
 	}
 
 	U getPassesCount() const
 	{
-		return passesCount;
+		return m_passesCount;
 	}
 
 	Bool getShadow() const
 	{
-		return shadow;
+		return m_shadow;
 	}
 
 	GLenum getBlendingSfactor() const
 	{
-		return blendingSfactor;
+		return m_blendingSfactor;
 	}
 
 	GLenum getBlendingDfactor() const
 	{
-		return blendingDfactor;
+		return m_blendingDfactor;
 	}
 
 	Bool getDepthTestingEnabled() const
 	{
-		return depthTesting;
+		return m_depthTesting;
 	}
 
 	Bool getWireframe() const
 	{
-		return wireframe;
+		return m_wireframe;
 	}
 
 	Bool getTessellation() const
 	{
-		return tessellation;
+		return m_tessellation;
 	}
 	/// @}
 
 	/// Check if blending is enabled
 	Bool isBlendingEnabled() const
 	{
-		return blendingSfactor != GL_ONE || blendingDfactor != GL_ZERO;
+		return m_blendingSfactor != GL_ONE || m_blendingDfactor != GL_ZERO;
 	}
 
 protected:
-	GLenum blendingSfactor = GL_ONE; ///< Default GL_ONE
-	GLenum blendingDfactor = GL_ZERO; ///< Default GL_ZERO
+	GLenum m_blendingSfactor = GL_ONE; ///< Default GL_ONE
+	GLenum m_blendingDfactor = GL_ZERO; ///< Default GL_ZERO
 
-	Bool8 depthTesting = true;
-	Bool8 wireframe = false;
-	Bool8 shadow = true;
-	Bool8 tessellation = false;
+	Bool8 m_depthTesting = true;
+	Bool8 m_wireframe = false;
+	Bool8 m_shadow = true;
+	Bool8 m_tessellation = false;
 
-	U8 passesCount = 1;
-	U8 lodsCount = 1;
+	U8 m_passesCount = 1;
+	U8 m_lodsCount = 1;
 };
 
 /// Material resource
@@ -236,8 +241,6 @@ protected:
 /// Material XML file format:
 /// @code
 /// <material>
-/// 	[<passes>COLOR DEPTH</passes>]
-///
 /// 	[<levelsOfDetail>N</levelsOfDetail>]
 ///
 /// 	[<shadow>0 | 1</shadow>]
@@ -251,22 +254,23 @@ protected:
 ///
 /// 	[<wireframe>0 | 1</wireframe>]
 ///
-/// 	<shaderProgram>
+/// 	<programs>
+/// 		<program>
+/// 			<type>vert | tesc | tese | geom | frag</type>
 ///
-///			[<inputs> (3)
-///				<input>
-///					<name>xx</name>
-///					<type>any glsl type</type>
-///					<value> (4)
-///						[a_series_of_numbers |
-///						path/to/image.tga]
-///					</value>
-///					[<const>0 | 1</const>] (5)
-///				</input>
-///			</inputs>]
-///
-/// 		<shader> (2)
-/// 			<type>vertex | tc | te | geometry | fragment</type>
+///				[<inputs> (1)
+///					<input>
+///						<name>xx</name>
+///						<type>any glsl type</type>
+///						<value> (2)
+///							[a_series_of_numbers |
+///							path/to/image.tga]
+///						</value>
+///						[<const>0 | 1</const>] (3)
+///						[<instanced>0 | 1</instanced>]
+///						[<arraySize>N</<arraySize>]
+///					</input>
+///				</inputs>]
 ///
 /// 			<includes>
 /// 				<include>path/to/file.glsl</include>
@@ -283,23 +287,24 @@ protected:
 /// 						<argument>yy</argument>
 /// 					</arguments>]
 /// 				</operation>
-/// 			</operations>
-/// 		</vertexShader>
 ///
-/// 		<shader>...</shader>
-/// 	</shaderProgram>
+/// 				<operation>...</operation>
+/// 			</operations>
+/// 		</program>
+///
+/// 		<program>...</program>
+/// 	</programs>
 /// </material>
 /// @endcode
-/// (2): The order of the shaders is crucial
-/// (3): AKA uniforms
-/// (4): The \<value\> can be left empty for build-in variables
-/// (5): The \<const\> will mark a variable as constant and it cannot be changed
-///      at all. Defauls is 0
+/// (1): AKA uniforms
+/// (2): The \<value\> can be left empty for build-in variables
+/// (3): The \<const\> will mark a variable as constant and it cannot be changed
+///      at all. Default is 0
 class Material: public MaterialProperties, public NonCopyable
 {
-public:
-	typedef Vector<MaterialVariable*> VarsContainer;
+	friend class MaterialVariable;
 
+public:
 	Material();
 	~Material();
 
@@ -313,40 +318,25 @@ public:
 	}
 
 	// Variable accessors
-	const VarsContainer& getVariables() const
+	const Vector<MaterialVariable*>& getVariables() const
 	{
-		return vars;
+		return m_vars;
 	}
 
-	const ShaderProgramUniformBlock* getCommonUniformBlock() const
+	U32 getDefaultBlockSize() const
 	{
-		return commonUniformBlock;
+		return m_shaderBlockSize;
 	}
 	/// @}
 
-	const ShaderProgram& findShaderProgram(const PassLodKey& key) const
-	{
-		ANKI_ASSERT(progs[key.pass][key.lod].isLoaded());
-		return *progs[key.pass][key.lod];
-	}
-
-	const ShaderProgram* tryFindShaderProgram(const PassLodKey& key) const
-	{
-		if(progs[key.pass][key.lod].isLoaded())
-		{
-			return progs[key.pass][key.lod].get();
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
+	GlProgramPipelineHandle getProgramPipeline(
+		const RenderingKey& key);
 
 	/// Get by name
 	const MaterialVariable* findVariableByName(const char* name) const
 	{
-		NameToVariableHashMap::const_iterator it = nameToVar.find(name);
-		return (it == nameToVar.end()) ? nullptr : it->second;
+		auto it = m_varDict.find(name);
+		return (it == m_varDict.end()) ? nullptr : it->second;
 	}
 
 	/// Load a material file
@@ -355,39 +345,33 @@ public:
 	/// For sorting
 	Bool operator<(const Material& b) const
 	{
-		return hash < b.hash;
+		return m_hash < b.m_hash;
 	}
 
 private:
-	typedef Dictionary<MaterialVariable*> NameToVariableHashMap;
+	Vector<MaterialVariable*> m_vars;
+	Dictionary<MaterialVariable*> m_varDict;
 
-	std::string fname; ///< filename
+	Vector<ProgramResourcePointer> m_progs;
+	Vector<GlProgramPipelineHandle> m_pplines;
 
-	/// All the material variables
-	VarsContainer vars;
-
-	NameToVariableHashMap nameToVar;
-
-	/// The most important aspect of materials. These are all the shader
-	/// programs per level and per pass. Their number are NP * NL where
-	/// NP is the number of passes and NL the number of levels of detail
-	PassLodArray<ShaderProgramResourcePointer> progs;
+	U32 m_shaderBlockSize;
 
 	/// Used for sorting
-	std::size_t hash;
+	PtrSize m_hash;
 
-	/// One uniform block
-	const ShaderProgramUniformBlock* commonUniformBlock;
+	/// Get a program resource
+	ProgramResourcePointer& getProgram(const RenderingKey key, U32 shaderId);
 
 	/// Parse what is within the @code <material></material> @endcode
 	void parseMaterialTag(const XmlElement& el);
 
 	/// Create a unique shader source in chache. If already exists do nothing
-	std::string createShaderProgSourceToCache(const std::string& source);
+	std::string createProgramSourceToChache(const std::string& source);
 
 	/// Read all shader programs and pupulate the @a vars and @a nameToVar
 	/// containers
-	void populateVariables(const MaterialShaderProgramCreator& mspc);
+	void populateVariables(const MaterialProgramCreator& mspc);
 };
 
 } // end namespace anki
