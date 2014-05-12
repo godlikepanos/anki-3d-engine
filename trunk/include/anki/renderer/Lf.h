@@ -42,9 +42,13 @@ private:
 	GlProgramPipelineHandle m_pseudoPpline;
 
 	// Sprite billboards
-	ProgramResourcePointer m_realVert; 
+	ProgramResourcePointer m_realVert;
 	ProgramResourcePointer m_realFrag;
 	GlProgramPipelineHandle m_realPpline;
+
+	// Final HDR blit
+	ProgramResourcePointer m_blitFrag;
+	GlProgramPipelineHandle m_blitPpline;
 
 	GlTextureHandle m_rt;
 	GlFramebufferHandle m_fb;

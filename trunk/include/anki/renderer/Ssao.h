@@ -14,11 +14,11 @@ namespace anki {
 /// @{
 
 /// Screen space ambient occlusion pass
-class Ssao: public SwitchableRenderingPass
+class Ssao: public OptionalRenderingPass
 {
 public:
 	Ssao(Renderer* r)
-		: SwitchableRenderingPass(r)
+		: OptionalRenderingPass(r)
 	{}
 
 	void init(const RendererInitializer& initializer);

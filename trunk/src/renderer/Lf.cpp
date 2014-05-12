@@ -128,6 +128,11 @@ void Lf::initInternal(const RendererInitializer& initializer)
 	// Textures
 	m_lensDirtTex.load("engine_data/lens_dirt.ankitex");
 
+	// Blit
+	m_blitFrag.load("shaders/Blit.frag.glsl");
+	m_blitPpline = m_r->createDrawQuadProgramPipeline(
+		m_blitFrag->getGlProgram());
+
 	jobs.flush();
 }
 
@@ -307,6 +312,12 @@ void Lf::run(GlJobChainHandle& jobs)
 
 		offset += buffSize;
 	}
+
+	// Blit the HDR RT back to LF RT
+	//
+	m_r->getPps().getHdr().getRt().bind(jobs, 0);
+	m_blitPpline.bind(jobs);
+	m_r->drawQuad(jobs);
 
 	jobs.enableBlend(false);
 }
