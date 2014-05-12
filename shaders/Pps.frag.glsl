@@ -5,8 +5,7 @@
 
 layout(binding = 0) uniform lowp sampler2D uIsRt;
 layout(binding = 1) uniform lowp sampler2D uPpsSsaoRt;
-layout(binding = 2) uniform lowp sampler2D uPpsHdrRt;
-layout(binding = 3) uniform lowp sampler2D uPpsLfRt;
+layout(binding = 2) uniform lowp sampler2D uPpsHdrLfRt;
 
 layout(location = 0) in vec2 inTexCoords;
 
@@ -92,19 +91,14 @@ void main()
 #endif
 	//outColor = erosion(uIsRt, inTexCoords);
 
-#if HDR_ENABLED
-	vec3 hdr = textureRt(uPpsHdrRt, inTexCoords).rgb;
-	outColor += hdr;
-#endif
-
 #if SSAO_ENABLED
 	float ssao = textureRt(uPpsSsaoRt, inTexCoords).r;
 	outColor *= ssao;
 #endif
 
-#if LF_ENABLED
-	vec3 lf = textureRt(uPpsLfRt, inTexCoords).rgb;
-	outColor += lf;
+#if HDR_ENABLED
+	vec3 hdr = textureRt(uPpsHdrLfRt, inTexCoords).rgb;
+	outColor += hdr;
 #endif
 
 #if GAMMA_CORRECTION_ENABLED

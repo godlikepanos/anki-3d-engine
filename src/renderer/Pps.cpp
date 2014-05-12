@@ -48,7 +48,6 @@ void Pps::initInternal(const RendererInitializer& initializer)
 
 	pps << "#define SSAO_ENABLED " << (U)m_ssao.getEnabled() << "\n"
 		<< "#define HDR_ENABLED " << (U)m_hdr.getEnabled() << "\n"
-		<< "#define LF_ENABLED " << (U)m_lf.getEnabled() << "\n"
 		<< "#define SHARPEN_ENABLED " << (U)initializer.get("pps.sharpen") 
 			<< "\n"
 		<< "#define GAMMA_CORRECTION_ENABLED " 
@@ -122,13 +121,14 @@ void Pps::run(GlJobChainHandle& jobs)
 	{
 		m_ssao.getRt().bind(jobs, 1);
 	}
-	if(m_hdr.getEnabled())
-	{
-		m_hdr.getRt().bind(jobs, 2);
-	}
+
 	if(m_lf.getEnabled())
 	{
-		m_lf.getRt().bind(jobs, 3);
+		m_lf.getRt().bind(jobs, 2);
+	}
+	else if(m_hdr.getEnabled())
+	{
+		m_hdr.getRt().bind(jobs, 2);
 	}
 
 	m_r->drawQuad(jobs);
