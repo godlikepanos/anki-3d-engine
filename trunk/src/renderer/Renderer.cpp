@@ -45,6 +45,9 @@ RendererInitializer::RendererInitializer()
 	newOption("pps.ssao.renderingQuality", 0.3);
 	newOption("pps.ssao.blurringIterationsNum", 2);
 
+	newOption("pps.sslr.enabled", true);
+	newOption("pps.sslr.renderingQuality", 0.2);
+
 	newOption("pps.bl.enabled", true);
 	newOption("pps.bl.blurringIterationsNum", 2);
 	newOption("pps.bl.sideBlurFactor", 1.0);
@@ -300,7 +303,7 @@ void Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 	GlManager& gl = GlManagerSingleton::get();
 	GlJobChainHandle jobs(&gl);
 	rt = GlTextureHandle(jobs, init);
-	jobs.flush();
+	jobs.finish();
 }
 
 //==============================================================================

@@ -27,6 +27,7 @@ class SpotLight;
 class Is: private RenderingPass
 {
 	friend class WriteLightsJob;
+	friend class Sslr;
 
 public:
 	Is(Renderer* r);

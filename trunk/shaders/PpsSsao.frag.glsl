@@ -35,14 +35,13 @@ layout(std140, row_major, binding = 0) readonly buffer commonBlock
 layout(binding = 0) uniform sampler2D uMsDepthRt;
 layout(binding = 1) uniform sampler2D uMsRt;
 layout(binding = 2) uniform sampler2D uNoiseMap;
-/// @}
 
 #define RADIUS 0.5
 #define DARKNESS_MULTIPLIER 1.0 // Initial is 1.0 but the bigger it is the more
                                 // darker the SSAO factor gets
 
 // Get normal
-vec3 getNormal(in vec2 uv)
+vec3 readNormal(in vec2 uv)
 {
 	vec3 normal;
 	readNormalFromGBuffer(uMsRt, uv, normal);
@@ -50,7 +49,7 @@ vec3 getNormal(in vec2 uv)
 }
 
 // Read the noise tex
-vec3 getRandom(in vec2 uv)
+vec3 readRandom(in vec2 uv)
 {
 	const vec2 tmp = vec2(
 		float(WIDTH) / float(NOISE_MAP_SIZE), 
@@ -61,8 +60,8 @@ vec3 getRandom(in vec2 uv)
 	return noise;
 }
 
-// Get position in view space
-vec3 getPosition(in vec2 uv)
+// Read position in view space
+vec3 readPosition(in vec2 uv)
 {
 	float depth = textureRt(uMsDepthRt, uv).r;
 
@@ -77,7 +76,7 @@ vec3 getPosition(in vec2 uv)
 	return fragPosVspace;
 }
 
-float getZ(in vec2 uv)
+float readZ(in vec2 uv)
 {
 	float depth = textureRt(uMsDepthRt, uv).r;
 	float z = -uPlanes.y / (uPlanes.x + depth);
@@ -86,10 +85,10 @@ float getZ(in vec2 uv)
 
 void main(void)
 {
-	vec3 origin = getPosition(inTexCoords);
+	vec3 origin = readPosition(inTexCoords);
 
-	vec3 normal = getNormal(inTexCoords);
-	vec3 rvec = getRandom(inTexCoords);
+	vec3 normal = readNormal(inTexCoords);
+	vec3 rvec = readRandom(inTexCoords);
 	
 	vec3 tangent = normalize(rvec - normal * dot(rvec, normal));
 	vec3 bitangent = cross(normal, tangent);
@@ -110,7 +109,7 @@ void main(void)
 		offset.xy = offset.xy * 0.5 + 0.5;
 
 		// get sample depth:
-		float sampleDepth = getZ(offset.xy);
+		float sampleDepth = readZ(offset.xy);
 
 		// range check & accumulate:
 		const float ADVANCE = DARKNESS_MULTIPLIER / float(KERNEL_SIZE);

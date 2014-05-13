@@ -28,8 +28,13 @@ private:
 	GlFramebufferHandle m_fb;
 	GlTextureHandle m_rt;
 
+	// 1st pass
 	ProgramResourcePointer m_reflectionFrag;
 	GlProgramPipelineHandle m_reflectionPpline;
+
+	// 2nd pass: blit
+	ProgramResourcePointer m_blitFrag;
+	GlProgramPipelineHandle m_blitPpline;
 };
 
 /// @}

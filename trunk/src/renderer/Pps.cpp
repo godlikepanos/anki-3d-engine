@@ -12,7 +12,8 @@ Pps::Pps(Renderer* r)
 		m_hdr(r), 
 		m_ssao(r), 
 		m_bl(r), 
-		m_lf(r)
+		m_lf(r),
+		m_sslr(r)
 {}
 
 //==============================================================================
@@ -33,6 +34,7 @@ void Pps::initInternal(const RendererInitializer& initializer)
 	m_ssao.init(initializer);
 	m_hdr.init(initializer);
 	m_lf.init(initializer);
+	m_sslr.init(initializer);
 
 	// FBO
 	GlManager& gl = GlManagerSingleton::get();
@@ -60,7 +62,7 @@ void Pps::initInternal(const RendererInitializer& initializer)
 
 	m_ppline = m_r->createDrawQuadProgramPipeline(m_frag->getGlProgram());
 
-	jobs.flush();
+	jobs.finish();
 }
 
 //==============================================================================
@@ -85,6 +87,12 @@ void Pps::run(GlJobChainHandle& jobs)
 	if(m_ssao.getEnabled())
 	{
 		m_ssao.run(jobs);
+	}
+
+	// Then SSLR because HDR depends on it
+	if(m_sslr.getEnabled())
+	{
+		m_sslr.run(jobs);
 	}
 
 	if(m_hdr.getEnabled())
