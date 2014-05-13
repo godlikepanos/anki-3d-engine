@@ -133,7 +133,7 @@ void Lf::initInternal(const RendererInitializer& initializer)
 	m_blitPpline = m_r->createDrawQuadProgramPipeline(
 		m_blitFrag->getGlProgram());
 
-	jobs.flush();
+	jobs.finish();
 }
 
 //==============================================================================

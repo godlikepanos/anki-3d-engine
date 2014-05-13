@@ -9,6 +9,7 @@
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Bl.h"
 #include "anki/renderer/Lf.h"
+#include "anki/renderer/Sslr.h"
 
 namespace anki {
 
@@ -83,6 +84,7 @@ private:
 	Ssao m_ssao;
 	Bl m_bl;
 	Lf m_lf;
+	Sslr m_sslr;
 	/// @}
 
 	GlFramebufferHandle m_fb;

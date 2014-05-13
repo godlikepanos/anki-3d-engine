@@ -32,13 +32,18 @@ void Sslr::init(const RendererInitializer& initializer)
 		m_reflectionFrag->getGlProgram());
 
 	// Fb
-	m_r->createRenderTarget(m_width, m_height, GL_RGB, GL_RGB8, 
+	m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
 		GL_UNSIGNED_BYTE, 1, m_rt);
 
 	GlManager& gl = GlManagerSingleton::get();
 	GlJobChainHandle jobs(&gl);
 
 	m_fb = GlFramebufferHandle(jobs, {{m_rt, GL_COLOR_ATTACHMENT0}});
+
+	// Blit
+	m_blitFrag.load("shaders/Blit.frag.glsl");
+	m_blitPpline = m_r->createDrawQuadProgramPipeline(
+		m_blitFrag->getGlProgram());
 
 	jobs.finish();
 }
@@ -48,12 +53,31 @@ void Sslr::run(GlJobChainHandle& jobs)
 {
 	ANKI_ASSERT(m_enabled);
 
+	// Compute the reflection
+	//
 	m_fb.bind(jobs, true);
 	jobs.setViewport(0, 0, m_width, m_height);
 
-	m_r->drawQuad(jobs);
-}
+	m_reflectionPpline.bind(jobs);
+	m_r->getIs().getRt().bind(jobs, 0);
+	m_r->getMs().getDepthRt().bind(jobs, 1);
 
+	m_r->drawQuad(jobs);
+
+	// Write the reflection back to IS RT
+	//
+	m_r->getIs().m_fb.bind(jobs, false);
+
+	jobs.enableBlend(true);
+	jobs.setBlendFunctions(GL_ONE, GL_ONE);
+
+	m_rt.bind(jobs, 0);
+
+	m_blitPpline.bind(jobs);
+	m_r->drawQuad(jobs);
+
+	jobs.enableBlend(false);
+}
 
 } // end namespace anki
 
