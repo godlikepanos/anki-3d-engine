@@ -81,8 +81,8 @@ void Lf::initInternal(const RendererInitializer& initializer)
 	// Load program 1
 	std::stringstream pps;
 	pps << "#define TEX_DIMENSIONS vec2(" 
-		<< (U)m_r->getPps().getHdr().getRt().getWidth() << ".0, "
-		<< (U)m_r->getPps().getHdr().getRt().getHeight() << ".0)\n";
+		<< (U)m_r->getPps().getHdr()._getRt().getWidth() << ".0, "
+		<< (U)m_r->getPps().getHdr()._getRt().getHeight() << ".0)\n";
 
 	std::string fname = ProgramResource::createSrcCodeToCache(
 		"shaders/PpsLfPseudoPass.frag.glsl", pps.str().c_str(), "r_");
@@ -119,8 +119,8 @@ void Lf::initInternal(const RendererInitializer& initializer)
 		jobs, GL_SHADER_STORAGE_BUFFER, blockSize, GL_DYNAMIC_STORAGE_BIT);
 
 	// Create the render target
-	m_r->createRenderTarget(m_r->getPps().getHdr().getRt().getWidth(), 
-		m_r->getPps().getHdr().getRt().getHeight(), 
+	m_r->createRenderTarget(m_r->getPps().getHdr()._getRt().getWidth(), 
+		m_r->getPps().getHdr()._getRt().getHeight(), 
 		GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
 
 	m_fb = GlFramebufferHandle(jobs, {{m_rt, GL_COLOR_ATTACHMENT0}}); 
@@ -147,12 +147,12 @@ void Lf::run(GlJobChainHandle& jobs)
 
 	// Set the common state
 	m_fb.bind(jobs, true);
-	jobs.setViewport(0, 0, m_r->getPps().getHdr().getRt().getWidth(), 
-		m_r->getPps().getHdr().getRt().getHeight());
+	jobs.setViewport(0, 0, m_r->getPps().getHdr()._getRt().getWidth(), 
+		m_r->getPps().getHdr()._getRt().getHeight());
 
 	m_pseudoPpline.bind(jobs);
 
-	m_r->getPps().getHdr().getRt().bind(jobs, 0);
+	m_r->getPps().getHdr()._getRt().bind(jobs, 0);
 	m_lensDirtTex->getGlTexture().bind(jobs, 1);
 
 	m_r->drawQuad(jobs);
@@ -315,7 +315,7 @@ void Lf::run(GlJobChainHandle& jobs)
 
 	// Blit the HDR RT back to LF RT
 	//
-	m_r->getPps().getHdr().getRt().bind(jobs, 0);
+	m_r->getPps().getHdr()._getRt().bind(jobs, 0);
 	m_blitPpline.bind(jobs);
 	m_r->drawQuad(jobs);
 

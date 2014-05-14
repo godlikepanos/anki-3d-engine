@@ -63,14 +63,14 @@ void MainRenderer::render(SceneGraph& scene)
 
 		if(getPps().getEnabled())
 		{
-			rt = &getPps().getRt();
+			rt = &getPps()._getRt();
 		}
 		else
 		{
-			rt = &getIs().getRt();
+			rt = &getIs()._getRt();
 		}
 
-		//rt = &getPps().getHdr().getRt();
+		//rt = &getPps().getSslr().m_rt;
 
 		rt->setFilter(jobs, GlTextureHandle::Filter::LINEAR);
 		rt->bind(jobs, 0);

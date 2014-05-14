@@ -13,13 +13,8 @@ namespace anki {
 /// Screen space local reflections pass
 class Sslr: public OptionalRenderingPass
 {
-public:
-	Sslr(Renderer* r)
-		: OptionalRenderingPass(r)
-	{}
-
-	void init(const RendererInitializer& initializer);
-	void run(GlJobChainHandle& jobs);
+	friend class Pps;
+	friend class MainRenderer;
 
 private:
 	U32 m_width;
@@ -35,6 +30,13 @@ private:
 	// 2nd pass: blit
 	ProgramResourcePointer m_blitFrag;
 	GlProgramPipelineHandle m_blitPpline;
+
+	Sslr(Renderer* r)
+		: OptionalRenderingPass(r)
+	{}
+
+	void init(const RendererInitializer& initializer);
+	void run(GlJobChainHandle& jobs);
 };
 
 /// @}

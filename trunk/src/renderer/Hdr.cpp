@@ -132,7 +132,7 @@ void Hdr::run(GlJobChainHandle& jobs)
 		m_commonUboUpdateTimestamp = getGlobTimestamp();
 	}
 
-	m_r->getIs().getRt().bind(jobs, 0);
+	m_r->getIs()._getRt().bind(jobs, 0);
 	m_commonBuff.bindShaderBuffer(jobs, 0);
 
 	m_r->drawQuad(jobs);

@@ -16,21 +16,8 @@ namespace anki {
 /// Screen space ambient occlusion pass
 class Ssao: public OptionalRenderingPass
 {
-public:
-	Ssao(Renderer* r)
-		: OptionalRenderingPass(r)
-	{}
-
-	void init(const RendererInitializer& initializer);
-	void run(GlJobChainHandle& jobs);
-
-	/// @name Accessors
-	/// @{
-	GlTextureHandle& getRt()
-	{
-		return m_vblurRt;
-	}
-	/// @}
+	friend class Pps;
+	friend class Sslr;
 
 private:
 	U32 m_width, m_height; ///< Blur passes size
@@ -51,6 +38,18 @@ private:
 	Timestamp m_commonUboUpdateTimestamp = getGlobTimestamp();
 	GlBufferHandle m_uniformsBuff;
 	GlTextureHandle m_noiseTex;
+
+	Ssao(Renderer* r)
+		: OptionalRenderingPass(r)
+	{}
+
+	void init(const RendererInitializer& initializer);
+	void run(GlJobChainHandle& jobs);
+
+	GlTextureHandle& getRt()
+	{
+		return m_vblurRt;
+	}
 
 	void createFb(GlFramebufferHandle& fb, GlTextureHandle& rt);
 	void initInternal(const RendererInitializer& initializer);

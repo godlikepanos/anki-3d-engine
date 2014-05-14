@@ -22,10 +22,6 @@ class Sm: private RenderingPass
 public:
 	static const U32 MAX_SHADOW_CASTERS = 8;
 
-	Sm(Renderer* r)
-		: RenderingPass(r)
-	{}
-
 	/// @name Accessors
 	/// @{
 	Bool getEnabled() const
@@ -38,10 +34,6 @@ public:
 		return m_poissonEnabled;
 	}
 	/// @}
-
-	void init(const RendererInitializer& initializer);
-	void run(Light* shadowCasters[], U32 shadowCastersCount, 
-		GlJobChainHandle& jobs);
 
 private:
 	GlTextureHandle m_sm2DArrayTex;
@@ -68,6 +60,14 @@ private:
 
 	/// Shadowmap resolution
 	U32 m_resolution;
+
+	Sm(Renderer* r)
+		: RenderingPass(r)
+	{}
+
+	void init(const RendererInitializer& initializer);
+	void run(Light* shadowCasters[], U32 shadowCastersCount, 
+		GlJobChainHandle& jobs);
 
 	/// Get max shadow casters
 	U32 getMaxLightsCount()

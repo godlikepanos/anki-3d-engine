@@ -22,13 +22,9 @@ class ShaderProgram;
 /// happens before blending stage and the second after
 class Pps: public OptionalRenderingPass
 {
+	friend class Renderer;
+
 public:
-	Pps(Renderer* r);
-	~Pps();
-
-	void init(const RendererInitializer& initializer);
-	void run(GlJobChainHandle& jobs);
-
 	/// @name Accessors
 	/// @{
 	const Hdr& getHdr() const
@@ -67,11 +63,23 @@ public:
 		return m_lf;
 	}
 
-	const GlTextureHandle& getRt() const
+	const Sslr& getSslr() const
+	{
+		return m_sslr;
+	}
+	Sslr& getSslr()
+	{
+		return m_sslr;
+	}
+	/// @}
+
+	/// @privatesection
+	/// @{
+	const GlTextureHandle& _getRt() const
 	{
 		return m_rt;
 	}
-	GlTextureHandle& getRt()
+	GlTextureHandle& _getRt()
 	{
 		return m_rt;
 	}
@@ -91,6 +99,12 @@ private:
 	ProgramResourcePointer m_frag;
 	GlProgramPipelineHandle m_ppline;
 	GlTextureHandle m_rt;
+
+	Pps(Renderer* r);
+	~Pps();
+
+	void init(const RendererInitializer& initializer);
+	void run(GlJobChainHandle& jobs);
 
 	void initInternal(const RendererInitializer& initializer);
 };

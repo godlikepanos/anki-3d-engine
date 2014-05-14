@@ -715,9 +715,9 @@ void Is::lightPass(GlJobChainHandle& jobs)
 
 	m_tilesBuff.bindShaderBuffer(jobs, TILES_BLOCK_BINDING); 
 
-	m_r->getMs().getRt0().bind(jobs, MS_RT0_TEX_UNIT);
-	m_r->getMs().getRt1().bind(jobs, MS_RT1_TEX_UNIT);
-	m_r->getMs().getDepthRt().bind(jobs, MS_DEPTH_RT_TEX_UNIT);
+	m_r->getMs()._getRt0().bind(jobs, MS_RT0_TEX_UNIT);
+	m_r->getMs()._getRt1().bind(jobs, MS_RT1_TEX_UNIT);
+	m_r->getMs()._getDepthRt().bind(jobs, MS_DEPTH_RT_TEX_UNIT);
 	m_sm.m_sm2DArrayTex.bind(jobs, SM_ARRAY_TEX_UNIT);
 
 	//

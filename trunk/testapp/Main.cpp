@@ -293,11 +293,6 @@ void init()
 		ScriptManagerSingleton::get().evalString(str.c_str());
 	}
 
-	// Physics debug
-	scene.getPhysics().setDebugDrawer(
-		new PhysicsDebugDrawer(
-			&MainRendererSingleton::get().getDbg().getDebugDrawer()));
-
 	initPhysics();
 
 	// Sectors
@@ -540,7 +535,7 @@ void mainLoop()
 
 		// Sleep
 		//
-#if 0
+#if 1
 		timer.stop();
 		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
 		{

@@ -12,16 +12,17 @@ namespace anki {
 /// Material stage EarlyZ pass
 class Ez: public OptionalRenderingPass
 {
-public:
+	friend class Ms;
+
+private:
+	U32 m_maxObjectsToDraw;
+
 	Ez(Renderer* r)
 		: OptionalRenderingPass(r)
 	{}
 
 	void init(const RendererInitializer& initializer);
 	void run(GlJobChainHandle& jobs);
-
-private:
-	U32 m_maxObjectsToDraw;
 };
 
 /// @}

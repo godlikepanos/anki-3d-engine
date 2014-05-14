@@ -239,8 +239,8 @@ void Ssao::run(GlJobChainHandle& jobs)
 	m_ssaoPpline.bind(jobs);
 
 	m_uniformsBuff.bindShaderBuffer(jobs, 0);
-	m_r->getMs().getDepthRt().bind(jobs, 0); // Depth
-	m_r->getMs().getRt1().bind(jobs, 1); // Normals
+	m_r->getMs()._getDepthRt().bind(jobs, 0); // Depth
+	m_r->getMs()._getRt1().bind(jobs, 1); // Normals
 	m_noiseTex.bind(jobs, 2);
 
 	// Write common block

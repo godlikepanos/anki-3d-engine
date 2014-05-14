@@ -197,7 +197,7 @@ public:
 			{
 				auto unit = glvar.getTextureUnit();
 
-				m_drawer->m_r->getMs().getDepthRt().bind(m_jobs, unit);
+				m_drawer->m_r->getMs()._getDepthRt().bind(m_jobs, unit);
 			}
 			break;
 		default:

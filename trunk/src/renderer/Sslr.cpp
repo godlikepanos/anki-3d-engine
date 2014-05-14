@@ -14,6 +14,9 @@ void Sslr::init(const RendererInitializer& initializer)
 		return;
 	}
 
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
+
 	// Size
 	const F32 quality = initializer.get("pps.sslr.renderingQuality");
 
@@ -34,9 +37,7 @@ void Sslr::init(const RendererInitializer& initializer)
 	// Fb
 	m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
 		GL_UNSIGNED_BYTE, 1, m_rt);
-
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	m_rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
 
 	m_fb = GlFramebufferHandle(jobs, {{m_rt, GL_COLOR_ATTACHMENT0}});
 
@@ -59,14 +60,17 @@ void Sslr::run(GlJobChainHandle& jobs)
 	jobs.setViewport(0, 0, m_width, m_height);
 
 	m_reflectionPpline.bind(jobs);
-	m_r->getIs().getRt().bind(jobs, 0);
-	m_r->getMs().getDepthRt().bind(jobs, 1);
+	m_r->getIs()._getRt().bind(jobs, 0);
+	m_r->getMs()._getDepthRt().bind(jobs, 1);
+	m_r->getMs()._getRt1().bind(jobs, 2);
+	m_r->getPps().getSsao().m_uniformsBuff.bindShaderBuffer(jobs, 0);
 
 	m_r->drawQuad(jobs);
 
 	// Write the reflection back to IS RT
 	//
 	m_r->getIs().m_fb.bind(jobs, false);
+	jobs.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	jobs.enableBlend(true);
 	jobs.setBlendFunctions(GL_ONE, GL_ONE);

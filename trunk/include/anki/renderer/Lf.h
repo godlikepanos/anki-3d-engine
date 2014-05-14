@@ -15,26 +15,20 @@ namespace anki {
 /// Lens flare rendering pass
 class Lf: public OptionalRenderingPass
 {
-	friend class MainRenderer;
+	friend class Pps;
 
 public:
-	Lf(Renderer* r)
-		: OptionalRenderingPass(r)
-	{}
-
-	~Lf();
-
-	void init(const RendererInitializer& initializer);
-	void run(GlJobChainHandle& jobs);
-
-	const GlTextureHandle& getRt() const
+	/// @privatesection
+	/// @{
+	const GlTextureHandle& _getRt() const
 	{
 		return m_rt;
 	}
-	GlTextureHandle& getRt()
+	GlTextureHandle& _getRt()
 	{
 		return m_rt;
 	}
+	/// @}
 
 private:
 	// Pseudo flares
@@ -57,6 +51,15 @@ private:
 	U8 m_maxFlaresPerLight;
 	U8 m_maxLightsWithFlares;
 	GlBufferHandle m_flareDataBuff;
+
+	Lf(Renderer* r)
+		: OptionalRenderingPass(r)
+	{}
+
+	~Lf();
+
+	void init(const RendererInitializer& initializer);
+	void run(GlJobChainHandle& jobs);
 	
 	void initInternal(const RendererInitializer& initializer);
 };

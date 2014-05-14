@@ -193,7 +193,7 @@ void Renderer::render(SceneGraph& scene, GlJobChainHandle& jobs)
 	m_ms.run(jobs);
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
-	m_tiler.runMinMax(m_ms.getDepthRt());
+	m_tiler.runMinMax(m_ms._getDepthRt());
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
 	m_is.run(jobs);

@@ -2,6 +2,7 @@
 #pragma anki type frag
 #pragma anki include "shaders/Common.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
+#pragma anki include "shaders/Pack.glsl"
 
 layout(location = 0) in vec2 inTexCoords;
 
@@ -67,27 +68,27 @@ float readZ(in vec2 uv)
 void main()
 {
 	vec3 normal = readNormal(inTexCoords);
-	vec3 pos = readPosition(inTexCoords);
+	vec3 posv = readPosition(inTexCoords);
 
 	// Reflection direction
-	vec3 rDir = normalize(reflect(pos, normal));
+	vec3 rDir = normalize(reflect(posv, normal));
 
-	vec3 sample = pos;
+	vec3 pos = posv;
 	for(int i = 0; i < 20; i++)
 	{
-		sample += rDir;
+		pos += rDir;
 
-		vec4 sampleNdc = uProjectionMatrix * vec4(sample, 1.0);
-		sampleNdc.xy /= sampleNdc.w;
-		sampleNdc.xy = sampleNdc.xy * 0.5 + 0.5;
+		vec4 posNdc = uProjectionMatrix * vec4(pos, 1.0);
+		posNdc.xy /= posNdc.w;
+		posNdc.xy = posNdc.xy * 0.5 + 0.5;
 
-		depth = readZ(sampleNdc.xy);
+		float depth = readZ(posNdc.xy);
 
-		float diffDepth = sampleNdc.z - depth;
+		float diffDepth = posNdc.z - depth;
 
-		if(dDepth < 0.0)
+		if(diffDepth < 0.0)
 		{
-			outColor = texture(uIsRt, sampleNdc.xy);
+			outColor = texture(uIsRt, posNdc.xy).rgb;
 			return;
 		}
 	}
