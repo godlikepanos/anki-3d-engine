@@ -13,33 +13,26 @@ namespace anki {
 /// Material stage also known as G buffer stage. It populates the G buffer
 class Ms: public RenderingPass
 {
+	friend class Renderer;
+
 public:
-	Ms(Renderer* r)
-		: RenderingPass(r), m_ez(r)
-	{}
-
-	~Ms();
-
-	/// @name Accessors
+	/// @privatesection
 	/// @{
-	GlTextureHandle& getRt0()
+	GlTextureHandle& _getRt0()
 	{
 		return m_planes[1].m_rt0;
 	}
 
-	GlTextureHandle& getRt1()
+	GlTextureHandle& _getRt1()
 	{
 		return m_planes[1].m_rt1;
 	}
 
-	GlTextureHandle& getDepthRt()
+	GlTextureHandle& _getDepthRt()
 	{
 		return m_planes[1].m_depthRt;
 	}
 	/// @}
-
-	void init(const RendererInitializer& initializer);
-	void run(GlJobChainHandle& jobs);
 
 private:
 	/// A collection of data
@@ -62,6 +55,15 @@ private:
 
 	/// One for multisampled and one for not. 0: multisampled, 1: not
 	Array<Plane, 2> m_planes;
+
+	Ms(Renderer* r)
+		: RenderingPass(r), m_ez(r)
+	{}
+
+	~Ms();
+
+	void init(const RendererInitializer& initializer);
+	void run(GlJobChainHandle& jobs);
 
 	/// Create a G buffer FBO
 	void createRt(U32 index, U32 samples);

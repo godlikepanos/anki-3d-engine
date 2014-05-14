@@ -27,14 +27,14 @@ void Dbg::init(const RendererInitializer& initializer)
 		if(m_r->getPps().getEnabled())
 		{
 			m_fb = GlFramebufferHandle(jobs, 
-				{{m_r->getPps().getRt(), GL_COLOR_ATTACHMENT0},
-				{m_r->getMs().getDepthRt(), GL_DEPTH_ATTACHMENT}});
+				{{m_r->getPps()._getRt(), GL_COLOR_ATTACHMENT0},
+				{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
 		}
 		else
 		{
 			m_fb = GlFramebufferHandle(jobs, 
-				{{m_r->getIs().getRt(), GL_COLOR_ATTACHMENT0},
-				{m_r->getMs().getDepthRt(), GL_DEPTH_ATTACHMENT}});
+				{{m_r->getIs()._getRt(), GL_COLOR_ATTACHMENT0},
+				{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
 		}
 
 		m_drawer.reset(new DebugDrawer);

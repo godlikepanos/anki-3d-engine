@@ -18,16 +18,9 @@ class ShaderProgram;
 /// High dynamic range lighting pass
 class Hdr: public SwitchableRenderingPass
 {
+	friend class Pps;
+
 public:
-	Hdr(Renderer* r)
-		: SwitchableRenderingPass(r)
-	{}
-
-	~Hdr();
-
-	void init(const RendererInitializer& initializer);
-	void run(GlJobChainHandle& jobs);
-
 	/// @name Accessors
 	/// @{
 	F32 getExposure() const
@@ -48,8 +41,11 @@ public:
 	{
 		m_blurringIterationsCount = x;
 	}
+	/// @}
 
-	GlTextureHandle& getRt()
+	/// @privatesection
+	/// @{
+	GlTextureHandle& _getRt()
 	{
 		return m_vblurRt;
 	}
@@ -79,6 +75,15 @@ private:
 	/// When the commonUbo got updated
 	Timestamp m_commonUboUpdateTimestamp = getGlobTimestamp();
 	GlBufferHandle m_commonBuff;
+
+	Hdr(Renderer* r)
+		: SwitchableRenderingPass(r)
+	{}
+
+	~Hdr();
+
+	void init(const RendererInitializer& initializer);
+	void run(GlJobChainHandle& jobs);
 
 	void initFb(GlFramebufferHandle& fb, GlTextureHandle& rt);
 	void initInternal(const RendererInitializer& initializer);

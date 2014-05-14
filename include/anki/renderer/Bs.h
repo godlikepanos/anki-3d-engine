@@ -13,7 +13,9 @@ namespace anki {
 /// Blending stage. The objects that blend must be handled differently
 class Bs: public RenderingPass
 {
-public:
+	friend class Renderer;
+
+private:
 	Bs(Renderer* r)
 		: RenderingPass(r) 
 	{}

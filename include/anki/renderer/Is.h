@@ -26,24 +26,19 @@ class SpotLight;
 /// Illumination stage
 class Is: private RenderingPass
 {
-	friend class WriteLightsJob;
+	friend class Renderer;
 	friend class Sslr;
+	friend class WriteLightsJob;
 
 public:
-	Is(Renderer* r);
-	~Is();
-
-	void init(const RendererInitializer& initializer);
-	void run(GlJobChainHandle& jobs);
-
-	/// @name Accessors
+	/// @privatesection
 	/// @{
-	const GlTextureHandle& getRt() const
+	const GlTextureHandle& _getRt() const
 	{
 		return m_rt;
 	}
 
-	GlTextureHandle& getRt()
+	GlTextureHandle& _getRt()
 	{
 		return m_rt;
 	}
@@ -122,6 +117,12 @@ private:
 	/// @}
 
 	U32 m_tileSize; ///< Cache the value here
+
+	Is(Renderer* r);
+	~Is();
+
+	void init(const RendererInitializer& initializer);
+	void run(GlJobChainHandle& jobs);
 
 	/// Called by init
 	void initInternal(const RendererInitializer& initializer);

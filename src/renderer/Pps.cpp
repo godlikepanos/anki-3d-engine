@@ -123,7 +123,7 @@ void Pps::run(GlJobChainHandle& jobs)
 
 	m_ppline.bind(jobs);
 
-	m_r->getIs().getRt().bind(jobs, 0);
+	m_r->getIs()._getRt().bind(jobs, 0);
 
 	if(m_ssao.getEnabled())
 	{
@@ -132,11 +132,11 @@ void Pps::run(GlJobChainHandle& jobs)
 
 	if(m_lf.getEnabled())
 	{
-		m_lf.getRt().bind(jobs, 2);
+		m_lf._getRt().bind(jobs, 2);
 	}
 	else if(m_hdr.getEnabled())
 	{
-		m_hdr.getRt().bind(jobs, 2);
+		m_hdr._getRt().bind(jobs, 2);
 	}
 
 	m_r->drawQuad(jobs);
