@@ -16,8 +16,8 @@ precision DEFAULT_FLOAT_PRECISION float;
 precision DEFAULT_FLOAT_PRECISION int;
 
 // Read from a render target texture
-#define textureRt(tex_, texc_) texture(tex_, texc_)
-//#define textureRt(tex_, texc_) textureLod(tex_, texc_, 0.0)
+//#define textureRt(tex_, texc_) texture(tex_, texc_)
+#define textureRt(tex_, texc_) textureLod(tex_, texc_, 0.0)
 
 #define POSITION_LOCATION 0
 #define NORMAL_LOCATION 1

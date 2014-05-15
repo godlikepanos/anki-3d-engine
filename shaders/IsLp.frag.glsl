@@ -38,20 +38,19 @@ layout(binding = 3) uniform highp sampler2DArrayShadow uShadowMapArr;
 
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 1) flat in int inInstanceId;
-layout(location = 2) in vec2 inLimitsOfNearPlaneOpt;
+layout(location = 2) in vec2 inProjectionParams;
 
 layout(location = 0) out vec3 outColor;
 
 //==============================================================================
-// @return frag pos in view space
+// Return frag pos in view space
 vec3 getFragPosVSpace()
 {
 	float depth = textureRt(uMsDepthRt, inTexCoord).r;
 
 	vec3 fragPosVspace;
-	fragPosVspace.z = uPlanes.y / (uPlanes.x + depth);
-	fragPosVspace.xy = inLimitsOfNearPlaneOpt * fragPosVspace.z;
-	fragPosVspace.z = -fragPosVspace.z;
+	fragPosVspace.z = uProjectionParams.z / (uProjectionParams.w + depth);
+	fragPosVspace.xy = inProjectionParams * fragPosVspace.z;
 
 	return fragPosVspace;
 }

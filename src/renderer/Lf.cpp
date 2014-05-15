@@ -188,129 +188,136 @@ void Lf::run(GlJobChainHandle& jobs)
 		}
 	}
 
-	// Early exit
-	if(lightsCount == 0)
+	// Check the light count
+	if(lightsCount != 0)
 	{
-		return;
-	}
+		// Sort the lights using their lens flare texture
+		std::sort(lights.begin(), lights.begin() + lightsCount, 
+			LightSortFunctor());
 
-	// Sort the lights using their lens flare texture
-	std::sort(lights.begin(), lights.begin() + lightsCount, LightSortFunctor());
+		// Write the UBO and get the groups
+		//
+		GlClientBufferHandle flaresCBuff(jobs,
+			sizeof(Flare) * lightsCount * m_maxFlaresPerLight, nullptr);
+		Flare* flares = (Flare*)flaresCBuff.getBaseAddress();
+		U flaresCount = 0;
 
-	// Write the UBO and get the groups
-	//
-	GlClientBufferHandle flaresCBuff(jobs,
-		sizeof(Flare) * lightsCount * m_maxFlaresPerLight, nullptr);
-	Flare* flares = (Flare*)flaresCBuff.getBaseAddress();
-	U flaresCount = 0;
+		// Contains the number of flares per flare texture
+		SceneFrameVector<U> groups(lightsCount, 0U, scene.getFrameAllocator());
+		SceneFrameVector<const GlTextureHandle*> texes(
+			lightsCount, nullptr, scene.getFrameAllocator());
+		U groupsCount = 0;
 
-	// Contains the number of flares per flare texture
-	SceneFrameVector<U> groups(lightsCount, 0U, scene.getFrameAllocator());
-	SceneFrameVector<const GlTextureHandle*> texes(
-		lightsCount, nullptr, scene.getFrameAllocator());
-	U groupsCount = 0;
+		GlTextureHandle lastTex;
 
-	GlTextureHandle lastTex;
-
-	// Iterate all lights and update the flares as well as the groups
-	while(lightsCount-- != 0)
-	{
-		Light& light = *lights[lightsCount];
-		const GlTextureHandle& tex = light.getLensFlareTexture();
-		const U depth = tex.getDepth();
-
-		// Transform
-		Vec3 posWorld = light.getWorldTransform().getOrigin();
-		Vec4 posClip = cam.getViewProjectionMatrix() * Vec4(posWorld, 1.0);
-
-		if(posClip.x() > posClip.w() || posClip.x() < -posClip.w()
-			|| posClip.y() > posClip.w() || posClip.y() < -posClip.w())
+		// Iterate all lights and update the flares as well as the groups
+		while(lightsCount-- != 0)
 		{
-			// Outside clip
-			continue;
-		}
+			Light& light = *lights[lightsCount];
+			const GlTextureHandle& tex = light.getLensFlareTexture();
+			const U depth = tex.getDepth();
 
-		Vec2 posNdc = posClip.xy() / posClip.w();
+			// Transform
+			Vec3 posWorld = light.getWorldTransform().getOrigin();
+			Vec4 posClip = cam.getViewProjectionMatrix() * Vec4(posWorld, 1.0);
 
-		Vec2 dir = -posNdc;
-		F32 len = dir.getLength();
-		dir /= len; // Normalize dir
+			if(posClip.x() > posClip.w() || posClip.x() < -posClip.w()
+				|| posClip.y() > posClip.w() || posClip.y() < -posClip.w())
+			{
+				// Outside clip
+				continue;
+			}
 
-		// New group?
-		if(lastTex != tex)
-		{
-			texes[groupsCount] = &tex;
-			lastTex = tex;
+			Vec2 posNdc = posClip.xy() / posClip.w();
 
-			++groupsCount;
-		}
+			Vec2 dir = -posNdc;
+			F32 len = dir.getLength();
+			dir /= len; // Normalize dir
 
-		// First flare 
-		F32 stretchFactor = 1.0 - posNdc.getLength();
-		stretchFactor *= stretchFactor;
+			// New group?
+			if(lastTex != tex)
+			{
+				texes[groupsCount] = &tex;
+				lastTex = tex;
 
-		Vec2 stretch = light.getLensFlaresStretchMultiplier() * stretchFactor;
+				++groupsCount;
+			}
 
-		flares[flaresCount].m_pos = posNdc;
-		flares[flaresCount].m_scale =
-			light.getLensFlaresSize() * Vec2(1.0, m_r->getAspectRatio())
-			* stretch;
-		flares[flaresCount].m_depth = 0.0;
-		flares[flaresCount].m_alpha = 
-			light.getLensFlaresAlpha() * stretchFactor;
-		++flaresCount;
-		++groups[groupsCount - 1];
+			// First flare 
+			F32 stretchFactor = 1.0 - posNdc.getLength();
+			stretchFactor *= stretchFactor;
 
-		// The rest of the flares
-		for(U d = 1; d < depth; d++)
-		{
-			// Write the "flares"
-			F32 factor = d / ((F32)depth - 1.0);
+			Vec2 stretch = 
+				light.getLensFlaresStretchMultiplier() * stretchFactor;
 
-			F32 flen = len * 2.0 * factor;
-
-			flares[flaresCount].m_pos = posNdc + dir * flen;
-
+			flares[flaresCount].m_pos = posNdc;
 			flares[flaresCount].m_scale =
 				light.getLensFlaresSize() * Vec2(1.0, m_r->getAspectRatio())
-				* ((len - flen) * 2.0);
-
-			flares[flaresCount].m_depth = d;
-
-			flares[flaresCount].m_alpha = light.getLensFlaresAlpha();
-
-			// Advance
+				* stretch;
+			flares[flaresCount].m_depth = 0.0;
+			flares[flaresCount].m_alpha = 
+				light.getLensFlaresAlpha() * stretchFactor;
 			++flaresCount;
 			++groups[groupsCount - 1];
+
+			// The rest of the flares
+			for(U d = 1; d < depth; d++)
+			{
+				// Write the "flares"
+				F32 factor = d / ((F32)depth - 1.0);
+
+				F32 flen = len * 2.0 * factor;
+
+				flares[flaresCount].m_pos = posNdc + dir * flen;
+
+				flares[flaresCount].m_scale =
+					light.getLensFlaresSize() * Vec2(1.0, m_r->getAspectRatio())
+					* ((len - flen) * 2.0);
+
+				flares[flaresCount].m_depth = d;
+
+				flares[flaresCount].m_alpha = light.getLensFlaresAlpha();
+
+				// Advance
+				++flaresCount;
+				++groups[groupsCount - 1];
+			}
+		}
+
+		// Time to render
+		//
+
+		// Write the buffer
+		m_flareDataBuff.write(
+			jobs, flaresCBuff, 0, 0, sizeof(Flare) * flaresCount);
+
+		// Set the common state
+		m_realPpline.bind(jobs);
+
+		jobs.enableBlend(true);
+		jobs.setBlendFunctions(GL_ONE, GL_ONE);
+
+		PtrSize offset = 0;
+		for(U i = 0; i < groupsCount; i++)
+		{
+			GlTextureHandle tex = *texes[i];
+			U instances = groups[i];
+			PtrSize buffSize = sizeof(Flare) * instances;
+
+			tex.bind(jobs, 0);
+			m_flareDataBuff.bindShaderBuffer(jobs, offset, buffSize, 0);
+
+			m_r->drawQuadInstanced(jobs, instances);
+
+			offset += buffSize;
 		}
 	}
-
-	// Time to render
-	//
-
-	// Write the buffer
-	m_flareDataBuff.write(
-		jobs, flaresCBuff, 0, 0, sizeof(Flare) * flaresCount);
-
-	// Set the common state
-	m_realPpline.bind(jobs);
-
-	jobs.enableBlend(true);
-	jobs.setBlendFunctions(GL_ONE, GL_ONE);
-
-	PtrSize offset = 0;
-	for(U i = 0; i < groupsCount; i++)
+	else
 	{
-		GlTextureHandle tex = *texes[i];
-		U instances = groups[i];
-		PtrSize buffSize = sizeof(Flare) * instances;
+		// No lights
 
-		tex.bind(jobs, 0);
-		m_flareDataBuff.bindShaderBuffer(jobs, offset, buffSize, 0);
-
-		m_r->drawQuadInstanced(jobs, instances);
-
-		offset += buffSize;
+		jobs.enableBlend(true);
+		jobs.setBlendFunctions(GL_ONE, GL_ONE);
 	}
 
 	// Blit the HDR RT back to LF RT
