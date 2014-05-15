@@ -10,25 +10,11 @@ layout(location = 0) out vec3 outColor;
 
 layout(std140, binding = 0) readonly buffer bCommon
 {
-	/// Packs:
-	/// - x: uZNear. For the calculation of frag pos in view space
-	/// - zw: Planes. For the calculation of frag pos in view space
-	vec4 uNearPlanesComp;
-
-	/// For the calculation of frag pos in view space. The xy is the 
-	/// uLimitsOfNearPlane and the zw is an optimization see PpsSsao.glsl and 
-	/// r403 for the clean one
-	vec4 uLimitsOfNearPlaneComp;
+	vec4 uProjectionParams;
 
 	/// The projection matrix
 	mat4 uProjectionMatrix;
 };
-
-#define uZNear uNearPlanesComp.x
-#define uZFar uNearPlanesComp.y
-#define uPlanes uNearPlanesComp.zw
-#define uLimitsOfNearPlane uLimitsOfNearPlaneComp.xy
-#define uLimitsOfNearPlane2 uLimitsOfNearPlaneComp.zw
 
 layout(binding = 0) uniform sampler2D uIsRt;
 layout(binding = 1) uniform sampler2D uMsDepthRt;
@@ -42,27 +28,26 @@ vec3 readNormal(in vec2 uv)
 	return normal;
 }
 
-// Get position in view space
+// Returns the Z of the position in view space
+float readZ(in vec2 uv)
+{
+	float depth = textureRt(uMsDepthRt, uv).r;
+	float z = uProjectionParams.z / (uProjectionParams.w + depth);
+	return z;
+}
+
+// Read position in view space
 vec3 readPosition(in vec2 uv)
 {
 	float depth = textureRt(uMsDepthRt, uv).r;
 
 	vec3 fragPosVspace;
-	fragPosVspace.z = -uPlanes.y / (uPlanes.x + depth);
+	fragPosVspace.z = readZ(uv);
 	
-	fragPosVspace.xy = (uv * uLimitsOfNearPlane2) - uLimitsOfNearPlane;
-	
-	float sc = -fragPosVspace.z;
-	fragPosVspace.xy *= sc;
+	fragPosVspace.xy = 
+		(2.0 * uv - 1.0) * uProjectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
-}
-
-float readZ(in vec2 uv)
-{
-	float depth = textureRt(uMsDepthRt, uv).r;
-	float z = -uPlanes.y / (uPlanes.x + depth);
-	return z;
 }
 
 void main()
@@ -74,21 +59,28 @@ void main()
 	vec3 rDir = normalize(reflect(posv, normal));
 
 	vec3 pos = posv;
-	for(int i = 0; i < 20; i++)
+	for(int i = 0; i < 200; i++)
 	{
-		pos += rDir;
+		pos += rDir * 0.1;
 
 		vec4 posNdc = uProjectionMatrix * vec4(pos, 1.0);
-		posNdc.xy /= posNdc.w;
-		posNdc.xy = posNdc.xy * 0.5 + 0.5;
+		posNdc.xyz /= posNdc.w;
 
-		float depth = readZ(posNdc.xy);
-
-		float diffDepth = posNdc.z - depth;
-
-		if(diffDepth < 0.0)
+		if(posNdc.x > 1.0 || posNdc.x < -1.0
+			|| posNdc.y > 1.0 || posNdc.y < -1.0)
 		{
-			outColor = texture(uIsRt, posNdc.xy).rgb;
+			break;
+		}
+
+		vec3 posClip = posNdc.xyz * 0.5 + 0.5;
+
+		float depth = textureRt(uMsDepthRt, posClip.xy).r;
+
+		float diffDepth = posClip.z - depth;
+
+		if(diffDepth > 0.0)
+		{
+			outColor = textureRt(uIsRt, posClip.xy).rgb;
 			return;
 		}
 	}

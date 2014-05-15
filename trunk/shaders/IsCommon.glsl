@@ -48,15 +48,7 @@ struct Lights
 // Common uniforms between lights
 layout(std140, row_major, binding = 0) readonly buffer commonBlock
 {
-	/// Packs:
-	/// - xy: Planes. For the calculation of frag pos in view space
-	vec4 uPlanesComp;
-
+	vec4 uProjectionParams;
 	vec4 uSceneAmbientColor;
-
 	vec4 uGroundLightDir;
-
-	vec4 uLimitsOfNearPlane;
 };
-
-#define uPlanes uPlanesComp.xy

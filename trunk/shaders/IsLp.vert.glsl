@@ -10,7 +10,7 @@ layout(location = 0) in vec2 inPosition;
 
 layout(location = 0) out vec2 outTexCoord;
 layout(location = 1) flat out int outInstanceId;
-layout(location = 2) out vec2 outLimitsOfNearPlaneOpt;
+layout(location = 2) out vec2 outProjectionParams;
 
 out gl_PerVertex
 {
@@ -34,8 +34,7 @@ void main()
 	vec2 vertPosNdc = outTexCoord * 2.0 - 1.0;
 	gl_Position = vec4(vertPosNdc, 0.0, 1.0);
 
-	outLimitsOfNearPlaneOpt = 
-		(outTexCoord * uLimitsOfNearPlane.zw) - uLimitsOfNearPlane.xy;
+	outProjectionParams = uProjectionParams.xy * vertPosNdc;
 }
 
 

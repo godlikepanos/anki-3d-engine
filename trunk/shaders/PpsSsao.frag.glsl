@@ -10,27 +10,13 @@ layout(location = 0) in vec2 inTexCoords;
 
 layout(location = 0) out float outColor;
 
-layout(std140, row_major, binding = 0) readonly buffer commonBlock
+layout(std140, row_major, binding = 0) readonly buffer bCommon
 {
-	/// Packs:
-	/// - x: uZNear. For the calculation of frag pos in view space
-	/// - zw: Planes. For the calculation of frag pos in view space
-	vec4 uNearPlanesComp;
-
-	/// For the calculation of frag pos in view space. The xy is the 
-	/// uLimitsOfNearPlane and the zw is an optimization see PpsSsao.glsl and 
-	/// r403 for the clean one
-	vec4 uLimitsOfNearPlaneComp;
+	vec4 uProjectionParams;
 
 	/// The projection matrix
 	mat4 uProjectionMatrix;
 };
-
-#define uZNear uNearPlanesComp.x
-#define uZFar uNearPlanesComp.y
-#define uPlanes uNearPlanesComp.zw
-#define uLimitsOfNearPlane uLimitsOfNearPlaneComp.xy
-#define uLimitsOfNearPlane2 uLimitsOfNearPlaneComp.zw
 
 layout(binding = 0) uniform sampler2D uMsDepthRt;
 layout(binding = 1) uniform sampler2D uMsRt;
@@ -60,27 +46,26 @@ vec3 readRandom(in vec2 uv)
 	return noise;
 }
 
+// Returns the Z of the position in view space
+float readZ(in vec2 uv)
+{
+	float depth = textureRt(uMsDepthRt, uv).r;
+	float z = uProjectionParams.z / (uProjectionParams.w + depth);
+	return z;
+}
+
 // Read position in view space
 vec3 readPosition(in vec2 uv)
 {
 	float depth = textureRt(uMsDepthRt, uv).r;
 
 	vec3 fragPosVspace;
-	fragPosVspace.z = -uPlanes.y / (uPlanes.x + depth);
+	fragPosVspace.z = readZ(uv);
 	
-	fragPosVspace.xy = (uv * uLimitsOfNearPlane2) - uLimitsOfNearPlane;
-	
-	float sc = -fragPosVspace.z;
-	fragPosVspace.xy *= sc;
+	fragPosVspace.xy = 
+		(2.0 * uv - 1.0) * uProjectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
-}
-
-float readZ(in vec2 uv)
-{
-	float depth = textureRt(uMsDepthRt, uv).r;
-	float z = -uPlanes.y / (uPlanes.x + depth);
-	return z;
 }
 
 void main(void)

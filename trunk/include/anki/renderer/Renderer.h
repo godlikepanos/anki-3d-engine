@@ -152,6 +152,10 @@ public:
 	{
 		return m_planesUpdateTimestamp;
 	}
+	const Vec4& getProjectionParameters() const
+	{
+		return m_projectionParams;
+	}
 
 	U getSamples() const
 	{
@@ -301,6 +305,10 @@ private:
 	/// Used to to calculate the frag pos in view space inside a few shader
 	/// programs
 	Vec2 m_limitsOfNearPlane2;
+
+	/// A vector that contains useful numbers for calculating the view space
+	/// position from the depth
+	Vec4 m_projectionParams;
 	/// @}
 
 	SceneGraph* m_scene; ///< Current scene
@@ -312,6 +320,8 @@ private:
 	std::string m_shaderPostProcessorString;
 
 	GlFramebufferHandle m_defaultFb;
+
+	void computeProjectionParams(const Mat4& projMat);
 };
 
 /// @}

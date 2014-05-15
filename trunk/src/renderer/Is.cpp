@@ -57,10 +57,9 @@ public:
 class CommonUniforms
 {
 public:
-	Vec4 m_planes;
+	Vec4 m_projectionParams;
 	Vec4 m_sceneAmbientColor;
 	Vec4 m_groundLightDir;
-	Vec4 m_limitsOfNearPlane;
 };
 
 } // end namespace shader
@@ -773,7 +772,7 @@ void Is::updateCommonBlock(GlJobChainHandle& jobs)
 		*(shader::CommonUniforms*)cbuff.getBaseAddress();
 
 	// Start writing
-	blk.m_planes = Vec4(m_r->getPlanes().x(), m_r->getPlanes().y(), 0.0, 0.0);
+	blk.m_projectionParams = m_r->getProjectionParameters();
 
 	blk.m_sceneAmbientColor = scene.getAmbientColor();
 
@@ -783,10 +782,6 @@ void Is::updateCommonBlock(GlJobChainHandle& jobs)
 		blk.m_groundLightDir = 
 			Vec4(-m_cam->getViewMatrix().getColumn(1).xyz(), 1.0);
 	}
-
-	blk.m_limitsOfNearPlane = Vec4(
-		m_r->getLimitsOfNearPlane(), 
-		m_r->getLimitsOfNearPlane2().x(), m_r->getLimitsOfNearPlane2().y());
 
 	m_commonBuff.write(jobs, cbuff, 0, 0, cbuff.getSize());
 }

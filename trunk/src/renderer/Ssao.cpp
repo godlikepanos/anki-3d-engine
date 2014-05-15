@@ -53,8 +53,7 @@ static void genNoise(Vec3* ANKI_RESTRICT arr,
 class ShaderCommonUniforms
 {
 public:
-	Vec4 m_nearPlanes;
-	Vec4 m_limitsOfNearPlane;
+	Vec4 m_projectionParams;
 	Mat4 m_projectionMatrix;
 };
 
@@ -254,12 +253,7 @@ void Ssao::run(GlJobChainHandle& jobs)
 		ShaderCommonUniforms& blk = 
 			*((ShaderCommonUniforms*)tmpBuff.getBaseAddress());
 
-		blk.m_nearPlanes = Vec4(cam.getNear(), cam.getFar(), 
-			m_r->getPlanes().x(), m_r->getPlanes().y());
-
-		blk.m_limitsOfNearPlane = Vec4(m_r->getLimitsOfNearPlane(),
-			m_r->getLimitsOfNearPlane2().x(),
-			m_r->getLimitsOfNearPlane2().y());
+		blk.m_projectionParams = m_r->getProjectionParameters();
 
 		blk.m_projectionMatrix = cam.getProjectionMatrix().getTransposed();
 

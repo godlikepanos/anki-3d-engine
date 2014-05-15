@@ -186,6 +186,8 @@ void Renderer::render(SceneGraph& scene, GlJobChainHandle& jobs)
 		calcLimitsOfNearPlane(pcam, m_limitsOfNearPlane);
 		m_limitsOfNearPlane2 = m_limitsOfNearPlane * 2.0;
 
+		computeProjectionParams(cam.getProjectionMatrix());
+
 		m_planesUpdateTimestamp = getGlobTimestamp();
 	}
 
@@ -268,6 +270,25 @@ void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
 {
 	limitsOfNearPlane.y() = tan(0.5 * pcam.getFovY());
 	limitsOfNearPlane.x() = tan(0.5 * pcam.getFovX());
+}
+
+//==============================================================================
+void Renderer::computeProjectionParams(const Mat4& m)
+{
+	// First, z' = (m * Pv) / 2 + 0.5 where Pv is the view space position.
+	// Solving that for Pv.z we get
+	// Pv.z = A / (z' + B)
+	// where A = (-m23 / 2) and B = (m22/2 - 0.5)
+	// so we save the A and B in the projection params vector
+	m_projectionParams.z() = -m(2, 3) * 0.5;
+	m_projectionParams.w() = m(2, 2) * 0.5 - 0.5;
+
+	// Using the same logic the Pv.x = x' * w / m00
+	// so Pv.x = x' * Pv.z * (-1 / m00)
+	m_projectionParams.x() = -1.0 / m(0, 0);
+
+	// Same for y
+	m_projectionParams.y() = -1.0 / m(1, 1);
 }
 
 //==============================================================================
