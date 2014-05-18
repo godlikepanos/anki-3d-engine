@@ -243,7 +243,8 @@ void Ssao::run(GlJobChainHandle& jobs)
 	m_noiseTex.bind(jobs, 2);
 
 	// Write common block
-	if(m_commonUboUpdateTimestamp < m_r->getPlanesUpdateTimestamp()
+	if(m_commonUboUpdateTimestamp 
+			< m_r->getProjectionParametersUpdateTimestamp()
 		|| m_commonUboUpdateTimestamp < cam.FrustumComponent::getTimestamp()
 		|| m_commonUboUpdateTimestamp == 1)
 	{

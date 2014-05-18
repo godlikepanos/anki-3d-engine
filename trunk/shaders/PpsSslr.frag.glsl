@@ -20,14 +20,6 @@ layout(binding = 0) uniform sampler2D uIsRt;
 layout(binding = 1) uniform sampler2D uMsDepthRt;
 layout(binding = 2) uniform sampler2D uMsRt;
 
-// Get normal
-vec3 readNormal(in vec2 uv)
-{
-	vec3 normal;
-	readNormalFromGBuffer(uMsRt, uv, normal);
-	return normal;
-}
-
 // Returns the Z of the position in view space
 float readZ(in vec2 uv)
 {
@@ -50,16 +42,42 @@ vec3 readPosition(in vec2 uv)
 	return fragPosVspace;
 }
 
+vec3 project(vec3 p)
+{
+	vec4 a = uProjectionMatrix * vec4(p, 1.0);
+	a.xyz /= a.w;
+	return a.xyz;
+}
+
 void main()
 {
-	vec3 normal = readNormal(inTexCoords);
+	vec3 normal;
+	float specColor;
+	readNormalSpecularColorFromGBuffer(uMsRt, inTexCoords, normal, specColor);
+
+	if(specColor < 0.5)
+	{
+		outColor = vec3(0.0);
+		return;
+	}
+
 	vec3 posv = readPosition(inTexCoords);
 
 	// Reflection direction
-	vec3 rDir = normalize(reflect(posv, normal));
+	vec3 rDir = reflect(normalize(posv), normal);
 
+	/*vec3 startpos = posv;
+	vec3 endpos = startpos + rDir * 1.0;
+
+	vec3 startposproj = project(startpos);
+	vec3 endposproj = project(endpos);
+
+	outColor = textureRt(uIsRt, endposproj.xy * 0.5 + 0.5).rgb;
+	outColor = vec3(0.0);*/
+
+#if 1
 	vec3 pos = posv;
-	for(int i = 0; i < 200; i++)
+	for(int i = 0; i < 500; i++)
 	{
 		pos += rDir * 0.1;
 
@@ -80,10 +98,20 @@ void main()
 
 		if(diffDepth > 0.0)
 		{
-			outColor = textureRt(uIsRt, posClip.xy).rgb;
+			if(diffDepth > 0.001)
+			{
+				break;
+			}
+
+			float factor = 1.0 - length(posNdc.xy);
+
+			outColor = textureRt(uIsRt, posClip.xy).rgb * (factor * specColor);
+			//outColor = vec3(diffDepth);
 			return;
 		}
 	}
 
+	//outColor = vec3(0.5, 0.0, 0.0);
 	outColor = vec3(0.0);
+#endif
 }

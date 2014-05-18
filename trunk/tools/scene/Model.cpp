@@ -318,6 +318,18 @@ void exportMaterial(
 			exporter.texrpath + normTex);
 	}
 
+	aiColor3D specCol = {0.0, 0.0, 0.0};
+	mtl.Get(AI_MATKEY_COLOR_SPECULAR, specCol);
+
+	float shininess = 0.0;
+	mtl.Get(AI_MATKEY_SHININESS, shininess);
+	
+
+	str = replaceAllString(str, "%specularColor%", 
+		std::to_string((specCol[0] + specCol[1] + specCol[2]) / 3.0));
+	str = replaceAllString(str, "%specularPower%", 
+		std::to_string(shininess));
+
 	str = replaceAllString(str, "%instanced%", (instanced) ? "1" : "0");
 	str = replaceAllString(str, "%diffuseMap%", exporter.texrpath + diffTex);
 

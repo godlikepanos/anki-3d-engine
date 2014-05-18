@@ -48,8 +48,8 @@ void writeGBuffer(
 	out vec4 fai0, out vec4 fai1)
 {
 	vec3 unorm = normal * 0.5 + 0.5;
-	fai0 = vec4(diffColor, specColor);
-	fai1 = vec4(unorm.xyz, specPower / MAX_SPECULARITY);
+	fai0 = vec4(diffColor, specPower / MAX_SPECULARITY);
+	fai1 = vec4(unorm.xyz, specColor);
 }
 
 // Read from the G buffer
@@ -61,11 +61,11 @@ void readGBuffer(
 {
 	vec4 comp = textureRt(fai0, texCoord);
 	diffColor = comp.rgb;
-	specColor = comp.a;
+	specPower = comp.w * MAX_SPECULARITY;
 
 	comp = textureRt(fai1, texCoord);
 	normal = normalize(comp.xyz * 2.0 - 1.0);
-	specPower = comp.w * MAX_SPECULARITY;
+	specColor = comp.a;
 }
 
 // Read only normal from G buffer
@@ -74,5 +74,17 @@ void readNormalFromGBuffer(
 	in vec2 texCoord,
 	out vec3 normal)
 {
-	normal = normalize(textureRt(fai1, texCoord).xyz);
+	normal = normalize(textureRt(fai1, texCoord).xyz * 2.0 - 1.0);
+}
+
+// Read only normal and specular color from G buffer
+void readNormalSpecularColorFromGBuffer(
+	in sampler2D fai1,
+	in vec2 texCoord,
+	out vec3 normal,
+	out float specColor)
+{
+	vec4 comp = textureRt(fai1, texCoord);
+	normal = normalize(comp.xyz * 2.0 - 1.0);
+	specColor = comp.a;
 }

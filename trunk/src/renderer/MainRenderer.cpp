@@ -45,7 +45,13 @@ void MainRenderer::render(SceneGraph& scene)
 	ANKI_COUNTER_START_TIMER(MAIN_RENDERER_TIME);
 
 	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl, m_jobsInitHints);
+	Array<GlJobChainHandle, JOB_CHAINS_COUNT> jobs;
+	GlJobChainHandle& lastJobs = jobs[JOB_CHAINS_COUNT - 1];
+
+	for(U i = 0; i < JOB_CHAINS_COUNT; i++)
+	{
+		jobs[i] = GlJobChainHandle(&gl, m_jobsInitHints[i]);
+	}
 
 	Renderer::render(scene, jobs);
 
@@ -54,10 +60,10 @@ void MainRenderer::render(SceneGraph& scene)
 
 	if(notDrawnToDefault)
 	{
-		getDefaultFramebuffer().bind(jobs, false);
-		jobs.setViewport(0, 0, getWindowWidth(), getWindowHeight());
+		getDefaultFramebuffer().bind(lastJobs, false);
+		lastJobs.setViewport(0, 0, getWindowWidth(), getWindowHeight());
 
-		m_blitPpline.bind(jobs);
+		m_blitPpline.bind(lastJobs);
 
 		GlTextureHandle* rt;
 
@@ -71,16 +77,23 @@ void MainRenderer::render(SceneGraph& scene)
 		}
 
 		//rt = &getPps().getSslr().m_rt;
+		//rt = &getMs()._getRt0();
 
-		rt->setFilter(jobs, GlTextureHandle::Filter::LINEAR);
-		rt->bind(jobs, 0);
+		rt->setFilter(lastJobs, GlTextureHandle::Filter::LINEAR);
+		rt->bind(lastJobs, 0);
 
-		drawQuad(jobs);
+		drawQuad(lastJobs);
 	}
 
-	ANKI_ASSERT(jobs.getReferenceCount() == 1);
-	jobs.flush();
-	m_jobsInitHints = jobs.computeInitHints();
+	// Set the hints
+	for(U i = 0; i < JOB_CHAINS_COUNT; i++)
+	{
+		m_jobsInitHints[i] = jobs[i].computeInitHints();	
+	}
+
+	// Flush the last job chain
+	ANKI_ASSERT(lastJobs.getReferenceCount() == 1);
+	lastJobs.flush();
 
 	ANKI_COUNTER_STOP_TIMER_INC(MAIN_RENDERER_TIME);
 }

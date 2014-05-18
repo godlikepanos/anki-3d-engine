@@ -637,6 +637,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.set("pps.hdr.blurringIterationsCount", 1);
 	initializer.set("pps.hdr.exposure", 8.0);
 	initializer.set("pps.hdr.samples", 9);
+	initializer.set("pps.sslr.renderingQuality", 0.5);
 	initializer.set("pps.ssao.blurringIterationsNum", 1);
 	initializer.set("pps.ssao.enabled", true);
 	initializer.set("pps.ssao.renderingQuality", 0.35);

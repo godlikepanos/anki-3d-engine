@@ -18,6 +18,7 @@ class Ssao: public OptionalRenderingPass
 {
 	friend class Pps;
 	friend class Sslr;
+	friend class MainRenderer;
 
 private:
 	U32 m_width, m_height; ///< Blur passes size
