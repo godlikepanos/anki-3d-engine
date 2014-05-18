@@ -549,9 +549,10 @@ void Is::lightPass(GlJobChainHandle& jobs)
 	clamp(visibleSpotLightsCount, m_maxSpotLights);
 	clamp(visibleSpotTexLightsCount, m_maxSpotTexLights);
 
-	ANKI_COUNTER_INC(RENDERER_LIGHTS_COUNT, 
-		U64(visiblePointLightsCount + visibleSpotLightsCount 
-		+ visibleSpotTexLightsCount));
+	U totalLightsCount = visiblePointLightsCount + visibleSpotLightsCount 
+		+ visibleSpotTexLightsCount;
+
+	ANKI_COUNTER_INC(RENDERER_LIGHTS_COUNT, U64(totalLightsCount));
 
 	//
 	// Do shadows pass
@@ -583,8 +584,12 @@ void Is::lightPass(GlJobChainHandle& jobs)
 	// Fire the super jobs
 	Array<WriteLightsJob, Threadpool::MAX_THREADS> tjobs;
 
-	GlClientBufferHandle lightsClientBuff(
-		jobs, spotTexLightsOffset + spotTexLightsSize, nullptr);
+	GlClientBufferHandle lightsClientBuff;
+	if(totalLightsCount > 0)
+	{
+		lightsClientBuff = GlClientBufferHandle(
+			jobs, spotTexLightsOffset + spotTexLightsSize, nullptr);
+	}
 
 	GlClientBufferHandle tilesClientBuff(jobs, m_tilesBuff.getSize(), nullptr);
 
@@ -615,12 +620,18 @@ void Is::lightPass(GlJobChainHandle& jobs)
 
 		if(i == 0)
 		{
-			job.m_pointLights = (shader::PointLight*)(
-				(U8*)lightsClientBuff.getBaseAddress() + pointLightsOffset);
-			job.m_spotLights = (shader::SpotLight*)(
-				(U8*)lightsClientBuff.getBaseAddress() + spotLightsOffset);
-			job.m_spotTexLights = (shader::SpotTexLight*)(
-				(U8*)lightsClientBuff.getBaseAddress() + spotTexLightsOffset);
+			if(totalLightsCount > 0)
+			{
+				job.m_pointLights = (shader::PointLight*)(
+					(U8*)lightsClientBuff.getBaseAddress() 
+					+ pointLightsOffset);
+				job.m_spotLights = (shader::SpotLight*)(
+					(U8*)lightsClientBuff.getBaseAddress() 
+					+ spotLightsOffset);
+				job.m_spotTexLights = (shader::SpotTexLight*)(
+					(U8*)lightsClientBuff.getBaseAddress() 
+					+ spotTexLightsOffset);
+			}
 
 			job.m_tileBuffer = (U8*)tilesClientBuff.getBaseAddress();
 
@@ -679,8 +690,11 @@ void Is::lightPass(GlJobChainHandle& jobs)
 	}
 
 	// Write BOs
-	m_lightsBuff.write(jobs,
-		lightsClientBuff, 0, 0, spotTexLightsOffset + spotTexLightsSize);
+	if(totalLightsCount > 0)
+	{
+		m_lightsBuff.write(jobs,
+			lightsClientBuff, 0, 0, spotTexLightsOffset + spotTexLightsSize);
+	}
 	m_tilesBuff.write(jobs, tilesClientBuff, 0, 0, tilesClientBuff.getSize());
 
 	//

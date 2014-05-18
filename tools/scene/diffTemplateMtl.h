@@ -30,7 +30,7 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 			</includes>
 
 			<inputs>
-				<input><type>vec2</type><name>uSpecular</name><value>1.0 90.0</value></input>
+				<input><type>vec2</type><name>uSpecular</name><value>%specularColor% %specularPower%</value></input>
 				<input><type>float</type><name>uBlurring</name><value>0.0</value><const>1</const></input>
 				<input><type>sampler2D</type><name>uDiffuseMap</name><value>%diffuseMap%</value></input>
 			</inputs>

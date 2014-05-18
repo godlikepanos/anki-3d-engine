@@ -161,11 +161,12 @@ void Renderer::init(const RendererInitializer& initializer)
 	// Default FB
 	m_defaultFb = GlFramebufferHandle(jobs, {});
 
-	jobs.flush();
+	jobs.finish();
 }
 
 //==============================================================================
-void Renderer::render(SceneGraph& scene, GlJobChainHandle& jobs)
+void Renderer::render(SceneGraph& scene, 
+	Array<GlJobChainHandle, JOB_CHAINS_COUNT>& jobs)
 {
 	m_scene = &scene;
 	Camera& cam = m_scene->getActiveCamera();
@@ -173,46 +174,40 @@ void Renderer::render(SceneGraph& scene, GlJobChainHandle& jobs)
 	// Calc a few vars
 	//
 	Timestamp camUpdateTimestamp = cam.FrustumComponent::getTimestamp();
-	if(m_planesUpdateTimestamp < m_scene->getActiveCameraChangeTimestamp()
-		|| m_planesUpdateTimestamp < camUpdateTimestamp
-		|| m_planesUpdateTimestamp == 1)
+	if(m_projectionParamsUpdateTimestamp 
+			< m_scene->getActiveCameraChangeTimestamp()
+		|| m_projectionParamsUpdateTimestamp < camUpdateTimestamp
+		|| m_projectionParamsUpdateTimestamp == 1)
 	{
-		calcPlanes(Vec2(cam.getNear(), cam.getFar()), m_planes);
-
 		ANKI_ASSERT(cam.getCameraType() == Camera::CT_PERSPECTIVE);
-		const PerspectiveCamera& pcam =
-			static_cast<const PerspectiveCamera&>(cam);
-
-		calcLimitsOfNearPlane(pcam, m_limitsOfNearPlane);
-		m_limitsOfNearPlane2 = m_limitsOfNearPlane * 2.0;
-
 		computeProjectionParams(cam.getProjectionMatrix());
-
-		m_planesUpdateTimestamp = getGlobTimestamp();
+		m_projectionParamsUpdateTimestamp = getGlobTimestamp();
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
-	m_ms.run(jobs);
+	m_ms.run(jobs[0]);
+	ANKI_ASSERT(jobs[0].getReferenceCount() == 1);
+	jobs[0].flush();
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
 	m_tiler.runMinMax(m_ms._getDepthRt());
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
-	m_is.run(jobs);
+	m_is.run(jobs[1]);
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
-	m_bs.run(jobs);
+	m_bs.run(jobs[1]);
 
 	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
 	if(m_pps.getEnabled())
 	{
-		m_pps.run(jobs);
+		m_pps.run(jobs[1]);
 	}
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_PPS_TIME);
 
 	if(m_dbg.getEnabled())
 	{
-		m_dbg.run(jobs);
+		m_dbg.run(jobs[1]);
 	}
 
 	++m_framesNum;
@@ -250,26 +245,6 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 	Vec4 out = invPm * vec;
 	out /= out.w();
 	return out.xyz();
-}
-
-//==============================================================================
-void Renderer::calcPlanes(const Vec2& cameraRange, Vec2& planes)
-{
-	F32 zNear = cameraRange.x();
-	F32 zFar = cameraRange.y();
-
-	F32 opt = zNear - zFar;
-
-	planes.x() = zFar / opt;
-	planes.y() = (zFar * zNear) / opt;
-}
-
-//==============================================================================
-void Renderer::calcLimitsOfNearPlane(const PerspectiveCamera& pcam,
-	Vec2& limitsOfNearPlane)
-{
-	limitsOfNearPlane.y() = tan(0.5 * pcam.getFovY());
-	limitsOfNearPlane.x() = tan(0.5 * pcam.getFovX());
 }
 
 //==============================================================================

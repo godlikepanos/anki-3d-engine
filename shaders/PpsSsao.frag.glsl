@@ -90,8 +90,8 @@ void main(void)
 		// project sample position:
 		vec4 offset = vec4(sample_, 1.0);
 		offset = uProjectionMatrix * offset;
-		offset.xy /= offset.w;
-		offset.xy = offset.xy * 0.5 + 0.5;
+		offset.xy = offset.xy / (2.0 * offset.w) + 0.5; // persp div & 
+		                                                // to NDC -> [0, 1]
 
 		// get sample depth:
 		float sampleDepth = readZ(offset.xy);

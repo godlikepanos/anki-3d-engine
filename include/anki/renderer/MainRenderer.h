@@ -35,7 +35,8 @@ private:
 	ProgramResourcePointer m_blitFrag;
 	GlProgramPipelineHandle m_blitPpline;
 
-	GlJobChainInitHints m_jobsInitHints; ///< Optimize job chain
+	/// Optimize job chain
+	Array<GlJobChainInitHints, JOB_CHAINS_COUNT> m_jobsInitHints; 
 
 	void takeScreenshotTga(const char* filename);
 	void initGl();

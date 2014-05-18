@@ -36,6 +36,10 @@ public:
 class Renderer
 {
 public:
+	/// Cut the job submition into multiple chains. We want to avoid feeding
+	/// GL with a huge job chain
+	static const U32 JOB_CHAINS_COUNT = 2;
+		
 	Renderer();
 	~Renderer();
 
@@ -136,21 +140,9 @@ public:
 		return m_sceneDrawer;
 	}
 
-	const Vec2& getPlanes() const
+	Timestamp getProjectionParametersUpdateTimestamp() const
 	{
-		return m_planes;
-	}
-	const Vec2& getLimitsOfNearPlane() const
-	{
-		return m_limitsOfNearPlane;
-	}
-	const Vec2& getLimitsOfNearPlane2() const
-	{
-		return m_limitsOfNearPlane2;
-	}
-	Timestamp getPlanesUpdateTimestamp() const
-	{
-		return m_planesUpdateTimestamp;
+		return m_projectionParamsUpdateTimestamp;
 	}
 	const Vec4& getProjectionParameters() const
 	{
@@ -209,7 +201,8 @@ public:
 	void init(const RendererInitializer& initializer);
 
 	/// This function does all the rendering stages and produces a final FAI
-	void render(SceneGraph& scene, GlJobChainHandle& jobs);
+	void render(SceneGraph& scene, 
+		Array<GlJobChainHandle, JOB_CHAINS_COUNT>& jobs);
 
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
@@ -226,25 +219,6 @@ public:
 	void drawQuad(GlJobChainHandle& jobs);
 
 	void drawQuadInstanced(GlJobChainHandle& jobs, U32 primitiveCount);
-
-	/// Calculate the planes needed for the calculation of the fragment
-	/// position z in view space. Having the fragment's depth, the camera's
-	/// zNear and zFar the z of the fragment is being calculated inside the
-	/// fragment shader from:
-	/// @code z = (- zFar * zNear) / (zFar - depth * (zFar - zNear))
-	/// @endcode
-	/// The above can be optimized and this method actually pre-calculates a
-	/// few things in order to lift a few calculations from the fragment
-	/// shader. So the z is:
-	/// @code z =  -planes.y / (planes.x + depth) @endcode
-	/// @param[in] cameraRange The zNear, zFar
-	/// @param[out] planes The planes
-	static void calcPlanes(const Vec2& cameraRange, Vec2& planes);
-
-	/// Calculates two values needed for the calculation of the fragment
-	/// position in view space.
-	static void calcLimitsOfNearPlane(const class PerspectiveCamera& cam,
-		Vec2& limitsOfNearPlane);
 
 	/// Get the LOD given the distance of an object from the camera
 	F32 calculateLod(F32 distance) const
@@ -294,21 +268,12 @@ private:
 	/// @name Optimization vars
 	/// Used in other stages
 	/// @{
-	Timestamp m_planesUpdateTimestamp = getGlobTimestamp();
-
-	/// Used to to calculate the frag pos in view space inside a few shader
-	/// programs
-	Vec2 m_planes;
-	/// Used to to calculate the frag pos in view space inside a few shader
-	/// programs
-	Vec2 m_limitsOfNearPlane;
-	/// Used to to calculate the frag pos in view space inside a few shader
-	/// programs
-	Vec2 m_limitsOfNearPlane2;
 
 	/// A vector that contains useful numbers for calculating the view space
 	/// position from the depth
 	Vec4 m_projectionParams;
+
+	Timestamp m_projectionParamsUpdateTimestamp = getGlobTimestamp();
 	/// @}
 
 	SceneGraph* m_scene; ///< Current scene
