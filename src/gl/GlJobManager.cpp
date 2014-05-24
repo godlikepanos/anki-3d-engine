@@ -105,6 +105,10 @@ void GlJobManager::stop()
 	{
 		std::unique_lock<std::mutex> lock(m_mtx);
 		m_renderingThreadSignal = 1;
+
+		// Set some dummy values in order to unlock the cond var
+		m_tail = m_queue.size() + 1;
+		m_head = m_tail + 1;
 	}
 	m_thread.join();
 #else

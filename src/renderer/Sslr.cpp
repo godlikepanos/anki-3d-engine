@@ -28,6 +28,10 @@ void Sslr::init(const RendererInitializer& initializer)
 	// Programs
 	std::stringstream pps;
 
+	pps << "#define WIDTH " << m_width 
+		<< "\n#define HEIGHT " << m_height
+		<< "\n";
+
 	m_reflectionFrag.load(ProgramResource::createSrcCodeToCache(
 		"shaders/PpsSslr.frag.glsl", pps.str().c_str(), "r_").c_str());
 
