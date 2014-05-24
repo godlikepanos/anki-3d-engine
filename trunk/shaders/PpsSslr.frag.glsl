@@ -55,31 +55,104 @@ void main()
 	float specColor;
 	readNormalSpecularColorFromGBuffer(uMsRt, inTexCoords, normal, specColor);
 
+	//outColor = vec3(0.5, 0.0, 0.0);
+	outColor = vec3(0.0);
+
 	if(specColor < 0.5)
 	{
-		outColor = vec3(0.0);
 		return;
 	}
 
-	vec3 posv = readPosition(inTexCoords);
+	vec3 p0 = readPosition(inTexCoords);
 
 	// Reflection direction
-	vec3 rDir = reflect(normalize(posv), normal);
-
-	/*vec3 startpos = posv;
-	vec3 endpos = startpos + rDir * 1.0;
-
-	vec3 startposproj = project(startpos);
-	vec3 endposproj = project(endpos);
-
-	outColor = textureRt(uIsRt, endposproj.xy * 0.5 + 0.5).rgb;
-	outColor = vec3(0.0);*/
+	vec3 eye = normalize(p0);
+	vec3 r = reflect(eye, normal);
 
 #if 1
-	vec3 pos = posv;
-	for(int i = 0; i < 500; i++)
+	float t = -p0.z / (r.z + 0.000001);
+	vec3 p1 = p0 + r * t;
+
+	/*if(p1.z > 0.0)
 	{
-		pos += rDir * 0.1;
+		outColor = vec3(1, 0.0, 1);
+		return;
+	}*/
+
+	vec2 pp0 = inTexCoords * 2.0 - 1.0;
+	vec3 pp1 = project(p1);
+
+	vec2 dir = pp1.xy - pp0;
+	vec2 path = dir * 0.5; // (pp1.xy/2+1/2)-(pp0.xy/2+1/2)
+	path *= vec2(float(WIDTH), float(HEIGHT));
+	path = abs(path);
+	float steps = max(path.x, path.y);
+
+	// XXX
+	float len = length(dir);
+	float stepD =  len / steps;
+	dir /= len;
+
+	steps = min(steps, 400.0);
+
+	for(float i = 1.0; i < steps; i += 1.0)
+	{
+		vec2 ndc = pp0 + dir * (i * stepD);
+
+		vec2 comp = abs(ndc);
+		if(comp.x > 1.0 || comp.y > 1.0)
+		{
+			//outColor = vec3(1, 0.0, 1);
+			return;
+		}
+
+		vec3 a;
+		a.z = -1.0;
+		a.xy = ndc * uProjectionParams.xy * a.z;
+		a = normalize(a);
+
+		vec3 c0 = cross(a, r);
+		vec3 c1 = cross(p0, r);
+		float k = c1.x / c0.x;
+
+		vec3 intersection = a * k;
+
+		vec2 texCoord = ndc * 0.5 + 0.5;
+		float depth = readZ(texCoord);
+
+		float diffDepth = depth - intersection.z;
+
+		/*if(i + 4.0 > 400.0)
+		{
+			outColor = vec3(pp1.zz, 0.0);
+			return;
+		}*/
+
+		if(diffDepth > 0.0)
+		{
+			if(diffDepth > 0.4)
+			{
+				//outColor = vec3(1.0);
+				return;
+			}
+
+			float factor = 1.0 - length(ndc.xy);
+			factor *= 1.0 - length(pp0.xy);
+
+			outColor = textureRt(uIsRt, texCoord).rgb * (factor * specColor);
+
+			//outColor = vec3(1.0 - abs(pp0.xy), 0.0);
+			return;
+		}
+	}
+#endif
+
+#if 0
+	vec3 pos = posv;
+	int i;
+	for(i = 0; i < 200; i++)
+	{
+		pos += r * 0.1;
 
 		vec4 posNdc = uProjectionMatrix * vec4(pos, 1.0);
 		posNdc.xyz /= posNdc.w;
@@ -111,7 +184,7 @@ void main()
 		}
 	}
 
-	//outColor = vec3(0.5, 0.0, 0.0);
 	outColor = vec3(0.0);
+	//outColor = vec3(float(i) / 100.0);
 #endif
 }

@@ -148,7 +148,6 @@ void Renderer::init(const RendererInitializer& initializer)
 	m_is.init(initializer);
 	m_bs.init(initializer);
 	m_pps.init(initializer);
-	m_bs.init(initializer);
 	m_dbg.init(initializer);
 
 	// Init the shaderPostProcessorString

@@ -224,16 +224,18 @@ void init()
 
 		if(i == 0)
 		{
-			/*scene.newSceneNode(pe, "pefire", "particles/fire.ankipart");
+			pe = scene.newSceneNode<ParticleEmitter>(
+				"pefire", "particles/fire.ankipart");
 			pe->setLocalOrigin(lightPos);
 
-			scene.newSceneNode(pe, "pesmoke", "particles/smoke.ankipart");
-			pe->setLocalOrigin(lightPos);*/
+			pe = scene.newSceneNode<ParticleEmitter>(
+				"pesmoke", "particles/smoke.ankipart");
+			pe->setLocalOrigin(lightPos);
 		}
-		/*else
+		else
 		{
 			InstanceNode* instance;
-			scene.newSceneNode(instance, 
+			instance = scene.newSceneNode<InstanceNode>( 
 				("pefire_inst" + std::to_string(i)).c_str());
 
 			instance->setLocalOrigin(lightPos);
@@ -241,8 +243,7 @@ void init()
 			SceneNode& sn = scene.findSceneNode("pefire");
 			sn.addChild(instance);
 
-
-			scene.newSceneNode(instance, 
+			instance = scene.newSceneNode<InstanceNode>(
 				("pesmoke_inst" + std::to_string(i)).c_str());
 
 			instance->setLocalOrigin(lightPos);
@@ -250,7 +251,7 @@ void init()
 			scene.findSceneNode("pesmoke").addChild(instance);
 		}
 
-		{
+		/*{
 			scene.newSceneNode(pe, ("pesparks" + std::to_string(i)).c_str(), 
 				"particles/sparks.ankipart");
 			pe->setLocalOrigin(lightPos);
@@ -551,6 +552,8 @@ void mainLoop()
 		increaseGlobTimestamp();
 	}
 
+	
+	GlManagerSingleton::get().destroy();
 	ANKI_COUNTER_STOP_TIMER_INC(FPS);
 
 	ANKI_COUNTERS_FLUSH();
@@ -566,7 +569,6 @@ void mainLoop()
 
 void makeCurrent(void* ctx)
 {
-	ANKI_ASSERT(ctx);
 	win->contextMakeCurrent(ctx);
 }
 
@@ -637,6 +639,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.set("pps.hdr.blurringIterationsCount", 1);
 	initializer.set("pps.hdr.exposure", 8.0);
 	initializer.set("pps.hdr.samples", 9);
+	initializer.set("pps.sslr.enabled", true);
 	initializer.set("pps.sslr.renderingQuality", 0.5);
 	initializer.set("pps.ssao.blurringIterationsNum", 1);
 	initializer.set("pps.ssao.enabled", true);

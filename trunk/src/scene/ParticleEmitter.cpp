@@ -246,7 +246,8 @@ ParticleEmitter::ParticleEmitter(
 	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, buffSize, 
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
-	jobs.flush();
+	// TODO Optimize that to avoir serialization
+	jobs.finish();
 
 	m_vertBuffMapping = (U8*)m_vertBuff.getPersistentMappingAddress();
 }
@@ -386,7 +387,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 	m_aliveParticlesCount = 0;
 
 	F32* verts = (F32*)(m_vertBuffMapping 
-		+ (getGlobTimestamp() % 3) * m_vertBuff.getSize());
+		+ (getGlobTimestamp() % 3) * (m_vertBuff.getSize() / 3));
 	F32* verts_base = verts;
 	(void)verts_base;
 
@@ -406,6 +407,10 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 		else
 		{
 			// It's alive
+
+			// Do checks
+			ANKI_ASSERT(((PtrSize)verts + VERT_SIZE 
+				- (PtrSize)m_vertBuffMapping) <= m_vertBuff.getSize());
 
 			// This will calculate a new world transformation
 			p->simulate(*this, prevUpdateTime, crntTime);
@@ -440,10 +445,6 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 
 			++m_aliveParticlesCount;
 			verts += 5;
-
-			// Do checks
-			ANKI_ASSERT(
-				((PtrSize)verts - (PtrSize)verts_base) <= m_vertBuff.getSize());
 		}
 	}
 
