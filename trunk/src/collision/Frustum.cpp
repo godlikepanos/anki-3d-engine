@@ -126,7 +126,8 @@ void PerspectiveFrustum::computeAabb(Aabb& aabb) const
 {
 	Array<Vec3, 5> points = {{
 		m_dirs[0], m_dirs[1], m_dirs[2], m_dirs[3], Vec3(0.0)}};
-	aabb.set(points);
+	aabb.setFromPointCloud(&points[0], points.size(), sizeof(Vec3), 
+		points.size() * sizeof(Vec3));
 	aabb.getMin() += m_eye;
 	aabb.getMax() += m_eye;
 }

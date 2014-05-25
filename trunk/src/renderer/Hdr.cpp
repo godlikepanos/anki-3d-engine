@@ -22,7 +22,7 @@ void Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 
 	// Create FB
 	fb = GlFramebufferHandle(jobs, {{rt, GL_COLOR_ATTACHMENT0}});
-	jobs.flush();
+	jobs.finish();
 }
 
 //==============================================================================

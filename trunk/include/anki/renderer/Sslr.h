@@ -11,17 +11,19 @@ namespace anki {
 /// @{
 
 /// Screen space local reflections pass
-class Sslr: public OptionalRenderingPass
+class Sslr: public OptionalRenderingPass, public BlurringRenderingPass
 {
 	friend class Pps;
-	friend class MainRenderer;
+
+public:
+	GlTextureHandle& _getRt()
+	{
+		return m_dirs[(U)DirectionEnum::VERTICAL].m_rt;
+	}
 
 private:
 	U32 m_width;
 	U32 m_height;
-
-	GlFramebufferHandle m_fb;
-	GlTextureHandle m_rt;
 
 	// 1st pass
 	ProgramResourcePointer m_reflectionFrag;

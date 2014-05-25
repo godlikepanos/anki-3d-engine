@@ -1,5 +1,5 @@
-#ifndef ANKI_COLLISION_COLLISION_SHAPE
-#define ANKI_COLLISION_COLLISION_SHAPE
+#ifndef ANKI_COLLISION_COLLISION_SHAPE_H
+#define ANKI_COLLISION_COLLISION_SHAPE_H
 
 #include "anki/collision/Forward.h"
 #include "anki/collision/CollisionAlgorithms.h"
@@ -9,7 +9,7 @@
 
 namespace anki {
 
-/// @addtogroup Collision
+/// @addtogroup collision
 /// @{
 
 /// Abstract class for collision shapes. It also features a visitor for
@@ -27,6 +27,7 @@ public:
 		AABB,
 		OBB,
 		FRUSTUM,
+		COMPOUND
 	};
 
 	/// Generic mutable visitor
@@ -43,6 +44,7 @@ public:
 		virtual void visit(Ray&) = 0;
 		virtual void visit(Sphere&) = 0;
 		virtual void visit(Aabb&) = 0;
+		virtual void visit(CompoundShape&) = 0;
 	};
 
 	/// Generic const visitor
@@ -59,6 +61,7 @@ public:
 		virtual void visit(const Ray&) = 0;
 		virtual void visit(const Sphere&) = 0;
 		virtual void visit(const Aabb&) = 0;
+		virtual void visit(const CompoundShape&) = 0;
 	};
 
 	/// @name Constructors & destructor

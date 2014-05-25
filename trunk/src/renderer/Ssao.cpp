@@ -90,7 +90,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 	}
 
 	m_blurringIterationsCount = 
-		initializer.get("pps.ssao.blurringIterationsNum");
+		initializer.get("pps.ssao.blurringIterationsCount");
 
 	//
 	// Init the widths/heights

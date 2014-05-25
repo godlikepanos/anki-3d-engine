@@ -85,7 +85,8 @@ Obb Obb::getCompoundShape(const Obb& b) const
 		points[i + 8] = points1[i];
 	}
 
-	out.set(points);
+	out.setFromPointCloud(&points[0], points.size(), sizeof(Vec3), 
+		sizeof(Vec3) * points.size());
 	return out;
 }
 
@@ -144,6 +145,49 @@ void Obb::computeAabb(Aabb& aabb) const
 	// Add a small epsilon to avoid some assertions
 	aabb = Aabb(m_center - newE, 
 		m_center + newE + Vec3(getEpsilon<F32>() * 100.0));
+}
+
+//==============================================================================
+void Obb::setFromPointCloud(
+	const void* buff, U count, PtrSize stride, PtrSize buffSize)
+{
+	ANKI_ASSERT(buff);
+	ANKI_ASSERT(count > 1);
+	ANKI_ASSERT(stride >= sizeof(Vec3));
+	ANKI_ASSERT(buffSize >= stride * count);
+
+	// Calc min/max
+	const U8* ptr = (const U8*)buff;
+	const Vec3* pos = (const Vec3*)(ptr);
+	Vec3 min = *pos;
+	Vec3 max = min;
+	--count;
+
+	while(count-- != 0)
+	{
+		ANKI_ASSERT(
+			(((PtrSize)ptr + sizeof(Vec3)) - (PtrSize)buff) <= buffSize);
+		const Vec3* pos = (const Vec3*)(ptr);
+
+		for(U j = 0; j < 3; j++)
+		{
+			if((*pos)[j] > max[j])
+			{
+				max[j] = (*pos)[j];
+			}
+			else if((*pos)[j] < min[j])
+			{
+				min[j] = (*pos)[j];
+			}
+		}
+
+		ptr += stride;
+	}
+
+	// Set the locals
+	m_center = (max + min) / 2.0;
+	m_rotation = Mat3::getIdentity();
+	m_extends = max - m_center;
 }
 
 } // end namespace anki

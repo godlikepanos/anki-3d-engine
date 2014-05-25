@@ -76,7 +76,7 @@ void MainRenderer::render(SceneGraph& scene)
 			rt = &getIs()._getRt();
 		}
 
-		rt = &getPps().getSslr().m_rt;
+		rt = &getPps().getSslr()._getRt();
 		rt = &getMs()._getRt0();
 
 		rt->setFilter(lastJobs, GlTextureHandle::Filter::LINEAR);

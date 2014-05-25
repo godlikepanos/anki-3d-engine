@@ -6,7 +6,7 @@
 
 namespace anki {
 
-/// @addtogroup Collision
+/// @addtogroup collision
 /// @{
 
 /// Axis align bounding box collision shape
@@ -112,8 +112,8 @@ public:
 	Aabb getCompoundShape(const Aabb& b) const;
 
 	/// Calculate from a set of points
-	template<typename Container>
-	void set(const Container& container);
+	void setFromPointCloud(
+		const void* buff, U count, PtrSize stride, PtrSize buffSize);
 
 private:
 	/// @name Data
@@ -123,33 +123,6 @@ private:
 	/// @}
 };
 /// @}
-
-//==============================================================================
-template<typename Container>
-void Aabb::set(const Container& container)
-{
-	ANKI_ASSERT(container.size() >= 1);
-
-	m_min = container.front();
-	m_max = m_min;
-
-	// for all the Vec3s calc the max and min
-	typename Container::const_iterator it = container.begin() + 1;
-	for(; it != container.end(); ++it)
-	{
-		for(U j = 0; j < 3; j++)
-		{
-			if((*it)[j] > m_max[j])
-			{
-				m_max[j] = (*it)[j];
-			}
-			else if((*it)[j] < m_min[j])
-			{
-				m_min[j] = (*it)[j];
-			}
-		}
-	}
-}
 
 } // end namespace anki
 
