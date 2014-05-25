@@ -2,6 +2,9 @@
 #define ANKI_RENDERER_RENDERING_PASS_H
 
 #include "anki/util/StdTypes.h"
+#include "anki/Gl.h"
+#include "anki/resource/Resource.h"
+#include "anki/resource/ProgramResource.h"
 
 namespace anki {
 
@@ -62,6 +65,35 @@ public:
 
 protected:
 	Bool8 m_enabled = false;
+};
+
+/// Blurring pass
+class BlurringRenderingPass
+{
+protected:
+	U32 m_blurringIterationsCount = 1; ///< The blurring iterations
+
+	class Direction
+	{
+	public:
+		GlFramebufferHandle m_fb;
+		GlTextureHandle m_rt; 
+		ProgramResourcePointer m_frag;
+		GlProgramPipelineHandle m_ppline;
+	};
+
+	enum class DirectionEnum: U
+	{
+		VERTICAL,
+		HORIZONTAL
+	};
+
+	Array<Direction, 2> m_dirs;
+
+	void initBlurring(Renderer& r, U width, U height, U samples, 
+		F32 blurringDistance);
+
+	void runBlurring(Renderer& r, GlJobChainHandle& jobs);
 };
 
 /// @}

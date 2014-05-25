@@ -25,7 +25,10 @@ void Mesh::load(const char* filename)
 		MeshLoader loader(filename);
 
 		m_indicesCount = loader.getIndices().size();
-		m_obb.set(loader.getPositions());
+
+		const auto& positions = loader.getPositions();
+		m_obb.setFromPointCloud(&positions[0], positions.size(),
+			sizeof(Vec3), positions.getSizeInBytes());
 		ANKI_ASSERT(m_indicesCount > 0);
 		ANKI_ASSERT(m_indicesCount % 3 == 0 && "Expecting triangles");
 
@@ -287,7 +290,10 @@ void BucketMesh::load(const char* filename)
 
 			submesh.m_indicesCount = loader->getIndices().size();
 			submesh.m_indicesOffset = m_indicesCount * sizeof(U16);
-			submesh.m_obb.set(loader->getPositions());
+
+			const auto& positions = loader->getPositions();
+			submesh.m_obb.setFromPointCloud(&positions[0], positions.size(),
+				sizeof(Vec3), positions.getSizeInBytes());
 
 			m_subMeshes.push_back(submesh);
 
@@ -302,7 +308,10 @@ void BucketMesh::load(const char* filename)
 
 		// Create the bucket mesh
 		createBuffers(fullLoader);
-		m_obb.set(fullLoader.getPositions());
+
+		const auto& positions = fullLoader.getPositions();
+		m_obb.setFromPointCloud(&positions[0], positions.size(),
+			sizeof(Vec3), positions.getSizeInBytes());
 	}
 	catch(std::exception& e)
 	{

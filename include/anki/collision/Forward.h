@@ -12,6 +12,7 @@ class Plane;
 class Ray;
 class Sphere;
 class Aabb;
+class CompoundShape;
 
 } // end namespace anki
 

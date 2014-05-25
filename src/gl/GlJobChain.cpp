@@ -76,8 +76,8 @@ GlGlobalHeapAllocator<U8> GlJobChain::getGlobalAllocator() const
 //==============================================================================
 void GlJobChain::executeAllJobs()
 {
-	ANKI_ASSERT(m_firstJob != nullptr);
-	ANKI_ASSERT(m_lastJob != nullptr);
+	ANKI_ASSERT(m_firstJob != nullptr && "Empty job chain");
+	ANKI_ASSERT(m_lastJob != nullptr && "Empty job chain");
 #if ANKI_DEBUG
 	m_executed = true;
 #endif

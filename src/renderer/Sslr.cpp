@@ -14,11 +14,10 @@ void Sslr::init(const RendererInitializer& initializer)
 		return;
 	}
 
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
-
 	// Size
 	const F32 quality = initializer.get("pps.sslr.renderingQuality");
+	m_blurringIterationsCount = 
+		initializer.get("pps.sslr.blurringIterationsCount");
 
 	m_width = quality * (F32)m_r->getWidth();
 	alignRoundUp(16, m_width);
@@ -38,19 +37,36 @@ void Sslr::init(const RendererInitializer& initializer)
 	m_reflectionPpline = m_r->createDrawQuadProgramPipeline(
 		m_reflectionFrag->getGlProgram());
 
-	// Fb
-	m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
-		GL_UNSIGNED_BYTE, 1, m_rt);
-	m_rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
-
-	m_fb = GlFramebufferHandle(jobs, {{m_rt, GL_COLOR_ATTACHMENT0}});
-
 	// Blit
 	m_blitFrag.load("shaders/Blit.frag.glsl");
 	m_blitPpline = m_r->createDrawQuadProgramPipeline(
 		m_blitFrag->getGlProgram());
 
-	jobs.finish();
+	// Init FBOs and RTs and blurring
+	if(m_blurringIterationsCount > 0)
+	{
+		initBlurring(*m_r, m_width, m_height, 7, 0.5);
+	}
+	else
+	{
+		GlManager& gl = GlManagerSingleton::get();
+		GlJobChainHandle jobs(&gl);
+
+		Direction& dir = m_dirs[(U)DirectionEnum::VERTICAL];
+
+		m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
+			GL_UNSIGNED_BYTE, 1, dir.m_rt);
+
+		// Set to bilinear because the blurring techniques take advantage of 
+		// that
+		dir.m_rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
+
+		// Create FB
+		dir.m_fb = GlFramebufferHandle(
+			jobs, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
+
+		jobs.finish();
+	}
 }
 
 //==============================================================================
@@ -60,7 +76,7 @@ void Sslr::run(GlJobChainHandle& jobs)
 
 	// Compute the reflection
 	//
-	m_fb.bind(jobs, true);
+	m_dirs[(U)DirectionEnum::VERTICAL].m_fb.bind(jobs, true);
 	jobs.setViewport(0, 0, m_width, m_height);
 
 	m_reflectionPpline.bind(jobs);
@@ -71,6 +87,13 @@ void Sslr::run(GlJobChainHandle& jobs)
 
 	m_r->drawQuad(jobs);
 
+	// Blurring
+	//
+	if(m_blurringIterationsCount > 0)
+	{
+		runBlurring(*m_r, jobs);
+	}
+
 	// Write the reflection back to IS RT
 	//
 	m_r->getIs().m_fb.bind(jobs, false);
@@ -79,7 +102,7 @@ void Sslr::run(GlJobChainHandle& jobs)
 	jobs.enableBlend(true);
 	jobs.setBlendFunctions(GL_ONE, GL_ONE);
 
-	m_rt.bind(jobs, 0);
+	m_dirs[(U)DirectionEnum::VERTICAL].m_rt.bind(jobs, 0);
 
 	m_blitPpline.bind(jobs);
 	m_r->drawQuad(jobs);

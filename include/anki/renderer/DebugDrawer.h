@@ -118,6 +118,9 @@ public:
 
 	void visit(const Aabb&);
 
+	void visit(const CompoundShape&)
+	{}
+
 private:
 	DebugDrawer* m_dbg; ///< The debug drawer
 };

@@ -43,13 +43,14 @@ RendererInitializer::RendererInitializer()
 
 	newOption("pps.ssao.enabled", true);
 	newOption("pps.ssao.renderingQuality", 0.3);
-	newOption("pps.ssao.blurringIterationsNum", 2);
+	newOption("pps.ssao.blurringIterationsCount", 1);
 
 	newOption("pps.sslr.enabled", true);
 	newOption("pps.sslr.renderingQuality", 0.2);
+	newOption("pps.sslr.blurringIterationsCount", 1);
 
 	newOption("pps.bl.enabled", true);
-	newOption("pps.bl.blurringIterationsNum", 2);
+	newOption("pps.bl.blurringIterationsCount", 1);
 	newOption("pps.bl.sideBlurFactor", 1.0);
 
 	newOption("pps.lf.enabled", true);

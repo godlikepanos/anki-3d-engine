@@ -31,6 +31,11 @@ public:
 		ANKI_ASSERT(i < Base::size() && "Vector out of bounds");
 		return Base::operator[](i);
 	}
+
+	PtrSize getSizeInBytes() const
+	{
+		return Base::size() * sizeof(T);
+	}
 };
 
 /// @}

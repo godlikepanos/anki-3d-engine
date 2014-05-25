@@ -7,7 +7,7 @@
 
 namespace anki {
 
-/// @addtogroup Collision
+/// @addtogroup collision
 /// @{
 
 /// Object oriented bounding box
@@ -113,8 +113,8 @@ public:
 	Obb getCompoundShape(const Obb& b) const;
 
 	/// Calculate from a set of points
-	template<typename Container>
-	void set(const Container& container);
+	void setFromPointCloud(
+		const void* buff, U count, PtrSize stride, PtrSize buffSize);
 
 	/// Get extreme points in 3D space
 	void getExtremePoints(Array<Vec3, 8>& points) const;
@@ -129,42 +129,9 @@ public:
 	Vec3 m_extends;
 	/// @}
 };
+
 /// @}
 
-//==============================================================================
-template<typename Container>
-void Obb::set(const Container& container)
-{
-	ANKI_ASSERT(container.size() >= 1);
-
-	Vec3 min(container.front());
-	Vec3 max(container.front());
-
-	// for all the Vec3s calc the max and min
-	typename Container::const_iterator it = container.begin() + 1;
-	for(; it != container.end(); ++it)
-	{
-		const Vec3& v = *it;
-
-		for(U j = 0; j < 3; j++)
-		{
-			if(v[j] > max[j])
-			{
-				max[j] = v[j];
-			}
-			else if(v[j] < min[j])
-			{
-				min[j] = v[j];
-			}
-		}
-	}
-
-	// set the locals
-	m_center = (max + min) / 2.0;
-	m_rotation = Mat3::getIdentity();
-	m_extends = max - m_center;
-}
-
-} // end namespace
+} // end namespace anki
 
 #endif

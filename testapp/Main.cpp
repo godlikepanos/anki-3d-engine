@@ -27,6 +27,7 @@
 #include "anki/core/NativeWindow.h"
 #include "anki/Scene.h"
 #include "anki/event/LightEvent.h"
+#include "anki/event/AnimationEvent.h"
 #include "anki/event/MoveEvent.h"
 #include "anki/core/Counters.h"
 
@@ -164,7 +165,7 @@ void init()
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
 		Mat3(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
-	spot->setDiffuseColor(Vec4(2.0));
+	spot->setDiffuseColor(Vec4(1.0));
 	spot->setSpecularColor(Vec4(-1.0));
 	spot->setDistance(30.0);
 	spot->setShadowEnabled(true);
@@ -266,9 +267,9 @@ void init()
 		0.7));
 
 
-	horse = scene.newSceneNode<ModelNode>("crate", "models/crate0/crate0.ankimdl");
-	horse->setLocalTransform(Transform(Vec3(2, 10.0, 0), Mat3::getIdentity(),
-		1.0));
+	//horse = scene.newSceneNode<ModelNode>("crate", "models/crate0/crate0.ankimdl");
+	//horse->setLocalTransform(Transform(Vec3(2, 10.0, 0), Mat3::getIdentity(),
+	//	1.0));
 
 	// barrel
 	/*ModelNode* redBarrel = new ModelNode(
@@ -295,6 +296,11 @@ void init()
 	}
 
 	initPhysics();
+
+	/*AnimationResourcePointer anim;
+	anim.load("maps/sponza/unnamed_0.ankianim");
+	AnimationEvent* event;
+	scene.getEventManager().newEvent(event, anim, cam);*/
 
 	// Sectors
 #if 0
@@ -352,10 +358,10 @@ void execStdinScpripts()
 //==============================================================================
 void mainLoopExtra()
 {
-	F32 dist = 0.2;
-	F32 ang = toRad(3.0);
+	F32 dist = 0.1;
+	F32 ang = toRad(1.5);
 	F32 scale = 0.01;
-	F32 mouseSensivity = 9.0;
+	F32 mouseSensivity = 6.0;
 
 	// move the camera
 	static MoveComponent* mover = 
@@ -640,12 +646,13 @@ void initSubsystems(int argc, char* argv[])
 	initializer.set("pps.hdr.exposure", 8.0);
 	initializer.set("pps.hdr.samples", 9);
 	initializer.set("pps.sslr.enabled", true);
-	initializer.set("pps.sslr.renderingQuality", 0.5);
-	initializer.set("pps.ssao.blurringIterationsNum", 1);
+	initializer.set("pps.sslr.renderingQuality", 0.35);
+	initializer.set("pps.sslr.blurringIterationsCount", 1);
+	initializer.set("pps.ssao.blurringIterationsCount", 1);
 	initializer.set("pps.ssao.enabled", true);
 	initializer.set("pps.ssao.renderingQuality", 0.35);
 	initializer.set("pps.bl.enabled", true);
-	initializer.set("pps.bl.blurringIterationsNum", 2);
+	initializer.set("pps.bl.blurringIterationsCount", 2);
 	initializer.set("pps.bl.sideBlurFactor", 1.0);
 	initializer.set("pps.lf.enabled", true);
 	initializer.set("pps.sharpen", true);
