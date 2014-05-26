@@ -48,7 +48,7 @@ private:
 		GlTextureHandle m_rt1;
 
 		/// Depth stencil
-		GlTextureHandle m_depthRt; 
+		GlTextureHandle m_depthRt;
 	};
 
 	Ez m_ez; /// EarlyZ pass
