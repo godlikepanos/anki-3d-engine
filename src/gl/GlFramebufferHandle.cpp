@@ -95,5 +95,38 @@ void GlFramebufferHandle::bind(GlJobChainHandle& jobs, Bool invalidate)
 	jobs._pushBackNewJob<Job>(*this, invalidate);
 }
 
+//==============================================================================
+void GlFramebufferHandle::blit(GlJobChainHandle& jobs,
+	const GlFramebufferHandle& b, 
+	const Array<F32, 4>& sourceRect,
+	const Array<F32, 4>& destRect, Bool linear)
+{
+	class Job: public GlJob
+	{
+	public:
+		GlFramebufferHandle m_fbDest;
+		GlFramebufferHandle m_fbSrc;
+		Array<F32, 4> m_sourceRect;
+		Array<F32, 4> m_destRect;
+		Bool m_linear;
+
+		Job(GlFramebufferHandle& fbDest, const GlFramebufferHandle& fbSrc,
+			const Array<F32, 4>& sourceRect,
+			const Array<F32, 4>& destRect,
+			Bool linear)
+			:	m_fbDest(fbDest), m_fbSrc(fbSrc), m_sourceRect(sourceRect),
+				m_destRect(destRect), m_linear(linear)
+		{}
+
+		void operator()(GlJobChain*)
+		{
+			m_fbSrc._get().blit(m_fbDest._get(), m_sourceRect, m_destRect, 
+				m_linear);
+		}
+	};
+
+	jobs._pushBackNewJob<Job>(*this, b, sourceRect, destRect, linear);
+}
+
 } // end namespace anki
 

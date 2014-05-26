@@ -35,6 +35,17 @@ public:
 	/// @param jobs The job chain
 	/// @param invalidate If true invalidate the FB after binding it
 	void bind(GlJobChainHandle& jobs, Bool invalidate);
+
+	/// Blit another framebuffer to this
+	/// @param[in, out] jobs The job chain
+	/// @param[in] b The sorce framebuffer
+	/// @param[in] sourceRect The source rectangle
+	/// @param[in] destRect The destination rectangle
+	/// @param linear Perform linean filtering
+	void blit(GlJobChainHandle& jobs,
+		const GlFramebufferHandle& b, 
+		const Array<F32, 4>& sourceRect,
+		const Array<F32, 4>& destRect, Bool linear);
 };
 
 } // end namespace anki

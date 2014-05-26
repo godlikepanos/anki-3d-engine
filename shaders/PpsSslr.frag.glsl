@@ -122,16 +122,16 @@ void main()
 
 		if(diffDepth > 0.0)
 		{
-			if(diffDepth > 0.3)
+			if(diffDepth > 0.7)
 			{
-				outColor = vec3(0.01);
 				return;
 			}
 
 			float factor = 1.0 - length(ndc.xy);
 			factor *= 1.0 - length(pp0.xy);
+			factor *= specColor;
 
-			outColor = textureRt(uIsRt, texCoord).rgb * (factor * 1.1 /* specColor*/);
+			outColor = textureRt(uIsRt, texCoord).rgb * factor;
 
 			//outColor = vec3(1.0 - abs(pp0.xy), 0.0);
 			return;

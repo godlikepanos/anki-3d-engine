@@ -45,7 +45,7 @@ void Sslr::init(const RendererInitializer& initializer)
 	// Init FBOs and RTs and blurring
 	if(m_blurringIterationsCount > 0)
 	{
-		initBlurring(*m_r, m_width, m_height, 7, 0.5);
+		initBlurring(*m_r, m_width, m_height, 9, 0.0);
 	}
 	else
 	{
