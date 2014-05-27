@@ -246,7 +246,7 @@ public:
 		for(U i = 0; i < 4; i++)
 		{
 			Vec3 extendPoint = light.getWorldTransform().getOrigin() 
-				+ frustum.getDirections()[i];
+				+ frustum.getLineSegments()[i].getDirection();
 
 			extendPoint.transform(cam->getViewMatrix());
 			baseslight->m_extendPoints[i] = Vec4(extendPoint, 1.0);

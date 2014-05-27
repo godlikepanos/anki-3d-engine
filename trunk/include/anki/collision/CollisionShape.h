@@ -26,7 +26,6 @@ public:
 		SPHERE,
 		AABB,
 		OBB,
-		FRUSTUM,
 		COMPOUND
 	};
 
@@ -39,7 +38,6 @@ public:
 
 		virtual void visit(LineSegment&) = 0;
 		virtual void visit(Obb&) = 0;
-		virtual void visit(Frustum&) = 0;
 		virtual void visit(Plane&) = 0;
 		virtual void visit(Ray&) = 0;
 		virtual void visit(Sphere&) = 0;
@@ -56,7 +54,6 @@ public:
 
 		virtual void visit(const LineSegment&) = 0;
 		virtual void visit(const Obb&) = 0;
-		virtual void visit(const Frustum&) = 0;
 		virtual void visit(const Plane&) = 0;
 		virtual void visit(const Ray&) = 0;
 		virtual void visit(const Sphere&) = 0;

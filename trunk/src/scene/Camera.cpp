@@ -9,12 +9,12 @@ namespace anki {
 //==============================================================================
 Camera::Camera(
 	const char* name, SceneGraph* scene, // SceneNode
-	CameraType type_) 
+	Type type, Frustum* frustum) 
 	:	SceneNode(name, scene), 
 		MoveComponent(this),
-		FrustumComponent(this),
+		FrustumComponent(this, frustum),
 		SpatialComponent(this),
-		type(type_)
+		m_type(type)
 {
 	// Init components
 	addComponent(static_cast<MoveComponent*>(this));
@@ -63,7 +63,8 @@ void Camera::moveUpdate(MoveComponent& move)
 	fr.setViewMatrix(Mat4(move.getWorldTransform().getInverse()));
 	fr.setViewProjectionMatrix(fr.getProjectionMatrix() * fr.getViewMatrix());
 	fr.markForUpdate();
-	fr.getFrustum().setTransform(move.getWorldTransform());
+	fr.getFrustum().resetTransform();
+	fr.getFrustum().transform(move.getWorldTransform());
 
 	// Spatial
 	SpatialComponent& sp = *this;
@@ -76,7 +77,7 @@ void Camera::moveUpdate(MoveComponent& move)
 
 //==============================================================================
 PerspectiveCamera::PerspectiveCamera(const char* name, SceneGraph* scene)
-	: Camera(name, scene, CT_PERSPECTIVE)
+	: Camera(name, scene, Type::PERSPECTIVE, &m_frustum)
 {}
 
 //==============================================================================
@@ -85,7 +86,7 @@ PerspectiveCamera::PerspectiveCamera(const char* name, SceneGraph* scene)
 
 //==============================================================================
 OrthographicCamera::OrthographicCamera(const char* name, SceneGraph* scene)
-	: Camera(name, scene, CT_ORTHOGRAPHIC)
+	: Camera(name, scene, Type::ORTHOGRAPHIC, &m_frustum)
 {}
 
 } // end namespace anki

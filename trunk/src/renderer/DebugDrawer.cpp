@@ -354,12 +354,12 @@ void CollisionDebugDrawer::visit(const Aabb& aabb)
 //==============================================================================
 void CollisionDebugDrawer::visit(const Frustum& f)
 {
-	switch(f.getFrustumType())
+	switch(f.getType())
 	{
-	case FrustumType::ORTHOGRAPHIC:
+	case Frustum::Type::ORTHOGRAPHIC:
 		visit(static_cast<const OrthographicFrustum&>(f).getObb());
 		break;
-	case FrustumType::PERSPECTIVE:
+	case Frustum::Type::PERSPECTIVE:
 		{
 			const PerspectiveFrustum& pf =
 				static_cast<const PerspectiveFrustum&>(f);

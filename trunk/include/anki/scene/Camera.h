@@ -17,33 +17,40 @@ class Camera: public SceneNode, public MoveComponent, public FrustumComponent,
 {
 public:
 	/// @note Don't EVER change the order
-	enum CameraType
+	enum class Type: U8
 	{
-		CT_PERSPECTIVE,
-		CT_ORTHOGRAPHIC,
-		CT_COUNT
+		PERSPECTIVE,
+		ORTHOGRAPHIC,
+		COUNT
 	};
 
 	/// @name Constructors/Destructor
 	/// @{
 	Camera(
 		const char* name, SceneGraph* scene, // SceneNode
-		CameraType type); // Self
+		Type type, Frustum* frustum); // Self
 
 	virtual ~Camera();
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	CameraType getCameraType() const
+	Type getCameraType() const
 	{
-		return type;
+		return m_type;
 	}
 
 	/// Needed by the renderer
-	virtual F32 getNear() const = 0;
+	F32 getNear() const
+	{
+		return getFrustum().getNear();
+	}
+
 	/// Needed by the renderer
-	virtual F32 getFar() const = 0;
+	F32 getFar() const
+	{
+		return getFrustum().getFar();
+	}
 	/// @}
 
 	/// @name SceneNode virtuals
@@ -66,14 +73,6 @@ public:
 	}
 	/// @}
 
-	/// @name FrustumComponent virtuals
-	/// @{
-	Vec3 getFrustumOrigin()
-	{
-		return getWorldTransform().getOrigin();
-	}
-	/// @}
-
 	void lookAtPoint(const Vec3& point);
 
 protected:
@@ -84,7 +83,7 @@ protected:
 	void moveUpdate(MoveComponent& move);
 
 private:
-	CameraType type;
+	Type m_type;
 };
 
 /// Perspective camera
@@ -98,39 +97,29 @@ public:
 
 	/// @name Accessors
 	/// @{
-	F32 getNear() const
-	{
-		return frustum.getNear();
-	}
-
-	F32 getFar() const
-	{
-		return frustum.getFar();
-	}
-
 	F32 getFovX() const
 	{
-		return frustum.getFovX();
+		return m_frustum.getFovX();
 	}
 	void setFovX(F32 x)
 	{
-		frustum.setFovX(x);
+		m_frustum.setFovX(x);
 		frustumUpdate();
 	}
 
 	F32 getFovY() const
 	{
-		return frustum.getFovY();
+		return m_frustum.getFovY();
 	}
 	void setFovY(F32 x)
 	{
-		frustum.setFovY(x);
+		m_frustum.setFovY(x);
 		frustumUpdate();
 	}
 
 	void setAll(F32 fovX_, F32 fovY_, F32 near_, F32 far_)
 	{
-		frustum.setAll(fovX_, fovY_, near_, far_);
+		m_frustum.setAll(fovX_, fovY_, near_, far_);
 		frustumUpdate();
 	}
 	/// @}
@@ -139,20 +128,12 @@ public:
 	/// @{
 	const CollisionShape& getSpatialCollisionShape()
 	{
-		return frustum;
-	}
-	/// @}
-
-	/// @name FrustumComponent virtuals
-	/// @{
-	Frustum& getFrustum()
-	{
-		return frustum;
+		return m_frustum;
 	}
 	/// @}
 
 private:
-	PerspectiveFrustum frustum;
+	PerspectiveFrustum m_frustum;
 };
 
 /// Orthographic camera
@@ -168,37 +149,37 @@ public:
 	/// @{
 	F32 getNear() const
 	{
-		return frustum.getNear();
+		return m_frustum.getNear();
 	}
 
 	F32 getFar() const
 	{
-		return frustum.getFar();
+		return m_frustum.getFar();
 	}
 
 	F32 getLeft() const
 	{
-		return frustum.getLeft();
+		return m_frustum.getLeft();
 	}
 
 	F32 getRight() const
 	{
-		return frustum.getRight();
+		return m_frustum.getRight();
 	}
 
 	F32 getBottom() const
 	{
-		return frustum.getBottom();
+		return m_frustum.getBottom();
 	}
 
 	F32 getTop() const
 	{
-		return frustum.getTop();
+		return m_frustum.getTop();
 	}
 
 	void setAll(F32 left, F32 right, F32 near, F32 far, F32 top, F32 bottom)
 	{
-		frustum.setAll(left, right, near, far, top, bottom);
+		m_frustum.setAll(left, right, near, far, top, bottom);
 		frustumUpdate();
 	}
 	/// @}
@@ -207,20 +188,12 @@ public:
 	/// @{
 	const CollisionShape& getSpatialCollisionShape()
 	{
-		return frustum;
-	}
-	/// @}
-
-	/// @name FrustumComponent virtuals
-	/// @{
-	Frustum& getFrustum()
-	{
-		return frustum;
+		return m_frustum;
 	}
 	/// @}
 
 private:
-	OrthographicFrustum frustum;
+	OrthographicFrustum m_frustum;
 };
 /// @}
 

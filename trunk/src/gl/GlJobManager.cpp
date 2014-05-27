@@ -147,7 +147,14 @@ void GlJobManager::finish()
 	// Iterate the queue and release the refcounts
 	for(U i = 0; i < m_queue.size(); i++)
 	{
-		m_queue[i] = GlJobChainHandle();
+		if(m_queue[i].isCreated())
+		{
+			// Fake that it's executed to avoid warnings
+			m_queue[i]._get().makeExecuted();
+
+			// Release
+			m_queue[i] = GlJobChainHandle();
+		}
 	}
 
 	// Delete default VAO

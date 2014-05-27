@@ -6,7 +6,7 @@
 
 namespace anki {
 
-/// @addtogroup Collision
+/// @addtogroup collision
 /// @{
 
 /// Extract the clip planes using an MVP matrix
@@ -16,7 +16,7 @@ namespace anki {
 ///
 /// @note plane_count * 8 muls, plane_count sqrt
 extern void extractClipPlanes(const Mat4& mvp, 
-	Plane* planes[(U)FrustumPlane::COUNT]);
+	Plane* planes[(U)Frustum::PlaneType::COUNT]);
 
 /// @}
 

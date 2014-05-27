@@ -114,4 +114,4 @@ void Aabb::setFromPointCloud(
 	}
 }
 
-} // namespace anki
+} // end namespace anki

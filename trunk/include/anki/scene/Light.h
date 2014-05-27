@@ -267,52 +267,52 @@ public:
 	/// @{
 	GlTextureHandle& getTexture()
 	{
-		return tex->getGlTexture();
+		return m_tex->getGlTexture();
 	}
 	const GlTextureHandle& getTexture() const
 	{
-		return tex->getGlTexture();
+		return m_tex->getGlTexture();
 	}
 
 	F32 getOuterAngle() const
 	{
-		return frustum.getFovX();
+		return m_frustum.getFovX();
 	}
 	void setOuterAngle(F32 x)
 	{
-		frustum.setFovX(x);
-		frustum.setFovY(x);
-		cosOuterAngle = cos(x / 2.0);
+		m_frustum.setFovX(x);
+		m_frustum.setFovY(x);
+		m_cosOuterAngle = cos(x / 2.0);
 		frustumUpdate();
 	}
 
 	F32 getOuterAngleCos() const
 	{
-		return cosOuterAngle;
+		return m_cosOuterAngle;
 	}
 
 	void setInnerAngle(F32 ang)
 	{
-		cosInnerAngle = cos(ang / 2.0);
+		m_cosInnerAngle = cos(ang / 2.0);
 	}
 	F32 getInnerAngleCos() const
 	{
-		return cosInnerAngle;
+		return m_cosInnerAngle;
 	}
 
 	F32 getDistance() const
 	{
-		return frustum.getFar();
+		return m_frustum.getFar();
 	}
 	void setDistance(F32 f)
 	{
-		frustum.setFar(f);
+		m_frustum.setFar(f);
 		frustumUpdate();
 	}
 
 	const PerspectiveFrustum& getFrustum() const
 	{
-		return frustum;
+		return m_frustum;
 	}
 	/// @}
 
@@ -326,33 +326,20 @@ public:
 	/// @{
 	const CollisionShape& getSpatialCollisionShape()
 	{
-		return frustum;
-	}
-	/// @}
-
-	/// @name FrustumVirtuals
-	/// @{
-	Vec3 getFrustumOrigin()
-	{
-		return getWorldTransform().getOrigin();
-	}
-
-	Frustum& getFrustum()
-	{
-		return frustum;
+		return m_frustum;
 	}
 	/// @}
 
 	void loadTexture(const char* filename)
 	{
-		tex.load(filename);
+		m_tex.load(filename);
 	}
 
 private:
-	PerspectiveFrustum frustum;
-	TextureResourcePointer tex;
-	F32 cosOuterAngle;
-	F32 cosInnerAngle;
+	PerspectiveFrustum m_frustum;
+	TextureResourcePointer m_tex;
+	F32 m_cosOuterAngle;
+	F32 m_cosInnerAngle;
 };
 
 } // end namespace anki

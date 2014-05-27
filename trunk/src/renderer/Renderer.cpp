@@ -179,7 +179,7 @@ void Renderer::render(SceneGraph& scene,
 		|| m_projectionParamsUpdateTimestamp < camUpdateTimestamp
 		|| m_projectionParamsUpdateTimestamp == 1)
 	{
-		ANKI_ASSERT(cam.getCameraType() == Camera::CT_PERSPECTIVE);
+		ANKI_ASSERT(cam.getCameraType() == Camera::Type::PERSPECTIVE);
 		computeProjectionParams(cam.getProjectionMatrix());
 		m_projectionParamsUpdateTimestamp = getGlobTimestamp();
 	}

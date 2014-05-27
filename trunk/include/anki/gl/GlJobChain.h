@@ -128,6 +128,12 @@ public:
 	/// Execute all jobs
 	void executeAllJobs();
 
+	/// Fake that it's been executed
+	void makeExecuted()
+	{
+		m_executed = true;
+	}
+
 	/// Make immutable
 	void makeImmutable()
 	{

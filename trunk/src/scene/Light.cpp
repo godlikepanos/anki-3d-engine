@@ -63,7 +63,8 @@ void Light::moveUpdate(MoveComponent& move)
 		fr.setViewProjectionMatrix(
 			fr.getProjectionMatrix() * fr.getViewMatrix());
 
-		fr.getFrustum().setTransform(move.getWorldTransform());
+		fr.getFrustum().resetTransform();
+		fr.getFrustum().transform(move.getWorldTransform());
 
 		fr.markForUpdate();
 	});
@@ -101,7 +102,7 @@ void PointLight::componentUpdated(SceneComponent& comp,
 //==============================================================================
 SpotLight::SpotLight(const char* name, SceneGraph* scene)
 	:	Light(name, scene, LT_SPOT),
-		FrustumComponent(this)
+		FrustumComponent(this, &m_frustum)
 {
 	// Init components
 	addComponent(static_cast<FrustumComponent*>(this));
@@ -109,7 +110,7 @@ SpotLight::SpotLight(const char* name, SceneGraph* scene)
 	const F32 ang = toRad(45.0);
 	const F32 dist = 1.0;
 
-	frustum.setAll(ang, ang, 0.1, dist);
+	m_frustum.setAll(ang, ang, 0.1, dist);
 }
 
 //==============================================================================
@@ -119,7 +120,8 @@ void SpotLight::componentUpdated(SceneComponent& comp,
 	if(comp.getType() == MoveComponent::getClassType())
 	{
 		MoveComponent& move = comp.downCast<MoveComponent>();
-		frustum.setTransform(move.getWorldTransform());
+		m_frustum.resetTransform();
+		m_frustum.transform(move.getWorldTransform());
 		moveUpdate(move);
 	}
 }

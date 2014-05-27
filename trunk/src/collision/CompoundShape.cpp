@@ -84,5 +84,17 @@ void CompoundShape::computeAabb(Aabb& out) const
 	out.setMax(max);
 }
 
+//==============================================================================
+void CompoundShape::addShape(CollisionShape* shape)
+{
+	U idx = 0;
+	while(m_dflt[idx])
+	{
+		++idx;
+	}
+
+	m_dflt[idx] = shape;
+}
+
 } // end namespace anki
 

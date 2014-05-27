@@ -47,7 +47,11 @@ private:
 		U idx = 0;
 		while(m_dflt[idx])
 		{
-			f(*m_dflt[idx]);
+			if(m_dflt[idx])
+			{
+				f(*m_dflt[idx]);
+			}
+			++idx;
 		}
 		ANKI_ASSERT(idx > 0 && "Empty CompoundShape");
 	}
@@ -58,7 +62,11 @@ private:
 		U idx = 0;
 		while(m_dflt[idx])
 		{
-			f(*m_dflt[idx]);
+			if(m_dflt[idx])
+			{
+				f(*m_dflt[idx]);
+			}
+			++idx;
 		}
 		ANKI_ASSERT(idx > 0 && "Empty CompoundShape");
 	}
