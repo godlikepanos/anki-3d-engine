@@ -34,9 +34,6 @@ static Bool tcollide(const CollisionShape& a, const CollisionShape& b)
 	case CollisionShape::Type::OBB:
 		out = collide(t, static_cast<const Obb&>(b));
 		break;
-	case CollisionShape::Type::FRUSTUM:
-		out = collide(t, static_cast<const Frustum&>(b));
-		break;
 	default:
 		ANKI_ASSERT(0 && "Forgot something");
 		break;
@@ -69,9 +66,6 @@ Bool collide(const CollisionShape& a, const CollisionShape& b)
 		break;
 	case CollisionShape::Type::OBB:
 		out = tcollide<Obb>(a, b);
-		break;
-	case CollisionShape::Type::FRUSTUM:
-		out = tcollide<Frustum>(a, b);
 		break;
 	default:
 		ANKI_ASSERT(0 && "Forgot something");
@@ -152,12 +146,6 @@ Bool collide(const LineSegment& ls, const Obb& obb)
 
 	// done, have intersection
 	return true;
-}
-
-//==============================================================================
-Bool collide(const LineSegment& a, const Frustum& b)
-{
-	return b.insideFrustum(a);
 }
 
 //==============================================================================
@@ -438,12 +426,6 @@ Bool collide(const Obb& o0, const Obb& o1)
 }
 
 //==============================================================================
-Bool collide(const Obb& a, const Frustum& b)
-{
-	return b.insideFrustum(a);
-}
-
-//==============================================================================
 Bool collide(const Obb& a, const Plane& b)
 {
 	return a.testPlane(b) == 0.0;
@@ -481,40 +463,6 @@ Bool collide(const Obb& obb, const Aabb& aabb)
 	Obb obb_(center_, Mat3::getIdentity(), extends_);
 
 	return collide(obb, obb_);
-}
-
-//==============================================================================
-// 3rd line (PCS)                                                              =
-//==============================================================================
-
-//==============================================================================
-Bool collide(const Frustum& a, const Frustum& b)
-{
-	return b.insideFrustum(a);
-}
-
-//==============================================================================
-Bool collide(const Frustum& a, const Plane& b)
-{
-	return a.insideFrustum(b);
-}
-
-//==============================================================================
-Bool collide(const Frustum& a, const Ray& b)
-{
-	return a.insideFrustum(b);
-}
-
-//==============================================================================
-Bool collide(const Frustum& a, const Sphere& b)
-{
-	return a.insideFrustum(b);
-}
-
-//==============================================================================
-Bool collide(const Frustum& a, const Aabb& b)
-{
-	return a.insideFrustum(b);
 }
 
 //==============================================================================

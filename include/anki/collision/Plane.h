@@ -6,7 +6,7 @@
 
 namespace anki {
 
-/// @addtogroup Collision
+/// @addtogroup collision
 /// @{
 
 /// Plane collision shape

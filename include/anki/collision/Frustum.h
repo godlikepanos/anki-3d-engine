@@ -1,9 +1,10 @@
 #ifndef ANKI_COLLISION_FRUSTUM_H
 #define ANKI_COLLISION_FRUSTUM_H
 
-#include "anki/collision/CollisionShape.h"
+#include "anki/collision/CompoundShape.h"
 #include "anki/collision/Plane.h"
 #include "anki/collision/Obb.h"
+#include "anki/collision/LineSegment.h"
 #include "anki/Math.h"
 #include "anki/util/Array.h"
 
@@ -12,34 +13,34 @@ namespace anki {
 /// @addtogroup Collision
 /// @{
 
-/// Frustum type
-enum class FrustumType: U8
-{
-	PERSPECTIVE,
-	ORTHOGRAPHIC
-};
-
-/// The 6 frustum planes
-enum class FrustumPlane: U8
-{
-	NEAR,
-	FAR,
-	LEFT,
-	RIGHT,
-	TOP,
-	BOTTOM,
-	COUNT ///< Number of planes
-};
-
 /// Frustum collision shape. This shape consists from 6 planes. The planes are
 /// being used to find shapes that are inside the frustum
-class Frustum: public CollisionShape
+class Frustum: public CompoundShape
 {
 public:
+	/// Frustum type
+	enum class Type: U8
+	{
+		PERSPECTIVE,
+		ORTHOGRAPHIC
+	};
+
+	/// The 6 frustum planes
+	enum class PlaneType: U8
+	{
+		NEAR,
+		FAR,
+		LEFT,
+		RIGHT,
+		TOP,
+		BOTTOM,
+		COUNT ///< Number of planes
+	};
+
 	/// @name Constructors
 	/// @{
-	Frustum(FrustumType type)
-		: CollisionShape(Type::FRUSTUM), m_type(type)
+	Frustum(Type type)
+		: m_type(type)
 	{}
 
 	virtual ~Frustum()
@@ -48,7 +49,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	FrustumType getFrustumType() const
+	Type getType() const
 	{
 		return m_type;
 	}
@@ -60,7 +61,7 @@ public:
 	void setNear(const F32 x)
 	{
 		m_near = x;
-		recalculate();
+		m_frustumDirty = true;
 	}
 
 	F32 getFar() const
@@ -70,40 +71,26 @@ public:
 	void setFar(const F32 x)
 	{
 		m_far = x;
-		recalculate();
+		m_frustumDirty = true;
+	}
+
+	const Transform& getTransform() const
+	{
+		return m_trf;
 	}
 	/// @}
 
-	/// Check for collision
-	template<typename T>
-	Bool collide(const T& x) const
-	{
-		return detail::collide(*this, x);
-	}
+	/// Override CompoundShape::transform
+	void transform(const Transform& trf) override;
 
-	/// Implements CollisionShape::accept
-	void accept(MutableVisitor& v)
-	{
-		v.visit(*this);
-	}
-	/// Implements CollisionShape::accept
-	void accept(ConstVisitor& v) const
-	{
-		v.visit(*this);
-	}
+	/// Convenient method to reset the transformation
+	void resetTransform();
 
 	/// Check if a collision shape @a b is inside the frustum
-	Bool insideFrustum(const CollisionShape& b) const;
+	Bool insideFrustum(const CollisionShape& b);
 
 	/// Calculate the projection matrix
 	virtual Mat4 calculateProjectionMatrix() const = 0;
-
-	/// Its like transform() but but with a difference. It doesn't transform
-	/// the @a trf, it just replaces it
-	virtual void setTransform(const Transform& trf) = 0;
-
-	/// Implements CollisionShape::toAbb
-	void computeAabb(Aabb& aabb) const;
 
 protected:
 	/// @name Viewing variables
@@ -113,9 +100,12 @@ protected:
 	/// @}
 
 	/// Used to check against the frustum
-	Array<Plane, (U)FrustumPlane::COUNT> m_planes;
+	Array<Plane, (U)PlaneType::COUNT> m_planes;
 
-	Transform m_trf = Transform::getIdentity(); ///< Retain the transformation
+	Transform m_trf = Transform::getIdentity(); ///< Keep the transformation
+
+	/// It's true when the frustum changed
+	Bool8 m_frustumDirty = true;
 
 	/// Called when a viewing variable changes. It recalculates the planes and
 	/// the other variables
@@ -124,16 +114,8 @@ protected:
 	/// Copy
 	Frustum& operator=(const Frustum& b);
 
-	void transformPlanes()
-	{
-		for(Plane& p : m_planes)
-		{
-			p.transform(m_trf);
-		}
-	}
-
 private:
-	FrustumType m_type;
+	Type m_type;
 };
 
 /// Frustum shape for perspective cameras
@@ -144,20 +126,18 @@ public:
 	/// @{
 
 	/// Default
-	PerspectiveFrustum()
-		: Frustum(FrustumType::PERSPECTIVE)
-	{}
+	PerspectiveFrustum();
 
 	/// Copy
 	PerspectiveFrustum(const PerspectiveFrustum& b)
-		: Frustum(FrustumType::PERSPECTIVE)
+		: PerspectiveFrustum()
 	{
 		*this = b;
 	}
 
 	/// Set all
 	PerspectiveFrustum(F32 fovX, F32 fovY, F32 near, F32 far)
-		: Frustum(FrustumType::PERSPECTIVE)
+		: PerspectiveFrustum()
 	{
 		setAll(fovX, fovY, near, far);
 	}
@@ -172,7 +152,7 @@ public:
 	void setFovX(F32 ang)
 	{
 		m_fovX = ang;
-		recalculate();
+		m_frustumDirty = true;
 	}
 
 	F32 getFovY() const
@@ -182,7 +162,7 @@ public:
 	void setFovY(F32 ang)
 	{
 		m_fovY = ang;
-		recalculate();
+		m_frustumDirty = true;
 	}
 
 	/// Set all the parameters and recalculate the planes and shape
@@ -192,20 +172,17 @@ public:
 		m_fovY = fovY,
 		m_near = near;
 		m_far = far;
-		recalculate();
+		m_frustumDirty = true;
 	}
 
-	const Array<Vec3, 4>& getDirections() const
+	const Array<LineSegment, 4>& getLineSegments() const
 	{
-		return m_dirs;
+		return m_segments;
 	}
 	/// @}
 
 	/// Copy
 	PerspectiveFrustum& operator=(const PerspectiveFrustum& b);
-
-	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Plane& p) const;
 
 	/// Calculate and get transformed
 	PerspectiveFrustum getTransformed(const Transform& trf) const
@@ -215,17 +192,8 @@ public:
 		return o;
 	}
 
-	/// Re-implements Frustum::transform
-	void transform(const Transform& trf);
-
-	/// Implements Frustum::setTransform
-	void setTransform(const Transform& trf);
-
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const;
-
-	/// Implements CollisionShape::computeAabb
-	void computeAabb(Aabb& aabb) const;
 
 private:
 	/// @name Viewing variables
@@ -236,18 +204,13 @@ private:
 
 	/// @name Shape
 	/// @{
-	Vec3 m_eye; ///< The eye point
-	Array<Vec3, 4> m_dirs; ///< Directions
+	Array<LineSegment, 4> m_segments;
 	/// @}
 
-	/// Implements CollisionShape::recalculate. Recalculate:
+	/// Implements Frustum::recalculate. Recalculates:
 	/// @li planes
-	/// @li eye
-	/// @li dirs
+	/// @li line segments
 	void recalculate();
-
-	/// Transform the @a eye and @a dirs using @a Frustrum::trf
-	void transformShape();
 };
 
 /// Frustum shape for orthographic cameras
@@ -258,13 +221,11 @@ public:
 	/// @{
 
 	/// Default
-	OrthographicFrustum()
-		: Frustum(FrustumType::ORTHOGRAPHIC)
-	{}
+	OrthographicFrustum();
 
 	/// Copy
 	OrthographicFrustum(const OrthographicFrustum& b)
-		: Frustum(FrustumType::ORTHOGRAPHIC)
+		: OrthographicFrustum()
 	{
 		*this = b;
 	}
@@ -272,7 +233,7 @@ public:
 	/// Set all
 	OrthographicFrustum(F32 left, F32 right, F32 near,
 		F32 far, F32 top, F32 bottom)
-		: Frustum(FrustumType::ORTHOGRAPHIC)
+		: OrthographicFrustum()
 	{
 		setAll(left, right, near, far, top, bottom);
 	}
@@ -287,7 +248,7 @@ public:
 	void setLeft(F32 f)
 	{
 		m_left = f;
-		recalculate();
+		m_frustumDirty = true;
 	}
 
 	F32 getRight() const
@@ -297,7 +258,7 @@ public:
 	void setRight(F32 f)
 	{
 		m_right = f;
-		recalculate();
+		m_frustumDirty = true;
 	}
 
 	F32 getTop() const
@@ -307,7 +268,7 @@ public:
 	void setTop(F32 f)
 	{
 		m_top = f;
-		recalculate();
+		m_frustumDirty = true;
 	}
 
 	F32 getBottom() const
@@ -317,7 +278,7 @@ public:
 	void setBottom(F32 f)
 	{
 		m_bottom = f;
-		recalculate();
+		m_frustumDirty = true;
 	}
 
 	/// Set all
@@ -330,7 +291,7 @@ public:
 		m_far = far;
 		m_top = top;
 		m_bottom = bottom;
-		recalculate();
+		m_frustumDirty = true;
 	}
 
 	/// Needed for debug drawing
@@ -342,24 +303,6 @@ public:
 
 	/// Copy
 	OrthographicFrustum& operator=(const OrthographicFrustum& b);
-
-	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Plane& p) const
-	{
-		return m_obb.testPlane(p);
-	}
-
-	/// Override Frustum::transform
-	void transform(const Transform& trf);
-
-	/// Implements Frustum::setTransform
-	void setTransform(const Transform& trf);
-
-	/// Implements CollisionShape::computeAabb
-	void computeAabb(Aabb& aabb) const
-	{
-		m_obb.computeAabb(aabb);
-	}
 
 	/// Implements Frustum::calculateProjectionMatrix
 	Mat4 calculateProjectionMatrix() const;
@@ -383,18 +326,12 @@ private:
 	Obb m_obb; ///< Including shape
 	/// @}
 
-	/// Implements CollisionShape::recalculate. Recalculate @a planes and
+	/// Implements Frustum::recalculate. Recalculate @a planes and
 	/// @a obb
 	void recalculate();
-
-	/// Transform the @a obb using @a Frustrum::trf
-	void transformShape()
-	{
-		m_obb.transform(m_trf);
-	}
 };
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

@@ -23,63 +23,75 @@ public:
 	/// @{
 
 	/// Pass the frustum here so we can avoid the virtuals
-	FrustumComponent(SceneNode* node)
-		: SceneComponent(FRUSTUM_COMPONENT, node)
+	FrustumComponent(SceneNode* node, Frustum* frustum)
+		: SceneComponent(FRUSTUM_COMPONENT, node), m_frustum(frustum)
 	{
+		// WARNING: Never touch m_frustum in constructor
+		ANKI_ASSERT(frustum);
 		markForUpdate();
 	}
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	virtual Frustum& getFrustum() = 0;
+	Frustum& getFrustum()
+	{
+		return *m_frustum;
+	}
+	const Frustum& getFrustum() const
+	{
+		return *m_frustum;
+	}
 
 	const Mat4& getProjectionMatrix() const
 	{
-		return projectionMat;
+		return m_pm;
 	}
 	void setProjectionMatrix(const Mat4& m)
 	{
-		projectionMat = m;
+		m_pm = m;
 	}
 
 	const Mat4& getViewMatrix() const
 	{
-		return viewMat;
+		return m_vm;
 	}
 	void setViewMatrix(const Mat4& m)
 	{
-		viewMat = m;
+		m_vm = m;
 	}
 
 	const Mat4& getViewProjectionMatrix() const
 	{
-		return viewProjectionMat;
+		return m_vpm;
 	}
 	void setViewProjectionMatrix(const Mat4& m)
 	{
-		viewProjectionMat = m;
+		m_vpm = m;
 	}
 
 	/// Get the origin for sorting and visibility tests
-	virtual Vec3 getFrustumOrigin() = 0;
-
-	void setVisibilityTestResults(VisibilityTestResults* visible_)
+	const Vec3& getFrustumOrigin() const
 	{
-		ANKI_ASSERT(visible == nullptr);
-		visible = visible_;
+		return getFrustum().getTransform().getOrigin();
+	}
+
+	void setVisibilityTestResults(VisibilityTestResults* visible)
+	{
+		ANKI_ASSERT(m_visible == nullptr);
+		m_visible = m_visible;
 	}
 	/// Call this after the tests. Before it will point to junk
 	VisibilityTestResults& getVisibilityTestResults()
 	{
-		ANKI_ASSERT(visible != nullptr);
-		return *visible;
+		ANKI_ASSERT(m_visible != nullptr);
+		return *m_visible;
 	}
 	/// @}
 
 	void markForUpdate()
 	{
-		markedForUpdate = true;
+		m_markedForUpdate = true;
 	}
 
 	/// Is a spatial inside the frustum?
@@ -99,8 +111,8 @@ public:
 	{
 		if(updateType == ASYNC_UPDATE)
 		{
-			Bool out = markedForUpdate;
-			markedForUpdate = false;
+			Bool out = m_markedForUpdate;
+			m_markedForUpdate = false;
 			return out;
 		}
 		else
@@ -112,7 +124,7 @@ public:
 	/// Override SceneComponent::reset
 	void reset() override
 	{
-		visible = nullptr;
+		m_visible = nullptr;
 	}
 
 	static constexpr Type getClassType()
@@ -121,15 +133,16 @@ public:
 	}
 
 private:
-	Mat4 projectionMat = Mat4::getIdentity();
-	Mat4 viewMat = Mat4::getIdentity();
-	Mat4 viewProjectionMat = Mat4::getIdentity();
+	Frustum* m_frustum;
+	Mat4 m_pm = Mat4::getIdentity(); ///< Projection matrix
+	Mat4 m_vm = Mat4::getIdentity(); ///< View matrix
+	Mat4 m_vpm = Mat4::getIdentity(); ///< View projection matrix
 
 	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
 	/// frame and before any visibility tests are run
-	VisibilityTestResults* visible = nullptr;
+	VisibilityTestResults* m_visible = nullptr;
 
-	Bool8 markedForUpdate;
+	Bool8 m_markedForUpdate;
 };
 /// @}
 

@@ -324,7 +324,7 @@ void Tiler::updateTiles(Camera& cam)
 
 	switch(cam.getCameraType())
 	{
-	case Camera::CT_PERSPECTIVE:
+	case Camera::Type::PERSPECTIVE:
 		for(U i = 0; i < threadPool.getThreadsCount(); i++)
 		{
 			jobs[i].m_tiler = this;
