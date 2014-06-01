@@ -63,8 +63,7 @@ void Light::moveUpdate(MoveComponent& move)
 		fr.setViewProjectionMatrix(
 			fr.getProjectionMatrix() * fr.getViewMatrix());
 
-		fr.getFrustum().resetTransform();
-		fr.getFrustum().transform(move.getWorldTransform());
+		fr.getFrustum().resetTransform(move.getWorldTransform());
 
 		fr.markForUpdate();
 	});
@@ -120,8 +119,7 @@ void SpotLight::componentUpdated(SceneComponent& comp,
 	if(comp.getType() == MoveComponent::getClassType())
 	{
 		MoveComponent& move = comp.downCast<MoveComponent>();
-		m_frustum.resetTransform();
-		m_frustum.transform(move.getWorldTransform());
+		m_frustum.resetTransform(move.getWorldTransform());
 		moveUpdate(move);
 	}
 }

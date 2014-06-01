@@ -8,7 +8,7 @@ namespace anki {
 CompoundShape::CompoundShape()
 	: CollisionShape(Type::COMPOUND)
 {
-	memset(&m_dflt[0], 0, sizeof(m_dflt));
+	memset(&m_dflt, 0, sizeof(m_dflt));
 }
 
 //==============================================================================
@@ -17,7 +17,7 @@ F32 CompoundShape::testPlane(const Plane& p) const
 	F32 min = MAX_F32;
 	F32 max = MIN_F32;
 
-	iterateShapes([&](CollisionShape& cs)
+	iterateShapes([&](const CollisionShape& cs)
 	{
 		F32 a = cs.testPlane(p);
 		min = std::min(min, a);
@@ -26,11 +26,11 @@ F32 CompoundShape::testPlane(const Plane& p) const
 
 	if(min > 0.0 && max > 0.0)
 	{
-		return std::min(min, max);
+		return min;
 	}
 	else if(min < 0.0 && max < 0.0)
 	{
-		return std::max(min, max);
+		return max;
 	}
 	
 	return 0.0;
@@ -48,7 +48,7 @@ void CompoundShape::accept(MutableVisitor& v)
 //==============================================================================
 void CompoundShape::accept(ConstVisitor& v) const
 {
-	iterateShapes([&](CollisionShape& cs)
+	iterateShapes([&](const CollisionShape& cs)
 	{
 		cs.accept(v);
 	});
@@ -68,7 +68,7 @@ void CompoundShape::computeAabb(Aabb& out) const
 {
 	Vec3 min(MAX_F32), max(MIN_F32);
 
-	iterateShapes([&](CollisionShape& cs)
+	iterateShapes([&](const CollisionShape& cs)
 	{
 		Aabb aabb;
 		cs.computeAabb(aabb);
@@ -87,13 +87,24 @@ void CompoundShape::computeAabb(Aabb& out) const
 //==============================================================================
 void CompoundShape::addShape(CollisionShape* shape)
 {
-	U idx = 0;
-	while(m_dflt[idx])
-	{
-		++idx;
-	}
+	Chunk* chunk = &m_dflt;
 
-	m_dflt[idx] = shape;
+	do
+	{
+		U idx = SHAPES_PER_CHUNK_COUNT;
+		while(idx-- != 0)
+		{
+			if(chunk->m_shapes[idx] == nullptr)
+			{
+				chunk->m_shapes[idx] = shape;
+				return;
+			}
+		}
+
+		chunk = chunk->m_next;
+	} while(chunk);
+
+	ANKI_ASSERT(0 && "TODO: Add code for adding new chunks");
 }
 
 } // end namespace anki

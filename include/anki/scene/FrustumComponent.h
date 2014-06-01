@@ -79,7 +79,7 @@ public:
 	void setVisibilityTestResults(VisibilityTestResults* visible)
 	{
 		ANKI_ASSERT(m_visible == nullptr);
-		m_visible = m_visible;
+		m_visible = visible;
 	}
 	/// Call this after the tests. Before it will point to junk
 	VisibilityTestResults& getVisibilityTestResults()

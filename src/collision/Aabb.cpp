@@ -81,37 +81,23 @@ Aabb Aabb::getCompoundShape(const Aabb& b) const
 void Aabb::setFromPointCloud(
 	const void* buff, U count, PtrSize stride, PtrSize buffSize)
 {
-	ANKI_ASSERT(buff);
-	ANKI_ASSERT(count > 1);
-	ANKI_ASSERT(stride >= sizeof(Vec3));
-	ANKI_ASSERT(buffSize >= stride * count);
+	m_min = Vec3(MAX_F32);
+	m_max = Vec3(MIN_F32);
 
-	const U8* ptr = (const U8*)buff;
-	const Vec3* pos = (const Vec3*)(ptr);
-	m_min = *pos;
-	m_max = m_min;
-	--count;
-
-	while(count-- != 0)
+	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
 	{
-		ANKI_ASSERT(
-			(((PtrSize)ptr + sizeof(Vec3)) - (PtrSize)buff) <= buffSize);
-		const Vec3* pos = (const Vec3*)(ptr);
-
 		for(U j = 0; j < 3; j++)
 		{
-			if((*pos)[j] > m_max[j])
+			if(pos[j] > m_max[j])
 			{
-				m_max[j] = (*pos)[j];
+				m_max[j] = pos[j];
 			}
-			else if((*pos)[j] < m_min[j])
+			else if(pos[j] < m_min[j])
 			{
-				m_min[j] = (*pos)[j];
+				m_min[j] = pos[j];
 			}
 		}
-
-		ptr += stride;
-	}
+	});
 }
 
 } // end namespace anki

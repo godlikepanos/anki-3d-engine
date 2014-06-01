@@ -103,6 +103,31 @@ public:
 	/// Visitor accept
 	virtual void accept(ConstVisitor&) const = 0;
 
+protected:
+	/// Function that iterates a point cloud
+	template<typename TFunc>
+	void iteratePointCloud(
+		const void* buff, U count, PtrSize stride, PtrSize buffSize,
+		TFunc func)
+	{
+		ANKI_ASSERT(buff);
+		ANKI_ASSERT(count > 1);
+		ANKI_ASSERT(stride >= sizeof(Vec3));
+		ANKI_ASSERT(buffSize >= stride * count);
+
+		const U8* ptr = (const U8*)buff;
+		while(count-- != 0)
+		{
+			ANKI_ASSERT(
+				(((PtrSize)ptr + sizeof(Vec3)) - (PtrSize)buff) <= buffSize);
+			const Vec3* pos = (const Vec3*)(ptr);
+
+			func(*pos);
+
+			ptr += stride;
+		}
+	}
+
 private:
 	/// Keep an ID to avoid (in some cases) the visitor and thus the cost of
 	/// virtuals

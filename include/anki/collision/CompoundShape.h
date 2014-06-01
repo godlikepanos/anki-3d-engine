@@ -37,38 +37,40 @@ public:
 	void addShape(CollisionShape* shape);
 
 private:
-	static const U SHAPES_PER_CHUNK = 8;
+	static const U SHAPES_PER_CHUNK_COUNT = 8;
 
-	Array<CollisionShape*, SHAPES_PER_CHUNK> m_dflt;
-
-	template<typename TFunc>
-	void iterateShapes(TFunc f)
+	class Chunk
 	{
-		U idx = 0;
-		while(m_dflt[idx])
-		{
-			if(m_dflt[idx])
-			{
-				f(*m_dflt[idx]);
-			}
-			++idx;
-		}
-		ANKI_ASSERT(idx > 0 && "Empty CompoundShape");
-	}
+	public:
+		Array<CollisionShape*, SHAPES_PER_CHUNK_COUNT> m_shapes;
+		Chunk* m_next = nullptr;
+	};
+
+	Chunk m_dflt;
 
 	template<typename TFunc>
 	void iterateShapes(TFunc f) const
 	{
-		U idx = 0;
-		while(m_dflt[idx])
+		U count = 0;
+		const Chunk* chunk = &m_dflt;
+
+		do
 		{
-			if(m_dflt[idx])
+			U idx = SHAPES_PER_CHUNK_COUNT;
+			while(idx-- != 0)
 			{
-				f(*m_dflt[idx]);
+				if(chunk->m_shapes[idx])
+				{
+					f(*const_cast<CollisionShape*>(chunk->m_shapes[idx]));
+					++count;
+				}
 			}
-			++idx;
-		}
-		ANKI_ASSERT(idx > 0 && "Empty CompoundShape");
+
+			chunk = chunk->m_next;
+		} while(chunk);
+	
+		ANKI_ASSERT(count > 0 && "Empty CompoundShape");
+		(void)count;
 	}
 };
 
@@ -77,5 +79,4 @@ private:
 } // end namespace anki
 
 #endif
-
 

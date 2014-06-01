@@ -151,38 +151,23 @@ void Obb::computeAabb(Aabb& aabb) const
 void Obb::setFromPointCloud(
 	const void* buff, U count, PtrSize stride, PtrSize buffSize)
 {
-	ANKI_ASSERT(buff);
-	ANKI_ASSERT(count > 1);
-	ANKI_ASSERT(stride >= sizeof(Vec3));
-	ANKI_ASSERT(buffSize >= stride * count);
+	Vec3 min = Vec3(MAX_F32);
+	Vec3 max = Vec3(MIN_F32);
 
-	// Calc min/max
-	const U8* ptr = (const U8*)buff;
-	const Vec3* pos = (const Vec3*)(ptr);
-	Vec3 min = *pos;
-	Vec3 max = min;
-	--count;
-
-	while(count-- != 0)
+	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
 	{
-		ANKI_ASSERT(
-			(((PtrSize)ptr + sizeof(Vec3)) - (PtrSize)buff) <= buffSize);
-		const Vec3* pos = (const Vec3*)(ptr);
-
 		for(U j = 0; j < 3; j++)
 		{
-			if((*pos)[j] > max[j])
+			if(pos[j] > max[j])
 			{
-				max[j] = (*pos)[j];
+				max[j] = pos[j];
 			}
-			else if((*pos)[j] < min[j])
+			else if(pos[j] < min[j])
 			{
-				min[j] = (*pos)[j];
+				min[j] = pos[j];
 			}
 		}
-
-		ptr += stride;
-	}
+	});
 
 	// Set the locals
 	m_center = (max + min) / 2.0;
