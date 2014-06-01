@@ -84,7 +84,7 @@ public:
 	void transform(const Transform& trf) override;
 
 	/// Convenient method to reset the transformation
-	void resetTransform();
+	void resetTransform(const Transform& trf);
 
 	/// Check if a collision shape @a b is inside the frustum
 	Bool insideFrustum(const CollisionShape& b);

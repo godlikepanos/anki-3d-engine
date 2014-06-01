@@ -131,7 +131,9 @@ public:
 	/// Fake that it's been executed
 	void makeExecuted()
 	{
+#if ANKI_DEBUG
 		m_executed = true;
+#endif
 	}
 
 	/// Make immutable

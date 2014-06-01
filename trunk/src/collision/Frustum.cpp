@@ -47,30 +47,46 @@ Bool Frustum::insideFrustum(const CollisionShape& b)
 //==============================================================================
 void Frustum::transform(const Transform& trf)
 {
+	const Transform* useTrf;
 	if(m_frustumDirty)
 	{
 		m_frustumDirty = false;
 		recalculate();
+
+		useTrf = &m_trf;
+	}
+	else
+	{
+		useTrf = &trf;
 	}
 
 	m_trf.transform(trf);
 
 	// Transform the compound
-	CompoundShape::transform(trf);
+	CompoundShape::transform(*useTrf);
 
 	// Transform the planes
 	for(Plane& p : m_planes)
 	{
-		p.transform(trf);
+		p.transform(*useTrf);
 	}
 }
 
 //==============================================================================
-void Frustum::resetTransform()
+void Frustum::resetTransform(const Transform& trf)
 {
 	recalculate();
 	m_frustumDirty = false;
-	m_trf.setIdentity();
+	m_trf = trf;
+	
+	// Transform the compound
+	CompoundShape::transform(m_trf);
+
+	// Transform the planes
+	for(Plane& p : m_planes)
+	{
+		p.transform(m_trf);
+	}
 }
 
 //==============================================================================

@@ -104,4 +104,44 @@ void Sphere::computeAabb(Aabb& aabb) const
 	aabb.setMax(center + radius);
 }
 
-} // end namespace
+//==============================================================================
+void Sphere::setFromPointCloud(
+	const void* buff, U count, PtrSize stride, PtrSize buffSize)
+{
+	// Calc min/max
+	Vec3 min(MAX_F32);
+	Vec3 max(MIN_F32);
+	
+	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
+	{
+		for(U j = 0; j < 3; j++)
+		{
+			if(pos[j] > max[j])
+			{
+				max[j] = pos[j];
+			}
+			else if(pos[j] < min[j])
+			{
+				min[j] = pos[j];
+			}
+		}
+	});
+
+	center = (min + max) * 0.5; // average
+
+	// max distance between center and the vec3 arr
+	F32 maxDist = MIN_F32;
+
+	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
+	{
+		F32 dist = (pos - center).getLengthSquared();
+		if(dist > maxDist)
+		{
+			maxDist = dist;
+		}
+	});
+
+	radius = sqrt(maxDist);
+}
+
+} // end namespace anki

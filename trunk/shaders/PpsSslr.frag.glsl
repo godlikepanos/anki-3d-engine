@@ -4,6 +4,8 @@
 #pragma anki include "shaders/LinearDepth.glsl"
 #pragma anki include "shaders/Pack.glsl"
 
+const float ONE = 0.9;
+
 layout(location = 0) in vec2 inTexCoords;
 
 layout(location = 0) out vec3 outColor;
@@ -45,8 +47,13 @@ vec3 readPosition(in vec2 uv)
 vec3 project(vec3 p)
 {
 	vec4 a = uProjectionMatrix * vec4(p, 1.0);
-	a.xyz /= a.w;
-	return a.xyz;
+	return a.xyz / a.w;
+}
+
+vec2 projectXy(vec3 p)
+{
+	vec4 a = uProjectionMatrix * vec4(p, 1.0);
+	return a.xy / a.w;
 }
 
 void main()
@@ -78,18 +85,20 @@ void main()
 	vec3 p1 = p0 + r * t;
 
 	vec2 pp0 = inTexCoords * 2.0 - 1.0;
-	vec3 pp1 = project(p1);
+	vec2 pp1 = projectXy(p1);
 
-	vec2 dir = pp1.xy - pp0;
-	vec2 path = dir * 0.5; // (pp1.xy/2+1/2)-(pp0.xy/2+1/2)
+	// Calculate the ray from p0 to p1 in 2D space and get the number of
+	// steps
+	vec2 dir = pp1 - pp0;
+	vec2 path = dir * 0.5; // (pp1/2+1/2)-(pp0.xy/2+1/2)
 	path *= vec2(float(WIDTH), float(HEIGHT));
 	path = abs(path);
 	float steps = max(path.x, path.y);
 
-	// XXX
+	// Calculate the step increase
 	float len = length(dir);
 	float stepInc =  len / steps;
-	dir /= len;
+	dir /= len; // Normalize dir at last
 
 	steps = min(steps, 300.0);
 
@@ -97,28 +106,36 @@ void main()
 	{
 		vec2 ndc = pp0 + dir * (i * stepInc);
 
+		// Check if it's out of the view
 		vec2 comp = abs(ndc);
-		if(comp.x > 1.0 || comp.y > 1.0)
+		if(comp.x > ONE || comp.y > ONE)
 		{
 			//outColor = vec3(1, 0.0, 1);
 			return;
 		}
 
+		// 'a' is ray that passes through the eye and into ndc
 		vec3 a;
 		a.z = -1.0;
-		a.xy = ndc * uProjectionParams.xy * a.z;
+		a.xy = ndc * uProjectionParams.xy * a.z; // Unproject
 		a = normalize(a);
 
-		vec3 c0 = cross(a, r);
-		vec3 c1 = cross(p0, r);
-		float k = c1.x / c0.x;
+		// Compute the intersection between 'a' (before normalization) and p0-p1 
+		// c0 = cross(a, r);
+		// c1 = cross(p0, r);
+		// k = c1.x / c0.x; and the optimized:
+		vec2 tmpv2 = a.yz * r.zy;
+		float c0x = tmpv2.x - tmpv2.y;
+		tmpv2 = p0.yz * r.zy;
+		float c1x = tmpv2.x - tmpv2.y;
+		float k = c1x / c0x;
 
-		vec3 intersection = a * k;
+		float intersectionZ = a.z * k; // intersectionXYZ = a * k;
 
 		vec2 texCoord = ndc * 0.5 + 0.5;
 		float depth = readZ(texCoord);
 
-		float diffDepth = depth - intersection.z;
+		float diffDepth = depth - intersectionZ;
 
 		if(diffDepth > 0.0)
 		{
@@ -127,8 +144,8 @@ void main()
 				return;
 			}
 
-			float factor = 1.0 - length(ndc.xy);
-			factor *= 1.0 - length(pp0.xy);
+			float factor = 1.0 - length(ndc);
+			factor *= 1.0 - length(pp0);
 			factor *= specColor;
 
 			outColor = textureRt(uIsRt, texCoord).rgb * factor;

@@ -6,7 +6,7 @@
 
 namespace anki {
 
-/// @addtogroup Collision
+/// @addtogroup collision
 /// @{
 
 /// Sphere collision shape
@@ -112,8 +112,8 @@ public:
 	Sphere getCompoundShape(const Sphere& b) const;
 
 	/// Calculate from a set of points
-	template<typename Container>
-	void set(const Container& container);
+	void setFromPointCloud(
+		const void* buff, U count, PtrSize stride, PtrSize buffSize);
 
 private:
 	Vec3 center;
@@ -121,54 +121,6 @@ private:
 };
 /// @}
 
-//==============================================================================
-template<typename Container>
-void Sphere::set(const Container& container)
-{
-	ANKI_ASSERT(container.size() >= 1);
-
-	Vec3 min(container.front());
-	Vec3 max(container.front());
-
-	// for all the Vec3 calc the max and min
-	typename Container::const_iterator it = container.begin() + 1;
-	for(; it != container.end(); ++it)
-	{
-		const Vec3& v = *it;
-
-		for(U j = 0; j < 3; j++)
-		{
-			if(v[j] > max[j])
-			{
-				max[j] = v[j];
-			}
-			else if(v[j] < min[j])
-			{
-				min[j] = v[j];
-			}
-		}
-	}
-
-	center = (min + max) * 0.5; // average
-
-	// max distance between center and the vec3 arr
-	F32 maxDist = (container.front() - center).getLengthSquared();
-
-	typename Container::const_iterator it_ = container.begin() + 1;
-	for(; it_ != container.end(); ++it_)
-	{
-		const Vec3& v = *it_;
-
-		F32 dist = (v - center).getLengthSquared();
-		if(dist > maxDist)
-		{
-			maxDist = dist;
-		}
-	}
-
-	radius = sqrt(maxDist);
-}
-
-} // end namespace
+} // end namespace anki
 
 #endif

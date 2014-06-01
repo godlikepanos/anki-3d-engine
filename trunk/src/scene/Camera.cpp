@@ -63,8 +63,7 @@ void Camera::moveUpdate(MoveComponent& move)
 	fr.setViewMatrix(Mat4(move.getWorldTransform().getInverse()));
 	fr.setViewProjectionMatrix(fr.getProjectionMatrix() * fr.getViewMatrix());
 	fr.markForUpdate();
-	fr.getFrustum().resetTransform();
-	fr.getFrustum().transform(move.getWorldTransform());
+	fr.getFrustum().resetTransform(move.getWorldTransform());
 
 	// Spatial
 	SpatialComponent& sp = *this;
