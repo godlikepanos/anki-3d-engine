@@ -110,6 +110,8 @@ private:
 	GlJobChainHandle m_syncJobs;
 	GlClientSyncHandle m_sync;
 
+	String m_error;
+
 	/// The function that the thread runs
 	void threadLoop();
 	void prepare();

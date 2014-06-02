@@ -8,6 +8,7 @@ namespace anki {
 
 // Forward
 class GlTexture;
+class GlSampler;
 
 /// @addtogroup opengl_containers
 /// @{
@@ -35,22 +36,22 @@ public:
 	GlTextureHandle();
 
 	/// Create the texture
-	explicit GlTextureHandle(GlJobChainHandle& chain, const Initializer& init);
+	explicit GlTextureHandle(GlJobChainHandle& jobs, const Initializer& init);
 
 	~GlTextureHandle();
 	/// @}
 
 	/// Bind to a unit
-	void bind(GlJobChainHandle& chain, U32 unit);
+	void bind(GlJobChainHandle& jobs, U32 unit);
 
 	/// Change filtering type
-	void setFilter(GlJobChainHandle& chain, Filter filter);
+	void setFilter(GlJobChainHandle& jobs, Filter filter);
 
 	/// Generate mips
-	void generateMipmaps(GlJobChainHandle& chain);
+	void generateMipmaps(GlJobChainHandle& jobs);
 
 	/// Set a texture parameter
-	void setParameter(GlJobChainHandle& chain, GLenum param, GLint value);
+	void setParameter(GlJobChainHandle& jobs, GLenum param, GLint value);
 
 	/// Get depth
 	U32 getDepth() const;
@@ -60,6 +61,39 @@ public:
 
 	/// Get height
 	U32 getHeight() const;
+};
+
+/// Sampler handle
+class GlSamplerHandle: public GlContainerHandle<GlSampler>
+{
+public:
+	typedef GlContainerHandle<GlSampler> Base;
+
+	typedef GlTextureFilter Filter;
+
+	/// @name Constructors/Destructor
+	/// @{
+
+	/// Create husk
+	GlSamplerHandle();
+
+	/// Create the sampler
+	explicit GlSamplerHandle(GlJobChainHandle& jobs);
+
+	~GlSamplerHandle();
+	/// @}
+
+	/// Bind to a unit
+	void bind(GlJobChainHandle& jobs, U32 unit);
+
+	/// Change filtering type
+	void setFilter(GlJobChainHandle& jobs, Filter filter);
+
+	/// Set a texture parameter
+	void setParameter(GlJobChainHandle& jobs, GLenum param, GLint value);
+
+	/// Bind default sampler
+	static void bindDefault(GlJobChainHandle& jobs, U32 unit);
 };
 
 /// @}

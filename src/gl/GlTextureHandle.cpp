@@ -6,6 +6,10 @@
 namespace anki {
 
 //==============================================================================
+// GlTextureHandle                                                             =
+//==============================================================================
+
+//==============================================================================
 /// Create texture job
 class GlTextureCreateJob: public GlJob
 {
@@ -71,6 +75,7 @@ public:
 
 		GlHandleState oldState = m_tex._setState(GlHandleState::CREATED);
 		ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
+		(void)oldState;
 	}
 };
 
@@ -184,25 +189,25 @@ void GlTextureHandle::bind(GlJobChainHandle& jobs, U32 unit)
 }
 
 //==============================================================================
-void GlTextureHandle::setFilter(GlJobChainHandle& chain, Filter filter)
+void GlTextureHandle::setFilter(GlJobChainHandle& jobs, Filter filter)
 {
 	ANKI_ASSERT(isCreated());
-	chain._pushBackNewJob<GlTextureSetFilterJob>(*this, filter);
+	jobs._pushBackNewJob<GlTextureSetFilterJob>(*this, filter);
 }
 
 //==============================================================================
-void GlTextureHandle::generateMipmaps(GlJobChainHandle& chain)
+void GlTextureHandle::generateMipmaps(GlJobChainHandle& jobs)
 {
 	ANKI_ASSERT(isCreated());
-	chain._pushBackNewJob<GlTextureGenMipsJob>(*this);
+	jobs._pushBackNewJob<GlTextureGenMipsJob>(*this);
 }
 
 //==============================================================================
-void GlTextureHandle::setParameter(GlJobChainHandle& chain, GLenum param, 
+void GlTextureHandle::setParameter(GlJobChainHandle& jobs, GLenum param, 
 	GLint value)
 {
 	ANKI_ASSERT(isCreated());
-	chain._pushBackNewJob<GlTextureSetParameterJob>(*this, param, value);
+	jobs._pushBackNewJob<GlTextureSetParameterJob>(*this, param, value);
 }
 
 //==============================================================================
@@ -224,6 +229,135 @@ U32 GlTextureHandle::getDepth() const
 {
 	serializeOnGetter();
 	return _get().getDepth();
+}
+
+//==============================================================================
+// GlSamplerHandle                                                             =
+//==============================================================================
+
+//==============================================================================
+GlSamplerHandle::GlSamplerHandle()
+{}
+
+//==============================================================================
+GlSamplerHandle::GlSamplerHandle(GlJobChainHandle& jobs)
+{
+	class Job: public GlJob
+	{
+	public:
+		GlSamplerHandle m_sampler;
+
+		Job(const GlSamplerHandle& sampler)
+			: m_sampler(sampler)
+		{}
+
+		void operator()(GlJobChain* jobs)
+		{
+			ANKI_ASSERT(jobs);
+
+			GlSampler newSampler;
+			m_sampler._get() = std::move(newSampler);
+
+			GlHandleState oldState = m_sampler._setState(GlHandleState::CREATED);
+			ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
+			(void)oldState;
+		}
+	};
+
+	jobs._pushBackNewJob<Job>(*this);
+}
+
+//==============================================================================
+GlSamplerHandle::~GlSamplerHandle()
+{}
+
+//==============================================================================
+void GlSamplerHandle::bind(GlJobChainHandle& jobs, U32 unit)
+{
+	class Job: public GlJob
+	{
+	public:
+		GlSamplerHandle m_sampler;
+		U32 m_unit;
+
+		Job(GlSamplerHandle& sampler, U32 unit)
+			: m_sampler(sampler), m_unit(unit)
+		{}
+
+		void operator()(GlJobChain*)
+		{
+			m_sampler._get().bind(m_unit);
+		}
+	};
+
+	jobs._pushBackNewJob<Job>(*this, unit);
+}
+
+//==============================================================================
+void GlSamplerHandle::setFilter(GlJobChainHandle& jobs, Filter filter)
+{
+	class Job: public GlJob
+	{
+	public:
+		GlSamplerHandle m_sampler;
+		GlSamplerHandle::Filter m_filter;
+
+		Job(const GlSamplerHandle& sampler, GlSamplerHandle::Filter filter)
+			: m_sampler(sampler), m_filter(filter)
+		{}
+
+		void operator()(GlJobChain*)
+		{
+			m_sampler._get().setFilter(m_filter);
+		}
+	};
+
+	jobs._pushBackNewJob<Job>(*this, filter);
+}
+
+//==============================================================================
+void GlSamplerHandle::setParameter(
+	GlJobChainHandle& jobs, GLenum param, GLint value)
+{
+	class Job: public GlJob
+	{
+	public:
+		GlSamplerHandle m_sampler;
+		GLenum m_param;
+		GLint m_value;
+
+		Job(GlSamplerHandle& sampler, GLenum param, GLint value)
+			: m_sampler(sampler), m_param(param), m_value(value)
+		{}
+
+		void operator()(GlJobChain*)
+		{
+			m_sampler._get().setParameter(m_param, m_value);
+		}
+	};
+
+	jobs._pushBackNewJob<Job>(*this, param, value);
+}
+
+//==============================================================================
+void GlSamplerHandle::bindDefault(GlJobChainHandle& jobs, U32 unit)
+{
+	class Job: public GlJob
+	{
+	public:
+		U32 m_unit;
+
+		Job(U32 unit)
+			: m_unit(unit)
+		{}
+
+		void operator()(GlJobChain*)
+		{
+			GlSamper::unbind(m_unit);
+		}
+	};
+
+	jobs._pushBackNewJob<Job>(*this, unit);
 }
 
 } // end namespace anki

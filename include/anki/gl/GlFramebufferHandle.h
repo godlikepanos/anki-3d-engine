@@ -41,11 +41,14 @@ public:
 	/// @param[in] b The sorce framebuffer
 	/// @param[in] sourceRect The source rectangle
 	/// @param[in] destRect The destination rectangle
+	/// @param attachmentMask The attachments to blit
 	/// @param linear Perform linean filtering
 	void blit(GlJobChainHandle& jobs,
 		const GlFramebufferHandle& b, 
-		const Array<F32, 4>& sourceRect,
-		const Array<F32, 4>& destRect, Bool linear);
+		const Array<U32, 4>& sourceRect,
+		const Array<U32, 4>& destRect, 
+		GLbitfield attachmentMask,
+		Bool linear);
 };
 
 } // end namespace anki

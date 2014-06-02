@@ -194,15 +194,16 @@ void GlFramebuffer::bind(Bool invalidate)
 
 //==============================================================================
 void GlFramebuffer::blit(const GlFramebuffer& b, 
-	const Array<F32, 4>& sourceRect,
-	const Array<F32, 4>& destRect, Bool linear)
+	const Array<U32, 4>& sourceRect,
+	const Array<U32, 4>& destRect, 
+	GLbitfield attachmentMask, Bool linear)
 {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_glName);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, b.m_glName);
 	glBlitFramebuffer(
 		sourceRect[0], sourceRect[1], sourceRect[2], sourceRect[3],
 		destRect[0], destRect[1], destRect[2], destRect[3], 
-		GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
+		attachmentMask,
 		linear ? GL_LINEAR : GL_NEAREST);
 }
 

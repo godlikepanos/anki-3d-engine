@@ -14,6 +14,8 @@ class Sphere;
 class Aabb;
 class CompoundShape;
 
+class ContactPoint;
+
 } // end namespace anki
 
 #endif
