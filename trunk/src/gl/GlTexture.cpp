@@ -39,7 +39,7 @@ Bool isCompressedInternalFormat(const GLenum internalFormat)
 
 
 //==============================================================================
-// Texture                                                                     =
+// GlTexture                                                                   =
 //==============================================================================
 
 //==============================================================================
@@ -329,6 +329,35 @@ void GlTexture::generateMipmaps()
 {
 	bind(0);
 	glGenerateMipmap(m_target);
+}
+
+//==============================================================================
+// GlSampler                                                                   =
+//==============================================================================
+
+//==============================================================================
+void GlSampler::setFilter(const Filter filterType)
+{
+	ANKI_ASSERT(isCreated());
+	switch(filterType)
+	{
+	case Filter::NEAREST:
+		glSamplerParameteri(m_glName, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		break;
+	case Filter::LINEAR:
+		glSamplerParameteri(m_glName, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		break;
+	case Filter::TRILINEAR:
+		glSamplerParameteri(
+			m_glName, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		break;
+	default:
+		ANKI_ASSERT(0);
+		break;
+	}
 }
 
 } // end namespace anki

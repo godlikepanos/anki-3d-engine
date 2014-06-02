@@ -14,6 +14,6 @@ layout(location = 0) out vec3 outFragColor;
 void main()
 {
 	vec3 col = textureRt(uRasterImage, inTexCoords).rgb;
-	//vec3 col = vec3(textureRt(uRasterImage, inTexCoords).a);
+	//vec3 col = vec3((2.0 * 0.5) / (500.0 + 0.5 - textureRt(uRasterImage, inTexCoords).r * (500.0 - 0.5)));
 	outFragColor = col;
 }

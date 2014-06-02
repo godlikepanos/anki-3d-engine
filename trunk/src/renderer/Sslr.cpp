@@ -81,7 +81,7 @@ void Sslr::run(GlJobChainHandle& jobs)
 
 	m_reflectionPpline.bind(jobs);
 	m_r->getIs()._getRt().bind(jobs, 0);
-	m_r->getMs()._getDepthRt().bind(jobs, 1);
+	m_r->getMs()._getSmallDepthRt().bind(jobs, 1);
 	m_r->getMs()._getRt1().bind(jobs, 2);
 	m_r->getPps().getSsao().m_uniformsBuff.bindShaderBuffer(jobs, 0);
 

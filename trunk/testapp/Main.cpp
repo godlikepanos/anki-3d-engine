@@ -361,7 +361,7 @@ void mainLoopExtra()
 	F32 dist = 0.1;
 	F32 ang = toRad(1.5);
 	F32 scale = 0.01;
-	F32 mouseSensivity = 6.0;
+	F32 mouseSensivity = 9.0;
 
 	// move the camera
 	static MoveComponent* mover = 
@@ -648,7 +648,7 @@ void initSubsystems(int argc, char* argv[])
 	initializer.set("pps.sslr.enabled", true);
 	initializer.set("pps.sslr.renderingQuality", 0.35);
 	initializer.set("pps.sslr.blurringIterationsCount", 1);
-	initializer.set("pps.ssao.blurringIterationsCount", 1);
+	initializer.set("pps.ssao.blurringIterationsCount", 2);
 	initializer.set("pps.ssao.enabled", true);
 	initializer.set("pps.ssao.renderingQuality", 0.35);
 	initializer.set("pps.bl.enabled", true);

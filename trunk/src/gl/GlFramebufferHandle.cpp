@@ -98,34 +98,40 @@ void GlFramebufferHandle::bind(GlJobChainHandle& jobs, Bool invalidate)
 //==============================================================================
 void GlFramebufferHandle::blit(GlJobChainHandle& jobs,
 	const GlFramebufferHandle& b, 
-	const Array<F32, 4>& sourceRect,
-	const Array<F32, 4>& destRect, Bool linear)
+	const Array<U32, 4>& sourceRect,
+	const Array<U32, 4>& destRect, 
+	GLbitfield attachmentMask,
+	Bool linear)
 {
 	class Job: public GlJob
 	{
 	public:
 		GlFramebufferHandle m_fbDest;
 		GlFramebufferHandle m_fbSrc;
-		Array<F32, 4> m_sourceRect;
-		Array<F32, 4> m_destRect;
+		Array<U32, 4> m_sourceRect;
+		Array<U32, 4> m_destRect;
+		GLbitfield m_attachmentMask;
 		Bool m_linear;
 
 		Job(GlFramebufferHandle& fbDest, const GlFramebufferHandle& fbSrc,
-			const Array<F32, 4>& sourceRect,
-			const Array<F32, 4>& destRect,
+			const Array<U32, 4>& sourceRect,
+			const Array<U32, 4>& destRect,
+			GLbitfield attachmentMask,
 			Bool linear)
 			:	m_fbDest(fbDest), m_fbSrc(fbSrc), m_sourceRect(sourceRect),
-				m_destRect(destRect), m_linear(linear)
+				m_destRect(destRect), m_attachmentMask(attachmentMask), 
+				m_linear(linear)
 		{}
 
 		void operator()(GlJobChain*)
 		{
-			m_fbSrc._get().blit(m_fbDest._get(), m_sourceRect, m_destRect, 
-				m_linear);
+			m_fbDest._get().blit(m_fbSrc._get(), m_sourceRect, m_destRect, 
+				m_attachmentMask, m_linear);
 		}
 	};
 
-	jobs._pushBackNewJob<Job>(*this, b, sourceRect, destRect, linear);
+	jobs._pushBackNewJob<Job>(
+		*this, b, sourceRect, destRect, attachmentMask, linear);
 }
 
 } // end namespace anki

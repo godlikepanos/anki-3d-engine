@@ -157,6 +157,73 @@ private:
 	void setFilterNoBind(Filter filterType);
 };
 
+/// Sampler container
+class GlSampler: public GlObject
+{
+public:
+	typedef GlObject Base;
+	typedef GlTextureFilter Filter;
+
+	/// @name Constructors/Destructor
+	/// @{
+	GlSampler()
+	{
+		glGenSamplers(1, &m_glName);
+	}
+
+	GlSampler(GlSampler&& b)
+	{
+		*this = std::move(b);
+	}
+
+	~GlSampler()
+	{
+		destroy();
+	}
+	/// @}
+
+	/// Move
+	GlSampler& operator=(GlSampler&& b)
+	{
+		destroy();
+		Base::operator=(std::forward<Base>(b));
+		return *this;
+	}
+
+	/// Set filter type
+	void setFilter(const Filter filterType);
+
+	/// Set sampler parameter
+	void setParameter(GLenum param, GLint value)
+	{
+		ANKI_ASSERT(isCreated());
+		glSamplerParameteri(m_glName, param, value);
+	}
+
+	/// Bind the texture to a specified unit
+	void bind(U32 unit) const
+	{
+		ANKI_ASSERT(isCreated());
+		glBindSampler(unit, m_glName);
+	}
+
+	/// Unbind sampler from unit
+	static void unbind(U32 unit)
+	{
+		glBindSampler(unit, 0);
+	}
+
+private:
+	void destroy()
+	{
+		if(m_glName)
+		{
+			glDeleteSamplers(1, &m_glName);
+			m_glName = 0;
+		}
+	}
+};
+
 /// @}
 
 } // end namespace anki

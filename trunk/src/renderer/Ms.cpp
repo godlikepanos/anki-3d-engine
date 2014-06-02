@@ -36,7 +36,7 @@ void Ms::createRt(U32 index, U32 samples)
 		{plane.m_rt1, GL_COLOR_ATTACHMENT1},
 		{plane.m_depthRt, GL_DEPTH_ATTACHMENT}});
 
-	jobs.flush();
+	jobs.finish();
 }
 
 //==============================================================================
@@ -49,6 +49,26 @@ void Ms::init(const RendererInitializer& initializer)
 			createRt(0, initializer.get("samples"));
 		}
 		createRt(1, 1);
+
+		// Init small depth 
+		{
+			m_r->createRenderTarget(
+				getAlignedRoundUp(16, m_r->getWidth() / 3) , 
+				getAlignedRoundUp(16, m_r->getHeight() / 3),
+				GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
+				GL_UNSIGNED_INT, 1, m_smallDepthRt);
+
+			GlManager& gl = GlManagerSingleton::get();
+			GlJobChainHandle jobs(&gl);
+
+			//m_smallDepthRt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
+
+			m_smallDepthFb = GlFramebufferHandle(
+				jobs,
+				{{m_smallDepthRt, GL_DEPTH_ATTACHMENT}});
+
+			jobs.finish();
+		}
 
 		m_ez.init(initializer);
 	}
@@ -118,6 +138,13 @@ void Ms::run(GlJobChainHandle& jobs)
 #endif
 		ANKI_ASSERT(0 && "TODO");
 	}
+
+	// Blit big depth buffer to small one
+	m_smallDepthFb.blit(jobs, m_planes[1].m_fb, 
+		{{0, 0, m_planes[1].m_depthRt.getWidth(), 
+			m_planes[1].m_depthRt.getHeight()}},
+		{{0, 0, m_smallDepthRt.getWidth(), m_smallDepthRt.getHeight()}},
+		GL_DEPTH_BUFFER_BIT, false);
 
 	jobs.enableDepthTest(false);
 }

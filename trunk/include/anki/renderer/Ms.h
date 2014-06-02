@@ -32,6 +32,11 @@ public:
 	{
 		return m_planes[1].m_depthRt;
 	}
+
+	GlTextureHandle& _getSmallDepthRt()
+	{
+		return m_smallDepthRt;
+	}
 	/// @}
 
 private:
@@ -50,6 +55,9 @@ private:
 		/// Depth stencil
 		GlTextureHandle m_depthRt;
 	};
+
+	GlTextureHandle m_smallDepthRt; ///< A smaller depth buffer
+	GlFramebufferHandle m_smallDepthFb;
 
 	Ez m_ez; /// EarlyZ pass
 

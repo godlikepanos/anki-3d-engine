@@ -45,7 +45,7 @@ Exception::Exception(const char* file, I line, const char* func,
 
 	m_err = synthErr(out, file, line, func);
 
-#if ANKI_ABORT_ON_THROW
+#if ANKI_ABORT_ON_THROW == 1
 	std::cerr << m_err << std::endl;
 	abort();
 #endif
@@ -59,7 +59,7 @@ Exception::Exception(const Exception& e) noexcept
 	m_err = (char*)mallocAligned(strlen(e.m_err) + 1, 1);
 	strcpy(m_err, e.m_err);
 
-#if ANKI_ABORT_ON_THROW
+#if ANKI_ABORT_ON_THROW == 1
 	std::cerr << m_err << std::endl;
 	abort();
 #endif

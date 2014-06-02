@@ -64,8 +64,8 @@ public:
 	void bind(Bool invalidate);
 
 	/// Blit another framebuffer to this
-	void blit(const GlFramebuffer& fb, const Array<F32, 4>& sourceRect,
-		const Array<F32, 4>& destRect, Bool linear);
+	void blit(const GlFramebuffer& fb, const Array<U32, 4>& sourceRect,
+		const Array<U32, 4>& destRect, GLbitfield attachmentMask, Bool linear);
 
 private:
 	Array<GlTextureHandle, MAX_COLOR_ATTACHMENTS + 1> m_attachments;

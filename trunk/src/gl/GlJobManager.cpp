@@ -29,6 +29,12 @@ void GlJobManager::flushJobChain(GlJobChainHandle& jobs)
 	{
 		std::unique_lock<std::mutex> lock(m_mtx);
 
+		if(m_error.size() > 0)
+		{
+			throw ANKI_EXCEPTION("GL rendering thread failed with error:\n%s",
+				&m_error[0]);
+		}
+
 		// Set jobc
 		U64 diff = m_tail - m_head;
 
@@ -199,8 +205,16 @@ void GlJobManager::threadLoop()
 			++m_head;
 		}
 
-		// Exec jobs of chain
-		jobc._executeAllJobs();
+		try
+		{
+			// Exec jobs of chain
+			jobc._executeAllJobs();
+		}
+		catch(const std::exception& e)
+		{
+			std::unique_lock<std::mutex> lock(m_mtx);
+			m_error = e.what();
+		}
 	}
 
 	finish();
