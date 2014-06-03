@@ -37,6 +37,12 @@ void Sslr::init(const RendererInitializer& initializer)
 	m_reflectionPpline = m_r->createDrawQuadProgramPipeline(
 		m_reflectionFrag->getGlProgram());
 
+	// Sampler
+	GlManager& gl = GlManagerSingleton::get();
+	GlJobChainHandle jobs(&gl);
+	m_depthMapSampler = GlSamplerHandle(jobs);
+	m_depthMapSampler.setFilter(jobs, GlSamplerHandle::Filter::NEAREST);
+
 	// Blit
 	m_blitFrag.load("shaders/Blit.frag.glsl");
 	m_blitPpline = m_r->createDrawQuadProgramPipeline(
@@ -49,9 +55,6 @@ void Sslr::init(const RendererInitializer& initializer)
 	}
 	else
 	{
-		GlManager& gl = GlManagerSingleton::get();
-		GlJobChainHandle jobs(&gl);
-
 		Direction& dir = m_dirs[(U)DirectionEnum::VERTICAL];
 
 		m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
@@ -64,9 +67,9 @@ void Sslr::init(const RendererInitializer& initializer)
 		// Create FB
 		dir.m_fb = GlFramebufferHandle(
 			jobs, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
-
-		jobs.finish();
 	}
+
+	jobs.finish();
 }
 
 //==============================================================================
@@ -82,10 +85,13 @@ void Sslr::run(GlJobChainHandle& jobs)
 	m_reflectionPpline.bind(jobs);
 	m_r->getIs()._getRt().bind(jobs, 0);
 	m_r->getMs()._getSmallDepthRt().bind(jobs, 1);
+	m_depthMapSampler.bind(jobs, 1);
 	m_r->getMs()._getRt1().bind(jobs, 2);
 	m_r->getPps().getSsao().m_uniformsBuff.bindShaderBuffer(jobs, 0);
 
 	m_r->drawQuad(jobs);
+
+	GlSamplerHandle::bindDefault(jobs, 1); // Unbind the sampler
 
 	// Blurring
 	//

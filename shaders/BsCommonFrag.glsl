@@ -53,7 +53,7 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
 
 	float delta = depth - gl_FragCoord.z;
-	float softalpha = clamp(delta * 100.0, 0.0, 1.0);
+	float softalpha = clamp(delta * 50.0, 0.0, 1.0);
 
 	vec4 color = texture(tex, gl_PointCoord);
 	color.a *= alpha * softalpha;
@@ -71,7 +71,7 @@ void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor,
 	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
 
 	float delta = depth - gl_FragCoord.z;
-	float softalpha = clamp(delta * 100.0, 0.0, 1.0);
+	float softalpha = clamp(delta * 50.0, 0.0, 1.0);
 
 	vec2 pix = (1.0 - abs(gl_PointCoord * 2.0 - 1.0));
 	float roundFactor = pix.x * pix.y;

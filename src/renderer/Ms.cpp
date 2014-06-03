@@ -61,7 +61,7 @@ void Ms::init(const RendererInitializer& initializer)
 			GlManager& gl = GlManagerSingleton::get();
 			GlJobChainHandle jobs(&gl);
 
-			//m_smallDepthRt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
+			m_smallDepthRt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
 
 			m_smallDepthFb = GlFramebufferHandle(
 				jobs,
