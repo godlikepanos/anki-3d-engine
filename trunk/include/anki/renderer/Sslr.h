@@ -28,6 +28,7 @@ private:
 	// 1st pass
 	ProgramResourcePointer m_reflectionFrag;
 	GlProgramPipelineHandle m_reflectionPpline;
+	GlSamplerHandle m_depthMapSampler;
 
 	// 2nd pass: blit
 	ProgramResourcePointer m_blitFrag;

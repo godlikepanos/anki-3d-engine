@@ -211,10 +211,7 @@ static void cullPoints(I n, F32 p[], I m, I i0, I iret[])
 			a -= 2.0 * getPi<F32>();
 		}
 
-		F32 maxdiff = 1e9, diff;
-#if ANKI_DEBUG == 1
-		*iret = i0;			// iret is not allowed to keep this value
-#endif
+		F32 maxdiff = MAX_F32, diff;
 		for(i = 0; i < n; i++) 
 		{
 			if(avail[i]) 
@@ -234,7 +231,7 @@ static void cullPoints(I n, F32 p[], I m, I i0, I iret[])
 			}
 		}
 
-		ANKI_ASSERT(*iret != i0);
+		ANKI_ASSERT(maxdiff != MAX_F32);
 		avail[*iret] = 0;
 		iret++;
 	}
