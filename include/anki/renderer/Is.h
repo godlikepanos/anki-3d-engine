@@ -33,11 +33,6 @@ class Is: private RenderingPass
 public:
 	/// @privatesection
 	/// @{
-	const GlTextureHandle& _getRt() const
-	{
-		return m_rt;
-	}
-
 	GlTextureHandle& _getRt()
 	{
 		return m_rt;
@@ -52,14 +47,6 @@ private:
 		SPOT_LIGHTS_BLOCK_BINDING = 2,
 		SPOT_TEX_LIGHTS_BLOCK_BINDING = 3,
 		TILES_BLOCK_BINDING = 4
-	};
-
-	enum
-	{
-		MS_RT0_TEX_UNIT = 0,
-		MS_RT1_TEX_UNIT = 1,
-		MS_DEPTH_RT_TEX_UNIT = 2,
-		SM_ARRAY_TEX_UNIT = 3
 	};
 
 	/// The IS render target

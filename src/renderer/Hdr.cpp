@@ -142,8 +142,7 @@ void Hdr::run(GlJobChainHandle& jobs)
 	{
 		if(i == 0)
 		{
-			m_vblurRt.bind(jobs, 1); // H pass input
-			m_hblurRt.bind(jobs, 0); // V pass input
+			jobs.bindTextures(0, {m_hblurRt, m_vblurRt});
 		}
 
 		// hpass

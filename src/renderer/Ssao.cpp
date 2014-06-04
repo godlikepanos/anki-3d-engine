@@ -238,9 +238,11 @@ void Ssao::run(GlJobChainHandle& jobs)
 	m_ssaoPpline.bind(jobs);
 
 	m_uniformsBuff.bindShaderBuffer(jobs, 0);
-	m_r->getMs()._getSmallDepthRt().bind(jobs, 0); // Depth
-	m_r->getMs()._getRt1().bind(jobs, 1); // Normals
-	m_noiseTex.bind(jobs, 2);
+
+	jobs.bindTextures(0, {
+		m_r->getMs()._getSmallDepthRt(),
+		m_r->getMs()._getRt1(),
+		m_noiseTex});
 
 	// Write common block
 	if(m_commonUboUpdateTimestamp 
@@ -271,8 +273,7 @@ void Ssao::run(GlJobChainHandle& jobs)
 	{
 		if(i == 0)
 		{
-			m_vblurRt.bind(jobs, 1); // H pass input
-			m_hblurRt.bind(jobs, 0); // V pass input
+			jobs.bindTextures(0, {m_hblurRt, m_vblurRt});
 		}
 
 		// hpass

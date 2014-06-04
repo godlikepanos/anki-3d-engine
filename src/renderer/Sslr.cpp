@@ -83,10 +83,13 @@ void Sslr::run(GlJobChainHandle& jobs)
 	jobs.setViewport(0, 0, m_width, m_height);
 
 	m_reflectionPpline.bind(jobs);
-	m_r->getIs()._getRt().bind(jobs, 0);
-	m_r->getMs()._getSmallDepthRt().bind(jobs, 1);
+
+	jobs.bindTextures(0	, {
+		m_r->getIs()._getRt(), // 0 
+		m_r->getMs()._getSmallDepthRt(), // 1
+		m_r->getMs()._getRt1()}); // 2
+
 	m_depthMapSampler.bind(jobs, 1);
-	m_r->getMs()._getRt1().bind(jobs, 2);
 	m_r->getPps().getSsao().m_uniformsBuff.bindShaderBuffer(jobs, 0);
 
 	m_r->drawQuad(jobs);

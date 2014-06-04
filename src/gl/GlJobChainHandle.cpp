@@ -2,6 +2,10 @@
 #include "anki/gl/GlManager.h"
 #include "anki/gl/GlSyncHandles.h"
 #include "anki/gl/GlFramebuffer.h"
+#include "anki/gl/GlTextureHandle.h"
+#include "anki/gl/GlTexture.h"
+#include "anki/util/Vector.h"
+#include <utility>
 
 namespace anki {
 
@@ -377,6 +381,50 @@ void GlJobChainHandle::setPolygonOffset(F32 factor, F32 units)
 void GlJobChainHandle::enablePolygonOffset(Bool enable)
 {
 	ANKI_STATE_JOB_ENABLE(GL_POLYGON_OFFSET_FILL, enable);
+}
+
+//==============================================================================
+void GlJobChainHandle::bindTextures(U32 first, 
+	const std::initializer_list<GlTextureHandle>& textures)
+{
+	using Vec = Vector<GlTextureHandle, GlJobChainAllocator<GlTextureHandle>>;
+		
+	class Job: public GlJob
+	{
+	public:
+		Vec m_texes;
+		U32 m_first;
+
+		Job(Vec& texes, U32 first)
+			: m_first(first)
+		{
+			m_texes = std::move(texes);
+		}
+
+		void operator()(GlJobChain* jobs)
+		{
+			Array<GLuint, 16> names;
+
+			U count = 0;
+			for(GlTextureHandle& t : m_texes)
+			{
+				names[count++] = t._get().getGlName();
+			}
+
+			ANKI_ASSERT(count > 0);
+			glBindTextures(m_first, count, &names[0]);
+		}
+	};
+
+	Vec texes(_getAllocator());
+	texes.reserve(textures.size());
+
+	for(const GlTextureHandle& t : textures)
+	{
+		texes.push_back(t);
+	}
+
+	_pushBackNewJob<Job>(texes, first);
 }
 
 } // end namespace anki

@@ -152,8 +152,9 @@ void Lf::run(GlJobChainHandle& jobs)
 
 	m_pseudoPpline.bind(jobs);
 
-	m_r->getPps().getHdr()._getRt().bind(jobs, 0);
-	m_lensDirtTex->getGlTexture().bind(jobs, 1);
+	jobs.bindTextures(0, {
+		m_r->getPps().getHdr()._getRt(), 
+		m_lensDirtTex->getGlTexture()});
 
 	m_r->drawQuad(jobs);
 
