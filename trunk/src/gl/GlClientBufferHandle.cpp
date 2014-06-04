@@ -2,6 +2,7 @@
 #include "anki/gl/GlClientBuffer.h"
 #include "anki/gl/GlJobChainHandle.h"
 #include "anki/gl/GlManager.h"
+#include "anki/core/Counters.h"
 
 namespace anki {
 
@@ -37,6 +38,8 @@ GlClientBufferHandle::GlClientBufferHandle(
 			Deleter(),
 			alloc, 
 			size);
+
+		ANKI_COUNTER_INC(GL_CLIENT_BUFFERS_SIZE, U64(size));
 	}
 }
 
@@ -57,3 +60,4 @@ PtrSize GlClientBufferHandle::getSize() const
 }
 
 } // end namespace anki
+

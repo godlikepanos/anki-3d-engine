@@ -3,6 +3,7 @@
 #include "anki/gl/GlManager.h"
 #include "anki/gl/GlError.h"
 #include "anki/core/Logger.h"
+#include "anki/core/Counters.h"
 #include <cstring>
 
 namespace anki {
@@ -98,6 +99,9 @@ GlJobChainInitHints GlJobChain::computeInitHints() const
 {
 	GlJobChainInitHints out;
 	out.m_chunkSize = m_alloc.getMemoryPool().getAllocatedSize() + 16;
+
+	ANKI_COUNTER_INC(GL_JOB_CHAINS_SIZE, 
+		U64(m_alloc.getMemoryPool().getAllocatedSize()));
 
 	return out;
 }

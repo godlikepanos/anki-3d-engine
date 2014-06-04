@@ -8,6 +8,7 @@ namespace anki {
 
 // Forward
 class GlManager;
+class GlTextureHandle;
 
 /// @addtogroup opengl_other
 /// @{
@@ -123,6 +124,10 @@ public:
 
 	/// Enable/disable polygon offset
 	void enablePolygonOffset(Bool enable);
+
+	/// Bind many textures
+	void bindTextures(U32 first, 
+		const std::initializer_list<GlTextureHandle>& textures);
 	/// @}
 
 	/// @privatesection
