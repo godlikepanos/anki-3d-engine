@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 #include "anki/math/CommonSrc.h"
 
 namespace anki {
@@ -145,6 +150,7 @@ inline TMat4<F32> TMat4<F32>::Base::operator*(const TMat4<F32>& b) const
 {
 	TMat4<F32> out;
 	const TMat4<F32>& m = *static_cast<const TMat4<F32>*>(this);
+
 	for(U i = 0; i < 4; i++)
 	{
 		__m128 t1, t2;
@@ -160,6 +166,7 @@ inline TMat4<F32> TMat4<F32>::Base::operator*(const TMat4<F32>& b) const
 
 		out.m_simd[i] = t2;
 	}
+
 	return out;
 }
 

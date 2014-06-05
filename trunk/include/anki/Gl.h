@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 /// @file
 /// This file contains the public OpenGL headers and all the GL classes that
 /// the rest of AnKi should use

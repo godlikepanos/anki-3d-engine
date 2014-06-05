@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 #include "tests/framework/Framework.h"
 #include "anki/Math.h"
 
@@ -349,6 +354,30 @@ ANKI_TEST(Math, Mat4)
 		Vec4 v(0.0, 1.0, 2.0, 3.0);
 
 		ANKI_TEST_EXPECT_EQ(m * v, Vec4(20, 44, 68, 92));
+	}
+}
+
+ANKI_TEST(Math, Mat3x4)
+{
+	commonMatTests<Mat3x4, Vec4, Vec3>();
+
+	// combine transforms
+	{
+		Mat3x4 a = getNonEmptyMat<Mat3x4>(0);
+		Mat3x4 b = getNonEmptyMat<Mat3x4>(1);
+		Mat3x4 c = a.combineTransformations(b);
+		Mat3x4 d = Mat3x4(23.000, 26.000, 29.000, 35.000,
+			83.000, 98.000, 113.000, 135.000,
+			143.000, 170.000, 197.000, 235.000);
+		ANKI_TEST_EXPECT_EQ(c, d);
+	}
+
+	// mat*vec
+	{
+		Mat3x4 m = getNonEmptyMat<Mat3x4>(1.0);
+		Vec4 v(0.0, 1.0, 2.0, 3.0);
+
+		ANKI_TEST_EXPECT_EQ(m * v, Vec3(20, 44, 68));
 	}
 }
 

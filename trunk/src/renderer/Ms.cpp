@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 #include "anki/renderer/Ms.h"
 #include "anki/renderer/Ez.h"
 #include "anki/renderer/Renderer.h"
@@ -53,8 +58,8 @@ void Ms::init(const RendererInitializer& initializer)
 		// Init small depth 
 		{
 			m_r->createRenderTarget(
-				getAlignedRoundUp(16, m_r->getWidth() / 3) , 
-				getAlignedRoundUp(16, m_r->getHeight() / 3),
+				getAlignedRoundDown(16, m_r->getWidth() / 3) , 
+				getAlignedRoundDown(16, m_r->getHeight() / 3),
 				GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
 				GL_UNSIGNED_INT, 1, m_smallDepthRt);
 

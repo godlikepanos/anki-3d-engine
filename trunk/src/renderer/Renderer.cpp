@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 #include "anki/renderer/Renderer.h"
 #include "anki/util/Exception.h"
 #include "anki/scene/Camera.h"
@@ -101,9 +106,7 @@ void Renderer::init(const RendererInitializer& initializer)
 {
 	// Set from the initializer
 	m_width = initializer.get("width");
-	alignRoundUp(16, m_width);
 	m_height = initializer.get("height");
-	alignRoundUp(16, m_height);
 	m_lodDistance = initializer.get("lodDistance");
 	m_framesNum = 0;
 	m_samples = initializer.get("samples");
@@ -272,8 +275,11 @@ void Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 {
 	// Not very important but keep the resulution of render targets aligned to
 	// 16
-	ANKI_ASSERT(isAligned(16, w));
-	ANKI_ASSERT(isAligned(16, h));
+	if(0)
+	{
+		ANKI_ASSERT(isAligned(16, w));
+		ANKI_ASSERT(isAligned(16, h));
+	}
 
 	GlTextureHandle::Initializer init;
 

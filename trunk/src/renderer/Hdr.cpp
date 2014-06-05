@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Renderer.h"
 #include <sstream>
@@ -38,9 +43,9 @@ void Hdr::initInternal(const RendererInitializer& initializer)
 	const F32 renderingQuality = initializer.get("pps.hdr.renderingQuality");
 
 	m_width = renderingQuality * (F32)m_r->getWidth();
-	alignRoundUp(16, m_width);
+	alignRoundDown(16, m_width);
 	m_height = renderingQuality * (F32)m_r->getHeight();
-	alignRoundUp(16, m_height);
+	alignRoundDown(16, m_height);
 
 	m_exposure = initializer.get("pps.hdr.exposure");
 	m_blurringDist = initializer.get("pps.hdr.blurringDist");

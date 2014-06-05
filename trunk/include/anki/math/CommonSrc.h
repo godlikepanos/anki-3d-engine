@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 #include "anki/math/Vec2.h"
 #include "anki/math/Vec3.h"
 #include "anki/math/Vec4.h"

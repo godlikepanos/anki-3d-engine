@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 #include "anki/renderer/MainRenderer.h"
 #include "anki/core/Logger.h"
 #include "anki/renderer/Deformer.h"
@@ -5,8 +10,6 @@
 #include "anki/core/Counters.h"
 #include <cstdlib>
 #include <cstdio>
-
-#define glewGetContext() (&glContext)
 
 namespace anki {
 
