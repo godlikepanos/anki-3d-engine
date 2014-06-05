@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 /// @file
 /// Contains misc functions
 
@@ -27,40 +32,6 @@ extern F64 randRange(F64 min, F64 max);
 
 extern F32 randFloat(F32 max);
 
-/// Get align number
-/// @param alignment The bytes of alignment
-/// @param value The value to align
-template<typename Type>
-Type getAlignedRoundUp(PtrSize alignment, Type value)
-{
-	PtrSize v = (PtrSize)value;
-	v = (v + alignment - 1) & ~(alignment - 1);
-	return (Type)v;
-}
-
-/// Align number
-/// @param alignment The bytes of alignment
-/// @param value The value to align
-template<typename Type>
-void alignRoundUp(PtrSize alignment, Type& value)
-{
-	value = getAlignedRoundUp(alignment, value);
-}
-
-/// Check if a number is aligned
-template<typename Type>
-bool isAligned(PtrSize alignment, Type value)
-{
-	return ((PtrSize)value % alignment) == 0;
-}
-
-/// Get the size in bytes of a vector
-template<typename Vec>
-inline PtrSize getVectorSizeInBytes(const Vec& v)
-{
-	return v.size() * sizeof(typename Vec::value_type);
-}
-
 /// Check if a number os a power of 2
 template<typename Int>
 inline Bool isPowerOfTwo(Int x)
@@ -78,6 +49,62 @@ template<typename Int>
 inline Int nextPowerOfTwo(Int x)
 {
 	return pow(2, ceil(log(x) / log(2)));
+}
+
+/// Get align number
+/// @param alignment The bytes of alignment
+/// @param value The value to align
+template<typename Type>
+inline Type getAlignedRoundUp(PtrSize alignment, Type value)
+{
+	ANKI_ASSERT(isPowerOfTwo(alignment));
+	PtrSize v = (PtrSize)value;
+	v = (v + alignment - 1) & ~(alignment - 1);
+	return (Type)v;
+}
+
+/// Align number
+/// @param alignment The bytes of alignment
+/// @param value The value to align
+template<typename Type>
+inline void alignRoundUp(PtrSize alignment, Type& value)
+{
+	value = getAlignedRoundUp(alignment, value);
+}
+
+/// Get align number
+/// @param alignment The bytes of alignment
+/// @param value The value to align
+template<typename Type>
+inline Type getAlignedRoundDown(PtrSize alignment, Type value)
+{
+	ANKI_ASSERT(isPowerOfTwo(alignment));
+	PtrSize v = (PtrSize)value;
+	v &= ~(alignment - 1);
+	return (Type)v;
+}
+
+/// Align number
+/// @param alignment The bytes of alignment
+/// @param value The value to align
+template<typename Type>
+inline void alignRoundDown(PtrSize alignment, Type& value)
+{
+	value = getAlignedRoundDown(alignment, value);
+}
+
+/// Check if a number is aligned
+template<typename Type>
+inline Bool isAligned(PtrSize alignment, Type value)
+{
+	return ((PtrSize)value % alignment) == 0;
+}
+
+/// Get the size in bytes of a vector
+template<typename Vec>
+inline PtrSize getVectorSizeInBytes(const Vec& v)
+{
+	return v.size() * sizeof(typename Vec::value_type);
 }
 
 /// Delete a pointer properly 

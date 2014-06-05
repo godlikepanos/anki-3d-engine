@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 #ifndef ANKI_MATH_MAT3X4_H
 #define ANKI_MATH_MAT3X4_H
 
@@ -27,7 +32,7 @@ public:
 };
 #endif
 
-/// 3x4 Matrix. Mainly used for rotations. It includes many helpful member
+/// 3x4 Matrix. Mainly used for transformations. It includes many helpful member
 /// functions. Its row major. The columns are the x,y,z axis
 template<typename T>
 class alignas(16) TMat3x4: public TMat<T, 3, 4, typename TMat3x4Simd<T>::Type, 
@@ -41,6 +46,10 @@ public:
 
 	/// @name Constructors
 	/// @{
+	explicit TMat3x4()
+		: Base()
+	{}
+
 	explicit TMat3x4(const TMat3<T>& m3)
 	{
 		TMat3x4& m = *this;
@@ -56,6 +65,41 @@ public:
 		m(2, 1) = m3(2, 1);
 		m(2, 2) = m3(2, 2);
 		m(2, 3) = 0.0;
+	}
+
+	explicit TMat3x4(const TMat4<T>& m3)
+	{
+		TMat3x4& m = *this;
+		m(0, 0) = m3(0, 0);
+		m(0, 1) = m3(0, 1);
+		m(0, 2) = m3(0, 2);
+		m(0, 3) = m3(0, 3);
+		m(1, 0) = m3(1, 0);
+		m(1, 1) = m3(1, 1);
+		m(1, 2) = m3(1, 2);
+		m(1, 3) = m3(1, 3);
+		m(2, 0) = m3(2, 0);
+		m(2, 1) = m3(2, 1);
+		m(2, 2) = m3(2, 2);
+		m(2, 3) = m3(2, 3);
+	}
+
+	explicit TMat3x4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, 
+		T m20, T m21, T m22, T m23)
+	{
+		TMat3x4& m = *this;
+		m(0, 0) = m00;
+		m(0, 1) = m01;
+		m(0, 2) = m02;
+		m(0, 3) = m03;
+		m(1, 0) = m10;
+		m(1, 1) = m11;
+		m(1, 2) = m12;
+		m(1, 3) = m13;
+		m(2, 0) = m20;
+		m(2, 1) = m21;
+		m(2, 2) = m22;
+		m(2, 3) = m23;
 	}
 
 	explicit TMat3x4(const TVec3<T>& v)
@@ -103,6 +147,49 @@ public:
 
 	/// @name Other
 	/// @{
+
+	/// Create a new matrix that is equivalent to Mat4(this)*Mat4(b)
+	TMat3x4 combineTransformations(const TMat3x4& b) const
+	{
+		const TMat3x4& a = *static_cast<const TMat3x4*>(this);
+		TMat3x4 c;
+
+		c(0, 0) = 
+			a(0, 0) * b(0, 0) + a(0, 1) * b(1, 0) + a(0, 2) * b(2, 0);
+		c(0, 1) = 
+			a(0, 0) * b(0, 1) + a(0, 1) * b(1, 1) + a(0, 2) * b(2, 1);
+		c(0, 2) = 
+			a(0, 0) * b(0, 2) + a(0, 1) * b(1, 2) + a(0, 2) * b(2, 2);
+		c(1, 0) = 
+			a(1, 0) * b(0, 0) + a(1, 1) * b(1, 0) + a(1, 2) * b(2, 0);
+		c(1, 1) = 
+			a(1, 0) * b(0, 1) + a(1, 1) * b(1, 1) + a(1, 2) * b(2, 1);
+		c(1, 2) = 
+			a(1, 0) * b(0, 2) + a(1, 1) * b(1, 2) + a(1, 2) * b(2, 2);
+		c(2, 0) =
+			a(2, 0) * b(0, 0) + a(2, 1) * b(1, 0) + a(2, 2) * b(2, 0);
+		c(2, 1) = 
+			a(2, 0) * b(0, 1) + a(2, 1) * b(1, 1) + a(2, 2) * b(2, 1);
+		c(2, 2) =
+			a(2, 0) * b(0, 2) + a(2, 1) * b(1, 2) + a(2, 2) * b(2, 2);
+
+		c(0, 3) = a(0, 0) * b(0, 3) + a(0, 1) * b(1, 3) 
+			+ a(0, 2) * b(2, 3) + a(0, 3);
+
+		c(1, 3) = a(1, 0) * b(0, 3) + a(1, 1) * b(1, 3) 
+			+ a(1, 2) * b(2, 3) + a(1, 3);
+
+		c(2, 3) = a(2, 0) * b(0, 3) + a(2, 1) * b(1, 3) 
+			+ a(2, 2) * b(2, 3) + a(2, 3);
+
+		return c;
+	}
+
+	void transform(const TMat3x4& b)
+	{
+		*this = combineTransformations(b);
+	}
+
 	void setIdentity()
 	{
 		(*this) = getIdentity();
@@ -119,8 +206,35 @@ public:
 	/// @}	
 };
 
+#if ANKI_SIMD == ANKI_SIMD_SSE
+
+// Forward declare specializations
+
+template<>
+TMat3x4<F32>::Base::TMat(const TMat3x4<F32>::Base& b);
+
+template<>
+TMat3x4<F32>::Base::TMat(const F32 f);
+
+template<>
+inline TVec3<F32> TMat3x4<F32>::Base::operator*(const TVec4<F32>& b) const;
+
+template<>
+TMat3x4<F32> TMat3x4<F32>::combineTransformations(const TMat3x4<F32>& b) const;
+
+#elif ANKI_SIMD == ANKI_SIMD_NEON
+
+#	error "TODO"
+
+#endif
+
+/// F32 4x4 matrix
+typedef TMat3x4<F32> Mat3x4;
+static_assert(sizeof(Mat3x4) == sizeof(F32) * 3 * 4, "Incorrect size");
 /// @}
 
 } // end namespace anki
+
+#include "anki/math/Mat3x4.inl.h"
 
 #endif

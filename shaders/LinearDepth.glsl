@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 // convert to linear depth
 
 float linearizeDepth(in float depth, in float zNear, in float zFar)

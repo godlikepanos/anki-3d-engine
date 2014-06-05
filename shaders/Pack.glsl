@@ -1,3 +1,8 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
 /// Pack 3D normal to 2D vector
 /// See the clean code in comments in revision < r467
 vec2 packNormal(in vec3 normal)
