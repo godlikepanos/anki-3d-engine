@@ -14,15 +14,21 @@
 namespace anki {
 
 //==============================================================================
+MainRenderer::MainRenderer(const ConfigSet& initializer)
+{
+	init(initializer);
+}
+
+//==============================================================================
 MainRenderer::~MainRenderer()
 {}
 
 //==============================================================================
-void MainRenderer::init(const RendererInitializer& initializer_)
+void MainRenderer::init(const ConfigSet& initializer_)
 {
 	ANKI_LOGI("Initializing main renderer...");
 
-	RendererInitializer initializer = initializer_;
+	ConfigSet initializer = initializer_;
 	initializer.set("offscreen", false);
 	initializer.set("width", 
 		initializer.get("width") * initializer.get("renderingQuality"));

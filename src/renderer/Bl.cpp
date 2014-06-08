@@ -11,7 +11,7 @@ namespace anki {
 
 #if 0
 //==============================================================================
-void Bl::init(const RendererInitializer& initializer)
+void Bl::init(const ConfigSet& initializer)
 {
 	enabled = initializer.pps.bl.enabled;
 	blurringIterationsNum = initializer.pps.bl.blurringIterationsNum;

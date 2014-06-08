@@ -14,7 +14,7 @@
 namespace anki {
 
 //==============================================================================
-void Sm::init(const RendererInitializer& initializer)
+void Sm::init(const ConfigSet& initializer)
 {
 	m_enabled = initializer.get("is.sm.enabled");
 

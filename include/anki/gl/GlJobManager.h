@@ -26,7 +26,8 @@ class GlJobManager
 public:
 	/// @name Contructors/Destructor
 	/// @{
-	GlJobManager(GlManager* manager);
+	GlJobManager(GlManager* manager, 
+		AllocAlignedCallback alloc, void* allocUserData);
 
 	~GlJobManager();
 	/// @}
@@ -43,6 +44,16 @@ public:
 	{
 		ANKI_ASSERT(m_manager);
 		return *m_manager;
+	}
+
+	AllocAlignedCallback getAllocationCallback() const
+	{
+		return m_allocCb;
+	}
+
+	void* getAllocationCallbackUserData() const
+	{
+		return m_allocCbUserData;
 	}
 
 	GlState& getState()
@@ -86,6 +97,8 @@ public:
 
 private:
 	GlManager* m_manager = nullptr;
+	AllocAlignedCallback m_allocCb;
+	void* m_allocCbUserData;
 
 	Array<GlJobChainHandle, 32> m_queue; ///< Job queue
 	U64 m_tail; ///< Tail of queue

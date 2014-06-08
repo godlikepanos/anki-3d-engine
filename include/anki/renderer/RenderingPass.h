@@ -14,7 +14,6 @@
 namespace anki {
 
 class Renderer;
-class RendererInitializer;
 
 /// @addtogroup renderer
 /// @{

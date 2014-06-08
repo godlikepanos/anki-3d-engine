@@ -85,7 +85,7 @@ void Ssao::createFb(GlFramebufferHandle & fb, GlTextureHandle& rt)
 }
 
 //==============================================================================
-void Ssao::initInternal(const RendererInitializer& initializer)
+void Ssao::initInternal(const ConfigSet& initializer)
 {
 	m_enabled = initializer.get("pps.ssao.enabled");
 
@@ -216,7 +216,7 @@ void Ssao::initInternal(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Ssao::init(const RendererInitializer& initializer)
+void Ssao::init(const ConfigSet& initializer)
 {
 	try
 	{

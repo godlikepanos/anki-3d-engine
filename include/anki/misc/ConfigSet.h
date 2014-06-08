@@ -7,6 +7,7 @@
 #define ANKI_MISC_CONFIG_SET_H
 
 #include "anki/util/StdTypes.h"
+#include "anki/util/Exception.h"
 #include <unordered_map>
 
 namespace anki {

@@ -50,7 +50,7 @@ void TextureResource::loadInternal(const char* filename)
 	// Load image
 	Image* imgPtr = new Image;
 	Image& img = *imgPtr;
-	img.load(filename, MainRendererSingleton::get().getMaxTextureSize());
+	img.load(filename, ResourceManagerSingleton::get().getMaxTextureSize());
 	
 	// width + height
 	init.m_width = img.getSurface(0, 0).width;
@@ -171,8 +171,8 @@ void TextureResource::loadInternal(const char* filename)
 	init.m_repeat = true;
 
 	// anisotropyLevel
-	//init.anisotropyLevel = XXX;
-	printf("TODO\n");
+	init.m_anisotropyLevel = 
+		ResourceManagerSingleton::get().getTextureAnisotropy();
 
 	// genMipmaps
 	if(init.m_mipmapsCount == 1 || driverShouldGenMipmaps)

@@ -14,13 +14,13 @@ namespace anki {
 ///
 /// It looks like auto_ptr but the main difference is that when its out of scope
 /// it tries to unload the resource.
-template<typename Type, typename ResourceManagerSingleton>
+template<typename Type, typename TResourceManagerSingleton>
 class ResourcePointer
 {
 public:
 	typedef Type Value; ///< Resource type
-	typedef ResourcePointer<Value, ResourceManagerSingleton> Self;
-	typedef typename ResourceManagerSingleton::Value::Hook Hook;
+	typedef ResourcePointer<Value, TResourceManagerSingleton> Self;
+	typedef typename TResourceManagerSingleton::Value::Hook Hook;
 
 	/// Default constructor
 	ResourcePointer()
@@ -111,7 +111,7 @@ public:
 	{
 		ANKI_ASSERT(hook == nullptr);
 		ANKI_ASSERT(filename != nullptr);
-		hook = &ResourceManagerSingleton::get().load(filename);
+		hook = &TResourceManagerSingleton::get().load(filename);
 	}
 
 	Bool isLoaded() const
@@ -128,7 +128,7 @@ private:
 	{
 		if(hook != nullptr)
 		{
-			ResourceManagerSingleton::get().unload(*hook);
+			TResourceManagerSingleton::get().unload(*hook);
 			hook = nullptr;
 		}
 	}

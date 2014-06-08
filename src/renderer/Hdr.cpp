@@ -31,7 +31,7 @@ void Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 }
 
 //==============================================================================
-void Hdr::initInternal(const RendererInitializer& initializer)
+void Hdr::initInternal(const ConfigSet& initializer)
 {
 	m_enabled = initializer.get("pps.hdr.enabled");
 
@@ -106,7 +106,7 @@ void Hdr::initInternal(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Hdr::init(const RendererInitializer& initializer)
+void Hdr::init(const ConfigSet& initializer)
 {
 	try
 	{

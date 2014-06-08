@@ -108,10 +108,10 @@ private:
 	Pps(Renderer* r);
 	~Pps();
 
-	void init(const RendererInitializer& initializer);
+	void init(const ConfigSet& initializer);
 	void run(GlJobChainHandle& jobs);
 
-	void initInternal(const RendererInitializer& initializer);
+	void initInternal(const ConfigSet& initializer);
 };
 
 /// @}

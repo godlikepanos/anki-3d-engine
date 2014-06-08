@@ -44,7 +44,7 @@ public:
 	template<typename T>
 	using Allocator = HeapAllocator<T>;
 
-	LuaBinder();
+	LuaBinder(Allocator<U8>& alloc);
 	~LuaBinder();
 
 	/// @name Accessors
@@ -75,6 +75,9 @@ public:
 private:
 	Allocator<U8> m_alloc;
 	lua_State* m_l = nullptr;
+
+	static void* luaAllocCallback(
+		void* userData, void* ptr, PtrSize osize, PtrSize nsize);
 };
 
 /// Internal lua stuff

@@ -35,7 +35,8 @@ class SceneGraph
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	SceneGraph();
+	SceneGraph(AllocAlignedCallback allocCb, void* allocCbUserData);
+
 	~SceneGraph();
 	/// @}
 
@@ -47,78 +48,78 @@ public:
 	/// @note Return a copy
 	SceneAllocator<U8> getAllocator() const
 	{
-		return SceneAllocator<U8>(alloc);
+		return m_alloc;
 	}
 
 	/// @note Return a copy
-	SceneAllocator<U8> getFrameAllocator() const
+	SceneFrameAllocator<U8> getFrameAllocator() const
 	{
-		return SceneAllocator<U8>(frameAlloc);
+		return m_frameAlloc;
 	}
 
 	Vec4 getAmbientColor() const
 	{
-		return Vec4(ambientCol, 1.0);
+		return Vec4(m_ambientCol, 1.0);
 	}
 	void setAmbientColor(const Vec4& x)
 	{
-		ambientCol = x.xyz();
-		ambiendColorUpdateTimestamp = getGlobTimestamp();
+		m_ambientCol = x.xyz();
+		m_ambiendColorUpdateTimestamp = getGlobTimestamp();
 	}
 	U32 getAmbientColorUpdateTimestamp() const
 	{
-		return ambiendColorUpdateTimestamp;
+		return m_ambiendColorUpdateTimestamp;
 	}
 
 	Camera& getActiveCamera()
 	{
-		ANKI_ASSERT(mainCam != nullptr);
-		return *mainCam;
+		ANKI_ASSERT(m_mainCam != nullptr);
+		return *m_mainCam;
 	}
 	const Camera& getActiveCamera() const
 	{
-		return *mainCam;
+		return *m_mainCam;
 	}
 	void setActiveCamera(Camera* cam)
 	{
-		mainCam = cam;
-		activeCameraChangeTimestamp = getGlobTimestamp();
+		m_mainCam = cam;
+		m_activeCameraChangeTimestamp = getGlobTimestamp();
 	}
 	U32 getActiveCameraChangeTimestamp() const
 	{
-		return activeCameraChangeTimestamp;
+		return m_activeCameraChangeTimestamp;
 	}
 
 	U32 getSceneNodesCount() const
 	{
-		return nodes.size();
+		return m_nodes.size();
 	}
 
 	PhysicsWorld& getPhysics()
 	{
-		return physics;
+		return m_physics;
 	}
 	const PhysicsWorld& getPhysics() const
 	{
-		return physics;
+		return m_physics;
 	}
 
 	EventManager& getEventManager()
 	{
-		return events;
+		return m_events;
 	}
 	const EventManager& getEventManager() const
 	{
-		return events;
+		return m_events;
 	}
 
 	SectorGroup& getSectorGroup()
 	{
-		return sectorGroup;
+		return m_sectorGroup;
 	}
 	const SectorGroup& getSectorGroup() const
 	{
-		return sectorGroup;
+		return m_sectorGroup;
 	}
 	/// @}
 
@@ -131,7 +132,7 @@ public:
 	template<typename Func>
 	void iterateSceneNodes(Func func)
 	{
-		for(SceneNode* psn : nodes)
+		for(SceneNode* psn : m_nodes)
 		{
 			func(*psn);
 		}
@@ -141,8 +142,10 @@ public:
 	template<typename Func>
 	void iterateSceneNodes(PtrSize begin, PtrSize count, Func func)
 	{
-		ANKI_ASSERT(begin < nodes.size() && count <= nodes.size());
-		for(auto it = nodes.begin() + begin; it != nodes.begin() + count; it++)
+		ANKI_ASSERT(begin < m_nodes.size() && count <= m_nodes.size());
+		for(auto it = m_nodes.begin() + begin; 
+			it != m_nodes.begin() + count; 
+			it++)
 		{
 			func(*(*it));
 		}
@@ -153,7 +156,7 @@ public:
 	Node* newSceneNode(const char* name, Args&&... args)
 	{
 		Node* node;
-		SceneAllocator<Node> al = alloc;
+		SceneAllocator<Node> al = m_alloc;
 		node = al.template newInstance<Node>(
 			name, this, std::forward<Args>(args)...);
 		registerNode(node);
@@ -167,32 +170,32 @@ public:
 	}
 	void increaseObjectsMarkedForDeletion()
 	{
-		++objectsMarkedForDeletionCount;
+		++m_objectsMarkedForDeletionCount;
 	}
 	void decreaseObjectsMarkedForDeletion()
 	{
-		++objectsMarkedForDeletionCount;
+		++m_objectsMarkedForDeletionCount;
 	}
 
 private:
-	SceneAllocator<U8> alloc;
-	SceneAllocator<U8> frameAlloc;
+	SceneAllocator<U8> m_alloc;
+	SceneAllocator<U8> m_frameAlloc;
 
-	SceneVector<SceneNode*> nodes;
-	SceneDictionary<SceneNode*> dict;
+	SceneVector<SceneNode*> m_nodes;
+	SceneDictionary<SceneNode*> m_dict;
 
-	Vec3 ambientCol = Vec3(1.0); ///< The global ambient color
-	Timestamp ambiendColorUpdateTimestamp = getGlobTimestamp();
-	Camera* mainCam = nullptr;
-	Timestamp activeCameraChangeTimestamp = getGlobTimestamp();
+	Vec3 m_ambientCol = Vec3(1.0); ///< The global ambient color
+	Timestamp m_ambiendColorUpdateTimestamp = getGlobTimestamp();
+	Camera* m_mainCam = nullptr;
+	Timestamp m_activeCameraChangeTimestamp = getGlobTimestamp();
 
-	PhysicsWorld physics;
+	PhysicsWorld m_physics;
 
-	SectorGroup sectorGroup;
+	SectorGroup m_sectorGroup;
 
-	EventManager events;
+	EventManager m_events;
 
-	std::atomic<U32> objectsMarkedForDeletionCount;
+	std::atomic<U32> m_objectsMarkedForDeletionCount;
 
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);
@@ -202,7 +205,7 @@ private:
 	void deleteNodesMarkedForDeletion();
 };
 
-typedef Singleton<SceneGraph> SceneGraphSingleton;
+typedef SingletonInit<SceneGraph> SceneGraphSingleton;
 /// @}
 
 } // end namespace anki

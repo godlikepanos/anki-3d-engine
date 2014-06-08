@@ -54,8 +54,6 @@ static const Array<CounterInfo, (U)Counter::COUNT> cinfo = {{
 //==============================================================================
 CountersManager::CountersManager()
 {
-	HeapAllocator<U8> alloc(HeapMemoryPool(0));
-	
 	m_perframeValues.resize((U)Counter::COUNT, 0);
 	m_perrunValues.resize((U)Counter::COUNT, 0);
 	m_counterTimes.resize((U)Counter::COUNT, 0.0);

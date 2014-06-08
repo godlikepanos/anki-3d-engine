@@ -34,6 +34,8 @@ ANKI_RESOURCE_TYPEDEFS(Model, ModelResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(Skin, SkinResourcePointer)
 ANKI_RESOURCE_TYPEDEFS(DummyRsrc, DummyRsrcResourcePointer)
 
+#undef ANKI_RESOURCE_TYPEDEFS
+
 } // end namespace anki
 
 #endif

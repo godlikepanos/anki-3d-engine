@@ -7,6 +7,7 @@
 #define ANKI_COLLISION_H
 
 /// @defgroup collision Collision detection module
+/// @ingroup anki_public
 
 #include "anki/collision/Plane.h"
 #include "anki/collision/Sphere.h"

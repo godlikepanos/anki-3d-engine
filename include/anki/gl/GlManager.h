@@ -20,12 +20,16 @@ class GlManager
 {
 public:
 	/// @see GlJobManager::start
-	void init(
+	GlManager(
 		GlCallback makeCurrentCallback, void* context,
 		GlCallback swapBuffersCallback, void* swapBuffersCbData,
-		Bool registerDebugMessages);
+		Bool registerDebugMessages,
+		AllocAlignedCallback alloc, void* allocUserData);
 
-	void destroy();
+	~GlManager()
+	{
+		destroy();
+	}
 
 	/// Synchronize client and server
 	void syncClientServer();
@@ -55,12 +59,14 @@ public:
 	/// @}
 
 private:
-	std::unique_ptr<GlJobManager> m_jobManager;
+	GlJobManager* m_jobManager;
 	HeapAllocator<U8> m_alloc; ///< Keep it last to be deleted last
+
+	void destroy();
 };
 
 /// Singleton for common GL stuff
-typedef Singleton<GlManager> GlManagerSingleton;
+typedef SingletonInit<GlManager> GlManagerSingleton;
 
 /// @}
 

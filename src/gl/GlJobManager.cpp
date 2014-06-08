@@ -12,8 +12,11 @@
 namespace anki {
 
 //==============================================================================
-GlJobManager::GlJobManager(GlManager* manager)
+GlJobManager::GlJobManager(GlManager* manager, 
+	AllocAlignedCallback allocCb, void* allocCbUserData)
 	:	m_manager(manager), 
+		m_allocCb(allocCb),
+		m_allocCbUserData(allocCbUserData),
 		m_tail(0), 
 		m_head(0),
 		m_renderingThreadSignal(0)

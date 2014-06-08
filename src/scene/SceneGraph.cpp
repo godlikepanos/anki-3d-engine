@@ -79,20 +79,22 @@ struct UpdateSceneNodesJob: ThreadpoolTask
 //==============================================================================
 
 //==============================================================================
-SceneGraph::SceneGraph()
-	:	alloc(ANKI_SCENE_ALLOCATOR_SIZE),
-		frameAlloc(ANKI_SCENE_FRAME_ALLOCATOR_SIZE),
-		nodes(alloc),
-		dict(10, DictionaryHasher(), DictionaryEqual(), alloc),
-		physics(this),
-		sectorGroup(this),
-		events(this)
+SceneGraph::SceneGraph(AllocAlignedCallback allocCb, void* allocCbUserData)
+	:	m_alloc(StackMemoryPool(allocCb, allocCbUserData, 
+			ANKI_SCENE_ALLOCATOR_SIZE)),
+		m_frameAlloc(StackMemoryPool(allocCb, allocCbUserData, 
+			ANKI_SCENE_FRAME_ALLOCATOR_SIZE)),
+		m_nodes(m_alloc),
+		m_dict(10, DictionaryHasher(), DictionaryEqual(), m_alloc),
+		m_physics(this),
+		m_sectorGroup(this),
+		m_events(this)
 {
-	nodes.reserve(ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT);
+	m_nodes.reserve(ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT);
 
-	objectsMarkedForDeletionCount.store(0);
+	m_objectsMarkedForDeletionCount.store(0);
 
-	ambientCol = Vec3(0.0);
+	m_ambientCol = Vec3(0.0);
 }
 
 //==============================================================================
@@ -107,25 +109,26 @@ void SceneGraph::registerNode(SceneNode* node)
 	// Add to dict if it has name
 	if(node->getName())
 	{
-		if(dict.find(node->getName()) != dict.end())
+		if(m_dict.find(node->getName()) != m_dict.end())
 		{
 			throw ANKI_EXCEPTION("Node with the same name already exists");
 		}
 
-		dict[node->getName()] = node;
+		m_dict[node->getName()] = node;
 	}
 
 	// Add to vector
-	ANKI_ASSERT(std::find(nodes.begin(), nodes.end(), node) == nodes.end());
-	nodes.push_back(node);
+	ANKI_ASSERT(
+		std::find(m_nodes.begin(), m_nodes.end(), node) == m_nodes.end());
+	m_nodes.push_back(node);
 }
 
 //==============================================================================
 void SceneGraph::unregisterNode(SceneNode* node)
 {
 	// Remove from vector
-	auto it = nodes.begin();
-	for(; it != nodes.end(); it++)
+	auto it = m_nodes.begin();
+	for(; it != m_nodes.end(); it++)
 	{
 		if((*it) == node)
 		{
@@ -133,45 +136,45 @@ void SceneGraph::unregisterNode(SceneNode* node)
 		}
 	}
 	
-	ANKI_ASSERT(it != nodes.end());
-	nodes.erase(it);
+	ANKI_ASSERT(it != m_nodes.end());
+	m_nodes.erase(it);
 
 	// Remove from dict
 	if(node->getName())
 	{
-		auto it = dict.find(node->getName());
+		auto it = m_dict.find(node->getName());
 
-		ANKI_ASSERT(it != dict.end());
-		dict.erase(it);
+		ANKI_ASSERT(it != m_dict.end());
+		m_dict.erase(it);
 	}
 }
 
 //==============================================================================
 SceneNode& SceneGraph::findSceneNode(const char* name)
 {
-	ANKI_ASSERT(dict.find(name) != dict.end());
-	return *(dict.find(name))->second;
+	ANKI_ASSERT(m_dict.find(name) != m_dict.end());
+	return *(m_dict.find(name))->second;
 }
 
 //==============================================================================
 SceneNode* SceneGraph::tryFindSceneNode(const char* name)
 {
-	auto it = dict.find(name);
-	return (it == dict.end()) ? nullptr : it->second;
+	auto it = m_dict.find(name);
+	return (it == m_dict.end()) ? nullptr : it->second;
 }
 
 //==============================================================================
 void SceneGraph::deleteNodesMarkedForDeletion()
 {
-	SceneAllocator<SceneNode> al = alloc;
+	SceneAllocator<SceneNode> al = m_alloc;
 
 	/// Delete all nodes pending deletion. At this point all scene threads 
 	/// should have finished their tasks
-	while(objectsMarkedForDeletionCount > 0)
+	while(m_objectsMarkedForDeletionCount > 0)
 	{
 		// First gather the nodes that will be deleted
-		SceneFrameVector<decltype(nodes)::iterator> forDeletion;
-		for(auto it = nodes.begin(); it != nodes.end(); it++)
+		SceneFrameVector<decltype(m_nodes)::iterator> forDeletion;
+		for(auto it = m_nodes.begin(); it != m_nodes.end(); it++)
 		{
 			if((*it)->isMarkedForDeletion())
 			{
@@ -185,18 +188,18 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 			// Remove it
 			unregisterNode(*it);
 
-			alloc.deleteInstance(*it);
+			m_alloc.deleteInstance(*it);
 		}
 
 		// Do the same for events
-		events.deleteEventsMarkedForDeletion();
+		m_events.deleteEventsMarkedForDeletion();
 	}
 }
 
 //==============================================================================
 void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 {
-	ANKI_ASSERT(mainCam);
+	ANKI_ASSERT(m_mainCam);
 
 	ANKI_COUNTER_START_TIMER(SCENE_UPDATE_TIME);
 
@@ -205,7 +208,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	//
 
 	// Reset the framepool
-	frameAlloc.getMemoryPool().reset();
+	m_frameAlloc.getMemoryPool().reset();
 
 	// Delete nodes
 	deleteNodesMarkedForDeletion();
@@ -227,9 +230,9 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	(void)threadPool;
 
 	// XXX Do that in parallel
-	physics.update(prevUpdateTime, crntTime);
-	renderer.getTiler().updateTiles(*mainCam);
-	events.updateAllEvents(prevUpdateTime, crntTime);
+	m_physics.update(prevUpdateTime, crntTime);
+	renderer.getTiler().updateTiles(*m_mainCam);
+	m_events.updateAllEvents(prevUpdateTime, crntTime);
 
 	// Then the rest
 	Array<UpdateSceneNodesJob, Threadpool::MAX_THREADS> jobs2;
@@ -249,91 +252,13 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 
 	threadPool.waitForAllThreadsToFinish();
 
-	doVisibilityTests(*mainCam, *this, renderer);
+	doVisibilityTests(*m_mainCam, *this, renderer);
 
 	ANKI_COUNTER_STOP_TIMER_INC(SCENE_UPDATE_TIME);
 }
 
 //==============================================================================
 void SceneGraph::load(const char* filename)
-{
-	try
-	{
-		XmlDocument doc;
-		doc.loadFile(ANKI_R(filename));
-
-		XmlElement rootEl = doc.getChildElement("scene");
-
-		// Model nodes
-		//
-		XmlElement mdlNodeEl = rootEl.getChildElement("modelNode");
-
-		do
-		{
-			XmlElement el, el1;
-	
-			// <name>
-			el = mdlNodeEl.getChildElement("name");
-			std::string name = el.getText();
-
-			// <model>
-			el = mdlNodeEl.getChildElement("model");
-
-			// <instancesCount>
-			el1 = mdlNodeEl.getChildElementOptional("instancesCount");
-			U32 instancesCount = (el1) ? el1.getInt() : 1;
-
-			if(instancesCount > ANKI_GL_MAX_INSTANCES)
-			{
-				throw ANKI_EXCEPTION("Too many instances");
-			}
-
-			ModelNode* node = 
-				newSceneNode<ModelNode>(name.c_str(), el.getText());
-
-			// <transform>
-			el = mdlNodeEl.getChildElement("transform");
-			U i = 0;
-
-			do
-			{
-				if(i == 0)
-				{
-					node->setLocalTransform(Transform(el.getMat4()));
-				}
-				else
-				{
-					std::string instName = name + "_inst" 
-						+ std::to_string(i - 1);
-
-					InstanceNode* instance = 
-						newSceneNode<InstanceNode>(instName.c_str());
-
-					instance->setLocalTransform(Transform(el.getMat4()));
-
-					node->SceneNode::addChild(instance);
-				}
-
-				// Advance
-				el = el.getNextSiblingElement("transform");
-				++i;
-			}
-			while(el && i < instancesCount);
-
-			if(i != instancesCount)
-			{
-				throw ANKI_EXCEPTION("instancesCount does not match "
-					"with transform");
-			}
-
-			// Advance
-			mdlNodeEl = mdlNodeEl.getNextSiblingElement("modelNode");
-		} while(mdlNodeEl);
-	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Scene loading failed") << e;
-	}
-}
+{}
 
 } // end namespace anki

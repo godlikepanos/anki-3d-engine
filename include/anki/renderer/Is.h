@@ -113,11 +113,11 @@ private:
 	Is(Renderer* r);
 	~Is();
 
-	void init(const RendererInitializer& initializer);
+	void init(const ConfigSet& initializer);
 	void run(GlJobChainHandle& jobs);
 
 	/// Called by init
-	void initInternal(const RendererInitializer& initializer);
+	void initInternal(const ConfigSet& initializer);
 
 	/// Do the actual pass
 	void lightPass(GlJobChainHandle& jobs);

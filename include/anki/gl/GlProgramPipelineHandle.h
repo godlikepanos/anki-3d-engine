@@ -15,7 +15,7 @@ class GlJobChainHandle;
 class GlProgramPipeline;
 class GlProgramHandle;
 
-/// @addtogroup opengl_misc
+/// @addtogroup opengl_other
 /// @{
 
 /// Program pipeline handle

@@ -65,8 +65,6 @@ void App::init()
 //==============================================================================
 void App::initDirs()
 {
-	HeapAllocator<U8> alloc(HeapMemoryPool(0));
-
 #if ANKI_OS != ANKI_OS_ANDROID
 	// Settings path
 	settingsPath = String(getenv("HOME")) + "/.anki";

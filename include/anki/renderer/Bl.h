@@ -24,7 +24,7 @@ public:
 		: SwitchableRenderingPass(r)
 	{}
 
-	void init(const RendererInitializer& initializer);
+	void init(const ConfigSet& initializer);
 	void run();
 
 #if 0
