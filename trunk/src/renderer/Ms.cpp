@@ -45,7 +45,7 @@ void Ms::createRt(U32 index, U32 samples)
 }
 
 //==============================================================================
-void Ms::init(const RendererInitializer& initializer)
+void Ms::init(const ConfigSet& initializer)
 {
 	try
 	{

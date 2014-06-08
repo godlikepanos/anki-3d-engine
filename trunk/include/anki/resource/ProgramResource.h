@@ -10,7 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup Resource
+/// @addtogroup resource
 /// @{
 
 /// Shader program resource

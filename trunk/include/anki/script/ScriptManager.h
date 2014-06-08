@@ -15,16 +15,12 @@ namespace anki {
 class ScriptManager: public LuaBinder
 {
 public:
-	ScriptManager()
-	{
-		init();
-	}
+	ScriptManager(HeapAllocator<U8>& alloc);
 
-private:
-	void init();
+	~ScriptManager();
 };
 
-typedef Singleton<ScriptManager> ScriptManagerSingleton;
+typedef SingletonInit<ScriptManager> ScriptManagerSingleton;
 
 } // end namespace anki
 

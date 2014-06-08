@@ -14,7 +14,7 @@ namespace anki {
 // Forward
 class GlJobChainHandle;
 
-/// @addtogroup opengl_misc
+/// @addtogroup opengl_other
 /// @{
 
 /// Framebuffer handle

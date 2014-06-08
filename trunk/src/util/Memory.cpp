@@ -71,6 +71,32 @@ void freeAligned(void* ptr) throw()
 }
 
 //==============================================================================
+void* allocAligned(
+	void* userData, void* ptr, PtrSize size, PtrSize alignment) throw()
+{
+	(void)userData;
+	void* out;
+
+	if(ptr == nullptr)
+	{
+		// Allocate
+		ANKI_ASSERT(size > 0);
+		out = mallocAligned(size, alignment);
+	}
+	else
+	{
+		// Deallocate
+		ANKI_ASSERT(size == 0);
+		ANKI_ASSERT(alignment == 0);
+
+		freeAligned(ptr);
+		out = nullptr;
+	}
+
+	return out;
+}
+
+//==============================================================================
 // HeapMemoryPool                                                              =
 //==============================================================================
 
@@ -79,42 +105,84 @@ void freeAligned(void* ptr) throw()
 class HeapMemoryPool::Implementation: public NonCopyable
 {
 public:
-	std::atomic<U32> m_allocationsCount = {0};
+	std::atomic<U32> m_refcount;
+	std::atomic<U32> m_allocationsCount;
+	AllocAlignedCallback m_alloc;
+	void* m_allocUserData;
 };
 
 //==============================================================================
-HeapMemoryPool::HeapMemoryPool(I)
+HeapMemoryPool::HeapMemoryPool(
+	AllocAlignedCallback alloc, void* allocUserData)
 {
-	m_impl.reset(new Implementation);
+	ANKI_ASSERT(alloc != nullptr);
+
+	m_impl = (Implementation*)alloc(allocUserData, nullptr, 
+		sizeof(Implementation), alignof(Implementation));
+
+	m_impl->m_refcount = 1;
+	m_impl->m_allocationsCount = 0;
+	m_impl->m_alloc = alloc;
+	m_impl->m_allocUserData = allocUserData;
 }
 
 //==============================================================================
-HeapMemoryPool::~HeapMemoryPool()
-{}
+HeapMemoryPool& HeapMemoryPool::operator=(const HeapMemoryPool& other)
+{
+	clear();
+
+	if(other.m_impl)
+	{
+		m_impl = other.m_impl;
+		++m_impl->m_refcount;
+	}
+
+	return *this;
+}
+
+//==============================================================================
+void HeapMemoryPool::clear()
+{
+	if(m_impl)
+	{
+		U32 refcount = --m_impl->m_refcount;
+
+		if(refcount == 0)
+		{
+			auto alloc = m_impl->m_alloc;
+			auto ud = m_impl->m_allocUserData;
+			ANKI_ASSERT(alloc);
+
+			alloc(ud, m_impl, 0, 0);
+		}
+
+		m_impl = nullptr;
+	}
+}
 
 //==============================================================================
 void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment) throw()
 {
-	ANKI_ASSERT(m_impl.get() != nullptr);
+	ANKI_ASSERT(m_impl != nullptr);
 
 	++m_impl->m_allocationsCount;
-	return mallocAligned(size, alignment);
+	return m_impl->m_alloc(m_impl->m_allocUserData, nullptr, size, alignment);
 }
 
 //==============================================================================
 Bool HeapMemoryPool::free(void* ptr) throw()
 {
-	ANKI_ASSERT(m_impl.get() != nullptr);
+	ANKI_ASSERT(m_impl != nullptr);
 
 	--m_impl->m_allocationsCount;
-	freeAligned(ptr);
+	m_impl->m_alloc(m_impl->m_allocUserData, ptr, 0, 0);
 	return true;
 }
 
 //==============================================================================
 U32 HeapMemoryPool::getAllocationsCount() const
 {
-	ANKI_ASSERT(m_impl.get() != nullptr);
+	ANKI_ASSERT(m_impl != nullptr);
 
 	return m_impl->m_allocationsCount.load();
 }
@@ -138,6 +206,15 @@ public:
 	static_assert(alignof(MemoryBlockHeader) == 1, "Alignment error");
 	static_assert(sizeof(MemoryBlockHeader) == sizeof(U32), "Size error");
 
+	/// Refcount
+	std::atomic<U32> m_refcount = {1};
+
+	/// User allocation function
+	AllocAlignedCallback m_alloc;
+
+	/// User allocation function data
+	void* m_allocUserData;
+
 	/// Alignment of allocations
 	PtrSize m_alignmentBytes;
 
@@ -154,13 +231,18 @@ public:
 	std::atomic<U8*> m_top = {nullptr};
 
 	// Construct
-	Implementation(PtrSize size, PtrSize alignmentBytes)
-		:	m_alignmentBytes(alignmentBytes), 
+	Implementation(AllocAlignedCallback alloc, void* allocUserData,
+		PtrSize size, PtrSize alignmentBytes)
+		:	m_alloc(alloc),
+			m_allocUserData(allocUserData),
+			m_alignmentBytes(alignmentBytes), 
 			m_memsize(getAlignedRoundUp(alignmentBytes, size))
 	{
+		ANKI_ASSERT(m_alloc);
 		ANKI_ASSERT(m_memsize > 0);
 		ANKI_ASSERT(m_alignmentBytes > 0);
-		m_memory = (U8*)mallocAligned(m_memsize, m_alignmentBytes);
+		m_memory = (U8*)m_alloc(
+			m_allocUserData, nullptr, m_memsize, m_alignmentBytes);
 
 		if(m_memory != nullptr)
 		{
@@ -187,7 +269,7 @@ public:
 	{
 		if(m_memory != nullptr)
 		{
-			freeAligned(m_memory);
+			m_alloc(m_allocUserData, m_memory, 0, 0);
 		}
 	}
 
@@ -304,48 +386,92 @@ public:
 };
 
 //==============================================================================
-StackMemoryPool::StackMemoryPool(PtrSize size, PtrSize alignmentBytes)
+StackMemoryPool::StackMemoryPool(
+	AllocAlignedCallback alloc, void* allocUserData,
+	PtrSize size, PtrSize alignmentBytes)
 {
-	m_impl.reset(new Implementation(size, alignmentBytes));
+	m_impl = (Implementation*)alloc(allocUserData, nullptr, 
+		sizeof(Implementation), alignof(Implementation));
+	
+	::new((void*)m_impl) Implementation(
+		alloc, allocUserData, size, alignmentBytes);
 }
 
 //==============================================================================
-StackMemoryPool::~StackMemoryPool()
-{}
+StackMemoryPool& StackMemoryPool::operator=(const StackMemoryPool& other)
+{
+	clear();
+
+	if(other.m_impl)
+	{
+		m_impl = other.m_impl;
+		++m_impl->m_refcount;
+	}
+
+	return *this;
+}
+
+//==============================================================================
+void StackMemoryPool::clear()
+{
+	if(m_impl)
+	{
+		U32 refcount = --m_impl->m_refcount;
+
+		if(refcount == 0)
+		{
+			auto alloc = m_impl->m_alloc;
+			auto ud = m_impl->m_allocUserData;
+			ANKI_ASSERT(alloc);
+
+			m_impl->~Implementation();
+			alloc(ud, m_impl, 0, 0);
+		}
+
+		m_impl = nullptr;
+	}
+}
 
 //==============================================================================
 PtrSize StackMemoryPool::getTotalSize() const
 {
-	ANKI_ASSERT(m_impl.get() != nullptr);
+	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->getTotalSize();
 }
 
 //==============================================================================
 PtrSize StackMemoryPool::getAllocatedSize() const
 {
-	ANKI_ASSERT(m_impl.get() != nullptr);
+	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->getAllocatedSize();
 }
 
 //==============================================================================
 void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment) throw()
 {
-	ANKI_ASSERT(m_impl.get() != nullptr);
+	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->allocate(size, alignment);
 }
 
 //==============================================================================
 Bool StackMemoryPool::free(void* ptr) throw()
 {
-	ANKI_ASSERT(m_impl.get() != nullptr);
+	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->free(ptr);
 }
 
 //==============================================================================
 void StackMemoryPool::reset()
 {
-	ANKI_ASSERT(m_impl.get() != nullptr);
+	ANKI_ASSERT(m_impl != nullptr);
 	m_impl->reset();
+}
+
+//==============================================================================
+U32 StackMemoryPool::getUsersCount() const
+{
+	ANKI_ASSERT(m_impl != nullptr);
+	return m_impl->m_refcount.load();
 }
 
 //==============================================================================
@@ -362,24 +488,36 @@ public:
 	{
 	public:
 		StackMemoryPool::Implementation m_pool;
-		/// Used to identify if the chunk can be deleted
-		U32 m_allocationsCount; 
 
-		Chunk(PtrSize size, PtrSize alignmentBytes)
-			:	m_pool(size, alignmentBytes),
-				m_allocationsCount(0)
+		/// Used to identify if the chunk can be deleted
+		U32 m_allocationsCount = 0;
+
+		/// Next chunk in the list
+		Chunk* m_next = nullptr;
+
+		Chunk(AllocAlignedCallback alloc, void* allocUserData, 
+			PtrSize size, PtrSize alignmentBytes)
+			:	m_pool(alloc, allocUserData, size, alignmentBytes)
 		{}
 	};
+
+	/// Refcount
+	std::atomic<U32> m_refcount = {1};
+
+	/// User allocation function
+	AllocAlignedCallback m_alloc;
+
+	/// User allocation function data
+	void* m_allocUserData;
 
 	/// Alignment of allocations
 	PtrSize m_alignmentBytes;
 
-	/// A list of chunks
-	/// @note Use STL allocator to keep it out of the grid
-	Vector<Chunk*, std::allocator<Chunk*>> m_chunks;
+	/// The first chunk
+	Chunk* m_headChunk = nullptr;
 
 	/// Current chunk to allocate from
-	Chunk* m_crntChunk = nullptr;
+	Chunk* m_tailChunk = nullptr;
 
 	/// Fast thread locking
 	SpinLock m_lock;
@@ -398,17 +536,23 @@ public:
 
 	/// Construct
 	Implementation(
+		AllocAlignedCallback alloc, 
+		void* allocUserData,
 		PtrSize initialChunkSize,
 		PtrSize maxChunkSize,
 		ChunkAllocationStepMethod chunkAllocStepMethod, 
 		PtrSize chunkAllocStep, 
 		PtrSize alignmentBytes)
-		:	m_alignmentBytes(alignmentBytes), 
+		:	m_alloc(alloc),
+			m_allocUserData(allocUserData),
+			m_alignmentBytes(alignmentBytes), 
 			m_initSize(initialChunkSize),
 			m_maxSize(maxChunkSize),
 			m_step((U32)chunkAllocStep),
 			m_method(chunkAllocStepMethod)
 	{
+		ANKI_ASSERT(m_alloc);
+
 		// Initial size should be > 0
 		ANKI_ASSERT(m_initSize > 0);
 
@@ -434,10 +578,15 @@ public:
 	/// Destroy
 	~Implementation()
 	{
-		for(Chunk* ch : m_chunks)
+		Chunk* ch = m_headChunk;
+		while(ch)
 		{
-			ANKI_ASSERT(ch);
-			delete ch;
+			Chunk* next = ch->m_next;
+
+			ch->~Chunk();
+			m_alloc(m_allocUserData, ch, 0, 0);
+
+			ch = next;
 		}
 	}
 
@@ -457,10 +606,10 @@ public:
 		else
 		{
 			// Get the size of the previous max chunk
-			if(m_chunks.size() > 0)
+			if(m_tailChunk != nullptr)
 			{
 				// Get the size of previous
-				crntMaxSize = m_chunks.back()->m_pool.getTotalSize();
+				crntMaxSize = m_tailChunk->m_pool.getTotalSize();
 
 				// Increase it
 				if(m_method == MULTIPLY)
@@ -477,7 +626,7 @@ public:
 			{
 				// No chunks. Choose initial size
 
-				ANKI_ASSERT(m_crntChunk == nullptr);
+				ANKI_ASSERT(m_headChunk == nullptr);
 				crntMaxSize = m_initSize;
 			}
 
@@ -496,15 +645,27 @@ public:
 		//
 		// Create the chunk
 		//
-		Chunk* chunk = new Chunk(size, m_alignmentBytes);
+		Chunk* chunk = (Chunk*)m_alloc(
+			m_allocUserData, nullptr, sizeof(Chunk), alignof(Chunk));
 
 		if(chunk)
 		{
-			m_chunks.push_back(chunk);
-		}
-		else
-		{
-			throw ANKI_EXCEPTION("Chunk creation failed");
+			// Construct it
+			::new((void*)chunk) Chunk(
+				m_alloc, m_allocUserData, size, m_alignmentBytes);
+
+			// Register it
+			if(m_tailChunk)
+			{
+				m_tailChunk->m_next = chunk;
+				m_tailChunk = chunk;
+			}
+			else
+			{
+				ANKI_ASSERT(m_headChunk == nullptr);
+
+				m_headChunk = m_tailChunk = chunk;
+			}
 		}
 		
 		return chunk;
@@ -534,15 +695,14 @@ public:
 		m_lock.lock();
 
 		// Get chunk
-		ch = m_crntChunk;
+		ch = m_tailChunk;
 
 		// Create new chunk if needed
 		if(ch == nullptr 
 			|| (mem = allocateFromChunk(ch, size, alignment)) == nullptr)
 		{
 			// Create new chunk
-			m_crntChunk = createNewChunk(size);
-			ch = m_crntChunk;
+			ch = createNewChunk(size);
 
 			// Chunk creation failed
 			if(ch == nullptr)
@@ -568,52 +728,51 @@ public:
 		m_lock.lock();
 
 		// Get the chunk that ptr belongs to
-		decltype(m_chunks)::iterator it;
-		for(it = m_chunks.begin(); it != m_chunks.end(); it++)
+		Chunk* chunk = m_headChunk;
+		Chunk* prevChunk = nullptr;
+		while(chunk)
 		{
-			Chunk* ch = *it;
-			ANKI_ASSERT(ch);
-
-			const U8* from = (const U8*)ch->m_pool.getBaseAddress();
-			const U8* to = from + ch->m_pool.getTotalSize();
+			const U8* from = (const U8*)chunk->m_pool.getBaseAddress();
+			const U8* to = from + chunk->m_pool.getTotalSize();
 			const U8* cptr = (const U8*)ptr;
 			if(cptr >= from && cptr < to)
 			{
 				break;
 			}
+
+			prevChunk = chunk;
+			chunk = chunk->m_next;
 		}
 
-		ANKI_ASSERT(it != m_chunks.end() 
+		ANKI_ASSERT(chunk != nullptr 
 			&& "Not initialized or ptr is incorrect");
 
 		// Decrease the deallocation refcount and if it's zero delete the chunk
-		ANKI_ASSERT((*it)->m_allocationsCount > 0);
-		if(--(*it)->m_allocationsCount == 0)
+		ANKI_ASSERT(chunk->m_allocationsCount > 0);
+		if(--chunk->m_allocationsCount == 0)
 		{
 			// Chunk is empty. Delete it
 
-			Chunk* ch = *it;
-			ANKI_ASSERT(ch);
-			
-			delete ch;
-			m_chunks.erase(it);
-
-			// Change the crntChunk
-			ANKI_ASSERT(m_crntChunk);
-			if(ch == m_crntChunk)
+			if(prevChunk != nullptr)
 			{
-				// If there are chunks chose the last. It's probably full but
-				// let the allocate() create a new one
-				if(m_chunks.size() > 0)
-				{
-					m_crntChunk = m_chunks.back();
-					ANKI_ASSERT(m_crntChunk);
-				}
-				else
-				{
-					m_crntChunk = nullptr;
-				}
+				ANKI_ASSERT(m_headChunk != chunk);
+				prevChunk->m_next = chunk->m_next;
 			}
+
+			if(chunk == m_headChunk)
+			{
+				ANKI_ASSERT(prevChunk == nullptr);
+				m_headChunk = chunk->m_next;
+			}
+
+			if(chunk == m_tailChunk)
+			{
+				m_tailChunk = prevChunk;
+			}
+
+			// Finaly delete it
+			chunk->~Chunk();
+			m_alloc(m_allocUserData, chunk, 0, 0);
 		}
 
 		m_lock.unlock();
@@ -624,55 +783,116 @@ public:
 	PtrSize getAllocatedSize() const
 	{
 		PtrSize sum = 0;
-		for(Chunk* ch : m_chunks)
+		Chunk* ch = m_headChunk;
+		while(ch)
 		{
-			ANKI_ASSERT(ch);
 			sum += ch->m_pool.getAllocatedSize();
+			ch = ch->m_next;
 		}
 
 		return sum;
+	}
+
+	PtrSize getChunksCount() const
+	{
+		PtrSize count = 0;
+		Chunk* ch = m_headChunk;
+		while(ch)
+		{
+			++count;
+			ch = ch->m_next;
+		}
+
+		return count;
 	}
 };
 
 //==============================================================================
 ChainMemoryPool::ChainMemoryPool(
+	AllocAlignedCallback alloc, 
+	void* allocUserData,
 	PtrSize initialChunkSize,
 	PtrSize maxChunkSize,
 	ChunkAllocationStepMethod chunkAllocStepMethod, 
 	PtrSize chunkAllocStep, 
 	PtrSize alignmentBytes)
 {
-	m_impl.reset(new Implementation(
+	m_impl = (Implementation*)alloc(allocUserData, nullptr, 
+		sizeof(Implementation), alignof(Implementation));
+
+	::new((void*)m_impl) Implementation(
+		alloc, allocUserData,
 		initialChunkSize, maxChunkSize, chunkAllocStepMethod, chunkAllocStep,
-		alignmentBytes));
+		alignmentBytes);
 }
 
 //==============================================================================
-ChainMemoryPool::~ChainMemoryPool()
-{}
+ChainMemoryPool& ChainMemoryPool::operator=(const ChainMemoryPool& other)
+{
+	clear();
+
+	if(other.m_impl)
+	{
+		m_impl = other.m_impl;
+		++m_impl->m_refcount;
+	}
+
+	return *this;
+}
+
+//==============================================================================
+void ChainMemoryPool::clear()
+{
+	if(m_impl)
+	{
+		U32 refcount = --m_impl->m_refcount;
+
+		if(refcount == 0)
+		{
+			auto alloc = m_impl->m_alloc;
+			auto ud = m_impl->m_allocUserData;
+			ANKI_ASSERT(alloc);
+
+			alloc(ud, m_impl, 0, 0);
+		}
+
+		m_impl = nullptr;
+	}
+}
 
 //==============================================================================
 void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment) throw()
 {
+	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->allocate(size, alignment);
 }
 
 //==============================================================================
 Bool ChainMemoryPool::free(void* ptr) throw()
 {
+	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->free(ptr);
 }
 
 //==============================================================================
 PtrSize ChainMemoryPool::getChunksCount() const
 {
-	return m_impl->m_chunks.size();
+	ANKI_ASSERT(m_impl != nullptr);
+	return m_impl->getChunksCount();
 }
 
 //==============================================================================
 PtrSize ChainMemoryPool::getAllocatedSize() const
 {
+	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->getAllocatedSize();
+}
+
+//==============================================================================
+U32 ChainMemoryPool::getUsersCount() const
+{
+	ANKI_ASSERT(m_impl != nullptr);
+	return m_impl->m_refcount.load();
 }
 
 } // end namespace anki

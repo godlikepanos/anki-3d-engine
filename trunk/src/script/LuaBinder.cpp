@@ -7,6 +7,7 @@
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
 #include <iostream>
+#include <cstring>
 
 namespace anki {
 
@@ -63,11 +64,12 @@ static int luaPanic(lua_State* l)
 }
 
 //==============================================================================
-LuaBinder::LuaBinder()
+LuaBinder::LuaBinder(Allocator<U8>& alloc)
 {
-	m_alloc = Allocator<U8>(HeapMemoryPool(0));
+	m_alloc = alloc;
 
-	m_l = luaL_newstate();
+	m_l = lua_newstate(luaAllocCallback, this);
+	//m_l = luaL_newstate();
 	luaL_openlibs(m_l);
 	lua_atpanic(m_l, &luaPanic);
 	lua_setuserdata(m_l, this);
@@ -80,6 +82,47 @@ LuaBinder::~LuaBinder()
 
 	ANKI_ASSERT(m_alloc.getMemoryPool().getAllocationsCount() == 0 
 		&& "Leaking memory");
+}
+
+//==============================================================================
+void* LuaBinder::luaAllocCallback(
+	void* userData, void* ptr, PtrSize osize, PtrSize nsize)
+{
+	ANKI_ASSERT(userData);
+	
+	LuaBinder& binder = *(LuaBinder*)userData;
+	void* out = nullptr;
+
+	if(nsize == 0) 
+	{
+		if(ptr != nullptr)
+		{
+			binder.m_alloc.getMemoryPool().free(ptr);
+		}
+	}
+	else
+	{
+		// Should be doing something like realloc
+
+		if(ptr == nullptr)
+		{
+			out = binder.m_alloc.allocate(nsize);
+		}
+		else if(nsize <= osize)
+		{
+			out = ptr;
+		}
+		else
+		{
+			// realloc
+
+			out = binder.m_alloc.allocate(nsize);
+			std::memcpy(out, ptr, osize);
+			binder.m_alloc.getMemoryPool().free(ptr);
+		}
+	}
+
+	return out;
 }
 
 //==============================================================================

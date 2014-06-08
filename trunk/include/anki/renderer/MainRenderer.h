@@ -19,14 +19,9 @@ namespace anki {
 class MainRenderer: public Renderer
 {
 public:
-	MainRenderer()
-	{}
+	MainRenderer(const ConfigSet& initializer);
 
 	~MainRenderer();
-
-	/// The same as Renderer::init but with additional initialization.
-	/// @see Renderer::init
-	void init(const RendererInitializer& initializer);
 
 	void render(SceneGraph& scene);
 
@@ -43,11 +38,15 @@ private:
 	/// Optimize job chain
 	Array<GlJobChainInitHints, JOB_CHAINS_COUNT> m_jobsInitHints; 
 
+	/// The same as Renderer::init but with additional initialization.
+	/// @see Renderer::init
+	void init(const ConfigSet& initializer);
+
 	void takeScreenshotTga(const char* filename);
 	void initGl();
 };
 
-typedef Singleton<MainRenderer> MainRendererSingleton;
+typedef SingletonInit<MainRenderer> MainRendererSingleton;
 
 /// @}
 

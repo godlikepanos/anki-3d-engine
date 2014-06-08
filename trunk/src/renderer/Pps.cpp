@@ -26,7 +26,7 @@ Pps::~Pps()
 {}
 
 //==============================================================================
-void Pps::initInternal(const RendererInitializer& initializer)
+void Pps::initInternal(const ConfigSet& initializer)
 {
 	m_enabled = initializer.get("pps.enabled");
 	if(!m_enabled)
@@ -71,7 +71,7 @@ void Pps::initInternal(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Pps::init(const RendererInitializer& initializer)
+void Pps::init(const ConfigSet& initializer)
 {
 	try
 	{

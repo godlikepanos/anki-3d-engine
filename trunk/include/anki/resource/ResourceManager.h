@@ -10,15 +10,21 @@
 #include "anki/util/StdTypes.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/Functions.h"
-#include <string>
+#include "anki/util/String.h"
 
 namespace anki {
+
+// Forward
+class ConfigSet;
+
+/// @addtogroup resource
+/// @{
 
 /// Holds information about a resource
 template<typename Type>
 struct ResourceHook
 {
-	std::string uuid; ///< Unique identifier
+	String uuid; ///< Unique identifier
 	U32 referenceCounter = 0;
 	Type* resource = nullptr;
 
@@ -37,21 +43,33 @@ struct ResourceHook
 class ResourceManager
 {
 public:
-	ResourceManager();
+	ResourceManager(const ConfigSet& config);
 
-	const std::string& getDataPath() const
+	const String& getDataPath() const
 	{
-		return dataPath;
+		return m_dataPath;
 	}
 
-	std::string fixResourcePath(const char* filename) const;
+	U32 getMaxTextureSize() const
+	{
+		return m_maxTextureSize;
+	}
+
+	U32 getTextureAnisotropy() const
+	{
+		return m_textureAnisotropy;
+	}
+
+	String fixResourcePath(const char* filename) const;
 
 private:
-	std::string dataPath;
+	String m_dataPath;
+	U32 m_maxTextureSize;
+	U32 m_textureAnisotropy;
 };
 
 /// The singleton of resource manager
-typedef Singleton<ResourceManager> ResourceManagerSingleton;
+typedef SingletonInit<ResourceManager> ResourceManagerSingleton;
 
 /// Convenience macro to sanitize resources path
 #define ANKI_R(x_) \
@@ -97,6 +115,8 @@ protected:
 	///   Apparently the compiler is to dump to decide
 	virtual void deallocRsrc(Type* rsrc);
 };
+
+/// @}
 
 } // end namespace anki
 

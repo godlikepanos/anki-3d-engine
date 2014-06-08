@@ -20,6 +20,24 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes) throw();
 /// Free aligned memory
 void freeAligned(void* ptr) throw();
 
+/// The function signature of a memory allocation/deallocation. 
+/// See allocAligned function for the explanation of arguments
+using AllocAlignedCallback = void* (*)(void*, void*, PtrSize, PtrSize);
+
+/// This is a function that allocates and deallocates heap memory. 
+/// If the @a ptr is nullptr then it allocates using the @a size and 
+/// @a alignment. If the @a ptr is not nullptr it deallocates the memory and
+/// the @a size and @a alignment is ignored.
+///
+/// @param userData Used defined data
+/// @param ptr The pointer to deallocate or nullptr
+/// @param size The size to allocate or 0
+/// @param alignment The allocation alignment or 0
+/// @return On allocation mode it will return the newelly allocated block or
+///         nullptr on error. On deallocation mode returns nullptr
+void* allocAligned(
+	void* userData, void* ptr, PtrSize size, PtrSize alignment) throw();
+
 /// A dummy interface to match the StackMemoryPool and ChainMemoryPool 
 /// interfaces in order to be used by the same allocator template
 class HeapMemoryPool
@@ -32,29 +50,30 @@ public:
 	///       that pool will call that constructor and that happens a lot.
 	///       If that constructor does some actual job then we have a problem.
 	HeapMemoryPool()
+		: m_impl(nullptr)
 	{}
 
 	/// Copy constructor. It's not copying any data
 	HeapMemoryPool(const HeapMemoryPool& other)
+		: m_impl(nullptr)
 	{
 		*this = other;
 	}
 
 	/// The real constructor
-	/// @note The parameter is dummy and used to differentiate it from the 
-	///       default constructor
-	HeapMemoryPool(I);
+	/// @param alloc The allocation function callback
+	/// @param allocUserData The user data to pass to the allocation function
+	HeapMemoryPool(AllocAlignedCallback alloc, void* allocUserData);
 
 	/// Destroy
-	~HeapMemoryPool();
+	~HeapMemoryPool()
+	{
+		clear();
+	}
 
 	/// Copy. It will not copy any data, what it will do is add visibility of
 	/// other's pool to this instance as well
-	HeapMemoryPool& operator=(const HeapMemoryPool& other)
-	{
-		m_impl = other.m_impl;
-		return *this;
-	}
+	HeapMemoryPool& operator=(const HeapMemoryPool& other);
 
 	/// Allocate memory
 	void* allocate(PtrSize size, PtrSize alignment) throw();
@@ -71,7 +90,10 @@ private:
 	class Implementation;
 
 	/// The actual implementation
-	std::shared_ptr<Implementation> m_impl;
+	Implementation* m_impl;
+
+	/// Clear the pool
+	void clear();
 };
 
 /// Thread safe memory pool. It's a preallocated memory pool that is used for 
@@ -84,30 +106,35 @@ class StackMemoryPool
 public:
 	/// Default constructor
 	StackMemoryPool()
+		: m_impl(nullptr)
 	{}
 
 	/// Copy constructor. It's not copying any data
 	StackMemoryPool(const StackMemoryPool& other)
+		: m_impl(nullptr)
 	{
 		*this = other;
 	}
 
 	/// Constructor with parameters
+	/// @param alloc The allocation function callback
+	/// @param allocUserData The user data to pass to the allocation function
 	/// @param size The size of the pool
 	/// @param alignmentBytes The maximum supported alignment for returned
 	///                       memory
-	StackMemoryPool(PtrSize size, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
+	StackMemoryPool(
+		AllocAlignedCallback alloc, void* allocUserData,
+		PtrSize size, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Destroy
-	~StackMemoryPool();
+	~StackMemoryPool()
+	{
+		clear();
+	}
 
 	/// Copy. It will not copy any data, what it will do is add visibility of
 	/// other's pool to this instance as well
-	StackMemoryPool& operator=(const StackMemoryPool& other)
-	{
-		m_impl = other.m_impl;
-		return *this;
-	}
+	StackMemoryPool& operator=(const StackMemoryPool& other);
 
 	/// Allocate aligned memory. The operation is thread safe
 	/// @param size The size to allocate
@@ -132,10 +159,7 @@ public:
 	PtrSize getAllocatedSize() const;
 
 	/// Get the number of users for this pool
-	U32 getUsersCount() const
-	{
-		return m_impl.use_count();
-	}
+	U32 getUsersCount() const;
 
 private:
 	// Forward. Hide the implementation because Memory.h is the base of other
@@ -143,7 +167,10 @@ private:
 	class Implementation;
 
 	/// The actual implementation
-	std::shared_ptr<Implementation> m_impl;
+	Implementation* m_impl;
+
+	/// Clear the pool
+	void clear();
 };
 
 /// Chain memory pool. Almost similar to StackMemoryPool but more flexible and 
@@ -163,15 +190,19 @@ public:
 
 	/// Default constructor
 	ChainMemoryPool()
+		: m_impl(nullptr)
 	{}
 
 	/// Copy constructor. It's not copying any data
 	ChainMemoryPool(const ChainMemoryPool& other)
+		: m_impl(nullptr)
 	{
 		*this = other;
 	}
 
 	/// Constructor with parameters
+	/// @param alloc The allocation function callback
+	/// @param allocUserData The user data to pass to the allocation function
 	/// @param initialChunkSize The size of the first chunk
 	/// @param maxChunkSize The size of the chunks cannot exceed that number
 	/// @param chunkAllocStepMethod How new chunks grow compared to the old ones
@@ -180,6 +211,7 @@ public:
 	/// @param alignmentBytes The maximum supported alignment for returned
 	///                       memory
 	ChainMemoryPool(
+		AllocAlignedCallback alloc, void* allocUserData,
 		PtrSize initialChunkSize,
 		PtrSize maxChunkSize,
 		ChunkAllocationStepMethod chunkAllocStepMethod = MULTIPLY, 
@@ -187,15 +219,14 @@ public:
 		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Destroy
-	~ChainMemoryPool();
+	~ChainMemoryPool()
+	{
+		clear();
+	}
 
 	/// Copy. It will not copy any data, what it will do is add visibility of
 	/// other's pool to this instance as well
-	ChainMemoryPool& operator=(const ChainMemoryPool& other)
-	{
-		m_impl = other.m_impl;
-		return *this;
-	}
+	ChainMemoryPool& operator=(const ChainMemoryPool& other);
 
 	/// Allocate memory. This operation is thread safe
 	/// @param size The size to allocate
@@ -210,10 +241,7 @@ public:
 	Bool free(void* ptr) throw();
 
 	/// Get the number of users for this pool
-	U32 getUsersCount() const
-	{
-		return m_impl.use_count();
-	}
+	U32 getUsersCount() const;
 
 	/// @name Methods used for optimizing future chains
 	/// @{
@@ -228,7 +256,10 @@ private:
 	class Implementation;
 
 	/// The actual implementation
-	std::shared_ptr<Implementation> m_impl;
+	Implementation* m_impl;
+
+	/// Clear the pool
+	void clear();
 };
 
 /// @}

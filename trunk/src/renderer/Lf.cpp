@@ -55,7 +55,7 @@ Lf::~Lf()
 {}
 
 //==============================================================================
-void Lf::init(const RendererInitializer& initializer)
+void Lf::init(const ConfigSet& initializer)
 {
 	try
 	{
@@ -68,7 +68,7 @@ void Lf::init(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Lf::initInternal(const RendererInitializer& initializer)
+void Lf::initInternal(const ConfigSet& initializer)
 {
 	m_enabled = initializer.get("pps.lf.enabled") 
 		&& initializer.get("pps.hdr.enabled");

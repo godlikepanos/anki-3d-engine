@@ -28,14 +28,6 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// A struct to initialize the renderer. It contains a few extra params for
-/// the MainRenderer. Open Renderer.cpp to see all the options
-class RendererInitializer: public ConfigSet
-{
-public:
-	RendererInitializer();
-};
-
 /// Offscreen renderer. It is a class and not a namespace because we may need
 /// external renderers for security cameras for example
 class Renderer
@@ -46,6 +38,7 @@ public:
 	static const U32 JOB_CHAINS_COUNT = 2;
 		
 	Renderer();
+
 	~Renderer();
 
 	/// @name Accessors
@@ -174,11 +167,6 @@ public:
 		return m_renderingQuality;
 	}
 
-	U32 getMaxTextureSize() const
-	{
-		return m_maxTextureSize;
-	}
-
 	const UVec2& getTilesCount() const
 	{
 		return m_tilesCount;
@@ -203,7 +191,7 @@ public:
 
 	/// Init the renderer given an initialization class
 	/// @param initializer The initializer class
-	void init(const RendererInitializer& initializer);
+	void init(const ConfigSet& initializer);
 
 	/// This function does all the rendering stages and produces a final FAI
 	void render(SceneGraph& scene, 
@@ -260,7 +248,6 @@ private:
 	Bool8 m_isOffscreen; ///< Is offscreen renderer?
 	Bool8 m_tessellation;
 	F32 m_renderingQuality; ///< Rendering quality. Relevant for offscreen 
-	U32 m_maxTextureSize; ///< Texture size limit. Just kept here.
 	UVec2 m_tilesCount;
 
 	/// @name For drawing a quad into the active framebuffer

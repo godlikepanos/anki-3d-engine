@@ -87,11 +87,11 @@ private:
 
 	~Hdr();
 
-	void init(const RendererInitializer& initializer);
+	void init(const ConfigSet& initializer);
 	void run(GlJobChainHandle& jobs);
 
 	void initFb(GlFramebufferHandle& fb, GlTextureHandle& rt);
-	void initInternal(const RendererInitializer& initializer);
+	void initInternal(const ConfigSet& initializer);
 
 	void updateDefaultBlock(GlJobChainHandle& jobs);
 };

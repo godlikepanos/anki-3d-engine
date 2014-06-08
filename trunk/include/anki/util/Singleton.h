@@ -6,6 +6,9 @@
 #ifndef ANKI_UTIL_SINGLETON_H
 #define ANKI_UTIL_SINGLETON_H
 
+#include "anki/util/Assert.h"
+#include <utility>
+
 namespace anki {
 
 /// @addtogroup util_patterns
@@ -33,7 +36,7 @@ public:
 	}
 
 	/// Cleanup
-	void destroy()
+	static void destroy()
 	{
 		if(m_instance)
 		{
@@ -47,6 +50,52 @@ private:
 
 template <typename T>
 typename Singleton<T>::Value* Singleton<T>::m_instance = nullptr;
+
+/// This template makes a class with a destructor with arguments singleton
+template<typename T>
+class SingletonInit
+{
+public:
+	typedef T Value;
+
+	// Non copyable
+	SingletonInit(const SingletonInit&) = delete;
+	SingletonInit& operator=(const SingletonInit&) = delete;
+
+	// Non constructable
+	SingletonInit() = delete;
+	~SingletonInit() = delete;
+
+	/// Init the singleton
+	template<typename... TArgs>
+	static void init(TArgs... args)
+	{
+		ANKI_ASSERT(m_instance == nullptr);
+		m_instance = new Value(args...);
+	}
+
+	/// Get instance
+	static Value& get()
+	{
+		ANKI_ASSERT(m_instance != nullptr);
+		return *m_instance;
+	}
+
+	/// Cleanup
+	static void destroy()
+	{
+		if(m_instance)
+		{
+			delete m_instance;
+		}
+	}
+
+private:
+	static Value* m_instance;
+};
+
+template <typename T>
+typename SingletonInit<T>::Value* SingletonInit<T>::m_instance = nullptr;
 
 /// This template makes a class singleton with thread local instance
 template<typename T>

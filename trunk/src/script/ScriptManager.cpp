@@ -42,7 +42,8 @@ ANKI_SCRIPT_WRAP(Anki)
 }
 
 //==============================================================================
-void ScriptManager::init()
+ScriptManager::ScriptManager(HeapAllocator<U8>& alloc)
+	: LuaBinder(alloc)
 {
 	ANKI_LOGI("Initializing scripting engine...");
 
@@ -69,6 +70,12 @@ void ScriptManager::init()
 	ANKI_SCRIPT_CALL_WRAP(SceneGraphSingleton);
 
 	ANKI_LOGI("Scripting engine initialized");
+}
+
+//==============================================================================
+ScriptManager::~ScriptManager()
+{
+	ANKI_LOGI("Destroying scripting engine...");
 }
 
 } // end namespace anki

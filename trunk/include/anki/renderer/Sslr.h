@@ -43,7 +43,7 @@ private:
 		: OptionalRenderingPass(r)
 	{}
 
-	void init(const RendererInitializer& initializer);
+	void init(const ConfigSet& initializer);
 	void run(GlJobChainHandle& jobs);
 };
 

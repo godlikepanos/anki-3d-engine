@@ -70,7 +70,7 @@ private:
 		: RenderingPass(r)
 	{}
 
-	void init(const RendererInitializer& initializer);
+	void init(const ConfigSet& initializer);
 	void run(Light* shadowCasters[], U32 shadowCastersCount, 
 		GlJobChainHandle& jobs);
 

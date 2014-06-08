@@ -375,7 +375,7 @@ Is::~Is()
 {}
 
 //==============================================================================
-void Is::init(const RendererInitializer& initializer)
+void Is::init(const ConfigSet& initializer)
 {
 	try
 	{
@@ -388,7 +388,7 @@ void Is::init(const RendererInitializer& initializer)
 }
 
 //==============================================================================
-void Is::initInternal(const RendererInitializer& initializer)
+void Is::initInternal(const ConfigSet& initializer)
 {
 	m_groundLightEnabled = initializer.get("is.groundLightEnabled");
 	m_maxPointLights = initializer.get("is.maxPointLights");

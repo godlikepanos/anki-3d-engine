@@ -30,6 +30,7 @@
 #include "anki/event/AnimationEvent.h"
 #include "anki/event/MoveEvent.h"
 #include "anki/core/Counters.h"
+#include "anki/core/Config.h"
 
 using namespace anki;
 
@@ -559,7 +560,7 @@ void mainLoop()
 	}
 
 	
-	GlManagerSingleton::get().destroy();
+	GlManagerSingleton::destroy();
 	ANKI_COUNTER_STOP_TIMER_INC(FPS);
 
 	ANKI_COUNTERS_FLUSH();
@@ -594,7 +595,7 @@ void initSubsystems(int argc, char* argv[])
 	U32 glminor = 0;
 #endif
 
-	globAlloc = HeapAllocator<U8>(HeapMemoryPool(0));
+	globAlloc = HeapAllocator<U8>(HeapMemoryPool(allocAligned, nullptr));
 
 	// Logger
 	LoggerSingleton::get().init(
@@ -619,8 +620,46 @@ void initSubsystems(int argc, char* argv[])
 	win->contextMakeCurrent(nullptr);
 
 	// GL stuff
-	GlManagerSingleton::get().init(makeCurrent, context,
-		swapBuffers, win, nwinit.m_debugContext);
+	GlManagerSingleton::init(makeCurrent, context,
+		swapBuffers, win, nwinit.m_debugContext,
+		allocAligned, nullptr);
+
+	// Config
+	Config config;
+	config.set("ms.ez.enabled", false);
+	config.set("ms.ez.maxObjectsToDraw", 100);
+	config.set("dbg.enabled", false);
+	config.set("is.sm.bilinearEnabled", true);
+	config.set("is.groundLightEnabled", true);
+	config.set("is.sm.enabled", true);
+	config.set("is.sm.poissonEnabled", true);
+	config.set("is.sm.resolution", 1024);
+	config.set("pps.enabled", true);
+	config.set("pps.hdr.enabled", true);
+	config.set("pps.hdr.renderingQuality", 0.6);
+	config.set("pps.hdr.blurringDist", 1.0);
+	config.set("pps.hdr.blurringIterationsCount", 4);
+	config.set("pps.hdr.exposure", 8.0);
+	config.set("pps.hdr.samples", 11);
+	config.set("pps.sslr.enabled", true);
+	config.set("pps.sslr.renderingQuality", 0.35);
+	config.set("pps.sslr.blurringIterationsCount", 1);
+	config.set("pps.ssao.blurringIterationsCount", 2);
+	config.set("pps.ssao.enabled", true);
+	config.set("pps.ssao.renderingQuality", 0.35);
+	config.set("pps.bl.enabled", true);
+	config.set("pps.bl.blurringIterationsCount", 2);
+	config.set("pps.bl.sideBlurFactor", 1.0);
+	config.set("pps.lf.enabled", true);
+	config.set("pps.sharpen", true);
+	config.set("renderingQuality", 1.0);
+	config.set("width", win->getWidth());
+	config.set("height", win->getHeight());
+	config.set("lodDistance", 20.0);
+	config.set("samples", 1);
+	config.set("tessellation", false);
+	config.set("tilesXCount", 16);
+	config.set("tilesYCount", 16);
 
 	// Input
 	InputSingleton::get().init(win);
@@ -628,49 +667,16 @@ void initSubsystems(int argc, char* argv[])
 	InputSingleton::get().hideCursor(true);
 	InputSingleton::get().moveCursor(Vec2(0.0));
 
-	// Main renderer
-	RendererInitializer initializer;
-	initializer.set("ms.ez.enabled", false);
-	initializer.set("ms.ez.maxObjectsToDraw", 100);
-	initializer.set("dbg.enabled", false);
-	initializer.set("is.sm.bilinearEnabled", true);
-	initializer.set("is.groundLightEnabled", true);
-	initializer.set("is.sm.enabled", true);
-	initializer.set("is.sm.poissonEnabled", true);
-	initializer.set("is.sm.resolution", 1024);
-	initializer.set("pps.enabled", true);
-	initializer.set("pps.hdr.enabled", true);
-	initializer.set("pps.hdr.renderingQuality", 0.6);
-	initializer.set("pps.hdr.blurringDist", 1.0);
-	initializer.set("pps.hdr.blurringIterationsCount", 4);
-	initializer.set("pps.hdr.exposure", 8.0);
-	initializer.set("pps.hdr.samples", 11);
-	initializer.set("pps.sslr.enabled", true);
-	initializer.set("pps.sslr.renderingQuality", 0.35);
-	initializer.set("pps.sslr.blurringIterationsCount", 1);
-	initializer.set("pps.ssao.blurringIterationsCount", 2);
-	initializer.set("pps.ssao.enabled", true);
-	initializer.set("pps.ssao.renderingQuality", 0.35);
-	initializer.set("pps.bl.enabled", true);
-	initializer.set("pps.bl.blurringIterationsCount", 2);
-	initializer.set("pps.bl.sideBlurFactor", 1.0);
-	initializer.set("pps.lf.enabled", true);
-	initializer.set("pps.sharpen", true);
-	initializer.set("renderingQuality", 1.0);
-	initializer.set("width", win->getWidth());
-	initializer.set("height", win->getHeight());
-	initializer.set("lodDistance", 20.0);
-	initializer.set("samples", 1);
-	initializer.set("tessellation", false);
-	initializer.set("tilesXCount", 16);
-	initializer.set("tilesYCount", 16);
+	ResourceManagerSingleton::init(config);
 
-	MainRendererSingleton::get().init(initializer);
+	MainRendererSingleton::init(config);
 
-	// Stdin listener
+	ScriptManagerSingleton::init(globAlloc);
+
+	SceneGraphSingleton::init(allocAligned, nullptr);
+
 	StdinListenerSingleton::get().start();
 
-	// Parallel jobs
 	ThreadpoolSingleton::get().init(getCpuCoresCount());
 }
 

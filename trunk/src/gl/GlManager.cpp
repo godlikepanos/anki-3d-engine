@@ -9,28 +9,32 @@
 namespace anki {
 
 //==============================================================================
-void GlManager::init(
+GlManager::GlManager(
 	GlCallback makeCurrentCallback, void* context,
 	GlCallback swapBuffersCallback, void* swapBuffersCbData,
-	Bool registerDebugMessages)
+	Bool registerDebugMessages,
+	AllocAlignedCallback alloc, void* allocUserData)
 {
-	m_alloc = HeapAllocator<U8>(HeapMemoryPool(0));
+	m_alloc = HeapAllocator<U8>(HeapMemoryPool(alloc, allocUserData));
 
 	// Start the server
-	m_jobManager.reset(new GlJobManager(this));
+	m_jobManager = m_alloc.newInstance<GlJobManager>(
+		this, alloc, allocUserData);
+
 	m_jobManager->start(makeCurrentCallback, context, 
 		swapBuffersCallback, swapBuffersCbData, 
 		registerDebugMessages);
+
 	syncClientServer();
 }
 
 //==============================================================================
 void GlManager::destroy()
 {
-	if(m_jobManager.get())
+	if(m_jobManager)
 	{
 		m_jobManager->stop();
-		m_jobManager.reset(nullptr);
+		m_alloc.deleteInstance(m_jobManager);
 	}
 }
 

@@ -85,7 +85,7 @@ public:
 	}
 
 	/// Constuctor that accepts a pool
-	GenericPoolAllocator(const TPool& pool) throw()
+	explicit GenericPoolAllocator(const TPool& pool) throw()
 		: m_pool(pool)
 	{}
 

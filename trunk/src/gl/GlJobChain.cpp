@@ -17,6 +17,8 @@ namespace anki {
 GlJobChain::GlJobChain(GlJobManager* server, const GlJobChainInitHints& hints)
 	:	m_server(server),
 		m_alloc(GlJobChainAllocator<GlJob*>(ChainMemoryPool(
+			m_server->getAllocationCallback(),
+			m_server->getAllocationCallbackUserData(),
 			hints.m_chunkSize, 
 			hints.m_maxChunkSize, 
 			ChainMemoryPool::ADD,

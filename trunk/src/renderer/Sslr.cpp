@@ -10,7 +10,7 @@
 namespace anki {
 
 //==============================================================================
-void Sslr::init(const RendererInitializer& initializer)
+void Sslr::init(const ConfigSet& initializer)
 {
 	m_enabled = initializer.get("pps.sslr.enabled");
 

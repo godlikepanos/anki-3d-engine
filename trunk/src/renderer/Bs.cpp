@@ -15,7 +15,7 @@ Bs::~Bs()
 {}
 
 //==============================================================================
-void Bs::init(const RendererInitializer&)
+void Bs::init(const ConfigSet&)
 {
 	// Do nothing
 }

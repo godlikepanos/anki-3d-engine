@@ -13,81 +13,6 @@
 namespace anki {
 
 //==============================================================================
-// RendererInitializer                                                         =
-//==============================================================================
-
-//==============================================================================
-RendererInitializer::RendererInitializer()
-{
-	// Ms
-	newOption("ms.ez.enabled", false);
-	newOption("ms.ez.maxObjectsToDraw", 10);
-
-	// Is
-	newOption("is.sm.enabled", true);
-	newOption("is.sm.poissonEnabled", true);
-	newOption("is.sm.bilinearEnabled", true);
-	newOption("is.sm.resolution", 512);
-	newOption("is.sm.maxLights", 4);
-
-	newOption("is.groundLightEnabled", true);
-	newOption("is.maxPointLights", 512 - 16);
-	newOption("is.maxSpotLights", 8);
-	newOption("is.maxSpotTexLights", 4);
-	newOption("is.maxPointLightsPerTile", 48);
-	newOption("is.maxSpotLightsPerTile", 4);
-	newOption("is.maxSpotTexLightsPerTile", 4);
-
-	// Pps
-	newOption("pps.hdr.enabled", true);
-	newOption("pps.hdr.renderingQuality", 0.5);
-	newOption("pps.hdr.blurringDist", 1.0);
-	newOption("pps.hdr.samples", 5);
-	newOption("pps.hdr.blurringIterationsCount", 1);
-	newOption("pps.hdr.exposure", 4.0);
-
-	newOption("pps.ssao.enabled", true);
-	newOption("pps.ssao.renderingQuality", 0.3);
-	newOption("pps.ssao.blurringIterationsCount", 1);
-
-	newOption("pps.sslr.enabled", true);
-	newOption("pps.sslr.renderingQuality", 0.2);
-	newOption("pps.sslr.blurringIterationsCount", 1);
-
-	newOption("pps.bl.enabled", true);
-	newOption("pps.bl.blurringIterationsCount", 1);
-	newOption("pps.bl.sideBlurFactor", 1.0);
-
-	newOption("pps.lf.enabled", true);
-	newOption("pps.lf.maxFlaresPerLight", 8);
-	newOption("pps.lf.maxLightsWithFlares", 4);
-
-	newOption("pps.enabled", true);
-	newOption("pps.sharpen", true);
-	newOption("pps.gammaCorrection", true);
-
-	// Dbg
-	newOption("dbg.enabled", false);
-
-	// Globals
-	newOption("width", 0);
-	newOption("height", 0);
-	newOption("renderingQuality", 1.0); // Applies only to MainRenderer
-	newOption("lodDistance", 10.0); // Distance that used to calculate the LOD
-	newOption("samples", 1);
-	newOption("tilesXCount", 16);
-	newOption("tilesYCount", 16);
-	newOption("tessellation", true);
-
-	newOption("maxTextureSize", 1048576); // Cap to limit quality in resources
-	newOption("offscreen", false);
-}
-
-//==============================================================================
-// Renderer                                                                    =
-//==============================================================================
-
-//==============================================================================
 Renderer::Renderer()
 	:	m_ms(this), 
 		m_is(this),
@@ -102,7 +27,7 @@ Renderer::~Renderer()
 {}
 
 //==============================================================================
-void Renderer::init(const RendererInitializer& initializer)
+void Renderer::init(const ConfigSet& initializer)
 {
 	// Set from the initializer
 	m_width = initializer.get("width");
@@ -112,7 +37,6 @@ void Renderer::init(const RendererInitializer& initializer)
 	m_samples = initializer.get("samples");
 	m_isOffscreen = initializer.get("offscreen");
 	m_renderingQuality = initializer.get("renderingQuality");
-	m_maxTextureSize = initializer.get("maxTextureSize");
 	m_tilesCount.x() = initializer.get("tilesXCount");
 	m_tilesCount.y() = initializer.get("tilesYCount");
 
