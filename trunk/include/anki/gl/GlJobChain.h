@@ -59,7 +59,7 @@ class GlJobChainInitHints
 	friend class GlJobChain;
 
 private:
-	static const PtrSize m_maxChunkSize = 1024 * 1024; // 1MB
+	static const PtrSize m_maxChunkSize = 4 * 1024 * 1024; // 1MB
 
 	PtrSize m_chunkSize = 1024;
 };

@@ -10,6 +10,7 @@
 #include "anki/Scene.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
@@ -39,7 +40,7 @@ DebugDrawer::DebugDrawer()
 	m_mvpMat.setIdentity();
 	m_crntCol = Vec3(1.0, 0.0, 0.0);
 
-	jobs.flush();
+	jobs.finish();
 }
 
 //==============================================================================
@@ -71,8 +72,8 @@ void DebugDrawer::end()
 {
 	if(m_vertexPointer % 2 != 0)
 	{
-		// push back the previous vertex to close the loop
-		pushBackVertex(m_clientVerts[m_vertexPointer].m_positionAndColor.xyz());
+		pushBackVertex(Vec3(0.0));
+		ANKI_LOGW("Forgot to close the line loop");
 	}
 }
 
@@ -93,19 +94,10 @@ void DebugDrawer::flush()
 	m_ppline.bind(m_jobs);
 
 	m_vertBuff.bindVertexBuffer(m_jobs, 
-		3, GL_FLOAT, false, sizeof(Vertex), 0, 0); // Pos
+		4, GL_FLOAT, false, sizeof(Vertex), 0, 0); // Pos
 
 	m_vertBuff.bindVertexBuffer(m_jobs, 
-		4, GL_UNSIGNED_BYTE, true, sizeof(Vertex), sizeof(Vec3), 1); // Color
-
-	m_vertBuff.bindVertexBuffer(m_jobs, 
-		4, GL_FLOAT, false, sizeof(Vertex), 1 * sizeof(Vec4), 2);
-	m_vertBuff.bindVertexBuffer(m_jobs, 
-		4, GL_FLOAT, false, sizeof(Vertex), 2 * sizeof(Vec4), 3);
-	m_vertBuff.bindVertexBuffer(m_jobs, 
-		4, GL_FLOAT, false, sizeof(Vertex), 3 * sizeof(Vec4), 4);
-	m_vertBuff.bindVertexBuffer(m_jobs, 
-		4, GL_FLOAT, false, sizeof(Vertex), 4 * sizeof(Vec4), 5);
+		4, GL_FLOAT, true, sizeof(Vertex), sizeof(Vec4), 1); // Color
 
 	GlDrawcallArrays dc(GL_LINES, m_vertexPointer);
 
@@ -117,21 +109,8 @@ void DebugDrawer::flush()
 //==============================================================================
 void DebugDrawer::pushBackVertex(const Vec3& pos)
 {
-	U32 color = (U8)(1.0 * 255.0);
-	color = (color << 8) | (U8)(m_crntCol.z() * 255.0);
-	color = (color << 8) | (U8)(m_crntCol.y() * 255.0);
-	color = (color << 8) | (U8)(m_crntCol.x() * 255.0);
-
-	union
-	{
-		F32 f;
-		U32 u;
-	} uni;
-
-	uni.u = color;
-
-	m_clientVerts[m_vertexPointer].m_positionAndColor = Vec4(pos, uni.f);
-	m_clientVerts[m_vertexPointer].m_matrix = m_mvpMat.getTransposed();
+	m_clientVerts[m_vertexPointer].m_position = m_mvpMat * Vec4(pos, 1.0);
+	m_clientVerts[m_vertexPointer].m_color = Vec4(m_crntCol, 1.0);
 
 	++m_vertexPointer;
 
@@ -197,7 +176,7 @@ void DebugDrawer::drawGrid()
 }
 
 //==============================================================================
-void DebugDrawer::drawSphere(F32 radius, int complexity)
+void DebugDrawer::drawSphere(F32 radius, I complexity)
 {
 	Vector<Vec3>* sphereLines;
 
@@ -334,6 +313,16 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 
 	m_dbg->setModelMatrix(trf);
 	m_dbg->drawGrid();
+}
+
+//==============================================================================
+void CollisionDebugDrawer::visit(const LineSegment& ls)
+{
+	m_dbg->setModelMatrix(Mat4::getIdentity());
+	m_dbg->begin();
+	m_dbg->pushBackVertex(ls.getOrigin());
+	m_dbg->pushBackVertex(ls.getOrigin() + ls.getDirection());
+	m_dbg->end();
 }
 
 //==============================================================================

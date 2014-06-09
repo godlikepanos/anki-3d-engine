@@ -13,9 +13,10 @@
 namespace anki {
 
 /// SDL input implementation
-struct InputImpl
+class InputImpl
 {
-	std::unordered_map<SDL_Keycode, KeyCode> m_sdlKeyToAnki;
+public:
+	std::unordered_map<SDL_Keycode, KeyCode> m_sdlToAnki;
 };
 
 } // end namespace anki

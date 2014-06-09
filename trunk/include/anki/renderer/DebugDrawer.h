@@ -28,7 +28,7 @@ public:
 	~DebugDrawer();
 
 	void drawGrid();
-	void drawSphere(F32 radius, int complexity = 4);
+	void drawSphere(F32 radius, I complexity = 4);
 	void drawCube(F32 size = 1.0);
 	void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 
@@ -65,10 +65,11 @@ public:
 	void flush();
 
 private:
-	struct Vertex
+	class Vertex
 	{
-		Vec4 m_positionAndColor;
-		Mat4 m_matrix;
+	public:
+		Vec4 m_position;
+		Vec4 m_color;
 	};
 
 	ProgramResourcePointer m_frag;
@@ -102,11 +103,7 @@ public:
 		: m_dbg(dbg)
 	{}
 
-	void visit(const LineSegment&)
-	{
-		/// XXX
-		ANKI_ASSERT(0 && "ToDo");
-	}
+	void visit(const LineSegment&);
 
 	void visit(const Obb&);
 

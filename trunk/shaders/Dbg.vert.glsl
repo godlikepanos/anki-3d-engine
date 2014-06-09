@@ -6,11 +6,10 @@
 #pragma anki type vert
 #pragma anki include "shaders/Common.glsl"
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in vec3 inColor;
-layout(location = 2) in mat4 inMvp;
+layout(location = 0) in vec4 inPosition;
+layout(location = 1) in vec4 inColor;
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out vec4 outColor;
 
 out gl_PerVertex
 {
@@ -20,5 +19,5 @@ out gl_PerVertex
 void main()
 {
 	outColor = inColor;
-	gl_Position = inMvp * vec4(inPosition, 1.0);
+	gl_Position = inPosition;
 }
