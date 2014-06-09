@@ -103,6 +103,14 @@ const vec2 kernel[SAMPLES - 1] = vec2[](
 	,BLURRING_OFFSET(7, -1),
 	BLURRING_OFFSET(7, 1)
 #endif
+#if SAMPLES > 15
+	,BLURRING_OFFSET(8, -1),
+	BLURRING_OFFSET(8, 1)
+#endif
+#if SAMPLES > 17
+	,BLURRING_OFFSET(9, -1),
+	BLURRING_OFFSET(9, 1)
+#endif
 	);
 
 layout(location = 0) out COL_TYPE outFragColor;

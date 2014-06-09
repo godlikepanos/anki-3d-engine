@@ -40,9 +40,9 @@ public:
 
 	/// @name Acessors
 	/// @{
-	U getKey(U32 i) const
+	U getKey(KeyCode i) const
 	{
-		return m_keys[i];
+		return m_keys[static_cast<U>(i)];
 	}
 
 	U getMouseButton(U32 i) const
@@ -101,7 +101,7 @@ private:
 	/// - 0 times: unpressed
 	/// - 1 times: pressed once
 	/// - >1 times: Kept pressed 'n' times continuously
-	Array<U32, KC_COUNT> m_keys;
+	Array<U32, U(KeyCode::COUNT)> m_keys;
 
 	/// Mouse btns. Supporting 3 btns & wheel. @see keys
 	Array<U32, 8> m_mouseBtns;

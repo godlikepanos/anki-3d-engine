@@ -136,7 +136,7 @@ void init()
 	scene.setActiveCamera(cam);
 
 	// lights
-#if 1
+#if 0
 	Vec3 lpos(-24.0, 0.1, -10.0);
 	for(int i = 0; i < 50; i++)
 	{
@@ -160,7 +160,7 @@ void init()
 	}
 #endif
 
-#if 1
+#if 0
 	SpotLight* spot = scene.newSceneNode<SpotLight>("spot0");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
@@ -261,7 +261,7 @@ void init()
 	}
 #endif
 
-#if 1
+#if 0
 	// horse
 	horse = scene.newSceneNode<ModelNode>("horse", "models/horse/horse.ankimdl");
 	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
@@ -281,20 +281,13 @@ void init()
 #endif
 
 #if 0
-	StaticGeometryNode* sponzaModel = new StaticGeometryNode(
-		//"data/maps/sponza/sponza_no_bmeshes.mdl",
-		//"data/maps/sponza/sponza.mdl",
-		"sponza", &scene, "data/maps/sponza/static_geometry.mdl");
-
-	(void)sponzaModel;
-#endif
-	//scene.load("maps/sponza/master.ankiscene");
 	{
 		String str;
 		File file(ANKI_R("maps/sponza/scene.lua"), File::OpenFlag::READ);
 		file.readAllText(str);
 		ScriptManagerSingleton::get().evalString(str.c_str());
 	}
+#endif
 
 	initPhysics();
 
@@ -329,6 +322,17 @@ void init()
 	scene.getEventManager().newFollowPathEvent(-1.0, 
 		path->getDistance() / distPerSec, 
 		cam, path, distPerSec);*/
+
+
+	horse = scene.newSceneNode<ModelNode>("shape0", 
+		"models/collision_test/Cube_Material-material.ankimdl");
+	horse->setLocalTransform(Transform(Vec3(0.0, 0, 0), Mat3::getIdentity(),
+		1.0));
+
+	horse = scene.newSceneNode<ModelNode>("shape1", 
+		"models/collision_test/Cube.001_Material_001-material.ankimdl");
+	horse->setLocalTransform(Transform(Vec3(0, 3, 0), Mat3::getIdentity(),
+		1.0));
 }
 
 //==============================================================================
@@ -369,36 +373,36 @@ void mainLoopExtra()
 		&SceneGraphSingleton::get().getActiveCamera().getComponent<MoveComponent>();
 	Input& in = InputSingleton::get();
 
-	if(in.getKey(KC_1))
+	if(in.getKey(KeyCode::_1))
 	{
 		mover = &SceneGraphSingleton::get().getActiveCamera();
 	}
-	if(in.getKey(KC_2))
+	if(in.getKey(KeyCode::_2))
 	{
 		mover = &SceneGraphSingleton::get().findSceneNode("horse").getComponent<MoveComponent>();
 	}
-	if(in.getKey(KC_3))
+	if(in.getKey(KeyCode::_3))
 	{
 		mover = &SceneGraphSingleton::get().findSceneNode("spot0").getComponent<MoveComponent>();
 	}
-	if(in.getKey(KC_4))
+	if(in.getKey(KeyCode::_4))
 	{
 		mover = &SceneGraphSingleton::get().findSceneNode("spot1").getComponent<MoveComponent>();
 	}
-	if(in.getKey(KC_5))
+	if(in.getKey(KeyCode::_5))
 	{
 		mover = &SceneGraphSingleton::get().findSceneNode("pe").getComponent<MoveComponent>();
 	}
-	if(in.getKey(KC_6))
+	if(in.getKey(KeyCode::_6))
 	{
 		mover = &SceneGraphSingleton::get().findSceneNode("vase_plight0").getComponent<MoveComponent>();
 	}
-	if(in.getKey(KC_7))
+	if(in.getKey(KeyCode::_7))
 	{
 		mover = &SceneGraphSingleton::get().findSceneNode("red_barrel").getComponent<MoveComponent>();
 	}
 
-	/*if(in.getKey(KC_L) == 1)
+	/*if(in.getKey(KeyCode::L) == 1)
 	{
 		SceneNode& l = 
 			SceneGraphSingleton::get().findSceneNode("crate");
@@ -409,62 +413,62 @@ void mainLoopExtra()
 		l.getComponent<MoveComponent>().setLocalTransform(trf);
 	}*/
 
-	if(in.getKey(KC_F1) == 1)
+	if(in.getKey(KeyCode::F1) == 1)
 	{
 		MainRendererSingleton::get().getDbg().setEnabled(
 			!MainRendererSingleton::get().getDbg().getEnabled());
 	}
-	if(in.getKey(KC_F2) == 1)
+	if(in.getKey(KeyCode::F2) == 1)
 	{
 		MainRendererSingleton::get().getDbg().switchBits(
 			Dbg::DF_SPATIAL);
 	}
-	if(in.getKey(KC_F3) == 1)
+	if(in.getKey(KeyCode::F3) == 1)
 	{
 		MainRendererSingleton::get().getDbg().switchBits(
 			Dbg::DF_PHYSICS);
 	}
-	if(in.getKey(KC_F4) == 1)
+	if(in.getKey(KeyCode::F4) == 1)
 	{
 		MainRendererSingleton::get().getDbg().switchBits(
 			Dbg::DF_SECTOR);
 	}
-	if(in.getKey(KC_F5) == 1)
+	if(in.getKey(KeyCode::F5) == 1)
 	{
 		MainRendererSingleton::get().getDbg().switchBits(
 			Dbg::DF_OCTREE);
 	}
-	if(in.getKey(KC_F6) == 1)
+	if(in.getKey(KeyCode::F6) == 1)
 	{
 		MainRendererSingleton::get().getDbg().switchDepthTestEnabled();
 	}
-	if(in.getKey(KC_F12) == 1)
+	if(in.getKey(KeyCode::F12) == 1)
 	{
 		MainRendererSingleton::get().takeScreenshot("screenshot.tga");
 	}
 
-	if(in.getKey(KC_UP)) mover->rotateLocalX(ang);
-	if(in.getKey(KC_DOWN)) mover->rotateLocalX(-ang);
-	if(in.getKey(KC_LEFT)) mover->rotateLocalY(ang);
-	if(in.getKey(KC_RIGHT)) mover->rotateLocalY(-ang);
+	if(in.getKey(KeyCode::UP)) mover->rotateLocalX(ang);
+	if(in.getKey(KeyCode::DOWN)) mover->rotateLocalX(-ang);
+	if(in.getKey(KeyCode::LEFT)) mover->rotateLocalY(ang);
+	if(in.getKey(KeyCode::RIGHT)) mover->rotateLocalY(-ang);
 
-	if(in.getKey(KC_A)) mover->moveLocalX(-dist);
-	if(in.getKey(KC_D)) mover->moveLocalX(dist);
-	if(in.getKey(KC_Z)) mover->moveLocalY(dist);
-	if(in.getKey(KC_SPACE)) mover->moveLocalY(-dist);
-	if(in.getKey(KC_W)) mover->moveLocalZ(-dist);
-	if(in.getKey(KC_S)) mover->moveLocalZ(dist);
-	if(in.getKey(KC_Q)) mover->rotateLocalZ(ang);
-	if(in.getKey(KC_E)) mover->rotateLocalZ(-ang);
-	if(in.getKey(KC_PAGEUP))
+	if(in.getKey(KeyCode::A)) mover->moveLocalX(-dist);
+	if(in.getKey(KeyCode::D)) mover->moveLocalX(dist);
+	if(in.getKey(KeyCode::Z)) mover->moveLocalY(dist);
+	if(in.getKey(KeyCode::SPACE)) mover->moveLocalY(-dist);
+	if(in.getKey(KeyCode::W)) mover->moveLocalZ(-dist);
+	if(in.getKey(KeyCode::S)) mover->moveLocalZ(dist);
+	if(in.getKey(KeyCode::Q)) mover->rotateLocalZ(ang);
+	if(in.getKey(KeyCode::E)) mover->rotateLocalZ(-ang);
+	if(in.getKey(KeyCode::PAGEUP))
 	{
 		mover->scale(scale);
 	}
-	if(in.getKey(KC_PAGEDOWN))
+	if(in.getKey(KeyCode::PAGEDOWN))
 	{
 		mover->scale(-scale);
 	}
-	if(in.getKey(KC_P) == 1)
+	if(in.getKey(KeyCode::P) == 1)
 	{
 		std::cout << "{Vec3(" 
 			<< mover->getWorldTransform().getOrigin().toString()
@@ -473,7 +477,7 @@ void mainLoopExtra()
 			<< ")}," << std::endl;
 	}
 
-	if(in.getKey(KC_L) == 1)
+	if(in.getKey(KeyCode::L) == 1)
 	{
 		try
 		{
@@ -533,7 +537,7 @@ void mainLoop()
 		//EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
 		MainRendererSingleton::get().render(SceneGraphSingleton::get());
 
-		if(InputSingleton::get().getKey(KC_ESCAPE))
+		if(InputSingleton::get().getKey(KeyCode::ESCAPE))
 		{
 			break;
 		}
@@ -638,9 +642,9 @@ void initSubsystems(int argc, char* argv[])
 	config.set("pps.hdr.enabled", true);
 	config.set("pps.hdr.renderingQuality", 0.6);
 	config.set("pps.hdr.blurringDist", 1.0);
-	config.set("pps.hdr.blurringIterationsCount", 4);
+	config.set("pps.hdr.blurringIterationsCount", 2);
 	config.set("pps.hdr.exposure", 8.0);
-	config.set("pps.hdr.samples", 11);
+	config.set("pps.hdr.samples", 17);
 	config.set("pps.sslr.enabled", true);
 	config.set("pps.sslr.renderingQuality", 0.35);
 	config.set("pps.sslr.blurringIterationsCount", 1);

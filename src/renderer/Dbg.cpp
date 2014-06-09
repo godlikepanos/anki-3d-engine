@@ -45,7 +45,7 @@ void Dbg::init(const ConfigSet& initializer)
 		m_drawer.reset(new DebugDrawer);
 		m_sceneDrawer.reset(new SceneDebugDrawer(m_drawer.get()));
 
-		jobs.flush();
+		jobs.finish();
 	}
 	catch(std::exception& e)
 	{
@@ -61,18 +61,23 @@ void Dbg::run(GlJobChainHandle& jobs)
 	SceneGraph& scene = m_r->getSceneGraph();
 
 	m_fb.bind(jobs, false);
-	jobs.enableBlend(true);
 	jobs.enableDepthTest(m_depthTest);
 
+	Camera& cam = scene.getActiveCamera();
 	m_drawer->prepareDraw(jobs);
-	m_drawer->setViewProjectionMatrix(
-		scene.getActiveCamera().getViewProjectionMatrix());
+	m_drawer->setViewProjectionMatrix(cam.getViewProjectionMatrix());
 	m_drawer->setModelMatrix(Mat4::getIdentity());
 	//drawer->drawGrid();
 
 	scene.iterateSceneNodes([&](SceneNode& node)
 	{
 		SpatialComponent* sp = node.tryGetComponent<SpatialComponent>();
+
+		if(&cam.getComponent<SpatialComponent>() == sp)
+		{
+			return;
+		}
+
 		if(bitsEnabled(DF_SPATIAL) && sp)
 		{
 			m_sceneDrawer->draw(node);
@@ -176,11 +181,10 @@ void Dbg::run(GlJobChainHandle& jobs)
 	// XXX
 #endif
 
-	jobs.enableBlend(false);
-	jobs.enableDepthTest(false);
-
 	m_drawer->flush();
 	m_drawer->finishDraw();
+
+	jobs.enableDepthTest(false);
 }
 
 } // end namespace anki
