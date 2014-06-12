@@ -55,6 +55,16 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes) throw()
 		return nullptr;
 	}
 #	endif
+#elif ANKI_OS == ANKI_OS_WINDOWS
+	void* out = _aligned_malloc(size, alignmentBytes);
+
+	if(out)
+	{
+		// Make sure it's aligned
+		ANKI_ASSERT(isAligned(alignmentBytes, out));
+	}
+
+	return out;
 #else
 #	error "Unimplemented"
 #endif
@@ -65,6 +75,8 @@ void freeAligned(void* ptr) throw()
 {
 #if ANKI_POSIX
 	::free(ptr);
+#elif ANKI_OS == ANKI_OS_WINDOWS
+	_aligned_free(ptr);
 #else
 #	error "Unimplemented"
 #endif

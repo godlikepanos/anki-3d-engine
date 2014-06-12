@@ -5,7 +5,7 @@
 
 #include "anki/resource/Extension.h"
 #include "anki/util/Exception.h"
-#include <dlfcn.h>
+//#include <dlfcn.h>
 
 namespace anki {
 

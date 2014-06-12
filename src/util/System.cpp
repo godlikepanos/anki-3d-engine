@@ -5,10 +5,13 @@
 
 #include "anki/util/System.h"
 #include "anki/Config.h"
+#include <cstdio>
 
 #if ANKI_POSIX
 #	include <unistd.h>
 #	include <signal.h>
+#elif ANKI_OS == ANKI_OS_WINDOWS
+#	include "Windows.h"
 #else
 #	error "Unimplemented"
 #endif
@@ -25,6 +28,10 @@ U32 getCpuCoresCount()
 {
 #if ANKI_POSIX
 	return sysconf(_SC_NPROCESSORS_ONLN);
+#elif ANKI_OS == ANKI_OS_WINDOWS
+	SYSTEM_INFO sysinfo;
+	GetSystemInfo(&sysinfo);
+	return sysinfo.dwNumberOfProcessors;
 #else
 #	error "Unimplemented"
 #endif
@@ -43,7 +50,7 @@ void printBacktrace()
 	// print out all the frames to stderr
 	backtrace_symbols_fd(array, size, 2);	
 #else
-	// No nothing
+	printf("TODO\n");
 #endif
 }
 
