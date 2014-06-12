@@ -6,7 +6,7 @@
 #ifndef ANKI_COLLISION_SPHERE_H
 #define ANKI_COLLISION_SPHERE_H
 
-#include "anki/collision/CollisionShape.h"
+#include "anki/collision/ConvexShape.h"
 #include "anki/Math.h"
 
 namespace anki {
@@ -15,7 +15,7 @@ namespace anki {
 /// @{
 
 /// Sphere collision shape
-class Sphere: public CollisionShape
+class Sphere: public ConvexShape
 {
 public:
 	/// @name Constructors
@@ -23,21 +23,21 @@ public:
 
 	/// Default constructor
 	Sphere()
-		: CollisionShape(Type::SPHERE)
+		: ConvexShape(Type::SPHERE)
 	{}
 
 	/// Copy constructor
 	Sphere(const Sphere& b)
-		:	CollisionShape(Type::SPHERE), 
-			center(b.center), 
-			radius(b.radius)
-	{}
+		:	ConvexShape(Type::SPHERE)
+	{
+		operator=(b);
+	}
 
 	/// Constructor
-	Sphere(const Vec3& center_, F32 radius_)
-		:	CollisionShape(Type::SPHERE), 
-			center(center_), 
-			radius(radius_)
+	Sphere(const Vec3& center, F32 radius)
+		:	ConvexShape(Type::SPHERE), 
+			m_center(center), 
+			m_radius(radius)
 	{}
 	/// @}
 
@@ -45,28 +45,28 @@ public:
 	/// @{
 	const Vec3& getCenter() const
 	{
-		return center;
+		return m_center;
 	}
 	Vec3& getCenter()
 	{
-		return center;
+		return m_center;
 	}
 	void setCenter(const Vec3& x)
 	{
-		center = x;
+		m_center = x;
 	}
 
 	F32 getRadius() const
 	{
-		return radius;
+		return m_radius;
 	}
 	F32& getRadius()
 	{
-		return radius;
+		return m_radius;
 	}
 	void setRadius(const F32 x)
 	{
-		radius = x;
+		m_radius = x;
 	}
 	/// @}
 
@@ -74,8 +74,8 @@ public:
 	/// @{
 	Sphere& operator=(const Sphere& b)
 	{
-		center = b.center;
-		radius = b.radius;
+		m_center = b.m_center;
+		m_radius = b.m_radius;
 		return *this;
 	}
 	/// @}
@@ -120,9 +120,12 @@ public:
 	void setFromPointCloud(
 		const void* buff, U count, PtrSize stride, PtrSize buffSize);
 
+	/// Implements CompoundShape::computeSupport
+	Vec4 computeSupport(const Vec4& dir) const;
+
 private:
-	Vec3 center;
-	F32 radius;
+	Vec3 m_center;
+	F32 m_radius;
 };
 /// @}
 

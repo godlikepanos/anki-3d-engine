@@ -97,6 +97,18 @@ public:
 	{}
 	/// @}
 
+	/// @name Operators with same
+	/// @{
+
+	/// It's like calculating the cross of a TVec3
+	TVec4 cross(const TVec4& b) const
+	{
+		ANKI_ASSERT(isZero<T>(Base::w()));
+		ANKI_ASSERT(isZero<T>(b.w()));
+		return TVec4(Base::xyz().template cross(b.xyz(), static_cast<T>(0)));
+	}
+	/// @{
+
 	/// @name Operators with other
 	/// @{
 
@@ -163,6 +175,9 @@ TVec4<F32> TVec4<F32>::Base::getNormalized() const;
 
 template<>
 void TVec4<F32>::Base::normalize();
+
+template<>
+TVec4<F32> TVec4<F32>::cross(const TVec4<F32>& b) const;
 
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 
