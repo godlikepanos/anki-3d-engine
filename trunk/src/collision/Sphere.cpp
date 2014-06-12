@@ -12,16 +12,16 @@ namespace anki {
 //==============================================================================
 F32 Sphere::testPlane(const Plane& p) const
 {
-	F32 dist = p.test(center);
+	F32 dist = p.test(m_center);
 
-	F32 out = dist - radius;
+	F32 out = dist - m_radius;
 	if(out > 0)
 	{
 		// Do nothing
 	}
 	else
 	{
-		out = dist + radius;
+		out = dist + m_radius;
 		if(out < 0)
 		{
 			// Do nothing
@@ -40,12 +40,12 @@ Sphere Sphere::getTransformed(const Transform& transform) const
 {
 	Sphere newSphere;
 
-	newSphere.center = center.getTransformed(
+	newSphere.m_center = m_center.getTransformed(
 		transform.getOrigin(),
 		transform.getRotation(),
 		transform.getScale());
 
-	newSphere.radius = radius * transform.getScale();
+	newSphere.m_radius = m_radius * transform.getScale();
 	return newSphere;
 }
 
@@ -54,7 +54,7 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 {
 	const Sphere& a = *this;
 
-	/// @todo test this
+	/// TODO test this
 	/*
 	Vec3 centerDiff = b.center - a.center;
 	F32 radiusDiff = b.radius - a.radius;
@@ -105,8 +105,8 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 //==============================================================================
 void Sphere::computeAabb(Aabb& aabb) const
 {
-	aabb.setMin(center - radius);
-	aabb.setMax(center + radius);
+	aabb.setMin((m_center - m_radius).xyz());
+	aabb.setMax((m_center + m_radius).xyz());
 }
 
 //==============================================================================
@@ -132,21 +132,27 @@ void Sphere::setFromPointCloud(
 		}
 	});
 
-	center = (min + max) * 0.5; // average
+	m_center = (min + max) * 0.5; // average
 
 	// max distance between center and the vec3 arr
 	F32 maxDist = MIN_F32;
 
 	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
 	{
-		F32 dist = (pos - center).getLengthSquared();
+		F32 dist = (pos - m_center).getLengthSquared();
 		if(dist > maxDist)
 		{
 			maxDist = dist;
 		}
 	});
 
-	radius = sqrt(maxDist);
+	m_radius = sqrt(maxDist);
+}
+
+//==============================================================================
+Vec4 Sphere::computeSupport(const Vec4& dir) const
+{
+	//return s.center + v.getNormalized() * s.radius;
 }
 
 } // end namespace anki
