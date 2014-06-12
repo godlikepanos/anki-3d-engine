@@ -41,6 +41,9 @@ static const GlDbg gldbgseverity[] = {
 	{GL_DEBUG_SEVERITY_HIGH, "GL_DEBUG_SEVERITY_HIGH"}};
 
 //==============================================================================
+#if ANKI_OS == ANKI_OS_WINDOWS
+__stdcall 
+#endif
 void oglMessagesCallback(GLenum source,
 	GLenum type, GLuint id, GLenum severity, GLsizei length,
 	const char* message, GLvoid* userParam)
