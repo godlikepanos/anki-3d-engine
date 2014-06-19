@@ -9,11 +9,11 @@
 namespace anki {
 
 //==============================================================================
-MoveComponent::MoveComponent(SceneNode* node_, U32 flags)
-	:	SceneComponent(MOVE_COMPONENT, node_),
-		Base(nullptr, node_->getSceneAllocator()),
+MoveComponent::MoveComponent(SceneNode* node, U32 flags)
+	:	SceneComponent(MOVE_COMPONENT, node),
+		Base(nullptr, node->getSceneAllocator()),
 		Bitset<U8>(flags),
-		node(node_)
+		m_node(node)
 {
 	markForUpdate();
 }
@@ -38,7 +38,7 @@ Bool MoveComponent::update(SceneNode&, F32, F32, UpdateType uptype)
 //==============================================================================
 void MoveComponent::updateWorldTransform()
 {
-	prevWTrf = wTrf;
+	m_prevWTrf = m_wtrf;
 	const Bool dirty = bitsEnabled(MF_MARKED_FOR_UPDATE);
 
 	// If dirty then update world transform
@@ -50,20 +50,20 @@ void MoveComponent::updateWorldTransform()
 		{
 			if(bitsEnabled(MF_IGNORE_LOCAL_TRANSFORM))
 			{
-				wTrf = parent->getWorldTransform();
+				m_wtrf = parent->getWorldTransform();
 			}
 			else
 			{
-				wTrf = Transform::combineTransformations(
-					parent->getWorldTransform(), lTrf);
+				m_wtrf = 
+					parent->getWorldTransform().combineTransformations(m_ltrf);
 			}
 		}
 		else
 		{
-			wTrf = lTrf;
+			m_wtrf = m_ltrf;
 		}
 
-		node->componentUpdated(*this, ASYNC_UPDATE);
+		m_node->componentUpdated(*this, ASYNC_UPDATE);
 		timestamp = getGlobTimestamp();
 
 		// Now it's a good time to cleanse parent

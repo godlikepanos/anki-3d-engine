@@ -41,8 +41,8 @@ inline Quat toAnki(const btQuaternion& q)
 inline Transform toAnki(const btTransform& t)
 {
 	Transform out;
-	out.setRotation(toAnki(t.getBasis()));
-	out.setOrigin(toAnki(t.getOrigin()));
+	out.setRotation(Mat3x4(toAnki(t.getBasis())));
+	out.setOrigin(Vec4(toAnki(t.getOrigin()), 0.0));
 	out.setScale(1.0);
 	return out;
 }
@@ -86,7 +86,7 @@ inline btTransform toBt(const Transform& trf)
 {
 	btTransform r;
 	r.setOrigin(toBt(trf.getOrigin()));
-	r.setBasis(toBt(trf.getRotation()));
+	r.setBasis(toBt(trf.getRotation().getRotationPart()));
 	return r;
 }
 

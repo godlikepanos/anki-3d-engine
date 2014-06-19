@@ -17,11 +17,28 @@ namespace anki {
 class ConvexShape: public CollisionShape
 {
 public:
+	using Base = CollisionShape;
+
 	/// @name Constructors & destructor
 	/// @{
 	ConvexShape(Type cid)
-		: CollisionShape(cid)
+		: Base(cid)
 	{}
+
+	ConvexShape(const ConvexShape& b)
+		: Base(b)
+	{
+		operator=(b);
+	}
+	/// @}
+
+	/// @name Operators
+	/// @{
+	ConvexShape& operator=(const ConvexShape& b)
+	{
+		Base::operator=(b);
+		return *this;
+	}
 	/// @}
 
 	/// Get a support vector for the GJK algorithm

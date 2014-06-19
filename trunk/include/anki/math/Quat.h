@@ -108,6 +108,13 @@ public:
 		}
 	}
 
+	explicit TQuat(const TMat3x4<T>& m)
+		: TQuat(m.getRotationPart())
+	{
+		ANKI_ASSERT(isZero<T>(m(0, 3)) && isZero<T>(m(1, 3)) 
+			&& isZero<T>(m(2, 3)));
+	}
+
 	explicit TQuat(const TEuler<T>& eu)
 	{
 		T cx, sx;
@@ -238,7 +245,7 @@ public:
 	}
 
 	/// @note 16 muls, 12 adds
-	TQuat getRotated(const TQuat& b) const 
+	TQuat combineRotations(const TQuat& b) const 
 	{
 		// XXX See if this can be optimized
 		TQuat out;
@@ -249,10 +256,14 @@ public:
 		return out;
 	}
 
-	/// @see getRotated
-	void rotate(const TQuat& b)
+	/// Returns q * this * q.Conjucated() aka returns a rotated this.
+	/// 18 muls, 12 adds
+	TVec3<T> rotate(const TVec3<T>& v) const
 	{
-		*this = getRotated(b);
+		ANKI_ASSERT(isZero<T>(1.0 - Base::getLength())); // Not normalized quat
+		TVec3<T> qXyz(Base::xyz());
+		return 
+			v + qXyz.cross(qXyz.cross(v) + v * Base::w()) * 2.0;
 	}
 
 	void setIdentity()

@@ -20,13 +20,14 @@ MoveEvent::MoveEvent(EventManager* manager, F32 startTime, F32 duration,
 
 	const MoveComponent& move = node->getComponent<MoveComponent>();
 
-	originalPos = move.getLocalTransform().getOrigin();
+	m_originalPos = move.getLocalTransform().getOrigin();
 
 	for(U i = 0; i < 3; i++)
 	{
-		newPos[i] = randRange(posMin[i], posMax[i]);
+		m_newPos[i] = randRange(m_posMin[i], m_posMax[i]);
 	}
-	newPos += move.getLocalTransform().getOrigin();
+	m_newPos[3] = 0.0;
+	m_newPos += move.getLocalTransform().getOrigin();
 }
 
 //==============================================================================
@@ -41,7 +42,7 @@ void MoveEvent::update(F32 prevUpdateTime, F32 crntTime)
 
 	F32 factor = sin(getDelta(crntTime) * getPi<F32>());
 
-	trf.getOrigin() = interpolate(originalPos, newPos, factor);
+	trf.getOrigin() = interpolate(m_originalPos, m_newPos, factor);
 
 	move.setLocalTransform(trf);
 }

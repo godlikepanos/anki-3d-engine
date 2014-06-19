@@ -36,13 +36,14 @@ void Camera::lookAtPoint(const Vec3& point)
 {
 	MoveComponent& move = *this;
 
-	const Vec3& j = Vec3(0.0, 1.0, 0.0);
-	Vec3 vdir = (point - move.getLocalTransform().getOrigin()).getNormalized();
-	Vec3 vup = j - vdir * j.dot(vdir);
-	Vec3 vside = vdir.cross(vup);
+	Vec4 j = Vec4(0.0, 1.0, 0.0, 0.0);
+	Vec4 vdir = 
+		(point.xyz0() - move.getLocalTransform().getOrigin()).getNormalized();
+	Vec4 vup = j - vdir * j.dot(vdir);
+	Vec4 vside = vdir.cross(vup);
 
-	Mat3 rot = move.getLocalTransform().getRotation();
-	rot.setColumns(vside, vup, -vdir);
+	Mat3x4 rot = move.getLocalTransform().getRotation();
+	rot.setColumns(vside.xyz(), vup.xyz(), (-vdir).xyz());
 	move.setLocalRotation(rot);
 }
 
@@ -65,6 +66,7 @@ void Camera::moveUpdate(MoveComponent& move)
 {
 	// Frustum
 	FrustumComponent& fr = *this;
+
 	fr.setViewMatrix(Mat4(move.getWorldTransform().getInverse()));
 	fr.setViewProjectionMatrix(fr.getProjectionMatrix() * fr.getViewMatrix());
 	fr.markForUpdate();

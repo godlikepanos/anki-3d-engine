@@ -102,7 +102,7 @@ public:
 class DistanceSortFunctor
 {
 public:
-	Vec3 m_origin;
+	Vec4 m_origin;
 
 	Bool operator()(const VisibleNode& a, const VisibleNode& b)
 	{
@@ -136,7 +136,7 @@ class DistanceSortJob: public ThreadpoolTask
 public:
 	U32 m_nodesCount;
 	VisibilityTestResults::Container::iterator m_nodes;
-	Vec3 m_origin;
+	Vec4 m_origin;
 
 	void operator()(ThreadId /*threadId*/, U /*threadsCount*/)
 	{

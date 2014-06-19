@@ -22,7 +22,7 @@ public:
 	void update(F32 prevUpdateTime, F32 crntTime) override;
 
 private:
-	AnimationResourcePointer anim;
+	AnimationResourcePointer m_anim;
 };
 /// @}
 

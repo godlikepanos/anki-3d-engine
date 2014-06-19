@@ -49,7 +49,7 @@ void initPhysics()
 
 	Transform groundTransform;
 	groundTransform.setIdentity();
-	groundTransform.setOrigin(Vec3(0, -50, 0));
+	groundTransform.setOrigin(Vec4(0, -50, 0, 0));
 
 	RigidBody::Initializer init;
 	init.mass = 0.0;
@@ -130,8 +130,8 @@ void init()
 	cam->setAll(
 		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
-	cam->setLocalTransform(Transform(Vec3(17.0, 5.2, 0.0),
-		Mat3(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
+	cam->setLocalTransform(Transform(Vec4(17.0, 5.2, 0.0, 0),
+		Mat3x4(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
 
@@ -190,9 +190,10 @@ void init()
 	F32 z = 2.49;
 	Array<Vec3, 4> vaseLightPos = {{Vec3(x, y, -z - 1.4), Vec3(x, y, z),
 		Vec3(-x - 2.3, y, z), Vec3(-x - 2.3, y, -z - 1.4)}};
-	for(U i = 0; i < vaseLightPos.getSize(); i++)
+	//for(U i = 0; i < vaseLightPos.getSize(); i++)
+	for(U i = 0; i < 0; i++)
 	{
-		Vec3 lightPos = vaseLightPos[i];
+		Vec4 lightPos = vaseLightPos[i].xyz0();
 
 		PointLight* point = scene.newSceneNode<PointLight>(
 			("vase_plight" + std::to_string(i)).c_str());
@@ -215,8 +216,8 @@ void init()
 		event->enableBits(Event::EF_REANIMATE);
 
 		MoveEventData moveData;
-		moveData.posMin = Vec3(-0.5, 0.0, -0.5);
-		moveData.posMax = Vec3(0.5, 0.0, 0.5);
+		moveData.m_posMin = Vec4(-0.5, 0.0, -0.5, 0);
+		moveData.m_posMax = Vec4(0.5, 0.0, 0.5, 0);
 		MoveEvent* mevent;
 		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
 		mevent->enableBits(Event::EF_REANIMATE);
@@ -326,13 +327,13 @@ void init()
 
 	horse = scene.newSceneNode<ModelNode>("shape0", 
 		"models/collision_test/Cube_Material-material.ankimdl");
-	horse->setLocalTransform(Transform(Vec3(0.0, 0, 0), Mat3::getIdentity(),
-		1.0));
+	horse->setLocalTransform(Transform(Vec4(0.0, 0, 0, 0), 
+		Mat3x4::getIdentity(), 0.1));
 
 	horse = scene.newSceneNode<ModelNode>("shape1", 
 		"models/collision_test/Cube.001_Material_001-material.ankimdl");
-	horse->setLocalTransform(Transform(Vec3(0, 3, 0), Mat3::getIdentity(),
-		1.0));
+	horse->setLocalTransform(Transform(Vec4(0, 3, 0, 0), Mat3x4::getIdentity(),
+		0.1));
 }
 
 //==============================================================================
@@ -395,11 +396,11 @@ void mainLoopExtra()
 	}
 	if(in.getKey(KeyCode::_6))
 	{
-		mover = &SceneGraphSingleton::get().findSceneNode("vase_plight0").getComponent<MoveComponent>();
+		mover = &SceneGraphSingleton::get().findSceneNode("shape0").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_7))
 	{
-		mover = &SceneGraphSingleton::get().findSceneNode("red_barrel").getComponent<MoveComponent>();
+		mover = &SceneGraphSingleton::get().findSceneNode("shape1").getComponent<MoveComponent>();
 	}
 
 	/*if(in.getKey(KeyCode::L) == 1)

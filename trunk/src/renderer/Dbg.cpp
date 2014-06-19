@@ -181,6 +181,41 @@ void Dbg::run(GlJobChainHandle& jobs)
 	// XXX
 #endif
 
+#if 1
+	{
+		Vec4 pos0 = scene.findSceneNode("shape0").
+			getComponent<MoveComponent>().getWorldTransform().getOrigin();
+
+		Vec4 pos1 = scene.findSceneNode("shape1").
+			getComponent<MoveComponent>().getWorldTransform().getOrigin();
+		Mat3x4 rot1 = scene.findSceneNode("shape1").
+			getComponent<MoveComponent>().getWorldTransform().getRotation();
+
+
+		Aabb s0(pos0 - Vec4(1.01, 1.0, 2.02, 0.0), pos0 + Vec4(1.0, 1.0, 2.0, 0.0));
+		Obb s1(pos1, rot1, Vec4(1.01, 0.501, 2.51, 0.0));
+
+		CollisionDebugDrawer dr(m_drawer.get());
+
+		Gjk gjk;
+
+		Bool intersect = gjk.intersect(s1, s0);
+
+
+		if(intersect)
+		{
+			m_drawer->setColor(Vec4(1.0, 0.0, 0.0, 1.0));
+		}
+		else
+		{
+			m_drawer->setColor(Vec4(1.0, 1.0, 1.0, 1.0));
+		}
+
+		s0.accept(dr);
+		s1.accept(dr);
+	}
+#endif
+
 	m_drawer->flush();
 	m_drawer->finishDraw();
 

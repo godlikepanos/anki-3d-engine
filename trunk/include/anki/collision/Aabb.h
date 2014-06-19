@@ -6,7 +6,7 @@
 #ifndef ANKI_COLLISION_AABB_H
 #define ANKI_COLLISION_AABB_H
 
-#include "anki/collision/CollisionShape.h"
+#include "anki/collision/ConvexShape.h"
 #include "anki/math/Vec3.h"
 
 namespace anki {
@@ -15,52 +15,54 @@ namespace anki {
 /// @{
 
 /// Axis align bounding box collision shape
-class Aabb: public CollisionShape
+class Aabb: public ConvexShape
 {
 public:
+	using Base = ConvexShape;
+
 	/// @name Constructors
 	/// @{
 	Aabb()
-		: CollisionShape(Type::AABB)
+		: Base(Type::AABB)
 	{}
 
-	Aabb(const Vec3& min, const Vec3& max)
-		: CollisionShape(Type::AABB), m_min(min), m_max(max)
+	Aabb(const Vec4& min, const Vec4& max)
+		: Base(Type::AABB), m_min(min), m_max(max)
 	{
-		ANKI_ASSERT(m_min < m_max);
+		ANKI_ASSERT(m_min.xyz() < m_max.xyz());
 	}
 
 	Aabb(const Aabb& b)
-		:	CollisionShape(Type::AABB), 
-			m_min(b.m_min), 
-			m_max(b.m_max)
-	{}
+		: Base(Type::AABB)
+	{
+		operator=(b);
+	}
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	const Vec3& getMin() const
+	const Vec4& getMin() const
 	{
 		return m_min;
 	}
-	Vec3& getMin()
+	Vec4& getMin()
 	{
 		return m_min;
 	}
-	void setMin(const Vec3& x)
+	void setMin(const Vec4& x)
 	{
 		m_min = x;
 	}
 
-	const Vec3& getMax() const
+	const Vec4& getMax() const
 	{
 		return m_max;
 	}
-	Vec3& getMax()
+	Vec4& getMax()
 	{
 		return m_max;
 	}
-	void setMax(const Vec3& x)
+	void setMax(const Vec4& x)
 	{
 		m_max = x;
 	}
@@ -70,18 +72,12 @@ public:
 	/// @{
 	Aabb& operator=(const Aabb& b)
 	{
+		Base::operator=(b);
 		m_min = b.m_min;
 		m_max = b.m_max;
 		return *this;
 	}
 	/// @}
-
-	/// Check for collision
-	template<typename T>
-	Bool collide(const T& x) const
-	{
-		return detail::collide(*this, x);
-	}
 
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
@@ -109,6 +105,9 @@ public:
 		b = *this;
 	}
 
+	/// Implements CompoundShape::computeSupport
+	Vec4 computeSupport(const Vec4& dir) const;
+
 	/// It uses a nice trick to avoid unwanted calculations 
 	Aabb getTransformed(const Transform& transform) const;
 
@@ -123,8 +122,8 @@ public:
 private:
 	/// @name Data
 	/// @{
-	Vec3 m_min;
-	Vec3 m_max;
+	Vec4 m_min;
+	Vec4 m_max;
 	/// @}
 };
 /// @}

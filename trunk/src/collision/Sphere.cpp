@@ -36,16 +36,12 @@ F32 Sphere::testPlane(const Plane& p) const
 }
 
 //==============================================================================
-Sphere Sphere::getTransformed(const Transform& transform) const
+Sphere Sphere::getTransformed(const Transform& trf) const
 {
 	Sphere newSphere;
 
-	newSphere.m_center = m_center.getTransformed(
-		transform.getOrigin(),
-		transform.getRotation(),
-		transform.getScale());
-
-	newSphere.m_radius = m_radius * transform.getScale();
+	newSphere.m_center = trf.transform(m_center);
+	newSphere.m_radius = m_radius * trf.getScale();
 	return newSphere;
 }
 
@@ -81,7 +77,7 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 	}
 	*/
 
-	Vec3 c = b.getCenter() - a.getCenter(); // Vector from one center to the
+	Vec4 c = b.getCenter() - a.getCenter(); // Vector from one center to the
 	                                        // other
 	F32 cLen = c.getLength();
 
@@ -94,10 +90,10 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 		return b;
 	}
 
-	Vec3 bnorm = c / cLen;
+	Vec4 bnorm = c / cLen;
 
-	Vec3 ca = (-bnorm) * a.getRadius() + a.getCenter();
-	Vec3 cb = (bnorm) * b.getRadius() + b.getCenter();
+	Vec4 ca = (-bnorm) * a.getRadius() + a.getCenter();
+	Vec4 cb = (bnorm) * b.getRadius() + b.getCenter();
 
 	return Sphere((ca + cb) / 2.0, (ca - cb).getLength() / 2.0);
 }
@@ -105,8 +101,8 @@ Sphere Sphere::getCompoundShape(const Sphere& b) const
 //==============================================================================
 void Sphere::computeAabb(Aabb& aabb) const
 {
-	aabb.setMin((m_center - m_radius).xyz());
-	aabb.setMax((m_center + m_radius).xyz());
+	aabb.setMin(m_center - m_radius);
+	aabb.setMax(m_center + m_radius);
 }
 
 //==============================================================================
@@ -114,8 +110,8 @@ void Sphere::setFromPointCloud(
 	const void* buff, U count, PtrSize stride, PtrSize buffSize)
 {
 	// Calc min/max
-	Vec3 min(MAX_F32);
-	Vec3 max(MIN_F32);
+	Vec4 min(Vec3(MAX_F32), 0.0);
+	Vec4 max(Vec3(MIN_F32), 0.0);
 	
 	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
 	{
@@ -139,7 +135,7 @@ void Sphere::setFromPointCloud(
 
 	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
 	{
-		F32 dist = (pos - m_center).getLengthSquared();
+		F32 dist = (Vec4(pos, 0.0) - m_center).getLengthSquared();
 		if(dist > maxDist)
 		{
 			maxDist = dist;
@@ -152,7 +148,7 @@ void Sphere::setFromPointCloud(
 //==============================================================================
 Vec4 Sphere::computeSupport(const Vec4& dir) const
 {
-	//return s.center + v.getNormalized() * s.radius;
+	return m_center + dir.getNormalized() * m_radius;
 }
 
 } // end namespace anki

@@ -65,15 +65,6 @@ public:
 	{}
 	/// @}
 
-	/// @name Operators with other types
-	/// @{
-	TVec3 operator*(const TMat3<T>& m3) const
-	{
-		ANKI_ASSERT(0 && "TODO");
-		return TVec3(0.0);
-	}
-	/// @}
-
 	/// @name Other
 	/// @{
 
@@ -88,100 +79,6 @@ public:
 	TVec3 getProjection(const TVec3& toThis) const
 	{
 		return toThis * ((*this).dot(toThis) / (toThis.dot(toThis)));
-	}
-
-	/// Returns q * this * q.Conjucated() aka returns a rotated this.
-	/// 18 muls, 12 adds
-	TVec3 getRotated(const TQuat<T>& q) const
-	{
-		ANKI_ASSERT(isZero<T>(1.0 - q.getLength())); // Not normalized quat
-		TVec3 qXyz(q.x(), q.y(), q.z());
-		return 
-			(*this) + qXyz.cross(qXyz.cross((*this)) + (*this) * q.w()) * 2.0;
-	}
-
-	void rotate(const TQuat<T>& q)
-	{
-		(*this) = getRotated(q);
-	}
-	/// @}
-
-	/// @name Transformations
-	/// The faster way is by far the TMat4 * TVec3 or the
-	/// getTransformed(const TVec3&, const TMat3&)
-	/// @{
-	TVec3 getTransformed(const TVec3& translate, const TMat3<T>& rotate,
-		T scale) const
-	{
-		return (rotate * ((*this) * scale)) + translate;
-	}
-
-	void transform(const TVec3& translate, const TMat3<T>& rotate, T scale)
-	{
-		(*this) = getTransformed(translate, rotate, scale);
-	}
-
-	TVec3 getTransformed(const TVec3& translate, const TMat3<T>& rotate) const
-	{
-		return (rotate * (*this)) + translate;
-	}
-
-	void transform(const TVec3& translate, const TMat3<T>& rotate)
-	{
-		(*this) = getTransformed(translate, rotate);
-	}
-
-	TVec3 getTransformed(const TVec3& translate, const TQuat<T>& rotate,
-		T scale) const
-	{
-		return ((*this) * scale).getRotated(rotate) + translate;
-	}
-
-	void transform(const TVec3& translate, const TQuat<T>& rotate, T scale)
-	{
-		(*this) = getTransformed(translate, rotate, scale);
-	}
-
-	TVec3 getTransformed(const TVec3& translate, const TQuat<T>& rotate) const
-	{
-		return getRotated(rotate) + translate;
-	}
-
-	void transform(const TVec3& translate, const TQuat<T>& rotate)
-	{
-		(*this) = getTransformed(translate, rotate);
-	}
-
-	/// Transform the vector
-	/// @param transform A transformation matrix
-	///
-	/// @note 9 muls, 9 adds
-	TVec3 getTransformed(const TMat4<T>& transform) const
-	{
-		return TVec3(
-			transform(0, 0) * x() + transform(0, 1) * y() 
-			+ transform(0, 2) * z() + transform(0, 3),
-			transform(1, 0) * x() + transform(1, 1) * y() 
-			+ transform(1, 2) * z() + transform(1, 3),
-			transform(2, 0) * x() + transform(2, 1) * y() 
-			+ transform(2, 2) * z() + transform(2, 3));
-	}
-
-	void transform(const TMat4<T>& transform)
-	{
-		(*this) = getTransformed(transform);
-	}
-
-	/// 12 muls, 9 adds
-	TVec3 getTransformed(const TTransform<T>& transform) const
-	{
-		return (transform.getRotation() * ((*this) * transform.getScale())) 
-			+ transform.getOrigin();
-	}
-
-	void transform(const TTransform<T>& transform)
-	{
-		(*this) = getTransformed(transform);
 	}
 	/// @}
 };

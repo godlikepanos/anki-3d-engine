@@ -12,16 +12,16 @@ namespace anki {
 
 //==============================================================================
 AnimationEvent::AnimationEvent(EventManager* manager, 
-	const AnimationResourcePointer& anim_, SceneNode* movableSceneNode)
+	const AnimationResourcePointer& anim, SceneNode* movableSceneNode)
 	:	Event(manager, 0.0, 0.0, movableSceneNode),
-		anim(anim_)
+		m_anim(anim)
 {
 	ANKI_ASSERT(movableSceneNode);
 
-	startTime = anim->getStartingTime();
-	duration = anim->getDuration();
+	startTime = m_anim->getStartingTime();
+	duration = m_anim->getDuration();
 
-	enableBits(EF_REANIMATE, anim->getRepeat());
+	enableBits(EF_REANIMATE, m_anim->getRepeat());
 }
 
 //==============================================================================
@@ -33,11 +33,11 @@ void AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
 	Vec3 pos;
 	Quat rot;
 	F32 scale = 1.0;
-	anim->interpolate(0, crntTime, pos, rot, scale);
+	m_anim->interpolate(0, crntTime, pos, rot, scale);
 
 	Transform trf;
-	trf.setOrigin(pos);
-	trf.setRotation(Mat3(rot));
+	trf.setOrigin(pos.xyz0());
+	trf.setRotation(Mat3x4(rot));
 	trf.setScale(scale);
 	move.setLocalTransform(trf);
 }

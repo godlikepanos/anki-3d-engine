@@ -65,7 +65,7 @@ void Frustum::transform(const Transform& trf)
 		useTrf = &trf;
 	}
 
-	m_trf.transform(trf);
+	m_trf = m_trf.combineTransformations(trf);
 
 	// Transform the compound
 	CompoundShape::transform(*useTrf);
@@ -127,24 +127,24 @@ void PerspectiveFrustum::recalculate()
 
 	sinCos(getPi<F32>() + m_fovX / 2.0, s, c);
 	// right
-	m_planes[(U)PlaneType::RIGHT] = Plane(Vec3(c, 0.0, s), 0.0);
+	m_planes[(U)PlaneType::RIGHT] = Plane(Vec4(c, 0.0, s, 0.0), 0.0);
 	// left
-	m_planes[(U)PlaneType::LEFT] = Plane(Vec3(-c, 0.0, s), 0.0);
+	m_planes[(U)PlaneType::LEFT] = Plane(Vec4(-c, 0.0, s, 0.0), 0.0);
 
 	sinCos((getPi<F32>() + m_fovY) * 0.5, s, c);
 	// bottom
-	m_planes[(U)PlaneType::BOTTOM] = Plane(Vec3(0.0, s, c), 0.0);
+	m_planes[(U)PlaneType::BOTTOM] = Plane(Vec4(0.0, s, c, 0.0), 0.0);
 	// top
-	m_planes[(U)PlaneType::TOP] = Plane(Vec3(0.0, -s, c), 0.0);
+	m_planes[(U)PlaneType::TOP] = Plane(Vec4(0.0, -s, c, 0.0), 0.0);
 
 	// near
-	m_planes[(U)PlaneType::NEAR] = Plane(Vec3(0.0, 0.0, -1.0), m_near);
+	m_planes[(U)PlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
 	// far
-	m_planes[(U)PlaneType::FAR] = Plane(Vec3(0.0, 0.0, 1.0), -m_far);
+	m_planes[(U)PlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
 
 	// Rest
 	//
-	Vec3 eye = Vec3(0.0, 0.0, -m_near);
+	Vec4 eye = Vec4(0.0, 0.0, -m_near, 0.0);
 	for(LineSegment& ls : m_segments)
 	{
 		ls.setOrigin(eye);
@@ -154,10 +154,10 @@ void PerspectiveFrustum::recalculate()
 	F32 y = tan(m_fovY / 2.0) * m_far;
 	F32 z = -m_far;
 
-	m_segments[0].setDirection(Vec3(x, y, z - m_near)); // top right
-	m_segments[1].setDirection(Vec3(-x, y, z - m_near)); // top left
-	m_segments[2].setDirection(Vec3(-x, -y, z - m_near)); // bottom left
-	m_segments[3].setDirection(Vec3(x, -y, z - m_near)); // bottom right
+	m_segments[0].setDirection(Vec4(x, y, z - m_near, 0.0)); // top right
+	m_segments[1].setDirection(Vec4(-x, y, z - m_near, 0.0)); // top left
+	m_segments[2].setDirection(Vec4(-x, -y, z - m_near, 0.0)); // bottom left
+	m_segments[3].setDirection(Vec4(x, -y, z - m_near, 0.0)); // bottom right
 }
 
 //==============================================================================
@@ -269,19 +269,20 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 void OrthographicFrustum::recalculate()
 {
 	// Planes
-	m_planes[(U)PlaneType::LEFT] = Plane(Vec3(1.0, 0.0, 0.0), m_left);
-	m_planes[(U)PlaneType::RIGHT] = Plane(Vec3(-1.0, 0.0, 0.0), -m_right);
-	m_planes[(U)PlaneType::NEAR] = Plane(Vec3(0.0, 0.0, -1.0), m_near);
-	m_planes[(U)PlaneType::FAR] = Plane(Vec3(0.0, 0.0, 1.0), -m_far);
-	m_planes[(U)PlaneType::TOP] = Plane(Vec3(0.0, -1.0, 0.0), -m_top);
-	m_planes[(U)PlaneType::BOTTOM] = Plane(Vec3(0.0, 1.0, 0.0), m_bottom);
+	m_planes[(U)PlaneType::LEFT] = Plane(Vec4(1.0, 0.0, 0.0, 0.0), m_left);
+	m_planes[(U)PlaneType::RIGHT] = Plane(Vec4(-1.0, 0.0, 0.0, 0.0), -m_right);
+	m_planes[(U)PlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
+	m_planes[(U)PlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
+	m_planes[(U)PlaneType::TOP] = Plane(Vec4(0.0, -1.0, 0.0, 0.0), -m_top);
+	m_planes[(U)PlaneType::BOTTOM] = Plane(Vec4(0.0, 1.0, 0.0, 0.0), m_bottom);
 
 	// OBB
-	Vec3 c((m_right + m_left) * 0.5, 
+	Vec4 c((m_right + m_left) * 0.5, 
 		(m_top + m_bottom) * 0.5, 
-		-(m_far + m_near) * 0.5);
-	Vec3 e = Vec3(m_right, m_top, -m_far) - c;
-	m_obb = Obb(c, Mat3::getIdentity(), e);
+		-(m_far + m_near) * 0.5,
+		0.0);
+	Vec4 e = Vec4(m_right, m_top, -m_far, 0.0) - c;
+	m_obb = Obb(c, Mat3x4::getIdentity(), e);
 }
 
 } // end namespace anki

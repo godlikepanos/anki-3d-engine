@@ -51,49 +51,49 @@ public:
 	/// @{
 	const Transform& getLocalTransform() const
 	{
-		return lTrf;
+		return m_ltrf;
 	}
 	void setLocalTransform(const Transform& x)
 	{
-		lTrf = x;
+		m_ltrf = x;
 		markForUpdate();
 	}
-	void setLocalOrigin(const Vec3& x)
+	void setLocalOrigin(const Vec4& x)
 	{
-		lTrf.setOrigin(x);
+		m_ltrf.setOrigin(x);
 		markForUpdate();
 	}
-	const Vec3& getLocalOrigin() const
+	const Vec4& getLocalOrigin() const
 	{
-		return lTrf.getOrigin();
+		return m_ltrf.getOrigin();
 	}
-	void setLocalRotation(const Mat3& x)
+	void setLocalRotation(const Mat3x4& x)
 	{
-		lTrf.setRotation(x);
+		m_ltrf.setRotation(x);
 		markForUpdate();
 	}
-	const Mat3& getLocalRotation() const
+	const Mat3x4& getLocalRotation() const
 	{
-		return lTrf.getRotation();
+		return m_ltrf.getRotation();
 	}
 	void setLocalScale(F32 x)
 	{
-		lTrf.setScale(x);
+		m_ltrf.setScale(x);
 		markForUpdate();
 	}
 	F32 getLocalScale() const
 	{
-		return lTrf.getScale();
+		return m_ltrf.getScale();
 	}
 
 	const Transform& getWorldTransform() const
 	{
-		return wTrf;
+		return m_wtrf;
 	}
 
 	const Transform& getPrevWorldTransform() const
 	{
-		return prevWTrf;
+		return m_prevWTrf;
 	}
 	/// @}
 
@@ -112,40 +112,40 @@ public:
 	/// @{
 	void rotateLocalX(F32 angDegrees)
 	{
-		lTrf.getRotation().rotateXAxis(angDegrees);
+		m_ltrf.getRotation().rotateXAxis(angDegrees);
 		markForUpdate();
 	}
 	void rotateLocalY(F32 angDegrees)
 	{
-		lTrf.getRotation().rotateYAxis(angDegrees);
+		m_ltrf.getRotation().rotateYAxis(angDegrees);
 		markForUpdate();
 	}
 	void rotateLocalZ(F32 angDegrees)
 	{
-		lTrf.getRotation().rotateZAxis(angDegrees);
+		m_ltrf.getRotation().rotateZAxis(angDegrees);
 		markForUpdate();
 	}
 	void moveLocalX(F32 distance)
 	{
-		Vec3 x_axis = lTrf.getRotation().getColumn(0);
-		lTrf.getOrigin() += x_axis * distance;
+		Vec3 x_axis = m_ltrf.getRotation().getColumn(0);
+		m_ltrf.getOrigin() += Vec4(x_axis, 0.0) * distance;
 		markForUpdate();
 	}
 	void moveLocalY(F32 distance)
 	{
-		Vec3 y_axis = lTrf.getRotation().getColumn(1);
-		lTrf.getOrigin() += y_axis * distance;
+		Vec3 y_axis = m_ltrf.getRotation().getColumn(1);
+		m_ltrf.getOrigin() += Vec4(y_axis, 0.0) * distance;
 		markForUpdate();
 	}
 	void moveLocalZ(F32 distance)
 	{
-		Vec3 z_axis = lTrf.getRotation().getColumn(2);
-		lTrf.getOrigin() += z_axis * distance;
+		Vec3 z_axis = m_ltrf.getRotation().getColumn(2);
+		m_ltrf.getOrigin() += Vec4(z_axis, 0.0) * distance;
 		markForUpdate();
 	}
 	void scale(F32 s)
 	{
-		lTrf.getScale() *= s;
+		m_ltrf.getScale() *= s;
 		markForUpdate();
 	}
 	/// @}
@@ -156,24 +156,24 @@ public:
 	}
 
 private:
-	SceneNode* node;
+	SceneNode* m_node;
 
 	/// The transformation in local space
-	Transform lTrf = Transform::getIdentity();
+	Transform m_ltrf = Transform::getIdentity();
 
 	/// The transformation in world space (local combined with parent's
 	/// transformation)
-	Transform wTrf = Transform::getIdentity();
+	Transform m_wtrf = Transform::getIdentity();
 
 	/// Keep the previous transformation for checking if it moved
-	Transform prevWTrf = Transform::getIdentity();
+	Transform m_prevWTrf = Transform::getIdentity();
 
 	void markForUpdate()
 	{
 		enableBits(MF_MARKED_FOR_UPDATE);
 	}
 
-	/// Called every frame. It updates the @a wTrf if @a shouldUpdateWTrf
+	/// Called every frame. It updates the @a m_wtrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.
 	void updateWorldTransform();
 };

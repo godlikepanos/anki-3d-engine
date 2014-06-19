@@ -14,7 +14,6 @@ class LineSegment;
 class Obb;
 class Frustum;
 class Plane;
-class Ray;
 class Sphere;
 class Aabb;
 class CompoundShape;

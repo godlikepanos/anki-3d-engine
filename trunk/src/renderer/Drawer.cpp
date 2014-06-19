@@ -72,8 +72,7 @@ public:
 		switch(rvar.getBuildinId())
 		{
 		case BuildinMaterialVariableId::NO_BUILDIN:
-			uniSet<DataType>(
-				glvar, rvar.begin(), arraySize);
+			uniSet<DataType>(glvar, rvar.begin(), arraySize);
 			break;
 		case BuildinMaterialVariableId::MVP_MATRIX:
 			if(hasWorldTrfs)
@@ -166,7 +165,7 @@ public:
 				{
 					Transform trf;
 					m_renderable->getRenderWorldTransform(i, trf);
-					trf.setRotation(rot);
+					trf.setRotation(Mat3x4(rot));
 					bmvp[i] = vp * Mat4(trf);
 				}
 
@@ -320,7 +319,7 @@ void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	// Calculate the key
 	RenderingKey key;
 
-	Vec3 camPos = fr.getFrustumOrigin();
+	Vec4 camPos = fr.getFrustumOrigin();
 
 	F32 dist = (visibleNode.m_node->getComponent<SpatialComponent>().
 		getSpatialOrigin() - camPos).getLength();

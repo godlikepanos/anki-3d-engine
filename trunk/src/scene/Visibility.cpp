@@ -98,12 +98,12 @@ public:
 			}
 
 			// Sort spatials
-			Vec3 origin = testedFr.getFrustumOrigin();
+			Vec4 origin = testedFr.getFrustumOrigin();
 			std::sort(sps.begin(), sps.begin() + count, 
 				[&](const SpatialTemp& a, const SpatialTemp& b) -> Bool
 			{
-				Vec3 spa = a.sp->getSpatialOrigin();
-				Vec3 spb = b.sp->getSpatialOrigin();
+				Vec4 spa = a.sp->getSpatialOrigin();
+				Vec4 spb = b.sp->getSpatialOrigin();
 
 				F32 dist0 = origin.getDistanceSquared(spa);
 				F32 dist1 = origin.getDistanceSquared(spb);

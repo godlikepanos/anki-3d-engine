@@ -39,7 +39,7 @@ private:
 	/// Helper of axbxa
 	static Vec4 crossAba(const Vec4& a, const Vec4& b)
 	{
-		return a.cross(b).cross(a);
+		return (a.cross(b)).cross(a);
 	}
 };
 

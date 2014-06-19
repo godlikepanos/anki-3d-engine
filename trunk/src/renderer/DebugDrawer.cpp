@@ -226,7 +226,8 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 	Mat4 oldMMat = m_mMat;
 	Mat4 oldVpMat = m_vpMat;
 
-	setModelMatrix(m_mMat * Mat4(Vec3(0.0), Mat3::getIdentity(), radius));
+	setModelMatrix(m_mMat * Mat4(Vec4(0.0, 0.0, 0.0, 1.0), 
+		Mat3::getIdentity(), radius));
 
 	begin();
 	for(const Vec3& p : *sphereLines)
@@ -276,7 +277,8 @@ void DebugDrawer::drawCube(F32 size)
 //==============================================================================
 void CollisionDebugDrawer::visit(const Sphere& sphere)
 {
-	m_dbg->setModelMatrix(Mat4(sphere.getCenter(), Mat3::getIdentity(), 1.0));
+	m_dbg->setModelMatrix(
+		Mat4(sphere.getCenter().xyz1(), Mat3::getIdentity(), 1.0));
 	m_dbg->drawSphere(sphere.getRadius());
 }
 
@@ -288,28 +290,22 @@ void CollisionDebugDrawer::visit(const Obb& obb)
 	scale(1, 1) = obb.getExtend().y();
 	scale(2, 2) = obb.getExtend().z();
 
-	Mat4 rot(obb.getRotation());
+	Mat4 tsl(Transform(obb.getCenter(), obb.getRotation(), 1.0));
 
-	Mat4 trs(obb.getCenter());
-
-	Mat4 tsl;
-	tsl = Mat4::combineTransformations(rot, scale);
-	tsl = Mat4::combineTransformations(trs, tsl);
-
-	m_dbg->setModelMatrix(tsl);
+	m_dbg->setModelMatrix(tsl * scale);
 	m_dbg->drawCube(2.0);
 }
 
 //==============================================================================
 void CollisionDebugDrawer::visit(const Plane& plane)
 {
-	const Vec3& n = plane.getNormal();
+	Vec3 n = plane.getNormal().xyz();
 	const F32& o = plane.getOffset();
 	Quat q;
 	q.setFrom2Vec3(Vec3(0.0, 0.0, 1.0), n);
 	Mat3 rot(q);
 	rot.rotateXAxis(getPi<F32>() / 2.0);
-	Mat4 trf(n * o, rot);
+	Mat4 trf(Vec4(n * o, 1.0), rot);
 
 	m_dbg->setModelMatrix(trf);
 	m_dbg->drawGrid();
@@ -320,16 +316,16 @@ void CollisionDebugDrawer::visit(const LineSegment& ls)
 {
 	m_dbg->setModelMatrix(Mat4::getIdentity());
 	m_dbg->begin();
-	m_dbg->pushBackVertex(ls.getOrigin());
-	m_dbg->pushBackVertex(ls.getOrigin() + ls.getDirection());
+	m_dbg->pushBackVertex(ls.getOrigin().xyz());
+	m_dbg->pushBackVertex((ls.getOrigin() + ls.getDirection()).xyz());
 	m_dbg->end();
 }
 
 //==============================================================================
 void CollisionDebugDrawer::visit(const Aabb& aabb)
 {
-	const Vec3& min = aabb.getMin();
-	const Vec3& max = aabb.getMax();
+	Vec3 min = aabb.getMin().xyz();
+	Vec3 max = aabb.getMax().xyz();
 
 	Mat4 trf = Mat4::getIdentity();
 	// Scale

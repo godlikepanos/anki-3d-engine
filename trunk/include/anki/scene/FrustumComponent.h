@@ -76,7 +76,7 @@ public:
 	}
 
 	/// Get the origin for sorting and visibility tests
-	const Vec3& getFrustumOrigin() const
+	const Vec4& getFrustumOrigin() const
 	{
 		return getFrustum().getTransform().getOrigin();
 	}

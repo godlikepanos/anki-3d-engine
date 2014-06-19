@@ -6,11 +6,11 @@
 #ifndef ANKI_MATH_TRANSFORM_H
 #define ANKI_MATH_TRANSFORM_H
 
-#include "anki/math/Vec3.h"
-#include "anki/math/Mat3.h"
 #include "anki/math/CommonIncludes.h"
 
 namespace anki {
+
+#define ANKI_CHECK_W() ANKI_ASSERT(m_origin.w() == 0.0)
 
 /// @addtogroup math
 /// @{
@@ -27,49 +27,55 @@ public:
 
 	TTransform(const TTransform& b)
 		: m_origin(b.m_origin), m_rotation(b.m_rotation), m_scale(b.m_scale)
-	{}
+	{
+		ANKI_CHECK_W();
+	}
 
 	explicit TTransform(const Mat4& m4)
 	{
 		m_rotation = m4.getRotationPart();
-		m_origin = m4.getTranslationPart().xyz();
+		m_origin = m4.getTranslationPart();
 		m_scale = 1.0;
+		ANKI_CHECK_W();
 	}
 
-	explicit TTransform(const TVec3<T>& origin, const TMat3<T>& rotation,
+	explicit TTransform(const TVec4<T>& origin, const TMat3x4<T>& rotation,
 		const T scale)
 		: m_origin(origin), m_rotation(rotation), m_scale(scale)
-	{}
+	{
+		ANKI_CHECK_W();
+	}
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	const TVec3<T>& getOrigin() const
+	const TVec4<T>& getOrigin() const
 	{
 		return m_origin;
 	}
 
-	TVec3<T>& getOrigin()
+	TVec4<T>& getOrigin()
 	{
 		return m_origin;
 	}
 
-	void setOrigin(const TVec3<T>& o)
+	void setOrigin(const TVec4<T>& o)
 	{
 		m_origin = o;
+		ANKI_CHECK_W();
 	}
 
-	const TMat3<T>& getRotation() const
+	const TMat3x4<T>& getRotation() const
 	{
 		return m_rotation;
 	}
 
-	TMat3<T>& getRotation()
+	TMat3x4<T>& getRotation()
 	{
 		return m_rotation;
 	}
 
-	void setRotation(const TMat3<T>& r)
+	void setRotation(const TMat3x4<T>& r)
 	{
 		m_rotation = r;
 	}
@@ -97,6 +103,7 @@ public:
 		m_origin = b.m_origin;
 		m_rotation = b.m_rotation;
 		m_scale = b.m_scale;
+		ANKI_CHECK_W();
 		return *this;
 	}
 
@@ -122,38 +129,21 @@ public:
 	static const TTransform& getIdentity()
 	{
 		static const TTransform ident(
-			TVec3<T>(0.0), TMat3<T>::getIdentity(), 1.0);
+			TVec4<T>(0.0), TMat3x4<T>::getIdentity(), 1.0);
 		return ident;
 	}
 
-	static void combineTransformations(
-		const TVec3<T>& t0, const TMat3<T>& r0, const T s0,
-		const TVec3<T>& t1, const TMat3<T>& r1, const T s1,
-		TVec3<T>& tf, TMat3<T>& rf, T& sf)
-	{
-		tf = t1.getTransformed(t0, r0, s0);
-		rf = r0 * r1;
-		sf = s0 * s1;
-	}
-
-	static void combineTransformations(
-		const TVec3<T>& t0, const TMat3<T>& r0,
-		const TVec3<T>& t1, const TMat3<T>& r1,
-		TVec3<T>& tf, TMat3<T>& rf)
-	{
-		tf = t1.getTransformed(t0, r0);
-		rf = r0 * r1;
-	}
-
 	/// @copybrief combineTTransformations
-	static TTransform combineTransformations(const TTransform& a,
-		const TTransform& b)
+	TTransform combineTransformations(const TTransform& b) const
 	{
+		ANKI_CHECK_W();
+		const TTransform& a = *this;
 		TTransform out;
 
 		out.m_origin = 
-			b.m_origin.getTransformed(a.m_origin, a.m_rotation, a.m_scale);
-		out.m_rotation = a.m_rotation * b.m_rotation;
+			TVec4<T>(a.m_rotation * (b.m_origin * a.m_scale), 0.0) + a.m_origin;
+
+		out.m_rotation = a.m_rotation.combineTransformations(b.m_rotation);
 		out.m_scale = a.m_scale * b.m_scale;
 
 		return out;
@@ -162,37 +152,50 @@ public:
 	/// Get the inverse transformation. Its faster that inverting a Mat4
 	TTransform getInverse() const
 	{
+		ANKI_CHECK_W();
 		TTransform o;
-		o.m_rotation = m_rotation.getTransposed(); // Rotation
-		o.m_scale = 1.0 / m_scale; // Apply scale
-		o.m_origin = -((o.m_rotation * o.m_scale) * m_origin); // Translation
+		o.m_rotation = m_rotation;
+		o.m_rotation.transposeRotationPart();
+		o.m_scale = 1.0 / m_scale;
+		o.m_origin = -((o.m_rotation * o.m_scale) * m_origin).xyz0();
 		return o;
 	}
 
 	void invert()
 	{
-		*this = getInverse();
+		m_rotation.transposeRotationPart();
+		m_scale = 1.0 / m_scale;
+		m_origin = -((m_rotation * m_scale) * m_origin);
 	}
 
-	void transform(const TTransform& b)
+	/// Transform a TVec3
+	TVec3<T> transform(const TVec3<T>& b) const
 	{
-		m_origin = b.m_origin.getTransformed(m_origin, m_rotation, m_scale);
-		m_rotation = m_rotation * b.m_rotation;
-		m_scale *= b.m_scale;
+		ANKI_CHECK_W();
+		return (m_rotation.getRotationPart() * (b * m_scale)) + m_origin.xyz();
+	}
+
+	/// Transform a TVec4. SIMD optimized
+	TVec4<T> transform(const TVec4<T>& b) const
+	{
+		ANKI_CHECK_W();
+		TVec4<T> out = TVec4<T>(m_rotation * (b * m_scale), 0.0) + m_origin;
+		return out;
 	}
 
 	std::string toString() const
 	{
-		return m_origin.toString() + " " + m_rotation.toString() + " " + 
-			std::to_string(m_scale);
+		return "t: " + m_origin.toString() 
+			+ "\n\nr: " + m_rotation.toString() 
+			+ "\ns: " + std::to_string(m_scale);
 	}
 	/// @}
 
 private:
 	/// @name Data
 	/// @{
-	TVec3<T> m_origin; ///< The rotation
-	TMat3<T> m_rotation; ///< The translation
+	TVec4<T> m_origin; ///< The rotation
+	TMat3x4<T> m_rotation; ///< The translation
 	T m_scale; ///< The uniform scaling
 	/// @}
 };
@@ -201,6 +204,8 @@ private:
 typedef TTransform<F32> Transform;
 
 /// @}
+
+#undef ANKI_CHECK_W
 
 } // end namespace anki
 
