@@ -27,7 +27,7 @@ struct ObbSpatialComponent: public SpatialComponent
 	}
 
 	/// Implement SpatialComponent::getSpatialOrigin
-	Vec3 getSpatialOrigin()
+	Vec4 getSpatialOrigin()
 	{
 		return obb.getCenter();
 	}

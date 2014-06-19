@@ -105,7 +105,7 @@ public:
 	{
 		ANKI_ASSERT(isZero<T>(Base::w()));
 		ANKI_ASSERT(isZero<T>(b.w()));
-		return TVec4(Base::xyz().template cross(b.xyz(), static_cast<T>(0)));
+		return TVec4(Base::xyz().cross(b.xyz()), static_cast<T>(0));
 	}
 	/// @{
 

@@ -22,6 +22,7 @@ template<typename T, U J, U I, typename TSimd, typename TM, typename TVJ,
 	typename TVI>
 class TMat;
 template<typename T> class TMat3;
+template<typename T> class TMat3x4;
 template<typename T> class TMat4;
 
 template<typename T> class TQuat;

@@ -73,7 +73,7 @@ public:
 
 	/// Used for sorting spatials. In most object the origin is the center of
 	/// mess but for cameras the origin is the eye point
-	virtual Vec3 getSpatialOrigin() = 0;
+	virtual Vec4 getSpatialOrigin() = 0;
 	/// @}
 
 	/// The derived class has to manually call this method when the collision 

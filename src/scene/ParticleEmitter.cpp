@@ -78,8 +78,8 @@ void ParticleSimple::simulate(const ParticleEmitter& pe,
 		static_cast<const ParticleEmitterProperties&>(pe).
 		m_particle.m_gravity.getLength() > 0.0);
 
-	Vec3 xp = m_position;
-	Vec3 xc = m_acceleration * (dt * dt) + m_velocity * dt + xp;
+	Vec4 xp = m_position;
+	Vec4 xc = m_acceleration * (dt * dt) + m_velocity * dt + xp;
 
 	m_position = xc;
 
@@ -91,16 +91,16 @@ void ParticleSimple::revive(const ParticleEmitter& pe,
 	F32 prevUpdateTime, F32 crntTime)
 {
 	ParticleBase::revive(pe, prevUpdateTime, crntTime);
-	m_velocity = Vec3(0.0);
+	m_velocity = Vec4(0.0);
 
 	const ParticleEmitterProperties& props = pe;
 
 	m_acceleration = getRandom(props.m_particle.m_gravity,
-			props.m_particle.m_gravityDeviation);
+			props.m_particle.m_gravityDeviation).xyz0();
 
 	// Set the initial position
 	m_position = getRandom(props.m_particle.m_startingPos,
-		props.m_particle.m_startingPosDeviation);
+		props.m_particle.m_startingPosDeviation).xyz0();
 
 	m_position += pe.getWorldTransform().getOrigin();
 }
@@ -214,9 +214,9 @@ ParticleEmitter::ParticleEmitter(
 	addComponent(static_cast<SpatialComponent*>(this));
 	addComponent(static_cast<RenderComponent*>(this));
 
-	m_obb.setCenter(Vec3(0.0));
-	m_obb.setExtend(Vec3(1.0));
-	m_obb.setRotation(Mat3::getIdentity());
+	m_obb.setCenter(Vec4(0.0));
+	m_obb.setExtend(Vec4(1.0, 1.0, 1.0, 0.0));
+	m_obb.setRotation(Mat3x4::getIdentity());
 
 	// Load resource
 	m_particleEmitterResource.load(filename);
@@ -323,7 +323,7 @@ void ParticleEmitter::componentUpdated(SceneComponent& comp,
 	if(comp.getType() == MoveComponent::getClassType())
 	{
 		m_identityRotation =
-			getWorldTransform().getRotation() == Mat3::getIdentity();
+			getWorldTransform().getRotation() == Mat3x4::getIdentity();
 	}
 }
 
@@ -387,8 +387,8 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 	// - Calc the AABB
 	// - Calc the instancing stuff
 	//
-	Vec3 aabbmin(MAX_F32);
-	Vec3 aabbmax(MIN_F32);
+	Vec4 aabbmin(MAX_F32, MAX_F32, MAX_F32, 0.0);
+	Vec4 aabbmax(MIN_F32, MIN_F32, MIN_F32, 0.0);
 	m_aliveParticlesCount = 0;
 
 	F32* verts = (F32*)(m_vertBuffMapping 
@@ -420,7 +420,7 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 			// This will calculate a new world transformation
 			p->simulate(*this, prevUpdateTime, crntTime);
 
-			const Vec3& origin = p->getPosition();
+			const Vec4& origin = p->getPosition();
 
 			for(U i = 0; i < 3; i++)
 			{
@@ -455,15 +455,15 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime,
 
 	if(m_aliveParticlesCount != 0)
 	{
-		Vec3 min = aabbmin - m_particle.m_size;
-		Vec3 max = aabbmax + m_particle.m_size;
-		Vec3 center = (min + max) / 2.0;
+		Vec4 min = aabbmin - m_particle.m_size;
+		Vec4 max = aabbmax + m_particle.m_size;
+		Vec4 center = (min + max) / 2.0;
 
-		m_obb = Obb(center, Mat3::getIdentity(), max - center);
+		m_obb = Obb(center, Mat3x4::getIdentity(), max - center);
 	}
 	else
 	{
-		m_obb = Obb(Vec3(0.0), Mat3::getIdentity(), Vec3(0.001));
+		m_obb = Obb(Vec4(0.0), Mat3x4::getIdentity(), Vec4(0.001));
 	}
 	SpatialComponent::markForUpdate();
 
@@ -581,7 +581,7 @@ void ParticleEmitter::doInstancingCalcs()
 					staticCastPtr<ObbSpatialComponent*>(&sp);
 		
 				Obb aobb = m_obb;
-				aobb.setCenter(Vec3(0.0));
+				aobb.setCenter(Vec4(0.0));
 				msp->obb = aobb.getTransformed(m_transforms[count - 1]);
 
 				msp->markForUpdate();
@@ -626,7 +626,7 @@ void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf)
 		// The particle positions are already in word space. Move them back to
 		// local space
 		Transform invTrf = getWorldTransform().getInverse();
-		trf = Transform::combineTransformations(m_transforms[index], invTrf);
+		trf = m_transforms[index].combineTransformations(invTrf);
 	}
 }
 

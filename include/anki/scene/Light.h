@@ -184,7 +184,7 @@ public:
 
 	/// @name SpatialComponent virtuals
 	/// @{
-	Vec3 getSpatialOrigin()
+	Vec4 getSpatialOrigin()
 	{
 		return getWorldTransform().getOrigin();
 	}
@@ -256,7 +256,7 @@ public:
 	/// @}
 
 public:
-	Sphere sphereW = Sphere(Vec3(0.0), 1.0);
+	Sphere sphereW = Sphere(Vec4(0.0), 1.0);
 };
 
 /// Spot light

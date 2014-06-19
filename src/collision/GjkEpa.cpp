@@ -60,7 +60,7 @@ Bool Gjk::update(const Vec4& a)
 			m_c = m_b;
 			m_b = a;
 		 
-			m_dir = crossAba(ab,ao);
+			m_dir = crossAba(ab, ao);
 		 
 			return false;
 		}

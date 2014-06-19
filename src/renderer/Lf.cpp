@@ -224,7 +224,7 @@ void Lf::run(GlJobChainHandle& jobs)
 			const U depth = tex.getDepth();
 
 			// Transform
-			Vec3 posWorld = light.getWorldTransform().getOrigin();
+			Vec3 posWorld = light.getWorldTransform().getOrigin().xyz();
 			Vec4 posClip = cam.getViewProjectionMatrix() * Vec4(posWorld, 1.0);
 
 			if(posClip.x() > posClip.w() || posClip.x() < -posClip.w()

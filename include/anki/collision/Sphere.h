@@ -18,24 +18,26 @@ namespace anki {
 class Sphere: public ConvexShape
 {
 public:
+	using Base = ConvexShape;
+
 	/// @name Constructors
 	/// @{
 
 	/// Default constructor
 	Sphere()
-		: ConvexShape(Type::SPHERE)
+		: Base(Type::SPHERE)
 	{}
 
 	/// Copy constructor
 	Sphere(const Sphere& b)
-		:	ConvexShape(Type::SPHERE)
+		: Base(Type::SPHERE)
 	{
 		operator=(b);
 	}
 
 	/// Constructor
-	Sphere(const Vec3& center, F32 radius)
-		:	ConvexShape(Type::SPHERE), 
+	Sphere(const Vec4& center, F32 radius)
+		:	Base(Type::SPHERE), 
 			m_center(center), 
 			m_radius(radius)
 	{}
@@ -43,15 +45,17 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Vec3& getCenter() const
+	const Vec4& getCenter() const
 	{
 		return m_center;
 	}
-	Vec3& getCenter()
+
+	Vec4& getCenter()
 	{
 		return m_center;
 	}
-	void setCenter(const Vec3& x)
+
+	void setCenter(const Vec4& x)
 	{
 		m_center = x;
 	}
@@ -60,10 +64,12 @@ public:
 	{
 		return m_radius;
 	}
+
 	F32& getRadius()
 	{
 		return m_radius;
 	}
+
 	void setRadius(const F32 x)
 	{
 		m_radius = x;
@@ -74,18 +80,12 @@ public:
 	/// @{
 	Sphere& operator=(const Sphere& b)
 	{
+		Base::operator=(b);
 		m_center = b.m_center;
 		m_radius = b.m_radius;
 		return *this;
 	}
 	/// @}
-
-	/// Check for collision
-	template<typename T>
-	Bool collide(const T& x) const
-	{
-		return detail::collide(*this, x);
-	}
 
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
@@ -124,7 +124,7 @@ public:
 	Vec4 computeSupport(const Vec4& dir) const;
 
 private:
-	Vec3 m_center;
+	Vec4 m_center;
 	F32 m_radius;
 };
 /// @}

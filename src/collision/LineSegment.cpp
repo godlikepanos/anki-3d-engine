@@ -13,9 +13,8 @@ namespace anki {
 //==============================================================================
 F32 LineSegment::testPlane(const Plane& p) const
 {
-	const LineSegment& ls = *this;
-	const Vec3& p0 = ls.getOrigin();
-	Vec3 p1 = ls.getOrigin() + ls.getDirection();
+	const Vec4& p0 = m_origin;
+	Vec4 p1 = m_origin + m_dir;
 
 	F32 dist0 = p.test(p0);
 	F32 dist1 = p.test(p1);
@@ -45,19 +44,19 @@ F32 LineSegment::testPlane(const Plane& p) const
 }
 
 //==============================================================================
-LineSegment LineSegment::getTransformed(const Transform& transform) const
+LineSegment LineSegment::getTransformed(const Transform& trf) const
 {
 	LineSegment out;
-	out.origin = origin.getTransformed(transform);
-	out.dir = transform.getRotation() * (dir * transform.getScale());
+	out.m_origin = trf.transform(m_origin);
+	out.m_dir = Vec4(trf.getRotation() * (m_dir * trf.getScale()), 0.0);
 	return out;
 }
 
 //==============================================================================
 void LineSegment::computeAabb(Aabb& aabb) const
 {
-	Vec3 min = origin;
-	Vec3 max = origin + dir;
+	Vec4 min = m_origin;
+	Vec4 max = m_origin + m_dir;
 
 	for(U i = 0; i < 3; ++i)
 	{

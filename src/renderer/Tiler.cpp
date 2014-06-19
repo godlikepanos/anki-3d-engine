@@ -159,16 +159,17 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadpoolTask
 	/// Calculate and set a top looking plane
 	void calcPlaneI(U i, const F32 o6)
 	{
-		Vec3 a, b;
+		Vec4 a, b;
 		const F32 n = m_cam->getNear();
 		Plane& plane = m_tiler->m_planesY[i];
 		CHECK_PLANE_PTR(&plane);
 
-		a = Vec3(0.0, 
+		a = Vec4(0.0, 
 			(I(i + 1) - I(m_tiler->m_r->getTilesCount().y()) / 2) * o6,
-			-n);
+			-n,
+			0.0);
 
-		b = Vec3(1.0, 0.0, 0.0).cross(a);
+		b = Vec4(1.0, 0.0, 0.0, 0.0).cross(a);
 		b.normalize();
 
 		plane = Plane(b, 0.0);
@@ -177,16 +178,17 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadpoolTask
 	/// Calculate and set a right looking plane
 	void calcPlaneJ(U j, const F32 l6)
 	{
-		Vec3 a, b;
+		Vec4 a, b;
 		const F32 n = m_cam->getNear();
 		Plane& plane = m_tiler->m_planesX[j];
 		CHECK_PLANE_PTR(&plane);
 
-		a = Vec3((I(j + 1) - I(m_tiler->m_r->getTilesCount().x()) / 2) * l6,
+		a = Vec4((I(j + 1) - I(m_tiler->m_r->getTilesCount().x()) / 2) * l6,
 			0.0, 
-			-n);
+			-n,
+			0.0);
 
-		b = a.cross(Vec3(0.0, 1.0, 0.0));
+		b = a.cross(Vec4(0.0, 1.0, 0.0, 0.0));
 		b.normalize();
 
 		plane = Plane(b, 0.0);

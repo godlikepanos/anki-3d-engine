@@ -83,7 +83,7 @@ public:
 		(void)crntTime;
 	}
 
-	virtual const Vec3& getPosition() const = 0;
+	virtual const Vec4& getPosition() const = 0;
 
 protected:
 	F32 m_timeOfBirth; ///< Keep the time of birth for nice effects
@@ -105,16 +105,16 @@ public:
 	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, 
 		F32 crntTime) override;
 
-	const Vec3& getPosition() const
+	const Vec4& getPosition() const
 	{
 		return m_position;
 	}
 
 private:
 	/// The velocity
-	Vec3 m_velocity = Vec3(0.0);
-	Vec3 m_acceleration = Vec3(0.0);
-	Vec3 m_position;
+	Vec4 m_velocity = Vec4(0.0);
+	Vec4 m_acceleration = Vec4(0.0);
+	Vec4 m_position;
 };
 
 /// Particle for bullet simulations
@@ -176,7 +176,7 @@ public:
 		return m_obb;
 	}
 
-	Vec3 getSpatialOrigin()
+	Vec4 getSpatialOrigin()
 	{
 		return m_obb.getCenter();
 	}

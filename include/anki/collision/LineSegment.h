@@ -19,51 +19,59 @@ namespace anki {
 class LineSegment: public CollisionShape
 {
 public:
+	using Base = CollisionShape;
+
 	/// @name Constructors
 	/// @{
 	LineSegment()
-		: CollisionShape(Type::LINE_SEG)
+		:	Base(Type::LINE_SEG),
+			m_origin(0.0),
+			m_dir(0.0)
 	{}
 
-	LineSegment(const Vec3& origin_, const Vec3& direction)
-		:	CollisionShape(Type::LINE_SEG), 
-			origin(origin_), 
-			dir(direction)
+	LineSegment(const Vec4& origin, const Vec4& direction)
+		:	Base(Type::LINE_SEG), 
+			m_origin(origin), 
+			m_dir(direction)
 	{}
 
 	LineSegment(const LineSegment& b)
-		:	CollisionShape(Type::LINE_SEG), 
-			origin(b.origin), 
-			dir(b.dir)
-	{}
+		:	Base(Type::LINE_SEG)
+	{
+		operator=(b);
+	}
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	const Vec3& getOrigin() const
+	const Vec4& getOrigin() const
 	{
-		return origin;
-	}
-	Vec3& getOrigin()
-	{
-		return origin;
-	}
-	void setOrigin(const Vec3& x)
-	{
-		origin = x;
+		return m_origin;
 	}
 
-	const Vec3& getDirection() const
+	Vec4& getOrigin()
 	{
-		return dir;
+		return m_origin;
 	}
-	Vec3& getDirection()
+
+	void setOrigin(const Vec4& x)
 	{
-		return dir;
+		m_origin = x;
 	}
-	void setDirection(const Vec3& x)
+
+	const Vec4& getDirection() const
 	{
-		dir = x;
+		return m_dir;
+	}
+
+	Vec4& getDirection()
+	{
+		return m_dir;
+	}
+
+	void setDirection(const Vec4& x)
+	{
+		m_dir = x;
 	}
 	/// @}
 
@@ -71,18 +79,12 @@ public:
 	/// @{
 	LineSegment& operator=(const LineSegment& b)
 	{
-		origin = b.origin;
-		dir = b.dir;
+		Base::operator=(b);
+		m_origin = b.m_origin;
+		m_dir = b.m_dir;
 		return *this;
 	}
 	/// @}
-
-	/// Check for collision
-	template<typename T>
-	Bool collide(const T& x) const
-	{
-		return detail::collide(*this, x);
-	}
 
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
@@ -112,12 +114,12 @@ public:
 private:
 	/// @name Data
 	/// @{
-	Vec3 origin; ///< P0
-	Vec3 dir; ///< P1 = origin+dir so dir = P1-origin
+	Vec4 m_origin; ///< P0
+	Vec4 m_dir; ///< P1 = origin+dir so dir = P1-origin
 	/// @}
 };
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

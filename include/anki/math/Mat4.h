@@ -158,15 +158,15 @@ public:
 		m(3, 3) = v.w();
 	}
 
-	explicit TMat4(const TVec3<T>& transl, const TMat3<T>& rot)
+	explicit TMat4(const TVec4<T>& transl, const TMat3<T>& rot)
 	{
 		setRotationPart(rot);
-		setTranslationPart(TVec4<T>(transl, 1.0));
+		setTranslationPart(transl);
 		TMat4& m = *this;
 		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
 	}
 
-	explicit TMat4(const TVec3<T>& transl, const TMat3<T>& rot, const T scale)
+	explicit TMat4(const TVec4<T>& transl, const TMat3<T>& rot, const T scale)
 	{
 		if(isZero<T>(scale - 1.0))
 		{
@@ -177,16 +177,17 @@ public:
 			setRotationPart(rot * scale);
 		}
 
-		setTranslationPart(TVec4<T>(transl, 1.0));
+		setTranslationPart(transl);
 
 		TMat4& m = *this;
 		m(3, 0) = m(3, 1) = m(3, 2) = 0.0;
 	}
 
 	explicit TMat4(const TTransform<T>& t)
-	{
-		(*this) = TMat4(t.getOrigin(), t.getRotation(), t.getScale());
-	}
+		: TMat4(TVec4<T>(t.getOrigin().xyz(), 1.0), 
+			t.getRotation().getRotationPart(), 
+			t.getScale())
+	{}
 	/// @}
 
 	/// @name Other
@@ -371,6 +372,20 @@ public:
 		m4(3, 3) = 1.0;
 
 		return m4;
+	}
+
+	/// @note 9 muls, 9 adds
+	TVec3<T> transform(const TVec3<T>& v) const
+	{
+		const TMat4& m = *this;
+
+		return TVec3<T>(
+			m(0, 0) * v.x() + m(0, 1) * v.y() 
+			+ m(0, 2) * v.z() + m(0, 3),
+			m(1, 0) * v.x() + m(1, 1) * v.y() 
+			+ m(1, 2) * v.z() + m(1, 3),
+			m(2, 0) * v.x() + m(2, 1) * v.y() 
+			+ m(2, 2) * v.z() + m(2, 3));
 	}
 	/// @}
 };

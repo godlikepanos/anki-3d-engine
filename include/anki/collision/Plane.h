@@ -18,6 +18,8 @@ namespace anki {
 class Plane: public CollisionShape
 {
 public:
+	using Base = CollisionShape;
+
 	/// @name Constructors
 	/// @{
 
@@ -27,10 +29,14 @@ public:
 	{}
 
 	/// Copy constructor
-	Plane(const Plane& b);
+	Plane(const Plane& b)
+		: CollisionShape(Type::PLANE)
+	{
+		operator=(b);
+	}
 
 	/// Constructor
-	Plane(const Vec3& normal_, F32 offset_);
+	Plane(const Vec4& normal, F32 offset);
 
 	/// @see setFrom3Points
 	Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2)
@@ -47,51 +53,45 @@ public:
 	}
 	/// @}
 
-	/// @name Accessors
-	/// @{
-	const Vec3& getNormal() const
-	{
-		return normal;
-	}
-	Vec3& getNormal()
-	{
-		return normal;
-	}
-	void setNormal(const Vec3& x)
-	{
-		normal = x;
-	}
-
-	F32 getOffset() const
-	{
-		return offset;
-	}
-	F32& getOffset()
-	{
-		return offset;
-	}
-	void setOffset(const F32 x)
-	{
-		offset = x;
-	}
-	/// @}
-
 	/// @name Operators
 	/// @{
 	Plane& operator=(const Plane& b)
 	{
-		normal = b.normal;
-		offset = b.offset;
+		Base::operator=(b);
+		m_normal = b.m_normal;
+		m_offset = b.m_offset;
 		return *this;
 	}
 	/// @}
 
-	/// Check for collision
-	template<typename T>
-	Bool collide(const T& x) const
+	/// @name Accessors
+	/// @{
+	const Vec4& getNormal() const
 	{
-		return detail::collide(*this, x);
+		return m_normal;
 	}
+	Vec4& getNormal()
+	{
+		return m_normal;
+	}
+	void setNormal(const Vec4& x)
+	{
+		m_normal = x;
+	}
+
+	F32 getOffset() const
+	{
+		return m_offset;
+	}
+	F32& getOffset()
+	{
+		return m_offset;
+	}
+	void setOffset(const F32 x)
+	{
+		m_offset = x;
+	}
+	/// @}
 
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
@@ -122,22 +122,23 @@ public:
 	/// It gives the distance between a point and a plane. if returns >0
 	/// then the point lies in front of the plane, if <0 then it is behind
 	/// and if =0 then it is co-planar
-	F32 test(const Vec3& point) const
+	F32 test(const Vec4& point) const
 	{
-		return normal.dot(point) - offset;
+		ANKI_ASSERT(isZero<F32>(point.w()));
+		return m_normal.dot(point) - m_offset;
 	}
 
 	/// Get the distance from a point to this plane
-	F32 getDistance(const Vec3& point) const
+	F32 getDistance(const Vec4& point) const
 	{
 		return fabs(test(point));
 	}
 
 	/// Returns the perpedicular point of a given point in this plane.
 	/// Plane's normal and returned-point are perpedicular
-	Vec3 getClosestPoint(const Vec3& point) const
+	Vec4 getClosestPoint(const Vec4& point) const
 	{
-		return point - normal * test(point);
+		return point - m_normal * test(point);
 	}
 
 	/// Test a CollisionShape
@@ -150,8 +151,8 @@ public:
 private:
 	/// @name Data
 	/// @{
-	Vec3 normal;
-	F32 offset;
+	Vec4 m_normal;
+	F32 m_offset;
 	/// @}
 
 	/// Set the plane from 3 points
@@ -162,6 +163,6 @@ private:
 };
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

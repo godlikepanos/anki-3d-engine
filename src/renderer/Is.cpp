@@ -159,10 +159,10 @@ public:
 		const Camera* cam = m_is->m_cam;
 		ANKI_ASSERT(cam);
 	
-		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
-			cam->getViewMatrix());
+		Vec4 pos = 
+			cam->getViewMatrix() * light.getWorldTransform().getOrigin().xyz1();
 
-		slight.m_posRadius = Vec4(pos, -1.0 / light.getRadius());
+		slight.m_posRadius = Vec4(pos.xyz(), -1.0 / light.getRadius());
 		slight.m_diffuseColorShadowmapId = light.getDiffuseColor();
 		slight.m_specularColorTexId = light.getSpecularColor();
 
@@ -222,9 +222,9 @@ public:
 		ANKI_ASSERT(baseslight);
 
 		// Pos & dist
-		Vec3 pos = light.getWorldTransform().getOrigin().getTransformed(
-				cam->getViewMatrix());
-		baseslight->m_posRadius = Vec4(pos, -1.0 / light.getDistance());
+		Vec4 pos = 
+			cam->getViewMatrix() * light.getWorldTransform().getOrigin().xyz1();
+		baseslight->m_posRadius = Vec4(pos.xyz(), -1.0 / light.getDistance());
 
 		// Diff color and shadowmap ID now
 		baseslight->m_diffuseColorShadowmapId = 
@@ -250,11 +250,11 @@ public:
 
 		for(U i = 0; i < 4; i++)
 		{
-			Vec3 extendPoint = light.getWorldTransform().getOrigin() 
+			Vec4 extendPoint = light.getWorldTransform().getOrigin() 
 				+ frustum.getLineSegments()[i].getDirection();
 
-			extendPoint.transform(cam->getViewMatrix());
-			baseslight->m_extendPoints[i] = Vec4(extendPoint, 1.0);
+			extendPoint = cam->getViewMatrix() * extendPoint.xyz1();
+			baseslight->m_extendPoints[i] = extendPoint;
 		}
 
 		return i;

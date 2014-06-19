@@ -9,13 +9,8 @@
 namespace anki {
 
 //==============================================================================
-Plane::Plane(const Plane& b)
-	: CollisionShape(Type::PLANE), normal(b.normal), offset(b.offset)
-{}
-
-//==============================================================================
-Plane::Plane(const Vec3& normal_, F32 offset_)
-	: CollisionShape(Type::PLANE), normal(normal_), offset(offset_)
+Plane::Plane(const Vec4& normal, F32 offset)
+	: CollisionShape(Type::PLANE), m_normal(normal), m_offset(offset)
 {}
 
 //==============================================================================
@@ -29,27 +24,27 @@ F32 Plane::testPlane(const Plane& /*p*/) const
 void Plane::setFrom3Points(const Vec3& p0, const Vec3& p1, const Vec3& p2)
 {
 	// get plane vectors
-	Vec3 u = p1 - p0;
-	Vec3 v = p2 - p0;
+	Vec4 u = Vec4(p1 - p0, 0.0);
+	Vec4 v = Vec4(p2 - p0, 0.0);
 
-	normal = u.cross(v);
+	m_normal = u.cross(v);
 
 	// length of normal had better not be zero
-	ANKI_ASSERT(!isZero(normal.getLengthSquared()));
+	ANKI_ASSERT(!isZero(m_normal.getLengthSquared()));
 
-	normal.normalize();
-	offset = normal.dot(p0); // XXX: correct??
+	m_normal.normalize();
+	m_offset = m_normal.dot(Vec4(p0, 0.0)); // XXX: correct??
 }
 
 //==============================================================================
 void Plane::setFromPlaneEquation(F32 a, F32 b, F32 c, F32 d)
 {
-	normal = Vec3(a, b, c);
+	m_normal = Vec4(a, b, c, 0.0);
 
 	// length of normal had better not be zero
-	ANKI_ASSERT(isZero(normal.getLength() - 1.0));
+	ANKI_ASSERT(isZero(m_normal.getLength() - 1.0));
 
-	offset = d;
+	m_offset = d;
 }
 
 //==============================================================================
@@ -57,12 +52,14 @@ Plane Plane::getTransformed(const Transform& trf) const
 {
 	Plane plane;
 
-	// the normal
-	plane.normal = trf.getRotation() * normal;
+	// Rotate the normal
+	plane.m_normal = Vec4(trf.getRotation() * m_normal, 0.0);
 
 	// the offset
-	Vec3 newTrans = trf.getRotation().getTransposed() * trf.getOrigin();
-	plane.offset = offset * trf.getScale() + newTrans.dot(normal);
+	Mat3x4 rot = trf.getRotation();
+	rot.transposeRotationPart();
+	Vec4 newTrans(rot * trf.getOrigin(), 0.0);
+	plane.m_offset = m_offset * trf.getScale() + newTrans.dot(m_normal);
 
 	return plane;
 }

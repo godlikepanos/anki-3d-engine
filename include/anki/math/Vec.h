@@ -1846,7 +1846,19 @@ public:
 	{
 		static_assert(N > 3, "Wrong vector");
 		return TVec4<T>(w(), w(), w(), w());
-	}	
+	}
+
+	TVec4<T> xyz1() const
+	{
+		static_assert(N > 2, "Wrong vector");
+		return TVec4<T>(x(), y(), z(), static_cast<T>(1));
+	}
+
+	TVec4<T> xyz0() const
+	{
+		static_assert(N > 2, "Wrong vector");
+		return TVec4<T>(x(), y(), z(), static_cast<T>(0));
+	}
 
 	T& operator[](const U i)
 	{

@@ -662,6 +662,11 @@ public:
 
 	void setTranslationPart(const TVI& v)
 	{
+		if(ROW_SIZE == 4)
+		{
+			ANKI_ASSERT(isZero<T>(v[3] - static_cast<T>(1))
+				&& "w should be 1");
+		}
 		setColumn(3, v);
 	}
 

@@ -7,7 +7,6 @@
 #define ANKI_COLLISION_COLLISION_SHAPE_H
 
 #include "anki/collision/Forward.h"
-#include "anki/collision/CollisionAlgorithms.h"
 #include "anki/Math.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Visitor.h"
@@ -26,7 +25,6 @@ public:
 	enum class Type: U8
 	{
 		LINE_SEG,
-		RAY,
 		PLANE,
 		SPHERE,
 		AABB,
@@ -44,7 +42,6 @@ public:
 		virtual void visit(LineSegment&) = 0;
 		virtual void visit(Obb&) = 0;
 		virtual void visit(Plane&) = 0;
-		virtual void visit(Ray&) = 0;
 		virtual void visit(Sphere&) = 0;
 		virtual void visit(Aabb&) = 0;
 		virtual void visit(CompoundShape&) = 0;
@@ -60,7 +57,6 @@ public:
 		virtual void visit(const LineSegment&) = 0;
 		virtual void visit(const Obb&) = 0;
 		virtual void visit(const Plane&) = 0;
-		virtual void visit(const Ray&) = 0;
 		virtual void visit(const Sphere&) = 0;
 		virtual void visit(const Aabb&) = 0;
 		virtual void visit(const CompoundShape&) = 0;
@@ -72,8 +68,24 @@ public:
 		: m_cid(cid)
 	{}
 
+	CollisionShape(const CollisionShape& b)
+		: m_cid(b.m_cid)
+	{
+		operator=(b);
+	}
+
 	virtual ~CollisionShape()
 	{}
+	/// @}
+
+	/// @name Operators
+	/// @{
+	CollisionShape& operator=(const CollisionShape& b)
+	{
+		ANKI_ASSERT(b.m_cid == m_cid);
+		(void)b;
+		return *this;
+	}
 	/// @}
 
 	/// @name Accessors
@@ -83,13 +95,6 @@ public:
 		return m_cid;
 	}
 	/// @}
-
-	/// Check for collision
-	template<typename T>
-	Bool collide(const T& x) const
-	{
-		return detail::collide(*this, x);
-	}
 
 	/// If the collision shape intersects with the plane then the method
 	/// returns 0.0, else it returns the distance. If the distance is < 0.0

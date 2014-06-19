@@ -11,41 +11,41 @@ namespace anki {
 
 //==============================================================================
 Obb::Obb()
-	:	CollisionShape(Type::OBB),
-		m_center(Vec3(0.0)),
-		m_rotation(Mat3::getIdentity()),
-		m_extends(Vec3(getEpsilon<F32>()))
+	:	Base(Type::OBB),
+		m_center(Vec4(0.0)),
+		m_rotation(Mat3x4::getIdentity()),
+		m_extend(Vec3(getEpsilon<F32>()), 0.0)
 {}
 
 //==============================================================================
 Obb::Obb(const Obb& b)
-	: 	CollisionShape(Type::OBB), 
-		m_center(b.m_center), 
-		m_rotation(b.m_rotation),
-		m_extends(b.m_extends)
-{}
+	: 	Base(Type::OBB)
+{
+	operator=(b);
+}
 
 //==============================================================================
-Obb::Obb(const Vec3& center, const Mat3& rotation, const Vec3& extends)
-	:	CollisionShape(Type::OBB), 
-		m_center(center), 
+Obb::Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend)
+	:	Base(Type::OBB), 
+		m_center(center),
 		m_rotation(rotation),
-		m_extends(extends)
+		m_extend(extend)
 {}
 
 //==============================================================================
 F32 Obb::testPlane(const Plane& p) const
 {
-	const Obb& obb = *this;
-	Vec3 xNormal = obb.getRotation().getTransposed() * p.getNormal();
+	Mat3x4 rot = m_rotation;
+	rot.transposeRotationPart();
+	Vec3 xNormal = rot * p.getNormal();
 
 	// maximum extent in direction of plane normal
 	F32 r =
-		fabs(obb.getExtend().x() * xNormal.x()) +
-		fabs(obb.getExtend().y() * xNormal.y()) +
-		fabs(obb.getExtend().z() * xNormal.z());
+		abs(m_extend.x() * xNormal.x()) +
+		abs(m_extend.y() * xNormal.y()) +
+		abs(m_extend.z() * xNormal.z());
 	// signed distance between box center and plane
-	F32 d = p.test(obb.getCenter());
+	F32 d = p.test(m_center);
 
 	// return signed distance
 	if(fabs(d) < r)
@@ -63,12 +63,12 @@ F32 Obb::testPlane(const Plane& p) const
 }
 
 //==============================================================================
-Obb Obb::getTransformed(const Transform& transform) const
+Obb Obb::getTransformed(const Transform& trf) const
 {
 	Obb out;
-	out.m_extends = m_extends * transform.getScale();
-	out.m_center = m_center.getTransformed(transform);
-	out.m_rotation = transform.getRotation() * m_rotation;
+	out.m_extend = m_extend * trf.getScale();
+	out.m_center = trf.transform(m_center);
+	out.m_rotation = trf.getRotation().combineTransformations(m_rotation);
 	return out;
 }
 
@@ -77,26 +77,26 @@ Obb Obb::getCompoundShape(const Obb& b) const
 {
 	Obb out;
 
-	Array<Vec3, 8> points0;
-	Array<Vec3, 8> points1;
+	Array<Vec4, 8> points0;
+	Array<Vec4, 8> points1;
 
 	getExtremePoints(points0);
 	b.getExtremePoints(points1);
 
-	Array<Vec3, 16> points;
+	Array<Vec4, 16> points;
 	for(U i = 0; i < 8; i++)
 	{
 		points[i] = points0[i];
 		points[i + 8] = points1[i];
 	}
 
-	out.setFromPointCloud(&points[0], points.size(), sizeof(Vec3), 
-		sizeof(Vec3) * points.size());
+	out.setFromPointCloud(&points[0], points.size(), sizeof(Vec4), 
+		sizeof(Vec4) * points.size());
 	return out;
 }
 
 //==============================================================================
-void Obb::getExtremePoints(Array<Vec3, 8>& points) const
+void Obb::getExtremePoints(Array<Vec4, 8>& points) const
 {
 	// L: left, R: right, T: top, B: bottom, F: front, B: back
 	enum
@@ -111,14 +111,15 @@ void Obb::getExtremePoints(Array<Vec3, 8>& points) const
 		RBB
 	};
 
-	Vec3 er = m_rotation * m_extends; // extend rotated
+	Vec3 er3 = m_rotation * m_extend; // extend rotated
+	Vec4 er(er3, 0.0);
 
 	points[RTF] = er;
 	points[LBB] = -er;
 
-	Vec3 xAxis = m_rotation.getColumn(0);
-	Vec3 yAxis = m_rotation.getColumn(1);
-	Vec3 zAxis = m_rotation.getColumn(2);
+	Vec4 xAxis = Vec4(m_rotation.getColumn(0), 0.0);
+	Vec4 yAxis = Vec4(m_rotation.getColumn(1), 0.0);
+	Vec4 zAxis = Vec4(m_rotation.getColumn(2), 0.0);
 
 	// Reflection: x1' = 2n|x1.n| - x1
 
@@ -130,7 +131,7 @@ void Obb::getExtremePoints(Array<Vec3, 8>& points) const
 	points[RTB] = 2.0f * points[LTF].dot(yAxis) * yAxis - points[LTF];
 	points[RBF] = 2.0f * points[LTF].dot(zAxis) * zAxis - points[LTF];
 
-	for(Vec3& point : points)
+	for(Vec4& point : points)
 	{
 		point += m_center;
 	}
@@ -139,25 +140,26 @@ void Obb::getExtremePoints(Array<Vec3, 8>& points) const
 //==============================================================================
 void Obb::computeAabb(Aabb& aabb) const
 {
-	Mat3 absM;
-	for(U i = 0; i < 9; ++i)
+	Mat3x4 absM;
+	for(U i = 0; i < 12; ++i)
 	{
 		absM[i] = fabs(m_rotation[i]);
 	}
 
-	Vec3 newE = absM * m_extends;
+	Vec4 newE = Vec4(absM * m_extend, 0.0);
 
 	// Add a small epsilon to avoid some assertions
+	Vec4 epsilon(Vec3(getEpsilon<F32>() * 100.0), 0.0);
 	aabb = Aabb(m_center - newE, 
-		m_center + newE + Vec3(getEpsilon<F32>() * 100.0));
+		m_center + newE + epsilon);
 }
 
 //==============================================================================
 void Obb::setFromPointCloud(
 	const void* buff, U count, PtrSize stride, PtrSize buffSize)
 {
-	Vec3 min = Vec3(MAX_F32);
-	Vec3 max = Vec3(MIN_F32);
+	Vec4 min = Vec4(Vec3(MAX_F32), 0.0);
+	Vec4 max = Vec4(Vec3(MIN_F32), 0.0);
 
 	iteratePointCloud(buff, count, stride, buffSize, [&](const Vec3& pos)
 	{
@@ -176,8 +178,56 @@ void Obb::setFromPointCloud(
 
 	// Set the locals
 	m_center = (max + min) / 2.0;
-	m_rotation = Mat3::getIdentity();
-	m_extends = max - m_center;
+	m_rotation = Mat3x4::getIdentity();
+	m_extend = max - m_center;
+}
+
+//==============================================================================
+Vec4 Obb::computeSupport(const Vec4& dir) const
+{
+	Vec4 out(0.0);
+
+	Vec3 er3 = m_rotation * m_extend; // extend rotated
+	Vec4 er(er3, 0.0);
+
+	Vec4 xAxis = Vec4(m_rotation.getColumn(0), 0.0);
+	Vec4 yAxis = Vec4(m_rotation.getColumn(1), 0.0);
+	Vec4 zAxis = Vec4(m_rotation.getColumn(2), 0.0);
+
+	if(dir.dot(xAxis) >= 0.0)
+	{
+		// Right side of the box
+
+		out.x() = er.x();
+	}
+	else
+	{
+		out.x() = -er.x();
+	}
+
+	if(dir.dot(yAxis) >= 0.0)
+	{
+		// Top side
+
+		out.y() = er.y();
+	}
+	else
+	{
+		out.y() = -er.y();
+	}
+
+	if(dir.dot(zAxis) >= 0.0)
+	{
+		// Front side
+
+		out.z() = er.z();
+	}
+	else
+	{
+		out.z() = -er.z();
+	}
+
+	return out;
 }
 
 } // end namespace anki

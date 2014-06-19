@@ -111,11 +111,6 @@ public:
 
 	void visit(const Plane&);
 
-	void visit(const Ray&)
-	{
-		ANKI_ASSERT(0 && "ToDo");
-	}
-
 	void visit(const Sphere&);
 
 	void visit(const Aabb&);

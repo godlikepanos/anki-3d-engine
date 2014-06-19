@@ -64,7 +64,7 @@ public:
 	}
 
 	/// Implement SpatialComponent::getSpatialOrigin
-	Vec3 getSpatialOrigin()
+	Vec4 getSpatialOrigin()
 	{
 		return m_obb.getCenter();
 	}

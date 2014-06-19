@@ -72,7 +72,7 @@ public:
 
 	/// @name SpatialComponent virtuals
 	/// @{
-	Vec3 getSpatialOrigin()
+	Vec4 getSpatialOrigin()
 	{
 		return getWorldTransform().getOrigin();
 	}

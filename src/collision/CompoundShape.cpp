@@ -71,7 +71,7 @@ void CompoundShape::transform(const Transform& trf)
 //==============================================================================
 void CompoundShape::computeAabb(Aabb& out) const
 {
-	Vec3 min(MAX_F32), max(MIN_F32);
+	Vec4 min(Vec3(MAX_F32), 0.0), max(Vec3(MIN_F32), 0.0);
 
 	iterateShapes([&](const CollisionShape& cs)
 	{

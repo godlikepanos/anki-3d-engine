@@ -159,8 +159,8 @@ inline TVec4<F32>& TVec4<F32>::Base::operator/=(const TVec4<F32>& b)
 template<>
 inline TVec4<F32> TVec4<F32>::cross(const TVec4<F32>& b) const
 {
-	ANKI_ASSERT(isZero<F32>(Base::w()));
-	ANKI_ASSERT(isZero<F32>(b.w()));
+	ANKI_ASSERT(Base::w() == 0.0);
+	ANKI_ASSERT(b.w() == 0.0);
 
 	const auto& a = *this;
 	const auto mask0 = _MM_SHUFFLE(3, 0, 2, 1);
@@ -168,8 +168,8 @@ inline TVec4<F32> TVec4<F32>::cross(const TVec4<F32>& b) const
 
 	__m128 tmp0 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask0), 
 		_mm_shuffle_ps(b.m_simd, b.m_simd, mask1));
-	__m128 tmp1 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask0), 
-		_mm_shuffle_ps(b.m_simd, b.m_simd, mask1));
+	__m128 tmp1 = _mm_mul_ps(_mm_shuffle_ps(a.m_simd, a.m_simd, mask1), 
+		_mm_shuffle_ps(b.m_simd, b.m_simd, mask0));
 
 	return TVec4<F32>(_mm_sub_ps(tmp0, tmp1));	
 }

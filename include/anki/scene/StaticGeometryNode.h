@@ -27,7 +27,7 @@ public:
 		return *m_obb;
 	}
 
-	Vec3 getSpatialOrigin()
+	Vec4 getSpatialOrigin()
 	{
 		return m_obb->getCenter();
 	}
@@ -57,7 +57,7 @@ public:
 		return *m_obb;
 	}
 
-	Vec3 getSpatialOrigin()
+	Vec4 getSpatialOrigin()
 	{
 		return m_obb->getCenter();
 	}

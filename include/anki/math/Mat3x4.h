@@ -50,39 +50,9 @@ public:
 		: Base()
 	{}
 
-	explicit TMat3x4(const TMat3<T>& m3)
-	{
-		TMat3x4& m = *this;
-		m(0, 0) = m3(0, 0);
-		m(0, 1) = m3(0, 1);
-		m(0, 2) = m3(0, 2);
-		m(0, 3) = 0.0;
-		m(1, 0) = m3(1, 0);
-		m(1, 1) = m3(1, 1);
-		m(1, 2) = m3(1, 2);
-		m(1, 3) = 0.0;
-		m(2, 0) = m3(2, 0);
-		m(2, 1) = m3(2, 1);
-		m(2, 2) = m3(2, 2);
-		m(2, 3) = 0.0;
-	}
-
-	explicit TMat3x4(const TMat4<T>& m3)
-	{
-		TMat3x4& m = *this;
-		m(0, 0) = m3(0, 0);
-		m(0, 1) = m3(0, 1);
-		m(0, 2) = m3(0, 2);
-		m(0, 3) = m3(0, 3);
-		m(1, 0) = m3(1, 0);
-		m(1, 1) = m3(1, 1);
-		m(1, 2) = m3(1, 2);
-		m(1, 3) = m3(1, 3);
-		m(2, 0) = m3(2, 0);
-		m(2, 1) = m3(2, 1);
-		m(2, 2) = m3(2, 2);
-		m(2, 3) = m3(2, 3);
-	}
+	TMat3x4(const TMat3x4& b)
+		: Base(b)
+	{}
 
 	explicit TMat3x4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, 
 		T m20, T m21, T m22, T m23)
@@ -102,41 +72,97 @@ public:
 		m(2, 3) = m23;
 	}
 
+	explicit TMat3x4(const T f)
+		: Base(f)
+	{}
+
+	explicit TMat3x4(const TMat3<T>& m3)
+	{
+		TMat3x4& m = *this;
+		m(0, 0) = m3(0, 0);
+		m(0, 1) = m3(0, 1);
+		m(0, 2) = m3(0, 2);
+		m(0, 3) = static_cast<T>(0);
+		m(1, 0) = m3(1, 0);
+		m(1, 1) = m3(1, 1);
+		m(1, 2) = m3(1, 2);
+		m(1, 3) = static_cast<T>(0);
+		m(2, 0) = m3(2, 0);
+		m(2, 1) = m3(2, 1);
+		m(2, 2) = m3(2, 2);
+		m(2, 3) = static_cast<T>(0);
+	}
+
+	explicit TMat3x4(const TMat4<T>& m3)
+	{
+		TMat3x4& m = *this;
+		m(0, 0) = m3(0, 0);
+		m(0, 1) = m3(0, 1);
+		m(0, 2) = m3(0, 2);
+		m(0, 3) = m3(0, 3);
+		m(1, 0) = m3(1, 0);
+		m(1, 1) = m3(1, 1);
+		m(1, 2) = m3(1, 2);
+		m(1, 3) = m3(1, 3);
+		m(2, 0) = m3(2, 0);
+		m(2, 1) = m3(2, 1);
+		m(2, 2) = m3(2, 2);
+		m(2, 3) = m3(2, 3);
+	}
+
 	explicit TMat3x4(const TVec3<T>& v)
 	{
 		TMat3x4& m = *this;
-		m(0, 0) = 1.0;
-		m(0, 1) = 0.0;
-		m(0, 2) = 0.0;
+		m(0, 0) = static_cast<T>(1);
+		m(0, 1) = static_cast<T>(0);
+		m(0, 2) = static_cast<T>(0);
 		m(0, 3) = v.x();
-		m(1, 0) = 0.0;
-		m(1, 1) = 1.0;
-		m(1, 2) = 0.0;
+		m(1, 0) = static_cast<T>(0);
+		m(1, 1) = static_cast<T>(1);
+		m(1, 2) = static_cast<T>(0);
 		m(1, 3) = v.y();
-		m(2, 0) = 0.0;
-		m(2, 1) = 0.0;
-		m(2, 2) = 1.0;
+		m(2, 0) = static_cast<T>(0);
+		m(2, 1) = static_cast<T>(0);
+		m(2, 2) = static_cast<T>(1);
 		m(2, 3) = v.z();
+	}
+
+	explicit TMat3x4(const TQuat<T>& q)
+	{
+		Base::setRotationPart(TMat3<T>(q));
+		Base::setTranslationPart(TVec3<T>(static_cast<T>(0)));
+	}
+
+	explicit TMat3x4(const TEuler<T>& b)
+	{
+		Base::setRotationPart(TMat3<T>(b));
+		Base::setTranslationPart(TVec3<T>(static_cast<T>(0)));
+	}
+
+	explicit TMat3x4(const TAxisang<T>& b)
+	{
+		Base::setRotationPart(TAxisang<T>(b));
+		Base::setTranslationPart(TVec3<T>(static_cast<T>(0)));
 	}
 
 	explicit TMat3x4(const TVec3<T>& transl, const TMat3<T>& rot)
 	{
-		setRotationPart(rot);
-		setTranslationPart(transl);
+		Base::setRotationPart(rot);
+		Base::setTranslationPart(transl);
 	}
 
 	explicit TMat3x4(const TVec3<T>& transl, const TMat3<T>& rot, const T scale)
 	{
-		if(isZero<T>(scale - 1.0))
+		if(isZero<T>(scale - static_cast<T>(1)))
 		{
-			setRotationPart(rot);
+			Base::setRotationPart(rot);
 		}
 		else
 		{
 			setRotationPart(rot * scale);
 		}
 
-		setTranslationPart(transl);
+		Base::setTranslationPart(transl);
 	}
 
 	explicit TMat3x4(const TTransform<T>& t)
@@ -183,11 +209,6 @@ public:
 			+ a(2, 2) * b(2, 3) + a(2, 3);
 
 		return c;
-	}
-
-	void transform(const TMat3x4& b)
-	{
-		*this = combineTransformations(b);
 	}
 
 	void setIdentity()

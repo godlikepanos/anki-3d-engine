@@ -18,10 +18,11 @@ class SceneNode;
 /// @{
 
 /// Helper class
-struct MoveEventData
+class MoveEventData
 {
-	Vec3 posMin;
-	Vec3 posMax;
+public:
+	Vec4 m_posMin;
+	Vec4 m_posMax;
 };
 
 /// An event for simple movable animations
@@ -40,8 +41,8 @@ public:
 	void update(F32 prevUpdateTime, F32 crntTime);
 
 private:
-	Vec3 originalPos;
-	Vec3 newPos;
+	Vec4 m_originalPos;
+	Vec4 m_newPos;
 };
 /// @}
 
