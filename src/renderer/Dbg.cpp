@@ -99,7 +99,7 @@ void Dbg::run(GlJobChainHandle& jobs)
 	// Physics
 	if(bitsEnabled(DF_PHYSICS))
 	{
-		scene.getPhysics().debugDraw();
+		//scene.getPhysics().debugDraw();
 	}
 
 	// XXX
@@ -192,14 +192,14 @@ void Dbg::run(GlJobChainHandle& jobs)
 			getComponent<MoveComponent>().getWorldTransform().getRotation();
 
 
-		Aabb s0(pos0 - Vec4(1.01, 1.0, 2.02, 0.0), pos0 + Vec4(1.0, 1.0, 2.0, 0.0));
-		Obb s1(pos1, rot1, Vec4(1.01, 0.501, 2.51, 0.0));
+		Aabb s0(pos0 - Vec4(1.0, 1.0, 2.0, 0.0), pos0 + Vec4(1.0, 1.0, 2.0, 0.0));
+		Obb s1(pos1, rot1, Vec4(1.0, 0.5, 2.5, 0.0));
 
 		CollisionDebugDrawer dr(m_drawer.get());
 
 		Gjk gjk;
 
-		Bool intersect = gjk.intersect(s1, s0);
+		Bool intersect = gjk.intersect(s0, s1);
 
 
 		if(intersect)
@@ -213,6 +213,15 @@ void Dbg::run(GlJobChainHandle& jobs)
 
 		s0.accept(dr);
 		s1.accept(dr);
+
+		/*m_drawer->setColor(Vec4(0.0, 1.0, 0.0, 1.0));
+		m_drawer->setModelMatrix(Mat4::getIdentity());
+		m_drawer->begin();
+		m_drawer->pushBackVertex(gjk.m_a.xyz());
+		m_drawer->pushBackVertex(gjk.m_b.xyz());
+		m_drawer->pushBackVertex(gjk.m_b.xyz());
+		m_drawer->pushBackVertex(gjk.m_c.xyz());
+		m_drawer->end();*/
 	}
 #endif
 

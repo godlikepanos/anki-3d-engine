@@ -10,7 +10,6 @@
 #include "anki/scene/MoveComponent.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/RenderComponent.h"
-#include "anki/physics/RigidBody.h"
 #include "anki/resource/ParticleEmitterResource.h"
 
 namespace anki {

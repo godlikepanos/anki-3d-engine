@@ -7,6 +7,7 @@
 #define ANKI_COLLISION_GJK_EPA_H
 
 #include "anki/Math.h"
+#include "anki/collision/ContactPoint.h"
 
 namespace anki {
 
@@ -24,9 +25,9 @@ public:
 	/// Return true if the two convex shapes intersect
 	Bool intersect(const ConvexShape& shape0, const ConvexShape& shape1);
 
-private:
+protected:
 	U32 m_count; ///< Simplex count
-	Vec4 m_b, m_c, m_d; ///< Simplex
+	Vec4 m_a, m_b, m_c, m_d; ///< Simplex
 	Vec4 m_dir;
 
 	/// Compute the support
@@ -41,6 +42,19 @@ private:
 	{
 		return (a.cross(b)).cross(a);
 	}
+};
+
+/// The implementation of EPA
+class GjkEpa: public Gjk
+{
+public:
+	Bool intersect(const ConvexShape& shape0, const ConvexShape& shape1,
+		ContactPoint& contact);
+
+private:
+	Array<Vec4, 100> m_simplex;
+
+	void findClosestEdge(F32& distance, Vec4& normal, U& index);
 };
 
 /// @}

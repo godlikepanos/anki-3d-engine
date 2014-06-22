@@ -9,11 +9,8 @@
 #include "anki/resource/Mesh.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/SkelAnim.h"
-#include "anki/physics/Character.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/MainRenderer.h"
-#include "anki/physics/Character.h"
-#include "anki/physics/RigidBody.h"
 #include "anki/script/ScriptManager.h"
 #include "anki/core/StdinListener.h"
 #include "anki/resource/Model.h"
@@ -42,6 +39,7 @@ HeapAllocator<U8> globAlloc;
 //==============================================================================
 void initPhysics()
 {
+#if 0
 	SceneGraph& scene = SceneGraphSingleton::get();
 
 	btCollisionShape* groundShape = new btBoxShape(
@@ -60,7 +58,6 @@ void initPhysics()
 
 	new RigidBody(&SceneGraphSingleton::get().getPhysics(), init);
 
-#if 0
 	btCollisionShape* colShape = new btBoxShape(
 	    btVector3(1, 1, 1));
 
@@ -603,7 +600,7 @@ void initSubsystems(int argc, char* argv[])
 	globAlloc = HeapAllocator<U8>(HeapMemoryPool(allocAligned, nullptr));
 
 	// Logger
-	LoggerSingleton::get().init(
+	LoggerSingleton::init(
 		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER, globAlloc);
 
 	// App

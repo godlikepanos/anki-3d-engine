@@ -12,7 +12,6 @@
 #include "anki/core/Counters.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/misc/Xml.h"
-#include "anki/physics/RigidBody.h"
 
 namespace anki {
 
@@ -86,7 +85,7 @@ SceneGraph::SceneGraph(AllocAlignedCallback allocCb, void* allocCbUserData)
 			ANKI_SCENE_FRAME_ALLOCATOR_SIZE)),
 		m_nodes(m_alloc),
 		m_dict(10, DictionaryHasher(), DictionaryEqual(), m_alloc),
-		m_physics(this),
+		m_physics(),
 		m_sectorGroup(this),
 		m_events(this)
 {
@@ -230,7 +229,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	(void)threadPool;
 
 	// XXX Do that in parallel
-	m_physics.update(prevUpdateTime, crntTime);
+	//m_physics.update(prevUpdateTime, crntTime);
 	renderer.getTiler().updateTiles(*m_mainCam);
 	m_events.updateAllEvents(prevUpdateTime, crntTime);
 

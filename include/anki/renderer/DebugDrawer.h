@@ -13,7 +13,6 @@
 #include "anki/scene/Forward.h"
 #include "anki/util/Array.h"
 #include <unordered_map>
-#include <LinearMath/btIDebugDraw.h>
 
 namespace anki {
 
@@ -120,47 +119,6 @@ public:
 
 private:
 	DebugDrawer* m_dbg; ///< The debug drawer
-};
-
-/// An implementation of btIDebugDraw used for debugging Bullet. See Bullet
-/// docs for details
-class PhysicsDebugDrawer: public btIDebugDraw
-{
-public:
-	PhysicsDebugDrawer(DebugDrawer* dbg)
-		: m_dbg(dbg)
-	{}
-
-	void drawLine(const btVector3& from, const btVector3& to,
-		const btVector3& color);
-
-	void drawContactPoint(const btVector3& pointOnB,
-		const btVector3& normalOnB, btScalar distance, int lifeTime,
-		const btVector3& color);
-
-	void drawSphere(btScalar radius, const btTransform& transform,
-		const btVector3& color);
-
-	void drawBox(const btVector3& bbMin, const btVector3& bbMax,
-		const btVector3& color);
-
-	void drawBox(const btVector3& bbMin, const btVector3& bbMax,
-		const btTransform& trans, const btVector3& color);
-
-	void reportErrorWarning(const char* warningString);
-	void draw3dText(const btVector3& location, const char* textString);
-	void setDebugMode(int debugMode)
-	{
-		m_debugMode = debugMode;
-	}
-	int getDebugMode() const
-	{
-		return m_debugMode;
-	}
-
-private:
-	int m_debugMode;
-	DebugDrawer* m_dbg;
 };
 
 // Forward
