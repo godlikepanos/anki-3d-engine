@@ -16,8 +16,6 @@
 #include "anki/resource/Animation.h"
 #include "anki/util/Vector.h"
 
-class btCollisionShape;
-
 namespace anki {
 
 /// Model patch interface class. Its very important class and it binds the
@@ -169,11 +167,6 @@ public:
 	{
 		return m_visibilityShape;
 	}
-
-	const btCollisionShape* getCollisionShape() const
-	{
-		return m_collShape.get();
-	}
 	/// @}
 
 	void load(const char* filename);
@@ -184,7 +177,6 @@ private:
 	Obb m_visibilityShape;
 	SkeletonResourcePointer m_skeleton;
 	Vector<AnimationResourcePointer> m_animations;
-	std::unique_ptr<btCollisionShape> m_collShape;
 };
 
 } // end namespace anki

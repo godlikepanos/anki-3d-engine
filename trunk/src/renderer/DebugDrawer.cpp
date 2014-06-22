@@ -5,7 +5,6 @@
 
 #include "anki/renderer/DebugDrawer.h"
 #include "anki/resource/ProgramResource.h"
-#include "anki/physics/Converters.h"
 #include "anki/Collision.h"
 #include "anki/Scene.h"
 #include "anki/resource/TextureResource.h"
@@ -379,81 +378,6 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 			break;
 		}
 	}
-}
-
-//==============================================================================
-// PhysicsDebugDrawer                                                          =
-//==============================================================================
-
-//==============================================================================
-void PhysicsDebugDrawer::drawLine(const btVector3& from, const btVector3& to,
-	const btVector3& color)
-{
-	m_dbg->drawLine(toAnki(from), toAnki(to), Vec4(toAnki(color), 1.0));
-}
-
-//==============================================================================
-void PhysicsDebugDrawer::drawSphere(btScalar radius,
-	const btTransform& transform,
-	const btVector3& color)
-{
-	m_dbg->setColor(toAnki(color));
-	m_dbg->setModelMatrix(Mat4(toAnki(transform)));
-	m_dbg->drawSphere(radius);
-}
-
-//==============================================================================
-void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
-	const btVector3& color)
-{
-	Mat4 trf(Mat4::getIdentity());
-	trf(0, 0) = max.getX() - min.getX();
-	trf(1, 1) = max.getY() - min.getY();
-	trf(2, 2) = max.getZ() - min.getZ();
-	trf(0, 3) = (max.getX() + min.getX()) / 2.0;
-	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
-	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
-	m_dbg->setModelMatrix(trf);
-	m_dbg->setColor(toAnki(color));
-	m_dbg->drawCube(1.0);
-}
-
-//==============================================================================
-void PhysicsDebugDrawer::drawBox(const btVector3& min, const btVector3& max,
-	const btTransform& trans, const btVector3& color)
-{
-	Mat4 trf(Mat4::getIdentity());
-	trf(0, 0) = max.getX() - min.getX();
-	trf(1, 1) = max.getY() - min.getY();
-	trf(2, 2) = max.getZ() - min.getZ();
-	trf(0, 3) = (max.getX() + min.getX()) / 2.0;
-	trf(1, 3) = (max.getY() + min.getY()) / 2.0;
-	trf(2, 3) = (max.getZ() + min.getZ()) / 2.0;
-	trf = Mat4::combineTransformations(Mat4(toAnki(trans)), trf);
-	m_dbg->setModelMatrix(trf);
-	m_dbg->setColor(toAnki(color));
-	m_dbg->drawCube(1.0);
-}
-
-//==============================================================================
-void PhysicsDebugDrawer::drawContactPoint(const btVector3& /*pointOnB*/,
-	const btVector3& /*normalOnB*/,
-	btScalar /*distance*/, int /*lifeTime*/, const btVector3& /*color*/)
-{
-	//ANKI_LOGW("Unimplemented");
-}
-
-//==============================================================================
-void PhysicsDebugDrawer::reportErrorWarning(const char* warningString)
-{
-	throw ANKI_EXCEPTION(warningString);
-}
-
-//==============================================================================
-void PhysicsDebugDrawer::draw3dText(const btVector3& /*location*/,
-	const char* /*textString*/)
-{
-	//ANKI_LOGW("Unimplemented");
 }
 
 //==============================================================================

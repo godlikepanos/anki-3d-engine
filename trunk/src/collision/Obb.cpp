@@ -33,6 +33,18 @@ Obb::Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend)
 {}
 
 //==============================================================================
+Obb& Obb::operator=(const Obb& b)
+{
+	m_center = b.m_center;
+	m_rotation = b.m_rotation;
+	m_extend = b.m_extend;
+	
+	m_cache = b.m_cache;
+
+	return *this;
+}
+
+//==============================================================================
 F32 Obb::testPlane(const Plane& p) const
 {
 	Mat3x4 rot = m_rotation;
@@ -98,6 +110,15 @@ Obb Obb::getCompoundShape(const Obb& b) const
 //==============================================================================
 void Obb::getExtremePoints(Array<Vec4, 8>& points) const
 {
+	if(!m_cache.m_dirtyExtremePoints)
+	{
+		points = m_cache.m_extremePoints;
+		return;
+	}
+
+	m_cache.m_dirtyExtremePoints = false;
+	
+
 	// L: left, R: right, T: top, B: bottom, F: front, B: back
 	enum
 	{
@@ -135,11 +156,22 @@ void Obb::getExtremePoints(Array<Vec4, 8>& points) const
 	{
 		point += m_center;
 	}
+
+	// Update cache
+	m_cache.m_extremePoints = points;
 }
 
 //==============================================================================
 void Obb::computeAabb(Aabb& aabb) const
 {
+	// Check cache
+	if(!m_cache.m_dirtyAabb)
+	{
+		aabb = m_cache.m_aabb;
+		return;
+	}
+	m_cache.m_dirtyAabb = false;
+
 	Mat3x4 absM;
 	for(U i = 0; i < 12; ++i)
 	{
@@ -152,6 +184,9 @@ void Obb::computeAabb(Aabb& aabb) const
 	Vec4 epsilon(Vec3(getEpsilon<F32>() * 100.0), 0.0);
 	aabb = Aabb(m_center - newE, 
 		m_center + newE + epsilon);
+
+	// Update cache
+	m_cache.m_aabb = aabb;
 }
 
 //==============================================================================
@@ -180,54 +215,31 @@ void Obb::setFromPointCloud(
 	m_center = (max + min) / 2.0;
 	m_rotation = Mat3x4::getIdentity();
 	m_extend = max - m_center;
+
+	// Invalidate cache
+	makeDirty();
 }
 
 //==============================================================================
 Vec4 Obb::computeSupport(const Vec4& dir) const
 {
-	Vec4 out(0.0);
+	Array<Vec4, 8> points;
+	getExtremePoints(points);
 
-	Vec3 er3 = m_rotation * m_extend; // extend rotated
-	Vec4 er(er3, 0.0);
-
-	Vec4 xAxis = Vec4(m_rotation.getColumn(0), 0.0);
-	Vec4 yAxis = Vec4(m_rotation.getColumn(1), 0.0);
-	Vec4 zAxis = Vec4(m_rotation.getColumn(2), 0.0);
-
-	if(dir.dot(xAxis) >= 0.0)
+	U best = 0;
+	F32 bestDot = points[0].dot(dir);
+ 
+	for(U i = 1; i < points.size(); i++)
 	{
-		// Right side of the box
-
-		out.x() = er.x();
+		F32 d = points[i].dot(dir);
+		if(d > bestDot)
+		{
+			best = i;
+			bestDot = d;
+		}
 	}
-	else
-	{
-		out.x() = -er.x();
-	}
-
-	if(dir.dot(yAxis) >= 0.0)
-	{
-		// Top side
-
-		out.y() = er.y();
-	}
-	else
-	{
-		out.y() = -er.y();
-	}
-
-	if(dir.dot(zAxis) >= 0.0)
-	{
-		// Front side
-
-		out.z() = er.z();
-	}
-	else
-	{
-		out.z() = -er.z();
-	}
-
-	return out;
+ 
+	return points[best];
 }
 
 } // end namespace anki

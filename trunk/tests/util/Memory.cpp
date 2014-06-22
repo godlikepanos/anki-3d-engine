@@ -41,17 +41,16 @@ ANKI_TEST(Memory, ChainMemoryPool)
 {
 	// Basic test
 	{
-		const U size = sizeof(PtrSize) + 10;
+		const U size = 8;
 		ChainMemoryPool pool(
-			size, size, ChainMemoryPool::MULTIPLY, 2, 1);
+			allocAligned, nullptr,
+			size, size + 1, ChainMemoryPool::MULTIPLY, 2, 1);
 
-		void* mem = pool.allocate(1, 1);
+		void* mem = pool.allocate(5, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
-		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 1);
 
-		void* mem1 = pool.allocate(10, 1);
+		void* mem1 = pool.allocate(5, 1);
 		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
-		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 2);
 
 		pool.free(mem1);
 		pool.free(mem);
@@ -62,18 +61,27 @@ ANKI_TEST(Memory, ChainMemoryPool)
 	{
 		const U size = sizeof(PtrSize) + 10;
 		ChainMemoryPool pool(
-			size, size, ChainMemoryPool::MULTIPLY, 2, 1);
+			allocAligned, nullptr,
+			size, size * 2, ChainMemoryPool::MULTIPLY, 2, 1);
 
-		void* mem = pool.allocate(1, 1);
+		void* mem = pool.allocate(size, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
-		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 1);
 
-		void* mem1 = pool.allocate(10, 1);
+		void* mem1 = pool.allocate(size, 1);
 		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
-		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 2);
 
-		pool.free(mem);
+		void* mem3 = pool.allocate(size, 1);
+		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
+
 		pool.free(mem1);
+
+		mem1 = pool.allocate(size, 1);
+		ANKI_TEST_EXPECT_NEQ(mem1, nullptr);
+
+		pool.free(mem3);
+		pool.free(mem1);
+		pool.free(mem);
+
 		ANKI_TEST_EXPECT_EQ(pool.getChunksCount(), 0);
 	}
 }

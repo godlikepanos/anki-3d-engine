@@ -68,7 +68,7 @@ public:
 	using MessageHandlerCallback = void (*)(void*, const Info& info);
 
 	/// Initialize the logger
-	void init(InitFlags flags, HeapAllocator<U8>& alloc);
+	Logger(InitFlags flags, HeapAllocator<U8>& alloc);
 
 	/// Add a new message handler
 	void addMessageHandler(void* data, MessageHandlerCallback callback);
@@ -99,7 +99,7 @@ private:
 	static void logfileMessageHandler(void* vlogger, const Info& info);
 };
 
-typedef Singleton<Logger> LoggerSingleton;
+typedef SingletonInit<Logger> LoggerSingleton;
 /// @}
 
 } // end namespace

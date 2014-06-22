@@ -9,7 +9,6 @@
 #include "anki/scene/Misc.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/Skeleton.h"
-#include "anki/physics/RigidBody.h"
 #include "anki/physics/PhysicsWorld.h"
 
 namespace anki {
@@ -233,6 +232,7 @@ ModelNode::ModelNode(
 	}
 
 	// Load rigid body
+#if 0
 	if(m_model->getCollisionShape() != nullptr)
 	{
 		RigidBody::Initializer init;
@@ -247,16 +247,19 @@ ModelNode::ModelNode(
 
 		addComponent(static_cast<RigidBody*>(body));
 	}
+#endif
 }
 
 //==============================================================================
 ModelNode::~ModelNode()
 {
+#if 0
 	RigidBody* body = tryGetComponent<RigidBody>();
 	if(body)
 	{
 		getSceneGraph().getPhysics().deletePhysicsObject(body);
 	}
+#endif
 }
 
 //==============================================================================

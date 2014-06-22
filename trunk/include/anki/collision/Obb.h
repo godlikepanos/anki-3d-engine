@@ -7,6 +7,7 @@
 #define ANKI_COLLISION_OBB_H
 
 #include "anki/collision/ConvexShape.h"
+#include "anki/collision/Aabb.h"
 #include "anki/Math.h"
 #include "anki/util/Array.h"
 
@@ -38,10 +39,12 @@ public:
 	}
 	Vec4& getCenter()
 	{
+		makeDirty();
 		return m_center;
 	}
 	void setCenter(const Vec4& x)
 	{
+		makeDirty();
 		m_center = x;
 	}
 
@@ -51,10 +54,12 @@ public:
 	}
 	Mat3x4& getRotation()
 	{
+		makeDirty();
 		return m_rotation;
 	}
 	void setRotation(const Mat3x4& x)
 	{
+		makeDirty();
 		m_rotation = x;
 	}
 
@@ -64,23 +69,19 @@ public:
 	}
 	Vec4& getExtend()
 	{
+		makeDirty();
 		return m_extend;
 	}
 	void setExtend(const Vec4& x)
 	{
+		makeDirty();
 		m_extend = x;
 	}
 	/// @}
 
 	/// @name Operators
 	/// @{
-	Obb& operator=(const Obb& b)
-	{
-		m_center = b.m_center;
-		m_rotation = b.m_rotation;
-		m_extend = b.m_extend;
-		return *this;
-	}
+	Obb& operator=(const Obb& b);
 	/// @}
 
 	/// Implements CollisionShape::accept
@@ -123,14 +124,26 @@ public:
 	Vec4 computeSupport(const Vec4& dir) const;
 
 public:
-	/// @name Data
-	/// @{
 	Vec4 m_center;
 	Mat3x4 m_rotation;
 	/// With identity rotation this points to max (front, right, top in
 	/// our case)
 	Vec4 m_extend;
-	/// @}
+
+	class 
+	{
+	public:
+		mutable Aabb m_aabb;
+		mutable Array<Vec4, 8> m_extremePoints;
+		mutable Bool8 m_dirtyAabb = true;
+		mutable Bool8 m_dirtyExtremePoints = true;
+	} m_cache;
+
+	void makeDirty()
+	{
+		m_cache.m_dirtyAabb = true;
+		m_cache.m_dirtyExtremePoints = true;
+	}
 };
 
 /// @}

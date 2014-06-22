@@ -648,11 +648,7 @@ public:
 			crntMaxSize = std::min(crntMaxSize, (PtrSize)m_maxSize);
 		}
 
-		size = std::max(crntMaxSize, size) 
-			+ sizeof(StackMemoryPool::Implementation::MemoryBlockHeader)
-			+ m_alignmentBytes;
-
-		ANKI_ASSERT(size <= m_maxSize && "To big chunk");
+		size = std::max(crntMaxSize, size) + 16;
 
 		//
 		// Create the chunk
@@ -701,6 +697,8 @@ public:
 	/// Allocate memory
 	void* allocate(PtrSize size, PtrSize alignment) throw()
 	{
+		ANKI_ASSERT(size <= m_maxSize);
+
 		Chunk* ch;
 		void* mem = nullptr;
 

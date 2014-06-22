@@ -14,7 +14,7 @@
 namespace anki {
 
 //==============================================================================
-void Logger::init(InitFlags flags, HeapAllocator<U8>& alloc)
+Logger::Logger(InitFlags flags, HeapAllocator<U8>& alloc)
 {
 	if((flags & InitFlags::WITH_SYSTEM_MESSAGE_HANDLER) != InitFlags::NONE)
 	{

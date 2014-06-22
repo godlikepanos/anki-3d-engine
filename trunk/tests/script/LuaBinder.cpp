@@ -16,7 +16,8 @@ v3:setZ(0.1)
 
 ANKI_TEST(Script, LuaBinder)
 {
-	ScriptManager sm;
+	HeapAllocator<U8> alloc(HeapMemoryPool(allocAligned, nullptr));
+	ScriptManager sm(alloc);
 	Vec2 v2(2.0, 3.0);
 	Vec3 v3(1.1, 2.2, 3.3);
 

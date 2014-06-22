@@ -10,6 +10,10 @@
 namespace anki {
 
 //==============================================================================
+// Gjk                                                                         =
+//==============================================================================
+
+//==============================================================================
 Vec4 Gjk::support(const ConvexShape& shape0, const ConvexShape& shape1,
 	const Vec4& dir)
 {
@@ -21,25 +25,7 @@ Vec4 Gjk::support(const ConvexShape& shape0, const ConvexShape& shape1,
 //==============================================================================
 Bool Gjk::update(const Vec4& a)
 {
-	if(m_count == 0)
-	{
-		m_b = a;
-		m_dir = -a;
-		++m_count;
-
-		return false;
-	}
-	else if(m_count == 1)
-	{
-		m_dir = crossAba(m_b - a, -a);
- 
-		m_c = m_b;
-		m_b = a;
-		++m_count;
-
-		return false;
-	}
-	else if(m_count == 2)
+	if(m_count == 2)
 	{
 		Vec4 ao = -a;
 		 
@@ -94,7 +80,7 @@ Bool Gjk::update(const Vec4& a)
 			m_dir = -abc;
 		}
 		 
-		++m_count;
+		m_count = 3;
 		 
 		// Again, need a tetrahedron to enclose the origin
 		return false;
@@ -149,6 +135,8 @@ Bool Gjk::update(const Vec4& a)
 		}
 		 
 		// Behind all three faces, the origin is in the tetrahedron, we're done
+		m_a = a;
+		m_count = 4;
 		return true;
 		 
 check_face:
@@ -176,7 +164,7 @@ check_face:
 		{
 			m_b = a;
 		 
-			m_dir = crossAba(ac,ao);
+			m_dir = crossAba(ac, ao);
 		 
 			m_count = 2;
 			return false;
@@ -199,8 +187,26 @@ check_face:
 //==============================================================================
 Bool Gjk::intersect(const ConvexShape& shape0, const ConvexShape& shape1)
 {
+	// Chose random direction
 	m_dir = Vec4(1.0, 0.0, 0.0, 0.0);
-	m_count = 0;
+
+	// Do cases 1, 2
+	m_c = support(shape0, shape1, m_dir);
+	if(m_c.dot(m_dir) < 0.0)
+	{
+		return false;
+	}
+ 
+	m_dir = -m_c;
+	m_b = support(shape0, shape1, m_dir);
+
+	if(m_b.dot(m_dir) < 0.0)
+	{
+		return false;
+	}
+
+	m_dir = crossAba(m_c - m_b, -m_b);
+	m_count = 2;
 
 	while(1)
 	{
@@ -216,6 +222,96 @@ Bool Gjk::intersect(const ConvexShape& shape0, const ConvexShape& shape1)
 			return true;
 		}
 	}
+}
+
+//==============================================================================
+// GjkEpa                                                                      =
+//==============================================================================
+
+//==============================================================================
+Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
+	ContactPoint& contact)
+{
+#if 0
+	// Do the intersection test
+	if(!intersect(shape0, shape1))
+	{
+		return false;
+	}
+
+	// Set the array simplex
+	ANKI_ASSER(m_count == 4);
+	m_simplex[0] = m_a;
+	m_simplex[1] = m_b;
+	m_simplex[2] = m_c;
+	m_simplex[3] = m_d;
+
+	while(1) 
+	{
+		F32 distance;
+		Vec4 normal;
+		U index;
+		findClosestEdge(distance, normal, index);	
+		
+		// Get new support
+		Vec4 p = support(shape0, shape1, normal);
+		F32 d = p.dot(e.normal);
+		if(d - e.distance < TOLERANCE) 
+		{
+			contact.m_normal = normal;
+			contact.m_depth = d;
+			break;
+		} 
+		else 
+		{
+			m_simplex[index] = p;
+		}
+	}
+#endif
+}
+
+//==============================================================================
+void GjkEpa::findClosestEdge(F32& distance, Vec4& normal, U& index)
+{
+#if 0
+	distance = F32_MAX;
+
+	// Iterate the simplex
+	for(U i = 0; i < m_count; i++) 
+	{
+		// Compute the next points index
+		U j = i + 1;
+		if(j == m_count)
+		{
+			j = 0;
+		}
+
+		Vec4 a = m_simplex[i];
+		Vec4 b = m_simplex[j];
+		
+		// Create the edge vector
+		Vec4 e = b - a;
+
+		// Get the vector from the origin to a
+		Vec4 oa = a;
+
+		// Get the vector from the edge towards the origin
+		Vec4 n = crossAba(e, oa);
+		n.normalize();
+
+		// Calculate the distance from the origin to the edge
+		F32 d = n.dot(a);
+
+		// Check the distance against the other distances
+		if(d < distance) 
+		{
+			// if this edge is closer then use it
+			distance = d;
+			normal = n;
+			index = j;
+		}
+	}
+#endif
 }
 
 } // end namespace anki

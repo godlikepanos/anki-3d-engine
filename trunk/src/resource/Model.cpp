@@ -8,8 +8,7 @@
 #include "anki/resource/Mesh.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/misc/Xml.h"
-#include "anki/physics/Converters.h"
-#include <btBulletCollisionCommon.h>
+#include "anki/core/Logger.h"
 
 namespace anki {
 
@@ -297,16 +296,15 @@ void Model::load(const char* filename)
 
 			if(type == "sphere")
 			{
-				m_collShape.reset(new btSphereShape(valEl.getFloat()));
+				ANKI_LOGW("TODO");
 			}
 			else if(type == "box")
 			{
-				Vec3 extend = valEl.getVec3();
-				m_collShape.reset(new btBoxShape(toBt(extend)));
+				ANKI_LOGW("TODO");
 			}
 			else if(type == "mesh")
 			{
-				ANKI_ASSERT(0 && "TODO");
+				ANKI_LOGW("TODO");
 			}
 			else
 			{
