@@ -17,8 +17,8 @@ namespace anki {
 class ContactPoint
 {
 public:
-	Vec3 m_position;
-	Vec3 m_normal;
+	Vec4 m_position;
+	Vec4 m_normal;
 	F32 m_depth;
 };
 

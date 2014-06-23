@@ -232,15 +232,14 @@ Bool Gjk::intersect(const ConvexShape& shape0, const ConvexShape& shape1)
 Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 	ContactPoint& contact)
 {
-#if 0
 	// Do the intersection test
-	if(!intersect(shape0, shape1))
+	if(!Gjk::intersect(shape0, shape1))
 	{
 		return false;
 	}
 
 	// Set the array simplex
-	ANKI_ASSER(m_count == 4);
+	ANKI_ASSERT(m_count == 4);
 	m_simplex[0] = m_a;
 	m_simplex[1] = m_b;
 	m_simplex[2] = m_c;
@@ -255,8 +254,8 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 		
 		// Get new support
 		Vec4 p = support(shape0, shape1, normal);
-		F32 d = p.dot(e.normal);
-		if(d - e.distance < TOLERANCE) 
+		F32 d = p.dot(normal);
+		if(d - distance < 0.00001)
 		{
 			contact.m_normal = normal;
 			contact.m_depth = d;
@@ -267,14 +266,12 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 			m_simplex[index] = p;
 		}
 	}
-#endif
 }
 
 //==============================================================================
 void GjkEpa::findClosestEdge(F32& distance, Vec4& normal, U& index)
 {
-#if 0
-	distance = F32_MAX;
+	distance = MAX_F32;
 
 	// Iterate the simplex
 	for(U i = 0; i < m_count; i++) 
@@ -311,7 +308,6 @@ void GjkEpa::findClosestEdge(F32& distance, Vec4& normal, U& index)
 			index = j;
 		}
 	}
-#endif
 }
 
 } // end namespace anki
