@@ -83,9 +83,11 @@ void main()
 
 #if 1
 	// Let p1 be the intersection of p0+r to the near plane, then
-	// p1 = p0 + t*r or p1.x = p0.x + t*r.x, p1.y = p0.y + t*r.y and
+	// p1 = p0 + t*r or 
+	// p1.x = p0.x + t*r.x (1)
+	// p1.y = p0.y + t*r.y (2) and
 	// p1.z = p0.z + t*r.z (3)
-	// p1.z is known to ~0.0 so if we solve (3) t becomes:
+	// p1.z is known to be something ~0.0 so if we solve (3) t becomes:
 	float t = -p0.z / (r.z + 0.0000001);
 	vec3 p1 = p0 + r * t;
 
@@ -125,7 +127,8 @@ void main()
 		a.xy = ndc * uProjectionParams.xy * a.z; // Unproject
 		a = normalize(a);
 
-		// Compute the intersection between 'a' (before normalization) and p0-p1 
+		// Compute the intersection between 'a' (before normalization) and r
+		// 'k' is the value to multiply to 'a' to get the intersection
 		// c0 = cross(a, r);
 		// c1 = cross(p0, r);
 		// k = c1.x / c0.x; and the optimized:
