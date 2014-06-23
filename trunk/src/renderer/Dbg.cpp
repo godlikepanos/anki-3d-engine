@@ -197,9 +197,10 @@ void Dbg::run(GlJobChainHandle& jobs)
 
 		CollisionDebugDrawer dr(m_drawer.get());
 
-		Gjk gjk;
+		GjkEpa gjk;
+		ContactPoint cp;
 
-		Bool intersect = gjk.intersect(s0, s1);
+		Bool intersect = gjk.intersect(s0, s1, cp);
 
 
 		if(intersect)
@@ -213,6 +214,14 @@ void Dbg::run(GlJobChainHandle& jobs)
 
 		s0.accept(dr);
 		s1.accept(dr);
+
+		m_drawer->setModelMatrix(Mat4::getIdentity());
+		m_drawer->setColor(Vec4(0.0, 1.0, 0.0, 1.0));
+		m_drawer->begin();
+		m_drawer->pushBackVertex(Vec3(0.0));
+		m_drawer->pushBackVertex(cp.m_normal.xyz());
+		m_drawer->end();
+
 
 		/*m_drawer->setColor(Vec4(0.0, 1.0, 0.0, 1.0));
 		m_drawer->setModelMatrix(Mat4::getIdentity());
