@@ -36,12 +36,6 @@ protected:
 
 	/// Update simplex
 	Bool update(const Vec4& a);
-
-	/// Helper of axbxa
-	static Vec4 crossAba(const Vec4& a, const Vec4& b)
-	{
-		return (a.cross(b)).cross(a);
-	}
 };
 
 /// The implementation of EPA
@@ -52,9 +46,23 @@ public:
 		ContactPoint& contact);
 
 private:
-	Array<Vec4, 100> m_simplex;
+	static const U MAX_SIMPLEX_COUNT = 20;
+	static const U MAX_FACE_COUNT = 50;
 
-	void findClosestEdge(F32& distance, Vec4& normal, U& index);
+	class Face
+	{
+	public:
+		Array<U32, 3> m_idx;
+		Vec4 m_normal;
+		F32 m_dist;
+	};
+
+	Array<Vec4, MAX_SIMPLEX_COUNT> m_simplex;
+
+	Array<Face, MAX_FACE_COUNT> m_faces;
+	U32 m_faceCount;
+
+	void findClosestFace(U& index);
 };
 
 /// @}

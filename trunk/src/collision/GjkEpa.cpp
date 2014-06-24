@@ -14,6 +14,17 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+/// Helper of (axb)xa
+static Vec4 crossAba(const Vec4& a, const Vec4& b)
+{
+	// We need to calculate the (axb)xa but we can use the triple product
+	// property ax(bxc) = b(a.c) - c(a.b) to make it faster
+	Vec4 out = b * (a.dot(a)) - a * (a.dot(b));
+
+	return out;
+}
+
+//==============================================================================
 Vec4 Gjk::support(const ConvexShape& shape0, const ConvexShape& shape1,
 	const Vec4& dir)
 {
@@ -245,16 +256,49 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 	m_simplex[2] = m_c;
 	m_simplex[3] = m_d;
 
+	// Set the first 4 faces
+	Face* face;
+
+	face = &m_faces[0];
+	face->m_idx[0] = 0;
+	face->m_idx[1] = 1;
+	face->m_idx[2] = 2;
+	face->m_normal[0] = -100.0;
+
+	face = &m_faces[1];
+	face->m_idx[0] = 1;
+	face->m_idx[1] = 2;
+	face->m_idx[2] = 3;
+	face->m_normal[0] = -100.0;
+
+	face = &m_faces[2];
+	face->m_idx[0] = 2;
+	face->m_idx[1] = 3;
+	face->m_idx[2] = 0;
+	face->m_normal[0] = -100.0;
+
+	face = &m_faces[3];
+	face->m_idx[0] = 3;
+	face->m_idx[1] = 0;
+	face->m_idx[2] = 1;
+	face->m_normal[0] = -100.0;
+
+	m_faceCount = 4;
+
 	while(1) 
 	{
-		F32 distance;
-		Vec4 normal;
-		U index;
-		findClosestEdge(distance, normal, index);	
+		U faceIndex;
+		findClosestFace(faceIndex);
 		
+		face = &m_faces[faceIndex];
+		Vec4& normal = face->m_normal;
+		F32 distance = face->m_dist;
+
 		// Get new support
 		Vec4 p = support(shape0, shape1, normal);
 		F32 d = p.dot(normal);
+
+		// Check new distance
 		if(d - distance < 0.00001)
 		{
 			contact.m_normal = normal;
@@ -263,49 +307,86 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 		} 
 		else 
 		{
-			m_simplex[index] = p;
+			// Create 3 new faces by adding 'p'
+
+			Array<U32, 3> idx = face->m_idx;
+
+			// Canibalize existing face
+			face->m_idx[0] = idx[0];
+			face->m_idx[1] = idx[1];
+			face->m_idx[2] = m_count;
+			face->m_normal[0] = -100.0;
+
+			// Next face
+			face = &m_faces[m_faceCount++];
+			face->m_idx[0] = idx[1];
+			face->m_idx[1] = idx[2];
+			face->m_idx[2] = m_count;
+			face->m_normal[0] = -100.0;
+
+			// Next face
+			face = &m_faces[m_faceCount++];
+			face->m_idx[0] = idx[2];
+			face->m_idx[1] = idx[0];
+			face->m_idx[2] = m_count;
+			face->m_normal[0] = -100.0;
+
+			// Add p
+			m_simplex[m_count++] = p;
 		}
 	}
+
+	return true;
 }
 
 //==============================================================================
-void GjkEpa::findClosestEdge(F32& distance, Vec4& normal, U& index)
+void GjkEpa::findClosestFace(U& index)
 {
-	distance = MAX_F32;
+	F32 minDistance = MAX_F32;
 
-	// Iterate the simplex
-	for(U i = 0; i < m_count; i++) 
+	// Iterate the faces
+	for(U i = 0; i < m_faceCount; i++) 
 	{
-		// Compute the next points index
-		U j = i + 1;
-		if(j == m_count)
+		Face& face = m_faces[i];
+		
+		// Check if we calculated the normal before
+		if(face.m_normal[0] == -100.0)
 		{
-			j = 0;
+			// First time we encounter that face
+
+			Vec4 a = m_simplex[face.m_idx[0]];
+			Vec4 b = m_simplex[face.m_idx[1]];
+			Vec4 c = m_simplex[face.m_idx[2]];
+
+			// Compute the face edges
+			Vec4 e0 = b - a;
+			Vec4 e1 = c - b;
+
+			// Compute the face normal
+			Vec4 n = e0.cross(e1);
+			n.normalize();
+
+			// Calculate the distance from the origin to the edge
+			F32 d = n.dot(a);
+
+			// Check where the face is facing
+			if(d < 0.0)
+			{
+				// It's not facing the origin so fix the normal and 'd'
+				d = -d;
+				n = -n;
+			}
+
+			face.m_normal = n;
+			face.m_dist = d;
 		}
 
-		Vec4 a = m_simplex[i];
-		Vec4 b = m_simplex[j];
-		
-		// Create the edge vector
-		Vec4 e = b - a;
-
-		// Get the vector from the origin to a
-		Vec4 oa = a;
-
-		// Get the vector from the edge towards the origin
-		Vec4 n = crossAba(e, oa);
-		n.normalize();
-
-		// Calculate the distance from the origin to the edge
-		F32 d = n.dot(a);
-
 		// Check the distance against the other distances
-		if(d < distance) 
+		if(face.m_dist < minDistance) 
 		{
 			// if this edge is closer then use it
-			distance = d;
-			normal = n;
-			index = j;
+			index = i;
+			minDistance = face.m_dist;
 		}
 	}
 }
