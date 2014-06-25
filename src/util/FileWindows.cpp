@@ -45,12 +45,12 @@ void removeDirectory(const char* dirname)
 {
 	ANKI_ASSERT(dirname);
 
-	SHFILEOPSTRUCTW fileOperation;
+	SHFILEOPSTRUCTA fileOperation;
 	fileOperation.wFunc = FO_DELETE;
 	fileOperation.pFrom = dirname;
 	fileOperation.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION;
 
-	I result = SHFileOperationW(&fileOperation);
+	I result = SHFileOperationA(&fileOperation);
 	if(result != 0) 
 	{
 		throw ANKI_EXCEPTION("Could not delete directory %s", dirname);
@@ -62,10 +62,41 @@ void createDirectory(const char* dir)
 {
 	ANKI_ASSERT(dir);
 
-	if(CreateDirectory(dir, NULL) 
-		|| GetLastError() == ERROR_ALREADY_EXISTS)
+	if(CreateDirectory(dir, NULL) == 0)
 	{
 		throw ANKI_EXCEPTION("Failed to create directory %s", dir);
+	}
+}
+
+//==============================================================================
+void getHomeDirectory(U32 buffSize, char* buff)
+{
+	const char* homed = getenv("HOMEDRIVE");
+	const char* homep = getenv("HOMEPATH");
+
+	if(homed == nullptr || homep == nullptr)
+	{
+		throw ANKI_EXCEPTION("HOME environment variables not set");
+	}
+
+	U len0 = strlen(homed);
+	U len1 = strlen(homep);
+	if(len0 + len1 + 1 > buffSize)
+	{
+		throw ANKI_EXCEPTION("buffSize too small");
+	}
+
+	memcpy(buff, homed, len0);
+	memcpy(buff + len0, homep, len1 + 1);
+
+	// Convert to Unix path
+	while(*buff != '\0')
+	{
+		if(*buff == '\\')
+		{
+			*buff = '/';
+		}
+		++buff;
 	}
 }
 

@@ -67,7 +67,9 @@ void App::initDirs()
 {
 #if ANKI_OS != ANKI_OS_ANDROID
 	// Settings path
-	settingsPath = String(getenv("HOME")) + "/.anki";
+	Array<char, 512> home;
+	getHomeDirectory(sizeof(home), &home[0]);
+	String settingsPath = String(&home[0]) + "/.anki";
 	if(!directoryExists(settingsPath.c_str()))
 	{
 		ANKI_LOGI("Creating settings dir: %s", settingsPath.c_str());

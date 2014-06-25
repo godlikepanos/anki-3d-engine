@@ -299,7 +299,9 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 		F32 d = p.dot(normal);
 
 		// Check new distance
-		if(d - distance < 0.00001)
+		if(d - distance < 0.001 
+			|| m_faceCount == m_faces.size() - 2
+			|| m_count == m_simplex.size() - 1)
 		{
 			contact.m_normal = normal;
 			contact.m_depth = d;
@@ -309,30 +311,43 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 		{
 			// Create 3 new faces by adding 'p'
 
+			// Search if the simplex is there
+			U i;
+			for(i = 0; i < m_count; i++)
+			{
+				if(p == m_simplex[i])
+				{
+					break;
+				}
+			}
+
+			if(i == m_count)
+			{
+				// Add p
+				m_simplex[m_count++] = p;
+			}
+
 			Array<U32, 3> idx = face->m_idx;
 
 			// Canibalize existing face
 			face->m_idx[0] = idx[0];
 			face->m_idx[1] = idx[1];
-			face->m_idx[2] = m_count;
+			face->m_idx[2] = i;
 			face->m_normal[0] = -100.0;
 
 			// Next face
 			face = &m_faces[m_faceCount++];
 			face->m_idx[0] = idx[1];
 			face->m_idx[1] = idx[2];
-			face->m_idx[2] = m_count;
+			face->m_idx[2] = i;
 			face->m_normal[0] = -100.0;
 
 			// Next face
 			face = &m_faces[m_faceCount++];
 			face->m_idx[0] = idx[2];
 			face->m_idx[1] = idx[0];
-			face->m_idx[2] = m_count;
+			face->m_idx[2] = i;
 			face->m_normal[0] = -100.0;
-
-			// Add p
-			m_simplex[m_count++] = p;
 		}
 	}
 
