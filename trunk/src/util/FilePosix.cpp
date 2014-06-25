@@ -110,4 +110,22 @@ void createDirectory(const char* dir)
 	}
 }
 
+//==============================================================================
+void getHomeDirectory(U32 buffSize, char* buff)
+{
+	const char* home = getenv("HOME");
+	if(home == nullptr)
+	{
+		throw ANKI_EXCEPTION("HOME environment not set");
+	}
+
+	U len = strlen(home);
+	if(len + 1 > buffSize)
+	{
+		throw ANKI_EXCEPTION("buffSize too small");
+	}
+
+	memcpy(buff, home, len + 1);
+}
+
 } // end namespace anki

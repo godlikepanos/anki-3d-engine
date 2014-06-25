@@ -193,6 +193,11 @@ extern void removeDirectory(const char* dir);
 /// Equivalent to: mkdir dir
 extern void createDirectory(const char* dir);
 
+/// Get the home directory
+/// Write the home directory to @a buff. The @a buffSize is the size of the 
+/// @a buff. If the @buffSize is not enough the function will throw exception
+extern void getHomeDirectory(U32 buffSize, char* buff);
+
 /// @}
 
 } // end namespace anki

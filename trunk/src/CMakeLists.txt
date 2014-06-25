@@ -1,16 +1,6 @@
 #
-# Add anki sub libraries
+# Set platform specific 
 #
-set(ANKI_SUB_DIRS script renderer scene event input physics resource core misc gl collision math util)
-
-set(ANKI_LIBS "")
-
-foreach(TMP ${ANKI_SUB_DIRS})
-	add_subdirectory(${TMP})
-	set(ANKI_LIBS ${ANKI_LIBS} anki${TMP})
-endforeach()
-
-# Set the platform libraries
 if(LINUX)
 	set(_SYS GL ankiglew pthread)
 elseif(MACOS)
@@ -21,10 +11,24 @@ elseif(ANDROID)
 	include_directories("${ANDROID_NDK}/sources/android/native_app_glue")
 	set(_SYS_SRC "${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c")
 elseif(WINDOWS)
-	set(_SYS GL ankiglew)
+	set(_SYS ankiglew opengl32 version)
+
+	add_definitions("-DGLEW_STATIC")
 else()
 	message(FATAL_ERROR "Unhandled case")
 endif()
+
+#
+# Add anki sub libraries
+#
+set(ANKI_SUB_DIRS script renderer scene event input physics resource core misc gl collision math util)
+
+set(ANKI_LIBS "")
+
+foreach(TMP ${ANKI_SUB_DIRS})
+	add_subdirectory(${TMP})
+	set(ANKI_LIBS ${ANKI_LIBS} anki${TMP})
+endforeach()
 
 if(${ANKI_WINDOW_BACKEND} STREQUAL "SDL")
 	SET(ANKI_LIBS ${ANKI_LIBS} ankisdl)

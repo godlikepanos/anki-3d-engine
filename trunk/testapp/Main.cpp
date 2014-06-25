@@ -614,7 +614,7 @@ void initSubsystems(int argc, char* argv[])
 	nwinit.m_minorVersion = glminor;
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = true;
+	nwinit.m_fullscreenDesktopRez = false;
 	nwinit.m_debugContext = ANKI_DEBUG;
 	win = new NativeWindow;	
 	win->create(nwinit);

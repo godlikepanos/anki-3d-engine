@@ -18,6 +18,9 @@
 #include <string>
 
 #if ANKI_GL == ANKI_GL_DESKTOP
+#	if ANKI_OS == ANKI_OS_WINDOWS && !defined(GLEW_STATIC)
+#		define GLEW_STATIC
+#	endif
 #	include <GL/glew.h>
 #	if !defined(ANKI_GLEW_H)
 #		error "Wrong GLEW included"

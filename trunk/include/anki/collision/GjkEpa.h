@@ -46,8 +46,8 @@ public:
 		ContactPoint& contact);
 
 private:
-	static const U MAX_SIMPLEX_COUNT = 20;
-	static const U MAX_FACE_COUNT = 50;
+	static const U MAX_SIMPLEX_COUNT = 50;
+	static const U MAX_FACE_COUNT = 100;
 
 	class Face
 	{
