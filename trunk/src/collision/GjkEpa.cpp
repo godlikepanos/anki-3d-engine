@@ -25,24 +25,24 @@ static Vec4 crossAba(const Vec4& a, const Vec4& b)
 }
 
 //==============================================================================
-Vec4 Gjk::support(const ConvexShape& shape0, const ConvexShape& shape1,
-	const Vec4& dir)
+void Gjk::support(const ConvexShape& shape0, const ConvexShape& shape1,
+	const Vec4& dir, Support& support)
 {
-	Vec4 s0 = shape0.computeSupport(dir);
-	Vec4 s1 = shape1.computeSupport(-dir);
-	return s0 - s1;
+	support.m_v0 = shape0.computeSupport(dir);
+	support.m_v1 = shape1.computeSupport(-dir);
+	support.m_v = support.m_v0 - support.m_v1;
 }
 
 //==============================================================================
-Bool Gjk::update(const Vec4& a)
+Bool Gjk::update(const Support& a)
 {
 	if(m_count == 2)
 	{
-		Vec4 ao = -a;
+		Vec4 ao = -a.m_v;
 		 
 		// Compute the vectors parallel to the edges we'll test
-		Vec4 ab = m_b - a;
-		Vec4 ac = m_c - a;
+		Vec4 ab = m_simplex[1].m_v - a.m_v;
+		Vec4 ac = m_simplex[2].m_v - a.m_v;
 		 
 		// Compute the triangle's normal
 		Vec4 abc = ab.cross(ac);
@@ -54,8 +54,8 @@ Bool Gjk::update(const Vec4& a)
 		if(abp.dot(ao) > 0.0)
 		{
 			// The origin lies outside the triangle, near the edge ab
-			m_c = m_b;
-			m_b = a;
+			m_simplex[2] = m_simplex[1];
+			m_simplex[1] = a;
 		 
 			m_dir = crossAba(ab, ao);
 		 
@@ -67,7 +67,7 @@ Bool Gjk::update(const Vec4& a)
 		 
 		if(acp.dot(ao) > 0.0)
 		{
-			m_b = a;
+			m_simplex[1] = a;
 			m_dir = crossAba(ac, ao);
 
 			return false;
@@ -77,16 +77,16 @@ Bool Gjk::update(const Vec4& a)
 		// but we care whether it is above or below it, so test
 		if(abc.dot(ao) > 0.0)
 		{
-			m_d = m_c;
-			m_c = m_b;
-			m_b = a;
+			m_simplex[3] = m_simplex[2];
+			m_simplex[2] = m_simplex[1];
+			m_simplex[1] = a;
 		 
 			m_dir = abc;
 		}
 		else
 		{
-			m_d = m_b;
-			m_b = a;
+			m_simplex[3] = m_simplex[1];
+			m_simplex[1] = a;
 		 
 			m_dir = -abc;
 		}
@@ -98,10 +98,10 @@ Bool Gjk::update(const Vec4& a)
 	}
 	else if(m_count == 3)
 	{
-		Vec4 ao = -a;
+		Vec4 ao = -a.m_v;
 		 
-		Vec4 ab = m_b - a;
-		Vec4 ac = m_c - a;
+		Vec4 ab = m_simplex[1].m_v - a.m_v;
+		Vec4 ac = m_simplex[2].m_v - a.m_v;
 		 
 		Vec4 abc = ab.cross(ac);
 		 
@@ -113,14 +113,14 @@ Bool Gjk::update(const Vec4& a)
 			goto check_face;
 		}
 		 
-		ad = m_d - a;
+		ad = m_simplex[3].m_v - a.m_v;
 		acd = ac.cross(ad);
 		 
 		if(acd.dot(ao) > 0.0)
 		{
 			// In front of triangle ACD
-			m_b = m_c;
-			m_c = m_d;
+			m_simplex[1] = m_simplex[2];
+			m_simplex[2] = m_simplex[3];
 		 
 			ab = ac;
 			ac = ad;
@@ -135,8 +135,8 @@ Bool Gjk::update(const Vec4& a)
 		{
 			// In front of triangle ADB
 		 
-			m_c = m_b;
-			m_b = m_d;
+			m_simplex[2] = m_simplex[1];
+			m_simplex[1] = m_simplex[3];
 		 
 			ac = ab;
 			ab = ad;
@@ -146,7 +146,7 @@ Bool Gjk::update(const Vec4& a)
 		}
 		 
 		// Behind all three faces, the origin is in the tetrahedron, we're done
-		m_a = a;
+		m_simplex[0] = a;
 		m_count = 4;
 		return true;
 		 
@@ -160,8 +160,8 @@ check_face:
 		 
 		if(abp.dot(ao) > 0.0)
 		{
-			m_c = m_b;
-			m_b = a;
+			m_simplex[2] = m_simplex[1];
+			m_simplex[1] = a;
 		 
 			m_dir = crossAba(ab, ao);
 		 
@@ -173,7 +173,7 @@ check_face:
 		 
 		if(acp.dot(ao) > 0.0)
 		{
-			m_b = a;
+			m_simplex[1] = a;
 		 
 			m_dir = crossAba(ac, ao);
 		 
@@ -181,9 +181,9 @@ check_face:
 			return false;
 		}
 		 
-		m_d = m_c;
-		m_c = m_b;
-		m_b = a;
+		m_simplex[3] = m_simplex[2];
+		m_simplex[2] = m_simplex[1];
+		m_simplex[1] = a;
 		 
 		m_dir = abc;
 		m_count = 3;
@@ -202,28 +202,29 @@ Bool Gjk::intersect(const ConvexShape& shape0, const ConvexShape& shape1)
 	m_dir = Vec4(1.0, 0.0, 0.0, 0.0);
 
 	// Do cases 1, 2
-	m_c = support(shape0, shape1, m_dir);
-	if(m_c.dot(m_dir) < 0.0)
+	support(shape0, shape1, m_dir, m_simplex[2]);
+	if(m_simplex[2].m_v.dot(m_dir) < 0.0)
 	{
 		return false;
 	}
  
-	m_dir = -m_c;
-	m_b = support(shape0, shape1, m_dir);
+	m_dir = -m_simplex[2].m_v;
+	support(shape0, shape1, m_dir, m_simplex[1]);
 
-	if(m_b.dot(m_dir) < 0.0)
+	if(m_simplex[1].m_v.dot(m_dir) < 0.0)
 	{
 		return false;
 	}
 
-	m_dir = crossAba(m_c - m_b, -m_b);
+	m_dir = crossAba(m_simplex[2].m_v - m_simplex[1].m_v, -m_simplex[1].m_v);
 	m_count = 2;
 
 	while(1)
 	{
-		Vec4 a = support(shape0, shape1, m_dir);
+		Support a;
+		support(shape0, shape1, m_dir, a);
 
-		if(a.dot(m_dir) < 0.0)
+		if(a.m_v.dot(m_dir) < 0.0)
 		{
 			return false;
 		}
@@ -249,82 +250,102 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 		return false;
 	}
 
-	// Set the array simplex
-	ANKI_ASSERT(m_count == 4);
-	m_simplex[0] = m_a;
-	m_simplex[1] = m_b;
-	m_simplex[2] = m_c;
-	m_simplex[3] = m_d;
-
-	// Set the first 4 faces
+	U faceIndex = 0;
 	Face* face;
 
+	// Set the array simplex
+	ANKI_ASSERT(m_count == 4);
+	m_simplexArr[0] = m_simplex[0];
+	m_simplexArr[1] = m_simplex[1];
+	m_simplexArr[2] = m_simplex[2];
+	m_simplexArr[3] = m_simplex[3];
+
+	// Set the first 4 faces
 	face = &m_faces[0];
 	face->m_idx[0] = 0;
 	face->m_idx[1] = 1;
 	face->m_idx[2] = 2;
-	face->m_normal[0] = -100.0;
+	face->init();
+	computeFace(*face);
 
 	face = &m_faces[1];
 	face->m_idx[0] = 1;
 	face->m_idx[1] = 2;
 	face->m_idx[2] = 3;
-	face->m_normal[0] = -100.0;
+	face->init();
+	computeFace(*face);
 
 	face = &m_faces[2];
 	face->m_idx[0] = 2;
 	face->m_idx[1] = 3;
 	face->m_idx[2] = 0;
-	face->m_normal[0] = -100.0;
+	face->init();
+	computeFace(*face);
 
 	face = &m_faces[3];
 	face->m_idx[0] = 3;
 	face->m_idx[1] = 0;
 	face->m_idx[2] = 1;
-	face->m_normal[0] = -100.0;
+	face->init();
+	computeFace(*face);
 
 	m_faceCount = 4;
 
+	std::cout << "-----------------------" << std::endl;
+
+	U iterations = 0;
 	while(1) 
 	{
-		U faceIndex;
+		// Find the closest to the origin face
 		findClosestFace(faceIndex);
-		
+
 		face = &m_faces[faceIndex];
-		Vec4& normal = face->m_normal;
+		const Vec4& normal = face->m_normal;
 		F32 distance = face->m_dist;
 
 		// Get new support
-		Vec4 p = support(shape0, shape1, normal);
-		F32 d = p.dot(normal);
+		Support p;
+		support(shape0, shape1, normal, p);
+		F32 d = p.m_v.dot(normal);
+
+		// Search if the simplex is there
+		U pIdx;
+		for(pIdx = 0; pIdx < m_count; pIdx++)
+		{
+			if(p.m_v == m_simplexArr[pIdx].m_v)
+			{
+				std::cout << "p found " << std::endl;
+				break;
+			}
+		}
 
 		// Check new distance
 		if(d - distance < 0.001 
 			|| m_faceCount == m_faces.size() - 2
-			|| m_count == m_simplex.size() - 1)
+			|| m_count == m_simplexArr.size() - 1
+			|| pIdx != m_count
+			/*|| iterations == 3*/)
 		{
-			contact.m_normal = normal;
-			contact.m_depth = d;
+			/*if(pIdx != m_count)
+			{
+				contact.m_normal = m_faces[prevFaceIndex].m_normal;
+				contact.m_depth = m_faces[prevFaceIndex].m_dist;
+			}
+			else*/
+			{
+				contact.m_normal = normal;
+				contact.m_depth = d;
+			}
 			break;
 		} 
 		else 
 		{
 			// Create 3 new faces by adding 'p'
 
-			// Search if the simplex is there
-			U i;
-			for(i = 0; i < m_count; i++)
-			{
-				if(p == m_simplex[i])
-				{
-					break;
-				}
-			}
-
-			if(i == m_count)
+			//if(pIdx == m_count)
 			{
 				// Add p
-				m_simplex[m_count++] = p;
+				m_simplexArr[m_count++] = p;
 			}
 
 			Array<U32, 3> idx = face->m_idx;
@@ -332,23 +353,25 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 			// Canibalize existing face
 			face->m_idx[0] = idx[0];
 			face->m_idx[1] = idx[1];
-			face->m_idx[2] = i;
+			face->m_idx[2] = pIdx;
 			face->m_normal[0] = -100.0;
 
 			// Next face
 			face = &m_faces[m_faceCount++];
 			face->m_idx[0] = idx[1];
 			face->m_idx[1] = idx[2];
-			face->m_idx[2] = i;
+			face->m_idx[2] = pIdx;
 			face->m_normal[0] = -100.0;
 
 			// Next face
 			face = &m_faces[m_faceCount++];
 			face->m_idx[0] = idx[2];
 			face->m_idx[1] = idx[0];
-			face->m_idx[2] = i;
+			face->m_idx[2] = pIdx;
 			face->m_normal[0] = -100.0;
 		}
+
+		++iterations;
 	}
 
 	return true;
@@ -367,43 +390,204 @@ void GjkEpa::findClosestFace(U& index)
 		// Check if we calculated the normal before
 		if(face.m_normal[0] == -100.0)
 		{
-			// First time we encounter that face
-
-			Vec4 a = m_simplex[face.m_idx[0]];
-			Vec4 b = m_simplex[face.m_idx[1]];
-			Vec4 c = m_simplex[face.m_idx[2]];
-
-			// Compute the face edges
-			Vec4 e0 = b - a;
-			Vec4 e1 = c - b;
-
-			// Compute the face normal
-			Vec4 n = e0.cross(e1);
-			n.normalize();
-
-			// Calculate the distance from the origin to the edge
-			F32 d = n.dot(a);
-
-			// Check where the face is facing
-			if(d < 0.0)
-			{
-				// It's not facing the origin so fix the normal and 'd'
-				d = -d;
-				n = -n;
-			}
-
-			face.m_normal = n;
-			face.m_dist = d;
+			computeFace(face);
 		}
 
 		// Check the distance against the other distances
 		if(face.m_dist < minDistance) 
 		{
-			// if this edge is closer then use it
-			index = i;
-			minDistance = face.m_dist;
+			// Check if the origin lies within the face
+			if(face.m_originInside == 2)
+			{
+				const Vec4& a = m_simplexArr[face.m_idx[0]].m_v;
+				const Vec4& b = m_simplexArr[face.m_idx[1]].m_v;
+				const Vec4& c = m_simplexArr[face.m_idx[2]].m_v;
+				const Vec4& n = face.m_normal;
+
+				face.m_originInside = 1;
+
+				// Compute the face edges
+				Vec4 e0 = b - a;
+				Vec4 e1 = c - b;
+				Vec4 e2 = a - c;
+
+				Vec4 adjacentNormal;
+				F32 d;
+
+				// Check the 1st edge
+				adjacentNormal = e0.cross(n);
+				d = adjacentNormal.dot(a);
+				if(d <= 0.0)
+				{
+					face.m_originInside = 0;
+				}
+
+				// Check the 2nd edge
+				if(face.m_originInside == 1)
+				{
+					adjacentNormal = e1.cross(n);
+					d = adjacentNormal.dot(b);
+
+					if(d <= 0.0)
+					{
+						face.m_originInside = 0;
+					}
+				}
+
+				// Check the 3rd edge
+				if(face.m_originInside == 1)
+				{
+					adjacentNormal = e2.cross(n);
+					d = adjacentNormal.dot(c);
+
+					if(d <= 0.0)
+					{
+						face.m_originInside = 0;
+					}
+				}
+			}
+
+			if(face.m_originInside)
+			{
+				// We have a candidate
+				index = i;
+				minDistance = face.m_dist;
+			}
+			else
+			{
+				std::cout << "origin not in face" << std::endl;
+			}
 		}
 	}
+}
+
+//==============================================================================
+void GjkEpa::computeFace(Face& face)
+{
+	ANKI_ASSERT(face.m_normal[0] == -100.0);
+
+	const Vec4& a = m_simplexArr[face.m_idx[0]].m_v;
+	const Vec4& b = m_simplexArr[face.m_idx[1]].m_v;
+	const Vec4& c = m_simplexArr[face.m_idx[2]].m_v;
+
+	// Compute the face edges
+	Vec4 e0 = b - a;
+	Vec4 e1 = c - b;
+
+	// Compute the face normal
+	Vec4 n = e0.cross(e1);
+	n.normalize();
+
+	// Calculate the distance from the origin to the edge
+	F32 d = n.dot(a);
+
+	// Check the winding
+	if(d < 0.0)
+	{
+		// It's not facing the origin so fix some stuff
+
+		d = -d;
+		n = -n;
+
+		// Swap some indices
+		auto idx = face.m_idx[0];
+		face.m_idx[0] = face.m_idx[1];
+		face.m_idx[1] = idx;
+	}
+
+	face.m_normal = n;
+	face.m_dist = d;
+}
+
+//==============================================================================
+#if 0
+static Bool commonEdge(const Face& f0, const Face& f1, U& edge0, U& edge1)
+{
+	// For all edges of f0
+	for(U i0 = 0; i0 < 3; i0++)
+	{
+		Array<U, 2> e0 = {f0.m_idx[i0], f0.m_idx[(i0 == 2) ? 0 : i0 + 1]};
+
+		// For all edges of f1
+		for(U i1 = 0; i1 < 3; i1++)
+		{
+			Array<U, 2> e1 = {f1.m_idx[i1], f1.m_idx[(i1 == 2) ? 0 : i1 + 1]};
+
+			if((e0[0] == e1[0] && e0[1] == e1[1])
+				|| (e0[0] == e1[1] && e0[1] == e1[0]))
+			{
+				edge0 = i0;
+				edge1 = i1;
+				return true;
+			}
+		}	
+	}
+
+	return false;
+}
+#endif
+
+//==============================================================================
+void GjkEpa::expandPolytope(Face& cface, const Vec4& point)
+{
+#if 0
+	static const Array2d<U, 3, 2> edges = {
+		{0,  1},
+		{1,  2},
+		{2,  0}};
+
+	// Find other faces that share the same edge
+	for(U f = 0; f < m_faceCount; f++)
+	{
+		Face& face = m_face[f];
+
+		// Skip the same face
+		if(&face == &cface)
+		{
+			continue;
+		}
+
+		for(U i = 0, i < 3; i++)
+		{
+			for(U j = 0, j < 3; j++)
+			{
+				if(cface.m_idx[edges[i][0]] == face.m_idx[edges[j][1]]
+					&& cface.m_idx[edges[i][1]] == face.m_idx[edges[j][0]])
+				{
+					// Found common edge
+
+					// Check if the point will create concave polytope
+					if(face.m_normal.dot(point) > 0.0)
+					{
+						// Concave
+
+
+					}
+				}
+			}
+		}
+
+		ANKI_ASSER(e0 < 3 && e1 < 3);
+
+		// Check if the point will create concave polytope
+		if(face.m_normal.dot(point) < 0.0)
+		{
+			// No concave
+			continue;
+		}
+
+		// XXX
+		Array<U32, 3> idx = face.m_idx;
+
+		for(U e = 0; e < 3; e++)
+		{
+			if(e != e1)
+			{
+			}
+		}
+
+	}
+#endif
 }
 
 } // end namespace anki
