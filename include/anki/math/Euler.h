@@ -156,9 +156,9 @@ public:
 
 	/// @name Other
 	/// @{
-	std::string toString() const
+	String toString() const
 	{
-		std::string s = std::to_string(x()) + " " + std::to_string(y())
+		String s = std::to_string(x()) + " " + std::to_string(y())
 			+ " " + std::to_string(z());
 		return s;
 	}

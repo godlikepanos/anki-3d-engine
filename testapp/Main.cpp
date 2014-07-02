@@ -325,12 +325,13 @@ void init()
 	horse = scene.newSceneNode<ModelNode>("shape0", 
 		"models/collision_test/Cube_Material-material.ankimdl");
 	horse->setLocalTransform(Transform(Vec4(0.0, 0, 0, 0), 
-		Mat3x4::getIdentity(), 0.1));
+		Mat3x4::getIdentity(), 0.01));
 
 	horse = scene.newSceneNode<ModelNode>("shape1", 
 		"models/collision_test/Cube.001_Material_001-material.ankimdl");
-	horse->setLocalTransform(Transform(Vec4(0, 3, 0, 0), Mat3x4::getIdentity(),
-		0.1));
+	horse->setLocalTransform(Transform(Vec4(2.1, 2, 3.2, 0), 
+		Mat3x4(Euler(toRad(-20.0), toRad(40.0), toRad(15.0))),
+		0.01));
 }
 
 //==============================================================================

@@ -219,8 +219,125 @@ void Dbg::run(GlJobChainHandle& jobs)
 		m_drawer->setColor(Vec4(0.0, 1.0, 0.0, 1.0));
 		m_drawer->begin();
 		m_drawer->pushBackVertex(Vec3(0.0));
-		m_drawer->pushBackVertex(cp.m_normal.xyz());
+		m_drawer->pushBackVertex(cp.m_normal.xyz() * cp.m_depth);
+		//m_drawer->pushBackVertex(cp.m_normal.xyz());
+		//m_drawer->pushBackVertex(gjk.m_faces[gjk.m_faceCount - 3].m_normal.xyz());
 		m_drawer->end();
+
+		{
+			m_drawer->setModelMatrix(Mat4::getIdentity());
+			m_drawer->setColor(Vec4(1.0));
+
+			m_drawer->begin();
+			m_drawer->pushBackVertex(Vec3(-10, 0, 0));
+			m_drawer->pushBackVertex(Vec3(10, 0, 0));
+			m_drawer->pushBackVertex(Vec3(0, 0, -10));
+			m_drawer->pushBackVertex(Vec3(0, 0, 10));
+			m_drawer->end();
+		}
+
+		if(0)
+		{
+			m_drawer->setColor(Vec4(.0, 1.0, 1.0, 1.0));
+			m_drawer->pushBackVertex(Vec3(0, 0, 0));
+			m_drawer->pushBackVertex(gjk.m_simplexArr[0].m_v.xyz());
+			std::cout << gjk.m_simplexArr[0].m_v.xyz().toString() << std::endl;
+		}
+
+		if(0)
+		{
+			m_drawer->setColor(Vec4(0.0, 1.0, 1.0, 1.0));
+
+			Vec4 n = Vec4(0.294484, 0.239468, 0.925074, 0.000000);
+			Vec4 p0 = Vec4(0.777393, 0.538571, 0.068147, 0);
+
+			Vec4 p = Vec4(-0.296335, -0.886740, 1.415587, 0.0);
+
+			m_drawer->pushBackVertex(Vec3(0, 0, 0));
+			m_drawer->pushBackVertex(p.xyz());
+
+			p = p - n.dot(p - p0) * n;
+			m_drawer->pushBackVertex(Vec3(0, 0, 0));
+			m_drawer->pushBackVertex(p.xyz());
+		}
+
+		if(0)
+		{
+			Mat4 m(Vec4(0.0, 0.0, 0.0, 1.0), Mat3::getIdentity(), 1.0);
+			m_drawer->setModelMatrix(m);
+			m_drawer->setColor(Vec4(1.0, 0.0, 1.0, 1.0));
+			m_drawer->begin();
+			Array<U, 12> idx = {{0, 1, 2, 1, 2, 3, 2, 3, 0, 3, 0, 1}};
+			for(U i = 0; i < idx.size(); i += 3)
+			{
+				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 0]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 1]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 1]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 2]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 2]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 0]].m_v.xyz());
+			}
+			m_drawer->end();
+		}
+
+		if(0)
+		{
+			Mat4 m(Vec4(0.0, 0.0, 0.0, 1.0), Mat3::getIdentity(), 1.02);
+			m_drawer->setModelMatrix(m);
+			m_drawer->setColor(Vec4(1.0, 1.0, 0.0, 1.0));
+			m_drawer->begin();
+			for(U i = 0; i < gjk.m_count - 1; i++)
+			{
+				m_drawer->pushBackVertex(gjk.m_simplexArr[i].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_simplexArr[i + 1].m_v.xyz());
+			}
+			m_drawer->end();
+		}
+
+		if(1)
+		{
+			Mat4 m(Vec4(0.0, 0.0, 0.0, 1.0), Mat3::getIdentity(), 1.01);
+			m_drawer->setModelMatrix(m);
+			m_drawer->setColor(Vec4(1.0, 0.0, 1.0, 1.0));
+			m_drawer->begin();
+
+			static U64 count = 0;
+
+			++count;
+			U offset = (count / 80) % gjk.m_faceCount;
+			//for(U i = 0; i < 1; i++)
+			for(U i = 0; i < gjk.m_faceCount; i++)
+			{
+				//auto idx = gjk.m_faces[offset].m_idx;
+				auto idx = gjk.m_faces[i].m_idx;
+
+				if(i % 2)
+				{
+					m = Mat4(Vec4(0.0, 0.0, 0.0, 1.0), Mat3::getIdentity(), 1.01);
+				}
+				else
+				{
+					m = Mat4(Vec4(0.0, 0.0, 0.0, 1.0), Mat3::getIdentity(), 1.0);
+				}
+				m_drawer->setModelMatrix(m);
+
+				m_drawer->setColor(Vec4(1.0, 0.0, 1.0, 1.0) 
+					* Vec4(F32(i + 1) / gjk.m_faceCount));
+
+				#define WHAT(i_) gjk.m_simplexArr[idx[i_]].m_v.xyz()
+
+				m_drawer->pushBackVertex(WHAT(0));
+				m_drawer->pushBackVertex(WHAT(1));
+				m_drawer->pushBackVertex(WHAT(1));
+				m_drawer->pushBackVertex(WHAT(2));
+				m_drawer->pushBackVertex(WHAT(2));
+				m_drawer->pushBackVertex(WHAT(0));
+
+				#undef WHAT
+			}
+
+			m_drawer->end();
+		}
 
 
 		/*m_drawer->setColor(Vec4(0.0, 1.0, 0.0, 1.0));
