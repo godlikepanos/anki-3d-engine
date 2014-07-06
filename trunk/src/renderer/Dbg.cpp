@@ -197,11 +197,12 @@ void Dbg::run(GlJobChainHandle& jobs)
 
 		CollisionDebugDrawer dr(m_drawer.get());
 
-		GjkEpa gjk;
+		GjkEpa gjk(100, 100);
 		ContactPoint cp;
+		StackAllocator<U8> alloc(
+			StackMemoryPool(allocAligned, nullptr, 1024 * 1024));
 
-		Bool intersect = gjk.intersect(s0, s1, cp);
-
+		Bool intersect = gjk.intersect(s0, s1, cp, alloc);
 
 		if(intersect)
 		{
@@ -240,8 +241,8 @@ void Dbg::run(GlJobChainHandle& jobs)
 		{
 			m_drawer->setColor(Vec4(.0, 1.0, 1.0, 1.0));
 			m_drawer->pushBackVertex(Vec3(0, 0, 0));
-			m_drawer->pushBackVertex(gjk.m_simplexArr[0].m_v.xyz());
-			std::cout << gjk.m_simplexArr[0].m_v.xyz().toString() << std::endl;
+			m_drawer->pushBackVertex(gjk.m_poly->m_simplex[0].m_v.xyz());
+			std::cout << gjk.m_poly->m_simplex[0].m_v.xyz().toString() << std::endl;
 		}
 
 		if(0)
@@ -270,12 +271,12 @@ void Dbg::run(GlJobChainHandle& jobs)
 			Array<U, 12> idx = {{0, 1, 2, 1, 2, 3, 2, 3, 0, 3, 0, 1}};
 			for(U i = 0; i < idx.size(); i += 3)
 			{
-				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 0]].m_v.xyz());
-				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 1]].m_v.xyz());
-				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 1]].m_v.xyz());
-				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 2]].m_v.xyz());
-				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 2]].m_v.xyz());
-				m_drawer->pushBackVertex(gjk.m_simplexArr[idx[i + 0]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_poly->m_simplex[idx[i + 0]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_poly->m_simplex[idx[i + 1]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_poly->m_simplex[idx[i + 1]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_poly->m_simplex[idx[i + 2]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_poly->m_simplex[idx[i + 2]].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_poly->m_simplex[idx[i + 0]].m_v.xyz());
 			}
 			m_drawer->end();
 		}
@@ -286,10 +287,10 @@ void Dbg::run(GlJobChainHandle& jobs)
 			m_drawer->setModelMatrix(m);
 			m_drawer->setColor(Vec4(1.0, 1.0, 0.0, 1.0));
 			m_drawer->begin();
-			for(U i = 0; i < gjk.m_count - 1; i++)
+			for(U i = 0; i < gjk.m_poly->m_simplex.size() - 1; i++)
 			{
-				m_drawer->pushBackVertex(gjk.m_simplexArr[i].m_v.xyz());
-				m_drawer->pushBackVertex(gjk.m_simplexArr[i + 1].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_poly->m_simplex[i].m_v.xyz());
+				m_drawer->pushBackVertex(gjk.m_poly->m_simplex[i + 1].m_v.xyz());
 			}
 			m_drawer->end();
 		}
@@ -304,12 +305,13 @@ void Dbg::run(GlJobChainHandle& jobs)
 			static U64 count = 0;
 
 			++count;
-			U offset = (count / 80) % gjk.m_faceCount;
+			U faceCount = gjk.m_poly->m_faces.size();
+			U offset = (count / 80) % faceCount;
 			//for(U i = 0; i < 1; i++)
-			for(U i = 0; i < gjk.m_faceCount; i++)
+			for(U i = 0; i < faceCount; i++)
 			{
 				//auto idx = gjk.m_faces[offset].m_idx;
-				auto idx = gjk.m_faces[i].m_idx;
+				auto idx = gjk.m_poly->m_faces[i].idx();
 
 				if(i % 2)
 				{
@@ -322,9 +324,9 @@ void Dbg::run(GlJobChainHandle& jobs)
 				m_drawer->setModelMatrix(m);
 
 				m_drawer->setColor(Vec4(1.0, 0.0, 1.0, 1.0) 
-					* Vec4(F32(i + 1) / gjk.m_faceCount));
+					* Vec4(F32(i + 1) / faceCount));
 
-				#define WHAT(i_) gjk.m_simplexArr[idx[i_]].m_v.xyz()
+				#define WHAT(i_) gjk.m_poly->m_simplex[idx[i_]].m_v.xyz()
 
 				m_drawer->pushBackVertex(WHAT(0));
 				m_drawer->pushBackVertex(WHAT(1));
