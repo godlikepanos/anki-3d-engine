@@ -21,7 +21,7 @@ static inline std::ostream& operator<<(std::ostream& os, const Edge& e)
 //==============================================================================
 
 //==============================================================================
-const Vec4& Face::normal(Polytope& poly) const
+const Vec4& Face::normal(Polytope& poly, Bool fixWinding) const
 {
 	if(m_normal[0] == -100.0)
 	{
@@ -43,7 +43,7 @@ const Vec4& Face::normal(Polytope& poly) const
 		m_dist = m_normal.dot(a);
 
 		// Check the winding
-		if(m_dist < 0.0)
+		if(fixWinding && m_dist < 0.0)
 		{
 			// It's not facing the origin so fix some stuff
 
@@ -207,18 +207,24 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 	}
 
 	//
-	// First add the point to the polytope by spliting the cface
+	// First add the point to the polytope by spliting the cface. 
 	//
 	Array<U32, 3> idx = cface.idx();
 
 	// Canibalize existing face
 	cface = Face(idx[0], idx[1], supportIdx);
+	cface.normal(*this, false);
 
 	// Next face
 	m_faces.emplace_back(idx[1], idx[2], supportIdx);
+	m_faces.back().normal(*this, false);
 
 	// Next face
 	m_faces.emplace_back(idx[2], idx[0], supportIdx);
+	m_faces.back().normal(*this, false);
+
+	Array<Face*, 3> newFaces = {
+		&cface, &m_faces[m_faces.size() - 2], &m_faces[m_faces.size() - 1]};
 
 	//
 	// Find other faces that hide the new support
@@ -230,8 +236,12 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 
 	for(Face& face : m_faces)
 	{
-		if(face.dead())
+		if(face.dead() 
+			|| &face == newFaces[0]
+			|| &face == newFaces[1]
+			|| &face == newFaces[2])
 		{
+			// Either dead or one of new faces
 			continue;
 		}
 
@@ -253,9 +263,6 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 	// Check if the new 3 faces share edges with the bad faces
 	//
 
-	Array<Face*, 3> newFaces = {
-		&cface, &m_faces[m_faces.size() - 2], &m_faces[m_faces.size() - 1]};
-
 	Array<Face*, 3> newFacesBad = {nullptr, nullptr, nullptr};
 	U newFacesBadCount = 0;
 
@@ -275,6 +282,8 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 			}
 		}
 	}
+
+	ANKI_ASSERT(newFacesBadCount != 0);
 
 	for(U i = 0; i < newFacesBadCount; i++)
 	{
@@ -313,7 +322,7 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 	// Get the edges that are in the loop
 	//
 	Vector<Edge, StackAllocator<Edge>> edgeLoop(getAllocator());
-	edgeLoop.reserve(edgeMap.size() + 1);
+	edgeLoop.reserve(edgeMap.size());
 
 	for(auto& it : edgeMap)
 	{
@@ -333,29 +342,41 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 		return a.m_idx[1] <= b.m_idx[0];
 	});
 
-	U edgeLoopBegin = 0;
-	if(edgeLoop[0].m_face == edgeLoop[1].m_face)
+	ANKI_ASSERT(edgeLoop[0].m_idx[0] == edgeLoop.back().m_idx[1]);
+
+	//
+	// Find where the edge loop starts
+	// 
+
+	U edgeLoopBegin = MAX_U32;
+	for(U i = 0; i < edgeLoop.size(); i++)
 	{
-		// The first 2 edges come from the same triangle. That will not work
-		// with the following algorithm
-		edgeLoop.push_back(edgeLoop[0]);
-		edgeLoopBegin = 1;	
+		if(edgeLoop[i].m_idx[0] == supportIdx)
+		{
+			edgeLoopBegin = i;
+			break;
+		}
 	}
 	
-	ANKI_ASSERT(edgeLoop[0].m_face != edgeLoop[1].m_face);
+	ANKI_ASSERT(edgeLoopBegin != MAX_U32);
 
 	//
 	// Spawn faces from the edge loop
 	//
 	Edge edge = edgeLoop[edgeLoopBegin];
-	for(U i = edgeLoopBegin + 1; i < edgeLoop.size(); i++)
+	U j = edgeLoopBegin;
+	for(U i = 0; i < edgeLoop.size() - 2; i++)
 	{
-		ANKI_ASSERT(edge.m_idx[1] == edgeLoop[i].m_idx[0]);
+		++j;
+		if(j == edgeLoop.size() - 1)
+		{
+			j = 0;
+		}
 
 		m_faces.emplace_back(
 			edge.m_idx[0],
 			edge.m_idx[1],
-			edgeLoop[i].m_idx[1]);
+			edgeLoop[j].m_idx[1]);
 
 		edge = m_faces.back().edge(*this, 2);
 		std::swap(edge.m_idx[0], edge.m_idx[1]);
