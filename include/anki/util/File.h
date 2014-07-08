@@ -68,13 +68,10 @@ public:
 	};
 
 	/// Default constructor
-	File()
-		: m_file(nullptr), m_type(Type::NONE), m_flags(OpenFlag::NONE)
-	{}
+	File() = default;
 
 	/// Open file
 	File(const char* filename, OpenFlag openMask)
-		: m_file(nullptr), m_type(Type::NONE), m_flags(OpenFlag::NONE)
 	{
 		open(filename, openMask);
 	}
@@ -158,9 +155,10 @@ private:
 		SPECIAL ///< For example file is located in the android apk 
 	};
 
-	void* m_file; ///< A native file type
-	Type m_type;
-	OpenFlag m_flags; ///< All the flags. Initialy zero and set on open
+	void* m_file = nullptr; ///< A native file type
+	Type m_type = Type::NONE;
+	OpenFlag m_flags = OpenFlag::NONE; ///< All the flags. Set on open
+	U16 m_size = 0;
 
 	/// Get the current machine's endianness
 	static OpenFlag getMachineEndianness();

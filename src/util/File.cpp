@@ -160,7 +160,7 @@ void File::openZipFile(
 	}
 
 	// Open file
-	if(unzOpenCurrentFile(zfile) != UNZ_OK )
+	if(unzOpenCurrentFile(zfile) != UNZ_OK)
 	{
 		unzClose(zfile);
 		throw ANKI_EXCEPTION("unzOpenCurrentFile failed: %s", archived);
@@ -170,6 +170,13 @@ void File::openZipFile(
 	m_file = (void*)zfile;
 	m_flags = flags;
 	m_type = Type::ZIP;
+
+	// Get size just in case
+	unz_file_info zinfo;
+	zinfo.uncompressed_size = 0;
+	unzGetCurrentFileInfo(zfile, &zinfo, nullptr, 0, nullptr, 0, nullptr, 0);
+	m_size = zinfo.uncompressed_size;
+	ANKI_ASSERT(m_size != 0);
 }
 
 //==============================================================================
@@ -328,25 +335,17 @@ void File::readAllText(String& txt)
 	}
 	else if(m_type == Type::ZIP)
 	{
-		char buff[256];
 		I64 readSize;
+		ANKI_ASSERT(m_size != 0);
 
-		while(true)
+		txt.resize(m_size + 1);
+		readSize = unzReadCurrentFile(m_file, &txt[0], m_size);
+
+		if(readSize == m_size)
 		{
-			readSize = unzReadCurrentFile(m_file, buff, sizeof(buff) - 1);
-
-			if(readSize > 0)
-			{
-				buff[readSize] = '\0';
-				txt += buff;
-			}
-			else
-			{
-				break;
-			}
+			txt[readSize] = '\0';
 		}
-
-		if(readSize < 0)
+		else
 		{
 			throw ANKI_EXCEPTION("unzReadCurrentFile() failed");
 		}

@@ -108,7 +108,7 @@ public:
 		return m_idx;
 	}
 
-	const Vec4& normal(Polytope& poly, Bool fixWinding = true) const;
+	const Vec4& normal(Polytope& poly, Bool fixWinding = false) const;
 
 	F32 distance(Polytope& poly) const
 	{
