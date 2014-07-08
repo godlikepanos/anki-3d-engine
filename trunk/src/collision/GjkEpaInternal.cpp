@@ -138,6 +138,12 @@ void Polytope::init(const Array<Support, 4>& gjkSupport)
 	m_faces.emplace_back(1, 2, 3);
 	m_faces.emplace_back(2, 3, 0);
 	m_faces.emplace_back(3, 0, 1);
+
+	// Pre-calc the normals and fix winding
+	for(Face& face : m_faces)
+	{
+		face.normal(*this, true);
+	}
 }
 
 //==============================================================================
@@ -207,30 +213,33 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 	}
 
 	//
-	// First add the point to the polytope by spliting the cface. 
+	// First add the point to the polytope by spliting the cface.
+	// Don't fix winding to the new faces because it should be correct.
 	//
 	Array<U32, 3> idx = cface.idx();
 
 	// Canibalize existing face
 	cface = Face(idx[0], idx[1], supportIdx);
-	cface.normal(*this, false);
+	cface.normal(*this);
 
 	// Next face
 	m_faces.emplace_back(idx[1], idx[2], supportIdx);
-	m_faces.back().normal(*this, false);
+	m_faces.back().normal(*this);
 
 	// Next face
 	m_faces.emplace_back(idx[2], idx[0], supportIdx);
-	m_faces.back().normal(*this, false);
+	m_faces.back().normal(*this);
 
 	Array<Face*, 3> newFaces = {
 		&cface, &m_faces[m_faces.size() - 2], &m_faces[m_faces.size() - 1]};
+
+	//return true;
 
 	//
 	// Find other faces that hide the new support
 	//
 	Vector<Face*, StackAllocator<Face*>> badFaces(getAllocator());
-	badFaces.reserve(20);
+	Bool badFacesVectorInitialized = false; // Opt
 
 	const Vec4& support = m_simplex[supportIdx].m_v;
 
@@ -241,13 +250,19 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 			|| &face == newFaces[1]
 			|| &face == newFaces[2])
 		{
-			// Either dead or one of new faces
+			// Either dead or one of the new faces
 			continue;
 		}
 
 		F32 dot = face.normal(*this).dot(support);
 		if(dot > getEpsilon<F32>())
 		{
+			if(!badFacesVectorInitialized)
+			{
+				badFaces.reserve(20);
+				badFacesVectorInitialized = true;
+			}
+
 			badFaces.push_back(&face);
 			face.kill();
 		}
@@ -259,10 +274,11 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 		return true;
 	}
 
-	//
-	// Check if the new 3 faces share edges with the bad faces
-	//
+	std::cout << "found bad faces " << badFaces.size() << std::endl;
 
+	//
+	// Out of the new 3 faces find those that share edges with the bad faces
+	//
 	Array<Face*, 3> newFacesBad = {nullptr, nullptr, nullptr};
 	U newFacesBadCount = 0;
 
@@ -277,6 +293,7 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 					if(nface->edge(*this, i) == face->edge(*this, j))
 					{
 						newFacesBad[newFacesBadCount++] = nface;
+						nface->kill();
 					}
 				}
 			}
@@ -294,7 +311,6 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 	// Get the edges of the deleted faces that belong to the surface of the
 	// deleted faces
 	//
-
 	std::unordered_map<Edge, U, EdgeHasher, EdgeCompare, 
 		StackAllocator<std::pair<Edge, U>>> edgeMap(
 		10, EdgeHasher(), EdgeCompare(), getAllocator());
@@ -319,64 +335,66 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 	}
 
 	//
-	// Get the edges that are in the loop
+	// Get the edges that are in a loop
 	//
-	Vector<Edge, StackAllocator<Edge>> edgeLoop(getAllocator());
-	edgeLoop.reserve(edgeMap.size());
+	Vector<Edge, StackAllocator<Edge>> edgeLoopTmp(getAllocator());
+	edgeLoopTmp.reserve(edgeMap.size());
+	U startEdge = MAX_U32;
 
 	for(auto& it : edgeMap)
 	{
 		if(it.second == 1)
 		{
-			edgeLoop.push_back(it.first);
+			edgeLoopTmp.push_back(it.first);
+
+			if(it.first.m_idx[0] == supportIdx)
+			{
+				startEdge = edgeLoopTmp.size() - 1;
+			}
 		}
 	}
 
-	//
-	// Sort those edges to a continues loop
-	// 
-	ANKI_ASSERT(edgeLoop.size() > 2);
-	std::sort(edgeLoop.begin(), edgeLoop.end(), 
-		[](const Edge& a, const Edge& b)
-	{
-		return a.m_idx[1] <= b.m_idx[0];
-	});
-
-	ANKI_ASSERT(edgeLoop[0].m_idx[0] == edgeLoop.back().m_idx[1]);
+	ANKI_ASSERT(startEdge != MAX_U32);
+	ANKI_ASSERT(edgeLoopTmp.size() > 2);
 
 	//
-	// Find where the edge loop starts
+	// Sort those edges to a continues loop starting from the edge with the 
+	// support
 	// 
+	Vector<Edge, StackAllocator<Edge>> edgeLoop(getAllocator());
+	edgeLoop.reserve(edgeMap.size());
 
-	U edgeLoopBegin = MAX_U32;
-	for(U i = 0; i < edgeLoop.size(); i++)
+	edgeLoop.push_back(edgeLoopTmp[startEdge]); // First edge
+
+	while(edgeLoop.size() != edgeLoopTmp.size())
 	{
-		if(edgeLoop[i].m_idx[0] == supportIdx)
+		for(Edge& e : edgeLoopTmp)
 		{
-			edgeLoopBegin = i;
-			break;
+			if(edgeLoop.back().m_idx[1] == e.m_idx[0])
+			{
+				edgeLoop.push_back(e);
+				break;
+			}
 		}
 	}
-	
-	ANKI_ASSERT(edgeLoopBegin != MAX_U32);
+
+	ANKI_ASSERT(edgeLoop[0].m_idx[0] == supportIdx);
+
+	ANKI_ASSERT(edgeLoop[0].m_idx[0] == edgeLoop.back().m_idx[1] 
+		&& "Edge loop is not closed");
 
 	//
 	// Spawn faces from the edge loop
 	//
-	Edge edge = edgeLoop[edgeLoopBegin];
-	U j = edgeLoopBegin;
-	for(U i = 0; i < edgeLoop.size() - 2; i++)
+	Edge edge = edgeLoop[0];
+	for(U i = 1; i < edgeLoop.size() - 1; i++)
 	{
-		++j;
-		if(j == edgeLoop.size() - 1)
-		{
-			j = 0;
-		}
+		ANKI_ASSERT(edge.m_idx[1] == edgeLoop[i].m_idx[0]);
 
 		m_faces.emplace_back(
 			edge.m_idx[0],
 			edge.m_idx[1],
-			edgeLoop[j].m_idx[1]);
+			edgeLoop[i].m_idx[1]);
 
 		edge = m_faces.back().edge(*this, 2);
 		std::swap(edge.m_idx[0], edge.m_idx[1]);

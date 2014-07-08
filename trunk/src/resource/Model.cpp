@@ -293,6 +293,7 @@ void Model::load(const char* filename)
 		{
 			std::string type = collEl.getChildElement("type").getText();
 			XmlElement valEl = collEl.getChildElement("value");
+			(void)valEl; // XXX
 
 			if(type == "sphere")
 			{

@@ -225,6 +225,7 @@ void Dbg::run(GlJobChainHandle& jobs)
 		//m_drawer->pushBackVertex(gjk.m_faces[gjk.m_faceCount - 3].m_normal.xyz());
 		m_drawer->end();
 
+		if(1)
 		{
 			m_drawer->setModelMatrix(Mat4::getIdentity());
 			m_drawer->setColor(Vec4(1.0));
@@ -310,6 +311,11 @@ void Dbg::run(GlJobChainHandle& jobs)
 			//for(U i = 0; i < 1; i++)
 			for(U i = 0; i < faceCount; i++)
 			{
+				if(gjk.m_poly->m_faces[i].dead())
+				{
+					continue;
+				}
+
 				//auto idx = gjk.m_faces[offset].m_idx;
 				auto idx = gjk.m_poly->m_faces[i].idx();
 
@@ -323,8 +329,14 @@ void Dbg::run(GlJobChainHandle& jobs)
 				}
 				m_drawer->setModelMatrix(m);
 
-				m_drawer->setColor(Vec4(1.0, 0.0, 1.0, 1.0) 
-					* Vec4(F32(i + 1) / faceCount));
+				if(i == faceCount - 1)
+				{
+					m_drawer->setColor(Vec4(1.0, 1.0, 1.0, 1.0));
+				}
+				else
+				{
+					m_drawer->setColor(Vec4(1.0, 0.0, 1.0, 1.0));
+				}
 
 				#define WHAT(i_) gjk.m_poly->m_simplex[idx[i_]].m_v.xyz()
 

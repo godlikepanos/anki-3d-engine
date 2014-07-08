@@ -278,7 +278,7 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 			//|| m_faceCount == m_faces.size() - 2
 			//|| m_count == m_simplexArr.size() - 1
 			//|| pIdx != m_count
-			/*|| iterations == 3*/)
+			|| iterations == 5)
 		{
 			/*if(pIdx != m_count)
 			{
