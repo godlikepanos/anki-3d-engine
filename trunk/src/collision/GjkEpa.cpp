@@ -242,7 +242,7 @@ Bool Gjk::intersect(const ConvexShape& shape0, const ConvexShape& shape1)
 
 //==============================================================================
 Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
-	ContactPoint& contact, StackAllocator<U8>& alloc)
+	ContactPoint& contact, CollisionTempAllocator<U8>& alloc)
 {
 	// Do the intersection test
 	Gjk gjk;
@@ -254,10 +254,8 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 	// Init polytope
 	detail::Polytope* poly = alloc.newInstance<detail::Polytope>(
 		alloc, m_maxSimplexSize, m_maxFaceCount);
-	m_poly = poly;
+	//m_poly = poly;
 	poly->init(gjk.m_simplex);
-
-	std::cout << "-----------------------" << std::endl;
 
 	U iterations = 0;
 	while(1) 
@@ -278,8 +276,13 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 			//|| m_faceCount == m_faces.size() - 2
 			//|| m_count == m_simplexArr.size() - 1
 			//|| pIdx != m_count
-			|| iterations == 5)
+			|| iterations == 10)
 		{
+			if(iterations == 10)
+			{
+				std::cout << "too many iterations" << std::endl;
+			}
+
 			/*if(pIdx != m_count)
 			{
 				contact.m_normal = m_faces[prevFaceIndex].m_normal;
@@ -304,6 +307,8 @@ Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
 
 		++iterations;
 	}
+
+	alloc.deleteInstance(poly);
 
 	return true;
 }

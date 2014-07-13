@@ -104,6 +104,9 @@ class StackMemoryPool
 	friend class ChainMemoryPool;
 
 public:
+	/// The type of the pool's snapshot
+	using Snapshot = void*;
+
 	/// Default constructor
 	StackMemoryPool()
 		: m_impl(nullptr)
@@ -160,6 +163,16 @@ public:
 
 	/// Get the number of users for this pool
 	U32 getUsersCount() const;
+
+	/// Get a snapshot of the current state that can be used to reset the 
+	/// pool's state later on. Not recommended on multithreading scenarios
+	/// @return The current state of the pool
+	Snapshot getShapshot() const;
+
+	/// Reset the poll using a snapshot. Not recommended on multithreading 
+	/// scenarios
+	/// @param s The snapshot to be used
+	void resetUsingSnapshot(Snapshot s);
 
 private:
 	// Forward. Hide the implementation because Memory.h is the base of other

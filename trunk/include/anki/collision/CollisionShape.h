@@ -22,14 +22,16 @@ class CollisionShape
 {
 public:
 	/// Collision shape type
+	/// @note WARNING: Order is important
 	enum class Type: U8
 	{
-		LINE_SEG,
 		PLANE,
-		SPHERE,
+		COMPOUND,
 		AABB,
+		SPHERE,
+		LINE_SEG,
 		OBB,
-		COMPOUND
+		COUNT
 	};
 
 	/// Generic mutable visitor

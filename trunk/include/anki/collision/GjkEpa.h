@@ -48,24 +48,26 @@ private:
 class GjkEpa
 {
 public:
-	detail::Polytope* m_poly; // XXX
+	//detail::Polytope* m_poly; // XXX
 
-	GjkEpa(U32 maxSimplexSize, U32 maxFaceCount)
+	GjkEpa(U32 maxSimplexSize, U32 maxFaceCount, U32 maxIterations)
 	:	m_maxSimplexSize(maxSimplexSize),
-		m_maxFaceCount(maxFaceCount)
+		m_maxFaceCount(maxFaceCount),
+		m_maxIterations(maxIterations)
 	{}
 
 	~GjkEpa()
 	{}
 
 	Bool intersect(const ConvexShape& shape0, const ConvexShape& shape1,
-		ContactPoint& contact, StackAllocator<U8>& alloc);
+		ContactPoint& contact, CollisionTempAllocator<U8>& alloc);
 
 private:
 	using Support = detail::Support;
 
 	U32 m_maxSimplexSize;
 	U32 m_maxFaceCount;
+	U32 m_maxIterations;
 };
 
 /// @}

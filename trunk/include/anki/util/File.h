@@ -103,10 +103,15 @@ public:
 	void read(void* buff, PtrSize size);
 
 	/// Read all the contents of a text file
-	void readAllText(String& out);
-
-	/// Read all the contents of a text file and return the result in lines
-	void readAllTextLines(StringList& lines);
+	/// If the file is not rewined it will probably fail
+	template<typename TContainer>
+	void readAllText(TContainer& out)
+	{
+		PtrSize size = getSize();
+		out.resize(size + 1);
+		read(&out[0], size);
+		out[size] = '\0';
+	}
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's 
 	/// endianness is different from the machine's
@@ -180,6 +185,9 @@ private:
 	/// Open an Android file
 	void openAndroidFile(const char* filename, OpenFlag flags);
 #endif
+
+	/// The file should be open
+	PtrSize getSize();
 };
 
 /// Return true if directory exists?
