@@ -19,7 +19,6 @@ using BasicString = std::basic_string<TChar, std::char_traits<TChar>, TAlloc>;
 
 using String = BasicString<char, std::allocator<char>>;
 
-
 /// Trim a string
 /// Remove the @p what from the front and back of @p str
 template<typename TString>

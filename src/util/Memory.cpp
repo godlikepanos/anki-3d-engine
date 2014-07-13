@@ -487,6 +487,23 @@ U32 StackMemoryPool::getUsersCount() const
 }
 
 //==============================================================================
+StackMemoryPool::Snapshot StackMemoryPool::getShapshot() const
+{
+	ANKI_ASSERT(m_impl != nullptr);
+	return m_impl->m_top.load();
+}
+
+//==============================================================================
+void StackMemoryPool::resetUsingSnapshot(Snapshot s)
+{
+	ANKI_ASSERT(m_impl != nullptr);
+	ANKI_ASSERT(static_cast<U8*>(s) >= m_impl->m_memory);
+	ANKI_ASSERT(static_cast<U8*>(s) < m_impl->m_memory + m_impl->m_memsize);
+
+	m_impl->m_top.store(static_cast<U8*>(s));
+}
+
+//==============================================================================
 // ChainMemoryPool                                                             =
 //==============================================================================
 

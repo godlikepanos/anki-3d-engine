@@ -308,13 +308,11 @@ void File::read(void* buff, PtrSize size)
 }
 
 //==============================================================================
-void File::readAllText(String& txt)
+PtrSize File::getSize()
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != OpenFlag::NONE);
-	ANKI_ASSERT((m_flags & OpenFlag::BINARY) == OpenFlag::NONE 
-		&& "Should not be binary file");
-	ANKI_ASSERT((m_flags & OpenFlag::READ) != OpenFlag::NONE);
+	PtrSize out;
 
 	if(m_type == Type::C)
 	{
@@ -327,92 +325,26 @@ void File::readAllText(String& txt)
 		}
 		rewind((FILE*)m_file);
 
-		// Read and write
-		txt.resize(size + 1);
-		PtrSize readSize = fread(&txt[0], 1, size, (FILE*)m_file);
-		ANKI_ASSERT(readSize == (PtrSize)size);
-		txt[readSize] = '\0';
+		out = size;
 	}
 	else if(m_type == Type::ZIP)
 	{
-		I64 readSize;
 		ANKI_ASSERT(m_size != 0);
-
-		txt.resize(m_size + 1);
-		readSize = unzReadCurrentFile(m_file, &txt[0], m_size);
-
-		if(readSize == m_size)
-		{
-			txt[readSize] = '\0';
-		}
-		else
-		{
-			throw ANKI_EXCEPTION("unzReadCurrentFile() failed");
-		}
+		out = m_size;
 	}
 #if ANKI_OS == ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
 	{
-		PtrSize size = AAsset_getLength((AAsset*)m_file);
-		AAsset_seek((AAsset*)m_file, 0, SEEK_SET);
-
-		txt.resize(size + 1);
-		I readSize = AAsset_read((AAsset*)m_file, &txt[0], size);
-		ANKI_ASSERT((PtrSize)readSize == size);
-
-		txt[readSize] = '\0';
+		out = AAsset_getLength((AAsset*)m_file);
 	}
 #endif
 	else
 	{
 		ANKI_ASSERT(0);
 	}
-}
 
-//==============================================================================
-void File::readAllTextLines(StringList& lines)
-{
-	ANKI_ASSERT(m_file);
-	ANKI_ASSERT(m_flags != OpenFlag::NONE);
-	ANKI_ASSERT((m_flags & OpenFlag::BINARY) == OpenFlag::NONE 
-		&& "Should not be binary file");
-	ANKI_ASSERT((m_flags & OpenFlag::READ) != OpenFlag::NONE);
-
-	if(m_type == Type::C)
-	{
-		char line[1024];
-
-		while(fgets(line, sizeof(line), (FILE*)m_file))
-		{
-			I len = strlen(line);
-
-			if(len != sizeof(line) - 1)
-			{
-				// line is big enough
-
-				line[len - 1] = '\0';
-				lines.push_back(line);
-			}
-			else
-			{
-				throw ANKI_EXCEPTION("Line bigger than temp buffer");
-			}			
-		}
-	}
-	else if(m_type == Type::ZIP
-#if ANKI_OS == ANKI_OS_ANDROID
-		|| m_type & Type::SPECIAL
-#endif
-		)
-	{
-		String txt;
-		readAllText(txt);
-		lines = StringList::splitString(txt.c_str(), '\n');
-	}
-	else
-	{
-		ANKI_ASSERT(0);
-	}
+	ANKI_ASSERT(out != 0);
+	return out;
 }
 
 //==============================================================================

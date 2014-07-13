@@ -66,8 +66,10 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 	}
 
 	// load file in lines
+	String txt;
 	StringList lines;
-	File(filename.c_str(), File::OpenFlag::READ).readAllTextLines(lines);
+	File(filename.c_str(), File::OpenFlag::READ).readAllText(txt);
+	lines = StringList::splitString(txt.c_str(), '\n');
 	if(lines.size() < 1)
 	{
 		throw ANKI_EXCEPTION("File is empty: %s", filename.c_str());

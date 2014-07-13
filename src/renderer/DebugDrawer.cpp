@@ -31,9 +31,10 @@ DebugDrawer::DebugDrawer()
 		{m_vert->getGlProgram(), m_frag->getGlProgram()});
 
 	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, 
-		sizeof(m_clientVerts), GL_DYNAMIC_STORAGE_BIT);
+		sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT);
 
-	m_vertexPointer = 0;
+	m_lineVertCount = 0;
+	m_triVertCount = 0;
 	m_mMat.setIdentity();
 	m_vpMat.setIdentity();
 	m_mvpMat.setIdentity();
@@ -61,34 +62,72 @@ void DebugDrawer::setViewProjectionMatrix(const Mat4& m)
 }
 
 //==============================================================================
-void DebugDrawer::begin()
+void DebugDrawer::begin(GLenum primitive)
 {
-	// Do nothing. Keep for compatibility
+	ANKI_ASSERT(primitive == GL_TRIANGLES || primitive == GL_LINES);
+	m_primitive = primitive;
 }
 
 //==============================================================================
 void DebugDrawer::end()
 {
-	if(m_vertexPointer % 2 != 0)
+	if(m_primitive == GL_LINES)
 	{
-		pushBackVertex(Vec3(0.0));
-		ANKI_LOGW("Forgot to close the line loop");
+		if(m_lineVertCount % 2 != 0)
+		{
+			pushBackVertex(Vec3(0.0));
+			ANKI_LOGW("Forgot to close the line loop");
+		}
+	}
+	else
+	{
+		if(m_triVertCount % 3 != 0)
+		{
+			pushBackVertex(Vec3(0.0));
+			pushBackVertex(Vec3(0.0));
+			ANKI_LOGW("Forgot to close the line loop");
+		}
 	}
 }
 
 //==============================================================================
 void DebugDrawer::flush()
 {
-	if(m_vertexPointer == 0)
+	flushInternal(GL_LINES);
+	flushInternal(GL_TRIANGLES);
+}
+
+//==============================================================================
+void DebugDrawer::flushInternal(GLenum primitive)
+{
+	if((primitive == GL_LINES && m_lineVertCount == 0)
+		|| (primitive == GL_TRIANGLES && m_triVertCount == 0))
 	{
 		// Early exit
 		return;
 	}
 
-	GlClientBufferHandle tmpBuff(m_jobs, sizeof(m_clientVerts), nullptr);
-	memcpy(tmpBuff.getBaseAddress(), &m_clientVerts[0], sizeof(m_clientVerts));
+	U clientVerts;
+	void* vertBuff;
+	if(primitive == GL_LINES)
+	{
+		clientVerts = m_lineVertCount;
+		vertBuff = &m_clientLineVerts[0];
+		m_lineVertCount = 0;
+	}
+	else
+	{
+		clientVerts = m_triVertCount;
+		vertBuff = &m_clientTriVerts[0];
+		m_triVertCount = 0;
+	}
 
-	m_vertBuff.write(m_jobs, tmpBuff, 0, 0, sizeof(m_clientVerts));
+	U size = sizeof(Vertex) * clientVerts;
+
+	GlClientBufferHandle tmpBuff(m_jobs, size, nullptr);
+	memcpy(tmpBuff.getBaseAddress(), vertBuff, size);
+
+	m_vertBuff.write(m_jobs, tmpBuff, 0, 0, size);
 
 	m_ppline.bind(m_jobs);
 
@@ -98,22 +137,33 @@ void DebugDrawer::flush()
 	m_vertBuff.bindVertexBuffer(m_jobs, 
 		4, GL_FLOAT, true, sizeof(Vertex), sizeof(Vec4), 1); // Color
 
-	GlDrawcallArrays dc(GL_LINES, m_vertexPointer);
+	GlDrawcallArrays dc(primitive, clientVerts);
 
 	dc.draw(m_jobs);
-
-	m_vertexPointer = 0;
 }
 
 //==============================================================================
 void DebugDrawer::pushBackVertex(const Vec3& pos)
 {
-	m_clientVerts[m_vertexPointer].m_position = m_mvpMat * Vec4(pos, 1.0);
-	m_clientVerts[m_vertexPointer].m_color = Vec4(m_crntCol, 1.0);
+	U32* vertCount;
+	Vertex* vertBuff;
+	if(m_primitive == GL_LINES)
+	{
+		vertCount = &m_lineVertCount;
+		vertBuff = &m_clientLineVerts[0];
+	}
+	else
+	{
+		vertCount = &m_triVertCount;
+		vertBuff = &m_clientTriVerts[0];
+	}
 
-	++m_vertexPointer;
+	vertBuff[*vertCount].m_position = m_mvpMat * Vec4(pos, 1.0);
+	vertBuff[*vertCount].m_color = Vec4(m_crntCol, 1.0);
 
-	if(m_vertexPointer == MAX_POINTS_PER_DRAW)
+	++(*vertCount);
+
+	if(*vertCount == MAX_POINTS_PER_DRAW)
 	{
 		flush();
 	}
@@ -123,7 +173,7 @@ void DebugDrawer::pushBackVertex(const Vec3& pos)
 void DebugDrawer::drawLine(const Vec3& from, const Vec3& to, const Vec4& color)
 {
 	setColor(color);
-	begin();
+	begin(GL_LINES);
 		pushBackVertex(from);
 		pushBackVertex(to);
 	end();
@@ -143,7 +193,7 @@ void DebugDrawer::drawGrid()
 
 	setColor(col0);
 
-	begin();
+	begin(GL_LINES);
 
 	for(U x = - NUM / 2 * SPACE; x < NUM / 2 * SPACE; x += SPACE)
 	{
@@ -228,7 +278,7 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 	setModelMatrix(m_mMat * Mat4(Vec4(0.0, 0.0, 0.0, 1.0), 
 		Mat3::getIdentity(), radius));
 
-	begin();
+	begin(GL_LINES);
 	for(const Vec3& p : *sphereLines)
 	{
 		pushBackVertex(p);
@@ -261,7 +311,7 @@ void DebugDrawer::drawCube(F32 size)
 		0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 
 		6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
-	begin();
+	begin(GL_LINES);
 		for(U32 id : indeces)
 		{
 			pushBackVertex(points[id]);
@@ -314,7 +364,7 @@ void CollisionDebugDrawer::visit(const Plane& plane)
 void CollisionDebugDrawer::visit(const LineSegment& ls)
 {
 	m_dbg->setModelMatrix(Mat4::getIdentity());
-	m_dbg->begin();
+	m_dbg->begin(GL_LINES);
 	m_dbg->pushBackVertex(ls.getOrigin().xyz());
 	m_dbg->pushBackVertex((ls.getOrigin() + ls.getDirection()).xyz());
 	m_dbg->end();
@@ -369,7 +419,7 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 			const U32 indeces[] = {0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2,
 				3, 3, 4, 4, 1};
 
-			m_dbg->begin();
+			m_dbg->begin(GL_LINES);
 			for(U32 i = 0; i < sizeof(indeces) / sizeof(U32); i++)
 			{
 				m_dbg->pushBackVertex(points[indeces[i]]);

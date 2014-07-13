@@ -9,7 +9,6 @@
 #include "anki/collision/Common.h"
 
 namespace anki {
-namespace detail {
 
 /// @addtogroup collision
 /// @{
@@ -18,27 +17,43 @@ namespace detail {
 /// shapes
 /// @code
 /// +------+------+------+------+------+------+------+
-/// |      | LS   | OBB  | P    | S    | AABB |      |
+/// |      | PL   | COMP | AABB | SPH  | LINE | OBB  |
 /// +------+------+------+------+------+------+------+
-/// | LS   | N/A  | OK   | OK   | OK   | OK   |      |
+/// | PL   | N/A  | OK   | OK   | OK   | OK   | OK   |
 /// +------+------+------+------+------+------+------+
-/// | OBB  |      | OK   | OK   | OK   | OK   |      |
+/// | COMP |      | OK   | OK   | OK   | OK   | OK   |
 /// +------+------+------+------+------+------+------+
-/// | P    |      |      | OK   | OK   | OK   |      |
+/// | AABB |      |      | OK   | OK   | OK   | OK   |
 /// +------+------+------+------+------+------+------+
-/// | S    |      |      |      | OK   | OK   |      |
+/// | SPH  |      |      |      | OK   | OK   | OK   |
 /// +------+------+------+------+------+------+------+
-/// | AABB |      |      |      |      | OK   |      |
+/// | LINE |      |      |      |      | OK   | OK   |
+/// +------+------+------+------+------+------+------+
+/// | OBB  |      |      |      |      |      | OK   |
 /// +------+------+------+------+------+------+------+
 /// @endcode
+class CollisionTester
+{
+public:
+	using TestCallback = U (*)(CollisionTester& self,
+		const CollisionShape&, const CollisionShape&, 
+		CollisionTempVector<ContactPoint>& points);
 
+	CollisionTempAllocator<U8>& _getAllocator()
+	{
+		return m_alloc;
+	}
 
-// 2nd line
-U test(const Obb& a, const Obb& b, CollisionTempVector<ContactPoint>& points);
+	// Generic test function
+	U test(const CollisionShape& a, const CollisionShape& b, 
+		CollisionTempVector<ContactPoint>& points);
+
+private:
+	CollisionTempAllocator<U8> m_alloc;
+};
 
 /// @}
 
-} // end namespace detail 
 } // end namespace anki
 
 #endif

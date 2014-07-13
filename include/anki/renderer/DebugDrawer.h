@@ -43,7 +43,7 @@ public:
 
 	/// @name Render functions. Imitate the GL 1.1 immediate mode
 	/// @{
-	void begin(); ///< Initiates the draw
+	void begin(GLenum primitive); ///< Initiates the draw
 	void end(); ///< Draws
 	void pushBackVertex(const Vec3& pos); ///< Something like glVertex
 	/// Something like glColor
@@ -80,10 +80,13 @@ private:
 	Mat4 m_mMat;
 	Mat4 m_vpMat;
 	Mat4 m_mvpMat; ///< Optimization
-	U32 m_vertexPointer;
+	U32 m_lineVertCount;
+	U32 m_triVertCount;
 	Vec3 m_crntCol;
+	GLenum m_primitive;
 
-	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientVerts;
+	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientLineVerts;
+	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientTriVerts;
 
 	GlBufferHandle m_vertBuff;
 
@@ -91,6 +94,8 @@ private:
 	/// from sphere complexity it returns a vector of lines (Vec3s in
 	/// pairs)
 	std::unordered_map<U32, Vector<Vec3>> m_complexityToPreCalculatedSphere;
+
+	void flushInternal(GLenum primitive);
 };
 
 /// Contains methods to render the collision shapes

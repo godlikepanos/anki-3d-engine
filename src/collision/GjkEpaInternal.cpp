@@ -21,6 +21,14 @@ static inline std::ostream& operator<<(std::ostream& os, const Edge& e)
 //==============================================================================
 
 //==============================================================================
+static inline std::ostream& operator<<(std::ostream& os, const Face& f) 
+{
+	auto idx = f.idx();
+	os << idx[0] << " " << idx[1] << " " << idx[2];
+	return os;
+}
+
+//==============================================================================
 const Vec4& Face::normal(Polytope& poly, Bool fixWinding) const
 {
 	if(m_normal[0] == -100.0)
@@ -166,10 +174,6 @@ Face& Polytope::findClosestFace()
 				index = i;
 				minDistance = face.distance(*this);
 			}
-			else
-			{
-				std::cout << "origin not in face" << std::endl;
-			}
 		}
 	}
 
@@ -212,6 +216,8 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 		return false;
 	}
 
+	ANKI_ASSERT(cface.dead() == false);
+
 	//
 	// First add the point to the polytope by spliting the cface.
 	// Don't fix winding to the new faces because it should be correct.
@@ -233,12 +239,11 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 	Array<Face*, 3> newFaces = {
 		&cface, &m_faces[m_faces.size() - 2], &m_faces[m_faces.size() - 1]};
 
-	//return true;
-
 	//
 	// Find other faces that hide the new support
 	//
-	Vector<Face*, StackAllocator<Face*>> badFaces(getAllocator());
+	auto alloc = getAllocator();
+	Vector<Face*, CollisionTempAllocator<Face*>> badFaces(alloc);
 	Bool badFacesVectorInitialized = false; // Opt
 
 	const Vec4& support = m_simplex[supportIdx].m_v;
@@ -255,7 +260,7 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 		}
 
 		F32 dot = face.normal(*this).dot(support);
-		if(dot > getEpsilon<F32>())
+		if(dot - face.distance(*this) > 0.0)
 		{
 			if(!badFacesVectorInitialized)
 			{
@@ -273,8 +278,6 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 		// Early exit
 		return true;
 	}
-
-	std::cout << "found bad faces " << badFaces.size() << std::endl;
 
 	//
 	// Out of the new 3 faces find those that share edges with the bad faces
@@ -312,8 +315,8 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 	// deleted faces
 	//
 	std::unordered_map<Edge, U, EdgeHasher, EdgeCompare, 
-		StackAllocator<std::pair<Edge, U>>> edgeMap(
-		10, EdgeHasher(), EdgeCompare(), getAllocator());
+		CollisionTempAllocator<std::pair<Edge, U>>> edgeMap(
+		10, EdgeHasher(), EdgeCompare(), alloc);
 
 	for(Face* face : badFaces)
 	{
@@ -337,7 +340,7 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 	//
 	// Get the edges that are in a loop
 	//
-	Vector<Edge, StackAllocator<Edge>> edgeLoopTmp(getAllocator());
+	Vector<Edge, CollisionTempAllocator<Edge>> edgeLoopTmp(alloc);
 	edgeLoopTmp.reserve(edgeMap.size());
 	U startEdge = MAX_U32;
 
@@ -354,15 +357,23 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 		}
 	}
 
-	ANKI_ASSERT(startEdge != MAX_U32);
+	if(newFacesBadCount < 3)
+	{
+		// If all 3 faces are bad then their edges will not appear
+		ANKI_ASSERT(startEdge != MAX_U32);
+	}
+	else
+	{
+		startEdge = 0;
+	}
 	ANKI_ASSERT(edgeLoopTmp.size() > 2);
 
 	//
 	// Sort those edges to a continues loop starting from the edge with the 
 	// support
 	// 
-	Vector<Edge, StackAllocator<Edge>> edgeLoop(getAllocator());
-	edgeLoop.reserve(edgeMap.size());
+	Vector<Edge, CollisionTempAllocator<Edge>> edgeLoop(alloc);
+	edgeLoop.reserve(edgeMap.size() + 2);
 
 	edgeLoop.push_back(edgeLoopTmp[startEdge]); // First edge
 
@@ -378,16 +389,26 @@ Bool Polytope::expand(Face& cface, U supportIdx)
 		}
 	}
 
-	ANKI_ASSERT(edgeLoop[0].m_idx[0] == supportIdx);
-
 	ANKI_ASSERT(edgeLoop[0].m_idx[0] == edgeLoop.back().m_idx[1] 
 		&& "Edge loop is not closed");
+
+	if(newFacesBadCount == 3)
+	{
+		edgeLoop.emplace(edgeLoop.begin(), 
+			supportIdx, edgeLoop.front().m_idx[0], nullptr);
+
+		edgeLoop.emplace_back(edgeLoop.back().m_idx[1], supportIdx, nullptr);
+	}
+
+	ANKI_ASSERT(edgeLoop[0].m_idx[0] == supportIdx);
 
 	//
 	// Spawn faces from the edge loop
 	//
+	const U limit = edgeLoop.size() - 1;
 	Edge edge = edgeLoop[0];
-	for(U i = 1; i < edgeLoop.size() - 1; i++)
+
+	for(U i = 1; i < limit; i++)
 	{
 		ANKI_ASSERT(edge.m_idx[1] == edgeLoop[i].m_idx[0]);
 

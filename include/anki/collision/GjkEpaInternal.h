@@ -7,8 +7,7 @@
 #define ANKI_COLLISION_GJK_EPA_INTERNAL_H
 
 #include "anki/Math.h"
-#include "anki/util/Allocator.h"
-#include "anki/util/Vector.h"
+#include "anki/collision/Common.h"
 
 namespace anki {
 namespace detail {
@@ -134,6 +133,11 @@ public:
 		m_dead = true;
 	}
 
+	void revive()
+	{
+		m_dead = false;
+	}
+
 private:
 	mutable Array<U32, 3> m_idx;
 	mutable Vec4 m_normal;
@@ -148,7 +152,9 @@ class Polytope
 	friend class Face;
 
 public:
-	Polytope(StackAllocator<U8>& alloc, U32 maxSimplexSize, U32 maxFaceCount)
+	Polytope(CollisionTempAllocator<U8>& alloc, 
+		U32 maxSimplexSize, 
+		U32 maxFaceCount)
 	:	m_maxSimplexSize(maxSimplexSize),
 		m_maxFaceCount(maxFaceCount),
 		m_simplex(alloc),
@@ -180,10 +186,10 @@ public: // XXX
 	U32 m_maxSimplexSize;
 	U32 m_maxFaceCount;
 
-	Vector<Support, StackAllocator<Support>> m_simplex;
-	Vector<Face, StackAllocator<Face>> m_faces;
+	Vector<Support, CollisionTempAllocator<Support>> m_simplex;
+	Vector<Face, CollisionTempAllocator<Face>> m_faces;
 
-	StackAllocator<U8> getAllocator() const
+	CollisionTempAllocator<U8> getAllocator() const
 	{
 		return m_simplex.get_allocator();
 	}
