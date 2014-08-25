@@ -13,13 +13,14 @@
 namespace anki {
 
 //==============================================================================
-Renderer::Renderer()
-	:	m_ms(this), 
-		m_is(this),
-		m_pps(this),
-		m_bs(this),
-		m_dbg(this), 
-		m_sceneDrawer(this)
+Renderer::Renderer(Threadpool* threadpool)
+:	m_ms(this), 
+	m_is(this),
+	m_pps(this),
+	m_bs(this),
+	m_dbg(this), 
+	m_sceneDrawer(this),
+	m_threadpool(threadpool)
 {}
 
 //==============================================================================
@@ -58,8 +59,8 @@ void Renderer::init(const ConfigSet& initializer)
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
 		{1.0, -1.0}, {-1.0, -1.0}};
 
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	GlClientBufferHandle tmpBuff = GlClientBufferHandle(jobs, 
 		sizeof(quadVertCoords), (void*)&quadVertCoords[0][0]);
@@ -93,7 +94,7 @@ void Renderer::init(const ConfigSet& initializer)
 
 //==============================================================================
 void Renderer::render(SceneGraph& scene, 
-	Array<GlJobChainHandle, JOB_CHAINS_COUNT>& jobs)
+	Array<GlCommandBufferHandle, JOB_CHAINS_COUNT>& jobs)
 {
 	m_scene = &scene;
 	Camera& cam = m_scene->getActiveCamera();
@@ -141,13 +142,13 @@ void Renderer::render(SceneGraph& scene,
 }
 
 //==============================================================================
-void Renderer::drawQuad(GlJobChainHandle& jobs)
+void Renderer::drawQuad(GlCommandBufferHandle& jobs)
 {
 	drawQuadInstanced(jobs, 1);
 }
 
 //==============================================================================
-void Renderer::drawQuadInstanced(GlJobChainHandle& jobs, U32 primitiveCount)
+void Renderer::drawQuadInstanced(GlCommandBufferHandle& jobs, U32 primitiveCount)
 {
 	m_quadPositionsBuff.bindVertexBuffer(jobs, 2, GL_FLOAT, false, 0, 0, 0);
 
@@ -226,8 +227,8 @@ void Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 	init.m_genMipmaps = false;
 	init.m_samples = samples;
 
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 	rt = GlTextureHandle(jobs, init);
 	jobs.finish();
 }
@@ -236,8 +237,8 @@ void Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 GlProgramPipelineHandle Renderer::createDrawQuadProgramPipeline(
 	GlProgramHandle frag)
 {
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	Array<GlProgramHandle, 2> progs = {{m_drawQuadVert->getGlProgram(), frag}};
 

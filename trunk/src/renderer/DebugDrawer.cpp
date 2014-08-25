@@ -20,12 +20,12 @@ namespace anki {
 //==============================================================================
 DebugDrawer::DebugDrawer()
 {
-	GlManager& gl = GlManagerSingleton::get();
+	GlDevice& gl = GlDeviceSingleton::get();
 
 	m_vert.load("shaders/Dbg.vert.glsl");
 	m_frag.load("shaders/Dbg.frag.glsl");
 
-	GlJobChainHandle jobs(&gl);
+	GlCommandBufferHandle jobs(&gl);
 
 	m_ppline = GlProgramPipelineHandle(jobs, 
 		{m_vert->getGlProgram(), m_frag->getGlProgram()});

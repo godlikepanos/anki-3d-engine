@@ -77,8 +77,8 @@ void Lf::initInternal(const ConfigSet& initializer)
 		return;
 	}
 
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	m_maxFlaresPerLight = initializer.get("pps.lf.maxFlaresPerLight");
 	m_maxLightsWithFlares = initializer.get("pps.lf.maxLightsWithFlares");
@@ -142,7 +142,7 @@ void Lf::initInternal(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Lf::run(GlJobChainHandle& jobs)
+void Lf::run(GlCommandBufferHandle& jobs)
 {
 	ANKI_ASSERT(m_enabled);
 

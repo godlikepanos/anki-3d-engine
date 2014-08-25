@@ -14,25 +14,25 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-class GlDrawElementsJob: public GlJob
+class GlDrawElementsCommand: public GlCommand
 {
 public:
 	GlDrawcallElements m_dc;
 
-	GlDrawElementsJob(const GlDrawcallElements& dc)
+	GlDrawElementsCommand(const GlDrawcallElements& dc)
 		: m_dc(dc)
 	{}
 
-	void operator()(GlJobChain*)
+	void operator()(GlCommandBuffer*)
 	{
 		m_dc.exec();
 	}
 };
 
 //==============================================================================
-void GlDrawcallElements::draw(GlJobChainHandle& jobs)
+void GlDrawcallElements::draw(GlCommandBufferHandle& commands)
 {
-	jobs._pushBackNewJob<GlDrawElementsJob>(*this);
+	commands._pushBackNewCommand<GlDrawElementsCommand>(*this);
 }
 
 //==============================================================================
@@ -110,25 +110,25 @@ void GlDrawcallElements::exec()
 //==============================================================================
 
 //==============================================================================
-class GlDrawArraysJob: public GlJob
+class GlDrawArraysCommand: public GlCommand
 {
 public:
 	GlDrawcallArrays m_dc;
 
-	GlDrawArraysJob(const GlDrawcallArrays& dc)
+	GlDrawArraysCommand(const GlDrawcallArrays& dc)
 		: m_dc(dc)
 	{}
 
-	void operator()(GlJobChain*)
+	void operator()(GlCommandBuffer*)
 	{
 		m_dc.exec();
 	}
 };
 
 //==============================================================================
-void GlDrawcallArrays::draw(GlJobChainHandle& jobs)
+void GlDrawcallArrays::draw(GlCommandBufferHandle& commands)
 {
-	jobs._pushBackNewJob<GlDrawArraysJob>(*this);
+	commands._pushBackNewCommand<GlDrawArraysCommand>(*this);
 }
 
 //==============================================================================

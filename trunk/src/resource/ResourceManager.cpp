@@ -4,8 +4,14 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/ResourceManager.h"
+#include "anki/resource/Animation.h"
+#include "anki/resource/Material.h"
+#include "anki/resource/Mesh.h"
+#include "anki/resource/Model.h"
+#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ParticleEmitterResource.h"
+#include "anki/resource/TextureResource.h"
 #include "anki/core/Logger.h"
-#include "anki/core/App.h"
 #include "anki/misc/ConfigSet.h"
 #include <cstring>
 
@@ -40,6 +46,16 @@ ResourceManager::ResourceManager(const ConfigSet& config)
 
 	m_maxTextureSize = config.get("maxTextureSize");
 	m_textureAnisotropy = config.get("textureAnisotropy");
+
+	// Init type resource managers
+	TypeResourceManager<Animation, ResourceManager>::init(m_alloc);
+	TypeResourceManager<Material, ResourceManager>::init(m_alloc);
+	TypeResourceManager<Mesh, ResourceManager>::init(m_alloc);
+	TypeResourceManager<Model, ResourceManager>::init(m_alloc);
+	TypeResourceManager<BucketMesh, ResourceManager>::init(m_alloc);
+	TypeResourceManager<ProgramResource, ResourceManager>::init(m_alloc);
+	TypeResourceManager<ParticleEmitterResource, ResourceManager>::init(
+		m_alloc);
 }
 
 //==============================================================================
@@ -48,8 +64,10 @@ String ResourceManager::fixResourcePath(const char* filename) const
 	String newFname;
 
 	// If the filename is in cache then dont append the data path
-	const char* cachePath = AppSingleton::get().getCachePath().c_str();
-	if(strstr(filename, cachePath) != nullptr)
+	//const char* cachePath = AppSingleton::get().getCachePath().c_str();
+	const char* cachePath = nullptr;
+	ANKI_ASSERT(0 && "TODO");
+	if(std::strstr(filename, cachePath) != nullptr)
 	{
 		newFname = filename;
 	}

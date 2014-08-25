@@ -8,7 +8,6 @@
 #include "anki/scene/ModelNode.h"
 #include "anki/scene/InstanceNode.h"
 #include "anki/util/Exception.h"
-#include "anki/core/Threadpool.h"
 #include "anki/core/Counters.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/misc/Xml.h"
@@ -22,19 +21,19 @@ namespace anki {
 namespace {
 
 //==============================================================================
-struct UpdateSceneNodesJob: ThreadpoolTask
+struct UpdateSceneNodesJob: Threadpool::Task
 {
 	SceneGraph* scene = nullptr;
 	F32 prevUpdateTime;
 	F32 crntTime;
 	Barrier* barrier = nullptr;
 
-	void operator()(ThreadId threadId, U threadsCount)
+	void operator()(U32 taskId, PtrSize threadsCount)
 	{
 		ANKI_ASSERT(scene);
 		PtrSize start, end;
 		choseStartEnd(
-			threadId, threadsCount, scene->getSceneNodesCount(), start, end);
+			taskId, threadsCount, scene->getSceneNodesCount(), start, end);
 
 		// First update the move components
 		scene->iterateSceneNodes(start, end, [&](SceneNode& node)
@@ -78,16 +77,17 @@ struct UpdateSceneNodesJob: ThreadpoolTask
 //==============================================================================
 
 //==============================================================================
-SceneGraph::SceneGraph(AllocAlignedCallback allocCb, void* allocCbUserData)
-:	m_alloc(StackMemoryPool(allocCb, allocCbUserData, 
-		ANKI_SCENE_ALLOCATOR_SIZE)),
-	m_frameAlloc(StackMemoryPool(allocCb, allocCbUserData, 
+SceneGraph::SceneGraph(AllocAlignedCallback allocCb, void* allocCbData, 
+	Threadpool* threadpool)
+:	m_alloc(allocCb, allocCbData, ANKI_SCENE_ALLOCATOR_SIZE),
+	m_frameAlloc(StackMemoryPool(allocCb, allocCbData, 
 		ANKI_SCENE_FRAME_ALLOCATOR_SIZE)),
 	m_nodes(m_alloc),
 	m_dict(10, DictionaryHasher(), DictionaryEqual(), m_alloc),
 	m_physics(),
 	m_sectorGroup(this),
-	m_events(this)
+	m_events(this),
+	m_threadpool(threadpool)
 {
 	m_nodes.reserve(ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT);
 
@@ -225,7 +225,7 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 		node.frameUpdate(prevUpdateTime, crntTime, SceneNode::SYNC_UPDATE);
 	});
 
-	Threadpool& threadPool = ThreadpoolSingleton::get();
+	Threadpool& threadPool = *m_threadpool;
 	(void)threadPool;
 
 	// XXX Do that in parallel

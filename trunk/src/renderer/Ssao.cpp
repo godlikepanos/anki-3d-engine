@@ -69,13 +69,13 @@ public:
 //==============================================================================
 void Ssao::createFb(GlFramebufferHandle & fb, GlTextureHandle& rt)
 {
-	GlManager& gl = GlManagerSingleton::get();
+	GlDevice& gl = GlDeviceSingleton::get();
 
 	m_r->createRenderTarget(m_width, m_height, GL_RED, GL_RED, 
 		GL_UNSIGNED_BYTE, 1, rt);
 
 	// Set to bilinear because the blurring techniques take advantage of that
-	GlJobChainHandle jobs(&gl);
+	GlCommandBufferHandle jobs(&gl);
 	rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
 
 	// create FB
@@ -116,8 +116,8 @@ void Ssao::initInternal(const ConfigSet& initializer)
 	//
 	// noise texture
 	//
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	GlClientBufferHandle noise(
 		jobs, sizeof(Vec3) * NOISE_TEX_SIZE * NOISE_TEX_SIZE, nullptr);
@@ -229,7 +229,7 @@ void Ssao::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Ssao::run(GlJobChainHandle& jobs)
+void Ssao::run(GlCommandBufferHandle& jobs)
 {
 	ANKI_ASSERT(m_enabled);
 

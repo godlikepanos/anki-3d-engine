@@ -11,7 +11,7 @@
 namespace anki {
 
 // Forward
-class GlManager;
+class GlDevice;
 
 /// @addtogroup opengl_private
 /// @{
@@ -31,7 +31,7 @@ template<typename T, typename TAlloc>
 class GlHandleDefaultDeleter
 {
 public:
-	void operator()(T* ptr, TAlloc alloc, GlManager*)
+	void operator()(T* ptr, TAlloc alloc, GlDevice*)
 	{
 		alloc.deleteInstance(ptr);
 	}
@@ -51,7 +51,7 @@ public:
 	/// @name Constructor/Destructor
 	/// @{
 	GlHandle()
-		: m_cb(nullptr)
+	:	m_cb(nullptr)
 	{}
 
 	/// Create an object and initialize the handle with that
@@ -64,7 +64,7 @@ public:
 	///                deleters
 	/// @param args The arguments to pass to the object's constructor
 	template<typename TAlloc, typename TDeleter, typename... TArgs>
-	GlHandle(GlManager* manager, TAlloc alloc, TDeleter del, TArgs&&... args)
+	GlHandle(GlDevice* manager, TAlloc alloc, TDeleter del, TArgs&&... args)
 	{
 		// Create the object
 		T* ptr = alloc.template newInstance<T>(std::forward<TArgs>(args)...);
@@ -104,13 +104,13 @@ public:
 	}
 
 	GlHandle(const GlHandle& b)
-		: GlHandle()
+	:	GlHandle()
 	{
 		*this = b;
 	}
 
 	GlHandle(GlHandle&& b)
-		: GlHandle()
+	:	GlHandle()
 	{
 		*this = std::move(b);
 	}
@@ -229,7 +229,7 @@ public:
 		return m_cb->getStateAtomically(&newVal);
 	}
 
-	GlManager& _getManager() const
+	GlDevice& _getManager() const
 	{
 		ANKI_ASSERT(m_cb != nullptr && m_cb->getManager() != nullptr);
 		return *m_cb->getManager(); 
@@ -255,7 +255,7 @@ private:
 		virtual void deleteSelf() = 0;
 
 		/// The container handles want the manager
-		virtual GlManager* getManager() const
+		virtual GlDevice* getManager() const
 		{
 			return nullptr;
 		}
@@ -309,7 +309,7 @@ private:
 		YDeleter m_del;
 
 		/// @note Its mutable because we want read/write access to it
-		mutable GlManager* m_manager; 
+		mutable GlDevice* m_manager; 
 
 		std::atomic<GlHandleState> m_state;
 		
@@ -325,7 +325,7 @@ private:
 			m_alloc.deleteInstance(this);
 		}
 
-		GlManager* getManager() const override
+		GlDevice* getManager() const override
 		{
 			return m_manager;
 		}

@@ -39,8 +39,8 @@ void TextureResource::load(const char* filename)
 //==============================================================================
 void TextureResource::loadInternal(const char* filename)
 {
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl); // Always first to avoid assertions (because of
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl); // Always first to avoid assertions (because of
 	                            // the check of the allocator)
 
 	GlTextureHandle::Initializer init;
@@ -202,7 +202,7 @@ void TextureResource::loadInternal(const char* filename)
 	m_tex = GlTextureHandle(jobs, init);
 
 	// Add cleanup job
-	jobs.pushBackUserJob(deleteImageCallback, imgPtr);
+	jobs.pushBackUserCommand(deleteImageCallback, imgPtr);
 
 	// Finaly enque the GL job chain
 	jobs.flush();

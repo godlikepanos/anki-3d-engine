@@ -240,8 +240,8 @@ GlProgramPipelineHandle Material::getProgramPipeline(
 
 		progs[progCount++] = getProgram(key, 4)->getGlProgram();
 
-		GlManager& gl = GlManagerSingleton::get();
-		GlJobChainHandle jobs(&gl);
+		GlDevice& gl = GlDeviceSingleton::get();
+		GlCommandBufferHandle jobs(&gl);
 
 		ppline = GlProgramPipelineHandle(
 			jobs, &progs[0], &progs[0] + progCount);
@@ -378,9 +378,12 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 					src << "#define PASS " << pid << "\n";
 					src << "#define TESSELLATION " << tess << "\n";
 
+#if 0
 					src << MainRendererSingleton::get().
 						getShaderPostProcessorString() << "\n"
 						<< mspc.getProgramSource(shader) << std::endl;
+#endif
+					ANKI_ASSERT(0 && "TODO");
 
 					std::string filename =
 						createProgramSourceToChache(src.str().c_str());

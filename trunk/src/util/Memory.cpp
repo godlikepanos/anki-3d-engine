@@ -20,7 +20,7 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-void* mallocAligned(PtrSize size, PtrSize alignmentBytes) throw()
+void* mallocAligned(PtrSize size, PtrSize alignmentBytes) noexcept
 {
 #if ANKI_POSIX 
 #	if ANKI_OS != ANKI_OS_ANDROID
@@ -71,7 +71,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes) throw()
 }
 
 //==============================================================================
-void freeAligned(void* ptr) throw()
+void freeAligned(void* ptr) noexcept
 {
 #if ANKI_POSIX
 	::free(ptr);
@@ -84,7 +84,7 @@ void freeAligned(void* ptr) throw()
 
 //==============================================================================
 void* allocAligned(
-	void* userData, void* ptr, PtrSize size, PtrSize alignment) throw()
+	void* userData, void* ptr, PtrSize size, PtrSize alignment) noexcept
 {
 	(void)userData;
 	void* out;
@@ -119,23 +119,23 @@ class HeapMemoryPool::Implementation: public NonCopyable
 public:
 	std::atomic<U32> m_refcount;
 	std::atomic<U32> m_allocationsCount;
-	AllocAlignedCallback m_alloc;
-	void* m_allocUserData;
+	AllocAlignedCallback m_allocCb;
+	void* m_allocCbUserData;
 };
 
 //==============================================================================
 HeapMemoryPool::HeapMemoryPool(
-	AllocAlignedCallback alloc, void* allocUserData)
+	AllocAlignedCallback allocCb, void* allocCbUserData)
 {
-	ANKI_ASSERT(alloc != nullptr);
+	ANKI_ASSERT(allocCb != nullptr);
 
-	m_impl = (Implementation*)alloc(allocUserData, nullptr, 
-		sizeof(Implementation), alignof(Implementation));
+	m_impl = static_cast<Implementation*>(allocCb(allocCbUserData, nullptr, 
+		sizeof(Implementation), alignof(Implementation)));
 
 	m_impl->m_refcount = 1;
 	m_impl->m_allocationsCount = 0;
-	m_impl->m_alloc = alloc;
-	m_impl->m_allocUserData = allocUserData;
+	m_impl->m_allocCb = allocCb;
+	m_impl->m_allocCbUserData = allocCbUserData;
 }
 
 //==============================================================================
@@ -161,11 +161,11 @@ void HeapMemoryPool::clear()
 
 		if(refcount == 0)
 		{
-			auto alloc = m_impl->m_alloc;
-			auto ud = m_impl->m_allocUserData;
-			ANKI_ASSERT(alloc);
+			auto allocCb = m_impl->m_allocCb;
+			auto ud = m_impl->m_allocCbUserData;
+			ANKI_ASSERT(allocCb);
 
-			alloc(ud, m_impl, 0, 0);
+			allocCb(ud, m_impl, 0, 0);
 		}
 
 		m_impl = nullptr;
@@ -173,21 +173,22 @@ void HeapMemoryPool::clear()
 }
 
 //==============================================================================
-void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment) throw()
+void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment) noexcept
 {
 	ANKI_ASSERT(m_impl != nullptr);
 
 	++m_impl->m_allocationsCount;
-	return m_impl->m_alloc(m_impl->m_allocUserData, nullptr, size, alignment);
+	return m_impl->m_allocCb(
+		m_impl->m_allocCbUserData, nullptr, size, alignment);
 }
 
 //==============================================================================
-Bool HeapMemoryPool::free(void* ptr) throw()
+Bool HeapMemoryPool::free(void* ptr) noexcept
 {
 	ANKI_ASSERT(m_impl != nullptr);
 
 	--m_impl->m_allocationsCount;
-	m_impl->m_alloc(m_impl->m_allocUserData, ptr, 0, 0);
+	m_impl->m_allocCb(m_impl->m_allocCbUserData, ptr, 0, 0);
 	return true;
 }
 
@@ -222,10 +223,10 @@ public:
 	std::atomic<U32> m_refcount = {1};
 
 	/// User allocation function
-	AllocAlignedCallback m_alloc;
+	AllocAlignedCallback m_allocCb;
 
 	/// User allocation function data
-	void* m_allocUserData;
+	void* m_allocCbUserData;
 
 	/// Alignment of allocations
 	PtrSize m_alignmentBytes;
@@ -243,18 +244,18 @@ public:
 	std::atomic<U8*> m_top = {nullptr};
 
 	// Construct
-	Implementation(AllocAlignedCallback alloc, void* allocUserData,
+	Implementation(AllocAlignedCallback allocCb, void* allocCbUserData,
 		PtrSize size, PtrSize alignmentBytes)
-		:	m_alloc(alloc),
-			m_allocUserData(allocUserData),
-			m_alignmentBytes(alignmentBytes), 
-			m_memsize(getAlignedRoundUp(alignmentBytes, size))
+	:	m_allocCb(allocCb),
+		m_allocCbUserData(allocCbUserData),
+		m_alignmentBytes(alignmentBytes), 
+		m_memsize(getAlignedRoundUp(alignmentBytes, size))
 	{
-		ANKI_ASSERT(m_alloc);
+		ANKI_ASSERT(m_allocCb);
 		ANKI_ASSERT(m_memsize > 0);
 		ANKI_ASSERT(m_alignmentBytes > 0);
-		m_memory = (U8*)m_alloc(
-			m_allocUserData, nullptr, m_memsize, m_alignmentBytes);
+		m_memory = (U8*)m_allocCb(
+			m_allocCbUserData, nullptr, m_memsize, m_alignmentBytes);
 
 		if(m_memory != nullptr)
 		{
@@ -281,7 +282,7 @@ public:
 	{
 		if(m_memory != nullptr)
 		{
-			m_alloc(m_allocUserData, m_memory, 0, 0);
+			m_allocCb(m_allocCbUserData, m_memory, 0, 0);
 		}
 	}
 
@@ -303,7 +304,7 @@ public:
 	}
 
 	/// Allocate
-	void* allocate(PtrSize size, PtrSize alignment) throw()
+	void* allocate(PtrSize size, PtrSize alignment) noexcept
 	{
 		ANKI_ASSERT(m_memory != nullptr);
 		ANKI_ASSERT(alignment <= m_alignmentBytes);
@@ -343,7 +344,7 @@ public:
 	}
 
 	/// Free
-	Bool free(void* ptr) throw()
+	Bool free(void* ptr) noexcept
 	{
 		// ptr shouldn't be null or not aligned. If not aligned it was not 
 		// allocated by this class
@@ -432,12 +433,12 @@ void StackMemoryPool::clear()
 
 		if(refcount == 0)
 		{
-			auto alloc = m_impl->m_alloc;
-			auto ud = m_impl->m_allocUserData;
-			ANKI_ASSERT(alloc);
+			auto allocCb = m_impl->m_allocCb;
+			auto ud = m_impl->m_allocCbUserData;
+			ANKI_ASSERT(allocCb);
 
 			m_impl->~Implementation();
-			alloc(ud, m_impl, 0, 0);
+			allocCb(ud, m_impl, 0, 0);
 		}
 
 		m_impl = nullptr;
@@ -459,14 +460,14 @@ PtrSize StackMemoryPool::getAllocatedSize() const
 }
 
 //==============================================================================
-void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment) throw()
+void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment) noexcept
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->allocate(size, alignment);
 }
 
 //==============================================================================
-Bool StackMemoryPool::free(void* ptr) throw()
+Bool StackMemoryPool::free(void* ptr) noexcept
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->free(ptr);
@@ -526,7 +527,7 @@ public:
 
 		Chunk(AllocAlignedCallback alloc, void* allocUserData, 
 			PtrSize size, PtrSize alignmentBytes)
-			:	m_pool(alloc, allocUserData, size, alignmentBytes)
+		:	m_pool(alloc, allocUserData, size, alignmentBytes)
 		{}
 	};
 
@@ -534,10 +535,10 @@ public:
 	std::atomic<U32> m_refcount = {1};
 
 	/// User allocation function
-	AllocAlignedCallback m_alloc;
+	AllocAlignedCallback m_allocCb;
 
 	/// User allocation function data
-	void* m_allocUserData;
+	void* m_allocCbUserData;
 
 	/// Alignment of allocations
 	PtrSize m_alignmentBytes;
@@ -561,44 +562,45 @@ public:
 	U32 m_step;
 
 	/// Chunk allocation method
-	U8 m_method;
+	ChainMemoryPool::ChunkGrowMethod m_method;
 
 	/// Construct
 	Implementation(
-		AllocAlignedCallback alloc, 
-		void* allocUserData,
+		AllocAlignedCallback allocCb, 
+		void* allocCbUserData,
 		PtrSize initialChunkSize,
 		PtrSize maxChunkSize,
-		ChunkAllocationStepMethod chunkAllocStepMethod, 
+		ChainMemoryPool::ChunkGrowMethod chunkAllocStepMethod, 
 		PtrSize chunkAllocStep, 
 		PtrSize alignmentBytes)
-		:	m_alloc(alloc),
-			m_allocUserData(allocUserData),
-			m_alignmentBytes(alignmentBytes), 
-			m_initSize(initialChunkSize),
-			m_maxSize(maxChunkSize),
-			m_step((U32)chunkAllocStep),
-			m_method(chunkAllocStepMethod)
+	:	m_allocCb(allocCb),
+		m_allocCbUserData(allocCbUserData),
+		m_alignmentBytes(alignmentBytes), 
+		m_initSize(initialChunkSize),
+		m_maxSize(maxChunkSize),
+		m_step((U32)chunkAllocStep),
+		m_method(chunkAllocStepMethod)
 	{
-		ANKI_ASSERT(m_alloc);
+		ANKI_ASSERT(m_allocCb);
 
 		// Initial size should be > 0
 		ANKI_ASSERT(m_initSize > 0);
 
 		// On fixed step should be 0
-		if(m_method == FIXED)
+		if(m_method == ChainMemoryPool::ChunkGrowMethod::FIXED)
 		{
 			ANKI_ASSERT(m_step == 0);
 		}
 
 		// On fixed initial size is the same as the max
-		if(m_method == FIXED)
+		if(m_method == ChainMemoryPool::ChunkGrowMethod::FIXED)
 		{
 			ANKI_ASSERT(m_initSize == m_maxSize);
 		}
 
 		// On add and mul the max size should be greater than initial
-		if(m_method == ADD || m_method == MULTIPLY)
+		if(m_method == ChainMemoryPool::ChunkGrowMethod::ADD 
+			|| m_method == ChainMemoryPool::ChunkGrowMethod::MULTIPLY)
 		{
 			ANKI_ASSERT(m_initSize < m_maxSize);
 		}
@@ -613,14 +615,14 @@ public:
 			Chunk* next = ch->m_next;
 
 			ch->~Chunk();
-			m_alloc(m_allocUserData, ch, 0, 0);
+			m_allocCb(m_allocCbUserData, ch, 0, 0);
 
 			ch = next;
 		}
 	}
 
 	/// Create a new chunk
-	Chunk* createNewChunk(PtrSize size) throw()
+	Chunk* createNewChunk(PtrSize size) noexcept
 	{
 		//
 		// Calculate preferred size
@@ -628,7 +630,7 @@ public:
 		
 		// Get the size of the next chunk
 		PtrSize crntMaxSize;
-		if(m_method == FIXED)
+		if(m_method == ChainMemoryPool::ChunkGrowMethod::FIXED)
 		{
 			crntMaxSize = m_initSize;
 		}
@@ -641,13 +643,14 @@ public:
 				crntMaxSize = m_tailChunk->m_pool.getTotalSize();
 
 				// Increase it
-				if(m_method == MULTIPLY)
+				if(m_method == ChainMemoryPool::ChunkGrowMethod::MULTIPLY)
 				{
 					crntMaxSize *= m_step;
 				}
 				else
 				{
-					ANKI_ASSERT(m_method == ADD);
+					ANKI_ASSERT(m_method 
+						== ChainMemoryPool::ChunkGrowMethod::ADD);
 					crntMaxSize += m_step;
 				}
 			}
@@ -670,14 +673,14 @@ public:
 		//
 		// Create the chunk
 		//
-		Chunk* chunk = (Chunk*)m_alloc(
-			m_allocUserData, nullptr, sizeof(Chunk), alignof(Chunk));
+		Chunk* chunk = (Chunk*)m_allocCb(
+			m_allocCbUserData, nullptr, sizeof(Chunk), alignof(Chunk));
 
 		if(chunk)
 		{
 			// Construct it
 			::new((void*)chunk) Chunk(
-				m_alloc, m_allocUserData, size, m_alignmentBytes);
+				m_allocCb, m_allocCbUserData, size, m_alignmentBytes);
 
 			// Register it
 			if(m_tailChunk)
@@ -697,7 +700,7 @@ public:
 	}
 
 	/// Allocate from chunk
-	void* allocateFromChunk(Chunk* ch, PtrSize size, PtrSize alignment) throw()
+	void* allocateFromChunk(Chunk* ch, PtrSize size, PtrSize alignment) noexcept
 	{
 		ANKI_ASSERT(ch);
 		ANKI_ASSERT(size <= m_maxSize);
@@ -712,7 +715,7 @@ public:
 	}
 
 	/// Allocate memory
-	void* allocate(PtrSize size, PtrSize alignment) throw()
+	void* allocate(PtrSize size, PtrSize alignment) noexcept
 	{
 		ANKI_ASSERT(size <= m_maxSize);
 
@@ -750,7 +753,7 @@ public:
 	}
 
 	/// Free memory
-	Bool free(void* ptr) throw()
+	Bool free(void* ptr) noexcept
 	{
 		m_lock.lock();
 
@@ -799,7 +802,7 @@ public:
 
 			// Finaly delete it
 			chunk->~Chunk();
-			m_alloc(m_allocUserData, chunk, 0, 0);
+			m_allocCb(m_allocCbUserData, chunk, 0, 0);
 		}
 
 		m_lock.unlock();
@@ -840,7 +843,7 @@ ChainMemoryPool::ChainMemoryPool(
 	void* allocUserData,
 	PtrSize initialChunkSize,
 	PtrSize maxChunkSize,
-	ChunkAllocationStepMethod chunkAllocStepMethod, 
+	ChunkGrowMethod chunkAllocStepMethod, 
 	PtrSize chunkAllocStep, 
 	PtrSize alignmentBytes)
 {
@@ -876,11 +879,11 @@ void ChainMemoryPool::clear()
 
 		if(refcount == 0)
 		{
-			auto alloc = m_impl->m_alloc;
-			auto ud = m_impl->m_allocUserData;
-			ANKI_ASSERT(alloc);
+			auto allocCb = m_impl->m_allocCb;
+			auto ud = m_impl->m_allocCbUserData;
+			ANKI_ASSERT(allocCb);
 
-			alloc(ud, m_impl, 0, 0);
+			allocCb(ud, m_impl, 0, 0);
 		}
 
 		m_impl = nullptr;
@@ -888,14 +891,14 @@ void ChainMemoryPool::clear()
 }
 
 //==============================================================================
-void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment) throw()
+void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment) noexcept
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->allocate(size, alignment);
 }
 
 //==============================================================================
-Bool ChainMemoryPool::free(void* ptr) throw()
+Bool ChainMemoryPool::free(void* ptr) noexcept
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->free(ptr);

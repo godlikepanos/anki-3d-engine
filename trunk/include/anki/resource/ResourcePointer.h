@@ -7,33 +7,39 @@
 #define ANKI_RESOURCE_RESOURCE_POINTER_H
 
 #include "anki/util/Assert.h"
+#include <atomic>
+#include <cstring>
 
 namespace anki {
+
+// Forward
+class ResourceManager;
+
+/// @addtogroup resource
+/// @{
 
 /// Special smart pointer that points to resource classes.
 ///
 /// It looks like auto_ptr but the main difference is that when its out of scope
 /// it tries to unload the resource.
-template<typename Type, typename TResourceManagerSingleton>
+template<typename Type, typename TResourceManager>
 class ResourcePointer
 {
 public:
-	typedef Type Value; ///< Resource type
-	typedef ResourcePointer<Value, TResourceManagerSingleton> Self;
-	typedef typename TResourceManagerSingleton::Value::Hook Hook;
+	using Value = Type; ///< Resource type
 
 	/// Default constructor
 	ResourcePointer()
 	{}
 
 	/// Copy constructor
-	ResourcePointer(const Self& b)
+	ResourcePointer(const ResourcePointer& b)
 	{
 		copy(b);
 	}
 
 	/// Move contructor
-	ResourcePointer(Self&& b)
+	ResourcePointer(ResourcePointer&& b)
 	{
 		*this = std::move(b);
 	}
@@ -46,112 +52,111 @@ public:
 
 	~ResourcePointer()
 	{
-		unload();
+		reset();
 	}
 
-	/// @name Accessors
-	/// @{
 	const Value& operator*() const
 	{
-		ANKI_ASSERT(hook != nullptr);
-		return *hook->resource;
+		ANKI_ASSERT(m_cb != nullptr);
+		return m_cb->m_resource;
 	}
+
 	Value& operator*()
 	{
-		ANKI_ASSERT(hook != nullptr);
-		return *hook->resource;
+		ANKI_ASSERT(m_cb != nullptr);
+		return m_cb->m_resource;
 	}
 
 	const Value* operator->() const
 	{
-		ANKI_ASSERT(hook != nullptr);
-		return hook->resource;
+		ANKI_ASSERT(m_cb != nullptr);
+		return &m_cb->m_resource;
 	}
+
 	Value* operator->()
 	{
-		ANKI_ASSERT(hook != nullptr);
-		return hook->resource;
+		ANKI_ASSERT(m_cb != nullptr);
+		return &m_cb->m_resource;
 	}
 
 	const Value* get() const
 	{
-		ANKI_ASSERT(hook != nullptr);
-		return hook->resource;
+		ANKI_ASSERT(m_cb != nullptr);
+		return &m_cb->m_resource;
 	}
+
 	Value* get()
 	{
-		ANKI_ASSERT(hook != nullptr);
-		return hook->resource;
+		ANKI_ASSERT(m_cb != nullptr);
+		return &m_cb->m_resource;
 	}
 
-	const std::string& getResourceName() const
+	const char* getResourceName() const
 	{
-		ANKI_ASSERT(hook != nullptr);
-		return hook->uuid;
+		ANKI_ASSERT(m_cb != nullptr);
+		return &m_cb->m_uuid[0];
 	}
-	/// @}
 
+	U32 getReferenceCount() const
+	{
+		ANKI_ASSERT(m_cb != nullptr);
+		return &m_cb->m_refcount.load();
+	}
+	
 	/// Copy
-	Self& operator=(const Self& b)
+	ResourcePointer& operator=(const ResourcePointer& b)
 	{
 		copy(b);
 		return *this;
 	}
 
 	/// Move
-	Self& operator=(Self&& b)
+	ResourcePointer& operator=(ResourcePointer&& b)
 	{
-		hook = b.hook;
-		b.hook = nullptr;
+		m_cb = b.m_cb;
+		b.m_cb = nullptr;
 		return *this;
 	}
 
-	/// Load the resource using the resource manager
-	void load(const char* filename)
+	Bool operator==(const ResourcePointer& b) const
 	{
-		ANKI_ASSERT(hook == nullptr);
-		ANKI_ASSERT(filename != nullptr);
-		hook = &TResourceManagerSingleton::get().load(filename);
+		ANKI_ASSERT(m_cb != nullptr);
+		ANKI_ASSERT(b.m_cb != nullptr);
+		return std::strcmp(&m_cb->m_uuid[0], &b.m_cb->m_uuid[0]) == 0; 
 	}
+
+	/// Load the resource using the resource manager
+	void load(const char* filename, TResourceManager* resources);
 
 	Bool isLoaded() const
 	{
-		return hook != nullptr;
+		return m_cb != nullptr;
 	}
 
 private:
-	/// Points to an element located in a container in the resource manager
-	Hook* hook = nullptr;
-
-	/// Unloads the resource @see loadRsrc
-	void unload()
+	/// Control block
+	class ControlBlock
 	{
-		if(hook != nullptr)
-		{
-			TResourceManagerSingleton::get().unload(*hook);
-			hook = nullptr;
-		}
-	}
+	public:
+		Type m_resource;
+		std::atomic<U32> m_refcount = {1};
+		TResourceManager* m_resources = nullptr;
+		char m_uuid[1]; ///< This is part of the UUID
+	};
+
+	ControlBlock* m_cb = nullptr;
+
+	void reset();
 
 	/// If this empty and @a b empty then unload. If @a b has something then
 	/// unload this and load exactly what @b has. In everything else do nothing
-	void copy(const Self& b)
-	{
-		if(b.hook == nullptr)
-		{
-			if(hook != nullptr)
-			{
-				unload();
-			}
-		}
-		else
-		{
-			unload();
-			load(b.hook->uuid.c_str());
-		}
-	}
+	void copy(const ResourcePointer& b);
 };
 
+/// @}
+
 } // end namespace anki
+
+#include "anki/resource/ResourcePointer.inl.h"
 
 #endif

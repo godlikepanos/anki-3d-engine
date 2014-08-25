@@ -76,7 +76,7 @@ private:
 	~Ms();
 
 	void init(const ConfigSet& initializer);
-	void run(GlJobChainHandle& jobs);
+	void run(GlCommandBufferHandle& jobs);
 
 	/// Create a G buffer FBO
 	void createRt(U32 index, U32 samples);

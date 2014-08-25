@@ -6,8 +6,8 @@
 #ifndef ANKI_GL_GL_HANDLE_DEFERRED_DELETER_H
 #define ANKI_GL_GL_HANDLE_DEFERRED_DELETER_H
 
-#include "anki/gl/GlManager.h"
-#include "anki/gl/GlJobChainHandle.h"
+#include "anki/gl/GlDevice.h"
+#include "anki/gl/GlCommandBufferHandle.h"
 
 namespace anki {
 
@@ -17,24 +17,24 @@ namespace anki {
 /// Common deleter for objects that require deferred deletion. Some handles
 /// might get releaced in various threads but their underlying GL object should 
 /// get deleted in the server thread (where the context is). This deleter will
-/// fire a server job with the deletion if the handle gets realeased thread 
+/// fire a server command with the deletion if the handle gets realeased thread 
 /// other than the server thread.
-template<typename T, typename TAlloc, typename TDeleteJob>
+template<typename T, typename TAlloc, typename TDeleteCommand>
 class GlHandleDeferredDeleter
 {
 public:
-	void operator()(T* obj, TAlloc alloc, GlManager* manager)
+	void operator()(T* obj, TAlloc alloc, GlDevice* manager)
 	{
 		ANKI_ASSERT(obj);
 		ANKI_ASSERT(manager);
 		
-		/// If not the server thread then create a job for the server thread
-		if(!manager->_getJobManager().isServerThread())
+		/// If not the server thread then create a command for the server thread
+		if(!manager->_getQueue().isServerThread())
 		{
-			GlJobChainHandle jobs(manager);
+			GlCommandBufferHandle commands(manager);
 			
-			jobs.template _pushBackNewJob<TDeleteJob>(obj, alloc);
-			jobs.flush();
+			commands.template _pushBackNewCommand<TDeleteCommand>(obj, alloc);
+			commands.flush();
 		}
 		else
 		{

@@ -15,7 +15,7 @@ GlProgramPipelineHandle::GlProgramPipelineHandle()
 
 //==============================================================================
 GlProgramPipelineHandle::GlProgramPipelineHandle(
-	GlJobChainHandle& jobs,
+	GlCommandBufferHandle& commands,
 	std::initializer_list<GlProgramHandle> iprogs)
 {
 	Array<GlProgramHandle, 6> progs;
@@ -26,7 +26,7 @@ GlProgramPipelineHandle::GlProgramPipelineHandle(
 		progs[count++] = prog;
 	}
 
-	commonConstructor(jobs, &progs[0], &progs[0] + count);
+	commonConstructor(commands, &progs[0], &progs[0] + count);
 }
 
 //==============================================================================
@@ -35,17 +35,17 @@ GlProgramPipelineHandle::~GlProgramPipelineHandle()
 
 //==============================================================================
 void GlProgramPipelineHandle::commonConstructor(
-	GlJobChainHandle& jobs,
+	GlCommandBufferHandle& commands,
 	const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlProgramPipelineHandle m_ppline;
 		Array<GlProgramHandle, 6> m_progs;
 		U8 m_progsCount;
 
-		Job(GlProgramPipelineHandle& ppline, 
+		Command(GlProgramPipelineHandle& ppline, 
 			const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd)
 			: m_ppline(ppline)
 		{
@@ -57,7 +57,7 @@ void GlProgramPipelineHandle::commonConstructor(
 			} while(++prog != progsEnd);
 		}
 
-		void operator()(GlJobChain*)
+		void operator()(GlCommandBuffer*)
 		{
 			GlProgramPipeline ppline(&m_progs[0], &m_progs[0] + m_progsCount);
 			m_ppline._get() = std::move(ppline);
@@ -68,36 +68,36 @@ void GlProgramPipelineHandle::commonConstructor(
 	};
 
 	typedef GlGlobalHeapAllocator<GlProgramPipeline> Alloc;
-	typedef GlDeleteObjectJob<GlProgramPipeline, Alloc> DeleteJob;
-	typedef GlHandleDeferredDeleter<GlProgramPipeline, Alloc, DeleteJob> 
+	typedef GlDeleteObjectCommand<GlProgramPipeline, Alloc> DeleteCommand;
+	typedef GlHandleDeferredDeleter<GlProgramPipeline, Alloc, DeleteCommand> 
 		Deleter;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&jobs._get().getJobManager().getManager(),
-		jobs._get().getGlobalAllocator(), 
+		&commands._get().getQueue().getManager(),
+		commands._get().getGlobalAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);
 
-	jobs._pushBackNewJob<Job>(*this, progsBegin, progsEnd);
+	commands._pushBackNewCommand<Command>(*this, progsBegin, progsEnd);
 }
 
 //==============================================================================
-void GlProgramPipelineHandle::bind(GlJobChainHandle& jobs)
+void GlProgramPipelineHandle::bind(GlCommandBufferHandle& commands)
 {
 	ANKI_ASSERT(isCreated());
 
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlProgramPipelineHandle m_ppline;
 
-		Job(GlProgramPipelineHandle& ppline)
+		Command(GlProgramPipelineHandle& ppline)
 			: m_ppline(ppline)
 		{}
 
-		void operator()(GlJobChain* jobs)
+		void operator()(GlCommandBuffer* commands)
 		{
-			GlState& state = jobs->getJobManager().getState();
+			GlState& state = commands->getQueue().getState();
 
 			if(state.m_crntPpline != m_ppline._get().getGlName())
 			{
@@ -108,7 +108,7 @@ void GlProgramPipelineHandle::bind(GlJobChainHandle& jobs)
 		}
 	};
 
-	jobs._pushBackNewJob<Job>(*this);
+	commands._pushBackNewCommand<Command>(*this);
 }
 
 //==============================================================================

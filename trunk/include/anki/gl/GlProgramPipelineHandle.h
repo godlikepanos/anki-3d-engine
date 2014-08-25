@@ -11,7 +11,7 @@
 namespace anki {
 
 // Forward
-class GlJobChainHandle;
+class GlCommandBufferHandle;
 class GlProgramPipeline;
 class GlProgramHandle;
 
@@ -30,28 +30,28 @@ public:
 
 	/// Create a pipeline
 	explicit GlProgramPipelineHandle(
-		GlJobChainHandle& jobs,
+		GlCommandBufferHandle& commands,
 		const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd)
 	{
-		commonConstructor(jobs, progsBegin, progsEnd);
+		commonConstructor(commands, progsBegin, progsEnd);
 	}
 
 	/// Create using initializer list
 	explicit GlProgramPipelineHandle(
-		GlJobChainHandle& jobs,
+		GlCommandBufferHandle& commands,
 		std::initializer_list<GlProgramHandle> progs);
 
 	~GlProgramPipelineHandle();
 	/// @}
 
 	/// Bind it to the state
-	void bind(GlJobChainHandle& jobs);
+	void bind(GlCommandBufferHandle& commands);
 
 	/// Get an attached program. It may serialize
 	GlProgramHandle getAttachedProgram(GLenum type) const;
 
 public:
-	void commonConstructor(GlJobChainHandle& jobs,
+	void commonConstructor(GlCommandBufferHandle& commands,
 		const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd);
 };
 

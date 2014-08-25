@@ -12,7 +12,7 @@ namespace anki {
 
 // Forward
 class GlClientSync;
-class GlJobChainHandle;
+class GlCommandBufferHandle;
 
 /// @addtogroup opengl_other
 /// @{
@@ -25,13 +25,13 @@ public:
 
 	GlClientSyncHandle();
 
-	GlClientSyncHandle(GlJobChainHandle& jobs);
+	GlClientSyncHandle(GlCommandBufferHandle& commands);
 
 	~GlClientSyncHandle();
 
-	/// Fire a job that adds a waits for the client. The client should call 
+	/// Fire a command that adds a waits for the client. The client should call 
 	/// wait some time after this call or the server will keep waiting forever
-	void sync(GlJobChainHandle& jobs);
+	void sync(GlCommandBufferHandle& commands);
 
 	/// Wait for the server. You need to call sync first or the client will
 	/// keep waiting forever

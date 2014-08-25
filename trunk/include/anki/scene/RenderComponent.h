@@ -219,7 +219,7 @@ public:
 	RenderingKey m_key;
 	const U8* m_subMeshIndicesArray; ///< @note indices != drawing indices
 	U32 m_subMeshIndicesCount;
-	GlJobChainHandle m_jobs; ///< A job chain 
+	GlCommandBufferHandle m_jobs; ///< A job chain 
 };
 
 /// RenderComponent interface. Implemented by renderable scene nodes

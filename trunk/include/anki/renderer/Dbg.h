@@ -62,7 +62,7 @@ private:
 	~Dbg();
 
 	void init(const ConfigSet& initializer);
-	void run(GlJobChainHandle& jobs);
+	void run(GlCommandBufferHandle& jobs);
 };
 
 /// @}

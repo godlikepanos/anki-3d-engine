@@ -21,7 +21,7 @@ void Bs::init(const ConfigSet&)
 }
 
 //==============================================================================
-void Bs::run(GlJobChainHandle& jobs)
+void Bs::run(GlCommandBufferHandle& jobs)
 {
 	jobs.enableDepthTest(true);
 	jobs.setDepthWriteMask(false);

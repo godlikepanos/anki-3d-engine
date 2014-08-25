@@ -5,7 +5,7 @@
 
 #include "anki/gl/GlTextureHandle.h"
 #include "anki/gl/GlTexture.h"
-#include "anki/gl/GlManager.h"
+#include "anki/gl/GlDevice.h"
 #include "anki/gl/GlHandleDeferredDeleter.h"	
 
 namespace anki {
@@ -20,23 +20,24 @@ GlTextureHandle::GlTextureHandle()
 
 //==============================================================================
 GlTextureHandle::GlTextureHandle(
-	GlJobChainHandle& jobs, const Initializer& init)
+	GlCommandBufferHandle& commands, const Initializer& init)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlTextureHandle m_tex;
 		GlTextureHandle::Initializer m_init;
 
-		Job(
+		Command(
 			GlTextureHandle tex, 
 			const GlTextureHandle::Initializer& init)
-			: m_tex(tex), m_init(init)
+		:	m_tex(tex), 
+			m_init(init)
 		{}
 
-		void operator()(GlJobChain* jobs)
+		void operator()(GlCommandBuffer* commands)
 		{
-			ANKI_ASSERT(jobs);
+			ANKI_ASSERT(commands);
 			GlTexture::Initializer init;
 
 			static_cast<GlTextureInitializerBase&>(init) = m_init;
@@ -79,7 +80,7 @@ GlTextureHandle::GlTextureHandle(
 				}
 			}
 
-			auto alloc = jobs->getGlobalAllocator();
+			auto alloc = commands->getGlobalAllocator();
 			GlTexture newTex(init, alloc);
 
 			m_tex._get() = std::move(newTex);
@@ -94,21 +95,21 @@ GlTextureHandle::GlTextureHandle(
 
 	typedef GlGlobalHeapAllocator<GlTexture> Alloc;
 
-	typedef GlDeleteObjectJob<
+	typedef GlDeleteObjectCommand<
 		GlTexture, 
-		Alloc> DeleteJob;
+		Alloc> DeleteCommand;
 
-	typedef GlHandleDeferredDeleter<GlTexture, Alloc, DeleteJob>
+	typedef GlHandleDeferredDeleter<GlTexture, Alloc, DeleteCommand>
 		Deleter;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&jobs._getJobManager().getManager(),
-		jobs._getJobManager().getManager()._getAllocator(), 
+		&commands._getQueue().getManager(),
+		commands._getQueue().getManager()._getAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);
 
-	// Fire the job
-	jobs._pushBackNewJob<Job>(*this, init);
+	// Fire the command
+	commands._pushBackNewCommand<Command>(*this, init);
 }
 
 //==============================================================================
@@ -116,98 +117,98 @@ GlTextureHandle::~GlTextureHandle()
 {}
 
 //==============================================================================
-void GlTextureHandle::bind(GlJobChainHandle& jobs, U32 unit)
+void GlTextureHandle::bind(GlCommandBufferHandle& commands, U32 unit)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlTextureHandle m_tex;
 		U32 m_unit;
 
-		Job(GlTextureHandle& tex, U32 unit)
+		Command(GlTextureHandle& tex, U32 unit)
 			: m_tex(tex), m_unit(unit)
 		{}
 
-		void operator()(GlJobChain*)
+		void operator()(GlCommandBuffer*)
 		{
 			m_tex._get().bind(m_unit);
 		}
 	};
 
 	ANKI_ASSERT(isCreated());
-	jobs._pushBackNewJob<Job>(*this, unit);
+	commands._pushBackNewCommand<Command>(*this, unit);
 }
 
 //==============================================================================
-void GlTextureHandle::setFilter(GlJobChainHandle& jobs, Filter filter)
+void GlTextureHandle::setFilter(GlCommandBufferHandle& commands, Filter filter)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlTextureHandle m_tex;
 		GlTexture::Filter m_filter;
 
-		Job(GlTextureHandle tex, GlTexture::Filter filter)
+		Command(GlTextureHandle tex, GlTexture::Filter filter)
 			: m_tex(tex), m_filter(filter)
 		{}
 
-		void operator()(GlJobChain*)
+		void operator()(GlCommandBuffer*)
 		{
 			m_tex._get().setFilter(m_filter);
 		}
 	};
 
 	ANKI_ASSERT(isCreated());
-	jobs._pushBackNewJob<Job>(*this, filter);
+	commands._pushBackNewCommand<Command>(*this, filter);
 }
 
 //==============================================================================
-void GlTextureHandle::generateMipmaps(GlJobChainHandle& jobs)
+void GlTextureHandle::generateMipmaps(GlCommandBufferHandle& commands)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlTextureHandle m_tex;
 
-		Job(GlTextureHandle tex)
+		Command(GlTextureHandle tex)
 			: m_tex(tex)
 		{}
 
-		void operator()(GlJobChain*)
+		void operator()(GlCommandBuffer*)
 		{
 			m_tex._get().generateMipmaps();
 		}
 	};
 
 	ANKI_ASSERT(isCreated());
-	jobs._pushBackNewJob<Job>(*this);
+	commands._pushBackNewCommand<Command>(*this);
 }
 
 //==============================================================================
-void GlTextureHandle::setParameter(GlJobChainHandle& jobs, GLenum param, 
-	GLint value)
+void GlTextureHandle::setParameter(GlCommandBufferHandle& commands, 
+	GLenum param, GLint value)
 {
 	ANKI_ASSERT(isCreated());
 
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlTextureHandle m_tex;
 		GLenum m_param;
 		GLint m_value;
 
-		Job(GlTextureHandle& tex, GLenum param, GLint value)
+		Command(GlTextureHandle& tex, GLenum param, GLint value)
 			: m_tex(tex), m_param(param), m_value(value)
 		{}
 
-		void operator()(GlJobChain*)
+		void operator()(GlCommandBuffer*)
 		{
 			m_tex._get().setParameter(m_param, m_value);
 		}
 	};
 
 	ANKI_ASSERT(isCreated());
-	jobs._pushBackNewJob<Job>(*this, param, value);
+	commands._pushBackNewCommand<Command>(*this, param, value);
 }
 
 //==============================================================================
@@ -240,25 +241,26 @@ GlSamplerHandle::GlSamplerHandle()
 {}
 
 //==============================================================================
-GlSamplerHandle::GlSamplerHandle(GlJobChainHandle& jobs)
+GlSamplerHandle::GlSamplerHandle(GlCommandBufferHandle& commands)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlSamplerHandle m_sampler;
 
-		Job(const GlSamplerHandle& sampler)
+		Command(const GlSamplerHandle& sampler)
 			: m_sampler(sampler)
 		{}
 
-		void operator()(GlJobChain* jobs)
+		void operator()(GlCommandBuffer* commands)
 		{
-			ANKI_ASSERT(jobs);
+			ANKI_ASSERT(commands);
 
 			GlSampler newSampler;
 			m_sampler._get() = std::move(newSampler);
 
-			GlHandleState oldState = m_sampler._setState(GlHandleState::CREATED);
+			GlHandleState oldState = 
+				m_sampler._setState(GlHandleState::CREATED);
 			ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
 			(void)oldState;
 		}
@@ -266,20 +268,20 @@ GlSamplerHandle::GlSamplerHandle(GlJobChainHandle& jobs)
 
 	typedef GlGlobalHeapAllocator<GlSampler> Alloc;
 
-	typedef GlDeleteObjectJob<
+	typedef GlDeleteObjectCommand<
 		GlSampler, 
-		Alloc> DeleteJob;
+		Alloc> DeleteCommand;
 
-	typedef GlHandleDeferredDeleter<GlSampler, Alloc, DeleteJob>
+	typedef GlHandleDeferredDeleter<GlSampler, Alloc, DeleteCommand>
 		Deleter;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&jobs._getJobManager().getManager(),
-		jobs._getJobManager().getManager()._getAllocator(), 
+		&commands._getQueue().getManager(),
+		commands._getQueue().getManager()._getAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);
 
-	jobs._pushBackNewJob<Job>(*this);
+	commands._pushBackNewCommand<Command>(*this);
 }
 
 //==============================================================================
@@ -287,95 +289,95 @@ GlSamplerHandle::~GlSamplerHandle()
 {}
 
 //==============================================================================
-void GlSamplerHandle::bind(GlJobChainHandle& jobs, U32 unit)
+void GlSamplerHandle::bind(GlCommandBufferHandle& commands, U32 unit)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlSamplerHandle m_sampler;
 		U32 m_unit;
 
-		Job(GlSamplerHandle& sampler, U32 unit)
+		Command(GlSamplerHandle& sampler, U32 unit)
 			: m_sampler(sampler), m_unit(unit)
 		{}
 
-		void operator()(GlJobChain*)
+		void operator()(GlCommandBuffer*)
 		{
 			m_sampler._get().bind(m_unit);
 		}
 	};
 
 	ANKI_ASSERT(isCreated());
-	jobs._pushBackNewJob<Job>(*this, unit);
+	commands._pushBackNewCommand<Command>(*this, unit);
 }
 
 //==============================================================================
-void GlSamplerHandle::setFilter(GlJobChainHandle& jobs, Filter filter)
+void GlSamplerHandle::setFilter(GlCommandBufferHandle& commands, Filter filter)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlSamplerHandle m_sampler;
 		GlSamplerHandle::Filter m_filter;
 
-		Job(const GlSamplerHandle& sampler, GlSamplerHandle::Filter filter)
+		Command(const GlSamplerHandle& sampler, GlSamplerHandle::Filter filter)
 			: m_sampler(sampler), m_filter(filter)
 		{}
 
-		void operator()(GlJobChain*)
+		void operator()(GlCommandBuffer*)
 		{
 			m_sampler._get().setFilter(m_filter);
 		}
 	};
 
 	ANKI_ASSERT(isCreated());
-	jobs._pushBackNewJob<Job>(*this, filter);
+	commands._pushBackNewCommand<Command>(*this, filter);
 }
 
 //==============================================================================
 void GlSamplerHandle::setParameter(
-	GlJobChainHandle& jobs, GLenum param, GLint value)
+	GlCommandBufferHandle& commands, GLenum param, GLint value)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GlSamplerHandle m_sampler;
 		GLenum m_param;
 		GLint m_value;
 
-		Job(GlSamplerHandle& sampler, GLenum param, GLint value)
+		Command(GlSamplerHandle& sampler, GLenum param, GLint value)
 			: m_sampler(sampler), m_param(param), m_value(value)
 		{}
 
-		void operator()(GlJobChain*)
+		void operator()(GlCommandBuffer*)
 		{
 			m_sampler._get().setParameter(m_param, m_value);
 		}
 	};
 
 	ANKI_ASSERT(isCreated());
-	jobs._pushBackNewJob<Job>(*this, param, value);
+	commands._pushBackNewCommand<Command>(*this, param, value);
 }
 
 //==============================================================================
-void GlSamplerHandle::bindDefault(GlJobChainHandle& jobs, U32 unit)
+void GlSamplerHandle::bindDefault(GlCommandBufferHandle& commands, U32 unit)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		U32 m_unit;
 
-		Job(U32 unit)
+		Command(U32 unit)
 			: m_unit(unit)
 		{}
 
-		void operator()(GlJobChain*)
+		void operator()(GlCommandBuffer*)
 		{
 			GlSampler::unbind(m_unit);
 		}
 	};
 
-	jobs._pushBackNewJob<Job>(unit);
+	commands._pushBackNewCommand<Command>(unit);
 }
 
 } // end namespace anki

@@ -13,7 +13,7 @@
 namespace anki {
 
 //==============================================================================
-class VisibilityTestTask: public ThreadpoolTask
+class VisibilityTestTask: public Threadpool::Task
 {
 public:
 	U m_nodesCount = 0;
@@ -25,7 +25,7 @@ public:
 
 	/// Test a frustum component
 	void test(SceneNode& testedNode, Bool isLight, 
-		ThreadId threadId, U threadsCount)
+		U32 threadId, PtrSize threadsCount)
 	{
 		ANKI_ASSERT(isLight == 
 			(testedNode.tryGetComponent<LightComponent>() != nullptr));
@@ -155,7 +155,7 @@ public:
 	}
 
 	/// Do the tests
-	void operator()(ThreadId threadId, U threadsCount)
+	void operator()(U32 threadId, PtrSize threadsCount)
 	{
 		test(*frustumableSn, false, threadId, threadsCount);
 	}
@@ -170,7 +170,7 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	//
 	// Do the tests in parallel
 	//
-	Threadpool& threadPool = ThreadpoolSingleton::get();
+	Threadpool& threadPool = scene._getThreadpool();
 	VisibilityTestTask jobs[Threadpool::MAX_THREADS];
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
@@ -254,10 +254,9 @@ void doVisibilityTests(SceneNode& fsn, SceneGraph& scene,
 	threadPool.assignNewTask(0, &dsjob);
 
 	// The rest of the jobs are dummy
-	DummyThreadpoolTask dummyjobs[Threadpool::MAX_THREADS];
 	for(U i = 1; i < threadPool.getThreadsCount(); i++)
 	{
-		threadPool.assignNewTask(i, &dummyjobs[i]);
+		threadPool.assignNewTask(i, nullptr);
 	}
 
 	// Sort the renderables in the main thread

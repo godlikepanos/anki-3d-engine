@@ -12,13 +12,10 @@
 namespace anki {
 
 //==============================================================================
-NativeWindow::~NativeWindow()
-{}
-
-//==============================================================================
-void NativeWindow::create(NativeWindowInitializer& init)
+void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 {
-	m_impl.reset(new NativeWindowImpl);
+	m_alloc = alloc;
+	m_impl = m_alloc.newInstance<NativeWindowImpl>();
 
 	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS 
 		| SDL_INIT_GAMECONTROLLER) != 0)
@@ -113,7 +110,7 @@ void NativeWindow::create(NativeWindowInitializer& init)
 //==============================================================================
 void NativeWindow::destroy()
 {
-	if(m_impl.get())
+	if(m_impl != nullptr)
 	{
 		if(m_impl->m_context)
 		{
@@ -126,7 +123,7 @@ void NativeWindow::destroy()
 		}
 	}
 
-	m_impl.reset();
+	m_alloc.deleteInstance(m_impl);
 }
 
 //==============================================================================

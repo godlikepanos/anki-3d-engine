@@ -18,7 +18,7 @@ namespace anki {
 /// A GL drawcall for elements
 class GlDrawcallElements
 {
-	friend class GlDrawElementsJob;
+	friend class GlDrawElementsCommand;
 
 public:
 	/// Indirect structure
@@ -94,7 +94,7 @@ public:
 	}
 
 	/// Execute the drawcall
-	void draw(GlJobChainHandle& jobs);
+	void draw(GlCommandBufferHandle& commands);
 
 private:
 	class IndirectView
@@ -128,14 +128,14 @@ private:
 		IndirectView m_indirect;
 	};
 
-	/// Execute the job. Called by the server
+	/// Execute the command. Called by the server
 	void exec();
 };
 
 /// A GL drawcall for arrays
 class GlDrawcallArrays
 {
-	friend class GlDrawArraysJob;
+	friend class GlDrawArraysCommand;
 
 public:
 	/// Indirect structure
@@ -197,7 +197,7 @@ public:
 	}
 
 	/// Execute the drawcall
-	void draw(GlJobChainHandle& jobs);
+	void draw(GlCommandBufferHandle& commands);
 
 private:
 	/// The GL primitive type (eg GL_POINTS). Need to set it
@@ -221,7 +221,7 @@ private:
 	/// Indirect buffer stride
 	U32 m_stride;
 
-	/// Execute the job. Called by the server
+	/// Execute the command. Called by the server
 	void exec();
 };
 

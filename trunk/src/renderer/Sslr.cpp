@@ -43,8 +43,8 @@ void Sslr::init(const ConfigSet& initializer)
 		m_reflectionFrag->getGlProgram());
 
 	// Sampler
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 	m_depthMapSampler = GlSamplerHandle(jobs);
 	m_depthMapSampler.setFilter(jobs, GlSamplerHandle::Filter::NEAREST);
 
@@ -78,7 +78,7 @@ void Sslr::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Sslr::run(GlJobChainHandle& jobs)
+void Sslr::run(GlCommandBufferHandle& jobs)
 {
 	ANKI_ASSERT(m_enabled);
 

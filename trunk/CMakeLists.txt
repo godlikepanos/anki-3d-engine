@@ -115,10 +115,12 @@ endif()
 set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
 
 # SSE
-if(LINUX OR MACOS OR WINDOWS)
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -msse4 ")
-else()
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -mfpu=neon ")
+if(ANKI_ENABLE_SIMD)
+	if(LINUX OR MACOS OR WINDOWS)
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -msse4 ")
+	else()
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -mfpu=neon ")
+	endif()
 endif()
 
 if(${ANKI_BUILD_TYPE} STREQUAL "Debug")

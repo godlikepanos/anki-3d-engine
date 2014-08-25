@@ -6,9 +6,8 @@
 #ifndef ANKI_CORE_APP_H
 #define ANKI_CORE_APP_H
 
-#include "anki/Config.h"
-#include "anki/util/Singleton.h"
-#include "anki/util/StringList.h"
+#include "anki/util/Allocator.h"
+#include "anki/util/String.h"
 #if ANKI_OS == ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
 #endif
@@ -19,69 +18,98 @@ namespace anki {
 extern android_app* gAndroidApp;
 #endif
 
+// Forward
+class Config;
+class Threadpool;
+class NativeWindow;
+class Input;
+class GlDevice;
+class MainRenderer;
+class SceneManager;
+class ScriptManager;
+
 /// The core class of the engine.
-///
-/// - It initializes the window
-/// - it holds the global state and thus it parses the command line arguments
-/// - It manipulates the main loop timer
 class App
 {
 public:
-	App()
-	{}
+	App(const Config& config, 
+		AllocAlignedCallback allocCb, void* allocCbUserData);
+
 	~App()
-	{}
+	{
+		// TODO
+	}
 
-	/// Initialize the app
-	void init();
-
-	/// @name Accessors
-	/// @{
 	F32 getTimerTick() const
 	{
-		return timerTick;
+		return m_timerTick;
 	}
-	F32& getTimerTick()
-	{
-		return timerTick;
-	}
+
 	void setTimerTick(const F32 x)
 	{
-		timerTick = x;
+		m_timerTick = x;
 	}
 
 	const String& getSettingsPath() const
 	{
-		return settingsPath;
+		return m_settingsPath;
 	}
 
 	const String& getCachePath() const
 	{
-		return cachePath;
+		return m_cachePath;
 	}
-	/// @}
 
-	/// What it does:
-	/// - Destroy the window
-	/// - call exit()
+	AllocAlignedCallback getAllocationCallback() const
+	{
+		return m_allocCb;
+	}
+
+	void* getAllocationCallbackData() const
+	{
+		return m_allocCbData;
+	}
+
+	Threadpool& getThreadpool()
+	{
+		return m_threadpool;
+	}
+
+	/// TODO
 	void quit(int code);
 
 	/// Run the main loop
 	void mainLoop();
 
-	static void printAppInfo();
-
 private:
-	/// The path that holds the configuration
-	String settingsPath;
-	/// This is used as a cache
-	String cachePath;
-	F32 timerTick;
+	// Allocation
+	AllocAlignedCallback m_allocCb;
+	void* m_allocCbData;
+	HeapAllocator<U8> m_heapAlloc;
+
+	// Sybsystems
+	GlDevice* m_gl = nullptr;
+	NativeWindow* m_window = nullptr;
+	Input* m_input = nullptr;
+	MainRenderer* m_renderer = nullptr;
+	SceneGraph* m_scene = nullptr;
+	ScriptManager* m_script = nullptr;
+
+	// Misc
+	Threadpool* m_threadpool = nullptr;
+	String m_settingsPath; ///< The path that holds the configuration
+	String m_cachePath; ///< This is used as a cache
+	F32 m_timerTick;
+
+	/// Initialize the app
+	void init();
 
 	void initDirs();
+
+	static void printAppInfo();
 };
 
-typedef Singleton<App> AppSingleton;
+using AppSingleton = SingletonInit<App>;
 
 } // end namespace anki
 

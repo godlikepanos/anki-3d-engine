@@ -8,9 +8,11 @@
 
 #include "anki/util/StringList.h"
 #include "anki/Gl.h"
+#include "anki/resource/Common.h"
 
 namespace anki {
 
+// Forward
 class XmlElement;
 
 /// Creator of shader programs. This class parses between
@@ -23,34 +25,45 @@ class XmlElement;
 class MaterialProgramCreator
 {
 public:
+	using MPString = BasicString<char, TempResourceAllocator<char>>; 
+	using MPStringList = BasicStringList<char, TempResourceAllocator<char>>; 
+
 	class Input
 	{
 	public:
-		std::string m_name;
-		std::string m_type;
-		StringList m_value;
+		Input(TempResourceAllocator<char>& alloc)
+		:	m_name(alloc),
+			m_type(alloc),
+			m_value(alloc),
+			m_line(alloc)
+		{}
+
+		MPString m_name;
+		MPString m_type;
+		MPStringList m_value;
 		Bool8 m_constant;
 		U16 m_arraySize;
 		Bool8 m_instanced = false;
 
-		std::string m_line;
+		MPStringList m_line;
 		GLbitfield m_shaderDefinedMask = 0; ///< Defined in
 		GLbitfield m_shaderReferencedMask = 0; ///< Referenced by
 		Bool8 m_inBlock = true;
 	};
 
-	explicit MaterialProgramCreator(const XmlElement& pt);
+	explicit MaterialProgramCreator(const XmlElement& pt, 
+		TempResourceAllocator<U8>& alloc);
 
 	~MaterialProgramCreator();
 
 	/// Get the shader program source code
-	std::string getProgramSource(U shaderType) const
+	MPString getProgramSource(U shaderType) const
 	{
 		ANKI_ASSERT(m_source[shaderType].size() > 0);
 		return m_source[shaderType].join("\n");
 	}
 
-	const Vector<Input>& getInputVariables() const
+	const TempResourceVector<Input>& getInputVariables() const
 	{
 		return m_inputs;
 	}
@@ -61,9 +74,10 @@ public:
 	}
 
 private:
-	Array<StringList, 5> m_source; ///< Shader program final source
-	Vector<Input> m_inputs;
-	StringList m_uniformBlock;
+	TempResourceAllocator<char> m_alloc; 
+	Array<MPStringList, 5> m_source; ///< Shader program final source
+	TempResourceVector<Input> m_inputs;
+	MPStringList m_uniformBlock;
 	GLbitfield m_uniformBlockReferencedMask = 0;
 	Bool8 m_instanced = false;
 	U32 m_texBinding = 0;

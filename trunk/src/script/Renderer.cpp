@@ -46,8 +46,6 @@ ANKI_SCRIPT_WRAP(MainRenderer)
 	ANKI_LUA_CLASS_END()
 }
 
-ANKI_SCRIPT_WRAP_SINGLETON(MainRendererSingleton)
-
 } // end namespace anki
 
 

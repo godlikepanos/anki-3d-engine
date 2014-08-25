@@ -6,7 +6,6 @@
 #include "anki/renderer/Tiler.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ProgramResource.h"
-#include "anki/core/Threadpool.h"
 #include "anki/scene/Camera.h"
 #include <sstream>
 
@@ -24,7 +23,7 @@ namespace anki {
 	ANKI_ASSERT(U(p_ - &m_tiler->m_allPlanes[0]) < m_tiler->m_allPlanes.size());
 
 /// Job that updates the left, right, top and buttom tile planes
-struct UpdatePlanesPerspectiveCameraJob: ThreadpoolTask
+struct UpdatePlanesPerspectiveCameraJob: Threadpool::Task
 {
 	Tiler* m_tiler = nullptr;
 	PerspectiveCamera* m_cam = nullptr;
@@ -33,7 +32,7 @@ struct UpdatePlanesPerspectiveCameraJob: ThreadpoolTask
 	const PixelArray* m_pixels = nullptr;
 #endif
 
-	void operator()(ThreadId threadId, U threadsCount)
+	void operator()(U32 threadId, PtrSize threadsCount)
 	{
 #if ANKI_TILER_ENABLE_GPU
 		ANKI_ASSERT(tiler && cam && pixels);
@@ -243,8 +242,8 @@ void Tiler::initInternal(Renderer* r)
 	m_r->createRenderTarget(m_r->getTilesCount().x(), m_r->getTilesCount().y(),
 		GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, 1, m_rt);
 
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	m_fb = GlFramebufferHandle(jobs, {{m_rt, GL_COLOR_ATTACHMENT0}});
 
@@ -327,7 +326,7 @@ void Tiler::updateTiles(Camera& cam)
 	Bool frustumChanged =
 		camTimestamp >= m_planes4UpdateTimestamp || m_prevCam != &cam;
 
-	Threadpool& threadPool = ThreadpoolSingleton::get();
+	Threadpool& threadPool = m_r->_getThreadpool();
 
 	switch(cam.getCameraType())
 	{

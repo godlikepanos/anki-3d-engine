@@ -37,7 +37,7 @@ public:
 	/// GL with a huge job chain
 	static const U32 JOB_CHAINS_COUNT = 2;
 		
-	Renderer();
+	Renderer(Threadpool* threadpool);
 
 	~Renderer();
 
@@ -187,6 +187,11 @@ public:
 	{
 		return m_defaultFb;
 	}
+
+	Threadpool& _getThreadpool() 
+	{
+		return *m_threadpool;
+	}
 	/// @}
 
 	/// Init the renderer given an initialization class
@@ -195,7 +200,7 @@ public:
 
 	/// This function does all the rendering stages and produces a final FAI
 	void render(SceneGraph& scene, 
-		Array<GlJobChainHandle, JOB_CHAINS_COUNT>& jobs);
+		Array<GlCommandBufferHandle, JOB_CHAINS_COUNT>& jobs);
 
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
@@ -209,9 +214,9 @@ public:
 
 	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no
 	/// longer support quads
-	void drawQuad(GlJobChainHandle& jobs);
+	void drawQuad(GlCommandBufferHandle& jobs);
 
-	void drawQuadInstanced(GlJobChainHandle& jobs, U32 primitiveCount);
+	void drawQuadInstanced(GlCommandBufferHandle& jobs, U32 primitiveCount);
 
 	/// Get the LOD given the distance of an object from the camera
 	F32 calculateLod(F32 distance) const
@@ -274,9 +279,11 @@ private:
 	U m_framesNum; ///< Frame number
 
 	/// String to pass to the material shaders
-	std::string m_shaderPostProcessorString;
+	String m_shaderPostProcessorString;
 
 	GlFramebufferHandle m_defaultFb;
+
+	Threadpool* m_threadpool;
 
 	void computeProjectionParams(const Mat4& projMat);
 };

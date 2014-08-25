@@ -109,7 +109,7 @@ private:
 	~Pps();
 
 	void init(const ConfigSet& initializer);
-	void run(GlJobChainHandle& jobs);
+	void run(GlCommandBufferHandle& jobs);
 
 	void initInternal(const ConfigSet& initializer);
 };

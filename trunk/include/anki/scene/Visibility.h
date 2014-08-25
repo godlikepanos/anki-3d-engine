@@ -11,7 +11,6 @@
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/RenderComponent.h"
-#include "anki/core/Threadpool.h"
 #include "anki/util/NonCopyable.h"
 
 namespace anki {
@@ -131,14 +130,14 @@ public:
 };
 
 /// Thread job to short scene nodes by distance
-class DistanceSortJob: public ThreadpoolTask					
+class DistanceSortJob: public Threadpool::Task					
 {
 public:
 	U32 m_nodesCount;
 	VisibilityTestResults::Container::iterator m_nodes;
 	Vec4 m_origin;
 
-	void operator()(ThreadId /*threadId*/, U /*threadsCount*/)
+	void operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
 	{
 		DistanceSortFunctor comp;
 		comp.m_origin = m_origin;
@@ -147,13 +146,13 @@ public:
 };
 
 /// Thread job to short renderable scene nodes by material
-class MaterialSortJob: public ThreadpoolTask
+class MaterialSortJob: public Threadpool::Task
 {
 public:
 	U32 m_nodesCount;
 	VisibilityTestResults::Container::iterator m_nodes;
 
-	void operator()(ThreadId /*threadId*/, U /*threadsCount*/)
+	void operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
 	{
 		std::sort(m_nodes, m_nodes + m_nodesCount, MaterialSortFunctor());
 	}

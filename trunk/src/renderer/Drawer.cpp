@@ -30,7 +30,7 @@ public:
 	Ptr<const FrustumComponent> m_fr;
 	Ptr<RenderableDrawer> m_drawer;
 	U8 m_instanceCount;
-	GlJobChainHandle m_jobs;
+	GlCommandBufferHandle m_jobs;
 
 	F32 m_flod;
 
@@ -229,8 +229,8 @@ RenderableDrawer::RenderableDrawer(Renderer* r)
 	: m_r(r)
 {
 	// Create the uniform buffer
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 	m_uniformBuff = GlBufferHandle(jobs, GL_UNIFORM_BUFFER, 
 		MAX_UNIFORM_BUFFER_SIZE,
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
@@ -260,7 +260,7 @@ void RenderableDrawer::setupUniforms(
 	// Find a place to write the uniforms
 	//
 	U8* prevUniformPtr = m_uniformPtr;
-	alignRoundUp(GlManagerSingleton::get().getBufferOffsetAlignment(
+	alignRoundUp(GlDeviceSingleton::get().getBufferOffsetAlignment(
 		m_uniformBuff.getTarget()), m_uniformPtr);
 	U diff = m_uniformPtr - prevUniformPtr;
 
@@ -368,7 +368,7 @@ void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 
 //==============================================================================
 void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
-	GlJobChainHandle& jobs)
+	GlCommandBufferHandle& jobs)
 {
 	// Set some numbers
 	m_stage = stage;
@@ -387,7 +387,7 @@ void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
 void RenderableDrawer::finishDraw()
 {
 	// Release the job chain
-	m_jobs = GlJobChainHandle();
+	m_jobs = GlCommandBufferHandle();
 
 	if(m_uniformsUsedSize > MAX_UNIFORM_BUFFER_SIZE / 3)
 	{

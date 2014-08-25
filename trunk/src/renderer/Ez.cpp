@@ -19,7 +19,7 @@ void Ez::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Ez::run(GlJobChainHandle& jobs)
+void Ez::run(GlCommandBufferHandle& jobs)
 {
 	ANKI_ASSERT(m_enabled);
 

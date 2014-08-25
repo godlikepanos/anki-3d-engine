@@ -120,7 +120,7 @@ public:
 	MaterialVariableTemplate(
 		const GlProgramVariable* glvar, Bool instanced, 
 		const TData* x, U32 size)
-		: MaterialVariable(glvar, instanced)
+	:	MaterialVariable(glvar, instanced)
 	{
 		setupVisitable(this);
 

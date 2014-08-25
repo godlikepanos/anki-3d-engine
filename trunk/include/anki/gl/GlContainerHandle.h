@@ -7,7 +7,7 @@
 #define ANKI_GL_GL_CONTAINER_HANDLE_H
 
 #include "anki/gl/GlHandle.h"
-#include "anki/gl/GlManager.h"
+#include "anki/gl/GlDevice.h"
 
 namespace anki {
 
@@ -30,7 +30,7 @@ protected:
 
 		if(state == GlHandleState::TO_BE_CREATED)
 		{
-			Base::_getManager()._getJobManager().syncClientServer();
+			Base::_getManager()._getQueue().syncClientServer();
 			ANKI_ASSERT(Base::_getState() > GlHandleState::TO_BE_CREATED);
 		}
 	}

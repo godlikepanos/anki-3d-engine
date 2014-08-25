@@ -41,22 +41,24 @@ public:
 	GlTextureHandle();
 
 	/// Create the texture
-	explicit GlTextureHandle(GlJobChainHandle& jobs, const Initializer& init);
+	explicit GlTextureHandle(GlCommandBufferHandle& commands, 
+		const Initializer& init);
 
 	~GlTextureHandle();
 	/// @}
 
 	/// Bind to a unit
-	void bind(GlJobChainHandle& jobs, U32 unit);
+	void bind(GlCommandBufferHandle& commands, U32 unit);
 
 	/// Change filtering type
-	void setFilter(GlJobChainHandle& jobs, Filter filter);
+	void setFilter(GlCommandBufferHandle& commands, Filter filter);
 
 	/// Generate mips
-	void generateMipmaps(GlJobChainHandle& jobs);
+	void generateMipmaps(GlCommandBufferHandle& commands);
 
 	/// Set a texture parameter
-	void setParameter(GlJobChainHandle& jobs, GLenum param, GLint value);
+	void setParameter(
+		GlCommandBufferHandle& commands, GLenum param, GLint value);
 
 	/// Get depth
 	U32 getDepth() const;
@@ -83,22 +85,22 @@ public:
 	GlSamplerHandle();
 
 	/// Create the sampler
-	explicit GlSamplerHandle(GlJobChainHandle& jobs);
+	explicit GlSamplerHandle(GlCommandBufferHandle& commands);
 
 	~GlSamplerHandle();
 	/// @}
 
 	/// Bind to a unit
-	void bind(GlJobChainHandle& jobs, U32 unit);
+	void bind(GlCommandBufferHandle& commands, U32 unit);
 
 	/// Change filtering type
-	void setFilter(GlJobChainHandle& jobs, Filter filter);
+	void setFilter(GlCommandBufferHandle& commands, Filter filter);
 
 	/// Set a texture parameter
-	void setParameter(GlJobChainHandle& jobs, GLenum param, GLint value);
+	void setParameter(GlCommandBufferHandle& commands, GLenum param, GLint value);
 
 	/// Bind default sampler
-	static void bindDefault(GlJobChainHandle& jobs, U32 unit);
+	static void bindDefault(GlCommandBufferHandle& commands, U32 unit);
 };
 
 /// @}

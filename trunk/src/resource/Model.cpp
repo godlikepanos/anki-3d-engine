@@ -38,7 +38,7 @@ static const Array<Attrib, (U)VertexAttribute::COUNT - 1> attribs = {{
 void ModelPatchBase::createVertexDesc(
 	const GlProgramHandle& prog,
 	const Mesh& mesh,
-	GlJobChainHandle& vertexJobs)
+	GlCommandBufferHandle& vertexJobs)
 {
 	GlBufferHandle vbo;
 	U32 size;
@@ -90,7 +90,7 @@ void ModelPatchBase::createVertexDesc(
 //==============================================================================
 void ModelPatchBase::getRenderingDataSub(
 	const RenderingKey& key, 
-	GlJobChainHandle& vertJobs, 
+	GlCommandBufferHandle& vertJobs, 
 	GlProgramPipelineHandle& ppline,
 	const U8* subMeshIndexArray, 
 	U32 subMeshIndexCount,
@@ -192,8 +192,8 @@ void ModelPatchBase::create()
 			prog = ppline.getAttachedProgram(GL_VERTEX_SHADER);
 			
 			// Create vert descriptor
-			GlManager& gl = GlManagerSingleton::get();
-			GlJobChainHandle vertJobs(&gl);
+			GlDevice& gl = GlDeviceSingleton::get();
+			GlCommandBufferHandle vertJobs(&gl);
 			createVertexDesc(prog, *mesh, vertJobs);
 
 			m_vertJobs[getVertexDescIdx(key)] = vertJobs;

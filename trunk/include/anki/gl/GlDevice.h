@@ -3,12 +3,12 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_MANAGER_H
-#define ANKI_GL_GL_MANAGER_H
+#ifndef ANKI_GL_GL_DEVICE_H
+#define ANKI_GL_GL_DEVICE_H
 
 #include "anki/gl/GlCommon.h"
 #include "anki/util/Singleton.h"
-#include "anki/gl/GlJobManager.h"
+#include "anki/gl/GlQueue.h"
 
 namespace anki {
 
@@ -16,17 +16,17 @@ namespace anki {
 /// @{
 
 /// Common stuff for all GL contexts
-class GlManager
+class GlDevice
 {
 public:
-	/// @see GlJobManager::start
-	GlManager(
+	/// @see GlQueue::start
+	GlDevice(
 		GlCallback makeCurrentCallback, void* context,
 		GlCallback swapBuffersCallback, void* swapBuffersCbData,
 		Bool registerDebugMessages,
 		AllocAlignedCallback alloc, void* allocUserData);
 
-	~GlManager()
+	~GlDevice()
 	{
 		destroy();
 	}
@@ -47,26 +47,26 @@ public:
 		return m_alloc;
 	}
 
-	GlJobManager& _getJobManager() 
+	GlQueue& _getQueue() 
 	{
-		return *m_jobManager;
+		return *m_queue;
 	}
 
-	const GlJobManager& _getJobManager() const
+	const GlQueue& _getQueue() const
 	{
-		return *m_jobManager;
+		return *m_queue;
 	}
 	/// @}
 
 private:
-	GlJobManager* m_jobManager;
+	GlQueue* m_queue;
 	HeapAllocator<U8> m_alloc; ///< Keep it last to be deleted last
 
 	void destroy();
 };
 
 /// Singleton for common GL stuff
-typedef SingletonInit<GlManager> GlManagerSingleton;
+typedef SingletonInit<GlDevice> GlDeviceSingleton;
 
 /// @}
 

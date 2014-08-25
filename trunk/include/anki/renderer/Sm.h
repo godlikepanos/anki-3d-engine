@@ -72,7 +72,7 @@ private:
 
 	void init(const ConfigSet& initializer);
 	void run(Light* shadowCasters[], U32 shadowCastersCount, 
-		GlJobChainHandle& jobs);
+		GlCommandBufferHandle& jobs);
 
 	/// Get max shadow casters
 	U32 getMaxLightsCount()
@@ -80,13 +80,13 @@ private:
 		return m_sms.size();
 	}
 
-	void prepareDraw(GlJobChainHandle& jobs);
-	void finishDraw(GlJobChainHandle& jobs);
+	void prepareDraw(GlCommandBufferHandle& jobs);
+	void finishDraw(GlCommandBufferHandle& jobs);
 
 	/// Find the best shadowmap for that light
 	Shadowmap& bestCandidate(Light& light);
 
-	Shadowmap* doLight(Light& light, GlJobChainHandle& jobs);
+	Shadowmap* doLight(Light& light, GlCommandBufferHandle& jobs);
 };
 
 /// @}

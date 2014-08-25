@@ -12,7 +12,7 @@ namespace anki {
 
 // Forward
 class GlClientBuffer;
-class GlJobChainHandle;
+class GlCommandBufferHandle;
 
 /// @addtogroup opengl_other
 /// @{
@@ -28,12 +28,12 @@ public:
 	GlClientBufferHandle();
 
 	/// Create the buffer using preallocated memory or memory from the chain
-	/// @param chain The job chain this client memory belongs to
+	/// @param chain The command buffer this client memory belongs to
 	/// @param size The size of the buffer
 	/// @param preallocatedMem Preallocated memory. Can be nullptr
 	/// @return The address of the new memory
 	GlClientBufferHandle(
-		GlJobChainHandle& chain, PtrSize size, void* preallocatedMem);
+		GlCommandBufferHandle& chain, PtrSize size, void* preallocatedMem);
 
 	~GlClientBufferHandle();
 	/// @}

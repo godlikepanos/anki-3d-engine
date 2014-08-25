@@ -49,7 +49,7 @@ void ModelPatchNode::buildRendering(RenderingBuildData& data)
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
 	U32 drawcallCount;
 
-	GlJobChainHandle vertJobs;
+	GlCommandBufferHandle vertJobs;
 	GlProgramPipelineHandle ppline;
 
 	m_modelPatch->getRenderingDataSub(
@@ -71,7 +71,7 @@ void ModelPatchNode::buildRendering(RenderingBuildData& data)
 
 	// Set jobs
 	ppline.bind(data.m_jobs);
-	data.m_jobs.pushBackOtherJobChain(vertJobs);
+	data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
 	dc.draw(data.m_jobs);
 }
 

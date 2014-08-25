@@ -44,7 +44,8 @@ ANKI_TEST(Memory, ChainMemoryPool)
 		const U size = 8;
 		ChainMemoryPool pool(
 			allocAligned, nullptr,
-			size, size + 1, ChainMemoryPool::MULTIPLY, 2, 1);
+			size, size + 1, 
+			ChainMemoryPool::ChunkGrowMethod::MULTIPLY, 2, 1);
 
 		void* mem = pool.allocate(5, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
@@ -62,7 +63,8 @@ ANKI_TEST(Memory, ChainMemoryPool)
 		const U size = sizeof(PtrSize) + 10;
 		ChainMemoryPool pool(
 			allocAligned, nullptr,
-			size, size * 2, ChainMemoryPool::MULTIPLY, 2, 1);
+			size, size * 2, 
+			ChainMemoryPool::ChunkGrowMethod::MULTIPLY, 2, 1);
 
 		void* mem = pool.allocate(size, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);

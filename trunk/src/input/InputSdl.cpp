@@ -12,17 +12,13 @@
 namespace anki {
 
 //==============================================================================
-Input::~Input()
-{}
-
-//==============================================================================
 void Input::init(NativeWindow* nativeWindow)
 {
 	ANKI_ASSERT(nativeWindow);
 	m_nativeWindow = nativeWindow;
 
 	// Init native
-	m_impl.reset(new InputImpl);
+	m_impl = m_nativeWindow->_getAllocator().newInstance<InputImpl>();
 
 	//impl
 	m_impl->m_sdlToAnki[SDLK_RETURN] = KeyCode::RETURN;
@@ -263,6 +259,15 @@ void Input::init(NativeWindow* nativeWindow)
 
 	// Call once to clear first events
 	handleEvents();
+}
+
+//==============================================================================
+void Input::destroy()
+{
+	if(m_impl != nullptr)
+	{
+		m_nativeWindow->_getAllocator().deleteInstance(m_impl);
+	}
 }
 
 //==============================================================================

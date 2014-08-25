@@ -13,8 +13,8 @@ namespace anki {
 void BlurringRenderingPass::initBlurring(
 	Renderer& r, U width, U height, U samples, F32 blurringDistance)
 {
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	Array<std::stringstream, 2> pps;
 
@@ -57,7 +57,7 @@ void BlurringRenderingPass::initBlurring(
 }
 
 //==============================================================================
-void BlurringRenderingPass::runBlurring(Renderer& r, GlJobChainHandle& jobs)
+void BlurringRenderingPass::runBlurring(Renderer& r, GlCommandBufferHandle& jobs)
 {
 	m_dirs[(U)DirectionEnum::VERTICAL].m_rt.bind(jobs, 1); // H pass input
 	m_dirs[(U)DirectionEnum::HORIZONTAL].m_rt.bind(jobs, 0); // V pass input

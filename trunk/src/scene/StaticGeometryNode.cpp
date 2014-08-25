@@ -80,7 +80,7 @@ void StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
 	U32 drawCount;
-	GlJobChainHandle vertJobs;
+	GlCommandBufferHandle vertJobs;
 	GlProgramPipelineHandle ppline;
 
 	m_modelPatch->getRenderingDataSub(
@@ -89,7 +89,7 @@ void StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 		indicesCountArray, indicesOffsetArray, drawCount);
 
 	ppline.bind(data.m_jobs);
-	data.m_jobs.pushBackOtherJobChain(vertJobs);
+	data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
 
 	if(drawCount == 1)
 	{

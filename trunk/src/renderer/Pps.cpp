@@ -42,8 +42,8 @@ void Pps::initInternal(const ConfigSet& initializer)
 	m_sslr.init(initializer);
 
 	// FBO
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8, GL_RGB,
 		GL_UNSIGNED_BYTE, 1, m_rt);
@@ -84,7 +84,7 @@ void Pps::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Pps::run(GlJobChainHandle& jobs)
+void Pps::run(GlCommandBufferHandle& jobs)
 {
 	ANKI_ASSERT(m_enabled);
 

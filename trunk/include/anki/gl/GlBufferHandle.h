@@ -13,7 +13,7 @@ namespace anki {
 // Forward
 class GlBuffer;
 class GlClientBufferHandle;
-class GlJobChainHandle;
+class GlCommandBufferHandle;
 
 /// @addtogroup opengl_containers
 /// @{
@@ -22,22 +22,19 @@ class GlJobChainHandle;
 class GlBufferHandle: public GlContainerHandle<GlBuffer>
 {
 public:
-	typedef GlContainerHandle<GlBuffer> Base;
+	using Base = GlContainerHandle<GlBuffer>;
 
-	/// @name Constructors/Destructor
-	/// @{
 	GlBufferHandle();
 
 	/// Create the buffer with data
-	explicit GlBufferHandle(GlJobChainHandle& jobs, GLenum target, 
+	explicit GlBufferHandle(GlCommandBufferHandle& commands, GLenum target, 
 		GlClientBufferHandle& data, GLbitfield flags);
 
 	/// Create the buffer without data
-	explicit GlBufferHandle(GlJobChainHandle& jobs, GLenum target, 
+	explicit GlBufferHandle(GlCommandBufferHandle& commands, GLenum target, 
 		PtrSize size, GLbitfield flags);
 
 	~GlBufferHandle();
-	/// @}
 
 	/// Get buffer size. It may serialize 
 	PtrSize getSize() const;
@@ -50,26 +47,26 @@ public:
 
 	/// Write data to the buffer
 	void write(
-		GlJobChainHandle& jobs, 
+		GlCommandBufferHandle& commands, 
 		GlClientBufferHandle& data, PtrSize readOffset,
 		PtrSize writeOffset, PtrSize size);
 
 	/// Bind to the state as uniform/shader storage buffer
-	void bindShaderBuffer(GlJobChainHandle& jobs, U32 bindingPoint)
+	void bindShaderBuffer(GlCommandBufferHandle& commands, U32 bindingPoint)
 	{
-		bindShaderBufferInternal(jobs, -1, -1, bindingPoint);
+		bindShaderBufferInternal(commands, -1, -1, bindingPoint);
 	}
 
 	/// Bind to the state as uniform/shader storage buffer
-	void bindShaderBuffer(GlJobChainHandle& jobs,
+	void bindShaderBuffer(GlCommandBufferHandle& commands,
 		U32 offset, U32 size, U32 bindingPoint)
 	{
-		bindShaderBufferInternal(jobs, offset, size, bindingPoint);
+		bindShaderBufferInternal(commands, offset, size, bindingPoint);
 	}
 
 	/// Bind to the state as vertex buffer
 	void bindVertexBuffer(
-		GlJobChainHandle& jobs, 
+		GlCommandBufferHandle& commands, 
 		U32 elementSize,
 		GLenum type,
 		Bool normalized,
@@ -78,10 +75,10 @@ public:
 		U32 attribLocation);
 
 	/// Bind to the state as index buffer
-	void bindIndexBuffer(GlJobChainHandle& jobs);
+	void bindIndexBuffer(GlCommandBufferHandle& commands);
 
 private:
-	void bindShaderBufferInternal(GlJobChainHandle& jobs,
+	void bindShaderBufferInternal(GlCommandBufferHandle& commands,
 		I32 offset, I32 size, U32 bindingPoint);
 };
 

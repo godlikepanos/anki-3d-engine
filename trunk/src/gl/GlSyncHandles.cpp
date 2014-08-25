@@ -5,25 +5,25 @@
 
 #include "anki/gl/GlSyncHandles.h"
 #include "anki/gl/GlSync.h"
-#include "anki/gl/GlJobChainHandle.h"
-#include "anki/gl/GlManager.h"
+#include "anki/gl/GlCommandBufferHandle.h"
+#include "anki/gl/GlDevice.h"
 #include "anki/core/Counters.h"
 
 
 namespace anki {
 
 //==============================================================================
-/// Wait job
-class GlClientSyncWaitJob: public GlJob
+/// Wait command
+class GlClientSyncWaitCommand: public GlCommand
 {
 public:
 	GlClientSyncHandle m_sync;	
 
-	GlClientSyncWaitJob(const GlClientSyncHandle& s)
+	GlClientSyncWaitCommand(const GlClientSyncHandle& s)
 		: m_sync(s)
 	{}
 
-	void operator()(GlJobChain*)
+	void operator()(GlCommandBuffer*)
 	{
 		ANKI_COUNTER_START_TIMER(GL_SERVER_WAIT_TIME);
 		m_sync._get().wait();
@@ -36,15 +36,15 @@ GlClientSyncHandle::GlClientSyncHandle()
 {}
 
 //==============================================================================
-GlClientSyncHandle::GlClientSyncHandle(GlJobChainHandle& jobs)
+GlClientSyncHandle::GlClientSyncHandle(GlCommandBufferHandle& commands)
 {
-	auto alloc = jobs._getGlobalAllocator();
+	auto alloc = commands._getGlobalAllocator();
 
 	typedef GlHandleDefaultDeleter<GlClientSync, GlGlobalHeapAllocator<U8>>
 		Deleter;
 
 	*static_cast<Base*>(this) = Base(
-		&jobs._getJobManager().getManager(), alloc, Deleter());
+		&commands._getQueue().getManager(), alloc, Deleter());
 }
 
 //==============================================================================
@@ -52,9 +52,9 @@ GlClientSyncHandle::~GlClientSyncHandle()
 {}
 
 //==============================================================================
-void GlClientSyncHandle::sync(GlJobChainHandle& jobs)
+void GlClientSyncHandle::sync(GlCommandBufferHandle& commands)
 {
-	jobs._pushBackNewJob<GlClientSyncWaitJob>(*this);
+	commands._pushBackNewCommand<GlClientSyncWaitCommand>(*this);
 }
 
 //==============================================================================
