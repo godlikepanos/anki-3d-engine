@@ -3,53 +3,50 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_JOB_CHAIN_HANDLE_H
-#define ANKI_GL_GL_JOB_CHAIN_HANDLE_H
+#ifndef ANKI_GL_GL_COMMAND_BUFFER_HANDLE_H
+#define ANKI_GL_GL_COMMAND_BUFFER_HANDLE_H
 
 #include "anki/gl/GlHandle.h"
-#include "anki/gl/GlJobChain.h"
+#include "anki/gl/GlCommandBuffer.h"
 
 namespace anki {
 
 // Forward
-class GlManager;
+class GlDevice;
 class GlTextureHandle;
 
 /// @addtogroup opengl_other
 /// @{
 
-/// Job chain handle
-class GlJobChainHandle: public GlHandle<GlJobChain>
+/// Command buffer handle
+class GlCommandBufferHandle: public GlHandle<GlCommandBuffer>
 {
 public:
-	typedef GlHandle<GlJobChain> Base;
+	using Base = GlHandle<GlCommandBuffer>;
 	using UserCallback = void(*)(void*);
 
-	/// @name Constructors/Destructor
-	/// @{
-	GlJobChainHandle();
+	GlCommandBufferHandle();
 
-	/// Create job chain
-	explicit GlJobChainHandle(GlManager* gl, 
-		GlJobChainInitHints hints = GlJobChainInitHints());
+	/// Create command buffer
+	explicit GlCommandBufferHandle(GlDevice* gl, 
+		GlCommandBufferInitHints hints = GlCommandBufferInitHints());
 
-	~GlJobChainHandle();
-	/// @}
+	~GlCommandBufferHandle();
 
-	/// Add a user job at the end of the chain
-	void pushBackUserJob(UserCallback callback, void* data);
+	/// Add a user command at the end of the command buffer
+	void pushBackUserCommand(UserCallback callback, void* data);
 
-	/// Add another job chain for execution
-	void pushBackOtherJobChain(GlJobChainHandle& jobs);
+	/// Add another command buffer for execution
+	void pushBackOtherCommandBuffer(GlCommandBufferHandle& commands);
 
-	/// Flush chain for deffered deletion
+	/// Flush command buffer for deffered deletion
 	void flush();
 
 	/// Flush and wait to finish
 	void finish();
 
 	/// Compute initialization hints
-	GlJobChainInitHints computeInitHints() const
+	GlCommandBufferInitHints computeInitHints() const
 	{
 		return _get().computeInitHints();
 	}
@@ -137,7 +134,7 @@ public:
 
 	/// @privatesection
 	/// @{
-	GlJobChainAllocator<U8> _getAllocator() const
+	GlCommandBufferAllocator<U8> _getAllocator() const
 	{
 		return _get().getAllocator();
 	}
@@ -147,27 +144,28 @@ public:
 		return _get().getGlobalAllocator();
 	}
 
-	GlJobManager& _getJobManager()
+	GlQueue& _getQueue()
 	{
-		return _get().getJobManager();
+		return _get().getQueue();
 	}
 
-	const GlJobManager& _getJobManager() const
+	const GlQueue& _getQueue() const
 	{
-		return _get().getJobManager();
+		return _get().getQueue();
 	}
 
-	/// Add a new job to the list
-	template<typename TJob, typename... TArgs>
-	void _pushBackNewJob(TArgs&&... args)
+	/// Add a new command to the list
+	template<typename TCommand, typename... TArgs>
+	void _pushBackNewCommand(TArgs&&... args)
 	{
-		_get().template pushBackNewJob<TJob>(std::forward<TArgs>(args)...);
+		_get().template pushBackNewCommand<TCommand>(
+			std::forward<TArgs>(args)...);
 	}
 
-	/// Execute all jobs
-	void _executeAllJobs()
+	/// Execute all commands
+	void _executeAllCommands()
 	{
-		_get().executeAllJobs();
+		_get().executeAllCommands();
 	}
 	/// @}
 };

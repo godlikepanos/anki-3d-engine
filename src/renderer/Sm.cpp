@@ -54,8 +54,8 @@ void Sm::init(const ConfigSet& initializer)
 		sminit.m_filterType = GlTextureHandle::Filter::NEAREST;
 	}
 
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	m_sm2DArrayTex = GlTextureHandle(jobs, sminit);
 
@@ -79,7 +79,7 @@ void Sm::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Sm::prepareDraw(GlJobChainHandle& jobs)
+void Sm::prepareDraw(GlCommandBufferHandle& jobs)
 {
 	// disable color & blend & enable depth test
 
@@ -95,7 +95,7 @@ void Sm::prepareDraw(GlJobChainHandle& jobs)
 }
 
 //==============================================================================
-void Sm::finishDraw(GlJobChainHandle& jobs)
+void Sm::finishDraw(GlCommandBufferHandle& jobs)
 {
 	m_r->getSceneDrawer().finishDraw();
 
@@ -106,7 +106,7 @@ void Sm::finishDraw(GlJobChainHandle& jobs)
 
 //==============================================================================
 void Sm::run(Light* shadowCasters[], U32 shadowCastersCount, 
-	GlJobChainHandle& jobs)
+	GlCommandBufferHandle& jobs)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -162,7 +162,7 @@ Sm::Shadowmap& Sm::bestCandidate(Light& light)
 }
 
 //==============================================================================
-Sm::Shadowmap* Sm::doLight(Light& light, GlJobChainHandle& jobs)
+Sm::Shadowmap* Sm::doLight(Light& light, GlCommandBufferHandle& jobs)
 {
 	Shadowmap& sm = bestCandidate(light);
 

@@ -15,10 +15,10 @@ namespace anki {
 /// @{
 
 /// Allocate aligned memory
-void* mallocAligned(PtrSize size, PtrSize alignmentBytes) throw();
+void* mallocAligned(PtrSize size, PtrSize alignmentBytes) noexcept;
 
 /// Free aligned memory
-void freeAligned(void* ptr) throw();
+void freeAligned(void* ptr) noexcept;
 
 /// The function signature of a memory allocation/deallocation. 
 /// See allocAligned function for the explanation of arguments
@@ -36,7 +36,7 @@ using AllocAlignedCallback = void* (*)(void*, void*, PtrSize, PtrSize);
 /// @return On allocation mode it will return the newelly allocated block or
 ///         nullptr on error. On deallocation mode returns nullptr
 void* allocAligned(
-	void* userData, void* ptr, PtrSize size, PtrSize alignment) throw();
+	void* userData, void* ptr, PtrSize size, PtrSize alignment) noexcept;
 
 /// A dummy interface to match the StackMemoryPool and ChainMemoryPool 
 /// interfaces in order to be used by the same allocator template
@@ -50,12 +50,12 @@ public:
 	///       that pool will call that constructor and that happens a lot.
 	///       If that constructor does some actual job then we have a problem.
 	HeapMemoryPool()
-		: m_impl(nullptr)
+	:	m_impl(nullptr)
 	{}
 
 	/// Copy constructor. It's not copying any data
 	HeapMemoryPool(const HeapMemoryPool& other)
-		: m_impl(nullptr)
+	:	m_impl(nullptr)
 	{
 		*this = other;
 	}
@@ -76,10 +76,10 @@ public:
 	HeapMemoryPool& operator=(const HeapMemoryPool& other);
 
 	/// Allocate memory
-	void* allocate(PtrSize size, PtrSize alignment) throw();
+	void* allocate(PtrSize size, PtrSize alignment) noexcept;
 
 	/// Free memory
-	Bool free(void* ptr) throw();
+	Bool free(void* ptr) noexcept;
 
 	/// Return number of allocations
 	U32 getAllocationsCount() const;
@@ -109,12 +109,12 @@ public:
 
 	/// Default constructor
 	StackMemoryPool()
-		: m_impl(nullptr)
+	:	m_impl(nullptr)
 	{}
 
 	/// Copy constructor. It's not copying any data
 	StackMemoryPool(const StackMemoryPool& other)
-		: m_impl(nullptr)
+	:	m_impl(nullptr)
 	{
 		*this = other;
 	}
@@ -143,14 +143,14 @@ public:
 	/// @param size The size to allocate
 	/// @param alignmentBytes The alignment of the returned address
 	/// @return The allocated memory or nullptr on failure
-	void* allocate(PtrSize size, PtrSize alignmentBytes) throw();
+	void* allocate(PtrSize size, PtrSize alignmentBytes) noexcept;
 
 	/// Free memory in StackMemoryPool. If the ptr is not the last allocation
 	/// then nothing happens and the method returns false. The operation is
 	/// threadsafe
 	/// @param[in, out] ptr Memory block to deallocate
 	/// @return True if the deallocation actually happened and false otherwise
-	Bool free(void* ptr) throw();
+	Bool free(void* ptr) noexcept;
 
 	/// Reinit the pool. All existing allocated memory will be lost
 	void reset();
@@ -194,7 +194,7 @@ public:
 	/// Chunk allocation method. Defines the size a newely created chunk should
 	/// have compared to the last created. Used to grow chunks over the time of
 	/// allocations
-	enum ChunkAllocationStepMethod
+	enum class ChunkGrowMethod: U8
 	{
 		FIXED, ///< All chunks have the same size
 		MULTIPLY, ///< Next chuck's size will be old_chuck_size * a_value
@@ -203,12 +203,12 @@ public:
 
 	/// Default constructor
 	ChainMemoryPool()
-		: m_impl(nullptr)
+	:	m_impl(nullptr)
 	{}
 
 	/// Copy constructor. It's not copying any data
 	ChainMemoryPool(const ChainMemoryPool& other)
-		: m_impl(nullptr)
+	:	m_impl(nullptr)
 	{
 		*this = other;
 	}
@@ -227,7 +227,8 @@ public:
 		AllocAlignedCallback alloc, void* allocUserData,
 		PtrSize initialChunkSize,
 		PtrSize maxChunkSize,
-		ChunkAllocationStepMethod chunkAllocStepMethod = MULTIPLY, 
+		ChunkGrowMethod chunkAllocStepMethod = 
+			ChunkGrowMethod::MULTIPLY, 
 		PtrSize chunkAllocStep = 2, 
 		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
@@ -245,13 +246,13 @@ public:
 	/// @param size The size to allocate
 	/// @param alignmentBytes The alignment of the returned address
 	/// @return The allocated memory or nullptr on failure
-	void* allocate(PtrSize size, PtrSize alignmentBytes) throw();
+	void* allocate(PtrSize size, PtrSize alignmentBytes) noexcept;
 
 	/// Free memory. If the ptr is not the last allocation of the chunk
 	/// then nothing happens and the method returns false
 	/// @param[in, out] ptr Memory block to deallocate
 	/// @return True if the deallocation actually happened and false otherwise
-	Bool free(void* ptr) throw();
+	Bool free(void* ptr) noexcept;
 
 	/// Get the number of users for this pool
 	U32 getUsersCount() const;

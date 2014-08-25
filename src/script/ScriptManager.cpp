@@ -59,7 +59,6 @@ ScriptManager::ScriptManager(HeapAllocator<U8>& alloc)
 	// Renderer
 	ANKI_SCRIPT_CALL_WRAP(Dbg);
 	ANKI_SCRIPT_CALL_WRAP(MainRenderer);
-	ANKI_SCRIPT_CALL_WRAP(MainRendererSingleton);
 
 	// Scene
 	ANKI_SCRIPT_CALL_WRAP(MoveComponent);
@@ -67,7 +66,6 @@ ScriptManager::ScriptManager(HeapAllocator<U8>& alloc)
 	ANKI_SCRIPT_CALL_WRAP(ModelNode);
 	ANKI_SCRIPT_CALL_WRAP(InstanceNode);
 	ANKI_SCRIPT_CALL_WRAP(SceneGraph);
-	ANKI_SCRIPT_CALL_WRAP(SceneGraphSingleton);
 
 	ANKI_LOGI("Scripting engine initialized");
 }

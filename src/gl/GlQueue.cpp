@@ -3,16 +3,16 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gl/GlJobManager.h"
-#include "anki/gl/GlJobChain.h"
+#include "anki/gl/GlQueue.h"
+#include "anki/gl/GlCommandBuffer.h"
 #include "anki/gl/GlSyncHandles.h"
-#include "anki/gl/GlManager.h"
+#include "anki/gl/GlDevice.h"
 #include "anki/core/Logger.h"
 
 namespace anki {
 
 //==============================================================================
-GlJobManager::GlJobManager(GlManager* manager, 
+GlQueue::GlQueue(GlDevice* manager, 
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 	:	m_manager(manager), 
 		m_allocCb(allocCb),
@@ -25,15 +25,15 @@ GlJobManager::GlJobManager(GlManager* manager,
 }
 
 //==============================================================================
-GlJobManager::~GlJobManager()
+GlQueue::~GlQueue()
 {}
 
 //==============================================================================
-void GlJobManager::flushJobChain(GlJobChainHandle& jobs)
+void GlQueue::flushCommandChain(GlCommandBufferHandle& commands)
 {
-	jobs._get().makeImmutable();
+	commands._get().makeImmutable();
 
-#if !ANKI_JOB_MANAGER_DISABLE_ASYNC
+#if !ANKI_QUEUE_DISABLE_ASYNC
 	{
 		std::unique_lock<std::mutex> lock(m_mtx);
 
@@ -43,14 +43,14 @@ void GlJobManager::flushJobChain(GlJobChainHandle& jobs)
 				&m_error[0]);
 		}
 
-		// Set jobc
+		// Set commandc
 		U64 diff = m_tail - m_head;
 
 		if(diff < m_queue.size())
 		{
 			U64 idx = m_tail % m_queue.size();
 
-			m_queue[idx] = jobs;
+			m_queue[idx] = commands;
 			++m_tail;
 		}
 		else
@@ -61,25 +61,25 @@ void GlJobManager::flushJobChain(GlJobChainHandle& jobs)
 
 	m_condVar.notify_one(); // Wake the thread
 #else
-	jobs._executeAllJobs();
+	commands._executeAllCommands();
 #endif
 }
 
 //==============================================================================
-void GlJobManager::finishJobChain(GlJobChainHandle& jobs)
+void GlQueue::finishCommandChain(GlCommandBufferHandle& commands)
 {
-#if !ANKI_JOB_MANAGER_DISABLE_ASYNC
-	flushJobChain(jobs);
+#if !ANKI_QUEUE_DISABLE_ASYNC
+	flushCommandChain(commands);
 
-	flushJobChain(m_syncJobs);
+	flushCommandChain(m_syncCommands);
 	m_sync.wait();
 #else
-	flushJobChain(jobs);
+	flushCommandChain(commands);
 #endif
 }
 
 //==============================================================================
-void GlJobManager::start(
+void GlQueue::start(
 	GlCallback makeCurrentCallback, void* context, 
 	GlCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerMessages)
@@ -96,26 +96,26 @@ void GlJobManager::start(
 	ANKI_ASSERT(swapBuffersCallback != nullptr);
 	m_swapBuffersCallback = swapBuffersCallback;
 	m_swapBuffersCbData = swapBuffersCbData;
-	m_swapBuffersJobs = GlJobChainHandle(m_manager);
-	m_swapBuffersJobs.pushBackUserJob(swapBuffersInternal, this);
+	m_swapBuffersCommands = GlCommandBufferHandle(m_manager);
+	m_swapBuffersCommands.pushBackUserCommand(swapBuffersInternal, this);
 
-#if !ANKI_JOB_MANAGER_DISABLE_ASYNC
+#if !ANKI_QUEUE_DISABLE_ASYNC
 	// Start thread
-	m_thread = std::thread(&GlJobManager::threadLoop, this);
+	m_thread = std::thread(&GlQueue::threadLoop, this);
 
-	// Create sync job chain
-	m_syncJobs = GlJobChainHandle(m_manager);
-	m_sync = GlClientSyncHandle(m_syncJobs);
-	m_sync.sync(m_syncJobs);
+	// Create sync command buffer
+	m_syncCommands = GlCommandBufferHandle(m_manager);
+	m_sync = GlClientSyncHandle(m_syncCommands);
+	m_sync.sync(m_syncCommands);
 #else
 	prepare();
 #endif
 }
 
 //==============================================================================
-void GlJobManager::stop()
+void GlQueue::stop()
 {
-#if !ANKI_JOB_MANAGER_DISABLE_ASYNC
+#if !ANKI_QUEUE_DISABLE_ASYNC
 	{
 		std::unique_lock<std::mutex> lock(m_mtx);
 		m_renderingThreadSignal = 1;
@@ -131,7 +131,7 @@ void GlJobManager::stop()
 }
 
 //==============================================================================
-void GlJobManager::prepare()
+void GlQueue::prepare()
 {
 	ANKI_ASSERT(m_makeCurrent && m_ctx);
 	(*m_makeCurrent)(m_ctx);
@@ -156,7 +156,7 @@ void GlJobManager::prepare()
 }
 
 //==============================================================================
-void GlJobManager::finish()
+void GlQueue::finish()
 {
 	// Iterate the queue and release the refcounts
 	for(U i = 0; i < m_queue.size(); i++)
@@ -167,7 +167,7 @@ void GlJobManager::finish()
 			m_queue[i]._get().makeExecuted();
 
 			// Release
-			m_queue[i] = GlJobChainHandle();
+			m_queue[i] = GlCommandBufferHandle();
 		}
 	}
 
@@ -180,15 +180,15 @@ void GlJobManager::finish()
 }
 
 //==============================================================================
-void GlJobManager::threadLoop()
+void GlQueue::threadLoop()
 {
-	setCurrentThreadName("anki_gl");
+	//setCurrentThreadName("anki_gl");
 
 	prepare();
 
 	while(1)
 	{
-		GlJobChainHandle jobc;
+		GlCommandBufferHandle commandc;
 
 		// Wait for something
 		{
@@ -206,17 +206,17 @@ void GlJobManager::threadLoop()
 			}
 
 			U64 idx = m_head % m_queue.size();
-			// Pop a job
-			jobc = m_queue[idx];
-			m_queue[idx] = GlJobChainHandle(); // Insert empty jobchain
+			// Pop a command
+			commandc = m_queue[idx];
+			m_queue[idx] = GlCommandBufferHandle(); // Insert empty cmd buffer
 
 			++m_head;
 		}
 
 		try
 		{
-			// Exec jobs of chain
-			jobc._executeAllJobs();
+			// Exec commands of chain
+			commandc._executeAllCommands();
 		}
 		catch(const std::exception& e)
 		{
@@ -229,19 +229,19 @@ void GlJobManager::threadLoop()
 }
 
 //==============================================================================
-void GlJobManager::syncClientServer()
+void GlQueue::syncClientServer()
 {
-#if !ANKI_JOB_MANAGER_DISABLE_ASYNC
-	flushJobChain(m_syncJobs);
+#if !ANKI_QUEUE_DISABLE_ASYNC
+	flushCommandChain(m_syncCommands);
 	m_sync.wait();
 #endif
 }
 
 //==============================================================================
-void GlJobManager::swapBuffersInternal(void* ptr)
+void GlQueue::swapBuffersInternal(void* ptr)
 {
 	ANKI_ASSERT(ptr);
-	GlJobManager& self = *reinterpret_cast<GlJobManager*>(ptr);
+	GlQueue& self = *reinterpret_cast<GlQueue*>(ptr);
 
 	self.m_swapBuffersCallback(self.m_swapBuffersCbData);
 
@@ -255,7 +255,7 @@ void GlJobManager::swapBuffersInternal(void* ptr)
 }
 
 //==============================================================================
-void GlJobManager::swapBuffers()
+void GlQueue::swapBuffers()
 {
 	// Wait for the rendering thread to finish swap buffers...
 	{
@@ -269,7 +269,7 @@ void GlJobManager::swapBuffers()
 	}
 
 	// ...and then flush a new swap buffers
-	flushJobChain(m_swapBuffersJobs);
+	flushCommandChain(m_swapBuffersCommands);
 }
 
 } // end namespace anki

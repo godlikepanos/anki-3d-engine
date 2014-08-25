@@ -33,7 +33,7 @@
 
 #include "anki/gl/GlOperations.h"
 
-#include "anki/gl/GlJobChainHandle.h"
-#include "anki/gl/GlManager.h"
+#include "anki/gl/GlCommandBufferHandle.h"
+#include "anki/gl/GlDevice.h"
 
 #endif

@@ -88,12 +88,12 @@ private:
 	~Hdr();
 
 	void init(const ConfigSet& initializer);
-	void run(GlJobChainHandle& jobs);
+	void run(GlCommandBufferHandle& jobs);
 
 	void initFb(GlFramebufferHandle& fb, GlTextureHandle& rt);
 	void initInternal(const ConfigSet& initializer);
 
-	void updateDefaultBlock(GlJobChainHandle& jobs);
+	void updateDefaultBlock(GlCommandBufferHandle& jobs);
 };
 
 /// @}

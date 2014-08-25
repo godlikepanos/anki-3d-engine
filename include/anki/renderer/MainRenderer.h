@@ -8,9 +8,11 @@
 
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/Deformer.h"
-#include "anki/util/Singleton.h"
 
 namespace anki {
+
+// Forward
+class App;
 
 /// @addtogroup renderer
 /// @{
@@ -19,7 +21,7 @@ namespace anki {
 class MainRenderer: public Renderer
 {
 public:
-	MainRenderer(const ConfigSet& initializer);
+	MainRenderer(App* app, const ConfigSet& initializer);
 
 	~MainRenderer();
 
@@ -36,7 +38,7 @@ private:
 	GlProgramPipelineHandle m_blitPpline;
 
 	/// Optimize job chain
-	Array<GlJobChainInitHints, JOB_CHAINS_COUNT> m_jobsInitHints; 
+	Array<GlCommandBufferInitHints, JOB_CHAINS_COUNT> m_jobsInitHints; 
 
 	/// The same as Renderer::init but with additional initialization.
 	/// @see Renderer::init
@@ -45,8 +47,6 @@ private:
 	void takeScreenshotTga(const char* filename);
 	void initGl();
 };
-
-typedef SingletonInit<MainRenderer> MainRendererSingleton;
 
 /// @}
 

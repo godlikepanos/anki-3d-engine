@@ -112,8 +112,8 @@ void Mesh::createBuffers(const MeshLoader& loader)
 	}
 
 	// Create GL buffers
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 	
 	GlClientBufferHandle clientVertBuff(jobs, vbosize, &buff[0]);
 	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, clientVertBuff, 0);

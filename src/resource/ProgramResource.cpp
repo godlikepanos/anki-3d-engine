@@ -25,8 +25,8 @@ void ProgramResource::load(const char* filename, const char* extraSrc)
 	ProgramPrePreprocessor pars(filename);
 	std::string source = extraSrc + pars.getShaderSource();
 
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 	GlClientBufferHandle glsource(jobs, source.length() + 1, nullptr);
 
 	strcpy((char*)glsource.getBaseAddress(), &source[0]);

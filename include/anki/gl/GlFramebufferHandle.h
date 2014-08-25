@@ -12,7 +12,7 @@
 namespace anki {
 
 // Forward
-class GlJobChainHandle;
+class GlCommandBufferHandle;
 
 /// @addtogroup opengl_other
 /// @{
@@ -24,31 +24,28 @@ public:
 	using Base = GlContainerHandle<GlFramebuffer>;
 	using Attachment = GlFramebuffer::Attachment;
 
-	/// @name Contructors/Destructor
-	/// @{
 	GlFramebufferHandle();
 
 	/// Create a framebuffer
 	explicit GlFramebufferHandle(
-		GlJobChainHandle& jobs,
+		GlCommandBufferHandle& commands,
 		const std::initializer_list<Attachment>& attachments);
 
 	~GlFramebufferHandle();
-	/// @}
 
 	/// Bind it to the state
-	/// @param jobs The job chain
+	/// @param commands The command buffer
 	/// @param invalidate If true invalidate the FB after binding it
-	void bind(GlJobChainHandle& jobs, Bool invalidate);
+	void bind(GlCommandBufferHandle& commands, Bool invalidate);
 
 	/// Blit another framebuffer to this
-	/// @param[in, out] jobs The job chain
+	/// @param[in, out] commands The command buffer
 	/// @param[in] b The sorce framebuffer
 	/// @param[in] sourceRect The source rectangle
 	/// @param[in] destRect The destination rectangle
 	/// @param attachmentMask The attachments to blit
 	/// @param linear Perform linean filtering
-	void blit(GlJobChainHandle& jobs,
+	void blit(GlCommandBufferHandle& commands,
 		const GlFramebufferHandle& b, 
 		const Array<U32, 4>& sourceRect,
 		const Array<U32, 4>& destRect, 

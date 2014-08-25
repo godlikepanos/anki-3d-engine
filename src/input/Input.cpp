@@ -9,12 +9,12 @@
 namespace anki {
 
 //==============================================================================
-void Input::reset(void)
+void Input::reset()
 {
-	memset(&m_keys[0], 0, m_keys.getSize() * sizeof(U32));
-	memset(&m_mouseBtns[0], 0, m_mouseBtns.getSize() * sizeof(U32));
+	std::memset(&m_keys[0], 0, sizeof(m_keys));
+	std::memset(&m_mouseBtns[0], 0, sizeof(m_mouseBtns));
 	m_mousePosNdc = Vec2(0.0);
-	memset(&m_events[0], 0, sizeof(m_events));
+	std::memset(&m_events[0], 0, sizeof(m_events));
 }
 
 } // end namespace anki

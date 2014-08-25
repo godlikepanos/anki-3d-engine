@@ -8,13 +8,15 @@
 #include "anki/renderer/Deformer.h"
 #include "anki/util/File.h"
 #include "anki/core/Counters.h"
+#include "anki/core/App.h"
 #include <cstdlib>
 #include <cstdio>
 
 namespace anki {
 
 //==============================================================================
-MainRenderer::MainRenderer(const ConfigSet& initializer)
+MainRenderer::MainRenderer(App* app, const ConfigSet& initializer)
+:	Renderer(&app->getThreadpool())
 {
 	init(initializer);
 }
@@ -53,13 +55,13 @@ void MainRenderer::render(SceneGraph& scene)
 {
 	ANKI_COUNTER_START_TIMER(MAIN_RENDERER_TIME);
 
-	GlManager& gl = GlManagerSingleton::get();
-	Array<GlJobChainHandle, JOB_CHAINS_COUNT> jobs;
-	GlJobChainHandle& lastJobs = jobs[JOB_CHAINS_COUNT - 1];
+	GlDevice& gl = GlDeviceSingleton::get();
+	Array<GlCommandBufferHandle, JOB_CHAINS_COUNT> jobs;
+	GlCommandBufferHandle& lastJobs = jobs[JOB_CHAINS_COUNT - 1];
 
 	for(U i = 0; i < JOB_CHAINS_COUNT; i++)
 	{
-		jobs[i] = GlJobChainHandle(&gl, m_jobsInitHints[i]);
+		jobs[i] = GlCommandBufferHandle(&gl, m_jobsInitHints[i]);
 	}
 
 	Renderer::render(scene, jobs);
@@ -111,8 +113,8 @@ void MainRenderer::render(SceneGraph& scene)
 void MainRenderer::initGl()
 {
 	// get max texture units
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	jobs.enableCulling(true);
 	jobs.setCullFace(GL_BACK);

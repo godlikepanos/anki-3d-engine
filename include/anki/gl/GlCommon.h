@@ -31,7 +31,7 @@
 #	error "See file"
 #endif
 
-#define ANKI_JOB_MANAGER_DISABLE_ASYNC 0
+#define ANKI_QUEUE_DISABLE_ASYNC 0
 
 namespace anki {
 
@@ -42,9 +42,9 @@ class GlProgramBlock;
 /// @addtogroup opengl_private
 /// @{
 
-/// The type of the allocator of GlJobChain
+/// The type of the allocator of GlCommandBuffer
 template<typename T>
-using GlJobChainAllocator = ChainAllocator<T>;
+using GlCommandBufferAllocator = ChainAllocator<T>;
 
 /// The type of the allocator for heap allocations
 template<typename T>
@@ -203,12 +203,12 @@ private:
 	void writeClientMemorySanityChecks(void* buffBase, U32 buffSize,
 		const T arr[], U32 size) const;
 
-	/// Do the actual job of setClientMemory
+	/// Do the actual command of setClientMemory
 	template<typename T>
 	void writeClientMemoryInternal(
 		void* buff, U32 buffSize, const T arr[], U32 size) const;
 
-	/// Do the actual job of setClientMemory for matrices
+	/// Do the actual command of setClientMemory for matrices
 	template<typename Mat, typename Vec>
 	void writeClientMemoryInternalMatrix(void* buff, U32 buffSize,
 		const Mat arr[], U32 size) const;

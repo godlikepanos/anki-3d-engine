@@ -15,7 +15,7 @@
 
 namespace anki {
 
-struct InputImpl;
+class InputImpl;
 class NativeWindow;
 
 /// Handle the input and other events
@@ -24,22 +24,27 @@ class NativeWindow;
 class Input
 {
 public:
-	enum Event
+	enum class Event: U8
 	{
 		WINDOW_FOCUS_LOST_EVENT,
 		WINDOW_FOCUS_GAINED_EVENT,
 		WINDOW_CLOSED_EVENT,
-		EVENTS_COUNT
+		COUNT
 	};
 
-	Input()
+	Input(NativeWindow* nativeWindow)
 	{
 		reset();
+		init(nativeWindow);
 	}
-	~Input();
 
-	/// @name Acessors
-	/// @{
+	~Input()
+	{
+		destroy();
+		ANKI_ASSERT(m_impl == nullptr);
+		ANKI_ASSERT(m_nativeWindow == nullptr);
+	}
+
 	U getKey(KeyCode i) const
 	{
 		return m_keys[static_cast<U>(i)];
@@ -58,12 +63,8 @@ public:
 	/// Get the times an event was triggered and resets the counter
 	U getEvent(Event eventId) const
 	{
-		return m_events[eventId];
+		return m_events[static_cast<U>(eventId)];
 	}
-	/// @}
-
-	/// Initialize the platform's input system
-	void init(NativeWindow* nativeWindow);
 
 	/// Reset the keys and mouse buttons
 	void reset();
@@ -88,10 +89,11 @@ public:
 	/// Add a new event
 	void addEvent(Event eventId)
 	{
-		++m_events[eventId];
+		++m_events[static_cast<U>(eventId)];
 	}
 
 private:
+	InputImpl* m_impl = nullptr;
 	NativeWindow* m_nativeWindow = nullptr;
 
 	/// @name Keys and btns
@@ -101,7 +103,7 @@ private:
 	/// - 0 times: unpressed
 	/// - 1 times: pressed once
 	/// - >1 times: Kept pressed 'n' times continuously
-	Array<U32, U(KeyCode::COUNT)> m_keys;
+	Array<U32, static_cast<U>(KeyCode::COUNT)> m_keys;
 
 	/// Mouse btns. Supporting 3 btns & wheel. @see keys
 	Array<U32, 8> m_mouseBtns;
@@ -111,12 +113,14 @@ private:
 
 	Array<U8, EVENTS_COUNT> m_events;
 
-	std::shared_ptr<InputImpl> m_impl;
-
 	Bool8 m_lockCurs = false;
-};
 
-typedef Singleton<Input> InputSingleton;
+	/// Initialize the platform's input system
+	void init(NativeWindow* nativeWindow);
+
+	/// Destroy the platform specific input system
+	void destroy();
+};
 
 } // end namespace anki
 

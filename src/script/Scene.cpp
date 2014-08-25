@@ -81,6 +81,4 @@ ANKI_SCRIPT_WRAP(SceneGraph)
 	ANKI_LUA_CLASS_END()
 }
 
-ANKI_SCRIPT_WRAP_SINGLETON(SceneGraphSingleton)
-
 } // end namespace anki

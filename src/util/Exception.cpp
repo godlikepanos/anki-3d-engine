@@ -102,7 +102,10 @@ char* Exception::synthErr(const char* error, const char* file,
 	U len = strlen(error) + strlen(file) + 5 + strlen(func) + 5 + 10;
 
 	char* out = (char*)mallocAligned(len + 1, 1);
-	I olen = snprintf(out, len + 1, "(%s:%lu %s) %s", file, line, func, error);
+	
+	I olen = snprintf(out, len + 1, "(%s:%d %s) %s", file, 
+		static_cast<int>(line), func, error);
+	
 	ANKI_ASSERT(olen >= 0 && (U)olen <= len);
 	(void)olen;
 

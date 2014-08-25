@@ -3,13 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gl/GlManager.h"
+#include "anki/gl/GlDevice.h"
 #include "anki/core/Timestamp.h"
 
 namespace anki {
 
 //==============================================================================
-GlManager::GlManager(
+GlDevice::GlDevice(
 	GlCallback makeCurrentCallback, void* context,
 	GlCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerDebugMessages,
@@ -18,10 +18,10 @@ GlManager::GlManager(
 	m_alloc = HeapAllocator<U8>(HeapMemoryPool(alloc, allocUserData));
 
 	// Start the server
-	m_jobManager = m_alloc.newInstance<GlJobManager>(
+	m_queue = m_alloc.newInstance<GlQueue>(
 		this, alloc, allocUserData);
 
-	m_jobManager->start(makeCurrentCallback, context, 
+	m_queue->start(makeCurrentCallback, context, 
 		swapBuffersCallback, swapBuffersCbData, 
 		registerDebugMessages);
 
@@ -29,31 +29,31 @@ GlManager::GlManager(
 }
 
 //==============================================================================
-void GlManager::destroy()
+void GlDevice::destroy()
 {
-	if(m_jobManager)
+	if(m_queue)
 	{
-		m_jobManager->stop();
-		m_alloc.deleteInstance(m_jobManager);
+		m_queue->stop();
+		m_alloc.deleteInstance(m_queue);
 	}
 }
 
 //==============================================================================
-void GlManager::syncClientServer()
+void GlDevice::syncClientServer()
 {
-	m_jobManager->syncClientServer();
+	m_queue->syncClientServer();
 }
 
 //==============================================================================
-void GlManager::swapBuffers()
+void GlDevice::swapBuffers()
 {
-	m_jobManager->swapBuffers();
+	m_queue->swapBuffers();
 }
 
 //==============================================================================
-PtrSize GlManager::getBufferOffsetAlignment(GLenum target)
+PtrSize GlDevice::getBufferOffsetAlignment(GLenum target)
 {
-	const GlState& state = m_jobManager->getState();
+	const GlState& state = m_queue->getState();
 
 	if(target == GL_UNIFORM_BUFFER)
 	{

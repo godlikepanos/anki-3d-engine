@@ -6,10 +6,8 @@
 #ifndef ANKI_CORE_STDIN_LISTENER_H
 #define ANKI_CORE_STDIN_LISTENER_H
 
-#include "anki/util/Singleton.h"
 #include "anki/util/String.h"
-#include <thread>
-#include <mutex>
+#include "anki/util/Thread.h"
 #include <queue>
 
 namespace anki {
@@ -23,22 +21,21 @@ namespace anki {
 class StdinListener
 {
 public:
+	StdinListener();
+
+	~StdinListener();
+
 	/// Get line from the queue or return an empty string
 	String getLine();
 
-	/// Start reading
-	void start();
-
 private:
 	std::queue<String> m_q;
-	std::mutex m_mtx; ///< Protect the queue
-	std::thread m_thrd; ///< The thread
+	Mutex m_mtx; ///< Protect the queue
+	Thread m_thrd; ///< The thread
+	Bool8 m_quit = false;
 
-	void workingFunc(); ///< The thread function
+	static I workingFunc(Thread::Info& info); ///< The thread function
 };
-
-/// Singleton
-typedef Singleton<StdinListener> StdinListenerSingleton;
 
 /// @}
 

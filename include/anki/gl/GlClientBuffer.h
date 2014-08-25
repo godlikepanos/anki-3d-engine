@@ -18,15 +18,12 @@ namespace anki {
 class GlClientBuffer: public NonCopyable
 {
 public:
-	/// @name Constructors/Destructor
-	/// @{
-
 	/// Default constructor
 	GlClientBuffer()
 	{}
 
 	/// Create the buffer and allocate memory for the chain's allocator
-	GlClientBuffer(const GlJobChainAllocator<U8>& chainAlloc, PtrSize size)
+	GlClientBuffer(const GlCommandBufferAllocator<U8>& chainAlloc, PtrSize size)
 		: m_alloc(chainAlloc)
 	{
 		ANKI_ASSERT(size > 0);
@@ -54,7 +51,6 @@ public:
 	{
 		destroy();
 	}
-	/// @}
 
 	/// Move
 	GlClientBuffer& operator=(GlClientBuffer&& b)
@@ -70,7 +66,7 @@ public:
 		if(!m_preallocated)
 		{
 			m_alloc = b.m_alloc;
-			b.m_alloc = GlJobChainAllocator<U8>();
+			b.m_alloc = GlCommandBufferAllocator<U8>();
 		}
 		return *this;
 	}
@@ -90,7 +86,7 @@ public:
 	}
 
 	/// Return the allocator
-	GlJobChainAllocator<U8> getAllocator() const
+	GlCommandBufferAllocator<U8> getAllocator() const
 	{
 		ANKI_ASSERT(!m_preallocated);
 		return m_alloc;
@@ -99,7 +95,7 @@ public:
 private:
 	void* m_ptr = nullptr;
 	U32 m_size = 0;
-	GlJobChainAllocator<U8> m_alloc;
+	GlCommandBufferAllocator<U8> m_alloc;
 	Bool8 m_preallocated;
 
 	void destroy()

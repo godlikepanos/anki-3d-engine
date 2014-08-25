@@ -11,39 +11,53 @@
 namespace anki {
 
 //==============================================================================
-void StdinListener::workingFunc()
+StdinListener::StdinListener()
+:	m_thrd("anki_stdin")
 {
-	setCurrentThreadName("anki_stdin");
+	m_thrd.start(this, workingFunc);	
+}
+
+//==============================================================================
+StdinListener::~StdinListener()
+{
+	m_quit = true;
+	// TODO write(0, );
+	m_thrd.join();
+}
+
+//==============================================================================
+I StdinListener::workingFunc(Thread::Info& info)
+{
+	StdinListener& self = *reinterpret_cast<StdinListener*>(info.m_userData);
 	Array<char, 512> buff;
 
-	while(1)
+	while(!self.m_quit)
 	{
-		int m = read(0, &buff[0], sizeof(buff));
+		I m = read(0, &buff[0], sizeof(buff));
 		buff[m] = '\0';
-		{
-			std::lock_guard<std::mutex> lock(m_mtx);
-			m_q.push(String(&buff[0]));
-		}
+		self.m_mtx.lock();
+		self.m_q.push(String(&buff[0]));
+		self.m_mtx.unlock();
 	}
+
+	return 1;
 }
 
 //==============================================================================
 String StdinListener::getLine()
 {
 	String ret;
-	std::lock_guard<std::mutex> lock(m_mtx);
+	m_mtx.lock();
+	
 	if(!m_q.empty())
 	{
 		ret = m_q.front();
 		m_q.pop();
 	}
-	return ret;
-}
 
-//==============================================================================
-void StdinListener::start()
-{
-	m_thrd = std::thread(&StdinListener::workingFunc, this);
+	m_mtx.unlock();
+
+	return ret;
 }
 
 } // end namespace anki

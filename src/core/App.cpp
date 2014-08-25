@@ -24,6 +24,8 @@
 #	include <android_native_app_glue.h>
 #endif
 
+// Sybsystems
+
 namespace anki {
 
 #if ANKI_OS == ANKI_OS_ANDROID
@@ -32,34 +34,49 @@ android_app* gAndroidApp = nullptr;
 #endif
 
 //==============================================================================
-/// Bad things signal handler
-/*static void handler(int sig)
+App::App(AllocAlignedCallback allocCb, void* allocCbUserData)
+:	m_allocCb(allocCb),
+	m_allocCbData(allocCbUserData),
+	m_heapAlloc(HeapMemoryPool(allocCbUserData, allocCb))
 {
-	void *array[10];
-	size_t size;
-
-	// get void*'s for all entries on the stack
-	size = backtrace(array, 10);
-
-	// print out all the frames to stderr
-	fprintf(stderr, "Error: signal %d:\n", sig);
-	backtrace_symbols_fd(array, size, 2);
-	exit(1);
-}*/
+	init(config);
+}
 
 //==============================================================================
-void App::init()
+void App::init(const Config& config)
 {
-	setCurrentThreadName("anki_main");
-	// Install signal handlers
-	/*signal(SIGSEGV, handler);
-	signal(SIGBUS, handler);
-	signal(SIGFPE, handler);*/
-
 	printAppInfo();
 	initDirs();
 
 	timerTick = 1.0 / 60.0; // in sec. 1.0 / period
+
+	// Logger
+	LoggerSingleton::init(
+		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER, m_heapAlloc);
+
+	// Window
+	NativeWindow::Initializer nwinit;
+	nwinit.m_width = config.get("width");
+	nwinit.m_height = config.get("height");
+	nwinit.m_majorVersion = config.get("glmajor");
+	nwinit.m_minorVersion = config.get("glminor");
+	nwinit.m_depthBits = 0;
+	nwinit.m_stencilBits = 0;
+	nwinit.m_fullscreenDesktopRez = config.get("fullscreen");
+	nwinit.m_debugContext = ANKI_DEBUG;
+	m_window = m_heapAlloc.newInstance<NativeWindow>(nwinit, m_heapAlloc);	
+	Context context = m_window->getCurrentContext();
+	m_window->contextMakeCurrent(nullptr);
+
+	// Input
+	m_input = m_heapAlloc.newInstance<Input>(m_window);
+
+	// Threadpool
+	m_threadpool = m_heapAlloc.newInstance<Threadpool>(getCpuCoresCount());
+
+	// Scene
+	m_scene = m_heapAlloc.newInstance<SceneGraph>(
+		m_allocCb, m_allocCbData, m_threadpool);
 }
 
 //==============================================================================
@@ -142,6 +159,7 @@ void App::printAppInfo()
 //==============================================================================
 void App::mainLoop()
 {
+#if 0
 	ANKI_LOGI("Entering main loop");
 
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
@@ -184,6 +202,7 @@ void App::mainLoop()
 	// Counters end
 	ANKI_COUNTER_STOP_TIMER_INC(FPS);
 	ANKI_COUNTERS_FLUSH();
+#endif
 }
 
 } // end namespace anki

@@ -18,10 +18,7 @@ namespace anki {
 class GlBuffer: public GlObject
 {
 public:
-	typedef GlObject Base;
-
-	/// @name Constructors/Destructor
-	/// @{
+	using Base = GlObject;
 
 	/// Default
 	GlBuffer()
@@ -51,13 +48,10 @@ public:
 	{
 		destroy();
 	}
-	/// @}
-
+	
 	/// Move
 	GlBuffer& operator=(GlBuffer&& b);
 
-	/// @name Accessors
-	/// @{
 	GLenum getTarget() const
 	{
 		ANKI_ASSERT(isCreated());
@@ -84,7 +78,6 @@ public:
 		ANKI_ASSERT(m_persistentMapping);
 		return m_persistentMapping;
 	}
-	/// @}
 
 	/// Bind
 	void bind() const

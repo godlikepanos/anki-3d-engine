@@ -66,7 +66,7 @@ public:
 	/// offsets and counts
 	void getRenderingDataSub(
 		const RenderingKey& key, 
-		GlJobChainHandle& vertJobs,
+		GlCommandBufferHandle& vertJobs,
 		GlProgramPipelineHandle& ppline,
 		const U8* subMeshIndicesArray, 
 		U32 subMeshIndicesCount,
@@ -76,7 +76,7 @@ public:
 
 protected:
 	/// Array [lod][pass]
-	Vector<GlJobChainHandle> m_vertJobs;
+	Vector<GlCommandBufferHandle> m_vertJobs;
 	Material* m_mtl = nullptr;
 	Vector<Mesh*> m_meshes; ///< One for each LOD
 
@@ -89,7 +89,7 @@ private:
 	static void createVertexDesc(
 		const GlProgramHandle& prog,
 		const Mesh& mesh,
-		GlJobChainHandle& vertexJobs);
+		GlCommandBufferHandle& vertexJobs);
 
 	/// Return the maximum number of LODs
 	U getLodsCount() const;

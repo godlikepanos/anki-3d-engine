@@ -133,14 +133,14 @@ inline T mod(const T x, const T y)
 template<typename T>
 inline T abs(const T f)
 { 
-	return ::fabs(f);
+	return std::fabs(f);
 }
 
 #define ANKI_SPECIALIZE_ABS_INT(type_) \
 	template<> \
 	inline type_ abs(const type_ f) \
 	{ \
-		return ::abs(f); \
+		return std::abs(f); \
 	}
 
 ANKI_SPECIALIZE_ABS_INT(I8)

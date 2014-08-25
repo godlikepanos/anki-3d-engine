@@ -33,7 +33,7 @@ public:
 	GlProgramHandle();
 
 	/// Create program
-	explicit GlProgramHandle(GlJobChainHandle& jobs, 
+	explicit GlProgramHandle(GlCommandBufferHandle& commands, 
 		GLenum shaderType, const GlClientBufferHandle& source);
 
 	~GlProgramHandle();

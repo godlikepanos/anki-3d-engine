@@ -5,8 +5,8 @@
 
 #include "anki/gl/GlClientBufferHandle.h"
 #include "anki/gl/GlClientBuffer.h"
-#include "anki/gl/GlJobChainHandle.h"
-#include "anki/gl/GlManager.h"
+#include "anki/gl/GlCommandBufferHandle.h"
+#include "anki/gl/GlDevice.h"
 #include "anki/core/Counters.h"
 
 namespace anki {
@@ -17,14 +17,14 @@ GlClientBufferHandle::GlClientBufferHandle()
 
 //==============================================================================
 GlClientBufferHandle::GlClientBufferHandle(
-	GlJobChainHandle& jobs, PtrSize size, void* preallocatedMem)
+	GlCommandBufferHandle& commands, PtrSize size, void* preallocatedMem)
 {
 	ANKI_ASSERT(!isCreated());
 
-	auto alloc = jobs._getAllocator();
+	auto alloc = commands._getAllocator();
 
 	typedef GlHandleDefaultDeleter<
-		GlClientBuffer, GlJobChainAllocator<GlClientBuffer>> Deleter;
+		GlClientBuffer, GlCommandBufferAllocator<GlClientBuffer>> Deleter;
 
 	if(preallocatedMem != nullptr)
 	{

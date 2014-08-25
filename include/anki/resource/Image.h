@@ -6,11 +6,10 @@
 #ifndef ANKI_RESOURCE_IMAGE_H
 #define ANKI_RESOURCE_IMAGE_H
 
+#include "anki/resource/Common.h"
 #include "anki/util/Functions.h"
 #include "anki/util/Vector.h"
-#include <iosfwd>
-#include <cstdint>
-#include <limits>
+#include "anki/util/Enum.h"
 
 namespace anki {
 
@@ -20,43 +19,51 @@ class Image
 {
 public:
 	/// Texture type
-	enum TextureType
+	enum class TextureType: U32
 	{
-		TT_NONE,
-		TT_2D,
-		TT_CUBE,
-		TT_3D,
-		TT_2D_ARRAY
+		NONE,
+		_2D,
+		CUBE,
+		_3D,
+		_2D_ARRAY
 	};
 
 	/// The acceptable color types of AnKi
-	enum ColorFormat
+	enum class ColorFormat: U32
 	{
-		CF_NONE,
-		CF_RGB8, ///< RGB
-		CF_RGBA8 ///< RGB plus alpha
+		NONE,
+		RGB8, ///< RGB
+		RGBA8 ///< RGB plus alpha
 	};
 
 	/// The data compression
-	enum DataCompression
+	enum class DataCompression: U32
 	{
-		DC_NONE,
-		DC_RAW = 1 << 0,
-		DC_S3TC = 1 << 1,
-		DC_ETC = 1 << 2
+		NONE,
+		RAW = 1 << 0,
+		S3TC = 1 << 1,
+		ETC = 1 << 2
 	};
 
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DataCompression, friend)
+
 	/// An image surface
-	struct Surface
+	class Surface
 	{
-		U32 width;
-		U32 height;
-		U32 mipLevel;
-		Vector<U8> data;
+	public:
+		Surface(ResourceAllocator<U8>& alloc)
+		:	m_data(alloc)
+		{}
+
+		U32 m_width;
+		U32 m_height;
+		U32 m_mipLevel;
+		ResourceVector<U8> m_data;
 	};
 
 	/// Do nothing
-	Image()
+	Image(ResourceAllocator<U8>& alloc)
+	:	m_surfaces(alloc)
 	{}
 
 	/// Do nothing
@@ -67,32 +74,32 @@ public:
 	/// @{
 	ColorFormat getColorFormat() const
 	{
-		ANKI_ASSERT(colorFormat != CF_NONE);
-		return colorFormat;
+		ANKI_ASSERT(m_colorFormat != ColorFormat::NONE);
+		return m_colorFormat;
 	}
 
 	DataCompression getCompression() const
 	{
-		ANKI_ASSERT(compression != DC_NONE);
-		return compression;
+		ANKI_ASSERT(m_compression != DataCompression::NONE);
+		return m_compression;
 	}
 
 	U getMipLevelsCount() const
 	{
-		ANKI_ASSERT(mipLevels != 0);
-		return mipLevels;
+		ANKI_ASSERT(m_mipLevels != 0);
+		return m_mipLevels;
 	}
 
 	U getDepth() const
 	{
-		ANKI_ASSERT(depth != 0);
-		return depth;
+		ANKI_ASSERT(m_depth != 0);
+		return m_depth;
 	}
 
 	TextureType getTextureType() const
 	{
-		ANKI_ASSERT(textureType != TT_NONE);
-		return textureType;
+		ANKI_ASSERT(m_textureType != TextureType::NONE);
+		return m_textureType;
 	}
 
 	const Surface& getSurface(U mipLevel, U layer) const;
@@ -102,8 +109,7 @@ public:
 	/// @param[in] filename The file to load
 	/// @param[in] maxTextureSize Only load mipmaps less or equal to that. Used
 	///                           with AnKi textures
-	void load(const char* filename, 
-		U32 maxTextureSize = std::numeric_limits<U32>::max());
+	void load(const char* filename, U32 maxTextureSize = MAX_U32);
 
 	/// Load an image file
 	/// @param[in] filenames The 6 files to load
@@ -111,12 +117,12 @@ public:
 
 private:
 	/// [mip][depthFace]
-	Vector<Surface> surfaces;
-	U8 mipLevels = 0;
-	U8 depth = 0;
-	DataCompression compression = DC_NONE;
-	ColorFormat colorFormat = CF_NONE;
-	TextureType textureType = TT_NONE;
+	ResourceVector<Surface> m_surfaces;
+	U8 m_mipLevels = 0;
+	U8 m_depth = 0;
+	DataCompression m_compression = DataCompression::NONE;
+	ColorFormat m_colorFormat = ColorFormat::NONE;
+	TextureType m_textureType = TextureType::NONE;
 };
 
 } // end namespace anki

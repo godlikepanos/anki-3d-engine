@@ -9,10 +9,10 @@
 #include "anki/util/StdTypes.h"
 #include "anki/util/Array.h"
 #include "anki/util/NonCopyable.h"
-#include <thread>
-#include <condition_variable>
-#include <mutex>
 #include <atomic>
+#include <mutex> // XXX
+#include <thread> // XXX
+#include <condition_variable>
 
 #define ANKI_DISABLE_THREADPOOL_THREADING 0
 
@@ -24,14 +24,105 @@ class Threadpool;
 /// @addtogroup util_thread
 /// @{
 
-typedef U32 ThreadId;
+/// Thread implementation
+class Thread: public NonCopyable
+{
+public:
+	/// It holds some information to be passed to the thread's callback
+	class Info
+	{
+	public:
+		void* m_userData;
+		const char* m_threadName;
+	};
 
-/// Set the name of the current thead
-void setCurrentThreadName(const char* name);
+	/// The type of the tread callback
+	using Callback = I(*)(Info&);
+
+	/// Create a thread with or without a name
+	/// @param[in] name The name of the new thread. Can be nullptr
+	Thread(const char* name);
+
+	~Thread();
+
+	/// Start the thread
+	/// @param userData The user data of the thread callback
+	/// @param callback The thread callback that will be executed
+	void start(void* userData, Callback callback);
+
+	/// Wait for the thread to finish
+	/// @return The error code of the thread's callback
+	I join();
+
+	/// Identify the current thread
+	static U64 getCurrentThreadId();
+
+private:
+	static constexpr U ALIGNMENT = 8;
+	alignas(ALIGNMENT) Array<PtrSize, 1> m_impl; ///< The system native type
+	Array<char, 32> m_name; ///< The name of the thread
+	Callback m_callback = nullptr; ///< The callback
+	void* m_userData = nullptr; ///< The user date to pass to the callback
+
+	/// Pthreads specific function
+	static void* pthreadCallback(void* ud);
+
+	Bool initialized() const
+	{
+		return m_impl[0] != 0;
+	}
+};
+
+/// Mutex
+class Mutex: public NonCopyable
+{
+	friend class ConditionVariable;
+
+public:
+	Mutex();
+
+	~Mutex();
+
+	/// Lock
+	void lock();
+
+	/// Try lock
+	/// @return True if it was locked successfully
+	Bool tryLock();
+
+	/// Unlock
+	void unlock();
+
+private:
+	static constexpr U ALIGNMENT = 8;
+	alignas(ALIGNMENT) Array<PtrSize, 10> m_impl; ///< The system native type
+};
+
+/// Condition variable
+class ConditionVariable: public NonCopyable
+{
+public:
+	ConditionVariable();
+
+	~ConditionVariable();
+
+	/// Signal one thread
+	void notifyOne();
+
+	/// Signal all threads
+	void notifyAll();
+
+	/// Bock until signaled
+	void wait(Mutex& mtx);
+
+private:
+	static constexpr U ALIGNMENT = 16;
+	alignas(ALIGNMENT) Array<PtrSize, 12> m_impl; ///< The system native type
+};
 
 /// Spin lock. Good if the critical section will be executed in a short period
 /// of time
-class SpinLock
+class SpinLock: public NonCopyable
 {
 public:
 	/// Lock 
@@ -56,196 +147,101 @@ class Barrier: public NonCopyable
 {
 public:
 	Barrier(U32 count)
-		: m_threshold(count), m_count(count), m_generation(0)
+	:	m_threshold(count), 
+		m_count(count), 
+		m_generation(0)
 	{
 		ANKI_ASSERT(count != 0);
 	}
 
-	Bool wait()
-	{
-		std::unique_lock<std::mutex> lock(m_mtx);
-		U32 gen = m_generation;
+	~Barrier() = default;
 
-		if(--m_count == 0)
-		{
-			m_generation++;
-			m_count = m_threshold;
-			m_cond.notify_all();
-			return true;
-		}
-
-		while(gen == m_generation)
-		{
-			m_cond.wait(lock);
-		}
-		return false;
-	}
+	/// TODO
+	Bool wait();
 
 private:
-	std::mutex m_mtx;
-	std::condition_variable m_cond;
+	Mutex m_mtx;
+	ConditionVariable m_cond;
 	U32 m_threshold;
 	U32 m_count;
 	U32 m_generation;
 };
 
-/// A task assignment to threads
-class ThreadTask
-{
-public:
-	virtual ~ThreadTask()
-	{}
+// Forward
+namespace detail {
+class ThreadpoolThread;
+}
 
-	virtual void operator()(ThreadId threadId) = 0;
-};
-
-/// This is a thread with 2 sync points
-class DualSyncThread
-{
-public:
-	DualSyncThread(ThreadId threadId)
-		:	m_id(threadId),
-			m_barriers{{{2}, {2}}},
-			m_task(nullptr)
-	{}
-
-	/// The thread does not own the task
-	/// @note This operation is not thread safe. Call it between syncs
-	/// @note This class will not own the task
-	void setTask(ThreadTask* task)
-	{
-		m_task = task;
-	}
-
-	/// Start the thread
-	void start()
-	{
-		m_thread = std::thread(&DualSyncThread::workingFunc, this);
-	}
-
-	/// Sync with one of the 2 sync points
-	void sync(U syncPoint)
-	{
-		m_barriers[syncPoint].wait();
-	}
-
-private:
-	ThreadId m_id;
-	std::thread m_thread; ///< Runs the workingFunc
-	Array<Barrier, 2> m_barriers;
-	ThreadTask* m_task; ///< Its nullptr if there are no pending task
-
-	/// Thread loop
-	void workingFunc();
-};
-
-/// A task assignment for a ThreadpoolThread
-class ThreadpoolTask
-{
-public:
-	virtual ~ThreadpoolTask()
-	{}
-
-	virtual void operator()(ThreadId threadId, U threadsCount) = 0;
-
-	/// Chose a starting and end index
-	void choseStartEnd(ThreadId threadId, PtrSize threadsCount, 
-		PtrSize elementsCount, PtrSize& start, PtrSize& end)
-	{
-		start = threadId * (elementsCount / threadsCount);
-		end = (threadId == threadsCount - 1)
-			? elementsCount
-			: start + elementsCount / threadsCount;
-	}
-};
-
-/// A dummy thread pool task
-class DummyThreadpoolTask: public ThreadpoolTask
-{
-public:
-	void operator()(ThreadId threadId, U threadsCount)
-	{
-		(void)threadId;
-		(void)threadsCount;
-	}
-};
-
-/// The thread that executes a ThreadpoolTask
-class ThreadpoolThread
-{
-public:
-	/// Constructor
-	ThreadpoolThread(ThreadId id, Barrier* barrier, Threadpool* threadpool);
-
-	/// Assign new task to the thread
-	/// @note 
-	void assignNewTask(ThreadpoolTask* task);
-
-private:
-	ThreadId m_id; ///< An ID
-	std::thread m_thread; ///< Runs the workingFunc
-	std::mutex m_mutex; ///< Protect the task
-	std::condition_variable m_condVar; ///< To wake up the thread
-	Barrier* m_barrier; ///< For synchronization
-	ThreadpoolTask* m_task; ///< Its NULL if there are no pending task
-	Threadpool* m_threadpool;
-
-	/// Start thread
-	void start()
-	{
-		m_thread = std::thread(&ThreadpoolThread::workingFunc, this);
-	}
-
-	/// Thread loop
-	void workingFunc();
-};
-
-/// Parallel task dispatcher.You feed it with tasks and sends them for
+/// Parallel task dispatcher. You feed it with tasks and sends them for
 /// execution in parallel and then waits for all to finish
 class Threadpool: public NonCopyable
 {
+	friend class detail::ThreadpoolThread;
+
 public:
 	static constexpr U MAX_THREADS = 32; ///< An absolute limit
 
-	/// Default constructor
-	Threadpool()
-	{}
-
-	/// Constructor #2
-	Threadpool(U threadsNum)
+	/// A task assignment for a Threadpool
+	class Task
 	{
-		init(threadsNum);
-	}
+	public:
+		virtual ~Task()
+		{}
+
+		virtual void operator()(U32 taskId, PtrSize threadsCount) = 0;
+
+		/// Chose a starting and end index
+		static void choseStartEnd(U32 taskId, PtrSize threadsCount, 
+			PtrSize elementsCount, PtrSize& start, PtrSize& end)
+		{
+			start = taskId * (elementsCount / threadsCount);
+			end = (taskId == threadsCount - 1)
+				? elementsCount
+				: start + elementsCount / threadsCount;
+		}
+	};
+
+	/// Constructor 
+	Threadpool(U32 threadsCount);
 
 	~Threadpool();
 
-	/// Init the manager
-	void init(U threadsNum);
-
 	/// Assign a task to a working thread
-	void assignNewTask(U taskId, ThreadpoolTask* task)
-	{
-		ANKI_ASSERT(taskId < getThreadsCount());
-		m_threads[taskId]->assignNewTask(task);
-	}
+	/// @param slot The slot of the task
+	/// @param task The task. If it's nullptr then a dummy task will be assigned
+	void assignNewTask(U32 slot, Task* task);
 
 	/// Wait for all tasks to finish
 	void waitForAllThreadsToFinish()
 	{
 #if !ANKI_DISABLE_THREADPOOL_THREADING
-		m_barrier->wait();
+		m_barrier.wait();
 #endif
 	}
 
-	U getThreadsCount() const
+	PtrSize getThreadsCount() const
 	{
 		return m_threadsCount;
 	}
 
 private:
-	ThreadpoolThread** m_threads = nullptr; ///< Worker threads array
+	/// A dummy task for a Threadpool
+	class DummyTask: public Task
+	{
+	public:
+		void operator()(U32 taskId, PtrSize threadsCount)
+		{
+			(void)taskId;
+			(void)threadsCount;
+		}
+	};
+
+#if !ANKI_DISABLE_THREADPOOL_THREADING
+	Barrier m_barrier; ///< Synchronization barrier
+	detail::ThreadpoolThread** m_threads = nullptr; ///< Threads array
+#endif
 	U8 m_threadsCount = 0;
-	std::unique_ptr<Barrier> m_barrier; ///< Synchronization barrier
+	static DummyTask m_dummyTask;
 };
 
 /// @}

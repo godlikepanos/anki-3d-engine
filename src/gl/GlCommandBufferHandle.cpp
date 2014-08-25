@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gl/GlJobChainHandle.h"
-#include "anki/gl/GlManager.h"
+#include "anki/gl/GlCommandBufferHandle.h"
+#include "anki/gl/GlDevice.h"
 #include "anki/gl/GlSyncHandles.h"
 #include "anki/gl/GlFramebuffer.h"
 #include "anki/gl/GlTextureHandle.h"
@@ -16,90 +16,90 @@ namespace anki {
 
 //==============================================================================
 // Macros because we are bored to type
-#define ANKI_STATE_JOB_0(type_, glfunc_) \
-	class Job: public GlJob \
+#define ANKI_STATE_CMD_0(type_, glfunc_) \
+	class Command: public GlCommand \
 	{ \
 	public: \
-		Job() = default \
-		void operator()(GlJobChain*) \
+		Command() = default \
+		void operator()(GlCommandBuffer*) \
 		{ \
 			glfunc_(); \
 		} \
 	}; \
-	_pushBackNewJob<Job>(value_)
+	_pushBackNewCommand<Command>(value_)
 
-#define ANKI_STATE_JOB_1(type_, glfunc_, value_) \
-	class Job: public GlJob \
+#define ANKI_STATE_CMD_1(type_, glfunc_, value_) \
+	class Command: public GlCommand \
 	{ \
 	public: \
 		type_ m_value; \
-		Job(type_ v) \
+		Command(type_ v) \
 			: m_value(v) \
 		{} \
-		void operator()(GlJobChain*) \
+		void operator()(GlCommandBuffer*) \
 		{ \
 			glfunc_(m_value); \
 		} \
 	}; \
-	_pushBackNewJob<Job>(value_)
+	_pushBackNewCommand<Command>(value_)
 
-#define ANKI_STATE_JOB_2(type_, glfunc_, a_, b_) \
-	class Job: public GlJob \
+#define ANKI_STATE_CMD_2(type_, glfunc_, a_, b_) \
+	class Command: public GlCommand \
 	{ \
 	public: \
 		Array<type_, 2> m_value; \
-		Job(type_ a, type_ b) \
+		Command(type_ a, type_ b) \
 		{ \
 			m_value = {{a, b}}; \
 		} \
-		void operator()(GlJobChain*) \
+		void operator()(GlCommandBuffer*) \
 		{ \
 			glfunc_(m_value[0], m_value[1]); \
 		} \
 	}; \
-	_pushBackNewJob<Job>(a_, b_)
+	_pushBackNewCommand<Command>(a_, b_)
 
-#define ANKI_STATE_JOB_3(type_, glfunc_, a_, b_, c_) \
-	class Job: public GlJob \
+#define ANKI_STATE_CMD_3(type_, glfunc_, a_, b_, c_) \
+	class Command: public GlCommand \
 	{ \
 	public: \
 		Array<type_, 3> m_value; \
-		Job(type_ a, type_ b, type_ c) \
+		Command(type_ a, type_ b, type_ c) \
 		{ \
 			m_value = {{a, b, c}}; \
 		} \
-		void operator()(GlJobChain*) \
+		void operator()(GlCommandBuffer*) \
 		{ \
 			glfunc_(m_value[0], m_value[1], m_value[2]); \
 		} \
 	}; \
-	_pushBackNewJob<Job>(a_, b_, c_)
+	_pushBackNewCommand<Command>(a_, b_, c_)
 
-#define ANKI_STATE_JOB_4(type_, glfunc_, a_, b_, c_, d_) \
-	class Job: public GlJob \
+#define ANKI_STATE_CMD_4(type_, glfunc_, a_, b_, c_, d_) \
+	class Command: public GlCommand \
 	{ \
 	public: \
 		Array<type_, 4> m_value; \
-		Job(type_ a, type_ b, type_ c, type_ d) \
+		Command(type_ a, type_ b, type_ c, type_ d) \
 		{ \
 			m_value = {{a, b, c, d}}; \
 		} \
-		void operator()(GlJobChain*) \
+		void operator()(GlCommandBuffer*) \
 		{ \
 			glfunc_(m_value[0], m_value[1], m_value[2], m_value[3]); \
 		} \
 	}; \
-	_pushBackNewJob<Job>(a_, b_, c_, d_)
+	_pushBackNewCommand<Command>(a_, b_, c_, d_)
 
-#define ANKI_STATE_JOB_ENABLE(enum_, enable_) \
-	class Job: public GlJob \
+#define ANKI_STATE_CMD_ENABLE(enum_, enable_) \
+	class Command: public GlCommand \
 	{ \
 	public: \
 		Bool8 m_enable; \
-		Job(Bool enable) \
+		Command(Bool enable) \
 			: m_enable(enable) \
 		{} \
-		void operator()(GlJobChain*) \
+		void operator()(GlCommandBuffer*) \
 		{ \
 			if(m_enable) \
 			{ \
@@ -111,131 +111,133 @@ namespace anki {
 			} \
 		} \
 	}; \
-	_pushBackNewJob<Job>(enable_)
+	_pushBackNewCommand<Command>(enable_)
 
 //==============================================================================
-GlJobChainHandle::GlJobChainHandle()
+GlCommandBufferHandle::GlCommandBufferHandle()
 {}
 
 //==============================================================================
-GlJobChainHandle::GlJobChainHandle(GlManager* gl, GlJobChainInitHints hints)
+GlCommandBufferHandle::GlCommandBufferHandle(GlDevice* gl, 
+	GlCommandBufferInitHints hints)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(gl);
 
-	typedef GlGlobalHeapAllocator<GlJobChain> Alloc;
+	typedef GlGlobalHeapAllocator<GlCommandBuffer> Alloc;
 	Alloc alloc = gl->_getAllocator();
 
 	*static_cast<Base*>(this) = Base(
 		gl,
 		alloc, 
-		GlHandleDefaultDeleter<GlJobChain, Alloc>(), 
-		&gl->_getJobManager(), 
+		GlHandleDefaultDeleter<GlCommandBuffer, Alloc>(), 
+		&gl->_getQueue(), 
 		hints);
 }
 
 //==============================================================================
-GlJobChainHandle::~GlJobChainHandle()
+GlCommandBufferHandle::~GlCommandBufferHandle()
 {}
 
 //==============================================================================
-void GlJobChainHandle::pushBackUserJob(UserCallback callback, void* data)
+void GlCommandBufferHandle::pushBackUserCommand(UserCallback callback, void* data)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		UserCallback m_callback;
 		void* m_userData;
 
-		Job(UserCallback callback, void* userData)
+		Command(UserCallback callback, void* userData)
 			: m_callback(callback), m_userData(userData)
 		{
 			ANKI_ASSERT(m_callback);
 		}
 
-		void operator()(GlJobChain* jobs)
+		void operator()(GlCommandBuffer* commands)
 		{
 			(*m_callback)(m_userData);
 		}
 	};
 
-	_pushBackNewJob<Job>(callback, data);
+	_pushBackNewCommand<Command>(callback, data);
 }
 
 //==============================================================================
-void GlJobChainHandle::pushBackOtherJobChain(GlJobChainHandle& jobs)
+void GlCommandBufferHandle::pushBackOtherCommandBuffer(
+	GlCommandBufferHandle& commands)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
-		GlJobChainHandle m_jobs;
+		GlCommandBufferHandle m_commands;
 
-		Job(GlJobChainHandle& jobs)
-			: m_jobs(jobs)
+		Command(GlCommandBufferHandle& commands)
+			: m_commands(commands)
 		{}
 
-		void operator()(GlJobChain*)
+		void operator()(GlCommandBuffer*)
 		{
-			m_jobs._executeAllJobs();
+			m_commands._executeAllCommands();
 		}
 	};
 
-	jobs._get().makeImmutable();
-	_pushBackNewJob<Job>(jobs);
+	commands._get().makeImmutable();
+	_pushBackNewCommand<Command>(commands);
 }
 
 //==============================================================================
-void GlJobChainHandle::flush()
+void GlCommandBufferHandle::flush()
 {
-	_get().getJobManager().flushJobChain(*this);
+	_get().getQueue().flushCommandChain(*this);
 }
 
 //==============================================================================
-void GlJobChainHandle::finish()
+void GlCommandBufferHandle::finish()
 {
-	_get().getJobManager().finishJobChain(*this);
+	_get().getQueue().finishCommandChain(*this);
 }
 
 //==============================================================================
-void GlJobChainHandle::setClearColor(F32 r, F32 g, F32 b, F32 a)
+void GlCommandBufferHandle::setClearColor(F32 r, F32 g, F32 b, F32 a)
 {
-	ANKI_STATE_JOB_4(F32, glClearColor, r, g, b, a);
+	ANKI_STATE_CMD_4(F32, glClearColor, r, g, b, a);
 }
 
 //==============================================================================
-void GlJobChainHandle::setClearDepth(F32 value)
+void GlCommandBufferHandle::setClearDepth(F32 value)
 {
-	ANKI_STATE_JOB_1(F32, glClearDepth, value);
+	ANKI_STATE_CMD_1(F32, glClearDepth, value);
 }
 
 //==============================================================================
-void GlJobChainHandle::setClearStencil(U32 value)
+void GlCommandBufferHandle::setClearStencil(U32 value)
 {
-	ANKI_STATE_JOB_1(U32, glClearStencil, value);
+	ANKI_STATE_CMD_1(U32, glClearStencil, value);
 }
 
 //==============================================================================
-void GlJobChainHandle::clearBuffers(U32 mask)
+void GlCommandBufferHandle::clearBuffers(U32 mask)
 {
-	ANKI_STATE_JOB_1(U32, glClear, mask);
+	ANKI_STATE_CMD_1(U32, glClear, mask);
 }
 
 //==============================================================================
-void GlJobChainHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
+void GlCommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		Array<U16, 4> m_value;
 		
-		Job(U16 a, U16 b, U16 c, U16 d)
+		Command(U16 a, U16 b, U16 c, U16 d)
 		{
 			m_value = {{a, b, c, d}};
 		}
 
-		void operator()(GlJobChain* jobs)
+		void operator()(GlCommandBuffer* commands)
 		{
-			GlState& state = jobs->getJobManager().getState();
+			GlState& state = commands->getQueue().getState();
 
 			if(state.m_viewport[0] != m_value[0] 
 				|| state.m_viewport[1] != m_value[1]
@@ -249,88 +251,88 @@ void GlJobChainHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 		}
 	};
 
-	_pushBackNewJob<Job>(minx, miny, maxx, maxy);
+	_pushBackNewCommand<Command>(minx, miny, maxx, maxy);
 }
 
 //==============================================================================
-void GlJobChainHandle::setColorWriteMask(
+void GlCommandBufferHandle::setColorWriteMask(
 	Bool red, Bool green, Bool blue, Bool alpha)
 {
-	ANKI_STATE_JOB_4(Bool8, glColorMask, red, green, blue, alpha);
+	ANKI_STATE_CMD_4(Bool8, glColorMask, red, green, blue, alpha);
 }
 
 //==============================================================================
-void GlJobChainHandle::enableDepthTest(Bool enable)
+void GlCommandBufferHandle::enableDepthTest(Bool enable)
 {
-	ANKI_STATE_JOB_ENABLE(GL_DEPTH_TEST, enable);
+	ANKI_STATE_CMD_ENABLE(GL_DEPTH_TEST, enable);
 }
 
 //==============================================================================
-void GlJobChainHandle::setDepthFunction(GLenum func)
+void GlCommandBufferHandle::setDepthFunction(GLenum func)
 {
-	ANKI_STATE_JOB_1(GLenum, glDepthFunc, func);
+	ANKI_STATE_CMD_1(GLenum, glDepthFunc, func);
 }
 
 //==============================================================================
-void GlJobChainHandle::setDepthWriteMask(Bool write)
+void GlCommandBufferHandle::setDepthWriteMask(Bool write)
 {
-	ANKI_STATE_JOB_1(Bool8, glDepthMask, write);
+	ANKI_STATE_CMD_1(Bool8, glDepthMask, write);
 }
 
 //==============================================================================
-void GlJobChainHandle::enableStencilTest(Bool enable)
+void GlCommandBufferHandle::enableStencilTest(Bool enable)
 {
-	ANKI_STATE_JOB_ENABLE(GL_STENCIL_TEST, enable);
+	ANKI_STATE_CMD_ENABLE(GL_STENCIL_TEST, enable);
 }
 
 //==============================================================================
-void GlJobChainHandle::setStencilFunction(
+void GlCommandBufferHandle::setStencilFunction(
 	GLenum function, U32 reference, U32 mask)
 {
-	ANKI_STATE_JOB_3(U32, glStencilFunc, function, reference, mask);
+	ANKI_STATE_CMD_3(U32, glStencilFunc, function, reference, mask);
 }
 
 //==============================================================================
-void GlJobChainHandle::setStencilPlaneMask(U32 mask)
+void GlCommandBufferHandle::setStencilPlaneMask(U32 mask)
 {
-	ANKI_STATE_JOB_1(U32, glStencilMask, mask);
+	ANKI_STATE_CMD_1(U32, glStencilMask, mask);
 }
 
 //==============================================================================
-void GlJobChainHandle::setStencilOperations(GLenum stencFail, GLenum depthFail, 
+void GlCommandBufferHandle::setStencilOperations(GLenum stencFail, GLenum depthFail, 
 	GLenum depthPass)
 {
-	ANKI_STATE_JOB_3(GLenum, glStencilOp, stencFail, depthFail, depthPass);
+	ANKI_STATE_CMD_3(GLenum, glStencilOp, stencFail, depthFail, depthPass);
 }
 
 //==============================================================================
-void GlJobChainHandle::enableBlend(Bool enable)
+void GlCommandBufferHandle::enableBlend(Bool enable)
 {
-	ANKI_STATE_JOB_ENABLE(GL_BLEND, enable);
+	ANKI_STATE_CMD_ENABLE(GL_BLEND, enable);
 }
 
 //==============================================================================
-void GlJobChainHandle::setBlendEquation(GLenum equation)
+void GlCommandBufferHandle::setBlendEquation(GLenum equation)
 {
-	ANKI_STATE_JOB_1(GLenum, glBlendEquation, equation);
+	ANKI_STATE_CMD_1(GLenum, glBlendEquation, equation);
 }
 
 //==============================================================================
-void GlJobChainHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
+void GlCommandBufferHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 {
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		GLenum m_sfactor;
 		GLenum m_dfactor;
 
-		Job(GLenum sfactor, GLenum dfactor)
+		Command(GLenum sfactor, GLenum dfactor)
 			: m_sfactor(sfactor), m_dfactor(dfactor)
 		{}
 
-		void operator()(GlJobChain* jobs)
+		void operator()(GlCommandBuffer* commands)
 		{
-			GlState& state = jobs->getJobManager().getState();
+			GlState& state = commands->getQueue().getState();
 
 			if(state.m_blendSfunc != m_sfactor 
 				|| state.m_blendDfunc != m_dfactor)
@@ -343,70 +345,70 @@ void GlJobChainHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 		}
 	};
 
-	_pushBackNewJob<Job>(sfactor, dfactor);
+	_pushBackNewCommand<Command>(sfactor, dfactor);
 }
 
 //==============================================================================
-void GlJobChainHandle::setBlendColor(F32 r, F32 g, F32 b, F32 a)
+void GlCommandBufferHandle::setBlendColor(F32 r, F32 g, F32 b, F32 a)
 {
-	ANKI_STATE_JOB_4(F32, glBlendColor, r, g, b, a);
+	ANKI_STATE_CMD_4(F32, glBlendColor, r, g, b, a);
 }
 
 //==============================================================================
-void GlJobChainHandle::enablePrimitiveRestart(Bool enable)
+void GlCommandBufferHandle::enablePrimitiveRestart(Bool enable)
 {
-	ANKI_STATE_JOB_ENABLE(GL_PRIMITIVE_RESTART, enable);
+	ANKI_STATE_CMD_ENABLE(GL_PRIMITIVE_RESTART, enable);
 }
 
 //==============================================================================
-void GlJobChainHandle::setPatchVertexCount(U32 count)
+void GlCommandBufferHandle::setPatchVertexCount(U32 count)
 {
-	ANKI_STATE_JOB_2(GLint, glPatchParameteri, GL_PATCH_VERTICES, count);
+	ANKI_STATE_CMD_2(GLint, glPatchParameteri, GL_PATCH_VERTICES, count);
 }
 
 //==============================================================================
-void GlJobChainHandle::enableCulling(Bool enable)
+void GlCommandBufferHandle::enableCulling(Bool enable)
 {
-	ANKI_STATE_JOB_ENABLE(GL_CULL_FACE, enable);
+	ANKI_STATE_CMD_ENABLE(GL_CULL_FACE, enable);
 }
 
 //==============================================================================
-void GlJobChainHandle::setCullFace(GLenum mode)
+void GlCommandBufferHandle::setCullFace(GLenum mode)
 {
-	ANKI_STATE_JOB_1(GLenum, glCullFace, mode);
+	ANKI_STATE_CMD_1(GLenum, glCullFace, mode);
 }
 
 //==============================================================================
-void GlJobChainHandle::setPolygonOffset(F32 factor, F32 units)
+void GlCommandBufferHandle::setPolygonOffset(F32 factor, F32 units)
 {
-	ANKI_STATE_JOB_2(F32, glPolygonOffset, factor, units);
+	ANKI_STATE_CMD_2(F32, glPolygonOffset, factor, units);
 }
 
 //==============================================================================
-void GlJobChainHandle::enablePolygonOffset(Bool enable)
+void GlCommandBufferHandle::enablePolygonOffset(Bool enable)
 {
-	ANKI_STATE_JOB_ENABLE(GL_POLYGON_OFFSET_FILL, enable);
+	ANKI_STATE_CMD_ENABLE(GL_POLYGON_OFFSET_FILL, enable);
 }
 
 //==============================================================================
-void GlJobChainHandle::bindTextures(U32 first, 
+void GlCommandBufferHandle::bindTextures(U32 first, 
 	const std::initializer_list<GlTextureHandle>& textures)
 {
-	using Vec = Vector<GlTextureHandle, GlJobChainAllocator<GlTextureHandle>>;
+	using Vec = Vector<GlTextureHandle, GlCommandBufferAllocator<GlTextureHandle>>;
 		
-	class Job: public GlJob
+	class Command: public GlCommand
 	{
 	public:
 		Vec m_texes;
 		U32 m_first;
 
-		Job(Vec& texes, U32 first)
+		Command(Vec& texes, U32 first)
 			: m_first(first)
 		{
 			m_texes = std::move(texes);
 		}
 
-		void operator()(GlJobChain* jobs)
+		void operator()(GlCommandBuffer* commands)
 		{
 			Array<GLuint, 16> names;
 
@@ -429,7 +431,7 @@ void GlJobChainHandle::bindTextures(U32 first,
 		texes.push_back(t);
 	}
 
-	_pushBackNewJob<Job>(texes, first);
+	_pushBackNewCommand<Command>(texes, first);
 }
 
 } // end namespace anki

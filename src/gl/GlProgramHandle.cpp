@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gl/GlProgramHandle.h"
-#include "anki/gl/GlManager.h"
+#include "anki/gl/GlDevice.h"
 #include "anki/gl/GlClientBufferHandle.h"
 #include "anki/gl/GlHandleDeferredDeleter.h"
 #include "anki/gl/GlProgram.h"
@@ -12,23 +12,23 @@
 namespace anki {
 
 //==============================================================================
-/// Create program job
-class GlProgramCreateJob: public GlJob
+/// Create program command
+class GlProgramCreateCommand: public GlCommand
 {
 public:
 	GlProgramHandle m_prog;
 	GLenum m_type;
 	GlClientBufferHandle m_source;
 
-	GlProgramCreateJob(GlProgramHandle prog, 
+	GlProgramCreateCommand(GlProgramHandle prog, 
 		GLenum type, GlClientBufferHandle source)
 		: m_prog(prog), m_type(type), m_source(source)
 	{}
 
-	void operator()(GlJobChain* jobs)
+	void operator()(GlCommandBuffer* commands)
 	{
 		GlProgram p(m_type, (const char*)m_source.getBaseAddress(), 
-			jobs->getJobManager().getManager()._getAllocator());
+			commands->getQueue().getManager()._getAllocator());
 		m_prog._get() = std::move(p);
 
 		GlHandleState oldState = m_prog._setState(GlHandleState::CREATED);
@@ -42,20 +42,20 @@ GlProgramHandle::GlProgramHandle()
 {}
 
 //==============================================================================
-GlProgramHandle::GlProgramHandle(GlJobChainHandle& jobs, 
+GlProgramHandle::GlProgramHandle(GlCommandBufferHandle& commands, 
 	GLenum type, const GlClientBufferHandle& source)
 {
 	typedef GlGlobalHeapAllocator<GlProgram> Alloc;
-	typedef GlDeleteObjectJob<GlProgram, Alloc> DeleteJob;
-	typedef GlHandleDeferredDeleter<GlProgram, Alloc, DeleteJob> Deleter;
+	typedef GlDeleteObjectCommand<GlProgram, Alloc> DeleteCommand;
+	typedef GlHandleDeferredDeleter<GlProgram, Alloc, DeleteCommand> Deleter;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&jobs._get().getJobManager().getManager(),
-		jobs._get().getGlobalAllocator(), 
+		&commands._get().getQueue().getManager(),
+		commands._get().getGlobalAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);
 
-	jobs._pushBackNewJob<GlProgramCreateJob>(*this, type, source);
+	commands._pushBackNewCommand<GlProgramCreateCommand>(*this, type, source);
 }
 
 //==============================================================================

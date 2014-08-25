@@ -7,13 +7,14 @@
 #define ANKI_RESOURCE_ANIMATION_H
 
 #include "anki/Math.h"
-#include "anki/util/Vector.h"
+#include "anki/resource/Common.h"
+#include "anki/util/String.h"
 
 namespace anki {
 
 class XmlElement;
 
-/// @addtogroup Resources
+/// @addtogroup resource
 /// @{
 
 /// A keyframe 
@@ -25,77 +26,82 @@ class Key
 public:
 	F32 getTime() const
 	{
-		return time;
+		return m_time;
 	}
 
 	const T& getValue() const
 	{
-		return value;
+		return m_value;
 	}
 
 private:
-	F32 time;
-	T value;
+	F32 m_time;
+	T m_value;
 };
 
 /// Animation channel
-struct AnimationChannel
+class AnimationChannel
 {
-	std::string name;
+public:
+	BasicString<char, ResourceAllocator<char>> m_name;
 
-	I32 boneIndex = -1; ///< For skeletal animations
+	I32 m_boneIndex = -1; ///< For skeletal animations
 
-	Vector<Key<Vec3>> positions;
-	Vector<Key<Quat>> rotations;
-	Vector<Key<F32>> scales;
-	Vector<Key<F32>> cameraFovs;
+	ResourceVector<Key<Vec3>> m_positions;
+	ResourceVector<Key<Quat>> m_rotations;
+	ResourceVector<Key<F32>> m_scales;
+	ResourceVector<Key<F32>> m_cameraFovs;
+
+	AnimationChannel(ResourceAllocator<U8>& alloc)
+	:	m_name(alloc),
+		m_positions(alloc),
+		m_rotations(alloc),
+		m_scales(alloc),
+		m_cameraFovs(alloc)
+	{}
 };
 
 /// Animation consists of keyframe data
 class Animation
 {
 public:
-	void load(const char* filename);
-
-	/// @name Accessors
-	/// @{
+	void load(const char* filename, ResourceAllocator<U8>& alloc);
 
 	/// Get a vector of all animation channels
-	const Vector<AnimationChannel>& getChannels() const
+	const ResourceVector<AnimationChannel>& getChannels() const
 	{
-		return channels;
+		return m_channels;
 	}
 
 	/// Get the duration of the animation in seconds
 	F32 getDuration() const
 	{
-		return duration;
+		return m_duration;
 	}
 
 	/// Get the time (in seconds) the animation should start
 	F32 getStartingTime() const
 	{
-		return startTime;
+		return m_startTime;
 	}
 
 	/// The animation repeats
 	Bool getRepeat() const
 	{
-		return repeat;
+		return m_repeat;
 	}
-	/// @}
 
 	/// Get the interpolated data
 	void interpolate(U channelIndex, F32 time, 
 		Vec3& position, Quat& rotation, F32& scale) const;
 
 private:
-	Vector<AnimationChannel> channels;
-	F32 duration;
-	F32 startTime;
-	Bool8 repeat;
+	ResourceVector<AnimationChannel> m_channels;
+	F32 m_duration;
+	F32 m_startTime;
+	Bool8 m_repeat;
 
-	void loadInternal(const XmlElement& el);
+	void loadInternal(const XmlElement& el, ResourceAllocator<U8>& alloc);
 };
 /// @}
 

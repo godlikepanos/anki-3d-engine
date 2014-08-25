@@ -13,7 +13,6 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/core/Logger.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/core/Threadpool.h"
 
 namespace anki {
 

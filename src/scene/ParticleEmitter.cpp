@@ -245,8 +245,8 @@ ParticleEmitter::ParticleEmitter(
 	//
 	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
 
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, buffSize, 
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);

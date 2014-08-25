@@ -16,13 +16,13 @@ Hdr::~Hdr()
 //==============================================================================
 void Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 {
-	GlManager& gl = GlManagerSingleton::get();
+	GlDevice& gl = GlDeviceSingleton::get();
 
 	m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
 		GL_UNSIGNED_BYTE, 1, rt);
 
 	// Set to bilinear because the blurring techniques take advantage of that
-	GlJobChainHandle jobs(&gl);
+	GlCommandBufferHandle jobs(&gl);
 	rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
 
 	// Create FB
@@ -56,8 +56,8 @@ void Hdr::initInternal(const ConfigSet& initializer)
 	initFb(m_vblurFb, m_vblurRt);
 
 	// init shaders
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	m_commonBuff = GlBufferHandle(jobs, GL_SHADER_STORAGE_BUFFER, 
 		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
@@ -119,7 +119,7 @@ void Hdr::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Hdr::run(GlJobChainHandle& jobs)
+void Hdr::run(GlCommandBufferHandle& jobs)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -166,7 +166,7 @@ void Hdr::run(GlJobChainHandle& jobs)
 }
 
 //==============================================================================
-void Hdr::updateDefaultBlock(GlJobChainHandle& jobs)
+void Hdr::updateDefaultBlock(GlCommandBufferHandle& jobs)
 {
 	GlClientBufferHandle tempBuff(jobs, sizeof(Vec4), nullptr);
 	

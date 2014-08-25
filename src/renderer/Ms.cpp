@@ -32,8 +32,8 @@ void Ms::createRt(U32 index, U32 samples)
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
 		GL_RGBA, GL_UNSIGNED_BYTE, samples, plane.m_rt1);
 
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl);
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl);
 
 	plane.m_fb = GlFramebufferHandle(
 		jobs,
@@ -63,8 +63,8 @@ void Ms::init(const ConfigSet& initializer)
 				GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
 				GL_UNSIGNED_INT, 1, m_smallDepthRt);
 
-			GlManager& gl = GlManagerSingleton::get();
-			GlJobChainHandle jobs(&gl);
+			GlDevice& gl = GlDeviceSingleton::get();
+			GlCommandBufferHandle jobs(&gl);
 
 			m_smallDepthRt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
 
@@ -84,7 +84,7 @@ void Ms::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Ms::run(GlJobChainHandle& jobs)
+void Ms::run(GlCommandBufferHandle& jobs)
 {
 	// Chose the multisampled or the singlesampled framebuffer
 	if(m_r->getSamples() > 1)

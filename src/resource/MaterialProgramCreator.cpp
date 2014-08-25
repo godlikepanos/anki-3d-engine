@@ -31,7 +31,7 @@ struct InputSortFunctor
 //==============================================================================
 /// Given a string return info about the shader
 static void getShaderInfo(
-	const std::string& str, 
+	const MaterialProgramCreator::MPString& str, 
 	GLenum& type, 
 	GLbitfield& bit,
 	U& idx)
@@ -78,7 +78,10 @@ static void getShaderInfo(
 
 //==============================================================================
 MaterialProgramCreator::MaterialProgramCreator(
-	const XmlElement& el)
+	const XmlElement& el, TempResourceAllocator<U8>& alloc)
+:	m_alloc(alloc),
+	m_inputs(m_alloc),
+	m_uniformBlock(m_alloc)
 {
 	parseProgramsTag(el);
 }
@@ -135,13 +138,14 @@ void MaterialProgramCreator::parseProgramTag(
 	const XmlElement& programEl)
 {
 	// <type>
-	std::string type = programEl.getChildElement("type").getText();
+	MPString type(programEl.getChildElement("type").getText().c_str(), m_alloc);
 	GLbitfield glshaderbit;
 	GLenum glshader;
 	U shaderidx;
 	getShaderInfo(type, glshader, glshaderbit, shaderidx);
 
-	StringList& lines = m_source[shaderidx];
+	m_source[shaderidx] = MPStringList(m_alloc);
+	auto& lines = m_source[shaderidx];
 	lines.push_back("#pragma anki type " + type);
 
 	if(glshader == GL_TESS_CONTROL_SHADER 
@@ -151,14 +155,13 @@ void MaterialProgramCreator::parseProgramTag(
 	}
 
 	// <includes></includes>
-	StringList includeLines;
 	XmlElement includesEl = programEl.getChildElement("includes");
 	XmlElement includeEl = includesEl.getChildElement("include");
 
 	do
 	{
-		std::string fname = includeEl.getText();
-		lines.push_back(std::string("#pragma anki include \"")
+		MPString fname(includeEl.getText(), m_alloc);
+		lines.push_back(MPString("#pragma anki include \"", m_alloc)
 			+ fname + "\"");
 
 		includeEl = includeEl.getNextSiblingElement("include");

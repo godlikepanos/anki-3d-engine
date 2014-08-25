@@ -122,21 +122,24 @@ public:
 	}
 
 	/// Allocate memory
-	pointer allocate(size_type n, const void* hint = 0)
+	/// @param n The bytes to allocate
+	/// @param hint It's been used to override the alignment. The type should
+	///             be PtrSize
+	pointer allocate(size_type n, const void* hint = nullptr)
 	{
 		(void)hint;
 
 		size_type size = n * sizeof(value_type);
-		
-		// Operator new doesn't respect alignment (in GCC at least) so use 
-		// the allocation
-		void* out = m_pool.allocate(size, alignof(value_type));
 
-		if(out != nullptr)
-		{
-			// Everything ok
-		}
-		else
+		// Operator new doesn't respect alignment (in GCC at least) so use 
+		// the types alignment. If hint override the alignment
+		PtrSize alignment = (hint != nullptr) 
+			? *reinterpret_cast<const PtrSize*>(hint) 
+			: alignof(value_type);
+
+		void* out = m_pool.allocate(size, alignment);
+
+		if(out == nullptr)
 		{
 			throw ANKI_EXCEPTION("Allocation failed. There is not enough room");
 		}

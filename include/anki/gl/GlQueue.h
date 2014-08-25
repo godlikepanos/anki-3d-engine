@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_JOB_MANAGER_H
-#define ANKI_GL_GL_JOB_MANAGER_H
+#ifndef ANKI_GL_GL_QUEUE_H
+#define ANKI_GL_GL_QUEUE_H
 
-#include "anki/gl/GlJobChainHandle.h"
+#include "anki/gl/GlCommandBufferHandle.h"
 #include "anki/gl/GlSyncHandles.h"
 #include "anki/gl/GlState.h"
 #include "anki/util/Thread.h"
@@ -14,33 +14,33 @@
 namespace anki {
 
 // Forward
-class GlManager;
+class GlDevice;
 
 /// @addtogroup opengl_private
 /// @{
 
-/// Job manager. It's essentialy a queue of job chains waiting for execution 
-/// and a server
-class GlJobManager
+/// Command queue. It's essentialy a queue of command buffers waiting for 
+/// execution and a server
+class GlQueue
 {
 public:
 	/// @name Contructors/Destructor
 	/// @{
-	GlJobManager(GlManager* manager, 
+	GlQueue(GlDevice* manager, 
 		AllocAlignedCallback alloc, void* allocUserData);
 
-	~GlJobManager();
+	~GlQueue();
 	/// @}
 
 	/// @name Accessors
 	/// @{
-	GlManager& getManager()
+	GlDevice& getManager()
 	{
 		ANKI_ASSERT(m_manager);
 		return *m_manager;
 	}
 
-	const GlManager& getManager() const
+	const GlDevice& getManager() const
 	{
 		ANKI_ASSERT(m_manager);
 		return *m_manager;
@@ -77,11 +77,11 @@ public:
 	/// Stop the working thread
 	void stop();
 
-	/// Push a job chain to the queue for deferred execution
-	void flushJobChain(GlJobChainHandle& jobs);
+	/// Push a command buffer to the queue for deferred execution
+	void flushCommandChain(GlCommandBufferHandle& commands);
 
-	/// Push a job chain to the queue and wait for it
-	void finishJobChain(GlJobChainHandle& jobs);
+	/// Push a command buffer to the queue and wait for it
+	void finishCommandChain(GlCommandBufferHandle& commands);
 
 	/// Sync the client and server
 	void syncClientServer();
@@ -96,11 +96,11 @@ public:
 	void swapBuffers();
 
 private:
-	GlManager* m_manager = nullptr;
+	GlDevice* m_manager = nullptr;
 	AllocAlignedCallback m_allocCb;
 	void* m_allocCbUserData;
 
-	Array<GlJobChainHandle, 32> m_queue; ///< Job queue
+	Array<GlCommandBufferHandle, 32> m_queue; ///< Command queue
 	U64 m_tail; ///< Tail of queue
 	U64 m_head; ///< Head of queue. Points to the end
 	U8 m_renderingThreadSignal; ///< Signal to the thread
@@ -111,7 +111,7 @@ private:
 	void* m_ctx = nullptr; ///< Pointer to the system GL context
 	GlCallback m_makeCurrent; ///< Making a context current
 
-	GlJobChainHandle m_swapBuffersJobs;
+	GlCommandBufferHandle m_swapBuffersCommands;
 	GlCallback m_swapBuffersCallback;
 	void* m_swapBuffersCbData;
 	std::condition_variable m_frameCondVar;
@@ -123,9 +123,9 @@ private:
 	GlState m_state;
 	GLuint m_defaultVao;
 
-	/// A special jobchain that is called every time we want to wait for the
-	/// server
-	GlJobChainHandle m_syncJobs;
+	/// A special command buffer that is called every time we want to wait for 
+	/// the server
+	GlCommandBufferHandle m_syncCommands;
 	GlClientSyncHandle m_sync;
 
 	String m_error;

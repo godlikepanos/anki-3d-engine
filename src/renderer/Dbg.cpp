@@ -25,8 +25,8 @@ void Dbg::init(const ConfigSet& initializer)
 
 	try
 	{
-		GlManager& gl = GlManagerSingleton::get();
-		GlJobChainHandle jobs(&gl);
+		GlDevice& gl = GlDeviceSingleton::get();
+		GlCommandBufferHandle jobs(&gl);
 
 		// Chose the correct color FAI
 		if(m_r->getPps().getEnabled())
@@ -54,7 +54,7 @@ void Dbg::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Dbg::run(GlJobChainHandle& jobs)
+void Dbg::run(GlCommandBufferHandle& jobs)
 {
 	ANKI_ASSERT(m_enabled);
 

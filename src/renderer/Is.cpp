@@ -8,7 +8,6 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
-#include "anki/core/Threadpool.h"
 #include "anki/core/Counters.h"
 #include "anki/core/Logger.h"
 #include <sstream>
@@ -71,7 +70,7 @@ public:
 
 //==============================================================================
 /// Write the lights to a client buffer
-class WriteLightsJob: public ThreadpoolTask
+class WriteLightsJob: public Threadpool::Task
 {
 public:
 	shader::PointLight* m_pointLights = nullptr;
@@ -100,7 +99,7 @@ public:
 	/// Bin lights on CPU path
 	Bool m_binLights = true;
 
-	void operator()(ThreadId threadId, U threadsCount)
+	void operator()(U32 threadId, PtrSize threadsCount)
 	{
 		U ligthsCount = m_lightsEnd - m_lightsBegin;
 
@@ -455,8 +454,8 @@ void Is::initInternal(const ConfigSet& initializer)
 	}
 
 	// point light
-	GlManager& gl = GlManagerSingleton::get();
-	GlJobChainHandle jobs(&gl); // Job for initialization
+	GlDevice& gl = GlDeviceSingleton::get();
+	GlCommandBufferHandle jobs(&gl); // Job for initialization
 
 	m_lightVert.load(ProgramResource::createSrcCodeToCache(
 		"shaders/IsLp.vert.glsl", pps.str().c_str(), "r_").c_str());
@@ -507,9 +506,9 @@ void Is::initInternal(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Is::lightPass(GlJobChainHandle& jobs)
+void Is::lightPass(GlCommandBufferHandle& jobs)
 {
-	Threadpool& threadPool = ThreadpoolSingleton::get();
+	Threadpool& threadPool = m_r->_getThreadpool();
 	m_cam = &m_r->getSceneGraph().getActiveCamera();
 	VisibilityTestResults& vi = m_cam->getVisibilityTestResults();
 
@@ -567,7 +566,7 @@ void Is::lightPass(GlJobChainHandle& jobs)
 	//
 	// Write the lights and tiles UBOs
 	//
-	GlManager& gl = GlManagerSingleton::get();
+	GlDevice& gl = GlDeviceSingleton::get();
 	U32 blockAlignment = gl.getBufferOffsetAlignment(m_lightsBuff.getTarget());
 
 	// Get the offsets and sizes of each uniform block
@@ -756,7 +755,7 @@ void Is::lightPass(GlJobChainHandle& jobs)
 }
 
 //==============================================================================
-void Is::setState(GlJobChainHandle& jobs)
+void Is::setState(GlCommandBufferHandle& jobs)
 {
 	Bool drawToDefaultFbo = !m_r->getPps().getEnabled() 
 		&& !m_r->getDbg().getEnabled() 
@@ -777,14 +776,14 @@ void Is::setState(GlJobChainHandle& jobs)
 }
 
 //==============================================================================
-void Is::run(GlJobChainHandle& jobs)
+void Is::run(GlCommandBufferHandle& jobs)
 {
 	// Do the light pass including the shadow passes
 	lightPass(jobs);
 }
 
 //==============================================================================
-void Is::updateCommonBlock(GlJobChainHandle& jobs)
+void Is::updateCommonBlock(GlCommandBufferHandle& jobs)
 {
 	SceneGraph& scene = m_r->getSceneGraph();
 
@@ -810,7 +809,7 @@ void Is::updateCommonBlock(GlJobChainHandle& jobs)
 //==============================================================================
 PtrSize Is::calcLightsBufferSize() const
 {
-	U32 buffAlignment = GlManagerSingleton::get().getBufferOffsetAlignment(
+	U32 buffAlignment = GlDeviceSingleton::get().getBufferOffsetAlignment(
 		GL_SHADER_STORAGE_BUFFER);
 	PtrSize size;
 

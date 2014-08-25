@@ -13,6 +13,7 @@
 #include "anki/Math.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/HighRezTimer.h"
+#include "anki/core/App.h"
 
 #include "anki/scene/Sector.h"
 #include "anki/physics/PhysicsWorld.h"
@@ -35,15 +36,13 @@ class SceneGraph
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	SceneGraph(AllocAlignedCallback allocCb, void* allocCbUserData);
+	SceneGraph(AllocAlignedCallback allocCb, void* allocCbData, 
+		Threadpool* threadpool);
 
 	~SceneGraph();
 	/// @}
 
 	void load(const char* filename);
-
-	/// @name Accessors
-	/// @{
 
 	/// @note Return a copy
 	SceneAllocator<U8> getAllocator() const
@@ -121,7 +120,11 @@ public:
 	{
 		return m_sectorGroup;
 	}
-	/// @}
+
+	Threadpool& _getThreadpool()
+	{
+		return *m_threadpool;
+	}
 
 	void update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer);
 
@@ -197,6 +200,8 @@ private:
 
 	std::atomic<U32> m_objectsMarkedForDeletionCount;
 
+	Threadpool* m_threadpool;
+
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);
 	void unregisterNode(SceneNode* node);
@@ -205,7 +210,6 @@ private:
 	void deleteNodesMarkedForDeletion();
 };
 
-typedef SingletonInit<SceneGraph> SceneGraphSingleton;
 /// @}
 
 } // end namespace anki

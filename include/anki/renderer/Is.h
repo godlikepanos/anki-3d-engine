@@ -114,16 +114,16 @@ private:
 	~Is();
 
 	void init(const ConfigSet& initializer);
-	void run(GlJobChainHandle& jobs);
+	void run(GlCommandBufferHandle& jobs);
 
 	/// Called by init
 	void initInternal(const ConfigSet& initializer);
 
 	/// Do the actual pass
-	void lightPass(GlJobChainHandle& jobs);
+	void lightPass(GlCommandBufferHandle& jobs);
 
 	/// Prepare GL for rendering
-	void setState(GlJobChainHandle& jobs);
+	void setState(GlCommandBufferHandle& jobs);
 
 	/// Calculate the size of the lights UBO
 	PtrSize calcLightsBufferSize() const;
@@ -131,7 +131,7 @@ private:
 	/// Calculate the size of the tile
 	PtrSize calcTileSize() const;
 
-	void updateCommonBlock(GlJobChainHandle& jobs);
+	void updateCommonBlock(GlCommandBufferHandle& jobs);
 };
 
 /// @}
