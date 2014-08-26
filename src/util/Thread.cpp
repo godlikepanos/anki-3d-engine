@@ -67,7 +67,6 @@ public:
 	}
 
 	/// Assign new task to the thread
-	/// @note 
 	void assignNewTask(Threadpool::Task* task)
 	{
 		m_mutex.lock();
@@ -93,13 +92,13 @@ private:
 
 			// Wait for something
 			{
+				LockGuard<Mutex> lock(mtx);
 				while(self.m_task == nullptr)
 				{
 					self.m_condVar.wait(mtx);
 				}
 				task = self.m_task;
 				self.m_task = nullptr;
-				mtx.unlock();
 			}
 
 			// Exec

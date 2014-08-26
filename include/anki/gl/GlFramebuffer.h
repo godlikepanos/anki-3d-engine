@@ -21,7 +21,7 @@ class GlTexture;
 class GlFramebuffer: public GlObject
 {
 public:
-	typedef GlObject Base;
+	using Base = GlObject;
 
 	static const U32 MAX_COLOR_ATTACHMENTS = 4;
 

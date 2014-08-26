@@ -93,18 +93,16 @@ GlTextureHandle::GlTextureHandle(
 
 	ANKI_ASSERT(!isCreated());
 
-	typedef GlGlobalHeapAllocator<GlTexture> Alloc;
+	using Alloc = GlGlobalHeapAllocator<GlTexture>;
 
-	typedef GlDeleteObjectCommand<
-		GlTexture, 
-		Alloc> DeleteCommand;
+	using DeleteCommand = 
+		GlDeleteObjectCommand<GlTexture, Alloc>;
 
-	typedef GlHandleDeferredDeleter<GlTexture, Alloc, DeleteCommand>
-		Deleter;
+	using Deleter = GlHandleDeferredDeleter<GlTexture, Alloc, DeleteCommand>;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&commands._getQueue().getManager(),
-		commands._getQueue().getManager()._getAllocator(), 
+		&commands._getQueue().getDevice(),
+		commands._getQueue().getDevice()._getAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);
 
@@ -126,7 +124,8 @@ void GlTextureHandle::bind(GlCommandBufferHandle& commands, U32 unit)
 		U32 m_unit;
 
 		Command(GlTextureHandle& tex, U32 unit)
-			: m_tex(tex), m_unit(unit)
+		:	m_tex(tex), 
+			m_unit(unit)
 		{}
 
 		void operator()(GlCommandBuffer*)
@@ -149,7 +148,8 @@ void GlTextureHandle::setFilter(GlCommandBufferHandle& commands, Filter filter)
 		GlTexture::Filter m_filter;
 
 		Command(GlTextureHandle tex, GlTexture::Filter filter)
-			: m_tex(tex), m_filter(filter)
+		:	m_tex(tex), 
+			m_filter(filter)
 		{}
 
 		void operator()(GlCommandBuffer*)
@@ -171,7 +171,7 @@ void GlTextureHandle::generateMipmaps(GlCommandBufferHandle& commands)
 		GlTextureHandle m_tex;
 
 		Command(GlTextureHandle tex)
-			: m_tex(tex)
+		:	m_tex(tex)
 		{}
 
 		void operator()(GlCommandBuffer*)
@@ -198,7 +198,9 @@ void GlTextureHandle::setParameter(GlCommandBufferHandle& commands,
 		GLint m_value;
 
 		Command(GlTextureHandle& tex, GLenum param, GLint value)
-			: m_tex(tex), m_param(param), m_value(value)
+		:	m_tex(tex), 
+			m_param(param), 
+			m_value(value)
 		{}
 
 		void operator()(GlCommandBuffer*)
@@ -249,7 +251,7 @@ GlSamplerHandle::GlSamplerHandle(GlCommandBufferHandle& commands)
 		GlSamplerHandle m_sampler;
 
 		Command(const GlSamplerHandle& sampler)
-			: m_sampler(sampler)
+		:	m_sampler(sampler)
 		{}
 
 		void operator()(GlCommandBuffer* commands)
@@ -266,18 +268,15 @@ GlSamplerHandle::GlSamplerHandle(GlCommandBufferHandle& commands)
 		}
 	};
 
-	typedef GlGlobalHeapAllocator<GlSampler> Alloc;
+	using Alloc = GlGlobalHeapAllocator<GlSampler>;
 
-	typedef GlDeleteObjectCommand<
-		GlSampler, 
-		Alloc> DeleteCommand;
+	using DeleteCommand = GlDeleteObjectCommand<GlSampler, Alloc>;
 
-	typedef GlHandleDeferredDeleter<GlSampler, Alloc, DeleteCommand>
-		Deleter;
+	using Deleter = GlHandleDeferredDeleter<GlSampler, Alloc, DeleteCommand>;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&commands._getQueue().getManager(),
-		commands._getQueue().getManager()._getAllocator(), 
+		&commands._getQueue().getDevice(),
+		commands._getQueue().getDevice()._getAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);
 
@@ -298,7 +297,8 @@ void GlSamplerHandle::bind(GlCommandBufferHandle& commands, U32 unit)
 		U32 m_unit;
 
 		Command(GlSamplerHandle& sampler, U32 unit)
-			: m_sampler(sampler), m_unit(unit)
+		:	m_sampler(sampler), 
+			m_unit(unit)
 		{}
 
 		void operator()(GlCommandBuffer*)
@@ -321,7 +321,8 @@ void GlSamplerHandle::setFilter(GlCommandBufferHandle& commands, Filter filter)
 		GlSamplerHandle::Filter m_filter;
 
 		Command(const GlSamplerHandle& sampler, GlSamplerHandle::Filter filter)
-			: m_sampler(sampler), m_filter(filter)
+		:	m_sampler(sampler), 
+			m_filter(filter)
 		{}
 
 		void operator()(GlCommandBuffer*)
@@ -346,7 +347,9 @@ void GlSamplerHandle::setParameter(
 		GLint m_value;
 
 		Command(GlSamplerHandle& sampler, GLenum param, GLint value)
-			: m_sampler(sampler), m_param(param), m_value(value)
+		:	m_sampler(sampler), 
+			m_param(param), 
+			m_value(value)
 		{}
 
 		void operator()(GlCommandBuffer*)
@@ -368,7 +371,7 @@ void GlSamplerHandle::bindDefault(GlCommandBufferHandle& commands, U32 unit)
 		U32 m_unit;
 
 		Command(U32 unit)
-			: m_unit(unit)
+		:	m_unit(unit)
 		{}
 
 		void operator()(GlCommandBuffer*)

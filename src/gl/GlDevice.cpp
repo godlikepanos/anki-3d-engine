@@ -5,6 +5,7 @@
 
 #include "anki/gl/GlDevice.h"
 #include "anki/core/Timestamp.h"
+#include <cstring>
 
 namespace anki {
 
@@ -13,9 +14,15 @@ GlDevice::GlDevice(
 	GlCallback makeCurrentCallback, void* context,
 	GlCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerDebugMessages,
-	AllocAlignedCallback alloc, void* allocUserData)
+	AllocAlignedCallback alloc, void* allocUserData,
+	const char* cacheDir)
 {
 	m_alloc = HeapAllocator<U8>(HeapMemoryPool(alloc, allocUserData));
+
+	// Allocate cache dir
+	I len = std::strlen(cacheDir);
+	m_cacheDir = reinterpret_cast<char*>(m_alloc.allocate(len + 1));
+	std::memcpy(m_cacheDir, cacheDir, len + 1);
 
 	// Start the server
 	m_queue = m_alloc.newInstance<GlQueue>(
@@ -35,6 +42,11 @@ void GlDevice::destroy()
 	{
 		m_queue->stop();
 		m_alloc.deleteInstance(m_queue);
+	}
+
+	if(m_cacheDir)
+	{
+		m_alloc.deallocate(m_cacheDir, std::strlen(m_cacheDir) + 1);
 	}
 }
 

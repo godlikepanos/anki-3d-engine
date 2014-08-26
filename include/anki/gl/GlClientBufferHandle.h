@@ -21,7 +21,7 @@ class GlCommandBufferHandle;
 class GlClientBufferHandle: public GlHandle<GlClientBuffer>
 {
 public:
-	typedef GlHandle<GlClientBuffer> Base;
+	using Base = GlHandle<GlClientBuffer>;
 
 	/// @name Constructors/Destructor
 	/// @{

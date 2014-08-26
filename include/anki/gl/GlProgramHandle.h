@@ -22,7 +22,7 @@ class GlClientBufferHandle;
 class GlProgramHandle: public GlContainerHandle<GlProgram>
 {
 public:
-	typedef GlContainerHandle<GlProgram> Base;
+	using Base = GlContainerHandle<GlProgram>;
 
 	// Re-define it here
 	template<typename T>

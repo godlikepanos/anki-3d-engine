@@ -19,9 +19,9 @@ namespace anki {
 class GlTexture: public GlObject
 {
 public:
-	typedef GlObject Base;
+	using Base = GlObject;
 
-	typedef GlTextureFilter Filter;
+	using Filter = GlTextureFilter;
 
 	/// Texture handle initializer struct
 	class Initializer: public GlTextureInitializerBase
@@ -166,8 +166,8 @@ private:
 class GlSampler: public GlObject
 {
 public:
-	typedef GlObject Base;
-	typedef GlTextureFilter Filter;
+	using Base = GlObject;
+	using Filter = GlTextureFilter;
 
 	/// @name Constructors/Destructor
 	/// @{

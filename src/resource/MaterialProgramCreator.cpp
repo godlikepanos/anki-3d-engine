@@ -19,8 +19,9 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-struct InputSortFunctor
+class InputSortFunctor
 {
+public:
 	Bool operator()(const MaterialProgramCreator::Input& a, 
 		const MaterialProgramCreator::Input& b)
 	{
@@ -31,36 +32,36 @@ struct InputSortFunctor
 //==============================================================================
 /// Given a string return info about the shader
 static void getShaderInfo(
-	const MaterialProgramCreator::MPString& str, 
+	const char* str, 
 	GLenum& type, 
 	GLbitfield& bit,
 	U& idx)
 {
-	if(str == "vert")
+	if(std::strcmp(str, "vert") == 0)
 	{
 		type = GL_VERTEX_SHADER;
 		bit = GL_VERTEX_SHADER_BIT;
 		idx = 0;
 	}
-	else if(str == "tesc")
+	else if(std::strcmp(str, "tesc") == 0)
 	{
 		type = GL_TESS_CONTROL_SHADER;
 		bit = GL_TESS_CONTROL_SHADER_BIT;
 		idx = 1;
 	}
-	else if(str == "tese")
+	else if(std::strcmp(str, "tese") == 0)
 	{
 		type = GL_TESS_EVALUATION_SHADER;
 		bit = GL_TESS_EVALUATION_SHADER_BIT;
 		idx = 2;
 	}
-	else if(str == "geom")
+	else if(std::strcmp(str, "geom") == 0)
 	{
 		type = GL_GEOMETRY_SHADER;
 		bit = GL_GEOMETRY_SHADER_BIT;
 		idx = 3;
 	}
-	else if(str == "frag")
+	else if(std::strcmp(str, "frag") == 0)
 	{
 		type = GL_GEOMETRY_SHADER;
 		bit = GL_GEOMETRY_SHADER_BIT;
@@ -138,7 +139,7 @@ void MaterialProgramCreator::parseProgramTag(
 	const XmlElement& programEl)
 {
 	// <type>
-	MPString type(programEl.getChildElement("type").getText().c_str(), m_alloc);
+	const char* type = programEl.getChildElement("type").getText();
 	GLbitfield glshaderbit;
 	GLenum glshader;
 	U shaderidx;
@@ -146,7 +147,7 @@ void MaterialProgramCreator::parseProgramTag(
 
 	m_source[shaderidx] = MPStringList(m_alloc);
 	auto& lines = m_source[shaderidx];
-	lines.push_back("#pragma anki type " + type);
+	lines.push_back(MPString("#pragma anki type ", m_alloc) + type);
 
 	if(glshader == GL_TESS_CONTROL_SHADER 
 		|| glshader == GL_TESS_EVALUATION_SHADER)
@@ -199,7 +200,7 @@ void MaterialProgramCreator::parseProgramTag(
 	XmlElement opEl = opsEl.getChildElement("operation");
 	do
 	{
-		std::string out;
+		MPString out(m_alloc);
 		parseOperationTag(opEl, glshader, glshaderbit, out);
 		lines.push_back(out);
 
@@ -223,13 +224,14 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 	GLbitfield glshaderbit;
 	GLenum glshader;
 	U shaderidx;
-	getShaderInfo(programEl.getChildElement("type").getText(), 
+	getShaderInfo(
+		programEl.getChildElement("type").getText(), 
 		glshader, glshaderbit, shaderidx);
 
 	XmlElement inputEl = inputsEl.getChildElement("input");
 	do
 	{
-		Input inpvar;
+		Input inpvar(m_alloc);
 
 		// <name>
 		inpvar.m_name = inputEl.getChildElement("name").getText();
@@ -241,7 +243,7 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		XmlElement valueEl = inputEl.getChildElement("value");
 		if(valueEl.getText())
 		{
-			inpvar.m_value = StringList::splitString(valueEl.getText(), ' ');
+			inpvar.m_value = MPStringList::splitString(valueEl.getText(), ' ');
 		}
 
 		// <const>
@@ -307,8 +309,9 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 				
 			if(inpvar.m_arraySize > 1)
 			{
-				inpvar.m_line += "[" + std::to_string(inpvar.m_arraySize) 
-					+ "U]";
+				MPString tmp(m_alloc);
+				toString(inpvar.m_arraySize, tmp);
+				inpvar.m_line += "[" + tmp + "U]";
 			}
 
 			if(inpvar.m_instanced)
@@ -379,8 +382,8 @@ void MaterialProgramCreator::parseOperationTag(
 	
 	// <returnType></returnType>
 	XmlElement retTypeEl = operationTag.getChildElement("returnType");
-	std::string retType = retTypeEl.getText();
-	std::string operationOut;
+	MPString retType(retTypeEl.getText(), m_alloc);
+	MPString operationOut(m_alloc);
 	if(retType != "void")
 	{
 		operationOut = OUT + std::to_string(id);

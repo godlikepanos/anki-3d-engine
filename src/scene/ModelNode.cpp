@@ -60,19 +60,18 @@ void ModelPatchNode::buildRendering(RenderingBuildData& data)
 	// Cannot accept multi-draw
 	ANKI_ASSERT(drawcallCount == 1);
 
+	// Set jobs
+	ppline.bind(data.m_jobs);
+	data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
+	
 	// Drawcall
 	U32 offset = indicesOffsetArray[0] / sizeof(U16);
-	GlDrawcallElements dc(
+	data.m_jobs.drawElements(
 		data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
 		sizeof(U16),
 		indicesCountArray[0],
 		instancesCount,
 		offset);
-
-	// Set jobs
-	ppline.bind(data.m_jobs);
-	data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
-	dc.draw(data.m_jobs);
 }
 
 //==============================================================================

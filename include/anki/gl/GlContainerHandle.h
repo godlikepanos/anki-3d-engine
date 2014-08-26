@@ -19,7 +19,7 @@ template<typename T>
 class GlContainerHandle: public GlHandle<T>
 {
 public:
-	typedef GlHandle<T> Base;
+	using Base = GlHandle<T>;
 
 protected:
 	/// Check if the object has been created and if not serialize the server

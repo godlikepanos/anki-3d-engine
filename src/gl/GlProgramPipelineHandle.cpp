@@ -67,13 +67,13 @@ void GlProgramPipelineHandle::commonConstructor(
 		}
 	};
 
-	typedef GlGlobalHeapAllocator<GlProgramPipeline> Alloc;
-	typedef GlDeleteObjectCommand<GlProgramPipeline, Alloc> DeleteCommand;
-	typedef GlHandleDeferredDeleter<GlProgramPipeline, Alloc, DeleteCommand> 
-		Deleter;
+	using Alloc = GlGlobalHeapAllocator<GlProgramPipeline>;
+	using DeleteCommand = GlDeleteObjectCommand<GlProgramPipeline, Alloc>;
+	using Deleter = 
+		GlHandleDeferredDeleter<GlProgramPipeline, Alloc, DeleteCommand>;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&commands._get().getQueue().getManager(),
+		&commands._get().getQueue().getDevice(),
 		commands._get().getGlobalAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);

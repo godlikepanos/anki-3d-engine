@@ -58,4 +58,7 @@
 /// @defgroup util_other Other interfaces
 /// @ingroup util
 
+/// @defgroup util_private Private interfaces
+/// @ingroup util
+
 #endif

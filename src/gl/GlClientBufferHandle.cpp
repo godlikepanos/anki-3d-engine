@@ -23,8 +23,8 @@ GlClientBufferHandle::GlClientBufferHandle(
 
 	auto alloc = commands._getAllocator();
 
-	typedef GlHandleDefaultDeleter<
-		GlClientBuffer, GlCommandBufferAllocator<GlClientBuffer>> Deleter;
+	using Deleter = GlHandleDefaultDeleter<
+		GlClientBuffer, GlCommandBufferAllocator<GlClientBuffer>>;
 
 	if(preallocatedMem != nullptr)
 	{

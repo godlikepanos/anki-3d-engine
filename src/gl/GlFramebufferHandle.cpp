@@ -63,7 +63,7 @@ GlFramebufferHandle::GlFramebufferHandle(
 		GlHandleDeferredDeleter<GlFramebuffer, Alloc, DeleteCommand>;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&commands._get().getQueue().getManager(),
+		&commands._get().getQueue().getDevice(),
 		commands._get().getGlobalAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);

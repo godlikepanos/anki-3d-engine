@@ -30,12 +30,12 @@ public:
 		Dictionary<T, GlGlobalHeapAllocator<std::pair<const char*, T>>>;
 
 	GlProgramData(const GlGlobalHeapAllocator<U8>& alloc)
-		:	m_variables(alloc), 
-			m_variablesDict(10, DictionaryHasher(), DictionaryEqual(), alloc), 
-			m_blocks(alloc), 
-			m_blocksDict(10, DictionaryHasher(), DictionaryEqual(), alloc),
-			m_names(nullptr),
-			m_prog(nullptr)
+	:	m_variables(alloc), 
+		m_variablesDict(10, DictionaryHasher(), DictionaryEqual(), alloc), 
+		m_blocks(alloc), 
+		m_blocksDict(10, DictionaryHasher(), DictionaryEqual(), alloc),
+		m_names(nullptr),
+		m_prog(nullptr)
 	{}
 
 	~GlProgramData() noexcept
@@ -68,12 +68,12 @@ class GlProgram: public GlObject
 	friend class GlProgramBlock;
 
 public:
-	typedef GlObject Base;
+	using Base = GlObject;
 
 	/// @name Constructors/Destructor
 	/// @{
 	GlProgram()
-		: m_data(nullptr)
+	:	m_data(nullptr)
 	{}
 
 	GlProgram(GlProgram&& b)
@@ -85,11 +85,14 @@ public:
 	/// @param shaderType The type of the shader in the program
 	/// @param source The shader's source
 	/// @param alloc The allocator to be used for internally
-	GlProgram(GLenum shaderType, const char* source, 
-		const GlGlobalHeapAllocator<U8>& alloc)
-		: m_data(nullptr)
+	GlProgram(
+		GLenum shaderType, 
+		const char* source, 
+		const GlGlobalHeapAllocator<U8>& alloc, 
+		const char* cacheDir)
+	:	m_data(nullptr)
 	{
-		create(shaderType, source, alloc);
+		create(shaderType, source, alloc, cacheDir);
 	}
 
 	~GlProgram()
@@ -101,8 +104,6 @@ public:
 	/// Move
 	GlProgram& operator=(GlProgram&& b);
 
-	/// @name Accessors
-	/// @{
 	GLenum getType() const
 	{
 		ANKI_ASSERT(isCreated() && m_data);
@@ -126,16 +127,15 @@ public:
 
 	const GlProgramVariable* tryFindVariable(const char* name) const;
 	const GlProgramBlock* tryFindBlock(const char* name) const;
-	/// @}
 
 private:
 	GLenum m_type;
 	GlProgramData* m_data;
 
 	void create(GLenum type, const char* source, 
-		const GlGlobalHeapAllocator<U8>& alloc);
+		const GlGlobalHeapAllocator<U8>& alloc, const char* cacheDir);
 	void createInternal(GLenum type, const char* source, 
-		const GlGlobalHeapAllocator<U8>& alloc);
+		const GlGlobalHeapAllocator<U8>& alloc, const char* cacheDir);
 	void destroy();
 
 	/// Query the program for blocks

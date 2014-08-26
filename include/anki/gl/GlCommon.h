@@ -265,6 +265,64 @@ private:
 
 /// @}
 
+/// @addtogroup opengl_other
+/// @{
+
+/// The draw indirect structure for index drawing, also the parameters of a 
+/// regular drawcall
+class GlDrawElementsIndirectInfo
+{
+public:
+	GlDrawElementsIndirectInfo()
+	{}
+
+	GlDrawElementsIndirectInfo(
+		U32 count, 
+		U32 instanceCount, 
+		U32 firstIndex, 
+		U32 baseVertex, 
+		U32 baseInstance)
+	:	m_count(count), 
+		m_instanceCount(instanceCount), 
+		m_firstIndex(firstIndex), 
+		m_baseVertex(baseVertex),
+		m_baseInstance(baseInstance)
+	{}
+
+	U32 m_count = MAX_U32;
+	U32 m_instanceCount = 1;
+	U32 m_firstIndex = 0;
+	U32 m_baseVertex = 0;
+	U32 m_baseInstance = 0;
+};
+
+/// The draw indirect structure for arrays drawing, also the parameters of a 
+/// regular drawcall
+class GlDrawArraysIndirectInfo
+{
+public:
+	GlDrawArraysIndirectInfo()
+	{}
+
+	GlDrawArraysIndirectInfo(
+		U32 count, 
+		U32 instanceCount, 
+		U32 first, 
+		U32 baseInstance)
+	:	m_count(count), 
+		m_instanceCount(instanceCount), 
+		m_first(first), 
+		m_baseInstance(baseInstance)
+	{}
+
+	U32 m_count = MAX_U32;
+	U32 m_instanceCount = 1;
+	U32 m_first = 0;
+	U32 m_baseInstance = 0;	
+};
+
+/// @}
+
 } // end namespace anki
 
 #endif

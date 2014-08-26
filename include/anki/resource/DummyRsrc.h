@@ -6,9 +6,10 @@
 #ifndef ANKI_RESOURCE_DUMMY_RSRC_H
 #define ANKI_RESOURCE_DUMMY_RSRC_H
 
-
 namespace anki {
 
+/// @addtogroup resource_private
+/// @{
 
 /// A dummy resource for the unit tests of the ResourceManager
 class DummyRsrc
@@ -45,8 +46,8 @@ private:
 	bool loaded;
 };
 
+/// @}
 
-} // end namespace
-
+} // end namespace anki
 
 #endif

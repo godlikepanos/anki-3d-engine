@@ -8,9 +8,9 @@
 
 layout(binding = 0) uniform lowp sampler2D uTex;
 
-layout(location = 0) in vec2 inTexCoords;
+layout(location = 0) in F32Vec2 inTexCoords;
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out F16Vec3 outColor;
 
 void main()
 {

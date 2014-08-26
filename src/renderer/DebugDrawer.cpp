@@ -137,9 +137,7 @@ void DebugDrawer::flushInternal(GLenum primitive)
 	m_vertBuff.bindVertexBuffer(m_jobs, 
 		4, GL_FLOAT, true, sizeof(Vertex), sizeof(Vec4), 1); // Color
 
-	GlDrawcallArrays dc(primitive, clientVerts);
-
-	dc.draw(m_jobs);
+	m_jobs.draw(primitive, clientVerts);
 }
 
 //==============================================================================

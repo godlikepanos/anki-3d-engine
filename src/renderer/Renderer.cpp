@@ -148,12 +148,12 @@ void Renderer::drawQuad(GlCommandBufferHandle& jobs)
 }
 
 //==============================================================================
-void Renderer::drawQuadInstanced(GlCommandBufferHandle& jobs, U32 primitiveCount)
+void Renderer::drawQuadInstanced(
+	GlCommandBufferHandle& jobs, U32 primitiveCount)
 {
 	m_quadPositionsBuff.bindVertexBuffer(jobs, 2, GL_FLOAT, false, 0, 0, 0);
 
-	GlDrawcallArrays dc(GL_TRIANGLE_STRIP, 4, primitiveCount);
-	dc.draw(jobs);
+	dc.drawArrays(GL_TRIANGLE_STRIP, 4, primitiveCount);
 }
 
 //==============================================================================

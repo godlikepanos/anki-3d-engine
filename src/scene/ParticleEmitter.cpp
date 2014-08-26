@@ -302,12 +302,9 @@ void ParticleEmitter::buildRendering(RenderingBuildData& data)
 	m_vertBuff.bindVertexBuffer(data.m_jobs, 
 		1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 4, 7);
 
-	GlDrawcallArrays dc = GlDrawcallArrays(
-		GL_POINTS, 
+	data.m_jobs.drawArrays(GL_POINTS, 
 		m_aliveParticlesCount,
 		data.m_subMeshIndicesCount);
-
-	dc.draw(data.m_jobs);
 }
 
 //==============================================================================
