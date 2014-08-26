@@ -97,7 +97,7 @@ private:
 
 	/// Parse what is within the @code <operation></operation> @endcode
 	void parseOperationTag(const XmlElement& el, GLenum glshader, 
-		GLbitfield glshaderbit, std::string& out);
+		GLbitfield glshaderbit, MPString& out);
 };
 
 } // end namespace anki

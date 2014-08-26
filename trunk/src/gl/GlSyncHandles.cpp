@@ -20,7 +20,7 @@ public:
 	GlClientSyncHandle m_sync;	
 
 	GlClientSyncWaitCommand(const GlClientSyncHandle& s)
-		: m_sync(s)
+	:	m_sync(s)
 	{}
 
 	void operator()(GlCommandBuffer*)
@@ -40,11 +40,11 @@ GlClientSyncHandle::GlClientSyncHandle(GlCommandBufferHandle& commands)
 {
 	auto alloc = commands._getGlobalAllocator();
 
-	typedef GlHandleDefaultDeleter<GlClientSync, GlGlobalHeapAllocator<U8>>
-		Deleter;
+	using Deleter = 
+		GlHandleDefaultDeleter<GlClientSync, GlGlobalHeapAllocator<U8>>;
 
 	*static_cast<Base*>(this) = Base(
-		&commands._getQueue().getManager(), alloc, Deleter());
+		&commands._getQueue().getDevice(), alloc, Deleter());
 }
 
 //==============================================================================

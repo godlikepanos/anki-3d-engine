@@ -22,13 +22,16 @@ public:
 
 	GlProgramCreateCommand(GlProgramHandle prog, 
 		GLenum type, GlClientBufferHandle source)
-		: m_prog(prog), m_type(type), m_source(source)
+	:	m_prog(prog), 
+		m_type(type), 
+		m_source(source)
 	{}
 
 	void operator()(GlCommandBuffer* commands)
 	{
 		GlProgram p(m_type, (const char*)m_source.getBaseAddress(), 
-			commands->getQueue().getManager()._getAllocator());
+			commands->getQueue().getDevice()._getAllocator(),
+			commands->getQueue().getDevice()._getCacheDirectory());
 		m_prog._get() = std::move(p);
 
 		GlHandleState oldState = m_prog._setState(GlHandleState::CREATED);
@@ -45,12 +48,12 @@ GlProgramHandle::GlProgramHandle()
 GlProgramHandle::GlProgramHandle(GlCommandBufferHandle& commands, 
 	GLenum type, const GlClientBufferHandle& source)
 {
-	typedef GlGlobalHeapAllocator<GlProgram> Alloc;
-	typedef GlDeleteObjectCommand<GlProgram, Alloc> DeleteCommand;
-	typedef GlHandleDeferredDeleter<GlProgram, Alloc, DeleteCommand> Deleter;
+	using Alloc = GlGlobalHeapAllocator<GlProgram>;
+	using DeleteCommand = GlDeleteObjectCommand<GlProgram, Alloc>;
+	using Deleter = GlHandleDeferredDeleter<GlProgram, Alloc, DeleteCommand>;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&commands._get().getQueue().getManager(),
+		&commands._get().getQueue().getDevice(),
 		commands._get().getGlobalAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);

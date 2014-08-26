@@ -46,7 +46,7 @@ template<typename T>
 class GlHandle
 {
 public:
-	typedef T Type;
+	using Type = T;
 
 	/// @name Constructor/Destructor
 	/// @{
@@ -73,7 +73,7 @@ public:
 		{
 			// Container block
 
-			typedef CtrlBlockContainer<T, TAlloc, TDeleter> Block;
+			using Block = CtrlBlockContainer<T, TAlloc, TDeleter>;
 
 			Block* blk = alloc.template newInstance<Block>();
 
@@ -88,7 +88,7 @@ public:
 		{
 			// Simple block
 
-			typedef CtrlBlockSimple<T, TAlloc, TDeleter> Block;
+			using Block = CtrlBlockSimple<T, TAlloc, TDeleter>;
 
 			Block* blk = alloc.template newInstance<Block>();
 
@@ -274,7 +274,7 @@ private:
 	class CtrlBlockSimple: public CtrlBlockBase<Y>
 	{
 	public:	
-		typedef CtrlBlockBase<Y> Base;
+		using Base = CtrlBlockBase<Y>;
 
 		/// Copy of the allocator
 		YAlloc m_alloc; 
@@ -300,7 +300,7 @@ private:
 	class CtrlBlockContainer: public CtrlBlockBase<Y>
 	{
 	public:	
-		typedef CtrlBlockBase<Y> Base;
+		using Base = CtrlBlockBase<Y>;
 
 		/// Copy of the allocator
 		YAlloc m_alloc; 

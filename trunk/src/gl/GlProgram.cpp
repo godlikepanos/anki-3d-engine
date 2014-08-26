@@ -10,7 +10,6 @@
 #define ANKI_DUMP_SHADERS ANKI_DEBUG
 
 #if ANKI_DUMP_SHADERS
-#	include "anki/core/App.h"
 #	include "anki/util/File.h"
 #endif
 
@@ -292,11 +291,11 @@ GlProgram& GlProgram::operator=(GlProgram&& b)
 
 //==============================================================================
 void GlProgram::create(GLenum type, const char* source, 
-	const GlGlobalHeapAllocator<U8>& alloc)
+	const GlGlobalHeapAllocator<U8>& alloc, const char* cacheDir)
 {
 	try
 	{
-		createInternal(type, source, alloc);
+		createInternal(type, source, alloc, cacheDir);
 	}
 	catch(const std::exception& e)
 	{
@@ -307,7 +306,7 @@ void GlProgram::create(GLenum type, const char* source,
 
 //==============================================================================
 void GlProgram::createInternal(GLenum type, const char* source, 
-	const GlGlobalHeapAllocator<U8>& alloc_)
+	const GlGlobalHeapAllocator<U8>& alloc_, const char* cacheDir)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(!isCreated() && m_data == nullptr);
@@ -375,7 +374,7 @@ void GlProgram::createInternal(GLenum type, const char* source,
 		}
 
 		std::stringstream fname;
-		fname << AppSingleton::get().getCachePath() << "/" 
+		fname << cacheDir << "/" 
 			<< std::setfill('0') << std::setw(4) << (U32)m_glName << ext;
 
 		File file(fname.str().c_str(), File::OpenFlag::WRITE);

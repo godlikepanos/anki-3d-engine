@@ -10,6 +10,7 @@
 #include "anki/gl/GlTextureHandle.h"
 #include "anki/gl/GlTexture.h"
 #include "anki/util/Vector.h"
+#include "anki/core/Counters.h"
 #include <utility>
 
 namespace anki {
@@ -124,7 +125,7 @@ GlCommandBufferHandle::GlCommandBufferHandle(GlDevice* gl,
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(gl);
 
-	typedef GlGlobalHeapAllocator<GlCommandBuffer> Alloc;
+	using Alloc = GlGlobalHeapAllocator<GlCommandBuffer>;
 	Alloc alloc = gl->_getAllocator();
 
 	*static_cast<Base*>(this) = Base(
@@ -140,7 +141,8 @@ GlCommandBufferHandle::~GlCommandBufferHandle()
 {}
 
 //==============================================================================
-void GlCommandBufferHandle::pushBackUserCommand(UserCallback callback, void* data)
+void GlCommandBufferHandle::pushBackUserCommand(
+	UserCallback callback, void* data)
 {
 	class Command: public GlCommand
 	{
@@ -189,13 +191,13 @@ void GlCommandBufferHandle::pushBackOtherCommandBuffer(
 //==============================================================================
 void GlCommandBufferHandle::flush()
 {
-	_get().getQueue().flushCommandChain(*this);
+	_get().getQueue().flushCommandBuffer(*this);
 }
 
 //==============================================================================
 void GlCommandBufferHandle::finish()
 {
-	_get().getQueue().finishCommandChain(*this);
+	_get().getQueue().finishCommandBuffer(*this);
 }
 
 //==============================================================================
@@ -394,7 +396,8 @@ void GlCommandBufferHandle::enablePolygonOffset(Bool enable)
 void GlCommandBufferHandle::bindTextures(U32 first, 
 	const std::initializer_list<GlTextureHandle>& textures)
 {
-	using Vec = Vector<GlTextureHandle, GlCommandBufferAllocator<GlTextureHandle>>;
+	using Vec = 
+		Vector<GlTextureHandle, GlCommandBufferAllocator<GlTextureHandle>>;
 		
 	class Command: public GlCommand
 	{
@@ -432,6 +435,133 @@ void GlCommandBufferHandle::bindTextures(U32 first,
 	}
 
 	_pushBackNewCommand<Command>(texes, first);
+}
+
+//==============================================================================
+// Use the template trick to avoid allocating too much things in the 
+// command buffer
+template<GLenum mode, U8 indexSize>
+class DrawElementsCommand: public GlCommand
+{
+public:
+	GlDrawElementsIndirectInfo m_info;
+
+	DrawElementsCommand(GlDrawElementsIndirectInfo& info)
+	:	m_info(info)
+	{}
+
+	void operator()(GlCommandBuffer*)
+	{
+		ANKI_ASSERT(indexSize != 0);
+
+		GLenum indicesType = 0;
+		switch(indexSize)
+		{
+		case 1:
+			indicesType = GL_UNSIGNED_BYTE;
+			break;
+		case 2:
+			indicesType = GL_UNSIGNED_SHORT;
+			break;
+		case 4:
+			indicesType = GL_UNSIGNED_INT;
+			break;
+		default:
+			ANKI_ASSERT(0);
+			break;
+		};
+
+		glDrawElementsInstancedBaseVertexBaseInstance(
+			mode,
+			m_info.m_count,
+			indicesType,
+			(const void*)(PtrSize)(m_info.m_firstIndex * indexSize),
+			m_info.m_instanceCount,
+			m_info.m_baseVertex,
+			m_info.m_baseInstance);
+
+		ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
+	}
+};
+
+void GlCommandBufferHandle::drawElements(
+	GLenum mode, U8 indexSize, U32 count, U32 instanceCount, U32 firstIndex,
+	U32 baseVertex, U32 baseInstance)
+{
+	GlDrawElementsIndirectInfo info(count, instanceCount, firstIndex, 
+		baseVertex, baseInstance);
+
+	if(indexSize == 2)
+	{
+		switch(mode)
+		{
+		case GL_TRIANGLES:
+			_pushBackNewCommand<DrawElementsCommand<GL_TRIANGLES, 2>>(info);
+			break;
+		case GL_POINTS:
+			_pushBackNewCommand<DrawElementsCommand<GL_POINTS, 2>>(info);
+			break;
+		case GL_LINES:
+			_pushBackNewCommand<DrawElementsCommand<GL_LINES, 2>>(info);
+			break;
+		default:
+			ANKI_ASSERT(0 && "Not implemented");
+		}
+	}
+	else
+	{
+		ANKI_ASSERT(0 && "Not implemented");
+	}
+}
+
+//==============================================================================
+// Use the template trick to avoid allocating too much things in the 
+// command buffer
+template<GLenum mode>
+class DrawArraysCommand: public GlCommand
+{
+public:
+	GlDrawArraysIndirectInfo m_info;
+
+	DrawArraysCommand(GlDrawArraysIndirectInfo& info)
+	:	m_info(info)
+	{}
+
+	void operator()(GlCommandBuffer*)
+	{
+		glDrawArraysInstancedBaseInstance(
+			mode,
+			m_info.m_first,
+			m_info.m_count,
+			m_info.m_instanceCount,
+			m_info.m_baseInstance);
+
+		ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
+	}
+};
+
+void GlCommandBufferHandle::drawArrays(
+	GLenum mode, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+{
+	GlDrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
+
+	switch(mode)
+	{
+	case GL_TRIANGLES:
+		_pushBackNewCommand<DrawArraysCommand<GL_TRIANGLES>>(info);
+		break;
+	case GL_TRIANGLE_STRIP:
+		_pushBackNewCommand<DrawArraysCommand<GL_TRIANGLE_STRIP>>(info);
+		break;
+	case GL_POINTS:
+		_pushBackNewCommand<DrawArraysCommand<GL_POINTS>>(info);
+		break;
+	case GL_LINES:
+		_pushBackNewCommand<DrawArraysCommand<GL_LINES>>(info);
+		break;
+	default:
+		ANKI_ASSERT(0 && "Not implemented");
+	}
 }
 
 } // end namespace anki

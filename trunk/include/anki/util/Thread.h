@@ -10,9 +10,6 @@
 #include "anki/util/Array.h"
 #include "anki/util/NonCopyable.h"
 #include <atomic>
-#include <mutex> // XXX
-#include <thread> // XXX
-#include <condition_variable>
 
 #define ANKI_DISABLE_THREADPOOL_THREADING 0
 
@@ -28,6 +25,8 @@ class Threadpool;
 class Thread: public NonCopyable
 {
 public:
+	using Id = U64;
+
 	/// It holds some information to be passed to the thread's callback
 	class Info
 	{
@@ -55,7 +54,7 @@ public:
 	I join();
 
 	/// Identify the current thread
-	static U64 getCurrentThreadId();
+	static Id getCurrentThreadId();
 
 private:
 	static constexpr U ALIGNMENT = 8;
@@ -142,6 +141,27 @@ private:
 	std::atomic_flag m_lock = ATOMIC_FLAG_INIT;	
 };
 
+/// Lock guard. When constructed it locks a TMutex and unlocks it when it gets
+/// destroyed.
+template<typename TMutex>
+class LockGuard
+{
+public:
+	LockGuard(TMutex& mtx)
+	:	m_mtx(&mtx)
+	{
+		m_mtx->lock();
+	}
+
+	~LockGuard()
+	{
+		m_mtx->unlock();
+	}
+
+private:
+	TMutex* m_mtx;
+};
+
 /// A barrier for thread synchronization. It works just like boost::barrier
 class Barrier: public NonCopyable
 {
@@ -156,7 +176,8 @@ public:
 
 	~Barrier() = default;
 
-	/// TODO
+	/// Wait until all threads call wait()
+	/// @return This is implementation defined. Don't pay attention.
 	Bool wait();
 
 private:

@@ -93,14 +93,12 @@ void StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 
 	if(drawCount == 1)
 	{
-		GlDrawcallElements dc = GlDrawcallElements(
+		data.m_jobs.drawElements(
 			data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
 			sizeof(U16),
 			indicesCountArray[0],
 			1,
 			indicesOffsetArray[0] / sizeof(U16));
-
-		dc.draw(data.m_jobs);
 	}
 	else if(drawCount == 0)
 	{

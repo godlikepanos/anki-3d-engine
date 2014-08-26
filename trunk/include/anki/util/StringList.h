@@ -29,11 +29,14 @@ template<typename TChar, typename TAlloc>
 class BasicStringList: public Vector<BasicString<TChar, TAlloc>, TAlloc>
 {
 public:
-	typedef BasicStringList Self; ///< Self type
+	using Self = BasicStringList; ///< Self type
 	/// Its the vector of strings
-	typedef Vector<BasicString<TChar, TAlloc>, TAlloc> Base; 
-	typedef typename Base::value_type String; ///< Its string
-	typedef typename String::value_type Char; ///< Char type
+	using Base = Vector<BasicString<TChar, TAlloc>, TAlloc>;
+	using String = typename Base::value_type; ///< Its string
+	using Char = typename String::value_type; ///< Char type
+
+	// Use the base constructors
+	using Base::Base;
 
 	/// Join all the elements into a single big string using a the
 	/// seperator @a separator

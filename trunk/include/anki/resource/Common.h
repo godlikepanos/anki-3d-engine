@@ -11,6 +11,9 @@
 
 namespace anki {
 
+/// @addtogroup resource
+/// @{
+
 template<typename T>
 using ResourceAllocator = HeapAllocator<T>;
 
@@ -22,6 +25,8 @@ using TempResourceAllocator = StackAllocator<T>;
 
 template<typename T>
 using TempResourceVector = Vector<T, TempResourceAllocator<T>>;
+
+/// @}
 
 } // end namespace anki
 

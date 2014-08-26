@@ -80,8 +80,8 @@ GlBufferHandle::GlBufferHandle(GlCommandBufferHandle& commands,
 	using Deleter = GlHandleDeferredDeleter<GlBuffer, Alloc, DeleteCommand>;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&commands._getQueue().getManager(),
-		commands._getQueue().getManager()._getAllocator(), 
+		&commands._getQueue().getDevice(),
+		commands._getQueue().getDevice()._getAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);
 
@@ -104,8 +104,8 @@ GlBufferHandle::GlBufferHandle(GlCommandBufferHandle& commands,
 	using Deleter = GlHandleDeferredDeleter<GlBuffer, Alloc, DeleteCommand>;
 
 	*static_cast<Base::Base*>(this) = Base::Base(
-		&commands._getQueue().getManager(),
-		commands._getQueue().getManager()._getAllocator(), 
+		&commands._getQueue().getDevice(),
+		commands._getQueue().getDevice()._getAllocator(), 
 		Deleter());
 	_setState(GlHandleState::TO_BE_CREATED);
 

@@ -128,8 +128,20 @@ public:
 	void enablePolygonOffset(Bool enable);
 
 	/// Bind many textures
+	/// @param first The unit where the first texture will be bound
+	/// @param textures A list of textures to bind
 	void bindTextures(U32 first, 
 		const std::initializer_list<GlTextureHandle>& textures);
+	/// @}
+
+	/// @name Drawcalls
+	/// @{
+	void drawElements(GLenum mode, U8 indexSize, 
+		U32 count, U32 instanceCount = 1, U32 firstIndex = 0,
+		U32 baseVertex = 0, U32 baseInstance = 0);
+
+	void drawArrays(GLenum mode, U32 count, U32 instanceCount = 1,
+		U32 first = 0, U32 baseInstance = 0);
 	/// @}
 
 	/// @privatesection

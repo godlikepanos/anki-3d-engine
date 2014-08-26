@@ -24,7 +24,8 @@ public:
 		GlCallback makeCurrentCallback, void* context,
 		GlCallback swapBuffersCallback, void* swapBuffersCbData,
 		Bool registerDebugMessages,
-		AllocAlignedCallback alloc, void* allocUserData);
+		AllocAlignedCallback alloc, void* allocUserData,
+		const char* cacheDir);
 
 	~GlDevice()
 	{
@@ -56,17 +57,21 @@ public:
 	{
 		return *m_queue;
 	}
+
+	const char* _getCacheDirectory() const
+	{
+		ANKI_ASSERT(m_cacheDir != nullptr);
+		return m_cacheDir;
+	}
 	/// @}
 
 private:
 	GlQueue* m_queue;
 	HeapAllocator<U8> m_alloc; ///< Keep it last to be deleted last
+	char* m_cacheDir = nullptr;
 
 	void destroy();
 };
-
-/// Singleton for common GL stuff
-typedef SingletonInit<GlDevice> GlDeviceSingleton;
 
 /// @}
 

@@ -21,7 +21,7 @@ class GlCommandBufferHandle;
 class GlClientSyncHandle: public GlHandle<GlClientSync>
 {
 public:
-	typedef GlHandle<GlClientSync> Base;
+	using Base = GlHandle<GlClientSync>;
 
 	GlClientSyncHandle();
 

@@ -748,10 +748,8 @@ void Is::lightPass(GlCommandBufferHandle& jobs)
 	m_quadPositionsVertBuff.bindVertexBuffer(jobs, 
 		2, GL_FLOAT, false, 0, 0, 0);
 
-	GlDrawcallArrays dc(GL_TRIANGLE_STRIP, 4, 
+	jobs.drawArrays(GL_TRIANGLE_STRIP, 4, 
 		m_r->getTilesCount().x() * m_r->getTilesCount().y());
-
-	dc.draw(jobs);
 }
 
 //==============================================================================

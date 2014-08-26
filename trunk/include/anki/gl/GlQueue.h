@@ -26,7 +26,7 @@ class GlQueue
 public:
 	/// @name Contructors/Destructor
 	/// @{
-	GlQueue(GlDevice* manager, 
+	GlQueue(GlDevice* device, 
 		AllocAlignedCallback alloc, void* allocUserData);
 
 	~GlQueue();
@@ -34,16 +34,16 @@ public:
 
 	/// @name Accessors
 	/// @{
-	GlDevice& getManager()
+	GlDevice& getDevice()
 	{
-		ANKI_ASSERT(m_manager);
-		return *m_manager;
+		ANKI_ASSERT(m_device);
+		return *m_device;
 	}
 
-	const GlDevice& getManager() const
+	const GlDevice& getDevice() const
 	{
-		ANKI_ASSERT(m_manager);
-		return *m_manager;
+		ANKI_ASSERT(m_device);
+		return *m_device;
 	}
 
 	AllocAlignedCallback getAllocationCallback() const
@@ -78,10 +78,10 @@ public:
 	void stop();
 
 	/// Push a command buffer to the queue for deferred execution
-	void flushCommandChain(GlCommandBufferHandle& commands);
+	void flushCommandBuffer(GlCommandBufferHandle& commands);
 
 	/// Push a command buffer to the queue and wait for it
-	void finishCommandChain(GlCommandBufferHandle& commands);
+	void finishCommandBuffer(GlCommandBufferHandle& commands);
 
 	/// Sync the client and server
 	void syncClientServer();
@@ -89,14 +89,14 @@ public:
 	/// Return true if this is the main thread
 	Bool isServerThread() const
 	{
-		return m_serverThreadId == std::this_thread::get_id();
+		return m_serverThreadId == Thread::getCurrentThreadId();
 	}
 
 	/// Swap buffers
 	void swapBuffers();
 
 private:
-	GlDevice* m_manager = nullptr;
+	GlDevice* m_device = nullptr;
 	AllocAlignedCallback m_allocCb;
 	void* m_allocCbUserData;
 
@@ -104,9 +104,9 @@ private:
 	U64 m_tail; ///< Tail of queue
 	U64 m_head; ///< Head of queue. Points to the end
 	U8 m_renderingThreadSignal; ///< Signal to the thread
-	std::mutex m_mtx; ///< Wake the thread
-	std::condition_variable m_condVar; ///< To wake up the thread
-	std::thread m_thread;
+	Mutex m_mtx; ///< Wake the thread
+	ConditionVariable m_condVar; ///< To wake up the thread
+	Thread m_thread;
 
 	void* m_ctx = nullptr; ///< Pointer to the system GL context
 	GlCallback m_makeCurrent; ///< Making a context current
@@ -114,11 +114,11 @@ private:
 	GlCommandBufferHandle m_swapBuffersCommands;
 	GlCallback m_swapBuffersCallback;
 	void* m_swapBuffersCbData;
-	std::condition_variable m_frameCondVar;
-	std::mutex m_frameMtx;
+	ConditionVariable m_frameCondVar;
+	Mutex m_frameMtx;
 	Bool8 m_frameWait = false;
 
-	std::thread::id m_serverThreadId;
+	Thread::Id m_serverThreadId;
 	
 	GlState m_state;
 	GLuint m_defaultVao;
@@ -131,6 +131,7 @@ private:
 	String m_error;
 
 	/// The function that the thread runs
+	static I threadCallback(Thread::Info&);
 	void threadLoop();
 	void prepare();
 	void finish();

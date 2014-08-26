@@ -22,9 +22,9 @@ class GlSampler;
 class GlTextureHandle: public GlContainerHandle<GlTexture>
 {
 public:
-	typedef GlContainerHandle<GlTexture> Base;
+	using Base = GlContainerHandle<GlTexture>;
 
-	typedef GlTextureFilter Filter;
+	using Filter = GlTextureFilter;
 
 	/// Texture handle initializer
 	class Initializer: public GlTextureInitializerBase
@@ -74,9 +74,9 @@ public:
 class GlSamplerHandle: public GlContainerHandle<GlSampler>
 {
 public:
-	typedef GlContainerHandle<GlSampler> Base;
+	using Base = GlContainerHandle<GlSampler>;
 
-	typedef GlTextureFilter Filter;
+	using Filter = GlTextureFilter;
 
 	/// @name Constructors/Destructor
 	/// @{

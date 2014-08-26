@@ -312,7 +312,7 @@ PtrSize File::getSize()
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != OpenFlag::NONE);
-	PtrSize out;
+	PtrSize out = 0;
 
 	if(m_type == Type::C)
 	{

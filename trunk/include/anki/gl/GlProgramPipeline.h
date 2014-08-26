@@ -18,7 +18,7 @@ namespace anki {
 class GlProgramPipeline: public GlObject
 {
 public:
-	typedef GlObject Base;
+	using Base = GlObject;
 
 	/// @name Constructors/Desctructor
 	/// @{
