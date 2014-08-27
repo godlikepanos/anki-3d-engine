@@ -30,8 +30,9 @@ class BasicStringList: public Vector<BasicString<TChar, TAlloc>, TAlloc>
 {
 public:
 	using Self = BasicStringList; ///< Self type
+	using Allocator = TAlloc;
 	/// Its the vector of strings
-	using Base = Vector<BasicString<TChar, TAlloc>, TAlloc>;
+	using Base = Vector<BasicString<TChar, Allocator>, Allocator>;
 	using String = typename Base::value_type; ///< Its string
 	using Char = typename String::value_type; ///< Char type
 
@@ -42,7 +43,8 @@ public:
 	/// seperator @a separator
 	String join(const Char* separator) const
 	{
-		String out;
+		Allocator alloc = Base::get_allocator();
+		String out(alloc);
 
 		typename Base::const_iterator it = Base::begin();
 		for(; it != Base::end(); it++)
@@ -93,10 +95,12 @@ public:
 	/// Split a string using a list of separators (@a sep) and return these
 	/// strings in a string list
 	static Self splitString(const Char* s, const Char separator = ' ',
-		Bool keepEmpties = false)
+		Bool keepEmpties = false, Allocator alloc = Allocator())
 	{
-		Self out;
-		std::istringstream ss(s);
+		Self out(alloc);
+		std::basic_istringstream<Char, std::char_traits<Char>, Allocator> 
+			ss(s, alloc);
+
 		while(!ss.eof())
 		{
 			String field;
@@ -114,7 +118,8 @@ public:
 	/// Mainly in the unit tests
 	friend std::ostream& operator<<(std::ostream& s, const Self& a)
 	{
-		s << a.join(", ");
+		auto alloc = a.get_allocator();
+		s << a.join(", ", a);
 		return s;
 	}
 

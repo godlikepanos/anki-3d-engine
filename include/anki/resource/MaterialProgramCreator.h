@@ -45,7 +45,7 @@ public:
 		U16 m_arraySize;
 		Bool8 m_instanced = false;
 
-		MPStringList m_line;
+		MPString m_line;
 		GLbitfield m_shaderDefinedMask = 0; ///< Defined in
 		GLbitfield m_shaderReferencedMask = 0; ///< Referenced by
 		Bool8 m_inBlock = true;
