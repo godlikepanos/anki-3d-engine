@@ -248,7 +248,7 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		if(valueEl.getText())
 		{
 			inpvar.m_value = MPStringList::splitString(
-				valueEl.getText(), ' ', false, m_alloc);
+				valueEl.getText(), ' ', m_alloc);
 		}
 
 		// <const>
@@ -486,6 +486,7 @@ void MaterialProgramCreator::parseOperationTag(
 
 	// Now write everything
 	MPString lines(m_alloc);
+	lines.reserve(256);
 	lines += "#if defined(" + funcName + "_DEFINED)";
 
 	// Write the defines for the operationOuts
