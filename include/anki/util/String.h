@@ -93,9 +93,9 @@ inline void toString(TNumber number, TString& out)
 {
 	Array<typename TString::value_type, 512> buff;
 	I ret = std::snprintf(
-		&buff, buff.size(), detail::toStringFormat<TNumber>(), number);
+		&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
 
-	if(ret < 0 || ret > buff.size())
+	if(ret < 0 || ret > static_cast<I>(buff.size()))
 	{
 		throw ANKI_EXCEPTION("To small intermediate buffer");
 	}
