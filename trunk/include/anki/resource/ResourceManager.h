@@ -6,10 +6,11 @@
 #ifndef ANKI_RESOURCE_RESOURCE_MANAGER_H
 #define ANKI_RESOURCE_RESOURCE_MANAGER_H
 
+#include "anki/resource/Common.h"
+#include "anki/resource/ResourcePointer.h"
 #include "anki/util/Vector.h"
 #include "anki/util/Functions.h"
 #include "anki/util/String.h"
-#include "anki/resource/ResourcePointer.h"
 
 namespace anki {
 
@@ -118,11 +119,11 @@ class ResourceManager:
 	public TypeResourceManager<TextureResource, ResourceManager>
 {
 public:
-	ResourceManager(const ConfigSet& config);
+	ResourceManager(App* app, const ConfigSet& config);
 
-	const String& getDataPath() const
+	const ResourceString& getDataDirectory() const
 	{
-		return m_dataPath;
+		return m_dataDir;
 	}
 
 	U32 getMaxTextureSize() const
@@ -135,15 +136,25 @@ public:
 		return m_textureAnisotropy;
 	}
 
-	HeapAllocator<U8>& _getAllocator()
+	TempResourceString fixResourceFilename(const char* filename) const;
+
+	/// @privatesection
+	/// @{
+	ResourceAllocator<U8>& _getAllocator()
 	{
 		return m_alloc;
 	}
 
-	String fixResourcePath(const char* filename) const;
+	TempResourceAllocator<U8>& _getTempAllocator()
+	{
+		return m_tmpAlloc;
+	}
 
-	/// @privatesection
-	/// @{
+	App& _getApp()
+	{
+		return *m_app;
+	}
+
 	template<typename T>
 	Bool _findLoadedResource(const char* filename, 
 		ResourcePointer<T, ResourceManager>& ptr)
@@ -166,8 +177,10 @@ public:
 	/// @}
 
 private:
-	HeapAllocator<U8> m_alloc;
-	String m_dataPath;
+	App* m_app;
+	ResourceAllocator<U8> m_alloc;
+	TempResourceAllocator<U8> m_tmpAlloc;
+	ResourceString m_dataDir;
 	U32 m_maxTextureSize;
 	U32 m_textureAnisotropy;
 };

@@ -18,36 +18,42 @@
 namespace anki {
 
 //==============================================================================
-ResourceManager::ResourceManager(const ConfigSet& config)
+ResourceManager::ResourceManager(App* app, const ConfigSet& config)
+:	m_app(app),
+	m_alloc(HeapMemoryPool(
+		m_app->getAllocationCallback(), m_app->getAllocationCallbackData())),
+	m_tmpAlloc(StackMemoryPool(m_app->getAllocationCallback(), 
+		m_app->getAllocationCallbackData(), 1024 * 1024))
 {
+	// Init the data path
+	//
 	if(getenv("ANKI_DATA_PATH"))
 	{
-		m_dataPath = getenv("ANKI_DATA_PATH");
-#if ANKI_POSIX
-		m_dataPath += "/";
-#else
-		m_dataPath = "\\";
-#endif
-		ANKI_LOGI("Data path: %s", m_dataPath.c_str());
+		m_dataDir = ResourceString(getenv("ANKI_DATA_PATH"), m_alloc);
+		m_dataDir += "/";
+		ANKI_LOGI("Data path: %s", m_dataDir.c_str());
 	}
 	else
 	{
 		// Assume working directory
 #if ANKI_OS == ANKI_OS_ANDROID
-		m_dataPath = "$";
+		m_dataDir = ResourceString("$", m_alloc);
 #else
-#	if ANKI_POSIX
-		m_dataPath = "./";
-#	else
-		m_dataPath = ".\\";
-#	endif
+		m_dataDir = ResourceString("./", m_alloc);
 #endif
 	}
 
+	// Init cache dir
+	//
+	m_cacheDir = ResourceString(cacheDir, m_alloc);
+
+	// Init some constants
+	//
 	m_maxTextureSize = config.get("maxTextureSize");
 	m_textureAnisotropy = config.get("textureAnisotropy");
 
 	// Init type resource managers
+	//
 	TypeResourceManager<Animation, ResourceManager>::init(m_alloc);
 	TypeResourceManager<Material, ResourceManager>::init(m_alloc);
 	TypeResourceManager<Mesh, ResourceManager>::init(m_alloc);
@@ -59,21 +65,19 @@ ResourceManager::ResourceManager(const ConfigSet& config)
 }
 
 //==============================================================================
-String ResourceManager::fixResourcePath(const char* filename) const
+TempResourceString ResourceManager::fixResourceFilename(
+	const char* filename) const
 {
-	String newFname;
+	TempResourceString newFname(m_tmpAlloc);
 
 	// If the filename is in cache then dont append the data path
-	//const char* cachePath = AppSingleton::get().getCachePath().c_str();
-	const char* cachePath = nullptr;
-	ANKI_ASSERT(0 && "TODO");
-	if(std::strstr(filename, cachePath) != nullptr)
+	if(std::strstr(filename, m_cacheDir.c_str()) != nullptr)
 	{
 		newFname = filename;
 	}
 	else
 	{
-		newFname = m_dataPath + filename;
+		newFname = TempResourceString(m_dataDir.c_str(), m_tmpAlloc) + filename;
 	}
 
 	return newFname;

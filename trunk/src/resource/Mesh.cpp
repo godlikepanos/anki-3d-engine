@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/Mesh.h"
-#include "anki/resource/Material.h"
 #include "anki/resource/MeshLoader.h"
 #include "anki/util/Functions.h"
 #include "anki/misc/Xml.h"
@@ -23,11 +22,11 @@ Bool Mesh::isCompatible(const Mesh& other) const
 }
 
 //==============================================================================
-void Mesh::load(const char* filename)
+void Mesh::load(const char* filename, ResourceInitializer& init)
 {
 	try
 	{
-		MeshLoader loader(filename);
+		MeshLoader loader(filename, init.m_tempAlloc);
 
 		m_indicesCount = loader.getIndices().size();
 
@@ -44,7 +43,7 @@ void Mesh::load(const char* filename)
 		m_texChannelsCount = loader.getTextureChannelsCount();
 		m_weights = loader.getWeights().size() > 1;
 
-		createBuffers(loader);
+		createBuffers(loader, init);
 	}
 	catch(std::exception& e)
 	{
@@ -67,7 +66,8 @@ U32 Mesh::calcVertexSize() const
 }
 
 //==============================================================================
-void Mesh::createBuffers(const MeshLoader& loader)
+void Mesh::createBuffers(const MeshLoader& loader,
+	ResourceInitializer& init)
 {
 	ANKI_ASSERT(m_vertsCount == loader.getPositions().size()
 		&& m_vertsCount == loader.getNormals().size()
@@ -112,7 +112,7 @@ void Mesh::createBuffers(const MeshLoader& loader)
 	}
 
 	// Create GL buffers
-	GlDevice& gl = GlDeviceSingleton::get();
+	GlDevice& gl = init.m_gl;
 	GlCommandBufferHandle jobs(&gl);
 	
 	GlClientBufferHandle clientVertBuff(jobs, vbosize, &buff[0]);
@@ -224,7 +224,7 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 //==============================================================================
 
 //==============================================================================
-void BucketMesh::load(const char* filename)
+void BucketMesh::load(const char* filename, ResourceInitializer& init)
 {
 	try
 	{
@@ -236,10 +236,11 @@ void BucketMesh::load(const char* filename)
 		XmlElement meshEl = meshesEl.getChildElement("mesh");
 
 		m_vertsCount = 0;
+		m_subMeshes = std::move(ResourceVector<SubMesh>(init.m_alloc));
 		m_subMeshes.reserve(4);
 		m_indicesCount = 0;
 
-		MeshLoader fullLoader;
+		MeshLoader fullLoader(init.m_tempAlloc);
 		U i = 0;
 		do
 		{
@@ -248,7 +249,7 @@ void BucketMesh::load(const char* filename)
 			// Load the submesh and if not the first load the append the 
 			// vertices to the fullMesh
 			MeshLoader* loader;
-			MeshLoader subLoader;
+			MeshLoader subLoader(init.m_tempAlloc);
 			if(i != 0)
 			{
 				// Sanity check
@@ -312,7 +313,7 @@ void BucketMesh::load(const char* filename)
 		} while(meshEl);
 
 		// Create the bucket mesh
-		createBuffers(fullLoader);
+		createBuffers(fullLoader, init);
 
 		const auto& positions = fullLoader.getPositions();
 		m_obb.setFromPointCloud(&positions[0], positions.size(),

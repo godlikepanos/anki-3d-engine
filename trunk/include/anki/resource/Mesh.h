@@ -6,10 +6,10 @@
 #ifndef ANKI_RESOURCE_MESH_H
 #define ANKI_RESOURCE_MESH_H
 
+#include "anki/resource/Common.h"
 #include "anki/Math.h"
 #include "anki/Gl.h"
 #include "anki/collision/Obb.h"
-#include "anki/util/Vector.h"
 
 namespace anki {
 
@@ -34,11 +34,10 @@ enum class VertexAttribute: U8
 class Mesh
 {
 public:
-	/// Default constructor. Do nothing
+	/// Default constructor
 	Mesh()
 	{}
 
-	/// Does nothing
 	~Mesh()
 	{}
 
@@ -98,7 +97,7 @@ public:
 	Bool isCompatible(const Mesh& other) const;
 
 	/// Load from a .mesh file
-	void load(const char* filename);
+	void load(const char* filename, ResourceInitializer& init);
 
 protected:
 	/// Per sub mesh data
@@ -110,7 +109,7 @@ protected:
 		Obb m_obb;
 	};
 
-	Vector<SubMesh> m_subMeshes;
+	ResourceVector<SubMesh> m_subMeshes;
 	U32 m_indicesCount;
 	U32 m_vertsCount;
 	Obb m_obb;
@@ -121,32 +120,24 @@ protected:
 	GlBufferHandle m_indicesBuff;
 
 	/// Create the VBOs using the mesh data
-	void createBuffers(const MeshLoader& loader);
+	void createBuffers(const MeshLoader& loader, ResourceInitializer& init);
 
 	U32 calcVertexSize() const;
 };
 
-/// A mesh that behaves as a mesh and as a collection of separate meshes
+/// A mesh that behaves as a mesh and as a collection of separate meshes.
 class BucketMesh: public Mesh
 {
 public:
-	/// Default constructor. Do nothing
+	/// Default constructor.
 	BucketMesh()
 	{}
 
-	/// Load file
-	BucketMesh(const char* filename)
-	{
-		load(filename);
-	}
-	/// @}
-
-	/// Does nothing
 	~BucketMesh()
 	{}
 
 	/// Load from a .mmesh file
-	void load(const char* filename);
+	void load(const char* filename, ResourceInitializer& init);
 };
 
 } // end namespace anki

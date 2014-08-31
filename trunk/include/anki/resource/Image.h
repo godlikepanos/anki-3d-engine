@@ -70,8 +70,6 @@ public:
 	~Image()
 	{}
 
-	/// @name Accessors
-	/// @{
 	ColorFormat getColorFormat() const
 	{
 		ANKI_ASSERT(m_colorFormat != ColorFormat::NONE);
@@ -103,7 +101,11 @@ public:
 	}
 
 	const Surface& getSurface(U mipLevel, U layer) const;
-	/// @}
+
+	ResourceAllocator<U8> getAllocator() const
+	{
+		return m_surfaces.get_allocator();
+	}
 
 	/// Load an image file
 	/// @param[in] filename The file to load

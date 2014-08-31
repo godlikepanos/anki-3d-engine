@@ -61,9 +61,9 @@ public:
 	}
 
 	/// The real constructor
-	/// @param alloc The allocation function callback
-	/// @param allocUserData The user data to pass to the allocation function
-	HeapMemoryPool(AllocAlignedCallback alloc, void* allocUserData);
+	/// @param allocCb The allocation function callback
+	/// @param allocCbUserData The user data to pass to the allocation function
+	HeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	/// Destroy
 	~HeapMemoryPool()

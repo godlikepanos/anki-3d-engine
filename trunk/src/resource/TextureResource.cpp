@@ -6,7 +6,6 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Image.h"
 #include "anki/util/Exception.h"
-#include "anki/renderer/MainRenderer.h"
 
 #if ANKI_GL == ANKI_GL_DESKTOP
 #	define DRIVER_CAN_COMPRESS 1
@@ -17,18 +16,19 @@
 namespace anki {
 
 //==============================================================================
-void deleteImageCallback(void* data)
+static void deleteImageCallback(void* data)
 {
-	Image* image = (Image*)data;
-	delete image;
+	Image* image = reinterpret_cast<Image*>(data);
+	auto alloc = image->getAllocator();
+	alloc.deleteInstance(image);
 }
 
 //==============================================================================
-void TextureResource::load(const char* filename)
+void TextureResource::load(const char* filename, ResourceInitializer& init)
 {
 	try
 	{
-		loadInternal(filename);
+		loadInternal(filename, init);
 	}
 	catch(std::exception& e)
 	{
@@ -37,28 +37,29 @@ void TextureResource::load(const char* filename)
 }
 
 //==============================================================================
-void TextureResource::loadInternal(const char* filename)
+void TextureResource::loadInternal(const char* filename, 
+	ResourceInitializer& rinit)
 {
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl); // Always first to avoid assertions (because of
-	                            // the check of the allocator)
+	GlDevice& gl = rinit.m_gl;
+	GlCommandBufferHandle jobs(&gl); // Always first to avoid assertions (
+	                                 // because of the check of the allocator)
 
 	GlTextureHandle::Initializer init;
 	U layers = 0;
 	Bool driverShouldGenMipmaps = false;
 
 	// Load image
-	Image* imgPtr = new Image;
+	Image* imgPtr = rinit.m_alloc.newInstance<Image>(rinit.m_alloc);
 	Image& img = *imgPtr;
-	img.load(filename, ResourceManagerSingleton::get().getMaxTextureSize());
+	img.load(filename, rinit.m_maxTextureSize);
 	
 	// width + height
-	init.m_width = img.getSurface(0, 0).width;
-	init.m_height = img.getSurface(0, 0).height;
+	init.m_width = img.getSurface(0, 0).m_width;
+	init.m_height = img.getSurface(0, 0).m_height;
 	
 	// depth
-	if(img.getTextureType() == Image::TT_2D_ARRAY 
-		|| img.getTextureType() == Image::TT_3D)
+	if(img.getTextureType() == Image::TextureType::_2D_ARRAY 
+		|| img.getTextureType() == Image::TextureType::_3D)
 	{
 		init.m_depth = img.getDepth();
 	}
@@ -70,19 +71,19 @@ void TextureResource::loadInternal(const char* filename)
 	// target
 	switch(img.getTextureType())
 	{
-	case Image::TT_2D:
+	case Image::TextureType::_2D:
 		init.m_target = GL_TEXTURE_2D;
 		layers = 1;
 		break;
-	case Image::TT_CUBE:
+	case Image::TextureType::CUBE:
 		init.m_target = GL_TEXTURE_CUBE_MAP;
 		layers = 6;
 		break;
-	case Image::TT_2D_ARRAY:
+	case Image::TextureType::_2D_ARRAY:
 		init.m_target = GL_TEXTURE_2D_ARRAY;
 		layers = init.m_depth;
 		break;
-	case Image::TT_3D:
+	case Image::TextureType::_3D:
 		init.m_target = GL_TEXTURE_3D;
 		layers = init.m_depth;
 	default:
@@ -90,11 +91,11 @@ void TextureResource::loadInternal(const char* filename)
 	}
 
 	// Internal format
-	if(img.getColorFormat() == Image::CF_RGB8)
+	if(img.getColorFormat() == Image::ColorFormat::RGB8)
 	{
 		switch(img.getCompression())
 		{
-		case Image::DC_RAW:
+		case Image::DataCompression::RAW:
 #if DRIVER_CAN_COMPRESS
 			init.m_internalFormat = GL_COMPRESSED_RGB;
 #else
@@ -103,11 +104,11 @@ void TextureResource::loadInternal(const char* filename)
 			driverShouldGenMipmaps = true;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
-		case Image::DC_S3TC:
+		case Image::DataCompression::S3TC:
 			init.m_internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 			break;
 #else
-		case Image::DC_ETC:
+		case Image::DataCompression::ETC:
 			init.m_internalFormat = GL_COMPRESSED_RGB8_ETC2;
 			break;
 #endif
@@ -115,11 +116,11 @@ void TextureResource::loadInternal(const char* filename)
 			ANKI_ASSERT(0);
 		}
 	}
-	else if(img.getColorFormat() == Image::CF_RGBA8)
+	else if(img.getColorFormat() == Image::ColorFormat::RGBA8)
 	{
 		switch(img.getCompression())
 		{
-		case Image::DC_RAW:
+		case Image::DataCompression::RAW:
 #if DRIVER_CAN_COMPRESS
 			init.m_internalFormat = GL_COMPRESSED_RGBA;
 #else
@@ -128,11 +129,11 @@ void TextureResource::loadInternal(const char* filename)
 			driverShouldGenMipmaps = true;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
-		case Image::DC_S3TC:
+		case Image::DataCompression::S3TC:
 			init.m_internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 			break;
 #else
-		case Image::DC_ETC:
+		case Image::DataCompression::ETC:
 			init.m_internalFormat = GL_COMPRESSED_RGBA8_ETC2_EAC;
 			break;
 #endif
@@ -148,10 +149,10 @@ void TextureResource::loadInternal(const char* filename)
 	// format
 	switch(img.getColorFormat())
 	{
-	case Image::CF_RGB8:
+	case Image::ColorFormat::RGB8:
 		init.m_format = GL_RGB;
 		break;
-	case Image::CF_RGBA8:
+	case Image::ColorFormat::RGBA8:
 		init.m_format = GL_RGBA;
 		break;
 	default:
@@ -171,8 +172,7 @@ void TextureResource::loadInternal(const char* filename)
 	init.m_repeat = true;
 
 	// anisotropyLevel
-	init.m_anisotropyLevel = 
-		ResourceManagerSingleton::get().getTextureAnisotropy();
+	init.m_anisotropyLevel = rinit.m_anisotropyLevel;
 
 	// genMipmaps
 	if(init.m_mipmapsCount == 1 || driverShouldGenMipmaps)
@@ -193,8 +193,8 @@ void TextureResource::loadInternal(const char* filename)
 
 			buff = GlClientBufferHandle(
 				jobs, 
-				img.getSurface(level, layer).data.size(), 
-				(void*)&img.getSurface(level, layer).data[0]);
+				img.getSurface(level, layer).m_data.size(), 
+				(void*)&img.getSurface(level, layer).m_data[0]);
 		}
 	}
 

@@ -6,10 +6,10 @@
 #ifndef ANKI_RESOURCE_MESH_LOADER_H
 #define ANKI_RESOURCE_MESH_LOADER_H
 
+#include "anki/resource/Common.h"
 #include "anki/Math.h"
 #include "anki/util/Vector.h"
 #include "anki/util/Array.h"
-#include <string>
 
 namespace anki {
 
@@ -47,73 +47,76 @@ namespace anki {
 class MeshLoader
 {
 public:
+	template<typename T>
+	using MLVector = TempResourceVector<T>;
+
 	/// If two vertices have the same position and normals under the angle 
 	/// specified by this constant then combine those normals
 	static constexpr F32 NORMALS_ANGLE_MERGE = getPi<F32>() / 6;
 
 	/// Vertex weight for skeletal animation
-	struct VertexWeight
+	class VertexWeight
 	{
+	public:
 		/// Dont change this or prepare to change the skinning code in
 		/// shader
 		static const U32 MAX_BONES_PER_VERT = 4;
 
-		U16 bonesNum;
-		Array<U16, MAX_BONES_PER_VERT> boneIds;
-		Array<F16, MAX_BONES_PER_VERT> weights;
+		U16 m_bonesCount;
+		Array<U16, MAX_BONES_PER_VERT> m_boneIds;
+		Array<F16, MAX_BONES_PER_VERT> m_weights;
 	};
 
 	/// Triangle
-	struct Triangle
+	class Triangle
 	{
+	public:
 		/// An array with the vertex indexes in the mesh class
-		Array<U32, 3> vertIds;
-		Vec3 normal;
+		Array<U32, 3> m_vertIds;
+		Vec3 m_normal;
 	};
 
-	MeshLoader()
-	{}
-	MeshLoader(const char* filename)
-	{
-		load(filename);
-	}
+	MeshLoader(TempResourceAllocator<U8>& alloc);
+
+	MeshLoader(const char* filename, TempResourceAllocator<U8>& alloc);
+
 	~MeshLoader()
 	{}
 
 	/// @name Accessors
 	/// @{
-	const Vector<Vec3>& getPositions() const
+	const MLVector<Vec3>& getPositions() const
 	{
-		return positions;
+		return m_positions;
 	}
 
-	const Vector<HVec3>& getNormals() const
+	const MLVector<HVec3>& getNormals() const
 	{
-		return normalsF16;
+		return m_normalsF16;
 	}
 
-	const Vector<HVec4>& getTangents() const
+	const MLVector<HVec4>& getTangents() const
 	{
-		return tangentsF16;
+		return m_tangentsF16;
 	}
 
-	const Vector<HVec2>& getTextureCoordinates(const U32 channel) const
+	const MLVector<HVec2>& getTextureCoordinates(const U32 channel) const
 	{
-		return texCoordsF16;
+		return m_texCoordsF16;
 	}
 	U getTextureChannelsCount() const
 	{
 		return 1;
 	}
 
-	const Vector<VertexWeight>& getWeights() const
+	const MLVector<VertexWeight>& getWeights() const
 	{
-		return weights;
+		return m_weights;
 	}
 
-	const Vector<U16>& getIndices() const
+	const MLVector<U16>& getIndices() const
 	{
-		return vertIndices;
+		return m_vertIndices;
 	}
 	/// @}
 
@@ -125,27 +128,24 @@ public:
 	void load(const char* filename);
 
 private:
-	/// @name Data
-	/// @{
-	Vector<Vec3> positions; ///< Loaded from file
+	MLVector<Vec3> m_positions; ///< Loaded from file
 
-	Vector<Vec3> normals; ///< Generated
-	Vector<HVec3> normalsF16;
+	MLVector<Vec3> m_normals; ///< Generated
+	MLVector<HVec3> m_normalsF16;
 
-	Vector<Vec4> tangents; ///< Generated
-	Vector<HVec4> tangentsF16;
+	MLVector<Vec4> m_tangents; ///< Generated
+	MLVector<HVec4> m_tangentsF16;
 
 	/// Optional. One for every vert so we can use vertex arrays & VBOs
-	Vector<Vec2> texCoords;
-	Vector<HVec2> texCoordsF16;
+	MLVector<Vec2> m_texCoords;
+	MLVector<HVec2> m_texCoordsF16;
 
-	Vector<VertexWeight> weights; ///< Optional
+	MLVector<VertexWeight> m_weights; ///< Optional
 
-	Vector<Triangle> tris; ///< Required
+	MLVector<Triangle> m_tris; ///< Required
 
 	/// Generated. Used for vertex arrays & VBOs
-	Vector<U16> vertIndices;
-	/// @}
+	MLVector<U16> m_vertIndices;
 
 	void createFaceNormals();
 	void createVertNormals();

@@ -55,7 +55,7 @@ ANKI_DEPLOY_TO_STRING(F64, "%f")
 template<typename TChar, typename TAlloc>
 using BasicString = std::basic_string<TChar, std::char_traits<TChar>, TAlloc>;
 
-using String = BasicString<char, std::allocator<char>>;
+using String = BasicString<char, HeapAllocator<char>>;
 
 /// Trim a string
 /// Remove the @p what from the front and back of @p str
@@ -79,7 +79,7 @@ inline void replaceAllString(const TString& in,
 	}
 
 	out = in;
-	size_t start_pos = 0;
+	PtrSize start_pos = 0;
 	while((start_pos = out.find(from, start_pos)) != TString::npos) 
 	{
 		out.replace(start_pos, from.length(), to);

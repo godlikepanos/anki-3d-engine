@@ -14,7 +14,7 @@
 namespace anki {
 
 //==============================================================================
-void ProgramResource::load(const char* filename)
+void ProgramResource::load(const char* filename, ResourceInitializer& init)
 {
 	load(filename, "");
 }
@@ -38,24 +38,28 @@ void ProgramResource::load(const char* filename, const char* extraSrc)
 }
 
 //==============================================================================
-std::string ProgramResource::createSrcCodeToCache(
+String ProgramResource::createSourceToCache(
 	const char* filename, const char* preAppendedSrcCode, 
-	const char* filenamePrefix)
+	const char* filenamePrefix, App& app)
 {
 	ANKI_ASSERT(filename && preAppendedSrcCode && filenamePrefix);
 
-	if(strlen(preAppendedSrcCode) < 1)
+	auto& alloc = app.getAllocator();
+
+	if(std::strlen(preAppendedSrcCode) < 1)
 	{
-		return filename;
+		return String(filename, alloc);
 	}
 
 	// Create suffix
-	std::hash<std::string> stringHasher;
-	PtrSize h = stringHasher(std::string(filename) + preAppendedSrcCode);
-	std::string suffix = std::to_string(h);
+	std::hash<String> stringHasher;
+	PtrSize h = stringHasher(String(filename, alloc) + preAppendedSrcCode);
+
+	String suffix(alloc);
+	toString(h, suffix);
 
 	// Compose cached filename
-	std::string newFilename = AppSingleton::get().getCachePath()
+	String newFilename(app.getCachePath()
 		+ "/" + filenamePrefix + suffix + ".glsl";
 
 	if(File::fileExists(newFilename.c_str()))
@@ -64,7 +68,7 @@ std::string ProgramResource::createSrcCodeToCache(
 	}
 
 	// Read file and append code
-	std::string src;
+	String src(alloc);
 	File(ResourceManagerSingleton::get().fixResourcePath(filename).c_str(), 
 		File::OpenFlag::READ).readAllText(src);
 	src = preAppendedSrcCode + src;

@@ -43,21 +43,17 @@ typedef VisitableCommonBase<
 class MaterialVariable: public MateriaVariableVisitable, public NonCopyable
 {
 public:
-	typedef MateriaVariableVisitable Base;
+	using Base = MateriaVariableVisitable;
 
-	/// @name Constructors & destructor
-	/// @{
 	MaterialVariable(const GlProgramVariable* glvar, Bool instanced)
-		: m_progVar(glvar), m_instanced(instanced)
+	:	m_progVar(glvar), 
+		m_instanced(instanced)
 	{
 		ANKI_ASSERT(m_progVar);
 	}
 
 	virtual ~MaterialVariable();
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	template<typename T>
 	const T* begin() const
 	{
@@ -65,6 +61,7 @@ public:
 		auto derived = static_cast<const MaterialVariableTemplate<T>*>(this);
 		return derived->begin();
 	}
+
 	template<typename T>
 	const T* end() const
 	{
@@ -98,7 +95,6 @@ public:
 	{
 		return m_instanced;
 	}
-	/// @}
 
 private:
 	/// Keep one program variable here for easy access of the common
@@ -118,9 +114,13 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	MaterialVariableTemplate(
-		const GlProgramVariable* glvar, Bool instanced, 
-		const TData* x, U32 size)
-	:	MaterialVariable(glvar, instanced)
+		const GlProgramVariable* glvar, 
+		Bool instanced, 
+		const TData* x, 
+		U32 size,
+		ResourceAllocator<U8> alloc)
+	:	MaterialVariable(glvar, instanced),
+		m_data(alloc)
 	{
 		setupVisitable(this);
 
@@ -162,7 +162,7 @@ public:
 	/// @}
 
 private:
-	Vector<TData> m_data;
+	ResourceVector<TData> m_data;
 };
 
 /// Contains a few properties that other classes may use. For an explanation of
@@ -313,9 +313,6 @@ public:
 	Material();
 	~Material();
 
-	/// @name Accessors
-	/// @{
-
 	/// Access the base class just for copying in other classes
 	const MaterialProperties& getBaseClass() const
 	{
@@ -323,7 +320,7 @@ public:
 	}
 
 	// Variable accessors
-	const Vector<MaterialVariable*>& getVariables() const
+	const ResourceVector<MaterialVariable*>& getVariables() const
 	{
 		return m_vars;
 	}
@@ -332,10 +329,8 @@ public:
 	{
 		return m_shaderBlockSize;
 	}
-	/// @}
 
-	GlProgramPipelineHandle getProgramPipeline(
-		const RenderingKey& key);
+	GlProgramPipelineHandle getProgramPipeline(const RenderingKey& key);
 
 	/// Get by name
 	const MaterialVariable* findVariableByName(const char* name) const
@@ -354,11 +349,11 @@ public:
 	}
 
 private:
-	Vector<MaterialVariable*> m_vars;
+	ResourceVector<MaterialVariable*> m_vars;
 	Dictionary<MaterialVariable*> m_varDict;
 
-	Vector<ProgramResourcePointer> m_progs;
-	Vector<GlProgramPipelineHandle> m_pplines;
+	ResourceVector<ProgramResourcePointer> m_progs;
+	ResourceVector<GlProgramPipelineHandle> m_pplines;
 
 	U32 m_shaderBlockSize;
 
