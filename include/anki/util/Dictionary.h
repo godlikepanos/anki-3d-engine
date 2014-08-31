@@ -16,11 +16,12 @@ namespace anki {
 /// @{
 
 /// The hash function
-struct DictionaryHasher
+class DictionaryHasher
 {
-	size_t operator()(const char* str) const
+public:
+	PtrSize operator()(const char* str) const
 	{
-		size_t h = 0;
+		PtrSize h = 0;
 		for (; *str != '\0'; ++str)
 		{
 			h += *str;
@@ -30,25 +31,28 @@ struct DictionaryHasher
 };
 
 /// The collision evaluation function
-struct DictionaryEqual
+class DictionaryEqual
 {
-	bool operator()(const char* a, const char* b) const
+public:
+	Bool operator()(const char* a, const char* b) const
 	{
-		return strcmp(a, b) == 0;
+		return std::strcmp(a, b) == 0;
 	}
 };
 
 /// The hash map that has as key an old school C string. When inserting the
 /// char MUST NOT point to a temporary or the evaluation function will fail.
 /// Its template struct because C++ does not offer template typedefs
-template<typename T, typename Alloc = std::allocator<std::pair<const char*, T>>>
+template<
+	typename T, 
+	template <typename> class TAlloc = HeapAllocator>
 using Dictionary = 
 	std::unordered_map<
 		const char*,
 		T,
 		DictionaryHasher,
 		DictionaryEqual,
-		Alloc>;
+		TAlloc<std::pair<const char*, T>>>;
 
 /// @}
 

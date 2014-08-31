@@ -31,10 +31,9 @@ const U32 MAX_DEPTH = 8;
 //==============================================================================
 void ProgramPrePreprocessor::printSourceLines() const
 {
-	for(U32 i = 0; i < m_sourceLines.size(); ++i)
+	for(U i = 0; i < m_sourceLines.size(); ++i)
 	{
-		std::cout << std::setw(3) << (i + 1) << ": " 
-			<< m_sourceLines[i] << std::endl;
+		printf("%4lu %s\n", i + 1, m_sourceLines[i].c_str());
 	}
 }
 
@@ -43,8 +42,12 @@ void ProgramPrePreprocessor::parseFile(const char* filename)
 {
 	try
 	{
+		auto alloc = m_shaderSource.get_allocator();	
+
 		// Parse files recursively
-		parseFileForPragmas(filename);
+		parseFileForPragmas(
+			PPPString(filename, alloc), 
+			0);
 
 		m_shaderSource = m_sourceLines.join("\n");
 	}
@@ -56,7 +59,7 @@ void ProgramPrePreprocessor::parseFile(const char* filename)
 
 //==============================================================================
 void ProgramPrePreprocessor::parseFileForPragmas(
-	const std::string& filename, U32 depth)
+	const PPPString& filename, U32 depth)
 {
 	// first check the depth
 	if(depth > MAX_DEPTH)
@@ -66,18 +69,19 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 	}
 
 	// load file in lines
-	String txt;
-	StringList lines;
+	auto alloc = m_shaderSource.get_allocator();
+	PPPString txt(alloc);
+	PPPStringList lines(alloc);
 	File(filename.c_str(), File::OpenFlag::READ).readAllText(txt);
-	lines = StringList::splitString(txt.c_str(), '\n');
+	lines = PPPStringList::splitString(txt.c_str(), '\n', alloc);
 	if(lines.size() < 1)
 	{
 		throw ANKI_EXCEPTION("File is empty: %s", filename.c_str());
 	}
 
-	for(const std::string& line : lines)
+	for(const PPPString& line : lines)
 	{
-		std::string::size_type npos = 0;
+		PPPString::size_type npos = 0;
 		Bool expectPragmaAnki = false;
 		Bool gotPragmaAnki = true;
 
@@ -92,11 +96,13 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 		}
 		else if((npos = line.find(commands[6])) == 0)
 		{
-			std::string filen = {line, strlen(commands[6]), std::string::npos};
+			// Include
+
+			PPPString filen(
+				line, std::strlen(commands[6]), PPPString::npos);
 			trimString(filen, " \"", filen);
 
-			filen = 
-				ResourceManagerSingleton::get().fixResourcePath(filen.c_str());
+			filen = m_manager->fixResourceFilename(filen.c_str());
 
 			parseFileForPragmas(filen, depth + 1);
 		}
@@ -121,12 +127,12 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 }
 
 //==============================================================================
-Bool ProgramPrePreprocessor::parseType(const std::string& line)
+Bool ProgramPrePreprocessor::parseType(const PPPString& line)
 {
 	U i;
 	Bool found = false;
 
-	for(i = 0; i < (U)ShaderType::COUNT; i++)
+	for(i = 0; i < static_cast<U>(ShaderType::COUNT); i++)
 	{
 		if(line.find(commands[i]) == 0)
 		{
@@ -143,7 +149,7 @@ Bool ProgramPrePreprocessor::parseType(const std::string& line)
 				line.c_str());
 		}
 
-		m_type = (ShaderType)i;
+		m_type = static_cast<ShaderType>(i);
 	}
 
 	return found;

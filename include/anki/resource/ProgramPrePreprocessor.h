@@ -6,6 +6,7 @@
 #ifndef ANKI_RESOURCE_PROGRAM_PRE_PREPROCESSOR_H
 #define ANKI_RESOURCE_PROGRAM_PRE_PREPROCESSOR_H
 
+#include "anki/resource/ResourceManager.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/StringList.h"
 
@@ -36,10 +37,18 @@ enum class ShaderType
 /// - #pragma anki include "<filename>"
 class ProgramPrePreprocessor
 {
+private:
+	using PPPStringList = BasicStringList<char, TempResourceAllocator<char>>;
+	using PPPString = TempResourceString;
+
 public:
 	/// It loads a file and parses it
 	/// @param[in] filename The file to load
-	ProgramPrePreprocessor(const char* filename)
+	ProgramPrePreprocessor(
+		const char* filename, ResourceManager* manager)
+	:	m_shaderSource(manager->_getTempAllocator()),
+		m_sourceLines(manager->_getTempAllocator()),
+		m_manager(manager)
 	{
 		parseFile(filename);
 	}
@@ -49,7 +58,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const String& getShaderSource()
+	const PPPString& getShaderSource()
 	{
 		ANKI_ASSERT(!m_shaderSource.empty());
 		return m_shaderSource;
@@ -64,13 +73,16 @@ public:
 
 protected:
 	/// The final program source
-	String m_shaderSource;
+	PPPString m_shaderSource;
 
 	/// The parseFileForPragmas fills this
-	StringList m_sourceLines;
+	PPPStringList m_sourceLines;
 
 	/// Shader type
 	ShaderType m_type = ShaderType::COUNT;
+
+	/// Keep the manager for some path conversions.
+	ResourceManager* m_manager;
 
 	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get 
 	/// the output
@@ -84,10 +96,10 @@ protected:
 	/// @param filename The file to parse
 	/// @param depth The #line in GLSL does not support filename so an
 	///              depth it being used. It also tracks the includance depth
-	void parseFileForPragmas(const String& filename, U32 depth = 0);
+	void parseFileForPragmas(const PPPString& filename, U32 depth);
 
 	/// Parse the type
-	Bool parseType(const String& line);
+	Bool parseType(const PPPString& line);
 
 	void printSourceLines() const;  ///< For debugging
 };

@@ -75,6 +75,11 @@ public:
 		return m_threadpool;
 	}
 
+	HeapAllocator<U8>& getAllocator()
+	{
+		return m_heapAllocator;
+	}
+
 	/// TODO
 	void quit(int code);
 

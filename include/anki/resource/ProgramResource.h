@@ -6,6 +6,7 @@
 #ifndef ANKI_RESOURCE_PROGRAM_RESOURCE_H
 #define ANKI_RESOURCE_PROGRAM_RESOURCE_H
 
+#include "anki/resource/Common.h"
 #include "anki/Gl.h"
 
 namespace anki {
@@ -19,6 +20,7 @@ class ProgramResource
 public:
 	ProgramResource()
 	{}
+
 	~ProgramResource()
 	{}
 
@@ -28,7 +30,7 @@ public:
 	}
 
 	/// Resource load
-	void load(const char* filename);
+	void load(const char* filename, ResourceInitializer& init);
 
 	/// Load and add extra code on top of the file
 	void load(const char* filename, const char* extraSrc);
@@ -42,10 +44,11 @@ public:
 	///        ways to identify the file in the cache
 	/// @return The file pathname of the new shader prog. Its
 	///         $HOME/.anki/cache/ + filenamePrefix + hash + .glsl
-	static std::string createSrcCodeToCache(
+	static String createSourceToCache(
 		const char* filename,
 		const char* preAppendedSrcCode,
-		const char* filenamePrefix);
+		const char* filenamePrefix,
+		ResourceManager& manager);
 
 private:
 	GlProgramHandle m_prog;

@@ -10,13 +10,13 @@
 namespace anki {
 
 //==============================================================================
-void Animation::load(const char* filename, ResourceAllocator<U8>& alloc)
+void Animation::load(const char* filename, ResourceInitializer& init)
 {
 	try
 	{
 		XmlDocument doc;
 		doc.loadFile(filename);
-		loadInternal(doc.getChildElement("animation"), alloc);
+		loadInternal(doc.getChildElement("animation"), init.m_alloc);
 	}
 	catch(const std::exception& e)
 	{
