@@ -7,8 +7,8 @@
 #define ANKI_UTIL_DICTIONARY_H
 
 #include "anki/util/Allocator.h"
+#include "anki/util/String.h"
 #include <unordered_map>
-#include <cstring>
 
 namespace anki {
 
@@ -19,9 +19,10 @@ namespace anki {
 class DictionaryHasher
 {
 public:
-	PtrSize operator()(const char* str) const
+	PtrSize operator()(const CString& cstr) const
 	{
 		PtrSize h = 0;
+		auto str = cstr.get();
 		for (; *str != '\0'; ++str)
 		{
 			h += *str;
@@ -34,9 +35,9 @@ public:
 class DictionaryEqual
 {
 public:
-	Bool operator()(const char* a, const char* b) const
+	Bool operator()(const CString& a, const CString& b) const
 	{
-		return std::strcmp(a, b) == 0;
+		return a == b;
 	}
 };
 
@@ -48,11 +49,11 @@ template<
 	template <typename> class TAlloc = HeapAllocator>
 using Dictionary = 
 	std::unordered_map<
-		const char*,
+		CString,
 		T,
 		DictionaryHasher,
 		DictionaryEqual,
-		TAlloc<std::pair<const char*, T>>>;
+		TAlloc<std::pair<CString, T>>>;
 
 /// @}
 

@@ -43,7 +43,7 @@ private:
 class AnimationChannel
 {
 public:
-	BasicString<char, ResourceAllocator<char>> m_name;
+	ResourceString m_name;
 
 	I32 m_boneIndex = -1; ///< For skeletal animations
 
@@ -65,7 +65,7 @@ public:
 class Animation
 {
 public:
-	void load(const char* filename, ResourceInitializer& init);
+	void load(const CString& filename, ResourceInitializer& init);
 
 	/// Get a vector of all animation channels
 	const ResourceVector<AnimationChannel>& getChannels() const

@@ -7,13 +7,12 @@
 #define ANKI_XML_H
 
 #include "anki/util/Exception.h"
-#include "anki/util/Vector.h"
+#include "anki/util/String.h"
 #include "anki/Math.h"
 #include <tinyxml2.h>
 #if !ANKI_TINYXML2
 #	error "Wrong tinyxml2 included"
 #endif
-#include <string>
 
 namespace anki {
 
@@ -23,22 +22,23 @@ class XmlElement
 	friend class XmlDocument;
 public:
 	XmlElement()
-		: el(nullptr)
+	:	m_el(nullptr)
 	{}
+
 	XmlElement(const XmlElement& b)
-		: el(b.el)
+	:	m_el(b.el)
 	{}
 
 	/// If element has something return true
-	operator bool() const
+	operator Bool() const
 	{
-		return el != nullptr;
+		return m_el != nullptr;
 	}
 
 	/// Copy
 	XmlElement& operator=(const XmlElement& b)
 	{
-		el = b.el;
+		m_el = b.m_el;
 		return *this;
 	}
 
@@ -46,7 +46,7 @@ public:
 	const char* getText() const
 	{
 		check();
-		return el->GetText();
+		return m_el->GetText();
 	}
 
 	/// Return the text inside as an int
@@ -82,7 +82,7 @@ private:
 
 	void check() const
 	{
-		if(el == nullptr)
+		if(m_el == nullptr)
 		{
 			throw ANKI_EXCEPTION("Empty element");
 		}
@@ -93,17 +93,17 @@ private:
 class XmlDocument
 {
 public:
-	void loadFile(const char* filename);
+	void loadFile(const CString& filename, StackAllocator<U8>& alloc);
 
-	XmlElement getChildElement(const char* name)
+	XmlElement getChildElement(const CString& name)
 	{
 		XmlElement el;
-		el.el = doc.FirstChildElement(name);
+		el.m_el = m_doc.FirstChildElement(name);
 		return el;
 	}
 
 private:
-	tinyxml2::XMLDocument doc;
+	tinyxml2::XMLDocument m_doc;
 };
 
 } // end namespace anki
