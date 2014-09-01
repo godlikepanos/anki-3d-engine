@@ -6,11 +6,10 @@
 #ifndef ANKI_STRING_H
 #define ANKI_STRING_H
 
-#include "anki/util/Allocator.h"
-#include "anki/util/Assert.h"
+#include "anki/util/Vector.h"
 #include "anki/util/Exception.h"
 #include "anki/util/Array.h"
-#include <string>
+#include <cstring>
 
 namespace anki {
 
@@ -52,54 +51,385 @@ ANKI_DEPLOY_TO_STRING(F64, "%f")
 /// @addtogroup util_containers
 /// @{
 
-template<typename TChar, typename TAlloc>
-using BasicString = std::basic_string<TChar, std::char_traits<TChar>, TAlloc>;
-
-using String = BasicString<char, HeapAllocator<char>>;
-
-/// Trim a string
-/// Remove the @p what from the front and back of @p str
-template<typename TString>
-inline void trimString(const TString& in, const char* what, TString& out)
+/// A wrapper on top of C strings. Used mainly for safety.
+class CString
 {
-	out = in;
-	out.erase(0, out.find_first_not_of(what));
-	out.erase(out.find_last_not_of(what) + 1);
-}
-
-/// Replace substring. Substitute occurances of @a from into @a to inside the
-/// @a str string
-template<typename TString>
-inline void replaceAllString(const TString& in, 
-	const TString& from, const TString& to, TString& out)
-{
-	if(from.empty())
+public:
+	explicit CString(const char* ptr)
+	:	m_ptr(ptr)
 	{
-		out = in;
+		ANKI_ASSERT(m_ptr != nullptr);
 	}
 
-	out = in;
-	PtrSize start_pos = 0;
-	while((start_pos = out.find(from, start_pos)) != TString::npos) 
-	{
-		out.replace(start_pos, from.length(), to);
-		start_pos += to.length();
-	}
-}
+	CString(const CString& b)
+	:	m_ptr(b.m_ptr)
+	{}
 
-/// To string implementation
-template<typename TNumber, typename TString>
-inline void toString(TNumber number, TString& out)
+	CString& operator=(const CString& b) noexcept
+	{
+		m_ptr = b.m_ptr;
+		return *this;
+	}
+
+	Bool operator==(const CString& b) const noexcept
+	{
+		return std::strcmp(m_ptr, b.m_ptr) == 0;
+	}
+
+	Bool operator<(const CString& b) const noexcept
+	{
+		return std::strcmp(m_ptr, b.m_ptr) < 0;
+	}
+
+	Bool operator<=(const CString& b) const noexcept
+	{
+		return std::strcmp(m_ptr, b.m_ptr) <= 0;
+	}
+
+	Bool operator>(const CString& b) const noexcept
+	{
+		return std::strcmp(m_ptr, b.m_ptr) > 0;
+	}
+
+	Bool operator>=(const CString& b) const noexcept
+	{
+		return std::strcmp(m_ptr, b.m_ptr) >= 0;
+	}
+
+	/// Get the underlying C string.
+	const char* get() const noexcept
+	{
+		return m_ptr;
+	}
+
+	/// Get the string length.
+	U getLength() const noexcept
+	{
+		return std::strlen(m_ptr);
+	}
+
+private:
+	const char* m_ptr;
+};
+
+/// The base class for strings.
+template<template <typename> class TAlloc>
+class BasicString
 {
-	Array<typename TString::value_type, 512> buff;
-	I ret = std::snprintf(
-		&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
+public:
+	using Char = char; ///< Character type
+	using Allocator = TAlloc<Char>; ///< Allocator type
+	using Self = BasicString;
+	using CStringType = CString;
 
-	if(ret < 0 || ret > static_cast<I>(buff.size()))
+	static const PtrSize NPOS = MAX_PTR_SIZE;
+
+	BasicString() noexcept
+	{}
+
+	explicit BasicString(Allocator& alloc) noexcept
+	:	m_data(alloc)
+	{}
+
+	/// Copy constructor.
+	BasicString(const Self& b)
+	:	m_data(b.m_data)
+	{}
+
+	/// Move constructor.
+	BasicString(BasicString&& b) noexcept
+	:	m_data(b.m_data)
+	{}
+
+	/// Initialize using a const string.
+	explicit BasicString(Allocator& alloc, const CStringType& cstr) noexcept
+	:	m_data(alloc)
 	{
-		throw ANKI_EXCEPTION("To small intermediate buffer");
+		auto size = cstr.getLength() + 1;
+		m_data.resize(size);
+		std::memcpy(&m_data[0], cstr.get(), sizeof(Char) * size);
 	}
-}
+
+	/// Destroys the string.
+	~BasicString() noexcept
+	{}
+
+	/// Copy another string to this one.
+	Self& operator=(const Self& b)
+	{
+		ANKI_ASSERT(this != &b);
+		m_data = b.m_data;
+		return *this;
+	}
+
+	/// Copy a const string to this one.
+	Self& operator=(const CStringType& cstr)
+	{
+		auto size = cstr.getLength() + 1;
+		m_data.resize(size);
+		std::memcpy(&m_data[0], cstr.get(), sizeof(Char) * size);
+		return *this;
+	}
+
+	/// Move one string to this one.
+	Self& operator=(Self&& b) noexcept
+	{
+		ANKI_ASSERT(this != &b);
+		m_data = std::move(b.m_data);
+		return *this;
+	}
+
+	/// Return char at the specified position.
+	Char operator[](U pos) const noexcept
+	{
+		checkInit();
+		return m_data[pos];
+	}
+
+	/// Return char at the specified position as a modifiable reference.
+	Char& operator[](U pos) noexcept
+	{
+		checkInit();
+		return m_data[pos];
+	}
+
+	Char* begin() noexcept
+	{
+		checkInit();
+		return &m_data[0];
+	}
+
+	const Char* begin() const noexcept
+	{
+		checkInit();
+		return &m_data[0];
+	}
+
+	Char* end() noexcept
+	{
+		checkInit();
+		return &m_data[m_data.size() - 1];
+	}
+
+	const Char& end() const noexcept
+	{
+		checkInit();
+		return &m_data[m_data.size() - 1];
+	}
+
+	/// Append another string to this one.
+	template<template <typename> class TTAlloc>
+	Self& operator+=(const BasicString<TTAlloc>& b)
+	{
+		b.checkInit();
+		append(&b.m_data[0], b.m_data.size());
+		return *this;
+	}
+
+	/// Append a const string to this one.
+	Self& operator+=(const CStringType& cstr)
+	{
+		U size = cstr.getLength() + 1;
+		append(cstr.get(), size);
+		return *this;
+	}
+
+	/// Return true if strings are equal
+	Bool operator==(const Self& b) const noexcept
+	{
+		checkInit();
+		b.checkInit();
+		return std::strcmp(&m_data[0], &b.m_data[0]) == 0;
+	}
+
+	/// Return true if strings are not equal
+	Bool operator!=(const Self& b) const noexcept
+	{
+		return !(*this == b);
+	}
+
+	/// Return true if this is less than b
+	Bool operator<(const Self& b) const noexcept
+	{
+		checkInit();
+		b.checkInit();
+		return std::strcmp(&m_data[0], &b.m_data[0]) < 0;
+	}
+
+	/// Return true if this is less or equal to b
+	Bool operator<=(const Self& b) const noexcept
+	{
+		checkInit();
+		b.checkInit();
+		return std::strcmp(&m_data[0], &b.m_data[0]) <= 0;
+	}
+
+	/// Return true if this is greater than b
+	Bool operator>(const Self& b) const noexcept
+	{
+		checkInit();
+		b.checkInit();
+		return std::strcmp(&m_data[0], &b.m_data[0]) > 0;
+	}
+
+	/// Return true if this is greater or equal to b
+	Bool operator>=(const Self& b) const noexcept
+	{
+		checkInit();
+		b.checkInit();
+		return std::strcmp(&m_data[0], &b.m_data[0]) >= 0;
+	}
+
+	/// Return true if strings are equal
+	Bool operator==(const CStringType& cstr) const noexcept
+	{
+		checkInit();
+		return std::strcmp(&m_data[0], cstr.get()) == 0;
+	}
+
+	/// Return true if strings are not equal
+	Bool operator!=(const CStringType& cstr) const noexcept
+	{
+		return !(*this == cstr);
+	}
+
+	/// Return true if this is less than cstr.
+	Bool operator<(const CStringType& cstr) const noexcept
+	{
+		checkInit();
+		return std::strcmp(&m_data[0], cstr.get()) < 0;
+	}
+
+	/// Return true if this is less or equal to cstr.
+	Bool operator<=(const CStringType& cstr) const noexcept
+	{
+		checkInit();
+		return std::strcmp(&m_data[0], cstr.get()) <= 0;
+	}
+
+	/// Return true if this is greater than cstr.
+	Bool operator>(const CStringType& cstr) const noexcept
+	{
+		checkInit();
+		return std::strcmp(&m_data[0], cstr.get()) > 0;
+	}
+
+	/// Return true if this is greater or equal to cstr.
+	Bool operator>=(const CStringType& cstr) const noexcept
+	{
+		checkInit();
+		return std::strcmp(&m_data[0], cstr.get()) >= 0;
+	}
+
+	/// Return the string's length. It doesn't count the terminating character.
+	PtrSize getLength() const noexcept
+	{
+		auto size = m_data.size();
+		return (size != 0) ? (size - 1) : 0;
+	}
+
+	/// Return the CString.
+	CStringType toCString() const noexcept
+	{
+		checkInit();
+		return CStringType(&m_data[0]);
+	}
+
+	/// Return the allocator
+	Allocator getAllocator() const noexcept
+	{
+		return m_data.get_allocator();
+	}
+
+	/// Clears the contents of the string and makes it empty.
+	void clear()
+	{
+		m_data.clear();
+	}
+
+	/// Request string capacity change.
+	void reserve(PtrSize size)
+	{
+		++size;
+		if(size > m_data.size())
+		{
+			m_data.reserve(size);
+		}
+	}
+
+	/// Find a substring of this string.
+	/// @param[in] cstr The substring to search.
+	/// @param position Position of the first character in the string to be 
+	///                 considered in the search.
+	/// @return A valid position if the string is found or NPOS if not found.
+	PtrSize find(const CStringType& cstr, PtrSize position) const noexcept
+	{
+		checkInit();
+		ANKI_ASSERT(position < m_data.size() - 1);
+		const Char* out = std::strstr(&m_data[position], cstr.get());
+		return (out == nullptr) ? NPOS : (out - &m_data[0]);
+	}
+
+	/// Find a substring of this string.
+	/// @param[in] str The substring to search.
+	/// @param position Position of the first character in the string to be 
+	///                 considered in the search.
+	/// @return A valid position if the string is found or NPOS if not found.
+	template<template <typename> class TTAlloc>
+	PtrSize find(
+		const BasicString<TTAlloc>& str, PtrSize position) const noexcept
+	{
+		str.chechInit();
+		return find(str.toCString(), position);
+	}
+
+	/// Convert a number to a string.
+	/// @param number The number to convert.
+	/// @param[in,out] alloc The allocator to allocate the returned string.
+	/// @return The string that presents the number.
+	template<typename TNumber>
+	Self toString(TNumber number, Allocator& alloc)
+	{
+		Array<Char, 512> buff;
+		I ret = std::snprintf(
+			&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
+
+		if(ret < 0 || ret > static_cast<I>(buff.size()))
+		{
+			throw ANKI_EXCEPTION("To small intermediate buffer");
+		}
+
+		return Self(alloc, CStringType(&buff[0]));
+	}
+
+private:
+	Vector<Char, Allocator> m_data;
+
+	void checkInit() const
+	{
+		ANKI_ASSERT(m_data.size() > 1);
+	}
+
+	void append(const Char* str, PtrSize strSize)
+	{
+		ANKI_ASSERT(str != nullptr);
+		ANKI_ASSERT(strSize > 1);
+
+		auto size = m_data.size();
+
+		// Fix empty string
+		if(size == 0)
+		{
+			size = 1;
+		}
+
+		m_data.resize(size + strSize - 1);
+		std::memcpy(&m_data[size - 1], str, sizeof(Char) * strSize);
+	}
+};
+
+/// A common string type that uses heap allocator.
+using String = BasicString<HeapAllocator>;
 
 /// @}
 

@@ -15,12 +15,11 @@
 namespace anki {
 
 //==============================================================================
-Exception::Exception(const char* file, I line, const char* func, 
-	const char* fmt, ...) noexcept
+Exception::Exception(const CString& file, I line, const CString& func, 
+	const CString& fmt, ...) noexcept
 {
-	char buffer[1024];
+	Array<char, 1024> buff; 
 	const char* out = &buffer[0];
-	Vector<char> largeStr;
 	va_list args;
 
 	va_start(args, fmt);
@@ -37,15 +36,15 @@ Exception::Exception(const char* file, I line, const char* func,
 		// The buffer is not big enough
 
 		// Create a huge string
-		largeStr.resize(len + 1, '-');
-		out = &largeStr[0];
+		I size = len + 1;
+		out = mallocAligned(size, 1);
 
 		va_start(args, fmt);
-		len = vsnprintf(&largeStr[0], largeStr.size(), fmt, args);
+		len = vsnprintf(out, size, fmt, args);
 		(void)len;
 		va_end(args);
 
-		ANKI_ASSERT(len < (I)largeStr.size());
+		ANKI_ASSERT(len < size);
 	}
 
 	m_err = synthErr(out, file, line, func);

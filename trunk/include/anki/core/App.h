@@ -25,7 +25,7 @@ class NativeWindow;
 class Input;
 class GlDevice;
 class MainRenderer;
-class SceneManager;
+class SceneGraph;
 class ScriptManager;
 
 /// The core class of the engine.
@@ -72,12 +72,12 @@ public:
 
 	Threadpool& getThreadpool()
 	{
-		return m_threadpool;
+		return *m_threadpool;
 	}
 
 	HeapAllocator<U8>& getAllocator()
 	{
-		return m_heapAllocator;
+		return m_heapAlloc;
 	}
 
 	/// TODO
@@ -113,8 +113,6 @@ private:
 
 	static void printAppInfo();
 };
-
-using AppSingleton = SingletonInit<App>;
 
 } // end namespace anki
 
