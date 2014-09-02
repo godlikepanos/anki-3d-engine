@@ -6,8 +6,6 @@
 #ifndef ANKI_UTIL_STRING_LIST_H
 #define ANKI_UTIL_STRING_LIST_H
 
-#include "anki/util/Vector.h"
-#include "anki/util/StdTypes.h"
 #include "anki/util/String.h"
 #include <algorithm>
 
@@ -16,23 +14,24 @@ namespace anki {
 /// @addtogroup util_containers
 /// @{
 
-/// Sort method for StringList
-enum class StringListSort
-{
-	ASCENDING,
-	DESCENDING
-};
-
 /// A simple convenience class for string lists
-template<typename TChar, typename TAlloc>
-class BasicStringList: public Vector<BasicString<TChar, TAlloc>, TAlloc>
+template<template <typename> class TAlloc>
+class BasicStringList: 
+	public Vector<BasicString<TAlloc>, TAlloc<BasicString<TAlloc>>>
 {
 public:
 	using Self = BasicStringList; ///< Self type
-	using Char = TChar; ///< Char type
-	using Allocator = TAlloc;
-	using String = BasicString<Char, Allocator>; ///< String type
+	using Char = char; ///< Char type
+	using Allocator = TAlloc<BasicString<TAlloc>>;
+	using String = BasicString<TAlloc>; ///< String type
 	using Base = Vector<String, Allocator>; ///< Base
+
+	/// Sort method for sortAll().
+	enum class Sort
+	{
+		ASCENDING,
+		DESCENDING
+	};
 
 	// Use the base constructors
 	using Base::Base;
@@ -47,15 +46,15 @@ public:
 	I getIndexOf(const Char* value) const;
 
 	/// Sort the string list
-	void sortAll(const StringListSort method = StringListSort::ASCENDING)
+	void sortAll(const Sort method = Sort::ASCENDING)
 	{
-		if(method == StringListSort::ASCENDING)
+		if(method == Sort::ASCENDING)
 		{
 			std::sort(Base::begin(), Base::end(), compareStringsAsc);
 		}
 		else
 		{
-			ANKI_ASSERT(method == StringListSort::DESCENDING);
+			ANKI_ASSERT(method == Sort::DESCENDING);
 			std::sort(Base::begin(), Base::end(), compareStringsDesc);
 		}
 	}
@@ -63,7 +62,7 @@ public:
 	/// Split a string using a separator (@a separator) and return these
 	/// strings in a string list
 	static Self splitString(const Char* s, const Char separator,
-		Allocator alloc = Allocator());
+		Allocator alloc);
 
 private:
 	static Bool compareStringsAsc(const String& a, const String& b)
@@ -77,8 +76,8 @@ private:
 	}
 };
 
-/// A common string list allocated in heap
-using StringList = BasicStringList<char, HeapAllocator<char>>;
+/// A common string list allocated in heap.
+using StringList = BasicStringList<HeapAllocator>;
 
 /// @}
 

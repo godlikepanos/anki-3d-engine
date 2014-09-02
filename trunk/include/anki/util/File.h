@@ -6,8 +6,8 @@
 #ifndef ANKI_UTIL_FILE_H
 #define ANKI_UTIL_FILE_H
 
-#include "anki/util/StringList.h"
-#include <string>
+#include "anki/util/String.h"
+#include "anki/util/Enum.h"
 
 namespace anki {
 
@@ -47,17 +47,7 @@ public:
 		BIG_ENDIAN = 1 << 6
 	};
 
-	friend OpenFlag operator|(OpenFlag a, OpenFlag b)
-	{
-		typedef std::underlying_type<OpenFlag>::type Int;
-		return static_cast<OpenFlag>(static_cast<Int>(a) | static_cast<Int>(b));
-	}
-
-	friend OpenFlag operator&(OpenFlag a, OpenFlag b)
-	{
-		typedef std::underlying_type<OpenFlag>::type Int;
-		return static_cast<OpenFlag>(static_cast<Int>(a) & static_cast<Int>(b));
-	}
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(OpenFlag, friend);
 
 	/// Passed to seek function
 	enum class SeekOrigin
@@ -71,7 +61,7 @@ public:
 	File() = default;
 
 	/// Open file
-	File(const char* filename, OpenFlag openMask)
+	File(const CString& filename, OpenFlag openMask)
 	{
 		open(filename, openMask);
 	}
@@ -82,7 +72,7 @@ public:
 	/// Open a file
 	/// @param[in] filename The file to open
 	/// @param[in] openMask The open flags. It's a combination of OpenFlag enum
-	void open(const char* filename, OpenFlag openMask);
+	void open(const CString& filename, OpenFlag openMask);
 
 	/// Return true if the file is oppen
 	Bool isOpen() const
@@ -95,9 +85,6 @@ public:
 
 	/// Flush pending operations
 	void flush();
-
-	/// @name Read methods
-	/// @{
 
 	/// Read data from the file
 	void read(void* buff, PtrSize size);
@@ -120,35 +107,17 @@ public:
 	/// Read 32bit float. Set the endianness if the file's endianness is 
 	/// different from the machine's
 	F32 readF32();
-	/// @}
-
-	/// @name Write methods
-	/// @{
 
 	/// Write data to the file
 	void write(void* buff, PtrSize size);
 
 	/// Write formated text
-	void writeText(const char* format, ...);
-	/// @}
+	void writeText(const CString& format, ...);
 
 	/// Set the position indicator to a new position
 	/// @param offset Number of bytes to offset from origin
 	/// @param origin Position used as reference for the offset
 	void seek(PtrSize offset, SeekOrigin origin);
-
-	/// @name Public statics
-	/// @{
-
-	/// Get file extension
-	/// @param[in] filename The file to open
-	/// @return nullptr on failure and if the dot is the last character
-	static const char* getFileExtension(const char* filename);
-
-	/// File exists?
-	static Bool fileExists(const char* filename);
-
-	/// @}
 
 private:
 	/// Internal filetype
@@ -169,40 +138,27 @@ private:
 	static OpenFlag getMachineEndianness();
 
 	/// Get the type of the file
-	Type identifyFile(const char* filename,
-		String& archive, String& filenameInArchive);
+	Type identifyFile(const CString& filename,
+		char* archiveFilename, PtrSize archiveFilenameSize,
+		CString& filenameInArchive);
 
 	/// Open a C file
-	void openCFile(const char* filename, OpenFlag flags);
+	void openCFile(const CString& filename, OpenFlag flags);
 
 	/// Open an archive and the file inside
 	/// @param[in] archive The filename of the archive
 	/// @param[in] archived The filename of the file inside the archive
-	void openZipFile(const char* archive, const char* archived, 
+	void openZipFile(const CString& archive, const CString& archived, 
 		OpenFlag flags);
 
 #if ANKI_OS == ANKI_OS_ANDROID
 	/// Open an Android file
-	void openAndroidFile(const char* filename, OpenFlag flags);
+	void openAndroidFile(const CString& filename, OpenFlag flags);
 #endif
 
 	/// The file should be open
 	PtrSize getSize();
 };
-
-/// Return true if directory exists?
-extern Bool directoryExists(const char* dir);
-
-/// Equivalent to: rm -rf dir
-extern void removeDirectory(const char* dir);
-
-/// Equivalent to: mkdir dir
-extern void createDirectory(const char* dir);
-
-/// Get the home directory
-/// Write the home directory to @a buff. The @a buffSize is the size of the 
-/// @a buff. If the @buffSize is not enough the function will throw exception
-extern void getHomeDirectory(U32 buffSize, char* buff);
 
 /// @}
 
