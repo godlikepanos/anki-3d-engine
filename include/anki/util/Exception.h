@@ -6,7 +6,6 @@
 #ifndef ANKI_UTIL_EXCEPTION_H
 #define ANKI_UTIL_EXCEPTION_H
 
-#include "anki/Config.h"
 #include "anki/util/StdTypes.h"
 #include <exception>
 #include <utility>
@@ -24,8 +23,8 @@ class Exception: public std::exception
 {
 public:
 	/// Constructor
-	explicit Exception(const CString& file, I line, const CString& func, 
-		const CString& errorFmt, ...) noexcept;
+	explicit Exception(const char* file, I line, const char* func, 
+		const char* errorFmt, ...) noexcept;
 
 	/// Copy constructor
 	Exception(const Exception& e) noexcept;
@@ -65,13 +64,13 @@ private:
 	{}
 
 	/// Synthesize the error string
-	static CString synthErr(const CString& error, const CString& file,
-		I line, const CString& func) noexcept;
+	static char* synthErr(const char* error, const char* file,
+		I line, const char* func) noexcept;
 };
 
 /// Macro for easy throwing
 #define ANKI_EXCEPTION(...) \
-	Exception(CString(ANKI_FILE), __LINE__, CString(ANKI_FUNC), __VA_ARGS__)
+	Exception(ANKI_FILE, __LINE__, ANKI_FUNC, __VA_ARGS__)
 
 /// @}
 

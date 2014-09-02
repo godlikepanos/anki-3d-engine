@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/util/Exception.h"
-#include "anki/util/Vector.h"
+#include "anki/util/Array.h"
 #include "anki/util/Memory.h"
 #include <cstring>
 #include <cstdarg>
@@ -15,21 +15,22 @@
 namespace anki {
 
 //==============================================================================
-Exception::Exception(const CString& file, I line, const CString& func, 
-	const CString& fmt, ...) noexcept
+Exception::Exception(const char* file, I line, const char* func, 
+	const char* fmt, ...) noexcept
 {
-	Array<char, 1024> buff; 
-	const char* out = &buffer[0];
+	Array<char, 1024> buffer; 
+	char* out = &buffer[0];
 	va_list args;
 
 	va_start(args, fmt);
-	I len = vsnprintf(buffer, sizeof(buffer), fmt, args);
+	I len = std::vsnprintf(&buffer[0], sizeof(buffer), fmt, args);
 	va_end(args);
 
 	if(len < 0)
 	{
 		// Error in vsnprintf()
-		strcpy(buffer, "Error when throwing exception. vsnprintf() failed");
+		std::strcpy(
+			&buffer[0], "Error when throwing exception. vsnprintf() failed");
 	}
 	else if((PtrSize)len >= sizeof(buffer))
 	{
@@ -37,10 +38,10 @@ Exception::Exception(const CString& file, I line, const CString& func,
 
 		// Create a huge string
 		I size = len + 1;
-		out = mallocAligned(size, 1);
+		out = reinterpret_cast<char*>(mallocAligned(size, 1));
 
 		va_start(args, fmt);
-		len = vsnprintf(out, size, fmt, args);
+		len = std::vsnprintf(out, size, fmt, args);
 		(void)len;
 		va_end(args);
 
@@ -48,6 +49,12 @@ Exception::Exception(const CString& file, I line, const CString& func,
 	}
 
 	m_err = synthErr(out, file, line, func);
+
+	// Delete the allocated memory
+	if(out != &buffer[0])
+	{
+		freeAligned(out);
+	}
 
 #if ANKI_ABORT_ON_THROW == 1
 	std::cerr << m_err << std::endl;
@@ -60,8 +67,8 @@ Exception::Exception(const Exception& e) noexcept
 {
 	ANKI_ASSERT(e.m_err);
 
-	m_err = (char*)mallocAligned(strlen(e.m_err) + 1, 1);
-	strcpy(m_err, e.m_err);
+	m_err = reinterpret_cast<char*>(mallocAligned(std::strlen(e.m_err) + 1, 1));
+	std::strcpy(m_err, e.m_err);
 
 #if ANKI_ABORT_ON_THROW == 1
 	std::cerr << m_err << std::endl;
@@ -98,11 +105,12 @@ char* Exception::synthErr(const char* error, const char* file,
 {
 	// The length of all strings plus some extra chars for the formating 
 	// plus 10 to be safe
-	U len = strlen(error) + strlen(file) + 5 + strlen(func) + 5 + 10;
+	U len = 
+		std::strlen(error) + std::strlen(file) + 5 + std::strlen(func) + 5 + 10;
 
-	char* out = (char*)mallocAligned(len + 1, 1);
+	char* out = reinterpret_cast<char*>(mallocAligned(len + 1, 1));
 	
-	I olen = snprintf(out, len + 1, "(%s:%d %s) %s", file, 
+	I olen = std::snprintf(out, len + 1, "(%s:%d %s) %s", file, 
 		static_cast<int>(line), func, error);
 	
 	ANKI_ASSERT(olen >= 0 && (U)olen <= len);
@@ -120,12 +128,14 @@ Exception Exception::operator<<(const std::exception& e) const
 	static const char* filling = "\nFrom: ";
 	Exception out;
 
-	U len = strlen(filling);
-	len += strlen(m_err);
-	len += strlen(e.what());
+	U len = std::strlen(filling);
+	len += std::strlen(m_err);
+	len += std::strlen(e.what());
 
-	out.m_err = (char*)mallocAligned(len + 1, 1);
-	I olen = snprintf(out.m_err, len + 1, "%s%s%s", m_err, filling, e.what());
+	out.m_err = reinterpret_cast<char*>(mallocAligned(len + 1, 1));
+	I olen = std::snprintf(
+		out.m_err, len + 1, "%s%s%s", m_err, filling, e.what());
+
 	ANKI_ASSERT(olen >= 0 && (U)olen <= len);
 	(void)olen;
 

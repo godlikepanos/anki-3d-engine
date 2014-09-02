@@ -55,61 +55,116 @@ ANKI_DEPLOY_TO_STRING(F64, "%f")
 class CString
 {
 public:
-	explicit CString(const char* ptr)
+	using Char = char;
+
+	CString() noexcept = default;
+
+	explicit CString(const Char* ptr) noexcept
 	:	m_ptr(ptr)
 	{
-		ANKI_ASSERT(m_ptr != nullptr);
+		checkInit();
 	}
 
-	CString(const CString& b)
-	:	m_ptr(b.m_ptr)
-	{}
+	/// Copy constructor.
+	CString(const CString& b) noexcept
+	:	m_ptr(b.m_ptr),
+		m_length(b.m_length)
+	{
+		checkInit();
+	}
 
+	/// Copy.
 	CString& operator=(const CString& b) noexcept
 	{
 		m_ptr = b.m_ptr;
+		m_length = b.m_length;
+		checkInit();
 		return *this;
+	}
+
+	/// Return char at the specified position.
+	const Char& operator[](U pos) const noexcept
+	{
+		checkInit();
+		ANKI_ASSERT(pos <= getLength());
+		return m_ptr[pos];
+	}
+
+	const Char* begin() const noexcept
+	{
+		checkInit();
+		return &m_ptr[0];
+	}
+
+	const Char* end() const noexcept
+	{
+		checkInit();
+		return &m_ptr[getLength()];
 	}
 
 	Bool operator==(const CString& b) const noexcept
 	{
+		checkInit();
+		b.checkInit();
 		return std::strcmp(m_ptr, b.m_ptr) == 0;
 	}
 
 	Bool operator<(const CString& b) const noexcept
 	{
+		checkInit();
+		b.checkInit();
 		return std::strcmp(m_ptr, b.m_ptr) < 0;
 	}
 
 	Bool operator<=(const CString& b) const noexcept
 	{
+		checkInit();
+		b.checkInit();
 		return std::strcmp(m_ptr, b.m_ptr) <= 0;
 	}
 
 	Bool operator>(const CString& b) const noexcept
 	{
+		checkInit();
+		b.checkInit();
 		return std::strcmp(m_ptr, b.m_ptr) > 0;
 	}
 
 	Bool operator>=(const CString& b) const noexcept
 	{
+		checkInit();
+		b.checkInit();
 		return std::strcmp(m_ptr, b.m_ptr) >= 0;
 	}
 
 	/// Get the underlying C string.
 	const char* get() const noexcept
 	{
+		checkInit();
 		return m_ptr;
 	}
 
 	/// Get the string length.
 	U getLength() const noexcept
 	{
-		return std::strlen(m_ptr);
+		checkInit();
+		if(m_length == 0)
+		{
+			m_length = std::strlen(m_ptr);
+		}
+		
+		return m_length;
 	}
 
 private:
-	const char* m_ptr;
+	const Char* m_ptr = nullptr;
+	mutable U16 m_length = 0;
+
+	void checkInit() const noexcept
+	{
+		ANKI_ASSERT(m_ptr != nullptr);
+		ANKI_ASSERT(m_ptr[0] != '\0' && "Empty strings are now allowed");
+	}
 };
 
 /// The base class for strings.
@@ -127,7 +182,7 @@ public:
 	BasicString() noexcept
 	{}
 
-	explicit BasicString(Allocator& alloc) noexcept
+	BasicString(Allocator& alloc) noexcept
 	:	m_data(alloc)
 	{}
 
@@ -142,7 +197,8 @@ public:
 	{}
 
 	/// Initialize using a const string.
-	explicit BasicString(Allocator& alloc, const CStringType& cstr) noexcept
+	template<typename TTAlloc>
+	BasicString(const CStringType& cstr, TTAlloc& alloc)
 	:	m_data(alloc)
 	{
 		auto size = cstr.getLength() + 1;
@@ -211,7 +267,7 @@ public:
 		return &m_data[m_data.size() - 1];
 	}
 
-	const Char& end() const noexcept
+	const Char* end() const noexcept
 	{
 		checkInit();
 		return &m_data[m_data.size() - 1];
@@ -355,6 +411,12 @@ public:
 		{
 			m_data.reserve(size);
 		}
+	}
+
+	/// Return true if it's empty.
+	Bool isEmpty() const noexcept
+	{
+		return m_data.empty();
 	}
 
 	/// Find a substring of this string.

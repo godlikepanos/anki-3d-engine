@@ -20,15 +20,10 @@
 namespace anki {
 
 //==============================================================================
-// File                                                                        =
-//==============================================================================
-
-//==============================================================================
-Bool File::fileExists(const char* filename)
+Bool fileExists(const CString& filename)
 {
-	ANKI_ASSERT(filename);
 	struct stat s;
-	if(stat(filename, &s) == 0)
+	if(stat(filename.get(), &s) == 0)
 	{
 		return S_ISREG(s.st_mode);
 	}
@@ -39,15 +34,10 @@ Bool File::fileExists(const char* filename)
 }
 
 //==============================================================================
-// Functions                                                                   =
-//==============================================================================
-
-//==============================================================================
-Bool directoryExists(const char* filename)
+Bool directoryExists(const CString& filename)
 {
-	ANKI_ASSERT(filename);
 	struct stat s;
-	if(stat(filename, &s) == 0)
+	if(stat(filename.get(), &s) == 0)
 	{
 		return S_ISDIR(s.st_mode);
 	}
@@ -58,7 +48,7 @@ Bool directoryExists(const char* filename)
 }
 
 //==============================================================================
-void removeDirectory(const char* dirname)
+void removeDirectory(const CString& dirname)
 {
 	DIR* dir;
 	struct dirent* entry;
@@ -69,7 +59,7 @@ void removeDirectory(const char* dirname)
 		throw ANKI_EXCEPTION("Out of memory error");
 	}
 
-	dir = opendir(dirname);
+	dir = opendir(dirname.get());
 	if(dir == nullptr) 
 	{
 		throw ANKI_EXCEPTION("opendir() failed");
@@ -79,10 +69,12 @@ void removeDirectory(const char* dirname)
 	{
 		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) 
 		{
-			snprintf(path, (size_t)PATH_MAX, "%s/%s", dirname, entry->d_name);
+			std::snprintf(
+				path, (size_t)PATH_MAX, "%s/%s", dirname.get(), entry->d_name);
+
 			if(entry->d_type == DT_DIR) 
 			{
-				removeDirectory(path);
+				removeDirectory(CString(path));
 			}
 			else
 			{
@@ -93,39 +85,33 @@ void removeDirectory(const char* dirname)
 	}
 
 	closedir(dir);
-	remove(dirname);
+	remove(dirname.get());
 }
 
 //==============================================================================
-void createDirectory(const char* dir)
+void createDirectory(const CString& dir)
 {
 	if(directoryExists(dir))
 	{
 		return;
 	}
 
-	if(mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+	if(mkdir(dir.get(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
 	{
-		throw ANKI_EXCEPTION("%s : %s", strerror(errno), dir);
+		throw ANKI_EXCEPTION("%s : %s", strerror(errno), dir.get());
 	}
 }
 
 //==============================================================================
-void getHomeDirectory(U32 buffSize, char* buff)
+String getHomeDirectory(HeapAllocator<U8>& alloc)
 {
 	const char* home = getenv("HOME");
 	if(home == nullptr)
 	{
-		throw ANKI_EXCEPTION("HOME environment not set");
+		throw ANKI_EXCEPTION("HOME environment variable not set");
 	}
 
-	U len = strlen(home);
-	if(len + 1 > buffSize)
-	{
-		throw ANKI_EXCEPTION("buffSize too small");
-	}
-
-	memcpy(buff, home, len + 1);
+	return String(CString(home), alloc);
 }
 
 } // end namespace anki

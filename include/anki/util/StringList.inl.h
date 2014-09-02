@@ -9,9 +9,9 @@
 namespace anki {
 
 //==============================================================================
-template<typename TChar, typename TAlloc>
-typename BasicStringList<TChar, TAlloc>::String 
-	BasicStringList<TChar, TAlloc>::join(const Char* separator) const
+template<template <typename> class TAlloc>
+typename BasicStringList<TAlloc>::String 
+	BasicStringList<TAlloc>::join(const Char* separator) const
 {
 	// Count the characters
 	I sepLen = std::strlen(separator);
@@ -42,8 +42,8 @@ typename BasicStringList<TChar, TAlloc>::String
 }
 
 //==============================================================================
-template<typename TChar, typename TAlloc>
-I BasicStringList<TChar, TAlloc>::getIndexOf(const Char* value) const
+template<template <typename> class TAlloc>
+I BasicStringList<TAlloc>::getIndexOf(const Char* value) const
 {
 	U pos = 0;
 
@@ -60,9 +60,9 @@ I BasicStringList<TChar, TAlloc>::getIndexOf(const Char* value) const
 }
 
 //==============================================================================
-template<typename TChar, typename TAlloc>
-BasicStringList<TChar, TAlloc> 
-	BasicStringList<TChar, TAlloc>::splitString(
+template<template <typename> class TAlloc>
+BasicStringList<TAlloc> 
+	BasicStringList<TAlloc>::splitString(
 	const Char* s, 
 	const Char separator,
 	Allocator alloc)
