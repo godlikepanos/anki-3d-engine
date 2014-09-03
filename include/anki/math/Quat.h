@@ -33,39 +33,39 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit TQuat()
-		: Base()
+	:	Base()
 	{}
 
 	TQuat(const TQuat& b)
-		: Base(b)
+	:	Base(b)
 	{}
 
 	explicit TQuat(const T x_, const T y_, const T z_, const T w_)
-		: Base(x_, y_, z_, w_)
+	:	Base(x_, y_, z_, w_)
 	{}
 
 	explicit TQuat(const T f)
-		: Base(f)
+	:	Base(f)
 	{}
 
 	explicit TQuat(const T arr[])
-		: Base(arr)
+	:	Base(arr)
 	{}
 
 	explicit TQuat(const typename Base::Simd& simd)
-		: Base(simd)
+	:	Base(simd)
 	{}
 
 	explicit TQuat(const TVec2<T>& v, const T z_, const T w_)
-		: Base(v, z_, w_)
+	:	Base(v, z_, w_)
 	{}
 
 	explicit TQuat(const TVec3<T>& v, const T w_)
-		: Base(v, w_)
+	:	Base(v, w_)
 	{}
 
 	explicit TQuat(const TVec4<T>& v)
-		: Base(v)
+	:	Base(v)
 	{}
 
 	explicit TQuat(const TMat3<T>& m3)

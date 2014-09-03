@@ -156,10 +156,14 @@ public:
 
 	/// @name Other
 	/// @{
-	String toString() const
+	template<template <typename> class TAlloc>
+	BasicString<TAlloc> toString(
+		typename BasicString<TAlloc>::Allocator& alloc) const
 	{
-		String s = std::to_string(x()) + " " + std::to_string(y())
-			+ " " + std::to_string(z());
+		BasicString<TAlloc> s(alloc);
+		s = BasicString<TAlloc>::toString(x(), alloc) + CString(" ") 
+			+ BasicString<TAlloc>::toString(y(), alloc) + CString(" ") 
+			+ BasicString<TAlloc>::toString(z(), alloc);
 		return s;
 	}
 	/// @}

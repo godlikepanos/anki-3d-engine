@@ -2155,12 +2155,14 @@ public:
 		return ((*this) * (1.0 - t)) + (v1 * t);
 	}
 
-	String toString() const
+	template<template <typename> class TAlloc>
+	BasicString<TAlloc> toString(
+		typename BasicString<TAlloc>::Allocator& alloc) const
 	{
-		String out;
+		BasicString<TAlloc> out(alloc);
 		for(U i = 0; i < N; i++)
 		{
-			out += std::to_string(m_arr[i]) + " ";
+			out += BasicString<TAlloc>::toString(m_arr[i]) + CString(" ");
 		}
 		return out;
 	}

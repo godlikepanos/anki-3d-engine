@@ -20,13 +20,15 @@ namespace anki {
 class XmlElement
 {
 	friend class XmlDocument;
+
 public:
 	XmlElement()
 	:	m_el(nullptr)
 	{}
 
 	XmlElement(const XmlElement& b)
-	:	m_el(b.el)
+	:	m_el(b.el),
+		m_alloc(b.m_alloc)
 	{}
 
 	/// If element has something return true
@@ -43,20 +45,20 @@ public:
 	}
 
 	/// Return the text inside a tag
-	const char* getText() const
+	CString getText() const
 	{
 		check();
-		return m_el->GetText();
+		return CString(m_el->GetText());
 	}
 
 	/// Return the text inside as an int
-	I getInt() const;
+	I64 getInt() const;
 
 	/// Return the text inside as a float
 	F64 getFloat() const;
 
 	/// Get a number of floats
-	Vector<F64> getFloats() const;
+	Vector<F64, StackAllocator> getFloats() const;
 
 	/// Return the text inside as a Mat4
 	Mat4 getMat4() const;
@@ -68,17 +70,18 @@ public:
 	Vec4 getVec4() const;
 
 	/// Get a child element quietly
-	XmlElement getChildElementOptional(const char* name) const;
+	XmlElement getChildElementOptional(const CString& name) const;
 
 	/// Get a child element and throw exception if not found
-	XmlElement getChildElement(const char* name) const;
+	XmlElement getChildElement(const CString& name) const;
 
 	/// Get the next element with the same name. Returns empty XmlElement if
 	/// it reached the end of the list
-	XmlElement getNextSiblingElement(const char* name) const;
+	XmlElement getNextSiblingElement(const CString& name) const;
 
 private:
-	tinyxml2::XMLElement* el;
+	tinyxml2::XMLElement* m_el;
+	StackAllocator<U8> m_alloc;
 
 	void check() const
 	{
@@ -98,7 +101,8 @@ public:
 	XmlElement getChildElement(const CString& name)
 	{
 		XmlElement el;
-		el.m_el = m_doc.FirstChildElement(name);
+		el.m_el = m_doc.FirstChildElement(&name[0]);
+		el.m_alloc = alloc;
 		return el;
 	}
 

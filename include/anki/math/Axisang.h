@@ -21,15 +21,18 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit TAxisang()
-		: m_ang(0.0), m_axis(0.0)
+	:	m_ang(0.0), 
+		m_axis(0.0)
 	{}
 	
 	TAxisang(const TAxisang& b)
-		: m_ang(b.ang), m_axis(b.axis)
+	:	m_ang(b.ang), 
+		m_axis(b.axis)
 	{}
 
 	explicit TAxisang(const T rad, const TVec3<T>& axis)
-		: m_ang(rad), m_axis(axis)
+	:	m_ang(rad), 
+		m_axis(axis)
 	{}
 
 	explicit TAxisang(const TQuat<T>& q)
@@ -186,10 +189,13 @@ public:
 
 	/// @name Other
 	/// @{
-	std::string toString() const
+	template<template <typename> class TAlloc>
+	BasicString<TAlloc> toString(
+		typename BasicString<TAlloc>::Allocator& alloc) const
 	{
-		std::string s = "axis: " + m_axis.toString() 
-			+ ", angle: " + std::to_string(m_ang);
+		BasicString<TAlloc> s(alloc);
+		s += "axis: " + m_axis.toString(alloc) 
+			+ ", angle: " + BasicString<TAlloc>::toString(m_ang, alloc);
 		return s;
 	}
 	/// @}

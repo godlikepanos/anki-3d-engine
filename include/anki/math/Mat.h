@@ -749,17 +749,20 @@ public:
 		*this = getZero();
 	}
 
-	String toString() const
+	template<template <typename> class TAlloc>
+	BasicString<TAlloc> toString(
+		typename BasicString<TAlloc>::Allocator& alloc) const
 	{
 		const TMat& m = *this;
-		String s;
+		BasicString<TAlloc> s(alloc);
 		for(U j = 0; j < J; j++)
 		{
 			for(U i = 0; i < I; i++)
 			{
-				s += std::to_string(m(j, i)) + " ";
+				s += BasicString<TAlloc>::toString(m(j, i), alloc) 
+					+ CString(" ");
 			}
-			s += "\n";
+			s += CString("\n");
 		}
 		return s;
 	}

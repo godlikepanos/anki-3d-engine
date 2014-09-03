@@ -183,11 +183,14 @@ public:
 		return out;
 	}
 
-	std::string toString() const
+	template<template <typename> class TAlloc>
+	BasicString<TAlloc> toString(
+		typename BasicString<TAlloc>::Allocator& alloc) const
 	{
-		return "t: " + m_origin.toString() 
-			+ "\n\nr: " + m_rotation.toString() 
-			+ "\ns: " + std::to_string(m_scale);
+		BasicString<TAlloc> out(alloc);
+		out = BasicString<TAlloc>("t: ", alloc) + m_origin.toString(alloc) 
+			+ CString("\n\nr: ") + m_rotation.toString(alloc) 
+			+ CString("\ns: ") + BasicString<TAlloc>::toString(m_scale, alloc);
 	}
 	/// @}
 

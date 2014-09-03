@@ -14,55 +14,57 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-I XmlElement::getInt() const
+I64 XmlElement::getInt() const
 {
 	check();
-	const char* txt = getText();
+	const char* txt = m_el->GetText();
 	if(txt == nullptr)
 	{
-		throw ANKI_EXCEPTION("Failed to return int. Element: %s", el->Value());
+		throw ANKI_EXCEPTION("Failed to return int. Element: %s", 
+			m_el->Value());
 	}
-	return std::stoi(txt);
+	return std::strtoimax(txt, nullptr, 10);
 }
 
 //==============================================================================
 F64 XmlElement::getFloat() const
 {
 	check();
-	const char* txt = getText();
+	const char* txt = m_el->GetText();
 	if(txt == nullptr)
 	{
 		throw ANKI_EXCEPTION("Failed to return float. Element: %s", 
-			el->Value());
+			m_el->Value());
 	}
-	return std::stof(txt);
+	return std::strtof(txt, nullptr);
 }
 
 //==============================================================================V
-Vector<F64> XmlElement::getFloats() const
+Vector<F64, StackAllocator> XmlElement::getFloats() const
 {
 	check();
-	const char* txt = getText();
+	const char* txt = m_el->GetText();
 	if(txt == nullptr)
 	{
 		throw ANKI_EXCEPTION("Failed to return floats. Element: %s",
-			el->Value());
+			m_el->Value());
 	}
 
-	StringList list = StringList::splitString(txt, ' ');
-	Vector<F64> out;
+	BasicStringList<StackAllocator> list(
+		BasicStringList<StackAllocator>::splitString(txt, ' ', m_alloc));
+	Vector<F64, StackAllocator> out;
 	out.resize(list.size());
 
 	try
 	{
 		for(U i = 0; i < out.size(); i++)
 		{
-			out[i] = std::stof(list[i]);
+			out[i] = list[i].toF64();
 		}
 	}
 	catch(const std::exception& e)
 	{
-		throw ANKI_EXCEPTION("Found non-float element for Mat4");
+		throw ANKI_EXCEPTION("Found non-float element for vec of floats");
 	}
 
 	return out;
@@ -73,13 +75,15 @@ Mat4 XmlElement::getMat4() const
 {
 	check();
 
-	const char* txt = getText();
+	const char* txt = m_el->GetText();
 	if(txt == nullptr)
 	{
 		throw ANKI_EXCEPTION("Failed to return Mat4");
 	}
 
-	StringList list = StringList::splitString(txt, ' ');
+	BasicStringList<StackAllocator> list = 
+		BasicStringList<StackAllocator>::splitString(txt, ' ', m_alloc);
+
 	if(list.size() != 16)
 	{
 		throw ANKI_EXCEPTION("Expecting 16 elements for Mat4");
@@ -91,7 +95,7 @@ Mat4 XmlElement::getMat4() const
 	{
 		for(U i = 0; i < 16; i++)
 		{
-			out[i] = std::stof(list[i]);
+			out[i] = list[i].toF64();
 		}
 	}
 	catch(const std::exception& e)
@@ -107,13 +111,15 @@ Vec3 XmlElement::getVec3() const
 {
 	check();
 
-	const char* txt = getText();
+	const char* txt = m_el->GetText();
 	if(txt == nullptr)
 	{
 		throw ANKI_EXCEPTION("Failed to return Vec3");
 	}
 
-	StringList list = StringList::splitString(txt, ' ');
+	BasicStringList<StackAllocator> list = 
+		BasicStringList<StackAllocator>::splitString(txt, ' ', m_alloc);
+
 	if(list.size() != 3)
 	{
 		throw ANKI_EXCEPTION("Expecting 3 elements for Vec3");
@@ -125,7 +131,7 @@ Vec3 XmlElement::getVec3() const
 	{
 		for(U i = 0; i < 3; i++)
 		{
-			out[i] = std::stof(list[i]);
+			out[i] = list[i].toF64();
 		}
 	}
 	catch(const std::exception& e)
@@ -140,13 +146,15 @@ Vec4 XmlElement::getVec4() const
 {
 	check();
 
-	const char* txt = getText();
+	const char* txt = m_el->GetText();
 	if(txt == nullptr)
 	{
 		throw ANKI_EXCEPTION("Failed to return Vec4");
 	}
 
-	StringList list = StringList::splitString(txt, ' ');
+	BasicStringList<StackAllocator> list = 
+		BasicStringList<StackAllocator>::splitString(txt, ' ', m_alloc);
+
 	if(list.size() != 4)
 	{
 		throw ANKI_EXCEPTION("Expecting 3 elements for Vec4");
@@ -158,7 +166,7 @@ Vec4 XmlElement::getVec4() const
 	{
 		for(U i = 0; i < 4; i++)
 		{
-			out[i] = std::stof(list[i]);
+			out[i] = list[i].toF64();
 		}
 	}
 	catch(const std::exception& e)
@@ -170,16 +178,16 @@ Vec4 XmlElement::getVec4() const
 }
 
 //==============================================================================
-XmlElement XmlElement::getChildElementOptional(const char* name) const
+XmlElement XmlElement::getChildElementOptional(const CString& name) const
 {
 	check();
 	XmlElement out;
-	out.el = el->FirstChildElement(name);
+	out.el = el->FirstChildElement(&name[0]);
 	return out;
 }
 
 //==============================================================================
-XmlElement XmlElement::getChildElement(const char* name) const
+XmlElement XmlElement::getChildElement(const CString& name) const
 {
 	check();
 	const XmlElement out = getChildElementOptional(name);
@@ -191,11 +199,11 @@ XmlElement XmlElement::getChildElement(const char* name) const
 }
 
 //==============================================================================
-XmlElement XmlElement::getNextSiblingElement(const char* name) const
+XmlElement XmlElement::getNextSiblingElement(const CString& name) const
 {
 	check();
 	XmlElement out;
-	out.el = el->NextSiblingElement(name);
+	out.el = el->NextSiblingElement(&name[0]);
 	return out;
 }
 
@@ -204,13 +212,14 @@ XmlElement XmlElement::getNextSiblingElement(const char* name) const
 //==============================================================================
 
 //==============================================================================
-void XmlDocument::loadFile(const char* filename, StackAllocator<U8>& alloc)
+void XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
 {
 	File file(filename, File::OpenFlag::READ);
-	std::string text;
+
+	BasicString<StackAllocator> text;
 	file.readAllText(text);
 
-	if(doc.Parse(text.c_str()))
+	if(doc.Parse(&text.toCString()[0]))
 	{
 		throw ANKI_EXCEPTION("Cannot parse file. Reason: %s",
 			((doc.GetErrorStr1() == nullptr)
