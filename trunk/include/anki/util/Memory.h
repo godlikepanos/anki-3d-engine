@@ -75,6 +75,12 @@ public:
 	/// other's pool to this instance as well
 	HeapMemoryPool& operator=(const HeapMemoryPool& other);
 
+	/// Check if two memory pools are the same one.
+	Bool operator==(const HeapMemoryPool& b) const noexcept
+	{
+		return m_impl == b.m_impl;
+	}
+
 	/// Allocate memory
 	void* allocate(PtrSize size, PtrSize alignment) noexcept;
 
@@ -138,6 +144,12 @@ public:
 	/// Copy. It will not copy any data, what it will do is add visibility of
 	/// other's pool to this instance as well
 	StackMemoryPool& operator=(const StackMemoryPool& other);
+
+	/// Check if two memory pools are the same one.
+	Bool operator==(const StackMemoryPool& b) const noexcept
+	{
+		return m_impl == b.m_impl;
+	}
 
 	/// Allocate aligned memory. The operation is thread safe
 	/// @param size The size to allocate
@@ -241,6 +253,12 @@ public:
 	/// Copy. It will not copy any data, what it will do is add visibility of
 	/// other's pool to this instance as well
 	ChainMemoryPool& operator=(const ChainMemoryPool& other);
+
+	/// Check if two memory pools are the same one.
+	Bool operator==(const ChainMemoryPool& b) const noexcept
+	{
+		return m_impl == b.m_impl;
+	}
 
 	/// Allocate memory. This operation is thread safe
 	/// @param size The size to allocate

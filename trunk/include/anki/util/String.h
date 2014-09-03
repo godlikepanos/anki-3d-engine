@@ -10,6 +10,8 @@
 #include "anki/util/Exception.h"
 #include "anki/util/Array.h"
 #include <cstring>
+#include <cmath> // For HUGE_VAL
+#include <climits> // For LLONG_MAX
 
 namespace anki {
 
@@ -156,6 +158,34 @@ public:
 		return m_length;
 	}
 
+	/// Convert to F64.
+	F64 toF64() const
+	{
+		checkInit();
+		F64 out = std::strtod(m_ptr, nullptr);
+
+		if(out == HUGE_VAL)
+		{
+			throw ANKI_EXCEPTION("Conversion failed");
+		}
+
+		return out;
+	}
+
+	/// Convert to I64.
+	I64 toI64() const
+	{
+		checkInit();
+		I64 out = std::strtoll(m_ptr, nullptr, 10);
+
+		if(out == LLONG_MAX)
+		{
+			throw ANKI_EXCEPTION("Conversion failed");
+		}
+
+		return out;
+	}
+
 private:
 	const Char* m_ptr = nullptr;
 	mutable U16 m_length = 0;
@@ -271,6 +301,19 @@ public:
 	{
 		checkInit();
 		return &m_data[m_data.size() - 1];
+	}
+
+	/// Add strings.
+	Self operator+(const Self& b) const
+	{
+		b.checkInit();
+		return add(&b.m_data[0], b.m_data.size());
+	}
+
+	/// Add strings.
+	Self operator+(const CString& cstr) const
+	{
+		return add(&cstr[0], cstr.getLength() + 1);
 	}
 
 	/// Append another string to this one.
@@ -464,8 +507,20 @@ public:
 		return Self(alloc, CStringType(&buff[0]));
 	}
 
+	/// Convert to F64.
+	F64 toF64() const
+	{
+		return toCString().toF64();
+	}
+
+	/// Convert to I64.
+	I64 toI64() const
+	{
+		return toCString().toI64();
+	}
+
 private:
-	Vector<Char, Allocator> m_data;
+	Vector<Char, TAlloc> m_data;
 
 	void checkInit() const
 	{
@@ -487,6 +542,21 @@ private:
 
 		m_data.resize(size + strSize - 1);
 		std::memcpy(&m_data[size - 1], str, sizeof(Char) * strSize);
+	}
+
+	Self add(const Char* str, PtrSize strSize)
+	{
+		checkInit();
+
+		Self out(m_data.get_allocator());
+		out.m_data.resize(m_data.size() + strSize - 1);
+
+		std::memcpy(&out.m_data[0], &m_data[0], 
+			(m_data.size() - 1) * sizeof(Char));
+		std::memcpy(&out.m_data[m_data.size() - 1], str, 
+			strSize * sizeof(Char));
+
+		return out;
 	}
 };
 
