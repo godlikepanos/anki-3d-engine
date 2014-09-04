@@ -45,7 +45,7 @@ public:
 	}
 
 	/// Construct and load
-	ResourcePointer(const char* filename)
+	ResourcePointer(const CString& filename)
 	{
 		load(filename);
 	}

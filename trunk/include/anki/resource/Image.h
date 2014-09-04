@@ -61,13 +61,8 @@ public:
 		ResourceVector<U8> m_data;
 	};
 
-	/// Do nothing
 	Image(ResourceAllocator<U8>& alloc)
 	:	m_surfaces(alloc)
-	{}
-
-	/// Do nothing
-	~Image()
 	{}
 
 	ColorFormat getColorFormat() const
@@ -111,11 +106,7 @@ public:
 	/// @param[in] filename The file to load
 	/// @param[in] maxTextureSize Only load mipmaps less or equal to that. Used
 	///                           with AnKi textures
-	void load(const char* filename, U32 maxTextureSize = MAX_U32);
-
-	/// Load an image file
-	/// @param[in] filenames The 6 files to load
-	void loadCube(const char* filenames[6]);
+	void load(const CString& filename, U32 maxTextureSize = MAX_U32);
 
 private:
 	/// [mip][depthFace]

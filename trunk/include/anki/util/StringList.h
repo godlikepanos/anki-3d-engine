@@ -15,14 +15,13 @@ namespace anki {
 /// @{
 
 /// A simple convenience class for string lists
-template<template <typename> class TAlloc>
-class BasicStringList: 
-	public Vector<BasicString<TAlloc>, TAlloc<BasicString<TAlloc>>>
+template<typename TAlloc>
+class BasicStringList: public Vector<BasicString<TAlloc>, TAlloc>
 {
 public:
 	using Self = BasicStringList; ///< Self type
 	using Char = char; ///< Char type
-	using Allocator = TAlloc<BasicString<TAlloc>>;
+	using Allocator = TAlloc;
 	using String = BasicString<TAlloc>; ///< String type
 	using Base = Vector<String, Allocator>; ///< Base
 
@@ -38,12 +37,12 @@ public:
 
 	/// Join all the elements into a single big string using a the
 	/// seperator @a separator
-	String join(const Char* separator) const;
+	String join(const CString& separator) const;
 
 	/// Returns the index position of the last occurrence of @a value in
 	/// the list
 	/// @return -1 of not found
-	I getIndexOf(const Char* value) const;
+	I getIndexOf(const CString& value) const;
 
 	/// Sort the string list
 	void sortAll(const Sort method = Sort::ASCENDING)
@@ -61,7 +60,7 @@ public:
 
 	/// Split a string using a separator (@a separator) and return these
 	/// strings in a string list
-	static Self splitString(const Char* s, const Char separator,
+	static Self splitString(const CString& s, const Char separator,
 		Allocator alloc);
 
 private:
@@ -77,7 +76,7 @@ private:
 };
 
 /// A common string list allocated in heap.
-using StringList = BasicStringList<HeapAllocator>;
+using StringList = BasicStringList<HeapAllocator<char>>;
 
 /// @}
 

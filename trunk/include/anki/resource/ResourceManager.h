@@ -16,6 +16,7 @@ namespace anki {
 
 // Forward
 class ConfigSet;
+class App;
 
 class Animation;
 class Material;
@@ -56,7 +57,7 @@ public:
 		m_ptrs = std::move(ptrs);
 	}
 
-	Bool _findLoadedResource(const char* filename, ResourcePointerType& ptr)
+	Bool _findLoadedResource(const CString& filename, ResourcePointerType& ptr)
 	{
 		auto it = find(filename);
 		
@@ -91,7 +92,7 @@ public:
 private:
 	Container m_ptrs;
 
-	typename Container::iterator find(const char* filename)
+	typename Container::iterator find(const CString& filename)
 	{
 		typename Container::iterator it;
 		
@@ -136,7 +137,7 @@ public:
 		return m_textureAnisotropy;
 	}
 
-	TempResourceString fixResourceFilename(const char* filename) const;
+	TempResourceString fixResourceFilename(const CString& filename) const;
 
 	/// @privatesection
 	/// @{
@@ -156,7 +157,7 @@ public:
 	}
 
 	template<typename T>
-	Bool _findLoadedResource(const char* filename, 
+	Bool _findLoadedResource(const CString& filename, 
 		ResourcePointer<T, ResourceManager>& ptr)
 	{
 		return TypeResourceManager<T, ResourceManager>::_findLoadedResource(

@@ -398,7 +398,7 @@ void File::write(void* buff, PtrSize size)
 	if(m_type == Type::C)
 	{
 		PtrSize writeSize = 0;
-		writeSize = fwrite(buff, 1, size, reinterpret_cast<FILE*>(m_file));
+		writeSize = std::fwrite(buff, 1, size, reinterpret_cast<FILE*>(m_file));
 
 		if(writeSize != size)
 		{
@@ -428,11 +428,11 @@ void File::writeText(const CString& format, ...)
 	ANKI_ASSERT((m_flags & OpenFlag::BINARY) == OpenFlag::NONE);
 
 	va_list args;
-	va_start(args, &format[0]);
+	va_start(args, format);
 
 	if(m_type == Type::C)
 	{
-		vfprintf((FILE*)m_file, &format[0], args);
+		std::vfprintf((FILE*)m_file, &format[0], args);
 	}
 	else if(m_type == Type::ZIP
 #if ANKI_OS == ANKI_OS_ANDROID

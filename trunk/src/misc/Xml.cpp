@@ -23,7 +23,7 @@ I64 XmlElement::getInt() const
 		throw ANKI_EXCEPTION("Failed to return int. Element: %s", 
 			m_el->Value());
 	}
-	return std::strtoimax(txt, nullptr, 10);
+	return CString(txt).toI64();
 }
 
 //==============================================================================
@@ -36,11 +36,11 @@ F64 XmlElement::getFloat() const
 		throw ANKI_EXCEPTION("Failed to return float. Element: %s", 
 			m_el->Value());
 	}
-	return std::strtof(txt, nullptr);
+	return CString(txt).toF64();
 }
 
 //==============================================================================V
-Vector<F64, StackAllocator> XmlElement::getFloats() const
+Vector<F64, StackAllocator<F64>> XmlElement::getFloats() const
 {
 	check();
 	const char* txt = m_el->GetText();
@@ -50,9 +50,11 @@ Vector<F64, StackAllocator> XmlElement::getFloats() const
 			m_el->Value());
 	}
 
-	BasicStringList<StackAllocator> list(
-		BasicStringList<StackAllocator>::splitString(txt, ' ', m_alloc));
-	Vector<F64, StackAllocator> out;
+	BasicStringList<StackAllocator<char>> list(
+		BasicStringList<StackAllocator<char>>::splitString(
+		CString(txt), ' ', m_alloc));
+
+	Vector<F64, StackAllocator<F64>> out;
 	out.resize(list.size());
 
 	try
@@ -81,8 +83,9 @@ Mat4 XmlElement::getMat4() const
 		throw ANKI_EXCEPTION("Failed to return Mat4");
 	}
 
-	BasicStringList<StackAllocator> list = 
-		BasicStringList<StackAllocator>::splitString(txt, ' ', m_alloc);
+	BasicStringList<StackAllocator<char>> list = 
+		BasicStringList<StackAllocator<char>>::splitString(
+		CString(txt), ' ', m_alloc);
 
 	if(list.size() != 16)
 	{
@@ -117,8 +120,9 @@ Vec3 XmlElement::getVec3() const
 		throw ANKI_EXCEPTION("Failed to return Vec3");
 	}
 
-	BasicStringList<StackAllocator> list = 
-		BasicStringList<StackAllocator>::splitString(txt, ' ', m_alloc);
+	BasicStringList<StackAllocator<char>> list = 
+		BasicStringList<StackAllocator<char>>::splitString(
+		CString(txt), ' ', m_alloc);
 
 	if(list.size() != 3)
 	{
@@ -152,8 +156,9 @@ Vec4 XmlElement::getVec4() const
 		throw ANKI_EXCEPTION("Failed to return Vec4");
 	}
 
-	BasicStringList<StackAllocator> list = 
-		BasicStringList<StackAllocator>::splitString(txt, ' ', m_alloc);
+	BasicStringList<StackAllocator<char>> list = 
+		BasicStringList<StackAllocator<char>>::splitString(
+		CString(txt), ' ', m_alloc);
 
 	if(list.size() != 4)
 	{
@@ -182,7 +187,7 @@ XmlElement XmlElement::getChildElementOptional(const CString& name) const
 {
 	check();
 	XmlElement out;
-	out.el = el->FirstChildElement(&name[0]);
+	out.m_el = m_el->FirstChildElement(&name[0]);
 	return out;
 }
 
@@ -193,7 +198,7 @@ XmlElement XmlElement::getChildElement(const CString& name) const
 	const XmlElement out = getChildElementOptional(name);
 	if(!out)
 	{
-		throw ANKI_EXCEPTION("Cannot find tag %s", name);
+		throw ANKI_EXCEPTION("Cannot find tag %s", &name[0]);
 	}
 	return out;
 }
@@ -203,7 +208,7 @@ XmlElement XmlElement::getNextSiblingElement(const CString& name) const
 {
 	check();
 	XmlElement out;
-	out.el = el->NextSiblingElement(&name[0]);
+	out.m_el = m_el->NextSiblingElement(&name[0]);
 	return out;
 }
 
@@ -216,14 +221,15 @@ void XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
 {
 	File file(filename, File::OpenFlag::READ);
 
-	BasicString<StackAllocator> text;
+	m_alloc = alloc;
+	BasicString<StackAllocator<char>> text(m_alloc);
 	file.readAllText(text);
 
-	if(doc.Parse(&text.toCString()[0]))
+	if(m_doc.Parse(&text[0]))
 	{
 		throw ANKI_EXCEPTION("Cannot parse file. Reason: %s",
-			((doc.GetErrorStr1() == nullptr)
-			? "unknown" : doc.GetErrorStr1()));
+			((m_doc.GetErrorStr1() == nullptr)
+			? "unknown" : m_doc.GetErrorStr1()));
 	}
 }
 

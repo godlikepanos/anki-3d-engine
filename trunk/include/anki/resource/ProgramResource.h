@@ -30,10 +30,11 @@ public:
 	}
 
 	/// Resource load
-	void load(const char* filename, ResourceInitializer& init);
+	void load(const CString& filename, ResourceInitializer& init);
 
 	/// Load and add extra code on top of the file
-	void load(const char* filename, const char* extraSrc);
+	void load(const CString& filename, const CString& extraSrc,
+		ResourceManager& manager);
 
 	/// Used by @ref Material and @ref Renderer to create custom shaders in
 	/// the cache
@@ -45,9 +46,9 @@ public:
 	/// @return The file pathname of the new shader prog. Its
 	///         $HOME/.anki/cache/ + filenamePrefix + hash + .glsl
 	static String createSourceToCache(
-		const char* filename,
-		const char* preAppendedSrcCode,
-		const char* filenamePrefix,
+		const CString& filename,
+		const CString& preAppendedSrcCode,
+		const CString& filenamePrefix,
 		ResourceManager& manager);
 
 private:

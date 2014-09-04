@@ -27,7 +27,7 @@ public:
 	{}
 
 	XmlElement(const XmlElement& b)
-	:	m_el(b.el),
+	:	m_el(b.m_el),
 		m_alloc(b.m_alloc)
 	{}
 
@@ -58,7 +58,7 @@ public:
 	F64 getFloat() const;
 
 	/// Get a number of floats
-	Vector<F64, StackAllocator> getFloats() const;
+	Vector<F64, StackAllocator<F64>> getFloats() const;
 
 	/// Return the text inside as a Mat4
 	Mat4 getMat4() const;
@@ -102,12 +102,13 @@ public:
 	{
 		XmlElement el;
 		el.m_el = m_doc.FirstChildElement(&name[0]);
-		el.m_alloc = alloc;
+		el.m_alloc = m_alloc;
 		return el;
 	}
 
 private:
 	tinyxml2::XMLDocument m_doc;
+	StackAllocator<U8> m_alloc;
 };
 
 } // end namespace anki
