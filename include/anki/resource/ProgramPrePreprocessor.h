@@ -38,14 +38,14 @@ enum class ShaderType
 class ProgramPrePreprocessor
 {
 private:
-	using PPPStringList = BasicStringList<char, TempResourceAllocator<char>>;
+	using PPPStringList = BasicStringList<TempResourceAllocator<char>>;
 	using PPPString = TempResourceString;
 
 public:
 	/// It loads a file and parses it
 	/// @param[in] filename The file to load
 	ProgramPrePreprocessor(
-		const char* filename, ResourceManager* manager)
+		const CString& filename, ResourceManager* manager)
 	:	m_shaderSource(manager->_getTempAllocator()),
 		m_sourceLines(manager->_getTempAllocator()),
 		m_manager(manager)
@@ -60,7 +60,7 @@ public:
 	/// @{
 	const PPPString& getShaderSource()
 	{
-		ANKI_ASSERT(!m_shaderSource.empty());
+		ANKI_ASSERT(!m_shaderSource.isEmpty());
 		return m_shaderSource;
 	}
 
@@ -88,7 +88,7 @@ protected:
 	/// the output
 	///
 	/// @param filename The file to parse
-	void parseFile(const char* filename);
+	void parseFile(const CString& filename);
 
 	/// A recursive function that parses a file for pragmas and updates the 
 	/// output

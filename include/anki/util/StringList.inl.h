@@ -9,16 +9,16 @@
 namespace anki {
 
 //==============================================================================
-template<template <typename> class TAlloc>
+template<typename TAlloc>
 typename BasicStringList<TAlloc>::String 
-	BasicStringList<TAlloc>::join(const Char* separator) const
+	BasicStringList<TAlloc>::join(const CString& separator) const
 {
 	// Count the characters
-	I sepLen = std::strlen(separator);
+	I sepLen = separator.getLength();
 	I charCount = 0;
 	for(const String& str : *this)
 	{
-		charCount += str.length() + sepLen;
+		charCount += str.getLength() + sepLen;
 	}
 
 	charCount -= sepLen; // Remove last separator
@@ -42,8 +42,8 @@ typename BasicStringList<TAlloc>::String
 }
 
 //==============================================================================
-template<template <typename> class TAlloc>
-I BasicStringList<TAlloc>::getIndexOf(const Char* value) const
+template<typename TAlloc>
+I BasicStringList<TAlloc>::getIndexOf(const CString& value) const
 {
 	U pos = 0;
 
@@ -60,17 +60,15 @@ I BasicStringList<TAlloc>::getIndexOf(const Char* value) const
 }
 
 //==============================================================================
-template<template <typename> class TAlloc>
+template<typename TAlloc>
 BasicStringList<TAlloc> 
 	BasicStringList<TAlloc>::splitString(
-	const Char* s, 
+	const CString& s, 
 	const Char separator,
 	Allocator alloc)
 {
-	ANKI_ASSERT(s != nullptr);
-
 	Self out(alloc);
-	const Char* begin = s;
+	const Char* begin = &s[0];
 	const Char* end = begin;
 
 	while(true)
@@ -79,7 +77,7 @@ BasicStringList<TAlloc>
 		{
 			if(begin < end)
 			{
-				out.push_back(String(begin, end, alloc));
+				out.emplace_back(begin, end, alloc);
 			}
 
 			break;
@@ -88,7 +86,7 @@ BasicStringList<TAlloc>
 		{
 			if(begin < end)
 			{
-				out.push_back(String(begin, end, alloc));
+				out.emplace_back(begin, end, alloc);
 				begin = end + 1;
 			}
 			else

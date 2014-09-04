@@ -15,6 +15,10 @@
 
 namespace anki {
 
+// Forward
+template<typename TAlloc>
+class BasicString;
+
 /// @addtogroup util_private
 /// @{
 
@@ -61,7 +65,7 @@ public:
 
 	CString() noexcept = default;
 
-	explicit CString(const Char* ptr) noexcept
+	CString(const Char* ptr) noexcept
 	:	m_ptr(ptr)
 	{
 		checkInit();
@@ -103,6 +107,10 @@ public:
 		checkInit();
 		return &m_ptr[getLength()];
 	}
+
+	/// Add with a BasicString.
+	template<typename TAlloc>
+	BasicString<TAlloc> operator+(const BasicString<TAlloc>& str) const;
 
 	Bool operator==(const CString& b) const noexcept
 	{
@@ -193,37 +201,30 @@ private:
 	void checkInit() const noexcept
 	{
 		ANKI_ASSERT(m_ptr != nullptr);
-		ANKI_ASSERT(m_ptr[0] != '\0' && "Empty strings are now allowed");
+		ANKI_ASSERT(m_ptr[0] != '\0' && "Empty strings are not allowed");
 	}
 };
 
 /// The base class for strings.
-template<template <typename> class TAlloc>
+template<typename TAlloc>
 class BasicString
 {
 public:
 	using Char = char; ///< Character type
-	using Allocator = TAlloc<Char>; ///< Allocator type
+	using Allocator = TAlloc; ///< Allocator type
 	using Self = BasicString;
 	using CStringType = CString;
+	using Iterator = Char*;
+	using ConstIterator = const Char*;
 
 	static const PtrSize NPOS = MAX_PTR_SIZE;
 
 	BasicString() noexcept
 	{}
 
-	BasicString(Allocator& alloc) noexcept
+	template<typename TTAlloc>
+	BasicString(TTAlloc& alloc) noexcept
 	:	m_data(alloc)
-	{}
-
-	/// Copy constructor.
-	BasicString(const Self& b)
-	:	m_data(b.m_data)
-	{}
-
-	/// Move constructor.
-	BasicString(BasicString&& b) noexcept
-	:	m_data(b.m_data)
 	{}
 
 	/// Initialize using a const string.
@@ -235,6 +236,28 @@ public:
 		m_data.resize(size);
 		std::memcpy(&m_data[0], cstr.get(), sizeof(Char) * size);
 	}
+
+	/// Initialize using a range. Copies the range of [first, last)
+	template<typename TTAlloc>
+	BasicString(ConstIterator first, ConstIterator last, TTAlloc& alloc)
+	:	m_data(alloc)
+	{
+		ANKI_ASSERT(first != 0 && last != 0);
+		auto length = last - first;
+		m_data.resize(length + 1);
+		std::memcpy(&m_data[0], first, length);
+		m_data[length] = '\0';
+	}
+
+	/// Copy constructor.
+	BasicString(const Self& b)
+	:	m_data(b.m_data)
+	{}
+
+	/// Move constructor.
+	BasicString(BasicString&& b) noexcept
+	:	m_data(b.m_data)
+	{}
 
 	/// Destroys the string.
 	~BasicString() noexcept
@@ -266,7 +289,7 @@ public:
 	}
 
 	/// Return char at the specified position.
-	Char operator[](U pos) const noexcept
+	const Char& operator[](U pos) const noexcept
 	{
 		checkInit();
 		return m_data[pos];
@@ -279,25 +302,25 @@ public:
 		return m_data[pos];
 	}
 
-	Char* begin() noexcept
+	Iterator begin() noexcept
 	{
 		checkInit();
 		return &m_data[0];
 	}
 
-	const Char* begin() const noexcept
+	ConstIterator begin() const noexcept
 	{
 		checkInit();
 		return &m_data[0];
 	}
 
-	Char* end() noexcept
+	Iterator end() noexcept
 	{
 		checkInit();
 		return &m_data[m_data.size() - 1];
 	}
 
-	const Char* end() const noexcept
+	ConstIterator end() const noexcept
 	{
 		checkInit();
 		return &m_data[m_data.size() - 1];
@@ -317,7 +340,7 @@ public:
 	}
 
 	/// Append another string to this one.
-	template<template <typename> class TTAlloc>
+	template<typename TTAlloc>
 	Self& operator+=(const BasicString<TTAlloc>& b)
 	{
 		b.checkInit();
@@ -456,6 +479,29 @@ public:
 		}
 	}
 
+	/// Resize the string.
+	void resize(PtrSize newLength, const Char c = '\0')
+	{
+		ANKI_ASSERT(newLength > 0);
+		auto size = m_data.size();
+		m_data.resize(newLength + 1);
+
+		if(size < newLength + 1)
+		{
+			// The string has grown
+			
+			// Fill the extra space with c
+			std::memset(&m_data[size - 1], c, newLength - size + 1);
+			m_data[newLength] = '\0';
+		}
+		else if(size > newLength + 1)
+		{
+			// The string got shrinked
+
+			m_data[newLength] = '\0';
+		}
+	}
+
 	/// Return true if it's empty.
 	Bool isEmpty() const noexcept
 	{
@@ -467,7 +513,7 @@ public:
 	/// @param position Position of the first character in the string to be 
 	///                 considered in the search.
 	/// @return A valid position if the string is found or NPOS if not found.
-	PtrSize find(const CStringType& cstr, PtrSize position) const noexcept
+	PtrSize find(const CStringType& cstr, PtrSize position = 0) const noexcept
 	{
 		checkInit();
 		ANKI_ASSERT(position < m_data.size() - 1);
@@ -480,7 +526,7 @@ public:
 	/// @param position Position of the first character in the string to be 
 	///                 considered in the search.
 	/// @return A valid position if the string is found or NPOS if not found.
-	template<template <typename> class TTAlloc>
+	template<typename TTAlloc>
 	PtrSize find(
 		const BasicString<TTAlloc>& str, PtrSize position) const noexcept
 	{
@@ -560,8 +606,21 @@ private:
 	}
 };
 
+template<typename TAlloc>
+inline BasicString<TAlloc> CString::operator+(
+	const BasicString<TAlloc>& str) const
+{
+	BasicString<TAlloc> out(str.getAllocator());
+
+	auto thisLength = getLength();
+	out.resize(thisLength + str.getLength() + 1);
+
+	std::memcpy(&out[0], &m_ptr[0], thisLength);
+	std::memcpy(&out[thisLength], &str[0], str.getLength() + 1);
+}
+
 /// A common string type that uses heap allocator.
-using String = BasicString<HeapAllocator>;
+using String = BasicString<HeapAllocator<char>>;
 
 /// @}
 

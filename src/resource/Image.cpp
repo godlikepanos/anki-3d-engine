@@ -7,6 +7,7 @@
 #include "anki/util/Exception.h"
 #include "anki/core/Logger.h"
 #include "anki/util/File.h"
+#include "anki/util/Filesystem.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Array.h"
 #include "anki/misc/Xml.h"
@@ -59,7 +60,7 @@ static void loadCompressedTga(
 	File& fs, U32& width, U32& height, U32& bpp, ResourceVector<U8>& data)
 {
 	U8 header6[6];
-	fs.read((char*)&header6[0], sizeof(header6));
+	fs.read(reinterpret_cast<char*>(&header6[0]), sizeof(header6));
 
 	width  = header6[1] * 256 + header6[0];
 	height = header6[3] * 256 + header6[2];
@@ -139,7 +140,7 @@ static void loadCompressedTga(
 }
 
 //==============================================================================
-static void loadTga(const char* filename, 
+static void loadTga(const CString& filename, 
 	U32& width, U32& height, U32& bpp, ResourceVector<U8>& data)
 {
 	File fs(filename, File::OpenFlag::READ | File::OpenFlag::BINARY);
@@ -268,7 +269,7 @@ static PtrSize calcSizeOfSegment(const AnkiTextureHeader& header,
 
 //==============================================================================
 static void loadAnkiTexture(
-	const char* filename, 
+	const CString& filename, 
 	U32 maxTextureSize,
 	Image::DataCompression& preferredCompression,
 	ResourceVector<Image::Surface>& surfaces, 
@@ -460,10 +461,10 @@ static void loadAnkiTexture(
 //==============================================================================
 
 //==============================================================================
-void Image::load(const char* filename, U32 maxTextureSize)
+void Image::load(const CString& filename, U32 maxTextureSize)
 {
 	// get the extension
-	const char* ext = File::getFileExtension(filename);
+	CString ext = getFileExtension(filename);
 	
 	if(ext == nullptr)
 	{
@@ -477,7 +478,7 @@ void Image::load(const char* filename, U32 maxTextureSize)
 		m_textureType = TextureType::_2D;
 		m_compression = DataCompression::RAW;
 
-		if(std::strcmp(ext, "tga") == 0)
+		if(ext == "tga")
 		{
 			ResourceAllocator<U8> alloc = m_surfaces.get_allocator(); 
 			m_surfaces.resize(1, Surface(alloc));
@@ -499,7 +500,7 @@ void Image::load(const char* filename, U32 maxTextureSize)
 				ANKI_ASSERT(0);
 			}
 		}
-		else if(std::strcmp(ext, "ankitex") == 0)
+		else if(ext == "ankitex")
 		{
 #if 0
 			compression = Image::DataCompression::RAW;

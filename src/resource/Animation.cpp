@@ -15,8 +15,8 @@ void Animation::load(const CString& filename, ResourceInitializer& init)
 	try
 	{
 		XmlDocument doc;
-		doc.loadFile(filename.get());
-		loadInternal(doc.getChildElement("animation"), init.m_alloc);
+		doc.loadFile(filename, init.m_tempAlloc);
+		loadInternal(doc.getChildElement("animation"), init);
 	}
 	catch(const std::exception& e)
 	{
@@ -26,10 +26,11 @@ void Animation::load(const CString& filename, ResourceInitializer& init)
 
 //==============================================================================
 void Animation::loadInternal(
-	const XmlElement& el, ResourceAllocator<U8>& alloc)
+	const XmlElement& el, ResourceInitializer& init)
 {
 	m_startTime = MAX_F32;
 	F32 maxTime = MIN_F32;
+	auto& alloc = init.m_alloc;
 
 	// Count the number of identity keys. If all of the keys are identities
 	// drop a vector
@@ -203,10 +204,6 @@ void Animation::interpolate(U channelIndex, F32 time,
 
 		ANKI_ASSERT(next != channel.m_positions.end());
 		auto prev = next - 1;
-		/*auto prevprev = 
-			(prev == channel.positions.begin()) ? prev : prev - 1;
-		auto nextnext = 
-			(next == channel.positions.end() - 1) ? next : next + 1;*/
 
 		F32 u = (time - prev->m_time) / (next->m_time - prev->m_time);
 		pos = linearInterpolate(prev->m_value, next->m_value, u);

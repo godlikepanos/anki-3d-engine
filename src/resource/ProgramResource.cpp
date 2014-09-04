@@ -14,16 +14,17 @@
 namespace anki {
 
 //==============================================================================
-void ProgramResource::load(const char* filename, ResourceInitializer& init)
+void ProgramResource::load(const CString& filename, ResourceInitializer& init)
 {
-	load(filename, "");
+	load(filename, "", init.m_resourceManager);
 }
 
 //==============================================================================
-void ProgramResource::load(const char* filename, const char* extraSrc)
+void ProgramResource::load(const CString& filename, const CString& extraSrc,
+	ResourceManager& manager)
 {
-	ProgramPrePreprocessor pars(filename);
-	std::string source = extraSrc + pars.getShaderSource();
+	ProgramPrePreprocessor pars(filename, &manager);
+	TempResourceString source = extraSrc + pars.getShaderSource();
 
 	GlDevice& gl = GlDeviceSingleton::get();
 	GlCommandBufferHandle jobs(&gl);

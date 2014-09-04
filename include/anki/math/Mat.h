@@ -749,7 +749,7 @@ public:
 		*this = getZero();
 	}
 
-	template<template <typename> class TAlloc>
+	template<typename TAlloc>
 	BasicString<TAlloc> toString(
 		typename BasicString<TAlloc>::Allocator& alloc) const
 	{

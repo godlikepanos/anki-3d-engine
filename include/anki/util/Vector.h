@@ -16,11 +16,11 @@ namespace anki {
 /// @{
 
 /// A semi-custom implementation of vector
-template<typename T, template <typename> class TAlloc = HeapAllocator>
-class Vector: public std::vector<T, TAlloc<T>>
+template<typename T, typename TAlloc = HeapAllocator<T>>
+class Vector: public std::vector<T, TAlloc>
 {
 public:
-	using Base = std::vector<T, TAlloc<T>>;
+	using Base = std::vector<T, TAlloc>;
 
 	using Base::Base;
 	using Base::operator=;

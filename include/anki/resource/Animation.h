@@ -101,7 +101,7 @@ private:
 	F32 m_startTime;
 	Bool8 m_repeat;
 
-	void loadInternal(const XmlElement& el, ResourceAllocator<U8>& alloc);
+	void loadInternal(const XmlElement& el, ResourceInitializer& init);
 };
 /// @}
 

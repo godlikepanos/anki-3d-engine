@@ -5,6 +5,7 @@
 
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Image.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/util/Exception.h"
 
 #if ANKI_GL == ANKI_GL_DESKTOP
@@ -51,7 +52,7 @@ void TextureResource::loadInternal(const char* filename,
 	// Load image
 	Image* imgPtr = rinit.m_alloc.newInstance<Image>(rinit.m_alloc);
 	Image& img = *imgPtr;
-	img.load(filename, rinit.m_maxTextureSize);
+	img.load(filename, rinit.m_resourceManager.getMaxTextureSize());
 	
 	// width + height
 	init.m_width = img.getSurface(0, 0).m_width;
@@ -172,7 +173,7 @@ void TextureResource::loadInternal(const char* filename,
 	init.m_repeat = true;
 
 	// anisotropyLevel
-	init.m_anisotropyLevel = rinit.m_anisotropyLevel;
+	init.m_anisotropyLevel = rinit.m_resourceManager.getTextureAnisotropy();
 
 	// genMipmaps
 	if(init.m_mipmapsCount == 1 || driverShouldGenMipmaps)

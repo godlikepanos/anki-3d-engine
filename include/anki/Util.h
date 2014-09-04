@@ -47,6 +47,7 @@
 #include "anki/util/Dictionary.h"
 #include "anki/util/Exception.h"
 #include "anki/util/File.h"
+#include "anki/util/Filesystem.h"
 #include "anki/util/Functions.h"
 #include "anki/util/HighRezTimer.h"
 #include "anki/util/LinuxMalinfo.h"

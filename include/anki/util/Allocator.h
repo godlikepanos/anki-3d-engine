@@ -41,7 +41,7 @@ namespace anki {
 template<typename T, typename TPool, Bool deallocationFlag = false>
 class GenericPoolAllocator
 {
-	template<typename U, typename TPool_, Bool deallocationFlag_>
+	template<typename Y, typename TPool_, Bool deallocationFlag_>
 	friend class GenericPoolAllocator;
 
 public:
@@ -60,33 +60,33 @@ public:
 	typedef std::true_type propagate_on_container_move_assignment;
 
 	/// A struct to rebind the allocator to another allocator of type U
-	template<typename U>
+	template<typename Y>
 	struct rebind
 	{
-		typedef GenericPoolAllocator<U, TPool, deallocationFlag> other;
+		typedef GenericPoolAllocator<Y, TPool, deallocationFlag> other;
 	};
 
 	/// Default constructor
-	GenericPoolAllocator() throw()
+	GenericPoolAllocator() noexcept
 	{}
 
 	/// Copy constructor
-	GenericPoolAllocator(const GenericPoolAllocator& b) throw()
+	GenericPoolAllocator(const GenericPoolAllocator& b) noexcept
 	{
 		*this = b;
 	}
 
 	/// Copy constructor
-	template<typename U>
+	template<typename Y>
 	GenericPoolAllocator(const GenericPoolAllocator<
-		U, TPool, deallocationFlag>& b) throw()
+		Y, TPool, deallocationFlag>& b) noexcept
 	{
 		*this = b;
 	}
 
 	/// Constuctor that accepts a pool
-	explicit GenericPoolAllocator(const TPool& pool) throw()
-		: m_pool(pool)
+	explicit GenericPoolAllocator(const TPool& pool) noexcept
+	:	m_pool(pool)
 	{}
 
 	/// Destructor

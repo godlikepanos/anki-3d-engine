@@ -24,7 +24,7 @@ static Array<const char*, 7> commands = {{
 	"#pragma anki type geom",
 	"#pragma anki type frag",
 	"#pragma anki type comp",
-	"#pragma anki include"}};
+	"#pragma anki include \""}};
 
 const U32 MAX_DEPTH = 8;
 
@@ -33,16 +33,16 @@ void ProgramPrePreprocessor::printSourceLines() const
 {
 	for(U i = 0; i < m_sourceLines.size(); ++i)
 	{
-		printf("%4lu %s\n", i + 1, m_sourceLines[i].c_str());
+		printf("%4lu %s\n", i + 1, &m_sourceLines[i][0]);
 	}
 }
 
 //==============================================================================
-void ProgramPrePreprocessor::parseFile(const char* filename)
+void ProgramPrePreprocessor::parseFile(const CString& filename)
 {
 	try
 	{
-		auto alloc = m_shaderSource.get_allocator();	
+		auto alloc = m_shaderSource.getAllocator();
 
 		// Parse files recursively
 		parseFileForPragmas(
@@ -53,7 +53,7 @@ void ProgramPrePreprocessor::parseFile(const char* filename)
 	}
 	catch(Exception& e)
 	{
-		throw ANKI_EXCEPTION("Loading file failed: %s", filename) << e;
+		throw ANKI_EXCEPTION("Loading file failed: %s", &filename[0]) << e;
 	}
 }
 
@@ -69,19 +69,19 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 	}
 
 	// load file in lines
-	auto alloc = m_shaderSource.get_allocator();
+	auto alloc = m_shaderSource.getAllocator();
 	PPPString txt(alloc);
 	PPPStringList lines(alloc);
-	File(filename.c_str(), File::OpenFlag::READ).readAllText(txt);
-	lines = PPPStringList::splitString(txt.c_str(), '\n', alloc);
+	File(filename.toCString(), File::OpenFlag::READ).readAllText(txt);
+	lines = PPPStringList::splitString(txt.toCString(), '\n', alloc);
 	if(lines.size() < 1)
 	{
-		throw ANKI_EXCEPTION("File is empty: %s", filename.c_str());
+		throw ANKI_EXCEPTION("File is empty: %s", &filename[0]);
 	}
 
 	for(const PPPString& line : lines)
 	{
-		PPPString::size_type npos = 0;
+		PtrSize npos = 0;
 		Bool expectPragmaAnki = false;
 		Bool gotPragmaAnki = true;
 
@@ -98,13 +98,21 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 		{
 			// Include
 
-			PPPString filen(
-				line, std::strlen(commands[6]), PPPString::npos);
-			trimString(filen, " \"", filen);
+			if(line.getLength() >= std::strlen(commands[6]) + 2)
+			{
+				PPPString filen(
+					line.begin() + std::strlen(commands[6]), 
+					line.end() - 2, 
+					alloc);
 
-			filen = m_manager->fixResourceFilename(filen.c_str());
+				filen = m_manager->fixResourceFilename(filen.toCString());
 
-			parseFileForPragmas(filen, depth + 1);
+				parseFileForPragmas(filen, depth + 1);
+			}
+			else
+			{
+				gotPragmaAnki = false;
+			}
 		}
 		else
 		{
@@ -115,7 +123,7 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 		// Sanity check
 		if(expectPragmaAnki && !gotPragmaAnki)
 		{
-			throw ANKI_EXCEPTION("Malformed pragma anki: %s", line.c_str());
+			throw ANKI_EXCEPTION("Malformed pragma anki: %s", &line[0]);
 		}
 	}
 
@@ -146,7 +154,7 @@ Bool ProgramPrePreprocessor::parseType(const PPPString& line)
 		if(m_type != ShaderType::COUNT)
 		{
 			throw ANKI_EXCEPTION("The shader type is already set. Line %s",
-				line.c_str());
+				&line[0]);
 		}
 
 		m_type = static_cast<ShaderType>(i);
