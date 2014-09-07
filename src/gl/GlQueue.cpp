@@ -39,7 +39,7 @@ void GlQueue::flushCommandBuffer(GlCommandBufferHandle& commands)
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
-		if(m_error.size() > 0)
+		if(!m_error.isEmpty())
 		{
 			throw ANKI_EXCEPTION("GL rendering thread failed with error:\n%s",
 				&m_error[0]);

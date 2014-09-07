@@ -10,10 +10,9 @@ namespace anki {
 //==============================================================================
 template<typename T, typename TResourceManager>
 void ResourcePointer<T, TResourceManager>::load(
-	const char* filename, TResourceManager* resources)
+	const CString& filename, TResourceManager* resources)
 {
 	ANKI_ASSERT(m_cb == nullptr);
-	ANKI_ASSERT(filename != nullptr);
 	ANKI_ASSERT(resources != nullptr);
 
 	ResourcePointer other;
@@ -22,16 +21,22 @@ void ResourcePointer<T, TResourceManager>::load(
 	if(!found)
 	{
 		// Allocate m_cb
-		U len = std::strlen(filename);
+		U len = filename.getLength();
 		PtrSize alignment = alignof(ControlBlock);
-		m_cb = resources->_getAllocator().allocate(
-			sizeof(ControlBlock) + len, &alignment);
+		m_cb = reinterpret_cast<ControlBlock*>(
+			resources->_getAllocator().allocate(
+			sizeof(ControlBlock) + len, &alignment));
 		resources->_getAllocator().construct(m_cb);
 
 		// Populate the m_cb
 		try
 		{
-			m_cb->m_resource.load(filename);
+			ResourceInitializer init(
+				resources->_getAllocator(),
+				resources->_getTempAllocator(),
+				*resources);
+
+			m_cb->m_resource.load(filename, init);
 		}
 		catch(const std::exception& e)
 		{
@@ -39,7 +44,7 @@ void ResourcePointer<T, TResourceManager>::load(
 		}
 
 		m_cb->m_resources = resources;
-		std::memcpy(&m_cb->m_uuid[0], filename, len + 1);
+		std::memcpy(&m_cb->m_uuid[0], &filename[0], len + 1);
 
 		// Register resource
 		resources->_registerResource(*this);

@@ -6,14 +6,13 @@
 #ifndef ANKI_RESOURCE_MATERIAL_H
 #define ANKI_RESOURCE_MATERIAL_H
 
-#include "anki/resource/Resource.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/resource/RenderingKey.h"
 #include "anki/Math.h"
 #include "anki/util/Visitor.h"
 #include "anki/util/Dictionary.h"
 #include "anki/util/NonCopyable.h"
-#include <memory>
 
 namespace anki {
 
@@ -84,7 +83,7 @@ public:
 	}
 
 	/// Get the name of all the shader program variables
-	const char* getName() const;
+	CString getName() const;
 
 	/// If false then it should be buildin
 	virtual Bool hasValues() const = 0;
@@ -333,14 +332,14 @@ public:
 	GlProgramPipelineHandle getProgramPipeline(const RenderingKey& key);
 
 	/// Get by name
-	const MaterialVariable* findVariableByName(const char* name) const
+	const MaterialVariable* findVariableByName(const CString& name) const
 	{
 		auto it = m_varDict.find(name);
 		return (it == m_varDict.end()) ? nullptr : it->second;
 	}
 
 	/// Load a material file
-	void load(const char* filename);
+	void load(const CString& filename, ResourceInitializer& init);
 
 	/// For sorting
 	Bool operator<(const Material& b) const
@@ -349,6 +348,9 @@ public:
 	}
 
 private:
+	/// Keep it to have access to some stuff at runtime
+	ResourceManager* m_resources = nullptr; 
+		
 	ResourceVector<MaterialVariable*> m_vars;
 	Dictionary<MaterialVariable*> m_varDict;
 
@@ -358,16 +360,17 @@ private:
 	U32 m_shaderBlockSize;
 
 	/// Used for sorting
-	PtrSize m_hash;
+	U64 m_hash;
 
 	/// Get a program resource
 	ProgramResourcePointer& getProgram(const RenderingKey key, U32 shaderId);
 
 	/// Parse what is within the @code <material></material> @endcode
-	void parseMaterialTag(const XmlElement& el);
+	void parseMaterialTag(const XmlElement& el, ResourceInitializer& rinit);
 
 	/// Create a unique shader source in chache. If already exists do nothing
-	std::string createProgramSourceToChache(const std::string& source);
+	TempResourceString createProgramSourceToChache(
+		const TempResourceString& source);
 
 	/// Read all shader programs and pupulate the @a vars and @a nameToVar
 	/// containers

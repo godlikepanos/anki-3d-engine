@@ -60,8 +60,16 @@ ANKI_DEPLOY_TO_STRING(F64, "%f")
 /// A wrapper on top of C strings. Used mainly for safety.
 class CString
 {
+	template<typename TAlloc>
+	friend class BasicString; // For the secret constructor
+
+	// For the secret constructor
+	friend CString operator"" _cstr(const char*, unsigned long); 
+
 public:
 	using Char = char;
+
+	static const PtrSize NPOS = MAX_PTR_SIZE;
 
 	CString() noexcept = default;
 
@@ -88,6 +96,12 @@ public:
 		return *this;
 	}
 
+	/// Return true if the string is initialized.
+	operator Bool() const noexcept
+	{
+		return !isEmpty();
+	}
+
 	/// Return char at the specified position.
 	const Char& operator[](U pos) const noexcept
 	{
@@ -106,6 +120,12 @@ public:
 	{
 		checkInit();
 		return &m_ptr[getLength()];
+	}
+
+	/// Return true if the string is not initialized.
+	Bool isEmpty() const noexcept
+	{
+		return m_ptr == nullptr;
 	}
 
 	/// Add with a BasicString.
@@ -166,6 +186,14 @@ public:
 		return m_length;
 	}
 
+	PtrSize find(const CString& cstr, PtrSize position = 0) const noexcept
+	{
+		checkInit();
+		ANKI_ASSERT(position < getLength());
+		const Char* out = std::strstr(m_ptr, &cstr[0]);
+		return (out == nullptr) ? NPOS : (out - m_ptr);
+	}
+
 	/// Convert to F64.
 	F64 toF64() const
 	{
@@ -198,12 +226,26 @@ private:
 	const Char* m_ptr = nullptr;
 	mutable U16 m_length = 0;
 
+	/// Constructor for friends
+	CString(const Char* ptr, U16 length) noexcept
+	:	m_ptr(ptr),
+		m_length(length)
+	{
+		checkInit();
+		ANKI_ASSERT(std::strlen(ptr) == length);
+	}
+
 	void checkInit() const noexcept
 	{
 		ANKI_ASSERT(m_ptr != nullptr);
-		ANKI_ASSERT(m_ptr[0] != '\0' && "Empty strings are not allowed");
 	}
 };
+
+/// User defined string literal for CStrings.
+CString operator"" _cstr(const char* str, unsigned long length)
+{
+	return CString(str, length);
+}
 
 /// The base class for strings.
 template<typename TAlloc>
@@ -222,14 +264,12 @@ public:
 	BasicString() noexcept
 	{}
 
-	template<typename TTAlloc>
-	BasicString(TTAlloc& alloc) noexcept
+	BasicString(Allocator alloc) noexcept
 	:	m_data(alloc)
 	{}
 
 	/// Initialize using a const string.
-	template<typename TTAlloc>
-	BasicString(const CStringType& cstr, TTAlloc& alloc)
+	BasicString(const CStringType& cstr, Allocator alloc)
 	:	m_data(alloc)
 	{
 		auto size = cstr.getLength() + 1;
@@ -238,8 +278,7 @@ public:
 	}
 
 	/// Initialize using a range. Copies the range of [first, last)
-	template<typename TTAlloc>
-	BasicString(ConstIterator first, ConstIterator last, TTAlloc& alloc)
+	BasicString(ConstIterator first, ConstIterator last, Allocator alloc)
 	:	m_data(alloc)
 	{
 		ANKI_ASSERT(first != 0 && last != 0);
@@ -450,17 +489,55 @@ public:
 		return (size != 0) ? (size - 1) : 0;
 	}
 
-	/// Return the CString.
-	CStringType toCString() const noexcept
-	{
-		checkInit();
-		return CStringType(&m_data[0]);
-	}
-
 	/// Return the allocator
 	Allocator getAllocator() const noexcept
 	{
 		return m_data.get_allocator();
+	}
+
+	/// Return the CString.
+	CStringType toCString() const noexcept
+	{
+		checkInit();
+		return CStringType(&m_data[0], getLength());
+	}
+
+	Self& sprintf(CString fmt, ...)
+	{
+		Array<Char, 512> buffer;
+		va_list args;
+		Char* out = &buffer[0];
+
+		va_start(args, fmt);
+		I len = std::vsnprintf(&buffer[0], sizeof(buffer), &fmt[0], args);
+		va_end(args);
+
+		if(len < 0)
+		{
+			throw ANKI_EXCEPTION("vsnprintf() failed");
+		}
+		else if(static_cast<PtrSize>(len) >= sizeof(buffer))
+		{
+			I size = len + 1;
+			out = reinterpret_cast<Char*>(getAllocator().allocate(size));
+
+			va_start(args, fmt);
+			len = std::vsnprintf(out, size, &fmt[0], args);
+			(void)len;
+			va_end(args);
+
+			ANKI_ASSERT(len < size);
+		}
+
+		*this = out;
+
+		// Delete the allocated memory
+		if(out != &buffer[0])
+		{
+			getAllocator().deallocate(out, 0);
+		}
+
+		return *this;
 	}
 
 	/// Clears the contents of the string and makes it empty.
@@ -516,9 +593,7 @@ public:
 	PtrSize find(const CStringType& cstr, PtrSize position = 0) const noexcept
 	{
 		checkInit();
-		ANKI_ASSERT(position < m_data.size() - 1);
-		const Char* out = std::strstr(&m_data[position], cstr.get());
-		return (out == nullptr) ? NPOS : (out - &m_data[0]);
+		return toString().find(cstr, position);
 	}
 
 	/// Find a substring of this string.
@@ -538,8 +613,8 @@ public:
 	/// @param number The number to convert.
 	/// @param[in,out] alloc The allocator to allocate the returned string.
 	/// @return The string that presents the number.
-	template<typename TNumber>
-	Self toString(TNumber number, Allocator& alloc)
+	template<typename TNumber, typename TTAlloc>
+	static Self toString(TNumber number, TTAlloc alloc)
 	{
 		Array<Char, 512> buff;
 		I ret = std::snprintf(
@@ -550,7 +625,8 @@ public:
 			throw ANKI_EXCEPTION("To small intermediate buffer");
 		}
 
-		return Self(alloc, CStringType(&buff[0]));
+		using YAlloc = typename TTAlloc::template rebind<Char>::other;
+		return BasicString<YAlloc>(&buff[0], alloc);
 	}
 
 	/// Convert to F64.
@@ -590,7 +666,7 @@ private:
 		std::memcpy(&m_data[size - 1], str, sizeof(Char) * strSize);
 	}
 
-	Self add(const Char* str, PtrSize strSize)
+	Self add(const Char* str, PtrSize strSize) const
 	{
 		checkInit();
 
@@ -613,10 +689,19 @@ inline BasicString<TAlloc> CString::operator+(
 	BasicString<TAlloc> out(str.getAllocator());
 
 	auto thisLength = getLength();
-	out.resize(thisLength + str.getLength() + 1);
+	out.resize(thisLength + str.getLength());
 
 	std::memcpy(&out[0], &m_ptr[0], thisLength);
 	std::memcpy(&out[thisLength], &str[0], str.getLength() + 1);
+
+	return out;
+}
+
+template<typename TAlloc>
+inline BasicString<TAlloc> operator+(
+	const CString& left, const BasicString<TAlloc>& right)
+{
+	return left.operator+(right);
 }
 
 /// A common string type that uses heap allocator.

@@ -46,14 +46,14 @@ public:
 /// Its template struct because C++ does not offer template typedefs
 template<
 	typename T, 
-	template <typename> class TAlloc = HeapAllocator>
+	typename TAlloc = HeapAllocator<std::pair<CString, T>>>
 using Dictionary = 
 	std::unordered_map<
 		CString,
 		T,
 		DictionaryHasher,
 		DictionaryEqual,
-		TAlloc<std::pair<CString, T>>>;
+		TAlloc>;
 
 /// @}
 

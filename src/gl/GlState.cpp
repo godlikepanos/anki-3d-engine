@@ -87,15 +87,13 @@ void GlState::init()
 	m_version = major * 100 + minor * 10;
 
 	// Vendor
-	String glstr = (const char*)glGetString(GL_VENDOR);
-	glstr += (const char*)glGetString(GL_RENDERER);
-	std::transform(glstr.begin(), glstr.end(), glstr.begin(), ::tolower);
+	CString glstr = reinterpret_cast<const char*>(glGetString(GL_VENDOR));
 
-	if(glstr.find("arm") != String::npos)
+	if(glstr.find("ARM") != CString::NPOS)
 	{
 		m_gpu = GlGpu::ARM;
 	}
-	else if(glstr.find("nvidia") != String::npos)
+	else if(glstr.find("NVIDIA") != CString::NPOS)
 	{
 		m_gpu = GlGpu::NVIDIA;
 	}

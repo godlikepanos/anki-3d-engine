@@ -25,7 +25,7 @@ class TextureResource
 {
 public:
 	/// Load a texture
-	void load(const char* filename, ResourceInitializer& init);
+	void load(const CString& filename, ResourceInitializer& init);
 
 	/// Get the GL texture
 	const GlTextureHandle& getGlTexture() const
@@ -43,7 +43,7 @@ private:
 	GlTextureHandle m_tex;
 
 	/// Load a texture
-	void loadInternal(const char* filename, ResourceInitializer& init);
+	void loadInternal(const CString& filename, ResourceInitializer& init);
 };
 /// @}
 

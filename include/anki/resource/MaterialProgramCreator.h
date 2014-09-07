@@ -25,8 +25,8 @@ class XmlElement;
 class MaterialProgramCreator
 {
 public:
-	using MPString = BasicString<char, TempResourceAllocator<char>>; 
-	using MPStringList = BasicStringList<char, TempResourceAllocator<char>>; 
+	using MPString = TempResourceString; 
+	using MPStringList = BasicStringList<TempResourceAllocator<char>>; 
 
 	class Input
 	{
@@ -60,7 +60,7 @@ public:
 	MPString getProgramSource(U shaderType) const
 	{
 		ANKI_ASSERT(m_source[shaderType].size() > 0);
-		return m_source[shaderType].join("\n");
+		return m_source[shaderType].join(CString("\n"));
 	}
 
 	const TempResourceVector<Input>& getInputVariables() const

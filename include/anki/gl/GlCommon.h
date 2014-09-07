@@ -116,9 +116,9 @@ public:
 		return m_type;
 	}
 
-	const char* getName() const
+	CString getName() const
 	{
-		return &m_name[0];
+		return CString(&m_name[0]);
 	}
 
 	GLenum getDataType() const
@@ -241,9 +241,9 @@ public:
 		return m_size;
 	}
 
-	const char* getName() const
+	CString getName() const
 	{
-		return &m_name[0];
+		return CString(&m_name[0]);
 	}
 
 	U32 getBinding() const

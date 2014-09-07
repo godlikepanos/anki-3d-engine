@@ -8,7 +8,6 @@
 
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/ResourcePointer.h"
-#include "anki/util/Singleton.h"
 
 namespace anki {
 

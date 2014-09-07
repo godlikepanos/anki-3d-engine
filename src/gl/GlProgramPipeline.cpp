@@ -56,7 +56,7 @@ GlProgramPipeline::GlProgramPipeline(
 
 		infoLogTxt = "Ppline error log follows:\n" + infoLogTxt;
 
-		throw ANKI_EXCEPTION("%s", infoLogTxt.c_str());
+		throw ANKI_EXCEPTION("%s", &infoLogTxt[0]);
 	}
 
 	glBindProgramPipeline(0);

@@ -58,7 +58,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const PPPString& getShaderSource()
+	const PPPString& getShaderSource() const
 	{
 		ANKI_ASSERT(!m_shaderSource.isEmpty());
 		return m_shaderSource;

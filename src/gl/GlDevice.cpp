@@ -15,14 +15,14 @@ GlDevice::GlDevice(
 	GlCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerDebugMessages,
 	AllocAlignedCallback alloc, void* allocUserData,
-	const char* cacheDir)
+	const CString& cacheDir)
 {
 	m_alloc = HeapAllocator<U8>(HeapMemoryPool(alloc, allocUserData));
 
 	// Allocate cache dir
-	I len = std::strlen(cacheDir);
+	auto len = cacheDir.getLength();
 	m_cacheDir = reinterpret_cast<char*>(m_alloc.allocate(len + 1));
-	std::memcpy(m_cacheDir, cacheDir, len + 1);
+	std::memcpy(m_cacheDir, &cacheDir[0], len + 1);
 
 	// Start the server
 	m_queue = m_alloc.newInstance<GlQueue>(

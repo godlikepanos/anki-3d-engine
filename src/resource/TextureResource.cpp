@@ -25,7 +25,7 @@ static void deleteImageCallback(void* data)
 }
 
 //==============================================================================
-void TextureResource::load(const char* filename, ResourceInitializer& init)
+void TextureResource::load(const CString& filename, ResourceInitializer& init)
 {
 	try
 	{
@@ -38,10 +38,10 @@ void TextureResource::load(const char* filename, ResourceInitializer& init)
 }
 
 //==============================================================================
-void TextureResource::loadInternal(const char* filename, 
+void TextureResource::loadInternal(const CString& filename, 
 	ResourceInitializer& rinit)
 {
-	GlDevice& gl = rinit.m_gl;
+	GlDevice& gl = rinit.m_resources._getGlDevice();
 	GlCommandBufferHandle jobs(&gl); // Always first to avoid assertions (
 	                                 // because of the check of the allocator)
 
@@ -52,7 +52,7 @@ void TextureResource::loadInternal(const char* filename,
 	// Load image
 	Image* imgPtr = rinit.m_alloc.newInstance<Image>(rinit.m_alloc);
 	Image& img = *imgPtr;
-	img.load(filename, rinit.m_resourceManager.getMaxTextureSize());
+	img.load(filename, rinit.m_resources.getMaxTextureSize());
 	
 	// width + height
 	init.m_width = img.getSurface(0, 0).m_width;
@@ -173,7 +173,7 @@ void TextureResource::loadInternal(const char* filename,
 	init.m_repeat = true;
 
 	// anisotropyLevel
-	init.m_anisotropyLevel = rinit.m_resourceManager.getTextureAnisotropy();
+	init.m_anisotropyLevel = rinit.m_resource.getTextureAnisotropy();
 
 	// genMipmaps
 	if(init.m_mipmapsCount == 1 || driverShouldGenMipmaps)
