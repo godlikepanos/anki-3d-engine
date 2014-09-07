@@ -36,36 +36,36 @@ public:
 //==============================================================================
 /// Given a string return info about the shader
 static void getShaderInfo(
-	const char* str, 
+	const CString& str, 
 	GLenum& type, 
 	GLbitfield& bit,
 	U& idx)
 {
-	if(std::strcmp(str, "vert") == 0)
+	if(str == "vert"_cstr)
 	{
 		type = GL_VERTEX_SHADER;
 		bit = GL_VERTEX_SHADER_BIT;
 		idx = 0;
 	}
-	else if(std::strcmp(str, "tesc") == 0)
+	else if(str == "tesc"_cstr)
 	{
 		type = GL_TESS_CONTROL_SHADER;
 		bit = GL_TESS_CONTROL_SHADER_BIT;
 		idx = 1;
 	}
-	else if(std::strcmp(str, "tese") == 0)
+	else if(str == "tese"_cstr)
 	{
 		type = GL_TESS_EVALUATION_SHADER;
 		bit = GL_TESS_EVALUATION_SHADER_BIT;
 		idx = 2;
 	}
-	else if(std::strcmp(str, "geom") == 0)
+	else if(str == "geom"_cstr)
 	{
 		type = GL_GEOMETRY_SHADER;
 		bit = GL_GEOMETRY_SHADER_BIT;
 		idx = 3;
 	}
-	else if(std::strcmp(str, "frag") == 0)
+	else if(str == "frag"_cstr)
 	{
 		type = GL_GEOMETRY_SHADER;
 		bit = GL_GEOMETRY_SHADER_BIT;
@@ -73,7 +73,7 @@ static void getShaderInfo(
 	}
 	else
 	{
-		throw ANKI_EXCEPTION("Incorrect type %s", str);
+		throw ANKI_EXCEPTION("Incorrect type %s", &str[0]);
 	}
 }
 
@@ -101,12 +101,12 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	//
 	// First gather all the inputs
 	//
-	XmlElement programEl = el.getChildElement("program");
+	XmlElement programEl = el.getChildElement("program"_cstr);
 	do
 	{
 		parseInputsTag(programEl);
 
-		programEl = programEl.getNextSiblingElement("program");
+		programEl = programEl.getNextSiblingElement("program"_cstr);
 	} while(programEl);
 
 	// Sort them by name to decrease the change of creating unique shaders
@@ -115,12 +115,12 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	//
 	// Then parse the includes, operations and other parts of the program
 	//
-	programEl = el.getChildElement("program");
+	programEl = el.getChildElement("program"_cstr);
 	do
 	{
 		parseProgramTag(programEl);
 
-		programEl = programEl.getNextSiblingElement("program");
+		programEl = programEl.getNextSiblingElement("program"_cstr);
 	} while(programEl);
 
 	//
@@ -133,7 +133,7 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 		if(in.m_shaderDefinedMask != in.m_shaderReferencedMask)
 		{
 			throw ANKI_EXCEPTION("Variable not referenced or not defined %s", 
-				in.m_name.c_str());
+				&in.m_name[0]);
 		}
 	}
 }
@@ -143,7 +143,7 @@ void MaterialProgramCreator::parseProgramTag(
 	const XmlElement& programEl)
 {
 	// <type>
-	const char* type = programEl.getChildElement("type").getText();
+	CString type = programEl.getChildElement("type"_cstr).getText();
 	GLbitfield glshaderbit;
 	GLenum glshader;
 	U shaderidx;
@@ -151,7 +151,7 @@ void MaterialProgramCreator::parseProgramTag(
 
 	m_source[shaderidx] = MPStringList(m_alloc);
 	auto& lines = m_source[shaderidx];
-	lines.push_back(ANKI_STRL("#pragma anki type ") + type);
+	lines.push_back(ANKI_STRL("#pragma anki type "_cstr) + type);
 
 	if(glshader == GL_TESS_CONTROL_SHADER 
 		|| glshader == GL_TESS_EVALUATION_SHADER)
@@ -160,16 +160,16 @@ void MaterialProgramCreator::parseProgramTag(
 	}
 
 	// <includes></includes>
-	XmlElement includesEl = programEl.getChildElement("includes");
-	XmlElement includeEl = includesEl.getChildElement("include");
+	XmlElement includesEl = programEl.getChildElement("includes"_cstr);
+	XmlElement includeEl = includesEl.getChildElement("include"_cstr);
 
 	do
 	{
 		MPString fname(includeEl.getText(), m_alloc);
 		lines.push_back(
-			ANKI_STRL("#pragma anki include \"") + fname + "\"");
+			ANKI_STRL("#pragma anki include \""_cstr) + fname + "\""_cstr);
 
-		includeEl = includeEl.getNextSiblingElement("include");
+		includeEl = includeEl.getNextSiblingElement("include"_cstr);
 	} while(includeEl);
 
 	// Inputs
@@ -180,12 +180,12 @@ void MaterialProgramCreator::parseProgramTag(
 	{
 		// TODO Make block SSB when driver bug is fixed
 		lines.push_back(ANKI_STRL(
-			"\nlayout(binding = 0, std140) uniform bDefaultBlock\n{"));
+			"\nlayout(binding = 0, std140) uniform bDefaultBlock\n{"_cstr));
 
 		lines.insert(
 			lines.end(), m_uniformBlock.begin(), m_uniformBlock.end());
 
-		lines.push_back("};");
+		lines.push_back(ANKI_STRL("};"));
 	}
 
 	// Other variables
@@ -298,7 +298,7 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			if(!same)
 			{
 				throw ANKI_EXCEPTION("Variable defined differently between "
-					"shaders: %s", inpvar.m_name.c_str());
+					"shaders: %s", &inpvar.m_name[0]);
 			}
 
 			duplicateInp->m_shaderDefinedMask |= glshaderbit;
@@ -314,15 +314,14 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 				
 			if(inpvar.m_arraySize > 1)
 			{
-				MPString tmp(m_alloc);
-				toString(inpvar.m_arraySize, tmp);
+				MPString tmp(MPString::toString(inpvar.m_arraySize, m_alloc));
 				inpvar.m_line += "[" + tmp + "U]";
 			}
 
 			if(inpvar.m_instanced)
 			{
-				MPString tmp(m_alloc);
-				toString(ANKI_GL_MAX_INSTANCES, tmp);
+				MPString tmp(
+					MPString::toString(ANKI_GL_MAX_INSTANCES, m_alloc));
 				inpvar.m_line += "[" +  tmp + "U]";
 			}
 
@@ -331,8 +330,8 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			// Can put it block
 			if(inpvar.m_type == "sampler2D" || inpvar.m_type == "samplerCube")
 			{
-				MPString tmp(m_alloc);
-				toString(m_texBinding++, tmp);
+				MPString tmp(
+					MPString::toString(m_texBinding++, m_alloc));
 
 				inpvar.m_line = ANKI_STRL("layout(binding = ") 
 					+ tmp + ") uniform " + inpvar.m_line;
@@ -395,8 +394,7 @@ void MaterialProgramCreator::parseOperationTag(
 	MPString operationOut(m_alloc);
 	if(retType != "void")
 	{
-		MPString tmp(m_alloc);
-		toString(id, tmp);
+		MPString tmp(MPString::toString(id, m_alloc));
 		operationOut = ANKI_STRL(OUT) + tmp;
 	}
 	
@@ -432,9 +430,9 @@ void MaterialProgramCreator::parseOperationTag(
 
 			// The argument should be an input variable or an outXX
 			if(!(input != nullptr 
-				|| strncmp(arg.c_str(), OUT, sizeof(OUT) - 1) == 0))
+				|| std::strncmp(&arg[0], OUT, sizeof(OUT) - 1) == 0))
 			{
-				throw ANKI_EXCEPTION("Incorrect argument: %s", arg.c_str());
+				throw ANKI_EXCEPTION("Incorrect argument: %s", &arg[0]);
 			}
 
 			// Add to a list and do something special if instanced
@@ -476,7 +474,7 @@ void MaterialProgramCreator::parseOperationTag(
 			}
 			else
 			{
-				argsList.push_back(argEl.getText());
+				argsList.push_back(MPString(argEl.getText(), m_alloc));
 			}
 
 			// Advance
@@ -506,7 +504,7 @@ void MaterialProgramCreator::parseOperationTag(
 	}
 	else
 	{
-		lines += '\t';
+		lines += "\t";
 	}
 	
 	// write the blah = func(args...)

@@ -41,18 +41,15 @@ class ResourceInitializer
 public:
 	ResourceAllocator<U8>& m_alloc;
 	TempResourceAllocator<U8>& m_tempAlloc;
-	GlDevice& m_gl;
-	ResourceManager& m_resourceManager;
+	ResourceManager& m_resources;
 
 	ResourceInitializer(
 		ResourceAllocator<U8>& alloc, 
 		TempResourceAllocator<U8>& tempAlloc,
-		GlDevice& gl,
 		ResourceManager& resourceManager)
 	:	m_alloc(alloc),
 		m_tempAlloc(tempAlloc),
-		m_gl(gl),
-		m_resourceManager(resourceManager)
+		m_resources(resourceManager)
 	{}
 };
 

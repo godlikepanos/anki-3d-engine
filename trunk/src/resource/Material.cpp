@@ -9,10 +9,11 @@
 #include "anki/core/Logger.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/resource/TextureResource.h"
+#include "anki/util/Hash.h"
 #include "anki/util/File.h"
+#include "anki/util/Filesystem.h"
 #include "anki/misc/Xml.h"
-#include "anki/renderer/MainRenderer.h"
-#include <functional>
+#include <functional> // TODO
 #include <algorithm>
 #include <sstream>
 
@@ -26,9 +27,10 @@ namespace anki {
 /// Create an numeric material variable
 template<typename T>
 static MaterialVariable* newMaterialVariable(
-	const GlProgramVariable& glvar, const MaterialProgramCreator::Input& in)
+	const GlProgramVariable& glvar, const MaterialProgramCreator::Input& in,
+	ResourceAllocator<U8>& alloc, TempResourceAllocator<U8>& talloc)
 {
-	MaterialVariable* out;
+	MaterialVariable* out = nullptr;
 
 	if(in.m_value.size() > 0)
 	{
@@ -39,31 +41,33 @@ static MaterialVariable* newMaterialVariable(
 		if(in.m_value.size() != floatsNeeded)
 		{
 			throw ANKI_EXCEPTION("Incorrect number of values. Variable %s",
-				glvar.getName());
+				&glvar.getName()[0]);
 		}
 
-		Vector<F32> floatvec;
+		TempResourceVector<F32> floatvec(talloc);
 		floatvec.resize(floatsNeeded);
 		for(U i = 0; i < floatsNeeded; ++i)
 		{
-			floatvec[i] = std::stof(in.m_value[i]);
+			floatvec[i] = in.m_value[i].toF64();
 		}
 
-		out = new MaterialVariableTemplate<T>(
+		out = alloc.newInstance<MaterialVariableTemplate<T>>(
 			&glvar, 
 			in.m_instanced,
 			(T*)&floatvec[0],
-			glvar.getArraySize());
+			glvar.getArraySize(),
+			alloc);
 	}
 	else
 	{
 		// Buildin
 
-		out = new MaterialVariableTemplate<T>(
+		out = alloc.newInstance<MaterialVariableTemplate<T>>(
 			&glvar, 
 			in.m_instanced,
 			nullptr,
-			0);
+			0,
+			alloc);
 	}
 
 	return out;
@@ -71,11 +75,12 @@ static MaterialVariable* newMaterialVariable(
 
 //==============================================================================
 /// Given a string that defines blending return the GLenum
-static GLenum blendToEnum(const char* str)
+static GLenum blendToEnum(const CString& str)
 {
 // Dont make idiotic mistakes
 #define TXT_AND_ENUM(x) \
-	if(strcmp(str, #x) == 0) { \
+	if(str == #x) \
+	{ \
 		return x; \
 	}
 
@@ -105,7 +110,7 @@ MaterialVariable::~MaterialVariable()
 {}
 
 //==============================================================================
-const char* MaterialVariable::getName() const
+CString MaterialVariable::getName() const
 {
 	return m_progVar->getName();
 }
@@ -127,9 +132,11 @@ Material::Material()
 //==============================================================================
 Material::~Material()
 {
+	auto alloc = m_vars.get_allocator();
+
 	for(auto it : m_vars)
 	{
-		delete it;
+		alloc.deleteInstance(it);
 	}
 }
 
@@ -240,26 +247,39 @@ GlProgramPipelineHandle Material::getProgramPipeline(
 
 		progs[progCount++] = getProgram(key, 4)->getGlProgram();
 
-		GlDevice& gl = GlDeviceSingleton::get();
-		GlCommandBufferHandle jobs(&gl);
+		GlDevice& gl = m_resources->_getGlDevice();
+		GlCommandBufferHandle cmdBuff(&gl);
 
 		ppline = GlProgramPipelineHandle(
-			jobs, &progs[0], &progs[0] + progCount);
+			cmdBuff, &progs[0], &progs[0] + progCount);
 
-		jobs.flush();
+		cmdBuff.flush();
 	}
 
 	return ppline;
 }
 
 //==============================================================================
-void Material::load(const char* filename)
+void Material::load(const CString& filename, ResourceInitializer& init)
 {
 	try
 	{
+		m_vars = std::move(ResourceVector<MaterialVariable*>(init.m_alloc));
+
+		Dictionary<MaterialVariable*> dict(10, 
+			Dictionary<MaterialVariable*>::hasher(),
+			Dictionary<MaterialVariable*>::key_equal(),
+			init.m_alloc);
+		m_varDict = std::move(dict);
+
+		m_progs = 
+			std::move(ResourceVector<ProgramResourcePointer>(init.m_alloc));
+		m_pplines = 
+			std::move(ResourceVector<GlProgramPipelineHandle>(init.m_alloc));
+
 		XmlDocument doc;
-		doc.loadFile(filename);
-		parseMaterialTag(doc.getChildElement("material"));
+		doc.loadFile(filename, init.m_tempAlloc);
+		parseMaterialTag(doc.getChildElement("material"), init);
 	}
 	catch(std::exception& e)
 	{
@@ -268,7 +288,8 @@ void Material::load(const char* filename)
 }
 
 //==============================================================================
-void Material::parseMaterialTag(const XmlElement& materialEl)
+void Material::parseMaterialTag(const XmlElement& materialEl,
+	ResourceInitializer& rinit)
 {
 	// levelsOfDetail
 	//
@@ -335,7 +356,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 	// shaderProgram
 	//
 	MaterialProgramCreator mspc(
-		materialEl.getChildElement("programs"));
+		materialEl.getChildElement("programs"),
+		rinit.m_tempAlloc);
 
 	m_tessellation = mspc.hasTessellation();
 	U tessCount = m_tessellation ? 2 : 1;
@@ -372,29 +394,21 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 			{
 				for(U tess = 0; tess < tessCount; ++tess)
 				{
-					std::stringstream src;
+					TempResourceString src(rinit.m_tempAlloc);
 
-					src << "#define LOD " << level << "\n";
-					src << "#define PASS " << pid << "\n";
-					src << "#define TESSELLATION " << tess << "\n";
+					src.sprintf("#define LOD %u\n#define PASS %u\n"
+						"#define TESSELLATION %u\n%s\n", level, pid, tess,
+						&rinit.m_resources._getShaderPostProcessorString()[0]);
 
-#if 0
-					src << MainRendererSingleton::get().
-						getShaderPostProcessorString() << "\n"
-						<< mspc.getProgramSource(shader) << std::endl;
-#endif
-					ANKI_ASSERT(0 && "TODO");
-
-					std::string filename =
-						createProgramSourceToChache(src.str().c_str());
+					TempResourceString filename =
+						createProgramSourceToChache(src);
 
 					RenderingKey key((Pass)pid, level, tess);
 					ProgramResourcePointer& progr = getProgram(key, shader);
-					progr.load(filename.c_str());
+					progr.load(filename.toCString(), &rinit.m_resources);
 
 					// Update the hash
-					std::hash<std::string> stringHasher;
-					m_hash ^= stringHasher(src.str());
+					m_hash ^= computeHash(&src[0], src.getLength());
 				}
 			}
 		}
@@ -409,23 +423,26 @@ void Material::parseMaterialTag(const XmlElement& materialEl)
 }
 
 //==============================================================================
-std::string Material::createProgramSourceToChache(const std::string& source)
+TempResourceString Material::createProgramSourceToChache(
+	const TempResourceString& source)
 {
 	// Create the hash
-	std::hash<std::string> stringHasher;
-	PtrSize h = stringHasher(source);
-	std::string prefix = std::to_string(h);
+	U64 h = computeHash(&source[0], source.getLength());
+	TempResourceString prefix = 
+		TempResourceString::toString(h, source.getAllocator());
 
 	// Create path
-	std::string newfPathName =
-		AppSingleton::get().getCachePath() + "/mtl_" + prefix + ".glsl";
+	TempResourceString newfPathName(source.getAllocator());
+	newfPathName.sprintf("%s/mtl_%s.glsl", 
+		&m_resources->_getApp().getCacheDirectory()[0],
+		&prefix[0]);
 
 	// If file not exists write it
-	if(!File::fileExists(newfPathName.c_str()))
+	if(!fileExists(newfPathName.toCString()))
 	{
 		// If not create it
-		File f(newfPathName.c_str(), File::OpenFlag::WRITE);
-		f.writeText("%s\n", source.c_str());
+		File f(newfPathName.toCString(), File::OpenFlag::WRITE);
+		f.writeText("%s\n", &source[0]);
 	}
 
 	return newfPathName;
@@ -449,7 +466,7 @@ void Material::populateVariables(const MaterialProgramCreator& mspc)
 		{
 			const GlProgramHandle& prog = progr->getGlProgram();
 
-			glvar = prog.tryFindVariable(in.m_name.c_str());
+			glvar = prog.tryFindVariable(in.m_name.toCString());
 			if(glvar)
 			{
 				break;
@@ -460,7 +477,7 @@ void Material::populateVariables(const MaterialProgramCreator& mspc)
 		if(glvar == nullptr)
 		{
 			throw ANKI_EXCEPTION("Variable not found in "
-				"at least one program: %s", in.m_name.c_str());
+				"at least one program: %s", &in.m_name[0]);
 		}
 
 		switch(glvar->getDataType())
@@ -473,36 +490,46 @@ void Material::populateVariables(const MaterialProgramCreator& mspc)
 				
 				if(in.m_value.size() > 0)
 				{
-					tp = TextureResourcePointer(in.m_value[0].c_str());
+					tp = TextureResourcePointer(
+						in.m_value[0].toCString(),
+						m_resources);
 				}
 
-				mtlvar = new MaterialVariableTemplate<TextureResourcePointer>(
-					glvar, false, &tp, 1);
+				auto alloc = m_resources->_getAllocator();
+				mtlvar = alloc.newInstance<
+					MaterialVariableTemplate<TextureResourcePointer>>(
+					glvar, false, &tp, 1, alloc);
 			}
 			break;
 		// F32
 		case GL_FLOAT:
-			mtlvar = newMaterialVariable<F32>(*glvar, in);
+			mtlvar = newMaterialVariable<F32>(*glvar, in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// vec2
 		case GL_FLOAT_VEC2:
-			mtlvar = newMaterialVariable<Vec2>(*glvar, in);
+			mtlvar = newMaterialVariable<Vec2>(*glvar, in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// vec3
 		case GL_FLOAT_VEC3:
-			mtlvar = newMaterialVariable<Vec3>(*glvar, in);
+			mtlvar = newMaterialVariable<Vec3>(*glvar, in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// vec4
 		case GL_FLOAT_VEC4:
-			mtlvar = newMaterialVariable<Vec4>(*glvar, in);
+			mtlvar = newMaterialVariable<Vec4>(*glvar, in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// mat3
 		case GL_FLOAT_MAT3:
-			mtlvar = newMaterialVariable<Mat3>(*glvar, in);
+			mtlvar = newMaterialVariable<Mat3>(*glvar, in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// mat4
 		case GL_FLOAT_MAT4:
-			mtlvar = newMaterialVariable<Mat4>(*glvar, in);
+			mtlvar = newMaterialVariable<Mat4>(*glvar, in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// default is error
 		default:

@@ -112,7 +112,7 @@ public:
 	void write(void* buff, PtrSize size);
 
 	/// Write formated text
-	void writeText(const CString& format, ...);
+	void writeText(CString format, ...);
 
 	/// Set the position indicator to a new position
 	/// @param offset Number of bytes to offset from origin

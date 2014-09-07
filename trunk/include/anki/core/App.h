@@ -50,12 +50,12 @@ public:
 		m_timerTick = x;
 	}
 
-	const String& getSettingsPath() const
+	const String& getSettingsDirectory() const
 	{
 		return m_settingsPath;
 	}
 
-	const String& getCachePath() const
+	const String& getCacheDirectory() const
 	{
 		return m_cachePath;
 	}

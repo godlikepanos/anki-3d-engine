@@ -420,7 +420,7 @@ void File::write(void* buff, PtrSize size)
 }
 
 //==============================================================================
-void File::writeText(const CString& format, ...)
+void File::writeText(CString format, ...)
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != OpenFlag::NONE);

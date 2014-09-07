@@ -25,7 +25,7 @@ public:
 		GlCallback swapBuffersCallback, void* swapBuffersCbData,
 		Bool registerDebugMessages,
 		AllocAlignedCallback alloc, void* allocUserData,
-		const char* cacheDir);
+		const CString& cacheDir);
 
 	~GlDevice()
 	{
@@ -58,7 +58,7 @@ public:
 		return *m_queue;
 	}
 
-	const char* _getCacheDirectory() const
+	CString _getCacheDirectory() const
 	{
 		ANKI_ASSERT(m_cacheDir != nullptr);
 		return m_cacheDir;

@@ -7,7 +7,7 @@
 #define ANKI_RESOURCE_RESOURCE_POINTER_H
 
 #include "anki/util/Assert.h"
-#include <atomic>
+#include "anki/util/Atomic.h"
 #include <cstring>
 
 namespace anki {
@@ -45,9 +45,9 @@ public:
 	}
 
 	/// Construct and load
-	ResourcePointer(const CString& filename)
+	ResourcePointer(const CString& filename, TResourceManager* resources)
 	{
-		load(filename);
+		load(filename, resources);
 	}
 
 	~ResourcePointer()
@@ -91,7 +91,7 @@ public:
 		return &m_cb->m_resource;
 	}
 
-	const char* getResourceName() const
+	CString getResourceName() const
 	{
 		ANKI_ASSERT(m_cb != nullptr);
 		return &m_cb->m_uuid[0];
@@ -100,7 +100,7 @@ public:
 	U32 getReferenceCount() const
 	{
 		ANKI_ASSERT(m_cb != nullptr);
-		return &m_cb->m_refcount.load();
+		return m_cb->m_refcount.load();
 	}
 	
 	/// Copy
@@ -126,7 +126,7 @@ public:
 	}
 
 	/// Load the resource using the resource manager
-	void load(const char* filename, TResourceManager* resources);
+	void load(const CString& filename, TResourceManager* resources);
 
 	Bool isLoaded() const
 	{
@@ -139,7 +139,7 @@ private:
 	{
 	public:
 		Type m_resource;
-		std::atomic<U32> m_refcount = {1};
+		AtomicU32 m_refcount = {1};
 		TResourceManager* m_resources = nullptr;
 		char m_uuid[1]; ///< This is part of the UUID
 	};

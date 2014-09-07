@@ -17,6 +17,7 @@ namespace anki {
 // Forward
 class ConfigSet;
 class App;
+class GlDevice;
 
 class Animation;
 class Material;
@@ -98,7 +99,7 @@ private:
 		
 		for(it = m_ptrs.begin(); it != m_ptrs.end(); ++it)
 		{
-			if(std::strcmp(it->getResourceName(), filename) == 0)
+			if(it->getResourceName() == filename)
 			{
 				break;
 			}
@@ -155,6 +156,11 @@ public:
 	{
 		return *m_app;
 	}
+
+	GlDevice& _getGlDevice();
+
+	/// For materials
+	CString _getShaderPostProcessorString() const;
 
 	template<typename T>
 	Bool _findLoadedResource(const CString& filename, 

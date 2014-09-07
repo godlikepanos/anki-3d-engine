@@ -27,7 +27,7 @@ public:
 
 	template<typename T>
 	using ProgramDictionary = 
-		Dictionary<T, GlGlobalHeapAllocator<std::pair<const char*, T>>>;
+		Dictionary<T, GlGlobalHeapAllocator<std::pair<CString, T>>>;
 
 	GlProgramData(const GlGlobalHeapAllocator<U8>& alloc)
 	:	m_variables(alloc), 
@@ -87,9 +87,9 @@ public:
 	/// @param alloc The allocator to be used for internally
 	GlProgram(
 		GLenum shaderType, 
-		const char* source, 
+		const CString& source, 
 		const GlGlobalHeapAllocator<U8>& alloc, 
-		const char* cacheDir)
+		const CString& cacheDir)
 	:	m_data(nullptr)
 	{
 		create(shaderType, source, alloc, cacheDir);
@@ -122,20 +122,20 @@ public:
 		return m_data->m_blocks;
 	}
 
-	const GlProgramVariable& findVariable(const char* name) const;
-	const GlProgramBlock& findBlock(const char* name) const;
+	const GlProgramVariable& findVariable(const CString& name) const;
+	const GlProgramBlock& findBlock(const CString& name) const;
 
-	const GlProgramVariable* tryFindVariable(const char* name) const;
-	const GlProgramBlock* tryFindBlock(const char* name) const;
+	const GlProgramVariable* tryFindVariable(const CString& name) const;
+	const GlProgramBlock* tryFindBlock(const CString& name) const;
 
 private:
 	GLenum m_type;
 	GlProgramData* m_data;
 
-	void create(GLenum type, const char* source, 
-		const GlGlobalHeapAllocator<U8>& alloc, const char* cacheDir);
-	void createInternal(GLenum type, const char* source, 
-		const GlGlobalHeapAllocator<U8>& alloc, const char* cacheDir);
+	void create(GLenum type, const CString& source, 
+		const GlGlobalHeapAllocator<U8>& alloc, const CString& cacheDir);
+	void createInternal(GLenum type, const CString& source, 
+		const GlGlobalHeapAllocator<U8>& alloc, const CString& cacheDir);
 	void destroy();
 
 	/// Query the program for blocks

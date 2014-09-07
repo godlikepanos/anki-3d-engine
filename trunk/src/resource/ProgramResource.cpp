@@ -8,15 +8,16 @@
 #include "anki/resource/ResourceManager.h"
 #include "anki/core/App.h" // To get cache dir
 #include "anki/util/File.h"
+#include "anki/util/Filesystem.h"
+#include "anki/util/Hash.h"
 #include "anki/util/Exception.h"
-#include <cstring>
 
 namespace anki {
 
 //==============================================================================
 void ProgramResource::load(const CString& filename, ResourceInitializer& init)
 {
-	load(filename, "", init.m_resourceManager);
+	load(filename, " ", init.m_resourceManager);
 }
 
 //==============================================================================
@@ -24,13 +25,13 @@ void ProgramResource::load(const CString& filename, const CString& extraSrc,
 	ResourceManager& manager)
 {
 	ProgramPrePreprocessor pars(filename, &manager);
-	TempResourceString source = extraSrc + pars.getShaderSource();
+	TempResourceString source(extraSrc + pars.getShaderSource());
 
-	GlDevice& gl = GlDeviceSingleton::get();
+	GlDevice& gl = manager._getGlDevice();
 	GlCommandBufferHandle jobs(&gl);
-	GlClientBufferHandle glsource(jobs, source.length() + 1, nullptr);
+	GlClientBufferHandle glsource(jobs, source.getLength() + 1, nullptr);
 
-	strcpy((char*)glsource.getBaseAddress(), &source[0]);
+	std::strcpy(reinterpret_cast<char*>(glsource.getBaseAddress()), &source[0]);
 
 	m_prog = GlProgramHandle(jobs, 
 		computeGlShaderType((U)pars.getShaderType()), glsource);
@@ -40,43 +41,40 @@ void ProgramResource::load(const CString& filename, const CString& extraSrc,
 
 //==============================================================================
 String ProgramResource::createSourceToCache(
-	const char* filename, const char* preAppendedSrcCode, 
-	const char* filenamePrefix, App& app)
+	const CString& filename, const CString& preAppendedSrcCode, 
+	const CString& filenamePrefix, ResourceManager& manager)
 {
-	ANKI_ASSERT(filename && preAppendedSrcCode && filenamePrefix);
+	auto& alloc = manager._getAllocator();
 
-	auto& alloc = app.getAllocator();
-
-	if(std::strlen(preAppendedSrcCode) < 1)
+	if(preAppendedSrcCode == "")
 	{
 		return String(filename, alloc);
 	}
 
 	// Create suffix
-	std::hash<String> stringHasher;
-	PtrSize h = stringHasher(String(filename, alloc) + preAppendedSrcCode);
+	String unique(String(filename, alloc) + preAppendedSrcCode);
+	U64 h = computeHash(&unique[0], unique.getLength());
 
-	String suffix(alloc);
-	toString(h, suffix);
+	String suffix(String::toString(h, alloc));
 
 	// Compose cached filename
-	String newFilename(app.getCachePath()
-		+ "/" + filenamePrefix + suffix + ".glsl";
+	String newFilename(manager._getApp().getCachePath()
+		+ CString("/") + filenamePrefix + suffix + CString(".glsl"));
 
-	if(File::fileExists(newFilename.c_str()))
+	if(fileExists(newFilename.toCString()))
 	{
 		return newFilename;
 	}
 
 	// Read file and append code
 	String src(alloc);
-	File(ResourceManagerSingleton::get().fixResourcePath(filename).c_str(), 
+	File(manager.fixResourceFilename(filename).toCString(), 
 		File::OpenFlag::READ).readAllText(src);
 	src = preAppendedSrcCode + src;
 
 	// Write cached file
-	File f(newFilename.c_str(), File::OpenFlag::WRITE);
-	f.writeText("%s\n", src.c_str());
+	File f(newFilename.toCString(), File::OpenFlag::WRITE);
+	f.writeText("%s\n", &src[0]);
 
 	return newFilename;
 }

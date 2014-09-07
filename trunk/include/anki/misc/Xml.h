@@ -48,7 +48,15 @@ public:
 	CString getText() const
 	{
 		check();
-		return CString(m_el->GetText());
+
+		if(m_el->GetText())
+		{
+			return CString(m_el->GetText());
+		}
+		else
+		{
+			return CString();
+		}
 	}
 
 	/// Return the text inside as an int

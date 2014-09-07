@@ -110,7 +110,7 @@ public:
 	}
 
 	/// Load it
-	void load(const char* filename);
+	void load(const CString& filename, );
 
 private:
 	MaterialResourcePointer m_material;

@@ -9,6 +9,8 @@
 #include "anki/util/StdTypes.h"
 #include <atomic>
 
+namespace anki {
+
 /// @addtogroup util_other
 /// @{
 
@@ -21,6 +23,8 @@ using AtomicI64 = std::atomic<I64>;
 using AtomicU64 = std::atomic<U64>;
 
 /// @}
+
+} // end namespace anki
 
 #endif
 

@@ -29,7 +29,8 @@ public:
 
 	void operator()(GlCommandBuffer* commands)
 	{
-		GlProgram p(m_type, (const char*)m_source.getBaseAddress(), 
+		GlProgram p(m_type, 
+			reinterpret_cast<const char*>(m_source.getBaseAddress()),
 			commands->getQueue().getDevice()._getAllocator(),
 			commands->getQueue().getDevice()._getCacheDirectory());
 		m_prog._get() = std::move(p);
@@ -89,14 +90,15 @@ const GlProgramData::ProgramVector<GlProgramBlock>&
 }
 
 //==============================================================================
-const GlProgramVariable& GlProgramHandle::findVariable(const char* name) const
+const GlProgramVariable& GlProgramHandle::findVariable(
+	const CString& name) const
 {
 	serializeOnGetter();
 	return _get().findVariable(name);
 }
 
 //==============================================================================
-const GlProgramBlock& GlProgramHandle::findBlock(const char* name) const
+const GlProgramBlock& GlProgramHandle::findBlock(const CString& name) const
 {
 	serializeOnGetter();
 	return _get().findBlock(name);
@@ -104,14 +106,14 @@ const GlProgramBlock& GlProgramHandle::findBlock(const char* name) const
 
 //==============================================================================
 const GlProgramVariable* 
-	GlProgramHandle::tryFindVariable(const char* name) const
+	GlProgramHandle::tryFindVariable(const CString& name) const
 {
 	serializeOnGetter();
 	return _get().tryFindVariable(name);
 }
 
 //==============================================================================
-const GlProgramBlock* GlProgramHandle::tryFindBlock(const char* name) const
+const GlProgramBlock* GlProgramHandle::tryFindBlock(const CString& name) const
 {
 	serializeOnGetter();
 	return _get().tryFindBlock(name);

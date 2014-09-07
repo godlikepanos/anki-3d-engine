@@ -290,8 +290,8 @@ GlProgram& GlProgram::operator=(GlProgram&& b)
 }
 
 //==============================================================================
-void GlProgram::create(GLenum type, const char* source, 
-	const GlGlobalHeapAllocator<U8>& alloc, const char* cacheDir)
+void GlProgram::create(GLenum type, const CString& source, 
+	const GlGlobalHeapAllocator<U8>& alloc, const CString& cacheDir)
 {
 	try
 	{
@@ -305,8 +305,8 @@ void GlProgram::create(GLenum type, const char* source,
 }
 
 //==============================================================================
-void GlProgram::createInternal(GLenum type, const char* source, 
-	const GlGlobalHeapAllocator<U8>& alloc_, const char* cacheDir)
+void GlProgram::createInternal(GLenum type, const CString& source, 
+	const GlGlobalHeapAllocator<U8>& alloc_, const CString& cacheDir)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(!isCreated() && m_data == nullptr);
@@ -325,13 +325,11 @@ void GlProgram::createInternal(GLenum type, const char* source,
 		version = major * 100 + minor * 10;
 	}
 
-	String fullSrc;
+	String fullSrc(alloc);
 #if ANKI_GL == ANKI_GL_DESKTOP
-	fullSrc = "#version " + std::to_string(version) + " core\n" 
-		+ String(source);
+	fullSrc.sprintf("#version %d core\n%s\n", version, &source[0]); 
 #else
-	fullSrc = "#version " + std::to_string(version) + " es\n"
-		+ String(source);
+	fullSrc.sprintf("#version %d es\n%s\n", version, &source[0]);
 #endif
 
 	// 2) Gen name, create, compile and link
@@ -378,7 +376,7 @@ void GlProgram::createInternal(GLenum type, const char* source,
 			<< std::setfill('0') << std::setw(4) << (U32)m_glName << ext;
 
 		File file(fname.str().c_str(), File::OpenFlag::WRITE);
-		file.writeText("%s", fullSrc.c_str());
+		file.writeText("%s", &fullSrc[0]);
 	}
 #endif
 	
@@ -389,7 +387,7 @@ void GlProgram::createInternal(GLenum type, const char* source,
 	{
 		GLint infoLen = 0;
 		GLint charsWritten = 0;
-		String infoLog;
+		String infoLog(alloc);
 
 		static const char* padding = 
 			"======================================="
@@ -400,23 +398,25 @@ void GlProgram::createInternal(GLenum type, const char* source,
 		infoLog.resize(infoLen + 1);
 		glGetProgramInfoLog(m_glName, infoLen, &charsWritten, &infoLog[0]);
 		
-		std::stringstream err;
-		err << "Shader compile failed (type:" << std::hex << m_type
-			<< std::dec << "):\n" << padding << "\n" << &infoLog[0]
-			<< "\n" << padding << "\nSource:\n" << padding << "\n";
+		String err(alloc);
+		err.sprintf("Shader compile failed (type %x):\n%s\n%s\n%s\n",
+			m_type, padding, &infoLog[0], padding);
 
 		// Prettyfy source
-		StringList lines = StringList::splitString(fullSrc.c_str(), '\n', true);
-		int lineno = 0;
+		StringList lines(
+			StringList::splitString(fullSrc.toCString(), '\n', alloc));
+		I lineno = 0;
 		for(const String& line : lines)
 		{
-			err << std::setw(4) << std::setfill('0') << ++lineno << ": "
-				<< line << "\n";
+			String tmp(alloc);
+			tmp.sprintf("%4d: %s\n", ++lineno, &line[0]);
+
+			err += tmp;
 		}
 
-		err << padding;
+		err += padding;
 
-		throw ANKI_EXCEPTION("%s", err.str().c_str());
+		throw ANKI_EXCEPTION("%s", &err[0]);
 	}
 
 	// 3) Populate with vars and blocks
@@ -459,14 +459,14 @@ void GlProgram::createInternal(GLenum type, const char* source,
 			}
 
 			// Recalc length after trimming
-			len = strlen(&name[0]);
+			len = std::strlen(&name[0]);
 
 			namesLen += (U)len + 1;
 			++count[i];
 		}
 	}
 
-	m_data->m_names = (char*)alloc.allocate(namesLen);
+	m_data->m_names = reinterpret_cast<char*>(alloc.allocate(namesLen));
 	char* namesPtr = m_data->m_names;
 
 	// Populate the blocks
@@ -495,7 +495,12 @@ void GlProgram::createInternal(GLenum type, const char* source,
 		// Sanity checks
 
 		// Iterate all samples and make sure they have set the unit explicitly
-		std::unordered_map<U, U> unitToCount;
+		std::unordered_map<
+			U, 
+			U, 
+			std::hash<U>,
+			std::equal_to<U>,
+			HeapAllocator<std::pair<U, U>>> unitToCount;
 		for(const GlProgramVariable& var : m_data->m_variables)
 		{
 			if(isSampler(var.m_dataType))
@@ -745,7 +750,7 @@ void GlProgram::initBlocksOfType(
 }
 
 //==============================================================================
-const GlProgramVariable* GlProgram::tryFindVariable(const char* name) const
+const GlProgramVariable* GlProgram::tryFindVariable(const CString& name) const
 {
 	ANKI_ASSERT(isCreated() && m_data);
 	auto it = m_data->m_variablesDict.find(name);
@@ -753,19 +758,19 @@ const GlProgramVariable* GlProgram::tryFindVariable(const char* name) const
 }
 
 //==============================================================================
-const GlProgramVariable& GlProgram::findVariable(const char* name) const
+const GlProgramVariable& GlProgram::findVariable(const CString& name) const
 {
 	ANKI_ASSERT(isCreated() && m_data);
 	const GlProgramVariable* var = tryFindVariable(name);
 	if(var == nullptr)
 	{
-		throw ANKI_EXCEPTION("Variable not found: %s", name);
+		throw ANKI_EXCEPTION("Variable not found: %s", &name[0]);
 	}
 	return *var;
 }
 
 //==============================================================================
-const GlProgramBlock* GlProgram::tryFindBlock(const char* name) const
+const GlProgramBlock* GlProgram::tryFindBlock(const CString& name) const
 {
 	ANKI_ASSERT(isCreated() && m_data);
 	auto it = m_data->m_blocksDict.find(name);
@@ -773,13 +778,13 @@ const GlProgramBlock* GlProgram::tryFindBlock(const char* name) const
 }
 
 //==============================================================================
-const GlProgramBlock& GlProgram::findBlock(const char* name) const
+const GlProgramBlock& GlProgram::findBlock(const CString& name) const
 {
 	ANKI_ASSERT(isCreated() && m_data);
 	const GlProgramBlock* var = tryFindBlock(name);
 	if(var == nullptr)
 	{
-		throw ANKI_EXCEPTION("Buffer not found: %s", name);
+		throw ANKI_EXCEPTION("Buffer not found: %s", &name[0]);
 	}
 	return *var;
 }
