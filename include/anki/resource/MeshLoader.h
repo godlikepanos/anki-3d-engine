@@ -78,7 +78,7 @@ public:
 
 	MeshLoader(TempResourceAllocator<U8>& alloc);
 
-	MeshLoader(const char* filename, TempResourceAllocator<U8>& alloc);
+	MeshLoader(const CString& filename, TempResourceAllocator<U8>& alloc);
 
 	~MeshLoader()
 	{}
@@ -125,7 +125,7 @@ public:
 
 	/// Load the mesh data from a binary file
 	/// @exception Exception
-	void load(const char* filename);
+	void load(const CString& filename);
 
 private:
 	MLVector<Vec3> m_positions; ///< Loaded from file

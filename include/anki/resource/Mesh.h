@@ -97,7 +97,7 @@ public:
 	Bool isCompatible(const Mesh& other) const;
 
 	/// Load from a .mesh file
-	void load(const char* filename, ResourceInitializer& init);
+	void load(const CString& filename, ResourceInitializer& init);
 
 protected:
 	/// Per sub mesh data
@@ -137,7 +137,7 @@ public:
 	{}
 
 	/// Load from a .mmesh file
-	void load(const char* filename, ResourceInitializer& init);
+	void load(const CString& filename, ResourceInitializer& init);
 };
 
 } // end namespace anki

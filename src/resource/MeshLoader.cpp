@@ -68,14 +68,15 @@ MeshLoader::MeshLoader(TempResourceAllocator<U8>& alloc)
 {}
 
 //==============================================================================
-MeshLoader::MeshLoader(const char* filename, TempResourceAllocator<U8>& alloc)
-:	MeshLoader(filename, alloc)
+MeshLoader::MeshLoader(
+	const CString& filename, TempResourceAllocator<U8>& alloc)
+:	MeshLoader(alloc)
 {
 	load(filename);
 }
 
 //==============================================================================
-void MeshLoader::load(const char* filename)
+void MeshLoader::load(const CString& filename)
 {
 	// Try
 	try

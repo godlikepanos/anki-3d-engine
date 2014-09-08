@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/Mesh.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/resource/MeshLoader.h"
 #include "anki/util/Functions.h"
 #include "anki/misc/Xml.h"
@@ -22,7 +23,7 @@ Bool Mesh::isCompatible(const Mesh& other) const
 }
 
 //==============================================================================
-void Mesh::load(const char* filename, ResourceInitializer& init)
+void Mesh::load(const CString& filename, ResourceInitializer& init)
 {
 	try
 	{
@@ -112,7 +113,7 @@ void Mesh::createBuffers(const MeshLoader& loader,
 	}
 
 	// Create GL buffers
-	GlDevice& gl = init.m_gl;
+	GlDevice& gl = init.m_resources._getGlDevice();
 	GlCommandBufferHandle jobs(&gl);
 	
 	GlClientBufferHandle clientVertBuff(jobs, vbosize, &buff[0]);
@@ -224,12 +225,12 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 //==============================================================================
 
 //==============================================================================
-void BucketMesh::load(const char* filename, ResourceInitializer& init)
+void BucketMesh::load(const CString& filename, ResourceInitializer& init)
 {
 	try
 	{
 		XmlDocument doc;
-		doc.loadFile(filename);
+		doc.loadFile(filename, init.m_tempAlloc);
 
 		XmlElement rootEl = doc.getChildElement("bucketMesh");
 		XmlElement meshesEl = rootEl.getChildElement("meshes");
@@ -244,7 +245,7 @@ void BucketMesh::load(const char* filename, ResourceInitializer& init)
 		U i = 0;
 		do
 		{
-			std::string subMeshFilename = meshEl.getText();
+			CString subMeshFilename = meshEl.getText();
 
 			// Load the submesh and if not the first load the append the 
 			// vertices to the fullMesh
@@ -259,7 +260,7 @@ void BucketMesh::load(const char* filename, ResourceInitializer& init)
 				}
 
 				// Load
-				subLoader.load(subMeshFilename.c_str());
+				subLoader.load(subMeshFilename);
 				loader = &subLoader;
 
 				// Sanity checks
@@ -282,7 +283,7 @@ void BucketMesh::load(const char* filename, ResourceInitializer& init)
 			else
 			{
 				// Load
-				fullLoader.load(subMeshFilename.c_str());
+				fullLoader.load(subMeshFilename);
 				loader = &fullLoader;
 
 				// Set properties

@@ -18,15 +18,26 @@ namespace anki {
 class ConfigSet;
 class App;
 class GlDevice;
+class ResourceManager;
 
-class Animation;
-class Material;
-class Mesh;
-class Model;
-class BucketMesh;
-class ProgramResource;
-class ParticleEmitterResource;
-class TextureResource;
+#define ANKI_RESOURCE(rsrc_, name_) \
+	class rsrc_; \
+	using name_ = ResourcePointer<rsrc_, ResourceManager>;
+
+ANKI_RESOURCE(Animation, AnimationResourcePointer)
+ANKI_RESOURCE(TextureResource, TextureResourcePointer)
+ANKI_RESOURCE(ProgramResource, ProgramResourcePointer)
+ANKI_RESOURCE(Material, MaterialResourcePointer)
+ANKI_RESOURCE(Mesh, MeshResourcePointer)
+ANKI_RESOURCE(BucketMesh, BucketMeshResourcePointer)
+ANKI_RESOURCE(Skeleton, SkeletonResourcePointer)
+ANKI_RESOURCE(SkelAnim, SkelAnimResourcePointer)
+ANKI_RESOURCE(LightRsrc, LightRsrcResourcePointer)
+ANKI_RESOURCE(ParticleEmitterResource, ParticleEmitterResourcePointer)
+ANKI_RESOURCE(Script, ScriptResourcePointer)
+ANKI_RESOURCE(Model, ModelResourcePointer)
+
+#undef ANKI_RESOURCE
 
 /// @addtogroup resource
 /// @{
@@ -109,16 +120,23 @@ private:
 	}
 };
 
+#define ANKI_RESOURCE(type_) \
+	public TypeResourceManager<type_, ResourceManager>
+
 /// Resource manager. It holds a few global variables
 class ResourceManager: 
-	public TypeResourceManager<Animation, ResourceManager>,
-	public TypeResourceManager<Material, ResourceManager>,
-	public TypeResourceManager<Mesh, ResourceManager>,
-	public TypeResourceManager<Model, ResourceManager>,
-	public TypeResourceManager<BucketMesh, ResourceManager>,
-	public TypeResourceManager<ProgramResource, ResourceManager>,
-	public TypeResourceManager<ParticleEmitterResource, ResourceManager>,
-	public TypeResourceManager<TextureResource, ResourceManager>
+	ANKI_RESOURCE(Animation),
+	ANKI_RESOURCE(TextureResource),
+	ANKI_RESOURCE(ProgramResource),
+	ANKI_RESOURCE(Material),
+	ANKI_RESOURCE(Mesh),
+	ANKI_RESOURCE(BucketMesh),
+	ANKI_RESOURCE(Skeleton),
+	ANKI_RESOURCE(SkelAnim),
+	ANKI_RESOURCE(LightRsrc),
+	ANKI_RESOURCE(ParticleEmitterResource),
+	ANKI_RESOURCE(Script),
+	ANKI_RESOURCE(Model)
 {
 public:
 	ResourceManager(App* app, const ConfigSet& config);
@@ -191,6 +209,8 @@ private:
 	U32 m_maxTextureSize;
 	U32 m_textureAnisotropy;
 };
+
+#undef ANKI_RESOURCE
 
 /// @}
 
