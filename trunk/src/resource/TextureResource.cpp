@@ -173,7 +173,7 @@ void TextureResource::loadInternal(const CString& filename,
 	init.m_repeat = true;
 
 	// anisotropyLevel
-	init.m_anisotropyLevel = rinit.m_resource.getTextureAnisotropy();
+	init.m_anisotropyLevel = rinit.m_resources.getTextureAnisotropy();
 
 	// genMipmaps
 	if(init.m_mipmapsCount == 1 || driverShouldGenMipmaps)

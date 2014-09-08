@@ -6,7 +6,7 @@
 #ifndef ANKI_RESOURCE_MODEL_H
 #define ANKI_RESOURCE_MODEL_H
 
-#include "anki/resource/Resource.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/Gl.h"
 #include "anki/collision/Obb.h"
 #include "anki/resource/RenderingKey.h"
@@ -24,6 +24,11 @@ class ModelPatchBase
 {
 public:
 	virtual ~ModelPatchBase()
+	{}
+
+	ModelPatchBase(ResourceAllocator<U8>& alloc)
+	:	m_vertJobs(alloc),
+		m_meshes(alloc)
 	{}
 
 	const Material& getMaterial() const
@@ -76,12 +81,12 @@ public:
 
 protected:
 	/// Array [lod][pass]
-	Vector<GlCommandBufferHandle> m_vertJobs;
+	ResourceVector<GlCommandBufferHandle> m_vertJobs;
 	Material* m_mtl = nullptr;
-	Vector<Mesh*> m_meshes; ///< One for each LOD
+	ResourceVector<Mesh*> m_meshes; ///< One for each LOD
 
 	/// Create vertex descriptors using a material and a mesh
-	void create();
+	void create(GlDevice* gl);
 
 private:
 	/// Called by @a create multiple times to create and populate a single
@@ -104,14 +109,17 @@ class ModelPatch: public ModelPatchBase
 {
 public:
 	/// Accepts a number of mesh filenames, one for each LOD
-	ModelPatch(const char* meshFNames[], U32 meshesCount,
-		const char* mtlFName);
+	ModelPatch(
+		CString meshFNames[], 
+		U32 meshesCount,
+		const CString& mtlFName, 
+		ResourceManager* resources);
 
 	~ModelPatch()
 	{}
 
 private:
-	Vector<MeshResourcePointerType> m_meshResources; ///< The geometries
+	ResourceVector<MeshResourcePointerType> m_meshResources; ///< Geometries
 	MaterialResourcePointer m_mtlResource; ///< Material
 };
 
@@ -158,7 +166,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const Vector<ModelPatchBase*>& getModelPatches() const
+	const ResourceVector<ModelPatchBase*>& getModelPatches() const
 	{
 		return m_modelPatches;
 	}
@@ -169,14 +177,14 @@ public:
 	}
 	/// @}
 
-	void load(const char* filename);
+	void load(const CString& filename, ResourceInitializer& init);
 
 private:
 	/// The vector of ModelPatch
-	Vector<ModelPatchBase*> m_modelPatches;
+	ResourceVector<ModelPatchBase*> m_modelPatches;
 	Obb m_visibilityShape;
 	SkeletonResourcePointer m_skeleton;
-	Vector<AnimationResourcePointer> m_animations;
+	ResourceVector<AnimationResourcePointer> m_animations;
 };
 
 } // end namespace anki

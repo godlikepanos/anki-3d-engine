@@ -23,7 +23,8 @@ public:
 	VertexAttribute m_location;
 };
 
-static const Array<Attrib, (U)VertexAttribute::COUNT - 1> attribs = {{
+static const Array<Attrib, static_cast<U>(VertexAttribute::COUNT) - 1> 
+	attribs = {{
 	{"inPosition", VertexAttribute::POSITION},
 	{"inNormal", VertexAttribute::NORMAL},
 	{"inTangent", VertexAttribute::TANGENT},
@@ -69,7 +70,7 @@ void ModelPatchBase::createVertexDesc(
 		}
 		
 		vbo.bindVertexBuffer(vertexJobs, size, type, false, stride,
-			offset, (U)attrib.m_location);
+			offset, static_cast<U>(attrib.m_location));
 
 		++count;
 	}
@@ -160,7 +161,7 @@ void ModelPatchBase::getRenderingDataSub(
 }
 
 //==============================================================================
-void ModelPatchBase::create()
+void ModelPatchBase::create(GlDevice* gl)
 {
 	const Material& mtl = getMaterial();
 	U lodsCount = getLodsCount();
@@ -192,8 +193,7 @@ void ModelPatchBase::create()
 			prog = ppline.getAttachedProgram(GL_VERTEX_SHADER);
 			
 			// Create vert descriptor
-			GlDevice& gl = GlDeviceSingleton::get();
-			GlCommandBufferHandle vertJobs(&gl);
+			GlCommandBufferHandle vertJobs(gl);
 			createVertexDesc(prog, *mesh, vertJobs);
 
 			m_vertJobs[getVertexDescIdx(key)] = vertJobs;
@@ -230,16 +230,21 @@ U ModelPatchBase::getVertexDescIdx(const RenderingKey& key) const
 //==============================================================================
 template<typename MeshResourcePointerType>
 ModelPatch<MeshResourcePointerType>::ModelPatch(
-	const char* meshFNames[], U32 meshesCount, const char* mtlFName)
+	CString meshFNames[], 
+	U32 meshesCount, 
+	const CString& mtlFName,
+	ResourceManager* resources)
+:	ModelPatchBase(resources->_getAllocator()),
+	m_meshResources(resources->_getAllocator())
 {
 	ANKI_ASSERT(meshesCount > 0);
 	m_meshes.resize(meshesCount);
 	m_meshResources.resize(meshesCount);
 
 	// Load meshes
-	for(U32 i = 0; i < meshesCount; i++)
+	for(U i = 0; i < meshesCount; i++)
 	{
-		m_meshResources[i].load(meshFNames[i]);
+		m_meshResources[i].load(meshFNames[i], resources);
 		m_meshes[i] = m_meshResources[i].get();
 
 		// Sanity check
@@ -251,11 +256,11 @@ ModelPatch<MeshResourcePointerType>::ModelPatch(
 	}
 
 	// Load material
-	m_mtlResource.load(mtlFName);
+	m_mtlResource.load(mtlFName, resources);
 	m_mtl = m_mtlResource.get();
 
 	// Create VAOs
-	create();
+	create(&resources->_getGlDevice());
 }
 
 //==============================================================================
@@ -269,21 +274,23 @@ Model::Model()
 //==============================================================================
 Model::~Model()
 {
+	auto alloc = m_modelPatches.get_allocator();
+
 	for(ModelPatchBase* patch : m_modelPatches)
 	{
-		delete patch;
+		alloc.deleteInstance(patch);
 	}
 }
 
 //==============================================================================
-void Model::load(const char* filename)
+void Model::load(const CString& filename, ResourceInitializer& init)
 {
 	try
 	{
 		// Load
 		//
 		XmlDocument doc;
-		doc.loadFile(filename);
+		doc.loadFile(filename, init.m_tempAlloc);
 
 		XmlElement rootEl = doc.getChildElement("model");
 
@@ -291,7 +298,7 @@ void Model::load(const char* filename)
 		XmlElement collEl = rootEl.getChildElementOptional("collisionShape");
 		if(collEl)
 		{
-			std::string type = collEl.getChildElement("type").getText();
+			CString type = collEl.getChildElement("type").getText();
 			XmlElement valEl = collEl.getChildElement("value");
 			(void)valEl; // XXX
 
@@ -323,7 +330,7 @@ void Model::load(const char* filename)
 			XmlElement materialEl =
 				modelPatchEl.getChildElement("material");
 
-			Array<const char*, 3> meshesFnames;
+			Array<CString, 3> meshesFnames;
 			U meshesCount = 1;
 			ModelPatchBase* patch;
 
@@ -350,8 +357,10 @@ void Model::load(const char* filename)
 					meshesFnames[2] = meshEl2.getText();
 				}
 
-				patch = new ModelPatch<MeshResourcePointer>(
-					&meshesFnames[0], meshesCount, materialEl.getText());
+				patch = init.m_alloc.newInstance<
+					ModelPatch<MeshResourcePointer>>(
+					&meshesFnames[0], meshesCount, materialEl.getText(),
+					&init.m_resources);
 			}
 			else
 			{
@@ -376,8 +385,10 @@ void Model::load(const char* filename)
 					meshesFnames[2] = bmeshEl2.getText();
 				}
 
-				patch = new ModelPatch<BucketMeshResourcePointer>(
-					&meshesFnames[0], meshesCount, materialEl.getText());
+				patch = init.m_alloc.newInstance<
+					ModelPatch<BucketMeshResourcePointer>>(
+					&meshesFnames[0], meshesCount, materialEl.getText(),
+					&init.m_resources);
 			}
 
 			m_modelPatches.push_back(patch);
