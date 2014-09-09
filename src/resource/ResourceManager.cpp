@@ -13,71 +13,75 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/core/Logger.h"
 #include "anki/misc/ConfigSet.h"
-#include <cstring>
 
 namespace anki {
 
 //==============================================================================
-ResourceManager::ResourceManager(App* app, const ConfigSet& config)
-:	m_app(app),
-	m_alloc(HeapMemoryPool(
-		m_app->getAllocationCallback(), m_app->getAllocationCallbackData())),
-	m_tmpAlloc(StackMemoryPool(m_app->getAllocationCallback(), 
-		m_app->getAllocationCallbackData(), 1024 * 1024))
+ResourceManager::ResourceManager(Initializer& init)
+:	m_gl(init.m_gl),
+	m_alloc(HeapMemoryPool(init.m_allocCallback, init.m_allocCallbackData)),
+	m_tmpAlloc(StackMemoryPool(
+		init.m_allocCallback, init.m_allocCallbackData, 
+		init.m_tempAllocatorMemorySize)),
+	m_cacheDir(m_alloc),
+	m_dataDir(init.m_cacheDir, m_alloc)
 {
 	// Init the data path
 	//
 	if(getenv("ANKI_DATA_PATH"))
 	{
-		m_dataDir = ResourceString(getenv("ANKI_DATA_PATH"), m_alloc);
+		m_dataDir = getenv("ANKI_DATA_PATH");
 		m_dataDir += "/";
-		ANKI_LOGI("Data path: %s", m_dataDir.c_str());
+		ANKI_LOGI("Data path: %s", &m_dataDir[0]);
 	}
 	else
 	{
 		// Assume working directory
 #if ANKI_OS == ANKI_OS_ANDROID
-		m_dataDir = ResourceString("$", m_alloc);
+		m_dataDir = "$";
 #else
-		m_dataDir = ResourceString("./", m_alloc);
+		m_dataDir = "./";
 #endif
 	}
 
-	// Init cache dir
-	//
-	m_cacheDir = ResourceString(cacheDir, m_alloc);
-
 	// Init some constants
 	//
-	m_maxTextureSize = config.get("maxTextureSize");
-	m_textureAnisotropy = config.get("textureAnisotropy");
+	m_maxTextureSize = init.m_config->get("maxTextureSize");
+	m_textureAnisotropy = init.m_config->get("textureAnisotropy");
 
 	// Init type resource managers
 	//
-	TypeResourceManager<Animation, ResourceManager>::init(m_alloc);
-	TypeResourceManager<Material, ResourceManager>::init(m_alloc);
-	TypeResourceManager<Mesh, ResourceManager>::init(m_alloc);
-	TypeResourceManager<Model, ResourceManager>::init(m_alloc);
-	TypeResourceManager<BucketMesh, ResourceManager>::init(m_alloc);
-	TypeResourceManager<ProgramResource, ResourceManager>::init(m_alloc);
-	TypeResourceManager<ParticleEmitterResource, ResourceManager>::init(
-		m_alloc);
+#define ANKI_RESOURCE(type_) \
+	TypeResourceManager<type_, ResourceManager>::init(m_alloc);
+
+	ANKI_RESOURCE(Animation)
+	ANKI_RESOURCE(TextureResource)
+	ANKI_RESOURCE(ProgramResource)
+	ANKI_RESOURCE(Material)
+	ANKI_RESOURCE(Mesh)
+	ANKI_RESOURCE(BucketMesh)
+	ANKI_RESOURCE(Skeleton)
+	ANKI_RESOURCE(ParticleEmitterResource)
+	ANKI_RESOURCE(Model)
+
+#undef ANKI_RESOURCE
 }
 
 //==============================================================================
 TempResourceString ResourceManager::fixResourceFilename(
-	const char* filename) const
+	const CString& filename) const
 {
 	TempResourceString newFname(m_tmpAlloc);
 
 	// If the filename is in cache then dont append the data path
-	if(std::strstr(filename, m_cacheDir.c_str()) != nullptr)
+	if(filename.find(m_cacheDir.toCString()) != TempResourceString::NPOS)
 	{
 		newFname = filename;
 	}
 	else
 	{
-		newFname = TempResourceString(m_dataDir.c_str(), m_tmpAlloc) + filename;
+		newFname = TempResourceString(m_dataDir.toCString(), m_tmpAlloc) 
+			+ filename;
 	}
 
 	return newFname;

@@ -10,8 +10,8 @@ namespace anki {
 
 //==============================================================================
 template<typename TAlloc>
-typename BasicStringList<TAlloc>::String 
-	BasicStringList<TAlloc>::join(const CString& separator) const
+typename StringListBase<TAlloc>::String 
+	StringListBase<TAlloc>::join(const CString& separator) const
 {
 	// Count the characters
 	I sepLen = separator.getLength();
@@ -43,7 +43,7 @@ typename BasicStringList<TAlloc>::String
 
 //==============================================================================
 template<typename TAlloc>
-I BasicStringList<TAlloc>::getIndexOf(const CString& value) const
+I StringListBase<TAlloc>::getIndexOf(const CString& value) const
 {
 	U pos = 0;
 
@@ -61,8 +61,8 @@ I BasicStringList<TAlloc>::getIndexOf(const CString& value) const
 
 //==============================================================================
 template<typename TAlloc>
-BasicStringList<TAlloc> 
-	BasicStringList<TAlloc>::splitString(
+StringListBase<TAlloc> 
+	StringListBase<TAlloc>::splitString(
 	const CString& s, 
 	const Char separator,
 	Allocator alloc)

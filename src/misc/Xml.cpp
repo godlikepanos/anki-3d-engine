@@ -50,8 +50,8 @@ Vector<F64, StackAllocator<F64>> XmlElement::getFloats() const
 			m_el->Value());
 	}
 
-	BasicStringList<StackAllocator<char>> list(
-		BasicStringList<StackAllocator<char>>::splitString(
+	StringListBase<StackAllocator<char>> list(
+		StringListBase<StackAllocator<char>>::splitString(
 		CString(txt), ' ', m_alloc));
 
 	Vector<F64, StackAllocator<F64>> out;
@@ -83,8 +83,8 @@ Mat4 XmlElement::getMat4() const
 		throw ANKI_EXCEPTION("Failed to return Mat4");
 	}
 
-	BasicStringList<StackAllocator<char>> list = 
-		BasicStringList<StackAllocator<char>>::splitString(
+	StringListBase<StackAllocator<char>> list = 
+		StringListBase<StackAllocator<char>>::splitString(
 		CString(txt), ' ', m_alloc);
 
 	if(list.size() != 16)
@@ -120,8 +120,8 @@ Vec3 XmlElement::getVec3() const
 		throw ANKI_EXCEPTION("Failed to return Vec3");
 	}
 
-	BasicStringList<StackAllocator<char>> list = 
-		BasicStringList<StackAllocator<char>>::splitString(
+	StringListBase<StackAllocator<char>> list = 
+		StringListBase<StackAllocator<char>>::splitString(
 		CString(txt), ' ', m_alloc);
 
 	if(list.size() != 3)
@@ -156,8 +156,8 @@ Vec4 XmlElement::getVec4() const
 		throw ANKI_EXCEPTION("Failed to return Vec4");
 	}
 
-	BasicStringList<StackAllocator<char>> list = 
-		BasicStringList<StackAllocator<char>>::splitString(
+	StringListBase<StackAllocator<char>> list = 
+		StringListBase<StackAllocator<char>>::splitString(
 		CString(txt), ' ', m_alloc);
 
 	if(list.size() != 4)

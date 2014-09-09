@@ -38,7 +38,7 @@ enum class ShaderType
 class ProgramPrePreprocessor
 {
 private:
-	using PPPStringList = BasicStringList<TempResourceAllocator<char>>;
+	using PPPStringList = StringListBase<TempResourceAllocator<char>>;
 	using PPPString = TempResourceString;
 
 public:

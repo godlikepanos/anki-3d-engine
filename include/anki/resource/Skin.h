@@ -6,13 +6,11 @@
 #ifndef ANKI_RESOURCE_SKIN_H
 #define ANKI_RESOURCE_SKIN_H
 
-#include "anki/resource/Resource.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/resource/Model.h"
 
+#if 0
 namespace anki {
-
-class Skeleton;
-class SkelAnim;
 
 /// Skin resource
 /// 
@@ -66,5 +64,6 @@ private:
 };
 
 } // end namespace anki
+#endif
 
 #endif

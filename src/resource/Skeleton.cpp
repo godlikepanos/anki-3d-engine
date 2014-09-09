@@ -10,10 +10,10 @@
 namespace anki {
 
 //==============================================================================
-void Skeleton::load(const char* filename)
+void Skeleton::load(const CString& filename, ResourceInitializer& init)
 {
 	XmlDocument doc;
-	doc.loadFile(filename);
+	doc.loadFile(filename, init.m_tempAlloc);
 
 	XmlElement rootEl = doc.getChildElement("skeleton");
 	XmlElement bonesEl = rootEl.getChildElement("bones");
@@ -30,32 +30,23 @@ void Skeleton::load(const char* filename)
 	} while(boneEl);
 
 	// Alloc the vector
-	bones.resize(bonesCount);
+	m_bones = std::move(ResourceVector<Bone>(init.m_alloc));
+	m_bones.resize(bonesCount, Bone(init.m_alloc));
 
 	// Load every bone
 	boneEl = bonesEl.getChildElement("bone");
 	bonesCount = 0;
 	do
 	{
-		Bone& bone = bones[bonesCount++];
+		Bone& bone = m_bones[bonesCount++];
 
 		// <name>
 		XmlElement nameEl = boneEl.getChildElement("name");
-		bone.name = nameEl.getText();
+		bone.m_name = nameEl.getText();
 
 		// <transform>
 		XmlElement trfEl = boneEl.getChildElement("transform");
-		StringList list = StringList::splitString(trfEl.getText(), ' ');
-
-		if(list.size() != 16)
-		{
-			throw ANKI_EXCEPTION("Expecting 16 floats for <transform>");
-		}
-
-		for(U i = 0; i < 16; i++)
-		{
-			bone.transform[i] = std::stof(list[i]);
-		}
+		bone.m_transform = trfEl.getMat4();
 
 		// Advance 
 		boneEl = boneEl.getNextSiblingElement("bone");

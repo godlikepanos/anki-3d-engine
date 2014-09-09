@@ -12,6 +12,7 @@
 #include <cstring>
 #include <cmath> // For HUGE_VAL
 #include <climits> // For LLONG_MAX
+#include <cstdarg> // For var args
 
 namespace anki {
 
@@ -127,10 +128,6 @@ public:
 	{
 		return m_ptr == nullptr;
 	}
-
-	/// Add with a BasicString.
-	template<typename TAlloc>
-	BasicString<TAlloc> operator+(const BasicString<TAlloc>& str) const;
 
 	Bool operator==(const CString& b) const noexcept
 	{
@@ -593,7 +590,7 @@ public:
 	PtrSize find(const CStringType& cstr, PtrSize position = 0) const noexcept
 	{
 		checkInit();
-		return toString().find(cstr, position);
+		return toCString().find(cstr, position);
 	}
 
 	/// Find a substring of this string.
@@ -683,25 +680,18 @@ private:
 };
 
 template<typename TAlloc>
-inline BasicString<TAlloc> CString::operator+(
-	const BasicString<TAlloc>& str) const
-{
-	BasicString<TAlloc> out(str.getAllocator());
-
-	auto thisLength = getLength();
-	out.resize(thisLength + str.getLength());
-
-	std::memcpy(&out[0], &m_ptr[0], thisLength);
-	std::memcpy(&out[thisLength], &str[0], str.getLength() + 1);
-
-	return out;
-}
-
-template<typename TAlloc>
 inline BasicString<TAlloc> operator+(
 	const CString& left, const BasicString<TAlloc>& right)
 {
-	return left.operator+(right);
+	BasicString<TAlloc> out(right.getAllocator());
+
+	auto leftLength = left.getLength();
+	out.resize(leftLength + right.getLength());
+
+	std::memcpy(&out[0], &left[0], leftLength);
+	std::memcpy(&out[leftLength], &right[0], right.getLength() + 1);
+
+	return out;
 }
 
 /// A common string type that uses heap allocator.

@@ -17,11 +17,7 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-#define PE_EXCEPTION(x) ANKI_EXCEPTION("Particle emmiter: " \
-	"Incorrect or missing value %s", x)
-
-//==============================================================================
-static void xmlReadVec3(const XmlElement& el_, const char* str, Vec3& out)
+static void xmlReadVec3(const XmlElement& el_, const CString& str, Vec3& out)
 {
 	XmlElement el = el_.getChildElementOptional(str);
 
@@ -30,22 +26,11 @@ static void xmlReadVec3(const XmlElement& el_, const char* str, Vec3& out)
 		return;
 	}
 
-	StringList list;
-
-	list = StringList::splitString(el.getText(), ' ');
-	if(list.size() != 3)
-	{
-		throw ANKI_EXCEPTION("Expecting 3 floats for Vec3");
-	}
-
-	for(U i = 0; i < 3; i++)
-	{
-		out[i] = std::stof(list[i]);
-	}
+	out = el.getVec3();
 }
 
 //==============================================================================
-static void xmlReadFloat(const XmlElement& el_, const char* str, F32& out)
+static void xmlReadFloat(const XmlElement& el_, const CString& str, F32& out)
 {
 	XmlElement el = el_.getChildElementOptional(str);
 
@@ -54,11 +39,11 @@ static void xmlReadFloat(const XmlElement& el_, const char* str, F32& out)
 		return;
 	}
 
-	out = std::stof(el.getText());
+	out = el.getFloat();
 }
 
 //==============================================================================
-static void xmlReadU(const XmlElement& el_, const char* str, U32& out)
+static void xmlReadU(const XmlElement& el_, const CString& str, U32& out)
 {
 	XmlElement el = el_.getChildElementOptional(str);
 
@@ -67,7 +52,7 @@ static void xmlReadU(const XmlElement& el_, const char* str, U32& out)
 		return;
 	}
 
-	out = (U32)std::stoi(el.getText());
+	out = static_cast<U32>(el.getInt());
 }
 
 //==============================================================================
@@ -78,7 +63,7 @@ static void xmlReadU(const XmlElement& el_, const char* str, U32& out)
 ParticleEmitterProperties& ParticleEmitterProperties::operator=(
 	const ParticleEmitterProperties& b)
 {
-	memcpy(this, &b, sizeof(ParticleEmitterProperties));
+	std::memcpy(this, &b, sizeof(ParticleEmitterProperties));
 	return *this;
 }
 
@@ -108,13 +93,14 @@ ParticleEmitterResource::~ParticleEmitterResource()
 {}
 
 //==============================================================================
-void ParticleEmitterResource::load(const char* filename)
+void ParticleEmitterResource::load(const CString& filename, 
+	ResourceInitializer& init)
 {
 	try
 	{
 		XmlDocument doc;
-		doc.loadFile(filename);
-		loadInternal(doc.getChildElement("particleEmitter"));
+		doc.loadFile(filename, init.m_tempAlloc);
+		loadInternal(doc.getChildElement("particleEmitter"), init);
 	}
 	catch(std::exception& e)
 	{
@@ -123,7 +109,8 @@ void ParticleEmitterResource::load(const char* filename)
 }
 
 //==============================================================================
-void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
+void ParticleEmitterResource::loadInternal(const XmlElement& rootel,
+	ResourceInitializer& init)
 {
 	// XML load
 	//
@@ -166,39 +153,42 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel)
 	m_usePhysicsEngine = tmp;
 
 	XmlElement el = rootel.getChildElement("material");
-	m_material.load(el.getText());
+	m_material.load(el.getText(), &init.m_resources);
 
 	// sanity checks
 	//
 
+	static const char* ERROR = "Particle emmiter: "
+		"Incorrect or missing value %s";
+
 	if(m_particle.m_life <= 0.0)
 	{
-		throw PE_EXCEPTION("life");
+		throw ANKI_EXCEPTION(ERROR, "life");
 	}
 
 	if(m_particle.m_life - m_particle.m_lifeDeviation <= 0.0)
 	{
-		throw PE_EXCEPTION("lifeDeviation");
+		throw ANKI_EXCEPTION(ERROR, "lifeDeviation");
 	}
 
 	if(m_particle.m_size <= 0.0)
 	{
-		throw PE_EXCEPTION("size");
+		throw ANKI_EXCEPTION(ERROR, "size");
 	}
 
 	if(m_maxNumOfParticles < 1)
 	{
-		throw PE_EXCEPTION("maxNumOfParticles");
+		throw ANKI_EXCEPTION(ERROR, "maxNumOfParticles");
 	}
 
 	if(m_emissionPeriod <= 0.0)
 	{
-		throw PE_EXCEPTION("emissionPeriod");
+		throw ANKI_EXCEPTION(ERROR, "emissionPeriod");
 	}
 
 	if(m_particlesPerEmittion < 1)
 	{
-		throw PE_EXCEPTION("particlesPerEmission");
+		throw ANKI_EXCEPTION(ERROR, "particlesPerEmission");
 	}
 
 	// Calc some stuff
