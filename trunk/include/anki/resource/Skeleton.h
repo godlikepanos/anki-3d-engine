@@ -6,8 +6,8 @@
 #ifndef ANKI_RESOURCE_SKELETON_H
 #define ANKI_RESOURCE_SKELETON_H
 
+#include "anki/resource/Common.h"
 #include "anki/Math.h"
-#include "anki/util/Vector.h"
 
 namespace anki {
 
@@ -17,27 +17,27 @@ struct Bone
 	friend class Skeleton; ///< For loading
 
 public:
-	/// @name Accessors
-	/// @{
-	const std::string& getName() const
+	Bone(ResourceAllocator<U8>& alloc)
+	:	m_name(alloc)
+	{}
+
+	const ResourceString& getName() const
 	{
-		return name;
+		return m_name;
 	}
 
 	const Mat4& getTransform() const
 	{
-		return transform;
+		return m_transform;
 	}
-	/// @}
 
 private:
-	std::string name; ///< The name of the bone
+	ResourceString m_name; ///< The name of the bone
 	static const U32 MAX_CHILDS_PER_BONE = 4; ///< Please dont change this
 
 	// see the class notes
-	Mat4 transform;
+	Mat4 m_transform;
 };
-
 
 /// It contains the bones with their position and hierarchy
 ///
@@ -58,20 +58,19 @@ class Skeleton
 {
 public:
 	/// Load file
-	void load(const char* filename);
+	void load(const CString& filename, ResourceInitializer& init);
 
 	/// @name Accessors
 	/// @{
-	const Vector<Bone>& getBones() const
+	const ResourceVector<Bone>& getBones() const
 	{
-		return bones;
+		return m_bones;
 	}
 	/// @}
 
 private:
-	Vector<Bone> bones;
+	ResourceVector<Bone> m_bones;
 };
-
 
 } // end namespace
 

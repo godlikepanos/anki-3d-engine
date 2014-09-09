@@ -16,10 +16,10 @@ namespace anki {
 
 // Forward
 class ConfigSet;
-class App;
 class GlDevice;
 class ResourceManager;
 
+// NOTE: Add resources in 3 places
 #define ANKI_RESOURCE(rsrc_, name_) \
 	class rsrc_; \
 	using name_ = ResourcePointer<rsrc_, ResourceManager>;
@@ -31,10 +31,7 @@ ANKI_RESOURCE(Material, MaterialResourcePointer)
 ANKI_RESOURCE(Mesh, MeshResourcePointer)
 ANKI_RESOURCE(BucketMesh, BucketMeshResourcePointer)
 ANKI_RESOURCE(Skeleton, SkeletonResourcePointer)
-ANKI_RESOURCE(SkelAnim, SkelAnimResourcePointer)
-ANKI_RESOURCE(LightRsrc, LightRsrcResourcePointer)
 ANKI_RESOURCE(ParticleEmitterResource, ParticleEmitterResourcePointer)
-ANKI_RESOURCE(Script, ScriptResourcePointer)
 ANKI_RESOURCE(Model, ModelResourcePointer)
 
 #undef ANKI_RESOURCE
@@ -62,13 +59,6 @@ public:
 
 	/// @privatesection
 	/// @{
-	void init(HeapAllocator<U8>& alloc)
-	{
-		HeapAllocator<ResourcePointerType> alloc2 = alloc;
-		Container ptrs(alloc2);
-		m_ptrs = std::move(ptrs);
-	}
-
 	Bool _findLoadedResource(const CString& filename, ResourcePointerType& ptr)
 	{
 		auto it = find(filename);
@@ -101,6 +91,14 @@ public:
 	}
 	/// @}
 
+protected:
+	void init(HeapAllocator<U8>& alloc)
+	{
+		HeapAllocator<ResourcePointerType> alloc2 = alloc;
+		Container ptrs(alloc2);
+		m_ptrs = std::move(ptrs);
+	}
+
 private:
 	Container m_ptrs;
 
@@ -132,14 +130,22 @@ class ResourceManager:
 	ANKI_RESOURCE(Mesh),
 	ANKI_RESOURCE(BucketMesh),
 	ANKI_RESOURCE(Skeleton),
-	ANKI_RESOURCE(SkelAnim),
-	ANKI_RESOURCE(LightRsrc),
 	ANKI_RESOURCE(ParticleEmitterResource),
-	ANKI_RESOURCE(Script),
 	ANKI_RESOURCE(Model)
 {
 public:
-	ResourceManager(App* app, const ConfigSet& config);
+	class Initializer
+	{
+	public:
+		GlDevice* m_gl = nullptr;
+		const ConfigSet* m_config = nullptr;
+		CString m_cacheDir;
+		AllocAlignedCallback m_allocCallback = 0;
+		void* m_allocCallbackData = nullptr;
+		U32 m_tempAllocatorMemorySize = 1024 * 1024;
+	};
+
+	ResourceManager(Initializer& init);
 
 	const ResourceString& getDataDirectory() const
 	{
@@ -170,15 +176,12 @@ public:
 		return m_tmpAlloc;
 	}
 
-	App& _getApp()
-	{
-		return *m_app;
-	}
-
 	GlDevice& _getGlDevice();
 
-	/// For materials
-	CString _getShaderPostProcessorString() const;
+	const ResourceString& _getCacheDirectory() const
+	{
+		return m_cacheDir;
+	}
 
 	template<typename T>
 	Bool _findLoadedResource(const CString& filename, 
@@ -202,9 +205,10 @@ public:
 	/// @}
 
 private:
-	App* m_app;
+	GlDevice* m_gl = nullptr;
 	ResourceAllocator<U8> m_alloc;
 	TempResourceAllocator<U8> m_tmpAlloc;
+	ResourceString m_cacheDir;
 	ResourceString m_dataDir;
 	U32 m_maxTextureSize;
 	U32 m_textureAnisotropy;

@@ -13,6 +13,7 @@
 #include "anki/resource/Material.h"
 #include "anki/misc/Xml.h"
 
+#if 0
 namespace anki {
 
 //==============================================================================
@@ -96,3 +97,4 @@ void Skin::load(const char* filename)
 }
 
 } // end namespace anki
+#endif

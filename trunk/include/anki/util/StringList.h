@@ -16,10 +16,10 @@ namespace anki {
 
 /// A simple convenience class for string lists
 template<typename TAlloc>
-class BasicStringList: public Vector<BasicString<TAlloc>, TAlloc>
+class StringListBase: public Vector<BasicString<TAlloc>, TAlloc>
 {
 public:
-	using Self = BasicStringList; ///< Self type
+	using Self = StringListBase; ///< Self type
 	using Char = char; ///< Char type
 	using Allocator = TAlloc;
 	using String = BasicString<TAlloc>; ///< String type
@@ -76,7 +76,7 @@ private:
 };
 
 /// A common string list allocated in heap.
-using StringList = BasicStringList<HeapAllocator<char>>;
+using StringList = StringListBase<HeapAllocator<char>>;
 
 /// @}
 

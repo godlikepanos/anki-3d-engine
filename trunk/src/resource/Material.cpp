@@ -396,9 +396,10 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 				{
 					TempResourceString src(rinit.m_tempAlloc);
 
-					src.sprintf("#define LOD %u\n#define PASS %u\n"
-						"#define TESSELLATION %u\n%s\n", level, pid, tess,
-						&rinit.m_resources._getShaderPostProcessorString()[0]);
+					src.sprintf("#define LOD %u\n"
+						"#define PASS %u\n"
+						"#define TESSELLATION %u\n", 
+						level, pid, tess);
 
 					TempResourceString filename =
 						createProgramSourceToChache(src);
@@ -434,7 +435,7 @@ TempResourceString Material::createProgramSourceToChache(
 	// Create path
 	TempResourceString newfPathName(source.getAllocator());
 	newfPathName.sprintf("%s/mtl_%s.glsl", 
-		&m_resources->_getApp().getCacheDirectory()[0],
+		&m_resources->_getCacheDirectory()[0],
 		&prefix[0]);
 
 	// If file not exists write it

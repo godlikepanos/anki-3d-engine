@@ -17,7 +17,7 @@ namespace anki {
 //==============================================================================
 void ProgramResource::load(const CString& filename, ResourceInitializer& init)
 {
-	load(filename, " ", init.m_resourceManager);
+	load(filename, " ", init.m_resources);
 }
 
 //==============================================================================
@@ -58,8 +58,8 @@ String ProgramResource::createSourceToCache(
 	String suffix(String::toString(h, alloc));
 
 	// Compose cached filename
-	String newFilename(manager._getApp().getCachePath()
-		+ CString("/") + filenamePrefix + suffix + CString(".glsl"));
+	String newFilename(manager._getCacheDirectory()
+		+ "/" + filenamePrefix + suffix + ".glsl");
 
 	if(fileExists(newFilename.toCString()))
 	{

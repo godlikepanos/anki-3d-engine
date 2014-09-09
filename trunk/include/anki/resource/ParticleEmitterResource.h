@@ -6,8 +6,8 @@
 #ifndef ANKI_RESOURCE_PARTICLE_EMITTER_RSRC_H
 #define ANKI_RESOURCE_PARTICLE_EMITTER_RSRC_H
 
+#include "anki/resource/ResourceManager.h"
 #include "anki/Math.h"
-#include "anki/resource/Resource.h"
 
 namespace anki {
 
@@ -110,12 +110,12 @@ public:
 	}
 
 	/// Load it
-	void load(const CString& filename, );
+	void load(const CString& filename, ResourceInitializer& init);
 
 private:
 	MaterialResourcePointer m_material;
 
-	void loadInternal(const XmlElement& el);
+	void loadInternal(const XmlElement& el, ResourceInitializer& init);
 };
 
 } // end namespace anki

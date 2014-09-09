@@ -26,7 +26,7 @@ class MaterialProgramCreator
 {
 public:
 	using MPString = TempResourceString; 
-	using MPStringList = BasicStringList<TempResourceAllocator<char>>; 
+	using MPStringList = StringListBase<TempResourceAllocator<char>>; 
 
 	class Input
 	{
