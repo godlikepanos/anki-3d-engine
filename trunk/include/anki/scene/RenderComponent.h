@@ -66,7 +66,7 @@ public:
 		return m_buildinId;
 	}
 
-	const char* getName() const
+	CString getName() const
 	{
 		return m_mvar->getName();
 	}

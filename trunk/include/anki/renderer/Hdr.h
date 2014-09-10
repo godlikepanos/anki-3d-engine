@@ -21,7 +21,7 @@ class ShaderProgram;
 /// @{
 
 /// High dynamic range lighting pass
-class Hdr: public SwitchableRenderingPass
+class Hdr: public RenderingPass
 {
 	friend class Pps;
 
@@ -82,7 +82,7 @@ private:
 	GlBufferHandle m_commonBuff;
 
 	Hdr(Renderer* r)
-		: SwitchableRenderingPass(r)
+	:	RenderingPass(r)
 	{}
 
 	~Hdr();

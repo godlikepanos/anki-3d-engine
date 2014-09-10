@@ -220,7 +220,7 @@ ModelNode::ModelNode(
 {
 	addComponent(static_cast<MoveComponent*>(this));
 
-	m_model.load(modelFname);
+	m_model.load(modelFname, &getResourceManager());
 
 	for(const ModelPatchBase* patch : m_model->getModelPatches())
 	{

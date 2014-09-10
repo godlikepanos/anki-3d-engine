@@ -16,13 +16,13 @@ namespace anki {
 
 /// A simple convenience class for string lists
 template<typename TAlloc>
-class StringListBase: public Vector<BasicString<TAlloc>, TAlloc>
+class StringListBase: public Vector<StringBase<TAlloc>, TAlloc>
 {
 public:
 	using Self = StringListBase; ///< Self type
 	using Char = char; ///< Char type
 	using Allocator = TAlloc;
-	using String = BasicString<TAlloc>; ///< String type
+	using String = StringBase<TAlloc>; ///< String type
 	using Base = Vector<String, Allocator>; ///< Base
 
 	/// Sort method for sortAll().

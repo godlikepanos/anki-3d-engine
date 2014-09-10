@@ -10,6 +10,12 @@
 namespace anki {
 
 //==============================================================================
+GlDevice& RenderingPass::getGlDevice()
+{
+	return m_r->getGlDevice();
+}
+
+//==============================================================================
 void BlurringRenderingPass::initBlurring(
 	Renderer& r, U width, U height, U samples, F32 blurringDistance)
 {

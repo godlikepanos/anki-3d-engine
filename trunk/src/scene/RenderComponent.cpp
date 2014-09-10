@@ -58,12 +58,12 @@ RenderComponentVariable::RenderComponentVariable(
 	ANKI_ASSERT(m_mvar);
 
 	// Set buildin id
-	const char* name = getName();
+	CString name = getName();
 
 	m_buildinId = BuildinMaterialVariableId::NO_BUILDIN;
 	for(U i = 0; i < buildinNames.getSize(); i++)
 	{
-		if(strcmp(name, buildinNames[i]) == 0)
+		if(name == buildinNames[i])
 		{
 			m_buildinId = (BuildinMaterialVariableId)(i + 1);
 			break;
@@ -75,7 +75,7 @@ RenderComponentVariable::RenderComponentVariable(
 		&& m_buildinId == BuildinMaterialVariableId::NO_BUILDIN)
 	{
 		ANKI_LOGW("Material variable no buildin and not initialized: %s",
-			name);
+			&name[0]);
 	}
 }
 

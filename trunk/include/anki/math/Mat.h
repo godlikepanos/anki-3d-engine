@@ -750,16 +750,16 @@ public:
 	}
 
 	template<typename TAlloc>
-	BasicString<TAlloc> toString(
-		typename BasicString<TAlloc>::Allocator& alloc) const
+	StringBase<TAlloc> toString(
+		typename StringBase<TAlloc>::Allocator& alloc) const
 	{
 		const TMat& m = *this;
-		BasicString<TAlloc> s(alloc);
+		StringBase<TAlloc> s(alloc);
 		for(U j = 0; j < J; j++)
 		{
 			for(U i = 0; i < I; i++)
 			{
-				s += BasicString<TAlloc>::toString(m(j, i), alloc) 
+				s += StringBase<TAlloc>::toString(m(j, i), alloc) 
 					+ CString(" ");
 			}
 			s += CString("\n");

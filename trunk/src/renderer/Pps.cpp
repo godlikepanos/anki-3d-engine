@@ -13,12 +13,12 @@ namespace anki {
 
 //==============================================================================
 Pps::Pps(Renderer* r)
-	:	OptionalRenderingPass(r), 
-		m_hdr(r), 
-		m_ssao(r), 
-		m_bl(r), 
-		m_lf(r),
-		m_sslr(r)
+:	RenderingPass(r), 
+	m_hdr(r), 
+	m_ssao(r), 
+	m_bl(r), 
+	m_lf(r),
+	m_sslr(r)
 {}
 
 //==============================================================================

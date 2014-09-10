@@ -13,7 +13,7 @@
 
 namespace anki {
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
 
 /// Part of the static geometry. Used only for visibility tests

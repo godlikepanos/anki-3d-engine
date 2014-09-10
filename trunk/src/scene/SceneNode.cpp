@@ -5,25 +5,22 @@
 
 #include "anki/scene/SceneNode.h"
 #include "anki/scene/SceneGraph.h"
-#include "anki/scene/MoveComponent.h"
-#include "anki/scene/SpatialComponent.h"
-#include "anki/scene/FrustumComponent.h"
 
 namespace anki {
 
 //==============================================================================
-SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
-	:	SceneObject(SCENE_NODE_TYPE, nullptr, scene_),
-		name(getSceneAllocator()),
-		components(getSceneAllocator())
+SceneNode::SceneNode(const CString& name, SceneGraph* scene)
+:	SceneObject(SCENE_NODE_TYPE, nullptr, scene),
+	m_name(getSceneAllocator()),
+	m_components(getSceneAllocator())
 {
 	ANKI_ASSERT(scene);
 
-	components.reserve(2);
+	m_components.reserve(2);
 
-	if(name_)
+	if(!name.isEmpty())
 	{
-		name = SceneString(name_, scene->getAllocator());
+		m_name = name;
 	}
 }
 
@@ -31,7 +28,7 @@ SceneNode::SceneNode(const char* name_, SceneGraph* scene_)
 SceneNode::~SceneNode()
 {
 	SceneAllocator<SceneComponent*> alloc = getSceneAllocator();
-	for(auto comp : components)
+	for(auto comp : m_components)
 	{
 		alloc.deleteInstance(comp);
 	}
@@ -54,15 +51,21 @@ U32 SceneNode::getLastUpdateFrame() const
 void SceneNode::addComponent(SceneComponent* comp)
 {
 	ANKI_ASSERT(comp);
-	components.push_back(comp);
+	m_components.push_back(comp);
 }
 
 //==============================================================================
 void SceneNode::removeComponent(SceneComponent* comp)
 {
-	auto it = std::find(components.begin(), components.end(), comp);
-	ANKI_ASSERT(it != components.end());
-	components.erase(it);
+	auto it = std::find(m_components.begin(), m_components.end(), comp);
+	ANKI_ASSERT(it != m_components.end());
+	m_components.erase(it);
+}
+
+//==============================================================================
+ResourceManager& SceneNode::getResourceManager()
+{
+	return getSceneGraph()._getResourceManager();
 }
 
 } // end namespace anki

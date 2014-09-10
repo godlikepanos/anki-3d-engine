@@ -222,7 +222,7 @@ void XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
 	File file(filename, File::OpenFlag::READ);
 
 	m_alloc = alloc;
-	BasicString<StackAllocator<char>> text(m_alloc);
+	StringBase<StackAllocator<char>> text(m_alloc);
 	file.readAllText(text);
 
 	if(m_doc.Parse(&text[0]))

@@ -2156,13 +2156,13 @@ public:
 	}
 
 	template<typename TAlloc>
-	BasicString<TAlloc> toString(
-		typename BasicString<TAlloc>::Allocator& alloc) const
+	StringBase<TAlloc> toString(
+		typename StringBase<TAlloc>::Allocator& alloc) const
 	{
-		BasicString<TAlloc> out(alloc);
+		StringBase<TAlloc> out(alloc);
 		for(U i = 0; i < N; i++)
 		{
-			out += BasicString<TAlloc>::toString(m_arr[i]) + CString(" ");
+			out += StringBase<TAlloc>::toString(m_arr[i]) + CString(" ");
 		}
 		return out;
 	}

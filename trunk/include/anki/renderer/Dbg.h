@@ -10,7 +10,6 @@
 #include "anki/Gl.h"
 #include "anki/renderer/DebugDrawer.h"
 #include "anki/util/Bitset.h"
-#include <memory>
 
 namespace anki {
 
@@ -18,31 +17,32 @@ namespace anki {
 /// @{
 
 /// Debugging stage
-class Dbg: public SwitchableRenderingPass, public Bitset<U8>
+class Dbg: public RenderingPass, public Bitset<U8>
 {
 	friend class Renderer;
 
 public:
-	enum DebugFlag
+	enum class Flag
 	{
-		DF_NONE = 0,
-		DF_SPATIAL = 1 << 0,
-		DF_FRUSTUMABLE = 1 << 1,
-		DF_SECTOR = 1 << 2,
-		DF_OCTREE = 1 << 3,
-		DF_PHYSICS = 1 << 4,
-		DF_ALL = DF_SPATIAL | DF_FRUSTUMABLE | DF_SECTOR | DF_OCTREE
-			| DF_PHYSICS
+		NONE = 0,
+		SPATIAL = 1 << 0,
+		FRUSTUMABLE = 1 << 1,
+		SECTOR = 1 << 2,
+		OCTREE = 1 << 3,
+		PHYSICS = 1 << 4,
+		ALL = SPATIAL | FRUSTUMABLE | SECTOR | OCTREE | PHYSICS
 	};
 
 	Bool getDepthTestEnabled() const
 	{
 		return m_depthTest;
 	}
+
 	void setDepthTestEnabled(Bool enable)
 	{
 		m_depthTest = enable;
 	}
+
 	void switchDepthTestEnabled()
 	{
 		m_depthTest = !m_depthTest;
@@ -56,7 +56,7 @@ private:
 	Bool8 m_depthTest = true;
 
 	Dbg(Renderer* r)
-		: SwitchableRenderingPass(r)
+	:	RenderingPass(r)
 	{}
 	
 	~Dbg();

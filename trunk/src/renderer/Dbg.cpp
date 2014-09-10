@@ -25,7 +25,7 @@ void Dbg::init(const ConfigSet& initializer)
 
 	try
 	{
-		GlDevice& gl = GlDeviceSingleton::get();
+		GlDevice& gl = getGlDevice();
 		GlCommandBufferHandle jobs(&gl);
 
 		// Chose the correct color FAI

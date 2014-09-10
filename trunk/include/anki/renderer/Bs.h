@@ -7,8 +7,6 @@
 #define ANKI_RENDERER_BS_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/Gl.h"
-#include "anki/resource/Resource.h"
 
 namespace anki {
 
@@ -22,7 +20,7 @@ class Bs: public RenderingPass
 
 private:
 	Bs(Renderer* r)
-		: RenderingPass(r) 
+	:	RenderingPass(r) 
 	{}
 
 	~Bs();

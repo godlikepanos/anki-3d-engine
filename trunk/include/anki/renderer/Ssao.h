@@ -19,7 +19,7 @@ namespace anki {
 /// @{
 
 /// Screen space ambient occlusion pass
-class Ssao: public OptionalRenderingPass
+class Ssao: public RenderingPass
 {
 	friend class Pps;
 	friend class Sslr;
@@ -46,7 +46,7 @@ private:
 	GlTextureHandle m_noiseTex;
 
 	Ssao(Renderer* r)
-		: OptionalRenderingPass(r)
+	:	RenderingPass(r)
 	{}
 
 	void init(const ConfigSet& initializer);

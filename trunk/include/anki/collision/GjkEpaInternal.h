@@ -41,7 +41,7 @@ public:
 	Face* m_face;
 
 	Edge(U32 i, U32 j, Face* face)
-	:	m_idx{i, j},
+	:	m_idx{{i, j}},
 		m_face(face)
 	{}
 

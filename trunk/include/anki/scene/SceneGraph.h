@@ -23,6 +23,7 @@ namespace anki {
 
 // Forward
 class Renderer;
+class ResourceManager;
 class Camera;
 
 /// @addtogroup Scene
@@ -180,7 +181,20 @@ public:
 		++m_objectsMarkedForDeletionCount;
 	}
 
+	/// @privatesection
+	/// @{
+	ResourceManager& _getResourceManager()
+	{
+		return *m_resources;
+	}
+
+	GlDevice& _getGlDevice();
+	/// @}
+
 private:
+	Threadpool* m_threadpool = nullptr;
+	ResourceManager* m_resources = nullptr;
+
 	SceneAllocator<U8> m_alloc;
 	SceneAllocator<U8> m_frameAlloc;
 
@@ -199,8 +213,6 @@ private:
 	EventManager m_events;
 
 	std::atomic<U32> m_objectsMarkedForDeletionCount;
-
-	Threadpool* m_threadpool;
 
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);

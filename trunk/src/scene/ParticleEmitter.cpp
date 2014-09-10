@@ -203,12 +203,12 @@ void Particle::revive(const ParticleEmitter& pe,
 ParticleEmitter::ParticleEmitter(
 	const char* name, SceneGraph* scene,
 	const char* filename)
-	:	SceneNode(name, scene),
-		SpatialComponent(this),
-		MoveComponent(this),
-		RenderComponent(this),
-		m_particles(getSceneAllocator()),
-		m_transforms(getSceneAllocator())
+:	SceneNode(name, scene),
+	SpatialComponent(this),
+	MoveComponent(this),
+	RenderComponent(this),
+	m_particles(getSceneAllocator()),
+	m_transforms(getSceneAllocator())
 {
 	addComponent(static_cast<MoveComponent*>(this));
 	addComponent(static_cast<SpatialComponent*>(this));
@@ -219,7 +219,7 @@ ParticleEmitter::ParticleEmitter(
 	m_obb.setRotation(Mat3x4::getIdentity());
 
 	// Load resource
-	m_particleEmitterResource.load(filename);
+	m_particleEmitterResource.load(filename, &getResourceManager());
 
 	// copy the resource to me
 	ParticleEmitterProperties& me = *this;
@@ -245,13 +245,13 @@ ParticleEmitter::ParticleEmitter(
 	//
 	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
 
-	GlDevice& gl = GlDeviceSingleton::get();
+	GlDevice& gl = getSceneGraph()._getGlDevice();
 	GlCommandBufferHandle jobs(&gl);
 
 	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, buffSize, 
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
-	// TODO Optimize that to avoir serialization
+	// TODO Optimize that to avoid serialization
 	jobs.finish();
 
 	m_vertBuffMapping = (U8*)m_vertBuff.getPersistentMappingAddress();

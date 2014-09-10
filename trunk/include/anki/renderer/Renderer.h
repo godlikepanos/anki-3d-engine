@@ -41,8 +41,6 @@ public:
 
 	~Renderer();
 
-	/// @name Accessors
-	/// @{
 	const Ms& getMs() const
 	{
 		return m_ms;
@@ -172,12 +170,6 @@ public:
 		return m_tilesCount;
 	}
 
-	/// Get string to pass to the material shaders
-	const std::string& getShaderPostProcessorString() const
-	{
-		return m_shaderPostProcessorString;
-	}
-
 	const GlProgramHandle& getDrawQuadVertexProgram() const
 	{
 		return m_drawQuadVert->getGlProgram();
@@ -192,7 +184,6 @@ public:
 	{
 		return *m_threadpool;
 	}
-	/// @}
 
 	/// Init the renderer given an initialization class
 	/// @param initializer The initializer class
@@ -232,6 +223,13 @@ public:
 	/// and the given fragment progam
 	GlProgramPipelineHandle createDrawQuadProgramPipeline(
 		GlProgramHandle frag);
+
+	GlDevice& getGlDevice();
+
+	/// @privatesection
+	/// @{
+	HeapAllocator<U8>& _getAllocator();
+	/// @}
 
 private:
 	/// @name Rendering stages

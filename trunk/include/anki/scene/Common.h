@@ -8,10 +8,9 @@
 
 #include "anki/util/Allocator.h"
 #include "anki/util/Vector.h"
-#include "anki/util/StdTypes.h"
+#include "anki/util/String.h"
 #include "anki/util/Dictionary.h"
 #include "anki/util/Object.h"
-#include <memory>
 
 namespace anki {
 
@@ -30,8 +29,7 @@ template<typename T>
 using SceneFrameAllocator = StackAllocator<T, false>;
 
 /// Scene string
-typedef std::basic_string<char, std::char_traits<char>,
-	SceneAllocator<char>> SceneString;
+using SceneString = StringBase<SceneAllocator<char>>;
 
 /// Scene vector
 template<typename T>
@@ -45,18 +43,6 @@ using SceneFrameVector = Vector<T, SceneFrameAllocator<T>>;
 template<typename T>
 using SceneDictionary = 
 	Dictionary<T, SceneAllocator<std::pair<const char*, T>>>;
-
-/// Deleter for shared pointers
-template<typename T>
-struct SceneSharedPtrDeleter
-{
-	void operator()(T* x)
-	{
-		ANKI_ASSERT(x);
-		SceneAllocator<U8> alloc = x->getSceneAllocator();
-		deleteObject(alloc, x);
-	}
-};
 
 /// Shared pointer in scene
 template<typename T>

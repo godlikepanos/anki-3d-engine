@@ -184,13 +184,13 @@ public:
 	}
 
 	template<typename TAlloc>
-	BasicString<TAlloc> toString(
-		typename BasicString<TAlloc>::Allocator& alloc) const
+	StringBase<TAlloc> toString(
+		typename StringBase<TAlloc>::Allocator& alloc) const
 	{
-		BasicString<TAlloc> out(alloc);
-		out = BasicString<TAlloc>("t: ", alloc) + m_origin.toString(alloc) 
+		StringBase<TAlloc> out(alloc);
+		out = StringBase<TAlloc>("t: ", alloc) + m_origin.toString(alloc) 
 			+ CString("\n\nr: ") + m_rotation.toString(alloc) 
-			+ CString("\ns: ") + BasicString<TAlloc>::toString(m_scale, alloc);
+			+ CString("\ns: ") + StringBase<TAlloc>::toString(m_scale, alloc);
 	}
 	/// @}
 

@@ -6,7 +6,6 @@
 #ifndef ANKI_SCENE_SCENE_NODE_H
 #define ANKI_SCENE_SCENE_NODE_H
 
-#include "anki/scene/Property.h"
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneObject.h"
 #include "anki/scene/SceneComponent.h"
@@ -14,8 +13,9 @@
 namespace anki {
 
 class SceneGraph; // Don't include
+class ResourceManager;
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
 
 /// Interface class backbone of scene
@@ -29,37 +29,29 @@ public:
 		ASYNC_UPDATE
 	};
 
-	/// @name Constructors/Destructor
-	/// @{
-
 	/// The one and only constructor
 	/// @param name The unique name of the node. If it's nullptr the the node
 	///             is not searchable
 	/// @param scene The scene that will register it
 	explicit SceneNode(
-		const char* name,
+		const CString& name,
 		SceneGraph* scene);
 
 	/// Unregister node
 	virtual ~SceneNode();
-	/// @}
-
-	/// @name Accessors
-	/// @{
 
 	/// Return the name. It may be nullptr for nodes that we don't want to 
 	/// track
-	const char* getName() const
+	CString getName() const
 	{
-		return name.length() > 0 ? name.c_str() : nullptr;
+		return (!m_name.isEmpty()) ? m_name.toCString() : CString();
 	}
-	/// @}
 
 	/// This is called by the scene every frame after logic and before
 	/// rendering. By default it does nothing
-	/// @param[in] prevUpdateTime Timestamp of the previous update
-	/// @param[in] crntTime Timestamp of this update
-	/// @param[in] uptype The type of this update
+	/// @param prevUpdateTime Timestamp of the previous update
+	/// @param crntTime Timestamp of this update
+	/// @param uptype The type of this update
 	virtual void frameUpdate(F32 prevUpdateTime, F32 crntTime, 
 		UpdateType uptype)
 	{
@@ -83,7 +75,7 @@ public:
 	template<typename Func>
 	void iterateComponents(Func func)
 	{
-		for(auto comp : components)
+		for(auto comp : m_components)
 		{
 			func(*comp);
 		}
@@ -93,7 +85,7 @@ public:
 	template<typename Func>
 	void iterateComponents(Func func) const
 	{
-		for(auto comp : components)
+		for(auto comp : m_components)
 		{
 			func(*comp);
 		}
@@ -104,7 +96,7 @@ public:
 	void iterateComponentsOfType(Func func)
 	{
 		SceneComponent::Type type = Component::getClassType();
-		for(auto comp : components)
+		for(auto comp : m_components)
 		{
 			if(comp->getType() == type)
 			{
@@ -118,7 +110,7 @@ public:
 	Component* tryGetComponent()
 	{
 		SceneComponent::Type type = Component::getClassType();
-		for(auto comp : components)
+		for(auto comp : m_components)
 		{
 			if(comp->getType() == type)
 			{
@@ -133,7 +125,7 @@ public:
 	const Component* tryGetComponent() const
 	{
 		SceneComponent::Type type = Component::getClassType();
-		for(auto comp : components)
+		for(auto comp : m_components)
 		{
 			if(comp->getType() == type)
 			{
@@ -173,10 +165,13 @@ protected:
 	/// Remove a component from the container
 	void removeComponent(SceneComponent* comp);
 
+	ResourceManager& getResourceManager();
+
 private:
-	SceneString name; ///< A unique name
-	SceneVector<SceneComponent*> components;
+	SceneString m_name; ///< A unique name
+	SceneVector<SceneComponent*> m_components;
 };
+
 /// @}
 
 } // end namespace anki

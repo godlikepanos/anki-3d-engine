@@ -15,7 +15,7 @@ namespace anki {
 /// @{
 
 /// Material stage EarlyZ pass
-class Ez: public OptionalRenderingPass
+class Ez: public RenderingPass
 {
 	friend class Ms;
 
@@ -23,7 +23,7 @@ private:
 	U32 m_maxObjectsToDraw;
 
 	Ez(Renderer* r)
-		: OptionalRenderingPass(r)
+	:	RenderingPass(r)
 	{}
 
 	void init(const ConfigSet& initializer);
