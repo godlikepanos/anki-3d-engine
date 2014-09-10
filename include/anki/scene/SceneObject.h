@@ -16,7 +16,7 @@ namespace anki {
 class SceneGraph;
 class SceneObject;
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
 
 /// The callbacks of SceneObject
@@ -52,8 +52,6 @@ public:
 
 	virtual ~SceneObject();
 
-	/// @name Accessors
-	/// @{
 	Type getType() const
 	{
 		return (Type)(flags & EVENT_TYPE);
@@ -71,7 +69,6 @@ public:
 	{
 		return *scene;
 	}
-	/// @}
 
 	Bool isMarkedForDeletion() const
 	{

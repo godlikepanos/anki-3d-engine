@@ -16,6 +16,9 @@ namespace anki {
 
 class ParticleEmitter;
 
+/// @addtogroup scene
+/// @{
+
 /// Particle base
 class ParticleBase
 {
@@ -28,16 +31,16 @@ public:
 	virtual ~ParticleBase()
 	{}
 
-	/// @name Accessors
-	/// @{
 	F32 getTimeOfBirth() const
 	{
 		return m_timeOfBirth;
 	}
+
 	F32& getTimeOfBirth()
 	{
 		return m_timeOfBirth;
 	}
+
 	void setTimeOfBirth(const F32 x)
 	{
 		m_timeOfBirth = x;
@@ -47,15 +50,16 @@ public:
 	{
 		return m_timeOfDeath;
 	}
+
 	F32& getTimeOfDeath()
 	{
 		return m_timeOfDeath;
 	}
+
 	void setTimeOfDeath(const F32 x)
 	{
 		m_timeOfDeath = x;
 	}
-	/// @}
 
 	Bool isDead() const
 	{
@@ -116,8 +120,8 @@ private:
 	Vec4 m_position;
 };
 
-/// Particle for bullet simulations
 #if 0
+/// Particle for bullet simulations
 class Particle: public ParticleBase
 {
 public:
@@ -224,6 +228,8 @@ private:
 
 	void doInstancingCalcs();
 };
+
+/// @}
 
 } // end namespace anki
 

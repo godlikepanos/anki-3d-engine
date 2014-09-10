@@ -21,11 +21,11 @@ public:
 	typedef T Value;
 
 	Bitset()
-		: m_bitmask(0)
+	:	m_bitmask(0)
 	{}
 
 	Bitset(T bitmask)
-		: m_bitmask(bitmask)
+	:	m_bitmask(bitmask)
 	{}
 
 	/// @name Bits manipulation
@@ -34,6 +34,7 @@ public:
 	{
 		m_bitmask |= mask;
 	}
+
 	void enableBits(Value mask, Bool enable)
 	{
 		m_bitmask = (enable) ? m_bitmask | mask : m_bitmask & ~mask;

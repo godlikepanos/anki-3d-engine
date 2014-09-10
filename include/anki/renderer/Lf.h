@@ -18,7 +18,7 @@ namespace anki {
 /// @{
 
 /// Lens flare rendering pass
-class Lf: public OptionalRenderingPass
+class Lf: public RenderingPass
 {
 	friend class Pps;
 
@@ -58,7 +58,7 @@ private:
 	GlBufferHandle m_flareDataBuff;
 
 	Lf(Renderer* r)
-		: OptionalRenderingPass(r)
+	:	RenderingPass(r)
 	{}
 
 	~Lf();

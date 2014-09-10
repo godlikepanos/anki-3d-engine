@@ -8,11 +8,12 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/Gl.h"
-#include "anki/resource/Resource.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/resource/ProgramResource.h"
 
 namespace anki {
 
+// Forward
 class Renderer;
 
 /// @addtogroup renderer
@@ -23,22 +24,10 @@ class RenderingPass
 {
 public:
 	RenderingPass(Renderer* r)
-		: m_r(r)
+	:	m_r(r)
 	{}
 
 	~RenderingPass()
-	{}
-
-protected:
-	Renderer* m_r; ///< Know your father
-};
-
-/// Rendering pass that can be enabled or disabled at runtime
-class SwitchableRenderingPass: public RenderingPass
-{
-public:
-	SwitchableRenderingPass(Renderer* r)
-		: RenderingPass(r)
 	{}
 
 	Bool getEnabled() const
@@ -51,24 +40,12 @@ public:
 	}
 
 protected:
+	Renderer* m_r; ///< Know your father
 	Bool8 m_enabled = false;
-};
 
-/// Rendering pass that can be enabled or disabled
-class OptionalRenderingPass: public RenderingPass
-{
-public:
-	OptionalRenderingPass(Renderer* r)
-		: RenderingPass(r)
-	{}
+	HeapAllocator<U8>& getAllocator();
 
-	Bool getEnabled() const
-	{
-		return m_enabled;
-	}
-
-protected:
-	Bool8 m_enabled = false;
+	GlDevice& getGlDevice();
 };
 
 /// Blurring pass

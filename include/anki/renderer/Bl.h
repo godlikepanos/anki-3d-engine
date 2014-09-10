@@ -17,11 +17,11 @@ namespace anki {
 class ProgramResource;
 
 /// Blurring rendering pass
-class Bl: public SwitchableRenderingPass
+class Bl: public RenderingPass
 {
 public:
 	Bl(Renderer* r)
-		: SwitchableRenderingPass(r)
+	:	RenderingPass(r)
 	{}
 
 	void init(const ConfigSet& initializer);

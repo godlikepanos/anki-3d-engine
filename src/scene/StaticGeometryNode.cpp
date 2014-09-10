@@ -118,9 +118,9 @@ void StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 //==============================================================================
 StaticGeometryNode::StaticGeometryNode(
 	const char* name, SceneGraph* scene, const char* filename)
-	: SceneNode(name, scene)
+:	SceneNode(name, scene)
 {
-	m_model.load(filename);
+	m_model.load(filename, &getResourceManager());
 
 	U i = 0;
 	for(const ModelPatchBase* patch : m_model->getModelPatches())

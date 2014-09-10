@@ -82,7 +82,7 @@ public:
 	/// @name Constructors
 	/// @{
 	Light(
-		const char* name, SceneGraph* scene, // SceneNode
+		const CString& name, SceneGraph* scene, // SceneNode
 		LightType t); // Self
 	/// @}
 
@@ -176,11 +176,7 @@ public:
 	}
 	/// @}
 
-	void loadLensFlare(const char* filename)
-	{
-		ANKI_ASSERT(!hasLensFlare());
-		flaresTex.load(filename);
-	}
+	void loadLensFlare(const CString& filename);
 
 	/// @name SpatialComponent virtuals
 	/// @{
@@ -220,7 +216,7 @@ class PointLight: public Light
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	PointLight(const char* name, SceneGraph* scene);
+	PointLight(const CString& name, SceneGraph* scene);
 	/// @}
 
 	/// @name Accessors
@@ -265,7 +261,7 @@ class SpotLight: public Light, public FrustumComponent
 public:
 	/// @name Constructors/Destructor
 	/// @{
-	SpotLight(const char* name, SceneGraph* scene);
+	SpotLight(const CString& name, SceneGraph* scene);
 	/// @}
 
 	/// @name Accessors
@@ -335,10 +331,7 @@ public:
 	}
 	/// @}
 
-	void loadTexture(const char* filename)
-	{
-		m_tex.load(filename);
-	}
+	void loadTexture(const CString& filename);
 
 private:
 	PerspectiveFrustum m_frustum;

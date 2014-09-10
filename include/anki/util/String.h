@@ -18,7 +18,7 @@ namespace anki {
 
 // Forward
 template<typename TAlloc>
-class BasicString;
+class StringBase;
 
 /// @addtogroup util_private
 /// @{
@@ -62,7 +62,7 @@ ANKI_DEPLOY_TO_STRING(F64, "%f")
 class CString
 {
 	template<typename TAlloc>
-	friend class BasicString; // For the secret constructor
+	friend class StringBase; // For the secret constructor
 
 	// For the secret constructor
 	friend CString operator"" _cstr(const char*, unsigned long); 
@@ -246,27 +246,27 @@ CString operator"" _cstr(const char* str, unsigned long length)
 
 /// The base class for strings.
 template<typename TAlloc>
-class BasicString
+class StringBase
 {
 public:
 	using Char = char; ///< Character type
 	using Allocator = TAlloc; ///< Allocator type
-	using Self = BasicString;
+	using Self = StringBase;
 	using CStringType = CString;
 	using Iterator = Char*;
 	using ConstIterator = const Char*;
 
 	static const PtrSize NPOS = MAX_PTR_SIZE;
 
-	BasicString() noexcept
+	StringBase() noexcept
 	{}
 
-	BasicString(Allocator alloc) noexcept
+	StringBase(Allocator alloc) noexcept
 	:	m_data(alloc)
 	{}
 
 	/// Initialize using a const string.
-	BasicString(const CStringType& cstr, Allocator alloc)
+	StringBase(const CStringType& cstr, Allocator alloc)
 	:	m_data(alloc)
 	{
 		auto size = cstr.getLength() + 1;
@@ -275,7 +275,7 @@ public:
 	}
 
 	/// Initialize using a range. Copies the range of [first, last)
-	BasicString(ConstIterator first, ConstIterator last, Allocator alloc)
+	StringBase(ConstIterator first, ConstIterator last, Allocator alloc)
 	:	m_data(alloc)
 	{
 		ANKI_ASSERT(first != 0 && last != 0);
@@ -286,17 +286,17 @@ public:
 	}
 
 	/// Copy constructor.
-	BasicString(const Self& b)
+	StringBase(const Self& b)
 	:	m_data(b.m_data)
 	{}
 
 	/// Move constructor.
-	BasicString(BasicString&& b) noexcept
+	StringBase(StringBase&& b) noexcept
 	:	m_data(b.m_data)
 	{}
 
 	/// Destroys the string.
-	~BasicString() noexcept
+	~StringBase() noexcept
 	{}
 
 	/// Copy another string to this one.
@@ -377,7 +377,7 @@ public:
 
 	/// Append another string to this one.
 	template<typename TTAlloc>
-	Self& operator+=(const BasicString<TTAlloc>& b)
+	Self& operator+=(const StringBase<TTAlloc>& b)
 	{
 		b.checkInit();
 		append(&b.m_data[0], b.m_data.size());
@@ -600,7 +600,7 @@ public:
 	/// @return A valid position if the string is found or NPOS if not found.
 	template<typename TTAlloc>
 	PtrSize find(
-		const BasicString<TTAlloc>& str, PtrSize position) const noexcept
+		const StringBase<TTAlloc>& str, PtrSize position) const noexcept
 	{
 		str.chechInit();
 		return find(str.toCString(), position);
@@ -623,7 +623,7 @@ public:
 		}
 
 		using YAlloc = typename TTAlloc::template rebind<Char>::other;
-		return BasicString<YAlloc>(&buff[0], alloc);
+		return StringBase<YAlloc>(&buff[0], alloc);
 	}
 
 	/// Convert to F64.
@@ -680,10 +680,10 @@ private:
 };
 
 template<typename TAlloc>
-inline BasicString<TAlloc> operator+(
-	const CString& left, const BasicString<TAlloc>& right)
+inline StringBase<TAlloc> operator+(
+	const CString& left, const StringBase<TAlloc>& right)
 {
-	BasicString<TAlloc> out(right.getAllocator());
+	StringBase<TAlloc> out(right.getAllocator());
 
 	auto leftLength = left.getLength();
 	out.resize(leftLength + right.getLength());
@@ -695,7 +695,7 @@ inline BasicString<TAlloc> operator+(
 }
 
 /// A common string type that uses heap allocator.
-using String = BasicString<HeapAllocator<char>>;
+using String = StringBase<HeapAllocator<char>>;
 
 /// @}
 

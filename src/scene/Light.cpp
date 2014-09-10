@@ -22,13 +22,13 @@ LightComponent::LightComponent(Light* node)
 
 //==============================================================================
 Light::Light(
-	const char* name, SceneGraph* scene, // SceneNode
+	const CString& name, SceneGraph* scene, // SceneNode
 	LightType t) // Self
-	:	SceneNode(name, scene),
-		LightComponent(this),
-		MoveComponent(this),
-		SpatialComponent(this),
-		type(t)
+:	SceneNode(name, scene),
+	LightComponent(this),
+	MoveComponent(this),
+	SpatialComponent(this),
+	type(t)
 {
 	// Init components
 	addComponent(static_cast<LightComponent*>(this));
@@ -79,12 +79,19 @@ void Light::moveUpdate(MoveComponent& move)
 }
 
 //==============================================================================
+void Light::loadLensFlare(const CString& filename)
+{
+	ANKI_ASSERT(!hasLensFlare());
+	flaresTex.load(filename, &getResourceManager());
+}
+
+//==============================================================================
 // PointLight                                                                  =
 //==============================================================================
 
 //==============================================================================
-PointLight::PointLight(const char* name, SceneGraph* scene)
-	:	Light(name, scene, LT_POINT)
+PointLight::PointLight(const CString& name, SceneGraph* scene)
+:	Light(name, scene, LT_POINT)
 {}
 
 //==============================================================================
@@ -104,9 +111,9 @@ void PointLight::componentUpdated(SceneComponent& comp,
 //==============================================================================
 
 //==============================================================================
-SpotLight::SpotLight(const char* name, SceneGraph* scene)
-	:	Light(name, scene, LT_SPOT),
-		FrustumComponent(this, &m_frustum)
+SpotLight::SpotLight(const CString& name, SceneGraph* scene)
+:	Light(name, scene, LT_SPOT),
+	FrustumComponent(this, &m_frustum)
 {
 	// Init components
 	addComponent(static_cast<FrustumComponent*>(this));
@@ -127,6 +134,12 @@ void SpotLight::componentUpdated(SceneComponent& comp,
 		m_frustum.resetTransform(move.getWorldTransform());
 		moveUpdate(move);
 	}
+}
+
+//==============================================================================
+void SpotLight::loadTexture(const CString& filename)
+{
+	m_tex.load(filename, &getResourceManager());
 }
 
 } // end namespace anki

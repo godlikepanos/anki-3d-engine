@@ -25,7 +25,7 @@ using ResourceAllocator = HeapAllocator<T>;
 template<typename T>
 using ResourceVector = Vector<T, ResourceAllocator<T>>;
 
-using ResourceString = BasicString<ResourceAllocator<char>>;
+using ResourceString = StringBase<ResourceAllocator<char>>;
 
 template<typename T>
 using TempResourceAllocator = StackAllocator<T>;
@@ -33,7 +33,7 @@ using TempResourceAllocator = StackAllocator<T>;
 template<typename T>
 using TempResourceVector = Vector<T, TempResourceAllocator<T>>;
 
-using TempResourceString = BasicString<TempResourceAllocator<char>>;
+using TempResourceString = StringBase<TempResourceAllocator<char>>;
 
 /// Contains initialization information for the resource classes.
 class ResourceInitializer

@@ -16,7 +16,7 @@ namespace anki {
 /// @{
 
 /// Screen space local reflections pass
-class Sslr: public OptionalRenderingPass, public BlurringRenderingPass
+class Sslr: public RenderingPass, public BlurringRenderingPass
 {
 	friend class Pps;
 
@@ -40,7 +40,7 @@ private:
 	GlProgramPipelineHandle m_blitPpline;
 
 	Sslr(Renderer* r)
-		: OptionalRenderingPass(r)
+	:	RenderingPass(r)
 	{}
 
 	void init(const ConfigSet& initializer);

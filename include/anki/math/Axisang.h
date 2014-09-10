@@ -190,12 +190,12 @@ public:
 	/// @name Other
 	/// @{
 	template<typename TAlloc>
-	BasicString<TAlloc> toString(
-		typename BasicString<TAlloc>::Allocator& alloc) const
+	StringBase<TAlloc> toString(
+		typename StringBase<TAlloc>::Allocator& alloc) const
 	{
-		BasicString<TAlloc> s(alloc);
+		StringBase<TAlloc> s(alloc);
 		s += "axis: " + m_axis.toString(alloc) 
-			+ ", angle: " + BasicString<TAlloc>::toString(m_ang, alloc);
+			+ ", angle: " + StringBase<TAlloc>::toString(m_ang, alloc);
 		return s;
 	}
 	/// @}

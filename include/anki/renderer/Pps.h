@@ -25,13 +25,11 @@ class ShaderProgram;
 
 /// Post-processing stage.This stage is divided into 2 two parts. The first
 /// happens before blending stage and the second after
-class Pps: public OptionalRenderingPass
+class Pps: public RenderingPass
 {
 	friend class Renderer;
 
 public:
-	/// @name Accessors
-	/// @{
 	const Hdr& getHdr() const
 	{
 		return m_hdr;
@@ -76,9 +74,7 @@ public:
 	{
 		return m_sslr;
 	}
-	/// @}
 
-	/// @privatesection
 	/// @{
 	const GlTextureHandle& _getRt() const
 	{

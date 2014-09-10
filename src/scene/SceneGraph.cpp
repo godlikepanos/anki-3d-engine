@@ -79,7 +79,7 @@ struct UpdateSceneNodesJob: Threadpool::Task
 //==============================================================================
 SceneGraph::SceneGraph(AllocAlignedCallback allocCb, void* allocCbData, 
 	Threadpool* threadpool)
-:	m_alloc(allocCb, allocCbData, ANKI_SCENE_ALLOCATOR_SIZE),
+:	m_alloc(StackMemoryPool(allocCb, allocCbData, ANKI_SCENE_ALLOCATOR_SIZE)),
 	m_frameAlloc(StackMemoryPool(allocCb, allocCbData, 
 		ANKI_SCENE_FRAME_ALLOCATOR_SIZE)),
 	m_nodes(m_alloc),
@@ -259,5 +259,11 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 //==============================================================================
 void SceneGraph::load(const char* filename)
 {}
+
+//==============================================================================
+GlDevice& SceneGraph::_getGlDevice()
+{
+	return m_resources->_getGlDevice();
+}
 
 } // end namespace anki
