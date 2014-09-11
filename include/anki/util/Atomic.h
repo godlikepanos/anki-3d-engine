@@ -22,6 +22,9 @@ using AtomicU32 = std::atomic<U32>;
 using AtomicI64 = std::atomic<I64>;
 using AtomicU64 = std::atomic<U64>;
 
+template<typename T>
+using Atomic = std::atomic<T>;
+
 /// @}
 
 } // end namespace anki

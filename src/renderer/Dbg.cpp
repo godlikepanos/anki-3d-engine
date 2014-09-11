@@ -10,18 +10,29 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 #include "anki/core/Logger.h"
+#include "anki/util/Enum.h"
 
 namespace anki {
 
 //==============================================================================
 Dbg::~Dbg()
-{}
+{
+	if(m_drawer != nullptr)
+	{
+		getAllocator().deleteInstance(m_drawer);
+	}
+
+	if(m_sceneDrawer != nullptr)
+	{
+		getAllocator().deleteInstance(m_sceneDrawer);
+	}
+}
 
 //==============================================================================
 void Dbg::init(const ConfigSet& initializer)
 {
 	m_enabled = initializer.get("dbg.enabled");
-	enableBits(DF_ALL);
+	enableBits(enumToValue(Flag::ALL));
 
 	try
 	{
@@ -42,8 +53,8 @@ void Dbg::init(const ConfigSet& initializer)
 				{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
 		}
 
-		m_drawer.reset(new DebugDrawer);
-		m_sceneDrawer.reset(new SceneDebugDrawer(m_drawer.get()));
+		m_drawer = getAllocator().newInstance<DebugDrawer>();
+		m_sceneDrawer = getAllocator().newInstance<SceneDebugDrawer>(m_drawer);
 
 		jobs.finish();
 	}
@@ -78,29 +89,11 @@ void Dbg::run(GlCommandBufferHandle& jobs)
 			return;
 		}
 
-		if(bitsEnabled(DF_SPATIAL) && sp)
+		if(bitsEnabled(enumToValue(Flag::SPATIAL)) && sp)
 		{
 			m_sceneDrawer->draw(node);
 		}
 	});
-
-	// Draw sectors
-	for(const Sector* sector : scene.getSectorGroup().getSectors())
-	{
-		//if(sector->isVisible())
-		{
-			if(bitsEnabled(DF_SECTOR))
-			{
-				m_sceneDrawer->draw(*sector);
-			}
-		}
-	}
-
-	// Physics
-	if(bitsEnabled(DF_PHYSICS))
-	{
-		//scene.getPhysics().debugDraw();
-	}
 
 	// XXX
 #if 0
@@ -194,7 +187,7 @@ void Dbg::run(GlCommandBufferHandle& jobs)
 		Aabb s0(pos0 - Vec4(1.0, 1.0, 2.0, 0.0), pos0 + Vec4(1.0, 1.0, 2.0, 0.0));
 		Obb s1(pos1, rot1, Vec4(1.0, 0.5, 2.5, 0.0));
 
-		CollisionDebugDrawer dr(m_drawer.get());
+		CollisionDebugDrawer dr(m_drawer);
 
 		GjkEpa gjk(100, 100, 100);
 		ContactPoint cp;

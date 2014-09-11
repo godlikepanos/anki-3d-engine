@@ -5,7 +5,7 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/renderer/Renderer.h"
-#include <sstream>
+#include "anki/util/Enum.h"
 
 namespace anki {
 
@@ -16,25 +16,39 @@ GlDevice& RenderingPass::getGlDevice()
 }
 
 //==============================================================================
+HeapAllocator<U8>& RenderingPass::getAllocator()
+{
+	return m_r->_getAllocator();
+}
+
+//==============================================================================
+ResourceManager& RenderingPass::getResourceManager()
+{
+	return m_r->_getResourceManager();
+}
+
+//==============================================================================
 void BlurringRenderingPass::initBlurring(
 	Renderer& r, U width, U height, U samples, F32 blurringDistance)
 {
-	GlDevice& gl = GlDeviceSingleton::get();
+	GlDevice& gl = getGlDevice();
 	GlCommandBufferHandle jobs(&gl);
 
-	Array<std::stringstream, 2> pps;
+	Array<String, 2> pps = {{String(getAllocator()), String(getAllocator())}};
 
-	pps[1] << "#define HPASS\n"
+	pps[1].sprintf("#define HPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST float(" << blurringDistance << ")\n"
-		"#define IMG_DIMENSION " << height << "\n"
-		"#define SAMPLES " << samples << "\n";
+		"#define BLURRING_DIST float(%f)\n"
+		"#define IMG_DIMENSION %u\n"
+		"#define SAMPLES %u\n", 
+		blurringDistance, height, samples);
 
-	pps[0] << "#define VPASS\n"
+	pps[0].sprintf("#define VPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST float(" << blurringDistance << ")\n"
-		"#define IMG_DIMENSION " << width << "\n"
-		"#define SAMPLES " << samples << "\n";
+		"#define BLURRING_DIST float(%f)\n"
+		"#define IMG_DIMENSION %u\n"
+		"#define SAMPLES %u\n",
+		blurringDistance, width, samples);
 
 	for(U i = 0; i < 2; i++)
 	{
@@ -51,9 +65,10 @@ void BlurringRenderingPass::initBlurring(
 		dir.m_fb = GlFramebufferHandle(
 			jobs, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
 
-		dir.m_frag.load(ProgramResource::createSrcCodeToCache(
+		dir.m_frag.load(ProgramResource::createSourceToCache(
 			"shaders/VariableSamplingBlurGeneric.frag.glsl", 
-			pps[i].str().c_str(), "r_").c_str());
+			pps[i].toCString(), "r_", getResourceManager()).toCString(),
+			&getResourceManager());
 
 		dir.m_ppline = 
 			r.createDrawQuadProgramPipeline(dir.m_frag->getGlProgram());
@@ -65,19 +80,22 @@ void BlurringRenderingPass::initBlurring(
 //==============================================================================
 void BlurringRenderingPass::runBlurring(Renderer& r, GlCommandBufferHandle& jobs)
 {
-	m_dirs[(U)DirectionEnum::VERTICAL].m_rt.bind(jobs, 1); // H pass input
-	m_dirs[(U)DirectionEnum::HORIZONTAL].m_rt.bind(jobs, 0); // V pass input
+	// H pass input
+	m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_rt.bind(jobs, 1); 
+
+	// V pass input
+	m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_rt.bind(jobs, 0); 
 
 	for(U32 i = 0; i < m_blurringIterationsCount; i++)
 	{
 		// hpass
-		m_dirs[(U)DirectionEnum::HORIZONTAL].m_fb.bind(jobs, true);
-		m_dirs[(U)DirectionEnum::HORIZONTAL].m_ppline.bind(jobs);
+		m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_fb.bind(jobs, true);
+		m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_ppline.bind(jobs);
 		r.drawQuad(jobs);
 
 		// vpass
-		m_dirs[(U)DirectionEnum::VERTICAL].m_fb.bind(jobs, true);
-		m_dirs[(U)DirectionEnum::VERTICAL].m_ppline.bind(jobs);
+		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_fb.bind(jobs, true);
+		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_ppline.bind(jobs);
 		r.drawQuad(jobs);
 	}
 }

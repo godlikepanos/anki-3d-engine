@@ -15,6 +15,7 @@ namespace anki {
 
 // Forward
 class Renderer;
+class ResourceManager;
 
 /// @addtogroup renderer
 /// @{
@@ -46,13 +47,19 @@ protected:
 	HeapAllocator<U8>& getAllocator();
 
 	GlDevice& getGlDevice();
+
+	ResourceManager& getResourceManager();
 };
 
 /// Blurring pass
-class BlurringRenderingPass
+class BlurringRenderingPass: public RenderingPass
 {
 protected:
 	U32 m_blurringIterationsCount = 1; ///< The blurring iterations
+
+	BlurringRenderingPass(Renderer* r)
+	:	RenderingPass(r)
+	{}
 
 	class Direction
 	{

@@ -224,11 +224,13 @@ public:
 	GlProgramPipelineHandle createDrawQuadProgramPipeline(
 		GlProgramHandle frag);
 
-	GlDevice& getGlDevice();
-
 	/// @privatesection
 	/// @{
+	GlDevice& _getGlDevice();
+
 	HeapAllocator<U8>& _getAllocator();
+
+	ResourceManager& _getResourceManager();
 	/// @}
 
 private:
