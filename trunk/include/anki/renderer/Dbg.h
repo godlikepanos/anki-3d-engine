@@ -10,6 +10,7 @@
 #include "anki/Gl.h"
 #include "anki/renderer/DebugDrawer.h"
 #include "anki/util/Bitset.h"
+#include "anki/util/Enum.h"
 
 namespace anki {
 
@@ -32,6 +33,7 @@ public:
 		PHYSICS = 1 << 4,
 		ALL = SPATIAL | FRUSTUMABLE | SECTOR | OCTREE | PHYSICS
 	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend);
 
 	Bool getDepthTestEnabled() const
 	{
@@ -50,9 +52,9 @@ public:
 
 private:
 	GlFramebufferHandle m_fb;
-	std::unique_ptr<DebugDrawer> m_drawer;
+	DebugDrawer* m_drawer = nullptr;
 	// Have it as ptr because the constructor calls opengl
-	std::unique_ptr<SceneDebugDrawer> m_sceneDrawer;
+	SceneDebugDrawer* m_sceneDrawer = nullptr;
 	Bool8 m_depthTest = true;
 
 	Dbg(Renderer* r)

@@ -5,7 +5,6 @@
 
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Renderer.h"
-#include <sstream>
 
 namespace anki {
 
@@ -16,7 +15,7 @@ Hdr::~Hdr()
 //==============================================================================
 void Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 {
-	GlDevice& gl = GlDeviceSingleton::get();
+	GlDevice& gl = getGlDevice();
 
 	m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
 		GL_UNSIGNED_BYTE, 1, rt);
@@ -56,7 +55,7 @@ void Hdr::initInternal(const ConfigSet& initializer)
 	initFb(m_vblurFb, m_vblurRt);
 
 	// init shaders
-	GlDevice& gl = GlDeviceSingleton::get();
+	GlDevice& gl = getGlDevice();
 	GlCommandBufferHandle jobs(&gl);
 
 	m_commonBuff = GlBufferHandle(jobs, GL_SHADER_STORAGE_BUFFER, 
@@ -66,7 +65,7 @@ void Hdr::initInternal(const ConfigSet& initializer)
 
 	jobs.flush();
 
-	m_toneFrag.load("shaders/PpsHdr.frag.glsl");
+	m_toneFrag.load("shaders/PpsHdr.frag.glsl", &getResourceManager());
 
 	m_tonePpline = 
 		m_r->createDrawQuadProgramPipeline(m_toneFrag->getGlProgram());
@@ -74,28 +73,35 @@ void Hdr::initInternal(const ConfigSet& initializer)
 	const char* SHADER_FILENAME = 
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
-	std::stringstream pps;
-	pps << "#define HPASS\n"
+	String pps(getAllocator());
+	pps.sprintf("#define HPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST float(" << m_blurringDist << ")\n"
-		"#define IMG_DIMENSION " << m_height << "\n"
-		"#define SAMPLES " << (U)initializer.get("pps.hdr.samples") << "\n";
+		"#define BLURRING_DIST float(%f)\n"
+		"#define IMG_DIMENSION %u\n"
+		"#define SAMPLES %u\n",
+		m_blurringDist, m_height, 
+		static_cast<U>(initializer.get("pps.hdr.samples")));
 
-	m_hblurFrag.load(ProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
+	m_hblurFrag.load(ProgramResource::createSourceToCache(
+		SHADER_FILENAME, pps.toCString(), "r_", 
+		getResourceManager()).toCString(),
+		&getResourceManager());
 
 	m_hblurPpline = 
 		m_r->createDrawQuadProgramPipeline(m_hblurFrag->getGlProgram());
 
-	pps.str("");
-	pps << "#define VPASS\n"
+	pps.sprintf("#define VPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST float(" << m_blurringDist << ")\n"
-		"#define IMG_DIMENSION " << m_width << "\n"
-		"#define SAMPLES " << (U)initializer.get("pps.hdr.samples") << "\n";
+		"#define BLURRING_DIST float(%f)\n"
+		"#define IMG_DIMENSION %u\n"
+		"#define SAMPLES %u\n",
+		m_blurringDist, m_width, 
+		static_cast<U>(initializer.get("pps.hdr.samples")));
 
-	m_vblurFrag.load(ProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
+	m_vblurFrag.load(ProgramResource::createSourceToCache(
+		SHADER_FILENAME, pps.toCString(), "r_",
+		getResourceManager()).toCString(),
+		&getResourceManager());
 
 	m_vblurPpline = 
 		m_r->createDrawQuadProgramPipeline(m_vblurFrag->getGlProgram());

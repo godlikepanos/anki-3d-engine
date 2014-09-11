@@ -212,7 +212,7 @@ private:
 
 	EventManager m_events;
 
-	std::atomic<U32> m_objectsMarkedForDeletionCount;
+	AtomicU32 m_objectsMarkedForDeletionCount;
 
 	/// Put a node in the appropriate containers
 	void registerNode(SceneNode* node);

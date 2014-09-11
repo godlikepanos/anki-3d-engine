@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/renderer/DebugDrawer.h"
+#include "anki/renderer/Renderer.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/Collision.h"
 #include "anki/Scene.h"
@@ -18,12 +19,12 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-DebugDrawer::DebugDrawer()
+DebugDrawer::DebugDrawer(Renderer* r)
 {
-	GlDevice& gl = GlDeviceSingleton::get();
+	GlDevice& gl = r->_getGlDevice();
 
-	m_vert.load("shaders/Dbg.vert.glsl");
-	m_frag.load("shaders/Dbg.frag.glsl");
+	m_vert.load("shaders/Dbg.vert.glsl", &r->_getResourceManager());
+	m_frag.load("shaders/Dbg.frag.glsl", &r->_getResourceManager());
 
 	GlCommandBufferHandle jobs(&gl);
 
@@ -137,7 +138,7 @@ void DebugDrawer::flushInternal(GLenum primitive)
 	m_vertBuff.bindVertexBuffer(m_jobs, 
 		4, GL_FLOAT, true, sizeof(Vertex), sizeof(Vec4), 1); // Color
 
-	m_jobs.draw(primitive, clientVerts);
+	m_jobs.drawArrays(primitive, clientVerts);
 }
 
 //==============================================================================

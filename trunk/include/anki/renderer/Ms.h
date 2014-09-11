@@ -70,7 +70,8 @@ private:
 	Array<Plane, 2> m_planes;
 
 	Ms(Renderer* r)
-		: RenderingPass(r), m_ez(r)
+	:	RenderingPass(r), 
+		m_ez(r)
 	{}
 
 	~Ms();

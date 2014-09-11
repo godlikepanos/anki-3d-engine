@@ -7,6 +7,7 @@
 #define ANKI_GL_GL_HANDLE_H
 
 #include "anki/gl/GlCommon.h"
+#include "anki/util/Atomic.h"
 
 namespace anki {
 
@@ -243,7 +244,7 @@ private:
 	{
 	public:
 		Y* m_ptr;
-		std::atomic<I32> m_refcount;
+		Atomic<I32> m_refcount;
 
 		virtual ~CtrlBlockBase()
 		{}
@@ -311,7 +312,7 @@ private:
 		/// @note Its mutable because we want read/write access to it
 		mutable GlDevice* m_manager; 
 
-		std::atomic<GlHandleState> m_state;
+		Atomic<GlHandleState> m_state;
 		
 		void deletePtr()
 		{

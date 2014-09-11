@@ -16,6 +16,9 @@
 
 namespace anki {
 
+// Forward
+class Renderer;
+
 /// @addtogroup renderer
 /// @{
 
@@ -23,7 +26,7 @@ namespace anki {
 class DebugDrawer
 {
 public:
-	DebugDrawer();
+	DebugDrawer(Renderer* r);
 	~DebugDrawer();
 
 	void drawGrid();
@@ -104,7 +107,7 @@ class CollisionDebugDrawer: public CollisionShape::ConstVisitor
 public:
 	/// Constructor
 	CollisionDebugDrawer(DebugDrawer* dbg)
-		: m_dbg(dbg)
+	:	m_dbg(dbg)
 	{}
 
 	void visit(const LineSegment&);
@@ -134,7 +137,7 @@ class SceneDebugDrawer
 {
 public:
 	SceneDebugDrawer(DebugDrawer* d)
-		: m_dbg(d)
+	:	m_dbg(d)
 	{}
 
 	~SceneDebugDrawer()
