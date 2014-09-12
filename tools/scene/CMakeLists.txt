@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES("../../extern/assimp/include")
+INCLUDE_DIRECTORIES("../../thirdparty/assimp/include")
 	
 ADD_EXECUTABLE(ankisceneimp Main.cpp Model.cpp Animation.cpp Light.cpp 
 	Common.cpp)

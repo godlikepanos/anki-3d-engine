@@ -98,7 +98,7 @@ set(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for some weir
 option(ANKI_VALGRIND_HAPPY "Make valgrind happy" OFF)
 
 #
-# Options that affect anki and extern
+# Options that affect anki and thirdparty
 #
 
 set(CXX_FLAGS "")
@@ -181,9 +181,9 @@ message("++ Include install dir: ${INCLUDE_INSTALL_DIR}")
 message("++ Lib install dir: ${LIB_INSTALL_DIR}")
 
 #
-# First the extern
+# First the thirdparty
 #
-add_subdirectory(extern)
+add_subdirectory(thirdparty)
 
 #
 # Doxygen
@@ -202,11 +202,16 @@ endif()
 #
 # Revision
 #
-find_package(Subversion 1.6)
+find_package(Git)
 
-if(Subversion_FOUND)
-	Subversion_WC_INFO(${CMAKE_CURRENT_SOURCE_DIR} ER)
-	set(ANKI_REVISION ${ER_WC_REVISION})
+if(GIT_FOUND)
+	execute_process(COMMAND
+		"${GIT_EXECUTABLE}" log -1 --date=short --format=%h
+		WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+		OUTPUT_VARIABLE GIT_COMMIT
+		ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+	set(ANKI_REVISION "\"${GIT_COMMIT}\"")
 else()
 	set(ANKI_REVISION "-1")
 endif()
@@ -230,12 +235,12 @@ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE
 #
 # Include & lib directories
 #
-include_directories("extern/tinyxml2/include" "extern/lua" "extern/z" "extern/bullet" "extern/SDL2/include" "include" "${CMAKE_CURRENT_BINARY_DIR}")
+include_directories("thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z" "thirdparty/bullet" "thirdparty/SDL2/include" "include" "${CMAKE_CURRENT_BINARY_DIR}")
 
 if(LINUX OR MACOS OR WINDOWS)
-	include_directories("extern/GLEW/include")
+	include_directories("thirdparty/GLEW/include")
 else()
-	#include_directories("extern/GLES3/include")
+	#include_directories("thirdparty/GLES3/include")
 endif()
 
 if(ANDROID)
