@@ -63,7 +63,7 @@ void GlDevice::swapBuffers()
 }
 
 //==============================================================================
-PtrSize GlDevice::getBufferOffsetAlignment(GLenum target)
+PtrSize GlDevice::getBufferOffsetAlignment(GLenum target) const
 {
 	const GlState& state = m_queue->getState();
 

@@ -10,6 +10,7 @@
 #include "anki/core/Logger.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 

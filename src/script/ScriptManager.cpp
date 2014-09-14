@@ -43,7 +43,7 @@ ANKI_SCRIPT_WRAP(Anki)
 
 //==============================================================================
 ScriptManager::ScriptManager(HeapAllocator<U8>& alloc)
-	: LuaBinder(alloc)
+:	LuaBinder(alloc)
 {
 	ANKI_LOGI("Initializing scripting engine...");
 

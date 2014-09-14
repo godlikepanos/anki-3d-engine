@@ -5,6 +5,7 @@
 
 #include "tests/framework/Framework.h"
 #include "anki/core/Logger.h"
+#include "anki/util/Filesystem.h"
 
 using namespace anki;
 
@@ -15,7 +16,7 @@ int main(int argc, char** argv)
 	// Call a few singletons to avoid memory leak confusion
 	LoggerSingleton::init(
 		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER,
-		alloc);
+		alloc, &(getHomeDirectory(alloc) + ".anki/tests.log")[0]);
 
 	int exitcode = getTesterSingleton().run(argc, argv);
 

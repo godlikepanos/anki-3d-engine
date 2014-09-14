@@ -38,7 +38,8 @@ public:
 	/// The one and only constructor
 	RenderableDrawer(Renderer* r);
 
-	void prepareDraw(RenderingStage stage, Pass pass, GlCommandBufferHandle& jobs);
+	void prepareDraw(
+		RenderingStage stage, Pass pass, GlCommandBufferHandle& cmdBuff);
 
 	void render(
 		SceneNode& frsn,
@@ -52,7 +53,7 @@ private:
 
 	/// @name State
 	/// @{
-	GlCommandBufferHandle m_jobs;
+	GlCommandBufferHandle m_cmdBuff;
 	U8* m_uniformPtr;
 
 	/// Used to calc if the uni buffer is big enough. Zero it per swap buffers

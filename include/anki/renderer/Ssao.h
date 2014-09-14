@@ -50,7 +50,7 @@ private:
 	{}
 
 	void init(const ConfigSet& initializer);
-	void run(GlCommandBufferHandle& jobs);
+	void run(GlCommandBufferHandle& cmdBuff);
 
 	GlTextureHandle& getRt()
 	{

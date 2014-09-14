@@ -10,7 +10,7 @@
 #include "anki/scene/Light.h"
 #include "anki/core/Counters.h"
 #include "anki/core/Logger.h"
-#include <sstream>
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
@@ -82,11 +82,11 @@ public:
 	VisibilityTestResults::Container::const_iterator m_lightsBegin;
 	VisibilityTestResults::Container::const_iterator m_lightsEnd;
 
-	std::atomic<U32>* m_pointLightsCount = nullptr;
-	std::atomic<U32>* m_spotLightsCount = nullptr;
-	std::atomic<U32>* m_spotTexLightsCount = nullptr;
+	AtomicU32* m_pointLightsCount = nullptr;
+	AtomicU32* m_spotLightsCount = nullptr;
+	AtomicU32* m_spotTexLightsCount = nullptr;
 		
-	Array2d<std::atomic<U32>, 
+	Array2d<AtomicU32, 
 		ANKI_RENDERER_MAX_TILES_Y, 
 		ANKI_RENDERER_MAX_TILES_X>
 		* m_tilePointLightsCount = nullptr,
@@ -374,11 +374,11 @@ Is::~Is()
 {}
 
 //==============================================================================
-void Is::init(const ConfigSet& initializer)
+void Is::init(const ConfigSet& config)
 {
 	try
 	{
-		initInternal(initializer);
+		initInternal(config);
 	}
 	catch(const std::exception& e)
 	{
@@ -387,21 +387,21 @@ void Is::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Is::initInternal(const ConfigSet& initializer)
+void Is::initInternal(const ConfigSet& config)
 {
-	m_groundLightEnabled = initializer.get("is.groundLightEnabled");
-	m_maxPointLights = initializer.get("is.maxPointLights");
-	m_maxSpotLights = initializer.get("is.maxSpotLights");
-	m_maxSpotTexLights = initializer.get("is.maxSpotTexLights");
+	m_groundLightEnabled = config.get("is.groundLightEnabled");
+	m_maxPointLights = config.get("is.maxPointLights");
+	m_maxSpotLights = config.get("is.maxSpotLights");
+	m_maxSpotTexLights = config.get("is.maxSpotTexLights");
 
 	if(m_maxPointLights < 1 || m_maxSpotLights < 1 || m_maxSpotTexLights < 1)
 	{
 		throw ANKI_EXCEPTION("Incorrect number of max lights");
 	}
 
-	m_maxPointLightsPerTile = initializer.get("is.maxPointLightsPerTile");
-	m_maxSpotLightsPerTile = initializer.get("is.maxSpotLightsPerTile");
-	m_maxSpotTexLightsPerTile = initializer.get("is.maxSpotTexLightsPerTile");
+	m_maxPointLightsPerTile = config.get("is.maxPointLightsPerTile");
+	m_maxSpotLightsPerTile = config.get("is.maxSpotLightsPerTile");
+	m_maxSpotTexLightsPerTile = config.get("is.maxSpotTexLightsPerTile");
 
 	if(m_maxPointLightsPerTile < 1 
 		|| m_maxSpotLightsPerTile < 1 
@@ -418,51 +418,53 @@ void Is::initInternal(const ConfigSet& initializer)
 	//
 	// Init the passes
 	//
-	m_sm.init(initializer);
+	m_sm.init(config);
 
 	//
 	// Load the programs
 	//
-	std::stringstream pps;
+	String pps(getAllocator());
 
-	pps << "\n#define TILES_X_COUNT " << m_r->getTilesCount().x()
-		<< "\n#define TILES_Y_COUNT " << m_r->getTilesCount().y()
-		<< "\n#define TILES_COUNT " 
-		<< (m_r->getTilesCount().x() * m_r->getTilesCount().y())
-		<< "\n#define RENDERER_WIDTH " << m_r->getWidth()
-		<< "\n#define RENDERER_HEIGHT " << m_r->getHeight()
-		<< "\n#define MAX_POINT_LIGHTS_PER_TILE " 
-		<< (U32)m_maxPointLightsPerTile
-		<< "\n#define MAX_SPOT_LIGHTS_PER_TILE " 
-		<< (U32)m_maxSpotLightsPerTile
-		<< "\n#define MAX_SPOT_TEX_LIGHTS_PER_TILE " 
-		<< (U32)m_maxSpotTexLightsPerTile
-		<< "\n#define MAX_POINT_LIGHTS " << (U32)m_maxPointLights
-		<< "\n#define MAX_SPOT_LIGHTS " << (U32)m_maxSpotLights 
-		<< "\n#define MAX_SPOT_TEX_LIGHTS " << (U32)m_maxSpotTexLights
-		<< "\n#define GROUND_LIGHT " << (U32)m_groundLightEnabled
-		<< "\n#define TILES_BLOCK_BINDING " << TILES_BLOCK_BINDING
-		<< "\n";
-
-	if(m_sm.getPoissonEnabled())
-	{
-		pps << "#define POISSON 1\n";
-	}
-	else
-	{
-		pps << "#define POISSON 0\n";
-	}
+	pps.sprintf(
+		"\n#define TILES_X_COUNT %u\n"
+		"#define TILES_Y_COUNT %u\n"
+		"#define TILES_COUNT %u\n" 
+		"#define RENDERER_WIDTH %u\n"
+		"#define RENDERER_HEIGHT %u\n"
+		"#define MAX_POINT_LIGHTS_PER_TILE %u\n"
+		"#define MAX_SPOT_LIGHTS_PER_TILE %u\n"
+		"#define MAX_SPOT_TEX_LIGHTS_PER_TILE %u\n" 
+		"#define MAX_POINT_LIGHTS %u\n"
+		"#define MAX_SPOT_LIGHTS %u\n"
+		"#define MAX_SPOT_TEX_LIGHTS %u\n"
+		"#define GROUND_LIGHT %u\n"
+		"#define TILES_BLOCK_BINDING %u\n"
+		"#define POISSON %u\n",
+		m_r->getTilesCount().x(),
+		m_r->getTilesCount().y(),
+		(m_r->getTilesCount().x() * m_r->getTilesCount().y()),
+		m_r->getWidth(),
+		m_r->getHeight(),
+		m_maxPointLightsPerTile,
+		m_maxSpotLightsPerTile,
+		m_maxSpotTexLightsPerTile,
+		m_maxPointLights,
+		m_maxSpotLights,
+		m_maxSpotTexLights,
+		m_groundLightEnabled,
+		TILES_BLOCK_BINDING,
+		m_sm.getPoissonEnabled());
 
 	// point light
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl); // Job for initialization
+	GlCommandBufferHandle cmdBuff(&getGlDevice()); // Job for initialization
 
-	m_lightVert.load(ProgramResource::createSrcCodeToCache(
-		"shaders/IsLp.vert.glsl", pps.str().c_str(), "r_").c_str());
-	m_lightFrag.load(ProgramResource::createSrcCodeToCache(
-		"shaders/IsLp.frag.glsl", pps.str().c_str(), "r_").c_str());
+	m_lightVert.loadToCache(&getResourceManager(),
+		"shaders/IsLp.vert.glsl", pps.toCString(), "r_");
 
-	m_lightPpline = GlProgramPipelineHandle(jobs, 
+	m_lightFrag.loadToCache(&getResourceManager(),
+		"shaders/IsLp.frag.glsl", pps.toCString(), "r_");
+
+	m_lightPpline = GlProgramPipelineHandle(cmdBuff, 
 		{m_lightVert->getGlProgram(), m_lightFrag->getGlProgram()});
 
 	//
@@ -472,7 +474,7 @@ void Is::initInternal(const ConfigSet& initializer)
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8,
 			GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
 
-	m_fb = GlFramebufferHandle(jobs, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	m_fb = GlFramebufferHandle(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
 
 	//
 	// Init the quad
@@ -480,10 +482,10 @@ void Is::initInternal(const ConfigSet& initializer)
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0},
 		{1.0, 0.0}, {0.0, 0.0}};
 
-	GlClientBufferHandle tempBuff(jobs, sizeof(quadVertCoords), 
+	GlClientBufferHandle tempBuff(cmdBuff, sizeof(quadVertCoords), 
 		(void*)&quadVertCoords[0][0]);
 
-	m_quadPositionsVertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER,
+	m_quadPositionsVertBuff = GlBufferHandle(cmdBuff, GL_ARRAY_BUFFER,
 		tempBuff, 0);
 
 	//
@@ -491,22 +493,22 @@ void Is::initInternal(const ConfigSet& initializer)
 	//
 	const GLbitfield bufferBits = GL_DYNAMIC_STORAGE_BIT;
 
-	m_commonBuff = GlBufferHandle(jobs, GL_SHADER_STORAGE_BUFFER, 
+	m_commonBuff = GlBufferHandle(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
 		sizeof(shader::CommonUniforms), bufferBits);
 
-	m_lightsBuff = GlBufferHandle(jobs, GL_SHADER_STORAGE_BUFFER, 
+	m_lightsBuff = GlBufferHandle(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
 		calcLightsBufferSize(), bufferBits);
 
-	m_tilesBuff = GlBufferHandle(jobs, GL_SHADER_STORAGE_BUFFER,
+	m_tilesBuff = GlBufferHandle(cmdBuff, GL_SHADER_STORAGE_BUFFER,
 		m_r->getTilesCount().x() * m_r->getTilesCount().y() * m_tileSize,
 		bufferBits);
 
 	// Last thing to do
-	jobs.flush();
+	cmdBuff.flush();
 }
 
 //==============================================================================
-void Is::lightPass(GlCommandBufferHandle& jobs)
+void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 {
 	Threadpool& threadPool = m_r->_getThreadpool();
 	m_cam = &m_r->getSceneGraph().getActiveCamera();
@@ -561,13 +563,13 @@ void Is::lightPass(GlCommandBufferHandle& jobs)
 	//
 	// Do shadows pass
 	//
-	m_sm.run(&shadowCasters[0], visibleSpotTexLightsCount, jobs);
+	m_sm.run(&shadowCasters[0], visibleSpotTexLightsCount, cmdBuff);
 
 	//
 	// Write the lights and tiles UBOs
 	//
-	GlDevice& gl = GlDeviceSingleton::get();
-	U32 blockAlignment = gl.getBufferOffsetAlignment(m_lightsBuff.getTarget());
+	U32 blockAlignment = 
+		getGlDevice().getBufferOffsetAlignment(m_lightsBuff.getTarget());
 
 	// Get the offsets and sizes of each uniform block
 	PtrSize pointLightsOffset = 0;
@@ -585,23 +587,23 @@ void Is::lightPass(GlCommandBufferHandle& jobs)
 	ANKI_ASSERT(
 		spotTexLightsOffset + spotTexLightsSize <= calcLightsBufferSize());
 
-	// Fire the super jobs
-	Array<WriteLightsJob, Threadpool::MAX_THREADS> tjobs;
+	// Fire the super cmdBuff
+	Array<WriteLightsJob, Threadpool::MAX_THREADS> tcmdBuff;
 
 	GlClientBufferHandle lightsClientBuff;
 	if(totalLightsCount > 0)
 	{
 		lightsClientBuff = GlClientBufferHandle(
-			jobs, spotTexLightsOffset + spotTexLightsSize, nullptr);
+			cmdBuff, spotTexLightsOffset + spotTexLightsSize, nullptr);
 	}
 
-	GlClientBufferHandle tilesClientBuff(jobs, m_tilesBuff.getSize(), nullptr);
+	GlClientBufferHandle tilesClientBuff(cmdBuff, m_tilesBuff.getSize(), nullptr);
 
-	std::atomic<U32> pointLightsAtomicCount(0);
-	std::atomic<U32> spotLightsAtomicCount(0);
-	std::atomic<U32> spotTexLightsAtomicCount(0);
+	AtomicU32 pointLightsAtomicCount(0);
+	AtomicU32 spotLightsAtomicCount(0);
+	AtomicU32 spotTexLightsAtomicCount(0);
 
-	Array2d<std::atomic<U32>, 
+	Array2d<AtomicU32, 
 		ANKI_RENDERER_MAX_TILES_Y, 
 		ANKI_RENDERER_MAX_TILES_X> 
 		tilePointLightsCount,
@@ -620,7 +622,7 @@ void Is::lightPass(GlCommandBufferHandle& jobs)
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		WriteLightsJob& job = tjobs[i];
+		WriteLightsJob& job = tcmdBuff[i];
 
 		if(i == 0)
 		{
@@ -655,16 +657,16 @@ void Is::lightPass(GlCommandBufferHandle& jobs)
 		}
 		else
 		{
-			// Just copy from the first job. All jobs have the same data
+			// Just copy from the first job. All cmdBuff have the same data
 
-			job = tjobs[0];
+			job = tcmdBuff[0];
 		}
 
 		threadPool.assignNewTask(i, &job);
 	}
 
 	// In the meantime set the state
-	setState(jobs);
+	setState(cmdBuff);
 
 	// Sync
 	threadPool.waitForAllThreadsToFinish();
@@ -696,10 +698,10 @@ void Is::lightPass(GlCommandBufferHandle& jobs)
 	// Write BOs
 	if(totalLightsCount > 0)
 	{
-		m_lightsBuff.write(jobs,
+		m_lightsBuff.write(cmdBuff,
 			lightsClientBuff, 0, 0, spotTexLightsOffset + spotTexLightsSize);
 	}
-	m_tilesBuff.write(jobs, tilesClientBuff, 0, 0, tilesClientBuff.getSize());
+	m_tilesBuff.write(cmdBuff, tilesClientBuff, 0, 0, tilesClientBuff.getSize());
 
 	//
 	// Setup uniforms
@@ -707,33 +709,33 @@ void Is::lightPass(GlCommandBufferHandle& jobs)
 
 	// shader prog
 
-	updateCommonBlock(jobs);
+	updateCommonBlock(cmdBuff);
 
-	m_commonBuff.bindShaderBuffer(jobs, COMMON_UNIFORMS_BLOCK_BINDING);
+	m_commonBuff.bindShaderBuffer(cmdBuff, COMMON_UNIFORMS_BLOCK_BINDING);
 
 	if(pointLightsSize > 0)
 	{
-		m_lightsBuff.bindShaderBuffer(jobs, 
+		m_lightsBuff.bindShaderBuffer(cmdBuff, 
 			pointLightsOffset, pointLightsSize, POINT_LIGHTS_BLOCK_BINDING);
 	}
 
 	if(spotLightsSize > 0)
 	{
-		m_lightsBuff.bindShaderBuffer(jobs, 
+		m_lightsBuff.bindShaderBuffer(cmdBuff, 
 			spotLightsOffset, spotLightsSize, SPOT_LIGHTS_BLOCK_BINDING);
 	}
 
 	if(spotTexLightsSize > 0)
 	{
-		m_lightsBuff.bindShaderBuffer(jobs,
+		m_lightsBuff.bindShaderBuffer(cmdBuff,
 			spotTexLightsOffset, spotTexLightsSize, 
 			SPOT_TEX_LIGHTS_BLOCK_BINDING);
 	}
 
-	m_tilesBuff.bindShaderBuffer(jobs, TILES_BLOCK_BINDING); 
+	m_tilesBuff.bindShaderBuffer(cmdBuff, TILES_BLOCK_BINDING); 
 
 	// The binding points should much the shader
-	jobs.bindTextures(0, {
+	cmdBuff.bindTextures(0, {
 		m_r->getMs()._getRt0(), 
 		m_r->getMs()._getRt1(), 
 		m_r->getMs()._getDepthRt(),
@@ -743,17 +745,17 @@ void Is::lightPass(GlCommandBufferHandle& jobs)
 	// Draw
 	//
 
-	m_lightPpline.bind(jobs);
+	m_lightPpline.bind(cmdBuff);
 
-	m_quadPositionsVertBuff.bindVertexBuffer(jobs, 
+	m_quadPositionsVertBuff.bindVertexBuffer(cmdBuff, 
 		2, GL_FLOAT, false, 0, 0, 0);
 
-	jobs.drawArrays(GL_TRIANGLE_STRIP, 4, 
+	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, 
 		m_r->getTilesCount().x() * m_r->getTilesCount().y());
 }
 
 //==============================================================================
-void Is::setState(GlCommandBufferHandle& jobs)
+void Is::setState(GlCommandBufferHandle& cmdBuff)
 {
 	Bool drawToDefaultFbo = !m_r->getPps().getEnabled() 
 		&& !m_r->getDbg().getEnabled() 
@@ -762,30 +764,30 @@ void Is::setState(GlCommandBufferHandle& jobs)
 
 	if(drawToDefaultFbo)
 	{
-		m_r->getDefaultFramebuffer().bind(jobs, true);
-		jobs.setViewport(0, 0, m_r->getWindowWidth(), m_r->getWindowHeight());
+		m_r->getDefaultFramebuffer().bind(cmdBuff, true);
+		cmdBuff.setViewport(0, 0, m_r->getWindowWidth(), m_r->getWindowHeight());
 	}
 	else
 	{
-		m_fb.bind(jobs, true);
+		m_fb.bind(cmdBuff, true);
 
-		jobs.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+		cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	}
 }
 
 //==============================================================================
-void Is::run(GlCommandBufferHandle& jobs)
+void Is::run(GlCommandBufferHandle& cmdBuff)
 {
 	// Do the light pass including the shadow passes
-	lightPass(jobs);
+	lightPass(cmdBuff);
 }
 
 //==============================================================================
-void Is::updateCommonBlock(GlCommandBufferHandle& jobs)
+void Is::updateCommonBlock(GlCommandBufferHandle& cmdBuff)
 {
 	SceneGraph& scene = m_r->getSceneGraph();
 
-	GlClientBufferHandle cbuff(jobs, sizeof(shader::CommonUniforms), nullptr);
+	GlClientBufferHandle cbuff(cmdBuff, sizeof(shader::CommonUniforms), nullptr);
 	shader::CommonUniforms& blk = 
 		*(shader::CommonUniforms*)cbuff.getBaseAddress();
 
@@ -801,14 +803,14 @@ void Is::updateCommonBlock(GlCommandBufferHandle& jobs)
 			Vec4(-m_cam->getViewMatrix().getColumn(1).xyz(), 1.0);
 	}
 
-	m_commonBuff.write(jobs, cbuff, 0, 0, cbuff.getSize());
+	m_commonBuff.write(cmdBuff, cbuff, 0, 0, cbuff.getSize());
 }
 
 //==============================================================================
 PtrSize Is::calcLightsBufferSize() const
 {
-	U32 buffAlignment = GlDeviceSingleton::get().getBufferOffsetAlignment(
-		GL_SHADER_STORAGE_BUFFER);
+	U32 buffAlignment = 
+		getGlDevice().getBufferOffsetAlignment(GL_SHADER_STORAGE_BUFFER);
 	PtrSize size;
 
 	size = getAlignedRoundUp(

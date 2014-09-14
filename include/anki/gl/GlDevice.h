@@ -39,7 +39,7 @@ public:
 	void swapBuffers();
 
 	/// Return the alignment of a buffer target
-	PtrSize getBufferOffsetAlignment(GLenum target);
+	PtrSize getBufferOffsetAlignment(GLenum target) const;
 
 	/// @privatesection
 	/// @{

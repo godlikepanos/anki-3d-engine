@@ -19,7 +19,7 @@ Bool fileExists(const CString& filename);
 /// Get file extension
 /// @param[in] filename The file to open
 /// @return nullptr on failure and if the dot is the last character
-CString getFileExtension(const CString& filename);
+String getFileExtension(const CString& filename, HeapAllocator<U8>& alloc);
 
 /// Return true if directory exists?
 Bool directoryExists(const CString& dir);

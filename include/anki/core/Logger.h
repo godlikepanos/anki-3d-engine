@@ -9,11 +9,12 @@
 #include "anki/Config.h"
 #include "anki/util/Singleton.h"
 #include "anki/util/File.h"
-#include <mutex>
+#include "anki/util/Thread.h"
+#include "anki/util/Enum.h"
 
 namespace anki {
 
-/// @addtogroup Core
+/// @addtogroup core
 /// @{
 
 /// The logger singleton class. The logger cannot print errors or throw
@@ -38,20 +39,7 @@ public:
 		WITH_SYSTEM_MESSAGE_HANDLER = 1 << 0,
 		WITH_LOG_FILE_MESSAGE_HANDLER  = 1 << 1
 	};
-
-	friend InitFlags operator|(InitFlags a, InitFlags b)
-	{
-		typedef std::underlying_type<InitFlags>::type Int;
-		return 
-			static_cast<InitFlags>(static_cast<Int>(a) | static_cast<Int>(b));
-	}
-
-	friend InitFlags operator&(InitFlags a, InitFlags b)
-	{
-		typedef std::underlying_type<InitFlags>::type Int;
-		return 
-			static_cast<InitFlags>(static_cast<Int>(a) & static_cast<Int>(b));
-	}
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(InitFlags, friend);
 
 	/// Used as parammeter when emitting the signal
 	class Info
@@ -68,7 +56,9 @@ public:
 	using MessageHandlerCallback = void (*)(void*, const Info& info);
 
 	/// Initialize the logger
-	Logger(InitFlags flags, HeapAllocator<U8>& alloc);
+	Logger(InitFlags flags, HeapAllocator<U8>& alloc, const char* cacheDir);
+
+	~Logger();
 
 	/// Add a new message handler
 	void addMessageHandler(void* data, MessageHandlerCallback callback);
@@ -82,8 +72,6 @@ public:
 		MessageType type, const char* fmt, ...);
 
 private:
-	std::mutex m_mutex; ///< For thread safety
-
 	class Handler
 	{
 	public:
@@ -91,9 +79,10 @@ private:
 		MessageHandlerCallback m_callback;
 	};
 
+	Mutex m_mutex; ///< For thread safety
 	Vector<Handler> m_handlers;
-
 	File m_logfile;
+	char* m_cacheDir = nullptr;
 	
 	static void defaultSystemMessageHandler(void*, const Info& info);
 	static void logfileMessageHandler(void* vlogger, const Info& info);

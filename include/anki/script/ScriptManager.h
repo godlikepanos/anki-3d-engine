@@ -11,6 +11,12 @@
 
 namespace anki {
 
+// Forward
+class App;
+
+/// @addtogroup script
+/// @{
+
 /// The scripting manager
 class ScriptManager: public LuaBinder
 {
@@ -18,9 +24,12 @@ public:
 	ScriptManager(HeapAllocator<U8>& alloc);
 
 	~ScriptManager();
+
+private:
+	App* m_app;
 };
 
-typedef SingletonInit<ScriptManager> ScriptManagerSingleton;
+/// @}
 
 } // end namespace anki
 

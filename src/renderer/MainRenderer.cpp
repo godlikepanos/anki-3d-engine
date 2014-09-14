@@ -7,18 +7,23 @@
 #include "anki/core/Logger.h"
 #include "anki/renderer/Deformer.h"
 #include "anki/util/File.h"
+#include "anki/util/Filesystem.h"
 #include "anki/core/Counters.h"
 #include "anki/core/App.h"
-#include <cstdlib>
-#include <cstdio>
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
 //==============================================================================
-MainRenderer::MainRenderer(App* app, const ConfigSet& initializer)
-:	Renderer(&app->getThreadpool())
+MainRenderer::MainRenderer(
+	Threadpool* threadpool, 
+	ResourceManager* resources,
+	GlDevice* gl,
+	HeapAllocator<U8>& alloc,
+	const ConfigSet& config)
+:	Renderer(threadpool, resources, gl, alloc, config)
 {
-	init(initializer);
+	init(config);
 }
 
 //==============================================================================
@@ -26,23 +31,22 @@ MainRenderer::~MainRenderer()
 {}
 
 //==============================================================================
-void MainRenderer::init(const ConfigSet& initializer_)
+void MainRenderer::init(const ConfigSet& config_)
 {
 	ANKI_LOGI("Initializing main renderer...");
 
-	ConfigSet initializer = initializer_;
-	initializer.set("offscreen", false);
-	initializer.set("width", 
-		initializer.get("width") * initializer.get("renderingQuality"));
-	initializer.set("height", 
-		initializer.get("height") * initializer.get("renderingQuality"));
+	ConfigSet config = config_;
+	config.set("offscreen", false);
+	config.set("width", 
+		config.get("width") * config.get("renderingQuality"));
+	config.set("height", 
+		config.get("height") * config.get("renderingQuality"));
 
 	initGl();
 
-	Renderer::init(initializer);
-	m_deformer.reset(new Deformer);
+	Renderer::init(config);
 
-	m_blitFrag.load("shaders/Final.frag.glsl");
+	m_blitFrag.load("shaders/Final.frag.glsl", &_getResourceManager());
 	m_blitPpline = createDrawQuadProgramPipeline(
 		m_blitFrag->getGlProgram());
 
@@ -55,7 +59,7 @@ void MainRenderer::render(SceneGraph& scene)
 {
 	ANKI_COUNTER_START_TIMER(MAIN_RENDERER_TIME);
 
-	GlDevice& gl = GlDeviceSingleton::get();
+	GlDevice& gl = _getGlDevice();
 	Array<GlCommandBufferHandle, JOB_CHAINS_COUNT> jobs;
 	GlCommandBufferHandle& lastJobs = jobs[JOB_CHAINS_COUNT - 1];
 
@@ -113,7 +117,7 @@ void MainRenderer::render(SceneGraph& scene)
 void MainRenderer::initGl()
 {
 	// get max texture units
-	GlDevice& gl = GlDeviceSingleton::get();
+	GlDevice& gl = _getGlDevice();
 	GlCommandBufferHandle jobs(&gl);
 
 	jobs.enableCulling(true);
@@ -185,7 +189,7 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 //==============================================================================
 void MainRenderer::takeScreenshot(const char* filename)
 {
-	std::string ext = File::getFileExtension(filename);
+	String ext = getFileExtension(filename, _getAllocator());
 
 	// exec from this extension
 	if(ext == "tga")

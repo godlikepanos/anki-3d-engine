@@ -31,88 +31,19 @@
 
 using namespace anki;
 
+App* app;
+
 ModelNode* horse;
 PerspectiveCamera* cam;
-NativeWindow* win;
-HeapAllocator<U8> globAlloc;
-
-//==============================================================================
-void initPhysics()
-{
-#if 0
-	SceneGraph& scene = SceneGraphSingleton::get();
-
-	btCollisionShape* groundShape = new btBoxShape(
-	    btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
-
-	Transform groundTransform;
-	groundTransform.setIdentity();
-	groundTransform.setOrigin(Vec4(0, -50, 0, 0));
-
-	RigidBody::Initializer init;
-	init.mass = 0.0;
-	init.shape = groundShape;
-	init.startTrf = groundTransform;
-	init.group = PhysicsWorld::CG_MAP;
-	init.mask = PhysicsWorld::CG_ALL;
-
-	new RigidBody(&SceneGraphSingleton::get().getPhysics(), init);
-
-	btCollisionShape* colShape = new btBoxShape(
-	    btVector3(1, 1, 1));
-
-	init.startTrf.setOrigin(Vec3(0.0, 15.0, 0.0));
-	init.mass = 20;
-	init.shape = colShape;
-	init.group = PhysWorld::CG_PARTICLE;
-	init.mask = PhysWorld::CG_MAP | PhysWorld::CG_PARTICLE;
-
-	const I ARRAY_SIZE_X = 5;
-	const I ARRAY_SIZE_Y = 5;
-	const I ARRAY_SIZE_Z = 5;
-	const I START_POS_X = -5;
-	const I START_POS_Y = 35;
-	const I START_POS_Z = -3;
-
-	float start_x = START_POS_X - ARRAY_SIZE_X / 2;
-	float start_y = START_POS_Y;
-	float start_z = START_POS_Z - ARRAY_SIZE_Z / 2;
-
-	for(I k = 0; k < ARRAY_SIZE_Y; k++)
-	{
-		for(I i = 0; i < ARRAY_SIZE_X; i++)
-		{
-			for(I j = 0; j < ARRAY_SIZE_Z; j++)
-			{
-				std::string name = std::string("crate0") + std::to_string(i)
-					+ std::to_string(j) + std::to_string(k);
-
-				ModelNode* mnode = new ModelNode(
-					name.c_str(), &SceneGraphSingleton::get(), nullptr,
-					MoveComponent::MF_NONE, "models/crate0/crate0.mdl");
-
-				init.movable = mnode;
-				ANKI_ASSERT(init.movable);
-
-				Transform trf(
-					Vec3(2.0 * i + start_x, 2.0 * k + start_y,
-						2.0 * j + start_z), Mat3::getIdentity(), 1.0);
-
-				init.startTrf = trf;
-
-				new RigidBody(&SceneGraphSingleton::get().getPhysics(), init);
-			}
-		}
-	}
-#endif
-}
 
 //==============================================================================
 void init()
 {
 	ANKI_LOGI("Other init...");
 
-	SceneGraph& scene = SceneGraphSingleton::get();
+	SceneGraph& scene = app->getSceneGraph();
+	MainRenderer& renderer = app->getMainRenderer();
+
 	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 3);
 
 #if 0
@@ -125,7 +56,7 @@ void init()
 	cam = scene.newSceneNode<PerspectiveCamera>("main-camera");
 	const F32 ang = 45.0;
 	cam->setAll(
-		MainRendererSingleton::get().getAspectRatio() * toRad(ang),
+		renderer.getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
 	cam->setLocalTransform(Transform(Vec4(17.0, 5.2, 0.0, 0),
 		Mat3x4(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
@@ -287,8 +218,6 @@ void init()
 	}
 #endif
 
-	initPhysics();
-
 	/*AnimationResourcePointer anim;
 	anim.load("maps/sponza/unnamed_0.ankianim");
 	AnimationEvent* event;
@@ -339,6 +268,7 @@ void init()
 }
 
 //==============================================================================
+#if 0
 /// The func pools the stdinListener for string in the console, if
 /// there are any it executes them with scriptingEngine
 void execStdinScpripts()
@@ -362,47 +292,51 @@ void execStdinScpripts()
 		}
 	}
 }
+#endif
 
 //==============================================================================
-void mainLoopExtra()
+void mainLoopExtra(App& app, void*)
 {
 	F32 dist = 0.1;
 	F32 ang = toRad(1.5);
 	F32 scale = 0.01;
 	F32 mouseSensivity = 9.0;
 
+	SceneGraph& scene = app.getSceneGraph();
+	Input& in = app.getInput();
+	MainRenderer& renderer = app.getMainRenderer();
+
 	// move the camera
 	static MoveComponent* mover = 
-		&SceneGraphSingleton::get().getActiveCamera().getComponent<MoveComponent>();
-	Input& in = InputSingleton::get();
+		&scene.getActiveCamera().getComponent<MoveComponent>();
 
 	if(in.getKey(KeyCode::_1))
 	{
-		mover = &SceneGraphSingleton::get().getActiveCamera();
+		mover = &scene.getActiveCamera();
 	}
 	if(in.getKey(KeyCode::_2))
 	{
-		mover = &SceneGraphSingleton::get().findSceneNode("horse").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("horse").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_3))
 	{
-		mover = &SceneGraphSingleton::get().findSceneNode("spot0").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("spot0").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_4))
 	{
-		mover = &SceneGraphSingleton::get().findSceneNode("spot1").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("spot1").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_5))
 	{
-		mover = &SceneGraphSingleton::get().findSceneNode("pe").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("pe").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_6))
 	{
-		mover = &SceneGraphSingleton::get().findSceneNode("shape0").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("shape0").getComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_7))
 	{
-		mover = &SceneGraphSingleton::get().findSceneNode("shape1").getComponent<MoveComponent>();
+		mover = &scene.findSceneNode("shape1").getComponent<MoveComponent>();
 	}
 
 	/*if(in.getKey(KeyCode::L) == 1)
@@ -418,36 +352,31 @@ void mainLoopExtra()
 
 	if(in.getKey(KeyCode::F1) == 1)
 	{
-		MainRendererSingleton::get().getDbg().setEnabled(
-			!MainRendererSingleton::get().getDbg().getEnabled());
+		renderer.getDbg().setEnabled(!renderer.getDbg().getEnabled());
 	}
 	if(in.getKey(KeyCode::F2) == 1)
 	{
-		MainRendererSingleton::get().getDbg().switchBits(
-			Dbg::DF_SPATIAL);
+		renderer.getDbg().switchBits(Dbg::Flag::SPATIAL);
 	}
 	if(in.getKey(KeyCode::F3) == 1)
 	{
-		MainRendererSingleton::get().getDbg().switchBits(
-			Dbg::DF_PHYSICS);
+		renderer.getDbg().switchBits(Dbg::Flag::PHYSICS);
 	}
 	if(in.getKey(KeyCode::F4) == 1)
 	{
-		MainRendererSingleton::get().getDbg().switchBits(
-			Dbg::DF_SECTOR);
+		renderer.getDbg().switchBits(Dbg::Flag::SECTOR);
 	}
 	if(in.getKey(KeyCode::F5) == 1)
 	{
-		MainRendererSingleton::get().getDbg().switchBits(
-			Dbg::DF_OCTREE);
+		renderer.getDbg().switchBits(Dbg::Flag::OCTREE);
 	}
 	if(in.getKey(KeyCode::F6) == 1)
 	{
-		MainRendererSingleton::get().getDbg().switchDepthTestEnabled();
+		renderer.getDbg().switchDepthTestEnabled();
 	}
 	if(in.getKey(KeyCode::F12) == 1)
 	{
-		MainRendererSingleton::get().takeScreenshot("screenshot.tga");
+		renderer.takeScreenshot("screenshot.tga");
 	}
 
 	if(in.getKey(KeyCode::UP)) mover->rotateLocalX(ang);
@@ -471,6 +400,7 @@ void mainLoopExtra()
 	{
 		mover->scale(-scale);
 	}
+#if 0
 	if(in.getKey(KeyCode::P) == 1)
 	{
 		std::cout << "{Vec3(" 
@@ -479,7 +409,9 @@ void mainLoopExtra()
 			<< Quat(mover->getWorldTransform().getRotation()).toString()
 			<< ")}," << std::endl;
 	}
+#endif
 
+#if 0
 	if(in.getKey(KeyCode::L) == 1)
 	{
 		try
@@ -498,139 +430,23 @@ end)");
 			ANKI_LOGE(e.what());
 		}
 	}
-
+#endif
 
 	if(in.getMousePosition() != Vec2(0.0))
 	{
 		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity *
-			MainRendererSingleton::get().getAspectRatio();
+			renderer.getAspectRatio();
 
 		mover->rotateLocalY(angY);
 		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
 	}
 
-	execStdinScpripts();
+	//execStdinScpripts();
 }
 
 //==============================================================================
-void mainLoop()
-{
-	ANKI_LOGI("Entering main loop");
-
-	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
-	HighRezTimer::Scalar crntTime = prevUpdateTime;
-
-	ANKI_COUNTER_START_TIMER(FPS);
-
-	while(1)
-	{
-		HighRezTimer timer;
-		timer.start();
-
-		prevUpdateTime = crntTime;
-		crntTime = HighRezTimer::getCurrentTime();
-
-		// Update
-		//
-		InputSingleton::get().handleEvents();
-		mainLoopExtra();
-
-		SceneGraphSingleton::get().update(
-			prevUpdateTime, crntTime, MainRendererSingleton::get());
-		//EventManagerSingleton::get().updateAllEvents(prevUpdateTime, crntTime);
-		MainRendererSingleton::get().render(SceneGraphSingleton::get());
-
-		if(InputSingleton::get().getKey(KeyCode::ESCAPE))
-		{
-			break;
-		}
-
-		GlManagerSingleton::get().swapBuffers();
-		ANKI_COUNTERS_RESOLVE_FRAME();
-
-		// Sleep
-		//
-#if 1
-		timer.stop();
-		if(timer.getElapsedTime() < AppSingleton::get().getTimerTick())
-		{
-			HighRezTimer::sleep(AppSingleton::get().getTimerTick()
-				- timer.getElapsedTime());
-		}
-#else
-		if(MainRendererSingleton::get().getFramesCount() == 2000)
-		{
-			break;
-		}
-#endif
-		increaseGlobTimestamp();
-	}
-
-	
-	GlManagerSingleton::destroy();
-	ANKI_COUNTER_STOP_TIMER_INC(FPS);
-
-	ANKI_COUNTERS_FLUSH();
-
-#if 0
-	MainRendererSingleton::get().takeScreenshot("screenshot.tga");
-#endif
-}
-
-//==============================================================================
-// initSubsystems                                                              =
-//==============================================================================
-
-void makeCurrent(void* ctx)
-{
-	win->contextMakeCurrent(ctx);
-}
-
-void swapBuffers(void* wind)
-{
-	NativeWindow* win = (NativeWindow*)wind;
-	win->swapBuffers();
-}
-
 void initSubsystems(int argc, char* argv[])
 {
-#if ANKI_GL == ANKI_GL_DESKTOP
-	U32 glmajor = 4;
-	U32 glminor = 4;
-#else
-	U32 glmajor = 3;
-	U32 glminor = 0;
-#endif
-
-	globAlloc = HeapAllocator<U8>(HeapMemoryPool(allocAligned, nullptr));
-
-	// Logger
-	LoggerSingleton::init(
-		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER, globAlloc);
-
-	// App
-	AppSingleton::get().init();
-
-	// Window
-	NativeWindowInitializer nwinit;
-	nwinit.m_width = 1280;
-	nwinit.m_height = 720;
-	nwinit.m_majorVersion = glmajor;
-	nwinit.m_minorVersion = glminor;
-	nwinit.m_depthBits = 0;
-	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = false;
-	nwinit.m_debugContext = ANKI_DEBUG;
-	win = new NativeWindow;	
-	win->create(nwinit);
-	void* context = win->getCurrentContext();
-	win->contextMakeCurrent(nullptr);
-
-	// GL stuff
-	GlManagerSingleton::init(makeCurrent, context,
-		swapBuffers, win, nwinit.m_debugContext,
-		allocAligned, nullptr);
-
 	// Config
 	Config config;
 	config.set("ms.ez.enabled", false);
@@ -660,31 +476,20 @@ void initSubsystems(int argc, char* argv[])
 	config.set("pps.lf.enabled", true);
 	config.set("pps.sharpen", true);
 	config.set("renderingQuality", 1.0);
-	config.set("width", win->getWidth());
-	config.set("height", win->getHeight());
+	config.set("width", 1280);
+	config.set("height", 720);
 	config.set("lodDistance", 20.0);
 	config.set("samples", 1);
 	config.set("tessellation", false);
 	config.set("tilesXCount", 16);
 	config.set("tilesYCount", 16);
 
+	app = new App(config, allocAligned, nullptr);
+
 	// Input
-	InputSingleton::get().init(win);
-	InputSingleton::get().lockCursor(true);
-	InputSingleton::get().hideCursor(true);
-	InputSingleton::get().moveCursor(Vec2(0.0));
-
-	ResourceManagerSingleton::init(config);
-
-	MainRendererSingleton::init(config);
-
-	ScriptManagerSingleton::init(globAlloc);
-
-	SceneGraphSingleton::init(allocAligned, nullptr);
-
-	StdinListenerSingleton::get().start();
-
-	ThreadpoolSingleton::get().init(getCpuCoresCount());
+	app->getInput().lockCursor(true);
+	app->getInput().hideCursor(true);
+	app->getInput().moveCursor(Vec2(0.0));
 }
 
 //==============================================================================
@@ -697,10 +502,9 @@ int main(int argc, char* argv[])
 		initSubsystems(argc, argv);
 		init();
 
-		mainLoop();
+		app->mainLoop(mainLoopExtra, nullptr);
 
 		ANKI_LOGI("Exiting...");
-		AppSingleton::get().quit(EXIT_SUCCESS);
 		exitCode = 0;
 	}
 	catch(std::exception& e)

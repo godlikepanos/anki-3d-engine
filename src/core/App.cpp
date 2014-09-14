@@ -4,21 +4,20 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/core/App.h"
-#include "anki/Config.h"
+#include "anki/misc/ConfigSet.h"
 #include "anki/core/Logger.h"
 #include "anki/util/Exception.h"
 #include "anki/util/File.h"
+#include "anki/util/Filesystem.h"
 #include "anki/util/System.h"
+#include "anki/core/Counters.h"
+
+#include "anki/core/NativeWindow.h"
+#include "anki/input/Input.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/renderer/MainRenderer.h"
-#include "anki/input/Input.h"
-#include "anki/core/NativeWindow.h"
-#include "anki/core/Counters.h"
-#include <cstring>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
-//#include <execinfo.h> XXX
+#include "anki/script/ScriptManager.h"
+
 #include <signal.h>
 #if ANKI_OS == ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
@@ -34,25 +33,40 @@ android_app* gAndroidApp = nullptr;
 #endif
 
 //==============================================================================
-App::App(AllocAlignedCallback allocCb, void* allocCbUserData)
+App::App(const ConfigSet& config, 
+	AllocAlignedCallback allocCb, void* allocCbUserData)
 :	m_allocCb(allocCb),
 	m_allocCbData(allocCbUserData),
-	m_heapAlloc(HeapMemoryPool(allocCbUserData, allocCb))
+	m_heapAlloc(HeapMemoryPool(allocCb, allocCbUserData))
 {
 	init(config);
 }
 
 //==============================================================================
-void App::init(const Config& config)
+void App::makeCurrent(void* data)
 {
+	App* app = reinterpret_cast<App*>(data);
+	app->m_window->contextMakeCurrent(app->m_ctx);
+}
+
+//==============================================================================
+void App::swapWindow(void* window)
+{
+	reinterpret_cast<NativeWindow*>(window)->swapBuffers();
+}
+
+//==============================================================================
+void App::init(const ConfigSet& config)
+{
+	// Logger
+	LoggerSingleton::init(
+		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER, m_heapAlloc,
+		&m_cacheDir[0]);
+
 	printAppInfo();
 	initDirs();
 
-	timerTick = 1.0 / 60.0; // in sec. 1.0 / period
-
-	// Logger
-	LoggerSingleton::init(
-		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER, m_heapAlloc);
+	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
 	// Window
 	NativeWindow::Initializer nwinit;
@@ -65,7 +79,7 @@ void App::init(const Config& config)
 	nwinit.m_fullscreenDesktopRez = config.get("fullscreen");
 	nwinit.m_debugContext = ANKI_DEBUG;
 	m_window = m_heapAlloc.newInstance<NativeWindow>(nwinit, m_heapAlloc);	
-	Context context = m_window->getCurrentContext();
+	m_ctx = m_window->getCurrentContext();
 	m_window->contextMakeCurrent(nullptr);
 
 	// Input
@@ -74,9 +88,37 @@ void App::init(const Config& config)
 	// Threadpool
 	m_threadpool = m_heapAlloc.newInstance<Threadpool>(getCpuCoresCount());
 
+	// GL
+	m_gl = m_heapAlloc.newInstance<GlDevice>(
+		makeCurrent, this,
+		swapWindow, m_window,
+		nwinit.m_debugContext,
+		m_allocCb, m_allocCbData,
+		m_cacheDir.toCString());
+
+	// Resources
+	ResourceManager::Initializer rinit;
+	rinit.m_gl = m_gl;
+	rinit.m_config = &config;
+	rinit.m_cacheDir = m_cacheDir.toCString();
+	rinit.m_allocCallback = m_allocCb;
+	rinit.m_allocCallbackData = m_allocCbData;
+	m_resources = m_heapAlloc.newInstance<ResourceManager>(rinit);
+
+	// Renderer
+	m_renderer = m_heapAlloc.newInstance<MainRenderer>(
+		m_threadpool,
+		m_resources,
+		m_gl,
+		m_heapAlloc,
+		config);
+
 	// Scene
 	m_scene = m_heapAlloc.newInstance<SceneGraph>(
-		m_allocCb, m_allocCbData, m_threadpool);
+		m_allocCb, m_allocCbData, m_threadpool, m_resources);
+
+	// Script
+	m_script = m_heapAlloc.newInstance<ScriptManager>(m_heapAlloc);
 }
 
 //==============================================================================
@@ -84,48 +126,47 @@ void App::initDirs()
 {
 #if ANKI_OS != ANKI_OS_ANDROID
 	// Settings path
-	Array<char, 512> home;
-	getHomeDirectory(sizeof(home), &home[0]);
-	String settingsPath = String(&home[0]) + "/.anki";
-	if(!directoryExists(settingsPath.c_str()))
+	String home = getHomeDirectory(m_heapAlloc);
+	String settingsDir = home + "/.anki";
+	if(!directoryExists(settingsDir.toCString()))
 	{
-		ANKI_LOGI("Creating settings dir: %s", settingsPath.c_str());
-		createDirectory(settingsPath.c_str());
+		ANKI_LOGI("Creating settings dir: %s", &settingsDir[0]);
+		createDirectory(settingsDir.toCString());
 	}
 
 	// Cache
-	cachePath = settingsPath + "/cache";
-	if(directoryExists(cachePath.c_str()))
+	m_cacheDir = settingsDir + "/cache";
+	if(directoryExists(m_cacheDir.toCString()))
 	{
-		ANKI_LOGI("Deleting dir: %s", cachePath.c_str());
-		removeDirectory(cachePath.c_str());
+		ANKI_LOGI("Deleting dir: %s", &m_cacheDir[0]);
+		removeDirectory(m_cacheDir.toCString());
 	}
 
-	ANKI_LOGI("Creating cache dir: %s", cachePath.c_str());
-	createDirectory(cachePath.c_str());
+	ANKI_LOGI("Creating cache dir: %s", &m_cacheDir[0]);
+	createDirectory(m_cacheDir.toCString());
 #else
 	//ANKI_ASSERT(gAndroidApp);
 	//ANativeActivity* activity = gAndroidApp->activity;
 
 	// Settings path
-	//settingsPath = String(activity->internalDataPath, alloc);
-	settingsPath = String("/sdcard/.anki/");
-	if(!directoryExists(settingsPath.c_str()))
+	//settingsDir = String(activity->internalDataDir, alloc);
+	settingsDir = String("/sdcard/.anki/");
+	if(!directoryExists(settingsDir.c_str()))
 	{
-		ANKI_LOGI("Creating settings dir: %s", settingsPath.c_str());
-		createDirectory(settingsPath.c_str());
+		ANKI_LOGI("Creating settings dir: %s", settingsDir.c_str());
+		createDirectory(settingsDir.c_str());
 	}
 
 	// Cache
-	cachePath = settingsPath + "/cache";
-	if(directoryExists(cachePath.c_str()))
+	cacheDir = settingsDir + "/cache";
+	if(directoryExists(cacheDir.c_str()))
 	{
-		ANKI_LOGI("Deleting dir: %s", cachePath.c_str());
-		removeDirectory(cachePath.c_str());
+		ANKI_LOGI("Deleting dir: %s", cacheDir.c_str());
+		removeDirectory(cacheDir.c_str());
 	}
 
-	ANKI_LOGI("Creating cache dir: %s", cachePath.c_str());
-	createDirectory(cachePath.c_str());
+	ANKI_LOGI("Creating cache dir: %s", cacheDir.c_str());
+	createDirectory(cacheDir.c_str());
 #endif
 }
 
@@ -136,39 +177,31 @@ void App::quit(int code)
 //==============================================================================
 void App::printAppInfo()
 {
-	std::stringstream msg;
-	msg << "App info: ";
-	msg << "AnKi " << ANKI_VERSION_MAJOR << "." << ANKI_VERSION_MINOR << ", ";
+	String msg(getAllocator());
+	msg.sprintf(
+		"App info: "
+		"version %u.%u, "
+		"build %s %s, "
+		"commit %s",
+		ANKI_VERSION_MAJOR, ANKI_VERSION_MINOR,
 #if !ANKI_DEBUG
-	msg << "Release";
+		"Release",
 #else
-	msg << "Debug";
+		"Debug",
 #endif
-	msg << " build,";
+		__DATE__,
+		ANKI_REVISION);
 
-	msg << " " << ANKI_CPU_ARCH_STR;
-	msg << " " << ANKI_GL_STR;
-	msg << " " << ANKI_WINDOW_BACKEND_STR;
-	msg << " CPU cores " << getCpuCoresCount();
-
-	msg << " build date " __DATE__ ", " << "rev " << ANKI_REVISION;
-
-	ANKI_LOGI(msg.str().c_str());
+	ANKI_LOGI(&msg[0]);
 }
 
 //==============================================================================
-void App::mainLoop()
+void App::mainLoop(UserMainLoopCallback callback, void* userData)
 {
-#if 0
 	ANKI_LOGI("Entering main loop");
 
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar crntTime = prevUpdateTime;
-
-	SceneGraph& scene = SceneGraphSingleton::get();
-	MainRenderer& renderer = MainRendererSingleton::get();
-	Input& input = InputSingleton::get();
-	NativeWindow& window = NativeWindowSingleton::get();
 
 	ANKI_COUNTER_START_TIMER(FPS);
 	while(true)
@@ -180,12 +213,14 @@ void App::mainLoop()
 		crntTime = HighRezTimer::getCurrentTime();
 
 		// Update
-		input.handleEvents();
-		scene.update(
-			prevUpdateTime, crntTime, MainRendererSingleton::get());
-		renderer.render(SceneGraphSingleton::get());
+		m_input->handleEvents();
+		m_scene->update(prevUpdateTime, crntTime, *m_renderer);
+		m_renderer->render(*m_scene);
 
-		window.swapBuffers();
+		// User update
+		callback(*this, userData);
+
+		m_gl->swapBuffers();
 		ANKI_COUNTERS_RESOLVE_FRAME();
 
 		// Sleep
@@ -202,7 +237,6 @@ void App::mainLoop()
 	// Counters end
 	ANKI_COUNTER_STOP_TIMER_INC(FPS);
 	ANKI_COUNTERS_FLUSH();
-#endif
 }
 
 } // end namespace anki

@@ -7,12 +7,8 @@
 #define ANKI_RENDERER_MAIN_RENDERER_H
 
 #include "anki/renderer/Renderer.h"
-#include "anki/renderer/Deformer.h"
 
 namespace anki {
-
-// Forward
-class App;
 
 /// @addtogroup renderer
 /// @{
@@ -21,7 +17,12 @@ class App;
 class MainRenderer: public Renderer
 {
 public:
-	MainRenderer(App* app, const ConfigSet& initializer);
+	MainRenderer(
+		Threadpool* threadpool, 
+		ResourceManager* resources,
+		GlDevice* gl,
+		HeapAllocator<U8>& alloc,
+		const ConfigSet& config);
 
 	~MainRenderer();
 
@@ -33,7 +34,6 @@ public:
 	void takeScreenshot(const char* filename);
 
 private:
-	std::unique_ptr<Deformer> m_deformer;
 	ProgramResourcePointer m_blitFrag;
 	GlProgramPipelineHandle m_blitPpline;
 

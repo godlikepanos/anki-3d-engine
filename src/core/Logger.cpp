@@ -14,7 +14,8 @@
 namespace anki {
 
 //==============================================================================
-Logger::Logger(InitFlags flags, HeapAllocator<U8>& alloc)
+Logger::Logger(InitFlags flags, HeapAllocator<U8>& alloc, const char* cacheDir)
+:	m_handlers(alloc)
 {
 	if((flags & InitFlags::WITH_SYSTEM_MESSAGE_HANDLER) != InitFlags::NONE)
 	{
@@ -23,7 +24,21 @@ Logger::Logger(InitFlags flags, HeapAllocator<U8>& alloc)
 
 	if((flags & InitFlags::WITH_LOG_FILE_MESSAGE_HANDLER) != InitFlags::NONE)
 	{
+		U size = std::strlen(cacheDir) + 1;
+		m_cacheDir = reinterpret_cast<char*>(alloc.allocate(size));
+		std::memcpy(m_cacheDir, cacheDir, size);
+
 		addMessageHandler(this, &logfileMessageHandler);
+	}
+}
+
+//==============================================================================
+Logger::~Logger()
+{
+	if(m_cacheDir != nullptr)
+	{
+		HeapAllocator<char> alloc = m_handlers.get_allocator();
+		alloc.deallocate(m_cacheDir, 0);
 	}
 }
 
@@ -145,17 +160,11 @@ void Logger::logfileMessageHandler(void* vlogger, const Info& info)
 	// Init the file
 	if(!logger->m_logfile.isOpen())
 	{
-		const String& filename = AppSingleton::get().getSettingsPath();
+		String filename(logger->m_handlers.get_allocator());
+		filename = logger->m_cacheDir;
+		filename += "/anki.log";
 
-		if(!filename.empty())
-		{
-			logger->m_logfile.open((filename + "/anki.log").c_str(), 
-				File::OpenFlag::WRITE);
-		}
-		else
-		{
-			return;
-		}
+		logger->m_logfile.open(filename.toCString(), File::OpenFlag::WRITE);
 	}
 
 	const char* x = nullptr;

@@ -11,20 +11,25 @@
 
 #include "anki/script/LuaBinder.h"
 
+/// @addtogroup script
+/// @{
+
 /// Wrap a class
 #define ANKI_SCRIPT_WRAP(x) \
 	void ankiScriptWrap##x(LuaBinder& lb)
 
-/// XXX
+/// Call the function that wraps x
 #define ANKI_SCRIPT_CALL_WRAP(x) \
 	extern void ankiScriptWrap##x(LuaBinder&); \
 	ankiScriptWrap##x(*this);
 
-/// XXX
+/// Wrap a singleton class
 #define ANKI_SCRIPT_WRAP_SINGLETON(x) \
 	ANKI_SCRIPT_WRAP(x) { \
 	ANKI_LUA_CLASS_BEGIN_NO_DESTRUCTOR(lb, x)	\
 		ANKI_LUA_STATIC_METHOD("get", &x::get) \
 	ANKI_LUA_CLASS_END() }
+
+/// @}
 
 #endif

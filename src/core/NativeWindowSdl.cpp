@@ -62,7 +62,7 @@ void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 	}
 
 	m_impl->m_window = SDL_CreateWindow(
-    	init.m_title.c_str(),
+    	init.m_title,
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
 		init.m_width, init.m_height, flags);
 

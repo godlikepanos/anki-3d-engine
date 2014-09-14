@@ -9,7 +9,7 @@
 #include "anki/scene/MoveComponent.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
-#include <sstream>
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
@@ -55,11 +55,11 @@ Lf::~Lf()
 {}
 
 //==============================================================================
-void Lf::init(const ConfigSet& initializer)
+void Lf::init(const ConfigSet& config)
 {
 	try
 	{
-		initInternal(initializer);
+		initInternal(config);
 	}
 	catch(const std::exception& e)
 	{
@@ -68,47 +68,42 @@ void Lf::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Lf::initInternal(const ConfigSet& initializer)
+void Lf::initInternal(const ConfigSet& config)
 {
-	m_enabled = initializer.get("pps.lf.enabled") 
-		&& initializer.get("pps.hdr.enabled");
+	m_enabled = config.get("pps.lf.enabled") 
+		&& config.get("pps.hdr.enabled");
 	if(!m_enabled)
 	{
 		return;
 	}
 
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle cmdBuff(&getGlDevice());
 
-	m_maxFlaresPerLight = initializer.get("pps.lf.maxFlaresPerLight");
-	m_maxLightsWithFlares = initializer.get("pps.lf.maxLightsWithFlares");
+	m_maxFlaresPerLight = config.get("pps.lf.maxFlaresPerLight");
+	m_maxLightsWithFlares = config.get("pps.lf.maxLightsWithFlares");
 
 	// Load program 1
-	std::stringstream pps;
-	pps << "#define TEX_DIMENSIONS vec2(" 
-		<< (U)m_r->getPps().getHdr()._getRt().getWidth() << ".0, "
-		<< (U)m_r->getPps().getHdr()._getRt().getHeight() << ".0)\n";
+	String pps(getAllocator());
+	pps.sprintf("#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n", 
+		m_r->getPps().getHdr()._getRt().getWidth(),
+		m_r->getPps().getHdr()._getRt().getHeight());
 
-	std::string fname = ProgramResource::createSrcCodeToCache(
-		"shaders/PpsLfPseudoPass.frag.glsl", pps.str().c_str(), "r_");
-	m_pseudoFrag.load(fname.c_str());
+	m_pseudoFrag.loadToCache(&getResourceManager(), 
+		"shaders/PpsLfPseudoPass.frag.glsl", pps.toCString(), "r_");
 	m_pseudoPpline = m_r->createDrawQuadProgramPipeline(
 		m_pseudoFrag->getGlProgram());
 
 	// Load program 2
-	pps.str("");
-	pps << "#define MAX_FLARES "
-		<< (U)(m_maxFlaresPerLight * m_maxLightsWithFlares) << "\n";
+	pps.sprintf("#define MAX_FLARES %u\n",
+		m_maxFlaresPerLight * m_maxLightsWithFlares);
 
-	fname = ProgramResource::createSrcCodeToCache(
-		"shaders/PpsLfSpritePass.vert.glsl", pps.str().c_str(), "r_");
-	m_realVert.load(fname.c_str());
+	m_realVert.loadToCache(&getResourceManager(), 
+		"shaders/PpsLfSpritePass.vert.glsl", pps.toCString(), "r_");
 
-	fname = ProgramResource::createSrcCodeToCache(
-		"shaders/PpsLfSpritePass.frag.glsl", pps.str().c_str(), "r_");
-	m_realFrag.load(fname.c_str());
+	m_realFrag.loadToCache(&getResourceManager(), 
+		"shaders/PpsLfSpritePass.frag.glsl", pps.toCString(), "r_");
 
-	m_realPpline = GlProgramPipelineHandle(jobs,
+	m_realPpline = GlProgramPipelineHandle(cmdBuff,
 		{m_realVert->getGlProgram(), m_realFrag->getGlProgram()});
 
 	PtrSize blockSize = 
@@ -121,28 +116,28 @@ void Lf::initInternal(const ConfigSet& initializer)
 
 	// Init buffer
 	m_flareDataBuff = GlBufferHandle(
-		jobs, GL_SHADER_STORAGE_BUFFER, blockSize, GL_DYNAMIC_STORAGE_BIT);
+		cmdBuff, GL_SHADER_STORAGE_BUFFER, blockSize, GL_DYNAMIC_STORAGE_BIT);
 
 	// Create the render target
 	m_r->createRenderTarget(m_r->getPps().getHdr()._getRt().getWidth(), 
 		m_r->getPps().getHdr()._getRt().getHeight(), 
 		GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
 
-	m_fb = GlFramebufferHandle(jobs, {{m_rt, GL_COLOR_ATTACHMENT0}}); 
+	m_fb = GlFramebufferHandle(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}}); 
 	
 	// Textures
-	m_lensDirtTex.load("engine_data/lens_dirt.ankitex");
+	m_lensDirtTex.load("engine_data/lens_dirt.ankitex", &getResourceManager());
 
 	// Blit
-	m_blitFrag.load("shaders/Blit.frag.glsl");
+	m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
 	m_blitPpline = m_r->createDrawQuadProgramPipeline(
 		m_blitFrag->getGlProgram());
 
-	jobs.finish();
+	cmdBuff.finish();
 }
 
 //==============================================================================
-void Lf::run(GlCommandBufferHandle& jobs)
+void Lf::run(GlCommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -151,17 +146,17 @@ void Lf::run(GlCommandBufferHandle& jobs)
 	//
 
 	// Set the common state
-	m_fb.bind(jobs, true);
-	jobs.setViewport(0, 0, m_r->getPps().getHdr()._getRt().getWidth(), 
+	m_fb.bind(cmdBuff, true);
+	cmdBuff.setViewport(0, 0, m_r->getPps().getHdr()._getRt().getWidth(), 
 		m_r->getPps().getHdr()._getRt().getHeight());
 
-	m_pseudoPpline.bind(jobs);
+	m_pseudoPpline.bind(cmdBuff);
 
-	jobs.bindTextures(0, {
+	cmdBuff.bindTextures(0, {
 		m_r->getPps().getHdr()._getRt(), 
 		m_lensDirtTex->getGlTexture()});
 
-	m_r->drawQuad(jobs);
+	m_r->drawQuad(cmdBuff);
 
 	//
 	// Rest of the passes
@@ -203,7 +198,7 @@ void Lf::run(GlCommandBufferHandle& jobs)
 
 		// Write the UBO and get the groups
 		//
-		GlClientBufferHandle flaresCBuff(jobs,
+		GlClientBufferHandle flaresCBuff(cmdBuff,
 			sizeof(Flare) * lightsCount * m_maxFlaresPerLight, nullptr);
 		Flare* flares = (Flare*)flaresCBuff.getBaseAddress();
 		U flaresCount = 0;
@@ -295,13 +290,13 @@ void Lf::run(GlCommandBufferHandle& jobs)
 
 		// Write the buffer
 		m_flareDataBuff.write(
-			jobs, flaresCBuff, 0, 0, sizeof(Flare) * flaresCount);
+			cmdBuff, flaresCBuff, 0, 0, sizeof(Flare) * flaresCount);
 
 		// Set the common state
-		m_realPpline.bind(jobs);
+		m_realPpline.bind(cmdBuff);
 
-		jobs.enableBlend(true);
-		jobs.setBlendFunctions(GL_ONE, GL_ONE);
+		cmdBuff.enableBlend(true);
+		cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);
 
 		PtrSize offset = 0;
 		for(U i = 0; i < groupsCount; i++)
@@ -310,10 +305,10 @@ void Lf::run(GlCommandBufferHandle& jobs)
 			U instances = groups[i];
 			PtrSize buffSize = sizeof(Flare) * instances;
 
-			tex.bind(jobs, 0);
-			m_flareDataBuff.bindShaderBuffer(jobs, offset, buffSize, 0);
+			tex.bind(cmdBuff, 0);
+			m_flareDataBuff.bindShaderBuffer(cmdBuff, offset, buffSize, 0);
 
-			m_r->drawQuadInstanced(jobs, instances);
+			m_r->drawQuadInstanced(cmdBuff, instances);
 
 			offset += buffSize;
 		}
@@ -322,17 +317,17 @@ void Lf::run(GlCommandBufferHandle& jobs)
 	{
 		// No lights
 
-		jobs.enableBlend(true);
-		jobs.setBlendFunctions(GL_ONE, GL_ONE);
+		cmdBuff.enableBlend(true);
+		cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);
 	}
 
 	// Blit the HDR RT back to LF RT
 	//
-	m_r->getPps().getHdr()._getRt().bind(jobs, 0);
-	m_blitPpline.bind(jobs);
-	m_r->drawQuad(jobs);
+	m_r->getPps().getHdr()._getRt().bind(cmdBuff, 0);
+	m_blitPpline.bind(cmdBuff);
+	m_r->drawQuad(cmdBuff);
 
-	jobs.enableBlend(false);
+	cmdBuff.enableBlend(false);
 }
 
 } // end namespace anki

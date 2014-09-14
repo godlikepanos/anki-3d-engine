@@ -239,7 +239,7 @@ private:
 };
 
 /// User defined string literal for CStrings.
-CString operator"" _cstr(const char* str, unsigned long length)
+inline CString operator"" _cstr(const char* str, unsigned long length)
 {
 	return CString(str, length);
 }

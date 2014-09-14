@@ -44,7 +44,7 @@ public:
 		Bool8 m_debugContext = false; ///< Enables KHR_debug
 		/// @}
 
-		String m_title = "Untitled window";
+		const char* m_title = "Untitled window";
 	};
 
 	NativeWindow(Initializer& initializer, HeapAllocator<U8>& alloc)
@@ -94,7 +94,7 @@ private:
 
 	Bool isCreated() const
 	{
-		return m_impl.get() != nullptr;
+		return m_impl != nullptr;
 	}
 
 	void create(Initializer& initializer, HeapAllocator<U8>& alloc);

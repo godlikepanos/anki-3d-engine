@@ -5,14 +5,14 @@
 
 #include "anki/renderer/Sslr.h"
 #include "anki/renderer/Renderer.h"
-#include <sstream>
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
 //==============================================================================
-void Sslr::init(const ConfigSet& initializer)
+void Sslr::init(const ConfigSet& config)
 {
-	m_enabled = initializer.get("pps.sslr.enabled");
+	m_enabled = config.get("pps.sslr.enabled");
 
 	if(!m_enabled)
 	{
@@ -20,9 +20,9 @@ void Sslr::init(const ConfigSet& initializer)
 	}
 
 	// Size
-	const F32 quality = initializer.get("pps.sslr.renderingQuality");
+	const F32 quality = config.get("pps.sslr.renderingQuality");
 	m_blurringIterationsCount = 
-		initializer.get("pps.sslr.blurringIterationsCount");
+		config.get("pps.sslr.blurringIterationsCount");
 
 	m_width = quality * (F32)m_r->getWidth();
 	alignRoundUp(16, m_width);
@@ -30,26 +30,26 @@ void Sslr::init(const ConfigSet& initializer)
 	alignRoundUp(16, m_height);
 
 	// Programs
-	std::stringstream pps;
+	String pps(getAllocator());
 
-	pps << "#define WIDTH " << m_width 
-		<< "\n#define HEIGHT " << m_height
-		<< "\n";
+	pps.sprintf(
+		"#define WIDTH %u\n"
+		"#define HEIGHT %u\n",
+		m_width, m_height);
 
-	m_reflectionFrag.load(ProgramResource::createSrcCodeToCache(
-		"shaders/PpsSslr.frag.glsl", pps.str().c_str(), "r_").c_str());
+	m_reflectionFrag.loadToCache(&getResourceManager(),
+		"shaders/PpsSslr.frag.glsl", pps.toCString(), "r_");
 
 	m_reflectionPpline = m_r->createDrawQuadProgramPipeline(
 		m_reflectionFrag->getGlProgram());
 
 	// Sampler
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl);
-	m_depthMapSampler = GlSamplerHandle(jobs);
-	m_depthMapSampler.setFilter(jobs, GlSamplerHandle::Filter::NEAREST);
+	GlCommandBufferHandle cmdBuff(&getGlDevice());
+	m_depthMapSampler = GlSamplerHandle(cmdBuff);
+	m_depthMapSampler.setFilter(cmdBuff, GlSamplerHandle::Filter::NEAREST);
 
 	// Blit
-	m_blitFrag.load("shaders/Blit.frag.glsl");
+	m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
 	m_blitPpline = m_r->createDrawQuadProgramPipeline(
 		m_blitFrag->getGlProgram());
 
@@ -67,61 +67,61 @@ void Sslr::init(const ConfigSet& initializer)
 
 		// Set to bilinear because the blurring techniques take advantage of 
 		// that
-		dir.m_rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
+		dir.m_rt.setFilter(cmdBuff, GlTextureHandle::Filter::LINEAR);
 
 		// Create FB
 		dir.m_fb = GlFramebufferHandle(
-			jobs, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
+			cmdBuff, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
 	}
 
-	jobs.finish();
+	cmdBuff.finish();
 }
 
 //==============================================================================
-void Sslr::run(GlCommandBufferHandle& jobs)
+void Sslr::run(GlCommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 
 	// Compute the reflection
 	//
-	m_dirs[(U)DirectionEnum::VERTICAL].m_fb.bind(jobs, true);
-	jobs.setViewport(0, 0, m_width, m_height);
+	m_dirs[(U)DirectionEnum::VERTICAL].m_fb.bind(cmdBuff, true);
+	cmdBuff.setViewport(0, 0, m_width, m_height);
 
-	m_reflectionPpline.bind(jobs);
+	m_reflectionPpline.bind(cmdBuff);
 
-	jobs.bindTextures(0	, {
+	cmdBuff.bindTextures(0	, {
 		m_r->getIs()._getRt(), // 0 
 		m_r->getMs()._getSmallDepthRt(), // 1
 		m_r->getMs()._getRt1()}); // 2
 
-	m_depthMapSampler.bind(jobs, 1);
-	m_r->getPps().getSsao().m_uniformsBuff.bindShaderBuffer(jobs, 0);
+	m_depthMapSampler.bind(cmdBuff, 1);
+	m_r->getPps().getSsao().m_uniformsBuff.bindShaderBuffer(cmdBuff, 0);
 
-	m_r->drawQuad(jobs);
+	m_r->drawQuad(cmdBuff);
 
-	GlSamplerHandle::bindDefault(jobs, 1); // Unbind the sampler
+	GlSamplerHandle::bindDefault(cmdBuff, 1); // Unbind the sampler
 
 	// Blurring
 	//
 	if(m_blurringIterationsCount > 0)
 	{
-		runBlurring(*m_r, jobs);
+		runBlurring(*m_r, cmdBuff);
 	}
 
 	// Write the reflection back to IS RT
 	//
-	m_r->getIs().m_fb.bind(jobs, false);
-	jobs.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	m_r->getIs().m_fb.bind(cmdBuff, false);
+	cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
-	jobs.enableBlend(true);
-	jobs.setBlendFunctions(GL_ONE, GL_ONE);
+	cmdBuff.enableBlend(true);
+	cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);
 
-	m_dirs[(U)DirectionEnum::VERTICAL].m_rt.bind(jobs, 0);
+	m_dirs[(U)DirectionEnum::VERTICAL].m_rt.bind(cmdBuff, 0);
 
-	m_blitPpline.bind(jobs);
-	m_r->drawQuad(jobs);
+	m_blitPpline.bind(cmdBuff);
+	m_r->drawQuad(cmdBuff);
 
-	jobs.enableBlend(false);
+	cmdBuff.enableBlend(false);
 }
 
 } // end namespace anki

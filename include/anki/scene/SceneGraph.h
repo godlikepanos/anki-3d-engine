@@ -38,12 +38,10 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	SceneGraph(AllocAlignedCallback allocCb, void* allocCbData, 
-		Threadpool* threadpool);
+		Threadpool* threadpool, ResourceManager* resources);
 
 	~SceneGraph();
 	/// @}
-
-	void load(const char* filename);
 
 	/// @note Return a copy
 	SceneAllocator<U8> getAllocator() const
@@ -188,12 +186,16 @@ public:
 		return *m_resources;
 	}
 
-	GlDevice& _getGlDevice();
+	GlDevice& _getGlDevice()
+	{
+		return *m_gl;
+	}
 	/// @}
 
 private:
 	Threadpool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
+	GlDevice* m_gl = nullptr;
 
 	SceneAllocator<U8> m_alloc;
 	SceneAllocator<U8> m_frameAlloc;

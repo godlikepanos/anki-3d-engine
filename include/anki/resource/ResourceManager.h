@@ -176,7 +176,10 @@ public:
 		return m_tmpAlloc;
 	}
 
-	GlDevice& _getGlDevice();
+	GlDevice& _getGlDevice()
+	{
+		return *m_gl;
+	}
 
 	const ResourceString& _getCacheDirectory() const
 	{

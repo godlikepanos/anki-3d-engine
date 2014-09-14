@@ -7,7 +7,6 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/scene/Camera.h"
-#include <sstream>
 
 // Default should be 0
 #define ANKI_TILER_ENABLE_GPU 0
@@ -227,14 +226,19 @@ void Tiler::initInternal(Renderer* r)
 	m_r = r;
 
 	// Load the program
-	std::stringstream pps;
-	pps << "#define TILES_X_COUNT " << m_r->getTilesCount().x() << "\n"
-		<< "#define TILES_Y_COUNT " << m_r->getTilesCount().y() << "\n"
-		<< "#define RENDERER_WIDTH " << m_r->getWidth() << "\n"
-		<< "#define RENDERER_HEIGHT " << m_r->getHeight() << "\n";
+	String pps(r->_getAllocator());
+	pps.sprintf(
+		"#define TILES_X_COUNT %u\n"
+		"#define TILES_Y_COUNT %u\n"
+		"#define RENDERER_WIDTH %u\n"
+		"#define RENDERER_HEIGHT %u\n",
+		m_r->getTilesCount().x(),
+		m_r->getTilesCount().y(),
+		m_r->getWidth(),
+		m_r->getHeight());
 
-	m_frag.load(ProgramResource::createSrcCodeToCache(
-		"shaders/TilerMinMax.frag.glsl", pps.str().c_str(), "r_").c_str());
+	m_frag.loadToCache(&m_r->_getResourceManager(),
+		"shaders/TilerMinMax.frag.glsl", pps.toCString(), "r_");
 
 	m_ppline = m_r->createDrawQuadProgramPipeline(m_frag->getGlProgram());
 
@@ -242,16 +246,15 @@ void Tiler::initInternal(Renderer* r)
 	m_r->createRenderTarget(m_r->getTilesCount().x(), m_r->getTilesCount().y(),
 		GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, 1, m_rt);
 
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle cmdBuff(&m_r->_getGlDevice());
 
-	m_fb = GlFramebufferHandle(jobs, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	m_fb = GlFramebufferHandle(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
 
 	// Create PBO
 	U pixelBuffSize = m_r->getTilesCount().x() * m_r->getTilesCount().y();
 	pixelBuffSize *= 2 * sizeof(F32); // The pixel size
 	pixelBuffSize *= 4; // Because it will be always mapped
-	m_pixelBuff = GlBufferHandle(jobs, GL_PIXEL_PACK_BUFFER, pixelBuffSize,
+	m_pixelBuff = GlBufferHandle(cmdBuff, GL_PIXEL_PACK_BUFFER, pixelBuffSize,
 		GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
 	// Init planes. One plane for each direction, plus near/far plus the world
@@ -275,7 +278,7 @@ void Tiler::initInternal(Renderer* r)
 	ANKI_ASSERT(m_farPlanesW + m_r->getTilesCount().x() 
 		* m_r->getTilesCount().y() ==  &m_allPlanes[0] + m_allPlanes.size());
 
-	jobs.flush();
+	cmdBuff.flush();
 }
 
 //==============================================================================

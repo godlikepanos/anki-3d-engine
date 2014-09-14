@@ -14,26 +14,33 @@
 
 namespace anki {
 
+namespace detail {
+
+/// Dbg flags. Define them first so they can be parameter to the bitset
+enum class DbgFlag
+{
+	NONE = 0,
+	SPATIAL = 1 << 0,
+	FRUSTUMABLE = 1 << 1,
+	SECTOR = 1 << 2,
+	OCTREE = 1 << 3,
+	PHYSICS = 1 << 4,
+	ALL = SPATIAL | FRUSTUMABLE | SECTOR | OCTREE | PHYSICS
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgFlag, inline);
+
+} // end namespace detail
+
 /// @addtogroup renderer
 /// @{
 
 /// Debugging stage
-class Dbg: public RenderingPass, public Bitset<U8>
+class Dbg: public RenderingPass, public Bitset<detail::DbgFlag>
 {
 	friend class Renderer;
 
 public:
-	enum class Flag
-	{
-		NONE = 0,
-		SPATIAL = 1 << 0,
-		FRUSTUMABLE = 1 << 1,
-		SECTOR = 1 << 2,
-		OCTREE = 1 << 3,
-		PHYSICS = 1 << 4,
-		ALL = SPATIAL | FRUSTUMABLE | SECTOR | OCTREE | PHYSICS
-	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend);
+	using Flag = detail::DbgFlag;
 
 	Bool getDepthTestEnabled() const
 	{

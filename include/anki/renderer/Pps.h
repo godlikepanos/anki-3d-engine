@@ -75,6 +75,7 @@ public:
 		return m_sslr;
 	}
 
+	/// @privatesection
 	/// @{
 	const GlTextureHandle& _getRt() const
 	{
@@ -87,14 +88,11 @@ public:
 	/// @}
 
 private:
-	/// @name Passes
-	/// @{
 	Hdr m_hdr;
 	Ssao m_ssao;
 	Bl m_bl;
 	Lf m_lf;
 	Sslr m_sslr;
-	/// @}
 
 	GlFramebufferHandle m_fb;
 	ProgramResourcePointer m_frag;
@@ -104,10 +102,10 @@ private:
 	Pps(Renderer* r);
 	~Pps();
 
-	void init(const ConfigSet& initializer);
+	void init(const ConfigSet& config);
 	void run(GlCommandBufferHandle& jobs);
 
-	void initInternal(const ConfigSet& initializer);
+	void initInternal(const ConfigSet& config);
 };
 
 /// @}

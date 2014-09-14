@@ -7,12 +7,11 @@
 #define ANKI_RENDERER_RENDERER_H
 
 #include "anki/Math.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/ProgramResource.h"
-#include "anki/resource/Resource.h"
 #include "anki/Gl.h"
 #include "anki/util/HighRezTimer.h"
-#include "anki/misc/ConfigSet.h"
 #include "anki/scene/Forward.h"
 
 #include "anki/renderer/Ms.h"
@@ -24,6 +23,9 @@
 #include "anki/renderer/Drawer.h"
 
 namespace anki {
+
+// Forward
+class ConfigSet;
 
 /// @addtogroup renderer
 /// @{
@@ -37,7 +39,12 @@ public:
 	/// GL with a huge job chain
 	static const U32 JOB_CHAINS_COUNT = 2;
 		
-	Renderer(Threadpool* threadpool);
+	Renderer(
+		Threadpool* threadpool, 
+		ResourceManager* resources,
+		GlDevice* gl,
+		HeapAllocator<U8>& alloc,
+		const ConfigSet& config);
 
 	~Renderer();
 
@@ -180,18 +187,9 @@ public:
 		return m_defaultFb;
 	}
 
-	Threadpool& _getThreadpool() 
-	{
-		return *m_threadpool;
-	}
-
-	/// Init the renderer given an initialization class
-	/// @param initializer The initializer class
-	void init(const ConfigSet& initializer);
-
 	/// This function does all the rendering stages and produces a final FAI
 	void render(SceneGraph& scene, 
-		Array<GlCommandBufferHandle, JOB_CHAINS_COUNT>& jobs);
+		Array<GlCommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff);
 
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
@@ -205,9 +203,9 @@ public:
 
 	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no
 	/// longer support quads
-	void drawQuad(GlCommandBufferHandle& jobs);
+	void drawQuad(GlCommandBufferHandle& cmdBuff);
 
-	void drawQuadInstanced(GlCommandBufferHandle& jobs, U32 primitiveCount);
+	void drawQuadInstanced(GlCommandBufferHandle& cmdBuff, U32 primitiveCount);
 
 	/// Get the LOD given the distance of an object from the camera
 	F32 calculateLod(F32 distance) const
@@ -224,16 +222,39 @@ public:
 	GlProgramPipelineHandle createDrawQuadProgramPipeline(
 		GlProgramHandle frag);
 
+	/// Init the renderer given an initialization class
+	/// @param initializer The initializer class
+	void init(const ConfigSet& initializer);
+
 	/// @privatesection
 	/// @{
-	GlDevice& _getGlDevice();
+	GlDevice& _getGlDevice()
+	{
+		return *m_gl;
+	}
 
-	HeapAllocator<U8>& _getAllocator();
+	HeapAllocator<U8>& _getAllocator()
+	{
+		return m_alloc;
+	}
 
-	ResourceManager& _getResourceManager();
+	ResourceManager& _getResourceManager()
+	{
+		return *m_resources;
+	}
+
+	Threadpool& _getThreadpool() 
+	{
+		return *m_threadpool;
+	}
 	/// @}
 
 private:
+	Threadpool* m_threadpool;
+	ResourceManager* m_resources;
+	GlDevice* m_gl;
+	HeapAllocator<U8> m_alloc;
+
 	/// @name Rendering stages
 	/// @{
 	Ms m_ms; ///< Material rendering stage
@@ -278,12 +299,7 @@ private:
 
 	U m_framesNum; ///< Frame number
 
-	/// String to pass to the material shaders
-	String m_shaderPostProcessorString;
-
 	GlFramebufferHandle m_defaultFb;
-
-	Threadpool* m_threadpool;
 
 	void computeProjectionParams(const Mat4& projMat);
 };

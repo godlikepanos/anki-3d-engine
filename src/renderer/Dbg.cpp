@@ -11,6 +11,7 @@
 #include "anki/scene/Light.h"
 #include "anki/core/Logger.h"
 #include "anki/util/Enum.h"
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
@@ -32,7 +33,7 @@ Dbg::~Dbg()
 void Dbg::init(const ConfigSet& initializer)
 {
 	m_enabled = initializer.get("dbg.enabled");
-	enableBits(enumToValue(Flag::ALL));
+	enableBits(Flag::ALL);
 
 	try
 	{
@@ -53,7 +54,7 @@ void Dbg::init(const ConfigSet& initializer)
 				{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
 		}
 
-		m_drawer = getAllocator().newInstance<DebugDrawer>();
+		m_drawer = getAllocator().newInstance<DebugDrawer>(m_r);
 		m_sceneDrawer = getAllocator().newInstance<SceneDebugDrawer>(m_drawer);
 
 		jobs.finish();
@@ -89,7 +90,7 @@ void Dbg::run(GlCommandBufferHandle& jobs)
 			return;
 		}
 
-		if(bitsEnabled(enumToValue(Flag::SPATIAL)) && sp)
+		if(bitsEnabled(Flag::SPATIAL) && sp)
 		{
 			m_sceneDrawer->draw(node);
 		}

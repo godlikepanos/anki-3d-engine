@@ -8,7 +8,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/util/Functions.h"
-#include <sstream>
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
@@ -69,25 +69,23 @@ public:
 //==============================================================================
 void Ssao::createFb(GlFramebufferHandle & fb, GlTextureHandle& rt)
 {
-	GlDevice& gl = GlDeviceSingleton::get();
-
 	m_r->createRenderTarget(m_width, m_height, GL_RED, GL_RED, 
 		GL_UNSIGNED_BYTE, 1, rt);
 
 	// Set to bilinear because the blurring techniques take advantage of that
-	GlCommandBufferHandle jobs(&gl);
-	rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
+	GlCommandBufferHandle cmdBuff(&getGlDevice());
+	rt.setFilter(cmdBuff, GlTextureHandle::Filter::LINEAR);
 
 	// create FB
-	fb = GlFramebufferHandle(jobs, {{rt, GL_COLOR_ATTACHMENT0}});
+	fb = GlFramebufferHandle(cmdBuff, {{rt, GL_COLOR_ATTACHMENT0}});
 
-	jobs.flush();
+	cmdBuff.flush();
 }
 
 //==============================================================================
-void Ssao::initInternal(const ConfigSet& initializer)
+void Ssao::initInternal(const ConfigSet& config)
 {
-	m_enabled = initializer.get("pps.ssao.enabled");
+	m_enabled = config.get("pps.ssao.enabled");
 
 	if(!m_enabled)
 	{
@@ -95,12 +93,12 @@ void Ssao::initInternal(const ConfigSet& initializer)
 	}
 
 	m_blurringIterationsCount = 
-		initializer.get("pps.ssao.blurringIterationsCount");
+		config.get("pps.ssao.blurringIterationsCount");
 
 	//
 	// Init the widths/heights
 	//
-	const F32 quality = initializer.get("pps.ssao.renderingQuality");
+	const F32 quality = config.get("pps.ssao.renderingQuality");
 
 	m_width = quality * (F32)m_r->getWidth();
 	alignRoundUp(16, m_width);
@@ -116,8 +114,7 @@ void Ssao::initInternal(const ConfigSet& initializer)
 	//
 	// noise texture
 	//
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle jobs(&getGlDevice());
 
 	GlClientBufferHandle noise(
 		jobs, sizeof(Vec3) * NOISE_TEX_SIZE * NOISE_TEX_SIZE, nullptr);
@@ -142,24 +139,20 @@ void Ssao::initInternal(const ConfigSet& initializer)
 	//
 	// Kernel
 	//
-	std::stringstream kernelStr;
+	String kernelStr(getAllocator());
 	Array<Vec3, KERNEL_SIZE> kernel;
 
 	genKernel(kernel.begin(), kernel.end());
-	kernelStr << "vec3[](";
+	kernelStr = "vec3[](";
 	for(U i = 0; i < kernel.size(); i++)
 	{
-		kernelStr << "vec3(" << kernel[i].x() << ", " << kernel[i].y()
-			<< ", " << kernel[i].z() << ")";
+		String tmp(getAllocator());
 
-		if(i != kernel.size() - 1)
-		{
-			kernelStr << ", ";
-		}
-		else
-		{
-			kernelStr << ")";
-		}
+		tmp.sprintf("vec3(%f, %f, %f) %s",
+			kernel[i].x(), kernel[i].y(), kernel[i].z(),
+			(i != kernel.size() - 1) ? ", " : ")");
+
+		kernelStr += tmp;
 	}
 
 	//
@@ -168,18 +161,20 @@ void Ssao::initInternal(const ConfigSet& initializer)
 	m_uniformsBuff = GlBufferHandle(jobs, GL_SHADER_STORAGE_BUFFER, 
 		sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT);
 
-	std::stringstream pps;
+	String pps(getAllocator());
 
 	// main pass prog
-	pps << "#define NOISE_MAP_SIZE " << NOISE_TEX_SIZE
-		<< "\n#define WIDTH " << m_width
-		<< "\n#define HEIGHT " << m_height
-		<< "\n#define KERNEL_SIZE " << KERNEL_SIZE << "U"
-		<< "\n#define KERNEL_ARRAY " << kernelStr.str() 
-		<< "\n";
+	pps.sprintf(
+		"#define NOISE_MAP_SIZE %u\n"
+		"#define WIDTH %u\n"
+		"#define HEIGHT %u\n"
+		"#define KERNEL_SIZE %u\n"
+		"#define KERNEL_ARRAY %s\n",
+		NOISE_TEX_SIZE, m_width, m_height, KERNEL_SIZE, &kernelStr[0]);
 
-	m_ssaoFrag.load(ProgramResource::createSrcCodeToCache(
-		"shaders/PpsSsao.frag.glsl", pps.str().c_str(), "r_").c_str());
+	m_ssaoFrag.loadToCache(&getResourceManager(),
+		"shaders/PpsSsao.frag.glsl", pps.toCString(), "r_");
+
 
 	m_ssaoPpline = m_r->createDrawQuadProgramPipeline(
 		m_ssaoFrag->getGlProgram());
@@ -188,26 +183,28 @@ void Ssao::initInternal(const ConfigSet& initializer)
 	const char* SHADER_FILENAME = 
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
-	pps.str("");
-	pps << "#define HPASS\n"
+	pps.sprintf(
+		"#define HPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " << m_height << "\n"
-		"#define SAMPLES 7\n";
+		"#define IMG_DIMENSION %u\n"
+		"#define SAMPLES 7\n", 
+		m_height);
 
-	m_hblurFrag.load(ProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
+	m_hblurFrag.loadToCache(&getResourceManager(),
+		SHADER_FILENAME, pps.toCString(), "r_");
 
 	m_hblurPpline = m_r->createDrawQuadProgramPipeline(
 		m_hblurFrag->getGlProgram());
 
-	pps.str("");
-	pps << "#define VPASS\n"
+	pps.sprintf(
+		"#define VPASS\n"
 		"#define COL_R\n"
-		"#define IMG_DIMENSION " << m_width << "\n"
-		"#define SAMPLES 7\n";
+		"#define IMG_DIMENSION %u\n"
+		"#define SAMPLES 7\n", 
+		m_width);
 
-	m_vblurFrag.load(ProgramResource::createSrcCodeToCache(
-		SHADER_FILENAME, pps.str().c_str(), "r_").c_str());
+	m_vblurFrag.loadToCache(&getResourceManager(),
+		SHADER_FILENAME, pps.toCString(), "r_");
 
 	m_vblurPpline = m_r->createDrawQuadProgramPipeline(
 		m_vblurFrag->getGlProgram());
@@ -216,11 +213,11 @@ void Ssao::initInternal(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Ssao::init(const ConfigSet& initializer)
+void Ssao::init(const ConfigSet& config)
 {
 	try
 	{
-		initInternal(initializer);
+		initInternal(config);
 	}
 	catch(const std::exception& e)
 	{

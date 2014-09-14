@@ -45,7 +45,7 @@ public:
 	///        ways to identify the file in the cache
 	/// @return The file pathname of the new shader prog. Its
 	///         $HOME/.anki/cache/ + filenamePrefix + hash + .glsl
-	static String createSourceToCache(
+	static String createToCache(
 		const CString& filename,
 		const CString& preAppendedSrcCode,
 		const CString& filenamePrefix,

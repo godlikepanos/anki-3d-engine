@@ -12,7 +12,13 @@ namespace anki {
 //==============================================================================
 GlDevice& RenderingPass::getGlDevice()
 {
-	return m_r->getGlDevice();
+	return m_r->_getGlDevice();
+}
+
+//==============================================================================
+const GlDevice& RenderingPass::getGlDevice() const
+{
+	return m_r->_getGlDevice();
 }
 
 //==============================================================================
@@ -65,10 +71,9 @@ void BlurringRenderingPass::initBlurring(
 		dir.m_fb = GlFramebufferHandle(
 			jobs, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
 
-		dir.m_frag.load(ProgramResource::createSourceToCache(
+		dir.m_frag.loadToCache(&getResourceManager(),
 			"shaders/VariableSamplingBlurGeneric.frag.glsl", 
-			pps[i].toCString(), "r_", getResourceManager()).toCString(),
-			&getResourceManager());
+			pps[i].toCString(), "r_");
 
 		dir.m_ppline = 
 			r.createDrawQuadProgramPipeline(dir.m_frag->getGlProgram());

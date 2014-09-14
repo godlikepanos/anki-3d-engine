@@ -10,6 +10,7 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
@@ -54,14 +55,13 @@ void Sm::init(const ConfigSet& initializer)
 		sminit.m_filterType = GlTextureHandle::Filter::NEAREST;
 	}
 
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle cmdBuff(&getGlDevice());
 
-	m_sm2DArrayTex = GlTextureHandle(jobs, sminit);
+	m_sm2DArrayTex = GlTextureHandle(cmdBuff, sminit);
 
-	m_sm2DArrayTex.setParameter(jobs, 
+	m_sm2DArrayTex.setParameter(cmdBuff, 
 		GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	m_sm2DArrayTex.setParameter(jobs, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+	m_sm2DArrayTex.setParameter(cmdBuff, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
 	// Init sms
 	U32 layer = 0;
@@ -69,58 +69,58 @@ void Sm::init(const ConfigSet& initializer)
 	for(Shadowmap& sm : m_sms)
 	{
 		sm.m_layerId = layer;
-		sm.m_fb = GlFramebufferHandle(jobs, 
+		sm.m_fb = GlFramebufferHandle(cmdBuff, 
 			{{m_sm2DArrayTex, GL_DEPTH_ATTACHMENT, (U32)layer}});
 
 		++layer;
 	}
 
-	jobs.flush();
+	cmdBuff.flush();
 }
 
 //==============================================================================
-void Sm::prepareDraw(GlCommandBufferHandle& jobs)
+void Sm::prepareDraw(GlCommandBufferHandle& cmdBuff)
 {
 	// disable color & blend & enable depth test
 
-	jobs.enableDepthTest(true);
-	jobs.setColorWriteMask(false, false, false, false);
+	cmdBuff.enableDepthTest(true);
+	cmdBuff.setColorWriteMask(false, false, false, false);
 
 	// for artifacts
-	jobs.setPolygonOffset(2.0, 2.0); // keep both as low as possible!!!!
-	jobs.enablePolygonOffset(true);
+	cmdBuff.setPolygonOffset(2.0, 2.0); // keep both as low as possible!!!!
+	cmdBuff.enablePolygonOffset(true);
 
 	m_r->getSceneDrawer().prepareDraw(
-		RenderingStage::MATERIAL, Pass::DEPTH, jobs);
+		RenderingStage::MATERIAL, Pass::DEPTH, cmdBuff);
 }
 
 //==============================================================================
-void Sm::finishDraw(GlCommandBufferHandle& jobs)
+void Sm::finishDraw(GlCommandBufferHandle& cmdBuff)
 {
 	m_r->getSceneDrawer().finishDraw();
 
-	jobs.enableDepthTest(false);
-	jobs.enablePolygonOffset(false);
-	jobs.setColorWriteMask(true, true, true, true);
+	cmdBuff.enableDepthTest(false);
+	cmdBuff.enablePolygonOffset(false);
+	cmdBuff.setColorWriteMask(true, true, true, true);
 }
 
 //==============================================================================
 void Sm::run(Light* shadowCasters[], U32 shadowCastersCount, 
-	GlCommandBufferHandle& jobs)
+	GlCommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 
-	prepareDraw(jobs);
+	prepareDraw(cmdBuff);
 
 	// render all
 	for(U32 i = 0; i < shadowCastersCount; i++)
 	{
-		Shadowmap* sm = doLight(*shadowCasters[i], jobs);
+		Shadowmap* sm = doLight(*shadowCasters[i], cmdBuff);
 		ANKI_ASSERT(sm != nullptr);
 		(void)sm;
 	}
 
-	finishDraw(jobs);
+	finishDraw(cmdBuff);
 }
 
 //==============================================================================
@@ -162,7 +162,7 @@ Sm::Shadowmap& Sm::bestCandidate(Light& light)
 }
 
 //==============================================================================
-Sm::Shadowmap* Sm::doLight(Light& light, GlCommandBufferHandle& jobs)
+Sm::Shadowmap* Sm::doLight(Light& light, GlCommandBufferHandle& cmdBuff)
 {
 	Shadowmap& sm = bestCandidate(light);
 
@@ -210,9 +210,9 @@ Sm::Shadowmap* Sm::doLight(Light& light, GlCommandBufferHandle& jobs)
 	//
 	// Render
 	//
-	sm.m_fb.bind(jobs, true);
-	jobs.setViewport(0, 0, m_resolution, m_resolution);
-	jobs.clearBuffers(GL_DEPTH_BUFFER_BIT);
+	sm.m_fb.bind(cmdBuff, true);
+	cmdBuff.setViewport(0, 0, m_resolution, m_resolution);
+	cmdBuff.clearBuffers(GL_DEPTH_BUFFER_BIT);
 
 	for(auto& it : vi.m_renderables)
 	{

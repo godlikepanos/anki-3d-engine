@@ -19,7 +19,7 @@ extern android_app* gAndroidApp;
 #endif
 
 // Forward
-class Config;
+class ConfigSet;
 class Threadpool;
 class NativeWindow;
 class Input;
@@ -27,12 +27,16 @@ class GlDevice;
 class MainRenderer;
 class SceneGraph;
 class ScriptManager;
+class ResourceManager;
 
 /// The core class of the engine.
 class App
 {
 public:
-	App(const Config& config, 
+	using UserMainLoopCallback = void(*)(App& app, void* userData);
+
+	/// Create and initialize the application
+	App(const ConfigSet& config, 
 		AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	~App()
@@ -52,12 +56,12 @@ public:
 
 	const String& getSettingsDirectory() const
 	{
-		return m_settingsPath;
+		return m_settingsDir;
 	}
 
 	const String& getCacheDirectory() const
 	{
-		return m_cachePath;
+		return m_cacheDir;
 	}
 
 	AllocAlignedCallback getAllocationCallback() const
@@ -84,7 +88,22 @@ public:
 	void quit(int code);
 
 	/// Run the main loop
-	void mainLoop();
+	void mainLoop(UserMainLoopCallback callback, void* userData);
+
+	Input& getInput()
+	{
+		return *m_input;
+	}
+
+	SceneGraph& getSceneGraph()
+	{
+		return *m_scene;
+	}
+
+	MainRenderer& getMainRenderer()
+	{
+		return *m_renderer;
+	}
 
 private:
 	// Allocation
@@ -93,25 +112,30 @@ private:
 	HeapAllocator<U8> m_heapAlloc;
 
 	// Sybsystems
-	GlDevice* m_gl = nullptr;
 	NativeWindow* m_window = nullptr;
 	Input* m_input = nullptr;
+	GlDevice* m_gl = nullptr;
+	ResourceManager* m_resources = nullptr;
 	MainRenderer* m_renderer = nullptr;
 	SceneGraph* m_scene = nullptr;
 	ScriptManager* m_script = nullptr;
 
 	// Misc
+	void* m_ctx = nullptr;
 	Threadpool* m_threadpool = nullptr;
-	String m_settingsPath; ///< The path that holds the configuration
-	String m_cachePath; ///< This is used as a cache
+	String m_settingsDir; ///< The path that holds the configuration
+	String m_cacheDir; ///< This is used as a cache
 	F32 m_timerTick;
 
 	/// Initialize the app
-	void init();
+	void init(const ConfigSet& config);
 
 	void initDirs();
 
-	static void printAppInfo();
+	void printAppInfo();
+
+	static void makeCurrent(void* data);
+	static void swapWindow(void* window);
 };
 
 } // end namespace anki

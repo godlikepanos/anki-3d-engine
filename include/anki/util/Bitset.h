@@ -21,10 +21,10 @@ public:
 	typedef T Value;
 
 	Bitset()
-	:	m_bitmask(0)
+	:	m_bitmask(static_cast<Value>(0))
 	{}
 
-	Bitset(T bitmask)
+	Bitset(Value bitmask)
 	:	m_bitmask(bitmask)
 	{}
 
@@ -52,7 +52,7 @@ public:
 
 	Bool bitsEnabled(Value mask) const
 	{
-		return m_bitmask & mask;
+		return (m_bitmask & mask) != static_cast<Value>(0);
 	}
 
 	Value getBitmask() const

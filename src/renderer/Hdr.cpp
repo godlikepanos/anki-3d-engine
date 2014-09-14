@@ -5,6 +5,7 @@
 
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
@@ -82,10 +83,8 @@ void Hdr::initInternal(const ConfigSet& initializer)
 		m_blurringDist, m_height, 
 		static_cast<U>(initializer.get("pps.hdr.samples")));
 
-	m_hblurFrag.load(ProgramResource::createSourceToCache(
-		SHADER_FILENAME, pps.toCString(), "r_", 
-		getResourceManager()).toCString(),
-		&getResourceManager());
+	m_hblurFrag.loadToCache(&getResourceManager(),
+		SHADER_FILENAME, pps.toCString(), "r_");
 
 	m_hblurPpline = 
 		m_r->createDrawQuadProgramPipeline(m_hblurFrag->getGlProgram());
@@ -98,10 +97,8 @@ void Hdr::initInternal(const ConfigSet& initializer)
 		m_blurringDist, m_width, 
 		static_cast<U>(initializer.get("pps.hdr.samples")));
 
-	m_vblurFrag.load(ProgramResource::createSourceToCache(
-		SHADER_FILENAME, pps.toCString(), "r_",
-		getResourceManager()).toCString(),
-		&getResourceManager());
+	m_vblurFrag.loadToCache(&getResourceManager(),
+		SHADER_FILENAME, pps.toCString(), "r_");
 
 	m_vblurPpline = 
 		m_r->createDrawQuadProgramPipeline(m_vblurFrag->getGlProgram());

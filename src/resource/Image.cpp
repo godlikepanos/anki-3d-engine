@@ -464,7 +464,8 @@ static void loadAnkiTexture(
 void Image::load(const CString& filename, U32 maxTextureSize)
 {
 	// get the extension
-	CString ext = getFileExtension(filename);
+	HeapAllocator<U8> alloc = m_surfaces.get_allocator();
+	String ext = getFileExtension(filename, alloc);
 	
 	if(ext == nullptr)
 	{

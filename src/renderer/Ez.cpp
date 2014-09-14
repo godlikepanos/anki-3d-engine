@@ -8,18 +8,19 @@
 #include "anki/core/App.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
 //==============================================================================
-void Ez::init(const ConfigSet& initializer)
+void Ez::init(const ConfigSet& config)
 {
-	m_enabled = initializer.get("ms.ez.enabled");
-	m_maxObjectsToDraw = initializer.get("ms.ez.maxObjectsToDraw");
+	m_enabled = config.get("ms.ez.enabled");
+	m_maxObjectsToDraw = config.get("ms.ez.maxObjectsToDraw");
 }
 
 //==============================================================================
-void Ez::run(GlCommandBufferHandle& jobs)
+void Ez::run(GlCommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -29,7 +30,7 @@ void Ez::run(GlCommandBufferHandle& jobs)
 	VisibilityTestResults& vi = cam.getVisibilityTestResults();
 
 	m_r->getSceneDrawer().prepareDraw(
-		RenderingStage::MATERIAL, Pass::DEPTH, jobs);
+		RenderingStage::MATERIAL, Pass::DEPTH, cmdBuff);
 
 	U count = m_maxObjectsToDraw;
 	for(auto& it : vi.m_renderables)

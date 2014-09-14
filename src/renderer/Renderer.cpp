@@ -8,19 +8,27 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/core/Counters.h"
-#include <sstream>
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
 //==============================================================================
-Renderer::Renderer(Threadpool* threadpool)
-:	m_ms(this), 
+Renderer::Renderer(
+	Threadpool* threadpool, 
+	ResourceManager* resources,
+	GlDevice* gl,
+	HeapAllocator<U8>& alloc,
+	const ConfigSet& config)
+:	m_threadpool(threadpool),
+	m_resources(resources),
+	m_gl(gl),
+	m_alloc(alloc),
+	m_ms(this), 
 	m_is(this),
 	m_pps(this),
 	m_bs(this),
 	m_dbg(this), 
-	m_sceneDrawer(this),
-	m_threadpool(threadpool)
+	m_sceneDrawer(this)
 {}
 
 //==============================================================================
@@ -28,20 +36,20 @@ Renderer::~Renderer()
 {}
 
 //==============================================================================
-void Renderer::init(const ConfigSet& initializer)
+void Renderer::init(const ConfigSet& config)
 {
-	// Set from the initializer
-	m_width = initializer.get("width");
-	m_height = initializer.get("height");
-	m_lodDistance = initializer.get("lodDistance");
+	// Set from the config
+	m_width = config.get("width");
+	m_height = config.get("height");
+	m_lodDistance = config.get("lodDistance");
 	m_framesNum = 0;
-	m_samples = initializer.get("samples");
-	m_isOffscreen = initializer.get("offscreen");
-	m_renderingQuality = initializer.get("renderingQuality");
-	m_tilesCount.x() = initializer.get("tilesXCount");
-	m_tilesCount.y() = initializer.get("tilesYCount");
+	m_samples = config.get("samples");
+	m_isOffscreen = config.get("offscreen");
+	m_renderingQuality = config.get("renderingQuality");
+	m_tilesCount.x() = config.get("tilesXCount");
+	m_tilesCount.y() = config.get("tilesYCount");
 
-	m_tessellation = initializer.get("tessellation");
+	m_tessellation = config.get("tessellation");
 
 	// A few sanity checks
 	if(m_samples != 1 && m_samples != 4 && m_samples != 8 && m_samples != 16
@@ -59,42 +67,34 @@ void Renderer::init(const ConfigSet& initializer)
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
 		{1.0, -1.0}, {-1.0, -1.0}};
 
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle cmdBuff(m_gl);
 
-	GlClientBufferHandle tmpBuff = GlClientBufferHandle(jobs, 
+	GlClientBufferHandle tmpBuff = GlClientBufferHandle(cmdBuff, 
 		sizeof(quadVertCoords), (void*)&quadVertCoords[0][0]);
 
-	m_quadPositionsBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, 
+	m_quadPositionsBuff = GlBufferHandle(cmdBuff, GL_ARRAY_BUFFER, 
 		tmpBuff, 0);
 
-	m_drawQuadVert.load("shaders/Quad.vert.glsl");
+	m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources);
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	m_tiler.init(this);
 
-	m_ms.init(initializer);;
-	m_is.init(initializer);
-	m_bs.init(initializer);
-	m_pps.init(initializer);
-	m_dbg.init(initializer);
-
-	// Init the shaderPostProcessorString
-	std::stringstream ss;
-	ss << "#define RENDERING_WIDTH " << m_width << "\n"
-		<< "#define RENDERING_HEIGHT " << m_height << "\n";
-
-	m_shaderPostProcessorString = ss.str();
+	m_ms.init(config);
+	m_is.init(config);
+	m_bs.init(config);
+	m_pps.init(config);
+	m_dbg.init(config);
 
 	// Default FB
-	m_defaultFb = GlFramebufferHandle(jobs, {});
+	m_defaultFb = GlFramebufferHandle(cmdBuff, {});
 
-	jobs.finish();
+	cmdBuff.finish();
 }
 
 //==============================================================================
 void Renderer::render(SceneGraph& scene, 
-	Array<GlCommandBufferHandle, JOB_CHAINS_COUNT>& jobs)
+	Array<GlCommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff)
 {
 	m_scene = &scene;
 	Camera& cam = m_scene->getActiveCamera();
@@ -113,47 +113,47 @@ void Renderer::render(SceneGraph& scene,
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
-	m_ms.run(jobs[0]);
-	ANKI_ASSERT(jobs[0].getReferenceCount() == 1);
-	jobs[0].flush();
+	m_ms.run(cmdBuff[0]);
+	ANKI_ASSERT(cmdBuff[0].getReferenceCount() == 1);
+	cmdBuff[0].flush();
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
 	m_tiler.runMinMax(m_ms._getDepthRt());
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
-	m_is.run(jobs[1]);
+	m_is.run(cmdBuff[1]);
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
-	m_bs.run(jobs[1]);
+	m_bs.run(cmdBuff[1]);
 
 	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
 	if(m_pps.getEnabled())
 	{
-		m_pps.run(jobs[1]);
+		m_pps.run(cmdBuff[1]);
 	}
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_PPS_TIME);
 
 	if(m_dbg.getEnabled())
 	{
-		m_dbg.run(jobs[1]);
+		m_dbg.run(cmdBuff[1]);
 	}
 
 	++m_framesNum;
 }
 
 //==============================================================================
-void Renderer::drawQuad(GlCommandBufferHandle& jobs)
+void Renderer::drawQuad(GlCommandBufferHandle& cmdBuff)
 {
-	drawQuadInstanced(jobs, 1);
+	drawQuadInstanced(cmdBuff, 1);
 }
 
 //==============================================================================
 void Renderer::drawQuadInstanced(
-	GlCommandBufferHandle& jobs, U32 primitiveCount)
+	GlCommandBufferHandle& cmdBuff, U32 primitiveCount)
 {
-	m_quadPositionsBuff.bindVertexBuffer(jobs, 2, GL_FLOAT, false, 0, 0, 0);
+	m_quadPositionsBuff.bindVertexBuffer(cmdBuff, 2, GL_FLOAT, false, 0, 0, 0);
 
-	dc.drawArrays(GL_TRIANGLE_STRIP, 4, primitiveCount);
+	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, primitiveCount);
 }
 
 //==============================================================================
@@ -227,23 +227,21 @@ void Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 	init.m_genMipmaps = false;
 	init.m_samples = samples;
 
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl);
-	rt = GlTextureHandle(jobs, init);
-	jobs.finish();
+	GlCommandBufferHandle cmdBuff(m_gl);
+	rt = GlTextureHandle(cmdBuff, init);
+	cmdBuff.finish();
 }
 
 //==============================================================================
 GlProgramPipelineHandle Renderer::createDrawQuadProgramPipeline(
 	GlProgramHandle frag)
 {
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle cmdBuff(m_gl);
 
 	Array<GlProgramHandle, 2> progs = {{m_drawQuadVert->getGlProgram(), frag}};
 
-	GlProgramPipelineHandle ppline(jobs, &progs[0], &progs[0] + 2);
-	jobs.finish();
+	GlProgramPipelineHandle ppline(cmdBuff, &progs[0], &progs[0] + 2);
+	cmdBuff.finish();
 
 	return ppline;
 }

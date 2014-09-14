@@ -21,7 +21,7 @@ namespace anki {
 class StdinListener
 {
 public:
-	StdinListener();
+	StdinListener(HeapAllocator<String>& alloc);
 
 	~StdinListener();
 
@@ -29,7 +29,7 @@ public:
 	String getLine();
 
 private:
-	std::queue<String> m_q;
+	std::deque<String, HeapAllocator<String>> m_q;
 	Mutex m_mtx; ///< Protect the queue
 	Thread m_thrd; ///< The thread
 	Bool8 m_quit = false;

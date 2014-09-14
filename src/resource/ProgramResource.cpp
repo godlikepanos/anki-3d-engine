@@ -40,7 +40,7 @@ void ProgramResource::load(const CString& filename, const CString& extraSrc,
 }
 
 //==============================================================================
-String ProgramResource::createSourceToCache(
+String ProgramResource::createToCache(
 	const CString& filename, const CString& preAppendedSrcCode, 
 	const CString& filenamePrefix, ResourceManager& manager)
 {

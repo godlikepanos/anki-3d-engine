@@ -30,7 +30,7 @@ public:
 	Ptr<const FrustumComponent> m_fr;
 	Ptr<RenderableDrawer> m_drawer;
 	U8 m_instanceCount;
-	GlCommandBufferHandle m_jobs;
+	GlCommandBufferHandle m_cmdBuff;
 
 	F32 m_flod;
 
@@ -201,7 +201,7 @@ public:
 			{
 				auto unit = glvar.getTextureUnit();
 
-				m_drawer->m_r->getMs()._getSmallDepthRt().bind(m_jobs, unit);
+				m_drawer->m_r->getMs()._getSmallDepthRt().bind(m_cmdBuff, unit);
 			}
 			break;
 		default:
@@ -221,24 +221,23 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 	GlTextureHandle tex = (*values)->getGlTexture();
 	auto unit = uni.getTextureUnit();
 
-	tex.bind(m_jobs, unit);
+	tex.bind(m_cmdBuff, unit);
 }
 
 //==============================================================================
 RenderableDrawer::RenderableDrawer(Renderer* r)
-	: m_r(r)
+:	m_r(r)
 {
 	// Create the uniform buffer
-	GlDevice& gl = GlDeviceSingleton::get();
-	GlCommandBufferHandle jobs(&gl);
-	m_uniformBuff = GlBufferHandle(jobs, GL_UNIFORM_BUFFER, 
+	GlCommandBufferHandle cmdBuff(&m_r->_getGlDevice());
+	m_uniformBuff = GlBufferHandle(cmdBuff, GL_UNIFORM_BUFFER, 
 		MAX_UNIFORM_BUFFER_SIZE,
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	jobs.flush();
+	cmdBuff.flush();
 
 	m_uniformPtr = (U8*)m_uniformBuff.getPersistentMappingAddress();
 	ANKI_ASSERT(m_uniformPtr != nullptr);
-	ANKI_ASSERT(isAligned(gl.getBufferOffsetAlignment(
+	ANKI_ASSERT(isAligned(m_r->_getGlDevice().getBufferOffsetAlignment(
 		m_uniformBuff.getTarget()), m_uniformPtr));
 
 	// Set some other values
@@ -260,7 +259,7 @@ void RenderableDrawer::setupUniforms(
 	// Find a place to write the uniforms
 	//
 	U8* prevUniformPtr = m_uniformPtr;
-	alignRoundUp(GlDeviceSingleton::get().getBufferOffsetAlignment(
+	alignRoundUp(m_r->_getGlDevice().getBufferOffsetAlignment(
 		m_uniformBuff.getTarget()), m_uniformPtr);
 	U diff = m_uniformPtr - prevUniformPtr;
 
@@ -280,7 +279,7 @@ void RenderableDrawer::setupUniforms(
 	vis.m_fr = &fr;
 	vis.m_drawer = this;
 	vis.m_instanceCount = visibleNode.m_spatialsCount;
-	vis.m_jobs = m_jobs;
+	vis.m_cmdBuff = m_cmdBuff;
 	vis.m_flod = flod;
 
 	for(auto it = renderable.getVariablesBegin();
@@ -295,7 +294,7 @@ void RenderableDrawer::setupUniforms(
 	// Update the uniform descriptor
 	//
 	m_uniformBuff.bindShaderBuffer(
-		m_jobs, 
+		m_cmdBuff, 
 		m_uniformPtr - persistent,
 		mtl.getDefaultBlockSize(),
 		0);
@@ -347,7 +346,7 @@ void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 			return;
 		}
 
-		m_jobs.setBlendFunctions(
+		m_cmdBuff.setBlendFunctions(
 			mtl.getBlendingSfactor(), mtl.getBlendingDfactor());
 	}
 
@@ -361,19 +360,19 @@ void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	// Enqueue vertex, program and drawcall
 	build.m_subMeshIndicesArray = &visibleNode.m_spatialIndices[0];
 	build.m_subMeshIndicesCount = visibleNode.m_spatialsCount;
-	build.m_jobs = m_jobs;
+	build.m_jobs = m_cmdBuff;
 
 	renderable.buildRendering(build);
 }
 
 //==============================================================================
 void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
-	GlCommandBufferHandle& jobs)
+	GlCommandBufferHandle& cmdBuff)
 {
 	// Set some numbers
 	m_stage = stage;
 	m_pass = pass;
-	m_jobs = jobs;
+	m_cmdBuff = cmdBuff;
 
 	if(m_r->getFramesCount() > m_uniformsUsedSizeFrame)
 	{
@@ -387,7 +386,7 @@ void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
 void RenderableDrawer::finishDraw()
 {
 	// Release the job chain
-	m_jobs = GlCommandBufferHandle();
+	m_cmdBuff = GlCommandBufferHandle();
 
 	if(m_uniformsUsedSize > MAX_UNIFORM_BUFFER_SIZE / 3)
 	{

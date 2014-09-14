@@ -18,7 +18,10 @@ void Input::init(NativeWindow* nativeWindow)
 	m_nativeWindow = nativeWindow;
 
 	// Init native
-	m_impl = m_nativeWindow->_getAllocator().newInstance<InputImpl>();
+	HeapAllocator<std::pair<const SDL_Keycode, KeyCode>> alloc = 
+		m_nativeWindow->_getAllocator();
+
+	m_impl = m_nativeWindow->_getAllocator().newInstance<InputImpl>(alloc);
 
 	//impl
 	m_impl->m_sdlToAnki[SDLK_RETURN] = KeyCode::RETURN;
@@ -319,7 +322,7 @@ void Input::handleEvents()
 				/ m_nativeWindow->getHeight() * 2.0 - 1.0);
 			break;
 		case SDL_QUIT:
-			addEvent(WINDOW_CLOSED_EVENT);
+			addEvent(Event::WINDOW_CLOSED);
 			break;
 		}
 	} // end while events

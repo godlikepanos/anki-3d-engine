@@ -82,6 +82,12 @@ Config::Config()
 
 	newOption("maxTextureSize", 1024 * 1024);
 	newOption("textureAnisotropy", 8);
+
+	//
+	// Window
+	//
+	newOption("glminor", 4);
+	newOption("glmajor", 4);
 }
 
 //==============================================================================

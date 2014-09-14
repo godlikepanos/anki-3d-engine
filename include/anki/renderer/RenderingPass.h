@@ -16,6 +16,7 @@ namespace anki {
 // Forward
 class Renderer;
 class ResourceManager;
+class ConfigSet;
 
 /// @addtogroup renderer
 /// @{
@@ -47,6 +48,7 @@ protected:
 	HeapAllocator<U8>& getAllocator();
 
 	GlDevice& getGlDevice();
+	const GlDevice& getGlDevice() const;
 
 	ResourceManager& getResourceManager();
 };

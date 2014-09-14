@@ -21,10 +21,13 @@ class Sslr: public BlurringRenderingPass
 	friend class Pps;
 
 public:
+	/// @privatesection
+	/// @{
 	GlTextureHandle& _getRt()
 	{
 		return m_dirs[(U)DirectionEnum::VERTICAL].m_rt;
 	}
+	/// @}
 
 private:
 	U32 m_width;
@@ -43,8 +46,8 @@ private:
 	:	BlurringRenderingPass(r)
 	{}
 
-	void init(const ConfigSet& initializer);
-	void run(GlCommandBufferHandle& jobs);
+	void init(const ConfigSet& config);
+	void run(GlCommandBufferHandle& cmdBuff);
 };
 
 /// @}

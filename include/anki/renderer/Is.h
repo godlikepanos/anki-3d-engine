@@ -100,12 +100,12 @@ private:
 	/// @name Limits
 	/// @{
 	U16 m_maxPointLights;
-	U8 m_maxSpotLights;
-	U8 m_maxSpotTexLights;
+	U32 m_maxSpotLights;
+	U32 m_maxSpotTexLights;
 
-	U8 m_maxPointLightsPerTile;
-	U8 m_maxSpotLightsPerTile;
-	U8 m_maxSpotTexLightsPerTile;
+	U32 m_maxPointLightsPerTile;
+	U32 m_maxSpotLightsPerTile;
+	U32 m_maxSpotTexLightsPerTile;
 	/// @}
 
 	U32 m_tileSize; ///< Cache the value here
@@ -114,16 +114,16 @@ private:
 	~Is();
 
 	void init(const ConfigSet& initializer);
-	void run(GlCommandBufferHandle& jobs);
+	void run(GlCommandBufferHandle& cmdBuff);
 
 	/// Called by init
 	void initInternal(const ConfigSet& initializer);
 
 	/// Do the actual pass
-	void lightPass(GlCommandBufferHandle& jobs);
+	void lightPass(GlCommandBufferHandle& cmdBuff);
 
 	/// Prepare GL for rendering
-	void setState(GlCommandBufferHandle& jobs);
+	void setState(GlCommandBufferHandle& cmdBuff);
 
 	/// Calculate the size of the lights UBO
 	PtrSize calcLightsBufferSize() const;
@@ -131,7 +131,7 @@ private:
 	/// Calculate the size of the tile
 	PtrSize calcTileSize() const;
 
-	void updateCommonBlock(GlCommandBufferHandle& jobs);
+	void updateCommonBlock(GlCommandBufferHandle& cmdBuff);
 };
 
 /// @}

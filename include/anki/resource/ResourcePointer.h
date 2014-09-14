@@ -128,6 +128,13 @@ public:
 	/// Load the resource using the resource manager
 	void load(const CString& filename, TResourceManager* resources);
 
+	template<typename... TArgs>
+	void loadToCache(TResourceManager* resources, TArgs&&... args)
+	{
+		auto fname = Type::createToCache(args..., *resources);
+		load(fname.toCString(), resources);
+	}
+
 	Bool isLoaded() const
 	{
 		return m_cb != nullptr;

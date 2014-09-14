@@ -11,7 +11,6 @@
 #include "anki/util/Array.h"
 #include "anki/util/StdTypes.h"
 #include "anki/input/KeyCode.h"
-#include <memory>
 
 namespace anki {
 
@@ -26,9 +25,9 @@ class Input
 public:
 	enum class Event: U8
 	{
-		WINDOW_FOCUS_LOST_EVENT,
-		WINDOW_FOCUS_GAINED_EVENT,
-		WINDOW_CLOSED_EVENT,
+		WINDOW_FOCUS_LOST,
+		WINDOW_FOCUS_GAINED,
+		WINDOW_CLOSED,
 		COUNT
 	};
 
@@ -111,7 +110,7 @@ private:
 
 	Vec2 m_mousePosNdc = Vec2(2.0); ///< The coords are in the NDC space
 
-	Array<U8, EVENTS_COUNT> m_events;
+	Array<U8, static_cast<U>(Event::COUNT)> m_events;
 
 	Bool8 m_lockCurs = false;
 
