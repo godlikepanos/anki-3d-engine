@@ -11,9 +11,6 @@
 
 namespace anki {
 
-// Forward
-class App;
-
 /// @addtogroup script
 /// @{
 
@@ -24,9 +21,6 @@ public:
 	ScriptManager(HeapAllocator<U8>& alloc);
 
 	~ScriptManager();
-
-private:
-	App* m_app;
 };
 
 /// @}

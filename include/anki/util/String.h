@@ -292,7 +292,7 @@ public:
 
 	/// Move constructor.
 	StringBase(StringBase&& b) noexcept
-	:	m_data(b.m_data)
+	:	m_data(std::move(b.m_data))
 	{}
 
 	/// Destroys the string.
@@ -503,7 +503,6 @@ public:
 	{
 		Array<Char, 512> buffer;
 		va_list args;
-		Char* out = &buffer[0];
 
 		va_start(args, fmt);
 		I len = std::vsnprintf(&buffer[0], sizeof(buffer), &fmt[0], args);
@@ -516,22 +515,19 @@ public:
 		else if(static_cast<PtrSize>(len) >= sizeof(buffer))
 		{
 			I size = len + 1;
-			out = reinterpret_cast<Char*>(getAllocator().allocate(size));
+			m_data.resize(size);
 
 			va_start(args, fmt);
-			len = std::vsnprintf(out, size, &fmt[0], args);
+			len = std::vsnprintf(&m_data[0], size, &fmt[0], args);
 			(void)len;
 			va_end(args);
 
-			ANKI_ASSERT(len < size);
+			ANKI_ASSERT((len + 1) == size);
 		}
-
-		*this = out;
-
-		// Delete the allocated memory
-		if(out != &buffer[0])
+		else
 		{
-			getAllocator().deallocate(out, 0);
+			// buffer was enough
+			*this = &buffer[0];
 		}
 
 		return *this;
@@ -565,7 +561,10 @@ public:
 			// The string has grown
 			
 			// Fill the extra space with c
-			std::memset(&m_data[size - 1], c, newLength - size + 1);
+			std::memset(
+				&m_data[(size > 0) ? (size - 1) : 0], 
+				c, 
+				newLength - size + 1);
 			m_data[newLength] = '\0';
 		}
 		else if(size > newLength + 1)

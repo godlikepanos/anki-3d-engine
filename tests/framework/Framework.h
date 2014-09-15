@@ -6,13 +6,11 @@
 #ifndef ANKI_TESTS_FRAMEWORK_FRAMEWORK_H
 #define ANKI_TESTS_FRAMEWORK_FRAMEWORK_H
 
-#include "anki/util/Vector.h"
 #include "anki/util/Singleton.h"
 #include <stdexcept>
+#include <vector>
 #include <string>
-#include <iostream>
 #include <sstream>
-#include <cmath>
 
 namespace anki {
 
@@ -29,7 +27,7 @@ class TestSuite
 {
 public:
 	std::string name;
-	Vector<Test*> tests;
+	std::vector<Test*> tests;
 
 	~TestSuite();
 };
@@ -49,7 +47,7 @@ public:
 class Tester
 {
 public:
-	Vector<TestSuite*> suites;
+	std::vector<TestSuite*> suites;
 	std::string programName;
 
 	void addTest(const char* name, const char* suite, TestCallback callback);

@@ -121,6 +121,12 @@ public:
 	std::atomic<U32> m_allocationsCount;
 	AllocAlignedCallback m_allocCb;
 	void* m_allocCbUserData;
+
+	~Implementation()
+	{
+		ANKI_ASSERT(m_allocationsCount == 0 
+			&& "Memory pool destroyed before all memory being released");
+	}
 };
 
 //==============================================================================
@@ -165,6 +171,7 @@ void HeapMemoryPool::clear()
 			auto ud = m_impl->m_allocCbUserData;
 			ANKI_ASSERT(allocCb);
 
+			m_impl->~Implementation();
 			allocCb(ud, m_impl, 0, 0);
 		}
 
@@ -883,6 +890,7 @@ void ChainMemoryPool::clear()
 			auto ud = m_impl->m_allocCbUserData;
 			ANKI_ASSERT(allocCb);
 
+			m_impl->~Implementation();
 			allocCb(ud, m_impl, 0, 0);
 		}
 

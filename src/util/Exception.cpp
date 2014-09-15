@@ -8,6 +8,7 @@
 #include "anki/util/Memory.h"
 #include <cstring>
 #include <cstdarg>
+#include <cstdio> // For vsnprintf
 
 // Instead of throwing abort. Its easier to debug
 #define ANKI_ABORT_ON_THROW 0

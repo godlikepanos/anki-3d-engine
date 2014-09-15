@@ -1,2 +1,12 @@
-build/*
 *
+!*/
+!*.cpp
+!*.c
+!*.cc
+!*.hpp
+!*.h
+!*.txt
+!*.py
+!*.glsl
+!*.sh
+build/*

@@ -68,6 +68,10 @@ ResourceManager::ResourceManager(Initializer& init)
 }
 
 //==============================================================================
+ResourceManager::~ResourceManager()
+{}
+
+//==============================================================================
 TempResourceString ResourceManager::fixResourceFilename(
 	const CString& filename) const
 {

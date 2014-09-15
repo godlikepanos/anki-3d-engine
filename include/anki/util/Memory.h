@@ -7,7 +7,6 @@
 #define ANKI_UTIL_MEMORY_H
 
 #include "anki/util/StdTypes.h"
-#include <memory>
 
 namespace anki {
 

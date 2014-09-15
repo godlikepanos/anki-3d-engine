@@ -147,6 +147,8 @@ public:
 
 	ResourceManager(Initializer& init);
 
+	~ResourceManager();
+
 	const ResourceString& getDataDirectory() const
 	{
 		return m_dataDir;

@@ -20,17 +20,19 @@ class GlDevice
 {
 public:
 	/// @see GlQueue::start
-	GlDevice(
-		GlCallback makeCurrentCallback, void* context,
-		GlCallback swapBuffersCallback, void* swapBuffersCbData,
-		Bool registerDebugMessages,
-		AllocAlignedCallback alloc, void* allocUserData,
+	GlDevice(AllocAlignedCallback alloc, void* allocUserData, 
 		const CString& cacheDir);
 
 	~GlDevice()
 	{
 		destroy();
 	}
+
+	/// Start the queue thread. @see GlQueue::start
+	void startServer(
+		GlCallback makeCurrentCallback, void* context,
+		GlCallback swapBuffersCallback, void* swapBuffersCbData,
+		Bool registerDebugMessages);
 
 	/// Synchronize client and server
 	void syncClientServer();
@@ -69,6 +71,7 @@ private:
 	GlQueue* m_queue;
 	HeapAllocator<U8> m_alloc; ///< Keep it last to be deleted last
 	char* m_cacheDir = nullptr;
+	Bool8 m_queueStarted = false;
 
 	void destroy();
 };

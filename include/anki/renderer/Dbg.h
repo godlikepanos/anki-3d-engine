@@ -27,7 +27,7 @@ enum class DbgFlag
 	PHYSICS = 1 << 4,
 	ALL = SPATIAL | FRUSTUMABLE | SECTOR | OCTREE | PHYSICS
 };
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgFlag, inline);
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgFlag, inline)
 
 } // end namespace detail
 

@@ -1,4 +1,5 @@
-FILE(GLOB_RECURSE ANKI_R_SOURCES *.cpp)
-FILE(GLOB_RECURSE ANKI_R_HEADERS *.h)
+file(GLOB_RECURSE ANKI_R_SOURCES *.cpp)
+file(GLOB_RECURSE ANKI_R_HEADERS *.h)
 
-ADD_LIBRARY(ankirenderer ${ANKI_R_SOURCES} ${ANKI_R_HEADERS})
+add_library(ankirenderer ${ANKI_R_SOURCES} ${ANKI_R_HEADERS})
+target_link_libraries(ankirenderer ankicore)

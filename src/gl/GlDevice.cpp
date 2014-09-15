@@ -11,9 +11,6 @@ namespace anki {
 
 //==============================================================================
 GlDevice::GlDevice(
-	GlCallback makeCurrentCallback, void* context,
-	GlCallback swapBuffersCallback, void* swapBuffersCbData,
-	Bool registerDebugMessages,
 	AllocAlignedCallback alloc, void* allocUserData,
 	const CString& cacheDir)
 {
@@ -24,15 +21,9 @@ GlDevice::GlDevice(
 	m_cacheDir = reinterpret_cast<char*>(m_alloc.allocate(len + 1));
 	std::memcpy(m_cacheDir, &cacheDir[0], len + 1);
 
-	// Start the server
+	// Create queue
 	m_queue = m_alloc.newInstance<GlQueue>(
 		this, alloc, allocUserData);
-
-	m_queue->start(makeCurrentCallback, context, 
-		swapBuffersCallback, swapBuffersCbData, 
-		registerDebugMessages);
-
-	syncClientServer();
 }
 
 //==============================================================================
@@ -40,7 +31,11 @@ void GlDevice::destroy()
 {
 	if(m_queue)
 	{
-		m_queue->stop();
+		if(m_queueStarted)
+		{
+			m_queue->stop();
+		}
+
 		m_alloc.deleteInstance(m_queue);
 	}
 
@@ -48,6 +43,21 @@ void GlDevice::destroy()
 	{
 		m_alloc.deallocate(m_cacheDir, std::strlen(m_cacheDir) + 1);
 	}
+}
+
+//==============================================================================
+void GlDevice::startServer(
+	GlCallback makeCurrentCallback, void* context,
+	GlCallback swapBuffersCallback, void* swapBuffersCbData,
+	Bool registerDebugMessages)
+{
+	m_queue->start(makeCurrentCallback, context, 
+		swapBuffersCallback, swapBuffersCbData, 
+		registerDebugMessages);
+
+	syncClientServer();
+
+	m_queueStarted = true;
 }
 
 //==============================================================================

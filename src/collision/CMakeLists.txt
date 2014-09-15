@@ -1,4 +1,5 @@
-FILE(GLOB ANKI_CLN_SOURCES *.cpp)
-FILE(GLOB ANKI_CLN_HEADERS *.h)
+file(GLOB ANKI_CLN_SOURCES *.cpp)
+file(GLOB ANKI_CLN_HEADERS *.h)
 
-ADD_LIBRARY(ankicollision ${ANKI_CLN_SOURCES} ${ANKI_CLN_HEADERS})
+add_library(ankicollision ${ANKI_CLN_SOURCES} ${ANKI_CLN_HEADERS})
+target_link_libraries(ankicollision ankimath)

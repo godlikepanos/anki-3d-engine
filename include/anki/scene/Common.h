@@ -44,10 +44,6 @@ template<typename T>
 using SceneDictionary = 
 	Dictionary<T, SceneAllocator<std::pair<const char*, T>>>;
 
-/// Shared pointer in scene
-template<typename T>
-using SceneSharedPointer = std::shared_ptr<T>;
-
 /// Scene object
 template<typename T>
 using SceneHierarchicalObject = Object<T, SceneAllocator<T>>;

@@ -42,7 +42,7 @@ void Test::run()
 void Tester::addTest(const char* name, const char* suiteName,
 	TestCallback callback)
 {
-	Vector<TestSuite*>::iterator it;
+	std::vector<TestSuite*>::iterator it;
 	for(it = suites.begin(); it != suites.end(); it++)
 	{
 		if((*it)->name == suiteName)
@@ -65,7 +65,7 @@ void Tester::addTest(const char* name, const char* suiteName,
 	}
 
 	// Sanity check
-	Vector<Test*>::iterator it1;
+	std::vector<Test*>::iterator it1;
 	for(it1 = suite->tests.begin(); it1 != suite->tests.end(); it1++)
 	{
 		if((*it)->name == name)

@@ -90,11 +90,13 @@ void App::init(const ConfigSet& config)
 
 	// GL
 	m_gl = m_heapAlloc.newInstance<GlDevice>(
-		makeCurrent, this,
-		swapWindow, m_window,
-		nwinit.m_debugContext,
 		m_allocCb, m_allocCbData,
 		m_cacheDir.toCString());
+
+	m_gl->startServer(
+		makeCurrent, this,
+		swapWindow, m_window,
+		nwinit.m_debugContext);
 
 	// Resources
 	ResourceManager::Initializer rinit;
