@@ -49,7 +49,7 @@ public:
 	{}
 
 	GlTexture(const Initializer& init, 
-		GlGlobalHeapAllocator<U8>& alloc)
+		GlAllocator<U8>& alloc)
 	{
 		create(init, alloc);
 	}
@@ -155,7 +155,7 @@ private:
 	U8 m_samples;
 
 	/// Create a texture
-	void create(const Initializer& init, GlGlobalHeapAllocator<U8>& alloc);
+	void create(const Initializer& init, GlAllocator<U8>& alloc);
 
 	void destroy();
 

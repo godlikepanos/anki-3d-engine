@@ -151,7 +151,7 @@ public:
 		return _get().getAllocator();
 	}
 
-	GlGlobalHeapAllocator<U8> _getGlobalAllocator() const
+	GlAllocator<U8> _getGlobalAllocator() const
 	{
 		return _get().getGlobalAllocator();
 	}

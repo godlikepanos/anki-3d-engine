@@ -72,10 +72,10 @@ GlBufferHandle::GlBufferHandle(GlCommandBufferHandle& commands,
 {
 	ANKI_ASSERT(!isCreated());
 
-	using Alloc = GlGlobalHeapAllocator<GlBuffer>;
+	using Alloc = GlAllocator<GlBuffer>;
 
 	using DeleteCommand = 
-		GlDeleteObjectCommand<GlBuffer, GlGlobalHeapAllocator<U8>>;
+		GlDeleteObjectCommand<GlBuffer, GlAllocator<U8>>;
 
 	using Deleter = GlHandleDeferredDeleter<GlBuffer, Alloc, DeleteCommand>;
 
@@ -96,10 +96,10 @@ GlBufferHandle::GlBufferHandle(GlCommandBufferHandle& commands,
 {
 	ANKI_ASSERT(!isCreated());
 
-	using Alloc = GlGlobalHeapAllocator<GlBuffer>;
+	using Alloc = GlAllocator<GlBuffer>;
 
 	using DeleteCommand = 
-		GlDeleteObjectCommand<GlBuffer, GlGlobalHeapAllocator<U8>>;
+		GlDeleteObjectCommand<GlBuffer, GlAllocator<U8>>;
 
 	using Deleter = GlHandleDeferredDeleter<GlBuffer, Alloc, DeleteCommand>;
 

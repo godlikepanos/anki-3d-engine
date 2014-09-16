@@ -26,7 +26,7 @@ public:
 
 	// Re-define it here
 	template<typename T>
-	using ProgramVector = Vector<T, GlGlobalHeapAllocator<T>>;
+	using ProgramVector = Vector<T, GlAllocator<T>>;
 
 	/// @name Contructors/Destructor
 	/// @{

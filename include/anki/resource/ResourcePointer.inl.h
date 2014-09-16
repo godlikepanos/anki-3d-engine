@@ -28,6 +28,8 @@ void ResourcePointer<T, TResourceManager>::load(
 			sizeof(ControlBlock) + len, &alignment));
 		resources->_getAllocator().construct(m_cb);
 
+		m_cb->m_resources = resources;
+
 		// Populate the m_cb
 		try
 		{
@@ -37,10 +39,13 @@ void ResourcePointer<T, TResourceManager>::load(
 				*resources);
 
 			m_cb->m_resource.load(filename, init);
+
+			resources->_getTempAllocator().getMemoryPool().reset();
 		}
 		catch(const std::exception& e)
 		{
-			m_cb->m_resources->_getAllocator().deleteInstance(m_cb);	
+			resources->_getAllocator().deleteInstance(m_cb);
+			throw ANKI_EXCEPTION("Loading failed: %s", &filename[0]) << e;
 		}
 
 		m_cb->m_resources = resources;
@@ -81,7 +86,7 @@ void ResourcePointer<T, TResourceManager>::copy(const ResourcePointer& b)
 {
 	reset();
 	
-	if(b.m_cb == nullptr)
+	if(b.m_cb != nullptr)
 	{
 		auto count = b.m_cb->m_refcount.fetch_add(1);
 		ANKI_ASSERT(count > 0);

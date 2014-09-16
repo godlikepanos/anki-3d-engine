@@ -57,7 +57,7 @@ GlFramebufferHandle::GlFramebufferHandle(
 		}
 	};
 
-	using Alloc = GlGlobalHeapAllocator<GlFramebuffer>;
+	using Alloc = GlAllocator<GlFramebuffer>;
 	using DeleteCommand = GlDeleteObjectCommand<GlFramebuffer, Alloc>;
 	using Deleter = 
 		GlHandleDeferredDeleter<GlFramebuffer, Alloc, DeleteCommand>;

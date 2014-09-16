@@ -77,7 +77,7 @@ void GlCommandBuffer::destroy()
 }
 
 //==============================================================================
-GlGlobalHeapAllocator<U8> GlCommandBuffer::getGlobalAllocator() const
+GlAllocator<U8> GlCommandBuffer::getGlobalAllocator() const
 {
 	return m_server->getDevice()._getAllocator();
 }

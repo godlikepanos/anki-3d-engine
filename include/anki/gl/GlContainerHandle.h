@@ -30,7 +30,7 @@ protected:
 
 		if(state == GlHandleState::TO_BE_CREATED)
 		{
-			Base::_getManager()._getQueue().syncClientServer();
+			Base::_getDevice()._getQueue().syncClientServer();
 			ANKI_ASSERT(Base::_getState() > GlHandleState::TO_BE_CREATED);
 		}
 	}

@@ -79,7 +79,7 @@ public:
 			Block* blk = alloc.template newInstance<Block>();
 
 			blk->m_state = GlHandleState::NEW;
-			blk->m_manager = manager;
+			blk->m_gl = manager;
 			blk->m_alloc = alloc;
 			blk->m_del = del;
 
@@ -110,31 +110,11 @@ public:
 		*this = b;
 	}
 
-	GlHandle(GlHandle&& b)
-	:	GlHandle()
-	{
-		*this = std::move(b);
-	}
-
 	~GlHandle()
 	{
 		reset();
 	}
 	/// @}
-
-	/// Move
-	GlHandle& operator=(GlHandle&& b)
-	{
-		reset();
-	
-		if(b.m_cb)
-		{
-			m_cb = b.m_cb;
-			b.m_cb = nullptr;
-		}
-
-		return *this;
-	}
 
 	/// Copy
 	GlHandle& operator=(const GlHandle& b)
@@ -230,10 +210,10 @@ public:
 		return m_cb->getStateAtomically(&newVal);
 	}
 
-	GlDevice& _getManager() const
+	GlDevice& _getDevice() const
 	{
-		ANKI_ASSERT(m_cb != nullptr && m_cb->getManager() != nullptr);
-		return *m_cb->getManager(); 
+		ANKI_ASSERT(m_cb != nullptr && m_cb->getDevice() != nullptr);
+		return *m_cb->getDevice(); 
 	}
 
 private:
@@ -244,19 +224,19 @@ private:
 	{
 	public:
 		Y* m_ptr;
-		Atomic<I32> m_refcount;
+		AtomicI32 m_refcount;
 
 		virtual ~CtrlBlockBase()
 		{}
 		
-		/// Destroy the object in m_ptr
+		/// Delete the m_ptr
 		virtual void deletePtr() = 0;
 
 		/// Delete the block itself
 		virtual void deleteSelf() = 0;
 
 		/// The container handles want the manager
-		virtual GlDevice* getManager() const
+		virtual GlDevice* getDevice() const
 		{
 			return nullptr;
 		}
@@ -310,14 +290,14 @@ private:
 		YDeleter m_del;
 
 		/// @note Its mutable because we want read/write access to it
-		mutable GlDevice* m_manager; 
+		mutable GlDevice* m_gl; 
 
 		Atomic<GlHandleState> m_state;
 		
 		void deletePtr()
 		{
 			// Delete object
-			m_del(Base::m_ptr, m_alloc, getManager());
+			m_del(Base::m_ptr, m_alloc, getDevice());
 		}
 
 		void deleteSelf()
@@ -326,9 +306,9 @@ private:
 			m_alloc.deleteInstance(this);
 		}
 
-		GlDevice* getManager() const override
+		GlDevice* getDevice() const override
 		{
-			return m_manager;
+			return m_gl;
 		}
 
 		GlHandleState getStateAtomically(GlHandleState* newVal) override

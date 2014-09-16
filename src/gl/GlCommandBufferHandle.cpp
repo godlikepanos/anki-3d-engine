@@ -35,7 +35,7 @@ namespace anki {
 	public: \
 		type_ m_value; \
 		Command(type_ v) \
-			: m_value(v) \
+		:	m_value(v) \
 		{} \
 		void operator()(GlCommandBuffer*) \
 		{ \
@@ -98,7 +98,7 @@ namespace anki {
 	public: \
 		Bool8 m_enable; \
 		Command(Bool enable) \
-			: m_enable(enable) \
+		:	m_enable(enable) \
 		{} \
 		void operator()(GlCommandBuffer*) \
 		{ \
@@ -125,7 +125,7 @@ GlCommandBufferHandle::GlCommandBufferHandle(GlDevice* gl,
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(gl);
 
-	using Alloc = GlGlobalHeapAllocator<GlCommandBuffer>;
+	using Alloc = GlAllocator<GlCommandBuffer>;
 	Alloc alloc = gl->_getAllocator();
 
 	*static_cast<Base*>(this) = Base(
@@ -151,7 +151,8 @@ void GlCommandBufferHandle::pushBackUserCommand(
 		void* m_userData;
 
 		Command(UserCallback callback, void* userData)
-			: m_callback(callback), m_userData(userData)
+		:	m_callback(callback), 
+			m_userData(userData)
 		{
 			ANKI_ASSERT(m_callback);
 		}
@@ -175,7 +176,7 @@ void GlCommandBufferHandle::pushBackOtherCommandBuffer(
 		GlCommandBufferHandle m_commands;
 
 		Command(GlCommandBufferHandle& commands)
-			: m_commands(commands)
+		:	m_commands(commands)
 		{}
 
 		void operator()(GlCommandBuffer*)

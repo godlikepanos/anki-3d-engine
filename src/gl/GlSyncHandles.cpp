@@ -41,7 +41,7 @@ GlClientSyncHandle::GlClientSyncHandle(GlCommandBufferHandle& commands)
 	auto alloc = commands._getGlobalAllocator();
 
 	using Deleter = 
-		GlHandleDefaultDeleter<GlClientSync, GlGlobalHeapAllocator<U8>>;
+		GlHandleDefaultDeleter<GlClientSync, GlAllocator<U8>>;
 
 	*static_cast<Base*>(this) = Base(
 		&commands._getQueue().getDevice(), alloc, Deleter());

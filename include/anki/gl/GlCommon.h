@@ -45,7 +45,7 @@ using GlCommandBufferAllocator = ChainAllocator<T>;
 
 /// The type of the allocator for heap allocations
 template<typename T>
-using GlGlobalHeapAllocator = HeapAllocator<T>;
+using GlAllocator = HeapAllocator<T>;
 
 /// Texture filtering method
 enum class GlTextureFilter: U8

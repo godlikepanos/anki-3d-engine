@@ -8,6 +8,7 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/Mesh.h"
 #include "anki/resource/Model.h"
+#include "anki/resource/DummyRsrc.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/resource/ParticleEmitterResource.h"
 #include "anki/resource/TextureResource.h"
@@ -23,8 +24,8 @@ ResourceManager::ResourceManager(Initializer& init)
 	m_tmpAlloc(StackMemoryPool(
 		init.m_allocCallback, init.m_allocCallbackData, 
 		init.m_tempAllocatorMemorySize)),
-	m_cacheDir(m_alloc),
-	m_dataDir(init.m_cacheDir, m_alloc)
+	m_cacheDir(init.m_cacheDir, m_alloc),
+	m_dataDir(m_alloc)
 {
 	// Init the data path
 	//
@@ -63,6 +64,7 @@ ResourceManager::ResourceManager(Initializer& init)
 	ANKI_RESOURCE(Skeleton)
 	ANKI_RESOURCE(ParticleEmitterResource)
 	ANKI_RESOURCE(Model)
+	ANKI_RESOURCE(DummyRsrc)
 
 #undef ANKI_RESOURCE
 }

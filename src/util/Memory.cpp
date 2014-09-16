@@ -25,8 +25,8 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes) noexcept
 #if ANKI_POSIX 
 #	if ANKI_OS != ANKI_OS_ANDROID
 	void* out;
-	int err = posix_memalign(
-		&out, getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
+	U alignment = getAlignedRoundUp(alignmentBytes, sizeof(void*));
+	int err = posix_memalign(&out, alignment, size);
 
 	if(!err)
 	{

@@ -49,7 +49,7 @@ GlProgramHandle::GlProgramHandle()
 GlProgramHandle::GlProgramHandle(GlCommandBufferHandle& commands, 
 	GLenum type, const GlClientBufferHandle& source)
 {
-	using Alloc = GlGlobalHeapAllocator<GlProgram>;
+	using Alloc = GlAllocator<GlProgram>;
 	using DeleteCommand = GlDeleteObjectCommand<GlProgram, Alloc>;
 	using Deleter = GlHandleDeferredDeleter<GlProgram, Alloc, DeleteCommand>;
 

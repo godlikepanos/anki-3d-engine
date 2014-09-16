@@ -67,7 +67,7 @@ void GlProgramPipelineHandle::commonConstructor(
 		}
 	};
 
-	using Alloc = GlGlobalHeapAllocator<GlProgramPipeline>;
+	using Alloc = GlAllocator<GlProgramPipeline>;
 	using DeleteCommand = GlDeleteObjectCommand<GlProgramPipeline, Alloc>;
 	using Deleter = 
 		GlHandleDeferredDeleter<GlProgramPipeline, Alloc, DeleteCommand>;

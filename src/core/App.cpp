@@ -58,13 +58,14 @@ void App::swapWindow(void* window)
 //==============================================================================
 void App::init(const ConfigSet& config)
 {
+	initDirs();
+
 	// Logger
 	LoggerSingleton::init(
 		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER, m_heapAlloc,
 		&m_cacheDir[0]);
 
 	printAppInfo();
-	initDirs();
 
 	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
@@ -132,7 +133,6 @@ void App::initDirs()
 	String settingsDir = home + "/.anki";
 	if(!directoryExists(settingsDir.toCString()))
 	{
-		ANKI_LOGI("Creating settings dir: %s", &settingsDir[0]);
 		createDirectory(settingsDir.toCString());
 	}
 
@@ -140,11 +140,9 @@ void App::initDirs()
 	m_cacheDir = settingsDir + "/cache";
 	if(directoryExists(m_cacheDir.toCString()))
 	{
-		ANKI_LOGI("Deleting dir: %s", &m_cacheDir[0]);
 		removeDirectory(m_cacheDir.toCString());
 	}
 
-	ANKI_LOGI("Creating cache dir: %s", &m_cacheDir[0]);
 	createDirectory(m_cacheDir.toCString());
 #else
 	//ANKI_ASSERT(gAndroidApp);
@@ -155,7 +153,6 @@ void App::initDirs()
 	settingsDir = String("/sdcard/.anki/");
 	if(!directoryExists(settingsDir.c_str()))
 	{
-		ANKI_LOGI("Creating settings dir: %s", settingsDir.c_str());
 		createDirectory(settingsDir.c_str());
 	}
 
@@ -163,11 +160,9 @@ void App::initDirs()
 	cacheDir = settingsDir + "/cache";
 	if(directoryExists(cacheDir.c_str()))
 	{
-		ANKI_LOGI("Deleting dir: %s", cacheDir.c_str());
 		removeDirectory(cacheDir.c_str());
 	}
 
-	ANKI_LOGI("Creating cache dir: %s", cacheDir.c_str());
 	createDirectory(cacheDir.c_str());
 #endif
 }

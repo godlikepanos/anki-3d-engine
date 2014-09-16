@@ -38,12 +38,6 @@ public:
 		copy(b);
 	}
 
-	/// Move contructor
-	ResourcePointer(ResourcePointer&& b)
-	{
-		*this = std::move(b);
-	}
-
 	/// Construct and load
 	ResourcePointer(const CString& filename, TResourceManager* resources)
 	{
@@ -107,14 +101,6 @@ public:
 	ResourcePointer& operator=(const ResourcePointer& b)
 	{
 		copy(b);
-		return *this;
-	}
-
-	/// Move
-	ResourcePointer& operator=(ResourcePointer&& b)
-	{
-		m_cb = b.m_cb;
-		b.m_cb = nullptr;
 		return *this;
 	}
 

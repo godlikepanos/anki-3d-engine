@@ -483,7 +483,9 @@ public:
 	PtrSize getLength() const noexcept
 	{
 		auto size = m_data.size();
-		return (size != 0) ? (size - 1) : 0;
+		auto out = (size != 0) ? (size - 1) : 0;
+		ANKI_ASSERT(std::strlen(&m_data[0]) == out);
+		return out;
 	}
 
 	/// Return the allocator

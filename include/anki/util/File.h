@@ -91,13 +91,12 @@ public:
 
 	/// Read all the contents of a text file
 	/// If the file is not rewined it will probably fail
-	template<typename TContainer>
-	void readAllText(TContainer& out)
+	template<typename TAlloc>
+	void readAllText(StringBase<TAlloc>& out)
 	{
 		PtrSize size = getSize();
-		out.resize(size + 1);
+		out.resize(size, '\0');
 		read(&out[0], size);
-		out[size] = '\0';
 	}
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's 

@@ -67,7 +67,7 @@ GlTexture& GlTexture::operator=(GlTexture&& b)
 
 //==============================================================================
 void GlTexture::create(const Initializer& init, 
-	GlGlobalHeapAllocator<U8>& alloc)
+	GlAllocator<U8>& alloc)
 {
 	// Sanity checks
 	//
@@ -167,7 +167,7 @@ void GlTexture::create(const Initializer& init,
 				ANKI_ASSERT(m_depth > 0);
 
 				// Gather the data
-				Vector<U8, GlGlobalHeapAllocator<U8>> data(alloc);
+				Vector<U8, GlAllocator<U8>> data(alloc);
 
 				// Check if there are data
 				if(init.m_data[level][0].m_ptr != nullptr)

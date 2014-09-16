@@ -93,7 +93,7 @@ GlTextureHandle::GlTextureHandle(
 
 	ANKI_ASSERT(!isCreated());
 
-	using Alloc = GlGlobalHeapAllocator<GlTexture>;
+	using Alloc = GlAllocator<GlTexture>;
 
 	using DeleteCommand = 
 		GlDeleteObjectCommand<GlTexture, Alloc>;
@@ -268,7 +268,7 @@ GlSamplerHandle::GlSamplerHandle(GlCommandBufferHandle& commands)
 		}
 	};
 
-	using Alloc = GlGlobalHeapAllocator<GlSampler>;
+	using Alloc = GlAllocator<GlSampler>;
 
 	using DeleteCommand = GlDeleteObjectCommand<GlSampler, Alloc>;
 

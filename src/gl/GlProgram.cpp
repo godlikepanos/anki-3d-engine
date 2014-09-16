@@ -291,7 +291,7 @@ GlProgram& GlProgram::operator=(GlProgram&& b)
 
 //==============================================================================
 void GlProgram::create(GLenum type, const CString& source, 
-	const GlGlobalHeapAllocator<U8>& alloc, const CString& cacheDir)
+	const GlAllocator<U8>& alloc, const CString& cacheDir)
 {
 	try
 	{
@@ -306,12 +306,12 @@ void GlProgram::create(GLenum type, const CString& source,
 
 //==============================================================================
 void GlProgram::createInternal(GLenum type, const CString& source, 
-	const GlGlobalHeapAllocator<U8>& alloc_, const CString& cacheDir)
+	const GlAllocator<U8>& alloc_, const CString& cacheDir)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(!isCreated() && m_data == nullptr);
 
-	GlGlobalHeapAllocator<U8> alloc = alloc_;
+	GlAllocator<U8> alloc = alloc_;
 	m_data = alloc.newInstance<GlProgramData>(alloc);
 	m_type = type;
 

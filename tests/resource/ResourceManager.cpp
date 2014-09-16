@@ -5,6 +5,7 @@
 
 #include "tests/framework/Framework.h"
 #include "anki/resource/ResourceManager.h"
+#include "anki/resource/DummyRsrc.h"
 #include "anki/core/Config.h"
 #include "anki/Gl.h"
 
@@ -29,7 +30,40 @@ ANKI_TEST(Resource, ResourceManager)
 	rinit.m_allocCallbackData = nullptr;
 	ResourceManager* resources = alloc.newInstance<ResourceManager>(rinit);
 
-	// Celete
+	// Load a resource
+	{
+		DummyResourcePointer a;
+
+		a.load("blah", resources);
+
+		{
+			DummyResourcePointer b = a;
+			a = b;
+			b = a;
+		}
+	}
+
+	// Load and load again
+	{
+		DummyResourcePointer a("blah", resources);
+		auto refcount = a.getReferenceCount();
+
+		DummyResourcePointer b("blah", resources);
+		ANKI_TEST_EXPECT_EQ(b.getReferenceCount(), a.getReferenceCount());
+		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 1);
+
+		ANKI_TEST_EXPECT_EQ(b.get(), a.get());
+
+		// Again
+		DummyResourcePointer c("blah", resources);
+		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 2);
+
+		// Load something else
+		DummyResourcePointer d("blih", resources);
+		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 2);
+	}
+
+	// Delete
 	alloc.deleteInstance(resources);
 	alloc.deleteInstance(gl);
 }

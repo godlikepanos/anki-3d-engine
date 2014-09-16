@@ -41,7 +41,8 @@ public:
 	TAlloc m_alloc;
 
 	GlDeleteObjectCommand(T* ptr, TAlloc alloc)
-		: m_ptr(ptr), m_alloc(alloc)
+	:	m_ptr(ptr), 
+		m_alloc(alloc)
 	{
 		ANKI_ASSERT(m_ptr);
 	}
@@ -52,8 +53,8 @@ public:
 	}
 };
 
-/// Command buffer initialization hints. They are used to optimize the allocators
-/// of a command buffer
+/// Command buffer initialization hints. They are used to optimize the 
+/// allocators of a command buffer
 class GlCommandBufferInitHints
 {
 	friend class GlCommandBuffer;
@@ -94,7 +95,7 @@ public:
 		return m_alloc;
 	}
 
-	GlGlobalHeapAllocator<U8> getGlobalAllocator() const;
+	GlAllocator<U8> getGlobalAllocator() const;
 
 	GlQueue& getQueue()
 	{

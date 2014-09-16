@@ -6,6 +6,8 @@
 #ifndef ANKI_RESOURCE_DUMMY_RSRC_H
 #define ANKI_RESOURCE_DUMMY_RSRC_H
 
+#include "anki/resource/Common.h"
+
 namespace anki {
 
 /// @addtogroup resource_private
@@ -16,34 +18,27 @@ class DummyRsrc
 {
 public:
 	DummyRsrc()
-	{
-		++mem;
-		loaded = false;
-	}
+	{}
 
 	~DummyRsrc()
 	{
-		--mem;
-		if(loaded)
+		if(m_memory)
 		{
-			--mem;
+			m_alloc.deallocate(m_memory, 128);
 		}
 	}
 
-	void load(const char* filename)
+	void load(const CString& filename, ResourceInitializer& init)
 	{
-		++mem;
-		loaded = true;
-	}
-
-	static int getMem()
-	{
-		return mem;
+		m_alloc = init.m_alloc;
+		m_memory = m_alloc.allocate(128);
+		void* tempMem = init.m_tempAlloc.allocate(128);
+		(void)tempMem;
 	}
 
 private:
-	static int mem;
-	bool loaded;
+	void* m_memory = nullptr;
+	HeapAllocator<U8> m_alloc;
 };
 
 /// @}

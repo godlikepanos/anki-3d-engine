@@ -23,13 +23,13 @@ class GlProgramData: public NonCopyable
 {
 public:
 	template<typename T>
-	using ProgramVector = Vector<T, GlGlobalHeapAllocator<T>>;
+	using ProgramVector = Vector<T, GlAllocator<T>>;
 
 	template<typename T>
 	using ProgramDictionary = 
-		Dictionary<T, GlGlobalHeapAllocator<std::pair<CString, T>>>;
+		Dictionary<T, GlAllocator<std::pair<CString, T>>>;
 
-	GlProgramData(const GlGlobalHeapAllocator<U8>& alloc)
+	GlProgramData(const GlAllocator<U8>& alloc)
 	:	m_variables(alloc), 
 		m_variablesDict(10, DictionaryHasher(), DictionaryEqual(), alloc), 
 		m_blocks(alloc), 
@@ -88,7 +88,7 @@ public:
 	GlProgram(
 		GLenum shaderType, 
 		const CString& source, 
-		const GlGlobalHeapAllocator<U8>& alloc, 
+		const GlAllocator<U8>& alloc, 
 		const CString& cacheDir)
 	:	m_data(nullptr)
 	{
@@ -133,9 +133,9 @@ private:
 	GlProgramData* m_data;
 
 	void create(GLenum type, const CString& source, 
-		const GlGlobalHeapAllocator<U8>& alloc, const CString& cacheDir);
+		const GlAllocator<U8>& alloc, const CString& cacheDir);
 	void createInternal(GLenum type, const CString& source, 
-		const GlGlobalHeapAllocator<U8>& alloc, const CString& cacheDir);
+		const GlAllocator<U8>& alloc, const CString& cacheDir);
 	void destroy();
 
 	/// Query the program for blocks

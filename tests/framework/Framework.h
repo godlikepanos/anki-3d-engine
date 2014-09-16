@@ -96,7 +96,8 @@ extern void deleteTesterSingleton();
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " != " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
-			throw std::runtime_error(ss.str()); \
+			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			throw std::runtime_error("Test faled"); \
 		} \
 	} while(0);
 
@@ -107,7 +108,8 @@ extern void deleteTesterSingleton();
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " == " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
-			throw std::runtime_error(ss.str()); \
+			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			throw std::runtime_error("Test faled"); \
 		} \
 	} while(0);
 
@@ -118,7 +120,8 @@ extern void deleteTesterSingleton();
 			std::stringstream ss; \
 			ss << "FAILURE: " << #x << " != " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
-			throw std::runtime_error(ss.str()); \
+			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			throw std::runtime_error("Test faled"); \
 		} \
 	} while(0);
 
