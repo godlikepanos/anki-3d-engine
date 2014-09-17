@@ -79,16 +79,17 @@ struct UpdateSceneNodesJob: Threadpool::Task
 //==============================================================================
 SceneGraph::SceneGraph(AllocAlignedCallback allocCb, void* allocCbData, 
 	Threadpool* threadpool, ResourceManager* resources)
-:	m_alloc(StackMemoryPool(allocCb, allocCbData, ANKI_SCENE_ALLOCATOR_SIZE)),
+:	m_threadpool(threadpool),
+	m_resources(resources),
+	m_gl(&m_resources->_getGlDevice()),
+	m_alloc(StackMemoryPool(allocCb, allocCbData, ANKI_SCENE_ALLOCATOR_SIZE)),
 	m_frameAlloc(StackMemoryPool(allocCb, allocCbData, 
 		ANKI_SCENE_FRAME_ALLOCATOR_SIZE)),
 	m_nodes(m_alloc),
 	m_dict(10, DictionaryHasher(), DictionaryEqual(), m_alloc),
 	m_physics(),
 	m_sectorGroup(this),
-	m_events(this),
-	m_threadpool(threadpool),
-	m_resources(resources)
+	m_events(this)
 {
 	m_nodes.reserve(ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT);
 

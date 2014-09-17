@@ -39,10 +39,7 @@ public:
 	App(const ConfigSet& config, 
 		AllocAlignedCallback allocCb, void* allocCbUserData);
 
-	~App()
-	{
-		// TODO
-	}
+	~App();
 
 	F32 getTimerTick() const
 	{
@@ -127,14 +124,13 @@ private:
 	String m_cacheDir; ///< This is used as a cache
 	F32 m_timerTick;
 
-	/// Initialize the app
 	void init(const ConfigSet& config);
-
 	void initDirs();
+	void cleanup();
 
 	void printAppInfo();
 
-	static void makeCurrent(void* data);
+	static void makeCurrent(void* app, void* ctx);
 	static void swapWindow(void* window);
 };
 

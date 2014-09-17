@@ -47,11 +47,11 @@ void GlDevice::destroy()
 
 //==============================================================================
 void GlDevice::startServer(
-	GlCallback makeCurrentCallback, void* context,
+	GlMakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
 	GlCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerDebugMessages)
 {
-	m_queue->start(makeCurrentCallback, context, 
+	m_queue->start(makeCurrentCb, makeCurrentCbData, ctx, 
 		swapBuffersCallback, swapBuffersCbData, 
 		registerDebugMessages);
 

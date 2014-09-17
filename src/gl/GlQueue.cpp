@@ -82,7 +82,7 @@ void GlQueue::finishCommandBuffer(GlCommandBufferHandle& commands)
 
 //==============================================================================
 void GlQueue::start(
-	GlCallback makeCurrentCallback, void* context, 
+	GlMakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
 	GlCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerMessages)
 {
@@ -90,9 +90,10 @@ void GlQueue::start(
 	m_state.m_registerMessages = registerMessages;
 
 	// Context
-	ANKI_ASSERT(context != nullptr && makeCurrentCallback != nullptr);
-	m_ctx = context;
-	m_makeCurrent = makeCurrentCallback;
+	ANKI_ASSERT(ctx != nullptr && makeCurrentCb != nullptr);
+	m_ctx = ctx;
+	m_makeCurrentCbData = makeCurrentCbData;
+	m_makeCurrentCb = makeCurrentCb;
 
 	// Swap buffers stuff
 	ANKI_ASSERT(swapBuffersCallback != nullptr);
@@ -135,8 +136,8 @@ void GlQueue::stop()
 //==============================================================================
 void GlQueue::prepare()
 {
-	ANKI_ASSERT(m_makeCurrent && m_ctx);
-	(*m_makeCurrent)(m_ctx);
+	ANKI_ASSERT(m_makeCurrentCb && m_ctx);
+	(*m_makeCurrentCb)(m_makeCurrentCbData, m_ctx);
 
 	// Ignore the first error
 	glGetError();
@@ -178,7 +179,7 @@ void GlQueue::finish()
 
 	// Cleanup
 	glFinish();
-	(*m_makeCurrent)(nullptr);
+	(*m_makeCurrentCb)(m_makeCurrentCbData, nullptr);
 }
 
 //==============================================================================

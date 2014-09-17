@@ -39,20 +39,73 @@ App::App(const ConfigSet& config,
 	m_allocCbData(allocCbUserData),
 	m_heapAlloc(HeapMemoryPool(allocCb, allocCbUserData))
 {
-	init(config);
+	try
+	{
+		init(config);
+	}
+	catch(const std::exception& e)
+	{
+		cleanup();
+		throw ANKI_EXCEPTION("App initialization failed") << e;
+	}
 }
 
 //==============================================================================
-void App::makeCurrent(void* data)
+App::~App()
 {
-	App* app = reinterpret_cast<App*>(data);
-	app->m_window->contextMakeCurrent(app->m_ctx);
+	cleanup();
 }
 
 //==============================================================================
-void App::swapWindow(void* window)
+void App::cleanup()
 {
-	reinterpret_cast<NativeWindow*>(window)->swapBuffers();
+	if (m_script != nullptr)
+	{
+		m_heapAlloc.deleteInstance(m_script);
+		m_script = nullptr;
+	}
+
+	if (m_scene != nullptr)
+	{
+		m_heapAlloc.deleteInstance(m_scene);
+		m_scene = nullptr;
+	}
+
+	if (m_renderer != nullptr)
+	{
+		m_heapAlloc.deleteInstance(m_renderer);
+		m_renderer = nullptr;
+	}
+
+	if (m_resources != nullptr)
+	{
+		m_heapAlloc.deleteInstance(m_resources);
+		m_resources = nullptr;
+	}
+
+	if (m_gl != nullptr)
+	{
+		m_heapAlloc.deleteInstance(m_gl);
+		m_gl = nullptr;
+	}
+
+	if (m_threadpool != nullptr)
+	{
+		m_heapAlloc.deleteInstance(m_threadpool);
+		m_threadpool = nullptr;
+	}
+
+	if (m_input != nullptr)
+	{
+		m_heapAlloc.deleteInstance(m_input);
+		m_input = nullptr;
+	}
+
+	if (m_window != nullptr)
+	{
+		m_heapAlloc.deleteInstance(m_window);
+		m_window = nullptr;
+	}
 }
 
 //==============================================================================
@@ -95,7 +148,7 @@ void App::init(const ConfigSet& config)
 		m_cacheDir.toCString());
 
 	m_gl->startServer(
-		makeCurrent, this,
+		makeCurrent, this, m_ctx,
 		swapWindow, m_window,
 		nwinit.m_debugContext);
 
@@ -122,6 +175,20 @@ void App::init(const ConfigSet& config)
 
 	// Script
 	m_script = m_heapAlloc.newInstance<ScriptManager>(m_heapAlloc);
+}
+
+//==============================================================================
+void App::makeCurrent(void* papp, void* ctx)
+{
+	ANKI_ASSERT(papp != nullptr);
+	App* app = reinterpret_cast<App*>(papp);
+	app->m_window->contextMakeCurrent(ctx);
+}
+
+//==============================================================================
+void App::swapWindow(void* window)
+{
+	reinterpret_cast<NativeWindow*>(window)->swapBuffers();
 }
 
 //==============================================================================

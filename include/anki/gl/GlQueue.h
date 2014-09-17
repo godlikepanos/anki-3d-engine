@@ -70,7 +70,7 @@ public:
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop
 	void start(
-		GlCallback makeCurrentCallback, void* context, 
+		GlMakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
 		GlCallback swapBuffersCallback, void* swapBuffersCbData,
 		Bool registerMessages);
 
@@ -108,8 +108,9 @@ private:
 	ConditionVariable m_condVar; ///< To wake up the thread
 	Thread m_thread;
 
+	void* m_makeCurrentCbData = nullptr; ///< Pointer first param of makecurrent
 	void* m_ctx = nullptr; ///< Pointer to the system GL context
-	GlCallback m_makeCurrent; ///< Making a context current
+	GlMakeCurrentCallback m_makeCurrentCb; ///< Making a context current
 
 	GlCommandBufferHandle m_swapBuffersCommands;
 	GlCallback m_swapBuffersCallback;

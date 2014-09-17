@@ -270,7 +270,9 @@ void Input::destroy()
 	if(m_impl != nullptr)
 	{
 		m_nativeWindow->_getAllocator().deleteInstance(m_impl);
+		m_impl = nullptr;
 	}
+	m_nativeWindow = nullptr;
 }
 
 //==============================================================================

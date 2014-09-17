@@ -86,6 +86,7 @@ GLenum computeGlShaderType(const U idx, GLbitfield* bit = nullptr);
 
 /// GL generic callback
 using GlCallback = void(*)(void*);
+using GlMakeCurrentCallback = void(*)(void*, void*);
 
 /// @}
 

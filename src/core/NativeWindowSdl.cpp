@@ -11,14 +11,17 @@
 
 namespace anki {
 
+const U32 INIT_SUBSYSTEMS = 
+	SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS 
+	| SDL_INIT_GAMECONTROLLER;
+
 //==============================================================================
 void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 {
 	m_alloc = alloc;
 	m_impl = m_alloc.newInstance<NativeWindowImpl>();
 
-	if(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_EVENTS 
-		| SDL_INIT_GAMECONTROLLER) != 0)
+	if(SDL_Init(INIT_SUBSYSTEMS) != 0)
 	{
 		throw ANKI_EXCEPTION("SDL_Init() failed");
 	}
@@ -121,6 +124,9 @@ void NativeWindow::destroy()
 		{
 			SDL_DestroyWindow(m_impl->m_window);
 		}
+
+		SDL_QuitSubSystem(INIT_SUBSYSTEMS);
+		SDL_Quit();
 	}
 
 	m_alloc.deleteInstance(m_impl);
