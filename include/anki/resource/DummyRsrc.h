@@ -30,10 +30,17 @@ public:
 
 	void load(const CString& filename, ResourceInitializer& init)
 	{
-		m_alloc = init.m_alloc;
-		m_memory = m_alloc.allocate(128);
-		void* tempMem = init.m_tempAlloc.allocate(128);
-		(void)tempMem;
+		if(filename != "exception")
+		{
+			m_alloc = init.m_alloc;
+			m_memory = m_alloc.allocate(128);
+			void* tempMem = init.m_tempAlloc.allocate(128);
+			(void)tempMem;
+		}
+		else
+		{
+			throw ANKI_EXCEPTION("Dummy exception");
+		}
 	}
 
 private:

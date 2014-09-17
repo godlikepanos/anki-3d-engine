@@ -63,6 +63,24 @@ ANKI_TEST(Resource, ResourceManager)
 		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 2);
 	}
 
+	// Exception
+	{
+		try
+		{
+			DummyResourcePointer a("exception", resources);
+		}
+		catch(...)
+		{}
+
+		DummyResourcePointer a;
+		try
+		{
+			a.load("exception", resources);
+		}
+		catch(...)
+		{}
+	}
+
 	// Delete
 	alloc.deleteInstance(resources);
 	alloc.deleteInstance(gl);

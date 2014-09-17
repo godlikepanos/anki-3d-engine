@@ -20,21 +20,33 @@ void ResourcePointer<T, TResourceManager>::load(
 
 	if(!found)
 	{
+		auto alloc = resources->_getAllocator();
+
 		// Allocate m_cb
 		U len = filename.getLength();
 		PtrSize alignment = alignof(ControlBlock);
 		m_cb = reinterpret_cast<ControlBlock*>(
-			resources->_getAllocator().allocate(
+			alloc.allocate(
 			sizeof(ControlBlock) + len, &alignment));
-		resources->_getAllocator().construct(m_cb);
 
-		m_cb->m_resources = resources;
+		// Construct
+		try
+		{
+			alloc.construct(m_cb);
+		}
+		catch(const std::exception& e)
+		{
+			alloc.deallocate(m_cb, 1);
+			m_cb = nullptr;
+			throw ANKI_EXCEPTION("Control block construction failed: %s", 
+				&filename[0]) << e;
+		}
 
 		// Populate the m_cb
 		try
 		{
 			ResourceInitializer init(
-				resources->_getAllocator(),
+				alloc,
 				resources->_getTempAllocator(),
 				*resources);
 
@@ -44,7 +56,8 @@ void ResourcePointer<T, TResourceManager>::load(
 		}
 		catch(const std::exception& e)
 		{
-			resources->_getAllocator().deleteInstance(m_cb);
+			alloc.deleteInstance(m_cb);
+			m_cb = nullptr;
 			throw ANKI_EXCEPTION("Loading failed: %s", &filename[0]) << e;
 		}
 

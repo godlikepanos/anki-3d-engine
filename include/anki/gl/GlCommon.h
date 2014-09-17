@@ -28,7 +28,7 @@
 #	error "See file"
 #endif
 
-#define ANKI_QUEUE_DISABLE_ASYNC 0
+#define ANKI_QUEUE_DISABLE_ASYNC 1
 
 namespace anki {
 

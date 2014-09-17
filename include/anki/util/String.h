@@ -136,6 +136,13 @@ public:
 		return std::strcmp(m_ptr, b.m_ptr) == 0;
 	}
 
+	Bool operator!=(const CString& b) const noexcept
+	{
+		checkInit();
+		b.checkInit();
+		return std::strcmp(m_ptr, b.m_ptr) != 0;
+	}
+
 	Bool operator<(const CString& b) const noexcept
 	{
 		checkInit();
