@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki type frag
-#pragma anki include shaders/Common.glsl
+#pragma anki include "shaders/Common.glsl"
 
 #if !defined(TILES_X_COUNT) || !defined(TILES_Y_COUNT) || !defined(RENDERER_WIDTH) || !defined(RENDERER_HEIGHT)
 #error Forgot to define something

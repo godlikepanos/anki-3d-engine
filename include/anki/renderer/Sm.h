@@ -67,7 +67,8 @@ private:
 	U32 m_resolution;
 
 	Sm(Renderer* r)
-		: RenderingPass(r)
+	:	RenderingPass(r),
+		m_sms(getAllocator())
 	{}
 
 	void init(const ConfigSet& initializer);

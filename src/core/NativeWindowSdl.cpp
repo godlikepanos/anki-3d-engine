@@ -29,6 +29,9 @@ void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 	//
 	// Set GL attributes
 	//
+	ANKI_LOGI("Creating SDL window (OpenGL context to be requested %u.%u)...", 
+		init.m_majorVersion, init.m_minorVersion);
+
 	if(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, init.m_rgbaBits[0]) != 0
 		|| SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, init.m_rgbaBits[1]) != 0
 		|| SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, init.m_rgbaBits[2]) != 0
@@ -108,6 +111,8 @@ void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 		throw ANKI_EXCEPTION("GLEW initialization failed");
 	}
 	glGetError();
+
+	ANKI_LOGI("SDL window created");
 }
 
 //==============================================================================

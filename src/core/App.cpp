@@ -118,7 +118,23 @@ void App::init(const ConfigSet& config)
 		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER, m_heapAlloc,
 		&m_cacheDir[0]);
 
-	printAppInfo();
+	// Print a message
+	String msg(getAllocator());
+	msg.sprintf(
+		"Initializing application ("
+		"version %u.%u, "
+		"build %s %s, "
+		"commit %s)...",
+		ANKI_VERSION_MAJOR, ANKI_VERSION_MINOR,
+#if !ANKI_DEBUG
+		"release",
+#else
+		"debug",
+#endif
+		__DATE__,
+		ANKI_REVISION);
+
+	ANKI_LOGI(&msg[0]);
 
 	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
@@ -175,6 +191,8 @@ void App::init(const ConfigSet& config)
 
 	// Script
 	m_script = m_heapAlloc.newInstance<ScriptManager>(m_heapAlloc);
+
+	ANKI_LOGI("Application initialized");
 }
 
 //==============================================================================
@@ -237,27 +255,6 @@ void App::initDirs()
 //==============================================================================
 void App::quit(int code)
 {}
-
-//==============================================================================
-void App::printAppInfo()
-{
-	String msg(getAllocator());
-	msg.sprintf(
-		"App info: "
-		"version %u.%u, "
-		"build %s %s, "
-		"commit %s",
-		ANKI_VERSION_MAJOR, ANKI_VERSION_MINOR,
-#if !ANKI_DEBUG
-		"Release",
-#else
-		"Debug",
-#endif
-		__DATE__,
-		ANKI_REVISION);
-
-	ANKI_LOGI(&msg[0]);
-}
 
 //==============================================================================
 void App::mainLoop(UserMainLoopCallback callback, void* userData)

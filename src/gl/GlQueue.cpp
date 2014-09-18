@@ -142,7 +142,7 @@ void GlQueue::prepare()
 	// Ignore the first error
 	glGetError();
 
-	ANKI_LOGI("OpenGL info: OGL %s, GLSL %s",
+	ANKI_LOGI("OpenGL async thread started: OpenGL version %s, GLSL version %s",
 		reinterpret_cast<const char*>(glGetString(GL_VERSION)),
 		reinterpret_cast<const char*>(
 		glGetString(GL_SHADING_LANGUAGE_VERSION)));

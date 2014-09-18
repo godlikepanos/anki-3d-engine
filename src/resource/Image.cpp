@@ -467,7 +467,7 @@ void Image::load(const CString& filename, U32 maxTextureSize)
 	HeapAllocator<U8> alloc = m_surfaces.get_allocator();
 	String ext = getFileExtension(filename, alloc);
 	
-	if(ext == nullptr)
+	if(ext.isEmpty())
 	{
 		throw ANKI_EXCEPTION("Failed to get filename extension");
 	}

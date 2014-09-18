@@ -6,16 +6,13 @@
 #ifndef ANKI_RENDERER_TILER_H
 #define ANKI_RENDERER_TILER_H
 
-#include "anki/util/StdTypes.h"
 #include "anki/Collision.h"
-#include "anki/Gl.h"
-#include "anki/resource/Resource.h"
+#include "anki/renderer/RenderingPass.h"
 #include "anki/core/Timestamp.h"
 #include <bitset>
 
 namespace anki {
 
-class Renderer;
 class Camera;
 class ShaderProgramUniformVariable;
 class Frustumable;
@@ -24,19 +21,19 @@ class Frustumable;
 /// @{
 
 /// Tiler used for visibility tests
-class Tiler
+class Tiler: public RenderingPass
 {
 	friend struct UpdateTilesPlanesPerspectiveCameraJob;
 	friend struct UpdatePlanesPerspectiveCameraJob;
 
 public:
-	typedef std::bitset<
-		ANKI_RENDERER_MAX_TILES_X * ANKI_RENDERER_MAX_TILES_Y> Bitset;
+	using Bitset = std::bitset<
+		ANKI_RENDERER_MAX_TILES_X * ANKI_RENDERER_MAX_TILES_Y>;
 
-	Tiler();
+	Tiler(Renderer* r);
 	~Tiler();
 
-	void init(Renderer* r);
+	void init();
 
 	/// Issue the GPU job
 	void runMinMax(const GlTextureHandle& depthMap);
@@ -78,15 +75,13 @@ private:
 	ProgramResourcePointer m_frag;
 	GlProgramPipelineHandle m_ppline;
 
-	Renderer* m_r = nullptr;
-
 	/// Used to check if the camera is changed and we need to update the planes
 	const Camera* m_prevCam = nullptr;
 
 	/// Timestamp for the same reason as prevCam
 	Timestamp m_planes4UpdateTimestamp = getGlobTimestamp();
 
-	void initInternal(Renderer* r);
+	void initInternal();
 
 	void testRange(const CollisionShape& cs, Bool nearPlane,
 		U iFrom, U iTo, U jFrom, U jTo, Bitset& bitset) const;

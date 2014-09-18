@@ -28,6 +28,7 @@ Renderer::Renderer(
 	m_pps(this),
 	m_bs(this),
 	m_dbg(this), 
+	m_tiler(this),
 	m_sceneDrawer(this)
 {}
 
@@ -78,7 +79,7 @@ void Renderer::init(const ConfigSet& config)
 	m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources);
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	m_tiler.init(this);
+	m_tiler.init();
 
 	m_ms.init(config);
 	m_is.init(config);

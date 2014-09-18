@@ -82,48 +82,42 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 	for(const PPPString& line : lines)
 	{
 		PtrSize npos = 0;
-		Bool expectPragmaAnki = false;
-		Bool gotPragmaAnki = true;
 
 		if(line.find("#pragma anki") == 0)
 		{
-			expectPragmaAnki = true;
-		}
+			Bool malformed = true;
 
-		if(parseType(line))
-		{
-			// Do nothing
-		}
-		else if((npos = line.find(commands[6])) == 0)
-		{
-			// Include
-
-			if(line.getLength() >= std::strlen(commands[6]) + 2)
+			if(parseType(line))
 			{
-				PPPString filen(
-					line.begin() + std::strlen(commands[6]), 
-					line.end() - 2, 
-					alloc);
-
-				filen = m_manager->fixResourceFilename(filen.toCString());
-
-				parseFileForPragmas(filen, depth + 1);
+				malformed = false; // All OK
 			}
-			else
+			else if((npos = line.find(commands[6])) == 0)
 			{
-				gotPragmaAnki = false;
+				// Include
+
+				if(line.getLength() >= std::strlen(commands[6]) + 2)
+				{
+					PPPString filen(
+						line.begin() + std::strlen(commands[6]), 
+						line.end() - 1, 
+						alloc);
+
+					filen = m_manager->fixResourceFilename(filen.toCString());
+
+					parseFileForPragmas(filen, depth + 1);
+
+					malformed = false; // All OK
+				}
+			}
+
+			if(malformed)
+			{
+				throw ANKI_EXCEPTION("Malformed pragma anki: %s", &line[0]);
 			}
 		}
 		else
 		{
-			gotPragmaAnki = false;
 			m_sourceLines.push_back(line);
-		}
-
-		// Sanity check
-		if(expectPragmaAnki && !gotPragmaAnki)
-		{
-			throw ANKI_EXCEPTION("Malformed pragma anki: %s", &line[0]);
 		}
 	}
 

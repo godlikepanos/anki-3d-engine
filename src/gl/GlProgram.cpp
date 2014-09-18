@@ -13,9 +13,6 @@
 #	include "anki/util/File.h"
 #endif
 
-#include <sstream>
-#include <iomanip>
-
 namespace anki {
 
 //==============================================================================
@@ -349,33 +346,33 @@ void GlProgram::createInternal(GLenum type, const CString& source,
 		switch(m_type)
 		{
 		case GL_VERTEX_SHADER:
-			ext = ".vert";
+			ext = "vert";
 			break;
 		case GL_TESS_CONTROL_SHADER:
-			ext = ".tesc";
+			ext = "tesc";
 			break;
 		case GL_TESS_EVALUATION_SHADER:
-			ext = ".tese";
+			ext = "tese";
 			break;
 		case GL_GEOMETRY_SHADER:
-			ext = ".geom";
+			ext = "geom";
 			break;
 		case GL_FRAGMENT_SHADER:
-			ext = ".frag";
+			ext = "frag";
 			break;
 		case GL_COMPUTE_SHADER:
-			ext = ".comp";
+			ext = "comp";
 			break;
 		default:
 			ext = nullptr;
 			ANKI_ASSERT(0);
 		}
 
-		std::stringstream fname;
-		fname << cacheDir << "/" 
-			<< std::setfill('0') << std::setw(4) << (U32)m_glName << ext;
+		String fname(alloc);
+		fname.sprintf(
+			"%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
-		File file(fname.str().c_str(), File::OpenFlag::WRITE);
+		File file(fname.toCString(), File::OpenFlag::WRITE);
 		file.writeText("%s", &fullSrc[0]);
 	}
 #endif
@@ -500,7 +497,9 @@ void GlProgram::createInternal(GLenum type, const CString& source,
 			U, 
 			std::hash<U>,
 			std::equal_to<U>,
-			HeapAllocator<std::pair<U, U>>> unitToCount;
+			HeapAllocator<std::pair<U, U>>> 
+			unitToCount(10, std::hash<U>(), std::equal_to<U>(), alloc);
+
 		for(const GlProgramVariable& var : m_data->m_variables)
 		{
 			if(isSampler(var.m_dataType))

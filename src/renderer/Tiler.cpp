@@ -200,7 +200,8 @@ struct UpdatePlanesPerspectiveCameraJob: Threadpool::Task
 //==============================================================================
 
 //==============================================================================
-Tiler::Tiler()
+Tiler::Tiler(Renderer* r)
+:	RenderingPass(r)
 {}
 
 //==============================================================================
@@ -208,11 +209,11 @@ Tiler::~Tiler()
 {}
 
 //==============================================================================
-void Tiler::init(Renderer* r)
+void Tiler::init()
 {
 	try
 	{
-		initInternal(r);
+		initInternal();
 	}
 	catch(const std::exception& e)
 	{
@@ -221,12 +222,10 @@ void Tiler::init(Renderer* r)
 }
 
 //==============================================================================
-void Tiler::initInternal(Renderer* r)
+void Tiler::initInternal()
 {
-	m_r = r;
-
 	// Load the program
-	String pps(r->_getAllocator());
+	String pps(getAllocator());
 	pps.sprintf(
 		"#define TILES_X_COUNT %u\n"
 		"#define TILES_Y_COUNT %u\n"
@@ -237,7 +236,7 @@ void Tiler::initInternal(Renderer* r)
 		m_r->getWidth(),
 		m_r->getHeight());
 
-	m_frag.loadToCache(&m_r->_getResourceManager(),
+	m_frag.loadToCache(&getResourceManager(),
 		"shaders/TilerMinMax.frag.glsl", pps.toCString(), "r_");
 
 	m_ppline = m_r->createDrawQuadProgramPipeline(m_frag->getGlProgram());
@@ -246,7 +245,7 @@ void Tiler::initInternal(Renderer* r)
 	m_r->createRenderTarget(m_r->getTilesCount().x(), m_r->getTilesCount().y(),
 		GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, 1, m_rt);
 
-	GlCommandBufferHandle cmdBuff(&m_r->_getGlDevice());
+	GlCommandBufferHandle cmdBuff(&getGlDevice());
 
 	m_fb = GlFramebufferHandle(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
 
@@ -260,10 +259,11 @@ void Tiler::initInternal(Renderer* r)
 	// Init planes. One plane for each direction, plus near/far plus the world
 	// space of those
 	U planesCount = 
-		(r->getTilesCount().x() - 1) * 2 // planes J
-		+ (r->getTilesCount().y() - 1) * 2  // planes I
-		+ (r->getTilesCount().x() * r->getTilesCount().y() * 2); // near+far
+		(m_r->getTilesCount().x() - 1) * 2 // planes J
+		+ (m_r->getTilesCount().y() - 1) * 2  // planes I
+		+ (m_r->getTilesCount().x() * m_r->getTilesCount().y() * 2); // near+far
 
+	m_allPlanes = std::move(Vector<Plane>(getAllocator()));
 	m_allPlanes.resize(planesCount);
 
 	m_planesX = &m_allPlanes[0];
