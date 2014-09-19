@@ -38,11 +38,12 @@ void ResourcePointer<T, TResourceManager>::load(
 		{
 			alloc.deallocate(m_cb, 1);
 			m_cb = nullptr;
-			throw ANKI_EXCEPTION("Control block construction failed: %s", 
-				&filename[0]) << e;
+			throw ANKI_EXCEPTION("Control block construction failed") << e;
 		}
 
 		// Populate the m_cb
+		TempResourceString newFname(resources->fixResourceFilename(filename));
+
 		try
 		{
 			ResourceInitializer init(
@@ -50,7 +51,7 @@ void ResourcePointer<T, TResourceManager>::load(
 				resources->_getTempAllocator(),
 				*resources);
 
-			m_cb->m_resource.load(filename, init);
+			m_cb->m_resource.load(newFname.toCString(), init);
 
 			resources->_getTempAllocator().getMemoryPool().reset();
 		}
@@ -58,7 +59,7 @@ void ResourcePointer<T, TResourceManager>::load(
 		{
 			alloc.deleteInstance(m_cb);
 			m_cb = nullptr;
-			throw ANKI_EXCEPTION("Loading failed: %s", &filename[0]) << e;
+			throw ANKI_EXCEPTION("Loading failed: %s", &newFname[0]) << e;
 		}
 
 		m_cb->m_resources = resources;
