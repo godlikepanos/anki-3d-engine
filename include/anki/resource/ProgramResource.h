@@ -18,7 +18,7 @@ namespace anki {
 class ProgramResource
 {
 public:
-	ProgramResource()
+	ProgramResource(ResourceAllocator<U8>&)
 	{}
 
 	~ProgramResource()

@@ -13,6 +13,11 @@ template<typename TAlloc>
 typename StringListBase<TAlloc>::String 
 	StringListBase<TAlloc>::join(const CString& separator) const
 {
+	if(Base::size() == 0)
+	{
+		return String(Base::get_allocator());
+	}
+
 	// Count the characters
 	I sepLen = separator.getLength();
 	I charCount = 0;

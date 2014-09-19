@@ -6,6 +6,7 @@
 #ifndef ANKI_RESOURCE_RESOURCE_POINTER_H
 #define ANKI_RESOURCE_RESOURCE_POINTER_H
 
+#include "anki/resource/Common.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Atomic.h"
 #include <cstring>
@@ -131,6 +132,10 @@ private:
 	class ControlBlock
 	{
 	public:
+		ControlBlock(ResourceAllocator<U8>& alloc)
+		:	m_resource(alloc)
+		{}
+
 		Type m_resource;
 		AtomicU32 m_refcount = {1};
 		TResourceManager* m_resources = nullptr;

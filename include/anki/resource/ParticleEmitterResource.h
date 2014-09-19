@@ -92,7 +92,8 @@ public:
 class ParticleEmitterResource: private ParticleEmitterProperties
 {
 public:
-	ParticleEmitterResource();
+	ParticleEmitterResource(ResourceAllocator<U8>& alloc);
+
 	~ParticleEmitterResource();
 
 	const ParticleEmitterProperties& getProperties() const

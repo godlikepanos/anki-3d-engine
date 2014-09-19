@@ -309,7 +309,8 @@ class Material: public MaterialProperties, public NonCopyable
 	friend class MaterialVariable;
 
 public:
-	Material();
+	Material(ResourceAllocator<U8>& alloc);
+
 	~Material();
 
 	/// Access the base class just for copying in other classes

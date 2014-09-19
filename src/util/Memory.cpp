@@ -10,6 +10,7 @@
 #include "anki/util/NonCopyable.h"
 #include "anki/util/Thread.h"
 #include "anki/util/Vector.h"
+#include "anki/util/Atomic.h"
 #include <cstdlib>
 #include <cstring>
 
@@ -117,8 +118,8 @@ void* allocAligned(
 class HeapMemoryPool::Implementation: public NonCopyable
 {
 public:
-	std::atomic<U32> m_refcount;
-	std::atomic<U32> m_allocationsCount;
+	AtomicU32 m_refcount;
+	AtomicU32 m_allocationsCount;
 	AllocAlignedCallback m_allocCb;
 	void* m_allocCbUserData;
 
@@ -227,7 +228,7 @@ public:
 	static_assert(sizeof(MemoryBlockHeader) == sizeof(U32), "Size error");
 
 	/// Refcount
-	std::atomic<U32> m_refcount = {1};
+	AtomicU32 m_refcount = {1};
 
 	/// User allocation function
 	AllocAlignedCallback m_allocCb;
@@ -248,7 +249,9 @@ public:
 	PtrSize m_memsize = 0;
 
 	/// Points to the memory and more specifically to the top of the stack
-	std::atomic<U8*> m_top = {nullptr};
+	Atomic<U8*> m_top = {nullptr};
+
+	AtomicU32 m_allocationsCount = {0};
 
 	// Construct
 	Implementation(AllocAlignedCallback allocCb, void* allocCbUserData,
@@ -340,6 +343,9 @@ public:
 
 			// Check alignment
 			ANKI_ASSERT(isAligned(m_alignmentBytes, out));
+
+			// Increase count
+			++m_allocationsCount;
 		}
 		else
 		{
@@ -386,6 +392,9 @@ public:
 		//     exchange = false;
 		// }
 		Bool exchange = m_top.compare_exchange_strong(expected, desired);
+
+		// Decrease count
+		--m_allocationsCount;
 
 		return exchange;
 	}
@@ -512,6 +521,13 @@ void StackMemoryPool::resetUsingSnapshot(Snapshot s)
 }
 
 //==============================================================================
+U32 StackMemoryPool::getAllocationsCount() const
+{
+	ANKI_ASSERT(m_impl != nullptr);
+	return m_impl->m_allocationsCount.load();
+}
+
+//==============================================================================
 // ChainMemoryPool                                                             =
 //==============================================================================
 
@@ -539,7 +555,7 @@ public:
 	};
 
 	/// Refcount
-	std::atomic<U32> m_refcount = {1};
+	AtomicU32 m_refcount = {1};
 
 	/// User allocation function
 	AllocAlignedCallback m_allocCb;

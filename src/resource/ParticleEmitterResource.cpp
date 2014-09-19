@@ -85,7 +85,7 @@ void ParticleEmitterProperties::updateFlags()
 //==============================================================================
 
 //==============================================================================
-ParticleEmitterResource::ParticleEmitterResource()
+ParticleEmitterResource::ParticleEmitterResource(ResourceAllocator<U8>&)
 {}
 
 //==============================================================================

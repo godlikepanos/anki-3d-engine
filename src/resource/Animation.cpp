@@ -10,6 +10,15 @@
 namespace anki {
 
 //==============================================================================
+Animation::Animation(ResourceAllocator<U8>& alloc)
+:	m_channels(alloc)
+{}
+
+//==============================================================================
+Animation::~Animation()
+{}
+
+//==============================================================================
 void Animation::load(const CString& filename, ResourceInitializer& init)
 {
 	try

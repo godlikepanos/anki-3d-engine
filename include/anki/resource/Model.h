@@ -161,7 +161,8 @@ private:
 class Model
 {
 public:
-	Model();
+	Model(ResourceAllocator<U8>& alloc);
+
 	~Model();
 
 	/// @name Accessors

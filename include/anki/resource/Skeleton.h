@@ -57,6 +57,10 @@ private:
 class Skeleton
 {
 public:
+	Skeleton(ResourceAllocator<U8>& alloc);
+
+	~Skeleton();
+
 	/// Load file
 	void load(const CString& filename, ResourceInitializer& init);
 

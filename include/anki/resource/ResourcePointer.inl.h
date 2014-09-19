@@ -32,7 +32,7 @@ void ResourcePointer<T, TResourceManager>::load(
 		// Construct
 		try
 		{
-			alloc.construct(m_cb);
+			alloc.construct(m_cb, alloc);
 		}
 		catch(const std::exception& e)
 		{
@@ -41,29 +41,43 @@ void ResourcePointer<T, TResourceManager>::load(
 			throw ANKI_EXCEPTION("Control block construction failed") << e;
 		}
 
-		// Populate the m_cb
-		TempResourceString newFname(resources->fixResourceFilename(filename));
+		// Populate the m_cb. Use a block ton cleanup temp_pool allocations
+		auto& pool = resources->_getTempAllocator().getMemoryPool();
 
-		try
 		{
-			ResourceInitializer init(
-				alloc,
-				resources->_getTempAllocator(),
-				*resources);
+			TempResourceString newFname(
+				resources->fixResourceFilename(filename));
 
-			m_cb->m_resource.load(newFname.toCString(), init);
+			try
+			{
+				ResourceInitializer init(
+					alloc,
+					resources->_getTempAllocator(),
+					*resources);
 
-			resources->_getTempAllocator().getMemoryPool().reset();
-		}
-		catch(const std::exception& e)
-		{
-			alloc.deleteInstance(m_cb);
-			m_cb = nullptr;
-			throw ANKI_EXCEPTION("Loading failed: %s", &newFname[0]) << e;
+				U allocsCountBefore = pool.getAllocationsCount();
+
+				m_cb->m_resource.load(newFname.toCString(), init);
+
+				ANKI_ASSERT(pool.getAllocationsCount() == allocsCountBefore
+					&& "Forgot to deallocate");
+			}
+			catch(const std::exception& e)
+			{
+				alloc.deleteInstance(m_cb);
+				m_cb = nullptr;
+				throw ANKI_EXCEPTION("Loading failed: %s", &newFname[0]) << e;
+			}
 		}
 
 		m_cb->m_resources = resources;
 		std::memcpy(&m_cb->m_uuid[0], &filename[0], len + 1);
+
+		// Reset the memory pool if no-one is using it
+		if(pool.getAllocationsCount() > 0)
+		{
+			pool.reset();
+		}
 
 		// Register resource
 		resources->_registerResource(*this);

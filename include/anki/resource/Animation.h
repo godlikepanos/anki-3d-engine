@@ -65,6 +65,10 @@ public:
 class Animation
 {
 public:
+	Animation(ResourceAllocator<U8>& alloc);
+
+	~Animation();
+
 	void load(const CString& filename, ResourceInitializer& init);
 
 	/// Get a vector of all animation channels

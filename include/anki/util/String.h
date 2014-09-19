@@ -126,7 +126,7 @@ public:
 	/// Return true if the string is not initialized.
 	Bool isEmpty() const noexcept
 	{
-		return m_ptr == nullptr;
+		return m_ptr == nullptr || getLength() == 0;
 	}
 
 	Bool operator==(const CString& b) const noexcept
@@ -386,16 +386,21 @@ public:
 	template<typename TTAlloc>
 	Self& operator+=(const StringBase<TTAlloc>& b)
 	{
-		b.checkInit();
-		append(&b.m_data[0], b.m_data.size());
+		if(!b.isEmpty())
+		{
+			append(&b.m_data[0], b.m_data.size());
+		}
 		return *this;
 	}
 
 	/// Append a const string to this one.
 	Self& operator+=(const CStringType& cstr)
 	{
-		U size = cstr.getLength() + 1;
-		append(cstr.get(), size);
+		if(!cstr.isEmpty())
+		{
+			U size = cstr.getLength() + 1;
+			append(cstr.get(), size);
+		}
 		return *this;
 	}
 

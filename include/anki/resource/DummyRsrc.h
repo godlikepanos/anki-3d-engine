@@ -17,7 +17,8 @@ namespace anki {
 class DummyRsrc
 {
 public:
-	DummyRsrc()
+	DummyRsrc(ResourceAllocator<U8>& alloc)
+	:	m_alloc(alloc)
 	{}
 
 	~DummyRsrc()
@@ -32,10 +33,11 @@ public:
 	{
 		if(filename != "exception")
 		{
-			m_alloc = init.m_alloc;
 			m_memory = m_alloc.allocate(128);
 			void* tempMem = init.m_tempAlloc.allocate(128);
 			(void)tempMem;
+
+			init.m_tempAlloc.deallocate(tempMem, 128);
 		}
 		else
 		{

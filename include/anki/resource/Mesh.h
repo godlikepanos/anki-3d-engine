@@ -35,11 +35,9 @@ class Mesh
 {
 public:
 	/// Default constructor
-	Mesh()
-	{}
+	Mesh(ResourceAllocator<U8>& alloc);
 
-	~Mesh()
-	{}
+	~Mesh();
 
 	U32 getTextureChannelsCount() const
 	{
@@ -130,7 +128,8 @@ class BucketMesh: public Mesh
 {
 public:
 	/// Default constructor.
-	BucketMesh()
+	BucketMesh(ResourceAllocator<U8>& alloc)
+	:	Mesh(alloc)
 	{}
 
 	~BucketMesh()

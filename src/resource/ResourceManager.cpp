@@ -71,7 +71,10 @@ ResourceManager::ResourceManager(Initializer& init)
 
 //==============================================================================
 ResourceManager::~ResourceManager()
-{}
+{
+	ANKI_ASSERT(m_tmpAlloc.getMemoryPool().getAllocationsCount() == 0
+		&& "Forgot to deallocate");
+}
 
 //==============================================================================
 TempResourceString ResourceManager::fixResourceFilename(

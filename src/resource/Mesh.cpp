@@ -16,6 +16,15 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
+Mesh::Mesh(ResourceAllocator<U8>& alloc)
+:	m_subMeshes(alloc)
+{}
+
+//==============================================================================
+Mesh::~Mesh()
+{}
+
+//==============================================================================
 Bool Mesh::isCompatible(const Mesh& other) const
 {
 	return hasWeights() == other.hasWeights() 
@@ -79,7 +88,7 @@ void Mesh::createBuffers(const MeshLoader& loader,
 	U32 vbosize = vertexsize * m_vertsCount;
 
 	// Create a temp buffer and populate it
-	Vector<U8> buff(vbosize, 0);
+	TempResourceVector<U8> buff(vbosize, 0, init.m_tempAlloc);
 
 	U8* ptra = &buff[0];
 	for(U i = 0; i < m_vertsCount; i++)
@@ -237,7 +246,6 @@ void BucketMesh::load(const CString& filename, ResourceInitializer& init)
 		XmlElement meshEl = meshesEl.getChildElement("mesh");
 
 		m_vertsCount = 0;
-		m_subMeshes = std::move(ResourceVector<SubMesh>(init.m_alloc));
 		m_subMeshes.reserve(4);
 		m_indicesCount = 0;
 

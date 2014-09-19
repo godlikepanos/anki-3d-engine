@@ -10,6 +10,15 @@
 namespace anki {
 
 //==============================================================================
+Skeleton::Skeleton(ResourceAllocator<U8>& alloc)
+:	m_bones(alloc)
+{}
+
+//==============================================================================
+Skeleton::~Skeleton()
+{}
+
+//==============================================================================
 void Skeleton::load(const CString& filename, ResourceInitializer& init)
 {
 	XmlDocument doc;
@@ -30,7 +39,6 @@ void Skeleton::load(const CString& filename, ResourceInitializer& init)
 	} while(boneEl);
 
 	// Alloc the vector
-	m_bones = std::move(ResourceVector<Bone>(init.m_alloc));
 	m_bones.resize(bonesCount, Bone(init.m_alloc));
 
 	// Load every bone

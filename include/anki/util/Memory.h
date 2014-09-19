@@ -185,6 +185,9 @@ public:
 	/// @param s The snapshot to be used
 	void resetUsingSnapshot(Snapshot s);
 
+	/// Return number of allocations
+	U32 getAllocationsCount() const;
+
 private:
 	// Forward. Hide the implementation because Memory.h is the base of other
 	// files and should not include them

@@ -24,6 +24,10 @@ class Image;
 class TextureResource
 {
 public:
+	TextureResource(ResourceAllocator<U8>& alloc);
+
+	~TextureResource();
+
 	/// Load a texture
 	void load(const CString& filename, ResourceInitializer& init);
 

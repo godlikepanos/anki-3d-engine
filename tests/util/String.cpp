@@ -85,7 +85,10 @@ ANKI_TEST(Util, String)
 
 		a += "456";
 		a += String("789", alloc);
-		ANKI_TEST_EXPECT_EQ(a, "123456789");
+		a += String(alloc);
+		a += "";
+		a += "0";
+		ANKI_TEST_EXPECT_EQ(a, "1234567890");
 	}
 
 	// Compare
@@ -112,16 +115,41 @@ ANKI_TEST(Util, String)
 
 		// Extreme
 		const char* s = "1234567890ABCDEF!@#$%^&*()_+asfghjkl:,.;ljk\"><{}[]/";
-		a.sprintf("%s%s%s%s%s%s%s%s%s%s %d", s, s, s, s, s, s, s, s, s, s, 88);
+		a.sprintf("%s%s%s%s%s%s%s%s%s%s%s %d", 
+			s, s, s, s, s, s, s, s, s, s, s, 88);
 
 		String b(alloc);
-		for(U i = 0; i < 10; i++)
+		for(U i = 0; i < 11; i++)
 		{
 			b += s;
 		}
 		b += " 88";
 
 		ANKI_TEST_EXPECT_EQ(a, b);
+		ANKI_TEST_EXPECT_EQ(a.getLength(), b.getLength());
+	}
+
+	// sprintf #2: Smaller result (will trigger another path)
+	{
+		String a(alloc);
+
+		// Simple
+		a.sprintf("12%c  %d", '3', 123);
+		ANKI_TEST_EXPECT_EQ(a, "123  123");
+
+		// Extreme
+		const char* s = "12345";
+		a.sprintf("%s%s %d", s, s, 88);
+
+		String b(alloc);
+		for(U i = 0; i < 2; i++)
+		{
+			b += s;
+		}
+		b += " 88";
+
+		ANKI_TEST_EXPECT_EQ(a, b);
+		ANKI_TEST_EXPECT_EQ(a.getLength(), b.getLength());
 	}
 
 	// Resize

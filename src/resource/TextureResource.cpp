@@ -25,6 +25,14 @@ static void deleteImageCallback(void* data)
 }
 
 //==============================================================================
+TextureResource::TextureResource(ResourceAllocator<U8>&)
+{}
+
+//==============================================================================
+TextureResource::~TextureResource()
+{}
+
+//==============================================================================
 void TextureResource::load(const CString& filename, ResourceInitializer& init)
 {
 	try

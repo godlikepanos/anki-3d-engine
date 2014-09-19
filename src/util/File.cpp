@@ -13,9 +13,35 @@
 
 namespace anki {
 
+//==============================================================================
+// Misc
+
 #if ANKI_OS == ANKI_OS_ANDROID
 extern android_app* gAndroidApp;
+
+#define ANKI_AFILE reinterpret_cast<AAsset*>(m_file)
 #endif
+
+#define ANKI_CFILE reinterpret_cast<FILE*>(m_file)
+#define ANKI_ZFILE reinterpret_cast<void*>(m_file)
+
+//==============================================================================
+File& File::operator=(File&& b)
+{
+	close();
+
+	if(b.m_file != nullptr)
+	{
+		m_file = b.m_file;
+		m_type = b.m_type;
+		m_flags = b.m_flags;
+		m_size = b.m_size;
+	}
+
+	b.zero();
+
+	return *this;
+}
 
 //==============================================================================
 File::~File()
@@ -207,16 +233,16 @@ void File::close()
 	{
 		if(m_type == Type::C)
 		{
-			fclose(reinterpret_cast<FILE*>(m_file));
+			fclose(ANKI_CFILE);
 		}
 		else if(m_type == Type::ZIP)
 		{
-			unzClose(m_file);
+			unzClose(ANKI_ZFILE);
 		}
 #if ANKI_OS == ANKI_OS_ANDROID
 		else if(m_type == Type::SPECIAL)
 		{
-			AAsset_close(reinterpret_cast<AAsset*>(m_file));
+			AAsset_close(ANKI_AFILE);
 		}
 #endif
 		else
@@ -225,9 +251,7 @@ void File::close()
 		}
 	}
 
-	m_file = nullptr;
-	m_flags = OpenFlag::NONE;
-	m_type = Type::NONE;
+	zero();
 }
 
 //==============================================================================
@@ -239,7 +263,7 @@ void File::flush()
 	{
 		if(m_type == Type::C)
 		{
-			I err = fflush(reinterpret_cast<FILE*>(m_file));
+			I err = fflush(ANKI_CFILE);
 			if(err)
 			{
 				throw ANKI_EXCEPTION("fflush() failed");
@@ -272,7 +296,7 @@ void File::read(void* buff, PtrSize size)
 
 	if(m_type == Type::C)
 	{
-		readSize = fread(buff, 1, size, reinterpret_cast<FILE*>(m_file));
+		readSize = fread(buff, 1, size, ANKI_CFILE);
 	}
 	else if(m_type == Type::ZIP)
 	{
@@ -281,7 +305,7 @@ void File::read(void* buff, PtrSize size)
 #if ANKI_OS == ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
 	{
-		readSize = AAsset_read(reinterpret_cast<AAsset*>(m_file), buff, size);
+		readSize = AAsset_read(ANKI_AFILE, buff, size);
 	}
 #endif
 	else
@@ -305,13 +329,13 @@ PtrSize File::getSize()
 	if(m_type == Type::C)
 	{
 		// Get file size
-		fseek(reinterpret_cast<FILE*>(m_file), 0, SEEK_END);
-		I64 size = ftell(reinterpret_cast<FILE*>(m_file));
+		fseek(ANKI_CFILE, 0, SEEK_END);
+		I64 size = ftell(ANKI_CFILE);
 		if(size < 1)
 		{
 			throw ANKI_EXCEPTION("ftell() failed");
 		}
-		rewind(reinterpret_cast<FILE*>(m_file));
+		rewind(ANKI_CFILE);
 
 		out = size;
 	}
@@ -323,7 +347,7 @@ PtrSize File::getSize()
 #if ANKI_OS == ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
 	{
-		out = AAsset_getLength(reinterpret_cast<AAsset*>(m_file));
+		out = AAsset_getLength(ANKI_AFILE);
 	}
 #endif
 	else
@@ -398,7 +422,7 @@ void File::write(void* buff, PtrSize size)
 	if(m_type == Type::C)
 	{
 		PtrSize writeSize = 0;
-		writeSize = std::fwrite(buff, 1, size, reinterpret_cast<FILE*>(m_file));
+		writeSize = std::fwrite(buff, 1, size, ANKI_CFILE);
 
 		if(writeSize != size)
 		{
@@ -459,7 +483,7 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 
 	if(m_type == Type::C)
 	{
-		if(fseek(reinterpret_cast<FILE*>(m_file), offset, (I)origin) != 0)
+		if(fseek(ANKI_CFILE, offset, (I)origin) != 0)
 		{
 			throw ANKI_EXCEPTION("fseek() failed");
 		}
@@ -488,7 +512,7 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 #if ANKI_OS == ANKI_OS_ANDROID
 	else if(m_type == Type::SPECIAL)
 	{
-		if(AAsset_seek(reinterpret_cast<AAsset*>(file), offset, origin) 
+		if(AAsset_seek(ANKI_AFILE, offset, origin) 
 			== (off_t)-1)
 		{
 			throw ANKI_EXCEPTION("AAsset_seek() failed");

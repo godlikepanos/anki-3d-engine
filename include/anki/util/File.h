@@ -8,6 +8,7 @@
 
 #include "anki/util/String.h"
 #include "anki/util/Enum.h"
+#include "anki/util/NonCopyable.h"
 
 namespace anki {
 
@@ -32,7 +33,7 @@ namespace anki {
 /// - If the filename starts with '$' it will try to load a system specific 
 ///   file. For Android this is a file in the .apk
 /// - If the above are false then try to load a regular C file
-class File
+class File: public NonCopyable
 {
 public:
 	/// Open mode
@@ -66,8 +67,17 @@ public:
 		open(filename, openMask);
 	}
 
+	/// Move
+	File(File&& b)
+	{
+		*this = std::move(b);
+	}
+
 	/// Closes the file if it's open
 	~File();
+
+	/// Move 
+	File& operator=(File&& b);
 
 	/// Open a file
 	/// @param[in] filename The file to open
@@ -157,6 +167,14 @@ private:
 
 	/// The file should be open
 	PtrSize getSize();
+
+	void zero()
+	{
+		m_file = nullptr;
+		m_type = Type::NONE;
+		m_flags = OpenFlag::NONE;
+		m_size = 0;
+	}
 };
 
 /// @}

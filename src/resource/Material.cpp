@@ -126,7 +126,12 @@ U32 MaterialVariable::getArraySize() const
 //==============================================================================
 
 //==============================================================================
-Material::Material()
+Material::Material(ResourceAllocator<U8>& alloc)
+:	m_vars(alloc),
+	m_varDict(10, Dictionary<MaterialVariable*>::hasher(),
+		Dictionary<MaterialVariable*>::key_equal(), alloc),
+	m_progs(alloc),
+	m_pplines(alloc)
 {}
 
 //==============================================================================
@@ -264,18 +269,7 @@ void Material::load(const CString& filename, ResourceInitializer& init)
 {
 	try
 	{
-		m_vars = std::move(ResourceVector<MaterialVariable*>(init.m_alloc));
-
-		Dictionary<MaterialVariable*> dict(10, 
-			Dictionary<MaterialVariable*>::hasher(),
-			Dictionary<MaterialVariable*>::key_equal(),
-			init.m_alloc);
-		m_varDict = std::move(dict);
-
-		m_progs = 
-			std::move(ResourceVector<ProgramResourcePointer>(init.m_alloc));
-		m_pplines = 
-			std::move(ResourceVector<GlProgramPipelineHandle>(init.m_alloc));
+		m_resources = &init.m_resources;
 
 		XmlDocument doc;
 		doc.loadFile(filename, init.m_tempAlloc);
@@ -355,11 +349,11 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 	// shaderProgram
 	//
-	MaterialProgramCreator mspc(
+	MaterialProgramCreator loader(
 		materialEl.getChildElement("programs"),
 		rinit.m_tempAlloc);
 
-	m_tessellation = mspc.hasTessellation();
+	m_tessellation = loader.hasTessellation();
 	U tessCount = m_tessellation ? 2 : 1;
 
 	// Alloc program vector
@@ -398,8 +392,9 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 					src.sprintf("#define LOD %u\n"
 						"#define PASS %u\n"
-						"#define TESSELLATION %u\n", 
-						level, pid, tess);
+						"#define TESSELLATION %u\n"
+						"%s\n", 
+						level, pid, tess, &loader.getProgramSource(shader)[0]);
 
 					TempResourceString filename =
 						createProgramSourceToChache(src);
@@ -415,7 +410,7 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 		}
 	}
 
-	populateVariables(mspc);
+	populateVariables(loader);
 
 	// Get uniform block size
 	ANKI_ASSERT(m_progs.size() > 0);
@@ -450,9 +445,9 @@ TempResourceString Material::createProgramSourceToChache(
 }
 
 //==============================================================================
-void Material::populateVariables(const MaterialProgramCreator& mspc)
+void Material::populateVariables(const MaterialProgramCreator& loader)
 {
-	for(auto in : mspc.getInputVariables())
+	for(auto in : loader.getInputVariables())
 	{
 		if(in.m_constant)
 		{

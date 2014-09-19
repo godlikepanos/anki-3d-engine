@@ -29,19 +29,20 @@ namespace anki {
 /// This is a template that accepts memory pools with a specific interface
 ///
 /// @tparam T The type
-/// @tparam deallocationFlag If true then the allocator will try to deallocate
-///                          the memory. It is extremely important to
-///                          understand when it should be true. See notes
+/// @tparam checkFree If false then the allocator will throw an exception
+///                   if the free() method of the memory pool returns false.
+///                   It is extremely important to understand when it should be 
+///                   true. See the notes.
 ///
-/// @note The deallocationFlag can brake the allocator when used with stack 
-///       pools and the deallocations are not in the correct order.
+/// @note The checkFree can brake the allocator when used with stack pools 
+///       and the deallocations are not in the correct order.
 ///
 /// @note Don't ever EVER remove the double copy constructor and the double
 ///       operator=. The compiler will create defaults
-template<typename T, typename TPool, Bool deallocationFlag = false>
+template<typename T, typename TPool, Bool checkFree = false>
 class GenericPoolAllocator
 {
-	template<typename Y, typename TPool_, Bool deallocationFlag_>
+	template<typename Y, typename TPool_, Bool checkFree_>
 	friend class GenericPoolAllocator;
 
 public:
@@ -63,7 +64,7 @@ public:
 	template<typename Y>
 	struct rebind
 	{
-		typedef GenericPoolAllocator<Y, TPool, deallocationFlag> other;
+		typedef GenericPoolAllocator<Y, TPool, checkFree> other;
 	};
 
 	/// Default constructor
@@ -79,7 +80,7 @@ public:
 	/// Copy constructor
 	template<typename Y>
 	GenericPoolAllocator(const GenericPoolAllocator<
-		Y, TPool, deallocationFlag>& b) noexcept
+		Y, TPool, checkFree>& b) noexcept
 	{
 		*this = b;
 	}
@@ -103,7 +104,7 @@ public:
 	/// Copy
 	template<typename U>
 	GenericPoolAllocator& operator=(const GenericPoolAllocator<
-		U, TPool, deallocationFlag>& b)
+		U, TPool, checkFree>& b)
 	{
 		m_pool = b.m_pool;
 		return *this;
@@ -150,18 +151,14 @@ public:
 	/// Deallocate memory
 	void deallocate(void* p, size_type n)
 	{
-		(void)p;
 		(void)n;
 
-		if(deallocationFlag)
-		{
-			Bool ok = m_pool.free(p);
+		Bool ok = m_pool.free(p);
 
-			if(!ok)
-			{
-				throw ANKI_EXCEPTION("Freeing wrong pointer. "
-					"Pool's free returned false");
-			}
+		if(checkFree && !ok)
+		{
+			throw ANKI_EXCEPTION("Freeing wrong pointer. "
+				"Pool's free returned false");
 		}
 	}
 
@@ -275,38 +272,38 @@ private:
 /// @{
 
 /// Another allocator of the same type can deallocate from this one
-template<typename T1, typename T2, typename TPool, Bool deallocationFlag>
+template<typename T1, typename T2, typename TPool, Bool checkFree>
 inline bool operator==(
-	const GenericPoolAllocator<T1, TPool, deallocationFlag>&,
-	const GenericPoolAllocator<T2, TPool, deallocationFlag>&)
+	const GenericPoolAllocator<T1, TPool, checkFree>&,
+	const GenericPoolAllocator<T2, TPool, checkFree>&)
 {
 	return true;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
 template<typename T1, typename AnotherAllocator, typename TPool, 
-	Bool deallocationFlag>
+	Bool checkFree>
 inline bool operator==(
-	const GenericPoolAllocator<T1, TPool, deallocationFlag>&,
+	const GenericPoolAllocator<T1, TPool, checkFree>&,
 	const AnotherAllocator&)
 {
 	return false;
 }
 
 /// Another allocator of the same type can deallocate from this one
-template<typename T1, typename T2, typename TPool, Bool deallocationFlag>
+template<typename T1, typename T2, typename TPool, Bool checkFree>
 inline bool operator!=(
-	const GenericPoolAllocator<T1, TPool, deallocationFlag>&,
-	const GenericPoolAllocator<T2, TPool, deallocationFlag>&)
+	const GenericPoolAllocator<T1, TPool, checkFree>&,
+	const GenericPoolAllocator<T2, TPool, checkFree>&)
 {
 	return false;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
 template<typename T1, typename AnotherAllocator, typename TPool, 
-	Bool deallocationFlag>
+	Bool checkFree>
 inline bool operator!=(
-	const GenericPoolAllocator<T1, TPool, deallocationFlag>&,
+	const GenericPoolAllocator<T1, TPool, checkFree>&,
 	const AnotherAllocator&)
 {
 	return true;
@@ -321,14 +318,14 @@ using HeapAllocator =
 	GenericPoolAllocator<T, HeapMemoryPool, true>;
 
 /// Allocator that uses a StackMemoryPool
-template<typename T, Bool deallocationFlag = false>
+template<typename T, Bool checkFree = false>
 using StackAllocator = 
-	GenericPoolAllocator<T, StackMemoryPool, deallocationFlag>;
+	GenericPoolAllocator<T, StackMemoryPool, checkFree>;
 
 /// Allocator that uses a ChainMemoryPool
-template<typename T, Bool deallocationFlag = true>
+template<typename T, Bool checkFree = true>
 using ChainAllocator = 
-	GenericPoolAllocator<T, ChainMemoryPool, deallocationFlag>;
+	GenericPoolAllocator<T, ChainMemoryPool, checkFree>;
 
 /// @}
 
