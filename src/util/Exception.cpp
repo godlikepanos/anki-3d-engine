@@ -57,8 +57,11 @@ Exception::Exception(const char* file, I line, const char* func,
 		freeAligned(out);
 	}
 
+#if ANKI_DEBUG == 1
+	fprintf(stderr, "Exception thrown\n");
+#endif
+
 #if ANKI_ABORT_ON_THROW == 1
-	std::cerr << m_err << std::endl;
 	abort();
 #endif
 }
@@ -71,8 +74,11 @@ Exception::Exception(const Exception& e) noexcept
 	m_err = reinterpret_cast<char*>(mallocAligned(std::strlen(e.m_err) + 1, 1));
 	std::strcpy(m_err, e.m_err);
 
+#if ANKI_DEBUG == 1
+	fprintf(stderr, "Exception thrown\n");
+#endif
+
 #if ANKI_ABORT_ON_THROW == 1
-	std::cerr << m_err << std::endl;
 	abort();
 #endif
 }

@@ -175,6 +175,7 @@ void App::init(const ConfigSet& config)
 	rinit.m_cacheDir = m_cacheDir.toCString();
 	rinit.m_allocCallback = m_allocCb;
 	rinit.m_allocCallbackData = m_allocCbData;
+	rinit.m_tempAllocatorMemorySize = 1024 * 1024 * 2;
 	m_resources = m_heapAlloc.newInstance<ResourceManager>(rinit);
 
 	// Renderer

@@ -155,7 +155,7 @@ public:
 
 	/// Create a new SceneNode
 	template<typename Node, typename... Args>
-	Node* newSceneNode(const char* name, Args&&... args)
+	Node* newSceneNode(const CString& name, Args&&... args)
 	{
 		Node* node;
 		SceneAllocator<Node> al = m_alloc;

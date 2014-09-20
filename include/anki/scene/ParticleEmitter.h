@@ -157,8 +157,8 @@ class ParticleEmitter: public SceneNode, public SpatialComponent,
 
 public:
 	ParticleEmitter(
-		const char* name, SceneGraph* scene, // SceneNode
-		const char* filename); // Self
+		const CString& name, SceneGraph* scene, // SceneNode
+		const CString& filename); // Self
 
 	~ParticleEmitter();
 

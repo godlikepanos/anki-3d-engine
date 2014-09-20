@@ -19,12 +19,12 @@ namespace anki {
 
 //==============================================================================
 ModelPatchNode::ModelPatchNode(
-	const char* name, SceneGraph* scene,
+	const CString& name, SceneGraph* scene,
 	const ModelPatchBase* modelPatch)
-	:	SceneNode(name, scene),
-		RenderComponent(this),
-		SpatialComponent(this), 
-		m_modelPatch(modelPatch)
+:	SceneNode(name, scene),
+	RenderComponent(this),
+	SpatialComponent(this), 
+	m_modelPatch(modelPatch)
 {
 	addComponent(static_cast<RenderComponent*>(this));
 	addComponent(static_cast<SpatialComponent*>(this));
@@ -211,12 +211,12 @@ void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 
 //==============================================================================
 ModelNode::ModelNode(
-	const char* name, SceneGraph* scene,
-	const char* modelFname)
-	: 	SceneNode(name, scene),
-		MoveComponent(this),
-		m_transforms(getSceneAllocator()),
-		m_transformsTimestamp(0)
+	const CString& name, SceneGraph* scene,
+	const CString& modelFname)
+: 	SceneNode(name, scene),
+	MoveComponent(this),
+	m_transforms(getSceneAllocator()),
+	m_transformsTimestamp(0)
 {
 	addComponent(static_cast<MoveComponent*>(this));
 
@@ -225,7 +225,7 @@ ModelNode::ModelNode(
 	for(const ModelPatchBase* patch : m_model->getModelPatches())
 	{
 		ModelPatchNode* mpn = 
-			getSceneGraph().newSceneNode<ModelPatchNode>(nullptr, patch);
+			getSceneGraph().newSceneNode<ModelPatchNode>(CString(), patch);
 
 		SceneObject::addChild(mpn);
 	}

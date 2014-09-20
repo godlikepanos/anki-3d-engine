@@ -24,11 +24,11 @@ StaticGeometrySpatial::StaticGeometrySpatial(
 
 //==============================================================================
 StaticGeometryPatchNode::StaticGeometryPatchNode(
-	const char* name, SceneGraph* scene, const ModelPatchBase* modelPatch)
-	:	SceneNode(name, scene),
-		SpatialComponent(this),
-		RenderComponent(this),
-		m_modelPatch(modelPatch)
+	const CString& name, SceneGraph* scene, const ModelPatchBase* modelPatch)
+:	SceneNode(name, scene),
+	SpatialComponent(this),
+	RenderComponent(this),
+	m_modelPatch(modelPatch)
 {
 	addComponent(static_cast<SpatialComponent*>(this));
 	addComponent(static_cast<RenderComponent*>(this));
@@ -117,7 +117,7 @@ void StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 
 //==============================================================================
 StaticGeometryNode::StaticGeometryNode(
-	const char* name, SceneGraph* scene, const char* filename)
+	const CString& name, SceneGraph* scene, const CString& filename)
 :	SceneNode(name, scene)
 {
 	m_model.load(filename, &getResourceManager());
@@ -125,11 +125,12 @@ StaticGeometryNode::StaticGeometryNode(
 	U i = 0;
 	for(const ModelPatchBase* patch : m_model->getModelPatches())
 	{
-		std::string newname = name + std::to_string(i);
+		SceneString newname(getSceneAllocator());
+		newname.sprintf("%s_%u", &name[0], i);
 
 		StaticGeometryPatchNode* node = 
 			getSceneGraph().newSceneNode<StaticGeometryPatchNode>(
-			newname.c_str(), patch);
+			newname.toCString(), patch);
 		(void)node;
 
 		++i;

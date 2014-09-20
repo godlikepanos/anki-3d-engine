@@ -27,7 +27,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	ModelPatchNode(
-		const char* name, SceneGraph* scene, // Scene
+		const CString& name, SceneGraph* scene, // Scene
 		const ModelPatchBase* modelPatch); // Self
 
 	~ModelPatchNode();
@@ -83,8 +83,8 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	ModelNode(
-		const char* name, SceneGraph* scene, // SceneNode
-		const char* modelFname); // Self
+		const CString& name, SceneGraph* scene, // SceneNode
+		const CString& modelFname); // Self
 
 	virtual ~ModelNode();
 	/// @}

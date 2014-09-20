@@ -13,13 +13,13 @@ namespace anki {
 
 //==============================================================================
 Camera::Camera(
-	const char* name, SceneGraph* scene, // SceneNode
+	const CString& name, SceneGraph* scene, // SceneNode
 	Type type, Frustum* frustum) 
-	:	SceneNode(name, scene), 
-		MoveComponent(this),
-		FrustumComponent(this, frustum),
-		SpatialComponent(this),
-		m_type(type)
+:	SceneNode(name, scene), 
+	MoveComponent(this),
+	FrustumComponent(this, frustum),
+	SpatialComponent(this),
+	m_type(type)
 {
 	// Init components
 	addComponent(static_cast<MoveComponent*>(this));
@@ -82,8 +82,8 @@ void Camera::moveUpdate(MoveComponent& move)
 //==============================================================================
 
 //==============================================================================
-PerspectiveCamera::PerspectiveCamera(const char* name, SceneGraph* scene)
-	: Camera(name, scene, Type::PERSPECTIVE, &m_frustum)
+PerspectiveCamera::PerspectiveCamera(const CString& name, SceneGraph* scene)
+:	Camera(name, scene, Type::PERSPECTIVE, &m_frustum)
 {}
 
 //==============================================================================
@@ -91,8 +91,8 @@ PerspectiveCamera::PerspectiveCamera(const char* name, SceneGraph* scene)
 //==============================================================================
 
 //==============================================================================
-OrthographicCamera::OrthographicCamera(const char* name, SceneGraph* scene)
-	: Camera(name, scene, Type::ORTHOGRAPHIC, &m_frustum)
+OrthographicCamera::OrthographicCamera(const CString& name, SceneGraph* scene)
+:	Camera(name, scene, Type::ORTHOGRAPHIC, &m_frustum)
 {}
 
 } // end namespace anki

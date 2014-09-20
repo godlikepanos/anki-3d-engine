@@ -201,8 +201,8 @@ void Particle::revive(const ParticleEmitter& pe,
 
 //==============================================================================
 ParticleEmitter::ParticleEmitter(
-	const char* name, SceneGraph* scene,
-	const char* filename)
+	const CString& name, SceneGraph* scene,
+	const CString& filename)
 :	SceneNode(name, scene),
 	SpatialComponent(this),
 	MoveComponent(this),

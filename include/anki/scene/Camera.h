@@ -32,7 +32,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	Camera(
-		const char* name, SceneGraph* scene, // SceneNode
+		const CString& name, SceneGraph* scene, // SceneNode
 		Type type, Frustum* frustum); // Self
 
 	virtual ~Camera();
@@ -97,7 +97,7 @@ class PerspectiveCamera: public Camera
 public:
 	/// @name Constructors
 	/// @{
-	PerspectiveCamera(const char* name, SceneGraph* scene);
+	PerspectiveCamera(const CString& name, SceneGraph* scene);
 	/// @}
 
 	/// @name Accessors
@@ -147,7 +147,7 @@ class OrthographicCamera: public Camera
 public:
 	/// @name Constructors
 	/// @{
-	OrthographicCamera(const char* name, SceneGraph* scene);
+	OrthographicCamera(const CString& name, SceneGraph* scene);
 	/// @}
 
 	/// @name Accessors

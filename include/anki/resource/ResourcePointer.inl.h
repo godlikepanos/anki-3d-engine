@@ -74,7 +74,7 @@ void ResourcePointer<T, TResourceManager>::load(
 		std::memcpy(&m_cb->m_uuid[0], &filename[0], len + 1);
 
 		// Reset the memory pool if no-one is using it
-		if(pool.getAllocationsCount() > 0)
+		if(pool.getAllocationsCount() == 0)
 		{
 			pool.reset();
 		}

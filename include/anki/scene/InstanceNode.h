@@ -18,7 +18,7 @@ class InstanceComponent: public SceneComponent
 {
 public:
 	InstanceComponent(SceneNode* node)
-		: SceneComponent(INSTANCE_COMPONENT, node)
+	:	SceneComponent(INSTANCE_COMPONENT, node)
 	{}
 
 	static constexpr Type getClassType()
@@ -32,8 +32,10 @@ class InstanceNode: public SceneNode, public InstanceComponent,
 	public MoveComponent
 {
 public:
-	InstanceNode(const char* name, SceneGraph* scene)
-		: SceneNode(name, scene), InstanceComponent(this), MoveComponent(this)
+	InstanceNode(const CString& name, SceneGraph* scene)
+	:	SceneNode(name, scene), 
+		InstanceComponent(this), 
+		MoveComponent(this)
 	{
 		addComponent(static_cast<InstanceComponent*>(this));
 		addComponent(static_cast<MoveComponent*>(this));

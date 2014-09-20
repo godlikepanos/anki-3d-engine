@@ -44,7 +44,7 @@ public:
 	/// @name Constructors/Destructor
 	/// @{
 	StaticGeometryPatchNode(
-		const char* name, SceneGraph* scene, // Scene
+		const CString& name, SceneGraph* scene, // Scene
 		const ModelPatchBase* modelPatch); // Self
 
 	~StaticGeometryPatchNode();
@@ -86,8 +86,8 @@ class StaticGeometryNode: public SceneNode
 {
 public:
 	StaticGeometryNode(
-		const char* name, SceneGraph* scene, // Scene
-		const char* filename); // Self
+		const CString& name, SceneGraph* scene, // Scene
+		const CString& filename); // Self
 
 	~StaticGeometryNode();
 
