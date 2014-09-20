@@ -159,7 +159,8 @@ public:
 	}
 
 protected:
-	/// Append a component to the components container
+	/// Append a component to the components container. The SceneNode will not
+	/// take ownership
 	void addComponent(SceneComponent* comp);
 
 	/// Remove a component from the container

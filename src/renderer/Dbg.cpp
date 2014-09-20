@@ -175,7 +175,7 @@ void Dbg::run(GlCommandBufferHandle& jobs)
 	// XXX
 #endif
 
-#if 1
+#if 0
 	{
 		Vec4 pos0 = scene.findSceneNode("shape0").
 			getComponent<MoveComponent>().getWorldTransform().getOrigin();

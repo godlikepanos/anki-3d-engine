@@ -292,6 +292,10 @@ public:
 	{
 		if(m_memory != nullptr)
 		{
+#if ANKI_DEBUG
+			// Invalidate the memory
+			memset(m_memory, 0xCC, m_memsize);
+#endif
 			m_allocCb(m_allocCbUserData, m_memory, 0, 0);
 		}
 	}

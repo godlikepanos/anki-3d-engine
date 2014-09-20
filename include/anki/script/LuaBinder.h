@@ -44,10 +44,10 @@ public:
 	template<typename T>
 	using Allocator = HeapAllocator<T>;
 
-	LuaBinder(Allocator<U8>& alloc);
+	LuaBinder(Allocator<U8>& alloc, void* parent);
 	~LuaBinder();
 
-	/// @name Accessors
+	/// @privatesection
 	/// {
 	lua_State* _getLuaState()
 	{
@@ -57,6 +57,11 @@ public:
 	Allocator<U8> _getAllocator() const
 	{
 		return m_alloc;
+	}
+
+	void* _getParent() const
+	{
+		return m_parent;
 	}
 	/// }
 
@@ -75,6 +80,7 @@ public:
 private:
 	Allocator<U8> m_alloc;
 	lua_State* m_l = nullptr;
+	void* m_parent = nullptr; ///< Point to the ScriptManager
 
 	static void* luaAllocCallback(
 		void* userData, void* ptr, PtrSize osize, PtrSize nsize);

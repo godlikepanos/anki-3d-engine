@@ -191,7 +191,7 @@ void App::init(const ConfigSet& config)
 		m_allocCb, m_allocCbData, m_threadpool, m_resources);
 
 	// Script
-	m_script = m_heapAlloc.newInstance<ScriptManager>(m_heapAlloc);
+	m_script = m_heapAlloc.newInstance<ScriptManager>(m_heapAlloc, m_scene);
 
 	ANKI_LOGI("Application initialized");
 }

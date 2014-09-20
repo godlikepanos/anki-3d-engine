@@ -186,8 +186,7 @@ Vec4 XmlElement::getVec4() const
 XmlElement XmlElement::getChildElementOptional(const CString& name) const
 {
 	check();
-	XmlElement out;
-	out.m_el = m_el->FirstChildElement(&name[0]);
+	XmlElement out(m_el->FirstChildElement(&name[0]), m_alloc);
 	return out;
 }
 
@@ -207,8 +206,7 @@ XmlElement XmlElement::getChildElement(const CString& name) const
 XmlElement XmlElement::getNextSiblingElement(const CString& name) const
 {
 	check();
-	XmlElement out;
-	out.m_el = m_el->NextSiblingElement(&name[0]);
+	XmlElement out(m_el->NextSiblingElement(&name[0]), m_alloc);
 	return out;
 }
 

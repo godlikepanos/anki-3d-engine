@@ -7,9 +7,11 @@
 #define ANKI_SCRIPT_SCRIPT_MANAGER_H
 
 #include "anki/script/LuaBinder.h"
-#include "anki/util/Singleton.h"
 
 namespace anki {
+
+// Forward
+class SceneGraph;
 
 /// @addtogroup script
 /// @{
@@ -18,9 +20,20 @@ namespace anki {
 class ScriptManager: public LuaBinder
 {
 public:
-	ScriptManager(HeapAllocator<U8>& alloc);
+	ScriptManager(HeapAllocator<U8>& alloc, SceneGraph* scene);
 
 	~ScriptManager();
+
+	/// @privatesection
+	/// @{
+	SceneGraph& _getSceneGraph()
+	{
+		return *m_scene;
+	}
+	/// @}
+
+public:
+	SceneGraph* m_scene = nullptr;
 };
 
 /// @}

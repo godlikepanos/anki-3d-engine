@@ -64,7 +64,8 @@ static int luaPanic(lua_State* l)
 }
 
 //==============================================================================
-LuaBinder::LuaBinder(Allocator<U8>& alloc)
+LuaBinder::LuaBinder(Allocator<U8>& alloc, void* parent)
+:	m_parent(parent)
 {
 	m_alloc = alloc;
 

@@ -31,6 +31,11 @@ public:
 		m_alloc(b.m_alloc)
 	{}
 
+	XmlElement(tinyxml2::XMLElement* el, const StackAllocator<U8>& alloc)
+	:	m_el(el),
+		m_alloc(alloc)
+	{}
+
 	/// If element has something return true
 	operator Bool() const
 	{
@@ -108,9 +113,7 @@ public:
 
 	XmlElement getChildElement(const CString& name)
 	{
-		XmlElement el;
-		el.m_el = m_doc.FirstChildElement(&name[0]);
-		el.m_alloc = m_alloc;
+		XmlElement el(m_doc.FirstChildElement(&name[0]), m_alloc);
 		return el;
 	}
 

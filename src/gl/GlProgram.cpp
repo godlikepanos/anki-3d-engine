@@ -297,7 +297,7 @@ void GlProgram::create(GLenum type, const CString& source,
 	catch(const std::exception& e)
 	{
 		destroy();
-		throw ANKI_EXCEPTION("") << e;
+		throw ANKI_EXCEPTION("Program creation failed") << e;
 	}
 }
 

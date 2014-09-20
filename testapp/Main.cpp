@@ -118,8 +118,7 @@ void init()
 	F32 z = 2.49;
 	Array<Vec3, 4> vaseLightPos = {{Vec3(x, y, -z - 1.4), Vec3(x, y, z),
 		Vec3(-x - 2.3, y, z), Vec3(-x - 2.3, y, -z - 1.4)}};
-	//for(U i = 0; i < vaseLightPos.getSize(); i++)
-	for(U i = 0; i < 0; i++)
+	for(U i = 0; i < vaseLightPos.getSize(); i++)
 	{
 		Vec4 lightPos = vaseLightPos[i].xyz0();
 
@@ -190,10 +189,10 @@ void init()
 	}
 #endif
 
-#if 0
+#if 1
 	// horse
 	horse = scene.newSceneNode<ModelNode>("horse", "models/horse/horse.ankimdl");
-	horse->setLocalTransform(Transform(Vec3(-2, 0, 0), Mat3::getIdentity(),
+	horse->setLocalTransform(Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(),
 		0.7));
 
 
@@ -251,6 +250,7 @@ void init()
 		cam, path, distPerSec);*/
 
 
+#if 0
 	horse = scene.newSceneNode<ModelNode>("shape0", 
 		"models/collision_test/Cube_Material-material.ankimdl");
 	horse->setLocalTransform(Transform(Vec4(0.0, 0, 0, 0), 
@@ -265,6 +265,7 @@ void init()
 	horse->setLocalRotation(Mat3x4(0.135899, -0.534728, 0.834033, 0.000000,
 		0.091205, 0.845038, 0.526900, 0.000000 ,
 		-0.986537, 0.004463, 0.163603, 0.000000));
+#endif
 }
 
 //==============================================================================

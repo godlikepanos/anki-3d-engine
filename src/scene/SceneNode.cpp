@@ -26,13 +26,7 @@ SceneNode::SceneNode(const CString& name, SceneGraph* scene)
 
 //==============================================================================
 SceneNode::~SceneNode()
-{
-	SceneAllocator<SceneComponent*> alloc = getSceneAllocator();
-	for(auto comp : m_components)
-	{
-		alloc.deleteInstance(comp);
-	}
-}
+{}
 
 //==============================================================================
 U32 SceneNode::getLastUpdateFrame() const
