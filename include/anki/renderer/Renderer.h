@@ -247,6 +247,11 @@ public:
 	{
 		return *m_threadpool;
 	}
+
+	const String& _getShadersPrependedSource() const
+	{
+		return m_shadersPrependedSource;
+	}
 	/// @}
 
 private:
@@ -279,7 +284,6 @@ private:
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
 	GlBufferHandle m_quadPositionsBuff; ///< The VBO for quad positions
-
 	ProgramResourcePointer m_drawQuadVert;
 	/// @}
 
@@ -300,6 +304,8 @@ private:
 	U m_framesNum; ///< Frame number
 
 	GlFramebufferHandle m_defaultFb;
+
+	String m_shadersPrependedSource; ///< String to append in user shaders
 
 	void computeProjectionParams(const Mat4& projMat);
 };

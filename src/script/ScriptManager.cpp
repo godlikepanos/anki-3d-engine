@@ -82,6 +82,7 @@ ScriptManager::ScriptManager(HeapAllocator<U8>& alloc, SceneGraph* scene)
 	ANKI_SCRIPT_CALL_WRAP(Vec3);
 	ANKI_SCRIPT_CALL_WRAP(Vec4);
 	ANKI_SCRIPT_CALL_WRAP(Mat3);
+	ANKI_SCRIPT_CALL_WRAP(Mat3x4);
 
 	// Renderer
 	ANKI_SCRIPT_CALL_WRAP(Dbg);

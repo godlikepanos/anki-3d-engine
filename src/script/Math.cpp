@@ -209,5 +209,24 @@ ANKI_SCRIPT_WRAP(Mat3)
 	ANKI_LUA_CLASS_END()
 }
 
+//==============================================================================
+static void mat3x4SetAt(Mat3x4* self, U j, U i, F32 f)
+{
+	(*self)(j, i) = f;
+}
+
+ANKI_SCRIPT_WRAP(Mat3x4)
+{
+	ANKI_LUA_CLASS_BEGIN(lb, Mat3x4)
+		ANKI_LUA_EMPTY_CONSTRUCTOR()
+		ANKI_LUA_METHOD("copy", &Mat3x4::operator=)
+		// Accessors
+		ANKI_LUA_METHOD_DETAIL("getAt", 
+			F32 (Mat3x4::Base::*)(const U, const U) const, 
+			&Mat3x4::operator(), BinderFlag::NONE)
+		ANKI_LUA_FUNCTION_AS_METHOD("setAt", &mat3x4SetAt)
+	ANKI_LUA_CLASS_END()
+}
+
 } // end namespace anki
 

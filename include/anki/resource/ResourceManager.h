@@ -190,6 +190,17 @@ public:
 		return m_cacheDir;
 	}
 
+	/// Set it with information from the renderer
+	void _setShadersPrependedSource(const CString& cstr)
+	{
+		m_shadersPrependedSource = cstr;
+	}
+
+	const ResourceString& _getShadersPrependedSource() const
+	{
+		return m_shadersPrependedSource;
+	}
+
 	template<typename T>
 	Bool _findLoadedResource(const CString& filename, 
 		ResourcePointer<T, ResourceManager>& ptr)
@@ -219,6 +230,7 @@ private:
 	ResourceString m_dataDir;
 	U32 m_maxTextureSize;
 	U32 m_textureAnisotropy;
+	ResourceString m_shadersPrependedSource;
 };
 
 #undef ANKI_RESOURCE

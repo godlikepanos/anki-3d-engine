@@ -25,7 +25,8 @@ ResourceManager::ResourceManager(Initializer& init)
 		init.m_allocCallback, init.m_allocCallbackData, 
 		init.m_tempAllocatorMemorySize)),
 	m_cacheDir(init.m_cacheDir, m_alloc),
-	m_dataDir(m_alloc)
+	m_dataDir(m_alloc),
+	m_shadersPrependedSource(m_alloc)
 {
 	// Init the data path
 	//

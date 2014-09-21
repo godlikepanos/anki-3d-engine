@@ -33,7 +33,8 @@ class ResourceManager;
 class App
 {
 public:
-	using UserMainLoopCallback = void(*)(App& app, void* userData);
+	/// User callback of main loop
+	using UserMainLoopCallback = I32(*)(App& app, void* userData);
 
 	/// Create and initialize the application
 	App(const ConfigSet& config, 
@@ -81,10 +82,10 @@ public:
 		return m_heapAlloc;
 	}
 
-	/// TODO
-	void quit(int code);
-
-	/// Run the main loop
+	/// Run the main loop.
+	/// @param callback The user callback to run along with the other main loop
+	///                 code.
+	/// @param userData The data to pass to the user callback.
 	void mainLoop(UserMainLoopCallback callback, void* userData);
 
 	Input& getInput()
@@ -100,6 +101,21 @@ public:
 	MainRenderer& getMainRenderer()
 	{
 		return *m_renderer;
+	}
+
+	ResourceManager& getResourceManager()
+	{
+		return *m_resources;
+	}
+
+	ScriptManager& getScriptManager()
+	{
+		return *m_script;
+	}
+
+	HeapAllocator<U8> getAllocator() const
+	{
+		return m_heapAlloc;
 	}
 
 private:

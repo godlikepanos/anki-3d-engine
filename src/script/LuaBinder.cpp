@@ -127,14 +127,14 @@ void* LuaBinder::luaAllocCallback(
 }
 
 //==============================================================================
-void LuaBinder::evalString(const char* str)
+void LuaBinder::evalString(const CString& str)
 {
-	int e = luaL_dostring(m_l, str);
+	int e = luaL_dostring(m_l, &str[0]);
 	if(e)
 	{
-		std::string str(lua_tostring(m_l, -1));
+		String str(lua_tostring(m_l, -1), m_alloc);
 		lua_pop(m_l, 1);
-		throw ANKI_EXCEPTION("%s", str.c_str());
+		throw ANKI_EXCEPTION("%s", &str[0]);
 	}
 }
 

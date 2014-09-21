@@ -40,7 +40,7 @@ void particle(in mat4 mvp)
 {
 	gl_Position = mvp * vec4(inPosition, 1);
 	outAlpha = inAlpha;
-	gl_PointSize = inScale * float(RENDERING_WIDTH) / gl_Position.w;
+	gl_PointSize = inScale * float(ANKI_RENDERER_WIDTH) / gl_Position.w;
 }
 
 //==============================================================================

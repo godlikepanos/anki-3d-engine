@@ -43,6 +43,7 @@ void init()
 
 	SceneGraph& scene = app->getSceneGraph();
 	MainRenderer& renderer = app->getMainRenderer();
+	ResourceManager& resources = app->getResourceManager();
 
 	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 3);
 
@@ -208,12 +209,14 @@ void init()
 		0.7));*/
 #endif
 
-#if 0
+#if 1
 	{
-		String str;
-		File file(ANKI_R("maps/sponza/scene.lua"), File::OpenFlag::READ);
+		String str(app->getAllocator());
+		File file(
+			resources.fixResourceFilename("maps/sponza/scene.lua").toCString(), 
+			File::OpenFlag::READ);
 		file.readAllText(str);
-		ScriptManagerSingleton::get().evalString(str.c_str());
+		app->getScriptManager().evalString(str.toCString());
 	}
 #endif
 
@@ -296,7 +299,7 @@ void execStdinScpripts()
 #endif
 
 //==============================================================================
-void mainLoopExtra(App& app, void*)
+I32 mainLoopExtra(App& app, void*)
 {
 	F32 dist = 0.1;
 	F32 ang = toRad(1.5);
@@ -306,6 +309,11 @@ void mainLoopExtra(App& app, void*)
 	SceneGraph& scene = app.getSceneGraph();
 	Input& in = app.getInput();
 	MainRenderer& renderer = app.getMainRenderer();
+
+	if(in.getKey(KeyCode::ESCAPE))
+	{
+		return 1;
+	}
 
 	// move the camera
 	static MoveComponent* mover = 
@@ -443,6 +451,8 @@ end)");
 	}
 
 	//execStdinScpripts();
+
+	return 0;
 }
 
 //==============================================================================

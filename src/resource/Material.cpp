@@ -390,10 +390,13 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 				{
 					TempResourceString src(rinit.m_tempAlloc);
 
-					src.sprintf("#define LOD %u\n"
+					src.sprintf(
+						"%s\n"
+						"#define LOD %u\n"
 						"#define PASS %u\n"
 						"#define TESSELLATION %u\n"
-						"%s\n", 
+						"%s\n",
+						&rinit.m_resources._getShadersPrependedSource()[0],
 						level, pid, tess, &loader.getProgramSource(shader)[0]);
 
 					TempResourceString filename =

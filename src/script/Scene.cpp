@@ -74,7 +74,7 @@ ANKI_SCRIPT_WRAP(SceneGraph)
 {
 	ANKI_LUA_CLASS_BEGIN_NO_DESTRUCTOR(lb, SceneGraph)
 		ANKI_LUA_METHOD("newModelNode", 
-			(&SceneGraph::newSceneNode<ModelNode, const char*>))
+			(&SceneGraph::newSceneNode<ModelNode, const CString&>))
 		ANKI_LUA_METHOD("newInstanceNode", 
 			(&SceneGraph::newSceneNode<InstanceNode>))
 		ANKI_LUA_METHOD("tryFindSceneNode", &SceneGraph::tryFindSceneNode)

@@ -29,7 +29,8 @@ Renderer::Renderer(
 	m_bs(this),
 	m_dbg(this), 
 	m_tiler(this),
-	m_sceneDrawer(this)
+	m_sceneDrawer(this),
+	m_shadersPrependedSource(alloc)
 {}
 
 //==============================================================================
@@ -91,6 +92,12 @@ void Renderer::init(const ConfigSet& config)
 	m_defaultFb = GlFramebufferHandle(cmdBuff, {});
 
 	cmdBuff.finish();
+
+	// Set the default preprocessor string
+	m_shadersPrependedSource.sprintf(
+		"#define ANKI_RENDERER_WIDTH %u\n"
+		"#define ANKI_RENDERER_HEIGHT %u\n",
+		m_width, m_height);
 }
 
 //==============================================================================

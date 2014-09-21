@@ -9,6 +9,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Allocator.h"
+#include "anki/util/String.h"
 #include <lua.hpp>
 #ifndef ANKI_LUA_HPP
 #	error "Wrong LUA header included"
@@ -70,9 +71,10 @@ public:
 	void exposeVariable(const char* name, T* y);
 
 	/// Evaluate a file
-	void evalFile(const char* filename);
+	void evalFile(const CString& filename);
+
 	/// Evaluate a string
-	void evalString(const char* str);
+	void evalString(const CString& str);
 
 	/// For debugging purposes
 	static void stackDump(lua_State* l);

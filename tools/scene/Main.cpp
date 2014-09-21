@@ -189,14 +189,15 @@ static void writeNodeTransform(const Exporter& exporter, std::ofstream& file,
 	pos[1] = m[1][3];
 	pos[2] = m[2][3];
 
-	file << "pos = Vec3.new()\n";
+	file << "pos = Vec4.new()\n";
 	file << "pos:setX(" << pos[0] << ")\n";
 	file << "pos:setY(" << pos[1] << ")\n";
 	file << "pos:setZ(" << pos[2] << ")\n";
+	file << "pos:setW(0.0)\n";
 	file << node 
 		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(pos)\n";
 
-	file << "rot = Mat3.new()\n";
+	file << "rot = Mat3x4.new()\n";
 	for(unsigned j = 0; j < 3; j++)
 	{
 		for(unsigned i = 0; i < 3; i++)
@@ -204,6 +205,11 @@ static void writeNodeTransform(const Exporter& exporter, std::ofstream& file,
 			file << "rot:setAt(" << j << ", " << i << ", " << m[j][i] << ")\n";
 		}
 	}
+
+	file << "rot:setAt(0, 3, 0.0)\n"
+		<< "rot:setAt(1, 3, 0.0)\n"
+		<< "rot:setAt(2, 3, 0.0)\n";
+
 	file << node 
 		<< ":getSceneNodeBase():getMoveComponent():setLocalRotation(rot)\n";
 }
@@ -219,7 +225,7 @@ static void exportScene(Exporter& exporter)
 	std::ofstream file;
 	file.open(exporter.outDir + "scene.lua");
 
-	file << "scene = SceneGraphSingleton.get()\n";
+	file << "scene = Anki.getSceneGraph()\n";
 
 	//
 	// Get all the data
@@ -248,15 +254,16 @@ static void exportScene(Exporter& exporter)
 		std::string name = getModelName(exporter, model);
 
 		// Write the main node
-		file << "\nnode = scene:newModelNode(\"" << name << "\", \"" 
-			<< exporter.rpath << name << ".ankimdl" << "\")\n"; 
+		file << "\nnode = scene:newModelNode(CString.new(\"" 
+			<< name << "\"), CString.new(\"" 
+			<< exporter.rpath << name << ".ankimdl" << "\"))\n"; 
 		writeNodeTransform(exporter, file, "node", node.transforms[0]);
 
 		// Write instance nodes
 		for(unsigned j = 1; j < node.transforms.size(); j++)
 		{
-			file << "inst = scene:newInstanceNode(\"" 
-				<< name << "_inst" << (j - 1) << "\")\n"
+			file << "inst = scene:newInstanceNode(CString.new(\"" 
+				<< name << "_inst" << (j - 1) << "\"))\n"
 				<< "node:getSceneNodeBase():addChild("
 				<< "inst:getSceneNodeBase())\n";
 

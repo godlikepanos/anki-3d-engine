@@ -228,10 +228,10 @@ public:
 
 private:
 	const Char* m_ptr = nullptr;
-	mutable U16 m_length = 0;
+	mutable U32 m_length = 0;
 
 	/// Constructor for friends
-	CString(const Char* ptr, U16 length) noexcept
+	CString(const Char* ptr, U32 length) noexcept
 	:	m_ptr(ptr),
 		m_length(length)
 	{

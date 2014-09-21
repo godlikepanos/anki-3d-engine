@@ -53,8 +53,10 @@ void particleAlpha(in sampler2D tex, in float alpha)
 void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex, 
 	in float alpha)
 {
-	const vec2 screenSize = 
-		vec2(1.0 / float(RENDERING_WIDTH), 1.0 / float(RENDERING_HEIGHT));
+	const vec2 screenSize = vec2(
+		1.0 / float(ANKI_RENDERER_WIDTH), 
+		1.0 / float(ANKI_RENDERER_HEIGHT));
+
 	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
 
 	float delta = depth - gl_FragCoord.z;
@@ -71,8 +73,10 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor, 
 	in float alpha)
 {
-	const vec2 screenSize = 
-		vec2(1.0 / float(RENDERING_WIDTH), 1.0 / float(RENDERING_HEIGHT));
+	const vec2 screenSize = vec2(
+		1.0 / float(ANKI_RENDERER_WIDTH), 
+		1.0 / float(ANKI_RENDERER_HEIGHT));
+
 	float depth = texture(depthMap, gl_FragCoord.xy * screenSize).r;
 
 	float delta = depth - gl_FragCoord.z;

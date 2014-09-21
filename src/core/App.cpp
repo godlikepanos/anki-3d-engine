@@ -175,7 +175,7 @@ void App::init(const ConfigSet& config)
 	rinit.m_cacheDir = m_cacheDir.toCString();
 	rinit.m_allocCallback = m_allocCb;
 	rinit.m_allocCallbackData = m_allocCbData;
-	rinit.m_tempAllocatorMemorySize = 1024 * 1024 * 2;
+	rinit.m_tempAllocatorMemorySize = 1024 * 1024 * 4;
 	m_resources = m_heapAlloc.newInstance<ResourceManager>(rinit);
 
 	// Renderer
@@ -185,6 +185,9 @@ void App::init(const ConfigSet& config)
 		m_gl,
 		m_heapAlloc,
 		config);
+
+	m_resources->_setShadersPrependedSource(
+		m_renderer->_getShadersPrependedSource().toCString());
 
 	// Scene
 	m_scene = m_heapAlloc.newInstance<SceneGraph>(
@@ -254,19 +257,16 @@ void App::initDirs()
 }
 
 //==============================================================================
-void App::quit(int code)
-{}
-
-//==============================================================================
 void App::mainLoop(UserMainLoopCallback callback, void* userData)
 {
 	ANKI_LOGI("Entering main loop");
+	I32 userRetCode = 0;
 
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar crntTime = prevUpdateTime;
 
 	ANKI_COUNTER_START_TIMER(FPS);
-	while(true)
+	while(userRetCode == 0)
 	{
 		HighRezTimer timer;
 		timer.start();
@@ -280,7 +280,7 @@ void App::mainLoop(UserMainLoopCallback callback, void* userData)
 		m_renderer->render(*m_scene);
 
 		// User update
-		callback(*this, userData);
+		userRetCode = callback(*this, userData);
 
 		m_gl->swapBuffers();
 		ANKI_COUNTERS_RESOLVE_FRAME();
