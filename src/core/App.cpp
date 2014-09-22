@@ -109,8 +109,10 @@ void App::cleanup()
 }
 
 //==============================================================================
-void App::init(const ConfigSet& config)
+void App::init(const ConfigSet& config_)
 {
+	ConfigSet config = config_;
+
 	initDirs();
 
 	// Logger
@@ -138,6 +140,10 @@ void App::init(const ConfigSet& config)
 
 	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
+#if ANKI_ENABLE_COUNTERS
+	CountersManagerSingleton::init(m_heapAlloc, m_settingsDir.toCString());
+#endif
+
 	// Window
 	NativeWindow::Initializer nwinit;
 	nwinit.m_width = config.get("width");
@@ -146,7 +152,7 @@ void App::init(const ConfigSet& config)
 	nwinit.m_minorVersion = config.get("glminor");
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = config.get("fullscreen");
+	nwinit.m_fullscreenDesktopRez = config.get("fullscreenDesktopResolution");
 	nwinit.m_debugContext = ANKI_DEBUG;
 	m_window = m_heapAlloc.newInstance<NativeWindow>(nwinit, m_heapAlloc);	
 	m_ctx = m_window->getCurrentContext();
@@ -179,6 +185,12 @@ void App::init(const ConfigSet& config)
 	m_resources = m_heapAlloc.newInstance<ResourceManager>(rinit);
 
 	// Renderer
+	if(nwinit.m_fullscreenDesktopRez)
+	{
+		config.set("width", m_window->getWidth());
+		config.set("height", m_window->getHeight());
+	}
+
 	m_renderer = m_heapAlloc.newInstance<MainRenderer>(
 		m_threadpool,
 		m_resources,
@@ -219,14 +231,14 @@ void App::initDirs()
 #if ANKI_OS != ANKI_OS_ANDROID
 	// Settings path
 	String home = getHomeDirectory(m_heapAlloc);
-	String settingsDir = home + "/.anki";
-	if(!directoryExists(settingsDir.toCString()))
+	m_settingsDir = home + "/.anki";
+	if(!directoryExists(m_settingsDir.toCString()))
 	{
-		createDirectory(settingsDir.toCString());
+		createDirectory(m_settingsDir.toCString());
 	}
 
 	// Cache
-	m_cacheDir = settingsDir + "/cache";
+	m_cacheDir = m_settingsDir + "/cache";
 	if(directoryExists(m_cacheDir.toCString()))
 	{
 		removeDirectory(m_cacheDir.toCString());
@@ -287,7 +299,7 @@ void App::mainLoop(UserMainLoopCallback callback, void* userData)
 
 		// Sleep
 		timer.stop();
-		if(timer.getElapsedTime() < getTimerTick())
+		if(timer.getElapsedTime() < m_timerTick)
 		{
 			HighRezTimer::sleep(getTimerTick() - timer.getElapsedTime());
 		}

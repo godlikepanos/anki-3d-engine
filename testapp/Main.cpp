@@ -36,6 +36,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
+
 //==============================================================================
 void init()
 {
@@ -46,6 +47,11 @@ void init()
 	ResourceManager& resources = app->getResourceManager();
 
 	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 3);
+
+	if(getenv("PROFILE"))
+	{
+		app->setTimerTick(0.0);
+	}
 
 #if 0
 	painter = new UiPainter(Vec2(AppSingleton::get().getWindowWidth(),
@@ -65,7 +71,7 @@ void init()
 	scene.setActiveCamera(cam);
 
 	// lights
-#if 0
+#if 1
 	Vec3 lpos(-24.0, 0.1, -10.0);
 	for(int i = 0; i < 50; i++)
 	{
@@ -79,7 +85,7 @@ void init()
 				randFloat(6.0) - 2.0, randFloat(6.0) - 2.0, 0.0));
 			point->setSpecularColor(Vec4(randFloat(6.0) - 3.0, 
 				randFloat(6.0) - 3.0, randFloat(6.0) - 3.0, 0.0));
-			point->setLocalOrigin(lpos);
+			point->setLocalOrigin(lpos.xyz0());
 
 			lpos.z() += 2.0;
 		}
@@ -89,12 +95,12 @@ void init()
 	}
 #endif
 
-#if 0
+#if 1
 	SpotLight* spot = scene.newSceneNode<SpotLight>("spot0");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
-	spot->setLocalTransform(Transform(Vec3(8.27936, 5.86285, 1.85526),
-		Mat3(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
+	spot->setLocalTransform(Transform(Vec4(8.27936, 5.86285, 1.85526, 0.0),
+		Mat3x4(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
 	spot->setDiffuseColor(Vec4(1.0));
 	spot->setSpecularColor(Vec4(-1.0));
 	spot->setDistance(30.0);
@@ -104,8 +110,8 @@ void init()
 	spot = scene.newSceneNode<SpotLight>("spot1");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
-	spot->setLocalTransform(Transform(Vec3(5.3, 4.3, 3.0),
-		Mat3::getIdentity(), 1.0));
+	spot->setLocalTransform(Transform(Vec4(5.3, 4.3, 3.0, 0.0),
+		Mat3x4::getIdentity(), 1.0));
 	spot->setDiffuseColor(Vec4(3.0, 0.0, 0.0, 0.0));
 	spot->setSpecularColor(Vec4(3.0, 3.0, 0.0, 0.0));
 	spot->setDistance(30.0);
@@ -452,6 +458,11 @@ end)");
 
 	//execStdinScpripts();
 
+	if(getenv("PROFILE") && getGlobTimestamp() == 2000)
+	{
+		return 1;
+	}
+
 	return 0;
 }
 
@@ -494,6 +505,8 @@ void initSubsystems(int argc, char* argv[])
 	config.set("tessellation", false);
 	config.set("tilesXCount", 16);
 	config.set("tilesYCount", 16);
+
+	config.set("fullscreenDesktopResolution", true);
 
 	app = new App(config, allocAligned, nullptr);
 

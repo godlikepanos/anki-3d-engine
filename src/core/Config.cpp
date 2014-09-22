@@ -88,7 +88,7 @@ Config::Config()
 	//
 	newOption("glminor", 4);
 	newOption("glmajor", 4);
-	newOption("fullscreen", false);
+	newOption("fullscreenDesktopResolution", false);
 }
 
 //==============================================================================

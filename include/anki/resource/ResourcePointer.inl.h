@@ -56,6 +56,7 @@ void ResourcePointer<T, TResourceManager>::load(
 					*resources);
 
 				U allocsCountBefore = pool.getAllocationsCount();
+				(void)allocsCountBefore;
 
 				m_cb->m_resource.load(newFname.toCString(), init);
 

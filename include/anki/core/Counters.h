@@ -36,7 +36,8 @@ enum class Counter
 class CountersManager
 {
 public:
-	CountersManager();
+	CountersManager(HeapAllocator<U8>& alloc, const CString& cacheDir);
+
 	~CountersManager();
 
 	void increaseCounter(Counter counter, F64 val);
@@ -64,7 +65,7 @@ private:
 };
 
 /// The singleton of the counters manager
-typedef Singleton<CountersManager> CountersManagerSingleton;
+typedef SingletonInit<CountersManager> CountersManagerSingleton;
 
 // Macros that encapsulate the functionaly
 

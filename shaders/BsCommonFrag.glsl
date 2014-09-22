@@ -64,6 +64,7 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 
 	vec4 color = texture(tex, gl_PointCoord);
 	color.a *= alpha * softalpha;
+
 	writeGBuffer(color);
 }
 #endif

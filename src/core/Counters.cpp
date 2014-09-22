@@ -52,7 +52,11 @@ static const Array<CounterInfo, (U)Counter::COUNT> cinfo = {{
 #define MAX_NAME "24"
 
 //==============================================================================
-CountersManager::CountersManager()
+CountersManager::CountersManager(
+	HeapAllocator<U8>& alloc, const CString& cacheDir)
+:	m_perframeValues(alloc),
+	m_perrunValues(alloc),
+	m_counterTimes(alloc)
 {
 	m_perframeValues.resize((U)Counter::COUNT, 0);
 	m_perrunValues.resize((U)Counter::COUNT, 0);
@@ -60,7 +64,7 @@ CountersManager::CountersManager()
 
 	// Open and write the headers to the files
 	m_perframeFile.open(
-		(AppSingleton::get().getSettingsPath() + "/frame_counters.csv").c_str(), 
+		(String(cacheDir, alloc) + "/frame_counters.csv").toCString(),
 		File::OpenFlag::WRITE);
 
 	m_perframeFile.writeText("FRAME");
@@ -75,7 +79,7 @@ CountersManager::CountersManager()
 
 	// Open and write the headers to the other file
 	m_perrunFile.open(
-		(AppSingleton::get().getSettingsPath() + "/run_counters.csv").c_str(), 
+		(String(cacheDir, alloc) + "/run_counters.csv").toCString(),
 		File::OpenFlag::WRITE);
 
 	U i = 0;
