@@ -77,7 +77,7 @@ public:
 	}
 
 private:
-	/// Thread loop
+	/// Thread callaback
 	static I threadCallback(Thread::Info& info)
 	{
 		ThreadpoolThread& self = 

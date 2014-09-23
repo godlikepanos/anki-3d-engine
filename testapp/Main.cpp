@@ -308,7 +308,7 @@ void execStdinScpripts()
 I32 mainLoopExtra(App& app, void*)
 {
 	F32 dist = 0.1;
-	F32 ang = toRad(1.5);
+	F32 ang = toRad(2.5);
 	F32 scale = 0.01;
 	F32 mouseSensivity = 9.0;
 
@@ -481,13 +481,13 @@ void initSubsystems(int argc, char* argv[])
 	config.set("is.sm.resolution", 1024);
 	config.set("pps.enabled", true);
 	config.set("pps.hdr.enabled", true);
-	config.set("pps.hdr.renderingQuality", 0.6);
+	config.set("pps.hdr.renderingQuality", 0.5);
 	config.set("pps.hdr.blurringDist", 1.0);
 	config.set("pps.hdr.blurringIterationsCount", 2);
-	config.set("pps.hdr.exposure", 8.0);
+	config.set("pps.hdr.exposure", 10.0);
 	config.set("pps.hdr.samples", 17);
 	config.set("pps.sslr.enabled", true);
-	config.set("pps.sslr.renderingQuality", 0.35);
+	config.set("pps.sslr.renderingQuality", 0.5);
 	config.set("pps.sslr.blurringIterationsCount", 1);
 	config.set("pps.ssao.blurringIterationsCount", 2);
 	config.set("pps.ssao.enabled", true);

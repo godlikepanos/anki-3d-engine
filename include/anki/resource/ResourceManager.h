@@ -18,6 +18,7 @@ namespace anki {
 class ConfigSet;
 class GlDevice;
 class ResourceManager;
+class AsyncLoader;
 
 // NOTE: Add resources in 3 places
 #define ANKI_RESOURCE(rsrc_, name_) \
@@ -220,6 +221,11 @@ public:
 	{
 		TypeResourceManager<T, ResourceManager>::_unregisterResource(ptr);
 	}
+
+	AsyncLoader& _getAsyncLoader() 
+	{
+		return *m_asyncLoader;
+	}
 	/// @}
 
 private:
@@ -231,6 +237,7 @@ private:
 	U32 m_maxTextureSize;
 	U32 m_textureAnisotropy;
 	ResourceString m_shadersPrependedSource;
+	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 };
 
 #undef ANKI_RESOURCE

@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/ResourceManager.h"
+#include "anki/resource/AsyncLoader.h"
 #include "anki/resource/Animation.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Mesh.h"
@@ -68,11 +69,16 @@ ResourceManager::ResourceManager(Initializer& init)
 	ANKI_RESOURCE(DummyRsrc)
 
 #undef ANKI_RESOURCE
+
+	// Init the thread
+	m_asyncLoader = m_alloc.newInstance<AsyncLoader>(m_alloc);
 }
 
 //==============================================================================
 ResourceManager::~ResourceManager()
 {
+	m_alloc.deleteInstance(m_asyncLoader);
+
 	ANKI_ASSERT(m_tmpAlloc.getMemoryPool().getAllocationsCount() == 0
 		&& "Forgot to deallocate");
 }
