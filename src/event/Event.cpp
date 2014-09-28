@@ -13,10 +13,10 @@ namespace anki {
 //==============================================================================
 Event::Event(EventManager* manager, F32 startTime_, F32 duration_, 
 	SceneNode* node, U8 flags)
-	:	SceneObject(EVENT_TYPE, node, &manager->getSceneGraph()),
-		Bitset<U8>(flags), 
-		startTime(startTime_),
-		duration(duration_)
+:	SceneObject(Type::EVENT, node, &manager->getSceneGraph()),
+	Bitset<U8>(flags), 
+	startTime(startTime_),
+	duration(duration_)
 {}
 
 //==============================================================================

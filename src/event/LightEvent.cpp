@@ -11,19 +11,19 @@ namespace anki {
 //==============================================================================
 LightEvent::LightEvent(EventManager* manager, F32 startTime, F32 duration,
 	Light* light, const LightEventData& data)
-	: Event(manager, startTime, duration, light, EF_NONE)
+:	Event(manager, startTime, duration, light, EF_NONE)
 {
 	*static_cast<LightEventData*>(this) = data;
 
 	switch(light->getLightType())
 	{
-	case Light::LT_POINT:
+	case Light::Type::POINT:
 		{
 			PointLight* plight = static_cast<PointLight*>(light);
 			originalRadius = plight->getRadius();
 		}
 		break;
-	case Light::LT_SPOT:
+	case Light::Type::SPOT:
 		ANKI_ASSERT("TODO");
 		break;
 	default:
@@ -43,14 +43,14 @@ void LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 
 	switch(light->getLightType())
 	{
-	case Light::LT_POINT:
+	case Light::Type::POINT:
 		{
 			PointLight* plight = static_cast<PointLight*>(light);
 			plight->setRadius(
 				factor * radiusMultiplier + originalRadius);
 		}
 		break;
-	case Light::LT_SPOT:
+	case Light::Type::SPOT:
 		ANKI_ASSERT("TODO");
 		break;
 	default:

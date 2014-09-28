@@ -314,14 +314,11 @@ const Material& ParticleEmitter::getMaterial()
 }
 
 //==============================================================================
-void ParticleEmitter::componentUpdated(SceneComponent& comp, 
-	SceneComponent::UpdateType)
+void ParticleEmitter::onMoveComponentUpdate(
+	SceneNode& node, F32 prevTime, F32 crntTime)
 {
-	if(comp.getType() == MoveComponent::getClassType())
-	{
-		m_identityRotation =
-			getWorldTransform().getRotation() == Mat3x4::getIdentity();
-	}
+	m_identityRotation =
+		getWorldTransform().getRotation() == Mat3x4::getIdentity();
 }
 
 //==============================================================================
@@ -372,14 +369,8 @@ void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
 }
 
 //==============================================================================
-void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime, 
-	SceneNode::UpdateType uptype)
+void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
-	if(uptype == SceneNode::SYNC_UPDATE)
-	{
-		return;
-	}
-
 	// - Deactivate the dead particles
 	// - Calc the AABB
 	// - Calc the instancing stuff
@@ -506,16 +497,20 @@ void ParticleEmitter::doInstancingCalcs()
 	// Gather the move components of the instances
 	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
 	Timestamp instancesTimestamp = 0;
-	SceneObject::visitThisAndChildren<SceneNode>([&](SceneNode& sn)
+	SceneObject::visitChildren([&](SceneObject& obj)
 	{	
-		if(sn.tryGetComponent<InstanceComponent>())
+		if(obj.getType() == SceneObject::Type::SCENE_NODE)
 		{
-			MoveComponent& move = sn.getComponent<MoveComponent>();
+			SceneNode& sn = obj.downCast<SceneNode>();
+			if(sn.tryGetComponent<InstanceComponent>())
+			{
+				MoveComponent& move = sn.getComponent<MoveComponent>();
 
-			instanceMoves.push_back(&move);
+				instanceMoves.push_back(&move);
 
-			instancesTimestamp = 
-				std::max(instancesTimestamp, move.getTimestamp());
+				instancesTimestamp = 
+					std::max(instancesTimestamp, move.getTimestamp());
+			}
 		}
 	});
 
@@ -579,7 +574,7 @@ void ParticleEmitter::doInstancingCalcs()
 		
 				Obb aobb = m_obb;
 				aobb.setCenter(Vec4(0.0));
-				msp->obb = aobb.getTransformed(m_transforms[count - 1]);
+				msp->m_obb = aobb.getTransformed(m_transforms[count - 1]);
 
 				msp->markForUpdate();
 			}
@@ -594,14 +589,7 @@ void ParticleEmitter::doInstancingCalcs()
 //==============================================================================
 Bool ParticleEmitter::getHasWorldTransforms()
 {
-	if(m_transforms.size() == 0)
-	{
-		return false;
-	}
-	else
-	{
-		return true;
-	}
+	return true;
 }
 
 //==============================================================================

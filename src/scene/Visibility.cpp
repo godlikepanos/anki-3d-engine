@@ -68,8 +68,8 @@ public:
 			// Test all spatial components of that node
 			struct SpatialTemp
 			{
-				SpatialComponent* sp;
-				U8 idx;
+				SpatialComponent* m_sp;
+				U8 m_idx;
 			};
 			Array<SpatialTemp, ANKI_GL_MAX_SUB_DRAWCALLS> sps;
 
@@ -82,11 +82,11 @@ public:
 				{
 					// Inside
 					ANKI_ASSERT(spIdx < MAX_U8);
-					sps[count++] = SpatialTemp{&sp, (U8)spIdx};
+					sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx)};
 
 					sp.enableBits(isLight 
-						? SpatialComponent::SF_VISIBLE_LIGHT 
-						: SpatialComponent::SF_VISIBLE_CAMERA);
+						? SpatialComponent::Flag::VISIBLE_LIGHT 
+						: SpatialComponent::Flag::VISIBLE_CAMERA);
 				}
 
 				++spIdx;
@@ -100,10 +100,10 @@ public:
 			// Sort spatials
 			Vec4 origin = testedFr.getFrustumOrigin();
 			std::sort(sps.begin(), sps.begin() + count, 
-				[&](const SpatialTemp& a, const SpatialTemp& b) -> Bool
+				[origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool
 			{
-				Vec4 spa = a.sp->getSpatialOrigin();
-				Vec4 spb = b.sp->getSpatialOrigin();
+				Vec4 spa = a.m_sp->getSpatialOrigin();
+				Vec4 spb = b.m_sp->getSpatialOrigin();
 
 				F32 dist0 = origin.getDistanceSquared(spa);
 				F32 dist1 = origin.getDistanceSquared(spb);
@@ -117,7 +117,7 @@ public:
 			visibleNode.m_spatialIndices = frameAlloc.newArray<U8>(count);
 			for(U i = 0; i < count; i++)
 			{
-				visibleNode.m_spatialIndices[i] = sps[i].idx;
+				visibleNode.m_spatialIndices[i] = sps[i].m_idx;
 			}
 
 			// Do something with the result

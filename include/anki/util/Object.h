@@ -43,22 +43,22 @@ template<typename T, typename Alloc = HeapAllocator<T>,
 class Object: public NonCopyable
 {
 public:
-	typedef T Value;
-	typedef Vector<Value*, Alloc> Container;
-	typedef TCallbackCollection CallbackCollection;
+	using Value = T;
+	using Container = Vector<Value*, Alloc>;
+	using CallbackCollection = TCallbackCollection;
 
 	/// Calls addChild if parent is not nullptr
 	///
-	/// @param parent_ The parent. Can be nullptr
+	/// @param parent The parent. Can be nullptr
 	/// @param alloc The allocator to use on internal allocations
 	/// @param callbacks A set of callbacks
 	Object(
 		Value* parent, 
 		const Alloc& alloc = Alloc(),
 		const CallbackCollection& callbacks = CallbackCollection())
-		:	m_parent(nullptr), // Set to nullptr or prepare for assertion
-			m_children(alloc), 
-			m_callbacks(callbacks)
+	:	m_parent(nullptr), // Set to nullptr or prepare for an assertion
+		m_children(alloc), 
+		m_callbacks(callbacks)
 	{
 		if(parent != nullptr)
 		{
@@ -85,8 +85,6 @@ public:
 		}
 	}
 
-	/// @name Accessors
-	/// @{
 	const Value* getParent() const
 	{
 		return m_parent;
@@ -116,7 +114,6 @@ public:
 	{
 		return m_children.get_allocator();
 	}
-	/// @}
 
 	/// Add a new child
 	void addChild(Value* child)
@@ -182,6 +179,24 @@ public:
 		}
 
 		root->visitThisAndChildren(vis);
+	}
+
+	/// Visit the children and limit the depth. Use it with lambda.
+	template<typename VisitorFunc>
+	void visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)
+	{
+		ANKI_ASSERT(maxDepth >= 0);
+		--maxDepth;
+
+		for(Value* c : m_children)
+		{
+			vis(*c);
+
+			if(maxDepth >= 0)
+			{
+				c->visitChildrenMaxDepth(maxDepth, vis);
+			}
+		}
 	}
 
 private:

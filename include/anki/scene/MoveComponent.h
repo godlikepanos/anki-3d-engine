@@ -9,78 +9,82 @@
 #include "anki/scene/Common.h"
 #include "anki/scene/SceneComponent.h"
 #include "anki/util/Bitset.h"
+#include "anki/util/Enum.h"
 #include "anki/Math.h"
 
 namespace anki {
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
 
+enum class MoveComponentFlag: U8
+{
+	NONE = 0,
+
+	/// Get the parent's world transform
+	IGNORE_LOCAL_TRANSFORM = 1 << 1,
+
+	/// Ignore parent's transform
+	IGNORE_PARENT_TRANSFORM = 1 << 2,
+
+	/// If dirty then is marked for update
+	MARKED_FOR_UPDATE = 1 << 3,
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MoveComponentFlag, inline)
+
 /// Interface for movable scene nodes
-class MoveComponent: 
-	public SceneComponent,
-	public SceneHierarchicalObject<MoveComponent>, 
-	public Bitset<U8>
+class MoveComponent: public SceneComponent, public Bitset<MoveComponentFlag>
 {
 public:
-	typedef SceneHierarchicalObject<MoveComponent> Base;
-
-	enum MoveComponentFlag
-	{
-		MF_NONE = 0,
-
-		/// Get the parent's world transform
-		MF_IGNORE_LOCAL_TRANSFORM = 1 << 1,
-
-		/// If dirty then is marked for update
-		MF_MARKED_FOR_UPDATE = 1 << 3,
-	};
-
-	/// @name Constructors & destructor
-	/// @{
+	using Base = SceneHierarchicalObject<MoveComponent>;
+	using Flag = MoveComponentFlag;
 
 	/// The one and only constructor
 	/// @param node The scene node to steal it's allocators
 	/// @param flags The flags
-	MoveComponent(SceneNode* node, U32 flags = MF_NONE);
+	MoveComponent(SceneNode* node, Flag flags = Flag::NONE);
 
 	~MoveComponent();
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	const Transform& getLocalTransform() const
 	{
 		return m_ltrf;
 	}
+
 	void setLocalTransform(const Transform& x)
 	{
 		m_ltrf = x;
 		markForUpdate();
 	}
+
 	void setLocalOrigin(const Vec4& x)
 	{
 		m_ltrf.setOrigin(x);
 		markForUpdate();
 	}
+
 	const Vec4& getLocalOrigin() const
 	{
 		return m_ltrf.getOrigin();
 	}
+
 	void setLocalRotation(const Mat3x4& x)
 	{
 		m_ltrf.setRotation(x);
 		markForUpdate();
 	}
+
 	const Mat3x4& getLocalRotation() const
 	{
 		return m_ltrf.getRotation();
 	}
+
 	void setLocalScale(F32 x)
 	{
 		m_ltrf.setScale(x);
 		markForUpdate();
 	}
+
 	F32 getLocalScale() const
 	{
 		return m_ltrf.getScale();
@@ -95,7 +99,11 @@ public:
 	{
 		return m_prevWTrf;
 	}
-	/// @}
+
+	/// Called when there is an update in the world transformation.
+	virtual void onMoveComponentUpdate(
+		SceneNode& node, F32 prevTime, F32 crntTime)
+	{}
 
 	/// @name SceneComponent overrides
 	/// @{
@@ -105,7 +113,12 @@ public:
 	/// @note Don't update if child because we start from roots and go to
 	///       children and we don't want a child to be updated before the
 	///       parent
-	Bool update(SceneNode&, F32, F32, UpdateType uptype) override;
+	Bool update(SceneNode&, F32, F32) override;
+
+	void onUpdate(SceneNode& node, F32 prevTime, F32 crntTime) final
+	{
+		onMoveComponentUpdate(node, prevTime, crntTime);
+	}
 	/// @}
 
 	/// @name Mess with the local transform
@@ -152,7 +165,7 @@ public:
 
 	static constexpr Type getClassType()
 	{
-		return MOVE_COMPONENT;
+		return Type::MOVE;
 	}
 
 private:
@@ -170,12 +183,12 @@ private:
 
 	void markForUpdate()
 	{
-		enableBits(MF_MARKED_FOR_UPDATE);
+		enableBits(Flag::MARKED_FOR_UPDATE);
 	}
 
 	/// Called every frame. It updates the @a m_wtrf if @a shouldUpdateWTrf
 	/// is true. Then it moves to the children.
-	void updateWorldTransform();
+	Bool updateWorldTransform(SceneNode& node);
 };
 /// @}
 

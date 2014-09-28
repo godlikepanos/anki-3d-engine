@@ -9,32 +9,32 @@
 namespace anki {
 
 //==============================================================================
-SceneObject::SceneObject(Type type, SceneObject* parent, SceneGraph* scene_)
-	:	Base(parent, scene_->getAllocator()),
-		scene(scene_),
-		flags((U8)type)
+SceneObject::SceneObject(Type type, SceneObject* parent, SceneGraph* scene)
+:	Base(parent, scene->getAllocator()),
+	m_scene(scene),
+	m_bits(static_cast<U8>(type))
 {
-	ANKI_ASSERT(scene);
+	ANKI_ASSERT(m_scene);
 }
 
 //==============================================================================
 SceneObject::~SceneObject()
 {
-	scene->decreaseObjectsMarkedForDeletion();
+	m_scene->decreaseObjectsMarkedForDeletion();
 }
 
 //==============================================================================
 SceneAllocator<U8> SceneObject::getSceneAllocator() const
 {
-	ANKI_ASSERT(scene);
-	return scene->getAllocator();
+	ANKI_ASSERT(m_scene);
+	return m_scene->getAllocator();
 }
 
 //==============================================================================
 SceneAllocator<U8> SceneObject::getSceneFrameAllocator() const
 {
-	ANKI_ASSERT(scene);
-	return scene->getFrameAllocator();
+	ANKI_ASSERT(m_scene);
+	return m_scene->getFrameAllocator();
 }
 
 //==============================================================================
@@ -44,8 +44,8 @@ void SceneObject::markForDeletion()
 	// want to increase the counter again
 	if(!isMarkedForDeletion())
 	{
-		flags |= MARKED_FOR_DELETION;
-		scene->increaseObjectsMarkedForDeletion();
+		m_bits |= enumToType(Flag::MARKED_FOR_DELETION);
+		m_scene->increaseObjectsMarkedForDeletion();
 	}
 
 	visitChildren([](SceneObject& obj)

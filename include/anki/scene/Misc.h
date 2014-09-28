@@ -10,28 +10,34 @@
 
 namespace anki {
 
+/// @addtogroup scene
+/// @{
+
 /// A class that holds spatial information and implements the SpatialComponent
 /// virtuals. You just need to update the OBB manually
-struct ObbSpatialComponent: public SpatialComponent
+class ObbSpatialComponent: public SpatialComponent
 {
-	Obb obb;
+public:
+	Obb m_obb;
 
 	ObbSpatialComponent(SceneNode* node)
-		: SpatialComponent(node)
+	:	SpatialComponent(node)
 	{}
 
 	/// Implement SpatialComponent::getSpatialCollisionShape
 	const CollisionShape& getSpatialCollisionShape()
 	{
-		return obb;
+		return m_obb;
 	}
 
 	/// Implement SpatialComponent::getSpatialOrigin
 	Vec4 getSpatialOrigin()
 	{
-		return obb.getCenter();
+		return m_obb.getCenter();
 	}
 };
+
+/// @}
 
 } // end namespace anki
 

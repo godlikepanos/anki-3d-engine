@@ -16,22 +16,24 @@
 
 namespace anki {
 
-/// @addtogroup Scene
+// Forward
+class ObbSpatialComponent;
+
+/// @addtogroup scene
 /// @{
 
 /// A fragment of the ModelNode
 class ModelPatchNode: public SceneNode, 
 	public RenderComponent, public SpatialComponent
 {
+	friend class ModelNode;
+
 public:
-	/// @name Constructors/Destructor
-	/// @{
 	ModelPatchNode(
 		const CString& name, SceneGraph* scene, // Scene
 		const ModelPatchBase* modelPatch); // Self
 
 	~ModelPatchNode();
-	/// @}
 
 	/// @name RenderComponent virtuals
 	/// @{
@@ -54,9 +56,6 @@ public:
 	}
 	/// @}
 
-	/// Override SceneNode::frameUpdate
-	void frameUpdate(F32, F32, SceneNode::UpdateType uptype) override;
-
 	/// Implement SpatialComponent::getSpatialCollisionShape
 	const CollisionShape& getSpatialCollisionShape()
 	{
@@ -72,6 +71,10 @@ public:
 private:
 	Obb m_obb; ///< In world space
 	const ModelPatchBase* m_modelPatch; ///< The resource
+	SceneVector<ObbSpatialComponent*> m_spatials;
+
+	void updateInstanceSpatials(
+		const SceneFrameVector<MoveComponent*>& instanceMoves);
 };
 
 /// The model scene node
@@ -80,28 +83,27 @@ class ModelNode: public SceneNode, public MoveComponent
 	friend class ModelPatchNode;
 
 public:
-	/// @name Constructors/Destructor
-	/// @{
 	ModelNode(
 		const CString& name, SceneGraph* scene, // SceneNode
 		const CString& modelFname); // Self
 
 	virtual ~ModelNode();
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	const Model& getModel() const
 	{
 		return *m_model;
 	}
-	/// @}
 
 	/// Override SceneNode::frameUpdate
-	void frameUpdate(F32, F32, SceneNode::UpdateType uptype) override;
+	void frameUpdate(F32, F32) override;
+
+	/// Override MoveComponent::onMoveComponentUpdate
+	void onMoveComponentUpdate(
+		SceneNode& node, F32 prevTime, F32 crntTime) override;
 
 private:
 	ModelResourcePointer m_model; ///< The resource
+	SceneVector<ModelPatchNode*> m_modelPatches;
 	SceneVector<Transform> m_transforms; ///< Cache the transforms of instances
 	Timestamp m_transformsTimestamp;
 };

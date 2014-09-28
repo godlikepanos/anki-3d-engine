@@ -13,7 +13,7 @@ namespace anki {
 
 //==============================================================================
 LightComponent::LightComponent(Light* node)
-	: SceneComponent(LIGHT_COMPONENT, node)
+:	SceneComponent(Type::LIGHT, node)
 {}
 
 //==============================================================================
@@ -23,17 +23,17 @@ LightComponent::LightComponent(Light* node)
 //==============================================================================
 Light::Light(
 	const CString& name, SceneGraph* scene, // SceneNode
-	LightType t) // Self
+	Type t) // Self
 :	SceneNode(name, scene),
 	LightComponent(this),
 	MoveComponent(this),
 	SpatialComponent(this),
-	type(t)
+	m_type(t)
 {
-	// Init components
-	addComponent(static_cast<LightComponent*>(this));
+	// Register components
 	addComponent(static_cast<MoveComponent*>(this));
 	addComponent(static_cast<SpatialComponent*>(this));
+	addComponent(static_cast<LightComponent*>(this));
 }
 
 //==============================================================================
@@ -49,7 +49,6 @@ void Light::frustumUpdate()
 		fr.setProjectionMatrix(fr.getFrustum().calculateProjectionMatrix());
 		fr.setViewProjectionMatrix(
 			fr.getProjectionMatrix() * fr.getViewMatrix());
-		fr.markForUpdate();
 	});
 
 	// Mark the spatial for update
@@ -58,8 +57,10 @@ void Light::frustumUpdate()
 }
 
 //==============================================================================
-void Light::moveUpdate(MoveComponent& move)
+void Light::onMoveComponentUpdateCommon()
 {
+	MoveComponent& move = *this;
+
 	// Update the frustums
 	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr)
 	{
@@ -82,7 +83,7 @@ void Light::moveUpdate(MoveComponent& move)
 void Light::loadLensFlare(const CString& filename)
 {
 	ANKI_ASSERT(!hasLensFlare());
-	flaresTex.load(filename, &getResourceManager());
+	m_flaresTex.load(filename, &getResourceManager());
 }
 
 //==============================================================================
@@ -91,19 +92,14 @@ void Light::loadLensFlare(const CString& filename)
 
 //==============================================================================
 PointLight::PointLight(const CString& name, SceneGraph* scene)
-:	Light(name, scene, LT_POINT)
+:	Light(name, scene, Light::Type::POINT)
 {}
 
 //==============================================================================
-void PointLight::componentUpdated(SceneComponent& comp, 
-	SceneComponent::UpdateType)
+void PointLight::onMoveComponentUpdate(SceneNode&, F32, F32)
 {
-	if(comp.getType() == MoveComponent::getClassType())
-	{
-		MoveComponent& move = comp.downCast<MoveComponent>();
-		sphereW.setCenter(move.getWorldTransform().getOrigin());
-		moveUpdate(move);
-	}
+	m_sphereW.setCenter(getWorldTransform().getOrigin());
+	onMoveComponentUpdateCommon();
 }
 
 //==============================================================================
@@ -112,7 +108,7 @@ void PointLight::componentUpdated(SceneComponent& comp,
 
 //==============================================================================
 SpotLight::SpotLight(const CString& name, SceneGraph* scene)
-:	Light(name, scene, LT_SPOT),
+:	Light(name, scene, Light::Type::SPOT),
 	FrustumComponent(this, &m_frustum)
 {
 	// Init components
@@ -125,15 +121,10 @@ SpotLight::SpotLight(const CString& name, SceneGraph* scene)
 }
 
 //==============================================================================
-void SpotLight::componentUpdated(SceneComponent& comp,
-	SceneComponent::UpdateType)
+void SpotLight::onMoveComponentUpdate(SceneNode&, F32, F32)
 {
-	if(comp.getType() == MoveComponent::getClassType())
-	{
-		MoveComponent& move = comp.downCast<MoveComponent>();
-		m_frustum.resetTransform(move.getWorldTransform());
-		moveUpdate(move);
-	}
+	m_frustum.resetTransform(getWorldTransform());
+	onMoveComponentUpdateCommon();
 }
 
 //==============================================================================

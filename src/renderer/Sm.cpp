@@ -178,20 +178,20 @@ Sm::Shadowmap* Sm::doLight(Light& light, GlCommandBufferHandle& cmdBuff)
 	for(auto& it : vi.m_renderables)
 	{
 		SceneNode* node = it.m_node;
-		MoveComponent* bmov = node->tryGetComponent<MoveComponent>();
-		FrustumComponent* bfr = node->tryGetComponent<FrustumComponent>();
-		SpatialComponent* sp = node->tryGetComponent<SpatialComponent>();
 
+		FrustumComponent* bfr = node->tryGetComponent<FrustumComponent>();
 		if(bfr)
 		{
 			lastUpdate = std::max(lastUpdate, bfr->getTimestamp());
 		}
 
+		MoveComponent* bmov = node->tryGetComponent<MoveComponent>();
 		if(bmov)
 		{
 			lastUpdate = std::max(lastUpdate, bmov->getTimestamp());
 		}
 
+		SpatialComponent* sp = node->tryGetComponent<SpatialComponent>();
 		if(sp)
 		{
 			lastUpdate = std::max(lastUpdate, sp->getTimestamp());

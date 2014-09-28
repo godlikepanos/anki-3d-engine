@@ -471,7 +471,7 @@ void SceneDebugDrawer::draw(FrustumComponent& fr) const
 //==============================================================================
 void SceneDebugDrawer::draw(SpatialComponent& x) const
 {
-	if(!x.bitsEnabled(SpatialComponent::SF_VISIBLE_CAMERA))
+	if(!x.bitsEnabled(SpatialComponent::Flag::VISIBLE_CAMERA))
 	{
 		return;
 	}

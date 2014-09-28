@@ -19,6 +19,13 @@ struct EnumUnderlyingType
 	using Type = __underlying_type(TEnum);
 };
 
+/// Convert an enum to it's integer type.
+template<typename TEnum>
+inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
+{
+	return static_cast<typename EnumUnderlyingType<TEnum>::Type>(e);
+}
+
 #define _ANKI_ENUM_OPERATOR(enum_, qualifier_, operator_, selfOperator_) \
 	qualifier_ enum_ operator operator_ (enum_ a, enum_ b) \
 	{ \

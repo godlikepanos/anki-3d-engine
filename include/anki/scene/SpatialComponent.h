@@ -10,51 +10,54 @@
 #include "anki/scene/SceneComponent.h"
 #include "anki/Collision.h"
 #include "anki/util/Bitset.h"
+#include "anki/util/Enum.h"
 
 namespace anki {
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
+
+/// Spatial flags
+enum class SpatialComponentFlag: U8
+{
+	NONE = 0,
+	VISIBLE_CAMERA = 1 << 1,
+	VISIBLE_LIGHT = 1 << 2,
+
+	/// Visible or not. The visibility tester sets it
+	VISIBLE_ANY = VISIBLE_CAMERA | VISIBLE_LIGHT,
+
+	/// This is used for example in lights. If the light does not collide 
+	/// with any surface then it shouldn't be visible and be processed 
+	/// further. This flag is being used to check if we should test agains
+	/// near plane when using the tiler for visibility tests.
+	FULLY_TRANSPARENT = 1 << 3,
+
+	MARKED_FOR_UPDATE = 1 << 4
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SpatialComponentFlag, inline)
 
 /// Spatial component for scene nodes. It indicates scene nodes that need to 
 /// be placed in the a sector and they participate in the visibility tests
-class SpatialComponent: public SceneComponent, public Bitset<U8>
+class SpatialComponent: public SceneComponent, 
+	public Bitset<SpatialComponentFlag>
 {
 public:
-	/// Spatial flags
-	enum SpatialFlag
-	{
-		SF_NONE = 0,
-		SF_VISIBLE_CAMERA = 1 << 1,
-		SF_VISIBLE_LIGHT = 1 << 2,
-
-		/// Visible or not. The visibility tester sets it
-		SF_VISIBLE_ANY = SF_VISIBLE_CAMERA | SF_VISIBLE_LIGHT,
-
-		/// This is used for example in lights. If the light does not collide 
-		/// with any surface then it shouldn't be visible and be processed 
-		/// further. This flag is being used to check if we should test agains
-		/// near plane when using the tiler for visibility tests.
-		SF_FULLY_TRANSPARENT = 1 << 3,
-
-		SF_MARKED_FOR_UPDATE = 1 << 4
-	};
+	using Flag = SpatialComponentFlag;
 
 	/// Pass the collision shape here so we can avoid the virtuals
 	/// @param node The scene node. Used only to steal it's allocators
 	/// @param flags A mask of SpatialFlag
-	SpatialComponent(SceneNode* node, U32 flags = SF_NONE);
+	SpatialComponent(SceneNode* node, Flag flags = Flag::NONE);
 
 	// Remove from current OctreeNode
 	~SpatialComponent();
 
-	/// @name Accessors
-	/// @{
 	virtual const CollisionShape& getSpatialCollisionShape() = 0;
 
 	const Aabb& getAabb() const
 	{
-		return aabb;
+		return m_aabb;
 	}
 
 	/// Get optimal collision shape for visibility tests
@@ -67,25 +70,35 @@ public:
 		}
 		else
 		{
-			return aabb;
+			return m_aabb;
 		}
 	}
 
 	/// Used for sorting spatials. In most object the origin is the center of
 	/// mess but for cameras the origin is the eye point
 	virtual Vec4 getSpatialOrigin() = 0;
-	/// @}
 
 	/// The derived class has to manually call this method when the collision 
 	/// shape got updated
 	void markForUpdate()
 	{
-		enableBits(SF_MARKED_FOR_UPDATE);
+		enableBits(Flag::MARKED_FOR_UPDATE);
 	}
+
+	/// Called when the component gets updated. It should be overriden, by 
+	/// default it does nothing.
+	virtual void onSpatialComponentUpdate(
+		SceneNode& node, F32 prevTime, F32 crntTime)
+	{}
 
 	/// @name SceneComponent overrides
 	/// @{
-	Bool update(SceneNode&, F32, F32, UpdateType) override;
+	Bool update(SceneNode&, F32, F32) override;
+
+	void onUpdate(SceneNode& node, F32 prevTime, F32 crntTime) final
+	{
+		onSpatialComponentUpdate(node, prevTime, crntTime);
+	}
 
 	/// Disable some flags
 	void reset() override;
@@ -93,12 +106,13 @@ public:
 
 	static constexpr Type getClassType()
 	{
-		return SPATIAL_COMPONENT;
+		return Type::SPATIAL;
 	}
 
 private:
-	Aabb aabb; ///< A faster shape
+	Aabb m_aabb; ///< A faster shape
 };
+
 /// @}
 
 } // end namespace anki

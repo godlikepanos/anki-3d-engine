@@ -53,7 +53,7 @@ static Array<const char*, (U)BuildinMaterialVariableId::COUNT - 1>
 //==============================================================================
 RenderComponentVariable::RenderComponentVariable(
 	const MaterialVariable* mvar)
-	: m_mvar(mvar)
+:	m_mvar(mvar)
 {
 	ANKI_ASSERT(m_mvar);
 
@@ -89,8 +89,8 @@ RenderComponentVariable::~RenderComponentVariable()
 
 //==============================================================================
 RenderComponent::RenderComponent(SceneNode* node)
-	:	SceneComponent(RENDER_COMPONENT, node), 
-		m_vars(node->getSceneAllocator())
+:	SceneComponent(Type::RENDER, node), 
+	m_vars(node->getSceneAllocator())
 {}
 
 //==============================================================================

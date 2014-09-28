@@ -153,7 +153,7 @@ void App::init(const ConfigSet& config_)
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
 	nwinit.m_fullscreenDesktopRez = config.get("fullscreenDesktopResolution");
-	nwinit.m_debugContext = ANKI_DEBUG;
+	nwinit.m_debugContext = config.get("debugContext");
 	m_window = m_heapAlloc.newInstance<NativeWindow>(nwinit, m_heapAlloc);	
 	m_ctx = m_window->getCurrentContext();
 	m_window->contextMakeCurrent(nullptr);
@@ -288,11 +288,12 @@ void App::mainLoop(UserMainLoopCallback callback, void* userData)
 
 		// Update
 		m_input->handleEvents();
-		m_scene->update(prevUpdateTime, crntTime, *m_renderer);
-		m_renderer->render(*m_scene);
 
 		// User update
 		userRetCode = callback(*this, userData);
+
+		m_scene->update(prevUpdateTime, crntTime, *m_renderer);
+		m_renderer->render(*m_scene);
 
 		m_gl->swapBuffers();
 		ANKI_COUNTERS_RESOLVE_FRAME();

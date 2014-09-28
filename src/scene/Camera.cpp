@@ -23,8 +23,8 @@ Camera::Camera(
 {
 	// Init components
 	addComponent(static_cast<MoveComponent*>(this));
-	addComponent(static_cast<SpatialComponent*>(this));
 	addComponent(static_cast<FrustumComponent*>(this));
+	addComponent(static_cast<SpatialComponent*>(this));
 }
 
 //==============================================================================
@@ -50,11 +50,10 @@ void Camera::lookAtPoint(const Vec3& point)
 //==============================================================================
 void Camera::frustumUpdate()
 {
-	// Frustum
+	// Frustum (it's marked for update)
 	FrustumComponent& fr = *this;
 	fr.setProjectionMatrix(fr.getFrustum().calculateProjectionMatrix());
 	fr.setViewProjectionMatrix(fr.getProjectionMatrix() * fr.getViewMatrix());
-	fr.markForUpdate();
 
 	// Spatial
 	SpatialComponent& sp = *this;
@@ -62,15 +61,14 @@ void Camera::frustumUpdate()
 }
 
 //==============================================================================
-void Camera::moveUpdate(MoveComponent& move)
+void Camera::onMoveComponentUpdate(SceneNode&, F32, F32)
 {
 	// Frustum
 	FrustumComponent& fr = *this;
 
-	fr.setViewMatrix(Mat4(move.getWorldTransform().getInverse()));
+	fr.setViewMatrix(Mat4(getWorldTransform().getInverse()));
 	fr.setViewProjectionMatrix(fr.getProjectionMatrix() * fr.getViewMatrix());
-	fr.markForUpdate();
-	fr.getFrustum().resetTransform(move.getWorldTransform());
+	fr.getFrustum().resetTransform(getWorldTransform());
 
 	// Spatial
 	SpatialComponent& sp = *this;

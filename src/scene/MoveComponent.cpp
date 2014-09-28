@@ -9,11 +9,10 @@
 namespace anki {
 
 //==============================================================================
-MoveComponent::MoveComponent(SceneNode* node, U32 flags)
-	:	SceneComponent(MOVE_COMPONENT, node),
-		Base(nullptr, node->getSceneAllocator()),
-		Bitset<U8>(flags),
-		m_node(node)
+MoveComponent::MoveComponent(SceneNode* node, Flag flags)
+:	SceneComponent(Type::MOVE, node),
+	Bitset<Flag>(flags),
+	m_node(node)
 {
 	markForUpdate();
 }
@@ -23,64 +22,79 @@ MoveComponent::~MoveComponent()
 {}
 
 //==============================================================================
-Bool MoveComponent::update(SceneNode&, F32, F32, UpdateType uptype)
+Bool MoveComponent::update(SceneNode& node, F32, F32)
 {
-	if(uptype == ASYNC_UPDATE && getParent() == nullptr)
-	{
-		// Call this only on roots
-		updateWorldTransform();
-	}
-
-	// move component does it's own updates
-	return false;
+	Bool updated = updateWorldTransform(node);
+	return updated;
 }
 
 //==============================================================================
-void MoveComponent::updateWorldTransform()
+Bool MoveComponent::updateWorldTransform(SceneNode& node)
 {
 	m_prevWTrf = m_wtrf;
-	const Bool dirty = bitsEnabled(MF_MARKED_FOR_UPDATE);
+	const Bool dirty = bitsEnabled(Flag::MARKED_FOR_UPDATE);
 
 	// If dirty then update world transform
 	if(dirty)
 	{
-		const MoveComponent* parent = getParent();
+		const SceneObject* parentObj = node.getParent();
 
-		if(parent)
+		if(parentObj)
 		{
-			if(bitsEnabled(MF_IGNORE_LOCAL_TRANSFORM))
+			const SceneNode* parent = &parentObj->downCast<SceneNode>();
+			const MoveComponent* parentMove = 
+				parent->tryGetComponent<MoveComponent>();
+
+			if(parentMove == nullptr)
 			{
-				m_wtrf = parent->getWorldTransform();
+				// Parent not movable
+				m_wtrf = m_ltrf;
+			}
+			else if(bitsEnabled(Flag::IGNORE_PARENT_TRANSFORM))
+			{
+				m_wtrf = m_ltrf;
+			}
+			else if(bitsEnabled(Flag::IGNORE_LOCAL_TRANSFORM))
+			{
+				m_wtrf = parentMove->getWorldTransform();
 			}
 			else
 			{
-				m_wtrf = 
-					parent->getWorldTransform().combineTransformations(m_ltrf);
+				m_wtrf = parentMove->getWorldTransform().
+					combineTransformations(m_ltrf);
 			}
 		}
 		else
 		{
+			// No parent
+
 			m_wtrf = m_ltrf;
 		}
 
-		m_node->componentUpdated(*this, ASYNC_UPDATE);
-		timestamp = getGlobTimestamp();
-
 		// Now it's a good time to cleanse parent
-		disableBits(MF_MARKED_FOR_UPDATE);
+		disableBits(Flag::MARKED_FOR_UPDATE);
 	}
 
-	// Update the children
-	visitChildren([&](MoveComponent& mov)
+	// If this is dirty then make children dirty as well. Don't walk the 
+	// whole tree because you will re-walk it later
+	if(dirty)
 	{
-		// If parent is dirty then make children dirty as well
-		if(dirty)
+		node.visitChildrenMaxDepth(1, [](SceneObject& obj)
 		{
-			mov.markForUpdate();
-		}
+			if(obj.getType() == SceneNode::getClassType())
+			{
+				SceneNode& childNode = obj.downCast<SceneNode>();
 
-		mov.updateWorldTransform();
-	});
+				childNode.iterateComponentsOfType<MoveComponent>([](
+					MoveComponent& mov)
+				{
+					mov.markForUpdate();
+				});
+			}
+		});
+	}
+
+	return dirty;
 }
 
 } // end namespace anki

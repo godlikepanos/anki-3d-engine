@@ -16,7 +16,7 @@ namespace anki {
 // Forward
 class VisibilityTestResults;
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
 
 /// Frustum component interface for scene nodes. Useful for nodes that are 
@@ -24,25 +24,21 @@ class VisibilityTestResults;
 class FrustumComponent: public SceneComponent
 {
 public:
-	/// @name Constructors
-	/// @{
-
 	/// Pass the frustum here so we can avoid the virtuals
 	FrustumComponent(SceneNode* node, Frustum* frustum)
-		: SceneComponent(FRUSTUM_COMPONENT, node), m_frustum(frustum)
+	:	SceneComponent(Type::FRUSTUM, node), 
+		m_frustum(frustum)
 	{
 		// WARNING: Never touch m_frustum in constructor
 		ANKI_ASSERT(frustum);
 		markForUpdate();
 	}
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	Frustum& getFrustum()
 	{
 		return *m_frustum;
 	}
+
 	const Frustum& getFrustum() const
 	{
 		return *m_frustum;
@@ -52,27 +48,33 @@ public:
 	{
 		return m_pm;
 	}
+
 	void setProjectionMatrix(const Mat4& m)
 	{
 		m_pm = m;
+		markForUpdate();
 	}
 
 	const Mat4& getViewMatrix() const
 	{
 		return m_vm;
 	}
+
 	void setViewMatrix(const Mat4& m)
 	{
 		m_vm = m;
+		markForUpdate();
 	}
 
 	const Mat4& getViewProjectionMatrix() const
 	{
 		return m_vpm;
 	}
+
 	void setViewProjectionMatrix(const Mat4& m)
 	{
 		m_vpm = m;
+		markForUpdate();
 	}
 
 	/// Get the origin for sorting and visibility tests
@@ -92,7 +94,6 @@ public:
 		ANKI_ASSERT(m_visible != nullptr);
 		return *m_visible;
 	}
-	/// @}
 
 	void markForUpdate()
 	{
@@ -111,30 +112,35 @@ public:
 		return getFrustum().insideFrustum(cs);
 	}
 
-	/// Override SceneComponent::update
-	Bool update(SceneNode&, F32, F32, UpdateType updateType) override
+	/// Called when the component gets updated. It should be overriden, by 
+	/// default it does nothing.
+	virtual void onFrustumComponentUpdate(
+		SceneNode& node, F32 prevTime, F32 crntTime)
+	{}
+
+	/// @name SceneComponent overrides
+	/// @{
+	Bool update(SceneNode&, F32, F32) override
 	{
-		if(updateType == ASYNC_UPDATE)
-		{
-			Bool out = m_markedForUpdate;
-			m_markedForUpdate = false;
-			return out;
-		}
-		else
-		{
-			return false;
-		}
+		Bool out = m_markedForUpdate;
+		m_markedForUpdate = false;
+		return out;
 	}
 
-	/// Override SceneComponent::reset
+	void onUpdate(SceneNode& node, F32 prevTime, F32 crntTime) final
+	{
+		onFrustumComponentUpdate(node, prevTime, crntTime);
+	}
+
 	void reset() override
 	{
 		m_visible = nullptr;
 	}
+	/// @}
 
 	static constexpr Type getClassType()
 	{
-		return FRUSTUM_COMPONENT;
+		return Type::FRUSTUM;
 	}
 
 private:

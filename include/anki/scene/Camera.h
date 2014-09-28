@@ -29,17 +29,12 @@ public:
 		COUNT
 	};
 
-	/// @name Constructors/Destructor
-	/// @{
 	Camera(
 		const CString& name, SceneGraph* scene, // SceneNode
 		Type type, Frustum* frustum); // Self
 
 	virtual ~Camera();
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	Type getCameraType() const
 	{
 		return m_type;
@@ -56,18 +51,11 @@ public:
 	{
 		return getFrustum().getFar();
 	}
-	/// @}
 
-	/// @name SceneNode virtuals
+	/// @name MoveComponent virtuals
 	/// @{
-	void componentUpdated(SceneComponent& comp, 
-		SceneComponent::UpdateType) override
-	{
-		if(comp.getType() == MoveComponent::getClassType())
-		{
-			moveUpdate(comp.downCast<MoveComponent>());
-		}
-	}
+	void onMoveComponentUpdate(
+		SceneNode& node, F32 prevTime, F32 crntTime) override;
 	/// @}
 
 	/// @name SpatialComponent virtuals
@@ -83,9 +71,6 @@ public:
 protected:
 	/// Called when something changes in the frustum
 	void frustumUpdate();
-
-	/// Called when the world transform got updated
-	void moveUpdate(MoveComponent& move);
 
 private:
 	Type m_type;

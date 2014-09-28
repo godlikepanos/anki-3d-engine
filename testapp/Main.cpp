@@ -106,7 +106,9 @@ void init()
 	spot->setDistance(30.0);
 	spot->setShadowEnabled(true);
 
+#endif
 
+#if 1
 	spot = scene.newSceneNode<SpotLight>("spot1");
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
@@ -199,9 +201,8 @@ void init()
 #if 1
 	// horse
 	horse = scene.newSceneNode<ModelNode>("horse", "models/horse/horse.ankimdl");
-	horse->setLocalTransform(Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(),
-		0.7));
-
+	horse->setLocalTransform(
+		Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(), 0.7));
 
 	//horse = scene.newSceneNode<ModelNode>("crate", "models/crate0/crate0.ankimdl");
 	//horse->setLocalTransform(Transform(Vec3(2, 10.0, 0), Mat3::getIdentity(),
@@ -399,7 +400,10 @@ I32 mainLoopExtra(App& app, void*)
 	if(in.getKey(KeyCode::LEFT)) mover->rotateLocalY(ang);
 	if(in.getKey(KeyCode::RIGHT)) mover->rotateLocalY(-ang);
 
-	if(in.getKey(KeyCode::A)) mover->moveLocalX(-dist);
+	if(in.getKey(KeyCode::A))
+	{
+		mover->moveLocalX(-dist);
+	}
 	if(in.getKey(KeyCode::D)) mover->moveLocalX(dist);
 	if(in.getKey(KeyCode::Z)) mover->moveLocalY(dist);
 	if(in.getKey(KeyCode::SPACE)) mover->moveLocalY(-dist);
@@ -506,7 +510,8 @@ void initSubsystems(int argc, char* argv[])
 	config.set("tilesXCount", 16);
 	config.set("tilesYCount", 16);
 
-	config.set("fullscreenDesktopResolution", true);
+	config.set("fullscreenDesktopResolution", false);
+	config.set("debugContext", false);
 
 	app = new App(config, allocAligned, nullptr);
 

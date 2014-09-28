@@ -9,6 +9,7 @@
 #include "anki/scene/Common.h"
 #include "anki/util/Object.h"
 #include "anki/util/Functions.h"
+#include "anki/util/Enum.h"
 
 namespace anki {
 
@@ -39,14 +40,16 @@ class SceneObject:
 	SceneObjectCallbackCollection>
 {
 public:
-	enum Type
+	enum class Type: U8
 	{
-		SCENE_NODE_TYPE = 0,
-		EVENT_TYPE = 1 << 0
+		SCENE_NODE = 1 << 0,
+		EVENT = 1 << 1,
+		_TYPE_MASK = SCENE_NODE | EVENT
 	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Type, friend)
 
-	typedef Object<SceneObject, SceneAllocator<SceneObject>,
-		SceneObjectCallbackCollection> Base;
+	using Base = Object<SceneObject, SceneAllocator<SceneObject>,
+		SceneObjectCallbackCollection>;
 
 	SceneObject(Type type, SceneObject* parent, SceneGraph* scene);
 
@@ -54,7 +57,7 @@ public:
 
 	Type getType() const
 	{
-		return (Type)(flags & EVENT_TYPE);
+		return m_bits & Type::_TYPE_MASK;
 	}
 
 	SceneAllocator<U8> getSceneAllocator() const;
@@ -63,75 +66,49 @@ public:
 
 	SceneGraph& getSceneGraph()
 	{
-		return *scene;
+		return *m_scene;
 	}
+
 	const SceneGraph& getSceneGraph() const
 	{
-		return *scene;
+		return *m_scene;
 	}
 
 	Bool isMarkedForDeletion() const
 	{
-		return (flags & MARKED_FOR_DELETION) != 0;
+		return (m_bits & Flag::MARKED_FOR_DELETION) != Flag::NONE;
 	}
+
 	void markForDeletion();
 
-	/// Visit this and the children of a specific SceneObject type
-	template<typename ScObj, typename Func>
-	void visitThisAndChildren(Func func)
-	{
-		Base::visitThisAndChildren([&](SceneObject& so)
-		{
-			const Type type = ScObj::getClassType();
-
-			if(so.getType() == type)
-			{
-				func(so.downCast<ScObj>());
-			}
-		});
-	}
-
-	/// Visit this and the children of a specific SceneObject type
-	template<typename ScObj, typename Func>
-	void visitThisAndChildren(Func func) const
-	{
-		Base::visitThisAndChildren([&](const SceneObject& so)
-		{
-			const Type type = ScObj::getClassType();
-
-			if(so.getType() == type)
-			{
-				func(so.downCast<ScObj>());
-			}
-		});
-	}
-
 	/// Downcast the class
-	template<typename ScObj>
-	ScObj& downCast()
+	template<typename TScObj>
+	TScObj& downCast()
 	{
-		ANKI_ASSERT(ScObj::getClassType() == getType());
-		ScObj* out = staticCastPtr<ScObj*>(this);
+		ANKI_ASSERT(TScObj::getClassType() == getType());
+		TScObj* out = staticCastPtr<TScObj*>(this);
 		return *out;
 	}
 
 	/// Downcast the class
-	template<typename ScObj>
-	const ScObj& downCast() const
+	template<typename TScObj>
+	const TScObj& downCast() const
 	{
-		ANKI_ASSERT(ScObj::getClassType() == getType());
-		const ScObj* out = staticCastPtr<const ScObj*>(this);
+		ANKI_ASSERT(TScObj::getClassType() == getType());
+		const TScObj* out = staticCastPtr<const TScObj*>(this);
 		return *out;
 	}
 
-public:
-	enum
+private:
+	enum class Flag: U8
 	{
-		MARKED_FOR_DELETION = 1 << 1
+		NONE = 0,
+		MARKED_FOR_DELETION = 1 << 2
 	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
 
-	SceneGraph* scene;
-	U8 flags; ///< Contains the type and the marked for deletion
+	SceneGraph* m_scene;
+	U8 m_bits; ///< Contains the type and the marked for deletion
 };
 
 inline void SceneObjectCallbackCollection::onChildRemoved(

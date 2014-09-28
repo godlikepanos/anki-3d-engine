@@ -17,43 +17,32 @@ class SceneComponent
 {
 public:
 	// The type of the components
-	enum Type
+	enum class Type: U16
 	{
-		COMPONENT_NONE,
-		FRUSTUM_COMPONENT,
-		MOVE_COMPONENT,
-		RENDER_COMPONENT,
-		SPATIAL_COMPONENT,
-		LIGHT_COMPONENT,
-		INSTANCE_COMPONENT,
+		NONE,
+		FRUSTUM,
+		MOVE,
+		RENDER,
+		SPATIAL,
+		LIGHT,
+		INSTANCE,
 		RIGID_BODY,
 		LAST_COMPONENT_ID = RIGID_BODY
 	};
 
-	/// The update type
-	enum UpdateType
-	{
-		/// The update happens in the thread safe sync section
-		SYNC_UPDATE, 
-		
-		/// The update happens in a thread. This should not touch data that 
-		/// belong to other nodes
-		ASYNC_UPDATE 
-	};
-
-	/// Construct the scene component. The x is bogus
-	SceneComponent(Type type_, SceneNode* node)
-		: type(type_)
+	/// Construct the scene component.
+	SceneComponent(Type type, SceneNode* node)
+	:	m_type(type)
 	{}
 
 	Type getType() const
 	{
-		return (Type)type;
+		return m_type;
 	}
 
 	Timestamp getTimestamp() const
 	{
-		return timestamp;
+		return m_timestamp;
 	}
 
 	/// Do some reseting before frame starts
@@ -62,20 +51,17 @@ public:
 
 	/// Do some updating
 	/// @return true if an update happened
-	virtual Bool update(SceneNode& node, F32 prevTime, F32 crntTime, 
-		UpdateType updateType)
+	virtual Bool update(SceneNode& node, F32 prevTime, F32 crntTime)
 	{
 		return false;
 	}
 
-	/// Method called when the component got updated
-	virtual void updated(SceneNode& node, F32 prevTime, F32 crntTime, 
-		UpdateType updateType)
+	/// Called if SceneComponent::update returned true.
+	virtual void onUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
 	{}
 
 	/// Called only by the SceneGraph
-	Bool updateReal(SceneNode& node, F32 prevTime, F32 crntTime,
-		UpdateType updateType);
+	Bool updateReal(SceneNode& node, F32 prevTime, F32 crntTime);
 
 	template<typename TComponent>
 	TComponent& downCast()
@@ -86,10 +72,10 @@ public:
 	}
 
 protected:
-	Timestamp timestamp; ///< Indicates when an update happened
+	Timestamp m_timestamp; ///< Indicates when an update happened
 
 private:
-	U8 type;
+	Type m_type;
 };
 
 } // end namespace anki

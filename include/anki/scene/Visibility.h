@@ -48,7 +48,9 @@ public:
 	U8 m_spatialsCount;
 
 	VisibleNode()
-		: m_node(nullptr), m_spatialIndices(nullptr), m_spatialsCount(0)
+	:	m_node(nullptr), 
+		m_spatialIndices(nullptr), 
+		m_spatialsCount(0)
 	{}
 
 	VisibleNode(VisibleNode&& other)
@@ -90,7 +92,8 @@ public:
 			ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_RENDERABLES_COUNT,
 		U32 lightsReservedSize =
 			ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_LIGHTS_COUNT)
-		: m_renderables(frameAlloc), m_lights(frameAlloc)
+	:	m_renderables(frameAlloc), 
+		m_lights(frameAlloc)
 	{
 		m_renderables.reserve(renderablesReservedSize);
 		m_lights.reserve(lightsReservedSize);

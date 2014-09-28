@@ -41,6 +41,8 @@ Bool Barrier::wait()
 // ThreadpoolThread                                                            =
 //==============================================================================
 
+#if !ANKI_DISABLE_THREADPOOL_THREADING
+
 namespace detail {
 
 /// The thread that executes a Threadpool::Task
@@ -113,6 +115,8 @@ private:
 };
 
 } // end namespace detail
+
+#endif
 
 //==============================================================================
 // Threadpool                                                                  =

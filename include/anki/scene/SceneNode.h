@@ -22,13 +22,6 @@ class ResourceManager;
 class SceneNode: public SceneObject
 {
 public:
-	/// Scene node update type
-	enum UpdateType
-	{
-		SYNC_UPDATE,
-		ASYNC_UPDATE
-	};
-
 	/// The one and only constructor
 	/// @param name The unique name of the node. If it's nullptr the the node
 	///             is not searchable
@@ -40,8 +33,7 @@ public:
 	/// Unregister node
 	virtual ~SceneNode();
 
-	/// Return the name. It may be nullptr for nodes that we don't want to 
-	/// track
+	/// Return the name. It may be empty for nodes that we don't want to track
 	CString getName() const
 	{
 		return (!m_name.isEmpty()) ? m_name.toCString() : CString();
@@ -51,21 +43,10 @@ public:
 	/// rendering. By default it does nothing
 	/// @param prevUpdateTime Timestamp of the previous update
 	/// @param crntTime Timestamp of this update
-	/// @param uptype The type of this update
-	virtual void frameUpdate(F32 prevUpdateTime, F32 crntTime, 
-		UpdateType uptype)
+	virtual void frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	{
 		(void)prevUpdateTime;
 		(void)crntTime;
-		(void)uptype;
-	}
-
-	/// Called when a component got updated
-	virtual void componentUpdated(SceneComponent& component, 
-		SceneComponent::UpdateType uptype)
-	{
-		(void)component;
-		(void)uptype;
 	}
 
 	/// Return the last frame the node was updated. It checks all components
@@ -155,7 +136,7 @@ public:
 
 	static constexpr SceneObject::Type getClassType()
 	{
-		return SCENE_NODE_TYPE;
+		return SceneObject::Type::SCENE_NODE;
 	}
 
 protected:

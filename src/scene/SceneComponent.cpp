@@ -9,14 +9,14 @@
 namespace anki {
 
 //==============================================================================
-Bool SceneComponent::updateReal(SceneNode& node, F32 prevTime, F32 crntTime,
-	UpdateType updateType)
+Bool SceneComponent::updateReal(SceneNode& node, F32 prevTime, F32 crntTime)
 {
-	Bool updated = update(node, prevTime, crntTime, updateType);
+	reset();
+	Bool updated = update(node, prevTime, crntTime);
 	if(updated)
 	{
-		node.componentUpdated(*this, updateType);
-		timestamp = getGlobTimestamp();
+		onUpdate(node, prevTime, crntTime);
+		m_timestamp = getGlobTimestamp();
 	}
 	return updated;
 }

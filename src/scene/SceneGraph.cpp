@@ -21,52 +21,49 @@ namespace anki {
 namespace {
 
 //==============================================================================
-struct UpdateSceneNodesJob: Threadpool::Task
+class UpdateSceneNodesTask: public Threadpool::Task
 {
-	SceneGraph* scene = nullptr;
-	F32 prevUpdateTime;
-	F32 crntTime;
-	Barrier* barrier = nullptr;
+public:
+	SceneGraph* m_scene = nullptr;
+	F32 m_prevUpdateTime;
+	F32 m_crntTime;
 
 	void operator()(U32 taskId, PtrSize threadsCount)
 	{
-		ANKI_ASSERT(scene);
 		PtrSize start, end;
 		choseStartEnd(
-			taskId, threadsCount, scene->getSceneNodesCount(), start, end);
+			taskId, threadsCount, m_scene->getSceneNodesCount(), start, end);
 
-		// First update the move components
-		scene->iterateSceneNodes(start, end, [&](SceneNode& node)
+		// Start with the root nodes
+		m_scene->iterateSceneNodes(start, end, [&](SceneNode& node)
 		{
-			MoveComponent* move = node.tryGetComponent<MoveComponent>();
-
-			if(move)
+			if(node.getParent() == nullptr)
 			{
-				move->updateReal(node, prevUpdateTime, crntTime,
-					SceneComponent::ASYNC_UPDATE);
+				updateInternal(node, m_prevUpdateTime, m_crntTime);
+			}
+		});
+	}
+
+	void updateInternal(SceneNode& node, F32 prevTime, F32 crntTime)
+	{
+		// Components update
+		node.iterateComponents([&](SceneComponent& comp)
+		{
+			comp.updateReal(node, prevTime, crntTime);
+		});
+
+		// Update children
+		node.visitChildren([&](SceneObject& obj)
+		{
+			if(obj.getType() == SceneObject::Type::SCENE_NODE)
+			{
+				SceneNode& child = obj.downCast<SceneNode>();
+				updateInternal(child, prevTime, crntTime);
 			}
 		});
 
-		barrier->wait();
-
-		// Update the rest of the components
-		auto moveComponentTypeId = MoveComponent::getClassType();
-		scene->iterateSceneNodes(start, end, [&](SceneNode& node)
-		{
-			// Components update
-			node.iterateComponents([&](SceneComponent& comp)
-			{
-				if(comp.getType() != moveComponentTypeId)
-				{
-					comp.updateReal(node, prevUpdateTime, crntTime, 
-						SceneComponent::ASYNC_UPDATE);
-				}
-			});
-
-			// Frame update
-			node.frameUpdate(prevUpdateTime, crntTime, 
-				SceneNode::ASYNC_UPDATE);
-		});
+		// Frame update
+		node.frameUpdate(prevTime, crntTime);
 	}
 };
 
@@ -214,19 +211,6 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	// Delete nodes
 	deleteNodesMarkedForDeletion();
 
-	// Sync updates
-	iterateSceneNodes([&](SceneNode& node)
-	{
-		node.iterateComponents([&](SceneComponent& comp)
-		{
-			comp.reset();
-			comp.updateReal(node, prevUpdateTime, crntTime, 
-				SceneComponent::SYNC_UPDATE);
-		});
-
-		node.frameUpdate(prevUpdateTime, crntTime, SceneNode::SYNC_UPDATE);
-	});
-
 	Threadpool& threadPool = *m_threadpool;
 	(void)threadPool;
 
@@ -236,17 +220,15 @@ void SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	m_events.updateAllEvents(prevUpdateTime, crntTime);
 
 	// Then the rest
-	Array<UpdateSceneNodesJob, Threadpool::MAX_THREADS> jobs2;
-	Barrier barrier(threadPool.getThreadsCount());
+	Array<UpdateSceneNodesTask, Threadpool::MAX_THREADS> jobs2;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		UpdateSceneNodesJob& job = jobs2[i];
+		UpdateSceneNodesTask& job = jobs2[i];
 
-		job.scene = this;
-		job.prevUpdateTime = prevUpdateTime;
-		job.crntTime = crntTime;
-		job.barrier = &barrier;
+		job.m_scene = this;
+		job.m_prevUpdateTime = prevUpdateTime;
+		job.m_crntTime = crntTime;
 
 		threadPool.assignNewTask(i, &job);
 	}

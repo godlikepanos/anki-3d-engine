@@ -10,7 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
 
 /// Instance component. Dummy used only for idendification
@@ -18,27 +18,27 @@ class InstanceComponent: public SceneComponent
 {
 public:
 	InstanceComponent(SceneNode* node)
-	:	SceneComponent(INSTANCE_COMPONENT, node)
+	:	SceneComponent(Type::INSTANCE, node)
 	{}
 
 	static constexpr Type getClassType()
 	{
-		return INSTANCE_COMPONENT;
+		return Type::INSTANCE;
 	}
 };
 
 /// Instance scene node
-class InstanceNode: public SceneNode, public InstanceComponent, 
-	public MoveComponent
+class InstanceNode: public SceneNode,  public MoveComponent, 
+	public InstanceComponent
 {
 public:
 	InstanceNode(const CString& name, SceneGraph* scene)
 	:	SceneNode(name, scene), 
-		InstanceComponent(this), 
-		MoveComponent(this)
+		MoveComponent(this, MoveComponent::Flag::IGNORE_PARENT_TRANSFORM),
+		InstanceComponent(this)
 	{
-		addComponent(static_cast<InstanceComponent*>(this));
 		addComponent(static_cast<MoveComponent*>(this));
+		addComponent(static_cast<InstanceComponent*>(this));
 	}
 };
 

@@ -16,6 +16,9 @@
 
 namespace anki {
 
+/// @addtogroup scene
+/// @{
+
 /// Light component. It's a dummy component used to identify lights
 class LightComponent: public SceneComponent
 {
@@ -24,7 +27,7 @@ public:
 
 	static constexpr Type getClassType()
 	{
-		return LIGHT_COMPONENT;
+		return Type::LIGHT;
 	}
 };
 
@@ -72,109 +75,115 @@ class Light: public SceneNode, public LightComponent, public MoveComponent,
 	public SpatialComponent
 {
 public:
-	enum LightType
+	enum class Type: U8
 	{
-		LT_POINT,
-		LT_SPOT,
-		LT_NUM
+		POINT,
+		SPOT,
+		COUNT
 	};
 
-	/// @name Constructors
-	/// @{
 	Light(
 		const CString& name, SceneGraph* scene, // SceneNode
-		LightType t); // Self
-	/// @}
+		Type t); // Self
 
 	virtual ~Light();
 
-	/// @name Accessors
-	/// @{
-	LightType getLightType() const
+	Type getLightType() const
 	{
-		return type;
+		return m_type;
 	}
 
 	const Vec4& getDiffuseColor() const
 	{
-		return color;
+		return m_color;
 	}
+
 	Vec4& getDiffuseColor()
 	{
-		return color;
+		return m_color;
 	}
+
 	void setDiffuseColor(const Vec4& x)
 	{
-		color = x;
+		m_color = x;
 	}
 
 	const Vec4& getSpecularColor() const
 	{
-		return specColor;
+		return m_specColor;
 	}
+
 	Vec4& getSpecularColor()
 	{
-		return specColor;
+		return m_specColor;
 	}
+
 	void setSpecularColor(const Vec4& x)
 	{
-		specColor = x;
+		m_specColor = x;
 	}
 
 	Bool getShadowEnabled() const
 	{
-		return shadow;
+		return m_shadow;
 	}
+
 	void setShadowEnabled(const Bool x)
 	{
-		shadow = x;
+		m_shadow = x;
 	}
 
 	U getShadowMapIndex() const
 	{
-		return (U)shadowMapIndex;
+		return static_cast<U>(m_shadowMapIndex);
 	}
+
 	void setShadowMapIndex(const U i)
 	{
 		ANKI_ASSERT(i < 0xFF);
-		shadowMapIndex = (U8)i;
+		m_shadowMapIndex = static_cast<U8>(i);
 	}
 
 	Bool hasLensFlare() const
 	{
-		return flaresTex.isLoaded();
+		return m_flaresTex.isLoaded();
 	}
 
 	const GlTextureHandle& getLensFlareTexture() const
 	{
 		ANKI_ASSERT(hasLensFlare());
-		return flaresTex->getGlTexture();
+		return m_flaresTex->getGlTexture();
 	}
+
 	const Vec2& getLensFlaresSize() const
 	{
-		return flaresSize;
+		return m_flaresSize;
 	}
+
 	void setLensFlaresSize(const Vec2& val)
 	{
-		flaresSize = val;
+		m_flaresSize = val;
 	}
+
 	const Vec2& getLensFlaresStretchMultiplier() const
 	{
-		return flaresStretchMultiplier;
+		return m_flaresStretchMultiplier;
 	}
+
 	void setLensFlaresStretchMultiplier(const Vec2& val)
 	{
-		flaresStretchMultiplier = val;
+		m_flaresStretchMultiplier = val;
 	}
+
 	F32 getLensFlaresAlpha() const
 	{
-		return flaresAlpha;
+		return m_flaresAlpha;
 	}
+
 	void setLensFlaresAlpha(F32 val)
 	{
-		flaresAlpha = val;
+		m_flaresAlpha = val;
 	}
-	/// @}
 
 	void loadLensFlare(const CString& filename);
 
@@ -191,85 +200,75 @@ protected:
 	void frustumUpdate();
 
 	/// Called when moved
-	void moveUpdate(MoveComponent& move);
+	void onMoveComponentUpdateCommon();
 
 private:
-	LightType type;
-	Vec4 color = Vec4(1.0);
-	Vec4 specColor = Vec4(1.0);
+	Type m_type;
+	Vec4 m_color = Vec4(1.0);
+	Vec4 m_specColor = Vec4(1.0);
 
 	/// @name Flare struff
 	/// @{
-	TextureResourcePointer flaresTex;
-	Vec2 flaresSize = Vec2(0.2);
-	Vec2 flaresStretchMultiplier = Vec2(1.0);
-	F32 flaresAlpha = 1.0;
+	TextureResourcePointer m_flaresTex;
+	Vec2 m_flaresSize = Vec2(0.2);
+	Vec2 m_flaresStretchMultiplier = Vec2(1.0);
+	F32 m_flaresAlpha = 1.0;
 	/// @}
 
-	Bool8 shadow = false;
-	U8 shadowMapIndex = 0xFF; ///< Used by the renderer
+	Bool8 m_shadow = false;
+	U8 m_shadowMapIndex = 0xFF; ///< Used by the renderer
 };
 
 /// Point light
 class PointLight: public Light
 {
 public:
-	/// @name Constructors/Destructor
-	/// @{
 	PointLight(const CString& name, SceneGraph* scene);
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	F32 getRadius() const
 	{
-		return sphereW.getRadius();
+		return m_sphereW.getRadius();
 	}
+
 	void setRadius(const F32 x)
 	{
-		sphereW.setRadius(x);
+		m_sphereW.setRadius(x);
 		frustumUpdate();
 	}
 
 	const Sphere& getSphere() const
 	{
-		return sphereW;
+		return m_sphereW;
 	}
-	/// @}
 
-	/// @name SceneNode virtuals
+	/// @name MoveComponent virtuals
 	/// @{
-	void componentUpdated(SceneComponent& comp, 
-		SceneComponent::UpdateType uptype) override;
+	void onMoveComponentUpdate(SceneNode&, F32, F32) override;
 	/// @}
 
 	/// @name SpatialComponent virtuals
 	/// @{
 	const CollisionShape& getSpatialCollisionShape()
 	{
-		return sphereW;
+		return m_sphereW;
 	}
 	/// @}
 
 public:
-	Sphere sphereW = Sphere(Vec4(0.0), 1.0);
+	Sphere m_sphereW = Sphere(Vec4(0.0), 1.0);
 };
 
 /// Spot light
 class SpotLight: public Light, public FrustumComponent
 {
 public:
-	/// @name Constructors/Destructor
-	/// @{
 	SpotLight(const CString& name, SceneGraph* scene);
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	GlTextureHandle& getTexture()
 	{
 		return m_tex->getGlTexture();
 	}
+
 	const GlTextureHandle& getTexture() const
 	{
 		return m_tex->getGlTexture();
@@ -279,6 +278,7 @@ public:
 	{
 		return m_frustum.getFovX();
 	}
+
 	void setOuterAngle(F32 x)
 	{
 		m_frustum.setFovX(x);
@@ -296,6 +296,7 @@ public:
 	{
 		m_cosInnerAngle = cos(ang / 2.0);
 	}
+
 	F32 getInnerAngleCos() const
 	{
 		return m_cosInnerAngle;
@@ -305,6 +306,7 @@ public:
 	{
 		return m_frustum.getFar();
 	}
+
 	void setDistance(F32 f)
 	{
 		m_frustum.setFar(f);
@@ -315,12 +317,10 @@ public:
 	{
 		return m_frustum;
 	}
-	/// @}
 
-	/// @name SceneNode virtuals
+	/// @name MoveComponent virtuals
 	/// @{
-	void componentUpdated(SceneComponent& comp,
-		SceneComponent::UpdateType uptype) override;
+	void onMoveComponentUpdate(SceneNode&, F32, F32) override;
 	/// @}
 
 	/// @name SpatialComponent virtuals
@@ -339,6 +339,8 @@ private:
 	F32 m_cosOuterAngle;
 	F32 m_cosInnerAngle;
 };
+
+/// @}
 
 } // end namespace anki
 

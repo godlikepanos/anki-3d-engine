@@ -41,14 +41,11 @@ class StaticGeometryPatchNode: public SceneNode, public SpatialComponent,
 	public RenderComponent
 {
 public:
-	/// @name Constructors/Destructor
-	/// @{
 	StaticGeometryPatchNode(
 		const CString& name, SceneGraph* scene, // Scene
 		const ModelPatchBase* modelPatch); // Self
 
 	~StaticGeometryPatchNode();
-	/// @}
 
 	/// @name SpatialComponent virtuals
 	/// @{
@@ -65,11 +62,8 @@ public:
 
 	/// @name RenderComponent virtuals
 	/// @{
-
-	/// Implements RenderComponent::buildRendering
 	void buildRendering(RenderingBuildData& data);
 
-	/// Implements  RenderComponent::getMaterial
 	const Material& getMaterial()
 	{
 		return m_modelPatch->getMaterial();

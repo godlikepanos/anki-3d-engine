@@ -59,8 +59,6 @@ public:
 	RenderComponentVariable(const MaterialVariable* mvar);
 	virtual ~RenderComponentVariable();
 
-	/// @name Accessors
-	/// @{
 	BuildinMaterialVariableId getBuildinId() const
 	{
 		return m_buildinId;
@@ -121,7 +119,6 @@ public:
 	{
 		return m_mvar->isInstanced();
 	}
-	/// @}
 
 	/// A custom cleanup method
 	virtual void cleanup(SceneAllocator<U8> alloc) = 0;
@@ -142,7 +139,7 @@ public:
 	typedef T Type;
 
 	RenderComponentVariableTemplate(const MaterialVariable* mvar)
-		: RenderComponentVariable(mvar)
+	:	RenderComponentVariable(mvar)
 	{
 		setupVisitable(this);
 	}
@@ -233,8 +230,6 @@ public:
 
 	~RenderComponent();
 
-	/// @name Accessors
-	/// @{
 	Variables::iterator getVariablesBegin()
 	{
 		return m_vars.begin();
@@ -243,7 +238,6 @@ public:
 	{
 		return m_vars.end();
 	}
-	/// @}
 
 	/// Build up the rendering.
 	/// Given an array of submeshes that are visible append jobs to the GL
@@ -287,7 +281,7 @@ public:
 
 	static constexpr Type getClassType()
 	{
-		return RENDER_COMPONENT;
+		return Type::RENDER;
 	}
 
 protected:

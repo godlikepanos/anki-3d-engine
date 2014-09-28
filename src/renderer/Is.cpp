@@ -115,7 +115,7 @@ public:
 
 			switch(light->getLightType())
 			{
-			case Light::LT_POINT:
+			case Light::Type::POINT:
 				{
 					PointLight& l = 
 						*staticCastPtr<PointLight*>(light);
@@ -126,7 +126,7 @@ public:
 					}
 				}
 				break;
-			case Light::LT_SPOT:
+			case Light::Type::SPOT:
 				{
 					SpotLight& l = *staticCastPtr<SpotLight*>(light);
 					I pos = doLight(l);
@@ -527,10 +527,10 @@ void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 		Light* light = staticCastPtr<Light*>(it.m_node);
 		switch(light->getLightType())
 		{
-		case Light::LT_POINT:
+		case Light::Type::POINT:
 			++visiblePointLightsCount;
 			break;
-		case Light::LT_SPOT:
+		case Light::Type::SPOT:
 			{
 				SpotLight* slight = staticCastPtr<SpotLight*>(light);
 				

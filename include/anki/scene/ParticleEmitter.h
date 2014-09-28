@@ -164,12 +164,13 @@ public:
 
 	/// @name SceneNode virtuals
 	/// @{
+	void frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
+	/// @}
 
-	void frameUpdate(F32 prevUpdateTime, F32 crntTime, 
-		SceneNode::UpdateType uptype) override;
-
-	void componentUpdated(SceneComponent& comp, 
-		SceneComponent::UpdateType) override;
+	/// @name MoveComponent virtuals
+	/// @{
+	void onMoveComponentUpdate(
+		SceneNode& node, F32 prevTime, F32 crntTime) override;
 	/// @}
 
 	/// @name SpatialComponent virtuals
@@ -187,7 +188,6 @@ public:
 
 	/// @name RenderComponent virtuals
 	/// @{
-
 	void buildRendering(RenderingBuildData& data);
 
 	const Material& getMaterial();

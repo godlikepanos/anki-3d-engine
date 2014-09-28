@@ -15,7 +15,8 @@ namespace anki {
 //==============================================================================
 StaticGeometrySpatial::StaticGeometrySpatial(
 	SceneNode* node, const Obb* obb)
-	: SpatialComponent(node), m_obb(obb)
+:	SpatialComponent(node), 
+	m_obb(obb)
 {}
 
 //==============================================================================

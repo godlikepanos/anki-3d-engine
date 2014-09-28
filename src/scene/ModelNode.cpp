@@ -24,7 +24,8 @@ ModelPatchNode::ModelPatchNode(
 :	SceneNode(name, scene),
 	RenderComponent(this),
 	SpatialComponent(this), 
-	m_modelPatch(modelPatch)
+	m_modelPatch(modelPatch),
+	m_spatials(getSceneAllocator())
 {
 	addComponent(static_cast<RenderComponent*>(this));
 	addComponent(static_cast<SpatialComponent*>(this));
@@ -100,109 +101,53 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 }
 
 //==============================================================================
-void ModelPatchNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
+void ModelPatchNode::updateInstanceSpatials(
+	const SceneFrameVector<MoveComponent*>& instanceMoves)
 {
-	if(uptype != SceneNode::ASYNC_UPDATE)
+	Bool fullUpdate = false;
+
+	if(m_spatials.size() < instanceMoves.size())
 	{
-		return;
+		// We need to add spatials
+		
+		fullUpdate = true;
+
+		U diff = instanceMoves.size() - m_spatials.size();
+
+		while(diff-- != 0)
+		{
+			ObbSpatialComponent* newSpatial = getSceneAllocator().
+				newInstance<ObbSpatialComponent>(this);
+
+			addComponent(newSpatial);
+
+			m_spatials.push_back(newSpatial);
+		}
+	}
+	else if(m_spatials.size() > instanceMoves.size())
+	{
+		// Need to remove spatials
+
+		fullUpdate = true;
+
+		// TODO
+		ANKI_ASSERT(0 && "TODO");
 	}
 
-	SceneNode* parent = &getParent()->downCast<SceneNode>();
-	ANKI_ASSERT(parent);
-
-	// Update first OBB
-	const MoveComponent& parentMove = parent->getComponent<MoveComponent>();
-	if(parentMove.getTimestamp() == getGlobTimestamp())
+	U count = instanceMoves.size();
+	while(count-- != 0)
 	{
-		m_obb = m_modelPatch->getBoundingShape().getTransformed(
-			parentMove.getWorldTransform());
+		ObbSpatialComponent& sp = *m_spatials[count];
+		const MoveComponent& inst = *instanceMoves[count];
 
-		SpatialComponent::markForUpdate();
+		if(sp.getTimestamp() < inst.getTimestamp() || fullUpdate)
+		{
+			sp.m_obb = m_modelPatch->getBoundingShape().getTransformed(
+				inst.getWorldTransform());
+
+			sp.markForUpdate();
+		}
 	}
-
-	// Get the move components of the instances of the parent
-	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
-	Timestamp instancesTimestamp = 0;
-	parent->visitThisAndChildren<SceneNode>([&](SceneNode& sn)
-	{		
-		if(sn.tryGetComponent<InstanceComponent>())
-		{
-			MoveComponent& move = sn.getComponent<MoveComponent>();
-
-			instanceMoves.push_back(&move);
-
-			instancesTimestamp = 
-				std::max(instancesTimestamp, move.getTimestamp());
-		}
-	});
-
-	// Instancing?
-	if(instanceMoves.size() != 0)
-	{
-		Bool needsUpdate = false;
-
-		// Get the spatials and their update time
-		SceneFrameVector<ObbSpatialComponent*> 
-			spatials(getSceneFrameAllocator());
-
-		Timestamp spatialsTimestamp = 0;
-		U count = 0;
-
-		iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp)
-		{
-			// Skip the first
-			if(count != 0)	
-			{
-				ObbSpatialComponent* msp = 
-					staticCastPtr<ObbSpatialComponent*>(&sp);
-		
-				spatialsTimestamp = 
-					std::max(spatialsTimestamp, msp->getTimestamp());
-
-				spatials.push_back(msp);
-			}
-			++count;
-		});
-
-		// If we need to add spatials
-		if(spatials.size() < instanceMoves.size())
-		{
-			needsUpdate = true;
-			U diff = instanceMoves.size() - spatials.size();
-
-			while(diff-- != 0)
-			{
-				ObbSpatialComponent* newSpatial = getSceneAllocator().
-					newInstance<ObbSpatialComponent>(this);
-
-				addComponent(newSpatial);
-
-				spatials.push_back(newSpatial);
-			}
-		}
-		// If we need to remove spatials
-		else if(spatials.size() > instanceMoves.size())
-		{
-			needsUpdate = true;
-
-			// TODO
-			ANKI_ASSERT(0 && "TODO");
-		}
-		
-		// Now update all spatials if needed
-		if(needsUpdate || spatialsTimestamp < instancesTimestamp)
-		{
-			for(U i = 0; i < spatials.size(); i++)
-			{
-				ObbSpatialComponent* sp = spatials[i];
-
-				sp->obb = m_modelPatch->getBoundingShape().getTransformed(
-					instanceMoves[i]->getWorldTransform());
-
-				sp->markForUpdate();
-			}
-		}
-	} // end instancing
 }
 
 //==============================================================================
@@ -215,17 +160,21 @@ ModelNode::ModelNode(
 	const CString& modelFname)
 : 	SceneNode(name, scene),
 	MoveComponent(this),
+	m_modelPatches(getSceneAllocator()),
 	m_transforms(getSceneAllocator()),
 	m_transformsTimestamp(0)
 {
 	addComponent(static_cast<MoveComponent*>(this));
 
 	m_model.load(modelFname, &getResourceManager());
+	m_modelPatches.reserve(m_model->getModelPatches().size());
 
 	for(const ModelPatchBase* patch : m_model->getModelPatches())
 	{
 		ModelPatchNode* mpn = 
 			getSceneGraph().newSceneNode<ModelPatchNode>(CString(), patch);
+
+		m_modelPatches.push_back(mpn);
 
 		SceneObject::addChild(mpn);
 	}
@@ -262,41 +211,40 @@ ModelNode::~ModelNode()
 }
 
 //==============================================================================
-void ModelNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
+void ModelNode::frameUpdate(F32, F32)
 {
-	if(uptype != SceneNode::ASYNC_UPDATE)
-	{
-		return;
-	}
-
-	// Get the move components of the instances of the parent
+	// Gather the move components of the instances
 	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
 	Timestamp instancesTimestamp = 0;
-	SceneObject::visitThisAndChildren<SceneNode>([&](SceneNode& sn)
-	{		
-		if(sn.tryGetComponent<InstanceComponent>())
+	SceneObject::visitChildren([&](SceneObject& obj)
+	{
+		if(obj.getType() == SceneNode::getClassType())
 		{
-			MoveComponent& move = sn.getComponent<MoveComponent>();
+			SceneNode& sn = obj.downCast<SceneNode>();
+			if(sn.tryGetComponent<InstanceComponent>())
+			{
+				MoveComponent& move = sn.getComponent<MoveComponent>();
 
-			instanceMoves.push_back(&move);
+				instanceMoves.push_back(&move);
 
-			instancesTimestamp = 
-				std::max(instancesTimestamp, move.getTimestamp());
+				instancesTimestamp = 
+					std::max(instancesTimestamp, move.getTimestamp());
+			}
 		}
 	});
 
-	// If instancing
+	// If having instances
 	if(instanceMoves.size() != 0)
 	{
-		Bool transformsNeedUpdate = false;
+		Bool fullUpdate = false;
 
 		if(instanceMoves.size() != m_transforms.size())
 		{
-			transformsNeedUpdate = true;
+			fullUpdate = true;
 			m_transforms.resize(instanceMoves.size());
 		}
 
-		if(transformsNeedUpdate || m_transformsTimestamp < instancesTimestamp)
+		if(fullUpdate || m_transformsTimestamp < instancesTimestamp)
 		{
 			m_transformsTimestamp = instancesTimestamp;
 
@@ -305,6 +253,25 @@ void ModelNode::frameUpdate(F32, F32, SceneNode::UpdateType uptype)
 				m_transforms[i] = instanceMoves[i]->getWorldTransform();
 			}
 		}
+
+		// Update children
+		for(ModelPatchNode* child : m_modelPatches)
+		{
+			child->updateInstanceSpatials(instanceMoves);
+		}
+	}
+}
+
+//==============================================================================
+void ModelNode::onMoveComponentUpdate(SceneNode&, F32, F32)
+{
+	// Inform the children about the moves
+	for(ModelPatchNode* child : m_modelPatches)
+	{
+		child->m_obb = child->m_modelPatch->getBoundingShape().getTransformed(
+			getWorldTransform());
+
+		child->SpatialComponent::markForUpdate();
 	}
 }
 
