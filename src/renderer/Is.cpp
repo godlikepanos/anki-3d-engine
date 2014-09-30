@@ -493,7 +493,7 @@ void Is::initInternal(const ConfigSet& config)
 	//
 	const GLbitfield bufferBits = GL_DYNAMIC_STORAGE_BIT;
 
-	m_commonBuff = GlBufferHandle(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
+	m_commonBuff = GlBufferHandle(cmdBuff, GL_UNIFORM_BUFFER, 
 		sizeof(shader::CommonUniforms), bufferBits);
 
 	m_lightsBuff = GlBufferHandle(cmdBuff, GL_SHADER_STORAGE_BUFFER, 

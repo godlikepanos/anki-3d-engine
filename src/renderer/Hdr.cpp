@@ -59,7 +59,7 @@ void Hdr::initInternal(const ConfigSet& initializer)
 	GlDevice& gl = getGlDevice();
 	GlCommandBufferHandle jobs(&gl);
 
-	m_commonBuff = GlBufferHandle(jobs, GL_SHADER_STORAGE_BUFFER, 
+	m_commonBuff = GlBufferHandle(jobs, GL_UNIFORM_BUFFER, 
 		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
 
 	updateDefaultBlock(jobs);

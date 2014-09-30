@@ -8,24 +8,24 @@
 layout(vertices = 3) out;
 
 #define IID gl_InvocationID
+#define IN_POS(i_) gl_in[i_].gl_Position
+#define OUT_POS(i_) gl_out[i_].gl_Position
 
 // In
-in vec3 vPosition[];
-in vec2 vTexCoords[];
-in mediump vec3 vNormal[];
+layout(location = 0) in vec2 inTexCoords[];
+layout(location = 1) in mediump vec3 inNormal[];
 #if PASS_COLOR
-in mediump vec4 vTangent[];
+layout(location = 2) in mediump vec4 inTangent[];
 #endif
 #if INSTANCE_ID_FRAGMENT_SHADER
-flat in uint vInstanceId[];
+layout(location = 3) flat in uint inInstanceId[];
 #endif
 
 // Out
-out vec3 tcPosition[];
-out vec2 tcTexCoord[];
-out vec3 tcNormal[];
+layout(location = 0) out vec2 outTexCoord[];
+layout(location = 1) out vec3 outNormal[];
 #if PASS_COLOR
-out vec4 tcTangent[];
+layout(location = 2) out vec4 outTangent[];
 #endif
 
 #if INSTANCE_ID_FRAGMENT_SHADER
@@ -46,9 +46,9 @@ struct PNPatch
 	vec3 pos111;
 };
 
-#define pos030 tcPosition[0]
-#define pos003 tcPosition[1]
-#define pos300 tcPosition[2]
+#define pos030 OUT_POS(0)
+#define pos003 OUT_POS(1)
+#define pos300 OUT_POS(2)
 
 struct PhongPatch
 {
@@ -74,9 +74,9 @@ vec3 projectToPlane(vec3 point, vec3 planePoint, vec3 planeNormal)
 void calcPositions()
 {
 	// The original vertices stay the same
-	pos030 = vPosition[0];
-	pos003 = vPosition[1];
-	pos300 = vPosition[2];
+	pos030 = IN_POS(0);
+	pos003 = IN_POS(1);
+	pos300 = IN_POS(2);
 
 	// edges are names according to the opposing vertex
 	vec3 edgeB300 = pos003 - pos030;
@@ -92,17 +92,17 @@ void calcPositions()
 	pnPatch.pos120 = pos300 + edgeB003 * 2.0 / 3.0;
 
 	pnPatch.pos021 = projectToPlane(
-		pnPatch.pos021, pos030, tcNormal[0]);
+		pnPatch.pos021, pos030, outNormal[0]);
 	pnPatch.pos012 = projectToPlane(
-		pnPatch.pos012, pos003, tcNormal[1]);
+		pnPatch.pos012, pos003, outNormal[1]);
 	pnPatch.pos102 = projectToPlane(
-		pnPatch.pos102, pos003, tcNormal[1]);
+		pnPatch.pos102, pos003, outNormal[1]);
 	pnPatch.pos201 = projectToPlane(
-		pnPatch.pos201, pos300, tcNormal[2]);
+		pnPatch.pos201, pos300, outNormal[2]);
 	pnPatch.pos210 = projectToPlane(
-		pnPatch.pos210, pos300, tcNormal[2]);
+		pnPatch.pos210, pos300, outNormal[2]);
 	pnPatch.pos120 = projectToPlane(
-		pnPatch.pos120, pos030, tcNormal[0]);
+		pnPatch.pos120, pos030, outNormal[0]);
 
 	// Handle the center
 	vec3 center = (pos003 + pos030 + pos300) / 3.0;
@@ -161,7 +161,7 @@ void setSilhouetteTessLevels(in mat3 normalMat, in float maxTessLevel)
 	vec3 nv[3];
 	for(int i = 0; i < 3; i++)
 	{
-		nv[i] = normalMat * vNormal[i];
+		nv[i] = normalMat * inNormal[i];
 	}
 
 	gl_TessLevelOuter[0] = calcEdgeTessLevel(nv[1], nv[2], maxTessLevel);
@@ -194,7 +194,7 @@ bool isFaceVisible(in mat4 mvp)
 	vec2 clip[3];
 	for(int i = 0 ; i < 3 ; i++) 
 	{
-		vec4 v = mvp * vec4(vPosition[i], 1.0);
+		vec4 v = mvp * vec4(IN_POS(i), 1.0);
 		clip[i] = v.xy / abs(v.w);
 	}
 
@@ -204,8 +204,8 @@ bool isFaceVisible(in mat4 mvp)
 
 float calcPhongTerm(int ivId, int i, vec3 q)
 {
-	vec3 qMinusP = q - vPosition[i];
-	return q[ivId] - dot(qMinusP, vNormal[i]) * vNormal[i][ivId];
+	vec3 qMinusP = q - IN_POS(i);
+	return q[ivId] - dot(qMinusP, inNormal[i]) * inNormal[i][ivId];
 }
 
 // This function is part of the point-normal tessellation method
@@ -218,7 +218,7 @@ void tessellatePNPositionNormalTangentTexCoord(
 	float tessLevel = 0.0;
 
 	// Calculate the face normal in view space
-	vec3 faceNorm = calcFaceNormal(vPosition[0], vPosition[1], vPosition[2]);
+	vec3 faceNorm = calcFaceNormal(IN_POS(0), IN_POS(1), IN_POS(2));
 	faceNorm = (normalMat * faceNorm);
 
 	if(faceNorm.z >= 0.0)
@@ -227,10 +227,10 @@ void tessellatePNPositionNormalTangentTexCoord(
 
 		for(int i = 0 ; i < 3 ; i++) 
 		{		
-			tcTexCoord[i] = vTexCoords[i];
-			tcNormal[i] = vNormal[i];
+			outTexCoord[i] = inTexCoords[i];
+			outNormal[i] = inNormal[i];
 #if PASS_COLOR
-			tcTangent[i] = vTangent[i];
+			outTangent[i] = inTangent[i];
 #endif
 		}
 
@@ -266,24 +266,24 @@ void tessellatePhongPositionNormalTangentTexCoord(
 		}
 	}
 
-	tcPosition[IID] = vPosition[IID]; // Do that here to trick the barrier
+	OUT_POS(IID) = IN_POS(IID); // Do that here to trick the barrier
 
 	barrier();
 
 	if(gl_TessLevelOuter[0] > 0.0)
 	{
-		tcTexCoord[IID] = vTexCoords[IID];
-		tcNormal[IID] = vNormal[IID];
+		outTexCoord[IID] = inTexCoords[IID];
+		outNormal[IID] = inNormal[IID];
 #if PASS_COLOR
-		tcTangent[IID] = vTangent[IID];
+		outTangent[IID] = inTangent[IID];
 #endif
 
-		phongPatch.terms[IID][0] = calcPhongTerm(IID, 0, vPosition[1]) 
-			+ calcPhongTerm(IID, 1, vPosition[0]);
-		phongPatch.terms[IID][1] = calcPhongTerm(IID, 1, vPosition[2]) 
-			+ calcPhongTerm(IID, 2, vPosition[1]);
-		phongPatch.terms[IID][2] = calcPhongTerm(IID, 2, vPosition[0]) 
-			+ calcPhongTerm(IID, 0, vPosition[2]);
+		phongPatch.terms[IID][0] = calcPhongTerm(IID, 0, IN_POS(1)) 
+			+ calcPhongTerm(IID, 1, IN_POS(0));
+		phongPatch.terms[IID][1] = calcPhongTerm(IID, 1, IN_POS(2)) 
+			+ calcPhongTerm(IID, 2, IN_POS(1));
+		phongPatch.terms[IID][2] = calcPhongTerm(IID, 2, IN_POS(0)) 
+			+ calcPhongTerm(IID, 0, IN_POS(2));
 	}
 }
 
@@ -300,7 +300,7 @@ void tessellateDispMapPositionNormalTangentTexCoord(
 			setSilhouetteTessLevels(normalMat, maxTessLevel);
 
 #if INSTANCE_ID_FRAGMENT_SHADER
-			commonPatch.instanceId = vInstanceId[0];
+			commonPatch.instanceId = inInstanceId[0];
 #endif
 		}
 		else
@@ -309,10 +309,10 @@ void tessellateDispMapPositionNormalTangentTexCoord(
 		}
 	}
 
-	tcPosition[IID] = vPosition[IID];
-	tcTexCoord[IID] = vTexCoords[IID];
-	tcNormal[IID] = vNormal[IID];
+	OUT_POS(IID) = IN_POS(IID);
+	outTexCoord[IID] = inTexCoords[IID];
+	outNormal[IID] = inNormal[IID];
 #if PASS_COLOR
-	tcTangent[IID] = vTangent[IID];
+	outTangent[IID] = inTangent[IID];
 #endif
 }

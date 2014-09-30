@@ -16,9 +16,11 @@ struct PNPatch
 	vec3 pos111;
 };
 
-#define pos030 tcPosition[0]
-#define pos003 tcPosition[1]
-#define pos300 tcPosition[2]
+#define IN_POS(i_) gl_in[i_].gl_Position
+
+#define pos030 IN_POS(0)
+#define pos003 IN_POS(1)
+#define pos300 IN_POS(2)
 
 struct PhongPatch
 {
@@ -38,18 +40,17 @@ in patch PhongPatch phongPatch;
 in patch CommonPatch commonPatch;
 #endif
 
-in vec3 tcPosition[];
-in vec2 tcTexCoord[];
-in vec3 tcNormal[];
+layout(location = 0) in vec2 inTexCoord[];
+layout(location = 1) in vec3 inNormal[];
 #if PASS_COLOR
-in vec4 tcTangent[];
+layout(location = 2) in vec4 inTangent[];
 #endif
 
 // Varyings out
-out highp vec2 teTexCoords;
+layout(location = 0) out highp vec2 outTexCoords;
 #if PASS_COLOR
-out mediump vec3 teNormal;
-out mediump vec4 teTangent;
+layout(location = 1) out mediump vec3 outNormal;
+layout(location = 2) out mediump vec4 outTangent;
 #endif
 
 #define INTERPOLATE(x_) (x_[0] * gl_TessCoord.x + x_[1] * gl_TessCoord.y + x_[2] * gl_TessCoord.z)
@@ -59,12 +60,12 @@ out mediump vec4 teTangent;
 void tessellatePNPositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat)
 {
 #if PASS_COLOR
-	teNormal = normalize(normalMat * INTERPOLATE(tcNormal));
-	teTangent = INTERPOLATE(tcTangent);
-	teTangent.xyz = normalize(normalMat * teTangent.xyz);
+	outNormal = normalize(normalMat * INTERPOLATE(inNormal));
+	outTangent = INTERPOLATE(inTangent);
+	outTangent.xyz = normalize(normalMat * outTangent.xyz);
 #endif
 
-	teTexCoords = INTERPOLATE(tcTexCoord);
+	outTexCoords = INTERPOLATE(inTexCoord);
 
 	float u = gl_TessCoord.x;
 	float v = gl_TessCoord.y;
@@ -97,12 +98,12 @@ void tessellatePhongPositionNormalTangentTexCoord(
 	in mat4 mvp, in mat3 normalMat)
 {
 #if PASS_COLOR
-	teNormal = normalize(normalMat * INTERPOLATE(tcNormal));
-	teTangent = INTERPOLATE(tcTangent);
-	teTangent.xyz = normalize(normalMat * teTangent.xyz);
+	outNormal = normalize(normalMat * INTERPOLATE(inNormal));
+	outTangent = INTERPOLATE(inTangent);
+	outTangent.xyz = normalize(normalMat * outTangent.xyz);
 #endif
 
-	teTexCoords = INTERPOLATE(tcTexCoord);
+	outTexCoords = INTERPOLATE(inTexCoord);
 
 	// interpolated position
 	vec3 barPos = INTERPOLATE(tcPosition);
@@ -132,8 +133,8 @@ void tessellatePhongPositionNormalTangentTexCoord(
 		 + gl_TessCoord[1] * gl_TessCoord[2] * termJK
 		 + gl_TessCoord[2] * gl_TessCoord[0] * termIK;
 
-	float uTessAlpha = 1.0;
-	vec3 finalPos = (1.0 - uTessAlpha) * barPos + uTessAlpha * phongPos;
+	float tessAlpha = 1.0;
+	vec3 finalPos = (1.0 - tessAlpha) * barPos + tessAlpha * phongPos;
 	gl_Position = mvp * vec4(finalPos, 1.0);
 }
 
@@ -141,16 +142,16 @@ void tessellatePhongPositionNormalTangentTexCoord(
 void tessellateDispMapPositionNormalTangentTexCoord(
 	in mat4 mvp, in mat3 normalMat, in sampler2D dispMap)
 {
-	vec3 norm = INTERPOLATE(tcNormal);
+	vec3 norm = INTERPOLATE(inNormal);
 #if PASS_COLOR
-	teNormal = normalize(normalMat * norm);
-	teTangent = INTERPOLATE(tcTangent);
-	teTangent.xyz = normalize(normalMat * teTangent.xyz);
+	outNormal = normalize(normalMat * norm);
+	outTangent = INTERPOLATE(inTangent);
+	outTangent.xyz = normalize(normalMat * outTangent.xyz);
 #endif
 
-	teTexCoords = INTERPOLATE(tcTexCoord);
+	outTexCoords = INTERPOLATE(inTexCoord);
 
-	float height = texture(dispMap, teTexCoords).r;
+	float height = texture(dispMap, outTexCoords).r;
 	height = height * 0.7 - 0.35;
 
 	vec3 pos = INTERPOLATE(tcPosition) + norm * height;

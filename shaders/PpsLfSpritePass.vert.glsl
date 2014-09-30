@@ -14,7 +14,7 @@ struct Flare
 };
 
 // The block contains data for all flares
-layout(std140) readonly buffer bFlares
+layout(std140) uniform bFlares
 {
 	Flare uFlares[MAX_FLARES];
 };

@@ -51,7 +51,7 @@ struct Lights
 };
 
 // Common uniforms between lights
-layout(std140, row_major, binding = 0) readonly buffer commonBlock
+layout(std140, row_major, binding = 0) uniform commonBlock
 {
 	vec4 uProjectionParams;
 	vec4 uSceneAmbientColor;

@@ -41,34 +41,34 @@ static void getShaderInfo(
 	GLbitfield& bit,
 	U& idx)
 {
-	if(str == "vert"_cstr)
+	if(str == "vert")
 	{
 		type = GL_VERTEX_SHADER;
 		bit = GL_VERTEX_SHADER_BIT;
 		idx = 0;
 	}
-	else if(str == "tesc"_cstr)
+	else if(str == "tesc")
 	{
 		type = GL_TESS_CONTROL_SHADER;
 		bit = GL_TESS_CONTROL_SHADER_BIT;
 		idx = 1;
 	}
-	else if(str == "tese"_cstr)
+	else if(str == "tese")
 	{
 		type = GL_TESS_EVALUATION_SHADER;
 		bit = GL_TESS_EVALUATION_SHADER_BIT;
 		idx = 2;
 	}
-	else if(str == "geom"_cstr)
+	else if(str == "geom")
 	{
 		type = GL_GEOMETRY_SHADER;
 		bit = GL_GEOMETRY_SHADER_BIT;
 		idx = 3;
 	}
-	else if(str == "frag"_cstr)
+	else if(str == "frag")
 	{
-		type = GL_GEOMETRY_SHADER;
-		bit = GL_GEOMETRY_SHADER_BIT;
+		type = GL_FRAGMENT_SHADER;
+		bit = GL_FRAGMENT_SHADER_BIT;
 		idx = 4;
 	}
 	else
@@ -101,12 +101,12 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	//
 	// First gather all the inputs
 	//
-	XmlElement programEl = el.getChildElement("program"_cstr);
+	XmlElement programEl = el.getChildElement("program");
 	do
 	{
 		parseInputsTag(programEl);
 
-		programEl = programEl.getNextSiblingElement("program"_cstr);
+		programEl = programEl.getNextSiblingElement("program");
 	} while(programEl);
 
 	// Sort them by name to decrease the change of creating unique shaders
@@ -115,12 +115,12 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	//
 	// Then parse the includes, operations and other parts of the program
 	//
-	programEl = el.getChildElement("program"_cstr);
+	programEl = el.getChildElement("program");
 	do
 	{
 		parseProgramTag(programEl);
 
-		programEl = programEl.getNextSiblingElement("program"_cstr);
+		programEl = programEl.getNextSiblingElement("program");
 	} while(programEl);
 
 	//
@@ -143,7 +143,7 @@ void MaterialProgramCreator::parseProgramTag(
 	const XmlElement& programEl)
 {
 	// <type>
-	CString type = programEl.getChildElement("type"_cstr).getText();
+	CString type = programEl.getChildElement("type").getText();
 	GLbitfield glshaderbit;
 	GLenum glshader;
 	U shaderidx;
@@ -151,7 +151,7 @@ void MaterialProgramCreator::parseProgramTag(
 
 	m_source[shaderidx] = MPStringList(m_alloc);
 	auto& lines = m_source[shaderidx];
-	lines.push_back(ANKI_STRL("#pragma anki type "_cstr) + type);
+	lines.push_back(ANKI_STRL("#pragma anki type ") + type);
 
 	if(glshader == GL_TESS_CONTROL_SHADER 
 		|| glshader == GL_TESS_EVALUATION_SHADER)
@@ -160,27 +160,27 @@ void MaterialProgramCreator::parseProgramTag(
 	}
 
 	// <includes></includes>
-	XmlElement includesEl = programEl.getChildElement("includes"_cstr);
-	XmlElement includeEl = includesEl.getChildElement("include"_cstr);
+	XmlElement includesEl = programEl.getChildElement("includes");
+	XmlElement includeEl = includesEl.getChildElement("include");
 
 	do
 	{
 		MPString fname(includeEl.getText(), m_alloc);
 		lines.push_back(
-			ANKI_STRL("#pragma anki include \""_cstr) + fname + "\""_cstr);
+			ANKI_STRL("#pragma anki include \"") + fname + "\"");
 
-		includeEl = includeEl.getNextSiblingElement("include"_cstr);
+		includeEl = includeEl.getNextSiblingElement("include");
 	} while(includeEl);
 
 	// Inputs
 
 	// Block
 	if(m_uniformBlock.size() > 0 
-		&& (m_uniformBlockReferencedMask | glshaderbit))
+		&& (m_uniformBlockReferencedMask & glshaderbit))
 	{
 		// TODO Make block SSB when driver bug is fixed
 		lines.push_back(ANKI_STRL(
-			"\nlayout(binding = 0, std140) uniform bDefaultBlock\n{"_cstr));
+			"\nlayout(binding = 0, std140) uniform bDefaultBlock\n{"));
 
 		lines.insert(
 			lines.end(), m_uniformBlock.begin(), m_uniformBlock.end());
@@ -191,7 +191,7 @@ void MaterialProgramCreator::parseProgramTag(
 	// Other variables
 	for(Input& in : m_inputs)
 	{
-		if(!in.m_inBlock && (in.m_shaderDefinedMask | glshaderbit))
+		if(!in.m_inBlock && (in.m_shaderDefinedMask & glshaderbit))
 		{
 			lines.push_back(in.m_line);
 		}
@@ -423,7 +423,7 @@ void MaterialProgramCreator::parseOperationTag(
 				if(in.m_name == arg)
 				{
 					input = &in;
-					in.m_shaderReferencedMask = glshaderbit;
+					in.m_shaderReferencedMask |= glshaderbit;
 					break;
 				}
 			}

@@ -83,13 +83,6 @@ endif()
 
 set(ANKI_WINDOW_BACKEND "${_WIN_BACKEND}" CACHE STRING "The window backend (GLXX11 or EGLX11 or EGLFBDEV or ANDROID or SDL or DUMMY)")
 
-option(ANKI_GCC_TO_STRING_WORKAROUND "Enable workaround for C++11 GCC bug" OFF)
-if(ANKI_GCC_TO_STRING_WORKAROUND)
-	set(_ANKI_GCC_TO_STRING_WORKAROUND 1)
-else()
-	set(_ANKI_GCC_TO_STRING_WORKAROUND 0)
-endif()
-
 # Extra directories
 set(ANKI_EXTRA_INCLUDE_DIRS CACHE STRING "Some extra include paths (Needed for some weird builds)")
 set(ANKI_EXTRA_LIB_DIRS CACHE STRING "Some extra lib paths (Needed for some weird builds)")

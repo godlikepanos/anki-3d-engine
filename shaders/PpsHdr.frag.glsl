@@ -10,7 +10,7 @@
 
 layout(binding = 0) uniform lowp sampler2D tex; ///< Its the IS RT
 
-layout(std140) readonly buffer commonBlock
+layout(std140) uniform commonBlock
 {
 	vec4 inExposureComp;
 };

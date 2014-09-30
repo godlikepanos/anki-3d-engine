@@ -116,7 +116,7 @@ void Lf::initInternal(const ConfigSet& config)
 
 	// Init buffer
 	m_flareDataBuff = GlBufferHandle(
-		cmdBuff, GL_SHADER_STORAGE_BUFFER, blockSize, GL_DYNAMIC_STORAGE_BIT);
+		cmdBuff, GL_UNIFORM_BUFFER, blockSize, GL_DYNAMIC_STORAGE_BIT);
 
 	// Create the render target
 	m_r->createRenderTarget(m_r->getPps().getHdr()._getRt().getWidth(), 
