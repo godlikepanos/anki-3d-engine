@@ -13,6 +13,14 @@
 namespace anki {
 
 //==============================================================================
+#define CHECK_ERROR() \
+	if(m_error != nullptr) \
+	{ \
+		throw ANKI_EXCEPTION("GL rendering thread failed with error:\n%s", \
+			&m_error[0]); \
+	}
+
+//==============================================================================
 GlQueue::GlQueue(GlDevice* device, 
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 :	m_device(device), 
@@ -28,7 +36,12 @@ GlQueue::GlQueue(GlDevice* device,
 
 //==============================================================================
 GlQueue::~GlQueue()
-{}
+{
+	if(m_error)
+	{
+		m_allocCb(m_allocCbUserData, m_error, 0, 0);
+	}
+}
 
 //==============================================================================
 void GlQueue::flushCommandBuffer(GlCommandBufferHandle& commands)
@@ -39,11 +52,7 @@ void GlQueue::flushCommandBuffer(GlCommandBufferHandle& commands)
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
-		if(!m_error.isEmpty())
-		{
-			throw ANKI_EXCEPTION("GL rendering thread failed with error:\n%s",
-				&m_error[0]);
-		}
+		CHECK_ERROR();
 
 		// Set commands
 		U64 diff = m_tail - m_head;
@@ -197,7 +206,7 @@ void GlQueue::threadLoop()
 
 	while(1)
 	{
-		GlCommandBufferHandle commandc;
+		GlCommandBufferHandle cmd;
 
 		// Wait for something
 		{
@@ -216,7 +225,7 @@ void GlQueue::threadLoop()
 
 			U64 idx = m_head % m_queue.size();
 			// Pop a command
-			commandc = m_queue[idx];
+			cmd = m_queue[idx];
 			m_queue[idx] = GlCommandBufferHandle(); // Insert empty cmd buffer
 
 			++m_head;
@@ -224,13 +233,17 @@ void GlQueue::threadLoop()
 
 		try
 		{
-			// Exec commands of chain
-			commandc._executeAllCommands();
+			// Exec commands
+			cmd._executeAllCommands();
 		}
 		catch(const std::exception& e)
 		{
 			LockGuard<Mutex> lock(m_mtx);
-			m_error = e.what();
+			I len = strlen(e.what());
+			m_error = reinterpret_cast<char*>(
+				m_allocCb(m_allocCbUserData, nullptr, len + 1, 1));
+
+			strcpy(m_error, e.what());
 		}
 	}
 
@@ -243,6 +256,8 @@ void GlQueue::syncClientServer()
 #if !ANKI_QUEUE_DISABLE_ASYNC
 	flushCommandBuffer(m_syncCommands);
 	m_sync.wait();
+
+	CHECK_ERROR();
 #endif
 }
 

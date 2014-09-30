@@ -14,27 +14,28 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-Bool Barrier::wait()
+Bool Barrier::wait(F64 timeoutSeconds)
 {
 	m_mtx.lock();
 	U32 gen = m_generation;
+	Bool timeout = false;
 
 	if(--m_count == 0)
 	{
 		m_generation++;
 		m_count = m_threshold;
 		m_cond.notifyAll();
-		m_mtx.unlock();
-		return true;
 	}
-
-	while(gen == m_generation)
+	else
 	{
-		m_cond.wait(m_mtx);
+		while(gen == m_generation)
+		{
+			timeout = m_cond.wait(m_mtx, timeoutSeconds);
+		}
 	}
 
 	m_mtx.unlock();
-	return false;
+	return timeout;
 }
 
 //==============================================================================

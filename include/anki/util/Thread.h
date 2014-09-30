@@ -56,20 +56,33 @@ public:
 	/// Identify the current thread
 	static Id getCurrentThreadId();
 
+	/// @privatesection
+	/// @{
+	const char* _getName() const
+	{
+		return &m_name[0];
+	}
+
+	void* _getUserData() const
+	{
+		return m_userData;
+	}
+
+	Callback _getCallback() const
+	{
+		return m_callback;
+	}
+	/// @}
+
 private:
-	static constexpr U ALIGNMENT = 8;
-	alignas(ALIGNMENT) Array<PtrSize, 1> m_impl; ///< The system native type
+	void* m_impl = nullptr; ///< The system native type
 	Array<char, 32> m_name; ///< The name of the thread
 	Callback m_callback = nullptr; ///< The callback
 	void* m_userData = nullptr; ///< The user date to pass to the callback
 
-	/// Pthreads specific function
-	static void* pthreadCallback(void* ud);
-
-	Bool initialized() const
-	{
-		return m_impl[0] != 0;
-	}
+#if ANKI_ASSERTIONS
+	Bool8 m_started = false;
+#endif
 };
 
 /// Mutex
@@ -93,8 +106,7 @@ public:
 	void unlock();
 
 private:
-	static constexpr U ALIGNMENT = 8;
-	alignas(ALIGNMENT) Array<PtrSize, 10> m_impl; ///< The system native type
+	void* m_impl = nullptr; ///< The system native type
 };
 
 /// Condition variable
@@ -111,12 +123,15 @@ public:
 	/// Signal all threads
 	void notifyAll();
 
-	/// Bock until signaled
-	void wait(Mutex& mtx);
+	/// Bock until signaled.
+	/// @param mtx The mutex.
+	/// @param timeoutSeconds Wait for the specified time. If zero it waits 
+	///                       forever.
+	/// @return On timeout it returns true.
+	Bool wait(Mutex& mtx, F64 timeoutSeconds = 0.0);
 
 private:
-	static constexpr U ALIGNMENT = 16;
-	alignas(ALIGNMENT) Array<PtrSize, 12> m_impl; ///< The system native type
+	void* m_impl = nullptr; ///< The system native type
 };
 
 /// Spin lock. Good if the critical section will be executed in a short period
@@ -162,7 +177,7 @@ private:
 	TMutex* m_mtx;
 };
 
-/// A barrier for thread synchronization. It works just like boost::barrier
+/// A barrier for thread synchronization. It works almost like boost::barrier
 class Barrier: public NonCopyable
 {
 public:
@@ -176,9 +191,11 @@ public:
 
 	~Barrier() = default;
 
-	/// Wait until all threads call wait()
-	/// @return This is implementation defined. Don't pay attention.
-	Bool wait();
+	/// Wait until all threads call wait().
+	/// @param timeoutSeconds Wait for the specified time. If zero it waits 
+	///                       forever.
+	/// @return On timeout it returns true.
+	Bool wait(F64 timeoutSeconds = 0.0);
 
 private:
 	Mutex m_mtx;

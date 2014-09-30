@@ -129,7 +129,7 @@ private:
 	GlCommandBufferHandle m_syncCommands;
 	GlClientSyncHandle m_sync;
 
-	String m_error;
+	char* m_error = nullptr;
 
 	/// The function that the thread runs
 	static I threadCallback(Thread::Info&);

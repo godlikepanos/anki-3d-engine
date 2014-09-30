@@ -19,14 +19,11 @@ class GlClientSync
 {
 public:
 	GlClientSync()
-		: m_barrier(2)
+	:	m_barrier(2)
 	{}
 
 	/// Wait 
-	void wait()
-	{
-		m_barrier.wait();
-	}
+	void wait();
 
 private:
 	Barrier m_barrier;

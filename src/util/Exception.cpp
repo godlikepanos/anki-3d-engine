@@ -58,7 +58,7 @@ Exception::Exception(const char* file, I line, const char* func,
 	}
 
 #if ANKI_DEBUG == 1
-	fprintf(stderr, "Exception thrown: %s\n", &m_err[0]);
+	fprintf(stderr, "Exception thrown\n");
 #endif
 
 #if ANKI_ABORT_ON_THROW == 1
@@ -75,7 +75,7 @@ Exception::Exception(const Exception& e) noexcept
 	std::strcpy(m_err, e.m_err);
 
 #if ANKI_DEBUG == 1
-	fprintf(stderr, "Exception copied: %s\n", &m_err[0]);
+	fprintf(stderr, "Exception copied\n");
 #endif
 
 #if ANKI_ABORT_ON_THROW == 1

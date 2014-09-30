@@ -3,6 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#include "anki/Config.h"
+
+#if ANKI_ENABLE_COUNTERS
+
 #include "anki/core/Counters.h"
 #include "anki/core/Timestamp.h"
 #include "anki/core/App.h"
@@ -10,8 +14,6 @@
 #include <cstring>
 
 namespace anki {
-
-#if ANKI_ENABLE_COUNTERS
 
 //==============================================================================
 
@@ -246,6 +248,101 @@ void CountersManager::flush()
 	m_perrunFile.close();
 }
 
-#endif // ANKI_ENABLE_COUNTERS
+//==============================================================================
+// TraceManager                                                                =
+//==============================================================================
+
+namespace detail {
+
+//==============================================================================
+TraceManager::TraceManager(HeapAllocator<U8>& alloc, const CString& storeDir)
+{
+	String filename(storeDir, alloc);
+	filename += "/trace";
+	m_traceFile.open(filename.toCString(), File::OpenFlag::WRITE);
+
+	m_traceFile.writeText(
+		"thread_id, depth, event_name, start_time, stop_time\n");
+}
+
+//==============================================================================
+TraceManager::~TraceManager()
+{
+	flushAll();
+}
+
+//==============================================================================
+void TraceManager::flush(ThreadTraceManager& thread)
+{
+	ANKI_ASSERT(thread.m_depth == 0);
+
+	LockGuard<Mutex> lock(m_fileMtx);
+	for(U i = 0; i < thread.m_bufferedEventsCount; i++)
+	{
+		const ThreadTraceManager::Event& event = thread.m_bufferedEvents[i];
+
+		m_traceFile.writeText("%u, %u, %s, %f, %f\n", 
+			thread.m_id,
+			event.m_depth,
+			event.m_name,
+			event.m_startTime,
+			event.m_stopTime);
+	}
+
+	thread.m_bufferedEventsCount = 0;
+}
+
+//==============================================================================
+void TraceManager::flushAll()
+{
+	auto count = m_threadCount.load();
+	while(count-- != 0)
+	{
+		flush(*m_threadData[count]);
+	}
+
+	m_traceFile.close();
+}
+
+//==============================================================================
+ThreadTraceManager::ThreadTraceManager()
+{
+	TraceManager& master = TraceManagerSingleton::get();
+	m_master = &master;
+
+	auto index = master.m_threadCount.fetch_add(1);
+	master.m_threadData[index] = this;
+	m_id = index;
+}
+
+//==============================================================================
+void ThreadTraceManager::pushEvent(const char* name)
+{
+	Event& event = m_inflightEvents[m_depth];
+	event.m_depth = m_depth++;
+	event.m_name = name;
+	event.m_startTime = HighRezTimer::getCurrentTime();
+}
+
+//==============================================================================
+void ThreadTraceManager::popEvent()
+{
+	ANKI_ASSERT(m_depth > 0);
+	Event& event = m_inflightEvents[--m_depth];
+	event.m_stopTime = HighRezTimer::getCurrentTime();
+
+	ANKI_ASSERT(m_bufferedEventsCount < m_bufferedEvents.getSize());
+	m_bufferedEvents[m_bufferedEventsCount++] = event;
+
+	if(m_bufferedEventsCount == m_bufferedEvents.getSize())
+	{
+		m_master->flush(*this);
+	}
+}
+
+} // end namespace detail
 
 } // end namespace anki
+
+#endif // ANKI_ENABLE_COUNTERS
+

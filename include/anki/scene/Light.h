@@ -241,6 +241,11 @@ public:
 		return m_sphereW;
 	}
 
+	/// @name SceneNode virtuals
+	/// @{
+	void frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
+	/// @}
+
 	/// @name MoveComponent virtuals
 	/// @{
 	void onMoveComponentUpdate(SceneNode&, F32, F32) override;
@@ -255,7 +260,23 @@ public:
 	/// @}
 
 public:
+	class ShadowData
+	{
+	public:
+		ShadowData(SceneNode* node)
+		:	m_frustumComps{{
+				{node, &m_frustums[0]}, {node, &m_frustums[1]},
+				{node, &m_frustums[2]}, {node, &m_frustums[3]},
+				{node, &m_frustums[4]}, {node, &m_frustums[5]}}}
+		{}
+
+		Array<PerspectiveFrustum, 6> m_frustums;
+		Array<FrustumComponent, 6> m_frustumComps;
+		Array<Transform, 6> m_localTrfs;
+	};
+
 	Sphere m_sphereW = Sphere(Vec4(0.0), 1.0);
+	ShadowData* m_shadowData = nullptr;
 };
 
 /// Spot light

@@ -142,6 +142,7 @@ void App::init(const ConfigSet& config_)
 
 #if ANKI_ENABLE_COUNTERS
 	CountersManagerSingleton::init(m_heapAlloc, m_settingsDir.toCString());
+	detail::TraceManagerSingleton::init(m_heapAlloc, m_settingsDir.toCString());
 #endif
 
 	// Window
@@ -309,9 +310,10 @@ void App::mainLoop(UserMainLoopCallback callback, void* userData)
 		increaseGlobTimestamp();
 	}
 
-	// Counters end
+	// Performance ends
 	ANKI_COUNTER_STOP_TIMER_INC(FPS);
 	ANKI_COUNTERS_FLUSH();
+	ANKI_TRACE_FLUSH();
 }
 
 } // end namespace anki

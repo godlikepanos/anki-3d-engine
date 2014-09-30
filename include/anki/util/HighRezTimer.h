@@ -18,7 +18,7 @@ class HighRezTimer
 {
 public:
 	/// The type that the timer manipulates the results
-	typedef F64 Scalar;
+	using Scalar = F64;
 
 	/// Start the timer
 	void start();
@@ -33,7 +33,8 @@ public:
 	/// Get the current date's seconds
 	static Scalar getCurrentTime();
 
-	/// Micro sleep
+	/// Micro sleep.
+	/// The resolution is in nanoseconds.
 	static void sleep(Scalar seconds);
 
 private:

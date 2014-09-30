@@ -7,14 +7,16 @@
 
 layout(vertices = 3) out;
 
+// Defines
 #define IID gl_InvocationID
-#define IN_POS(i_) gl_in[i_].gl_Position
-#define OUT_POS(i_) gl_out[i_].gl_Position
+#define IN_POS4(i_) gl_in[i_].gl_Position
+#define IN_POS3(i_) gl_in[i_].gl_Position.xyz
+#define OUT_POS4(i_) gl_out[i_].gl_Position
 
 // In
 layout(location = 0) in vec2 inTexCoords[];
 layout(location = 1) in mediump vec3 inNormal[];
-#if PASS_COLOR
+#if PASS == COLOR
 layout(location = 2) in mediump vec4 inTangent[];
 #endif
 #if INSTANCE_ID_FRAGMENT_SHADER
@@ -24,7 +26,7 @@ layout(location = 3) flat in uint inInstanceId[];
 // Out
 layout(location = 0) out vec2 outTexCoord[];
 layout(location = 1) out vec3 outNormal[];
-#if PASS_COLOR
+#if PASS == COLOR
 layout(location = 2) out vec4 outTangent[];
 #endif
 
@@ -45,10 +47,6 @@ struct PNPatch
 	vec3 pos120;
 	vec3 pos111;
 };
-
-#define pos030 OUT_POS(0)
-#define pos003 OUT_POS(1)
-#define pos300 OUT_POS(2)
 
 struct PhongPatch
 {
@@ -74,9 +72,13 @@ vec3 projectToPlane(vec3 point, vec3 planePoint, vec3 planeNormal)
 void calcPositions()
 {
 	// The original vertices stay the same
-	pos030 = IN_POS(0);
-	pos003 = IN_POS(1);
-	pos300 = IN_POS(2);
+	vec3 pos030 = IN_POS3(0);
+	vec3 pos003 = IN_POS3(1);
+	vec3 pos300 = IN_POS3(2);
+
+	OUT_POS4(0) = IN_POS3(0);
+	OUT_POS4(1) = IN_POS3(1);
+	OUT_POS4(2) = IN_POS3(2);
 
 	// edges are names according to the opposing vertex
 	vec3 edgeB300 = pos003 - pos030;
@@ -194,7 +196,7 @@ bool isFaceVisible(in mat4 mvp)
 	vec2 clip[3];
 	for(int i = 0 ; i < 3 ; i++) 
 	{
-		vec4 v = mvp * vec4(IN_POS(i), 1.0);
+		vec4 v = mvp * IN_POS4(i);
 		clip[i] = v.xy / abs(v.w);
 	}
 
@@ -202,9 +204,10 @@ bool isFaceVisible(in mat4 mvp)
 	return isFaceFrontFacing(clip) && !isFaceOutsideClipSpace(clip);
 }
 
-float calcPhongTerm(int ivId, int i, vec3 q)
+// Used in phong method
+float calcPhongTerm(int ivId, int i, int j)
 {
-	vec3 qMinusP = q - IN_POS(i);
+	vec3 qMinusP = IN_POS3(j) - IN_POS3(i);
 	return q[ivId] - dot(qMinusP, inNormal[i]) * inNormal[i][ivId];
 }
 
@@ -218,7 +221,7 @@ void tessellatePNPositionNormalTangentTexCoord(
 	float tessLevel = 0.0;
 
 	// Calculate the face normal in view space
-	vec3 faceNorm = calcFaceNormal(IN_POS(0), IN_POS(1), IN_POS(2));
+	vec3 faceNorm = calcFaceNormal(IN_POS3(0), IN_POS3(1), IN_POS3(2));
 	faceNorm = (normalMat * faceNorm);
 
 	if(faceNorm.z >= 0.0)
@@ -229,7 +232,7 @@ void tessellatePNPositionNormalTangentTexCoord(
 		{		
 			outTexCoord[i] = inTexCoords[i];
 			outNormal[i] = inNormal[i];
-#if PASS_COLOR
+#if PASS == COLOR
 			outTangent[i] = inTangent[i];
 #endif
 		}
@@ -266,7 +269,7 @@ void tessellatePhongPositionNormalTangentTexCoord(
 		}
 	}
 
-	OUT_POS(IID) = IN_POS(IID); // Do that here to trick the barrier
+	OUT_POS4(IID) = IN_POS4(IID); // Do that here to trick the barrier
 
 	barrier();
 
@@ -274,16 +277,16 @@ void tessellatePhongPositionNormalTangentTexCoord(
 	{
 		outTexCoord[IID] = inTexCoords[IID];
 		outNormal[IID] = inNormal[IID];
-#if PASS_COLOR
+#if PASS == COLOR
 		outTangent[IID] = inTangent[IID];
 #endif
 
-		phongPatch.terms[IID][0] = calcPhongTerm(IID, 0, IN_POS(1)) 
-			+ calcPhongTerm(IID, 1, IN_POS(0));
-		phongPatch.terms[IID][1] = calcPhongTerm(IID, 1, IN_POS(2)) 
-			+ calcPhongTerm(IID, 2, IN_POS(1));
-		phongPatch.terms[IID][2] = calcPhongTerm(IID, 2, IN_POS(0)) 
-			+ calcPhongTerm(IID, 0, IN_POS(2));
+		phongPatch.terms[IID][0] = calcPhongTerm(IID, 0, 1) 
+			+ calcPhongTerm(IID, 1, 0);
+		phongPatch.terms[IID][1] = calcPhongTerm(IID, 1, 2) 
+			+ calcPhongTerm(IID, 2, 1);
+		phongPatch.terms[IID][2] = calcPhongTerm(IID, 2, 0) 
+			+ calcPhongTerm(IID, 0, 2);
 	}
 }
 
@@ -309,10 +312,11 @@ void tessellateDispMapPositionNormalTangentTexCoord(
 		}
 	}
 
-	OUT_POS(IID) = IN_POS(IID);
+	// Passthrough
+	OUT_POS4(IID) = IN_POS4(IID);
 	outTexCoord[IID] = inTexCoords[IID];
 	outNormal[IID] = inNormal[IID];
-#if PASS_COLOR
+#if PASS == COLOR
 	outTangent[IID] = inTangent[IID];
 #endif
 }

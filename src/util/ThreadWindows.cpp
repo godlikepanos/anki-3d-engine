@@ -5,9 +5,7 @@
 
 #include "anki/util/Thread.h"
 #include "anki/util/Exception.h"
-#include <cstring>
-#include <algorithm>
-#include <pthread.h>
+#include <windows.h>
 
 namespace anki {
 
@@ -16,7 +14,7 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-static void* pthreadCallback(void* ud)
+static DWORD WINAPI threadCallback(LPVOID ud)
 {
 	ANKI_ASSERT(ud != nullptr);
 	Thread* thread = reinterpret_cast<Thread*>(ud);
@@ -24,7 +22,7 @@ static void* pthreadCallback(void* ud)
 	// Set thread name
 	if(thread->_getName()[0] != '\0')
 	{
-		pthread_setname_np(pthread_self(), &thread->_getName()[0]);
+		// TODO
 	}
 
 	// Call the callback
@@ -33,21 +31,13 @@ static void* pthreadCallback(void* ud)
 	info.m_threadName = thread->_getName();
 
 	I err = thread->_getCallback()(info);
-	void* errVoidp = nullptr;
-	std::memcpy(&errVoidp, &err, sizeof(err));
 
-	return nullptr;
+	return err;
 }
 
 //==============================================================================
 Thread::Thread(const char* name)
 {
-	m_impl = malloc(sizeof(pthread_t));
-	if(m_impl == nullptr)
-	{
-		throw ANKI_EXCEPTION("Out of memory");
-	}
-
 	// Init the name
 	if(name)
 	{
@@ -76,15 +66,13 @@ void Thread::start(void* userData, Callback callback)
 	ANKI_ASSERT(!m_started);
 	ANKI_ASSERT(callback != nullptr);
 
-	pthread_t* impl = reinterpret_cast<pthread_t*>(m_impl);
-
 	m_callback = callback;
 	m_userData = userData;
 
-	I err = pthread_create(impl, nullptr, pthreadCallback, this);
-	if(err)
+	m_impl = CreateThread(nullptr, 0, threadCallback, this, 0, nullptr);
+	if(m_impl == nullptr)
 	{
-		throw ANKI_EXCEPTION("pthread_create() failed");
+		throw ANKI_EXCEPTION("CreateThread() failed");
 	}
 	else
 	{
@@ -98,30 +86,33 @@ void Thread::start(void* userData, Callback callback)
 I Thread::join()
 {
 	ANKI_ASSERT(m_started);
-	pthread_t* impl = reinterpret_cast<pthread_t*>(m_impl);
 
-	void* out;
-	U err = pthread_join(*impl, &out);
-	if(err)
+	// Wait thread
+	WaitForSingleObject(m_impl, INFINITE);
+	
+	// Get return code
+	DWORD exitCode = 0;
+	ok = GetExitCodeThread(m_impl, &exitCode);
+	if(!ok)
 	{
-		throw ANKI_EXCEPTION("pthread_join() failed");
+		throw ANKI_EXCEPTION("GetExitCodeThread() failed");
 	}
 
-#if ANKI_ASSERTIONS
-	m_started = false;
-#endif
+	// Delete handle
+	BOOL ok = CloseHandle(m_impl);
+	if(!ok)
+	{
+		throw ANKI_EXCEPTION("CloseHandle() failed");
+	}
 
-	// Set return error code
-	I callbackErr;
-	std::memcpy(&callbackErr, &out, sizeof(callbackErr));
-	return callbackErr;
+	return exitCode;
 }
 
 //==============================================================================
 Thread::Id Thread::getCurrentThreadId()
 {
-	pthread_t pid = pthread_self();
-	return pid;
+	HANDLE x = GetCurrentThread();
+	return x;
 }
 
 //==============================================================================
@@ -131,8 +122,8 @@ Thread::Id Thread::getCurrentThreadId()
 //==============================================================================
 Mutex::Mutex()
 {
-	pthread_mutex_t* mtx = 
-		reinterpret_cast<pthread_mutex_t*>(malloc(sizeof(pthread_mutex_t)));
+	CRITICAL_SECTION* mtx = 
+		reinterpret_cast<CRITICAL_SECTION*>(malloc(sizeof(CRITICAL_SECTION)));
 	if(mtx == nullptr)
 	{
 		throw ANKI_EXCEPTION("Out of memory");
@@ -140,20 +131,20 @@ Mutex::Mutex()
 
 	m_impl = mtx;
 
-	I err = pthread_mutex_init(mtx, nullptr);
-	if(err)
+	BOOL ok = InitializeCriticalSectionAndSpinCount(mtx, 0x400);
+	if(!ok)
 	{
 		free(m_impl);
 		m_impl = nullptr;
-		throw ANKI_EXCEPTION("pthread_mutex_init() failed");
+		throw ANKI_EXCEPTION("InitializeCriticalSectionAndSpinCount() failed");
 	}
 }
 
 //==============================================================================
 Mutex::~Mutex()
 {
-	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
-	pthread_mutex_destroy(mtx);
+	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
+	DeleteCriticalSection(mtx);
 
 	free(m_impl);
 	m_impl = nullptr;
@@ -162,34 +153,25 @@ Mutex::~Mutex()
 //==============================================================================
 void Mutex::lock()
 {
-	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
-
-	I err = pthread_mutex_lock(mtx);
-	if(err)
-	{
-		throw ANKI_EXCEPTION("pthread_mutex_lock() failed");
-	}
+	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
+	EnterCriticalSection(mtx);
 }
 
 //==============================================================================
 Bool Mutex::tryLock()
 {
-	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
+	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
 
-	I err = pthread_mutex_trylock(mtx);
-	return err == 0;
+	BOOL enter = EnterCriticalSection(mtx);
+	return enter;
 }
 
 //==============================================================================
 void Mutex::unlock()
 {
-	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
+	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
 
-	I err = pthread_mutex_unlock(mtx);
-	if(err)
-	{
-		throw ANKI_EXCEPTION("pthread_mutex_unlock() failed");
-	}
+	LeaveCriticalSection(mtx);
 }
 
 //==============================================================================
@@ -199,8 +181,8 @@ void Mutex::unlock()
 //==============================================================================
 ConditionVariable::ConditionVariable()
 {
-	pthread_cond_t* cond = 
-		reinterpret_cast<pthread_cond_t*>(malloc(sizeof(pthread_cond_t)));
+	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(
+		malloc(sizeof(CONDITION_VARIABLE)));
 	if(cond == nullptr)
 	{
 		throw ANKI_EXCEPTION("Out of memory");
@@ -208,21 +190,12 @@ ConditionVariable::ConditionVariable()
 
 	m_impl = cond;
 
-	I err = pthread_cond_init(cond, nullptr);
-	if(err)
-	{
-		free(m_impl);
-		m_impl = nullptr;
-		throw ANKI_EXCEPTION("pthread_cond_init() failed");
-	}
+	InitializeConditionVariable(cond);
 }
 
 //==============================================================================
 ConditionVariable::~ConditionVariable()
 {
-	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
-	pthread_cond_destroy(cond);
-
 	free(m_impl);
 	m_impl = nullptr;
 }
@@ -230,54 +203,24 @@ ConditionVariable::~ConditionVariable()
 //==============================================================================
 void ConditionVariable::notifyOne()
 {
-	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
-	pthread_cond_signal(cond);
+	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(m_impl);
+	WakeConditionVariable(cond);
 }
 
 //==============================================================================
 void ConditionVariable::notifyAll()
 {
-	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
-	pthread_cond_broadcast(cond);
+	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(m_impl);
+	WakeAllConditionVariable(cond);
 }
 
 //==============================================================================
-Bool ConditionVariable::wait(Mutex& amtx, F64 timeoutSeconds)
+void ConditionVariable::wait(Mutex& amtx)
 {
-	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
-	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(amtx.m_impl);
+	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(m_impl);
+	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
 
-	Bool timeout = false;
-	I err = 0;
-
-	if(timeoutSeconds == 0.0)
-	{
-		err = pthread_cond_wait(cond, mtx);
-	}
-	else
-	{
-		U64 ns = static_cast<U64>(timeoutSeconds * 1e+9);
-		struct timespec abstime;
-		abstime.tv_sec = ns / 1000000000;
-		abstime.tv_nsec = (ns % 1000000000);
-		err = pthread_cond_timedwait(cond, mtx, &abstime);
-	}
-
-	if(err == 0)
-	{
-		// Do nothing
-	}
-	else if(err == ETIMEDOUT)
-	{
-		timeout = true;
-	}
-	else
-	{
-		throw ANKI_EXCEPTION("pthread_cond_wait() or pthread_cond_timedwait()"
-			" failed: %d", err);
-	}
-
-	return timeout;
+	SleepConditionVariableCS(cond, INFINITE);
 }
 
 } // end namespace anki

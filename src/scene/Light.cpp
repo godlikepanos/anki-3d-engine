@@ -103,6 +103,34 @@ void PointLight::onMoveComponentUpdate(SceneNode&, F32, F32)
 }
 
 //==============================================================================
+void PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+{
+	if(getShadowEnabled() && m_shadowData == nullptr)
+	{
+		m_shadowData = getAllocator().newInstance<ShadowData>(this);
+
+		const F32 ang = toRad(90.0);
+		F32 dist = m_sphereW.getRadius();
+
+		for(U i = 0; i < 6; i++)
+		{
+			m_shadowData->m_frustums[i].setAll(ang, ang, 0.1, dist);
+			m_shadowData->m_localTrfs[i] = Transform::getIdentity();
+		}
+
+		auto& trfs = m_shadowData->m_localTrfs;
+		Vec3 axis = Vec3(0.0, 1.0, 0.0);
+		trfs[1].setRotation(Mat3x4(Mat3(Axisang(ang, axis))));
+		trfs[2].setRotation(Mat3x4(Mat3(Axisang(ang * 2.0, axis))));
+		trfs[3].setRotation(Mat3x4(Mat3(Axisang(ang * 3.0, axis))));
+
+		axis = Vec3(1.0, 0.0, 0.0);
+		trfs[4].setRotation(Mat3x4(Mat3(Axisang(ang, axis))));
+		trfs[5].setRotation(Mat3x4(Mat3(Axisang(-ang, axis))));
+	}
+}
+
+//==============================================================================
 // SpotLight                                                                   =
 //==============================================================================
 

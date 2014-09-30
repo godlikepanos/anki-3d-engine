@@ -7,6 +7,8 @@
 #include "anki/util/Singleton.h"
 #include "anki/util/File.h"
 #include "anki/util/HighRezTimer.h"
+#include "anki/util/Atomic.h"
+#include "anki/util/Thread.h"
 
 namespace anki {
 
@@ -92,5 +94,92 @@ typedef SingletonInit<CountersManager> CountersManagerSingleton;
 #	define ANKI_COUNTERS_RESOLVE_FRAME() ((void)0)
 #	define ANKI_COUNTERS_FLUSH() ((void)0)
 #endif // ANKI_ENABLE_COUNTERS
+
+namespace detail {
+
+// Forward
+class ThreadTraceManager;
+
+/// Trace manager per process.
+class TraceManager
+{
+public:
+	Array<ThreadTraceManager*, 32> m_threadData;
+	AtomicU32 m_threadCount = {0};
+	File m_traceFile;
+	Mutex m_fileMtx;
+
+	TraceManager(HeapAllocator<U8>& alloc, const CString& storeDir);
+
+	~TraceManager();
+
+	void flushAll();
+
+	void flush(ThreadTraceManager& thread);
+};
+
+using TraceManagerSingleton = SingletonInit<TraceManager>;
+
+/// Trace manager per thread.
+class ThreadTraceManager
+{
+public:
+	static const U MAX_DEPTH = 4;
+	static const U BUFFERED_EVENTS_COUNT = 16;
+
+	class Event
+	{
+	public:
+		F64 m_startTime = 0.0;
+		F64 m_stopTime = 0.0;
+		const char* m_name;
+		U32 m_depth = 0;
+	};
+
+	TraceManager* m_master = nullptr; ///< Cache it
+	U32 m_id = 0;
+
+	Array<Event, MAX_DEPTH> m_inflightEvents; ///< Stack
+	U32 m_depth = 0;
+
+	Array<Event, BUFFERED_EVENTS_COUNT> m_bufferedEvents;
+	U32 m_bufferedEventsCount = 0;
+
+	ThreadTraceManager();
+
+	/// Begin a new event
+	void pushEvent(const char* name);
+
+	/// Stop an already started event
+	void popEvent();
+};
+
+using ThreadTraceManagerSingleton = SingletonThreadSafe<ThreadTraceManager>;
+
+} // end namespace detail
+
+/// @name Trace macros.
+/// @{
+
+#if ANKI_ENABLE_COUNTERS
+
+#	define ANKI_TRACE_PUSH_EVENT(name_) \
+	detail::ThreadTraceManagerSingleton::get().pushEvent(name_)
+
+#	define ANKI_TRACE_POP_EVENT() \
+	detail::ThreadTraceManagerSingleton::get().popEvent()
+
+#	define ANKI_TRACE_FLUSH() \
+	detail::TraceManagerSingleton::get().flushAll()
+
+#else
+
+#	define ANKI_TRACE_PUSH_EVENT(name_) ((void)0)
+#	define ANKI_TRACE_POP_EVENT() ((void)0)
+#	define ANKI_TRACE_FLUSH() ((void)0)
+
+#endif
+
+/// @}
 
 } // end namespace anki
