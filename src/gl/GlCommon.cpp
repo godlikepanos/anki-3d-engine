@@ -8,28 +8,28 @@
 namespace anki {
 
 //==============================================================================
-U computeShaderTypeIndex(const GLenum glType)
+ShaderType computeShaderTypeIndex(const GLenum glType)
 {
-	U idx = 0;
+	ShaderType idx = ShaderType::VERTEX;
 	switch(glType)
 	{
 	case GL_VERTEX_SHADER:
-		idx = 0;
+		idx = ShaderType::VERTEX;
 		break;
 	case GL_TESS_CONTROL_SHADER:
-		idx = 1;
+		idx = ShaderType::TESSELLATION_CONTROL;
 		break;
 	case GL_TESS_EVALUATION_SHADER:
-		idx = 2;
+		idx = ShaderType::TESSELLATION_EVALUATION;
 		break;
 	case GL_GEOMETRY_SHADER:
-		idx = 3;
+		idx = ShaderType::GEOMETRY;
 		break;
 	case GL_FRAGMENT_SHADER:
-		idx = 4;
+		idx = ShaderType::FRAGMENT;
 		break;
 	case GL_COMPUTE_SHADER:
-		idx = 5;
+		idx = ShaderType::COMPUTE;
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -39,7 +39,7 @@ U computeShaderTypeIndex(const GLenum glType)
 }
 
 //==============================================================================
-GLenum computeGlShaderType(const U idx, GLbitfield* bit)
+GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit)
 {
 	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER, 
 		GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER,
@@ -52,10 +52,10 @@ GLenum computeGlShaderType(const U idx, GLbitfield* bit)
 
 	if(bit)
 	{
-		*bit = glbit[idx];
+		*bit = glbit[enumToType(idx)];
 	}
 
-	return gltype[idx];
+	return gltype[enumToType(idx)];
 }
 
 } // end namespace anki

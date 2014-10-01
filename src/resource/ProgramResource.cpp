@@ -34,7 +34,7 @@ void ProgramResource::load(const CString& filename, const CString& extraSrc,
 	std::strcpy(reinterpret_cast<char*>(glsource.getBaseAddress()), &source[0]);
 
 	m_prog = GlProgramHandle(jobs, 
-		computeGlShaderType((U)pars.getShaderType()), glsource);
+		computeGlShaderType(pars.getShaderType()), glsource);
 
 	jobs.flush();
 }

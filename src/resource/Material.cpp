@@ -147,7 +147,7 @@ Material::~Material()
 
 //==============================================================================
 ProgramResourcePointer& Material::getProgram(
-	const RenderingKey key, U32 shaderId)
+	const RenderingKey key, ShaderType shaderId)
 {
 	ANKI_ASSERT((U)key.m_pass < m_passesCount);
 	ANKI_ASSERT(key.m_lod < m_lodsCount);
@@ -162,25 +162,25 @@ ProgramResourcePointer& Material::getProgram(
 	U count = 0;
 	switch(shaderId)
 	{
-	case 4:
+	case ShaderType::FRAGMENT:
 		// Count of geom
 		count += 0;
-	case 3:
+	case ShaderType::GEOMETRY:
 		// Count of tess
 		if(m_tessellation)
 		{
 			count += m_passesCount * m_lodsCount;
 		}
-	case 2:
+	case ShaderType::TESSELLATION_EVALUATION:
 		// Count of tess
 		if(m_tessellation)
 		{
 			count += m_passesCount * m_lodsCount;
 		}
-	case 1:
+	case ShaderType::TESSELLATION_CONTROL:
 		// Count of vert
 		count += m_passesCount * m_lodsCount * tessCount;
-	case 0:
+	case ShaderType::VERTEX:
 		break;
 	default:
 		ANKI_ASSERT(0);
@@ -190,13 +190,13 @@ ProgramResourcePointer& Material::getProgram(
 	U idx = 0;
 	switch(shaderId)
 	{
-	case 0:
+	case ShaderType::VERTEX:
 		idx = (U)key.m_pass * m_lodsCount * tessCount + key.m_lod * tessCount 
 			+ (key.m_tessellation ? 1 : 0);
 		break;
-	case 1:
-	case 2:
-	case 4:
+	case ShaderType::TESSELLATION_CONTROL:
+	case ShaderType::TESSELLATION_EVALUATION:
+	case ShaderType::FRAGMENT:
 		idx = (U)key.m_pass * m_lodsCount + key.m_lod;
 		break;
 	default:
@@ -242,15 +242,19 @@ GlProgramPipelineHandle Material::getProgramPipeline(
 		Array<GlProgramHandle, 5> progs;
 		U progCount = 0;
 
-		progs[progCount++] = getProgram(key, 0)->getGlProgram();
+		progs[progCount++] = 
+			getProgram(key, ShaderType::VERTEX)->getGlProgram();
 
 		if(key.m_tessellation)
 		{
-			progs[progCount++] = getProgram(key, 1)->getGlProgram();
-			progs[progCount++] = getProgram(key, 2)->getGlProgram();
+			progs[progCount++] = getProgram(
+				key, ShaderType::TESSELLATION_CONTROL)->getGlProgram();
+			progs[progCount++] = getProgram(
+				key, ShaderType::TESSELLATION_EVALUATION)->getGlProgram();
 		}
 
-		progs[progCount++] = getProgram(key, 4)->getGlProgram();
+		progs[progCount++] = 
+			getProgram(key, ShaderType::FRAGMENT)->getGlProgram();
 
 		GlDevice& gl = m_resources->_getGlDevice();
 		GlCommandBufferHandle cmdBuff(&gl);
@@ -370,14 +374,18 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 	m_pplines.resize(m_passesCount * m_lodsCount * tessCount);
 
 	m_hash = 0;
-	for(U shader = 0; shader < 5; shader++)
+	for(ShaderType shader = ShaderType::VERTEX; 
+		shader <= ShaderType::FRAGMENT; 
+		++shader)
 	{
-		if(!m_tessellation && (shader == 1 || shader == 2))
+		if(!m_tessellation 
+			&& (shader == ShaderType::TESSELLATION_CONTROL 
+				|| shader == ShaderType::TESSELLATION_EVALUATION))
 		{
 			continue;
 		}
 
-		if(shader == 3)
+		if(shader == ShaderType::GEOMETRY)
 		{
 			continue;
 		}

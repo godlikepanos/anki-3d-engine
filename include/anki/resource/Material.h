@@ -364,7 +364,8 @@ private:
 	U64 m_hash;
 
 	/// Get a program resource
-	ProgramResourcePointer& getProgram(const RenderingKey key, U32 shaderId);
+	ProgramResourcePointer& getProgram(
+		const RenderingKey key, ShaderType shaderId);
 
 	/// Parse what is within the @code <material></material> @endcode
 	void parseMaterialTag(const XmlElement& el, ResourceInitializer& rinit);

@@ -9,20 +9,9 @@
 #include "anki/resource/ResourceManager.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/StringList.h"
+#include "anki/gl/GlCommon.h"
 
 namespace anki {
-
-/// Shader type
-enum class ShaderType
-{
-	VERTEX,
-	TC,
-	TE,
-	GEOMETRY,
-	FRAGMENT,
-	COMPUTE,
-	COUNT
-};
 
 /// Helper class used for shader program loading
 ///

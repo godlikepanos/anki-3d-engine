@@ -13,7 +13,14 @@ layout(vertices = 3) out;
 #define IN_POS3(i_) gl_in[i_].gl_Position.xyz
 #define OUT_POS4(i_) gl_out[i_].gl_Position
 
+//
 // In
+//
+in gl_PerVertex
+{
+	vec4 gl_Position;
+} gl_in[];
+
 layout(location = 0) in vec2 inTexCoords[];
 layout(location = 1) in mediump vec3 inNormal[];
 #if PASS == COLOR
@@ -23,7 +30,15 @@ layout(location = 2) in mediump vec4 inTangent[];
 layout(location = 3) flat in uint inInstanceId[];
 #endif
 
+//
 // Out
+//
+
+out gl_PerVertex
+{
+	vec4 gl_Position;
+} gl_out[];
+
 layout(location = 0) out vec2 outTexCoord[];
 layout(location = 1) out vec3 outNormal[];
 #if PASS == COLOR
@@ -76,9 +91,9 @@ void calcPositions()
 	vec3 pos003 = IN_POS3(1);
 	vec3 pos300 = IN_POS3(2);
 
-	OUT_POS4(0) = IN_POS3(0);
-	OUT_POS4(1) = IN_POS3(1);
-	OUT_POS4(2) = IN_POS3(2);
+	OUT_POS4(0) = IN_POS4(0);
+	OUT_POS4(1) = IN_POS4(1);
+	OUT_POS4(2) = IN_POS4(2);
 
 	// edges are names according to the opposing vertex
 	vec3 edgeB300 = pos003 - pos030;
@@ -205,9 +220,9 @@ bool isFaceVisible(in mat4 mvp)
 }
 
 // Used in phong method
-float calcPhongTerm(int ivId, int i, int j)
+float calcPhongTerm(int ivId, int i, vec3 q)
 {
-	vec3 qMinusP = IN_POS3(j) - IN_POS3(i);
+	vec3 qMinusP = q - IN_POS3(i);
 	return q[ivId] - dot(qMinusP, inNormal[i]) * inNormal[i][ivId];
 }
 
@@ -281,12 +296,12 @@ void tessellatePhongPositionNormalTangentTexCoord(
 		outTangent[IID] = inTangent[IID];
 #endif
 
-		phongPatch.terms[IID][0] = calcPhongTerm(IID, 0, 1) 
-			+ calcPhongTerm(IID, 1, 0);
-		phongPatch.terms[IID][1] = calcPhongTerm(IID, 1, 2) 
-			+ calcPhongTerm(IID, 2, 1);
-		phongPatch.terms[IID][2] = calcPhongTerm(IID, 2, 0) 
-			+ calcPhongTerm(IID, 0, 2);
+		phongPatch.terms[IID][0] = calcPhongTerm(IID, 0, IN_POS3(1))
+			+ calcPhongTerm(IID, 1, IN_POS3(0));
+		phongPatch.terms[IID][1] = calcPhongTerm(IID, 1, IN_POS3(2))
+			+ calcPhongTerm(IID, 2, IN_POS3(1));
+		phongPatch.terms[IID][2] = calcPhongTerm(IID, 2, IN_POS3(0))
+			+ calcPhongTerm(IID, 0, IN_POS3(2));
 	}
 }
 

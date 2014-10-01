@@ -30,7 +30,8 @@ GlProgramPipeline::GlProgramPipeline(
 		if(prog.isCreated())
 		{
 			GLbitfield bit;
-			GLenum gltype = computeGlShaderType(i, &bit);
+			GLenum gltype = 
+				computeGlShaderType(static_cast<ShaderType>(i), &bit);
 			ANKI_ASSERT(prog.getType() == gltype && "Attached wrong shader");
 			(void)gltype;
 			glUseProgramStages(m_glName, bit, prog._get().getGlName());
@@ -95,7 +96,8 @@ void GlProgramPipeline::attachProgramsInternal(
 	while(count-- != 0)
 	{
 		const GlProgramHandle& prog = progs[count];
-		U idx = computeShaderTypeIndex(prog._get().getType());
+		ShaderType type = computeShaderTypeIndex(prog._get().getType());
+		U idx = enumToType(type);
 
 		ANKI_ASSERT(!m_progs[idx].isCreated() && "Attaching the same");
 		m_progs[idx] = prog;
@@ -137,7 +139,8 @@ void GlProgramPipeline::bind()
 GlProgramHandle GlProgramPipeline::getAttachedProgram(GLenum type) const
 {
 	ANKI_ASSERT(isCreated());
-	U idx = computeShaderTypeIndex(type);
+	ShaderType stype = computeShaderTypeIndex(type);
+	U idx = enumToType(stype);
 	GlProgramHandle prog = m_progs[idx];
 	ANKI_ASSERT(prog.isCreated() && "Asking for non-created program");
 	return prog;

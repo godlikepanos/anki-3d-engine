@@ -13,14 +13,6 @@
 namespace anki {
 
 //==============================================================================
-#define CHECK_ERROR() \
-	if(m_error != nullptr) \
-	{ \
-		throw ANKI_EXCEPTION("GL rendering thread failed with error:\n%s", \
-			&m_error[0]); \
-	}
-
-//==============================================================================
 GlQueue::GlQueue(GlDevice* device, 
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 :	m_device(device), 
@@ -36,12 +28,7 @@ GlQueue::GlQueue(GlDevice* device,
 
 //==============================================================================
 GlQueue::~GlQueue()
-{
-	if(m_error)
-	{
-		m_allocCb(m_allocCbUserData, m_error, 0, 0);
-	}
-}
+{}
 
 //==============================================================================
 void GlQueue::flushCommandBuffer(GlCommandBufferHandle& commands)
@@ -51,8 +38,6 @@ void GlQueue::flushCommandBuffer(GlCommandBufferHandle& commands)
 #if !ANKI_QUEUE_DISABLE_ASYNC
 	{
 		LockGuard<Mutex> lock(m_mtx);
-
-		CHECK_ERROR();
 
 		// Set commands
 		U64 diff = m_tail - m_head;
@@ -238,12 +223,8 @@ void GlQueue::threadLoop()
 		}
 		catch(const std::exception& e)
 		{
-			LockGuard<Mutex> lock(m_mtx);
-			I len = strlen(e.what());
-			m_error = reinterpret_cast<char*>(
-				m_allocCb(m_allocCbUserData, nullptr, len + 1, 1));
-
-			strcpy(m_error, e.what());
+			ANKI_LOGE("Exception in rendering thread. Aborting:\n%s", e.what());
+			abort();
 		}
 	}
 
@@ -256,8 +237,6 @@ void GlQueue::syncClientServer()
 #if !ANKI_QUEUE_DISABLE_ASYNC
 	flushCommandBuffer(m_syncCommands);
 	m_sync.wait();
-
-	CHECK_ERROR();
 #endif
 }
 

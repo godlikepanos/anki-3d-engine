@@ -11,7 +11,7 @@
 #include "anki/util/NonCopyable.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Array.h"
-#include "anki/util/StdTypes.h"
+#include "anki/util/Enum.h"
 #include "anki/Math.h"
 
 #if ANKI_GL == ANKI_GL_DESKTOP
@@ -76,22 +76,21 @@ public:
 
 /// @}
 
-/// @addtogroup opengl_other
-
-/// A function that returns an index from a shader type GLenum
-U computeShaderTypeIndex(const GLenum glType);
-
-/// A function that returns a GLenum from an index
-GLenum computeGlShaderType(const U idx, GLbitfield* bit = nullptr);
-
-/// GL generic callback
-using GlCallback = void(*)(void*);
-using GlMakeCurrentCallback = void(*)(void*, void*);
-
-/// @}
-
 /// @addtogroup opengl_containers
 /// @{
+
+/// Shader type
+enum class ShaderType: U8
+{
+	VERTEX,
+	TESSELLATION_CONTROL,
+	TESSELLATION_EVALUATION,
+	GEOMETRY,
+	FRAGMENT,
+	COMPUTE,
+	COUNT
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType, inline)
 
 /// Shader program variable. The type is attribute or uniform
 class GlProgramVariable
@@ -318,6 +317,16 @@ public:
 	U32 m_first = 0;
 	U32 m_baseInstance = 0;	
 };
+
+/// A function that returns an index from a shader type GLenum
+ShaderType computeShaderTypeIndex(const GLenum glType);
+
+/// A function that returns a GLenum from an index
+GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit = nullptr);
+
+/// GL generic callback
+using GlCallback = void(*)(void*);
+using GlMakeCurrentCallback = void(*)(void*, void*);
 
 /// @}
 

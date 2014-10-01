@@ -129,8 +129,6 @@ private:
 	GlCommandBufferHandle m_syncCommands;
 	GlClientSyncHandle m_sync;
 
-	char* m_error = nullptr;
-
 	/// The function that the thread runs
 	static I threadCallback(Thread::Info&);
 	void threadLoop();

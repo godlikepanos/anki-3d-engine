@@ -11,7 +11,7 @@ namespace anki {
 //==============================================================================
 AsyncLoader::AsyncLoader(const HeapAllocator<U8>& alloc)
 :	m_alloc(alloc),
-	m_thread("anki_async_loader")
+	m_thread("anki_asyload")
 {
 	m_thread.start(this, threadCallback);
 }

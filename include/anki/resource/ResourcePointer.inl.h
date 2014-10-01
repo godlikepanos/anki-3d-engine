@@ -12,7 +12,7 @@ template<typename T, typename TResourceManager>
 void ResourcePointer<T, TResourceManager>::load(
 	const CString& filename, TResourceManager* resources)
 {
-	ANKI_ASSERT(m_cb == nullptr);
+	ANKI_ASSERT(m_cb == nullptr && "Already loaded");
 	ANKI_ASSERT(resources != nullptr);
 
 	ResourcePointer other;

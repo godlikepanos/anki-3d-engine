@@ -9,6 +9,9 @@
 #include <cstring>
 #include <cstdarg>
 #include <cstdio> // For vsnprintf
+#if ANKI_DEBUG == 1
+#	include "anki/util/Thread.h"
+#endif
 
 // Instead of throwing abort. Its easier to debug
 #define ANKI_ABORT_ON_THROW 0

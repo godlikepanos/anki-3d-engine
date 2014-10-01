@@ -57,8 +57,9 @@ public:
 	~MaterialProgramCreator();
 
 	/// Get the shader program source code
-	MPString getProgramSource(U shaderType) const
+	MPString getProgramSource(ShaderType shaderType_) const
 	{
+		U shaderType = enumToType(shaderType_);
 		ANKI_ASSERT(m_source[shaderType].size() > 0);
 		return m_source[shaderType].join(CString("\n"));
 	}
