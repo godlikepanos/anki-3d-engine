@@ -303,6 +303,11 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 			duplicateInp->m_shaderDefinedMask |= glshaderbit;
 
+			if(duplicateInp->m_inBlock)
+			{
+				m_uniformBlockReferencedMask |= glshaderbit;
+			}
+
 			goto advance;
 		}
 

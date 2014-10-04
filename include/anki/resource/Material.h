@@ -377,6 +377,9 @@ private:
 	/// Read all shader programs and pupulate the @a vars and @a nameToVar
 	/// containers
 	void populateVariables(const MaterialProgramCreator& mspc);
+
+	U countShaders(ShaderType type) const;
+	U getShaderIndex(const RenderingKey key, ShaderType type) const;
 };
 
 } // end namespace anki

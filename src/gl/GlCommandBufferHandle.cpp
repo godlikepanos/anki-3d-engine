@@ -505,6 +505,9 @@ void GlCommandBufferHandle::drawElements(
 		case GL_LINES:
 			_pushBackNewCommand<DrawElementsCommand<GL_LINES, 2>>(info);
 			break;
+		case GL_PATCHES:
+			_pushBackNewCommand<DrawElementsCommand<GL_PATCHES, 2>>(info);
+			break;
 		default:
 			ANKI_ASSERT(0 && "Not implemented");
 		}

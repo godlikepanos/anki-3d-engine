@@ -257,9 +257,18 @@ Bool ConditionVariable::wait(Mutex& amtx, F64 timeoutSeconds)
 	else
 	{
 		U64 ns = static_cast<U64>(timeoutSeconds * 1e+9);
+		struct timespec reltime;
+		reltime.tv_sec = ns / 1000000000;
+		reltime.tv_nsec = (ns % 1000000000);
+
+		struct timespec now;
+		clock_gettime(CLOCK_REALTIME, &now);
+
 		struct timespec abstime;
-		abstime.tv_sec = ns / 1000000000;
-		abstime.tv_nsec = (ns % 1000000000);
+		memset(&abstime, 0, sizeof(abstime));
+		abstime.tv_sec = now.tv_sec + reltime.tv_sec;
+		abstime.tv_nsec = now.tv_nsec + reltime.tv_nsec;
+		
 		err = pthread_cond_timedwait(cond, mtx, &abstime);
 	}
 

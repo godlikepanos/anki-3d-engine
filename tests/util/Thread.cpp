@@ -152,3 +152,23 @@ ANKI_TEST(Util, Threadpool)
 	delete tp;
 }
 
+//==============================================================================
+ANKI_TEST(Util, Barrier)
+{
+	// Simple test
+	{
+		Barrier b(2);
+		Thread t(nullptr);
+
+		t.start(&b, [](Thread::Info& info) -> I
+		{
+			Barrier& b = *reinterpret_cast<Barrier*>(info.m_userData);
+			b.wait();
+			return 0;
+		});
+
+		b.wait();
+		t.join();
+	}
+}
+

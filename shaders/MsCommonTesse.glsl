@@ -8,6 +8,10 @@ layout(triangles, equal_spacing, ccw) in;
 #define IN_POS4(i_) gl_in[i_].gl_Position
 #define IN_POS3(i_) gl_in[i_].gl_Position.xyz
 
+//
+// Input
+//
+
 struct PNPatch
 {
 	vec3 pos021;
@@ -31,6 +35,11 @@ struct CommonPatch
 };
 #endif
 
+in gl_PerVertex
+{
+	vec4 gl_Position;
+} gl_in[];
+
 in patch PNPatch pnPatch;
 in patch PhongPatch phongPatch;
 #if INSTANCE_ID_FRAGMENT_SHADER
@@ -39,13 +48,21 @@ in patch CommonPatch commonPatch;
 
 layout(location = 0) in vec2 inTexCoord[];
 layout(location = 1) in vec3 inNormal[];
-#if PASS_COLOR
+#if PASS == COLOR
 layout(location = 2) in vec4 inTangent[];
 #endif
 
-// Varyings out
+//
+// Output
+//
+
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
 layout(location = 0) out highp vec2 outTexCoord;
-#if PASS_COLOR
+#if PASS == COLOR
 layout(location = 1) out mediump vec3 outNormal;
 layout(location = 2) out mediump vec4 outTangent;
 #endif
@@ -56,7 +73,7 @@ layout(location = 2) out mediump vec4 outTangent;
 #define tessellatePNPositionNormalTangentTexCoord_DEFINED
 void tessellatePNPositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat)
 {
-#if PASS_COLOR
+#if PASS == COLOR
 	outNormal = normalize(normalMat * INTERPOLATE(inNormal));
 	outTangent = INTERPOLATE(inTangent);
 	outTangent.xyz = normalize(normalMat * outTangent.xyz);
@@ -98,7 +115,7 @@ void tessellatePNPositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat)
 void tessellatePhongPositionNormalTangentTexCoord(
 	in mat4 mvp, in mat3 normalMat)
 {
-#if PASS_COLOR
+#if PASS == COLOR
 	outNormal = normalize(normalMat * INTERPOLATE(inNormal));
 	outTangent = INTERPOLATE(inTangent);
 	outTangent.xyz = normalize(normalMat * outTangent.xyz);
@@ -145,7 +162,7 @@ void tessellateDispMapPositionNormalTangentTexCoord(
 	in mat4 mvp, in mat3 normalMat, in sampler2D dispMap)
 {
 	vec3 norm = INTERPOLATE(inNormal);
-#if PASS_COLOR
+#if PASS == COLOR
 	outNormal = normalize(normalMat * norm);
 	outTangent = INTERPOLATE(inTangent);
 	outTangent.xyz = normalize(normalMat * outTangent.xyz);

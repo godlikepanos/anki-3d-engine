@@ -326,9 +326,14 @@ void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	build.m_key.m_lod = flod;
 	build.m_key.m_pass = m_pass;
 	build.m_key.m_tessellation = 
-		m_r->usesTessellation() 
+		m_r->getTessellationEnabled() 
 		&& mtl.getTessellation()
 		&& build.m_key.m_lod == 0;
+
+	if(m_pass == Pass::DEPTH)
+	{
+		build.m_key.m_tessellation = false;
+	}
 
 	// Blending
 	Bool blending = mtl.isBlendingEnabled();
@@ -373,6 +378,11 @@ void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
 	m_stage = stage;
 	m_pass = pass;
 	m_cmdBuff = cmdBuff;
+
+	if(m_r->getTessellationEnabled())
+	{
+		m_cmdBuff.setPatchVertexCount(3);
+	}
 
 	if(m_r->getFramesCount() > m_uniformsUsedSizeFrame)
 	{

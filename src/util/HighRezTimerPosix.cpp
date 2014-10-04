@@ -15,31 +15,33 @@ namespace anki {
 //==============================================================================
 namespace {
 
-// The first ticks value of the application
-struct timespec gstart;
-
 /// A dummy struct that inits the timer
-struct DummyInitTimer
+class StartTime
 {
-	DummyInitTimer()
+public:
+	/// The first ticks value of the application
+	timespec m_time;
+
+	StartTime()
 	{
-		clock_gettime(CLOCK_MONOTONIC, &gstart);
+		clock_gettime(CLOCK_MONOTONIC, &m_time);
 	}
 };
 
-DummyInitTimer dummy;
+StartTime startTime;
 
 } // end namespace anonymous 
 
 //==============================================================================
 static U64 getNs()
 {
-	U32 ticks;
+	U64 ticks;
 
-	struct timespec now;
+	timespec now;
 	clock_gettime(CLOCK_MONOTONIC, &now);
-	ticks = (now.tv_sec - gstart.tv_sec) * 1000000000 
-		+ (now.tv_nsec - gstart.tv_nsec);
+	ticks = 
+		static_cast<U64>(now.tv_sec - startTime.m_time.tv_sec) * 1000000000 
+		+ (now.tv_nsec - startTime.m_time.tv_nsec);
 
 	return ticks;
 }
@@ -47,6 +49,7 @@ static U64 getNs()
 //==============================================================================
 void HighRezTimer::sleep(Scalar sec)
 {
+	ANKI_ASSERT(sec >= 0.0);
 	int wasError;
 	U64 ns = static_cast<U64>(sec * 1e+9);
 

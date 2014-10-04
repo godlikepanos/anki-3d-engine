@@ -146,8 +146,43 @@ Material::~Material()
 }
 
 //==============================================================================
-ProgramResourcePointer& Material::getProgram(
-	const RenderingKey key, ShaderType shaderId)
+U Material::countShaders(ShaderType type) const
+{
+	U count = 0;
+	U tessCount = m_tessellation ? 2 : 1;
+
+	switch(type)
+	{
+	case ShaderType::VERTEX:
+		count = m_passesCount * m_lodsCount * tessCount;
+		break;
+	case ShaderType::TESSELLATION_CONTROL:
+		if(m_tessellation)
+		{
+			count = m_passesCount;
+		}
+		break;
+	case ShaderType::TESSELLATION_EVALUATION:
+		if(m_tessellation)
+		{
+			count = m_passesCount;
+		}
+		break;
+	case ShaderType::GEOMETRY:
+		count = 0;
+		break;
+	case ShaderType::FRAGMENT:
+		count = m_passesCount * m_lodsCount;
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return count;
+}
+
+//==============================================================================
+U Material::getShaderIndex(const RenderingKey key, ShaderType type) const
 {
 	ANKI_ASSERT((U)key.m_pass < m_passesCount);
 	ANKI_ASSERT(key.m_lod < m_lodsCount);
@@ -157,60 +192,69 @@ ProgramResourcePointer& Material::getProgram(
 		ANKI_ASSERT(m_tessellation);
 	}
 
-	// Calc the count that are before this shader
 	U tessCount = m_tessellation ? 2 : 1;
-	U count = 0;
-	switch(shaderId)
+
+	U pass = enumToType(key.m_pass);
+	U lod = key.m_lod;
+	U tess = key.m_tessellation;
+
+	U offset = 0;
+	switch(type)
 	{
 	case ShaderType::FRAGMENT:
-		// Count of geom
-		count += 0;
+		offset += countShaders(ShaderType::GEOMETRY);
 	case ShaderType::GEOMETRY:
-		// Count of tess
-		if(m_tessellation)
-		{
-			count += m_passesCount * m_lodsCount;
-		}
+		offset += countShaders(ShaderType::TESSELLATION_EVALUATION);
 	case ShaderType::TESSELLATION_EVALUATION:
-		// Count of tess
-		if(m_tessellation)
-		{
-			count += m_passesCount * m_lodsCount;
-		}
+		offset += countShaders(ShaderType::TESSELLATION_CONTROL);
 	case ShaderType::TESSELLATION_CONTROL:
-		// Count of vert
-		count += m_passesCount * m_lodsCount * tessCount;
+		offset += countShaders(ShaderType::VERTEX);
 	case ShaderType::VERTEX:
+		offset += 0;
 		break;
 	default:
 		ANKI_ASSERT(0);
 	}
 
-	// Calc the idx
-	U idx = 0;
-	switch(shaderId)
+	U idx = MAX_U32;
+	switch(type)
 	{
 	case ShaderType::VERTEX:
-		idx = (U)key.m_pass * m_lodsCount * tessCount + key.m_lod * tessCount 
-			+ (key.m_tessellation ? 1 : 0);
+		// Like referencing an array of [pass][lod][tess]
+		idx = pass * m_lodsCount * tessCount + lod * tessCount + tess;
 		break;
 	case ShaderType::TESSELLATION_CONTROL:
+		// Like an array [pass]
+		idx = pass;
+		break;
 	case ShaderType::TESSELLATION_EVALUATION:
+		// Like an array [pass]
+		idx = pass;
+		break;
+	case ShaderType::GEOMETRY:
+		idx = 0;
+		break;
 	case ShaderType::FRAGMENT:
-		idx = (U)key.m_pass * m_lodsCount + key.m_lod;
+		// Like an array [pass][lod]
+		idx = pass * m_lodsCount + lod;
 		break;
 	default:
 		ANKI_ASSERT(0);
 	}
 
-	idx += count;
-	ANKI_ASSERT(idx < m_progs.size());
-	ProgramResourcePointer& out = m_progs[idx];
+	return offset + idx;
+}
+
+//==============================================================================
+ProgramResourcePointer& Material::getProgram(
+	const RenderingKey key, ShaderType type)
+{
+	ProgramResourcePointer& out = m_progs[getShaderIndex(key, type)];
 
 	if(out.isLoaded())
 	{
 		ANKI_ASSERT(
-			computeShaderTypeIndex(out->getGlProgram().getType()) == shaderId);
+			computeShaderTypeIndex(out->getGlProgram().getType()) == type);
 	}
 
 	return out;
@@ -220,20 +264,22 @@ ProgramResourcePointer& Material::getProgram(
 GlProgramPipelineHandle Material::getProgramPipeline(
 	const RenderingKey& key)
 {
-	ANKI_ASSERT((U)key.m_pass < m_passesCount);
+	ANKI_ASSERT(enumToType(key.m_pass) < m_passesCount);
 	ANKI_ASSERT(key.m_lod < m_lodsCount);
 
 	U tessCount = 1;
-	if(key.m_tessellation)
+	if(m_tessellation)
 	{
-		ANKI_ASSERT(m_tessellation);
 		tessCount = 2;
 	}
+	else
+	{
+		ANKI_ASSERT(!key.m_tessellation);
+	}
 
-	U idx = (U)key.m_pass * m_lodsCount * tessCount
+	U idx = enumToType(key.m_pass) * m_lodsCount * tessCount
 		+ key.m_lod * tessCount + key.m_tessellation;
 
-	ANKI_ASSERT(idx < m_pplines.size());
 	GlProgramPipelineHandle& ppline = m_pplines[idx];
 
 	// Lazily create it
@@ -361,14 +407,12 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 	U tessCount = m_tessellation ? 2 : 1;
 
 	// Alloc program vector
-	U progCount = 0;
-	progCount += m_passesCount * m_lodsCount * tessCount;
-	if(m_tessellation)
-	{
-		progCount += m_passesCount * m_lodsCount * 2;
-	}
-	progCount += m_passesCount * m_lodsCount;
-	m_progs.resize(progCount);
+	m_progs.resize(
+		countShaders(ShaderType::VERTEX) 
+		+ countShaders(ShaderType::TESSELLATION_CONTROL)
+		+ countShaders(ShaderType::TESSELLATION_EVALUATION)
+		+ countShaders(ShaderType::GEOMETRY)
+		+ countShaders(ShaderType::FRAGMENT));
 
 	// Aloc progam descriptors
 	m_pplines.resize(m_passesCount * m_lodsCount * tessCount);
@@ -378,24 +422,42 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 		shader <= ShaderType::FRAGMENT; 
 		++shader)
 	{
-		if(!m_tessellation 
-			&& (shader == ShaderType::TESSELLATION_CONTROL 
-				|| shader == ShaderType::TESSELLATION_EVALUATION))
+		Bool isTessellationShader = shader == ShaderType::TESSELLATION_CONTROL 
+			|| shader == ShaderType::TESSELLATION_EVALUATION;
+
+		if(!m_tessellation && isTessellationShader)
 		{
+			// Skip tessellation if not enabled
 			continue;
 		}
 
 		if(shader == ShaderType::GEOMETRY)
 		{
+			// Skip geometry for now
 			continue;
 		}
 
 		for(U level = 0; level < m_lodsCount; ++level)
 		{
+			if(level > 0 && isTessellationShader)
+			{
+				continue;
+			}
+
 			for(U pid = 0; pid < m_passesCount; ++pid)
 			{
 				for(U tess = 0; tess < tessCount; ++tess)
 				{
+					if(tess == 0 && isTessellationShader)
+					{
+						continue;
+					}
+
+					if(tess > 0 && shader == ShaderType::FRAGMENT)
+					{
+						continue;
+					}
+
 					TempResourceString src(rinit.m_tempAlloc);
 
 					src.sprintf(

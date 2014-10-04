@@ -120,7 +120,7 @@ void init()
 	spot->setShadowEnabled(true);
 #endif
 
-#if 1
+#if 0
 	// Vase point lights
 	F32 x = 8.5; 
 	F32 y = 2.25;
@@ -506,7 +506,7 @@ void initSubsystems(int argc, char* argv[])
 	config.set("height", 720);
 	config.set("lodDistance", 20.0);
 	config.set("samples", 1);
-	config.set("tessellation", false);
+	config.set("tessellation", true);
 	config.set("tilesXCount", 16);
 	config.set("tilesYCount", 16);
 

@@ -162,7 +162,7 @@ public:
 		return m_isOffscreen;
 	}
 
-	Bool usesTessellation() const
+	Bool getTessellationEnabled() const
 	{
 		return m_tessellation;
 	}
