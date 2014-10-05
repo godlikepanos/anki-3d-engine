@@ -127,6 +127,9 @@ public:
 	/// Enable/disable polygon offset
 	void enablePolygonOffset(Bool enable);
 
+	/// Set polygon mode
+	void setPolygonMode(GLenum face, GLenum mode);
+
 	/// Bind many textures
 	/// @param first The unit where the first texture will be bound
 	/// @param textures A list of textures to bind

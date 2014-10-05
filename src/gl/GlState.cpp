@@ -129,8 +129,6 @@ void GlState::init()
 	}
 #endif
 
-	glEnable(GL_PROGRAM_POINT_SIZE);
-
 	// Buffer offset alignment
 	GLint64 alignment;
 	glGetInteger64v(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &alignment);

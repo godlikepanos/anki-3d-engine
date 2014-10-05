@@ -201,7 +201,7 @@ public:
 		return m_depthTesting;
 	}
 
-	Bool getWireframe() const
+	Bool getWireframeEnabled() const
 	{
 		return m_wireframe;
 	}

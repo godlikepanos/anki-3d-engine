@@ -394,6 +394,12 @@ void GlCommandBufferHandle::enablePolygonOffset(Bool enable)
 }
 
 //==============================================================================
+void GlCommandBufferHandle::setPolygonMode(GLenum face, GLenum mode)
+{
+	ANKI_STATE_CMD_2(GLenum, glPolygonMode, face, mode);
+}
+
+//==============================================================================
 void GlCommandBufferHandle::bindTextures(U32 first, 
 	const std::initializer_list<GlTextureHandle>& textures)
 {

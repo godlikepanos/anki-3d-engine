@@ -172,6 +172,21 @@ bool isFaceOutsideClipSpace(in vec2 posNdc[3])
 		posOutsideClipSpace(posNdc[2])));
 }
 
+// Check if a face is visible
+bool isFaceVisible(in mat4 mvp)
+{
+	// Calculate clip positions
+	vec2 clip[3];
+	for(int i = 0 ; i < 3 ; i++) 
+	{
+		vec4 v = mvp * IN_POS4(i);
+		clip[i] = v.xy / (v.w * 0.5 + 0.5);
+	}
+
+	// Check the face orientation and clipping
+	return isFaceFrontFacing(clip) && !isFaceOutsideClipSpace(clip);
+}
+
 void setSilhouetteTessLevels(in mat3 normalMat, in float maxTessLevel)
 {
 	// Calculate the normals in view space
@@ -202,21 +217,6 @@ void discardPatch()
 	gl_TessLevelOuter[1] = 0.0;
 	gl_TessLevelOuter[2] = 0.0;
 	gl_TessLevelInner[0] = 0.0;
-}
-
-// Check if a face is visible
-bool isFaceVisible(in mat4 mvp)
-{
-	// Calculate clip positions
-	vec2 clip[3];
-	for(int i = 0 ; i < 3 ; i++) 
-	{
-		vec4 v = mvp * IN_POS4(i);
-		clip[i] = v.xy / abs(v.w);
-	}
-
-	// Check the face orientation and clipping
-	return isFaceFrontFacing(clip) && !isFaceOutsideClipSpace(clip);
 }
 
 // Used in phong method
@@ -315,7 +315,7 @@ void tessellateDispMapPositionNormalTangentTexCoord(
 	{
 		if(isFaceVisible(mvp))
 		{
-			setSilhouetteTessLevels(normalMat, maxTessLevel);
+			setConstantTessLevels(maxTessLevel);
 
 #if INSTANCE_ID_FRAGMENT_SHADER
 			commonPatch.instanceId = inInstanceId[0];

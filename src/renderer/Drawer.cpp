@@ -355,9 +355,12 @@ void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 			mtl.getBlendingSfactor(), mtl.getBlendingDfactor());
 	}
 
-#if ANKI_GL == ANKI_GL_DESKTOP
-	// TODO Set wireframe
-#endif
+	// Wireframe
+	Bool wireframeOn = mtl.getWireframeEnabled();
+	if(wireframeOn)
+	{
+		m_cmdBuff.setPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
 
 	// Enqueue uniform state updates
 	setupUniforms(visibleNode, renderable, fr, flod);
@@ -368,6 +371,12 @@ void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	build.m_jobs = m_cmdBuff;
 
 	renderable.buildRendering(build);
+
+	// Wireframe back to what it was
+	if(wireframeOn)
+	{
+		m_cmdBuff.setPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 }
 
 //==============================================================================

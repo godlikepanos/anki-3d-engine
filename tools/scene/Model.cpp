@@ -267,6 +267,7 @@ void exportMaterial(
 {
 	std::string diffTex;
 	std::string normTex;
+	std::string dispTex;
 
 	std::string name = getMaterialName(mtl, instanced);
 	LOGI("Exporting material %s\n", name.c_str());
@@ -300,6 +301,19 @@ void exportMaterial(
 		}
 	}
 
+	// Height texture
+	if(mtl.GetTextureCount(aiTextureType_EMISSIVE) > 0)
+	{	
+		if(mtl.GetTexture(aiTextureType_EMISSIVE, 0, &path) == AI_SUCCESS)
+		{
+			dispTex = getFilename(path.C_Str());
+		}
+		else
+		{
+			ERROR("Failed to retrieve texture\n");
+		}
+	}
+
 	// Write file
 	static const char* diffMtlStr = 
 #include "diffTemplateMtl.h"
@@ -307,20 +321,34 @@ void exportMaterial(
 	static const char* diffNormMtlStr = 
 #include "diffNormTemplateMtl.h"
 		;
+	static const char* tessDispMtlStr = 
+#include "tessDispTemplateMtl.h"
+		;
 
 	std::fstream file;
 	file.open(exporter.outDir + name + ".ankimtl", std::ios::out);
 
 	// Chose the correct template
 	std::string str;
-	if(normTex.size() == 0)
+	if(normTex.empty())
 	{
 		str = diffMtlStr;
 	}
 	else
 	{
-		str = replaceAllString(diffNormMtlStr, "%normalMap%", 
-			exporter.texrpath + normTex);
+		if(dispTex.empty())
+		{
+			str = replaceAllString(diffNormMtlStr, "%normalMap%", 
+				exporter.texrpath + normTex);
+		}
+		else
+		{
+			str = replaceAllString(tessDispMtlStr, "%normalMap%", 
+				exporter.texrpath + normTex);
+
+			str = replaceAllString(str, "%dispMap%", 
+				exporter.texrpath + dispTex);
+		}
 	}
 
 	aiColor3D specCol = {0.0, 0.0, 0.0};
