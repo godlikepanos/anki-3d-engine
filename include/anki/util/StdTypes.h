@@ -71,6 +71,21 @@ const F64 MIN_F64 = -std::numeric_limits<F64>::max();
 using Bool = bool; ///< Fast boolean type
 using Bool8 = U8; ///< Small 8bit boolean type
 
+/// Error codes
+enum Error
+{
+	ERROR_NONE,
+	ERROR_OUT_OF_MEMORY,
+	ERROR_FUNCTION_FAILED, ///< External operation failed
+	ERROR_INITIALIZATION_FAILED,
+
+	// File errors
+	ERROR_FILE_NOT_FOUND,
+	ERROR_FILE_ACCESS, ///< Read/write access error
+
+	ERROR_UNKNOWN
+};
+
 /// @}
 
 } // end namespace anki

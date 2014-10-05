@@ -151,12 +151,12 @@
 #	define ANKI_LIKELY(x) __builtin_expect((x), 1)
 #	define ANKI_UNLIKELY(x) __builtin_expect((x), 0)
 #	define ANKI_RESTRICT __restrict
-#	define ANKI_ATTRIBUTE_ALIGNED(attr_, al_) \
-		attr_ __attribute__ ((aligned (al_)))
+#	define ANKI_USE_RESULT __attribute__((warn_unused_result))
 #else
 #	define ANKI_LIKELY(x) ((x) == 1)
 #	define ANKI_UNLIKELY(x) ((x) == 1)
 #	define ANKI_RESTRICT
+#	define ANKI_USE_RESULT
 #endif
 
 /// @}
