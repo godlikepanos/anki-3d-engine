@@ -59,11 +59,6 @@ public:
 		*this = other;
 	}
 
-	/// The real constructor
-	/// @param allocCb The allocation function callback
-	/// @param allocCbUserData The user data to pass to the allocation function
-	HeapMemoryPool(AllocAlignedCallback allocCb, void* allocCbUserData);
-
 	/// Destroy
 	~HeapMemoryPool()
 	{
@@ -73,6 +68,11 @@ public:
 	/// Copy. It will not copy any data, what it will do is add visibility of
 	/// other's pool to this instance as well
 	HeapMemoryPool& operator=(const HeapMemoryPool& other);
+
+	/// The real constructor
+	/// @param allocCb The allocation function callback
+	/// @param allocCbUserData The user data to pass to the allocation function
+	Error create(AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	/// Check if two memory pools are the same one.
 	Bool operator==(const HeapMemoryPool& b) const noexcept
@@ -124,16 +124,6 @@ public:
 		*this = other;
 	}
 
-	/// Constructor with parameters
-	/// @param alloc The allocation function callback
-	/// @param allocUserData The user data to pass to the allocation function
-	/// @param size The size of the pool
-	/// @param alignmentBytes The maximum supported alignment for returned
-	///                       memory
-	StackMemoryPool(
-		AllocAlignedCallback alloc, void* allocUserData,
-		PtrSize size, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
-
 	/// Destroy
 	~StackMemoryPool()
 	{
@@ -149,6 +139,16 @@ public:
 	{
 		return m_impl == b.m_impl;
 	}
+
+	/// Create with parameters
+	/// @param alloc The allocation function callback
+	/// @param allocUserData The user data to pass to the allocation function
+	/// @param size The size of the pool
+	/// @param alignmentBytes The maximum supported alignment for returned
+	///                       memory
+	Error create(
+		AllocAlignedCallback alloc, void* allocUserData,
+		PtrSize size, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Allocate aligned memory. The operation is thread safe
 	/// @param size The size to allocate
@@ -227,25 +227,6 @@ public:
 		*this = other;
 	}
 
-	/// Constructor with parameters
-	/// @param alloc The allocation function callback
-	/// @param allocUserData The user data to pass to the allocation function
-	/// @param initialChunkSize The size of the first chunk
-	/// @param maxChunkSize The size of the chunks cannot exceed that number
-	/// @param chunkAllocStepMethod How new chunks grow compared to the old ones
-	/// @param chunkAllocStep Used along with chunkAllocStepMethod and defines
-	///                       the ammount of chunk size increase 
-	/// @param alignmentBytes The maximum supported alignment for returned
-	///                       memory
-	ChainMemoryPool(
-		AllocAlignedCallback alloc, void* allocUserData,
-		PtrSize initialChunkSize,
-		PtrSize maxChunkSize,
-		ChunkGrowMethod chunkAllocStepMethod = 
-			ChunkGrowMethod::MULTIPLY, 
-		PtrSize chunkAllocStep = 2, 
-		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
-
 	/// Destroy
 	~ChainMemoryPool()
 	{
@@ -261,6 +242,25 @@ public:
 	{
 		return m_impl == b.m_impl;
 	}
+
+	/// Constructor with parameters
+	/// @param alloc The allocation function callback
+	/// @param allocUserData The user data to pass to the allocation function
+	/// @param initialChunkSize The size of the first chunk
+	/// @param maxChunkSize The size of the chunks cannot exceed that number
+	/// @param chunkAllocStepMethod How new chunks grow compared to the old ones
+	/// @param chunkAllocStep Used along with chunkAllocStepMethod and defines
+	///                       the ammount of chunk size increase 
+	/// @param alignmentBytes The maximum supported alignment for returned
+	///                       memory
+	Error create(
+		AllocAlignedCallback alloc, void* allocUserData,
+		PtrSize initialChunkSize,
+		PtrSize maxChunkSize,
+		ChunkGrowMethod chunkAllocStepMethod = 
+			ChunkGrowMethod::MULTIPLY, 
+		PtrSize chunkAllocStep = 2, 
+		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Allocate memory. This operation is thread safe
 	/// @param size The size to allocate

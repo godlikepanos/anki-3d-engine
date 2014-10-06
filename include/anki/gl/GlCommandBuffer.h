@@ -60,7 +60,10 @@ class GlCommandBufferInitHints
 	friend class GlCommandBuffer;
 
 private:
-	static const PtrSize m_maxChunkSize = 4 * 1024 * 1024; // 1MB
+	enum
+	{
+		MAX_CHUNK_SIZE = 4 * 1024 * 1024 // 1MB
+	};
 
 	PtrSize m_chunkSize = 1024;
 };

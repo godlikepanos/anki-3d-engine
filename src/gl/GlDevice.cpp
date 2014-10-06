@@ -14,7 +14,7 @@ GlDevice::GlDevice(
 	AllocAlignedCallback alloc, void* allocUserData,
 	const CString& cacheDir)
 {
-	m_alloc = HeapAllocator<U8>(HeapMemoryPool(alloc, allocUserData));
+	m_alloc = HeapAllocator<U8>(alloc, allocUserData);
 
 	// Allocate cache dir
 	auto len = cacheDir.getLength();

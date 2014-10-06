@@ -83,7 +83,7 @@ public:
 //==============================================================================
 ANKI_TEST(Resource, AsyncLoader)
 {
-	HeapAllocator<U8> alloc(HeapMemoryPool(allocAligned, nullptr));
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	// Simple create destroy
 	{

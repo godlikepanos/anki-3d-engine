@@ -17,13 +17,13 @@ namespace anki {
 GlCommandBuffer::GlCommandBuffer(GlQueue* server, 
 	const GlCommandBufferInitHints& hints)
 :	m_server(server),
-	m_alloc(GlCommandBufferAllocator<GlCommand*>(ChainMemoryPool(
+	m_alloc(GlCommandBufferAllocator<GlCommand*>(
 		m_server->getAllocationCallback(),
 		m_server->getAllocationCallbackUserData(),
 		hints.m_chunkSize, 
-		hints.m_maxChunkSize, 
+		GlCommandBufferInitHints::MAX_CHUNK_SIZE, 
 		ChainMemoryPool::ChunkGrowMethod::ADD,
-		hints.m_chunkSize)))
+		hints.m_chunkSize))
 {
 	//std::cout << hints.m_chunkSize << std::endl;
 	ANKI_ASSERT(m_server);

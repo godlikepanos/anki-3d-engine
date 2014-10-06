@@ -37,7 +37,7 @@ App::App(const ConfigSet& config,
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 :	m_allocCb(allocCb),
 	m_allocCbData(allocCbUserData),
-	m_heapAlloc(HeapMemoryPool(allocCb, allocCbUserData))
+	m_heapAlloc(allocCb, allocCbUserData)
 {
 	try
 	{

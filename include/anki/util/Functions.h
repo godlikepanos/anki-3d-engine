@@ -174,6 +174,21 @@ constexpr typename std::underlying_type<TEnum>::type enumValue(TEnum val)
 	return static_cast<typename std::underlying_type<TEnum>::type>(val);
 }
 
+/// Construct an object
+template<typename T, typename... TArgs>
+void construct(T* p, TArgs&&... args)
+{
+	// Placement new
+	::new(reinterpret_cast<void*>(p)) T(std::forward<TArgs>(args)...);
+}
+
+/// Call destructor
+template<typename T>
+void destroy(T* p)
+{
+	p->~T();
+}
+
 /// @}
 
 } // end namespace anki

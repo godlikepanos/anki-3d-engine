@@ -86,9 +86,19 @@ public:
 	}
 
 	/// Constuctor that accepts a pool
-	explicit GenericPoolAllocator(const TPool& pool) noexcept
-	:	m_pool(pool)
-	{}
+	template<typename... TArgs>
+	explicit GenericPoolAllocator(
+		AllocAlignedCallback allocCb, void* allocCbUserData,
+		TArgs&&... args) noexcept
+	{
+		Error error = m_pool.create(
+			allocCb, allocCbUserData, std::forward<TArgs>(args)...);
+
+		if(error)
+		{
+			throw ANKI_EXCEPTION("Initialization failed");
+		}
+	}
 
 	/// Destructor
 	~GenericPoolAllocator()

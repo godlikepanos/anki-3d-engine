@@ -11,7 +11,7 @@ using namespace anki;
 
 int main(int argc, char** argv)
 {
-	HeapAllocator<U8> alloc(HeapMemoryPool(allocAligned, nullptr));
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	// Call a few singletons to avoid memory leak confusion
 	LoggerSingleton::init(

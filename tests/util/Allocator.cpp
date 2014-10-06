@@ -14,8 +14,7 @@ ANKI_TEST(Allocators, StackAllocator)
 
 	// With simple string
 	{
-		StackAllocator<char, false> alloc(
-			StackMemoryPool(allocAligned, nullptr, 128));
+		StackAllocator<char, false> alloc(allocAligned, nullptr, 128);
 		typedef std::basic_string<char, std::char_traits<char>, 
 			StackAllocator<char, false>> Str;
 
@@ -28,8 +27,8 @@ ANKI_TEST(Allocators, StackAllocator)
 	// With vector
 	{
 		typedef StackAllocator<Foo, false> All;
-		All alloc(StackMemoryPool(allocAligned, nullptr, 
-			(sizeof(Foo) + 1) * 10, 1));
+		All alloc(allocAligned, nullptr, 
+			(sizeof(Foo) + 1) * 10, 1);
 		std::vector<Foo, All> vec(alloc);
 
 		vec.reserve(10);

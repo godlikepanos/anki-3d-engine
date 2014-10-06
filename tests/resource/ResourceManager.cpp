@@ -17,7 +17,7 @@ ANKI_TEST(Resource, ResourceManager)
 	// Create
 	Config config;
 	
-	HeapAllocator<U8> alloc(HeapMemoryPool(allocAligned, nullptr));
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	GlDevice* gl = alloc.newInstance<GlDevice>(
 		allocAligned, nullptr, "/tmp/");

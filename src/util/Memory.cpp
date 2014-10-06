@@ -131,21 +131,6 @@ public:
 };
 
 //==============================================================================
-HeapMemoryPool::HeapMemoryPool(
-	AllocAlignedCallback allocCb, void* allocCbUserData)
-{
-	ANKI_ASSERT(allocCb != nullptr);
-
-	m_impl = static_cast<Implementation*>(allocCb(allocCbUserData, nullptr, 
-		sizeof(Implementation), alignof(Implementation)));
-
-	m_impl->m_refcount = 1;
-	m_impl->m_allocationsCount = 0;
-	m_impl->m_allocCb = allocCb;
-	m_impl->m_allocCbUserData = allocCbUserData;
-}
-
-//==============================================================================
 HeapMemoryPool& HeapMemoryPool::operator=(const HeapMemoryPool& other)
 {
 	clear();
@@ -157,6 +142,31 @@ HeapMemoryPool& HeapMemoryPool::operator=(const HeapMemoryPool& other)
 	}
 
 	return *this;
+}
+
+//==============================================================================
+Error HeapMemoryPool::create(
+	AllocAlignedCallback allocCb, void* allocCbUserData)
+{
+	ANKI_ASSERT(allocCb != nullptr);
+
+	Error error = ERROR_NONE;
+	m_impl = static_cast<Implementation*>(allocCb(allocCbUserData, nullptr, 
+		sizeof(Implementation), alignof(Implementation)));
+
+	if(m_impl)
+	{
+		m_impl->m_refcount = 1;
+		m_impl->m_allocationsCount = 0;
+		m_impl->m_allocCb = allocCb;
+		m_impl->m_allocCbUserData = allocCbUserData;
+	}
+	else
+	{
+		error = ERROR_OUT_OF_MEMORY;
+	}
+
+	return error;
 }
 
 //==============================================================================
@@ -228,7 +238,7 @@ public:
 	static_assert(sizeof(MemoryBlockHeader) == sizeof(U32), "Size error");
 
 	/// Refcount
-	AtomicU32 m_refcount = {1};
+	AtomicU32 m_refcount;
 
 	/// User allocation function
 	AllocAlignedCallback m_allocCb;
@@ -243,27 +253,46 @@ public:
 	PtrSize m_headerSize;
 
 	/// Pre-allocated memory chunk
-	U8* m_memory = nullptr;
+	U8* m_memory;
 
 	/// Size of the pre-allocated memory chunk
-	PtrSize m_memsize = 0;
+	PtrSize m_memsize;
 
 	/// Points to the memory and more specifically to the top of the stack
-	Atomic<U8*> m_top = {nullptr};
+	Atomic<U8*> m_top;
 
-	AtomicU32 m_allocationsCount = {0};
+	AtomicU32 m_allocationsCount;
+
+	// Destroy
+	~Implementation()
+	{
+		if(m_memory != nullptr)
+		{
+#if ANKI_DEBUG
+			// Invalidate the memory
+			memset(m_memory, 0xCC, m_memsize);
+#endif
+			m_allocCb(m_allocCbUserData, m_memory, 0, 0);
+		}
+	}
 
 	// Construct
-	Implementation(AllocAlignedCallback allocCb, void* allocCbUserData,
+	Error create(AllocAlignedCallback allocCb, void* allocCbUserData,
 		PtrSize size, PtrSize alignmentBytes)
-	:	m_allocCb(allocCb),
-		m_allocCbUserData(allocCbUserData),
-		m_alignmentBytes(alignmentBytes), 
-		m_memsize(getAlignedRoundUp(alignmentBytes, size))
 	{
-		ANKI_ASSERT(m_allocCb);
-		ANKI_ASSERT(m_memsize > 0);
-		ANKI_ASSERT(m_alignmentBytes > 0);
+		ANKI_ASSERT(allocCb);
+		ANKI_ASSERT(size > 0);
+		ANKI_ASSERT(alignmentBytes > 0);
+
+		Error error = ERROR_NONE;
+
+		m_refcount = 1;
+		m_allocCb = allocCb;
+		m_allocCbUserData = allocCbUserData;
+		m_alignmentBytes = alignmentBytes;
+		m_memsize = getAlignedRoundUp(alignmentBytes, size);
+		m_allocationsCount = 0;
+
 		m_memory = (U8*)m_allocCb(
 			m_allocCbUserData, nullptr, m_memsize, m_alignmentBytes);
 
@@ -283,21 +312,10 @@ public:
 		}
 		else
 		{
-			throw ANKI_EXCEPTION("Failed to allocate memory");
+			error = ERROR_OUT_OF_MEMORY;
 		}
-	}
 
-	// Destroy
-	~Implementation()
-	{
-		if(m_memory != nullptr)
-		{
-#if ANKI_DEBUG
-			// Invalidate the memory
-			memset(m_memory, 0xCC, m_memsize);
-#endif
-			m_allocCb(m_allocCbUserData, m_memory, 0, 0);
-		}
+		return error;
 	}
 
 	PtrSize getTotalSize() const
@@ -419,18 +437,6 @@ public:
 };
 
 //==============================================================================
-StackMemoryPool::StackMemoryPool(
-	AllocAlignedCallback alloc, void* allocUserData,
-	PtrSize size, PtrSize alignmentBytes)
-{
-	m_impl = (Implementation*)alloc(allocUserData, nullptr, 
-		sizeof(Implementation), alignof(Implementation));
-	
-	::new((void*)m_impl) Implementation(
-		alloc, allocUserData, size, alignmentBytes);
-}
-
-//==============================================================================
 StackMemoryPool& StackMemoryPool::operator=(const StackMemoryPool& other)
 {
 	clear();
@@ -442,6 +448,30 @@ StackMemoryPool& StackMemoryPool::operator=(const StackMemoryPool& other)
 	}
 
 	return *this;
+}
+
+//==============================================================================
+Error StackMemoryPool::create(
+	AllocAlignedCallback alloc, void* allocUserData,
+	PtrSize size, PtrSize alignmentBytes)
+{
+	ANKI_ASSERT(m_impl == nullptr);
+
+	Error error = ERROR_NONE;
+	m_impl = static_cast<Implementation*>(alloc(allocUserData, nullptr, 
+		sizeof(Implementation), alignof(Implementation)));
+	
+	if(m_impl)
+	{
+		construct(m_impl);
+		error = m_impl->create(alloc, allocUserData, size, alignmentBytes);
+	}
+	else
+	{
+		error = ERROR_OUT_OF_MEMORY;
+	}
+
+	return error;
 }
 
 //==============================================================================
@@ -551,11 +581,6 @@ public:
 
 		/// Next chunk in the list
 		Chunk* m_next = nullptr;
-
-		Chunk(AllocAlignedCallback alloc, void* allocUserData, 
-			PtrSize size, PtrSize alignmentBytes)
-		:	m_pool(alloc, allocUserData, size, alignmentBytes)
-		{}
 	};
 
 	/// Refcount
@@ -706,20 +731,30 @@ public:
 		if(chunk)
 		{
 			// Construct it
-			::new((void*)chunk) Chunk(
+			construct(chunk);
+			Error error = chunk->m_pool.create(
 				m_allocCb, m_allocCbUserData, size, m_alignmentBytes);
 
-			// Register it
-			if(m_tailChunk)
+			if(!error)
 			{
-				m_tailChunk->m_next = chunk;
-				m_tailChunk = chunk;
+				// Register it
+				if(m_tailChunk)
+				{
+					m_tailChunk->m_next = chunk;
+					m_tailChunk = chunk;
+				}
+				else
+				{
+					ANKI_ASSERT(m_headChunk == nullptr);
+
+					m_headChunk = m_tailChunk = chunk;
+				}
 			}
 			else
 			{
-				ANKI_ASSERT(m_headChunk == nullptr);
-
-				m_headChunk = m_tailChunk = chunk;
+				destroy(chunk);
+				m_allocCb(m_allocCbUserData, chunk, 0, 0);
+				chunk = nullptr;
 			}
 		}
 		
@@ -865,25 +900,6 @@ public:
 };
 
 //==============================================================================
-ChainMemoryPool::ChainMemoryPool(
-	AllocAlignedCallback alloc, 
-	void* allocUserData,
-	PtrSize initialChunkSize,
-	PtrSize maxChunkSize,
-	ChunkGrowMethod chunkAllocStepMethod, 
-	PtrSize chunkAllocStep, 
-	PtrSize alignmentBytes)
-{
-	m_impl = (Implementation*)alloc(allocUserData, nullptr, 
-		sizeof(Implementation), alignof(Implementation));
-
-	::new((void*)m_impl) Implementation(
-		alloc, allocUserData,
-		initialChunkSize, maxChunkSize, chunkAllocStepMethod, chunkAllocStep,
-		alignmentBytes);
-}
-
-//==============================================================================
 ChainMemoryPool& ChainMemoryPool::operator=(const ChainMemoryPool& other)
 {
 	clear();
@@ -895,6 +911,39 @@ ChainMemoryPool& ChainMemoryPool::operator=(const ChainMemoryPool& other)
 	}
 
 	return *this;
+}
+
+//==============================================================================
+Error ChainMemoryPool::create(
+	AllocAlignedCallback alloc, 
+	void* allocUserData,
+	PtrSize initialChunkSize,
+	PtrSize maxChunkSize,
+	ChunkGrowMethod chunkAllocStepMethod, 
+	PtrSize chunkAllocStep, 
+	PtrSize alignmentBytes)
+{
+	ANKI_ASSERT(m_impl == nullptr);
+
+	Error error = ERROR_NONE;
+	m_impl = static_cast<Implementation*>(alloc(allocUserData, nullptr, 
+		sizeof(Implementation), alignof(Implementation)));
+
+	if(m_impl)
+	{
+		construct(
+			m_impl,
+			alloc, allocUserData,
+			initialChunkSize, maxChunkSize, chunkAllocStepMethod, 
+			chunkAllocStep,
+			alignmentBytes);
+	}
+	else
+	{
+		error = ERROR_OUT_OF_MEMORY;
+	}
+
+	return error;
 }
 
 //==============================================================================

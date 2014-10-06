@@ -12,7 +12,7 @@ namespace anki {
 //==============================================================================
 ANKI_TEST(Util, String)
 {
-	HeapAllocator<U8> alloc(HeapMemoryPool(allocAligned, nullptr));
+	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	// Copy
 	{

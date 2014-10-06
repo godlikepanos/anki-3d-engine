@@ -21,10 +21,9 @@ namespace anki {
 //==============================================================================
 ResourceManager::ResourceManager(Initializer& init)
 :	m_gl(init.m_gl),
-	m_alloc(HeapMemoryPool(init.m_allocCallback, init.m_allocCallbackData)),
-	m_tmpAlloc(StackMemoryPool(
-		init.m_allocCallback, init.m_allocCallbackData, 
-		init.m_tempAllocatorMemorySize)),
+	m_alloc(init.m_allocCallback, init.m_allocCallbackData),
+	m_tmpAlloc(init.m_allocCallback, init.m_allocCallbackData, 
+		init.m_tempAllocatorMemorySize),
 	m_cacheDir(init.m_cacheDir, m_alloc),
 	m_dataDir(m_alloc),
 	m_shadersPrependedSource(m_alloc)
