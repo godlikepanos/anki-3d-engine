@@ -24,16 +24,11 @@ class GlDevice;
 class GlQueue
 {
 public:
-	/// @name Contructors/Destructor
-	/// @{
 	GlQueue(GlDevice* device, 
 		AllocAlignedCallback alloc, void* allocUserData);
 
 	~GlQueue();
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	GlDevice& getDevice()
 	{
 		ANKI_ASSERT(m_device);
@@ -65,7 +60,6 @@ public:
 	{
 		return m_state;
 	}
-	/// @}
 
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop

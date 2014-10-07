@@ -33,7 +33,9 @@ public:
 		{}
 
 		Attachment(const GlTextureHandle& tex, GLenum point, U32 layer = 0)
-			: m_tex(tex), m_point(point), m_layer(layer)
+		:	m_tex(tex), 
+			m_point(point), 
+			m_layer(layer)
 		{}
 
 		GlTextureHandle m_tex;
@@ -41,28 +43,17 @@ public:
 		U32 m_layer;
 	};
 
-	/// @name Constructors/Desctructor
-	/// @{
-	GlFramebuffer()
-	{}
-
-	/// Set all the attachments. It will overwrite the previous state. If the
-	/// initalizer list is empty the it will bind the default framebuffer
-	explicit GlFramebuffer(
-		Attachment* attachmentsBegin, Attachment* attachmentsEnd);
-
-	GlFramebuffer(GlFramebuffer&& b)
-	{
-		*this = std::move(b);
-	}
+	GlFramebuffer() = default;
 
 	~GlFramebuffer()
 	{
 		destroy();
 	}
-	/// @}
 
-	GlFramebuffer& operator=(GlFramebuffer&& b);
+	/// Set all the attachments. It will overwrite the previous state. If the
+	/// initalizer list is empty the it will bind the default framebuffer
+	ANKI_USE_RESULT Error create(
+		Attachment* attachmentsBegin, Attachment* attachmentsEnd);
 
 	/// Bind it to the state. Call it in rendering thread
 	/// @param invalidate If true invalidate the FB after binding it

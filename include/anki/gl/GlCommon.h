@@ -33,7 +33,7 @@
 namespace anki {
 
 // Forward
-class GlProgramData;
+class GlProgram;
 class GlProgramBlock;
 
 /// @addtogroup opengl_private
@@ -170,8 +170,8 @@ public:
 
 private:
 	Type m_type; ///< It's type
+	GlProgram* m_prog = nullptr;
 	char* m_name; ///< The name inside the shader program
-	const GlProgramData* m_progData = nullptr; ///< Know your father
 
 	GLenum m_dataType = GL_NONE; ///< GL_FLOAT or GL_FLOAT_VEC2 etc.
 	U8 m_arrSize = 0; ///< Its 1 if it is a single or >1 if it is an array
@@ -251,12 +251,11 @@ public:
 
 private:
 	Type m_type;
-	char* m_name;
-	const GlProgramData* m_progData = nullptr; ///< Know your father
+	char* m_name = nullptr;
 	/// Keep the indices as U16 to save memory
 	Array<U16, MAX_VARIABLES_PER_BLOCK> m_variableIdx; 
-	U32 m_size; ///< In bytes
-	U32 m_bindingPoint;
+	U32 m_size = 0; ///< In bytes
+	U32 m_bindingPoint = MAX_U32;
 	U8 m_variablesCount = 0;
 };
 

@@ -72,7 +72,9 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 	auto alloc = m_shaderSource.getAllocator();
 	PPPString txt(alloc);
 	PPPStringList lines(alloc);
-	File(filename.toCString(), File::OpenFlag::READ).readAllText(txt);
+	File file;
+	file.open(filename.toCString(), File::OpenFlag::READ);
+	file.readAllText(txt);
 	lines = PPPStringList::splitString(txt.toCString(), '\n', alloc);
 	if(lines.size() < 1)
 	{

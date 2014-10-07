@@ -88,13 +88,13 @@ static Bool isSampler(GLenum type)
 //==============================================================================
 const GlProgramBlock* GlProgramVariable::getBlock() const
 {
-	ANKI_ASSERT(m_progData);
+	ANKI_ASSERT(m_prog);
 	if(m_blockIdx != -1)
 	{
-		ANKI_ASSERT((PtrSize)m_blockIdx < m_progData->m_blocks.size());
+		ANKI_ASSERT((PtrSize)m_blockIdx < m_prog->m_blocks.size());
 	}
 
-	return (m_blockIdx != -1) ? &m_progData->m_blocks[m_blockIdx] : nullptr;
+	return (m_blockIdx != -1) ? &m_prog->m_blocks[m_blockIdx] : nullptr;
 }
 
 //==============================================================================
@@ -269,47 +269,14 @@ static Bool sanitizeSymbolName(char* name)
 const U SYMBOL_MAX_NAME_LENGTH = 256;
 
 //==============================================================================
-GlProgram& GlProgram::operator=(GlProgram&& b)
-{
-	destroy();
-	Base::operator=(std::forward<Base>(b));
-	
-	m_type = b.m_type;
-	b.m_type = 0;
-
-	m_data = b.m_data;
-	b.m_data = nullptr;
-
-	// Fix data
-	m_data->m_prog = this;
-
-	return *this;
-}
-
-//==============================================================================
-void GlProgram::create(GLenum type, const CString& source, 
-	const GlAllocator<U8>& alloc, const CString& cacheDir)
-{
-	try
-	{
-		createInternal(type, source, alloc, cacheDir);
-	}
-	catch(const std::exception& e)
-	{
-		destroy();
-		throw ANKI_EXCEPTION("Program creation failed") << e;
-	}
-}
-
-//==============================================================================
-void GlProgram::createInternal(GLenum type, const CString& source, 
-	const GlAllocator<U8>& alloc_, const CString& cacheDir)
+Error GlProgram::create(GLenum type, const CString& source, 
+	GlAllocator<U8>& alloc, const CString& cacheDir)
 {
 	ANKI_ASSERT(source);
-	ANKI_ASSERT(!isCreated() && m_data == nullptr);
+	ANKI_ASSERT(!isCreated());
 
-	GlAllocator<U8> alloc = alloc_;
-	m_data = alloc.newInstance<GlProgramData>(alloc);
+	Error err = ErrorCode::NONE;
+
 	m_type = type;
 
 	// 1) Append some things in the source string
@@ -336,7 +303,7 @@ void GlProgram::createInternal(GLenum type, const CString& source,
 	m_glName = glCreateShaderProgramv(m_type, 1, sourceStrs);
 	if(m_glName == 0)
 	{
-		throw ANKI_EXCEPTION("glCreateShaderProgramv() failed");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
 #if ANKI_DUMP_SHADERS
@@ -372,9 +339,11 @@ void GlProgram::createInternal(GLenum type, const CString& source,
 		fname.sprintf(
 			"%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
-		File file(fname.toCString(), File::OpenFlag::WRITE);
-		Error err = file.writeText("%s", &fullSrc[0]);
-		ANKI_ASSERT(!err && "handle_error");
+		File file;
+		err = file.open(fname.toCString(), File::OpenFlag::WRITE);
+		ANKI_ASSERT(!err);
+		err = file.writeText("%s", &fullSrc[0]);
+		ANKI_ASSERT(!err);
 	}
 #endif
 	
@@ -396,8 +365,8 @@ void GlProgram::createInternal(GLenum type, const CString& source,
 		infoLog.resize(infoLen + 1);
 		glGetProgramInfoLog(m_glName, infoLen, &charsWritten, &infoLog[0]);
 		
-		String err(alloc);
-		err.sprintf("Shader compile failed (type %x):\n%s\n%s\n%s\n",
+		String errstr(alloc);
+		errstr.sprintf("Shader compile failed (type %x):\n%s\n%s\n%s\n",
 			m_type, padding, &infoLog[0], padding);
 
 		// Prettyfy source
@@ -409,16 +378,33 @@ void GlProgram::createInternal(GLenum type, const CString& source,
 			String tmp(alloc);
 			tmp.sprintf("%4d: %s\n", ++lineno, &line[0]);
 
-			err += tmp;
+			errstr += tmp;
 		}
 
-		err += padding;
+		errstr += padding;
 
-		throw ANKI_EXCEPTION("%s", &err[0]);
+		ANKI_LOGE("%s", &errstr[0]);
+		return ErrorCode::USER_DATA;
 	}
 
 	// 3) Populate with vars and blocks
 	//
+	err = populateVariablesAndBlock(alloc);
+
+	return err;
+}
+
+//==============================================================================
+Error GlProgram::populateVariablesAndBlock(GlAllocator<U8>& alloc)
+{
+	Error err = ErrorCode::NONE;
+
+	m_variables = ProgramVector<GlProgramVariable>(alloc);
+	m_variablesDict = ProgramDictionary<GlProgramVariable*>(
+		10, DictionaryHasher(), DictionaryEqual(), alloc);
+	m_blocks = ProgramVector<GlProgramBlock>(alloc);
+	m_blocksDict = ProgramDictionary<GlProgramBlock*>(
+		10, DictionaryHasher(), DictionaryEqual(), alloc);
 
 	static Array<GLenum, 5> interfaces = {{
 		GL_UNIFORM_BLOCK, GL_SHADER_STORAGE_BLOCK, 
@@ -464,70 +450,88 @@ void GlProgram::createInternal(GLenum type, const CString& source,
 		}
 	}
 
-	m_data->m_names = reinterpret_cast<char*>(alloc.allocate(namesLen));
-	char* namesPtr = m_data->m_names;
+	m_names = reinterpret_cast<char*>(alloc.allocate(namesLen));
+	char* namesPtr = m_names;
 
 	// Populate the blocks
 	if(count[0] + count[1] > 0)
 	{
-		m_data->m_blocks.resize(count[0] + count[1]);
+		m_blocks.resize(count[0] + count[1]);
 
-		initBlocksOfType(GL_UNIFORM_BLOCK,
+		err = initBlocksOfType(GL_UNIFORM_BLOCK,
 			countReal[0], 0, namesPtr, namesLen);
-		initBlocksOfType(GL_SHADER_STORAGE_BLOCK,
-			countReal[1], count[0], namesPtr, namesLen);
+
+		if(!err)
+		{
+			err = initBlocksOfType(GL_SHADER_STORAGE_BLOCK,
+				countReal[1], count[0], namesPtr, namesLen);
+		}
 	}
 
 	// Populate the variables
-	if(count[2] + count[3] + count[4] > 0)
+	if(!err && (count[2] + count[3] + count[4] > 0))
 	{
-		m_data->m_variables.resize(count[2] + count[3] + count[4]);
+		m_variables.resize(count[2] + count[3] + count[4]);
 
-		initVariablesOfType(GL_UNIFORM,
+		err = initVariablesOfType(GL_UNIFORM,
 			countReal[2], 0, 0, namesPtr, namesLen);
-		initVariablesOfType(GL_BUFFER_VARIABLE,
-			countReal[3], count[2], count[0], namesPtr, namesLen);
-		initVariablesOfType(GL_PROGRAM_INPUT,
-			countReal[4], count[2] + count[3], 0, namesPtr, namesLen);
+
+		if(!err)
+		{
+			err = initVariablesOfType(GL_BUFFER_VARIABLE,
+				countReal[3], count[2], count[0], namesPtr, namesLen);
+		}
+
+		if(!err)
+		{
+			err = initVariablesOfType(GL_PROGRAM_INPUT,
+				countReal[4], count[2] + count[3], 0, namesPtr, namesLen);
+		}
 
 		// Sanity checks
-
-		// Iterate all samples and make sure they have set the unit explicitly
-		std::unordered_map<
-			U, 
-			U, 
-			std::hash<U>,
-			std::equal_to<U>,
-			HeapAllocator<std::pair<U, U>>> 
-			unitToCount(10, std::hash<U>(), std::equal_to<U>(), alloc);
-
-		for(const GlProgramVariable& var : m_data->m_variables)
+		if(!err)
 		{
-			if(isSampler(var.m_dataType))
+			// Iterate all samples and make sure they have set the unit 
+			// explicitly
+			std::unordered_map<
+				U, 
+				U, 
+				std::hash<U>,
+				std::equal_to<U>,
+				HeapAllocator<std::pair<U, U>>> 
+				unitToCount(10, std::hash<U>(), std::equal_to<U>(), alloc);
+
+			for(const GlProgramVariable& var : m_variables)
 			{
-				if(unitToCount.find(var.m_texUnit) == unitToCount.end())
+				if(isSampler(var.m_dataType))
 				{
-					// Doesn't exit
-					unitToCount[var.m_texUnit] = 1;
-				}	
-				else
-				{
-					unitToCount[var.m_texUnit] = unitToCount[var.m_texUnit] + 1;
+					if(unitToCount.find(var.m_texUnit) == unitToCount.end())
+					{
+						// Doesn't exit
+						unitToCount[var.m_texUnit] = 1;
+					}	
+					else
+					{
+						unitToCount[var.m_texUnit] = 
+							unitToCount[var.m_texUnit] + 1;
+					}
 				}
 			}
-		}
 
-		for(auto pair : unitToCount)
-		{
-			if(pair.second != 1)
+			for(auto pair : unitToCount)
 			{
-				ANKI_LOGW("It is advised to explicitly set the unit "
-					"for samplers");
+				if(pair.second != 1)
+				{
+					ANKI_LOGW("It is advised to explicitly set the unit "
+						"for samplers");
+				}
 			}
-		}
+		} // end sanity checks
 	}
 
 	ANKI_ASSERT(namesLen == 0);
+
+	return err;
 }
 
 //==============================================================================
@@ -539,19 +543,19 @@ void GlProgram::destroy()
 		m_glName = 0;
 	}
 
-	if(m_data != nullptr)
+	if(m_names != nullptr)
 	{
-		auto alloc = m_data->m_variables.get_allocator();
-		alloc.deleteInstance(m_data);
-		m_data = nullptr;
+		auto alloc = m_variables.get_allocator();
+		alloc.deallocate(m_names, 0);
 	}
 }
 
 //==============================================================================
-void GlProgram::initVariablesOfType(
+Error GlProgram::initVariablesOfType(
 	GLenum interface, U activeCount, U indexOffset, U blkIndexOffset,
 	char*& namesPtr, U& namesLen)
 {
+	Error err = ErrorCode::NONE;
 	U index = indexOffset;
 
 	for(U i = 0; i < activeCount; i++)
@@ -606,17 +610,18 @@ void GlProgram::initVariablesOfType(
 
 		if(count != outCount)
 		{
-			throw ANKI_EXCEPTION("glGetProgramResourceiv() didn't got all "
-				"the params");
+			ANKI_LOGE("glGetProgramResourceiv() didn't got all the params");
+			err = ErrorCode::FUNCTION_FAILED;
+			break;
 		}
 
 		// Create and populate the variable
-		ANKI_ASSERT(index < m_data->m_variables.size());
-		GlProgramVariable& var = m_data->m_variables[index++];
+		ANKI_ASSERT(index < m_variables.size());
+		GlProgramVariable& var = m_variables[index++];
 
 		var.m_type = akType;
+		var.m_prog = this;
 		var.m_name = namesPtr;
-		var.m_progData = m_data;
 		var.m_dataType = out[1];
 		ANKI_ASSERT(var.m_dataType != GL_NONE);
 
@@ -645,13 +650,13 @@ void GlProgram::initVariablesOfType(
 			ANKI_ASSERT(interface != GL_PROGRAM_INPUT);
 
 			U blkIdx = blkIndexOffset + out[6];
-			ANKI_ASSERT(blkIdx < m_data->m_blocks.size());
+			ANKI_ASSERT(blkIdx < m_blocks.size());
 
 			// Connect block with variable
-			ANKI_ASSERT(m_data->m_blocks[blkIdx].m_variablesCount < 255);
+			ANKI_ASSERT(m_blocks[blkIdx].m_variablesCount < 255);
 			
-			m_data->m_blocks[blkIdx].m_variableIdx[
-				m_data->m_blocks[blkIdx].m_variablesCount++];
+			m_blocks[blkIdx].m_variableIdx[
+				m_blocks[blkIdx].m_variablesCount++];
 
 			var.m_blockIdx = blkIdx;
 		}
@@ -666,21 +671,24 @@ void GlProgram::initVariablesOfType(
 		}
 
 		// Add to dict
-		ANKI_ASSERT(m_data->m_variablesDict.find(var.m_name) 
-			== m_data->m_variablesDict.end());
-		m_data->m_variablesDict[var.m_name] = &var;
+		ANKI_ASSERT(m_variablesDict.find(var.m_name) 
+			== m_variablesDict.end());
+		m_variablesDict[var.m_name] = &var;
 
 		// Advance
 		namesPtr += len + 1;
 		namesLen -= len + 1;
 	}
+
+	return err;
 }
 
 //==============================================================================
-void GlProgram::initBlocksOfType(
+Error GlProgram::initBlocksOfType(
 	GLenum interface, U activeCount, U indexOffset, 
 	char*& namesPtr, U& namesLen)
 {
+	Error err = ErrorCode::NONE;
 	U index = indexOffset;
 
 	for(U i = 0; i < activeCount; i++)
@@ -710,8 +718,9 @@ void GlProgram::initBlocksOfType(
 
 		if(prop.getSize() != (U)outCount)
 		{
-			throw ANKI_EXCEPTION("glGetProgramResourceiv() didn't got all "
-				"the params");
+			ANKI_LOGE("glGetProgramResourceiv() didn't got all the params");
+			err = ErrorCode::FUNCTION_FAILED;
+			break;
 		}
 
 		GlProgramBlock::Type akType = GlProgramBlock::Type::UNIFORM;
@@ -728,65 +737,42 @@ void GlProgram::initBlocksOfType(
 		}
 
 		// Create and populate the block
-		GlProgramBlock& block = m_data->m_blocks[index++];
+		GlProgramBlock& block = m_blocks[index++];
 
 		block.m_type = akType;
 		block.m_name = namesPtr;
 		block.m_size = out[1];
-		block.m_progData = m_data;
 		ANKI_ASSERT(out[1] > 0);
 		block.m_bindingPoint = out[0];
 		ANKI_ASSERT(out[0] >= 0);
 
 		// Add to dict
-		ANKI_ASSERT(m_data->m_blocksDict.find(block.m_name) 
-			== m_data->m_blocksDict.end());
-		m_data->m_blocksDict[block.m_name] = &block;
+		ANKI_ASSERT(m_blocksDict.find(block.m_name) 
+			== m_blocksDict.end());
+		m_blocksDict[block.m_name] = &block;
 
 		// Advance
 		namesPtr += len + 1;
 		namesLen -= len + 1;
 	}
+
+	return err;
 }
 
 //==============================================================================
 const GlProgramVariable* GlProgram::tryFindVariable(const CString& name) const
 {
-	ANKI_ASSERT(isCreated() && m_data);
-	auto it = m_data->m_variablesDict.find(name);
-	return (it != m_data->m_variablesDict.end()) ? it->second : nullptr;
-}
-
-//==============================================================================
-const GlProgramVariable& GlProgram::findVariable(const CString& name) const
-{
-	ANKI_ASSERT(isCreated() && m_data);
-	const GlProgramVariable* var = tryFindVariable(name);
-	if(var == nullptr)
-	{
-		throw ANKI_EXCEPTION("Variable not found: %s", &name[0]);
-	}
-	return *var;
+	ANKI_ASSERT(isCreated());
+	auto it = m_variablesDict.find(name);
+	return (it != m_variablesDict.end()) ? it->second : nullptr;
 }
 
 //==============================================================================
 const GlProgramBlock* GlProgram::tryFindBlock(const CString& name) const
 {
-	ANKI_ASSERT(isCreated() && m_data);
-	auto it = m_data->m_blocksDict.find(name);
-	return (it != m_data->m_blocksDict.end()) ? it->second : nullptr;
-}
-
-//==============================================================================
-const GlProgramBlock& GlProgram::findBlock(const CString& name) const
-{
-	ANKI_ASSERT(isCreated() && m_data);
-	const GlProgramBlock* var = tryFindBlock(name);
-	if(var == nullptr)
-	{
-		throw ANKI_EXCEPTION("Buffer not found: %s", &name[0]);
-	}
-	return *var;
+	ANKI_ASSERT(isCreated());
+	auto it = m_blocksDict.find(name);
+	return (it != m_blocksDict.end()) ? it->second : nullptr;
 }
 
 } // end namespace anki

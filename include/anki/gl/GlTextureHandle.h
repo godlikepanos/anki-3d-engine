@@ -34,9 +34,6 @@ public:
 			ANKI_GL_MAX_MIPMAPS, ANKI_GL_MAX_TEXTURE_LAYERS> m_data;
 	};
 
-	/// @name Constructors/Destructor
-	/// @{
-
 	/// Create husk
 	GlTextureHandle();
 
@@ -45,7 +42,6 @@ public:
 		const Initializer& init);
 
 	~GlTextureHandle();
-	/// @}
 
 	/// Bind to a unit
 	void bind(GlCommandBufferHandle& commands, U32 unit);

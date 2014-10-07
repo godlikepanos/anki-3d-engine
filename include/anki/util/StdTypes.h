@@ -77,7 +77,7 @@ enum class ErrorCode
 	NONE,
 	OUT_OF_MEMORY,
 	FUNCTION_FAILED, ///< External operation failed
-	INITIALIZATION_FAILED,
+	USER_DATA,
 
 	// File errors
 	FILE_NOT_FOUND,

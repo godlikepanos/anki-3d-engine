@@ -42,37 +42,17 @@ Bool isCompressedInternalFormat(const GLenum internalFormat)
 
 } // end anonymous namespace
 
-
 //==============================================================================
 // GlTexture                                                                   =
 //==============================================================================
 
 //==============================================================================
-GlTexture& GlTexture::operator=(GlTexture&& b)
-{
-	destroy();
-	Base::operator=(std::forward<Base>(b));
-
-	m_target = b.m_target;
-	m_internalFormat = b.m_internalFormat; 
-	m_format = b.m_format;
-	m_type = b.m_type;
-	m_width = b.m_width;
-	m_height = b.m_height;
-	m_depth = b.m_depth;
-	m_filter = b.m_filter;
-	m_samples = b.m_samples;
-	return *this;
-}
-
-//==============================================================================
-void GlTexture::create(const Initializer& init, 
+Error GlTexture::create(const Initializer& init, 
 	GlAllocator<U8>& alloc)
 {
 	// Sanity checks
 	//
 	ANKI_ASSERT(!isCreated());
-	ANKI_ASSERT(init.m_internalFormat > 4 && "Deprecated internal format");
 	ANKI_ASSERT(init.m_width > 0 && init.m_height > 0);
 
 	// Create
@@ -275,6 +255,7 @@ void GlTexture::create(const Initializer& init,
 	}
 
 	ANKI_CHECK_GL_ERROR();
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

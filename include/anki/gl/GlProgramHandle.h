@@ -48,10 +48,6 @@ public:
 
 	const ProgramVector<GlProgramBlock>& getBlocks() const;
 
-	const GlProgramVariable& findVariable(const CString& name) const;
-
-	const GlProgramBlock& findBlock(const CString& name) const;
-
 	const GlProgramVariable* tryFindVariable(const CString& name) const;
 
 	const GlProgramBlock* tryFindBlock(const CString& name) const;

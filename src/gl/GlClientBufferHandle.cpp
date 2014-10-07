@@ -21,31 +21,27 @@ GlClientBufferHandle::GlClientBufferHandle(
 {
 	ANKI_ASSERT(!isCreated());
 
+	Error err = ErrorCode::NONE;
+
 	auto alloc = commands._getAllocator();
 
 	using Deleter = GlHandleDefaultDeleter<
 		GlClientBuffer, GlCommandBufferAllocator<GlClientBuffer>>;
 
+	*static_cast<Base*>(this) = Base(nullptr, alloc, Deleter());
+
 	if(preallocatedMem != nullptr)
 	{
-		*static_cast<Base*>(this) = Base(
-			nullptr, 
-			alloc, 
-			Deleter(),
-			preallocatedMem, 
-			size);
+		err = _get().create(preallocatedMem, size);
 	}
 	else
 	{
-		*static_cast<Base*>(this) = Base(
-			nullptr, 
-			alloc, 
-			Deleter(),
-			alloc, 
-			size);
+		err = _get().create(alloc, size);
 
 		ANKI_COUNTER_INC(GL_CLIENT_BUFFERS_SIZE, U64(size));
 	}
+
+	ANKI_ASSERT(!err);
 }
 
 //==============================================================================

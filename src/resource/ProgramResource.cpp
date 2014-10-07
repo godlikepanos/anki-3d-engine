@@ -69,12 +69,15 @@ String ProgramResource::createToCache(
 
 	// Read file and append code
 	String src(alloc);
-	File(manager.fixResourceFilename(filename).toCString(), 
-		File::OpenFlag::READ).readAllText(src);
+	File file;
+	file.open(manager.fixResourceFilename(filename).toCString(), 
+		File::OpenFlag::READ);
+	file.readAllText(src);
 	src = preAppendedSrcCode + src;
 
 	// Write cached file
-	File f(newFilename.toCString(), File::OpenFlag::WRITE);
+	File f;
+	f.open(newFilename.toCString(), File::OpenFlag::WRITE);
 	Error err = f.writeText("%s\n", &src[0]);
 	ANKI_ASSERT(!err && "handle_error");
 

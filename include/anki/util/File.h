@@ -61,12 +61,6 @@ public:
 	/// Default constructor
 	File() = default;
 
-	/// Open file
-	File(const CString& filename, OpenFlag openMask)
-	{
-		open(filename, openMask);
-	}
-
 	/// Move
 	File(File&& b)
 	{
@@ -79,10 +73,10 @@ public:
 	/// Move 
 	File& operator=(File&& b);
 
-	/// Open a file
+	/// Open a file.
 	/// @param[in] filename The file to open
 	/// @param[in] openMask The open flags. It's a combination of OpenFlag enum
-	void open(const CString& filename, OpenFlag openMask);
+	ANKI_USE_RESULT Error open(const CString& filename, OpenFlag openMask);
 
 	/// Return true if the file is oppen
 	Bool isOpen() const
@@ -94,28 +88,39 @@ public:
 	void close();
 
 	/// Flush pending operations
-	void flush();
+	ANKI_USE_RESULT Error flush();
 
 	/// Read data from the file
-	void read(void* buff, PtrSize size);
+	ANKI_USE_RESULT Error read(void* buff, PtrSize size);
 
 	/// Read all the contents of a text file
 	/// If the file is not rewined it will probably fail
 	template<typename TAlloc>
-	void readAllText(StringBase<TAlloc>& out)
+	ANKI_USE_RESULT Error readAllText(StringBase<TAlloc>& out)
 	{
 		PtrSize size = getSize();
-		out.resize(size, '\0');
-		read(&out[0], size);
+		Error err = ErrorCode::NONE;
+
+		if(size != 0)
+		{
+			out.resize(size, '\0');
+			err = read(&out[0], size);
+		}
+		else
+		{
+			err = ErrorCode::FUNCTION_FAILED;
+		}
+		
+		return err;
 	}
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's 
 	/// endianness is different from the machine's
-	U32 readU32();
+	ANKI_USE_RESULT Error readU32(U32& u);
 
 	/// Read 32bit float. Set the endianness if the file's endianness is 
 	/// different from the machine's
-	F32 readF32();
+	ANKI_USE_RESULT Error readF32(F32& f);
 
 	/// Write data to the file
 	ANKI_USE_RESULT Error write(void* buff, PtrSize size);
@@ -152,17 +157,18 @@ private:
 		CString& filenameInArchive, Type& type);
 
 	/// Open a C file
-	void openCFile(const CString& filename, OpenFlag flags);
+	ANKI_USE_RESULT Error openCFile(const CString& filename, OpenFlag flags);
 
 	/// Open an archive and the file inside
 	/// @param[in] archive The filename of the archive
 	/// @param[in] archived The filename of the file inside the archive
-	void openZipFile(const CString& archive, const CString& archived, 
-		OpenFlag flags);
+	ANKI_USE_RESULT Error openZipFile(
+		const CString& archive, const CString& archived, OpenFlag flags);
 
 #if ANKI_OS == ANKI_OS_ANDROID
 	/// Open an Android file
-	void openAndroidFile(const CString& filename, OpenFlag flags);
+	ANKI_USE_RESULT Error  openAndroidFile(
+		const CString& filename, OpenFlag flags);
 #endif
 
 	/// The file should be open

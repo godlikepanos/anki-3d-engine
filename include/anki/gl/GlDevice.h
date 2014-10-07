@@ -19,14 +19,19 @@ namespace anki {
 class GlDevice
 {
 public:
-	/// @see GlQueue::start
-	GlDevice(AllocAlignedCallback alloc, void* allocUserData, 
-		const CString& cacheDir);
+	/// Default constructor
+	GlDevice() = default;
 
 	~GlDevice()
 	{
 		destroy();
 	}
+
+	/// Create
+	ANKI_USE_RESULT Error create(
+		AllocAlignedCallback alloc, 
+		void* allocUserData, 
+		const CString& cacheDir);
 
 	/// Start the queue thread. @see GlQueue::start
 	void startServer(
@@ -45,7 +50,7 @@ public:
 
 	/// @privatesection
 	/// @{
-	HeapAllocator<U8> _getAllocator() const
+	HeapAllocator<U8>& _getAllocator()
 	{
 		return m_alloc;
 	}
@@ -68,7 +73,7 @@ public:
 	/// @}
 
 private:
-	GlQueue* m_queue;
+	GlQueue* m_queue = nullptr;
 	HeapAllocator<U8> m_alloc; ///< Keep it last to be deleted last
 	char* m_cacheDir = nullptr;
 	Bool8 m_queueStarted = false;

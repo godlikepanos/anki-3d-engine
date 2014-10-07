@@ -108,7 +108,7 @@ void Lf::initInternal(const ConfigSet& config)
 
 	PtrSize blockSize = 
 		sizeof(Flare) * m_maxFlaresPerLight * m_maxLightsWithFlares;
-	if(m_realVert->getGlProgram().findBlock("bFlares").getSize() 
+	if(m_realVert->getGlProgram().tryFindBlock("bFlares")->getSize() 
 		!= blockSize)
 	{
 		throw ANKI_EXCEPTION("Incorrect block size");

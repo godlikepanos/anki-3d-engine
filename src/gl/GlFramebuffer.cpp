@@ -9,31 +9,13 @@
 namespace anki {
 
 //==============================================================================
-GlFramebuffer& GlFramebuffer::operator=(GlFramebuffer&& b)
-{
-	destroy();
-	Base::operator=(std::forward<Base>(b));
-
-	for(U i = 0; i < m_attachments.size(); i++)
-	{
-		m_attachments[i] = b.m_attachments[i];
-		b.m_attachments[i] = GlTextureHandle();
-	}
-
-	m_bindDefault = b.m_bindDefault;
-	b.m_bindDefault = false;
-
-	return *this;
-}
-
-//==============================================================================
-GlFramebuffer::GlFramebuffer(
+Error GlFramebuffer::create(
 	Attachment* attachmentsBegin, Attachment* attachmentsEnd)
 {
 	if(attachmentsBegin == nullptr || attachmentsEnd == nullptr)
 	{
 		m_bindDefault = true;
-		return;
+		return ErrorCode::NONE;
 	}
 
 	m_bindDefault = false;
@@ -67,6 +49,8 @@ GlFramebuffer::GlFramebuffer(
 	// Now create the FBO
 	createFbo(layers, depthStencilBindingPoint);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

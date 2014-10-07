@@ -19,8 +19,9 @@ ANKI_TEST(Resource, ResourceManager)
 	
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
-	GlDevice* gl = alloc.newInstance<GlDevice>(
-		allocAligned, nullptr, "/tmp/");
+	GlDevice* gl = alloc.newInstance<GlDevice>();
+	Error err = gl->create(allocAligned, nullptr, "/tmp/");
+	ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
 
 	ResourceManager::Initializer rinit;
 	rinit.m_gl = gl;

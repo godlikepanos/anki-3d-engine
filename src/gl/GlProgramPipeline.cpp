@@ -5,15 +5,18 @@
 
 #include "anki/gl/GlProgramPipeline.h"
 #include "anki/gl/GlProgram.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
 //==============================================================================
-GlProgramPipeline::GlProgramPipeline(
+Error GlProgramPipeline::create(
 	const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd)
 {
 	ANKI_ASSERT(progsBegin != nullptr && progsEnd != nullptr);
 	ANKI_ASSERT(progsBegin != progsEnd);
+
+	Error err = ErrorCode::NONE;
 
 	attachProgramsInternal(progsBegin, progsEnd - progsBegin);
 
@@ -57,25 +60,13 @@ GlProgramPipeline::GlProgramPipeline(
 
 		infoLogTxt = "Ppline error log follows:\n" + infoLogTxt;
 
-		throw ANKI_EXCEPTION("%s", &infoLogTxt[0]);
+		ANKI_LOGE("%s", &infoLogTxt[0]);
+		err = ErrorCode::USER_DATA;
 	}
 
 	glBindProgramPipeline(0);
-}
 
-//==============================================================================
-GlProgramPipeline& GlProgramPipeline::operator=(GlProgramPipeline&& b)
-{
-	destroy();
-	Base::operator=(std::forward<Base>(b));
-
-	for(U i = 0; i < m_progs.size(); i++)
-	{
-		m_progs[i] = b.m_progs[i];
-		b.m_progs[i] = GlProgramHandle();
-	}
-
-	return *this;
+	return err;
 }
 
 //==============================================================================

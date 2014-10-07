@@ -34,9 +34,13 @@ Bool Mesh::isCompatible(const Mesh& other) const
 //==============================================================================
 void Mesh::load(const CString& filename, ResourceInitializer& init)
 {
+	Error err = ErrorCode::NONE;
+
 	try
 	{
-		MeshLoader loader(filename, init.m_tempAlloc);
+		MeshLoader loader(init.m_tempAlloc);
+		err = loader.load(filename);
+		ANKI_ASSERT(!err && "handle_error");
 
 		m_indicesCount = loader.getIndices().size();
 
@@ -236,6 +240,8 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 //==============================================================================
 void BucketMesh::load(const CString& filename, ResourceInitializer& init)
 {
+	Error err = ErrorCode::NONE;
+
 	try
 	{
 		XmlDocument doc;
@@ -268,7 +274,8 @@ void BucketMesh::load(const CString& filename, ResourceInitializer& init)
 				}
 
 				// Load
-				subLoader.load(subMeshFilename);
+				err = subLoader.load(subMeshFilename);
+				ANKI_ASSERT(!err);
 				loader = &subLoader;
 
 				// Sanity checks
@@ -291,7 +298,8 @@ void BucketMesh::load(const CString& filename, ResourceInitializer& init)
 			else
 			{
 				// Load
-				fullLoader.load(subMeshFilename);
+				err = fullLoader.load(subMeshFilename);
+				ANKI_ASSERT(!err);
 				loader = &fullLoader;
 
 				// Set properties

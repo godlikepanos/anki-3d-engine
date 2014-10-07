@@ -219,7 +219,8 @@ void init()
 #if 1
 	{
 		String str(app->getAllocator());
-		File file(
+		File file;
+		file.open(
 			resources.fixResourceFilename("maps/sponza/scene.lua").toCString(), 
 			File::OpenFlag::READ);
 		file.readAllText(str);

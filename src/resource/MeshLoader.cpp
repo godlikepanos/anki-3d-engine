@@ -5,6 +5,7 @@
 
 #include "anki/resource/MeshLoader.h"
 #include "anki/util/File.h"
+#include "anki/core/Logger.h"
 #include <cstring>
 #include <unordered_map>
 
@@ -68,166 +69,254 @@ MeshLoader::MeshLoader(TempResourceAllocator<U8>& alloc)
 {}
 
 //==============================================================================
-MeshLoader::MeshLoader(
-	const CString& filename, TempResourceAllocator<U8>& alloc)
-:	MeshLoader(alloc)
+Error MeshLoader::load(const CString& filename)
 {
-	load(filename);
-}
+	Error err = ErrorCode::NONE;
 
-//==============================================================================
-void MeshLoader::load(const CString& filename)
-{
-	// Try
-	try
-	{
 		// Open the file
-		File file(filename, 
-			File::OpenFlag::READ | File::OpenFlag::BINARY 
-			| File::OpenFlag::LITTLE_ENDIAN);
-
-		// Magic word
-		char magic[8];
-		file.read(magic, sizeof(magic));
-		if(std::memcmp(magic, "ANKIMESH", 8))
-		{
-			throw ANKI_EXCEPTION("Incorrect magic word");
-		}
-
-		// Mesh name
-		{
-			U32 strLen = file.readU32();
-			Error error = file.seek(strLen, File::SeekOrigin::CURRENT);
-			if(error)
-			{
-				throw ANKI_EXCEPTION("File seek failed");
-			}
-		}
-
-		// Verts num
-		U vertsNum = file.readU32();
-		m_positions.resize(vertsNum);
-
-		// Vert coords
-		for(Vec3& vertCoord : m_positions)
-		{
-			for(U j = 0; j < 3; j++)
-			{
-				vertCoord[j] = file.readF32();
-			}
-		}
-
-		// Faces num
-		U facesNum = file.readU32();
-		m_tris.resize(facesNum);
-
-		// Faces IDs
-		for(Triangle& tri : m_tris)
-		{
-			for(U j = 0; j < 3; j++)
-			{
-				tri.m_vertIds[j] = file.readU32();
-
-				// a sanity check
-				if(tri.m_vertIds[j] >= m_positions.size())
-				{
-					throw ANKI_EXCEPTION("Vert index out of bounds");
-				}
-			}
-		}
-
-		// Tex coords num
-		U texCoordsNum = file.readU32();
-		m_texCoords.resize(texCoordsNum);
-
-		// Tex coords
-		for(Vec2& texCoord : m_texCoords)
-		{
-			for(U32 i = 0; i < 2; i++)
-			{
-				texCoord[i] = file.readF32();
-			}
-		}
-
-		// Vert weights num
-		U weightsNum = file.readU32();
-		m_weights.resize(weightsNum);
-
-		// Vert weights
-		for(VertexWeight& vw : m_weights)
-		{
-			// get the bone connections num
-			U32 boneConnections = file.readU32();
-
-			// we treat as error if one vert doesnt have a bone
-			if(boneConnections < 1)
-			{
-				throw ANKI_EXCEPTION("Vert sould have at least one bone");
-			}
-
-			// and here is another possible error
-			if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
-			{
-				U32 tmp = VertexWeight::MAX_BONES_PER_VERT;
-				throw ANKI_EXCEPTION("Cannot have more than %d "
-					"bones per vertex", tmp);
-			}
-			vw.m_bonesCount = boneConnections;
-
-			// for all the weights of the current vertes
-			for(U32 i = 0; i < vw.m_bonesCount; i++)
-			{
-				// read bone id
-				U32 boneId = file.readU32();
-				vw.m_boneIds[i] = boneId;
-
-				// read the weight of that bone
-				float weight = file.readF32();
-				vw.m_weights[i] = weight;
-			}
-		} // end for all vert weights
-
-		doPostLoad();
-	}
-	catch(Exception& e)
+	File file;
+	err = file.open(filename, 
+		File::OpenFlag::READ | File::OpenFlag::BINARY 
+		| File::OpenFlag::LITTLE_ENDIAN);
+	if(err)
 	{
-		throw ANKI_EXCEPTION("Loading of mesh failed") << e;
+		ANKI_LOGE("Failed to open file");
+		goto cleanup;
 	}
+
+	// Magic word
+	char magic[8];
+	err = file.read(magic, sizeof(magic));
+	if(err)
+	{
+		ANKI_LOGE("Read error");
+		goto cleanup;
+	}
+	
+	if(std::memcmp(magic, "ANKIMESH", 8))
+	{
+		ANKI_LOGE("Incorrect magic word");
+		goto cleanup;
+	}
+
+	// Mesh name
+	{
+		U32 strLen;
+		err = file.readU32(strLen);
+		if(err)
+		{
+			ANKI_LOGE("Read error");
+			goto cleanup;
+		}
+
+		err = file.seek(strLen, File::SeekOrigin::CURRENT);
+		if(err)
+		{
+			ANKI_LOGE("Read error");
+			goto cleanup;
+		}
+	}
+
+	// Verts num
+	U32 vertsNum;
+	err = file.readU32(vertsNum);
+	if(err)
+	{
+		ANKI_LOGE("Read error");
+		goto cleanup;
+	}
+
+	m_positions.resize(vertsNum);
+
+	// Vert coords
+	for(Vec3& vertCoord : m_positions)
+	{
+		for(U j = 0; j < 3; j++)
+		{
+			 err = file.readF32(vertCoord[j]);
+			 if(err)
+			{
+				ANKI_LOGE("Read error");
+				goto cleanup;
+			}
+		}
+	}
+
+	// Faces num
+	U32 facesNum;
+	err = file.readU32(facesNum);
+	if(err)
+	{
+		ANKI_LOGE("Read error");
+		goto cleanup;
+	}
+
+	m_tris.resize(facesNum);
+
+	// Faces IDs
+	for(Triangle& tri : m_tris)
+	{
+		for(U j = 0; j < 3; j++)
+		{
+			err = file.readU32(tri.m_vertIds[j]);
+			if(err)
+			{
+				ANKI_LOGE("Read error");
+				goto cleanup;
+			}
+
+			// a sanity check
+			if(tri.m_vertIds[j] >= m_positions.size())
+			{
+				ANKI_LOGE("Vert index out of bounds");
+				err = ErrorCode::USER_DATA;
+				goto cleanup;
+			}
+		}
+	}
+
+	// Tex coords num
+	U32 texCoordsNum;
+	err = file.readU32(texCoordsNum);
+	if(err)
+	{
+		ANKI_LOGE("Read error");
+		goto cleanup;
+	}
+
+	m_texCoords.resize(texCoordsNum);
+
+	// Tex coords
+	for(Vec2& texCoord : m_texCoords)
+	{
+		for(U32 i = 0; i < 2; i++)
+		{
+			err = file.readF32(texCoord[i]);
+			if(err)
+			{
+				ANKI_LOGE("Read error");
+				goto cleanup;
+			}
+		}
+	}
+
+	// Vert weights num
+	U32 weightsNum;
+	err = file.readU32(weightsNum);
+	if(err)
+	{
+		ANKI_LOGE("Read error");
+		goto cleanup;
+	}
+
+	m_weights.resize(weightsNum);
+
+	// Vert weights
+	for(VertexWeight& vw : m_weights)
+	{
+		// get the bone connections num
+		U32 boneConnections;
+		err = file.readU32(boneConnections);
+		if(err)
+		{
+			ANKI_LOGE("Read error");
+			goto cleanup;
+		}
+
+		// we treat as error if one vert doesnt have a bone
+		if(boneConnections < 1)
+		{
+			ANKI_LOGE("Vert sould have at least one bone");
+			err = ErrorCode::USER_DATA;
+			goto cleanup;
+		}
+
+		// and here is another possible error
+		if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
+		{
+			U32 tmp = VertexWeight::MAX_BONES_PER_VERT;
+			ANKI_LOGE("Cannot have more than %d "
+				"bones per vertex", tmp);
+			err = ErrorCode::USER_DATA;
+			goto cleanup;
+		}
+
+		vw.m_bonesCount = boneConnections;
+
+		// for all the weights of the current vertes
+		for(U32 i = 0; i < vw.m_bonesCount; i++)
+		{
+			// read bone id
+			U32 boneId;
+			err = file.readU32(boneId);
+			if(err)
+			{
+				ANKI_LOGE("Read error");
+				goto cleanup;
+			}
+
+			vw.m_boneIds[i] = boneId;
+
+			// read the weight of that bone
+			F32 weight;
+			err = file.readF32(weight);
+			vw.m_weights[i] = weight;
+		}
+	} // end for all vert weights
+
+	err = doPostLoad();
+
+cleanup:
+	return err;
 }
 
 
 //==============================================================================
-void MeshLoader::doPostLoad()
+Error MeshLoader::doPostLoad()
 {
+	Error err = ErrorCode::NONE;
+
 	// Sanity checks
 	if(m_positions.size() < 1 || m_tris.size() < 1)
 	{
-		throw ANKI_EXCEPTION("Vert coords and tris must be filled");
+		ANKI_LOGE("Vert coords and tris must be filled");
+		err = ErrorCode::USER_DATA;
 	}
 
-	if(m_texCoords.size() != 0 && m_texCoords.size() != m_positions.size())
+	if(!err 
+		&& m_texCoords.size() != 0 
+		&& m_texCoords.size() != m_positions.size())
 	{
-		throw ANKI_EXCEPTION("Tex coords num must be "
+		ANKI_LOGE("Tex coords num must be "
 			"zero or equal to the vertex "
 			"coords num");
+		err = ErrorCode::USER_DATA;
 	}
 
-	if(m_weights.size() != 0 && m_weights.size() != m_positions.size())
+	if(!err 
+		&& m_weights.size() != 0 
+		&& m_weights.size() != m_positions.size())
 	{
-		throw ANKI_EXCEPTION("Vert weights num must be zero or equal to the "
+		ANKI_LOGE("Vert weights num must be zero or equal to the "
 			"vertex coords num");
+		err = ErrorCode::USER_DATA;
 	}
 
-	createAllNormals();
-	fixNormals();
-
-	if(m_texCoords.size() > 0)
+	if(!err)
 	{
-		createVertTangents();
+		createAllNormals();
+		fixNormals();
+
+		if(m_texCoords.size() > 0)
+		{
+			createVertTangents();
+		}
+
+		createVertIndeces();
+		compressBuffers();
 	}
 
-	createVertIndeces();
-	compressBuffers();
+	return err;
 }
 
 //==============================================================================

@@ -73,24 +73,18 @@ class GlCommandBuffer: public NonCopyable
 {
 public:
 	/// Default constructor
-	/// @param server The command buffers server
-	/// @param hints Hints to optimize the command's allocator
-	GlCommandBuffer(GlQueue* server, 
-		const GlCommandBufferInitHints& hints);
-
-	/// Move
-	GlCommandBuffer(GlCommandBuffer&& b)
-	{
-		*this = std::move(b);
-	}
+	GlCommandBuffer() = default;
 
 	~GlCommandBuffer()
 	{
 		destroy();
 	}
 
-	/// Move
-	GlCommandBuffer& operator=(GlCommandBuffer&& b);
+	/// Default constructor
+	/// @param server The command buffers server
+	/// @param hints Hints to optimize the command's allocator
+	ANKI_USE_RESULT Error create(GlQueue* server, 
+		const GlCommandBufferInitHints& hints);
 
 	/// Get he allocator
 	GlCommandBufferAllocator<U8> getAllocator() const
@@ -153,7 +147,7 @@ public:
 	}
 
 private:
-	GlQueue* m_server;
+	GlQueue* m_server = nullptr;
 	GlCommand* m_firstCommand = nullptr;
 	GlCommand* m_lastCommand = nullptr;
 	GlCommandBufferAllocator<U8> m_alloc;

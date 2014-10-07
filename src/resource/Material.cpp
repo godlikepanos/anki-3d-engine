@@ -488,7 +488,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 	// Get uniform block size
 	ANKI_ASSERT(m_progs.size() > 0);
 	m_shaderBlockSize = 
-		m_progs[0]->getGlProgram().findBlock("bDefaultBlock").getSize();
+		m_progs[0]->getGlProgram().tryFindBlock("bDefaultBlock")->getSize();
+	// TODO handle nullptr block
 }
 
 //==============================================================================
@@ -510,7 +511,8 @@ TempResourceString Material::createProgramSourceToChache(
 	if(!fileExists(newfPathName.toCString()))
 	{
 		// If not create it
-		File f(newfPathName.toCString(), File::OpenFlag::WRITE);
+		File f;
+		f.open(newfPathName.toCString(), File::OpenFlag::WRITE);
 		Error err = f.writeText("%s\n", &source[0]);
 		ANKI_ASSERT(!err && "handle_error");
 	}

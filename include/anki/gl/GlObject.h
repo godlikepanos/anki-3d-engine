@@ -19,30 +19,13 @@ class GlObject: public NonCopyable
 public:
 	/// Default
 	GlObject()
-		: m_glName(0)
+	:	m_glName(0)
 	{}
-
-	/// Move
-	GlObject(GlObject&& b)
-		: GlObject()
-	{
-		*this = std::move(b);
-	}
 
 	~GlObject()
 	{
 		// The destructor of the derived GL object should pass 0 name
 		ANKI_ASSERT(!isCreated());
-	}
-
-	/// Move
-	GlObject& operator=(GlObject&& b)
-	{
-		ANKI_ASSERT(!isCreated());
-		
-		m_glName = b.m_glName;
-		b.m_glName = 0;
-		return *this;
 	}
 
 	/// Get the GL name for the current frame

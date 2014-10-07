@@ -8,7 +8,6 @@
 
 #include "anki/gl/GlObject.h"
 #include "anki/util/Array.h"
-#include <cstring>
 
 namespace anki {
 
@@ -43,33 +42,17 @@ public:
 		}
 	};
 
-	/// @name Constructors/Destructor
-	/// @{
-	GlTexture()
-	{}
-
-	GlTexture(const Initializer& init, 
-		GlAllocator<U8>& alloc)
-	{
-		create(init, alloc);
-	}
-
-	GlTexture(GlTexture&& b)
-	{
-		*this = std::move(b);
-	}
+	GlTexture() = default;
 
 	~GlTexture()
 	{
 		destroy();
 	}
-	/// @}
 
-	/// Move
-	GlTexture& operator=(GlTexture&& b);
+	/// Create a texture
+	ANKI_USE_RESULT Error create(
+		const Initializer& init, GlAllocator<U8>& alloc);
 
-	/// @name Accessors
-	/// @{
 	GLenum getInternalFormat() const
 	{
 		ANKI_ASSERT(isCreated());
@@ -111,7 +94,6 @@ public:
 		ANKI_ASSERT(isCreated());
 		return m_depth;
 	}
-	/// @}
 
 	/// Bind the texture to a specified unit
 	void bind(U32 unit) const;
@@ -144,18 +126,15 @@ public:
 	void generateMipmaps();
 
 private:
-	GLenum m_target; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
-	GLenum m_internalFormat; ///< GL_COMPRESSED_RED, GL_RGB16 etc
-	GLenum m_format; ///< GL_RED, GL_RG, GL_RGB etc
-	GLenum m_type; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
-	U32 m_width;
-	U32 m_height;
-	U32 m_depth;
+	GLenum m_target = GL_NONE; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
+	GLenum m_internalFormat = GL_NONE; ///< GL_COMPRESSED_RED, GL_RGB16 etc
+	GLenum m_format = GL_NONE; ///< GL_RED, GL_RG, GL_RGB etc
+	GLenum m_type = GL_NONE; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
+	U32 m_width = 0;
+	U32 m_height = 0;
+	U32 m_depth = 0;
 	Filter m_filter;
-	U8 m_samples;
-
-	/// Create a texture
-	void create(const Initializer& init, GlAllocator<U8>& alloc);
+	U8 m_samples = 0;
 
 	void destroy();
 
@@ -169,30 +148,18 @@ public:
 	using Base = GlObject;
 	using Filter = GlTextureFilter;
 
-	/// @name Constructors/Destructor
-	/// @{
-	GlSampler()
-	{
-		glGenSamplers(1, &m_glName);
-	}
-
-	GlSampler(GlSampler&& b)
-	{
-		*this = std::move(b);
-	}
+	GlSampler() = default;
 
 	~GlSampler()
 	{
 		destroy();
 	}
-	/// @}
 
-	/// Move
-	GlSampler& operator=(GlSampler&& b)
+	ANKI_USE_RESULT Error create()
 	{
-		destroy();
-		Base::operator=(std::forward<Base>(b));
-		return *this;
+		glGenSamplers(1, &m_glName);
+		ANKI_ASSERT(m_glName);
+		return ErrorCode::NONE;
 	}
 
 	/// Set filter type

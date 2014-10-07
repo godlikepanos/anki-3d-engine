@@ -29,11 +29,11 @@ public:
 
 	void operator()(GlCommandBuffer* commands)
 	{
-		GlProgram p(m_type, 
+		Error err = m_prog._get().create(m_type, 
 			reinterpret_cast<const char*>(m_source.getBaseAddress()),
 			commands->getQueue().getDevice()._getAllocator(),
 			commands->getQueue().getDevice()._getCacheDirectory());
-		m_prog._get() = std::move(p);
+		ANKI_ASSERT(!err);
 
 		GlHandleState oldState = m_prog._setState(GlHandleState::CREATED);
 		ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
@@ -74,7 +74,7 @@ GLenum GlProgramHandle::getType() const
 }
 
 //==============================================================================
-const GlProgramData::ProgramVector<GlProgramVariable>& 
+const GlProgram::ProgramVector<GlProgramVariable>& 
 	GlProgramHandle::getVariables() const
 {
 	serializeOnGetter();
@@ -82,26 +82,11 @@ const GlProgramData::ProgramVector<GlProgramVariable>&
 }
 
 //==============================================================================
-const GlProgramData::ProgramVector<GlProgramBlock>& 
+const GlProgram::ProgramVector<GlProgramBlock>& 
 	GlProgramHandle::getBlocks() const
 {
 	serializeOnGetter();
 	return _get().getBlocks();
-}
-
-//==============================================================================
-const GlProgramVariable& GlProgramHandle::findVariable(
-	const CString& name) const
-{
-	serializeOnGetter();
-	return _get().findVariable(name);
-}
-
-//==============================================================================
-const GlProgramBlock& GlProgramHandle::findBlock(const CString& name) const
-{
-	serializeOnGetter();
-	return _get().findBlock(name);
 }
 
 //==============================================================================

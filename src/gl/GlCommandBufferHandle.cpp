@@ -125,15 +125,18 @@ GlCommandBufferHandle::GlCommandBufferHandle(GlDevice* gl,
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(gl);
 
+	Error err = ErrorCode::NONE;
+
 	using Alloc = GlAllocator<GlCommandBuffer>;
 	Alloc alloc = gl->_getAllocator();
 
 	*static_cast<Base*>(this) = Base(
 		gl,
 		alloc, 
-		GlHandleDefaultDeleter<GlCommandBuffer, Alloc>(), 
-		&gl->_getQueue(), 
-		hints);
+		GlHandleDefaultDeleter<GlCommandBuffer, Alloc>());
+
+	err = _get().create(&gl->_getQueue(), hints);
+	ANKI_ASSERT(!err);
 }
 
 //==============================================================================

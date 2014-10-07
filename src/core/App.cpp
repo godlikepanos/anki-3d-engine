@@ -111,6 +111,8 @@ void App::cleanup()
 //==============================================================================
 void App::init(const ConfigSet& config_)
 {
+	Error err = ErrorCode::NONE;
+
 	ConfigSet config = config_;
 
 	initDirs();
@@ -166,9 +168,9 @@ void App::init(const ConfigSet& config_)
 	m_threadpool = m_heapAlloc.newInstance<Threadpool>(getCpuCoresCount());
 
 	// GL
-	m_gl = m_heapAlloc.newInstance<GlDevice>(
-		m_allocCb, m_allocCbData,
-		m_cacheDir.toCString());
+	m_gl = m_heapAlloc.newInstance<GlDevice>();
+	err = m_gl->create(m_allocCb, m_allocCbData, m_cacheDir.toCString());
+	ANKI_ASSERT(!err);
 
 	m_gl->startServer(
 		makeCurrent, this, m_ctx,

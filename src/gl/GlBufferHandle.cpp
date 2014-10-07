@@ -44,17 +44,18 @@ public:
 
 	void operator()(GlCommandBuffer*)
 	{
+		Error err = ErrorCode::NONE;
+
 		if(!m_empty)
 		{
-			GlBuffer newBuff(m_target, m_data.getSize(), 
+			err = m_buff._get().create(m_target, m_data.getSize(), 
 				m_data.getBaseAddress(), m_flags);
-			m_buff._get() = std::move(newBuff);
 		}
 		else
 		{
-			GlBuffer newBuff(m_target, m_size, nullptr, m_flags);
-			m_buff._get() = std::move(newBuff);
+			err = m_buff._get().create(m_target, m_size, nullptr, m_flags);
 		}
+		ANKI_ASSERT(!err);
 
 		GlHandleState oldState = m_buff._setState(GlHandleState::CREATED);
 		(void)oldState;

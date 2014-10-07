@@ -20,26 +20,15 @@ class GlProgramPipeline: public GlObject
 public:
 	using Base = GlObject;
 
-	/// @name Constructors/Desctructor
-	/// @{
-	GlProgramPipeline()
-	{}
-
-	GlProgramPipeline(GlProgramPipeline&& b)
-	{
-		*this = std::move(b);
-	}
-
-	GlProgramPipeline(
-		const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd);
+	GlProgramPipeline() = default;
 
 	~GlProgramPipeline()
 	{
 		destroy();
 	}
-	/// @}
 
-	GlProgramPipeline& operator=(GlProgramPipeline&& b);
+	ANKI_USE_RESULT Error create(
+		const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd);
 
 	GlProgramHandle getAttachedProgram(GLenum type) const;
 

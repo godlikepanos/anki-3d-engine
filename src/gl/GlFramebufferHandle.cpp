@@ -49,8 +49,8 @@ GlFramebufferHandle::GlFramebufferHandle(
 				begin = end = nullptr;
 			}
 
-			GlFramebuffer fb(begin, end);
-			m_fb._get() = std::move(fb);
+			Error err = m_fb._get().create(begin, end);
+			ANKI_ASSERT(!err);
 			GlHandleState oldState = m_fb._setState(GlHandleState::CREATED);
 			ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
 			(void)oldState;

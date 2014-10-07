@@ -13,21 +13,6 @@
 namespace anki {
 
 //==============================================================================
-GlBuffer& GlBuffer::operator=(GlBuffer&& b)
-{
-	destroy();
-	Base::operator=(std::forward<Base>(b));
-	m_target = b.m_target;
-	m_size = b.m_size;
-	m_persistentMapping = b.m_persistentMapping;
-
-	b.m_target = 0;
-	b.m_size = 0;
-	b.m_persistentMapping = nullptr;
-	return *this;
-}
-
-//==============================================================================
 void GlBuffer::destroy()
 {
 	if(isCreated())
@@ -38,7 +23,7 @@ void GlBuffer::destroy()
 }
 
 //==============================================================================
-void GlBuffer::create(GLenum target, U32 sizeInBytes,
+Error GlBuffer::create(GLenum target, U32 sizeInBytes,
 	const void* dataPtr, GLbitfield flags)
 {
 	ANKI_ASSERT(!isCreated());
@@ -99,6 +84,8 @@ void GlBuffer::create(GLenum target, U32 sizeInBytes,
 			glMapBufferRange(m_target, 0, sizeInBytes, flags & mapbits);
 		ANKI_ASSERT(m_persistentMapping != nullptr);
 	}
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

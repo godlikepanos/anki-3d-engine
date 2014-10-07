@@ -22,53 +22,34 @@ public:
 	GlClientBuffer()
 	{}
 
-	/// Create the buffer and allocate memory for the chain's allocator
-	GlClientBuffer(const GlCommandBufferAllocator<U8>& chainAlloc, PtrSize size)
-		: m_alloc(chainAlloc)
-	{
-		ANKI_ASSERT(size > 0);
-		m_ptr = m_alloc.allocate(size);
-		m_size = size;
-		m_preallocated = false;
-	}
-
-	/// Create the buffer using preallocated memory
-	GlClientBuffer(void* preallocatedMem, PtrSize size)
-	{
-		ANKI_ASSERT(size > 0);
-		m_ptr = preallocatedMem;
-		m_size = size;
-		m_preallocated = true;
-	}
-
-	/// Move
-	GlClientBuffer(GlClientBuffer&& b)
-	{
-		*this = std::move(b);
-	}
-
 	~GlClientBuffer()
 	{
 		destroy();
 	}
 
-	/// Move
-	GlClientBuffer& operator=(GlClientBuffer&& b)
+	/// Create the buffer and allocate memory for the chain's allocator
+	ANKI_USE_RESULT Error create(
+		const GlCommandBufferAllocator<U8>& chainAlloc, PtrSize size)
 	{
-		destroy();
+		ANKI_ASSERT(size > 0);
 
-		m_ptr = b.m_ptr;
-		m_size = b.m_size;
-		b.m_ptr = nullptr;
-		b.m_size = 0;
-		m_preallocated = b.m_preallocated;
+		m_alloc = chainAlloc;
+		m_ptr = m_alloc.allocate(size);
+		m_size = size;
+		m_preallocated = false;
 
-		if(!m_preallocated)
-		{
-			m_alloc = b.m_alloc;
-			b.m_alloc = GlCommandBufferAllocator<U8>();
-		}
-		return *this;
+		return ErrorCode::NONE;
+	}
+
+	/// Create the buffer using preallocated memory
+	ANKI_USE_RESULT Error create(void* preallocatedMem, PtrSize size)
+	{
+		ANKI_ASSERT(size > 0);
+		m_ptr = preallocatedMem;
+		m_size = size;
+		m_preallocated = true;
+
+		return ErrorCode::NONE;
 	}
 
 	/// Return the base address

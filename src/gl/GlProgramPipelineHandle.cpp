@@ -47,7 +47,7 @@ void GlProgramPipelineHandle::commonConstructor(
 
 		Command(GlProgramPipelineHandle& ppline, 
 			const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd)
-			: m_ppline(ppline)
+		:	m_ppline(ppline)
 		{
 			m_progsCount = 0;
 			const GlProgramHandle* prog = progsBegin;
@@ -59,8 +59,10 @@ void GlProgramPipelineHandle::commonConstructor(
 
 		void operator()(GlCommandBuffer*)
 		{
-			GlProgramPipeline ppline(&m_progs[0], &m_progs[0] + m_progsCount);
-			m_ppline._get() = std::move(ppline);
+			Error err = m_ppline._get().create(
+				&m_progs[0], &m_progs[0] + m_progsCount);
+			ANKI_ASSERT(!err);
+
 			GlHandleState oldState = m_ppline._setState(GlHandleState::CREATED);
 			ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
 			(void)oldState;

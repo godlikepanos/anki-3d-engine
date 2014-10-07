@@ -24,6 +24,12 @@ public:
 	GlBuffer()
 	{}
 
+	/// It deletes the BO
+	~GlBuffer()
+	{
+		destroy();
+	}
+
 	/// Creates a new BO with the given parameters and checks if everything
 	/// went OK. Throws exception if fails
 	/// @param target Depends on the BO
@@ -31,26 +37,8 @@ public:
 	/// @param dataPtr Points to the data buffer to copy to the VGA memory.
 	///		   Put NULL if you want just to allocate memory
 	/// @param flags GL access flags
-	GlBuffer(GLenum target, U32 sizeInBytes, const void* dataPtr,
-		GLbitfield flags)
-	{
-		create(target, sizeInBytes, dataPtr, flags);
-	}
-
-	/// Move
-	GlBuffer(GlBuffer&& b)
-	{
-		*this = std::move(b);
-	}
-
-	/// It deletes the BO
-	~GlBuffer()
-	{
-		destroy();
-	}
-	
-	/// Move
-	GlBuffer& operator=(GlBuffer&& b);
+	ANKI_USE_RESULT Error create(
+		GLenum target, U32 sizeInBytes, const void* dataPtr, GLbitfield flags);
 
 	GLenum getTarget() const
 	{
@@ -119,13 +107,9 @@ public:
 	void setBindingRange(GLuint binding, PtrSize offset, PtrSize size) const;
 
 private:
-	GLenum m_target; ///< GL_TEXTURE_BUFFER or GL_ELEMENT_ARRAY_BUFFER etc
-	U32 m_size; ///< The size of the buffer
+	GLenum m_target = GL_NONE; ///< eg GL_TEXTURE_BUFFER 
+	U32 m_size = 0; ///< The size of the buffer
 	void* m_persistentMapping = nullptr;
-
-	/// Create
-	void create(GLenum target, U32 sizeInBytes, const void* dataPtr,
-		GLbitfield flags);
 
 	/// Delete the BO
 	void destroy();

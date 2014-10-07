@@ -81,9 +81,9 @@ GlTextureHandle::GlTextureHandle(
 			}
 
 			auto alloc = commands->getGlobalAllocator();
-			GlTexture newTex(init, alloc);
 
-			m_tex._get() = std::move(newTex);
+			Error err = m_tex._get().create(init, alloc);
+			ANKI_ASSERT(!err);
 
 			GlHandleState oldState = m_tex._setState(GlHandleState::CREATED);
 			ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
@@ -258,8 +258,8 @@ GlSamplerHandle::GlSamplerHandle(GlCommandBufferHandle& commands)
 		{
 			ANKI_ASSERT(commands);
 
-			GlSampler newSampler;
-			m_sampler._get() = std::move(newSampler);
+			Error err = m_sampler._get().create();
+			ANKI_ASSERT(!err);
 
 			GlHandleState oldState = 
 				m_sampler._setState(GlHandleState::CREATED);

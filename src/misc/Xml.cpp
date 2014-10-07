@@ -217,7 +217,8 @@ XmlElement XmlElement::getNextSiblingElement(const CString& name) const
 //==============================================================================
 void XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
 {
-	File file(filename, File::OpenFlag::READ);
+	File file;
+	file.open(filename, File::OpenFlag::READ);
 
 	m_alloc = alloc;
 	StringBase<StackAllocator<char>> text(m_alloc);

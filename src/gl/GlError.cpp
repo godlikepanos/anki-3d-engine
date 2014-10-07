@@ -4,12 +4,12 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gl/GlError.h"
-#include "anki/util/Exception.h"
+#include "anki/core/Logger.h"
 #include <cstring>
 
 namespace anki {
 
-void glConditionalThrowException(const char* file, int line, const char* func)
+void glConditionalCheckError(const char* file, int line, const char* func)
 {
 	GLenum errId = glGetError();
 	if(errId == GL_NO_ERROR)
@@ -43,7 +43,8 @@ void glConditionalThrowException(const char* file, int line, const char* func)
 	const char tmp[] = "OpenGL exception: ";
 	memcpy(errStr, tmp, sizeof(tmp));
 	strcat(errStr, glerr);
-	throw Exception(file, line, func, errStr);
+
+	ANKI_LOGE("GL error: %s (%s:%d %s)", errStr, file, line, func);
 }
 
 } // end namespace

@@ -143,7 +143,8 @@ static void loadCompressedTga(
 static void loadTga(const CString& filename, 
 	U32& width, U32& height, U32& bpp, ResourceVector<U8>& data)
 {
-	File fs(filename, File::OpenFlag::READ | File::OpenFlag::BINARY);
+	File fs;
+	fs.open(filename, File::OpenFlag::READ | File::OpenFlag::BINARY);
 	char myTgaHeader[12];
 
 	fs.read(&myTgaHeader[0], sizeof(myTgaHeader));
@@ -278,7 +279,8 @@ static void loadAnkiTexture(
 	Image::TextureType& textureType,
 	Image::ColorFormat& colorFormat)
 {
-	File file(filename, 
+	File file;
+	file.open(filename, 
 		File::OpenFlag::READ | File::OpenFlag::BINARY 
 		| File::OpenFlag::LITTLE_ENDIAN);
 

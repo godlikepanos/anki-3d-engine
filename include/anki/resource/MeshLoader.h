@@ -78,8 +78,6 @@ public:
 
 	MeshLoader(TempResourceAllocator<U8>& alloc);
 
-	MeshLoader(const CString& filename, TempResourceAllocator<U8>& alloc);
-
 	~MeshLoader()
 	{}
 
@@ -125,7 +123,7 @@ public:
 
 	/// Load the mesh data from a binary file
 	/// @exception Exception
-	void load(const CString& filename);
+	ANKI_USE_RESULT Error load(const CString& filename);
 
 private:
 	MLVector<Vec3> m_positions; ///< Loaded from file
@@ -160,7 +158,7 @@ private:
 	/// This method does some sanity checks and creates normals,
 	/// tangents, VBOs etc
 	/// @exception Exception
-	void doPostLoad();
+	ANKI_USE_RESULT Error doPostLoad();
 
 	/// It iterates all verts and fixes the normals on seams
 	void fixNormals();

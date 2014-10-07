@@ -14,41 +14,22 @@
 namespace anki {
 
 //==============================================================================
-GlCommandBuffer::GlCommandBuffer(GlQueue* server, 
+Error GlCommandBuffer::create(GlQueue* server, 
 	const GlCommandBufferInitHints& hints)
-:	m_server(server),
-	m_alloc(GlCommandBufferAllocator<GlCommand*>(
+{
+	ANKI_ASSERT(server);
+
+	m_server = server;
+
+	m_alloc = GlCommandBufferAllocator<GlCommand*>(
 		m_server->getAllocationCallback(),
 		m_server->getAllocationCallbackUserData(),
 		hints.m_chunkSize, 
 		GlCommandBufferInitHints::MAX_CHUNK_SIZE, 
 		ChainMemoryPool::ChunkGrowMethod::ADD,
-		hints.m_chunkSize))
-{
-	//std::cout << hints.m_chunkSize << std::endl;
-	ANKI_ASSERT(m_server);
-}
+		hints.m_chunkSize);
 
-//==============================================================================
-GlCommandBuffer& GlCommandBuffer::operator=(GlCommandBuffer&& b)
-{
-	destroy();
-	m_server = b.m_server; 
-	b.m_server = nullptr;
-	
-	m_firstCommand = b.m_firstCommand;
-	b.m_firstCommand = nullptr;
-	
-	m_lastCommand = b.m_lastCommand;
-	b.m_lastCommand = nullptr;
-
-	m_alloc = b.m_alloc;
-	b.m_alloc = GlCommandBufferAllocator<U8>();
-
-	m_immutable = b.m_immutable;
-	b.m_immutable = false;
-
-	return *this;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

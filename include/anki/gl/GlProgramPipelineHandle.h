@@ -24,8 +24,6 @@ class GlProgramPipelineHandle: public GlContainerHandle<GlProgramPipeline>
 public:
 	using Base = GlContainerHandle<GlProgramPipeline>;
 
-	/// @name Contructors/Destructor
-	/// @{
 	GlProgramPipelineHandle();
 
 	/// Create a pipeline
@@ -42,7 +40,6 @@ public:
 		std::initializer_list<GlProgramHandle> progs);
 
 	~GlProgramPipelineHandle();
-	/// @}
 
 	/// Bind it to the state
 	void bind(GlCommandBufferHandle& commands);

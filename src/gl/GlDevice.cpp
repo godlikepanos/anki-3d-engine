@@ -10,7 +10,7 @@
 namespace anki {
 
 //==============================================================================
-GlDevice::GlDevice(
+Error GlDevice::create(
 	AllocAlignedCallback alloc, void* allocUserData,
 	const CString& cacheDir)
 {
@@ -24,6 +24,8 @@ GlDevice::GlDevice(
 	// Create queue
 	m_queue = m_alloc.newInstance<GlQueue>(
 		this, alloc, allocUserData);
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
