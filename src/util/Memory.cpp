@@ -150,7 +150,7 @@ Error HeapMemoryPool::create(
 {
 	ANKI_ASSERT(allocCb != nullptr);
 
-	Error error = ERROR_NONE;
+	Error error = ErrorCode::NONE;
 	m_impl = static_cast<Implementation*>(allocCb(allocCbUserData, nullptr, 
 		sizeof(Implementation), alignof(Implementation)));
 
@@ -163,7 +163,7 @@ Error HeapMemoryPool::create(
 	}
 	else
 	{
-		error = ERROR_OUT_OF_MEMORY;
+		error = ErrorCode::OUT_OF_MEMORY;
 	}
 
 	return error;
@@ -284,7 +284,7 @@ public:
 		ANKI_ASSERT(size > 0);
 		ANKI_ASSERT(alignmentBytes > 0);
 
-		Error error = ERROR_NONE;
+		Error error = ErrorCode::NONE;
 
 		m_refcount = 1;
 		m_allocCb = allocCb;
@@ -312,7 +312,7 @@ public:
 		}
 		else
 		{
-			error = ERROR_OUT_OF_MEMORY;
+			error = ErrorCode::OUT_OF_MEMORY;
 		}
 
 		return error;
@@ -457,7 +457,7 @@ Error StackMemoryPool::create(
 {
 	ANKI_ASSERT(m_impl == nullptr);
 
-	Error error = ERROR_NONE;
+	Error error = ErrorCode::NONE;
 	m_impl = static_cast<Implementation*>(alloc(allocUserData, nullptr, 
 		sizeof(Implementation), alignof(Implementation)));
 	
@@ -468,7 +468,7 @@ Error StackMemoryPool::create(
 	}
 	else
 	{
-		error = ERROR_OUT_OF_MEMORY;
+		error = ErrorCode::OUT_OF_MEMORY;
 	}
 
 	return error;
@@ -925,7 +925,7 @@ Error ChainMemoryPool::create(
 {
 	ANKI_ASSERT(m_impl == nullptr);
 
-	Error error = ERROR_NONE;
+	Error error = ErrorCode::NONE;
 	m_impl = static_cast<Implementation*>(alloc(allocUserData, nullptr, 
 		sizeof(Implementation), alignof(Implementation)));
 
@@ -940,7 +940,7 @@ Error ChainMemoryPool::create(
 	}
 	else
 	{
-		error = ERROR_OUT_OF_MEMORY;
+		error = ErrorCode::OUT_OF_MEMORY;
 	}
 
 	return error;

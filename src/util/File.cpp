@@ -69,9 +69,14 @@ void File::open(const CString& filename, OpenFlag flags)
 
 	Array<char, 512> archive;
 	CString filenameInArchive;
-	Type ft = identifyFile(
-		filename, &archive[0],
-		archive.getSize(), filenameInArchive);
+	Type ft;
+	Error error = identifyFile(filename, &archive[0],
+		archive.getSize(), filenameInArchive, ft);
+
+	if(error)
+	{
+		throw ANKI_EXCEPTION("File error");
+	}
 
 	switch(ft)
 	{
@@ -412,12 +417,14 @@ F32 File::readF32()
 }
 
 //==============================================================================
-void File::write(void* buff, PtrSize size)
+Error File::write(void* buff, PtrSize size)
 {
 	ANKI_ASSERT(buff);
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT((m_flags & OpenFlag::WRITE) != OpenFlag::NONE);
+
+	Error error = ErrorCode::NONE;
 
 	if(m_type == Type::C)
 	{
@@ -426,7 +433,8 @@ void File::write(void* buff, PtrSize size)
 
 		if(writeSize != size)
 		{
-			throw ANKI_EXCEPTION("Failed to write on file");
+			// Failed to write on file
+			error = ErrorCode::FILE_ACCESS;
 		}
 	}
 	else if(m_type == Type::ZIP
@@ -435,28 +443,32 @@ void File::write(void* buff, PtrSize size)
 #endif
 		)
 	{
-		throw ANKI_EXCEPTION("Writting to archives is not supported");
+		// Writting to archives is not supported
+		error = ErrorCode::FILE_ACCESS;
 	}
 	else
 	{
 		ANKI_ASSERT(0);
 	}
+
+	return error;
 }
 
 //==============================================================================
-void File::writeText(CString format, ...)
+Error File::writeText(CString format, ...)
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != OpenFlag::NONE);
 	ANKI_ASSERT((m_flags & OpenFlag::WRITE) != OpenFlag::NONE);
 	ANKI_ASSERT((m_flags & OpenFlag::BINARY) == OpenFlag::NONE);
 
+	Error error = ErrorCode::NONE;
 	va_list args;
 	va_start(args, format);
 
 	if(m_type == Type::C)
 	{
-		std::vfprintf((FILE*)m_file, &format[0], args);
+		std::vfprintf(ANKI_CFILE, &format[0], args);
 	}
 	else if(m_type == Type::ZIP
 #if ANKI_OS == ANKI_OS_ANDROID
@@ -464,8 +476,8 @@ void File::writeText(CString format, ...)
 #endif
 		)
 	{
-		va_end(args);
-		throw ANKI_EXCEPTION("Writting to archives is not supported");
+		// Writting to archives is not supported
+		error = ErrorCode::FILE_ACCESS;
 	}
 	else
 	{
@@ -473,19 +485,22 @@ void File::writeText(CString format, ...)
 	}
 
 	va_end(args);
+	return error;
 }
 
 //==============================================================================
-void File::seek(PtrSize offset, SeekOrigin origin)
+Error File::seek(PtrSize offset, SeekOrigin origin)
 {
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != OpenFlag::NONE);
+	Error error = ErrorCode::NONE;
 
 	if(m_type == Type::C)
 	{
 		if(fseek(ANKI_CFILE, offset, (I)origin) != 0)
 		{
-			throw ANKI_EXCEPTION("fseek() failed");
+			// fseek() failed
+			error = ErrorCode::FUNCTION_FAILED;
 		}
 	}
 	else if(m_type == Type::ZIP)
@@ -496,17 +511,21 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 			if(unzCloseCurrentFile(m_file)
 				|| unzOpenCurrentFile(m_file))
 			{
-				throw ANKI_EXCEPTION("Rewind failed");
+				// Rewind failed
+				error = ErrorCode::FUNCTION_FAILED;
 			}
 		}
 
-		// Move forward by reading dummy data
-		char buff[256];
-		while(offset != 0)
+		if(!error)
 		{
-			PtrSize toRead = std::min(offset, sizeof(buff));
-			read(buff, toRead);
-			offset -= toRead;
+			// Move forward by reading dummy data
+			char buff[256];
+			while(offset != 0)
+			{
+				PtrSize toRead = std::min(offset, sizeof(buff));
+				read(buff, toRead);
+				offset -= toRead;
+			}
 		}
 	}
 #if ANKI_OS == ANKI_OS_ANDROID
@@ -515,7 +534,8 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 		if(AAsset_seek(ANKI_AFILE, offset, origin) 
 			== (off_t)-1)
 		{
-			throw ANKI_EXCEPTION("AAsset_seek() failed");
+			// AAsset_seek() failed
+			error = ErrorCode::FUNCTION_FAILED;
 		}
 	}
 #endif
@@ -523,17 +543,21 @@ void File::seek(PtrSize offset, SeekOrigin origin)
 	{
 		ANKI_ASSERT(0);
 	}
+
+	return error;
 }
 
 //==============================================================================
-File::Type File::identifyFile(const CString& filename, 
+Error File::identifyFile(const CString& filename, 
 	char* archiveFilename, PtrSize archiveFilenameLength,
-	CString& filenameInArchive)
+	CString& filenameInArchive, Type& type)
 {
+	Error error = ErrorCode::NONE;
+
 #if ANKI_OS == ANKI_OS_ANDROID
 	if(filename[0] == '$')
 	{
-		return Type::SPECIAL;
+		type = Type::SPECIAL;
 	}
 	else
 #endif
@@ -545,7 +569,7 @@ File::Type File::identifyFile(const CString& filename,
 		if(ptrToArchiveExt == nullptr)
 		{
 			// It's a C file
-			return Type::C;
+			type = Type::C;
 		}
 		else
 		{
@@ -556,35 +580,39 @@ File::Type File::identifyFile(const CString& filename,
 
 			if(archLen + 1 >= fnameLen)
 			{
-				throw ANKI_EXCEPTION("Too sort archived filename");
+				// Too sort archived filename
+				error = ErrorCode::FILE_NOT_FOUND;
 			}
 
 			if(archiveFilenameLength > archLen)
 			{
-				throw ANKI_EXCEPTION("Using too long paths");
+				// Using too long paths
+				error = ErrorCode::FILE_NOT_FOUND;
 			}
 
-			std::memcpy(archiveFilename, &filename[0], archLen);
-			archiveFilename[archLen] = '\0';
-
-			if(directoryExists(CString(archiveFilename)))
+			if(!error)
 			{
-				// It's a directory so failback to C file
-				return Type::C;
-			}
-			else
-			{
-				// It's a ziped file
+				std::memcpy(archiveFilename, &filename[0], archLen);
+				archiveFilename[archLen] = '\0';
 
-				filenameInArchive = CString(&filename[0] + archLen + 1);
+				if(directoryExists(CString(archiveFilename)))
+				{
+					// It's a directory so failback to C file
+					type = Type::C;
+				}
+				else
+				{
+					// It's a ziped file
 
-				return Type::ZIP;
+					filenameInArchive = CString(&filename[0] + archLen + 1);
+
+					type = Type::ZIP;
+				}
 			}
 		}
 	}
 
-	ANKI_ASSERT(0);
-	return Type::C;
+	return error;
 }
 
 //==============================================================================

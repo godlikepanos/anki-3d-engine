@@ -388,9 +388,10 @@ static void loadAnkiTexture(
 			!= Image::DataCompression::NONE)
 		{
 			// If raw compression is present then skip it
-			file.seek(
+			Error err = file.seek(
 				calcSizeOfSegment(header, Image::DataCompression::RAW), 
 				File::SeekOrigin::CURRENT);
+			ANKI_ASSERT(!err && "handle_error");
 		}
 	}
 	else if(preferredCompression == Image::DataCompression::ETC)
@@ -399,18 +400,20 @@ static void loadAnkiTexture(
 			!= Image::DataCompression::NONE)
 		{
 			// If raw compression is present then skip it
-			file.seek(
+			Error err = file.seek(
 				calcSizeOfSegment(header, Image::DataCompression::RAW), 
 				File::SeekOrigin::CURRENT);
+			ANKI_ASSERT(!err && "handle_error");
 		}
 
 		if((header.m_compressionFormats & Image::DataCompression::S3TC)
 			!= Image::DataCompression::NONE)
 		{
 			// If s3tc compression is present then skip it
-			file.seek(
+			Error err = file.seek(
 				calcSizeOfSegment(header, Image::DataCompression::S3TC), 
 				File::SeekOrigin::CURRENT);
+			ANKI_ASSERT(!err && "handle_error");
 		}
 	}
 
@@ -447,7 +450,8 @@ static void loadAnkiTexture(
 			}
 			else
 			{
-				file.seek(dataSize, File::SeekOrigin::CURRENT);
+				Error err = file.seek(dataSize, File::SeekOrigin::CURRENT);
+				ANKI_ASSERT(!err && "handle_error");
 			}
 		}
 

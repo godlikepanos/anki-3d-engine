@@ -373,7 +373,8 @@ void GlProgram::createInternal(GLenum type, const CString& source,
 			"%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
 		File file(fname.toCString(), File::OpenFlag::WRITE);
-		file.writeText("%s", &fullSrc[0]);
+		Error err = file.writeText("%s", &fullSrc[0]);
+		ANKI_ASSERT(!err && "handle_error");
 	}
 #endif
 	

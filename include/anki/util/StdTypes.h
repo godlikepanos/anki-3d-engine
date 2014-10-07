@@ -72,18 +72,73 @@ using Bool = bool; ///< Fast boolean type
 using Bool8 = U8; ///< Small 8bit boolean type
 
 /// Error codes
-enum Error
+enum class ErrorCode
 {
-	ERROR_NONE,
-	ERROR_OUT_OF_MEMORY,
-	ERROR_FUNCTION_FAILED, ///< External operation failed
-	ERROR_INITIALIZATION_FAILED,
+	NONE,
+	OUT_OF_MEMORY,
+	FUNCTION_FAILED, ///< External operation failed
+	INITIALIZATION_FAILED,
 
 	// File errors
-	ERROR_FILE_NOT_FOUND,
-	ERROR_FILE_ACCESS, ///< Read/write access error
+	FILE_NOT_FOUND,
+	FILE_ACCESS, ///< Read/write access error
 
-	ERROR_UNKNOWN
+	UNKNOWN
+};
+
+/// Representation of error and a wrapper on top of error codes.
+class Error
+{
+public:
+	/// Construct using an error code.
+	Error(ErrorCode code)
+	:	m_code(code)
+	{}
+
+	/// Copy.
+	Error(const Error& b)
+	:	m_code(b.m_code)
+	{}
+
+	/// Copy.
+	Error& operator=(const Error& b)
+	{
+		m_code = b.m_code;
+		return *this;
+	}
+
+	/// Compare.
+	Bool operator==(const Error& b) const
+	{
+		return m_code == b.m_code;
+	}
+
+	/// Compare.
+	Bool operator==(ErrorCode code) const
+	{
+		return m_code == code;
+	}
+
+	/// Compare.
+	Bool operator!=(const Error& b) const
+	{
+		return m_code != b.m_code;
+	}
+
+	/// Compare.
+	Bool operator!=(ErrorCode code) const
+	{
+		return m_code != code;
+	}
+
+	/// Check if it is an error.
+	operator Bool() const
+	{
+		return m_code != ErrorCode::NONE;
+	}
+
+private:
+	ErrorCode m_code = ErrorCode::NONE;
 };
 
 /// @}

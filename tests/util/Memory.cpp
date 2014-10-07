@@ -48,7 +48,7 @@ ANKI_TEST(Memory, ChainMemoryPool)
 			allocAligned, nullptr,
 			size, size + 1, 
 			ChainMemoryPool::ChunkGrowMethod::MULTIPLY, 2, 1);
-		ANKI_TEST_EXPECT_EQ(error, ERROR_NONE);
+		ANKI_TEST_EXPECT_EQ(error, ErrorCode::NONE);
 
 		void* mem = pool.allocate(5, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
@@ -70,7 +70,7 @@ ANKI_TEST(Memory, ChainMemoryPool)
 			allocAligned, nullptr,
 			size, size * 2, 
 			ChainMemoryPool::ChunkGrowMethod::MULTIPLY, 2, 1);
-		ANKI_TEST_EXPECT_EQ(error, ERROR_NONE);
+		ANKI_TEST_EXPECT_EQ(error, ErrorCode::NONE);
 
 		void* mem = pool.allocate(size, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);

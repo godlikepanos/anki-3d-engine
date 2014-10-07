@@ -11,6 +11,7 @@
 #include "anki/util/Filesystem.h"
 #include "anki/util/Hash.h"
 #include "anki/util/Exception.h"
+#include "anki/util/Assert.h"
 
 namespace anki {
 
@@ -74,7 +75,8 @@ String ProgramResource::createToCache(
 
 	// Write cached file
 	File f(newFilename.toCString(), File::OpenFlag::WRITE);
-	f.writeText("%s\n", &src[0]);
+	Error err = f.writeText("%s\n", &src[0]);
+	ANKI_ASSERT(!err && "handle_error");
 
 	return newFilename;
 }

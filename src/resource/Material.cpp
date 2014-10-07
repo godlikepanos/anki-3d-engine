@@ -511,7 +511,8 @@ TempResourceString Material::createProgramSourceToChache(
 	{
 		// If not create it
 		File f(newfPathName.toCString(), File::OpenFlag::WRITE);
-		f.writeText("%s\n", &source[0]);
+		Error err = f.writeText("%s\n", &source[0]);
+		ANKI_ASSERT(!err && "handle_error");
 	}
 
 	return newfPathName;

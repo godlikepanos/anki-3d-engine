@@ -97,7 +97,11 @@ void MeshLoader::load(const CString& filename)
 		// Mesh name
 		{
 			U32 strLen = file.readU32();
-			file.seek(strLen, File::SeekOrigin::CURRENT);
+			Error error = file.seek(strLen, File::SeekOrigin::CURRENT);
+			if(error)
+			{
+				throw ANKI_EXCEPTION("File seek failed");
+			}
 		}
 
 		// Verts num

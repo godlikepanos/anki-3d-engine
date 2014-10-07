@@ -118,15 +118,15 @@ public:
 	F32 readF32();
 
 	/// Write data to the file
-	void write(void* buff, PtrSize size);
+	ANKI_USE_RESULT Error write(void* buff, PtrSize size);
 
 	/// Write formated text
-	void writeText(CString format, ...);
+	ANKI_USE_RESULT Error writeText(CString format, ...);
 
 	/// Set the position indicator to a new position
 	/// @param offset Number of bytes to offset from origin
 	/// @param origin Position used as reference for the offset
-	void seek(PtrSize offset, SeekOrigin origin);
+	ANKI_USE_RESULT Error seek(PtrSize offset, SeekOrigin origin);
 
 private:
 	/// Internal filetype
@@ -147,9 +147,9 @@ private:
 	static OpenFlag getMachineEndianness();
 
 	/// Get the type of the file
-	Type identifyFile(const CString& filename,
+	ANKI_USE_RESULT Error identifyFile(const CString& filename,
 		char* archiveFilename, PtrSize archiveFilenameSize,
-		CString& filenameInArchive);
+		CString& filenameInArchive, Type& type);
 
 	/// Open a C file
 	void openCFile(const CString& filename, OpenFlag flags);
