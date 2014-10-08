@@ -119,29 +119,31 @@ GlCommandBufferHandle::GlCommandBufferHandle()
 {}
 
 //==============================================================================
-GlCommandBufferHandle::GlCommandBufferHandle(GlDevice* gl, 
+GlCommandBufferHandle::~GlCommandBufferHandle()
+{}
+
+//==============================================================================
+Error GlCommandBufferHandle::create(GlDevice* gl, 
 	GlCommandBufferInitHints hints)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(gl);
 
-	Error err = ErrorCode::NONE;
-
 	using Alloc = GlAllocator<GlCommandBuffer>;
 	Alloc alloc = gl->_getAllocator();
 
-	*static_cast<Base*>(this) = Base(
+	Error err = _createAdvanced(
 		gl,
 		alloc, 
 		GlHandleDefaultDeleter<GlCommandBuffer, Alloc>());
 
-	err = _get().create(&gl->_getQueue(), hints);
-	ANKI_ASSERT(!err);
-}
+	if(!err)
+	{
+		err = _get().create(&gl->_getQueue(), hints);
+	}
 
-//==============================================================================
-GlCommandBufferHandle::~GlCommandBufferHandle()
-{}
+	return err;
+}
 
 //==============================================================================
 void GlCommandBufferHandle::pushBackUserCommand(

@@ -68,7 +68,11 @@ GlBufferHandle::GlBufferHandle()
 {}
 
 //==============================================================================
-GlBufferHandle::GlBufferHandle(GlCommandBufferHandle& commands,
+GlBufferHandle::~GlBufferHandle()
+{}
+
+//==============================================================================
+Error GlBufferHandle::create(GlCommandBufferHandle& commands,
 	GLenum target, GlClientBufferHandle& data, GLenum flags)
 {
 	ANKI_ASSERT(!isCreated());
@@ -80,19 +84,25 @@ GlBufferHandle::GlBufferHandle(GlCommandBufferHandle& commands,
 
 	using Deleter = GlHandleDeferredDeleter<GlBuffer, Alloc, DeleteCommand>;
 
-	*static_cast<Base::Base*>(this) = Base::Base(
+	Error err = _createAdvanced(
 		&commands._getQueue().getDevice(),
 		commands._getQueue().getDevice()._getAllocator(), 
 		Deleter());
-	_setState(GlHandleState::TO_BE_CREATED);
 
-	// Fire the command
-	commands._pushBackNewCommand<GlBufferCreateCommand>(
-		*this, target, data, flags);
+	if(!err)
+	{
+		_setState(GlHandleState::TO_BE_CREATED);
+
+		// Fire the command
+		commands._pushBackNewCommand<GlBufferCreateCommand>(
+			*this, target, data, flags);
+	}
+
+	return err;
 }
 
 //==============================================================================
-GlBufferHandle::GlBufferHandle(GlCommandBufferHandle& commands,
+Error GlBufferHandle::create(GlCommandBufferHandle& commands,
 	GLenum target, PtrSize size, GLenum flags)
 {
 	ANKI_ASSERT(!isCreated());
@@ -104,20 +114,22 @@ GlBufferHandle::GlBufferHandle(GlCommandBufferHandle& commands,
 
 	using Deleter = GlHandleDeferredDeleter<GlBuffer, Alloc, DeleteCommand>;
 
-	*static_cast<Base::Base*>(this) = Base::Base(
+	Error err = _createAdvanced(
 		&commands._getQueue().getDevice(),
 		commands._getQueue().getDevice()._getAllocator(), 
 		Deleter());
-	_setState(GlHandleState::TO_BE_CREATED);
 
-	// Fire the command
-	commands._pushBackNewCommand<GlBufferCreateCommand>(
-		*this, target, size, flags);
+	if(!err)
+	{
+		_setState(GlHandleState::TO_BE_CREATED);
+		
+		// Fire the command
+		commands._pushBackNewCommand<GlBufferCreateCommand>(
+			*this, target, size, flags);
+	}
+
+	return err;
 }
-
-//==============================================================================
-GlBufferHandle::~GlBufferHandle()
-{}
 
 //==============================================================================
 void GlBufferHandle::write(GlCommandBufferHandle& commands, 

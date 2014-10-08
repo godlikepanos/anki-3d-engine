@@ -26,12 +26,12 @@ public:
 
 	GlFramebufferHandle();
 
+	~GlFramebufferHandle();
+
 	/// Create a framebuffer
-	explicit GlFramebufferHandle(
+	ANKI_USE_RESULT Error create(
 		GlCommandBufferHandle& commands,
 		const std::initializer_list<Attachment>& attachments);
-
-	~GlFramebufferHandle();
 
 	/// Bind it to the state
 	/// @param commands The command buffer

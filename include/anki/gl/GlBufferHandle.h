@@ -26,15 +26,15 @@ public:
 
 	GlBufferHandle();
 
+	~GlBufferHandle();
+
 	/// Create the buffer with data
-	explicit GlBufferHandle(GlCommandBufferHandle& commands, GLenum target, 
+	ANKI_USE_RESULT Error create(GlCommandBufferHandle& commands, GLenum target, 
 		GlClientBufferHandle& data, GLbitfield flags);
 
 	/// Create the buffer without data
-	explicit GlBufferHandle(GlCommandBufferHandle& commands, GLenum target, 
+	ANKI_USE_RESULT Error create(GlCommandBufferHandle& commands, GLenum target, 
 		PtrSize size, GLbitfield flags);
-
-	~GlBufferHandle();
 
 	/// Get buffer size. It may serialize 
 	PtrSize getSize() const;

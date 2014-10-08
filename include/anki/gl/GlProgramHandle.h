@@ -28,16 +28,13 @@ public:
 	template<typename T>
 	using ProgramVector = Vector<T, GlAllocator<T>>;
 
-	/// @name Contructors/Destructor
-	/// @{
 	GlProgramHandle();
 
-	/// Create program
-	explicit GlProgramHandle(GlCommandBufferHandle& commands, 
-		GLenum shaderType, const GlClientBufferHandle& source);
-
 	~GlProgramHandle();
-	/// @}
+
+	/// Create program
+	ANKI_USE_RESULT Error create(GlCommandBufferHandle& commands, 
+		GLenum shaderType, const GlClientBufferHandle& source);
 
 	/// @name Accessors
 	/// They will sync

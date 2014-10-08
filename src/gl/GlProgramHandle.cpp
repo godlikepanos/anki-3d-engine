@@ -46,25 +46,32 @@ GlProgramHandle::GlProgramHandle()
 {}
 
 //==============================================================================
-GlProgramHandle::GlProgramHandle(GlCommandBufferHandle& commands, 
+GlProgramHandle::~GlProgramHandle()
+{}
+
+//==============================================================================
+Error GlProgramHandle::create(GlCommandBufferHandle& commands, 
 	GLenum type, const GlClientBufferHandle& source)
 {
 	using Alloc = GlAllocator<GlProgram>;
 	using DeleteCommand = GlDeleteObjectCommand<GlProgram, Alloc>;
 	using Deleter = GlHandleDeferredDeleter<GlProgram, Alloc, DeleteCommand>;
 
-	*static_cast<Base::Base*>(this) = Base::Base(
+	Error err = _createAdvanced(
 		&commands._get().getQueue().getDevice(),
 		commands._get().getGlobalAllocator(), 
 		Deleter());
-	_setState(GlHandleState::TO_BE_CREATED);
 
-	commands._pushBackNewCommand<GlProgramCreateCommand>(*this, type, source);
+	if(!err)
+	{
+		_setState(GlHandleState::TO_BE_CREATED);
+
+		commands._pushBackNewCommand<GlProgramCreateCommand>(
+			*this, type, source);
+	}
+
+	return err;
 }
-
-//==============================================================================
-GlProgramHandle::~GlProgramHandle()
-{}
 
 //==============================================================================
 GLenum GlProgramHandle::getType() const

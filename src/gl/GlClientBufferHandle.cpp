@@ -16,37 +16,37 @@ GlClientBufferHandle::GlClientBufferHandle()
 {}
 
 //==============================================================================
-GlClientBufferHandle::GlClientBufferHandle(
+GlClientBufferHandle::~GlClientBufferHandle()
+{}
+
+//==============================================================================
+Error GlClientBufferHandle::create(
 	GlCommandBufferHandle& commands, PtrSize size, void* preallocatedMem)
 {
 	ANKI_ASSERT(!isCreated());
 
-	Error err = ErrorCode::NONE;
-
-	auto alloc = commands._getAllocator();
-
 	using Deleter = GlHandleDefaultDeleter<
 		GlClientBuffer, GlCommandBufferAllocator<GlClientBuffer>>;
 
-	*static_cast<Base*>(this) = Base(nullptr, alloc, Deleter());
+	auto alloc = commands._getAllocator();
+	Error err = _createSimple(alloc, Deleter());
 
-	if(preallocatedMem != nullptr)
+	if(!err)
 	{
-		err = _get().create(preallocatedMem, size);
-	}
-	else
-	{
-		err = _get().create(alloc, size);
+		if(preallocatedMem != nullptr)
+		{
+			err = _get().create(preallocatedMem, size);
+		}
+		else
+		{
+			err = _get().create(alloc, size);
 
-		ANKI_COUNTER_INC(GL_CLIENT_BUFFERS_SIZE, U64(size));
+			ANKI_COUNTER_INC(GL_CLIENT_BUFFERS_SIZE, U64(size));
+		}
 	}
 
-	ANKI_ASSERT(!err);
+	return err;
 }
-
-//==============================================================================
-GlClientBufferHandle::~GlClientBufferHandle()
-{}
 
 //==============================================================================
 void* GlClientBufferHandle::getBaseAddress()

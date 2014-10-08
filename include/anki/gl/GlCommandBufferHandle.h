@@ -27,11 +27,11 @@ public:
 
 	GlCommandBufferHandle();
 
-	/// Create command buffer
-	explicit GlCommandBufferHandle(GlDevice* gl, 
-		GlCommandBufferInitHints hints = GlCommandBufferInitHints());
-
 	~GlCommandBufferHandle();
+
+	/// Create command buffer
+	ANKI_USE_RESULT Error create(GlDevice* gl, 
+		GlCommandBufferInitHints hints = GlCommandBufferInitHints());
 
 	/// Add a user command at the end of the command buffer
 	void pushBackUserCommand(UserCallback callback, void* data);

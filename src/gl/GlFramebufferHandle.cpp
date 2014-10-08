@@ -13,7 +13,11 @@ GlFramebufferHandle::GlFramebufferHandle()
 {}
 
 //==============================================================================
-GlFramebufferHandle::GlFramebufferHandle(
+GlFramebufferHandle::~GlFramebufferHandle()
+{}
+
+//==============================================================================
+Error GlFramebufferHandle::create(
 	GlCommandBufferHandle& commands,
 	const std::initializer_list<Attachment>& attachments)
 {
@@ -62,25 +66,27 @@ GlFramebufferHandle::GlFramebufferHandle(
 	using Deleter = 
 		GlHandleDeferredDeleter<GlFramebuffer, Alloc, DeleteCommand>;
 
-	*static_cast<Base::Base*>(this) = Base::Base(
+	Error err = _createAdvanced(
 		&commands._get().getQueue().getDevice(),
 		commands._get().getGlobalAllocator(), 
 		Deleter());
-	_setState(GlHandleState::TO_BE_CREATED);
 
-	Attachments att;
-	U i = 0;
-	for(const Attachment& a : attachments)
+	if(!err)
 	{
-		att[i++] = a;
+		_setState(GlHandleState::TO_BE_CREATED);
+
+		Attachments att;
+		U i = 0;
+		for(const Attachment& a : attachments)
+		{
+			att[i++] = a;
+		}
+
+		commands._pushBackNewCommand<Command>(*this, att, attachments.size());
 	}
 
-	commands._pushBackNewCommand<Command>(*this, att, attachments.size());
+	return err;
 }
-
-//==============================================================================
-GlFramebufferHandle::~GlFramebufferHandle()
-{}
 
 //==============================================================================
 void GlFramebufferHandle::bind(GlCommandBufferHandle& commands, Bool invalidate)

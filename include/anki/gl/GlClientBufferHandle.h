@@ -23,20 +23,17 @@ class GlClientBufferHandle: public GlHandle<GlClientBuffer>
 public:
 	using Base = GlHandle<GlClientBuffer>;
 
-	/// @name Constructors/Destructor
-	/// @{
 	GlClientBufferHandle();
+
+	~GlClientBufferHandle();
 
 	/// Create the buffer using preallocated memory or memory from the chain
 	/// @param chain The command buffer this client memory belongs to
 	/// @param size The size of the buffer
 	/// @param preallocatedMem Preallocated memory. Can be nullptr
 	/// @return The address of the new memory
-	GlClientBufferHandle(
+	ANKI_USE_RESULT Error create(
 		GlCommandBufferHandle& chain, PtrSize size, void* preallocatedMem);
-
-	~GlClientBufferHandle();
-	/// @}
 
 	/// Get the base address
 	void* getBaseAddress();

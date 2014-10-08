@@ -31,7 +31,10 @@ public:
 		/// If not the server thread then create a command for the server thread
 		if(!manager->_getQueue().isServerThread())
 		{
-			GlCommandBufferHandle commands(manager);
+			GlCommandBufferHandle commands;
+			
+			Error err = commands.create(manager);
+			ANKI_ASSERT(!err);
 			
 			commands.template _pushBackNewCommand<TDeleteCommand>(obj, alloc);
 			commands.flush();

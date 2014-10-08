@@ -24,7 +24,8 @@ enum class GlHandleState: U8
 	TO_BE_CREATED,
 	CREATED,
 	TO_BE_DELETED,
-	DELETED
+	DELETED,
+	ERROR
 };
 
 /// Default deleter for the GlHandle
@@ -49,60 +50,9 @@ class GlHandle
 public:
 	using Type = T;
 
-	/// @name Constructor/Destructor
-	/// @{
 	GlHandle()
 	:	m_cb(nullptr)
 	{}
-
-	/// Create an object and initialize the handle with that
-	/// @param[in,out] manager If it's not nullptr then it will create a more 
-	///                        sophisticated handle. Pass nullptr otherwise
-	/// @param[in] alloc The allocator that will be used for all internal 
-	///                  allocations of the handle
-	/// @param[in] del The deleter that will be used to cleanup the allocated
-	///                object. The containers for example require deferred 
-	///                deleters
-	/// @param args The arguments to pass to the object's constructor
-	template<typename TAlloc, typename TDeleter, typename... TArgs>
-	GlHandle(GlDevice* manager, TAlloc alloc, TDeleter del, TArgs&&... args)
-	{
-		// Create the object
-		T* ptr = alloc.template newInstance<T>(std::forward<TArgs>(args)...);
-
-		if(manager)
-		{
-			// Container block
-
-			using Block = CtrlBlockContainer<T, TAlloc, TDeleter>;
-
-			Block* blk = alloc.template newInstance<Block>();
-
-			blk->m_state = GlHandleState::NEW;
-			blk->m_gl = manager;
-			blk->m_alloc = alloc;
-			blk->m_del = del;
-
-			m_cb = blk;
-		}
-		else
-		{
-			// Simple block
-
-			using Block = CtrlBlockSimple<T, TAlloc, TDeleter>;
-
-			Block* blk = alloc.template newInstance<Block>();
-
-			blk->m_alloc = alloc;
-			blk->m_del = del;
-
-			m_cb = blk;
-		}
-
-		// Set common
-		m_cb->m_refcount = 1;
-		m_cb->m_ptr = ptr;
-	}
 
 	GlHandle(const GlHandle& b)
 	:	GlHandle()
@@ -114,7 +64,6 @@ public:
 	{
 		reset();
 	}
-	/// @}
 
 	/// Copy
 	GlHandle& operator=(const GlHandle& b)
@@ -167,6 +116,99 @@ public:
 	Bool operator>=(const GlHandle& b) const
 	{
 		return m_cb >= b.m_cb;
+	}
+
+	/// Allocate a GL object and initialize the handle with that
+	/// @param[in] alloc The allocator that will be used for all internal 
+	///                  allocations of the handle
+	/// @param[in] del The deleter that will be used to cleanup the allocated
+	///                object. The containers for example require deferred 
+	///                deleters
+	template<typename TAlloc, typename TDeleter>
+	ANKI_USE_RESULT Error _createSimple(TAlloc alloc, TDeleter del)
+	{
+		using Cb = CtrlBlockSimple<T, TAlloc, TDeleter>;
+
+		Error err = ErrorCode::NONE;
+
+		// Create the object
+		T* ptr = alloc.template newInstance<T>();
+
+		if(ptr != nullptr)
+		{
+			Cb* cb = alloc.template newInstance<Cb>();
+
+			if(cb != nullptr)
+			{
+				cb->m_alloc = alloc;
+				cb->m_del = del;
+				cb->m_refcount = 1;
+				cb->m_ptr = ptr;
+
+				m_cb = cb;
+			}
+			else
+			{
+				alloc. template deleteInstance(ptr);
+				err = ErrorCode::OUT_OF_MEMORY;
+			}
+		}
+		else
+		{
+			err = ErrorCode::OUT_OF_MEMORY;
+		}
+
+		return err;
+	}
+
+	/// Create an object and initialize the handle with that
+	/// @param[in,out] dev The device.
+	/// @param[in] alloc The allocator that will be used for all internal 
+	///                  allocations of the handle
+	/// @param[in] del The deleter that will be used to cleanup the allocated
+	///                object. The containers for example require deferred 
+	///                deleters
+	/// @param args The arguments to pass to the object's constructor
+	template<typename TAlloc, typename TDeleter>
+	ANKI_USE_RESULT Error _createAdvanced(
+		GlDevice* dev, TAlloc alloc, TDeleter del)
+	{
+		ANKI_ASSERT(dev);
+
+		using Cb = CtrlBlockContainer<T, TAlloc, TDeleter>;
+
+		Error err = ErrorCode::NONE;
+
+		// Create the object
+		T* ptr = alloc.template newInstance<T>();
+
+		if(ptr != nullptr)
+		{
+			Cb* cb = alloc.template newInstance<Cb>();
+
+			if(cb != nullptr)
+			{
+				cb->m_state = GlHandleState::NEW;
+				cb->m_gl = dev;
+				cb->m_alloc = alloc;
+				cb->m_del = del;
+				cb->m_refcount = 1;
+				cb->m_ptr = ptr;
+
+				m_cb = cb;
+			}
+			else
+			{
+				alloc. template deleteInstance(ptr);
+				err = ErrorCode::OUT_OF_MEMORY;
+			}
+		}
+		else
+		{
+			err = ErrorCode::OUT_OF_MEMORY;
+		}
+
+		return err;
 	}
 
 	/// Return true if it's pointing to actual data
