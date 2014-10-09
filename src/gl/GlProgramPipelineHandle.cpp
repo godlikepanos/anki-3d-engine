@@ -14,7 +14,11 @@ GlProgramPipelineHandle::GlProgramPipelineHandle()
 {}
 
 //==============================================================================
-GlProgramPipelineHandle::GlProgramPipelineHandle(
+GlProgramPipelineHandle::~GlProgramPipelineHandle()
+{}
+
+//==============================================================================
+Error GlProgramPipelineHandle::create(
 	GlCommandBufferHandle& commands,
 	std::initializer_list<GlProgramHandle> iprogs)
 {
@@ -26,15 +30,11 @@ GlProgramPipelineHandle::GlProgramPipelineHandle(
 		progs[count++] = prog;
 	}
 
-	commonConstructor(commands, &progs[0], &progs[0] + count);
+	return commonConstructor(commands, &progs[0], &progs[0] + count);
 }
 
 //==============================================================================
-GlProgramPipelineHandle::~GlProgramPipelineHandle()
-{}
-
-//==============================================================================
-void GlProgramPipelineHandle::commonConstructor(
+Error GlProgramPipelineHandle::commonConstructor(
 	GlCommandBufferHandle& commands,
 	const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd)
 {
@@ -74,13 +74,19 @@ void GlProgramPipelineHandle::commonConstructor(
 	using Deleter = 
 		GlHandleDeferredDeleter<GlProgramPipeline, Alloc, DeleteCommand>;
 
-	*static_cast<Base::Base*>(this) = Base::Base(
+	Error err = _createAdvanced(
 		&commands._get().getQueue().getDevice(),
 		commands._get().getGlobalAllocator(), 
 		Deleter());
-	_setState(GlHandleState::TO_BE_CREATED);
 
-	commands._pushBackNewCommand<Command>(*this, progsBegin, progsEnd);
+	if(!err)
+	{
+		_setState(GlHandleState::TO_BE_CREATED);
+
+		commands._pushBackNewCommand<Command>(*this, progsBegin, progsEnd);
+	}
+
+	return err;
 }
 
 //==============================================================================

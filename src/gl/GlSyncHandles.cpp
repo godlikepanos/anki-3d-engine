@@ -36,20 +36,20 @@ GlClientSyncHandle::GlClientSyncHandle()
 {}
 
 //==============================================================================
-GlClientSyncHandle::GlClientSyncHandle(GlCommandBufferHandle& commands)
+GlClientSyncHandle::~GlClientSyncHandle()
+{}
+
+//==============================================================================
+Error GlClientSyncHandle::create(GlCommandBufferHandle& commands)
 {
 	auto alloc = commands._getGlobalAllocator();
 
 	using Deleter = 
 		GlHandleDefaultDeleter<GlClientSync, GlAllocator<U8>>;
 
-	*static_cast<Base*>(this) = Base(
+	return _createAdvanced(
 		&commands._getQueue().getDevice(), alloc, Deleter());
 }
-
-//==============================================================================
-GlClientSyncHandle::~GlClientSyncHandle()
-{}
 
 //==============================================================================
 void GlClientSyncHandle::sync(GlCommandBufferHandle& commands)

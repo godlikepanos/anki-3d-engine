@@ -93,7 +93,7 @@ void GlQueue::start(
 	ANKI_ASSERT(swapBuffersCallback != nullptr);
 	m_swapBuffersCallback = swapBuffersCallback;
 	m_swapBuffersCbData = swapBuffersCbData;
-	m_swapBuffersCommands = GlCommandBufferHandle(m_device);
+	m_swapBuffersCommands.create(m_device);
 	m_swapBuffersCommands.pushBackUserCommand(swapBuffersInternal, this);
 
 #if !ANKI_QUEUE_DISABLE_ASYNC
@@ -101,8 +101,8 @@ void GlQueue::start(
 	m_thread.start(this, threadCallback);
 
 	// Create sync command buffer
-	m_syncCommands = GlCommandBufferHandle(m_device);
-	m_sync = GlClientSyncHandle(m_syncCommands);
+	m_syncCommands.create(m_device);
+	m_sync.create(m_syncCommands);
 	m_sync.sync(m_syncCommands);
 #else
 	prepare();

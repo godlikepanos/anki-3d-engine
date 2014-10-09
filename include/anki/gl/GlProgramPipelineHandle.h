@@ -26,20 +26,20 @@ public:
 
 	GlProgramPipelineHandle();
 
+	~GlProgramPipelineHandle();
+
 	/// Create a pipeline
-	explicit GlProgramPipelineHandle(
+	ANKI_USE_RESULT Error create(
 		GlCommandBufferHandle& commands,
 		const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd)
 	{
-		commonConstructor(commands, progsBegin, progsEnd);
+		return commonConstructor(commands, progsBegin, progsEnd);
 	}
 
 	/// Create using initializer list
-	explicit GlProgramPipelineHandle(
+	ANKI_USE_RESULT Error create(
 		GlCommandBufferHandle& commands,
 		std::initializer_list<GlProgramHandle> progs);
-
-	~GlProgramPipelineHandle();
 
 	/// Bind it to the state
 	void bind(GlCommandBufferHandle& commands);
@@ -48,7 +48,7 @@ public:
 	GlProgramHandle getAttachedProgram(GLenum type) const;
 
 public:
-	void commonConstructor(GlCommandBufferHandle& commands,
+	ANKI_USE_RESULT Error commonConstructor(GlCommandBufferHandle& commands,
 		const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd);
 };
 

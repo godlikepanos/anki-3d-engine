@@ -37,11 +37,10 @@ public:
 	/// Create husk
 	GlTextureHandle();
 
-	/// Create the texture
-	explicit GlTextureHandle(GlCommandBufferHandle& commands, 
-		const Initializer& init);
-
 	~GlTextureHandle();
+
+	/// Create the texture
+	Error create(GlCommandBufferHandle& commands, const Initializer& init);
 
 	/// Bind to a unit
 	void bind(GlCommandBufferHandle& commands, U32 unit);
@@ -74,17 +73,13 @@ public:
 
 	using Filter = GlTextureFilter;
 
-	/// @name Constructors/Destructor
-	/// @{
-
 	/// Create husk
 	GlSamplerHandle();
 
-	/// Create the sampler
-	explicit GlSamplerHandle(GlCommandBufferHandle& commands);
-
 	~GlSamplerHandle();
-	/// @}
+
+	/// Create the sampler
+	ANKI_USE_RESULT Error create(GlCommandBufferHandle& commands);
 
 	/// Bind to a unit
 	void bind(GlCommandBufferHandle& commands, U32 unit);

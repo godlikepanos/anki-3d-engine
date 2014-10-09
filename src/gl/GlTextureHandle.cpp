@@ -19,7 +19,11 @@ GlTextureHandle::GlTextureHandle()
 {}
 
 //==============================================================================
-GlTextureHandle::GlTextureHandle(
+GlTextureHandle::~GlTextureHandle()
+{}
+
+//==============================================================================
+Error GlTextureHandle::create(
 	GlCommandBufferHandle& commands, const Initializer& init)
 {
 	class Command: public GlCommand
@@ -100,19 +104,21 @@ GlTextureHandle::GlTextureHandle(
 
 	using Deleter = GlHandleDeferredDeleter<GlTexture, Alloc, DeleteCommand>;
 
-	*static_cast<Base::Base*>(this) = Base::Base(
+	Error err = _createAdvanced(
 		&commands._getQueue().getDevice(),
 		commands._getQueue().getDevice()._getAllocator(), 
 		Deleter());
-	_setState(GlHandleState::TO_BE_CREATED);
 
-	// Fire the command
-	commands._pushBackNewCommand<Command>(*this, init);
+	if(!err)
+	{
+		_setState(GlHandleState::TO_BE_CREATED);
+
+		// Fire the command
+		commands._pushBackNewCommand<Command>(*this, init);
+	}
+
+	return err;
 }
-
-//==============================================================================
-GlTextureHandle::~GlTextureHandle()
-{}
 
 //==============================================================================
 void GlTextureHandle::bind(GlCommandBufferHandle& commands, U32 unit)
@@ -243,7 +249,11 @@ GlSamplerHandle::GlSamplerHandle()
 {}
 
 //==============================================================================
-GlSamplerHandle::GlSamplerHandle(GlCommandBufferHandle& commands)
+GlSamplerHandle::~GlSamplerHandle()
+{}
+
+//==============================================================================
+Error GlSamplerHandle::create(GlCommandBufferHandle& commands)
 {
 	class Command: public GlCommand
 	{
@@ -274,18 +284,19 @@ GlSamplerHandle::GlSamplerHandle(GlCommandBufferHandle& commands)
 
 	using Deleter = GlHandleDeferredDeleter<GlSampler, Alloc, DeleteCommand>;
 
-	*static_cast<Base::Base*>(this) = Base::Base(
+	Error err = _createAdvanced(
 		&commands._getQueue().getDevice(),
 		commands._getQueue().getDevice()._getAllocator(), 
 		Deleter());
-	_setState(GlHandleState::TO_BE_CREATED);
 
-	commands._pushBackNewCommand<Command>(*this);
+	if(!err)
+	{
+		_setState(GlHandleState::TO_BE_CREATED);
+		commands._pushBackNewCommand<Command>(*this);
+	}
+
+	return err;
 }
-
-//==============================================================================
-GlSamplerHandle::~GlSamplerHandle()
-{}
 
 //==============================================================================
 void GlSamplerHandle::bind(GlCommandBufferHandle& commands, U32 unit)

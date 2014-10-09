@@ -25,9 +25,9 @@ public:
 
 	GlClientSyncHandle();
 
-	GlClientSyncHandle(GlCommandBufferHandle& commands);
-
 	~GlClientSyncHandle();
+
+	ANKI_USE_RESULT Error create(GlCommandBufferHandle& commands);
 
 	/// Fire a command that adds a waits for the client. The client should call 
 	/// wait some time after this call or the server will keep waiting forever
