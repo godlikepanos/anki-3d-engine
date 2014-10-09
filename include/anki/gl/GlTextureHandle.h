@@ -54,15 +54,6 @@ public:
 	/// Set a texture parameter
 	void setParameter(
 		GlCommandBufferHandle& commands, GLenum param, GLint value);
-
-	/// Get depth
-	U32 getDepth() const;
-
-	/// Get width
-	U32 getWidth() const;
-
-	/// Get height
-	U32 getHeight() const;
 };
 
 /// Sampler handle

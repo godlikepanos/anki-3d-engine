@@ -23,11 +23,13 @@ public:
 	:	m_sync(s)
 	{}
 
-	void operator()(GlCommandBuffer*)
+	Error operator()(GlCommandBuffer*)
 	{
 		ANKI_COUNTER_START_TIMER(GL_SERVER_WAIT_TIME);
 		m_sync._get().wait();
 		ANKI_COUNTER_STOP_TIMER_INC(GL_SERVER_WAIT_TIME);
+
+		return ErrorCode::NONE;
 	}
 };
 

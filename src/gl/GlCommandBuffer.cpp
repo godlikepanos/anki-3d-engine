@@ -64,7 +64,7 @@ GlAllocator<U8> GlCommandBuffer::getGlobalAllocator() const
 }
 
 //==============================================================================
-void GlCommandBuffer::executeAllCommands()
+Error GlCommandBuffer::executeAllCommands()
 {
 	ANKI_ASSERT(m_firstCommand != nullptr && "Empty command buffer");
 	ANKI_ASSERT(m_lastCommand != nullptr && "Empty command buffer");
@@ -72,15 +72,19 @@ void GlCommandBuffer::executeAllCommands()
 	m_executed = true;
 #endif
 	
+	Error err = ErrorCode::NONE;
+
 	GlCommand* command = m_firstCommand;
 
-	while(command != nullptr)
+	while(command != nullptr && !err)
 	{
-		(*command)(this);
+		err = (*command)(this);
 		ANKI_CHECK_GL_ERROR();
 
 		command = command->m_nextCommand;
 	}
+
+	return err;
 }
 
 //==============================================================================

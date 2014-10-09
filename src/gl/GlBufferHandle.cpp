@@ -42,7 +42,7 @@ public:
 		m_empty(true)
 	{}
 
-	void operator()(GlCommandBuffer*)
+	Error operator()(GlCommandBuffer*)
 	{
 		Error err = ErrorCode::NONE;
 
@@ -55,11 +55,14 @@ public:
 		{
 			err = m_buff._get().create(m_target, m_size, nullptr, m_flags);
 		}
-		ANKI_ASSERT(!err);
 
-		GlHandleState oldState = m_buff._setState(GlHandleState::CREATED);
+		GlHandleState oldState = m_buff._setState(
+			(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
+
 		(void)oldState;
 		ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
+
+		return err;
 	}
 };
 
@@ -151,7 +154,7 @@ void GlBufferHandle::write(GlCommandBufferHandle& commands,
 				m_writeOffset(writeOffset), m_size(size)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			ANKI_ASSERT(m_readOffset + m_size <= m_data.getSize());
 
@@ -159,6 +162,8 @@ void GlBufferHandle::write(GlCommandBufferHandle& commands,
 				(U8*)m_data.getBaseAddress() + m_readOffset, 
 				m_writeOffset, 
 				m_size);
+
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -183,12 +188,14 @@ void GlBufferHandle::bindShaderBufferInternal(GlCommandBufferHandle& commands,
 			: m_buff(buff), m_offset(offset), m_size(size), m_binding(binding)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			U32 offset = (m_offset != -1) ? m_offset : 0;
 			U32 size = (m_size != -1) ? m_size : m_buff._get().getSize();
 
 			m_buff._get().setBindingRange(m_binding, offset, size);
+
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -228,7 +235,7 @@ void GlBufferHandle::bindVertexBuffer(
 			m_attribLocation(attribLocation)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			GlBuffer& buff = m_buff._get();
 			ANKI_ASSERT(m_offset < m_buff.getSize());
@@ -244,6 +251,8 @@ void GlBufferHandle::bindVertexBuffer(
 				m_normalized,
 				m_stride, 
 				reinterpret_cast<const GLvoid*>(m_offset));
+
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -264,11 +273,13 @@ void GlBufferHandle::bindIndexBuffer(GlCommandBufferHandle& commands)
 		:	m_buff(buff)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			GlBuffer& buff = m_buff._get();
 			buff.setTarget(GL_ELEMENT_ARRAY_BUFFER);
 			buff.bind();
+
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -279,22 +290,20 @@ void GlBufferHandle::bindIndexBuffer(GlCommandBufferHandle& commands)
 //==============================================================================
 PtrSize GlBufferHandle::getSize() const
 {
-	serializeOnGetter();
-	return _get().getSize();
+	return (serializeOnGetter()) ? 0 : _get().getSize();
 }
 
 //==============================================================================
 GLenum GlBufferHandle::getTarget() const
 {
-	serializeOnGetter();
-	return _get().getTarget();
+	return (serializeOnGetter()) ? GL_NONE : _get().getTarget();
 }
 
 //==============================================================================
 void* GlBufferHandle::getPersistentMappingAddress()
 {
-	serializeOnGetter();
-	return _get().getPersistentMappingAddress();
+	return 
+		(serializeOnGetter()) ? nullptr : _get().getPersistentMappingAddress();
 }
 
 } // end namespace anki

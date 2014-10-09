@@ -38,7 +38,7 @@ Error GlFramebufferHandle::create(
 			m_fb(handle)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			Attachment* begin;
 			Attachment* end;
@@ -54,10 +54,13 @@ Error GlFramebufferHandle::create(
 			}
 
 			Error err = m_fb._get().create(begin, end);
-			ANKI_ASSERT(!err);
-			GlHandleState oldState = m_fb._setState(GlHandleState::CREATED);
+
+			GlHandleState oldState = m_fb._setState(
+				(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
 			ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
 			(void)oldState;
+
+			return err;
 		}
 	};
 
@@ -102,9 +105,10 @@ void GlFramebufferHandle::bind(GlCommandBufferHandle& commands, Bool invalidate)
 			m_invalidate(invalidate)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			m_fb._get().bind(m_invalidate);
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -142,10 +146,12 @@ void GlFramebufferHandle::blit(GlCommandBufferHandle& commands,
 			m_linear(linear)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			m_fbDest._get().blit(m_fbSrc._get(), m_sourceRect, m_destRect, 
 				m_attachmentMask, m_linear);
+
+			return ErrorCode::NONE;
 		}
 	};
 

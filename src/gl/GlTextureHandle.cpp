@@ -39,7 +39,7 @@ Error GlTextureHandle::create(
 			m_init(init)
 		{}
 
-		void operator()(GlCommandBuffer* commands)
+		Error operator()(GlCommandBuffer* commands)
 		{
 			ANKI_ASSERT(commands);
 			GlTexture::Initializer init;
@@ -87,11 +87,13 @@ Error GlTextureHandle::create(
 			auto alloc = commands->getGlobalAllocator();
 
 			Error err = m_tex._get().create(init, alloc);
-			ANKI_ASSERT(!err);
 
-			GlHandleState oldState = m_tex._setState(GlHandleState::CREATED);
+			GlHandleState oldState = m_tex._setState(
+				(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
 			ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
 			(void)oldState;
+
+			return err;
 		}
 	};
 
@@ -134,9 +136,10 @@ void GlTextureHandle::bind(GlCommandBufferHandle& commands, U32 unit)
 			m_unit(unit)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			m_tex._get().bind(m_unit);
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -158,9 +161,10 @@ void GlTextureHandle::setFilter(GlCommandBufferHandle& commands, Filter filter)
 			m_filter(filter)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			m_tex._get().setFilter(m_filter);
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -180,9 +184,10 @@ void GlTextureHandle::generateMipmaps(GlCommandBufferHandle& commands)
 		:	m_tex(tex)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			m_tex._get().generateMipmaps();
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -209,35 +214,15 @@ void GlTextureHandle::setParameter(GlCommandBufferHandle& commands,
 			m_value(value)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			m_tex._get().setParameter(m_param, m_value);
+			return ErrorCode::NONE;
 		}
 	};
 
 	ANKI_ASSERT(isCreated());
 	commands._pushBackNewCommand<Command>(*this, param, value);
-}
-
-//==============================================================================
-U32 GlTextureHandle::getWidth() const
-{
-	serializeOnGetter();
-	return _get().getWidth();
-}
-
-//==============================================================================
-U32 GlTextureHandle::getHeight() const
-{
-	serializeOnGetter();
-	return _get().getHeight();
-}
-
-//==============================================================================
-U32 GlTextureHandle::getDepth() const
-{
-	serializeOnGetter();
-	return _get().getDepth();
 }
 
 //==============================================================================
@@ -264,17 +249,18 @@ Error GlSamplerHandle::create(GlCommandBufferHandle& commands)
 		:	m_sampler(sampler)
 		{}
 
-		void operator()(GlCommandBuffer* commands)
+		Error operator()(GlCommandBuffer* commands)
 		{
 			ANKI_ASSERT(commands);
 
 			Error err = m_sampler._get().create();
-			ANKI_ASSERT(!err);
 
-			GlHandleState oldState = 
-				m_sampler._setState(GlHandleState::CREATED);
+			GlHandleState oldState = m_sampler._setState(
+				(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
 			ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
 			(void)oldState;
+
+			return err;
 		}
 	};
 
@@ -312,9 +298,10 @@ void GlSamplerHandle::bind(GlCommandBufferHandle& commands, U32 unit)
 			m_unit(unit)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			m_sampler._get().bind(m_unit);
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -336,9 +323,10 @@ void GlSamplerHandle::setFilter(GlCommandBufferHandle& commands, Filter filter)
 			m_filter(filter)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			m_sampler._get().setFilter(m_filter);
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -363,9 +351,10 @@ void GlSamplerHandle::setParameter(
 			m_value(value)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			m_sampler._get().setParameter(m_param, m_value);
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -385,9 +374,10 @@ void GlSamplerHandle::bindDefault(GlCommandBufferHandle& commands, U32 unit)
 		:	m_unit(unit)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			GlSampler::unbind(m_unit);
+			return ErrorCode::NONE;
 		}
 	};
 

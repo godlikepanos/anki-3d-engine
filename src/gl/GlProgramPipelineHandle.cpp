@@ -57,15 +57,17 @@ Error GlProgramPipelineHandle::commonConstructor(
 			} while(++prog != progsEnd);
 		}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
 			Error err = m_ppline._get().create(
 				&m_progs[0], &m_progs[0] + m_progsCount);
-			ANKI_ASSERT(!err);
 
-			GlHandleState oldState = m_ppline._setState(GlHandleState::CREATED);
+			GlHandleState oldState = m_ppline._setState(
+				err ? GlHandleState::ERROR : GlHandleState::CREATED);
 			ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
 			(void)oldState;
+
+			return err;
 		}
 	};
 
@@ -100,10 +102,10 @@ void GlProgramPipelineHandle::bind(GlCommandBufferHandle& commands)
 		GlProgramPipelineHandle m_ppline;
 
 		Command(GlProgramPipelineHandle& ppline)
-			: m_ppline(ppline)
+		:	m_ppline(ppline)
 		{}
 
-		void operator()(GlCommandBuffer* commands)
+		Error operator()(GlCommandBuffer* commands)
 		{
 			GlState& state = commands->getQueue().getState();
 
@@ -113,6 +115,8 @@ void GlProgramPipelineHandle::bind(GlCommandBufferHandle& commands)
 
 				state.m_crntPpline = m_ppline._get().getGlName();
 			}
+
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -123,7 +127,8 @@ void GlProgramPipelineHandle::bind(GlCommandBufferHandle& commands)
 GlProgramHandle GlProgramPipelineHandle::getAttachedProgram(GLenum type) const
 {
 	ANKI_ASSERT(isCreated());
-	serializeOnGetter();
+	Error err = serializeOnGetter();
+	ANKI_ASSERT(!err);
 	return _get().getAttachedProgram(type);
 }
 

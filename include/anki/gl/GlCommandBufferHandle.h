@@ -23,7 +23,7 @@ class GlCommandBufferHandle: public GlHandle<GlCommandBuffer>
 {
 public:
 	using Base = GlHandle<GlCommandBuffer>;
-	using UserCallback = void(*)(void*);
+	using UserCallback = Error(*)(void*);
 
 	GlCommandBufferHandle();
 
@@ -178,9 +178,9 @@ public:
 	}
 
 	/// Execute all commands
-	void _executeAllCommands()
+	ANKI_USE_RESULT Error _executeAllCommands()
 	{
-		_get().executeAllCommands();
+		return _get().executeAllCommands();
 	}
 	/// @}
 };

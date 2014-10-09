@@ -22,9 +22,10 @@ namespace anki {
 	{ \
 	public: \
 		Command() = default \
-		void operator()(GlCommandBuffer*) \
+		Error operator()(GlCommandBuffer*) \
 		{ \
 			glfunc_(); \
+			return ErrorCode::NONE; \
 		} \
 	}; \
 	_pushBackNewCommand<Command>(value_)
@@ -37,9 +38,10 @@ namespace anki {
 		Command(type_ v) \
 		:	m_value(v) \
 		{} \
-		void operator()(GlCommandBuffer*) \
+		Error operator()(GlCommandBuffer*) \
 		{ \
 			glfunc_(m_value); \
+			return ErrorCode::NONE; \
 		} \
 	}; \
 	_pushBackNewCommand<Command>(value_)
@@ -53,9 +55,10 @@ namespace anki {
 		{ \
 			m_value = {{a, b}}; \
 		} \
-		void operator()(GlCommandBuffer*) \
+		Error operator()(GlCommandBuffer*) \
 		{ \
 			glfunc_(m_value[0], m_value[1]); \
+			return ErrorCode::NONE; \
 		} \
 	}; \
 	_pushBackNewCommand<Command>(a_, b_)
@@ -69,9 +72,10 @@ namespace anki {
 		{ \
 			m_value = {{a, b, c}}; \
 		} \
-		void operator()(GlCommandBuffer*) \
+		Error operator()(GlCommandBuffer*) \
 		{ \
 			glfunc_(m_value[0], m_value[1], m_value[2]); \
+			return ErrorCode::NONE; \
 		} \
 	}; \
 	_pushBackNewCommand<Command>(a_, b_, c_)
@@ -85,9 +89,10 @@ namespace anki {
 		{ \
 			m_value = {{a, b, c, d}}; \
 		} \
-		void operator()(GlCommandBuffer*) \
+		Error operator()(GlCommandBuffer*) \
 		{ \
 			glfunc_(m_value[0], m_value[1], m_value[2], m_value[3]); \
+			return ErrorCode::NONE; \
 		} \
 	}; \
 	_pushBackNewCommand<Command>(a_, b_, c_, d_)
@@ -100,7 +105,7 @@ namespace anki {
 		Command(Bool enable) \
 		:	m_enable(enable) \
 		{} \
-		void operator()(GlCommandBuffer*) \
+		Error operator()(GlCommandBuffer*) \
 		{ \
 			if(m_enable) \
 			{ \
@@ -110,6 +115,7 @@ namespace anki {
 			{ \
 				glDisable(enum_); \
 			} \
+			return ErrorCode::NONE; \
 		} \
 	}; \
 	_pushBackNewCommand<Command>(enable_)
@@ -162,9 +168,9 @@ void GlCommandBufferHandle::pushBackUserCommand(
 			ANKI_ASSERT(m_callback);
 		}
 
-		void operator()(GlCommandBuffer* commands)
+		Error operator()(GlCommandBuffer* commands)
 		{
-			(*m_callback)(m_userData);
+			return (*m_callback)(m_userData);
 		}
 	};
 
@@ -184,9 +190,9 @@ void GlCommandBufferHandle::pushBackOtherCommandBuffer(
 		:	m_commands(commands)
 		{}
 
-		void operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer*)
 		{
-			m_commands._executeAllCommands();
+			return m_commands._executeAllCommands();
 		}
 	};
 
@@ -243,7 +249,7 @@ void GlCommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 			m_value = {{a, b, c, d}};
 		}
 
-		void operator()(GlCommandBuffer* commands)
+		Error operator()(GlCommandBuffer* commands)
 		{
 			GlState& state = commands->getQueue().getState();
 
@@ -256,6 +262,8 @@ void GlCommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 
 				state.m_viewport = m_value;
 			}
+
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -338,7 +346,7 @@ void GlCommandBufferHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 			: m_sfactor(sfactor), m_dfactor(dfactor)
 		{}
 
-		void operator()(GlCommandBuffer* commands)
+		Error operator()(GlCommandBuffer* commands)
 		{
 			GlState& state = commands->getQueue().getState();
 
@@ -350,6 +358,8 @@ void GlCommandBufferHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 				state.m_blendSfunc = m_sfactor;
 				state.m_blendDfunc = m_dfactor;
 			}
+
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -423,7 +433,7 @@ void GlCommandBufferHandle::bindTextures(U32 first,
 			m_texes = std::move(texes);
 		}
 
-		void operator()(GlCommandBuffer* commands)
+		Error operator()(GlCommandBuffer* commands)
 		{
 			Array<GLuint, 16> names;
 
@@ -435,6 +445,8 @@ void GlCommandBufferHandle::bindTextures(U32 first,
 
 			ANKI_ASSERT(count > 0);
 			glBindTextures(m_first, count, &names[0]);
+
+			return ErrorCode::NONE;
 		}
 	};
 
@@ -462,7 +474,7 @@ public:
 	:	m_info(info)
 	{}
 
-	void operator()(GlCommandBuffer*)
+	Error operator()(GlCommandBuffer*)
 	{
 		ANKI_ASSERT(indexSize != 0);
 
@@ -493,6 +505,8 @@ public:
 			m_info.m_baseInstance);
 
 		ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
+
+		return ErrorCode::NONE;
 	}
 };
 
@@ -542,7 +556,7 @@ public:
 	:	m_info(info)
 	{}
 
-	void operator()(GlCommandBuffer*)
+	Error operator()(GlCommandBuffer*)
 	{
 		glDrawArraysInstancedBaseInstance(
 			mode,
@@ -552,6 +566,8 @@ public:
 			m_info.m_baseInstance);
 
 		ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
+
+		return ErrorCode::NONE;
 	}
 };
 

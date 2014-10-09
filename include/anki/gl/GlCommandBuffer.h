@@ -29,7 +29,7 @@ public:
 	{}
 
 	/// Execute command
-	virtual void operator()(GlCommandBuffer*) = 0;
+	virtual ANKI_USE_RESULT Error operator()(GlCommandBuffer*) = 0;
 };
 
 /// A common command that deletes an object
@@ -47,9 +47,10 @@ public:
 		ANKI_ASSERT(m_ptr);
 	}
 
-	void operator()(GlCommandBuffer*)
+	Error operator()(GlCommandBuffer*)
 	{
 		m_alloc.deleteInstance(m_ptr);
+		return ErrorCode::NONE;
 	}
 };
 
@@ -62,7 +63,7 @@ class GlCommandBufferInitHints
 private:
 	enum
 	{
-		MAX_CHUNK_SIZE = 4 * 1024 * 1024 // 1MB
+		MAX_CHUNK_SIZE = 4 * 1024 * 1024 // 4MB
 	};
 
 	PtrSize m_chunkSize = 1024;
@@ -130,7 +131,7 @@ public:
 	}
 
 	/// Execute all commands
-	void executeAllCommands();
+	ANKI_USE_RESULT Error executeAllCommands();
 
 	/// Fake that it's been executed
 	void makeExecuted()

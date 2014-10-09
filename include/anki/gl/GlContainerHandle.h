@@ -23,16 +23,27 @@ public:
 
 protected:
 	/// Check if the object has been created and if not serialize the server
-	void serializeOnGetter() const
+	ANKI_USE_RESULT Error serializeOnGetter() const
 	{
+		Error err = ErrorCode::NONE;
 		GlHandleState state = Base::_getState();
 		ANKI_ASSERT(state != GlHandleState::NEW);
-
+		
 		if(state == GlHandleState::TO_BE_CREATED)
 		{
 			Base::_getDevice()._getQueue().syncClientServer();
-			ANKI_ASSERT(Base::_getState() > GlHandleState::TO_BE_CREATED);
+
+			state = Base::_getState();
+
+			if(state == GlHandleState::ERROR)
+			{
+				err = ErrorCode::UNKNOWN;
+			}
 		}
+
+		ANKI_ASSERT(state > GlHandleState::TO_BE_CREATED);
+
+		return err;
 	}
 };
 

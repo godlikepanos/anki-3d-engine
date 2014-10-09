@@ -75,11 +75,13 @@ void GlQueue::finishCommandBuffer(GlCommandBufferHandle& commands)
 }
 
 //==============================================================================
-void GlQueue::start(
+Error GlQueue::start(
 	GlMakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
 	GlCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerMessages)
 {
+	Error err = ErrorCode::NONE;
+
 	ANKI_ASSERT(m_tail == 0 && m_head == 0);
 	m_state.m_registerMessages = registerMessages;
 
@@ -93,20 +95,43 @@ void GlQueue::start(
 	ANKI_ASSERT(swapBuffersCallback != nullptr);
 	m_swapBuffersCallback = swapBuffersCallback;
 	m_swapBuffersCbData = swapBuffersCbData;
-	m_swapBuffersCommands.create(m_device);
-	m_swapBuffersCommands.pushBackUserCommand(swapBuffersInternal, this);
+	err = m_swapBuffersCommands.create(m_device);
+	if(!err)
+	{
+		m_swapBuffersCommands.pushBackUserCommand(swapBuffersInternal, this);
+	}
 
 #if !ANKI_QUEUE_DISABLE_ASYNC
-	// Start thread
-	m_thread.start(this, threadCallback);
+	Bool threadStarted = false;
+	if(!err)
+	{
+		// Start thread
+		m_thread.start(this, threadCallback);
+		threadStarted = true;
 
-	// Create sync command buffer
-	m_syncCommands.create(m_device);
-	m_sync.create(m_syncCommands);
-	m_sync.sync(m_syncCommands);
+		// Create sync command buffer
+		err = m_syncCommands.create(m_device);
+	}
+
+	if(!err)
+	{
+		err = m_sync.create(m_syncCommands);
+	}
+
+	if(!err)
+	{
+		m_sync.sync(m_syncCommands);
+	}
+
+	if(err && threadStarted)
+	{
+		m_thread.join();
+	}
 #else
 	prepare();
 #endif
+
+	return err;
 }
 
 //==============================================================================
@@ -216,14 +241,11 @@ void GlQueue::threadLoop()
 			++m_head;
 		}
 
-		try
+		Error err = cmd._executeAllCommands();
+
+		if(err)
 		{
-			// Exec commands
-			cmd._executeAllCommands();
-		}
-		catch(const std::exception& e)
-		{
-			ANKI_LOGE("Exception in rendering thread. Aborting:\n%s", e.what());
+			ANKI_LOGE("Error in rendering thread. Aborting\n");
 			abort();
 		}
 	}
@@ -241,7 +263,7 @@ void GlQueue::syncClientServer()
 }
 
 //==============================================================================
-void GlQueue::swapBuffersInternal(void* ptr)
+Error GlQueue::swapBuffersInternal(void* ptr)
 {
 	ANKI_ASSERT(ptr);
 	GlQueue& self = *reinterpret_cast<GlQueue*>(ptr);
@@ -256,6 +278,8 @@ void GlQueue::swapBuffersInternal(void* ptr)
 	}
 
 	self.m_frameCondVar.notifyOne();
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

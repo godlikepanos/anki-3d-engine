@@ -48,18 +48,23 @@ void GlDevice::destroy()
 }
 
 //==============================================================================
-void GlDevice::startServer(
+Error GlDevice::startServer(
 	GlMakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
 	GlCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerDebugMessages)
 {
-	m_queue->start(makeCurrentCb, makeCurrentCbData, ctx, 
+	Error err = m_queue->start(makeCurrentCb, makeCurrentCbData, ctx, 
 		swapBuffersCallback, swapBuffersCbData, 
 		registerDebugMessages);
 
-	syncClientServer();
+	if(!err)
+	{
+		syncClientServer();
 
-	m_queueStarted = true;
+		m_queueStarted = true;
+	}
+
+	return err;
 }
 
 //==============================================================================

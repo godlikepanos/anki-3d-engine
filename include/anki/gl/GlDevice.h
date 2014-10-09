@@ -34,7 +34,7 @@ public:
 		const CString& cacheDir);
 
 	/// Start the queue thread. @see GlQueue::start
-	void startServer(
+	ANKI_USE_RESULT Error startServer(
 		GlMakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
 		GlCallback swapBuffersCallback, void* swapBuffersCbData,
 		Bool registerDebugMessages);

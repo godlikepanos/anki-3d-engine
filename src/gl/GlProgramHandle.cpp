@@ -27,17 +27,19 @@ public:
 		m_source(source)
 	{}
 
-	void operator()(GlCommandBuffer* commands)
+	Error operator()(GlCommandBuffer* commands)
 	{
 		Error err = m_prog._get().create(m_type, 
 			reinterpret_cast<const char*>(m_source.getBaseAddress()),
 			commands->getQueue().getDevice()._getAllocator(),
 			commands->getQueue().getDevice()._getCacheDirectory());
-		ANKI_ASSERT(!err);
 
-		GlHandleState oldState = m_prog._setState(GlHandleState::CREATED);
+		GlHandleState oldState = m_prog._setState(
+			(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
 		ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
 		(void)oldState;
+
+		return err;
 	}
 };
 
@@ -76,15 +78,15 @@ Error GlProgramHandle::create(GlCommandBufferHandle& commands,
 //==============================================================================
 GLenum GlProgramHandle::getType() const
 {
-	serializeOnGetter();
-	return _get().getType();
+	return (serializeOnGetter()) ? GL_NONE : _get().getType();
 }
 
 //==============================================================================
 const GlProgram::ProgramVector<GlProgramVariable>& 
 	GlProgramHandle::getVariables() const
 {
-	serializeOnGetter();
+	Error err = serializeOnGetter();
+	ANKI_ASSERT(!err);
 	return _get().getVariables();
 }
 
@@ -92,7 +94,8 @@ const GlProgram::ProgramVector<GlProgramVariable>&
 const GlProgram::ProgramVector<GlProgramBlock>& 
 	GlProgramHandle::getBlocks() const
 {
-	serializeOnGetter();
+	Error err = serializeOnGetter();
+	ANKI_ASSERT(!err);
 	return _get().getBlocks();
 }
 
@@ -100,15 +103,13 @@ const GlProgram::ProgramVector<GlProgramBlock>&
 const GlProgramVariable* 
 	GlProgramHandle::tryFindVariable(const CString& name) const
 {
-	serializeOnGetter();
-	return _get().tryFindVariable(name);
+	return (serializeOnGetter()) ? nullptr : _get().tryFindVariable(name);
 }
 
 //==============================================================================
 const GlProgramBlock* GlProgramHandle::tryFindBlock(const CString& name) const
 {
-	serializeOnGetter();
-	return _get().tryFindBlock(name);
+	return (serializeOnGetter()) ? nullptr : _get().tryFindBlock(name);
 }
 
 } // end namespace anki

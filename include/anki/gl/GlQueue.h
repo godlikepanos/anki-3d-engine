@@ -63,7 +63,7 @@ public:
 
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop
-	void start(
+	ANKI_USE_RESULT Error start(
 		GlMakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
 		GlCallback swapBuffersCallback, void* swapBuffersCbData,
 		Bool registerMessages);
@@ -129,7 +129,7 @@ private:
 	void prepare();
 	void finish();
 
-	static void swapBuffersInternal(void* self);
+	static Error swapBuffersInternal(void* self);
 };
 
 /// @}
