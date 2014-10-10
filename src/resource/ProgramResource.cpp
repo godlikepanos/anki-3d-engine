@@ -29,15 +29,17 @@ void ProgramResource::load(const CString& filename, const CString& extraSrc,
 	TempResourceString source(extraSrc + pars.getShaderSource());
 
 	GlDevice& gl = manager._getGlDevice();
-	GlCommandBufferHandle jobs(&gl);
-	GlClientBufferHandle glsource(jobs, source.getLength() + 1, nullptr);
+	GlCommandBufferHandle cmdb;
+	cmdb.create(&gl);
+	GlClientBufferHandle glsource;
+	glsource.create(cmdb, source.getLength() + 1, nullptr);
 
 	std::strcpy(reinterpret_cast<char*>(glsource.getBaseAddress()), &source[0]);
 
-	m_prog = GlProgramHandle(jobs, 
+	m_prog.create(cmdb, 
 		computeGlShaderType(pars.getShaderType()), glsource);
 
-	jobs.flush();
+	cmdb.flush();
 }
 
 //==============================================================================

@@ -72,7 +72,8 @@ private:
 		const U32 layer);
 
 	/// Create the FBO
-	void createFbo(const Array<U, MAX_COLOR_ATTACHMENTS + 1>& layers,
+	ANKI_USE_RESULT Error createFbo(
+		const Array<U, MAX_COLOR_ATTACHMENTS + 1>& layers,
 		GLenum depthStencilBindingPoint);
 
 	void destroy();

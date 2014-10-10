@@ -127,19 +127,22 @@ void Mesh::createBuffers(const MeshLoader& loader,
 
 	// Create GL buffers
 	GlDevice& gl = init.m_resources._getGlDevice();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle cmdb;
+	cmdb.create(&gl);
 	
-	GlClientBufferHandle clientVertBuff(jobs, vbosize, &buff[0]);
-	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, clientVertBuff, 0);
+	GlClientBufferHandle clientVertBuff;
+	clientVertBuff.create(cmdb, vbosize, &buff[0]);
+	m_vertBuff.create(cmdb, GL_ARRAY_BUFFER, clientVertBuff, 0);
 
-	GlClientBufferHandle clientIndexBuff(
-		jobs, 
+	GlClientBufferHandle clientIndexBuff;
+	clientIndexBuff.create(
+		cmdb, 
 		getVectorSizeInBytes(loader.getIndices()), 
 		(void*)&loader.getIndices()[0]);
-	m_indicesBuff = GlBufferHandle(
-		jobs, GL_ELEMENT_ARRAY_BUFFER, clientIndexBuff, 0);
+	m_indicesBuff.create(
+		cmdb, GL_ELEMENT_ARRAY_BUFFER, clientIndexBuff, 0);
 
-	jobs.finish();
+	cmdb.finish();
 }
 
 //==============================================================================

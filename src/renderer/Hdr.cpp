@@ -22,12 +22,13 @@ void Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 		GL_UNSIGNED_BYTE, 1, rt);
 
 	// Set to bilinear because the blurring techniques take advantage of that
-	GlCommandBufferHandle jobs(&gl);
-	rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
+	GlCommandBufferHandle cmdb;
+	cmdb.create(&gl);
+	rt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
 
 	// Create FB
-	fb = GlFramebufferHandle(jobs, {{rt, GL_COLOR_ATTACHMENT0}});
-	jobs.finish();
+	fb.create(cmdb, {{rt, GL_COLOR_ATTACHMENT0}});
+	cmdb.finish();
 }
 
 //==============================================================================
@@ -57,14 +58,15 @@ void Hdr::initInternal(const ConfigSet& initializer)
 
 	// init shaders
 	GlDevice& gl = getGlDevice();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle cmdb;
+	cmdb.create(&gl);
 
-	m_commonBuff = GlBufferHandle(jobs, GL_UNIFORM_BUFFER, 
+	m_commonBuff.create(cmdb, GL_UNIFORM_BUFFER, 
 		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
 
-	updateDefaultBlock(jobs);
+	updateDefaultBlock(cmdb);
 
-	jobs.flush();
+	cmdb.flush();
 
 	m_toneFrag.load("shaders/PpsHdr.frag.glsl", &getResourceManager());
 
@@ -122,7 +124,7 @@ void Hdr::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Hdr::run(GlCommandBufferHandle& jobs)
+void Hdr::run(GlCommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -130,38 +132,38 @@ void Hdr::run(GlCommandBufferHandle& jobs)
 	//vblurFai.setFiltering(Texture::TFrustumType::NEAREST);
 
 	// pass 0
-	m_vblurFb.bind(jobs, true);
-	jobs.setViewport(0, 0, m_width, m_height);
-	m_tonePpline.bind(jobs);
+	m_vblurFb.bind(cmdb, true);
+	cmdb.setViewport(0, 0, m_width, m_height);
+	m_tonePpline.bind(cmdb);
 
 	if(m_parameterUpdateTimestamp > m_commonUboUpdateTimestamp)
 	{
-		updateDefaultBlock(jobs);
+		updateDefaultBlock(cmdb);
 		m_commonUboUpdateTimestamp = getGlobTimestamp();
 	}
 
-	m_r->getIs()._getRt().bind(jobs, 0);
-	m_commonBuff.bindShaderBuffer(jobs, 0);
+	m_r->getIs()._getRt().bind(cmdb, 0);
+	m_commonBuff.bindShaderBuffer(cmdb, 0);
 
-	m_r->drawQuad(jobs);
+	m_r->drawQuad(cmdb);
 
 	// Blurring passes
 	for(U32 i = 0; i < m_blurringIterationsCount; i++)
 	{
 		if(i == 0)
 		{
-			jobs.bindTextures(0, {m_hblurRt, m_vblurRt});
+			cmdb.bindTextures(0, {m_hblurRt, m_vblurRt});
 		}
 
 		// hpass
-		m_hblurFb.bind(jobs, true);
-		m_hblurPpline.bind(jobs);		
-		m_r->drawQuad(jobs);
+		m_hblurFb.bind(cmdb, true);
+		m_hblurPpline.bind(cmdb);		
+		m_r->drawQuad(cmdb);
 
 		// vpass
-		m_vblurFb.bind(jobs, true);
-		m_vblurPpline.bind(jobs);
-		m_r->drawQuad(jobs);
+		m_vblurFb.bind(cmdb, true);
+		m_vblurPpline.bind(cmdb);
+		m_r->drawQuad(cmdb);
 	}
 
 	// For the next stage it should be LINEAR though
@@ -169,13 +171,14 @@ void Hdr::run(GlCommandBufferHandle& jobs)
 }
 
 //==============================================================================
-void Hdr::updateDefaultBlock(GlCommandBufferHandle& jobs)
+void Hdr::updateDefaultBlock(GlCommandBufferHandle& cmdb)
 {
-	GlClientBufferHandle tempBuff(jobs, sizeof(Vec4), nullptr);
+	GlClientBufferHandle tempBuff;
+	tempBuff.create(cmdb, sizeof(Vec4), nullptr);
 	
 	*((Vec4*)tempBuff.getBaseAddress()) = Vec4(m_exposure, 0.0, 0.0, 0.0);
 
-	m_commonBuff.write(jobs, tempBuff, 0, 0, tempBuff.getSize());
+	m_commonBuff.write(cmdb, tempBuff, 0, 0, tempBuff.getSize());
 }
 
 } // end namespace anki

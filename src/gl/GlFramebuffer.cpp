@@ -5,6 +5,7 @@
 
 #include "anki/gl/GlFramebuffer.h"
 #include "anki/gl/GlTexture.h"
+#include "anki/core/Logger.h"
 
 namespace anki {
 
@@ -47,10 +48,10 @@ Error GlFramebuffer::create(
 	} while(++attachment != attachmentsEnd);
 
 	// Now create the FBO
-	createFbo(layers, depthStencilBindingPoint);
+	Error err = createFbo(layers, depthStencilBindingPoint);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	return ErrorCode::NONE;
+	return err;
 }
 
 //==============================================================================
@@ -64,10 +65,12 @@ void GlFramebuffer::destroy()
 }
 
 //==============================================================================
-void GlFramebuffer::createFbo(
+Error GlFramebuffer::createFbo(
 	const Array<U, MAX_COLOR_ATTACHMENTS + 1>& layers,
 	GLenum depthStencilBindingPoint)
 {
+	Error err = ErrorCode::NONE;
+
 	ANKI_ASSERT(!isCreated());
 	glGenFramebuffers(1, &m_glName);
 	ANKI_ASSERT(m_glName != 0);
@@ -100,9 +103,12 @@ void GlFramebuffer::createFbo(
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if(status != GL_FRAMEBUFFER_COMPLETE)
 	{
+		ANKI_LOGE("FBO is incomplete");
 		destroy();
-		throw ANKI_EXCEPTION("FBO is incomplete");
+		err = ErrorCode::FUNCTION_FAILED;
 	}
+
+	return err;
 }
 
 //==============================================================================
@@ -197,4 +203,5 @@ void GlFramebuffer::blit(const GlFramebuffer& b,
 }
 
 } // end namespace anki
+
 

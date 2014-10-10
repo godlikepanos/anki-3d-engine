@@ -193,7 +193,8 @@ void ModelPatchBase::create(GlDevice* gl)
 			prog = ppline.getAttachedProgram(GL_VERTEX_SHADER);
 			
 			// Create vert descriptor
-			GlCommandBufferHandle vertJobs(gl);
+			GlCommandBufferHandle vertJobs;
+			vertJobs.create(gl);
 			createVertexDesc(prog, *mesh, vertJobs);
 
 			m_vertJobs[getVertexDescIdx(key)] = vertJobs;

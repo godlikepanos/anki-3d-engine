@@ -31,8 +31,6 @@
 #include "anki/gl/GlFramebufferHandle.h"
 #include "anki/gl/GlProgramPipelineHandle.h"
 
-#include "anki/gl/GlOperations.h"
-
 #include "anki/gl/GlCommandBufferHandle.h"
 #include "anki/gl/GlDevice.h"
 

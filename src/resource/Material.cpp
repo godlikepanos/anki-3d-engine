@@ -303,9 +303,10 @@ GlProgramPipelineHandle Material::getProgramPipeline(
 			getProgram(key, ShaderType::FRAGMENT)->getGlProgram();
 
 		GlDevice& gl = m_resources->_getGlDevice();
-		GlCommandBufferHandle cmdBuff(&gl);
+		GlCommandBufferHandle cmdBuff;
+		cmdBuff.create(&gl);
 
-		ppline = GlProgramPipelineHandle(
+		ppline.create(
 			cmdBuff, &progs[0], &progs[0] + progCount);
 
 		cmdBuff.flush();

@@ -26,12 +26,13 @@ DebugDrawer::DebugDrawer(Renderer* r)
 	m_vert.load("shaders/Dbg.vert.glsl", &r->_getResourceManager());
 	m_frag.load("shaders/Dbg.frag.glsl", &r->_getResourceManager());
 
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle jobs;
+	jobs.create(&gl);
 
-	m_ppline = GlProgramPipelineHandle(jobs, 
+	m_ppline.create(jobs, 
 		{m_vert->getGlProgram(), m_frag->getGlProgram()});
 
-	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, 
+	m_vertBuff.create(jobs, GL_ARRAY_BUFFER, 
 		sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT);
 
 	m_lineVertCount = 0;
@@ -125,7 +126,8 @@ void DebugDrawer::flushInternal(GLenum primitive)
 
 	U size = sizeof(Vertex) * clientVerts;
 
-	GlClientBufferHandle tmpBuff(m_jobs, size, nullptr);
+	GlClientBufferHandle tmpBuff;
+	tmpBuff.create(m_jobs, size, nullptr);
 	memcpy(tmpBuff.getBaseAddress(), vertBuff, size);
 
 	m_vertBuff.write(m_jobs, tmpBuff, 0, 0, size);

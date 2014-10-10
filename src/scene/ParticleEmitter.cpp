@@ -246,13 +246,14 @@ ParticleEmitter::ParticleEmitter(
 	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
 
 	GlDevice& gl = getSceneGraph()._getGlDevice();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle cmd;
+	cmd.create(&gl);
 
-	m_vertBuff = GlBufferHandle(jobs, GL_ARRAY_BUFFER, buffSize, 
+	m_vertBuff.create(cmd, GL_ARRAY_BUFFER, buffSize, 
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
 	// TODO Optimize that to avoid serialization
-	jobs.finish();
+	cmd.finish();
 
 	m_vertBuffMapping = (U8*)m_vertBuff.getPersistentMappingAddress();
 }

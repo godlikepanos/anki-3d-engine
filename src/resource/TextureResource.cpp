@@ -17,11 +17,12 @@
 namespace anki {
 
 //==============================================================================
-static void deleteImageCallback(void* data)
+static Error deleteImageCallback(void* data)
 {
 	Image* image = reinterpret_cast<Image*>(data);
 	auto alloc = image->getAllocator();
 	alloc.deleteInstance(image);
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -50,8 +51,9 @@ void TextureResource::loadInternal(const CString& filename,
 	ResourceInitializer& rinit)
 {
 	GlDevice& gl = rinit.m_resources._getGlDevice();
-	GlCommandBufferHandle jobs(&gl); // Always first to avoid assertions (
-	                                 // because of the check of the allocator)
+	GlCommandBufferHandle cmdb;
+	cmdb.create(&gl); // Always first to avoid assertions (
+	                  // because of the check of the allocator)
 
 	GlTextureHandle::Initializer init;
 	U layers = 0;
@@ -200,21 +202,21 @@ void TextureResource::loadInternal(const CString& filename,
 		{
 			GlClientBufferHandle& buff = init.m_data[level][layer];
 
-			buff = GlClientBufferHandle(
-				jobs, 
+			buff.create(
+				cmdb, 
 				img.getSurface(level, layer).m_data.size(), 
 				(void*)&img.getSurface(level, layer).m_data[0]);
 		}
 	}
 
 	// Add the GL job to create the texture
-	m_tex = GlTextureHandle(jobs, init);
+	m_tex.create(cmdb, init);
 
 	// Add cleanup job
-	jobs.pushBackUserCommand(deleteImageCallback, imgPtr);
+	cmdb.pushBackUserCommand(deleteImageCallback, imgPtr);
 
 	// Finaly enque the GL job chain
-	jobs.flush();
+	cmdb.flush();
 }
 
 } // end namespace anki
