@@ -34,15 +34,15 @@ void Ms::createRt(U32 index, U32 samples)
 		GL_RGBA, GL_UNSIGNED_BYTE, samples, plane.m_rt1);
 
 	GlDevice& gl = getGlDevice();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle cmdb(&gl);
 
 	plane.m_fb = GlFramebufferHandle(
-		jobs,
+		cmdb,
 		{{plane.m_rt0, GL_COLOR_ATTACHMENT0}, 
 		{plane.m_rt1, GL_COLOR_ATTACHMENT1},
 		{plane.m_depthRt, GL_DEPTH_ATTACHMENT}});
 
-	jobs.finish();
+	cmdb.finish();
 }
 
 //==============================================================================
@@ -65,15 +65,15 @@ void Ms::init(const ConfigSet& initializer)
 				GL_UNSIGNED_INT, 1, m_smallDepthRt);
 
 			GlDevice& gl = getGlDevice();
-			GlCommandBufferHandle jobs(&gl);
+			GlCommandBufferHandle cmdb(&gl);
 
-			m_smallDepthRt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
+			m_smallDepthRt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
 
 			m_smallDepthFb = GlFramebufferHandle(
-				jobs,
+				cmdb,
 				{{m_smallDepthRt, GL_DEPTH_ATTACHMENT}});
 
-			jobs.finish();
+			cmdb.finish();
 		}
 
 		m_ez.init(initializer);
@@ -85,42 +85,42 @@ void Ms::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Ms::run(GlCommandBufferHandle& jobs)
+void Ms::run(GlCommandBufferHandle& cmdb)
 {
 	// Chose the multisampled or the singlesampled framebuffer
 	if(m_r->getSamples() > 1)
 	{
-		m_planes[0].m_fb.bind(jobs, true);
+		m_planes[0].m_fb.bind(cmdb, true);
 	}
 	else
 	{
-		m_planes[1].m_fb.bind(jobs, true);
+		m_planes[1].m_fb.bind(cmdb, true);
 	}
 
-	jobs.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	jobs.clearBuffers(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT
+	cmdb.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+	cmdb.clearBuffers(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT
 #if ANKI_DEBUG
 		| GL_COLOR_BUFFER_BIT
 #endif
 			);
 
-	jobs.enableDepthTest(true);
-	jobs.setDepthWriteMask(true);
+	cmdb.enableDepthTest(true);
+	cmdb.setDepthWriteMask(true);
 
 	if(m_ez.getEnabled())
 	{
-		jobs.setDepthFunction(GL_LESS);
-		jobs.setColorWriteMask(false, false, false, false);
+		cmdb.setDepthFunction(GL_LESS);
+		cmdb.setColorWriteMask(false, false, false, false);
 
-		m_ez.run(jobs);
+		m_ez.run(cmdb);
 
-		jobs.setDepthFunction(GL_LEQUAL);
-		jobs.setColorWriteMask(true, true, true, true);
+		cmdb.setDepthFunction(GL_LEQUAL);
+		cmdb.setColorWriteMask(true, true, true, true);
 	}
 
 	// render all
 	m_r->getSceneDrawer().prepareDraw(RenderingStage::MATERIAL, Pass::COLOR,
-		jobs);
+		cmdb);
 
 	VisibilityTestResults& vi =
 		m_r->getSceneGraph().getActiveCamera().getVisibilityTestResults();
@@ -146,13 +146,13 @@ void Ms::run(GlCommandBufferHandle& jobs)
 	}
 
 	// Blit big depth buffer to small one
-	m_smallDepthFb.blit(jobs, m_planes[1].m_fb, 
+	m_smallDepthFb.blit(cmdb, m_planes[1].m_fb, 
 		{{0, 0, m_planes[1].m_depthRt.getWidth(), 
 			m_planes[1].m_depthRt.getHeight()}},
 		{{0, 0, m_smallDepthRt.getWidth(), m_smallDepthRt.getHeight()}},
 		GL_DEPTH_BUFFER_BIT, false);
 
-	jobs.enableDepthTest(false);
+	cmdb.enableDepthTest(false);
 }
 
 } // end namespace anki
