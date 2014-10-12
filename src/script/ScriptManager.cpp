@@ -5,7 +5,7 @@
 
 #include "anki/script/ScriptManager.h"
 #include "anki/util/Exception.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/script/Common.h"
 
 namespace anki {

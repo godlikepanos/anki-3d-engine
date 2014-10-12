@@ -14,7 +14,7 @@
 #include "anki/script/ScriptManager.h"
 #include "anki/core/StdinListener.h"
 #include "anki/resource/Model.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/Util.h"
 #include "anki/resource/Skin.h"
 #include "anki/event/EventManager.h"

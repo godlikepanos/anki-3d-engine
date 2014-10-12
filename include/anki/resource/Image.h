@@ -8,7 +8,6 @@
 
 #include "anki/resource/Common.h"
 #include "anki/util/Functions.h"
-#include "anki/util/Vector.h"
 #include "anki/util/Enum.h"
 
 namespace anki {
@@ -51,18 +50,14 @@ public:
 	class Surface
 	{
 	public:
-		Surface(ResourceAllocator<U8>& alloc)
-		:	m_data(alloc)
-		{}
-
 		U32 m_width;
 		U32 m_height;
 		U32 m_mipLevel;
-		ResourceVector<U8> m_data;
+		ResourceDArray<U8> m_data;
 	};
 
 	Image(ResourceAllocator<U8>& alloc)
-	:	m_surfaces(alloc)
+	:	m_alloc(alloc)
 	{}
 
 	ColorFormat getColorFormat() const
@@ -99,18 +94,20 @@ public:
 
 	ResourceAllocator<U8> getAllocator() const
 	{
-		return m_surfaces.get_allocator();
+		return m_alloc;
 	}
 
 	/// Load an image file
 	/// @param[in] filename The file to load
 	/// @param[in] maxTextureSize Only load mipmaps less or equal to that. Used
 	///                           with AnKi textures
-	void load(const CString& filename, U32 maxTextureSize = MAX_U32);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, U32 maxTextureSize = MAX_U32);
 
 private:
+	ResourceAllocator<U8> m_alloc;
 	/// [mip][depthFace]
-	ResourceVector<Surface> m_surfaces;
+	ResourceDArray<Surface> m_surfaces;
 	U8 m_mipLevels = 0;
 	U8 m_depth = 0;
 	DataCompression m_compression = DataCompression::NONE;

@@ -6,7 +6,7 @@
 #include "anki/ui/UiPainter.h"
 #include "anki/gl/GlState.h"
 #include "anki/resource/TextureResource.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/ui/UiFont.h"
 #include <cstdarg>
 #include <cstdio>

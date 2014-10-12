@@ -8,7 +8,7 @@
 
 #include "anki/gl/GlObject.h"
 #include "anki/util/Dictionary.h"
-#include "anki/util/Vector.h"
+#include "anki/util/DArray.h"
 
 namespace anki {
 
@@ -29,11 +29,7 @@ public:
 	using Base = GlObject;
 
 	template<typename T>
-	using ProgramVector = Vector<T, GlAllocator<T>>;
-
-	template<typename T>
-	using ProgramDictionary = 
-		Dictionary<T, GlAllocator<std::pair<CString, T>>>;
+	using DArray = DArray<T, GlAllocator<T>>;
 
 	GlProgram() = default;
 
@@ -58,13 +54,13 @@ public:
 		return m_type;
 	}
 
-	const ProgramVector<GlProgramVariable>& getVariables() const
+	const DArray<GlProgramVariable>& getVariables() const
 	{
 		ANKI_ASSERT(isCreated());
 		return m_variables;
 	}
 
-	const ProgramVector<GlProgramBlock>& getBlocks() const
+	const DArray<GlProgramBlock>& getBlocks() const
 	{
 		ANKI_ASSERT(isCreated());
 		return m_blocks;
@@ -75,14 +71,12 @@ public:
 
 private:
 	GLenum m_type;
-	ProgramVector<GlProgramVariable> m_variables;
-	ProgramDictionary<GlProgramVariable*> m_variablesDict;
-
-	ProgramVector<GlProgramBlock> m_blocks;
-	ProgramDictionary<GlProgramBlock*> m_blocksDict;
+	GlAllocator<U8> m_alloc;
+	DArray<GlProgramVariable> m_variables;
+	DArray<GlProgramBlock> m_blocks;
 
 	/// Keep all the names of blocks and variables in a single place
-	char* m_names = nullptr;
+	DArray<char> m_names;
 
 	void destroy();
 

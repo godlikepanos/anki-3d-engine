@@ -217,6 +217,8 @@ void TextureResource::loadInternal(const CString& filename,
 
 	// Finaly enque the GL job chain
 	cmdb.flush();
+
+	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 }
 
 } // end namespace anki

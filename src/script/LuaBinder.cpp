@@ -5,7 +5,7 @@
 
 #include "anki/script/LuaBinder.h"
 #include "anki/util/Exception.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include <iostream>
 #include <cstring>
 

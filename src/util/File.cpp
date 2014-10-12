@@ -5,7 +5,7 @@
 
 #include "anki/util/File.h"
 #include "anki/util/Filesystem.h"
-#include "anki/util/Exception.h"
+#include "anki/util/Logger.h"
 #include "anki/util/Assert.h"
 #include <cstring>
 #include <cstdarg>
@@ -145,7 +145,7 @@ Error File::openCFile(const CString& filename, OpenFlag flags)
 	m_file = reinterpret_cast<FILE*>(fopen(filename.get(), openMode));
 	if(m_file == nullptr)
 	{
-		// Failed to open file
+		ANKI_LOGE("Failed to open file %s", &filename[0]);
 		err = ErrorCode::FILE_ACCESS;
 	}
 	else
@@ -291,7 +291,7 @@ Error File::flush()
 			I ierr = fflush(ANKI_CFILE);
 			if(ierr)
 			{
-				// fflush() failed
+				ANKI_LOGE("fflush() failed");
 				err = ErrorCode::FUNCTION_FAILED;
 			}
 		}
@@ -344,7 +344,7 @@ Error File::read(void* buff, PtrSize size)
 	Error err = ErrorCode::NONE;
 	if(static_cast<I64>(size) != readSize)
 	{
-		// File read failed
+		ANKI_LOGE("File read failed");
 		err = ErrorCode::FILE_ACCESS;
 	}
 
@@ -365,7 +365,7 @@ PtrSize File::getSize()
 		I64 size = ftell(ANKI_CFILE);
 		if(size < 1)
 		{
-			// ftell() failed
+			ANKI_LOGE("ftell() failed");
 		}
 		else
 		{
@@ -475,7 +475,7 @@ Error File::write(void* buff, PtrSize size)
 #endif
 		)
 	{
-		// Writting to archives is not supported
+		ANKI_LOGE("Writting to archives is not supported");
 		err = ErrorCode::FILE_ACCESS;
 	}
 	else
@@ -508,7 +508,7 @@ Error File::writeText(CString format, ...)
 #endif
 		)
 	{
-		// Writting to archives is not supported
+		ANKI_LOGE("Writting to archives is not supported");
 		err = ErrorCode::FILE_ACCESS;
 	}
 	else
@@ -531,7 +531,7 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 	{
 		if(fseek(ANKI_CFILE, offset, (I)origin) != 0)
 		{
-			// fseek() failed
+			ANKI_LOGE("fseek() failed");
 			err = ErrorCode::FUNCTION_FAILED;
 		}
 	}
@@ -543,7 +543,7 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 			if(unzCloseCurrentFile(m_file)
 				|| unzOpenCurrentFile(m_file))
 			{
-				// Rewind failed
+				ANKI_LOGE("Rewind failed");
 				err = ErrorCode::FUNCTION_FAILED;
 			}
 		}
@@ -565,7 +565,7 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 	{
 		if(AAsset_seek(ANKI_AFILE, offset, origin) == (off_t)-1)
 		{
-			// AAsset_seek() failed
+			ANKI_LOGE("AAsset_seek() failed");
 			err = ErrorCode::FUNCTION_FAILED;
 		}
 	}
@@ -611,13 +611,13 @@ Error File::identifyFile(const CString& filename,
 
 			if(archLen + 1 >= fnameLen)
 			{
-				// Too sort archived filename
+				ANKI_LOGE("Too sort archived filename");
 				err = ErrorCode::FILE_NOT_FOUND;
 			}
 
 			if(archiveFilenameLength > archLen)
 			{
-				// Using too long paths
+				ANKI_LOGE("Using too long paths");
 				err = ErrorCode::FILE_NOT_FOUND;
 			}
 

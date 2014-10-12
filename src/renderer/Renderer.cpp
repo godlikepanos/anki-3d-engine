@@ -69,13 +69,14 @@ void Renderer::init(const ConfigSet& config)
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
 		{1.0, -1.0}, {-1.0, -1.0}};
 
-	GlCommandBufferHandle cmdBuff(m_gl);
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(m_gl);
 
-	GlClientBufferHandle tmpBuff = GlClientBufferHandle(cmdBuff, 
-		sizeof(quadVertCoords), (void*)&quadVertCoords[0][0]);
+	GlClientBufferHandle tmpBuff;
+	tmpBuff.create(
+		cmdBuff, sizeof(quadVertCoords), (void*)&quadVertCoords[0][0]);
 
-	m_quadPositionsBuff = GlBufferHandle(cmdBuff, GL_ARRAY_BUFFER, 
-		tmpBuff, 0);
+	m_quadPositionsBuff.create(cmdBuff, GL_ARRAY_BUFFER, tmpBuff, 0);
 
 	m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources);
 
@@ -89,7 +90,7 @@ void Renderer::init(const ConfigSet& config)
 	m_dbg.init(config);
 
 	// Default FB
-	m_defaultFb = GlFramebufferHandle(cmdBuff, {});
+	m_defaultFb.create(cmdBuff, {});
 
 	cmdBuff.finish();
 
@@ -235,8 +236,9 @@ void Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 	init.m_genMipmaps = false;
 	init.m_samples = samples;
 
-	GlCommandBufferHandle cmdBuff(m_gl);
-	rt = GlTextureHandle(cmdBuff, init);
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(m_gl);
+	rt.create(cmdBuff, init);
 	cmdBuff.finish();
 }
 
@@ -244,11 +246,13 @@ void Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 GlProgramPipelineHandle Renderer::createDrawQuadProgramPipeline(
 	GlProgramHandle frag)
 {
-	GlCommandBufferHandle cmdBuff(m_gl);
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(m_gl);
 
 	Array<GlProgramHandle, 2> progs = {{m_drawQuadVert->getGlProgram(), frag}};
 
-	GlProgramPipelineHandle ppline(cmdBuff, &progs[0], &progs[0] + 2);
+	GlProgramPipelineHandle ppline;
+	ppline.create(cmdBuff, &progs[0], &progs[0] + 2);
 	cmdBuff.finish();
 
 	return ppline;

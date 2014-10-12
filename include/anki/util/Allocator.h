@@ -9,6 +9,7 @@
 #include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Memory.h"
+#include "anki/util/Logger.h"
 #include <cstddef> // For ptrdiff_t
 #include <utility> // For forward
 
@@ -47,18 +48,18 @@ class GenericPoolAllocator
 
 public:
 	// Typedefs
-	typedef size_t size_type;
-	typedef ptrdiff_t difference_type;
-	typedef T* pointer;
-	typedef const T* const_pointer;
-	typedef T& reference;
-	typedef const T& const_reference;
-	typedef T value_type;
+	using size_type = size_t;
+	using difference_type = ptrdiff_t;
+	using pointer = T*;
+	using const_pointer = const T*;
+	using reference = T&;
+	using const_reference = const T&;
+	using value_type = T;
 
 	/// Move assignments between containers will copy the allocator as well. 
 	/// If propagate_on_container_move_assignment is not defined then not moves
 	/// are going to happen
-	typedef std::true_type propagate_on_container_move_assignment;
+	using propagate_on_container_move_assignment = std::true_type;
 
 	/// A struct to rebind the allocator to another allocator of type U
 	template<typename Y>
@@ -96,7 +97,7 @@ public:
 
 		if(error)
 		{
-			throw ANKI_EXCEPTION("Initialization failed");
+			ANKI_LOGF("Initialization failed");
 		}
 	}
 
@@ -152,10 +153,10 @@ public:
 
 		if(out == nullptr)
 		{
-			throw ANKI_EXCEPTION("Allocation failed. There is not enough room");
+			ANKI_LOGE("Allocation failed. There is not enough room");
 		}
 
-		return (pointer)out;
+		return reinterpret_cast<pointer>(out);
 	}
 
 	/// Deallocate memory
@@ -167,8 +168,7 @@ public:
 
 		if(checkFree && !ok)
 		{
-			throw ANKI_EXCEPTION("Freeing wrong pointer. "
-				"Pool's free returned false");
+			ANKI_LOGE("Freeing wrong pointer. Pool's free() returned false");
 		}
 	}
 

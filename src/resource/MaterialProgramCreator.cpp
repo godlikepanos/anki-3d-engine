@@ -7,7 +7,7 @@
 #include "anki/util/Assert.h"
 #include "anki/util/Exception.h"
 #include "anki/misc/Xml.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 
 #include <algorithm>
 #include <sstream>

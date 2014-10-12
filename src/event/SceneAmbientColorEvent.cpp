@@ -5,7 +5,7 @@
 
 #include "anki/event/SceneAmbientColorEvent.h"
 #include "anki/scene/SceneGraph.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 
 namespace anki {
 

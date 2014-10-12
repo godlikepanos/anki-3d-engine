@@ -9,7 +9,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 #include "anki/core/Counters.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
 
 namespace anki {
@@ -456,7 +456,8 @@ void Is::initInternal(const ConfigSet& config)
 		m_sm.getPoissonEnabled());
 
 	// point light
-	GlCommandBufferHandle cmdBuff(&getGlDevice()); // Job for initialization
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(&getGlDevice()); // Job for initialization
 
 	m_lightVert.loadToCache(&getResourceManager(),
 		"shaders/IsLp.vert.glsl", pps.toCString(), "r_");
@@ -464,7 +465,7 @@ void Is::initInternal(const ConfigSet& config)
 	m_lightFrag.loadToCache(&getResourceManager(),
 		"shaders/IsLp.frag.glsl", pps.toCString(), "r_");
 
-	m_lightPpline = GlProgramPipelineHandle(cmdBuff, 
+	m_lightPpline.create(cmdBuff, 
 		{m_lightVert->getGlProgram(), m_lightFrag->getGlProgram()});
 
 	//
@@ -474,7 +475,7 @@ void Is::initInternal(const ConfigSet& config)
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8,
 			GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
 
-	m_fb = GlFramebufferHandle(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
 
 	//
 	// Init the quad
@@ -482,24 +483,24 @@ void Is::initInternal(const ConfigSet& config)
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0},
 		{1.0, 0.0}, {0.0, 0.0}};
 
-	GlClientBufferHandle tempBuff(cmdBuff, sizeof(quadVertCoords), 
+	GlClientBufferHandle tempBuff;
+	tempBuff.create(cmdBuff, sizeof(quadVertCoords), 
 		(void*)&quadVertCoords[0][0]);
 
-	m_quadPositionsVertBuff = GlBufferHandle(cmdBuff, GL_ARRAY_BUFFER,
-		tempBuff, 0);
+	m_quadPositionsVertBuff.create(cmdBuff, GL_ARRAY_BUFFER, tempBuff, 0);
 
 	//
 	// Create UBOs
 	//
 	const GLbitfield bufferBits = GL_DYNAMIC_STORAGE_BIT;
 
-	m_commonBuff = GlBufferHandle(cmdBuff, GL_UNIFORM_BUFFER, 
+	m_commonBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
 		sizeof(shader::CommonUniforms), bufferBits);
 
-	m_lightsBuff = GlBufferHandle(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
+	m_lightsBuff.create(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
 		calcLightsBufferSize(), bufferBits);
 
-	m_tilesBuff = GlBufferHandle(cmdBuff, GL_SHADER_STORAGE_BUFFER,
+	m_tilesBuff.create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
 		m_r->getTilesCount().x() * m_r->getTilesCount().y() * m_tileSize,
 		bufferBits);
 
@@ -593,11 +594,12 @@ void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	GlClientBufferHandle lightsClientBuff;
 	if(totalLightsCount > 0)
 	{
-		lightsClientBuff = GlClientBufferHandle(
+		lightsClientBuff.create(
 			cmdBuff, spotTexLightsOffset + spotTexLightsSize, nullptr);
 	}
 
-	GlClientBufferHandle tilesClientBuff(cmdBuff, m_tilesBuff.getSize(), nullptr);
+	GlClientBufferHandle tilesClientBuff;
+	tilesClientBuff.create(cmdBuff, m_tilesBuff.getSize(), nullptr);
 
 	AtomicU32 pointLightsAtomicCount(0);
 	AtomicU32 spotLightsAtomicCount(0);
@@ -735,11 +737,13 @@ void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	m_tilesBuff.bindShaderBuffer(cmdBuff, TILES_BLOCK_BINDING); 
 
 	// The binding points should much the shader
-	cmdBuff.bindTextures(0, {
+	Array<GlTextureHandle, 4> tarr = {{
 		m_r->getMs()._getRt0(), 
 		m_r->getMs()._getRt1(), 
 		m_r->getMs()._getDepthRt(),
-		m_sm.m_sm2DArrayTex});
+		m_sm.m_sm2DArrayTex}};
+
+	cmdBuff.bindTextures(0, tarr.begin(), tarr.getSize());
 
 	//
 	// Draw
@@ -787,7 +791,8 @@ void Is::updateCommonBlock(GlCommandBufferHandle& cmdBuff)
 {
 	SceneGraph& scene = m_r->getSceneGraph();
 
-	GlClientBufferHandle cbuff(cmdBuff, sizeof(shader::CommonUniforms), nullptr);
+	GlClientBufferHandle cbuff;
+	cbuff.create(cmdBuff, sizeof(shader::CommonUniforms), nullptr);
 	shader::CommonUniforms& blk = 
 		*(shader::CommonUniforms*)cbuff.getBaseAddress();
 

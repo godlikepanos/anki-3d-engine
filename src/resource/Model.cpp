@@ -8,7 +8,7 @@
 #include "anki/resource/Mesh.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/misc/Xml.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 
 namespace anki {
 

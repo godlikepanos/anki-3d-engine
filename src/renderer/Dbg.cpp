@@ -9,7 +9,7 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/util/Enum.h"
 #include "anki/misc/ConfigSet.h"
 
@@ -38,18 +38,19 @@ void Dbg::init(const ConfigSet& initializer)
 	try
 	{
 		GlDevice& gl = getGlDevice();
-		GlCommandBufferHandle jobs(&gl);
+		GlCommandBufferHandle cmdb;
+		cmdb.create(&gl);
 
 		// Chose the correct color FAI
 		if(m_r->getPps().getEnabled())
 		{
-			m_fb = GlFramebufferHandle(jobs, 
+			m_fb.create(cmdb, 
 				{{m_r->getPps()._getRt(), GL_COLOR_ATTACHMENT0},
 				{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
 		}
 		else
 		{
-			m_fb = GlFramebufferHandle(jobs, 
+			m_fb.create(cmdb, 
 				{{m_r->getIs()._getRt(), GL_COLOR_ATTACHMENT0},
 				{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
 		}
@@ -57,7 +58,7 @@ void Dbg::init(const ConfigSet& initializer)
 		m_drawer = getAllocator().newInstance<DebugDrawer>(m_r);
 		m_sceneDrawer = getAllocator().newInstance<SceneDebugDrawer>(m_drawer);
 
-		jobs.finish();
+		cmdb.finish();
 	}
 	catch(std::exception& e)
 	{
@@ -66,17 +67,17 @@ void Dbg::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Dbg::run(GlCommandBufferHandle& jobs)
+void Dbg::run(GlCommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
 	SceneGraph& scene = m_r->getSceneGraph();
 
-	m_fb.bind(jobs, false);
-	jobs.enableDepthTest(m_depthTest);
+	m_fb.bind(cmdb, false);
+	cmdb.enableDepthTest(m_depthTest);
 
 	Camera& cam = scene.getActiveCamera();
-	m_drawer->prepareDraw(jobs);
+	m_drawer->prepareDraw(cmdb);
 	m_drawer->setViewProjectionMatrix(cam.getViewProjectionMatrix());
 	m_drawer->setModelMatrix(Mat4::getIdentity());
 	//drawer->drawGrid();
@@ -412,7 +413,7 @@ void Dbg::run(GlCommandBufferHandle& jobs)
 	m_drawer->flush();
 	m_drawer->finishDraw();
 
-	jobs.enableDepthTest(false);
+	cmdb.enableDepthTest(false);
 }
 
 } // end namespace anki

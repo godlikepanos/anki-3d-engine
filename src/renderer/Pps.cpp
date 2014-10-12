@@ -7,7 +7,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Ssao.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
 
 namespace anki {
@@ -43,12 +43,13 @@ void Pps::initInternal(const ConfigSet& config)
 	m_sslr.init(config);
 
 	// FBO
-	GlCommandBufferHandle cmdBuff(&getGlDevice());
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(&getGlDevice());
 
 	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8, GL_RGB,
 		GL_UNSIGNED_BYTE, 1, m_rt);
 
-	m_fb = GlFramebufferHandle(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
 
 	// SProg
 	String pps(getAllocator());

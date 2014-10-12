@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/AsyncLoader.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 
 namespace anki {
 

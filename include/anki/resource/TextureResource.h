@@ -43,8 +43,24 @@ public:
 		return m_tex;
 	}
 
+	U32 getWidth() const
+	{
+		return m_size.x();
+	}
+
+	U32 getHeight() const
+	{
+		return m_size.y();
+	}
+
+	U32 getDepth() const
+	{
+		return m_size.z();
+	}
+
 private:
 	GlTextureHandle m_tex;
+	UVec3 m_size;
 
 	/// Load a texture
 	void loadInternal(const CString& filename, ResourceInitializer& init);

@@ -10,7 +10,7 @@
 #include "anki/Scene.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 
 namespace anki {
 

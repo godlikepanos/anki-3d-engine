@@ -62,7 +62,8 @@ private:
 	};
 
 	GlTextureHandle m_smallDepthRt; ///< A smaller depth buffer
-	GlFramebufferHandle m_smallDepthFb;
+	GlFramebufferHandle m_smallDepthFb; ///< Used to blit
+	UVec2 m_smallDepthSize;
 
 	Ez m_ez; /// EarlyZ pass
 

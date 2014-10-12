@@ -38,7 +38,8 @@ void BlurringRenderingPass::initBlurring(
 	Renderer& r, U width, U height, U samples, F32 blurringDistance)
 {
 	GlDevice& gl = getGlDevice();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle cmdb;
+	cmdb.create(&gl);
 
 	Array<String, 2> pps = {{String(getAllocator()), String(getAllocator())}};
 
@@ -65,11 +66,11 @@ void BlurringRenderingPass::initBlurring(
 
 		// Set to bilinear because the blurring techniques take advantage of 
 		// that
-		dir.m_rt.setFilter(jobs, GlTextureHandle::Filter::LINEAR);
+		dir.m_rt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
 
 		// Create FB
-		dir.m_fb = GlFramebufferHandle(
-			jobs, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
+		dir.m_fb.create(
+			cmdb, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
 
 		dir.m_frag.loadToCache(&getResourceManager(),
 			"shaders/VariableSamplingBlurGeneric.frag.glsl", 
@@ -79,29 +80,30 @@ void BlurringRenderingPass::initBlurring(
 			r.createDrawQuadProgramPipeline(dir.m_frag->getGlProgram());
 	}
 
-	jobs.finish();
+	cmdb.finish();
 }
 
 //==============================================================================
-void BlurringRenderingPass::runBlurring(Renderer& r, GlCommandBufferHandle& jobs)
+void BlurringRenderingPass::runBlurring(
+	Renderer& r, GlCommandBufferHandle& cmdb)
 {
 	// H pass input
-	m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_rt.bind(jobs, 1); 
+	m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_rt.bind(cmdb, 1); 
 
 	// V pass input
-	m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_rt.bind(jobs, 0); 
+	m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_rt.bind(cmdb, 0); 
 
 	for(U32 i = 0; i < m_blurringIterationsCount; i++)
 	{
 		// hpass
-		m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_fb.bind(jobs, true);
-		m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_ppline.bind(jobs);
-		r.drawQuad(jobs);
+		m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_fb.bind(cmdb, true);
+		m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_ppline.bind(cmdb);
+		r.drawQuad(cmdb);
 
 		// vpass
-		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_fb.bind(jobs, true);
-		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_ppline.bind(jobs);
-		r.drawQuad(jobs);
+		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_fb.bind(cmdb, true);
+		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_ppline.bind(cmdb);
+		r.drawQuad(cmdb);
 	}
 }
 

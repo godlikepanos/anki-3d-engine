@@ -6,7 +6,7 @@
 #include "anki/scene/RenderComponent.h"
 #include "anki/scene/SceneNode.h"
 #include "anki/resource/TextureResource.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 
 namespace anki {
 

@@ -77,7 +77,8 @@ void Lf::initInternal(const ConfigSet& config)
 		return;
 	}
 
-	GlCommandBufferHandle cmdBuff(&getGlDevice());
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(&getGlDevice());
 
 	m_maxFlaresPerLight = config.get("pps.lf.maxFlaresPerLight");
 	m_maxLightsWithFlares = config.get("pps.lf.maxLightsWithFlares");
@@ -85,8 +86,8 @@ void Lf::initInternal(const ConfigSet& config)
 	// Load program 1
 	String pps(getAllocator());
 	pps.sprintf("#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n", 
-		m_r->getPps().getHdr()._getRt().getWidth(),
-		m_r->getPps().getHdr()._getRt().getHeight());
+		m_r->getPps().getHdr()._getWidth(),
+		m_r->getPps().getHdr()._getHeight());
 
 	m_pseudoFrag.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfPseudoPass.frag.glsl", pps.toCString(), "r_");
@@ -103,7 +104,7 @@ void Lf::initInternal(const ConfigSet& config)
 	m_realFrag.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfSpritePass.frag.glsl", pps.toCString(), "r_");
 
-	m_realPpline = GlProgramPipelineHandle(cmdBuff,
+	m_realPpline.create(cmdBuff,
 		{m_realVert->getGlProgram(), m_realFrag->getGlProgram()});
 
 	PtrSize blockSize = 
@@ -115,15 +116,15 @@ void Lf::initInternal(const ConfigSet& config)
 	}
 
 	// Init buffer
-	m_flareDataBuff = GlBufferHandle(
+	m_flareDataBuff.create(
 		cmdBuff, GL_UNIFORM_BUFFER, blockSize, GL_DYNAMIC_STORAGE_BIT);
 
 	// Create the render target
-	m_r->createRenderTarget(m_r->getPps().getHdr()._getRt().getWidth(), 
-		m_r->getPps().getHdr()._getRt().getHeight(), 
+	m_r->createRenderTarget(m_r->getPps().getHdr()._getWidth(), 
+		m_r->getPps().getHdr()._getHeight(), 
 		GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
 
-	m_fb = GlFramebufferHandle(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}}); 
+	m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}}); 
 	
 	// Textures
 	m_lensDirtTex.load("engine_data/lens_dirt.ankitex", &getResourceManager());
@@ -147,14 +148,15 @@ void Lf::run(GlCommandBufferHandle& cmdBuff)
 
 	// Set the common state
 	m_fb.bind(cmdBuff, true);
-	cmdBuff.setViewport(0, 0, m_r->getPps().getHdr()._getRt().getWidth(), 
-		m_r->getPps().getHdr()._getRt().getHeight());
+	cmdBuff.setViewport(0, 0, m_r->getPps().getHdr()._getWidth(), 
+		m_r->getPps().getHdr()._getHeight());
 
 	m_pseudoPpline.bind(cmdBuff);
 
-	cmdBuff.bindTextures(0, {
+	Array<GlTextureHandle, 2> tarr = {{
 		m_r->getPps().getHdr()._getRt(), 
-		m_lensDirtTex->getGlTexture()});
+		m_lensDirtTex->getGlTexture()}};
+	cmdBuff.bindTextures(0, tarr.begin(), tarr.getSize());
 
 	m_r->drawQuad(cmdBuff);
 
@@ -198,7 +200,8 @@ void Lf::run(GlCommandBufferHandle& cmdBuff)
 
 		// Write the UBO and get the groups
 		//
-		GlClientBufferHandle flaresCBuff(cmdBuff,
+		GlClientBufferHandle flaresCBuff;
+		flaresCBuff.create(cmdBuff,
 			sizeof(Flare) * lightsCount * m_maxFlaresPerLight, nullptr);
 		Flare* flares = (Flare*)flaresCBuff.getBaseAddress();
 		U flaresCount = 0;
@@ -216,7 +219,7 @@ void Lf::run(GlCommandBufferHandle& cmdBuff)
 		{
 			Light& light = *lights[lightsCount];
 			const GlTextureHandle& tex = light.getLensFlareTexture();
-			const U depth = tex.getDepth();
+			const U depth = light.getLensFlareTextureDepth();
 
 			// Transform
 			Vec3 posWorld = light.getWorldTransform().getOrigin().xyz();

@@ -131,10 +131,10 @@ public:
 	void setPolygonMode(GLenum face, GLenum mode);
 
 	/// Bind many textures
-	/// @param first The unit where the first texture will be bound
-	/// @param textures A list of textures to bind
-	void bindTextures(U32 first, 
-		const std::initializer_list<GlTextureHandle>& textures);
+	/// @param first The unit where the first texture will be bound.
+	/// @param textures The array of textures.
+	/// @param count The count of textures
+	void bindTextures(U32 first, GlTextureHandle textures[], U32 count);
 	/// @}
 
 	/// @name Drawcalls

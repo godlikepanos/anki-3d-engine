@@ -7,7 +7,7 @@
 #include "anki/gl/GlCommandBuffer.h"
 #include "anki/gl/GlSyncHandles.h"
 #include "anki/gl/GlDevice.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/core/Counters.h"
 
 namespace anki {

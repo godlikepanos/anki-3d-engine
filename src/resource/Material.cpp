@@ -6,7 +6,7 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/MaterialProgramCreator.h"
 #include "anki/core/App.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/util/Hash.h"

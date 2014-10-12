@@ -55,9 +55,10 @@ void Sm::init(const ConfigSet& initializer)
 		sminit.m_filterType = GlTextureHandle::Filter::NEAREST;
 	}
 
-	GlCommandBufferHandle cmdBuff(&getGlDevice());
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(&getGlDevice());
 
-	m_sm2DArrayTex = GlTextureHandle(cmdBuff, sminit);
+	m_sm2DArrayTex.create(cmdBuff, sminit);
 
 	m_sm2DArrayTex.setParameter(cmdBuff, 
 		GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
@@ -69,7 +70,7 @@ void Sm::init(const ConfigSet& initializer)
 	for(Shadowmap& sm : m_sms)
 	{
 		sm.m_layerId = layer;
-		sm.m_fb = GlFramebufferHandle(cmdBuff, 
+		sm.m_fb.create(cmdBuff, 
 			{{m_sm2DArrayTex, GL_DEPTH_ATTACHMENT, (U32)layer}});
 
 		++layer;

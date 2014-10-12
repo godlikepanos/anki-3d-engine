@@ -9,7 +9,6 @@
 #include "anki/gl/GlFramebuffer.h"
 #include "anki/gl/GlTextureHandle.h"
 #include "anki/gl/GlTexture.h"
-#include "anki/util/Vector.h"
 #include "anki/core/Counters.h"
 #include <utility>
 
@@ -415,50 +414,51 @@ void GlCommandBufferHandle::setPolygonMode(GLenum face, GLenum mode)
 }
 
 //==============================================================================
-void GlCommandBufferHandle::bindTextures(U32 first, 
-	const std::initializer_list<GlTextureHandle>& textures)
+class BindTexturesCommand: public GlCommand
 {
-	using Vec = 
-		Vector<GlTextureHandle, GlCommandBufferAllocator<GlTextureHandle>>;
-		
-	class Command: public GlCommand
+public:
+	static const U MAX_BIND_TEXTURES = 8;
+
+	Array<GlTextureHandle, MAX_BIND_TEXTURES> m_texes;
+	U32 m_texCount;
+	U32 m_first;
+
+	BindTexturesCommand(
+		GlTextureHandle textures[], U count, U32 first)
+	:	m_first(first)
 	{
-	public:
-		Vec m_texes;
-		U32 m_first;
-
-		Command(Vec& texes, U32 first)
-			: m_first(first)
+		m_texCount = count;
+		GlTextureHandle* t = textures;
+		while(count-- != 0)
 		{
-			m_texes = std::move(texes);
+			m_texes[count] = *t;
+			++t;
 		}
-
-		Error operator()(GlCommandBuffer* commands)
-		{
-			Array<GLuint, 16> names;
-
-			U count = 0;
-			for(GlTextureHandle& t : m_texes)
-			{
-				names[count++] = t._get().getGlName();
-			}
-
-			ANKI_ASSERT(count > 0);
-			glBindTextures(m_first, count, &names[0]);
-
-			return ErrorCode::NONE;
-		}
-	};
-
-	Vec texes(_getAllocator());
-	texes.reserve(textures.size());
-
-	for(const GlTextureHandle& t : textures)
-	{
-		texes.push_back(t);
 	}
 
-	_pushBackNewCommand<Command>(texes, first);
+	Error operator()(GlCommandBuffer* commands)
+	{
+		Array<GLuint, MAX_BIND_TEXTURES> names;
+
+		U count = m_texCount;
+		U i = 0;
+		while(count-- != 0)
+		{
+			names[i++] = m_texes[count]._get().getGlName();
+		}
+
+		glBindTextures(m_first, m_texCount, &names[0]);
+
+		return ErrorCode::NONE;
+	}
+};
+
+void GlCommandBufferHandle::bindTextures(U32 first, 
+	GlTextureHandle textures[], U32 count)
+{
+	ANKI_ASSERT(count > 0);
+
+	_pushBackNewCommand<BindTexturesCommand>(&textures[0], count, first);
 }
 
 //==============================================================================

@@ -67,17 +67,18 @@ public:
 //==============================================================================
 
 //==============================================================================
-void Ssao::createFb(GlFramebufferHandle & fb, GlTextureHandle& rt)
+void Ssao::createFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 {
 	m_r->createRenderTarget(m_width, m_height, GL_RED, GL_RED, 
 		GL_UNSIGNED_BYTE, 1, rt);
 
 	// Set to bilinear because the blurring techniques take advantage of that
-	GlCommandBufferHandle cmdBuff(&getGlDevice());
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(&getGlDevice());
 	rt.setFilter(cmdBuff, GlTextureHandle::Filter::LINEAR);
 
 	// create FB
-	fb = GlFramebufferHandle(cmdBuff, {{rt, GL_COLOR_ATTACHMENT0}});
+	fb.create(cmdBuff, {{rt, GL_COLOR_ATTACHMENT0}});
 
 	cmdBuff.flush();
 }
@@ -114,10 +115,12 @@ void Ssao::initInternal(const ConfigSet& config)
 	//
 	// noise texture
 	//
-	GlCommandBufferHandle jobs(&getGlDevice());
+	GlCommandBufferHandle cmdb;
+	cmdb.create(&getGlDevice());
 
-	GlClientBufferHandle noise(
-		jobs, sizeof(Vec3) * NOISE_TEX_SIZE * NOISE_TEX_SIZE, nullptr);
+	GlClientBufferHandle noise;
+	noise.create(
+		cmdb, sizeof(Vec3) * NOISE_TEX_SIZE * NOISE_TEX_SIZE, nullptr);
 
 	genNoise((Vec3*)noise.getBaseAddress(), 
 		(Vec3*)((U8*)noise.getBaseAddress() + noise.getSize()));
@@ -134,7 +137,7 @@ void Ssao::initInternal(const ConfigSet& config)
 	tinit.m_mipmapsCount = 1;
 	tinit.m_data[0][0] = noise;
 
-	m_noiseTex = GlTextureHandle(jobs, tinit);
+	m_noiseTex.create(cmdb, tinit);
 
 	//
 	// Kernel
@@ -158,7 +161,7 @@ void Ssao::initInternal(const ConfigSet& config)
 	//
 	// Shaders
 	//
-	m_uniformsBuff = GlBufferHandle(jobs, GL_SHADER_STORAGE_BUFFER, 
+	m_uniformsBuff.create(cmdb, GL_SHADER_STORAGE_BUFFER, 
 		sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT);
 
 	String pps(getAllocator());
@@ -209,7 +212,7 @@ void Ssao::initInternal(const ConfigSet& config)
 	m_vblurPpline = m_r->createDrawQuadProgramPipeline(
 		m_vblurFrag->getGlProgram());
 
-	jobs.flush();
+	cmdb.flush();
 }
 
 //==============================================================================
@@ -226,25 +229,26 @@ void Ssao::init(const ConfigSet& config)
 }
 
 //==============================================================================
-void Ssao::run(GlCommandBufferHandle& jobs)
+void Ssao::run(GlCommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
 	const Camera& cam = m_r->getSceneGraph().getActiveCamera();
 
-	jobs.setViewport(0, 0, m_width, m_height);
+	cmdb.setViewport(0, 0, m_width, m_height);
 
 	// 1st pass
 	//
-	m_vblurFb.bind(jobs, true);
-	m_ssaoPpline.bind(jobs);
+	m_vblurFb.bind(cmdb, true);
+	m_ssaoPpline.bind(cmdb);
 
-	m_uniformsBuff.bindShaderBuffer(jobs, 0);
+	m_uniformsBuff.bindShaderBuffer(cmdb, 0);
 
-	jobs.bindTextures(0, {
+	Array<GlTextureHandle, 3> tarr = {{
 		m_r->getMs()._getSmallDepthRt(),
 		m_r->getMs()._getRt1(),
-		m_noiseTex});
+		m_noiseTex}};
+	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
 
 	// Write common block
 	if(m_commonUboUpdateTimestamp 
@@ -252,7 +256,8 @@ void Ssao::run(GlCommandBufferHandle& jobs)
 		|| m_commonUboUpdateTimestamp < cam.FrustumComponent::getTimestamp()
 		|| m_commonUboUpdateTimestamp == 1)
 	{
-		GlClientBufferHandle tmpBuff(jobs, sizeof(ShaderCommonUniforms),
+		GlClientBufferHandle tmpBuff;
+		tmpBuff.create(cmdb, sizeof(ShaderCommonUniforms),
 			nullptr);
 
 		ShaderCommonUniforms& blk = 
@@ -262,12 +267,12 @@ void Ssao::run(GlCommandBufferHandle& jobs)
 
 		blk.m_projectionMatrix = cam.getProjectionMatrix().getTransposed();
 
-		m_uniformsBuff.write(jobs, tmpBuff, 0, 0, tmpBuff.getSize());
+		m_uniformsBuff.write(cmdb, tmpBuff, 0, 0, tmpBuff.getSize());
 		m_commonUboUpdateTimestamp = getGlobTimestamp();
 	}
 
 	// Draw
-	m_r->drawQuad(jobs);
+	m_r->drawQuad(cmdb);
 
 	// Blurring passes
 	//
@@ -275,18 +280,19 @@ void Ssao::run(GlCommandBufferHandle& jobs)
 	{
 		if(i == 0)
 		{
-			jobs.bindTextures(0, {m_hblurRt, m_vblurRt});
+			Array<GlTextureHandle, 2> tarr = {{m_hblurRt, m_vblurRt}};
+			cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
 		}
 
 		// hpass
-		m_hblurFb.bind(jobs, true);
-		m_hblurPpline.bind(jobs);
-		m_r->drawQuad(jobs);
+		m_hblurFb.bind(cmdb, true);
+		m_hblurPpline.bind(cmdb);
+		m_r->drawQuad(cmdb);
 
 		// vpass
-		m_vblurFb.bind(jobs, true);
-		m_vblurPpline.bind(jobs);
-		m_r->drawQuad(jobs);
+		m_vblurFb.bind(cmdb, true);
+		m_vblurPpline.bind(cmdb);
+		m_r->drawQuad(cmdb);
 	}
 }
 

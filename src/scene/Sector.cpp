@@ -11,7 +11,7 @@
 #include "anki/scene/Visibility.h"
 #include "anki/scene/FrustumComponent.h"
 #include "anki/scene/SceneGraph.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/renderer/Renderer.h"
 
 namespace anki {

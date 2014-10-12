@@ -155,6 +155,12 @@ public:
 		return m_flaresTex->getGlTexture();
 	}
 
+	U32 getLensFlareTextureDepth() const
+	{
+		ANKI_ASSERT(hasLensFlare());
+		return m_flaresTex->getDepth();
+	}
+
 	const Vec2& getLensFlaresSize() const
 	{
 		return m_flaresSize;

@@ -5,7 +5,7 @@
 
 #include "anki/gl/GlProgramPipeline.h"
 #include "anki/gl/GlProgram.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 
 namespace anki {
 

@@ -7,7 +7,7 @@
 #include "anki/gl/GlQueue.h"
 #include "anki/gl/GlDevice.h"
 #include "anki/gl/GlError.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/core/Counters.h"
 #include <cstring>
 

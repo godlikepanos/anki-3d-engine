@@ -7,7 +7,7 @@
 #include "anki/renderer/Ez.h"
 #include "anki/renderer/Renderer.h"
 
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/misc/ConfigSet.h"
@@ -34,9 +34,10 @@ void Ms::createRt(U32 index, U32 samples)
 		GL_RGBA, GL_UNSIGNED_BYTE, samples, plane.m_rt1);
 
 	GlDevice& gl = getGlDevice();
-	GlCommandBufferHandle cmdb(&gl);
+	GlCommandBufferHandle cmdb;
+	cmdb.create(&gl);
 
-	plane.m_fb = GlFramebufferHandle(
+	plane.m_fb.create(
 		cmdb,
 		{{plane.m_rt0, GL_COLOR_ATTACHMENT0}, 
 		{plane.m_rt1, GL_COLOR_ATTACHMENT1},
@@ -58,18 +59,23 @@ void Ms::init(const ConfigSet& initializer)
 
 		// Init small depth 
 		{
+			m_smallDepthSize = UVec2(
+				getAlignedRoundDown(16, m_r->getWidth() / 3),
+				getAlignedRoundDown(16, m_r->getHeight() / 3));
+
 			m_r->createRenderTarget(
-				getAlignedRoundDown(16, m_r->getWidth() / 3) , 
-				getAlignedRoundDown(16, m_r->getHeight() / 3),
+				m_smallDepthSize.x(), 
+				m_smallDepthSize.y(),
 				GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
 				GL_UNSIGNED_INT, 1, m_smallDepthRt);
 
 			GlDevice& gl = getGlDevice();
-			GlCommandBufferHandle cmdb(&gl);
+			GlCommandBufferHandle cmdb;
+			cmdb.create(&gl);
 
 			m_smallDepthRt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
 
-			m_smallDepthFb = GlFramebufferHandle(
+			m_smallDepthFb.create(
 				cmdb,
 				{{m_smallDepthRt, GL_DEPTH_ATTACHMENT}});
 
@@ -147,9 +153,8 @@ void Ms::run(GlCommandBufferHandle& cmdb)
 
 	// Blit big depth buffer to small one
 	m_smallDepthFb.blit(cmdb, m_planes[1].m_fb, 
-		{{0, 0, m_planes[1].m_depthRt.getWidth(), 
-			m_planes[1].m_depthRt.getHeight()}},
-		{{0, 0, m_smallDepthRt.getWidth(), m_smallDepthRt.getHeight()}},
+		{{0, 0, m_r->getWidth(), m_r->getHeight()}},
+		{{0, 0, m_smallDepthSize.x(), m_smallDepthSize.y()}},
 		GL_DEPTH_BUFFER_BIT, false);
 
 	cmdb.enableDepthTest(false);

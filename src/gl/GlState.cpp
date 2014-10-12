@@ -5,7 +5,7 @@
 
 #include "anki/gl/GlState.h"
 #include "anki/gl/GlBuffer.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include <algorithm>
 #include <cstring>
 

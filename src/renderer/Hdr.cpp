@@ -152,7 +152,8 @@ void Hdr::run(GlCommandBufferHandle& cmdb)
 	{
 		if(i == 0)
 		{
-			cmdb.bindTextures(0, {m_hblurRt, m_vblurRt});
+			Array<GlTextureHandle, 2> arr = {{m_hblurRt, m_vblurRt}};
+			cmdb.bindTextures(0, arr.begin(), arr.getSize());
 		}
 
 		// hpass

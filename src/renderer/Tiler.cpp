@@ -245,15 +245,16 @@ void Tiler::initInternal()
 	m_r->createRenderTarget(m_r->getTilesCount().x(), m_r->getTilesCount().y(),
 		GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, 1, m_rt);
 
-	GlCommandBufferHandle cmdBuff(&getGlDevice());
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(&getGlDevice());
 
-	m_fb = GlFramebufferHandle(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
 
 	// Create PBO
 	U pixelBuffSize = m_r->getTilesCount().x() * m_r->getTilesCount().y();
 	pixelBuffSize *= 2 * sizeof(F32); // The pixel size
 	pixelBuffSize *= 4; // Because it will be always mapped
-	m_pixelBuff = GlBufferHandle(cmdBuff, GL_PIXEL_PACK_BUFFER, pixelBuffSize,
+	m_pixelBuff.create(cmdBuff, GL_PIXEL_PACK_BUFFER, pixelBuffSize,
 		GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
 	// Init planes. One plane for each direction, plus near/far plus the world

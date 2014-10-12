@@ -5,7 +5,7 @@
 
 #include "anki/resource/MeshLoader.h"
 #include "anki/util/File.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include <cstring>
 #include <unordered_map>
 

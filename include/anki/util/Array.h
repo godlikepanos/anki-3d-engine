@@ -16,19 +16,20 @@ namespace anki {
 
 /// Like std::array but with some additions
 template<typename T, PtrSize N>
-struct Array
+class Array
 {
-	typedef T Value;
-	typedef Value* Iterator;
-	typedef const Value* ConstIterator;
-	typedef Value& Reference;
-	typedef const Value& ConstReference;
+public:
+	using Value = T;
+	using Iterator = Value*;
+	using ConstIterator = const Value*;
+	using Reference = Value&;
+	using ConstReference = const Value&;
 
-	// std compatible
-	typedef Iterator iterator;
-	typedef ConstIterator const_iterator;
-	typedef Reference reference;
-	typedef ConstReference const_reference;
+	// STL compatible
+	using iterator = Iterator;
+	using const_iterator = ConstIterator;
+	using reference = Reference;
+	using const_reference = ConstReference;
 
 	Value m_data[N];
 

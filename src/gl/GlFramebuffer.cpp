@@ -5,7 +5,7 @@
 
 #include "anki/gl/GlFramebuffer.h"
 #include "anki/gl/GlTexture.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 
 namespace anki {
 

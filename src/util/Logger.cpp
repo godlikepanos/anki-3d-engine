@@ -3,10 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/core/Logger.h"
-#include "anki/core/App.h"
+#include "anki/util/Logger.h"
+#include "anki/util/File.h"
 #include <cstring>
 #include <cstdarg>
+#include <cstdio>
 #if ANKI_OS == ANKI_OS_ANDROID
 #	include <android/log.h>
 #endif
@@ -14,38 +15,23 @@
 namespace anki {
 
 //==============================================================================
-Logger::Logger(InitFlags flags, HeapAllocator<U8>& alloc, const char* cacheDir)
-:	m_handlers(alloc)
+static const Array<const char*, static_cast<U>(Logger::MessageType::COUNT)> 
+	MSG_TEXT = {{"Info", "Error", "Warning", "Fatal"}};
+
+//==============================================================================
+Logger::Logger()
 {
-	if((flags & InitFlags::WITH_SYSTEM_MESSAGE_HANDLER) != InitFlags::NONE)
-	{
-		addMessageHandler(this, &defaultSystemMessageHandler);
-	}
-
-	if((flags & InitFlags::WITH_LOG_FILE_MESSAGE_HANDLER) != InitFlags::NONE)
-	{
-		U size = std::strlen(cacheDir) + 1;
-		m_cacheDir = reinterpret_cast<char*>(alloc.allocate(size));
-		std::memcpy(m_cacheDir, cacheDir, size);
-
-		addMessageHandler(this, &logfileMessageHandler);
-	}
+	addMessageHandler(this, &defaultSystemMessageHandler);
 }
 
 //==============================================================================
 Logger::~Logger()
-{
-	if(m_cacheDir != nullptr)
-	{
-		HeapAllocator<char> alloc = m_handlers.get_allocator();
-		alloc.deallocate(m_cacheDir, 0);
-	}
-}
+{}
 
 //==============================================================================
 void Logger::addMessageHandler(void* data, MessageHandlerCallback callback)
 {
-	m_handlers.push_back(Handler{data, callback});
+	m_handlers[m_handlersCount++] =  Handler(data, callback);
 }
 
 //==============================================================================
@@ -56,12 +42,18 @@ void Logger::write(const char* file, int line, const char* func,
 
 	Info inf = {file, line, func, type, msg};
 
-	for(Handler& handler : m_handlers)
+	U count = m_handlersCount;
+	while(count-- != 0)
 	{
-		handler.m_callback(handler.m_data, inf);
+		m_handlers[count].m_callback(m_handlers[count].m_data, inf);
 	}
 
 	m_mutex.unlock();
+
+	if(type == MessageType::FATAL)
+	{
+		abort();
+	}
 }
 
 //==============================================================================
@@ -81,32 +73,32 @@ void Logger::writeFormated(const char* file, int line, const char* func,
 void Logger::defaultSystemMessageHandler(void*, const Info& info)
 {
 #if ANKI_OS == ANKI_OS_LINUX
-	std::ostream* out = NULL;
-	const char* x = NULL;
+	FILE* out = nullptr;
 	const char* terminalColor = nullptr;
 
 	switch(info.m_type)
 	{
 	case Logger::MessageType::NORMAL:
-		out = &std::cout;
-		x = "Info";
+		out = stdout;
 		terminalColor = "\033[0;32m";
 		break;
 	case Logger::MessageType::ERROR:
-		out = &std::cerr;
-		x = "Error";
+		out = stderr;
 		terminalColor = "\033[0;31m";
 		break;
 	case Logger::MessageType::WARNING:
-		out = &std::cerr;
-		x = "Warn";
+		out = stderr;
 		terminalColor = "\033[0;33m";
+		break;
+	case Logger::MessageType::FATAL:
+		out = stderr;
+		terminalColor = "\033[0;31m";
 		break;
 	}
 
-	(*out) << terminalColor << "(" << info.m_file << ":" << info.m_line << " "
-		<< info.m_func << ") " << x << ": " << info.m_msg 
-		<< "\033[0m" << std::endl;
+	fprintf(out, "%s(%s:%d %s) %s: %s\033[0m\n", terminalColor, info.m_file,
+		info.m_line, info.m_func, MSG_TEXT[static_cast<U>(info.m_type)], 
+		info.m_msg);
 #elif ANKI_OS == ANKI_OS_ANDROID
 	U32 andMsgType = ANDROID_LOG_INFO;
 
@@ -121,6 +113,9 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 	case Logger::MessageType::WARNING:
 		andMsgType = ANDROID_LOG_WARN;
 		break;
+	case Logger::MessageType::FATAL:
+		andMsgType = ANDROID_LOG_ERROR;
+		break;
 	}
 
 	std::stringstream ss;
@@ -128,63 +123,44 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 	__android_log_print(andMsgType, "AnKi", "(%s:%d %s) %s", info.m_file,
 		info.m_line, info.m_func, info.m_msg);
 #else
-	std::ostream* out = NULL;
-	const char* x = NULL;
+	FILE* out = NULL;
 
 	switch(info.m_type)
 	{
 	case Logger::MessageType::NORMAL:
-		out = &std::cout;
-		x = "Info";
+		out = stdout;
 		break;
 	case Logger::MessageType::ERROR:
-		out = &std::cerr;
-		x = "Error";
+		out = stderr;
 		break;
 	case Logger::MessageType::WARNING:
-		out = &std::cerr;
-		x = "Warn";
+		out = stderr;
+		break;
+	case Logger::MessageType::FATAL:
+		out = stderr;
 		break;
 	}
 
-	(*out) << "(" << info.m_file << ":" << info.m_line << " "
-		<< info.m_func << ") " << x << ": " << info.m_msg << std::endl;
+	fprintf(out, "(%s:%d %s) %s: %s\n", info.m_file,
+		info.m_line, info.m_func, MSG_TEXT[static_cast<U>(info.m_type)], 
+		info.m_msg);
 #endif
 }
 
 //==============================================================================
-void Logger::logfileMessageHandler(void* vlogger, const Info& info)
+void Logger::fileMessageHandler(void* pfile, const Info& info)
 {
-	Logger* logger = (Logger*)vlogger;
+	File* file = reinterpret_cast<File*>(pfile);
 
-	// Init the file
-	if(!logger->m_logfile.isOpen())
+	Error err = file->writeText("(%s:%d %s) %s: %s\n", 
+		info.m_file, info.m_line, info.m_func, 
+		MSG_TEXT[static_cast<U>(info.m_type)], info.m_msg);
+
+	if(!err)
 	{
-		String filename(logger->m_handlers.get_allocator());
-		filename = logger->m_cacheDir;
-		filename += "/anki.log";
-
-		logger->m_logfile.open(filename.toCString(), File::OpenFlag::WRITE);
+		err = file->flush();
+		(void)err;
 	}
-
-	const char* x = nullptr;
-	switch(info.m_type)
-	{
-	case Logger::MessageType::NORMAL:
-		x = "Info";
-		break;
-	case Logger::MessageType::ERROR:
-		x = "Error";
-		break;
-	case Logger::MessageType::WARNING:
-		x = "Warn";
-		break;
-	}
-
-	logger->m_logfile.writeText("(%s:%d %s) %s: %s\n", 
-		info.m_file, info.m_line, info.m_func, x, info.m_msg);
-
-	logger->m_logfile.flush();
 }
 
 } // end namespace anki

@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/renderer/MainRenderer.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/renderer/Deformer.h"
 #include "anki/util/File.h"
 #include "anki/util/Filesystem.h"
@@ -65,7 +65,7 @@ void MainRenderer::render(SceneGraph& scene)
 
 	for(U i = 0; i < JOB_CHAINS_COUNT; i++)
 	{
-		jobs[i] = GlCommandBufferHandle(&gl, m_jobsInitHints[i]);
+		jobs[i].create(&gl, m_jobsInitHints[i]);
 	}
 
 	Renderer::render(scene, jobs);
@@ -118,7 +118,8 @@ void MainRenderer::initGl()
 {
 	// get max texture units
 	GlDevice& gl = _getGlDevice();
-	GlCommandBufferHandle jobs(&gl);
+	GlCommandBufferHandle jobs;
+	jobs.create(&gl);
 
 	jobs.enableCulling(true);
 	jobs.setCullFace(GL_BACK);

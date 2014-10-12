@@ -13,7 +13,7 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/core/Counters.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 
 namespace anki {
 
@@ -229,8 +229,9 @@ RenderableDrawer::RenderableDrawer(Renderer* r)
 :	m_r(r)
 {
 	// Create the uniform buffer
-	GlCommandBufferHandle cmdBuff(&m_r->_getGlDevice());
-	m_uniformBuff = GlBufferHandle(cmdBuff, GL_UNIFORM_BUFFER, 
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(&m_r->_getGlDevice());
+	m_uniformBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
 		MAX_UNIFORM_BUFFER_SIZE,
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	cmdBuff.flush();

@@ -5,7 +5,7 @@
 
 #include "anki/input/Input.h"
 #include "anki/core/NativeWindowAndroid.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/core/App.h"
 
 namespace anki {

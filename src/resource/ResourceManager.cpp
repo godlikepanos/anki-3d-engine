@@ -13,7 +13,7 @@
 #include "anki/resource/ProgramResource.h"
 #include "anki/resource/ParticleEmitterResource.h"
 #include "anki/resource/TextureResource.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
 
 namespace anki {

@@ -5,7 +5,7 @@
 
 #include "anki/core/App.h"
 #include "anki/misc/ConfigSet.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include "anki/util/Exception.h"
 #include "anki/util/File.h"
 #include "anki/util/Filesystem.h"
@@ -116,11 +116,6 @@ void App::init(const ConfigSet& config_)
 	ConfigSet config = config_;
 
 	initDirs();
-
-	// Logger
-	LoggerSingleton::init(
-		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER, m_heapAlloc,
-		&m_cacheDir[0]);
 
 	// Print a message
 	String msg(getAllocator());

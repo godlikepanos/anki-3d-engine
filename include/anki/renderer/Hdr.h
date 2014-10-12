@@ -54,6 +54,16 @@ public:
 	{
 		return m_vblurRt;
 	}
+
+	U32 _getWidth() const
+	{
+		return m_width;
+	}
+
+	U32 _getHeight() const
+	{
+		return m_height;
+	}
 	/// @}
 
 private:

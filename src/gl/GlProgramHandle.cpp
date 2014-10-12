@@ -82,21 +82,31 @@ GLenum GlProgramHandle::getType() const
 }
 
 //==============================================================================
-const GlProgram::ProgramVector<GlProgramVariable>& 
-	GlProgramHandle::getVariables() const
+const GlProgramVariable* GlProgramHandle::getVariablesBegin() const
 {
 	Error err = serializeOnGetter();
-	ANKI_ASSERT(!err);
-	return _get().getVariables();
+	const GlProgramVariable* out = nullptr;
+
+	if(!err && _get().getVariables().getSize() != 0)
+	{
+		out = _get().getVariables().begin();
+	}
+
+	return out;
 }
 
 //==============================================================================
-const GlProgram::ProgramVector<GlProgramBlock>& 
-	GlProgramHandle::getBlocks() const
+const GlProgramVariable* GlProgramHandle::getVariablesEnd() const
 {
 	Error err = serializeOnGetter();
-	ANKI_ASSERT(!err);
-	return _get().getBlocks();
+	const GlProgramVariable* out = nullptr;
+
+	if(!err && _get().getVariables().getSize() != 0)
+	{
+		out = _get().getVariables().end();
+	}
+
+	return out;
 }
 
 //==============================================================================

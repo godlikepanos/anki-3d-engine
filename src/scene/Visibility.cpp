@@ -8,7 +8,7 @@
 #include "anki/scene/FrustumComponent.h"
 #include "anki/scene/Light.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 
 namespace anki {
 

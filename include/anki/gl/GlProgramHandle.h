@@ -7,7 +7,6 @@
 #define ANKI_GL_GL_PROGRAM_HANDLE_H
 
 #include "anki/gl/GlContainerHandle.h"
-#include "anki/util/Vector.h"
 
 namespace anki {
 
@@ -24,10 +23,6 @@ class GlProgramHandle: public GlContainerHandle<GlProgram>
 public:
 	using Base = GlContainerHandle<GlProgram>;
 
-	// Re-define it here
-	template<typename T>
-	using ProgramVector = Vector<T, GlAllocator<T>>;
-
 	GlProgramHandle();
 
 	~GlProgramHandle();
@@ -37,13 +32,15 @@ public:
 		GLenum shaderType, const GlClientBufferHandle& source);
 
 	/// @name Accessors
-	/// They will sync
+	/// They will sync client with server.
 	/// @{
 	GLenum getType() const;
 
-	const ProgramVector<GlProgramVariable>& getVariables() const;
+	const GlProgramVariable* getVariablesBegin() const;
+	const GlProgramVariable* getVariablesEnd() const;
 
-	const ProgramVector<GlProgramBlock>& getBlocks() const;
+	const GlProgramBlock* getBlocksBegin() const;
+	const GlProgramBlock* getBlocksEnd() const;
 
 	const GlProgramVariable* tryFindVariable(const CString& name) const;
 

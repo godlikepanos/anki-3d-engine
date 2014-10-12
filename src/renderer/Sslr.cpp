@@ -44,8 +44,9 @@ void Sslr::init(const ConfigSet& config)
 		m_reflectionFrag->getGlProgram());
 
 	// Sampler
-	GlCommandBufferHandle cmdBuff(&getGlDevice());
-	m_depthMapSampler = GlSamplerHandle(cmdBuff);
+	GlCommandBufferHandle cmdBuff;
+	cmdBuff.create(&getGlDevice());
+	m_depthMapSampler.create(cmdBuff);
 	m_depthMapSampler.setFilter(cmdBuff, GlSamplerHandle::Filter::NEAREST);
 
 	// Blit
@@ -70,8 +71,7 @@ void Sslr::init(const ConfigSet& config)
 		dir.m_rt.setFilter(cmdBuff, GlTextureHandle::Filter::LINEAR);
 
 		// Create FB
-		dir.m_fb = GlFramebufferHandle(
-			cmdBuff, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
+		dir.m_fb.create(cmdBuff, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
 	}
 
 	cmdBuff.finish();
@@ -89,10 +89,11 @@ void Sslr::run(GlCommandBufferHandle& cmdBuff)
 
 	m_reflectionPpline.bind(cmdBuff);
 
-	cmdBuff.bindTextures(0	, {
-		m_r->getIs()._getRt(), // 0 
-		m_r->getMs()._getSmallDepthRt(), // 1
-		m_r->getMs()._getRt1()}); // 2
+	Array<GlTextureHandle, 3> tarr = {{
+		m_r->getIs()._getRt(),
+		m_r->getMs()._getSmallDepthRt(),
+		m_r->getMs()._getRt1()}};
+	cmdBuff.bindTextures(0	, tarr.begin(), tarr.getSize()); 
 
 	m_depthMapSampler.bind(cmdBuff, 1);
 	m_r->getPps().getSsao().m_uniformsBuff.bindShaderBuffer(cmdBuff, 0);

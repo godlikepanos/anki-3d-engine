@@ -6,7 +6,7 @@
 #include "anki/input/Input.h"
 #include "anki/input/InputSdl.h"
 #include "anki/core/NativeWindowSdl.h"
-#include "anki/core/Logger.h"
+#include "anki/util/Logger.h"
 #include <SDL.h>
 
 namespace anki {
