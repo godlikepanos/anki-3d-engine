@@ -336,13 +336,17 @@ void Material::load(const CString& filename, ResourceInitializer& init)
 void Material::parseMaterialTag(const XmlElement& materialEl,
 	ResourceInitializer& rinit)
 {
+	Error err = ErrorCode::NONE;
+
 	// levelsOfDetail
 	//
 	XmlElement lodEl = materialEl.getChildElementOptional("levelsOfDetail");
 
 	if(lodEl)
 	{
-		I tmp = lodEl.getInt();
+		I64 tmp;
+		err = lodEl.getI64(tmp);
+		// TODO
 		m_lodsCount = (tmp < 1) ? 1 : tmp;
 	}
 	else
@@ -356,7 +360,10 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 	if(shadowEl)
 	{
-		m_shadow = shadowEl.getInt();
+		I64 tmp;
+		err = shadowEl.getI64(tmp);
+		// TODO
+		m_shadow = tmp;
 	}
 
 	// blendFunctions
@@ -386,7 +393,10 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 	if(depthTestingEl)
 	{
-		m_depthTesting = depthTestingEl.getInt();
+		I64 tmp;
+		err = depthTestingEl.getI64(tmp);
+		// TODO
+		m_depthTesting = tmp;
 	}
 
 	// wireframe
@@ -395,7 +405,10 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 	if(wireframeEl)
 	{
-		m_wireframe = wireframeEl.getInt();
+		I64 tmp;
+		err = wireframeEl.getI64(tmp);
+		// TODO
+		m_wireframe = tmp;
 	}
 
 	// shaderProgram

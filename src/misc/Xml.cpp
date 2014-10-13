@@ -6,6 +6,7 @@
 #include "anki/misc/Xml.h"
 #include "anki/util/StringList.h"
 #include "anki/util/File.h"
+#include "anki/util/Logger.h"
 
 namespace anki {
 
@@ -14,16 +15,37 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-I64 XmlElement::getInt() const
+ANKI_USE_RESULT Error XmlElement::check() const
 {
-	check();
-	const char* txt = m_el->GetText();
-	if(txt == nullptr)
+	Error err = ErrorCode::NONE;
+	if(m_el == nullptr)
 	{
-		throw ANKI_EXCEPTION("Failed to return int. Element: %s", 
-			m_el->Value());
+		ANKI_LOGE("Empty element");
+		err = ErrorCode::USER_DATA;
 	}
-	return CString(txt).toI64();
+	return err;
+}
+
+//==============================================================================
+Error XmlElement::getI64(I64& out) const
+{
+	Error err = check();
+
+	if(!err)
+	{
+		const char* txt = m_el->GetText();
+		if(txt != nullptr)
+		{
+			out = CString(txt).toI64();
+		}
+		else
+		{
+			ANKI_LOGE("Failed to return int. Element: %s", m_el->Value());
+			err = ErrorCode::USER_DATA;
+		}
+	}
+
+	return err;
 }
 
 //==============================================================================

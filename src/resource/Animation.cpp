@@ -51,7 +51,9 @@ void Animation::loadInternal(
 	XmlElement repel = el.getChildElementOptional("repeat");
 	if(repel)
 	{
-		m_repeat = repel.getInt();
+		I64 tmp;
+		repel.getI64(tmp);
+		m_repeat = tmp;
 	}
 	else
 	{

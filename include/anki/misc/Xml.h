@@ -65,7 +65,7 @@ public:
 	}
 
 	/// Return the text inside as an int
-	I64 getInt() const;
+	ANKI_USE_RESULT Error getI64(I64& out) const;
 
 	/// Return the text inside as a float
 	F64 getFloat() const;
@@ -96,13 +96,7 @@ private:
 	tinyxml2::XMLElement* m_el;
 	StackAllocator<U8> m_alloc;
 
-	void check() const
-	{
-		if(m_el == nullptr)
-		{
-			throw ANKI_EXCEPTION("Empty element");
-		}
-	}
+	ANKI_USE_RESULT Error check() const;
 };
 
 /// XML document

@@ -8,12 +8,6 @@
 #include "anki/resource/ResourceManager.h"
 #include "anki/util/Exception.h"
 
-#if ANKI_GL == ANKI_GL_DESKTOP
-#	define DRIVER_CAN_COMPRESS 1
-#else
-#	define DRIVER_CAN_COMPRESS 0
-#endif
-
 namespace anki {
 
 //==============================================================================
@@ -34,45 +28,45 @@ TextureResource::~TextureResource()
 {}
 
 //==============================================================================
-void TextureResource::load(const CString& filename, ResourceInitializer& init)
-{
-	try
-	{
-		loadInternal(filename, init);
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to load texture") << e;
-	}
-}
-
-//==============================================================================
-void TextureResource::loadInternal(const CString& filename, 
-	ResourceInitializer& rinit)
+Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 {
 	GlDevice& gl = rinit.m_resources._getGlDevice();
 	GlCommandBufferHandle cmdb;
-	cmdb.create(&gl); // Always first to avoid assertions (
-	                  // because of the check of the allocator)
+	Error err = cmdb.create(&gl); // Always first to avoid assertions (
+	                              // because of the check of the allocator)
+	if(err)
+	{
+		return err;
+	}
 
 	GlTextureHandle::Initializer init;
 	U layers = 0;
 	Bool driverShouldGenMipmaps = false;
 
 	// Load image
-	Image* imgPtr = rinit.m_alloc.newInstance<Image>(rinit.m_alloc);
-	Image& img = *imgPtr;
-	img.load(filename, rinit.m_resources.getMaxTextureSize());
+	Image* img = rinit.m_alloc.newInstance<Image>(rinit.m_alloc);
+	if(img == nullptr)
+	{
+		return ErrorCode::OUT_OF_MEMORY;
+	}
+
+	err = img->load(filename, rinit.m_resources.getMaxTextureSize());
+	if(err)
+	{
+		rinit.m_alloc.deleteInstance(img);
+		return err;
+	}
 	
 	// width + height
-	init.m_width = img.getSurface(0, 0).m_width;
-	init.m_height = img.getSurface(0, 0).m_height;
+	const auto& tmpSurf = img->getSurface(0, 0);
+	init.m_width = tmpSurf.m_width;
+	init.m_height = tmpSurf.m_height;
 	
 	// depth
-	if(img.getTextureType() == Image::TextureType::_2D_ARRAY 
-		|| img.getTextureType() == Image::TextureType::_3D)
+	if(img->getTextureType() == Image::TextureType::_2D_ARRAY 
+		|| img->getTextureType() == Image::TextureType::_3D)
 	{
-		init.m_depth = img.getDepth();
+		init.m_depth = img->getDepth();
 	}
 	else
 	{
@@ -80,7 +74,7 @@ void TextureResource::loadInternal(const CString& filename,
 	}
 
 	// target
-	switch(img.getTextureType())
+	switch(img->getTextureType())
 	{
 	case Image::TextureType::_2D:
 		init.m_target = GL_TEXTURE_2D;
@@ -102,16 +96,12 @@ void TextureResource::loadInternal(const CString& filename,
 	}
 
 	// Internal format
-	if(img.getColorFormat() == Image::ColorFormat::RGB8)
+	if(img->getColorFormat() == Image::ColorFormat::RGB8)
 	{
-		switch(img.getCompression())
+		switch(img->getCompression())
 		{
 		case Image::DataCompression::RAW:
-#if DRIVER_CAN_COMPRESS
-			init.m_internalFormat = GL_COMPRESSED_RGB;
-#else
 			init.m_internalFormat = GL_RGB;
-#endif
 			driverShouldGenMipmaps = true;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
@@ -127,16 +117,12 @@ void TextureResource::loadInternal(const CString& filename,
 			ANKI_ASSERT(0);
 		}
 	}
-	else if(img.getColorFormat() == Image::ColorFormat::RGBA8)
+	else if(img->getColorFormat() == Image::ColorFormat::RGBA8)
 	{
-		switch(img.getCompression())
+		switch(img->getCompression())
 		{
 		case Image::DataCompression::RAW:
-#if DRIVER_CAN_COMPRESS
-			init.m_internalFormat = GL_COMPRESSED_RGBA;
-#else
 			init.m_internalFormat = GL_RGBA;
-#endif
 			driverShouldGenMipmaps = true;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
@@ -158,7 +144,7 @@ void TextureResource::loadInternal(const CString& filename,
 	}
 
 	// format
-	switch(img.getColorFormat())
+	switch(img->getColorFormat())
 	{
 	case Image::ColorFormat::RGB8:
 		init.m_format = GL_RGB;
@@ -174,7 +160,7 @@ void TextureResource::loadInternal(const CString& filename,
 	init.m_type = GL_UNSIGNED_BYTE;
 
 	// mipmapsCount
-	init.m_mipmapsCount = img.getMipLevelsCount();
+	init.m_mipmapsCount = img->getMipLevelsCount();
 
 	// filteringType
 	init.m_filterType = GlTextureHandle::Filter::TRILINEAR;
@@ -201,19 +187,31 @@ void TextureResource::loadInternal(const CString& filename,
 		for(U level = 0; level < init.m_mipmapsCount; level++)
 		{
 			GlClientBufferHandle& buff = init.m_data[level][layer];
+			const auto& surf = img->getSurface(level, layer);
 
-			buff.create(
+			err = buff.create(
 				cmdb, 
-				img.getSurface(level, layer).m_data.size(), 
-				(void*)&img.getSurface(level, layer).m_data[0]);
+				surf.m_data.getSize(), 
+				const_cast<U8*>(&surf.m_data[0]));
+
+			if(err)
+			{
+				rinit.m_alloc.deleteInstance(img);
+				return err;
+			}
 		}
 	}
 
 	// Add the GL job to create the texture
-	m_tex.create(cmdb, init);
+	err = m_tex.create(cmdb, init);
+	if(err)
+	{
+		rinit.m_alloc.deleteInstance(img);
+		return err;
+	}
 
 	// Add cleanup job
-	cmdb.pushBackUserCommand(deleteImageCallback, imgPtr);
+	cmdb.pushBackUserCommand(deleteImageCallback, img);
 
 	// Finaly enque the GL job chain
 	cmdb.flush();

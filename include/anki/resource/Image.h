@@ -60,6 +60,11 @@ public:
 	:	m_alloc(alloc)
 	{}
 
+	~Image()
+	{
+		destroy();
+	}
+
 	ColorFormat getColorFormat() const
 	{
 		ANKI_ASSERT(m_colorFormat != ColorFormat::NONE);
@@ -113,6 +118,8 @@ private:
 	DataCompression m_compression = DataCompression::NONE;
 	ColorFormat m_colorFormat = ColorFormat::NONE;
 	TextureType m_textureType = TextureType::NONE;
+
+	void destroy();
 };
 
 } // end namespace anki

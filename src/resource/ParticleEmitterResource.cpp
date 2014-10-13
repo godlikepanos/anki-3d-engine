@@ -52,7 +52,9 @@ static void xmlReadU(const XmlElement& el_, const CString& str, U32& out)
 		return;
 	}
 
-	out = static_cast<U32>(el.getInt());
+	I64 tmp;
+	el.getI64(tmp);
+	out = static_cast<U32>(tmp);
 }
 
 //==============================================================================

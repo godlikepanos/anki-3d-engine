@@ -253,11 +253,29 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 		// <const>
 		XmlElement constEl = inputEl.getChildElementOptional("const");
-		inpvar.m_constant = (constEl) ? constEl.getInt() : false;
+		if(constEl)
+		{
+			I64 tmp;
+			constEl.getI64(tmp);
+			inpvar.m_constant = tmp;
+		}
+		else
+		{
+			inpvar.m_constant = false;
+		}
 
 		// <arraySize>
 		XmlElement arrSizeEl = inputEl.getChildElementOptional("arraySize");
-		inpvar.m_arraySize = (arrSizeEl) ? arrSizeEl.getInt() : 0;
+		if(arrSizeEl)
+		{
+			I64 tmp;
+			arrSizeEl.getI64(tmp);
+			inpvar.m_arraySize = tmp;
+		}
+		else
+		{
+			inpvar.m_arraySize = 0;
+		}
 
 		// <instanced>
 		if(inpvar.m_arraySize == 0)
@@ -265,7 +283,16 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			XmlElement instancedEl = 
 				inputEl.getChildElementOptional("instanced");
 
-			inpvar.m_instanced = (instancedEl) ? instancedEl.getInt() : 0;
+			if(instancedEl)
+			{
+				I64 tmp;
+				instancedEl.getI64(tmp);
+				inpvar.m_instanced = tmp;
+			}
+			else
+			{
+				inpvar.m_instanced = 0;
+			}
 
 			// If one input var is instanced notify the whole program that 
 			// it's instanced
@@ -391,7 +418,9 @@ void MaterialProgramCreator::parseOperationTag(
 	static const char OUT[] = {"out"};
 
 	// <id></id>
-	I id = operationTag.getChildElement("id").getInt();
+	I64 tmp;
+	operationTag.getChildElement("id").getI64(tmp);
+	I id = tmp;
 	
 	// <returnType></returnType>
 	XmlElement retTypeEl = operationTag.getChildElement("returnType");

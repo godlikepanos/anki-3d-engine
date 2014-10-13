@@ -29,7 +29,8 @@ public:
 	~TextureResource();
 
 	/// Load a texture
-	void load(const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init);
 
 	/// Get the GL texture
 	const GlTextureHandle& getGlTexture() const
@@ -61,9 +62,6 @@ public:
 private:
 	GlTextureHandle m_tex;
 	UVec3 m_size;
-
-	/// Load a texture
-	void loadInternal(const CString& filename, ResourceInitializer& init);
 };
 /// @}
 
