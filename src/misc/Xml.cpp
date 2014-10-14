@@ -104,14 +104,15 @@ Vector<F64, StackAllocator<F64>> XmlElement::getFloats() const
 }
 
 //==============================================================================
-Mat4 XmlElement::getMat4() const
+Error XmlElement::getMat4(Mat4& out) const
 {
 	check();
 
 	const char* txt = m_el->GetText();
 	if(txt == nullptr)
 	{
-		throw ANKI_EXCEPTION("Failed to return Mat4");
+		ANKI_LOGE("Failed to return Mat4");
+		return ErrorCode::USER_DATA;
 	}
 
 	StringListBase<StackAllocator<char>> list = 
@@ -120,35 +121,32 @@ Mat4 XmlElement::getMat4() const
 
 	if(list.size() != 16)
 	{
-		throw ANKI_EXCEPTION("Expecting 16 elements for Mat4");
+		ANKI_LOGE("Expecting 16 elements for Mat4");
+		return ErrorCode::USER_DATA;
 	}
 
-	Mat4 out;
-
-	try
+	for(U i = 0; i < 16; i++)
 	{
-		for(U i = 0; i < 16; i++)
-		{
-			out[i] = list[i].toF64();
-		}
-	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Found non-float element for Mat4");
+		out[i] = list[i].toF64();
 	}
 
-	return out;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Vec3 XmlElement::getVec3() const
+Error XmlElement::getVec3(Vec3& out) const
 {
-	check();
+	Error err = check();
+	if(err)
+	{
+		return err;
+	}
 
 	const char* txt = m_el->GetText();
 	if(txt == nullptr)
 	{
-		throw ANKI_EXCEPTION("Failed to return Vec3");
+		ANKI_LOGE("Failed to return Vec3");
+		return ErrorCode::USER_DATA;
 	}
 
 	StringListBase<StackAllocator<char>> list = 
@@ -157,34 +155,31 @@ Vec3 XmlElement::getVec3() const
 
 	if(list.size() != 3)
 	{
-		throw ANKI_EXCEPTION("Expecting 3 elements for Vec3");
+		ANKI_LOGE("Expecting 3 elements for Vec3");
+		return ErrorCode::USER_DATA;
 	}
 
-	Vec3 out;
-
-	try
+	for(U i = 0; i < 3; i++)
 	{
-		for(U i = 0; i < 3; i++)
-		{
-			out[i] = list[i].toF64();
-		}
+		out[i] = list[i].toF64();
 	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Found non-float element for Vec3");
-	}
-
-	return out;
+	
+	return ErrorCode::NONE;
 }
 //==============================================================================
-Vec4 XmlElement::getVec4() const
+Error XmlElement::getVec4(Vec4& out) const
 {
-	check();
+	Error err = check();
+	if(err)
+	{
+		return err;
+	}
 
 	const char* txt = m_el->GetText();
 	if(txt == nullptr)
 	{
-		throw ANKI_EXCEPTION("Failed to return Vec4");
+		ANKI_LOGE("Failed to return Vec4");
+		return ErrorCode::USER_DATA;
 	}
 
 	StringListBase<StackAllocator<char>> list = 
@@ -193,44 +188,58 @@ Vec4 XmlElement::getVec4() const
 
 	if(list.size() != 4)
 	{
-		throw ANKI_EXCEPTION("Expecting 3 elements for Vec4");
+		ANKI_LOGE("Expecting 3 elements for Vec4");
+		return ErrorCode::USER_DATA;
 	}
 
-	Vec4 out;
-
-	try
+	for(U i = 0; i < 4; i++)
 	{
-		for(U i = 0; i < 4; i++)
-		{
-			out[i] = list[i].toF64();
-		}
-	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Found non-float element for Vec4");
+		out[i] = list[i].toF64();
 	}
 
-	return out;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-XmlElement XmlElement::getChildElementOptional(const CString& name) const
-{
-	check();
-	XmlElement out(m_el->FirstChildElement(&name[0]), m_alloc);
-	return out;
+Error XmlElement::getChildElementOptional(
+	const CString& name, XmlElement& out) const
+{	
+	Error err = check();
+	if(!err)
+	{
+		out = XmlElement(m_el->FirstChildElement(&name[0]), m_alloc);
+	}
+	else
+	{
+		out = XmlElement();
+	}
+
+	return err;
 }
 
 //==============================================================================
-XmlElement XmlElement::getChildElement(const CString& name) const
+Error XmlElement::getChildElement(const CString& name, XmlElement& out) const
 {
-	check();
-	const XmlElement out = getChildElementOptional(name);
+	Error err = check();
+	if(err)
+	{
+		out = XmlElement();
+		return err;
+	}
+
+	err = getChildElementOptional(name, out);
+	if(err)
+	{
+		return err;
+	}
+
 	if(!out)
 	{
-		throw ANKI_EXCEPTION("Cannot find tag %s", &name[0]);
+		ANKI_LOGE("Cannot find tag %s", &name[0]);
+		err = ErrorCode::USER_DATA;
 	}
-	return out;
+	
+	return err;
 }
 
 //==============================================================================
@@ -261,6 +270,22 @@ void XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
 			((m_doc.GetErrorStr1() == nullptr)
 			? "unknown" : m_doc.GetErrorStr1()));
 	}
+}
+
+//==============================================================================
+ANKI_USE_RESULT Error XmlDocument::getChildElement(
+	const CString& name, XmlElement& out)
+{
+	Error err = ErrorCode::NONE;
+	out = XmlElement(m_doc.FirstChildElement(&name[0]), m_alloc);
+
+	if(!out)
+	{
+		ANKI_LOGE("Cannot find tag %s", &name[0]);
+		err = ErrorCode::USER_DATA;
+	}
+
+	return err;
 }
 
 } // end namespace anki

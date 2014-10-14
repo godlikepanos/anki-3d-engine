@@ -250,9 +250,12 @@ void BucketMesh::load(const CString& filename, ResourceInitializer& init)
 		XmlDocument doc;
 		doc.loadFile(filename, init.m_tempAlloc);
 
-		XmlElement rootEl = doc.getChildElement("bucketMesh");
-		XmlElement meshesEl = rootEl.getChildElement("meshes");
-		XmlElement meshEl = meshesEl.getChildElement("mesh");
+		XmlElement rootEl;
+		doc.getChildElement("bucketMesh", rootEl);
+		XmlElement meshesEl;
+		rootEl.getChildElement("meshes", meshesEl);
+		XmlElement meshEl;
+		meshesEl.getChildElement("mesh", meshEl);
 
 		m_vertsCount = 0;
 		m_subMeshes.reserve(4);

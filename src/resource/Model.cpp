@@ -292,17 +292,22 @@ void Model::load(const CString& filename, ResourceInitializer& init)
 	{
 		// Load
 		//
+		XmlElement el;
 		XmlDocument doc;
 		doc.loadFile(filename, init.m_tempAlloc);
 
-		XmlElement rootEl = doc.getChildElement("model");
+		XmlElement rootEl;
+		doc.getChildElement("model", rootEl);
 
 		// <collisionShape>
-		XmlElement collEl = rootEl.getChildElementOptional("collisionShape");
+		XmlElement collEl;
+		rootEl.getChildElementOptional("collisionShape", collEl);
 		if(collEl)
 		{
-			CString type = collEl.getChildElement("type").getText();
-			XmlElement valEl = collEl.getChildElement("value");
+			collEl.getChildElement("type", el);
+			CString type = el.getText();
+			XmlElement valEl;
+			collEl.getChildElement("value", valEl);
 			(void)valEl; // XXX
 
 			if(type == "sphere")
@@ -324,27 +329,28 @@ void Model::load(const CString& filename, ResourceInitializer& init)
 		}
 
 		// <modelPatches>
-		XmlElement modelPatchesEl =
-			rootEl.getChildElement("modelPatches");
-		XmlElement modelPatchEl =
-			modelPatchesEl.getChildElement("modelPatch");
+		XmlElement modelPatchesEl;
+		rootEl.getChildElement("modelPatches", modelPatchesEl);
+		XmlElement modelPatchEl;
+		modelPatchesEl.getChildElement("modelPatch", modelPatchEl);
 		do
 		{
-			XmlElement materialEl =
-				modelPatchEl.getChildElement("material");
+			XmlElement materialEl;
+			modelPatchEl.getChildElement("material", materialEl);
 
 			Array<CString, 3> meshesFnames;
 			U meshesCount = 1;
 			ModelPatchBase* patch;
 
 			// Try mesh
-			XmlElement meshEl = modelPatchEl.getChildElementOptional("mesh");
+			XmlElement meshEl;
+			modelPatchEl.getChildElementOptional("mesh", meshEl);
 			if(meshEl)
 			{
-				XmlElement meshEl1 =
-					modelPatchEl.getChildElementOptional("mesh1");
-				XmlElement meshEl2 =
-					modelPatchEl.getChildElementOptional("mesh2");
+				XmlElement meshEl1;
+				modelPatchEl.getChildElementOptional("mesh1", meshEl1);
+				XmlElement meshEl2;
+				modelPatchEl.getChildElementOptional("mesh2", meshEl2);
 
 				meshesFnames[0] = meshEl.getText();
 
@@ -367,12 +373,12 @@ void Model::load(const CString& filename, ResourceInitializer& init)
 			}
 			else
 			{
-				XmlElement bmeshEl =
-					modelPatchEl.getChildElement("bucketMesh");
-				XmlElement bmeshEl1 =
-					modelPatchEl.getChildElementOptional("bucketMesh1");
-				XmlElement bmeshEl2 =
-					modelPatchEl.getChildElementOptional("bucketMesh2");
+				XmlElement bmeshEl;
+				modelPatchEl.getChildElement("bucketMesh", bmeshEl);
+				XmlElement bmeshEl1;
+				modelPatchEl.getChildElementOptional("bucketMesh1", bmeshEl1);
+				XmlElement bmeshEl2;
+				modelPatchEl.getChildElementOptional("bucketMesh2", bmeshEl2);
 
 				meshesFnames[0] = bmeshEl.getText();
 

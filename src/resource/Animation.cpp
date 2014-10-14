@@ -25,7 +25,9 @@ void Animation::load(const CString& filename, ResourceInitializer& init)
 	{
 		XmlDocument doc;
 		doc.loadFile(filename, init.m_tempAlloc);
-		loadInternal(doc.getChildElement("animation"), init);
+		XmlElement el;
+		doc.getChildElement("animation", el);
+		loadInternal(el, init);
 	}
 	catch(const std::exception& e)
 	{
@@ -35,8 +37,9 @@ void Animation::load(const CString& filename, ResourceInitializer& init)
 
 //==============================================================================
 void Animation::loadInternal(
-	const XmlElement& el, ResourceInitializer& init)
+	const XmlElement& rootel, ResourceInitializer& init)
 {
+	XmlElement el;
 	m_startTime = MAX_F32;
 	F32 maxTime = MIN_F32;
 	auto& alloc = init.m_alloc;
@@ -48,7 +51,8 @@ void Animation::loadInternal(
 	U identScaleCount = 0;
 
 	// <repeat>
-	XmlElement repel = el.getChildElementOptional("repeat");
+	XmlElement repel;
+	rootel.getChildElementOptional("repeat", repel);
 	if(repel)
 	{
 		I64 tmp;
@@ -61,8 +65,10 @@ void Animation::loadInternal(
 	}
 
 	// <channels>
-	XmlElement channelsEl = el.getChildElement("channels");
-	XmlElement chEl = channelsEl.getChildElement("channel");
+	XmlElement channelsEl;
+	rootel.getChildElement("channels", channelsEl);
+	XmlElement chEl;
+	channelsEl.getChildElement("channel", chEl);
 
 	// For all channels
 	do
@@ -71,28 +77,31 @@ void Animation::loadInternal(
 		AnimationChannel& ch = m_channels.back();
 
 		// <name>
-		ch.m_name = chEl.getChildElement("name").getText();
+		chEl.getChildElement("name", el);
+		ch.m_name = el.getText();
 
 		XmlElement keysEl, keyEl;
 
 		// <positionKeys>
-		keysEl = chEl.getChildElementOptional("positionKeys");
+		chEl.getChildElementOptional("positionKeys", keysEl);
 		if(keysEl)
 		{
-			keyEl = keysEl.getChildElement("key");
+			keysEl.getChildElement("key", keyEl);
 			do
 			{
 				Key<Vec3> key;
 
 				// <time>
 				F64 tmp;
-				keyEl.getChildElement("time").getF64(tmp);
+				keyEl.getChildElement("time", el);
+				el.getF64(tmp);
 				key.m_time = tmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
 				// <value>
-				key.m_value = keyEl.getChildElement("value").getVec3();
+				keyEl.getChildElement("value", el);
+				el.getVec3(key.m_value);
 
 				// push_back
 				ch.m_positions.push_back(key);
@@ -109,23 +118,27 @@ void Animation::loadInternal(
 		}
 
 		// <rotationKeys>
-		keysEl = chEl.getChildElement("rotationKeys");
+		chEl.getChildElement("rotationKeys", keysEl);
 		if(keysEl)
 		{
-			keyEl = keysEl.getChildElement("key");
+			keysEl.getChildElement("key", keyEl);
 			do
 			{
 				Key<Quat> key;
 
 				// <time>
 				F64 tmp;
-				keyEl.getChildElement("time").getF64(tmp);
+				keyEl.getChildElement("time", el);
+				el.getF64(tmp);
 				key.m_time = tmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
 				// <value>
-				key.m_value = Quat(keyEl.getChildElement("value").getVec4());
+				Vec4 tmp2;
+				keyEl.getChildElement("value", el);
+				el.getVec4(tmp2);
+				key.m_value = Quat(tmp);
 
 				// push_back
 				ch.m_rotations.push_back(key);
@@ -142,23 +155,26 @@ void Animation::loadInternal(
 		}
 
 		// <scalingKeys>
-		keysEl = chEl.getChildElementOptional("scalingKeys");
+		chEl.getChildElementOptional("scalingKeys", keysEl);
 		if(keysEl)
 		{
-			XmlElement keyEl = keysEl.getChildElement("key");
+			XmlElement keyEl;
+			keysEl.getChildElement("key", keyEl);
 			do
 			{
 				Key<F32> key;
 
 				// <time>
 				F64 tmp;
-				keyEl.getChildElement("time").getF64(tmp);
+				keyEl.getChildElement("time", el);
+				el.getF64(tmp);
 				key.m_time = tmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
 				// <value>
-				keyEl.getChildElement("value").getF64(tmp);
+				keyEl.getChildElement("value", el);
+				el.getF64(tmp);
 				key.m_value = tmp;
 
 				// push_back

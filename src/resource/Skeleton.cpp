@@ -24,13 +24,16 @@ void Skeleton::load(const CString& filename, ResourceInitializer& init)
 	XmlDocument doc;
 	doc.loadFile(filename, init.m_tempAlloc);
 
-	XmlElement rootEl = doc.getChildElement("skeleton");
-	XmlElement bonesEl = rootEl.getChildElement("bones");
+	XmlElement rootEl;
+	doc.getChildElement("skeleton", rootEl);
+	XmlElement bonesEl;
+	rootEl.getChildElement("bones", bonesEl);
 
 	// count the bones count
 	U bonesCount = 0;
 
-	XmlElement boneEl = bonesEl.getChildElement("bone");
+	XmlElement boneEl;
+	bonesEl.getChildElement("bone", boneEl);
 
 	do
 	{
@@ -42,19 +45,21 @@ void Skeleton::load(const CString& filename, ResourceInitializer& init)
 	m_bones.resize(bonesCount, Bone(init.m_alloc));
 
 	// Load every bone
-	boneEl = bonesEl.getChildElement("bone");
+	bonesEl.getChildElement("bone", boneEl);
 	bonesCount = 0;
 	do
 	{
 		Bone& bone = m_bones[bonesCount++];
 
 		// <name>
-		XmlElement nameEl = boneEl.getChildElement("name");
+		XmlElement nameEl;
+		boneEl.getChildElement("name", nameEl);
 		bone.m_name = nameEl.getText();
 
 		// <transform>
-		XmlElement trfEl = boneEl.getChildElement("transform");
-		bone.m_transform = trfEl.getMat4();
+		XmlElement trfEl;
+		boneEl.getChildElement("transform", trfEl);
+		trfEl.getMat4(bone.m_transform);
 
 		// Advance 
 		boneEl = boneEl.getNextSiblingElement("bone");

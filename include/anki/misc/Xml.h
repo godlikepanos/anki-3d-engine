@@ -46,6 +46,7 @@ public:
 	XmlElement& operator=(const XmlElement& b)
 	{
 		m_el = b.m_el;
+		m_alloc = b.m_alloc;
 		return *this;
 	}
 
@@ -74,19 +75,21 @@ public:
 	Vector<F64, StackAllocator<F64>> getFloats() const;
 
 	/// Return the text inside as a Mat4
-	Mat4 getMat4() const;
+	ANKI_USE_RESULT Error getMat4(Mat4& out) const;
 
 	/// Return the text inside as a Vec3
-	Vec3 getVec3() const;
+	ANKI_USE_RESULT Error getVec3(Vec3& out) const;
 
 	/// Return the text inside as a Vec4
-	Vec4 getVec4() const;
+	ANKI_USE_RESULT Error getVec4(Vec4& out) const;
 
 	/// Get a child element quietly
-	XmlElement getChildElementOptional(const CString& name) const;
+	ANKI_USE_RESULT Error getChildElementOptional(
+		const CString& name, XmlElement& out) const;
 
-	/// Get a child element and throw exception if not found
-	XmlElement getChildElement(const CString& name) const;
+	/// Get a child element and print error if not found
+	ANKI_USE_RESULT Error getChildElement(
+		const CString& name, XmlElement& out) const;
 
 	/// Get the next element with the same name. Returns empty XmlElement if
 	/// it reached the end of the list
@@ -105,11 +108,7 @@ class XmlDocument
 public:
 	void loadFile(const CString& filename, StackAllocator<U8>& alloc);
 
-	XmlElement getChildElement(const CString& name)
-	{
-		XmlElement el(m_doc.FirstChildElement(&name[0]), m_alloc);
-		return el;
-	}
+	ANKI_USE_RESULT Error getChildElement(const CString& name, XmlElement& out);
 
 private:
 	tinyxml2::XMLDocument m_doc;

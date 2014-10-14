@@ -19,20 +19,22 @@ namespace anki {
 //==============================================================================
 static void xmlReadVec3(const XmlElement& el_, const CString& str, Vec3& out)
 {
-	XmlElement el = el_.getChildElementOptional(str);
+	XmlElement el;
+	el_.getChildElementOptional(str, el);
 
 	if(!el)
 	{
 		return;
 	}
 
-	out = el.getVec3();
+	el.getVec3(out);
 }
 
 //==============================================================================
 static void xmlReadFloat(const XmlElement& el_, const CString& str, F32& out)
 {
-	XmlElement el = el_.getChildElementOptional(str);
+	XmlElement el;
+	el_.getChildElementOptional(str, el);
 
 	if(!el)
 	{
@@ -47,7 +49,8 @@ static void xmlReadFloat(const XmlElement& el_, const CString& str, F32& out)
 //==============================================================================
 static void xmlReadU(const XmlElement& el_, const CString& str, U32& out)
 {
-	XmlElement el = el_.getChildElementOptional(str);
+	XmlElement el;
+	el_.getChildElementOptional(str, el);
 
 	if(!el)
 	{
@@ -104,7 +107,9 @@ void ParticleEmitterResource::load(const CString& filename,
 	{
 		XmlDocument doc;
 		doc.loadFile(filename, init.m_tempAlloc);
-		loadInternal(doc.getChildElement("particleEmitter"), init);
+		XmlElement el;
+		doc.getChildElement("particleEmitter", el);
+		loadInternal(el, init);
 	}
 	catch(std::exception& e)
 	{
@@ -156,7 +161,8 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel,
 	xmlReadU(rootel, "usePhysicsEngine", tmp);
 	m_usePhysicsEngine = tmp;
 
-	XmlElement el = rootel.getChildElement("material");
+	XmlElement el;
+	rootel.getChildElement("material", el);
 	m_material.load(el.getText(), &init.m_resources);
 
 	// sanity checks

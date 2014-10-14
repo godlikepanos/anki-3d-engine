@@ -101,7 +101,8 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	//
 	// First gather all the inputs
 	//
-	XmlElement programEl = el.getChildElement("program");
+	XmlElement programEl;
+	el.getChildElement("program", programEl);
 	do
 	{
 		parseInputsTag(programEl);
@@ -115,7 +116,7 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	//
 	// Then parse the includes, operations and other parts of the program
 	//
-	programEl = el.getChildElement("program");
+	el.getChildElement("program", programEl);
 	do
 	{
 		parseProgramTag(programEl);
@@ -142,8 +143,11 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 void MaterialProgramCreator::parseProgramTag(
 	const XmlElement& programEl)
 {
+	XmlElement el;
+
 	// <type>
-	CString type = programEl.getChildElement("type").getText();
+	programEl.getChildElement("type", el);
+	CString type = el.getText();
 	GLbitfield glshaderbit;
 	GLenum glshader;
 	U shaderidx;
@@ -160,8 +164,10 @@ void MaterialProgramCreator::parseProgramTag(
 	}
 
 	// <includes></includes>
-	XmlElement includesEl = programEl.getChildElement("includes");
-	XmlElement includeEl = includesEl.getChildElement("include");
+	XmlElement includesEl;
+	programEl.getChildElement("includes", includesEl);
+	XmlElement includeEl;
+	includesEl.getChildElement("include", includeEl);
 
 	do
 	{
@@ -200,8 +206,10 @@ void MaterialProgramCreator::parseProgramTag(
 	// <operations></operations>
 	lines.push_back(ANKI_STRL("\nvoid main()\n{"));
 
-	XmlElement opsEl = programEl.getChildElement("operations");
-	XmlElement opEl = opsEl.getChildElement("operation");
+	XmlElement opsEl;
+	programEl.getChildElement("operations", opsEl);
+	XmlElement opEl;
+	opsEl.getChildElement("operation", opEl);
 	do
 	{
 		MPString out(m_alloc);
@@ -218,7 +226,9 @@ void MaterialProgramCreator::parseProgramTag(
 //==============================================================================
 void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 {
-	XmlElement inputsEl = programEl.getChildElementOptional("inputs");
+	XmlElement el;
+	XmlElement inputsEl;
+	programEl.getChildElementOptional("inputs", inputsEl);
 	if(!inputsEl)
 	{
 		return;
@@ -228,23 +238,26 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 	GLbitfield glshaderbit;
 	GLenum glshader;
 	U shaderidx;
-	getShaderInfo(
-		programEl.getChildElement("type").getText(), 
-		glshader, glshaderbit, shaderidx);
+	programEl.getChildElement("type", el);
+	getShaderInfo(el.getText(), glshader, glshaderbit, shaderidx);
 
-	XmlElement inputEl = inputsEl.getChildElement("input");
+	XmlElement inputEl;
+	inputsEl.getChildElement("input", inputEl);
 	do
 	{
 		Input inpvar(m_alloc);
 
 		// <name>
-		inpvar.m_name = inputEl.getChildElement("name").getText();
+		inputEl.getChildElement("name", el);
+		inpvar.m_name = el.getText();
 
 		// <type>
-		inpvar.m_type = inputEl.getChildElement("type").getText();
+		inputEl.getChildElement("type", el);
+		inpvar.m_type = el.getText();
 
 		// <value>
-		XmlElement valueEl = inputEl.getChildElement("value");
+		XmlElement valueEl;
+		inputEl.getChildElement("value", valueEl);
 		if(valueEl.getText())
 		{
 			inpvar.m_value = MPStringList::splitString(
@@ -252,7 +265,8 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		}
 
 		// <const>
-		XmlElement constEl = inputEl.getChildElementOptional("const");
+		XmlElement constEl;
+		inputEl.getChildElementOptional("const", constEl);
 		if(constEl)
 		{
 			I64 tmp;
@@ -265,7 +279,8 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		}
 
 		// <arraySize>
-		XmlElement arrSizeEl = inputEl.getChildElementOptional("arraySize");
+		XmlElement arrSizeEl;
+		inputEl.getChildElementOptional("arraySize", arrSizeEl);
 		if(arrSizeEl)
 		{
 			I64 tmp;
@@ -280,8 +295,8 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		// <instanced>
 		if(inpvar.m_arraySize == 0)
 		{
-			XmlElement instancedEl = 
-				inputEl.getChildElementOptional("instanced");
+			XmlElement instancedEl;
+			inputEl.getChildElementOptional("instanced", instancedEl);
 
 			if(instancedEl)
 			{
@@ -416,14 +431,17 @@ void MaterialProgramCreator::parseOperationTag(
 	MPString& out)
 {
 	static const char OUT[] = {"out"};
+	XmlElement el;
 
 	// <id></id>
 	I64 tmp;
-	operationTag.getChildElement("id").getI64(tmp);
+	operationTag.getChildElement("id", el);
+	el.getI64(tmp);
 	I id = tmp;
 	
 	// <returnType></returnType>
-	XmlElement retTypeEl = operationTag.getChildElement("returnType");
+	XmlElement retTypeEl;
+	operationTag.getChildElement("returnType", retTypeEl);
 	MPString retType(retTypeEl.getText(), m_alloc);
 	MPString operationOut(m_alloc);
 	if(retType != "void")
@@ -433,17 +451,19 @@ void MaterialProgramCreator::parseOperationTag(
 	}
 	
 	// <function>functionName</function>
-	MPString funcName(
-		operationTag.getChildElement("function").getText(), m_alloc);
+	operationTag.getChildElement("function", el);
+	MPString funcName(el.getText(), m_alloc);
 	
 	// <arguments></arguments>
-	XmlElement argsEl = operationTag.getChildElementOptional("arguments");
+	XmlElement argsEl;
+	operationTag.getChildElementOptional("arguments", argsEl);
 	MPStringList argsList(m_alloc);
 	
 	if(argsEl)
 	{
 		// Get all arguments
-		XmlElement argEl = argsEl.getChildElement("argument");
+		XmlElement argEl;
+		argsEl.getChildElement("argument", argEl);
 		do
 		{
 			MPString arg(argEl.getText(), m_alloc);

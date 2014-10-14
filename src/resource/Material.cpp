@@ -324,7 +324,9 @@ void Material::load(const CString& filename, ResourceInitializer& init)
 
 		XmlDocument doc;
 		doc.loadFile(filename, init.m_tempAlloc);
-		parseMaterialTag(doc.getChildElement("material"), init);
+		XmlElement el;
+		doc.getChildElement("material", el);
+		parseMaterialTag(el , init);
 	}
 	catch(std::exception& e)
 	{
@@ -337,10 +339,12 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 	ResourceInitializer& rinit)
 {
 	Error err = ErrorCode::NONE;
+	XmlElement el;
 
 	// levelsOfDetail
 	//
-	XmlElement lodEl = materialEl.getChildElementOptional("levelsOfDetail");
+	XmlElement lodEl;
+	materialEl.getChildElementOptional("levelsOfDetail", lodEl);
 
 	if(lodEl)
 	{
@@ -356,7 +360,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 	// shadow
 	//
-	XmlElement shadowEl = materialEl.getChildElementOptional("shadow");
+	XmlElement shadowEl;
+	materialEl.getChildElementOptional("shadow", shadowEl);
 
 	if(shadowEl)
 	{
@@ -368,18 +373,18 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 	// blendFunctions
 	//
-	XmlElement blendFunctionsEl =
-		materialEl.getChildElementOptional("blendFunctions");
+	XmlElement blendFunctionsEl;
+	materialEl.getChildElementOptional("blendFunctions", blendFunctionsEl);
 
 	if(blendFunctionsEl)
 	{
 		// sFactor
-		m_blendingSfactor = blendToEnum(
-			blendFunctionsEl.getChildElement("sFactor").getText());
+		blendFunctionsEl.getChildElement("sFactor", el);
+		m_blendingSfactor = blendToEnum(el.getText());
 
 		// dFactor
-		m_blendingDfactor = blendToEnum(
-			blendFunctionsEl.getChildElement("dFactor").getText());
+		blendFunctionsEl.getChildElement("dFactor", el);
+		m_blendingDfactor = blendToEnum(el.getText());
 	}
 	else
 	{
@@ -388,8 +393,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 	// depthTesting
 	//
-	XmlElement depthTestingEl =
-		materialEl.getChildElementOptional("depthTesting");
+	XmlElement depthTestingEl;
+	materialEl.getChildElementOptional("depthTesting", depthTestingEl);
 
 	if(depthTestingEl)
 	{
@@ -401,7 +406,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 	// wireframe
 	//
-	XmlElement wireframeEl = materialEl.getChildElementOptional("wireframe");
+	XmlElement wireframeEl;
+	materialEl.getChildElementOptional("wireframe", wireframeEl);
 
 	if(wireframeEl)
 	{
@@ -413,9 +419,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 	// shaderProgram
 	//
-	MaterialProgramCreator loader(
-		materialEl.getChildElement("programs"),
-		rinit.m_tempAlloc);
+	materialEl.getChildElement("programs", el);
+	MaterialProgramCreator loader(el, rinit.m_tempAlloc);
 
 	m_tessellation = loader.hasTessellation();
 	U tessCount = m_tessellation ? 2 : 1;
