@@ -39,7 +39,9 @@ static void xmlReadFloat(const XmlElement& el_, const CString& str, F32& out)
 		return;
 	}
 
-	out = el.getFloat();
+	F64 tmp;
+	el.getF64(tmp);
+	out = tmp;
 }
 
 //==============================================================================

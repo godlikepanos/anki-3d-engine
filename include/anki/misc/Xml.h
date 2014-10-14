@@ -68,7 +68,7 @@ public:
 	ANKI_USE_RESULT Error getI64(I64& out) const;
 
 	/// Return the text inside as a float
-	F64 getFloat() const;
+	ANKI_USE_RESULT Error getF64(F64& out) const;
 
 	/// Get a number of floats
 	Vector<F64, StackAllocator<F64>> getFloats() const;

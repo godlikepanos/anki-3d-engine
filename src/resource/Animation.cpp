@@ -85,7 +85,9 @@ void Animation::loadInternal(
 				Key<Vec3> key;
 
 				// <time>
-				key.m_time = keyEl.getChildElement("time").getFloat();
+				F64 tmp;
+				keyEl.getChildElement("time").getF64(tmp);
+				key.m_time = tmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
@@ -116,7 +118,9 @@ void Animation::loadInternal(
 				Key<Quat> key;
 
 				// <time>
-				key.m_time = keyEl.getChildElement("time").getFloat();
+				F64 tmp;
+				keyEl.getChildElement("time").getF64(tmp);
+				key.m_time = tmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
@@ -147,12 +151,15 @@ void Animation::loadInternal(
 				Key<F32> key;
 
 				// <time>
-				key.m_time = keyEl.getChildElement("time").getFloat();
+				F64 tmp;
+				keyEl.getChildElement("time").getF64(tmp);
+				key.m_time = tmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
 				// <value>
-				key.m_value = keyEl.getChildElement("value").getFloat();
+				keyEl.getChildElement("value").getF64(tmp);
+				key.m_value = tmp;
 
 				// push_back
 				ch.m_scales.push_back(key);

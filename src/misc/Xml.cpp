@@ -49,16 +49,25 @@ Error XmlElement::getI64(I64& out) const
 }
 
 //==============================================================================
-F64 XmlElement::getFloat() const
+Error XmlElement::getF64(F64& out) const
 {
-	check();
-	const char* txt = m_el->GetText();
-	if(txt == nullptr)
+	Error err = check();
+	
+	if(!err)
 	{
-		throw ANKI_EXCEPTION("Failed to return float. Element: %s", 
-			m_el->Value());
+		const char* txt = m_el->GetText();
+		if(txt != nullptr)
+		{
+			out = CString(txt).toF64();
+		}
+		else
+		{
+			ANKI_LOGE("Failed to return float. Element: %s", m_el->Value());
+			err = ErrorCode::USER_DATA;
+		}
 	}
-	return CString(txt).toF64();
+
+	return err;
 }
 
 //==============================================================================V
