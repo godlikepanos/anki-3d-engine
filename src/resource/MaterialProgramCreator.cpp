@@ -18,6 +18,14 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
+// Sortcut
+#define ANKI_CHECK(x_) \
+	err = x_; \
+	if(ANKI_UNLIKELY(err)) \
+	{ \
+		return err; \
+	}
+
 //==============================================================================
 /// Define string literal
 #define ANKI_STRL(cstr_) MPString(cstr_, m_alloc)
@@ -35,12 +43,14 @@ public:
 
 //==============================================================================
 /// Given a string return info about the shader
-static void getShaderInfo(
+static ANKI_USE_RESULT Error getShaderInfo(
 	const CString& str, 
 	GLenum& type, 
 	GLbitfield& bit,
 	U& idx)
 {
+	Error err = ErrorCode::NONE;
+
 	if(str == "vert")
 	{
 		type = GL_VERTEX_SHADER;
@@ -73,8 +83,11 @@ static void getShaderInfo(
 	}
 	else
 	{
-		throw ANKI_EXCEPTION("Incorrect type %s", &str[0]);
+		ANKI_LOGE("Incorrect type %s", &str[0]);
+		err = ErrorCode::USER_DATA;
 	}
+
+	return err;
 }
 
 //==============================================================================
@@ -85,7 +98,6 @@ static void getShaderInfo(
 MaterialProgramCreator::MaterialProgramCreator(
 	const XmlElement& el, TempResourceAllocator<U8>& alloc)
 :	m_alloc(alloc),
-	m_inputs(m_alloc),
 	m_uniformBlock(m_alloc)
 {
 	parseProgramsTag(el);
@@ -96,18 +108,20 @@ MaterialProgramCreator::~MaterialProgramCreator()
 {}
 
 //==============================================================================
-void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
+Error MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 {
+	Error err = ErrorCode::NONE;
+
 	//
 	// First gather all the inputs
 	//
 	XmlElement programEl;
-	el.getChildElement("program", programEl);
+	ANKI_CHECK(el.getChildElement("program", programEl));
 	do
 	{
-		parseInputsTag(programEl);
+		ANKI_CHECK(parseInputsTag(programEl));
 
-		programEl.getNextSiblingElement("program", programEl);
+		ANKI_CHECK(programEl.getNextSiblingElement("program", programEl));
 	} while(programEl);
 
 	// Sort them by name to decrease the change of creating unique shaders
@@ -116,12 +130,12 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	//
 	// Then parse the includes, operations and other parts of the program
 	//
-	el.getChildElement("program", programEl);
+	ANKI_CHECK(el.getChildElement("program", programEl));
 	do
 	{
-		parseProgramTag(programEl);
+		ANKI_CHECK(parseProgramTag(programEl));
 
-		programEl.getNextSiblingElement("program", programEl);
+		ANKI_CHECK(programEl.getNextSiblingElement("program", programEl));
 	} while(programEl);
 
 	//
@@ -133,25 +147,30 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	{
 		if(in.m_shaderDefinedMask != in.m_shaderReferencedMask)
 		{
-			throw ANKI_EXCEPTION("Variable not referenced or not defined %s", 
+			ANKI_LOGE("Variable not referenced or not defined %s", 
 				&in.m_name[0]);
+			return ErrorCode::USER_DATA;
 		}
 	}
+
+	return err;
 }
 
 //==============================================================================
-void MaterialProgramCreator::parseProgramTag(
+Error MaterialProgramCreator::parseProgramTag(
 	const XmlElement& programEl)
 {
+	Error err = ErrorCode::NONE;
 	XmlElement el;
 
 	// <type>
-	programEl.getChildElement("type", el);
-	CString type = el.getText();
+	ANKI_CHECK(programEl.getChildElement("type", el));
+	CString type;
+	ANKI_CHECK(el.getText(type));
 	GLbitfield glshaderbit;
 	GLenum glshader;
 	U shaderidx;
-	getShaderInfo(type, glshader, glshaderbit, shaderidx);
+	ANKI_CHECK(getShaderInfo(type, glshader, glshaderbit, shaderidx));
 
 	m_source[shaderidx] = MPStringList(m_alloc);
 	auto& lines = m_source[shaderidx];
@@ -165,17 +184,19 @@ void MaterialProgramCreator::parseProgramTag(
 
 	// <includes></includes>
 	XmlElement includesEl;
-	programEl.getChildElement("includes", includesEl);
+	ANKI_CHECK(programEl.getChildElement("includes", includesEl));
 	XmlElement includeEl;
-	includesEl.getChildElement("include", includeEl);
+	ANKI_CHECK(includesEl.getChildElement("include", includeEl));
 
 	do
 	{
-		MPString fname(includeEl.getText(), m_alloc);
+		CString tmp;
+		ANKI_CHECK(includeEl.getText(tmp));
+		MPString fname(tmp, m_alloc);
 		lines.push_back(
 			ANKI_STRL("#pragma anki include \"") + fname + "\"");
 
-		includeEl.getNextSiblingElement("include", includeEl);
+		ANKI_CHECK(includeEl.getNextSiblingElement("include", includeEl));
 	} while(includeEl);
 
 	// Inputs
@@ -207,70 +228,76 @@ void MaterialProgramCreator::parseProgramTag(
 	lines.push_back(ANKI_STRL("\nvoid main()\n{"));
 
 	XmlElement opsEl;
-	programEl.getChildElement("operations", opsEl);
+	ANKI_CHECK(programEl.getChildElement("operations", opsEl));
 	XmlElement opEl;
-	opsEl.getChildElement("operation", opEl);
+	ANKI_CHECK(opsEl.getChildElement("operation", opEl));
 	do
 	{
 		MPString out(m_alloc);
-		parseOperationTag(opEl, glshader, glshaderbit, out);
+		ANKI_CHECK(parseOperationTag(opEl, glshader, glshaderbit, out));
 		lines.push_back(out);
 
 		// Advance
-		opEl.getNextSiblingElement("operation", opEl);
+		ANKI_CHECK(opEl.getNextSiblingElement("operation", opEl));
 	} while(opEl);
 
 	lines.push_back(ANKI_STRL("}\n"));
+	return err;
 }
 
 //==============================================================================
-void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
+Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 {
+	Error err = ErrorCode::NONE;
 	XmlElement el;
+	CString cstr;
 	XmlElement inputsEl;
-	programEl.getChildElementOptional("inputs", inputsEl);
+	ANKI_CHECK(programEl.getChildElementOptional("inputs", inputsEl));
 	if(!inputsEl)
 	{
-		return;
+		return err;
 	}
 
 	// Get shader type
 	GLbitfield glshaderbit;
 	GLenum glshader;
 	U shaderidx;
-	programEl.getChildElement("type", el);
-	getShaderInfo(el.getText(), glshader, glshaderbit, shaderidx);
+	ANKI_CHECK(programEl.getChildElement("type", el));
+	ANKI_CHECK(el.getText(cstr));
+	ANKI_CHECK(getShaderInfo(cstr, glshader, glshaderbit, shaderidx));
 
 	XmlElement inputEl;
-	inputsEl.getChildElement("input", inputEl);
+	ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
 	do
 	{
 		Input inpvar(m_alloc);
 
 		// <name>
-		inputEl.getChildElement("name", el);
-		inpvar.m_name = el.getText();
+		ANKI_CHECK(inputEl.getChildElement("name", el));
+		ANKI_CHECK(el.getText(cstr));
+		inpvar.m_name = cstr;
 
 		// <type>
-		inputEl.getChildElement("type", el);
-		inpvar.m_type = el.getText();
+		ANKI_CHECK(inputEl.getChildElement("type", el));
+		ANKI_CHECK(el.getText(cstr));
+		inpvar.m_type = cstr;
 
 		// <value>
 		XmlElement valueEl;
-		inputEl.getChildElement("value", valueEl);
-		if(valueEl.getText())
+		ANKI_CHECK(inputEl.getChildElement("value", valueEl));
+		ANKI_CHECK(valueEl.getText(cstr));
+		if(cstr)
 		{
-			inpvar.m_value = MPStringList::splitString(
-				valueEl.getText(), ' ', m_alloc);
+			inpvar.m_value = MPStringList::splitString(cstr, ' ', m_alloc);
 		}
 
 		// <const>
 		XmlElement constEl;
-		inputEl.getChildElementOptional("const", constEl);
+		ANKI_CHECK(inputEl.getChildElementOptional("const", constEl));
 		if(constEl)
 		{
 			I64 tmp;
-			constEl.getI64(tmp);
+			ANKI_CHECK(constEl.getI64(tmp));
 			inpvar.m_constant = tmp;
 		}
 		else
@@ -280,11 +307,11 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 		// <arraySize>
 		XmlElement arrSizeEl;
-		inputEl.getChildElementOptional("arraySize", arrSizeEl);
+		ANKI_CHECK(inputEl.getChildElementOptional("arraySize", arrSizeEl));
 		if(arrSizeEl)
 		{
 			I64 tmp;
-			arrSizeEl.getI64(tmp);
+			ANKI_CHECK(arrSizeEl.getI64(tmp));
 			inpvar.m_arraySize = tmp;
 		}
 		else
@@ -296,12 +323,13 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		if(inpvar.m_arraySize == 0)
 		{
 			XmlElement instancedEl;
-			inputEl.getChildElementOptional("instanced", instancedEl);
+			ANKI_CHECK(
+				inputEl.getChildElementOptional("instanced", instancedEl));
 
 			if(instancedEl)
 			{
 				I64 tmp;
-				instancedEl.getI64(tmp);
+				ANKI_CHECK(instancedEl.getI64(tmp));
 				inpvar.m_instanced = tmp;
 			}
 			else
@@ -339,8 +367,9 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 			if(!same)
 			{
-				throw ANKI_EXCEPTION("Variable defined differently between "
+				ANKI_LOGE("Variable defined differently between "
 					"shaders: %s", &inpvar.m_name[0]);
+				return ErrorCode::USER_DATA;
 			}
 
 			duplicateInp->m_shaderDefinedMask |= glshaderbit;
@@ -399,13 +428,14 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 			if(inpvar.m_value.size() == 0)
 			{
-				throw ANKI_EXCEPTION("Empty value and const is illogical");
+				ANKI_LOGE("Empty value and const is illogical");
+				return ErrorCode::USER_DATA;
 			}
 
 			if(inpvar.m_arraySize > 0)
 			{
-				throw ANKI_EXCEPTION("Const arrays currently cannot "
-					"be handled");
+				ANKI_LOGE("Const arrays currently cannot be handled");
+				return ErrorCode::USER_DATA;
 			}
 
 			inpvar.m_inBlock = false;
@@ -421,28 +451,33 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 advance:
 		// Advance
-		inputEl.getNextSiblingElement("input", inputEl);
+		ANKI_CHECK(inputEl.getNextSiblingElement("input", inputEl));
 	} while(inputEl);
+
+	return err;
 }
 
 //==============================================================================
-void MaterialProgramCreator::parseOperationTag(
+Error MaterialProgramCreator::parseOperationTag(
 	const XmlElement& operationTag, GLenum glshader, GLbitfield glshaderbit,
 	MPString& out)
 {
+	Error err = ErrorCode::NONE;
+	CString cstr;
 	static const char OUT[] = {"out"};
 	XmlElement el;
 
 	// <id></id>
 	I64 tmp;
-	operationTag.getChildElement("id", el);
-	el.getI64(tmp);
+	ANKI_CHECK(operationTag.getChildElement("id", el));
+	ANKI_CHECK(el.getI64(tmp));
 	I id = tmp;
 	
 	// <returnType></returnType>
 	XmlElement retTypeEl;
-	operationTag.getChildElement("returnType", retTypeEl);
-	MPString retType(retTypeEl.getText(), m_alloc);
+	ANKI_CHECK(operationTag.getChildElement("returnType", retTypeEl));
+	ANKI_CHECK(retTypeEl.getText(cstr));
+	MPString retType(cstr, m_alloc);
 	MPString operationOut(m_alloc);
 	if(retType != "void")
 	{
@@ -451,22 +486,24 @@ void MaterialProgramCreator::parseOperationTag(
 	}
 	
 	// <function>functionName</function>
-	operationTag.getChildElement("function", el);
-	MPString funcName(el.getText(), m_alloc);
+	ANKI_CHECK(operationTag.getChildElement("function", el));
+	ANKI_CHECK(el.getText(cstr));
+	MPString funcName(cstr, m_alloc);
 	
 	// <arguments></arguments>
 	XmlElement argsEl;
-	operationTag.getChildElementOptional("arguments", argsEl);
+	ANKI_CHECK(operationTag.getChildElementOptional("arguments", argsEl));
 	MPStringList argsList(m_alloc);
 	
 	if(argsEl)
 	{
 		// Get all arguments
 		XmlElement argEl;
-		argsEl.getChildElement("argument", argEl);
+		ANKI_CHECK(argsEl.getChildElement("argument", argEl));
 		do
 		{
-			MPString arg(argEl.getText(), m_alloc);
+			ANKI_CHECK(argEl.getText(cstr));
+			MPString arg(cstr, m_alloc);
 
 			// Search for all the inputs and mark the appropriate
 			Input* input = nullptr;
@@ -486,53 +523,55 @@ void MaterialProgramCreator::parseOperationTag(
 			if(!(input != nullptr 
 				|| std::strncmp(&arg[0], OUT, sizeof(OUT) - 1) == 0))
 			{
-				throw ANKI_EXCEPTION("Incorrect argument: %s", &arg[0]);
+				ANKI_LOGE("Incorrect argument: %s", &arg[0]);
+				return ErrorCode::USER_DATA;
 			}
 
 			// Add to a list and do something special if instanced
 			if(input && input->m_instanced)
 			{
+				ANKI_CHECK(argEl.getText(cstr));
+
 				if(glshader == GL_VERTEX_SHADER)
 				{
-					argsList.push_back(ANKI_STRL(argEl.getText()) 
-						+ "[gl_InstanceID]");
+					argsList.push_back(ANKI_STRL(cstr) + "[gl_InstanceID]");
 
 					m_instanceIdMask |= glshaderbit;
 				}
 				else if(glshader == GL_TESS_CONTROL_SHADER)
 				{
-					argsList.push_back(ANKI_STRL(argEl.getText()) 
-						+ "[vInstanceId[0]]");
+					argsList.push_back(ANKI_STRL(cstr) + "[vInstanceId[0]]");
 
 					m_instanceIdMask |= glshaderbit;
 				}
 				else if(glshader == GL_TESS_EVALUATION_SHADER)
 				{
-					argsList.push_back(ANKI_STRL(argEl.getText()) 
+					argsList.push_back(ANKI_STRL(cstr) 
 						+ "[commonPatch.instanceId]");
 					
 					m_instanceIdMask |= glshaderbit;
 				}
 				else if(glshader == GL_FRAGMENT_SHADER)
 				{
-					argsList.push_back(ANKI_STRL(argEl.getText()) 
-						+ "[vInstanceId]");
+					argsList.push_back(ANKI_STRL(cstr) + "[vInstanceId]");
 					
 					m_instanceIdMask |= glshaderbit;
 				}
 				else
 				{
-					throw ANKI_EXCEPTION(
+					ANKI_LOGE(
 						"Cannot access the instance ID in all shaders");
+					return ErrorCode::USER_DATA;
 				}
 			}
 			else
 			{
-				argsList.push_back(MPString(argEl.getText(), m_alloc));
+				ANKI_CHECK(argEl.getText(cstr));
+				argsList.push_back(MPString(cstr, m_alloc));
 			}
 
 			// Advance
-			argEl.getNextSiblingElement("argument", argEl);
+			ANKI_CHECK(argEl.getNextSiblingElement("argument", argEl));
 		} while(argEl);
 	}
 
@@ -553,8 +592,9 @@ void MaterialProgramCreator::parseOperationTag(
 
 	if(retType != "void")
 	{
+		ANKI_CHECK(retTypeEl.getText(cstr));
 		lines += "#\tdefine " + operationOut + "_DEFINED\n\t"
-			+ retTypeEl.getText() + " " + operationOut + " = ";
+			+ cstr + " " + operationOut + " = ";
 	}
 	else
 	{
@@ -569,6 +609,7 @@ void MaterialProgramCreator::parseOperationTag(
 
 	// Done
 	out = std::move(lines);
+	return err;
 }
 
 } // end namespace anki

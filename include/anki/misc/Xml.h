@@ -51,19 +51,7 @@ public:
 	}
 
 	/// Return the text inside a tag
-	CString getText() const
-	{
-		check();
-
-		if(m_el->GetText())
-		{
-			return CString(m_el->GetText());
-		}
-		else
-		{
-			return CString();
-		}
-	}
+	ANKI_USE_RESULT Error getText(CString& out) const;
 
 	/// Return the text inside as an int
 	ANKI_USE_RESULT Error getI64(I64& out) const;

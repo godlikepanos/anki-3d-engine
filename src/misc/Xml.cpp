@@ -27,6 +27,22 @@ ANKI_USE_RESULT Error XmlElement::check() const
 }
 
 //==============================================================================
+Error XmlElement::getText(CString& out) const
+{
+	Error err = check();
+	if(!err && m_el->GetText())
+	{
+		out = CString(m_el->GetText());
+	}
+	else
+	{
+		out = CString();
+	}
+
+	return err;
+}
+
+//==============================================================================
 Error XmlElement::getI64(I64& out) const
 {
 	Error err = check();

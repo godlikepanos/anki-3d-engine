@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "tests/framework/Framework.h"
-#include "anki/core/Logger.h"
 #include "anki/util/Filesystem.h"
 
 using namespace anki;
@@ -14,9 +13,7 @@ int main(int argc, char** argv)
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	// Call a few singletons to avoid memory leak confusion
-	LoggerSingleton::init(
-		Logger::InitFlags::WITH_SYSTEM_MESSAGE_HANDLER,
-		alloc, &(getHomeDirectory(alloc) + ".anki/tests.log")[0]);
+	LoggerSingleton::get();
 
 	int exitcode = getTesterSingleton().run(argc, argv);
 

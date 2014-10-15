@@ -87,17 +87,18 @@ private:
 
 	/// Parse what is within the
 	/// @code <programs></programs> @endcode
-	void parseProgramsTag(const XmlElement& el);
+	ANKI_USE_RESULT Error parseProgramsTag(const XmlElement& el);
 
 	/// Parse what is within the
 	/// @code <program></program> @endcode
-	void parseProgramTag(const XmlElement& el);
+	ANKI_USE_RESULT Error parseProgramTag(const XmlElement& el);
 
 	/// Parse what is within the @code <inputs></inputs> @endcode
-	void parseInputsTag(const XmlElement& programEl);
+	ANKI_USE_RESULT Error parseInputsTag(const XmlElement& programEl);
 
 	/// Parse what is within the @code <operation></operation> @endcode
-	void parseOperationTag(const XmlElement& el, GLenum glshader, 
+	ANKI_USE_RESULT Error parseOperationTag(
+		const XmlElement& el, GLenum glshader, 
 		GLbitfield glshaderbit, MPString& out);
 };
 

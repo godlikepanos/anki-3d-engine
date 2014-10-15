@@ -54,7 +54,9 @@ void Skeleton::load(const CString& filename, ResourceInitializer& init)
 		// <name>
 		XmlElement nameEl;
 		boneEl.getChildElement("name", nameEl);
-		bone.m_name = nameEl.getText();
+		CString tmp;
+		nameEl.getText(tmp);
+		bone.m_name = tmp;
 
 		// <transform>
 		XmlElement trfEl;

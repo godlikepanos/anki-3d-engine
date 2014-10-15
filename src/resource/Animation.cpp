@@ -78,7 +78,9 @@ void Animation::loadInternal(
 
 		// <name>
 		chEl.getChildElement("name", el);
-		ch.m_name = el.getText();
+		CString tmp;
+		el.getText(tmp);
+		ch.m_name = tmp;
 
 		XmlElement keysEl, keyEl;
 

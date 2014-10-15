@@ -265,7 +265,8 @@ void BucketMesh::load(const CString& filename, ResourceInitializer& init)
 		U i = 0;
 		do
 		{
-			CString subMeshFilename = meshEl.getText();
+			CString subMeshFilename;
+			meshEl.getText(subMeshFilename);
 
 			// Load the submesh and if not the first load the append the 
 			// vertices to the fullMesh

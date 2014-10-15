@@ -305,7 +305,8 @@ void Model::load(const CString& filename, ResourceInitializer& init)
 		if(collEl)
 		{
 			collEl.getChildElement("type", el);
-			CString type = el.getText();
+			CString type;
+			el.getText(type);
 			XmlElement valEl;
 			collEl.getChildElement("value", valEl);
 			(void)valEl; // XXX
@@ -352,23 +353,25 @@ void Model::load(const CString& filename, ResourceInitializer& init)
 				XmlElement meshEl2;
 				modelPatchEl.getChildElementOptional("mesh2", meshEl2);
 
-				meshesFnames[0] = meshEl.getText();
+				meshEl.getText(meshesFnames[0]);
 
 				if(meshEl1)
 				{
 					++meshesCount;
-					meshesFnames[1] = meshEl1.getText();
+					meshEl1.getText(meshesFnames[1]);
 				}
 
 				if(meshEl2)
 				{
 					++meshesCount;
-					meshesFnames[2] = meshEl2.getText();
+					meshEl2.getText(meshesFnames[2]);
 				}
 
+				CString cstr;
+				materialEl.getText(cstr);
 				patch = init.m_alloc.newInstance<
 					ModelPatch<MeshResourcePointer>>(
-					&meshesFnames[0], meshesCount, materialEl.getText(),
+					&meshesFnames[0], meshesCount, cstr,
 					&init.m_resources);
 			}
 			else
@@ -380,23 +383,25 @@ void Model::load(const CString& filename, ResourceInitializer& init)
 				XmlElement bmeshEl2;
 				modelPatchEl.getChildElementOptional("bucketMesh2", bmeshEl2);
 
-				meshesFnames[0] = bmeshEl.getText();
+				bmeshEl.getText(meshesFnames[0]);
 
 				if(bmeshEl1)
 				{
 					++meshesCount;
-					meshesFnames[1] = bmeshEl1.getText();
+					bmeshEl1.getText(meshesFnames[1]);
 				}
 
 				if(bmeshEl2)
 				{
 					++meshesCount;
-					meshesFnames[2] = bmeshEl2.getText();
+					bmeshEl2.getText(meshesFnames[2]);
 				}
 
+				CString cstr;
+				materialEl.getText(cstr);
 				patch = init.m_alloc.newInstance<
 					ModelPatch<BucketMeshResourcePointer>>(
-					&meshesFnames[0], meshesCount, materialEl.getText(),
+					&meshesFnames[0], meshesCount, cstr,
 					&init.m_resources);
 			}
 

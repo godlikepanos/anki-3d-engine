@@ -378,13 +378,17 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 
 	if(blendFunctionsEl)
 	{
+		CString cstr;
+
 		// sFactor
 		blendFunctionsEl.getChildElement("sFactor", el);
-		m_blendingSfactor = blendToEnum(el.getText());
+		el.getText(cstr);
+		m_blendingSfactor = blendToEnum(cstr);
 
 		// dFactor
 		blendFunctionsEl.getChildElement("dFactor", el);
-		m_blendingDfactor = blendToEnum(el.getText());
+		el.getText(cstr);
+		m_blendingDfactor = blendToEnum(cstr);
 	}
 	else
 	{

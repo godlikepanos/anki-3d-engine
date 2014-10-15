@@ -163,7 +163,9 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel,
 
 	XmlElement el;
 	rootel.getChildElement("material", el);
-	m_material.load(el.getText(), &init.m_resources);
+	CString cstr;
+	el.getText(cstr);
+	m_material.load(cstr, &init.m_resources);
 
 	// sanity checks
 	//
