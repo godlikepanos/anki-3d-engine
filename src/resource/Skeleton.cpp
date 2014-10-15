@@ -38,7 +38,7 @@ void Skeleton::load(const CString& filename, ResourceInitializer& init)
 	do
 	{
 		++bonesCount;
-		boneEl = boneEl.getNextSiblingElement("bone");
+		boneEl.getNextSiblingElement("bone", boneEl);
 	} while(boneEl);
 
 	// Alloc the vector
@@ -62,7 +62,7 @@ void Skeleton::load(const CString& filename, ResourceInitializer& init)
 		trfEl.getMat4(bone.m_transform);
 
 		// Advance 
-		boneEl = boneEl.getNextSiblingElement("bone");
+		boneEl.getNextSiblingElement("bone", boneEl);
 	} while(boneEl);
 }
 

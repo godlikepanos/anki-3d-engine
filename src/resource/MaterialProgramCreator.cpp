@@ -107,7 +107,7 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	{
 		parseInputsTag(programEl);
 
-		programEl = programEl.getNextSiblingElement("program");
+		programEl.getNextSiblingElement("program", programEl);
 	} while(programEl);
 
 	// Sort them by name to decrease the change of creating unique shaders
@@ -121,7 +121,7 @@ void MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	{
 		parseProgramTag(programEl);
 
-		programEl = programEl.getNextSiblingElement("program");
+		programEl.getNextSiblingElement("program", programEl);
 	} while(programEl);
 
 	//
@@ -175,7 +175,7 @@ void MaterialProgramCreator::parseProgramTag(
 		lines.push_back(
 			ANKI_STRL("#pragma anki include \"") + fname + "\"");
 
-		includeEl = includeEl.getNextSiblingElement("include");
+		includeEl.getNextSiblingElement("include", includeEl);
 	} while(includeEl);
 
 	// Inputs
@@ -217,7 +217,7 @@ void MaterialProgramCreator::parseProgramTag(
 		lines.push_back(out);
 
 		// Advance
-		opEl = opEl.getNextSiblingElement("operation");
+		opEl.getNextSiblingElement("operation", opEl);
 	} while(opEl);
 
 	lines.push_back(ANKI_STRL("}\n"));
@@ -421,7 +421,7 @@ void MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 advance:
 		// Advance
-		inputEl = inputEl.getNextSiblingElement("input");
+		inputEl.getNextSiblingElement("input", inputEl);
 	} while(inputEl);
 }
 
@@ -532,7 +532,7 @@ void MaterialProgramCreator::parseOperationTag(
 			}
 
 			// Advance
-			argEl = argEl.getNextSiblingElement("argument");
+			argEl.getNextSiblingElement("argument", argEl);
 		} while(argEl);
 	}
 

@@ -243,11 +243,20 @@ Error XmlElement::getChildElement(const CString& name, XmlElement& out) const
 }
 
 //==============================================================================
-XmlElement XmlElement::getNextSiblingElement(const CString& name) const
+Error XmlElement::getNextSiblingElement(
+	const CString& name, XmlElement& out) const
 {
-	check();
-	XmlElement out(m_el->NextSiblingElement(&name[0]), m_alloc);
-	return out;
+	Error err = check();
+	if(!err)
+	{
+		out = XmlElement(m_el->NextSiblingElement(&name[0]), m_alloc);
+	}
+	else
+	{
+		out = XmlElement();
+	}
+
+	return err;
 }
 
 //==============================================================================

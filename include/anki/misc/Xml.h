@@ -93,7 +93,8 @@ public:
 
 	/// Get the next element with the same name. Returns empty XmlElement if
 	/// it reached the end of the list
-	XmlElement getNextSiblingElement(const CString& name) const;
+	ANKI_USE_RESULT Error getNextSiblingElement(
+		const CString& name, XmlElement& out) const;
 
 private:
 	tinyxml2::XMLElement* m_el;

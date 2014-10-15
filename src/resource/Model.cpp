@@ -403,7 +403,7 @@ void Model::load(const CString& filename, ResourceInitializer& init)
 			m_modelPatches.push_back(patch);
 
 			// Move to next
-			modelPatchEl = modelPatchEl.getNextSiblingElement("modelPatch");
+			modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl);
 		} while(modelPatchEl);
 
 		// Check number of model patches

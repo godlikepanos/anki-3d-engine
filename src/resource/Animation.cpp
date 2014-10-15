@@ -113,7 +113,7 @@ void Animation::loadInternal(
 				}
 
 				// Move to next
-				keyEl = keyEl.getNextSiblingElement("key");
+				keyEl.getNextSiblingElement("key", keyEl);
 			} while(keyEl);
 		}
 
@@ -150,7 +150,7 @@ void Animation::loadInternal(
 				}
 
 				// Move to next
-				keyEl = keyEl.getNextSiblingElement("key");
+				keyEl.getNextSiblingElement("key", keyEl);
 			} while(keyEl);
 		}
 
@@ -187,7 +187,7 @@ void Animation::loadInternal(
 				}
 
 				// Move to next
-				keyEl = keyEl.getNextSiblingElement("key");
+				keyEl.getNextSiblingElement("key", keyEl);
 			} while(keyEl);
 		}
 
@@ -206,7 +206,7 @@ void Animation::loadInternal(
 		}
 
 		// Move to next channel
-		chEl = chEl.getNextSiblingElement("channel");
+		chEl.getNextSiblingElement("channel", chEl);
 	} while(chEl);
 
 	m_duration = maxTime - m_startTime;

@@ -331,7 +331,7 @@ void BucketMesh::load(const CString& filename, ResourceInitializer& init)
 			m_indicesCount += loader->getIndices().size();
 
 			// Move to next
-			meshEl = meshEl.getNextSiblingElement("mesh");
+			meshEl.getNextSiblingElement("mesh", meshEl);
 			++i;
 		} while(meshEl);
 
