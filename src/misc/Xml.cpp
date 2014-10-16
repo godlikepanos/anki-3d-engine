@@ -280,21 +280,33 @@ Error XmlElement::getNextSiblingElement(
 //==============================================================================
 
 //==============================================================================
-void XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
+Error XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
 {
+	Error err = ErrorCode::NONE;
+
 	File file;
-	file.open(filename, File::OpenFlag::READ);
+	err = file.open(filename, File::OpenFlag::READ);
+	if(err)
+	{
+		return err;
+	}
 
 	m_alloc = alloc;
 	StringBase<StackAllocator<char>> text(m_alloc);
-	file.readAllText(text);
+	err = file.readAllText(text);
+	if(err)
+	{
+		return err;
+	}
 
 	if(m_doc.Parse(&text[0]))
 	{
-		throw ANKI_EXCEPTION("Cannot parse file. Reason: %s",
+		ANKI_LOGE("Cannot parse file. Reason: %s",
 			((m_doc.GetErrorStr1() == nullptr)
 			? "unknown" : m_doc.GetErrorStr1()));
 	}
+
+	return err;
 }
 
 //==============================================================================

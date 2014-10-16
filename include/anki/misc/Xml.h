@@ -95,7 +95,8 @@ private:
 class XmlDocument
 {
 public:
-	void loadFile(const CString& filename, StackAllocator<U8>& alloc);
+	ANKI_USE_RESULT Error loadFile(
+		const CString& filename, StackAllocator<U8>& alloc);
 
 	ANKI_USE_RESULT Error getChildElement(const CString& name, XmlElement& out);
 

@@ -340,7 +340,8 @@ public:
 	}
 
 	/// Load a material file
-	void load(const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init);
 
 	/// For sorting
 	Bool operator<(const Material& b) const
@@ -368,15 +369,16 @@ private:
 		const RenderingKey key, ShaderType shaderId);
 
 	/// Parse what is within the @code <material></material> @endcode
-	void parseMaterialTag(const XmlElement& el, ResourceInitializer& rinit);
+	ANKI_USE_RESULT Error parseMaterialTag(
+		const XmlElement& el, ResourceInitializer& rinit);
 
 	/// Create a unique shader source in chache. If already exists do nothing
-	TempResourceString createProgramSourceToChache(
-		const TempResourceString& source);
+	ANKI_USE_RESULT Error createProgramSourceToCache(
+		const TempResourceString& source, TempResourceString& out);
 
 	/// Read all shader programs and pupulate the @a vars and @a nameToVar
 	/// containers
-	void populateVariables(const MaterialProgramCreator& mspc);
+	ANKI_USE_RESULT Error populateVariables(const MaterialProgramCreator& mspc);
 
 	U countShaders(ShaderType type) const;
 	U getShaderIndex(const RenderingKey key, ShaderType type) const;

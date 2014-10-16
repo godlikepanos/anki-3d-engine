@@ -23,6 +23,14 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
+// Sortcut
+#define ANKI_CHECK(x_) \
+	err = x_; \
+	if(ANKI_UNLIKELY(err)) \
+	{ \
+		return err; \
+	}
+
 //==============================================================================
 /// Create an numeric material variable
 template<typename T>
@@ -40,8 +48,10 @@ static MaterialVariable* newMaterialVariable(
 
 		if(in.m_value.size() != floatsNeeded)
 		{
-			throw ANKI_EXCEPTION("Incorrect number of values. Variable %s",
+			ANKI_LOGE("Incorrect number of values. Variable %s",
 				&glvar.getName()[0]);
+
+			return nullptr;
 		}
 
 		TempResourceVector<F32> floatvec(talloc);
@@ -306,8 +316,7 @@ GlProgramPipelineHandle Material::getProgramPipeline(
 		GlCommandBufferHandle cmdBuff;
 		cmdBuff.create(&gl);
 
-		ppline.create(
-			cmdBuff, &progs[0], &progs[0] + progCount);
+		ppline.create(cmdBuff, &progs[0], &progs[0] + progCount);
 
 		cmdBuff.flush();
 	}
@@ -316,26 +325,22 @@ GlProgramPipelineHandle Material::getProgramPipeline(
 }
 
 //==============================================================================
-void Material::load(const CString& filename, ResourceInitializer& init)
+Error Material::load(const CString& filename, ResourceInitializer& init)
 {
-	try
-	{
-		m_resources = &init.m_resources;
+	Error err = ErrorCode::NONE;
 
-		XmlDocument doc;
-		doc.loadFile(filename, init.m_tempAlloc);
-		XmlElement el;
-		doc.getChildElement("material", el);
-		parseMaterialTag(el , init);
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to load material") << e;
-	}
+	m_resources = &init.m_resources;
+
+	XmlDocument doc;
+	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
+
+	XmlElement el;
+	ANKI_CHECK(doc.getChildElement("material", el));
+	ANKI_CHECK(parseMaterialTag(el , init));
 }
 
 //==============================================================================
-void Material::parseMaterialTag(const XmlElement& materialEl,
+Error Material::parseMaterialTag(const XmlElement& materialEl,
 	ResourceInitializer& rinit)
 {
 	Error err = ErrorCode::NONE;
@@ -344,13 +349,12 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 	// levelsOfDetail
 	//
 	XmlElement lodEl;
-	materialEl.getChildElementOptional("levelsOfDetail", lodEl);
+	ANKI_CHECK(materialEl.getChildElementOptional("levelsOfDetail", lodEl));
 
 	if(lodEl)
 	{
 		I64 tmp;
-		err = lodEl.getI64(tmp);
-		// TODO
+		ANKI_CHECK(lodEl.getI64(tmp));
 		m_lodsCount = (tmp < 1) ? 1 : tmp;
 	}
 	else
@@ -361,33 +365,33 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 	// shadow
 	//
 	XmlElement shadowEl;
-	materialEl.getChildElementOptional("shadow", shadowEl);
+	ANKI_CHECK(materialEl.getChildElementOptional("shadow", shadowEl));
 
 	if(shadowEl)
 	{
 		I64 tmp;
-		err = shadowEl.getI64(tmp);
-		// TODO
+		ANKI_CHECK(shadowEl.getI64(tmp));
 		m_shadow = tmp;
 	}
 
 	// blendFunctions
 	//
 	XmlElement blendFunctionsEl;
-	materialEl.getChildElementOptional("blendFunctions", blendFunctionsEl);
+	ANKI_CHECK(
+		materialEl.getChildElementOptional("blendFunctions", blendFunctionsEl));
 
 	if(blendFunctionsEl)
 	{
 		CString cstr;
 
 		// sFactor
-		blendFunctionsEl.getChildElement("sFactor", el);
-		el.getText(cstr);
+		ANKI_CHECK(blendFunctionsEl.getChildElement("sFactor", el));
+		ANKI_CHECK(el.getText(cstr));
 		m_blendingSfactor = blendToEnum(cstr);
 
 		// dFactor
-		blendFunctionsEl.getChildElement("dFactor", el);
-		el.getText(cstr);
+		ANKI_CHECK(blendFunctionsEl.getChildElement("dFactor", el));
+		ANKI_CHECK(el.getText(cstr));
 		m_blendingDfactor = blendToEnum(cstr);
 	}
 	else
@@ -398,32 +402,31 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 	// depthTesting
 	//
 	XmlElement depthTestingEl;
-	materialEl.getChildElementOptional("depthTesting", depthTestingEl);
+	ANKI_CHECK(
+		materialEl.getChildElementOptional("depthTesting", depthTestingEl));
 
 	if(depthTestingEl)
 	{
 		I64 tmp;
-		err = depthTestingEl.getI64(tmp);
-		// TODO
+		ANKI_CHECK(depthTestingEl.getI64(tmp));
 		m_depthTesting = tmp;
 	}
 
 	// wireframe
 	//
 	XmlElement wireframeEl;
-	materialEl.getChildElementOptional("wireframe", wireframeEl);
+	ANKI_CHECK(materialEl.getChildElementOptional("wireframe", wireframeEl));
 
 	if(wireframeEl)
 	{
 		I64 tmp;
-		err = wireframeEl.getI64(tmp);
-		// TODO
+		ANKI_CHECK(wireframeEl.getI64(tmp));
 		m_wireframe = tmp;
 	}
 
 	// shaderProgram
 	//
-	materialEl.getChildElement("programs", el);
+	ANKI_CHECK(materialEl.getChildElement("programs", el));
 	MaterialProgramCreator loader(el, rinit.m_tempAlloc);
 
 	m_tessellation = loader.hasTessellation();
@@ -492,8 +495,8 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 						&rinit.m_resources._getShadersPrependedSource()[0],
 						level, pid, tess, &loader.getProgramSource(shader)[0]);
 
-					TempResourceString filename =
-						createProgramSourceToChache(src);
+					TempResourceString filename(rinit.m_tempAlloc);
+					ANKI_CHECK(createProgramSourceToCache(src, filename));
 
 					RenderingKey key((Pass)pid, level, tess);
 					ProgramResourcePointer& progr = getProgram(key, shader);
@@ -506,45 +509,57 @@ void Material::parseMaterialTag(const XmlElement& materialEl,
 		}
 	}
 
-	populateVariables(loader);
+	ANKI_CHECK(populateVariables(loader));
 
 	// Get uniform block size
 	ANKI_ASSERT(m_progs.size() > 0);
-	m_shaderBlockSize = 
-		m_progs[0]->getGlProgram().tryFindBlock("bDefaultBlock")->getSize();
-	// TODO handle nullptr block
+
+	auto blk = m_progs[0]->getGlProgram().tryFindBlock("bDefaultBlock");
+	if(blk == nullptr)
+	{
+		ANKI_LOGE("bDefaultBlock not found");
+		return ErrorCode::USER_DATA;
+	}
+
+	m_shaderBlockSize = blk->getSize();
+
+	return err;
 }
 
 //==============================================================================
-TempResourceString Material::createProgramSourceToChache(
-	const TempResourceString& source)
+Error Material::createProgramSourceToCache(
+	const TempResourceString& source, TempResourceString& out)
 {
+	Error err = ErrorCode::NONE;
+
 	// Create the hash
 	U64 h = computeHash(&source[0], source.getLength());
 	TempResourceString prefix = 
 		TempResourceString::toString(h, source.getAllocator());
 
 	// Create path
-	TempResourceString newfPathName(source.getAllocator());
-	newfPathName.sprintf("%s/mtl_%s.glsl", 
+	out.sprintf("%s/mtl_%s.glsl", 
 		&m_resources->_getCacheDirectory()[0],
 		&prefix[0]);
 
 	// If file not exists write it
-	if(!fileExists(newfPathName.toCString()))
+	if(!fileExists(out.toCString()))
 	{
 		// If not create it
 		File f;
-		f.open(newfPathName.toCString(), File::OpenFlag::WRITE);
-		Error err = f.writeText("%s\n", &source[0]);
-		ANKI_ASSERT(!err && "handle_error");
+		err = f.open(out.toCString(), File::OpenFlag::WRITE);
+
+		if(!err)
+		{
+			err = f.writeText("%s\n", &source[0]);
+		}
 	}
 
-	return newfPathName;
+	return err;
 }
 
 //==============================================================================
-void Material::populateVariables(const MaterialProgramCreator& loader)
+Error Material::populateVariables(const MaterialProgramCreator& loader)
 {
 	for(auto in : loader.getInputVariables())
 	{
@@ -571,8 +586,9 @@ void Material::populateVariables(const MaterialProgramCreator& loader)
 		// Check if variable found
 		if(glvar == nullptr)
 		{
-			throw ANKI_EXCEPTION("Variable not found in "
-				"at least one program: %s", &in.m_name[0]);
+			ANKI_LOGE("Variable not found in at least one program: %s", 
+				&in.m_name[0]);
+			return ErrorCode::USER_DATA;
 		}
 
 		switch(glvar->getDataType())
@@ -631,8 +647,15 @@ void Material::populateVariables(const MaterialProgramCreator& loader)
 			ANKI_ASSERT(0);
 		}
 
+		if(mtlvar == nullptr)
+		{
+			return ErrorCode::USER_DATA;
+		}
+
 		m_vars.push_back(mtlvar);
 	}
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki
