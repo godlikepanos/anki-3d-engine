@@ -284,8 +284,8 @@ void ParticleEmitter::buildRendering(RenderingBuildData& data)
 	RenderingKey key = data.m_key;
 	key.m_lod = 0;
 
-	GlProgramPipelineHandle ppline = 
-		m_particleEmitterResource->getMaterial().getProgramPipeline(key);
+	GlProgramPipelineHandle ppline;
+	m_particleEmitterResource->getMaterial().getProgramPipeline(key, ppline);
 
 	ppline.bind(data.m_jobs);
 

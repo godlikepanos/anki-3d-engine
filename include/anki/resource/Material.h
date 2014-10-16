@@ -320,7 +320,7 @@ public:
 	}
 
 	// Variable accessors
-	const ResourceVector<MaterialVariable*>& getVariables() const
+	const ResourceDArray<MaterialVariable*>& getVariables() const
 	{
 		return m_vars;
 	}
@@ -330,14 +330,8 @@ public:
 		return m_shaderBlockSize;
 	}
 
-	GlProgramPipelineHandle getProgramPipeline(const RenderingKey& key);
-
-	/// Get by name
-	const MaterialVariable* findVariableByName(const CString& name) const
-	{
-		auto it = m_varDict.find(name);
-		return (it == m_varDict.end()) ? nullptr : it->second;
-	}
+	ANKI_USE_RESULT Error getProgramPipeline(
+		const RenderingKey& key, GlProgramPipelineHandle& out);
 
 	/// Load a material file
 	ANKI_USE_RESULT Error load(
@@ -353,10 +347,10 @@ private:
 	/// Keep it to have access to some stuff at runtime
 	ResourceManager* m_resources = nullptr; 
 		
-	ResourceVector<MaterialVariable*> m_vars;
+	ResourceDArray<MaterialVariable*> m_vars;
 	Dictionary<MaterialVariable*> m_varDict;
 
-	ResourceVector<ProgramResourcePointer> m_progs;
+	ResourceDArray<ProgramResourcePointer> m_progs;
 	ResourceVector<GlProgramPipelineHandle> m_pplines;
 
 	U32 m_shaderBlockSize;

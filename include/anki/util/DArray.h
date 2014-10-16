@@ -121,7 +121,8 @@ public:
 	}
 
 	/// Create the array.
-	ANKI_USE_RESULT Error create(Allocator alloc, PtrSize size)
+	template<typename... TArgs>
+	ANKI_USE_RESULT Error create(Allocator alloc, PtrSize size, TArgs... args)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0);
 		ANKI_ASSERT(size);
@@ -129,7 +130,7 @@ public:
 
 		destroy(alloc);
 
-		m_data = alloc.template newArray<Value>(size);
+		m_data = alloc.template newArray<Value>(size, args...);
 		if(m_data)
 		{
 			m_size = size;

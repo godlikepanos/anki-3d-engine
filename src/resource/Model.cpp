@@ -107,7 +107,7 @@ void ModelPatchBase::getRenderingDataSub(
 	mtlKey.m_lod = 
 		std::min(key.m_lod, (U8)(getMaterial().getLevelsOfDetail() - 1));
 
-	ppline = m_mtl->getProgramPipeline(mtlKey);
+	m_mtl->getProgramPipeline(mtlKey, ppline);
 
 	// Mesh and indices
 	RenderingKey meshKey = key;
@@ -188,8 +188,8 @@ void ModelPatchBase::create(GlDevice* gl)
 			shaderKey.m_lod = std::min(key.m_lod, 
 				(U8)(getMaterial().getLevelsOfDetail() - 1));
 
-			GlProgramPipelineHandle ppline =
-				m_mtl->getProgramPipeline(shaderKey);
+			GlProgramPipelineHandle ppline;
+			m_mtl->getProgramPipeline(shaderKey, ppline);
 			prog = ppline.getAttachedProgram(GL_VERTEX_SHADER);
 			
 			// Create vert descriptor

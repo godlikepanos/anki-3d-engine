@@ -137,22 +137,24 @@ U32 MaterialVariable::getArraySize() const
 
 //==============================================================================
 Material::Material(ResourceAllocator<U8>& alloc)
-:	m_vars(alloc),
-	m_varDict(10, Dictionary<MaterialVariable*>::hasher(),
+:	m_varDict(10, Dictionary<MaterialVariable*>::hasher(),
 		Dictionary<MaterialVariable*>::key_equal(), alloc),
-	m_progs(alloc),
 	m_pplines(alloc)
 {}
 
 //==============================================================================
 Material::~Material()
 {
-	auto alloc = m_vars.get_allocator();
+	auto alloc = m_resources->_getAllocator();
+
+	m_progs.destroy(alloc);
 
 	for(auto it : m_vars)
 	{
 		alloc.deleteInstance(it);
 	}
+
+	m_vars.destroy(alloc);
 }
 
 //==============================================================================
@@ -271,11 +273,13 @@ ProgramResourcePointer& Material::getProgram(
 }
 
 //==============================================================================
-GlProgramPipelineHandle Material::getProgramPipeline(
-	const RenderingKey& key)
+Error Material::getProgramPipeline(
+	const RenderingKey& key, GlProgramPipelineHandle& out)
 {
 	ANKI_ASSERT(enumToType(key.m_pass) < m_passesCount);
 	ANKI_ASSERT(key.m_lod < m_lodsCount);
+
+	Error err = ErrorCode::NONE;
 
 	U tessCount = 1;
 	if(m_tessellation)
@@ -314,14 +318,16 @@ GlProgramPipelineHandle Material::getProgramPipeline(
 
 		GlDevice& gl = m_resources->_getGlDevice();
 		GlCommandBufferHandle cmdBuff;
-		cmdBuff.create(&gl);
+		ANKI_CHECK(cmdBuff.create(&gl));
 
-		ppline.create(cmdBuff, &progs[0], &progs[0] + progCount);
+		ANKI_CHECK(ppline.create(cmdBuff, &progs[0], &progs[0] + progCount));
 
 		cmdBuff.flush();
 	}
 
-	return ppline;
+	out = ppline;
+
+	return err;
 }
 
 //==============================================================================
@@ -337,6 +343,8 @@ Error Material::load(const CString& filename, ResourceInitializer& init)
 	XmlElement el;
 	ANKI_CHECK(doc.getChildElement("material", el));
 	ANKI_CHECK(parseMaterialTag(el , init));
+
+	return err;
 }
 
 //==============================================================================
@@ -433,12 +441,12 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 	U tessCount = m_tessellation ? 2 : 1;
 
 	// Alloc program vector
-	m_progs.resize(
+	ANKI_CHECK(m_progs.create(rinit.m_alloc,
 		countShaders(ShaderType::VERTEX) 
 		+ countShaders(ShaderType::TESSELLATION_CONTROL)
 		+ countShaders(ShaderType::TESSELLATION_EVALUATION)
 		+ countShaders(ShaderType::GEOMETRY)
-		+ countShaders(ShaderType::FRAGMENT));
+		+ countShaders(ShaderType::FRAGMENT)));
 
 	// Aloc progam descriptors
 	m_pplines.resize(m_passesCount * m_lodsCount * tessCount);
@@ -512,7 +520,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 	ANKI_CHECK(populateVariables(loader));
 
 	// Get uniform block size
-	ANKI_ASSERT(m_progs.size() > 0);
+	ANKI_ASSERT(m_progs.getSize() > 0);
 
 	auto blk = m_progs[0]->getGlProgram().tryFindBlock("bDefaultBlock");
 	if(blk == nullptr)
@@ -561,6 +569,20 @@ Error Material::createProgramSourceToCache(
 //==============================================================================
 Error Material::populateVariables(const MaterialProgramCreator& loader)
 {
+	Error err = ErrorCode::NONE;
+
+	U varCount = 0;
+	for(auto in : loader.getInputVariables())
+	{
+		if(!in.m_constant)
+		{
+			++varCount;
+		}
+	}
+
+	ANKI_CHECK(m_vars.create(m_resources->_getAllocator(), varCount));
+
+	varCount = 0;
 	for(auto in : loader.getInputVariables())
 	{
 		if(in.m_constant)
@@ -652,7 +674,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 			return ErrorCode::USER_DATA;
 		}
 
-		m_vars.push_back(mtlvar);
+		m_vars[varCount++] = mtlvar;
 	}
 
 	return ErrorCode::NONE;

@@ -114,7 +114,7 @@ void RenderComponent::init()
 	CreateNewRenderComponentVariableVisitor vis;
 	vis.m_vars = &m_vars;
 
-	m_vars.reserve(mtl.getVariables().size());
+	m_vars.reserve(mtl.getVariables().getSize());
 
 	for(const MaterialVariable* mv : mtl.getVariables())
 	{
