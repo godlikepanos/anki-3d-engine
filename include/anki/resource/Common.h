@@ -62,6 +62,19 @@ public:
 
 /// @}
 
+/// @privatesection
+/// @{
+
+// Sortcut
+#define ANKI_CHECK(x_) \
+	err = x_; \
+	if(ANKI_UNLIKELY(err)) \
+	{ \
+		return err; \
+	}
+
+/// @}
+
 } // end namespace anki
 
 #endif

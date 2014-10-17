@@ -18,14 +18,6 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
-// Sortcut
-#define ANKI_CHECK(x_) \
-	err = x_; \
-	if(ANKI_UNLIKELY(err)) \
-	{ \
-		return err; \
-	}
-
 //==============================================================================
 /// Define string literal
 #define ANKI_STRL(cstr_) MPString(cstr_, m_alloc)

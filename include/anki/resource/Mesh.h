@@ -95,7 +95,8 @@ public:
 	Bool isCompatible(const Mesh& other) const;
 
 	/// Load from a .mesh file
-	void load(const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init);
 
 protected:
 	/// Per sub mesh data
@@ -118,7 +119,8 @@ protected:
 	GlBufferHandle m_indicesBuff;
 
 	/// Create the VBOs using the mesh data
-	void createBuffers(const MeshLoader& loader, ResourceInitializer& init);
+	ANKI_USE_RESULT Error createBuffers(
+		const MeshLoader& loader, ResourceInitializer& init);
 
 	U32 calcVertexSize() const;
 };
@@ -136,7 +138,8 @@ public:
 	{}
 
 	/// Load from a .mmesh file
-	void load(const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init);
 };
 
 } // end namespace anki

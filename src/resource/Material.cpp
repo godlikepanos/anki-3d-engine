@@ -23,14 +23,6 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
-// Sortcut
-#define ANKI_CHECK(x_) \
-	err = x_; \
-	if(ANKI_UNLIKELY(err)) \
-	{ \
-		return err; \
-	}
-
 //==============================================================================
 /// Create an numeric material variable
 template<typename T>

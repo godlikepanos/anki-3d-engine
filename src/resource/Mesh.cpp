@@ -32,37 +32,31 @@ Bool Mesh::isCompatible(const Mesh& other) const
 }
 
 //==============================================================================
-void Mesh::load(const CString& filename, ResourceInitializer& init)
+Error Mesh::load(const CString& filename, ResourceInitializer& init)
 {
 	Error err = ErrorCode::NONE;
 
-	try
-	{
-		MeshLoader loader(init.m_tempAlloc);
-		err = loader.load(filename);
-		ANKI_ASSERT(!err && "handle_error");
+	MeshLoader loader(init.m_tempAlloc);
+	ANKI_CHECK(loader.load(filename))
 
-		m_indicesCount = loader.getIndices().size();
+	m_indicesCount = loader.getIndices().size();
 
-		const auto& positions = loader.getPositions();
-		m_obb.setFromPointCloud(&positions[0], positions.size(),
-			sizeof(Vec3), positions.getSizeInBytes());
-		ANKI_ASSERT(m_indicesCount > 0);
-		ANKI_ASSERT(m_indicesCount % 3 == 0 && "Expecting triangles");
+	const auto& positions = loader.getPositions();
+	m_obb.setFromPointCloud(&positions[0], positions.size(),
+		sizeof(Vec3), positions.getSizeInBytes());
+	ANKI_ASSERT(m_indicesCount > 0);
+	ANKI_ASSERT(m_indicesCount % 3 == 0 && "Expecting triangles");
 
-		// Set the non-VBO members
-		m_vertsCount = loader.getPositions().size();
-		ANKI_ASSERT(m_vertsCount > 0);
+	// Set the non-VBO members
+	m_vertsCount = loader.getPositions().size();
+	ANKI_ASSERT(m_vertsCount > 0);
 
-		m_texChannelsCount = loader.getTextureChannelsCount();
-		m_weights = loader.getWeights().size() > 1;
+	m_texChannelsCount = loader.getTextureChannelsCount();
+	m_weights = loader.getWeights().size() > 1;
 
-		createBuffers(loader, init);
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to load mesh") << e;
-	}
+	ANKI_CHECK(createBuffers(loader, init));
+
+	return err;
 }
 
 //==============================================================================
@@ -80,12 +74,14 @@ U32 Mesh::calcVertexSize() const
 }
 
 //==============================================================================
-void Mesh::createBuffers(const MeshLoader& loader,
+Error Mesh::createBuffers(const MeshLoader& loader,
 	ResourceInitializer& init)
 {
 	ANKI_ASSERT(m_vertsCount == loader.getPositions().size()
 		&& m_vertsCount == loader.getNormals().size()
 		&& m_vertsCount == loader.getTangents().size());
+
+	Error err = ErrorCode::NONE;
 
 	// Calculate VBO size
 	U32 vertexsize = calcVertexSize();
@@ -128,21 +124,23 @@ void Mesh::createBuffers(const MeshLoader& loader,
 	// Create GL buffers
 	GlDevice& gl = init.m_resources._getGlDevice();
 	GlCommandBufferHandle cmdb;
-	cmdb.create(&gl);
+	ANKI_CHECK(cmdb.create(&gl));
 	
 	GlClientBufferHandle clientVertBuff;
-	clientVertBuff.create(cmdb, vbosize, &buff[0]);
-	m_vertBuff.create(cmdb, GL_ARRAY_BUFFER, clientVertBuff, 0);
+	ANKI_CHECK(clientVertBuff.create(cmdb, vbosize, &buff[0]));
+	ANKI_CHECK(m_vertBuff.create(cmdb, GL_ARRAY_BUFFER, clientVertBuff, 0));
 
 	GlClientBufferHandle clientIndexBuff;
-	clientIndexBuff.create(
+	ANKI_CHECK(clientIndexBuff.create(
 		cmdb, 
 		getVectorSizeInBytes(loader.getIndices()), 
-		(void*)&loader.getIndices()[0]);
-	m_indicesBuff.create(
-		cmdb, GL_ELEMENT_ARRAY_BUFFER, clientIndexBuff, 0);
+		(void*)&loader.getIndices()[0]));
+	ANKI_CHECK(m_indicesBuff.create(
+		cmdb, GL_ELEMENT_ARRAY_BUFFER, clientIndexBuff, 0));
 
 	cmdb.finish();
+
+	return err;
 }
 
 //==============================================================================
@@ -241,112 +239,107 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 //==============================================================================
 
 //==============================================================================
-void BucketMesh::load(const CString& filename, ResourceInitializer& init)
+Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 {
 	Error err = ErrorCode::NONE;
 
-	try
+	XmlDocument doc;
+	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
+
+	XmlElement rootEl;
+	ANKI_CHECK(doc.getChildElement("bucketMesh", rootEl));
+	XmlElement meshesEl;
+	ANKI_CHECK(rootEl.getChildElement("meshes", meshesEl));
+	XmlElement meshEl;
+	ANKI_CHECK(meshesEl.getChildElement("mesh", meshEl));
+
+	m_vertsCount = 0;
+	m_subMeshes.reserve(4);
+	m_indicesCount = 0;
+
+	MeshLoader fullLoader(init.m_tempAlloc);
+	U i = 0;
+	do
 	{
-		XmlDocument doc;
-		doc.loadFile(filename, init.m_tempAlloc);
+		CString subMeshFilename;
+		ANKI_CHECK(meshEl.getText(subMeshFilename));
 
-		XmlElement rootEl;
-		doc.getChildElement("bucketMesh", rootEl);
-		XmlElement meshesEl;
-		rootEl.getChildElement("meshes", meshesEl);
-		XmlElement meshEl;
-		meshesEl.getChildElement("mesh", meshEl);
-
-		m_vertsCount = 0;
-		m_subMeshes.reserve(4);
-		m_indicesCount = 0;
-
-		MeshLoader fullLoader(init.m_tempAlloc);
-		U i = 0;
-		do
+		// Load the submesh and if not the first load the append the 
+		// vertices to the fullMesh
+		MeshLoader* loader;
+		MeshLoader subLoader(init.m_tempAlloc);
+		if(i != 0)
 		{
-			CString subMeshFilename;
-			meshEl.getText(subMeshFilename);
-
-			// Load the submesh and if not the first load the append the 
-			// vertices to the fullMesh
-			MeshLoader* loader;
-			MeshLoader subLoader(init.m_tempAlloc);
-			if(i != 0)
+			// Sanity check
+			if(i > ANKI_GL_MAX_SUB_DRAWCALLS)
 			{
-				// Sanity check
-				if(i > ANKI_GL_MAX_SUB_DRAWCALLS)
-				{
-					throw ANKI_EXCEPTION("Max number of submeshes exceeded");
-				}
-
-				// Load
-				err = subLoader.load(subMeshFilename);
-				ANKI_ASSERT(!err);
-				loader = &subLoader;
-
-				// Sanity checks
-				if(m_weights != (loader->getWeights().size() > 1))
-				{
-					throw ANKI_EXCEPTION("All sub meshes should have or not "
-						"have vertex weights");
-				}
-
-				if(m_texChannelsCount 
-					!= loader->getTextureChannelsCount())
-				{
-					throw ANKI_EXCEPTION("All sub meshes should have the "
-						"same number of texture channels");
-				}
-
-				// Append
-				fullLoader.append(subLoader);
-			}
-			else
-			{
-				// Load
-				err = fullLoader.load(subMeshFilename);
-				ANKI_ASSERT(!err);
-				loader = &fullLoader;
-
-				// Set properties
-				m_weights = loader->getWeights().size() > 1;
-				m_texChannelsCount = 
-					loader->getTextureChannelsCount();
+				ANKI_LOGE("Max number of submeshes exceeded");
+				return ErrorCode::USER_DATA;
 			}
 
-			// Push back the new submesh
-			SubMesh submesh;
+			// Load
+			ANKI_CHECK(subLoader.load(subMeshFilename));
+			loader = &subLoader;
 
-			submesh.m_indicesCount = loader->getIndices().size();
-			submesh.m_indicesOffset = m_indicesCount * sizeof(U16);
+			// Sanity checks
+			if(m_weights != (loader->getWeights().size() > 1))
+			{
+				ANKI_LOGE("All sub meshes should have or not "
+					"have vertex weights");
+				return ErrorCode::USER_DATA;
+			}
 
-			const auto& positions = loader->getPositions();
-			submesh.m_obb.setFromPointCloud(&positions[0], positions.size(),
-				sizeof(Vec3), positions.getSizeInBytes());
+			if(m_texChannelsCount 
+				!= loader->getTextureChannelsCount())
+			{
+				ANKI_LOGE("All sub meshes should have the "
+					"same number of texture channels");
+				return ErrorCode::USER_DATA;
+			}
 
-			m_subMeshes.push_back(submesh);
+			// Append
+			fullLoader.append(subLoader);
+		}
+		else
+		{
+			// Load
+			ANKI_CHECK(fullLoader.load(subMeshFilename));
+			loader = &fullLoader;
 
-			// Set the global numbers
-			m_vertsCount += loader->getPositions().size();
-			m_indicesCount += loader->getIndices().size();
+			// Set properties
+			m_weights = loader->getWeights().size() > 1;
+			m_texChannelsCount = loader->getTextureChannelsCount();
+		}
 
-			// Move to next
-			meshEl.getNextSiblingElement("mesh", meshEl);
-			++i;
-		} while(meshEl);
+		// Push back the new submesh
+		SubMesh submesh;
 
-		// Create the bucket mesh
-		createBuffers(fullLoader, init);
+		submesh.m_indicesCount = loader->getIndices().size();
+		submesh.m_indicesOffset = m_indicesCount * sizeof(U16);
 
-		const auto& positions = fullLoader.getPositions();
-		m_obb.setFromPointCloud(&positions[0], positions.size(),
+		const auto& positions = loader->getPositions();
+		submesh.m_obb.setFromPointCloud(&positions[0], positions.size(),
 			sizeof(Vec3), positions.getSizeInBytes());
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to load bucket mesh") << e;
-	}
+
+		m_subMeshes.push_back(submesh);
+
+		// Set the global numbers
+		m_vertsCount += loader->getPositions().size();
+		m_indicesCount += loader->getIndices().size();
+
+		// Move to next
+		ANKI_CHECK(meshEl.getNextSiblingElement("mesh", meshEl));
+		++i;
+	} while(meshEl);
+
+	// Create the bucket mesh
+	ANKI_CHECK(createBuffers(fullLoader, init));
+
+	const auto& positions = fullLoader.getPositions();
+	m_obb.setFromPointCloud(&positions[0], positions.size(),
+		sizeof(Vec3), positions.getSizeInBytes());
+
+	return err;
 }
 
 } // end namespace anki
