@@ -14,7 +14,6 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/Animation.h"
-#include "anki/util/Vector.h"
 
 namespace anki {
 
@@ -23,13 +22,11 @@ namespace anki {
 class ModelPatchBase
 {
 public:
-	virtual ~ModelPatchBase()
+	ModelPatchBase(ResourceAllocator<U8> alloc)
+	:	m_alloc(alloc)
 	{}
 
-	ModelPatchBase(ResourceAllocator<U8>& alloc)
-	:	m_vertJobs(alloc),
-		m_meshes(alloc)
-	{}
+	virtual ~ModelPatchBase();
 
 	const Material& getMaterial() const
 	{
@@ -39,13 +36,12 @@ public:
 
 	const Mesh& getMesh(const RenderingKey& key) const
 	{
-		ANKI_ASSERT(key.m_lod < m_meshes.size());
 		return *m_meshes[key.m_lod];
 	}
 
 	U32 getMeshesCount() const
 	{
-		return m_meshes.size();
+		return m_meshes.getSize();
 	}
 
 	const Obb& getBoundingShape() const
@@ -69,7 +65,7 @@ public:
 	/// Get information for multiDraw rendering.
 	/// Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts
-	void getRenderingDataSub(
+	ANKI_USE_RESULT Error getRenderingDataSub(
 		const RenderingKey& key, 
 		GlCommandBufferHandle& vertJobs,
 		GlProgramPipelineHandle& ppline,
@@ -80,18 +76,19 @@ public:
 		U32& drawcallCount) const;
 
 protected:
+	ResourceAllocator<U8> m_alloc;
 	/// Array [lod][pass]
-	ResourceVector<GlCommandBufferHandle> m_vertJobs;
+	ResourceDArray<GlCommandBufferHandle> m_vertJobs;
 	Material* m_mtl = nullptr;
-	ResourceVector<Mesh*> m_meshes; ///< One for each LOD
+	ResourceDArray<Mesh*> m_meshes; ///< One for each LOD
 
 	/// Create vertex descriptors using a material and a mesh
-	void create(GlDevice* gl);
+	ANKI_USE_RESULT Error create(GlDevice* gl);
 
 private:
 	/// Called by @a create multiple times to create and populate a single
 	/// vertex descriptor
-	static void createVertexDesc(
+	static ANKI_USE_RESULT Error createVertexDesc(
 		const GlProgramHandle& prog,
 		const Mesh& mesh,
 		GlCommandBufferHandle& vertexJobs);
@@ -108,18 +105,26 @@ template<typename MeshResourcePointerType>
 class ModelPatch: public ModelPatchBase
 {
 public:
+	using Base = ModelPatchBase;
+
 	/// Accepts a number of mesh filenames, one for each LOD
-	ModelPatch(
+	ModelPatch(ResourceAllocator<U8> alloc)
+	:	ModelPatchBase(alloc)
+	{}
+
+	~ModelPatch()
+	{
+		m_meshResources.destroy(ModelPatchBase::m_alloc);
+	}
+
+	ANKI_USE_RESULT Error create(
 		CString meshFNames[], 
 		U32 meshesCount,
 		const CString& mtlFName, 
 		ResourceManager* resources);
 
-	~ModelPatch()
-	{}
-
 private:
-	ResourceVector<MeshResourcePointerType> m_meshResources; ///< Geometries
+	ResourceDArray<MeshResourcePointerType> m_meshResources; ///< Geometries
 	MaterialResourcePointer m_mtlResource; ///< Material
 };
 
@@ -167,7 +172,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const ResourceVector<ModelPatchBase*>& getModelPatches() const
+	const ResourceDArray<ModelPatchBase*>& getModelPatches() const
 	{
 		return m_modelPatches;
 	}
@@ -178,14 +183,15 @@ public:
 	}
 	/// @}
 
-	void load(const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init);
 
 private:
-	/// The vector of ModelPatch
-	ResourceVector<ModelPatchBase*> m_modelPatches;
+	ResourceAllocator<U8> m_alloc;
+	ResourceDArray<ModelPatchBase*> m_modelPatches;
 	Obb m_visibilityShape;
 	SkeletonResourcePointer m_skeleton;
-	ResourceVector<AnimationResourcePointer> m_animations;
+	ResourceDArray<AnimationResourcePointer> m_animations;
 };
 
 } // end namespace anki

@@ -29,8 +29,10 @@ public:
 		}
 	}
 
-	void load(const CString& filename, ResourceInitializer& init)
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init)
 	{
+		Error err = ErrorCode::NONE;
 		if(filename != "exception")
 		{
 			m_memory = m_alloc.allocate(128);
@@ -41,8 +43,11 @@ public:
 		}
 		else
 		{
-			throw ANKI_EXCEPTION("Dummy exception");
+			ANKI_LOGE("Dummy exception");
+			err = ErrorCode::USER_DATA;
 		}
+
+		return err;
 	}
 
 private:

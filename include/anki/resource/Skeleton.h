@@ -62,21 +62,23 @@ public:
 	~Skeleton();
 
 	/// Load file
-	void load(const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init);
 
 	/// @name Accessors
 	/// @{
-	const ResourceVector<Bone>& getBones() const
+	const ResourceDArray<Bone>& getBones() const
 	{
 		return m_bones;
 	}
 	/// @}
 
 private:
-	ResourceVector<Bone> m_bones;
+	ResourceAllocator<U8> m_alloc;
+	ResourceDArray<Bone> m_bones;
 };
 
-} // end namespace
+} // end namespace anki
 
 
 #endif

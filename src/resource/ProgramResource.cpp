@@ -16,30 +16,35 @@
 namespace anki {
 
 //==============================================================================
-void ProgramResource::load(const CString& filename, ResourceInitializer& init)
+Error ProgramResource::load(const CString& filename, ResourceInitializer& init)
 {
-	load(filename, " ", init.m_resources);
+	return load(filename, " ", init.m_resources);
 }
 
 //==============================================================================
-void ProgramResource::load(const CString& filename, const CString& extraSrc,
+Error ProgramResource::load(const CString& filename, const CString& extraSrc,
 	ResourceManager& manager)
 {
+	Error err = ErrorCode::NONE;
+
 	ProgramPrePreprocessor pars(filename, &manager);
 	TempResourceString source(extraSrc + pars.getShaderSource());
 
 	GlDevice& gl = manager._getGlDevice();
 	GlCommandBufferHandle cmdb;
-	cmdb.create(&gl);
+	ANKI_CHECK(cmdb.create(&gl));
+
 	GlClientBufferHandle glsource;
-	glsource.create(cmdb, source.getLength() + 1, nullptr);
+	ANKI_CHECK(glsource.create(cmdb, source.getLength() + 1, nullptr));
 
 	std::strcpy(reinterpret_cast<char*>(glsource.getBaseAddress()), &source[0]);
 
-	m_prog.create(cmdb, 
-		computeGlShaderType(pars.getShaderType()), glsource);
+	ANKI_CHECK(m_prog.create(cmdb, 
+		computeGlShaderType(pars.getShaderType()), glsource));
 
 	cmdb.flush();
+
+	return err;
 }
 
 //==============================================================================

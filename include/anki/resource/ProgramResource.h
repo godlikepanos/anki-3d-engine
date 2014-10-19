@@ -30,10 +30,12 @@ public:
 	}
 
 	/// Resource load
-	void load(const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init);
 
 	/// Load and add extra code on top of the file
-	void load(const CString& filename, const CString& extraSrc,
+	ANKI_USE_RESULT Error load(
+		const CString& filename, const CString& extraSrc,
 		ResourceManager& manager);
 
 	/// Used by @ref Material and @ref Renderer to create custom shaders in

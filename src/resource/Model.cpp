@@ -36,18 +36,26 @@ static const Array<Attrib, static_cast<U>(VertexAttribute::COUNT) - 1>
 }};
 
 //==============================================================================
-void ModelPatchBase::createVertexDesc(
+ModelPatchBase::~ModelPatchBase()
+{
+	m_vertJobs.destroy(m_alloc);
+	m_meshes.destroy(m_alloc);
+}
+
+//==============================================================================
+Error ModelPatchBase::createVertexDesc(
 	const GlProgramHandle& prog,
 	const Mesh& mesh,
 	GlCommandBufferHandle& vertexJobs)
 {
+	Error err = ErrorCode::NONE;
 	GlBufferHandle vbo;
 	U32 size;
 	GLenum type;
 	U32 stride;
 	U32 offset;
 
-	U32 count = 0;
+	U count = 0;
 	for(const Attrib& attrib : attribs)
 	{
 		const GlProgramVariable* attr = 
@@ -65,8 +73,9 @@ void ModelPatchBase::createVertexDesc(
 
 		if(!vbo.isCreated())
 		{
-			throw ANKI_EXCEPTION("Material asks for attribute that the mesh "
+			ANKI_LOGE("Material asks for attribute that the mesh "
 				"does not have: %s", attrib.m_name);
+			return ErrorCode::USER_DATA;
 		}
 		
 		vbo.bindVertexBuffer(vertexJobs, size, type, false, stride,
@@ -77,7 +86,8 @@ void ModelPatchBase::createVertexDesc(
 
 	if(count < 1)
 	{
-		throw ANKI_EXCEPTION("The program doesn't have any attributes");
+		ANKI_LOGE("The program doesn't have any attributes");
+		return ErrorCode::USER_DATA;
 	}
 
 	// The indices VBO
@@ -86,10 +96,12 @@ void ModelPatchBase::createVertexDesc(
 
 	ANKI_ASSERT(vbo.isCreated());
 	vbo.bindIndexBuffer(vertexJobs);
+
+	return err;
 }
 
 //==============================================================================
-void ModelPatchBase::getRenderingDataSub(
+Error ModelPatchBase::getRenderingDataSub(
 	const RenderingKey& key, 
 	GlCommandBufferHandle& vertJobs, 
 	GlProgramPipelineHandle& ppline,
@@ -99,6 +111,8 @@ void ModelPatchBase::getRenderingDataSub(
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray, 
 	U32& drawcallCount) const
 {
+	Error err = ErrorCode::NONE;
+
 	// Vertex descr
 	vertJobs = m_vertJobs[getVertexDescIdx(key)];
 
@@ -107,7 +121,7 @@ void ModelPatchBase::getRenderingDataSub(
 	mtlKey.m_lod = 
 		std::min(key.m_lod, (U8)(getMaterial().getLevelsOfDetail() - 1));
 
-	m_mtl->getProgramPipeline(mtlKey, ppline);
+	ANKI_CHECK(m_mtl->getProgramPipeline(mtlKey, ppline));
 
 	// Mesh and indices
 	RenderingKey meshKey = key;
@@ -158,15 +172,19 @@ void ModelPatchBase::getRenderingDataSub(
 			prevIndex = index;
 		}
 	}
+
+	return err;
 }
 
 //==============================================================================
-void ModelPatchBase::create(GlDevice* gl)
+Error ModelPatchBase::create(GlDevice* gl)
 {
+	Error err = ErrorCode::NONE;
+
 	const Material& mtl = getMaterial();
 	U lodsCount = getLodsCount();
 
-	m_vertJobs.resize(lodsCount * mtl.getPassesCount());
+	ANKI_CHECK(m_vertJobs.create(m_alloc, lodsCount * mtl.getPassesCount()));
 
 	for(U lod = 0; lod < lodsCount; ++lod)
 	{
@@ -189,17 +207,19 @@ void ModelPatchBase::create(GlDevice* gl)
 				(U8)(getMaterial().getLevelsOfDetail() - 1));
 
 			GlProgramPipelineHandle ppline;
-			m_mtl->getProgramPipeline(shaderKey, ppline);
+			ANKI_CHECK(m_mtl->getProgramPipeline(shaderKey, ppline));
 			prog = ppline.getAttachedProgram(GL_VERTEX_SHADER);
 			
 			// Create vert descriptor
 			GlCommandBufferHandle vertJobs;
-			vertJobs.create(gl);
-			createVertexDesc(prog, *mesh, vertJobs);
+			ANKI_CHECK(vertJobs.create(gl));
+			ANKI_CHECK(createVertexDesc(prog, *mesh, vertJobs));
 
 			m_vertJobs[getVertexDescIdx(key)] = vertJobs;
 		}
 	}
+
+	return err;
 }
 
 //==============================================================================
@@ -220,7 +240,7 @@ U ModelPatchBase::getVertexDescIdx(const RenderingKey& key) const
 	U lod = std::min((U)key.m_lod, getLodsCount() - 1);
 
 	U idx = lod * passesCount + (U)key.m_pass;
-	ANKI_ASSERT(idx < m_vertJobs.size());
+	ANKI_ASSERT(idx < m_vertJobs.getSize());
 	return idx;
 }
 
@@ -230,17 +250,18 @@ U ModelPatchBase::getVertexDescIdx(const RenderingKey& key) const
 
 //==============================================================================
 template<typename MeshResourcePointerType>
-ModelPatch<MeshResourcePointerType>::ModelPatch(
+Error ModelPatch<MeshResourcePointerType>::create(
 	CString meshFNames[], 
 	U32 meshesCount, 
 	const CString& mtlFName,
 	ResourceManager* resources)
-:	ModelPatchBase(resources->_getAllocator()),
-	m_meshResources(resources->_getAllocator())
 {
 	ANKI_ASSERT(meshesCount > 0);
-	m_meshes.resize(meshesCount);
-	m_meshResources.resize(meshesCount);
+
+	Error err = ErrorCode::NONE;
+
+	ANKI_CHECK(m_meshes.create(m_alloc, meshesCount));
+	ANKI_CHECK(m_meshResources.create(m_alloc, meshesCount));
 
 	// Load meshes
 	for(U i = 0; i < meshesCount; i++)
@@ -252,7 +273,8 @@ ModelPatch<MeshResourcePointerType>::ModelPatch(
 		if(i > 0 
 			&& !m_meshResources[i]->isCompatible(*m_meshResources[i - 1]))
 		{
-			throw ANKI_EXCEPTION("Meshes not compatible");
+			ANKI_LOGE("Meshes not compatible");
+			return ErrorCode::USER_DATA;
 		}
 	}
 
@@ -261,7 +283,9 @@ ModelPatch<MeshResourcePointerType>::ModelPatch(
 	m_mtl = m_mtlResource.get();
 
 	// Create VAOs
-	create(&resources->_getGlDevice());
+	ANKI_CHECK(Base::create(&resources->_getGlDevice()));
+
+	return err;
 }
 
 //==============================================================================
@@ -270,170 +294,209 @@ ModelPatch<MeshResourcePointerType>::ModelPatch(
 
 //==============================================================================
 Model::Model(ResourceAllocator<U8>& alloc)
-:	m_modelPatches(alloc),
-	m_animations(alloc)
 {}
 
 //==============================================================================
 Model::~Model()
 {
-	auto alloc = m_modelPatches.get_allocator();
-
 	for(ModelPatchBase* patch : m_modelPatches)
 	{
-		alloc.deleteInstance(patch);
+		m_alloc.deleteInstance(patch);
 	}
+
+	m_modelPatches.destroy(m_alloc);
 }
 
 //==============================================================================
-void Model::load(const CString& filename, ResourceInitializer& init)
+Error Model::load(const CString& filename, ResourceInitializer& init)
 {
-	try
+	Error err = ErrorCode::NONE;
+	m_alloc = init.m_alloc;
+
+	// Load
+	//
+	XmlElement el;
+	XmlDocument doc;
+	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
+
+	XmlElement rootEl;
+	ANKI_CHECK(doc.getChildElement("model", rootEl));
+
+	// <collisionShape>
+	XmlElement collEl;
+	ANKI_CHECK(rootEl.getChildElementOptional("collisionShape", collEl));
+	if(collEl)
 	{
-		// Load
-		//
-		XmlElement el;
-		XmlDocument doc;
-		doc.loadFile(filename, init.m_tempAlloc);
+		ANKI_CHECK(collEl.getChildElement("type", el));
+		CString type;
+		ANKI_CHECK(el.getText(type));
 
-		XmlElement rootEl;
-		doc.getChildElement("model", rootEl);
+		XmlElement valEl;
+		ANKI_CHECK(collEl.getChildElement("value", valEl));
+		(void)valEl; // XXX
 
-		// <collisionShape>
-		XmlElement collEl;
-		rootEl.getChildElementOptional("collisionShape", collEl);
-		if(collEl)
+		if(type == "sphere")
 		{
-			collEl.getChildElement("type", el);
-			CString type;
-			el.getText(type);
-			XmlElement valEl;
-			collEl.getChildElement("value", valEl);
-			(void)valEl; // XXX
-
-			if(type == "sphere")
-			{
-				ANKI_LOGW("TODO");
-			}
-			else if(type == "box")
-			{
-				ANKI_LOGW("TODO");
-			}
-			else if(type == "mesh")
-			{
-				ANKI_LOGW("TODO");
-			}
-			else
-			{
-				throw ANKI_EXCEPTION("Incorrect collision type");
-			}
+			ANKI_LOGW("TODO");
 		}
-
-		// <modelPatches>
-		XmlElement modelPatchesEl;
-		rootEl.getChildElement("modelPatches", modelPatchesEl);
-		XmlElement modelPatchEl;
-		modelPatchesEl.getChildElement("modelPatch", modelPatchEl);
-		do
+		else if(type == "box")
 		{
-			XmlElement materialEl;
-			modelPatchEl.getChildElement("material", materialEl);
-
-			Array<CString, 3> meshesFnames;
-			U meshesCount = 1;
-			ModelPatchBase* patch;
-
-			// Try mesh
-			XmlElement meshEl;
-			modelPatchEl.getChildElementOptional("mesh", meshEl);
-			if(meshEl)
-			{
-				XmlElement meshEl1;
-				modelPatchEl.getChildElementOptional("mesh1", meshEl1);
-				XmlElement meshEl2;
-				modelPatchEl.getChildElementOptional("mesh2", meshEl2);
-
-				meshEl.getText(meshesFnames[0]);
-
-				if(meshEl1)
-				{
-					++meshesCount;
-					meshEl1.getText(meshesFnames[1]);
-				}
-
-				if(meshEl2)
-				{
-					++meshesCount;
-					meshEl2.getText(meshesFnames[2]);
-				}
-
-				CString cstr;
-				materialEl.getText(cstr);
-				patch = init.m_alloc.newInstance<
-					ModelPatch<MeshResourcePointer>>(
-					&meshesFnames[0], meshesCount, cstr,
-					&init.m_resources);
-			}
-			else
-			{
-				XmlElement bmeshEl;
-				modelPatchEl.getChildElement("bucketMesh", bmeshEl);
-				XmlElement bmeshEl1;
-				modelPatchEl.getChildElementOptional("bucketMesh1", bmeshEl1);
-				XmlElement bmeshEl2;
-				modelPatchEl.getChildElementOptional("bucketMesh2", bmeshEl2);
-
-				bmeshEl.getText(meshesFnames[0]);
-
-				if(bmeshEl1)
-				{
-					++meshesCount;
-					bmeshEl1.getText(meshesFnames[1]);
-				}
-
-				if(bmeshEl2)
-				{
-					++meshesCount;
-					bmeshEl2.getText(meshesFnames[2]);
-				}
-
-				CString cstr;
-				materialEl.getText(cstr);
-				patch = init.m_alloc.newInstance<
-					ModelPatch<BucketMeshResourcePointer>>(
-					&meshesFnames[0], meshesCount, cstr,
-					&init.m_resources);
-			}
-
-			m_modelPatches.push_back(patch);
-
-			// Move to next
-			modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl);
-		} while(modelPatchEl);
-
-		// Check number of model patches
-		if(m_modelPatches.size() < 1)
-		{
-			throw ANKI_EXCEPTION("Zero number of model patches");
+			ANKI_LOGW("TODO");
 		}
-
-		// Calculate compound bounding volume
-		RenderingKey key;
-		key.m_lod = 0;
-		m_visibilityShape = m_modelPatches[0]->getMesh(key).getBoundingShape();
-
-		for(auto it = m_modelPatches.begin() + 1;
-			it != m_modelPatches.end();
-			++it)
+		else if(type == "mesh")
 		{
-			m_visibilityShape = m_visibilityShape.getCompoundShape(
-				(*it)->getMesh(key).getBoundingShape());
+			ANKI_LOGW("TODO");
+		}
+		else
+		{
+			ANKI_LOGE("Incorrect collision type");
+			return ErrorCode::USER_DATA;
 		}
 	}
-	catch(std::exception& e)
+
+	// <modelPatches>
+	XmlElement modelPatchesEl;
+	ANKI_CHECK(rootEl.getChildElement("modelPatches", modelPatchesEl));
+
+	XmlElement modelPatchEl;
+	ANKI_CHECK(modelPatchesEl.getChildElement("modelPatch", modelPatchEl));
+
+	// Count
+	U count = 0;
+	do
 	{
-		throw ANKI_EXCEPTION("Failed to load model") << e;
+		++count;
+		// Move to next
+		ANKI_CHECK(
+			modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));
+	} while(modelPatchEl);
+
+	// Check number of model patches
+	if(count < 1)
+	{
+		ANKI_LOGE("Zero number of model patches");
+		return ErrorCode::USER_DATA;
 	}
+
+	ANKI_CHECK(m_modelPatches.create(m_alloc, count));
+
+	count = 0;
+	ANKI_CHECK(modelPatchesEl.getChildElement("modelPatch", modelPatchEl));
+	do
+	{
+		XmlElement materialEl;
+		ANKI_CHECK(modelPatchEl.getChildElement("material", materialEl));
+
+		Array<CString, 3> meshesFnames;
+		U meshesCount = 1;
+		ModelPatchBase* patch;
+
+		// Try mesh
+		XmlElement meshEl;
+		ANKI_CHECK(modelPatchEl.getChildElementOptional("mesh", meshEl));
+		if(meshEl)
+		{
+			XmlElement meshEl1;
+			ANKI_CHECK(modelPatchEl.getChildElementOptional("mesh1", meshEl1));
+			
+			XmlElement meshEl2;
+			ANKI_CHECK(modelPatchEl.getChildElementOptional("mesh2", meshEl2));
+
+			ANKI_CHECK(meshEl.getText(meshesFnames[0]));
+
+			if(meshEl1)
+			{
+				++meshesCount;
+				ANKI_CHECK(meshEl1.getText(meshesFnames[1]));
+			}
+
+			if(meshEl2)
+			{
+				++meshesCount;
+				ANKI_CHECK(meshEl2.getText(meshesFnames[2]));
+			}
+
+			CString cstr;
+			ANKI_CHECK(materialEl.getText(cstr));
+			ModelPatch<MeshResourcePointer>* mpatch = m_alloc.newInstance<
+				ModelPatch<MeshResourcePointer>>(m_alloc);
+
+			if(mpatch == nullptr)
+			{
+				return ErrorCode::OUT_OF_MEMORY;
+			}
+
+			ANKI_CHECK(mpatch->create(&meshesFnames[0], meshesCount, cstr,
+				&init.m_resources));
+
+			patch = mpatch;
+		}
+		else
+		{
+			XmlElement bmeshEl;
+			ANKI_CHECK(modelPatchEl.getChildElement("bucketMesh", bmeshEl));
+
+			XmlElement bmeshEl1;
+			ANKI_CHECK(
+				modelPatchEl.getChildElementOptional("bucketMesh1", bmeshEl1));
+
+			XmlElement bmeshEl2;
+			ANKI_CHECK(
+				modelPatchEl.getChildElementOptional("bucketMesh2", bmeshEl2));
+
+			ANKI_CHECK(bmeshEl.getText(meshesFnames[0]));
+
+			if(bmeshEl1)
+			{
+				++meshesCount;
+				ANKI_CHECK(bmeshEl1.getText(meshesFnames[1]));
+			}
+
+			if(bmeshEl2)
+			{
+				++meshesCount;
+				ANKI_CHECK(bmeshEl2.getText(meshesFnames[2]));
+			}
+
+			CString cstr;
+			ANKI_CHECK(materialEl.getText(cstr));
+
+			ModelPatch<BucketMeshResourcePointer>* mpatch = 
+				init.m_alloc.newInstance<
+				ModelPatch<BucketMeshResourcePointer>>(m_alloc);
+
+			if(mpatch == nullptr)
+			{
+				return ErrorCode::OUT_OF_MEMORY;
+			}
+
+			ANKI_CHECK(mpatch->create(&meshesFnames[0], meshesCount, cstr,
+				&init.m_resources));
+
+			patch  = mpatch;
+		}
+
+		m_modelPatches[count++] = patch;
+
+		// Move to next
+		ANKI_CHECK(
+			modelPatchEl.getNextSiblingElement("modelPatch", modelPatchEl));
+	} while(modelPatchEl);
+
+	// Calculate compound bounding volume
+	RenderingKey key;
+	key.m_lod = 0;
+	m_visibilityShape = m_modelPatches[0]->getMesh(key).getBoundingShape();
+
+	for(auto it = m_modelPatches.begin() + 1;
+		it != m_modelPatches.end();
+		++it)
+	{
+		m_visibilityShape = m_visibilityShape.getCompoundShape(
+			(*it)->getMesh(key).getBoundingShape());
+	}
+
+	return err;
 }
 
 } // end namespace anki

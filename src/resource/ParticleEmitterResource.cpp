@@ -17,49 +17,66 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-static void xmlReadVec3(const XmlElement& el_, const CString& str, Vec3& out)
+static ANKI_USE_RESULT Error xmlVec3(
+	const XmlElement& el_, const CString& str, Vec3& out)
 {
+	Error err = ErrorCode::NONE;
 	XmlElement el;
-	el_.getChildElementOptional(str, el);
 
-	if(!el)
+	err = el_.getChildElementOptional(str, el);
+	if(err || !el)
 	{
-		return;
+		return err;
 	}
 
-	el.getVec3(out);
+	err = el.getVec3(out);
+	return err;
 }
 
 //==============================================================================
-static void xmlReadFloat(const XmlElement& el_, const CString& str, F32& out)
+static ANKI_USE_RESULT Error xmlF32(
+	const XmlElement& el_, const CString& str, F32& out)
 {
+	Error err = ErrorCode::NONE;
 	XmlElement el;
-	el_.getChildElementOptional(str, el);
 
-	if(!el)
+	err = el_.getChildElementOptional(str, el);
+	if(err || !el)
 	{
-		return;
+		return err;
 	}
 
 	F64 tmp;
-	el.getF64(tmp);
-	out = tmp;
+	err = el.getF64(tmp);
+	if(!err)
+	{
+		out = tmp;
+	}
+
+	return err;
 }
 
 //==============================================================================
-static void xmlReadU(const XmlElement& el_, const CString& str, U32& out)
+static ANKI_USE_RESULT Error xmlU32(
+	const XmlElement& el_, const CString& str, U32& out)
 {
+	Error err = ErrorCode::NONE;
 	XmlElement el;
-	el_.getChildElementOptional(str, el);
 
-	if(!el)
+	err = el_.getChildElementOptional(str, el);
+	if(err || !el)
 	{
-		return;
+		return err;
 	}
 
 	I64 tmp;
-	el.getI64(tmp);
-	out = static_cast<U32>(tmp);
+	err = el.getI64(tmp);
+	if(!err)
+	{
+		out = static_cast<U32>(tmp);
+	}
+
+	return err;
 }
 
 //==============================================================================
@@ -100,71 +117,63 @@ ParticleEmitterResource::~ParticleEmitterResource()
 {}
 
 //==============================================================================
-void ParticleEmitterResource::load(const CString& filename, 
+Error ParticleEmitterResource::load(
+	const CString& filename, 
 	ResourceInitializer& init)
 {
-	try
-	{
-		XmlDocument doc;
-		doc.loadFile(filename, init.m_tempAlloc);
-		XmlElement el;
-		doc.getChildElement("particleEmitter", el);
-		loadInternal(el, init);
-	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to load particles") << e;
-	}
-}
+	Error err = ErrorCode::NONE;
+	U32 tmp;
 
-//==============================================================================
-void ParticleEmitterResource::loadInternal(const XmlElement& rootel,
-	ResourceInitializer& init)
-{
+	XmlDocument doc;
+	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
+	XmlElement rel; // Root element
+	ANKI_CHECK(doc.getChildElement("particleEmitter", rel));
+
 	// XML load
 	//
-	xmlReadFloat(rootel, "life", m_particle.m_life);
-	xmlReadFloat(rootel, "lifeDeviation", m_particle.m_lifeDeviation);
+	ANKI_CHECK(xmlF32(rel, "life", m_particle.m_life));
+	ANKI_CHECK(xmlF32(rel, "lifeDeviation", m_particle.m_lifeDeviation));
 	
-	xmlReadFloat(rootel, "mass", m_particle.m_mass);
-	xmlReadFloat(rootel, "massDeviation", m_particle.m_massDeviation);
+	ANKI_CHECK(xmlF32(rel, "mass", m_particle.m_mass));
+	ANKI_CHECK(xmlF32(rel, "massDeviation", m_particle.m_massDeviation));
 
-	xmlReadFloat(rootel, "size", m_particle.m_size);
-	xmlReadFloat(rootel, "sizeDeviation", m_particle.m_sizeDeviation);
-	xmlReadFloat(rootel, "sizeAnimation", m_particle.m_sizeAnimation);
+	ANKI_CHECK(xmlF32(rel, "size", m_particle.m_size));
+	ANKI_CHECK(xmlF32(rel, "sizeDeviation", m_particle.m_sizeDeviation));
+	ANKI_CHECK(xmlF32(rel, "sizeAnimation", m_particle.m_sizeAnimation));
 
-	xmlReadFloat(rootel, "alpha", m_particle.m_alpha);
-	xmlReadFloat(rootel, "alphaDeviation", m_particle.m_alphaDeviation);
-	U32 tmp = m_particle.m_alphaAnimation;
-	xmlReadU(rootel, "alphaAnimationEnabled", tmp);
+	ANKI_CHECK(xmlF32(rel, "alpha", m_particle.m_alpha));
+	ANKI_CHECK(xmlF32(rel, "alphaDeviation", m_particle.m_alphaDeviation));
+
+	tmp = m_particle.m_alphaAnimation;
+	ANKI_CHECK(xmlU32(rel, "alphaAnimationEnabled", tmp));
 	m_particle.m_alphaAnimation = tmp;
 
-	xmlReadVec3(rootel, "forceDirection", m_particle.m_forceDirection);
-	xmlReadVec3(rootel, "forceDirectionDeviation", 
-		m_particle.m_forceDirectionDeviation);
-	xmlReadFloat(rootel, "forceMagnitude", m_particle.m_forceMagnitude);
-	xmlReadFloat(rootel, "forceMagnitudeDeviation", 
-		m_particle.m_forceMagnitudeDeviation);
+	ANKI_CHECK(xmlVec3(rel, "forceDirection", m_particle.m_forceDirection));
+	ANKI_CHECK(xmlVec3(rel, "forceDirectionDeviation", 
+		m_particle.m_forceDirectionDeviation));
+	ANKI_CHECK(xmlF32(rel, "forceMagnitude", m_particle.m_forceMagnitude));
+	ANKI_CHECK(xmlF32(rel, "forceMagnitudeDeviation", 
+		m_particle.m_forceMagnitudeDeviation));
 
-	xmlReadVec3(rootel, "gravity", m_particle.m_gravity);
-	xmlReadVec3(rootel, "gravityDeviation", m_particle.m_gravityDeviation);
+	ANKI_CHECK(xmlVec3(rel, "gravity", m_particle.m_gravity));
+	ANKI_CHECK(xmlVec3(rel, "gravityDeviation", m_particle.m_gravityDeviation));
 
-	xmlReadVec3(rootel, "startingPosition", m_particle.m_startingPos);
-	xmlReadVec3(rootel, "startingPositionDeviation", 
-		m_particle.m_startingPosDeviation);
+	ANKI_CHECK(xmlVec3(rel, "startingPosition", m_particle.m_startingPos));
+	ANKI_CHECK(xmlVec3(rel, "startingPositionDeviation", 
+		m_particle.m_startingPosDeviation));
 
-	xmlReadU(rootel, "maxNumberOfParticles", m_maxNumOfParticles);
+	ANKI_CHECK(xmlU32(rel, "maxNumberOfParticles", m_maxNumOfParticles));
 
-	xmlReadFloat(rootel, "emissionPeriod", m_emissionPeriod);
-	xmlReadU(rootel, "particlesPerEmittion", m_particlesPerEmittion);
+	ANKI_CHECK(xmlF32(rel, "emissionPeriod", m_emissionPeriod));
+	ANKI_CHECK(xmlU32(rel, "particlesPerEmittion", m_particlesPerEmittion));
 	tmp = m_usePhysicsEngine;
-	xmlReadU(rootel, "usePhysicsEngine", tmp);
+	ANKI_CHECK(xmlU32(rel, "usePhysicsEngine", tmp));
 	m_usePhysicsEngine = tmp;
 
 	XmlElement el;
-	rootel.getChildElement("material", el);
 	CString cstr;
-	el.getText(cstr);
+	ANKI_CHECK(rel.getChildElement("material", el));
+	ANKI_CHECK(el.getText(cstr));
 	m_material.load(cstr, &init.m_resources);
 
 	// sanity checks
@@ -175,37 +184,45 @@ void ParticleEmitterResource::loadInternal(const XmlElement& rootel,
 
 	if(m_particle.m_life <= 0.0)
 	{
-		throw ANKI_EXCEPTION(ERROR, "life");
+		ANKI_LOGE(ERROR, "life");
+		return ErrorCode::USER_DATA;
 	}
 
 	if(m_particle.m_life - m_particle.m_lifeDeviation <= 0.0)
 	{
-		throw ANKI_EXCEPTION(ERROR, "lifeDeviation");
+		ANKI_LOGE(ERROR, "lifeDeviation");
+		return ErrorCode::USER_DATA;
 	}
 
 	if(m_particle.m_size <= 0.0)
 	{
-		throw ANKI_EXCEPTION(ERROR, "size");
+		ANKI_LOGE(ERROR, "size");
+		return ErrorCode::USER_DATA;
 	}
 
 	if(m_maxNumOfParticles < 1)
 	{
-		throw ANKI_EXCEPTION(ERROR, "maxNumOfParticles");
+		ANKI_LOGE(ERROR, "maxNumOfParticles");
+		return ErrorCode::USER_DATA;
 	}
 
 	if(m_emissionPeriod <= 0.0)
 	{
-		throw ANKI_EXCEPTION(ERROR, "emissionPeriod");
+		ANKI_LOGE(ERROR, "emissionPeriod");
+		return ErrorCode::USER_DATA;
 	}
 
 	if(m_particlesPerEmittion < 1)
 	{
-		throw ANKI_EXCEPTION(ERROR, "particlesPerEmission");
+		ANKI_LOGE(ERROR, "particlesPerEmission");
+		return ErrorCode::USER_DATA;
 	}
 
 	// Calc some stuff
 	//
 	updateFlags();
+
+	return err;
 }
 
 } // end namespace anki

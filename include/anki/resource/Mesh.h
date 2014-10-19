@@ -68,7 +68,6 @@ public:
 	/// Get indices count and offset of submesh
 	U32 getIndicesCountSub(U subMeshId, U32& offset) const
 	{
-		ANKI_ASSERT(subMeshId < m_subMeshes.size());
 		const SubMesh& sm = m_subMeshes[subMeshId];
 		offset = sm.m_indicesOffset;
 		return sm.m_indicesCount;
@@ -76,14 +75,13 @@ public:
 
 	const Obb& getBoundingShapeSub(U subMeshId) const
 	{
-		ANKI_ASSERT(subMeshId < m_subMeshes.size());
 		return m_subMeshes[subMeshId].m_obb;
 	}
 
 	/// If returns zero then the mesh is a single uniform mesh
 	U32 getSubMeshesCount() const
 	{
-		return m_subMeshes.size();
+		return m_subMeshes.getSize();
 	}
 
 	/// Get info on how to attach a GL buffer to the state
@@ -108,7 +106,8 @@ protected:
 		Obb m_obb;
 	};
 
-	ResourceVector<SubMesh> m_subMeshes;
+	ResourceAllocator<U8> m_alloc;
+	ResourceDArray<SubMesh> m_subMeshes;
 	U32 m_indicesCount;
 	U32 m_vertsCount;
 	Obb m_obb;

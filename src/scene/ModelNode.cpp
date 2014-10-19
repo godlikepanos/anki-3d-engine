@@ -167,7 +167,7 @@ ModelNode::ModelNode(
 	addComponent(static_cast<MoveComponent*>(this));
 
 	m_model.load(modelFname, &getResourceManager());
-	m_modelPatches.reserve(m_model->getModelPatches().size());
+	m_modelPatches.reserve(m_model->getModelPatches().getSize());
 
 	for(const ModelPatchBase* patch : m_model->getModelPatches())
 	{

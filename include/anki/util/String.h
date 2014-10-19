@@ -93,7 +93,6 @@ public:
 	{
 		m_ptr = b.m_ptr;
 		m_length = b.m_length;
-		checkInit();
 		return *this;
 	}
 

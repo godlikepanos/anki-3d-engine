@@ -276,6 +276,31 @@ Error XmlElement::getNextSiblingElement(
 }
 
 //==============================================================================
+Error XmlElement::getSiblingElementsCount(U32& out) const
+{
+	Error err = check();
+	if(!err)
+	{
+		tinyxml2::XMLElement* el = m_el;
+		
+		I count = -1;
+		do
+		{
+			el = el->NextSiblingElement(m_el->Name());
+			++count;
+		} while(el);
+
+		out = count;
+	}
+	else
+	{
+		out = 0;
+	}
+
+	return err;
+}
+
+//==============================================================================
 // XmlDocument                                                                 =
 //==============================================================================
 

@@ -10,10 +10,31 @@
 #include "anki/util/Thread.h"
 #include "anki/util/Vector.h"
 #include "anki/util/Atomic.h"
+#include "anki/util/Logger.h"
 #include <cstdlib>
 #include <cstring>
 
 namespace anki {
+
+//==============================================================================
+// Misc                                                                        =
+//==============================================================================
+
+#define ANKI_MEM_SIGNATURES ANKI_DEBUG
+
+#if ANKI_MEM_SIGNATURES
+using Signature = U32;
+
+static Signature computeSignature(void* ptr)
+{
+	ANKI_ASSERT(ptr);
+	PtrSize sig64 = reinterpret_cast<PtrSize>(ptr);
+	Signature sig = sig64;
+	sig ^= 0x5bd1e995;
+	sig ^= sig << 24;
+	return sig;
+}
+#endif
 
 //==============================================================================
 // Other                                                                       =
@@ -32,13 +53,13 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes) noexcept
 	{
 		// Make sure it's aligned
 		ANKI_ASSERT(isAligned(alignmentBytes, out));
-		return out;
 	}
 	else
 	{
-		ANKI_ASSERT(0 && "mallocAligned() failed");
-		return nullptr;
+		ANKI_LOGE("mallocAligned() failed");
 	}
+
+	return out;
 #	else
 	void* out = memalign(
 		getAlignedRoundUp(alignmentBytes, sizeof(void*)), size);
@@ -47,13 +68,13 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes) noexcept
 	{
 		// Make sure it's aligned
 		ANKI_ASSERT(isAligned(alignmentBytes, out));
-		return out;
 	}
 	else
 	{
-		ANKI_ASSERT(0 && "mallocAligned() failed");
-		return nullptr;
+		ANKI_LOGE("memalign() failed");
 	}
+
+	return out;
 #	endif
 #elif ANKI_OS == ANKI_OS_WINDOWS
 	void* out = _aligned_malloc(size, alignmentBytes);
@@ -62,6 +83,10 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes) noexcept
 	{
 		// Make sure it's aligned
 		ANKI_ASSERT(isAligned(alignmentBytes, out));
+	}
+	else
+	{
+		ANKI_LOGE("_aligned_malloc() failed");
 	}
 
 	return out;
@@ -121,11 +146,77 @@ public:
 	AtomicU32 m_allocationsCount;
 	AllocAlignedCallback m_allocCb;
 	void* m_allocCbUserData;
+#if ANKI_MEM_SIGNATURES
+	Signature m_signature;
+	static const U32 MAX_ALIGNMENT = 16;
+	U32 m_headerSize;
+#endif
 
 	~Implementation()
 	{
-		ANKI_ASSERT(m_allocationsCount == 0 
-			&& "Memory pool destroyed before all memory being released");
+		if(m_allocationsCount != 0)
+		{
+			ANKI_LOGW("Memory pool destroyed before all memory being released");
+		}
+	}
+
+	void create(AllocAlignedCallback allocCb, void* allocCbUserData)
+	{
+		m_refcount = 1;
+		m_allocationsCount = 0;
+		m_allocCb = allocCb;
+		m_allocCbUserData = allocCbUserData;
+#if ANKI_MEM_SIGNATURES
+		m_signature = computeSignature(this);
+		m_headerSize = getAlignedRoundUp(MAX_ALIGNMENT, sizeof(Signature));
+#endif
+	}
+
+	void* allocate(PtrSize size, PtrSize alignment)
+	{
+#if ANKI_MEM_SIGNATURES
+		ANKI_ASSERT(alignment <= MAX_ALIGNMENT && "Wrong assumption");
+		size += m_headerSize;
+#endif
+
+		void* mem = m_allocCb(m_allocCbUserData, nullptr, size, alignment);
+
+		if(mem != nullptr)
+		{
+			++m_allocationsCount;
+
+#if ANKI_MEM_SIGNATURES
+			memset(mem, 0, m_headerSize);
+			memcpy(mem, &m_signature, sizeof(m_signature));
+			U8* memU8 = static_cast<U8*>(mem);
+			memU8 += m_headerSize;
+			mem = static_cast<void*>(memU8);
+#endif
+		}
+		else
+		{
+			ANKI_LOGE("Out of memory");
+		}
+
+		return mem;
+	}
+
+	Bool free(void* ptr)
+	{
+#if ANKI_MEM_SIGNATURES
+		U8* memU8 = static_cast<U8*>(ptr);
+		memU8 -= m_headerSize;
+		if(memcmp(memU8, &m_signature, sizeof(m_signature)) != 0)
+		{
+			ANKI_LOGE("Signature missmatch on free");
+		}
+
+		ptr = static_cast<void*>(memU8);
+#endif
+		--m_allocationsCount;
+		m_allocCb(m_allocCbUserData, ptr, 0, 0);
+
+		return true;
 	}
 };
 
@@ -155,13 +246,11 @@ Error HeapMemoryPool::create(
 
 	if(m_impl)
 	{
-		m_impl->m_refcount = 1;
-		m_impl->m_allocationsCount = 0;
-		m_impl->m_allocCb = allocCb;
-		m_impl->m_allocCbUserData = allocCbUserData;
+		m_impl->create(allocCb, allocCbUserData);
 	}
 	else
 	{
+		ANKI_LOGE("Out of memory");
 		error = ErrorCode::OUT_OF_MEMORY;
 	}
 
@@ -193,20 +282,14 @@ void HeapMemoryPool::clear()
 void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment) noexcept
 {
 	ANKI_ASSERT(m_impl != nullptr);
-
-	++m_impl->m_allocationsCount;
-	return m_impl->m_allocCb(
-		m_impl->m_allocCbUserData, nullptr, size, alignment);
+	return m_impl->allocate(size, alignment);
 }
 
 //==============================================================================
 Bool HeapMemoryPool::free(void* ptr) noexcept
 {
 	ANKI_ASSERT(m_impl != nullptr);
-
-	--m_impl->m_allocationsCount;
-	m_impl->m_allocCb(m_impl->m_allocCbUserData, ptr, 0, 0);
-	return true;
+	return m_impl->free(ptr);
 }
 
 //==============================================================================
@@ -311,6 +394,7 @@ public:
 		}
 		else
 		{
+			ANKI_LOGE("Out of memory");
 			error = ErrorCode::OUT_OF_MEMORY;
 		}
 
@@ -355,7 +439,8 @@ public:
 #endif
 
 			// Write the block header
-			MemoryBlockHeader* header = (MemoryBlockHeader*)out;
+			MemoryBlockHeader* header = 
+				reinterpret_cast<MemoryBlockHeader*>(out);
 			U32 size32 = size;
 			memcpy(&header->m_size[0], &size32, sizeof(U32));
 
@@ -370,7 +455,7 @@ public:
 		}
 		else
 		{
-			// Error
+			// Not always an error
 			out = nullptr;
 		}
 
@@ -467,6 +552,7 @@ Error StackMemoryPool::create(
 	}
 	else
 	{
+		ANKI_LOGE("Out of memory");
 		error = ErrorCode::OUT_OF_MEMORY;
 	}
 
@@ -512,7 +598,14 @@ PtrSize StackMemoryPool::getAllocatedSize() const
 void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment) noexcept
 {
 	ANKI_ASSERT(m_impl != nullptr);
-	return m_impl->allocate(size, alignment);
+	void* mem = m_impl->allocate(size, alignment);
+
+	if (mem == nullptr)
+	{
+		ANKI_LOGE("Out of memory");
+	}
+
+	return mem;
 }
 
 //==============================================================================
@@ -672,6 +765,52 @@ public:
 		}
 	}
 
+#if 0
+	PtrSize computeNewChunkSize(PtrSize allocationSize)
+	{
+		PtrSize crntMaxSize;
+		if(m_method == ChainMemoryPool::ChunkGrowMethod::FIXED)
+		{
+			crntMaxSize = m_initSize;
+		}
+		else
+		{
+			// Get the size of the previous max chunk
+			if(m_tailChunk != nullptr)
+			{
+				// Get the size of previous
+				crntMaxSize = m_tailChunk->m_pool.getTotalSize();
+
+				// Increase it
+				if(m_method == ChainMemoryPool::ChunkGrowMethod::MULTIPLY)
+				{
+					crntMaxSize *= m_step;
+				}
+				else
+				{
+					ANKI_ASSERT(m_method 
+						== ChainMemoryPool::ChunkGrowMethod::ADD);
+					crntMaxSize += m_step;
+				}
+			}
+			else
+			{
+				// No chunks. Choose initial size
+
+				ANKI_ASSERT(m_headChunk == nullptr);
+				crntMaxSize = m_initSize;
+			}
+
+			ANKI_ASSERT(crntMaxSize > 0);
+
+			// Fix the size
+			crntMaxSize = std::min(crntMaxSize, (PtrSize)m_maxSize);
+		}
+
+		size = std::max(crntMaxSize, size) + 16;
+	}
+#endif
+
 	/// Create a new chunk
 	Chunk* createNewChunk(PtrSize size) noexcept
 	{
@@ -756,6 +895,10 @@ public:
 				chunk = nullptr;
 			}
 		}
+		else
+		{
+			ANKI_LOGE("Out of memory");
+		}
 		
 		return chunk;
 	}
@@ -770,6 +913,10 @@ public:
 		if(mem)
 		{
 			++ch->m_allocationsCount;
+		}
+		else
+		{
+			// Chunk is full. Need a new one
 		}
 
 		return mem;
@@ -939,6 +1086,7 @@ Error ChainMemoryPool::create(
 	}
 	else
 	{
+		ANKI_LOGE("Out of memory");
 		error = ErrorCode::OUT_OF_MEMORY;
 	}
 

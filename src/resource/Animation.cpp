@@ -11,38 +11,37 @@ namespace anki {
 
 //==============================================================================
 Animation::Animation(ResourceAllocator<U8>& alloc)
-:	m_channels(alloc)
 {}
 
 //==============================================================================
 Animation::~Animation()
-{}
-
-//==============================================================================
-void Animation::load(const CString& filename, ResourceInitializer& init)
 {
-	try
+	for(AnimationChannel& ch : m_channels)
 	{
-		XmlDocument doc;
-		doc.loadFile(filename, init.m_tempAlloc);
-		XmlElement el;
-		doc.getChildElement("animation", el);
-		loadInternal(el, init);
+		ch.destroy(m_alloc);
 	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to load animation") << e;
-	}
+
+	m_channels.destroy(m_alloc);
 }
 
 //==============================================================================
-void Animation::loadInternal(
-	const XmlElement& rootel, ResourceInitializer& init)
+Error Animation::load(const CString& filename, ResourceInitializer& init)
 {
+	Error err = ErrorCode::NONE;
+
 	XmlElement el;
+	I64 tmp;
+	F64 ftmp;
+
 	m_startTime = MAX_F32;
 	F32 maxTime = MIN_F32;
-	auto& alloc = init.m_alloc;
+	m_alloc = init.m_alloc;
+
+	// Document
+	XmlDocument doc;
+	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
+	XmlElement rootel;
+	ANKI_CHECK(doc.getChildElement("animation", rootel));
 
 	// Count the number of identity keys. If all of the keys are identities
 	// drop a vector
@@ -52,11 +51,10 @@ void Animation::loadInternal(
 
 	// <repeat>
 	XmlElement repel;
-	rootel.getChildElementOptional("repeat", repel);
+	ANKI_CHECK(rootel.getChildElementOptional("repeat", repel));
 	if(repel)
 	{
-		I64 tmp;
-		repel.getI64(tmp);
+		ANKI_CHECK(repel.getI64(tmp));
 		m_repeat = tmp;
 	}
 	else
@@ -66,47 +64,58 @@ void Animation::loadInternal(
 
 	// <channels>
 	XmlElement channelsEl;
-	rootel.getChildElement("channels", channelsEl);
+	ANKI_CHECK(rootel.getChildElement("channels", channelsEl));
 	XmlElement chEl;
-	channelsEl.getChildElement("channel", chEl);
+	ANKI_CHECK(channelsEl.getChildElement("channel", chEl));
+
+	U32 channelCount = 0;
+	ANKI_CHECK(chEl.getSiblingElementsCount(channelCount));
+	if(channelCount == 0)
+	{
+		ANKI_LOGE("Didn't found any channels");
+		return ErrorCode::USER_DATA;
+	}
+	ANKI_CHECK(m_channels.create(m_alloc, channelCount, m_alloc));
 
 	// For all channels
+	channelCount = 0;
 	do
 	{
-		m_channels.emplace_back(alloc);
-		AnimationChannel& ch = m_channels.back();
+		AnimationChannel& ch = m_channels[channelCount];
 
 		// <name>
-		chEl.getChildElement("name", el);
-		CString tmp;
-		el.getText(tmp);
-		ch.m_name = tmp;
+		ANKI_CHECK(chEl.getChildElement("name", el));
+		CString strtmp;
+		ANKI_CHECK(el.getText(strtmp));
+		ch.m_name = strtmp;
 
 		XmlElement keysEl, keyEl;
 
 		// <positionKeys>
-		chEl.getChildElementOptional("positionKeys", keysEl);
+		ANKI_CHECK(chEl.getChildElementOptional("positionKeys", keysEl));
 		if(keysEl)
 		{
-			keysEl.getChildElement("key", keyEl);
+			ANKI_CHECK(keysEl.getChildElement("key", keyEl));
+
+			U32 count = 0;
+			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
+			ANKI_CHECK(ch.m_positions.create(m_alloc, count));
+
+			count = 0;
 			do
 			{
-				Key<Vec3> key;
+				Key<Vec3>& key = ch.m_positions[count++];
 
 				// <time>
-				F64 tmp;
-				keyEl.getChildElement("time", el);
-				el.getF64(tmp);
-				key.m_time = tmp;
+				ANKI_CHECK(keyEl.getChildElement("time", el));
+				ANKI_CHECK(el.getF64(ftmp));
+				key.m_time = ftmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
 				// <value>
-				keyEl.getChildElement("value", el);
-				el.getVec3(key.m_value);
-
-				// push_back
-				ch.m_positions.push_back(key);
+				ANKI_CHECK(keyEl.getChildElement("value", el));
+				ANKI_CHECK(el.getVec3(key.m_value));
 
 				// Check ident
 				if(key.m_value == Vec3(0.0))
@@ -115,35 +124,37 @@ void Animation::loadInternal(
 				}
 
 				// Move to next
-				keyEl.getNextSiblingElement("key", keyEl);
+				ANKI_CHECK(keyEl.getNextSiblingElement("key", keyEl));
 			} while(keyEl);
 		}
 
 		// <rotationKeys>
-		chEl.getChildElement("rotationKeys", keysEl);
+		ANKI_CHECK(chEl.getChildElement("rotationKeys", keysEl));
 		if(keysEl)
 		{
-			keysEl.getChildElement("key", keyEl);
+			ANKI_CHECK(keysEl.getChildElement("key", keyEl));
+
+			U32 count = 0;
+			ANKI_CHECK(keysEl.getSiblingElementsCount(count));
+			ANKI_CHECK(ch.m_rotations.create(m_alloc, count));
+
+			count = 0;
 			do
 			{
-				Key<Quat> key;
+				Key<Quat>& key = ch.m_rotations[count++];
 
 				// <time>
-				F64 tmp;
-				keyEl.getChildElement("time", el);
-				el.getF64(tmp);
-				key.m_time = tmp;
+				ANKI_CHECK(keyEl.getChildElement("time", el));
+				ANKI_CHECK(el.getF64(ftmp));
+				key.m_time = ftmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
 				// <value>
 				Vec4 tmp2;
-				keyEl.getChildElement("value", el);
-				el.getVec4(tmp2);
-				key.m_value = Quat(tmp);
-
-				// push_back
-				ch.m_rotations.push_back(key);
+				ANKI_CHECK(keyEl.getChildElement("value", el));
+				ANKI_CHECK(el.getVec4(tmp2));
+				key.m_value = Quat(tmp2);
 
 				// Check ident
 				if(key.m_value == Quat::getIdentity())
@@ -152,35 +163,36 @@ void Animation::loadInternal(
 				}
 
 				// Move to next
-				keyEl.getNextSiblingElement("key", keyEl);
+				ANKI_CHECK(keyEl.getNextSiblingElement("key", keyEl));
 			} while(keyEl);
 		}
 
 		// <scalingKeys>
-		chEl.getChildElementOptional("scalingKeys", keysEl);
+		ANKI_CHECK(chEl.getChildElementOptional("scalingKeys", keysEl));
 		if(keysEl)
 		{
-			XmlElement keyEl;
-			keysEl.getChildElement("key", keyEl);
+			ANKI_CHECK(keysEl.getChildElement("key", keyEl));
+
+			U32 count = 0;
+			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
+			ANKI_CHECK(ch.m_scales.create(m_alloc, count));
+
+			count = 0;
 			do
 			{
-				Key<F32> key;
+				Key<F32>& key = ch.m_scales[count++];
 
 				// <time>
-				F64 tmp;
-				keyEl.getChildElement("time", el);
-				el.getF64(tmp);
-				key.m_time = tmp;
+				ANKI_CHECK(keyEl.getChildElement("time", el));
+				ANKI_CHECK(el.getF64(ftmp));
+				key.m_time = ftmp;
 				m_startTime = std::min(m_startTime, key.m_time);
 				maxTime = std::max(maxTime, key.m_time);
 
 				// <value>
-				keyEl.getChildElement("value", el);
-				el.getF64(tmp);
-				key.m_value = tmp;
-
-				// push_back
-				ch.m_scales.push_back(key);
+				ANKI_CHECK(keyEl.getChildElement("value", el));
+				ANKI_CHECK(el.getF64(ftmp));
+				key.m_value = ftmp;
 
 				// Check ident
 				if(isZero(key.m_value - 1.0))
@@ -189,29 +201,34 @@ void Animation::loadInternal(
 				}
 
 				// Move to next
-				keyEl.getNextSiblingElement("key", keyEl);
+				ANKI_CHECK(keyEl.getNextSiblingElement("key", keyEl));
 			} while(keyEl);
 		}
 
 		// Remove identity vectors
-		if(identPosCount == ch.m_positions.size())
+		if(identPosCount == ch.m_positions.getSize())
 		{
-			ch.m_positions.clear();
+			ch.m_positions.destroy(m_alloc);
 		}
-		if(identRotCount == ch.m_rotations.size())
+
+		if(identRotCount == ch.m_rotations.getSize())
 		{
-			ch.m_rotations.clear();
+			ch.m_rotations.destroy(m_alloc);
 		}
-		if(identScaleCount == ch.m_scales.size())
+
+		if(identScaleCount == ch.m_scales.getSize())
 		{
-			ch.m_scales.clear();
+			ch.m_scales.destroy(m_alloc);
 		}
 
 		// Move to next channel
-		chEl.getNextSiblingElement("channel", chEl);
+		++channelCount;
+		ANKI_CHECK(chEl.getNextSiblingElement("channel", chEl));
 	} while(chEl);
 
 	m_duration = maxTime - m_startTime;
+
+	return err;
 }
 
 //==============================================================================
@@ -225,12 +242,12 @@ void Animation::interpolate(U channelIndex, F32 time,
 	}
 
 	ANKI_ASSERT(time >= m_startTime && time <= m_startTime + m_duration);
-	ANKI_ASSERT(channelIndex < m_channels.size());
+	ANKI_ASSERT(channelIndex < m_channels.getSize());
 
 	const AnimationChannel& channel = m_channels[channelIndex];
 
 	// Position
-	if(channel.m_positions.size() > 1)
+	if(channel.m_positions.getSize() > 1)
 	{
 		auto next = channel.m_positions.begin();
 
@@ -246,7 +263,7 @@ void Animation::interpolate(U channelIndex, F32 time,
 	}
 
 	// Rotation
-	if(channel.m_rotations.size() > 1)
+	if(channel.m_rotations.getSize() > 1)
 	{
 		auto next = channel.m_rotations.begin();
 

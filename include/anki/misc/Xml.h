@@ -16,7 +16,7 @@
 
 namespace anki {
 
-/// XML element
+/// XML element.
 class XmlElement
 {
 	friend class XmlDocument;
@@ -83,6 +83,10 @@ public:
 	/// it reached the end of the list
 	ANKI_USE_RESULT Error getNextSiblingElement(
 		const CString& name, XmlElement& out) const;
+
+	/// Get the number of sibling elements of this node.
+	/// @note The sibling elements share the same name.
+	ANKI_USE_RESULT Error getSiblingElementsCount(U32& out) const;
 
 private:
 	tinyxml2::XMLElement* m_el;

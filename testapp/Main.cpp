@@ -120,7 +120,7 @@ void init()
 	spot->setShadowEnabled(true);
 #endif
 
-#if 0
+#if 1
 	// Vase point lights
 	F32 x = 8.5; 
 	F32 y = 2.25;

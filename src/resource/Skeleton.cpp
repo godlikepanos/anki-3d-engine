@@ -11,41 +11,40 @@ namespace anki {
 
 //==============================================================================
 Skeleton::Skeleton(ResourceAllocator<U8>& alloc)
-:	m_bones(alloc)
 {}
 
 //==============================================================================
 Skeleton::~Skeleton()
-{}
+{
+	m_bones.destroy(m_alloc);
+}
 
 //==============================================================================
-void Skeleton::load(const CString& filename, ResourceInitializer& init)
+Error Skeleton::load(const CString& filename, ResourceInitializer& init)
 {
+	Error err = ErrorCode::NONE;
+
+	m_alloc = init.m_alloc;
+
 	XmlDocument doc;
-	doc.loadFile(filename, init.m_tempAlloc);
+	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
 
 	XmlElement rootEl;
-	doc.getChildElement("skeleton", rootEl);
+	ANKI_CHECK(doc.getChildElement("skeleton", rootEl));
 	XmlElement bonesEl;
-	rootEl.getChildElement("bones", bonesEl);
+	ANKI_CHECK(rootEl.getChildElement("bones", bonesEl));
 
 	// count the bones count
-	U bonesCount = 0;
-
 	XmlElement boneEl;
-	bonesEl.getChildElement("bone", boneEl);
+	U32 bonesCount = 0;
 
-	do
-	{
-		++bonesCount;
-		boneEl.getNextSiblingElement("bone", boneEl);
-	} while(boneEl);
+	ANKI_CHECK(bonesEl.getChildElement("bone", boneEl));
+	ANKI_CHECK(boneEl.getSiblingElementsCount(bonesCount));
+	++bonesCount;
 
-	// Alloc the vector
-	m_bones.resize(bonesCount, Bone(init.m_alloc));
+	ANKI_CHECK(m_bones.create(m_alloc, bonesCount, Bone(init.m_alloc)));
 
 	// Load every bone
-	bonesEl.getChildElement("bone", boneEl);
 	bonesCount = 0;
 	do
 	{
@@ -53,19 +52,21 @@ void Skeleton::load(const CString& filename, ResourceInitializer& init)
 
 		// <name>
 		XmlElement nameEl;
-		boneEl.getChildElement("name", nameEl);
+		ANKI_CHECK(boneEl.getChildElement("name", nameEl));
 		CString tmp;
-		nameEl.getText(tmp);
+		ANKI_CHECK(nameEl.getText(tmp));
 		bone.m_name = tmp;
 
 		// <transform>
 		XmlElement trfEl;
-		boneEl.getChildElement("transform", trfEl);
-		trfEl.getMat4(bone.m_transform);
+		ANKI_CHECK(boneEl.getChildElement("transform", trfEl));
+		ANKI_CHECK(trfEl.getMat4(bone.m_transform));
 
 		// Advance 
-		boneEl.getNextSiblingElement("bone", boneEl);
+		ANKI_CHECK(boneEl.getNextSiblingElement("bone", boneEl));
 	} while(boneEl);
+
+	return err;
 }
 
 } // end namespace anki

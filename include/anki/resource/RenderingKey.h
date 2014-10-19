@@ -30,19 +30,20 @@ public:
 	U8 m_lod;
 	Bool8 m_tessellation;
 
-	explicit RenderingKey(
-		const Pass pass, const U8 lod, const Bool tessellation)
-		: m_pass(pass), m_lod(lod), m_tessellation(tessellation)
+	explicit RenderingKey(Pass pass, U8 lod, Bool tessellation)
+	:	m_pass(pass), 
+		m_lod(lod), 
+		m_tessellation(tessellation)
 	{
 		ANKI_ASSERT(lod <= MAX_LOD);
 	}
 
 	RenderingKey()
-		: RenderingKey(Pass::COLOR, 0, false)
+	:	RenderingKey(Pass::COLOR, 0, false)
 	{}
 
 	RenderingKey(const RenderingKey& b)
-		: RenderingKey(b.m_pass, b.m_lod, b.m_tessellation)
+	:	RenderingKey(b.m_pass, b.m_lod, b.m_tessellation)
 	{}
 };
 

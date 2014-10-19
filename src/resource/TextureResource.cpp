@@ -217,6 +217,8 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 	cmdb.flush();
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
+
+	return err;
 }
 
 } // end namespace anki

@@ -113,7 +113,8 @@ public:
 	}
 
 	/// Load the resource using the resource manager
-	void load(const CString& filename, TResourceManager* resources);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, TResourceManager* resources);
 
 	template<typename... TArgs>
 	void loadToCache(TResourceManager* resources, TArgs&&... args)

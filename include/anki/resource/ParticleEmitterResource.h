@@ -111,7 +111,8 @@ public:
 	}
 
 	/// Load it
-	void load(const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init);
 
 private:
 	MaterialResourcePointer m_material;

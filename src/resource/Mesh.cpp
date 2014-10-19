@@ -16,13 +16,14 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-Mesh::Mesh(ResourceAllocator<U8>& alloc)
-:	m_subMeshes(alloc)
+Mesh::Mesh(ResourceAllocator<U8>&)
 {}
 
 //==============================================================================
 Mesh::~Mesh()
-{}
+{
+	m_subMeshes.destroy(m_alloc);
+}
 
 //==============================================================================
 Bool Mesh::isCompatible(const Mesh& other) const
@@ -243,6 +244,8 @@ Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 {
 	Error err = ErrorCode::NONE;
 
+	m_alloc = init.m_alloc;
+
 	XmlDocument doc;
 	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
 
@@ -253,12 +256,22 @@ Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 	XmlElement meshEl;
 	ANKI_CHECK(meshesEl.getChildElement("mesh", meshEl));
 
+	// Count sub meshes
+	U i = 0;
+	do
+	{
+		++i;
+		ANKI_CHECK(meshEl.getNextSiblingElement("mesh", meshEl));
+	} while(meshEl);
+
+	ANKI_CHECK(m_subMeshes.create(m_alloc, i));
+
+	ANKI_CHECK(meshesEl.getChildElement("mesh", meshEl));
+
 	m_vertsCount = 0;
-	m_subMeshes.reserve(4);
 	m_indicesCount = 0;
 
 	MeshLoader fullLoader(init.m_tempAlloc);
-	U i = 0;
 	do
 	{
 		CString subMeshFilename;
@@ -312,7 +325,7 @@ Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 		}
 
 		// Push back the new submesh
-		SubMesh submesh;
+		SubMesh& submesh = m_subMeshes[i];
 
 		submesh.m_indicesCount = loader->getIndices().size();
 		submesh.m_indicesOffset = m_indicesCount * sizeof(U16);
@@ -321,15 +334,13 @@ Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 		submesh.m_obb.setFromPointCloud(&positions[0], positions.size(),
 			sizeof(Vec3), positions.getSizeInBytes());
 
-		m_subMeshes.push_back(submesh);
-
 		// Set the global numbers
 		m_vertsCount += loader->getPositions().size();
 		m_indicesCount += loader->getIndices().size();
 
+		++i;
 		// Move to next
 		ANKI_CHECK(meshEl.getNextSiblingElement("mesh", meshEl));
-		++i;
 	} while(meshEl);
 
 	// Create the bucket mesh

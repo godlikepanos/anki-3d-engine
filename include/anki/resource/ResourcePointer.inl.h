@@ -9,11 +9,13 @@ namespace anki {
 
 //==============================================================================
 template<typename T, typename TResourceManager>
-void ResourcePointer<T, TResourceManager>::load(
+Error ResourcePointer<T, TResourceManager>::load(
 	const CString& filename, TResourceManager* resources)
 {
 	ANKI_ASSERT(m_cb == nullptr && "Already loaded");
 	ANKI_ASSERT(resources != nullptr);
+
+	Error err = ErrorCode::NONE;
 
 	ResourcePointer other;
 	Bool found = resources->_findLoadedResource(filename, other);
@@ -29,47 +31,40 @@ void ResourcePointer<T, TResourceManager>::load(
 			alloc.allocate(
 			sizeof(ControlBlock) + len, &alignment));
 
+		if(!m_cb)
+		{
+			ANKI_LOGE("Out of memory when loading resource");
+			return ErrorCode::OUT_OF_MEMORY;
+		}
+
 		// Construct
-		try
-		{
-			alloc.construct(m_cb, alloc);
-		}
-		catch(const std::exception& e)
-		{
-			alloc.deallocate(m_cb, 1);
-			m_cb = nullptr;
-			throw ANKI_EXCEPTION("Control block construction failed") << e;
-		}
+		alloc.construct(m_cb, alloc);
 
 		// Populate the m_cb. Use a block ton cleanup temp_pool allocations
 		auto& pool = resources->_getTempAllocator().getMemoryPool();
 
+		TempResourceString newFname(
+			resources->fixResourceFilename(filename));
+
+		ResourceInitializer init(
+			alloc,
+			resources->_getTempAllocator(),
+			*resources);
+
+		U allocsCountBefore = pool.getAllocationsCount();
+		(void)allocsCountBefore;
+
+		err = m_cb->m_resource.load(newFname.toCString(), init);
+		if(err)
 		{
-			TempResourceString newFname(
-				resources->fixResourceFilename(filename));
-
-			try
-			{
-				ResourceInitializer init(
-					alloc,
-					resources->_getTempAllocator(),
-					*resources);
-
-				U allocsCountBefore = pool.getAllocationsCount();
-				(void)allocsCountBefore;
-
-				m_cb->m_resource.load(newFname.toCString(), init);
-
-				ANKI_ASSERT(pool.getAllocationsCount() == allocsCountBefore
-					&& "Forgot to deallocate");
-			}
-			catch(const std::exception& e)
-			{
-				alloc.deleteInstance(m_cb);
-				m_cb = nullptr;
-				throw ANKI_EXCEPTION("Loading failed: %s", &newFname[0]) << e;
-			}
+			ANKI_LOGE("Failed to load resource: %s", &newFname[0]);
+			alloc.deleteInstance(m_cb);
+			m_cb = nullptr;
+			return err;
 		}
+
+		ANKI_ASSERT(pool.getAllocationsCount() == allocsCountBefore
+			&& "Forgot to deallocate");
 
 		m_cb->m_resources = resources;
 		std::memcpy(&m_cb->m_uuid[0], &filename[0], len + 1);

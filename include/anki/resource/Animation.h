@@ -47,18 +47,22 @@ public:
 
 	I32 m_boneIndex = -1; ///< For skeletal animations
 
-	ResourceVector<Key<Vec3>> m_positions;
-	ResourceVector<Key<Quat>> m_rotations;
-	ResourceVector<Key<F32>> m_scales;
-	ResourceVector<Key<F32>> m_cameraFovs;
+	ResourceDArray<Key<Vec3>> m_positions;
+	ResourceDArray<Key<Quat>> m_rotations;
+	ResourceDArray<Key<F32>> m_scales;
+	ResourceDArray<Key<F32>> m_cameraFovs;
 
 	AnimationChannel(ResourceAllocator<U8>& alloc)
-	:	m_name(alloc),
-		m_positions(alloc),
-		m_rotations(alloc),
-		m_scales(alloc),
-		m_cameraFovs(alloc)
+	:	m_name(alloc)
 	{}
+
+	void destroy(ResourceAllocator<U8>& alloc)
+	{
+		m_positions.destroy(alloc);
+		m_rotations.destroy(alloc);
+		m_scales.destroy(alloc);
+		m_cameraFovs.destroy(alloc);
+	}
 };
 
 /// Animation consists of keyframe data
@@ -69,10 +73,11 @@ public:
 
 	~Animation();
 
-	void load(const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init);
 
 	/// Get a vector of all animation channels
-	const ResourceVector<AnimationChannel>& getChannels() const
+	const ResourceDArray<AnimationChannel>& getChannels() const
 	{
 		return m_channels;
 	}
@@ -100,7 +105,8 @@ public:
 		Vec3& position, Quat& rotation, F32& scale) const;
 
 private:
-	ResourceVector<AnimationChannel> m_channels;
+	ResourceAllocator<U8> m_alloc;
+	ResourceDArray<AnimationChannel> m_channels;
 	F32 m_duration;
 	F32 m_startTime;
 	Bool8 m_repeat;
