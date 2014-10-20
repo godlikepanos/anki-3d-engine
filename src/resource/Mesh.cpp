@@ -40,20 +40,20 @@ Error Mesh::load(const CString& filename, ResourceInitializer& init)
 	MeshLoader loader(init.m_tempAlloc);
 	ANKI_CHECK(loader.load(filename))
 
-	m_indicesCount = loader.getIndices().size();
+	m_indicesCount = loader.getIndices().getSize();
 
 	const auto& positions = loader.getPositions();
-	m_obb.setFromPointCloud(&positions[0], positions.size(),
+	m_obb.setFromPointCloud(&positions[0], positions.getSize(),
 		sizeof(Vec3), positions.getSizeInBytes());
 	ANKI_ASSERT(m_indicesCount > 0);
 	ANKI_ASSERT(m_indicesCount % 3 == 0 && "Expecting triangles");
 
 	// Set the non-VBO members
-	m_vertsCount = loader.getPositions().size();
+	m_vertsCount = loader.getPositions().getSize();
 	ANKI_ASSERT(m_vertsCount > 0);
 
 	m_texChannelsCount = loader.getTextureChannelsCount();
-	m_weights = loader.getWeights().size() > 1;
+	m_weights = loader.getWeights().getSize() > 1;
 
 	ANKI_CHECK(createBuffers(loader, init));
 
@@ -78,9 +78,9 @@ U32 Mesh::calcVertexSize() const
 Error Mesh::createBuffers(const MeshLoader& loader,
 	ResourceInitializer& init)
 {
-	ANKI_ASSERT(m_vertsCount == loader.getPositions().size()
-		&& m_vertsCount == loader.getNormals().size()
-		&& m_vertsCount == loader.getTangents().size());
+	ANKI_ASSERT(m_vertsCount == loader.getPositions().getSize()
+		&& m_vertsCount == loader.getNormals().getSize()
+		&& m_vertsCount == loader.getTangents().getSize());
 
 	Error err = ErrorCode::NONE;
 
@@ -134,7 +134,7 @@ Error Mesh::createBuffers(const MeshLoader& loader,
 	GlClientBufferHandle clientIndexBuff;
 	ANKI_CHECK(clientIndexBuff.create(
 		cmdb, 
-		getVectorSizeInBytes(loader.getIndices()), 
+		loader.getIndices().getSizeInBytes(), 
 		(void*)&loader.getIndices()[0]));
 	ANKI_CHECK(m_indicesBuff.create(
 		cmdb, GL_ELEMENT_ARRAY_BUFFER, clientIndexBuff, 0));
@@ -295,7 +295,7 @@ Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 			loader = &subLoader;
 
 			// Sanity checks
-			if(m_weights != (loader->getWeights().size() > 1))
+			if(m_weights != (loader->getWeights().getSize() > 1))
 			{
 				ANKI_LOGE("All sub meshes should have or not "
 					"have vertex weights");
@@ -311,7 +311,7 @@ Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 			}
 
 			// Append
-			fullLoader.append(subLoader);
+			ANKI_CHECK(fullLoader.append(subLoader));
 		}
 		else
 		{
@@ -320,23 +320,23 @@ Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 			loader = &fullLoader;
 
 			// Set properties
-			m_weights = loader->getWeights().size() > 1;
+			m_weights = loader->getWeights().getSize() > 1;
 			m_texChannelsCount = loader->getTextureChannelsCount();
 		}
 
 		// Push back the new submesh
 		SubMesh& submesh = m_subMeshes[i];
 
-		submesh.m_indicesCount = loader->getIndices().size();
+		submesh.m_indicesCount = loader->getIndices().getSize();
 		submesh.m_indicesOffset = m_indicesCount * sizeof(U16);
 
 		const auto& positions = loader->getPositions();
-		submesh.m_obb.setFromPointCloud(&positions[0], positions.size(),
+		submesh.m_obb.setFromPointCloud(&positions[0], positions.getSize(),
 			sizeof(Vec3), positions.getSizeInBytes());
 
 		// Set the global numbers
-		m_vertsCount += loader->getPositions().size();
-		m_indicesCount += loader->getIndices().size();
+		m_vertsCount += loader->getPositions().getSize();
+		m_indicesCount += loader->getIndices().getSize();
 
 		++i;
 		// Move to next
@@ -347,7 +347,7 @@ Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 	ANKI_CHECK(createBuffers(fullLoader, init));
 
 	const auto& positions = fullLoader.getPositions();
-	m_obb.setFromPointCloud(&positions[0], positions.size(),
+	m_obb.setFromPointCloud(&positions[0], positions.getSize(),
 		sizeof(Vec3), positions.getSizeInBytes());
 
 	return err;

@@ -39,12 +39,6 @@ public:
 		copy(b);
 	}
 
-	/// Construct and load
-	ResourcePointer(const CString& filename, TResourceManager* resources)
-	{
-		load(filename, resources);
-	}
-
 	~ResourcePointer()
 	{
 		reset();

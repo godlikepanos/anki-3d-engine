@@ -48,7 +48,7 @@ class MeshLoader
 {
 public:
 	template<typename T>
-	using MLVector = TempResourceVector<T>;
+	using MLDArray = TempResourceDArray<T>;
 
 	/// If two vertices have the same position and normals under the angle 
 	/// specified by this constant then combine those normals
@@ -78,27 +78,26 @@ public:
 
 	MeshLoader(TempResourceAllocator<U8>& alloc);
 
-	~MeshLoader()
-	{}
+	~MeshLoader();
 
 	/// @name Accessors
 	/// @{
-	const MLVector<Vec3>& getPositions() const
+	const MLDArray<Vec3>& getPositions() const
 	{
 		return m_positions;
 	}
 
-	const MLVector<HVec3>& getNormals() const
+	const MLDArray<HVec3>& getNormals() const
 	{
 		return m_normalsF16;
 	}
 
-	const MLVector<HVec4>& getTangents() const
+	const MLDArray<HVec4>& getTangents() const
 	{
 		return m_tangentsF16;
 	}
 
-	const MLVector<HVec2>& getTextureCoordinates(const U32 channel) const
+	const MLDArray<HVec2>& getTextureCoordinates(const U32 channel) const
 	{
 		return m_texCoordsF16;
 	}
@@ -107,53 +106,59 @@ public:
 		return 1;
 	}
 
-	const MLVector<VertexWeight>& getWeights() const
+	const MLDArray<VertexWeight>& getWeights() const
 	{
 		return m_weights;
 	}
 
-	const MLVector<U16>& getIndices() const
+	const MLDArray<U16>& getIndices() const
 	{
 		return m_vertIndices;
 	}
 	/// @}
 
 	/// Append data from another mesh loader. BucketMesh method
-	void append(const MeshLoader& other);
+	ANKI_USE_RESULT Error append(const MeshLoader& other);
 
 	/// Load the mesh data from a binary file
 	/// @exception Exception
 	ANKI_USE_RESULT Error load(const CString& filename);
 
 private:
-	MLVector<Vec3> m_positions; ///< Loaded from file
+	TempResourceAllocator<U8> m_alloc;
 
-	MLVector<Vec3> m_normals; ///< Generated
-	MLVector<HVec3> m_normalsF16;
+	MLDArray<Vec3> m_positions; ///< Loaded from file
 
-	MLVector<Vec4> m_tangents; ///< Generated
-	MLVector<HVec4> m_tangentsF16;
+	MLDArray<Vec3> m_normals; ///< Generated
+	MLDArray<HVec3> m_normalsF16;
+
+	MLDArray<Vec4> m_tangents; ///< Generated
+	MLDArray<HVec4> m_tangentsF16;
 
 	/// Optional. One for every vert so we can use vertex arrays & VBOs
-	MLVector<Vec2> m_texCoords;
-	MLVector<HVec2> m_texCoordsF16;
+	MLDArray<Vec2> m_texCoords;
+	MLDArray<HVec2> m_texCoordsF16;
 
-	MLVector<VertexWeight> m_weights; ///< Optional
+	MLDArray<VertexWeight> m_weights; ///< Optional
 
-	MLVector<Triangle> m_tris; ///< Required
+	MLDArray<Triangle> m_tris; ///< Required
 
 	/// Generated. Used for vertex arrays & VBOs
-	MLVector<U16> m_vertIndices;
+	MLDArray<U16> m_vertIndices;
 
-	void createFaceNormals();
-	void createVertNormals();
-	void createAllNormals()
+	ANKI_USE_RESULT Error createFaceNormals();
+	ANKI_USE_RESULT Error createVertNormals();
+	ANKI_USE_RESULT Error createAllNormals()
 	{
-		createFaceNormals();
-		createVertNormals();
+		Error err = createFaceNormals();
+		if(!err)
+		{
+			err = createVertNormals();
+		}
+		return err;
 	}
-	void createVertTangents();
-	void createVertIndeces();
+	ANKI_USE_RESULT Error createVertTangents();
+	ANKI_USE_RESULT Error createVertIndeces();
 
 	/// This method does some sanity checks and creates normals,
 	/// tangents, VBOs etc
@@ -164,7 +169,7 @@ private:
 	void fixNormals();
 
 	/// Compress some buffers for increased BW performance
-	void compressBuffers();
+	ANKI_USE_RESULT Error compressBuffers();
 };
 
 } // end namespace anki

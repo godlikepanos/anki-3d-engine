@@ -145,7 +145,7 @@ public:
 		CString m_cacheDir;
 		AllocAlignedCallback m_allocCallback = 0;
 		void* m_allocCallbackData = nullptr;
-		U32 m_tempAllocatorMemorySize = 1024 * 1024;
+		U32 m_tempAllocatorMemorySize = 2 * 1024 * 1024;
 	};
 
 	ResourceManager(Initializer& init);

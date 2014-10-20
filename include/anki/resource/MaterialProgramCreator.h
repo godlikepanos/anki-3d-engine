@@ -51,10 +51,13 @@ public:
 		Bool8 m_inBlock = true;
 	};
 
-	explicit MaterialProgramCreator(const XmlElement& pt, 
-		TempResourceAllocator<U8>& alloc);
+	explicit MaterialProgramCreator(TempResourceAllocator<U8>& alloc);
 
 	~MaterialProgramCreator();
+
+	/// Parse what is within the
+	/// @code <programs></programs> @endcode
+	ANKI_USE_RESULT Error parseProgramsTag(const XmlElement& el);
 
 	/// Get the shader program source code
 	MPString getProgramSource(ShaderType shaderType_) const
@@ -84,10 +87,6 @@ private:
 	U32 m_texBinding = 0;
 	GLbitfield m_instanceIdMask = 0;
 	Bool8 m_tessellation = false;
-
-	/// Parse what is within the
-	/// @code <programs></programs> @endcode
-	ANKI_USE_RESULT Error parseProgramsTag(const XmlElement& el);
 
 	/// Parse what is within the
 	/// @code <program></program> @endcode

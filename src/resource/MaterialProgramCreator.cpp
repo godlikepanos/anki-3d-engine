@@ -88,13 +88,11 @@ static ANKI_USE_RESULT Error getShaderInfo(
 
 //==============================================================================
 MaterialProgramCreator::MaterialProgramCreator(
-	const XmlElement& el, TempResourceAllocator<U8>& alloc)
+	TempResourceAllocator<U8>& alloc)
 :	m_alloc(alloc),
 	m_inputs(alloc),
 	m_uniformBlock(m_alloc)
-{
-	parseProgramsTag(el);
-}
+{}
 
 //==============================================================================
 MaterialProgramCreator::~MaterialProgramCreator()

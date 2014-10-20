@@ -33,20 +33,21 @@ private:
 public:
 	/// It loads a file and parses it
 	/// @param[in] filename The file to load
-	ProgramPrePreprocessor(
-		const CString& filename, ResourceManager* manager)
+	ProgramPrePreprocessor(ResourceManager* manager)
 	:	m_shaderSource(manager->_getTempAllocator()),
 		m_sourceLines(manager->_getTempAllocator()),
 		m_manager(manager)
-	{
-		parseFile(filename);
-	}
+	{}
 
 	~ProgramPrePreprocessor()
 	{}
 
-	/// @name Accessors
-	/// @{
+	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get 
+	/// the output
+	///
+	/// @param filename The file to parse
+	ANKI_USE_RESULT Error parseFile(const CString& filename);
+
 	const PPPString& getShaderSource() const
 	{
 		ANKI_ASSERT(!m_shaderSource.isEmpty());
@@ -58,7 +59,6 @@ public:
 		ANKI_ASSERT(m_type != ShaderType::COUNT);
 		return m_type;
 	}
-	/// @}
 
 protected:
 	/// The final program source
@@ -73,22 +73,17 @@ protected:
 	/// Keep the manager for some path conversions.
 	ResourceManager* m_manager;
 
-	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get 
-	/// the output
-	///
-	/// @param filename The file to parse
-	void parseFile(const CString& filename);
-
 	/// A recursive function that parses a file for pragmas and updates the 
 	/// output
 	///
 	/// @param filename The file to parse
 	/// @param depth The #line in GLSL does not support filename so an
 	///              depth it being used. It also tracks the includance depth
-	void parseFileForPragmas(const PPPString& filename, U32 depth);
+	ANKI_USE_RESULT Error parseFileForPragmas(
+		const PPPString& filename, U32 depth);
 
 	/// Parse the type
-	Bool parseType(const PPPString& line);
+	ANKI_USE_RESULT Error parseType(const PPPString& line, Bool& found);
 
 	void printSourceLines() const;  ///< For debugging
 };

@@ -46,21 +46,25 @@ ANKI_TEST(Resource, ResourceManager)
 
 	// Load and load again
 	{
-		DummyResourcePointer a("blah", resources);
+		DummyResourcePointer a;
+		a.load("blah", resources);
 		auto refcount = a.getReferenceCount();
 
-		DummyResourcePointer b("blah", resources);
+		DummyResourcePointer b;
+		b.load("blah", resources);
 		ANKI_TEST_EXPECT_EQ(b.getReferenceCount(), a.getReferenceCount());
 		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 1);
 
 		ANKI_TEST_EXPECT_EQ(b.get(), a.get());
 
 		// Again
-		DummyResourcePointer c("blah", resources);
+		DummyResourcePointer c;
+		c.load("blah", resources);
 		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 2);
 
 		// Load something else
-		DummyResourcePointer d("blih", resources);
+		DummyResourcePointer d;
+		d.load("blih", resources);
 		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 2);
 	}
 
@@ -68,7 +72,8 @@ ANKI_TEST(Resource, ResourceManager)
 	{
 		try
 		{
-			DummyResourcePointer a("exception", resources);
+			DummyResourcePointer a;
+			a.load("exception", resources);
 		}
 		catch(...)
 		{}

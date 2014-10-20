@@ -427,7 +427,8 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 	// shaderProgram
 	//
 	ANKI_CHECK(materialEl.getChildElement("programs", el));
-	MaterialProgramCreator loader(el, rinit.m_tempAlloc);
+	MaterialProgramCreator loader(rinit.m_tempAlloc);
+	ANKI_CHECK(loader.parseProgramsTag(el));
 
 	m_tessellation = loader.hasTessellation();
 	U tessCount = m_tessellation ? 2 : 1;
@@ -500,7 +501,8 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 
 					RenderingKey key((Pass)pid, level, tess);
 					ProgramResourcePointer& progr = getProgram(key, shader);
-					progr.load(filename.toCString(), &rinit.m_resources);
+					ANKI_CHECK(
+						progr.load(filename.toCString(), &rinit.m_resources));
 
 					// Update the hash
 					m_hash ^= computeHash(&src[0], src.getLength());
@@ -615,9 +617,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 				
 				if(in.m_value.size() > 0)
 				{
-					tp = TextureResourcePointer(
-						in.m_value[0].toCString(),
-						m_resources);
+					ANKI_CHECK(tp.load(in.m_value[0].toCString(), m_resources));
 				}
 
 				auto alloc = m_resources->_getAllocator();

@@ -120,24 +120,31 @@ public:
 		return m_size;
 	}
 
+	PtrSize getSizeInBytes() const
+	{
+		return m_size * sizeof(Value);
+	}
+
 	/// Create the array.
 	template<typename... TArgs>
 	ANKI_USE_RESULT Error create(Allocator alloc, PtrSize size, TArgs... args)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0);
-		ANKI_ASSERT(size);
 		Error err = ErrorCode::NONE;
 
 		destroy(alloc);
 
-		m_data = alloc.template newArray<Value>(size, args...);
-		if(m_data)
+		if(size > 0)
 		{
-			m_size = size;
-		}
-		else
-		{
-			err = ErrorCode::OUT_OF_MEMORY;
+			m_data = alloc.template newArray<Value>(size, args...);
+			if(m_data)
+			{
+				m_size = size;
+			}
+			else
+			{
+				err = ErrorCode::OUT_OF_MEMORY;
+			}
 		}
 
 		return err;

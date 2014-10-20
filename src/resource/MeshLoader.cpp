@@ -56,17 +56,29 @@ using FixNormalsMap = std::unordered_map<
 
 //==============================================================================
 MeshLoader::MeshLoader(TempResourceAllocator<U8>& alloc)
-:	m_positions(alloc),
-	m_normals(alloc),
-	m_normalsF16(alloc),
-	m_tangents(alloc),
-	m_tangentsF16(alloc),
-	m_texCoords(alloc),
-	m_texCoordsF16(alloc),
-	m_weights(alloc),
-	m_tris(alloc),
-	m_vertIndices(alloc)
+:	m_alloc(alloc)
 {}
+
+//==============================================================================
+MeshLoader::~MeshLoader()
+{
+	m_positions.destroy(m_alloc);
+
+	m_normals.destroy(m_alloc);
+	m_normalsF16.destroy(m_alloc);
+
+	m_tangents.destroy(m_alloc);
+	m_tangentsF16.destroy(m_alloc);
+
+	m_texCoords.destroy(m_alloc);
+	m_texCoordsF16.destroy(m_alloc);
+
+	m_weights.destroy(m_alloc);
+
+	m_tris.destroy(m_alloc);
+
+	m_vertIndices.destroy(m_alloc);
+}
 
 //==============================================================================
 Error MeshLoader::load(const CString& filename)
@@ -75,170 +87,103 @@ Error MeshLoader::load(const CString& filename)
 
 		// Open the file
 	File file;
-	err = file.open(filename, 
+	ANKI_CHECK(file.open(filename, 
 		File::OpenFlag::READ | File::OpenFlag::BINARY 
-		| File::OpenFlag::LITTLE_ENDIAN);
-	if(err)
-	{
-		ANKI_LOGE("Failed to open file");
-		goto cleanup;
-	}
+		| File::OpenFlag::LITTLE_ENDIAN));
 
 	// Magic word
 	char magic[8];
-	err = file.read(magic, sizeof(magic));
-	if(err)
-	{
-		ANKI_LOGE("Read error");
-		goto cleanup;
-	}
+	ANKI_CHECK(file.read(magic, sizeof(magic)));
 	
 	if(std::memcmp(magic, "ANKIMESH", 8))
 	{
 		ANKI_LOGE("Incorrect magic word");
-		goto cleanup;
+		return ErrorCode::USER_DATA;
 	}
 
 	// Mesh name
 	{
 		U32 strLen;
-		err = file.readU32(strLen);
-		if(err)
-		{
-			ANKI_LOGE("Read error");
-			goto cleanup;
-		}
-
-		err = file.seek(strLen, File::SeekOrigin::CURRENT);
-		if(err)
-		{
-			ANKI_LOGE("Read error");
-			goto cleanup;
-		}
+		ANKI_CHECK(file.readU32(strLen));
+		ANKI_CHECK(file.seek(strLen, File::SeekOrigin::CURRENT));
 	}
 
 	// Verts num
 	U32 vertsNum;
-	err = file.readU32(vertsNum);
-	if(err)
-	{
-		ANKI_LOGE("Read error");
-		goto cleanup;
-	}
+	ANKI_CHECK(file.readU32(vertsNum));
 
-	m_positions.resize(vertsNum);
+	ANKI_CHECK(m_positions.create(m_alloc, vertsNum));
 
 	// Vert coords
 	for(Vec3& vertCoord : m_positions)
 	{
 		for(U j = 0; j < 3; j++)
 		{
-			 err = file.readF32(vertCoord[j]);
-			 if(err)
-			{
-				ANKI_LOGE("Read error");
-				goto cleanup;
-			}
+			ANKI_CHECK(file.readF32(vertCoord[j]));
 		}
 	}
 
 	// Faces num
 	U32 facesNum;
-	err = file.readU32(facesNum);
-	if(err)
-	{
-		ANKI_LOGE("Read error");
-		goto cleanup;
-	}
+	ANKI_CHECK(file.readU32(facesNum));
 
-	m_tris.resize(facesNum);
+	ANKI_CHECK(m_tris.create(m_alloc, facesNum));
 
 	// Faces IDs
 	for(Triangle& tri : m_tris)
 	{
 		for(U j = 0; j < 3; j++)
 		{
-			err = file.readU32(tri.m_vertIds[j]);
-			if(err)
-			{
-				ANKI_LOGE("Read error");
-				goto cleanup;
-			}
+			ANKI_CHECK(file.readU32(tri.m_vertIds[j]));
 
 			// a sanity check
-			if(tri.m_vertIds[j] >= m_positions.size())
+			if(tri.m_vertIds[j] >= m_positions.getSize())
 			{
 				ANKI_LOGE("Vert index out of bounds");
-				err = ErrorCode::USER_DATA;
-				goto cleanup;
+				return ErrorCode::USER_DATA;
 			}
 		}
 	}
 
 	// Tex coords num
 	U32 texCoordsNum;
-	err = file.readU32(texCoordsNum);
-	if(err)
-	{
-		ANKI_LOGE("Read error");
-		goto cleanup;
-	}
-
-	m_texCoords.resize(texCoordsNum);
+	ANKI_CHECK(file.readU32(texCoordsNum));
+	ANKI_CHECK(m_texCoords.create(m_alloc, texCoordsNum));
 
 	// Tex coords
 	for(Vec2& texCoord : m_texCoords)
 	{
 		for(U32 i = 0; i < 2; i++)
 		{
-			err = file.readF32(texCoord[i]);
-			if(err)
-			{
-				ANKI_LOGE("Read error");
-				goto cleanup;
-			}
+			ANKI_CHECK(file.readF32(texCoord[i]));
 		}
 	}
 
 	// Vert weights num
 	U32 weightsNum;
-	err = file.readU32(weightsNum);
-	if(err)
-	{
-		ANKI_LOGE("Read error");
-		goto cleanup;
-	}
-
-	m_weights.resize(weightsNum);
+	ANKI_CHECK(file.readU32(weightsNum));
+	ANKI_CHECK(m_weights.create(m_alloc, weightsNum));
 
 	// Vert weights
 	for(VertexWeight& vw : m_weights)
 	{
 		// get the bone connections num
 		U32 boneConnections;
-		err = file.readU32(boneConnections);
-		if(err)
-		{
-			ANKI_LOGE("Read error");
-			goto cleanup;
-		}
+		ANKI_CHECK(file.readU32(boneConnections));
 
 		// we treat as error if one vert doesnt have a bone
 		if(boneConnections < 1)
 		{
 			ANKI_LOGE("Vert sould have at least one bone");
-			err = ErrorCode::USER_DATA;
-			goto cleanup;
+			return ErrorCode::USER_DATA;
 		}
 
 		// and here is another possible error
 		if(boneConnections > VertexWeight::MAX_BONES_PER_VERT)
 		{
 			U32 tmp = VertexWeight::MAX_BONES_PER_VERT;
-			ANKI_LOGE("Cannot have more than %d "
-				"bones per vertex", tmp);
-			err = ErrorCode::USER_DATA;
-			goto cleanup;
+			ANKI_LOGE("Cannot have more than %d bones per vertex", tmp);
+			return ErrorCode::USER_DATA;
 		}
 
 		vw.m_bonesCount = boneConnections;
@@ -248,25 +193,19 @@ Error MeshLoader::load(const CString& filename)
 		{
 			// read bone id
 			U32 boneId;
-			err = file.readU32(boneId);
-			if(err)
-			{
-				ANKI_LOGE("Read error");
-				goto cleanup;
-			}
+			ANKI_CHECK(file.readU32(boneId));
 
 			vw.m_boneIds[i] = boneId;
 
 			// read the weight of that bone
 			F32 weight;
-			err = file.readF32(weight);
+			ANKI_CHECK(file.readF32(weight));
 			vw.m_weights[i] = weight;
 		}
 	} // end for all vert weights
 
 	err = doPostLoad();
 
-cleanup:
 	return err;
 }
 
@@ -277,54 +216,54 @@ Error MeshLoader::doPostLoad()
 	Error err = ErrorCode::NONE;
 
 	// Sanity checks
-	if(m_positions.size() < 1 || m_tris.size() < 1)
+	if(m_positions.getSize() < 1 || m_tris.getSize() < 1)
 	{
 		ANKI_LOGE("Vert coords and tris must be filled");
-		err = ErrorCode::USER_DATA;
+		return ErrorCode::USER_DATA;
 	}
 
-	if(!err 
-		&& m_texCoords.size() != 0 
-		&& m_texCoords.size() != m_positions.size())
+	if(m_texCoords.getSize() != 0 
+		&& m_texCoords.getSize() != m_positions.getSize())
 	{
 		ANKI_LOGE("Tex coords num must be "
 			"zero or equal to the vertex "
 			"coords num");
-		err = ErrorCode::USER_DATA;
+		return ErrorCode::USER_DATA;
 	}
 
-	if(!err 
-		&& m_weights.size() != 0 
-		&& m_weights.size() != m_positions.size())
+	if(m_weights.getSize() != 0 
+		&& m_weights.getSize() != m_positions.getSize())
 	{
 		ANKI_LOGE("Vert weights num must be zero or equal to the "
 			"vertex coords num");
-		err = ErrorCode::USER_DATA;
+		return ErrorCode::USER_DATA;
 	}
 
-	if(!err)
+	ANKI_CHECK(createAllNormals());
+	//fixNormals();
+
+	if(m_texCoords.getSize() > 0)
 	{
-		createAllNormals();
-		fixNormals();
-
-		if(m_texCoords.size() > 0)
-		{
-			createVertTangents();
-		}
-
-		createVertIndeces();
-		compressBuffers();
+		ANKI_CHECK(createVertTangents());
 	}
+
+	ANKI_CHECK(createVertIndeces());
+	ANKI_CHECK(compressBuffers());
 
 	return err;
 }
 
 //==============================================================================
-void MeshLoader::createVertIndeces()
+Error MeshLoader::createVertIndeces()
 {
-	m_vertIndices.resize(m_tris.size() * 3);
+	Error err = m_vertIndices.create(m_alloc, m_tris.getSize() * 3);
+	if(err)
+	{
+		return err;
+	}
+	
 	U j = 0;
-	for(U i = 0; i < m_tris.size(); ++i)
+	for(U i = 0; i < m_tris.getSize(); ++i)
 	{
 		m_vertIndices[j + 0] = m_tris[i].m_vertIds[0];
 		m_vertIndices[j + 1] = m_tris[i].m_vertIds[1];
@@ -332,10 +271,12 @@ void MeshLoader::createVertIndeces()
 
 		j += 3;
 	}
+
+	return err;
 }
 
 //==============================================================================
-void MeshLoader::createFaceNormals()
+Error MeshLoader::createFaceNormals()
 {
 	for(Triangle& tri : m_tris)
 	{
@@ -354,12 +295,18 @@ void MeshLoader::createFaceNormals()
 			tri.m_normal = Vec3(1.0, 0.0, 0.0);
 		}
 	}
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void MeshLoader::createVertNormals()
+Error MeshLoader::createVertNormals()
 {
-	m_normals.resize(m_positions.size());
+	Error err = m_normals.create(m_alloc, m_positions.getSize());
+	if(err)
+	{
+		return err;
+	}
 
 	for(Vec3& vertNormal : m_normals)
 	{
@@ -380,16 +327,27 @@ void MeshLoader::createVertNormals()
 			vertNormal.normalize();
 		}
 	}
+
+	return err;
 }
 
 //==============================================================================
-void MeshLoader::createVertTangents()
+Error MeshLoader::createVertTangents()
 {
-	m_tangents.resize(m_positions.size(), Vec4(0.0)); // alloc
-	MLVector<Vec3> bitagents(
-		m_positions.size(), Vec3(0.0), m_tangents.get_allocator());
+	Error err = m_tangents.create(m_alloc, m_positions.getSize(), Vec4(0.0));
+	if(err)
+	{
+		return err;
+	}
 
-	for(U32 i = 0; i < m_tris.size(); i++)
+	MLDArray<Vec3> bitagents;
+	err = bitagents.create(m_alloc, m_positions.getSize(), Vec3(0.0));
+	if(err)
+	{
+		return err;
+	}
+
+	for(U32 i = 0; i < m_tris.getSize(); i++)
 	{
 		const Triangle& tri = m_tris[i];
 		const I i0 = tri.m_vertIds[0];
@@ -434,7 +392,7 @@ void MeshLoader::createVertTangents()
 		bitagents[i2] += b;
 	}
 
-	for(U i = 0; i < m_tangents.size(); i++)
+	for(U i = 0; i < m_tangents.getSize(); i++)
 	{
 		Vec3 t = m_tangents[i].xyz();
 		const Vec3& n = m_normals[i];
@@ -456,15 +414,18 @@ void MeshLoader::createVertTangents()
 
 		m_tangents[i] = Vec4(t, w);
 	}
+
+	bitagents.destroy(m_alloc);
+	return err;
 }
 
 //==============================================================================
 void MeshLoader::fixNormals()
 {
-	FixNormalsMap map(10, Hasher(), Equal(), m_positions.get_allocator());
+	FixNormalsMap map(10, Hasher(), Equal(), m_alloc);
 
 	// For all verts
-	for(U i = 1; i < m_positions.size(); i++)
+	for(U i = 1; i < m_positions.getSize(); i++)
 	{
 		const Vec3& pos = m_positions[i];
 		Vec3& norm = m_normals[i];
@@ -518,8 +479,9 @@ void MeshLoader::fixNormals()
 }
 
 //==============================================================================
-void MeshLoader::append(const MeshLoader& other)
+Error MeshLoader::append(const MeshLoader& other)
 {
+#if 0
 	m_positions.insert(
 		m_positions.end(), other.m_positions.begin(), other.m_positions.end());
 
@@ -550,17 +512,22 @@ void MeshLoader::append(const MeshLoader& other)
 	{
 		m_vertIndices.push_back(bias + index);
 	}
+#endif
+	ANKI_ASSERT(0 && "TODO");
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void MeshLoader::compressBuffers()
+Error MeshLoader::compressBuffers()
 {
-	ANKI_ASSERT(m_positions.size() > 0);
+	ANKI_ASSERT(m_positions.getSize() > 0);
+
+	Error err = ErrorCode::NONE;
 
 	// Normals
-	m_normalsF16.resize(m_normals.size());
+	ANKI_CHECK(m_normalsF16.create(m_alloc, m_normals.getSize()));
 
-	for(U i = 0; i < m_normals.size(); i++)
+	for(U i = 0; i < m_normals.getSize(); i++)
 	{
 		for(U j = 0; j < 3; j++)
 		{
@@ -569,9 +536,9 @@ void MeshLoader::compressBuffers()
 	}
 
 	// Tangents
-	m_tangentsF16.resize(m_tangents.size());
+	ANKI_CHECK(m_tangentsF16.create(m_alloc, m_tangents.getSize()));
 
-	for(U i = 0; i < m_tangents.size(); i++)
+	for(U i = 0; i < m_tangents.getSize(); i++)
 	{
 		for(U j = 0; j < 4; j++)
 		{
@@ -580,15 +547,17 @@ void MeshLoader::compressBuffers()
 	}
 
 	// Texture coords
-	m_texCoordsF16.resize(m_texCoords.size());	
+	ANKI_CHECK(m_texCoordsF16.create(m_alloc, m_texCoords.getSize()));
 
-	for(U i = 0; i < m_texCoords.size(); i++)
+	for(U i = 0; i < m_texCoords.getSize(); i++)
 	{
 		for(U j = 0; j < 2; j++)
 		{
 			m_texCoordsF16[i][j] = F16(m_texCoords[i][j]);
 		}
 	}
+
+	return err;
 }
 
 } // end namespace anki

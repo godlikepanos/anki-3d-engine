@@ -43,33 +43,38 @@ Error ResourcePointer<T, TResourceManager>::load(
 		// Populate the m_cb. Use a block ton cleanup temp_pool allocations
 		auto& pool = resources->_getTempAllocator().getMemoryPool();
 
-		TempResourceString newFname(
-			resources->fixResourceFilename(filename));
-
-		ResourceInitializer init(
-			alloc,
-			resources->_getTempAllocator(),
-			*resources);
-
-		U allocsCountBefore = pool.getAllocationsCount();
-		(void)allocsCountBefore;
-
-		err = m_cb->m_resource.load(newFname.toCString(), init);
-		if(err)
+		// WARNING: Keep the brackets to force deallocation of newFname before
+		// reseting the mempool
 		{
-			ANKI_LOGE("Failed to load resource: %s", &newFname[0]);
-			alloc.deleteInstance(m_cb);
-			m_cb = nullptr;
-			return err;
-		}
+			TempResourceString newFname(
+				resources->fixResourceFilename(filename));
 
-		ANKI_ASSERT(pool.getAllocationsCount() == allocsCountBefore
-			&& "Forgot to deallocate");
+			ResourceInitializer init(
+				alloc,
+				resources->_getTempAllocator(),
+				*resources);
+
+			U allocsCountBefore = pool.getAllocationsCount();
+			(void)allocsCountBefore;
+
+			err = m_cb->m_resource.load(newFname.toCString(), init);
+			if(err)
+			{
+				ANKI_LOGE("Failed to load resource: %s", &newFname[0]);
+				alloc.deleteInstance(m_cb);
+				m_cb = nullptr;
+				return err;
+			}
+
+			ANKI_ASSERT(pool.getAllocationsCount() == allocsCountBefore
+				&& "Forgot to deallocate");
+		}
 
 		m_cb->m_resources = resources;
 		std::memcpy(&m_cb->m_uuid[0], &filename[0], len + 1);
 
-		// Reset the memory pool if no-one is using it
+		// Reset the memory pool if no-one is using it.
+		// NOTE: Check because resources load other resources
 		if(pool.getAllocationsCount() == 0)
 		{
 			pool.reset();
@@ -82,6 +87,8 @@ Error ResourcePointer<T, TResourceManager>::load(
 	{
 		*this = other;
 	}
+
+	return err;
 }
 
 //==============================================================================

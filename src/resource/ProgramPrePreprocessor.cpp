@@ -38,47 +38,47 @@ void ProgramPrePreprocessor::printSourceLines() const
 }
 
 //==============================================================================
-void ProgramPrePreprocessor::parseFile(const CString& filename)
+Error ProgramPrePreprocessor::parseFile(const CString& filename)
 {
-	try
+	auto alloc = m_shaderSource.getAllocator();
+
+	// Parse files recursively
+	Error err = parseFileForPragmas(PPPString(filename, alloc), 0);
+
+	if(!err)
 	{
-		auto alloc = m_shaderSource.getAllocator();
-
-		// Parse files recursively
-		parseFileForPragmas(
-			PPPString(filename, alloc), 
-			0);
-
 		m_shaderSource = m_sourceLines.join("\n");
 	}
-	catch(Exception& e)
-	{
-		throw ANKI_EXCEPTION("Loading file failed: %s", &filename[0]) << e;
-	}
+	
+	return err;
 }
 
 //==============================================================================
-void ProgramPrePreprocessor::parseFileForPragmas(
+Error ProgramPrePreprocessor::parseFileForPragmas(
 	const PPPString& filename, U32 depth)
 {
 	// first check the depth
 	if(depth > MAX_DEPTH)
 	{
-		throw ANKI_EXCEPTION("The include depth is too high. "
+		ANKI_LOGE("The include depth is too high. "
 			"Probably circular includance");
+		return ErrorCode::USER_DATA;
 	}
+
+	Error err = ErrorCode::NONE;
 
 	// load file in lines
 	auto alloc = m_shaderSource.getAllocator();
 	PPPString txt(alloc);
 	PPPStringList lines(alloc);
 	File file;
-	file.open(filename.toCString(), File::OpenFlag::READ);
-	file.readAllText(txt);
+	ANKI_CHECK(file.open(filename.toCString(), File::OpenFlag::READ));
+	ANKI_CHECK(file.readAllText(txt));
 	lines = PPPStringList::splitString(txt.toCString(), '\n', alloc);
 	if(lines.size() < 1)
 	{
-		throw ANKI_EXCEPTION("File is empty: %s", &filename[0]);
+		ANKI_LOGE("File is empty: %s", &filename[0]);
+		return ErrorCode::USER_DATA;
 	}
 
 	for(const PPPString& line : lines)
@@ -89,7 +89,9 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 		{
 			Bool malformed = true;
 
-			if(parseType(line))
+			Bool found;
+			ANKI_CHECK(parseType(line, found));
+			if(found)
 			{
 				malformed = false; // All OK
 			}
@@ -106,7 +108,7 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 
 					filen = m_manager->fixResourceFilename(filen.toCString());
 
-					parseFileForPragmas(filen, depth + 1);
+					ANKI_CHECK(parseFileForPragmas(filen, depth + 1));
 
 					malformed = false; // All OK
 				}
@@ -114,7 +116,8 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 
 			if(malformed)
 			{
-				throw ANKI_EXCEPTION("Malformed pragma anki: %s", &line[0]);
+				ANKI_LOGE("Malformed pragma anki: %s", &line[0]);
+				return ErrorCode::USER_DATA;
 			}
 		}
 		else
@@ -126,15 +129,19 @@ void ProgramPrePreprocessor::parseFileForPragmas(
 	// Sanity checks
 	if(m_type == ShaderType::COUNT)
 	{
-		throw ANKI_EXCEPTION("Shader is missing the type");
+		ANKI_LOGE("Shader is missing the type");
+		return ErrorCode::USER_DATA;
 	}
+
+	return err;
 }
 
 //==============================================================================
-Bool ProgramPrePreprocessor::parseType(const PPPString& line)
+Error ProgramPrePreprocessor::parseType(const PPPString& line, Bool& found)
 {
+	Error err = ErrorCode::NONE;
 	U i;
-	Bool found = false;
+	found = false;
 
 	for(i = 0; i < static_cast<U>(ShaderType::COUNT); i++)
 	{
@@ -149,14 +156,16 @@ Bool ProgramPrePreprocessor::parseType(const PPPString& line)
 	{
 		if(m_type != ShaderType::COUNT)
 		{
-			throw ANKI_EXCEPTION("The shader type is already set. Line %s",
-				&line[0]);
+			ANKI_LOGE("The shader type is already set. Line %s", &line[0]);
+			err = ErrorCode::USER_DATA;
 		}
-
-		m_type = static_cast<ShaderType>(i);
+		else
+		{
+			m_type = static_cast<ShaderType>(i);
+		}
 	}
 
-	return found;
+	return err;
 }
 
 } // end namespace anki

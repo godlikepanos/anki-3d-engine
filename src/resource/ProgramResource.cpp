@@ -27,7 +27,8 @@ Error ProgramResource::load(const CString& filename, const CString& extraSrc,
 {
 	Error err = ErrorCode::NONE;
 
-	ProgramPrePreprocessor pars(filename, &manager);
+	ProgramPrePreprocessor pars(&manager);
+	ANKI_CHECK(pars.parseFile(filename));
 	TempResourceString source(extraSrc + pars.getShaderSource());
 
 	GlDevice& gl = manager._getGlDevice();
