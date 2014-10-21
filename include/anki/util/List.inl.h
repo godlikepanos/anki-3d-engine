@@ -6,14 +6,42 @@
 namespace anki {
 
 //==============================================================================
+// ListIterator                                                                =
+//==============================================================================
+
+//==============================================================================
+template<typename TNodePointer, typename TValuePointer, 
+	typename TValueReference, typename TList>
+ListIterator<TNodePointer, TValuePointer, TValueReference, TList>& 
+	ListIterator<TNodePointer, TValuePointer, TValueReference, TList>::
+	operator--()
+{
+	ANKI_ASSERT(m_list);
+
+	if(m_node)
+	{
+		m_node = m_node->m_prev;
+	}
+	else
+	{
+		m_node = m_list->m_tail;
+	}
+
+	return *this;
+}
+
+//==============================================================================
+// List                                                                        =
+//==============================================================================
+
+//==============================================================================
 template<typename T, typename TAlloc>
 template<typename... TArgs>
 Error List<T, TAlloc>::emplaceBack(Allocator alloc, TArgs&&... args)
 {
 	Error err = ErrorCode::NONE;
 	
-	Node* el = alloc.template newInstance<Node>(
-		std::forward<TArgs>(args)...);
+	Node* el = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 	if(el != nullptr)
 	{
 		if(m_tail != nullptr)
@@ -44,8 +72,7 @@ Error List<T, TAlloc>::emplaceFront(Allocator alloc, TArgs&&... args)
 {
 	Error err = ErrorCode::NONE;
 
-	Node* el = alloc.template newInstance<Node>(
-		std::forward<TArgs>(args)...);
+	Node* el = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
 	if(el != nullptr)
 	{
 		if(m_head != nullptr)
@@ -59,6 +86,57 @@ Error List<T, TAlloc>::emplaceFront(Allocator alloc, TArgs&&... args)
 		{
 			ANKI_ASSERT(m_tail == nullptr);
 			m_tail = m_head = el;
+		}
+	}
+	else
+	{
+		err = ErrorCode::OUT_OF_MEMORY;
+	}
+
+	return err;
+}
+
+//==============================================================================
+template<typename T, typename TAlloc>
+template<typename... TArgs>
+Error List<T, TAlloc>::emplace(Allocator alloc, Iterator pos, TArgs&&... args)
+{
+	ANKI_ASSERT(pos.m_list == this);
+	Error err = ErrorCode::NONE;
+
+	Node* el = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
+	if(el != nullptr)
+	{
+		Node* node = pos.m_node;
+
+		if(node == nullptr)
+		{
+			// Place after the last
+
+			if(m_tail != nullptr)
+			{
+				ANKI_ASSERT(m_head != nullptr);
+				m_tail->m_next = el;
+				el->m_prev = m_tail;
+				m_tail = el;
+			}
+			else
+			{
+				ANKI_ASSERT(m_head == nullptr);
+				m_tail = m_head = el;
+			}
+		}
+		else
+		{
+			el->m_prev = node->m_prev;
+			el->m_next = node;
+			node->m_prev = el;
+
+			if(node == m_head)
+			{
+				ANKI_ASSERT(m_tail != nullptr);
+				m_head = el;
+			}
 		}
 	}
 	else
@@ -167,6 +245,40 @@ typename List<T, TAlloc>::Node* List<T, TAlloc>::partition(
 	std::swap(i->m_value, r->m_value);
 
 	return i;
+}
+
+//==============================================================================
+template<typename T, typename TAlloc>
+void List<T, TAlloc>::erase(Allocator alloc, Iterator pos)
+{
+	ANKI_ASSERT(pos.m_node);
+	ANKI_ASSERT(pos.m_list == this);
+
+	Node* node = pos.m_node;
+	
+	if(node == m_tail)
+	{
+		m_tail = node->m_prev;
+	}
+
+	if(node == m_head)
+	{
+		m_head = node->m_next;
+	}
+
+	if(node->m_prev)
+	{
+		ANKI_ASSERT(node->m_prev->m_next == node);
+		node->m_prev->m_next = node->m_next;
+	}
+
+	if(node->m_next)
+	{
+		ANKI_ASSERT(node->m_next->m_prev == node);
+		node->m_next->m_prev = node->m_prev;
+	}
+
+	alloc.deleteInstance(node);
 }
 
 } // end namespace anki

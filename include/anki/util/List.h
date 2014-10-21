@@ -11,6 +11,150 @@
 
 namespace anki {
 
+// Forward
+template<typename T, typename TAlloc>
+class List;
+
+/// @addtogroup util_private
+/// @{
+
+/// List node.
+template<typename T>
+class ListNode
+{
+public:
+	using Value = T;
+
+	T m_value;
+	ListNode* m_prev = nullptr;
+	ListNode* m_next = nullptr;
+
+	template<typename... TArgs>
+	ListNode(TArgs&&... args)
+	:	m_value(std::forward<TArgs>(args)...)
+	{}
+};
+
+/// List bidirectional iterator.
+template<typename TNodePointer, typename TValuePointer, 
+	typename TValueReference, typename TList>
+class ListIterator
+{
+public:
+	TNodePointer m_node = nullptr;
+	TList* m_list = nullptr; ///< Used to go back from the end
+
+	ListIterator() = default;
+
+	ListIterator(const ListIterator& b)
+	:	m_node(b.m_node),
+		m_list(b.m_list)
+	{}
+
+	/// Allow conversion from iterator to const iterator.
+	template<typename YNodePointer, typename YValuePointer, 
+		typename YValueReference, typename YList>
+	ListIterator(const ListIterator<YNodePointer, 
+		YValuePointer, YValueReference, YList>& b)
+	:	m_node(b.m_node),
+		m_list(b.m_list)
+	{}
+
+	ListIterator(TNodePointer node, TList* list)
+	:	m_node(node),
+		m_list(list)
+	{
+		ANKI_ASSERT(list);
+	}
+
+	TValueReference operator*() const
+	{
+		ANKI_ASSERT(m_node);
+		return m_node->m_value;
+	}
+
+	TValuePointer operator->() const
+	{
+		ANKI_ASSERT(m_node);
+		return &m_node->m_value;
+	}
+
+	ListIterator& operator++()
+	{
+		ANKI_ASSERT(m_node);
+		m_node = m_node->m_next;
+		return *this;
+	}
+
+	ListIterator operator++(int)
+	{
+		ANKI_ASSERT(m_node);
+		ListIterator out = *this;
+		++(*this);
+		return out;
+	}
+
+	ListIterator& operator--();
+
+	ListIterator operator--(int)
+	{
+		ANKI_ASSERT(m_node);
+		ListIterator out = *this;
+		--(*this);
+		return out;
+	}
+
+	ListIterator operator+(U n) const
+	{
+		ListIterator it = *this;
+		while(n-- != 0)
+		{
+			++it;
+		}
+		return it;
+	}
+
+	ListIterator operator-(U n) const
+	{
+		ListIterator it = *this;
+		while(n-- != 0)
+		{
+			--it;
+		}
+		return it;
+	}
+
+	ListIterator& operator+=(U n)
+	{
+		while(n-- != 0)
+		{
+			++(*this);
+		}
+		return *this;
+	}
+
+	ListIterator& operator-=(U n)
+	{
+		while(n-- != 0)
+		{
+			--(*this);
+		}
+		return *this;
+	}
+
+	Bool operator==(const ListIterator& b) const
+	{
+		return m_node == b.m_node && m_list == b.m_list;
+	}
+
+	Bool operator!=(const ListIterator& b) const
+	{
+		return !(*this == b);
+	}
+};
+
+/// @}
+
 /// @addtogroup util_containers
 /// @{
 
@@ -18,11 +162,21 @@ namespace anki {
 template<typename T, typename TAlloc = HeapAllocator<T>>
 class List: public NonCopyable
 {
+	template<typename TNodePointer, typename TValuePointer, 
+		typename TValueReference, typename TList>
+	friend class ListIterator;
+
 public:
 	using Value = T;
 	using Allocator = TAlloc;
+	using Node = ListNode<Value>;
 	using Reference = Value&;
 	using ConstReference = const Value&;
+	using Pointer = Value*;
+	using ConstPointer = const Value*;
+	using Iterator = ListIterator<Node*, Pointer, Reference, List>;
+	using ConstIterator = 
+		ListIterator<const Node*, ConstPointer, ConstReference, List>;
 
 	List() = default;
 
@@ -33,6 +187,8 @@ public:
 		move(b);
 	}
 
+	/// You need to manually destroy the list.
+	/// @see List::destroy
 	~List()
 	{
 		ANKI_ASSERT(m_head == nullptr && "Requires manual destruction");
@@ -76,11 +232,53 @@ public:
 		return m_tail->m_value;
 	}
 
+	/// Get begin.
+	Iterator getBegin()
+	{
+		return Iterator(m_head, this);
+	}
+
+	/// Get begin.
+	ConstIterator getBegin() const
+	{
+		return ConstIterator(m_head, this);
+	}
+
+	/// Get end.
+	Iterator getEnd()
+	{
+		Iterator it(nullptr, this);
+		return it;
+	}
+
+	/// Get end.
+	ConstIterator getEnd() const
+	{
+		ConstIterator it(nullptr, this);
+		return it;
+	}
+
+	/// Return true if list is empty.
+	Bool isEmpty() const
+	{
+		return m_head == nullptr;
+	}
+
+	/// Construct element at the end of the list.
 	template<typename... TArgs>
 	ANKI_USE_RESULT Error emplaceBack(Allocator alloc, TArgs&&... args);
 
+	/// Construct element at the beginning of the list.
 	template<typename... TArgs>
 	ANKI_USE_RESULT Error emplaceFront(Allocator alloc, TArgs&&... args);
+
+	/// Construct element at the the given position.
+	template<typename... TArgs>
+	ANKI_USE_RESULT Error emplace(
+		Allocator alloc, Iterator pos, TArgs&&... args);
+
+	/// Erase an element.
+	void erase(Allocator alloc, Iterator position);
 
 	/// Iterate the list using lambda.
 	template<typename TFunc>
@@ -90,29 +288,11 @@ public:
 	template<typename TFunc>
 	ANKI_USE_RESULT Error iterateBackward(TFunc func);
 
-	Bool isEmpty() const
-	{
-		return m_head == nullptr;
-	}
-
 	/// Quicksort.
 	template<typename TCompFunc = std::less<Value>>
 	void sort(TCompFunc compFunc = TCompFunc());
 
 private:
-	class Node
-	{
-	public:
-		Value m_value;
-		Node* m_prev = nullptr;
-		Node* m_next = nullptr;
-
-		template<typename... TArgs>
-		Node(TArgs&&... args)
-		:	m_value(std::forward<TArgs>(args)...)
-		{}
-	};
-
 	Node* m_head = nullptr;
 	Node* m_tail = nullptr;
 
