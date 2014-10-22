@@ -281,5 +281,24 @@ void List<T, TAlloc>::erase(Allocator alloc, Iterator pos)
 	alloc.deleteInstance(node);
 }
 
+//==============================================================================
+template<typename T, typename TAlloc>
+typename List<T, TAlloc>::Iterator List<T, TAlloc>::find(const Value& a)
+{
+	Iterator it = getBegin();
+	Iterator end = getEnd();
+	while(it != end)
+	{
+		if(*it == a)
+		{
+			break;
+		}
+
+		++it;
+	}
+
+	return it;
+}
+
 } // end namespace anki
 

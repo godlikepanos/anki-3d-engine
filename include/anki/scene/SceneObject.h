@@ -69,6 +69,11 @@ public:
 		return *m_scene;
 	}
 
+	ANKI_USE_RESULT Error addChild(SceneObject* obj)
+	{
+		return Base::addChild(getSceneAllocator(), obj);
+	}
+
 	const SceneGraph& getSceneGraph() const
 	{
 		return *m_scene;

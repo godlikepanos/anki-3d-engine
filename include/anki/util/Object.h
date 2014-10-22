@@ -7,7 +7,7 @@
 #define ANKI_UTIL_OBJECT_H
 
 #include "anki/util/Assert.h"
-#include "anki/util/Vector.h"
+#include "anki/util/List.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Allocator.h"
 #include "anki/util/NonCopyable.h"
@@ -38,166 +38,72 @@ struct ObjectCallbackCollection
 };
 
 /// A hierarchical object
-template<typename T, typename Alloc = HeapAllocator<T>,
+template<typename T, typename TAlloc = HeapAllocator<T>,
 	typename TCallbackCollection = ObjectCallbackCollection<T>>
 class Object: public NonCopyable
 {
 public:
 	using Value = T;
-	using Container = Vector<Value*, Alloc>;
+	using Allocator = TAlloc;
+	using Container = List<Value*, Allocator>;
 	using CallbackCollection = TCallbackCollection;
 
-	/// Calls addChild if parent is not nullptr
-	///
-	/// @param parent The parent. Can be nullptr
-	/// @param alloc The allocator to use on internal allocations
 	/// @param callbacks A set of callbacks
-	Object(
-		Value* parent, 
-		const Alloc& alloc = Alloc(),
-		const CallbackCollection& callbacks = CallbackCollection())
-	:	m_parent(nullptr), // Set to nullptr or prepare for an assertion
-		m_children(alloc), 
+	Object(const CallbackCollection& callbacks = CallbackCollection())
+	:	m_parent(nullptr),
 		m_callbacks(callbacks)
-	{
-		if(parent != nullptr)
-		{
-			parent->addChild(getSelf());
-		}
-	}
+	{}
 
 	/// Delete children from the last entered to the first and update parent
 	virtual ~Object()
 	{
-		if(m_parent != nullptr)
-		{
-			m_parent->removeChild(getSelf());
-		}
-
-		// Remove all children (fast version)
-		for(Value* child : m_children)
-		{
-			child->m_parent = nullptr;
-
-			// Pass the parent as nullptr because at this point there is 
-			// nothing you should do with a deleteding parent
-			m_callbacks.onChildRemoved(child, nullptr);
-		}
+		ANKI_ASSERT(m_parent == nullptr && m_children.isEmpty()
+			&& "Requires manual desruction");
 	}
+
+	void destroy(Allocator alloc);
 
 	const Value* getParent() const
 	{
 		return m_parent;
 	}
+
 	Value* getParent()
 	{
 		return m_parent;
 	}
 
-	PtrSize getChildrenSize() const
-	{
-		return m_children.size();
-	}
-
 	Value& getChild(PtrSize i)
 	{
-		ANKI_ASSERT(i < m_children.size());
-		return *m_children[i];
+		return *(*(m_children.getBegin() + i));
 	}
+
 	const Value& getChild(PtrSize i) const
 	{
-		ANKI_ASSERT(i < m_children.size());
-		return *m_children[i];
+		return *(*(m_children.getBegin() + i));
 	}
 
-	Alloc getAllocator() const
-	{
-		return m_children.get_allocator();
-	}
+	/// Add a new child.
+	ANKI_USE_RESULT Error addChild(Allocator alloc, Value* child);
 
-	/// Add a new child
-	void addChild(Value* child)
-	{
-		ANKI_ASSERT(child != nullptr && "Null arg");
-		ANKI_ASSERT(child != getSelf() && "Cannot put itself");
-		ANKI_ASSERT(child->m_parent == nullptr && "Child already has parent");
-		ANKI_ASSERT(child->findChild(getSelf()) == child->m_children.end()
-			&& "Cyclic add");
-		ANKI_ASSERT(findChild(child) == m_children.end() && "Already a child");
-
-		child->m_parent = getSelf();
-		m_children.push_back(child);
-
-		m_callbacks.onChildAdded(child, getSelf());
-	}
-
-	/// Remove a child
-	void removeChild(Value* child)
-	{
-		ANKI_ASSERT(child != nullptr && "Null arg");
-		ANKI_ASSERT(child->m_parent == getSelf() && "Child has other parent");
-
-		typename Container::iterator it = findChild(child);
-
-		ANKI_ASSERT(it != m_children.end() && "Child not found");
-
-		m_children.erase(it);
-		child->m_parent = nullptr;
-
-		m_callbacks.onChildRemoved(child, getSelf());
-	}
+	/// Remove a child.
+	void removeChild(Allocator alloc, Value* child);
 
 	/// Visit the children and the children's children. Use it with lambda
 	template<typename VisitorFunc>
-	void visitChildren(VisitorFunc vis)
-	{
-		for(Value* c : m_children)
-		{
-			vis(*c);
-			c->visitChildren(vis);
-		}
-	}
+	ANKI_USE_RESULT Error visitChildren(VisitorFunc vis);
 
 	/// Visit this object and move to the children. Use it with lambda
 	template<typename VisitorFunc>
-	void visitThisAndChildren(VisitorFunc vis)
-	{
-		vis(*getSelf());
-
-		visitChildren(vis);
-	}
+	ANKI_USE_RESULT Error visitThisAndChildren(VisitorFunc vis);
 
 	/// Visit the whole tree. Use it with lambda
 	template<typename VisitorFunc>
-	void visitTree(VisitorFunc vis)
-	{
-		// Move to root
-		Value* root = getSelf();
-		while(root->m_parent != nullptr)
-		{
-			root = root->m_parent;
-		}
-
-		root->visitThisAndChildren(vis);
-	}
+	ANKI_USE_RESULT Error visitTree(VisitorFunc vis);
 
 	/// Visit the children and limit the depth. Use it with lambda.
 	template<typename VisitorFunc>
-	void visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)
-	{
-		ANKI_ASSERT(maxDepth >= 0);
-		--maxDepth;
-
-		for(Value* c : m_children)
-		{
-			vis(*c);
-
-			if(maxDepth >= 0)
-			{
-				c->visitChildrenMaxDepth(maxDepth, vis);
-			}
-		}
-	}
+	ANKI_USE_RESULT Error visitChildrenMaxDepth(I maxDepth, VisitorFunc vis);
 
 private:
 	Value* m_parent; ///< May be nullptr
@@ -211,15 +117,16 @@ private:
 	}
 
 	/// Find the child
-	typename Container::iterator findChild(Value* child)
+	typename Container::Iterator findChild(Value* child)
 	{
-		typename Container::iterator it =
-			std::find(m_children.begin(), m_children.end(), child);
+		typename Container::Iterator it = m_children.find(child);
 		return it;
 	}
 };
 /// @}
 
 } // end namespace anki
+
+#include "anki/util/Object.inl.h"
 
 #endif

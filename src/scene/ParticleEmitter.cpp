@@ -498,7 +498,7 @@ void ParticleEmitter::doInstancingCalcs()
 	// Gather the move components of the instances
 	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
 	Timestamp instancesTimestamp = 0;
-	SceneObject::visitChildren([&](SceneObject& obj)
+	SceneObject::visitChildren([&](SceneObject& obj) -> Error
 	{	
 		if(obj.getType() == SceneObject::Type::SCENE_NODE)
 		{
@@ -513,6 +513,8 @@ void ParticleEmitter::doInstancingCalcs()
 					std::max(instancesTimestamp, move.getTimestamp());
 			}
 		}
+
+		return ErrorCode::NONE;
 	});
 
 	// If instancing

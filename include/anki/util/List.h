@@ -288,6 +288,9 @@ public:
 	template<typename TFunc>
 	ANKI_USE_RESULT Error iterateBackward(TFunc func);
 
+	/// Find item.
+	Iterator find(const Value& a);
+
 	/// Quicksort.
 	template<typename TCompFunc = std::less<Value>>
 	void sort(TCompFunc compFunc = TCompFunc());

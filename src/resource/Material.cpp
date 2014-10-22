@@ -50,7 +50,14 @@ static MaterialVariable* newMaterialVariable(
 		floatvec.resize(floatsNeeded);
 		for(U i = 0; i < floatsNeeded; ++i)
 		{
-			floatvec[i] = in.m_value[i].toF64();
+			F64 d;
+			Error err = in.m_value[i].toF64(d);
+			if(err)
+			{
+				return nullptr;
+			}
+
+			floatvec[i] = d;
 		}
 
 		out = alloc.newInstance<MaterialVariableTemplate<T>>(

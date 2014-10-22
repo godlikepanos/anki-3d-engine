@@ -10,11 +10,17 @@ namespace anki {
 
 //==============================================================================
 SceneObject::SceneObject(Type type, SceneObject* parent, SceneGraph* scene)
-:	Base(parent, scene->getAllocator()),
+:	Base(),
 	m_scene(scene),
 	m_bits(static_cast<U8>(type))
 {
 	ANKI_ASSERT(m_scene);
+
+	// TODO Remove that
+	if(parent)
+	{
+		parent->addChild(this);
+	}
 }
 
 //==============================================================================
@@ -48,9 +54,10 @@ void SceneObject::markForDeletion()
 		m_scene->increaseObjectsMarkedForDeletion();
 	}
 
-	visitChildren([](SceneObject& obj)
+	visitChildren([](SceneObject& obj) -> Error
 	{
 		obj.markForDeletion();
+		return ErrorCode::NONE;
 	});
 }
 

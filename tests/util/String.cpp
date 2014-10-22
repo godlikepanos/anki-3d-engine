@@ -183,13 +183,15 @@ ANKI_TEST(Util, String)
 
 	// To number
 	{
-		I64 i = String("123456789", alloc).toI64();
+		I64 i;
+		String("123456789", alloc).toI64(i);
 		ANKI_TEST_EXPECT_EQ(i, 123456789);
 
-		i = String("-9223372036854775807", alloc).toI64();
+		String("-9223372036854775807", alloc).toI64(i);
 		ANKI_TEST_EXPECT_EQ(i, -9223372036854775807);
 
-		F64 f = String("123456789.145", alloc).toF64();
+		F64 f;
+		String("123456789.145", alloc).toF64(f);
 		ANKI_TEST_EXPECT_EQ(f, 123456789.145);
 	}
 }

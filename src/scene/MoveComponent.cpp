@@ -79,7 +79,7 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 	// whole tree because you will re-walk it later
 	if(dirty)
 	{
-		node.visitChildrenMaxDepth(1, [](SceneObject& obj)
+		node.visitChildrenMaxDepth(1, [](SceneObject& obj) -> Error
 		{
 			if(obj.getType() == SceneNode::getClassType())
 			{
@@ -91,6 +91,8 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 					mov.markForUpdate();
 				});
 			}
+
+			return ErrorCode::NONE;
 		});
 	}
 

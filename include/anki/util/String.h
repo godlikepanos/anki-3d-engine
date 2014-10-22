@@ -198,31 +198,48 @@ public:
 	}
 
 	/// Convert to F64.
-	F64 toF64() const
+	ANKI_USE_RESULT Error toF64(F64& out) const
 	{
 		checkInit();
-		F64 out = std::strtod(m_ptr, nullptr);
+		Error err = ErrorCode::NONE;
+		out = std::strtod(m_ptr, nullptr);
 
 		if(out == HUGE_VAL)
 		{
-			throw ANKI_EXCEPTION("Conversion failed");
+			ANKI_LOGE("Conversion failed");
+			err = ErrorCode::USER_DATA;
 		}
 
-		return out;
+		return err;
+	}
+
+	/// Convert to F32.
+	ANKI_USE_RESULT Error toF32(F32& out) const
+	{
+		F64 d;
+		Error err = toF64(d);
+		if(!err)
+		{
+			out = d;
+		}
+
+		return err;
 	}
 
 	/// Convert to I64.
-	I64 toI64() const
+	ANKI_USE_RESULT Error toI64(I64& out) const
 	{
 		checkInit();
-		I64 out = std::strtoll(m_ptr, nullptr, 10);
+		Error err = ErrorCode::NONE;
+		out = std::strtoll(m_ptr, nullptr, 10);
 
-		if(out == LLONG_MAX)
+		if(out == LLONG_MAX || out == LLONG_MIN)
 		{
-			throw ANKI_EXCEPTION("Conversion failed");
+			ANKI_LOGE("Conversion failed");
+			err = ErrorCode::USER_DATA;
 		}
 
-		return out;
+		return err;
 	}
 
 private:
@@ -639,15 +656,15 @@ public:
 	}
 
 	/// Convert to F64.
-	F64 toF64() const
+	ANKI_USE_RESULT Error toF64(F64& out) const
 	{
-		return toCString().toF64();
+		return toCString().toF64(out);
 	}
 
 	/// Convert to I64.
-	I64 toI64() const
+	ANKI_USE_RESULT Error toI64(I64& out) const
 	{
-		return toCString().toI64();
+		return toCString().toI64(out);
 	}
 
 private:

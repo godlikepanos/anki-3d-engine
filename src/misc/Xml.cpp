@@ -52,7 +52,7 @@ Error XmlElement::getI64(I64& out) const
 		const char* txt = m_el->GetText();
 		if(txt != nullptr)
 		{
-			out = CString(txt).toI64();
+			err = CString(txt).toI64(out);
 		}
 		else
 		{
@@ -74,7 +74,7 @@ Error XmlElement::getF64(F64& out) const
 		const char* txt = m_el->GetText();
 		if(txt != nullptr)
 		{
-			out = CString(txt).toF64();
+			err = CString(txt).toF64(out);
 		}
 		else
 		{
@@ -87,133 +87,130 @@ Error XmlElement::getF64(F64& out) const
 }
 
 //==============================================================================V
-Vector<F64, StackAllocator<F64>> XmlElement::getFloats() const
+Error XmlElement::getFloats(DArray<F64, StackAllocator<F64>>& out) const
 {
-	check();
-	const char* txt = m_el->GetText();
-	if(txt == nullptr)
+	Error err = check();
+	
+	const char* txt;
+	if(!err)
 	{
-		throw ANKI_EXCEPTION("Failed to return floats. Element: %s",
-			m_el->Value());
-	}
-
-	StringListBase<StackAllocator<char>> list(
-		StringListBase<StackAllocator<char>>::splitString(
-		CString(txt), ' ', m_alloc));
-
-	Vector<F64, StackAllocator<F64>> out;
-	out.resize(list.size());
-
-	try
-	{
-		for(U i = 0; i < out.size(); i++)
+		txt = m_el->GetText();
+		if(txt == nullptr)
 		{
-			out[i] = list[i].toF64();
+			err = ErrorCode::USER_DATA;
 		}
 	}
-	catch(const std::exception& e)
+
+	StringListBase<StackAllocator<char>> list;
+	if(!err)
 	{
-		throw ANKI_EXCEPTION("Found non-float element for vec of floats");
+		 list = StringListBase<StackAllocator<char>>(
+			StringListBase<StackAllocator<char>>::splitString(
+			CString(txt), ' ', m_alloc));
+
+		err = out.create(m_alloc, list.size());
 	}
 
-	return out;
+	for(U i = 0; i < out.getSize() && !err; i++)
+	{
+		err = list[i].toF64(out[i]);
+	}
+
+	if(err)
+	{
+		ANKI_LOGE("Failed to return floats. Element: %s", m_el->Value());
+	}
+
+	return err;
 }
 
 //==============================================================================
 Error XmlElement::getMat4(Mat4& out) const
 {
-	check();
+	DArray<F64, StackAllocator<F64>> arr;
+	Error err = getFloats(arr);	
 
-	const char* txt = m_el->GetText();
-	if(txt == nullptr)
-	{
-		ANKI_LOGE("Failed to return Mat4");
-		return ErrorCode::USER_DATA;
-	}
-
-	StringListBase<StackAllocator<char>> list = 
-		StringListBase<StackAllocator<char>>::splitString(
-		CString(txt), ' ', m_alloc);
-
-	if(list.size() != 16)
+	if(!err && arr.getSize() != 16)
 	{
 		ANKI_LOGE("Expecting 16 elements for Mat4");
-		return ErrorCode::USER_DATA;
+		err = ErrorCode::USER_DATA;
 	}
 
-	for(U i = 0; i < 16; i++)
+	if(!err)
 	{
-		out[i] = list[i].toF64();
+		for(U i = 0; i < 16 && !err; i++)
+		{
+			out[i] = arr[i];
+		}
 	}
 
-	return ErrorCode::NONE;
+	arr.destroy(m_alloc);
+
+	if(err)
+	{
+		ANKI_LOGE("Failed to return Mat4. Element: %s", m_el->Value());
+	}
+
+	return err;
 }
 
 //==============================================================================
 Error XmlElement::getVec3(Vec3& out) const
 {
-	Error err = check();
-	if(err)
-	{
-		return err;
-	}
-
-	const char* txt = m_el->GetText();
-	if(txt == nullptr)
-	{
-		ANKI_LOGE("Failed to return Vec3");
-		return ErrorCode::USER_DATA;
-	}
-
-	StringListBase<StackAllocator<char>> list = 
-		StringListBase<StackAllocator<char>>::splitString(
-		CString(txt), ' ', m_alloc);
-
-	if(list.size() != 3)
+	DArray<F64, StackAllocator<F64>> arr;
+	Error err = getFloats(arr);
+	
+	if(!err && arr.getSize() != 3)
 	{
 		ANKI_LOGE("Expecting 3 elements for Vec3");
-		return ErrorCode::USER_DATA;
+		err = ErrorCode::USER_DATA;
 	}
 
-	for(U i = 0; i < 3; i++)
+	if(!err)
 	{
-		out[i] = list[i].toF64();
+		for(U i = 0; i < 3; i++)
+		{
+			out[i] = arr[i];
+		}
+	}
+
+	arr.destroy(m_alloc);
+
+	if(err)
+	{
+		ANKI_LOGE("Failed to return Vec3. Element: %s", m_el->Value());
 	}
 	
-	return ErrorCode::NONE;
+	return err;
 }
 //==============================================================================
 Error XmlElement::getVec4(Vec4& out) const
 {
-	Error err = check();
+	DArray<F64, StackAllocator<F64>> arr;
+	Error err = getFloats(arr);
+	
+	if(!err && arr.getSize() != 4)
+	{
+		ANKI_LOGE("Expecting 4 elements for Vec3");
+		err = ErrorCode::USER_DATA;
+	}
+
+	if(!err)
+	{
+		for(U i = 0; i < 4; i++)
+		{
+			out[i] = arr[i];
+		}
+	}
+
+	arr.destroy(m_alloc);
+
 	if(err)
 	{
-		return err;
+		ANKI_LOGE("Failed to return Vec4. Element: %s", m_el->Value());
 	}
-
-	const char* txt = m_el->GetText();
-	if(txt == nullptr)
-	{
-		ANKI_LOGE("Failed to return Vec4");
-		return ErrorCode::USER_DATA;
-	}
-
-	StringListBase<StackAllocator<char>> list = 
-		StringListBase<StackAllocator<char>>::splitString(
-		CString(txt), ' ', m_alloc);
-
-	if(list.size() != 4)
-	{
-		ANKI_LOGE("Expecting 3 elements for Vec4");
-		return ErrorCode::USER_DATA;
-	}
-
-	for(U i = 0; i < 4; i++)
-	{
-		out[i] = list[i].toF64();
-	}
-
-	return ErrorCode::NONE;
+	
+	return err;
 }
 
 //==============================================================================

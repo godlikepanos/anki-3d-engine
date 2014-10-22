@@ -53,13 +53,15 @@ public:
 		});
 
 		// Update children
-		node.visitChildren([&](SceneObject& obj)
+		node.visitChildren([&](SceneObject& obj) -> Error
 		{
 			if(obj.getType() == SceneObject::Type::SCENE_NODE)
 			{
 				SceneNode& child = obj.downCast<SceneNode>();
 				updateInternal(child, prevTime, crntTime);
 			}
+
+			return ErrorCode::NONE;
 		});
 
 		// Frame update

@@ -107,7 +107,7 @@ void PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
 	if(getShadowEnabled() && m_shadowData == nullptr)
 	{
-		m_shadowData = getAllocator().newInstance<ShadowData>(this);
+		m_shadowData = getSceneAllocator().newInstance<ShadowData>(this);
 
 		const F32 ang = toRad(90.0);
 		F32 dist = m_sphereW.getRadius();

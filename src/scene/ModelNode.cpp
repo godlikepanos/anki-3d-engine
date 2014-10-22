@@ -216,7 +216,7 @@ void ModelNode::frameUpdate(F32, F32)
 	// Gather the move components of the instances
 	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
 	Timestamp instancesTimestamp = 0;
-	SceneObject::visitChildren([&](SceneObject& obj)
+	SceneObject::visitChildren([&](SceneObject& obj) -> Error
 	{
 		if(obj.getType() == SceneNode::getClassType())
 		{
@@ -231,6 +231,8 @@ void ModelNode::frameUpdate(F32, F32)
 					std::max(instancesTimestamp, move.getTimestamp());
 			}
 		}
+
+		return ErrorCode::NONE;
 	});
 
 	// If having instances
