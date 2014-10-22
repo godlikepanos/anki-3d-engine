@@ -8,19 +8,29 @@
 namespace anki {
 
 //==============================================================================
-String getFileExtension(const CString& filename, HeapAllocator<U8>& alloc)
+Error getFileExtension(
+	const CString& filename, HeapAllocator<U8>& alloc, String& out)
 {
+	Error err = ErrorCode::NONE;
 	const char* pc = std::strrchr(&filename[0], '.');
+
+	out.destroy(alloc);
 
 	if(pc == nullptr)
 	{
-		return String();
+		// Do nothing
+	}
+	else
+	{
+		++pc;
+		if(*pc != '\0')
+		{
+			err = out.create(alloc, CString(pc));
+		}
 	}
 
-	++pc;
-	return (*pc == '\0') ? String() : String(CString(pc), alloc);
+	return err;
 }
 
 } // end namespace anki
-
 

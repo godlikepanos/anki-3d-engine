@@ -94,6 +94,8 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 		out = stderr;
 		terminalColor = "\033[0;31m";
 		break;
+	default:
+		ANKI_ASSERT(0);
 	}
 
 	fprintf(out, "%s(%s:%d %s) %s: %s\033[0m\n", terminalColor, info.m_file,
@@ -116,6 +118,8 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 	case Logger::MessageType::FATAL:
 		andMsgType = ANDROID_LOG_ERROR;
 		break;
+	default:
+		ANKI_ASSERT(0);
 	}
 
 	std::stringstream ss;
@@ -139,6 +143,8 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 	case Logger::MessageType::FATAL:
 		out = stderr;
 		break;
+	default:
+		ANKI_ASSERT(0);
 	}
 
 	fprintf(out, "(%s:%d %s) %s: %s\n", info.m_file,

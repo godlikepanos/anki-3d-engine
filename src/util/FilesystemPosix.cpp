@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/util/File.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
 #include <cstring>
 #include <sys/stat.h>
@@ -48,7 +47,7 @@ Bool directoryExists(const CString& filename)
 }
 
 //==============================================================================
-void removeDirectory(const CString& dirname)
+Error removeDirectory(const CString& dirname)
 {
 	DIR* dir;
 	struct dirent* entry;
@@ -56,13 +55,15 @@ void removeDirectory(const CString& dirname)
 
 	if(path == nullptr) 
 	{
-		throw ANKI_EXCEPTION("Out of memory error");
+		ANKI_LOGE("Out of memory error");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	dir = opendir(dirname.get());
 	if(dir == nullptr) 
 	{
-		throw ANKI_EXCEPTION("opendir() failed");
+		ANKI_LOGE("opendir() failed");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	while((entry = readdir(dir)) != nullptr) 
@@ -74,7 +75,11 @@ void removeDirectory(const CString& dirname)
 
 			if(entry->d_type == DT_DIR) 
 			{
-				removeDirectory(CString(path));
+				Error err = removeDirectory(CString(path));
+				if(err)
+				{
+					return err;
+				}
 			}
 			else
 			{
@@ -86,32 +91,39 @@ void removeDirectory(const CString& dirname)
 
 	closedir(dir);
 	remove(dirname.get());
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void createDirectory(const CString& dir)
+Error createDirectory(const CString& dir)
 {
 	if(directoryExists(dir))
 	{
-		return;
+		return ErrorCode::NONE;
 	}
 
+	Error err = ErrorCode::NONE;
 	if(mkdir(dir.get(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
 	{
-		throw ANKI_EXCEPTION("%s : %s", strerror(errno), dir.get());
+		ANKI_LOGE("%s : %s", strerror(errno), dir.get());
+		err = ErrorCode::FUNCTION_FAILED;
 	}
+
+	return err;
 }
 
 //==============================================================================
-String getHomeDirectory(HeapAllocator<U8>& alloc)
+Error getHomeDirectory(HeapAllocator<U8>& alloc, String& out)
 {
 	const char* home = getenv("HOME");
 	if(home == nullptr)
 	{
-		throw ANKI_EXCEPTION("HOME environment variable not set");
+		ANKI_LOGE("HOME environment variable not set");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
-	return String(CString(home), alloc);
+	return out.create(alloc, home);
 }
 
 } // end namespace anki

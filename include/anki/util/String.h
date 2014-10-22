@@ -6,9 +6,9 @@
 #ifndef ANKI_STRING_H
 #define ANKI_STRING_H
 
-#include "anki/util/Vector.h"
-#include "anki/util/Exception.h"
+#include "anki/util/DArray.h"
 #include "anki/util/Array.h"
+#include "anki/util/NonCopyable.h"
 #include <cstring>
 #include <cmath> // For HUGE_VAL
 #include <climits> // For LLONG_MAX
@@ -72,16 +72,16 @@ public:
 
 	static const PtrSize NPOS = MAX_PTR_SIZE;
 
-	CString() noexcept = default;
+	CString()  = default;
 
-	CString(const Char* ptr) noexcept
+	CString(const Char* ptr) 
 	:	m_ptr(ptr)
 	{
 		checkInit();
 	}
 
 	/// Copy constructor.
-	CString(const CString& b) noexcept
+	CString(const CString& b) 
 	:	m_ptr(b.m_ptr),
 		m_length(b.m_length)
 	{
@@ -89,7 +89,7 @@ public:
 	}
 
 	/// Copy.
-	CString& operator=(const CString& b) noexcept
+	CString& operator=(const CString& b) 
 	{
 		m_ptr = b.m_ptr;
 		m_length = b.m_length;
@@ -97,73 +97,73 @@ public:
 	}
 
 	/// Return true if the string is initialized.
-	operator Bool() const noexcept
+	operator Bool() const 
 	{
 		return !isEmpty();
 	}
 
 	/// Return char at the specified position.
-	const Char& operator[](U pos) const noexcept
+	const Char& operator[](U pos) const 
 	{
 		checkInit();
 		ANKI_ASSERT(pos <= getLength());
 		return m_ptr[pos];
 	}
 
-	const Char* begin() const noexcept
+	const Char* begin() const 
 	{
 		checkInit();
 		return &m_ptr[0];
 	}
 
-	const Char* end() const noexcept
+	const Char* end() const 
 	{
 		checkInit();
 		return &m_ptr[getLength()];
 	}
 
 	/// Return true if the string is not initialized.
-	Bool isEmpty() const noexcept
+	Bool isEmpty() const 
 	{
 		return m_ptr == nullptr || getLength() == 0;
 	}
 
-	Bool operator==(const CString& b) const noexcept
+	Bool operator==(const CString& b) const 
 	{
 		checkInit();
 		b.checkInit();
 		return std::strcmp(m_ptr, b.m_ptr) == 0;
 	}
 
-	Bool operator!=(const CString& b) const noexcept
+	Bool operator!=(const CString& b) const 
 	{
 		checkInit();
 		b.checkInit();
 		return std::strcmp(m_ptr, b.m_ptr) != 0;
 	}
 
-	Bool operator<(const CString& b) const noexcept
+	Bool operator<(const CString& b) const 
 	{
 		checkInit();
 		b.checkInit();
 		return std::strcmp(m_ptr, b.m_ptr) < 0;
 	}
 
-	Bool operator<=(const CString& b) const noexcept
+	Bool operator<=(const CString& b) const 
 	{
 		checkInit();
 		b.checkInit();
 		return std::strcmp(m_ptr, b.m_ptr) <= 0;
 	}
 
-	Bool operator>(const CString& b) const noexcept
+	Bool operator>(const CString& b) const 
 	{
 		checkInit();
 		b.checkInit();
 		return std::strcmp(m_ptr, b.m_ptr) > 0;
 	}
 
-	Bool operator>=(const CString& b) const noexcept
+	Bool operator>=(const CString& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -171,14 +171,14 @@ public:
 	}
 
 	/// Get the underlying C string.
-	const char* get() const noexcept
+	const char* get() const 
 	{
 		checkInit();
 		return m_ptr;
 	}
 
 	/// Get the string length.
-	U getLength() const noexcept
+	U getLength() const 
 	{
 		checkInit();
 		if(m_length == 0)
@@ -189,7 +189,7 @@ public:
 		return m_length;
 	}
 
-	PtrSize find(const CString& cstr, PtrSize position = 0) const noexcept
+	PtrSize find(const CString& cstr, PtrSize position = 0) const 
 	{
 		checkInit();
 		ANKI_ASSERT(position < getLength());
@@ -247,7 +247,7 @@ private:
 	mutable U32 m_length = 0;
 
 	/// Constructor for friends
-	CString(const Char* ptr, U32 length) noexcept
+	CString(const Char* ptr, U32 length) 
 	:	m_ptr(ptr),
 		m_length(length)
 	{
@@ -255,7 +255,7 @@ private:
 		ANKI_ASSERT(std::strlen(ptr) == length);
 	}
 
-	void checkInit() const noexcept
+	void checkInit() const 
 	{
 		ANKI_ASSERT(m_ptr != nullptr);
 	}
@@ -269,7 +269,7 @@ inline CString operator"" _cstr(const char* str, unsigned long length)
 
 /// The base class for strings.
 template<typename TAlloc>
-class StringBase
+class StringBase: public NonCopyable
 {
 public:
 	using Char = char; ///< Character type
@@ -281,66 +281,40 @@ public:
 
 	static const PtrSize NPOS = MAX_PTR_SIZE;
 
-	StringBase() noexcept
-	{}
-
-	StringBase(Allocator alloc) noexcept
-	:	m_data(alloc)
-	{}
-
-	/// Initialize using a const string.
-	StringBase(const CStringType& cstr, Allocator alloc)
-	:	m_data(alloc)
-	{
-		auto size = cstr.getLength() + 1;
-		m_data.resize(size);
-		std::memcpy(&m_data[0], cstr.get(), sizeof(Char) * size);
-	}
-
-	/// Initialize using a range. Copies the range of [first, last)
-	StringBase(ConstIterator first, ConstIterator last, Allocator alloc)
-	:	m_data(alloc)
-	{
-		ANKI_ASSERT(first != 0 && last != 0);
-		auto length = last - first;
-		m_data.resize(length + 1);
-		std::memcpy(&m_data[0], first, length);
-		m_data[length] = '\0';
-	}
-
-	/// Copy constructor.
-	StringBase(const Self& b)
-	:	m_data(b.m_data)
+	/// Default constructor.
+	StringBase() 
 	{}
 
 	/// Move constructor.
-	StringBase(StringBase&& b) noexcept
+	StringBase(StringBase&& b) 
 	:	m_data(std::move(b.m_data))
 	{}
 
-	/// Destroys the string.
-	~StringBase() noexcept
+	/// Requires manual destruction.
+	~StringBase() 
 	{}
 
-	/// Copy another string to this one.
-	Self& operator=(const Self& b)
+	/// Initialize using a const string.
+	ANKI_USE_RESULT Error create(Allocator alloc, const CStringType& cstr);
+
+	/// Initialize using a range. Copies the range of [first, last)
+	ANKI_USE_RESULT Error create(Allocator alloc,
+		ConstIterator first, ConstIterator last);
+
+	/// Copy one string to another.
+	ANKI_USE_RESULT Error create(Allocator alloc, const Self& b)
 	{
-		ANKI_ASSERT(this != &b);
-		m_data = b.m_data;
-		return *this;
+		return create(alloc, b.toCString());
 	}
 
-	/// Copy a const string to this one.
-	Self& operator=(const CStringType& cstr)
+	/// Destroy the string.
+	void destroy(Allocator alloc)
 	{
-		auto size = cstr.getLength() + 1;
-		m_data.resize(size);
-		std::memcpy(&m_data[0], cstr.get(), sizeof(Char) * size);
-		return *this;
+		m_data.destroy(alloc);
 	}
 
 	/// Move one string to this one.
-	Self& operator=(Self&& b) noexcept
+	Self& operator=(Self&& b) 
 	{
 		ANKI_ASSERT(this != &b);
 		m_data = std::move(b.m_data);
@@ -348,80 +322,45 @@ public:
 	}
 
 	/// Return char at the specified position.
-	const Char& operator[](U pos) const noexcept
+	const Char& operator[](U pos) const 
 	{
 		checkInit();
 		return m_data[pos];
 	}
 
 	/// Return char at the specified position as a modifiable reference.
-	Char& operator[](U pos) noexcept
+	Char& operator[](U pos) 
 	{
 		checkInit();
 		return m_data[pos];
 	}
 
-	Iterator begin() noexcept
+	Iterator begin() 
 	{
 		checkInit();
 		return &m_data[0];
 	}
 
-	ConstIterator begin() const noexcept
+	ConstIterator begin() const 
 	{
 		checkInit();
 		return &m_data[0];
 	}
 
-	Iterator end() noexcept
+	Iterator end() 
 	{
 		checkInit();
 		return &m_data[m_data.size() - 1];
 	}
 
-	ConstIterator end() const noexcept
+	ConstIterator end() const 
 	{
 		checkInit();
 		return &m_data[m_data.size() - 1];
-	}
-
-	/// Add strings.
-	Self operator+(const Self& b) const
-	{
-		b.checkInit();
-		return add(&b.m_data[0], b.m_data.size());
-	}
-
-	/// Add strings.
-	Self operator+(const CString& cstr) const
-	{
-		return add(&cstr[0], cstr.getLength() + 1);
-	}
-
-	/// Append another string to this one.
-	template<typename TTAlloc>
-	Self& operator+=(const StringBase<TTAlloc>& b)
-	{
-		if(!b.isEmpty())
-		{
-			append(&b.m_data[0], b.m_data.size());
-		}
-		return *this;
-	}
-
-	/// Append a const string to this one.
-	Self& operator+=(const CStringType& cstr)
-	{
-		if(!cstr.isEmpty())
-		{
-			U size = cstr.getLength() + 1;
-			append(cstr.get(), size);
-		}
-		return *this;
 	}
 
 	/// Return true if strings are equal
-	Bool operator==(const Self& b) const noexcept
+	Bool operator==(const Self& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -429,13 +368,13 @@ public:
 	}
 
 	/// Return true if strings are not equal
-	Bool operator!=(const Self& b) const noexcept
+	Bool operator!=(const Self& b) const 
 	{
 		return !(*this == b);
 	}
 
 	/// Return true if this is less than b
-	Bool operator<(const Self& b) const noexcept
+	Bool operator<(const Self& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -443,7 +382,7 @@ public:
 	}
 
 	/// Return true if this is less or equal to b
-	Bool operator<=(const Self& b) const noexcept
+	Bool operator<=(const Self& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -451,7 +390,7 @@ public:
 	}
 
 	/// Return true if this is greater than b
-	Bool operator>(const Self& b) const noexcept
+	Bool operator>(const Self& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -459,7 +398,7 @@ public:
 	}
 
 	/// Return true if this is greater or equal to b
-	Bool operator>=(const Self& b) const noexcept
+	Bool operator>=(const Self& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -467,146 +406,92 @@ public:
 	}
 
 	/// Return true if strings are equal
-	Bool operator==(const CStringType& cstr) const noexcept
+	Bool operator==(const CStringType& cstr) const 
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) == 0;
 	}
 
 	/// Return true if strings are not equal
-	Bool operator!=(const CStringType& cstr) const noexcept
+	Bool operator!=(const CStringType& cstr) const 
 	{
 		return !(*this == cstr);
 	}
 
 	/// Return true if this is less than cstr.
-	Bool operator<(const CStringType& cstr) const noexcept
+	Bool operator<(const CStringType& cstr) const 
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) < 0;
 	}
 
 	/// Return true if this is less or equal to cstr.
-	Bool operator<=(const CStringType& cstr) const noexcept
+	Bool operator<=(const CStringType& cstr) const 
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) <= 0;
 	}
 
 	/// Return true if this is greater than cstr.
-	Bool operator>(const CStringType& cstr) const noexcept
+	Bool operator>(const CStringType& cstr) const 
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) > 0;
 	}
 
 	/// Return true if this is greater or equal to cstr.
-	Bool operator>=(const CStringType& cstr) const noexcept
+	Bool operator>=(const CStringType& cstr) const 
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) >= 0;
 	}
 
 	/// Return the string's length. It doesn't count the terminating character.
-	PtrSize getLength() const noexcept
+	PtrSize getLength() const 
 	{
-		auto size = m_data.size();
+		auto size = m_data.getSize();
 		auto out = (size != 0) ? (size - 1) : 0;
 		ANKI_ASSERT(std::strlen(&m_data[0]) == out);
 		return out;
 	}
 
-	/// Return the allocator
-	Allocator getAllocator() const noexcept
-	{
-		return m_data.get_allocator();
-	}
-
 	/// Return the CString.
-	CStringType toCString() const noexcept
+	CStringType toCString() const 
 	{
 		checkInit();
 		return CStringType(&m_data[0], getLength());
 	}
 
-	Self& sprintf(CString fmt, ...)
+	/// Append another string to this one.
+	template<typename TTAlloc>
+	ANKI_USE_RESULT Error append(Allocator alloc, const StringBase<TTAlloc>& b)
 	{
-		Array<Char, 512> buffer;
-		va_list args;
-
-		va_start(args, fmt);
-		I len = std::vsnprintf(&buffer[0], sizeof(buffer), &fmt[0], args);
-		va_end(args);
-
-		if(len < 0)
+		Error err = ErrorCode::NONE;
+		if(!b.isEmpty())
 		{
-			throw ANKI_EXCEPTION("vsnprintf() failed");
-		}
-		else if(static_cast<PtrSize>(len) >= sizeof(buffer))
-		{
-			I size = len + 1;
-			m_data.resize(size);
-
-			va_start(args, fmt);
-			len = std::vsnprintf(&m_data[0], size, &fmt[0], args);
-			(void)len;
-			va_end(args);
-
-			ANKI_ASSERT((len + 1) == size);
-		}
-		else
-		{
-			// buffer was enough
-			*this = &buffer[0];
+			err = appendInternal(alloc, &b.m_data[0], b.m_data.getSize());
 		}
 
-		return *this;
+		return err;
 	}
 
-	/// Clears the contents of the string and makes it empty.
-	void clear()
+	/// Append a const string to this one.
+	ANKI_USE_RESULT Error append(Allocator alloc, const CStringType& cstr)
 	{
-		m_data.clear();
+		Error err = ErrorCode::NONE;
+		if(!cstr.isEmpty())
+		{
+			err = appendInternal(cstr.get(), cstr.getLength() + 1);
+		}
+
+		return err;
 	}
 
-	/// Request string capacity change.
-	void reserve(PtrSize size)
-	{
-		++size;
-		if(size > m_data.size())
-		{
-			m_data.reserve(size);
-		}
-	}
-
-	/// Resize the string.
-	void resize(PtrSize newLength, const Char c = '\0')
-	{
-		ANKI_ASSERT(newLength > 0);
-		auto size = m_data.size();
-		m_data.resize(newLength + 1);
-
-		if(size < newLength + 1)
-		{
-			// The string has grown
-			
-			// Fill the extra space with c
-			std::memset(
-				&m_data[(size > 0) ? (size - 1) : 0], 
-				c, 
-				newLength - size + 1);
-			m_data[newLength] = '\0';
-		}
-		else if(size > newLength + 1)
-		{
-			// The string got shrinked
-
-			m_data[newLength] = '\0';
-		}
-	}
+	/// Create formated string.
+	ANKI_USE_RESULT Error sprintf(Allocator alloc, CString fmt, ...);
 
 	/// Return true if it's empty.
-	Bool isEmpty() const noexcept
+	Bool isEmpty() const 
 	{
 		return m_data.empty();
 	}
@@ -616,7 +501,7 @@ public:
 	/// @param position Position of the first character in the string to be 
 	///                 considered in the search.
 	/// @return A valid position if the string is found or NPOS if not found.
-	PtrSize find(const CStringType& cstr, PtrSize position = 0) const noexcept
+	PtrSize find(const CStringType& cstr, PtrSize position = 0) const 
 	{
 		checkInit();
 		return toCString().find(cstr, position);
@@ -629,31 +514,16 @@ public:
 	/// @return A valid position if the string is found or NPOS if not found.
 	template<typename TTAlloc>
 	PtrSize find(
-		const StringBase<TTAlloc>& str, PtrSize position) const noexcept
+		const StringBase<TTAlloc>& str, PtrSize position) const 
 	{
 		str.chechInit();
 		return find(str.toCString(), position);
 	}
 
 	/// Convert a number to a string.
-	/// @param number The number to convert.
-	/// @param[in,out] alloc The allocator to allocate the returned string.
-	/// @return The string that presents the number.
-	template<typename TNumber, typename TTAlloc>
-	static Self toString(TNumber number, TTAlloc alloc)
-	{
-		Array<Char, 512> buff;
-		I ret = std::snprintf(
-			&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
-
-		if(ret < 0 || ret > static_cast<I>(buff.size()))
-		{
-			throw ANKI_EXCEPTION("To small intermediate buffer");
-		}
-
-		using YAlloc = typename TTAlloc::template rebind<Char>::other;
-		return StringBase<YAlloc>(&buff[0], alloc);
-	}
+	template<typename TNumber>
+	static ANKI_USE_RESULT Error toString(
+		Allocator alloc, TNumber number, Self& out);
 
 	/// Convert to F64.
 	ANKI_USE_RESULT Error toF64(F64& out) const
@@ -668,60 +538,17 @@ public:
 	}
 
 private:
-	Vector<Char, TAlloc> m_data;
+	DArray<Char, Allocator> m_data;
 
 	void checkInit() const
 	{
-		ANKI_ASSERT(m_data.size() > 1);
+		ANKI_ASSERT(m_data.getSize() > 1);
 	}
 
-	void append(const Char* str, PtrSize strSize)
-	{
-		ANKI_ASSERT(str != nullptr);
-		ANKI_ASSERT(strSize > 1);
-
-		auto size = m_data.size();
-
-		// Fix empty string
-		if(size == 0)
-		{
-			size = 1;
-		}
-
-		m_data.resize(size + strSize - 1);
-		std::memcpy(&m_data[size - 1], str, sizeof(Char) * strSize);
-	}
-
-	Self add(const Char* str, PtrSize strSize) const
-	{
-		checkInit();
-
-		Self out(m_data.get_allocator());
-		out.m_data.resize(m_data.size() + strSize - 1);
-
-		std::memcpy(&out.m_data[0], &m_data[0], 
-			(m_data.size() - 1) * sizeof(Char));
-		std::memcpy(&out.m_data[m_data.size() - 1], str, 
-			strSize * sizeof(Char));
-
-		return out;
-	}
+	/// Append to this string.
+	ANKI_USE_RESULT Error appendInternal(
+		Allocator alloc, const Char* str, PtrSize strSize);
 };
-
-template<typename TAlloc>
-inline StringBase<TAlloc> operator+(
-	const CString& left, const StringBase<TAlloc>& right)
-{
-	StringBase<TAlloc> out(right.getAllocator());
-
-	auto leftLength = left.getLength();
-	out.resize(leftLength + right.getLength());
-
-	std::memcpy(&out[0], &left[0], leftLength);
-	std::memcpy(&out[leftLength], &right[0], right.getLength() + 1);
-
-	return out;
-}
 
 /// A common string type that uses heap allocator.
 using String = StringBase<HeapAllocator<char>>;
@@ -729,5 +556,7 @@ using String = StringBase<HeapAllocator<char>>;
 /// @}
 
 } // end namespace anki
+
+#include "anki/util/String.inl.h"
 
 #endif
