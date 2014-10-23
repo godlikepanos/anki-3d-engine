@@ -301,7 +301,10 @@ public:
 	ANKI_USE_RESULT Error create(Allocator alloc,
 		ConstIterator first, ConstIterator last);
 
-	/// Copy one string to another.
+	/// Initialize using a character.
+	ANKI_USE_RESULT Error create(Allocator alloc, Char c, PtrSize length);
+
+	/// Copy one string to this one.
 	ANKI_USE_RESULT Error create(Allocator alloc, const Self& b)
 	{
 		return create(alloc, b.toCString());

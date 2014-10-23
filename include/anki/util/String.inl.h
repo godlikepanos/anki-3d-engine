@@ -40,6 +40,22 @@ Error StringBase<TAlloc>::create(
 
 //==============================================================================
 template<typename TAlloc>
+Error StringBase<TAlloc>::create(Allocator alloc, Char c, PtrSize length)
+{
+	ANKI_ASSERT(c != '\0');
+	Error err = m_data.create(alloc, length + 1);
+
+	if(!err)
+	{
+		std::memset(&m_data[0], c, length);
+		m_data[length] = '\0';
+	}
+
+	return err;
+}
+
+//==============================================================================
+template<typename TAlloc>
 Error StringBase<TAlloc>::appendInternal(
 	Allocator alloc, const Char* str, PtrSize strSize)
 {

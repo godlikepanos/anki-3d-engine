@@ -11,7 +11,8 @@ namespace anki {
 
 //==============================================================================
 Error GlProgramPipeline::create(
-	const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd)
+	const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd,
+	GlAllocator<U8>& alloc)
 {
 	ANKI_ASSERT(progsBegin != nullptr && progsEnd != nullptr);
 	ANKI_ASSERT(progsBegin != progsEnd);
@@ -50,18 +51,20 @@ Error GlProgramPipeline::create(
 	{
 		GLint infoLen = 0;
 		GLint charsWritten = 0;
-		String infoLogTxt;
+		DArray<char> infoLogTxt;
 
 		glGetProgramPipelineiv(m_glName, GL_INFO_LOG_LENGTH, &infoLen);
 
-		infoLogTxt.resize(infoLen + 1);
-		glGetProgramPipelineInfoLog(
-			m_glName, infoLen, &charsWritten, &infoLogTxt[0]);
+		err = infoLogTxt.create(alloc, infoLen + 1);
 
-		infoLogTxt = "Ppline error log follows:\n" + infoLogTxt;
+		if(!err)
+		{
+			glGetProgramPipelineInfoLog(
+				m_glName, infoLen, &charsWritten, &infoLogTxt[0]);
 
-		ANKI_LOGE("%s", &infoLogTxt[0]);
-		err = ErrorCode::USER_DATA;
+			ANKI_LOGE("Ppline error log follows:\n%s", &infoLogTxt[0]);
+			err = ErrorCode::USER_DATA;
+		}
 	}
 
 	glBindProgramPipeline(0);
