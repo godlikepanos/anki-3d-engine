@@ -120,6 +120,11 @@ public:
 		return m_size;
 	}
 
+	Bool isEmpty() const
+	{
+		return m_size == 0;
+	}
+
 	PtrSize getSizeInBytes() const
 	{
 		return m_size * sizeof(Value);

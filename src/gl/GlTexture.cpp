@@ -154,7 +154,11 @@ Error GlTexture::create(const Initializer& init,
 				{
 					PtrSize layerSize = init.m_data[level][0].m_size;
 					ANKI_ASSERT(layerSize > 0);
-					data.create(alloc, layerSize * m_depth);
+					Error err = data.create(alloc, layerSize * m_depth);
+					if(err)
+					{
+						return err;
+					}
 
 					for(U d = 0; d < m_depth; d++)
 					{

@@ -290,24 +290,28 @@ Error GlProgram::create(GLenum type, const CString& source,
 		version = major * 100 + minor * 10;
 	}
 
-	String fullSrc(alloc);
+	String fullSrc;
 #if ANKI_GL == ANKI_GL_DESKTOP
-	fullSrc.sprintf("#version %d core\n%s\n", version, &source[0]); 
+	err = fullSrc.sprintf(alloc, "#version %d core\n%s\n", version, &source[0]); 
 #else
-	fullSrc.sprintf("#version %d es\n%s\n", version, &source[0]);
+	err = fullSrc.sprintf(alloc, "#version %d es\n%s\n", version, &source[0]);
 #endif
 
 	// 2) Gen name, create, compile and link
 	//
-	const char* sourceStrs[1] = {nullptr};
-	sourceStrs[0] = &fullSrc[0];
-	m_glName = glCreateShaderProgramv(m_type, 1, sourceStrs);
-	if(m_glName == 0)
+	if(!err)
 	{
-		return ErrorCode::FUNCTION_FAILED;
+		const char* sourceStrs[1] = {nullptr};
+		sourceStrs[0] = &fullSrc[0];
+		m_glName = glCreateShaderProgramv(m_type, 1, sourceStrs);
+		if(m_glName == 0)
+		{
+			err = ErrorCode::FUNCTION_FAILED;
+		}
 	}
 
 #if ANKI_DUMP_SHADERS
+	if(!err)
 	{
 		const char* ext;
 
@@ -336,68 +340,88 @@ Error GlProgram::create(GLenum type, const CString& source,
 			ANKI_ASSERT(0);
 		}
 
-		String fname(alloc);
-		fname.sprintf(
+		String fname;
+		err = fname.sprintf(alloc,
 			"%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
-		File file;
-		err = file.open(fname.toCString(), File::OpenFlag::WRITE);
-		
 		if(!err)
 		{
-			err = file.writeText("%s", &fullSrc[0]);
+			File file;
+			err = file.open(fname.toCString(), File::OpenFlag::WRITE);
 		}
 
-		if(err)
-		{
-			ANKI_LOGW("Failed to open file %s", &fname[0]);
-		}
+		fname.destroy(alloc);
 	}
 #endif
 	
-	GLint status = GL_FALSE;
-	glGetProgramiv(m_glName, GL_LINK_STATUS, &status);
-
-	if(status == GL_FALSE)
+	if(!err)
 	{
-		GLint infoLen = 0;
-		GLint charsWritten = 0;
-		String infoLog(alloc);
+		GLint status = GL_FALSE;
+		glGetProgramiv(m_glName, GL_LINK_STATUS, &status);
 
-		static const char* padding = 
-			"======================================="
-			"=======================================";
-
-		glGetProgramiv(m_glName, GL_INFO_LOG_LENGTH, &infoLen);
-
-		infoLog.resize(infoLen + 1);
-		glGetProgramInfoLog(m_glName, infoLen, &charsWritten, &infoLog[0]);
-		
-		String errstr(alloc);
-		errstr.sprintf("Shader compile failed (type %x):\n%s\n%s\n%s\n",
-			m_type, padding, &infoLog[0], padding);
-
-		// Prettyfy source
-		StringList lines(
-			StringList::splitString(fullSrc.toCString(), '\n', alloc));
-		I lineno = 0;
-		for(const String& line : lines)
+		if(status == GL_FALSE)
 		{
-			String tmp(alloc);
-			tmp.sprintf("%4d: %s\n", ++lineno, &line[0]);
-
-			errstr += tmp;
+			err = handleError(alloc, fullSrc);
 		}
-
-		errstr += padding;
-
-		ANKI_LOGE("%s", &errstr[0]);
-		return ErrorCode::USER_DATA;
 	}
 
 	// 3) Populate with vars and blocks
 	//
-	err = populateVariablesAndBlock(alloc);
+	if(!err)
+	{
+		err = populateVariablesAndBlock(alloc);
+	}
+
+	fullSrc.destroy(alloc);
+
+	return err;
+}
+
+//==============================================================================
+Error GlProgram::handleError(GlAllocator<U8>& alloc, String& src)
+{
+	Error err = ErrorCode::NONE;
+
+	GLint compilerLogLen = 0;
+	GLint charsWritten = 0;
+	String compilerLog;
+	String prettySrc;
+
+	static const char* padding = 
+		"======================================="
+		"=======================================";
+
+	glGetProgramiv(m_glName, GL_INFO_LOG_LENGTH, &compilerLogLen);
+
+	err = compilerLog.create(alloc, '?', compilerLogLen + 1);
+
+	StringList lines;
+	if(!err)
+	{
+		glGetProgramInfoLog(
+			m_glName, compilerLogLen, &charsWritten, &compilerLog[0]);
+		
+		err = StringList::splitString(alloc, src.toCString(), '\n', lines);
+	}
+
+	I lineno = 0;
+	for(auto it = lines.getBegin(); it != lines.getEnd() && !err; ++it)
+	{
+		String tmp;
+
+		err = tmp.sprintf(alloc, "%4d: %s\n", ++lineno, &(*it)[0]);
+		
+		if(!err)
+		{
+			err = prettySrc.append(alloc, tmp);
+		}
+	}
+
+	if(!err)
+	{
+		ANKI_LOGE("Shader compilation failed (type %x):\n%s\n%s\n%s\n%s",
+			m_type, padding, &compilerLog[0], padding, &prettySrc[0]);
+	}
 
 	return err;
 }

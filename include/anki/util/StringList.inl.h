@@ -10,16 +10,18 @@ namespace anki {
 
 //==============================================================================
 template<typename TAlloc>
-typename StringListBase<TAlloc>::String 
-	StringListBase<TAlloc>::join(const CString& separator) const
+Error StringListBase<TAlloc>::join(
+	Allocator alloc,
+	const CString& separator,
+	String& out) const
 {
-	if(Base::size() == 0)
+	if(Base::isEmpty())
 	{
-		return String(Base::get_allocator());
+		return ErrorCode::NONE;
 	}
 
 	// Count the characters
-	I sepLen = separator.getLength();
+	const I sepLen = separator.getLength();
 	I charCount = 0;
 	for(const String& str : *this)
 	{
@@ -29,21 +31,30 @@ typename StringListBase<TAlloc>::String
 	charCount -= sepLen; // Remove last separator
 	ANKI_ASSERT(charCount > 0);
 
-	Allocator alloc = Base::get_allocator();
-	String out(alloc);
-	out.reserve(charCount + 1);
-
-	typename Base::const_iterator it = Base::begin();
-	for(; it != Base::end(); it++)
+	// Allocate
+	Error err = out.create(alloc, '?', charCount + 1);
+	if(err)
 	{
-		out += *it;
+		return err;
+	}
+
+	// Append to output
+	Char* to = &out[0];
+	typename Base::ConstIterator it = Base::getBegin();
+	for(; it != Base::getEnd(); it++)
+	{
+		const String& from = *it;
+		std::memcpy(out, &from[0], from.getLength() * sizeof(Char));
+		to += from.getLength();
+
 		if(it != Base::end() - 1)
 		{
-			out += separator;
+			std::memcpy(to, &separator[0], sepLen * sizeof(Char));
+			to += sepLen;
 		}
 	}
 
-	return out;
+	return err;
 }
 
 //==============================================================================
@@ -52,7 +63,7 @@ I StringListBase<TAlloc>::getIndexOf(const CString& value) const
 {
 	U pos = 0;
 
-	for(auto it = Base::begin(); it != Base::end(); ++it)
+	for(auto it = Base::getBegin(); it != Base::getEnd(); ++it)
 	{
 		if(*it == value)
 		{
@@ -66,23 +77,36 @@ I StringListBase<TAlloc>::getIndexOf(const CString& value) const
 
 //==============================================================================
 template<typename TAlloc>
-StringListBase<TAlloc> 
-	StringListBase<TAlloc>::splitString(
+Error StringListBase<TAlloc>::splitString(
+	Allocator alloc,
 	const CString& s, 
 	const Char separator,
-	Allocator alloc)
+	Self& out)
 {
-	Self out(alloc);
+	ANKI_ASSERT(out.isEmpty());
+
+	Error err = ErrorCode::NONE;
 	const Char* begin = &s[0];
 	const Char* end = begin;
 
-	while(true)
+	while(!err)
 	{
 		if(*end == '\0')
 		{
 			if(begin < end)
 			{
-				out.emplace_back(begin, end, alloc);
+				err = out.emplaceBack(alloc);
+
+				String str;
+				if(!err)
+				{
+					err = str.create(alloc, begin, end);
+				}
+
+				if(!err)
+				{
+					out.getBack() = std::move(str);
+				}
 			}
 
 			break;
@@ -91,8 +115,19 @@ StringListBase<TAlloc>
 		{
 			if(begin < end)
 			{
-				out.emplace_back(begin, end, alloc);
-				begin = end + 1;
+				err = out.emplaceBack(alloc);
+
+				String str;
+				if(!err)
+				{
+					err = str.create(alloc, begin, end);
+				}
+
+				if(!err)
+				{
+					out.getBack() = std::move(str);
+					begin = end + 1;
+				}
 			}
 			else
 			{
@@ -103,7 +138,28 @@ StringListBase<TAlloc>
 		++end;
 	}
 
-	return out;
+	return err;
+}
+
+//==============================================================================
+template<typename TAlloc>
+void StringListBase<TAlloc>::sortAll(const Sort method)
+{
+	if(method == Sort::ASCENDING)
+	{
+		Base::sort([](const String& a, const String& b)
+		{
+			return a < b;
+		});
+	}
+	else
+	{
+		ANKI_ASSERT(method == Sort::DESCENDING);
+		Base::sort([](const String& a, const String& b)
+		{
+			return a < b;
+		});
+	}
 }
 
 } // end namespace anki

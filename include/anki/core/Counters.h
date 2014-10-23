@@ -5,6 +5,7 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Singleton.h"
+#include "anki/util/DArray.h"
 #include "anki/util/File.h"
 #include "anki/util/HighRezTimer.h"
 #include "anki/util/Atomic.h"
@@ -61,9 +62,9 @@ public:
 private:
 	File m_perframeFile;
 	File m_perrunFile;
-	Vector<U64> m_perframeValues;
-	Vector<U64> m_perrunValues;
-	Vector<HighRezTimer::Scalar> m_counterTimes;
+	DArray<U64> m_perframeValues;
+	DArray<U64> m_perrunValues;
+	DArray<HighRezTimer::Scalar> m_counterTimes;
 };
 
 /// The singleton of the counters manager

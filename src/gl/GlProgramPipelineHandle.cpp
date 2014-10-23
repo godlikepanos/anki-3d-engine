@@ -57,10 +57,11 @@ Error GlProgramPipelineHandle::commonConstructor(
 			} while(++prog != progsEnd);
 		}
 
-		Error operator()(GlCommandBuffer*)
+		Error operator()(GlCommandBuffer* cmdb)
 		{
 			Error err = m_ppline._get().create(
-				&m_progs[0], &m_progs[0] + m_progsCount);
+				&m_progs[0], &m_progs[0] + m_progsCount,
+				cmdb->getGlobalAllocator());
 
 			GlHandleState oldState = m_ppline._setState(
 				err ? GlHandleState::ERROR : GlHandleState::CREATED);

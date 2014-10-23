@@ -29,7 +29,7 @@ public:
 
 	ANKI_USE_RESULT Error create(
 		const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd,
-		GlAllocator<U8>& alloc);
+		GlAllocator<U8> alloc);
 
 	GlProgramHandle getAttachedProgram(GLenum type) const;
 

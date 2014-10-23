@@ -496,7 +496,7 @@ public:
 	/// Return true if it's empty.
 	Bool isEmpty() const 
 	{
-		return m_data.empty();
+		return m_data.isEmpty();
 	}
 
 	/// Find a substring of this string.

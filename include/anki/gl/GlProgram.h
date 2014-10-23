@@ -90,6 +90,8 @@ private:
 		char*& namesPtr, U& namesLen);
 
 	ANKI_USE_RESULT Error populateVariablesAndBlock(GlAllocator<U8>& alloc);
+
+	ANKI_USE_RESULT Error handleError(GlAllocator<U8>& alloc, String& src);
 };
 
 /// @}

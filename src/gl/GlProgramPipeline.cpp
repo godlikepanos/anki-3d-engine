@@ -12,7 +12,7 @@ namespace anki {
 //==============================================================================
 Error GlProgramPipeline::create(
 	const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd,
-	GlAllocator<U8>& alloc)
+	GlAllocator<U8> alloc)
 {
 	ANKI_ASSERT(progsBegin != nullptr && progsEnd != nullptr);
 	ANKI_ASSERT(progsBegin != progsEnd);
