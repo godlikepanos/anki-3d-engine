@@ -266,12 +266,11 @@ Error ModelPatch<MeshResourcePointerType>::create(
 	// Load meshes
 	for(U i = 0; i < meshesCount; i++)
 	{
-		m_meshResources[i].load(meshFNames[i], resources);
+		ANKI_CHECK(m_meshResources[i].load(meshFNames[i], resources));
 		m_meshes[i] = m_meshResources[i].get();
 
 		// Sanity check
-		if(i > 0 
-			&& !m_meshResources[i]->isCompatible(*m_meshResources[i - 1]))
+		if(i > 0 && !m_meshResources[i]->isCompatible(*m_meshResources[i - 1]))
 		{
 			ANKI_LOGE("Meshes not compatible");
 			return ErrorCode::USER_DATA;
@@ -279,7 +278,7 @@ Error ModelPatch<MeshResourcePointerType>::create(
 	}
 
 	// Load material
-	m_mtlResource.load(mtlFName, resources);
+	ANKI_CHECK(m_mtlResource.load(mtlFName, resources));
 	m_mtl = m_mtlResource.get();
 
 	// Create VAOs

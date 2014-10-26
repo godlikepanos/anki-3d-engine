@@ -17,9 +17,9 @@ struct Bone
 	friend class Skeleton; ///< For loading
 
 public:
-	Bone(ResourceAllocator<U8>& alloc)
-	:	m_name(alloc)
-	{}
+	Bone() = default;
+
+	~Bone() = default;
 
 	const ResourceString& getName() const
 	{
@@ -30,6 +30,14 @@ public:
 	{
 		return m_transform;
 	}
+
+	/// @privatesection
+	/// @{
+	void _destroy(ResourceAllocator<U8> alloc)
+	{
+		m_name.destroy(alloc);
+	}
+	/// @}
 
 private:
 	ResourceString m_name; ///< The name of the bone

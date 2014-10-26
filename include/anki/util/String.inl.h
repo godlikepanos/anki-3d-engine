@@ -129,7 +129,7 @@ Error StringBase<TAlloc>::sprintf(Allocator alloc, CString fmt, ...)
 //==============================================================================
 template<typename TAlloc>
 template<typename TNumber>
-Error StringBase<TAlloc>::toString(Allocator alloc, TNumber number, Self& out)
+Error StringBase<TAlloc>::toString(Allocator alloc, TNumber number)
 {
 	Error err = ErrorCode::NONE;
 
@@ -139,7 +139,7 @@ Error StringBase<TAlloc>::toString(Allocator alloc, TNumber number, Self& out)
 	I ret = std::snprintf(
 		&buff[0], buff.size(), detail::toStringFormat<TNumber>(), number);
 
-	if(ret < 0 || ret > static_cast<I>(buff.size()))
+	if(ret < 0 || ret > static_cast<I>(buff.getSize()))
 	{
 		ANKI_LOGE("To small intermediate buffer");
 		err = ErrorCode::FUNCTION_FAILED;

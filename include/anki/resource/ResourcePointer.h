@@ -111,11 +111,8 @@ public:
 		const CString& filename, TResourceManager* resources);
 
 	template<typename... TArgs>
-	void loadToCache(TResourceManager* resources, TArgs&&... args)
-	{
-		auto fname = Type::createToCache(args..., *resources);
-		load(fname.toCString(), resources);
-	}
+	ANKI_USE_RESULT Error loadToCache(
+		TResourceManager* resources, TArgs&&... args);
 
 	Bool isLoaded() const
 	{

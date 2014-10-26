@@ -44,7 +44,7 @@ Error StringListBase<TAlloc>::join(
 	for(; it != Base::getEnd(); it++)
 	{
 		const String& from = *it;
-		std::memcpy(out, &from[0], from.getLength() * sizeof(Char));
+		std::memcpy(to, &from[0], from.getLength() * sizeof(Char));
 		to += from.getLength();
 
 		if(it != Base::end() - 1)
@@ -160,6 +160,28 @@ void StringListBase<TAlloc>::sortAll(const Sort method)
 			return a < b;
 		});
 	}
+}
+
+//==============================================================================
+template<typename TAlloc>
+template<typename... TArgs>
+Error StringListBase<TAlloc>::pushBackSprintf(
+	Allocator alloc, const TArgs&... args)
+{
+	String str;
+	Error err = str.sprintf(alloc, args...);
+	
+	if(!err)
+	{
+		err = Base::emplaceBack(alloc);
+	}
+
+	if(!err)
+	{
+		Base::getBack() = std::move(str);
+	}
+
+	return err;
 }
 
 } // end namespace anki

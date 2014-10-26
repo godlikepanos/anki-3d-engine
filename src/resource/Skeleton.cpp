@@ -16,6 +16,11 @@ Skeleton::Skeleton(ResourceAllocator<U8>& alloc)
 //==============================================================================
 Skeleton::~Skeleton()
 {
+	for(Bone& b : m_bones)
+	{
+		b._destroy(m_alloc);
+	}
+
 	m_bones.destroy(m_alloc);
 }
 
@@ -42,7 +47,7 @@ Error Skeleton::load(const CString& filename, ResourceInitializer& init)
 	ANKI_CHECK(boneEl.getSiblingElementsCount(bonesCount));
 	++bonesCount;
 
-	ANKI_CHECK(m_bones.create(m_alloc, bonesCount, Bone(init.m_alloc)));
+	ANKI_CHECK(m_bones.create(m_alloc, bonesCount));
 
 	// Load every bone
 	bonesCount = 0;
@@ -55,7 +60,7 @@ Error Skeleton::load(const CString& filename, ResourceInitializer& init)
 		ANKI_CHECK(boneEl.getChildElement("name", nameEl));
 		CString tmp;
 		ANKI_CHECK(nameEl.getText(tmp));
-		bone.m_name = tmp;
+		ANKI_CHECK(bone.m_name.create(m_alloc, tmp));
 
 		// <transform>
 		XmlElement trfEl;

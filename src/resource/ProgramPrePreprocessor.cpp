@@ -31,23 +31,24 @@ const U32 MAX_DEPTH = 8;
 //==============================================================================
 void ProgramPrePreprocessor::printSourceLines() const
 {
-	for(U i = 0; i < m_sourceLines.size(); ++i)
+	U i = 1;
+	auto it = m_sourceLines.getBegin();
+	auto end = m_sourceLines.getEnd();
+	for(; it != end; ++it)
 	{
-		printf("%4lu %s\n", i + 1, &m_sourceLines[i][0]);
+		printf("%4lu %s\n", i++, &(*it)[0]);
 	}
 }
 
 //==============================================================================
 Error ProgramPrePreprocessor::parseFile(const CString& filename)
 {
-	auto alloc = m_shaderSource.getAllocator();
-
 	// Parse files recursively
-	Error err = parseFileForPragmas(PPPString(filename, alloc), 0);
+	Error err = parseFileForPragmas(filename, 0);
 
 	if(!err)
 	{
-		m_shaderSource = m_sourceLines.join("\n");
+		err = m_sourceLines.join(m_alloc, "\n", m_shaderSource);
 	}
 	
 	return err;
@@ -55,7 +56,7 @@ Error ProgramPrePreprocessor::parseFile(const CString& filename)
 
 //==============================================================================
 Error ProgramPrePreprocessor::parseFileForPragmas(
-	const PPPString& filename, U32 depth)
+	CString filename, U32 depth)
 {
 	// first check the depth
 	if(depth > MAX_DEPTH)
@@ -68,14 +69,18 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 	Error err = ErrorCode::NONE;
 
 	// load file in lines
-	auto alloc = m_shaderSource.getAllocator();
-	PPPString txt(alloc);
-	PPPStringList lines(alloc);
+	PPPString txt;
+	PPPString::ScopeDestroyer txtd(&txt, m_alloc);
+
+	PPPStringList lines;
+	PPPStringList::ScopeDestroyer linesd(&lines, m_alloc);
+
 	File file;
-	ANKI_CHECK(file.open(filename.toCString(), File::OpenFlag::READ));
-	ANKI_CHECK(file.readAllText(txt));
-	lines = PPPStringList::splitString(txt.toCString(), '\n', alloc);
-	if(lines.size() < 1)
+	ANKI_CHECK(file.open(filename, File::OpenFlag::READ));
+	ANKI_CHECK(file.readAllText(TempResourceAllocator<char>(m_alloc), txt));
+	ANKI_CHECK(PPPStringList::splitString(
+		m_alloc, txt.toCString(), '\n', lines));
+	if(lines.getSize() < 1)
 	{
 		ANKI_LOGE("File is empty: %s", &filename[0]);
 		return ErrorCode::USER_DATA;
@@ -101,14 +106,22 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 
 				if(line.getLength() >= std::strlen(commands[6]) + 2)
 				{
-					PPPString filen(
+					PPPString filen;
+					PPPString::ScopeDestroyer filend(&filen, m_alloc);
+					
+					ANKI_CHECK(filen.create(
+						m_alloc,
 						line.begin() + std::strlen(commands[6]), 
-						line.end() - 1, 
-						alloc);
+						line.end() - 1));
 
-					filen = m_manager->fixResourceFilename(filen.toCString());
+					PPPString filenFixed;
+					PPPString::ScopeDestroyer filenFixedd(&filenFixed, m_alloc);
 
-					ANKI_CHECK(parseFileForPragmas(filen, depth + 1));
+					ANKI_CHECK(m_manager->fixResourceFilename(
+						filen.toCString(), filenFixed));
+
+					ANKI_CHECK(parseFileForPragmas(
+						filenFixed.toCString(), depth + 1));
 
 					malformed = false; // All OK
 				}
@@ -122,7 +135,7 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 		}
 		else
 		{
-			m_sourceLines.push_back(line);
+			ANKI_CHECK(m_sourceLines.pushBackSprintf(m_alloc, "%s", &line[0]));
 		}
 	}
 

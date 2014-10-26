@@ -3,12 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_STRING_H
-#define ANKI_STRING_H
+#ifndef ANKI_UTIL_STRING_H
+#define ANKI_UTIL_STRING_H
 
 #include "anki/util/DArray.h"
 #include "anki/util/Array.h"
 #include "anki/util/NonCopyable.h"
+#include "anki/util/ScopeDestroyer.h"
 #include <cstring>
 #include <cmath> // For HUGE_VAL
 #include <climits> // For LLONG_MAX
@@ -267,6 +268,9 @@ inline CString operator"" _cstr(const char* str, unsigned long length)
 	return CString(str, length);
 }
 
+template<typename TAlloc>
+using StringScopeDestroyer = ScopeDestroyer<StringBase<TAlloc>, TAlloc>;
+
 /// The base class for strings.
 template<typename TAlloc>
 class StringBase: public NonCopyable
@@ -278,6 +282,8 @@ public:
 	using CStringType = CString;
 	using Iterator = Char*;
 	using ConstIterator = const Char*;
+
+	using ScopeDestroyer = StringScopeDestroyer<Allocator>;
 
 	static const PtrSize NPOS = MAX_PTR_SIZE;
 
@@ -359,7 +365,7 @@ public:
 	ConstIterator end() const 
 	{
 		checkInit();
-		return &m_data[m_data.size() - 1];
+		return &m_data[m_data.getSize() - 1];
 	}
 
 	/// Return true if strings are equal
@@ -484,7 +490,7 @@ public:
 		Error err = ErrorCode::NONE;
 		if(!cstr.isEmpty())
 		{
-			err = appendInternal(cstr.get(), cstr.getLength() + 1);
+			err = appendInternal(alloc, &cstr[0], cstr.getLength() + 1);
 		}
 
 		return err;
@@ -525,8 +531,7 @@ public:
 
 	/// Convert a number to a string.
 	template<typename TNumber>
-	static ANKI_USE_RESULT Error toString(
-		Allocator alloc, TNumber number, Self& out);
+	ANKI_USE_RESULT Error toString(Allocator alloc, TNumber number);
 
 	/// Convert to F64.
 	ANKI_USE_RESULT Error toF64(F64& out) const

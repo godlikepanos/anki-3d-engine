@@ -45,13 +45,14 @@ public:
 	///        of the shader prog
 	/// @param filenamePrefix Add that at the base filename for additional 
 	///        ways to identify the file in the cache
-	/// @return The file pathname of the new shader prog. Its
-	///         $HOME/.anki/cache/ + filenamePrefix + hash + .glsl
-	static String createToCache(
+	/// @param out The file pathname of the new shader prog. Its
+	///            $HOME/.anki/cache/ + filenamePrefix + hash + .glsl
+	static ANKI_USE_RESULT Error createToCache(
 		const CString& filename,
 		const CString& preAppendedSrcCode,
 		const CString& filenamePrefix,
-		ResourceManager& manager);
+		ResourceManager& manager,
+		TempResourceString& out);
 
 private:
 	GlProgramHandle m_prog;

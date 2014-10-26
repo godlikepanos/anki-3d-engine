@@ -37,12 +37,12 @@ public:
 
 /// List bidirectional iterator.
 template<typename TNodePointer, typename TValuePointer, 
-	typename TValueReference, typename TList>
+	typename TValueReference, typename TListPointer>
 class ListIterator
 {
 public:
 	TNodePointer m_node = nullptr;
-	TList* m_list = nullptr; ///< Used to go back from the end
+	TListPointer m_list = nullptr; ///< Used to go back from the end
 
 	ListIterator() = default;
 
@@ -60,7 +60,7 @@ public:
 		m_list(b.m_list)
 	{}
 
-	ListIterator(TNodePointer node, TList* list)
+	ListIterator(TNodePointer node, TListPointer list)
 	:	m_node(node),
 		m_list(list)
 	{
@@ -144,7 +144,9 @@ public:
 
 	Bool operator==(const ListIterator& b) const
 	{
-		return m_node == b.m_node && m_list == b.m_list;
+		ANKI_ASSERT(m_list == b.m_list 
+			&& "Comparing iterators from different lists");
+		return m_node == b.m_node;
 	}
 
 	Bool operator!=(const ListIterator& b) const
@@ -163,7 +165,7 @@ template<typename T, typename TAlloc = HeapAllocator<T>>
 class List: public NonCopyable
 {
 	template<typename TNodePointer, typename TValuePointer, 
-		typename TValueReference, typename TList>
+		typename TValueReference, typename TListPointer>
 	friend class ListIterator;
 
 public:
@@ -174,9 +176,9 @@ public:
 	using ConstReference = const Value&;
 	using Pointer = Value*;
 	using ConstPointer = const Value*;
-	using Iterator = ListIterator<Node*, Pointer, Reference, List>;
+	using Iterator = ListIterator<Node*, Pointer, Reference, List*>;
 	using ConstIterator = 
-		ListIterator<const Node*, ConstPointer, ConstReference, List>;
+		ListIterator<const Node*, ConstPointer, ConstReference, const List*>;
 
 	List() = default;
 
@@ -200,6 +202,9 @@ public:
 		move(b);
 		return *this;
 	}
+
+	/// Compare with another list.
+	Bool operator==(const List& b) const;
 
 	/// Destroy the list.
 	void destroy(Allocator alloc);
@@ -258,13 +263,40 @@ public:
 		return it;
 	}
 
+	/// Get begin.
+	Iterator begin()
+	{
+		return getBegin();
+	}
+
+	/// Get begin.
+	ConstIterator begin() const
+	{
+		return getBegin();
+	}
+
+	/// Get end.
+	Iterator end()
+	{
+		return getEnd();
+	}
+
+	/// Get end.
+	ConstIterator end() const
+	{
+		return getEnd();
+	}
+
 	/// Return true if list is empty.
 	Bool isEmpty() const
 	{
 		return m_head == nullptr;
 	}
 
-	/// Construct element at the end of the list.
+	/// Copy an element at the end of the list.
+	ANKI_USE_RESULT Error pushBack(Allocator alloc, const Value& x);
+
+	/// Construct an element at the end of the list.
 	template<typename... TArgs>
 	ANKI_USE_RESULT Error emplaceBack(Allocator alloc, TArgs&&... args);
 
@@ -276,6 +308,9 @@ public:
 	template<typename... TArgs>
 	ANKI_USE_RESULT Error emplace(
 		Allocator alloc, Iterator pos, TArgs&&... args);
+
+	/// Pop a value from the back of the list.
+	void popBack(Allocator alloc);
 
 	/// Erase an element.
 	void erase(Allocator alloc, Iterator position);
@@ -294,6 +329,9 @@ public:
 	/// Quicksort.
 	template<typename TCompFunc = std::less<Value>>
 	void sort(TCompFunc compFunc = TCompFunc());
+
+	/// Compute the size of elements in the list.
+	PtrSize getSize() const;
 
 private:
 	Node* m_head = nullptr;
@@ -315,6 +353,8 @@ private:
 	/// Used in sortInternal.
 	template<typename TCompFunc>
 	Node* partition(TCompFunc compFunc, Node* l, Node* r);
+
+	void pushBackNode(Node* node);
 };
 
 /// @}

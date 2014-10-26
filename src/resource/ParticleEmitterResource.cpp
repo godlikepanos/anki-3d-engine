@@ -174,7 +174,7 @@ Error ParticleEmitterResource::load(
 	CString cstr;
 	ANKI_CHECK(rel.getChildElement("material", el));
 	ANKI_CHECK(el.getText(cstr));
-	m_material.load(cstr, &init.m_resources);
+	ANKI_CHECK(m_material.load(cstr, &init.m_resources));
 
 	// sanity checks
 	//

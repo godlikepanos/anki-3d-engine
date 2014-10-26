@@ -97,15 +97,19 @@ public:
 	/// Read all the contents of a text file
 	/// If the file is not rewined it will probably fail
 	template<typename TAlloc>
-	ANKI_USE_RESULT Error readAllText(StringBase<TAlloc>& out)
+	ANKI_USE_RESULT Error readAllText(TAlloc alloc, StringBase<TAlloc>& out)
 	{
-		PtrSize size = getSize();
 		Error err = ErrorCode::NONE;
+		PtrSize size = getSize();
 
 		if(size != 0)
 		{
-			out.resize(size, '\0');
-			err = read(&out[0], size);
+			err = out.create(alloc, '?', size);
+
+			if(!err)
+			{
+				err = read(&out[0], size);
+			}
 		}
 		else
 		{

@@ -75,7 +75,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 		ANKI_LOGE("Didn't found any channels");
 		return ErrorCode::USER_DATA;
 	}
-	ANKI_CHECK(m_channels.create(m_alloc, channelCount, m_alloc));
+	ANKI_CHECK(m_channels.create(m_alloc, channelCount));
 
 	// For all channels
 	channelCount = 0;
@@ -87,7 +87,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 		ANKI_CHECK(chEl.getChildElement("name", el));
 		CString strtmp;
 		ANKI_CHECK(el.getText(strtmp));
-		ch.m_name = strtmp;
+		ANKI_CHECK(ch.m_name.create(m_alloc, strtmp));
 
 		XmlElement keysEl, keyEl;
 

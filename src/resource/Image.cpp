@@ -576,7 +576,13 @@ Error Image::load(const CString& filename, U32 maxTextureSize)
 	Error err = ErrorCode::NONE;
 
 	// get the extension
-	String ext = getFileExtension(filename, m_alloc);
+	String ext;
+	String::ScopeDestroyer extd(&ext, m_alloc);
+	err = getFileExtension(filename, m_alloc, ext);
+	if(err)
+	{
+		return err;
+	}
 	
 	if(ext.isEmpty())
 	{

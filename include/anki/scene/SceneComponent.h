@@ -50,18 +50,24 @@ public:
 	{}
 
 	/// Do some updating
-	/// @return true if an update happened
-	virtual Bool update(SceneNode& node, F32 prevTime, F32 crntTime)
+	/// @param[out] updated true if an update happened
+	virtual ANKI_USE_RESULT Error update(
+		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
 	{
-		return false;
+		updated = false;
+		return ErrorCode::NONE;
 	}
 
 	/// Called if SceneComponent::update returned true.
-	virtual void onUpdate(SceneNode& node, F32 prevTime, F32 crntTime)
-	{}
+	virtual ANKI_USE_RESULT Error onUpdate(
+		SceneNode& node, F32 prevTime, F32 crntTime)
+	{
+		return ErrorCode::NONE;
+	}
 
 	/// Called only by the SceneGraph
-	Bool updateReal(SceneNode& node, F32 prevTime, F32 crntTime);
+	ANKI_USE_RESULT Error updateReal(
+		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated);
 
 	template<typename TComponent>
 	TComponent& downCast()

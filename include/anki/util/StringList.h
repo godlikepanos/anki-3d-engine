@@ -12,6 +12,19 @@
 
 namespace anki {
 
+// Forward
+template<typename TAlloc>
+class StringListBase;
+
+/// @addtogroup util_private
+/// @{
+
+template<typename TAlloc>
+using StringListBaseScopeDestroyer = 
+	ScopeDestroyer<StringListBase<TAlloc>, TAlloc>;
+
+/// @}
+
 /// @addtogroup util_containers
 /// @{
 
@@ -25,6 +38,8 @@ public:
 	using Allocator = TAlloc;
 	using String = StringBase<Allocator>; ///< String type
 	using Base = List<String, Allocator>; ///< Base
+
+	using ScopeDestroyer = StringListBaseScopeDestroyer<Allocator>;
 
 	/// Sort method for sortAll().
 	enum class Sort
@@ -48,6 +63,11 @@ public:
 
 	/// Sort the string list
 	void sortAll(const Sort method = Sort::ASCENDING);
+
+	/// Push at the end of the list a formated string
+	template<typename... TArgs>
+	ANKI_USE_RESULT Error pushBackSprintf(
+		Allocator alloc, const TArgs&... args);
 
 	/// Split a string using a separator (@a separator) and return these
 	/// strings in a string list

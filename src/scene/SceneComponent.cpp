@@ -9,16 +9,23 @@
 namespace anki {
 
 //==============================================================================
-Bool SceneComponent::updateReal(SceneNode& node, F32 prevTime, F32 crntTime)
+Error SceneComponent::updateReal(SceneNode& node, F32 prevTime, F32 crntTime,
+	Bool& updated)
 {
 	reset();
-	Bool updated = update(node, prevTime, crntTime);
-	if(updated)
+
+	Error err = update(node, prevTime, crntTime, updated);
+	if(!err && updated)
 	{
-		onUpdate(node, prevTime, crntTime);
-		m_timestamp = getGlobTimestamp();
+		err = onUpdate(node, prevTime, crntTime);
+
+		if(!err)
+		{
+			m_timestamp = getGlobTimestamp();
+		}
 	}
-	return updated;
+
+	return err;
 }
 
 } // end namespace anki

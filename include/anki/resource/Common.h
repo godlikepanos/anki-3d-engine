@@ -73,6 +73,13 @@ public:
 		return err; \
 	}
 
+#define ANKI_CHECK_C(x_) \
+	err = x_; \
+	if(ANKI_UNLIKELY(err)) \
+	{ \
+		goto cleanup; \
+	}
+
 /// @}
 
 } // end namespace anki

@@ -10,7 +10,6 @@
 #include "anki/util/Logger.h"
 
 #include <algorithm>
-#include <sstream>
 
 namespace anki {
 
@@ -21,17 +20,6 @@ namespace anki {
 //==============================================================================
 /// Define string literal
 #define ANKI_STRL(cstr_) MPString(cstr_, m_alloc)
-
-//==============================================================================
-class InputSortFunctor
-{
-public:
-	Bool operator()(const MaterialProgramCreator::Input& a, 
-		const MaterialProgramCreator::Input& b)
-	{
-		return a.m_name < b.m_name;
-	}
-};
 
 //==============================================================================
 /// Given a string return info about the shader
@@ -87,16 +75,22 @@ static ANKI_USE_RESULT Error getShaderInfo(
 //==============================================================================
 
 //==============================================================================
-MaterialProgramCreator::MaterialProgramCreator(
-	TempResourceAllocator<U8>& alloc)
-:	m_alloc(alloc),
-	m_inputs(alloc),
-	m_uniformBlock(m_alloc)
+MaterialProgramCreator::MaterialProgramCreator(TempResourceAllocator<U8>& alloc)
+:	m_alloc(alloc)
 {}
 
 //==============================================================================
 MaterialProgramCreator::~MaterialProgramCreator()
-{}
+{
+	for(auto& it : m_inputs)
+	{
+		it.destroy(m_alloc);
+	}
+
+	m_inputs.destroy(m_alloc);
+
+	m_uniformBlock.destroy(m_alloc);
+}
 
 //==============================================================================
 Error MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
@@ -116,7 +110,10 @@ Error MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	} while(programEl);
 
 	// Sort them by name to decrease the change of creating unique shaders
-	std::sort(m_inputs.begin(), m_inputs.end(), InputSortFunctor());
+	m_inputs.sort([](const Input& a, const Input& b)
+	{
+		return a.m_name < b.m_name;
+	});
 
 	//
 	// Then parse the includes, operations and other parts of the program
@@ -134,13 +131,24 @@ Error MaterialProgramCreator::parseProgramsTag(const XmlElement& el)
 	//
 
 	// Check that all input is referenced
-	for(Input& in : m_inputs)
+	for(auto& in : m_inputs)
 	{
 		if(in.m_shaderDefinedMask != in.m_shaderReferencedMask)
 		{
 			ANKI_LOGE("Variable not referenced or not defined %s", 
 				&in.m_name[0]);
 			return ErrorCode::USER_DATA;
+		}
+	}
+
+	//
+	// Merge strings
+	//
+	for(U i = 0; i < m_sourceBaked.getSize(); i++)
+	{
+		if(!m_source[i].isEmpty())
+		{
+			ANKI_CHECK(m_source[i].join(m_alloc, "\n", m_sourceBaked[i]));
 		}
 	}
 
@@ -163,9 +171,9 @@ Error MaterialProgramCreator::parseProgramTag(
 	U shaderidx;
 	ANKI_CHECK(getShaderInfo(type, glshader, glshaderbit, shaderidx));
 
-	m_source[shaderidx] = MPStringList(m_alloc);
 	auto& lines = m_source[shaderidx];
-	lines.push_back(ANKI_STRL("#pragma anki type ") + type);
+	ANKI_CHECK(lines.pushBackSprintf(m_alloc, 
+		"#pragma anki type %s", &type[0]));
 
 	if(glshader == GL_TESS_CONTROL_SHADER 
 		|| glshader == GL_TESS_EVALUATION_SHADER)
@@ -183,9 +191,8 @@ Error MaterialProgramCreator::parseProgramTag(
 	{
 		CString tmp;
 		ANKI_CHECK(includeEl.getText(tmp));
-		MPString fname(tmp, m_alloc);
-		lines.push_back(
-			ANKI_STRL("#pragma anki include \"") + fname + "\"");
+		ANKI_CHECK(lines.pushBackSprintf(m_alloc, 
+			"#pragma anki include \"%s\"", &tmp[0]));
 
 		ANKI_CHECK(includeEl.getNextSiblingElement("include", includeEl));
 	} while(includeEl);
@@ -193,17 +200,18 @@ Error MaterialProgramCreator::parseProgramTag(
 	// Inputs
 
 	// Block
-	if(m_uniformBlock.size() > 0 
+	if(!m_uniformBlock.isEmpty()
 		&& (m_uniformBlockReferencedMask & glshaderbit))
 	{
-		// TODO Make block SSB when driver bug is fixed
-		lines.push_back(ANKI_STRL(
+		ANKI_CHECK(lines.pushBackSprintf(m_alloc, 
 			"\nlayout(binding = 0, std140) uniform bDefaultBlock\n{"));
 
-		lines.insert(
-			lines.end(), m_uniformBlock.begin(), m_uniformBlock.end());
+		for(auto& str : m_uniformBlock)
+		{
+			ANKI_CHECK(lines.pushBackSprintf(m_alloc, &str[0]));
+		}
 
-		lines.push_back(ANKI_STRL("};"));
+		ANKI_CHECK(lines.pushBackSprintf(m_alloc, "};"));
 	}
 
 	// Other variables
@@ -211,12 +219,12 @@ Error MaterialProgramCreator::parseProgramTag(
 	{
 		if(!in.m_inBlock && (in.m_shaderDefinedMask & glshaderbit))
 		{
-			lines.push_back(in.m_line);
+			ANKI_ASSERT(lines.pushBackSprintf(m_alloc, &in.m_line[0]));
 		}
 	}
 
 	// <operations></operations>
-	lines.push_back(ANKI_STRL("\nvoid main()\n{"));
+	ANKI_ASSERT(lines.pushBackSprintf(m_alloc, "\nvoid main()\n{"));
 
 	XmlElement opsEl;
 	ANKI_CHECK(programEl.getChildElement("operations", opsEl));
@@ -224,15 +232,16 @@ Error MaterialProgramCreator::parseProgramTag(
 	ANKI_CHECK(opsEl.getChildElement("operation", opEl));
 	do
 	{
-		MPString out(m_alloc);
+		MPString out;
 		ANKI_CHECK(parseOperationTag(opEl, glshader, glshaderbit, out));
-		lines.push_back(out);
+		ANKI_ASSERT(lines.pushBackSprintf(m_alloc, &out[0]));
+		out.destroy(m_alloc);
 
 		// Advance
 		ANKI_CHECK(opEl.getNextSiblingElement("operation", opEl));
 	} while(opEl);
 
-	lines.push_back(ANKI_STRL("}\n"));
+	ANKI_CHECK(lines.pushBackSprintf(m_alloc, "}\n"));
 	return err;
 }
 
@@ -261,17 +270,17 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 	ANKI_CHECK(inputsEl.getChildElement("input", inputEl));
 	do
 	{
-		Input inpvar(m_alloc);
+		Input inpvar;
 
 		// <name>
 		ANKI_CHECK(inputEl.getChildElement("name", el));
 		ANKI_CHECK(el.getText(cstr));
-		inpvar.m_name = cstr;
+		ANKI_CHECK(inpvar.m_name.create(m_alloc, cstr));
 
 		// <type>
 		ANKI_CHECK(inputEl.getChildElement("type", el));
 		ANKI_CHECK(el.getText(cstr));
-		inpvar.m_type = cstr;
+		ANKI_CHECK(inpvar.m_type.create(m_alloc, cstr));
 
 		// <value>
 		XmlElement valueEl;
@@ -279,7 +288,8 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		ANKI_CHECK(valueEl.getText(cstr));
 		if(cstr)
 		{
-			inpvar.m_value = MPStringList::splitString(cstr, ' ', m_alloc);
+			ANKI_CHECK(
+				MPStringList::splitString(m_alloc, cstr, ' ', inpvar.m_value));
 		}
 
 		// <const>
@@ -338,14 +348,17 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 		// Now you have the info to check if duplicate
 		Input* duplicateInp = nullptr;
-		for(Input& in : m_inputs)
+		err = m_inputs.iterateForward(
+			[&duplicateInp, &inpvar](Input& in) -> Error
 		{
 			if(in.m_name == inpvar.m_name)
 			{
 				duplicateInp = &in;
-				break;
+				return ErrorCode::NONE;
 			}
-		}
+
+			return ErrorCode::NONE;
+		});
 
 		if(duplicateInp != nullptr)
 		{
@@ -377,47 +390,61 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		{
 			// Handle NON-consts
 
-			inpvar.m_line = inpvar.m_type + " " + inpvar.m_name;
-				
+			ANKI_CHECK(inpvar.m_line.sprintf(
+				m_alloc, "%s %s", &inpvar.m_type[0], &inpvar.m_name[0]));
+			
+			U arrSize = 0;
 			if(inpvar.m_arraySize > 1)
 			{
-				MPString tmp(MPString::toString(inpvar.m_arraySize, m_alloc));
-				inpvar.m_line += "[" + tmp + "U]";
+				arrSize = inpvar.m_arraySize;
 			}
 
 			if(inpvar.m_instanced)
 			{
-				MPString tmp(
-					MPString::toString(ANKI_GL_MAX_INSTANCES, m_alloc));
-				inpvar.m_line += "[" +  tmp + "U]";
+				inpvar.m_arraySize = ANKI_GL_MAX_INSTANCES;
 			}
 
-			inpvar.m_line += ";";
+			if(arrSize)
+			{
+				MPString tmp;
+				ANKI_CHECK(tmp.sprintf(m_alloc, "[%uU]", arrSize));
+				ANKI_CHECK(inpvar.m_line.append(m_alloc, tmp));
+				tmp.destroy(m_alloc);
+			}
+
+			ANKI_CHECK(inpvar.m_line.append(m_alloc, ";"));
 
 			// Can put it block
 			if(inpvar.m_type == "sampler2D" || inpvar.m_type == "samplerCube")
 			{
-				MPString tmp(
-					MPString::toString(m_texBinding++, m_alloc));
+				MPString tmp;
 
-				inpvar.m_line = ANKI_STRL("layout(binding = ") 
-					+ tmp + ") uniform " + inpvar.m_line;
-		
+				ANKI_CHECK(tmp.sprintf(
+					m_alloc, "layout(binding = %u) uniform %s",
+					m_texBinding++, &inpvar.m_line[0]));
+
+				inpvar.m_line.destroy(m_alloc);
+				inpvar.m_line = std::move(tmp);
+
 				inpvar.m_inBlock = false;
 			}
 			else
 			{
-				inpvar.m_inBlock = true;
+				MPString tmp;
 
-				m_uniformBlock.push_back(inpvar.m_line);
+				ANKI_CHECK(tmp.create(m_alloc, inpvar.m_line));
+				ANKI_CHECK(m_uniformBlock.emplaceBack(m_alloc));
+				m_uniformBlock.getBack() = std::move(tmp);
+
 				m_uniformBlockReferencedMask |= glshaderbit;
+				inpvar.m_inBlock = true;
 			}
 		}
 		else
 		{
 			// Handle consts
 
-			if(inpvar.m_value.size() == 0)
+			if(!inpvar.m_value.isEmpty())
 			{
 				ANKI_LOGE("Empty value and const is illogical");
 				return ErrorCode::USER_DATA;
@@ -431,14 +458,21 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 			inpvar.m_inBlock = false;
 
-			inpvar.m_line = ANKI_STRL("const ") 
-				+ inpvar.m_type + " " + inpvar.m_name 
-				+ " = " + inpvar.m_type + "(" + inpvar.m_value.join(", ") 
-				+  ");";
+			MPString initList;
+			ANKI_CHECK(inpvar.m_value.join(m_alloc, ", ", initList));
+
+			err = inpvar.m_line.sprintf(m_alloc, "const %s %s = %s(%s);",
+				&inpvar.m_type[0], &inpvar.m_name[0], &inpvar.m_type[0], 
+				&initList[0]);
+			initList.destroy(m_alloc);
+
+			ANKI_CHECK(err);
 		}
 
 		inpvar.m_shaderDefinedMask = glshaderbit;
-		m_inputs.push_back(inpvar);
+
+		ANKI_CHECK(m_inputs.emplaceBack(m_alloc));
+		m_inputs.getBack().move(inpvar);
 
 advance:
 		// Advance
@@ -450,41 +484,39 @@ advance:
 
 //==============================================================================
 Error MaterialProgramCreator::parseOperationTag(
-	const XmlElement& operationTag, GLenum glshader, GLbitfield glshaderbit,
+	const XmlElement& operationTag, 
+	GLenum glshader, 
+	GLbitfield glshaderbit,
 	MPString& out)
 {
 	Error err = ErrorCode::NONE;
 	CString cstr;
-	static const char OUT[] = {"out"};
 	XmlElement el;
 
+	static const char OUT[] = "out";
+
+	CString funcName;
+	MPStringList argsList;
+	MPStringList::ScopeDestroyer argsListd(&argsList, m_alloc);
+
 	// <id></id>
-	I64 tmp;
+	I64 id;
 	ANKI_CHECK(operationTag.getChildElement("id", el));
-	ANKI_CHECK(el.getI64(tmp));
-	I id = tmp;
+	ANKI_CHECK(el.getI64(id));
 	
 	// <returnType></returnType>
 	XmlElement retTypeEl;
 	ANKI_CHECK(operationTag.getChildElement("returnType", retTypeEl));
 	ANKI_CHECK(retTypeEl.getText(cstr));
-	MPString retType(cstr, m_alloc);
-	MPString operationOut(m_alloc);
-	if(retType != "void")
-	{
-		MPString tmp(MPString::toString(id, m_alloc));
-		operationOut = ANKI_STRL(OUT) + tmp;
-	}
+	Bool retTypeVoid = cstr == "void";
 	
 	// <function>functionName</function>
 	ANKI_CHECK(operationTag.getChildElement("function", el));
-	ANKI_CHECK(el.getText(cstr));
-	MPString funcName(cstr, m_alloc);
+	ANKI_CHECK(el.getText(funcName));
 	
 	// <arguments></arguments>
 	XmlElement argsEl;
 	ANKI_CHECK(operationTag.getChildElementOptional("arguments", argsEl));
-	MPStringList argsList(m_alloc);
 	
 	if(argsEl)
 	{
@@ -493,8 +525,8 @@ Error MaterialProgramCreator::parseOperationTag(
 		ANKI_CHECK(argsEl.getChildElement("argument", argEl));
 		do
 		{
-			ANKI_CHECK(argEl.getText(cstr));
-			MPString arg(cstr, m_alloc);
+			CString arg;
+			ANKI_CHECK(argEl.getText(arg));
 
 			// Search for all the inputs and mark the appropriate
 			Input* input = nullptr;
@@ -512,7 +544,7 @@ Error MaterialProgramCreator::parseOperationTag(
 
 			// The argument should be an input variable or an outXX
 			if(!(input != nullptr 
-				|| std::strncmp(&arg[0], OUT, sizeof(OUT) - 1) == 0))
+				|| std::memcmp(&arg[0], "out", 3) == 0))
 			{
 				ANKI_LOGE("Incorrect argument: %s", &arg[0]);
 				return ErrorCode::USER_DATA;
@@ -525,40 +557,28 @@ Error MaterialProgramCreator::parseOperationTag(
 
 				if(glshader == GL_VERTEX_SHADER)
 				{
-					argsList.push_back(ANKI_STRL(cstr) + "[gl_InstanceID]");
+					ANKI_CHECK(argsList.pushBackSprintf(m_alloc, 
+						"%s [gl_InstanceID]", &cstr[0]));
 
-					m_instanceIdMask |= glshaderbit;
-				}
-				else if(glshader == GL_TESS_CONTROL_SHADER)
-				{
-					argsList.push_back(ANKI_STRL(cstr) + "[vInstanceId[0]]");
-
-					m_instanceIdMask |= glshaderbit;
-				}
-				else if(glshader == GL_TESS_EVALUATION_SHADER)
-				{
-					argsList.push_back(ANKI_STRL(cstr) 
-						+ "[commonPatch.instanceId]");
-					
 					m_instanceIdMask |= glshaderbit;
 				}
 				else if(glshader == GL_FRAGMENT_SHADER)
 				{
-					argsList.push_back(ANKI_STRL(cstr) + "[vInstanceId]");
+					ANKI_CHECK(argsList.pushBackSprintf(m_alloc, 
+						"%s [vInstanceId]", &cstr[0]));
 					
 					m_instanceIdMask |= glshaderbit;
 				}
 				else
 				{
-					ANKI_LOGE(
-						"Cannot access the instance ID in all shaders");
+					ANKI_LOGE("Cannot access the instance ID in all shaders");
 					return ErrorCode::USER_DATA;
 				}
 			}
 			else
 			{
 				ANKI_CHECK(argEl.getText(cstr));
-				argsList.push_back(MPString(cstr, m_alloc));
+				ANKI_CHECK(argsList.pushBackSprintf(m_alloc, &cstr[0]));
 			}
 
 			// Advance
@@ -567,39 +587,47 @@ Error MaterialProgramCreator::parseOperationTag(
 	}
 
 	// Now write everything
-	MPString lines(m_alloc);
-	lines.reserve(256);
-	lines += "#if defined(" + funcName + "_DEFINED)";
+	MPStringList lines;
+	MPStringList::ScopeDestroyer linesd(&lines, m_alloc);
+
+	ANKI_CHECK(lines.pushBackSprintf(m_alloc,
+		"#if defined(%s_DEFINED)", &funcName[0]));
 
 	// Write the defines for the operationOuts
 	for(const MPString& arg : argsList)
 	{
 		if(arg.find(OUT) == 0)
 		{
-			lines += " && defined(" + arg + "_DEFINED)";
+			ANKI_CHECK(lines.pushBackSprintf(m_alloc,
+				" && defined(%s_DEFINED)", &arg[0]));
 		}
 	}
-	lines += "\n";
+	ANKI_CHECK(lines.pushBackSprintf(m_alloc, "\n"));
 
-	if(retType != "void")
+	if(!retTypeVoid)
 	{
 		ANKI_CHECK(retTypeEl.getText(cstr));
-		lines += "#\tdefine " + operationOut + "_DEFINED\n\t"
-			+ cstr + " " + operationOut + " = ";
+		ANKI_CHECK(lines.pushBackSprintf(m_alloc,
+			"#\tdefine out%u_DEFINED\n"
+			"\tout%u = ", id));
 	}
 	else
 	{
-		lines += "\t";
+		ANKI_CHECK(lines.pushBackSprintf(m_alloc, "\t"));
 	}
 	
-	// write the blah = func(args...)
-	lines += funcName + "(";
-	lines += argsList.join(", ");
-	lines += ");\n";
-	lines += "#endif";
+	// write the "func(args...)" of "blah = func(args...)"
+	MPString argsStr;
+	MPString::ScopeDestroyer argsStrd(&argsStr, m_alloc);
 
-	// Done
-	out = std::move(lines);
+	ANKI_CHECK(argsList.join(m_alloc, ", ", argsStr));
+
+	ANKI_CHECK(lines.pushBackSprintf(m_alloc, "%s(%s);\n#endif",
+		&funcName[0], &argsStr[0]));
+
+	// Bake final string
+	ANKI_CHECK(lines.join(m_alloc, " ", out));
+
 	return err;
 }
 

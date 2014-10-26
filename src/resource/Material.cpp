@@ -32,13 +32,13 @@ static MaterialVariable* newMaterialVariable(
 {
 	MaterialVariable* out = nullptr;
 
-	if(in.m_value.size() > 0)
+	if(in.m_value.getSize() > 0)
 	{
 		// Has values
 
 		U floatsNeeded = glvar.getArraySize() * (sizeof(T) / sizeof(F32));
 
-		if(in.m_value.size() != floatsNeeded)
+		if(in.m_value.getSize() != floatsNeeded)
 		{
 			ANKI_LOGE("Incorrect number of values. Variable %s",
 				&glvar.getName()[0]);
@@ -48,16 +48,18 @@ static MaterialVariable* newMaterialVariable(
 
 		TempResourceVector<F32> floatvec(talloc);
 		floatvec.resize(floatsNeeded);
+		auto it = in.m_value.getBegin();
 		for(U i = 0; i < floatsNeeded; ++i)
 		{
 			F64 d;
-			Error err = in.m_value[i].toF64(d);
+			Error err = it->toF64(d);
 			if(err)
 			{
 				return nullptr;
 			}
 
 			floatvec[i] = d;
+			++it;
 		}
 
 		out = alloc.newInstance<MaterialVariableTemplate<T>>(
@@ -104,8 +106,8 @@ static GLenum blendToEnum(const CString& str)
 	TXT_AND_ENUM(GL_SRC_ALPHA_SATURATE)
 	TXT_AND_ENUM(GL_SRC_COLOR)
 	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
-	ANKI_ASSERT(0);
-	throw ANKI_EXCEPTION("Incorrect blend enum");
+	ANKI_LOGE("Incorrect blend enum");
+	return 0;
 
 #undef TXT_AND_ENUM
 }
@@ -395,11 +397,19 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 		ANKI_CHECK(blendFunctionsEl.getChildElement("sFactor", el));
 		ANKI_CHECK(el.getText(cstr));
 		m_blendingSfactor = blendToEnum(cstr);
+		if(m_blendingSfactor == 0)
+		{
+			return ErrorCode::USER_DATA;
+		}
 
 		// dFactor
 		ANKI_CHECK(blendFunctionsEl.getChildElement("dFactor", el));
 		ANKI_CHECK(el.getText(cstr));
 		m_blendingDfactor = blendToEnum(cstr);
+		if(m_blendingDfactor == 0)
+		{
+			return ErrorCode::USER_DATA;
+		}
 	}
 	else
 	{
@@ -492,18 +502,24 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 						continue;
 					}
 
-					TempResourceString src(rinit.m_tempAlloc);
+					TempResourceString src;
+					TempResourceString::ScopeDestroyer srcd(
+						&src, rinit.m_tempAlloc);
 
-					src.sprintf(
+					ANKI_CHECK(src.sprintf(
+						rinit.m_tempAlloc,
 						"%s\n"
 						"#define LOD %u\n"
 						"#define PASS %u\n"
 						"#define TESSELLATION %u\n"
 						"%s\n",
 						&rinit.m_resources._getShadersPrependedSource()[0],
-						level, pid, tess, &loader.getProgramSource(shader)[0]);
+						level, pid, tess, &loader.getProgramSource(shader)[0]));
 
-					TempResourceString filename(rinit.m_tempAlloc);
+					TempResourceString filename;
+					TempResourceString::ScopeDestroyer filenamed(
+						&filename, rinit.m_tempAlloc);
+
 					ANKI_CHECK(createProgramSourceToCache(src, filename));
 
 					RenderingKey key((Pass)pid, level, tess);
@@ -541,27 +557,27 @@ Error Material::createProgramSourceToCache(
 {
 	Error err = ErrorCode::NONE;
 
+	auto alloc = m_resources->_getTempAllocator();
+
 	// Create the hash
 	U64 h = computeHash(&source[0], source.getLength());
-	TempResourceString prefix = 
-		TempResourceString::toString(h, source.getAllocator());
+	TempResourceString prefix;
+	TempResourceString::ScopeDestroyer prefixd(&prefix, alloc);
+
+	ANKI_CHECK(prefix.toString(alloc, h));
 
 	// Create path
-	out.sprintf("%s/mtl_%s.glsl", 
+	ANKI_CHECK(out.sprintf(alloc, "%s/mtl_%s.glsl", 
 		&m_resources->_getCacheDirectory()[0],
-		&prefix[0]);
+		&prefix[0]));
 
 	// If file not exists write it
 	if(!fileExists(out.toCString()))
 	{
 		// If not create it
 		File f;
-		err = f.open(out.toCString(), File::OpenFlag::WRITE);
-
-		if(!err)
-		{
-			err = f.writeText("%s\n", &source[0]);
-		}
+		ANKI_CHECK(f.open(out.toCString(), File::OpenFlag::WRITE));
+		ANKI_CHECK(f.writeText("%s\n", &source[0]));
 	}
 
 	return err;
@@ -573,7 +589,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 	Error err = ErrorCode::NONE;
 
 	U varCount = 0;
-	for(auto in : loader.getInputVariables())
+	for(const auto& in : loader.getInputVariables())
 	{
 		if(!in.m_constant)
 		{
@@ -584,7 +600,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 	ANKI_CHECK(m_vars.create(m_resources->_getAllocator(), varCount));
 
 	varCount = 0;
-	for(auto in : loader.getInputVariables())
+	for(const auto& in : loader.getInputVariables())
 	{
 		if(in.m_constant)
 		{
@@ -622,9 +638,10 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 			{
 				TextureResourcePointer tp;
 				
-				if(in.m_value.size() > 0)
+				if(in.m_value.getSize() > 0)
 				{
-					ANKI_CHECK(tp.load(in.m_value[0].toCString(), m_resources));
+					ANKI_CHECK(tp.load(
+						in.m_value.getBegin()->toCString(), m_resources));
 				}
 
 				auto alloc = m_resources->_getAllocator();

@@ -31,13 +31,6 @@ public:
 	class Input
 	{
 	public:
-		Input(TempResourceAllocator<char>& alloc)
-		:	m_name(alloc),
-			m_type(alloc),
-			m_value(alloc),
-			m_line(alloc)
-		{}
-
 		MPString m_name;
 		MPString m_type;
 		MPStringList m_value;
@@ -49,6 +42,27 @@ public:
 		GLbitfield m_shaderDefinedMask = 0; ///< Defined in
 		GLbitfield m_shaderReferencedMask = 0; ///< Referenced by
 		Bool8 m_inBlock = true;
+
+		void destroy(TempResourceAllocator<U8> alloc)
+		{
+			m_name.destroy(alloc);
+			m_type.destroy(alloc);
+			m_value.destroy(alloc);
+			m_line.destroy(alloc);
+		}
+
+		void move(Input& b)
+		{
+			m_name = std::move(b.m_name);
+			m_type = std::move(b.m_type);
+			m_value = std::move(b.m_value);
+			m_constant = b.m_constant;
+			m_arraySize = b.m_arraySize;
+			m_line = std::move(m_line);
+			m_shaderDefinedMask = b.m_shaderDefinedMask;
+			m_shaderReferencedMask = b.m_shaderReferencedMask;
+			m_inBlock = b.m_inBlock;
+		}
 	};
 
 	explicit MaterialProgramCreator(TempResourceAllocator<U8>& alloc);
@@ -60,14 +74,14 @@ public:
 	ANKI_USE_RESULT Error parseProgramsTag(const XmlElement& el);
 
 	/// Get the shader program source code
-	MPString getProgramSource(ShaderType shaderType_) const
+	const MPString& getProgramSource(ShaderType shaderType_) const
 	{
 		U shaderType = enumToType(shaderType_);
-		ANKI_ASSERT(m_source[shaderType].size() > 0);
-		return m_source[shaderType].join(CString("\n"));
+		ANKI_ASSERT(!m_sourceBaked[shaderType].isEmpty());
+		return m_sourceBaked[shaderType];
 	}
 
-	const TempResourceVector<Input>& getInputVariables() const
+	const List<Input, TempResourceAllocator<U8>>& getInputVariables() const
 	{
 		return m_inputs;
 	}
@@ -80,7 +94,8 @@ public:
 private:
 	TempResourceAllocator<char> m_alloc; 
 	Array<MPStringList, 5> m_source; ///< Shader program final source
-	TempResourceVector<Input> m_inputs;
+	Array<MPString, 5> m_sourceBaked; ///< Final source baked
+	List<Input, TempResourceAllocator<U8>> m_inputs;
 	MPStringList m_uniformBlock;
 	GLbitfield m_uniformBlockReferencedMask = 0;
 	Bool8 m_instanced = false;

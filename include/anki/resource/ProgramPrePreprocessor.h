@@ -34,13 +34,15 @@ public:
 	/// It loads a file and parses it
 	/// @param[in] filename The file to load
 	ProgramPrePreprocessor(ResourceManager* manager)
-	:	m_shaderSource(manager->_getTempAllocator()),
-		m_sourceLines(manager->_getTempAllocator()),
+	:	m_alloc(manager->_getTempAllocator()),
 		m_manager(manager)
 	{}
 
 	~ProgramPrePreprocessor()
-	{}
+	{
+		m_shaderSource.destroy(m_alloc);
+		m_sourceLines.destroy(m_alloc);
+	}
 
 	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get 
 	/// the output
@@ -61,6 +63,8 @@ public:
 	}
 
 protected:
+	TempResourceAllocator<U8> m_alloc;
+
 	/// The final program source
 	PPPString m_shaderSource;
 
@@ -80,7 +84,7 @@ protected:
 	/// @param depth The #line in GLSL does not support filename so an
 	///              depth it being used. It also tracks the includance depth
 	ANKI_USE_RESULT Error parseFileForPragmas(
-		const PPPString& filename, U32 depth);
+		CString filename, U32 depth);
 
 	/// Parse the type
 	ANKI_USE_RESULT Error parseType(const PPPString& line, Bool& found);

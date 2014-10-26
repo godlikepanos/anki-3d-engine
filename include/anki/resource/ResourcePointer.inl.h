@@ -33,7 +33,7 @@ Error ResourcePointer<T, TResourceManager>::load(
 
 		if(!m_cb)
 		{
-			ANKI_LOGE("Out of memory when loading resource");
+			ANKI_LOGE("OOM when loading resource");
 			return ErrorCode::OUT_OF_MEMORY;
 		}
 
@@ -46,8 +46,18 @@ Error ResourcePointer<T, TResourceManager>::load(
 		// WARNING: Keep the brackets to force deallocation of newFname before
 		// reseting the mempool
 		{
-			TempResourceString newFname(
-				resources->fixResourceFilename(filename));
+			TempResourceString newFname;
+			TempResourceString::ScopeDestroyer newFnamed(
+				&newFname, resources->_getTempAllocator());
+
+			err = resources->fixResourceFilename(filename, newFname);
+			if(err)
+			{
+				ANKI_LOGE("OOM when loading resource: %s", &newFname[0]);
+				alloc.deleteInstance(m_cb);
+				m_cb = nullptr;
+				return err;
+			}
 
 			ResourceInitializer init(
 				alloc,
@@ -81,7 +91,14 @@ Error ResourcePointer<T, TResourceManager>::load(
 		}
 
 		// Register resource
-		resources->_registerResource(*this);
+		err = resources->_registerResource(*this);
+		if(err)
+		{
+			ANKI_LOGE("OOM when registering resource");
+			alloc.deleteInstance(m_cb);
+			m_cb = nullptr;
+			return err;
+		}
 	}
 	else
 	{
@@ -125,6 +142,25 @@ void ResourcePointer<T, TResourceManager>::copy(const ResourcePointer& b)
 
 		m_cb = b.m_cb;
 	}
+}
+
+//==============================================================================
+template<typename T, typename TResourceManager>
+template<typename... TArgs>
+Error ResourcePointer<T, TResourceManager>::loadToCache(
+	TResourceManager* resources, TArgs&&... args)
+{
+	TempResourceString fname;
+
+	Error err = T::createToCache(args..., *resources, fname);
+
+	if(!err)
+	{
+		err = load(fname.toCString(), resources);
+	}
+
+	fname.destroy(resources->_getTempAllocator());
+	return err;
 }
 
 } // end namespace anki

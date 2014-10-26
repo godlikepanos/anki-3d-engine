@@ -19,30 +19,46 @@
 namespace anki {
 
 //==============================================================================
-ResourceManager::ResourceManager(Initializer& init)
-:	m_gl(init.m_gl),
-	m_alloc(init.m_allocCallback, init.m_allocCallbackData),
-	m_tmpAlloc(init.m_allocCallback, init.m_allocCallbackData, 
-		init.m_tempAllocatorMemorySize),
-	m_cacheDir(init.m_cacheDir, m_alloc),
-	m_dataDir(m_alloc),
-	m_shadersPrependedSource(m_alloc)
+ResourceManager::ResourceManager()
+{}
+
+//==============================================================================
+ResourceManager::~ResourceManager()
 {
+	m_cacheDir.destroy(m_alloc);
+	m_dataDir.destroy(m_alloc);
+	m_alloc.deleteInstance(m_asyncLoader);
+}
+
+//==============================================================================
+Error ResourceManager::create(Initializer& init)
+{
+	Error err = ErrorCode::NONE;
+
+	m_gl = init.m_gl;
+	m_alloc = ResourceAllocator<U8>(
+		init.m_allocCallback, init.m_allocCallbackData);
+
+	m_tmpAlloc = TempResourceAllocator<U8>(
+		init.m_allocCallback, init.m_allocCallbackData, 
+		init.m_tempAllocatorMemorySize);
+
+	ANKI_CHECK(m_cacheDir.create(m_alloc, init.m_cacheDir));
+
 	// Init the data path
 	//
 	if(getenv("ANKI_DATA_PATH"))
 	{
-		m_dataDir = getenv("ANKI_DATA_PATH");
-		m_dataDir += "/";
+		ANKI_CHECK(m_dataDir.sprintf(m_alloc, "%s/", getenv("ANKI_DATA_PATH")));
 		ANKI_LOGI("Data path: %s", &m_dataDir[0]);
 	}
 	else
 	{
 		// Assume working directory
 #if ANKI_OS == ANKI_OS_ANDROID
-		m_dataDir = "$";
+		ANKI_CHECK(m_dataDir.create(m_alloc, "$"));
 #else
-		m_dataDir = "./";
+		ANKI_CHECK(m_dataDir.create(m_alloc, "./"));
 #endif
 	}
 
@@ -71,35 +87,32 @@ ResourceManager::ResourceManager(Initializer& init)
 
 	// Init the thread
 	m_asyncLoader = m_alloc.newInstance<AsyncLoader>(m_alloc);
+	if(m_asyncLoader == nullptr)
+	{
+		return ErrorCode::FUNCTION_FAILED;
+	}
+
+	return err;
 }
 
 //==============================================================================
-ResourceManager::~ResourceManager()
+Error ResourceManager::fixResourceFilename(
+	const CString& filename,
+	TempResourceString& out) const
 {
-	m_alloc.deleteInstance(m_asyncLoader);
-
-	ANKI_ASSERT(m_tmpAlloc.getMemoryPool().getAllocationsCount() == 0
-		&& "Forgot to deallocate");
-}
-
-//==============================================================================
-TempResourceString ResourceManager::fixResourceFilename(
-	const CString& filename) const
-{
-	TempResourceString newFname(m_tmpAlloc);
+	Error err = ErrorCode::NONE;
 
 	// If the filename is in cache then dont append the data path
 	if(filename.find(m_cacheDir.toCString()) != TempResourceString::NPOS)
 	{
-		newFname = filename;
+		err = out.create(m_tmpAlloc, filename);
 	}
 	else
 	{
-		newFname = TempResourceString(m_dataDir.toCString(), m_tmpAlloc) 
-			+ filename;
+		err = out.sprintf(m_tmpAlloc, "%s%s", &m_dataDir[0], &filename[0]);
 	}
 
-	return newFname;
+	return err;
 }
 
 } // end namespace anki

@@ -36,26 +36,77 @@ ListIterator<TNodePointer, TValuePointer, TValueReference, TList>&
 
 //==============================================================================
 template<typename T, typename TAlloc>
+Bool List<T, TAlloc>::operator==(const List& b) const
+{
+	Bool same = true;
+	ConstIterator ita = getBegin();
+	ConstIterator itb = b.getBegin();
+
+	while(same && ita != getEnd() && itb != b.getEnd())
+	{
+		same = *ita == *itb;
+		++ita;
+		++itb;
+	}
+
+	if(same && (ita != getEnd() || itb != b.getEnd()))
+	{
+		same = false;
+	}
+
+	return same;
+}
+
+//==============================================================================
+template<typename T, typename TAlloc>
+void List<T, TAlloc>::pushBackNode(Node* node)
+{
+	ANKI_ASSERT(node);
+
+	if(m_tail != nullptr)
+	{
+		ANKI_ASSERT(m_head != nullptr);
+		m_tail->m_next = node;
+		node->m_prev = m_tail;
+		m_tail = node;
+	}
+	else
+	{
+		ANKI_ASSERT(m_head == nullptr);
+		m_tail = m_head = node;
+	}
+}
+
+//==============================================================================
+template<typename T, typename TAlloc>
+Error List<T, TAlloc>::pushBack(Allocator alloc, const Value& x)
+{
+	Error err = ErrorCode::NONE;
+	
+	Node* node = alloc.template newInstance<Node>(x);
+	if(node != nullptr)
+	{
+		pushBackNode(node);
+	}
+	else
+	{
+		err = ErrorCode::OUT_OF_MEMORY;
+	}
+
+	return err;
+}
+
+//==============================================================================
+template<typename T, typename TAlloc>
 template<typename... TArgs>
 Error List<T, TAlloc>::emplaceBack(Allocator alloc, TArgs&&... args)
 {
 	Error err = ErrorCode::NONE;
 	
-	Node* el = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
-	if(el != nullptr)
+	Node* node = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
+	if(node != nullptr)
 	{
-		if(m_tail != nullptr)
-		{
-			ANKI_ASSERT(m_head != nullptr);
-			m_tail->m_next = el;
-			el->m_prev = m_tail;
-			m_tail = el;
-		}
-		else
-		{
-			ANKI_ASSERT(m_head == nullptr);
-			m_tail = m_head = el;
-		}
+		pushBackNode(node);
 	}
 	else
 	{
@@ -283,6 +334,14 @@ void List<T, TAlloc>::erase(Allocator alloc, Iterator pos)
 
 //==============================================================================
 template<typename T, typename TAlloc>
+void List<T, TAlloc>::popBack(Allocator alloc)
+{
+	ANKI_ASSERT(m_tail);
+	erase(alloc, Iterator(m_tail, this));
+}
+
+//==============================================================================
+template<typename T, typename TAlloc>
 typename List<T, TAlloc>::Iterator List<T, TAlloc>::find(const Value& a)
 {
 	Iterator it = getBegin();
@@ -298,6 +357,21 @@ typename List<T, TAlloc>::Iterator List<T, TAlloc>::find(const Value& a)
 	}
 
 	return it;
+}
+
+//==============================================================================
+template<typename T, typename TAlloc>
+PtrSize List<T, TAlloc>::getSize() const
+{
+	PtrSize size = 0;
+	ConstIterator it = getBegin();
+	ConstIterator end = getEnd();
+	for(; it != end; it++)
+	{
+		++size;
+	}
+
+	return size;
 }
 
 } // end namespace anki

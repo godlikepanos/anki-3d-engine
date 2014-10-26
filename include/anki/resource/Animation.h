@@ -52,12 +52,9 @@ public:
 	ResourceDArray<Key<F32>> m_scales;
 	ResourceDArray<Key<F32>> m_cameraFovs;
 
-	AnimationChannel(ResourceAllocator<U8>& alloc)
-	:	m_name(alloc)
-	{}
-
 	void destroy(ResourceAllocator<U8>& alloc)
 	{
+		m_name.destroy(alloc);
 		m_positions.destroy(alloc);
 		m_rotations.destroy(alloc);
 		m_scales.destroy(alloc);

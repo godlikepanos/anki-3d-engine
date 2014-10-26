@@ -8,7 +8,7 @@
 
 #include "anki/resource/Common.h"
 #include "anki/resource/ResourcePointer.h"
-#include "anki/util/Vector.h"
+#include "anki/util/List.h"
 #include "anki/util/Functions.h"
 #include "anki/util/String.h"
 
@@ -48,15 +48,17 @@ class TypeResourceManager
 public:
 	using ResourcePointerType = ResourcePointer<Type, TResourceManager>;
 	using Container = 
-		Vector<ResourcePointerType, HeapAllocator<ResourcePointerType>>;
+		List<ResourcePointerType, ResourceAllocator<ResourcePointerType>>;
 
 	TypeResourceManager()
 	{}
 
 	~TypeResourceManager()
 	{
-		ANKI_ASSERT(m_ptrs.size() == 0 
+		ANKI_ASSERT(m_ptrs.isEmpty() 
 			&& "Forgot to delete some resource ptrs");
+
+		m_ptrs.destroy(m_alloc);
 	}
 
 	/// @privatesection
@@ -76,12 +78,12 @@ public:
 		}
 	}
 
-	void _registerResource(ResourcePointerType& ptr)
+	ANKI_USE_RESULT Error _registerResource(ResourcePointerType& ptr)
 	{
 		ANKI_ASSERT(ptr.getReferenceCount() == 1);
-		ANKI_ASSERT(find(ptr.getResourceName()) == m_ptrs.end());
+		ANKI_ASSERT(find(ptr.getResourceName()) == m_ptrs.getEnd());
 	
-		m_ptrs.push_back(ptr);
+		return m_ptrs.pushBack(m_alloc, ptr);
 	}
 
 	void _unregisterResource(ResourcePointerType& ptr)
@@ -89,26 +91,25 @@ public:
 		auto it = find(ptr.getResourceName());
 		ANKI_ASSERT(it != m_ptrs.end());
 	
-		m_ptrs.erase(it);
+		m_ptrs.erase(m_alloc, it);
 	}
 	/// @}
 
 protected:
-	void init(HeapAllocator<U8>& alloc)
+	void init(ResourceAllocator<U8> alloc)
 	{
-		HeapAllocator<ResourcePointerType> alloc2 = alloc;
-		Container ptrs(alloc2);
-		m_ptrs = std::move(ptrs);
+		m_alloc = alloc;
 	}
 
 private:
+	ResourceAllocator<U8> m_alloc;
 	Container m_ptrs;
 
-	typename Container::iterator find(const CString& filename)
+	typename Container::Iterator find(const CString& filename)
 	{
-		typename Container::iterator it;
+		typename Container::Iterator it;
 		
-		for(it = m_ptrs.begin(); it != m_ptrs.end(); ++it)
+		for(it = m_ptrs.getBegin(); it != m_ptrs.getEnd(); ++it)
 		{
 			if(it->getResourceName() == filename)
 			{
@@ -145,12 +146,14 @@ public:
 		CString m_cacheDir;
 		AllocAlignedCallback m_allocCallback = 0;
 		void* m_allocCallbackData = nullptr;
-		U32 m_tempAllocatorMemorySize = 2 * 1024 * 1024;
+		U32 m_tempAllocatorMemorySize = 1 * 1024 * 1024;
 	};
 
-	ResourceManager(Initializer& init);
+	ResourceManager();
 
 	~ResourceManager();
+
+	ANKI_USE_RESULT Error create(Initializer& init);
 
 	const ResourceString& getDataDirectory() const
 	{
@@ -167,7 +170,9 @@ public:
 		return m_textureAnisotropy;
 	}
 
-	TempResourceString fixResourceFilename(const CString& filename) const;
+	ANKI_USE_RESULT Error fixResourceFilename(
+		const CString& filename,
+		TempResourceString& out) const;
 
 	/// @privatesection
 	/// @{
@@ -192,9 +197,9 @@ public:
 	}
 
 	/// Set it with information from the renderer
-	void _setShadersPrependedSource(const CString& cstr)
+	ANKI_USE_RESULT Error _setShadersPrependedSource(const CString& cstr)
 	{
-		m_shadersPrependedSource = cstr;
+		return m_shadersPrependedSource.create(m_alloc, cstr);
 	}
 
 	const ResourceString& _getShadersPrependedSource() const
@@ -211,9 +216,10 @@ public:
 	}
 
 	template<typename T>
-	void _registerResource(ResourcePointer<T, ResourceManager>& ptr)
+	ANKI_USE_RESULT Error _registerResource(
+		ResourcePointer<T, ResourceManager>& ptr)
 	{
-		TypeResourceManager<T, ResourceManager>::_registerResource(ptr);
+		return TypeResourceManager<T, ResourceManager>::_registerResource(ptr);
 	}
 
 	template<typename T>
