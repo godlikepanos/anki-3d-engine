@@ -35,9 +35,17 @@ using SceneString = StringBase<SceneAllocator<char>>;
 template<typename T>
 using SceneVector = Vector<T, SceneAllocator<T>>;
 
+/// Scene vector
+template<typename T>
+using SceneDArray = DArray<T, SceneAllocator<T>>;
+
 /// The same as SceneVector. Different name to show the difference
 template<typename T>
 using SceneFrameVector = Vector<T, SceneFrameAllocator<T>>;
+
+/// The same as SceneVector. Different name to show the difference
+template<typename T>
+using SceneFrameDArray = DArray<T, SceneFrameAllocator<T>>;
 
 /// Scene dictionary
 template<typename T>

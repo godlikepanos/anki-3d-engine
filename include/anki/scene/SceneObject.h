@@ -36,24 +36,32 @@ struct SceneObjectCallbackCollection
 
 /// The base of all scene related objects
 class SceneObject: 
-	public Object<SceneObject, SceneAllocator<SceneObject>, 
+	private Object<SceneObject, SceneAllocator<SceneObject>, 
 	SceneObjectCallbackCollection>
 {
 public:
-	enum class Type: U8
-	{
-		SCENE_NODE = 1 << 0,
-		EVENT = 1 << 1,
-		_TYPE_MASK = SCENE_NODE | EVENT
-	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Type, friend)
-
 	using Base = Object<SceneObject, SceneAllocator<SceneObject>,
 		SceneObjectCallbackCollection>;
 
-	SceneObject(Type type, SceneObject* parent, SceneGraph* scene);
+	enum class Type: U8
+	{
+		NONE = 0,
+		SCENE_NODE = 1 << 0,
+		EVENT = 1 << 1,
+		_TYPE_MASK = SCENE_NODE | EVENT,
+		_MARKED_FOR_DELETION = 1 << 2
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Type, friend)
+
+	SceneObject(Type type, SceneGraph* scene);
 
 	virtual ~SceneObject();
+
+	// Methods that SceneObject can use from it's base.
+	using Base::getParent;
+	using Base::visitChildren;
+	using Base::visitThisAndChildren;
+	using Base::visitChildrenMaxDepth;
 
 	Type getType() const
 	{
@@ -81,7 +89,7 @@ public:
 
 	Bool isMarkedForDeletion() const
 	{
-		return (m_bits & Flag::MARKED_FOR_DELETION) != Flag::NONE;
+		return (m_bits & Type::_MARKED_FOR_DELETION) != Type::NONE;
 	}
 
 	void markForDeletion();
@@ -105,15 +113,8 @@ public:
 	}
 
 private:
-	enum class Flag: U8
-	{
-		NONE = 0,
-		MARKED_FOR_DELETION = 1 << 2
-	};
-	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
-
-	SceneGraph* m_scene;
-	U8 m_bits; ///< Contains the type and the marked for deletion
+	SceneGraph* m_scene = 0;
+	Type m_bits = Type::NONE; ///< Contains the type and other flags
 };
 
 inline void SceneObjectCallbackCollection::onChildRemoved(

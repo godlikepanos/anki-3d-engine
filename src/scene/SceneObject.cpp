@@ -9,18 +9,12 @@
 namespace anki {
 
 //==============================================================================
-SceneObject::SceneObject(Type type, SceneObject* parent, SceneGraph* scene)
+SceneObject::SceneObject(Type type, SceneGraph* scene)
 :	Base(),
 	m_scene(scene),
 	m_bits(static_cast<U8>(type))
 {
 	ANKI_ASSERT(m_scene);
-
-	// TODO Remove that
-	if(parent)
-	{
-		parent->addChild(this);
-	}
 }
 
 //==============================================================================
