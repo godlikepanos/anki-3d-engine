@@ -121,7 +121,7 @@ public:
 	}
 
 	/// A custom cleanup method
-	virtual void cleanup(SceneAllocator<U8> alloc) = 0;
+	virtual void destroy(SceneAllocator<U8> alloc) = 0;
 
 protected:
 	const MaterialVariable* m_mvar = nullptr;
@@ -195,7 +195,7 @@ public:
 	}
 
 	/// Call that manually
-	void cleanup(SceneAllocator<U8> alloc)
+	void destroy(SceneAllocator<U8> alloc)
 	{
 		if(m_copy)
 		{
@@ -223,18 +223,19 @@ public:
 class RenderComponent: public SceneComponent
 {
 public:
-	typedef SceneVector<RenderComponentVariable*> Variables;
+	typedef SceneDArray<RenderComponentVariable*> Variables;
 
 	/// @param node Pass node to steal it's allocator
 	RenderComponent(SceneNode* node);
 
 	~RenderComponent();
 
-	Variables::iterator getVariablesBegin()
+	Variables::Iterator getVariablesBegin()
 	{
 		return m_vars.begin();
 	}
-	Variables::iterator getVariablesEnd()
+
+	Variables::Iterator getVariablesEnd()
 	{
 		return m_vars.end();
 	}
@@ -242,7 +243,7 @@ public:
 	/// Build up the rendering.
 	/// Given an array of submeshes that are visible append jobs to the GL
 	/// job chain
-	virtual void buildRendering(RenderingBuildData& data) = 0;
+	virtual ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) = 0;
 
 	/// Access the material
 	virtual const Material& getMaterial() = 0;
@@ -271,12 +272,16 @@ public:
 
 	/// Iterate variables using a lambda
 	template<typename Func>
-	void iterateVariables(Func func)
+	ANKI_USE_RESULT Error iterateVariables(Func func)
 	{
-		for(auto var : m_vars)
+		Error err = ErrorCode::NONE;
+		Variables::Iterator it = m_vars.getBegin();
+		for(; it != m_vars.getEnd() && !err; it++)
 		{
-			func(*var);
+			err = func(*(*it));
 		}
+
+		return err;
 	}
 
 	static constexpr Type getClassType()
@@ -285,9 +290,10 @@ public:
 	}
 
 protected:
-	void init();
+	ANKI_USE_RESULT Error create();
 
 private:
+	SceneAllocator<U8> m_alloc;
 	Variables m_vars;
 };
 /// @}

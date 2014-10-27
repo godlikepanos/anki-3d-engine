@@ -87,17 +87,20 @@ public:
 
 	/// Called when the component gets updated. It should be overriden, by 
 	/// default it does nothing.
-	virtual void onSpatialComponentUpdate(
+	virtual ANKI_USE_RESULT Error onSpatialComponentUpdate(
 		SceneNode& node, F32 prevTime, F32 crntTime)
-	{}
+	{
+		return ErrorCode::NONE;
+	}
 
 	/// @name SceneComponent overrides
 	/// @{
-	Bool update(SceneNode&, F32, F32) override;
+	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
 
-	void onUpdate(SceneNode& node, F32 prevTime, F32 crntTime) final
+	ANKI_USE_RESULT Error onUpdate(
+		SceneNode& node, F32 prevTime, F32 crntTime) final
 	{
-		onSpatialComponentUpdate(node, prevTime, crntTime);
+		return onSpatialComponentUpdate(node, prevTime, crntTime);
 	}
 
 	/// Disable some flags

@@ -254,18 +254,18 @@ public:
 
 	/// Apply mutable visitor
 	template<typename TVisitor>
-	void acceptVisitor(TVisitor& v)
+	ANKI_USE_RESULT Error acceptVisitor(TVisitor& v)
 	{
 		ANKI_ASSERT(m_what != -1);
-		acceptVisitorInternal<TVisitor, Types...>(v);
+		return acceptVisitorInternal<TVisitor, Types...>(v);
 	}
 
 	/// Apply const visitor
 	template<typename TVisitor>
-	void acceptVisitor(TVisitor& v) const
+	ANKI_USE_RESULT Error acceptVisitor(TVisitor& v) const
 	{
 		ANKI_ASSERT(m_what != -1);
-		acceptVisitorInternalConst<TVisitor, Types...>(v);
+		return acceptVisitorInternalConst<TVisitor, Types...>(v);
 	}
 
 	/// Setup the type ID
@@ -282,8 +282,10 @@ private:
 	/// @name Accept visitor template methods
 	/// @{
 	template<typename TVisitor, typename TFirst>
-	void acceptVisitorInternal(TVisitor& v)
+	ANKI_USE_RESULT Error acceptVisitorInternal(TVisitor& v)
 	{
+		Error err = ErrorCode::NONE;
+
 		switch(m_what)
 		{
 		case 0:
@@ -294,19 +296,22 @@ private:
 #else
 				TFirst* base = static_cast<TFirst*>(this);
 #endif
-				v.template visit(*base);
+				err = v.template visit(*base);
 			}
 			break;
 		default:
 			ANKI_ASSERT(0 && "Wrong type ID");
 			break;
 		}
+
+		return err;
 	}
 
 	template<typename TVisitor, typename TFirst, typename TSecond, 
 		typename... Types_>
-	void acceptVisitorInternal(TVisitor& v)
+	ANKI_USE_RESULT Error acceptVisitorInternal(TVisitor& v)
 	{
+		Error err = ErrorCode::NONE;
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
 		switch(m_what)
@@ -319,18 +324,22 @@ private:
 #else
 				TSecond* base = static_cast<TSecond*>(this);
 #endif
-				v.template visit(*base);
+				err = v.template visit(*base);
 			}
 			break;
 		default:
-			acceptVisitorInternal<TVisitor, TFirst, Types_...>(v);
+			err = acceptVisitorInternal<TVisitor, TFirst, Types_...>(v);
 			break;
 		}
+		
+		return err;
 	}
 
 	template<typename TVisitor, typename TFirst>
-	void acceptVisitorInternalConst(TVisitor& v) const
+	ANKI_USE_RESULT Error acceptVisitorInternalConst(TVisitor& v) const
 	{
+		Error err = ErrorCode::NONE;
+
 		switch(m_what)
 		{
 		case 0:
@@ -341,19 +350,22 @@ private:
 #else
 				const TFirst* base = static_cast<const TFirst*>(this);
 #endif
-				v.template visit(*base);
+				err = v.template visit(*base);
 			}
 			break;
 		default:
 			ANKI_ASSERT(0 && "Wrong type ID");
 			break;
 		}
+		
+		return err;
 	}
 
 	template<typename TVisitor, typename TFirst, typename TSecond, 
 		typename... Types_>
-	void acceptVisitorInternalConst(TVisitor& v) const
+	ANKI_USE_RESULT Error acceptVisitorInternalConst(TVisitor& v) const
 	{
+		Error err = ErrorCode::NONE;
 		constexpr I i = sizeof...(Types) - sizeof...(Types_) - 1;
 
 		switch(m_what)
@@ -366,13 +378,15 @@ private:
 #else
 				const TSecond* base = static_cast<const TSecond*>(this);
 #endif
-				v.template visit(*base);
+				err = v.template visit(*base);
 			}
 			break;
 		default:
-			acceptVisitorInternalConst<TVisitor, TFirst, Types_...>(v);
+			err = acceptVisitorInternalConst<TVisitor, TFirst, Types_...>(v);
 			break;
 		}
+		
+		return err;
 	}
 	/// @}
 };

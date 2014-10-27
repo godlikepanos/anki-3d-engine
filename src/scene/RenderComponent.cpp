@@ -18,19 +18,25 @@ namespace anki {
 struct CreateNewRenderComponentVariableVisitor
 {
 	const MaterialVariable* m_mvar = nullptr;
-	RenderComponent::Variables* m_vars = nullptr;
+	mutable RenderComponent::Variables* m_vars = nullptr;
+	mutable U32* m_count = nullptr;
+	mutable SceneAllocator<U8> m_alloc;
 
 	template<typename TMaterialVariableTemplate>
-	void visit(const TMaterialVariableTemplate&) const
+	Error visit(const TMaterialVariableTemplate&) const
 	{
-		typedef typename TMaterialVariableTemplate::Type Type;
-
-		SceneAllocator<U8> alloc = m_vars->get_allocator();
+		using Type = typename TMaterialVariableTemplate::Type;
 
 		RenderComponentVariableTemplate<Type>* rvar =
-			alloc.newInstance<RenderComponentVariableTemplate<Type>>(m_mvar);
+			m_alloc.newInstance<RenderComponentVariableTemplate<Type>>(m_mvar);
 
-		m_vars->push_back(rvar);
+		if(rvar)
+		{
+			(*m_vars)[(*m_count)++] = rvar;
+			return ErrorCode::NONE;
+		}
+
+		return ErrorCode::OUT_OF_MEMORY;
 	}
 };
 
@@ -90,37 +96,45 @@ RenderComponentVariable::~RenderComponentVariable()
 //==============================================================================
 RenderComponent::RenderComponent(SceneNode* node)
 :	SceneComponent(Type::RENDER, node), 
-	m_vars(node->getSceneAllocator())
+	m_alloc(node->getSceneAllocator())
 {}
 
 //==============================================================================
 RenderComponent::~RenderComponent()
 {
-	SceneAllocator<U8> alloc = m_vars.get_allocator();
-
 	for(RenderComponentVariable* var : m_vars)
 	{
-		var->cleanup(alloc);
-		alloc.deleteInstance(var);
+		var->destroy(m_alloc);
+		m_alloc.deleteInstance(var);
 	}
+
+	m_vars.destroy(m_alloc);
 }
 
 //==============================================================================
-void RenderComponent::init()
+Error RenderComponent::create()
 {
 	const Material& mtl = getMaterial();
 
 	// Create the material variables using a visitor
 	CreateNewRenderComponentVariableVisitor vis;
+	U32 count = 0;
 	vis.m_vars = &m_vars;
+	vis.m_count = &count;
+	vis.m_alloc = m_alloc;
 
-	m_vars.reserve(mtl.getVariables().getSize());
+	Error err = m_vars.create(m_alloc, mtl.getVariables().getSize());
 
-	for(const MaterialVariable* mv : mtl.getVariables())
+	auto it = mtl.getVariables().getBegin();
+	auto end = mtl.getVariables().getEnd();
+	for(; !err && it != end; it++)
 	{
+		const MaterialVariable* mv = (*it);
 		vis.m_mvar = mv;
-		mv->acceptVisitor(vis);
+		err = mv->acceptVisitor(vis);
 	}
+
+	return err;
 }
 
 }  // end namespace anki

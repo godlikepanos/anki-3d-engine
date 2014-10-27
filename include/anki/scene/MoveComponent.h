@@ -101,9 +101,11 @@ public:
 	}
 
 	/// Called when there is an update in the world transformation.
-	virtual void onMoveComponentUpdate(
+	virtual ANKI_USE_RESULT Error onMoveComponentUpdate(
 		SceneNode& node, F32 prevTime, F32 crntTime)
-	{}
+	{
+		return ErrorCode::NONE;
+	}
 
 	/// @name SceneComponent overrides
 	/// @{
@@ -113,11 +115,12 @@ public:
 	/// @note Don't update if child because we start from roots and go to
 	///       children and we don't want a child to be updated before the
 	///       parent
-	Bool update(SceneNode&, F32, F32) override;
+	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
 
-	void onUpdate(SceneNode& node, F32 prevTime, F32 crntTime) final
+	ANKI_USE_RESULT Error onUpdate(
+		SceneNode& node, F32 prevTime, F32 crntTime) final
 	{
-		onMoveComponentUpdate(node, prevTime, crntTime);
+		return onMoveComponentUpdate(node, prevTime, crntTime);
 	}
 	/// @}
 

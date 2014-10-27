@@ -68,51 +68,75 @@ public:
 	}
 
 	/// Make it compatible with the C++11 range based for loop.
-	Iterator begin()
+	Iterator getBegin()
 	{
 		return &m_data[0];
+	}
+
+	/// Make it compatible with the C++11 range based for loop.
+	ConstIterator getBegin() const
+	{
+		return &m_data[0];
+	}
+
+	/// Make it compatible with the C++11 range based for loop.
+	Iterator getEnd()
+	{
+		return &m_data[0] + m_size;
+	}
+
+	/// Make it compatible with the C++11 range based for loop.
+	ConstIterator getEnd() const
+	{
+		return &m_data[0] + m_size;
+	}
+
+	/// Make it compatible with the C++11 range based for loop.
+	Iterator begin()
+	{
+		return getBegin();
 	}
 
 	/// Make it compatible with the C++11 range based for loop.
 	ConstIterator begin() const
 	{
-		return &m_data[0];
+		return getBegin();
 	}
 
 	/// Make it compatible with the C++11 range based for loop.
 	Iterator end()
 	{
-		return &m_data[0] + m_size;
+		return getEnd();
 	}
 
 	/// Make it compatible with the C++11 range based for loop.
 	ConstIterator end() const
 	{
-		return &m_data[0] + m_size;
+		return getEnd();
 	}
 
-	/// Make it compatible with STL.
-	Reference front() 
+	/// Get first element.
+	Reference getFront() 
 	{
 		return m_data[0];
 	}
 
-	/// Make it compatible with STL.
-	ConstReference front() const
+	/// Get first element.
+	ConstReference getFront() const
 	{
 		return m_data[0];
 	}
 
-	/// Make it compatible with STL.
-	Reference back() 
+	/// Get last element.
+	Reference getBack() 
 	{
 		return m_data[m_size - 1];
 	}
 
-	/// Make it compatible with STL.
+	/// Get last element.
 	ConstReference back() const
 	{
-		return m_data[m_size - 1];
+		return getBack[m_size - 1];
 	}
 
 	PtrSize getSize() const

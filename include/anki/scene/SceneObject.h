@@ -36,7 +36,7 @@ struct SceneObjectCallbackCollection
 
 /// The base of all scene related objects
 class SceneObject: 
-	private Object<SceneObject, SceneAllocator<SceneObject>, 
+	public Object<SceneObject, SceneAllocator<SceneObject>, 
 	SceneObjectCallbackCollection>
 {
 public:
@@ -56,12 +56,6 @@ public:
 	SceneObject(Type type, SceneGraph* scene);
 
 	virtual ~SceneObject();
-
-	// Methods that SceneObject can use from it's base.
-	using Base::getParent;
-	using Base::visitChildren;
-	using Base::visitThisAndChildren;
-	using Base::visitChildrenMaxDepth;
 
 	Type getType() const
 	{

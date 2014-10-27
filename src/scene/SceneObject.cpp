@@ -12,7 +12,7 @@ namespace anki {
 SceneObject::SceneObject(Type type, SceneGraph* scene)
 :	Base(),
 	m_scene(scene),
-	m_bits(static_cast<U8>(type))
+	m_bits(type)
 {
 	ANKI_ASSERT(m_scene);
 }
@@ -44,15 +44,17 @@ void SceneObject::markForDeletion()
 	// want to increase the counter again
 	if(!isMarkedForDeletion())
 	{
-		m_bits |= enumToType(Flag::MARKED_FOR_DELETION);
+		m_bits |= Type::_MARKED_FOR_DELETION	;
 		m_scene->increaseObjectsMarkedForDeletion();
 	}
 
-	visitChildren([](SceneObject& obj) -> Error
+	Error err = visitChildren([](SceneObject& obj) -> Error
 	{
 		obj.markForDeletion();
 		return ErrorCode::NONE;
 	});
+
+	(void)err;
 }
 
 } // end namespace anki

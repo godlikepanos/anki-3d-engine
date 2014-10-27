@@ -21,9 +21,9 @@ SpatialComponent::~SpatialComponent()
 {}
 
 //==============================================================================
-Bool SpatialComponent::update(SceneNode&, F32, F32)
+Error SpatialComponent::update(SceneNode&, F32, F32, Bool& updated)
 {
-	Bool updated = false;
+	updated = false;
 
 	updated = bitsEnabled(Flag::MARKED_FOR_UPDATE);
 	if(updated)
@@ -32,7 +32,7 @@ Bool SpatialComponent::update(SceneNode&, F32, F32)
 		disableBits(Flag::MARKED_FOR_UPDATE);
 	}
 
-	return updated;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

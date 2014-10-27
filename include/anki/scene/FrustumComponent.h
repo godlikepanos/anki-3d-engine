@@ -114,22 +114,25 @@ public:
 
 	/// Called when the component gets updated. It should be overriden, by 
 	/// default it does nothing.
-	virtual void onFrustumComponentUpdate(
+	virtual ANKI_USE_RESULT Error onFrustumComponentUpdate(
 		SceneNode& node, F32 prevTime, F32 crntTime)
-	{}
+	{
+		return ErrorCode::NONE;
+	}
 
 	/// @name SceneComponent overrides
 	/// @{
-	Bool update(SceneNode&, F32, F32) override
+	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override
 	{
-		Bool out = m_markedForUpdate;
+		updated = m_markedForUpdate;
 		m_markedForUpdate = false;
-		return out;
+		return ErrorCode::NONE;
 	}
 
-	void onUpdate(SceneNode& node, F32 prevTime, F32 crntTime) final
+	ANKI_USE_RESULT Error onUpdate(
+		SceneNode& node, F32 prevTime, F32 crntTime) final
 	{
-		onFrustumComponentUpdate(node, prevTime, crntTime);
+		return onFrustumComponentUpdate(node, prevTime, crntTime);
 	}
 
 	void reset() override

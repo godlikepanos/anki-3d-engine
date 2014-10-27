@@ -108,7 +108,7 @@ template<typename TData>
 class MaterialVariableTemplate: public MaterialVariable
 {
 public:
-	typedef TData Type;
+	using Type = TData;
 
 	/// @name Constructors/Destructor
 	/// @{

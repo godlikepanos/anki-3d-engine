@@ -22,10 +22,10 @@ MoveComponent::~MoveComponent()
 {}
 
 //==============================================================================
-Bool MoveComponent::update(SceneNode& node, F32, F32)
+Error MoveComponent::update(SceneNode& node, F32, F32, Bool& updated)
 {
-	Bool updated = updateWorldTransform(node);
-	return updated;
+	updated = updateWorldTransform(node);
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -79,8 +79,8 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 	// whole tree because you will re-walk it later
 	if(dirty)
 	{
-		node.visitChildrenMaxDepth(1, [](SceneObject& obj) -> Error
-		{
+		Error err = node.visitChildrenMaxDepth(1, [](SceneObject& obj) -> Error
+		{ 
 			if(obj.getType() == SceneNode::getClassType())
 			{
 				SceneNode& childNode = obj.downCast<SceneNode>();
@@ -94,6 +94,8 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 
 			return ErrorCode::NONE;
 		});
+
+		(void)err;
 	}
 
 	return dirty;
