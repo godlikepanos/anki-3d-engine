@@ -32,13 +32,23 @@ class InstanceNode: public SceneNode,  public MoveComponent,
 	public InstanceComponent
 {
 public:
-	InstanceNode(const CString& name, SceneGraph* scene)
-	:	SceneNode(name, scene), 
+	InstanceNode(SceneGraph* scene)
+	:	SceneNode(scene), 
 		MoveComponent(this, MoveComponent::Flag::IGNORE_PARENT_TRANSFORM),
 		InstanceComponent(this)
+	{}
+
+	ANKI_USE_RESULT Error create(const CString& name)
 	{
-		addComponent(static_cast<MoveComponent*>(this));
-		addComponent(static_cast<InstanceComponent*>(this));
+		Error err = SceneNode::create(name, 2);
+
+		if(!err)
+		{
+			addComponent(static_cast<MoveComponent*>(this));
+			addComponent(static_cast<InstanceComponent*>(this));
+		}
+
+		return err;
 	}
 };
 

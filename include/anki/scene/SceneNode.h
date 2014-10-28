@@ -23,15 +23,17 @@ class SceneNode: public SceneObject
 {
 public:
 	/// The one and only constructor
-	/// @param name The unique name of the node. If it's nullptr the the node
-	///             is not searchable
-	/// @param scene The scene that will register it
-	explicit SceneNode(
-		const CString& name,
-		SceneGraph* scene);
+	SceneNode(SceneGraph* scene);
 
 	/// Unregister node
 	virtual ~SceneNode();
+
+	/// @param name The unique name of the node. If it's nullptr the the node
+	///             is not searchable
+	/// @param scene The scene that will register it
+	ANKI_USE_RESULT Error create(
+		const CString& name, 
+		U32 maxComponents);
 
 	/// Return the name. It may be empty for nodes that we don't want to track
 	CString getName() const
@@ -43,10 +45,11 @@ public:
 	/// rendering. By default it does nothing
 	/// @param prevUpdateTime Timestamp of the previous update
 	/// @param crntTime Timestamp of this update
-	virtual void frameUpdate(F32 prevUpdateTime, F32 crntTime)
+	virtual ANKI_USE_RESULT Error frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	{
 		(void)prevUpdateTime;
 		(void)crntTime;
+		return ErrorCode::NONE;
 	}
 
 	/// Return the last frame the node was updated. It checks all components
@@ -54,36 +57,36 @@ public:
 
 	/// Iterate all components
 	template<typename Func>
-	void iterateComponents(Func func)
+	ANKI_USE_RESULT Error iterateComponents(Func func) const
 	{
-		for(auto comp : m_components)
+		Error err = ErrorCode::NONE;
+		auto it = m_components.getBegin();
+		auto end = m_components.getEnd();
+		for(; !err && it != end; it++)
 		{
-			func(*comp);
+			err = func(*(*it));
 		}
-	}
 
-	/// Iterate all components. Const version
-	template<typename Func>
-	void iterateComponents(Func func) const
-	{
-		for(auto comp : m_components)
-		{
-			func(*comp);
-		}
+		return err;
 	}
 
 	/// Iterate all components of a specific type
 	template<typename Component, typename Func>
-	void iterateComponentsOfType(Func func)
+	ANKI_USE_RESULT Error iterateComponentsOfType(Func func)
 	{
+		Error err = ErrorCode::NONE;
 		SceneComponent::Type type = Component::getClassType();
-		for(auto comp : m_components)
+		auto it = m_components.getBegin();
+		auto end = m_components.getEnd();
+		for(; !err && it != end; it++)
 		{
-			if(comp->getType() == type)
+			if((*it)->getType() == type)
 			{
-				func(comp->downCast<Component>());
+				err = func(*(*it));
 			}
 		}
+
+		return err;
 	}
 
 	/// Try geting a pointer to the first component of the requested type
@@ -151,7 +154,8 @@ protected:
 
 private:
 	SceneString m_name; ///< A unique name
-	SceneVector<SceneComponent*> m_components;
+	SceneDArray<SceneComponent*> m_components;
+	U8 m_componentsCount = 0;
 };
 
 /// @}

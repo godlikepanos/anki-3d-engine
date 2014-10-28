@@ -9,34 +9,48 @@
 namespace anki {
 
 //==============================================================================
-SceneNode::SceneNode(const CString& name, SceneGraph* scene)
-:	SceneObject(Type::SCENE_NODE, nullptr, scene),
-	m_name(getSceneAllocator()),
-	m_components(getSceneAllocator())
+SceneNode::SceneNode(SceneGraph* scene)
+:	SceneObject(Type::SCENE_NODE, scene)
+{}
+
+//==============================================================================
+Error SceneNode::create(const CString& name, U32 maxComponents)
 {
-	ANKI_ASSERT(scene);
-
-	m_components.reserve(2);
-
-	if(!name.isEmpty())
+	Error err = ErrorCode::NONE;
+	
+	if(maxComponents)
 	{
-		m_name = name;
+		err = m_components.create(getSceneAllocator(), maxComponents);
 	}
+
+	if(!err && !name.isEmpty())
+	{
+		err = m_name.create(getSceneAllocator(), name);
+	}
+
+	return err;
 }
 
 //==============================================================================
 SceneNode::~SceneNode()
-{}
+{
+	auto alloc = getSceneAllocator();
+	m_name.destroy(alloc);
+	m_components.destroy(alloc);
+}
 
 //==============================================================================
 U32 SceneNode::getLastUpdateFrame() const
 {
 	U32 max = 0;
 
-	iterateComponents([&](const SceneComponent& comp)
+	Error err = iterateComponents([&max](const SceneComponent& comp) -> Error
 	{
 		max = std::max(max, comp.getTimestamp());
+		return ErrorCode::NONE;
 	});
+
+	(void)err;
 
 	return max;
 }
@@ -45,15 +59,13 @@ U32 SceneNode::getLastUpdateFrame() const
 void SceneNode::addComponent(SceneComponent* comp)
 {
 	ANKI_ASSERT(comp);
-	m_components.push_back(comp);
+	m_components[m_componentsCount++] = comp;
 }
 
 //==============================================================================
 void SceneNode::removeComponent(SceneComponent* comp)
 {
-	auto it = std::find(m_components.begin(), m_components.end(), comp);
-	ANKI_ASSERT(it != m_components.end());
-	m_components.erase(it);
+	ANKI_ASSERT(0 && "TODO");
 }
 
 //==============================================================================
