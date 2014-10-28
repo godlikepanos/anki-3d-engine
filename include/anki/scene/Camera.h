@@ -29,11 +29,11 @@ public:
 		COUNT
 	};
 
-	Camera(
-		const CString& name, SceneGraph* scene, // SceneNode
-		Type type, Frustum* frustum); // Self
+	Camera(SceneGraph* scene, Type type, Frustum* frustum);
 
 	virtual ~Camera();
+
+	ANKI_USE_RESULT Error create(const CString& name);
 
 	Type getCameraType() const
 	{
@@ -54,7 +54,7 @@ public:
 
 	/// @name MoveComponent virtuals
 	/// @{
-	void onMoveComponentUpdate(
+	ANKI_USE_RESULT Error onMoveComponentUpdate(
 		SceneNode& node, F32 prevTime, F32 crntTime) override;
 	/// @}
 
@@ -80,13 +80,13 @@ private:
 class PerspectiveCamera: public Camera
 {
 public:
-	/// @name Constructors
-	/// @{
-	PerspectiveCamera(const CString& name, SceneGraph* scene);
-	/// @}
+	PerspectiveCamera(SceneGraph* scene);
 
-	/// @name Accessors
-	/// @{
+	ANKI_USE_RESULT Error create(const CString& name)
+	{
+		return Camera::create(name);
+	}
+
 	F32 getFovX() const
 	{
 		return m_frustum.getFovX();
@@ -112,7 +112,6 @@ public:
 		m_frustum.setAll(fovX_, fovY_, near_, far_);
 		frustumUpdate();
 	}
-	/// @}
 
 	/// @name SpatialComponent virtuals
 	/// @{
@@ -130,13 +129,13 @@ private:
 class OrthographicCamera: public Camera
 {
 public:
-	/// @name Constructors
-	/// @{
-	OrthographicCamera(const CString& name, SceneGraph* scene);
-	/// @}
+	OrthographicCamera(SceneGraph* scene);
 
-	/// @name Accessors
-	/// @{
+	ANKI_USE_RESULT Error create(const CString& name)
+	{
+		return Camera::create(name);
+	}
+
 	F32 getNear() const
 	{
 		return m_frustum.getNear();
@@ -172,7 +171,6 @@ public:
 		m_frustum.setAll(left, right, near, far, top, bottom);
 		frustumUpdate();
 	}
-	/// @}
 
 	/// @name SpatialComponent virtuals
 	/// @{

@@ -21,19 +21,27 @@ LightComponent::LightComponent(Light* node)
 //==============================================================================
 
 //==============================================================================
-Light::Light(
-	const CString& name, SceneGraph* scene, // SceneNode
-	Type t) // Self
-:	SceneNode(name, scene),
+Light::Light(SceneGraph* scene, Type t)
+:	SceneNode(scene),
 	LightComponent(this),
 	MoveComponent(this),
 	SpatialComponent(this),
 	m_type(t)
+{}
+
+//==============================================================================
+Error Light::create(const CString& name)
 {
-	// Register components
-	addComponent(static_cast<MoveComponent*>(this));
-	addComponent(static_cast<SpatialComponent*>(this));
-	addComponent(static_cast<LightComponent*>(this));
+	Error err = SceneNode::create(name, 3 + 1);
+	
+	if(!err)
+	{
+		addComponent(static_cast<MoveComponent*>(this));
+		addComponent(static_cast<SpatialComponent*>(this));
+		addComponent(static_cast<LightComponent*>(this));
+	}
+
+	return err;
 }
 
 //==============================================================================
@@ -44,12 +52,17 @@ Light::~Light()
 void Light::frustumUpdate()
 {
 	// Update the frustums
-	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr)
+	Error err = iterateComponentsOfType<FrustumComponent>(
+		[&](FrustumComponent& fr) -> Error
 	{
 		fr.setProjectionMatrix(fr.getFrustum().calculateProjectionMatrix());
 		fr.setViewProjectionMatrix(
 			fr.getProjectionMatrix() * fr.getViewMatrix());
+
+		return ErrorCode::NONE;
 	});
+
+	(void)err;
 
 	// Mark the spatial for update
 	SpatialComponent& sp = getComponent<SpatialComponent>();
@@ -62,7 +75,8 @@ void Light::onMoveComponentUpdateCommon()
 	MoveComponent& move = *this;
 
 	// Update the frustums
-	iterateComponentsOfType<FrustumComponent>([&](FrustumComponent& fr)
+	Error err = iterateComponentsOfType<FrustumComponent>(
+		[&](FrustumComponent& fr) -> Error
 	{
 		fr.setProjectionMatrix(fr.getFrustum().calculateProjectionMatrix());
 		fr.setViewMatrix(Mat4(move.getWorldTransform().getInverse()));
@@ -72,7 +86,11 @@ void Light::onMoveComponentUpdateCommon()
 		fr.getFrustum().resetTransform(move.getWorldTransform());
 
 		fr.markForUpdate();
+
+		return ErrorCode::NONE;
 	});
+
+	(void)err;
 
 	// Update the spatial
 	SpatialComponent& sp = getComponent<SpatialComponent>();
@@ -80,10 +98,10 @@ void Light::onMoveComponentUpdateCommon()
 }
 
 //==============================================================================
-void Light::loadLensFlare(const CString& filename)
+Error Light::loadLensFlare(const CString& filename)
 {
 	ANKI_ASSERT(!hasLensFlare());
-	m_flaresTex.load(filename, &getResourceManager());
+	return m_flaresTex.load(filename, &getResourceManager());
 }
 
 //==============================================================================
@@ -91,23 +109,34 @@ void Light::loadLensFlare(const CString& filename)
 //==============================================================================
 
 //==============================================================================
-PointLight::PointLight(const CString& name, SceneGraph* scene)
-:	Light(name, scene, Light::Type::POINT)
+PointLight::PointLight(SceneGraph* scene)
+:	Light(scene, Light::Type::POINT)
 {}
 
 //==============================================================================
-void PointLight::onMoveComponentUpdate(SceneNode&, F32, F32)
+Error PointLight::create(const CString& name)
 {
-	m_sphereW.setCenter(getWorldTransform().getOrigin());
-	onMoveComponentUpdateCommon();
+	return Light::create(name);
 }
 
 //==============================================================================
-void PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+Error PointLight::onMoveComponentUpdate(SceneNode&, F32, F32)
+{
+	m_sphereW.setCenter(getWorldTransform().getOrigin());
+	onMoveComponentUpdateCommon();
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
 	if(getShadowEnabled() && m_shadowData == nullptr)
 	{
 		m_shadowData = getSceneAllocator().newInstance<ShadowData>(this);
+		if(m_shadowData == nullptr)
+		{
+			return ErrorCode::OUT_OF_MEMORY;
+		}
 
 		const F32 ang = toRad(90.0);
 		F32 dist = m_sphereW.getRadius();
@@ -128,6 +157,8 @@ void PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		trfs[4].setRotation(Mat3x4(Mat3(Axisang(ang, axis))));
 		trfs[5].setRotation(Mat3x4(Mat3(Axisang(-ang, axis))));
 	}
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -135,30 +166,41 @@ void PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 //==============================================================================
 
 //==============================================================================
-SpotLight::SpotLight(const CString& name, SceneGraph* scene)
-:	Light(name, scene, Light::Type::SPOT),
+SpotLight::SpotLight(SceneGraph* scene)
+:	Light(scene, Light::Type::SPOT),
 	FrustumComponent(this, &m_frustum)
+{}
+
+//==============================================================================
+Error SpotLight::create(const CString& name)
 {
-	// Init components
-	addComponent(static_cast<FrustumComponent*>(this));
+	Error err = Light::create(name);
 
-	const F32 ang = toRad(45.0);
-	const F32 dist = 1.0;
+	if(!err)
+	{
+		addComponent(static_cast<FrustumComponent*>(this));
 
-	m_frustum.setAll(ang, ang, 0.1, dist);
+		const F32 ang = toRad(45.0);
+		const F32 dist = 1.0;
+
+		m_frustum.setAll(ang, ang, 0.1, dist);
+	}
+
+	return err;
 }
 
 //==============================================================================
-void SpotLight::onMoveComponentUpdate(SceneNode&, F32, F32)
+Error SpotLight::onMoveComponentUpdate(SceneNode&, F32, F32)
 {
 	m_frustum.resetTransform(getWorldTransform());
 	onMoveComponentUpdateCommon();
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void SpotLight::loadTexture(const CString& filename)
+Error SpotLight::loadTexture(const CString& filename)
 {
-	m_tex.load(filename, &getResourceManager());
+	return m_tex.load(filename, &getResourceManager());
 }
 
 } // end namespace anki

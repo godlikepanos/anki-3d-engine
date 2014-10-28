@@ -82,7 +82,7 @@ public:
 		{
 			if((*it)->getType() == type)
 			{
-				err = func(*(*it));
+				err = func((*it)->downCast<Component>());
 			}
 		}
 

@@ -82,11 +82,11 @@ public:
 		COUNT
 	};
 
-	Light(
-		const CString& name, SceneGraph* scene, // SceneNode
-		Type t); // Self
+	Light(SceneGraph* scene, Type t);
 
 	virtual ~Light();
+
+	ANKI_USE_RESULT Error create(const CString& name);
 
 	Type getLightType() const
 	{
@@ -191,7 +191,7 @@ public:
 		m_flaresAlpha = val;
 	}
 
-	void loadLensFlare(const CString& filename);
+	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
 
 	/// @name SpatialComponent virtuals
 	/// @{
@@ -229,7 +229,9 @@ private:
 class PointLight: public Light
 {
 public:
-	PointLight(const CString& name, SceneGraph* scene);
+	PointLight(SceneGraph* scene);
+
+	ANKI_USE_RESULT Error create(const CString& name);
 
 	F32 getRadius() const
 	{
@@ -249,12 +251,13 @@ public:
 
 	/// @name SceneNode virtuals
 	/// @{
-	void frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(
+		F32 prevUpdateTime, F32 crntTime) override;
 	/// @}
 
 	/// @name MoveComponent virtuals
 	/// @{
-	void onMoveComponentUpdate(SceneNode&, F32, F32) override;
+	ANKI_USE_RESULT Error onMoveComponentUpdate(SceneNode&, F32, F32) override;
 	/// @}
 
 	/// @name SpatialComponent virtuals
@@ -289,7 +292,9 @@ public:
 class SpotLight: public Light, public FrustumComponent
 {
 public:
-	SpotLight(const CString& name, SceneGraph* scene);
+	SpotLight(SceneGraph* scene);
+
+	ANKI_USE_RESULT Error create(const CString& name);
 
 	GlTextureHandle& getTexture()
 	{
@@ -347,7 +352,7 @@ public:
 
 	/// @name MoveComponent virtuals
 	/// @{
-	void onMoveComponentUpdate(SceneNode&, F32, F32) override;
+	ANKI_USE_RESULT Error onMoveComponentUpdate(SceneNode&, F32, F32) override;
 	/// @}
 
 	/// @name SpatialComponent virtuals
@@ -358,7 +363,7 @@ public:
 	}
 	/// @}
 
-	void loadTexture(const CString& filename);
+	ANKI_USE_RESULT Error loadTexture(const CString& filename);
 
 private:
 	PerspectiveFrustum m_frustum;
