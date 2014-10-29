@@ -19,26 +19,38 @@ namespace anki {
 
 //==============================================================================
 ModelPatchNode::ModelPatchNode(
-	const CString& name, SceneGraph* scene,
+	SceneGraph* scene,
 	const ModelPatchBase* modelPatch)
-:	SceneNode(name, scene),
+:	SceneNode(scene),
 	RenderComponent(this),
 	SpatialComponent(this), 
-	m_modelPatch(modelPatch),
-	m_spatials(getSceneAllocator())
-{
-	addComponent(static_cast<RenderComponent*>(this));
-	addComponent(static_cast<SpatialComponent*>(this));
+	m_modelPatch(modelPatch)
+{}
 
-	RenderComponent::init();
+//==============================================================================
+Error ModelPatchNode::create(const CString& name)
+{
+	err = SceneNode::create(name, 2);
+
+	if(!err)
+	{
+		addComponent(static_cast<RenderComponent*>(this));
+		addComponent(static_cast<SpatialComponent*>(this));
+
+		err = RenderComponent::create();
+	}
+
+	return err;
 }
 
 //==============================================================================
 ModelPatchNode::~ModelPatchNode()
-{}
+{
+	m_spatials.destroy(getSceneAllocator());
+}
 
 //==============================================================================
-void ModelPatchNode::buildRendering(RenderingBuildData& data)
+Error ModelPatchNode::buildRendering(RenderingBuildData& data)
 {
 	// That will not work on multi-draw and instanced at the same time. Make
 	// sure that there is no multi-draw anywhere
@@ -53,26 +65,36 @@ void ModelPatchNode::buildRendering(RenderingBuildData& data)
 	GlCommandBufferHandle vertJobs;
 	GlProgramPipelineHandle ppline;
 
-	m_modelPatch->getRenderingDataSub(
+	Error err = m_modelPatch->getRenderingDataSub(
 		data.m_key, vertJobs, ppline, 
 		nullptr, 0,
 		indicesCountArray, indicesOffsetArray, drawcallCount);
+	if(err)
+	{
+		return err;
+	}
 
 	// Cannot accept multi-draw
 	ANKI_ASSERT(drawcallCount == 1);
 
 	// Set jobs
 	ppline.bind(data.m_jobs);
-	data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
+	err = data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
+	if(err)
+	{
+		return err;
+	}
 	
 	// Drawcall
 	U32 offset = indicesOffsetArray[0] / sizeof(U16);
-	data.m_jobs.drawElements(
+	err = data.m_jobs.drawElements(
 		data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
 		sizeof(U16),
 		indicesCountArray[0],
 		instancesCount,
 		offset);
+
+	return err;
 }
 
 //==============================================================================
@@ -101,27 +123,41 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 }
 
 //==============================================================================
-void ModelPatchNode::updateInstanceSpatials(
-	const SceneFrameVector<MoveComponent*>& instanceMoves)
+Error ModelPatchNode::updateInstanceSpatials(
+	const SceneFrameDArray<MoveComponent*>& instanceMoves)
 {
+	Error err = ErrorCode::NONE;
 	Bool fullUpdate = false;
 
-	if(m_spatials.size() < instanceMoves.size())
+	const U oldSize = m_spatials.getSize();
+	const U newSize = instanceMoves.getSize();
+
+	if(oldSize < newSize)
 	{
 		// We need to add spatials
 		
 		fullUpdate = true;
+		
+		err = m_spatials.resize(getSceneAllocator(), newSize);
+		if(err)
+		{
+			return err;
+		}
 
-		U diff = instanceMoves.size() - m_spatials.size();
-
+		U diff = newSize - oldSize;
+		U index = oldSize;
 		while(diff-- != 0)
 		{
 			ObbSpatialComponent* newSpatial = getSceneAllocator().
 				newInstance<ObbSpatialComponent>(this);
+			if(newSpatial == nullptr)
+			{
+				return ErrorCode::OUT_OF_MEMORY;
+			}
 
 			addComponent(newSpatial);
 
-			m_spatials.push_back(newSpatial);
+			m_spatials[index++] = newSpatial;
 		}
 	}
 	else if(m_spatials.size() > instanceMoves.size())
@@ -134,7 +170,7 @@ void ModelPatchNode::updateInstanceSpatials(
 		ANKI_ASSERT(0 && "TODO");
 	}
 
-	U count = instanceMoves.size();
+	U count = newSize;
 	while(count-- != 0)
 	{
 		ObbSpatialComponent& sp = *m_spatials[count];
@@ -148,6 +184,8 @@ void ModelPatchNode::updateInstanceSpatials(
 			sp.markForUpdate();
 		}
 	}
+
+	return err;
 }
 
 //==============================================================================

@@ -29,17 +29,17 @@ class ModelPatchNode: public SceneNode,
 	friend class ModelNode;
 
 public:
-	ModelPatchNode(
-		const CString& name, SceneGraph* scene, // Scene
-		const ModelPatchBase* modelPatch); // Self
+	ModelPatchNode(SceneGraph* scene, const ModelPatchBase* modelPatch);
 
 	~ModelPatchNode();
+
+	ANKI_USE_RESULT Error create(const CString& name);
 
 	/// @name RenderComponent virtuals
 	/// @{
 
 	/// Implements RenderComponent::buildRendering
-	void buildRendering(RenderingBuildData& data);
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
 
 	/// Implements  RenderComponent::getMaterial
 	const Material& getMaterial()
@@ -71,10 +71,10 @@ public:
 private:
 	Obb m_obb; ///< In world space
 	const ModelPatchBase* m_modelPatch; ///< The resource
-	SceneVector<ObbSpatialComponent*> m_spatials;
+	SceneDArray<ObbSpatialComponent*> m_spatials;
 
-	void updateInstanceSpatials(
-		const SceneFrameVector<MoveComponent*>& instanceMoves);
+	ANKI_USE_RESULT Error updateInstanceSpatials(
+		const SceneFrameDArray<MoveComponent*>& instanceMoves);
 };
 
 /// The model scene node

@@ -179,6 +179,28 @@ public:
 		return err;
 	}
 
+	/// Grow the array.
+	ANKI_USE_RESULT Error resize(Allocator alloc, PtrSize size)
+	{
+		ANKI_ASSERT(size > 0);
+		DArray newArr;
+		Error err = newArr.create(alloc, size);
+
+		if(!err)
+		{
+			U minSize = std::min(size, m_size);
+			for(U i = 0; i < minSize; i++)
+			{
+				newArr[i] = (*this)[i];
+			}
+
+			destroy(alloc);
+			move(newArr);
+		}
+
+		return err;
+	}
+
 	/// Destroy the array.
 	void destroy(Allocator alloc)
 	{
