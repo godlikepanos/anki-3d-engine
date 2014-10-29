@@ -18,25 +18,33 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-ModelPatchNode::ModelPatchNode(
-	SceneGraph* scene,
-	const ModelPatchBase* modelPatch)
+ModelPatchNode::ModelPatchNode(SceneGraph* scene)
 :	SceneNode(scene),
 	RenderComponent(this),
-	SpatialComponent(this), 
-	m_modelPatch(modelPatch)
+	SpatialComponent(this)
 {}
 
 //==============================================================================
-Error ModelPatchNode::create(const CString& name)
+Error ModelPatchNode::create(const CString& name, 
+	const ModelPatchBase* modelPatch)
 {
-	err = SceneNode::create(name, 2);
+	ANKI_ASSERT(modelPatch);
+	Error err = SceneNode::create(name);
+
+	m_modelPatch = modelPatch;
 
 	if(!err)
 	{
-		addComponent(static_cast<RenderComponent*>(this));
-		addComponent(static_cast<SpatialComponent*>(this));
+		err = addComponent(static_cast<RenderComponent*>(this));
+	}
 
+	if(!err)
+	{
+		err = addComponent(static_cast<SpatialComponent*>(this));
+	}
+
+	if(!err)
+	{
 		err = RenderComponent::create();
 	}
 
@@ -69,30 +77,25 @@ Error ModelPatchNode::buildRendering(RenderingBuildData& data)
 		data.m_key, vertJobs, ppline, 
 		nullptr, 0,
 		indicesCountArray, indicesOffsetArray, drawcallCount);
-	if(err)
-	{
-		return err;
-	}
 
-	// Cannot accept multi-draw
-	ANKI_ASSERT(drawcallCount == 1);
-
-	// Set jobs
-	ppline.bind(data.m_jobs);
-	err = data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
-	if(err)
+	if(!err)
 	{
-		return err;
+		// Cannot accept multi-draw
+		ANKI_ASSERT(drawcallCount == 1);
+
+		// Set jobs
+		ppline.bind(data.m_jobs);
+		data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
+
+		// Drawcall
+		U32 offset = indicesOffsetArray[0] / sizeof(U16);
+		data.m_jobs.drawElements(
+			data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
+			sizeof(U16),
+			indicesCountArray[0],
+			instancesCount,
+			offset);
 	}
-	
-	// Drawcall
-	U32 offset = indicesOffsetArray[0] / sizeof(U16);
-	err = data.m_jobs.drawElements(
-		data.m_key.m_tessellation ? GL_PATCHES : GL_TRIANGLES,
-		sizeof(U16),
-		indicesCountArray[0],
-		instancesCount,
-		offset);
 
 	return err;
 }
@@ -117,7 +120,7 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 		ModelNode* mnode = staticCastPtr<ModelNode*>(parent);
 
 		--index;
-		ANKI_ASSERT(index < mnode->m_transforms.size());
+		ANKI_ASSERT(index < mnode->m_transforms.getSize());
 		trf = mnode->m_transforms[index];
 	}
 }
@@ -155,12 +158,16 @@ Error ModelPatchNode::updateInstanceSpatials(
 				return ErrorCode::OUT_OF_MEMORY;
 			}
 
-			addComponent(newSpatial);
+			err = addComponent(newSpatial);
+			if(err)
+			{
+				return err;
+			}
 
 			m_spatials[index++] = newSpatial;
 		}
 	}
-	else if(m_spatials.size() > instanceMoves.size())
+	else if(oldSize > newSize)
 	{
 		// Need to remove spatials
 
@@ -193,28 +200,66 @@ Error ModelPatchNode::updateInstanceSpatials(
 //==============================================================================
 
 //==============================================================================
-ModelNode::ModelNode(
-	const CString& name, SceneGraph* scene,
-	const CString& modelFname)
-: 	SceneNode(name, scene),
+ModelNode::ModelNode(SceneGraph* scene)
+: 	SceneNode(scene),
 	MoveComponent(this),
-	m_modelPatches(getSceneAllocator()),
-	m_transforms(getSceneAllocator()),
 	m_transformsTimestamp(0)
+{}
+
+//==============================================================================
+ModelNode::~ModelNode()
 {
-	addComponent(static_cast<MoveComponent*>(this));
-
-	m_model.load(modelFname, &getResourceManager());
-	m_modelPatches.reserve(m_model->getModelPatches().getSize());
-
-	for(const ModelPatchBase* patch : m_model->getModelPatches())
+	m_modelPatches.destroy(getSceneAllocator());
+	m_transforms.destroy(getSceneAllocator());
+#if 0
+	RigidBody* body = tryGetComponent<RigidBody>();
+	if(body)
 	{
-		ModelPatchNode* mpn = 
-			getSceneGraph().newSceneNode<ModelPatchNode>(CString(), patch);
+		getSceneGraph().getPhysics().deletePhysicsObject(body);
+	}
+#endif
+}
 
-		m_modelPatches.push_back(mpn);
+//==============================================================================
+Error ModelNode::create(const CString& name, const CString& modelFname)
+{
+	Error err = ErrorCode::NONE;
 
-		SceneObject::addChild(mpn);
+	err = SceneNode::create(name);
+
+	if(!err)
+	{
+		err = addComponent(static_cast<MoveComponent*>(this));
+	}
+
+	if(!err)
+	{
+		err = m_model.load(modelFname, &getResourceManager());
+	}
+
+	if(!err)
+	{
+		err = m_modelPatches.create(
+			getSceneAllocator(), m_model->getModelPatches().getSize());
+	}
+
+	if(!err)
+	{
+		U count = 0;
+		auto it = m_model->getModelPatches().getBegin();
+		auto end = m_model->getModelPatches().getEnd();
+		for(; !err && it != end; it++)
+		{
+			ModelPatchNode* mpn;
+			err = getSceneGraph().newSceneNode(CString(), mpn, *it);
+
+			if(!err)
+			{
+				m_modelPatches[count++] = mpn;
+
+				err = SceneObject::addChild(mpn);
+			}
+		}
 	}
 
 	// Load rigid body
@@ -234,27 +279,27 @@ ModelNode::ModelNode(
 		addComponent(static_cast<RigidBody*>(body));
 	}
 #endif
+
+	return err;
 }
 
 //==============================================================================
-ModelNode::~ModelNode()
+Error ModelNode::frameUpdate(F32, F32)
 {
-#if 0
-	RigidBody* body = tryGetComponent<RigidBody>();
-	if(body)
-	{
-		getSceneGraph().getPhysics().deletePhysicsObject(body);
-	}
-#endif
-}
+	Error err = ErrorCode::NONE;
 
-//==============================================================================
-void ModelNode::frameUpdate(F32, F32)
-{
 	// Gather the move components of the instances
-	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
+	SceneFrameDArray<MoveComponent*> instanceMoves;
+	U instanceMovesCount = 0;
 	Timestamp instancesTimestamp = 0;
-	SceneObject::visitChildren([&](SceneObject& obj) -> Error
+
+	err = instanceMoves.create(getSceneFrameAllocator(), 64);
+	if(err)
+	{
+		return err;
+	}
+
+	err = SceneObject::visitChildren([&](SceneObject& obj) -> Error
 	{
 		if(obj.getType() == SceneNode::getClassType())
 		{
@@ -263,7 +308,7 @@ void ModelNode::frameUpdate(F32, F32)
 			{
 				MoveComponent& move = sn.getComponent<MoveComponent>();
 
-				instanceMoves.push_back(&move);
+				instanceMoves[instanceMovesCount++] = &move;
 
 				instancesTimestamp = 
 					std::max(instancesTimestamp, move.getTimestamp());
@@ -274,36 +319,46 @@ void ModelNode::frameUpdate(F32, F32)
 	});
 
 	// If having instances
-	if(instanceMoves.size() != 0)
+	if(instanceMovesCount > 0)
 	{
 		Bool fullUpdate = false;
 
-		if(instanceMoves.size() != m_transforms.size())
+		if(instanceMovesCount != m_transforms.getSize())
 		{
 			fullUpdate = true;
-			m_transforms.resize(instanceMoves.size());
+			err = m_transforms.resize(getSceneAllocator(), instanceMovesCount);
 		}
 
-		if(fullUpdate || m_transformsTimestamp < instancesTimestamp)
+		if(!err && (fullUpdate || m_transformsTimestamp < instancesTimestamp))
 		{
 			m_transformsTimestamp = instancesTimestamp;
 
-			for(U i = 0; i < instanceMoves.size(); i++)
+			U count = 0;
+			for(const MoveComponent* instanceMove : instanceMoves)
 			{
-				m_transforms[i] = instanceMoves[i]->getWorldTransform();
+				m_transforms[count++] = instanceMove->getWorldTransform();
 			}
 		}
 
 		// Update children
-		for(ModelPatchNode* child : m_modelPatches)
+		if(!err)
 		{
-			child->updateInstanceSpatials(instanceMoves);
+			auto it = m_modelPatches.getBegin();
+			auto end = m_modelPatches.getEnd();
+			for(; it != end && !err; ++it)
+			{
+				err = (*it)->updateInstanceSpatials(instanceMoves);
+			}
 		}
 	}
+
+	instanceMoves.destroy(getSceneFrameAllocator());
+
+	return err;
 }
 
 //==============================================================================
-void ModelNode::onMoveComponentUpdate(SceneNode&, F32, F32)
+Error ModelNode::onMoveComponentUpdate(SceneNode&, F32, F32)
 {
 	// Inform the children about the moves
 	for(ModelPatchNode* child : m_modelPatches)
@@ -313,6 +368,8 @@ void ModelNode::onMoveComponentUpdate(SceneNode&, F32, F32)
 
 		child->SpatialComponent::markForUpdate();
 	}
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

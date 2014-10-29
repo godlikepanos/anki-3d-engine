@@ -228,23 +228,31 @@ public:
 		typename rebind<U>::other alloc(*this);
 
 		U* x = alloc.allocate(1);
-		alloc.construct(x, std::forward<Args>(args)...);
+		if(x)
+		{
+			alloc.construct(x, std::forward<Args>(args)...);
+		}
+
 		return x;
 	}
 
 	/// Allocate a new array of objects and call their constructor
 	/// @note This is AnKi specific
-	template<typename U, typename... Args>
-	U* newArray(size_type n, Args&&... args)
+	template<typename U>
+	U* newArray(size_type n, const U& v = U())
 	{
 		typename rebind<U>::other alloc(*this);
 
 		U* x = alloc.allocate(n);
-		// Call the constuctors
-		for(size_type i = 0; i < n; i++)
+		if(x)
 		{
-			alloc.construct(&x[i], std::forward<Args>(args)...);
+			// Call the constuctors
+			for(size_type i = 0; i < n; i++)
+			{
+				alloc.construct(&x[i], v);
+			}
 		}
+
 		return x;
 	}
 
@@ -271,6 +279,7 @@ public:
 		{
 			alloc.destroy(&x[i]);
 		}
+
 		alloc.deallocate(x, n);
 	}
 

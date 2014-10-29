@@ -14,21 +14,9 @@ SceneNode::SceneNode(SceneGraph* scene)
 {}
 
 //==============================================================================
-Error SceneNode::create(const CString& name, U32 maxComponents)
+Error SceneNode::create(const CString& name)
 {
-	Error err = ErrorCode::NONE;
-	
-	if(maxComponents)
-	{
-		err = m_components.create(getSceneAllocator(), maxComponents);
-	}
-
-	if(!err && !name.isEmpty())
-	{
-		err = m_name.create(getSceneAllocator(), name);
-	}
-
-	return err;
+	return m_name.create(getSceneAllocator(), name);
 }
 
 //==============================================================================
@@ -56,10 +44,25 @@ U32 SceneNode::getLastUpdateFrame() const
 }
 
 //==============================================================================
-void SceneNode::addComponent(SceneComponent* comp)
+Error SceneNode::addComponent(SceneComponent* comp)
 {
 	ANKI_ASSERT(comp);
-	m_components[m_componentsCount++] = comp;
+	Error err = ErrorCode::NONE;
+
+	if(m_components.getSize() < m_componentsCount + 1)
+	{
+		// Not enough room
+		const U extra = 2;
+		err = m_components.resize(
+			getSceneAllocator(), m_componentsCount + 1 + extra);
+	}
+
+	if(!err)
+	{
+		m_components[m_componentsCount++] = comp;
+	}
+
+	return err;
 }
 
 //==============================================================================

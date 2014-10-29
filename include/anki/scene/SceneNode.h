@@ -29,16 +29,18 @@ public:
 	virtual ~SceneNode();
 
 	/// @param name The unique name of the node. If it's nullptr the the node
-	///             is not searchable
-	/// @param scene The scene that will register it
-	ANKI_USE_RESULT Error create(
-		const CString& name, 
-		U32 maxComponents);
+	///             is not searchable.
+	ANKI_USE_RESULT Error create(const CString& name);
 
 	/// Return the name. It may be empty for nodes that we don't want to track
 	CString getName() const
 	{
 		return (!m_name.isEmpty()) ? m_name.toCString() : CString();
+	}
+
+	U32 getComponentsCount() const
+	{
+		return m_componentsCount;
 	}
 
 	/// This is called by the scene every frame after logic and before
@@ -60,11 +62,10 @@ public:
 	ANKI_USE_RESULT Error iterateComponents(Func func) const
 	{
 		Error err = ErrorCode::NONE;
-		auto it = m_components.getBegin();
-		auto end = m_components.getEnd();
-		for(; !err && it != end; it++)
+		U count = m_componentsCount;
+		while(!err && count-- != 0)
 		{
-			err = func(*(*it));
+			err = func(*m_components[count]);
 		}
 
 		return err;
@@ -76,13 +77,12 @@ public:
 	{
 		Error err = ErrorCode::NONE;
 		SceneComponent::Type type = Component::getClassType();
-		auto it = m_components.getBegin();
-		auto end = m_components.getEnd();
-		for(; !err && it != end; it++)
+		U count = m_componentsCount;
+		while(!err && count-- != 0)
 		{
-			if((*it)->getType() == type)
+			if(m_components[count]->getType() == type)
 			{
-				err = func((*it)->downCast<Component>());
+				err = func(m_components[count]->downCast<Component>());
 			}
 		}
 
@@ -94,11 +94,12 @@ public:
 	Component* tryGetComponent()
 	{
 		SceneComponent::Type type = Component::getClassType();
-		for(auto comp : m_components)
+		U count = m_componentsCount;
+		while(count-- != 0)
 		{
-			if(comp->getType() == type)
+			if(m_components[count]->getType() == type)
 			{
-				return &comp->downCast<Component>();
+				return &m_components[count]->downCast<Component>();
 			}
 		}
 		return nullptr;
@@ -109,11 +110,12 @@ public:
 	const Component* tryGetComponent() const
 	{
 		SceneComponent::Type type = Component::getClassType();
-		for(auto comp : m_components)
+		U count = m_componentsCount;
+		while(count-- != 0)
 		{
-			if(comp->getType() == type)
+			if(m_components[count]->getType() == type)
 			{
-				return &comp->downCast<Component>();
+				return &m_components[count]->downCast<Component>();
 			}
 		}
 		return nullptr;
@@ -145,7 +147,7 @@ public:
 protected:
 	/// Append a component to the components container. The SceneNode will not
 	/// take ownership
-	void addComponent(SceneComponent* comp);
+	ANKI_USE_RESULT Error addComponent(SceneComponent* comp);
 
 	/// Remove a component from the container
 	void removeComponent(SceneComponent* comp);

@@ -155,14 +155,34 @@ public:
 
 	/// Create a new SceneNode
 	template<typename Node, typename... Args>
-	Node* newSceneNode(const CString& name, Args&&... args)
+	ANKI_USE_RESULT Error newSceneNode(
+		const CString& name, Node*& node, Args&&... args)
 	{
-		Node* node;
+		Error err = ErrorCode::NONE;
 		SceneAllocator<Node> al = m_alloc;
-		node = al.template newInstance<Node>(
-			name, this, std::forward<Args>(args)...);
-		registerNode(node);
-		return node;
+
+		node = al.template newInstance<Node>(this);
+		if(node)
+		{
+			err = node->create(name, std::forward<Args>(args)...);
+		}
+		else
+		{
+			err = ErrorCode::OUT_OF_MEMORY;
+		}
+
+		if(!err)
+		{
+			err = registerNode(node);
+		}
+
+		if(err && node)
+		{
+			al.deleteInstance(node);
+			node = nullptr;
+		}
+
+		return err;
 	}
 
 	/// Delete a scene node. It actualy marks it for deletion
@@ -217,7 +237,7 @@ private:
 	AtomicU32 m_objectsMarkedForDeletionCount;
 
 	/// Put a node in the appropriate containers
-	void registerNode(SceneNode* node);
+	ANKI_USE_RESULT Error registerNode(SceneNode* node);
 	void unregisterNode(SceneNode* node);
 
 	/// Delete the nodes that are marked for deletion

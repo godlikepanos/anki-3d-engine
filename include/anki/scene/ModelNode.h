@@ -29,11 +29,12 @@ class ModelPatchNode: public SceneNode,
 	friend class ModelNode;
 
 public:
-	ModelPatchNode(SceneGraph* scene, const ModelPatchBase* modelPatch);
+	ModelPatchNode(SceneGraph* scene);
 
 	~ModelPatchNode();
 
-	ANKI_USE_RESULT Error create(const CString& name);
+	ANKI_USE_RESULT Error create(
+		const CString& name, const ModelPatchBase* modelPatch);
 
 	/// @name RenderComponent virtuals
 	/// @{
@@ -83,11 +84,12 @@ class ModelNode: public SceneNode, public MoveComponent
 	friend class ModelPatchNode;
 
 public:
-	ModelNode(
-		const CString& name, SceneGraph* scene, // SceneNode
-		const CString& modelFname); // Self
+	ModelNode(SceneGraph* scene);
 
 	virtual ~ModelNode();
+
+	ANKI_USE_RESULT Error create(
+		const CString& name, const CString& modelFname);
 
 	const Model& getModel() const
 	{
@@ -95,16 +97,16 @@ public:
 	}
 
 	/// Override SceneNode::frameUpdate
-	void frameUpdate(F32, F32) override;
+	ANKI_USE_RESULT Error frameUpdate(F32, F32) override;
 
 	/// Override MoveComponent::onMoveComponentUpdate
-	void onMoveComponentUpdate(
+	ANKI_USE_RESULT Error onMoveComponentUpdate(
 		SceneNode& node, F32 prevTime, F32 crntTime) override;
 
 private:
 	ModelResourcePointer m_model; ///< The resource
-	SceneVector<ModelPatchNode*> m_modelPatches;
-	SceneVector<Transform> m_transforms; ///< Cache the transforms of instances
+	SceneDArray<ModelPatchNode*> m_modelPatches;
+	SceneDArray<Transform> m_transforms; ///< Cache the transforms of instances
 	Timestamp m_transformsTimestamp;
 };
 

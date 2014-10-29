@@ -155,8 +155,8 @@ public:
 	}
 
 	/// Create the array.
-	template<typename... TArgs>
-	ANKI_USE_RESULT Error create(Allocator alloc, PtrSize size, TArgs... args)
+	ANKI_USE_RESULT Error create(Allocator alloc, PtrSize size, 
+		const Value& v = Value())
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0);
 		Error err = ErrorCode::NONE;
@@ -165,7 +165,7 @@ public:
 
 		if(size > 0)
 		{
-			m_data = alloc.template newArray<Value>(size, args...);
+			m_data = alloc.template newArray<Value>(size, v);
 			if(m_data)
 			{
 				m_size = size;
@@ -188,7 +188,7 @@ public:
 
 		if(!err)
 		{
-			U minSize = std::min(size, m_size);
+			PtrSize minSize = std::min<PtrSize>(size, m_size);
 			for(U i = 0; i < minSize; i++)
 			{
 				newArr[i] = (*this)[i];
