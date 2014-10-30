@@ -5,7 +5,10 @@
 
 #include "anki/util/Thread.h"
 #include "anki/util/Assert.h"
-#include "anki/util/Exception.h"
+#include "anki/util/Logger.h"
+#include "anki/util/Functions.h"
+#include <cstdlib>
+#include <new>
 
 namespace anki {
 
@@ -14,28 +17,27 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-Bool Barrier::wait(F64 timeoutSeconds)
+Bool Barrier::wait()
 {
 	m_mtx.lock();
 	U32 gen = m_generation;
-	Bool timeout = false;
 
 	if(--m_count == 0)
 	{
 		m_generation++;
 		m_count = m_threshold;
 		m_cond.notifyAll();
+		m_mtx.unlock();
+		return true;
 	}
-	else
+
+	while(gen == m_generation)
 	{
-		while(gen == m_generation)
-		{
-			timeout = m_cond.wait(m_mtx, timeoutSeconds);
-		}
+		m_cond.wait(m_mtx);
 	}
 
 	m_mtx.unlock();
-	return timeout;
+	return false;
 }
 
 //==============================================================================
@@ -81,7 +83,7 @@ public:
 
 private:
 	/// Thread callaback
-	static I threadCallback(Thread::Info& info)
+	static Error threadCallback(Thread::Info& info)
 	{
 		ThreadpoolThread& self = 
 			*reinterpret_cast<ThreadpoolThread*>(info.m_userData);
@@ -105,13 +107,19 @@ private:
 			}
 
 			// Exec
-			(*task)(self.m_id, threadCount);
+			Error err = (*task)(self.m_id, threadCount);
+
+			if(err)
+			{
+				LockGuard<Mutex> lock(mtx);
+				self.m_threadpool->m_err = err;
+			}
 
 			// Sync with main thread
 			barrier.wait();
 		}
 
-		return 0;
+		return ErrorCode::NONE;
 	}
 };
 
@@ -136,12 +144,17 @@ Threadpool::Threadpool(U32 threadsCount)
 	ANKI_ASSERT(m_threadsCount <= MAX_THREADS && m_threadsCount > 0);
 
 #if !ANKI_DISABLE_THREADPOOL_THREADING
-	m_threads = new detail::ThreadpoolThread*[m_threadsCount];
+	m_threads = reinterpret_cast<detail::ThreadpoolThread*>(
+		malloc(sizeof(detail::ThreadpoolThread) * m_threadsCount));
+
+	if(m_threads == nullptr)
+	{
+		ANKI_LOGF("Out of memory");
+	}
 
 	while(threadsCount-- != 0)
 	{
-		m_threads[threadsCount] = 
-			new detail::ThreadpoolThread(threadsCount, this);
+		construct(&m_threads[threadsCount], threadsCount, this);
 	}
 #endif
 }
@@ -154,23 +167,25 @@ Threadpool::~Threadpool()
 	U count = m_threadsCount;
 	while(count-- != 0)
 	{
-		detail::ThreadpoolThread& thread = *m_threads[count];
+		detail::ThreadpoolThread& thread = m_threads[count];
 
 		thread.m_quit = true;
 		thread.assignNewTask(&m_dummyTask); // Wake it
 	}
 
-	waitForAllThreadsToFinish();
+	Error err = waitForAllThreadsToFinish();
+	(void)err;
 
 	while(m_threadsCount-- != 0)
 	{
-		m_threads[m_threadsCount]->m_thread.join();
-		delete m_threads[m_threadsCount];
+		Error err = m_threads[m_threadsCount].m_thread.join();
+		(void)err;
+		m_threads[m_threadsCount].~ThreadpoolThread();
 	}
 
 	if(m_threads)
 	{
-		delete[] m_threads;
+		free(m_threads);
 	}
 #endif
 }
@@ -186,9 +201,14 @@ void Threadpool::assignNewTask(U32 slot, Task* task)
 		task = &m_dummyTask;
 	}
 	
-	m_threads[slot]->assignNewTask(task);
+	m_threads[slot].assignNewTask(task);
 #else
-	(*task)(slot, m_threadsCount);
+	Error err = (*task)(slot, m_threadsCount);
+
+	if(err)
+	{
+		m_err = err;
+	}
 #endif
 }
 

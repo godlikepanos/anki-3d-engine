@@ -42,16 +42,12 @@ enum VisibleBy
 class VisibleNode: public NonCopyable
 {
 public:
-	SceneNode* m_node;
+	SceneNode* m_node = nullptr;
 	/// An array of the visible spatials
-	U8* m_spatialIndices;
-	U8 m_spatialsCount;
+	U8* m_spatialIndices = nullptr;
+	U8 m_spatialsCount = 0;
 
-	VisibleNode()
-	:	m_node(nullptr), 
-		m_spatialIndices(nullptr), 
-		m_spatialsCount(0)
-	{}
+	VisibleNode() = default;
 
 	VisibleNode(VisibleNode&& other)
 	{
@@ -82,22 +78,66 @@ public:
 class VisibilityTestResults
 {
 public:
-	typedef SceneFrameVector<VisibleNode> Container;
+	using Container = SceneFrameDArray<VisibleNode>;
 
+	~VisibilityTestResults()
+	{
+		ANKI_ASSERT(0 && "It's supposed to be deallocated on frame start");
+	}
+
+	ANKI_USE_RESULT Error create(
+		SceneAllocator<U8> alloc,
+		U32 renderablesReservedSize,
+		U32 lightsReservedSize)
+	{
+		Error err = m_renderables.create(alloc, renderablesReservedSize);
+		if(!err)
+		{
+			err = m_lights.create(alloc, lightsReservedSize);
+		}
+		return err;
+	}
+
+	VisibleNode* getRenderablesBegin()
+	{
+		return &m_renderables[0];
+	}
+
+	VisibleNode* getRenderablesEnd()
+	{
+		return &m_renderables[0] + m_renderablesCount;
+	}
+
+	VisibleNode* getLightsBegin()
+	{
+		return &m_lights[0];
+	}
+
+	VisibleNode* getLightsEnd()
+	{
+		return &m_lights[0] + m_lightsCount;
+	}
+
+	ANKI_USE_RESULT Error moveBackRenderable(
+		SceneAllocator<U8> alloc, VisibleNode& x)
+	{
+		return moveBack(alloc, m_renderables, m_renderablesCount, x);
+	}
+
+	ANKI_USE_RESULT Error moveBackLight(
+		SceneAllocator<U8> alloc, VisibleNode& x)
+	{
+		return moveBack(alloc, m_lights, m_lightsCount, x);
+	}
+
+private:
 	Container m_renderables;
 	Container m_lights;
+	U32 m_renderablesCount = 0;
+	U32 m_lightsCount = 0;
 
-	VisibilityTestResults(const SceneAllocator<U8>& frameAlloc,
-		U32 renderablesReservedSize = 
-			ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_RENDERABLES_COUNT,
-		U32 lightsReservedSize =
-			ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_LIGHTS_COUNT)
-	:	m_renderables(frameAlloc), 
-		m_lights(frameAlloc)
-	{
-		m_renderables.reserve(renderablesReservedSize);
-		m_lights.reserve(lightsReservedSize);
-	}
+	ANKI_USE_RESULT Error moveBack(
+		SceneAllocator<U8> alloc, Container& c, U32& count, VisibleNode& x);
 };
 
 /// Sort spatial scene nodes on distance
@@ -162,7 +202,9 @@ public:
 };
 
 /// Do visibility tests bypassing portals 
-void doVisibilityTests(SceneNode& frustumable, SceneGraph& scene, 
+ANKI_USE_RESULT Error doVisibilityTests(
+	SceneNode& frustumable, 
+	SceneGraph& scene, 
 	Renderer& renderer);
 
 /// @}

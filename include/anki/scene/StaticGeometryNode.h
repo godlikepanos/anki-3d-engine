@@ -41,11 +41,12 @@ class StaticGeometryPatchNode: public SceneNode, public SpatialComponent,
 	public RenderComponent
 {
 public:
-	StaticGeometryPatchNode(
-		const CString& name, SceneGraph* scene, // Scene
-		const ModelPatchBase* modelPatch); // Self
+	StaticGeometryPatchNode(SceneGraph* scene);
 
 	~StaticGeometryPatchNode();
+
+	ANKI_USE_RESULT Error create(
+		const CString& name, const ModelPatchBase* modelPatch);
 
 	/// @name SpatialComponent virtuals
 	/// @{
@@ -62,7 +63,7 @@ public:
 
 	/// @name RenderComponent virtuals
 	/// @{
-	void buildRendering(RenderingBuildData& data);
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
 
 	const Material& getMaterial()
 	{
@@ -79,11 +80,12 @@ private:
 class StaticGeometryNode: public SceneNode
 {
 public:
-	StaticGeometryNode(
-		const CString& name, SceneGraph* scene, // Scene
-		const CString& filename); // Self
+	StaticGeometryNode(SceneGraph* scene);
 
 	~StaticGeometryNode();
+
+	ANKI_USE_RESULT Error create(
+		const CString& name, const CString& filename);
 
 private:
 	ModelResourcePointer m_model;

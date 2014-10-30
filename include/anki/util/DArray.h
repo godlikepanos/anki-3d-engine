@@ -191,7 +191,7 @@ public:
 			PtrSize minSize = std::min<PtrSize>(size, m_size);
 			for(U i = 0; i < minSize; i++)
 			{
-				newArr[i] = (*this)[i];
+				newArr[i] = std::move((*this)[i]);
 			}
 
 			destroy(alloc);

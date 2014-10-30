@@ -19,12 +19,12 @@ public:
 	U m_nodesCount = 0;
 	SceneGraph* m_scene = nullptr;
 	SceneNode* frustumableSn = nullptr;
-	SceneFrameAllocator<U8> frameAlloc;
+	SceneFrameAllocator<U8> m_alloc;
 
-	VisibilityTestResults* cameraVisible; // out
+	VisibilityTestResults* m_cameraVisible; // out
 
 	/// Test a frustum component
-	void test(SceneNode& testedNode, Bool isLight, 
+	ANKI_USE_RESULT Error test(SceneNode& testedNode, Bool isLight, 
 		U32 threadId, PtrSize threadsCount)
 	{
 		ANKI_ASSERT(isLight == 
@@ -155,14 +155,34 @@ public:
 	}
 
 	/// Do the tests
-	void operator()(U32 threadId, PtrSize threadsCount)
+	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
-		test(*frustumableSn, false, threadId, threadsCount);
+		return test(*frustumableSn, false, threadId, threadsCount);
 	}
 };
 
 //==============================================================================
-void doVisibilityTests(SceneNode& fsn, SceneGraph& scene, 
+Error VisibilityTestResults::moveBack(
+	SceneAllocator<U8> alloc, Container& c, U32& count, VisibleNode& x)
+{
+	Error err = ErrorCode::NONE;
+
+	if(count + 1 > c.getSize())
+	{
+		// Need to grow
+		err = c.resize(alloc, c.getSize() * 2);
+	}
+
+	if(!err)
+	{
+		c[count++] = std::move(x);
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, 
 	Renderer& r)
 {
 	FrustumComponent& fr = fsn.getComponent<FrustumComponent>();

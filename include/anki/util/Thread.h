@@ -36,7 +36,7 @@ public:
 	};
 
 	/// The type of the tread callback
-	using Callback = I(*)(Info&);
+	using Callback = Error(*)(Info&);
 
 	/// Create a thread with or without a name
 	/// @param[in] name The name of the new thread. Can be nullptr
@@ -51,7 +51,7 @@ public:
 
 	/// Wait for the thread to finish
 	/// @return The error code of the thread's callback
-	I join();
+	ANKI_USE_RESULT Error join();
 
 	/// Identify the current thread
 	static Id getCurrentThreadId();
@@ -125,10 +125,7 @@ public:
 
 	/// Bock until signaled.
 	/// @param mtx The mutex.
-	/// @param timeoutSeconds Wait for the specified time. If zero it waits 
-	///                       forever.
-	/// @return On timeout it returns true.
-	Bool wait(Mutex& mtx, F64 timeoutSeconds = 0.0);
+	void wait(Mutex& mtx);
 
 private:
 	void* m_impl = nullptr; ///< The system native type
@@ -192,10 +189,7 @@ public:
 	~Barrier() = default;
 
 	/// Wait until all threads call wait().
-	/// @param timeoutSeconds Wait for the specified time. If zero it waits 
-	///                       forever.
-	/// @return On timeout it returns true.
-	Bool wait(F64 timeoutSeconds = 0.0);
+	Bool wait();
 
 private:
 	Mutex m_mtx;
@@ -226,7 +220,7 @@ public:
 		virtual ~Task()
 		{}
 
-		virtual void operator()(U32 taskId, PtrSize threadsCount) = 0;
+		virtual Error operator()(U32 taskId, PtrSize threadsCount) = 0;
 
 		/// Chose a starting and end index
 		static void choseStartEnd(U32 taskId, PtrSize threadsCount, 
@@ -249,12 +243,16 @@ public:
 	/// @param task The task. If it's nullptr then a dummy task will be assigned
 	void assignNewTask(U32 slot, Task* task);
 
-	/// Wait for all tasks to finish
-	void waitForAllThreadsToFinish()
+	/// Wait for all tasks to finish.
+	/// @return The error code in one of the worker threads.
+	ANKI_USE_RESULT Error waitForAllThreadsToFinish()
 	{
 #if !ANKI_DISABLE_THREADPOOL_THREADING
 		m_barrier.wait();
 #endif
+		Error err = m_err;
+		m_err = ErrorCode::NONE;
+		return err;
 	}
 
 	PtrSize getThreadsCount() const
@@ -267,18 +265,20 @@ private:
 	class DummyTask: public Task
 	{
 	public:
-		void operator()(U32 taskId, PtrSize threadsCount)
+		Error operator()(U32 taskId, PtrSize threadsCount)
 		{
 			(void)taskId;
 			(void)threadsCount;
+			return ErrorCode::NONE;
 		}
 	};
 
 #if !ANKI_DISABLE_THREADPOOL_THREADING
 	Barrier m_barrier; ///< Synchronization barrier
-	detail::ThreadpoolThread** m_threads = nullptr; ///< Threads array
+	detail::ThreadpoolThread* m_threads = nullptr; ///< Threads array
 #endif
 	U8 m_threadsCount = 0;
+	Error m_err = ErrorCode::NONE;
 	static DummyTask m_dummyTask;
 };
 

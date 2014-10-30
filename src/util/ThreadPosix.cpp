@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/util/Thread.h"
-#include "anki/util/Exception.h"
+#include "anki/util/Logger.h"
 #include <cstring>
 #include <algorithm>
 #include <pthread.h>
@@ -32,11 +32,9 @@ static void* pthreadCallback(void* ud)
 	info.m_userData = thread->_getUserData();
 	info.m_threadName = thread->_getName();
 
-	I err = thread->_getCallback()(info);
-	void* errVoidp = nullptr;
-	std::memcpy(&errVoidp, &err, sizeof(err));
+	Error err = thread->_getCallback()(info);
 
-	return nullptr;
+	return reinterpret_cast<void*>(static_cast<PtrSize>(err._getCode()));
 }
 
 //==============================================================================
@@ -45,7 +43,7 @@ Thread::Thread(const char* name)
 	m_impl = malloc(sizeof(pthread_t));
 	if(m_impl == nullptr)
 	{
-		throw ANKI_EXCEPTION("Out of memory");
+		ANKI_LOGF("Out of memory");
 	}
 
 	// Init the name
@@ -84,7 +82,7 @@ void Thread::start(void* userData, Callback callback)
 	I err = pthread_create(impl, nullptr, pthreadCallback, this);
 	if(err)
 	{
-		throw ANKI_EXCEPTION("pthread_create() failed");
+		ANKI_LOGF("pthread_create() failed");
 	}
 	else
 	{
@@ -95,16 +93,16 @@ void Thread::start(void* userData, Callback callback)
 }
 
 //==============================================================================
-I Thread::join()
+Error Thread::join()
 {
 	ANKI_ASSERT(m_started);
 	pthread_t* impl = reinterpret_cast<pthread_t*>(m_impl);
 
 	void* out;
-	U err = pthread_join(*impl, &out);
+	I err = pthread_join(*impl, &out);
 	if(err)
 	{
-		throw ANKI_EXCEPTION("pthread_join() failed");
+		ANKI_LOGF("pthread_join() failed");
 	}
 
 #if ANKI_ASSERTIONS
@@ -112,9 +110,8 @@ I Thread::join()
 #endif
 
 	// Set return error code
-	I callbackErr;
-	std::memcpy(&callbackErr, &out, sizeof(callbackErr));
-	return callbackErr;
+	ErrorCode code = static_cast<ErrorCode>(reinterpret_cast<PtrSize>(out));
+	return code;
 }
 
 //==============================================================================
@@ -135,7 +132,7 @@ Mutex::Mutex()
 		reinterpret_cast<pthread_mutex_t*>(malloc(sizeof(pthread_mutex_t)));
 	if(mtx == nullptr)
 	{
-		throw ANKI_EXCEPTION("Out of memory");
+		ANKI_LOGF("Out of memory");
 	}
 
 	m_impl = mtx;
@@ -145,7 +142,7 @@ Mutex::Mutex()
 	{
 		free(m_impl);
 		m_impl = nullptr;
-		throw ANKI_EXCEPTION("pthread_mutex_init() failed");
+		ANKI_LOGF("pthread_mutex_init() failed");
 	}
 }
 
@@ -167,7 +164,7 @@ void Mutex::lock()
 	I err = pthread_mutex_lock(mtx);
 	if(err)
 	{
-		throw ANKI_EXCEPTION("pthread_mutex_lock() failed");
+		ANKI_LOGF("pthread_mutex_lock() failed");
 	}
 }
 
@@ -188,7 +185,7 @@ void Mutex::unlock()
 	I err = pthread_mutex_unlock(mtx);
 	if(err)
 	{
-		throw ANKI_EXCEPTION("pthread_mutex_unlock() failed");
+		ANKI_LOGF("pthread_mutex_unlock() failed");
 	}
 }
 
@@ -203,7 +200,7 @@ ConditionVariable::ConditionVariable()
 		reinterpret_cast<pthread_cond_t*>(malloc(sizeof(pthread_cond_t)));
 	if(cond == nullptr)
 	{
-		throw ANKI_EXCEPTION("Out of memory");
+		ANKI_LOGF("Out of memory");
 	}
 
 	m_impl = cond;
@@ -213,7 +210,7 @@ ConditionVariable::ConditionVariable()
 	{
 		free(m_impl);
 		m_impl = nullptr;
-		throw ANKI_EXCEPTION("pthread_cond_init() failed");
+		ANKI_LOGF("pthread_cond_init() failed");
 	}
 }
 
@@ -242,51 +239,17 @@ void ConditionVariable::notifyAll()
 }
 
 //==============================================================================
-Bool ConditionVariable::wait(Mutex& amtx, F64 timeoutSeconds)
+void ConditionVariable::wait(Mutex& amtx)
 {
 	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
 	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(amtx.m_impl);
 
-	Bool timeout = false;
-	I err = 0;
+	I err = pthread_cond_wait(cond, mtx);
 
-	if(timeoutSeconds == 0.0)
+	if(err)
 	{
-		err = pthread_cond_wait(cond, mtx);
+		ANKI_LOGF("pthread_cond_wait() failed: %d", err);
 	}
-	else
-	{
-		U64 ns = static_cast<U64>(timeoutSeconds * 1e+9);
-		struct timespec reltime;
-		reltime.tv_sec = ns / 1000000000;
-		reltime.tv_nsec = (ns % 1000000000);
-
-		struct timespec now;
-		clock_gettime(CLOCK_REALTIME, &now);
-
-		struct timespec abstime;
-		memset(&abstime, 0, sizeof(abstime));
-		abstime.tv_sec = now.tv_sec + reltime.tv_sec;
-		abstime.tv_nsec = now.tv_nsec + reltime.tv_nsec;
-		
-		err = pthread_cond_timedwait(cond, mtx, &abstime);
-	}
-
-	if(err == 0)
-	{
-		// Do nothing
-	}
-	else if(err == ETIMEDOUT)
-	{
-		timeout = true;
-	}
-	else
-	{
-		throw ANKI_EXCEPTION("pthread_cond_wait() or pthread_cond_timedwait()"
-			" failed: %d", err);
-	}
-
-	return timeout;
 }
 
 } // end namespace anki

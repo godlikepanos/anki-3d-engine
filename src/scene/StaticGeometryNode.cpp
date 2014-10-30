@@ -24,70 +24,112 @@ StaticGeometrySpatial::StaticGeometrySpatial(
 //==============================================================================
 
 //==============================================================================
-StaticGeometryPatchNode::StaticGeometryPatchNode(
-	const CString& name, SceneGraph* scene, const ModelPatchBase* modelPatch)
-:	SceneNode(name, scene),
+StaticGeometryPatchNode::StaticGeometryPatchNode(SceneGraph* scene)
+:	SceneNode(scene),
 	SpatialComponent(this),
-	RenderComponent(this),
-	m_modelPatch(modelPatch)
+	RenderComponent(this)
+{}
+
+//==============================================================================
+Error StaticGeometryPatchNode::create(
+	const CString& name, const ModelPatchBase* modelPatch)
 {
-	addComponent(static_cast<SpatialComponent*>(this));
-	addComponent(static_cast<RenderComponent*>(this));
+	ANKI_ASSERT(modelPatch);
+	Error err = ErrorCode::NONE;
 
-	ANKI_ASSERT(m_modelPatch);
-	RenderComponent::init();
+	m_modelPatch = modelPatch;
 
-	// Check if multimesh
-	if(m_modelPatch->getSubMeshesCount() > 1)
+	err = SceneNode::create(name);
+	
+	if(!err)
 	{
-		// If multimesh create additional spatial components
+		err = addComponent(static_cast<SpatialComponent*>(this));
+	}
 
-		m_obb = &m_modelPatch->getBoundingShapeSub(0);
+	if(!err)
+	{
+		err = addComponent(static_cast<RenderComponent*>(this));
+	}
 
-		for(U i = 1; i < m_modelPatch->getSubMeshesCount(); i++)
+	if(!err)
+	{	
+		err = RenderComponent::create();
+	}
+
+	if(!err)
+	{
+		// Check if multimesh
+		if(m_modelPatch->getSubMeshesCount() > 1)
 		{
-			StaticGeometrySpatial* spatial =
-				getSceneAllocator().newInstance<StaticGeometrySpatial>(
-				this, &m_modelPatch->getBoundingShapeSub(i));
+			// If multimesh create additional spatial components
 
-			addComponent(static_cast<SpatialComponent*>(spatial));
+			m_obb = &m_modelPatch->getBoundingShapeSub(0);
+
+			for(U i = 1; i < m_modelPatch->getSubMeshesCount() && !err; i++)
+			{
+				StaticGeometrySpatial* spatial =
+					getSceneAllocator().newInstance<StaticGeometrySpatial>(
+					this, &m_modelPatch->getBoundingShapeSub(i));
+
+				if(spatial)
+				{
+					err = addComponent(static_cast<SpatialComponent*>(spatial));
+				}
+				else
+				{
+					err = ErrorCode::OUT_OF_MEMORY;
+				}
+			}
+		}
+		else
+		{
+			// If not multimesh then set the current spatial component
+
+			m_obb = &modelPatch->getBoundingShape();
 		}
 	}
-	else
-	{
-		// If not multimesh then set the current spatial component
 
-		m_obb = &modelPatch->getBoundingShape();
-	}
+	return err;
 }
 
 //==============================================================================
 StaticGeometryPatchNode::~StaticGeometryPatchNode()
 {
 	U i = 0;
-	iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& spatial)
+	Error err = iterateComponentsOfType<SpatialComponent>([&](
+		SpatialComponent& spatial)
 	{
 		if(i != 0)
 		{
 			getSceneAllocator().deleteInstance(&spatial);
 		}
 		++i;
+
+		return ErrorCode::NONE;
 	});
+
+	(void)err;
 }
 
 //==============================================================================
-void StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
+Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 {
+	Error err = ErrorCode::NONE;
+
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS> indicesCountArray;
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
 	U32 drawCount;
 	GlCommandBufferHandle vertJobs;
 	GlProgramPipelineHandle ppline;
 
-	m_modelPatch->getRenderingDataSub(
+	err = m_modelPatch->getRenderingDataSub(
 		data.m_key, vertJobs, ppline, 
 		data.m_subMeshIndicesArray, data.m_subMeshIndicesCount, 
 		indicesCountArray, indicesOffsetArray, drawCount);
+	if(err)
+	{
+		return err;
+	}
 
 	ppline.bind(data.m_jobs);
 	data.m_jobs.pushBackOtherCommandBuffer(vertJobs);
@@ -110,6 +152,8 @@ void StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 		// TODO Make it indirect
 		ANKI_ASSERT(0 && "TODO");
 	}
+
+	return err;
 }
 
 //==============================================================================
@@ -117,25 +161,50 @@ void StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 //==============================================================================
 
 //==============================================================================
-StaticGeometryNode::StaticGeometryNode(
-	const CString& name, SceneGraph* scene, const CString& filename)
-:	SceneNode(name, scene)
+StaticGeometryNode::StaticGeometryNode(SceneGraph* scene)
+:	SceneNode(scene)
 {
-	m_model.load(filename, &getResourceManager());
+}
 
-	U i = 0;
-	for(const ModelPatchBase* patch : m_model->getModelPatches())
+//==============================================================================
+Error StaticGeometryNode::create(const CString& name, const CString& filename)
+{
+	Error err = SceneNode::create(name);
+
+	if(!err)
 	{
-		SceneString newname(getSceneAllocator());
-		newname.sprintf("%s_%u", &name[0], i);
-
-		StaticGeometryPatchNode* node = 
-			getSceneGraph().newSceneNode<StaticGeometryPatchNode>(
-			newname.toCString(), patch);
-		(void)node;
-
-		++i;
+		err = m_model.load(filename, &getResourceManager());
 	}
+
+	if(!err)
+	{
+		U i = 0;
+		for(const ModelPatchBase* patch : m_model->getModelPatches())
+		{
+			SceneString newname;
+			
+			err = newname.sprintf(getSceneAllocator(), "%s_%u", &name[0], i);
+			if(err)
+			{
+				break;
+			}
+
+			StaticGeometryPatchNode* node;
+			err = getSceneGraph().newSceneNode<StaticGeometryPatchNode>(
+				newname.toCString(), node, patch);
+			
+			newname.destroy(getSceneAllocator());
+
+			if(err)
+			{
+				break;
+			}
+
+			++i;
+		}
+	}
+
+	return err;
 }
 
 //==============================================================================

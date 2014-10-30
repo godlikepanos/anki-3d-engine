@@ -10,8 +10,9 @@
 #define ANKI_UTIL_FUNCTIONS_H
 
 #include "anki/util/StdTypes.h"
-#include "anki/util/String.h"
+#include "anki/util/Assert.h"
 #include <cmath>
+#include <utility>
 
 namespace anki {
 
@@ -100,33 +101,6 @@ inline Bool isAligned(PtrSize alignment, Type value)
 	return ((PtrSize)value % alignment) == 0;
 }
 
-/// Get the size in bytes of a vector
-template<typename Vec>
-inline PtrSize getVectorSizeInBytes(const Vec& v)
-{
-	return v.size() * sizeof(typename Vec::value_type);
-}
-
-/// Delete a pointer properly 
-template<typename T>
-inline void propperDelete(T*& x)
-{
-	typedef char TypeMustBeComplete[sizeof(T) ? 1 : -1];
-  	(void) sizeof(TypeMustBeComplete);
-	delete x;
-	x = nullptr;
-}
-
-/// Delete a pointer properly
-template<typename T>
-inline void propperDeleteArray(T*& x)
-{
-	typedef char TypeMustBeComplete[sizeof(T) ? 1 : -1];
-	(void) sizeof(TypeMustBeComplete);
-	delete[] x;
-	x = nullptr;
-}
-
 /// A simple template trick to remove the pointer from one type
 ///
 /// Example:
@@ -167,14 +141,7 @@ inline U32 countBits(U32 number)
 #endif
 }
 
-/// Get the underlying type of a strongly typed enum
-template<typename TEnum>
-constexpr typename std::underlying_type<TEnum>::type enumValue(TEnum val)
-{
-	return static_cast<typename std::underlying_type<TEnum>::type>(val);
-}
-
-/// Construct an object
+/// Call an object constructor.
 template<typename T, typename... TArgs>
 void construct(T* p, TArgs&&... args)
 {
@@ -182,9 +149,9 @@ void construct(T* p, TArgs&&... args)
 	::new(reinterpret_cast<void*>(p)) T(std::forward<TArgs>(args)...);
 }
 
-/// Call destructor
+/// Call destructor.
 template<typename T>
-void destroy(T* p)
+void destruct(T* p)
 {
 	p->~T();
 }

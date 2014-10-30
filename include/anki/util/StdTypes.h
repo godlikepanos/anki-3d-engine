@@ -137,6 +137,14 @@ public:
 		return m_code != ErrorCode::NONE;
 	}
 
+	/// @privatesection
+	/// @{
+	ErrorCode _getCode() const
+	{
+		return m_code;
+	}
+	/// @}
+
 private:
 	ErrorCode m_code = ErrorCode::NONE;
 };

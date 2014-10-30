@@ -23,14 +23,22 @@ Camera::Camera(SceneGraph* scene, Type type, Frustum* frustum)
 //==============================================================================
 Error Camera::create(const CString& name) 
 {
-	Error err = SceneNode::create(name, 3);
+	Error err = SceneNode::create(name);
 
 	// Init components
 	if(!err)
 	{
-		addComponent(static_cast<MoveComponent*>(this));
-		addComponent(static_cast<FrustumComponent*>(this));
-		addComponent(static_cast<SpatialComponent*>(this));
+		err = addComponent(static_cast<MoveComponent*>(this));
+	}
+
+	if(!err)
+	{
+		err = addComponent(static_cast<FrustumComponent*>(this));
+	}
+
+	if(!err)
+	{
+		err = addComponent(static_cast<SpatialComponent*>(this));
 	}
 
 	return err;
