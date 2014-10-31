@@ -132,25 +132,38 @@ public:
 
 	/// Iterate the scene nodes using a lambda
 	template<typename Func>
-	void iterateSceneNodes(Func func)
+	ANKI_USE_RESULT Error iterateSceneNodes(Func func)
 	{
 		for(SceneNode* psn : m_nodes)
 		{
-			func(*psn);
+			Error err = func(*psn);
+			if(err)
+			{
+				return err;
+			}
 		}
+
+		return ErrorCode::NONE;
 	}
 
 	/// Iterate a range of scene nodes using a lambda
 	template<typename Func>
-	void iterateSceneNodes(PtrSize begin, PtrSize count, Func func)
+	ANKI_USE_RESULT Error iterateSceneNodes(
+		PtrSize begin, PtrSize count, Func func)
 	{
 		ANKI_ASSERT(begin < m_nodes.size() && count <= m_nodes.size());
 		for(auto it = m_nodes.begin() + begin; 
 			it != m_nodes.begin() + count; 
 			it++)
 		{
-			func(*(*it));
+			Error err = func(*(*it));
+			if(err)
+			{
+				return err;
+			}
 		}
+
+		return ErrorCode::NONE;
 	}
 
 	/// Create a new SceneNode

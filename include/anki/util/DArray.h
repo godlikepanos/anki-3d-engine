@@ -155,8 +155,31 @@ public:
 	}
 
 	/// Create the array.
-	ANKI_USE_RESULT Error create(Allocator alloc, PtrSize size, 
-		const Value& v = Value())
+	ANKI_USE_RESULT Error create(Allocator alloc, PtrSize size)
+	{
+		ANKI_ASSERT(m_data == nullptr && m_size == 0);
+		Error err = ErrorCode::NONE;
+
+		destroy(alloc);
+
+		if(size > 0)
+		{
+			m_data = alloc.template newArray<Value>(size);
+			if(m_data)
+			{
+				m_size = size;
+			}
+			else
+			{
+				err = ErrorCode::OUT_OF_MEMORY;
+			}
+		}
+
+		return err;
+	}
+
+	/// Create the array.
+	ANKI_USE_RESULT Error create(Allocator alloc, PtrSize size, const Value& v)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0);
 		Error err = ErrorCode::NONE;

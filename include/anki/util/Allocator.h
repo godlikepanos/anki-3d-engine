@@ -239,7 +239,27 @@ public:
 	/// Allocate a new array of objects and call their constructor
 	/// @note This is AnKi specific
 	template<typename U>
-	U* newArray(size_type n, const U& v = U())
+	U* newArray(size_type n)
+	{
+		typename rebind<U>::other alloc(*this);
+
+		U* x = alloc.allocate(n);
+		if(x)
+		{
+			// Call the constuctors
+			for(size_type i = 0; i < n; i++)
+			{
+				alloc.construct(&x[i]);
+			}
+		}
+
+		return x;
+	}
+
+	/// Allocate a new array of objects and call their constructor
+	/// @note This is AnKi specific
+	template<typename U>
+	U* newArray(size_type n, const U& v)
 	{
 		typename rebind<U>::other alloc(*this);
 

@@ -24,6 +24,13 @@ class VisibilityTestResults;
 class FrustumComponent: public SceneComponent
 {
 public:
+	class VisibilityStats
+	{
+	public:
+		U32 m_renderablesCount = 0;
+		U32 m_lightsCount = 0;
+	};
+
 	/// Pass the frustum here so we can avoid the virtuals
 	FrustumComponent(SceneNode* node, Frustum* frustum)
 	:	SceneComponent(Type::FRUSTUM, node), 
@@ -83,16 +90,18 @@ public:
 		return getFrustum().getTransform().getOrigin();
 	}
 
-	void setVisibilityTestResults(VisibilityTestResults* visible)
-	{
-		ANKI_ASSERT(m_visible == nullptr);
-		m_visible = visible;
-	}
+	void setVisibilityTestResults(VisibilityTestResults* visible);
+
 	/// Call this after the tests. Before it will point to junk
 	VisibilityTestResults& getVisibilityTestResults()
 	{
 		ANKI_ASSERT(m_visible != nullptr);
 		return *m_visible;
+	}
+
+	VisibilityStats getLastVisibilityStats() const
+	{
+		return m_stats;
 	}
 
 	void markForUpdate()
@@ -151,6 +160,7 @@ private:
 	Mat4 m_pm = Mat4::getIdentity(); ///< Projection matrix
 	Mat4 m_vm = Mat4::getIdentity(); ///< View matrix
 	Mat4 m_vpm = Mat4::getIdentity(); ///< View projection matrix
+	VisibilityStats m_stats;
 
 	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
 	/// frame and before any visibility tests are run

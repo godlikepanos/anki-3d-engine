@@ -47,7 +47,8 @@ public:
 	U8* m_spatialIndices = nullptr;
 	U8 m_spatialsCount = 0;
 
-	VisibleNode() = default;
+	VisibleNode()
+	{}
 
 	VisibleNode(VisibleNode&& other)
 	{
@@ -86,7 +87,7 @@ public:
 	}
 
 	ANKI_USE_RESULT Error create(
-		SceneAllocator<U8> alloc,
+		SceneFrameAllocator<U8> alloc,
 		U32 renderablesReservedSize,
 		U32 lightsReservedSize)
 	{
@@ -100,22 +101,33 @@ public:
 
 	VisibleNode* getRenderablesBegin()
 	{
-		return &m_renderables[0];
+		return (m_renderablesCount) ? &m_renderables[0] : nullptr;
 	}
 
 	VisibleNode* getRenderablesEnd()
 	{
-		return &m_renderables[0] + m_renderablesCount;
+		return (m_renderablesCount) 
+			? (&m_renderables[0] + m_renderablesCount) : nullptr;
 	}
 
 	VisibleNode* getLightsBegin()
 	{
-		return &m_lights[0];
+		return (m_lightsCount) ? &m_lights[0] : nullptr;
 	}
 
 	VisibleNode* getLightsEnd()
 	{
-		return &m_lights[0] + m_lightsCount;
+		return (m_lightsCount) ? (&m_lights[0] + m_lightsCount) : nullptr;
+	}
+
+	U32 getRenderablesCount() const
+	{
+		return m_renderablesCount;
+	}
+
+	U32 getLightsCount() const
+	{
+		return m_lightsCount;
 	}
 
 	ANKI_USE_RESULT Error moveBackRenderable(
@@ -180,11 +192,12 @@ public:
 	VisibilityTestResults::Container::iterator m_nodes;
 	Vec4 m_origin;
 
-	void operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
+	Error operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
 	{
 		DistanceSortFunctor comp;
 		comp.m_origin = m_origin;
 		std::sort(m_nodes, m_nodes + m_nodesCount, comp);
+		return ErrorCode::NONE;
 	}
 };
 
@@ -195,9 +208,10 @@ public:
 	U32 m_nodesCount;
 	VisibilityTestResults::Container::iterator m_nodes;
 
-	void operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
+	Error operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
 	{
 		std::sort(m_nodes, m_nodes + m_nodesCount, MaterialSortFunctor());
+		return ErrorCode::NONE;
 	}
 };
 
