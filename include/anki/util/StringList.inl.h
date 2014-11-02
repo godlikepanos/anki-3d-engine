@@ -80,10 +80,9 @@ template<typename TAlloc>
 Error StringListBase<TAlloc>::splitString(
 	Allocator alloc,
 	const CString& s, 
-	const Char separator,
-	Self& out)
+	const Char separator)
 {
-	ANKI_ASSERT(out.isEmpty());
+	ANKI_ASSERT(Base::isEmpty());
 
 	Error err = ErrorCode::NONE;
 	const Char* begin = &s[0];
@@ -95,7 +94,7 @@ Error StringListBase<TAlloc>::splitString(
 		{
 			if(begin < end)
 			{
-				err = out.emplaceBack(alloc);
+				err = Base::emplaceBack(alloc);
 
 				String str;
 				if(!err)
@@ -105,7 +104,7 @@ Error StringListBase<TAlloc>::splitString(
 
 				if(!err)
 				{
-					out.getBack() = std::move(str);
+					Base::getBack() = std::move(str);
 				}
 			}
 
@@ -115,7 +114,7 @@ Error StringListBase<TAlloc>::splitString(
 		{
 			if(begin < end)
 			{
-				err = out.emplaceBack(alloc);
+				err = Base::emplaceBack(alloc);
 
 				String str;
 				if(!err)
@@ -125,7 +124,7 @@ Error StringListBase<TAlloc>::splitString(
 
 				if(!err)
 				{
-					out.getBack() = std::move(str);
+					Base::getBack() = std::move(str);
 					begin = end + 1;
 				}
 			}

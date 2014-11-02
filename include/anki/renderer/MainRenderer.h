@@ -17,16 +17,18 @@ namespace anki {
 class MainRenderer: public Renderer
 {
 public:
-	MainRenderer(
+	MainRenderer();
+
+	~MainRenderer();
+
+	ANKI_USE_RESULT Error init(
 		Threadpool* threadpool, 
 		ResourceManager* resources,
 		GlDevice* gl,
 		HeapAllocator<U8>& alloc,
 		const ConfigSet& config);
 
-	~MainRenderer();
-
-	void render(SceneGraph& scene);
+	ANKI_USE_RESULT Error render(SceneGraph& scene);
 
 	/// Save the color buffer to a tga (lossless & uncompressed & slow)
 	/// or jpeg (lossy & compressed fast)
@@ -40,12 +42,8 @@ private:
 	/// Optimize job chain
 	Array<GlCommandBufferInitHints, JOB_CHAINS_COUNT> m_jobsInitHints; 
 
-	/// The same as Renderer::init but with additional initialization.
-	/// @see Renderer::init
-	void init(const ConfigSet& initializer);
-
 	void takeScreenshotTga(const char* filename);
-	void initGl();
+	ANKI_USE_RESULT Error initGl();
 };
 
 /// @}

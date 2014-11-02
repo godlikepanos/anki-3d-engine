@@ -9,12 +9,9 @@
 namespace anki {
 
 //==============================================================================
-AsyncLoader::AsyncLoader(const HeapAllocator<U8>& alloc)
-:	m_alloc(alloc),
-	m_thread("anki_asyload")
-{
-	m_thread.start(this, threadCallback);
-}
+AsyncLoader::AsyncLoader()
+:	m_thread("anki_asyload")
+{}
 
 //==============================================================================
 AsyncLoader::~AsyncLoader()
@@ -38,6 +35,14 @@ AsyncLoader::~AsyncLoader()
 }
 
 //==============================================================================
+Error AsyncLoader::create(const HeapAllocator<U8>& alloc)
+{
+	m_alloc = alloc;
+	m_thread.start(this, threadCallback);
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
 void AsyncLoader::stop()
 {
 	{
@@ -46,24 +51,25 @@ void AsyncLoader::stop()
 	}
 
 	m_condVar.notifyOne();
-	m_thread.join();
+	Error err = m_thread.join();
+	(void)err;
 }
 
 //==============================================================================
-I AsyncLoader::threadCallback(Thread::Info& info)
+Error AsyncLoader::threadCallback(Thread::Info& info)
 {
 	AsyncLoader& self = 
 		*reinterpret_cast<AsyncLoader*>(info.m_userData);
 
-	self.threadWorker();
-
-	return 0;
+	return self.threadWorker();
 }
 
 //==============================================================================
-void AsyncLoader::threadWorker()
+Error AsyncLoader::threadWorker()
 {
-	while(true)
+	Error err = ErrorCode::NONE;
+
+	while(!err)
 	{
 		Task* task;
 
@@ -96,11 +102,17 @@ void AsyncLoader::threadWorker()
 		}
 
 		// Exec the task
-		(*task)();
+		err = (*task)();
+		if(err)
+		{
+			ANKI_LOGE("Async loader task failed");
+		}
 
 		// Delete the task
 		m_alloc.deleteInstance(task);
 	}
+
+	return err;
 }
 
 } // end namespace anki

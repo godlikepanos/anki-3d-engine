@@ -27,12 +27,14 @@ void checkArgsCount(lua_State* l, I argsCount)
 //==============================================================================
 void createClass(lua_State* l, const char* className)
 {
-	lua_newtable(l);
-	lua_setglobal(l, className);
-	luaL_newmetatable(l, className);
-	lua_pushstring(l, "__index");
-	lua_pushvalue(l, -2);  // pushes the metatable
-	lua_settable(l, -3);  // metatable.__index = metatable
+	lua_newtable(l); // push new table
+	lua_setglobal(l, className); // pop and make global
+	luaL_newmetatable(l, className); // push
+	lua_pushstring(l, "__index"); // push
+	lua_pushvalue(l, -2);  // pushes copy of the metatable
+	lua_settable(l, -3);  // pop*2: metatable.__index = metatable
+
+	// After all these the metatable is in the top of tha stack
 }
 
 //==============================================================================
@@ -47,10 +49,10 @@ void pushCFunctionMethod(lua_State* l, const char* name, lua_CFunction luafunc)
 void pushCFunctionStatic(lua_State* l, const char* className,
 	const char* name, lua_CFunction luafunc) 
 {
-	lua_getglobal(l, className);
-	lua_pushcfunction(l, luafunc);
-	lua_setfield(l, -2, name);
-	lua_pop(l, 1);
+	lua_getglobal(l, className); // push
+	lua_pushcfunction(l, luafunc); // push
+	lua_setfield(l, -2, name); // pop global
+	lua_pop(l, 1); // pop cfunc
 }
 
 } // end namespace lua_detail
@@ -132,9 +134,8 @@ void LuaBinder::evalString(const CString& str)
 	int e = luaL_dostring(m_l, &str[0]);
 	if(e)
 	{
-		String str(lua_tostring(m_l, -1), m_alloc);
+		ANKI_LOGE("%s", lua_tostring(m_l, -1));
 		lua_pop(m_l, 1);
-		throw ANKI_EXCEPTION("%s", &str[0]);
 	}
 }
 

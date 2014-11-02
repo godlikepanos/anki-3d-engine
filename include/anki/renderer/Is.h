@@ -113,14 +113,14 @@ private:
 	Is(Renderer* r);
 	~Is();
 
-	void init(const ConfigSet& initializer);
-	void run(GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdBuff);
 
 	/// Called by init
-	void initInternal(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	/// Do the actual pass
-	void lightPass(GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error lightPass(GlCommandBufferHandle& cmdBuff);
 
 	/// Prepare GL for rendering
 	void setState(GlCommandBufferHandle& cmdBuff);
@@ -131,7 +131,7 @@ private:
 	/// Calculate the size of the tile
 	PtrSize calcTileSize() const;
 
-	void updateCommonBlock(GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error updateCommonBlock(GlCommandBufferHandle& cmdBuff);
 };
 
 /// @}

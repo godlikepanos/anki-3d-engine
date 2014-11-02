@@ -46,8 +46,8 @@ private:
 	:	BlurringRenderingPass(r)
 	{}
 
-	void init(const ConfigSet& config);
-	void run(GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
+	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdBuff);
 };
 
 /// @}

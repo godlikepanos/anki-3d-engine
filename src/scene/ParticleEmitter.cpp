@@ -200,63 +200,12 @@ void Particle::revive(const ParticleEmitter& pe,
 //==============================================================================
 
 //==============================================================================
-ParticleEmitter::ParticleEmitter(
-	const CString& name, SceneGraph* scene,
-	const CString& filename)
-:	SceneNode(name, scene),
+ParticleEmitter::ParticleEmitter(SceneGraph* scene)
+:	SceneNode(scene),
 	SpatialComponent(this),
 	MoveComponent(this),
-	RenderComponent(this),
-	m_particles(getSceneAllocator()),
-	m_transforms(getSceneAllocator())
-{
-	addComponent(static_cast<MoveComponent*>(this));
-	addComponent(static_cast<SpatialComponent*>(this));
-	addComponent(static_cast<RenderComponent*>(this));
-
-	m_obb.setCenter(Vec4(0.0));
-	m_obb.setExtend(Vec4(1.0, 1.0, 1.0, 0.0));
-	m_obb.setRotation(Mat3x4::getIdentity());
-
-	// Load resource
-	m_particleEmitterResource.load(filename, &getResourceManager());
-
-	// copy the resource to me
-	ParticleEmitterProperties& me = *this;
-	const ParticleEmitterProperties& other =
-		m_particleEmitterResource->getProperties();
-	me = other;
-
-	if(m_usePhysicsEngine)
-	{
-		createParticlesSimulation(scene);
-		m_simulationType = SimulationType::PHYSICS_ENGINE;
-	}
-	else
-	{
-		createParticlesSimpleSimulation(scene);
-		m_simulationType = SimulationType::SIMPLE;
-	}
-
-	m_timeLeftForNextEmission = 0.0;
-	RenderComponent::init();
-
-	// Create the vertex buffer and object
-	//
-	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
-
-	GlDevice& gl = getSceneGraph()._getGlDevice();
-	GlCommandBufferHandle cmd;
-	cmd.create(&gl);
-
-	m_vertBuff.create(cmd, GL_ARRAY_BUFFER, buffSize, 
-		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-
-	// TODO Optimize that to avoid serialization
-	cmd.finish();
-
-	m_vertBuffMapping = (U8*)m_vertBuff.getPersistentMappingAddress();
-}
+	RenderComponent(this)
+{}
 
 //==============================================================================
 ParticleEmitter::~ParticleEmitter()
@@ -269,43 +218,137 @@ ParticleEmitter::~ParticleEmitter()
 			getSceneAllocator().deleteInstance(part);
 		}
 	}
+
+	m_particles.destroy(getSceneAllocator());
+	m_transforms.destroy(getSceneAllocator());
 }
 
 //==============================================================================
-void ParticleEmitter::buildRendering(RenderingBuildData& data)
+Error ParticleEmitter::create(
+	const CString& name, const CString& filename)
 {
-	ANKI_ASSERT(data.m_subMeshIndicesCount <= m_transforms.size() + 1);
+	Error err = SceneNode::create(name);
+
+	if(!err)
+	{
+		err = addComponent(static_cast<MoveComponent*>(this));
+	}
+
+	if(!err)
+	{
+		err = addComponent(static_cast<SpatialComponent*>(this));
+	}
+
+	if(!err)
+	{
+		err = addComponent(static_cast<RenderComponent*>(this));
+	}
+
+	if(!err)
+	{
+		m_obb.setCenter(Vec4(0.0));
+		m_obb.setExtend(Vec4(1.0, 1.0, 1.0, 0.0));
+		m_obb.setRotation(Mat3x4::getIdentity());
+
+		// Load resource
+		err = m_particleEmitterResource.load(filename, &getResourceManager());
+	}
+
+	// copy the resource to me
+	if(!err)
+	{
+		ParticleEmitterProperties& me = *this;
+		const ParticleEmitterProperties& other =
+			m_particleEmitterResource->getProperties();
+		me = other;
+
+		if(m_usePhysicsEngine)
+		{
+			err = createParticlesSimulation(&getSceneGraph());
+			m_simulationType = SimulationType::PHYSICS_ENGINE;
+		}
+		else
+		{
+			err = createParticlesSimpleSimulation();
+			m_simulationType = SimulationType::SIMPLE;
+		}
+	}
+
+	if(!err)
+	{
+		err = RenderComponent::create();
+	}
+
+	// Create the vertex buffer and object
+	//
+	GlCommandBufferHandle cmd;
+	if(!err)
+	{
+		GlDevice& gl = getSceneGraph()._getGlDevice();
+		err = cmd.create(&gl);
+	}
+
+	if(!err)
+	{
+		PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
+		err = m_vertBuff.create(cmd, GL_ARRAY_BUFFER, buffSize, 
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	}
+
+	if(!err)
+	{
+		// TODO Optimize that to avoid serialization
+		cmd.finish();
+
+		m_vertBuffMapping = (U8*)m_vertBuff.getPersistentMappingAddress();
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error ParticleEmitter::buildRendering(RenderingBuildData& data)
+{
+	ANKI_ASSERT(data.m_subMeshIndicesCount <= m_transforms.getSize() + 1);
+
+	Error err = ErrorCode::NONE;
 
 	if(m_aliveParticlesCount == 0)
 	{
-		return;
+		return ErrorCode::NONE;
 	}
 
 	RenderingKey key = data.m_key;
 	key.m_lod = 0;
 
 	GlProgramPipelineHandle ppline;
-	m_particleEmitterResource->getMaterial().getProgramPipeline(key, ppline);
+	err = m_particleEmitterResource->getMaterial().getProgramPipeline(
+		key, ppline);
+	
+	if(!err)
+	{
+		ppline.bind(data.m_jobs);
 
-	ppline.bind(data.m_jobs);
+		PtrSize offset = (getGlobTimestamp() % 3) * (m_vertBuff.getSize() / 3);
 
-	PtrSize offset = (getGlobTimestamp() % 3) * (m_vertBuff.getSize() / 3);
+		// Position
+		m_vertBuff.bindVertexBuffer(data.m_jobs, 
+			3, GL_FLOAT, false, VERT_SIZE, offset + 0, 0);
 
-	// Position
-	m_vertBuff.bindVertexBuffer(data.m_jobs, 
-		3, GL_FLOAT, false, VERT_SIZE, offset + 0, 0);
+		// Scale
+		m_vertBuff.bindVertexBuffer(data.m_jobs, 
+			1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 3, 6);
 
-	// Scale
-	m_vertBuff.bindVertexBuffer(data.m_jobs, 
-		1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 3, 6);
+		// Alpha
+		m_vertBuff.bindVertexBuffer(data.m_jobs, 
+			1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 4, 7);
 
-	// Alpha
-	m_vertBuff.bindVertexBuffer(data.m_jobs, 
-		1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 4, 7);
+		data.m_jobs.drawArrays(GL_POINTS, 
+			m_aliveParticlesCount,
+			data.m_subMeshIndicesCount);
+	}
 
-	data.m_jobs.drawArrays(GL_POINTS, 
-		m_aliveParticlesCount,
-		data.m_subMeshIndicesCount);
+	return err;
 }
 
 //==============================================================================
@@ -315,15 +358,17 @@ const Material& ParticleEmitter::getMaterial()
 }
 
 //==============================================================================
-void ParticleEmitter::onMoveComponentUpdate(
+Error ParticleEmitter::onMoveComponentUpdate(
 	SceneNode& node, F32 prevTime, F32 crntTime)
 {
 	m_identityRotation =
 		getWorldTransform().getRotation() == Mat3x4::getIdentity();
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
+Error ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 {
 #if 0
 	collShape = getSceneAllocator().newInstance<btSphereShape>(particle.size);
@@ -349,28 +394,44 @@ void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 		particles.push_back(part);
 	}
 #endif
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void ParticleEmitter::createParticlesSimpleSimulation(SceneGraph* scene)
+Error ParticleEmitter::createParticlesSimpleSimulation()
 {
-	m_particles.resize(m_maxNumOfParticles);
+	Error err = m_particles.create(getSceneAllocator(), m_maxNumOfParticles);
+	if(err)
+	{
+		return err;
+	}
 
 	for(U i = 0; i < m_maxNumOfParticles; i++)
 	{
 		ParticleSimple* part = 
 			getSceneAllocator().newInstance<ParticleSimple>();
 
-		part->m_size = getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
-		part->m_alpha = 
-			getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
+		if(part)
+		{
+			part->m_size = 
+				getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
+			part->m_alpha = 
+				getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
 
-		m_particles[i] = part;
+			m_particles[i] = part;
+		}
+		else
+		{
+			err = ErrorCode::OUT_OF_MEMORY;
+			break;
+		}
 	}
+
+	return err;
 }
 
 //==============================================================================
-void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
 	// - Deactivate the dead particles
 	// - Calc the AABB
@@ -489,25 +550,37 @@ void ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	}
 
 	// Do something more
-	doInstancingCalcs();
+	return doInstancingCalcs();
 }
 
 //==============================================================================
-void ParticleEmitter::doInstancingCalcs()
+Error ParticleEmitter::doInstancingCalcs()
 {
+	Error err = ErrorCode::NONE;
+
+	//
 	// Gather the move components of the instances
-	SceneFrameVector<MoveComponent*> instanceMoves(getSceneFrameAllocator());
+	//
+	SceneFrameDArray<MoveComponent*> instanceMoves;
+	U instanceMovesCount = 0;
 	Timestamp instancesTimestamp = 0;
-	SceneObject::visitChildren([&](SceneObject& obj) -> Error
+
+	err = instanceMoves.create(getSceneFrameAllocator(), 64);
+	if(err)
+	{
+		return err;
+	}
+
+	err = SceneObject::visitChildren([&](SceneObject& obj) -> Error
 	{	
-		if(obj.getType() == SceneObject::Type::SCENE_NODE)
+		if(obj.getType() == SceneNode::getClassType())
 		{
 			SceneNode& sn = obj.downCast<SceneNode>();
 			if(sn.tryGetComponent<InstanceComponent>())
 			{
 				MoveComponent& move = sn.getComponent<MoveComponent>();
 
-				instanceMoves.push_back(&move);
+				instanceMoves[instanceMovesCount++] = &move;
 
 				instancesTimestamp = 
 					std::max(instancesTimestamp, move.getTimestamp());
@@ -517,30 +590,42 @@ void ParticleEmitter::doInstancingCalcs()
 		return ErrorCode::NONE;
 	});
 
+	//
 	// If instancing
-	if(instanceMoves.size() != 0)
+	//
+	if(instanceMovesCount > 0)
 	{
 		Bool transformsNeedUpdate = false;
 
 		// Check if an instance was added or removed and reset the spatials and
 		// the transforms
-		if(instanceMoves.size() != m_transforms.size())
+		if(instanceMovesCount != m_transforms.getSize())
 		{
 			transformsNeedUpdate = true;
 
 			// Check if instances added or removed
-			if(m_transforms.size() < instanceMoves.size())
+			if(m_transforms.getSize() < instanceMovesCount)
 			{
 				// Instances added
 
-				U diff = instanceMoves.size() - m_transforms.size();
+				U diff = instanceMovesCount - m_transforms.getSize();
 
 				while(diff-- != 0)
 				{
 					ObbSpatialComponent* newSpatial = getSceneAllocator().
 						newInstance<ObbSpatialComponent>(this);
 
-					addComponent(newSpatial);
+					if(newSpatial == nullptr)
+					{
+						err = ErrorCode::OUT_OF_MEMORY;
+						break;
+					}
+
+					err = addComponent(newSpatial);
+					if(err)
+					{
+						break;
+					}
 				}
 			}
 			else
@@ -551,42 +636,61 @@ void ParticleEmitter::doInstancingCalcs()
 				ANKI_ASSERT(0 && "TODO");
 			}
 
-			m_transforms.resize(instanceMoves.size());
+			err = m_transforms.resize(getSceneAllocator(), instanceMovesCount);
 		}
 
-		if(transformsNeedUpdate || m_transformsTimestamp < instancesTimestamp)
+		if(!err && (transformsNeedUpdate 
+			|| m_transformsTimestamp < instancesTimestamp))
 		{
 			m_transformsTimestamp = instancesTimestamp;
 
 			// Update the transforms
-			for(U i = 0; i < instanceMoves.size(); i++)
+			for(U i = 0; i < instanceMovesCount; i++)
 			{
 				m_transforms[i] = instanceMoves[i]->getWorldTransform();
 			}
 		}
 
 		// Update the spatials anyway
-		U count = 0;
-		iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp)
+		if(!err)
 		{
-			// Skip the first
-			if(count != 0)	
+			U count = 0;
+			err = iterateComponentsOfType<SpatialComponent>(
+				[&](SpatialComponent& sp) -> Error
 			{
-				ObbSpatialComponent* msp = 
-					staticCastPtr<ObbSpatialComponent*>(&sp);
-		
-				Obb aobb = m_obb;
-				aobb.setCenter(Vec4(0.0));
-				msp->m_obb = aobb.getTransformed(m_transforms[count - 1]);
+				Error err2 = ErrorCode::NONE;
 
-				msp->markForUpdate();
-			}
+				// Skip the first
+				if(count != 0)	
+				{
+					ObbSpatialComponent* msp = 
+						staticCastPtr<ObbSpatialComponent*>(&sp);
 
-			++count;
-		});
+					if(msp)
+					{
+						Obb aobb = m_obb;
+						aobb.setCenter(Vec4(0.0));
+						msp->m_obb =
+							aobb.getTransformed(m_transforms[count - 1]);
 
-		ANKI_ASSERT(count - 1 == m_transforms.size());
+						msp->markForUpdate();
+					}
+					else
+					{
+						err2 = ErrorCode::OUT_OF_MEMORY;
+					}
+				}
+
+				++count;
+
+				return err2;
+			});
+
+			ANKI_ASSERT(count - 1 == m_transforms.getSize());
+		}
 	} // end if instancing
+
+	return err;
 }
 
 //==============================================================================
@@ -598,7 +702,7 @@ Bool ParticleEmitter::getHasWorldTransforms()
 //==============================================================================
 void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf)
 {
-	ANKI_ASSERT(m_transforms.size() > 0);
+	ANKI_ASSERT(m_transforms.getSize() > 0);
 
 	if(index == 0)
 	{
@@ -609,7 +713,7 @@ void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf)
 	else
 	{
 		--index;
-		ANKI_ASSERT(index < m_transforms.size());
+		ANKI_ASSERT(index < m_transforms.getSize());
 
 		// The particle positions are already in word space. Move them back to
 		// local space

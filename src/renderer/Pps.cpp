@@ -27,34 +27,44 @@ Pps::~Pps()
 {}
 
 //==============================================================================
-void Pps::initInternal(const ConfigSet& config)
+Error Pps::initInternal(const ConfigSet& config)
 {
+	Error err = ErrorCode::NONE;
+
 	m_enabled = config.get("pps.enabled");
 	if(!m_enabled)
 	{
-		return;
+		return err;
 	}
 
 	ANKI_ASSERT("Initializing PPS");
 
-	m_ssao.init(config);
-	m_hdr.init(config);
-	m_lf.init(config);
-	m_sslr.init(config);
+	err = m_ssao.init(config);
+	if(err) return err;
+	err = m_hdr.init(config);
+	if(err) return err;
+	err = m_lf.init(config);
+	if(err) return err;
+	err = m_sslr.init(config);
+	if(err) return err;
 
 	// FBO
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(&getGlDevice());
+	err = cmdBuff.create(&getGlDevice());
+	if(err) return err;
 
-	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8, GL_RGB,
-		GL_UNSIGNED_BYTE, 1, m_rt);
+	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8, 
+		GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
+	if(err) return err;
 
-	m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	if(err) return err;
 
 	// SProg
-	String pps(getAllocator());
+	String pps;
+	String::ScopeDestroyer ppsd(&pps, getAllocator());
 
-	pps.sprintf(
+	err = pps.sprintf(getAllocator(),
 		"#define SSAO_ENABLED %u\n"
 		"#define HDR_ENABLED %u\n"
 		"#define SHARPEN_ENABLED %u\n"
@@ -67,53 +77,62 @@ void Pps::initInternal(const ConfigSet& config)
 		static_cast<U>(config.get("pps.gammaCorrection")),
 		m_r->getWidth(),
 		m_r->getHeight());
+	if(err) return err;
 
-	m_frag.loadToCache(&getResourceManager(),
+	err = m_frag.loadToCache(&getResourceManager(),
 		"shaders/Pps.frag.glsl", pps.toCString(), "r_");
+	if(err) return err;
 
-	m_ppline = m_r->createDrawQuadProgramPipeline(m_frag->getGlProgram());
+	err = m_r->createDrawQuadProgramPipeline(m_frag->getGlProgram(), m_ppline);
+	if(err) return err;
 
 	cmdBuff.finish();
+
+	return err;
 }
 
 //==============================================================================
-void Pps::init(const ConfigSet& config)
+Error Pps::init(const ConfigSet& config)
 {
-	try
+	Error err = initInternal(config);
+	if(err)
 	{
-		initInternal(config);
+		ANKI_LOGE("Failed to init PPS");
 	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to init PPS") << e;
-	}
+
+	return err;
 }
 
 //==============================================================================
-void Pps::run(GlCommandBufferHandle& cmdBuff)
+Error Pps::run(GlCommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
+	Error err = ErrorCode::NONE;
 
 	// First SSAO because it depends on MS where HDR depends on IS
 	if(m_ssao.getEnabled())
 	{
-		m_ssao.run(cmdBuff);
+		err = m_ssao.run(cmdBuff);
+		if(err) return err;
 	}
 
 	// Then SSLR because HDR depends on it
 	if(m_sslr.getEnabled())
 	{
-		m_sslr.run(cmdBuff);
+		err = m_sslr.run(cmdBuff);
+		if(err) return err;
 	}
 
 	if(m_hdr.getEnabled())
 	{
-		m_hdr.run(cmdBuff);
+		err = m_hdr.run(cmdBuff);
+		if(err) return err;
 	}
 
 	if(m_lf.getEnabled())
 	{
-		m_lf.run(cmdBuff);
+		err = m_lf.run(cmdBuff);
+		if(err) return err;
 	}
 
 	Bool drawToDefaultFbo = 
@@ -124,7 +143,8 @@ void Pps::run(GlCommandBufferHandle& cmdBuff)
 	if(drawToDefaultFbo)
 	{
 		m_r->getDefaultFramebuffer().bind(cmdBuff, true);
-		cmdBuff.setViewport(0, 0, m_r->getWindowWidth(), m_r->getWindowHeight());
+		cmdBuff.setViewport(
+			0, 0, m_r->getWindowWidth(), m_r->getWindowHeight());
 	}
 	else
 	{
@@ -151,6 +171,8 @@ void Pps::run(GlCommandBufferHandle& cmdBuff)
 	}
 
 	m_r->drawQuad(cmdBuff);
+
+	return err;
 }
 
 } // end namespace anki

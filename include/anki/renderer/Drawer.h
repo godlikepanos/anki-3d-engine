@@ -36,12 +36,12 @@ public:
 	static const U32 MAX_UNIFORM_BUFFER_SIZE = 1024 * 1024 * 1;
 
 	/// The one and only constructor
-	RenderableDrawer(Renderer* r);
+	ANKI_USE_RESULT Error create(Renderer* r);
 
 	void prepareDraw(
 		RenderingStage stage, Pass pass, GlCommandBufferHandle& cmdBuff);
 
-	void render(
+	ANKI_USE_RESULT Error render(
 		SceneNode& frsn,
 		VisibleNode& visible);
 

@@ -32,13 +32,21 @@ Light::Light(SceneGraph* scene, Type t)
 //==============================================================================
 Error Light::create(const CString& name)
 {
-	Error err = SceneNode::create(name, 3 + 1);
+	Error err = SceneNode::create(name);
 	
 	if(!err)
 	{
-		addComponent(static_cast<MoveComponent*>(this));
-		addComponent(static_cast<SpatialComponent*>(this));
-		addComponent(static_cast<LightComponent*>(this));
+		err = addComponent(static_cast<MoveComponent*>(this));
+	}
+
+	if(!err)
+	{
+		err = addComponent(static_cast<SpatialComponent*>(this));
+	}
+
+	if(!err)
+	{
+		err = addComponent(static_cast<LightComponent*>(this));
 	}
 
 	return err;
@@ -178,11 +186,13 @@ Error SpotLight::create(const CString& name)
 
 	if(!err)
 	{
-		addComponent(static_cast<FrustumComponent*>(this));
+		err = addComponent(static_cast<FrustumComponent*>(this));
+	}
 
+	if(!err)
+	{
 		const F32 ang = toRad(45.0);
 		const F32 dist = 1.0;
-
 		m_frustum.setAll(ang, ang, 0.1, dist);
 	}
 

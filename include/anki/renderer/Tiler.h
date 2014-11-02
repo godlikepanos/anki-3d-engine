@@ -23,8 +23,7 @@ class Frustumable;
 /// Tiler used for visibility tests
 class Tiler: public RenderingPass
 {
-	friend struct UpdateTilesPlanesPerspectiveCameraJob;
-	friend struct UpdatePlanesPerspectiveCameraJob;
+	friend struct UpdatePlanesPerspectiveCameraTask;
 
 public:
 	using Bitset = std::bitset<
@@ -33,7 +32,7 @@ public:
 	Tiler(Renderer* r);
 	~Tiler();
 
-	void init();
+	Error init();
 
 	/// Issue the GPU job
 	void runMinMax(const GlTextureHandle& depthMap);
@@ -53,7 +52,7 @@ public:
 
 private:
 	/// Tile planes
-	Vector<Plane> m_allPlanes;
+	DArray<Plane> m_allPlanes;
 	Plane* m_planesY = nullptr;
 	Plane* m_planesX = nullptr;
 	Plane* m_planesYW = nullptr;
@@ -81,7 +80,7 @@ private:
 	/// Timestamp for the same reason as prevCam
 	Timestamp m_planes4UpdateTimestamp = getGlobTimestamp();
 
-	void initInternal();
+	ANKI_USE_RESULT Error initInternal();
 
 	void testRange(const CollisionShape& cs, Bool nearPlane,
 		U iFrom, U iTo, U jFrom, U jTo, Bitset& bitset) const;

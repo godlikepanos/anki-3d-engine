@@ -16,4 +16,12 @@ ANKI_SCRIPT_WRAP(CString)
 	ANKI_LUA_CLASS_END()
 }
 
+//==============================================================================
+ANKI_SCRIPT_WRAP(Error)
+{
+	ANKI_LUA_CLASS_BEGIN(lb, Error)
+		ANKI_LUA_CONSTRUCTOR(I)
+	ANKI_LUA_CLASS_END()
+}
+
 } // end namespace anki

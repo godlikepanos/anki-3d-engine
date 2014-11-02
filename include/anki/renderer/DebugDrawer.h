@@ -26,8 +26,10 @@ class Renderer;
 class DebugDrawer
 {
 public:
-	DebugDrawer(Renderer* r);
+	DebugDrawer();
 	~DebugDrawer();
+
+	ANKI_USE_RESULT Error create(Renderer* r);
 
 	void drawGrid();
 	void drawSphere(F32 radius, I complexity = 4);
@@ -47,24 +49,30 @@ public:
 	/// @name Render functions. Imitate the GL 1.1 immediate mode
 	/// @{
 	void begin(GLenum primitive); ///< Initiates the draw
+
 	void end(); ///< Draws
+
 	void pushBackVertex(const Vec3& pos); ///< Something like glVertex
+
 	/// Something like glColor
 	void setColor(const Vec3& col)
 	{
 		m_crntCol = col;
 	}
+
 	/// Something like glColor
 	void setColor(const Vec4& col)
 	{
 		m_crntCol = col.xyz();
 	}
+
 	void setModelMatrix(const Mat4& m);
+
 	void setViewProjectionMatrix(const Mat4& m);
 	/// @}
 
 	/// This is the function that actualy draws
-	void flush();
+	ANKI_USE_RESULT Error flush();
 
 private:
 	class Vertex
@@ -88,17 +96,17 @@ private:
 	Vec3 m_crntCol;
 	GLenum m_primitive;
 
+	GlBufferHandle m_vertBuff;
+
 	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientLineVerts;
 	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientTriVerts;
-
-	GlBufferHandle m_vertBuff;
 
 	/// This is a container of some precalculated spheres. Its a map that
 	/// from sphere complexity it returns a vector of lines (Vec3s in
 	/// pairs)
 	std::unordered_map<U32, Vector<Vec3>> m_complexityToPreCalculatedSphere;
 
-	void flushInternal(GLenum primitive);
+	ANKI_USE_RESULT Error flushInternal(GLenum primitive);
 };
 
 /// Contains methods to render the collision shapes

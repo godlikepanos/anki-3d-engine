@@ -890,7 +890,7 @@ public:
 			}
 			else
 			{
-				destroy(chunk);
+				destruct(chunk);
 				m_allocCb(m_allocCbUserData, chunk, 0, 0);
 				chunk = nullptr;
 			}

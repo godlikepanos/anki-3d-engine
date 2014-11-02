@@ -71,8 +71,8 @@ public:
 
 	/// Split a string using a separator (@a separator) and return these
 	/// strings in a string list
-	static ANKI_USE_RESULT Error splitString(
-		Allocator alloc, const CString& s, const Char separator, Self& out);
+	ANKI_USE_RESULT Error splitString(
+		Allocator alloc, const CString& s, const Char separator);
 };
 
 /// A common string list allocated in heap.

@@ -55,92 +55,120 @@ Lf::~Lf()
 {}
 
 //==============================================================================
-void Lf::init(const ConfigSet& config)
+Error Lf::init(const ConfigSet& config)
 {
-	try
+	Error err = initInternal(config);
+	if(err)
 	{
-		initInternal(config);
+		ANKI_LOGE("Failed to init lens flare pass");
 	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to init lens flare pass") << e;
-	}
+
+	return err;
 }
 
 //==============================================================================
-void Lf::initInternal(const ConfigSet& config)
+Error Lf::initInternal(const ConfigSet& config)
 {
+	Error err = ErrorCode::NONE;
 	m_enabled = config.get("pps.lf.enabled") 
 		&& config.get("pps.hdr.enabled");
 	if(!m_enabled)
 	{
-		return;
+		return err;
 	}
 
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(&getGlDevice());
+	err = cmdBuff.create(&getGlDevice());
+	if(err) return err;
 
 	m_maxFlaresPerLight = config.get("pps.lf.maxFlaresPerLight");
 	m_maxLightsWithFlares = config.get("pps.lf.maxLightsWithFlares");
 
 	// Load program 1
-	String pps(getAllocator());
-	pps.sprintf("#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n", 
+	String pps;
+	String::ScopeDestroyer ppsd(&pps, getAllocator());
+
+	err = pps.sprintf(getAllocator(), 
+		"#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n", 
 		m_r->getPps().getHdr()._getWidth(),
 		m_r->getPps().getHdr()._getHeight());
+	if(err) return err;
 
-	m_pseudoFrag.loadToCache(&getResourceManager(), 
+	err = m_pseudoFrag.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfPseudoPass.frag.glsl", pps.toCString(), "r_");
-	m_pseudoPpline = m_r->createDrawQuadProgramPipeline(
-		m_pseudoFrag->getGlProgram());
+	if(err) return err;
+
+	err = m_r->createDrawQuadProgramPipeline(
+		m_pseudoFrag->getGlProgram(), m_pseudoPpline);
+	if(err) return err;
 
 	// Load program 2
-	pps.sprintf("#define MAX_FLARES %u\n",
+	pps.destroy(getAllocator());
+	err = pps.sprintf(getAllocator(), "#define MAX_FLARES %u\n",
 		m_maxFlaresPerLight * m_maxLightsWithFlares);
+	if(err)
+	{
+		return err;
+	}
 
-	m_realVert.loadToCache(&getResourceManager(), 
+	err = m_realVert.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfSpritePass.vert.glsl", pps.toCString(), "r_");
+	if(err) return err;
 
-	m_realFrag.loadToCache(&getResourceManager(), 
+	err = m_realFrag.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfSpritePass.frag.glsl", pps.toCString(), "r_");
+	if(err) return err;
 
-	m_realPpline.create(cmdBuff,
+	err = m_realPpline.create(cmdBuff,
 		{m_realVert->getGlProgram(), m_realFrag->getGlProgram()});
+	if(err) return err;
 
 	PtrSize blockSize = 
 		sizeof(Flare) * m_maxFlaresPerLight * m_maxLightsWithFlares;
 	if(m_realVert->getGlProgram().tryFindBlock("bFlares")->getSize() 
 		!= blockSize)
 	{
-		throw ANKI_EXCEPTION("Incorrect block size");
+		ANKI_LOGE("Incorrect block size");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	// Init buffer
-	m_flareDataBuff.create(
+	err = m_flareDataBuff.create(
 		cmdBuff, GL_UNIFORM_BUFFER, blockSize, GL_DYNAMIC_STORAGE_BIT);
+	if(err) return err;
 
 	// Create the render target
-	m_r->createRenderTarget(m_r->getPps().getHdr()._getWidth(), 
+	err = m_r->createRenderTarget(m_r->getPps().getHdr()._getWidth(), 
 		m_r->getPps().getHdr()._getHeight(), 
 		GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
+	if(err) return err;
 
-	m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}}); 
+	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	if(err) return err;
 	
 	// Textures
-	m_lensDirtTex.load("engine_data/lens_dirt.ankitex", &getResourceManager());
+	err = m_lensDirtTex.load(
+		"engine_data/lens_dirt.ankitex", &getResourceManager());
+	if(err) return err;
 
 	// Blit
-	m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
-	m_blitPpline = m_r->createDrawQuadProgramPipeline(
-		m_blitFrag->getGlProgram());
+	err = m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
+	if(err) return err;
+
+	err = m_r->createDrawQuadProgramPipeline(
+		m_blitFrag->getGlProgram(), m_blitPpline);
+	if(err) return err;
 
 	cmdBuff.finish();
+
+	return err;
 }
 
 //==============================================================================
-void Lf::run(GlCommandBufferHandle& cmdBuff)
+Error Lf::run(GlCommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
+	Error err = ErrorCode::NONE;
 
 	//
 	// First pass
@@ -170,13 +198,22 @@ void Lf::run(GlCommandBufferHandle& cmdBuff)
 	VisibilityTestResults& vi = cam.getVisibilityTestResults();
 
 	// Iterate the visible light and get those that have lens flare
-	SceneFrameVector<Light*> lights(
-		m_maxLightsWithFlares, nullptr, scene.getFrameAllocator());
+	SceneDArray<Light*> lights;
+	SceneDArray<Light*>::ScopeDestroyer lightsd(
+		&lights, scene.getFrameAllocator());
+	err = lights.create(
+		scene.getFrameAllocator(), m_maxLightsWithFlares, nullptr);
+	if(err)
+	{
+		return err;
+	}
 
 	U lightsCount = 0;
-	for(auto& it : vi.m_lights)
+	auto it = vi.getLightsBegin();
+	auto end = vi.getLightsEnd();
+	for(; it != end; ++it)
 	{
-		SceneNode& sn = *it.m_node;
+		SceneNode& sn = *(it->m_node);
 		ANKI_ASSERT(sn.tryGetComponent<LightComponent>() != nullptr);
 		Light* light = staticCastPtr<Light*>(&sn);
 
@@ -201,15 +238,35 @@ void Lf::run(GlCommandBufferHandle& cmdBuff)
 		// Write the UBO and get the groups
 		//
 		GlClientBufferHandle flaresCBuff;
-		flaresCBuff.create(cmdBuff,
+		err = flaresCBuff.create(cmdBuff,
 			sizeof(Flare) * lightsCount * m_maxFlaresPerLight, nullptr);
+		if(err)
+		{
+			return err;
+		}
+
 		Flare* flares = (Flare*)flaresCBuff.getBaseAddress();
 		U flaresCount = 0;
 
 		// Contains the number of flares per flare texture
-		SceneFrameVector<U> groups(lightsCount, 0U, scene.getFrameAllocator());
-		SceneFrameVector<const GlTextureHandle*> texes(
-			lightsCount, nullptr, scene.getFrameAllocator());
+		SceneFrameDArray<U> groups;
+		SceneFrameDArray<U>::ScopeDestroyer groupsd(
+			&groups, scene.getFrameAllocator());
+		err = groups.create(scene.getFrameAllocator(), lightsCount, 0U);
+		if(err)
+		{
+			return err;
+		}
+
+		SceneFrameDArray<const GlTextureHandle*> texes;
+		SceneFrameDArray<const GlTextureHandle*>::ScopeDestroyer 
+			texesd(&texes, scene.getFrameAllocator());
+		err = texes.create(scene.getFrameAllocator(), lightsCount, nullptr);
+		if(err)
+		{
+			return err;
+		}
+
 		U groupsCount = 0;
 
 		GlTextureHandle lastTex;
@@ -331,6 +388,8 @@ void Lf::run(GlCommandBufferHandle& cmdBuff)
 	m_r->drawQuad(cmdBuff);
 
 	cmdBuff.enableBlend(false);
+
+	return err;
 }
 
 } // end namespace anki

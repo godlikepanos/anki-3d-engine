@@ -80,10 +80,10 @@ protected:
 
 	Array<Direction, 2> m_dirs;
 
-	void initBlurring(Renderer& r, U width, U height, U samples, 
+	ANKI_USE_RESULT Error initBlurring(Renderer& r, U width, U height, U samples, 
 		F32 blurringDistance);
 
-	void runBlurring(Renderer& r, GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error runBlurring(Renderer& r, GlCommandBufferHandle& jobs);
 };
 
 /// @}

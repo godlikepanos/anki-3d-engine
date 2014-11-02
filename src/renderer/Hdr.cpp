@@ -14,31 +14,40 @@ Hdr::~Hdr()
 {}
 
 //==============================================================================
-void Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
+Error Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 {
-	GlDevice& gl = getGlDevice();
+	Error err = ErrorCode::NONE;
 
-	m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
+	err = m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
 		GL_UNSIGNED_BYTE, 1, rt);
+	if(err) return err;
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	GlCommandBufferHandle cmdb;
-	cmdb.create(&gl);
+	err = cmdb.create(&getGlDevice());
+	if(err) return err;
+
 	rt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
 
 	// Create FB
-	fb.create(cmdb, {{rt, GL_COLOR_ATTACHMENT0}});
+	err = fb.create(cmdb, {{rt, GL_COLOR_ATTACHMENT0}});
+	if(err) return err;
+
 	cmdb.finish();
+
+	return err;
 }
 
 //==============================================================================
-void Hdr::initInternal(const ConfigSet& initializer)
+Error Hdr::initInternal(const ConfigSet& initializer)
 {
+	Error err = ErrorCode::NONE;
+
 	m_enabled = initializer.get("pps.hdr.enabled");
 
 	if(!m_enabled)
 	{
-		return;
+		return ErrorCode::NONE;
 	}
 
 	const F32 renderingQuality = initializer.get("pps.hdr.renderingQuality");
@@ -53,80 +62,102 @@ void Hdr::initInternal(const ConfigSet& initializer)
 	m_blurringIterationsCount = 
 		initializer.get("pps.hdr.blurringIterationsCount");
 
-	initFb(m_hblurFb, m_hblurRt);
-	initFb(m_vblurFb, m_vblurRt);
+	err = initFb(m_hblurFb, m_hblurRt);
+	if(err) return err;
+
+	err = initFb(m_vblurFb, m_vblurRt);
+	if(err) return err;
 
 	// init shaders
 	GlDevice& gl = getGlDevice();
 	GlCommandBufferHandle cmdb;
-	cmdb.create(&gl);
+	err = cmdb.create(&gl);
+	if(err) return err;
 
-	m_commonBuff.create(cmdb, GL_UNIFORM_BUFFER, 
+	err = m_commonBuff.create(cmdb, GL_UNIFORM_BUFFER, 
 		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
+	if(err) return err;
 
-	updateDefaultBlock(cmdb);
+	err = updateDefaultBlock(cmdb);
+	if(err) return err;
 
 	cmdb.flush();
 
-	m_toneFrag.load("shaders/PpsHdr.frag.glsl", &getResourceManager());
+	err = m_toneFrag.load("shaders/PpsHdr.frag.glsl", &getResourceManager());
+	if(err) return err;
 
-	m_tonePpline = 
-		m_r->createDrawQuadProgramPipeline(m_toneFrag->getGlProgram());
+	err = m_r->createDrawQuadProgramPipeline(
+		m_toneFrag->getGlProgram(), m_tonePpline);
+	if(err) return err;
 
 	const char* SHADER_FILENAME = 
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
-	String pps(getAllocator());
-	pps.sprintf("#define HPASS\n"
+	String pps;
+	String::ScopeDestroyer ppsd(&pps, getAllocator());
+	err = pps.sprintf(getAllocator(),
+		"#define HPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n",
 		m_blurringDist, m_height, 
 		static_cast<U>(initializer.get("pps.hdr.samples")));
+	if(err) return err;
 
-	m_hblurFrag.loadToCache(&getResourceManager(),
+	err = m_hblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_");
+	if(err) return err;
 
-	m_hblurPpline = 
-		m_r->createDrawQuadProgramPipeline(m_hblurFrag->getGlProgram());
+	err = m_r->createDrawQuadProgramPipeline(
+		m_hblurFrag->getGlProgram(), m_hblurPpline);
+	if(err) return err;
 
-	pps.sprintf("#define VPASS\n"
+	pps.destroy(getAllocator());
+	err = pps.sprintf(getAllocator(),
+		"#define VPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n",
 		m_blurringDist, m_width, 
 		static_cast<U>(initializer.get("pps.hdr.samples")));
+	if(err) return err;
 
-	m_vblurFrag.loadToCache(&getResourceManager(),
+	err = m_vblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_");
+	if(err) return err;
 
-	m_vblurPpline = 
-		m_r->createDrawQuadProgramPipeline(m_vblurFrag->getGlProgram());
+	err = m_r->createDrawQuadProgramPipeline(
+		m_vblurFrag->getGlProgram(), m_vblurPpline);
+	if(err) return err;
 
 	// Set timestamps
 	m_parameterUpdateTimestamp = getGlobTimestamp();
 	m_commonUboUpdateTimestamp = getGlobTimestamp();
+
+	return err;
 }
 
 //==============================================================================
-void Hdr::init(const ConfigSet& initializer)
+Error Hdr::init(const ConfigSet& initializer)
 {
-	try
+
+	Error err = initInternal(initializer);
+
+	if(err)
 	{
-		initInternal(initializer);
+		ANKI_LOGE("Failed to init PPS HDR");
 	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to init PPS HDR") << e;
-	}
+
+	return err;
 }
 
 //==============================================================================
-void Hdr::run(GlCommandBufferHandle& cmdb)
+Error Hdr::run(GlCommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
+	Error err = ErrorCode::NONE;
 
 	// For the passes it should be NEAREST
 	//vblurFai.setFiltering(Texture::TFrustumType::NEAREST);
@@ -138,7 +169,12 @@ void Hdr::run(GlCommandBufferHandle& cmdb)
 
 	if(m_parameterUpdateTimestamp > m_commonUboUpdateTimestamp)
 	{
-		updateDefaultBlock(cmdb);
+		err = updateDefaultBlock(cmdb);
+		if(err)
+		{
+			return err;
+		}
+
 		m_commonUboUpdateTimestamp = getGlobTimestamp();
 	}
 
@@ -169,17 +205,24 @@ void Hdr::run(GlCommandBufferHandle& cmdb)
 
 	// For the next stage it should be LINEAR though
 	//vblurFai.setFiltering(Texture::TFrustumType::LINEAR);
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void Hdr::updateDefaultBlock(GlCommandBufferHandle& cmdb)
+Error Hdr::updateDefaultBlock(GlCommandBufferHandle& cmdb)
 {
 	GlClientBufferHandle tempBuff;
-	tempBuff.create(cmdb, sizeof(Vec4), nullptr);
+	Error err = tempBuff.create(cmdb, sizeof(Vec4), nullptr);
 	
-	*((Vec4*)tempBuff.getBaseAddress()) = Vec4(m_exposure, 0.0, 0.0, 0.0);
+	if(!err)
+	{
+		*((Vec4*)tempBuff.getBaseAddress()) = Vec4(m_exposure, 0.0, 0.0, 0.0);
 
-	m_commonBuff.write(cmdb, tempBuff, 0, 0, tempBuff.getSize());
+		m_commonBuff.write(cmdb, tempBuff, 0, 0, tempBuff.getSize());
+	}
+
+	return err;
 }
 
 } // end namespace anki

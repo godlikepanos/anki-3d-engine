@@ -19,80 +19,104 @@ Ms::~Ms()
 {}
 
 //==============================================================================
-void Ms::createRt(U32 index, U32 samples)
+Error Ms::createRt(U32 index, U32 samples)
 {
+	Error err = ErrorCode::NONE;
+
 	Plane& plane = m_planes[index];
 
-	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
+	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
 		GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
 		GL_UNSIGNED_INT, samples, plane.m_depthRt);
+	if(err) return err;
 
-	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
+	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
 			GL_RGBA, GL_UNSIGNED_BYTE, samples, plane.m_rt0);
+	if(err) return err;
 
-	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
+	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
 		GL_RGBA, GL_UNSIGNED_BYTE, samples, plane.m_rt1);
+	if(err) return err;
 
 	GlDevice& gl = getGlDevice();
 	GlCommandBufferHandle cmdb;
-	cmdb.create(&gl);
+	err = cmdb.create(&gl);
+	if(err)	return err;
 
-	plane.m_fb.create(
+	err = plane.m_fb.create(
 		cmdb,
 		{{plane.m_rt0, GL_COLOR_ATTACHMENT0}, 
 		{plane.m_rt1, GL_COLOR_ATTACHMENT1},
 		{plane.m_depthRt, GL_DEPTH_ATTACHMENT}});
+	if(err)	return err;
 
 	cmdb.finish();
+
+	return err;
 }
 
 //==============================================================================
-void Ms::init(const ConfigSet& initializer)
+Error Ms::init(const ConfigSet& initializer)
 {
-	try
+	Error err = initInternal(initializer);
+	if(err)
 	{
-		if(initializer.get("samples") > 1)
-		{
-			createRt(0, initializer.get("samples"));
-		}
-		createRt(1, 1);
-
-		// Init small depth 
-		{
-			m_smallDepthSize = UVec2(
-				getAlignedRoundDown(16, m_r->getWidth() / 3),
-				getAlignedRoundDown(16, m_r->getHeight() / 3));
-
-			m_r->createRenderTarget(
-				m_smallDepthSize.x(), 
-				m_smallDepthSize.y(),
-				GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
-				GL_UNSIGNED_INT, 1, m_smallDepthRt);
-
-			GlDevice& gl = getGlDevice();
-			GlCommandBufferHandle cmdb;
-			cmdb.create(&gl);
-
-			m_smallDepthRt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
-
-			m_smallDepthFb.create(
-				cmdb,
-				{{m_smallDepthRt, GL_DEPTH_ATTACHMENT}});
-
-			cmdb.finish();
-		}
-
-		m_ez.init(initializer);
+		ANKI_LOGE("Failed to initialize material stage");
 	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to initialize material stage") << e;
-	}
+
+	return err;
 }
 
 //==============================================================================
-void Ms::run(GlCommandBufferHandle& cmdb)
+Error Ms::initInternal(const ConfigSet& initializer)
 {
+	Error err = ErrorCode::NONE;
+
+	if(initializer.get("samples") > 1)
+	{
+		err = createRt(0, initializer.get("samples"));
+		if(err)	return err;
+	}
+	err = createRt(1, 1);
+	if(err)	return err;
+
+	// Init small depth 
+	{
+		m_smallDepthSize = UVec2(
+			getAlignedRoundDown(16, m_r->getWidth() / 3),
+			getAlignedRoundDown(16, m_r->getHeight() / 3));
+
+		err = m_r->createRenderTarget(
+			m_smallDepthSize.x(), 
+			m_smallDepthSize.y(),
+			GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
+			GL_UNSIGNED_INT, 1, m_smallDepthRt);
+		if(err) return err;
+
+		GlDevice& gl = getGlDevice();
+		GlCommandBufferHandle cmdb;
+		err = cmdb.create(&gl);
+		if(err)	return err;
+
+		m_smallDepthRt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
+
+		err = m_smallDepthFb.create(
+			cmdb,
+			{{m_smallDepthRt, GL_DEPTH_ATTACHMENT}});
+		if(err)	return err;
+
+		cmdb.finish();
+	}
+
+	err = m_ez.init(initializer);
+	return err;
+}
+
+//==============================================================================
+Error Ms::run(GlCommandBufferHandle& cmdb)
+{
+	Error err = ErrorCode::NONE;
+
 	// Chose the multisampled or the singlesampled framebuffer
 	if(m_r->getSamples() > 1)
 	{
@@ -118,7 +142,8 @@ void Ms::run(GlCommandBufferHandle& cmdb)
 		cmdb.setDepthFunction(GL_LESS);
 		cmdb.setColorWriteMask(false, false, false, false);
 
-		m_ez.run(cmdb);
+		err = m_ez.run(cmdb);
+		if(err) return err;
 
 		cmdb.setDepthFunction(GL_LEQUAL);
 		cmdb.setColorWriteMask(true, true, true, true);
@@ -128,13 +153,17 @@ void Ms::run(GlCommandBufferHandle& cmdb)
 	m_r->getSceneDrawer().prepareDraw(RenderingStage::MATERIAL, Pass::COLOR,
 		cmdb);
 
+	Camera& cam = m_r->getSceneGraph().getActiveCamera();
+	
 	VisibilityTestResults& vi =
 		m_r->getSceneGraph().getActiveCamera().getVisibilityTestResults();
 
-	Camera& cam = m_r->getSceneGraph().getActiveCamera();
-	for(auto& it : vi.m_renderables)
+	auto it = vi.getRenderablesBegin();
+	auto end = vi.getRenderablesEnd();
+	for(; it != end; ++it)
 	{
-		m_r->getSceneDrawer().render(cam, it);
+		err = m_r->getSceneDrawer().render(cam, *it);
+		if(err) return err;
 	}
 
 	m_r->getSceneDrawer().finishDraw();
@@ -158,6 +187,8 @@ void Ms::run(GlCommandBufferHandle& cmdb)
 		GL_DEPTH_BUFFER_BIT, false);
 
 	cmdb.enableDepthTest(false);
+
+	return err;
 }
 
 } // end namespace anki

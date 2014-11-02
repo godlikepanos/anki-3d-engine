@@ -77,11 +77,12 @@ private:
 
 	~Ms();
 
-	void init(const ConfigSet& initializer);
-	void run(GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error run(GlCommandBufferHandle& jobs);
 
 	/// Create a G buffer FBO
-	void createRt(U32 index, U32 samples);
+	ANKI_USE_RESULT Error createRt(U32 index, U32 samples);
 };
 
 /// @}

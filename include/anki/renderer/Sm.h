@@ -52,7 +52,7 @@ private:
 		U32 m_timestamp = 0; ///< Timestamp of last render or light change
 	};
 
-	Vector<Shadowmap> m_sms;
+	DArray<Shadowmap> m_sms;
 
 	/// If false then disable SM at all
 	Bool8 m_enabled; 
@@ -67,18 +67,22 @@ private:
 	U32 m_resolution;
 
 	Sm(Renderer* r)
-	:	RenderingPass(r),
-		m_sms(getAllocator())
+	:	RenderingPass(r)
 	{}
 
-	void init(const ConfigSet& initializer);
-	void run(Light* shadowCasters[], U32 shadowCastersCount, 
+	~Sm()
+	{
+		m_sms.destroy(getAllocator());
+	}
+
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error run(Light* shadowCasters[], U32 shadowCastersCount, 
 		GlCommandBufferHandle& cmdBuff);
 
 	/// Get max shadow casters
 	U32 getMaxLightsCount()
 	{
-		return m_sms.size();
+		return m_sms.getSize();
 	}
 
 	void prepareDraw(GlCommandBufferHandle& cmdBuff);
@@ -87,7 +91,8 @@ private:
 	/// Find the best shadowmap for that light
 	Shadowmap& bestCandidate(Light& light);
 
-	Shadowmap* doLight(Light& light, GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error doLight(
+		Light& light, GlCommandBufferHandle& cmdBuff, Shadowmap*& sm);
 };
 
 /// @}

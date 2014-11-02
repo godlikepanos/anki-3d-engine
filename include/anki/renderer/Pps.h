@@ -102,10 +102,10 @@ private:
 	Pps(Renderer* r);
 	~Pps();
 
-	void init(const ConfigSet& config);
-	void run(GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
+	ANKI_USE_RESULT Error run(GlCommandBufferHandle& jobs);
 
-	void initInternal(const ConfigSet& config);
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };
 
 /// @}

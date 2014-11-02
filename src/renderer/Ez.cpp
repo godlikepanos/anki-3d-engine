@@ -13,37 +13,45 @@
 namespace anki {
 
 //==============================================================================
-void Ez::init(const ConfigSet& config)
+Error Ez::init(const ConfigSet& config)
 {
 	m_enabled = config.get("ms.ez.enabled");
 	m_maxObjectsToDraw = config.get("ms.ez.maxObjectsToDraw");
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void Ez::run(GlCommandBufferHandle& cmdBuff)
+Error Ez::run(GlCommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 
+	Error err = ErrorCode::NONE;
 	SceneGraph& scene = m_r->getSceneGraph();
 	Camera& cam = scene.getActiveCamera();
-
-	VisibilityTestResults& vi = cam.getVisibilityTestResults();
 
 	m_r->getSceneDrawer().prepareDraw(
 		RenderingStage::MATERIAL, Pass::DEPTH, cmdBuff);
 
 	U count = m_maxObjectsToDraw;
-	for(auto& it : vi.m_renderables)
+	auto it = cam.getVisibilityTestResults().getRenderablesBegin();
+	auto end = cam.getVisibilityTestResults().getRenderablesEnd();
+	for(; it != end; ++it)
 	{
-		m_r->getSceneDrawer().render(cam, it);
+		err = m_r->getSceneDrawer().render(cam, *it);
 
-		if(--count == 0)
+		if(--count == 0 || err)
 		{
 			break;
 		}
 	}
 
-	m_r->getSceneDrawer().finishDraw();
+	if(!err)
+	{
+		m_r->getSceneDrawer().finishDraw();
+	}
+
+	return err;
 }
 
 } // end namespace anki

@@ -15,13 +15,14 @@
 namespace anki {
 
 //==============================================================================
-void Sm::init(const ConfigSet& initializer)
+Error Sm::init(const ConfigSet& initializer)
 {
+	Error err = ErrorCode::NONE;
 	m_enabled = initializer.get("is.sm.enabled");
 
 	if(!m_enabled)
 	{
-		return;
+		return err;
 	}
 
 	m_poissonEnabled = initializer.get("is.sm.poissonEnabled");
@@ -33,7 +34,8 @@ void Sm::init(const ConfigSet& initializer)
 	//
 	if(initializer.get("is.sm.maxLights") > MAX_SHADOW_CASTERS)
 	{
-		throw ANKI_EXCEPTION("Too many shadow casters");
+		ANKI_LOGE("Too many shadow casters");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	// Create shadowmaps array
@@ -56,9 +58,11 @@ void Sm::init(const ConfigSet& initializer)
 	}
 
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(&getGlDevice());
+	err = cmdBuff.create(&getGlDevice());
+	if(err) return err;
 
-	m_sm2DArrayTex.create(cmdBuff, sminit);
+	err = m_sm2DArrayTex.create(cmdBuff, sminit);
+	if(err) return err;
 
 	m_sm2DArrayTex.setParameter(cmdBuff, 
 		GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
@@ -66,17 +70,20 @@ void Sm::init(const ConfigSet& initializer)
 
 	// Init sms
 	U32 layer = 0;
-	m_sms.resize(initializer.get("is.sm.maxLights"));
+	err = m_sms.create(getAllocator(), initializer.get("is.sm.maxLights"));
 	for(Shadowmap& sm : m_sms)
 	{
 		sm.m_layerId = layer;
-		sm.m_fb.create(cmdBuff, 
+		err = sm.m_fb.create(cmdBuff, 
 			{{m_sm2DArrayTex, GL_DEPTH_ATTACHMENT, (U32)layer}});
+		if(err) return err;
 
 		++layer;
 	}
 
 	cmdBuff.flush();
+
+	return err;
 }
 
 //==============================================================================
@@ -106,22 +113,28 @@ void Sm::finishDraw(GlCommandBufferHandle& cmdBuff)
 }
 
 //==============================================================================
-void Sm::run(Light* shadowCasters[], U32 shadowCastersCount, 
+Error Sm::run(Light* shadowCasters[], U32 shadowCastersCount, 
 	GlCommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
+	Error err = ErrorCode::NONE;
 
 	prepareDraw(cmdBuff);
 
 	// render all
 	for(U32 i = 0; i < shadowCastersCount; i++)
 	{
-		Shadowmap* sm = doLight(*shadowCasters[i], cmdBuff);
+		Shadowmap* sm;
+		err = doLight(*shadowCasters[i], cmdBuff, sm);
+		if(err) return err;
+
 		ANKI_ASSERT(sm != nullptr);
 		(void)sm;
 	}
 
 	finishDraw(cmdBuff);
+
+	return err;
 }
 
 //==============================================================================
@@ -149,7 +162,7 @@ Sm::Shadowmap& Sm::bestCandidate(Light& light)
 
 	// Find an old and replace it
 	Shadowmap* sm = &m_sms[0];
-	for(U i = 1; i < m_sms.size(); i++)
+	for(U i = 1; i < m_sms.getSize(); i++)
 	{
 		if(m_sms[i].m_timestamp < sm->m_timestamp)
 		{
@@ -163,9 +176,12 @@ Sm::Shadowmap& Sm::bestCandidate(Light& light)
 }
 
 //==============================================================================
-Sm::Shadowmap* Sm::doLight(Light& light, GlCommandBufferHandle& cmdBuff)
+Error Sm::doLight(
+	Light& light, GlCommandBufferHandle& cmdBuff, Sm::Shadowmap*& sm)
 {
-	Shadowmap& sm = bestCandidate(light);
+	Error err = ErrorCode::NONE;
+
+	sm = &bestCandidate(light);
 
 	FrustumComponent& fr = light.getComponent<FrustumComponent>();
 	VisibilityTestResults& vi = fr.getVisibilityTestResults();
@@ -176,9 +192,11 @@ Sm::Shadowmap* Sm::doLight(Light& light, GlCommandBufferHandle& cmdBuff)
 	U32 lastUpdate = light.MoveComponent::getTimestamp();
 	lastUpdate = std::max(lastUpdate, fr.getTimestamp());
 
-	for(auto& it : vi.m_renderables)
+	auto it = vi.getRenderablesBegin();
+	auto end = vi.getRenderablesEnd();
+	for(; it != end; ++it)
 	{
-		SceneNode* node = it.m_node;
+		SceneNode* node = it->m_node;
 
 		FrustumComponent* bfr = node->tryGetComponent<FrustumComponent>();
 		if(bfr)
@@ -199,30 +217,32 @@ Sm::Shadowmap* Sm::doLight(Light& light, GlCommandBufferHandle& cmdBuff)
 		}
 	}
 
-	Bool shouldUpdate = lastUpdate >= sm.m_timestamp;
+	Bool shouldUpdate = lastUpdate >= sm->m_timestamp;
 	if(!shouldUpdate)
 	{
-		return &sm;
+		return err;
 	}
 
-	sm.m_timestamp = getGlobTimestamp();
-	light.setShadowMapIndex(&sm - &m_sms[0]);
+	sm->m_timestamp = getGlobTimestamp();
+	light.setShadowMapIndex(sm - &m_sms[0]);
 
 	//
 	// Render
 	//
-	sm.m_fb.bind(cmdBuff, true);
+	sm->m_fb.bind(cmdBuff, true);
 	cmdBuff.setViewport(0, 0, m_resolution, m_resolution);
 	cmdBuff.clearBuffers(GL_DEPTH_BUFFER_BIT);
 
-	for(auto& it : vi.m_renderables)
+	it = vi.getRenderablesBegin();
+	for(; it != end; ++it)
 	{
-		m_r->getSceneDrawer().render(light, it);
+		err = m_r->getSceneDrawer().render(light, *it);
+		if(err) break;
 	}
 
 	ANKI_COUNTER_INC(RENDERER_SHADOW_PASSES, (U64)1);
 
-	return &sm;
+	return err;
 }
 
 } // end namespace anki

@@ -19,35 +19,60 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-DebugDrawer::DebugDrawer(Renderer* r)
-{
-	GlDevice& gl = r->_getGlDevice();
-
-	m_vert.load("shaders/Dbg.vert.glsl", &r->_getResourceManager());
-	m_frag.load("shaders/Dbg.frag.glsl", &r->_getResourceManager());
-
-	GlCommandBufferHandle jobs;
-	jobs.create(&gl);
-
-	m_ppline.create(jobs, 
-		{m_vert->getGlProgram(), m_frag->getGlProgram()});
-
-	m_vertBuff.create(jobs, GL_ARRAY_BUFFER, 
-		sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT);
-
-	m_lineVertCount = 0;
-	m_triVertCount = 0;
-	m_mMat.setIdentity();
-	m_vpMat.setIdentity();
-	m_mvpMat.setIdentity();
-	m_crntCol = Vec3(1.0, 0.0, 0.0);
-
-	jobs.finish();
-}
+DebugDrawer::DebugDrawer()
+{}
 
 //==============================================================================
 DebugDrawer::~DebugDrawer()
 {}
+
+//==============================================================================
+Error DebugDrawer::create(Renderer* r)
+{
+	Error err = ErrorCode::NONE;
+
+	GlDevice& gl = r->_getGlDevice();
+
+	err = m_vert.load("shaders/Dbg.vert.glsl", &r->_getResourceManager());
+
+	if(!err)
+	{
+		err = m_frag.load("shaders/Dbg.frag.glsl", &r->_getResourceManager());
+	}
+
+	GlCommandBufferHandle jobs;
+
+	if(!err)
+	{
+		err = jobs.create(&gl);
+	}
+
+	if(!err)
+	{
+		err = m_ppline.create(jobs, 
+			{m_vert->getGlProgram(), m_frag->getGlProgram()});
+	}
+
+	if(!err)
+	{
+		err = m_vertBuff.create(jobs, GL_ARRAY_BUFFER, 
+			sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT);
+	}
+
+	if(!err)
+	{
+		m_lineVertCount = 0;
+		m_triVertCount = 0;
+		m_mMat.setIdentity();
+		m_vpMat.setIdentity();
+		m_mvpMat.setIdentity();
+		m_crntCol = Vec3(1.0, 0.0, 0.0);
+
+		jobs.finish();
+	}
+
+	return err;
+}
 
 //==============================================================================
 void DebugDrawer::setModelMatrix(const Mat4& m)
@@ -93,20 +118,28 @@ void DebugDrawer::end()
 }
 
 //==============================================================================
-void DebugDrawer::flush()
+Error DebugDrawer::flush()
 {
-	flushInternal(GL_LINES);
-	flushInternal(GL_TRIANGLES);
+	Error err = flushInternal(GL_LINES);
+
+	if(!err)
+	{
+		err = flushInternal(GL_TRIANGLES);
+	}
+
+	return err;
 }
 
 //==============================================================================
-void DebugDrawer::flushInternal(GLenum primitive)
+Error DebugDrawer::flushInternal(GLenum primitive)
 {
+	Error err = ErrorCode::NONE;
+
 	if((primitive == GL_LINES && m_lineVertCount == 0)
 		|| (primitive == GL_TRIANGLES && m_triVertCount == 0))
 	{
 		// Early exit
-		return;
+		return ErrorCode::NONE;
 	}
 
 	U clientVerts;
@@ -127,7 +160,12 @@ void DebugDrawer::flushInternal(GLenum primitive)
 	U size = sizeof(Vertex) * clientVerts;
 
 	GlClientBufferHandle tmpBuff;
-	tmpBuff.create(m_jobs, size, nullptr);
+	err = tmpBuff.create(m_jobs, size, nullptr);
+	if(err)
+	{
+		return err;
+	}
+
 	memcpy(tmpBuff.getBaseAddress(), vertBuff, size);
 
 	m_vertBuff.write(m_jobs, tmpBuff, 0, 0, size);
@@ -141,6 +179,8 @@ void DebugDrawer::flushInternal(GLenum primitive)
 		4, GL_FLOAT, true, sizeof(Vertex), sizeof(Vec4), 1); // Color
 
 	m_jobs.drawArrays(primitive, clientVerts);
+
+	return err;
 }
 
 //==============================================================================
@@ -166,7 +206,9 @@ void DebugDrawer::pushBackVertex(const Vec3& pos)
 
 	if(*vertCount == MAX_POINTS_PER_DRAW)
 	{
-		flush();
+		Error err = flush();
+		// TODO Don't ignore
+		(void)err;
 	}
 }
 
@@ -454,10 +496,14 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		draw(*fr);
 	}
 
-	node.iterateComponentsOfType<SpatialComponent>([&](SpatialComponent& sp)
+	Error err = node.iterateComponentsOfType<SpatialComponent>(
+		[&](SpatialComponent& sp) -> Error
 	{
 		draw(sp);
+		return ErrorCode::NONE;
 	});
+
+	(void)err;
 }
 
 //==============================================================================

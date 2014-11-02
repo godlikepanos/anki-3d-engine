@@ -27,44 +27,21 @@ public:
 		virtual ~Task()
 		{}
 
-		virtual void operator()() = 0;
+		virtual ANKI_USE_RESULT Error operator()() = 0;
 
 	private:
 		Task* m_next = nullptr;
 	};
 
-	AsyncLoader(const HeapAllocator<U8>& alloc);
+	AsyncLoader();
 
 	~AsyncLoader();
 
+	ANKI_USE_RESULT Error create(const HeapAllocator<U8>& alloc);
+
 	/// Create a new asynchronous loading task.
 	template<typename TTask, typename... TArgs>
-	void newTask(TArgs&&... args)
-	{
-		TTask* newTask = m_alloc.template newInstance<TTask>(
-			std::forward<TArgs>(args)...);
-
-		// Append task to the list
-		{
-			LockGuard<Mutex> lock(m_mtx);
-			if(m_tail != nullptr)
-			{
-				ANKI_ASSERT(m_tail->m_next == nullptr);
-				ANKI_ASSERT(m_head != nullptr);
-
-				m_tail->m_next = newTask;
-				m_tail = newTask;
-			}
-			else
-			{
-				ANKI_ASSERT(m_head == nullptr);
-				m_head = m_tail = newTask;
-			}
-		}
-
-		// Wake up the thread
-		m_condVar.notifyOne();
-	}
+	ANKI_USE_RESULT Error newTask(TArgs&&... args);
 
 private:
 	HeapAllocator<U8> m_alloc;
@@ -76,12 +53,46 @@ private:
 	Bool8 m_quit = false;
 
 	/// Thread callback
-	static I threadCallback(Thread::Info& info);
+	static ANKI_USE_RESULT Error threadCallback(Thread::Info& info);
 
-	void threadWorker();
+	Error threadWorker();
 
 	void stop();
 };
+
+template<typename TTask, typename... TArgs>
+Error AsyncLoader::newTask(TArgs&&... args)
+{
+	TTask* newTask = m_alloc.template newInstance<TTask>(
+		std::forward<TArgs>(args)...);
+	if(newTask == nullptr)
+	{
+		return ErrorCode::OUT_OF_MEMORY;
+	}
+
+	// Append task to the list
+	{
+		LockGuard<Mutex> lock(m_mtx);
+		if(m_tail != nullptr)
+		{
+			ANKI_ASSERT(m_tail->m_next == nullptr);
+			ANKI_ASSERT(m_head != nullptr);
+
+			m_tail->m_next = newTask;
+			m_tail = newTask;
+		}
+		else
+		{
+			ANKI_ASSERT(m_head == nullptr);
+			m_head = m_tail = newTask;
+		}
+	}
+
+	// Wake up the thread
+	m_condVar.notifyOne();
+
+	return ErrorCode::NONE;
+}
 
 /// @}
 

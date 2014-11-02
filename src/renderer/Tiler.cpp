@@ -18,12 +18,13 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-#define CHECK_PLANE_PTR(p_) \
-	ANKI_ASSERT(U(p_ - &m_tiler->m_allPlanes[0]) < m_tiler->m_allPlanes.size());
+#define CHECK_PLANE_PTR(p_) ANKI_ASSERT(U(p_ - &m_tiler->m_allPlanes[0]) \
+	< m_tiler->m_allPlanes.getSize());
 
 /// Job that updates the left, right, top and buttom tile planes
-struct UpdatePlanesPerspectiveCameraJob: Threadpool::Task
+class UpdatePlanesPerspectiveCameraTask: public Threadpool::Task
 {
+public:
 	Tiler* m_tiler = nullptr;
 	PerspectiveCamera* m_cam = nullptr;
 	Bool m_frustumChanged;
@@ -31,7 +32,7 @@ struct UpdatePlanesPerspectiveCameraJob: Threadpool::Task
 	const PixelArray* m_pixels = nullptr;
 #endif
 
-	void operator()(U32 threadId, PtrSize threadsCount)
+	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
 #if ANKI_TILER_ENABLE_GPU
 		ANKI_ASSERT(tiler && cam && pixels);
@@ -152,6 +153,8 @@ struct UpdatePlanesPerspectiveCameraJob: Threadpool::Task
 			++farPlanesW;
 		}
 #endif
+
+		return ErrorCode::NONE;
 	}
 
 	/// Calculate and set a top looking plane
@@ -206,27 +209,33 @@ Tiler::Tiler(Renderer* r)
 
 //==============================================================================
 Tiler::~Tiler()
-{}
-
-//==============================================================================
-void Tiler::init()
 {
-	try
-	{
-		initInternal();
-	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to init tiler") << e;
-	}
+	m_allPlanes.destroy(getAllocator());
 }
 
 //==============================================================================
-void Tiler::initInternal()
+Error Tiler::init()
 {
+	Error err = initInternal();
+	
+	if(err)
+	{
+		ANKI_LOGE("Failed to init tiler");
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error Tiler::initInternal()
+{
+	Error err = ErrorCode::NONE;
+
 	// Load the program
-	String pps(getAllocator());
-	pps.sprintf(
+	String pps;
+	String::ScopeDestroyer ppsd(&pps, getAllocator());
+
+	err = pps.sprintf(getAllocator(),
 		"#define TILES_X_COUNT %u\n"
 		"#define TILES_Y_COUNT %u\n"
 		"#define RENDERER_WIDTH %u\n"
@@ -235,27 +244,35 @@ void Tiler::initInternal()
 		m_r->getTilesCount().y(),
 		m_r->getWidth(),
 		m_r->getHeight());
+	if(err) return err;
 
-	m_frag.loadToCache(&getResourceManager(),
+	err = m_frag.loadToCache(&getResourceManager(),
 		"shaders/TilerMinMax.frag.glsl", pps.toCString(), "r_");
+	if(err) return err;
 
-	m_ppline = m_r->createDrawQuadProgramPipeline(m_frag->getGlProgram());
+	err = m_r->createDrawQuadProgramPipeline(m_frag->getGlProgram(), m_ppline);
+	if(err) return err;
 
 	// Create FB
-	m_r->createRenderTarget(m_r->getTilesCount().x(), m_r->getTilesCount().y(),
+	err = m_r->createRenderTarget(
+		m_r->getTilesCount().x(), m_r->getTilesCount().y(),
 		GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, 1, m_rt);
+	if(err) return err;
 
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(&getGlDevice());
+	err = cmdBuff.create(&getGlDevice());
+	if(err) return err;
 
-	m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	if(err) return err;
 
 	// Create PBO
 	U pixelBuffSize = m_r->getTilesCount().x() * m_r->getTilesCount().y();
 	pixelBuffSize *= 2 * sizeof(F32); // The pixel size
 	pixelBuffSize *= 4; // Because it will be always mapped
-	m_pixelBuff.create(cmdBuff, GL_PIXEL_PACK_BUFFER, pixelBuffSize,
+	err = m_pixelBuff.create(cmdBuff, GL_PIXEL_PACK_BUFFER, pixelBuffSize,
 		GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	if(err) return err;
 
 	// Init planes. One plane for each direction, plus near/far plus the world
 	// space of those
@@ -264,8 +281,8 @@ void Tiler::initInternal()
 		+ (m_r->getTilesCount().y() - 1) * 2  // planes I
 		+ (m_r->getTilesCount().x() * m_r->getTilesCount().y() * 2); // near+far
 
-	m_allPlanes = std::move(Vector<Plane>(getAllocator()));
-	m_allPlanes.resize(planesCount);
+	err = m_allPlanes.create(getAllocator(), planesCount);
+	if(err) return err;
 
 	m_planesX = &m_allPlanes[0];
 	m_planesY = m_planesX + m_r->getTilesCount().x() - 1;
@@ -277,9 +294,11 @@ void Tiler::initInternal()
 		m_nearPlanesW + m_r->getTilesCount().x() * m_r->getTilesCount().y();
 
 	ANKI_ASSERT(m_farPlanesW + m_r->getTilesCount().x() 
-		* m_r->getTilesCount().y() ==  &m_allPlanes[0] + m_allPlanes.size());
+		* m_r->getTilesCount().y() ==  &m_allPlanes[0] + m_allPlanes.getSize());
 
 	cmdBuff.flush();
+
+	return err;
 }
 
 //==============================================================================
@@ -321,7 +340,7 @@ void Tiler::updateTiles(Camera& cam)
 	//
 	// Issue parallel jobs
 	//
-	Array<UpdatePlanesPerspectiveCameraJob, Threadpool::MAX_THREADS> jobs;
+	Array<UpdatePlanesPerspectiveCameraTask, Threadpool::MAX_THREADS> jobs;
 	U32 camTimestamp = cam.FrustumComponent::getTimestamp();
 
 	// Do a job that transforms only the planes when:
@@ -358,7 +377,8 @@ void Tiler::updateTiles(Camera& cam)
 	}
 
 	// Sync threads
-	threadPool.waitForAllThreadsToFinish();
+	Error err = threadPool.waitForAllThreadsToFinish();
+	(void)err;
 
 	// 
 	// Misc

@@ -15,33 +15,42 @@ Bs::~Bs()
 {}
 
 //==============================================================================
-void Bs::init(const ConfigSet&)
+Error Bs::init(const ConfigSet&)
 {
-	// Do nothing
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void Bs::run(GlCommandBufferHandle& jobs)
+Error Bs::run(GlCommandBufferHandle& cmdb)
 {
-	jobs.enableDepthTest(true);
-	jobs.setDepthWriteMask(false);
-	jobs.enableBlend(true);
+	Error err = ErrorCode::NONE;
+
+	cmdb.enableDepthTest(true);
+	cmdb.setDepthWriteMask(false);
+	cmdb.enableBlend(true);
 
 	RenderableDrawer& drawer = m_r->getSceneDrawer();
-	drawer.prepareDraw(RenderingStage::BLEND, Pass::COLOR, jobs);
+	drawer.prepareDraw(RenderingStage::BLEND, Pass::COLOR, cmdb);
 
 	Camera& cam = m_r->getSceneGraph().getActiveCamera();
 
-	for(auto& it : cam.getVisibilityTestResults().m_renderables)
+	auto it = cam.getVisibilityTestResults().getRenderablesBegin();
+	auto end = cam.getVisibilityTestResults().getRenderablesEnd();
+	for(; !err && it != end; ++it)
 	{
-		drawer.render(cam, it);
+		err = drawer.render(cam, *it);
 	}
 
-	drawer.finishDraw();
+	if(!err)
+	{
+		drawer.finishDraw();
 
-	jobs.enableDepthTest(false);
-	jobs.setDepthWriteMask(true);
-	jobs.enableBlend(false);
+		cmdb.enableDepthTest(false);
+		cmdb.setDepthWriteMask(true);
+		cmdb.enableBlend(false);
+	}
+
+	return err;
 }
 
 } // end namespace anki

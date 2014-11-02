@@ -39,12 +39,7 @@ public:
 	/// GL with a huge job chain
 	static const U32 JOB_CHAINS_COUNT = 2;
 		
-	Renderer(
-		Threadpool* threadpool, 
-		ResourceManager* resources,
-		GlDevice* gl,
-		HeapAllocator<U8>& alloc,
-		const ConfigSet& config);
+	Renderer();
 
 	~Renderer();
 
@@ -188,7 +183,7 @@ public:
 	}
 
 	/// This function does all the rendering stages and produces a final FAI
-	void render(SceneGraph& scene, 
+	ANKI_USE_RESULT Error render(SceneGraph& scene, 
 		Array<GlCommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff);
 
 	/// My version of gluUnproject
@@ -214,17 +209,23 @@ public:
 	}
 
 	/// Create a framebuffer attachment texture
-	void createRenderTarget(U32 w, U32 h, GLenum internalFormat, 
-		GLenum format, GLenum type, U32 samples, GlTextureHandle& rt);
+	ANKI_USE_RESULT Error createRenderTarget(U32 w, U32 h, 
+		GLenum internalFormat, GLenum format, GLenum type, U32 samples, 
+		GlTextureHandle& rt);
 
 	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
 	/// and the given fragment progam
-	GlProgramPipelineHandle createDrawQuadProgramPipeline(
-		GlProgramHandle frag);
+	ANKI_USE_RESULT Error createDrawQuadProgramPipeline(
+		GlProgramHandle frag, GlProgramPipelineHandle& ppline);
 
 	/// Init the renderer given an initialization class
 	/// @param initializer The initializer class
-	void init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error init(
+		Threadpool* threadpool, 
+		ResourceManager* resources,
+		GlDevice* gl,
+		HeapAllocator<U8>& alloc,
+		const ConfigSet& config);
 
 	/// @privatesection
 	/// @{
@@ -308,6 +309,8 @@ private:
 	String m_shadersPrependedSource; ///< String to append in user shaders
 
 	void computeProjectionParams(const Mat4& projMat);
+
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
 
 /// @}

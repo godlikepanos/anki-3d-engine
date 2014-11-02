@@ -49,16 +49,17 @@ private:
 	:	RenderingPass(r)
 	{}
 
-	void init(const ConfigSet& initializer);
-	void run(GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdBuff);
 
 	GlTextureHandle& getRt()
 	{
 		return m_vblurRt;
 	}
 
-	void createFb(GlFramebufferHandle& fb, GlTextureHandle& rt);
-	void initInternal(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error createFb(
+		GlFramebufferHandle& fb, GlTextureHandle& rt);
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
 
 /// @}

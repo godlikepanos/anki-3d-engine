@@ -30,45 +30,71 @@ Dbg::~Dbg()
 }
 
 //==============================================================================
-void Dbg::init(const ConfigSet& initializer)
+Error Dbg::init(const ConfigSet& initializer)
 {
+	Error err = ErrorCode::NONE;
+
 	m_enabled = initializer.get("dbg.enabled");
 	enableBits(Flag::ALL);
 
-	try
+	GlDevice& gl = getGlDevice();
+	GlCommandBufferHandle cmdb;
+	err = cmdb.create(&gl);
+	if(err)
 	{
-		GlDevice& gl = getGlDevice();
-		GlCommandBufferHandle cmdb;
-		cmdb.create(&gl);
+		return err;
+	}
 
-		// Chose the correct color FAI
-		if(m_r->getPps().getEnabled())
-		{
-			m_fb.create(cmdb, 
-				{{m_r->getPps()._getRt(), GL_COLOR_ATTACHMENT0},
-				{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
-		}
-		else
-		{
-			m_fb.create(cmdb, 
-				{{m_r->getIs()._getRt(), GL_COLOR_ATTACHMENT0},
-				{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
-		}
+	// Chose the correct color FAI
+	if(m_r->getPps().getEnabled())
+	{
+		err = m_fb.create(cmdb, 
+			{{m_r->getPps()._getRt(), GL_COLOR_ATTACHMENT0},
+			{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
+	}
+	else
+	{
+		err = m_fb.create(cmdb, 
+			{{m_r->getIs()._getRt(), GL_COLOR_ATTACHMENT0},
+			{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
+	}
 
-		m_drawer = getAllocator().newInstance<DebugDrawer>(m_r);
+	if(!err)
+	{
+		m_drawer = getAllocator().newInstance<DebugDrawer>();
+		if(m_drawer == nullptr)
+		{
+			err = ErrorCode::OUT_OF_MEMORY;
+		}
+	}
+
+	if(!err)
+	{
+		err = m_drawer->create(m_r);
+	}
+
+	if(!err)
+	{
 		m_sceneDrawer = getAllocator().newInstance<SceneDebugDrawer>(m_drawer);
+		if(m_sceneDrawer == nullptr)
+		{
+			err = ErrorCode::OUT_OF_MEMORY;
+		}
+	}
 
+	if(!err)
+	{
 		cmdb.finish();
 	}
-	catch(std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Cannot create debug FBO") << e;
-	}
+
+	return err;
 }
 
 //==============================================================================
-void Dbg::run(GlCommandBufferHandle& cmdb)
+Error Dbg::run(GlCommandBufferHandle& cmdb)
 {
+	Error err = ErrorCode::NONE;
+
 	ANKI_ASSERT(m_enabled);
 
 	SceneGraph& scene = m_r->getSceneGraph();
@@ -82,20 +108,24 @@ void Dbg::run(GlCommandBufferHandle& cmdb)
 	m_drawer->setModelMatrix(Mat4::getIdentity());
 	//drawer->drawGrid();
 
-	scene.iterateSceneNodes([&](SceneNode& node)
+	err = scene.iterateSceneNodes([&](SceneNode& node) -> Error
 	{
 		SpatialComponent* sp = node.tryGetComponent<SpatialComponent>();
 
 		if(&cam.getComponent<SpatialComponent>() == sp)
 		{
-			return;
+			return ErrorCode::NONE	;
 		}
 
 		if(bitsEnabled(Flag::SPATIAL) && sp)
 		{
 			m_sceneDrawer->draw(node);
 		}
+
+		return ErrorCode::NONE;
 	});
+
+	(void)err;
 
 	// XXX
 #if 0
@@ -410,10 +440,15 @@ void Dbg::run(GlCommandBufferHandle& cmdb)
 	}
 #endif
 
-	m_drawer->flush();
-	m_drawer->finishDraw();
+	err = m_drawer->flush();
 
-	cmdb.enableDepthTest(false);
+	if(!err)
+	{
+		m_drawer->finishDraw();
+		cmdb.enableDepthTest(false);
+	}
+
+	return err;
 }
 
 } // end namespace anki

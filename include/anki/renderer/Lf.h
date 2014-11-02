@@ -63,10 +63,10 @@ private:
 
 	~Lf();
 
-	void init(const ConfigSet& initializer);
-	void run(GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error run(GlCommandBufferHandle& jobs);
 	
-	void initInternal(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
 
 /// @}

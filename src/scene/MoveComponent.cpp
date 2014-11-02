@@ -85,11 +85,14 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 			{
 				SceneNode& childNode = obj.downCast<SceneNode>();
 
-				childNode.iterateComponentsOfType<MoveComponent>([](
-					MoveComponent& mov)
+				Error e = childNode.iterateComponentsOfType<MoveComponent>(
+					[](MoveComponent& mov) -> Error
 				{
 					mov.markForUpdate();
+					return ErrorCode::NONE;
 				});
+
+				(void)e;
 			}
 
 			return ErrorCode::NONE;

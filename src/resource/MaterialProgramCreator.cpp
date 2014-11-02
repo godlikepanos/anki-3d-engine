@@ -289,7 +289,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		if(cstr)
 		{
 			ANKI_CHECK(
-				MPStringList::splitString(m_alloc, cstr, ' ', inpvar.m_value));
+				inpvar.m_value.splitString(m_alloc, cstr, ' '));
 		}
 
 		// <const>

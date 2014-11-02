@@ -34,57 +34,71 @@ ResourceManager& RenderingPass::getResourceManager()
 }
 
 //==============================================================================
-void BlurringRenderingPass::initBlurring(
+Error BlurringRenderingPass::initBlurring(
 	Renderer& r, U width, U height, U samples, F32 blurringDistance)
 {
+	Error err = ErrorCode::NONE;
 	GlDevice& gl = getGlDevice();
 	GlCommandBufferHandle cmdb;
-	cmdb.create(&gl);
+	err = cmdb.create(&gl);
+	if(err) return err;
 
-	Array<String, 2> pps = {{String(getAllocator()), String(getAllocator())}};
+	Array<String, 2> pps;
+	String::ScopeDestroyer ppsd0(&pps[0], getAllocator());
+	String::ScopeDestroyer ppsd1(&pps[1], getAllocator());
 
-	pps[1].sprintf("#define HPASS\n"
+	err = pps[1].sprintf(getAllocator(),
+		"#define HPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n", 
 		blurringDistance, height, samples);
+	if(err) return err;
 
-	pps[0].sprintf("#define VPASS\n"
+	err = pps[0].sprintf(getAllocator(),
+		"#define VPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n",
 		blurringDistance, width, samples);
+	if(err) return err;
 
 	for(U i = 0; i < 2; i++)
 	{
 		Direction& dir = m_dirs[i];
 
-		r.createRenderTarget(width, height, GL_RGB8, GL_RGB, 
+		err = r.createRenderTarget(width, height, GL_RGB8, GL_RGB, 
 			GL_UNSIGNED_BYTE, 1, dir.m_rt);
+		if(err) return err;
 
 		// Set to bilinear because the blurring techniques take advantage of 
 		// that
 		dir.m_rt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
 
 		// Create FB
-		dir.m_fb.create(
+		err = dir.m_fb.create(
 			cmdb, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
+		if(err) return err;
 
-		dir.m_frag.loadToCache(&getResourceManager(),
+		err = dir.m_frag.loadToCache(&getResourceManager(),
 			"shaders/VariableSamplingBlurGeneric.frag.glsl", 
 			pps[i].toCString(), "r_");
+		if(err) return err;
 
-		dir.m_ppline = 
-			r.createDrawQuadProgramPipeline(dir.m_frag->getGlProgram());
+		err = r.createDrawQuadProgramPipeline(
+			dir.m_frag->getGlProgram(), dir.m_ppline);
+		if(err) return err;
 	}
 
 	cmdb.finish();
+
+	return err;
 }
 
 //==============================================================================
-void BlurringRenderingPass::runBlurring(
+Error BlurringRenderingPass::runBlurring(
 	Renderer& r, GlCommandBufferHandle& cmdb)
 {
 	// H pass input
@@ -105,6 +119,8 @@ void BlurringRenderingPass::runBlurring(
 		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_ppline.bind(cmdb);
 		r.drawQuad(cmdb);
 	}
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

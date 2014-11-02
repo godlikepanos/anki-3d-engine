@@ -97,13 +97,13 @@ private:
 
 	~Hdr();
 
-	void init(const ConfigSet& initializer);
-	void run(GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error run(GlCommandBufferHandle& jobs);
 
-	void initFb(GlFramebufferHandle& fb, GlTextureHandle& rt);
-	void initInternal(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error initFb(GlFramebufferHandle& fb, GlTextureHandle& rt);
+	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
-	void updateDefaultBlock(GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error updateDefaultBlock(GlCommandBufferHandle& jobs);
 };
 
 /// @}

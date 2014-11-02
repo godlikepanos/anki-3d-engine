@@ -78,8 +78,7 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 	File file;
 	ANKI_CHECK(file.open(filename, File::OpenFlag::READ));
 	ANKI_CHECK(file.readAllText(TempResourceAllocator<char>(m_alloc), txt));
-	ANKI_CHECK(PPPStringList::splitString(
-		m_alloc, txt.toCString(), '\n', lines));
+	ANKI_CHECK(lines.splitString(m_alloc, txt.toCString(), '\n'));
 	if(lines.getSize() < 1)
 	{
 		ANKI_LOGE("File is empty: %s", &filename[0]);

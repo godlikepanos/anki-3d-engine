@@ -26,8 +26,8 @@ private:
 	:	RenderingPass(r)
 	{}
 
-	void init(const ConfigSet& initializer);
-	void run(GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdBuff);
 };
 
 /// @}

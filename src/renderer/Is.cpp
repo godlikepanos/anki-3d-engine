@@ -99,7 +99,7 @@ public:
 	/// Bin lights on CPU path
 	Bool m_binLights = true;
 
-	void operator()(U32 threadId, PtrSize threadsCount)
+	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
 		U ligthsCount = m_lightsEnd - m_lightsBegin;
 
@@ -141,6 +141,8 @@ public:
 				break;
 			}
 		}
+
+		return ErrorCode::NONE;
 	}
 
 	/// Copy CPU light to GPU buffer
@@ -366,7 +368,8 @@ public:
 
 //==============================================================================
 Is::Is(Renderer* r)
-	: RenderingPass(r), m_sm(r)
+:	RenderingPass(r), 
+	m_sm(r)
 {}
 
 //==============================================================================
@@ -374,21 +377,24 @@ Is::~Is()
 {}
 
 //==============================================================================
-void Is::init(const ConfigSet& config)
+Error Is::init(const ConfigSet& config)
 {
-	try
+
+	Error err = initInternal(config);
+	
+	if(err)
 	{
-		initInternal(config);
+		ANKI_LOGE("Failed to init IS");
 	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to init IS") << e;
-	}
+
+	return err;
 }
 
 //==============================================================================
-void Is::initInternal(const ConfigSet& config)
+Error Is::initInternal(const ConfigSet& config)
 {
+	Error err = ErrorCode::NONE;
+
 	m_groundLightEnabled = config.get("is.groundLightEnabled");
 	m_maxPointLights = config.get("is.maxPointLights");
 	m_maxSpotLights = config.get("is.maxSpotLights");
@@ -396,7 +402,8 @@ void Is::initInternal(const ConfigSet& config)
 
 	if(m_maxPointLights < 1 || m_maxSpotLights < 1 || m_maxSpotTexLights < 1)
 	{
-		throw ANKI_EXCEPTION("Incorrect number of max lights");
+		ANKI_LOGE("Incorrect number of max lights");
+		return ErrorCode::USER_DATA;
 	}
 
 	m_maxPointLightsPerTile = config.get("is.maxPointLightsPerTile");
@@ -410,7 +417,8 @@ void Is::initInternal(const ConfigSet& config)
 		|| m_maxSpotLightsPerTile % 4 != 0
 		|| m_maxSpotTexLightsPerTile % 4 != 0)
 	{
-		throw ANKI_EXCEPTION("Incorrect number of max lights per tile");
+		ANKI_LOGE("Incorrect number of max lights per tile");
+		return ErrorCode::USER_DATA;
 	}
 
 	m_tileSize = calcTileSize();
@@ -418,14 +426,17 @@ void Is::initInternal(const ConfigSet& config)
 	//
 	// Init the passes
 	//
-	m_sm.init(config);
+	err = m_sm.init(config);
+	if(err) return err;
 
 	//
 	// Load the programs
 	//
-	String pps(getAllocator());
+	String pps;
+	String::ScopeDestroyer ppsd(&pps, getAllocator());
 
-	pps.sprintf(
+	err = pps.sprintf(
+		getAllocator(),
 		"\n#define TILES_X_COUNT %u\n"
 		"#define TILES_Y_COUNT %u\n"
 		"#define TILES_COUNT %u\n" 
@@ -454,28 +465,35 @@ void Is::initInternal(const ConfigSet& config)
 		m_groundLightEnabled,
 		TILES_BLOCK_BINDING,
 		m_sm.getPoissonEnabled());
+	if(err) return err;
 
 	// point light
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(&getGlDevice()); // Job for initialization
+	err = cmdBuff.create(&getGlDevice()); // Job for initialization
+	if(err) return err;
 
-	m_lightVert.loadToCache(&getResourceManager(),
+	err = m_lightVert.loadToCache(&getResourceManager(),
 		"shaders/IsLp.vert.glsl", pps.toCString(), "r_");
+	if(err) return err;
 
-	m_lightFrag.loadToCache(&getResourceManager(),
+	err = m_lightFrag.loadToCache(&getResourceManager(),
 		"shaders/IsLp.frag.glsl", pps.toCString(), "r_");
+	if(err) return err;
 
-	m_lightPpline.create(cmdBuff, 
+	err = m_lightPpline.create(cmdBuff, 
 		{m_lightVert->getGlProgram(), m_lightFrag->getGlProgram()});
+	if(err) return err;
 
 	//
 	// Create framebuffer
 	//
 
-	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8,
+	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8,
 			GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
+	if(err) return err;
 
-	m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	if(err) return err;
 
 	//
 	// Init the quad
@@ -484,33 +502,41 @@ void Is::initInternal(const ConfigSet& config)
 		{1.0, 0.0}, {0.0, 0.0}};
 
 	GlClientBufferHandle tempBuff;
-	tempBuff.create(cmdBuff, sizeof(quadVertCoords), 
+	err = tempBuff.create(cmdBuff, sizeof(quadVertCoords), 
 		(void*)&quadVertCoords[0][0]);
+	if(err) return err;
 
-	m_quadPositionsVertBuff.create(cmdBuff, GL_ARRAY_BUFFER, tempBuff, 0);
+	err = m_quadPositionsVertBuff.create(cmdBuff, GL_ARRAY_BUFFER, tempBuff, 0);
+	if(err) return err;
 
 	//
 	// Create UBOs
 	//
 	const GLbitfield bufferBits = GL_DYNAMIC_STORAGE_BIT;
 
-	m_commonBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
+	err = m_commonBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
 		sizeof(shader::CommonUniforms), bufferBits);
+	if(err) return err;
 
-	m_lightsBuff.create(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
+	err = m_lightsBuff.create(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
 		calcLightsBufferSize(), bufferBits);
+	if(err) return err;
 
-	m_tilesBuff.create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
+	err = m_tilesBuff.create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
 		m_r->getTilesCount().x() * m_r->getTilesCount().y() * m_tileSize,
 		bufferBits);
+	if(err) return err;
 
 	// Last thing to do
 	cmdBuff.flush();
+
+	return err;
 }
 
 //==============================================================================
-void Is::lightPass(GlCommandBufferHandle& cmdBuff)
+Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 {
+	Error err = ErrorCode::NONE;
 	Threadpool& threadPool = m_r->_getThreadpool();
 	m_cam = &m_r->getSceneGraph().getActiveCamera();
 	VisibilityTestResults& vi = m_cam->getVisibilityTestResults();
@@ -523,9 +549,11 @@ void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	U visibleSpotTexLightsCount = 0;
 	Array<Light*, Sm::MAX_SHADOW_CASTERS> shadowCasters;
 
-	for(auto& it : vi.m_lights)
+	auto it = vi.getLightsBegin();
+	auto lend = vi.getLightsEnd();
+	for(; it != lend; ++it)
 	{
-		Light* light = staticCastPtr<Light*>(it.m_node);
+		Light* light = staticCastPtr<Light*>((*it).m_node);
 		switch(light->getLightType())
 		{
 		case Light::Type::POINT:
@@ -564,7 +592,8 @@ void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	//
 	// Do shadows pass
 	//
-	m_sm.run(&shadowCasters[0], visibleSpotTexLightsCount, cmdBuff);
+	err = m_sm.run(&shadowCasters[0], visibleSpotTexLightsCount, cmdBuff);
+	if(err) return err;
 
 	//
 	// Write the lights and tiles UBOs
@@ -594,12 +623,14 @@ void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	GlClientBufferHandle lightsClientBuff;
 	if(totalLightsCount > 0)
 	{
-		lightsClientBuff.create(
+		err = lightsClientBuff.create(
 			cmdBuff, spotTexLightsOffset + spotTexLightsSize, nullptr);
+		if(err) return err;
 	}
 
 	GlClientBufferHandle tilesClientBuff;
-	tilesClientBuff.create(cmdBuff, m_tilesBuff.getSize(), nullptr);
+	err = tilesClientBuff.create(cmdBuff, m_tilesBuff.getSize(), nullptr);
+	if(err) return err;
 
 	AtomicU32 pointLightsAtomicCount(0);
 	AtomicU32 spotLightsAtomicCount(0);
@@ -643,8 +674,8 @@ void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 
 			job.m_tileBuffer = (U8*)tilesClientBuff.getBaseAddress();
 
-			job.m_lightsBegin = vi.m_lights.begin();
-			job.m_lightsEnd = vi.m_lights.end();
+			job.m_lightsBegin = vi.getLightsBegin();
+			job.m_lightsEnd = vi.getLightsEnd();
 
 			job.m_pointLightsCount = &pointLightsAtomicCount;
 			job.m_spotLightsCount = &spotLightsAtomicCount;
@@ -671,7 +702,8 @@ void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	setState(cmdBuff);
 
 	// Sync
-	threadPool.waitForAllThreadsToFinish();
+	err = threadPool.waitForAllThreadsToFinish();
+	if(err) return err;
 
 	// Write the light count for each tile
 	for(U y = 0; y < m_r->getTilesCount().y(); y++)
@@ -703,15 +735,16 @@ void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 		m_lightsBuff.write(cmdBuff,
 			lightsClientBuff, 0, 0, spotTexLightsOffset + spotTexLightsSize);
 	}
-	m_tilesBuff.write(cmdBuff, tilesClientBuff, 0, 0, tilesClientBuff.getSize());
+	m_tilesBuff.write(cmdBuff, tilesClientBuff, 0, 0, 
+		tilesClientBuff.getSize());
 
 	//
 	// Setup uniforms
 	//
 
 	// shader prog
-
-	updateCommonBlock(cmdBuff);
+	err = updateCommonBlock(cmdBuff);
+	if(err) return err;
 
 	m_commonBuff.bindShaderBuffer(cmdBuff, COMMON_UNIFORMS_BLOCK_BINDING);
 
@@ -756,6 +789,8 @@ void Is::lightPass(GlCommandBufferHandle& cmdBuff)
 
 	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, 
 		m_r->getTilesCount().x() * m_r->getTilesCount().y());
+
+	return err;
 }
 
 //==============================================================================
@@ -780,19 +815,21 @@ void Is::setState(GlCommandBufferHandle& cmdBuff)
 }
 
 //==============================================================================
-void Is::run(GlCommandBufferHandle& cmdBuff)
+Error Is::run(GlCommandBufferHandle& cmdBuff)
 {
 	// Do the light pass including the shadow passes
-	lightPass(cmdBuff);
+	return lightPass(cmdBuff);
 }
 
 //==============================================================================
-void Is::updateCommonBlock(GlCommandBufferHandle& cmdBuff)
+Error Is::updateCommonBlock(GlCommandBufferHandle& cmdBuff)
 {
 	SceneGraph& scene = m_r->getSceneGraph();
 
 	GlClientBufferHandle cbuff;
-	cbuff.create(cmdBuff, sizeof(shader::CommonUniforms), nullptr);
+	Error err = cbuff.create(cmdBuff, sizeof(shader::CommonUniforms), nullptr);
+	if(err) return err;
+
 	shader::CommonUniforms& blk = 
 		*(shader::CommonUniforms*)cbuff.getBaseAddress();
 
@@ -809,6 +846,8 @@ void Is::updateCommonBlock(GlCommandBufferHandle& cmdBuff)
 	}
 
 	m_commonBuff.write(cmdBuff, cbuff, 0, 0, cbuff.getSize());
+
+	return err;
 }
 
 //==============================================================================

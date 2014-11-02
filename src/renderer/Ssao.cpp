@@ -67,30 +67,39 @@ public:
 //==============================================================================
 
 //==============================================================================
-void Ssao::createFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
+Error Ssao::createFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 {
-	m_r->createRenderTarget(m_width, m_height, GL_RED, GL_RED, 
+	Error err = ErrorCode::NONE;
+
+	err = m_r->createRenderTarget(m_width, m_height, GL_RED, GL_RED, 
 		GL_UNSIGNED_BYTE, 1, rt);
+	if(err) return err;
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(&getGlDevice());
+	err = cmdBuff.create(&getGlDevice());
+	if(err) return err;
 	rt.setFilter(cmdBuff, GlTextureHandle::Filter::LINEAR);
 
 	// create FB
-	fb.create(cmdBuff, {{rt, GL_COLOR_ATTACHMENT0}});
+	err = fb.create(cmdBuff, {{rt, GL_COLOR_ATTACHMENT0}});
+	if(err) return err;
 
 	cmdBuff.flush();
+
+	return err;
 }
 
 //==============================================================================
-void Ssao::initInternal(const ConfigSet& config)
+Error Ssao::initInternal(const ConfigSet& config)
 {
+	Error err = ErrorCode::NONE;
+
 	m_enabled = config.get("pps.ssao.enabled");
 
 	if(!m_enabled)
 	{
-		return;
+		return err;
 	}
 
 	m_blurringIterationsCount = 
@@ -109,18 +118,22 @@ void Ssao::initInternal(const ConfigSet& config)
 	//
 	// create FBOs
 	//
-	createFb(m_hblurFb, m_hblurRt);
-	createFb(m_vblurFb, m_vblurRt);
+	err = createFb(m_hblurFb, m_hblurRt);
+	if(err) return err;
+	err = createFb(m_vblurFb, m_vblurRt);
+	if(err) return err;
 
 	//
 	// noise texture
 	//
 	GlCommandBufferHandle cmdb;
-	cmdb.create(&getGlDevice());
+	err = cmdb.create(&getGlDevice());
+	if(err) return err;
 
 	GlClientBufferHandle noise;
-	noise.create(
+	err = noise.create(
 		cmdb, sizeof(Vec3) * NOISE_TEX_SIZE * NOISE_TEX_SIZE, nullptr);
+	if(err) return err;
 
 	genNoise((Vec3*)noise.getBaseAddress(), 
 		(Vec3*)((U8*)noise.getBaseAddress() + noise.getSize()));
@@ -142,96 +155,117 @@ void Ssao::initInternal(const ConfigSet& config)
 	//
 	// Kernel
 	//
-	String kernelStr(getAllocator());
+	String kernelStr;
+	String::ScopeDestroyer kernelStrd(&kernelStr, getAllocator());
 	Array<Vec3, KERNEL_SIZE> kernel;
 
 	genKernel(kernel.begin(), kernel.end());
-	kernelStr = "vec3[](";
+	err = kernelStr.create(getAllocator(), "vec3[](");
+	if(err) return err;
 	for(U i = 0; i < kernel.size(); i++)
 	{
-		String tmp(getAllocator());
+		String tmp;
+		String::ScopeDestroyer tmpd(&tmp, getAllocator());
 
-		tmp.sprintf("vec3(%f, %f, %f) %s",
+		err = tmp.sprintf(getAllocator(),
+			"vec3(%f, %f, %f) %s",
 			kernel[i].x(), kernel[i].y(), kernel[i].z(),
 			(i != kernel.size() - 1) ? ", " : ")");
+		if(err) return err;
 
-		kernelStr += tmp;
+		err = kernelStr.append(getAllocator(), tmp);
+		if(err) return err;
 	}
 
 	//
 	// Shaders
 	//
-	m_uniformsBuff.create(cmdb, GL_SHADER_STORAGE_BUFFER, 
+	err = m_uniformsBuff.create(cmdb, GL_SHADER_STORAGE_BUFFER, 
 		sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT);
+	if(err) return err;
 
-	String pps(getAllocator());
+	String pps;
+	String::ScopeDestroyer ppsd(&pps, getAllocator());
 
 	// main pass prog
-	pps.sprintf(
+	err = pps.sprintf(getAllocator(),
 		"#define NOISE_MAP_SIZE %u\n"
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n"
 		"#define KERNEL_SIZE %u\n"
 		"#define KERNEL_ARRAY %s\n",
 		NOISE_TEX_SIZE, m_width, m_height, KERNEL_SIZE, &kernelStr[0]);
+	if(err) return err;
 
-	m_ssaoFrag.loadToCache(&getResourceManager(),
+	err = m_ssaoFrag.loadToCache(&getResourceManager(),
 		"shaders/PpsSsao.frag.glsl", pps.toCString(), "r_");
+	if(err) return err;
 
-
-	m_ssaoPpline = m_r->createDrawQuadProgramPipeline(
-		m_ssaoFrag->getGlProgram());
+	err = m_r->createDrawQuadProgramPipeline(
+		m_ssaoFrag->getGlProgram(), m_ssaoPpline);
+	if(err) return err;
 
 	// blurring progs
 	const char* SHADER_FILENAME = 
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
-	pps.sprintf(
+	pps.destroy(getAllocator());
+	err = pps.sprintf(getAllocator(),
 		"#define HPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES 7\n", 
 		m_height);
+	if(err) return err;
 
-	m_hblurFrag.loadToCache(&getResourceManager(),
+	err = m_hblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_");
+	if(err) return err;
 
-	m_hblurPpline = m_r->createDrawQuadProgramPipeline(
-		m_hblurFrag->getGlProgram());
+	err = m_r->createDrawQuadProgramPipeline(
+		m_hblurFrag->getGlProgram(), m_hblurPpline);
+	if(err) return err;
 
-	pps.sprintf(
+	pps.destroy(getAllocator());
+	err = pps.sprintf(getAllocator(),
 		"#define VPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES 7\n", 
 		m_width);
+	if(err) return err;
 
-	m_vblurFrag.loadToCache(&getResourceManager(),
+	err = m_vblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_");
+	if(err) return err;
 
-	m_vblurPpline = m_r->createDrawQuadProgramPipeline(
-		m_vblurFrag->getGlProgram());
+	err = m_r->createDrawQuadProgramPipeline(
+		m_vblurFrag->getGlProgram(), m_vblurPpline);
+	if(err) return err;
 
 	cmdb.flush();
+
+	return err;
 }
 
 //==============================================================================
-void Ssao::init(const ConfigSet& config)
+Error Ssao::init(const ConfigSet& config)
 {
-	try
+	Error err = initInternal(config);
+	
+	if(err)
 	{
-		initInternal(config);
+		ANKI_LOGE("Failed to init PPS SSAO");
 	}
-	catch(const std::exception& e)
-	{
-		throw ANKI_EXCEPTION("Failed to init PPS SSAO") << e;
-	}
+
+	return err;
 }
 
 //==============================================================================
-void Ssao::run(GlCommandBufferHandle& cmdb)
+Error Ssao::run(GlCommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
+	Error err = ErrorCode::NONE;
 
 	const Camera& cam = m_r->getSceneGraph().getActiveCamera();
 
@@ -257,8 +291,9 @@ void Ssao::run(GlCommandBufferHandle& cmdb)
 		|| m_commonUboUpdateTimestamp == 1)
 	{
 		GlClientBufferHandle tmpBuff;
-		tmpBuff.create(cmdb, sizeof(ShaderCommonUniforms),
+		err = tmpBuff.create(cmdb, sizeof(ShaderCommonUniforms),
 			nullptr);
+		if(err) return err;
 
 		ShaderCommonUniforms& blk = 
 			*((ShaderCommonUniforms*)tmpBuff.getBaseAddress());
@@ -294,6 +329,8 @@ void Ssao::run(GlCommandBufferHandle& cmdb)
 		m_vblurPpline.bind(cmdb);
 		m_r->drawQuad(cmdb);
 	}
+
+	return err;
 }
 
 } // end namespace anki

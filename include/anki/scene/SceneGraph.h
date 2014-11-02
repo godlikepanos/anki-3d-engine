@@ -26,7 +26,7 @@ class Renderer;
 class ResourceManager;
 class Camera;
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
 
 /// The scene graph that  all the scene entities
@@ -35,13 +35,15 @@ class SceneGraph
 	friend class SceneNode;
 
 public:
-	/// @name Constructors/Destructor
-	/// @{
-	SceneGraph(AllocAlignedCallback allocCb, void* allocCbData, 
-		Threadpool* threadpool, ResourceManager* resources);
+	SceneGraph();
 
 	~SceneGraph();
-	/// @}
+
+	ANKI_USE_RESULT Error create(
+		AllocAlignedCallback allocCb, 
+		void* allocCbData, 
+		Threadpool* threadpool, 
+		ResourceManager* resources);
 
 	/// @note Return a copy
 	SceneAllocator<U8> getAllocator() const
@@ -90,7 +92,7 @@ public:
 
 	U32 getSceneNodesCount() const
 	{
-		return m_nodes.size();
+		return m_nodesCount;
 	}
 
 	PhysicsWorld& getPhysics()
@@ -125,10 +127,11 @@ public:
 		return *m_threadpool;
 	}
 
-	void update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer);
+	ANKI_USE_RESULT Error update(
+		F32 prevUpdateTime, F32 crntTime, Renderer& renderer);
 
-	SceneNode& findSceneNode(const char* name);
-	SceneNode* tryFindSceneNode(const char* name);
+	SceneNode& findSceneNode(const CString& name);
+	SceneNode* tryFindSceneNode(const CString& name);
 
 	/// Iterate the scene nodes using a lambda
 	template<typename Func>
@@ -151,16 +154,18 @@ public:
 	ANKI_USE_RESULT Error iterateSceneNodes(
 		PtrSize begin, PtrSize count, Func func)
 	{
-		ANKI_ASSERT(begin < m_nodes.size() && count <= m_nodes.size());
-		for(auto it = m_nodes.begin() + begin; 
-			it != m_nodes.begin() + count; 
-			it++)
+		ANKI_ASSERT(begin < m_nodesCount && count <= m_nodesCount);
+		auto it = m_nodes.getBegin() + begin;
+		
+		while(count-- != 0)
 		{
 			Error err = func(*(*it));
 			if(err)
 			{
 				return err;
 			}
+
+			++it;
 		}
 
 		return ErrorCode::NONE;
@@ -231,10 +236,11 @@ private:
 	GlDevice* m_gl = nullptr;
 
 	SceneAllocator<U8> m_alloc;
-	SceneAllocator<U8> m_frameAlloc;
+	SceneFrameAllocator<U8> m_frameAlloc;
 
-	SceneVector<SceneNode*> m_nodes;
-	SceneDictionary<SceneNode*> m_dict;
+	List<SceneNode*, SceneAllocator<SceneNode*>> m_nodes;
+	U32 m_nodesCount = 0;
+	//SceneDictionary<SceneNode*> m_dict;
 
 	Vec3 m_ambientCol = Vec3(1.0); ///< The global ambient color
 	Timestamp m_ambiendColorUpdateTimestamp = getGlobTimestamp();

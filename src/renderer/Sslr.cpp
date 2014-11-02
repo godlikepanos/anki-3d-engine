@@ -10,13 +10,15 @@
 namespace anki {
 
 //==============================================================================
-void Sslr::init(const ConfigSet& config)
+Error Sslr::init(const ConfigSet& config)
 {
+	Error err = ErrorCode::NONE;
+
 	m_enabled = config.get("pps.sslr.enabled");
 
 	if(!m_enabled)
 	{
-		return;
+		return err;
 	}
 
 	// Size
@@ -30,29 +32,37 @@ void Sslr::init(const ConfigSet& config)
 	alignRoundUp(16, m_height);
 
 	// Programs
-	String pps(getAllocator());
+	String pps;
+	String::ScopeDestroyer ppsd(&pps, getAllocator());
 
-	pps.sprintf(
+	err = pps.sprintf(getAllocator(),
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n",
 		m_width, m_height);
+	if(err) return err;
 
-	m_reflectionFrag.loadToCache(&getResourceManager(),
+	err = m_reflectionFrag.loadToCache(&getResourceManager(),
 		"shaders/PpsSslr.frag.glsl", pps.toCString(), "r_");
+	if(err) return err;
 
-	m_reflectionPpline = m_r->createDrawQuadProgramPipeline(
-		m_reflectionFrag->getGlProgram());
+	err = m_r->createDrawQuadProgramPipeline(
+		m_reflectionFrag->getGlProgram(), m_reflectionPpline);
+	if(err) return err;
 
 	// Sampler
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(&getGlDevice());
-	m_depthMapSampler.create(cmdBuff);
+	err = cmdBuff.create(&getGlDevice());
+	if(err) return err;
+	err = m_depthMapSampler.create(cmdBuff);
+	if(err) return err;
 	m_depthMapSampler.setFilter(cmdBuff, GlSamplerHandle::Filter::NEAREST);
 
 	// Blit
-	m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
-	m_blitPpline = m_r->createDrawQuadProgramPipeline(
-		m_blitFrag->getGlProgram());
+	err = m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
+	if(err) return err;
+	err = m_r->createDrawQuadProgramPipeline(
+		m_blitFrag->getGlProgram(), m_blitPpline);
+	if(err) return err;
 
 	// Init FBOs and RTs and blurring
 	if(m_blurringIterationsCount > 0)
@@ -63,24 +73,29 @@ void Sslr::init(const ConfigSet& config)
 	{
 		Direction& dir = m_dirs[(U)DirectionEnum::VERTICAL];
 
-		m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
+		err = m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
 			GL_UNSIGNED_BYTE, 1, dir.m_rt);
+		if(err) return err;
 
 		// Set to bilinear because the blurring techniques take advantage of 
 		// that
 		dir.m_rt.setFilter(cmdBuff, GlTextureHandle::Filter::LINEAR);
 
 		// Create FB
-		dir.m_fb.create(cmdBuff, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
+		err = dir.m_fb.create(cmdBuff, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
+		if(err) return err;
 	}
 
 	cmdBuff.finish();
+
+	return err;
 }
 
 //==============================================================================
-void Sslr::run(GlCommandBufferHandle& cmdBuff)
+Error Sslr::run(GlCommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
+	Error err = ErrorCode::NONE;
 
 	// Compute the reflection
 	//
@@ -123,6 +138,8 @@ void Sslr::run(GlCommandBufferHandle& cmdBuff)
 	m_r->drawQuad(cmdBuff);
 
 	cmdBuff.enableBlend(false);
+
+	return err;
 }
 
 } // end namespace anki

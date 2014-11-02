@@ -8,8 +8,19 @@
 
 #include "anki/util/Allocator.h"
 #include "anki/util/NonCopyable.h"
+#include "anki/util/ScopeDestroyer.h"
 
 namespace anki {
+
+// Forward
+template<typename T, typename TAlloc>
+class DArray;
+
+/// @addtogroup util_private
+/// @{
+template<typename T, typename TAlloc>
+using DArrayScopeDestroyer = ScopeDestroyer<DArray<T, TAlloc>, TAlloc>;
+/// @}
 
 /// @addtogroup util_containers
 /// @{
@@ -25,6 +36,8 @@ public:
 	using ConstIterator = const Value*;
 	using Reference = Value&;
 	using ConstReference = const Value&;
+
+	using ScopeDestroyer = DArrayScopeDestroyer<T, TAlloc>;
 
 	// STL compatible
 	using iterator = Iterator;
@@ -253,7 +266,6 @@ private:
 		b.m_size = 0;
 	}
 };
-
 /// @}
 
 } // end namespace anki

@@ -47,7 +47,7 @@ public:
 	}
 
 	template<typename TRenderableVariableTemplate>
-	void visit(const TRenderableVariableTemplate& rvar)
+	Error visit(const TRenderableVariableTemplate& rvar)
 	{
 		typedef typename TRenderableVariableTemplate::Type DataType;
 		const GlProgramVariable& glvar = rvar.getGlProgramVariable();
@@ -208,6 +208,8 @@ public:
 			ANKI_ASSERT(0);
 			break;
 		}
+
+		return ErrorCode::NONE;
 	}
 };
 
@@ -225,15 +227,28 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 }
 
 //==============================================================================
-RenderableDrawer::RenderableDrawer(Renderer* r)
-:	m_r(r)
+Error RenderableDrawer::create(Renderer* r)
 {
+	Error err = ErrorCode::NONE;
+
+	m_r = r;
+
 	// Create the uniform buffer
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(&m_r->_getGlDevice());
-	m_uniformBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
+	err = cmdBuff.create(&m_r->_getGlDevice());
+	if(err)
+	{
+		return err;
+	}
+
+	err = m_uniformBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
 		MAX_UNIFORM_BUFFER_SIZE,
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	if(err)
+	{
+		return err;
+	}
+
 	cmdBuff.flush();
 
 	m_uniformPtr = (U8*)m_uniformBuff.getPersistentMappingAddress();
@@ -244,6 +259,8 @@ RenderableDrawer::RenderableDrawer(Renderer* r)
 	// Set some other values
 	m_uniformsUsedSize = 0;
 	m_uniformsUsedSizeFrame = 0;
+
+	return err;
 }
 
 //==============================================================================
@@ -289,7 +306,8 @@ void RenderableDrawer::setupUniforms(
 		RenderComponentVariable* rvar = *it;
 
 		vis.m_rvar = rvar;
-		rvar->acceptVisitor(vis);
+		Error err = rvar->acceptVisitor(vis);
+		(void)err;
 	}
 
 	// Update the uniform descriptor
@@ -306,7 +324,7 @@ void RenderableDrawer::setupUniforms(
 }
 
 //==============================================================================
-void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
+Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 {
 	RenderingBuildData build;
 
@@ -342,14 +360,14 @@ void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	{
 		if(m_stage == RenderingStage::BLEND)
 		{
-			return;
+			return ErrorCode::NONE;
 		}
 	}
 	else
 	{
 		if(m_stage != RenderingStage::BLEND)
 		{
-			return;
+			return ErrorCode::NONE;
 		}
 
 		m_cmdBuff.setBlendFunctions(
@@ -371,13 +389,19 @@ void RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	build.m_subMeshIndicesCount = visibleNode.m_spatialsCount;
 	build.m_jobs = m_cmdBuff;
 
-	renderable.buildRendering(build);
+	Error err = renderable.buildRendering(build);
+	if(err)
+	{
+		return err;
+	}
 
 	// Wireframe back to what it was
 	if(wireframeOn)
 	{
 		m_cmdBuff.setPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

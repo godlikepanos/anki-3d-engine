@@ -156,20 +156,22 @@ class ParticleEmitter: public SceneNode, public SpatialComponent,
 	friend class ParticleSimple;
 
 public:
-	ParticleEmitter(
-		const CString& name, SceneGraph* scene, // SceneNode
-		const CString& filename); // Self
+	ParticleEmitter(SceneGraph* scene);
 
 	~ParticleEmitter();
 
+	ANKI_USE_RESULT Error create(
+		const CString& name, const CString& filename);
+
 	/// @name SceneNode virtuals
 	/// @{
-	void frameUpdate(F32 prevUpdateTime, F32 crntTime) override;
+	ANKI_USE_RESULT Error frameUpdate(
+		F32 prevUpdateTime, F32 crntTime) override;
 	/// @}
 
 	/// @name MoveComponent virtuals
 	/// @{
-	void onMoveComponentUpdate(
+	ANKI_USE_RESULT Error onMoveComponentUpdate(
 		SceneNode& node, F32 prevTime, F32 crntTime) override;
 	/// @}
 
@@ -188,7 +190,7 @@ public:
 
 	/// @name RenderComponent virtuals
 	/// @{
-	void buildRendering(RenderingBuildData& data);
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
 
 	const Material& getMaterial();
 
@@ -206,10 +208,10 @@ private:
 	};
 
 	ParticleEmitterResourcePointer m_particleEmitterResource;
-	SceneVector<ParticleBase*> m_particles;
-	F32 m_timeLeftForNextEmission;
+	SceneDArray<ParticleBase*> m_particles;
+	F32 m_timeLeftForNextEmission = 0.0;
 	Obb m_obb;
-	SceneVector<Transform> m_transforms; ///< InstanceTransforms
+	SceneDArray<Transform> m_transforms; ///< InstanceTransforms
 	Timestamp m_transformsTimestamp = 0;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's
@@ -223,10 +225,10 @@ private:
 
 	SimulationType m_simulationType = SimulationType::UNDEFINED;
 
-	void createParticlesSimulation(SceneGraph* scene);
-	void createParticlesSimpleSimulation(SceneGraph* scene);
+	ANKI_USE_RESULT Error createParticlesSimulation(SceneGraph* scene);
+	ANKI_USE_RESULT Error createParticlesSimpleSimulation();
 
-	void doInstancingCalcs();
+	ANKI_USE_RESULT Error doInstancingCalcs();
 };
 
 /// @}

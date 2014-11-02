@@ -13,33 +13,48 @@
 namespace anki {
 
 //==============================================================================
-Renderer::Renderer(
+Renderer::Renderer()
+:	m_ms(this), 
+	m_is(this),
+	m_pps(this),
+	m_bs(this),
+	m_dbg(this), 
+	m_tiler(this)
+{}
+
+//==============================================================================
+Renderer::~Renderer()
+{
+	m_shadersPrependedSource.destroy(m_alloc);
+}
+
+//==============================================================================
+Error Renderer::init(
 	Threadpool* threadpool, 
 	ResourceManager* resources,
 	GlDevice* gl,
 	HeapAllocator<U8>& alloc,
 	const ConfigSet& config)
-:	m_threadpool(threadpool),
-	m_resources(resources),
-	m_gl(gl),
-	m_alloc(alloc),
-	m_ms(this), 
-	m_is(this),
-	m_pps(this),
-	m_bs(this),
-	m_dbg(this), 
-	m_tiler(this),
-	m_sceneDrawer(this),
-	m_shadersPrependedSource(alloc)
-{}
-
-//==============================================================================
-Renderer::~Renderer()
-{}
-
-//==============================================================================
-void Renderer::init(const ConfigSet& config)
 {
+	m_threadpool = threadpool;
+	m_resources = resources;
+	m_gl = gl;
+	m_alloc = alloc;
+
+	Error err = initInternal(config);
+	if(err)
+	{
+		ANKI_LOGE("Failed to initialize the renderer");
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error Renderer::initInternal(const ConfigSet& config)
+{
+	Error err = ErrorCode::NONE;
+
 	// Set from the config
 	m_width = config.get("width");
 	m_height = config.get("height");
@@ -57,54 +72,75 @@ void Renderer::init(const ConfigSet& config)
 	if(m_samples != 1 && m_samples != 4 && m_samples != 8 && m_samples != 16
 		&& m_samples != 32)
 	{
-		throw ANKI_EXCEPTION("Incorrect samples");
+		ANKI_LOGE("Incorrect samples");
+		return ErrorCode::USER_DATA;
 	}
 
 	if(m_width < 10 || m_height < 10)
 	{
-		throw ANKI_EXCEPTION("Incorrect sizes");
+		ANKI_LOGE("Incorrect sizes");
+		return ErrorCode::USER_DATA;
 	}
+
+	// Drawer
+	err = m_sceneDrawer.create(this);
+	if(err) return err;
 
 	// quad setup
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
 		{1.0, -1.0}, {-1.0, -1.0}};
 
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(m_gl);
+	err = cmdBuff.create(m_gl);
+	if(err) return err;
 
 	GlClientBufferHandle tmpBuff;
-	tmpBuff.create(
+	err = tmpBuff.create(
 		cmdBuff, sizeof(quadVertCoords), (void*)&quadVertCoords[0][0]);
+	if(err) return err;
 
-	m_quadPositionsBuff.create(cmdBuff, GL_ARRAY_BUFFER, tmpBuff, 0);
+	err = m_quadPositionsBuff.create(cmdBuff, GL_ARRAY_BUFFER, tmpBuff, 0);
+	if(err) return err;
 
-	m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources);
+	err = m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources);
+	if(err) return err;
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	m_tiler.init();
+	err = m_tiler.init();
+	if(err) return err;
 
-	m_ms.init(config);
-	m_is.init(config);
-	m_bs.init(config);
-	m_pps.init(config);
-	m_dbg.init(config);
+	err = m_ms.init(config);
+	if(err) return err;
+	err = m_is.init(config);
+	if(err) return err;
+	err = m_bs.init(config);
+	if(err) return err;
+	err = m_pps.init(config);
+	if(err) return err;
+	err = m_dbg.init(config);
+	if(err) return err;
 
 	// Default FB
-	m_defaultFb.create(cmdBuff, {});
+	err = m_defaultFb.create(cmdBuff, {});
+	if(err) return err;
 
 	cmdBuff.finish();
 
 	// Set the default preprocessor string
-	m_shadersPrependedSource.sprintf(
+	err = m_shadersPrependedSource.sprintf(
+		m_alloc,
 		"#define ANKI_RENDERER_WIDTH %u\n"
 		"#define ANKI_RENDERER_HEIGHT %u\n",
 		m_width, m_height);
+
+	return err;
 }
 
 //==============================================================================
-void Renderer::render(SceneGraph& scene, 
+Error Renderer::render(SceneGraph& scene, 
 	Array<GlCommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff)
 {
+	Error err = ErrorCode::NONE;
 	m_scene = &scene;
 	Camera& cam = m_scene->getActiveCamera();
 
@@ -122,7 +158,8 @@ void Renderer::render(SceneGraph& scene,
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
-	m_ms.run(cmdBuff[0]);
+	err = m_ms.run(cmdBuff[0]);
+	if(err) return err;
 	ANKI_ASSERT(cmdBuff[0].getReferenceCount() == 1);
 	cmdBuff[0].flush();
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
@@ -130,24 +167,30 @@ void Renderer::render(SceneGraph& scene,
 	m_tiler.runMinMax(m_ms._getDepthRt());
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
-	m_is.run(cmdBuff[1]);
+	err = m_is.run(cmdBuff[1]);
+	if(err) return err;
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
-	m_bs.run(cmdBuff[1]);
+	err = m_bs.run(cmdBuff[1]);
+	if(err) return err;
 
 	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
 	if(m_pps.getEnabled())
 	{
-		m_pps.run(cmdBuff[1]);
+		err = m_pps.run(cmdBuff[1]);
+		if(err) return err;
 	}
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_PPS_TIME);
 
 	if(m_dbg.getEnabled())
 	{
-		m_dbg.run(cmdBuff[1]);
+		err = m_dbg.run(cmdBuff[1]);
+		if(err) return err;
 	}
 
 	++m_framesNum;
+
+	return err;
 }
 
 //==============================================================================
@@ -204,9 +247,11 @@ void Renderer::computeProjectionParams(const Mat4& m)
 }
 
 //==============================================================================
-void Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat, 
+Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat, 
 	GLenum format, GLenum type, U32 samples, GlTextureHandle& rt)
 {
+	Error err = ErrorCode::NONE;
+
 	// Not very important but keep the resulution of render targets aligned to
 	// 16
 	if(0)
@@ -237,25 +282,38 @@ void Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 	init.m_samples = samples;
 
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(m_gl);
-	rt.create(cmdBuff, init);
-	cmdBuff.finish();
+	err = cmdBuff.create(m_gl);
+
+	if(!err)
+	{
+		rt.create(cmdBuff, init);
+		cmdBuff.finish();
+	}
+
+	return err;
 }
 
 //==============================================================================
-GlProgramPipelineHandle Renderer::createDrawQuadProgramPipeline(
-	GlProgramHandle frag)
+Error Renderer::createDrawQuadProgramPipeline(
+	GlProgramHandle frag, GlProgramPipelineHandle& ppline)
 {
 	GlCommandBufferHandle cmdBuff;
-	cmdBuff.create(m_gl);
+	Error err = cmdBuff.create(m_gl);
 
-	Array<GlProgramHandle, 2> progs = {{m_drawQuadVert->getGlProgram(), frag}};
+	if(!err)
+	{
+		Array<GlProgramHandle, 2> progs = 
+			{{m_drawQuadVert->getGlProgram(), frag}};
 
-	GlProgramPipelineHandle ppline;
-	ppline.create(cmdBuff, &progs[0], &progs[0] + 2);
-	cmdBuff.finish();
+		err = ppline.create(cmdBuff, &progs[0], &progs[0] + 2);
+	}
 
-	return ppline;
+	if(!err)
+	{
+		cmdBuff.finish();
+	}
+
+	return err;
 }
 
 } // end namespace anki

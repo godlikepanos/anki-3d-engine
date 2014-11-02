@@ -104,22 +104,27 @@ Error XmlElement::getFloats(DArray<F64, StackAllocator<F64>>& out) const
 	StringListBase<StackAllocator<char>> list;
 	if(!err)
 	{
-		 list = StringListBase<StackAllocator<char>>(
-			StringListBase<StackAllocator<char>>::splitString(
-			CString(txt), ' ', m_alloc));
-
-		err = out.create(m_alloc, list.size());
+		err = list.splitString(m_alloc, txt, ' ');
 	}
 
+	if(!err)
+	{
+		err = out.create(m_alloc, list.getSize());
+	}
+
+	auto it = list.getBegin();
 	for(U i = 0; i < out.getSize() && !err; i++)
 	{
-		err = list[i].toF64(out[i]);
+		err = it->toF64(out[i]);
+		++it;
 	}
 
 	if(err)
 	{
 		ANKI_LOGE("Failed to return floats. Element: %s", m_el->Value());
 	}
+
+	list.destroy(m_alloc);
 
 	return err;
 }
@@ -314,8 +319,9 @@ Error XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
 	}
 
 	m_alloc = alloc;
-	StringBase<StackAllocator<char>> text(m_alloc);
-	err = file.readAllText(text);
+	StringBase<StackAllocator<char>> text;
+	
+	err = file.readAllText(StackAllocator<char>(m_alloc), text);
 	if(err)
 	{
 		return err;
@@ -327,6 +333,8 @@ Error XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
 			((m_doc.GetErrorStr1() == nullptr)
 			? "unknown" : m_doc.GetErrorStr1()));
 	}
+
+	text.destroy(m_alloc);
 
 	return err;
 }

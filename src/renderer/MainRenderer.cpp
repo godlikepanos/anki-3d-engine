@@ -15,24 +15,22 @@
 namespace anki {
 
 //==============================================================================
-MainRenderer::MainRenderer(
-	Threadpool* threadpool, 
-	ResourceManager* resources,
-	GlDevice* gl,
-	HeapAllocator<U8>& alloc,
-	const ConfigSet& config)
-:	Renderer(threadpool, resources, gl, alloc, config)
-{
-	init(config);
-}
+MainRenderer::MainRenderer()	
+{}
 
 //==============================================================================
 MainRenderer::~MainRenderer()
 {}
 
 //==============================================================================
-void MainRenderer::init(const ConfigSet& config_)
+Error MainRenderer::init(
+	Threadpool* threadpool, 
+	ResourceManager* resources,
+	GlDevice* gl,
+	HeapAllocator<U8>& alloc,
+	const ConfigSet& config_)
 {
+	Error err = ErrorCode::NONE;
 	ANKI_LOGI("Initializing main renderer...");
 
 	ConfigSet config = config_;
@@ -42,21 +40,29 @@ void MainRenderer::init(const ConfigSet& config_)
 	config.set("height", 
 		config.get("height") * config.get("renderingQuality"));
 
-	initGl();
+	err = initGl();
+	if(err) return err;
 
-	Renderer::init(config);
+	err = Renderer::init(threadpool, resources, gl, alloc, config);
+	if(err) return err;
 
-	m_blitFrag.load("shaders/Final.frag.glsl", &_getResourceManager());
-	m_blitPpline = createDrawQuadProgramPipeline(
-		m_blitFrag->getGlProgram());
+	err = m_blitFrag.load("shaders/Final.frag.glsl", &_getResourceManager());
+	if(err) return err;
+
+	err = createDrawQuadProgramPipeline(
+		m_blitFrag->getGlProgram(), m_blitPpline);
+	if(err) return err;
 
 	ANKI_LOGI("Main renderer initialized. Rendering size %dx%d", 
 		getWidth(), getHeight());
+
+	return err;
 }
 
 //==============================================================================
-void MainRenderer::render(SceneGraph& scene)
+Error MainRenderer::render(SceneGraph& scene)
 {
+	Error err = ErrorCode::NONE;
 	ANKI_COUNTER_START_TIMER(MAIN_RENDERER_TIME);
 
 	GlDevice& gl = _getGlDevice();
@@ -65,10 +71,12 @@ void MainRenderer::render(SceneGraph& scene)
 
 	for(U i = 0; i < JOB_CHAINS_COUNT; i++)
 	{
-		jobs[i].create(&gl, m_jobsInitHints[i]);
+		err = jobs[i].create(&gl, m_jobsInitHints[i]);
+		if(err) return err;
 	}
 
-	Renderer::render(scene, jobs);
+	err = Renderer::render(scene, jobs);
+	if(err) return err;
 
 	Bool notDrawnToDefault = 
 		getRenderingQuality() != 1.0 || getDbg().getEnabled();
@@ -111,20 +119,27 @@ void MainRenderer::render(SceneGraph& scene)
 	lastJobs.flush();
 
 	ANKI_COUNTER_STOP_TIMER_INC(MAIN_RENDERER_TIME);
+
+	return err;
 }
 
 //==============================================================================
-void MainRenderer::initGl()
+Error MainRenderer::initGl()
 {
 	// get max texture units
 	GlDevice& gl = _getGlDevice();
 	GlCommandBufferHandle jobs;
-	jobs.create(&gl);
+	Error err = jobs.create(&gl);
 
-	jobs.enableCulling(true);
-	jobs.setCullFace(GL_BACK);
+	if(!err)
+	{
+		jobs.enableCulling(true);
+		jobs.setCullFace(GL_BACK);
 
-	jobs.flush();
+		jobs.flush();
+	}
+
+	return err;
 }
 
 //==============================================================================
@@ -190,6 +205,7 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 //==============================================================================
 void MainRenderer::takeScreenshot(const char* filename)
 {
+#if 0
 	String ext = getFileExtension(filename, _getAllocator());
 
 	// exec from this extension
@@ -202,6 +218,7 @@ void MainRenderer::takeScreenshot(const char* filename)
 		throw ANKI_EXCEPTION("Unsupported file extension");
 	}
 	ANKI_LOGI("Screenshot %s saved", filename);
+#endif
 }
 
 } // end namespace anki

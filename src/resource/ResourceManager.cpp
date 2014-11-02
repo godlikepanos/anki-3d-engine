@@ -86,11 +86,13 @@ Error ResourceManager::create(Initializer& init)
 #undef ANKI_RESOURCE
 
 	// Init the thread
-	m_asyncLoader = m_alloc.newInstance<AsyncLoader>(m_alloc);
+	m_asyncLoader = m_alloc.newInstance<AsyncLoader>();
 	if(m_asyncLoader == nullptr)
 	{
-		return ErrorCode::FUNCTION_FAILED;
+		return ErrorCode::OUT_OF_MEMORY;
 	}
+
+	err = m_asyncLoader->create(m_alloc);
 
 	return err;
 }
