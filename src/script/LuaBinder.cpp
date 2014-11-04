@@ -11,52 +11,6 @@
 
 namespace anki {
 
-namespace detail {
-
-//==============================================================================
-void checkArgsCount(lua_State* l, I argsCount)
-{
-	I actualArgsCount = lua_gettop(l);
-	if(argsCount != actualArgsCount)
-	{
-		luaL_error(l, "Expecting %d arguments, got %d", argsCount, 
-			actualArgsCount);
-	}
-}
-
-//==============================================================================
-void createClass(lua_State* l, const char* className)
-{
-	lua_newtable(l); // push new table
-	lua_setglobal(l, className); // pop and make global
-	luaL_newmetatable(l, className); // push
-	lua_pushstring(l, "__index"); // push
-	lua_pushvalue(l, -2);  // pushes copy of the metatable
-	lua_settable(l, -3);  // pop*2: metatable.__index = metatable
-
-	// After all these the metatable is in the top of tha stack
-}
-
-//==============================================================================
-void pushCFunctionMethod(lua_State* l, const char* name, lua_CFunction luafunc)
-{
-	lua_pushstring(l, name);
-	lua_pushcfunction(l, luafunc);
-	lua_settable(l, -3);
-}
-
-//==============================================================================
-void pushCFunctionStatic(lua_State* l, const char* className,
-	const char* name, lua_CFunction luafunc) 
-{
-	lua_getglobal(l, className); // push
-	lua_pushcfunction(l, luafunc); // push
-	lua_setfield(l, -2, name); // pop global
-	lua_pop(l, 1); // pop cfunc
-}
-
-} // end namespace lua_detail
-
 //==============================================================================
 static int luaPanic(lua_State* l)
 {
@@ -137,6 +91,67 @@ void LuaBinder::evalString(const CString& str)
 		ANKI_LOGE("%s", lua_tostring(m_l, -1));
 		lua_pop(m_l, 1);
 	}
+}
+
+//==============================================================================
+void LuaBinder::checkArgsCount(lua_State* l, I argsCount)
+{
+	I actualArgsCount = lua_gettop(l);
+	if(argsCount != actualArgsCount)
+	{
+		luaL_error(l, "Expecting %d arguments, got %d", argsCount, 
+			actualArgsCount);
+	}
+}
+
+//==============================================================================
+void LuaBinder::createClass(lua_State* l, const char* className)
+{
+	lua_newtable(l); // push new table
+	lua_setglobal(l, className); // pop and make global
+	luaL_newmetatable(l, className); // push
+	lua_pushstring(l, "__index"); // push
+	lua_pushvalue(l, -2);  // pushes copy of the metatable
+	lua_settable(l, -3);  // pop*2: metatable.__index = metatable
+
+	// After all these the metatable is in the top of tha stack
+}
+
+//==============================================================================
+void LuaBinder::pushLuaCFuncMethod(
+	lua_State* l, const char* name, lua_CFunction luafunc)
+{
+	lua_pushstring(l, name);
+	lua_pushcfunction(l, luafunc);
+	lua_settable(l, -3);
+}
+
+//==============================================================================
+void LuaBinder::pushLuaCFuncStaticMethod(lua_State* l, const char* className,
+	const char* name, lua_CFunction luafunc) 
+{
+	lua_getglobal(l, className); // push
+	lua_pushcfunction(l, luafunc); // push
+	lua_setfield(l, -2, name); // pop global
+	lua_pop(l, 1); // pop cfunc
+}
+
+//==============================================================================
+void* LuaBinder::luaAlloc(lua_State* l, size_t size)
+{
+	void* ud;
+	lua_Alloc alloc = lua_getallocf(l, &ud);
+
+	return alloc(ud, nullptr, 0, size);
+}
+
+//==============================================================================
+void LuaBinder::luaFree(lua_State* l, void* ptr)
+{
+	void* ud;
+	lua_Alloc alloc = lua_getallocf(l, &ud);
+
+	alloc(ud, ptr, 0, 0);
 }
 
 } // end namespace anki

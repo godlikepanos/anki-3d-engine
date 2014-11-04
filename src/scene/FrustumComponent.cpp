@@ -9,7 +9,7 @@
 namespace anki {
 
 //==============================================================================
-void FrustumComponentsetVisibilityTestResults(VisibilityTestResults* visible)
+void FrustumComponent::setVisibilityTestResults(VisibilityTestResults* visible)
 {
 	ANKI_ASSERT(m_visible == nullptr);
 	m_visible = visible;

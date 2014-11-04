@@ -4,14 +4,13 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/script/ScriptManager.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Logger.h"
-#include "anki/script/Common.h"
 
 namespace anki {
 
 //==============================================================================
 
+#if 0
 /// Dummy class
 class Anki
 {};
@@ -63,6 +62,11 @@ ANKI_SCRIPT_WRAP(Anki)
 			"getSceneGraph", &getSceneGraph);
 	ANKI_LUA_CLASS_END()
 }
+#endif
+
+#define ANKI_SCRIPT_CALL_WRAP(type_) \
+	extern void wrap##x(lua_State*); \
+	wrap##x(l);
 
 //==============================================================================
 ScriptManager::ScriptManager(HeapAllocator<U8>& alloc, SceneGraph* scene)
@@ -71,29 +75,16 @@ ScriptManager::ScriptManager(HeapAllocator<U8>& alloc, SceneGraph* scene)
 {
 	ANKI_LOGI("Initializing scripting engine...");
 
+	lua_State* l = _getLuaState();
+
 	// Global functions
+#if 0
 	ANKI_SCRIPT_CALL_WRAP(Anki);
+#endif
 
-	// Util
-	ANKI_SCRIPT_CALL_WRAP(CString);
-
-	// Math
-	ANKI_SCRIPT_CALL_WRAP(Vec2);
-	ANKI_SCRIPT_CALL_WRAP(Vec3);
-	ANKI_SCRIPT_CALL_WRAP(Vec4);
-	ANKI_SCRIPT_CALL_WRAP(Mat3);
-	ANKI_SCRIPT_CALL_WRAP(Mat3x4);
-
-	// Renderer
-	ANKI_SCRIPT_CALL_WRAP(Dbg);
-	ANKI_SCRIPT_CALL_WRAP(MainRenderer);
-
-	// Scene
-	ANKI_SCRIPT_CALL_WRAP(MoveComponent);
-	ANKI_SCRIPT_CALL_WRAP(SceneNode);
-	ANKI_SCRIPT_CALL_WRAP(ModelNode);
-	ANKI_SCRIPT_CALL_WRAP(InstanceNode);
-	ANKI_SCRIPT_CALL_WRAP(SceneGraph);
+	ANKI_SCRIPT_CALL_WRAP(Math);
+	ANKI_SCRIPT_CALL_WRAP(Renderer);
+	ANKI_SCRIPT_CALL_WRAP(Scene);
 
 	ANKI_LOGI("Scripting engine initialized");
 }
