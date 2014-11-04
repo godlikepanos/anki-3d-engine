@@ -6,4 +6,6 @@
 !*.hpp
 !*.h
 !*.glsl
+!*.py
+!*.xml
 build/*
