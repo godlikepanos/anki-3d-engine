@@ -137,6 +137,29 @@ void LuaBinder::pushLuaCFuncStaticMethod(lua_State* l, const char* className,
 }
 
 //==============================================================================
+Error LuaBinder::checkNumberInternal(
+	lua_State* l, I stackIdx, lua_Number& number)
+{
+	Error err = ErrorCode::NONE;
+	lua_Number lnum;
+	int isnum;
+
+	lnum = lua_tonumberx(l, stackIdx, &isnum);
+	if(isnum)
+	{
+		number = lnum;
+	}
+	else
+	{
+		err = ErrorCode::USER_DATA;
+		lua_pushfstring(
+			l, "Number expected. Got %s", luaL_typename(l, stackIdx));
+	}
+
+	return err;
+}
+
+//==============================================================================
 void* LuaBinder::luaAlloc(lua_State* l, size_t size)
 {
 	void* ud;

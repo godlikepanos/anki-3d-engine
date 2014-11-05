@@ -59,6 +59,20 @@ public:
 	static void pushLuaCFuncStaticMethod(lua_State* l, const char* className,
 		const char* name, lua_CFunction luafunc);
 
+	template<typename TNumber>
+	static ANKI_USE_RESULT Error checkNumber(
+		lua_State* l, I stackIdx, TNumber& number)
+	{
+		lua_Number lnum;
+		Error err = checkNumberInternal(l, stackIdx, lnum);
+		if(!err)
+		{
+			number = lnum;
+		}
+
+		return err;
+	}
+
 	static void* luaAlloc(lua_State* l, size_t size);
 
 	static void luaFree(lua_State* l, void* ptr);
@@ -84,6 +98,9 @@ private:
 
 	static void* luaAllocCallback(
 		void* userData, void* ptr, PtrSize osize, PtrSize nsize);
+
+	static ANKI_USE_RESULT Error checkNumberInternal(
+		lua_State* l, I stackIdx, lua_Number& number);
 };
 
 //==============================================================================

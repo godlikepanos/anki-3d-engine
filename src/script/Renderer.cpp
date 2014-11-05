@@ -25,6 +25,8 @@ static inline int pwrapDbggetEnabled(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
@@ -61,6 +63,8 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
@@ -71,7 +75,8 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	Bool arg0(luaL_checknumber(l, 2));
+	Bool arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
 	
 	// Call the method
 	self->setEnabled(arg0);

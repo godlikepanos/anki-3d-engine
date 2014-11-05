@@ -97,18 +97,18 @@ def ret(ret_el):
 
 	wglue("// Push return value")
 
-	zero_as_error = ret_el.get("zeroAsError", None)
-	if zero_as_error is not None and zero_as_error == "1":
-		wglue("if(ANKI_UNLIKELY(ret == 0))")
+	type_txt = ret_el.text
+	(type, is_ref, is_ptr, is_const) = parse_type_decl(type_txt)
+
+	if is_ptr:
+		wglue("if(ANKI_UNLIKELY(ret == nullptr))")
 		wglue("{")
 		ident(1)
-		wglue("lua_pushstring(l, \"Glue code returned zero\");")
+		wglue("lua_pushstring(l, \"Glue code returned nullptr\");")
 		wglue("return -1;")
 		ident(-1)
 		wglue("}")
-
-	type_txt = ret_el.text
-	(type, is_ref, is_ptr, is_const) = parse_type_decl(type_txt)
+		wglue("")
 	
 	if type_is_bool(type):
 		wglue("lua_pushboolean(l, ret);")
@@ -169,12 +169,12 @@ def arg(arg_txt, stack_index, index):
 
 	(type, is_ref, is_ptr, is_const) = parse_type_decl(arg_txt)
 
-	if type_is_bool(type):
-		wglue("%s arg%d(luaL_checknumber(l, %d));" \
-			% (type, index, stack_index))
-	elif type_is_number(type):
-		wglue("%s arg%d(luaL_checknumber(l, %d));" \
-			% (type, index, stack_index))
+	if type_is_bool(type) or type_is_number(type):
+		#wglue("%s arg%d(luaL_checknumber(l, %d));" \
+			#% (type, index, stack_index))
+		wglue("%s arg%d;" % (type, index))
+		wglue("if(LuaBinder::checkNumber(l, %d, arg%d)) return -1;" \
+			% (stack_index, index))
 	elif type == "char" or type == "CString":
 		wglue("const char* arg%d(luaL_checkstring(l, %d));" \
 			% (index, stack_index))
@@ -262,6 +262,15 @@ def get_meth_alias(meth_el):
 
 	return meth_alias
 
+def write_local_vars():
+	wglue("UserData* ud;")
+	wglue("(void)ud;")
+	wglue("void* voidp;")
+	wglue("(void)voidp;")
+	wglue("Error err = ErrorCode::NONE;")
+	wglue("(void)err;")
+	wglue("")
+
 def method(class_name, meth_el):
 	""" Handle a method """
 
@@ -276,11 +285,7 @@ def method(class_name, meth_el):
 		% (class_name, meth_alias))
 	wglue("{")
 	ident(1)
-	wglue("UserData* ud;")
-	wglue("(void)ud;")
-	wglue("void* voidp;")
-	wglue("(void)voidp;")
-	wglue("")
+	write_local_vars()
 
 	check_args(meth_el.find("args"), 1)
 
@@ -350,11 +355,7 @@ def static_method(class_name, meth_el):
 		% (class_name, meth_alias))
 	wglue("{")
 	ident(1)
-	wglue("UserData* ud;")
-	wglue("(void)ud;")
-	wglue("void* voidp;")
-	wglue("(void)voidp;")
-	wglue("")
+	write_local_vars()
 
 	check_args(meth_el.find("args"), 0)
 
@@ -406,11 +407,7 @@ def constructor(constr_el, class_name):
 	wglue("static inline int pwrap%sCtor(lua_State* l)" % class_name)
 	wglue("{")
 	ident(1)
-	wglue("UserData* ud;")
-	wglue("(void)ud;")
-	wglue("void* voidp;")
-	wglue("(void)voidp;")
-	wglue("")
+	write_local_vars()
 
 	check_args(constr_el.find("args"), 0)
 

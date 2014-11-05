@@ -70,8 +70,8 @@ static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 					</args>
 					<return>Error</return>
 				</method>
-				<method name="getComponent&lt;MoveComponent&gt;" alias="getMoveComponent">
-					<return>MoveComponent&amp;</return>
+				<method name="tryGetComponent&lt;MoveComponent&gt;" alias="getMoveComponent">
+					<return>MoveComponent*</return>
 				</method>
 			</methods>
 		</class>
@@ -99,14 +99,14 @@ static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 						<arg>const CString&amp;</arg>
 						<arg>const CString&amp;</arg>
 					</args>
-					<return zeroAsError="1">ModelNode*</return>
+					<return>ModelNode*</return>
 				</method>
 				<method name="newInstanceNode">
 					<overrideCall><![CDATA[InstanceNode* ret = newSceneNode<InstanceNode>(self, arg0);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
 					</args>
-					<return zeroAsError="1">InstanceNode*</return>
+					<return>InstanceNode*</return>
 				</method>
 			</methods>
 		</class>

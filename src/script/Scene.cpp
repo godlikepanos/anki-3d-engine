@@ -44,6 +44,8 @@ static inline int pwrapMoveComponentsetLocalOrigin(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
@@ -84,6 +86,8 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
@@ -124,6 +128,8 @@ static inline int pwrapMoveComponentsetLocalRotation(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
@@ -164,6 +170,8 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
@@ -204,6 +212,8 @@ static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
@@ -214,7 +224,8 @@ static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	F32 arg0(luaL_checknumber(l, 2));
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
 	
 	// Call the method
 	self->setLocalScale(arg0);
@@ -240,6 +251,8 @@ static inline int pwrapMoveComponentgetLocalScale(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
@@ -297,6 +310,8 @@ static inline int pwrapSceneNodegetName(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
@@ -333,6 +348,8 @@ static inline int pwrapSceneNodeaddChild(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
@@ -375,13 +392,15 @@ static int wrapSceneNodeaddChild(lua_State* l)
 }
 
 //==============================================================================
-/// Pre-wrap method SceneNode::getComponent<MoveComponent>.
+/// Pre-wrap method SceneNode::tryGetComponent<MoveComponent>.
 static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 {
 	UserData* ud;
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
@@ -392,20 +411,26 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
-	MoveComponent& ret = self->getComponent<MoveComponent>();
+	MoveComponent* ret = self->tryGetComponent<MoveComponent>();
 	
 	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+	
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = reinterpret_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "MoveComponent");
-	ud->m_data = reinterpret_cast<void*>(&ret);
+	ud->m_data = reinterpret_cast<void*>(ret);
 	ud->m_gc = false;
 	
 	return 1;
 }
 
 //==============================================================================
-/// Wrap method SceneNode::getComponent<MoveComponent>.
+/// Wrap method SceneNode::tryGetComponent<MoveComponent>.
 static int wrapSceneNodegetMoveComponent(lua_State* l)
 {
 	int res = pwrapSceneNodegetMoveComponent(l);
@@ -440,6 +465,8 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
@@ -496,6 +523,8 @@ static inline int pwrapInstanceNodegetSceneNodeBase(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
@@ -552,6 +581,8 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 3);
 	
@@ -570,11 +601,12 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 	ModelNode* ret = newSceneNode<ModelNode>(self, arg0, arg1);
 	
 	// Push return value
-	if(ANKI_UNLIKELY(ret == 0))
+	if(ANKI_UNLIKELY(ret == nullptr))
 	{
-		lua_pushstring(l, "Glue code returned zero");
+		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
+	
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = reinterpret_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "ModelNode");
@@ -602,6 +634,8 @@ static inline int pwrapSceneGraphnewInstanceNode(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
+	Error err = ErrorCode::NONE;
+	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
@@ -618,11 +652,12 @@ static inline int pwrapSceneGraphnewInstanceNode(lua_State* l)
 	InstanceNode* ret = newSceneNode<InstanceNode>(self, arg0);
 	
 	// Push return value
-	if(ANKI_UNLIKELY(ret == 0))
+	if(ANKI_UNLIKELY(ret == nullptr))
 	{
-		lua_pushstring(l, "Glue code returned zero");
+		lua_pushstring(l, "Glue code returned nullptr");
 		return -1;
 	}
+	
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = reinterpret_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "InstanceNode");
