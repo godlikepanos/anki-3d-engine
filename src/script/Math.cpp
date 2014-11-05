@@ -17,6 +17,18 @@ namespace anki {
 //==============================================================================
 static const char* classnameVec2 = "Vec2";
 
+template<>
+I64 LuaBinder::getWrappedTypeSignature<Vec2>()
+{
+	return 6804478823655046388;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<Vec2>()
+{
+	return classnameVec2;
+}
+
 //==============================================================================
 /// Pre-wrap constructor for Vec2.
 static inline int pwrapVec2Ctor(lua_State* l)
@@ -25,18 +37,10 @@ static inline int pwrapVec2Ctor(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 0);
 	
 	// Create user data
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
-	ud->m_data = nullptr;
-	ud->m_gc = false;
-	luaL_setmetatable(l, classnameVec2);
-	
 	void* inst = LuaBinder::luaAlloc(l, sizeof(Vec2));
 	if(ANKI_UNLIKELY(inst == nullptr))
 	{
@@ -46,8 +50,12 @@ static inline int pwrapVec2Ctor(lua_State* l)
 	
 	::new(inst) Vec2();
 	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = reinterpret_cast<UserData*>(voidp);
 	ud->m_data = inst;
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046388;
+	luaL_setmetatable(l, classnameVec2);
 	
 	return 1;
 }
@@ -66,9 +74,13 @@ static int wrapVec2Ctor(lua_State* l)
 /// Wrap destructor for Vec2.
 static int wrapVec2Dtor(lua_State* l)
 {
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
 	LuaBinder::checkArgsCount(l, 1);
-	void* voidp = luaL_checkudata(l, 1, classnameVec2);
-	UserData* ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	if(ud->m_gc)
 	{
 		Vec2* inst = reinterpret_cast<Vec2*>(ud->m_data);
@@ -87,14 +99,11 @@ static inline int pwrapVec2getX(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -125,14 +134,11 @@ static inline int pwrapVec2getY(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -163,14 +169,11 @@ static inline int pwrapVec2setX(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -202,14 +205,11 @@ static inline int pwrapVec2setY(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -241,14 +241,11 @@ static inline int pwrapVec2getAt(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -283,14 +280,11 @@ static inline int pwrapVec2setAt(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -325,22 +319,17 @@ static inline int pwrapVec2copy(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec2");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
 	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -367,22 +356,17 @@ static inline int pwrapVec2__add(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec2");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
 	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -402,6 +386,7 @@ static inline int pwrapVec2__add(lua_State* l)
 	
 	::new(ud->m_data) Vec2(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046388;
 	
 	return 1;
 }
@@ -424,22 +409,17 @@ static inline int pwrapVec2__sub(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec2");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
 	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -459,6 +439,7 @@ static inline int pwrapVec2__sub(lua_State* l)
 	
 	::new(ud->m_data) Vec2(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046388;
 	
 	return 1;
 }
@@ -481,22 +462,17 @@ static inline int pwrapVec2__mul(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec2");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
 	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -516,6 +492,7 @@ static inline int pwrapVec2__mul(lua_State* l)
 	
 	::new(ud->m_data) Vec2(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046388;
 	
 	return 1;
 }
@@ -538,22 +515,17 @@ static inline int pwrapVec2__div(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec2");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
 	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -573,6 +545,7 @@ static inline int pwrapVec2__div(lua_State* l)
 	
 	::new(ud->m_data) Vec2(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046388;
 	
 	return 1;
 }
@@ -595,22 +568,17 @@ static inline int pwrapVec2__eq(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec2");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
 	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -640,14 +608,11 @@ static inline int pwrapVec2getLength(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -678,14 +643,11 @@ static inline int pwrapVec2getNormalized(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -706,6 +668,7 @@ static inline int pwrapVec2getNormalized(lua_State* l)
 	
 	::new(ud->m_data) Vec2(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046388;
 	
 	return 1;
 }
@@ -728,14 +691,11 @@ static inline int pwrapVec2normalize(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -763,22 +723,17 @@ static inline int pwrapVec2dot(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec2);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec2");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
 	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -833,6 +788,18 @@ static inline void wrapVec2(lua_State* l)
 //==============================================================================
 static const char* classnameVec3 = "Vec3";
 
+template<>
+I64 LuaBinder::getWrappedTypeSignature<Vec3>()
+{
+	return 6804478823655046389;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<Vec3>()
+{
+	return classnameVec3;
+}
+
 //==============================================================================
 /// Pre-wrap constructor for Vec3.
 static inline int pwrapVec3Ctor(lua_State* l)
@@ -841,18 +808,10 @@ static inline int pwrapVec3Ctor(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 0);
 	
 	// Create user data
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
-	ud->m_data = nullptr;
-	ud->m_gc = false;
-	luaL_setmetatable(l, classnameVec3);
-	
 	void* inst = LuaBinder::luaAlloc(l, sizeof(Vec3));
 	if(ANKI_UNLIKELY(inst == nullptr))
 	{
@@ -862,8 +821,12 @@ static inline int pwrapVec3Ctor(lua_State* l)
 	
 	::new(inst) Vec3();
 	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = reinterpret_cast<UserData*>(voidp);
 	ud->m_data = inst;
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046389;
+	luaL_setmetatable(l, classnameVec3);
 	
 	return 1;
 }
@@ -882,9 +845,13 @@ static int wrapVec3Ctor(lua_State* l)
 /// Wrap destructor for Vec3.
 static int wrapVec3Dtor(lua_State* l)
 {
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
 	LuaBinder::checkArgsCount(l, 1);
-	void* voidp = luaL_checkudata(l, 1, classnameVec3);
-	UserData* ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	if(ud->m_gc)
 	{
 		Vec3* inst = reinterpret_cast<Vec3*>(ud->m_data);
@@ -903,14 +870,11 @@ static inline int pwrapVec3getX(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -941,14 +905,11 @@ static inline int pwrapVec3getY(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -979,14 +940,11 @@ static inline int pwrapVec3getZ(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1017,14 +975,11 @@ static inline int pwrapVec3setX(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1056,14 +1011,11 @@ static inline int pwrapVec3setY(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1095,14 +1047,11 @@ static inline int pwrapVec3setZ(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1134,14 +1083,11 @@ static inline int pwrapVec3getAt(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1176,14 +1122,11 @@ static inline int pwrapVec3setAt(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1218,22 +1161,17 @@ static inline int pwrapVec3copy(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec3");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
 	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1260,22 +1198,17 @@ static inline int pwrapVec3__add(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec3");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
 	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1295,6 +1228,7 @@ static inline int pwrapVec3__add(lua_State* l)
 	
 	::new(ud->m_data) Vec3(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046389;
 	
 	return 1;
 }
@@ -1317,22 +1251,17 @@ static inline int pwrapVec3__sub(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec3");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
 	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1352,6 +1281,7 @@ static inline int pwrapVec3__sub(lua_State* l)
 	
 	::new(ud->m_data) Vec3(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046389;
 	
 	return 1;
 }
@@ -1374,22 +1304,17 @@ static inline int pwrapVec3__mul(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec3");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
 	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1409,6 +1334,7 @@ static inline int pwrapVec3__mul(lua_State* l)
 	
 	::new(ud->m_data) Vec3(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046389;
 	
 	return 1;
 }
@@ -1431,22 +1357,17 @@ static inline int pwrapVec3__div(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec3");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
 	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1466,6 +1387,7 @@ static inline int pwrapVec3__div(lua_State* l)
 	
 	::new(ud->m_data) Vec3(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046389;
 	
 	return 1;
 }
@@ -1488,22 +1410,17 @@ static inline int pwrapVec3__eq(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec3");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
 	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1533,14 +1450,11 @@ static inline int pwrapVec3getLength(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1571,14 +1485,11 @@ static inline int pwrapVec3getNormalized(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1599,6 +1510,7 @@ static inline int pwrapVec3getNormalized(lua_State* l)
 	
 	::new(ud->m_data) Vec3(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046389;
 	
 	return 1;
 }
@@ -1621,14 +1533,11 @@ static inline int pwrapVec3normalize(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1656,22 +1565,17 @@ static inline int pwrapVec3dot(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec3");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
 	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1728,6 +1632,18 @@ static inline void wrapVec3(lua_State* l)
 //==============================================================================
 static const char* classnameVec4 = "Vec4";
 
+template<>
+I64 LuaBinder::getWrappedTypeSignature<Vec4>()
+{
+	return 6804478823655046386;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<Vec4>()
+{
+	return classnameVec4;
+}
+
 //==============================================================================
 /// Pre-wrap constructor for Vec4.
 static inline int pwrapVec4Ctor(lua_State* l)
@@ -1736,18 +1652,10 @@ static inline int pwrapVec4Ctor(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 0);
 	
 	// Create user data
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
-	ud->m_data = nullptr;
-	ud->m_gc = false;
-	luaL_setmetatable(l, classnameVec4);
-	
 	void* inst = LuaBinder::luaAlloc(l, sizeof(Vec4));
 	if(ANKI_UNLIKELY(inst == nullptr))
 	{
@@ -1757,8 +1665,12 @@ static inline int pwrapVec4Ctor(lua_State* l)
 	
 	::new(inst) Vec4();
 	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = reinterpret_cast<UserData*>(voidp);
 	ud->m_data = inst;
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046386;
+	luaL_setmetatable(l, classnameVec4);
 	
 	return 1;
 }
@@ -1777,9 +1689,13 @@ static int wrapVec4Ctor(lua_State* l)
 /// Wrap destructor for Vec4.
 static int wrapVec4Dtor(lua_State* l)
 {
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
 	LuaBinder::checkArgsCount(l, 1);
-	void* voidp = luaL_checkudata(l, 1, classnameVec4);
-	UserData* ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	if(ud->m_gc)
 	{
 		Vec4* inst = reinterpret_cast<Vec4*>(ud->m_data);
@@ -1798,14 +1714,11 @@ static inline int pwrapVec4getX(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1836,14 +1749,11 @@ static inline int pwrapVec4getY(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1874,14 +1784,11 @@ static inline int pwrapVec4getZ(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1912,14 +1819,11 @@ static inline int pwrapVec4getW(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1950,14 +1854,11 @@ static inline int pwrapVec4setX(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1989,14 +1890,11 @@ static inline int pwrapVec4setY(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -2028,14 +1926,11 @@ static inline int pwrapVec4setZ(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -2067,14 +1962,11 @@ static inline int pwrapVec4setW(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -2106,14 +1998,11 @@ static inline int pwrapVec4getAt(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -2148,14 +2037,11 @@ static inline int pwrapVec4setAt(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -2190,22 +2076,17 @@ static inline int pwrapVec4copy(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec4");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
 	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2232,22 +2113,17 @@ static inline int pwrapVec4__add(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec4");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
 	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2267,6 +2143,7 @@ static inline int pwrapVec4__add(lua_State* l)
 	
 	::new(ud->m_data) Vec4(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046386;
 	
 	return 1;
 }
@@ -2289,22 +2166,17 @@ static inline int pwrapVec4__sub(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec4");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
 	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2324,6 +2196,7 @@ static inline int pwrapVec4__sub(lua_State* l)
 	
 	::new(ud->m_data) Vec4(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046386;
 	
 	return 1;
 }
@@ -2346,22 +2219,17 @@ static inline int pwrapVec4__mul(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec4");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
 	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2381,6 +2249,7 @@ static inline int pwrapVec4__mul(lua_State* l)
 	
 	::new(ud->m_data) Vec4(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046386;
 	
 	return 1;
 }
@@ -2403,22 +2272,17 @@ static inline int pwrapVec4__div(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec4");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
 	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2438,6 +2302,7 @@ static inline int pwrapVec4__div(lua_State* l)
 	
 	::new(ud->m_data) Vec4(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046386;
 	
 	return 1;
 }
@@ -2460,22 +2325,17 @@ static inline int pwrapVec4__eq(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec4");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
 	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2505,14 +2365,11 @@ static inline int pwrapVec4getLength(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -2543,14 +2400,11 @@ static inline int pwrapVec4getNormalized(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -2571,6 +2425,7 @@ static inline int pwrapVec4getNormalized(lua_State* l)
 	
 	::new(ud->m_data) Vec4(std::move(ret));
 	ud->m_gc = true;
+	ud->m_sig = 6804478823655046386;
 	
 	return 1;
 }
@@ -2593,14 +2448,11 @@ static inline int pwrapVec4normalize(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -2628,22 +2480,17 @@ static inline int pwrapVec4dot(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameVec4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Vec4");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
 	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2702,6 +2549,18 @@ static inline void wrapVec4(lua_State* l)
 //==============================================================================
 static const char* classnameMat3 = "Mat3";
 
+template<>
+I64 LuaBinder::getWrappedTypeSignature<Mat3>()
+{
+	return 6306819796139686981;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<Mat3>()
+{
+	return classnameMat3;
+}
+
 //==============================================================================
 /// Pre-wrap constructor for Mat3.
 static inline int pwrapMat3Ctor(lua_State* l)
@@ -2710,18 +2569,10 @@ static inline int pwrapMat3Ctor(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 0);
 	
 	// Create user data
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
-	ud->m_data = nullptr;
-	ud->m_gc = false;
-	luaL_setmetatable(l, classnameMat3);
-	
 	void* inst = LuaBinder::luaAlloc(l, sizeof(Mat3));
 	if(ANKI_UNLIKELY(inst == nullptr))
 	{
@@ -2731,8 +2582,12 @@ static inline int pwrapMat3Ctor(lua_State* l)
 	
 	::new(inst) Mat3();
 	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = reinterpret_cast<UserData*>(voidp);
 	ud->m_data = inst;
 	ud->m_gc = true;
+	ud->m_sig = 6306819796139686981;
+	luaL_setmetatable(l, classnameMat3);
 	
 	return 1;
 }
@@ -2751,9 +2606,13 @@ static int wrapMat3Ctor(lua_State* l)
 /// Wrap destructor for Mat3.
 static int wrapMat3Dtor(lua_State* l)
 {
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
 	LuaBinder::checkArgsCount(l, 1);
-	void* voidp = luaL_checkudata(l, 1, classnameMat3);
-	UserData* ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud)) return -1;
 	if(ud->m_gc)
 	{
 		Mat3* inst = reinterpret_cast<Mat3*>(ud->m_data);
@@ -2772,22 +2631,17 @@ static inline int pwrapMat3copy(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameMat3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud)) return -1;
 	Mat3* self = reinterpret_cast<Mat3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Mat3");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Mat3", 6306819796139686981, ud)) return -1;
 	Mat3* iarg0 = reinterpret_cast<Mat3*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Mat3& arg0(*iarg0);
 	
 	// Call the method
@@ -2814,14 +2668,11 @@ static inline int pwrapMat3getAt(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameMat3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud)) return -1;
 	Mat3* self = reinterpret_cast<Mat3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -2859,14 +2710,11 @@ static inline int pwrapMat3setAt(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 4);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameMat3);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud)) return -1;
 	Mat3* self = reinterpret_cast<Mat3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -2916,6 +2764,18 @@ static inline void wrapMat3(lua_State* l)
 //==============================================================================
 static const char* classnameMat3x4 = "Mat3x4";
 
+template<>
+I64 LuaBinder::getWrappedTypeSignature<Mat3x4>()
+{
+	return -2654194732934255869;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<Mat3x4>()
+{
+	return classnameMat3x4;
+}
+
 //==============================================================================
 /// Pre-wrap constructor for Mat3x4.
 static inline int pwrapMat3x4Ctor(lua_State* l)
@@ -2924,18 +2784,10 @@ static inline int pwrapMat3x4Ctor(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 0);
 	
 	// Create user data
-	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
-	ud->m_data = nullptr;
-	ud->m_gc = false;
-	luaL_setmetatable(l, classnameMat3x4);
-	
 	void* inst = LuaBinder::luaAlloc(l, sizeof(Mat3x4));
 	if(ANKI_UNLIKELY(inst == nullptr))
 	{
@@ -2945,8 +2797,12 @@ static inline int pwrapMat3x4Ctor(lua_State* l)
 	
 	::new(inst) Mat3x4();
 	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = reinterpret_cast<UserData*>(voidp);
 	ud->m_data = inst;
 	ud->m_gc = true;
+	ud->m_sig = -2654194732934255869;
+	luaL_setmetatable(l, classnameMat3x4);
 	
 	return 1;
 }
@@ -2965,9 +2821,13 @@ static int wrapMat3x4Ctor(lua_State* l)
 /// Wrap destructor for Mat3x4.
 static int wrapMat3x4Dtor(lua_State* l)
 {
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
 	LuaBinder::checkArgsCount(l, 1);
-	void* voidp = luaL_checkudata(l, 1, classnameMat3x4);
-	UserData* ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud)) return -1;
 	if(ud->m_gc)
 	{
 		Mat3x4* inst = reinterpret_cast<Mat3x4*>(ud->m_data);
@@ -2986,22 +2846,17 @@ static inline int pwrapMat3x4copy(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameMat3x4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud)) return -1;
 	Mat3x4* self = reinterpret_cast<Mat3x4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	voidp = luaL_checkudata(l, 2, "Mat3x4");
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud)) return -1;
 	Mat3x4* iarg0 = reinterpret_cast<Mat3x4*>(ud->m_data);
-	ANKI_ASSERT(iarg0 != nullptr);
 	const Mat3x4& arg0(*iarg0);
 	
 	// Call the method
@@ -3028,14 +2883,11 @@ static inline int pwrapMat3x4getAt(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameMat3x4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud)) return -1;
 	Mat3x4* self = reinterpret_cast<Mat3x4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -3073,14 +2925,11 @@ static inline int pwrapMat3x4setAt(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 4);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameMat3x4);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud)) return -1;
 	Mat3x4* self = reinterpret_cast<Mat3x4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	

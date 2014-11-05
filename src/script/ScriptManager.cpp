@@ -69,15 +69,30 @@ ANKI_SCRIPT_WRAP(Anki)
 	wrap##x(l);
 
 //==============================================================================
-ScriptManager::ScriptManager(HeapAllocator<U8>& alloc, SceneGraph* scene)
-:	LuaBinder(alloc, this),
-	m_scene(scene)
+ScriptManager::ScriptManager()
+{}
+
+//==============================================================================
+ScriptManager::~ScriptManager()
+{
+	ANKI_LOGI("Destroying scripting engine...");
+}
+
+//==============================================================================
+Error ScriptManager::create(
+	AllocAlignedCallback allocCb, 
+	void* allocCbData, SceneGraph* scene)
 {
 	ANKI_LOGI("Initializing scripting engine...");
 
-	lua_State* l = _getLuaState();
+	m_scene = scene;
+	m_alloc = ChainAllocator<U8>(allocCb, allocCbData, 1024, 1024);
 
-	// Global functions
+	Error err = m_lua.create(m_alloc, this);
+	if(err) return err;
+
+	// Wrap stuff
+	lua_State* l = m_lua.getLuaState();
 #if 0
 	ANKI_SCRIPT_CALL_WRAP(Anki);
 #endif
@@ -87,12 +102,7 @@ ScriptManager::ScriptManager(HeapAllocator<U8>& alloc, SceneGraph* scene)
 	ANKI_SCRIPT_CALL_WRAP(Scene);
 
 	ANKI_LOGI("Scripting engine initialized");
-}
-
-//==============================================================================
-ScriptManager::~ScriptManager()
-{
-	ANKI_LOGI("Destroying scripting engine...");
+	return err;
 }
 
 } // end namespace anki

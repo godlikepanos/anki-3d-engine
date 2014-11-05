@@ -14,23 +14,13 @@ namespace anki {
 //==============================================================================
 static int luaPanic(lua_State* l)
 {
-	std::string err(lua_tostring(l, -1));
-	ANKI_LOGE("Lua panic attack: %s", err.c_str());
+	ANKI_LOGE("Lua panic attack: %s", lua_tostring(l, -1));
 	abort();
 }
 
 //==============================================================================
-LuaBinder::LuaBinder(Allocator<U8>& alloc, void* parent)
-:	m_parent(parent)
-{
-	m_alloc = alloc;
-
-	m_l = lua_newstate(luaAllocCallback, this);
-	//m_l = luaL_newstate();
-	luaL_openlibs(m_l);
-	lua_atpanic(m_l, &luaPanic);
-	lua_setuserdata(m_l, this);
-}
+LuaBinder::LuaBinder()
+{}
 
 //==============================================================================
 LuaBinder::~LuaBinder()
@@ -39,6 +29,20 @@ LuaBinder::~LuaBinder()
 
 	ANKI_ASSERT(m_alloc.getMemoryPool().getAllocationsCount() == 0 
 		&& "Leaking memory");
+}
+
+//==============================================================================
+Error LuaBinder::create(Allocator<U8>& alloc, void* parent)
+{
+	m_parent = parent;
+	m_alloc = alloc;
+
+	m_l = lua_newstate(luaAllocCallback, this);
+	luaL_openlibs(m_l);
+	lua_atpanic(m_l, &luaPanic);
+	lua_setuserdata(m_l, this);
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -83,14 +87,20 @@ void* LuaBinder::luaAllocCallback(
 }
 
 //==============================================================================
-void LuaBinder::evalString(const CString& str)
+Error LuaBinder::evalString(const CString& str)
 {
+	Error err = ErrorCode::NONE;
 	int e = luaL_dostring(m_l, &str[0]);
 	if(e)
 	{
 		ANKI_LOGE("%s", lua_tostring(m_l, -1));
 		lua_pop(m_l, 1);
+		err = ErrorCode::USER_DATA;
 	}
+
+	lua_gc(m_l, LUA_GCCOLLECT, 0);
+
+	return err;
 }
 
 //==============================================================================
@@ -138,7 +148,7 @@ void LuaBinder::pushLuaCFuncStaticMethod(lua_State* l, const char* className,
 
 //==============================================================================
 Error LuaBinder::checkNumberInternal(
-	lua_State* l, I stackIdx, lua_Number& number)
+	lua_State* l, I32 stackIdx, lua_Number& number)
 {
 	Error err = ErrorCode::NONE;
 	lua_Number lnum;
@@ -154,6 +164,66 @@ Error LuaBinder::checkNumberInternal(
 		err = ErrorCode::USER_DATA;
 		lua_pushfstring(
 			l, "Number expected. Got %s", luaL_typename(l, stackIdx));
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error LuaBinder::checkString(lua_State* l, I32 stackIdx, const char*& out)
+{
+	Error err = ErrorCode::NONE;
+	const char* s = lua_tolstring(l, stackIdx, nullptr);
+	if(s != nullptr)
+	{
+		out = s;
+	}
+	else
+	{
+		err = ErrorCode::USER_DATA;
+		lua_pushfstring(
+			l, "String expected. Got %s", luaL_typename(l, stackIdx));
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error LuaBinder::checkUserData(
+	lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature,
+	UserData*& out)
+{
+	Error err = ErrorCode::NONE;
+
+	void* p = lua_touserdata(l, stackIdx);
+	if(p != nullptr)
+	{
+		out = reinterpret_cast<UserData*>(p);
+		if(out->m_sig == typeSignature)
+		{
+			// All done!
+			ANKI_ASSERT(out->m_data);
+
+			// Check using a LUA method again
+			ANKI_ASSERT(luaL_testudata(l, stackIdx, typeName) != nullptr
+				&& "ANKI type check passes but LUA's type check failed");
+		}
+		else
+		{
+			// It's not the correct user data
+			err = ErrorCode::USER_DATA;
+		}
+	}
+	else
+	{
+		// It's not user data
+		err = ErrorCode::USER_DATA;
+	}
+
+	if(err)
+	{
+		lua_pushfstring(l, "Userdata of %s expected. Got %s", 
+			typeName, luaL_typename(l, stackIdx));
 	}
 
 	return err;

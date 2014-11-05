@@ -17,6 +17,18 @@ namespace anki {
 //==============================================================================
 static const char* classnameDbg = "Dbg";
 
+template<>
+I64 LuaBinder::getWrappedTypeSignature<Dbg>()
+{
+	return -2784798555522127122;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<Dbg>()
+{
+	return classnameDbg;
+}
+
 //==============================================================================
 /// Pre-wrap method Dbg::getEnabled.
 static inline int pwrapDbggetEnabled(lua_State* l)
@@ -25,14 +37,11 @@ static inline int pwrapDbggetEnabled(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameDbg);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud)) return -1;
 	Dbg* self = reinterpret_cast<Dbg*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -63,14 +72,11 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 	(void)ud;
 	void* voidp;
 	(void)voidp;
-	Error err = ErrorCode::NONE;
-	(void)err;
 	
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	voidp = luaL_checkudata(l, 1, classnameDbg);
-	ud = reinterpret_cast<UserData*>(voidp);
+	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud)) return -1;
 	Dbg* self = reinterpret_cast<Dbg*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	

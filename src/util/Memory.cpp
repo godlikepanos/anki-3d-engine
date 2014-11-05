@@ -708,6 +708,9 @@ public:
 	/// Chunk allocation method
 	ChainMemoryPool::ChunkGrowMethod m_method;
 
+	/// Allocations number.
+	AtomicU32 m_allocationsCount;
+
 	/// Construct
 	Implementation(
 		AllocAlignedCallback allocCb, 
@@ -954,6 +957,7 @@ public:
 		{
 			mem = allocateFromChunk(ch, size, alignment);
 			ANKI_ASSERT(mem != nullptr && "The chunk should have space");
+			++m_allocationsCount;
 		}
 
 		m_lock.unlock();
@@ -1014,6 +1018,8 @@ public:
 		}
 
 		m_lock.unlock();
+
+		--m_allocationsCount;
 
 		return true;
 	}
@@ -1147,6 +1153,13 @@ U32 ChainMemoryPool::getUsersCount() const
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->m_refcount.load();
+}
+
+//==============================================================================
+U32 ChainMemoryPool::getAllocationsCount() const
+{
+	ANKI_ASSERT(m_impl != nullptr);
+	return m_impl->m_allocationsCount.load();
 }
 
 } // end namespace anki

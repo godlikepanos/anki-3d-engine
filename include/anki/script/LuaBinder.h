@@ -18,32 +18,51 @@
 
 namespace anki {
 
+/// LUA userdata
+class UserData
+{
+public:
+	I64 m_sig = 0; ///< Signature to identify the user data.
+	void* m_data = nullptr;
+	Bool8 m_gc = false; ///< Garbage collection on?
+};
+
 /// Lua binder class. A wrapper on top of LUA
 class LuaBinder
 {
 public:
 	template<typename T>
-	using Allocator = HeapAllocator<T>;
+	using Allocator = ChainAllocator<T>;
 
-	LuaBinder(Allocator<U8>& alloc, void* parent);
+	LuaBinder();
 	~LuaBinder();
 
-	/// @privatesection
-	/// {
-	lua_State* _getLuaState()
+	ANKI_USE_RESULT Error create(Allocator<U8>& alloc, void* parent);
+
+	lua_State* getLuaState()
 	{
 		return m_l;
 	}
 
-	Allocator<U8> _getAllocator() const
+	Allocator<U8> getAllocator() const
 	{
 		return m_alloc;
 	}
 
-	void* _getParent() const
+	void* getParent() const
 	{
 		return m_parent;
 	}
+
+	/// Expose a variable to the lua state
+	template<typename T>
+	void exposeVariable(const char* name, T* y);
+
+	/// Evaluate a string
+	ANKI_USE_RESULT Error evalString(const CString& str);
+
+	/// For debugging purposes
+	static void stackDump(lua_State* l);
 
 	/// Make sure that the arguments match the argsCount number
 	static void checkArgsCount(lua_State* l, I argsCount);
@@ -55,41 +74,37 @@ public:
 	static void pushLuaCFuncMethod(lua_State* l, const char* name,
 		lua_CFunction luafunc);
 
-	/// Add a new static function in the class
+	/// Add a new static function in the class.
 	static void pushLuaCFuncStaticMethod(lua_State* l, const char* className,
 		const char* name, lua_CFunction luafunc);
 
+	/// Get a number from the stack.
 	template<typename TNumber>
 	static ANKI_USE_RESULT Error checkNumber(
-		lua_State* l, I stackIdx, TNumber& number)
-	{
-		lua_Number lnum;
-		Error err = checkNumberInternal(l, stackIdx, lnum);
-		if(!err)
-		{
-			number = lnum;
-		}
+		lua_State* l, I stackIdx, TNumber& number);
 
-		return err;
-	}
+	/// Get a string from the stack.
+	static ANKI_USE_RESULT Error checkString(
+		lua_State* l, I32 stackIdx, const char*& out);
 
+	/// Get some user data from the stack.
+	/// The function uses the type signature to validate the type and not the 
+	/// typeName. That is supposed to be faster.
+	static ANKI_USE_RESULT Error checkUserData(
+		lua_State* l, I32 stackIdx, const char* typeName, I64 typeSignature, 
+		UserData*& out);
+
+	/// Allocate memory.
 	static void* luaAlloc(lua_State* l, size_t size);
 
+	/// Free memory.
 	static void luaFree(lua_State* l, void* ptr);
-	/// }
 
-	/// Expose a variable to the lua state
-	template<typename T>
-	void exposeVariable(const char* name, T* y);
+	template<typename TWrapedType>
+	static I64 getWrappedTypeSignature();
 
-	/// Evaluate a file
-	void evalFile(const CString& filename);
-
-	/// Evaluate a string
-	void evalString(const CString& str);
-
-	/// For debugging purposes
-	static void stackDump(lua_State* l);
+	template<typename TWrapedType>
+	static const char* getWrappedTypeName();
 
 private:
 	Allocator<U8> m_alloc;
@@ -100,17 +115,36 @@ private:
 		void* userData, void* ptr, PtrSize osize, PtrSize nsize);
 
 	static ANKI_USE_RESULT Error checkNumberInternal(
-		lua_State* l, I stackIdx, lua_Number& number);
+		lua_State* l, I32 stackIdx, lua_Number& number);
 };
 
 //==============================================================================
-/// lua userdata
-class UserData
+template<typename TNumber>
+inline Error LuaBinder::checkNumber(
+	lua_State* l, I stackIdx, TNumber& number)
 {
-public:
-	void* m_data = nullptr;
-	Bool8 m_gc = false; ///< Garbage collection on?
-};
+	lua_Number lnum;
+	Error err = checkNumberInternal(l, stackIdx, lnum);
+	if(!err)
+	{
+		number = lnum;
+	}
+
+	return err;
+}
+
+//==============================================================================
+template<typename T>
+inline void LuaBinder::exposeVariable(const char* name, T* y)
+{
+	void* ptr = lua_newuserdata(m_l, sizeof(UserData));
+	UserData* ud = reinterpret_cast<UserData*>(ptr);
+	ud->m_data = y;
+	ud->m_gc = false;
+	ud->m_sig = getWrappedTypeSignature<T>();
+	luaL_setmetatable(m_l, getWrappedTypeName<T>());
+	lua_setglobal(m_l, name);
+}
 
 } // end namespace anki
 

@@ -17,12 +17,17 @@ class SceneGraph;
 /// @{
 
 /// The scripting manager
-class ScriptManager: public LuaBinder
+class ScriptManager
 {
 public:
-	ScriptManager(HeapAllocator<U8>& alloc, SceneGraph* scene);
-
+	ScriptManager();
 	~ScriptManager();
+
+	/// Create the script manager.
+	ANKI_USE_RESULT Error create(
+		AllocAlignedCallback allocCb, 
+		void* allocCbData,
+		SceneGraph* scene);
 
 	/// @privatesection
 	/// @{
@@ -34,6 +39,8 @@ public:
 
 public:
 	SceneGraph* m_scene = nullptr;
+	ChainAllocator<U8> m_alloc;
+	LuaBinder m_lua;
 };
 
 /// @}

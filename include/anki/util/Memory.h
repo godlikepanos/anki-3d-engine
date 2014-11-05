@@ -277,6 +277,9 @@ public:
 	/// Get the number of users for this pool
 	U32 getUsersCount() const;
 
+	/// Return number of allocations
+	U32 getAllocationsCount() const;
+
 	/// @name Methods used for optimizing future chains
 	/// @{
 	PtrSize getChunksCount() const;

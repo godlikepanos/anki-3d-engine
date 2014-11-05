@@ -28,6 +28,10 @@ def parse_commandline():
 
 	return options.inp.split(":")
 
+def type_sig(value):
+	""" Calculate the signature of a type """
+	return hash(value)
+
 def get_base_fname(path):
 	""" From path/to/a/file.ext return the "file" """
 	return os.path.splitext(os.path.basename(path))[0]
@@ -160,6 +164,7 @@ def ret(ret_el):
 
 			wglue("::new(ud->m_data) %s(std::move(ret));" % type)
 			wglue("ud->m_gc = true;")
+		wglue("ud->m_sig = %d;" % type_sig(type))
 
 	wglue("")
 	wglue("return 1;")
@@ -170,21 +175,18 @@ def arg(arg_txt, stack_index, index):
 	(type, is_ref, is_ptr, is_const) = parse_type_decl(arg_txt)
 
 	if type_is_bool(type) or type_is_number(type):
-		#wglue("%s arg%d(luaL_checknumber(l, %d));" \
-			#% (type, index, stack_index))
 		wglue("%s arg%d;" % (type, index))
 		wglue("if(LuaBinder::checkNumber(l, %d, arg%d)) return -1;" \
 			% (stack_index, index))
 	elif type == "char" or type == "CString":
-		wglue("const char* arg%d(luaL_checkstring(l, %d));" \
-			% (index, stack_index))
+		wglue("const char* arg%d;" % index)
+		wglue("if(LuaBinder::checkString(l, %d, arg%d)) return -1;" \
+			% (stack_index, index))
 	else:
-		wglue("voidp = luaL_checkudata(l, %d, \"%s\");" \
-			% (stack_index, type))
-		wglue("ud = reinterpret_cast<UserData*>(voidp);")
+		wglue("if(LuaBinder::checkUserData(l, %d, \"%s\", %d, ud)) return -1;" \
+			% (stack_index, type, type_sig(type)))
 		wglue("%s* iarg%d = reinterpret_cast<%s*>(ud->m_data);" \
 			% (type, index, type))
-		wglue("ANKI_ASSERT(iarg%d != nullptr);" % index)
 
 		if is_ptr:
 			wglue("%s arg%d(iarg%d);" % (arg_txt, index, index))
@@ -217,6 +219,8 @@ def args(args_el, stack_index, class_name):
 	return args_str
 
 def check_args(args_el, bias):
+	""" Check number of args. Call that first because it throws error """
+
 	if args_el is None:
 		wglue("LuaBinder::checkArgsCount(l, %d);" % bias)
 	else:
@@ -267,8 +271,6 @@ def write_local_vars():
 	wglue("(void)ud;")
 	wglue("void* voidp;")
 	wglue("(void)voidp;")
-	wglue("Error err = ErrorCode::NONE;")
-	wglue("(void)err;")
 	wglue("")
 
 def method(class_name, meth_el):
@@ -291,8 +293,8 @@ def method(class_name, meth_el):
 
 	# Get this pointer
 	wglue("// Get \"this\" as \"self\"")
-	wglue("voidp = luaL_checkudata(l, %d, classname%s);" % (1, class_name))
-	wglue("ud = reinterpret_cast<UserData*>(voidp);")
+	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud)) return -1;" \
+		% (class_name, type_sig(class_name)))
 	wglue("%s* self = reinterpret_cast<%s*>(ud->m_data);" \
 		% (class_name, class_name))
 	wglue("ANKI_ASSERT(self != nullptr);")
@@ -416,12 +418,6 @@ def constructor(constr_el, class_name):
 
 	# Create new userdata
 	wglue("// Create user data")
-	wglue("voidp = lua_newuserdata(l, sizeof(UserData));")
-	wglue("ud = reinterpret_cast<UserData*>(voidp);")
-	wglue("ud->m_data = nullptr;")
-	wglue("ud->m_gc = false;")
-	wglue("luaL_setmetatable(l, classname%s);" % class_name)
-	wglue("")
 
 	wglue("void* inst = LuaBinder::luaAlloc(l, sizeof(%s));" % class_name)
 	wglue("if(ANKI_UNLIKELY(inst == nullptr))")
@@ -435,8 +431,12 @@ def constructor(constr_el, class_name):
 	wglue("::new(inst) %s(%s);" % (class_name, args_str))
 	wglue("")
 
+	wglue("voidp = lua_newuserdata(l, sizeof(UserData));")
+	wglue("ud = reinterpret_cast<UserData*>(voidp);")
 	wglue("ud->m_data = inst;")
 	wglue("ud->m_gc = true;")
+	wglue("ud->m_sig = %d;" % type_sig(class_name))
+	wglue("luaL_setmetatable(l, classname%s);" % class_name)
 	wglue("")
 
 	wglue("return 1;")
@@ -469,10 +469,11 @@ def destructor(class_name):
 	wglue("static int wrap%sDtor(lua_State* l)" % class_name)
 	wglue("{")
 	ident(1)
+	write_local_vars();
 
 	wglue("LuaBinder::checkArgsCount(l, 1);")
-	wglue("void* voidp = luaL_checkudata(l, 1, classname%s);" % class_name)
-	wglue("UserData* ud = reinterpret_cast<UserData*>(voidp);")
+	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud)) return -1;" \
+		% (class_name, type_sig(class_name)))
 
 	wglue("if(ud->m_gc)")
 	wglue("{")
@@ -509,6 +510,22 @@ def class_(class_el):
 	wglue(separator)
 	wglue("static const char* classname%s = \"%s\";" \
 		% (class_name, class_name))
+	wglue("")
+	wglue("template<>")
+	wglue("I64 LuaBinder::getWrappedTypeSignature<%s>()" % class_name)
+	wglue("{")
+	ident(1)
+	wglue("return %d;" % type_sig(class_name))
+	ident(-1)
+	wglue("}")
+	wglue("")
+	wglue("template<>")
+	wglue("const char* LuaBinder::getWrappedTypeName<%s>()" % class_name)
+	wglue("{")
+	ident(1)
+	wglue("return classname%s;" % class_name)
+	ident(-1)
+	wglue("}")
 	wglue("")
 
 	# Constructor declarations
