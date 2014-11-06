@@ -7,8 +7,8 @@
 // WARNING: The file is auto generated.
 
 #include "anki/script/LuaBinder.h"
+#include "anki/script/ScriptManager.h"
 #include "anki/Scene.h"
-#include <utility>
 
 namespace anki {
 
@@ -28,6 +28,17 @@ static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 	{
 		return nullptr;
 	}
+}
+
+//==============================================================================
+static SceneGraph* getSceneGraph(lua_State* l)
+{
+	LuaBinder* binder = reinterpret_cast<LuaBinder*>(lua_getuserdata(l));
+
+	ScriptManager* scriptManager = 
+		reinterpret_cast<ScriptManager*>(binder->getParent());
+
+	return &scriptManager->_getSceneGraph();
 }]]></head>
 
 	<classes>
@@ -111,6 +122,13 @@ static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 			</methods>
 		</class>
 	</classes>
+
+	<functions>
+		<function name="getSceneGraph">
+			<overrideCall>SceneGraph* ret = getSceneGraph(l);</overrideCall>
+			<return>SceneGraph*</return>
+		</function>
+	</functions>
 
 	<tail><![CDATA[} // end namespace anki]]></tail>
 </glue>

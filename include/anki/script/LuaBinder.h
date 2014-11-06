@@ -78,6 +78,10 @@ public:
 	static void pushLuaCFuncStaticMethod(lua_State* l, const char* className,
 		const char* name, lua_CFunction luafunc);
 
+	/// Add a new function.
+	static void pushLuaCFunc(
+		lua_State* l, const char* name, lua_CFunction luafunc);
+
 	/// Get a number from the stack.
 	template<typename TNumber>
 	static ANKI_USE_RESULT Error checkNumber(

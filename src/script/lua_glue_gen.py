@@ -194,7 +194,7 @@ def arg(arg_txt, stack_index, index):
 			wglue("%s arg%d(*iarg%d);" % (arg_txt, index, index))
 
 
-def args(args_el, stack_index, class_name):
+def args(args_el, stack_index):
 	""" Write the pop code for argument parsing and return the arg list """
 
 	if args_el is None:
@@ -300,7 +300,7 @@ def method(class_name, meth_el):
 	wglue("ANKI_ASSERT(self != nullptr);")
 	wglue("")
 
-	args_str = args(meth_el.find("args"), 2, class_name)
+	args_str = args(meth_el.find("args"), 2)
 
 	# Return value
 	ret_txt = None
@@ -362,7 +362,7 @@ def static_method(class_name, meth_el):
 	check_args(meth_el.find("args"), 0)
 
 	# Args
-	args_str = args(meth_el.find("args"), 1, class_name)
+	args_str = args(meth_el.find("args"), 1)
 	
 	# Return value
 	ret_txt = None
@@ -414,7 +414,7 @@ def constructor(constr_el, class_name):
 	check_args(constr_el.find("args"), 0)
 
 	# Args
-	args_str = args(constr_el.find("args"), 1, class_name)
+	args_str = args(constr_el.find("args"), 1)
 
 	# Create new userdata
 	wglue("// Create user data")
@@ -593,6 +593,67 @@ def class_(class_el):
 	wglue("}")
 	wglue("")
 
+def function(func_el):
+	""" Handle a plain function """
+
+	func_name = func_el.get("name")
+	func_alias = get_meth_alias(func_el)
+
+	global separator
+
+	wglue(separator)
+	wglue("/// Pre-wrap function %s." % func_name)
+	wglue("static inline int pwrap%s(lua_State* l)" % func_alias)
+	wglue("{")
+	ident(1)
+	write_local_vars()
+
+	check_args(func_el.find("args"), 0)
+
+	# Args
+	args_str = args(func_el.find("args"), 1)
+	
+	# Return value
+	ret_txt = None
+	ret_el = func_el.find("return")
+	if ret_el is not None:
+		ret_txt = ret_el.text
+
+	# Call
+	wglue("// Call the function")
+	call = func_el.find("overrideCall")
+	if call is not None:
+		call = call.text
+
+	if call is not None:
+		wglue("%s" % call)
+	else:
+		if ret_txt is None:
+			wglue("%s(%s);" % (func_name, args_str))
+		else:
+			wglue("%s ret = %s(%s);" % (ret_txt, func_name, args_str))
+
+	wglue("")
+	ret(ret_el)
+
+	ident(-1)
+	wglue("}")
+	wglue("")
+
+	# Write the actual function
+	wglue(separator)
+	wglue("/// Wrap function %s." % func_name)
+	wglue("static int wrap%s(lua_State* l)" % func_alias)
+	wglue("{")
+	ident(1)
+	wglue("int res = pwrap%s(l);" % func_alias)
+	wglue("if(res >= 0) return res;")
+	wglue("lua_error(l);")
+	wglue("return 0;")
+	ident(-1)
+	wglue("}")
+	wglue("")
+
 def main():
 	""" Main function """
 
@@ -613,12 +674,21 @@ def main():
 			wglue("%s" % head.text)
 			wglue("")
 
+		# Classes
 		class_names = []
 		for cls in root.iter("classes"):
 			for cl in cls.iter("class"):
 				class_(cl)
 				class_names.append(cl.get("name"))
 
+		# Functions
+		func_names = []
+		for fs in root.iter("functions"):
+			for f in fs.iter("function"):
+				function(f)
+				func_names.append(f.get("name"))
+
+		# Wrap function
 		wglue(separator)
 		wglue("/// Wrap the module.")
 		wglue("void wrapModule%s(lua_State* l)" % get_base_fname(filename))
@@ -626,6 +696,9 @@ def main():
 		ident(1)
 		for class_name in class_names:
 			wglue("wrap%s(l);" % class_name)
+		for func_name in func_names:
+			wglue("LuaBinder::pushLuaCFunc(l, \"%s\", wrap%s);" \
+				% (func_name, func_name))
 		ident(-1)
 		wglue("}")
 		wglue("")

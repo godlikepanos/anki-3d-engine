@@ -147,6 +147,13 @@ void LuaBinder::pushLuaCFuncStaticMethod(lua_State* l, const char* className,
 }
 
 //==============================================================================
+void LuaBinder::pushLuaCFunc(
+	lua_State* l, const char* name, lua_CFunction luafunc)
+{
+	lua_register(l, name, luafunc);
+}
+
+//==============================================================================
 Error LuaBinder::checkNumberInternal(
 	lua_State* l, I32 stackIdx, lua_Number& number)
 {

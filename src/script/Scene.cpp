@@ -6,8 +6,8 @@
 // WARNING: The file is auto generated.
 
 #include "anki/script/LuaBinder.h"
+#include "anki/script/ScriptManager.h"
 #include "anki/Scene.h"
-#include <utility>
 
 namespace anki {
 
@@ -27,6 +27,17 @@ static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 	{
 		return nullptr;
 	}
+}
+
+//==============================================================================
+static SceneGraph* getSceneGraph(lua_State* l)
+{
+	LuaBinder* binder = reinterpret_cast<LuaBinder*>(lua_getuserdata(l));
+
+	ScriptManager* scriptManager = 
+		reinterpret_cast<ScriptManager*>(binder->getParent());
+
+	return &scriptManager->_getSceneGraph();
 }
 
 //==============================================================================
@@ -713,6 +724,47 @@ static inline void wrapSceneGraph(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap function getSceneGraph.
+static inline int pwrapgetSceneGraph(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 0);
+	
+	// Call the function
+	SceneGraph* ret = getSceneGraph(l);
+	
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = reinterpret_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SceneGraph");
+	ud->m_data = reinterpret_cast<void*>(ret);
+	ud->m_gc = false;
+	ud->m_sig = -7754439619132389154;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap function getSceneGraph.
+static int wrapgetSceneGraph(lua_State* l)
+{
+	int res = pwrapgetSceneGraph(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap the module.
 void wrapModuleScene(lua_State* l)
 {
@@ -721,6 +773,7 @@ void wrapModuleScene(lua_State* l)
 	wrapModelNode(l);
 	wrapInstanceNode(l);
 	wrapSceneGraph(l);
+	LuaBinder::pushLuaCFunc(l, "getSceneGraph", wrapgetSceneGraph);
 }
 
 } // end namespace anki
