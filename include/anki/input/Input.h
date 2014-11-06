@@ -31,17 +31,20 @@ public:
 		COUNT
 	};
 
-	Input(NativeWindow* nativeWindow)
-	{
-		reset();
-		init(nativeWindow);
-	}
+	Input()
+	{}
 
 	~Input()
 	{
 		destroy();
 		ANKI_ASSERT(m_impl == nullptr);
 		ANKI_ASSERT(m_nativeWindow == nullptr);
+	}
+
+	ANKI_USE_RESULT Error create(NativeWindow* nativeWindow)
+	{
+		reset();
+		return init(nativeWindow);
 	}
 
 	U getKey(KeyCode i) const
@@ -69,7 +72,7 @@ public:
 	void reset();
 
 	/// Populate the key and button with the new state
-	void handleEvents();
+	ANKI_USE_RESULT Error handleEvents();
 
 	/// Move the mouse cursor to a position inside the window. Useful for 
 	/// locking the cursor into a fixed location (eg in the center of the 
@@ -115,7 +118,7 @@ private:
 	Bool8 m_lockCurs = false;
 
 	/// Initialize the platform's input system
-	void init(NativeWindow* nativeWindow);
+	ANKI_USE_RESULT Error init(NativeWindow* nativeWindow);
 
 	/// Destroy the platform specific input system
 	void destroy();

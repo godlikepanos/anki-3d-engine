@@ -33,22 +33,8 @@ android_app* gAndroidApp = nullptr;
 #endif
 
 //==============================================================================
-App::App(const ConfigSet& config, 
-	AllocAlignedCallback allocCb, void* allocCbUserData)
-:	m_allocCb(allocCb),
-	m_allocCbData(allocCbUserData),
-	m_heapAlloc(allocCb, allocCbUserData)
-{
-	try
-	{
-		init(config);
-	}
-	catch(const std::exception& e)
-	{
-		cleanup();
-		throw ANKI_EXCEPTION("App initialization failed") << e;
-	}
-}
+App::App()
+{}
 
 //==============================================================================
 App::~App()
@@ -109,31 +95,48 @@ void App::cleanup()
 }
 
 //==============================================================================
-void App::init(const ConfigSet& config_)
+Error App::create(const ConfigSet& config, 
+	AllocAlignedCallback allocCb, void* allocCbUserData)
+{
+	Error err = create(config, allocCb, allocCbUserData);
+	if(err)
+	{
+		cleanup();
+		ANKI_LOGE("App initialization failed");
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error App::createInternal(const ConfigSet& config_, 
+	AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	Error err = ErrorCode::NONE;
-
+	m_allocCb = allocCb;
+	m_allocCbData = allocCbUserData;
+	m_heapAlloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	ConfigSet config = config_;
 
-	initDirs();
+	err = initDirs();
+	if(err) return err;
 
 	// Print a message
-	String msg(getAllocator());
-	msg.sprintf(
-		"Initializing application ("
+	const char* buildType =
+#if !ANKI_DEBUG
+		"release";
+#else
+		"debug";
+#endif
+
+	ANKI_LOGI("Initializing application ("
 		"version %u.%u, "
 		"build %s %s, "
 		"commit %s)...",
 		ANKI_VERSION_MAJOR, ANKI_VERSION_MINOR,
-#if !ANKI_DEBUG
-		"release",
-#else
-		"debug",
-#endif
+		buildType,
 		__DATE__,
 		ANKI_REVISION);
-
-	ANKI_LOGI(&msg[0]);
 
 	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
@@ -142,7 +145,9 @@ void App::init(const ConfigSet& config_)
 	detail::TraceManagerSingleton::init(m_heapAlloc, m_settingsDir.toCString());
 #endif
 
+	//
 	// Window
+	//
 	NativeWindow::Initializer nwinit;
 	nwinit.m_width = config.get("width");
 	nwinit.m_height = config.get("height");
@@ -152,27 +157,48 @@ void App::init(const ConfigSet& config_)
 	nwinit.m_stencilBits = 0;
 	nwinit.m_fullscreenDesktopRez = config.get("fullscreenDesktopResolution");
 	nwinit.m_debugContext = config.get("debugContext");
-	m_window = m_heapAlloc.newInstance<NativeWindow>(nwinit, m_heapAlloc);	
+	m_window = m_heapAlloc.newInstance<NativeWindow>();
+	if(!m_window) return ErrorCode::OUT_OF_MEMORY;
+
+	err = m_window->create(nwinit, m_heapAlloc);
+	if(err) return err;
+
 	m_ctx = m_window->getCurrentContext();
 	m_window->contextMakeCurrent(nullptr);
 
+	//
 	// Input
-	m_input = m_heapAlloc.newInstance<Input>(m_window);
+	//
+	m_input = m_heapAlloc.newInstance<Input>();
+	if(!m_input) return ErrorCode::OUT_OF_MEMORY;
 
+	err = m_input->create(m_window);
+	if(err) return err;
+
+	//
 	// Threadpool
+	//
 	m_threadpool = m_heapAlloc.newInstance<Threadpool>(getCpuCoresCount());
+	if(!m_threadpool) return ErrorCode::OUT_OF_MEMORY;
 
+	//
 	// GL
+	//
 	m_gl = m_heapAlloc.newInstance<GlDevice>();
-	err = m_gl->create(m_allocCb, m_allocCbData, m_cacheDir.toCString());
-	ANKI_ASSERT(!err);
+	if(!m_gl) return ErrorCode::OUT_OF_MEMORY;
 
-	m_gl->startServer(
+	err = m_gl->create(m_allocCb, m_allocCbData, m_cacheDir.toCString());
+	if(err) return err;
+
+	err = m_gl->startServer(
 		makeCurrent, this, m_ctx,
 		swapWindow, m_window,
 		nwinit.m_debugContext);
+	if(err) return err;
 
+	//
 	// Resources
+	//
 	ResourceManager::Initializer rinit;
 	rinit.m_gl = m_gl;
 	rinit.m_config = &config;
@@ -180,33 +206,52 @@ void App::init(const ConfigSet& config_)
 	rinit.m_allocCallback = m_allocCb;
 	rinit.m_allocCallbackData = m_allocCbData;
 	rinit.m_tempAllocatorMemorySize = 1024 * 1024 * 4;
-	m_resources = m_heapAlloc.newInstance<ResourceManager>(rinit);
+	m_resources = m_heapAlloc.newInstance<ResourceManager>();
+	if(!m_resources) return ErrorCode::OUT_OF_MEMORY;
 
+	err = m_resources->create(rinit);
+	if(err) return err;
+
+	//
 	// Renderer
+	//
 	if(nwinit.m_fullscreenDesktopRez)
 	{
 		config.set("width", m_window->getWidth());
 		config.set("height", m_window->getHeight());
 	}
 
-	m_renderer = m_heapAlloc.newInstance<MainRenderer>(
+	m_renderer = m_heapAlloc.newInstance<MainRenderer>();
+	if(!m_renderer) return ErrorCode::OUT_OF_MEMORY;
+
+	err = m_renderer->create(
 		m_threadpool,
 		m_resources,
 		m_gl,
 		m_heapAlloc,
 		config);
+	if(err) return err;
 
-	m_resources->_setShadersPrependedSource(
+	err = m_resources->_setShadersPrependedSource(
 		m_renderer->_getShadersPrependedSource().toCString());
+	if(err) return err;
 
 	// Scene
-	m_scene = m_heapAlloc.newInstance<SceneGraph>(
-		m_allocCb, m_allocCbData, m_threadpool, m_resources);
+	m_scene = m_heapAlloc.newInstance<SceneGraph>();
+	if(!m_scene) return ErrorCode::OUT_OF_MEMORY;
+
+	err = m_scene->create(m_allocCb, m_allocCbData, m_threadpool, m_resources);
+	if(err) return err;
 
 	// Script
-	m_script = m_heapAlloc.newInstance<ScriptManager>(m_heapAlloc, m_scene);
+	m_script = m_heapAlloc.newInstance<ScriptManager>();
+	if(!m_script) return ErrorCode::OUT_OF_MEMORY;
+		
+	err = m_script->create(m_allocCb, m_allocCbData, m_scene);
+	if(err) return err;
 
 	ANKI_LOGI("Application initialized");
+	return err;
 }
 
 //==============================================================================
@@ -224,25 +269,35 @@ void App::swapWindow(void* window)
 }
 
 //==============================================================================
-void App::initDirs()
+Error App::initDirs()
 {
 #if ANKI_OS != ANKI_OS_ANDROID
 	// Settings path
-	String home = getHomeDirectory(m_heapAlloc);
-	m_settingsDir = home + "/.anki";
+	String home;
+	String::ScopeDestroyer homed(&home, m_heapAlloc);
+	Error err = getHomeDirectory(m_heapAlloc, home);
+	if(err) return err;
+
+	err = m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]);
+	if(err) return err;
+
 	if(!directoryExists(m_settingsDir.toCString()))
 	{
-		createDirectory(m_settingsDir.toCString());
+		err = createDirectory(m_settingsDir.toCString());
+		if(err) return err;
 	}
 
 	// Cache
-	m_cacheDir = m_settingsDir + "/cache";
+	err = m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]);
+	if(err) return err;
+
 	if(directoryExists(m_cacheDir.toCString()))
 	{
-		removeDirectory(m_cacheDir.toCString());
+		err = removeDirectory(m_cacheDir.toCString());
+		if(err) return err;
 	}
 
-	createDirectory(m_cacheDir.toCString());
+	err = createDirectory(m_cacheDir.toCString());
 #else
 	//ANKI_ASSERT(gAndroidApp);
 	//ANativeActivity* activity = gAndroidApp->activity;
@@ -264,11 +319,14 @@ void App::initDirs()
 
 	createDirectory(cacheDir.c_str());
 #endif
+
+	return err;
 }
 
 //==============================================================================
-void App::mainLoop(UserMainLoopCallback callback, void* userData)
+Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 {
+	Error err = ErrorCode::NONE;
 	ANKI_LOGI("Entering main loop");
 	I32 userRetCode = 0;
 
@@ -285,13 +343,17 @@ void App::mainLoop(UserMainLoopCallback callback, void* userData)
 		crntTime = HighRezTimer::getCurrentTime();
 
 		// Update
-		m_input->handleEvents();
+		err = m_input->handleEvents();
+		if(err)	break;
 
 		// User update
 		userRetCode = callback(*this, userData);
 
-		m_scene->update(prevUpdateTime, crntTime, *m_renderer);
-		m_renderer->render(*m_scene);
+		err = m_scene->update(prevUpdateTime, crntTime, *m_renderer);
+		if(err)	break;
+
+		err = m_renderer->render(*m_scene);
+		if(err)	break;
 
 		m_gl->swapBuffers();
 		ANKI_COUNTERS_RESOLVE_FRAME();
@@ -311,6 +373,8 @@ void App::mainLoop(UserMainLoopCallback callback, void* userData)
 	ANKI_COUNTER_STOP_TIMER_INC(FPS);
 	ANKI_COUNTERS_FLUSH();
 	ANKI_TRACE_FLUSH();
+
+	return err;
 }
 
 } // end namespace anki

@@ -11,39 +11,54 @@
 namespace anki {
 
 //==============================================================================
-StdinListener::StdinListener(HeapAllocator<String>& alloc)
-:	m_q(alloc),
-	m_thrd("anki_stdin")
-{
-	m_thrd.start(this, workingFunc);	
-}
-
-//==============================================================================
 StdinListener::~StdinListener()
 {
 	m_quit = true;
-	// TODO write(0, );
 	m_thrd.join();
+	
+	for(String& s : m_q)
+	{
+		s.destroy(m_alloc);
+	}
+
+	m_q.destroy(m_alloc);
 }
 
 //==============================================================================
-I StdinListener::workingFunc(Thread::Info& info)
+Error StdinListener::create(HeapAllocator<String>& alloc)
 {
+	m_alloc = alloc;
+	m_thrd.start(this, workingFunc);
+
+	return ErrorCode::NONE;
+}
+
+
+//==============================================================================
+Error StdinListener::workingFunc(Thread::Info& info)
+{
+	Error err = ErrorCode::NONE;
 	StdinListener& self = *reinterpret_cast<StdinListener*>(info.m_userData);
 	Array<char, 512> buff;
 
-	while(!self.m_quit)
+	while(!self.m_quit && !err)
 	{
 		I m = read(0, &buff[0], sizeof(buff));
 		buff[m] = '\0';
 
 		self.m_mtx.lock();
-		auto alloc = self.m_q.get_allocator();
-		self.m_q.emplace_back(&buff[0], alloc);
+		auto alloc = self.m_alloc;
+		err = self.m_q.emplaceBack(self.m_alloc);
+
+		if(!err)
+		{
+			err = self.m_q.getBack().create(alloc, &buff[0]);
+		}
+
 		self.m_mtx.unlock();
 	}
 
-	return 1;
+	return err;
 }
 
 //==============================================================================
@@ -52,10 +67,10 @@ String StdinListener::getLine()
 	String ret;
 	m_mtx.lock();
 	
-	if(!m_q.empty())
+	if(!m_q.isEmpty())
 	{
-		ret = m_q.front();
-		m_q.pop_front();
+		ret = std::move(m_q.getFront());
+		m_q.popFront(m_alloc);
 	}
 
 	m_mtx.unlock();

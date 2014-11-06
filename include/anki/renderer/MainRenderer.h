@@ -21,7 +21,7 @@ public:
 
 	~MainRenderer();
 
-	ANKI_USE_RESULT Error init(
+	ANKI_USE_RESULT Error create(
 		Threadpool* threadpool, 
 		ResourceManager* resources,
 		GlDevice* gl,

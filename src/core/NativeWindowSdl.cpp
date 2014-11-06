@@ -16,14 +16,16 @@ const U32 INIT_SUBSYSTEMS =
 	| SDL_INIT_GAMECONTROLLER;
 
 //==============================================================================
-void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
+Error NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 {
 	m_alloc = alloc;
 	m_impl = m_alloc.newInstance<NativeWindowImpl>();
+	if(!m_impl) return ErrorCode::OUT_OF_MEMORY;
 
 	if(SDL_Init(INIT_SUBSYSTEMS) != 0)
 	{
-		throw ANKI_EXCEPTION("SDL_Init() failed");
+		ANKI_LOGE("SDL_Init() failed");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 	
 	//
@@ -45,7 +47,8 @@ void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 		|| SDL_GL_SetAttribute(
 			SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) != 0)
 	{
-		throw ANKI_EXCEPTION("SDL_GL_SetAttribute() failed");
+		ANKI_LOGE("SDL_GL_SetAttribute() failed");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	if(init.m_debugContext)
@@ -53,7 +56,8 @@ void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 		if(SDL_GL_SetAttribute(
 			SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG) != 0)
 		{
-			throw ANKI_EXCEPTION("SDL_GL_SetAttribute() failed");
+			ANKI_LOGE("SDL_GL_SetAttribute() failed");
+			return ErrorCode::FUNCTION_FAILED;
 		}
 	}
 
@@ -74,7 +78,8 @@ void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 
 	if(m_impl->m_window == nullptr)
 	{
-		throw ANKI_EXCEPTION("SDL_CreateWindow() failed");
+		ANKI_LOGE("SDL_CreateWindow() failed");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	// Set the size after loading a fullscreen window
@@ -99,7 +104,8 @@ void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 
 	if(m_impl->m_context == nullptr)
 	{
-		throw ANKI_EXCEPTION("SDL_GL_CreateContext() failed");
+		ANKI_LOGE("SDL_GL_CreateContext() failed");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	//
@@ -108,11 +114,13 @@ void NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 	glewExperimental = GL_TRUE;
 	if(glewInit() != GLEW_OK)
 	{
-		throw ANKI_EXCEPTION("GLEW initialization failed");
+		ANKI_LOGE("GLEW initialization failed");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 	glGetError();
 
 	ANKI_LOGI("SDL window created");
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

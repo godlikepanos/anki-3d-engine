@@ -342,6 +342,14 @@ void List<T, TAlloc>::popBack(Allocator alloc)
 
 //==============================================================================
 template<typename T, typename TAlloc>
+void List<T, TAlloc>::popFront(Allocator alloc)
+{
+	ANKI_ASSERT(m_tail);
+	erase(alloc, Iterator(m_head, this));
+}
+
+//==============================================================================
+template<typename T, typename TAlloc>
 typename List<T, TAlloc>::Iterator List<T, TAlloc>::find(const Value& a)
 {
 	Iterator it = getBegin();

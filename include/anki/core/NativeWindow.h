@@ -47,15 +47,16 @@ public:
 		const char* m_title = "Untitled window";
 	};
 
-	NativeWindow(Initializer& initializer, HeapAllocator<U8>& alloc)
-	{
-		create(initializer, alloc);
-	}
+	NativeWindow()
+	{}
 
 	~NativeWindow()
 	{
 		destroy();
 	}
+
+	ANKI_USE_RESULT Error create(
+		Initializer& initializer, HeapAllocator<U8>& alloc);
 
 	NativeWindowImpl& getNative()
 	{
@@ -86,10 +87,10 @@ public:
 	/// @}
 
 private:
-	U32 m_width;
-	U32 m_height;
+	U32 m_width = 0;
+	U32 m_height = 0;
 
-	NativeWindowImpl* m_impl;
+	NativeWindowImpl* m_impl = nullptr;
 	HeapAllocator<U8> m_alloc;
 
 	Bool isCreated() const
@@ -97,7 +98,6 @@ private:
 		return m_impl != nullptr;
 	}
 
-	void create(Initializer& initializer, HeapAllocator<U8>& alloc);
 	void destroy();
 };
 

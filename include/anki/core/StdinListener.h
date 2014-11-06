@@ -8,7 +8,7 @@
 
 #include "anki/util/String.h"
 #include "anki/util/Thread.h"
-#include <queue>
+#include "anki/util/List.h"
 
 namespace anki {
 
@@ -21,20 +21,25 @@ namespace anki {
 class StdinListener
 {
 public:
-	StdinListener(HeapAllocator<String>& alloc);
+	StdinListener()
+	:	m_thrd("anki_stdin")
+	{}
 
 	~StdinListener();
+
+	ANKI_USE_RESULT Error create(HeapAllocator<String>& alloc);
 
 	/// Get line from the queue or return an empty string
 	String getLine();
 
 private:
-	std::deque<String, HeapAllocator<String>> m_q;
+	HeapAllocator<U8> m_alloc;
+	List<String, HeapAllocator<String>> m_q;
 	Mutex m_mtx; ///< Protect the queue
 	Thread m_thrd; ///< The thread
 	Bool8 m_quit = false;
 
-	static I workingFunc(Thread::Info& info); ///< The thread function
+	static Error workingFunc(Thread::Info& info); ///< The thread function
 };
 
 /// @}

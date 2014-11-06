@@ -12,7 +12,7 @@
 namespace anki {
 
 //==============================================================================
-void Input::init(NativeWindow* nativeWindow)
+Error Input::init(NativeWindow* nativeWindow)
 {
 	ANKI_ASSERT(nativeWindow);
 	m_nativeWindow = nativeWindow;
@@ -22,6 +22,7 @@ void Input::init(NativeWindow* nativeWindow)
 		m_nativeWindow->_getAllocator();
 
 	m_impl = m_nativeWindow->_getAllocator().newInstance<InputImpl>(alloc);
+	if(!m_impl) return ErrorCode::OUT_OF_MEMORY;
 
 	//impl
 	m_impl->m_sdlToAnki[SDLK_RETURN] = KeyCode::RETURN;
@@ -261,7 +262,7 @@ void Input::init(NativeWindow* nativeWindow)
 	m_impl->m_sdlToAnki[SDLK_SLEEP] = KeyCode::SLEEP;
 
 	// Call once to clear first events
-	handleEvents();
+	return handleEvents();
 }
 
 //==============================================================================
@@ -276,7 +277,7 @@ void Input::destroy()
 }
 
 //==============================================================================
-void Input::handleEvents()
+Error Input::handleEvents()
 {
 	ANKI_ASSERT(m_nativeWindow != nullptr);
 
@@ -334,6 +335,8 @@ void Input::handleEvents()
 	{
 		moveCursor(Vec2(0.0));
 	}
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

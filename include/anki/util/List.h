@@ -312,6 +312,9 @@ public:
 	/// Pop a value from the back of the list.
 	void popBack(Allocator alloc);
 
+	/// Pop a value from the front of the list.
+	void popFront(Allocator alloc);
+
 	/// Erase an element.
 	void erase(Allocator alloc, Iterator position);
 

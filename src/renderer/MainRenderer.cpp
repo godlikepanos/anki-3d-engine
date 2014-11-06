@@ -23,7 +23,7 @@ MainRenderer::~MainRenderer()
 {}
 
 //==============================================================================
-Error MainRenderer::init(
+Error MainRenderer::create(
 	Threadpool* threadpool, 
 	ResourceManager* resources,
 	GlDevice* gl,

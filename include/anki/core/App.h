@@ -36,11 +36,11 @@ public:
 	/// User callback of main loop
 	using UserMainLoopCallback = I32(*)(App& app, void* userData);
 
-	/// Create and initialize the application
-	App(const ConfigSet& config, 
-		AllocAlignedCallback allocCb, void* allocCbUserData);
-
+	App();
 	~App();
+
+	ANKI_USE_RESULT Error create(const ConfigSet& config, 
+		AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	F32 getTimerTick() const
 	{
@@ -86,7 +86,8 @@ public:
 	/// @param callback The user callback to run along with the other main loop
 	///                 code.
 	/// @param userData The data to pass to the user callback.
-	void mainLoop(UserMainLoopCallback callback, void* userData);
+	ANKI_USE_RESULT Error mainLoop(
+		UserMainLoopCallback callback, void* userData);
 
 	Input& getInput()
 	{
@@ -140,11 +141,11 @@ private:
 	String m_cacheDir; ///< This is used as a cache
 	F32 m_timerTick;
 
-	void init(const ConfigSet& config);
-	void initDirs();
-	void cleanup();
+	ANKI_USE_RESULT Error createInternal(const ConfigSet& config, 
+		AllocAlignedCallback allocCb, void* allocCbUserData);
 
-	void printAppInfo();
+	ANKI_USE_RESULT Error initDirs();
+	void cleanup();
 
 	static void makeCurrent(void* app, void* ctx);
 	static void swapWindow(void* window);
