@@ -154,15 +154,8 @@ Options:
 			for(Test* test : suite->tests)
 			{
 				++run;
-				try
-				{
-					test->run();
-					++passed;
-				}
-				catch(const std::exception& e)
-				{
-					std::cerr << e.what() << std::endl;
-				}
+				test->run();
+				++passed;
 			}
 		}
 	}
@@ -177,15 +170,8 @@ Options:
 					if(test->name == testName || testName.length() == 0)
 					{
 						++run;
-						try
-						{
-							test->run();
-							++passed;
-						}
-						catch(const std::exception& e)
-						{
-							std::cerr << e.what() << std::endl;
-						}
+						test->run();
+						++passed;
 					}
 				}
 			}

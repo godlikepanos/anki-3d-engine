@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/renderer/Renderer.h"
-#include "anki/util/Exception.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/core/Counters.h"

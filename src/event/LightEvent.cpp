@@ -9,10 +9,12 @@
 namespace anki {
 
 //==============================================================================
-LightEvent::LightEvent(EventManager* manager, F32 startTime, F32 duration,
+Error LightEvent::create(EventManager* manager, F32 startTime, F32 duration,
 	Light* light, const LightEventData& data)
-:	Event(manager, startTime, duration, light, EF_NONE)
 {
+	Error err = Event::create(manager, startTime, duration, light);
+	if(err) return err;
+
 	*static_cast<LightEventData*>(this) = data;
 
 	switch(light->getLightType())
@@ -20,7 +22,7 @@ LightEvent::LightEvent(EventManager* manager, F32 startTime, F32 duration,
 	case Light::Type::POINT:
 		{
 			PointLight* plight = static_cast<PointLight*>(light);
-			originalRadius = plight->getRadius();
+			m_originalRadius = plight->getRadius();
 		}
 		break;
 	case Light::Type::SPOT:
@@ -31,12 +33,14 @@ LightEvent::LightEvent(EventManager* manager, F32 startTime, F32 duration,
 		break;
 	}
 
-	originalDiffColor = light->getDiffuseColor();
-	originalSpecColor = light->getSpecularColor();
+	m_originalDiffColor = light->getDiffuseColor();
+	m_originalSpecColor = light->getSpecularColor();
+
+	return err;
 }
 
 //==============================================================================
-void LightEvent::update(F32 prevUpdateTime, F32 crntTime)
+Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
 	F32 factor = sin(getDelta(crntTime) * getPi<F32>());
 	Light* light = static_cast<Light*>(getSceneNode());
@@ -47,7 +51,7 @@ void LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 		{
 			PointLight* plight = static_cast<PointLight*>(light);
 			plight->setRadius(
-				factor * radiusMultiplier + originalRadius);
+				factor * m_radiusMultiplier + m_originalRadius);
 		}
 		break;
 	case Light::Type::SPOT:
@@ -58,9 +62,12 @@ void LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 		break;
 	}
 
-	light->setDiffuseColor(originalDiffColor + factor * intensityMultiplier);
+	light->setDiffuseColor(
+		m_originalDiffColor + factor * m_intensityMultiplier);
 	light->setSpecularColor(
-		originalSpecColor + factor * specularIntensityMultiplier);
+		m_originalSpecColor + factor * m_specularIntensityMultiplier);
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

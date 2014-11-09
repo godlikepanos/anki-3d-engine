@@ -20,7 +20,7 @@ ANKI_TEST(Util, Thread)
 	static const U64 NUMBER = 0xFAFAFAFABABABA;
 	U64 u = NUMBER;
 
-	t.start(&u, [](Thread::Info& info) -> I
+	t.start(&u, [](Thread::Info& info) -> Error
 	{
 		Bool check = true; 
 		
@@ -36,11 +36,11 @@ ANKI_TEST(Util, Thread)
 
 		HighRezTimer::sleep(1.0);
 
-		return check != true;
+		return (check != true) ? ErrorCode::FUNCTION_FAILED : ErrorCode::NONE;
 	});
 
 
-	I err = t.join();
+	Error err = t.join();
 	ANKI_TEST_EXPECT_EQ(err, 0);
 	ANKI_TEST_EXPECT_EQ(u, 0xF00);
 }
@@ -63,7 +63,7 @@ ANKI_TEST(Util, Mutex)
 	In in;
 	in.m_mtx = &mtx;
 
-	t0.start(&in, [](Thread::Info& info) -> I
+	t0.start(&in, [](Thread::Info& info) -> Error
 	{
 		In& in = *reinterpret_cast<In*>(info.m_userData);
 		I64& num = in.m_num;
@@ -76,10 +76,10 @@ ANKI_TEST(Util, Mutex)
 			mtx.unlock();
 		}
 
-		return 0;
+		return ErrorCode::NONE;
 	});
 
-	t1.start(&in, [](Thread::Info& info) -> I
+	t1.start(&in, [](Thread::Info& info) -> Error
 	{
 		In& in = *reinterpret_cast<In*>(info.m_userData);
 		I64& num = in.m_num;
@@ -92,12 +92,12 @@ ANKI_TEST(Util, Mutex)
 			mtx.unlock();
 		}
 
-		return 0;
+		return ErrorCode::NONE;
 	});
 
 
-	t0.join();
-	t1.join();
+	ANKI_TEST_EXPECT_NO_ERR(t0.join());
+	ANKI_TEST_EXPECT_NO_ERR(t1.join());
 
 	ANKI_TEST_EXPECT_EQ(in.m_num, ITERATIONS * 2);
 }
@@ -110,12 +110,14 @@ struct TestJobTP: Threadpool::Task
 	U32 in = 0;
 	U32 iterations = 0;
 
-	void operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
+	Error operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
 	{
 		for(U32 i = 0; i < iterations; i++)	
 		{
 			++in;
 		}
+
+		return ErrorCode::NONE;
 	}
 };
 
@@ -124,7 +126,7 @@ struct TestJobTP: Threadpool::Task
 ANKI_TEST(Util, Threadpool)
 {
 	const U32 threadsCount = 4;
-	const U32 repeat = 500;
+	const U32 repeat = 5;
 	Threadpool* tp = new Threadpool(threadsCount);
 
 	TestJobTP jobs[threadsCount];
@@ -141,7 +143,7 @@ ANKI_TEST(Util, Threadpool)
 			tp->assignNewTask(j, &jobs[j]);
 		}
 
-		tp->waitForAllThreadsToFinish();
+		ANKI_TEST_EXPECT_NO_ERR(tp->waitForAllThreadsToFinish());
 
 		for(U32 j = 0; j < threadsCount; j++)
 		{
@@ -160,15 +162,15 @@ ANKI_TEST(Util, Barrier)
 		Barrier b(2);
 		Thread t(nullptr);
 
-		t.start(&b, [](Thread::Info& info) -> I
+		t.start(&b, [](Thread::Info& info) -> Error
 		{
 			Barrier& b = *reinterpret_cast<Barrier*>(info.m_userData);
 			b.wait();
-			return 0;
+			return ErrorCode::NONE;
 		});
 
 		b.wait();
-		t.join();
+		ANKI_TEST_EXPECT_NO_ERR(t.join());
 	}
 }
 

@@ -51,6 +51,8 @@ public:
 	// Use the base constructors
 	using Base::Base;
 
+	void destroy(Allocator alloc);
+
 	/// Join all the elements into a single big string using a the
 	/// seperator @a separator
 	ANKI_USE_RESULT Error join(

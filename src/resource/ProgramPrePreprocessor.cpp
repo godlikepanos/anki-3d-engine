@@ -5,7 +5,6 @@
 
 #include "anki/resource/ProgramPrePreprocessor.h"
 #include "anki/resource/ResourceManager.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Functions.h"
 #include "anki/util/File.h"
 #include "anki/util/Array.h"

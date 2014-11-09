@@ -17,53 +17,51 @@ namespace anki {
 // Forward
 class SceneGraph;
 
-/// @addtogroup Events
+/// @addtogroup event
 /// @{
 
-/// This manager creates the events ands keeps tracks of them
+/// This manager creates the events ands keeps track of them
 class EventManager
 {
 public:
-	typedef SceneVector<Event*> EventsContainer;
+	using EventsContainer = List<Event*, SceneAllocator<Event*>>;
 
-	EventManager(SceneGraph* scene);
+	EventManager();
 	~EventManager();
 
-	/// @name Accessors
-	/// @{
+	ANKI_USE_RESULT Error create(SceneGraph* scene);
+
 	SceneGraph& getSceneGraph()
 	{
-		return *scene;
+		return *m_scene;
 	}
+
 	const SceneGraph& getSceneGraph() const
 	{
-		return *scene;
+		return *m_scene;
 	}
 
 	SceneAllocator<U8> getSceneAllocator() const;
-	SceneAllocator<U8> getSceneFrameAllocator() const;
-	/// @}
+	SceneFrameAllocator<U8> getSceneFrameAllocator() const;
 
 	/// Iterate events
 	template<typename Func>
-	void iterateEvents(Func func)
+	ANKI_USE_RESULT Error iterateEvents(Func func)
 	{
-		for(Event* e : events)
+		Error err = ErrorCode::NONE;
+		auto it = m_events.getBegin();
+		auto end = m_events.getEnd();
+		for(; it != end && !err; ++it)
 		{
-			func(*e);
+			err = func(*(*it));
 		}
+
+		return err;
 	}
 
 	/// Create a new event
 	template<typename T, typename... Args>
-	void newEvent(T*& event, Args&&... args)
-	{
-		SceneAllocator<T> al = getSceneAllocator();
-		event = al.allocate(1);
-		al.construct(event, this, std::forward<Args>(args)...);
-
-		registerEvent(event);
-	}
+	ANKI_USE_RESULT Error newEvent(T*& event, Args... args);
 
 	/// Delete an event. It actualy marks it for deletion
 	void deleteEvent(Event* event)
@@ -72,23 +70,48 @@ public:
 	}
 
 	/// Update
-	void updateAllEvents(F32 prevUpdateTime, F32 crntTime);
+	ANKI_USE_RESULT Error updateAllEvents(F32 prevUpdateTime, F32 crntTime);
 
 	/// Delete events that pending deletion
 	void deleteEventsMarkedForDeletion();
 
 private:
-	SceneGraph* scene = nullptr;
-	EventsContainer events;
-	F32 prevUpdateTime;
-	F32 crntTime;
+	SceneGraph* m_scene = nullptr;
+	EventsContainer m_events;
+	U32 m_markedForDeletionCount = 0;
+	F32 m_prevUpdateTime;
+	F32 m_crntTime;
 
 	/// Add an event to the local container
-	void registerEvent(Event* event);
+	ANKI_USE_RESULT Error registerEvent(Event* event);
 
 	/// Remove an event from the container
-	void unregisterEvent(Event* event);
+	void unregisterEvent(EventsContainer::Iterator it);
 };
+
+//==============================================================================
+template<typename T, typename... Args>
+inline Error EventManager::newEvent(T*& event, Args... args)
+{
+	Error err = ErrorCode::NONE;
+	event = getSceneAllocator().template newInstance<T>();
+	if(event == nullptr)
+	{
+		err = ErrorCode::OUT_OF_MEMORY;
+	}
+	
+	if(!err)
+	{
+		err = event->create(this, args...);
+	}
+
+	if(!err)
+	{
+		err = registerEvent(event);
+	}
+
+	return err;
+}
 /// @}
 
 } // end namespace anki

@@ -34,7 +34,7 @@ class App
 {
 public:
 	/// User callback of main loop
-	using UserMainLoopCallback = I32(*)(App& app, void* userData);
+	using UserMainLoopCallback = Error(*)(App& app, void* userData, Bool& quit);
 
 	App();
 	~App();

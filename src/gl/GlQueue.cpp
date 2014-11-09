@@ -125,7 +125,7 @@ Error GlQueue::start(
 
 	if(err && threadStarted)
 	{
-		m_thread.join();
+		err = m_thread.join();
 	}
 #else
 	prepare();
@@ -146,7 +146,8 @@ void GlQueue::stop()
 		m_tail = m_queue.size() + 1;
 		m_head = m_tail + 1;
 	}
-	m_thread.join();
+	Error err = m_thread.join();
+	(void)err;
 #else
 	finish();
 #endif
@@ -202,11 +203,11 @@ void GlQueue::finish()
 }
 
 //==============================================================================
-I GlQueue::threadCallback(Thread::Info& info)
+Error GlQueue::threadCallback(Thread::Info& info)
 {
 	GlQueue* queue = reinterpret_cast<GlQueue*>(info.m_userData);
 	queue->threadLoop();
-	return 0;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

@@ -16,33 +16,46 @@ ANKI_TEST(Util, String)
 
 	// Copy
 	{
-		String a("123", alloc);
-		String b(a);
+		String a, b;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc, "123"));
+		ANKI_TEST_EXPECT_NO_ERR(b.create(alloc, a));
+
 		ANKI_TEST_EXPECT_EQ(a, b);
 		ANKI_TEST_EXPECT_EQ(b, "123");
 
-		b = "321";
-		a = b;
+		b.destroy(alloc);
+		a.destroy(alloc);
+		ANKI_TEST_EXPECT_NO_ERR(b.create(alloc, "321"));
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc, b));
+		ANKI_TEST_EXPECT_EQ(a, b);
 		ANKI_TEST_EXPECT_EQ(a, "321");
+
+		b.destroy(alloc);
+		a.destroy(alloc);
 	}
+
 
 	// Move
 	{
-		String a("123", alloc);
+		String a;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc, "123"));
 		String b(std::move(a));
 		ANKI_TEST_EXPECT_EQ(a.isEmpty(), true);
 		ANKI_TEST_EXPECT_EQ(b, "123");
 
-		b = "321";
+		b.destroy(alloc);
+		ANKI_TEST_EXPECT_NO_ERR(b.create(alloc, "321"));
 		a = std::move(b);
 		ANKI_TEST_EXPECT_EQ(a, "321");
 		ANKI_TEST_EXPECT_EQ(b.isEmpty(), true);
+		a.destroy(alloc);
 	}
 
 	// Accessors
 	{
 		const char* s = "123";
-		String a(s, alloc);
+		String a;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc, s));
 		ANKI_TEST_EXPECT_EQ(a[0], '1');
 		ANKI_TEST_EXPECT_EQ(a[1], '2');
 		ANKI_TEST_EXPECT_EQ(a[2], '3');
@@ -59,44 +72,39 @@ ANKI_TEST(Util, String)
 
 		ANKI_TEST_EXPECT_EQ(a.begin(), &a[0]);
 		ANKI_TEST_EXPECT_EQ(a.end(), &a[0] + 3);
+		a.destroy(alloc);
 	}
 
-	// Addition
-	{
-		String a(alloc);
-		String b(alloc);
-
-		a = "123";
-		b = String("456", alloc);
-
-		String c;
-		c = a + b;
-
-		ANKI_TEST_EXPECT_EQ(c, "123456");
-	}
 
 	// Append
 	{
-		String a(alloc);
-		String b("123", alloc);
+		String a, b;
 
-		a += b;
+		ANKI_TEST_EXPECT_NO_ERR(b.create(alloc, "123"));
+
+		ANKI_TEST_EXPECT_NO_ERR(a.append(alloc, b));
 		ANKI_TEST_EXPECT_EQ(a, "123");
 
-		a += "456";
-		a += String("789", alloc);
-		a += String(alloc);
-		a += "";
-		a += "0";
+		ANKI_TEST_EXPECT_NO_ERR(a.append(alloc, "456789"));
+		ANKI_TEST_EXPECT_NO_ERR(a.append(alloc, String()));
+		ANKI_TEST_EXPECT_NO_ERR(a.append(alloc, ""));
+		ANKI_TEST_EXPECT_NO_ERR(a.append(alloc, "0"));
 		ANKI_TEST_EXPECT_EQ(a, "1234567890");
+		a.destroy(alloc);
+		b.destroy(alloc);
 	}
 
 	// Compare
 	{
 #define COMPARE(x_, y_, op_) \
-	ANKI_TEST_EXPECT_EQ(String(x_, alloc) op_ String(y_, alloc), \
-	std::string(x_) op_ std::string(y_) )
-
+	ANKI_TEST_EXPECT_NO_ERR(a.append(alloc, x_)); \
+	ANKI_TEST_EXPECT_NO_ERR(b.append(alloc, y_)); \
+	ANKI_TEST_EXPECT_EQ(a op_ b, \
+	std::string(x_) op_ std::string(y_)) \
+	a.destroy(alloc); \
+	b.destroy(alloc); 
+	
+		String a, b;
 		COMPARE("123", "1233", <);
 		COMPARE("0123", "1233", <=);
 		COMPARE("ASDFA", "asdf90f", >);
@@ -107,92 +115,101 @@ ANKI_TEST(Util, String)
 
 	// sprintf
 	{
-		String a(alloc);
+		String a;
 
 		// Simple
-		a.sprintf("12%c  %d", '3', 123);
+		ANKI_TEST_EXPECT_NO_ERR(a.sprintf(alloc, "12%c  %d", '3', 123));
 		ANKI_TEST_EXPECT_EQ(a, "123  123");
+		a.destroy(alloc);
 
 		// Extreme
 		const char* s = "1234567890ABCDEF!@#$%^&*()_+asfghjkl:,.;ljk\"><{}[]/";
-		a.sprintf("%s%s%s%s%s%s%s%s%s%s%s %d", 
-			s, s, s, s, s, s, s, s, s, s, s, 88);
+		ANKI_TEST_EXPECT_NO_ERR(a.sprintf(alloc, "%s%s%s%s%s%s%s%s%s%s%s %d", 
+			s, s, s, s, s, s, s, s, s, s, s, 88));
 
-		String b(alloc);
+		String b;
 		for(U i = 0; i < 11; i++)
 		{
-			b += s;
+			ANKI_TEST_EXPECT_NO_ERR(b.append(alloc, s));
 		}
-		b += " 88";
+		ANKI_TEST_EXPECT_NO_ERR(b.append(alloc, " 88"));
 
 		ANKI_TEST_EXPECT_EQ(a, b);
 		ANKI_TEST_EXPECT_EQ(a.getLength(), b.getLength());
+
+		a.destroy(alloc);
+		b.destroy(alloc);
 	}
 
 	// sprintf #2: Smaller result (will trigger another path)
 	{
-		String a(alloc);
+		String a;
 
 		// Simple
-		a.sprintf("12%c  %d", '3', 123);
+		ANKI_TEST_EXPECT_NO_ERR(a.sprintf(alloc, "12%c  %d", '3', 123));
 		ANKI_TEST_EXPECT_EQ(a, "123  123");
+		a.destroy(alloc);
 
 		// Extreme
 		const char* s = "12345";
-		a.sprintf("%s%s %d", s, s, 88);
+		ANKI_TEST_EXPECT_NO_ERR(a.sprintf(alloc, "%s%s %d", s, s, 88));
 
-		String b(alloc);
+		String b;
 		for(U i = 0; i < 2; i++)
 		{
-			b += s;
+			ANKI_TEST_EXPECT_NO_ERR(b.append(alloc, s));
 		}
-		b += " 88";
+		ANKI_TEST_EXPECT_NO_ERR(b.append(alloc, " 88"));
 
 		ANKI_TEST_EXPECT_EQ(a, b);
 		ANKI_TEST_EXPECT_EQ(a.getLength(), b.getLength());
+
+		a.destroy(alloc);
+		b.destroy(alloc);
 	}
 
-	// Resize
+	// Other create
 	{
-		String a(alloc);
+		String a;
 
-		a.resize(3, '1');
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc, '1', 3));
 		ANKI_TEST_EXPECT_EQ(a, "111");
+		ANKI_TEST_EXPECT_EQ(a.getLength(), 3);
 
-		a.resize(2, '2');
-		ANKI_TEST_EXPECT_EQ(a, "11");
-
-		a.resize(3, '3');
-		ANKI_TEST_EXPECT_EQ(a, "113");
-
-		a.resize(3, '?');
-		ANKI_TEST_EXPECT_EQ(a, "113");
-
-		a.resize(4, '4');
-		ANKI_TEST_EXPECT_EQ(a, "1134");
+		a.destroy(alloc);
 	}
 
 	// toString
 	{
-		String a(String::toString(123, alloc));
+		String a;
+		ANKI_TEST_EXPECT_NO_ERR(a.toString(alloc, 123));
 		ANKI_TEST_EXPECT_EQ(a, "123");
+		a.destroy(alloc);
 
-		a = String::toString(123.123, alloc);
+		ANKI_TEST_EXPECT_NO_ERR(a.toString(alloc, 123.123));
 		ANKI_TEST_EXPECT_EQ(a, "123.123000");
+		a.destroy(alloc);
 	}
 
 	// To number
 	{
 		I64 i;
-		String("123456789", alloc).toI64(i);
+		String a;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc, "123456789"));
+		ANKI_TEST_EXPECT_NO_ERR(a.toI64(i));
 		ANKI_TEST_EXPECT_EQ(i, 123456789);
+		a.destroy(alloc);
 
-		String("-9223372036854775807", alloc).toI64(i);
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc, "-9223372036854775807"));
+		ANKI_TEST_EXPECT_NO_ERR(a.toI64(i));
 		ANKI_TEST_EXPECT_EQ(i, -9223372036854775807);
+		a.destroy(alloc);
 
 		F64 f;
-		String("123456789.145", alloc).toF64(f);
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc, "123456789.145"));
+		ANKI_TEST_EXPECT_NO_ERR(a.toF64(f));
 		ANKI_TEST_EXPECT_EQ(f, 123456789.145);
+		a.destroy(alloc);
 	}
 }
 

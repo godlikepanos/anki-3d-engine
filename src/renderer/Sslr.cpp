@@ -67,7 +67,8 @@ Error Sslr::init(const ConfigSet& config)
 	// Init FBOs and RTs and blurring
 	if(m_blurringIterationsCount > 0)
 	{
-		initBlurring(*m_r, m_width, m_height, 9, 0.0);
+		err = initBlurring(*m_r, m_width, m_height, 9, 0.0);
+		if(err) return err;
 	}
 	else
 	{
@@ -121,7 +122,8 @@ Error Sslr::run(GlCommandBufferHandle& cmdBuff)
 	//
 	if(m_blurringIterationsCount > 0)
 	{
-		runBlurring(*m_r, cmdBuff);
+		err = runBlurring(*m_r, cmdBuff);
+		if(err) return err;
 	}
 
 	// Write the reflection back to IS RT

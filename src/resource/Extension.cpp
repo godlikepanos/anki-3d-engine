@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/Extension.h"
-#include "anki/util/Exception.h"
 //#include <dlfcn.h>
 
 namespace anki {

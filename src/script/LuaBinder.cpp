@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/script/LuaBinder.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Logger.h"
 #include <iostream>
 #include <cstring>
@@ -51,7 +50,8 @@ void* LuaBinder::luaAllocCallback(
 {
 	ANKI_ASSERT(userData);
 	
-	LuaBinder& binder = *(LuaBinder*)userData;
+#if 1
+	LuaBinder& binder = *reinterpret_cast<LuaBinder*>(userData);
 	void* out = nullptr;
 
 	if(nsize == 0) 
@@ -82,6 +82,17 @@ void* LuaBinder::luaAllocCallback(
 			binder.m_alloc.getMemoryPool().free(ptr);
 		}
 	}
+#else
+	void* out = nullptr;
+	if (nsize == 0) 
+	{
+		free(ptr);
+	}
+	else
+	{
+		out = realloc(ptr, nsize);
+	}
+#endif
 
 	return out;
 }

@@ -9,6 +9,7 @@
 #include "anki/util/Functions.h"
 #include <cstdlib>
 #include <new>
+#include <cstdio>
 
 namespace anki {
 
@@ -90,8 +91,9 @@ private:
 		Barrier& barrier = self.m_threadpool->m_barrier;
 		Mutex& mtx = self.m_mutex; 
 		const PtrSize threadCount = self.m_threadpool->getThreadsCount();
+		Bool quit = false;
 
-		while(!self.m_quit)
+		while(!quit)
 		{
 			Threadpool::Task* task;
 
@@ -104,6 +106,8 @@ private:
 				}
 				task = self.m_task;
 				self.m_task = nullptr;
+
+				quit = self.m_quit;
 			}
 
 			// Exec
@@ -172,7 +176,7 @@ Threadpool::~Threadpool()
 		thread.m_quit = true;
 		thread.assignNewTask(&m_dummyTask); // Wake it
 	}
-
+	
 	Error err = waitForAllThreadsToFinish();
 	(void)err;
 

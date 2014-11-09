@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/core/NativeWindowEglFbdev.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Vector.h"
 #include "anki/util/Array.h"
 #include "anki/util/StdTypes.h"

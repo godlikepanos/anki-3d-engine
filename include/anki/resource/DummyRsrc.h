@@ -33,7 +33,7 @@ public:
 		const CString& filename, ResourceInitializer& init)
 	{
 		Error err = ErrorCode::NONE;
-		if(filename != "exception")
+		if(filename != "error")
 		{
 			m_memory = m_alloc.allocate(128);
 			void* tempMem = init.m_tempAlloc.allocate(128);
@@ -43,7 +43,7 @@ public:
 		}
 		else
 		{
-			ANKI_LOGE("Dummy exception");
+			ANKI_LOGE("Dummy error");
 			err = ErrorCode::USER_DATA;
 		}
 

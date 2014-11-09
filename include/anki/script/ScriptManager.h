@@ -29,6 +29,19 @@ public:
 		void* allocCbData,
 		SceneGraph* scene);
 
+	/// Expose a variable to the scripting engine.
+	template<typename T>
+	void exposeVariable(const char* name, T* y)
+	{
+		m_lua.exposeVariable<T>(name, y);
+	}
+
+	/// Evaluate a string
+	ANKI_USE_RESULT Error evalString(const CString& str)
+	{
+		return m_lua.evalString(str);
+	}
+
 	/// @privatesection
 	/// @{
 	SceneGraph& _getSceneGraph()

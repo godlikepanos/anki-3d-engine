@@ -27,7 +27,7 @@ public:
 		m_id(id)
 	{}
 
-	void operator()()
+	Error operator()()
 	{
 		if(m_count)
 		{
@@ -37,9 +37,12 @@ public:
 			{
 				if(m_id != static_cast<I32>(x))
 				{
-					throw ANKI_EXCEPTION("Wrong excecution order");
+					ANKI_LOGE("Wrong excecution order");
+					return ErrorCode::FUNCTION_FAILED;
 				}
 			}
+
+			return ErrorCode::NONE;
 		}
 
 		if(m_sleepTime != 0.0)
@@ -51,6 +54,8 @@ public:
 		{
 			m_barrier->wait();
 		}
+
+		return ErrorCode::NONE;
 	}
 };
 
@@ -66,9 +71,11 @@ public:
 		m_barrier(barrier)
 	{}
 
-	void operator()()
+	Error operator()()
 	{
 		void* mem = m_alloc.allocate(10);
+		if(!mem) return ErrorCode::FUNCTION_FAILED;
+
 		HighRezTimer::sleep(0.1);
 
 		m_alloc.deallocate(mem, 10);
@@ -77,6 +84,8 @@ public:
 		{
 			m_barrier->wait();
 		}
+
+		return ErrorCode::NONE;
 	}
 };
 
@@ -87,21 +96,24 @@ ANKI_TEST(Resource, AsyncLoader)
 
 	// Simple create destroy
 	{
-		AsyncLoader a(alloc);
+		AsyncLoader a;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc));
 	}
 
 	// Simple task that will finish
 	{
-		AsyncLoader a(alloc);
+		AsyncLoader a;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc));
 		Barrier barrier(2);
 
-		a.newTask<Task>(0.0, &barrier, nullptr);
+		ANKI_TEST_EXPECT_NO_ERR(a.newTask<Task>(0.0, &barrier, nullptr));
 		barrier.wait();
 	}
 
 	// Many tasks that will finish
 	{
-		AsyncLoader a(alloc);
+		AsyncLoader a;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc));
 		Barrier barrier(2);
 		AtomicU32 counter = {0};
 
@@ -114,7 +126,7 @@ ANKI_TEST(Resource, AsyncLoader)
 				pbarrier = &barrier;
 			}
 
-			a.newTask<Task>(0.0, pbarrier, &counter);
+			ANKI_TEST_EXPECT_NO_ERR(a.newTask<Task>(0.0, pbarrier, &counter));
 		}
 
 		barrier.wait();
@@ -124,17 +136,19 @@ ANKI_TEST(Resource, AsyncLoader)
 
 	// Many tasks that will _not_ finish
 	{
-		AsyncLoader a(alloc);
+		AsyncLoader a;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc));
 
 		for(U i = 0; i < 100; i++)
 		{
-			a.newTask<Task>(0.0, nullptr, nullptr);
+			ANKI_TEST_EXPECT_NO_ERR(a.newTask<Task>(0.0, nullptr, nullptr));
 		}
 	}
 
 	// Tasks that allocate
 	{
-		AsyncLoader a(alloc);
+		AsyncLoader a;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc));
 		Barrier barrier(2);
 
 		for(U i = 0; i < 10; i++)
@@ -146,7 +160,7 @@ ANKI_TEST(Resource, AsyncLoader)
 				pbarrier = &barrier;
 			}
 
-			a.newTask<MemTask>(alloc, pbarrier);
+			ANKI_TEST_EXPECT_NO_ERR(a.newTask<MemTask>(alloc, pbarrier));
 		}
 
 		barrier.wait();
@@ -154,17 +168,19 @@ ANKI_TEST(Resource, AsyncLoader)
 
 	// Tasks that allocate and never finished
 	{
-		AsyncLoader a(alloc);
+		AsyncLoader a;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc));
 
 		for(U i = 0; i < 10; i++)
 		{
-			a.newTask<MemTask>(alloc, nullptr);
+			ANKI_TEST_EXPECT_NO_ERR(a.newTask<MemTask>(alloc, nullptr));
 		}
 	}
 
 	// Random struf
 	{
-		AsyncLoader a(alloc);
+		AsyncLoader a;
+		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc));
 		Barrier barrier(2);
 		AtomicU32 counter = {0};
 
@@ -177,7 +193,8 @@ ANKI_TEST(Resource, AsyncLoader)
 				pbarrier = &barrier;
 			}
 
-			a.newTask<Task>(randRange(0.0, 0.5), pbarrier, &counter, i);
+			ANKI_TEST_EXPECT_NO_ERR(
+				a.newTask<Task>(randRange(0.0, 0.5), pbarrier, &counter, i));
 		}
 
 		barrier.wait();

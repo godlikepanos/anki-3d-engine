@@ -97,7 +97,7 @@ extern void deleteTesterSingleton();
 			ss << "FAILURE: " << #x << " != " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
 			fprintf(stderr, "%s\n", ss.str().c_str()); \
-			throw std::runtime_error("Test faled"); \
+			abort(); \
 		} \
 	} while(0);
 
@@ -109,7 +109,7 @@ extern void deleteTesterSingleton();
 			ss << "FAILURE: " << #x << " == " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
 			fprintf(stderr, "%s\n", ss.str().c_str()); \
-			throw std::runtime_error("Test faled"); \
+			abort(); \
 		} \
 	} while(0);
 
@@ -121,7 +121,7 @@ extern void deleteTesterSingleton();
 			ss << "FAILURE: " << #x << " != " << #y << " (" \
 				<< file_ << ":" << line_ << ")"; \
 			fprintf(stderr, "%s\n", ss.str().c_str()); \
-			throw std::runtime_error("Test faled"); \
+			abort(); \
 		} \
 	} while(0);
 
@@ -136,6 +136,11 @@ extern void deleteTesterSingleton();
 /// Compare floats with epsilon
 #define ANKI_TEST_EXPECT_NEAR(x_, y_, e_) \
 	ANKI_TEST_EXPECT_NEAR_IMPL(__FILE__, __LINE__, __func__, x_, y_, e_)
+
+/// Check error code.
+#define ANKI_TEST_EXPECT_NO_ERR(x_) \
+	ANKI_TEST_EXPECT_EQ_IMPL(__FILE__, __LINE__, __func__, x_, ErrorCode::NONE)
+
 
 } // end namespace anki
 

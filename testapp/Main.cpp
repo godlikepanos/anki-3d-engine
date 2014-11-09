@@ -14,6 +14,7 @@
 #include "anki/script/ScriptManager.h"
 #include "anki/core/StdinListener.h"
 #include "anki/resource/Model.h"
+#include "anki/resource/Script.h"
 #include "anki/util/Logger.h"
 #include "anki/Util.h"
 #include "anki/resource/Skin.h"
@@ -38,8 +39,9 @@ PerspectiveCamera* cam;
 
 
 //==============================================================================
-void init()
+Error init()
 {
+	Error err = ErrorCode::NONE;
 	ANKI_LOGI("Other init...");
 
 	SceneGraph& scene = app->getSceneGraph();
@@ -60,7 +62,8 @@ void init()
 #endif
 
 	// camera
-	cam = scene.newSceneNode<PerspectiveCamera>("main-camera");
+	err = scene.newSceneNode<PerspectiveCamera>("main-camera", cam);
+	if(err) return err;
 	const F32 ang = 45.0;
 	cam->setAll(
 		renderer.getAspectRatio() * toRad(ang),
@@ -79,7 +82,9 @@ void init()
 		{
 			std::string name = "plight" + std::to_string(i) + std::to_string(j);
 
-			PointLight* point = scene.newSceneNode<PointLight>(name.c_str());
+			PointLight* point;
+			err = scene.newSceneNode<PointLight>(name.c_str(), point);
+			if(err) return err;
 			point->setRadius(0.5);
 			point->setDiffuseColor(Vec4(randFloat(6.0) - 2.0, 
 				randFloat(6.0) - 2.0, randFloat(6.0) - 2.0, 0.0));
@@ -96,7 +101,9 @@ void init()
 #endif
 
 #if 1
-	SpotLight* spot = scene.newSceneNode<SpotLight>("spot0");
+	SpotLight* spot;
+	err = scene.newSceneNode<SpotLight>("spot0", spot);
+	if(err) return err;
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec4(8.27936, 5.86285, 1.85526, 0.0),
@@ -109,7 +116,8 @@ void init()
 #endif
 
 #if 1
-	spot = scene.newSceneNode<SpotLight>("spot1");
+	err = scene.newSceneNode<SpotLight>("spot1", spot);
+	if(err) return err;
 	spot->setOuterAngle(toRad(45.0));
 	spot->setInnerAngle(toRad(15.0));
 	spot->setLocalTransform(Transform(Vec4(5.3, 4.3, 3.0, 0.0),
@@ -131,8 +139,10 @@ void init()
 	{
 		Vec4 lightPos = vaseLightPos[i].xyz0();
 
-		PointLight* point = scene.newSceneNode<PointLight>(
-			("vase_plight" + std::to_string(i)).c_str());
+		PointLight* point;
+		err = scene.newSceneNode<PointLight>(
+			("vase_plight" + std::to_string(i)).c_str(), point);
+		if(err) return err;
 
 		point->loadLensFlare("textures/lens_flare/flares0.ankitex");
 
@@ -144,46 +154,51 @@ void init()
 		point->setLensFlaresAlpha(1.0);
 
 		LightEventData eventData;
-		eventData.radiusMultiplier = 0.2;
-		eventData.intensityMultiplier = Vec4(-1.2, 0.0, 0.0, 0.0);
-		eventData.specularIntensityMultiplier = Vec4(0.1, 0.1, 0.0, 0.0);
+		eventData.m_radiusMultiplier = 0.2;
+		eventData.m_intensityMultiplier = Vec4(-1.2, 0.0, 0.0, 0.0);
+		eventData.m_specularIntensityMultiplier = Vec4(0.1, 0.1, 0.0, 0.0);
 		LightEvent* event;
-		scene.getEventManager().newEvent(event, 0.0, 0.8, point, eventData);
-		event->enableBits(Event::EF_REANIMATE);
+		err = scene.getEventManager().newEvent(event, 0.0, 0.8, point, eventData);
+		if(err) return err;
+		event->setReanimate(true);
 
 		MoveEventData moveData;
 		moveData.m_posMin = Vec4(-0.5, 0.0, -0.5, 0);
 		moveData.m_posMax = Vec4(0.5, 0.0, 0.5, 0);
 		MoveEvent* mevent;
 		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
-		mevent->enableBits(Event::EF_REANIMATE);
+		mevent->setReanimate(true);
 
 		ParticleEmitter* pe;
 		/**/
 
 		if(i == 0)
 		{
-			pe = scene.newSceneNode<ParticleEmitter>(
-				"pefire", "particles/fire.ankipart");
+			err = scene.newSceneNode<ParticleEmitter>(
+				"pefire", pe, "particles/fire.ankipart");
+			if(err) return err;
 			pe->setLocalOrigin(lightPos);
 
-			pe = scene.newSceneNode<ParticleEmitter>(
-				"pesmoke", "particles/smoke.ankipart");
+			err = scene.newSceneNode<ParticleEmitter>(
+				"pesmoke", pe, "particles/smoke.ankipart");
+			if(err) return err;
 			pe->setLocalOrigin(lightPos);
 		}
 		else
 		{
 			InstanceNode* instance;
-			instance = scene.newSceneNode<InstanceNode>( 
-				("pefire_inst" + std::to_string(i)).c_str());
+			err = scene.newSceneNode<InstanceNode>( 
+				("pefire_inst" + std::to_string(i)).c_str(), instance);
+			if(err) return err;
 
 			instance->setLocalOrigin(lightPos);
 
 			SceneNode& sn = scene.findSceneNode("pefire");
 			sn.addChild(instance);
 
-			instance = scene.newSceneNode<InstanceNode>(
-				("pesmoke_inst" + std::to_string(i)).c_str());
+			err = scene.newSceneNode<InstanceNode>(
+				("pesmoke_inst" + std::to_string(i)).c_str(), instance);
+			if(err) return err;
 
 			instance->setLocalOrigin(lightPos);
 
@@ -200,7 +215,9 @@ void init()
 
 #if 1
 	// horse
-	horse = scene.newSceneNode<ModelNode>("horse", "models/horse/horse.ankimdl");
+	err = scene.newSceneNode<ModelNode>("horse", horse, 
+		"models/horse/horse.ankimdl");
+	if(err) return err;
 	horse->setLocalTransform(
 		Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(), 0.7));
 
@@ -218,13 +235,13 @@ void init()
 
 #if 1
 	{
-		String str(app->getAllocator());
-		File file;
-		file.open(
-			resources.fixResourceFilename("maps/sponza/scene.lua").toCString(), 
-			File::OpenFlag::READ);
-		file.readAllText(str);
-		app->getScriptManager().evalString(str.toCString());
+		ScriptResourcePointer script;
+
+		err = script.load("maps/sponza/scene.lua", &resources);
+		if(err) return err;
+
+		err = app->getScriptManager().evalString(script->getSource());
+		if(err) return err;
 	}
 #endif
 
@@ -307,12 +324,14 @@ void execStdinScpripts()
 #endif
 
 //==============================================================================
-I32 mainLoopExtra(App& app, void*)
+Error mainLoopExtra(App& app, void*, Bool& quit)
 {
+	Error err = ErrorCode::NONE;
 	F32 dist = 0.1;
 	F32 ang = toRad(2.5);
 	F32 scale = 0.01;
 	F32 mouseSensivity = 9.0;
+	quit = false;
 
 	SceneGraph& scene = app.getSceneGraph();
 	Input& in = app.getInput();
@@ -320,7 +339,8 @@ I32 mainLoopExtra(App& app, void*)
 
 	if(in.getKey(KeyCode::ESCAPE))
 	{
-		return 1;
+		quit = true;
+		return err;
 	}
 
 	// move the camera
@@ -465,15 +485,18 @@ end)");
 
 	if(getenv("PROFILE") && getGlobTimestamp() == 2000)
 	{
-		return 1;
+		quit = true;
+		return err;
 	}
 
-	return 0;
+	return err;
 }
 
 //==============================================================================
-void initSubsystems(int argc, char* argv[])
+Error initSubsystems(int argc, char* argv[])
 {
+	Error err = ErrorCode::NONE;
+
 	// Config
 	Config config;
 	config.set("ms.ez.enabled", false);
@@ -514,34 +537,35 @@ void initSubsystems(int argc, char* argv[])
 	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 
-	app = new App(config, allocAligned, nullptr);
+	app = new App;
+	err = app->create(config, allocAligned, nullptr);
+	if(err) return err;
 
 	// Input
 	app->getInput().lockCursor(true);
 	app->getInput().hideCursor(true);
 	app->getInput().moveCursor(Vec2(0.0));
+
+	return err;
 }
 
 //==============================================================================
 int main(int argc, char* argv[])
 {
-	int exitCode;
+	Error err = ErrorCode::NONE;
 
-	try
+	initSubsystems(argc, argv);
+	init();
+
+	err = app->mainLoop(mainLoopExtra, nullptr);
+	if(err)
 	{
-		initSubsystems(argc, argv);
-		init();
-
-		app->mainLoop(mainLoopExtra, nullptr);
-
-		ANKI_LOGI("Exiting...");
-		exitCode = 0;
+		ANKI_LOGE("Error reported. See previous messages");
 	}
-	catch(std::exception& e)
+	else
 	{
-		ANKI_LOGE("Aborting: %s", e.what());
-		exitCode = 1;
+		ANKI_LOGI("Bye!!");
 	}
-	ANKI_LOGI("Bye!!");
-	return exitCode;
+
+	return 0;
 }

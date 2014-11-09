@@ -124,7 +124,7 @@ private:
 	GlClientSyncHandle m_sync;
 
 	/// The function that the thread runs
-	static I threadCallback(Thread::Info&);
+	static ANKI_USE_RESULT Error threadCallback(Thread::Info&);
 	void threadLoop();
 	void prepare();
 	void finish();

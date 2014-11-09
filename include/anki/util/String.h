@@ -359,7 +359,7 @@ public:
 	Iterator end() 
 	{
 		checkInit();
-		return &m_data[m_data.size() - 1];
+		return &m_data[m_data.getSize() - 1];
 	}
 
 	ConstIterator end() const 

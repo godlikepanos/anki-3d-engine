@@ -5,7 +5,6 @@
 
 #include "anki/resource/MaterialProgramCreator.h"
 #include "anki/util/Assert.h"
-#include "anki/util/Exception.h"
 #include "anki/misc/Xml.h"
 #include "anki/util/Logger.h"
 

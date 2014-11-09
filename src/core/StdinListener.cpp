@@ -14,7 +14,11 @@ namespace anki {
 StdinListener::~StdinListener()
 {
 	m_quit = true;
-	m_thrd.join();
+	Error err = m_thrd.join();
+	if(err)
+	{
+		ANKI_LOGE("Error when joining StdinListener");
+	}
 	
 	for(String& s : m_q)
 	{

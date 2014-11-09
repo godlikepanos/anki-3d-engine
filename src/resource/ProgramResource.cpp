@@ -10,7 +10,6 @@
 #include "anki/util/File.h"
 #include "anki/util/Filesystem.h"
 #include "anki/util/Hash.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
 
 namespace anki {

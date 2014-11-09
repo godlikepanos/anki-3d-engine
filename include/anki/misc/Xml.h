@@ -6,7 +6,6 @@
 #ifndef ANKI_XML_H
 #define ANKI_XML_H
 
-#include "anki/util/Exception.h"
 #include "anki/util/String.h"
 #include "anki/util/DArray.h"
 #include "anki/Math.h"

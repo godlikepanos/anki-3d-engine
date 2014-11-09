@@ -104,6 +104,8 @@ if(NOT ANKI_CPU_ADDR_SPACE STREQUAL "0")
 	set(COMPILER_FLAGS "${COMPILER_FLAGS} -m${ANKI_CPU_ADDR_SPACE} ")
 endif()
 
+add_definitions(-fno-exceptions)
+
 # static libstdc++
 set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
 
@@ -243,9 +245,6 @@ endif()
 #
 # AnKi specific compiler flags
 #
-
-# thread local
-add_definitions("-Dthread_local=__thread")
 
 # AnKi compiler flags (Mainly warnings)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic -Wall -W -Wextra -Wwrite-strings -Wunused -Wunused-variable -Wno-unused-parameter -Wundef -std=c++11 ")

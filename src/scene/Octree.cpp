@@ -9,7 +9,6 @@
 #include "anki/scene/Light.h"
 #include "anki/scene/Sector.h"
 #include "anki/scene/SceneGraph.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Logger.h"
 #include "anki/scene/RenderComponent.h"
 

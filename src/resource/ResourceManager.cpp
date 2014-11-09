@@ -9,6 +9,7 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/Mesh.h"
 #include "anki/resource/Model.h"
+#include "anki/resource/Script.h"
 #include "anki/resource/DummyRsrc.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/resource/ParticleEmitterResource.h"
@@ -81,6 +82,7 @@ Error ResourceManager::create(Initializer& init)
 	ANKI_RESOURCE(Skeleton)
 	ANKI_RESOURCE(ParticleEmitterResource)
 	ANKI_RESOURCE(Model)
+	ANKI_RESOURCE(Script)
 	ANKI_RESOURCE(DummyRsrc)
 
 #undef ANKI_RESOURCE

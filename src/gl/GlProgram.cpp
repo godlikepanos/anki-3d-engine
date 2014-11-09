@@ -362,6 +362,12 @@ Error GlProgram::create(GLenum type, const CString& source,
 		if(status == GL_FALSE)
 		{
 			err = handleError(alloc, fullSrc);
+
+			if(!err)
+			{
+				// Compilation failed, set error anyway
+				err = ErrorCode::USER_DATA;
+			}
 		}
 	}
 
@@ -386,6 +392,7 @@ Error GlProgram::handleError(GlAllocator<U8>& alloc, String& src)
 	GLint charsWritten = 0;
 	String compilerLog;
 	String prettySrc;
+	StringList lines;
 
 	static const char* padding = 
 		"======================================="
@@ -393,15 +400,14 @@ Error GlProgram::handleError(GlAllocator<U8>& alloc, String& src)
 
 	glGetProgramiv(m_glName, GL_INFO_LOG_LENGTH, &compilerLogLen);
 
-	err = compilerLog.create(alloc, '?', compilerLogLen + 1);
+	err = compilerLog.create(alloc, ' ', compilerLogLen + 1);
 
-	StringList lines;
 	if(!err)
 	{
 		glGetProgramInfoLog(
 			m_glName, compilerLogLen, &charsWritten, &compilerLog[0]);
 		
-		err = StringList::splitString(alloc, src.toCString(), '\n', lines);
+		err = lines.splitString(alloc, src.toCString(), '\n');
 	}
 
 	I lineno = 0;
@@ -415,6 +421,8 @@ Error GlProgram::handleError(GlAllocator<U8>& alloc, String& src)
 		{
 			err = prettySrc.append(alloc, tmp);
 		}
+
+		tmp.destroy(alloc);
 	}
 
 	if(!err)
@@ -423,6 +431,9 @@ Error GlProgram::handleError(GlAllocator<U8>& alloc, String& src)
 			m_type, padding, &compilerLog[0], padding, &prettySrc[0]);
 	}
 
+	lines.destroy(alloc);
+	prettySrc.destroy(alloc);
+	compilerLog.destroy(alloc);
 	return err;
 }
 

@@ -10,6 +10,20 @@ namespace anki {
 
 //==============================================================================
 template<typename TAlloc>
+void StringListBase<TAlloc>::destroy(Allocator alloc)
+{
+	auto it = Base::getBegin();
+	auto end = Base::getEnd();
+	for(; it != end; ++it)
+	{
+		(*it).destroy(alloc);
+	}
+
+	Base::destroy(alloc);
+}
+
+//==============================================================================
+template<typename TAlloc>
 Error StringListBase<TAlloc>::join(
 	Allocator alloc,
 	const CString& separator,

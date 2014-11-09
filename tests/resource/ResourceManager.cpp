@@ -20,8 +20,7 @@ ANKI_TEST(Resource, ResourceManager)
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
 	GlDevice* gl = alloc.newInstance<GlDevice>();
-	Error err = gl->create(allocAligned, nullptr, "/tmp/");
-	ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
+	ANKI_TEST_EXPECT_NO_ERR(gl->create(allocAligned, nullptr, "/tmp/"));
 
 	ResourceManager::Initializer rinit;
 	rinit.m_gl = gl;
@@ -29,13 +28,15 @@ ANKI_TEST(Resource, ResourceManager)
 	rinit.m_cacheDir = "/tmp/";
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;
-	ResourceManager* resources = alloc.newInstance<ResourceManager>(rinit);
+	ResourceManager* resources = alloc.newInstance<ResourceManager>();
+	ANKI_TEST_EXPECT_NEQ(resources, nullptr);
+	ANKI_TEST_EXPECT_NO_ERR(resources->create(rinit));
 
 	// Load a resource
 	{
 		DummyResourcePointer a;
 
-		a.load("blah", resources);
+		ANKI_TEST_EXPECT_NO_ERR(a.load("blah", resources));
 
 		{
 			DummyResourcePointer b = a;
@@ -47,11 +48,11 @@ ANKI_TEST(Resource, ResourceManager)
 	// Load and load again
 	{
 		DummyResourcePointer a;
-		a.load("blah", resources);
+		ANKI_TEST_EXPECT_NO_ERR(a.load("blah", resources));
 		auto refcount = a.getReferenceCount();
 
 		DummyResourcePointer b;
-		b.load("blah", resources);
+		ANKI_TEST_EXPECT_NO_ERR(b.load("blah", resources));
 		ANKI_TEST_EXPECT_EQ(b.getReferenceCount(), a.getReferenceCount());
 		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 1);
 
@@ -59,32 +60,28 @@ ANKI_TEST(Resource, ResourceManager)
 
 		// Again
 		DummyResourcePointer c;
-		c.load("blah", resources);
+		ANKI_TEST_EXPECT_NO_ERR(c.load("blah", resources));
 		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 2);
 
 		// Load something else
 		DummyResourcePointer d;
-		d.load("blih", resources);
+		ANKI_TEST_EXPECT_NO_ERR(d.load("blih", resources));
 		ANKI_TEST_EXPECT_EQ(a.getReferenceCount(), refcount + 2);
 	}
 
 	// Exception
 	{
-		try
 		{
 			DummyResourcePointer a;
-			a.load("exception", resources);
+			ANKI_TEST_EXPECT_EQ(
+				a.load("error", resources), ErrorCode::USER_DATA);
 		}
-		catch(...)
-		{}
 
-		DummyResourcePointer a;
-		try
 		{
-			a.load("exception", resources);
+			DummyResourcePointer a;
+			ANKI_TEST_EXPECT_EQ(
+				a.load("error", resources), ErrorCode::USER_DATA);
 		}
-		catch(...)
-		{}
 	}
 
 	// Delete

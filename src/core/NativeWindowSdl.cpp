@@ -6,7 +6,6 @@
 #include "anki/core/NativeWindowSdl.h"
 #include "anki/core/Counters.h"
 #include "anki/util/Logger.h"
-#include "anki/util/Exception.h"
 #include <GL/glew.h>
 
 namespace anki {

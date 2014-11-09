@@ -4,18 +4,31 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/Script.h"
-#include "anki/util/Exception.h"
+#include "anki/util/File.h"
 
 namespace anki {
 
 //==============================================================================
-void Script::load(const char* filename)
+Script::~Script()
 {
-	/*source = readFile(filename);
-	if(source.length() < 1)
+	m_source.destroy(m_alloc);
+}
+
+//==============================================================================
+Error Script::load(const CString& filename, ResourceInitializer& init)
+{
+	Error err = ErrorCode::NONE;
+	File file;
+
+	err = file.open(filename, File::OpenFlag::READ);
+
+	if(!err)
 	{
-		throw ANKI_EXCEPTION("Cannot load script: " + filename);
-	}*/
+		m_alloc = init.m_alloc;
+		err = file.readAllText(m_alloc, m_source);
+	}
+
+	return err;
 }
 
 } // end namespace anki

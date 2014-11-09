@@ -6,9 +6,9 @@
 #include "anki/script/ScriptManager.h"
 #include "anki/util/Logger.h"
 
-#define ANKI_SCRIPT_CALL_WRAP(type_) \
-	extern void wrap##x(lua_State*); \
-	wrap##x(l);
+#define ANKI_SCRIPT_CALL_WRAP(x_) \
+	extern void wrapModule##x_(lua_State*); \
+	wrapModule##x_(l);
 
 namespace anki {
 
@@ -30,7 +30,7 @@ Error ScriptManager::create(
 	ANKI_LOGI("Initializing scripting engine...");
 
 	m_scene = scene;
-	m_alloc = ChainAllocator<U8>(allocCb, allocCbData, 1024, 1024);
+	m_alloc = ChainAllocator<U8>(allocCb, allocCbData, 1024, 1024 * 1024);
 
 	Error err = m_lua.create(m_alloc, this);
 	if(err) return err;

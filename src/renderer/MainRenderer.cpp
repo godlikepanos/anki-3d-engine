@@ -40,10 +40,10 @@ Error MainRenderer::create(
 	config.set("height", 
 		config.get("height") * config.get("renderingQuality"));
 
-	err = initGl();
+	err = Renderer::init(threadpool, resources, gl, alloc, config);
 	if(err) return err;
 
-	err = Renderer::init(threadpool, resources, gl, alloc, config);
+	err = initGl();
 	if(err) return err;
 
 	err = m_blitFrag.load("shaders/Final.frag.glsl", &_getResourceManager());

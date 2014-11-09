@@ -6,7 +6,6 @@
 #ifndef ANKI_UTIL_ALLOCATOR_H
 #define ANKI_UTIL_ALLOCATOR_H
 
-#include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Memory.h"
 #include "anki/util/Logger.h"

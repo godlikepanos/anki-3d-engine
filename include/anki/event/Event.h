@@ -7,120 +7,131 @@
 #define ANKI_EVENT_EVENT_H
 
 #include "anki/scene/Common.h"
-#include "anki/scene/SceneObject.h"
-#include "anki/util/Bitset.h"
 #include "anki/Math.h"
+#include "anki/util/Enum.h"
 
 namespace anki {
 
 // Forward
 class EventManager;
 class SceneNode;
+class SceneGraph;
 
-/// @addtogroup Events
+/// @addtogroup event
 /// @{
 
 /// The base class for all events
-class Event: public SceneObject, public Bitset<U8>
+class Event
 {
 	friend class EventManager;
 
 public:
 	/// Event flags
-	enum EventFlags
+	enum class Flag: U8
 	{
-		EF_NONE = 0,
-		EF_REANIMATE = 1 << 0
+		NONE = 0,
+		REANIMATE = 1 << 0,
+		MARKED_FOR_DELETION = 1 << 1
 	};
-
-	/// @name Constructors/Destructor
-	/// @{
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend);
 
 	/// Constructor
-	Event(EventManager* manager, F32 startTime, F32 duration,  
-		SceneNode* snode = nullptr, U8 flags = EF_NONE);
+	Event();
 
 	virtual ~Event();
-	/// @}
 
-	/// @name Accessors
-	/// @{
+	ANKI_USE_RESULT Error create(
+		EventManager* manager, F32 startTime, F32 duration,  
+		SceneNode* snode = nullptr, Flag flags = Flag::NONE);
+
 	F32 getStartTime() const
 	{
-		return startTime;
+		return m_startTime;
 	}
 
 	F32 getDuration() const
 	{
-		return duration;
+		return m_duration;
 	}
 
 	Bool isDead(F32 crntTime) const
 	{
-		return crntTime >= startTime + duration;
+		return crntTime >= m_startTime + m_duration;
 	}
 
-	EventManager& getEventManager();
-	const EventManager& getEventManager() const;
+	EventManager& getEventManager()
+	{
+		return *m_manager;
+	}
 
-	SceneNode* getSceneNode();
-	const SceneNode* getSceneNode() const;
-	/// @}
+	const EventManager& getEventManager() const
+	{
+		return *m_manager;
+	}
+
+	SceneNode* getSceneNode()
+	{
+		return m_node;
+	}
+
+	const SceneNode* getSceneNode() const
+	{
+		return m_node;
+	}
+
+	void markForDeletion()
+	{
+		m_flags |= Flag::MARKED_FOR_DELETION;
+	}
+
+	Bool getMarkedForDeletion() const
+	{
+		return (m_flags & Flag::MARKED_FOR_DELETION) != Flag::NONE;
+	}
+
+	void setReanimate(Bool reanimate)
+	{
+		m_flags = (reanimate) 
+			? (m_flags | Flag::REANIMATE) 
+			: (m_flags & ~Flag::REANIMATE);
+	}
+
+	Bool getReanimate() const
+	{
+		return (m_flags & Flag::REANIMATE) != Flag::NONE;
+	}
+
+	SceneGraph& getSceneGraph();
+
+	const SceneGraph& getSceneGraph() const;
 
 	/// This method should be implemented by the derived classes
 	/// @param prevUpdateTime The time of the previous update (sec)
 	/// @param crntTime The current time (sec)
-	virtual void update(F32 prevUpdateTime, F32 crntTime) = 0;
+	virtual ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime) = 0;
 
 	/// This is called when the event is killed
 	/// @param prevUpdateTime The time of the previous update (sec)
 	/// @param crntTime The current time (sec)
-	/// @return Return false if you don't want to be killed
-	virtual Bool onKilled(F32 prevUpdateTime, F32 crntTime)
+	/// @param[out] Return false if you don't want to be killed
+	virtual ANKI_USE_RESULT Error onKilled(
+		F32 prevUpdateTime, F32 crntTime, Bool& kill)
 	{
 		(void)prevUpdateTime;
 		(void)crntTime;
-		return true;
+		kill = true;
+		return ErrorCode::NONE;
 	}
 
 protected:
-	/// The time the event will start. Eg 23:00. If it's < 0 then start the 
-	/// event now
-	F32 startTime;
-	F32 duration; ///< The duration of the event
+	Flag m_flags = Flag::NONE;
+	EventManager* m_manager = nullptr;
+	
+	F32 m_startTime; ///< The time the event will start. Eg 23:00. If it's < 0 
+	                 ///< then start the event now.
+	F32 m_duration; ///< The duration of the event
 
-	/// Linear interpolation between values
-	/// @param[in] from Starting value
-	/// @param[in] to Ending value
-	/// @param[in] u The percentage from the from "from" value. Values
-	///              from [0.0, 1.0]
-	template<typename Type>
-	static Type interpolate(const Type& from, const Type& to, F32 u)
-	{
-		//ANKI_ASSERT(u >= 0 && u <= 1.0);
-		return from * (1.0 - u) + to * u;
-	}
-
-	template<typename Type>
-	static Type cosInterpolate(const Type& from, const Type& to, F32 u)
-	{
-		F32 u2 = (1.0 - cos(u * getPi<F32>())) / 2.0;
-		return from * (1.0 - u2) + to * u2;
-	}
-
-	template<typename Type>
-	static Type cubicInterpolate(
-		const Type& a, const Type& b, const Type& c, 
-		const Type& d, F32 u)
-	{
-		F32 u2 = u * u;
-		Type a0 = d - c - a + b;
-		Type a1 = a - b - a0;
-		Type a2 = c - a;
-		Type a3 = b;
-
-		return(a0 * u * u2 + a1 * u2 + a2 * u + a3);
-	}
+	SceneNode* m_node = nullptr;
 
 	/// Return the u between current time and when the event started
 	/// @return A number [0.0, 1.0]

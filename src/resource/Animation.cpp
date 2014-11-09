@@ -5,7 +5,6 @@
 
 #include "anki/resource/Animation.h"
 #include "anki/misc/Xml.h"
-#include "anki/util/Exception.h"
 
 namespace anki {
 

@@ -6,7 +6,6 @@
 #include "anki/core/App.h"
 #include "anki/misc/ConfigSet.h"
 #include "anki/util/Logger.h"
-#include "anki/util/Exception.h"
 #include "anki/util/File.h"
 #include "anki/util/Filesystem.h"
 #include "anki/util/System.h"
@@ -98,7 +97,7 @@ void App::cleanup()
 Error App::create(const ConfigSet& config, 
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 {
-	Error err = create(config, allocCb, allocCbUserData);
+	Error err = createInternal(config, allocCb, allocCbUserData);
 	if(err)
 	{
 		cleanup();
@@ -328,13 +327,13 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 {
 	Error err = ErrorCode::NONE;
 	ANKI_LOGI("Entering main loop");
-	I32 userRetCode = 0;
+	Bool quit = false;
 
 	HighRezTimer::Scalar prevUpdateTime = HighRezTimer::getCurrentTime();
 	HighRezTimer::Scalar crntTime = prevUpdateTime;
 
 	ANKI_COUNTER_START_TIMER(FPS);
-	while(userRetCode == 0)
+	while(!quit)
 	{
 		HighRezTimer timer;
 		timer.start();
@@ -347,7 +346,8 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 		if(err)	break;
 
 		// User update
-		userRetCode = callback(*this, userData);
+		err = callback(*this, userData, quit);
+		if(err)	break;
 
 		err = m_scene->update(prevUpdateTime, crntTime, *m_renderer);
 		if(err)	break;

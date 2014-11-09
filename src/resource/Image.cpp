@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/Image.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Logger.h"
 #include "anki/util/File.h"
 #include "anki/util/Filesystem.h"

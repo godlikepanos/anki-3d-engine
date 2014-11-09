@@ -6,7 +6,6 @@
 #include <cstring>
 #include "anki/gl/GlBuffer.h"
 #include "anki/gl/GlError.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Logger.h"
 #include <cmath>
 

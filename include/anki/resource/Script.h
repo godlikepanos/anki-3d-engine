@@ -6,19 +6,35 @@
 #ifndef ANKI_RESOURCE_SCRIPT_H
 #define ANKI_RESOURCE_SCRIPT_H
 
-#include <string>
+#include "anki/resource/Common.h"
 
 namespace anki {
 
-/// Python script resource
+/// @addtogroup resource
+/// @{
+
+/// Script resource.
 class Script
 {
 public:
-	void load(const char* filename);
+	Script(ResourceAllocator<U8>&)
+	{}
+
+	~Script();
+
+	ANKI_USE_RESULT Error load(
+		const CString& filename, ResourceInitializer& init);
+
+	CString getSource() const
+	{
+		return m_source.toCString();
+	}
 
 private:
-	std::string source;
+	ResourceString m_source;
+	ResourceAllocator<char> m_alloc;
 };
+/// @}
 
 } // end namespace
 

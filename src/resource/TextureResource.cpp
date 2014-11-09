@@ -6,7 +6,6 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Image.h"
 #include "anki/resource/ResourceManager.h"
-#include "anki/util/Exception.h"
 
 namespace anki {
 

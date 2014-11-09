@@ -7,7 +7,7 @@
 #define ANKI_MISC_CONFIG_SET_H
 
 #include "anki/util/StdTypes.h"
-#include "anki/util/Exception.h"
+#include "anki/util/Logger.h"
 #include <unordered_map>
 
 namespace anki {
@@ -27,7 +27,8 @@ public:
 		}
 		else
 		{
-			throw ANKI_EXCEPTION("Option not found");
+			ANKI_LOGE("Option not found");
+			return 0.0;
 		}
 	}
 
@@ -41,7 +42,7 @@ public:
 		}
 		else
 		{
-			throw ANKI_EXCEPTION("Option not found");
+			ANKI_LOGE("Option not found");
 		}
 	}
 

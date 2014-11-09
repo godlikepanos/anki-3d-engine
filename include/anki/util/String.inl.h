@@ -75,7 +75,11 @@ Error StringBase<TAlloc>::appendInternal(
 
 	if(!err)
 	{
-		std::memcpy(&newData[0], &m_data[0], sizeof(Char) * size);
+		if(!m_data.isEmpty())
+		{
+			std::memcpy(&newData[0], &m_data[0], sizeof(Char) * size);
+		}
+
 		std::memcpy(&newData[size - 1], str, sizeof(Char) * strSize);
 
 		m_data.destroy(alloc);

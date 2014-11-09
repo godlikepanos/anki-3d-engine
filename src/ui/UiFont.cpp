@@ -5,7 +5,6 @@
 
 #include "anki/ui/UiFont.h"
 #include "anki/resource/TextureResource.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
 #include "anki/ui/UiFtFontLoader.h"
 

@@ -11,21 +11,27 @@
 namespace anki {
 
 //==============================================================================
-AnimationEvent::AnimationEvent(EventManager* manager, 
-	const AnimationResourcePointer& anim, SceneNode* movableSceneNode)
-	:	Event(manager, 0.0, 0.0, movableSceneNode),
-		m_anim(anim)
+Error AnimationEvent::create(EventManager* manager, 
+	const AnimationResourcePointer& anim, 
+	SceneNode* movableSceneNode)
 {
 	ANKI_ASSERT(movableSceneNode);
+	m_anim = anim;
 
-	startTime = m_anim->getStartingTime();
-	duration = m_anim->getDuration();
+	Flag f = Flag::NONE;
+	if(m_anim->getRepeat())
+	{
+		f = Flag::REANIMATE;
+	}
 
-	enableBits(EF_REANIMATE, m_anim->getRepeat());
+	Error err = Event::create(manager, m_anim->getStartingTime(), 
+		m_anim->getDuration(), movableSceneNode, f);
+
+	return err;
 }
 
 //==============================================================================
-void AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
+Error AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
 	ANKI_ASSERT(getSceneNode());
 	MoveComponent& move = getSceneNode()->getComponent<MoveComponent>();
@@ -40,6 +46,8 @@ void AnimationEvent::update(F32 prevUpdateTime, F32 crntTime)
 	trf.setRotation(Mat3x4(rot));
 	trf.setScale(scale);
 	move.setLocalTransform(trf);
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

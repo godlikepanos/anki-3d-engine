@@ -9,8 +9,7 @@
 namespace anki {
 
 //==============================================================================
-EventManager::EventManager(SceneGraph* scene_)
-	: scene(scene_), events(getSceneAllocator())
+EventManager::EventManager()
 {}
 
 //==============================================================================
@@ -18,125 +17,127 @@ EventManager::~EventManager()
 {}
 
 //==============================================================================
+Error EventManager::create(SceneGraph* scene)
+{
+	ANKI_ASSERT(scene);
+	m_scene = scene;
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
 SceneAllocator<U8> EventManager::getSceneAllocator() const
 {
-	return scene->getAllocator();
+	return m_scene->getAllocator();
 }
 
 //==============================================================================
-SceneAllocator<U8> EventManager::getSceneFrameAllocator() const
+SceneFrameAllocator<U8> EventManager::getSceneFrameAllocator() const
 {
-	return scene->getFrameAllocator();
+	return m_scene->getFrameAllocator();
 }
 
 //==============================================================================
-void EventManager::registerEvent(Event* event)
-{
-	ANKI_ASSERT(event);
-	ANKI_ASSERT(std::find(events.begin(), events.end(), event) == events.end());
-	events.push_back(event);
-}
-
-//==============================================================================
-void EventManager::unregisterEvent(Event* event)
+Error EventManager::registerEvent(Event* event)
 {
 	ANKI_ASSERT(event);
-	
-	EventsContainer::iterator it = events.begin();
-	for(; it != events.end(); it++)
-	{
-		if((*it) == event)
-		{
-			break;
-		}
-	}
-
-	ANKI_ASSERT(it == events.end() && "Trying to unreg non-existing event");
-	events.erase(it);
+	return m_events.pushBack(getSceneAllocator(), event);
 }
 
 //==============================================================================
-void EventManager::updateAllEvents(F32 prevUpdateTime_, F32 crntTime_)
-{
-	prevUpdateTime = prevUpdateTime_;
-	crntTime = crntTime_;
+void EventManager::unregisterEvent(EventsContainer::Iterator it)
+{	
+	ANKI_ASSERT(it != m_events.getEnd());
+	m_events.erase(getSceneAllocator(), it);
+}
 
-	EventsContainer::iterator it = events.begin();
-	for(; it != events.end(); it++)
+//==============================================================================
+Error EventManager::updateAllEvents(F32 prevUpdateTime, F32 crntTime)
+{
+	Error err = ErrorCode::NONE;
+	m_prevUpdateTime = prevUpdateTime;
+	m_crntTime = crntTime;
+
+	auto it = m_events.getBegin();
+	auto end = m_events.getEnd();
+	for(; it != end && !err; ++it)
 	{
-		Event* pevent = *it;
+		Event* event = *it;
 
 		// If event or the node's event is marked for deletion then dont 
 		// do anything else for that event
-		if(pevent->isMarkedForDeletion() 
-			|| (pevent->getSceneNode() != nullptr 
-				&& pevent->getSceneNode()->isMarkedForDeletion()))
+		if(event->getMarkedForDeletion())
 		{
-			pevent->markForDeletion();
+			continue;
+		}
+
+		if(event->getSceneNode() != nullptr 
+			&& event->getSceneNode()->isMarkedForDeletion())
+		{
+			event->markForDeletion();
 			continue;
 		}
 
 		// Audjust starting time
-		if(pevent->startTime < 0.0)
+		if(event->m_startTime < 0.0)
 		{
-			pevent->startTime = crntTime;
+			event->m_startTime = crntTime;
 		}
 
 		// Check if dead
-		if(!pevent->isDead(crntTime))
+		if(!event->isDead(crntTime))
 		{
 			// If not dead update it
 
-			if(pevent->getStartTime() <= crntTime)
+			if(event->getStartTime() <= crntTime)
 			{
-				pevent->update(prevUpdateTime, crntTime);
+				err = event->update(prevUpdateTime, crntTime);
 			}
 		}
 		else
 		{
 			// Dead
 
-			if(pevent->bitsEnabled(Event::EF_REANIMATE))
+			if(event->getReanimate())
 			{
-				pevent->startTime = prevUpdateTime;
-				pevent->update(prevUpdateTime, crntTime);
+				event->m_startTime = prevUpdateTime;
+				err = event->update(prevUpdateTime, crntTime);
 			}
 			else
 			{
-				if(pevent->onKilled(prevUpdateTime, crntTime))
+				Bool kill;
+				err = event->onKilled(prevUpdateTime, crntTime, kill);
+				if(!err && kill)
 				{
-					pevent->markForDeletion();
+					event->markForDeletion();
 				}
 			}
 		}
 	}
+
+	return err;
 }
 
 //==============================================================================
 void EventManager::deleteEventsMarkedForDeletion()
 {
-	SceneAllocator<Event> al = getSceneAllocator();
+	SceneAllocator<U8> alloc = getSceneAllocator();
 
 	// Gather events for deletion
-	SceneFrameVector<EventsContainer::iterator> 
-		forDeletion(getSceneFrameAllocator());
-
-	for(EventsContainer::iterator it = events.begin(); it != events.end(); ++it)
+	while(m_markedForDeletionCount != 0)
 	{
-		Event* event = *it;
-		if(event->isMarkedForDeletion())
+		auto it = m_events.getBegin();
+		auto end = m_events.getEnd();
+		for(; it != end; ++it)
 		{
-			forDeletion.push_back(it);
+			Event* event = *it;
+			if(event->getMarkedForDeletion())
+			{
+				unregisterEvent(it);
+				alloc.deleteInstance<Event>(event);
+				--m_markedForDeletionCount;
+				break;
+			}
 		}
-	}
-
-	// Delete events
-	for(auto it : forDeletion)
-	{
-		Event* event = *it;
-
-		unregisterEvent(event);
-		al.deleteInstance(event);
 	}
 }
 

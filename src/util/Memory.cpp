@@ -709,7 +709,7 @@ public:
 	ChainMemoryPool::ChunkGrowMethod m_method;
 
 	/// Allocations number.
-	AtomicU32 m_allocationsCount;
+	AtomicU32 m_allocationsCount = {0};
 
 	/// Construct
 	Implementation(
@@ -731,25 +731,25 @@ public:
 		ANKI_ASSERT(m_allocCb);
 
 		// Initial size should be > 0
-		ANKI_ASSERT(m_initSize > 0);
+		ANKI_ASSERT(m_initSize > 0 && "Wrong arg");
 
 		// On fixed step should be 0
 		if(m_method == ChainMemoryPool::ChunkGrowMethod::FIXED)
 		{
-			ANKI_ASSERT(m_step == 0);
+			ANKI_ASSERT(m_step == 0 && "Wrong arg");
 		}
 
 		// On fixed initial size is the same as the max
 		if(m_method == ChainMemoryPool::ChunkGrowMethod::FIXED)
 		{
-			ANKI_ASSERT(m_initSize == m_maxSize);
+			ANKI_ASSERT(m_initSize == m_maxSize && "Wrong arg");
 		}
 
 		// On add and mul the max size should be greater than initial
 		if(m_method == ChainMemoryPool::ChunkGrowMethod::ADD 
 			|| m_method == ChainMemoryPool::ChunkGrowMethod::MULTIPLY)
 		{
-			ANKI_ASSERT(m_initSize < m_maxSize);
+			ANKI_ASSERT(m_initSize < m_maxSize && "Wrong arg");
 		}
 	}
 
@@ -957,16 +957,22 @@ public:
 		{
 			mem = allocateFromChunk(ch, size, alignment);
 			ANKI_ASSERT(mem != nullptr && "The chunk should have space");
-			++m_allocationsCount;
 		}
 
 		m_lock.unlock();
+		++m_allocationsCount;
+
 		return mem;
 	}
 
 	/// Free memory
 	Bool free(void* ptr) noexcept
 	{
+		if(ptr == nullptr)
+		{
+			return true;
+		}
+
 		m_lock.lock();
 
 		// Get the chunk that ptr belongs to

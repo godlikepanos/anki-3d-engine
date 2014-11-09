@@ -6,7 +6,6 @@
 #include "anki/core/NativeWindowAndroid.h"
 #include "anki/core/App.h"
 #include "anki/util/Logger.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Array.h"
 #include "anki/util/StdTypes.h"
 #include "anki/core/Counters.h"

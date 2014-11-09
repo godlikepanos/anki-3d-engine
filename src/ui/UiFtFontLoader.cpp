@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/ui/UiFtFontLoader.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Logger.h"
 
 namespace anki {

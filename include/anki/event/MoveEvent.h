@@ -11,10 +11,7 @@
 
 namespace anki {
 
-// Forward
-class SceneNode;
-
-/// @addtogroup Events
+/// @addtogroup event
 /// @{
 
 /// Helper class
@@ -29,16 +26,14 @@ public:
 class MoveEvent: public Event, private MoveEventData
 {
 public:
-	/// @name Constructors/Destructor
-	/// @{
-
 	/// Constructor
-	MoveEvent(EventManager* manager, F32 startTime, F32 duration,
+	ANKI_USE_RESULT Error create(
+		EventManager* manager, F32 startTime, F32 duration,
 		SceneNode* movableSceneNode, const MoveEventData& data);
 	/// @}
 
 	/// Implements Event::update
-	void update(F32 prevUpdateTime, F32 crntTime);
+	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);
 
 private:
 	Vec4 m_originalPos;

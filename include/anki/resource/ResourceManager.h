@@ -34,6 +34,7 @@ ANKI_RESOURCE(BucketMesh, BucketMeshResourcePointer)
 ANKI_RESOURCE(Skeleton, SkeletonResourcePointer)
 ANKI_RESOURCE(ParticleEmitterResource, ParticleEmitterResourcePointer)
 ANKI_RESOURCE(Model, ModelResourcePointer)
+ANKI_RESOURCE(Script, ScriptResourcePointer)
 ANKI_RESOURCE(DummyRsrc, DummyResourcePointer)
 
 #undef ANKI_RESOURCE
@@ -135,6 +136,7 @@ class ResourceManager:
 	ANKI_RESOURCE(Skeleton),
 	ANKI_RESOURCE(ParticleEmitterResource),
 	ANKI_RESOURCE(Model),
+	ANKI_RESOURCE(Script),
 	ANKI_RESOURCE(DummyRsrc)
 {
 public:

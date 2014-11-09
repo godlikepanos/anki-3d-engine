@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/util/Filesystem.h"
-#include "anki/util/Exception.h"
 #include "anki/util/Assert.h"
 #include <windows.h>
 
@@ -29,8 +28,9 @@ Bool directoryExists(const CString& filename)
 }
 
 //==============================================================================
-void removeDirectory(const CString& dirname)
+Error removeDirectory(const CString& dirname)
 {
+	Error err = ErrorCode::NONE;
 	SHFILEOPSTRUCTA fileOperation;
 	fileOperation.wFunc = FO_DELETE;
 	fileOperation.pFrom = dirname.get();
@@ -39,46 +39,53 @@ void removeDirectory(const CString& dirname)
 	I result = SHFileOperationA(&fileOperation);
 	if(result != 0) 
 	{
-		throw ANKI_EXCEPTION("Could not delete directory %s", dirname.get());
+		ANKI_LOGE("Could not delete directory %s", dirname.get());
+		err = ErrorCode::FUNCTION_FAILED;
 	}
+
+	return err;
 }
 
 //==============================================================================
-void createDirectory(const CString& dir)
+Error createDirectory(const CString& dir)
 {
+	Error err = ErrorCode::NONE;
 	if(CreateDirectory(dir.get(), NULL) == 0)
 	{
-		throw ANKI_EXCEPTION("Failed to create directory %s", dir.get());
+		ANKI_LOGE("Failed to create directory %s", dir.get());
+		err = ErrorCode::FUNCTION_FAILED;
 	}
+
+	return err;
 }
 
 //==============================================================================
-String getHomeDirectory(HeapAllocator<U8>& alloc)
+Error getHomeDirectory(HeapAllocator<U8>& alloc, String& out);
 {
 	const char* homed = getenv("HOMEDRIVE");
 	const char* homep = getenv("HOMEPATH");
 
 	if(homed == nullptr || homep == nullptr)
 	{
-		throw ANKI_EXCEPTION("HOME environment variables not set");
+		ANKI_LOGE("HOME environment variables not set");
+		return ErrorCode::FUNCTION_FAILED;
 	}
 
-	String out(alloc);
-	out.reserve(std::strlen(homed) + std::strlen(homep));
-
-	out += CString(homed);
-	out += CString(homep);
-
-	// Convert to Unix path
-	for(char& c : out)
+	String out;
+	Error err = out.sprintf("%s/%s", homed, homep);
+	if(!err)
 	{
-		if(c == '\\')
+		// Convert to Unix path
+		for(char& c : out)
 		{
-			c = '/';
+			if(c == '\\')
+			{
+				c = '/';
+			}
 		}
 	}
 
-	return out;
+	return err;
 }
 
 } // end namespace anki

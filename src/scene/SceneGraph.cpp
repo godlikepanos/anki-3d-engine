@@ -7,7 +7,6 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/ModelNode.h"
 #include "anki/scene/InstanceNode.h"
-#include "anki/util/Exception.h"
 #include "anki/core/Counters.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/misc/Xml.h"
@@ -100,8 +99,7 @@ public:
 //==============================================================================
 SceneGraph::SceneGraph()
 :	m_physics(),
-	m_sectorGroup(this),
-	m_events(this)
+	m_sectorGroup(this)
 {}
 
 //==============================================================================
@@ -115,6 +113,8 @@ Error SceneGraph::create(
 	Threadpool* threadpool, 
 	ResourceManager* resources)
 {
+	Error err = ErrorCode::NONE;
+
 	m_threadpool = threadpool;
 	m_resources = resources;
 	m_objectsMarkedForDeletionCount.store(0);
@@ -126,7 +126,14 @@ Error SceneGraph::create(
 	m_frameAlloc = SceneFrameAllocator<U8>(
 		allocCb, allocCbData, ANKI_SCENE_FRAME_ALLOCATOR_SIZE);
 
-	return ErrorCode::NONE;
+	err = m_events.create(this);
+
+	if(err)
+	{
+		ANKI_LOGE("Scene creation failed");
+	}
+
+	return err;
 }
 
 //==============================================================================
@@ -249,16 +256,17 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	// Reset the framepool
 	m_frameAlloc.getMemoryPool().reset();
 
-	// Delete nodes
+	// Delete stuff
+	m_events.deleteEventsMarkedForDeletion();
 	deleteNodesMarkedForDeletion();
 
 	Threadpool& threadPool = *m_threadpool;
 	(void)threadPool;
 
-	// XXX Do that in parallel
 	//m_physics.update(prevUpdateTime, crntTime);
 	renderer.getTiler().updateTiles(*m_mainCam);
-	m_events.updateAllEvents(prevUpdateTime, crntTime);
+	err = m_events.updateAllEvents(prevUpdateTime, crntTime);
+	if(err) return err;
 
 	// Then the rest
 	Array<UpdateSceneNodesTask, Threadpool::MAX_THREADS> jobs2;

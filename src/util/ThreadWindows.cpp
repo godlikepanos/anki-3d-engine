@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/util/Thread.h"
-#include "anki/util/Exception.h"
 #include <windows.h>
 
 namespace anki {

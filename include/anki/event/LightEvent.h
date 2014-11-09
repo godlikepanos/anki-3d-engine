@@ -14,37 +14,34 @@ namespace anki {
 // Forward
 class Light;
 
-/// @addtogroup Events
+/// @addtogroup event
 /// @{
 
 /// Helper class
-struct LightEventData
+class LightEventData
 {
-	F32 radiusMultiplier = 0.0;
-	Vec4 intensityMultiplier = Vec4(0.0);
-	Vec4 specularIntensityMultiplier = Vec4(0.0);
+public:
+	F32 m_radiusMultiplier = 0.0;
+	Vec4 m_intensityMultiplier = Vec4(0.0);
+	Vec4 m_specularIntensityMultiplier = Vec4(0.0);
 };
 
 /// An event for light animation
 class LightEvent: public Event, private LightEventData
 {
 public:
-	/// @name Constructors/Destructor
-	/// @{
-
-	/// Constructor
-	LightEvent(EventManager* manager, F32 startTime, F32 duration,
+	/// Create
+	ANKI_USE_RESULT Error create(
+		EventManager* manager, F32 startTime, F32 duration,
 		Light* light, const LightEventData& data);
-	/// @}
 
 	/// Implements Event::update
-	void update(F32 prevUpdateTime, F32 crntTime);
+	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);
 
 private:
-	Light* light;
-	F32 originalRadius;
-	Vec4 originalDiffColor;
-	Vec4 originalSpecColor;
+	F32 m_originalRadius;
+	Vec4 m_originalDiffColor;
+	Vec4 m_originalSpecColor;
 };
 /// @}
 
