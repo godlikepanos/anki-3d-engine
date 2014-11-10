@@ -46,7 +46,7 @@ Error StringListBase<TAlloc>::join(
 	ANKI_ASSERT(charCount > 0);
 
 	// Allocate
-	Error err = out.create(alloc, '?', charCount + 1);
+	Error err = out.create(alloc, '?', charCount);
 	if(err)
 	{
 		return err;
