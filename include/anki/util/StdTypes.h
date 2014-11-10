@@ -143,6 +143,11 @@ public:
 	{
 		return m_code;
 	}
+
+	I32 _getCodeInt() const
+	{
+		return static_cast<I32>(m_code);
+	}
 	/// @}
 
 private:

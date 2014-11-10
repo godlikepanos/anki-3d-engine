@@ -174,34 +174,7 @@ public:
 	/// Create a new SceneNode
 	template<typename Node, typename... Args>
 	ANKI_USE_RESULT Error newSceneNode(
-		const CString& name, Node*& node, Args&&... args)
-	{
-		Error err = ErrorCode::NONE;
-		SceneAllocator<Node> al = m_alloc;
-
-		node = al.template newInstance<Node>(this);
-		if(node)
-		{
-			err = node->create(name, std::forward<Args>(args)...);
-		}
-		else
-		{
-			err = ErrorCode::OUT_OF_MEMORY;
-		}
-
-		if(!err)
-		{
-			err = registerNode(node);
-		}
-
-		if(err && node)
-		{
-			al.deleteInstance(node);
-			node = nullptr;
-		}
-
-		return err;
-	}
+		const CString& name, Node*& node, Args&&... args);
 
 	/// Delete a scene node. It actualy marks it for deletion
 	void deleteSceneNode(SceneNode* node)
@@ -263,6 +236,43 @@ private:
 	void deleteNodesMarkedForDeletion();
 };
 
+//==============================================================================
+template<typename Node, typename... Args>
+inline Error SceneGraph::newSceneNode(
+	const CString& name, Node*& node, Args&&... args)
+{
+	Error err = ErrorCode::NONE;
+	SceneAllocator<Node> al = m_alloc;
+
+	node = al.template newInstance<Node>(this);
+	if(node)
+	{
+		err = node->create(name, std::forward<Args>(args)...);
+	}
+	else
+	{
+		err = ErrorCode::OUT_OF_MEMORY;
+	}
+
+	if(!err)
+	{
+		err = registerNode(node);
+	}
+
+	if(err)
+	{
+		ANKI_LOGE("Failed to create scene node: %s", 
+			(name.isEmpty()) ? "unnamed" : &name[0]);
+
+		if(node)
+		{
+			al.deleteInstance(node);
+			node = nullptr;
+		}
+	}
+
+	return err;
+}
 /// @}
 
 } // end namespace anki

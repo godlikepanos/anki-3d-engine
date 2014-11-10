@@ -11,11 +11,7 @@ namespace anki {
 //==============================================================================
 void GlClientSync::wait()
 {
-	Bool timeout = m_barrier.wait();
-	if(timeout)
-	{
-		ANKI_LOGW("Sync timed out. Probably because of exception");
-	}
+	m_barrier.wait();
 }
 
 } // end namespace anki

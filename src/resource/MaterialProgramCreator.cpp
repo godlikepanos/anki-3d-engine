@@ -7,7 +7,6 @@
 #include "anki/util/Assert.h"
 #include "anki/misc/Xml.h"
 #include "anki/util/Logger.h"
-
 #include <algorithm>
 
 namespace anki {
@@ -81,7 +80,12 @@ MaterialProgramCreator::MaterialProgramCreator(TempResourceAllocator<U8>& alloc)
 //==============================================================================
 MaterialProgramCreator::~MaterialProgramCreator()
 {
-	for(auto& it : m_inputs)
+	for(auto& it : m_source)
+	{
+		it.destroy(m_alloc);
+	}
+
+	for(auto& it : m_sourceBaked)
 	{
 		it.destroy(m_alloc);
 	}
@@ -218,12 +222,12 @@ Error MaterialProgramCreator::parseProgramTag(
 	{
 		if(!in.m_inBlock && (in.m_shaderDefinedMask & glshaderbit))
 		{
-			ANKI_ASSERT(lines.pushBackSprintf(m_alloc, &in.m_line[0]));
+			ANKI_CHECK(lines.pushBackSprintf(m_alloc, &in.m_line[0]));
 		}
 	}
 
 	// <operations></operations>
-	ANKI_ASSERT(lines.pushBackSprintf(m_alloc, "\nvoid main()\n{"));
+	ANKI_CHECK(lines.pushBackSprintf(m_alloc, "\nvoid main()\n{"));
 
 	XmlElement opsEl;
 	ANKI_CHECK(programEl.getChildElement("operations", opsEl));
@@ -233,7 +237,7 @@ Error MaterialProgramCreator::parseProgramTag(
 	{
 		MPString out;
 		ANKI_CHECK(parseOperationTag(opEl, glshader, glshaderbit, out));
-		ANKI_ASSERT(lines.pushBackSprintf(m_alloc, &out[0]));
+		ANKI_CHECK(lines.pushBackSprintf(m_alloc, &out[0]));
 		out.destroy(m_alloc);
 
 		// Advance
@@ -270,6 +274,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 	do
 	{
 		Input inpvar;
+		inpvar.m_alloc = m_alloc;
 
 		// <name>
 		ANKI_CHECK(inputEl.getChildElement("name", el));
@@ -443,7 +448,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		{
 			// Handle consts
 
-			if(!inpvar.m_value.isEmpty())
+			if(inpvar.m_value.isEmpty())
 			{
 				ANKI_LOGE("Empty value and const is illogical");
 				return ErrorCode::USER_DATA;
@@ -543,7 +548,7 @@ Error MaterialProgramCreator::parseOperationTag(
 
 			// The argument should be an input variable or an outXX
 			if(!(input != nullptr 
-				|| std::memcmp(&arg[0], "out", 3) == 0))
+				|| std::memcmp(&arg[0], OUT, 3) == 0))
 			{
 				ANKI_LOGE("Incorrect argument: %s", &arg[0]);
 				return ErrorCode::USER_DATA;
@@ -608,7 +613,7 @@ Error MaterialProgramCreator::parseOperationTag(
 		ANKI_CHECK(retTypeEl.getText(cstr));
 		ANKI_CHECK(lines.pushBackSprintf(m_alloc,
 			"#\tdefine out%u_DEFINED\n"
-			"\tout%u = ", id));
+			"\t%s out%u = ", id, &cstr[0], id));
 	}
 	else
 	{
@@ -619,10 +624,14 @@ Error MaterialProgramCreator::parseOperationTag(
 	MPString argsStr;
 	MPString::ScopeDestroyer argsStrd(&argsStr, m_alloc);
 
-	ANKI_CHECK(argsList.join(m_alloc, ", ", argsStr));
+	if(!argsList.isEmpty())
+	{
+		ANKI_CHECK(argsList.join(m_alloc, ", ", argsStr));
+	}
 
 	ANKI_CHECK(lines.pushBackSprintf(m_alloc, "%s(%s);\n#endif",
-		&funcName[0], &argsStr[0]));
+		&funcName[0], 
+		(argsStr.isEmpty()) ? "" : &argsStr[0]));
 
 	// Bake final string
 	ANKI_CHECK(lines.join(m_alloc, " ", out));

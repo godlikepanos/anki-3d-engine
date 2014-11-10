@@ -26,11 +26,12 @@ class MaterialProgramCreator
 {
 public:
 	using MPString = TempResourceString; 
-	using MPStringList = StringListBase<TempResourceAllocator<char>>; 
+	using MPStringList = StringListBase<TempResourceAllocator<char>>;
 
-	class Input
+	class Input: public NonCopyable
 	{
 	public:
+		TempResourceAllocator<U8> m_alloc;
 		MPString m_name;
 		MPString m_type;
 		MPStringList m_value;
@@ -43,22 +44,37 @@ public:
 		GLbitfield m_shaderReferencedMask = 0; ///< Referenced by
 		Bool8 m_inBlock = true;
 
-		void destroy(TempResourceAllocator<U8> alloc)
+		Input()
+		{}
+
+		Input(Input&& b)
 		{
-			m_name.destroy(alloc);
-			m_type.destroy(alloc);
-			m_value.destroy(alloc);
-			m_line.destroy(alloc);
+			move(b);
+		}
+
+		~Input()
+		{
+			m_name.destroy(m_alloc);
+			m_type.destroy(m_alloc);
+			m_value.destroy(m_alloc);
+			m_line.destroy(m_alloc);
+		}
+
+		Input& operator=(Input&& b)
+		{
+			move(b);
+			return *this;
 		}
 
 		void move(Input& b)
 		{
+			m_alloc = std::move(b.m_alloc);
 			m_name = std::move(b.m_name);
 			m_type = std::move(b.m_type);
 			m_value = std::move(b.m_value);
 			m_constant = b.m_constant;
 			m_arraySize = b.m_arraySize;
-			m_line = std::move(m_line);
+			m_line = std::move(b.m_line);
 			m_shaderDefinedMask = b.m_shaderDefinedMask;
 			m_shaderReferencedMask = b.m_shaderReferencedMask;
 			m_inBlock = b.m_inBlock;

@@ -554,10 +554,18 @@ int main(int argc, char* argv[])
 {
 	Error err = ErrorCode::NONE;
 
-	initSubsystems(argc, argv);
-	init();
+	err = initSubsystems(argc, argv);
 
-	err = app->mainLoop(mainLoopExtra, nullptr);
+	if(!err)
+	{
+		err = init();
+	}
+
+	if(!err)
+	{
+		err = app->mainLoop(mainLoopExtra, nullptr);
+	}
+
 	if(err)
 	{
 		ANKI_LOGE("Error reported. See previous messages");

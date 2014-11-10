@@ -189,6 +189,7 @@ public:
 	/// Call destructor
 	void destroy(pointer p)
 	{
+		ANKI_ASSERT(p != nullptr);
 		p->~T();
 	}
 
@@ -196,6 +197,7 @@ public:
 	template<typename U>
 	void destroy(U* p)
 	{
+		ANKI_ASSERT(p != nullptr);
 		p->~U();
 	}
 
@@ -282,8 +284,11 @@ public:
 	{
 		typename rebind<U>::other alloc(*this);
 
-		alloc.destroy(x);
-		alloc.deallocate(x, 1);
+		if(x != nullptr)
+		{
+			alloc.destroy(x);
+			alloc.deallocate(x, 1);
+		}
 	}
 
 	/// Call the destructor and deallocate an array of objects
@@ -293,13 +298,20 @@ public:
 	{
 		typename rebind<U>::other alloc(*this);
 
-		// Call the destructors
-		for(size_type i = 0; i < n; i++)
+		if(x != nullptr)
 		{
-			alloc.destroy(&x[i]);
-		}
+			// Call the destructors
+			for(size_type i = 0; i < n; i++)
+			{
+				alloc.destroy(&x[i]);
+			}
 
-		alloc.deallocate(x, n);
+			alloc.deallocate(x, n);
+		}
+		else
+		{
+			ANKI_ASSERT(n == 0);
+		}
 	}
 
 private:

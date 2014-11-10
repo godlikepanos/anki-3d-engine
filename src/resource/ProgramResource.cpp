@@ -123,6 +123,7 @@ Error ProgramResource::createToCache(
 	ANKI_CHECK(f.open(newFilename.toCString(), File::OpenFlag::WRITE));
 	ANKI_CHECK(f.writeText("%s\n", &srcfull[0]));
 
+	out = std::move(newFilename);
 	return err;
 }
 
