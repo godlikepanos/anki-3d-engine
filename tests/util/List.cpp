@@ -6,6 +6,8 @@
 #include "tests/framework/Framework.h"
 #include "tests/util/Foo.h"
 #include "anki/util/List.h"
+#include "anki/util/HighRezTimer.h"
+#include <list>
 
 ANKI_TEST(Util, List)
 {
@@ -90,6 +92,49 @@ ANKI_TEST(Util, List)
 
 		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
 
+		a.destroy(alloc);
+	}
+
+	// Extreme sort
+	{
+		const U COUNT = 10000;
+		List<Foo> a;
+		std::list<Foo> b;
+
+		for(U i = 0; i < COUNT; i++)
+		{
+			I randVal = rand();
+			Foo f(randVal);
+
+			ANKI_TEST_EXPECT_NO_ERR(a.pushBack(alloc, f));
+			b.push_back(f);
+		}
+
+		//auto ta = HighRezTimer::getCurrentTime();
+		b.sort([](const Foo& a, const Foo& b){return a.x < b.x;});
+		//auto tb = HighRezTimer::getCurrentTime();
+		a.sort([](const Foo& a, const Foo& b){return a.x < b.x;});
+		//auto tc = HighRezTimer::getCurrentTime();
+
+		//printf("%f %f\n", tb - ta, tc - tb);
+
+		auto ait = a.getBegin();
+		auto bit = b.begin();
+		auto aend = a.getEnd();
+		auto bend = b.end();
+
+		while(ait != aend && bit != bend)
+		{
+			const Foo& afoo = *ait;
+			const Foo& bfoo = *bit;
+
+			ANKI_TEST_EXPECT_EQ(afoo, bfoo);
+			++ait;
+			++bit;
+		}
+
+		ANKI_TEST_EXPECT_EQ(ait, aend);
+		ANKI_TEST_EXPECT_EQ(bit, bend);
 		a.destroy(alloc);
 	}
 

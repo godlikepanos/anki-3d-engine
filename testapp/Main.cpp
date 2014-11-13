@@ -233,7 +233,7 @@ Error init()
 		0.7));*/
 #endif
 
-#if 1
+#if 0
 	{
 		ScriptResourcePointer script;
 

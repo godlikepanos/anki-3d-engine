@@ -37,11 +37,10 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 	// If dirty then update world transform
 	if(dirty)
 	{
-		const SceneObject* parentObj = node.getParent();
+		const SceneNode* parent = node.getParent();
 
-		if(parentObj)
+		if(parent)
 		{
-			const SceneNode* parent = &parentObj->downCast<SceneNode>();
 			const MoveComponent* parentMove = 
 				parent->tryGetComponent<MoveComponent>();
 
@@ -79,21 +78,17 @@ Bool MoveComponent::updateWorldTransform(SceneNode& node)
 	// whole tree because you will re-walk it later
 	if(dirty)
 	{
-		Error err = node.visitChildrenMaxDepth(1, [](SceneObject& obj) -> Error
+		Error err = node.visitChildrenMaxDepth(1, 
+			[](SceneNode& childNode) -> Error
 		{ 
-			if(obj.getType() == SceneNode::getClassType())
+			Error e = childNode.iterateComponentsOfType<MoveComponent>(
+				[](MoveComponent& mov) -> Error
 			{
-				SceneNode& childNode = obj.downCast<SceneNode>();
+				mov.markForUpdate();
+				return ErrorCode::NONE;
+			});
 
-				Error e = childNode.iterateComponentsOfType<MoveComponent>(
-					[](MoveComponent& mov) -> Error
-				{
-					mov.markForUpdate();
-					return ErrorCode::NONE;
-				});
-
-				(void)e;
-			}
+			(void)e;
 
 			return ErrorCode::NONE;
 		});

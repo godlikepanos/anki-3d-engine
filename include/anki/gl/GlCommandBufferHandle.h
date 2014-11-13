@@ -39,7 +39,7 @@ public:
 	/// Add another command buffer for execution
 	void pushBackOtherCommandBuffer(GlCommandBufferHandle& commands);
 
-	/// Flush command buffer for deffered deletion
+	/// Flush command buffer for deffered execution.
 	void flush();
 
 	/// Flush and wait to finish

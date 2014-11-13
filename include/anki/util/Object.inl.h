@@ -16,7 +16,9 @@ void Object<T, TAlloc, TCallbackCollection>::destroy(Allocator alloc)
 	}
 
 	// Remove all children (fast version)
-	for(typename Container::Iterator it : m_children)
+	auto it = m_children.getBegin();
+	auto end = m_children.getEnd();
+	for(; it != end; ++it)
 	{
 		Value* child = *it;
 		child->m_parent = nullptr;
@@ -65,7 +67,7 @@ void Object<T, TAlloc, TCallbackCollection>::removeChild(
 
 	ANKI_ASSERT(it != m_children.getEnd() && "Child not found");
 
-	m_children.erase(it);
+	m_children.erase(alloc, it);
 	child->m_parent = nullptr;
 
 	m_callbacks.onChildRemoved(child, getSelf());

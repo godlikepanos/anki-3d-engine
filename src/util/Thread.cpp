@@ -197,14 +197,13 @@ Threadpool::~Threadpool()
 //==============================================================================
 void Threadpool::assignNewTask(U32 slot, Task* task)
 {
-#if !ANKI_DISABLE_THREADPOOL_THREADING
 	ANKI_ASSERT(slot < getThreadsCount());
-	
 	if(task == nullptr)
 	{
 		task = &m_dummyTask;
 	}
-	
+
+#if !ANKI_DISABLE_THREADPOOL_THREADING
 	m_threads[slot].assignNewTask(task);
 #else
 	Error err = (*task)(slot, m_threadsCount);

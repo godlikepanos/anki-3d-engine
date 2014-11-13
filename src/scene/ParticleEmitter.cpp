@@ -562,6 +562,8 @@ Error ParticleEmitter::doInstancingCalcs()
 	// Gather the move components of the instances
 	//
 	SceneFrameDArray<MoveComponent*> instanceMoves;
+	SceneFrameDArray<MoveComponent*>::ScopeDestroyer instanceMovesd(
+		&instanceMoves, getSceneFrameAllocator());
 	U instanceMovesCount = 0;
 	Timestamp instancesTimestamp = 0;
 
@@ -571,20 +573,16 @@ Error ParticleEmitter::doInstancingCalcs()
 		return err;
 	}
 
-	err = SceneObject::visitChildren([&](SceneObject& obj) -> Error
+	err = SceneNode::visitChildren([&](SceneNode& sn) -> Error
 	{	
-		if(obj.getType() == SceneNode::getClassType())
+		if(sn.tryGetComponent<InstanceComponent>())
 		{
-			SceneNode& sn = obj.downCast<SceneNode>();
-			if(sn.tryGetComponent<InstanceComponent>())
-			{
-				MoveComponent& move = sn.getComponent<MoveComponent>();
+			MoveComponent& move = sn.getComponent<MoveComponent>();
 
-				instanceMoves[instanceMovesCount++] = &move;
+			instanceMoves[instanceMovesCount++] = &move;
 
-				instancesTimestamp = 
-					std::max(instancesTimestamp, move.getTimestamp());
-			}
+			instancesTimestamp = 
+				std::max(instancesTimestamp, move.getTimestamp());
 		}
 
 		return ErrorCode::NONE;
@@ -655,13 +653,14 @@ Error ParticleEmitter::doInstancingCalcs()
 		if(!err)
 		{
 			U count = 0;
+			SpatialComponent* meSpatial = this;
 			err = iterateComponentsOfType<SpatialComponent>(
 				[&](SpatialComponent& sp) -> Error
 			{
 				Error err2 = ErrorCode::NONE;
 
 				// Skip the first
-				if(count != 0)	
+				if(&sp != meSpatial)	
 				{
 					ObbSpatialComponent* msp = 
 						staticCastPtr<ObbSpatialComponent*>(&sp);
@@ -670,9 +669,8 @@ Error ParticleEmitter::doInstancingCalcs()
 					{
 						Obb aobb = m_obb;
 						aobb.setCenter(Vec4(0.0));
-						msp->m_obb =
-							aobb.getTransformed(m_transforms[count - 1]);
-
+						msp->m_obb = aobb.getTransformed(m_transforms[count]);
+						++count;
 						msp->markForUpdate();
 					}
 					else
@@ -681,12 +679,10 @@ Error ParticleEmitter::doInstancingCalcs()
 					}
 				}
 
-				++count;
-
 				return err2;
 			});
 
-			ANKI_ASSERT(count - 1 == m_transforms.getSize());
+			ANKI_ASSERT(count == m_transforms.getSize());
 		}
 	} // end if instancing
 

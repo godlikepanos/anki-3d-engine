@@ -53,11 +53,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool isLight,
 	// Allocate visible
 	VisibilityTestResults* visible = 
 		m_alloc.newInstance<VisibilityTestResults>();
-
-	if(visible == nullptr)
-	{
-		return ErrorCode::OUT_OF_MEMORY;
-	}
+	if(visible == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
 	// Init visible
 	FrustumComponent::VisibilityStats stats = testedFr.getLastVisibilityStats();
@@ -71,10 +67,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool isLight,
 
 	err = visible->create(
 		m_alloc, stats.m_renderablesCount, stats.m_lightsCount);
-	if(err)
-	{
-		return err;
-	}
+	if(err)	return err;
 
 	// Chose the test range and a few other things
 	PtrSize start, end;
@@ -216,7 +209,8 @@ Error VisibilityTestResults::moveBack(
 	if(count + 1 > c.getSize())
 	{
 		// Need to grow
-		err = c.resize(alloc, c.getSize() * 2);
+		U newSize = (c.getSize() != 0) ? c.getSize() * 2 : 2;
+		err = c.resize(alloc, newSize);
 	}
 
 	if(!err)
@@ -248,10 +242,7 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 	}
 
 	Error err = threadPool.waitForAllThreadsToFinish();
-	if(err)
-	{
-		return err;
-	}
+	if(err)	return err;
 
 	//
 	// Combine results
@@ -270,21 +261,15 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 	// Allocate
 	VisibilityTestResults* visible = 
 		scene.getFrameAllocator().newInstance<VisibilityTestResults>();
-
-	if(visible == nullptr)
-	{
-		return ErrorCode::OUT_OF_MEMORY;
-	}
+	if(visible == nullptr)	return ErrorCode::OUT_OF_MEMORY;
 
 	err = visible->create(
 		scene.getFrameAllocator(), 
 		renderablesSize, 
 		lightsSize);
+	if(err)	return err;
 
-	if(err)
-	{
-		return err;
-	}
+	visible->prepareMerge();
 
 	if(renderablesSize == 0)
 	{

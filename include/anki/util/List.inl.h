@@ -250,52 +250,78 @@ template<typename T, typename TAlloc>
 template<typename TCompFunc>
 void List<T, TAlloc>::sort(TCompFunc compFunc)
 {
-	sortInternal(compFunc, m_head, m_tail);
-}
+	Node* sortPtr;
+	Node* newTail = m_tail;
 
-//==============================================================================
-template<typename T, typename TAlloc>
-template<typename TCompFunc>
-void List<T, TAlloc>::sortInternal(TCompFunc compFunc, Node* l, Node* r)
-{
-	if (r != nullptr && l != r && l != r->m_next)
+	while(newTail != m_head)
 	{
-		Node* p = partition(compFunc, l, r);
-		sortInternal(compFunc, l, p->m_prev);
-		sortInternal(compFunc, p->m_next, r);
-	}
-}
+		sortPtr = m_head;
+		Bool swapped = false;
+		Bool end = false;
 
-//==============================================================================
-template<typename T, typename TAlloc>
-template<typename TCompFunc>
-typename List<T, TAlloc>::Node* List<T, TAlloc>::partition(
-	TCompFunc compFunc, Node* l, Node* r)
-{
-	// Set pivot as h element
-	Value& x = r->m_value;
- 
-	// similar to i = l-1 for array implementation
-	Node* i = l->m_prev;
- 
-	// Similar to "for (int j = l; j <= h- 1; j++)"
-	for(Node* j = l; j != r; j = j->m_next)
-	{
-		if(compFunc(j->m_value, x))
+		do
 		{
-			// Similar to i++ for array
-			i = (i == nullptr) ? l : i->m_next;
+			ANKI_ASSERT(sortPtr != nullptr);
+			Node* sortPtrNext = sortPtr->m_next;
+			ANKI_ASSERT(sortPtrNext != nullptr);
 
-			// Swap
-			std::swap(i->m_value, j->m_value);
-		}
+			if(compFunc(sortPtrNext->m_value, sortPtr->m_value))
+			{
+				sortPtr = swap(sortPtr, sortPtrNext);
+				swapped = true;
+			}
+			else
+			{
+				sortPtr = sortPtrNext;
+			}
+
+			if(sortPtr == m_tail || sortPtr == newTail)
+			{
+				if(swapped)
+				{
+					newTail = sortPtr->m_prev;
+				}
+				else
+				{
+					newTail = m_head;
+				}
+
+				end = true;
+			}
+		} while(!end);
+	}
+}
+
+//==============================================================================
+template<typename T, typename TAlloc>
+typename List<T, TAlloc>::Node* List<T, TAlloc>::swap(Node* one, Node* two)
+{
+	if(one->m_prev == nullptr)
+	{
+		m_head = two;
+	}
+	else
+	{
+		ANKI_ASSERT(one->m_prev);
+		one->m_prev->m_next = two;
 	}
 
-	i = (i == nullptr) ? l : i->m_next; // Similar to i++
-	
-	std::swap(i->m_value, r->m_value);
+	if(two->m_next == nullptr)
+	{
+		m_tail = one;
+	}
+	else
+	{
+		ANKI_ASSERT(two->m_next);
+		two->m_next->m_prev = one;
+	}
 
-	return i;
+	two->m_prev = one->m_prev;
+	one->m_next = two->m_next;
+	one->m_prev = two;
+	two->m_next = one;
+
+	return one;
 }
 
 //==============================================================================

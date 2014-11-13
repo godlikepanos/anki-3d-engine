@@ -10,7 +10,7 @@ namespace anki {
 
 //==============================================================================
 SceneNode::SceneNode(SceneGraph* scene)
-:	SceneObject(Type::SCENE_NODE, scene)
+:	m_scene(scene)
 {}
 
 //==============================================================================
@@ -23,8 +23,43 @@ Error SceneNode::create(const CString& name)
 SceneNode::~SceneNode()
 {
 	auto alloc = getSceneAllocator();
+	Base::destroy(alloc);
 	m_name.destroy(alloc);
 	m_components.destroy(alloc);
+}
+
+//==============================================================================
+void SceneNode::setMarkedForDeletion()
+{
+	// Mark for deletion only when it's not already marked because we don't 
+	// want to increase the counter again
+	if(!getMarkedForDeletion())
+	{
+		m_forDeletion = true;
+		m_scene->increaseObjectsMarkedForDeletion();
+	}
+
+	Error err = visitChildren([](SceneNode& obj) -> Error
+	{
+		obj.setMarkedForDeletion();
+		return ErrorCode::NONE;
+	});
+
+	(void)err;
+}
+
+//==============================================================================
+SceneAllocator<U8> SceneNode::getSceneAllocator() const
+{
+	ANKI_ASSERT(m_scene);
+	return m_scene->getAllocator();
+}
+
+//==============================================================================
+SceneAllocator<U8> SceneNode::getSceneFrameAllocator() const
+{
+	ANKI_ASSERT(m_scene);
+	return m_scene->getFrameAllocator();
 }
 
 //==============================================================================
@@ -74,7 +109,7 @@ void SceneNode::removeComponent(SceneComponent* comp)
 //==============================================================================
 ResourceManager& SceneNode::getResourceManager()
 {
-	return getSceneGraph()._getResourceManager();
+	return m_scene->_getResourceManager();
 }
 
 } // end namespace anki

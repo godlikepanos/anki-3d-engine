@@ -11,7 +11,7 @@
 #include "anki/util/NonCopyable.h"
 #include <atomic>
 
-#define ANKI_DISABLE_THREADPOOL_THREADING 0
+#define ANKI_DISABLE_THREADPOOL_THREADING 1
 
 namespace anki {
 

@@ -6,7 +6,17 @@
 #ifndef ANKI_TESTS_UTIL_FOO_H
 #define ANKI_TESTS_UTIL_FOO_H
 
-#include <iostream>
+#include <cstdio>
+
+#ifndef ANKI_TESTS_FOO_VERBOSE
+#	define ANKI_TESTS_FOO_VERBOSE 0
+#endif
+
+#if ANKI_TESTS_FOO_VERBOSE
+#	define ANKI_TESTS_FOO_PRINT() printf("%s\n", __PRETTY_FUNCTION__)
+#else
+#	define ANKI_TESTS_FOO_PRINT() ((void)0)
+#endif
 
 /// Struct for testing
 struct Foo
@@ -17,51 +27,61 @@ struct Foo
 
 	Foo()
 	{
-		std::cout << __PRETTY_FUNCTION__ << std::endl;
+		ANKI_TESTS_FOO_PRINT();
 		++constructorCallCount;
 	}
 
 	Foo(int x_)
-		: x(x_)
+	:	x(x_)
 	{
-		std::cout << __PRETTY_FUNCTION__ << std::endl;
+		ANKI_TESTS_FOO_PRINT();
 		++constructorCallCount;
 	}
 
 	Foo(const Foo& b)
-		: x(b.x)
+	:	x(b.x)
 	{
-		std::cout << __PRETTY_FUNCTION__ << std::endl;
+		ANKI_TESTS_FOO_PRINT();
 		++constructorCallCount;
 	}
 
 	Foo(Foo&& b)
-		: x(b.x)
+	:	x(b.x)
 	{
-		std::cout << __PRETTY_FUNCTION__ << std::endl;
+		ANKI_TESTS_FOO_PRINT();
 		b.x = 0;
 		++constructorCallCount;
 	}
 
 	~Foo()
 	{
-		std::cout << __PRETTY_FUNCTION__ << std::endl;
+		ANKI_TESTS_FOO_PRINT();
 		++destructorCallCount;
 	}
 
 	Foo& operator=(const Foo& b)
 	{
-		std::cout << __PRETTY_FUNCTION__ << std::endl;
+		ANKI_TESTS_FOO_PRINT();
 		x = b.x;
 		return *this;
 	}
 
 	Foo& operator=(Foo&& b)
 	{
-		std::cout << __PRETTY_FUNCTION__ << std::endl;
+		ANKI_TESTS_FOO_PRINT();
 		x = b.x;
 		b.x = 0;
 		return *this;
+	}
+
+	bool operator==(const Foo& b) const
+	{
+		return x == b.x;
+	}
+
+	bool operator!=(const Foo& b) const
+	{
+		return x != b.x;
 	}
 
 	static void reset()

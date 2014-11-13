@@ -131,44 +131,67 @@ public:
 
 	Bool operator==(const CString& b) const 
 	{
-		checkInit();
-		b.checkInit();
-		return std::strcmp(m_ptr, b.m_ptr) == 0;
+		if(m_ptr == nullptr || b.m_ptr == nullptr)
+		{
+			return m_ptr == b.m_ptr;
+		}
+		else
+		{
+			return std::strcmp(m_ptr, b.m_ptr) == 0;
+		}
 	}
 
 	Bool operator!=(const CString& b) const 
 	{
-		checkInit();
-		b.checkInit();
-		return std::strcmp(m_ptr, b.m_ptr) != 0;
+		return !((*this) == b);
 	}
 
 	Bool operator<(const CString& b) const 
 	{
-		checkInit();
-		b.checkInit();
-		return std::strcmp(m_ptr, b.m_ptr) < 0;
+		if(m_ptr == nullptr || b.m_ptr == nullptr)
+		{
+			return false;
+		}
+		else
+		{
+			return std::strcmp(m_ptr, b.m_ptr) < 0;
+		}
 	}
 
 	Bool operator<=(const CString& b) const 
 	{
-		checkInit();
-		b.checkInit();
-		return std::strcmp(m_ptr, b.m_ptr) <= 0;
+		if(m_ptr == nullptr || b.m_ptr == nullptr)
+		{
+			return m_ptr == b.m_ptr;
+		}
+		else
+		{
+			return std::strcmp(m_ptr, b.m_ptr) <= 0;
+		}
 	}
 
 	Bool operator>(const CString& b) const 
 	{
-		checkInit();
-		b.checkInit();
-		return std::strcmp(m_ptr, b.m_ptr) > 0;
+		if(m_ptr == nullptr || b.m_ptr == nullptr)
+		{
+			return false;
+		}
+		else
+		{
+			return std::strcmp(m_ptr, b.m_ptr) > 0;
+		}
 	}
 
 	Bool operator>=(const CString& b) const 
 	{
-		checkInit();
-		b.checkInit();
-		return std::strcmp(m_ptr, b.m_ptr) >= 0;
+		if(m_ptr == nullptr || b.m_ptr == nullptr)
+		{
+			return m_ptr == b.m_ptr;
+		}
+		else
+		{
+			return std::strcmp(m_ptr, b.m_ptr) >= 0;
+		}
 	}
 
 	/// Get the underlying C string.
@@ -181,8 +204,7 @@ public:
 	/// Get the string length.
 	U getLength() const 
 	{
-		checkInit();
-		if(m_length == 0)
+		if(m_length == 0 && m_ptr != nullptr)
 		{
 			m_length = std::strlen(m_ptr);
 		}

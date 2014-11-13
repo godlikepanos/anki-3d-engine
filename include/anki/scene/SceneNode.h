@@ -7,7 +7,7 @@
 #define ANKI_SCENE_SCENE_NODE_H
 
 #include "anki/scene/Common.h"
-#include "anki/scene/SceneObject.h"
+#include "anki/util/Object.h"
 #include "anki/scene/SceneComponent.h"
 
 namespace anki {
@@ -19,9 +19,11 @@ class ResourceManager;
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode: public SceneObject
+class SceneNode: public Object<SceneNode, SceneAllocator<SceneNode>>
 {
 public:
+	using Base = Object<SceneNode, SceneAllocator<SceneNode>>;
+
 	/// The one and only constructor
 	SceneNode(SceneGraph* scene);
 
@@ -32,6 +34,11 @@ public:
 	///             is not searchable.
 	ANKI_USE_RESULT Error create(const CString& name);
 
+	SceneGraph& getSceneGraph()
+	{
+		return *m_scene;
+	}
+
 	/// Return the name. It may be empty for nodes that we don't want to track
 	CString getName() const
 	{
@@ -41,6 +48,22 @@ public:
 	U32 getComponentsCount() const
 	{
 		return m_componentsCount;
+	}
+
+	Bool getMarkedForDeletion() const
+	{
+		return m_forDeletion;
+	}
+
+	void setMarkedForDeletion();
+
+	SceneAllocator<U8> getSceneAllocator() const;
+
+	SceneAllocator<U8> getSceneFrameAllocator() const;
+
+	ANKI_USE_RESULT Error addChild(SceneNode* obj)
+	{
+		return Base::addChild(getSceneAllocator(), obj);
 	}
 
 	/// This is called by the scene every frame after logic and before
@@ -139,11 +162,6 @@ public:
 		return *out;
 	}
 
-	static constexpr SceneObject::Type getClassType()
-	{
-		return SceneObject::Type::SCENE_NODE;
-	}
-
 protected:
 	/// Append a component to the components container. The SceneNode will not
 	/// take ownership
@@ -155,9 +173,11 @@ protected:
 	ResourceManager& getResourceManager();
 
 private:
-	SceneString m_name; ///< A unique name
+	SceneGraph* m_scene = nullptr;
 	SceneDArray<SceneComponent*> m_components;
 	U8 m_componentsCount = 0;
+	SceneString m_name; ///< A unique name
+	Bool8 m_forDeletion = false;
 };
 
 /// @}

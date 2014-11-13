@@ -79,10 +79,7 @@ public:
 		return m_node;
 	}
 
-	void markForDeletion()
-	{
-		m_flags |= Flag::MARKED_FOR_DELETION;
-	}
+	void setMarkedForDeletion();
 
 	Bool getMarkedForDeletion() const
 	{

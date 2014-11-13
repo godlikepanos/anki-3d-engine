@@ -99,6 +99,13 @@ public:
 		return err;
 	}
 
+	void prepareMerge()
+	{
+		ANKI_ASSERT(m_renderablesCount == 0 && m_lightsCount == 0);
+		m_renderablesCount = m_renderables.getSize();
+		m_lightsCount = m_lights.getSize();
+	}
+
 	VisibleNode* getRenderablesBegin()
 	{
 		return (m_renderablesCount) ? &m_renderables[0] : nullptr;

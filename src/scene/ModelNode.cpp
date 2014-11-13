@@ -103,7 +103,7 @@ Error ModelPatchNode::buildRendering(RenderingBuildData& data)
 //==============================================================================
 void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 {
-	SceneNode* parent = &getParent()->downCast<SceneNode>();
+	SceneNode* parent = getParent();
 	ANKI_ASSERT(parent);
 	MoveComponent& move = parent->getComponent<MoveComponent>();
 
@@ -115,7 +115,7 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 	else
 	{
 		// Asking for a next instance
-		SceneNode* parent = &getParent()->downCast<SceneNode>();
+		SceneNode* parent = getParent();
 		ANKI_ASSERT(parent);
 		ModelNode* mnode = staticCastPtr<ModelNode*>(parent);
 
@@ -257,7 +257,7 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 			{
 				m_modelPatches[count++] = mpn;
 
-				err = SceneObject::addChild(mpn);
+				err = addChild(mpn);
 			}
 		}
 	}
@@ -299,20 +299,16 @@ Error ModelNode::frameUpdate(F32, F32)
 		return err;
 	}
 
-	err = SceneObject::visitChildren([&](SceneObject& obj) -> Error
+	err = visitChildren([&](SceneNode& sn) -> Error
 	{
-		if(obj.getType() == SceneNode::getClassType())
+		if(sn.tryGetComponent<InstanceComponent>())
 		{
-			SceneNode& sn = obj.downCast<SceneNode>();
-			if(sn.tryGetComponent<InstanceComponent>())
-			{
-				MoveComponent& move = sn.getComponent<MoveComponent>();
+			MoveComponent& move = sn.getComponent<MoveComponent>();
 
-				instanceMoves[instanceMovesCount++] = &move;
+			instanceMoves[instanceMovesCount++] = &move;
 
-				instancesTimestamp = 
-					std::max(instancesTimestamp, move.getTimestamp());
-			}
+			instancesTimestamp = 
+				std::max(instancesTimestamp, move.getTimestamp());
 		}
 
 		return ErrorCode::NONE;

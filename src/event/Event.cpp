@@ -35,6 +35,16 @@ Error Event::create(
 }
 
 //==============================================================================
+void Event::setMarkedForDeletion()
+{
+	if(!getMarkedForDeletion())
+	{
+		m_flags |= Flag::MARKED_FOR_DELETION;
+		m_manager->increaseMarkedForDeletion();
+	}
+}
+
+//==============================================================================
 F32 Event::getDelta(F32 crntTime) const
 {
 	F32 d = crntTime - m_startTime; // delta

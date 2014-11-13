@@ -329,7 +329,9 @@ public:
 	/// Find item.
 	Iterator find(const Value& a);
 
-	/// Quicksort.
+	/// Sort the list.
+	/// @note It's almost 300 slower than std::list::sort, at some point replace
+	///       the algorithm.
 	template<typename TCompFunc = std::less<Value>>
 	void sort(TCompFunc compFunc = TCompFunc());
 
@@ -349,13 +351,8 @@ private:
 		b.m_tail = nullptr;
 	}
 
-	/// Sort.
-	template<typename TCompFunc>
-	void sortInternal(TCompFunc compFunc, Node* l, Node* r);
-
-	/// Used in sortInternal.
-	template<typename TCompFunc>
-	Node* partition(TCompFunc compFunc, Node* l, Node* r);
+	/// Used in sort.
+	Node* swap(Node* one, Node* two);
 
 	void pushBackNode(Node* node);
 };

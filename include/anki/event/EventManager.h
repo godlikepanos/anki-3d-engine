@@ -66,7 +66,7 @@ public:
 	/// Delete an event. It actualy marks it for deletion
 	void deleteEvent(Event* event)
 	{
-		event->markForDeletion();
+		event->setMarkedForDeletion();
 	}
 
 	/// Update
@@ -74,6 +74,11 @@ public:
 
 	/// Delete events that pending deletion
 	void deleteEventsMarkedForDeletion();
+
+	void increaseMarkedForDeletion()
+	{
+		++m_markedForDeletionCount;
+	}
 
 private:
 	SceneGraph* m_scene = nullptr;

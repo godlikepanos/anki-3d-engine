@@ -152,24 +152,7 @@ public:
 	/// Iterate a range of scene nodes using a lambda
 	template<typename Func>
 	ANKI_USE_RESULT Error iterateSceneNodes(
-		PtrSize begin, PtrSize count, Func func)
-	{
-		ANKI_ASSERT(begin < m_nodesCount && count <= m_nodesCount);
-		auto it = m_nodes.getBegin() + begin;
-		
-		while(count-- != 0)
-		{
-			Error err = func(*(*it));
-			if(err)
-			{
-				return err;
-			}
-
-			++it;
-		}
-
-		return ErrorCode::NONE;
-	}
+		PtrSize begin, PtrSize end, Func func);
 
 	/// Create a new SceneNode
 	template<typename Node, typename... Args>
@@ -179,13 +162,10 @@ public:
 	/// Delete a scene node. It actualy marks it for deletion
 	void deleteSceneNode(SceneNode* node)
 	{
-		node->markForDeletion();
+		node->setMarkedForDeletion();
 	}
+
 	void increaseObjectsMarkedForDeletion()
-	{
-		++m_objectsMarkedForDeletionCount;
-	}
-	void decreaseObjectsMarkedForDeletion()
 	{
 		++m_objectsMarkedForDeletionCount;
 	}
@@ -272,6 +252,29 @@ inline Error SceneGraph::newSceneNode(
 	}
 
 	return err;
+}
+
+//==============================================================================
+template<typename Func>
+Error SceneGraph::iterateSceneNodes(PtrSize begin, PtrSize end, Func func)
+{
+	ANKI_ASSERT(begin < m_nodesCount && end <= m_nodesCount);
+	auto it = m_nodes.getBegin() + begin;
+	
+	PtrSize count = end - begin;
+	while(count-- != 0)
+	{
+		ANKI_ASSERT(it != m_nodes.getEnd());
+		Error err = func(*(*it));
+		if(err)
+		{
+			return err;
+		}
+
+		++it;
+	}
+
+	return ErrorCode::NONE;
 }
 /// @}
 

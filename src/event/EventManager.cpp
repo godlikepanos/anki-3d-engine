@@ -71,9 +71,9 @@ Error EventManager::updateAllEvents(F32 prevUpdateTime, F32 crntTime)
 		}
 
 		if(event->getSceneNode() != nullptr 
-			&& event->getSceneNode()->isMarkedForDeletion())
+			&& event->getSceneNode()->getMarkedForDeletion())
 		{
-			event->markForDeletion();
+			event->setMarkedForDeletion();
 			continue;
 		}
 
@@ -108,7 +108,7 @@ Error EventManager::updateAllEvents(F32 prevUpdateTime, F32 crntTime)
 				err = event->onKilled(prevUpdateTime, crntTime, kill);
 				if(!err && kill)
 				{
-					event->markForDeletion();
+					event->setMarkedForDeletion();
 				}
 			}
 		}
@@ -121,6 +121,16 @@ Error EventManager::updateAllEvents(F32 prevUpdateTime, F32 crntTime)
 void EventManager::deleteEventsMarkedForDeletion()
 {
 	SceneAllocator<U8> alloc = getSceneAllocator();
+
+	// Check if nodes are marked for deletion
+	if(true)
+	{
+		auto it = m_events.getBegin();
+		auto end = m_events.getEnd();
+		for(; it != end; ++it)
+		{
+		}
+	}
 
 	// Gather events for deletion
 	while(m_markedForDeletionCount != 0)

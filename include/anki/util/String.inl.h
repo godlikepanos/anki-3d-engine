@@ -9,12 +9,18 @@ namespace anki {
 template<typename TAlloc>
 Error StringBase<TAlloc>::create(Allocator alloc, const CStringType& cstr)
 {
-	auto size = cstr.getLength() + 1;
-	Error err = m_data.create(alloc, size);
-
-	if(!err)
+	Error err = ErrorCode::NONE;
+	
+	auto len = cstr.getLength();
+	if(len > 0)
 	{
-		std::memcpy(&m_data[0], cstr.get(), sizeof(Char) * size);
+		auto size = len + 1;
+		err = m_data.create(alloc, size);
+
+		if(!err)
+		{
+			std::memcpy(&m_data[0], &cstr[0], sizeof(Char) * size);
+		}
 	}
 
 	return err;

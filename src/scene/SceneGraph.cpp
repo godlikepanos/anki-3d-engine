@@ -9,7 +9,6 @@
 #include "anki/scene/InstanceNode.h"
 #include "anki/core/Counters.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/misc/Xml.h"
 
 namespace anki {
 
@@ -67,17 +66,9 @@ public:
 		}
 
 		// Update children
-		err = node.visitChildren([&](SceneObject& obj) -> Error
+		err = node.visitChildren([&](SceneNode& child) -> Error
 		{
-			Error err2 = ErrorCode::NONE;
-
-			if(obj.getType() == SceneObject::Type::SCENE_NODE)
-			{
-				SceneNode& child = obj.downCast<SceneNode>();
-				err2 = updateInternal(child, prevTime, crntTime);
-			}
-
-			return err2;
+			return updateInternal(child, prevTime, crntTime);
 		});
 
 		// Frame update
@@ -224,19 +215,23 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 	/// should have finished their tasks
 	while(m_objectsMarkedForDeletionCount > 0)
 	{
+		Bool found = false;
 		auto it = m_nodes.begin();
-		for(; it != m_nodes.end(); it++)
+		auto end = m_nodes.end();
+		for(; it != end; it++)
 		{
-			if((*it)->isMarkedForDeletion())
+			if((*it)->getMarkedForDeletion())
 			{
 				// Delete node
 				unregisterNode(*it);
-				m_alloc.deleteInstance(*it);		
+				m_alloc.deleteInstance(*it);
+				found = true;
+				break;
 			}
 		}
 
-		// Do the same for events
-		m_events.deleteEventsMarkedForDeletion();
+		(void)found;
+		ANKI_ASSERT(found && "Something is wrong with marked for deletion");
 	}
 }
 
