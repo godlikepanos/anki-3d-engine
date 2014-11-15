@@ -75,7 +75,8 @@ private:
 	SceneDArray<ObbSpatialComponent*> m_spatials;
 
 	ANKI_USE_RESULT Error updateInstanceSpatials(
-		const SceneFrameDArray<MoveComponent*>& instanceMoves);
+		const MoveComponent* instanceMoves[], 
+		U32 instanceMovesCount);
 };
 
 /// The model scene node

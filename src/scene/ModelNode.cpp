@@ -127,13 +127,14 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 
 //==============================================================================
 Error ModelPatchNode::updateInstanceSpatials(
-	const SceneFrameDArray<MoveComponent*>& instanceMoves)
+	const MoveComponent* instanceMoves[],
+	U32 instanceMovesCount)
 {
 	Error err = ErrorCode::NONE;
 	Bool fullUpdate = false;
 
 	const U oldSize = m_spatials.getSize();
-	const U newSize = instanceMoves.getSize();
+	const U newSize = instanceMovesCount;
 
 	if(oldSize < newSize)
 	{
@@ -142,10 +143,7 @@ Error ModelPatchNode::updateInstanceSpatials(
 		fullUpdate = true;
 		
 		err = m_spatials.resize(getSceneAllocator(), newSize);
-		if(err)
-		{
-			return err;
-		}
+		if(err)	return err;
 
 		U diff = newSize - oldSize;
 		U index = oldSize;
@@ -153,16 +151,10 @@ Error ModelPatchNode::updateInstanceSpatials(
 		{
 			ObbSpatialComponent* newSpatial = getSceneAllocator().
 				newInstance<ObbSpatialComponent>(this);
-			if(newSpatial == nullptr)
-			{
-				return ErrorCode::OUT_OF_MEMORY;
-			}
+			if(newSpatial == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
 			err = addComponent(newSpatial);
-			if(err)
-			{
-				return err;
-			}
+			if(err)	return err;
 
 			m_spatials[index++] = newSpatial;
 		}
@@ -178,14 +170,16 @@ Error ModelPatchNode::updateInstanceSpatials(
 	}
 
 	U count = newSize;
+	const Obb& localBoundingShape = m_modelPatch->getBoundingShape();
 	while(count-- != 0)
 	{
 		ObbSpatialComponent& sp = *m_spatials[count];
+		ANKI_ASSERT(count < instanceMovesCount);
 		const MoveComponent& inst = *instanceMoves[count];
 
 		if(sp.getTimestamp() < inst.getTimestamp() || fullUpdate)
 		{
-			sp.m_obb = m_modelPatch->getBoundingShape().getTransformed(
+			sp.m_obb = localBoundingShape.getTransformed(
 				inst.getWorldTransform());
 
 			sp.markForUpdate();
@@ -289,7 +283,9 @@ Error ModelNode::frameUpdate(F32, F32)
 	Error err = ErrorCode::NONE;
 
 	// Gather the move components of the instances
-	SceneFrameDArray<MoveComponent*> instanceMoves;
+	SceneFrameDArray<const MoveComponent*> instanceMoves;
+	SceneFrameDArray<const MoveComponent*>::ScopeDestroyer instanceMovesd(
+		&instanceMoves, getSceneFrameAllocator());
 	U instanceMovesCount = 0;
 	Timestamp instancesTimestamp = 0;
 
@@ -329,10 +325,9 @@ Error ModelNode::frameUpdate(F32, F32)
 		{
 			m_transformsTimestamp = instancesTimestamp;
 
-			U count = 0;
-			for(const MoveComponent* instanceMove : instanceMoves)
+			for(U i = 0; i < instanceMovesCount; ++i)
 			{
-				m_transforms[count++] = instanceMove->getWorldTransform();
+				m_transforms[i] = instanceMoves[i]->getWorldTransform();
 			}
 		}
 
@@ -343,12 +338,11 @@ Error ModelNode::frameUpdate(F32, F32)
 			auto end = m_modelPatches.getEnd();
 			for(; it != end && !err; ++it)
 			{
-				err = (*it)->updateInstanceSpatials(instanceMoves);
+				err = (*it)->updateInstanceSpatials(
+					&instanceMoves[0], instanceMovesCount);
 			}
 		}
 	}
-
-	instanceMoves.destroy(getSceneFrameAllocator());
 
 	return err;
 }

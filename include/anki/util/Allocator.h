@@ -64,7 +64,7 @@ public:
 	template<typename Y>
 	struct rebind
 	{
-		typedef GenericPoolAllocator<Y, TPool, checkFree> other;
+		using other = GenericPoolAllocator<Y, TPool, checkFree>;
 	};
 
 	/// Default constructor

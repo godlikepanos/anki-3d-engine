@@ -10,12 +10,10 @@ namespace anki {
 
 //==============================================================================
 Error LightEvent::create(EventManager* manager, F32 startTime, F32 duration,
-	Light* light, const LightEventData& data)
+	Light* light)
 {
 	Error err = Event::create(manager, startTime, duration, light);
 	if(err) return err;
-
-	*static_cast<LightEventData*>(this) = data;
 
 	switch(light->getLightType())
 	{

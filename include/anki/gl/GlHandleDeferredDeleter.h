@@ -34,10 +34,16 @@ public:
 			GlCommandBufferHandle commands;
 			
 			Error err = commands.create(manager);
-			ANKI_ASSERT(!err);
-			
-			commands.template _pushBackNewCommand<TDeleteCommand>(obj, alloc);
-			commands.flush();
+			if(!err)
+			{
+				commands.template _pushBackNewCommand<TDeleteCommand>(
+					obj, alloc);
+				commands.flush();
+			}
+			else
+			{
+				ANKI_LOGE("Failed to create command");
+			}
 		}
 		else
 		{

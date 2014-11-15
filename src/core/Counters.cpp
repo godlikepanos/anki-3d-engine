@@ -45,7 +45,7 @@ static const Array<CounterInfo, (U)Counter::COUNT> cinfo = {{
 	{"SWAP_BUFFERS_TIME", CF_PER_RUN | CF_F64},
 	{"GL_CLIENT_WAIT_TIME", CF_PER_FRAME | CF_PER_RUN | CF_F64},
 	{"GL_SERVER_WAIT_TIME", CF_PER_FRAME | CF_PER_RUN | CF_F64},
-	{"GL_DRAWCALLS_COUNT", CF_PER_RUN | CF_U64},
+	{"GL_DRAWCALLS_COUNT", CF_PER_FRAME | CF_PER_RUN | CF_U64},
 	{"GL_VERTICES_COUNT", CF_PER_FRAME | CF_PER_RUN | CF_U64},
 	{"GL_QUEUES_SIZE", CF_PER_FRAME | CF_PER_RUN | CF_U64},
 	{"GL_CLIENT_BUFFERS_SIZE", CF_PER_FRAME | CF_PER_RUN | CF_U64}
@@ -54,35 +54,51 @@ static const Array<CounterInfo, (U)Counter::COUNT> cinfo = {{
 #define MAX_NAME "24"
 
 //==============================================================================
-CountersManager::CountersManager(
-	HeapAllocator<U8>& alloc, const CString& cacheDir)
-:	m_perframeValues(alloc),
-	m_perrunValues(alloc),
-	m_counterTimes(alloc)
+Error CountersManager::create(
+	HeapAllocator<U8> alloc, const CString& cacheDir)
 {
-	m_perframeValues.resize((U)Counter::COUNT, 0);
-	m_perrunValues.resize((U)Counter::COUNT, 0);
-	m_counterTimes.resize((U)Counter::COUNT, 0.0);
+	Error err = ErrorCode::NONE;
+
+	U count = static_cast<U>(Counter::COUNT);
+	m_alloc = alloc;
+	
+	err = m_perframeValues.create(m_alloc, count, 0);
+	if(err) return err;
+
+	err = m_perrunValues.create(m_alloc, count, 0);
+	if(err) return err;
+
+	err = m_counterTimes.create(m_alloc, count, 0.0);
+	if(err) return err;
 
 	// Open and write the headers to the files
-	m_perframeFile.open(
-		(String(cacheDir, alloc) + "/frame_counters.csv").toCString(),
-		File::OpenFlag::WRITE);
+	String tmp;
+	String::ScopeDestroyer tmpd(&tmp, alloc);
+	err = tmp.sprintf(alloc, "%s/frame_counters.csv", &cacheDir[0]);
+	if(err) return err;
 
-	m_perframeFile.writeText("FRAME");
+	err = m_perframeFile.open(tmp.toCString(), File::OpenFlag::WRITE);
+	if(err) return err;
+
+	err = m_perframeFile.writeText("FRAME");
+	if(err) return err;
 
 	for(const CounterInfo& inf : cinfo)
 	{
 		if(inf.m_flags & CF_PER_FRAME)
 		{
-			m_perframeFile.writeText(", %s", inf.m_name);
+			err = m_perframeFile.writeText(", %s", inf.m_name);
+			if(err) return err;
 		}
 	}
 
 	// Open and write the headers to the other file
-	m_perrunFile.open(
-		(String(cacheDir, alloc) + "/run_counters.csv").toCString(),
-		File::OpenFlag::WRITE);
+	tmp.destroy(alloc);
+	err = tmp.sprintf(alloc, "%s/run_counters.csv", &cacheDir[0]);
+	if(err) return err;
+
+	err = m_perrunFile.open(tmp.toCString(), File::OpenFlag::WRITE);
+	if(err) return err;
 
 	U i = 0;
 	for(const CounterInfo& inf : cinfo)
@@ -91,22 +107,30 @@ CountersManager::CountersManager(
 		{
 			if(i != 0)
 			{
-				m_perrunFile.writeText(", %" MAX_NAME "s", inf.m_name);
+				err = m_perrunFile.writeText(", %" MAX_NAME "s", inf.m_name);
 			}
 			else
 			{
-				m_perrunFile.writeText("%" MAX_NAME "s", inf.m_name);
+				err = m_perrunFile.writeText("%" MAX_NAME "s", inf.m_name);
 			}
+
+			if(err) return err;
 
 			++i;
 		}
 	}
-	m_perrunFile.writeText("\n");
+	err = m_perrunFile.writeText("\n");
+
+	return err;
 }
 
 //==============================================================================
 CountersManager::~CountersManager()
-{}
+{
+	m_perframeValues.destroy(m_alloc);
+	m_perrunValues.destroy(m_alloc);
+	m_counterTimes.destroy(m_alloc);
+}
 
 //==============================================================================
 void CountersManager::increaseCounter(Counter counter, U64 val)
@@ -170,8 +194,10 @@ void CountersManager::stopTimerIncreaseCounter(Counter counter)
 //==============================================================================
 void CountersManager::resolveFrame()
 {
+	Error err = ErrorCode::NONE;
+
 	// Write new line and frame no
-	m_perframeFile.writeText("\n%llu", getGlobTimestamp());
+	err = m_perframeFile.writeText("\n%llu", getGlobTimestamp());
 
 	U i = 0;
 	for(const CounterInfo& inf : cinfo)
@@ -180,11 +206,12 @@ void CountersManager::resolveFrame()
 		{
 			if(inf.m_flags & CF_U64)
 			{
-				m_perframeFile.writeText(", %llu", m_perframeValues[i]);
+				err = m_perframeFile.writeText(", %llu", m_perframeValues[i]);
 			}
 			else if(inf.m_flags & CF_F64)
 			{
-				m_perframeFile.writeText(", %f", *((F64*)&m_perframeValues[i]));
+				err = m_perframeFile.writeText(
+					", %f", *((F64*)&m_perframeValues[i]));
 			}
 			else
 			{
@@ -196,11 +223,15 @@ void CountersManager::resolveFrame()
 
 		i++;
 	}
+
+	(void)err;
 }
 
 //==============================================================================
 void CountersManager::flush()
 {
+	Error err = ErrorCode::NONE;
+
 	// Resolve per run counters
 	U i = 0;
 	U j = 0;
@@ -210,23 +241,24 @@ void CountersManager::flush()
 		{
 			if(j != 0)
 			{
-				m_perrunFile.writeText(", ");
+				err = m_perrunFile.writeText(", ");
 			}
 
 			if(inf.m_flags & CF_U64)
 			{
-				m_perrunFile.writeText("%" MAX_NAME "llu", m_perrunValues[i]);
+				err = m_perrunFile.writeText(
+					"%" MAX_NAME "llu", m_perrunValues[i]);
 			}
 			else if(inf.m_flags & CF_F64)
 			{
 				if(inf.m_flags & CF_FPS)
 				{
-					m_perrunFile.writeText("%" MAX_NAME "f", 
+					err = m_perrunFile.writeText("%" MAX_NAME "f", 
 						(F64)getGlobTimestamp() / *((F64*)&m_perrunValues[i]));
 				}
 				else
 				{
-					m_perrunFile.writeText("%" MAX_NAME "f", 
+					err = m_perrunFile.writeText("%" MAX_NAME "f", 
 						*((F64*)&m_perrunValues[i]));
 				}
 			}
@@ -241,29 +273,21 @@ void CountersManager::flush()
 
 		++i;
 	}
-	m_perrunFile.writeText("\n");
+	err = m_perrunFile.writeText("\n");
 
 	// Close and flush files
 	m_perframeFile.close();
 	m_perrunFile.close();
+
+	if(err)
+	{
+		ANKI_LOGE("Error in counters file");
+	}
 }
 
 //==============================================================================
 // TraceManager                                                                =
 //==============================================================================
-
-namespace detail {
-
-//==============================================================================
-TraceManager::TraceManager(HeapAllocator<U8>& alloc, const CString& storeDir)
-{
-	String filename(storeDir, alloc);
-	filename += "/trace";
-	m_traceFile.open(filename.toCString(), File::OpenFlag::WRITE);
-
-	m_traceFile.writeText(
-		"thread_id, depth, event_name, start_time, stop_time\n");
-}
 
 //==============================================================================
 TraceManager::~TraceManager()
@@ -272,21 +296,44 @@ TraceManager::~TraceManager()
 }
 
 //==============================================================================
+Error TraceManager::create(HeapAllocator<U8>& alloc, const CString& storeDir)
+{
+	Error err = ErrorCode::NONE;
+	String filename;
+	err = filename.sprintf(alloc, "%s/trace", &storeDir[0]);
+	if(err) return err;
+
+	err = m_traceFile.open(filename.toCString(), File::OpenFlag::WRITE);
+
+	if(!err)
+	{
+		err = m_traceFile.writeText(
+			"thread_id, depth, event_name, start_time, stop_time\n");
+	}
+
+	filename.destroy(alloc);
+	return err;
+}
+
+//==============================================================================
 void TraceManager::flush(ThreadTraceManager& thread)
 {
 	ANKI_ASSERT(thread.m_depth == 0);
+	Error err = ErrorCode::NONE;
 
 	LockGuard<Mutex> lock(m_fileMtx);
 	for(U i = 0; i < thread.m_bufferedEventsCount; i++)
 	{
 		const ThreadTraceManager::Event& event = thread.m_bufferedEvents[i];
 
-		m_traceFile.writeText("%u, %u, %s, %f, %f\n", 
+		err = m_traceFile.writeText("%u, %u, %s, %f, %f\n", 
 			thread.m_id,
 			event.m_depth,
 			event.m_name,
 			event.m_startTime,
 			event.m_stopTime);
+
+		(void)err;
 	}
 
 	thread.m_bufferedEventsCount = 0;
@@ -339,8 +386,6 @@ void ThreadTraceManager::popEvent()
 		m_master->flush(*this);
 	}
 }
-
-} // end namespace detail
 
 } // end namespace anki
 

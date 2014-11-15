@@ -129,8 +129,14 @@ GlProgramHandle GlProgramPipelineHandle::getAttachedProgram(GLenum type) const
 {
 	ANKI_ASSERT(isCreated());
 	Error err = serializeOnGetter();
-	ANKI_ASSERT(!err);
-	return _get().getAttachedProgram(type);
+	if(!err)
+	{
+		return _get().getAttachedProgram(type);
+	}
+	else
+	{
+		return GlProgramHandle();
+	}
 }
 
 } // end namespace anki

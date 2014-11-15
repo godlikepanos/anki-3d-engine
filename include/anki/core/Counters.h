@@ -39,9 +39,13 @@ enum class Counter
 class CountersManager
 {
 public:
-	CountersManager(HeapAllocator<U8>& alloc, const CString& cacheDir);
+	CountersManager()
+	{}
 
 	~CountersManager();
+
+	ANKI_USE_RESULT Error create(
+		HeapAllocator<U8> alloc, const CString& cacheDir);
 
 	void increaseCounter(Counter counter, F64 val);
 	void increaseCounter(Counter counter, U64 val);
@@ -60,6 +64,7 @@ public:
 	void stopTimerIncreaseCounter(Counter counter);
 
 private:
+	HeapAllocator<U8> m_alloc;
 	File m_perframeFile;
 	File m_perrunFile;
 	DArray<U64> m_perframeValues;
@@ -68,7 +73,7 @@ private:
 };
 
 /// The singleton of the counters manager
-typedef SingletonInit<CountersManager> CountersManagerSingleton;
+typedef Singleton<CountersManager> CountersManagerSingleton;
 
 // Macros that encapsulate the functionaly
 
@@ -96,8 +101,6 @@ typedef SingletonInit<CountersManager> CountersManagerSingleton;
 #	define ANKI_COUNTERS_FLUSH() ((void)0)
 #endif // ANKI_ENABLE_COUNTERS
 
-namespace detail {
-
 // Forward
 class ThreadTraceManager;
 
@@ -110,16 +113,20 @@ public:
 	File m_traceFile;
 	Mutex m_fileMtx;
 
-	TraceManager(HeapAllocator<U8>& alloc, const CString& storeDir);
+	TraceManager()
+	{}
 
 	~TraceManager();
+
+	ANKI_USE_RESULT Error create(
+		HeapAllocator<U8>& alloc, const CString& storeDir);
 
 	void flushAll();
 
 	void flush(ThreadTraceManager& thread);
 };
 
-using TraceManagerSingleton = SingletonInit<TraceManager>;
+using TraceManagerSingleton = Singleton<TraceManager>;
 
 /// Trace manager per thread.
 class ThreadTraceManager
@@ -157,21 +164,19 @@ public:
 
 using ThreadTraceManagerSingleton = SingletonThreadSafe<ThreadTraceManager>;
 
-} // end namespace detail
-
 /// @name Trace macros.
 /// @{
 
 #if ANKI_ENABLE_COUNTERS
 
 #	define ANKI_TRACE_PUSH_EVENT(name_) \
-	detail::ThreadTraceManagerSingleton::get().pushEvent(name_)
+	ThreadTraceManagerSingleton::get().pushEvent(name_)
 
 #	define ANKI_TRACE_POP_EVENT() \
-	detail::ThreadTraceManagerSingleton::get().popEvent()
+	ThreadTraceManagerSingleton::get().popEvent()
 
 #	define ANKI_TRACE_FLUSH() \
-	detail::TraceManagerSingleton::get().flushAll()
+	TraceManagerSingleton::get().flushAll()
 
 #else
 

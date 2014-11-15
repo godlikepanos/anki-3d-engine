@@ -153,13 +153,12 @@ Error init()
 		point->setLensFlaresStretchMultiplier(Vec2(10.0, 1.0));
 		point->setLensFlaresAlpha(1.0);
 
-		LightEventData eventData;
-		eventData.m_radiusMultiplier = 0.2;
-		eventData.m_intensityMultiplier = Vec4(-1.2, 0.0, 0.0, 0.0);
-		eventData.m_specularIntensityMultiplier = Vec4(0.1, 0.1, 0.0, 0.0);
 		LightEvent* event;
-		err = scene.getEventManager().newEvent(event, 0.0, 0.8, point, eventData);
+		err = scene.getEventManager().newEvent(event, 0.0, 0.8, point);
 		if(err) return err;
+		event->setRadiusMultiplier(0.2);
+		event->setIntensityMultiplier(Vec4(-1.2, 0.0, 0.0, 0.0));
+		event->setSpecularIntensityMultiplier(Vec4(0.1, 0.1, 0.0, 0.0));
 		event->setReanimate(true);
 
 		MoveEventData moveData;

@@ -85,10 +85,11 @@ public:
 	ANKI_USE_RESULT Error iterateComponents(Func func) const
 	{
 		Error err = ErrorCode::NONE;
-		U count = m_componentsCount;
-		while(!err && count-- != 0)
+		auto it = m_components.getBegin();
+		auto end = it + m_componentsCount;
+		for(; !err && it != end; ++it)
 		{
-			err = func(*m_components[count]);
+			err = func(*(*it));
 		}
 
 		return err;
@@ -100,12 +101,14 @@ public:
 	{
 		Error err = ErrorCode::NONE;
 		SceneComponent::Type type = Component::getClassType();
-		U count = m_componentsCount;
-		while(!err && count-- != 0)
+		auto it = m_components.getBegin();
+		auto end = it + m_componentsCount;
+		for(; !err && it != end; ++it)
 		{
-			if(m_components[count]->getType() == type)
+			SceneComponent* comp = *it;
+			if(comp->getType() == type)
 			{
-				err = func(m_components[count]->downCast<Component>());
+				err = func(comp->downCast<Component>());
 			}
 		}
 

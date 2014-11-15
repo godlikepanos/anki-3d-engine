@@ -140,8 +140,13 @@ Error App::createInternal(const ConfigSet& config_,
 	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
 #if ANKI_ENABLE_COUNTERS
-	CountersManagerSingleton::init(m_heapAlloc, m_settingsDir.toCString());
-	detail::TraceManagerSingleton::init(m_heapAlloc, m_settingsDir.toCString());
+	err = CountersManagerSingleton::get().create(
+		m_heapAlloc, m_settingsDir.toCString());
+	if(err) return err;
+
+	err = TraceManagerSingleton::get().create(
+		m_heapAlloc, m_settingsDir.toCString());
+	if(err) return err;
 #endif
 
 	//

@@ -25,7 +25,6 @@ ANKI_TEST(Script, LuaBinder)
 	Vec2 v2(2.0, 3.0);
 	Vec3 v3(1.1, 2.2, 3.3);
 
-#if 0
 	sm.exposeVariable("v2", &v2);
 	sm.exposeVariable("v3", &v3);
 
@@ -33,5 +32,4 @@ ANKI_TEST(Script, LuaBinder)
 
 	ANKI_TEST_EXPECT_EQ(v2, Vec2(6, 12));
 	ANKI_TEST_EXPECT_EQ(v3, Vec3(1.1, 2.2, 0.1));
-#endif
 }

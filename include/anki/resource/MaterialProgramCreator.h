@@ -74,6 +74,7 @@ public:
 			m_value = std::move(b.m_value);
 			m_constant = b.m_constant;
 			m_arraySize = b.m_arraySize;
+			m_instanced = b.m_instanced;
 			m_line = std::move(b.m_line);
 			m_shaderDefinedMask = b.m_shaderDefinedMask;
 			m_shaderReferencedMask = b.m_shaderReferencedMask;

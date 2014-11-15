@@ -17,28 +17,38 @@ class Light;
 /// @addtogroup event
 /// @{
 
-/// Helper class
-class LightEventData
-{
-public:
-	F32 m_radiusMultiplier = 0.0;
-	Vec4 m_intensityMultiplier = Vec4(0.0);
-	Vec4 m_specularIntensityMultiplier = Vec4(0.0);
-};
-
 /// An event for light animation
-class LightEvent: public Event, private LightEventData
+class LightEvent: public Event
 {
 public:
 	/// Create
 	ANKI_USE_RESULT Error create(
 		EventManager* manager, F32 startTime, F32 duration,
-		Light* light, const LightEventData& data);
+		Light* light);
 
 	/// Implements Event::update
 	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime);
 
+	void setRadiusMultiplier(F32 v)
+	{
+		m_radiusMultiplier = v;
+	}
+
+	void setIntensityMultiplier(const Vec4& v)
+	{
+		m_intensityMultiplier = v;
+	}
+
+	void setSpecularIntensityMultiplier(const Vec4& v)
+	{
+		m_specularIntensityMultiplier = v;
+	}
+
 private:
+	F32 m_radiusMultiplier = 0.0;
+	Vec4 m_intensityMultiplier = Vec4(0.0);
+	Vec4 m_specularIntensityMultiplier = Vec4(0.0);
+
 	F32 m_originalRadius;
 	Vec4 m_originalDiffColor;
 	Vec4 m_originalSpecColor;

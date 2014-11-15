@@ -398,14 +398,14 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 				m_alloc, "%s %s", &inpvar.m_type[0], &inpvar.m_name[0]));
 			
 			U arrSize = 0;
-			if(inpvar.m_arraySize > 1)
-			{
-				arrSize = inpvar.m_arraySize;
-			}
-
 			if(inpvar.m_instanced)
 			{
 				inpvar.m_arraySize = ANKI_GL_MAX_INSTANCES;
+			}
+
+			if(inpvar.m_arraySize > 1)
+			{
+				arrSize = inpvar.m_arraySize;
 			}
 
 			if(arrSize)

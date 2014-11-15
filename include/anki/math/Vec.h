@@ -2156,13 +2156,19 @@ public:
 	}
 
 	template<typename TAlloc>
-	StringBase<TAlloc> toString(
-		typename StringBase<TAlloc>::Allocator& alloc) const
+	StringBase<typename TAlloc::template rebind<char>::other> toString(
+		TAlloc alloc_) const
 	{
-		StringBase<TAlloc> out(alloc);
+		using Alloc = typename TAlloc::template rebind<char>::other;
+		Alloc alloc = alloc_;
+		StringBase<Alloc> out;
 		for(U i = 0; i < N; i++)
 		{
-			out += StringBase<TAlloc>::toString(m_arr[i]) + CString(" ");
+			StringBase<Alloc> tmp;
+			tmp.toString(alloc, m_arr[i]);
+			out.append(alloc, tmp);
+			out.append(alloc, " ");
+			tmp.destroy(alloc);
 		}
 		return out;
 	}
