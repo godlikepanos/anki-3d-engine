@@ -120,7 +120,7 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
 	U32 drawCount;
 	GlCommandBufferHandle vertJobs;
-	GlProgramPipelineHandle ppline;
+	GlPipelineHandle ppline;
 
 	err = m_modelPatch->getRenderingDataSub(
 		data.m_key, vertJobs, ppline, 

@@ -3,11 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_PROGRAM_PIPELINE_H
-#define ANKI_GL_GL_PROGRAM_PIPELINE_H
+#ifndef ANKI_GL_GL_PIPELINE_H
+#define ANKI_GL_GL_PIPELINE_H
 
 #include "anki/gl/GlObject.h"
-#include "anki/gl/GlProgramHandle.h"
+#include "anki/gl/GlShaderHandle.h"
 
 namespace anki {
 
@@ -15,35 +15,35 @@ namespace anki {
 /// @{
 
 /// Program pipeline
-class GlProgramPipeline: public GlObject
+class GlPipeline: public GlObject
 {
 public:
 	using Base = GlObject;
 
-	GlProgramPipeline() = default;
+	GlPipeline() = default;
 
-	~GlProgramPipeline()
+	~GlPipeline()
 	{
 		destroy();
 	}
 
 	ANKI_USE_RESULT Error create(
-		const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd,
+		const GlShaderHandle* progsBegin, const GlShaderHandle* progsEnd,
 		GlAllocator<U8> alloc);
 
-	GlProgramHandle getAttachedProgram(GLenum type) const;
+	GlShaderHandle getAttachedProgram(GLenum type) const;
 
 	/// Bind the pipeline to the state
 	void bind();
 
 private:
-	Array<GlProgramHandle, 6> m_progs;
+	Array<GlShaderHandle, 6> m_shaders;
 
 	/// Create pipeline object
 	void createPpline();
 
 	/// Attach all the programs
-	void attachProgramsInternal(const GlProgramHandle* progs, PtrSize count);
+	void attachProgramsInternal(const GlShaderHandle* progs, PtrSize count);
 
 	void destroy();
 };

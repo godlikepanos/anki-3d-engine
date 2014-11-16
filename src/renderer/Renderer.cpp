@@ -298,14 +298,14 @@ Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 
 //==============================================================================
 Error Renderer::createDrawQuadProgramPipeline(
-	GlProgramHandle frag, GlProgramPipelineHandle& ppline)
+	GlShaderHandle frag, GlPipelineHandle& ppline)
 {
 	GlCommandBufferHandle cmdBuff;
 	Error err = cmdBuff.create(m_gl);
 
 	if(!err)
 	{
-		Array<GlProgramHandle, 2> progs = 
+		Array<GlShaderHandle, 2> progs = 
 			{{m_drawQuadVert->getGlProgram(), frag}};
 
 		err = ppline.create(cmdBuff, &progs[0], &progs[0] + 2);

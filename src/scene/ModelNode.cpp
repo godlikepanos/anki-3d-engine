@@ -71,7 +71,7 @@ Error ModelPatchNode::buildRendering(RenderingBuildData& data)
 	U32 drawcallCount;
 
 	GlCommandBufferHandle vertJobs;
-	GlProgramPipelineHandle ppline;
+	GlPipelineHandle ppline;
 
 	Error err = m_modelPatch->getRenderingDataSub(
 		data.m_key, vertJobs, ppline, 

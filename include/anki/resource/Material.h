@@ -331,7 +331,7 @@ public:
 	}
 
 	ANKI_USE_RESULT Error getProgramPipeline(
-		const RenderingKey& key, GlProgramPipelineHandle& out);
+		const RenderingKey& key, GlPipelineHandle& out);
 
 	/// Load a material file
 	ANKI_USE_RESULT Error load(
@@ -351,7 +351,7 @@ private:
 	Dictionary<MaterialVariable*> m_varDict;
 
 	ResourceDArray<ProgramResourcePointer> m_progs;
-	ResourceVector<GlProgramPipelineHandle> m_pplines;
+	ResourceVector<GlPipelineHandle> m_pplines;
 
 	U32 m_shaderBlockSize;
 

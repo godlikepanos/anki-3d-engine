@@ -33,7 +33,7 @@
 namespace anki {
 
 // Forward
-class GlProgram;
+class GlShader;
 class GlProgramBlock;
 
 /// @addtogroup opengl_private
@@ -95,7 +95,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType, inline)
 /// Shader program variable. The type is attribute or uniform
 class GlProgramVariable
 {
-	friend class GlProgram;
+	friend class GlShader;
 
 public:
 	/// Shader program variable type
@@ -170,7 +170,7 @@ public:
 
 private:
 	Type m_type; ///< It's type
-	GlProgram* m_prog = nullptr;
+	GlShader* m_prog = nullptr;
 	char* m_name; ///< The name inside the shader program
 
 	GLenum m_dataType = GL_NONE; ///< GL_FLOAT or GL_FLOAT_VEC2 etc.
@@ -214,7 +214,7 @@ private:
 /// Interface shader block
 class GlProgramBlock
 {
-	friend class GlProgram;
+	friend class GlShader;
 
 public:
 	static const U32 MAX_VARIABLES_PER_BLOCK = 16;

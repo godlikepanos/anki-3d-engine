@@ -35,12 +35,12 @@ private:
 
 	// 1st pass
 	ProgramResourcePointer m_reflectionFrag;
-	GlProgramPipelineHandle m_reflectionPpline;
+	GlPipelineHandle m_reflectionPpline;
 	GlSamplerHandle m_depthMapSampler;
 
 	// 2nd pass: blit
 	ProgramResourcePointer m_blitFrag;
-	GlProgramPipelineHandle m_blitPpline;
+	GlPipelineHandle m_blitPpline;
 
 	Sslr(Renderer* r)
 	:	BlurringRenderingPass(r)

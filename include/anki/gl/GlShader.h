@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_PROGRAM_H
-#define ANKI_GL_GL_PROGRAM_H
+#ifndef ANKI_GL_GL_SHADER_H
+#define ANKI_GL_GL_SHADER_H
 
 #include "anki/gl/GlObject.h"
 #include "anki/util/Dictionary.h"
@@ -12,15 +12,12 @@
 
 namespace anki {
 
-// Forward
-class GlProgram;
-
 /// @addtogroup opengl_private
 /// @{
 
 /// Shader program. It only contains a single shader and it can be combined 
 /// with other programs in a program pipiline.
-class GlProgram: public GlObject
+class GlShader: public GlObject
 {
 	friend class GlProgramVariable;
 	friend class GlProgramBlock;
@@ -31,14 +28,14 @@ public:
 	template<typename T>
 	using DArray = DArray<T, GlAllocator<T>>;
 
-	GlProgram() = default;
+	GlShader() = default;
 
-	~GlProgram()
+	~GlShader()
 	{
 		destroy();
 	}
 
-	/// Create the program
+	/// Create the shader.
 	/// @param shaderType The type of the shader in the program
 	/// @param source The shader's source
 	/// @param alloc The allocator to be used for internally
@@ -80,7 +77,7 @@ private:
 
 	void destroy();
 
-	/// Query the program for blocks
+	/// Query the shader for blocks
 	ANKI_USE_RESULT Error initBlocksOfType(GLenum programInterface, 
 		U count, U index, char*& namesPtr, U& namesLen);
 

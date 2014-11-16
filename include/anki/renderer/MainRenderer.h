@@ -37,7 +37,7 @@ public:
 
 private:
 	ProgramResourcePointer m_blitFrag;
-	GlProgramPipelineHandle m_blitPpline;
+	GlPipelineHandle m_blitPpline;
 
 	/// Optimize job chain
 	Array<GlCommandBufferInitHints, JOB_CHAINS_COUNT> m_jobsInitHints; 

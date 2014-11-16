@@ -79,7 +79,7 @@ private:
 	// Light shaders
 	ProgramResourcePointer m_lightVert;
 	ProgramResourcePointer m_lightFrag;
-	GlProgramPipelineHandle m_lightPpline;
+	GlPipelineHandle m_lightPpline;
 
 	/// Shadow mapping
 	Sm m_sm;

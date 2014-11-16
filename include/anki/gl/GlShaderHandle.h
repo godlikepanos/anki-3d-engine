@@ -3,31 +3,31 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_PROGRAM_HANDLE_H
-#define ANKI_GL_GL_PROGRAM_HANDLE_H
+#ifndef ANKI_GL_GL_SHADER_HANDLE_H
+#define ANKI_GL_GL_SHADER_HANDLE_H
 
 #include "anki/gl/GlContainerHandle.h"
 
 namespace anki {
 
 // Forward
-class GlProgram;
+class GlShader;
 class GlClientBufferHandle;
 
 /// @addtogroup opengl_containers
 /// @{
 
 /// Program handle
-class GlProgramHandle: public GlContainerHandle<GlProgram>
+class GlShaderHandle: public GlContainerHandle<GlShader>
 {
 public:
-	using Base = GlContainerHandle<GlProgram>;
+	using Base = GlContainerHandle<GlShader>;
 
-	GlProgramHandle();
+	GlShaderHandle();
 
-	~GlProgramHandle();
+	~GlShaderHandle();
 
-	/// Create program
+	/// Create shader program.
 	ANKI_USE_RESULT Error create(GlCommandBufferHandle& commands, 
 		GLenum shaderType, const GlClientBufferHandle& source);
 

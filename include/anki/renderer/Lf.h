@@ -38,16 +38,16 @@ public:
 private:
 	// Pseudo flares
 	ProgramResourcePointer m_pseudoFrag;
-	GlProgramPipelineHandle m_pseudoPpline;
+	GlPipelineHandle m_pseudoPpline;
 
 	// Sprite billboards
 	ProgramResourcePointer m_realVert;
 	ProgramResourcePointer m_realFrag;
-	GlProgramPipelineHandle m_realPpline;
+	GlPipelineHandle m_realPpline;
 
 	// Final HDR blit
 	ProgramResourcePointer m_blitFrag;
-	GlProgramPipelineHandle m_blitPpline;
+	GlPipelineHandle m_blitPpline;
 
 	GlTextureHandle m_rt;
 	GlFramebufferHandle m_fb;

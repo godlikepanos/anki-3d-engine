@@ -96,7 +96,7 @@ private:
 
 	GlFramebufferHandle m_fb;
 	ProgramResourcePointer m_frag;
-	GlProgramPipelineHandle m_ppline;
+	GlPipelineHandle m_ppline;
 	GlTextureHandle m_rt;
 
 	Pps(Renderer* r);

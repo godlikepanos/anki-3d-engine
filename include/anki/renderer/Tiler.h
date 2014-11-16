@@ -72,7 +72,7 @@ private:
 
 	/// Main shader program
 	ProgramResourcePointer m_frag;
-	GlProgramPipelineHandle m_ppline;
+	GlPipelineHandle m_ppline;
 
 	/// Used to check if the camera is changed and we need to update the planes
 	const Camera* m_prevCam = nullptr;

@@ -79,9 +79,9 @@ private:
 	ProgramResourcePointer m_hblurFrag;
 	ProgramResourcePointer m_vblurFrag;
 
-	GlProgramPipelineHandle m_tonePpline;
-	GlProgramPipelineHandle m_hblurPpline;
-	GlProgramPipelineHandle m_vblurPpline;
+	GlPipelineHandle m_tonePpline;
+	GlPipelineHandle m_hblurPpline;
+	GlPipelineHandle m_vblurPpline;
 
 	GlTextureHandle m_hblurRt; ///< pass0Fai with the horizontal blur FAI
 	GlTextureHandle m_vblurRt; ///< The final FAI

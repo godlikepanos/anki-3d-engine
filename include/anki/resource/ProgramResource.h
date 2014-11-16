@@ -24,9 +24,9 @@ public:
 	~ProgramResource()
 	{}
 
-	const GlProgramHandle& getGlProgram() const
+	const GlShaderHandle& getGlProgram() const
 	{
-		return m_prog;
+		return m_shader;
 	}
 
 	/// Resource load
@@ -55,7 +55,7 @@ public:
 		TempResourceString& out);
 
 private:
-	GlProgramHandle m_prog;
+	GlShaderHandle m_shader;
 }; 
 /// @}
 

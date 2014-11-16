@@ -69,7 +69,7 @@ protected:
 		GlFramebufferHandle m_fb;
 		GlTextureHandle m_rt; 
 		ProgramResourcePointer m_frag;
-		GlProgramPipelineHandle m_ppline;
+		GlPipelineHandle m_ppline;
 	};
 
 	enum class DirectionEnum: U

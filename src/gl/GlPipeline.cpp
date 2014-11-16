@@ -3,15 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gl/GlProgramPipeline.h"
-#include "anki/gl/GlProgram.h"
+#include "anki/gl/GlPipeline.h"
+#include "anki/gl/GlShader.h"
 #include "anki/util/Logger.h"
 
 namespace anki {
 
 //==============================================================================
-Error GlProgramPipeline::create(
-	const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd,
+Error GlPipeline::create(
+	const GlShaderHandle* progsBegin, const GlShaderHandle* progsEnd,
 	GlAllocator<U8> alloc)
 {
 	ANKI_ASSERT(progsBegin != nullptr && progsEnd != nullptr);
@@ -27,9 +27,9 @@ Error GlProgramPipeline::create(
 
 	glBindProgramPipeline(m_glName);
 
-	for(U i = 0; i < m_progs.size(); i++)
+	for(U i = 0; i < m_shaders.size(); i++)
 	{
-		GlProgramHandle& prog = m_progs[i];
+		GlShaderHandle& prog = m_shaders[i];
 
 		if(prog.isCreated())
 		{
@@ -73,7 +73,7 @@ Error GlProgramPipeline::create(
 }
 
 //==============================================================================
-void GlProgramPipeline::destroy()
+void GlPipeline::destroy()
 {
 	if(m_glName)
 	{
@@ -83,18 +83,18 @@ void GlProgramPipeline::destroy()
 }
 
 //==============================================================================
-void GlProgramPipeline::attachProgramsInternal(
-	const GlProgramHandle* progs, PtrSize count)
+void GlPipeline::attachProgramsInternal(
+	const GlShaderHandle* progs, PtrSize count)
 {
 	U mask = 0;
 	while(count-- != 0)
 	{
-		const GlProgramHandle& prog = progs[count];
+		const GlShaderHandle& prog = progs[count];
 		ShaderType type = computeShaderTypeIndex(prog._get().getType());
 		U idx = enumToType(type);
 
-		ANKI_ASSERT(!m_progs[idx].isCreated() && "Attaching the same");
-		m_progs[idx] = prog;
+		ANKI_ASSERT(!m_shaders[idx].isCreated() && "Attaching the same");
+		m_shaders[idx] = prog;
 		mask |= 1 << idx;
 	}
 
@@ -123,19 +123,19 @@ void GlProgramPipeline::attachProgramsInternal(
 }
 
 //==============================================================================
-void GlProgramPipeline::bind()
+void GlPipeline::bind()
 {
 	ANKI_ASSERT(isCreated());
 	glBindProgramPipeline(m_glName);
 }
 
 //==============================================================================
-GlProgramHandle GlProgramPipeline::getAttachedProgram(GLenum type) const
+GlShaderHandle GlPipeline::getAttachedProgram(GLenum type) const
 {
 	ANKI_ASSERT(isCreated());
 	ShaderType stype = computeShaderTypeIndex(type);
 	U idx = enumToType(stype);
-	GlProgramHandle prog = m_progs[idx];
+	GlShaderHandle prog = m_shaders[idx];
 	ANKI_ASSERT(prog.isCreated() && "Asking for non-created program");
 	return prog;
 }

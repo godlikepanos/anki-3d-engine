@@ -3,38 +3,38 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gl/GlProgramHandle.h"
+#include "anki/gl/GlShaderHandle.h"
 #include "anki/gl/GlDevice.h"
 #include "anki/gl/GlClientBufferHandle.h"
 #include "anki/gl/GlHandleDeferredDeleter.h"
-#include "anki/gl/GlProgram.h"
+#include "anki/gl/GlShader.h"
 
 namespace anki {
 
 //==============================================================================
 /// Create program command
-class GlProgramCreateCommand: public GlCommand
+class GlShaderCreateCommand: public GlCommand
 {
 public:
-	GlProgramHandle m_prog;
+	GlShaderHandle m_shader;
 	GLenum m_type;
 	GlClientBufferHandle m_source;
 
-	GlProgramCreateCommand(GlProgramHandle prog, 
+	GlShaderCreateCommand(GlShaderHandle shader, 
 		GLenum type, GlClientBufferHandle source)
-	:	m_prog(prog), 
+	:	m_shader(shader), 
 		m_type(type), 
 		m_source(source)
 	{}
 
 	Error operator()(GlCommandBuffer* commands)
 	{
-		Error err = m_prog._get().create(m_type, 
+		Error err = m_shader._get().create(m_type, 
 			reinterpret_cast<const char*>(m_source.getBaseAddress()),
 			commands->getQueue().getDevice()._getAllocator(),
 			commands->getQueue().getDevice()._getCacheDirectory());
 
-		GlHandleState oldState = m_prog._setState(
+		GlHandleState oldState = m_shader._setState(
 			(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
 		ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
 		(void)oldState;
@@ -44,20 +44,20 @@ public:
 };
 
 //==============================================================================
-GlProgramHandle::GlProgramHandle()
+GlShaderHandle::GlShaderHandle()
 {}
 
 //==============================================================================
-GlProgramHandle::~GlProgramHandle()
+GlShaderHandle::~GlShaderHandle()
 {}
 
 //==============================================================================
-Error GlProgramHandle::create(GlCommandBufferHandle& commands, 
+Error GlShaderHandle::create(GlCommandBufferHandle& commands, 
 	GLenum type, const GlClientBufferHandle& source)
 {
-	using Alloc = GlAllocator<GlProgram>;
-	using DeleteCommand = GlDeleteObjectCommand<GlProgram, Alloc>;
-	using Deleter = GlHandleDeferredDeleter<GlProgram, Alloc, DeleteCommand>;
+	using Alloc = GlAllocator<GlShader>;
+	using DeleteCommand = GlDeleteObjectCommand<GlShader, Alloc>;
+	using Deleter = GlHandleDeferredDeleter<GlShader, Alloc, DeleteCommand>;
 
 	Error err = _createAdvanced(
 		&commands._get().getQueue().getDevice(),
@@ -68,7 +68,7 @@ Error GlProgramHandle::create(GlCommandBufferHandle& commands,
 	{
 		_setState(GlHandleState::TO_BE_CREATED);
 
-		commands._pushBackNewCommand<GlProgramCreateCommand>(
+		commands._pushBackNewCommand<GlShaderCreateCommand>(
 			*this, type, source);
 	}
 
@@ -76,13 +76,13 @@ Error GlProgramHandle::create(GlCommandBufferHandle& commands,
 }
 
 //==============================================================================
-GLenum GlProgramHandle::getType() const
+GLenum GlShaderHandle::getType() const
 {
 	return (serializeOnGetter()) ? GL_NONE : _get().getType();
 }
 
 //==============================================================================
-const GlProgramVariable* GlProgramHandle::getVariablesBegin() const
+const GlProgramVariable* GlShaderHandle::getVariablesBegin() const
 {
 	Error err = serializeOnGetter();
 	const GlProgramVariable* out = nullptr;
@@ -96,7 +96,7 @@ const GlProgramVariable* GlProgramHandle::getVariablesBegin() const
 }
 
 //==============================================================================
-const GlProgramVariable* GlProgramHandle::getVariablesEnd() const
+const GlProgramVariable* GlShaderHandle::getVariablesEnd() const
 {
 	Error err = serializeOnGetter();
 	const GlProgramVariable* out = nullptr;
@@ -111,13 +111,13 @@ const GlProgramVariable* GlProgramHandle::getVariablesEnd() const
 
 //==============================================================================
 const GlProgramVariable* 
-	GlProgramHandle::tryFindVariable(const CString& name) const
+	GlShaderHandle::tryFindVariable(const CString& name) const
 {
 	return (serializeOnGetter()) ? nullptr : _get().tryFindVariable(name);
 }
 
 //==============================================================================
-const GlProgramBlock* GlProgramHandle::tryFindBlock(const CString& name) const
+const GlProgramBlock* GlShaderHandle::tryFindBlock(const CString& name) const
 {
 	return (serializeOnGetter()) ? nullptr : _get().tryFindBlock(name);
 }

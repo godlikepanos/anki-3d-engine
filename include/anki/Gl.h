@@ -26,10 +26,10 @@
 
 #include "anki/gl/GlBufferHandle.h"
 #include "anki/gl/GlTextureHandle.h"
-#include "anki/gl/GlProgramHandle.h"
+#include "anki/gl/GlShaderHandle.h"
 
 #include "anki/gl/GlFramebufferHandle.h"
-#include "anki/gl/GlProgramPipelineHandle.h"
+#include "anki/gl/GlPipelineHandle.h"
 
 #include "anki/gl/GlCommandBufferHandle.h"
 #include "anki/gl/GlDevice.h"

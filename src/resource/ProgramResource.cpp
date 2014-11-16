@@ -50,7 +50,7 @@ Error ProgramResource::load(const CString& filename, const CString& extraSrc,
 
 	std::strcpy(reinterpret_cast<char*>(glsource.getBaseAddress()), &source[0]);
 
-	ANKI_CHECK(m_prog.create(cmdb, 
+	ANKI_CHECK(m_shader.create(cmdb, 
 		computeGlShaderType(pars.getShaderType()), glsource));
 
 	cmdb.flush();

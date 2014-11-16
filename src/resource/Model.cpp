@@ -44,7 +44,7 @@ ModelPatchBase::~ModelPatchBase()
 
 //==============================================================================
 Error ModelPatchBase::createVertexDesc(
-	const GlProgramHandle& prog,
+	const GlShaderHandle& prog,
 	const Mesh& mesh,
 	GlCommandBufferHandle& vertexJobs)
 {
@@ -104,7 +104,7 @@ Error ModelPatchBase::createVertexDesc(
 Error ModelPatchBase::getRenderingDataSub(
 	const RenderingKey& key, 
 	GlCommandBufferHandle& vertJobs, 
-	GlProgramPipelineHandle& ppline,
+	GlPipelineHandle& ppline,
 	const U8* subMeshIndexArray, 
 	U32 subMeshIndexCount,
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
@@ -191,7 +191,7 @@ Error ModelPatchBase::create(GlDevice* gl)
 		for(U pass = 0; pass < mtl.getPassesCount(); ++pass)
 		{
 			RenderingKey key((Pass)pass, lod, false);
-			GlProgramHandle prog;
+			GlShaderHandle prog;
 			const Mesh* mesh;
 
 			// Get mesh
@@ -206,7 +206,7 @@ Error ModelPatchBase::create(GlDevice* gl)
 			shaderKey.m_lod = std::min(key.m_lod, 
 				(U8)(getMaterial().getLevelsOfDetail() - 1));
 
-			GlProgramPipelineHandle ppline;
+			GlPipelineHandle ppline;
 			ANKI_CHECK(m_mtl->getProgramPipeline(shaderKey, ppline));
 			prog = ppline.getAttachedProgram(GL_VERTEX_SHADER);
 			

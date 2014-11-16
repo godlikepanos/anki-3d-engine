@@ -68,7 +68,7 @@ public:
 	ANKI_USE_RESULT Error getRenderingDataSub(
 		const RenderingKey& key, 
 		GlCommandBufferHandle& vertJobs,
-		GlProgramPipelineHandle& ppline,
+		GlPipelineHandle& ppline,
 		const U8* subMeshIndicesArray, 
 		U32 subMeshIndicesCount,
 		Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
@@ -89,7 +89,7 @@ private:
 	/// Called by @a create multiple times to create and populate a single
 	/// vertex descriptor
 	static ANKI_USE_RESULT Error createVertexDesc(
-		const GlProgramHandle& prog,
+		const GlShaderHandle& prog,
 		const Mesh& mesh,
 		GlCommandBufferHandle& vertexJobs);
 

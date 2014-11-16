@@ -84,7 +84,7 @@ private:
 
 	ProgramResourcePointer m_frag;
 	ProgramResourcePointer m_vert;
-	GlProgramPipelineHandle m_ppline;
+	GlPipelineHandle m_ppline;
 	GlCommandBufferHandle m_jobs;
 
 	static const U MAX_POINTS_PER_DRAW = 256;

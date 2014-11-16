@@ -172,7 +172,7 @@ public:
 		return m_tilesCount;
 	}
 
-	const GlProgramHandle& getDrawQuadVertexProgram() const
+	const GlShaderHandle& getDrawQuadVertexProgram() const
 	{
 		return m_drawQuadVert->getGlProgram();
 	}
@@ -216,7 +216,7 @@ public:
 	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
 	/// and the given fragment progam
 	ANKI_USE_RESULT Error createDrawQuadProgramPipeline(
-		GlProgramHandle frag, GlProgramPipelineHandle& ppline);
+		GlShaderHandle frag, GlPipelineHandle& ppline);
 
 	/// Init the renderer given an initialization class
 	/// @param initializer The initializer class

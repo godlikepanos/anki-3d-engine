@@ -37,9 +37,9 @@ private:
 	ProgramResourcePointer m_ssaoFrag;
 	ProgramResourcePointer m_hblurFrag;
 	ProgramResourcePointer m_vblurFrag;
-	GlProgramPipelineHandle m_ssaoPpline;
-	GlProgramPipelineHandle m_hblurPpline;
-	GlProgramPipelineHandle m_vblurPpline;
+	GlPipelineHandle m_ssaoPpline;
+	GlPipelineHandle m_hblurPpline;
+	GlPipelineHandle m_vblurPpline;
 	
 	Timestamp m_commonUboUpdateTimestamp = getGlobTimestamp();
 	GlBufferHandle m_uniformsBuff;

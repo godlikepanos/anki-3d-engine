@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gl/GlProgram.h"
+#include "anki/gl/GlShader.h"
 #include "anki/util/StringList.h"
 #include "anki/util/Logger.h"
 
@@ -210,7 +210,7 @@ void GlProgramVariable::writeClientMemory(void* buff, U32 buffSize,
 }
 
 //==============================================================================
-// GlProgram                                                                   =
+// GlShader                                                                    =
 //==============================================================================
 
 /// Check if the variable name is worth beeng processed.
@@ -269,7 +269,7 @@ static Bool sanitizeSymbolName(char* name)
 const U SYMBOL_MAX_NAME_LENGTH = 256;
 
 //==============================================================================
-Error GlProgram::create(GLenum type, const CString& source, 
+Error GlShader::create(GLenum type, const CString& source, 
 	GlAllocator<U8>& alloc, const CString& cacheDir)
 {
 	ANKI_ASSERT(source);
@@ -384,7 +384,7 @@ Error GlProgram::create(GLenum type, const CString& source,
 }
 
 //==============================================================================
-Error GlProgram::handleError(GlAllocator<U8>& alloc, String& src)
+Error GlShader::handleError(GlAllocator<U8>& alloc, String& src)
 {
 	Error err = ErrorCode::NONE;
 
@@ -438,7 +438,7 @@ Error GlProgram::handleError(GlAllocator<U8>& alloc, String& src)
 }
 
 //==============================================================================
-Error GlProgram::populateVariablesAndBlock(GlAllocator<U8>& alloc)
+Error GlShader::populateVariablesAndBlock(GlAllocator<U8>& alloc)
 {
 	Error err = ErrorCode::NONE;
 
@@ -582,7 +582,7 @@ Error GlProgram::populateVariablesAndBlock(GlAllocator<U8>& alloc)
 }
 
 //==============================================================================
-void GlProgram::destroy()
+void GlShader::destroy()
 {
 	if(m_glName != 0)
 	{
@@ -596,7 +596,7 @@ void GlProgram::destroy()
 }
 
 //==============================================================================
-Error GlProgram::initVariablesOfType(
+Error GlShader::initVariablesOfType(
 	GLenum interface, U activeCount, U indexOffset, U blkIndexOffset,
 	char*& namesPtr, U& namesLen)
 {
@@ -724,7 +724,7 @@ Error GlProgram::initVariablesOfType(
 }
 
 //==============================================================================
-Error GlProgram::initBlocksOfType(
+Error GlShader::initBlocksOfType(
 	GLenum interface, U activeCount, U indexOffset, 
 	char*& namesPtr, U& namesLen)
 {
@@ -795,7 +795,7 @@ Error GlProgram::initBlocksOfType(
 }
 
 //==============================================================================
-const GlProgramVariable* GlProgram::tryFindVariable(const CString& name) const
+const GlProgramVariable* GlShader::tryFindVariable(const CString& name) const
 {
 	ANKI_ASSERT(isCreated());
 
@@ -814,7 +814,7 @@ const GlProgramVariable* GlProgram::tryFindVariable(const CString& name) const
 }
 
 //==============================================================================
-const GlProgramBlock* GlProgram::tryFindBlock(const CString& name) const
+const GlProgramBlock* GlShader::tryFindBlock(const CString& name) const
 {
 	ANKI_ASSERT(isCreated());
 

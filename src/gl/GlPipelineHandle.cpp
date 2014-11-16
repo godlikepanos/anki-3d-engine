@@ -3,29 +3,29 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gl/GlProgramPipelineHandle.h"
-#include "anki/gl/GlProgramPipeline.h"
+#include "anki/gl/GlPipelineHandle.h"
+#include "anki/gl/GlPipeline.h"
 #include "anki/gl/GlHandleDeferredDeleter.h"
 
 namespace anki {
 
 //==============================================================================
-GlProgramPipelineHandle::GlProgramPipelineHandle()
+GlPipelineHandle::GlPipelineHandle()
 {}
 
 //==============================================================================
-GlProgramPipelineHandle::~GlProgramPipelineHandle()
+GlPipelineHandle::~GlPipelineHandle()
 {}
 
 //==============================================================================
-Error GlProgramPipelineHandle::create(
+Error GlPipelineHandle::create(
 	GlCommandBufferHandle& commands,
-	std::initializer_list<GlProgramHandle> iprogs)
+	std::initializer_list<GlShaderHandle> iprogs)
 {
-	Array<GlProgramHandle, 6> progs;
+	Array<GlShaderHandle, 6> progs;
 
 	U count = 0;
-	for(GlProgramHandle prog : iprogs)
+	for(GlShaderHandle prog : iprogs)
 	{
 		progs[count++] = prog;
 	}
@@ -34,23 +34,23 @@ Error GlProgramPipelineHandle::create(
 }
 
 //==============================================================================
-Error GlProgramPipelineHandle::commonConstructor(
+Error GlPipelineHandle::commonConstructor(
 	GlCommandBufferHandle& commands,
-	const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd)
+	const GlShaderHandle* progsBegin, const GlShaderHandle* progsEnd)
 {
 	class Command: public GlCommand
 	{
 	public:
-		GlProgramPipelineHandle m_ppline;
-		Array<GlProgramHandle, 6> m_progs;
+		GlPipelineHandle m_ppline;
+		Array<GlShaderHandle, 6> m_progs;
 		U8 m_progsCount;
 
-		Command(GlProgramPipelineHandle& ppline, 
-			const GlProgramHandle* progsBegin, const GlProgramHandle* progsEnd)
+		Command(GlPipelineHandle& ppline, 
+			const GlShaderHandle* progsBegin, const GlShaderHandle* progsEnd)
 		:	m_ppline(ppline)
 		{
 			m_progsCount = 0;
-			const GlProgramHandle* prog = progsBegin;
+			const GlShaderHandle* prog = progsBegin;
 			do
 			{
 				m_progs[m_progsCount++] = *prog;
@@ -72,10 +72,10 @@ Error GlProgramPipelineHandle::commonConstructor(
 		}
 	};
 
-	using Alloc = GlAllocator<GlProgramPipeline>;
-	using DeleteCommand = GlDeleteObjectCommand<GlProgramPipeline, Alloc>;
+	using Alloc = GlAllocator<GlPipeline>;
+	using DeleteCommand = GlDeleteObjectCommand<GlPipeline, Alloc>;
 	using Deleter = 
-		GlHandleDeferredDeleter<GlProgramPipeline, Alloc, DeleteCommand>;
+		GlHandleDeferredDeleter<GlPipeline, Alloc, DeleteCommand>;
 
 	Error err = _createAdvanced(
 		&commands._get().getQueue().getDevice(),
@@ -93,16 +93,16 @@ Error GlProgramPipelineHandle::commonConstructor(
 }
 
 //==============================================================================
-void GlProgramPipelineHandle::bind(GlCommandBufferHandle& commands)
+void GlPipelineHandle::bind(GlCommandBufferHandle& commands)
 {
 	ANKI_ASSERT(isCreated());
 
 	class Command: public GlCommand
 	{
 	public:
-		GlProgramPipelineHandle m_ppline;
+		GlPipelineHandle m_ppline;
 
-		Command(GlProgramPipelineHandle& ppline)
+		Command(GlPipelineHandle& ppline)
 		:	m_ppline(ppline)
 		{}
 
@@ -125,7 +125,7 @@ void GlProgramPipelineHandle::bind(GlCommandBufferHandle& commands)
 }
 
 //==============================================================================
-GlProgramHandle GlProgramPipelineHandle::getAttachedProgram(GLenum type) const
+GlShaderHandle GlPipelineHandle::getAttachedProgram(GLenum type) const
 {
 	ANKI_ASSERT(isCreated());
 	Error err = serializeOnGetter();
@@ -135,7 +135,7 @@ GlProgramHandle GlProgramPipelineHandle::getAttachedProgram(GLenum type) const
 	}
 	else
 	{
-		return GlProgramHandle();
+		return GlShaderHandle();
 	}
 }
 

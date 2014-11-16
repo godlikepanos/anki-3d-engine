@@ -275,7 +275,7 @@ ProgramResourcePointer& Material::getProgram(
 
 //==============================================================================
 Error Material::getProgramPipeline(
-	const RenderingKey& key, GlProgramPipelineHandle& out)
+	const RenderingKey& key, GlPipelineHandle& out)
 {
 	ANKI_ASSERT(enumToType(key.m_pass) < m_passesCount);
 	ANKI_ASSERT(key.m_lod < m_lodsCount);
@@ -295,12 +295,12 @@ Error Material::getProgramPipeline(
 	U idx = enumToType(key.m_pass) * m_lodsCount * tessCount
 		+ key.m_lod * tessCount + key.m_tessellation;
 
-	GlProgramPipelineHandle& ppline = m_pplines[idx];
+	GlPipelineHandle& ppline = m_pplines[idx];
 
 	// Lazily create it
 	if(ANKI_UNLIKELY(!ppline.isCreated()))
 	{
-		Array<GlProgramHandle, 5> progs;
+		Array<GlShaderHandle, 5> progs;
 		U progCount = 0;
 
 		progs[progCount++] = 
@@ -613,7 +613,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 		// Find the input variable in one of the programs
 		for(const ProgramResourcePointer& progr : m_progs)
 		{
-			const GlProgramHandle& prog = progr->getGlProgram();
+			const GlShaderHandle& prog = progr->getGlProgram();
 
 			glvar = prog.tryFindVariable(in.m_name.toCString());
 			if(glvar)
