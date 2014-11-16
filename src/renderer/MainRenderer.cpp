@@ -28,17 +28,10 @@ Error MainRenderer::create(
 	ResourceManager* resources,
 	GlDevice* gl,
 	HeapAllocator<U8>& alloc,
-	const ConfigSet& config_)
+	const ConfigSet& config)
 {
 	Error err = ErrorCode::NONE;
 	ANKI_LOGI("Initializing main renderer...");
-
-	ConfigSet config = config_;
-	config.set("offscreen", false);
-	config.set("width", 
-		config.get("width") * config.get("renderingQuality"));
-	config.set("height", 
-		config.get("height") * config.get("renderingQuality"));
 
 	err = Renderer::init(threadpool, resources, gl, alloc, config);
 	if(err) return err;
@@ -78,13 +71,15 @@ Error MainRenderer::render(SceneGraph& scene)
 	err = Renderer::render(scene, jobs);
 	if(err) return err;
 
-	Bool notDrawnToDefault = 
-		getRenderingQuality() != 1.0 || getDbg().getEnabled();
+	Bool alreadyDrawnToDefault = 
+		!getDbg().getEnabled()
+		&& getRenderingQuality() == 1.0;
 
-	if(notDrawnToDefault)
+	if(!alreadyDrawnToDefault)
 	{
 		getDefaultFramebuffer().bind(lastJobs, false);
-		lastJobs.setViewport(0, 0, getWindowWidth(), getWindowHeight());
+		lastJobs.setViewport(0, 0, 
+			getDefaultFramebufferWidth(), getDefaultFramebufferHeight());
 
 		m_blitPpline.bind(lastJobs);
 
@@ -127,16 +122,16 @@ Error MainRenderer::render(SceneGraph& scene)
 Error MainRenderer::initGl()
 {
 	// get max texture units
-	GlDevice& gl = _getGlDevice();
-	GlCommandBufferHandle jobs;
-	Error err = jobs.create(&gl);
+	GlCommandBufferHandle cmdb;
+	Error err = cmdb.create(&_getGlDevice());
 
 	if(!err)
 	{
-		jobs.enableCulling(true);
-		jobs.setCullFace(GL_BACK);
+		cmdb.enableCulling(true);
+		cmdb.setCullFace(GL_BACK);
+		cmdb.enablePointSize(true);
 
-		jobs.flush();
+		cmdb.flush();
 	}
 
 	return err;

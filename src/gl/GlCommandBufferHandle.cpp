@@ -414,6 +414,12 @@ void GlCommandBufferHandle::setPolygonMode(GLenum face, GLenum mode)
 }
 
 //==============================================================================
+void GlCommandBufferHandle::enablePointSize(Bool enable)
+{
+	ANKI_STATE_CMD_ENABLE(GL_PROGRAM_POINT_SIZE, enable);
+}
+
+//==============================================================================
 class BindTexturesCommand: public GlCommand
 {
 public:

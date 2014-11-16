@@ -55,13 +55,17 @@ Error Renderer::initInternal(const ConfigSet& config)
 	Error err = ErrorCode::NONE;
 
 	// Set from the config
-	m_width = config.get("width");
-	m_height = config.get("height");
+	m_renderingQuality = config.get("renderingQuality");
+	m_defaultFbWidth = config.get("width");
+	m_defaultFbHeight = config.get("height");
+	m_width = m_defaultFbWidth * m_renderingQuality;
+	alignRoundDown(16, m_width);
+	m_height = m_defaultFbHeight * m_renderingQuality;
+	alignRoundDown(16, m_height);
 	m_lodDistance = config.get("lodDistance");
 	m_framesNum = 0;
 	m_samples = config.get("samples");
 	m_isOffscreen = config.get("offscreen");
-	m_renderingQuality = config.get("renderingQuality");
 	m_tilesCount.x() = config.get("tilesXCount");
 	m_tilesCount.y() = config.get("tilesYCount");
 

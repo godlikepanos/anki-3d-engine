@@ -533,7 +533,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("tilesXCount", 16);
 	config.set("tilesYCount", 16);
 
-	config.set("fullscreenDesktopResolution", true);
+	config.set("fullscreenDesktopResolution", false);
 	config.set("debugContext", false);
 
 	app = new App;

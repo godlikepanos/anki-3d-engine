@@ -130,6 +130,9 @@ public:
 	/// Set polygon mode
 	void setPolygonMode(GLenum face, GLenum mode);
 
+	/// Enable/diable point size in vertex/geometry shaders.
+	void enablePointSize(Bool enable);
+
 	/// Bind many textures
 	/// @param first The unit where the first texture will be bound.
 	/// @param textures The array of textures.

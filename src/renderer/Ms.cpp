@@ -77,6 +77,7 @@ Error Ms::initInternal(const ConfigSet& initializer)
 		err = createRt(0, initializer.get("samples"));
 		if(err)	return err;
 	}
+
 	err = createRt(1, 1);
 	if(err)	return err;
 

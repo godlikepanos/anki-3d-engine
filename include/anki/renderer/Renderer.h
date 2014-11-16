@@ -98,16 +98,21 @@ public:
 		return m_height;
 	}
 
-	U32 getWindowWidth() const
+	U32 getDefaultFramebufferWidth() const
 	{
 		ANKI_ASSERT(!m_isOffscreen);
-		return m_width / m_renderingQuality;
+		return m_defaultFbWidth;
 	}
 
-	U32 getWindowHeight() const
+	U32 getDefaultFramebufferHeight() const
 	{
 		ANKI_ASSERT(!m_isOffscreen);
-		return m_height / m_renderingQuality;
+		return m_defaultFbHeight;
+	}
+
+	F32 getRenderingQuality() const
+	{
+		return m_renderingQuality;
 	}
 
 	F32 getAspectRatio() const
@@ -160,11 +165,6 @@ public:
 	Bool getTessellationEnabled() const
 	{
 		return m_tessellation;
-	}
-
-	F32 getRenderingQuality() const
-	{
-		return m_renderingQuality;
 	}
 
 	const UVec2& getTilesCount() const
@@ -271,15 +271,16 @@ private:
 	Tiler m_tiler;
 	/// @}
 
-	/// Width of the rendering. Don't confuse with the window width
 	U32 m_width;
-	/// Height of the rendering. Don't confuse with the window height
 	U32 m_height;
+	U32 m_defaultFbWidth;
+	U32 m_defaultFbHeight;
+	F32 m_renderingQuality;
+
 	F32 m_lodDistance; ///< Distance that used to calculate the LOD
 	U8 m_samples; ///< Number of sample in multisampling
 	Bool8 m_isOffscreen; ///< Is offscreen renderer?
 	Bool8 m_tessellation;
-	F32 m_renderingQuality; ///< Rendering quality. Relevant for offscreen 
 	UVec2 m_tilesCount;
 
 	/// @name For drawing a quad into the active framebuffer

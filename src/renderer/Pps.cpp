@@ -143,8 +143,9 @@ Error Pps::run(GlCommandBufferHandle& cmdBuff)
 	if(drawToDefaultFbo)
 	{
 		m_r->getDefaultFramebuffer().bind(cmdBuff, true);
-		cmdBuff.setViewport(
-			0, 0, m_r->getWindowWidth(), m_r->getWindowHeight());
+		cmdBuff.setViewport(0, 0, 
+			m_r->getDefaultFramebufferWidth(), 
+			m_r->getDefaultFramebufferHeight());
 	}
 	else
 	{
