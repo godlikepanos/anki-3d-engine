@@ -367,11 +367,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		if(duplicateInp != nullptr)
 		{
 			// Duplicate. Make sure it's the same as the other shader
-			Bool same = duplicateInp->m_type == inpvar.m_type
-				|| duplicateInp->m_value == inpvar.m_value
-				|| duplicateInp->m_constant == inpvar.m_constant
-				|| duplicateInp->m_arraySize == inpvar.m_arraySize
-				|| duplicateInp->m_instanced == inpvar.m_instanced;
+			Bool same = duplicateInp->duplicate(inpvar);
 
 			if(!same)
 			{
@@ -425,15 +421,18 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 				ANKI_CHECK(tmp.sprintf(
 					m_alloc, "layout(binding = %u) uniform %s",
-					m_texBinding++, &inpvar.m_line[0]));
+					m_texBinding, &inpvar.m_line[0]));
 
 				inpvar.m_line.destroy(m_alloc);
 				inpvar.m_line = std::move(tmp);
 
 				inpvar.m_inBlock = false;
+				inpvar.m_binding = m_texBinding;
+				++m_texBinding;
 			}
 			else
 			{
+				// In block
 				MPString tmp;
 
 				ANKI_CHECK(tmp.create(m_alloc, inpvar.m_line));
@@ -442,6 +441,28 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 				m_uniformBlockReferencedMask |= glshaderbit;
 				inpvar.m_inBlock = true;
+
+				inpvar.m_offset = m_blockSize;
+				if(inpvar.m_type == "float" 
+					|| inpvar.m_type == "vec2"
+					|| inpvar.m_type == "vec3"
+					|| inpvar.m_type == "vec4")
+				{
+					inpvar.m_arrayStride = sizeof(Vec4);
+					m_blockSize += sizeof(Vec4) * inpvar.m_arraySize;
+				}
+				else if(inpvar.m_type == "mat3"
+					|| inpvar.m_type == "mat4")
+				{
+					inpvar.m_arrayStride = sizeof(Mat4);
+					m_blockSize += sizeof(Mat4) * inpvar.m_arraySize;
+					inpvar.m_matrixStride = sizeof(Vec4);				
+				}
+				else
+				{
+					ANKI_LOGE("Unsupported type %s", &inpvar.m_type[0]);
+					return ErrorCode::USER_DATA;
+				}
 			}
 		}
 		else

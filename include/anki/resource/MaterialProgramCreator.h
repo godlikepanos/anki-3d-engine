@@ -35,14 +35,21 @@ public:
 		MPString m_name;
 		MPString m_type;
 		MPStringList m_value;
-		Bool8 m_constant;
-		U16 m_arraySize;
+		Bool8 m_constant = false;
+		U16 m_arraySize = 0;
 		Bool8 m_instanced = false;
 
 		MPString m_line;
 		GLbitfield m_shaderDefinedMask = 0; ///< Defined in
 		GLbitfield m_shaderReferencedMask = 0; ///< Referenced by
 		Bool8 m_inBlock = true;
+
+		I16 m_binding = -1; ///< Texture unit
+		I32 m_offset = -1; ///< Offset inside the UBO
+		I32 m_arrayStride = -1;
+		/// Identifying the stride between columns of a column-major matrix or 
+		/// rows of a row-major matrix
+		I32 m_matrixStride = -1;
 
 		Input()
 		{}
@@ -79,6 +86,20 @@ public:
 			m_shaderDefinedMask = b.m_shaderDefinedMask;
 			m_shaderReferencedMask = b.m_shaderReferencedMask;
 			m_inBlock = b.m_inBlock;
+			m_binding = b.m_binding;
+			m_offset = b.m_offset;
+			m_arrayStride = b.m_arrayStride;
+			m_matrixStride = b.m_matrixStride;
+		}
+
+		Bool duplicate(const Input& b) const
+		{
+			return b.m_name == m_name
+				&& b.m_type == m_type
+				&& b.m_value == m_value
+				&& b.m_constant == m_constant
+				&& b.m_arraySize == m_arraySize
+				&& b.m_instanced == m_instanced;
 		}
 	};
 
@@ -115,6 +136,7 @@ private:
 	List<Input, TempResourceAllocator<U8>> m_inputs;
 	MPStringList m_uniformBlock;
 	GLbitfield m_uniformBlockReferencedMask = 0;
+	U32 m_blockSize = 0;
 	Bool8 m_instanced = false;
 	U32 m_texBinding = 0;
 	GLbitfield m_instanceIdMask = 0;

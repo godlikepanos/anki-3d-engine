@@ -99,6 +99,9 @@ private:
 	/// Keep one program variable here for easy access of the common
 	/// variable stuff like name or GL data type etc
 	const GlProgramVariable* m_progVar;
+	I16 m_offset = -1;
+	I16 m_arrayStride = -1;
+	I16 m_matrixStride = -1;
 
 	Bool8 m_instanced;
 };
