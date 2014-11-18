@@ -197,8 +197,6 @@ public:
 		ANKI_ASSERT(m_data == nullptr && m_size == 0);
 		Error err = ErrorCode::NONE;
 
-		destroy(alloc);
-
 		if(size > 0)
 		{
 			m_data = alloc.template newArray<Value>(size, v);

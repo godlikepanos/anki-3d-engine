@@ -53,6 +53,8 @@ public:
 
 	virtual ~MaterialVariable();
 
+	virtual void destroy(ResourceAllocator<U8> alloc) = 0;
+
 	template<typename T>
 	const T* begin() const
 	{
@@ -113,58 +115,66 @@ class MaterialVariableTemplate: public MaterialVariable
 public:
 	using Type = TData;
 
-	/// @name Constructors/Destructor
-	/// @{
 	MaterialVariableTemplate(
 		const GlProgramVariable* glvar, 
-		Bool instanced, 
-		const TData* x, 
-		U32 size,
-		ResourceAllocator<U8> alloc)
-	:	MaterialVariable(glvar, instanced),
-		m_data(alloc)
+		Bool instanced)
+	:	MaterialVariable(glvar, instanced)
 	{
 		setupVisitable(this);
-
-		if(size > 0)
-		{
-			m_data.insert(m_data.begin(), x, x + size);
-		}
 	}
 
 	~MaterialVariableTemplate()
 	{}
-	/// @}
 
-	/// @name Accessors
-	/// @{
+	ANKI_USE_RESULT Error create(
+		ResourceAllocator<U8> alloc, const TData* x, U32 size)
+	{
+		Error err = ErrorCode::NONE;
+		if(size > 0)
+		{
+			err = m_data.create(alloc, size);
+			if(!err)
+			{
+				for(U i = 0; i < size; i++)
+				{
+					m_data[i] = x[i];
+				}
+			}
+		}
+
+		return ErrorCode::NONE;
+	}
+
+	void destroy(ResourceAllocator<U8> alloc)
+	{
+		m_data.destroy(alloc);
+	}
+
 	const TData* begin() const
 	{
 		ANKI_ASSERT(hasValues());
-		return &(*m_data.begin());
+		return m_data.begin();
 	}
 	const TData* end() const
 	{
 		ANKI_ASSERT(hasValues());
-		return &(*m_data.end());
+		return m_data.end();
 	}
 
 	const TData& operator[](U idx) const
 	{
 		ANKI_ASSERT(hasValues());
-		ANKI_ASSERT(idx < m_data.size());
 		return m_data[idx];
 	}
 
 	/// Implements hasValues
 	Bool hasValues() const
 	{
-		return m_data.size() > 0;
+		return m_data.getSize() > 0;
 	}
-	/// @}
 
 private:
-	ResourceVector<TData> m_data;
+	ResourceDArray<TData> m_data;
 };
 
 /// Contains a few properties that other classes may use. For an explanation of

@@ -30,7 +30,7 @@ static MaterialVariable* newMaterialVariable(
 	const GlProgramVariable& glvar, const MaterialProgramCreator::Input& in,
 	ResourceAllocator<U8>& alloc, TempResourceAllocator<U8>& talloc)
 {
-	MaterialVariable* out = nullptr;
+	MaterialVariableTemplate<T>* out = nullptr;
 
 	if(in.m_value.getSize() > 0)
 	{
@@ -63,22 +63,26 @@ static MaterialVariable* newMaterialVariable(
 		}
 
 		out = alloc.newInstance<MaterialVariableTemplate<T>>(
-			&glvar, 
-			in.m_instanced,
-			(T*)&floatvec[0],
-			glvar.getArraySize(),
-			alloc);
+			&glvar, in.m_instanced);
+
+		if(out)
+		{
+			Error err = out->create(
+				alloc, (T*)&floatvec[0], glvar.getArraySize());
+
+			if(err)
+			{
+				alloc.deleteInstance(out);
+				out = nullptr;
+			}
+		}
 	}
 	else
 	{
 		// Buildin
 
 		out = alloc.newInstance<MaterialVariableTemplate<T>>(
-			&glvar, 
-			in.m_instanced,
-			nullptr,
-			0,
-			alloc);
+			&glvar, in.m_instanced);
 	}
 
 	return out;
@@ -152,7 +156,9 @@ Material::~Material()
 
 	for(auto it : m_vars)
 	{
-		alloc.deleteInstance(it);
+		MaterialVariable* mvar = &(*it);
+		mvar->destroy(alloc);
+		alloc.deleteInstance(mvar);
 	}
 
 	m_vars.destroy(alloc);
@@ -645,9 +651,23 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 				}
 
 				auto alloc = m_resources->_getAllocator();
-				mtlvar = alloc.newInstance<
+				MaterialVariableTemplate<TextureResourcePointer>* tvar = 
+					alloc.newInstance<
 					MaterialVariableTemplate<TextureResourcePointer>>(
-					glvar, false, &tp, 1, alloc);
+					glvar, false);
+
+				if(tvar)
+				{
+					err = tvar->create(alloc, &tp, 1);
+
+					if(err)
+					{
+						alloc.deleteInstance(tvar);
+						tvar = nullptr;
+					}
+				}
+
+				mtlvar = tvar;
 			}
 			break;
 		// F32
