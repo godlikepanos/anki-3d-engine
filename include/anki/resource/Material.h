@@ -19,6 +19,7 @@ namespace anki {
 // Forward
 class XmlElement;
 class MaterialProgramCreator;
+class MaterialProgramCreatorInputVariable;
 
 template<typename T>
 class MaterialVariableTemplate;
@@ -97,6 +98,13 @@ public:
 		return m_instanced;
 	}
 
+	void setUniformBufferInfo(U16 offset, U16 arrayStride, U16 matrixStride)
+	{
+		m_offset = offset;
+		m_arrayStride = arrayStride;
+		m_matrixStride = matrixStride;
+	}
+
 private:
 	/// Keep one program variable here for easy access of the common
 	/// variable stuff like name or GL data type etc
@@ -172,6 +180,12 @@ public:
 	{
 		return m_data.getSize() > 0;
 	}
+
+	static MaterialVariableTemplate* _newInstance(
+		const GlProgramVariable& glvar, 
+		const MaterialProgramCreatorInputVariable& in,
+		ResourceAllocator<U8> alloc, 
+		TempResourceAllocator<U8> talloc);
 
 private:
 	ResourceDArray<TData> m_data;

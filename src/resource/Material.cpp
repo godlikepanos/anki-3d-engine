@@ -24,11 +24,58 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-/// Create an numeric material variable
+/// Given a string that defines blending return the GLenum
+static GLenum blendToEnum(const CString& str)
+{
+// Dont make idiotic mistakes
+#define TXT_AND_ENUM(x) \
+	if(str == #x) \
+	{ \
+		return x; \
+	}
+
+	TXT_AND_ENUM(GL_ZERO)
+	TXT_AND_ENUM(GL_ONE)
+	TXT_AND_ENUM(GL_DST_COLOR)
+	TXT_AND_ENUM(GL_ONE_MINUS_DST_COLOR)
+	TXT_AND_ENUM(GL_SRC_ALPHA)
+	TXT_AND_ENUM(GL_ONE_MINUS_SRC_ALPHA)
+	TXT_AND_ENUM(GL_DST_ALPHA)
+	TXT_AND_ENUM(GL_ONE_MINUS_DST_ALPHA)
+	TXT_AND_ENUM(GL_SRC_ALPHA_SATURATE)
+	TXT_AND_ENUM(GL_SRC_COLOR)
+	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
+	ANKI_LOGE("Incorrect blend enum");
+	return 0;
+
+#undef TXT_AND_ENUM
+}
+
+//==============================================================================
+// MaterialVariable                                                            =
+//==============================================================================
+
+//==============================================================================
+MaterialVariable::~MaterialVariable()
+{}
+
+//==============================================================================
+CString MaterialVariable::getName() const
+{
+	return m_progVar->getName();
+}
+
+//==============================================================================
+U32 MaterialVariable::getArraySize() const
+{
+	return m_progVar->getArraySize();
+}
+
+//==============================================================================
 template<typename T>
-static MaterialVariable* newMaterialVariable(
+MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 	const GlProgramVariable& glvar, const MaterialProgramCreator::Input& in,
-	ResourceAllocator<U8>& alloc, TempResourceAllocator<U8>& talloc)
+	ResourceAllocator<U8> alloc, TempResourceAllocator<U8> talloc)
 {
 	MaterialVariableTemplate<T>* out = nullptr;
 
@@ -86,54 +133,6 @@ static MaterialVariable* newMaterialVariable(
 	}
 
 	return out;
-}
-
-//==============================================================================
-/// Given a string that defines blending return the GLenum
-static GLenum blendToEnum(const CString& str)
-{
-// Dont make idiotic mistakes
-#define TXT_AND_ENUM(x) \
-	if(str == #x) \
-	{ \
-		return x; \
-	}
-
-	TXT_AND_ENUM(GL_ZERO)
-	TXT_AND_ENUM(GL_ONE)
-	TXT_AND_ENUM(GL_DST_COLOR)
-	TXT_AND_ENUM(GL_ONE_MINUS_DST_COLOR)
-	TXT_AND_ENUM(GL_SRC_ALPHA)
-	TXT_AND_ENUM(GL_ONE_MINUS_SRC_ALPHA)
-	TXT_AND_ENUM(GL_DST_ALPHA)
-	TXT_AND_ENUM(GL_ONE_MINUS_DST_ALPHA)
-	TXT_AND_ENUM(GL_SRC_ALPHA_SATURATE)
-	TXT_AND_ENUM(GL_SRC_COLOR)
-	TXT_AND_ENUM(GL_ONE_MINUS_SRC_COLOR);
-	ANKI_LOGE("Incorrect blend enum");
-	return 0;
-
-#undef TXT_AND_ENUM
-}
-
-//==============================================================================
-// MaterialVariable                                                            =
-//==============================================================================
-
-//==============================================================================
-MaterialVariable::~MaterialVariable()
-{}
-
-//==============================================================================
-CString MaterialVariable::getName() const
-{
-	return m_progVar->getName();
-}
-
-//==============================================================================
-U32 MaterialVariable::getArraySize() const
-{
-	return m_progVar->getArraySize();
 }
 
 //==============================================================================
@@ -672,32 +671,32 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 			break;
 		// F32
 		case GL_FLOAT:
-			mtlvar = newMaterialVariable<F32>(*glvar, in,
+			mtlvar = MaterialVariableTemplate<F32>::_newInstance(*glvar, in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// vec2
 		case GL_FLOAT_VEC2:
-			mtlvar = newMaterialVariable<Vec2>(*glvar, in,
+			mtlvar = MaterialVariableTemplate<Vec2>::_newInstance(*glvar, in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// vec3
 		case GL_FLOAT_VEC3:
-			mtlvar = newMaterialVariable<Vec3>(*glvar, in,
+			mtlvar = MaterialVariableTemplate<Vec3>::_newInstance(*glvar, in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// vec4
 		case GL_FLOAT_VEC4:
-			mtlvar = newMaterialVariable<Vec4>(*glvar, in,
+			mtlvar = MaterialVariableTemplate<Vec4>::_newInstance(*glvar, in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// mat3
 		case GL_FLOAT_MAT3:
-			mtlvar = newMaterialVariable<Mat3>(*glvar, in,
+			mtlvar = MaterialVariableTemplate<Mat3>::_newInstance(*glvar, in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// mat4
 		case GL_FLOAT_MAT4:
-			mtlvar = newMaterialVariable<Mat4>(*glvar, in,
+			mtlvar = MaterialVariableTemplate<Mat4>::_newInstance(*glvar, in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// default is error
