@@ -73,12 +73,41 @@ U32 MaterialVariable::getArraySize() const
 
 //==============================================================================
 template<typename T>
+Error MaterialVariableTemplate<T>::create(ResourceAllocator<U8> alloc, 
+	const CString& name, const T* x, U32 size)
+{
+	Error err = ErrorCode::NONE;
+
+	err = m_name.create(alloc, name);
+
+	if(!err && size > 0)
+	{
+		err = m_data.create(alloc, size);
+		if(!err)
+		{
+			for(U i = 0; i < size; i++)
+			{
+				m_data[i] = x[i];
+			}
+		}
+	}
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+template<typename T>
 MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 	const GlProgramVariable& glvar, const MaterialProgramCreator::Input& in,
 	ResourceAllocator<U8> alloc, TempResourceAllocator<U8> talloc)
 {
+	Error err = ErrorCode::NONE;
 	MaterialVariableTemplate<T>* out = nullptr;
 
+	TempResourceDArray<F32> floats;
+	TempResourceDArray<F32>::ScopeDestroyer floatsd(&floats, talloc);
+
+	// Get the float values
 	if(in.m_value.getSize() > 0)
 	{
 		// Has values
@@ -93,43 +122,58 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 			return nullptr;
 		}
 
-		TempResourceVector<F32> floatvec(talloc);
-		floatvec.resize(floatsNeeded);
+		err = floats.create(talloc, floatsNeeded);
+		if(err) return nullptr;
+
 		auto it = in.m_value.getBegin();
 		for(U i = 0; i < floatsNeeded; ++i)
 		{
 			F64 d;
-			Error err = it->toF64(d);
-			if(err)
-			{
-				return nullptr;
-			}
+			err = it->toF64(d);
+			if(err)	return nullptr;
 
-			floatvec[i] = d;
+			floats[i] = d;
 			++it;
 		}
 
 		out = alloc.newInstance<MaterialVariableTemplate<T>>(
 			&glvar, in.m_instanced);
+	}
 
-		if(out)
-		{
-			Error err = out->create(
-				alloc, (T*)&floatvec[0], glvar.getArraySize());
+	// Create new instance
+	out = alloc.newInstance<MaterialVariableTemplate<T>>(
+		&glvar, in.m_instanced);
+	if(!out) return nullptr;
 
-			if(err)
-			{
-				alloc.deleteInstance(out);
-				out = nullptr;
-			}
-		}
+	if(floats.getSize() > 0)
+	{
+		err = out->create(alloc, in.m_name.toCString(), 
+			(T*)&floats[0], glvar.getArraySize());
 	}
 	else
 	{
 		// Buildin
+		err = out->create(alloc, in.m_name.toCString(), nullptr, 0);
+	}
 
-		out = alloc.newInstance<MaterialVariableTemplate<T>>(
-			&glvar, in.m_instanced);
+	if(err && out)
+	{
+		alloc.deleteInstance(out);
+		return nullptr;
+	}
+
+	// Set some values
+	out->m_varType = in.m_type;
+	out->m_textureUnit = in.m_binding;
+	out->m_varBlkInfo.m_arraySize = in.m_arraySize;
+
+	// Set UBO data
+	if(out && in.m_inBlock)
+	{
+		out->m_varBlkInfo.m_offset = in.m_offset;
+		ANKI_ASSERT(out->m_varBlkInfo.m_offset >= 0);
+		out->m_varBlkInfo.m_arrayStride = in.m_arrayStride;
+		out->m_varBlkInfo.m_matrixStride = in.m_matrixStride;
 	}
 
 	return out;
@@ -657,7 +701,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 
 				if(tvar)
 				{
-					err = tvar->create(alloc, &tp, 1);
+					err = tvar->create(alloc, in.m_name.toCString(), &tp, 1);
 
 					if(err)
 					{

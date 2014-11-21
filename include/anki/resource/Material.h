@@ -98,20 +98,33 @@ public:
 		return m_instanced;
 	}
 
-	void setUniformBufferInfo(U16 offset, U16 arrayStride, U16 matrixStride)
+	U32 getTextureUnit() const
 	{
-		m_offset = offset;
-		m_arrayStride = arrayStride;
-		m_matrixStride = matrixStride;
+		ANKI_ASSERT(m_textureUnit != -1);
+		return static_cast<U32>(m_textureUnit);
 	}
 
-private:
+	template<typename T>
+	void writeShaderBlockMemory(
+		const T* elements, 
+		U32 elementsCount,
+		void* buffBegin,
+		const void* buffEnd)
+	{
+		ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
+		ANKI_ASSERT(m_varType == getShaderVariableTypeFromTypename<T>());
+		anki::writeShaderBlockMemory(m_varType, m_varBlkInfo, 
+			reinterpret_cast<T*>(elements), elementsCount, buffBegin, buffEnd);
+	}
+
+protected:
 	/// Keep one program variable here for easy access of the common
 	/// variable stuff like name or GL data type etc
 	const GlProgramVariable* m_progVar;
-	I16 m_offset = -1;
-	I16 m_arrayStride = -1;
-	I16 m_matrixStride = -1;
+	ShaderVariableDataType m_varType;
+	ShaderVariableBlockInfo m_varBlkInfo;
+	I16 m_textureUnit = -1;
+	ResourceString m_name;
 
 	Bool8 m_instanced;
 };
@@ -134,24 +147,8 @@ public:
 	~MaterialVariableTemplate()
 	{}
 
-	ANKI_USE_RESULT Error create(
-		ResourceAllocator<U8> alloc, const TData* x, U32 size)
-	{
-		Error err = ErrorCode::NONE;
-		if(size > 0)
-		{
-			err = m_data.create(alloc, size);
-			if(!err)
-			{
-				for(U i = 0; i < size; i++)
-				{
-					m_data[i] = x[i];
-				}
-			}
-		}
-
-		return ErrorCode::NONE;
-	}
+	ANKI_USE_RESULT Error create(ResourceAllocator<U8> alloc, 
+		const CString& name, const TData* x, U32 size);
 
 	void destroy(ResourceAllocator<U8> alloc)
 	{

@@ -69,6 +69,45 @@ static ANKI_USE_RESULT Error getShaderInfo(
 }
 
 //==============================================================================
+ANKI_USE_RESULT Error computeShaderVariableDataType(
+	const CString& str, ShaderVariableDataType& out)
+{
+	Error err = ErrorCode::NONE;
+
+	if(str == "float")
+	{
+		out = ShaderVariableDataType::FLOAT;
+	}
+	else if(str == "vec2")
+	{
+		out = ShaderVariableDataType::VEC2;
+	}
+	else if(str == "vec3")
+	{
+		out = ShaderVariableDataType::VEC3;
+	}
+	else if(str == "vec4")
+	{
+		out = ShaderVariableDataType::VEC4;
+	}
+	else if(str == "mat3")
+	{
+		out = ShaderVariableDataType::MAT3;
+	}
+	else if(str == "mat4")
+	{
+		out = ShaderVariableDataType::MAT4;
+	}
+	else
+	{
+		ANKI_LOGE("Incorrect variable type %s", &str[0]);
+		err = ErrorCode::USER_DATA;
+	}
+
+	return err;
+}
+
+//==============================================================================
 // MaterialProgramCreator                                                      =
 //==============================================================================
 
@@ -284,7 +323,8 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		// <type>
 		ANKI_CHECK(inputEl.getChildElement("type", el));
 		ANKI_CHECK(el.getText(cstr));
-		ANKI_CHECK(inpvar.m_type.create(m_alloc, cstr));
+		ANKI_CHECK(inpvar.m_typeStr.create(m_alloc, cstr));
+		ANKI_CHECK(computeShaderVariableDataType(cstr, inpvar.m_type));
 
 		// <value>
 		XmlElement valueEl;
@@ -391,7 +431,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			// Handle NON-consts
 
 			ANKI_CHECK(inpvar.m_line.sprintf(
-				m_alloc, "%s %s", &inpvar.m_type[0], &inpvar.m_name[0]));
+				m_alloc, "%s %s", &inpvar.m_typeStr[0], &inpvar.m_name[0]));
 			
 			U arrSize = 0;
 			if(inpvar.m_instanced)
@@ -415,7 +455,8 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			ANKI_CHECK(inpvar.m_line.append(m_alloc, ";"));
 
 			// Can put it block
-			if(inpvar.m_type == "sampler2D" || inpvar.m_type == "samplerCube")
+			if(inpvar.m_type >= ShaderVariableDataType::SAMPLERS_FIRST 
+				&& inpvar.m_type <= ShaderVariableDataType::SAMPLERS_LAST)
 			{
 				MPString tmp;
 
@@ -443,16 +484,16 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 				inpvar.m_inBlock = true;
 
 				inpvar.m_offset = m_blockSize;
-				if(inpvar.m_type == "float" 
-					|| inpvar.m_type == "vec2"
-					|| inpvar.m_type == "vec3"
-					|| inpvar.m_type == "vec4")
+				if(inpvar.m_type == ShaderVariableDataType::FLOAT 
+					|| inpvar.m_type == ShaderVariableDataType::VEC2
+					|| inpvar.m_type == ShaderVariableDataType::VEC3
+					|| inpvar.m_type == ShaderVariableDataType::VEC4)
 				{
 					inpvar.m_arrayStride = sizeof(Vec4);
 					m_blockSize += sizeof(Vec4) * inpvar.m_arraySize;
 				}
-				else if(inpvar.m_type == "mat3"
-					|| inpvar.m_type == "mat4")
+				else if(inpvar.m_type == ShaderVariableDataType::MAT3
+					|| inpvar.m_type == ShaderVariableDataType::MAT4)
 				{
 					inpvar.m_arrayStride = sizeof(Mat4);
 					m_blockSize += sizeof(Mat4) * inpvar.m_arraySize;
@@ -460,7 +501,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 				}
 				else
 				{
-					ANKI_LOGE("Unsupported type %s", &inpvar.m_type[0]);
+					ANKI_LOGE("Unsupported type %s", &inpvar.m_typeStr[0]);
 					return ErrorCode::USER_DATA;
 				}
 			}
@@ -487,7 +528,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			ANKI_CHECK(inpvar.m_value.join(m_alloc, ", ", initList));
 
 			err = inpvar.m_line.sprintf(m_alloc, "const %s %s = %s(%s);",
-				&inpvar.m_type[0], &inpvar.m_name[0], &inpvar.m_type[0], 
+				&inpvar.m_typeStr[0], &inpvar.m_name[0], &inpvar.m_typeStr[0], 
 				&initList[0]);
 			initList.destroy(m_alloc);
 

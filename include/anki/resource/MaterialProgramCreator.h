@@ -24,7 +24,8 @@ public:
 
 	TempResourceAllocator<U8> m_alloc;
 	MPString m_name;
-	MPString m_type;
+	MPString m_typeStr;
+	ShaderVariableDataType m_type;
 	MPStringList m_value;
 	Bool8 m_constant = false;
 	U16 m_arraySize = 0;
@@ -53,7 +54,7 @@ public:
 	~MaterialProgramCreatorInputVariable()
 	{
 		m_name.destroy(m_alloc);
-		m_type.destroy(m_alloc);
+		m_typeStr.destroy(m_alloc);
 		m_value.destroy(m_alloc);
 		m_line.destroy(m_alloc);
 	}
@@ -69,7 +70,8 @@ public:
 	{
 		m_alloc = std::move(b.m_alloc);
 		m_name = std::move(b.m_name);
-		m_type = std::move(b.m_type);
+		m_type = b.m_type;
+		m_typeStr = std::move(b.m_typeStr);
 		m_value = std::move(b.m_value);
 		m_constant = b.m_constant;
 		m_arraySize = b.m_arraySize;
