@@ -50,6 +50,7 @@ public:
 private:
 	Renderer* m_r;
 	GlBufferHandle m_uniformBuff;
+	U8* m_uniformBuffMapAddr = nullptr;
 
 	/// @name State
 	/// @{

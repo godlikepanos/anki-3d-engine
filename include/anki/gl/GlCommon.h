@@ -95,6 +95,7 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType, inline)
 /// Shader variable type.
 enum class ShaderVariableDataType: U8
 {
+	NONE,
 	FLOAT,
 	VEC2,
 	VEC3,

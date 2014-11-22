@@ -15,7 +15,8 @@ namespace anki {
 // Forward
 class XmlElement;
 
-/// XXX
+/// Material loader variable. It's the information on whatever is inside 
+/// \<input\>
 class MaterialProgramCreatorInputVariable: public NonCopyable
 {
 public:
@@ -25,7 +26,7 @@ public:
 	TempResourceAllocator<U8> m_alloc;
 	MPString m_name;
 	MPString m_typeStr;
-	ShaderVariableDataType m_type;
+	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
 	MPStringList m_value;
 	Bool8 m_constant = false;
 	U16 m_arraySize = 0;

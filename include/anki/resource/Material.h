@@ -45,12 +45,8 @@ class MaterialVariable: public MateriaVariableVisitable, public NonCopyable
 public:
 	using Base = MateriaVariableVisitable;
 
-	MaterialVariable(const GlProgramVariable* glvar, Bool instanced)
-	:	m_progVar(glvar), 
-		m_instanced(instanced)
-	{
-		ANKI_ASSERT(m_progVar);
-	}
+	MaterialVariable()
+	{}
 
 	virtual ~MaterialVariable();
 
@@ -80,18 +76,20 @@ public:
 		return (*derived)[idx];
 	}
 
-	const GlProgramVariable& getGlProgramVariable() const
-	{
-		return *m_progVar;
-	}
-
 	/// Get the name of all the shader program variables
-	CString getName() const;
+	CString getName() const
+	{
+		return m_name.toCString();
+	}
 
 	/// If false then it should be buildin
 	virtual Bool hasValues() const = 0;
 
-	U32 getArraySize() const;
+	U32 getArraySize() const
+	{
+		ANKI_ASSERT(m_varBlkInfo.m_arraySize > 0);
+		return m_varBlkInfo.m_arraySize;
+	}
 
 	Bool isInstanced() const
 	{
@@ -109,24 +107,22 @@ public:
 		const T* elements, 
 		U32 elementsCount,
 		void* buffBegin,
-		const void* buffEnd)
+		const void* buffEnd) const
 	{
 		ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
 		ANKI_ASSERT(m_varType == getShaderVariableTypeFromTypename<T>());
 		anki::writeShaderBlockMemory(m_varType, m_varBlkInfo, 
-			reinterpret_cast<T*>(elements), elementsCount, buffBegin, buffEnd);
+			reinterpret_cast<const T*>(elements), 
+			elementsCount, buffBegin, buffEnd);
 	}
 
 protected:
-	/// Keep one program variable here for easy access of the common
-	/// variable stuff like name or GL data type etc
-	const GlProgramVariable* m_progVar;
-	ShaderVariableDataType m_varType;
+	ShaderVariableDataType m_varType = ShaderVariableDataType::NONE;
 	ShaderVariableBlockInfo m_varBlkInfo;
 	I16 m_textureUnit = -1;
 	ResourceString m_name;
 
-	Bool8 m_instanced;
+	Bool8 m_instanced = false;
 };
 
 /// Material variable with data. A complete type
@@ -136,10 +132,7 @@ class MaterialVariableTemplate: public MaterialVariable
 public:
 	using Type = TData;
 
-	MaterialVariableTemplate(
-		const GlProgramVariable* glvar, 
-		Bool instanced)
-	:	MaterialVariable(glvar, instanced)
+	MaterialVariableTemplate()
 	{
 		setupVisitable(this);
 	}
@@ -179,7 +172,6 @@ public:
 	}
 
 	static MaterialVariableTemplate* _newInstance(
-		const GlProgramVariable& glvar, 
 		const MaterialProgramCreatorInputVariable& in,
 		ResourceAllocator<U8> alloc, 
 		TempResourceAllocator<U8> talloc);

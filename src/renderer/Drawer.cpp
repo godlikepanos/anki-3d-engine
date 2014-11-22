@@ -36,21 +36,22 @@ public:
 
 	/// Set a uniform in a client block
 	template<typename T>
-	void uniSet(const GlProgramVariable& uni,
+	void uniSet(const MaterialVariable& mtlVar,
 		const T* value, U32 size)
 	{
-		uni.writeClientMemory(
+		mtlVar.writeShaderBlockMemory<T>(
+			value,
+			size,
 			m_drawer->m_uniformPtr,
-			m_renderable->getMaterial().getDefaultBlockSize(),
-			value, 
-			size);
+			m_drawer->m_uniformBuffMapAddr 
+				+ RenderableDrawer::MAX_UNIFORM_BUFFER_SIZE);
 	}
 
 	template<typename TRenderableVariableTemplate>
 	Error visit(const TRenderableVariableTemplate& rvar)
 	{
 		typedef typename TRenderableVariableTemplate::Type DataType;
-		const GlProgramVariable& glvar = rvar.getGlProgramVariable();
+		const MaterialVariable& glvar = rvar.getMaterialVariable();
 
 		// Array size
 		U arraySize;
@@ -216,12 +217,12 @@ public:
 // Texture specialization
 template<>
 void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
-	const GlProgramVariable& uni, 
+	const MaterialVariable& mtlvar, 
 	const TextureResourcePointer* values, U32 size)
 {
 	ANKI_ASSERT(size == 1);
 	GlTextureHandle tex = (*values)->getGlTexture();
-	auto unit = uni.getTextureUnit();
+	auto unit = mtlvar.getTextureUnit();
 
 	tex.bind(m_cmdBuff, unit);
 }
@@ -251,7 +252,9 @@ Error RenderableDrawer::create(Renderer* r)
 
 	cmdBuff.flush();
 
-	m_uniformPtr = (U8*)m_uniformBuff.getPersistentMappingAddress();
+	m_uniformPtr = static_cast<U8*>(
+		m_uniformBuff.getPersistentMappingAddress());
+	m_uniformBuffMapAddr = m_uniformPtr;
 	ANKI_ASSERT(m_uniformPtr != nullptr);
 	ANKI_ASSERT(isAligned(m_r->_getGlDevice().getBufferOffsetAlignment(
 		m_uniformBuff.getTarget()), m_uniformPtr));
@@ -272,7 +275,7 @@ void RenderableDrawer::setupUniforms(
 {
 	const Material& mtl = renderable.getMaterial();
 	U blockSize = mtl.getDefaultBlockSize();
-	U8* persistent = (U8*)m_uniformBuff.getPersistentMappingAddress();
+	U8* persistent = m_uniformBuffMapAddr;
 
 	// Find a place to write the uniforms
 	//

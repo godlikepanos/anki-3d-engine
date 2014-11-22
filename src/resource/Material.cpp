@@ -60,18 +60,6 @@ MaterialVariable::~MaterialVariable()
 {}
 
 //==============================================================================
-CString MaterialVariable::getName() const
-{
-	return m_progVar->getName();
-}
-
-//==============================================================================
-U32 MaterialVariable::getArraySize() const
-{
-	return m_progVar->getArraySize();
-}
-
-//==============================================================================
 template<typename T>
 Error MaterialVariableTemplate<T>::create(ResourceAllocator<U8> alloc, 
 	const CString& name, const T* x, U32 size)
@@ -98,7 +86,7 @@ Error MaterialVariableTemplate<T>::create(ResourceAllocator<U8> alloc,
 //==============================================================================
 template<typename T>
 MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
-	const GlProgramVariable& glvar, const MaterialProgramCreator::Input& in,
+	const MaterialProgramCreator::Input& in,
 	ResourceAllocator<U8> alloc, TempResourceAllocator<U8> talloc)
 {
 	Error err = ErrorCode::NONE;
@@ -112,12 +100,12 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 	{
 		// Has values
 
-		U floatsNeeded = glvar.getArraySize() * (sizeof(T) / sizeof(F32));
+		U floatsNeeded = in.m_arraySize * (sizeof(T) / sizeof(F32));
 
 		if(in.m_value.getSize() != floatsNeeded)
 		{
-			ANKI_LOGE("Incorrect number of values. Variable %s",
-				&glvar.getName()[0]);
+			ANKI_LOGE("Incorrect number of values. Variable %s", 
+				&in.m_name[0]);
 
 			return nullptr;
 		}
@@ -135,20 +123,16 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 			floats[i] = d;
 			++it;
 		}
-
-		out = alloc.newInstance<MaterialVariableTemplate<T>>(
-			&glvar, in.m_instanced);
 	}
 
 	// Create new instance
-	out = alloc.newInstance<MaterialVariableTemplate<T>>(
-		&glvar, in.m_instanced);
+	out = alloc.newInstance<MaterialVariableTemplate<T>>();
 	if(!out) return nullptr;
 
 	if(floats.getSize() > 0)
 	{
 		err = out->create(alloc, in.m_name.toCString(), 
-			(T*)&floats[0], glvar.getArraySize());
+			(T*)&floats[0], in.m_arraySize);
 	}
 	else
 	{
@@ -163,6 +147,7 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 	}
 
 	// Set some values
+	out->m_instanced = in.m_instanced;
 	out->m_varType = in.m_type;
 	out->m_textureUnit = in.m_binding;
 	out->m_varBlkInfo.m_arraySize = in.m_arraySize;
@@ -657,33 +642,12 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 		}
 
 		MaterialVariable* mtlvar = nullptr;
-		const GlProgramVariable* glvar = nullptr;
 
-		// Find the input variable in one of the programs
-		for(const ProgramResourcePointer& progr : m_progs)
-		{
-			const GlShaderHandle& prog = progr->getGlProgram();
-
-			glvar = prog.tryFindVariable(in.m_name.toCString());
-			if(glvar)
-			{
-				break;
-			}
-		}
-
-		// Check if variable found
-		if(glvar == nullptr)
-		{
-			ANKI_LOGE("Variable not found in at least one program: %s", 
-				&in.m_name[0]);
-			return ErrorCode::USER_DATA;
-		}
-
-		switch(glvar->getDataType())
+		switch(in.m_type)
 		{
 		// samplers
-		case GL_SAMPLER_2D:
-		case GL_SAMPLER_CUBE:
+		case ShaderVariableDataType::SAMPLER_2D:
+		case ShaderVariableDataType::SAMPLER_CUBE:
 			{
 				TextureResourcePointer tp;
 				
@@ -696,8 +660,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 				auto alloc = m_resources->_getAllocator();
 				MaterialVariableTemplate<TextureResourcePointer>* tvar = 
 					alloc.newInstance<
-					MaterialVariableTemplate<TextureResourcePointer>>(
-					glvar, false);
+					MaterialVariableTemplate<TextureResourcePointer>>();
 
 				if(tvar)
 				{
@@ -713,34 +676,28 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 				mtlvar = tvar;
 			}
 			break;
-		// F32
-		case GL_FLOAT:
-			mtlvar = MaterialVariableTemplate<F32>::_newInstance(*glvar, in,
+		case ShaderVariableDataType::FLOAT:
+			mtlvar = MaterialVariableTemplate<F32>::_newInstance(in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
-		// vec2
-		case GL_FLOAT_VEC2:
-			mtlvar = MaterialVariableTemplate<Vec2>::_newInstance(*glvar, in,
+		case ShaderVariableDataType::VEC2:
+			mtlvar = MaterialVariableTemplate<Vec2>::_newInstance(in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
-		// vec3
-		case GL_FLOAT_VEC3:
-			mtlvar = MaterialVariableTemplate<Vec3>::_newInstance(*glvar, in,
+		case ShaderVariableDataType::VEC3:
+			mtlvar = MaterialVariableTemplate<Vec3>::_newInstance(in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
-		// vec4
-		case GL_FLOAT_VEC4:
-			mtlvar = MaterialVariableTemplate<Vec4>::_newInstance(*glvar, in,
+		case ShaderVariableDataType::VEC4:
+			mtlvar = MaterialVariableTemplate<Vec4>::_newInstance(in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
-		// mat3
-		case GL_FLOAT_MAT3:
-			mtlvar = MaterialVariableTemplate<Mat3>::_newInstance(*glvar, in,
+		case ShaderVariableDataType::MAT3:
+			mtlvar = MaterialVariableTemplate<Mat3>::_newInstance(in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
-		// mat4
-		case GL_FLOAT_MAT4:
-			mtlvar = MaterialVariableTemplate<Mat4>::_newInstance(*glvar, in,
+		case ShaderVariableDataType::MAT4:
+			mtlvar = MaterialVariableTemplate<Mat4>::_newInstance(in,
 				m_resources->_getAllocator(), m_resources->_getTempAllocator());
 			break;
 		// default is error

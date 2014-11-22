@@ -109,9 +109,9 @@ public:
 		return m_mvar->getArraySize();
 	}
 
-	const GlProgramVariable& getGlProgramVariable() const
+	const MaterialVariable& getMaterialVariable() const
 	{
-		return m_mvar->getGlProgramVariable();
+		return *m_mvar;
 	}
 
 	Bool isInstanced() const

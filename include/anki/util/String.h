@@ -65,9 +65,6 @@ class CString
 	template<typename TAlloc>
 	friend class StringBase; // For the secret constructor
 
-	// For the secret constructor
-	friend CString operator"" _cstr(const char*, unsigned long); 
-
 public:
 	using Char = char;
 
@@ -283,12 +280,6 @@ private:
 		ANKI_ASSERT(m_ptr != nullptr);
 	}
 };
-
-/// User defined string literal for CStrings.
-inline CString operator"" _cstr(const char* str, unsigned long length)
-{
-	return CString(str, length);
-}
 
 template<typename TAlloc>
 using StringScopeDestroyer = ScopeDestroyer<StringBase<TAlloc>, TAlloc>;
