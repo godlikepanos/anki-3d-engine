@@ -1,0 +1,74 @@
+<glue>
+	<head><![CDATA[// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+// WARNING: The file is auto generated.
+
+#include "anki/script/LuaBinder.h"
+#include "anki/script/ScriptManager.h"
+#include "anki/scene/SceneGraph.h"
+#include "anki/Event.h"
+
+namespace anki {
+
+//==============================================================================
+template<typename T, typename... TArgs>
+static T* newEvent(EventManager* events, TArgs... args)
+{
+	T* ptr;
+	Error err = events->template newEvent<T>(ptr, args...);
+
+	if(!err)
+	{
+		return ptr;
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
+//==============================================================================
+static EventManager* getEventManager(lua_State* l)
+{
+	LuaBinder* binder = reinterpret_cast<LuaBinder*>(lua_getuserdata(l));
+
+	ScriptManager* scriptManager = 
+		reinterpret_cast<ScriptManager*>(binder->getParent());
+
+	return &scriptManager->_getSceneGraph().getEventManager();
+}]]></head>
+
+	<classes>
+		<class name="SceneAmbientColorEvent">
+		</class>
+		<class name="EventManager">
+			<methods>
+				<method name="newSceneAmbientColorEvent">
+					<overrideCall><![CDATA[SceneAmbientColorEvent* ret = newEvent<SceneAmbientColorEvent>(self, arg0, arg1, arg2);]]></overrideCall>
+					<args>
+						<arg>F32</arg>
+						<arg>F32</arg>
+						<arg>const Vec4&amp;</arg>
+					</args>
+					<return>SceneAmbientColorEvent*</return>
+				</method>
+			</methods>
+		</class>
+	</classes>
+
+	<functions>
+		<function name="getEventManager">
+			<overrideCall>EventManager* ret = getEventManager(l);</overrideCall>
+			<return>EventManager*</return>
+		</function>
+	</functions>
+
+	<tail><![CDATA[} // end namespace anki]]></tail>
+</glue>
+
+
+
+

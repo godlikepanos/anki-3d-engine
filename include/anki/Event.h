@@ -10,7 +10,7 @@
 
 #include "anki/event/SceneAmbientColorEvent.h"
 #include "anki/event/LightEvent.h"
-#include "anki/event/MoveEvent.h"
+#include "anki/event/JitterMoveEvent.h"
 #include "anki/event/AnimationEvent.h"
 
 #endif

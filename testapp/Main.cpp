@@ -26,7 +26,7 @@
 #include "anki/Scene.h"
 #include "anki/event/LightEvent.h"
 #include "anki/event/AnimationEvent.h"
-#include "anki/event/MoveEvent.h"
+#include "anki/event/JitterMoveEvent.h"
 #include "anki/core/Counters.h"
 #include "anki/core/Config.h"
 
@@ -161,11 +161,10 @@ Error init()
 		event->setSpecularIntensityMultiplier(Vec4(0.1, 0.1, 0.0, 0.0));
 		event->setReanimate(true);
 
-		MoveEventData moveData;
-		moveData.m_posMin = Vec4(-0.5, 0.0, -0.5, 0);
-		moveData.m_posMax = Vec4(0.5, 0.0, 0.5, 0);
-		MoveEvent* mevent;
-		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point, moveData);
+		JitterMoveEvent* mevent;
+		scene.getEventManager().newEvent(mevent, 0.0, 2.0, point);
+		mevent->setPositionLimits(
+			Vec4(-0.5, 0.0, -0.5, 0), Vec4(0.5, 0.0, 0.5, 0));
 		mevent->setReanimate(true);
 
 		ParticleEmitter* pe;
