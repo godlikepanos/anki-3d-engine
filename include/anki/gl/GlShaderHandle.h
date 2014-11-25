@@ -35,16 +35,6 @@ public:
 	/// They will sync client with server.
 	/// @{
 	GLenum getType() const;
-
-	const GlProgramVariable* getVariablesBegin() const;
-	const GlProgramVariable* getVariablesEnd() const;
-
-	const GlProgramBlock* getBlocksBegin() const;
-	const GlProgramBlock* getBlocksEnd() const;
-
-	const GlProgramVariable* tryFindVariable(const CString& name) const;
-
-	const GlProgramBlock* tryFindBlock(const CString& name) const;
 	/// @}
 };
 

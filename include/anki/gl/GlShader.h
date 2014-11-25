@@ -51,42 +51,14 @@ public:
 		return m_type;
 	}
 
-	const DArray<GlProgramVariable>& getVariables() const
-	{
-		ANKI_ASSERT(isCreated());
-		return m_variables;
-	}
-
-	const DArray<GlProgramBlock>& getBlocks() const
-	{
-		ANKI_ASSERT(isCreated());
-		return m_blocks;
-	}
-
-	const GlProgramVariable* tryFindVariable(const CString& name) const;
-	const GlProgramBlock* tryFindBlock(const CString& name) const;
-
 private:
 	GLenum m_type;
-	GlAllocator<U8> m_alloc;
-	DArray<GlProgramVariable> m_variables;
-	DArray<GlProgramBlock> m_blocks;
-
-	/// Keep all the names of blocks and variables in a single place
-	DArray<char> m_names;
 
 	void destroy();
 
 	/// Query the shader for blocks
 	ANKI_USE_RESULT Error initBlocksOfType(GLenum programInterface, 
 		U count, U index, char*& namesPtr, U& namesLen);
-
-	/// Query the program for variables
-	ANKI_USE_RESULT Error initVariablesOfType(
-		GLenum programInterface, U count, U index, U blkIndex,
-		char*& namesPtr, U& namesLen);
-
-	ANKI_USE_RESULT Error populateVariablesAndBlock(GlAllocator<U8>& alloc);
 
 	ANKI_USE_RESULT Error handleError(GlAllocator<U8>& alloc, String& src);
 };

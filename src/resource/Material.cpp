@@ -572,15 +572,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 
 	// Get uniform block size
 	ANKI_ASSERT(m_progs.getSize() > 0);
-
-	auto blk = m_progs[0]->getGlProgram().tryFindBlock("bDefaultBlock");
-	if(blk == nullptr)
-	{
-		ANKI_LOGE("bDefaultBlock not found");
-		return ErrorCode::USER_DATA;
-	}
-
-	m_shaderBlockSize = blk->getSize();
+	m_shaderBlockSize = loader.getUniformBlockSize();
 
 	return err;
 }

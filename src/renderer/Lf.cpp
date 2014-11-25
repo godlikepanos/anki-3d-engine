@@ -125,12 +125,6 @@ Error Lf::initInternal(const ConfigSet& config)
 
 	PtrSize blockSize = 
 		sizeof(Flare) * m_maxFlaresPerLight * m_maxLightsWithFlares;
-	if(m_realVert->getGlProgram().tryFindBlock("bFlares")->getSize() 
-		!= blockSize)
-	{
-		ANKI_LOGE("Incorrect block size");
-		return ErrorCode::FUNCTION_FAILED;
-	}
 
 	// Init buffer
 	err = m_flareDataBuff.create(

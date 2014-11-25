@@ -138,6 +138,11 @@ public:
 		return m_tessellation;
 	}
 
+	U32 getUniformBlockSize() const
+	{
+		return m_blockSize;
+	}
+
 private:
 	TempResourceAllocator<char> m_alloc; 
 	Array<MPStringList, 5> m_source; ///< Shader program final source

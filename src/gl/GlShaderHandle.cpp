@@ -81,46 +81,5 @@ GLenum GlShaderHandle::getType() const
 	return (serializeOnGetter()) ? GL_NONE : _get().getType();
 }
 
-//==============================================================================
-const GlProgramVariable* GlShaderHandle::getVariablesBegin() const
-{
-	Error err = serializeOnGetter();
-	const GlProgramVariable* out = nullptr;
-
-	if(!err && _get().getVariables().getSize() != 0)
-	{
-		out = _get().getVariables().begin();
-	}
-
-	return out;
-}
-
-//==============================================================================
-const GlProgramVariable* GlShaderHandle::getVariablesEnd() const
-{
-	Error err = serializeOnGetter();
-	const GlProgramVariable* out = nullptr;
-
-	if(!err && _get().getVariables().getSize() != 0)
-	{
-		out = _get().getVariables().end();
-	}
-
-	return out;
-}
-
-//==============================================================================
-const GlProgramVariable* 
-	GlShaderHandle::tryFindVariable(const CString& name) const
-{
-	return (serializeOnGetter()) ? nullptr : _get().tryFindVariable(name);
-}
-
-//==============================================================================
-const GlProgramBlock* GlShaderHandle::tryFindBlock(const CString& name) const
-{
-	return (serializeOnGetter()) ? nullptr : _get().tryFindBlock(name);
-}
-
 } // end namespace anki
 

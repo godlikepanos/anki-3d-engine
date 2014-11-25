@@ -58,16 +58,6 @@ Error ModelPatchBase::createVertexDesc(
 	U count = 0;
 	for(const Attrib& attrib : attribs)
 	{
-		const GlProgramVariable* attr = 
-			prog.tryFindVariable(attrib.m_name);
-
-		if(attr == nullptr)
-		{
-			continue;
-		}
-
-		ANKI_ASSERT(attr->getType() == GlProgramVariable::Type::INPUT);
-
 		mesh.getBufferInfo(attrib.m_location, vbo, size, type,
 			stride, offset);
 
