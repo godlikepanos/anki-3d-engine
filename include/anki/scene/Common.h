@@ -10,7 +10,6 @@
 #include "anki/util/Vector.h"
 #include "anki/util/String.h"
 #include "anki/util/Dictionary.h"
-#include "anki/util/Object.h"
 
 namespace anki {
 
@@ -51,11 +50,6 @@ using SceneFrameDArray = DArray<T, SceneFrameAllocator<T>>;
 template<typename T>
 using SceneDictionary = 
 	Dictionary<T, SceneAllocator<std::pair<const char*, T>>>;
-
-/// Scene object
-template<typename T>
-using SceneHierarchicalObject = Object<T, SceneAllocator<T>>;
-
 /// @}
 
 } // end namespace anki

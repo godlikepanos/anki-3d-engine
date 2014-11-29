@@ -7,7 +7,7 @@
 #define ANKI_SCENE_SCENE_NODE_H
 
 #include "anki/scene/Common.h"
-#include "anki/util/Object.h"
+#include "anki/util/Hierarchy.h"
 #include "anki/scene/SceneComponent.h"
 
 namespace anki {
@@ -19,10 +19,10 @@ class ResourceManager;
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode: public Object<SceneNode, SceneAllocator<SceneNode>>
+class SceneNode: public Hierarchy<SceneNode, SceneAllocator<SceneNode>>
 {
 public:
-	using Base = Object<SceneNode, SceneAllocator<SceneNode>>;
+	using Base = Hierarchy<SceneNode, SceneAllocator<SceneNode>>;
 
 	/// The one and only constructor
 	SceneNode(SceneGraph* scene);

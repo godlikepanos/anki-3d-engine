@@ -36,7 +36,6 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(MoveComponentFlag, inline)
 class MoveComponent: public SceneComponent, public Bitset<MoveComponentFlag>
 {
 public:
-	using Base = SceneHierarchicalObject<MoveComponent>;
 	using Flag = MoveComponentFlag;
 
 	/// The one and only constructor

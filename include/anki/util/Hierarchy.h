@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_OBJECT_H
-#define ANKI_UTIL_OBJECT_H
+#ifndef ANKI_UTIL_HIERARCHY_H
+#define ANKI_UTIL_HIERARCHY_H
 
 #include "anki/util/Assert.h"
 #include "anki/util/List.h"
@@ -18,44 +18,21 @@ namespace anki {
 /// @addtogroup util_patterns
 /// @{
 
-/// The default set of callbacks. They do nothing
-template<typename T>
-struct ObjectCallbackCollection
-{
-	/// Called when a child is been removed from a parent
-	void onChildRemoved(T* child, T* parent)
-	{
-		ANKI_ASSERT(child);
-		// Do nothing
-	}
-
-	/// Called when a child is been added to a parent
-	void onChildAdded(T* child, T* parent)
-	{
-		ANKI_ASSERT(child && parent);
-		// Do nothing
-	}
-};
-
 /// A hierarchical object
-template<typename T, typename TAlloc = HeapAllocator<T>,
-	typename TCallbackCollection = ObjectCallbackCollection<T>>
-class Object: public NonCopyable
+template<typename T, typename TAlloc = HeapAllocator<T>>
+class Hierarchy: public NonCopyable
 {
 public:
 	using Value = T;
 	using Allocator = TAlloc;
 	using Container = List<Value*, Allocator>;
-	using CallbackCollection = TCallbackCollection;
 
-	/// @param callbacks A set of callbacks
-	Object(const CallbackCollection& callbacks = CallbackCollection())
-	:	m_parent(nullptr),
-		m_callbacks(callbacks)
+	Hierarchy()
+	:	m_parent(nullptr)
 	{}
 
 	/// Delete children from the last entered to the first and update parent
-	virtual ~Object()
+	virtual ~Hierarchy()
 	{
 		ANKI_ASSERT(m_parent == nullptr && m_children.isEmpty()
 			&& "Requires manual desruction");
@@ -108,9 +85,8 @@ public:
 private:
 	Value* m_parent; ///< May be nullptr
 	Container m_children;
-	CallbackCollection m_callbacks; /// A set of callbacks
 
-	/// Cast the Object to the given type
+	/// Cast the Hierarchy to the given type
 	Value* getSelf()
 	{
 		return static_cast<Value*>(this);
@@ -127,6 +103,6 @@ private:
 
 } // end namespace anki
 
-#include "anki/util/Object.inl.h"
+#include "anki/util/Hierarchy.inl.h"
 
 #endif

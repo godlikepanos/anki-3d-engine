@@ -6,8 +6,8 @@
 namespace anki {
 
 //==============================================================================
-template<typename T, typename TAlloc, typename TCallbackCollection>
-void Object<T, TAlloc, TCallbackCollection>::destroy(Allocator alloc)
+template<typename T, typename TAlloc>
+void Hierarchy<T, TAlloc>::destroy(Allocator alloc)
 {
 	if(m_parent != nullptr)
 	{
@@ -22,19 +22,14 @@ void Object<T, TAlloc, TCallbackCollection>::destroy(Allocator alloc)
 	{
 		Value* child = *it;
 		child->m_parent = nullptr;
-
-		// Pass the parent as nullptr because at this point there is 
-		// nothing you should do with a deleteding parent
-		m_callbacks.onChildRemoved(child, nullptr);
 	}
 
 	m_children.destroy(alloc);
 }
 
 //==============================================================================
-template<typename T, typename TAlloc, typename TCallbackCollection>
-Error Object<T, TAlloc, TCallbackCollection>::addChild(
-	Allocator alloc, Value* child)
+template<typename T, typename TAlloc>
+Error Hierarchy<T, TAlloc>::addChild(Allocator alloc, Value* child)
 {
 	ANKI_ASSERT(child != nullptr && "Null arg");
 	ANKI_ASSERT(child != getSelf() && "Cannot put itself");
@@ -47,18 +42,12 @@ Error Object<T, TAlloc, TCallbackCollection>::addChild(
 	child->m_parent = getSelf();
 	Error err = m_children.emplaceBack(alloc, child);
 
-	if(!err)
-	{
-		m_callbacks.onChildAdded(child, getSelf());
-	}
-
 	return err;
 }
 
 //==============================================================================
-template<typename T, typename TAlloc, typename TCallbackCollection>
-void Object<T, TAlloc, TCallbackCollection>::removeChild(
-	Allocator alloc, Value* child)
+template<typename T, typename TAlloc>
+void Hierarchy<T, TAlloc>::removeChild(Allocator alloc, Value* child)
 {
 	ANKI_ASSERT(child != nullptr && "Null arg");
 	ANKI_ASSERT(child->m_parent == getSelf() && "Child has other parent");
@@ -69,14 +58,12 @@ void Object<T, TAlloc, TCallbackCollection>::removeChild(
 
 	m_children.erase(alloc, it);
 	child->m_parent = nullptr;
-
-	m_callbacks.onChildRemoved(child, getSelf());
 }
 
 //==============================================================================
-template<typename T, typename TAlloc, typename TCallbackCollection>
+template<typename T, typename TAlloc>
 template<typename VisitorFunc>
-Error Object<T, TAlloc, TCallbackCollection>::visitChildren(VisitorFunc vis)
+Error Hierarchy<T, TAlloc>::visitChildren(VisitorFunc vis)
 {
 	Error err = ErrorCode::NONE;
 	typename Container::Iterator it = m_children.getBegin();
@@ -94,10 +81,9 @@ Error Object<T, TAlloc, TCallbackCollection>::visitChildren(VisitorFunc vis)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc, typename TCallbackCollection>
+template<typename T, typename TAlloc>
 template<typename VisitorFunc>
-Error Object<T, TAlloc, TCallbackCollection>::visitThisAndChildren(
-	VisitorFunc vis)
+Error Hierarchy<T, TAlloc>::visitThisAndChildren(VisitorFunc vis)
 {
 	Error err = vis(*getSelf());
 
@@ -110,9 +96,9 @@ Error Object<T, TAlloc, TCallbackCollection>::visitThisAndChildren(
 }
 
 //==============================================================================
-template<typename T, typename TAlloc, typename TCallbackCollection>
+template<typename T, typename TAlloc>
 template<typename VisitorFunc>
-Error Object<T, TAlloc, TCallbackCollection>::visitTree(VisitorFunc vis)
+Error Hierarchy<T, TAlloc>::visitTree(VisitorFunc vis)
 {
 	// Move to root
 	Value* root = getSelf();
@@ -125,10 +111,9 @@ Error Object<T, TAlloc, TCallbackCollection>::visitTree(VisitorFunc vis)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc, typename TCallbackCollection>
+template<typename T, typename TAlloc>
 template<typename VisitorFunc>
-Error Object<T, TAlloc, TCallbackCollection>::visitChildrenMaxDepth(
-	I maxDepth, VisitorFunc vis)
+Error Hierarchy<T, TAlloc>::visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)
 {
 	ANKI_ASSERT(maxDepth >= 0);
 	Error err = ErrorCode::NONE;

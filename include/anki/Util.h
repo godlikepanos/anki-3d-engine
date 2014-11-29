@@ -57,7 +57,7 @@
 #include "anki/util/Logger.h"
 #include "anki/util/Memory.h"
 #include "anki/util/NonCopyable.h"
-#include "anki/util/Object.h"
+#include "anki/util/Hierarchy.h"
 //#include "anki/util/Observer.h"
 #include "anki/util/Ptr.h"
 #include "anki/util/ScopeDestroyer.h"

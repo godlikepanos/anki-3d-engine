@@ -7,7 +7,7 @@
 #define ANKI_EVENT_MANAGER_H
 
 #include "anki/event/Event.h"
-#include "anki/util/Vector.h"
+#include "anki/util/List.h"
 #include "anki/util/StdTypes.h"
 #include "anki/scene/Common.h"
 #include "anki/Math.h"

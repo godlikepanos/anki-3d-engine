@@ -6,7 +6,7 @@
 #ifndef ANKI_PHYSICS_PHYS_WORLD_H
 #define ANKI_PHYSICS_PHYS_WORLD_H
 
-#include <memory>
+#include "anki/util/StdTypes.h"
 
 namespace anki {
 
