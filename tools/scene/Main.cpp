@@ -190,25 +190,33 @@ static void writeNodeTransform(const Exporter& exporter, std::ofstream& file,
 	pos[2] = m[2][3];
 
 	file << "pos = Vec4.new()\n";
-	file << "pos:setX(" << pos[0] << ")\n";
-	file << "pos:setY(" << pos[1] << ")\n";
-	file << "pos:setZ(" << pos[2] << ")\n";
-	file << "pos:setW(0.0)\n";
+	file << "pos:setAll(" << pos[0] << ", " << pos[1] << ", " << pos[2] 
+		<< ", 0.0)\n";
 	file << node 
 		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(pos)\n";
 
 	file << "rot = Mat3x4.new()\n";
+	file << "rot:setAll("
 	for(unsigned j = 0; j < 3; j++)
 	{
-		for(unsigned i = 0; i < 3; i++)
+		for(unsigned i = 0; i < 4; i++)
 		{
-			file << "rot:setAt(" << j << ", " << i << ", " << m[j][i] << ")\n";
+			if(i == 3)
+			{
+				file << "0.0"
+			}
+			else
+			{
+				file << m[j][i];
+			}
+
+			if(i != 2 || j != 2)
+			{
+				file << ", ";
+			}
 		}
 	}
-
-	file << "rot:setAt(0, 3, 0.0)\n"
-		<< "rot:setAt(1, 3, 0.0)\n"
-		<< "rot:setAt(2, 3, 0.0)\n";
+	file << ")\n"
 
 	file << node 
 		<< ":getSceneNodeBase():getMoveComponent():setLocalRotation(rot)\n";
