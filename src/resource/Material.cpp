@@ -171,8 +171,7 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 //==============================================================================
 Material::Material(ResourceAllocator<U8>& alloc)
 :	m_varDict(10, Dictionary<MaterialVariable*>::hasher(),
-		Dictionary<MaterialVariable*>::key_equal(), alloc),
-	m_pplines(alloc)
+		Dictionary<MaterialVariable*>::key_equal(), alloc)
 {}
 
 //==============================================================================
@@ -493,7 +492,8 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 		+ countShaders(ShaderType::FRAGMENT)));
 
 	// Aloc progam descriptors
-	m_pplines.resize(m_passesCount * m_lodsCount * tessCount);
+	ANKI_CHECK(m_pplines.create(rinit.m_alloc,
+		m_passesCount * m_lodsCount * tessCount));
 
 	m_hash = 0;
 	for(ShaderType shader = ShaderType::VERTEX; 

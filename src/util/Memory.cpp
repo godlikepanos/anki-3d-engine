@@ -8,7 +8,6 @@
 #include "anki/util/Assert.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/util/Thread.h"
-#include "anki/util/Vector.h"
 #include "anki/util/Atomic.h"
 #include "anki/util/Logger.h"
 #include <cstdlib>
@@ -858,10 +857,10 @@ public:
 			ANKI_ASSERT(crntMaxSize > 0);
 
 			// Fix the size
-			crntMaxSize = std::min(crntMaxSize, (PtrSize)m_maxSize);
+			crntMaxSize = min(crntMaxSize, (PtrSize)m_maxSize);
 		}
 
-		size = std::max(crntMaxSize, size) + 16;
+		size = max(crntMaxSize, size) + 16;
 
 		//
 		// Create the chunk

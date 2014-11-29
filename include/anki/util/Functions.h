@@ -13,6 +13,7 @@
 #include "anki/util/Assert.h"
 #include <cmath>
 #include <utility>
+#include <new>
 
 namespace anki {
 
@@ -32,6 +33,20 @@ extern F32 randRange(F32 min, F32 max);
 extern F64 randRange(F64 min, F64 max);
 
 extern F32 randFloat(F32 max);
+
+/// Get min of two values.
+template<typename T>
+inline T min(T a, T b)
+{
+	return (a < b) ? a : b;
+}
+
+/// Get max of two values.
+template<typename T>
+inline T max(T a, T b)
+{
+	return (a > b) ? a : b;
+}
 
 /// Check if a number os a power of 2
 template<typename Int>

@@ -8,7 +8,6 @@
 
 #include "anki/resource/Common.h"
 #include "anki/Math.h"
-#include "anki/util/Vector.h"
 #include "anki/util/Array.h"
 
 namespace anki {

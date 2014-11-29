@@ -15,7 +15,6 @@
 #include "anki/util/HighRezTimer.h"
 #include "anki/core/App.h"
 
-#include "anki/scene/Sector.h"
 #include "anki/physics/PhysicsWorld.h"
 #include "anki/event/EventManager.h"
 
@@ -113,15 +112,6 @@ public:
 		return m_events;
 	}
 
-	SectorGroup& getSectorGroup()
-	{
-		return m_sectorGroup;
-	}
-	const SectorGroup& getSectorGroup() const
-	{
-		return m_sectorGroup;
-	}
-
 	Threadpool& _getThreadpool()
 	{
 		return *m_threadpool;
@@ -201,8 +191,6 @@ private:
 	Timestamp m_activeCameraChangeTimestamp = getGlobTimestamp();
 
 	PhysicsWorld m_physics;
-
-	SectorGroup m_sectorGroup;
 
 	EventManager m_events;
 

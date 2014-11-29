@@ -3,6 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#if 0
 #include "anki/scene/Grid.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/SceneNode.h"
@@ -72,3 +73,4 @@ void Grid::getVisible(const Frustumable& cam,
 }
 
 } // end namespace anki
+#endif

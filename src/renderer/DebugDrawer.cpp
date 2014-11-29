@@ -270,6 +270,7 @@ void DebugDrawer::drawGrid()
 //==============================================================================
 void DebugDrawer::drawSphere(F32 radius, I complexity)
 {
+#if 0
 	Vector<Vec3>* sphereLines;
 
 	// Pre-calculate the sphere points5
@@ -331,6 +332,7 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 	// restore
 	m_mMat = oldMMat;
 	m_vpMat = oldVpMat;
+#endif
 }
 
 //==============================================================================
@@ -530,6 +532,7 @@ void SceneDebugDrawer::draw(SpatialComponent& x) const
 }
 
 //==============================================================================
+#if 0
 void SceneDebugDrawer::draw(const Sector& sector)
 {
 	// Draw the sector
@@ -561,6 +564,7 @@ void SceneDebugDrawer::draw(const Sector& sector)
 		}
 	}
 }
+#endif
 
 //==============================================================================
 void SceneDebugDrawer::drawPath(const Path& path) const

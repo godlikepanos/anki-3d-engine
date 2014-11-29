@@ -367,7 +367,7 @@ private:
 	Dictionary<MaterialVariable*> m_varDict;
 
 	ResourceDArray<ProgramResourcePointer> m_progs;
-	ResourceVector<GlPipelineHandle> m_pplines;
+	ResourceDArray<GlPipelineHandle> m_pplines;
 
 	U32 m_shaderBlockSize;
 

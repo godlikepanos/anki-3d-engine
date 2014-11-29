@@ -3,6 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#if 0
 #include "anki/scene/Sector.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/SceneNode.h"
@@ -426,3 +427,5 @@ void SectorGroup::doVisibilityTestsInternal(SceneNode& sn, VisibilityTest test,
 }
 
 } // end namespace anki
+
+#endif

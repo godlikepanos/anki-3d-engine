@@ -101,10 +101,7 @@ private:
 	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientLineVerts;
 	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientTriVerts;
 
-	/// This is a container of some precalculated spheres. Its a map that
-	/// from sphere complexity it returns a vector of lines (Vec3s in
-	/// pairs)
-	std::unordered_map<U32, Vector<Vec3>> m_complexityToPreCalculatedSphere;
+	DArray<Vec3> m_sphereVerts;
 
 	ANKI_USE_RESULT Error flushInternal(GLenum primitive);
 };
@@ -153,7 +150,7 @@ public:
 
 	void draw(SceneNode& node);
 
-	void draw(const Sector& sector);
+	//void draw(const Sector& sector);
 
 	void setViewProjectionMatrix(const Mat4& m)
 	{

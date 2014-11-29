@@ -7,7 +7,6 @@
 #define ANKI_RESOURCE_COMMON_H
 
 #include "anki/util/Allocator.h"
-#include "anki/util/Vector.h"
 #include "anki/util/DArray.h"
 #include "anki/util/String.h"
 
@@ -24,18 +23,12 @@ template<typename T>
 using ResourceAllocator = HeapAllocator<T>;
 
 template<typename T>
-using ResourceVector = Vector<T, ResourceAllocator<T>>;
-
-template<typename T>
 using ResourceDArray = DArray<T, ResourceAllocator<T>>;
 
 using ResourceString = StringBase<ResourceAllocator<char>>;
 
 template<typename T>
 using TempResourceAllocator = StackAllocator<T>;
-
-template<typename T>
-using TempResourceVector = Vector<T, TempResourceAllocator<T>>;
 
 template<typename T>
 using TempResourceDArray = DArray<T, TempResourceAllocator<T>>;

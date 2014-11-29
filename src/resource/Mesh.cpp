@@ -89,7 +89,8 @@ Error Mesh::createBuffers(const MeshLoader& loader,
 	U32 vbosize = vertexsize * m_vertsCount;
 
 	// Create a temp buffer and populate it
-	TempResourceVector<U8> buff(vbosize, 0, init.m_tempAlloc);
+	TempResourceDArray<U8> buff;
+	ANKI_CHECK(buff.create(init.m_tempAlloc, vbosize, 0));
 
 	U8* ptra = &buff[0];
 	for(U i = 0; i < m_vertsCount; i++)

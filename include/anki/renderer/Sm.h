@@ -9,7 +9,6 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/Gl.h"
 #include "anki/resource/TextureResource.h"
-#include "anki/util/Vector.h"
 #include "anki/util/Array.h"
 
 namespace anki {

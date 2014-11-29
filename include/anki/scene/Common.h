@@ -7,7 +7,6 @@
 #define ANKI_SCENE_COMMON_H
 
 #include "anki/util/Allocator.h"
-#include "anki/util/Vector.h"
 #include "anki/util/String.h"
 #include "anki/util/Dictionary.h"
 
@@ -30,19 +29,11 @@ using SceneFrameAllocator = StackAllocator<T, false>;
 /// Scene string
 using SceneString = StringBase<SceneAllocator<char>>;
 
-/// Scene vector
-template<typename T>
-using SceneVector = Vector<T, SceneAllocator<T>>;
-
-/// Scene vector
+/// Scene array
 template<typename T>
 using SceneDArray = DArray<T, SceneAllocator<T>>;
 
-/// The same as SceneVector. Different name to show the difference
-template<typename T>
-using SceneFrameVector = Vector<T, SceneFrameAllocator<T>>;
-
-/// The same as SceneVector. Different name to show the difference
+/// The same as SceneDArray. Different name to show the difference
 template<typename T>
 using SceneFrameDArray = DArray<T, SceneFrameAllocator<T>>;
 

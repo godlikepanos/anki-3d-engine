@@ -3,6 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#if 0
 #include "anki/scene/Octree.h"
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/FrustumComponent.h"
@@ -13,8 +14,6 @@
 #include "anki/scene/RenderComponent.h"
 
 namespace anki {
-
-#if 0
 
 //==============================================================================
 // OctreeNode                                                                  =
@@ -346,6 +345,5 @@ void Octree::doVisibilityTestsInternal(SceneNode& fsn,
 	}
 }
 
-#endif
-
 } // end namespace anki
+#endif
