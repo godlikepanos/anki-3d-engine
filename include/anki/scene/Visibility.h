@@ -138,13 +138,13 @@ public:
 	}
 
 	ANKI_USE_RESULT Error moveBackRenderable(
-		SceneAllocator<U8> alloc, VisibleNode& x)
+		SceneFrameAllocator<U8> alloc, VisibleNode& x)
 	{
 		return moveBack(alloc, m_renderables, m_renderablesCount, x);
 	}
 
 	ANKI_USE_RESULT Error moveBackLight(
-		SceneAllocator<U8> alloc, VisibleNode& x)
+		SceneFrameAllocator<U8> alloc, VisibleNode& x)
 	{
 		return moveBack(alloc, m_lights, m_lightsCount, x);
 	}
@@ -155,8 +155,8 @@ private:
 	U32 m_renderablesCount = 0;
 	U32 m_lightsCount = 0;
 
-	ANKI_USE_RESULT Error moveBack(
-		SceneAllocator<U8> alloc, Container& c, U32& count, VisibleNode& x);
+	ANKI_USE_RESULT Error moveBack(SceneFrameAllocator<U8> alloc, 
+		Container& c, U32& count, VisibleNode& x);
 };
 
 /// Sort spatial scene nodes on distance

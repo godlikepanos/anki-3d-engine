@@ -111,9 +111,13 @@ Error SceneGraph::create(
 	m_gl = &m_resources->_getGlDevice();
 
 	m_alloc = SceneAllocator<U8>(
-		allocCb, allocCbData, ANKI_SCENE_ALLOCATOR_SIZE);
+		allocCb, allocCbData, 
+		1024 * 10,
+		1024 * 10,
+		ChainMemoryPool::ChunkGrowMethod::FIXED,
+		0);
 	m_frameAlloc = SceneFrameAllocator<U8>(
-		allocCb, allocCbData, ANKI_SCENE_FRAME_ALLOCATOR_SIZE);
+		allocCb, allocCbData, ANKI_SCENE_ALLOCATOR_SIZE);
 
 	err = m_events.create(this);
 

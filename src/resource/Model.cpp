@@ -63,9 +63,7 @@ Error ModelPatchBase::createVertexDesc(
 
 		if(!vbo.isCreated())
 		{
-			ANKI_LOGE("Material asks for attribute that the mesh "
-				"does not have: %s", attrib.m_name);
-			return ErrorCode::USER_DATA;
+			continue;
 		}
 		
 		vbo.bindVertexBuffer(vertexJobs, size, type, false, stride,

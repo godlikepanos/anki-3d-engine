@@ -98,6 +98,14 @@ ANKI_USE_RESULT Error computeShaderVariableDataType(
 	{
 		out = ShaderVariableDataType::MAT4;
 	}
+	else if(str == "sampler2D")
+	{
+		out = ShaderVariableDataType::SAMPLER_2D;
+	}
+	else if(str == "samplerCube")
+	{
+		out = ShaderVariableDataType::SAMPLER_CUBE;
+	}
 	else
 	{
 		ANKI_LOGE("Incorrect variable type %s", &str[0]);
@@ -357,37 +365,45 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		{
 			I64 tmp;
 			ANKI_CHECK(arrSizeEl.getI64(tmp));
+			if(tmp == 0)
+			{
+				ANKI_LOGE("Array size for some reason is zero");
+				return ErrorCode::USER_DATA;
+			}
+
 			inpvar.m_arraySize = tmp;
 		}
 		else
 		{
-			inpvar.m_arraySize = 0;
+			inpvar.m_arraySize = 1;
 		}
 
 		// <instanced>
-		if(inpvar.m_arraySize == 0)
+		XmlElement instancedEl;
+		ANKI_CHECK(
+			inputEl.getChildElementOptional("instanced", instancedEl));
+
+		if(instancedEl)
 		{
-			XmlElement instancedEl;
-			ANKI_CHECK(
-				inputEl.getChildElementOptional("instanced", instancedEl));
+			I64 tmp;
+			ANKI_CHECK(instancedEl.getI64(tmp));
+			inpvar.m_instanced = tmp;
 
-			if(instancedEl)
+			if(inpvar.m_instanced && inpvar.m_arraySize == 1)
 			{
-				I64 tmp;
-				ANKI_CHECK(instancedEl.getI64(tmp));
-				inpvar.m_instanced = tmp;
+				inpvar.m_arraySize = ANKI_GL_MAX_INSTANCES;
 			}
-			else
-			{
-				inpvar.m_instanced = 0;
-			}
+		}
+		else
+		{
+			inpvar.m_instanced = 0;
+		}
 
-			// If one input var is instanced notify the whole program that 
-			// it's instanced
-			if(inpvar.m_instanced)
-			{
-				m_instanced = true;
-			}
+		// If one input var is instanced notify the whole program that 
+		// it's instanced
+		if(inpvar.m_instanced)
+		{
+			m_instanced = true;
 		}
 
 		// Now you have the info to check if duplicate
@@ -433,21 +449,10 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			ANKI_CHECK(inpvar.m_line.sprintf(
 				m_alloc, "%s %s", &inpvar.m_typeStr[0], &inpvar.m_name[0]));
 			
-			U arrSize = 0;
-			if(inpvar.m_instanced)
-			{
-				inpvar.m_arraySize = ANKI_GL_MAX_INSTANCES;
-			}
-
 			if(inpvar.m_arraySize > 1)
 			{
-				arrSize = inpvar.m_arraySize;
-			}
-
-			if(arrSize)
-			{
 				MPString tmp;
-				ANKI_CHECK(tmp.sprintf(m_alloc, "[%uU]", arrSize));
+				ANKI_CHECK(tmp.sprintf(m_alloc, "[%uU]", inpvar.m_arraySize));
 				ANKI_CHECK(inpvar.m_line.append(m_alloc, tmp));
 				tmp.destroy(m_alloc);
 			}
@@ -516,7 +521,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 				return ErrorCode::USER_DATA;
 			}
 
-			if(inpvar.m_arraySize > 0)
+			if(inpvar.m_arraySize > 1)
 			{
 				ANKI_LOGE("Const arrays currently cannot be handled");
 				return ErrorCode::USER_DATA;

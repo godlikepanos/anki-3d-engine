@@ -202,7 +202,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool isLight,
 
 //==============================================================================
 Error VisibilityTestResults::moveBack(
-	SceneAllocator<U8> alloc, Container& c, U32& count, VisibleNode& x)
+	SceneFrameAllocator<U8> alloc, Container& c, U32& count, VisibleNode& x)
 {
 	Error err = ErrorCode::NONE;
 

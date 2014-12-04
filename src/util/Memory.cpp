@@ -31,6 +31,7 @@ static Signature computeSignature(void* ptr)
 	Signature sig = sig64;
 	sig ^= 0x5bd1e995;
 	sig ^= sig << 24;
+	ANKI_ASSERT(sig != 0);
 	return sig;
 }
 #endif
@@ -40,7 +41,7 @@ static Signature computeSignature(void* ptr)
 //==============================================================================
 
 //==============================================================================
-void* mallocAligned(PtrSize size, PtrSize alignmentBytes) noexcept
+void* mallocAligned(PtrSize size, PtrSize alignmentBytes)
 {
 #if ANKI_POSIX 
 #	if ANKI_OS != ANKI_OS_ANDROID
@@ -95,7 +96,7 @@ void* mallocAligned(PtrSize size, PtrSize alignmentBytes) noexcept
 }
 
 //==============================================================================
-void freeAligned(void* ptr) noexcept
+void freeAligned(void* ptr)
 {
 #if ANKI_POSIX
 	::free(ptr);
@@ -108,7 +109,7 @@ void freeAligned(void* ptr) noexcept
 
 //==============================================================================
 void* allocAligned(
-	void* userData, void* ptr, PtrSize size, PtrSize alignment) noexcept
+	void* userData, void* ptr, PtrSize size, PtrSize alignment)
 {
 	(void)userData;
 	void* out;
@@ -278,14 +279,14 @@ void HeapMemoryPool::clear()
 }
 
 //==============================================================================
-void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment) noexcept
+void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->allocate(size, alignment);
 }
 
 //==============================================================================
-Bool HeapMemoryPool::free(void* ptr) noexcept
+Bool HeapMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->free(ptr);
@@ -418,7 +419,7 @@ public:
 	}
 
 	/// Allocate
-	void* allocate(PtrSize size, PtrSize alignment) noexcept
+	void* allocate(PtrSize size, PtrSize alignment)
 	{
 		ANKI_ASSERT(m_memory != nullptr);
 		ANKI_ASSERT(alignment <= m_alignmentBytes);
@@ -462,7 +463,7 @@ public:
 	}
 
 	/// Free
-	Bool free(void* ptr) noexcept
+	Bool free(void* ptr)
 	{
 		// ptr shouldn't be null or not aligned. If not aligned it was not 
 		// allocated by this class
@@ -594,7 +595,7 @@ PtrSize StackMemoryPool::getAllocatedSize() const
 }
 
 //==============================================================================
-void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment) noexcept
+void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	void* mem = m_impl->allocate(size, alignment);
@@ -608,7 +609,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment) noexcept
 }
 
 //==============================================================================
-Bool StackMemoryPool::free(void* ptr) noexcept
+Bool StackMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->free(ptr);
@@ -814,7 +815,7 @@ public:
 #endif
 
 	/// Create a new chunk
-	Chunk* createNewChunk(PtrSize size) noexcept
+	Chunk* createNewChunk(PtrSize size)
 	{
 		//
 		// Calculate preferred size
@@ -906,7 +907,7 @@ public:
 	}
 
 	/// Allocate from chunk
-	void* allocateFromChunk(Chunk* ch, PtrSize size, PtrSize alignment) noexcept
+	void* allocateFromChunk(Chunk* ch, PtrSize size, PtrSize alignment)
 	{
 		ANKI_ASSERT(ch);
 		ANKI_ASSERT(size <= m_maxSize);
@@ -925,7 +926,7 @@ public:
 	}
 
 	/// Allocate memory
-	void* allocate(PtrSize size, PtrSize alignment) noexcept
+	void* allocate(PtrSize size, PtrSize alignment)
 	{
 		ANKI_ASSERT(size <= m_maxSize);
 
@@ -965,7 +966,7 @@ public:
 	}
 
 	/// Free memory
-	Bool free(void* ptr) noexcept
+	Bool free(void* ptr)
 	{
 		if(ptr == nullptr)
 		{
@@ -1126,14 +1127,14 @@ void ChainMemoryPool::clear()
 }
 
 //==============================================================================
-void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment) noexcept
+void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->allocate(size, alignment);
 }
 
 //==============================================================================
-Bool ChainMemoryPool::free(void* ptr) noexcept
+Bool ChainMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(m_impl != nullptr);
 	return m_impl->free(ptr);

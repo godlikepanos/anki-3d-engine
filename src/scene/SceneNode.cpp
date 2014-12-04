@@ -56,7 +56,7 @@ SceneAllocator<U8> SceneNode::getSceneAllocator() const
 }
 
 //==============================================================================
-SceneAllocator<U8> SceneNode::getSceneFrameAllocator() const
+SceneFrameAllocator<U8> SceneNode::getSceneFrameAllocator() const
 {
 	ANKI_ASSERT(m_scene);
 	return m_scene->getFrameAllocator();

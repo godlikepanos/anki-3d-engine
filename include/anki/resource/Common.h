@@ -33,6 +33,9 @@ using TempResourceAllocator = StackAllocator<T>;
 template<typename T>
 using TempResourceDArray = DArray<T, TempResourceAllocator<T>>;
 
+template<typename T>
+using TempResourceDArrayAuto = DArrayAuto<T, TempResourceAllocator<T>>;
+
 using TempResourceString = StringBase<TempResourceAllocator<char>>;
 
 /// Contains initialization information for the resource classes.

@@ -92,8 +92,7 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 	Error err = ErrorCode::NONE;
 	MaterialVariableTemplate<T>* out = nullptr;
 
-	TempResourceDArray<F32> floats;
-	TempResourceDArray<F32>::ScopeDestroyer floatsd(&floats, talloc);
+	TempResourceDArrayAuto<F32> floats(talloc);
 
 	// Get the float values
 	if(in.m_value.getSize() > 0)
@@ -110,7 +109,7 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 			return nullptr;
 		}
 
-		err = floats.create(talloc, floatsNeeded);
+		err = floats.create(floatsNeeded);
 		if(err) return nullptr;
 
 		auto it = in.m_value.getBegin();
@@ -183,12 +182,16 @@ Material::~Material()
 
 	for(auto it : m_vars)
 	{
-		MaterialVariable* mvar = &(*it);
-		mvar->destroy(alloc);
-		alloc.deleteInstance(mvar);
+		if(it)
+		{
+			MaterialVariable* mvar = &(*it);
+			mvar->destroy(alloc);
+			alloc.deleteInstance(mvar);
+		}
 	}
 
 	m_vars.destroy(alloc);
+	m_pplines.destroy(alloc);
 }
 
 //==============================================================================

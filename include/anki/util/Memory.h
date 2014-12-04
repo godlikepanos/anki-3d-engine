@@ -14,10 +14,10 @@ namespace anki {
 /// @{
 
 /// Allocate aligned memory
-void* mallocAligned(PtrSize size, PtrSize alignmentBytes) noexcept;
+void* mallocAligned(PtrSize size, PtrSize alignmentBytes);
 
 /// Free aligned memory
-void freeAligned(void* ptr) noexcept;
+void freeAligned(void* ptr);
 
 /// The function signature of a memory allocation/deallocation. 
 /// See allocAligned function for the explanation of arguments
@@ -35,7 +35,7 @@ using AllocAlignedCallback = void* (*)(void*, void*, PtrSize, PtrSize);
 /// @return On allocation mode it will return the newelly allocated block or
 ///         nullptr on error. On deallocation mode returns nullptr
 void* allocAligned(
-	void* userData, void* ptr, PtrSize size, PtrSize alignment) noexcept;
+	void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
 /// A dummy interface to match the StackMemoryPool and ChainMemoryPool 
 /// interfaces in order to be used by the same allocator template
@@ -75,16 +75,16 @@ public:
 	Error create(AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	/// Check if two memory pools are the same one.
-	Bool operator==(const HeapMemoryPool& b) const noexcept
+	Bool operator==(const HeapMemoryPool& b) const
 	{
 		return m_impl == b.m_impl;
 	}
 
 	/// Allocate memory
-	void* allocate(PtrSize size, PtrSize alignment) noexcept;
+	void* allocate(PtrSize size, PtrSize alignment);
 
 	/// Free memory
-	Bool free(void* ptr) noexcept;
+	Bool free(void* ptr);
 
 	/// Return number of allocations
 	U32 getAllocationsCount() const;
@@ -135,7 +135,7 @@ public:
 	StackMemoryPool& operator=(const StackMemoryPool& other);
 
 	/// Check if two memory pools are the same one.
-	Bool operator==(const StackMemoryPool& b) const noexcept
+	Bool operator==(const StackMemoryPool& b) const
 	{
 		return m_impl == b.m_impl;
 	}
@@ -154,14 +154,14 @@ public:
 	/// @param size The size to allocate
 	/// @param alignmentBytes The alignment of the returned address
 	/// @return The allocated memory or nullptr on failure
-	void* allocate(PtrSize size, PtrSize alignmentBytes) noexcept;
+	void* allocate(PtrSize size, PtrSize alignmentBytes);
 
 	/// Free memory in StackMemoryPool. If the ptr is not the last allocation
 	/// then nothing happens and the method returns false. The operation is
 	/// threadsafe
 	/// @param[in, out] ptr Memory block to deallocate
 	/// @return True if the deallocation actually happened and false otherwise
-	Bool free(void* ptr) noexcept;
+	Bool free(void* ptr);
 
 	/// Reinit the pool. All existing allocated memory will be lost
 	void reset();
@@ -238,7 +238,7 @@ public:
 	ChainMemoryPool& operator=(const ChainMemoryPool& other);
 
 	/// Check if two memory pools are the same one.
-	Bool operator==(const ChainMemoryPool& b) const noexcept
+	Bool operator==(const ChainMemoryPool& b) const
 	{
 		return m_impl == b.m_impl;
 	}
@@ -266,13 +266,13 @@ public:
 	/// @param size The size to allocate
 	/// @param alignmentBytes The alignment of the returned address
 	/// @return The allocated memory or nullptr on failure
-	void* allocate(PtrSize size, PtrSize alignmentBytes) noexcept;
+	void* allocate(PtrSize size, PtrSize alignmentBytes);
 
 	/// Free memory. If the ptr is not the last allocation of the chunk
 	/// then nothing happens and the method returns false
 	/// @param[in, out] ptr Memory block to deallocate
 	/// @return True if the deallocation actually happened and false otherwise
-	Bool free(void* ptr) noexcept;
+	Bool free(void* ptr);
 
 	/// Get the number of users for this pool
 	U32 getUsersCount() const;

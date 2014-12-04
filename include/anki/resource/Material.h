@@ -18,6 +18,7 @@ namespace anki {
 
 // Forward
 class XmlElement;
+class Material;
 class MaterialProgramCreator;
 class MaterialProgramCreatorInputVariable;
 
@@ -145,6 +146,7 @@ public:
 
 	void destroy(ResourceAllocator<U8> alloc)
 	{
+		m_name.destroy(alloc);
 		m_data.destroy(alloc);
 	}
 

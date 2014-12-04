@@ -50,7 +50,7 @@ static const char* classnameSceneAmbientColorEvent = "SceneAmbientColorEvent";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<SceneAmbientColorEvent>()
 {
-	return 671577193;
+	return -2736282921550252951;
 }
 
 template<>
@@ -77,7 +77,7 @@ static const char* classnameEventManager = "EventManager";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<EventManager>()
 {
-	return -1078526863;
+	return -6959305329499243407;
 }
 
 template<>
@@ -98,7 +98,7 @@ static inline int pwrapEventManagernewSceneAmbientColorEvent(lua_State* l)
 	LuaBinder::checkArgsCount(l, 4);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameEventManager, -1078526863, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameEventManager, -6959305329499243407, ud)) return -1;
 	EventManager* self = reinterpret_cast<EventManager*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -109,7 +109,7 @@ static inline int pwrapEventManagernewSceneAmbientColorEvent(lua_State* l)
 	F32 arg1;
 	if(LuaBinder::checkNumber(l, 3, arg1)) return -1;
 	
-	if(LuaBinder::checkUserData(l, 4, "Vec4", 1033927922, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 4, "Vec4", 6804478823655046386, ud)) return -1;
 	Vec4* iarg2 = reinterpret_cast<Vec4*>(ud->m_data);
 	const Vec4& arg2(*iarg2);
 	
@@ -128,7 +128,7 @@ static inline int pwrapEventManagernewSceneAmbientColorEvent(lua_State* l)
 	luaL_setmetatable(l, "SceneAmbientColorEvent");
 	ud->m_data = reinterpret_cast<void*>(ret);
 	ud->m_gc = false;
-	ud->m_sig = 671577193;
+	ud->m_sig = -2736282921550252951;
 	
 	return 1;
 }
@@ -178,7 +178,7 @@ static inline int pwrapgetEventManager(lua_State* l)
 	luaL_setmetatable(l, "EventManager");
 	ud->m_data = reinterpret_cast<void*>(ret);
 	ud->m_gc = false;
-	ud->m_sig = -1078526863;
+	ud->m_sig = -6959305329499243407;
 	
 	return 1;
 }

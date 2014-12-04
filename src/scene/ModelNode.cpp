@@ -283,13 +283,12 @@ Error ModelNode::frameUpdate(F32, F32)
 	Error err = ErrorCode::NONE;
 
 	// Gather the move components of the instances
-	SceneFrameDArray<const MoveComponent*> instanceMoves;
-	SceneFrameDArray<const MoveComponent*>::ScopeDestroyer instanceMovesd(
-		&instanceMoves, getSceneFrameAllocator());
+	SceneFrameDArrayAuto<const MoveComponent*> instanceMoves(
+		getSceneFrameAllocator());
 	U instanceMovesCount = 0;
 	Timestamp instancesTimestamp = 0;
 
-	err = instanceMoves.create(getSceneFrameAllocator(), 64);
+	err = instanceMoves.create(64);
 	if(err)
 	{
 		return err;

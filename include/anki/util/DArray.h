@@ -8,24 +8,15 @@
 
 #include "anki/util/Allocator.h"
 #include "anki/util/NonCopyable.h"
-#include "anki/util/ScopeDestroyer.h"
 
 namespace anki {
-
-// Forward
-template<typename T, typename TAlloc>
-class DArray;
-
-/// @addtogroup util_private
-/// @{
-template<typename T, typename TAlloc>
-using DArrayScopeDestroyer = ScopeDestroyer<DArray<T, TAlloc>, TAlloc>;
-/// @}
 
 /// @addtogroup util_containers
 /// @{
 
-/// Dynamic array.
+/// Dynamic array with manual destruction. It doesn't hold the allocator and 
+/// that makes it compact. At the same time that requires manual destruction. 
+/// Used in permanent classes.
 template<typename T, typename TAlloc = HeapAllocator<T>>
 class DArray: public NonCopyable
 {
@@ -36,8 +27,6 @@ public:
 	using ConstIterator = const Value*;
 	using Reference = Value&;
 	using ConstReference = const Value&;
-
-	using ScopeDestroyer = DArrayScopeDestroyer<T, TAlloc>;
 
 	// STL compatible
 	using iterator = Iterator;
@@ -50,6 +39,7 @@ public:
 		m_size(0)
 	{}
 
+	/// Move.
 	DArray(DArray&& b)
 	:	DArray()
 	{
@@ -62,6 +52,7 @@ public:
 			&& "Requires manual destruction");
 	}
 
+	/// Move.
 	DArray& operator=(DArray&& b)
 	{
 		move(b);
@@ -262,6 +253,69 @@ private:
 		b.m_data = nullptr;
 		m_size = b.m_size;
 		b.m_size = 0;
+	}
+};
+
+/// Dynamic array with automatic destruction. It's the same as DArray but it 
+/// holds the allocator in order to perform automatic destruction. Use it for
+/// temp operations and on transient classes.
+template<typename T, typename TAlloc = HeapAllocator<T>>
+class DArrayAuto: public DArray<T, TAlloc>
+{
+public:
+	using Base = DArray<T, TAlloc>;
+	using Value = typename Base::Value;
+	using Allocator = typename Base::Allocator;
+
+	DArrayAuto(Allocator alloc)
+	:	Base(),
+		m_alloc(alloc)
+	{}
+
+	/// Move.
+	DArrayAuto(DArrayAuto&& b)
+	:	DArrayAuto()
+	{
+		move(b);
+	}
+
+	~DArrayAuto()
+	{
+		Base::destroy(m_alloc);
+	}
+
+	/// Move.
+	DArrayAuto& operator=(DArrayAuto&& b)
+	{
+		move(b);
+		return *this;
+	}
+
+	/// Create the array.
+	ANKI_USE_RESULT Error create(PtrSize size)
+	{
+		return Base::create(m_alloc, size);
+	}
+
+	/// Create the array.
+	ANKI_USE_RESULT Error create(PtrSize size, const Value& v)
+	{
+		return Base::create(m_alloc, size, v);
+	}
+
+	/// Grow the array.
+	ANKI_USE_RESULT Error resize(PtrSize size)
+	{
+		return Base::resize(m_alloc, size);
+	}
+
+private:
+	Allocator m_alloc;
+
+	void move(DArrayAuto& b)
+	{
+		Base::move(b);
+		m_alloc = b.m_alloc;
 	}
 };
 /// @}

@@ -561,13 +561,12 @@ Error ParticleEmitter::doInstancingCalcs()
 	//
 	// Gather the move components of the instances
 	//
-	SceneFrameDArray<MoveComponent*> instanceMoves;
-	SceneFrameDArray<MoveComponent*>::ScopeDestroyer instanceMovesd(
-		&instanceMoves, getSceneFrameAllocator());
+	SceneFrameDArrayAuto<MoveComponent*> instanceMoves(
+		getSceneFrameAllocator());
 	U instanceMovesCount = 0;
 	Timestamp instancesTimestamp = 0;
 
-	err = instanceMoves.create(getSceneFrameAllocator(), 64);
+	err = instanceMoves.create(64);
 	if(err)
 	{
 		return err;

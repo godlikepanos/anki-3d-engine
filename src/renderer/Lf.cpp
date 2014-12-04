@@ -192,15 +192,9 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 	VisibilityTestResults& vi = cam.getVisibilityTestResults();
 
 	// Iterate the visible light and get those that have lens flare
-	SceneDArray<Light*> lights;
-	SceneDArray<Light*>::ScopeDestroyer lightsd(
-		&lights, scene.getFrameAllocator());
-	err = lights.create(
-		scene.getFrameAllocator(), m_maxLightsWithFlares, nullptr);
-	if(err)
-	{
-		return err;
-	}
+	SceneFrameDArrayAuto<Light*> lights(scene.getFrameAllocator());
+	err = lights.create(m_maxLightsWithFlares, nullptr);
+	if(err)	return err;
 
 	U lightsCount = 0;
 	auto it = vi.getLightsBegin();
@@ -234,32 +228,20 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 		GlClientBufferHandle flaresCBuff;
 		err = flaresCBuff.create(cmdBuff,
 			sizeof(Flare) * lightsCount * m_maxFlaresPerLight, nullptr);
-		if(err)
-		{
-			return err;
-		}
+		if(err)	return err;
 
 		Flare* flares = (Flare*)flaresCBuff.getBaseAddress();
 		U flaresCount = 0;
 
 		// Contains the number of flares per flare texture
-		SceneFrameDArray<U> groups;
-		SceneFrameDArray<U>::ScopeDestroyer groupsd(
-			&groups, scene.getFrameAllocator());
-		err = groups.create(scene.getFrameAllocator(), lightsCount, 0U);
-		if(err)
-		{
-			return err;
-		}
+		SceneFrameDArrayAuto<U> groups(scene.getFrameAllocator());
+		err = groups.create(lightsCount, 0U);
+		if(err)	return err;
 
-		SceneFrameDArray<const GlTextureHandle*> texes;
-		SceneFrameDArray<const GlTextureHandle*>::ScopeDestroyer 
-			texesd(&texes, scene.getFrameAllocator());
-		err = texes.create(scene.getFrameAllocator(), lightsCount, nullptr);
-		if(err)
-		{
-			return err;
-		}
+		SceneFrameDArrayAuto<const GlTextureHandle*> texes(
+			scene.getFrameAllocator());
+		err = texes.create(lightsCount, nullptr);
+		if(err)	return err;
 
 		U groupsCount = 0;
 

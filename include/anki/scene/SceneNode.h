@@ -59,7 +59,7 @@ public:
 
 	SceneAllocator<U8> getSceneAllocator() const;
 
-	SceneAllocator<U8> getSceneFrameAllocator() const;
+	SceneFrameAllocator<U8> getSceneFrameAllocator() const;
 
 	ANKI_USE_RESULT Error addChild(SceneNode* obj)
 	{
