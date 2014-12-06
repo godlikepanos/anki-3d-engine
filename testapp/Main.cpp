@@ -55,12 +55,6 @@ Error init()
 		app->setTimerTick(0.0);
 	}
 
-#if 0
-	painter = new UiPainter(Vec2(AppSingleton::get().getWindowWidth(),
-		AppSingleton::get().getWindowHeight()));
-	painter->setFont("engine-rsrc/ModernAntiqua.ttf", 25, 25);
-#endif
-
 	// camera
 	err = scene.newSceneNode<PerspectiveCamera>("main-camera", cam);
 	if(err) return err;
@@ -109,7 +103,7 @@ Error init()
 	spot->setLocalTransform(Transform(Vec4(8.27936, 5.86285, 1.85526, 0.0),
 		Mat3x4(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
 	spot->setDiffuseColor(Vec4(1.0));
-	spot->setSpecularColor(Vec4(-1.0));
+	spot->setSpecularColor(Vec4(1.2));
 	spot->setDistance(30.0);
 	spot->setShadowEnabled(true);
 
@@ -235,7 +229,7 @@ Error init()
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/sponza/scene.lua", &resources);
+		err = script.load("maps/adis/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());
@@ -532,7 +526,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("tilesXCount", 16);
 	config.set("tilesYCount", 16);
 
-	config.set("fullscreenDesktopResolution", false);
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 
 	app = new App;

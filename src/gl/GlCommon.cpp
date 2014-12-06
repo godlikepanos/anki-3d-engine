@@ -134,7 +134,8 @@ static void writeShaderBlockMemoryMatrix(
 		matrix.transpose();
 		for(U j = 0; j < sizeof(T) / sizeof(Vec); j++)
 		{
-			ANKI_ASSERT(subbuff + sizeof(Vec) <= static_cast<U8*>(buffEnd));
+			ANKI_ASSERT(
+				(subbuff + sizeof(Vec)) <= static_cast<const U8*>(buffEnd));
 
 			Vec* out = reinterpret_cast<Vec*>(subbuff);
 			*out = matrix.getRow(j);
@@ -172,12 +173,12 @@ void writeShaderBlockMemory(
 			buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::MAT3:
-		writeShaderBlockMemorySimple<Mat3>(varBlkInfo, elements, elementsCount,
-			buffBegin, buffEnd);
+		writeShaderBlockMemoryMatrix<Mat3, Vec3>(varBlkInfo, elements, 
+			elementsCount, buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::MAT4:
-		writeShaderBlockMemorySimple<Mat4>(varBlkInfo, elements, elementsCount,
-			buffBegin, buffEnd);
+		writeShaderBlockMemoryMatrix<Mat4, Vec4>(varBlkInfo, elements, 
+			elementsCount, buffBegin, buffEnd);
 		break;
 	default:
 		ANKI_ASSERT(0);

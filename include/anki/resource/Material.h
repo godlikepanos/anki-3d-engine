@@ -43,6 +43,8 @@ typedef VisitableCommonBase<
 /// that share the same name
 class MaterialVariable: public MateriaVariableVisitable, public NonCopyable
 {
+	friend class Material;
+
 public:
 	using Base = MateriaVariableVisitable;
 

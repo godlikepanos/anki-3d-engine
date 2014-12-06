@@ -196,27 +196,27 @@ static void writeNodeTransform(const Exporter& exporter, std::ofstream& file,
 		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(pos)\n";
 
 	file << "rot = Mat3x4.new()\n";
-	file << "rot:setAll("
+	file << "rot:setAll(";
 	for(unsigned j = 0; j < 3; j++)
 	{
 		for(unsigned i = 0; i < 4; i++)
 		{
 			if(i == 3)
 			{
-				file << "0.0"
+				file << "0";
 			}
 			else
 			{
 				file << m[j][i];
 			}
 
-			if(i != 2 || j != 2)
+			if(!(i == 3 && j == 2))
 			{
 				file << ", ";
 			}
 		}
 	}
-	file << ")\n"
+	file << ")\n";
 
 	file << node 
 		<< ":getSceneNodeBase():getMoveComponent():setLocalRotation(rot)\n";

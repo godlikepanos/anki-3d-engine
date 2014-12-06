@@ -227,6 +227,7 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 				+ m_texChannelsCount * sizeof(HVec2) + sizeof(U16) 
 				+ sizeof(U16) * 4;
 		}
+		break;
 	case VertexAttribute::INDICES:
 		v = m_indicesBuff;
 		break;

@@ -257,7 +257,7 @@ void main()
 #endif
 
 #if 0
-	if(spotTexLightsCount > 0)
+	if(pointLightsCount > 0)
 	{
 		outColor += vec3(0.1);
 	}

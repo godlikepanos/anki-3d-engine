@@ -233,7 +233,9 @@ void GlBufferHandle::bindVertexBuffer(
 			m_stride(stride),
 			m_offset(offset),
 			m_attribLocation(attribLocation)
-		{}
+		{
+			ANKI_ASSERT(m_elementSize != 0);
+		}
 
 		Error operator()(GlCommandBuffer*)
 		{

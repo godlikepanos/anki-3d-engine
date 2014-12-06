@@ -669,6 +669,8 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 				}
 
 				mtlvar = tvar;
+				mtlvar->m_varBlkInfo.m_arraySize = 1;
+				mtlvar->m_textureUnit = in.m_binding;
 			}
 			break;
 		case ShaderVariableDataType::FLOAT:

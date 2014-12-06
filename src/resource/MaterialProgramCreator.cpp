@@ -7,6 +7,7 @@
 #include "anki/util/Assert.h"
 #include "anki/misc/Xml.h"
 #include "anki/util/Logger.h"
+#include "anki/util/Functions.h"
 #include <algorithm>
 
 namespace anki {
@@ -365,9 +366,9 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		{
 			I64 tmp;
 			ANKI_CHECK(arrSizeEl.getI64(tmp));
-			if(tmp == 0)
+			if(tmp <= 0)
 			{
-				ANKI_LOGE("Array size for some reason is zero");
+				ANKI_LOGE("Incorrect arraySize value %d", tmp);
 				return ErrorCode::USER_DATA;
 			}
 
@@ -396,7 +397,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 		}
 		else
 		{
-			inpvar.m_instanced = 0;
+			inpvar.m_instanced = false;
 		}
 
 		// If one input var is instanced notify the whole program that 
@@ -488,18 +489,69 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 				m_uniformBlockReferencedMask |= glshaderbit;
 				inpvar.m_inBlock = true;
 
+				// std140 rules
 				inpvar.m_offset = m_blockSize;
-				if(inpvar.m_type == ShaderVariableDataType::FLOAT 
-					|| inpvar.m_type == ShaderVariableDataType::VEC2
-					|| inpvar.m_type == ShaderVariableDataType::VEC3
-					|| inpvar.m_type == ShaderVariableDataType::VEC4)
+
+				if(inpvar.m_type == ShaderVariableDataType::FLOAT)
 				{
 					inpvar.m_arrayStride = sizeof(Vec4);
+
+					if(inpvar.m_arraySize == 1)
+					{
+						// No need to align the inpvar.m_offset
+						m_blockSize += sizeof(F32);
+					}
+					else
+					{
+						alignRoundUp(sizeof(Vec4), inpvar.m_offset);
+						m_blockSize += sizeof(Vec4) * inpvar.m_arraySize;
+					}
+				}
+				else if(inpvar.m_type == ShaderVariableDataType::VEC2)
+				{
+					inpvar.m_arrayStride = sizeof(Vec4);
+
+					if(inpvar.m_arraySize == 1)
+					{
+						alignRoundUp(sizeof(Vec2), inpvar.m_offset);
+						m_blockSize += sizeof(Vec2);
+					}
+					else
+					{
+						alignRoundUp(sizeof(Vec4), inpvar.m_offset);
+						m_blockSize += sizeof(Vec4) * inpvar.m_arraySize;
+					}
+				}
+				else if(inpvar.m_type == ShaderVariableDataType::VEC3)
+				{
+					alignRoundUp(sizeof(Vec4), inpvar.m_offset);
+					inpvar.m_arrayStride = sizeof(Vec4);
+
+					if(inpvar.m_arraySize == 1)
+					{
+						m_blockSize += sizeof(Vec3);
+					}
+					else
+					{
+						m_blockSize += sizeof(Vec4) * inpvar.m_arraySize;
+					}
+				}
+				else if(inpvar.m_type == ShaderVariableDataType::VEC4)
+				{
+					inpvar.m_arrayStride = sizeof(Vec4);
+					alignRoundUp(sizeof(Vec4), inpvar.m_offset);
 					m_blockSize += sizeof(Vec4) * inpvar.m_arraySize;
 				}
-				else if(inpvar.m_type == ShaderVariableDataType::MAT3
-					|| inpvar.m_type == ShaderVariableDataType::MAT4)
+				else if(inpvar.m_type == ShaderVariableDataType::MAT3)
 				{
+					alignRoundUp(sizeof(Vec4), inpvar.m_offset);
+					inpvar.m_arrayStride = sizeof(Vec4) * 3;
+					m_blockSize += sizeof(Vec4) * 3 * inpvar.m_arraySize;
+					inpvar.m_matrixStride = sizeof(Vec4);				
+				}
+				else if(inpvar.m_type == ShaderVariableDataType::MAT4)
+				{
+					alignRoundUp(sizeof(Vec4), inpvar.m_offset);
 					inpvar.m_arrayStride = sizeof(Mat4);
 					m_blockSize += sizeof(Mat4) * inpvar.m_arraySize;
 					inpvar.m_matrixStride = sizeof(Vec4);				

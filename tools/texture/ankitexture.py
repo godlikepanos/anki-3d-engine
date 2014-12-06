@@ -194,6 +194,10 @@ def parse_commandline():
 			action = "store_true", default = False, 
 			help = "remove alpha channel")
 
+	parser.add_option("--no-uncompressed", dest = "no_uncompressed", 
+			action = "store_true", default = True, 
+			help = "don't store uncompressed data")
+
 	(options, args) = parser.parse_args()
 
 	if not options.inp or not options.out or not options.convert_path:
@@ -211,7 +215,8 @@ def parse_commandline():
 		parser.error("Unrecognized type: " + options.type)
 
 	return (options.inp.split(":"), options.out, options.fast, \
-			typ, options.normal, options.convert_path, options.no_alpha)
+			typ, options.normal, options.convert_path, options.no_alpha, \
+			options.no_uncompressed)
 
 def identify_image(in_file):
 	""" Return the size of the input image and the internal format """
@@ -508,7 +513,8 @@ def write_etc(out_file, fname, width, height, color_format):
 
 	out_file.write(data)
 
-def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha):
+def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha, \
+		no_uncompressed):
 	""" This is the function that does all the work """
 
 	# Invoke app named "identify" to get internal format and width and height
@@ -550,6 +556,10 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha):
 	# Write header
 	ak_format = "8sIIIIIIII"
 
+	data_compression = DC_S3TC | DC_ETC2
+	if not no_uncompressed:
+		data_compression = data_compression | DC_RAW
+
 	buff = struct.pack(ak_format, 
 			b"ANKITEX1",
 			width,
@@ -557,7 +567,7 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha):
 			len(in_files),
 			typ,
 			color_format,
-			DC_RAW | DC_S3TC | DC_ETC2,
+			data_compression,
 			normal,
 			len(mips_fnames))
 
@@ -588,7 +598,7 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha):
 						+ "." + size_str
 
 				# Write RAW
-				if compression == 0:
+				if compression == 0 and not no_uncompressed:
 					write_raw(tex_file, in_base_fname + ".tga", \
 							tmp_width, tmp_height, color_format)
 				# Write S3TC
@@ -608,7 +618,7 @@ def main():
 
 	# Parse cmd line args
 	(in_files, out, fast, typ, normal, convert_path, \
-			no_alpha) = parse_commandline();
+			no_alpha, no_uncompressed) = parse_commandline();
 
 	if typ == TT_CUBE and len(in_files) != 6:
 		raise Exception("Not enough images for cube generation")
@@ -629,7 +639,7 @@ def main():
 	# Do the work
 	try:
 		convert(in_files, out, fast, typ, normal, tmp_dir, \
-				convert_path, no_alpha)
+				convert_path, no_alpha, no_uncompressed)
 	finally:
 		shutil.rmtree(tmp_dir)
 		
