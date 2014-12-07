@@ -222,7 +222,7 @@ void ConditionVariable::notifyAll()
 void ConditionVariable::wait(Mutex& amtx)
 {
 	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(m_impl);
-	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
+	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(amtx.m_impl);
 
 	SleepConditionVariableCS(cond, mtx, INFINITE);
 }
