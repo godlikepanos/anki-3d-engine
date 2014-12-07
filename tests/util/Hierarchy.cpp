@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "tests/framework/Framework.h"
-#include "anki/util/Object.h"
+#include "anki/util/Hierarchy.h"
 
 using namespace anki;
 
