@@ -39,7 +39,7 @@ ANKI_TEST(Util, Thread)
 		return (check != true) ? ErrorCode::FUNCTION_FAILED : ErrorCode::NONE;
 	});
 
-
+	ANKI_TEST_EXPECT_EQ(u, NUMBER); // It should be the old value
 	Error err = t.join();
 	ANKI_TEST_EXPECT_EQ(err, 0);
 	ANKI_TEST_EXPECT_EQ(u, 0xF00);
@@ -87,6 +87,7 @@ ANKI_TEST(Util, Mutex)
 
 		for(U i = 0; i < ITERATIONS; i++)
 		{
+
 			mtx.lock();
 			--num;
 			mtx.unlock();

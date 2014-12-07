@@ -3,8 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+// Add support for condition variables
+#define _WIN32_WINNT _WIN32_WINNT_VISTA
+
 #include "anki/util/Thread.h"
-#include <windows.h>
+#include "anki/util/Functions.h"
+#include "anki/util/Logger.h"
+#include <cstring>
+#include <Windows.h>
+#include <WinBase.h>
 
 namespace anki {
 
@@ -29,9 +36,9 @@ static DWORD WINAPI threadCallback(LPVOID ud)
 	info.m_userData = thread->_getUserData();
 	info.m_threadName = thread->_getName();
 
-	I err = thread->_getCallback()(info);
+	Error err = thread->_getCallback()(info);
 
-	return err;
+	return err._getCodeInt();
 }
 
 //==============================================================================
@@ -41,7 +48,7 @@ Thread::Thread(const char* name)
 	if(name)
 	{
 		U len = std::strlen(name);
-		len = std::min<U>(len, sizeof(m_name) - 1);
+		len = min<U>(len, sizeof(m_name) - 1);
 		std::memcpy(&m_name[0], &name[0], len);
 		m_name[len] = '\0';
 	}
@@ -55,7 +62,7 @@ Thread::Thread(const char* name)
 Thread::~Thread()
 {
 	ANKI_ASSERT(!m_started && "Thread probably not joined");
-	free(m_impl);
+	ANKI_ASSERT(m_impl == nullptr);
 	m_impl = nullptr;
 }
 
@@ -71,7 +78,7 @@ void Thread::start(void* userData, Callback callback)
 	m_impl = CreateThread(nullptr, 0, threadCallback, this, 0, nullptr);
 	if(m_impl == nullptr)
 	{
-		throw ANKI_EXCEPTION("CreateThread() failed");
+		ANKI_LOGF("CreateThread() failed");
 	}
 	else
 	{
@@ -82,7 +89,7 @@ void Thread::start(void* userData, Callback callback)
 }
 
 //==============================================================================
-I Thread::join()
+Error Thread::join()
 {
 	ANKI_ASSERT(m_started);
 
@@ -91,27 +98,33 @@ I Thread::join()
 	
 	// Get return code
 	DWORD exitCode = 0;
-	ok = GetExitCodeThread(m_impl, &exitCode);
+	BOOL ok = GetExitCodeThread(m_impl, &exitCode);
 	if(!ok)
 	{
-		throw ANKI_EXCEPTION("GetExitCodeThread() failed");
+		ANKI_LOGF("GetExitCodeThread() failed");
 	}
 
 	// Delete handle
-	BOOL ok = CloseHandle(m_impl);
+	ok = CloseHandle(m_impl);
 	if(!ok)
 	{
-		throw ANKI_EXCEPTION("CloseHandle() failed");
+		ANKI_LOGF("CloseHandle() failed");
 	}
 
-	return exitCode;
+	m_impl = nullptr;
+
+#if ANKI_ASSERTIONS
+	m_started = false;
+#endif
+
+	return static_cast<ErrorCode>(exitCode);
 }
 
 //==============================================================================
 Thread::Id Thread::getCurrentThreadId()
 {
 	HANDLE x = GetCurrentThread();
-	return x;
+	return reinterpret_cast<PtrSize>(x);
 }
 
 //==============================================================================
@@ -125,18 +138,12 @@ Mutex::Mutex()
 		reinterpret_cast<CRITICAL_SECTION*>(malloc(sizeof(CRITICAL_SECTION)));
 	if(mtx == nullptr)
 	{
-		throw ANKI_EXCEPTION("Out of memory");
+		ANKI_LOGF("Out of memory");
 	}
 
 	m_impl = mtx;
 
-	BOOL ok = InitializeCriticalSectionAndSpinCount(mtx, 0x400);
-	if(!ok)
-	{
-		free(m_impl);
-		m_impl = nullptr;
-		throw ANKI_EXCEPTION("InitializeCriticalSectionAndSpinCount() failed");
-	}
+	InitializeCriticalSection(mtx);
 }
 
 //==============================================================================
@@ -160,8 +167,7 @@ void Mutex::lock()
 Bool Mutex::tryLock()
 {
 	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
-
-	BOOL enter = EnterCriticalSection(mtx);
+	BOOL enter = TryEnterCriticalSection(mtx);
 	return enter;
 }
 
@@ -169,7 +175,6 @@ Bool Mutex::tryLock()
 void Mutex::unlock()
 {
 	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
-
 	LeaveCriticalSection(mtx);
 }
 
@@ -184,7 +189,7 @@ ConditionVariable::ConditionVariable()
 		malloc(sizeof(CONDITION_VARIABLE)));
 	if(cond == nullptr)
 	{
-		throw ANKI_EXCEPTION("Out of memory");
+		ANKI_LOGF("Out of memory");
 	}
 
 	m_impl = cond;
@@ -219,7 +224,7 @@ void ConditionVariable::wait(Mutex& amtx)
 	CONDITION_VARIABLE* cond = reinterpret_cast<CONDITION_VARIABLE*>(m_impl);
 	CRITICAL_SECTION* mtx = reinterpret_cast<CRITICAL_SECTION*>(m_impl);
 
-	SleepConditionVariableCS(cond, INFINITE);
+	SleepConditionVariableCS(cond, mtx, INFINITE);
 }
 
 } // end namespace anki

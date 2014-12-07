@@ -5,14 +5,18 @@
 
 #include "anki/util/Filesystem.h"
 #include "anki/util/Assert.h"
+#include "anki/util/Logger.h"
 #include <windows.h>
+
+// Someone pollutes the global namespace
+#undef ERROR
 
 namespace anki {
 
 //==============================================================================
 Bool fileExists(const CString& filename)
 {
-	DWORD dwAttrib = GetFileAttributes(filename.get());
+	DWORD dwAttrib = GetFileAttributes(&filename[0]);
 
 	return dwAttrib != INVALID_FILE_ATTRIBUTES 
 		&& !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
@@ -60,7 +64,7 @@ Error createDirectory(const CString& dir)
 }
 
 //==============================================================================
-Error getHomeDirectory(HeapAllocator<U8>& alloc, String& out);
+Error getHomeDirectory(HeapAllocator<U8>& alloc, String& out)
 {
 	const char* homed = getenv("HOMEDRIVE");
 	const char* homep = getenv("HOMEPATH");
@@ -71,8 +75,7 @@ Error getHomeDirectory(HeapAllocator<U8>& alloc, String& out);
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
-	String out;
-	Error err = out.sprintf("%s/%s", homed, homep);
+	Error err = out.sprintf(alloc, "%s/%s", homed, homep);
 	if(!err)
 	{
 		// Convert to Unix path

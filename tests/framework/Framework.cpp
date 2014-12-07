@@ -25,8 +25,13 @@ void Test::run()
 	std::cout << "========\nRunning " << suite->name << " " << name
 		<< "\n========" << std::endl;
 
+#if ANKI_OS == ANKI_OS_LINUX
 	struct mallinfo a = mallinfo();
+#endif
+
 	callback(*this);
+
+#if ANKI_OS == ANKI_OS_LINUX
 	struct mallinfo b = mallinfo();
 
 	int diff = b.uordblks - a.uordblks;
@@ -34,6 +39,7 @@ void Test::run()
 	{
 		std::cerr << "Test leaks memory: " << diff << std::endl;
 	}
+#endif
 
 	std::cout << std::endl;
 }
