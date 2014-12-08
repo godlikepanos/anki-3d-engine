@@ -281,18 +281,18 @@ Bool Barrier::wait()
 	BarrierImpl& barrier = *reinterpret_cast<BarrierImpl*>(m_impl);
 
 	EnterCriticalSection(&barrier.m_mtx);
-	U32 gen = m_generation;
+	U32 gen = barrier.m_generation;
 
-	if(--m_count == 0)
+	if(--barrier.m_count == 0)
 	{
-		++m_generation;
-		m_count = m_threshold;
+		++barrier.m_generation;
+		barrier.m_count = barrier.m_threshold;
 		WakeAllConditionVariable(&barrier.m_cvar);
 		LeaveCriticalSection(&barrier.m_mtx);
 		return true;
 	}
 
-	while(gen == m_generation)
+	while(gen == barrier.m_generation)
 	{
 		SleepConditionVariableCS(&barrier.m_cvar, &barrier.m_mtx, INFINITE);
 	}
