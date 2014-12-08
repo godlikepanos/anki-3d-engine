@@ -10,31 +10,58 @@
 
 ANKI_TEST(Memory, StackMemoryPool)
 {
-	/*constexpr U n = 4;
-	StackAllocator<U8, true> alloc(sizeof(Foo) * n + sizeof(PtrSize));
+	// Create/destroy test
+	{
+		StackMemoryPool pool;
+	}
 
-	Foo* f = ANKI_NEW(Foo, alloc, 123);
+	// Create/destroy test #2
+	{
+		StackMemoryPool pool;
 
-	ANKI_TEST_EXPECT_EQ(f->x, 123);
+		ANKI_TEST_EXPECT_NO_ERR(pool.create(allocAligned, nullptr, 10, 4));
+	}
 
-	ANKI_TEST_EXPECT_EQ(alloc.getMemoryPool().getAllocatedSize(),
-		sizeof(Foo) + sizeof(U32));
+	// Allocate
+	{
+		StackMemoryPool pool;
 
-	ANKI_DELETE(f, alloc);
+		ANKI_TEST_EXPECT_NO_ERR(pool.create(allocAligned, nullptr, 100, 4));
 
-	ANKI_TEST_EXPECT_EQ(alloc.getMemoryPool().getAllocatedSize(), 0);
+		void* a = pool.allocate(25, 1);
+		ANKI_TEST_EXPECT_NEQ(a, nullptr);
+		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 1);
+		ANKI_TEST_EXPECT_GEQ(pool.getAllocatedSize(), 25);
 
-	// Array
-	f = ANKI_NEW_ARRAY(Foo, alloc, 2, 123);
+		ANKI_TEST_EXPECT_EQ(pool.free(a), true);
+		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 0);
 
-	ANKI_TEST_EXPECT_EQ(alloc.getMemoryPool().getAllocatedSize(),
-		2 * sizeof(Foo) + sizeof(U32) + sizeof(PtrSize));
+		// Allocate a few
+		a = pool.allocate(25, 1);
+		ANKI_TEST_EXPECT_NEQ(a, nullptr);
+		a = pool.allocate(25, 1);
+		ANKI_TEST_EXPECT_NEQ(a, nullptr);
+		a = pool.allocate(25, 1);
+		ANKI_TEST_EXPECT_NEQ(a, nullptr);
+		a = pool.allocate(25, 1);
+		ANKI_TEST_EXPECT_EQ(a, nullptr);
+		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 3);
 
-	ANKI_TEST_EXPECT_NEQ(alloc.getMemoryPool().getAllocatedSize(), 0);
+		// Reset
+		pool.reset();
+		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 0);
 
-	ANKI_DELETE_ARRAY(f, alloc);
-
-	ANKI_TEST_EXPECT_EQ(alloc.getMemoryPool().getAllocatedSize(), 0);*/
+		// Allocate again
+		a = pool.allocate(25, 1);
+		ANKI_TEST_EXPECT_NEQ(a, nullptr);
+		a = pool.allocate(25, 1);
+		ANKI_TEST_EXPECT_NEQ(a, nullptr);
+		a = pool.allocate(25, 1);
+		ANKI_TEST_EXPECT_NEQ(a, nullptr);
+		a = pool.allocate(25, 1);
+		ANKI_TEST_EXPECT_EQ(a, nullptr);
+		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 3);
+	}
 }
 
 ANKI_TEST(Memory, ChainMemoryPool)

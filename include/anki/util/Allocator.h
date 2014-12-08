@@ -68,11 +68,11 @@ public:
 	};
 
 	/// Default constructor
-	GenericPoolAllocator() noexcept
+	GenericPoolAllocator()
 	{}
 
 	/// Copy constructor
-	GenericPoolAllocator(const GenericPoolAllocator& b) noexcept
+	GenericPoolAllocator(const GenericPoolAllocator& b)
 	{
 		*this = b;
 	}
@@ -80,34 +80,47 @@ public:
 	/// Copy constructor
 	template<typename Y>
 	GenericPoolAllocator(const GenericPoolAllocator<
-		Y, TPool, checkFree>& b) noexcept
+		Y, TPool, checkFree>& b)
 	{
 		*this = b;
 	}
 
-	/// Constuctor that accepts a pool
+	/// Constuctor that creates a pool
 	template<typename... TArgs>
 	explicit GenericPoolAllocator(
 		AllocAlignedCallback allocCb, void* allocCbUserData,
-		TArgs&&... args) noexcept
+		TArgs&&... args)
 	{
-		Error error = m_pool.create(
+		m_pool = reinterpret_cast<TPool*>(
+			allocCb(allocCbUserData, nullptr, sizeof(TPool), alignof(TPool)));
+		if(!m_pool)
+		{
+			ANKI_LOGF("Initialization failed");
+		}
+
+		new (m_pool) TPool();
+
+		Error error = m_pool->create(
 			allocCb, allocCbUserData, std::forward<TArgs>(args)...);
 
 		if(error)
 		{
 			ANKI_LOGF("Initialization failed");
 		}
+
+		m_pool->getRefcount() = 1;
 	}
 
 	/// Destructor
 	~GenericPoolAllocator()
-	{}
+	{
+		clear();
+	}
 
 	/// Copy
 	GenericPoolAllocator& operator=(const GenericPoolAllocator& b)
 	{
-		m_pool = b.m_pool;
+		copy(b);
 		return *this;
 	}
 
@@ -116,7 +129,7 @@ public:
 	GenericPoolAllocator& operator=(const GenericPoolAllocator<
 		U, TPool, checkFree>& b)
 	{
-		m_pool = b.m_pool;
+		copy(b);
 		return *this;
 	}
 
@@ -148,7 +161,7 @@ public:
 			? *reinterpret_cast<const PtrSize*>(hint) 
 			: alignof(value_type);
 
-		void* out = m_pool.allocate(size, alignment);
+		void* out = m_pool->allocate(size, alignment);
 
 		if(out == nullptr)
 		{
@@ -163,7 +176,7 @@ public:
 	{
 		(void)n;
 
-		Bool ok = m_pool.free(p);
+		Bool ok = m_pool->free(p);
 
 		if(checkFree && !ok)
 		{
@@ -211,14 +224,16 @@ public:
 	/// @note This is AnKi specific
 	const TPool& getMemoryPool() const
 	{
-		return m_pool;
+		ANKI_ASSERT(m_pool);
+		return *m_pool;
 	}
 
 	/// Get the memory pool
 	/// @note This is AnKi specific
 	TPool& getMemoryPool()
 	{
-		return m_pool;
+		ANKI_ASSERT(m_pool);
+		return *m_pool;
 	}
 
 	/// Allocate a new object and call it's constructor
@@ -315,7 +330,36 @@ public:
 	}
 
 private:
-	TPool m_pool;
+	TPool* m_pool = nullptr;
+
+	template<typename Y>
+	void copy(const GenericPoolAllocator<Y, TPool, checkFree>& b)
+	{
+		clear();
+		if(b.m_pool)
+		{
+			m_pool = b.m_pool;
+			++m_pool->getRefcount();
+		}
+	}
+
+	void clear()
+	{
+		if(m_pool)
+		{
+			auto count = --m_pool->getRefcount();
+			if(count == 0)
+			{
+				auto allocCb = m_pool->getAllocationCallback();
+				auto ud = m_pool->getAllocationCallbackUserData();
+				ANKI_ASSERT(allocCb);
+				m_pool->~TPool();
+				allocCb(ud, m_pool, 0, 0);
+			}
+
+			m_pool = nullptr;
+		}
+	}
 };
 
 /// @name GenericPoolAllocator global functions

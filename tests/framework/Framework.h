@@ -114,6 +114,54 @@ extern void deleteTesterSingleton();
 	} while(0);
 
 /// Intermediate macro
+#define ANKI_TEST_EXPECT_GT_IMPL(file_, line_, func_, x, y) \
+	do { \
+		if((x) <= (y)) { \
+			std::stringstream ss; \
+			ss << "FAILURE: " << #x << " > " << #y << " (" \
+				<< file_ << ":" << line_ << ")"; \
+			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			abort(); \
+		} \
+	} while(0);
+
+/// Intermediate macro
+#define ANKI_TEST_EXPECT_GEQ_IMPL(file_, line_, func_, x, y) \
+	do { \
+		if((x) < (y)) { \
+			std::stringstream ss; \
+			ss << "FAILURE: " << #x << " >= " << #y << " (" \
+				<< file_ << ":" << line_ << ")"; \
+			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			abort(); \
+		} \
+	} while(0);
+
+/// Intermediate macro
+#define ANKI_TEST_EXPECT_LT_IMPL(file_, line_, func_, x, y) \
+	do { \
+		if((x) >= (y)) { \
+			std::stringstream ss; \
+			ss << "FAILURE: " << #x << " < " << #y << " (" \
+				<< file_ << ":" << line_ << ")"; \
+			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			abort(); \
+		} \
+	} while(0);
+
+/// Intermediate macro
+#define ANKI_TEST_EXPECT_LEQ_IMPL(file_, line_, func_, x, y) \
+	do { \
+		if((x) > (y)) { \
+			std::stringstream ss; \
+			ss << "FAILURE: " << #x << " <= " << #y << " (" \
+				<< file_ << ":" << line_ << ")"; \
+			fprintf(stderr, "%s\n", ss.str().c_str()); \
+			abort(); \
+		} \
+	} while(0);
+
+/// Intermediate macro
 #define ANKI_TEST_EXPECT_NEAR_IMPL(file_, line_, func_, x, y, epsilon_) \
 	do { \
 		if(abs((x) - (y)) > (epsilon_)) { \
@@ -132,6 +180,22 @@ extern void deleteTesterSingleton();
 /// Macro to compare equal
 #define ANKI_TEST_EXPECT_NEQ(x_, y_) \
 	ANKI_TEST_EXPECT_NEQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
+
+/// Macro to compare greater than
+#define ANKI_TEST_EXPECT_GT(x_, y_) \
+	ANKI_TEST_EXPECT_GT_IMPL(__FILE__, __LINE__, __func__, x_, y_)
+
+/// Macro to compare greater than or equal
+#define ANKI_TEST_EXPECT_GEQ(x_, y_) \
+	ANKI_TEST_EXPECT_GEQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
+
+/// Macro to compare less than
+#define ANKI_TEST_EXPECT_LT(x_, y_) \
+	ANKI_TEST_EXPECT_LT_IMPL(__FILE__, __LINE__, __func__, x_, y_)
+
+/// Macro to compare less than or equal
+#define ANKI_TEST_EXPECT_LEQ(x_, y_) \
+	ANKI_TEST_EXPECT_LEQ_IMPL(__FILE__, __LINE__, __func__, x_, y_)
 
 /// Compare floats with epsilon
 #define ANKI_TEST_EXPECT_NEAR(x_, y_, e_) \

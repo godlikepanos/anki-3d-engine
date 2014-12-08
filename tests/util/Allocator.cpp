@@ -28,7 +28,7 @@ ANKI_TEST(Allocators, StackAllocator)
 	{
 		typedef StackAllocator<Foo, false> All;
 		All alloc(allocAligned, nullptr, 
-			(sizeof(Foo) + 1) * 10, 1);
+			(sizeof(Foo) + 1) * 10, alignof(Foo));
 		std::vector<Foo, All> vec(alloc);
 
 		vec.reserve(10);
@@ -51,8 +51,25 @@ ANKI_TEST(Allocators, StackAllocator)
 		ANKI_TEST_EXPECT_EQ(sum, sumi);
 	}
 
-	ANKI_TEST_EXPECT_EQ(Foo::constructorCallCount, 
-		Foo::destructorCallCount);
+	// Copy around
+	{
+		typedef StackAllocator<Foo, false> Alloc;
+
+		Alloc a(allocAligned, nullptr, 
+			(sizeof(Foo) + 1) * 10, alignof(Foo));
+
+		Alloc b(allocAligned, nullptr, 
+			(sizeof(Foo) + 1) * 10, alignof(Foo));
+
+		a = b;
+		ANKI_TEST_EXPECT_EQ(a.getMemoryPool().getUsersCount(), 2);
+
+		b = a;
+		ANKI_TEST_EXPECT_EQ(&a.getMemoryPool(), &b.getMemoryPool());
+		ANKI_TEST_EXPECT_EQ(a.getMemoryPool().getUsersCount(), 2);
+	}
+
+	ANKI_TEST_EXPECT_EQ(Foo::constructorCallCount, Foo::destructorCallCount);
 
 	// End
 	Foo::reset();
