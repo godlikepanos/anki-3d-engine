@@ -74,12 +74,12 @@ void Thread::start(void* userData, Callback callback)
 	ANKI_ASSERT(!m_started);
 	ANKI_ASSERT(callback != nullptr);
 
-	pthread_t* impl = reinterpret_cast<pthread_t*>(m_impl);
+	pthread_t* thread = reinterpret_cast<pthread_t*>(m_impl);
 
 	m_callback = callback;
 	m_userData = userData;
 
-	I err = pthread_create(impl, nullptr, pthreadCallback, this);
+	I err = pthread_create(thread, nullptr, pthreadCallback, this);
 	if(err)
 	{
 		ANKI_LOGF("pthread_create() failed");
@@ -96,10 +96,10 @@ void Thread::start(void* userData, Callback callback)
 Error Thread::join()
 {
 	ANKI_ASSERT(m_started);
-	pthread_t* impl = reinterpret_cast<pthread_t*>(m_impl);
+	pthread_t* thread = reinterpret_cast<pthread_t*>(m_impl);
 
 	void* out;
-	I err = pthread_join(*impl, &out);
+	I err = pthread_join(*thread, &out);
 	if(err)
 	{
 		ANKI_LOGF("pthread_join() failed");
@@ -135,15 +135,14 @@ Mutex::Mutex()
 		ANKI_LOGF("Out of memory");
 	}
 
-	m_impl = mtx;
-
 	I err = pthread_mutex_init(mtx, nullptr);
 	if(err)
 	{
-		free(m_impl);
-		m_impl = nullptr;
+		free(mtx);
 		ANKI_LOGF("pthread_mutex_init() failed");
 	}
+
+	m_impl = mtx;
 }
 
 //==============================================================================
@@ -159,6 +158,7 @@ Mutex::~Mutex()
 //==============================================================================
 void Mutex::lock()
 {
+	ANKI_ASSERT(m_impl);
 	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
 
 	I err = pthread_mutex_lock(mtx);
@@ -171,6 +171,7 @@ void Mutex::lock()
 //==============================================================================
 Bool Mutex::tryLock()
 {
+	ANKI_ASSERT(m_impl);
 	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
 
 	I err = pthread_mutex_trylock(mtx);
@@ -180,6 +181,7 @@ Bool Mutex::tryLock()
 //==============================================================================
 void Mutex::unlock()
 {
+	ANKI_ASSERT(m_impl);
 	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(m_impl);
 
 	I err = pthread_mutex_unlock(mtx);
@@ -203,15 +205,14 @@ ConditionVariable::ConditionVariable()
 		ANKI_LOGF("Out of memory");
 	}
 
-	m_impl = cond;
-
 	I err = pthread_cond_init(cond, nullptr);
 	if(err)
 	{
-		free(m_impl);
-		m_impl = nullptr;
+		free(cond);
 		ANKI_LOGF("pthread_cond_init() failed");
 	}
+
+	m_impl = cond;
 }
 
 //==============================================================================
@@ -227,6 +228,7 @@ ConditionVariable::~ConditionVariable()
 //==============================================================================
 void ConditionVariable::notifyOne()
 {
+	ANKI_ASSERT(m_impl);
 	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
 	pthread_cond_signal(cond);
 }
@@ -234,6 +236,7 @@ void ConditionVariable::notifyOne()
 //==============================================================================
 void ConditionVariable::notifyAll()
 {
+	ANKI_ASSERT(m_impl);
 	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
 	pthread_cond_broadcast(cond);
 }
@@ -241,15 +244,75 @@ void ConditionVariable::notifyAll()
 //==============================================================================
 void ConditionVariable::wait(Mutex& amtx)
 {
+	ANKI_ASSERT(m_impl);
+	ANKI_ASSERT(amtx.m_impl);
 	pthread_cond_t* cond = reinterpret_cast<pthread_cond_t*>(m_impl);
 	pthread_mutex_t* mtx = reinterpret_cast<pthread_mutex_t*>(amtx.m_impl);
 
 	I err = pthread_cond_wait(cond, mtx);
-
 	if(err)
 	{
-		ANKI_LOGF("pthread_cond_wait() failed: %d", err);
+		ANKI_LOGF("pthread_cond_wait() failed");
 	}
+}
+
+//==============================================================================
+// Barrier                                                                     =
+//==============================================================================
+
+//==============================================================================
+Barrier::Barrier(U32 count)
+{
+	ANKI_ASSERT(count > 1);
+
+	pthread_barrier_t* barrier = 
+		reinterpret_cast<pthread_barrier_t*>(malloc(sizeof(pthread_barrier_t)));
+	if(barrier == nullptr)
+	{
+		ANKI_LOGF("Out of memory");
+	}
+
+	I err = pthread_barrier_init(barrier, nullptr, count);
+	if(err)
+	{
+		free(barrier);
+		ANKI_LOGF("pthread_barrier_init() failed");
+	}
+
+	m_impl = barrier;
+}
+
+//==============================================================================
+Barrier::~Barrier()
+{
+	ANKI_ASSERT(m_impl);
+	pthread_barrier_t* barrier = reinterpret_cast<pthread_barrier_t*>(m_impl);
+
+	I err = pthread_barrier_destroy(barrier);
+	if(err)
+	{
+		ANKI_LOGE("pthread_barrier_destroy() failed");
+	}
+
+	free(barrier);
+	m_impl = nullptr;
+}
+
+//==============================================================================
+Bool Barrier::wait()
+{
+	ANKI_ASSERT(m_impl);
+
+	pthread_barrier_t* barrier = 
+		reinterpret_cast<pthread_barrier_t*>(m_impl);
+
+	I err = pthread_barrier_wait(barrier);
+	if(err != PTHREAD_BARRIER_SERIAL_THREAD && err != 0)
+	{
+		ANKI_LOGF("pthread_barrier_wait() failed");
+	}
+
+	return true;
 }
 
 } // end namespace anki

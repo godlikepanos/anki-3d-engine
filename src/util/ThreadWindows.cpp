@@ -227,5 +227,80 @@ void ConditionVariable::wait(Mutex& amtx)
 	SleepConditionVariableCS(cond, mtx, INFINITE);
 }
 
+//==============================================================================
+// Barrier                                                                     =
+//==============================================================================
+
+//==============================================================================
+struct BarrierImpl
+{
+	CONDITION_VARIABLE m_cvar;
+	CRITICAL_SECTION m_mtx;
+	U32 m_threshold;
+	U32 m_count;
+	U32 m_generation;
+};
+
+//==============================================================================
+Barrier::Barrier(U32 count)
+{
+	ANKI_ASSERT(count > 1);
+
+	BarrierImpl* barrier = 
+		reinterpret_cast<BarrierImpl*>(malloc(sizeof(BarrierImpl)));
+	if(barrier == nullptr)
+	{
+		ANKI_LOGF("Out of memory");
+	}
+
+	InitializeCriticalSection(&barrier->m_mtx);
+	InitializeConditionVariable(&barrier->m_cvar);
+
+	barrier->m_threshold = count;
+	barrier->m_count = count;
+	barrier->m_generation = 0;
+
+	m_impl = barrier;
+}
+
+//==============================================================================
+Barrier::~Barrier()
+{
+	ANKI_ASSERT(m_impl);
+	BarrierImpl* barrier = reinterpret_cast<BarrierImpl*>(m_impl);
+
+	DeleteCriticalSection(&barrier->m_mtx);
+	free(barrier);
+	m_impl = nullptr;
+}
+
+//==============================================================================
+Bool Barrier::wait()
+{
+	ANKI_ASSERT(m_impl);
+	BarrierImpl& barrier = *reinterpret_cast<BarrierImpl*>(m_impl);
+
+	EnterCriticalSection(&barrier.m_mtx);
+	U32 gen = m_generation;
+
+	if(--m_count == 0)
+	{
+		++m_generation;
+		m_count = m_threshold;
+		WakeAllConditionVariable(&barrier.m_cvar);
+		LeaveCriticalSection(&barrier.m_mtx);
+		return true;
+	}
+
+	while(gen == m_generation)
+	{
+		SleepConditionVariableCS(&barrier.m_cvar, &barrier.m_mtx, INFINITE);
+	}
+
+	LeaveCriticalSection(&barrier.m_mtx);
+	return false;
+}
+
+
 } // end namespace anki
 

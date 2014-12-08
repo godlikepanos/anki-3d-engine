@@ -178,25 +178,15 @@ private:
 class Barrier: public NonCopyable
 {
 public:
-	Barrier(U32 count)
-	:	m_threshold(count), 
-		m_count(count), 
-		m_generation(0)
-	{
-		ANKI_ASSERT(count != 0);
-	}
+	Barrier(U32 count);
 
-	~Barrier() = default;
+	~Barrier();
 
 	/// Wait until all threads call wait().
 	Bool wait();
 
 private:
-	Mutex m_mtx;
-	ConditionVariable m_cond;
-	U32 m_threshold;
-	U32 m_count;
-	U32 m_generation;
+	void* m_impl = nullptr;
 };
 
 // Forward
