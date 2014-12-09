@@ -15,7 +15,7 @@ namespace anki {
 // Forward
 class File;
 
-/// @addtogroup util_other
+/// @addtogroup util_private
 /// @{
 
 /// The logger singleton class. The logger cannot print errors or throw
@@ -94,13 +94,6 @@ private:
 };
 
 typedef Singleton<Logger> LoggerSingleton;
-/// @}
-
-} // end namespace
-
-//==============================================================================
-// Macros                                                                      =
-//==============================================================================
 
 #define ANKI_LOGGER_MESSAGE(t, ...) \
 	do \
@@ -108,17 +101,28 @@ typedef Singleton<Logger> LoggerSingleton;
 		LoggerSingleton::get().writeFormated(ANKI_FILE, __LINE__, ANKI_FUNC, \
 			t, __VA_ARGS__); \
 	} while(false);
+/// @}
 
+/// @addtogroup util_logging
+/// @{
+
+/// Log information message.
 #define ANKI_LOGI(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::NORMAL, \
 	__VA_ARGS__)
 
+/// Log warning message.
 #define ANKI_LOGW(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::WARNING, \
 	__VA_ARGS__)
 
+/// Log error message.
 #define ANKI_LOGE(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::ERROR, \
 	__VA_ARGS__)
 
+/// Log fatal message. It will will abort.
 #define ANKI_LOGF(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::FATAL, \
 	__VA_ARGS__)
+/// @}
+
+} // end namespace anki
 
 #endif

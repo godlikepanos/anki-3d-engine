@@ -8,7 +8,7 @@
 #include "anki/util/Allocator.h"
 #include <string>
 
-ANKI_TEST(Allocators, StackAllocator)
+ANKI_TEST(Util, StackAllocator)
 {
 	Foo::reset();
 

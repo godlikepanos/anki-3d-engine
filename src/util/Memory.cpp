@@ -134,18 +134,80 @@ void* allocAligned(
 }
 
 //==============================================================================
+// BaseMemoryPool                                                              =
+//==============================================================================
+
+//==============================================================================
+BaseMemoryPool::~BaseMemoryPool()
+{
+	ANKI_ASSERT(m_refcount == 0 && "Refcount should be zero");
+}
+
+//==============================================================================
+Bool BaseMemoryPool::isCreated() const
+{
+	return m_allocCb != nullptr;
+}
+
+//==============================================================================
+void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)
+{
+	void* out = nullptr;
+	switch(m_type)
+	{
+	case Type::HEAP:
+		out = static_cast<HeapMemoryPool*>(this)->allocate(
+			size, alignmentBytes);
+		break;
+	case Type::STACK:
+		out = static_cast<StackMemoryPool*>(this)->allocate(
+			size, alignmentBytes);
+		break;
+	case Type::CHAIN:
+		out = static_cast<ChainMemoryPool*>(this)->allocate(
+			size, alignmentBytes);
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+//==============================================================================
+Bool BaseMemoryPool::free(void* ptr)
+{
+	Bool out = false;
+	switch(m_type)
+	{
+	case Type::HEAP:
+		out = static_cast<HeapMemoryPool*>(this)->free(ptr);
+		break;
+	case Type::STACK:
+		out = static_cast<StackMemoryPool*>(this)->free(ptr);
+		break;
+	case Type::CHAIN:
+		out = static_cast<ChainMemoryPool*>(this)->free(ptr);
+		break;
+	default:
+		ANKI_ASSERT(0);
+	}
+
+	return out;
+}
+
+//==============================================================================
 // HeapMemoryPool                                                              =
 //==============================================================================
 
 //==============================================================================
 HeapMemoryPool::HeapMemoryPool()
+:	BaseMemoryPool(Type::HEAP)
 {}
 
 //==============================================================================
 HeapMemoryPool::~HeapMemoryPool()
 {
-	ANKI_ASSERT(m_refcount == 0 && "Refcount should be zero");
-
 	if(m_allocationsCount != 0)
 	{
 		ANKI_LOGW("Memory pool destroyed before all memory being released");
@@ -156,11 +218,10 @@ HeapMemoryPool::~HeapMemoryPool()
 Error HeapMemoryPool::create(
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 {
+	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(m_allocCb == nullptr);
 	ANKI_ASSERT(allocCb != nullptr);
 
-	m_refcount = 0;
-	m_allocationsCount = 0;
 	m_allocCb = allocCb;
 	m_allocCbUserData = allocCbUserData;
 #if ANKI_MEM_SIGNATURES
@@ -173,7 +234,8 @@ Error HeapMemoryPool::create(
 
 //==============================================================================
 void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
-{	
+{
+	ANKI_ASSERT(isCreated());
 #if ANKI_MEM_SIGNATURES
 	ANKI_ASSERT(alignment <= MAX_ALIGNMENT && "Wrong assumption");
 	size += m_headerSize;
@@ -204,6 +266,8 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 //==============================================================================
 Bool HeapMemoryPool::free(void* ptr)
 {
+	ANKI_ASSERT(isCreated());
+
 #if ANKI_MEM_SIGNATURES
 	U8* memU8 = static_cast<U8*>(ptr);
 	memU8 -= m_headerSize;
@@ -226,6 +290,7 @@ Bool HeapMemoryPool::free(void* ptr)
 
 //==============================================================================
 StackMemoryPool::StackMemoryPool()
+:	BaseMemoryPool(Type::STACK)
 {}
 
 //==============================================================================
@@ -246,18 +311,17 @@ Error StackMemoryPool::create(
 	AllocAlignedCallback allocCb, void* allocCbUserData,
 	PtrSize size, PtrSize alignmentBytes)
 {
+	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(allocCb);
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(alignmentBytes > 0);
 
 	Error error = ErrorCode::NONE;
 
-	m_refcount = 0;
 	m_allocCb = allocCb;
 	m_allocCbUserData = allocCbUserData;
 	m_alignmentBytes = alignmentBytes;
 	m_memsize = getAlignedRoundUp(alignmentBytes, size);
-	m_allocationsCount = 0;
 
 	m_memory = reinterpret_cast<U8*>(m_allocCb(
 		m_allocCbUserData, nullptr, m_memsize, m_alignmentBytes));
@@ -288,7 +352,7 @@ Error StackMemoryPool::create(
 //==============================================================================
 void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
-	ANKI_ASSERT(m_memory != nullptr);
+	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(alignment <= m_alignmentBytes);
 	(void)alignment;
 
@@ -322,12 +386,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 	}
 	else
 	{
-		// Not always an error
-		if(!m_ignoreAllocationErrors)
-		{
-			ANKI_LOGE("Out of memory");
-		}
-
+		ANKI_LOGE("Out of memory");
 		out = nullptr;
 	}
 
@@ -337,6 +396,8 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 //==============================================================================
 Bool StackMemoryPool::free(void* ptr)
 {
+	ANKI_ASSERT(isCreated());
+
 	// ptr shouldn't be null or not aligned. If not aligned it was not 
 	// allocated by this class
 	ANKI_ASSERT(ptr != nullptr && isAligned(m_alignmentBytes, ptr));
@@ -380,6 +441,8 @@ Bool StackMemoryPool::free(void* ptr)
 //==============================================================================
 void StackMemoryPool::reset()
 {
+	ANKI_ASSERT(isCreated());
+
 	// memory is nullptr if moved
 	ANKI_ASSERT(m_memory != nullptr);
 
@@ -395,14 +458,14 @@ void StackMemoryPool::reset()
 //==============================================================================
 StackMemoryPool::Snapshot StackMemoryPool::getShapshot() const
 {
-	ANKI_ASSERT(m_memory != nullptr);
+	ANKI_ASSERT(isCreated());
 	return m_top.load();
 }
 
 //==============================================================================
 void StackMemoryPool::resetUsingSnapshot(Snapshot s)
 {
-	ANKI_ASSERT(m_memory != nullptr);
+	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(static_cast<U8*>(s) >= m_memory);
 	ANKI_ASSERT(static_cast<U8*>(s) < m_memory + m_memsize);
 
@@ -415,19 +478,22 @@ void StackMemoryPool::resetUsingSnapshot(Snapshot s)
 
 //==============================================================================
 ChainMemoryPool::ChainMemoryPool()
+:	BaseMemoryPool(Type::CHAIN)
 {}
 
 //==============================================================================
 ChainMemoryPool::~ChainMemoryPool()
 {
+	if(m_allocationsCount != 0)
+	{
+		ANKI_LOGW("Memory pool destroyed before all memory being released");
+	}
+
 	Chunk* ch = m_headChunk;
 	while(ch)
 	{
 		Chunk* next = ch->m_next;
-
-		ch->~Chunk();
-		m_allocCb(m_allocCbUserData, ch, 0, 0);
-
+		destroyChunk(ch);
 		ch = next;
 	}
 
@@ -449,6 +515,7 @@ Error ChainMemoryPool::create(
 	PtrSize chunkAllocStep, 
 	PtrSize alignmentBytes)
 {
+	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(m_allocCb == nullptr);
 
 	// Set all values
@@ -464,6 +531,7 @@ Error ChainMemoryPool::create(
 		m_allocCbUserData, nullptr, sizeof(SpinLock), alignof(SpinLock)));
 	if(!m_lock)
 	{
+		ANKI_LOGE("Out of memory");
 		return ErrorCode::OUT_OF_MEMORY;
 	}
 	construct(m_lock);
@@ -472,20 +540,20 @@ Error ChainMemoryPool::create(
 	ANKI_ASSERT(m_initSize > 0 && "Wrong arg");
 
 	// On fixed step should be 0
-	if(m_method == ChainMemoryPool::ChunkGrowMethod::FIXED)
+	if(m_method == ChunkGrowMethod::FIXED)
 	{
 		ANKI_ASSERT(m_step == 0 && "Wrong arg");
 	}
 
 	// On fixed initial size is the same as the max
-	if(m_method == ChainMemoryPool::ChunkGrowMethod::FIXED)
+	if(m_method == ChunkGrowMethod::FIXED)
 	{
 		ANKI_ASSERT(m_initSize == m_maxSize && "Wrong arg");
 	}
 
 	// On add and mul the max size should be greater than initial
-	if(m_method == ChainMemoryPool::ChunkGrowMethod::ADD 
-		|| m_method == ChainMemoryPool::ChunkGrowMethod::MULTIPLY)
+	if(m_method == ChunkGrowMethod::ADD 
+		|| m_method == ChunkGrowMethod::MULTIPLY)
 	{
 		ANKI_ASSERT(m_initSize < m_maxSize && "Wrong arg");
 	}
@@ -496,7 +564,7 @@ Error ChainMemoryPool::create(
 //==============================================================================
 void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
-	ANKI_ASSERT(m_allocCb);
+	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(size <= m_maxSize);
 
 	Chunk* ch;
@@ -512,7 +580,8 @@ void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 		|| (mem = allocateFromChunk(ch, size, alignment)) == nullptr)
 	{
 		// Create new chunk
-		ch = createNewChunk(size);
+		PtrSize chunkSize = computeNewChunkSize(size);
+		ch = createNewChunk(chunkSize);
 
 		// Chunk creation failed
 		if(ch == nullptr)
@@ -535,7 +604,7 @@ void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 //==============================================================================
 Bool ChainMemoryPool::free(void* ptr)
 {
-	ANKI_ASSERT(m_allocCb);
+	ANKI_ASSERT(isCreated());
 	if(ptr == nullptr)
 	{
 		return true;
@@ -543,13 +612,13 @@ Bool ChainMemoryPool::free(void* ptr)
 
 	LockGuard<SpinLock> lock(*m_lock);
 
-	// Get the chunk that ptr belongs to
+	// Find the chunk the ptr belongs to
 	Chunk* chunk = m_headChunk;
 	Chunk* prevChunk = nullptr;
 	while(chunk)
 	{
-		const U8* from = chunk->m_pool.m_memory;
-		const U8* to = from + chunk->m_pool.m_memsize;
+		const U8* from = chunk->m_memory;
+		const U8* to = from + chunk->m_memsize;
 		const U8* cptr = reinterpret_cast<const U8*>(ptr);
 		if(cptr >= from && cptr < to)
 		{
@@ -587,8 +656,7 @@ Bool ChainMemoryPool::free(void* ptr)
 		}
 
 		// Finaly delete it
-		chunk->~Chunk();
-		m_allocCb(m_allocCbUserData, chunk, 0, 0);
+		destroyChunk(chunk);
 	}
 
 	--m_allocationsCount;
@@ -599,7 +667,7 @@ Bool ChainMemoryPool::free(void* ptr)
 //==============================================================================
 PtrSize ChainMemoryPool::getChunksCount() const
 {
-	ANKI_ASSERT(m_allocCb);
+	ANKI_ASSERT(isCreated());
 
 	PtrSize count = 0;
 	Chunk* ch = m_headChunk;
@@ -615,13 +683,13 @@ PtrSize ChainMemoryPool::getChunksCount() const
 //==============================================================================
 PtrSize ChainMemoryPool::getAllocatedSize() const
 {
-	ANKI_ASSERT(m_allocCb);
+	ANKI_ASSERT(isCreated());
 
 	PtrSize sum = 0;
 	Chunk* ch = m_headChunk;
 	while(ch)
 	{
-		sum += ch->m_pool.getAllocatedSize();
+		sum += ch->m_top - ch->m_memory;
 		ch = ch->m_next;
 	}
 
@@ -629,15 +697,13 @@ PtrSize ChainMemoryPool::getAllocatedSize() const
 }
 
 //==============================================================================
-ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
+PtrSize ChainMemoryPool::computeNewChunkSize(PtrSize size)
 {
-	//
-	// Calculate preferred size
-	//
-	
+	ANKI_ASSERT(size <= m_maxSize);
+
 	// Get the size of the next chunk
 	PtrSize crntMaxSize;
-	if(m_method == ChainMemoryPool::ChunkGrowMethod::FIXED)
+	if(m_method == ChunkGrowMethod::FIXED)
 	{
 		crntMaxSize = m_initSize;
 	}
@@ -647,7 +713,8 @@ ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
 		if(m_tailChunk != nullptr)
 		{
 			// Get the size of previous
-			crntMaxSize = m_tailChunk->m_pool.getTotalSize();
+			crntMaxSize = m_tailChunk->m_memsize;
+			ANKI_ASSERT(crntMaxSize > 0);
 
 			// Increase it
 			if(m_method == ChainMemoryPool::ChunkGrowMethod::MULTIPLY)
@@ -672,27 +739,38 @@ ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
 		ANKI_ASSERT(crntMaxSize > 0);
 
 		// Fix the size
-		crntMaxSize = min(crntMaxSize, (PtrSize)m_maxSize);
+		crntMaxSize = min(crntMaxSize, m_maxSize);
 	}
 
-	size = max(crntMaxSize, size) + 16;
+	size = max(crntMaxSize, size) + m_alignmentBytes;
 
-	//
-	// Create the chunk
-	//
-	Chunk* chunk = (Chunk*)m_allocCb(
-		m_allocCbUserData, nullptr, sizeof(Chunk), alignof(Chunk));
+	return size;
+}
+
+//==============================================================================
+ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
+{
+	ANKI_ASSERT(size > 0);
+
+	Chunk* chunk = reinterpret_cast<Chunk*>(m_allocCb(
+		m_allocCbUserData, nullptr, sizeof(Chunk), alignof(Chunk)));
 
 	if(chunk)
 	{
 		// Construct it
 		construct(chunk);
-		Error error = chunk->m_pool.create(
-			m_allocCb, m_allocCbUserData, size, m_alignmentBytes);
 
-		if(!error)
+		// Initialize it
+		chunk->m_memory = reinterpret_cast<U8*>(
+			m_allocCb(m_allocCbUserData, nullptr, size, m_alignmentBytes));
+		if(chunk->m_memory)
 		{
-			chunk->m_pool.m_ignoreAllocationErrors = true;
+			chunk->m_memsize = size;
+			chunk->m_top = chunk->m_memory;
+
+#if ANKI_DEBUG
+			memset(chunk->m_memory, 0xCC, chunk->m_memsize);
+#endif
 
 			// Register it
 			if(m_tailChunk)
@@ -703,12 +781,12 @@ ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
 			else
 			{
 				ANKI_ASSERT(m_headChunk == nullptr);
-
 				m_headChunk = m_tailChunk = chunk;
 			}
 		}
 		else
 		{
+			ANKI_LOGE("Out of memory");
 			destruct(chunk);
 			m_allocCb(m_allocCbUserData, chunk, 0, 0);
 			chunk = nullptr;
@@ -728,18 +806,43 @@ void* ChainMemoryPool::allocateFromChunk(
 {
 	ANKI_ASSERT(ch);
 	ANKI_ASSERT(size <= m_maxSize);
-	void* mem = ch->m_pool.allocate(size, alignment);
+	ANKI_ASSERT(ch->m_top <= ch->m_memory + ch->m_memsize);
 
-	if(mem)
+	U8* mem = ch->m_top;
+	alignRoundUp(m_alignmentBytes, mem);
+	U8* newTop = mem + size;
+
+	if(newTop <= ch->m_memory + ch->m_memsize)
 	{
+		ch->m_top = newTop;
 		++ch->m_allocationsCount;
 	}
 	else
 	{
 		// Chunk is full. Need a new one
+		mem = nullptr;
 	}
 
 	return mem;
+}
+
+//==============================================================================
+void ChainMemoryPool::destroyChunk(Chunk* ch)
+{
+	ANKI_ASSERT(ch);
+
+	if(ch->m_memory)
+	{
+#if ANKI_DEBUG
+		memset(ch->m_memory, 0xCC, ch->m_memsize);
+#endif
+		m_allocCb(m_allocCbUserData, ch->m_memory, 0, 0);
+	}
+
+#if ANKI_DEBUG
+	memset(ch, 0xCC, sizeof(*ch));
+#endif
+	m_allocCb(m_allocCbUserData, ch, 0, 0);
 }
 
 } // end namespace anki

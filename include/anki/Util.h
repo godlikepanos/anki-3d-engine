@@ -30,6 +30,9 @@
 /// @defgroup util_thread Threading
 /// @ingroup util
 
+/// @defgroup util_logging Logging
+/// @ingroup util
+
 /// @defgroup util_other Other interfaces
 /// @ingroup util
 

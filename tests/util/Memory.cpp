@@ -8,7 +8,7 @@
 #include "anki/util/Memory.h"
 #include <type_traits>
 
-ANKI_TEST(Memory, StackMemoryPool)
+ANKI_TEST(Util, StackMemoryPool)
 {
 	// Create/destroy test
 	{
@@ -64,7 +64,7 @@ ANKI_TEST(Memory, StackMemoryPool)
 	}
 }
 
-ANKI_TEST(Memory, ChainMemoryPool)
+ANKI_TEST(Util, ChainMemoryPool)
 {
 	// Basic test
 	{

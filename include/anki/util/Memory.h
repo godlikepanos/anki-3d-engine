@@ -47,9 +47,92 @@ using AllocationSignature = U32;
 void* allocAligned(
 	void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
+/// Generic memory pool. It can be HeapMemoryPool or StackMemoryPool or 
+/// ChainMemoryPool.
+class BaseMemoryPool: public NonCopyable
+{
+public:
+	/// Pool type.
+	enum class Type: U8
+	{
+		NONE,
+		HEAP,
+		STACK,
+		CHAIN
+	};
+
+	BaseMemoryPool(Type type)
+	:	m_type(type)
+	{}
+
+	virtual ~BaseMemoryPool();
+
+	/// Allocate memory. This operation MAY be thread safe
+	/// @param size The size to allocate
+	/// @param alignmentBytes The alignment of the returned address
+	/// @return The allocated memory or nullptr on failure
+	void* allocate(PtrSize size, PtrSize alignmentBytes);
+
+	/// Free memory. If the ptr is not the last allocation of the chunk
+	/// then nothing happens and the method returns false
+	/// @param[in, out] ptr Memory block to deallocate
+	/// @return True if the deallocation actually happened and false otherwise
+	Bool free(void* ptr);
+
+	/// Get refcount.
+	AtomicU32& getRefcount()
+	{
+		return m_refcount;
+	}
+
+	/// Get number of users.
+	U32 getUsersCount() const
+	{
+		return m_refcount.load();
+	}
+
+	/// Get allocation callback.
+	AllocAlignedCallback getAllocationCallback() const
+	{
+		return m_allocCb;
+	}
+
+	/// Get allocation callback user data.
+	void* getAllocationCallbackUserData() const
+	{
+		return m_allocCbUserData;
+	}
+
+	/// Return number of allocations
+	U32 getAllocationsCount() const
+	{
+		return m_allocationsCount.load();
+	}
+
+protected:
+	/// User allocation function.
+	AllocAlignedCallback m_allocCb = nullptr;
+
+	/// User allocation function data.
+	void* m_allocCbUserData = nullptr;
+
+	/// Allocations count.
+	AtomicU32 m_allocationsCount = {0};
+
+	/// Check if already created.
+	Bool isCreated() const;
+
+private:
+	/// Type.
+	Type m_type = Type::NONE;
+
+	/// Refcount.
+	AtomicU32 m_refcount = {0};
+};
+
 /// A dummy interface to match the StackMemoryPool and ChainMemoryPool 
 /// interfaces in order to be used by the same allocator template
-class HeapMemoryPool
+class HeapMemoryPool: public BaseMemoryPool
 {
 public:
 	/// Default constructor
@@ -74,41 +157,7 @@ public:
 	/// Free memory
 	Bool free(void* ptr);
 
-	/// Get refcount.
-	AtomicU32& getRefcount()
-	{
-		return m_refcount;
-	}
-
-	/// Get the number of users for this pool.
-	U32 getUsersCount() const
-	{
-		return m_refcount.load();
-	}
-
-	/// Return number of allocations
-	U32 getAllocationsCount() const
-	{
-		return m_allocationsCount.load();
-	}
-
-	/// Get allocation callback.
-	AllocAlignedCallback getAllocationCallback() const
-	{
-		return m_allocCb;
-	}
-
-	/// Get allocation callback user data.
-	void* getAllocationCallbackUserData() const
-	{
-		return m_allocCbUserData;
-	}
-
 private:
-	AtomicU32 m_refcount = {0};
-	AllocAlignedCallback m_allocCb = nullptr;
-	void* m_allocCbUserData = nullptr;
-	AtomicU32 m_allocationsCount = {0};
 #if ANKI_MEM_USE_SIGNATURES
 	AllocationSignature m_signature = 0;
 	static const U32 MAX_ALIGNMENT = 16;
@@ -119,10 +168,8 @@ private:
 /// Thread safe memory pool. It's a preallocated memory pool that is used for 
 /// memory allocations on top of that preallocated memory. It is mainly used by 
 /// fast stack allocators
-class StackMemoryPool: public NonCopyable
+class StackMemoryPool: public BaseMemoryPool
 {
-	friend class ChainMemoryPool;
-
 public:
 	/// The type of the pool's snapshot
 	using Snapshot = void*;
@@ -155,36 +202,6 @@ public:
 	/// @param[in, out] ptr Memory block to deallocate
 	/// @return True if the deallocation actually happened and false otherwise
 	Bool free(void* ptr);
-
-	/// Get the refcount.
-	AtomicU32& getRefcount()
-	{
-		return m_refcount;
-	}
-
-	/// Get the number of users for this pool.
-	U32 getUsersCount() const
-	{
-		return m_refcount.load();
-	}
-
-	/// Get allocation callback.
-	AllocAlignedCallback getAllocationCallback() const
-	{
-		return m_allocCb;
-	}
-
-	/// Get allocation callback user data.
-	void* getAllocationCallbackUserData() const
-	{
-		return m_allocCbUserData;
-	}
-
-	/// Return number of allocations
-	U32 getAllocationsCount() const
-	{
-		return m_allocationsCount.load();
-	}
 
 	/// Get the total size.
 	PtrSize getTotalSize() const
@@ -221,22 +238,13 @@ private:
 	static_assert(alignof(MemoryBlockHeader) == 1, "Alignment error");
 	static_assert(sizeof(MemoryBlockHeader) == sizeof(U32), "Size error");
 
-	/// Refcount
-	AtomicU32 m_refcount = {0};
-
-	/// User allocation function
-	AllocAlignedCallback m_allocCb = nullptr;
-
-	/// User allocation function data
-	void* m_allocCbUserData = nullptr;
-
 	/// Alignment of allocations
 	PtrSize m_alignmentBytes = 0;
 
 	/// Aligned size of MemoryBlockHeader
 	PtrSize m_headerSize = 0;
 
-	/// Pre-allocated memory chunk
+	/// Pre-allocated memory chunk.
 	U8* m_memory = nullptr;
 
 	/// Size of the pre-allocated memory chunk
@@ -244,16 +252,11 @@ private:
 
 	/// Points to the memory and more specifically to the top of the stack
 	Atomic<U8*> m_top = {nullptr};
-
-	AtomicU32 m_allocationsCount = {0};
-
-	/// The ChainMemoryPool will set that to true.
-	Bool8 m_ignoreAllocationErrors = false;
 };
 
 /// Chain memory pool. Almost similar to StackMemoryPool but more flexible and 
 /// at the same time a bit slower.
-class ChainMemoryPool: public NonCopyable
+class ChainMemoryPool: public BaseMemoryPool
 {
 public:
 	/// Chunk allocation method. Defines the size a newely created chunk should
@@ -304,36 +307,6 @@ public:
 	/// @return True if the deallocation actually happened and false otherwise
 	Bool free(void* ptr);
 
-	/// Get refcount.
-	AtomicU32& getRefcount()
-	{
-		return m_refcount;
-	}
-
-	/// Get the number of users for this pool
-	U32 getUsersCount() const
-	{
-		return m_refcount.load();
-	}
-
-	/// Get allocation callback.
-	AllocAlignedCallback getAllocationCallback() const
-	{
-		return m_allocCb;
-	}
-
-	/// Get allocation callback user data.
-	void* getAllocationCallbackUserData() const
-	{
-		return m_allocCbUserData;
-	}
-
-	/// Return number of allocations
-	U32 getAllocationsCount() const
-	{
-		return m_allocationsCount;
-	}
-
 	/// @name Methods used for optimizing future chains.
 	/// @{
 	PtrSize getChunksCount() const;
@@ -345,7 +318,14 @@ private:
 	/// A chunk of memory
 	struct Chunk
 	{
-		StackMemoryPool m_pool;
+		/// Pre-allocated memory chunk.
+		U8* m_memory = nullptr;
+
+		/// Size of the pre-allocated memory chunk
+		PtrSize m_memsize = 0;
+
+		/// Points to the memory and more specifically to the top of the stack
+		U8* m_top = nullptr;
 
 		/// Used to identify if the chunk can be deleted
 		U32 m_allocationsCount = 0;
@@ -354,49 +334,43 @@ private:
 		Chunk* m_next = nullptr;
 	};
 
-	/// Refcount
-	AtomicU32 m_refcount = {0};
-
-	/// User allocation function
-	AllocAlignedCallback m_allocCb = nullptr;
-
-	/// User allocation function data
-	void* m_allocCbUserData = nullptr;
-
-	/// Alignment of allocations
+	/// Alignment of allocations.
 	PtrSize m_alignmentBytes = 0;
 
-	/// The first chunk
+	/// The first chunk.
 	Chunk* m_headChunk = nullptr;
 
-	/// Current chunk to allocate from
+	/// Current chunk to allocate from.
 	Chunk* m_tailChunk = nullptr;
 
-	/// Fast thread locking
+	/// Fast thread locking.
 	SpinLock* m_lock = nullptr;
 
-	/// Chunk first chunk size
+	/// Size of the first chunk.
 	PtrSize m_initSize = 0;
 
-	/// Chunk max size
+	/// Chunk max size.
 	PtrSize m_maxSize = 0;
 
-	/// Chunk allocation method value
+	/// Chunk allocation method value.
 	U32 m_step = 0;
 
-	/// Chunk allocation method
+	/// Chunk allocation method.
 	ChunkGrowMethod m_method = ChunkGrowMethod::NONE;
 
-	/// Allocations number.
-	U32 m_allocationsCount = 0;
+	/// Compute the size for the next chunk.
+	/// @param size The current allocation size.
+	PtrSize computeNewChunkSize(PtrSize size);
 
-	/// Create a new chunk
+	/// Create a new chunk.
 	Chunk* createNewChunk(PtrSize size);
 
-	/// Allocate from chunk
+	/// Allocate from chunk.
 	void* allocateFromChunk(Chunk* ch, PtrSize size, PtrSize alignment);
-};
 
+	/// Destroy a chunk.
+	void destroyChunk(Chunk* ch);
+};
 /// @}
 
 } // end namespace anki
