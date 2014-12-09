@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_PHYSICS_BODY_H
-#define ANKI_PHYSICS_BODY_H
+#ifndef ANKI_PHYSICS_PHYSICS_BODY_H
+#define ANKI_PHYSICS_PHYSICS_BODY_H
 
 #include "anki/physics/Common.h"
 
@@ -14,9 +14,13 @@ namespace anki {
 /// @{
 
 /// Rigid body.
-class Body
+class PhysicsBody
 {
 public:
+	PhysicsBody();
+
+	~PhysicsBody();
+
 private:
 	NewtonBody* m_body;
 	Transform m_trf;

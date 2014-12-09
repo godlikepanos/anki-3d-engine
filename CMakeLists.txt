@@ -230,7 +230,8 @@ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE
 #
 # Include & lib directories
 #
-include_directories("thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z" "thirdparty/bullet" "thirdparty/SDL2/include" "include" "${CMAKE_CURRENT_BINARY_DIR}")
+include_directories("thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z" "thirdparty/bullet" 
+	"thirdparty/SDL2/include" "include" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}")
 
 if(LINUX OR MACOS OR WINDOWS)
 	include_directories("thirdparty/GLEW/include")
