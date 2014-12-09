@@ -3,27 +3,24 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_PHYSICS_PHYS_WORLD_H
-#define ANKI_PHYSICS_PHYS_WORLD_H
+#ifndef ANKI_PHYSICS_BODY_H
+#define ANKI_PHYSICS_BODY_H
 
-#include "anki/util/StdTypes.h"
+#include "anki/physics/Common.h"
 
 namespace anki {
 
 /// @addtogroup physics
 /// @{
 
-/// The master container for all physics related stuff.
-class PhysicsWorld
+/// Rigid body.
+class Body
 {
 public:
-	PhysicsWorld();
-	~PhysicsWorld();
-
 private:
-	NewtonWorld* m_world = nullptr;
+	NewtonBody* m_body;
+	Transform m_trf;
 };
-
 /// @}
 
 } // end namespace anki
