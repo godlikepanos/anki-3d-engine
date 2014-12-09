@@ -10,10 +10,6 @@
 namespace anki {
 
 //==============================================================================
-// Gjk                                                                         =
-//==============================================================================
-
-//==============================================================================
 /// Helper of (axb)xa
 static Vec4 crossAba(const Vec4& a, const Vec4& b)
 {
@@ -234,83 +230,6 @@ Bool Gjk::intersect(const ConvexShape& shape0, const ConvexShape& shape1)
 			return true;
 		}
 	}
-}
-
-//==============================================================================
-// GjkEpa                                                                      =
-//==============================================================================
-
-//==============================================================================
-Bool GjkEpa::intersect(const ConvexShape& shape0, const ConvexShape& shape1,
-	ContactPoint& contact, CollisionTempAllocator<U8>& alloc)
-{
-	// Do the intersection test
-	Gjk gjk;
-	if(!gjk.intersect(shape0, shape1))
-	{
-		return false;
-	}
-
-	// Init polytope
-	detail::Polytope* poly = alloc.newInstance<detail::Polytope>(
-		alloc, m_maxSimplexSize, m_maxFaceCount);
-	//m_poly = poly;
-	poly->init(gjk.m_simplex);
-
-	U iterations = 0;
-	while(1) 
-	{
-		// Find the closest to the origin face
-		detail::Face& cface = poly->findClosestFace();
-
-		const Vec4& normal = cface.normal(*poly);
-		F32 distance = cface.distance(*poly);
-
-		// Get new support
-		Support p;
-		Gjk::support(shape0, shape1, normal, p);
-		F32 d = p.m_v.dot(normal);
-
-		// Check new distance
-		if(d - distance < 0.001 
-			//|| m_faceCount == m_faces.size() - 2
-			//|| m_count == m_simplexArr.size() - 1
-			//|| pIdx != m_count
-			|| iterations == 10)
-		{
-			if(iterations == 10)
-			{
-				std::cout << "too many iterations" << std::endl;
-			}
-
-			/*if(pIdx != m_count)
-			{
-				contact.m_normal = m_faces[prevFaceIndex].m_normal;
-				contact.m_depth = m_faces[prevFaceIndex].m_dist;
-			}
-			else*/
-			{
-				contact.m_normal = normal;
-				contact.m_depth = d;
-			}
-			break;
-		} 
-		else 
-		{
-			if(!poly->addSupportAndExpand(p, cface))
-			{
-				contact.m_normal = normal;
-				contact.m_depth = d;
-				break;
-			}
-		}
-
-		++iterations;
-	}
-
-	alloc.deleteInstance(poly);
-
-	return true;
 }
 
 } // end namespace anki

@@ -47,7 +47,7 @@ using AllocationSignature = U32;
 void* allocAligned(
 	void* userData, void* ptr, PtrSize size, PtrSize alignment);
 
-/// Generic memory pool. It can be HeapMemoryPool or StackMemoryPool or 
+/// Generic memory pool. The base of HeapMemoryPool or StackMemoryPool or 
 /// ChainMemoryPool.
 class BaseMemoryPool: public NonCopyable
 {
@@ -135,12 +135,7 @@ private:
 class HeapMemoryPool: public BaseMemoryPool
 {
 public:
-	/// Default constructor
-	/// @note It does _nothing_ and it should stay that way. First of all,
-	///       this class should have the same interface with the other pools
-	///       and secondly, the default constructors of the allocators that use
-	///       that pool will call that constructor and that happens a lot.
-	///       If that constructor does some actual job then we have a problem.
+	/// Default constructor.
 	HeapMemoryPool();
 
 	/// Destroy
@@ -260,8 +255,8 @@ class ChainMemoryPool: public BaseMemoryPool
 {
 public:
 	/// Chunk allocation method. Defines the size a newely created chunk should
-	/// have compared to the last created. Used to grow chunks over the time of
-	/// allocations
+	/// have compared to the last created. Used to grow chunks over the number 
+	/// of allocations that happen.
 	enum class ChunkGrowMethod: U8
 	{
 		NONE,

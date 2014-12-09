@@ -18,10 +18,7 @@ namespace anki {
 class CompoundShape: public CollisionShape, public NonCopyable
 {
 public:
-	/// @name Constructors
-	/// @{
 	CompoundShape();
-	/// @}
 
 	/// Implements CollisionShape::testPlane
 	F32 testPlane(const Plane& p) const;

@@ -19,19 +19,6 @@ class Face;
 /// @addtogroup collision_internal
 /// @{
 
-/// GJK support
-class Support
-{
-public:
-	Vec4 m_v;
-	Vec4 m_v0;
-	Vec4 m_v1;
-
-	Bool operator==(const Support& b) const
-	{
-		return m_v == b.m_v && m_v0 == b.m_v0 && m_v1 == b.m_v1;
-	}
-};
 
 /// Edge of a polytope
 class Edge
