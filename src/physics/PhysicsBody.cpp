@@ -28,6 +28,7 @@ Error PhysicsBody::create(const Initializer& init)
 	ANKI_ASSERT(init.m_world);
 	ANKI_ASSERT(init.m_shape);
 
+	// Create
 	Mat4 trf = Mat4(init.m_startTrf);
 	if(init.m_kinematic)
 	{
@@ -53,13 +54,15 @@ Error PhysicsBody::create(const Initializer& init)
 	NewtonCollision* shape = NewtonBodyGetCollision(m_body);
 	NewtonBodySetMassProperties(m_body, init.m_mass, shape);
 
-	NewtonBodySetSimulationState(m_body, true);
-
+	// Set gravity
 	if(init.m_gravity)
 	{
-		//Vec3 force = ;
-		//NewtonBodyAddForce(m_body, );
+		Vec3 gravityForce(0.0, -9.8f * init.m_mass, 0.0);
+		NewtonBodySetForce(m_body, &gravityForce[0]);
 	}
+
+	// Activate
+	NewtonBodySetSimulationState(m_body, true);
 
 	return ErrorCode::NONE;
 }
