@@ -33,7 +33,7 @@ public:
 
 	explicit TTransform(const Mat4& m4)
 	{
-		m_rotation = m4.getRotationPart();
+		m_rotation = TMat3x4<T>(m4.getRotationPart());
 		m_origin = m4.getTranslationPart();
 		m_scale = 1.0;
 		ANKI_CHECK_W();

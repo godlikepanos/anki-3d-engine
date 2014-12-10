@@ -15,6 +15,8 @@ namespace anki {
 
 // Forward
 class PhysicsWorld;
+class PhysicsCollisionShape;
+class SceneGraph;
 
 /// @addtogroup physics
 /// @{

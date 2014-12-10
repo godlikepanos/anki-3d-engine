@@ -42,8 +42,15 @@ public:
 	ANKI_USE_RESULT Error createStaticTriangleSoup(Initializer& init,
 		const Vec3* positions, U32 positionsStride, U16* indices);
 
+	NewtonCollision* _getNewtonShape()
+	{
+		ANKI_ASSERT(m_shape);
+		return m_shape;
+	}
+
 private:
 	NewtonCollision* m_shape = nullptr;
+	static I32 id;
 };
 /// @}
 

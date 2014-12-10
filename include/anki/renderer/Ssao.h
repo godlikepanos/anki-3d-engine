@@ -25,6 +25,11 @@ class Ssao: public RenderingPass
 	friend class Sslr;
 	friend class MainRenderer;
 
+	GlTextureHandle& _getRt()
+	{
+		return m_vblurRt;
+	}
+
 private:
 	U32 m_width, m_height; ///< Blur passes size
 	U8 m_blurringIterationsCount;
@@ -51,11 +56,6 @@ private:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdBuff);
-
-	GlTextureHandle& getRt()
-	{
-		return m_vblurRt;
-	}
 
 	ANKI_USE_RESULT Error createFb(
 		GlFramebufferHandle& fb, GlTextureHandle& rt);

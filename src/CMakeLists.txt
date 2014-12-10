@@ -35,7 +35,7 @@ endif()
 
 add_library(anki Dummy.cpp "${_SYS_SRC}")
 
-target_link_libraries(anki ankicore ankiscript ankirenderer ankiscene ankievent ankiinput ankiphysics ankiresource ankimisc ankigl ankicollision ankimath ankiutil ankitinyxml2 ankilua ankiz ${LIB_SDL} ${ANKI_GPERFTOOLS_LIBS} ${_SYS})
+target_link_libraries(anki ankicore ankiscript ankirenderer ankiscene ankievent ankiinput ankiphysics ankiresource ankimisc ankigl ankicollision ankimath ankiutil ankitinyxml2 ankilua ankiz ankinewton ${LIB_SDL} ${ANKI_GPERFTOOLS_LIBS} ${_SYS})
 
 set_target_properties(anki PROPERTIES LINKER_LANGUAGE CXX)
 

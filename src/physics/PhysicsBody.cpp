@@ -4,6 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/physics/PhysicsBody.h"
+#include "anki/physics/PhysicsWorld.h"
+#include "anki/physics/PhysicsCollisionShape.h"
 
 namespace anki {
 
@@ -13,6 +15,72 @@ PhysicsBody::PhysicsBody()
 
 //==============================================================================
 PhysicsBody::~PhysicsBody()
-{}
+{
+	if(m_body)
+	{
+		NewtonDestroyBody(m_body);
+	}
+}
+
+//==============================================================================
+Error PhysicsBody::create(const Initializer& init)
+{
+	ANKI_ASSERT(init.m_world);
+	ANKI_ASSERT(init.m_shape);
+
+	Mat4 trf = Mat4(init.m_startTrf);
+	if(init.m_kinematic)
+	{
+		// TODO
+	}
+	else
+	{
+		m_body = NewtonCreateDynamicBody(init.m_world->_getNewtonWorld(),
+			init.m_shape->_getNewtonShape(), &trf(0, 0));
+	}
+
+	if(!m_body)
+	{
+		ANKI_LOGE("NewtonCreateXXBody() failed");
+		return ErrorCode::FUNCTION_FAILED;
+	}
+
+	// User data & callbacks
+	NewtonBodySetUserData(m_body, this);
+	NewtonBodySetTransformCallback(m_body, onTransform);
+
+	// Set mass
+	NewtonCollision* shape = NewtonBodyGetCollision(m_body);
+	NewtonBodySetMassProperties(m_body, init.m_mass, shape);
+
+	NewtonBodySetSimulationState(m_body, true);
+
+	if(init.m_gravity)
+	{
+		//Vec3 force = ;
+		//NewtonBodyAddForce(m_body, );
+	}
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void PhysicsBody::onTransform(
+	const NewtonBody* const body, 
+	const dFloat* const matrix, 
+	int threadIndex)
+{
+	ANKI_ASSERT(body);
+	ANKI_ASSERT(matrix);
+
+	void* ud = NewtonBodyGetUserData(body);
+	ANKI_ASSERT(ud);
+
+	PhysicsBody* self = reinterpret_cast<PhysicsBody*>(ud);
+
+	Mat4 trf;
+	memcpy(&trf, matrix, sizeof(Mat4));
+	self->m_trf = Transform(trf);
+}
 
 } // end namespace anki

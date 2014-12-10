@@ -47,11 +47,11 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit TMat3x4()
-		: Base()
+	:	Base()
 	{}
 
 	TMat3x4(const TMat3x4& b)
-		: Base(b)
+	:	Base(b)
 	{}
 
 	explicit TMat3x4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, 
@@ -73,7 +73,7 @@ public:
 	}
 
 	explicit TMat3x4(const T f)
-		: Base(f)
+	:	Base(f)
 	{}
 
 	explicit TMat3x4(const TMat3<T>& m3)

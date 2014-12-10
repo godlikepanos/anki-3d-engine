@@ -20,7 +20,16 @@ public:
 	PhysicsWorld();
 	~PhysicsWorld();
 
+	ANKI_USE_RESULT Error create(SceneGraph* scene);
+
+	NewtonWorld* _getNewtonWorld()
+	{
+		ANKI_ASSERT(m_world);
+		return m_world;
+	}
+
 private:
+	SceneGraph* m_scene = nullptr;
 	NewtonWorld* m_world = nullptr;
 };
 

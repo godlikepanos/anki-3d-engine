@@ -159,7 +159,7 @@ Error Pps::run(GlCommandBufferHandle& cmdBuff)
 
 	if(m_ssao.getEnabled())
 	{
-		m_ssao.getRt().bind(cmdBuff, 1);
+		m_ssao._getRt().bind(cmdBuff, 1);
 	}
 
 	if(m_lf.getEnabled())

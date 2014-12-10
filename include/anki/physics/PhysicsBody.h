@@ -13,17 +13,38 @@ namespace anki {
 /// @addtogroup physics
 /// @{
 
+/// Body initializer.
+struct PhysicsBodyInitializer
+{
+	PhysicsWorld* m_world = nullptr;
+	PhysicsCollisionShape* m_shape = nullptr;
+	F32 m_mass = 0.0;
+	Transform m_startTrf = Transform::getIdentity();
+	Bool m_kinematic = false;
+	Bool m_gravity = true;
+};
+
 /// Rigid body.
 class PhysicsBody
 {
 public:
+	using Initializer = PhysicsBodyInitializer;
+
 	PhysicsBody();
 
 	~PhysicsBody();
 
+	ANKI_USE_RESULT Error create(const Initializer& init);
+
 private:
-	NewtonBody* m_body;
-	Transform m_trf;
+	NewtonBody* m_body = nullptr;
+	Transform m_trf = Transform::getIdentity();
+
+	// Newton callback.
+	static void onTransform(
+		const NewtonBody* const body, 
+		const dFloat* const matrix, 
+		int threadIndex);
 };
 /// @}
 
