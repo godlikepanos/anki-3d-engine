@@ -13,17 +13,23 @@ namespace anki {
 /// @addtogroup physics
 /// @{
 
-/// Standard initializer for all collision shapes.
-struct PhysicsCollisionShapeInitializer
-{
-	PhysicsWorld* m_world = nullptr;
-};
-
 /// The base of all collision shapes.
 class PhysicsCollisionShape
 {
 public:
-	using Initializer = PhysicsCollisionShapeInitializer;
+	/// Type of supported physics collision shapes.
+	enum class Type: U8
+	{
+		NONE,
+		SPHERE,
+		BOX
+	};
+
+	/// Standard initializer for all collision shapes.
+	struct Initializer
+	{
+		PhysicsWorld* m_world = nullptr;
+	};
 
 	PhysicsCollisionShape();
 	~PhysicsCollisionShape();

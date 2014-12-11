@@ -320,11 +320,13 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 
 		XmlElement valEl;
 		ANKI_CHECK(collEl.getChildElement("value", valEl));
-		(void)valEl; // XXX
 
 		if(type == "sphere")
 		{
-			ANKI_LOGW("TODO");
+			F64 tmp;
+			ANKI_CHECK(valEl.getF64(tmp));
+			m_physicsInfo.m_type = PhysicsCollisionShape::Type::SPHERE;
+			m_physicsInfo.m_radius = tmp;
 		}
 		else if(type == "box")
 		{

@@ -26,8 +26,8 @@ public:
 		SPATIAL,
 		LIGHT,
 		INSTANCE,
-		RIGID_BODY,
-		LAST_COMPONENT_ID = RIGID_BODY
+		BODY,
+		LAST_COMPONENT_ID = BODY
 	};
 
 	/// Construct the scene component.

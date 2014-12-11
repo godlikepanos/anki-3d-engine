@@ -78,7 +78,6 @@ void PhysicsBody::onTransform(
 
 	void* ud = NewtonBodyGetUserData(body);
 	ANKI_ASSERT(ud);
-
 	PhysicsBody* self = reinterpret_cast<PhysicsBody*>(ud);
 
 	Mat4 trf;

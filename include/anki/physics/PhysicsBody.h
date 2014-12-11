@@ -13,7 +13,7 @@ namespace anki {
 /// @addtogroup physics
 /// @{
 
-/// Body initializer.
+/// Initializer for PhysicsBody.
 struct PhysicsBodyInitializer
 {
 	PhysicsWorld* m_world = nullptr;
@@ -36,9 +36,17 @@ public:
 
 	ANKI_USE_RESULT Error create(const Initializer& init);
 
+	const Transform& getTransform(Bool& updated)
+	{
+		updated = m_updated;
+		m_updated = false;
+		return m_trf;
+	}
+
 private:
 	NewtonBody* m_body = nullptr;
 	Transform m_trf = Transform::getIdentity();
+	Bool8 m_updated = true;
 
 	// Newton callback.
 	static void onTransform(

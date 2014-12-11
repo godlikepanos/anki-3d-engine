@@ -14,6 +14,7 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/Animation.h"
+#include "anki/physics/PhysicsCollisionShape.h"
 
 namespace anki {
 
@@ -166,12 +167,17 @@ private:
 class Model
 {
 public:
+	/// Physics information the Model holds.
+	struct PhysicsInformation
+	{
+		PhysicsCollisionShape::Type m_type = PhysicsCollisionShape::Type::NONE;
+		F32 m_radius = 0.0;
+	};
+
 	Model(ResourceAllocator<U8>& alloc);
 
 	~Model();
 
-	/// @name Accessors
-	/// @{
 	const ResourceDArray<ModelPatchBase*>& getModelPatches() const
 	{
 		return m_modelPatches;
@@ -181,7 +187,11 @@ public:
 	{
 		return m_visibilityShape;
 	}
-	/// @}
+
+	const PhysicsInformation& getPhysicsInformation() const
+	{
+		return m_physicsInfo;
+	}
 
 	ANKI_USE_RESULT Error load(
 		const CString& filename, ResourceInitializer& init);
@@ -192,6 +202,7 @@ private:
 	Obb m_visibilityShape;
 	SkeletonResourcePointer m_skeleton;
 	ResourceDArray<AnimationResourcePointer> m_animations;
+	PhysicsInformation m_physicsInfo;
 };
 
 } // end namespace anki
