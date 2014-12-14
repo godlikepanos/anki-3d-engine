@@ -267,6 +267,7 @@ void exportMaterial(
 {
 	std::string diffTex;
 	std::string normTex;
+	std::string specColTex;
 	std::string dispTex;
 
 	std::string name = getMaterialName(mtl, instanced);
@@ -301,6 +302,19 @@ void exportMaterial(
 		}
 	}
 
+	// Specular color
+	if(mtl.GetTextureCount(aiTextureType_SPECULAR) > 0)
+	{
+		if(mtl.GetTexture(aiTextureType_SPECULAR, 0, &path) == AI_SUCCESS)
+		{
+			specColTex = getFilename(path.C_Str());
+		}
+		else
+		{
+			ERROR("Failed to retrieve texture\n");
+		}
+	}
+
 	// Height texture
 	if(mtl.GetTextureCount(aiTextureType_EMISSIVE) > 0)
 	{	
@@ -315,40 +329,70 @@ void exportMaterial(
 	}
 
 	// Write file
-	static const char* diffMtlStr = 
-#include "diffTemplateMtl.h"
+	static const char* diffFragTemplate = 
+#include "templates/diffFrag.h"
 		;
-	static const char* diffNormMtlStr = 
-#include "diffNormTemplateMtl.h"
+	static const char* diffNormFragTemplate = 
+#include "templates/diffNormFrag.h"
 		;
-	static const char* tessDispMtlStr = 
-#include "tessDispTemplateMtl.h"
+	static const char* diffNormSpecFragTemplate = 
+#include "templates/diffNormSpecFrag.h"
+		;
+	static const char* simpleVertTemplate = 
+#include "templates/simpleVert.h"
+		;
+	static const char* tessVertTemplate = 
+#include "templates/tessVert.h"
 		;
 
-	std::fstream file;
-	file.open(exporter.outDir + name + ".ankimtl", std::ios::out);
-
-	// Chose the correct template
-	std::string str;
-	if(normTex.empty())
+	// Compose full template
+	// First geometry part
+	std::string materialStr;
+	materialStr = "<material>\n\t<programs>\n";
+	if(dispTex.empty())
 	{
-		str = diffMtlStr;
+		materialStr += simpleVertTemplate;
 	}
 	else
 	{
-		if(dispTex.empty())
-		{
-			str = replaceAllString(diffNormMtlStr, "%normalMap%", 
-				exporter.texrpath + normTex);
-		}
-		else
-		{
-			str = replaceAllString(tessDispMtlStr, "%normalMap%", 
-				exporter.texrpath + normTex);
+		materialStr += tessVertTemplate;
+	}
 
-			str = replaceAllString(str, "%dispMap%", 
-				exporter.texrpath + dispTex);
-		}
+	materialStr += "\n";
+
+	// Then fragment part
+	if(normTex.empty())
+	{
+		materialStr += diffFragTemplate;
+	}
+	else if(!specColTex.empty())
+	{
+		materialStr += diffNormSpecFragTemplate;
+	}
+	else
+	{
+		materialStr += diffNormFragTemplate;
+	}
+
+	materialStr += "\n\t</programs>\t</material>";
+
+	// Replace strings
+	if(!normTex.empty())
+	{
+		materialStr = replaceAllString(materialStr, "%normalMap%", 
+			exporter.texrpath + normTex);
+	}
+
+	if(!dispTex.empty())
+	{
+		materialStr = replaceAllString(materialStr, "%dispMap%", 
+			exporter.texrpath + dispTex);
+	}
+
+	if(!specColTex.empty())
+	{
+		materialStr = replaceAllString(materialStr, "%specularColorMap%", 
+			exporter.texrpath + specColTex);
 	}
 
 	aiColor3D specCol = {0.0, 0.0, 0.0};
@@ -356,17 +400,25 @@ void exportMaterial(
 
 	float shininess = 0.0;
 	mtl.Get(AI_MATKEY_SHININESS, shininess);
-	
 
-	str = replaceAllString(str, "%specularColor%", 
+	materialStr = replaceAllString(materialStr, "%specularColor%", 
 		std::to_string((specCol[0] + specCol[1] + specCol[2]) / 3.0));
-	str = replaceAllString(str, "%specularPower%", 
+	materialStr = replaceAllString(materialStr, "%specularPower%", 
 		std::to_string(shininess));
 
-	str = replaceAllString(str, "%instanced%", (instanced) ? "1" : "0");
-	str = replaceAllString(str, "%diffuseMap%", exporter.texrpath + diffTex);
+	materialStr = replaceAllString(materialStr, "%instanced%", 
+		(instanced) ? "1" : "0");
+	materialStr = replaceAllString(materialStr, "%diffuseMap%", 
+		exporter.texrpath + diffTex);
 
-	file << str;
+	// Replace texture extensions with .anki
+	materialStr = replaceAllString(materialStr, ".tga", ".ankitex");
+	materialStr = replaceAllString(materialStr, ".png", ".ankitex");
+
+	// Open and write file
+	std::fstream file;
+	file.open(exporter.outDir + name + ".ankimtl", std::ios::out);
+	file << materialStr;
 }
 
 //==============================================================================

@@ -641,7 +641,7 @@ Error Image::load(const CString& filename, U32 maxTextureSize)
 	}
 	else
 	{
-		ANKI_LOGE("Unsupported extension");
+		ANKI_LOGE("Unsupported extension: %s", &ext[0]);
 		err = ErrorCode::USER_DATA;
 	}
 

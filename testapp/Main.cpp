@@ -229,7 +229,7 @@ Error init()
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/adis/scene.lua", &resources);
+		err = script.load("maps/sponza/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());
@@ -499,7 +499,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.enabled", true);
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
-	config.set("pps.enabled", true);
+	config.set("pps.enabled", false);
 	config.set("pps.hdr.enabled", true);
 	config.set("pps.hdr.renderingQuality", 0.5);
 	config.set("pps.hdr.blurringDist", 1.0);

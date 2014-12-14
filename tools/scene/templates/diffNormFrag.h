@@ -1,29 +1,4 @@
-R"(<?xml version="1.0" encoding="UTF-8" ?>
-
-<material>
-	<programs>
-		<program>
-			<type>vert</type>
-			<includes>
-				<include>shaders/MsCommonVert.glsl</include>
-			</includes>
-
-			<inputs>
-				<input><type>mat4</type><name>uMvp</name><value></value><instanced>%instanced%</instanced></input>
-				<input><type>mat3</type><name>uN</name><value></value><instanced>%instanced%</instanced></input>
-			</inputs>
-
-			<operations>
-				<operation>
-					<id>1</id>
-					<returnType>void</returnType>
-					<function>writePositionNormalTangentTexCoord</function>
-					<arguments><argument>uMvp</argument><argument>uN</argument></arguments>
-				</operation>
-			</operations>
-		</program>
-
-		<program>
+R"(		<program>
 			<type>frag</type>
 
 			<includes>
@@ -31,7 +6,8 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 			</includes>
 
 			<inputs>
-				<input><type>vec2</type><name>uSpecular</name><value>%specularColor% %specularPower%</value></input>
+				<input><type>float</type><name>uSpecularColor</name><value>%specularColor%</value></input>
+				<input><type>float</type><name>uSpecularPower</name><value>%specularPower%</value></input>
 				<input><type>float</type><name>uBlurring</name><value>0.0</value><const>1</const></input>
 				<input><type>sampler2D</type><name>uDiffuseMap</name><value>%diffuseMap%</value></input>
 				<input><type>sampler2D</type><name>uNormalMap</name><value>%normalMap%</value></input>
@@ -81,12 +57,11 @@ R"(<?xml version="1.0" encoding="UTF-8" ?>
 					<arguments>
 						<argument>out10</argument>
 						<argument>out20</argument>
-						<argument>uSpecular</argument>
+						<argument>uSpecularColor</argument>
+						<argument>uSpecularPower</argument>
 						<argument>uBlurring</argument>
 					</arguments>
 				</operation>
 			</operations>
-		</program>
-	</programs>
-</material>)"
+		</program>)"
 

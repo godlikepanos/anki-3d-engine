@@ -169,16 +169,26 @@ vec3 readRgbFromCubeTexture(in samplerCube tex, in mediump vec3 texCoord)
 }
 #endif
 
+// Just read the R color from texture
+#if PASS == COLOR
+#	define readRFromTexture_DEFINED
+float readRFromTexture(in sampler2D tex, in highp vec2 texCoords)
+{
+	return vec3(texture(tex, texCoords)).r;
+}
+#endif
+
 // Write the data to FAIs
 #if PASS == COLOR
 #	define writeRts_DEFINED
 void writeRts(
 	in vec3 diffColor, // from 0 to 1
 	in vec3 normal, 
-	in vec2 specularComponent, // Streangth and shininess
+	in float specularColor,
+	in float specularPower,
 	in float blurring)
 {
-	writeGBuffer(diffColor, normal, specularComponent.x, specularComponent.y,
+	writeGBuffer(diffColor, normal, specularColor, specularPower,
 		outMsRt0, outMsRt1);
 }
 #endif
