@@ -61,7 +61,7 @@ public:
 
 	/// Get a number of floats
 	ANKI_USE_RESULT Error getFloats(
-		DArray<F64, StackAllocator<F64>>& out) const;
+		DArrayAuto<F64, StackAllocator<F64>>& out) const;
 
 	/// Return the text inside as a Mat4
 	ANKI_USE_RESULT Error getMat4(Mat4& out) const;

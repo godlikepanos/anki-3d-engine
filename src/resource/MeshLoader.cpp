@@ -56,29 +56,22 @@ using FixNormalsMap = std::unordered_map<
 
 //==============================================================================
 MeshLoader::MeshLoader(TempResourceAllocator<U8>& alloc)
-:	m_alloc(alloc)
+:	m_alloc(alloc),
+	m_positions(alloc),
+	m_normals(alloc),
+	m_normalsF16(alloc),
+	m_tangents(alloc),
+	m_tangentsF16(alloc),
+	m_texCoords(alloc),
+	m_texCoordsF16(alloc),
+	m_weights(alloc),
+	m_tris(alloc),
+	m_vertIndices(alloc)
 {}
 
 //==============================================================================
 MeshLoader::~MeshLoader()
-{
-	m_positions.destroy(m_alloc);
-
-	m_normals.destroy(m_alloc);
-	m_normalsF16.destroy(m_alloc);
-
-	m_tangents.destroy(m_alloc);
-	m_tangentsF16.destroy(m_alloc);
-
-	m_texCoords.destroy(m_alloc);
-	m_texCoordsF16.destroy(m_alloc);
-
-	m_weights.destroy(m_alloc);
-
-	m_tris.destroy(m_alloc);
-
-	m_vertIndices.destroy(m_alloc);
-}
+{}
 
 //==============================================================================
 Error MeshLoader::load(const CString& filename)
@@ -112,7 +105,7 @@ Error MeshLoader::load(const CString& filename)
 	U32 vertsNum;
 	ANKI_CHECK(file.readU32(vertsNum));
 
-	ANKI_CHECK(m_positions.create(m_alloc, vertsNum));
+	ANKI_CHECK(m_positions.create(vertsNum));
 
 	// Vert coords
 	for(Vec3& vertCoord : m_positions)
@@ -127,7 +120,7 @@ Error MeshLoader::load(const CString& filename)
 	U32 facesNum;
 	ANKI_CHECK(file.readU32(facesNum));
 
-	ANKI_CHECK(m_tris.create(m_alloc, facesNum));
+	ANKI_CHECK(m_tris.create(facesNum));
 
 	// Faces IDs
 	for(Triangle& tri : m_tris)
@@ -148,7 +141,7 @@ Error MeshLoader::load(const CString& filename)
 	// Tex coords num
 	U32 texCoordsNum;
 	ANKI_CHECK(file.readU32(texCoordsNum));
-	ANKI_CHECK(m_texCoords.create(m_alloc, texCoordsNum));
+	ANKI_CHECK(m_texCoords.create(texCoordsNum));
 
 	// Tex coords
 	for(Vec2& texCoord : m_texCoords)
@@ -162,7 +155,7 @@ Error MeshLoader::load(const CString& filename)
 	// Vert weights num
 	U32 weightsNum;
 	ANKI_CHECK(file.readU32(weightsNum));
-	ANKI_CHECK(m_weights.create(m_alloc, weightsNum));
+	ANKI_CHECK(m_weights.create(weightsNum));
 
 	// Vert weights
 	for(VertexWeight& vw : m_weights)
@@ -256,7 +249,7 @@ Error MeshLoader::doPostLoad()
 //==============================================================================
 Error MeshLoader::createVertIndeces()
 {
-	Error err = m_vertIndices.create(m_alloc, m_tris.getSize() * 3);
+	Error err = m_vertIndices.create(m_tris.getSize() * 3);
 	if(err)
 	{
 		return err;
@@ -302,7 +295,7 @@ Error MeshLoader::createFaceNormals()
 //==============================================================================
 Error MeshLoader::createVertNormals()
 {
-	Error err = m_normals.create(m_alloc, m_positions.getSize());
+	Error err = m_normals.create(m_positions.getSize());
 	if(err)
 	{
 		return err;
@@ -334,14 +327,14 @@ Error MeshLoader::createVertNormals()
 //==============================================================================
 Error MeshLoader::createVertTangents()
 {
-	Error err = m_tangents.create(m_alloc, m_positions.getSize(), Vec4(0.0));
+	Error err = m_tangents.create(m_positions.getSize(), Vec4(0.0));
 	if(err)
 	{
 		return err;
 	}
 
-	MLDArray<Vec3> bitagents;
-	err = bitagents.create(m_alloc, m_positions.getSize(), Vec3(0.0));
+	MLDArray<Vec3> bitagents(m_alloc);
+	err = bitagents.create(m_positions.getSize(), Vec3(0.0));
 	if(err)
 	{
 		return err;
@@ -525,7 +518,7 @@ Error MeshLoader::compressBuffers()
 	Error err = ErrorCode::NONE;
 
 	// Normals
-	ANKI_CHECK(m_normalsF16.create(m_alloc, m_normals.getSize()));
+	ANKI_CHECK(m_normalsF16.create(m_normals.getSize()));
 
 	for(U i = 0; i < m_normals.getSize(); i++)
 	{
@@ -536,7 +529,7 @@ Error MeshLoader::compressBuffers()
 	}
 
 	// Tangents
-	ANKI_CHECK(m_tangentsF16.create(m_alloc, m_tangents.getSize()));
+	ANKI_CHECK(m_tangentsF16.create(m_tangents.getSize()));
 
 	for(U i = 0; i < m_tangents.getSize(); i++)
 	{
@@ -547,7 +540,7 @@ Error MeshLoader::compressBuffers()
 	}
 
 	// Texture coords
-	ANKI_CHECK(m_texCoordsF16.create(m_alloc, m_texCoords.getSize()));
+	ANKI_CHECK(m_texCoordsF16.create(m_texCoords.getSize()));
 
 	for(U i = 0; i < m_texCoords.getSize(); i++)
 	{

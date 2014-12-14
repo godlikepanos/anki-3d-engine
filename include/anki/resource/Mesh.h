@@ -98,9 +98,8 @@ public:
 
 protected:
 	/// Per sub mesh data
-	class SubMesh
+	struct SubMesh
 	{
-	public:
 		U32 m_indicesCount;
 		U32 m_indicesOffset;
 		Obb m_obb;

@@ -10,7 +10,8 @@
 namespace anki {
 
 //==============================================================================
-PhysicsBody::PhysicsBody()
+PhysicsBody::PhysicsBody(PhysicsWorld* world)
+:	PhysicsObject(world)
 {}
 
 //==============================================================================
@@ -25,7 +26,6 @@ PhysicsBody::~PhysicsBody()
 //==============================================================================
 Error PhysicsBody::create(const Initializer& init)
 {
-	ANKI_ASSERT(init.m_world);
 	ANKI_ASSERT(init.m_shape);
 
 	// Create
@@ -36,7 +36,7 @@ Error PhysicsBody::create(const Initializer& init)
 	}
 	else
 	{
-		m_body = NewtonCreateDynamicBody(init.m_world->_getNewtonWorld(),
+		m_body = NewtonCreateDynamicBody(m_world->_getNewtonWorld(),
 			init.m_shape->_getNewtonShape(), &trf(0, 0));
 	}
 

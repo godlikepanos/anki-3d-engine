@@ -128,7 +128,7 @@ public:
 		return m_sourceBaked[shaderType];
 	}
 
-	const List<Input, TempResourceAllocator<U8>>& getInputVariables() const
+	const List<Input>& getInputVariables() const
 	{
 		return m_inputs;
 	}
@@ -147,7 +147,7 @@ private:
 	TempResourceAllocator<char> m_alloc; 
 	Array<MPStringList, 5> m_source; ///< Shader program final source
 	Array<MPString, 5> m_sourceBaked; ///< Final source baked
-	List<Input, TempResourceAllocator<U8>> m_inputs;
+	List<Input> m_inputs;
 	MPStringList m_uniformBlock;
 	GLbitfield m_uniformBlockReferencedMask = 0;
 	U32 m_blockSize = 0;

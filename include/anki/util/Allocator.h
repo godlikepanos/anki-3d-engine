@@ -29,20 +29,13 @@ namespace anki {
 /// This is a template that accepts memory pools with a specific interface
 ///
 /// @tparam T The type
-/// @tparam checkFree If false then the allocator will throw an exception
-///                   if the free() method of the memory pool returns false.
-///                   It is extremely important to understand when it should be 
-///                   true. See the notes.
-///
-/// @note The checkFree can brake the allocator when used with stack pools 
-///       and the deallocations are not in the correct order.
 ///
 /// @note Don't ever EVER remove the double copy constructor and the double
 ///       operator=. The compiler will create defaults
-template<typename T, typename TPool, Bool checkFree = false>
+template<typename T, typename TPool>
 class GenericPoolAllocator
 {
-	template<typename Y, typename TPool_, Bool checkFree_>
+	template<typename Y, typename TPool_>
 	friend class GenericPoolAllocator;
 
 public:
@@ -64,7 +57,7 @@ public:
 	template<typename Y>
 	struct rebind
 	{
-		using other = GenericPoolAllocator<Y, TPool, checkFree>;
+		using other = GenericPoolAllocator<Y, TPool>;
 	};
 
 	/// Default constructor
@@ -79,8 +72,7 @@ public:
 
 	/// Copy constructor
 	template<typename Y>
-	GenericPoolAllocator(const GenericPoolAllocator<
-		Y, TPool, checkFree>& b)
+	GenericPoolAllocator(const GenericPoolAllocator<Y, TPool>& b)
 	{
 		*this = b;
 	}
@@ -126,8 +118,7 @@ public:
 
 	/// Copy
 	template<typename U>
-	GenericPoolAllocator& operator=(const GenericPoolAllocator<
-		U, TPool, checkFree>& b)
+	GenericPoolAllocator& operator=(const GenericPoolAllocator<U, TPool>& b)
 	{
 		copy(b);
 		return *this;
@@ -175,13 +166,7 @@ public:
 	void deallocate(void* p, size_type n)
 	{
 		(void)n;
-
-		Bool ok = m_pool->free(p);
-
-		if(checkFree && !ok)
-		{
-			ANKI_LOGE("Freeing wrong pointer. Pool's free() returned false");
-		}
+		m_pool->free(p);
 	}
 
 	/// Call constructor
@@ -243,13 +228,13 @@ public:
 	{
 		typename rebind<U>::other alloc(*this);
 
-		U* x = alloc.allocate(1);
-		if(x)
+		U* ptr = alloc.allocate(1);
+		if(ptr)
 		{
-			alloc.construct(x, std::forward<Args>(args)...);
+			alloc.construct(ptr, std::forward<Args>(args)...);
 		}
 
-		return x;
+		return ptr;
 	}
 
 	/// Allocate a new array of objects and call their constructor
@@ -259,17 +244,17 @@ public:
 	{
 		typename rebind<U>::other alloc(*this);
 
-		U* x = alloc.allocate(n);
-		if(x)
+		U* ptr = alloc.allocate(n);
+		if(ptr)
 		{
 			// Call the constuctors
 			for(size_type i = 0; i < n; i++)
 			{
-				alloc.construct(&x[i]);
+				alloc.construct(&ptr[i]);
 			}
 		}
 
-		return x;
+		return ptr;
 	}
 
 	/// Allocate a new array of objects and call their constructor
@@ -279,49 +264,49 @@ public:
 	{
 		typename rebind<U>::other alloc(*this);
 
-		U* x = alloc.allocate(n);
-		if(x)
+		U* ptr = alloc.allocate(n);
+		if(ptr)
 		{
 			// Call the constuctors
 			for(size_type i = 0; i < n; i++)
 			{
-				alloc.construct(&x[i], v);
+				alloc.construct(&ptr[i], v);
 			}
 		}
 
-		return x;
+		return ptr;
 	}
 
 	/// Call the destructor and deallocate an object
 	/// @note This is AnKi specific
 	template<typename U>
-	void deleteInstance(U* x)
+	void deleteInstance(U* ptr)
 	{
 		typename rebind<U>::other alloc(*this);
 
-		if(x != nullptr)
+		if(ptr != nullptr)
 		{
-			alloc.destroy(x);
-			alloc.deallocate(x, 1);
+			alloc.destroy(ptr);
+			alloc.deallocate(ptr, 1);
 		}
 	}
 
 	/// Call the destructor and deallocate an array of objects
 	/// @note This is AnKi specific
 	template<typename U>
-	void deleteArray(U* x, size_type n)
+	void deleteArray(U* ptr, size_type n)
 	{
 		typename rebind<U>::other alloc(*this);
 
-		if(x != nullptr)
+		if(ptr != nullptr)
 		{
 			// Call the destructors
 			for(size_type i = 0; i < n; i++)
 			{
-				alloc.destroy(&x[i]);
+				alloc.destroy(&ptr[i]);
 			}
 
-			alloc.deallocate(x, n);
+			alloc.deallocate(ptr, n);
 		}
 		else
 		{
@@ -333,7 +318,7 @@ private:
 	TPool* m_pool = nullptr;
 
 	template<typename Y>
-	void copy(const GenericPoolAllocator<Y, TPool, checkFree>& b)
+	void copy(const GenericPoolAllocator<Y, TPool>& b)
 	{
 		clear();
 		if(b.m_pool)
@@ -366,61 +351,58 @@ private:
 /// @{
 
 /// Another allocator of the same type can deallocate from this one
-template<typename T1, typename T2, typename TPool, Bool checkFree>
-inline bool operator==(
-	const GenericPoolAllocator<T1, TPool, checkFree>&,
-	const GenericPoolAllocator<T2, TPool, checkFree>&)
+template<typename T1, typename T2, typename TPool>
+inline Bool operator==(
+	const GenericPoolAllocator<T1, TPool>&,
+	const GenericPoolAllocator<T2, TPool>&)
 {
 	return true;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
-template<typename T1, typename AnotherAllocator, typename TPool, 
-	Bool checkFree>
-inline bool operator==(
-	const GenericPoolAllocator<T1, TPool, checkFree>&,
+template<typename T1, typename AnotherAllocator, typename TPool>
+inline Bool operator==(
+	const GenericPoolAllocator<T1, TPool>&,
 	const AnotherAllocator&)
 {
 	return false;
 }
 
 /// Another allocator of the same type can deallocate from this one
-template<typename T1, typename T2, typename TPool, Bool checkFree>
-inline bool operator!=(
-	const GenericPoolAllocator<T1, TPool, checkFree>&,
-	const GenericPoolAllocator<T2, TPool, checkFree>&)
+template<typename T1, typename T2, typename TPool>
+inline Bool operator!=(
+	const GenericPoolAllocator<T1, TPool>&,
+	const GenericPoolAllocator<T2, TPool>&)
 {
 	return false;
 }
 
 /// Another allocator of the another type cannot deallocate from this one
-template<typename T1, typename AnotherAllocator, typename TPool, 
-	Bool checkFree>
-inline bool operator!=(
-	const GenericPoolAllocator<T1, TPool, checkFree>&,
+template<typename T1, typename AnotherAllocator, typename TPool>
+inline Bool operator!=(
+	const GenericPoolAllocator<T1, TPool>&,
 	const AnotherAllocator&)
 {
 	return true;
 }
-
 /// @}
+
+/// Allocator using the base memory pool.
+template<typename T>
+using GenericMemoryPoolAllocator = GenericPoolAllocator<T, BaseMemoryPool>;
 
 /// Heap based allocator. The default allocator. It uses malloc and free for 
 /// allocations/deallocations
 template<typename T>
-using HeapAllocator = 
-	GenericPoolAllocator<T, HeapMemoryPool, true>;
+using HeapAllocator = GenericPoolAllocator<T, HeapMemoryPool>;
 
 /// Allocator that uses a StackMemoryPool
-template<typename T, Bool checkFree = false>
-using StackAllocator = 
-	GenericPoolAllocator<T, StackMemoryPool, checkFree>;
+template<typename T>
+using StackAllocator = GenericPoolAllocator<T, StackMemoryPool>;
 
 /// Allocator that uses a ChainMemoryPool
-template<typename T, Bool checkFree = true>
-using ChainAllocator = 
-	GenericPoolAllocator<T, ChainMemoryPool, checkFree>;
-
+template<typename T>
+using ChainAllocator = GenericPoolAllocator<T, ChainMemoryPool>;
 /// @}
 
 } // end namespace anki

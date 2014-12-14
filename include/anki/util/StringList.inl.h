@@ -13,8 +13,8 @@ template<typename TAlloc>
 void StringListBase<TAlloc>::destroy(Allocator alloc)
 {
 	auto it = Base::getBegin();
-	auto end = Base::getEnd();
-	for(; it != end; ++it)
+	auto endit = Base::getEnd();
+	for(; it != endit; ++it)
 	{
 		(*it).destroy(alloc);
 	}

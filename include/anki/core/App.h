@@ -25,6 +25,7 @@ class NativeWindow;
 class Input;
 class GlDevice;
 class MainRenderer;
+class PhysicsWorld;
 class SceneGraph;
 class ScriptManager;
 class ResourceManager;
@@ -114,6 +115,11 @@ public:
 		return *m_script;
 	}
 
+	PhysicsWorld& getPhysicsWorld()
+	{
+		return *m_physics;
+	}
+
 	HeapAllocator<U8> getAllocator() const
 	{
 		return m_heapAlloc;
@@ -129,6 +135,7 @@ private:
 	NativeWindow* m_window = nullptr;
 	Input* m_input = nullptr;
 	GlDevice* m_gl = nullptr;
+	PhysicsWorld* m_physics = nullptr;
 	ResourceManager* m_resources = nullptr;
 	MainRenderer* m_renderer = nullptr;
 	SceneGraph* m_scene = nullptr;

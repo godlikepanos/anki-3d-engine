@@ -4,22 +4,21 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/physics/PhysicsWorld.h"
-#include "anki/scene/SceneGraph.h"
 
 namespace anki {
 
 //==============================================================================
 // Ugly but there is no other way
-static SceneGraph* gScene = nullptr;
+static ChainAllocator<U8>* gAlloc = nullptr;
 
 static void* newtonAlloc(int size)
 {
-	return gScene->getAllocator().allocate(size);
+	return gAlloc->allocate(size);
 }
 
 static void newtonFree(void* const ptr, int size)
 {
-	gScene->getAllocator().deallocate(ptr, size);
+	gAlloc->deallocate(ptr, size);
 }
 
 //==============================================================================
@@ -33,18 +32,24 @@ PhysicsWorld::~PhysicsWorld()
 	{
 		NewtonDestroy(m_world);
 	}
+
+	gAlloc = nullptr;
 }
 
 //==============================================================================
-Error PhysicsWorld::create(SceneGraph* scene)
+Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 {
 	Error err = ErrorCode::NONE;
 
-	ANKI_ASSERT(scene);
-	m_scene = scene;
+	m_alloc = ChainAllocator<U8>(
+		allocCb, allocCbData, 
+		1024 * 10,
+		1024 * 1024,
+		ChainMemoryPool::ChunkGrowMethod::MULTIPLY,
+		2);
 	
 	// Set allocators
-	gScene = scene;
+	gAlloc = &m_alloc;
 	NewtonSetMemorySystem(newtonAlloc, newtonFree);
 
 	// Initialize world

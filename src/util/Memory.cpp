@@ -175,25 +175,22 @@ void* BaseMemoryPool::allocate(PtrSize size, PtrSize alignmentBytes)
 }
 
 //==============================================================================
-Bool BaseMemoryPool::free(void* ptr)
+void BaseMemoryPool::free(void* ptr)
 {
-	Bool out = false;
 	switch(m_type)
 	{
 	case Type::HEAP:
-		out = static_cast<HeapMemoryPool*>(this)->free(ptr);
+		static_cast<HeapMemoryPool*>(this)->free(ptr);
 		break;
 	case Type::STACK:
-		out = static_cast<StackMemoryPool*>(this)->free(ptr);
+		static_cast<StackMemoryPool*>(this)->free(ptr);
 		break;
 	case Type::CHAIN:
-		out = static_cast<ChainMemoryPool*>(this)->free(ptr);
+		static_cast<ChainMemoryPool*>(this)->free(ptr);
 		break;
 	default:
 		ANKI_ASSERT(0);
 	}
-
-	return out;
 }
 
 //==============================================================================
@@ -264,7 +261,7 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 }
 
 //==============================================================================
-Bool HeapMemoryPool::free(void* ptr)
+void HeapMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(isCreated());
 
@@ -280,8 +277,6 @@ Bool HeapMemoryPool::free(void* ptr)
 #endif
 	--m_allocationsCount;
 	m_allocCb(m_allocCbUserData, ptr, 0, 0);
-
-	return true;
 }
 
 //==============================================================================
@@ -309,7 +304,7 @@ StackMemoryPool::~StackMemoryPool()
 //==============================================================================
 Error StackMemoryPool::create(
 	AllocAlignedCallback allocCb, void* allocCbUserData,
-	PtrSize size, PtrSize alignmentBytes)
+	PtrSize size, Bool ignoreDeallocationErrors, PtrSize alignmentBytes)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(allocCb);
@@ -322,6 +317,7 @@ Error StackMemoryPool::create(
 	m_allocCbUserData = allocCbUserData;
 	m_alignmentBytes = alignmentBytes;
 	m_memsize = getAlignedRoundUp(alignmentBytes, size);
+	m_ignoreDeallocationErrors = ignoreDeallocationErrors;
 
 	m_memory = reinterpret_cast<U8*>(m_allocCb(
 		m_allocCbUserData, nullptr, m_memsize, m_alignmentBytes));
@@ -394,7 +390,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 }
 
 //==============================================================================
-Bool StackMemoryPool::free(void* ptr)
+void StackMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(isCreated());
 
@@ -435,7 +431,11 @@ Bool StackMemoryPool::free(void* ptr)
 	// Decrease count
 	--m_allocationsCount;
 
-	return exchange;
+	// Error if needed
+	if(!m_ignoreDeallocationErrors && !exchange)
+	{
+		ANKI_LOGW("Not top of stack. Deallocation failed. Silently ignoring");
+	}
 }
 
 //==============================================================================
@@ -602,12 +602,12 @@ void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 }
 
 //==============================================================================
-Bool ChainMemoryPool::free(void* ptr)
+void ChainMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(isCreated());
 	if(ptr == nullptr)
 	{
-		return true;
+		return;
 	}
 
 	LockGuard<SpinLock> lock(*m_lock);
@@ -660,8 +660,6 @@ Bool ChainMemoryPool::free(void* ptr)
 	}
 
 	--m_allocationsCount;
-
-	return true;
 }
 
 //==============================================================================

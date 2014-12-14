@@ -132,22 +132,22 @@ def ret(ret_el):
 		wglue("lua_pushnumber(l, ret);")
 	else:
 	 	wglue("voidp = lua_newuserdata(l, sizeof(UserData));")
-		wglue("ud = reinterpret_cast<UserData*>(voidp);")
+		wglue("ud = static_cast<UserData*>(voidp);")
 		wglue("luaL_setmetatable(l, \"%s\");" % type)
 
 		if is_ptr:
 			if is_const:
 				wglue("ud->m_data = const_cast<void*>(" \
-					"reinterpret_cast<const void*>(ret));")
+					"static_cast<const void*>(ret));")
 			else:
-				wglue("ud->m_data = reinterpret_cast<void*>(ret);")
+				wglue("ud->m_data = static_cast<void*>(ret);")
 			wglue("ud->m_gc = false;")
 		elif is_ref:
 			if is_const:
 				wglue("ud->m_data = const_cast<void*>(" \
-					"reinterpret_cast<const void*>(&ret));")
+					"static_cast<const void*>(&ret));")
 			else:
-				wglue("ud->m_data = reinterpret_cast<void*>(&ret);")
+				wglue("ud->m_data = static_cast<void*>(&ret);")
 			wglue("ud->m_gc = false;")
 		else:
 			wglue("ud->m_data = LuaBinder::luaAlloc(l, sizeof(%s));" % type)
@@ -185,7 +185,7 @@ def arg(arg_txt, stack_index, index):
 	else:
 		wglue("if(LuaBinder::checkUserData(l, %d, \"%s\", %d, ud)) return -1;" \
 			% (stack_index, type, type_sig(type)))
-		wglue("%s* iarg%d = reinterpret_cast<%s*>(ud->m_data);" \
+		wglue("%s* iarg%d = static_cast<%s*>(ud->m_data);" \
 			% (type, index, type))
 
 		if is_ptr:
@@ -295,7 +295,7 @@ def method(class_name, meth_el):
 	wglue("// Get \"this\" as \"self\"")
 	wglue("if(LuaBinder::checkUserData(l, 1, classname%s, %d, ud)) return -1;" \
 		% (class_name, type_sig(class_name)))
-	wglue("%s* self = reinterpret_cast<%s*>(ud->m_data);" \
+	wglue("%s* self = static_cast<%s*>(ud->m_data);" \
 		% (class_name, class_name))
 	wglue("ANKI_ASSERT(self != nullptr);")
 	wglue("")
@@ -432,7 +432,7 @@ def constructor(constr_el, class_name):
 	wglue("")
 
 	wglue("voidp = lua_newuserdata(l, sizeof(UserData));")
-	wglue("ud = reinterpret_cast<UserData*>(voidp);")
+	wglue("ud = static_cast<UserData*>(voidp);")
 	wglue("ud->m_data = inst;")
 	wglue("ud->m_gc = true;")
 	wglue("ud->m_sig = %d;" % type_sig(class_name))
@@ -478,7 +478,7 @@ def destructor(class_name):
 	wglue("if(ud->m_gc)")
 	wglue("{")
 	ident(1)
-	wglue("%s* inst = reinterpret_cast<%s*>(ud->m_data);" \
+	wglue("%s* inst = static_cast<%s*>(ud->m_data);" \
 		% (class_name, class_name))
 	wglue("inst->~%s();" % class_name)
 	wglue("LuaBinder::luaFree(l, inst);")

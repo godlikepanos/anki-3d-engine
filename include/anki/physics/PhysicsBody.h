@@ -6,7 +6,7 @@
 #ifndef ANKI_PHYSICS_PHYSICS_BODY_H
 #define ANKI_PHYSICS_PHYSICS_BODY_H
 
-#include "anki/physics/Common.h"
+#include "anki/physics/PhysicsObject.h"
 
 namespace anki {
 
@@ -16,7 +16,6 @@ namespace anki {
 /// Initializer for PhysicsBody.
 struct PhysicsBodyInitializer
 {
-	PhysicsWorld* m_world = nullptr;
 	PhysicsCollisionShape* m_shape = nullptr;
 	F32 m_mass = 0.0;
 	Transform m_startTrf = Transform::getIdentity();
@@ -25,12 +24,12 @@ struct PhysicsBodyInitializer
 };
 
 /// Rigid body.
-class PhysicsBody
+class PhysicsBody: public PhysicsObject
 {
 public:
 	using Initializer = PhysicsBodyInitializer;
 
-	PhysicsBody();
+	PhysicsBody(PhysicsWorld* world);
 
 	~PhysicsBody();
 

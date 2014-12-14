@@ -87,7 +87,7 @@ Error XmlElement::getF64(F64& out) const
 }
 
 //==============================================================================V
-Error XmlElement::getFloats(DArray<F64, StackAllocator<F64>>& out) const
+Error XmlElement::getFloats(DArrayAuto<F64, StackAllocator<F64>>& out) const
 {
 	Error err = check();
 	
@@ -107,9 +107,11 @@ Error XmlElement::getFloats(DArray<F64, StackAllocator<F64>>& out) const
 		err = list.splitString(m_alloc, txt, ' ');
 	}
 
+	out = std::move(DArrayAuto<F64, StackAllocator<F64>>(m_alloc));
+
 	if(!err)
 	{
-		err = out.create(m_alloc, list.getSize());
+		err = out.create(list.getSize());
 	}
 
 	auto it = list.getBegin();
@@ -132,7 +134,7 @@ Error XmlElement::getFloats(DArray<F64, StackAllocator<F64>>& out) const
 //==============================================================================
 Error XmlElement::getMat4(Mat4& out) const
 {
-	DArray<F64, StackAllocator<F64>> arr;
+	DArrayAuto<F64, StackAllocator<F64>> arr(m_alloc);
 	Error err = getFloats(arr);	
 
 	if(!err && arr.getSize() != 16)
@@ -149,8 +151,6 @@ Error XmlElement::getMat4(Mat4& out) const
 		}
 	}
 
-	arr.destroy(m_alloc);
-
 	if(err)
 	{
 		ANKI_LOGE("Failed to return Mat4. Element: %s", m_el->Value());
@@ -162,7 +162,7 @@ Error XmlElement::getMat4(Mat4& out) const
 //==============================================================================
 Error XmlElement::getVec3(Vec3& out) const
 {
-	DArray<F64, StackAllocator<F64>> arr;
+	DArrayAuto<F64, StackAllocator<F64>> arr(m_alloc);
 	Error err = getFloats(arr);
 	
 	if(!err && arr.getSize() != 3)
@@ -179,8 +179,6 @@ Error XmlElement::getVec3(Vec3& out) const
 		}
 	}
 
-	arr.destroy(m_alloc);
-
 	if(err)
 	{
 		ANKI_LOGE("Failed to return Vec3. Element: %s", m_el->Value());
@@ -191,7 +189,7 @@ Error XmlElement::getVec3(Vec3& out) const
 //==============================================================================
 Error XmlElement::getVec4(Vec4& out) const
 {
-	DArray<F64, StackAllocator<F64>> arr;
+	DArrayAuto<F64, StackAllocator<F64>> arr(m_alloc);
 	Error err = getFloats(arr);
 	
 	if(!err && arr.getSize() != 4)
@@ -207,8 +205,6 @@ Error XmlElement::getVec4(Vec4& out) const
 			out[i] = arr[i];
 		}
 	}
-
-	arr.destroy(m_alloc);
 
 	if(err)
 	{

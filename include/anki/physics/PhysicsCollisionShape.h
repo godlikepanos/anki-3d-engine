@@ -6,7 +6,7 @@
 #ifndef ANKI_PHYSICS_PHYSICS_COLLISION_SHAPE_H
 #define ANKI_PHYSICS_PHYSICS_COLLISION_SHAPE_H
 
-#include "anki/physics/Common.h"
+#include "anki/physics/PhysicsObject.h"
 
 namespace anki {
 
@@ -14,7 +14,7 @@ namespace anki {
 /// @{
 
 /// The base of all collision shapes.
-class PhysicsCollisionShape
+class PhysicsCollisionShape: public PhysicsObject
 {
 public:
 	/// Type of supported physics collision shapes.
@@ -28,35 +28,85 @@ public:
 	/// Standard initializer for all collision shapes.
 	struct Initializer
 	{
-		PhysicsWorld* m_world = nullptr;
+		// Empty for now
 	};
 
-	PhysicsCollisionShape();
+	PhysicsCollisionShape(PhysicsWorld* world)
+	:	PhysicsObject(world)
+	{}
+
 	~PhysicsCollisionShape();
 
-	/// Create sphere.
-	ANKI_USE_RESULT Error createSphere(Initializer& init, F32 radius);
-
-	/// Create box.
-	ANKI_USE_RESULT Error createBox(Initializer& init, const Vec3& extend);
-
-	/// Create convex hull.
-	ANKI_USE_RESULT Error createConvexHull(Initializer& init, 
-		const Vec3* positions, U32 positionsCount, U32 positionsStride);
-
-	/// Create face soup.
-	ANKI_USE_RESULT Error createStaticTriangleSoup(Initializer& init,
-		const Vec3* positions, U32 positionsStride, U16* indices);
-
+	/// @privatesection
+	/// @{
 	NewtonCollision* _getNewtonShape()
 	{
 		ANKI_ASSERT(m_shape);
 		return m_shape;
 	}
+	/// @}
 
-private:
+protected:
 	NewtonCollision* m_shape = nullptr;
-	static I32 id;
+	static I32 m_gid;
+};
+
+/// Sphere collision shape.
+class PhysicsSphere: public PhysicsCollisionShape
+{
+public:
+	PhysicsSphere(PhysicsWorld* world)
+	:	PhysicsCollisionShape(world)
+	{}
+
+	~PhysicsSphere() final
+	{}
+
+	ANKI_USE_RESULT Error create(Initializer& init, F32 radius);
+};
+
+/// Box collision shape.
+class PhysicsBox: public PhysicsCollisionShape
+{
+public:
+	PhysicsBox(PhysicsWorld* world)
+	:	PhysicsCollisionShape(world)
+	{}
+
+	~PhysicsBox() final
+	{}
+
+	ANKI_USE_RESULT Error create(Initializer& init, const Vec3& extend);
+};
+
+/// Convex hull collision shape.
+class PhysicsConvexHull: public PhysicsCollisionShape
+{
+public:
+	PhysicsConvexHull(PhysicsWorld* world)
+	:	PhysicsCollisionShape(world)
+	{}
+
+	~PhysicsConvexHull() final
+	{}
+
+	ANKI_USE_RESULT Error create(Initializer& init, 
+		const Vec3* positions, U32 positionsCount, U32 positionsStride);
+};
+
+/// Static triangle mesh shape.
+class PhysicsTriangleSoup: public PhysicsCollisionShape
+{
+public:
+	PhysicsTriangleSoup(PhysicsWorld* world)
+	:	PhysicsCollisionShape(world)
+	{}
+
+	~PhysicsTriangleSoup() final
+	{}
+
+	ANKI_USE_RESULT Error createStaticTriangleSoup(Initializer& init,
+		const Vec3* positions, U32 positionsStride, U16* indices);
 };
 /// @}
 

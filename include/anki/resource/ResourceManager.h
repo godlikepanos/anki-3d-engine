@@ -48,8 +48,7 @@ class TypeResourceManager
 {
 public:
 	using ResourcePointerType = ResourcePointer<Type, TResourceManager>;
-	using Container = 
-		List<ResourcePointerType, ResourceAllocator<ResourcePointerType>>;
+	using Container = List<ResourcePointerType>;
 
 	TypeResourceManager()
 	{}

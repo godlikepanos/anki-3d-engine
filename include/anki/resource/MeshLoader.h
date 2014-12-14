@@ -47,7 +47,7 @@ class MeshLoader
 {
 public:
 	template<typename T>
-	using MLDArray = TempResourceDArray<T>;
+	using MLDArray = TempResourceDArrayAuto<T>;
 
 	/// If two vertices have the same position and normals under the angle 
 	/// specified by this constant then combine those normals

@@ -12,7 +12,7 @@
 namespace anki {
 
 // Forward
-template<typename T, typename TAlloc>
+template<typename T>
 class List;
 
 /// @addtogroup util_private
@@ -161,7 +161,7 @@ public:
 /// @{
 
 /// Double linked list.
-template<typename T, typename TAlloc = HeapAllocator<T>>
+template<typename T>
 class List: public NonCopyable
 {
 	template<typename TNodePointer, typename TValuePointer, 
@@ -170,7 +170,6 @@ class List: public NonCopyable
 
 public:
 	using Value = T;
-	using Allocator = TAlloc;
 	using Node = ListNode<Value>;
 	using Reference = Value&;
 	using ConstReference = const Value&;
@@ -207,7 +206,8 @@ public:
 	Bool operator==(const List& b) const;
 
 	/// Destroy the list.
-	void destroy(Allocator alloc);
+	template<typename TAllocator>
+	void destroy(TAllocator alloc);
 
 	/// Get first element.
 	ConstReference getFront() const
@@ -294,29 +294,33 @@ public:
 	}
 
 	/// Copy an element at the end of the list.
-	ANKI_USE_RESULT Error pushBack(Allocator alloc, const Value& x);
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error pushBack(TAllocator alloc, const Value& x);
 
 	/// Construct an element at the end of the list.
-	template<typename... TArgs>
-	ANKI_USE_RESULT Error emplaceBack(Allocator alloc, TArgs&&... args);
+	template<typename TAllocator, typename... TArgs>
+	ANKI_USE_RESULT Error emplaceBack(TAllocator alloc, TArgs&&... args);
 
 	/// Construct element at the beginning of the list.
-	template<typename... TArgs>
-	ANKI_USE_RESULT Error emplaceFront(Allocator alloc, TArgs&&... args);
+	template<typename TAllocator, typename... TArgs>
+	ANKI_USE_RESULT Error emplaceFront(TAllocator alloc, TArgs&&... args);
 
 	/// Construct element at the the given position.
-	template<typename... TArgs>
+	template<typename TAllocator, typename... TArgs>
 	ANKI_USE_RESULT Error emplace(
-		Allocator alloc, Iterator pos, TArgs&&... args);
+		TAllocator alloc, Iterator pos, TArgs&&... args);
 
 	/// Pop a value from the back of the list.
-	void popBack(Allocator alloc);
+	template<typename TAllocator>
+	void popBack(TAllocator alloc);
 
 	/// Pop a value from the front of the list.
-	void popFront(Allocator alloc);
+	template<typename TAllocator>
+	void popFront(TAllocator alloc);
 
 	/// Erase an element.
-	void erase(Allocator alloc, Iterator position);
+	template<typename TAllocator>
+	void erase(TAllocator alloc, Iterator position);
 
 	/// Iterate the list using lambda.
 	template<typename TFunc>

@@ -19,13 +19,12 @@ namespace anki {
 /// @{
 
 /// A hierarchical object
-template<typename T, typename TAlloc = HeapAllocator<T>>
+template<typename T>
 class Hierarchy: public NonCopyable
 {
 public:
 	using Value = T;
-	using Allocator = TAlloc;
-	using Container = List<Value*, Allocator>;
+	using Container = List<Value*>;
 
 	Hierarchy()
 	:	m_parent(nullptr)
@@ -38,7 +37,8 @@ public:
 			&& "Requires manual desruction");
 	}
 
-	void destroy(Allocator alloc);
+	template<typename TAllocator>
+	void destroy(TAllocator alloc);
 
 	const Value* getParent() const
 	{
@@ -61,10 +61,12 @@ public:
 	}
 
 	/// Add a new child.
-	ANKI_USE_RESULT Error addChild(Allocator alloc, Value* child);
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error addChild(TAllocator alloc, Value* child);
 
 	/// Remove a child.
-	void removeChild(Allocator alloc, Value* child);
+	template<typename TAllocator>
+	void removeChild(TAllocator alloc, Value* child);
 
 	/// Visit the children and the children's children. Use it with lambda
 	template<typename VisitorFunc>

@@ -14,6 +14,7 @@
 #include "anki/core/NativeWindow.h"
 #include "anki/input/Input.h"
 #include "anki/scene/SceneGraph.h"
+#include "anki/physics/PhysicsWorld.h"
 #include "anki/renderer/MainRenderer.h"
 #include "anki/script/ScriptManager.h"
 
@@ -44,49 +45,55 @@ App::~App()
 //==============================================================================
 void App::cleanup()
 {
-	if (m_script != nullptr)
+	if(m_script != nullptr)
 	{
 		m_heapAlloc.deleteInstance(m_script);
 		m_script = nullptr;
 	}
 
-	if (m_scene != nullptr)
+	if(m_scene != nullptr)
 	{
 		m_heapAlloc.deleteInstance(m_scene);
 		m_scene = nullptr;
 	}
 
-	if (m_renderer != nullptr)
+	if(m_renderer != nullptr)
 	{
 		m_heapAlloc.deleteInstance(m_renderer);
 		m_renderer = nullptr;
 	}
 
-	if (m_resources != nullptr)
+	if(m_resources != nullptr)
 	{
 		m_heapAlloc.deleteInstance(m_resources);
 		m_resources = nullptr;
 	}
 
-	if (m_gl != nullptr)
+	if(m_physics)
+	{
+		m_heapAlloc.deleteInstance(m_physics);
+		m_physics = nullptr;
+	}
+
+	if(m_gl != nullptr)
 	{
 		m_heapAlloc.deleteInstance(m_gl);
 		m_gl = nullptr;
 	}
 
-	if (m_threadpool != nullptr)
+	if(m_threadpool != nullptr)
 	{
 		m_heapAlloc.deleteInstance(m_threadpool);
 		m_threadpool = nullptr;
 	}
 
-	if (m_input != nullptr)
+	if(m_input != nullptr)
 	{
 		m_heapAlloc.deleteInstance(m_input);
 		m_input = nullptr;
 	}
 
-	if (m_window != nullptr)
+	if(m_window != nullptr)
 	{
 		m_heapAlloc.deleteInstance(m_window);
 		m_window = nullptr;
@@ -198,6 +205,15 @@ Error App::createInternal(const ConfigSet& config_,
 		makeCurrent, this, m_ctx,
 		swapWindow, m_window,
 		nwinit.m_debugContext);
+	if(err) return err;
+
+	//
+	// Physics
+	//
+	m_physics = m_heapAlloc.newInstance<PhysicsWorld>();
+	if(!m_gl) return ErrorCode::OUT_OF_MEMORY;
+
+	err = m_physics->create(m_allocCb, m_allocCbData);
 	if(err) return err;
 
 	//

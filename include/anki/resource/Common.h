@@ -23,15 +23,12 @@ template<typename T>
 using ResourceAllocator = HeapAllocator<T>;
 
 template<typename T>
-using ResourceDArray = DArray<T, ResourceAllocator<T>>;
+using ResourceDArray = DArray<T>;
 
 using ResourceString = StringBase<ResourceAllocator<char>>;
 
 template<typename T>
 using TempResourceAllocator = StackAllocator<T>;
-
-template<typename T>
-using TempResourceDArray = DArray<T, TempResourceAllocator<T>>;
 
 template<typename T>
 using TempResourceDArrayAuto = DArrayAuto<T, TempResourceAllocator<T>>;

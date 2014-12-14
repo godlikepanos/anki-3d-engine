@@ -9,6 +9,8 @@
 #include "anki/util/StdTypes.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/util/Atomic.h"
+#include "anki/util/Assert.h"
+#include <utility> // For forward
 
 namespace anki {
 
@@ -76,8 +78,7 @@ public:
 	/// Free memory. If the ptr is not the last allocation of the chunk
 	/// then nothing happens and the method returns false
 	/// @param[in, out] ptr Memory block to deallocate
-	/// @return True if the deallocation actually happened and false otherwise
-	Bool free(void* ptr);
+	void free(void* ptr);
 
 	/// Get refcount.
 	AtomicU32& getRefcount()
@@ -139,7 +140,7 @@ public:
 	HeapMemoryPool();
 
 	/// Destroy
-	~HeapMemoryPool();
+	~HeapMemoryPool() final;
 
 	/// The real constructor.
 	/// @param allocCb The allocation function callback
@@ -149,8 +150,9 @@ public:
 	/// Allocate memory
 	void* allocate(PtrSize size, PtrSize alignment);
 
-	/// Free memory
-	Bool free(void* ptr);
+	/// Free memory.
+	/// @param[in, out] ptr Memory block to deallocate.
+	void free(void* ptr);
 
 private:
 #if ANKI_MEM_USE_SIGNATURES
@@ -173,17 +175,23 @@ public:
 	StackMemoryPool();
 
 	/// Destroy
-	~StackMemoryPool();
+	~StackMemoryPool() final;
 
 	/// Create with parameters
 	/// @param allocCb The allocation function callback
 	/// @param allocCbUserData The user data to pass to the allocation function
 	/// @param size The size of the pool
+	/// @param ignoreDeallocationErrors Method free() may fail if the ptr is
+	///        not in the top of the stack. Set that to true to suppress such
+	///        errors
 	/// @param alignmentBytes The maximum supported alignment for returned
-	///                       memory
+	///        memory
 	Error create(
-		AllocAlignedCallback allocCb, void* allocCbUserData,
-		PtrSize size, PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
+		AllocAlignedCallback allocCb, 
+		void* allocCbUserData,
+		PtrSize size, 
+		Bool ignoreDeallocationErrors = true,
+		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Allocate aligned memory. The operation is thread safe
 	/// @param size The size to allocate
@@ -195,8 +203,7 @@ public:
 	/// then nothing happens and the method returns false. The operation is
 	/// threadsafe
 	/// @param[in, out] ptr Memory block to deallocate
-	/// @return True if the deallocation actually happened and false otherwise
-	Bool free(void* ptr);
+	void free(void* ptr);
 
 	/// Get the total size.
 	PtrSize getTotalSize() const
@@ -247,6 +254,8 @@ private:
 
 	/// Points to the memory and more specifically to the top of the stack
 	Atomic<U8*> m_top = {nullptr};
+
+	Bool8 m_ignoreDeallocationErrors = false;
 };
 
 /// Chain memory pool. Almost similar to StackMemoryPool but more flexible and 
@@ -269,7 +278,7 @@ public:
 	ChainMemoryPool();
 
 	/// Destroy
-	~ChainMemoryPool();
+	~ChainMemoryPool() final;
 
 	/// Constructor with parameters
 	/// @param allocCb The allocation function callback
@@ -299,8 +308,7 @@ public:
 	/// Free memory. If the ptr is not the last allocation of the chunk
 	/// then nothing happens and the method returns false
 	/// @param[in, out] ptr Memory block to deallocate
-	/// @return True if the deallocation actually happened and false otherwise
-	Bool free(void* ptr);
+	void free(void* ptr);
 
 	/// @name Methods used for optimizing future chains.
 	/// @{

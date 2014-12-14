@@ -35,8 +35,8 @@ ListIterator<TNodePointer, TValuePointer, TValueReference, TList>&
 //==============================================================================
 
 //==============================================================================
-template<typename T, typename TAlloc>
-Bool List<T, TAlloc>::operator==(const List& b) const
+template<typename T>
+Bool List<T>::operator==(const List& b) const
 {
 	Bool same = true;
 	ConstIterator ita = getBegin();
@@ -58,8 +58,8 @@ Bool List<T, TAlloc>::operator==(const List& b) const
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-void List<T, TAlloc>::pushBackNode(Node* node)
+template<typename T>
+void List<T>::pushBackNode(Node* node)
 {
 	ANKI_ASSERT(node);
 
@@ -78,8 +78,9 @@ void List<T, TAlloc>::pushBackNode(Node* node)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-Error List<T, TAlloc>::pushBack(Allocator alloc, const Value& x)
+template<typename T>
+template<typename TAllocator>
+Error List<T>::pushBack(TAllocator alloc, const Value& x)
 {
 	Error err = ErrorCode::NONE;
 	
@@ -97,9 +98,9 @@ Error List<T, TAlloc>::pushBack(Allocator alloc, const Value& x)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-template<typename... TArgs>
-Error List<T, TAlloc>::emplaceBack(Allocator alloc, TArgs&&... args)
+template<typename T>
+template<typename TAllocator, typename... TArgs>
+Error List<T>::emplaceBack(TAllocator alloc, TArgs&&... args)
 {
 	Error err = ErrorCode::NONE;
 	
@@ -117,9 +118,9 @@ Error List<T, TAlloc>::emplaceBack(Allocator alloc, TArgs&&... args)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-template<typename... TArgs>
-Error List<T, TAlloc>::emplaceFront(Allocator alloc, TArgs&&... args)
+template<typename T>
+template<typename TAllocator, typename... TArgs>
+Error List<T>::emplaceFront(TAllocator alloc, TArgs&&... args)
 {
 	Error err = ErrorCode::NONE;
 
@@ -148,9 +149,9 @@ Error List<T, TAlloc>::emplaceFront(Allocator alloc, TArgs&&... args)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-template<typename... TArgs>
-Error List<T, TAlloc>::emplace(Allocator alloc, Iterator pos, TArgs&&... args)
+template<typename T>
+template<typename TAllocator, typename... TArgs>
+Error List<T>::emplace(TAllocator alloc, Iterator pos, TArgs&&... args)
 {
 	ANKI_ASSERT(pos.m_list == this);
 	Error err = ErrorCode::NONE;
@@ -199,8 +200,9 @@ Error List<T, TAlloc>::emplace(Allocator alloc, Iterator pos, TArgs&&... args)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-void List<T, TAlloc>::destroy(Allocator alloc)
+template<typename T>
+template<typename TAllocator>
+void List<T>::destroy(TAllocator alloc)
 {
 	Node* el = m_head;
 	while(el)
@@ -214,9 +216,9 @@ void List<T, TAlloc>::destroy(Allocator alloc)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
+template<typename T>
 template<typename TFunc>
-Error List<T, TAlloc>::iterateForward(TFunc func)
+Error List<T>::iterateForward(TFunc func)
 {
 	Error err = ErrorCode::NONE;
 	Node* el = m_head;
@@ -230,9 +232,9 @@ Error List<T, TAlloc>::iterateForward(TFunc func)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
+template<typename T>
 template<typename TFunc>
-Error List<T, TAlloc>::iterateBackward(TFunc func)
+Error List<T>::iterateBackward(TFunc func)
 {
 	Error err = ErrorCode::NONE;
 	Node* el = m_tail;
@@ -246,9 +248,9 @@ Error List<T, TAlloc>::iterateBackward(TFunc func)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
+template<typename T>
 template<typename TCompFunc>
-void List<T, TAlloc>::sort(TCompFunc compFunc)
+void List<T>::sort(TCompFunc compFunc)
 {
 	Node* sortPtr;
 	Node* newTail = m_tail;
@@ -257,7 +259,7 @@ void List<T, TAlloc>::sort(TCompFunc compFunc)
 	{
 		sortPtr = m_head;
 		Bool swapped = false;
-		Bool end = false;
+		Bool finished = false;
 
 		do
 		{
@@ -286,15 +288,15 @@ void List<T, TAlloc>::sort(TCompFunc compFunc)
 					newTail = m_head;
 				}
 
-				end = true;
+				finished = true;
 			}
-		} while(!end);
+		} while(!finished);
 	}
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-typename List<T, TAlloc>::Node* List<T, TAlloc>::swap(Node* one, Node* two)
+template<typename T>
+typename List<T>::Node* List<T>::swap(Node* one, Node* two)
 {
 	if(one->m_prev == nullptr)
 	{
@@ -325,8 +327,9 @@ typename List<T, TAlloc>::Node* List<T, TAlloc>::swap(Node* one, Node* two)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-void List<T, TAlloc>::erase(Allocator alloc, Iterator pos)
+template<typename T>
+template<typename TAllocator>
+void List<T>::erase(TAllocator alloc, Iterator pos)
 {
 	ANKI_ASSERT(pos.m_node);
 	ANKI_ASSERT(pos.m_list == this);
@@ -359,28 +362,30 @@ void List<T, TAlloc>::erase(Allocator alloc, Iterator pos)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-void List<T, TAlloc>::popBack(Allocator alloc)
+template<typename T>
+template<typename TAllocator>
+void List<T>::popBack(TAllocator alloc)
 {
 	ANKI_ASSERT(m_tail);
 	erase(alloc, Iterator(m_tail, this));
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-void List<T, TAlloc>::popFront(Allocator alloc)
+template<typename T>
+template<typename TAllocator>
+void List<T>::popFront(TAllocator alloc)
 {
 	ANKI_ASSERT(m_tail);
 	erase(alloc, Iterator(m_head, this));
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-typename List<T, TAlloc>::Iterator List<T, TAlloc>::find(const Value& a)
+template<typename T>
+typename List<T>::Iterator List<T>::find(const Value& a)
 {
 	Iterator it = getBegin();
-	Iterator end = getEnd();
-	while(it != end)
+	Iterator endit = getEnd();
+	while(it != endit)
 	{
 		if(*it == a)
 		{
@@ -394,13 +399,13 @@ typename List<T, TAlloc>::Iterator List<T, TAlloc>::find(const Value& a)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-PtrSize List<T, TAlloc>::getSize() const
+template<typename T>
+PtrSize List<T>::getSize() const
 {
 	PtrSize size = 0;
 	ConstIterator it = getBegin();
-	ConstIterator end = getEnd();
-	for(; it != end; it++)
+	ConstIterator endit = getEnd();
+	for(; it != endit; it++)
 	{
 		++size;
 	}

@@ -30,14 +30,14 @@ using StringListBaseScopeDestroyer =
 
 /// A simple convenience class for string lists
 template<typename TAlloc>
-class StringListBase: public List<StringBase<TAlloc>, TAlloc>
+class StringListBase: public List<StringBase<TAlloc>>
 {
 public:
 	using Self = StringListBase; ///< Self type
 	using Char = char; ///< Char type
 	using Allocator = TAlloc;
 	using String = StringBase<Allocator>; ///< String type
-	using Base = List<String, Allocator>; ///< Base
+	using Base = List<String>; ///< Base
 
 	using ScopeDestroyer = StringListBaseScopeDestroyer<Allocator>;
 

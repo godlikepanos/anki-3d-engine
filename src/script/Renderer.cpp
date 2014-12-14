@@ -42,7 +42,7 @@ static inline int pwrapDbggetEnabled(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud)) return -1;
-	Dbg* self = reinterpret_cast<Dbg*>(ud->m_data);
+	Dbg* self = static_cast<Dbg*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -77,7 +77,7 @@ static inline int pwrapDbgsetEnabled(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameDbg, -2784798555522127122, ud)) return -1;
-	Dbg* self = reinterpret_cast<Dbg*>(ud->m_data);
+	Dbg* self = static_cast<Dbg*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments

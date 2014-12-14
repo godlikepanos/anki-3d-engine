@@ -34,7 +34,7 @@ public:
 
 private:
 	HeapAllocator<U8> m_alloc;
-	List<String, HeapAllocator<String>> m_q;
+	List<String> m_q;
 	Mutex m_mtx; ///< Protect the queue
 	Thread m_thrd; ///< The thread
 	Bool8 m_quit = false;

@@ -8,7 +8,6 @@
 
 #include "anki/gl/GlObject.h"
 #include "anki/util/Dictionary.h"
-#include "anki/util/DArray.h"
 
 namespace anki {
 
@@ -24,9 +23,6 @@ class GlShader: public GlObject
 
 public:
 	using Base = GlObject;
-
-	template<typename T>
-	using DArray = DArray<T, GlAllocator<T>>;
 
 	GlShader() = default;
 

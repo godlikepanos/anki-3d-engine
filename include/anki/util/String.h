@@ -559,7 +559,7 @@ public:
 	}
 
 private:
-	DArray<Char, Allocator> m_data;
+	DArray<Char> m_data;
 
 	void checkInit() const
 	{

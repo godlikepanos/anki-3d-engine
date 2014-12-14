@@ -20,21 +20,18 @@ class SceneNode;
 
 /// The type of the scene's allocator
 template<typename T>
-using SceneAllocator = ChainAllocator<T, true>;
+using SceneAllocator = ChainAllocator<T>;
 
 /// The type of the scene's frame allocator
 template<typename T>
-using SceneFrameAllocator = StackAllocator<T, false>;
+using SceneFrameAllocator = StackAllocator<T>;
 
 /// Scene string
 using SceneString = StringBase<SceneAllocator<char>>;
 
 /// Scene array
 template<typename T>
-using SceneDArray = DArray<T, SceneAllocator<T>>;
-
-template<typename T>
-using SceneFrameDArray = DArray<T, SceneFrameAllocator<T>>;
+using SceneDArray = DArray<T>;
 
 template<typename T>
 using SceneFrameDArrayAuto = DArrayAuto<T, SceneFrameAllocator<T>>;

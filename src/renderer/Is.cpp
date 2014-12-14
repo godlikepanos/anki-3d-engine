@@ -79,8 +79,8 @@ public:
 
 	U8* m_tileBuffer = nullptr;
 
-	VisibilityTestResults::Container::const_iterator m_lightsBegin;
-	VisibilityTestResults::Container::const_iterator m_lightsEnd;
+	VisibilityTestResults::Container::ConstIterator m_lightsBegin;
+	VisibilityTestResults::Container::ConstIterator m_lightsEnd;
 
 	AtomicU32* m_pointLightsCount = nullptr;
 	AtomicU32* m_spotLightsCount = nullptr;

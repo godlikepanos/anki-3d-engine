@@ -147,14 +147,14 @@ Error GlTexture::create(const Initializer& init,
 				ANKI_ASSERT(m_depth > 0);
 
 				// Gather the data
-				DArray<U8, GlAllocator<U8>> data;
+				DArrayAuto<U8, GlAllocator<U8>> data(alloc);
 
 				// Check if there are data
 				if(init.m_data[level][0].m_ptr != nullptr)
 				{
 					PtrSize layerSize = init.m_data[level][0].m_size;
 					ANKI_ASSERT(layerSize > 0);
-					Error err = data.create(alloc, layerSize * m_depth);
+					Error err = data.create(layerSize * m_depth);
 					if(err)
 					{
 						return err;
@@ -200,8 +200,6 @@ Error GlTexture::create(const Initializer& init,
 						data.getSize(), 
 						(data.getSize() > 0) ? &data[0] : nullptr);
 				}
-
-				data.destroy(alloc);
 			}
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP

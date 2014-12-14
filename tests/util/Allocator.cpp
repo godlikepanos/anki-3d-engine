@@ -14,9 +14,9 @@ ANKI_TEST(Util, StackAllocator)
 
 	// With simple string
 	{
-		StackAllocator<char, false> alloc(allocAligned, nullptr, 128);
-		typedef std::basic_string<char, std::char_traits<char>, 
-			StackAllocator<char, false>> Str;
+		StackAllocator<char> alloc(allocAligned, nullptr, 128);
+		using Str = std::basic_string<char, std::char_traits<char>, 
+			StackAllocator<char>>;
 
 		Str str(alloc);
 
@@ -26,7 +26,7 @@ ANKI_TEST(Util, StackAllocator)
 
 	// With vector
 	{
-		typedef StackAllocator<Foo, false> All;
+		using All = StackAllocator<Foo>;
 		All alloc(allocAligned, nullptr, 
 			(sizeof(Foo) + 1) * 10, alignof(Foo));
 		std::vector<Foo, All> vec(alloc);
@@ -53,7 +53,7 @@ ANKI_TEST(Util, StackAllocator)
 
 	// Copy around
 	{
-		typedef StackAllocator<Foo, false> Alloc;
+		typedef StackAllocator<Foo> Alloc;
 
 		Alloc a(allocAligned, nullptr, 
 			(sizeof(Foo) + 1) * 10, alignof(Foo));

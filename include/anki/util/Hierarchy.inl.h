@@ -6,8 +6,9 @@
 namespace anki {
 
 //==============================================================================
-template<typename T, typename TAlloc>
-void Hierarchy<T, TAlloc>::destroy(Allocator alloc)
+template<typename T>
+template<typename TAllocator>
+void Hierarchy<T>::destroy(TAllocator alloc)
 {
 	if(m_parent != nullptr)
 	{
@@ -28,8 +29,9 @@ void Hierarchy<T, TAlloc>::destroy(Allocator alloc)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-Error Hierarchy<T, TAlloc>::addChild(Allocator alloc, Value* child)
+template<typename T>
+template<typename TAllocator>
+Error Hierarchy<T>::addChild(TAllocator alloc, Value* child)
 {
 	ANKI_ASSERT(child != nullptr && "Null arg");
 	ANKI_ASSERT(child != getSelf() && "Cannot put itself");
@@ -46,8 +48,9 @@ Error Hierarchy<T, TAlloc>::addChild(Allocator alloc, Value* child)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
-void Hierarchy<T, TAlloc>::removeChild(Allocator alloc, Value* child)
+template<typename T>
+template<typename TAllocator>
+void Hierarchy<T>::removeChild(TAllocator alloc, Value* child)
 {
 	ANKI_ASSERT(child != nullptr && "Null arg");
 	ANKI_ASSERT(child->m_parent == getSelf() && "Child has other parent");
@@ -61,9 +64,9 @@ void Hierarchy<T, TAlloc>::removeChild(Allocator alloc, Value* child)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
+template<typename T>
 template<typename VisitorFunc>
-Error Hierarchy<T, TAlloc>::visitChildren(VisitorFunc vis)
+Error Hierarchy<T>::visitChildren(VisitorFunc vis)
 {
 	Error err = ErrorCode::NONE;
 	typename Container::Iterator it = m_children.getBegin();
@@ -81,9 +84,9 @@ Error Hierarchy<T, TAlloc>::visitChildren(VisitorFunc vis)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
+template<typename T>
 template<typename VisitorFunc>
-Error Hierarchy<T, TAlloc>::visitThisAndChildren(VisitorFunc vis)
+Error Hierarchy<T>::visitThisAndChildren(VisitorFunc vis)
 {
 	Error err = vis(*getSelf());
 
@@ -96,9 +99,9 @@ Error Hierarchy<T, TAlloc>::visitThisAndChildren(VisitorFunc vis)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
+template<typename T>
 template<typename VisitorFunc>
-Error Hierarchy<T, TAlloc>::visitTree(VisitorFunc vis)
+Error Hierarchy<T>::visitTree(VisitorFunc vis)
 {
 	// Move to root
 	Value* root = getSelf();
@@ -111,9 +114,9 @@ Error Hierarchy<T, TAlloc>::visitTree(VisitorFunc vis)
 }
 
 //==============================================================================
-template<typename T, typename TAlloc>
+template<typename T>
 template<typename VisitorFunc>
-Error Hierarchy<T, TAlloc>::visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)
+Error Hierarchy<T>::visitChildrenMaxDepth(I maxDepth, VisitorFunc vis)
 {
 	ANKI_ASSERT(maxDepth >= 0);
 	Error err = ErrorCode::NONE;

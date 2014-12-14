@@ -79,7 +79,7 @@ public:
 class VisibilityTestResults
 {
 public:
-	using Container = SceneFrameDArray<VisibleNode>;
+	using Container = DArray<VisibleNode>;
 
 	~VisibilityTestResults()
 	{
@@ -196,7 +196,7 @@ class DistanceSortJob: public Threadpool::Task
 {
 public:
 	U32 m_nodesCount;
-	VisibilityTestResults::Container::iterator m_nodes;
+	VisibilityTestResults::Container::Iterator m_nodes;
 	Vec4 m_origin;
 
 	Error operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
@@ -213,7 +213,7 @@ class MaterialSortJob: public Threadpool::Task
 {
 public:
 	U32 m_nodesCount;
-	VisibilityTestResults::Container::iterator m_nodes;
+	VisibilityTestResults::Container::Iterator m_nodes;
 
 	Error operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
 	{

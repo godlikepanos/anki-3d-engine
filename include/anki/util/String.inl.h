@@ -76,7 +76,7 @@ Error StringBase<TAlloc>::appendInternal(
 		size = 1;
 	}
 
-	DArray<Char, Allocator> newData;	
+	DArray<Char> newData;	
 	Error err = newData.create(alloc, size + strSize - 1);
 
 	if(!err)

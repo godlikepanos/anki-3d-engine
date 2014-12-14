@@ -19,10 +19,10 @@ class ResourceManager;
 /// @{
 
 /// Interface class backbone of scene
-class SceneNode: public Hierarchy<SceneNode, SceneAllocator<SceneNode>>
+class SceneNode: public Hierarchy<SceneNode>
 {
 public:
-	using Base = Hierarchy<SceneNode, SceneAllocator<SceneNode>>;
+	using Base = Hierarchy<SceneNode>;
 
 	/// The one and only constructor
 	SceneNode(SceneGraph* scene);

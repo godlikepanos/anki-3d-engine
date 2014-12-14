@@ -8,6 +8,31 @@
 #include "anki/util/Memory.h"
 #include <type_traits>
 
+ANKI_TEST(Util, HeapMemoryPool)
+{
+	// Simple
+	{
+		HeapMemoryPool pool;
+		ANKI_TEST_EXPECT_NO_ERR(pool.create(allocAligned, nullptr));
+
+		void* ptr = pool.allocate(123, 1);
+		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
+
+		pool.free(ptr);
+	}
+
+	// Simple array
+	{
+		HeapMemoryPool pool;
+		ANKI_TEST_EXPECT_NO_ERR(pool.create(allocAligned, nullptr));
+
+		void* ptr = pool.allocate(2, 1);
+		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
+
+		pool.free(ptr);
+	}
+}
+
 ANKI_TEST(Util, StackMemoryPool)
 {
 	// Create/destroy test
@@ -33,7 +58,7 @@ ANKI_TEST(Util, StackMemoryPool)
 		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 1);
 		ANKI_TEST_EXPECT_GEQ(pool.getAllocatedSize(), 25);
 
-		ANKI_TEST_EXPECT_EQ(pool.free(a), true);
+		pool.free(a);
 		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 0);
 
 		// Allocate a few

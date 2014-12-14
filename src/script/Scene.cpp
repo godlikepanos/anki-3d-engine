@@ -72,12 +72,12 @@ static inline int pwrapMoveComponentsetLocalOrigin(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
-	MoveComponent* self = reinterpret_cast<MoveComponent*>(ud->m_data);
+	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
-	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -109,7 +109,7 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
-	MoveComponent* self = reinterpret_cast<MoveComponent*>(ud->m_data);
+	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -117,9 +117,9 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
-	ud->m_data = const_cast<void*>(reinterpret_cast<const void*>(&ret));
+	ud->m_data = const_cast<void*>(static_cast<const void*>(&ret));
 	ud->m_gc = false;
 	ud->m_sig = 6804478823655046386;
 	
@@ -149,12 +149,12 @@ static inline int pwrapMoveComponentsetLocalRotation(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
-	MoveComponent* self = reinterpret_cast<MoveComponent*>(ud->m_data);
+	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud)) return -1;
-	Mat3x4* iarg0 = reinterpret_cast<Mat3x4*>(ud->m_data);
+	Mat3x4* iarg0 = static_cast<Mat3x4*>(ud->m_data);
 	const Mat3x4& arg0(*iarg0);
 	
 	// Call the method
@@ -186,7 +186,7 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
-	MoveComponent* self = reinterpret_cast<MoveComponent*>(ud->m_data);
+	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -194,9 +194,9 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Mat3x4");
-	ud->m_data = const_cast<void*>(reinterpret_cast<const void*>(&ret));
+	ud->m_data = const_cast<void*>(static_cast<const void*>(&ret));
 	ud->m_gc = false;
 	ud->m_sig = -2654194732934255869;
 	
@@ -226,7 +226,7 @@ static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
-	MoveComponent* self = reinterpret_cast<MoveComponent*>(ud->m_data);
+	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -262,7 +262,7 @@ static inline int pwrapMoveComponentgetLocalScale(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
-	MoveComponent* self = reinterpret_cast<MoveComponent*>(ud->m_data);
+	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -330,7 +330,7 @@ static inline int pwrapSceneNodegetName(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
-	SceneNode* self = reinterpret_cast<SceneNode*>(ud->m_data);
+	SceneNode* self = static_cast<SceneNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -365,12 +365,12 @@ static inline int pwrapSceneNodeaddChild(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
-	SceneNode* self = reinterpret_cast<SceneNode*>(ud->m_data);
+	SceneNode* self = static_cast<SceneNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "SceneNode", -2220074417980276571, ud)) return -1;
-	SceneNode* iarg0 = reinterpret_cast<SceneNode*>(ud->m_data);
+	SceneNode* iarg0 = static_cast<SceneNode*>(ud->m_data);
 	SceneNode* arg0(iarg0);
 	
 	// Call the method
@@ -411,7 +411,7 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
-	SceneNode* self = reinterpret_cast<SceneNode*>(ud->m_data);
+	SceneNode* self = static_cast<SceneNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -425,9 +425,9 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 	}
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "MoveComponent");
-	ud->m_data = reinterpret_cast<void*>(ret);
+	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
 	ud->m_sig = 2038493110845313445;
 	
@@ -487,7 +487,7 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameModelNode, -1856316251880904290, ud)) return -1;
-	ModelNode* self = reinterpret_cast<ModelNode*>(ud->m_data);
+	ModelNode* self = static_cast<ModelNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -495,9 +495,9 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
-	ud->m_data = reinterpret_cast<void*>(&ret);
+	ud->m_data = static_cast<void*>(&ret);
 	ud->m_gc = false;
 	ud->m_sig = -2220074417980276571;
 	
@@ -555,7 +555,7 @@ static inline int pwrapInstanceNodegetSceneNodeBase(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameInstanceNode, -2063375830923741403, ud)) return -1;
-	InstanceNode* self = reinterpret_cast<InstanceNode*>(ud->m_data);
+	InstanceNode* self = static_cast<InstanceNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -563,9 +563,9 @@ static inline int pwrapInstanceNodegetSceneNodeBase(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneNode");
-	ud->m_data = reinterpret_cast<void*>(&ret);
+	ud->m_data = static_cast<void*>(&ret);
 	ud->m_gc = false;
 	ud->m_sig = -2220074417980276571;
 	
@@ -623,7 +623,7 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
-	SceneGraph* self = reinterpret_cast<SceneGraph*>(ud->m_data);
+	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -644,9 +644,9 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 	}
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "ModelNode");
-	ud->m_data = reinterpret_cast<void*>(ret);
+	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
 	ud->m_sig = -1856316251880904290;
 	
@@ -676,7 +676,7 @@ static inline int pwrapSceneGraphnewInstanceNode(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
-	SceneGraph* self = reinterpret_cast<SceneGraph*>(ud->m_data);
+	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -694,9 +694,9 @@ static inline int pwrapSceneGraphnewInstanceNode(lua_State* l)
 	}
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "InstanceNode");
-	ud->m_data = reinterpret_cast<void*>(ret);
+	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
 	ud->m_sig = -2063375830923741403;
 	
@@ -745,9 +745,9 @@ static inline int pwrapgetSceneGraph(lua_State* l)
 	}
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "SceneGraph");
-	ud->m_data = reinterpret_cast<void*>(ret);
+	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
 	ud->m_sig = -7754439619132389154;
 	

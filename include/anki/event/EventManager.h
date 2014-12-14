@@ -24,7 +24,7 @@ class SceneGraph;
 class EventManager
 {
 public:
-	using EventsContainer = List<Event*, SceneAllocator<Event*>>;
+	using EventsContainer = List<Event*>;
 
 	EventManager();
 	~EventManager();

@@ -8,6 +8,7 @@
 
 #include "anki/util/Allocator.h"
 #include "anki/util/NonCopyable.h"
+#include "anki/util/Functions.h"
 
 namespace anki {
 
@@ -17,22 +18,15 @@ namespace anki {
 /// Dynamic array with manual destruction. It doesn't hold the allocator and 
 /// that makes it compact. At the same time that requires manual destruction. 
 /// Used in permanent classes.
-template<typename T, typename TAlloc = HeapAllocator<T>>
+template<typename T>
 class DArray: public NonCopyable
 {
 public:
 	using Value = T;
-	using Allocator = TAlloc;
 	using Iterator = Value*;
 	using ConstIterator = const Value*;
 	using Reference = Value&;
 	using ConstReference = const Value&;
-
-	// STL compatible
-	using iterator = Iterator;
-	using const_iterator = ConstIterator;
-	using reference = Reference;
-	using const_reference = ConstReference;
 
 	DArray()
 	:	m_data(nullptr),
@@ -159,7 +153,8 @@ public:
 	}
 
 	/// Create the array.
-	ANKI_USE_RESULT Error create(Allocator alloc, PtrSize size)
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error create(TAllocator alloc, PtrSize size)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0);
 		Error err = ErrorCode::NONE;
@@ -183,7 +178,8 @@ public:
 	}
 
 	/// Create the array.
-	ANKI_USE_RESULT Error create(Allocator alloc, PtrSize size, const Value& v)
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error create(TAllocator alloc, PtrSize size, const Value& v)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0);
 		Error err = ErrorCode::NONE;
@@ -205,7 +201,8 @@ public:
 	}
 
 	/// Grow the array.
-	ANKI_USE_RESULT Error resize(Allocator alloc, PtrSize size)
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error resize(TAllocator alloc, PtrSize size)
 	{
 		ANKI_ASSERT(size > 0);
 		DArray newArr;
@@ -213,7 +210,7 @@ public:
 
 		if(!err)
 		{
-			PtrSize minSize = std::min<PtrSize>(size, m_size);
+			PtrSize minSize = min<PtrSize>(size, m_size);
 			for(U i = 0; i < minSize; i++)
 			{
 				newArr[i] = std::move((*this)[i]);
@@ -227,7 +224,8 @@ public:
 	}
 
 	/// Destroy the array.
-	void destroy(Allocator alloc)
+	template<typename TAllocator>
+	void destroy(TAllocator alloc)
 	{
 		if(m_data)
 		{
@@ -241,7 +239,7 @@ public:
 		ANKI_ASSERT(m_data == nullptr && m_size == 0);
 	}
 
-private:
+protected:
 	Value* m_data;
 	U32 m_size;
 
@@ -260,12 +258,12 @@ private:
 /// holds the allocator in order to perform automatic destruction. Use it for
 /// temp operations and on transient classes.
 template<typename T, typename TAlloc = HeapAllocator<T>>
-class DArrayAuto: public DArray<T, TAlloc>
+class DArrayAuto: public DArray<T>
 {
 public:
-	using Base = DArray<T, TAlloc>;
-	using Value = typename Base::Value;
-	using Allocator = typename Base::Allocator;
+	using Base = DArray<T>;
+	using Value = T;
+	using Allocator = TAlloc;
 
 	DArrayAuto(Allocator alloc)
 	:	Base(),

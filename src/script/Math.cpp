@@ -51,7 +51,7 @@ static inline int pwrapVec2Ctor(lua_State* l)
 	::new(inst) Vec2();
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	ud->m_data = inst;
 	ud->m_gc = true;
 	ud->m_sig = 6804478823655046388;
@@ -83,7 +83,7 @@ static int wrapVec2Dtor(lua_State* l)
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
 	if(ud->m_gc)
 	{
-		Vec2* inst = reinterpret_cast<Vec2*>(ud->m_data);
+		Vec2* inst = static_cast<Vec2*>(ud->m_data);
 		inst->~Vec2();
 		LuaBinder::luaFree(l, inst);
 	}
@@ -104,7 +104,7 @@ static inline int pwrapVec2getX(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -139,7 +139,7 @@ static inline int pwrapVec2getY(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -174,7 +174,7 @@ static inline int pwrapVec2setX(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -210,7 +210,7 @@ static inline int pwrapVec2setY(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -246,7 +246,7 @@ static inline int pwrapVec2setAll(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -285,7 +285,7 @@ static inline int pwrapVec2getAt(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -324,7 +324,7 @@ static inline int pwrapVec2setAt(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -363,12 +363,12 @@ static inline int pwrapVec2copy(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
-	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* iarg0 = static_cast<Vec2*>(ud->m_data);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -400,12 +400,12 @@ static inline int pwrapVec2__add(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
-	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* iarg0 = static_cast<Vec2*>(ud->m_data);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -413,7 +413,7 @@ static inline int pwrapVec2__add(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec2");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec2));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -453,12 +453,12 @@ static inline int pwrapVec2__sub(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
-	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* iarg0 = static_cast<Vec2*>(ud->m_data);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -466,7 +466,7 @@ static inline int pwrapVec2__sub(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec2");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec2));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -506,12 +506,12 @@ static inline int pwrapVec2__mul(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
-	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* iarg0 = static_cast<Vec2*>(ud->m_data);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -519,7 +519,7 @@ static inline int pwrapVec2__mul(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec2");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec2));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -559,12 +559,12 @@ static inline int pwrapVec2__div(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
-	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* iarg0 = static_cast<Vec2*>(ud->m_data);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -572,7 +572,7 @@ static inline int pwrapVec2__div(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec2");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec2));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -612,12 +612,12 @@ static inline int pwrapVec2__eq(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
-	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* iarg0 = static_cast<Vec2*>(ud->m_data);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -652,7 +652,7 @@ static inline int pwrapVec2getLength(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -687,7 +687,7 @@ static inline int pwrapVec2getNormalized(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -695,7 +695,7 @@ static inline int pwrapVec2getNormalized(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec2");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec2));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -735,7 +735,7 @@ static inline int pwrapVec2normalize(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -767,12 +767,12 @@ static inline int pwrapVec2dot(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec2, 6804478823655046388, ud)) return -1;
-	Vec2* self = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* self = static_cast<Vec2*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
-	Vec2* iarg0 = reinterpret_cast<Vec2*>(ud->m_data);
+	Vec2* iarg0 = static_cast<Vec2*>(ud->m_data);
 	const Vec2& arg0(*iarg0);
 	
 	// Call the method
@@ -862,7 +862,7 @@ static inline int pwrapVec3Ctor(lua_State* l)
 	::new(inst) Vec3();
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	ud->m_data = inst;
 	ud->m_gc = true;
 	ud->m_sig = 6804478823655046389;
@@ -894,7 +894,7 @@ static int wrapVec3Dtor(lua_State* l)
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
 	if(ud->m_gc)
 	{
-		Vec3* inst = reinterpret_cast<Vec3*>(ud->m_data);
+		Vec3* inst = static_cast<Vec3*>(ud->m_data);
 		inst->~Vec3();
 		LuaBinder::luaFree(l, inst);
 	}
@@ -915,7 +915,7 @@ static inline int pwrapVec3getX(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -950,7 +950,7 @@ static inline int pwrapVec3getY(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -985,7 +985,7 @@ static inline int pwrapVec3getZ(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -1020,7 +1020,7 @@ static inline int pwrapVec3setX(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -1056,7 +1056,7 @@ static inline int pwrapVec3setY(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -1092,7 +1092,7 @@ static inline int pwrapVec3setZ(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -1128,7 +1128,7 @@ static inline int pwrapVec3setAll(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -1170,7 +1170,7 @@ static inline int pwrapVec3getAt(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -1209,7 +1209,7 @@ static inline int pwrapVec3setAt(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -1248,12 +1248,12 @@ static inline int pwrapVec3copy(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
-	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* iarg0 = static_cast<Vec3*>(ud->m_data);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1285,12 +1285,12 @@ static inline int pwrapVec3__add(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
-	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* iarg0 = static_cast<Vec3*>(ud->m_data);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1298,7 +1298,7 @@ static inline int pwrapVec3__add(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec3");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec3));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -1338,12 +1338,12 @@ static inline int pwrapVec3__sub(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
-	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* iarg0 = static_cast<Vec3*>(ud->m_data);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1351,7 +1351,7 @@ static inline int pwrapVec3__sub(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec3");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec3));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -1391,12 +1391,12 @@ static inline int pwrapVec3__mul(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
-	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* iarg0 = static_cast<Vec3*>(ud->m_data);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1404,7 +1404,7 @@ static inline int pwrapVec3__mul(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec3");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec3));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -1444,12 +1444,12 @@ static inline int pwrapVec3__div(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
-	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* iarg0 = static_cast<Vec3*>(ud->m_data);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1457,7 +1457,7 @@ static inline int pwrapVec3__div(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec3");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec3));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -1497,12 +1497,12 @@ static inline int pwrapVec3__eq(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
-	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* iarg0 = static_cast<Vec3*>(ud->m_data);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1537,7 +1537,7 @@ static inline int pwrapVec3getLength(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -1572,7 +1572,7 @@ static inline int pwrapVec3getNormalized(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -1580,7 +1580,7 @@ static inline int pwrapVec3getNormalized(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec3");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec3));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -1620,7 +1620,7 @@ static inline int pwrapVec3normalize(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -1652,12 +1652,12 @@ static inline int pwrapVec3dot(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec3, 6804478823655046389, ud)) return -1;
-	Vec3* self = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* self = static_cast<Vec3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec3", 6804478823655046389, ud)) return -1;
-	Vec3* iarg0 = reinterpret_cast<Vec3*>(ud->m_data);
+	Vec3* iarg0 = static_cast<Vec3*>(ud->m_data);
 	const Vec3& arg0(*iarg0);
 	
 	// Call the method
@@ -1749,7 +1749,7 @@ static inline int pwrapVec4Ctor(lua_State* l)
 	::new(inst) Vec4();
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	ud->m_data = inst;
 	ud->m_gc = true;
 	ud->m_sig = 6804478823655046386;
@@ -1781,7 +1781,7 @@ static int wrapVec4Dtor(lua_State* l)
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
 	if(ud->m_gc)
 	{
-		Vec4* inst = reinterpret_cast<Vec4*>(ud->m_data);
+		Vec4* inst = static_cast<Vec4*>(ud->m_data);
 		inst->~Vec4();
 		LuaBinder::luaFree(l, inst);
 	}
@@ -1802,7 +1802,7 @@ static inline int pwrapVec4getX(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -1837,7 +1837,7 @@ static inline int pwrapVec4getY(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -1872,7 +1872,7 @@ static inline int pwrapVec4getZ(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -1907,7 +1907,7 @@ static inline int pwrapVec4getW(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -1942,7 +1942,7 @@ static inline int pwrapVec4setX(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -1978,7 +1978,7 @@ static inline int pwrapVec4setY(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -2014,7 +2014,7 @@ static inline int pwrapVec4setZ(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -2050,7 +2050,7 @@ static inline int pwrapVec4setW(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -2086,7 +2086,7 @@ static inline int pwrapVec4setAll(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -2131,7 +2131,7 @@ static inline int pwrapVec4getAt(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -2170,7 +2170,7 @@ static inline int pwrapVec4setAt(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -2209,12 +2209,12 @@ static inline int pwrapVec4copy(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
-	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2246,12 +2246,12 @@ static inline int pwrapVec4__add(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
-	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2259,7 +2259,7 @@ static inline int pwrapVec4__add(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec4));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -2299,12 +2299,12 @@ static inline int pwrapVec4__sub(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
-	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2312,7 +2312,7 @@ static inline int pwrapVec4__sub(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec4));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -2352,12 +2352,12 @@ static inline int pwrapVec4__mul(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
-	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2365,7 +2365,7 @@ static inline int pwrapVec4__mul(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec4));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -2405,12 +2405,12 @@ static inline int pwrapVec4__div(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
-	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2418,7 +2418,7 @@ static inline int pwrapVec4__div(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec4));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -2458,12 +2458,12 @@ static inline int pwrapVec4__eq(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
-	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2498,7 +2498,7 @@ static inline int pwrapVec4getLength(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -2533,7 +2533,7 @@ static inline int pwrapVec4getNormalized(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -2541,7 +2541,7 @@ static inline int pwrapVec4getNormalized(lua_State* l)
 	
 	// Push return value
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	luaL_setmetatable(l, "Vec4");
 	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec4));
 	if(ANKI_UNLIKELY(ud->m_data == nullptr))
@@ -2581,7 +2581,7 @@ static inline int pwrapVec4normalize(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Call the method
@@ -2613,12 +2613,12 @@ static inline int pwrapVec4dot(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameVec4, 6804478823655046386, ud)) return -1;
-	Vec4* self = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* self = static_cast<Vec4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
-	Vec4* iarg0 = reinterpret_cast<Vec4*>(ud->m_data);
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
 	// Call the method
@@ -2712,7 +2712,7 @@ static inline int pwrapMat3Ctor(lua_State* l)
 	::new(inst) Mat3();
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	ud->m_data = inst;
 	ud->m_gc = true;
 	ud->m_sig = 6306819796139686981;
@@ -2744,7 +2744,7 @@ static int wrapMat3Dtor(lua_State* l)
 	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud)) return -1;
 	if(ud->m_gc)
 	{
-		Mat3* inst = reinterpret_cast<Mat3*>(ud->m_data);
+		Mat3* inst = static_cast<Mat3*>(ud->m_data);
 		inst->~Mat3();
 		LuaBinder::luaFree(l, inst);
 	}
@@ -2765,12 +2765,12 @@ static inline int pwrapMat3copy(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud)) return -1;
-	Mat3* self = reinterpret_cast<Mat3*>(ud->m_data);
+	Mat3* self = static_cast<Mat3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Mat3", 6306819796139686981, ud)) return -1;
-	Mat3* iarg0 = reinterpret_cast<Mat3*>(ud->m_data);
+	Mat3* iarg0 = static_cast<Mat3*>(ud->m_data);
 	const Mat3& arg0(*iarg0);
 	
 	// Call the method
@@ -2802,7 +2802,7 @@ static inline int pwrapMat3getAt(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud)) return -1;
-	Mat3* self = reinterpret_cast<Mat3*>(ud->m_data);
+	Mat3* self = static_cast<Mat3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -2844,7 +2844,7 @@ static inline int pwrapMat3setAt(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud)) return -1;
-	Mat3* self = reinterpret_cast<Mat3*>(ud->m_data);
+	Mat3* self = static_cast<Mat3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -2886,7 +2886,7 @@ static inline int pwrapMat3setAll(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3, 6306819796139686981, ud)) return -1;
-	Mat3* self = reinterpret_cast<Mat3*>(ud->m_data);
+	Mat3* self = static_cast<Mat3*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -2988,7 +2988,7 @@ static inline int pwrapMat3x4Ctor(lua_State* l)
 	::new(inst) Mat3x4();
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
-	ud = reinterpret_cast<UserData*>(voidp);
+	ud = static_cast<UserData*>(voidp);
 	ud->m_data = inst;
 	ud->m_gc = true;
 	ud->m_sig = -2654194732934255869;
@@ -3020,7 +3020,7 @@ static int wrapMat3x4Dtor(lua_State* l)
 	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud)) return -1;
 	if(ud->m_gc)
 	{
-		Mat3x4* inst = reinterpret_cast<Mat3x4*>(ud->m_data);
+		Mat3x4* inst = static_cast<Mat3x4*>(ud->m_data);
 		inst->~Mat3x4();
 		LuaBinder::luaFree(l, inst);
 	}
@@ -3041,12 +3041,12 @@ static inline int pwrapMat3x4copy(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud)) return -1;
-	Mat3x4* self = reinterpret_cast<Mat3x4*>(ud->m_data);
+	Mat3x4* self = static_cast<Mat3x4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
 	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud)) return -1;
-	Mat3x4* iarg0 = reinterpret_cast<Mat3x4*>(ud->m_data);
+	Mat3x4* iarg0 = static_cast<Mat3x4*>(ud->m_data);
 	const Mat3x4& arg0(*iarg0);
 	
 	// Call the method
@@ -3078,7 +3078,7 @@ static inline int pwrapMat3x4getAt(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud)) return -1;
-	Mat3x4* self = reinterpret_cast<Mat3x4*>(ud->m_data);
+	Mat3x4* self = static_cast<Mat3x4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -3120,7 +3120,7 @@ static inline int pwrapMat3x4setAt(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud)) return -1;
-	Mat3x4* self = reinterpret_cast<Mat3x4*>(ud->m_data);
+	Mat3x4* self = static_cast<Mat3x4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
@@ -3162,7 +3162,7 @@ static inline int pwrapMat3x4setAll(lua_State* l)
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameMat3x4, -2654194732934255869, ud)) return -1;
-	Mat3x4* self = reinterpret_cast<Mat3x4*>(ud->m_data);
+	Mat3x4* self = static_cast<Mat3x4*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
