@@ -268,6 +268,7 @@ void exportMaterial(
 	std::string diffTex;
 	std::string normTex;
 	std::string specColTex;
+	std::string shininessTex;
 	std::string dispTex;
 
 	std::string name = getMaterialName(mtl, instanced);
@@ -315,6 +316,19 @@ void exportMaterial(
 		}
 	}
 
+	// Shininess color
+	if(mtl.GetTextureCount(aiTextureType_SHININESS) > 0)
+	{
+		if(mtl.GetTexture(aiTextureType_SHININESS, 0, &path) == AI_SUCCESS)
+		{
+			shininessTex = getFilename(path.C_Str());
+		}
+		else
+		{
+			ERROR("Failed to retrieve texture\n");
+		}
+	}
+
 	// Height texture
 	if(mtl.GetTextureCount(aiTextureType_EMISSIVE) > 0)
 	{	
@@ -344,11 +358,22 @@ void exportMaterial(
 	static const char* tessVertTemplate = 
 #include "templates/tessVert.h"
 		;
+	static const char* readRFromTextureTemplate = R"(
+				<operation>
+					<id>%id%</id>
+					<returnType>float</returnType>
+					<function>readRFromTexture</function>
+					<arguments>
+						<argument>%map%</argument>
+						<argument>out2</argument>
+					</arguments>
+				</operation>)";
 
 	// Compose full template
 	// First geometry part
 	std::string materialStr;
-	materialStr = "<material>\n\t<programs>\n";
+	materialStr = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
+	materialStr += "\n<material>\n\t<programs>\n";
 	if(dispTex.empty())
 	{
 		materialStr += simpleVertTemplate;
@@ -365,13 +390,9 @@ void exportMaterial(
 	{
 		materialStr += diffFragTemplate;
 	}
-	else if(!specColTex.empty())
-	{
-		materialStr += diffNormSpecFragTemplate;
-	}
 	else
 	{
-		materialStr += diffNormFragTemplate;
+		materialStr += diffNormSpecFragTemplate;
 	}
 
 	materialStr += "\n\t</programs>\t</material>";
@@ -391,20 +412,95 @@ void exportMaterial(
 
 	if(!specColTex.empty())
 	{
-		materialStr = replaceAllString(materialStr, "%specularColorMap%", 
-			exporter.texrpath + specColTex);
+		materialStr = replaceAllString(materialStr, "%specularColorInput%", 
+			R"(<input><type>sampler2D</type><name>uSpecularColor</name><value>)"
+			+ exporter.texrpath + specColTex
+			+ R"(</value></input>)");
+
+		materialStr = replaceAllString(materialStr, "%specularColorFunc%", 
+			readRFromTextureTemplate);
+
+		materialStr = replaceAllString(materialStr, "%id%", 
+			"50");
+
+		materialStr = replaceAllString(materialStr, "%map%", 
+			"uSpecularColor");
+
+		materialStr = replaceAllString(materialStr, "%specularColorArg%", 
+			"out50");
+	}
+	else
+	{
+		aiColor3D specCol = {0.0, 0.0, 0.0};
+		mtl.Get(AI_MATKEY_COLOR_SPECULAR, specCol);
+
+		materialStr = replaceAllString(materialStr, "%specularColorInput%", 
+			R"(<input><type>float</type><name>uSpecularColor</name><value>)"
+			+ std::to_string((specCol[0] + specCol[1] + specCol[2]) / 3.0)
+			+ R"(</value></input>)");
+
+		materialStr = replaceAllString(materialStr, "%specularColorFunc%", 
+			"");
+
+		materialStr = replaceAllString(materialStr, "%specularColorArg%", 
+			"uSpecularColor");
 	}
 
-	aiColor3D specCol = {0.0, 0.0, 0.0};
-	mtl.Get(AI_MATKEY_COLOR_SPECULAR, specCol);
+	if(!shininessTex.empty())
+	{
+		materialStr = replaceAllString(materialStr, "%specularPowerInput%", 
+			R"(<input><type>sampler2D</type><name>uSpecularPower</name><value>)"
+			+ exporter.texrpath + shininessTex
+			+ R"(</value></input>)" + "\n"
+			+ "\t\t\t\t" 
+			+ R"(<input><type>float</type><name>MAX_SPECULAR_POWER</name>)"
+			+ R"(<value>120.0</value><const>1</const></input>)");
 
-	float shininess = 0.0;
-	mtl.Get(AI_MATKEY_SHININESS, shininess);
+		materialStr = replaceAllString(materialStr, "%specularPowerValue%", 
+			exporter.texrpath + shininessTex);
 
-	materialStr = replaceAllString(materialStr, "%specularColor%", 
-		std::to_string((specCol[0] + specCol[1] + specCol[2]) / 3.0));
-	materialStr = replaceAllString(materialStr, "%specularPower%", 
-		std::to_string(shininess));
+			static const char* multiply = R"(
+				<operation>
+					<id>61</id>
+					<returnType>float</returnType>
+					<function>mul</function>
+					<arguments>
+						<argument>MAX_SPECULAR_POWER</argument>
+						<argument>out60</argument>
+					</arguments>
+				</operation>)";
+
+		std::string func = std::string(readRFromTextureTemplate) + multiply;
+
+		materialStr = replaceAllString(materialStr, "%specularPowerFunc%", 
+			func);
+
+		materialStr = replaceAllString(materialStr, "%id%", 
+			"60");
+
+		materialStr = replaceAllString(materialStr, "%map%", 
+			"uSpecularPower");
+
+		materialStr = replaceAllString(materialStr, "%specularPowerArg%", 
+			"out61");
+	}
+	else
+	{
+		float shininess = 0.0;
+		mtl.Get(AI_MATKEY_SHININESS, shininess);
+		materialStr = replaceAllString(materialStr, "%specularPowerInput%", 
+			R"(<input><type>float</type><name>uSpecularPower</name><value>)"
+			+ std::to_string(shininess)
+			+ R"(</value></input>)");
+
+		materialStr = replaceAllString(materialStr, "%specularPowerFunc%", 
+			"");
+
+		materialStr = replaceAllString(materialStr, "%specularPowerArg%", 
+			"uSpecularPower");
+	}
+
+	materialStr = replaceAllString(materialStr, "%maxSpecularPower%", " ");
 
 	materialStr = replaceAllString(materialStr, "%instanced%", 
 		(instanced) ? "1" : "0");

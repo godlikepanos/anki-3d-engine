@@ -6,11 +6,11 @@ R"(		<program>
 			</includes>
 
 			<inputs>
-				<input><type>float</type><name>uSpecularPower</name><value>%specularPower%</value></input>
+				%specularColorInput%
+				%specularPowerInput%
 				<input><type>float</type><name>uBlurring</name><value>0.0</value><const>1</const></input>
 				<input><type>sampler2D</type><name>uDiffuseMap</name><value>%diffuseMap%</value></input>
 				<input><type>sampler2D</type><name>uNormalMap</name><value>%normalMap%</value></input>
-				<input><type>sampler2D</type><name>uSpecularColorMap</name><value>%specularColorMap%</value></input>
 			</inputs>
 			
 			<operations>
@@ -50,25 +50,19 @@ R"(		<program>
 						<argument>out2</argument>
 					</arguments>
 				</operation>
-				<operation>
-					<id>30</id>
-					<returnType>float</returnType>
-					<function>readRFromTexture</function>
-					<arguments>
-						<argument>uSpecularColorMap</argument>
-						<argument>out2</argument>
-					</arguments>
-				</operation>
+
+				%specularColorFunc%
+				%specularPowerFunc%
 				
 				<operation>
-					<id>40</id>
+					<id>100</id>
 					<returnType>void</returnType>
 					<function>writeRts</function>
 					<arguments>
 						<argument>out10</argument>
 						<argument>out20</argument>
-						<argument>out30</argument>
-						<argument>uSpecularPower</argument>
+						<argument>%specularColorArg%</argument>
+						<argument>%specularPowerArg%</argument>
 						<argument>uBlurring</argument>
 					</arguments>
 				</operation>

@@ -252,7 +252,7 @@ void main()
 #if 0
 	if(inInstanceId != 99999)
 	{
-		outColor = vec3(specColor);
+		outColor = vec3(specPower / 120.0);
 	}
 #endif
 

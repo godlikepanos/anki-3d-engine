@@ -19,9 +19,6 @@ enum class Pass: U8
 	COUNT
 };
 
-/// Max level of detail
-const U MAX_LOD = 3;
-
 /// A key that consistst of the rendering pass and the level of detail
 class RenderingKey
 {
@@ -34,9 +31,7 @@ public:
 	:	m_pass(pass), 
 		m_lod(lod), 
 		m_tessellation(tessellation)
-	{
-		ANKI_ASSERT(lod <= MAX_LOD);
-	}
+	{}
 
 	RenderingKey()
 	:	RenderingKey(Pass::COLOR, 0, false)
