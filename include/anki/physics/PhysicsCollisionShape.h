@@ -18,7 +18,7 @@ class PhysicsCollisionShape: public PhysicsObject
 {
 public:
 	/// Type of supported physics collision shapes.
-	enum class Type: U8
+	enum class ShapeType: U8
 	{
 		NONE,
 		SPHERE,
@@ -32,7 +32,7 @@ public:
 	};
 
 	PhysicsCollisionShape(PhysicsWorld* world)
-	:	PhysicsObject(world)
+	:	PhysicsObject(Type::COLLISION_SHAPE, world)
 	{}
 
 	~PhysicsCollisionShape();

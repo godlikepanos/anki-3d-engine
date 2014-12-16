@@ -325,8 +325,6 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		{
 			F64 tmp;
 			ANKI_CHECK(valEl.getF64(tmp));
-			m_physicsInfo.m_type = PhysicsCollisionShape::Type::SPHERE;
-			m_physicsInfo.m_radius = tmp;
 		}
 		else if(type == "box")
 		{

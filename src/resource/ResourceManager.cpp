@@ -37,6 +37,7 @@ Error ResourceManager::create(Initializer& init)
 	Error err = ErrorCode::NONE;
 
 	m_gl = init.m_gl;
+	m_physics = init.m_physics;
 	m_alloc = ResourceAllocator<U8>(
 		init.m_allocCallback, init.m_allocCallbackData);
 

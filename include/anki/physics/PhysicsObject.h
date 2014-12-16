@@ -17,8 +17,18 @@ namespace anki {
 class PhysicsObject
 {
 public:
-	PhysicsObject(PhysicsWorld* world)
-	:	m_world(world)
+	/// Type of the physics object.
+	enum class Type: U8
+	{
+		COLLISION_SHAPE,
+		BODY,
+		JOINT,
+		COUNT
+	};
+
+	PhysicsObject(Type type, PhysicsWorld* world)
+	:	m_world(world),
+		m_type(type)
 	{
 		ANKI_ASSERT(m_world);
 	}
@@ -26,6 +36,11 @@ public:
 	virtual ~PhysicsObject()
 	{
 		ANKI_ASSERT(m_markedForDeletion == true);
+	}
+
+	Type getType() const
+	{
+		return m_type;
 	}
 
 	void setMarkedForDeletion();
@@ -39,6 +54,7 @@ protected:
 	PhysicsWorld* m_world = nullptr;
 
 private:
+	Type m_type;
 	Bool8 m_markedForDeletion = false;
 };
 /// @}

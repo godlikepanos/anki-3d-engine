@@ -18,7 +18,6 @@ class ResourceManager;
 
 /// @addtogroup resource
 /// @{
-
 template<typename T>
 using ResourceAllocator = HeapAllocator<T>;
 
@@ -52,7 +51,6 @@ public:
 		m_resources(resourceManager)
 	{}
 };
-
 /// @}
 
 /// @privatesection
@@ -72,7 +70,6 @@ public:
 	{ \
 		goto cleanup; \
 	}
-
 /// @}
 
 } // end namespace anki

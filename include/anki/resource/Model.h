@@ -14,9 +14,11 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/Skeleton.h"
 #include "anki/resource/Animation.h"
-#include "anki/physics/PhysicsCollisionShape.h"
 
 namespace anki {
+
+// Forward
+class PhysicsCollisionShape;
 
 /// Model patch interface class. Its very important class and it binds the
 /// material with the mesh
@@ -167,13 +169,6 @@ private:
 class Model
 {
 public:
-	/// Physics information the Model holds.
-	struct PhysicsInformation
-	{
-		PhysicsCollisionShape::Type m_type = PhysicsCollisionShape::Type::NONE;
-		F32 m_radius = 0.0;
-	};
-
 	Model(ResourceAllocator<U8>& alloc);
 
 	~Model();
@@ -188,9 +183,9 @@ public:
 		return m_visibilityShape;
 	}
 
-	const PhysicsInformation& getPhysicsInformation() const
+	const PhysicsCollisionShape* getPhysicsCollisionShape() const
 	{
-		return m_physicsInfo;
+		return m_physicsShape;
 	}
 
 	ANKI_USE_RESULT Error load(
@@ -202,7 +197,7 @@ private:
 	Obb m_visibilityShape;
 	SkeletonResourcePointer m_skeleton;
 	ResourceDArray<AnimationResourcePointer> m_animations;
-	PhysicsInformation m_physicsInfo;
+	PhysicsCollisionShape* m_physicsShape = nullptr;
 };
 
 } // end namespace anki

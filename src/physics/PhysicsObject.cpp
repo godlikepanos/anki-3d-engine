@@ -14,7 +14,7 @@ void PhysicsObject::setMarkedForDeletion()
 	if(!m_markedForDeletion)
 	{
 		m_markedForDeletion = true;
-		m_world->_increaseObjectsMarkedForDeletion();
+		m_world->_increaseObjectsMarkedForDeletion(m_type);
 	}
 }
 

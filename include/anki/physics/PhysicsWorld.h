@@ -38,6 +38,12 @@ public:
 		return newObjectInternal(m_bodies, std::forward<TArgs>(args)...);
 	}
 
+	/// Start asynchronous update.
+	Error updateAsync(F32 timestep);
+
+	/// End asynchronous update.
+	void waitUpdate();
+
 	/// @privatesection
 	/// @{
 	NewtonWorld* _getNewtonWorld()
@@ -46,21 +52,23 @@ public:
 		return m_world;
 	}
 
-	void _increaseObjectsMarkedForDeletion()
-	{
-		++m_markedForDeletionCount;
-	}
+	void _increaseObjectsMarkedForDeletion(PhysicsObject::Type type);
 	/// @}
 
 private:
 	ChainAllocator<U8> m_alloc;
 	List<PhysicsCollisionShape*> m_collisions;
 	List<PhysicsBody*> m_bodies;
-	AtomicU32 m_markedForDeletionCount = {0};
+	Array<AtomicU32, static_cast<U>(PhysicsObject::Type::COUNT)> 
+		m_forDeletionCount = {{{0}, {0}, {0}}};
 	NewtonWorld* m_world = nullptr;
 
 	template<typename T, typename TContainer, typename... TArgs>
 	T* newObjectInternal(TContainer& cont, TArgs&&... args);
+
+	template<typename T>
+	void cleanupMarkedForDeletion(
+		List<T*>& container, AtomicU32& count);
 };
 
 //==============================================================================

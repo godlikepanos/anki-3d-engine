@@ -63,4 +63,58 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	return err;
 }
 
+//==============================================================================
+void PhysicsWorld::_increaseObjectsMarkedForDeletion(PhysicsObject::Type type)
+{
+	++m_forDeletionCount[static_cast<U>(type)];
+}
+
+//==============================================================================
+Error PhysicsWorld::updateAsync(F32 timestep)
+{
+	// Do cleanup of marked for deletion
+	cleanupMarkedForDeletion(m_bodies, 
+		m_forDeletionCount[static_cast<U>(PhysicsObject::Type::BODY)]);
+	cleanupMarkedForDeletion(m_collisions, m_forDeletionCount[
+		static_cast<U>(PhysicsObject::Type::COLLISION_SHAPE)]);
+
+	// Update
+	NewtonUpdateAsync(m_world, timestep);
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void PhysicsWorld::waitUpdate()
+{
+	NewtonWaitForUpdateToFinish(m_world);
+}
+
+//==============================================================================
+template<typename T>
+void PhysicsWorld::cleanupMarkedForDeletion(
+	List<T*>& container, AtomicU32& count)
+{
+	while(count > 0)
+	{
+		Bool found = false;
+		auto it = container.begin();
+		auto end = container.end();
+		for(; it != end; it++)
+		{
+			if((*it)->getMarkedForDeletion())
+			{
+				// Delete node
+				container.erase(m_alloc, it);
+				m_alloc.deleteInstance(*it);
+				found = true;
+				break;
+			}
+		}
+
+		(void)found;
+		ANKI_ASSERT(found && "Something is wrong with marked for deletion");
+	}
+}
+
 } // end namespace anki

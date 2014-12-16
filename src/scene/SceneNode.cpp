@@ -84,7 +84,7 @@ Error SceneNode::addComponent(SceneComponent* comp)
 	ANKI_ASSERT(comp);
 	Error err = ErrorCode::NONE;
 
-	if(m_components.getSize() < m_componentsCount + 1)
+	if(m_components.getSize() < m_componentsCount + 1u)
 	{
 		// Not enough room
 		const U extra = 2;
