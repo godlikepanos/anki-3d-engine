@@ -15,7 +15,6 @@
 #include "anki/util/HighRezTimer.h"
 #include "anki/core/App.h"
 
-#include "anki/physics/PhysicsWorld.h"
 #include "anki/event/EventManager.h"
 
 namespace anki {
@@ -94,15 +93,6 @@ public:
 		return m_nodesCount;
 	}
 
-	PhysicsWorld& getPhysics()
-	{
-		return m_physics;
-	}
-	const PhysicsWorld& getPhysics() const
-	{
-		return m_physics;
-	}
-
 	EventManager& getEventManager()
 	{
 		return m_events;
@@ -171,12 +161,18 @@ public:
 	{
 		return *m_gl;
 	}
+
+	PhysicsWorld& _getPhysicsWorld()
+	{
+		return *m_physics;
+	}
 	/// @}
 
 private:
 	Threadpool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
 	GlDevice* m_gl = nullptr;
+	PhysicsWorld* m_physics = nullptr;
 
 	SceneAllocator<U8> m_alloc;
 	SceneFrameAllocator<U8> m_frameAlloc;
@@ -189,8 +185,6 @@ private:
 	Timestamp m_ambiendColorUpdateTimestamp = getGlobTimestamp();
 	Camera* m_mainCam = nullptr;
 	Timestamp m_activeCameraChangeTimestamp = getGlobTimestamp();
-
-	PhysicsWorld m_physics;
 
 	EventManager m_events;
 

@@ -221,6 +221,7 @@ Error App::createInternal(const ConfigSet& config_,
 	//
 	ResourceManager::Initializer rinit;
 	rinit.m_gl = m_gl;
+	rinit.m_physics = m_physics;
 	rinit.m_config = &config;
 	rinit.m_cacheDir = m_cacheDir.toCString();
 	rinit.m_allocCallback = m_allocCb;

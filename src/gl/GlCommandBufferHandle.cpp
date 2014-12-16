@@ -9,6 +9,8 @@
 #include "anki/gl/GlFramebuffer.h"
 #include "anki/gl/GlTextureHandle.h"
 #include "anki/gl/GlTexture.h"
+#include "anki/gl/GlOcclusionQueryHandle.h"
+#include "anki/gl/GlOcclusionQuery.h"
 #include "anki/core/Counters.h"
 #include <utility>
 
@@ -597,6 +599,100 @@ void GlCommandBufferHandle::drawArrays(
 		_pushBackNewCommand<DrawArraysCommand<GL_LINES>>(info);
 		break;
 	default:
+		ANKI_ASSERT(0 && "Not implemented");
+	}
+}
+
+//==============================================================================
+// Use the template trick to avoid allocating too much things in the 
+// command buffer
+template<GLenum mode, U8 indexSize>
+class DrawElementsCondCommand: public GlCommand
+{
+public:
+	GlDrawElementsIndirectInfo m_info;
+	GlOcclusionQueryHandle m_query;
+
+	DrawElementsCondCommand(GlDrawElementsIndirectInfo& info,
+		GlOcclusionQueryHandle query)
+	:	m_info(info),
+		m_query(query)
+	{}
+
+	Error operator()(GlCommandBuffer*)
+	{
+		ANKI_ASSERT(indexSize != 0);
+
+		GLenum indicesType = 0;
+		switch(indexSize)
+		{
+		case 1:
+			indicesType = GL_UNSIGNED_BYTE;
+			break;
+		case 2:
+			indicesType = GL_UNSIGNED_SHORT;
+			break;
+		case 4:
+			indicesType = GL_UNSIGNED_INT;
+			break;
+		default:
+			ANKI_ASSERT(0);
+			break;
+		};
+
+		if(m_query._get().getResult() != GlOcclusionQuery::Result::NOT_VISIBLE)
+		{
+			glDrawElementsInstancedBaseVertexBaseInstance(
+				mode,
+				m_info.m_count,
+				indicesType,
+				(const void*)(PtrSize)(m_info.m_firstIndex * indexSize),
+				m_info.m_instanceCount,
+				m_info.m_baseVertex,
+				m_info.m_baseInstance);
+
+			ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
+		}
+
+		return ErrorCode::NONE;
+	}
+};
+
+void GlCommandBufferHandle::drawElementsConditional(
+	GlOcclusionQueryHandle& query, 
+	GLenum mode, U8 indexSize, 
+	U32 count, U32 instanceCount, U32 firstIndex,
+	U32 baseVertex, U32 baseInstance)
+{
+	GlDrawElementsIndirectInfo info(count, instanceCount, firstIndex, 
+		baseVertex, baseInstance);
+
+	if(indexSize == 2)
+	{
+		switch(mode)
+		{
+		case GL_TRIANGLES:
+			_pushBackNewCommand<DrawElementsCondCommand<GL_TRIANGLES, 2>>(
+				info, query);
+			break;
+		case GL_POINTS:
+			_pushBackNewCommand<DrawElementsCondCommand<GL_POINTS, 2>>(
+				info, query);
+			break;
+		case GL_LINES:
+			_pushBackNewCommand<DrawElementsCondCommand<GL_LINES, 2>>(
+				info, query);
+			break;
+		case GL_PATCHES:
+			_pushBackNewCommand<DrawElementsCondCommand<GL_PATCHES, 2>>(
+				info, query);
+			break;
+		default:
+			ANKI_ASSERT(0 && "Not implemented");
+		}
+	}
+	else
+	{
 		ANKI_ASSERT(0 && "Not implemented");
 	}
 }

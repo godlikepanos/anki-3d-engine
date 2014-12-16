@@ -29,13 +29,13 @@ public:
 	template<typename T, typename... TArgs>
 	T* newCollisionShape(TArgs&&... args)
 	{
-		return newObjectInternal(m_collisions, std::forward<TArgs>(args)...);
+		return newObjectInternal<T>(m_collisions, std::forward<TArgs>(args)...);
 	}
 
 	template<typename T, typename... TArgs>
 	T* newBody(TArgs&&... args)
 	{
-		return newObjectInternal(m_bodies, std::forward<TArgs>(args)...);
+		return newObjectInternal<T>(m_bodies, std::forward<TArgs>(args)...);
 	}
 
 	/// Start asynchronous update.

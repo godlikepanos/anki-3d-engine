@@ -7,7 +7,6 @@
 #define ANKI_GL_GL_SHADER_H
 
 #include "anki/gl/GlObject.h"
-#include "anki/util/Dictionary.h"
 
 namespace anki {
 
@@ -48,13 +47,9 @@ public:
 	}
 
 private:
-	GLenum m_type;
+	GLenum m_type = 0;
 
 	void destroy();
-
-	/// Query the shader for blocks
-	ANKI_USE_RESULT Error initBlocksOfType(GLenum programInterface, 
-		U count, U index, char*& namesPtr, U& namesLen);
 
 	ANKI_USE_RESULT Error handleError(GlAllocator<U8>& alloc, String& src);
 };

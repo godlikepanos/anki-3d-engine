@@ -39,7 +39,7 @@ public:
 
 	/// @privatesection
 	/// @{
-	NewtonCollision* _getNewtonShape()
+	NewtonCollision* _getNewtonShape() const
 	{
 		ANKI_ASSERT(m_shape);
 		return m_shape;
@@ -52,42 +52,42 @@ protected:
 };
 
 /// Sphere collision shape.
-class PhysicsSphere: public PhysicsCollisionShape
+class PhysicsSphere final: public PhysicsCollisionShape
 {
 public:
 	PhysicsSphere(PhysicsWorld* world)
 	:	PhysicsCollisionShape(world)
 	{}
 
-	~PhysicsSphere() final
+	~PhysicsSphere()
 	{}
 
 	ANKI_USE_RESULT Error create(Initializer& init, F32 radius);
 };
 
 /// Box collision shape.
-class PhysicsBox: public PhysicsCollisionShape
+class PhysicsBox final: public PhysicsCollisionShape
 {
 public:
 	PhysicsBox(PhysicsWorld* world)
 	:	PhysicsCollisionShape(world)
 	{}
 
-	~PhysicsBox() final
+	~PhysicsBox()
 	{}
 
 	ANKI_USE_RESULT Error create(Initializer& init, const Vec3& extend);
 };
 
 /// Convex hull collision shape.
-class PhysicsConvexHull: public PhysicsCollisionShape
+class PhysicsConvexHull final: public PhysicsCollisionShape
 {
 public:
 	PhysicsConvexHull(PhysicsWorld* world)
 	:	PhysicsCollisionShape(world)
 	{}
 
-	~PhysicsConvexHull() final
+	~PhysicsConvexHull()
 	{}
 
 	ANKI_USE_RESULT Error create(Initializer& init, 
@@ -95,14 +95,14 @@ public:
 };
 
 /// Static triangle mesh shape.
-class PhysicsTriangleSoup: public PhysicsCollisionShape
+class PhysicsTriangleSoup final: public PhysicsCollisionShape
 {
 public:
 	PhysicsTriangleSoup(PhysicsWorld* world)
 	:	PhysicsCollisionShape(world)
 	{}
 
-	~PhysicsTriangleSoup() final
+	~PhysicsTriangleSoup()
 	{}
 
 	ANKI_USE_RESULT Error createStaticTriangleSoup(Initializer& init,

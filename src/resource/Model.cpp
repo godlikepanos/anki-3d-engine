@@ -9,6 +9,7 @@
 #include "anki/resource/ProgramResource.h"
 #include "anki/misc/Xml.h"
 #include "anki/util/Logger.h"
+#include "anki/physics/PhysicsWorld.h"
 
 namespace anki {
 
@@ -286,19 +287,25 @@ Model::Model(ResourceAllocator<U8>& alloc)
 //==============================================================================
 Model::~Model()
 {
-	for(ModelPatchBase* patch : m_modelPatches)
+	if(m_resources)
 	{
-		m_alloc.deleteInstance(patch);
-	}
+		auto alloc = m_resources->_getAllocator();
 
-	m_modelPatches.destroy(m_alloc);
+		for(ModelPatchBase* patch : m_modelPatches)
+		{
+			alloc.deleteInstance(patch);
+		}
+
+		m_modelPatches.destroy(alloc);
+	}
 }
 
 //==============================================================================
 Error Model::load(const CString& filename, ResourceInitializer& init)
 {
 	Error err = ErrorCode::NONE;
-	m_alloc = init.m_alloc;
+	m_resources = &init.m_resources;
+	auto alloc = init.m_alloc;
 
 	// Load
 	//
@@ -321,10 +328,15 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		XmlElement valEl;
 		ANKI_CHECK(collEl.getChildElement("value", valEl));
 
+		PhysicsWorld& physics = m_resources->_getPhysicsWorld();
+		PhysicsCollisionShape::Initializer csInit;
+
 		if(type == "sphere")
 		{
 			F64 tmp;
 			ANKI_CHECK(valEl.getF64(tmp));
+			m_physicsShape = physics.newCollisionShape<PhysicsSphere>(
+				csInit, tmp);
 		}
 		else if(type == "box")
 		{
@@ -338,6 +350,11 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		{
 			ANKI_LOGE("Incorrect collision type");
 			return ErrorCode::USER_DATA;
+		}
+
+		if(m_physicsShape == nullptr)
+		{
+			return ErrorCode::OUT_OF_MEMORY;
 		}
 	}
 
@@ -365,7 +382,7 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		return ErrorCode::USER_DATA;
 	}
 
-	ANKI_CHECK(m_modelPatches.create(m_alloc, count));
+	ANKI_CHECK(m_modelPatches.create(alloc, count));
 
 	count = 0;
 	ANKI_CHECK(modelPatchesEl.getChildElement("modelPatch", modelPatchEl));
@@ -405,8 +422,8 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 
 			CString cstr;
 			ANKI_CHECK(materialEl.getText(cstr));
-			ModelPatch<MeshResourcePointer>* mpatch = m_alloc.newInstance<
-				ModelPatch<MeshResourcePointer>>(m_alloc);
+			ModelPatch<MeshResourcePointer>* mpatch = alloc.newInstance<
+				ModelPatch<MeshResourcePointer>>(alloc);
 
 			if(mpatch == nullptr)
 			{
@@ -449,8 +466,8 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 			ANKI_CHECK(materialEl.getText(cstr));
 
 			ModelPatch<BucketMeshResourcePointer>* mpatch = 
-				init.m_alloc.newInstance<
-				ModelPatch<BucketMeshResourcePointer>>(m_alloc);
+				alloc.newInstance<
+				ModelPatch<BucketMeshResourcePointer>>(alloc);
 
 			if(mpatch == nullptr)
 			{

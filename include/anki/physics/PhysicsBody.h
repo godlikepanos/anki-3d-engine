@@ -16,7 +16,7 @@ namespace anki {
 /// Initializer for PhysicsBody.
 struct PhysicsBodyInitializer
 {
-	PhysicsCollisionShape* m_shape = nullptr;
+	const PhysicsCollisionShape* m_shape = nullptr;
 	F32 m_mass = 0.0;
 	Transform m_startTrf = Transform::getIdentity();
 	Bool m_kinematic = false;

@@ -277,7 +277,7 @@ void exportMaterial(
 	// Diffuse texture
 	if(mtl.GetTextureCount(aiTextureType_DIFFUSE) < 1)
 	{
-		ERROR("Material has no diffuse textures\n");
+		ERROR("Material has no diffuse textures. Skipping\n");
 	}
 
 	aiString path;

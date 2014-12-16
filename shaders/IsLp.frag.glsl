@@ -246,7 +246,7 @@ void main()
 
 #if GROUND_LIGHT
 	outColor += max(dot(normal, uGroundLightDir.xyz), 0.0) 
-		* vec3(0.05, 0.05, 0.01);
+		* vec3(0.10, 0.01, 0.01);
 #endif
 
 #if 0

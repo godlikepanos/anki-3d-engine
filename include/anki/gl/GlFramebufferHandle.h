@@ -52,6 +52,7 @@ public:
 		GLbitfield attachmentMask,
 		Bool linear);
 };
+/// @}
 
 } // end namespace anki
 

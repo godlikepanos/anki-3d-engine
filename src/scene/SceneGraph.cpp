@@ -9,6 +9,7 @@
 #include "anki/scene/InstanceNode.h"
 #include "anki/core/Counters.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/physics/PhysicsWorld.h"
 
 namespace anki {
 
@@ -109,6 +110,7 @@ Error SceneGraph::create(
 	m_objectsMarkedForDeletionCount.store(0);
 	m_ambientCol = Vec3(0.0);
 	m_gl = &m_resources->_getGlDevice();
+	m_physics = &m_resources->_getPhysicsWorld();
 
 	m_alloc = SceneAllocator<U8>(
 		allocCb, allocCbData, 
@@ -260,8 +262,10 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	Threadpool& threadPool = *m_threadpool;
 	(void)threadPool;
 
-	//m_physics.update(prevUpdateTime, crntTime);
+	// Update
+	m_physics->updateAsync(crntTime - prevUpdateTime);
 	renderer.getTiler().updateTiles(*m_mainCam);
+	m_physics->waitUpdate();
 	err = m_events.updateAllEvents(prevUpdateTime, crntTime);
 	if(err) return err;
 

@@ -6,6 +6,7 @@
 #include "anki/scene/ModelNode.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/InstanceNode.h"
+#include "anki/scene/BodyComponent.h"
 #include "anki/scene/Misc.h"
 #include "anki/resource/Model.h"
 #include "anki/resource/Skeleton.h"
@@ -205,13 +206,16 @@ ModelNode::~ModelNode()
 {
 	m_modelPatches.destroy(getSceneAllocator());
 	m_transforms.destroy(getSceneAllocator());
-#if 0
-	RigidBody* body = tryGetComponent<RigidBody>();
-	if(body)
+
+	if(m_bodyComp)
 	{
-		getSceneGraph().getPhysics().deletePhysicsObject(body);
+		getSceneAllocator().deleteInstance(m_bodyComp);
 	}
-#endif
+
+	if(m_body)
+	{
+		getSceneAllocator().deleteInstance(m_body);
+	}
 }
 
 //==============================================================================
@@ -257,22 +261,33 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 	}
 
 	// Load rigid body
-#if 0
-	if(m_model->getCollisionShape() != nullptr)
+	const PhysicsCollisionShape* shape = m_model->getPhysicsCollisionShape();
+	if(shape != nullptr)
 	{
-		RigidBody::Initializer init;
-		init.mass = 1.0;
-		init.shape = const_cast<btCollisionShape*>(m_model->getCollisionShape());
-		init.node = this;
+		PhysicsBody::Initializer init;
+		init.m_mass = 1.0;
+		init.m_shape = shape;
 
-		RigidBody* body;
-		
-		getSceneGraph().getPhysics().newPhysicsObject<RigidBody>(
-			body, init);
+		m_body = 
+			getSceneGraph()._getPhysicsWorld().newBody<PhysicsBody>(init);
+		if(m_body == nullptr)
+		{
+			return ErrorCode::OUT_OF_MEMORY;
+		}
 
-		addComponent(static_cast<RigidBody*>(body));
+		m_bodyComp = 
+			getSceneAllocator().newInstance<BodyComponent>(this, m_body);
+		if(m_bodyComp == nullptr)
+		{
+			return ErrorCode::OUT_OF_MEMORY;
+		}
+
+		err = addComponent(m_bodyComp);
+		if(err)
+		{
+			return err;
+		}
 	}
-#endif
 
 	return err;
 }

@@ -1,4 +1,5 @@
-FILE(GLOB_RECURSE ANKI_RSRC_SOURCES *.cpp)
-FILE(GLOB_RECURSE ANKI_RSRC_HEADERS *.h)
+file(GLOB_RECURSE ANKI_RSRC_SOURCES *.cpp)
+file(GLOB_RECURSE ANKI_RSRC_HEADERS *.h)
 
-ADD_LIBRARY(ankiresource ${ANKI_RSRC_SOURCES} ${ANKI_RSRC_HEADERS})
+add_library(ankiresource ${ANKI_RSRC_SOURCES} ${ANKI_RSRC_HEADERS})
+target_link_libraries(ankiresource ankiphysics ankigl)

@@ -192,7 +192,7 @@ public:
 		const CString& filename, ResourceInitializer& init);
 
 private:
-	ResourceAllocator<U8> m_alloc;
+	ResourceManager* m_resources = nullptr;
 	ResourceDArray<ModelPatchBase*> m_modelPatches;
 	Obb m_visibilityShape;
 	SkeletonResourcePointer m_skeleton;
