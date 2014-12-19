@@ -165,6 +165,8 @@ void main()
 	readGBuffer(uMsRt0, uMsRt1,
 		inTexCoord, diffColor, normal, specColor, specPower);
 
+	specPower *= 128.0;
+
 	// Ambient color
 	outColor = diffColor * uSceneAmbientColor.rgb;
 

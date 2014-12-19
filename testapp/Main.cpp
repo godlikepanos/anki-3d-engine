@@ -225,11 +225,33 @@ Error init()
 		0.7));*/
 #endif
 
+	if(0)
+	{
+		PointLight* point;
+		err = scene.newSceneNode<PointLight>("plight0", point);
+		point->setLocalOrigin(Vec4(0.5, 8.4, 7.6, 0.0));
+		point->setRadius(30.0);
+		point->setDiffuseColor(Vec4(1.0));
+		point->setSpecularColor(Vec4(1.0));
+		if(err) return err;
+	}
+
+	if(0)
+	{
+		PointLight* point;
+		err = scene.newSceneNode<PointLight>("plight1", point);
+		point->setLocalOrigin(Vec4(0.0, 1.1, -15.3, 0.0));
+		point->setRadius(30.0);
+		point->setDiffuseColor(Vec4(1.0));
+		point->setSpecularColor(Vec4(1.0, 0.0, 1.0, 0.0));
+		if(err) return err;
+	}
+
 #if 1
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/adis/scene.lua", &resources);
+		err = script.load("maps/sponza/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());

@@ -45,15 +45,13 @@ vec4 unpackUnorm4x8(in highp uint u)
 }
 #endif
 
-#define MAX_SPECULARITY 128.0
-
 // Populate the G buffer
 void writeGBuffer(
 	in vec3 diffColor, in vec3 normal, in float specColor, in float specPower,
 	out vec4 fai0, out vec4 fai1)
 {
 	vec3 unorm = normal * 0.5 + 0.5;
-	fai0 = vec4(diffColor, specPower / MAX_SPECULARITY);
+	fai0 = vec4(diffColor, specPower);
 	fai1 = vec4(unorm.xyz, specColor);
 }
 
@@ -66,7 +64,7 @@ void readGBuffer(
 {
 	vec4 comp = textureRt(fai0, texCoord);
 	diffColor = comp.rgb;
-	specPower = comp.w * MAX_SPECULARITY;
+	specPower = comp.a;
 
 	comp = textureRt(fai1, texCoord);
 	normal = normalize(comp.xyz * 2.0 - 1.0);

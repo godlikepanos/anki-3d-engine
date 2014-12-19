@@ -233,7 +233,7 @@ Error MeshLoader::doPostLoad()
 	}
 
 	ANKI_CHECK(createAllNormals());
-	//fixNormals();
+	fixNormals();
 
 	if(m_texCoords.getSize() > 0)
 	{
