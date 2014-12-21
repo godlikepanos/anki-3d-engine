@@ -45,52 +45,92 @@ public:
 		return m_data[n];
 	}
 
+	Iterator getBegin()
+	{
+		return &m_data[0];
+	}
+
+	ConstIterator getBegin() const
+	{
+		return &m_data[0];
+	}
+
+	Iterator getEnd()
+	{
+		return &m_data[0] + N;
+	}
+
+	ConstIterator getEnd() const
+	{
+		return &m_data[0] + N;
+	}
+
+	Reference getFront() 
+	{
+		return m_data[0];
+	}
+
+	ConstReference getFront() const
+	{
+		return m_data[0];
+	}
+
+	Reference getBack() 
+	{
+		return m_data[N - 1];
+	}
+
+	ConstReference getBack() const
+	{
+		return m_data[N - 1];
+	}
+
 	/// Make it compatible with the C++11 range based for loop
 	Iterator begin()
 	{
-		return &m_data[0];
+		return getBegin();
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	ConstIterator begin() const
 	{
-		return &m_data[0];
+		return getBegin();
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	Iterator end()
 	{
-		return &m_data[0] + N;
+		return getEnd();
 	}
 
 	/// Make it compatible with the C++11 range based for loop
 	ConstIterator end() const
 	{
-		return &m_data[0] + N;
+		return getEnd();
 	}
 
 	/// Make it compatible with STL
 	Reference front() 
 	{
-		return m_data[0];
+		return getFront();
 	}
 
 	/// Make it compatible with STL
 	ConstReference front() const
 	{
-		return m_data[0];
+		return getFront();
 	}
 
 	/// Make it compatible with STL
 	Reference back() 
 	{
-		return m_data[N - 1];
+		return getBack;
 	}
 
 	/// Make it compatible with STL
 	ConstReference back() const
 	{
-		return m_data[N - 1];
+		return getBack();
 	}
 
 	static constexpr PtrSize getSize()

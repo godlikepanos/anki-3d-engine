@@ -18,7 +18,7 @@ GlOcclusionQueryHandle::~GlOcclusionQueryHandle()
 {}
 
 //==============================================================================
-Error GlOcclusionQueryHandle::create(GlCommandBufferHandle& commands)
+Error GlOcclusionQueryHandle::create(GlDevice* dev)
 {
 	class Command: public GlCommand
 	{
@@ -47,16 +47,20 @@ Error GlOcclusionQueryHandle::create(GlCommandBufferHandle& commands)
 	using Deleter = 
 		GlHandleDeferredDeleter<GlOcclusionQuery, Alloc, DeleteCommand>;
 
-	Error err = _createAdvanced(
-		&commands._get().getQueue().getDevice(),
-		commands._get().getGlobalAllocator(), 
-		Deleter());
+	GlCommandBufferHandle cmd;
+	Error err = cmd.create(dev);
+
+	if(!err)
+	{
+		err = _createAdvanced(dev, dev->_getAllocator(), Deleter());
+	}
 
 	if(!err)
 	{
 		_setState(GlHandleState::TO_BE_CREATED);
 
-		commands._pushBackNewCommand<Command>(*this);
+		cmd._pushBackNewCommand<Command>(*this);
+		cmd.flush();
 	}
 
 	return err;

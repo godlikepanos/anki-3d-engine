@@ -26,6 +26,7 @@ public:
 		SPATIAL,
 		LIGHT,
 		INSTANCE,
+		LENS_FLARE,
 		BODY,
 		LAST_COMPONENT_ID = BODY
 	};

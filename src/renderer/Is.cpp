@@ -50,11 +50,6 @@ public:
 	Vec4 m_lightDir;
 	Vec4 m_outerCosInnerCos;
 	Array<Vec4, 4> m_extendPoints;
-};
-
-class SpotTexLight: public SpotLight
-{
-public:
 	Mat4 m_texProjectionMat; ///< Texture projection matrix
 };
 
@@ -75,7 +70,7 @@ class WriteLightsJob: public Threadpool::Task
 public:
 	shader::PointLight* m_pointLights = nullptr;
 	shader::SpotLight* m_spotLights = nullptr;
-	shader::SpotTexLight* m_spotTexLights = nullptr;
+	shader::SpotLight* m_spotTexLights = nullptr;
 
 	U8* m_tileBuffer = nullptr;
 
@@ -188,7 +183,7 @@ public:
 				return -1;
 			}
 
-			shader::SpotTexLight& slight = m_spotTexLights[i];
+			shader::SpotLight& slight = m_spotTexLights[i];
 			baseslight = &slight;
 
 			// Write matrix
@@ -612,7 +607,7 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 
 	PtrSize spotTexLightsOffset = spotLightsOffset + spotLightsSize;
 	PtrSize spotTexLightsSize = getAlignedRoundUp(blockAlignment, 
-		sizeof(shader::SpotTexLight) * visibleSpotTexLightsCount);
+		sizeof(shader::SpotLight) * visibleSpotTexLightsCount);
 
 	ANKI_ASSERT(
 		spotTexLightsOffset + spotTexLightsSize <= calcLightsBufferSize());
@@ -667,7 +662,7 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 				job.m_spotLights = (shader::SpotLight*)(
 					(U8*)lightsClientBuff.getBaseAddress() 
 					+ spotLightsOffset);
-				job.m_spotTexLights = (shader::SpotTexLight*)(
+				job.m_spotTexLights = (shader::SpotLight*)(
 					(U8*)lightsClientBuff.getBaseAddress() 
 					+ spotTexLightsOffset);
 			}
@@ -869,7 +864,7 @@ PtrSize Is::calcLightsBufferSize() const
 
 	size += getAlignedRoundUp(
 		buffAlignment,
-		m_maxSpotTexLights * sizeof(shader::SpotTexLight));
+		m_maxSpotTexLights * sizeof(shader::SpotLight));
 
 	return size;
 }

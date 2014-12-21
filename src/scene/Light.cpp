@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/scene/Light.h"
+#include "anki/scene/LensFlareComponent.h"
 
 namespace anki {
 
@@ -54,7 +55,13 @@ Error Light::create(const CString& name)
 
 //==============================================================================
 Light::~Light()
-{}
+{
+	LensFlareComponent* flareComp = tryGetComponent<LensFlareComponent>();
+	if(flareComp)
+	{
+		getSceneAllocator().deleteInstance(flareComp);
+	}
+}
 
 //==============================================================================
 void Light::frustumUpdate()
@@ -103,13 +110,45 @@ void Light::onMoveComponentUpdateCommon()
 	// Update the spatial
 	SpatialComponent& sp = getComponent<SpatialComponent>();
 	sp.markForUpdate();
+
+	// Update the lens flare
+	LensFlareComponent* lf = tryGetComponent<LensFlareComponent>();
+	if(lf)
+	{
+		lf->setWorldPosition(move.getWorldTransform().getOrigin());
+	}
 }
 
 //==============================================================================
 Error Light::loadLensFlare(const CString& filename)
 {
-	ANKI_ASSERT(!hasLensFlare());
-	return m_flaresTex.load(filename, &getResourceManager());
+	ANKI_ASSERT(tryGetComponent<LensFlareComponent>() == nullptr);
+	Error err = ErrorCode::NONE;
+
+	LensFlareComponent* flareComp = 
+		getSceneAllocator().newInstance<LensFlareComponent>(this);
+	
+	if(flareComp)
+	{
+		err = flareComp->create(filename);
+	}
+	else
+	{
+		err = ErrorCode::OUT_OF_MEMORY;
+	}
+
+	if(!err)
+	{
+		err = addComponent(flareComp);	
+	}
+
+	// Clean up on any error
+	if(err && flareComp)
+	{
+		getSceneAllocator().deleteInstance(flareComp);
+	}
+
+	return err;
 }
 
 //==============================================================================

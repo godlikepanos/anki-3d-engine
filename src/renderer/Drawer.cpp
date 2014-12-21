@@ -202,7 +202,7 @@ public:
 			{
 				auto unit = glvar.getTextureUnit();
 
-				m_drawer->m_r->getMs()._getSmallDepthRt().bind(m_cmdBuff, unit);
+				m_drawer->m_r->getDp().getSmallDepthRt().bind(m_cmdBuff, unit);
 			}
 			break;
 		default:

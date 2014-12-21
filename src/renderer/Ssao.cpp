@@ -279,7 +279,7 @@ Error Ssao::run(GlCommandBufferHandle& cmdb)
 	m_uniformsBuff.bindShaderBuffer(cmdb, 0);
 
 	Array<GlTextureHandle, 3> tarr = {{
-		m_r->getMs()._getSmallDepthRt(),
+		m_r->getDp().getSmallDepthRt(),
 		m_r->getMs()._getRt1(),
 		m_noiseTex}};
 	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());

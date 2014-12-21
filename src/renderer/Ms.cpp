@@ -81,34 +81,6 @@ Error Ms::initInternal(const ConfigSet& initializer)
 	err = createRt(1, 1);
 	if(err)	return err;
 
-	// Init small depth 
-	{
-		m_smallDepthSize = UVec2(
-			getAlignedRoundDown(16, m_r->getWidth() / 3),
-			getAlignedRoundDown(16, m_r->getHeight() / 3));
-
-		err = m_r->createRenderTarget(
-			m_smallDepthSize.x(), 
-			m_smallDepthSize.y(),
-			GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
-			GL_UNSIGNED_INT, 1, m_smallDepthRt);
-		if(err) return err;
-
-		GlDevice& gl = getGlDevice();
-		GlCommandBufferHandle cmdb;
-		err = cmdb.create(&gl);
-		if(err)	return err;
-
-		m_smallDepthRt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
-
-		err = m_smallDepthFb.create(
-			cmdb,
-			{{m_smallDepthRt, GL_DEPTH_ATTACHMENT}});
-		if(err)	return err;
-
-		cmdb.finish();
-	}
-
 	err = m_ez.init(initializer);
 	return err;
 }
@@ -180,12 +152,6 @@ Error Ms::run(GlCommandBufferHandle& cmdb)
 #endif
 		ANKI_ASSERT(0 && "TODO");
 	}
-
-	// Blit big depth buffer to small one
-	m_smallDepthFb.blit(cmdb, m_planes[1].m_fb, 
-		{{0, 0, m_r->getWidth(), m_r->getHeight()}},
-		{{0, 0, m_smallDepthSize.x(), m_smallDepthSize.y()}},
-		GL_DEPTH_BUFFER_BIT, false);
 
 	cmdb.enableDepthTest(false);
 

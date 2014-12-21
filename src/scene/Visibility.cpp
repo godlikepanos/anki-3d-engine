@@ -6,6 +6,7 @@
 #include "anki/scene/Visibility.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/FrustumComponent.h"
+#include "anki/scene/LensFlareComponent.h"
 #include "anki/scene/Light.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/util/Logger.h"
@@ -28,7 +29,7 @@ public:
 	VisibilityTestResults* m_cameraVisible; // out
 
 	/// Test a frustum component
-	ANKI_USE_RESULT Error test(SceneNode& testedNode, Bool isLight, 
+	ANKI_USE_RESULT Error test(SceneNode& testedNode, Bool testingLight, 
 		U32 threadId, PtrSize threadsCount);
 
 	/// Do the tests
@@ -39,10 +40,10 @@ public:
 };
 
 //==============================================================================
-Error VisibilityTestTask::test(SceneNode& testedNode, Bool isLight, 
+Error VisibilityTestTask::test(SceneNode& testedNode, Bool testingLight, 
 	U32 threadId, PtrSize threadsCount)
 {
-	ANKI_ASSERT(isLight == 
+	ANKI_ASSERT(testingLight == 
 		(testedNode.tryGetComponent<LightComponent>() != nullptr));
 
 	Error err = ErrorCode::NONE;
@@ -58,7 +59,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool isLight,
 	// Init visible
 	FrustumComponent::VisibilityStats stats = testedFr.getLastVisibilityStats();
 	
-	if(!isLight)
+	if(!testingLight)
 	{
 		// For camera be conservative
 		stats.m_renderablesCount /= threadsCount;
@@ -66,12 +67,12 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool isLight,
 	}
 
 	err = visible->create(
-		m_alloc, stats.m_renderablesCount, stats.m_lightsCount);
+		m_alloc, stats.m_renderablesCount, stats.m_lightsCount, 4);
 	if(err)	return err;
 
 	// Chose the test range and a few other things
 	PtrSize start, end;
-	if(!isLight)
+	if(!testingLight)
 	{
 		choseStartEnd(threadId, threadsCount, m_nodesCount, start, end);
 		m_cameraVisible = visible;
@@ -90,7 +91,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool isLight,
 		Error err = ErrorCode::NONE;
 
 		FrustumComponent* fr = node.tryGetComponent<FrustumComponent>();
-
+		
 		// Skip if it is the same
 		if(ANKI_UNLIKELY(&testedFr == fr))
 		{
@@ -119,7 +120,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool isLight,
 				ANKI_ASSERT(spIdx < MAX_U8);
 				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx)};
 
-				sp.enableBits(isLight 
+				sp.enableBits(testingLight 
 					? SpatialComponent::Flag::VISIBLE_LIGHT 
 					: SpatialComponent::Flag::VISIBLE_CAMERA);
 			}
@@ -164,7 +165,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool isLight,
 
 		// Do something with the result
 		RenderComponent* r = node.tryGetComponent<RenderComponent>();
-		if(isLight)
+		if(testingLight)
 		{
 			if(r && r->getCastsShadow())
 			{
@@ -177,25 +178,56 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool isLight,
 			{
 				err = visible->moveBackRenderable(m_alloc, visibleNode);
 			}
-			else
+
+			LightComponent* l = node.tryGetComponent<LightComponent>();
+			if(!err && l)
 			{
-				LightComponent* l = node.tryGetComponent<LightComponent>();
-				if(l)
+				Light* light = staticCastPtr<Light*>(&node);
+
+				err = visible->moveBackLight(m_alloc, visibleNode);
+
+				if(!err && light->getShadowEnabled() && fr)
 				{
-					Light* light = staticCastPtr<Light*>(&node);
-
-					err = visible->moveBackLight(m_alloc, visibleNode);
-
-					if(!err && light->getShadowEnabled() && fr)
-					{
-						err = test(node, true, 0, 0);
-					}
+					err = test(node, true, 0, 0);
 				}
+			}
+
+			LensFlareComponent* lf = node.tryGetComponent<LensFlareComponent>();
+			if(!err && lf)
+			{
+				err = visible->moveBackLensFlare(m_alloc, visibleNode);
+				ANKI_ASSERT(visibleNode.m_node);
 			}
 		}
 
 		return err;
 	}); // end for
+
+	return err;
+}
+
+//==============================================================================
+// VisibilityTestResults                                                       =
+//==============================================================================
+
+//==============================================================================
+Error VisibilityTestResults::create(
+	SceneFrameAllocator<U8> alloc,
+	U32 renderablesReservedSize,
+	U32 lightsReservedSize,
+	U32 lensFlaresReservedSize)
+{
+	Error err = m_renderables.create(alloc, renderablesReservedSize);
+	
+	if(!err)
+	{
+		err = m_lights.create(alloc, lightsReservedSize);
+	}
+
+	if(!err)
+	{
+		err = m_flares.create(alloc, lensFlaresReservedSize);
+	}
 
 	return err;
 }
@@ -215,11 +247,15 @@ Error VisibilityTestResults::moveBack(
 
 	if(!err)
 	{
-		c[count++] = std::move(x);
+		c[count++] = x;
 	}
 
 	return err;
 }
+
+//==============================================================================
+// doVisibilityTests                                                           =
+//==============================================================================
 
 //==============================================================================
 Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
@@ -252,10 +288,12 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 	// final result
 	U32 renderablesSize = 0;
 	U32 lightsSize = 0;
+	U32 lensFlaresSize = 0;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		renderablesSize += jobs[i].m_cameraVisible->getRenderablesCount();
 		lightsSize += jobs[i].m_cameraVisible->getLightsCount();
+		lensFlaresSize += jobs[i].m_cameraVisible->getLensFlaresCount();
 	}
 
 	// Allocate
@@ -266,7 +304,8 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 	err = visible->create(
 		scene.getFrameAllocator(), 
 		renderablesSize, 
-		lightsSize);
+		lightsSize,
+		lensFlaresSize);
 	if(err)	return err;
 
 	visible->prepareMerge();
@@ -279,12 +318,14 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 	// Append thread results
 	VisibleNode* renderables = visible->getRenderablesBegin();
 	VisibleNode* lights = visible->getLightsBegin();
+	VisibleNode* lensFlares = visible->getLensFlaresBegin();
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		VisibilityTestResults& from = *jobs[i].m_cameraVisible;
 
 		U rCount = from.getRenderablesCount();
 		U lCount = from.getLightsCount();
+		U lfCount = from.getLensFlaresCount();
 
 		if(rCount > 0)
 		{
@@ -302,6 +343,15 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 				sizeof(VisibleNode) * lCount);
 
 			lights += lCount;
+		}
+
+		if(lfCount > 0)
+		{
+			memcpy(lensFlares,
+				from.getLensFlaresBegin(),
+				sizeof(VisibleNode) * lfCount);
+
+			lensFlares += lfCount;
 		}
 	}
 

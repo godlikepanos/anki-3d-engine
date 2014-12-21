@@ -7,9 +7,10 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/MoveComponent.h"
+#include "anki/scene/LensFlareComponent.h"
 #include "anki/scene/Camera.h"
-#include "anki/scene/Light.h"
 #include "anki/misc/ConfigSet.h"
+#include "anki/util/Functions.h"
 
 namespace anki {
 
@@ -17,34 +18,15 @@ namespace anki {
 // Misc                                                                        =
 //==============================================================================
 
-namespace {
-
 //==============================================================================
-class Flare
+struct Sprite
 {
-public:
 	Vec2 m_pos; ///< Position in NDC
 	Vec2 m_scale; ///< Scale of the quad
 	F32 m_alpha; ///< Alpha value
 	F32 m_depth; ///< Texture depth
 	U32 m_padding[2];
 };
-
-//==============================================================================
-class LightSortFunctor
-{
-public:
-	Bool operator()(const Light* lightA, const Light* lightB)
-	{
-		ANKI_ASSERT(lightA && lightB);
-		ANKI_ASSERT(lightA->hasLensFlare() && lightB->hasLensFlare());
-
-		return lightA->getLensFlareTexture() <
-			lightB->getLensFlareTexture();
-	}
-};
-
-} // end namespace anonymous
 
 //==============================================================================
 // Lf                                                                          =
@@ -81,8 +63,8 @@ Error Lf::initInternal(const ConfigSet& config)
 	err = cmdBuff.create(&getGlDevice());
 	if(err) return err;
 
-	m_maxFlaresPerLight = config.get("pps.lf.maxFlaresPerLight");
-	m_maxLightsWithFlares = config.get("pps.lf.maxLightsWithFlares");
+	m_maxSpritesPerFlare = config.get("pps.lf.maxSpritesPerFlare");
+	m_maxFlares = config.get("pps.lf.maxFlares");
 
 	// Load program 1
 	String pps;
@@ -104,8 +86,8 @@ Error Lf::initInternal(const ConfigSet& config)
 
 	// Load program 2
 	pps.destroy(getAllocator());
-	err = pps.sprintf(getAllocator(), "#define MAX_FLARES %u\n",
-		m_maxFlaresPerLight * m_maxLightsWithFlares);
+	err = pps.sprintf(getAllocator(), "#define MAX_SPRITES %u\n",
+		m_maxSpritesPerFlare);
 	if(err)
 	{
 		return err;
@@ -123,8 +105,11 @@ Error Lf::initInternal(const ConfigSet& config)
 		{m_realVert->getGlProgram(), m_realFrag->getGlProgram()});
 	if(err) return err;
 
-	PtrSize blockSize = 
-		sizeof(Flare) * m_maxFlaresPerLight * m_maxLightsWithFlares;
+	PtrSize uboAlignment = 
+		m_r->_getGlDevice().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
+	m_flareSize = getAlignedRoundUp(
+		uboAlignment, sizeof(Sprite) * m_maxSpritesPerFlare);
+	PtrSize blockSize = m_flareSize * m_maxFlares;
 
 	// Init buffer
 	err = m_flareDataBuff.create(
@@ -154,6 +139,48 @@ Error Lf::initInternal(const ConfigSet& config)
 	if(err) return err;
 
 	cmdBuff.finish();
+
+	return err;
+}
+
+//==============================================================================
+Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
+{
+	ANKI_ASSERT(m_enabled);
+	Error err = ErrorCode::NONE;
+
+	// Retrieve some things
+	SceneGraph& scene = m_r->getSceneGraph();
+	Camera& cam = scene.getActiveCamera();
+	VisibilityTestResults& vi = cam.getVisibilityTestResults();
+
+	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);
+	if(totalCount > 0)
+	{
+		// Setup state
+		cmdb.setColorWriteMask(false, false, false, false);
+		cmdb.setDepthWriteMask(false);
+		cmdb.enableDepthTest(true);
+
+		// Iterate lens flare
+		auto it = vi.getLensFlaresBegin();
+		auto end = vi.getLensFlaresEnd();
+		for(; it != end; ++it)
+		{
+			LensFlareComponent& lf = 
+				(it->m_node)->getComponent<LensFlareComponent>();
+
+			GlOcclusionQueryHandle& query = lf.getOcclusionQueryToTest();
+			query.begin(cmdb);
+
+			query.end(cmdb);
+		}
+
+		// Restore state
+		cmdb.setColorWriteMask(true, true, true, true);
+		cmdb.setDepthWriteMask(true);
+		cmdb.enableDepthTest(false);
+	}
 
 	return err;
 }
@@ -191,72 +218,43 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 	Camera& cam = scene.getActiveCamera();
 	VisibilityTestResults& vi = cam.getVisibilityTestResults();
 
-	// Iterate the visible light and get those that have lens flare
-	SceneFrameDArrayAuto<Light*> lights(scene.getFrameAllocator());
-	err = lights.create(m_maxLightsWithFlares, nullptr);
-	if(err)	return err;
-
-	U lightsCount = 0;
-	auto it = vi.getLightsBegin();
-	auto end = vi.getLightsEnd();
-	for(; it != end; ++it)
+	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);
+	if(totalCount > 0)
 	{
-		SceneNode& sn = *(it->m_node);
-		ANKI_ASSERT(sn.tryGetComponent<LightComponent>() != nullptr);
-		Light* light = staticCastPtr<Light*>(&sn);
+		// Allocate client buffer
+		U uboAlignment = 
+			m_r->_getGlDevice().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
+		U bufferSize = m_flareSize * totalCount;
 
-		if(light->hasLensFlare())
-		{
-			lights[lightsCount++] = light;
-
-			if(lightsCount == m_maxLightsWithFlares)
-			{
-				break;
-			}
-		}
-	}
-
-	// Check the light count
-	if(lightsCount != 0)
-	{
-		// Sort the lights using their lens flare texture
-		std::sort(lights.begin(), lights.begin() + lightsCount, 
-			LightSortFunctor());
-
-		// Write the UBO and get the groups
-		//
 		GlClientBufferHandle flaresCBuff;
-		err = flaresCBuff.create(cmdBuff,
-			sizeof(Flare) * lightsCount * m_maxFlaresPerLight, nullptr);
+		err = flaresCBuff.create(cmdBuff, bufferSize, nullptr);
 		if(err)	return err;
 
-		Flare* flares = (Flare*)flaresCBuff.getBaseAddress();
-		U flaresCount = 0;
+		Sprite* sprites = static_cast<Sprite*>(flaresCBuff.getBaseAddress());
+		U8* spritesInitialPtr = reinterpret_cast<U8*>(sprites);
 
-		// Contains the number of flares per flare texture
-		SceneFrameDArrayAuto<U> groups(scene.getFrameAllocator());
-		err = groups.create(lightsCount, 0U);
-		if(err)	return err;
+		// Set common rendering state
+		m_realPpline.bind(cmdBuff);
+		cmdBuff.enableBlend(true);
+		cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);
 
-		SceneFrameDArrayAuto<const GlTextureHandle*> texes(
-			scene.getFrameAllocator());
-		err = texes.create(lightsCount, nullptr);
-		if(err)	return err;
+		// Send the command to write the buffer now
+		m_flareDataBuff.write(
+			cmdBuff, flaresCBuff, 0, 0, 
+			bufferSize);
 
-		U groupsCount = 0;
+		// Iterate lens flare
+		auto it = vi.getLensFlaresBegin();
+		auto end = vi.getLensFlaresEnd();
+		for(; it != end; ++it)
+		{			
+			LensFlareComponent& lf = 
+				(it->m_node)->getComponent<LensFlareComponent>();
+			U count = 0;
 
-		GlTextureHandle lastTex;
-
-		// Iterate all lights and update the flares as well as the groups
-		while(lightsCount-- != 0)
-		{
-			Light& light = *lights[lightsCount];
-			const GlTextureHandle& tex = light.getLensFlareTexture();
-			const U depth = light.getLensFlareTextureDepth();
-
-			// Transform
-			Vec3 posWorld = light.getWorldTransform().getOrigin().xyz();
-			Vec4 posClip = cam.getViewProjectionMatrix() * Vec4(posWorld, 1.0);
+			// Compute position
+			Vec4 lfPos = Vec4(lf.getWorldPosition().xyz(), 1.0);
+			Vec4 posClip = cam.getViewProjectionMatrix() * lfPos;
 
 			if(posClip.x() > posClip.w() || posClip.x() < -posClip.w()
 				|| posClip.y() > posClip.w() || posClip.y() < -posClip.w())
@@ -271,87 +269,35 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 			F32 len = dir.getLength();
 			dir /= len; // Normalize dir
 
-			// New group?
-			if(lastTex != tex)
-			{
-				texes[groupsCount] = &tex;
-				lastTex = tex;
-
-				++groupsCount;
-			}
-
 			// First flare 
-			F32 stretchFactor = 1.0 - posNdc.getLength();
-			stretchFactor *= stretchFactor;
+			sprites[count].m_pos = posNdc;
+			sprites[count].m_scale =
+				lf.getFirstFlareSize() * Vec2(1.0, m_r->getAspectRatio());
+			sprites[count].m_depth = 0.0;
+			sprites[count].m_alpha = lf.getColorMultiplier().w();
+			++count;
 
-			Vec2 stretch = 
-				light.getLensFlaresStretchMultiplier() * stretchFactor;
+			// Render
+			lf.getTexture().bind(cmdBuff, 0);
+			m_flareDataBuff.bindShaderBuffer(
+				cmdBuff, 
+				reinterpret_cast<U8*>(sprites) - spritesInitialPtr, 
+				sizeof(Sprite) * count,
+				0);
 
-			flares[flaresCount].m_pos = posNdc;
-			flares[flaresCount].m_scale =
-				light.getLensFlaresSize() * Vec2(1.0, m_r->getAspectRatio())
-				* stretch;
-			flares[flaresCount].m_depth = 0.0;
-			flares[flaresCount].m_alpha = 
-				light.getLensFlaresAlpha() * stretchFactor;
-			++flaresCount;
-			++groups[groupsCount - 1];
+			m_r->drawQuad(cmdBuff);
 
-			// The rest of the flares
-			for(U d = 1; d < depth; d++)
-			{
-				// Write the "flares"
-				F32 factor = d / ((F32)depth - 1.0);
+			// Advance
+			U advancementSize = 
+				getAlignedRoundUp(uboAlignment, sizeof(Sprite) * count);
 
-				F32 flen = len * 2.0 * factor;
-
-				flares[flaresCount].m_pos = posNdc + dir * flen;
-
-				flares[flaresCount].m_scale =
-					light.getLensFlaresSize() * Vec2(1.0, m_r->getAspectRatio())
-					* ((len - flen) * 2.0);
-
-				flares[flaresCount].m_depth = d;
-
-				flares[flaresCount].m_alpha = light.getLensFlaresAlpha();
-
-				// Advance
-				++flaresCount;
-				++groups[groupsCount - 1];
-			}
-		}
-
-		// Time to render
-		//
-
-		// Write the buffer
-		m_flareDataBuff.write(
-			cmdBuff, flaresCBuff, 0, 0, sizeof(Flare) * flaresCount);
-
-		// Set the common state
-		m_realPpline.bind(cmdBuff);
-
-		cmdBuff.enableBlend(true);
-		cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);
-
-		PtrSize offset = 0;
-		for(U i = 0; i < groupsCount; i++)
-		{
-			GlTextureHandle tex = *texes[i];
-			U instances = groups[i];
-			PtrSize buffSize = sizeof(Flare) * instances;
-
-			tex.bind(cmdBuff, 0);
-			m_flareDataBuff.bindShaderBuffer(cmdBuff, offset, buffSize, 0);
-
-			m_r->drawQuadInstanced(cmdBuff, instances);
-
-			offset += buffSize;
+			sprites = reinterpret_cast<Sprite*>(
+				reinterpret_cast<U8*>(sprites) + advancementSize);
 		}
 	}
 	else
 	{
-		// No lights
+		// No flares
 
 		cmdBuff.enableBlend(true);
 		cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);

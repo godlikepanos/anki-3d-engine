@@ -107,7 +107,7 @@ Error Sslr::run(GlCommandBufferHandle& cmdBuff)
 
 	Array<GlTextureHandle, 3> tarr = {{
 		m_r->getIs()._getRt(),
-		m_r->getMs()._getSmallDepthRt(),
+		m_r->getDp().getSmallDepthRt(),
 		m_r->getMs()._getRt1()}};
 	cmdBuff.bindTextures(0	, tarr.begin(), tarr.getSize()); 
 

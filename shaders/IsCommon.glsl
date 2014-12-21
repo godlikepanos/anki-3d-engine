@@ -32,12 +32,6 @@ struct SpotLight
 	vec4 lightDir;
 	vec4 outerCosInnerCos;
 	vec4 extendPoints[4]; // The positions of the 4 camera points
-};
-
-// Spot light with texture
-struct SpotTexLight
-{
-	SpotLight spotLightBase;
 	mat4 texProjectionMat;
 };
 
@@ -47,7 +41,7 @@ struct Lights
 	uvec4 count; // x: points, z: 
 	PointLight pointLights[MAX_POINT_LIGHTS];
 	SpotLight spotLights[MAX_SPOT_LIGHTS];
-	SpotTexLight spotTexLights[MAX_SPOT_TEX_LIGHTS];
+	SpotLight spotTexLights[MAX_SPOT_TEX_LIGHTS];
 };
 
 // Common uniforms between lights

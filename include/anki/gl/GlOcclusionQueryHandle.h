@@ -27,7 +27,7 @@ public:
 	~GlOcclusionQueryHandle();
 
 	/// Create a query.
-	ANKI_USE_RESULT Error create(GlCommandBufferHandle& commands);
+	ANKI_USE_RESULT Error create(GlDevice* dev);
 
 	/// Begin query.
 	void begin(GlCommandBufferHandle& commands);

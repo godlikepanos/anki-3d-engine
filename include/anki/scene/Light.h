@@ -31,30 +31,6 @@ public:
 	}
 };
 
-/// XXX
-class FlareBatch
-{
-public:
-	static constexpr U MAX_FLARES = 10;
-
-	enum FlareFlag
-	{
-		POSITION_LIGHT = 1 << 0,
-		POSITION_FLOATING = 1 << 1
-	};
-
-private:
-	/// A 2D array texture with the flare textures
-	TextureResourcePointer flaresTex;
-
-	/// The size of each flare
-	Array<Vec2, MAX_FLARES> size;
-
-	Array<Vec2, MAX_FLARES> stretchMultiplier;
-
-	F32 flaresAlpha = 1.0;
-};
-
 /// Light scene node. It can be spot or point
 ///
 /// Explaining the lighting model:
@@ -144,53 +120,6 @@ public:
 		m_shadowMapIndex = static_cast<U8>(i);
 	}
 
-	Bool hasLensFlare() const
-	{
-		return m_flaresTex.isLoaded();
-	}
-
-	const GlTextureHandle& getLensFlareTexture() const
-	{
-		ANKI_ASSERT(hasLensFlare());
-		return m_flaresTex->getGlTexture();
-	}
-
-	U32 getLensFlareTextureDepth() const
-	{
-		ANKI_ASSERT(hasLensFlare());
-		return m_flaresTex->getDepth();
-	}
-
-	const Vec2& getLensFlaresSize() const
-	{
-		return m_flaresSize;
-	}
-
-	void setLensFlaresSize(const Vec2& val)
-	{
-		m_flaresSize = val;
-	}
-
-	const Vec2& getLensFlaresStretchMultiplier() const
-	{
-		return m_flaresStretchMultiplier;
-	}
-
-	void setLensFlaresStretchMultiplier(const Vec2& val)
-	{
-		m_flaresStretchMultiplier = val;
-	}
-
-	F32 getLensFlaresAlpha() const
-	{
-		return m_flaresAlpha;
-	}
-
-	void setLensFlaresAlpha(F32 val)
-	{
-		m_flaresAlpha = val;
-	}
-
 	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
 
 	/// @name SpatialComponent virtuals
@@ -212,14 +141,6 @@ private:
 	Type m_type;
 	Vec4 m_color = Vec4(1.0);
 	Vec4 m_specColor = Vec4(1.0);
-
-	/// @name Flare struff
-	/// @{
-	TextureResourcePointer m_flaresTex;
-	Vec2 m_flaresSize = Vec2(0.2);
-	Vec2 m_flaresStretchMultiplier = Vec2(1.0);
-	F32 m_flaresAlpha = 1.0;
-	/// @}
 
 	Bool8 m_shadow = false;
 	U8 m_shadowMapIndex = 0xFF; ///< Used by the renderer

@@ -32,6 +32,7 @@
 #include "anki/gl/GlPipelineHandle.h"
 
 #include "anki/gl/GlCommandBufferHandle.h"
+#include "anki/gl/GlOcclusionQueryHandle.h"
 #include "anki/gl/GlDevice.h"
 
 #endif

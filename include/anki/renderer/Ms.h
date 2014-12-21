@@ -38,9 +38,9 @@ public:
 		return m_planes[1].m_depthRt;
 	}
 
-	GlTextureHandle& _getSmallDepthRt()
+	GlFramebufferHandle& getFramebuffer()
 	{
-		return m_smallDepthRt;
+		return m_planes[1].m_fb;
 	}
 	/// @}
 
@@ -60,10 +60,6 @@ private:
 		/// Depth stencil
 		GlTextureHandle m_depthRt;
 	};
-
-	GlTextureHandle m_smallDepthRt; ///< A smaller depth buffer
-	GlFramebufferHandle m_smallDepthFb; ///< Used to blit
-	UVec2 m_smallDepthSize;
 
 	Ez m_ez; /// EarlyZ pass
 

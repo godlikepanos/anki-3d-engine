@@ -15,6 +15,7 @@
 #include "anki/scene/Forward.h"
 
 #include "anki/renderer/Ms.h"
+#include "anki/renderer/Dp.h"
 #include "anki/renderer/Is.h"
 #include "anki/renderer/Pps.h"
 #include "anki/renderer/Bs.h"
@@ -50,6 +51,15 @@ public:
 	Ms& getMs()
 	{
 		return m_ms;
+	}
+
+	const Dp& getDp() const
+	{
+		return m_dp;
+	}
+	Dp& getDp()
+	{
+		return m_dp;
 	}
 
 	const Is& getIs() const
@@ -264,6 +274,7 @@ private:
 	/// @name Rendering stages
 	/// @{
 	Ms m_ms; ///< Material rendering stage
+	Dp m_dp; ///< Depth processing stage.
 	Is m_is; ///< Illumination rendering stage
 	Pps m_pps; ///< Postprocessing rendering stage
 	Bs m_bs; ///< Blending stage

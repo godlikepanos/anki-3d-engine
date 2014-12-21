@@ -39,7 +39,7 @@ enum VisibleBy
 
 /// Visible node pointer with some more info
 /// @note Keep this structore as small as possible
-class VisibleNode: public NonCopyable
+class VisibleNode
 {
 public:
 	SceneNode* m_node = nullptr;
@@ -50,21 +50,16 @@ public:
 	VisibleNode()
 	{}
 
-	VisibleNode(VisibleNode&& other)
+	VisibleNode(const VisibleNode& other)
 	{
-		*this = std::move(other);
+		*this = other;
 	}
 
-	VisibleNode& operator=(VisibleNode&& other)
+	VisibleNode& operator=(const VisibleNode& other)
 	{
 		m_node = other.m_node;
 		m_spatialIndices = other.m_spatialIndices;
 		m_spatialsCount = other.m_spatialsCount;
-
-		other.m_node = nullptr;
-		other.m_spatialIndices = nullptr;
-		other.m_spatialsCount = 0;
-
 		return *this;
 	}
 
@@ -89,21 +84,15 @@ public:
 	ANKI_USE_RESULT Error create(
 		SceneFrameAllocator<U8> alloc,
 		U32 renderablesReservedSize,
-		U32 lightsReservedSize)
-	{
-		Error err = m_renderables.create(alloc, renderablesReservedSize);
-		if(!err)
-		{
-			err = m_lights.create(alloc, lightsReservedSize);
-		}
-		return err;
-	}
+		U32 lightsReservedSize,
+		U32 lensFlaresReservedSize);
 
 	void prepareMerge()
 	{
 		ANKI_ASSERT(m_renderablesCount == 0 && m_lightsCount == 0);
 		m_renderablesCount = m_renderables.getSize();
 		m_lightsCount = m_lights.getSize();
+		m_flaresCount = m_flares.getSize();
 	}
 
 	VisibleNode* getRenderablesBegin()
@@ -127,6 +116,16 @@ public:
 		return (m_lightsCount) ? (&m_lights[0] + m_lightsCount) : nullptr;
 	}
 
+	VisibleNode* getLensFlaresBegin()
+	{
+		return (m_flaresCount) ? &m_flares[0] : nullptr;
+	}
+
+	VisibleNode* getLensFlaresEnd()
+	{
+		return (m_flaresCount) ? (&m_flares[0] + m_flaresCount) : nullptr;
+	}
+
 	U32 getRenderablesCount() const
 	{
 		return m_renderablesCount;
@@ -135,6 +134,11 @@ public:
 	U32 getLightsCount() const
 	{
 		return m_lightsCount;
+	}
+
+	U32 getLensFlaresCount() const
+	{
+		return m_flaresCount;
 	}
 
 	ANKI_USE_RESULT Error moveBackRenderable(
@@ -149,11 +153,19 @@ public:
 		return moveBack(alloc, m_lights, m_lightsCount, x);
 	}
 
+	ANKI_USE_RESULT Error moveBackLensFlare(
+		SceneFrameAllocator<U8> alloc, VisibleNode& x)
+	{
+		return moveBack(alloc, m_flares, m_flaresCount, x);
+	}
+
 private:
 	Container m_renderables;
 	Container m_lights;
+	Container m_flares;
 	U32 m_renderablesCount = 0;
 	U32 m_lightsCount = 0;
+	U32 m_flaresCount = 0;
 
 	ANKI_USE_RESULT Error moveBack(SceneFrameAllocator<U8> alloc, 
 		Container& c, U32& count, VisibleNode& x);

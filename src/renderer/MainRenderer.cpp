@@ -94,7 +94,7 @@ Error MainRenderer::render(SceneGraph& scene)
 			rt = &getIs()._getRt();
 		}
 
-		//rt = &getPps().getSsao()._getRt();
+		//rt = &getDp().getSmallDepthRt();
 		//rt = &getIs()._getRt();
 
 		rt->setFilter(lastJobs, GlTextureHandle::Filter::LINEAR);

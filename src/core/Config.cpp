@@ -54,8 +54,8 @@ Config::Config()
 	newOption("pps.bl.sideBlurFactor", 1.0);
 
 	newOption("pps.lf.enabled", true);
-	newOption("pps.lf.maxFlaresPerLight", 8);
-	newOption("pps.lf.maxLightsWithFlares", 4);
+	newOption("pps.lf.maxSpritesPerFlare", 8);
+	newOption("pps.lf.maxFlares", 4);
 
 	newOption("pps.enabled", true);
 	newOption("pps.sharpen", true);

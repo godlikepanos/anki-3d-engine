@@ -14,6 +14,7 @@ namespace anki {
 //==============================================================================
 Renderer::Renderer()
 :	m_ms(this), 
+	m_dp(this), 
 	m_is(this),
 	m_pps(this),
 	m_bs(this),
@@ -114,6 +115,8 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	err = m_ms.init(config);
 	if(err) return err;
+	err = m_dp.init(config);
+	if(err) return err;
 	err = m_is.init(config);
 	if(err) return err;
 	err = m_bs.init(config);
@@ -166,6 +169,9 @@ Error Renderer::render(SceneGraph& scene,
 	ANKI_ASSERT(cmdBuff[0].getReferenceCount() == 1);
 	cmdBuff[0].flush();
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
+
+	err = m_dp.run(cmdBuff[1]);
+	if(err) return err;
 
 	m_tiler.runMinMax(m_ms._getDepthRt());
 

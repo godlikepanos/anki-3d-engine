@@ -33,6 +33,8 @@ public:
 	{
 		return m_rt;
 	}
+
+	Error runOcclusionTests(GlCommandBufferHandle& cmdb);
 	/// @}
 
 private:
@@ -53,9 +55,11 @@ private:
 	GlFramebufferHandle m_fb;
 
 	TextureResourcePointer m_lensDirtTex;
-	U8 m_maxFlaresPerLight;
-	U8 m_maxLightsWithFlares;
+	U8 m_maxSpritesPerFlare;
+	U8 m_maxFlares;
 	GlBufferHandle m_flareDataBuff;
+
+	U32 m_flareSize;
 
 	Lf(Renderer* r)
 	:	RenderingPass(r)

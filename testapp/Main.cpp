@@ -29,6 +29,7 @@
 #include "anki/event/JitterMoveEvent.h"
 #include "anki/core/Counters.h"
 #include "anki/core/Config.h"
+#include "anki/scene/LensFlareComponent.h"
 
 using namespace anki;
 
@@ -138,14 +139,15 @@ Error init()
 			("vase_plight" + std::to_string(i)).c_str(), point);
 		if(err) return err;
 
-		point->loadLensFlare("textures/lens_flare/flares0.ankitex");
-
 		point->setRadius(2.0);
 		point->setLocalOrigin(lightPos);
 		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
 		point->setSpecularColor(Vec4(1.0, 1.0, 0.0, 0.0));
-		point->setLensFlaresStretchMultiplier(Vec2(10.0, 1.0));
-		point->setLensFlaresAlpha(1.0);
+		
+		point->loadLensFlare("textures/lens_flare/flares0.ankitex");
+		LensFlareComponent& lf = point->getComponent<LensFlareComponent>();
+		lf.setFirstFlareSize(Vec2(0.5, 0.2));
+		lf.setColorMultiplier(Vec4(1.0, 1.0, 1.0, 0.6));
 
 		LightEvent* event;
 		err = scene.getEventManager().newEvent(event, 0.0, 0.8, point);
@@ -549,7 +551,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("tilesYCount", 16);
 
 	config.set("fullscreenDesktopResolution", true);
-	config.set("debugContext", false);
+	config.set("debugContext", true);
 
 	app = new App;
 	err = app->create(config, allocAligned, nullptr);

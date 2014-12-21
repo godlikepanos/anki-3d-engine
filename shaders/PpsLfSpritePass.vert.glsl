@@ -16,7 +16,7 @@ struct Flare
 // The block contains data for all flares
 layout(std140) uniform bFlares
 {
-	Flare uFlares[MAX_FLARES];
+	Flare uFlares[MAX_SPRITES];
 };
 
 layout(location = 0) in vec2 inPosition;
