@@ -49,19 +49,10 @@ Error Lf::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Lf::initInternal(const ConfigSet& config)
+Error Lf::initPseudo(const ConfigSet& config, 
+	GlCommandBufferHandle& cmdBuff)
 {
 	Error err = ErrorCode::NONE;
-	m_enabled = config.get("pps.lf.enabled") 
-		&& config.get("pps.hdr.enabled");
-	if(!m_enabled)
-	{
-		return err;
-	}
-
-	GlCommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGlDevice());
-	if(err) return err;
 
 	m_maxSpritesPerFlare = config.get("pps.lf.maxSpritesPerFlare");
 	m_maxFlares = config.get("pps.lf.maxFlares");
@@ -80,18 +71,31 @@ Error Lf::initInternal(const ConfigSet& config)
 		"shaders/PpsLfPseudoPass.frag.glsl", pps.toCString(), "r_");
 	if(err) return err;
 
-	err = m_r->createDrawQuadProgramPipeline(
+	err = m_r->createDrawQuadPipeline(
 		m_pseudoFrag->getGlProgram(), m_pseudoPpline);
 	if(err) return err;
 
-	// Load program 2
-	pps.destroy(getAllocator());
+	// Textures
+	err = m_lensDirtTex.load(
+		"engine_data/lens_dirt.ankitex", &getResourceManager());
+	if(err) return err;
+
+	return err;
+}
+
+//==============================================================================
+Error Lf::initSprite(const ConfigSet& config, 
+	GlCommandBufferHandle& cmdBuff)
+{
+	Error err = ErrorCode::NONE;
+
+	// Load program + ppline
+	String pps;
+	String::ScopeDestroyer ppsd(&pps, getAllocator());
+
 	err = pps.sprintf(getAllocator(), "#define MAX_SPRITES %u\n",
 		m_maxSpritesPerFlare);
-	if(err)
-	{
-		return err;
-	}
+	if(err)	return err;
 
 	err = m_realVert.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfSpritePass.vert.glsl", pps.toCString(), "r_");
@@ -105,15 +109,76 @@ Error Lf::initInternal(const ConfigSet& config)
 		{m_realVert->getGlProgram(), m_realFrag->getGlProgram()});
 	if(err) return err;
 
+	// Create buffer
 	PtrSize uboAlignment = 
 		m_r->_getGlDevice().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
 	m_flareSize = getAlignedRoundUp(
 		uboAlignment, sizeof(Sprite) * m_maxSpritesPerFlare);
 	PtrSize blockSize = m_flareSize * m_maxFlares;
 
-	// Init buffer
 	err = m_flareDataBuff.create(
 		cmdBuff, GL_UNIFORM_BUFFER, blockSize, GL_DYNAMIC_STORAGE_BIT);
+	if(err) return err;
+
+	return err;
+}
+
+//==============================================================================
+Error Lf::initOcclusion(
+	const ConfigSet& config, GlCommandBufferHandle& cmdBuff)
+{
+	Error err = ErrorCode::NONE;
+
+	// Init vert buff
+	U buffSize = sizeof(Vec3) * m_maxFlares;
+
+	err = m_positionsVertBuff.create(
+		cmdBuff, GL_ARRAY_BUFFER, buffSize, GL_DYNAMIC_STORAGE_BIT);
+	if(err) return err;
+
+	// Init MVP buff
+	err = m_mvpBuff.create(
+		cmdBuff, GL_UNIFORM_BUFFER, sizeof(Mat4), GL_DYNAMIC_STORAGE_BIT);
+	if(err) return err;
+
+	// Shaders
+	err = m_occlusionVert.load("shaders/PpsLfOcclusion.vert.glsl",
+		&getResourceManager());
+	if(err) return err;
+
+	err = m_occlusionFrag.load("shaders/PpsLfOcclusion.frag.glsl",
+		&getResourceManager());
+	if(err) return err;
+
+	err = m_occlusionPpline.create(cmdBuff,
+		{m_occlusionVert->getGlProgram(), m_occlusionFrag->getGlProgram()});
+	if(err) return err;
+
+	return err;
+}
+
+//==============================================================================
+Error Lf::initInternal(const ConfigSet& config)
+{
+	Error err = ErrorCode::NONE;
+	m_enabled = config.get("pps.lf.enabled") 
+		&& config.get("pps.hdr.enabled");
+	if(!m_enabled)
+	{
+		return err;
+	}
+
+	GlCommandBufferHandle cmdBuff;
+	err = cmdBuff.create(&getGlDevice());
+	if(err) return err;
+
+	err = initPseudo(config, cmdBuff);
+	if(err) return err;
+
+	err = initSprite(config, cmdBuff);
+	if(err) return err;
+
+	err = initOcclusion(config, cmdBuff);
 	if(err) return err;
 
 	// Create the render target
@@ -124,21 +189,16 @@ Error Lf::initInternal(const ConfigSet& config)
 
 	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
 	if(err) return err;
-	
-	// Textures
-	err = m_lensDirtTex.load(
-		"engine_data/lens_dirt.ankitex", &getResourceManager());
-	if(err) return err;
 
 	// Blit
 	err = m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
 	if(err) return err;
 
-	err = m_r->createDrawQuadProgramPipeline(
+	err = m_r->createDrawQuadPipeline(
 		m_blitFrag->getGlProgram(), m_blitPpline);
 	if(err) return err;
 
-	cmdBuff.finish();
+	cmdBuff.flush();
 
 	return err;
 }
@@ -161,6 +221,28 @@ Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
 		cmdb.setColorWriteMask(false, false, false, false);
 		cmdb.setDepthWriteMask(false);
 		cmdb.enableDepthTest(true);
+		m_occlusionPpline.bind(cmdb);
+
+		// Setup MVP UBO
+		GlClientBufferHandle mvpCBuff;
+		err = mvpCBuff.create(cmdb, sizeof(Mat4), nullptr);
+		if(err) return err;
+		Mat4* mvpWrite = static_cast<Mat4*>(mvpCBuff.getBaseAddress());
+		ANKI_ASSERT(mvpWrite);
+		*mvpWrite = cam.getViewProjectionMatrix().getTransposed();
+		m_mvpBuff.write(cmdb, mvpCBuff, 0, 0, sizeof(Mat4));
+		m_mvpBuff.bindShaderBuffer(cmdb, 0, sizeof(Mat4), 0);
+
+		// Allocate vertices and fire write job
+		GlClientBufferHandle posCBuff;
+		err = posCBuff.create(cmdb, sizeof(Vec3) * totalCount, nullptr);
+		if(err) return err;
+		m_positionsVertBuff.write(cmdb, posCBuff, 0, 0, posCBuff.getSize());
+		m_positionsVertBuff.bindVertexBuffer(
+			cmdb, 3, GL_FLOAT, false, sizeof(Vec3), 0, 0);
+
+		Vec3* positions = static_cast<Vec3*>(posCBuff.getBaseAddress());
+		Vec3* initialPositions = positions;
 
 		// Iterate lens flare
 		auto it = vi.getLensFlaresBegin();
@@ -170,10 +252,17 @@ Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
 			LensFlareComponent& lf = 
 				(it->m_node)->getComponent<LensFlareComponent>();
 
+			*positions = lf.getWorldPosition().xyz();
+
+			// Draw and query
 			GlOcclusionQueryHandle& query = lf.getOcclusionQueryToTest();
 			query.begin(cmdb);
 
+			cmdb.drawArrays(GL_POINTS, 1, 1, positions - initialPositions);
+			
 			query.end(cmdb);
+
+			++positions;
 		}
 
 		// Restore state
@@ -285,7 +374,7 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 				sizeof(Sprite) * count,
 				0);
 
-			m_r->drawQuad(cmdBuff);
+			m_r->drawQuadConditional(lf.getOcclusionQueryToCheck(), cmdBuff);
 
 			// Advance
 			U advancementSize = 

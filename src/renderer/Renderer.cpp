@@ -170,6 +170,9 @@ Error Renderer::render(SceneGraph& scene,
 	cmdBuff[0].flush();
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
+	err = m_pps.getLf().runOcclusionTests(cmdBuff[1]);
+	if(err) return err;
+
 	err = m_dp.run(cmdBuff[1]);
 	if(err) return err;
 
@@ -206,6 +209,14 @@ Error Renderer::render(SceneGraph& scene,
 void Renderer::drawQuad(GlCommandBufferHandle& cmdBuff)
 {
 	drawQuadInstanced(cmdBuff, 1);
+}
+
+//==============================================================================
+void Renderer::drawQuadConditional(GlOcclusionQueryHandle& q,
+	GlCommandBufferHandle& cmdBuff)
+{
+	m_quadPositionsBuff.bindVertexBuffer(cmdBuff, 2, GL_FLOAT, false, 0, 0, 0);
+	cmdBuff.drawArraysConditional(q, GL_TRIANGLE_STRIP, 4, 1);
 }
 
 //==============================================================================
@@ -303,7 +314,7 @@ Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 }
 
 //==============================================================================
-Error Renderer::createDrawQuadProgramPipeline(
+Error Renderer::createDrawQuadPipeline(
 	GlShaderHandle frag, GlPipelineHandle& ppline)
 {
 	GlCommandBufferHandle cmdBuff;

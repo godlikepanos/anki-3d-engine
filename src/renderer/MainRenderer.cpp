@@ -42,7 +42,7 @@ Error MainRenderer::create(
 	err = m_blitFrag.load("shaders/Final.frag.glsl", &_getResourceManager());
 	if(err) return err;
 
-	err = createDrawQuadProgramPipeline(
+	err = createDrawQuadPipeline(
 		m_blitFrag->getGlProgram(), m_blitPpline);
 	if(err) return err;
 

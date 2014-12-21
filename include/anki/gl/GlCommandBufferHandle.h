@@ -154,6 +154,10 @@ public:
 		GLenum mode, U8 indexSize, 
 		U32 count, U32 instanceCount = 1, U32 firstIndex = 0,
 		U32 baseVertex = 0, U32 baseInstance = 0);
+
+	void drawArraysConditional(GlOcclusionQueryHandle& query,
+		GLenum mode, U32 count, U32 instanceCount = 1,
+		U32 first = 0, U32 baseInstance = 0);
 	/// @}
 
 	/// @privatesection

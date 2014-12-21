@@ -14,15 +14,15 @@ struct Flare
 };
 
 // The block contains data for all flares
-layout(std140) uniform bFlares
+layout(std140) uniform _flaresBlock
 {
-	Flare uFlares[MAX_SPRITES];
+	Flare u_flares[MAX_SPRITES];
 };
 
-layout(location = 0) in vec2 inPosition;
+layout(location = 0) in vec2 in_position;
 
-layout(location = 0) out vec3 outTexCoord;
-layout(location = 1) flat out float outAlpha;
+layout(location = 0) out vec3 out_texCoord;
+layout(location = 1) flat out float out_alpha;
 
 out gl_PerVertex
 {
@@ -31,12 +31,12 @@ out gl_PerVertex
 
 void main()
 {
-	Flare flare = uFlares[gl_InstanceID];
+	Flare flare = u_flares[gl_InstanceID];
 
-	outTexCoord = vec3((inPosition * 0.5) + 0.5, flare.alphaDepth.y);
+	out_texCoord = vec3((in_position * 0.5) + 0.5, flare.alphaDepth.y);
 
 	vec4 posScale = flare.posScale;
-	gl_Position = vec4(inPosition * posScale.zw + posScale.xy , 0.0, 1.0);
+	gl_Position = vec4(in_position * posScale.zw + posScale.xy , 0.0, 1.0);
 
-	outAlpha = flare.alphaDepth.x;
+	out_alpha = flare.alphaDepth.x;
 }

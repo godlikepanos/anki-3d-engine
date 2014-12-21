@@ -87,7 +87,7 @@ Error BlurringRenderingPass::initBlurring(
 			pps[i].toCString(), "r_");
 		if(err) return err;
 
-		err = r.createDrawQuadProgramPipeline(
+		err = r.createDrawQuadPipeline(
 			dir.m_frag->getGlProgram(), dir.m_ppline);
 		if(err) return err;
 	}

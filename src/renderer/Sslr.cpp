@@ -45,7 +45,7 @@ Error Sslr::init(const ConfigSet& config)
 		"shaders/PpsSslr.frag.glsl", pps.toCString(), "r_");
 	if(err) return err;
 
-	err = m_r->createDrawQuadProgramPipeline(
+	err = m_r->createDrawQuadPipeline(
 		m_reflectionFrag->getGlProgram(), m_reflectionPpline);
 	if(err) return err;
 
@@ -60,7 +60,7 @@ Error Sslr::init(const ConfigSet& config)
 	// Blit
 	err = m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
 	if(err) return err;
-	err = m_r->createDrawQuadProgramPipeline(
+	err = m_r->createDrawQuadPipeline(
 		m_blitFrag->getGlProgram(), m_blitPpline);
 	if(err) return err;
 

@@ -697,4 +697,62 @@ void GlCommandBufferHandle::drawElementsConditional(
 	}
 }
 
+//==============================================================================
+// Use the template trick to avoid allocating too much things in the 
+// command buffer
+template<GLenum mode>
+class DrawArraysCondCommand: public GlCommand
+{
+public:
+	GlDrawArraysIndirectInfo m_info;
+	GlOcclusionQueryHandle m_query;
+
+	DrawArraysCondCommand(
+		GlDrawArraysIndirectInfo& info, GlOcclusionQueryHandle& q)
+	:	m_info(info),
+		m_query(q)
+	{}
+
+	Error operator()(GlCommandBuffer*)
+	{
+		if(m_query._get().getResult() != GlOcclusionQuery::Result::NOT_VISIBLE)
+		{
+			glDrawArraysInstancedBaseInstance(
+				mode,
+				m_info.m_first,
+				m_info.m_count,
+				m_info.m_instanceCount,
+				m_info.m_baseInstance);
+		}
+
+		ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
+
+		return ErrorCode::NONE;
+	}
+};
+
+void GlCommandBufferHandle::drawArraysConditional(GlOcclusionQueryHandle& q,
+	GLenum mode, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
+{
+	GlDrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
+
+	switch(mode)
+	{
+	case GL_TRIANGLES:
+		_pushBackNewCommand<DrawArraysCondCommand<GL_TRIANGLES>>(info, q);
+		break;
+	case GL_TRIANGLE_STRIP:
+		_pushBackNewCommand<DrawArraysCondCommand<GL_TRIANGLE_STRIP>>(info, q);
+		break;
+	case GL_POINTS:
+		_pushBackNewCommand<DrawArraysCondCommand<GL_POINTS>>(info, q);
+		break;
+	case GL_LINES:
+		_pushBackNewCommand<DrawArraysCondCommand<GL_LINES>>(info, q);
+		break;
+	default:
+		ANKI_ASSERT(0 && "Not implemented");
+	}
+}
+
 } // end namespace anki

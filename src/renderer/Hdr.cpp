@@ -86,7 +86,7 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	err = m_toneFrag.load("shaders/PpsHdr.frag.glsl", &getResourceManager());
 	if(err) return err;
 
-	err = m_r->createDrawQuadProgramPipeline(
+	err = m_r->createDrawQuadPipeline(
 		m_toneFrag->getGlProgram(), m_tonePpline);
 	if(err) return err;
 
@@ -109,7 +109,7 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 		SHADER_FILENAME, pps.toCString(), "r_");
 	if(err) return err;
 
-	err = m_r->createDrawQuadProgramPipeline(
+	err = m_r->createDrawQuadPipeline(
 		m_hblurFrag->getGlProgram(), m_hblurPpline);
 	if(err) return err;
 
@@ -128,7 +128,7 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 		SHADER_FILENAME, pps.toCString(), "r_");
 	if(err) return err;
 
-	err = m_r->createDrawQuadProgramPipeline(
+	err = m_r->createDrawQuadPipeline(
 		m_vblurFrag->getGlProgram(), m_vblurPpline);
 	if(err) return err;
 

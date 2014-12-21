@@ -201,7 +201,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"shaders/PpsSsao.frag.glsl", pps.toCString(), "r_");
 	if(err) return err;
 
-	err = m_r->createDrawQuadProgramPipeline(
+	err = m_r->createDrawQuadPipeline(
 		m_ssaoFrag->getGlProgram(), m_ssaoPpline);
 	if(err) return err;
 
@@ -222,7 +222,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		SHADER_FILENAME, pps.toCString(), "r_");
 	if(err) return err;
 
-	err = m_r->createDrawQuadProgramPipeline(
+	err = m_r->createDrawQuadPipeline(
 		m_hblurFrag->getGlProgram(), m_hblurPpline);
 	if(err) return err;
 
@@ -239,7 +239,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		SHADER_FILENAME, pps.toCString(), "r_");
 	if(err) return err;
 
-	err = m_r->createDrawQuadProgramPipeline(
+	err = m_r->createDrawQuadPipeline(
 		m_vblurFrag->getGlProgram(), m_vblurPpline);
 	if(err) return err;
 

@@ -83,7 +83,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		"shaders/Pps.frag.glsl", pps.toCString(), "r_");
 	if(err) return err;
 
-	err = m_r->createDrawQuadProgramPipeline(m_frag->getGlProgram(), m_ppline);
+	err = m_r->createDrawQuadPipeline(m_frag->getGlProgram(), m_ppline);
 	if(err) return err;
 
 	cmdBuff.finish();

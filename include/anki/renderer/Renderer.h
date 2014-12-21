@@ -210,6 +210,9 @@ public:
 	/// longer support quads
 	void drawQuad(GlCommandBufferHandle& cmdBuff);
 
+	void drawQuadConditional(
+		GlOcclusionQueryHandle& q, GlCommandBufferHandle& cmdBuff);
+
 	void drawQuadInstanced(GlCommandBufferHandle& cmdBuff, U32 primitiveCount);
 
 	/// Get the LOD given the distance of an object from the camera
@@ -225,7 +228,7 @@ public:
 
 	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
 	/// and the given fragment progam
-	ANKI_USE_RESULT Error createDrawQuadProgramPipeline(
+	ANKI_USE_RESULT Error createDrawQuadPipeline(
 		GlShaderHandle frag, GlPipelineHandle& ppline);
 
 	/// Init the renderer given an initialization class

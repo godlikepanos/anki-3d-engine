@@ -9,7 +9,7 @@
 /// the vert coords are NDC
 layout(location = POSITION_LOCATION) in vec2 inPosition;
 
-layout(location = 0) out F32Vec2 outTexCoord;
+layout(location = 0) out vec2 outTexCoord;
 
 out gl_PerVertex
 {
