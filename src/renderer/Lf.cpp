@@ -374,7 +374,19 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 				sizeof(Sprite) * count,
 				0);
 
-			m_r->drawQuadConditional(lf.getOcclusionQueryToCheck(), cmdBuff);
+			GlOcclusionQueryHandle query;
+			Bool queryInvalid;
+			lf.getOcclusionQueryToCheck(query, queryInvalid);
+			
+			if(!queryInvalid)
+			{
+				m_r->drawQuadConditional(query, cmdBuff);
+			}
+			else
+			{
+				// Skip the drawcall. If the flare appeared suddenly inside the
+				// view we don't want to draw it.
+			}
 
 			// Advance
 			U advancementSize = 

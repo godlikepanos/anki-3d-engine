@@ -144,7 +144,7 @@ Error init()
 		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
 		point->setSpecularColor(Vec4(1.0, 1.0, 0.0, 0.0));
 		
-		if(i == 0)
+		//if(i == 0)
 		{
 		point->loadLensFlare("textures/lens_flare/flares0.ankitex");
 		LensFlareComponent& lf = point->getComponent<LensFlareComponent>();
@@ -554,7 +554,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("tilesYCount", 16);
 
 	config.set("fullscreenDesktopResolution", true);
-	config.set("debugContext", false);
+	config.set("debugContext", true);
 
 	app = new App;
 	err = app->create(config, allocAligned, nullptr);

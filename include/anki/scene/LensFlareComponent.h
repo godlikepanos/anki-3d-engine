@@ -72,23 +72,20 @@ public:
 		return m_tex->getGlTexture();
 	}
 
-	GlOcclusionQueryHandle& getOcclusionQueryToTest()
-	{
-		return m_queries[m_crntQueryIndex];
-	}
+	GlOcclusionQueryHandle& getOcclusionQueryToTest();
 
-	GlOcclusionQueryHandle& getOcclusionQueryToCheck()
-	{
-		return m_queries[(m_crntQueryIndex + 1) % m_queries.getSize()];
-	}
+	/// Get the occlusion query to test.
+	/// @param[out] q The returned query.
+	/// @param[out] queryInvalid It's true if the query has an old result that
+	///             cannot be used.
+	void getOcclusionQueryToCheck(
+		GlOcclusionQueryHandle& q, Bool& queryInvalid);
 
 	/// @name SceneComponent virtuals
 	/// @{
 	Error update(
 		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated)
 	{
-		// Move the query counter
-		m_crntQueryIndex = getGlobTimestamp() % m_queries.getSize();
 		updated = false;
 		return ErrorCode::NONE;
 	}
@@ -109,6 +106,7 @@ private:
 	Vec2 m_otherFlareSize = Vec2(1.0);
 
 	Array<GlOcclusionQueryHandle, 3> m_queries;
+	Array<Timestamp, 3> m_queryTestTimestamp = {{MAX_U32, MAX_U32, MAX_U32}};
 	U8 m_crntQueryIndex = 0;
 	
 	Vec4 m_worldPosition = Vec4(0.0);
