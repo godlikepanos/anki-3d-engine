@@ -8,8 +8,9 @@
 
 //==============================================================================
 void exportLight(
+	const Exporter& exporter,
 	const aiLight& light, 
-	std::fstream& file)
+	std::ofstream& file)
 {
 	if(light.mType != aiLightSource_POINT || light.mType != aiLightSource_SPOT)
 	{
@@ -17,26 +18,29 @@ void exportLight(
 		return;
 	}
 
-	file << "\t<light>\n";
+	file << "node = scene:new" 
+		<< ((light.mType != aiLightSource_POINT) ? "Point" : "Spot") 
+		<< "(\"" << light.mName.C_Str() << "\")\n";
+	
+	file << "lcomp = node:getLightComponent()\n";
 
-	file << "\t\t<name>" << light.mName.C_Str() << "</name>\n";
-
-	file << "\t\t<diffuseColor>" 
-		<< light.mColorDiffuse[0] << " " 
-		<< light.mColorDiffuse[1] << " " 
-		<< light.mColorDiffuse[2] << " " 
+	file << "lcomp:setDiffuseColor(" 
+		<< light.mColorDiffuse[0] << ", " 
+		<< light.mColorDiffuse[1] << ", " 
+		<< light.mColorDiffuse[2] << ", " 
 		<< light.mColorDiffuse[3]
-		<< "</diffuseColor>\n";
+		<< ")\n";
 
-	file << "\t\t<specularColor>" 
-		<< light.mColorSpecular[0] << " " 
-		<< light.mColorSpecular[1] << " " 
-		<< light.mColorSpecular[2] << " " 
+	file << "lcomp:setSpecularColor(" 
+		<< light.mColorSpecular[0] << ", " 
+		<< light.mColorSpecular[1] << ", " 
+		<< light.mColorSpecular[2] << ", " 
 		<< light.mColorSpecular[3]
-		<< "</specularColor>\n";
+		<< ")\n";
 
 	aiMatrix4x4 trf;
 	aiMatrix4x4::Translation(light.mPosition, trf);
+	writeNodeTransform(exporter, file, "node", trf);
 
 	switch(light.mType)
 	{
@@ -59,14 +63,4 @@ void exportLight(
 		assert(0);
 		break;
 	}
-
-	// <transform>
-	file << "\t\t<transform>";
-	for(uint32_t i = 0; i < 16; i++)
-	{
-		file << trf[i] << " ";
-	}
-	file << "</transform>\n";
-
-	file << "\t</light>\n";
 }

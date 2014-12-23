@@ -330,9 +330,9 @@ void exportMaterial(
 	}
 
 	// Height texture
-	if(mtl.GetTextureCount(aiTextureType_EMISSIVE) > 0)
+	if(mtl.GetTextureCount(aiTextureType_DISPLACEMENT) > 0)
 	{	
-		if(mtl.GetTexture(aiTextureType_EMISSIVE, 0, &path) == AI_SUCCESS)
+		if(mtl.GetTexture(aiTextureType_DISPLACEMENT, 0, &path) == AI_SUCCESS)
 		{
 			dispTex = getFilename(path.C_Str());
 		}

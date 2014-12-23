@@ -18,20 +18,22 @@ GlOcclusionQueryHandle::~GlOcclusionQueryHandle()
 {}
 
 //==============================================================================
-Error GlOcclusionQueryHandle::create(GlDevice* dev)
+Error GlOcclusionQueryHandle::create(GlDevice* dev, ResultBit condRenderingBit)
 {
 	class Command: public GlCommand
 	{
 	public:	
 		GlOcclusionQueryHandle m_handle;
+		ResultBit m_condRenderingBit;
 
-		Command(GlOcclusionQueryHandle& handle)
-		:	m_handle(handle)
+		Command(GlOcclusionQueryHandle& handle, ResultBit condRenderingBit)
+		:	m_handle(handle),
+			m_condRenderingBit(condRenderingBit)
 		{}
 
 		Error operator()(GlCommandBuffer*)
 		{
-			Error err = m_handle._get().create();
+			Error err = m_handle._get().create(m_condRenderingBit);
 
 			GlHandleState oldState = m_handle._setState(
 				(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
@@ -59,7 +61,7 @@ Error GlOcclusionQueryHandle::create(GlDevice* dev)
 	{
 		_setState(GlHandleState::TO_BE_CREATED);
 
-		cmd._pushBackNewCommand<Command>(*this);
+		cmd._pushBackNewCommand<Command>(*this, condRenderingBit);
 		cmd.flush();
 	}
 

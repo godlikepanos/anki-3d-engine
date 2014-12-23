@@ -179,50 +179,6 @@ static void visitNode(Exporter& exporter, const aiNode* ainode)
 }
 
 //==============================================================================
-static void writeNodeTransform(const Exporter& exporter, std::ofstream& file, 
-	const std::string& node, const aiMatrix4x4& mat)
-{
-	aiMatrix4x4 m = toAnkiMatrix(mat, exporter.flipyz);
-
-	float pos[3];
-	pos[0] = m[0][3];
-	pos[1] = m[1][3];
-	pos[2] = m[2][3];
-
-	file << "pos = Vec4.new()\n";
-	file << "pos:setAll(" << pos[0] << ", " << pos[1] << ", " << pos[2] 
-		<< ", 0.0)\n";
-	file << node 
-		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(pos)\n";
-
-	file << "rot = Mat3x4.new()\n";
-	file << "rot:setAll(";
-	for(unsigned j = 0; j < 3; j++)
-	{
-		for(unsigned i = 0; i < 4; i++)
-		{
-			if(i == 3)
-			{
-				file << "0";
-			}
-			else
-			{
-				file << m[j][i];
-			}
-
-			if(!(i == 3 && j == 2))
-			{
-				file << ", ";
-			}
-		}
-	}
-	file << ")\n";
-
-	file << node 
-		<< ":getSceneNodeBase():getMoveComponent():setLocalRotation(rot)\n";
-}
-
-//==============================================================================
 static void exportScene(Exporter& exporter)
 {
 	LOGI("Exporting scene to %s\n", exporter.outDir.c_str());
@@ -237,7 +193,8 @@ static void exportScene(Exporter& exporter)
 		<< "local pos\n"
 		<< "local rot\n"
 		<< "local node\n"
-		<< "local inst\n";
+		<< "local inst\n"
+		<< "local lcomp\n";
 
 	//
 	// Get all the data

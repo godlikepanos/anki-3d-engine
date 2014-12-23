@@ -69,7 +69,7 @@ Error init()
 	scene.setActiveCamera(cam);
 
 	// lights
-#if 1
+#if 0
 	Vec3 lpos(-24.0, 0.1, -10.0);
 	for(int i = 0; i < 50; i++)
 	{
@@ -110,7 +110,7 @@ Error init()
 
 #endif
 
-#if 1
+#if 0
 	err = scene.newSceneNode<SpotLight>("spot1", spot);
 	if(err) return err;
 	spot->setOuterAngle(toRad(45.0));
@@ -123,7 +123,7 @@ Error init()
 	spot->setShadowEnabled(true);
 #endif
 
-#if 1
+#if 0
 	// Vase point lights
 	F32 x = 8.5; 
 	F32 y = 2.25;
@@ -210,7 +210,7 @@ Error init()
 	}
 #endif
 
-#if 1
+#if 0
 	// horse
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
 		"models/horse/horse.ankimdl");
@@ -230,14 +230,14 @@ Error init()
 		0.7));*/
 #endif
 
-	if(0)
+	if(1)
 	{
 		PointLight* point;
 		err = scene.newSceneNode<PointLight>("plight0", point);
-		point->setLocalOrigin(Vec4(0.5, 8.4, 7.6, 0.0));
+		point->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
 		point->setRadius(30.0);
-		point->setDiffuseColor(Vec4(1.0));
-		point->setSpecularColor(Vec4(1.0));
+		point->setDiffuseColor(Vec4(0.6));
+		point->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
 		if(err) return err;
 	}
 
@@ -256,7 +256,7 @@ Error init()
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/sponza/scene.lua", &resources);
+		err = script.load("maps/adis/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());
@@ -554,7 +554,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("tilesYCount", 16);
 
 	config.set("fullscreenDesktopResolution", true);
-	config.set("debugContext", true);
+	config.set("debugContext", false);
 
 	app = new App;
 	err = app->create(config, allocAligned, nullptr);

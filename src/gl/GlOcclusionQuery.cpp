@@ -8,10 +8,11 @@
 namespace anki {
 
 //==============================================================================
-Error GlOcclusionQuery::create()
+Error GlOcclusionQuery::create(GlOcclusionQueryResultBit condRenderingBit)
 {
 	glGenQueries(1, &m_glName);
 	ANKI_ASSERT(m_glName != 0);
+	m_condRenderingBit = condRenderingBit;
 	return ErrorCode::NONE;
 }
 
@@ -30,7 +31,7 @@ void GlOcclusionQuery::end()
 }
 
 //==============================================================================
-GlOcclusionQuery::Result GlOcclusionQuery::getResult()
+GlOcclusionQuery::Result GlOcclusionQuery::getResult() const
 {
 	ANKI_ASSERT(isCreated());
 	Result result = Result::NOT_AVAILABLE;

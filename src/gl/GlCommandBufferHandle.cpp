@@ -470,24 +470,31 @@ void GlCommandBufferHandle::bindTextures(U32 first,
 }
 
 //==============================================================================
-// Use the template trick to avoid allocating too much things in the 
-// command buffer
-template<GLenum mode, U8 indexSize>
-class DrawElementsCommand: public GlCommand
+class DrawElementsCondCommand: public GlCommand
 {
 public:
+	GLenum m_mode;
+	U8 m_indexSize;
 	GlDrawElementsIndirectInfo m_info;
+	GlOcclusionQueryHandle m_query;
 
-	DrawElementsCommand(GlDrawElementsIndirectInfo& info)
-	:	m_info(info)
+	DrawElementsCondCommand(
+		GLenum mode,
+		U8 indexSize,
+		GlDrawElementsIndirectInfo& info,
+		GlOcclusionQueryHandle query = GlOcclusionQueryHandle())
+	:	m_mode(mode),
+		m_indexSize(indexSize),
+		m_info(info),
+		m_query(query)
 	{}
 
 	Error operator()(GlCommandBuffer*)
 	{
-		ANKI_ASSERT(indexSize != 0);
+		ANKI_ASSERT(m_indexSize != 0);
 
 		GLenum indicesType = 0;
-		switch(indexSize)
+		switch(m_indexSize)
 		{
 		case 1:
 			indicesType = GL_UNSIGNED_BYTE;
@@ -503,16 +510,19 @@ public:
 			break;
 		};
 
-		glDrawElementsInstancedBaseVertexBaseInstance(
-			mode,
-			m_info.m_count,
-			indicesType,
-			(const void*)(PtrSize)(m_info.m_firstIndex * indexSize),
-			m_info.m_instanceCount,
-			m_info.m_baseVertex,
-			m_info.m_baseInstance);
+		if(!m_query.isCreated() || !m_query._get().skipDrawcall())
+		{
+			glDrawElementsInstancedBaseVertexBaseInstance(
+				m_mode,
+				m_info.m_count,
+				indicesType,
+				(const void*)(PtrSize)(m_info.m_firstIndex * m_indexSize),
+				m_info.m_instanceCount,
+				m_info.m_baseVertex,
+				m_info.m_baseInstance);
 
-		ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
+			ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
+		}
 
 		return ErrorCode::NONE;
 	}
@@ -525,55 +535,39 @@ void GlCommandBufferHandle::drawElements(
 	GlDrawElementsIndirectInfo info(count, instanceCount, firstIndex, 
 		baseVertex, baseInstance);
 
-	if(indexSize == 2)
-	{
-		switch(mode)
-		{
-		case GL_TRIANGLES:
-			_pushBackNewCommand<DrawElementsCommand<GL_TRIANGLES, 2>>(info);
-			break;
-		case GL_POINTS:
-			_pushBackNewCommand<DrawElementsCommand<GL_POINTS, 2>>(info);
-			break;
-		case GL_LINES:
-			_pushBackNewCommand<DrawElementsCommand<GL_LINES, 2>>(info);
-			break;
-		case GL_PATCHES:
-			_pushBackNewCommand<DrawElementsCommand<GL_PATCHES, 2>>(info);
-			break;
-		default:
-			ANKI_ASSERT(0 && "Not implemented");
-		}
-	}
-	else
-	{
-		ANKI_ASSERT(0 && "Not implemented");
-	}
+	_pushBackNewCommand<DrawElementsCondCommand>(mode, indexSize, info);
 }
 
 //==============================================================================
-// Use the template trick to avoid allocating too much things in the 
-// command buffer
-template<GLenum mode>
-class DrawArraysCommand: public GlCommand
+class DrawArraysCondCommand: public GlCommand
 {
 public:
+	GLenum m_mode;
 	GlDrawArraysIndirectInfo m_info;
+	GlOcclusionQueryHandle m_query;
 
-	DrawArraysCommand(GlDrawArraysIndirectInfo& info)
-	:	m_info(info)
+	DrawArraysCondCommand(
+		GLenum mode,
+		GlDrawArraysIndirectInfo& info, 
+		GlOcclusionQueryHandle query = GlOcclusionQueryHandle())
+	:	m_mode(mode),
+		m_info(info),
+		m_query(query)
 	{}
 
 	Error operator()(GlCommandBuffer*)
 	{
-		glDrawArraysInstancedBaseInstance(
-			mode,
-			m_info.m_first,
-			m_info.m_count,
-			m_info.m_instanceCount,
-			m_info.m_baseInstance);
+		if(!m_query.isCreated() || !m_query._get().skipDrawcall())
+		{
+			glDrawArraysInstancedBaseInstance(
+				m_mode,
+				m_info.m_first,
+				m_info.m_count,
+				m_info.m_instanceCount,
+				m_info.m_baseInstance);
 
-		ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
+			ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
+		}
 
 		return ErrorCode::NONE;
 	}
@@ -584,175 +578,29 @@ void GlCommandBufferHandle::drawArrays(
 {
 	GlDrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
-	switch(mode)
-	{
-	case GL_TRIANGLES:
-		_pushBackNewCommand<DrawArraysCommand<GL_TRIANGLES>>(info);
-		break;
-	case GL_TRIANGLE_STRIP:
-		_pushBackNewCommand<DrawArraysCommand<GL_TRIANGLE_STRIP>>(info);
-		break;
-	case GL_POINTS:
-		_pushBackNewCommand<DrawArraysCommand<GL_POINTS>>(info);
-		break;
-	case GL_LINES:
-		_pushBackNewCommand<DrawArraysCommand<GL_LINES>>(info);
-		break;
-	default:
-		ANKI_ASSERT(0 && "Not implemented");
-	}
+	_pushBackNewCommand<DrawArraysCondCommand>(mode, info);
 }
 
 //==============================================================================
-// Use the template trick to avoid allocating too much things in the 
-// command buffer
-template<GLenum mode, U8 indexSize>
-class DrawElementsCondCommand: public GlCommand
-{
-public:
-	GlDrawElementsIndirectInfo m_info;
-	GlOcclusionQueryHandle m_query;
-
-	DrawElementsCondCommand(GlDrawElementsIndirectInfo& info,
-		GlOcclusionQueryHandle query)
-	:	m_info(info),
-		m_query(query)
-	{}
-
-	Error operator()(GlCommandBuffer*)
-	{
-		ANKI_ASSERT(indexSize != 0);
-
-		GLenum indicesType = 0;
-		switch(indexSize)
-		{
-		case 1:
-			indicesType = GL_UNSIGNED_BYTE;
-			break;
-		case 2:
-			indicesType = GL_UNSIGNED_SHORT;
-			break;
-		case 4:
-			indicesType = GL_UNSIGNED_INT;
-			break;
-		default:
-			ANKI_ASSERT(0);
-			break;
-		};
-
-		if(m_query._get().getResult() != GlOcclusionQuery::Result::NOT_VISIBLE)
-		{
-			glDrawElementsInstancedBaseVertexBaseInstance(
-				mode,
-				m_info.m_count,
-				indicesType,
-				(const void*)(PtrSize)(m_info.m_firstIndex * indexSize),
-				m_info.m_instanceCount,
-				m_info.m_baseVertex,
-				m_info.m_baseInstance);
-
-			ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
-		}
-
-		return ErrorCode::NONE;
-	}
-};
-
 void GlCommandBufferHandle::drawElementsConditional(
-	GlOcclusionQueryHandle& query, 
-	GLenum mode, U8 indexSize, 
-	U32 count, U32 instanceCount, U32 firstIndex,
+	GlOcclusionQueryHandle& query,
+	GLenum mode, U8 indexSize, U32 count, U32 instanceCount, U32 firstIndex,
 	U32 baseVertex, U32 baseInstance)
 {
 	GlDrawElementsIndirectInfo info(count, instanceCount, firstIndex, 
 		baseVertex, baseInstance);
 
-	if(indexSize == 2)
-	{
-		switch(mode)
-		{
-		case GL_TRIANGLES:
-			_pushBackNewCommand<DrawElementsCondCommand<GL_TRIANGLES, 2>>(
-				info, query);
-			break;
-		case GL_POINTS:
-			_pushBackNewCommand<DrawElementsCondCommand<GL_POINTS, 2>>(
-				info, query);
-			break;
-		case GL_LINES:
-			_pushBackNewCommand<DrawElementsCondCommand<GL_LINES, 2>>(
-				info, query);
-			break;
-		case GL_PATCHES:
-			_pushBackNewCommand<DrawElementsCondCommand<GL_PATCHES, 2>>(
-				info, query);
-			break;
-		default:
-			ANKI_ASSERT(0 && "Not implemented");
-		}
-	}
-	else
-	{
-		ANKI_ASSERT(0 && "Not implemented");
-	}
+	_pushBackNewCommand<DrawElementsCondCommand>(mode, indexSize, info, query);
 }
 
 //==============================================================================
-// Use the template trick to avoid allocating too much things in the 
-// command buffer
-template<GLenum mode>
-class DrawArraysCondCommand: public GlCommand
-{
-public:
-	GlDrawArraysIndirectInfo m_info;
-	GlOcclusionQueryHandle m_query;
-
-	DrawArraysCondCommand(
-		GlDrawArraysIndirectInfo& info, GlOcclusionQueryHandle& q)
-	:	m_info(info),
-		m_query(q)
-	{}
-
-	Error operator()(GlCommandBuffer*)
-	{
-		if(m_query._get().getResult() != GlOcclusionQuery::Result::NOT_VISIBLE)
-		{
-			glDrawArraysInstancedBaseInstance(
-				mode,
-				m_info.m_first,
-				m_info.m_count,
-				m_info.m_instanceCount,
-				m_info.m_baseInstance);
-		}
-
-		ANKI_COUNTER_INC(GL_DRAWCALLS_COUNT, (U64)1);
-
-		return ErrorCode::NONE;
-	}
-};
-
-void GlCommandBufferHandle::drawArraysConditional(GlOcclusionQueryHandle& q,
+void GlCommandBufferHandle::drawArraysConditional(
+	GlOcclusionQueryHandle& query,
 	GLenum mode, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
 	GlDrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
-	switch(mode)
-	{
-	case GL_TRIANGLES:
-		_pushBackNewCommand<DrawArraysCondCommand<GL_TRIANGLES>>(info, q);
-		break;
-	case GL_TRIANGLE_STRIP:
-		_pushBackNewCommand<DrawArraysCondCommand<GL_TRIANGLE_STRIP>>(info, q);
-		break;
-	case GL_POINTS:
-		_pushBackNewCommand<DrawArraysCondCommand<GL_POINTS>>(info, q);
-		break;
-	case GL_LINES:
-		_pushBackNewCommand<DrawArraysCondCommand<GL_LINES>>(info, q);
-		break;
-	default:
-		ANKI_ASSERT(0 && "Not implemented");
-	}
+	_pushBackNewCommand<DrawArraysCondCommand>(mode, info, query);
 }
 
 } // end namespace anki

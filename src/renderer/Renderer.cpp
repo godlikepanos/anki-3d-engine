@@ -170,8 +170,11 @@ Error Renderer::render(SceneGraph& scene,
 	cmdBuff[0].flush();
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
-	err = m_pps.getLf().runOcclusionTests(cmdBuff[1]);
-	if(err) return err;
+	if(m_pps.getEnabled() && m_pps.getLf().getEnabled())
+	{
+		err = m_pps.getLf().runOcclusionTests(cmdBuff[1]);
+		if(err) return err;
+	}
 
 	err = m_dp.run(cmdBuff[1]);
 	if(err) return err;

@@ -6,56 +6,104 @@
 #pragma anki type frag
 #pragma anki include "shaders/Common.glsl"
 #pragma anki include "shaders/Pack.glsl"
-#pragma anki include "shaders/LinearDepth.glsl"
-#pragma anki include "shaders/IsCommon.glsl"
+
+#define PI 3.1415926535
 
 #define ATTENUATION_FINE 0
-
 #define ATTENUATION_BOOST (0.05)
 
-#define SUBSURFACE_COLOR (0.1)
+#ifndef BRDF
+#	define BRDF 1
+#endif
+
+// Representation of a tile
+struct Tile
+{
+	uvec4 lightsCount;
+	uint pointLightIndices[MAX_POINT_LIGHTS_PER_TILE];
+	uint spotLightIndices[MAX_SPOT_LIGHTS_PER_TILE];
+	uint spotTexLightIndices[MAX_SPOT_TEX_LIGHTS_PER_TILE];
+};
+
+// The base of all lights
+struct Light
+{
+	vec4 posRadius; // xyz: Light pos in eye space. w: The -1/radius
+	vec4 diffuseColorShadowmapId; // xyz: diff color, w: shadowmap tex ID
+	vec4 specularColorTexId; // xyz: spec color, w: diffuse tex ID
+};
+
+// Point light
+#define PointLight Light
+
+// Spot light
+struct SpotLight
+{
+	Light lightBase;
+	vec4 lightDir;
+	vec4 outerCosInnerCos;
+	vec4 extendPoints[4]; // The positions of the 4 camera points
+	mat4 texProjectionMat;
+};
+
+// A container of many lights
+struct Lights
+{
+	uvec4 count; // x: points, z: 
+	PointLight pointLights[MAX_POINT_LIGHTS];
+	SpotLight spotLights[MAX_SPOT_LIGHTS];
+	SpotLight spotTexLights[MAX_SPOT_TEX_LIGHTS];
+};
+
+// Common uniforms between lights
+layout(std140, row_major, binding = 0) uniform _commonBlock
+{
+	vec4 u_projectionParams;
+	vec4 u_sceneAmbientColor;
+	vec4 u_groundLightDir;
+};
 
 layout(std140, binding = 1) readonly buffer pointLightsBlock
 {
-	PointLight uPointLights[MAX_POINT_LIGHTS];
+	PointLight u_pointLights[MAX_POINT_LIGHTS];
 };
 
 layout(std140, binding = 2) readonly buffer spotLightsBlock
 {
-	SpotLight uSpotLights[MAX_SPOT_LIGHTS];
+	SpotLight u_spotLights[MAX_SPOT_LIGHTS];
 };
 
 layout(std140, binding = 3) readonly buffer spotTexLightsBlock
 {
-	SpotLight uSpotTexLights[MAX_SPOT_TEX_LIGHTS];
+	SpotLight u_spotTexLights[MAX_SPOT_TEX_LIGHTS];
 };
 
 layout(std430, binding = 4) readonly buffer tilesBlock
 {
-	Tile uTiles[TILES_COUNT];
+	Tile u_tiles[TILES_COUNT];
 };
 
-layout(binding = 0) uniform sampler2D uMsRt0;
-layout(binding = 1) uniform sampler2D uMsRt1;
-layout(binding = 2) uniform sampler2D uMsDepthRt;
+layout(binding = 0) uniform sampler2D u_msRt0;
+layout(binding = 1) uniform sampler2D u_msRt1;
+layout(binding = 2) uniform sampler2D u_msDepthRtg;
 
-layout(binding = 3) uniform highp sampler2DArrayShadow uShadowMapArr;
+layout(binding = 3) uniform highp sampler2DArrayShadow u_shadowMapArr;
 
-layout(location = 0) in vec2 inTexCoord;
-layout(location = 1) flat in int inInstanceId;
-layout(location = 2) in vec2 inProjectionParams;
+layout(location = 0) in vec2 in_texCoord;
+layout(location = 1) flat in int in_instanceId;
+layout(location = 2) in vec2 in_projectionParams;
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out vec3 out_color;
 
 //==============================================================================
 // Return frag pos in view space
 vec3 getFragPosVSpace()
 {
-	float depth = textureRt(uMsDepthRt, inTexCoord).r;
+	float depth = textureRt(u_msDepthRtg, in_texCoord).r;
 
 	vec3 fragPos;
-	fragPos.z = uProjectionParams.z / (uProjectionParams.w + depth);
-	fragPos.xy = inProjectionParams * fragPos.z;
+	fragPos.z = u_projectionParams.z / (u_projectionParams.w + depth);
+	fragPos.xy = in_projectionParams * fragPos.z;
 
 	return fragPos;
 }
@@ -74,26 +122,53 @@ float computeAttenuationFactor(
 }
 
 //==============================================================================
-float computeLambertTerm(in vec3 normal, in vec3 frag2LightDir)
-{
-	return max(SUBSURFACE_COLOR, dot(normal, frag2LightDir));
-}
-
-//==============================================================================
-// Performs phong lighting using the MS FAIs and a few other things
+// Performs phong specular lighting
 vec3 computeSpecularColor(
-	in vec3 viewDir,
-	in vec3 frag2LightDir,
-	in vec3 normal,
+	in vec3 v,
+	in vec3 l,
+	in vec3 n,
 	in float specCol, 
 	in float specPower, 
 	in vec3 lightSpecCol)
 {
-	vec3 h = normalize(frag2LightDir + viewDir);
-	float specIntensity = pow(max(0.0, dot(normal, h)), specPower);
+	vec3 h = normalize(l + v);
+	float specIntensity = pow(max(0.0, dot(n, h)), specPower);
 	vec3 outSpecCol = lightSpecCol * (specIntensity * specCol);
 	
 	return outSpecCol;
+}
+
+//==============================================================================
+// Performs BRDF specular lighting
+vec3 computeSpecularColorBrdf(
+	in vec3 v,
+	in vec3 l,
+	in vec3 n,
+	in float specCol, 
+	in float specPower, 
+	in vec3 lightSpecCol,
+	in float a2, // rougness^2
+	in float nol) // N dot L
+{
+	vec3 h = normalize(l + v);
+
+	// Fresnel
+	float loh = max(0.0, dot(l, h));
+	float f = specCol + (1.0 - specCol) * pow((1.0 - loh), 5.0);
+	//float f = specColor + (1.0 - specColor) 
+	//	* pow(2.0, (-5.55473 * loh - 6.98316) * loh);
+
+	// NDF: GGX Trowbridge-Reitz
+	float noh = max(0.0, dot(n, h));
+	float d = a2 / (PI * pow(noh * noh * (a2 - 1.0) + 1.0, 2.0));
+
+	// Visibility term: Geometric shadowing devided by BRDF denominator
+	float nov = max(0.0001, dot(n, v));
+	float vv = nov + sqrt((nov - nov * a2) * nov + a2);
+	float vl = nol + sqrt((nol - nol * a2) * nol + a2);
+	float vis = 1.0 / (vv * vl);
+
+	return (vis * d * f) * lightSpecCol;
 }
 
 //==============================================================================
@@ -104,12 +179,12 @@ vec3 computeDiffuseColor(in vec3 diffCol, in vec3 lightDiffCol)
 
 //==============================================================================
 float computeSpotFactor(
-	in vec3 frag2LightDir,
+	in vec3 l,
 	in float outerCos,
 	in float innerCos,
 	in vec3 spotDir)
 {
-	float costheta = -dot(frag2LightDir, spotDir);
+	float costheta = -dot(l, spotDir);
 	float spotFactor = smoothstep(outerCos, innerCos, costheta);
 	return spotFactor;
 }
@@ -140,7 +215,7 @@ float computeShadowFactor(
 		vec2 cordpart1 = texCoords3.xy + poissonDisk[i] / (300.0);
 		vec4 tcoord = vec4(cordpart1, cordpart0);
 		
-		shadowFactor += texture(uShadowMapArr, tcoord);
+		shadowFactor += texture(u_shadowMapArr, tcoord);
 	}
 
 	return shadowFactor / 4.0;
@@ -153,9 +228,40 @@ float computeShadowFactor(
 }
 
 //==============================================================================
+// Common code for lighting
+
+#define LIGHTING_COMMON_PHONG() \
+	vec3 frag2Light = light.posRadius.xyz - fragPos; \
+	vec3 l = normalize(frag2Light); \
+	float nol = max(0.0, dot(normal, l)); \
+	vec3 specC = computeSpecularColor( \
+		viewDir, l, normal, specCol, specPower, light.specularColorTexId.rgb); \
+	vec3 diffC = computeDiffuseColor( \
+		diffCol, light.diffuseColorShadowmapId.rgb); \
+	float att = computeAttenuationFactor(light.posRadius.w, frag2Light); \
+	float lambert = nol;
+
+#define LIGHTING_COMMON_BRDF() \
+	vec3 frag2Light = light.posRadius.xyz - fragPos; \
+	vec3 l = normalize(frag2Light); \
+	float nol = max(0.0, dot(normal, l)); \
+	vec3 specC = computeSpecularColorBrdf(viewDir, l, normal, specCol, \
+		specPower, light.specularColorTexId.rgb, a2, nol); \
+	vec3 diffC = computeDiffuseColor( \
+		diffCol, light.diffuseColorShadowmapId.rgb); \
+	float att = computeAttenuationFactor(light.posRadius.w, frag2Light); \
+	float lambert = nol;
+
+#if BRDF
+#	define LIGHTING_COMMON LIGHTING_COMMON_BRDF
+#else
+#	define LIGHTING_COMMON LIGHTING_COMMON_PHONG
+#endif
+
+//==============================================================================
 void main()
 {
-	// get frag pos in view space
+	// Get frag pos in view space
 	vec3 fragPos = getFragPosVSpace();
 	vec3 viewDir = normalize(-fragPos);
 
@@ -164,38 +270,33 @@ void main()
 	vec3 diffCol;
 	float specCol;
 	float specPower;
+	const float subsurface = 0.1;
 
 	readGBuffer(
-		uMsRt0, uMsRt1, inTexCoord, diffCol, normal, specCol, specPower);
+		u_msRt0, u_msRt1, in_texCoord, diffCol, normal, specCol, specPower);
 
-	specPower *= 128.0;
+#if BRDF
+	float a2 = pow(max(0.0001, specPower), 4.0);
+#else
+	specPower = max(0.0001, specPower) * 128.0;
+#endif
 
 	// Ambient color
-	outColor = diffCol * uSceneAmbientColor.rgb;
+	out_color = diffCol * u_sceneAmbientColor.rgb;
 
-	//Tile tile = uTiles[inInstanceId];
-	#define tile uTiles[inInstanceId]
+	//Tile tile = u_tiles[in_instanceId];
+	#define tile u_tiles[in_instanceId]
 
 	// Point lights
 	uint pointLightsCount = tile.lightsCount[0];
 	for(uint i = 0U; i < pointLightsCount; ++i)
 	{
 		uint lightId = tile.pointLightIndices[i];
-		PointLight light = uPointLights[lightId];
+		PointLight light = u_pointLights[lightId];
 
-		vec3 frag2Light = light.posRadius.xyz - fragPos;
-		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
+		LIGHTING_COMMON();
 
-		vec3 frag2LightDir = normalize(frag2Light);
-		float lambert = computeLambertTerm(normal, frag2LightDir);
-
-		vec3 specC = computeSpecularColor(viewDir, frag2LightDir, normal,
-			specCol, specPower, light.specularColorTexId.rgb);
-
-		vec3 diffC = computeDiffuseColor(
-			diffCol, light.diffuseColorShadowmapId.rgb);
-
-		outColor += (specC + diffC) * (att * lambert);
+		out_color += (specC + diffC) * (att * max(subsurface, lambert));
 	}
 
 	// Spot lights
@@ -203,27 +304,17 @@ void main()
 	for(uint i = 0U; i < spotLightsCount; ++i)
 	{
 		uint lightId = tile.spotLightIndices[i];
-		SpotLight slight = uSpotLights[lightId];
+		SpotLight slight = u_spotLights[lightId];
 		Light light = slight.lightBase;
 
-		vec3 frag2Light = light.posRadius.xyz - fragPos;
-		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
-
-		vec3 frag2LightDir = normalize(frag2Light);
-		float lambert = computeLambertTerm(normal, frag2LightDir);
-
-		vec3 specC = computeSpecularColor(viewDir, frag2LightDir, normal,
-			specCol, specPower, light.specularColorTexId.rgb);
-
-		vec3 diffC = computeDiffuseColor(
-			diffCol, light.diffuseColorShadowmapId.rgb);
+		LIGHTING_COMMON();
 
 		float spot = computeSpotFactor(
-			frag2LightDir, slight.outerCosInnerCos.x, 
+			l, slight.outerCosInnerCos.x, 
 			slight.outerCosInnerCos.y, 
 			slight.lightDir.xyz);
 
-		outColor += (diffC + specC) * (att * lambert * spot);
+		out_color += (diffC + specC) * (att * max(subsurface, lambert) * spot);
 	}
 
 	// Spot lights with shadow
@@ -231,42 +322,34 @@ void main()
 	for(uint i = 0U; i < spotTexLightsCount; ++i)
 	{
 		uint lightId = tile.spotTexLightIndices[i];
-		SpotLight slight = uSpotTexLights[lightId];
+		SpotLight slight = u_spotTexLights[lightId];
 		Light light = slight.lightBase;
 
-		vec3 frag2Light = light.posRadius.xyz - fragPos;
-		float att = computeAttenuationFactor(light.posRadius.w, frag2Light);
-
-		vec3 frag2LightDir = normalize(frag2Light);
-		float lambert = computeLambertTerm(normal, frag2LightDir);
-
-		vec3 specC = computeSpecularColor(viewDir, frag2LightDir, normal,
-			specCol, specPower, light.specularColorTexId.rgb);
-
-		vec3 diffC = computeDiffuseColor(
-			diffCol, light.diffuseColorShadowmapId.rgb);
+		LIGHTING_COMMON();
 
 		float spot = computeSpotFactor(
-			frag2LightDir, slight.outerCosInnerCos.x, 
+			l, slight.outerCosInnerCos.x, 
 			slight.outerCosInnerCos.y, 
 			slight.lightDir.xyz);
 
 		float shadowmapLayerId = light.diffuseColorShadowmapId.w;
 		float shadow = computeShadowFactor(slight.texProjectionMat, 
-			fragPos, uShadowMapArr, shadowmapLayerId);
+			fragPos, u_shadowMapArr, shadowmapLayerId);
 
-		outColor += (diffC + specC) * (att * lambert * spot * shadow);
+		out_color += (diffC + specC) 
+			* (att * spot * max(subsurface, lambert * shadow));
 	}
 
-#if GROUND_LIGHT
-	outColor += max(dot(normal, uGroundLightDir.xyz), 0.0) 
+//#if GROUND_LIGHT
+#if 0
+	out_color += max(dot(normal, u_groundLightDir.xyz), 0.0) 
 		* vec3(0.10, 0.01, 0.01);
 #endif
 
 #if 0
-	if(inInstanceId != 99999)
+	if(in_instanceId != 99999)
 	{
-		outColor = vec3(specPower / 120.0);
+		out_color = vec3(diffCol);
 	}
 #endif
 }

@@ -94,6 +94,13 @@ extern aiMatrix4x4 toAnkiMatrix(const aiMatrix4x4& in, bool flipyz);
 /// Convert one 3x3 matrix to AnKi friendly matrix
 extern aiMatrix3x3 toAnkiMatrix(const aiMatrix3x3& in, bool flipyz);
 
+/// Write transformation of a node
+void writeNodeTransform(
+	const Exporter& exporter, 
+	std::ofstream& file, 
+	const std::string& node, 
+	const aiMatrix4x4& mat);
+
 /// Export animation
 extern void exportAnimation(
 	const Exporter& exporter,
@@ -127,7 +134,8 @@ std::string getModelName(const Exporter& exporter, const Model& model);
 
 /// Write light to the scene file
 extern void exportLight(
+	const Exporter& exporter,
 	const aiLight& light, 
-	std::fstream& file);
+	std::ofstream& file);
 
 #endif

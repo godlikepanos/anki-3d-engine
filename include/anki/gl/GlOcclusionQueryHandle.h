@@ -21,13 +21,14 @@ class GlOcclusionQueryHandle: public GlContainerHandle<GlOcclusionQuery>
 {
 public:
 	using Base = GlContainerHandle<GlOcclusionQuery>;
+	using ResultBit = GlOcclusionQueryResultBit;
 
 	GlOcclusionQueryHandle();
 
 	~GlOcclusionQueryHandle();
 
 	/// Create a query.
-	ANKI_USE_RESULT Error create(GlDevice* dev);
+	ANKI_USE_RESULT Error create(GlDevice* dev, ResultBit condRenderingBit);
 
 	/// Begin query.
 	void begin(GlCommandBufferHandle& commands);

@@ -117,12 +117,5 @@ void main()
 		outColor = vec3(ssao);
 	}
 #endif
-
-#if 0
-	if(outColor.r != 0.00000001)
-	{
-		outColor = hdr;
-	}
-#endif
 }
 

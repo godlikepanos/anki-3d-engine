@@ -222,6 +222,15 @@ GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit = nullptr);
 using GlCallback = void(*)(void*);
 using GlMakeCurrentCallback = void(*)(void*, void*);
 
+/// Occlusion query result bit.
+enum class GlOcclusionQueryResultBit: U8
+{
+	NOT_AVAILABLE = 1 << 0,
+	VISIBLE = 1 << 1,
+	NOT_VISIBLE = 1 << 2 
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GlOcclusionQueryResultBit, inline)
+
 /// @}
 
 } // end namespace anki

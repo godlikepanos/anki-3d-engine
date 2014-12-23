@@ -20,7 +20,7 @@ Error LensFlareComponent::create(const CString& textureFilename)
 	GlDevice& gl = m_node->getSceneGraph()._getGlDevice();
 	for(auto it = m_queries.getBegin(); it != m_queries.getEnd() && !err; ++it)
 	{
-		err = (*it).create(&gl);
+		err = (*it).create(&gl, GlOcclusionQueryHandle::ResultBit::VISIBLE);
 	}
 
 	return err;
