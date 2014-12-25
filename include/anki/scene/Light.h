@@ -29,6 +29,13 @@ public:
 	{
 		return Type::LIGHT;
 	}
+
+private:
+	Vec4 m_diffColor = Vec4(0.5);
+	Vec4 m_specColor = Vec4(0.5);
+
+	Bool8 m_shadow = false;
+	U8 m_shadowMapIndex = 0xFF; ///< Used by the renderer
 };
 
 /// Light scene node. It can be spot or point

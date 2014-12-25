@@ -60,13 +60,10 @@ public:
 	U32 m_depth = 0; ///< Relevant only for 3D and 2DArray textures
 	GLenum m_target = GL_TEXTURE_2D;
 	GLenum m_internalFormat = GL_NONE;
-	GLenum m_format = GL_NONE;
-	GLenum m_type = GL_NONE;
 	U32 m_mipmapsCount = 0;
 	GlTextureFilter m_filterType = GlTextureFilter::NEAREST;
 	Bool8 m_repeat = false;
 	I32 m_anisotropyLevel = 0;
-	Bool8 m_genMipmaps = false;
 	U32 m_samples = 1;
 };
 

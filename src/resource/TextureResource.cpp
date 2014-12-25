@@ -40,7 +40,6 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 
 	GlTextureHandle::Initializer init;
 	U layers = 0;
-	Bool driverShouldGenMipmaps = false;
 
 	// Load image
 	Image* img = rinit.m_alloc.newInstance<Image>(rinit.m_alloc);
@@ -101,7 +100,6 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 		{
 		case Image::DataCompression::RAW:
 			init.m_internalFormat = GL_RGB;
-			driverShouldGenMipmaps = true;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case Image::DataCompression::S3TC:
@@ -122,7 +120,6 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 		{
 		case Image::DataCompression::RAW:
 			init.m_internalFormat = GL_RGBA;
-			driverShouldGenMipmaps = true;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case Image::DataCompression::S3TC:
@@ -142,22 +139,6 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 		ANKI_ASSERT(0);
 	}
 
-	// format
-	switch(img->getColorFormat())
-	{
-	case Image::ColorFormat::RGB8:
-		init.m_format = GL_RGB;
-		break;
-	case Image::ColorFormat::RGBA8:
-		init.m_format = GL_RGBA;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	// type
-	init.m_type = GL_UNSIGNED_BYTE;
-
 	// mipmapsCount
 	init.m_mipmapsCount = img->getMipLevelsCount();
 
@@ -169,16 +150,6 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 
 	// anisotropyLevel
 	init.m_anisotropyLevel = rinit.m_resources.getTextureAnisotropy();
-
-	// genMipmaps
-	if(init.m_mipmapsCount == 1 || driverShouldGenMipmaps)
-	{
-		init.m_genMipmaps = true;
-	}
-	else
-	{
-		init.m_genMipmaps = false;
-	}
 
 	// Now assign the data
 	for(U layer = 0; layer < layers; layer++)

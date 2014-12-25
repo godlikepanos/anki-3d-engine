@@ -270,7 +270,7 @@ void main()
 	vec3 diffCol;
 	float specCol;
 	float specPower;
-	const float subsurface = 0.1;
+	const float subsurface = 0.0;
 
 	readGBuffer(
 		u_msRt0, u_msRt1, in_texCoord, diffCol, normal, specCol, specPower);
@@ -340,10 +340,9 @@ void main()
 			* (att * spot * max(subsurface, lambert * shadow));
 	}
 
-//#if GROUND_LIGHT
-#if 0
+#if GROUND_LIGHT
 	out_color += max(dot(normal, u_groundLightDir.xyz), 0.0) 
-		* vec3(0.10, 0.01, 0.01);
+		* vec3(0.01, 0.001, 0.001);
 #endif
 
 #if 0

@@ -44,9 +44,7 @@ Error Sm::init(const ConfigSet& initializer)
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
 	sminit.m_depth = initializer.get("is.sm.maxLights");
-	sminit.m_format = GL_DEPTH_COMPONENT;
 	sminit.m_internalFormat = GL_DEPTH_COMPONENT16;
-	sminit.m_type = GL_UNSIGNED_SHORT;
 	sminit.m_mipmapsCount = 1;
 	if(m_bilinearEnabled)
 	{

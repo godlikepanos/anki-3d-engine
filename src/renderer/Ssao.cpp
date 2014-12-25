@@ -71,7 +71,7 @@ Error Ssao::createFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 {
 	Error err = ErrorCode::NONE;
 
-	err = m_r->createRenderTarget(m_width, m_height, GL_RED, GL_RED, 
+	err = m_r->createRenderTarget(m_width, m_height, GL_R8, GL_RED, 
 		GL_UNSIGNED_BYTE, 1, rt);
 	if(err) return err;
 
@@ -143,8 +143,6 @@ Error Ssao::initInternal(const ConfigSet& config)
 	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
 	tinit.m_target = GL_TEXTURE_2D;
 	tinit.m_internalFormat = GL_RGB32F;
-	tinit.m_format = GL_RGB;
-	tinit.m_type = GL_FLOAT;
 	tinit.m_filterType = GlTextureHandle::Filter::NEAREST;
 	tinit.m_repeat = true;
 	tinit.m_mipmapsCount = 1;

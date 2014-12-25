@@ -295,13 +295,10 @@ Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 	init.m_target = GL_TEXTURE_2D;
 #endif
 	init.m_internalFormat = internalFormat;
-	init.m_format = format;
-	init.m_type = type;
 	init.m_mipmapsCount = 1;
 	init.m_filterType = GlTextureHandle::Filter::NEAREST;
 	init.m_repeat = false;
 	init.m_anisotropyLevel = 0;
-	init.m_genMipmaps = false;
 	init.m_samples = samples;
 
 	GlCommandBufferHandle cmdBuff;

@@ -59,22 +59,10 @@ public:
 		return m_internalFormat;
 	}
 
-	GLenum getFormat() const
-	{
-		ANKI_ASSERT(isCreated());
-		return m_format;
-	}
-
 	GLenum getTarget() const
 	{
 		ANKI_ASSERT(isCreated());
 		return m_target;
-	}
-
-	GLenum getType() const
-	{
-		ANKI_ASSERT(isCreated());
-		return m_type;
 	}
 
 	U32 getWidth() const
@@ -128,8 +116,6 @@ public:
 private:
 	GLenum m_target = GL_NONE; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
 	GLenum m_internalFormat = GL_NONE; ///< GL_COMPRESSED_RED, GL_RGB16 etc
-	GLenum m_format = GL_NONE; ///< GL_RED, GL_RG, GL_RGB etc
-	GLenum m_type = GL_NONE; ///< GL_UNSIGNED_BYTE, GL_BYTE etc
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 0;

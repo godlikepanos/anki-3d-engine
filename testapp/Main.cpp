@@ -49,7 +49,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 3);
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.0);
 
 	if(getenv("PROFILE"))
 	{
@@ -526,7 +526,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.enabled", true);
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
-	config.set("pps.enabled", true);
+	config.set("pps.enabled", false);
 	config.set("pps.hdr.enabled", true);
 	config.set("pps.hdr.renderingQuality", 0.5);
 	config.set("pps.hdr.blurringDist", 1.0);
