@@ -45,7 +45,7 @@ public:
 	/// @name Constructors
 	/// @{
 	Frustum(Type type)
-		: m_type(type)
+	:	m_type(type)
 	{}
 
 	virtual ~Frustum()

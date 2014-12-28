@@ -29,13 +29,14 @@ Error Ez::run(GlCommandBufferHandle& cmdBuff)
 	Error err = ErrorCode::NONE;
 	SceneGraph& scene = m_r->getSceneGraph();
 	Camera& cam = scene.getActiveCamera();
+	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
 
 	m_r->getSceneDrawer().prepareDraw(
 		RenderingStage::MATERIAL, Pass::DEPTH, cmdBuff);
 
 	U count = m_maxObjectsToDraw;
-	auto it = cam.getVisibilityTestResults().getRenderablesBegin();
-	auto end = cam.getVisibilityTestResults().getRenderablesEnd();
+	auto it = camFr.getVisibilityTestResults().getRenderablesBegin();
+	auto end = camFr.getVisibilityTestResults().getRenderablesEnd();
 	for(; it != end; ++it)
 	{
 		err = m_r->getSceneDrawer().render(cam, *it);

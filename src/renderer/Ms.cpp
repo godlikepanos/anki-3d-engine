@@ -26,16 +26,15 @@ Error Ms::createRt(U32 index, U32 samples)
 	Plane& plane = m_planes[index];
 
 	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
-		GL_UNSIGNED_INT, samples, plane.m_depthRt);
+		GL_DEPTH_COMPONENT24, samples, plane.m_depthRt);
 	if(err) return err;
 
 	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
-			GL_RGBA, GL_UNSIGNED_BYTE, samples, plane.m_rt0);
+			samples, plane.m_rt0);
 	if(err) return err;
 
 	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
-		GL_RGBA, GL_UNSIGNED_BYTE, samples, plane.m_rt1);
+		samples, plane.m_rt1);
 	if(err) return err;
 
 	GlDevice& gl = getGlDevice();
@@ -129,7 +128,8 @@ Error Ms::run(GlCommandBufferHandle& cmdb)
 	Camera& cam = m_r->getSceneGraph().getActiveCamera();
 	
 	VisibilityTestResults& vi =
-		m_r->getSceneGraph().getActiveCamera().getVisibilityTestResults();
+		m_r->getSceneGraph().getActiveCamera().
+		getComponent<FrustumComponent>().getVisibilityTestResults();
 
 	auto it = vi.getRenderablesBegin();
 	auto end = vi.getRenderablesEnd();

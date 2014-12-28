@@ -152,14 +152,15 @@ Error Renderer::render(SceneGraph& scene,
 
 	// Calc a few vars
 	//
-	Timestamp camUpdateTimestamp = cam.FrustumComponent::getTimestamp();
+	const FrustumComponent& fr = cam.getComponent<FrustumComponent>();
+	Timestamp camUpdateTimestamp = fr.getTimestamp();
 	if(m_projectionParamsUpdateTimestamp 
 			< m_scene->getActiveCameraChangeTimestamp()
 		|| m_projectionParamsUpdateTimestamp < camUpdateTimestamp
 		|| m_projectionParamsUpdateTimestamp == 1)
 	{
 		ANKI_ASSERT(cam.getCameraType() == Camera::Type::PERSPECTIVE);
-		computeProjectionParams(cam.getProjectionMatrix());
+		computeProjectionParams(fr.getProjectionMatrix());
 		m_projectionParamsUpdateTimestamp = getGlobTimestamp();
 	}
 
@@ -271,7 +272,7 @@ void Renderer::computeProjectionParams(const Mat4& m)
 
 //==============================================================================
 Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat, 
-	GLenum format, GLenum type, U32 samples, GlTextureHandle& rt)
+	U32 samples, GlTextureHandle& rt)
 {
 	Error err = ErrorCode::NONE;
 

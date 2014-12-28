@@ -13,7 +13,8 @@
 
 namespace anki {
 
-class Light;
+// Forward 
+class SceneNode;
 
 /// @addtogroup renderer
 /// @{
@@ -47,7 +48,7 @@ private:
 	{
 		U32 m_layerId;
 		GlFramebufferHandle m_fb;
-		Light* m_light = nullptr;
+		SceneNode* m_light = nullptr;
 		U32 m_timestamp = 0; ///< Timestamp of last render or light change
 	};
 
@@ -75,7 +76,9 @@ private:
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(Light* shadowCasters[], U32 shadowCastersCount, 
+	ANKI_USE_RESULT Error run(
+		SceneNode* shadowCasters[], 
+		U32 shadowCastersCount, 
 		GlCommandBufferHandle& cmdBuff);
 
 	/// Get max shadow casters
@@ -88,10 +91,10 @@ private:
 	void finishDraw(GlCommandBufferHandle& cmdBuff);
 
 	/// Find the best shadowmap for that light
-	Shadowmap& bestCandidate(Light& light);
+	Shadowmap& bestCandidate(SceneNode& light);
 
 	ANKI_USE_RESULT Error doLight(
-		Light& light, GlCommandBufferHandle& cmdBuff, Shadowmap*& sm);
+		SceneNode& light, GlCommandBufferHandle& cmdBuff, Shadowmap*& sm);
 };
 
 /// @}

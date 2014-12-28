@@ -160,7 +160,7 @@ public:
 	template<typename Component>
 	const Component& getComponent() const
 	{
-		Component* out = tryGetComponent<Component>();
+		const Component* out = tryGetComponent<Component>();
 		ANKI_ASSERT(out != nullptr);
 		return *out;
 	}
@@ -168,7 +168,8 @@ public:
 protected:
 	/// Append a component to the components container. The SceneNode will not
 	/// take ownership
-	ANKI_USE_RESULT Error addComponent(SceneComponent* comp);
+	ANKI_USE_RESULT Error addComponent(
+		SceneComponent* comp, Bool transferOwnership = false);
 
 	/// Remove a component from the container
 	void removeComponent(SceneComponent* comp);
@@ -182,7 +183,6 @@ private:
 	SceneString m_name; ///< A unique name
 	Bool8 m_forDeletion = false;
 };
-
 /// @}
 
 } // end namespace anki

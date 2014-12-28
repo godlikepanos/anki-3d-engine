@@ -24,9 +24,8 @@ class VisibilityTestResults;
 class FrustumComponent: public SceneComponent
 {
 public:
-	class VisibilityStats
+	struct VisibilityStats
 	{
-	public:
 		U32 m_renderablesCount = 0;
 		U32 m_lightsCount = 0;
 	};
@@ -38,7 +37,8 @@ public:
 	{
 		// WARNING: Never touch m_frustum in constructor
 		ANKI_ASSERT(frustum);
-		markForUpdate();
+		markShapeForUpdate();
+		markTransformForUpdate();
 	}
 
 	Frustum& getFrustum()
@@ -56,21 +56,9 @@ public:
 		return m_pm;
 	}
 
-	void setProjectionMatrix(const Mat4& m)
-	{
-		m_pm = m;
-		markForUpdate();
-	}
-
 	const Mat4& getViewMatrix() const
 	{
 		return m_vm;
-	}
-
-	void setViewMatrix(const Mat4& m)
-	{
-		m_vm = m;
-		markForUpdate();
 	}
 
 	const Mat4& getViewProjectionMatrix() const
@@ -78,16 +66,10 @@ public:
 		return m_vpm;
 	}
 
-	void setViewProjectionMatrix(const Mat4& m)
-	{
-		m_vpm = m;
-		markForUpdate();
-	}
-
 	/// Get the origin for sorting and visibility tests
 	const Vec4& getFrustumOrigin() const
 	{
-		return getFrustum().getTransform().getOrigin();
+		return m_frustum->getTransform().getOrigin();
 	}
 
 	void setVisibilityTestResults(VisibilityTestResults* visible);
@@ -99,50 +81,38 @@ public:
 		return *m_visible;
 	}
 
-	VisibilityStats getLastVisibilityStats() const
+	const VisibilityStats& getLastVisibilityStats() const
 	{
 		return m_stats;
 	}
 
-	void markForUpdate()
+	/// Call when the shape of the frustum got changed.
+	void markShapeForUpdate()
 	{
-		m_markedForUpdate = true;
+		m_flags |= SHAPE_MARKED_FOR_UPDATE;
+	}
+
+	/// Call when the transformation of the frustum got changed.
+	void markTransformForUpdate()
+	{
+		m_flags |= TRANSFORM_MARKED_FOR_UPDATE;
 	}
 
 	/// Is a spatial inside the frustum?
 	Bool insideFrustum(SpatialComponent& sp)
 	{
-		return getFrustum().insideFrustum(sp.getSpatialCollisionShape());
+		return m_frustum->insideFrustum(sp.getSpatialCollisionShape());
 	}
 
 	/// Is a collision shape inside the frustum?
 	Bool insideFrustum(const CollisionShape& cs)
 	{
-		return getFrustum().insideFrustum(cs);
-	}
-
-	/// Called when the component gets updated. It should be overriden, by 
-	/// default it does nothing.
-	virtual ANKI_USE_RESULT Error onFrustumComponentUpdate(
-		SceneNode& node, F32 prevTime, F32 crntTime)
-	{
-		return ErrorCode::NONE;
+		return m_frustum->insideFrustum(cs);
 	}
 
 	/// @name SceneComponent overrides
 	/// @{
-	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override
-	{
-		updated = m_markedForUpdate;
-		m_markedForUpdate = false;
-		return ErrorCode::NONE;
-	}
-
-	ANKI_USE_RESULT Error onUpdate(
-		SceneNode& node, F32 prevTime, F32 crntTime) final
-	{
-		return onFrustumComponentUpdate(node, prevTime, crntTime);
-	}
+	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
 
 	void reset() override
 	{
@@ -156,17 +126,23 @@ public:
 	}
 
 private:
+	enum Flags
+	{
+		SHAPE_MARKED_FOR_UPDATE = 1 << 0,
+		TRANSFORM_MARKED_FOR_UPDATE = 1 << 1
+	};
+
 	Frustum* m_frustum;
 	Mat4 m_pm = Mat4::getIdentity(); ///< Projection matrix
 	Mat4 m_vm = Mat4::getIdentity(); ///< View matrix
 	Mat4 m_vpm = Mat4::getIdentity(); ///< View projection matrix
-	VisibilityStats m_stats;
 
 	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
 	/// frame and before any visibility tests are run
 	VisibilityTestResults* m_visible = nullptr;
+	VisibilityStats m_stats;
 
-	Bool8 m_markedForUpdate;
+	U8 m_flags;
 };
 /// @}
 

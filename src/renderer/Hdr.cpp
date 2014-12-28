@@ -18,8 +18,7 @@ Error Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 {
 	Error err = ErrorCode::NONE;
 
-	err = m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
-		GL_UNSIGNED_BYTE, 1, rt);
+	err = m_r->createRenderTarget(m_width, m_height, GL_RGB8, 1, rt);
 	if(err) return err;
 
 	// Set to bilinear because the blurring techniques take advantage of that

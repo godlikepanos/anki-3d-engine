@@ -69,8 +69,7 @@ Error BlurringRenderingPass::initBlurring(
 	{
 		Direction& dir = m_dirs[i];
 
-		err = r.createRenderTarget(width, height, GL_RGB8, GL_RGB, 
-			GL_UNSIGNED_BYTE, 1, dir.m_rt);
+		err = r.createRenderTarget(width, height, GL_RGB8, 1, dir.m_rt);
 		if(err) return err;
 
 		// Set to bilinear because the blurring techniques take advantage of 

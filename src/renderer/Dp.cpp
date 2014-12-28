@@ -16,10 +16,8 @@ Error Dp::init(const ConfigSet& config)
 		getAlignedRoundDown(16, m_r->getHeight() / 3));
 
 	Error err = m_r->createRenderTarget(
-		m_smallDepthSize.x(), 
-		m_smallDepthSize.y(),
-		GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT,
-		GL_UNSIGNED_INT, 1, m_smallDepthRt);
+		m_smallDepthSize.x(), m_smallDepthSize.y(),
+		GL_DEPTH_COMPONENT24, 1, m_smallDepthRt);
 	if(err) return err;
 
 	GlDevice& gl = getGlDevice();

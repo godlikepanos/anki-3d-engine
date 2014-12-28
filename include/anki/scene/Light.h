@@ -7,12 +7,10 @@
 #define ANKI_SCENE_LIGHT_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/scene/MoveComponent.h"
-#include "anki/scene/FrustumComponent.h"
-#include "anki/scene/SpatialComponent.h"
 #include "anki/scene/Forward.h"
 #include "anki/resource/Resource.h"
 #include "anki/resource/TextureResource.h"
+#include "anki/Collision.h"
 
 namespace anki {
 
@@ -23,72 +21,28 @@ namespace anki {
 class LightComponent: public SceneComponent
 {
 public:
-	LightComponent(Light* node);
-
-	static constexpr Type getClassType()
-	{
-		return Type::LIGHT;
-	}
-
-private:
-	Vec4 m_diffColor = Vec4(0.5);
-	Vec4 m_specColor = Vec4(0.5);
-
-	Bool8 m_shadow = false;
-	U8 m_shadowMapIndex = 0xFF; ///< Used by the renderer
-};
-
-/// Light scene node. It can be spot or point
-///
-/// Explaining the lighting model:
-/// @code
-/// Final intensity:                If = Ia + Id + Is
-/// Ambient intensity:              Ia = Al * Am
-/// Ambient intensity of light:     Al
-/// Ambient intensity of material:  Am
-/// Diffuse intensity:              Id = Dl * Dm * LambertTerm
-/// Diffuse intensity of light:     Dl
-/// Diffuse intensity of material:  Dm
-/// LambertTerm:                    max(Normal dot Light, 0.0)
-/// Specular intensity:             Is = Sm * Sl * pow(max(R dot E, 0.0), f)
-/// Specular intensity of light:    Sl
-/// Specular intensity of material: Sm
-/// @endcode
-class Light: public SceneNode, public LightComponent, public MoveComponent, 
-	public SpatialComponent
-{
-public:
-	enum class Type: U8
+	enum class LightType: U8
 	{
 		POINT,
 		SPOT,
 		COUNT
-	};
+ 	};
 
-	Light(SceneGraph* scene, Type t);
+	LightComponent(SceneNode* node, LightType type);
 
-	virtual ~Light();
-
-	ANKI_USE_RESULT Error create(const CString& name);
-
-	Type getLightType() const
+	LightType getLightType() const
 	{
 		return m_type;
 	}
 
 	const Vec4& getDiffuseColor() const
 	{
-		return m_color;
-	}
-
-	Vec4& getDiffuseColor()
-	{
-		return m_color;
+		return m_diffColor;
 	}
 
 	void setDiffuseColor(const Vec4& x)
 	{
-		m_color = x;
+		m_diffColor = x;
 	}
 
 	const Vec4& getSpecularColor() const
@@ -96,14 +50,58 @@ public:
 		return m_specColor;
 	}
 
-	Vec4& getSpecularColor()
-	{
-		return m_specColor;
-	}
-
 	void setSpecularColor(const Vec4& x)
 	{
 		m_specColor = x;
+	}
+
+	void setRadius(F32 x)
+	{
+		m_radius = x;
+		m_dirty = true;
+	}
+
+	F32 getRadius() const
+	{
+		return m_radius;
+	}
+
+	void setDistance(F32 x)
+	{
+		m_distance = x;
+		m_dirty = true;
+	}
+
+	F32 getDistance() const
+	{
+		return m_distance;
+	}
+
+	void setInnerAngle(F32 ang)
+	{
+		m_innerAngleCos = cos(ang / 2.0);
+		m_dirty = true;
+	}
+
+	F32 getInnerAngleCos() const
+	{
+		return m_innerAngleCos;
+	}
+
+	void setOuterAngle(F32 ang)
+	{
+		m_outerAngleCos = cos(ang / 2.0);
+		m_dirty = true;
+	}
+
+	F32 getOuterAngle() const
+	{
+		return m_outerAngle;
+	}
+
+	F32 getOuterAngleCos() const
+	{
+		return m_outerAngleCos;
 	}
 
 	Bool getShadowEnabled() const
@@ -127,30 +125,59 @@ public:
 		m_shadowMapIndex = static_cast<U8>(i);
 	}
 
-	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
+	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
 
-	/// @name SpatialComponent virtuals
-	/// @{
-	Vec4 getSpatialOrigin()
+	static constexpr Type getClassType()
 	{
-		return getWorldTransform().getOrigin();
+		return Type::LIGHT;
 	}
-	/// @}
-
-protected:
-	/// One of the frustums got updated
-	void frustumUpdate();
-
-	/// Called when moved
-	void onMoveComponentUpdateCommon();
 
 private:
-	Type m_type;
-	Vec4 m_color = Vec4(1.0);
-	Vec4 m_specColor = Vec4(1.0);
+	LightType m_type;
+	Vec4 m_diffColor = Vec4(0.5);
+	Vec4 m_specColor = Vec4(0.5);
+	union
+	{
+		F32 m_radius;
+		F32 m_distance;
+	};
+	F32 m_innerAngleCos;
+	F32 m_outerAngleCos;
+	F32 m_outerAngle;
 
 	Bool8 m_shadow = false;
 	U8 m_shadowMapIndex = 0xFF; ///< Used by the renderer
+
+	Bool8 m_dirty = true;
+};
+
+/// Light scene node. It can be spot or point.
+class Light: public SceneNode
+{
+	friend class LightFeedbackComponent;
+
+public:
+	Light(SceneGraph* scene);
+
+	virtual ~Light();
+
+	ANKI_USE_RESULT Error create(
+		const CString& name, 
+		LightComponent::LightType type,
+		CollisionShape* shape);
+
+	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
+
+protected:
+	/// Called when moved
+	void onMoveUpdateCommon(MoveComponent& move);
+
+	/// One of the frustums got updated
+	void onShapeUpdateCommon(LightComponent& light);
+
+	virtual void onMoveUpdate(MoveComponent& move) = 0;
+
+	virtual void onShapeUpdate(LightComponent& light) = 0;
 };
 
 /// Point light
@@ -161,45 +188,23 @@ public:
 
 	ANKI_USE_RESULT Error create(const CString& name);
 
-	F32 getRadius() const
-	{
-		return m_sphereW.getRadius();
-	}
-
-	void setRadius(const F32 x)
-	{
-		m_sphereW.setRadius(x);
-		frustumUpdate();
-	}
-
-	const Sphere& getSphere() const
-	{
-		return m_sphereW;
-	}
-
 	/// @name SceneNode virtuals
 	/// @{
 	ANKI_USE_RESULT Error frameUpdate(
 		F32 prevUpdateTime, F32 crntTime) override;
 	/// @}
 
-	/// @name MoveComponent virtuals
+	/// @privatesection
 	/// @{
-	ANKI_USE_RESULT Error onMoveComponentUpdate(SceneNode&, F32, F32) override;
-	/// @}
-
-	/// @name SpatialComponent virtuals
-	/// @{
-	const CollisionShape& getSpatialCollisionShape()
-	{
-		return m_sphereW;
-	}
+	void onMoveUpdate(MoveComponent& move) override;
+	void onShapeUpdate(LightComponent& light) override;
 	/// @}
 
 public:
 	class ShadowData
 	{
 	public:
+#if 0
 		ShadowData(SceneNode* node)
 		:	m_frustumComps{{
 				{node, &m_frustums[0]}, {node, &m_frustums[1]},
@@ -210,6 +215,7 @@ public:
 		Array<PerspectiveFrustum, 6> m_frustums;
 		Array<FrustumComponent, 6> m_frustumComps;
 		Array<Transform, 6> m_localTrfs;
+#endif
 	};
 
 	Sphere m_sphereW = Sphere(Vec4(0.0), 1.0);
@@ -217,89 +223,22 @@ public:
 };
 
 /// Spot light
-class SpotLight: public Light, public FrustumComponent
+class SpotLight: public Light
 {
 public:
 	SpotLight(SceneGraph* scene);
 
 	ANKI_USE_RESULT Error create(const CString& name);
 
-	GlTextureHandle& getTexture()
-	{
-		return m_tex->getGlTexture();
-	}
-
-	const GlTextureHandle& getTexture() const
-	{
-		return m_tex->getGlTexture();
-	}
-
-	F32 getOuterAngle() const
-	{
-		return m_frustum.getFovX();
-	}
-
-	void setOuterAngle(F32 x)
-	{
-		m_frustum.setFovX(x);
-		m_frustum.setFovY(x);
-		m_cosOuterAngle = cos(x / 2.0);
-		frustumUpdate();
-	}
-
-	F32 getOuterAngleCos() const
-	{
-		return m_cosOuterAngle;
-	}
-
-	void setInnerAngle(F32 ang)
-	{
-		m_cosInnerAngle = cos(ang / 2.0);
-	}
-
-	F32 getInnerAngleCos() const
-	{
-		return m_cosInnerAngle;
-	}
-
-	F32 getDistance() const
-	{
-		return m_frustum.getFar();
-	}
-
-	void setDistance(F32 f)
-	{
-		m_frustum.setFar(f);
-		frustumUpdate();
-	}
-
-	const PerspectiveFrustum& getFrustum() const
-	{
-		return m_frustum;
-	}
-
-	/// @name MoveComponent virtuals
+	/// @privatesection
 	/// @{
-	ANKI_USE_RESULT Error onMoveComponentUpdate(SceneNode&, F32, F32) override;
+	void onMoveUpdate(MoveComponent& move) override;
+	void onShapeUpdate(LightComponent& light) override;
 	/// @}
-
-	/// @name SpatialComponent virtuals
-	/// @{
-	const CollisionShape& getSpatialCollisionShape()
-	{
-		return m_frustum;
-	}
-	/// @}
-
-	ANKI_USE_RESULT Error loadTexture(const CString& filename);
 
 private:
 	PerspectiveFrustum m_frustum;
-	TextureResourcePointer m_tex;
-	F32 m_cosOuterAngle;
-	F32 m_cosInnerAngle;
 };
-
 /// @}
 
 } // end namespace anki

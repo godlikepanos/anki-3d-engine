@@ -21,22 +21,9 @@ public:
 	Obb m_obb;
 
 	ObbSpatialComponent(SceneNode* node)
-	:	SpatialComponent(node)
+	:	SpatialComponent(node, &m_obb)
 	{}
-
-	/// Implement SpatialComponent::getSpatialCollisionShape
-	const CollisionShape& getSpatialCollisionShape()
-	{
-		return m_obb;
-	}
-
-	/// Implement SpatialComponent::getSpatialOrigin
-	Vec4 getSpatialOrigin()
-	{
-		return m_obb.getCenter();
-	}
 };
-
 /// @}
 
 } // end namespace anki

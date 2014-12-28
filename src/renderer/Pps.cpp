@@ -53,8 +53,8 @@ Error Pps::initInternal(const ConfigSet& config)
 	err = cmdBuff.create(&getGlDevice());
 	if(err) return err;
 
-	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8, 
-		GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
+	err = m_r->createRenderTarget(
+		m_r->getWidth(), m_r->getHeight(), GL_RGB8, 1, m_rt);
 	if(err) return err;
 
 	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});

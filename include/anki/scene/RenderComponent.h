@@ -229,6 +229,8 @@ public:
 
 	~RenderComponent();
 
+	ANKI_USE_RESULT Error create();
+
 	Variables::Iterator getVariablesBegin()
 	{
 		return m_vars.begin();
@@ -287,9 +289,6 @@ public:
 	{
 		return Type::RENDER;
 	}
-
-protected:
-	ANKI_USE_RESULT Error create();
 
 private:
 	SceneAllocator<U8> m_alloc;

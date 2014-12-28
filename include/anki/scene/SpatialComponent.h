@@ -45,15 +45,17 @@ class SpatialComponent: public SceneComponent,
 public:
 	using Flag = SpatialComponentFlag;
 
-	/// Pass the collision shape here so we can avoid the virtuals
-	/// @param node The scene node. Used only to steal it's allocators
-	/// @param flags A mask of SpatialFlag
-	SpatialComponent(SceneNode* node, Flag flags = Flag::NONE);
+	SpatialComponent(
+		SceneNode* node, 
+		const CollisionShape* shape, 
+		Flag flags = Flag::NONE);
 
-	// Remove from current OctreeNode
 	~SpatialComponent();
 
-	virtual const CollisionShape& getSpatialCollisionShape() = 0;
+	const CollisionShape& getSpatialCollisionShape() const
+	{
+		return *m_shape;
+	}
 
 	const Aabb& getAabb() const
 	{
@@ -76,7 +78,16 @@ public:
 
 	/// Used for sorting spatials. In most object the origin is the center of
 	/// mess but for cameras the origin is the eye point
-	virtual Vec4 getSpatialOrigin() = 0;
+	const Vec4& getSpatialOrigin() const
+	{
+		ANKI_ASSERT(m_origin.x() != MAX_F32);
+		return m_origin;
+	}
+
+	void setSpatialOrigin(const Vec4& origin)
+	{
+		m_origin = origin;
+	}
 
 	/// The derived class has to manually call this method when the collision 
 	/// shape got updated
@@ -85,23 +96,9 @@ public:
 		enableBits(Flag::MARKED_FOR_UPDATE);
 	}
 
-	/// Called when the component gets updated. It should be overriden, by 
-	/// default it does nothing.
-	virtual ANKI_USE_RESULT Error onSpatialComponentUpdate(
-		SceneNode& node, F32 prevTime, F32 crntTime)
-	{
-		return ErrorCode::NONE;
-	}
-
 	/// @name SceneComponent overrides
 	/// @{
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
-
-	ANKI_USE_RESULT Error onUpdate(
-		SceneNode& node, F32 prevTime, F32 crntTime) final
-	{
-		return onSpatialComponentUpdate(node, prevTime, crntTime);
-	}
 
 	/// Disable some flags
 	void reset() override;
@@ -113,9 +110,10 @@ public:
 	}
 
 private:
+	const CollisionShape* m_shape;
 	Aabb m_aabb; ///< A faster shape
+	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0);
 };
-
 /// @}
 
 } // end namespace anki

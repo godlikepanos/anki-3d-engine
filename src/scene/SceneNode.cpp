@@ -79,10 +79,18 @@ U32 SceneNode::getLastUpdateFrame() const
 }
 
 //==============================================================================
-Error SceneNode::addComponent(SceneComponent* comp)
+Error SceneNode::addComponent(SceneComponent* comp, Bool transferOwnership)
 {
 	ANKI_ASSERT(comp);
 	Error err = ErrorCode::NONE;
+
+#if ANKI_ASSERTIONS
+	err = iterateComponents([&](const SceneComponent& bcomp) -> Error
+	{
+		ANKI_ASSERT(comp != &bcomp);
+		return ErrorCode::NONE;
+	});
+#endif
 
 	if(m_components.getSize() < m_componentsCount + 1u)
 	{
@@ -95,6 +103,8 @@ Error SceneNode::addComponent(SceneComponent* comp)
 	if(!err)
 	{
 		m_components[m_componentsCount++] = comp;
+
+		comp->setAutomaticCleanup(transferOwnership);
 	}
 
 	return err;

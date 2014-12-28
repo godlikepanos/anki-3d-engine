@@ -94,9 +94,15 @@ public:
 	/// Bin lights on CPU path
 	Bool m_binLights = true;
 
+	// Cached values
+	const FrustumComponent* m_camFrustum = nullptr;
+	const MoveComponent* m_camMove = nullptr;
+
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
 		U ligthsCount = m_lightsEnd - m_lightsBegin;
+		m_camFrustum = &m_is->m_cam->getComponent<FrustumComponent>();
+		m_camMove = &m_is->m_cam->getComponent<MoveComponent>();
 
 		// Count job bounds
 		PtrSize start, end;
@@ -106,28 +112,28 @@ public:
 		for(U64 i = start; i < end; i++)
 		{
 			SceneNode* snode = (*(m_lightsBegin + i)).m_node;
-			Light* light = staticCastPtr<Light*>(snode);
+			MoveComponent& move = snode->getComponent<MoveComponent>();
+			LightComponent& light = snode->getComponent<LightComponent>();
+			SpatialComponent& sp = snode->getComponent<SpatialComponent>();
+			FrustumComponent* fr = snode->tryGetComponent<FrustumComponent>();
 
-			switch(light->getLightType())
+			switch(light.getLightType())
 			{
-			case Light::Type::POINT:
+			case LightComponent::LightType::POINT:
 				{
-					PointLight& l = 
-						*staticCastPtr<PointLight*>(light);
-					I pos = doLight(l);
+					I pos = doPointLight(light, move);
 					if(m_binLights && pos != -1)
 					{
-						binLight(l, pos);
+						binPointLight(sp, pos);
 					}
 				}
 				break;
-			case Light::Type::SPOT:
+			case LightComponent::LightType::SPOT:
 				{
-					SpotLight& l = *staticCastPtr<SpotLight*>(light);
-					I pos = doLight(l);
+					I pos = doSpotLight(light, move, fr);
 					if(m_binLights && pos != -1)
 					{
-						binLight(l, pos);
+						binSpotLight(light, sp, pos);
 					}
 				}
 				break;
@@ -141,7 +147,7 @@ public:
 	}
 
 	/// Copy CPU light to GPU buffer
-	I doLight(const PointLight& light)
+	I doPointLight(const LightComponent& light, const MoveComponent& move)
 	{
 		// Get GPU light
 		I i = m_pointLightsCount->fetch_add(1);
@@ -155,8 +161,8 @@ public:
 		const Camera* cam = m_is->m_cam;
 		ANKI_ASSERT(cam);
 	
-		Vec4 pos = 
-			cam->getViewMatrix() * light.getWorldTransform().getOrigin().xyz1();
+		Vec4 pos = m_camFrustum->getViewMatrix() 
+			* move.getWorldTransform().getOrigin().xyz1();
 
 		slight.m_posRadius = Vec4(pos.xyz(), -1.0 / light.getRadius());
 		slight.m_diffuseColorShadowmapId = light.getDiffuseColor();
@@ -166,9 +172,9 @@ public:
 	}
 
 	/// Copy CPU spot light to GPU buffer
-	I doLight(const SpotLight& light)
+	I doSpotLight(const LightComponent& light, const MoveComponent& move,
+		const FrustumComponent* fr)
 	{
-		const Camera* cam = m_is->m_cam;
 		Bool isTexLight = light.getShadowEnabled();
 		I i;
 		shader::SpotLight* baseslight = nullptr;
@@ -193,9 +199,10 @@ public:
 				0.0, 0.0, 0.5, 0.5, 
 				0.0, 0.0, 0.0, 1.0);
 			// bias * proj_l * view_l * world_c
-			slight.m_texProjectionMat = biasMat4 * light.getProjectionMatrix() 
-				* Mat4::combineTransformations(light.getViewMatrix(),
-				Mat4(cam->getWorldTransform()));
+			slight.m_texProjectionMat = 
+				biasMat4 
+				* fr->getViewProjectionMatrix() 
+				* Mat4(m_camMove->getWorldTransform());
 
 			// Transpose because of driver bug
 			slight.m_texProjectionMat.transpose();
@@ -219,7 +226,8 @@ public:
 
 		// Pos & dist
 		Vec4 pos = 
-			cam->getViewMatrix() * light.getWorldTransform().getOrigin().xyz1();
+			m_camFrustum->getViewMatrix() 
+			* move.getWorldTransform().getOrigin().xyz1();
 		baseslight->m_posRadius = Vec4(pos.xyz(), -1.0 / light.getDistance());
 
 		// Diff color and shadowmap ID now
@@ -230,8 +238,8 @@ public:
 		baseslight->m_specularColorTexId = light.getSpecularColor();
 
 		// Light dir
-		Vec3 lightDir = -light.getWorldTransform().getRotation().getZAxis();
-		lightDir = cam->getViewMatrix().getRotationPart() * lightDir;
+		Vec3 lightDir = -move.getWorldTransform().getRotation().getZAxis();
+		lightDir = m_camFrustum->getViewMatrix().getRotationPart() * lightDir;
 		baseslight->m_lightDir = Vec4(lightDir, 0.0);
 		
 		// Angles
@@ -242,14 +250,15 @@ public:
 			1.0);
 
 		// extend points
-		const PerspectiveFrustum& frustum = light.getFrustum();
+		const PerspectiveFrustum& frustum = 
+			static_cast<const PerspectiveFrustum&>(fr->getFrustum());
 
 		for(U i = 0; i < 4; i++)
 		{
-			Vec4 extendPoint = light.getWorldTransform().getOrigin() 
+			Vec4 extendPoint = move.getWorldTransform().getOrigin() 
 				+ frustum.getLineSegments()[i].getDirection();
 
-			extendPoint = cam->getViewMatrix() * extendPoint.xyz1();
+			extendPoint = m_camFrustum->getViewMatrix() * extendPoint.xyz1();
 			baseslight->m_extendPoints[i] = extendPoint;
 		}
 
@@ -257,11 +266,11 @@ public:
 	}
 
 	// Bin point light
-	void binLight(PointLight& light, U pos)
+	void binPointLight(SpatialComponent& sp, U pos)
 	{
 		// Do the tests
 		Tiler::Bitset bitset;
-		m_tiler->test(light.getSpatialCollisionShape(), true, &bitset);
+		m_tiler->test(sp.getSpatialCollisionShape(), true, &bitset);
 
 		// Bin to the correct tiles
 		PtrSize tilesCount = 
@@ -287,11 +296,14 @@ public:
 	}
 
 	// Bin spot light
-	void binLight(SpotLight& light, U pos)
+	void binSpotLight(
+		const LightComponent& light, 
+		const SpatialComponent& sp, 
+		U pos)
 	{
 		// Do the tests
 		Tiler::Bitset bitset;
-		m_tiler->test(light.getSpatialCollisionShape(), true, &bitset);
+		m_tiler->test(sp.getSpatialCollisionShape(), true, &bitset);
 
 		// Bin to the correct tiles
 		PtrSize tilesCount = 
@@ -483,8 +495,8 @@ Error Is::initInternal(const ConfigSet& config)
 	// Create framebuffer
 	//
 
-	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGB8,
-			GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
+	err = m_r->createRenderTarget(
+		m_r->getWidth(), m_r->getHeight(), GL_RGB8, 1, m_rt);
 	if(err) return err;
 
 	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
@@ -534,7 +546,8 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	Error err = ErrorCode::NONE;
 	Threadpool& threadPool = m_r->_getThreadpool();
 	m_cam = &m_r->getSceneGraph().getActiveCamera();
-	VisibilityTestResults& vi = m_cam->getVisibilityTestResults();
+	FrustumComponent& fr = m_cam->getComponent<FrustumComponent>();
+	VisibilityTestResults& vi = fr.getVisibilityTestResults();
 
 	//
 	// Quickly get the lights
@@ -542,25 +555,24 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	U visiblePointLightsCount = 0;
 	U visibleSpotLightsCount = 0;
 	U visibleSpotTexLightsCount = 0;
-	Array<Light*, Sm::MAX_SHADOW_CASTERS> shadowCasters;
+	Array<SceneNode*, Sm::MAX_SHADOW_CASTERS> shadowCasters;
 
 	auto it = vi.getLightsBegin();
 	auto lend = vi.getLightsEnd();
 	for(; it != lend; ++it)
 	{
-		Light* light = staticCastPtr<Light*>((*it).m_node);
-		switch(light->getLightType())
+		SceneNode* node = (*it).m_node;
+		LightComponent& light = node->getComponent<LightComponent>();
+		switch(light.getLightType())
 		{
-		case Light::Type::POINT:
+		case LightComponent::LightType::POINT:
 			++visiblePointLightsCount;
 			break;
-		case Light::Type::SPOT:
-			{
-				SpotLight* slight = staticCastPtr<SpotLight*>(light);
-				
-				if(slight->getShadowEnabled())
+		case LightComponent::LightType::SPOT:
+			{				
+				if(light.getShadowEnabled())
 				{
-					shadowCasters[visibleSpotTexLightsCount++] = slight;
+					shadowCasters[visibleSpotTexLightsCount++] = node;
 				}
 				else
 				{
@@ -838,8 +850,9 @@ Error Is::updateCommonBlock(GlCommandBufferHandle& cmdBuff)
 	Vec3 groundLightDir;
 	if(m_groundLightEnabled)
 	{
-		blk.m_groundLightDir = 
-			Vec4(-m_cam->getViewMatrix().getColumn(1).xyz(), 1.0);
+		const Mat4& viewMat = 
+			m_cam->getComponent<FrustumComponent>().getViewMatrix();
+		blk.m_groundLightDir = Vec4(-viewMat.getColumn(1).xyz(), 1.0);
 	}
 
 	m_commonBuff.write(cmdBuff, cbuff, 0, 0, cbuff.getSize());

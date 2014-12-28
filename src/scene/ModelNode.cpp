@@ -15,15 +15,55 @@
 namespace anki {
 
 //==============================================================================
+// ModelPatchRenderComponent                                                   =
+//==============================================================================
+
+/// Render component implementation.
+class ModelPatchRenderComponent: public RenderComponent
+{
+public:
+	ModelPatchNode* m_node;
+
+	ModelPatchRenderComponent(ModelPatchNode* node)
+	:	RenderComponent(node),
+		m_node(node)
+	{}
+
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) override
+	{
+		return m_node->buildRendering(data);
+	}
+
+	const Material& getMaterial() override
+	{
+		return m_node->m_modelPatch->getMaterial();
+	}
+
+	void getRenderWorldTransform(U index, Transform& trf) override
+	{
+		m_node->getRenderWorldTransform(index, trf);
+	}
+
+	Bool getHasWorldTransforms() override
+	{
+		return true;
+	}
+};
+
+//==============================================================================
 // ModelPatchNode                                                              =
 //==============================================================================
 
 //==============================================================================
 ModelPatchNode::ModelPatchNode(SceneGraph* scene)
-:	SceneNode(scene),
-	RenderComponent(this),
-	SpatialComponent(this)
+:	SceneNode(scene)
 {}
+
+//==============================================================================
+ModelPatchNode::~ModelPatchNode()
+{
+	m_spatials.destroy(getSceneAllocator());
+}
 
 //==============================================================================
 Error ModelPatchNode::create(const CString& name, 
@@ -31,31 +71,30 @@ Error ModelPatchNode::create(const CString& name,
 {
 	ANKI_ASSERT(modelPatch);
 	Error err = SceneNode::create(name);
+	if(err) return err;
 
 	m_modelPatch = modelPatch;
 
-	if(!err)
-	{
-		err = addComponent(static_cast<RenderComponent*>(this));
-	}
+	// Spatial component
+	SceneComponent* comp = getSceneAllocator().newInstance<SpatialComponent>(
+		this, &m_obb);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	if(!err)
-	{
-		err = addComponent(static_cast<SpatialComponent*>(this));
-	}
+	err = addComponent(comp, true);
+	if(err) return err;
 
-	if(!err)
-	{
-		err = RenderComponent::create();
-	}
+	// Render component
+	RenderComponent* rcomp = 
+		getSceneAllocator().newInstance<ModelPatchRenderComponent>(this);
+	comp = rcomp;
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+
+	err = addComponent(comp, true);
+	if(err) return err;
+
+	err = rcomp->create();
 
 	return err;
-}
-
-//==============================================================================
-ModelPatchNode::~ModelPatchNode()
-{
-	m_spatials.destroy(getSceneAllocator());
 }
 
 //==============================================================================
@@ -121,7 +160,6 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 		ModelNode* mnode = staticCastPtr<ModelNode*>(parent);
 
 		--index;
-		ANKI_ASSERT(index < mnode->m_transforms.getSize());
 		trf = mnode->m_transforms[index];
 	}
 }
@@ -184,11 +222,40 @@ Error ModelPatchNode::updateInstanceSpatials(
 				inst.getWorldTransform());
 
 			sp.markForUpdate();
+			sp.setSpatialOrigin(inst.getWorldTransform().getOrigin());
 		}
 	}
 
 	return err;
 }
+
+//==============================================================================
+// ModelNodeFeedbackComponent                                                  =
+//==============================================================================
+
+/// Feedback component.
+class ModelNodeFeedbackComponent: public SceneComponent
+{
+public:
+	ModelNodeFeedbackComponent(SceneNode* node)
+	:	SceneComponent(SceneComponent::Type::NONE, node)
+	{}
+
+	ANKI_USE_RESULT Error update(
+		SceneNode& node, F32, F32, Bool& updated)
+	{
+		updated = false;
+
+		MoveComponent& move = node.getComponent<MoveComponent>();
+		if(move.getTimestamp() == getGlobTimestamp())
+		{
+			ModelNode& mnode = static_cast<ModelNode&>(node);
+			mnode.onMoveComponentUpdate(move);
+		}
+
+		return ErrorCode::NONE;
+	}
+};
 
 //==============================================================================
 // ModelNode                                                                   =
@@ -197,7 +264,6 @@ Error ModelPatchNode::updateInstanceSpatials(
 //==============================================================================
 ModelNode::ModelNode(SceneGraph* scene)
 : 	SceneNode(scene),
-	MoveComponent(this),
 	m_transformsTimestamp(0)
 {}
 
@@ -206,11 +272,6 @@ ModelNode::~ModelNode()
 {
 	m_modelPatches.destroy(getSceneAllocator());
 	m_transforms.destroy(getSceneAllocator());
-
-	if(m_bodyComp)
-	{
-		getSceneAllocator().deleteInstance(m_bodyComp);
-	}
 
 	if(m_body)
 	{
@@ -224,41 +285,46 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 	Error err = ErrorCode::NONE;
 
 	err = SceneNode::create(name);
+	if(err) return err;
 
-	if(!err)
+	SceneComponent* comp;
+
+	err = m_model.load(modelFname, &getResourceManager());
+	if(err) return err;
+
+	err = m_modelPatches.create(
+		getSceneAllocator(), m_model->getModelPatches().getSize(), nullptr);
+	if(err) return err;
+
+	U count = 0;
+	auto it = m_model->getModelPatches().getBegin();
+	auto end = m_model->getModelPatches().getEnd();
+	for(; it != end; it++)
 	{
-		err = addComponent(static_cast<MoveComponent*>(this));
+		ModelPatchNode* mpn;
+		err = getSceneGraph().newSceneNode(CString(), mpn, *it);
+		if(err) return err;
+
+		m_modelPatches[count++] = mpn;
+		err = addChild(mpn);
+		if(err) return err;
 	}
 
-	if(!err)
-	{
-		err = m_model.load(modelFname, &getResourceManager());
-	}
+	// Move component
+	comp = getSceneAllocator().newInstance<MoveComponent>(this);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	if(!err)
-	{
-		err = m_modelPatches.create(
-			getSceneAllocator(), m_model->getModelPatches().getSize());
-	}
+	err = addComponent(comp);
+	if(err) return err;
+	comp->setAutomaticCleanup(true);
 
-	if(!err)
-	{
-		U count = 0;
-		auto it = m_model->getModelPatches().getBegin();
-		auto end = m_model->getModelPatches().getEnd();
-		for(; !err && it != end; it++)
-		{
-			ModelPatchNode* mpn;
-			err = getSceneGraph().newSceneNode(CString(), mpn, *it);
+	// Feedback component
+	comp = getSceneAllocator().newInstance<ModelNodeFeedbackComponent>(this);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-			if(!err)
-			{
-				m_modelPatches[count++] = mpn;
-
-				err = addChild(mpn);
-			}
-		}
-	}
+	err = addComponent(comp);
+	if(err) return err;
+	comp->setAutomaticCleanup(true);
 
 	// Load rigid body
 	const PhysicsCollisionShape* shape = m_model->getPhysicsCollisionShape();
@@ -270,23 +336,16 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 
 		m_body = 
 			getSceneGraph()._getPhysicsWorld().newBody<PhysicsBody>(init);
-		if(m_body == nullptr)
-		{
-			return ErrorCode::OUT_OF_MEMORY;
-		}
+		if(m_body == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-		m_bodyComp = 
+		BodyComponent* bodyComp = 
 			getSceneAllocator().newInstance<BodyComponent>(this, m_body);
-		if(m_bodyComp == nullptr)
-		{
-			return ErrorCode::OUT_OF_MEMORY;
-		}
+		if(bodyComp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-		err = addComponent(m_bodyComp);
-		if(err)
-		{
-			return err;
-		}
+		err = addComponent(bodyComp);
+		if(err) return err;
+
+		bodyComp->setAutomaticCleanup(true);
 	}
 
 	return err;
@@ -304,10 +363,7 @@ Error ModelNode::frameUpdate(F32, F32)
 	Timestamp instancesTimestamp = 0;
 
 	err = instanceMoves.create(64);
-	if(err)
-	{
-		return err;
-	}
+	if(err)	return err;
 
 	err = visitChildren([&](SceneNode& sn) -> Error
 	{
@@ -318,7 +374,7 @@ Error ModelNode::frameUpdate(F32, F32)
 			instanceMoves[instanceMovesCount++] = &move;
 
 			instancesTimestamp = 
-				std::max(instancesTimestamp, move.getTimestamp());
+				max(instancesTimestamp, move.getTimestamp());
 		}
 
 		return ErrorCode::NONE;
@@ -333,9 +389,10 @@ Error ModelNode::frameUpdate(F32, F32)
 		{
 			fullUpdate = true;
 			err = m_transforms.resize(getSceneAllocator(), instanceMovesCount);
+			if(err) return err;
 		}
 
-		if(!err && (fullUpdate || m_transformsTimestamp < instancesTimestamp))
+		if(fullUpdate || m_transformsTimestamp < instancesTimestamp)
 		{
 			m_transformsTimestamp = instancesTimestamp;
 
@@ -346,15 +403,13 @@ Error ModelNode::frameUpdate(F32, F32)
 		}
 
 		// Update children
-		if(!err)
+		auto it = m_modelPatches.getBegin();
+		auto end = m_modelPatches.getEnd();
+		for(; it != end; ++it)
 		{
-			auto it = m_modelPatches.getBegin();
-			auto end = m_modelPatches.getEnd();
-			for(; it != end && !err; ++it)
-			{
-				err = (*it)->updateInstanceSpatials(
-					&instanceMoves[0], instanceMovesCount);
-			}
+			err = (*it)->updateInstanceSpatials(
+				&instanceMoves[0], instanceMovesCount);
+			return err;
 		}
 	}
 
@@ -362,18 +417,18 @@ Error ModelNode::frameUpdate(F32, F32)
 }
 
 //==============================================================================
-Error ModelNode::onMoveComponentUpdate(SceneNode&, F32, F32)
+void ModelNode::onMoveComponentUpdate(MoveComponent& move)
 {
 	// Inform the children about the moves
 	for(ModelPatchNode* child : m_modelPatches)
 	{
 		child->m_obb = child->m_modelPatch->getBoundingShape().getTransformed(
-			getWorldTransform());
+			move.getWorldTransform());
 
-		child->SpatialComponent::markForUpdate();
+		SpatialComponent& sp = child->getComponent<SpatialComponent>();
+		sp.markForUpdate();
+		sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 	}
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

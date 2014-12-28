@@ -52,7 +52,7 @@ static Vec3 getRandom(const Vec3& initial, const Vec3& deviation)
 //==============================================================================
 
 //==============================================================================
-void ParticleBase::revive(const ParticleEmitter& pe,
+void ParticleBase::revive(const ParticleEmitter& pe, const Transform& trf,
 	F32 /*prevUpdateTime*/, F32 crntTime)
 {
 	ANKI_ASSERT(isDead());
@@ -87,10 +87,10 @@ void ParticleSimple::simulate(const ParticleEmitter& pe,
 }
 
 //==============================================================================
-void ParticleSimple::revive(const ParticleEmitter& pe,
+void ParticleSimple::revive(const ParticleEmitter& pe, const Transform& trf,
 	F32 prevUpdateTime, F32 crntTime)
 {
-	ParticleBase::revive(pe, prevUpdateTime, crntTime);
+	ParticleBase::revive(pe, trf, prevUpdateTime, crntTime);
 	m_velocity = Vec4(0.0);
 
 	const ParticleEmitterProperties& props = pe;
@@ -102,7 +102,7 @@ void ParticleSimple::revive(const ParticleEmitter& pe,
 	m_position = getRandom(props.m_particle.m_startingPos,
 		props.m_particle.m_startingPosDeviation).xyz0();
 
-	m_position += pe.getWorldTransform().getOrigin();
+	m_position += trf.getOrigin();
 }
 
 //==============================================================================
@@ -196,15 +196,75 @@ void Particle::revive(const ParticleEmitter& pe,
 #endif
 
 //==============================================================================
+// ParticleEmitterRenderComponent                                              =
+//==============================================================================
+
+/// The derived render component for particle emitters.
+class ParticleEmitterRenderComponent: public RenderComponent
+{
+public:
+	ParticleEmitter* m_node;
+
+	ParticleEmitterRenderComponent(ParticleEmitter* node)
+	:	RenderComponent(node),
+		m_node(node)
+	{}
+
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data) override
+	{
+		return m_node->buildRendering(data);
+	}
+
+	const Material& getMaterial() override
+	{
+		return m_node->m_particleEmitterResource->getMaterial();
+	}
+
+	void getRenderWorldTransform(U index, Transform& trf) override
+	{
+		m_node->getRenderWorldTransform(index, trf);
+	}
+
+	Bool getHasWorldTransforms() override
+	{
+		return true;
+	}
+};
+
+//==============================================================================
+// MoveFeedbackComponent                                                       =
+//==============================================================================
+
+/// Feedback component
+class MoveFeedbackComponent: public SceneComponent
+{
+public:
+	MoveFeedbackComponent(ParticleEmitter* node)
+	:	SceneComponent(SceneComponent::Type::NONE, node)
+	{}
+
+	ANKI_USE_RESULT Error update(
+		SceneNode& node, F32, F32, Bool& updated) override
+	{
+		updated = false;
+
+		MoveComponent& move = node.getComponent<MoveComponent>();
+		if(move.getTimestamp() == getGlobTimestamp())
+		{
+			static_cast<ParticleEmitter&>(node).onMoveComponentUpdate(move);
+		}
+
+		return ErrorCode::NONE;
+	}
+};
+
+//==============================================================================
 // ParticleEmitter                                                             =
 //==============================================================================
 
 //==============================================================================
 ParticleEmitter::ParticleEmitter(SceneGraph* scene)
-:	SceneNode(scene),
-	SpatialComponent(this),
-	MoveComponent(this),
-	RenderComponent(this)
+:	SceneNode(scene)
 {}
 
 //==============================================================================
@@ -228,80 +288,78 @@ Error ParticleEmitter::create(
 	const CString& name, const CString& filename)
 {
 	Error err = SceneNode::create(name);
+	SceneComponent* comp;
 
-	if(!err)
-	{
-		err = addComponent(static_cast<MoveComponent*>(this));
-	}
+	// Load resource
+	err = m_particleEmitterResource.load(filename, &getResourceManager());
+	if(err) return err;
 
-	if(!err)
-	{
-		err = addComponent(static_cast<SpatialComponent*>(this));
-	}
+	// Move component
+	comp = getSceneAllocator().newInstance<MoveComponent>(this);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	if(!err)
-	{
-		err = addComponent(static_cast<RenderComponent*>(this));
-	}
+	err = addComponent(comp);
+	if(err) return err;
+	comp->setAutomaticCleanup(true);
 
-	if(!err)
-	{
-		m_obb.setCenter(Vec4(0.0));
-		m_obb.setExtend(Vec4(1.0, 1.0, 1.0, 0.0));
-		m_obb.setRotation(Mat3x4::getIdentity());
+	// Spatial component
+	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_obb);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-		// Load resource
-		err = m_particleEmitterResource.load(filename, &getResourceManager());
-	}
+	err = addComponent(comp);
+	if(err) return err;
+	comp->setAutomaticCleanup(true);
+
+	// Render component
+	ParticleEmitterRenderComponent* rcomp = 
+		getSceneAllocator().newInstance<ParticleEmitterRenderComponent>(this);
+	if(rcomp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+
+	err = rcomp->create();
+	if(err) return err;
+
+	err = addComponent(comp);
+	if(err) return err;
+	comp->setAutomaticCleanup(true);
+
+	// Other
+	m_obb.setCenter(Vec4(0.0));
+	m_obb.setExtend(Vec4(1.0, 1.0, 1.0, 0.0));
+	m_obb.setRotation(Mat3x4::getIdentity());
 
 	// copy the resource to me
-	if(!err)
-	{
-		ParticleEmitterProperties& me = *this;
-		const ParticleEmitterProperties& other =
-			m_particleEmitterResource->getProperties();
-		me = other;
+	ParticleEmitterProperties& me = *this;
+	const ParticleEmitterProperties& other =
+		m_particleEmitterResource->getProperties();
+	me = other;
 
-		if(m_usePhysicsEngine)
-		{
-			err = createParticlesSimulation(&getSceneGraph());
-			m_simulationType = SimulationType::PHYSICS_ENGINE;
-		}
-		else
-		{
-			err = createParticlesSimpleSimulation();
-			m_simulationType = SimulationType::SIMPLE;
-		}
+	if(m_usePhysicsEngine)
+	{
+		err = createParticlesSimulation(&getSceneGraph());
+		m_simulationType = SimulationType::PHYSICS_ENGINE;
+	}
+	else
+	{
+		err = createParticlesSimpleSimulation();
+		m_simulationType = SimulationType::SIMPLE;
 	}
 
-	if(!err)
-	{
-		err = RenderComponent::create();
-	}
+	if(err) return err;
 
 	// Create the vertex buffer and object
-	//
 	GlCommandBufferHandle cmd;
-	if(!err)
-	{
-		GlDevice& gl = getSceneGraph()._getGlDevice();
-		err = cmd.create(&gl);
-	}
+	GlDevice& gl = getSceneGraph()._getGlDevice();
+	err = cmd.create(&gl);
+	if(err) return err;
 
-	if(!err)
-	{
-		PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
-		err = m_vertBuff.create(cmd, GL_ARRAY_BUFFER, buffSize, 
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	}
+	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
+	err = m_vertBuff.create(cmd, GL_ARRAY_BUFFER, buffSize, 
+		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	if(err) return err;
 
-	if(!err)
-	{
-		// TODO Optimize that to avoid serialization
-		cmd.finish();
-
-		m_vertBuffMapping = (U8*)m_vertBuff.getPersistentMappingAddress();
-	}
+	cmd.finish(); /// TODO Optimize serialization
+	m_vertBuffMapping = 
+		static_cast<U8*>(m_vertBuff.getPersistentMappingAddress());
 
 	return err;
 }
@@ -352,19 +410,10 @@ Error ParticleEmitter::buildRendering(RenderingBuildData& data)
 }
 
 //==============================================================================
-const Material& ParticleEmitter::getMaterial()
-{
-	return m_particleEmitterResource->getMaterial();
-}
-
-//==============================================================================
-Error ParticleEmitter::onMoveComponentUpdate(
-	SceneNode& node, F32 prevTime, F32 crntTime)
+void ParticleEmitter::onMoveComponentUpdate(MoveComponent& move)
 {
 	m_identityRotation =
-		getWorldTransform().getRotation() == Mat3x4::getIdentity();
-
-	return ErrorCode::NONE;
+		move.getWorldTransform().getRotation() == Mat3x4::getIdentity();
 }
 
 //==============================================================================
@@ -515,13 +564,16 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	{
 		m_obb = Obb(Vec4(0.0), Mat3x4::getIdentity(), Vec4(0.001));
 	}
-	SpatialComponent::markForUpdate();
+	
+	getComponent<SpatialComponent>().markForUpdate();
 
 	//
 	// Emit new particles
 	//
 	if(m_timeLeftForNextEmission <= 0.0)
 	{
+		MoveComponent& move = getComponent<MoveComponent>();
+
 		U particlesCount = 0; // How many particles I am allowed to emmit
 		for(ParticleBase* pp : m_particles)
 		{
@@ -532,7 +584,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 				continue;
 			}
 
-			p.revive(*this, prevUpdateTime, crntTime);
+			p.revive(*this, move.getWorldTransform(), prevUpdateTime, crntTime);
 
 			// do the rest
 			++particlesCount;
@@ -558,6 +610,7 @@ Error ParticleEmitter::doInstancingCalcs()
 {
 	Error err = ErrorCode::NONE;
 
+#if 0
 	//
 	// Gather the move components of the instances
 	//
@@ -567,10 +620,7 @@ Error ParticleEmitter::doInstancingCalcs()
 	Timestamp instancesTimestamp = 0;
 
 	err = instanceMoves.create(64);
-	if(err)
-	{
-		return err;
-	}
+	if(err)	return err;
 
 	err = SceneNode::visitChildren([&](SceneNode& sn) -> Error
 	{	
@@ -684,14 +734,9 @@ Error ParticleEmitter::doInstancingCalcs()
 			ANKI_ASSERT(count == m_transforms.getSize());
 		}
 	} // end if instancing
+#endif
 
 	return err;
-}
-
-//==============================================================================
-Bool ParticleEmitter::getHasWorldTransforms()
-{
-	return true;
 }
 
 //==============================================================================
@@ -712,7 +757,8 @@ void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf)
 
 		// The particle positions are already in word space. Move them back to
 		// local space
-		Transform invTrf = getWorldTransform().getInverse();
+		const MoveComponent& move = getComponent<MoveComponent>();
+		Transform invTrf = move.getWorldTransform().getInverse();
 		trf = m_transforms[index].combineTransformations(invTrf);
 	}
 }

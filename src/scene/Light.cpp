@@ -5,6 +5,9 @@
 
 #include "anki/scene/Light.h"
 #include "anki/scene/LensFlareComponent.h"
+#include "anki/scene/MoveComponent.h"
+#include "anki/scene/SpatialComponent.h"
+#include "anki/scene/FrustumComponent.h"
 
 namespace anki {
 
@@ -13,94 +16,129 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-LightComponent::LightComponent(Light* node)
-:	SceneComponent(Type::LIGHT, node)
-{}
+LightComponent::LightComponent(SceneNode* node, LightType type)
+:	SceneComponent(Type::LIGHT, node),
+	m_type(type)
+{
+	setInnerAngle(toRad(45.0));
+	setOuterAngle(toRad(30.0));
+	m_radius = 1.0;
+}
+
+//==============================================================================
+Error LightComponent::update(SceneNode&, F32, F32, Bool& updated)
+{
+	if(m_dirty)
+	{
+		updated = true;
+		m_dirty = false;
+	}
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+// LightFeedbackComponent                                                      =
+//==============================================================================
+
+/// Feedback component.
+class LightFeedbackComponent: public SceneComponent
+{
+public:
+	LightFeedbackComponent(SceneNode* node)
+	:	SceneComponent(SceneComponent::Type::NONE, node)
+	{}
+
+	Error update(SceneNode& node, F32, F32, Bool& updated) override
+	{
+		updated = false;
+		Light& lnode = static_cast<Light&>(node);
+
+		MoveComponent& move = node.getComponent<MoveComponent>();
+		if(move.getTimestamp() == getGlobTimestamp())
+		{
+			// Move updated
+			lnode.onMoveUpdate(move);
+		}
+
+		LightComponent& light = node.getComponent<LightComponent>();
+		if(light.getTimestamp() == getGlobTimestamp())
+		{
+			// Shape updated
+			lnode.onShapeUpdate(light);
+		}
+
+		return ErrorCode::NONE;
+	}
+};
 
 //==============================================================================
 // Light                                                                       =
 //==============================================================================
 
 //==============================================================================
-Light::Light(SceneGraph* scene, Type t)
-:	SceneNode(scene),
-	LightComponent(this),
-	MoveComponent(this),
-	SpatialComponent(this),
-	m_type(t)
+Light::Light(SceneGraph* scene)
+:	SceneNode(scene)
 {}
 
 //==============================================================================
-Error Light::create(const CString& name)
+Error Light::create(const CString& name, 
+	LightComponent::LightType type,
+	CollisionShape* shape)
 {
 	Error err = SceneNode::create(name);
-	
-	if(!err)
-	{
-		err = addComponent(static_cast<MoveComponent*>(this));
-	}
+	if(err) return err;
 
-	if(!err)
-	{
-		err = addComponent(static_cast<SpatialComponent*>(this));
-	}
+	SceneComponent* comp;
 
-	if(!err)
-	{
-		err = addComponent(static_cast<LightComponent*>(this));
-	}
+	// Move component
+	comp = getSceneAllocator().newInstance<MoveComponent>(this);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
+	comp->setAutomaticCleanup(true);
+
+	err = addComponent(comp);
+	if(err) return err;
+
+	// Light component
+	comp = getSceneAllocator().newInstance<LightComponent>(this, type);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
+	comp->setAutomaticCleanup(true);
+
+	err = addComponent(comp);
+	if(err) return err;
+
+	// Feedback component
+	comp = getSceneAllocator().newInstance<LightFeedbackComponent>(this);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
+	comp->setAutomaticCleanup(true);
+
+	err = addComponent(comp);
+	if(err) return err;
+
+	// Spatial component
+	comp = getSceneAllocator().newInstance<SpatialComponent>(this, shape);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
+	comp->setAutomaticCleanup(true);
+
+	err = addComponent(comp);
+	if(err) return err;
 
 	return err;
 }
 
 //==============================================================================
 Light::~Light()
-{
-	LensFlareComponent* flareComp = tryGetComponent<LensFlareComponent>();
-	if(flareComp)
-	{
-		getSceneAllocator().deleteInstance(flareComp);
-	}
-}
+{}
 
 //==============================================================================
-void Light::frustumUpdate()
+void Light::onMoveUpdateCommon(MoveComponent& move)
 {
 	// Update the frustums
 	Error err = iterateComponentsOfType<FrustumComponent>(
 		[&](FrustumComponent& fr) -> Error
 	{
-		fr.setProjectionMatrix(fr.getFrustum().calculateProjectionMatrix());
-		fr.setViewProjectionMatrix(
-			fr.getProjectionMatrix() * fr.getViewMatrix());
-
-		return ErrorCode::NONE;
-	});
-
-	(void)err;
-
-	// Mark the spatial for update
-	SpatialComponent& sp = getComponent<SpatialComponent>();
-	sp.markForUpdate();
-}
-
-//==============================================================================
-void Light::onMoveComponentUpdateCommon()
-{
-	MoveComponent& move = *this;
-
-	// Update the frustums
-	Error err = iterateComponentsOfType<FrustumComponent>(
-		[&](FrustumComponent& fr) -> Error
-	{
-		fr.setProjectionMatrix(fr.getFrustum().calculateProjectionMatrix());
-		fr.setViewMatrix(Mat4(move.getWorldTransform().getInverse()));
-		fr.setViewProjectionMatrix(
-			fr.getProjectionMatrix() * fr.getViewMatrix());
-
+		fr.markTransformForUpdate();
 		fr.getFrustum().resetTransform(move.getWorldTransform());
-
-		fr.markForUpdate();
 
 		return ErrorCode::NONE;
 	});
@@ -110,6 +148,7 @@ void Light::onMoveComponentUpdateCommon()
 	// Update the spatial
 	SpatialComponent& sp = getComponent<SpatialComponent>();
 	sp.markForUpdate();
+	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 
 	// Update the lens flare
 	LensFlareComponent* lf = tryGetComponent<LensFlareComponent>();
@@ -117,6 +156,24 @@ void Light::onMoveComponentUpdateCommon()
 	{
 		lf->setWorldPosition(move.getWorldTransform().getOrigin());
 	}
+}
+
+//==============================================================================
+void Light::onShapeUpdateCommon(LightComponent& light)
+{
+	// Update the frustums
+	Error err = iterateComponentsOfType<FrustumComponent>(
+		[&](FrustumComponent& fr) -> Error
+	{
+		fr.markShapeForUpdate();
+		return ErrorCode::NONE;
+	});
+
+	(void)err;
+
+	// Mark the spatial for update
+	SpatialComponent& sp = getComponent<SpatialComponent>();
+	sp.markForUpdate();
 }
 
 //==============================================================================
@@ -139,7 +196,12 @@ Error Light::loadLensFlare(const CString& filename)
 
 	if(!err)
 	{
-		err = addComponent(flareComp);	
+		err = addComponent(flareComp);
+	}
+
+	if(!err)
+	{
+		flareComp->setAutomaticCleanup(true);
 	}
 
 	// Clean up on any error
@@ -157,26 +219,33 @@ Error Light::loadLensFlare(const CString& filename)
 
 //==============================================================================
 PointLight::PointLight(SceneGraph* scene)
-:	Light(scene, Light::Type::POINT)
+:	Light(scene)
 {}
 
 //==============================================================================
 Error PointLight::create(const CString& name)
 {
-	return Light::create(name);
+	return Light::create(name, LightComponent::LightType::POINT, &m_sphereW);
 }
 
 //==============================================================================
-Error PointLight::onMoveComponentUpdate(SceneNode&, F32, F32)
+void PointLight::onMoveUpdate(MoveComponent& move)
 {
-	m_sphereW.setCenter(getWorldTransform().getOrigin());
-	onMoveComponentUpdateCommon();
-	return ErrorCode::NONE;
+	onMoveUpdateCommon(move);
+	m_sphereW.setCenter(move.getWorldTransform().getOrigin());
+}
+
+//==============================================================================
+void PointLight::onShapeUpdate(LightComponent& light)
+{
+	onShapeUpdateCommon(light);
+	m_sphereW.setRadius(light.getRadius());
 }
 
 //==============================================================================
 Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
+#if 0
 	if(getShadowEnabled() && m_shadowData == nullptr)
 	{
 		m_shadowData = getSceneAllocator().newInstance<ShadowData>(this);
@@ -204,6 +273,7 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		trfs[4].setRotation(Mat3x4(Mat3(Axisang(ang, axis))));
 		trfs[5].setRotation(Mat3x4(Mat3(Axisang(-ang, axis))));
 	}
+#endif
 
 	return ErrorCode::NONE;
 }
@@ -214,42 +284,40 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 //==============================================================================
 SpotLight::SpotLight(SceneGraph* scene)
-:	Light(scene, Light::Type::SPOT),
-	FrustumComponent(this, &m_frustum)
+:	Light(scene)
 {}
 
 //==============================================================================
 Error SpotLight::create(const CString& name)
 {
-	Error err = Light::create(name);
+	Error err = Light::create(
+		name, LightComponent::LightType::SPOT, &m_frustum);
+	if(err) return err;
 
-	if(!err)
-	{
-		err = addComponent(static_cast<FrustumComponent*>(this));
-	}
-
-	if(!err)
-	{
-		const F32 ang = toRad(45.0);
-		const F32 dist = 1.0;
-		m_frustum.setAll(ang, ang, 0.1, dist);
-	}
+	FrustumComponent* fr = 
+		getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);
+	if(fr == nullptr) return ErrorCode::OUT_OF_MEMORY;
+	
+	err = addComponent(fr);
+	if(err) return err;
 
 	return err;
 }
 
 //==============================================================================
-Error SpotLight::onMoveComponentUpdate(SceneNode&, F32, F32)
+void SpotLight::onMoveUpdate(MoveComponent& move)
 {
-	m_frustum.resetTransform(getWorldTransform());
-	onMoveComponentUpdateCommon();
-	return ErrorCode::NONE;
+	onMoveUpdateCommon(move);
+	m_frustum.resetTransform(move.getWorldTransform());
 }
 
 //==============================================================================
-Error SpotLight::loadTexture(const CString& filename)
+void SpotLight::onShapeUpdate(LightComponent& light)
 {
-	return m_tex.load(filename, &getResourceManager());
+	onShapeUpdateCommon(light);
+	m_frustum.setFovX(light.getOuterAngle());
+	m_frustum.setFovY(light.getOuterAngle());
+	m_frustum.setFar(light.getDistance());
 }
 
 } // end namespace anki

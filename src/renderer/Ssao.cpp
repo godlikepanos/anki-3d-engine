@@ -71,8 +71,7 @@ Error Ssao::createFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 {
 	Error err = ErrorCode::NONE;
 
-	err = m_r->createRenderTarget(m_width, m_height, GL_R8, GL_RED, 
-		GL_UNSIGNED_BYTE, 1, rt);
+	err = m_r->createRenderTarget(m_width, m_height, GL_R8, 1, rt);
 	if(err) return err;
 
 	// Set to bilinear because the blurring techniques take advantage of that
@@ -283,9 +282,11 @@ Error Ssao::run(GlCommandBufferHandle& cmdb)
 	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
 
 	// Write common block
+	const FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
+
 	if(m_commonUboUpdateTimestamp 
 			< m_r->getProjectionParametersUpdateTimestamp()
-		|| m_commonUboUpdateTimestamp < cam.FrustumComponent::getTimestamp()
+		|| m_commonUboUpdateTimestamp < camFr.getTimestamp()
 		|| m_commonUboUpdateTimestamp == 1)
 	{
 		GlClientBufferHandle tmpBuff;
@@ -298,7 +299,7 @@ Error Ssao::run(GlCommandBufferHandle& cmdb)
 
 		blk.m_projectionParams = m_r->getProjectionParameters();
 
-		blk.m_projectionMatrix = cam.getProjectionMatrix().getTransposed();
+		blk.m_projectionMatrix = camFr.getProjectionMatrix().getTransposed();
 
 		m_uniformsBuff.write(cmdb, tmpBuff, 0, 0, tmpBuff.getSize());
 		m_commonUboUpdateTimestamp = getGlobTimestamp();

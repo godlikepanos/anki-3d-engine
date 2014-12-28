@@ -16,30 +16,11 @@ namespace anki {
 /// @addtogroup scene
 /// @{
 
-/// Part of the static geometry. Used only for visibility tests
-class StaticGeometrySpatial: public SpatialComponent
-{
-public:
-	StaticGeometrySpatial(SceneNode* node, const Obb* obb);
-
-	const CollisionShape& getSpatialCollisionShape()
-	{
-		return *m_obb;
-	}
-
-	Vec4 getSpatialOrigin()
-	{
-		return m_obb->getCenter();
-	}
-
-private:
-	const Obb* m_obb;
-};
-
 /// Static geometry scene node patch
-class StaticGeometryPatchNode: public SceneNode, public SpatialComponent,
-	public RenderComponent
+class StaticGeometryPatchNode: public SceneNode
 {
+	friend class StaticGeometryRenderComponent;
+
 public:
 	StaticGeometryPatchNode(SceneGraph* scene);
 
@@ -48,32 +29,10 @@ public:
 	ANKI_USE_RESULT Error create(
 		const CString& name, const ModelPatchBase* modelPatch);
 
-	/// @name SpatialComponent virtuals
-	/// @{
-	const CollisionShape& getSpatialCollisionShape()
-	{
-		return *m_obb;
-	}
-
-	Vec4 getSpatialOrigin()
-	{
-		return m_obb->getCenter();
-	}
-	/// @}
-
-	/// @name RenderComponent virtuals
-	/// @{
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
-
-	const Material& getMaterial()
-	{
-		return m_modelPatch->getMaterial();
-	}
-	/// @}
-
 private:
 	const ModelPatchBase* m_modelPatch;
-	const Obb* m_obb; 
+
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
 };
 
 /// Static geometry scene node
@@ -90,7 +49,6 @@ public:
 private:
 	ModelResourcePointer m_model;
 };
-
 /// @}
 
 } // end namespace anki

@@ -14,16 +14,17 @@ Error LightEvent::create(EventManager* manager, F32 startTime, F32 duration,
 {
 	Error err = Event::create(manager, startTime, duration, light);
 	if(err) return err;
+	
+	LightComponent& lightc = light->getComponent<LightComponent>();
 
-	switch(light->getLightType())
+	switch(lightc.getLightType())
 	{
-	case Light::Type::POINT:
+	case LightComponent::LightType::POINT:
 		{
-			PointLight* plight = static_cast<PointLight*>(light);
-			m_originalRadius = plight->getRadius();
+			m_originalRadius = lightc.getRadius();
 		}
 		break;
-	case Light::Type::SPOT:
+	case LightComponent::LightType::SPOT:
 		ANKI_ASSERT("TODO");
 		break;
 	default:
@@ -31,8 +32,8 @@ Error LightEvent::create(EventManager* manager, F32 startTime, F32 duration,
 		break;
 	}
 
-	m_originalDiffColor = light->getDiffuseColor();
-	m_originalSpecColor = light->getSpecularColor();
+	m_originalDiffColor = lightc.getDiffuseColor();
+	m_originalSpecColor = lightc.getSpecularColor();
 
 	return err;
 }
@@ -41,18 +42,17 @@ Error LightEvent::create(EventManager* manager, F32 startTime, F32 duration,
 Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 {
 	F32 factor = sin(getDelta(crntTime) * getPi<F32>());
-	Light* light = static_cast<Light*>(getSceneNode());
+	LightComponent& lightc = getSceneNode()->getComponent<LightComponent>();
 
-	switch(light->getLightType())
+	switch(lightc.getLightType())
 	{
-	case Light::Type::POINT:
+	case LightComponent::LightType::POINT:
 		{
-			PointLight* plight = static_cast<PointLight*>(light);
-			plight->setRadius(
+			lightc.setRadius(
 				factor * m_radiusMultiplier + m_originalRadius);
 		}
 		break;
-	case Light::Type::SPOT:
+	case LightComponent::LightType::SPOT:
 		ANKI_ASSERT("TODO");
 		break;
 	default:
@@ -60,9 +60,9 @@ Error LightEvent::update(F32 prevUpdateTime, F32 crntTime)
 		break;
 	}
 
-	light->setDiffuseColor(
+	lightc.setDiffuseColor(
 		m_originalDiffColor + factor * m_intensityMultiplier);
-	light->setSpecularColor(
+	lightc.setSpecularColor(
 		m_originalSpecColor + factor * m_specularIntensityMultiplier);
 
 	return ErrorCode::NONE;

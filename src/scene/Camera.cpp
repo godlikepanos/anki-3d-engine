@@ -8,38 +8,89 @@
 namespace anki {
 
 //==============================================================================
+// FeedbackComponent                                                           =
+//==============================================================================
+
+/// Feedback component.
+class FeedbackComponent: public SceneComponent
+{
+public:
+	FeedbackComponent(Camera* node)
+	:	SceneComponent(SceneComponent::Type::NONE, node)
+	{}
+
+	ANKI_USE_RESULT Error update(
+		SceneNode& node, F32, F32, Bool& updated)
+	{
+		updated = false;
+
+		MoveComponent& move = node.getComponent<MoveComponent>();
+		if(move.getTimestamp() == getGlobTimestamp())
+		{
+			Camera& cam = static_cast<Camera&>(node);
+			cam.onMoveComponentUpdate(move);
+		}
+
+		FrustumComponent& fr = node.getComponent<FrustumComponent>();
+		if(fr.getTimestamp() == getGlobTimestamp())
+		{
+			Camera& cam = static_cast<Camera&>(node);
+			cam.onFrustumComponentUpdate(fr);
+		}
+
+		return ErrorCode::NONE;
+	}
+};
+
+//==============================================================================
 // Camera                                                                      =
 //==============================================================================
 
 //==============================================================================
-Camera::Camera(SceneGraph* scene, Type type, Frustum* frustum) 
-:	SceneNode(scene), 
-	MoveComponent(this),
-	FrustumComponent(this, frustum),
-	SpatialComponent(this),
+Camera::Camera(SceneGraph* scene, Type type) 
+:	SceneNode(scene),
 	m_type(type)
 {}
 
 //==============================================================================
-Error Camera::create(const CString& name) 
+Error Camera::create(const CString& name, Frustum* frustum) 
 {
 	Error err = SceneNode::create(name);
+	if(err) return err;
 
-	// Init components
-	if(!err)
-	{
-		err = addComponent(static_cast<MoveComponent*>(this));
-	}
+	SceneComponent* comp;
 
-	if(!err)
-	{
-		err = addComponent(static_cast<FrustumComponent*>(this));
-	}
+	// Move component
+	comp = getSceneAllocator().newInstance<MoveComponent>(this);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	if(!err)
-	{
-		err = addComponent(static_cast<SpatialComponent*>(this));
-	}
+	err = addComponent(comp);
+	if(err) return err;
+	comp->setAutomaticCleanup(true);
+
+	// Frustum component
+	comp = getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+
+	err = addComponent(comp);
+	if(err) return err;
+	comp->setAutomaticCleanup(true);
+
+	// Feedback component
+	comp = getSceneAllocator().newInstance<FeedbackComponent>(this);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+
+	err = addComponent(comp);
+	if(err) return err;
+	comp->setAutomaticCleanup(true);
+
+	// Spatial component
+	comp = getSceneAllocator().newInstance<SpatialComponent>(this, frustum);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+
+	err = addComponent(comp);
+	if(err) return err;
+	comp->setAutomaticCleanup(true);
 
 	return err;
 }
@@ -51,7 +102,7 @@ Camera::~Camera()
 //==============================================================================
 void Camera::lookAtPoint(const Vec3& point)
 {
-	MoveComponent& move = *this;
+	MoveComponent& move = getComponent<MoveComponent>();
 
 	Vec4 j = Vec4(0.0, 1.0, 0.0, 0.0);
 	Vec4 vdir = 
@@ -65,33 +116,25 @@ void Camera::lookAtPoint(const Vec3& point)
 }
 
 //==============================================================================
-void Camera::frustumUpdate()
+void Camera::onFrustumComponentUpdate(FrustumComponent& fr)
 {
-	// Frustum (it's marked for update)
-	FrustumComponent& fr = *this;
-	fr.setProjectionMatrix(fr.getFrustum().calculateProjectionMatrix());
-	fr.setViewProjectionMatrix(fr.getProjectionMatrix() * fr.getViewMatrix());
-
 	// Spatial
-	SpatialComponent& sp = *this;
+	SpatialComponent& sp = getComponent<SpatialComponent>();
 	sp.markForUpdate();
 }
 
 //==============================================================================
-Error Camera::onMoveComponentUpdate(SceneNode&, F32, F32)
+void Camera::onMoveComponentUpdate(MoveComponent& move)
 {
 	// Frustum
-	FrustumComponent& fr = *this;
-
-	fr.setViewMatrix(Mat4(getWorldTransform().getInverse()));
-	fr.setViewProjectionMatrix(fr.getProjectionMatrix() * fr.getViewMatrix());
-	fr.getFrustum().resetTransform(getWorldTransform());
+	FrustumComponent& fr = getComponent<FrustumComponent>();
+	fr.markTransformForUpdate();
+	fr.getFrustum().resetTransform(move.getWorldTransform());
 
 	// Spatial
-	SpatialComponent& sp = *this;
+	SpatialComponent& sp = getComponent<SpatialComponent>();
 	sp.markForUpdate();
-
-	return ErrorCode::NONE;
+	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
 }
 
 //==============================================================================
@@ -100,8 +143,19 @@ Error Camera::onMoveComponentUpdate(SceneNode&, F32, F32)
 
 //==============================================================================
 PerspectiveCamera::PerspectiveCamera(SceneGraph* scene)
-:	Camera(scene, Type::PERSPECTIVE, &m_frustum)
+:	Camera(scene, Type::PERSPECTIVE)
 {}
+
+//==============================================================================
+PerspectiveCamera::~PerspectiveCamera()
+{}
+
+//==============================================================================
+void PerspectiveCamera::setAll(F32 fovX, F32 fovY, F32 near, F32 far)
+{
+	m_frustum.setAll(fovX, fovY, near, far);
+	getComponent<FrustumComponent>().markShapeForUpdate();
+}
 
 //==============================================================================
 // OrthographicCamera                                                          =
@@ -109,7 +163,11 @@ PerspectiveCamera::PerspectiveCamera(SceneGraph* scene)
 
 //==============================================================================
 OrthographicCamera::OrthographicCamera(SceneGraph* scene)
-:	Camera(scene, Type::ORTHOGRAPHIC, &m_frustum)
+:	Camera(scene, Type::ORTHOGRAPHIC)
+{}
+
+//==============================================================================
+OrthographicCamera::~OrthographicCamera()
 {}
 
 } // end namespace anki

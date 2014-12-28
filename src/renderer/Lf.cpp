@@ -183,8 +183,7 @@ Error Lf::initInternal(const ConfigSet& config)
 
 	// Create the render target
 	err = m_r->createRenderTarget(m_r->getPps().getHdr()._getWidth(), 
-		m_r->getPps().getHdr()._getHeight(), 
-		GL_RGB8, GL_RGB, GL_UNSIGNED_BYTE, 1, m_rt);
+		m_r->getPps().getHdr()._getHeight(), GL_RGB8, 1, m_rt);
 	if(err) return err;
 
 	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
@@ -212,7 +211,8 @@ Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
 	// Retrieve some things
 	SceneGraph& scene = m_r->getSceneGraph();
 	Camera& cam = scene.getActiveCamera();
-	VisibilityTestResults& vi = cam.getVisibilityTestResults();
+	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
+	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
 	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);
 	if(totalCount > 0)
@@ -229,7 +229,7 @@ Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
 		if(err) return err;
 		Mat4* mvpWrite = static_cast<Mat4*>(mvpCBuff.getBaseAddress());
 		ANKI_ASSERT(mvpWrite);
-		*mvpWrite = cam.getViewProjectionMatrix().getTransposed();
+		*mvpWrite = camFr.getViewProjectionMatrix().getTransposed();
 		m_mvpBuff.write(cmdb, mvpCBuff, 0, 0, sizeof(Mat4));
 		m_mvpBuff.bindShaderBuffer(cmdb, 0, sizeof(Mat4), 0);
 
@@ -305,7 +305,8 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 	// Retrieve some things
 	SceneGraph& scene = m_r->getSceneGraph();
 	Camera& cam = scene.getActiveCamera();
-	VisibilityTestResults& vi = cam.getVisibilityTestResults();
+	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
+	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
 	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);
 	if(totalCount > 0)
@@ -343,7 +344,7 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 
 			// Compute position
 			Vec4 lfPos = Vec4(lf.getWorldPosition().xyz(), 1.0);
-			Vec4 posClip = cam.getViewProjectionMatrix() * lfPos;
+			Vec4 posClip = camFr.getViewProjectionMatrix() * lfPos;
 
 			if(posClip.x() > posClip.w() || posClip.x() < -posClip.w()
 				|| posClip.y() > posClip.w() || posClip.y() < -posClip.w())

@@ -25,10 +25,10 @@ class PhysicsBody;
 /// @{
 
 /// A fragment of the ModelNode
-class ModelPatchNode: public SceneNode, 
-	public RenderComponent, public SpatialComponent
+class ModelPatchNode: public SceneNode
 {
 	friend class ModelNode;
+	friend class ModelPatchRenderComponent;
 
 public:
 	ModelPatchNode(SceneGraph* scene);
@@ -38,39 +38,6 @@ public:
 	ANKI_USE_RESULT Error create(
 		const CString& name, const ModelPatchBase* modelPatch);
 
-	/// @name RenderComponent virtuals
-	/// @{
-
-	/// Implements RenderComponent::buildRendering
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
-
-	/// Implements  RenderComponent::getMaterial
-	const Material& getMaterial()
-	{
-		return m_modelPatch->getMaterial();
-	}
-
-	/// Overrides RenderComponent::getRenderComponentWorldTransform
-	void getRenderWorldTransform(U index, Transform& trf) override;
-
-	Bool getHasWorldTransforms() override
-	{
-		return true;
-	}
-	/// @}
-
-	/// Implement SpatialComponent::getSpatialCollisionShape
-	const CollisionShape& getSpatialCollisionShape()
-	{
-		return m_obb;
-	}
-
-	/// Implement SpatialComponent::getSpatialOrigin
-	Vec4 getSpatialOrigin()
-	{
-		return m_obb.getCenter();
-	}
-
 private:
 	Obb m_obb; ///< In world space
 	const ModelPatchBase* m_modelPatch; ///< The resource
@@ -79,17 +46,22 @@ private:
 	ANKI_USE_RESULT Error updateInstanceSpatials(
 		const MoveComponent* instanceMoves[], 
 		U32 instanceMovesCount);
+
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
+
+	void getRenderWorldTransform(U index, Transform& trf);
 };
 
 /// The model scene node
-class ModelNode: public SceneNode, public MoveComponent
+class ModelNode: public SceneNode
 {
 	friend class ModelPatchNode;
+	friend class ModelNodeFeedbackComponent;
 
 public:
 	ModelNode(SceneGraph* scene);
 
-	virtual ~ModelNode();
+	~ModelNode();
 
 	ANKI_USE_RESULT Error create(
 		const CString& name, const CString& modelFname);
@@ -102,10 +74,6 @@ public:
 	/// Override SceneNode::frameUpdate
 	ANKI_USE_RESULT Error frameUpdate(F32, F32) override;
 
-	/// Override MoveComponent::onMoveComponentUpdate
-	ANKI_USE_RESULT Error onMoveComponentUpdate(
-		SceneNode& node, F32 prevTime, F32 crntTime) override;
-
 private:
 	ModelResourcePointer m_model; ///< The resource
 	SceneDArray<ModelPatchNode*> m_modelPatches;
@@ -113,8 +81,9 @@ private:
 	Timestamp m_transformsTimestamp;
 	PhysicsBody* m_body = nullptr;
 	BodyComponent* m_bodyComp = nullptr;
-};
 
+	void onMoveComponentUpdate(MoveComponent& move);
+};
 /// @}
 
 } // end namespace anki

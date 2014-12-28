@@ -33,9 +33,10 @@ Error Bs::run(GlCommandBufferHandle& cmdb)
 	drawer.prepareDraw(RenderingStage::BLEND, Pass::COLOR, cmdb);
 
 	Camera& cam = m_r->getSceneGraph().getActiveCamera();
+	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
 
-	auto it = cam.getVisibilityTestResults().getRenderablesBegin();
-	auto end = cam.getVisibilityTestResults().getRenderablesEnd();
+	auto it = camFr.getVisibilityTestResults().getRenderablesBegin();
+	auto end = camFr.getVisibilityTestResults().getRenderablesEnd();
 	for(; !err && it != end; ++it)
 	{
 		err = drawer.render(cam, *it);

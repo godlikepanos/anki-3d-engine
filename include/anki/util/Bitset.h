@@ -13,12 +13,12 @@ namespace anki {
 /// @addtogroup util_containers
 /// @{
 
-/// Easy bit manipulation
+/// Easy bit manipulation.
 template<typename T>
 class Bitset
 {
 public:
-	typedef T Value;
+	using Value = T;
 
 	Bitset()
 	:	m_bitmask(static_cast<Value>(0))
@@ -37,7 +37,7 @@ public:
 
 	void enableBits(Value mask, Bool enable)
 	{
-		m_bitmask = (enable) ? m_bitmask | mask : m_bitmask & ~mask;
+		m_bitmask = (enable) ? (m_bitmask | mask) : (m_bitmask & ~mask);
 	}
 
 	void disableBits(Value mask)
@@ -64,7 +64,6 @@ public:
 protected:
 	Value m_bitmask;
 };
-
 /// @}
 
 } // end namespace anki

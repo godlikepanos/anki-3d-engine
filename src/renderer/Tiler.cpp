@@ -28,6 +28,7 @@ public:
 	Tiler* m_tiler = nullptr;
 	PerspectiveCamera* m_cam = nullptr;
 	Bool m_frustumChanged;
+	const PerspectiveFrustum* m_frustum = nullptr; ///< Cached value
 #if ANKI_TILER_ENABLE_GPU
 	const PixelArray* m_pixels = nullptr;
 #endif
@@ -39,15 +40,19 @@ public:
 #endif
 
 		PtrSize start, end;
-		Transform trf = Transform(m_cam->getWorldTransform());
+		const MoveComponent& move = m_cam->getComponent<MoveComponent>();
+		const FrustumComponent& fr = m_cam->getComponent<FrustumComponent>();
+		m_frustum = &static_cast<const PerspectiveFrustum&>(fr.getFrustum());
+
+		Transform trf = Transform(move.getWorldTransform());
 
 		if(m_frustumChanged)
 		{
 			// Re-calculate the planes in local space
 
-			const F32 fx = m_cam->getFovX();
-			const F32 fy = m_cam->getFovY();
-			const F32 n = m_cam->getNear();
+			const F32 fx = m_frustum->getFovX();
+			const F32 fy = m_frustum->getFovY();
+			const F32 n = m_frustum->getNear();
 
 			// Calculate l6 and o6 used to rotate the planes
 			F32 l = 2.0 * n * tan(fx / 2.0);
@@ -161,7 +166,7 @@ public:
 	void calcPlaneI(U i, const F32 o6)
 	{
 		Vec4 a, b;
-		const F32 n = m_cam->getNear();
+		const F32 n = m_frustum->getNear();
 		Plane& plane = m_tiler->m_planesY[i];
 		CHECK_PLANE_PTR(&plane);
 
@@ -180,7 +185,7 @@ public:
 	void calcPlaneJ(U j, const F32 l6)
 	{
 		Vec4 a, b;
-		const F32 n = m_cam->getNear();
+		const F32 n = m_frustum->getNear();
 		Plane& plane = m_tiler->m_planesX[j];
 		CHECK_PLANE_PTR(&plane);
 
@@ -255,8 +260,7 @@ Error Tiler::initInternal()
 
 	// Create FB
 	err = m_r->createRenderTarget(
-		m_r->getTilesCount().x(), m_r->getTilesCount().y(),
-		GL_RG32UI, GL_RG_INTEGER, GL_UNSIGNED_INT, 1, m_rt);
+		m_r->getTilesCount().x(), m_r->getTilesCount().y(), GL_RG32UI, 1, m_rt);
 	if(err) return err;
 
 	GlCommandBufferHandle cmdBuff;
@@ -341,7 +345,8 @@ void Tiler::updateTiles(Camera& cam)
 	// Issue parallel jobs
 	//
 	Array<UpdatePlanesPerspectiveCameraTask, Threadpool::MAX_THREADS> jobs;
-	U32 camTimestamp = cam.FrustumComponent::getTimestamp();
+	const FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
+	U32 camTimestamp = camFr.getTimestamp();
 
 	// Do a job that transforms only the planes when:
 	// - it is the same camera as before and

@@ -74,7 +74,7 @@ public:
 	}
 
 	/// Revive the particle
-	virtual void revive(const ParticleEmitter& pe,
+	virtual void revive(const ParticleEmitter& pe, const Transform& trf,
 		F32 prevUpdateTime, F32 crntTime);
 
 	/// Only relevant for non-bullet simulations
@@ -102,7 +102,7 @@ public:
 	ParticleSimple()
 	{}
 
-	void revive(const ParticleEmitter& pe,
+	void revive(const ParticleEmitter& pe, const Transform& trf,
 		F32 prevUpdateTime, F32 crntTime) override;
 
 	void simulate(const ParticleEmitter& pe, F32 prevUpdateTime, 
@@ -147,13 +147,13 @@ private:
 #endif
 
 /// The particle emitter scene node. This scene node emitts
-class ParticleEmitter: public SceneNode, public SpatialComponent, 
-	public MoveComponent, public RenderComponent, 
-	private ParticleEmitterProperties
+class ParticleEmitter: public SceneNode, private ParticleEmitterProperties
 {
 	friend class ParticleBase;
 	friend class Particle;
 	friend class ParticleSimple;
+	friend class ParticleEmitterRenderComponent;
+	friend class MoveFeedbackComponent;
 
 public:
 	ParticleEmitter(SceneGraph* scene);
@@ -167,36 +167,6 @@ public:
 	/// @{
 	ANKI_USE_RESULT Error frameUpdate(
 		F32 prevUpdateTime, F32 crntTime) override;
-	/// @}
-
-	/// @name MoveComponent virtuals
-	/// @{
-	ANKI_USE_RESULT Error onMoveComponentUpdate(
-		SceneNode& node, F32 prevTime, F32 crntTime) override;
-	/// @}
-
-	/// @name SpatialComponent virtuals
-	/// @{
-	const CollisionShape& getSpatialCollisionShape()
-	{
-		return m_obb;
-	}
-
-	Vec4 getSpatialOrigin()
-	{
-		return m_obb.getCenter();
-	}
-	/// @}
-
-	/// @name RenderComponent virtuals
-	/// @{
-	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
-
-	const Material& getMaterial();
-
-	void getRenderWorldTransform(U index, Transform& trf) override;
-
-	Bool getHasWorldTransforms() override;
 	/// @}
 
 private:
@@ -229,8 +199,12 @@ private:
 	ANKI_USE_RESULT Error createParticlesSimpleSimulation();
 
 	ANKI_USE_RESULT Error doInstancingCalcs();
-};
 
+	ANKI_USE_RESULT Error buildRendering(RenderingBuildData& data);
+	void getRenderWorldTransform(U index, Transform& trf);
+
+	void onMoveComponentUpdate(MoveComponent& move);
+};
 /// @}
 
 } // end namespace anki

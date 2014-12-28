@@ -9,6 +9,7 @@
 #include "anki/scene/Common.h"
 #include "anki/core/Timestamp.h"
 #include "anki/util/Functions.h"
+#include "anki/util/Bitset.h"
 
 namespace anki {
 
@@ -78,11 +79,27 @@ public:
 		return *out;
 	}
 
+	void setAutomaticCleanup(Bool enable)
+	{
+		m_flags.enableBits(AUTOMATIC_CLEANUP, enable);	
+	}
+
+	Bool getAutomaticCleanup() const
+	{
+		return m_flags.bitsEnabled(AUTOMATIC_CLEANUP);
+	}
+
 protected:
 	Timestamp m_timestamp; ///< Indicates when an update happened
 
 private:
+	enum Flags
+	{
+		AUTOMATIC_CLEANUP = 1 << 0
+	};
+
 	Type m_type;
+	Bitset<U8> m_flags;
 };
 
 } // end namespace anki

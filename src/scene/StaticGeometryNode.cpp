@@ -9,15 +9,30 @@
 namespace anki {
 
 //==============================================================================
-// StaticGeometrySpatial                                                       =
+// StaticGeometryRenderComponent                                               =
 //==============================================================================
 
-//==============================================================================
-StaticGeometrySpatial::StaticGeometrySpatial(
-	SceneNode* node, const Obb* obb)
-:	SpatialComponent(node), 
-	m_obb(obb)
-{}
+/// The implementation of static geometry node renderable component.
+class StaticGeometryRenderComponent: public RenderComponent
+{
+public:
+	StaticGeometryPatchNode* m_node;
+
+	StaticGeometryRenderComponent(StaticGeometryPatchNode* node)
+	:	RenderComponent(node),
+		m_node(node)
+	{}
+
+	Error buildRendering(RenderingBuildData& data) override
+	{
+		return m_node->buildRendering(data);
+	}
+
+	const Material& getMaterial()
+	{
+		return m_node->m_modelPatch->getMaterial();
+	}
+};
 
 //==============================================================================
 // StaticGeometryPatchNode                                                     =
@@ -25,9 +40,7 @@ StaticGeometrySpatial::StaticGeometrySpatial(
 
 //==============================================================================
 StaticGeometryPatchNode::StaticGeometryPatchNode(SceneGraph* scene)
-:	SceneNode(scene),
-	SpatialComponent(this),
-	RenderComponent(this)
+:	SceneNode(scene)
 {}
 
 //==============================================================================
@@ -40,76 +53,40 @@ Error StaticGeometryPatchNode::create(
 	m_modelPatch = modelPatch;
 
 	err = SceneNode::create(name);
+	if(err) return err;
+
+	// Create spatial components
+	for(U i = 1; i < m_modelPatch->getSubMeshesCount() && !err; i++)
+	{
+		SpatialComponent* spatial =
+			getSceneAllocator().newInstance<SpatialComponent>(
+			this, &m_modelPatch->getBoundingShapeSub(i));
+
+		if(spatial == nullptr) return ErrorCode::OUT_OF_MEMORY;
+
+
+		err = addComponent(spatial);
+		if(err) return err;
+
+		spatial->setSpatialOrigin(
+			m_modelPatch->getBoundingShapeSub(i).getCenter());
+		spatial->setAutomaticCleanup(true);
+	}
+
+	// Create render component
+	RenderComponent* rcomp = 
+		getSceneAllocator().newInstance<StaticGeometryRenderComponent>(this);
+	if(rcomp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 	
-	if(!err)
-	{
-		err = addComponent(static_cast<SpatialComponent*>(this));
-	}
-
-	if(!err)
-	{
-		err = addComponent(static_cast<RenderComponent*>(this));
-	}
-
-	if(!err)
-	{	
-		err = RenderComponent::create();
-	}
-
-	if(!err)
-	{
-		// Check if multimesh
-		if(m_modelPatch->getSubMeshesCount() > 1)
-		{
-			// If multimesh create additional spatial components
-
-			m_obb = &m_modelPatch->getBoundingShapeSub(0);
-
-			for(U i = 1; i < m_modelPatch->getSubMeshesCount() && !err; i++)
-			{
-				StaticGeometrySpatial* spatial =
-					getSceneAllocator().newInstance<StaticGeometrySpatial>(
-					this, &m_modelPatch->getBoundingShapeSub(i));
-
-				if(spatial)
-				{
-					err = addComponent(static_cast<SpatialComponent*>(spatial));
-				}
-				else
-				{
-					err = ErrorCode::OUT_OF_MEMORY;
-				}
-			}
-		}
-		else
-		{
-			// If not multimesh then set the current spatial component
-
-			m_obb = &modelPatch->getBoundingShape();
-		}
-	}
+	err = addComponent(rcomp);
+	if(err) return err;
 
 	return err;
 }
 
 //==============================================================================
 StaticGeometryPatchNode::~StaticGeometryPatchNode()
-{
-	U i = 0;
-	Error err = iterateComponentsOfType<SpatialComponent>([&](
-		SpatialComponent& spatial)
-	{
-		if(i != 0)
-		{
-			getSceneAllocator().deleteInstance(&spatial);
-		}
-		++i;
-
-		return ErrorCode::NONE;
-	});
-
-	(void)err;
-}
+{}
 
 //==============================================================================
 Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
@@ -163,8 +140,7 @@ Error StaticGeometryPatchNode::buildRendering(RenderingBuildData& data)
 //==============================================================================
 StaticGeometryNode::StaticGeometryNode(SceneGraph* scene)
 :	SceneNode(scene)
-{
-}
+{}
 
 //==============================================================================
 Error StaticGeometryNode::create(const CString& name, const CString& filename)

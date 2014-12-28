@@ -111,7 +111,7 @@ void Sm::finishDraw(GlCommandBufferHandle& cmdBuff)
 }
 
 //==============================================================================
-Error Sm::run(Light* shadowCasters[], U32 shadowCastersCount, 
+Error Sm::run(SceneNode* shadowCasters[], U32 shadowCastersCount, 
 	GlCommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
@@ -136,7 +136,7 @@ Error Sm::run(Light* shadowCasters[], U32 shadowCastersCount,
 }
 
 //==============================================================================
-Sm::Shadowmap& Sm::bestCandidate(Light& light)
+Sm::Shadowmap& Sm::bestCandidate(SceneNode& light)
 {
 	// Allready there
 	for(Shadowmap& sm : m_sms)
@@ -175,7 +175,7 @@ Sm::Shadowmap& Sm::bestCandidate(Light& light)
 
 //==============================================================================
 Error Sm::doLight(
-	Light& light, GlCommandBufferHandle& cmdBuff, Sm::Shadowmap*& sm)
+	SceneNode& light, GlCommandBufferHandle& cmdBuff, Sm::Shadowmap*& sm)
 {
 	Error err = ErrorCode::NONE;
 
@@ -183,11 +183,12 @@ Error Sm::doLight(
 
 	FrustumComponent& fr = light.getComponent<FrustumComponent>();
 	VisibilityTestResults& vi = fr.getVisibilityTestResults();
+	LightComponent& lcomp = light.getComponent<LightComponent>();
 
 	//
 	// Find last update
 	//
-	U32 lastUpdate = light.MoveComponent::getTimestamp();
+	U32 lastUpdate = light.getComponent<MoveComponent>().getTimestamp();
 	lastUpdate = std::max(lastUpdate, fr.getTimestamp());
 
 	auto it = vi.getRenderablesBegin();
@@ -222,7 +223,7 @@ Error Sm::doLight(
 	}
 
 	sm->m_timestamp = getGlobTimestamp();
-	light.setShadowMapIndex(sm - &m_sms[0]);
+	lcomp.setShadowMapIndex(sm - &m_sms[0]);
 
 	//
 	// Render

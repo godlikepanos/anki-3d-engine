@@ -74,8 +74,7 @@ Error Sslr::init(const ConfigSet& config)
 	{
 		Direction& dir = m_dirs[(U)DirectionEnum::VERTICAL];
 
-		err = m_r->createRenderTarget(m_width, m_height, GL_RGB8, GL_RGB, 
-			GL_UNSIGNED_BYTE, 1, dir.m_rt);
+		err = m_r->createRenderTarget(m_width, m_height, GL_RGB8, 1, dir.m_rt);
 		if(err) return err;
 
 		// Set to bilinear because the blurring techniques take advantage of 

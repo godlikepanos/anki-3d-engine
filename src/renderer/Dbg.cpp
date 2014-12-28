@@ -103,8 +103,9 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 	cmdb.enableDepthTest(m_depthTest);
 
 	Camera& cam = scene.getActiveCamera();
+	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
 	m_drawer->prepareDraw(cmdb);
-	m_drawer->setViewProjectionMatrix(cam.getViewProjectionMatrix());
+	m_drawer->setViewProjectionMatrix(camFr.getViewProjectionMatrix());
 	m_drawer->setModelMatrix(Mat4::getIdentity());
 	//drawer->drawGrid();
 

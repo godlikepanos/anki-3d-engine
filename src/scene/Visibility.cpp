@@ -182,11 +182,9 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool testingLight,
 			LightComponent* l = node.tryGetComponent<LightComponent>();
 			if(!err && l)
 			{
-				Light* light = staticCastPtr<Light*>(&node);
-
 				err = visible->moveBackLight(m_alloc, visibleNode);
 
-				if(!err && light->getShadowEnabled() && fr)
+				if(!err && l->getShadowEnabled() && fr)
 				{
 					err = test(node, true, 0, 0);
 				}

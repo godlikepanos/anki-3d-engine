@@ -18,4 +18,30 @@ void FrustumComponent::setVisibilityTestResults(VisibilityTestResults* visible)
 	m_stats.m_lightsCount = visible->getLightsCount();
 }
 
+//==============================================================================
+Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
+{
+	updated = false;
+
+	if(m_flags & SHAPE_MARKED_FOR_UPDATE)
+	{
+		updated = true;
+		m_pm = m_frustum->calculateProjectionMatrix();
+	}
+
+	if(m_flags & TRANSFORM_MARKED_FOR_UPDATE)
+	{
+		updated = true;
+		m_vm = Mat4(m_frustum->getTransform().getInverse());
+	}
+
+	if(updated)
+	{
+		m_vpm = m_pm * m_vm;
+		m_flags = 0;
+	}
+
+	return ErrorCode::NONE;
+}
+
 } // end namespace anki

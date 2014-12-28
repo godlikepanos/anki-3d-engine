@@ -45,11 +45,16 @@ Error init()
 	Error err = ErrorCode::NONE;
 	ANKI_LOGI("Other init...");
 
+	SpotLight* spot;
+	PointLight* point;
+	MoveComponent* move;
+	LightComponent* lightc;
+
 	SceneGraph& scene = app->getSceneGraph();
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.0);
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 1.0);
 
 	if(getenv("PROFILE"))
 	{
@@ -63,7 +68,8 @@ Error init()
 	cam->setAll(
 		renderer.getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
-	cam->setLocalTransform(Transform(Vec4(17.0, 5.2, 0.0, 0),
+	cam->getComponent<MoveComponent>().
+		setLocalTransform(Transform(Vec4(17.0, 5.2, 0.0, 0),
 		Mat3x4(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
@@ -95,18 +101,21 @@ Error init()
 	}
 #endif
 
-#if 1
-	SpotLight* spot;
+#if 0
 	err = scene.newSceneNode<SpotLight>("spot0", spot);
 	if(err) return err;
-	spot->setOuterAngle(toRad(45.0));
-	spot->setInnerAngle(toRad(15.0));
-	spot->setLocalTransform(Transform(Vec4(8.27936, 5.86285, 1.85526, 0.0),
+
+	lightc = spot->tryGetComponent<LightComponent>();
+	lightc->setOuterAngle(toRad(45.0));
+	lightc->setInnerAngle(toRad(15.0));
+	lightc->setDiffuseColor(Vec4(1.0));
+	lightc->setSpecularColor(Vec4(1.2));
+	lightc->setDistance(30.0);
+	lightc->setShadowEnabled(true);
+
+	move = spot->tryGetComponent<MoveComponent>();
+	move->setLocalTransform(Transform(Vec4(8.27936, 5.86285, 1.85526, 0.0),
 		Mat3x4(Quat(-0.125117, 0.620465, 0.154831, 0.758544)), 1.0));
-	spot->setDiffuseColor(Vec4(1.0));
-	spot->setSpecularColor(Vec4(1.2));
-	spot->setDistance(30.0);
-	spot->setShadowEnabled(true);
 
 #endif
 
@@ -210,12 +219,12 @@ Error init()
 	}
 #endif
 
-#if 0
+#if 1
 	// horse
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
 		"models/horse/horse.ankimdl");
 	if(err) return err;
-	horse->setLocalTransform(
+	horse->getComponent<MoveComponent>().setLocalTransform(
 		Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(), 0.7));
 
 	//horse = scene.newSceneNode<ModelNode>("crate", "models/crate0/crate0.ankimdl");
@@ -230,29 +239,21 @@ Error init()
 		0.7));*/
 #endif
 
-	if(1)
-	{
-		PointLight* point;
-		err = scene.newSceneNode<PointLight>("plight0", point);
-		point->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
-		point->setRadius(30.0);
-		point->setDiffuseColor(Vec4(0.6));
-		point->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
-		if(err) return err;
-	}
-
 	if(0)
 	{
-		PointLight* point;
-		err = scene.newSceneNode<PointLight>("plight1", point);
-		point->setLocalOrigin(Vec4(0.0, 1.1, -15.3, 0.0));
-		point->setRadius(30.0);
-		point->setDiffuseColor(Vec4(1.0));
-		point->setSpecularColor(Vec4(1.0, 0.0, 1.0, 0.0));
+		err = scene.newSceneNode<PointLight>("plight0", point);
 		if(err) return err;
+
+		lightc = point->tryGetComponent<LightComponent>();
+		lightc->setRadius(30.0);
+		lightc->setDiffuseColor(Vec4(0.6));
+		lightc->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
+
+		move = point->tryGetComponent<MoveComponent>();
+		move->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
 	}
 
-#if 1
+#if 0
 	{
 		ScriptResourcePointer script;
 
@@ -368,7 +369,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 
 	if(in.getKey(KeyCode::_1))
 	{
-		mover = &scene.getActiveCamera();
+		mover = scene.getActiveCamera().tryGetComponent<MoveComponent>();
 	}
 	if(in.getKey(KeyCode::_2))
 	{
@@ -553,7 +554,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("tilesXCount", 16);
 	config.set("tilesYCount", 16);
 
-	config.set("fullscreenDesktopResolution", true);
+	config.set("fullscreenDesktopResolution", false);
 	config.set("debugContext", false);
 
 	app = new App;
