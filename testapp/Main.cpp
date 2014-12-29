@@ -101,12 +101,12 @@ Error init()
 	}
 #endif
 
-#if 0
+#if 1
 	err = scene.newSceneNode<SpotLight>("spot0", spot);
 	if(err) return err;
 
 	lightc = spot->tryGetComponent<LightComponent>();
-	lightc->setOuterAngle(toRad(45.0));
+	lightc->setOuterAngle(toRad(35.0));
 	lightc->setInnerAngle(toRad(15.0));
 	lightc->setDiffuseColor(Vec4(1.0));
 	lightc->setSpecularColor(Vec4(1.2));

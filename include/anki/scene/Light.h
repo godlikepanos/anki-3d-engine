@@ -80,6 +80,7 @@ public:
 	void setInnerAngle(F32 ang)
 	{
 		m_innerAngleCos = cos(ang / 2.0);
+		m_innerAngle = ang;
 		m_dirty = true;
 	}
 
@@ -91,6 +92,7 @@ public:
 	void setOuterAngle(F32 ang)
 	{
 		m_outerAngleCos = cos(ang / 2.0);
+		m_outerAngle = ang;
 		m_dirty = true;
 	}
 
@@ -144,6 +146,7 @@ private:
 	F32 m_innerAngleCos;
 	F32 m_outerAngleCos;
 	F32 m_outerAngle;
+	F32 m_innerAngle;
 
 	Bool8 m_shadow = false;
 	U8 m_shadowMapIndex = 0xFF; ///< Used by the renderer
@@ -194,12 +197,6 @@ public:
 		F32 prevUpdateTime, F32 crntTime) override;
 	/// @}
 
-	/// @privatesection
-	/// @{
-	void onMoveUpdate(MoveComponent& move) override;
-	void onShapeUpdate(LightComponent& light) override;
-	/// @}
-
 public:
 	class ShadowData
 	{
@@ -220,6 +217,9 @@ public:
 
 	Sphere m_sphereW = Sphere(Vec4(0.0), 1.0);
 	ShadowData* m_shadowData = nullptr;
+
+	void onMoveUpdate(MoveComponent& move) override;
+	void onShapeUpdate(LightComponent& light) override;
 };
 
 /// Spot light
@@ -230,14 +230,11 @@ public:
 
 	ANKI_USE_RESULT Error create(const CString& name);
 
-	/// @privatesection
-	/// @{
-	void onMoveUpdate(MoveComponent& move) override;
-	void onShapeUpdate(LightComponent& light) override;
-	/// @}
-
 private:
 	PerspectiveFrustum m_frustum;
+
+	void onMoveUpdate(MoveComponent& move) override;
+	void onShapeUpdate(LightComponent& light) override;
 };
 /// @}
 

@@ -298,7 +298,7 @@ Error SpotLight::create(const CString& name)
 		getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);
 	if(fr == nullptr) return ErrorCode::OUT_OF_MEMORY;
 	
-	err = addComponent(fr);
+	err = addComponent(fr, true);
 	if(err) return err;
 
 	return err;
