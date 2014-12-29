@@ -89,6 +89,11 @@ public:
 		return m_innerAngleCos;
 	}
 
+	F32 getInnerAngle() const
+	{
+		return m_innerAngle;
+	}
+
 	void setOuterAngle(F32 ang)
 	{
 		m_outerAngleCos = cos(ang / 2.0);

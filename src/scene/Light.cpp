@@ -308,16 +308,15 @@ Error SpotLight::create(const CString& name)
 void SpotLight::onMoveUpdate(MoveComponent& move)
 {
 	onMoveUpdateCommon(move);
-	m_frustum.resetTransform(move.getWorldTransform());
 }
 
 //==============================================================================
 void SpotLight::onShapeUpdate(LightComponent& light)
 {
 	onShapeUpdateCommon(light);
-	m_frustum.setFovX(light.getOuterAngle());
-	m_frustum.setFovY(light.getOuterAngle());
-	m_frustum.setFar(light.getDistance());
+	m_frustum.setAll(
+		light.getOuterAngle(), light.getOuterAngle(), 
+		0.5, light.getDistance());
 }
 
 } // end namespace anki

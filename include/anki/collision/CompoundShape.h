@@ -75,7 +75,6 @@ private:
 		(void)count;
 	}
 };
-
 /// @}
 
 } // end namespace anki

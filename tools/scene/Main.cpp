@@ -241,6 +241,14 @@ static void exportScene(Exporter& exporter)
 	}
 
 	//
+	// Lights
+	//
+	for(unsigned i = 0; i < exporter.scene->mNumLights; i++)
+	{
+		exportLight(exporter, *exporter.scene->mLights[i], file);
+	}
+
+	//
 	// Animations
 	//
 	for(unsigned i = 0; i < exporter.scene->mNumAnimations; i++)

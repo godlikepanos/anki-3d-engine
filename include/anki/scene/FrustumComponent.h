@@ -33,7 +33,8 @@ public:
 	/// Pass the frustum here so we can avoid the virtuals
 	FrustumComponent(SceneNode* node, Frustum* frustum)
 	:	SceneComponent(Type::FRUSTUM, node), 
-		m_frustum(frustum)
+		m_frustum(frustum),
+		m_flags(0)
 	{
 		// WARNING: Never touch m_frustum in constructor
 		ANKI_ASSERT(frustum);

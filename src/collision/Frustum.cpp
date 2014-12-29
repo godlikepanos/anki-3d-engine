@@ -27,15 +27,66 @@ Frustum& Frustum::operator=(const Frustum& b)
 }
 
 //==============================================================================
+void Frustum::accept(MutableVisitor& v)
+{
+	if(m_frustumDirty)
+	{
+		// Force recalculation and tranform
+		resetTransform(m_trf);
+	}
+
+	CompoundShape::accept(v);
+}
+
+//==============================================================================
+void Frustum::accept(ConstVisitor& v) const
+{
+	Frustum& self = *const_cast<Frustum*>(this);
+
+	if(self.m_frustumDirty)
+	{
+		// Force recalculation and tranform
+		self.resetTransform(m_trf);
+	}
+
+	CompoundShape::accept(v);
+}
+
+//==============================================================================
+F32 Frustum::testPlane(const Plane& p) const
+{
+	Frustum& self = *const_cast<Frustum*>(this);
+
+	if(self.m_frustumDirty)
+	{
+		// Force recalculation and tranform
+		self.resetTransform(m_trf);
+	}
+
+	return CompoundShape::testPlane(p);
+}
+
+//==============================================================================
+void Frustum::computeAabb(Aabb& aabb) const
+{
+	Frustum& self = *const_cast<Frustum*>(this);
+
+	if(self.m_frustumDirty)
+	{
+		// Force recalculation and tranform
+		self.resetTransform(m_trf);
+	}
+
+	CompoundShape::computeAabb(aabb);
+}
+
+//==============================================================================
 Bool Frustum::insideFrustum(const CollisionShape& b)
 {
 	if(m_frustumDirty)
 	{
-		m_frustumDirty = false;
-		recalculate();
-
-		// recalculate() reset the tranformations so re-transform
-		transform(m_trf);
+		// Force recalculation and tranform
+		resetTransform(m_trf);
 	}
 
 	for(const Plane& plane : m_planes)
@@ -100,7 +151,7 @@ void Frustum::resetTransform(const Transform& trf)
 
 //==============================================================================
 PerspectiveFrustum::PerspectiveFrustum()
-	: Frustum(Type::PERSPECTIVE)
+:	Frustum(Type::PERSPECTIVE)
 {
 	for(LineSegment& ls : m_segments)
 	{
@@ -163,7 +214,7 @@ void PerspectiveFrustum::recalculate()
 //==============================================================================
 Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 {
-	ANKI_ASSERT(m_fovX != 0.0 && m_fovY != 0.0);
+	ANKI_ASSERT(m_fovX != 0.0 && m_fovY != 0.0 && m_near != 0.0);
 	Mat4 projectionMat;
 	F32 g = m_near - m_far;
 
@@ -214,7 +265,7 @@ Mat4 PerspectiveFrustum::calculateProjectionMatrix() const
 
 //==============================================================================
 OrthographicFrustum::OrthographicFrustum()
-	: Frustum(Type::ORTHOGRAPHIC)
+:	Frustum(Type::ORTHOGRAPHIC)
 {
 	addShape(&m_obb);
 }

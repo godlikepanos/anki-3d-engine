@@ -42,18 +42,13 @@ public:
 		COUNT ///< Number of planes
 	};
 
-	/// @name Constructors
-	/// @{
 	Frustum(Type type)
 	:	m_type(type)
 	{}
 
 	virtual ~Frustum()
 	{}
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	Type getType() const
 	{
 		return m_type;
@@ -83,7 +78,18 @@ public:
 	{
 		return m_trf;
 	}
-	/// @}
+
+	/// Override CompoundShape::accept
+	void accept(MutableVisitor& v) override;
+
+	/// Override CompoundShape::accept
+	void accept(ConstVisitor& v) const override;
+
+	/// Override CompoundShape::testPlane
+	F32 testPlane(const Plane& p) const override;
+
+	/// Override CompoundShape::testPlane computeAabb
+	void computeAabb(Aabb&) const override;
 
 	/// Override CompoundShape::transform
 	void transform(const Transform& trf) override;
@@ -107,13 +113,15 @@ protected:
 	/// Used to check against the frustum
 	Array<Plane, (U)PlaneType::COUNT> m_planes;
 
-	Transform m_trf = Transform::getIdentity(); ///< Keep the transformation
+	/// Keep the transformation.
+	Transform m_trf = Transform::getIdentity(); 
 
 	/// It's true when the frustum changed
 	Bool8 m_frustumDirty = true;
 
 	/// Called when a viewing variable changes. It recalculates the planes and
-	/// the other variables
+	/// the other variables.
+	/// @note It's const because it must be called on const methods.
 	virtual void recalculate() = 0;
 
 	/// Copy
@@ -127,29 +135,23 @@ private:
 class PerspectiveFrustum: public Frustum
 {
 public:
-	/// @name Constructors
-	/// @{
-
 	/// Default
 	PerspectiveFrustum();
 
 	/// Copy
 	PerspectiveFrustum(const PerspectiveFrustum& b)
-		: PerspectiveFrustum()
+	:	PerspectiveFrustum()
 	{
 		*this = b;
 	}
 
 	/// Set all
 	PerspectiveFrustum(F32 fovX, F32 fovY, F32 near, F32 far)
-		: PerspectiveFrustum()
+	:	PerspectiveFrustum()
 	{
 		setAll(fovX, fovY, near, far);
 	}
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	F32 getFovX() const
 	{
 		return m_fovX;
@@ -173,6 +175,7 @@ public:
 	/// Set all the parameters and recalculate the planes and shape
 	void setAll(F32 fovX, F32 fovY, F32 near, F32 far)
 	{
+		ANKI_ASSERT(far > near);
 		m_fovX = fovX;
 		m_fovY = fovY,
 		m_near = near;
@@ -184,7 +187,6 @@ public:
 	{
 		return m_segments;
 	}
-	/// @}
 
 	/// Copy
 	PerspectiveFrustum& operator=(const PerspectiveFrustum& b);
@@ -215,16 +217,13 @@ private:
 	/// Implements Frustum::recalculate. Recalculates:
 	/// @li planes
 	/// @li line segments
-	void recalculate();
+	void recalculate() override;
 };
 
 /// Frustum shape for orthographic cameras
 class OrthographicFrustum: public Frustum
 {
 public:
-	/// @name Constructors
-	/// @{
-
 	/// Default
 	OrthographicFrustum();
 
@@ -242,10 +241,7 @@ public:
 	{
 		setAll(left, right, near, far, top, bottom);
 	}
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	F32 getLeft() const
 	{
 		return m_left;
@@ -304,7 +300,6 @@ public:
 	{
 		return m_obb;
 	}
-	/// @}
 
 	/// Copy
 	OrthographicFrustum& operator=(const OrthographicFrustum& b);
@@ -331,9 +326,8 @@ private:
 	Obb m_obb; ///< Including shape
 	/// @}
 
-	/// Implements Frustum::recalculate. Recalculate @a planes and
-	/// @a obb
-	void recalculate();
+	/// Implements Frustum::recalculate. Recalculate @a m_planes and @a m_obb
+	void recalculate() override;
 };
 /// @}
 

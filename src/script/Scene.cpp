@@ -299,6 +299,556 @@ static inline void wrapMoveComponent(lua_State* l)
 }
 
 //==============================================================================
+// LightComponent                                                              =
+//==============================================================================
+
+//==============================================================================
+static const char* classnameLightComponent = "LightComponent";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<LightComponent>()
+{
+	return 7940823622056993903;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<LightComponent>()
+{
+	return classnameLightComponent;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::setDiffuseColor.
+static inline int pwrapLightComponentsetDiffuseColor(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
+	const Vec4& arg0(*iarg0);
+	
+	// Call the method
+	self->setDiffuseColor(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::setDiffuseColor.
+static int wrapLightComponentsetDiffuseColor(lua_State* l)
+{
+	int res = pwrapLightComponentsetDiffuseColor(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::getDiffuseColor.
+static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	const Vec4& ret = self->getDiffuseColor();
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "Vec4");
+	ud->m_data = const_cast<void*>(static_cast<const void*>(&ret));
+	ud->m_gc = false;
+	ud->m_sig = 6804478823655046386;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::getDiffuseColor.
+static int wrapLightComponentgetDiffuseColor(lua_State* l)
+{
+	int res = pwrapLightComponentgetDiffuseColor(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::setSpecularColor.
+static inline int pwrapLightComponentsetSpecularColor(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
+	const Vec4& arg0(*iarg0);
+	
+	// Call the method
+	self->setSpecularColor(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::setSpecularColor.
+static int wrapLightComponentsetSpecularColor(lua_State* l)
+{
+	int res = pwrapLightComponentsetSpecularColor(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::getSpecularColor.
+static inline int pwrapLightComponentgetSpecularColor(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	const Vec4& ret = self->getSpecularColor();
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "Vec4");
+	ud->m_data = const_cast<void*>(static_cast<const void*>(&ret));
+	ud->m_gc = false;
+	ud->m_sig = 6804478823655046386;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::getSpecularColor.
+static int wrapLightComponentgetSpecularColor(lua_State* l)
+{
+	int res = pwrapLightComponentgetSpecularColor(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::setRadius.
+static inline int pwrapLightComponentsetRadius(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	
+	// Call the method
+	self->setRadius(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::setRadius.
+static int wrapLightComponentsetRadius(lua_State* l)
+{
+	int res = pwrapLightComponentsetRadius(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::getRadius.
+static inline int pwrapLightComponentgetRadius(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	F32 ret = self->getRadius();
+	
+	// Push return value
+	lua_pushnumber(l, ret);
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::getRadius.
+static int wrapLightComponentgetRadius(lua_State* l)
+{
+	int res = pwrapLightComponentgetRadius(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::setDistance.
+static inline int pwrapLightComponentsetDistance(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	
+	// Call the method
+	self->setDistance(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::setDistance.
+static int wrapLightComponentsetDistance(lua_State* l)
+{
+	int res = pwrapLightComponentsetDistance(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::getDistance.
+static inline int pwrapLightComponentgetDistance(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	F32 ret = self->getDistance();
+	
+	// Push return value
+	lua_pushnumber(l, ret);
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::getDistance.
+static int wrapLightComponentgetDistance(lua_State* l)
+{
+	int res = pwrapLightComponentgetDistance(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::setInnerAngle.
+static inline int pwrapLightComponentsetInnerAngle(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	
+	// Call the method
+	self->setInnerAngle(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::setInnerAngle.
+static int wrapLightComponentsetInnerAngle(lua_State* l)
+{
+	int res = pwrapLightComponentsetInnerAngle(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::getInnerAngle.
+static inline int pwrapLightComponentgetInnerAngle(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	F32 ret = self->getInnerAngle();
+	
+	// Push return value
+	lua_pushnumber(l, ret);
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::getInnerAngle.
+static int wrapLightComponentgetInnerAngle(lua_State* l)
+{
+	int res = pwrapLightComponentgetInnerAngle(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::setOuterAngle.
+static inline int pwrapLightComponentsetOuterAngle(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	
+	// Call the method
+	self->setOuterAngle(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::setOuterAngle.
+static int wrapLightComponentsetOuterAngle(lua_State* l)
+{
+	int res = pwrapLightComponentsetOuterAngle(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::getOuterAngle.
+static inline int pwrapLightComponentgetOuterAngle(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	F32 ret = self->getOuterAngle();
+	
+	// Push return value
+	lua_pushnumber(l, ret);
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::getOuterAngle.
+static int wrapLightComponentgetOuterAngle(lua_State* l)
+{
+	int res = pwrapLightComponentgetOuterAngle(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::setShadowEnabled.
+static inline int pwrapLightComponentsetShadowEnabled(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	Bool arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	
+	// Call the method
+	self->setShadowEnabled(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::setShadowEnabled.
+static int wrapLightComponentsetShadowEnabled(lua_State* l)
+{
+	int res = pwrapLightComponentsetShadowEnabled(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LightComponent::getShadowEnabled.
+static inline int pwrapLightComponentgetShadowEnabled(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	Bool ret = self->getShadowEnabled();
+	
+	// Push return value
+	lua_pushboolean(l, ret);
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method LightComponent::getShadowEnabled.
+static int wrapLightComponentgetShadowEnabled(lua_State* l)
+{
+	int res = pwrapLightComponentgetShadowEnabled(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class LightComponent.
+static inline void wrapLightComponent(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameLightComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "setDiffuseColor", wrapLightComponentsetDiffuseColor);
+	LuaBinder::pushLuaCFuncMethod(l, "getDiffuseColor", wrapLightComponentgetDiffuseColor);
+	LuaBinder::pushLuaCFuncMethod(l, "setSpecularColor", wrapLightComponentsetSpecularColor);
+	LuaBinder::pushLuaCFuncMethod(l, "getSpecularColor", wrapLightComponentgetSpecularColor);
+	LuaBinder::pushLuaCFuncMethod(l, "setRadius", wrapLightComponentsetRadius);
+	LuaBinder::pushLuaCFuncMethod(l, "getRadius", wrapLightComponentgetRadius);
+	LuaBinder::pushLuaCFuncMethod(l, "setDistance", wrapLightComponentsetDistance);
+	LuaBinder::pushLuaCFuncMethod(l, "getDistance", wrapLightComponentgetDistance);
+	LuaBinder::pushLuaCFuncMethod(l, "setInnerAngle", wrapLightComponentsetInnerAngle);
+	LuaBinder::pushLuaCFuncMethod(l, "getInnerAngle", wrapLightComponentgetInnerAngle);
+	LuaBinder::pushLuaCFuncMethod(l, "setOuterAngle", wrapLightComponentsetOuterAngle);
+	LuaBinder::pushLuaCFuncMethod(l, "getOuterAngle", wrapLightComponentgetOuterAngle);
+	LuaBinder::pushLuaCFuncMethod(l, "setShadowEnabled", wrapLightComponentsetShadowEnabled);
+	LuaBinder::pushLuaCFuncMethod(l, "getShadowEnabled", wrapLightComponentgetShadowEnabled);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
 // SceneNode                                                                   =
 //==============================================================================
 
@@ -445,6 +995,52 @@ static int wrapSceneNodegetMoveComponent(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap method SceneNode::tryGetComponent<LightComponent>.
+static inline int pwrapSceneNodegetLightComponent(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	SceneNode* self = static_cast<SceneNode*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	LightComponent* ret = self->tryGetComponent<LightComponent>();
+	
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "LightComponent");
+	ud->m_data = static_cast<void*>(ret);
+	ud->m_gc = false;
+	ud->m_sig = 7940823622056993903;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SceneNode::tryGetComponent<LightComponent>.
+static int wrapSceneNodegetLightComponent(lua_State* l)
+{
+	int res = pwrapSceneNodegetLightComponent(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap class SceneNode.
 static inline void wrapSceneNode(lua_State* l)
 {
@@ -452,6 +1048,7 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getName", wrapSceneNodegetName);
 	LuaBinder::pushLuaCFuncMethod(l, "addChild", wrapSceneNodeaddChild);
 	LuaBinder::pushLuaCFuncMethod(l, "getMoveComponent", wrapSceneNodegetMoveComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "getLightComponent", wrapSceneNodegetLightComponent);
 	lua_settop(l, 0);
 }
 
@@ -592,6 +1189,142 @@ static inline void wrapInstanceNode(lua_State* l)
 }
 
 //==============================================================================
+// PointLight                                                                  =
+//==============================================================================
+
+//==============================================================================
+static const char* classnamePointLight = "PointLight";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<PointLight>()
+{
+	return 3561037663389896020;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<PointLight>()
+{
+	return classnamePointLight;
+}
+
+//==============================================================================
+/// Pre-wrap method PointLight::getSceneNodeBase.
+static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud)) return -1;
+	PointLight* self = static_cast<PointLight*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	SceneNode& ret = *self;
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->m_data = static_cast<void*>(&ret);
+	ud->m_gc = false;
+	ud->m_sig = -2220074417980276571;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method PointLight::getSceneNodeBase.
+static int wrapPointLightgetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapPointLightgetSceneNodeBase(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class PointLight.
+static inline void wrapPointLight(lua_State* l)
+{
+	LuaBinder::createClass(l, classnamePointLight);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPointLightgetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
+// SpotLight                                                                   =
+//==============================================================================
+
+//==============================================================================
+static const char* classnameSpotLight = "SpotLight";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<SpotLight>()
+{
+	return 7940385212889719421;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<SpotLight>()
+{
+	return classnameSpotLight;
+}
+
+//==============================================================================
+/// Pre-wrap method SpotLight::getSceneNodeBase.
+static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSpotLight, 7940385212889719421, ud)) return -1;
+	SpotLight* self = static_cast<SpotLight*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	SceneNode& ret = *self;
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->m_data = static_cast<void*>(&ret);
+	ud->m_gc = false;
+	ud->m_sig = -2220074417980276571;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SpotLight::getSceneNodeBase.
+static int wrapSpotLightgetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapSpotLightgetSceneNodeBase(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class SpotLight.
+static inline void wrapSpotLight(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameSpotLight);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSpotLightgetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
 // SceneGraph                                                                  =
 //==============================================================================
 
@@ -714,12 +1447,114 @@ static int wrapSceneGraphnewInstanceNode(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap method SceneGraph::newPointLight.
+static inline int pwrapSceneGraphnewPointLight(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	
+	// Call the method
+	PointLight* ret = newSceneNode<PointLight>(self, arg0);
+	
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "PointLight");
+	ud->m_data = static_cast<void*>(ret);
+	ud->m_gc = false;
+	ud->m_sig = 3561037663389896020;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SceneGraph::newPointLight.
+static int wrapSceneGraphnewPointLight(lua_State* l)
+{
+	int res = pwrapSceneGraphnewPointLight(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method SceneGraph::newSpotLight.
+static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	
+	// Call the method
+	SpotLight* ret = newSceneNode<SpotLight>(self, arg0);
+	
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SpotLight");
+	ud->m_data = static_cast<void*>(ret);
+	ud->m_gc = false;
+	ud->m_sig = 7940385212889719421;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SceneGraph::newSpotLight.
+static int wrapSceneGraphnewSpotLight(lua_State* l)
+{
+	int res = pwrapSceneGraphnewSpotLight(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap class SceneGraph.
 static inline void wrapSceneGraph(lua_State* l)
 {
 	LuaBinder::createClass(l, classnameSceneGraph);
 	LuaBinder::pushLuaCFuncMethod(l, "newModelNode", wrapSceneGraphnewModelNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newInstanceNode", wrapSceneGraphnewInstanceNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newPointLight", wrapSceneGraphnewPointLight);
+	LuaBinder::pushLuaCFuncMethod(l, "newSpotLight", wrapSceneGraphnewSpotLight);
 	lua_settop(l, 0);
 }
 
@@ -769,9 +1604,12 @@ static int wrapgetSceneGraph(lua_State* l)
 void wrapModuleScene(lua_State* l)
 {
 	wrapMoveComponent(l);
+	wrapLightComponent(l);
 	wrapSceneNode(l);
 	wrapModelNode(l);
 	wrapInstanceNode(l);
+	wrapPointLight(l);
+	wrapSpotLight(l);
 	wrapSceneGraph(l);
 	LuaBinder::pushLuaCFunc(l, "getSceneGraph", wrapgetSceneGraph);
 }

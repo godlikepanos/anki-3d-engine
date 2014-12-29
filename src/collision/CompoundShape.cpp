@@ -11,7 +11,7 @@ namespace anki {
 
 //==============================================================================
 CompoundShape::CompoundShape()
-	: CollisionShape(Type::COMPOUND)
+:	CollisionShape(Type::COMPOUND)
 {
 	memset(&m_dflt, 0, sizeof(m_dflt));
 }

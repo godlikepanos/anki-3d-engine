@@ -8,14 +8,14 @@
 namespace anki {
 
 //==============================================================================
-// FeedbackComponent                                                           =
+// MoveFeedbackComponent                                                       =
 //==============================================================================
 
 /// Feedback component.
-class FeedbackComponent: public SceneComponent
+class MoveFeedbackComponent: public SceneComponent
 {
 public:
-	FeedbackComponent(Camera* node)
+	MoveFeedbackComponent(Camera* node)
 	:	SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
@@ -30,6 +30,27 @@ public:
 			Camera& cam = static_cast<Camera&>(node);
 			cam.onMoveComponentUpdate(move);
 		}
+
+		return ErrorCode::NONE;
+	}
+};
+
+//==============================================================================
+// FrustumFeedbackComponent                                                    =
+//==============================================================================
+
+/// Feedback component.
+class FrustumFeedbackComponent: public SceneComponent
+{
+public:
+	FrustumFeedbackComponent(Camera* node)
+	:	SceneComponent(SceneComponent::Type::NONE, node)
+	{}
+
+	ANKI_USE_RESULT Error update(
+		SceneNode& node, F32, F32, Bool& updated)
+	{
+		updated = false;
 
 		FrustumComponent& fr = node.getComponent<FrustumComponent>();
 		if(fr.getTimestamp() == getGlobTimestamp())
@@ -64,33 +85,36 @@ Error Camera::create(const CString& name, Frustum* frustum)
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);
 	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	err = addComponent(comp);
+	err = addComponent(comp, true);
 	if(err) return err;
-	comp->setAutomaticCleanup(true);
+
+	// Feedback component
+	comp = getSceneAllocator().newInstance<MoveFeedbackComponent>(this);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+
+	err = addComponent(comp, true);
+	if(err) return err;
 
 	// Frustum component
 	comp = getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
 	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	err = addComponent(comp);
+	err = addComponent(comp, true);
 	if(err) return err;
-	comp->setAutomaticCleanup(true);
 
-	// Feedback component
-	comp = getSceneAllocator().newInstance<FeedbackComponent>(this);
+	// Feedback component #2
+	comp = getSceneAllocator().newInstance<FrustumFeedbackComponent>(this);
 	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	err = addComponent(comp);
+	err = addComponent(comp, true);
 	if(err) return err;
-	comp->setAutomaticCleanup(true);
 
 	// Spatial component
 	comp = getSceneAllocator().newInstance<SpatialComponent>(this, frustum);
 	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	err = addComponent(comp);
+	err = addComponent(comp, true);
 	if(err) return err;
-	comp->setAutomaticCleanup(true);
 
 	return err;
 }
