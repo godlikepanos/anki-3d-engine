@@ -3,45 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <iostream>
-#include <stdexcept>
-#include <cstdarg>
-#include <fstream>
-#include <cstdint>
-#include <sstream>
-#include <cassert>
-#include "Common.h"
-
-//==============================================================================
-/// Load the scene
-static void load(
-	Exporter& exporter,
-	const std::string& filename)
-{
-	LOGI("Loading file %s\n", filename.c_str());
-
-	const aiScene* scene = exporter.importer.ReadFile(filename, 0
-		//| aiProcess_FindInstances
-		| aiProcess_Triangulate
-		| aiProcess_JoinIdenticalVertices
-		//| aiProcess_SortByPType
-		| aiProcess_ImproveCacheLocality
-		| aiProcess_OptimizeMeshes
-		| aiProcess_RemoveRedundantMaterials
-		);
-
-	if(!scene)
-	{
-		ERROR("%s\n", exporter.importer.GetErrorString());
-	}
-
-	exporter.scene = scene;
-
-	LOGI("File loaded successfully!\n");
-}
+#include "Exporter.h"
 
 //==============================================================================
 static void parseCommandLineArgs(int argc, char** argv, Exporter& exporter)
@@ -59,8 +21,8 @@ Options:
 		goto error;
 	}
 
-	exporter.inputFname = argv[1];
-	exporter.outDir = argv[2] + std::string("/");
+	exporter.m_inputFilename = argv[1];
+	exporter.m_outputDirectory = argv[2] + std::string("/");
 
 	for(int i = 3; i < argc; i++)
 	{
@@ -70,7 +32,7 @@ Options:
 
 			if(i < argc)
 			{
-				exporter.texrpath = argv[i] + std::string("/");
+				exporter.m_texrpath = argv[i] + std::string("/");
 			}
 			else
 			{
@@ -83,7 +45,7 @@ Options:
 
 			if(i < argc)
 			{
-				exporter.rpath = argv[i] + std::string("/");
+				exporter.m_rpath = argv[i] + std::string("/");
 			}
 			else
 			{
@@ -92,7 +54,7 @@ Options:
 		}
 		else if(strcmp(argv[i], "-flipyz") == 0)
 		{
-			exporter.flipyz = true;
+			exporter.m_flipyz = true;
 		}
 		else
 		{
@@ -100,14 +62,14 @@ Options:
 		}
 	}
 
-	if(exporter.rpath.empty())
+	if(exporter.m_rpath.empty())
 	{
-		exporter.rpath = exporter.outDir;
+		exporter.m_rpath = exporter.m_outputDirectory;
 	}
 
-	if(exporter.texrpath.empty())
+	if(exporter.m_texrpath.empty())
 	{
-		exporter.texrpath = exporter.outDir;
+		exporter.m_texrpath = exporter.m_outputDirectory;
 	}
 
 	return;
@@ -115,148 +77,6 @@ Options:
 error:
 	printf(usage, argv[0]);
 	exit(1);
-}
-
-//==============================================================================
-static void visitNode(Exporter& exporter, const aiNode* ainode)
-{
-	if(ainode == nullptr)
-	{
-		return;
-	}
-
-	// For every mesh of this node
-	for(unsigned i = 0; i < ainode->mNumMeshes; i++)
-	{
-		unsigned meshIndex = ainode->mMeshes[i];
-		unsigned mtlIndex =  exporter.scene->mMeshes[meshIndex]->mMaterialIndex;
-
-		// Find if there is another node with the same model
-		std::vector<Node>::iterator it;
-		for(it = exporter.nodes.begin(); it != exporter.nodes.end(); it++)
-		{
-			const Node& node = *it;
-			const Model& model = exporter.models[node.modelIndex];
-
-			if(model.meshIndex == meshIndex && model.mtlIndex == mtlIndex)
-			{
-				break;
-			}
-		}
-
-		if(it != exporter.nodes.end())
-		{
-			// A node with the same model exists. It's instanced
-
-			Node& node = *it;
-			Model& model = exporter.models[node.modelIndex];
-
-			assert(node.transforms.size() > 0);
-			node.transforms.push_back(ainode->mTransformation);
-			
-			model.instanced = true;
-			break;
-		}
-
-		// Create new model
-		Model mdl;
-		mdl.meshIndex = meshIndex;
-		mdl.mtlIndex = mtlIndex;
-		exporter.models.push_back(mdl);
-
-		// Create new node
-		Node node;
-		node.modelIndex = exporter.models.size() - 1;
-		node.transforms.push_back(ainode->mTransformation);
-		exporter.nodes.push_back(node);
-	}
-
-	// Go to children
-	for(uint32_t i = 0; i < ainode->mNumChildren; i++)
-	{
-		visitNode(exporter, ainode->mChildren[i]);
-	}
-}
-
-//==============================================================================
-static void exportScene(Exporter& exporter)
-{
-	LOGI("Exporting scene to %s\n", exporter.outDir.c_str());
-
-	//
-	// Open scene file
-	//
-	std::ofstream file;
-	file.open(exporter.outDir + "scene.lua");
-
-	file << "local scene = getSceneGraph()\n"
-		<< "local pos\n"
-		<< "local rot\n"
-		<< "local node\n"
-		<< "local inst\n"
-		<< "local lcomp\n";
-
-	//
-	// Get all the data
-	//
-
-	const aiNode* node = exporter.scene->mRootNode;
-	visitNode(exporter, node);
-
-	//
-	// Export nodes
-	//
-	for(uint32_t i = 0; i < exporter.nodes.size(); i++)
-	{
-		Node& node = exporter.nodes[i];
-
-		Model& model = exporter.models[node.modelIndex];
-
-		exportMesh(exporter, 
-			*exporter.scene->mMeshes[model.meshIndex], nullptr);
-
-		exportMaterial(exporter, 
-			*exporter.scene->mMaterials[model.mtlIndex], 
-			model.instanced);
-
-		exportModel(exporter, model);
-		std::string name = getModelName(exporter, model);
-
-		// Write the main node
-		file << "\nnode = scene:newModelNode(\"" 
-			<< name << "\", \"" 
-			<< exporter.rpath << name << ".ankimdl" << "\")\n"; 
-		writeNodeTransform(exporter, file, "node", node.transforms[0]);
-
-		// Write instance nodes
-		for(unsigned j = 1; j < node.transforms.size(); j++)
-		{
-			file << "inst = scene:newInstanceNode(\"" 
-				<< name << "_inst" << (j - 1) << "\")\n"
-				<< "node:getSceneNodeBase():addChild("
-				<< "inst:getSceneNodeBase())\n";
-
-			writeNodeTransform(exporter, file, "inst", node.transforms[j]);
-		}
-	}
-
-	//
-	// Lights
-	//
-	for(unsigned i = 0; i < exporter.scene->mNumLights; i++)
-	{
-		exportLight(exporter, *exporter.scene->mLights[i], file);
-	}
-
-	//
-	// Animations
-	//
-	for(unsigned i = 0; i < exporter.scene->mNumAnimations; i++)
-	{
-		exportAnimation(exporter, *exporter.scene->mAnimations[i], i);
-	}
-
-	LOGI("Done exporting scene!\n");
 }
 
 //==============================================================================
@@ -269,13 +89,13 @@ int main(int argc, char** argv)
 		parseCommandLineArgs(argc, argv, exporter);
 
 		// Load file
-		load(exporter, exporter.inputFname);
+		exporter.load();
 
 		// Export
-		exportScene(exporter);
+		exporter.exportAll();
 	}
 	catch(std::exception& e)
 	{
-		std::cerr << "Exception: " << e.what() << std::endl;
+		ERROR("Exception: %s", &e.what()[0]);
 	}
 }

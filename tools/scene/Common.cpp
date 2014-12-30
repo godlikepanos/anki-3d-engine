@@ -4,9 +4,39 @@
 // http://www.anki3d.org/LICENSE
 
 #include "Common.h"
+#include <cstdarg>
+
+#define TERMINAL_COL_INFO "\033[0;32m"
+#define TERMINAL_COL_ERROR "\033[1;31m"
+#define TERMINAL_COL_WARNING "\033[0;33m"
+#define TERMINAL_COL_RESET "\033[0m"
 
 //==============================================================================
-const char* XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
+void log(const char* file, int line, unsigned type, const char* fmt, ...)
+{
+	char buffer[1024];
+	va_list args;
+	
+	va_start(args, fmt);
+	vsnprintf(buffer, sizeof(buffer), fmt, args);
+	va_end(args);
+
+	switch(type)
+	{
+	case 1:
+		fprintf(stdout, TERMINAL_COL_INFO "(%s:%4d) Info: %s\n" 
+			TERMINAL_COL_RESET, file, line, buffer);
+		break;
+	case 2:
+		fprintf(stderr, TERMINAL_COL_ERROR "(%s:%4d) Error: %s\n" 
+			TERMINAL_COL_RESET, file, line, buffer);
+		break;
+	case 3:
+		fprintf(stderr, TERMINAL_COL_WARNING "(%s:%4d) Warning: %s\n" 
+			TERMINAL_COL_RESET, file, line, buffer);
+		break;
+	};
+}
 
 //==============================================================================
 std::string replaceAllString(
@@ -48,94 +78,3 @@ std::string getFilename(const std::string& path)
 	return out;
 }
 
-//==============================================================================
-aiMatrix4x4 toAnkiMatrix(const aiMatrix4x4& in, bool flipyz)
-{
-	static const aiMatrix4x4 toLeftHanded(
-		1, 0, 0, 0, 
-		0, 0, 1, 0, 
-		0, -1, 0, 0, 
-		0, 0, 0, 1);
-
-	static const aiMatrix4x4 toLeftHandedInv(
-		1, 0, 0, 0, 
-		0, 0, -1, 0, 
-		0, 1, 0, 0, 
-		0, 0, 0, 1);
-
-	if(flipyz)
-	{
-		return toLeftHanded * in * toLeftHandedInv;
-	}
-	else
-	{
-		return in;
-	}
-}
-
-//==============================================================================
-aiMatrix3x3 toAnkiMatrix(const aiMatrix3x3& in, bool flipyz)
-{
-	static const aiMatrix3x3 toLeftHanded(
-		1, 0, 0,
-		0, 0, 1, 
-		0, -1, 0);
-
-	static const aiMatrix3x3 toLeftHandedInv(
-		1, 0, 0, 
-		0, 0, -1, 
-		0, 1, 0);
-
-	if(flipyz)
-	{
-		return toLeftHanded * in;
-	}
-	else
-	{
-		return in;
-	}
-}
-
-//==============================================================================
-void writeNodeTransform(const Exporter& exporter, std::ofstream& file, 
-	const std::string& node, const aiMatrix4x4& mat)
-{
-	aiMatrix4x4 m = toAnkiMatrix(mat, exporter.flipyz);
-
-	float pos[3];
-	pos[0] = m[0][3];
-	pos[1] = m[1][3];
-	pos[2] = m[2][3];
-
-	file << "pos = Vec4.new()\n";
-	file << "pos:setAll(" << pos[0] << ", " << pos[1] << ", " << pos[2] 
-		<< ", 0.0)\n";
-	file << node 
-		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(pos)\n";
-
-	file << "rot = Mat3x4.new()\n";
-	file << "rot:setAll(";
-	for(unsigned j = 0; j < 3; j++)
-	{
-		for(unsigned i = 0; i < 4; i++)
-		{
-			if(i == 3)
-			{
-				file << "0";
-			}
-			else
-			{
-				file << m[j][i];
-			}
-
-			if(!(i == 3 && j == 2))
-			{
-				file << ", ";
-			}
-		}
-	}
-	file << ")\n";
-
-	file << node 
-		<< ":getSceneNodeBase():getMoveComponent():setLocalRotation(rot)\n";
-}

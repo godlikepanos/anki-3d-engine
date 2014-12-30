@@ -527,7 +527,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.enabled", true);
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
-	config.set("pps.enabled", false);
+	config.set("pps.enabled", true);
 	config.set("pps.hdr.enabled", true);
 	config.set("pps.hdr.renderingQuality", 0.5);
 	config.set("pps.hdr.blurringDist", 1.0);
@@ -554,7 +554,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("tilesXCount", 16);
 	config.set("tilesYCount", 16);
 
-	config.set("fullscreenDesktopResolution", false);
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 
 	app = new App;

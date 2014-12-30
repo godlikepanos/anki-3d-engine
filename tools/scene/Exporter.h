@@ -16,6 +16,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include "Common.h"
+
 const uint32_t INVALID_INDEX = 0xFFFFFFFF;
 
 /// Thin mesh wrapper
@@ -69,6 +71,9 @@ public:
 	void exportAll();
 
 private:
+	/// @name Helpers
+	/// @{
+
 	/// Convert one 4x4 matrix to AnKi friendly matrix.
 	aiMatrix4x4 toAnkiMatrix(const aiMatrix4x4& in) const;
 
@@ -78,7 +83,40 @@ private:
 	/// Write transformation of a node
 	void writeNodeTransform(
 		const std::string& node, 
-		const aiMatrix4x4& mat) const;
+		const aiMatrix4x4& mat);
+
+	const aiMesh& getMeshAt(unsigned index) const;
+	const aiMaterial& getMaterialAt(unsigned index) const;
+	std::string getModelName(const Model& model) const;
+
+	/// Visits the node hierarchy and gathers models and nodes.
+	void visitNode(const aiNode* ainode);
+	/// @}
+
+	/// Export a mesh.
+	/// @param transform If not nullptr then transform the vertices using that.
+	void exportMesh(
+		const aiMesh& mesh, 
+		const aiMatrix4x4* transform) const;
+
+	/// Export a skeleton.
+	void exportSkeleton(const aiMesh& mesh) const;
+
+	/// Export a material.
+	void exportMaterial(
+		const aiMaterial& mtl, 
+		bool instanced) const;
+
+	/// Export a model.
+	void exportModel(const Model& model) const;
+
+	/// Export a light.
+	void exportLight(const aiLight& light);
+
+	/// Export an animation.
+	void exportAnimation(
+		const aiAnimation& anim,
+		unsigned index);
 };
 
 #endif
