@@ -57,6 +57,12 @@ Error Lf::initPseudo(const ConfigSet& config,
 	m_maxSpritesPerFlare = config.get("pps.lf.maxSpritesPerFlare");
 	m_maxFlares = config.get("pps.lf.maxFlares");
 
+	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
+	{
+		ANKI_LOGE("Incorrect m_maxSpritesPerFlare or m_maxFlares");
+		return ErrorCode::USER_DATA;
+	}
+
 	// Load program 1
 	String pps;
 	String::ScopeDestroyer ppsd(&pps, getAllocator());
@@ -217,6 +223,11 @@ Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
 	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);
 	if(totalCount > 0)
 	{
+		if(vi.getLensFlaresCount() > m_maxFlares)
+		{
+			ANKI_LOGW("Visible flares exceed the limit");
+		}
+
 		// Setup state
 		cmdb.setColorWriteMask(false, false, false, false);
 		cmdb.setDepthWriteMask(false);
@@ -246,7 +257,7 @@ Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
 
 		// Iterate lens flare
 		auto it = vi.getLensFlaresBegin();
-		auto end = vi.getLensFlaresEnd();
+		auto end = vi.getLensFlaresBegin() + totalCount;
 		for(; it != end; ++it)
 		{
 			LensFlareComponent& lf = 
@@ -264,6 +275,8 @@ Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
 
 			++positions;
 		}
+
+		ANKI_ASSERT(positions == initialPositions + totalCount);
 
 		// Restore state
 		cmdb.setColorWriteMask(true, true, true, true);
@@ -312,9 +325,9 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 	if(totalCount > 0)
 	{
 		// Allocate client buffer
-		U uboAlignment = 
+		const U uboAlignment = 
 			m_r->_getGlDevice().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
-		U bufferSize = m_flareSize * totalCount;
+		const U bufferSize = m_flareSize * totalCount;
 
 		GlClientBufferHandle flaresCBuff;
 		err = flaresCBuff.create(cmdBuff, bufferSize, nullptr);
@@ -329,13 +342,11 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 		cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);
 
 		// Send the command to write the buffer now
-		m_flareDataBuff.write(
-			cmdBuff, flaresCBuff, 0, 0, 
-			bufferSize);
+		m_flareDataBuff.write(cmdBuff, flaresCBuff, 0, 0, bufferSize);
 
 		// Iterate lens flare
 		auto it = vi.getLensFlaresBegin();
-		auto end = vi.getLensFlaresEnd();
+		auto end = vi.getLensFlaresBegin() + totalCount;
 		for(; it != end; ++it)
 		{			
 			LensFlareComponent& lf = 
@@ -389,13 +400,18 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 				// view we don't want to draw it.
 			}
 
+			ANKI_ASSERT(count <= m_maxSpritesPerFlare);
+
 			// Advance
 			U advancementSize = 
 				getAlignedRoundUp(uboAlignment, sizeof(Sprite) * count);
-
 			sprites = reinterpret_cast<Sprite*>(
 				reinterpret_cast<U8*>(sprites) + advancementSize);
+			
 		}
+
+		ANKI_ASSERT(
+			reinterpret_cast<U8*>(sprites) <= spritesInitialPtr + bufferSize);
 	}
 	else
 	{

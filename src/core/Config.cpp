@@ -55,7 +55,7 @@ Config::Config()
 
 	newOption("pps.lf.enabled", true);
 	newOption("pps.lf.maxSpritesPerFlare", 8);
-	newOption("pps.lf.maxFlares", 4);
+	newOption("pps.lf.maxFlares", 16);
 
 	newOption("pps.enabled", true);
 	newOption("pps.sharpen", true);

@@ -32,7 +32,7 @@ static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 //==============================================================================
 static SceneGraph* getSceneGraph(lua_State* l)
 {
-	LuaBinder* binder = reinterpret_cast<LuaBinder*>(lua_getuserdata(l));
+	LuaBinder* binder = static_cast<LuaBinder*>(lua_getuserdata(l));
 
 	ScriptManager* scriptManager = 
 		reinterpret_cast<ScriptManager*>(binder->getParent());
@@ -1248,11 +1248,57 @@ static int wrapPointLightgetSceneNodeBase(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap method PointLight::loadLensFlare.
+static inline int pwrapPointLightloadLensFlare(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud)) return -1;
+	PointLight* self = static_cast<PointLight*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	
+	// Call the method
+	Error ret = self->loadLensFlare(arg0);
+	
+	// Push return value
+	if(ANKI_UNLIKELY(ret))
+	{
+		lua_pushstring(l, "Glue code returned an error");
+		return -1;
+	}
+	
+	lua_pushnumber(l, ret);
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method PointLight::loadLensFlare.
+static int wrapPointLightloadLensFlare(lua_State* l)
+{
+	int res = pwrapPointLightloadLensFlare(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap class PointLight.
 static inline void wrapPointLight(lua_State* l)
 {
 	LuaBinder::createClass(l, classnamePointLight);
 	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPointLightgetSceneNodeBase);
+	LuaBinder::pushLuaCFuncMethod(l, "loadLensFlare", wrapPointLightloadLensFlare);
 	lua_settop(l, 0);
 }
 

@@ -25,6 +25,10 @@ Error GlDevice::create(
 	m_queue = m_alloc.newInstance<GlQueue>(
 		this, alloc, allocUserData);
 
+#if ANKI_QUEUE_DISABLE_ASYNC
+	ANKI_LOGW("GL queue works in synchronous mode");
+#endif
+
 	return ErrorCode::NONE;
 }
 

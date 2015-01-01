@@ -842,6 +842,11 @@ void Exporter::exportLight(const aiLight& light)
 	{
 		file << "lcomp:setShadowEnabled(1)\n";
 	}
+
+	if(light.mLensFlare)
+	{
+		file << "node:loadLensFlare(\"" << light.mLensFlare << "\")\n";
+	}
 }
 
 //==============================================================================

@@ -89,7 +89,9 @@ public:
 
 	void prepareMerge()
 	{
-		ANKI_ASSERT(m_renderablesCount == 0 && m_lightsCount == 0);
+		ANKI_ASSERT(m_renderablesCount == 0 
+			&& m_lightsCount == 0 
+			&& m_flaresCount == 0);
 		m_renderablesCount = m_renderables.getSize();
 		m_lightsCount = m_lights.getSize();
 		m_flaresCount = m_flares.getSize();

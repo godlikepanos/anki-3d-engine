@@ -57,7 +57,11 @@ void GlQueue::flushCommandBuffer(GlCommandBufferHandle& commands)
 
 	m_condVar.notifyOne(); // Wake the thread
 #else
-	commands._executeAllCommands();
+	Error err = commands._executeAllCommands();
+	if(err)
+	{
+		ANKI_LOGE("Error in command buffer");
+	}
 #endif
 }
 

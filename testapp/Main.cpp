@@ -557,7 +557,7 @@ Error initSubsystems(int argc, char* argv[])
 	//config.set("maxTextureSize", 256);
 
 	config.set("fullscreenDesktopResolution", true);
-	config.set("debugContext", false);
+	config.set("debugContext", true);
 
 	app = new App;
 	err = app->create(config, allocAligned, nullptr);

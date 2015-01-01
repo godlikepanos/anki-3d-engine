@@ -47,7 +47,7 @@ public:
 		ANKI_ASSERT(m_ptr);
 	}
 
-	Error operator()(GlCommandBuffer*)
+	Error operator()(GlCommandBuffer*) override
 	{
 		m_alloc.deleteInstance(m_ptr);
 		return ErrorCode::NONE;
@@ -110,25 +110,7 @@ public:
 
 	/// Create a new command and add it to the chain
 	template<typename TCommand, typename... TArgs>
-	void pushBackNewCommand(TArgs&&... args)
-	{
-		ANKI_ASSERT(m_immutable == false);
-		TCommand* newCommand = 
-			m_alloc.template newInstance<TCommand>(std::forward<TArgs>(args)...);
-
-		if(m_firstCommand != nullptr)
-		{
-			ANKI_ASSERT(m_lastCommand != nullptr);
-			ANKI_ASSERT(m_lastCommand->m_nextCommand == nullptr);
-			m_lastCommand->m_nextCommand = newCommand;
-			m_lastCommand = newCommand;
-		}
-		else
-		{
-			m_firstCommand = newCommand;
-			m_lastCommand = newCommand;
-		}
-	}
+	void pushBackNewCommand(TArgs&&... args);
 
 	/// Execute all commands
 	ANKI_USE_RESULT Error executeAllCommands();
@@ -161,6 +143,28 @@ private:
 	void destroy();
 };
 
+//==============================================================================
+template<typename TCommand, typename... TArgs>
+void GlCommandBuffer::pushBackNewCommand(TArgs&&... args)
+{
+	ANKI_ASSERT(m_immutable == false);
+	TCommand* newCommand = m_alloc.template newInstance<TCommand>(
+		std::forward<TArgs>(args)...);
+
+	if(m_firstCommand != nullptr)
+	{
+		ANKI_ASSERT(m_lastCommand != nullptr);
+		ANKI_ASSERT(m_lastCommand->m_nextCommand == nullptr);
+		m_lastCommand->m_nextCommand = newCommand;
+		m_lastCommand = newCommand;
+	}
+	else
+	{
+		ANKI_ASSERT(m_lastCommand == nullptr);
+		m_firstCommand = newCommand;
+		m_lastCommand = newCommand;
+	}
+}
 /// @}
 
 } // end namespace anki

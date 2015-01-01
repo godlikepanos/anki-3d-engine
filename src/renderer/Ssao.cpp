@@ -290,8 +290,7 @@ Error Ssao::run(GlCommandBufferHandle& cmdb)
 		|| m_commonUboUpdateTimestamp == 1)
 	{
 		GlClientBufferHandle tmpBuff;
-		err = tmpBuff.create(cmdb, sizeof(ShaderCommonUniforms),
-			nullptr);
+		err = tmpBuff.create(cmdb, sizeof(ShaderCommonUniforms), nullptr);
 		if(err) return err;
 
 		ShaderCommonUniforms& blk = 
