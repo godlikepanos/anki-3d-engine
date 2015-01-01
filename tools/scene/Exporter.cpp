@@ -833,7 +833,15 @@ void Exporter::exportLight(const aiLight& light)
 		ERROR("Couldn't find node for light %s", light.mName.C_Str());
 	}
 
-	writeNodeTransform("node", node->mTransformation);
+	aiMatrix4x4 rot;
+	aiMatrix4x4::RotationX(-3.1415 / 2.0, rot);
+	writeNodeTransform("node", node->mTransformation * rot);
+
+	// Extra
+	if(light.mShadow)
+	{
+		file << "lcomp:setShadowEnabled(1)\n";
+	}
 }
 
 //==============================================================================

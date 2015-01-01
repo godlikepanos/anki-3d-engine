@@ -64,11 +64,17 @@ public:
 	void stopTimerIncreaseCounter(Counter counter);
 
 private:
+	union Value
+	{
+		F64 m_float;
+		U64 m_int;
+	};
+
 	HeapAllocator<U8> m_alloc;
 	File m_perframeFile;
 	File m_perrunFile;
-	DArray<U64> m_perframeValues;
-	DArray<U64> m_perrunValues;
+	DArray<Value> m_perframeValues;
+	DArray<Value> m_perrunValues;
 	DArray<HighRezTimer::Scalar> m_counterTimes;
 };
 

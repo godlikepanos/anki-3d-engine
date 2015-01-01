@@ -142,6 +142,11 @@ public:
 		return m_size;
 	}
 
+	PtrSize getByteSize() const
+	{
+		return m_size * sizeof(Value);
+	}
+
 	Bool isEmpty() const
 	{
 		return m_size == 0;

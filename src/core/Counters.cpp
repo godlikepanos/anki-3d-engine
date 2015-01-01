@@ -26,9 +26,8 @@ enum CounterFlag
 	CF_U64 = 1 << 4
 };
 
-class CounterInfo
+struct CounterInfo
 {
-public:
 	const char* m_name;
 	U32 m_flags;
 };
@@ -40,7 +39,7 @@ static const Array<CounterInfo, (U)Counter::COUNT> cinfo = {{
 	{"RENDERER_IS_TIME", CF_PER_FRAME | CF_PER_RUN | CF_F64},
 	{"RENDERER_PPS_TIME", CF_PER_FRAME | CF_PER_RUN | CF_F64},
 	{"RENDERER_SHADOW_PASSES", CF_PER_FRAME | CF_PER_RUN | CF_U64},
-	{"RENDERER_LIGHTS_COUNT", CF_PER_RUN | CF_U64},
+	{"RENDERER_LIGHTS_COUNT", CF_PER_FRAME | CF_PER_RUN | CF_U64},
 	{"SCENE_UPDATE_TIME", CF_PER_RUN | CF_F64},
 	{"SWAP_BUFFERS_TIME", CF_PER_RUN | CF_F64},
 	{"GL_CLIENT_WAIT_TIME", CF_PER_FRAME | CF_PER_RUN | CF_F64},
@@ -62,14 +61,18 @@ Error CountersManager::create(
 	U count = static_cast<U>(Counter::COUNT);
 	m_alloc = alloc;
 	
-	err = m_perframeValues.create(m_alloc, count, 0);
+	err = m_perframeValues.create(m_alloc, count);
 	if(err) return err;
 
-	err = m_perrunValues.create(m_alloc, count, 0);
+	err = m_perrunValues.create(m_alloc, count);
 	if(err) return err;
 
-	err = m_counterTimes.create(m_alloc, count, 0.0);
+	err = m_counterTimes.create(m_alloc, count);
 	if(err) return err;
+
+	memset(&m_perframeValues[0], 0, m_perframeValues.getByteSize());
+	memset(&m_perrunValues[0], 0, m_perrunValues.getByteSize());
+	memset(&m_counterTimes[0], 0, m_counterTimes.getByteSize());
 
 	// Open and write the headers to the files
 	String tmp;
@@ -139,12 +142,12 @@ void CountersManager::increaseCounter(Counter counter, U64 val)
 
 	if(cinfo[(U)counter].m_flags & CF_PER_FRAME)
 	{
-		m_perframeValues[(U)counter] += val;
+		m_perframeValues[(U)counter].m_int += val;
 	}
 
 	if(cinfo[(U)counter].m_flags & CF_PER_RUN)
 	{
-		m_perrunValues[(U)counter] += val;
+		m_perrunValues[(U)counter].m_int += val;
 	}
 }
 
@@ -152,17 +155,15 @@ void CountersManager::increaseCounter(Counter counter, U64 val)
 void CountersManager::increaseCounter(Counter counter, F64 val)
 {
 	ANKI_ASSERT(cinfo[(U)counter].m_flags & CF_F64);
-	F64 f;
-	memcpy(&f, &val, sizeof(F64));
 
 	if(cinfo[(U)counter].m_flags & CF_PER_FRAME)
 	{
-		*(F64*)(&m_perframeValues[(U)counter]) += f;
+		m_perframeValues[(U)counter].m_float += val;
 	}
 
 	if(cinfo[(U)counter].m_flags & CF_PER_RUN)
 	{
-		*(F64*)(&m_perrunValues[(U)counter]) += f;
+		m_perrunValues[(U)counter].m_float += val;
 	}
 }
 
@@ -171,7 +172,7 @@ void CountersManager::startTimer(Counter counter)
 {
 	// The counter should be F64
 	ANKI_ASSERT(cinfo[(U)counter].m_flags & CF_F64);
-	// The timer should have beeb reseted
+	// The timer should have been reseted
 	ANKI_ASSERT(m_counterTimes[(U)counter] == 0.0);
 
 	m_counterTimes[(U)counter] = HighRezTimer::getCurrentTime();
@@ -185,10 +186,11 @@ void CountersManager::stopTimerIncreaseCounter(Counter counter)
 	// The timer should have started
 	ANKI_ASSERT(m_counterTimes[(U)counter] > 0.0);
 
-	F32 prevTime = m_counterTimes[(U)counter];
+	auto prevTime = m_counterTimes[(U)counter];
 	m_counterTimes[(U)counter] = 0.0;
 
-	increaseCounter(counter, HighRezTimer::getCurrentTime() - prevTime);
+	increaseCounter(
+		counter, (HighRezTimer::getCurrentTime() - prevTime) * 1000.0);
 }
 
 //==============================================================================
@@ -206,19 +208,20 @@ void CountersManager::resolveFrame()
 		{
 			if(inf.m_flags & CF_U64)
 			{
-				err = m_perframeFile.writeText(", %llu", m_perframeValues[i]);
+				err = m_perframeFile.writeText(
+					", %llu", m_perframeValues[i].m_int);
 			}
 			else if(inf.m_flags & CF_F64)
 			{
 				err = m_perframeFile.writeText(
-					", %f", *((F64*)&m_perframeValues[i]));
+					", %f", m_perframeValues[i].m_float);
 			}
 			else
 			{
 				ANKI_ASSERT(0);
 			}
 
-			m_perframeValues[i] = 0;
+			m_perframeValues[i].m_int = 0;
 		}
 
 		i++;
@@ -247,19 +250,19 @@ void CountersManager::flush()
 			if(inf.m_flags & CF_U64)
 			{
 				err = m_perrunFile.writeText(
-					"%" MAX_NAME "llu", m_perrunValues[i]);
+					"%" MAX_NAME "llu", m_perrunValues[i].m_int);
 			}
 			else if(inf.m_flags & CF_F64)
 			{
 				if(inf.m_flags & CF_FPS)
 				{
 					err = m_perrunFile.writeText("%" MAX_NAME "f", 
-						(F64)getGlobTimestamp() / *((F64*)&m_perrunValues[i]));
+						(F64)getGlobTimestamp() / m_perrunValues[i].m_float);
 				}
 				else
 				{
 					err = m_perrunFile.writeText("%" MAX_NAME "f", 
-						*((F64*)&m_perrunValues[i]));
+						&m_perrunValues[i].m_float);
 				}
 			}
 			else
@@ -267,7 +270,7 @@ void CountersManager::flush()
 				ANKI_ASSERT(0);
 			}
 
-			m_perrunValues[i] = 0;
+			m_perrunValues[i].m_int = 0;
 			++j;
 		}
 

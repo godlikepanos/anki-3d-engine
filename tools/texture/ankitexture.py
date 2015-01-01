@@ -10,6 +10,23 @@ import tempfile
 import shutil
 
 #
+# Config
+#
+
+class Config:
+	in_files = []
+	out_file = ""
+	fast = False
+	type = 0 
+	normal = False
+	convert_path = ""
+	no_alpha = False
+	no_uncompressed = False
+	to_linear_rgb = False
+
+	tmp_dir = ""
+
+#
 # AnKi texture
 #
 
@@ -198,6 +215,16 @@ def parse_commandline():
 			action = "store_true", default = True, 
 			help = "don't store uncompressed data")
 
+	parser.add_option("--to-linear-rgb", dest = "to_linear_rgb", 
+			action = "store_true", default = False, 
+			help = "assume the input textures are sRGB. If this option is " \
+			"true then convert them to linear RGB")
+
+	# Add the default value on each option when printing help
+	for option in parser.option_list:
+		if option.default != ("NO", "DEFAULT"):
+			option.help += (" " if option.help else "") + "[default: %default]"
+
 	(options, args) = parser.parse_args()
 
 	if not options.inp or not options.out or not options.convert_path:
@@ -214,9 +241,18 @@ def parse_commandline():
 	else:
 		parser.error("Unrecognized type: " + options.type)
 
-	return (options.inp.split(":"), options.out, options.fast, \
-			typ, options.normal, options.convert_path, options.no_alpha, \
-			options.no_uncompressed)
+	config = Config()
+	config.in_files = options.inp.split(":")
+	config.out_file = options.out
+	config.fast = options.fast
+	config.type = typ
+	config.normal = options.normal
+	config.convert_path = options.convert_path
+	config.no_alpha = options.no_alpha
+	config.no_uncompressed = options.no_uncompressed
+	config.to_linear_rgb = options.to_linear_rgb
+
+	return config
 
 def identify_image(in_file):
 	""" Return the size of the input image and the internal format """
@@ -260,7 +296,8 @@ def identify_image(in_file):
 
 	return (color_format, int(reg.group(1)), int(reg.group(2)))
 
-def create_mipmaps(in_file, tmp_dir, width_, height_, color_format):
+def create_mipmaps(in_file, tmp_dir, width_, height_, color_format, \
+		to_linear_rgb):
 	""" Create a number of images for all mipmaps """
 
 	printi("Generate mipmaps")
@@ -279,8 +316,25 @@ def create_mipmaps(in_file, tmp_dir, width_, height_, color_format):
 
 		mips_fnames.append(out_file_str)
 
-		args = ["convert", in_file, "-resize", size_str, "-alpha"]
+		args = ["convert", in_file]
+		
+		# to linear
+		if to_linear_rgb:
+			if color_format != CF_RGB8:
+				raise Exception("to linear RGB only supported for RGB textures")
+			
+			args.append("-set") 
+			args.append("colorspace")
+			args.append("sRGB")
+			args.append("-colorspace")
+			args.append("RGB")
 
+		# resize
+		args.append("-resize") 
+		args.append(size_str) 
+
+		# alpha
+		args.append("-alpha") 
 		if color_format == CF_RGB8:
 			args.append("deactivate")
 		else:
@@ -513,43 +567,43 @@ def write_etc(out_file, fname, width, height, color_format):
 
 	out_file.write(data)
 
-def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha, \
-		no_uncompressed):
+def convert(config):
 	""" This is the function that does all the work """
 
 	# Invoke app named "identify" to get internal format and width and height
-	(color_format, width, height) = identify_image(in_files[0])
+	(color_format, width, height) = identify_image(config.in_files[0])
 
 	if not is_power2(width) or not is_power2(height):
 		raise Exception("Image width and height should power of 2")
 
-	if color_format == CF_RGBA8 and normal:
+	if color_format == CF_RGBA8 and config.normal:
 		raise Exception("RGBA image and normal does not make much sense")
 
-	for i in range(1, len(in_files)):
+	for i in range(1, len(config.in_files)):
 		(color_format_2, width_2, height_2) = identify_image(in_files[i])
 
 		if width != width_2 or height != height_2 \
 				or color_format != color_format_2:
 			raise Exception("Images are not same size and color space")
 
-	if no_alpha:
+	if config.no_alpha:
 		color_format = CF_RGB8
 
 	# Create images
-	for in_file in in_files:
-		mips_fnames = create_mipmaps(in_file, tmp_dir, width, height, \
-				color_format)
+	for in_file in config.in_files:
+		mips_fnames = create_mipmaps(in_file, config.tmp_dir, width, height, \
+				color_format, config.to_linear_rgb)
 
 		# Create etc images
-		create_etc_images(mips_fnames, tmp_dir, fast, color_format, \
-				convert_path)
+		create_etc_images(mips_fnames, config.tmp_dir, config.fast, \
+				color_format, config.convert_path)
 
 		# Create dds images
-		create_dds_images(mips_fnames, tmp_dir, fast, color_format, normal)
+		create_dds_images(mips_fnames, config.tmp_dir, config.fast, \
+				color_format, config.normal)
 
 	# Open file
-	fname = out
+	fname = config.out_file
 	printi("Writing %s" % fname)
 	tex_file = open(fname, "wb")
 
@@ -557,18 +611,18 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha, \
 	ak_format = "8sIIIIIIII"
 
 	data_compression = DC_S3TC | DC_ETC2
-	if not no_uncompressed:
+	if not config.no_uncompressed:
 		data_compression = data_compression | DC_RAW
 
 	buff = struct.pack(ak_format, 
 			b"ANKITEX1",
 			width,
 			height,
-			len(in_files),
-			typ,
+			len(config.in_files),
+			config.type,
 			color_format,
 			data_compression,
-			normal,
+			config.normal,
 			len(mips_fnames))
 
 	tex_file.write(buff)
@@ -592,13 +646,13 @@ def convert(in_files, out, fast, typ, normal, tmp_dir, convert_path, no_alpha, \
 		while tmp_width >= 4 and tmp_height >= 4:
 
 			# For each image
-			for in_file in in_files:
+			for in_file in config.in_files:
 				size_str = "%dx%d" % (tmp_width, tmp_height)
-				in_base_fname = os.path.join(tmp_dir, get_base_fname(in_file)) \
-						+ "." + size_str
+				in_base_fname = os.path.join(config.tmp_dir, \
+						get_base_fname(in_file)) + "." + size_str
 
 				# Write RAW
-				if compression == 0 and not no_uncompressed:
+				if compression == 0 and not config.no_uncompressed:
 					write_raw(tex_file, in_base_fname + ".tga", \
 							tmp_width, tmp_height, color_format)
 				# Write S3TC
@@ -617,31 +671,30 @@ def main():
 	""" The main """
 
 	# Parse cmd line args
-	(in_files, out, fast, typ, normal, convert_path, \
-			no_alpha, no_uncompressed) = parse_commandline();
+	config = parse_commandline();
 
-	if typ == TT_CUBE and len(in_files) != 6:
+	if config.type == TT_CUBE and len(config.in_files) != 6:
 		raise Exception("Not enough images for cube generation")
 
-	if (typ == TT_3D or typ == TT_2D_ARRAY) and len(in_files) < 2:
+	if (config.type == TT_3D or config.type == TT_2D_ARRAY) \
+			and len(config.in_files) < 2:
 		#raise Exception("Not enough images for 2DArray/3D texture")
 		printw("Not enough images for 2DArray/3D texture")
 
-	if typ == TT_2D and len(in_files) != 1:
+	if config.type == TT_2D and len(config.in_files) != 1:
 		raise Exception("Only one image for 2D textures needed")
 
-	if not os.path.isfile(convert_path):
-		raise Exception("Tool convert not found: " + convert_path)
+	if not os.path.isfile(config.convert_path):
+		raise Exception("Tool convert not found: " + config.convert_path)
 
 	# Setup the temp dir
-	tmp_dir = tempfile.mkdtemp("_ankitex")
+	config.tmp_dir = tempfile.mkdtemp("_ankitex")
 
 	# Do the work
 	try:
-		convert(in_files, out, fast, typ, normal, tmp_dir, \
-				convert_path, no_alpha, no_uncompressed)
+		convert(config)
 	finally:
-		shutil.rmtree(tmp_dir)
+		shutil.rmtree(config.tmp_dir)
 		
 	# Done
 	printi("Done!")

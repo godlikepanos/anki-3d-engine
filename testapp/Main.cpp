@@ -101,7 +101,7 @@ Error init()
 	}
 #endif
 
-#if 1
+#if 0
 	err = scene.newSceneNode<SpotLight>("spot0", spot);
 	if(err) return err;
 
@@ -532,7 +532,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.hdr.renderingQuality", 0.5);
 	config.set("pps.hdr.blurringDist", 1.0);
 	config.set("pps.hdr.blurringIterationsCount", 2);
-	config.set("pps.hdr.exposure", 10.0);
+	config.set("pps.hdr.exposure", 15.0);
 	config.set("pps.hdr.samples", 17);
 	config.set("pps.sslr.enabled", true);
 	config.set("pps.sslr.renderingQuality", 0.5);
@@ -544,7 +544,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.bl.blurringIterationsCount", 2);
 	config.set("pps.bl.sideBlurFactor", 1.0);
 	config.set("pps.lf.enabled", true);
-	config.set("pps.sharpen", true);
+	config.set("pps.sharpen", false);
 	config.set("renderingQuality", 1.0);
 	config.set("width", 1280);
 	config.set("height", 720);
@@ -553,6 +553,8 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("tessellation", true);
 	config.set("tilesXCount", 16);
 	config.set("tilesYCount", 16);
+
+	//config.set("maxTextureSize", 256);
 
 	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);

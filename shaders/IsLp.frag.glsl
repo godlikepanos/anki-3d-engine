@@ -348,7 +348,7 @@ void main()
 #if 0
 	if(in_instanceId != 99999)
 	{
-		out_color = vec3(diffCol);
+		out_color = vec3(normal);
 	}
 #endif
 }

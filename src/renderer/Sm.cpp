@@ -93,7 +93,7 @@ void Sm::prepareDraw(GlCommandBufferHandle& cmdBuff)
 	cmdBuff.setColorWriteMask(false, false, false, false);
 
 	// for artifacts
-	cmdBuff.setPolygonOffset(2.0, 2.0); // keep both as low as possible!!!!
+	cmdBuff.setPolygonOffset(7.0, 5.0); // keep both as low as possible!!!!
 	cmdBuff.enablePolygonOffset(true);
 
 	m_r->getSceneDrawer().prepareDraw(

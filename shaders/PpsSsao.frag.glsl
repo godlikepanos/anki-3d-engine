@@ -28,7 +28,7 @@ layout(binding = 1) uniform sampler2D uMsRt;
 layout(binding = 2) uniform sampler2D uNoiseMap;
 
 #define RADIUS 0.5
-#define DARKNESS_MULTIPLIER 1.0 // Initial is 1.0 but the bigger it is the more
+#define DARKNESS_MULTIPLIER 1.5 // Initial is 1.0 but the bigger it is the more
                                 // darker the SSAO factor gets
 
 // Get normal

@@ -164,9 +164,9 @@ Error GlTexture::create(const Initializer& init,
 	// Load data
 	if(init.m_data[0][0].m_ptr != nullptr)
 	{
-		Bool compressed;
-		GLenum format;
-		GLenum type;
+		Bool compressed = false;
+		GLenum format = GL_NONE;
+		GLenum type = GL_NONE;
 		getTextureInformation(m_internalFormat, compressed, format, type);
 
 		U w = m_width;
