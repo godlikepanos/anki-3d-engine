@@ -130,6 +130,20 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
+		<class name="LensFlareComponent">
+			<methods>
+				<method name="setFirstFlareSize">
+					<args>
+						<arg>const Vec2&amp;</arg>
+					</args>
+				</method>
+				<method name="setColorMultiplier">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
 		<class name="SceneNode">
 			<methods>
 				<method name="getName">

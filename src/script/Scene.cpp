@@ -849,6 +849,109 @@ static inline void wrapLightComponent(lua_State* l)
 }
 
 //==============================================================================
+// LensFlareComponent                                                          =
+//==============================================================================
+
+//==============================================================================
+static const char* classnameLensFlareComponent = "LensFlareComponent";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<LensFlareComponent>()
+{
+	return -2019248835133422777;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<LensFlareComponent>()
+{
+	return classnameLensFlareComponent;
+}
+
+//==============================================================================
+/// Pre-wrap method LensFlareComponent::setFirstFlareSize.
+static inline int pwrapLensFlareComponentsetFirstFlareSize(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, -2019248835133422777, ud)) return -1;
+	LensFlareComponent* self = static_cast<LensFlareComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
+	Vec2* iarg0 = static_cast<Vec2*>(ud->m_data);
+	const Vec2& arg0(*iarg0);
+	
+	// Call the method
+	self->setFirstFlareSize(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method LensFlareComponent::setFirstFlareSize.
+static int wrapLensFlareComponentsetFirstFlareSize(lua_State* l)
+{
+	int res = pwrapLensFlareComponentsetFirstFlareSize(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method LensFlareComponent::setColorMultiplier.
+static inline int pwrapLensFlareComponentsetColorMultiplier(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, -2019248835133422777, ud)) return -1;
+	LensFlareComponent* self = static_cast<LensFlareComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
+	const Vec4& arg0(*iarg0);
+	
+	// Call the method
+	self->setColorMultiplier(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method LensFlareComponent::setColorMultiplier.
+static int wrapLensFlareComponentsetColorMultiplier(lua_State* l)
+{
+	int res = pwrapLensFlareComponentsetColorMultiplier(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class LensFlareComponent.
+static inline void wrapLensFlareComponent(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameLensFlareComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "setFirstFlareSize", wrapLensFlareComponentsetFirstFlareSize);
+	LuaBinder::pushLuaCFuncMethod(l, "setColorMultiplier", wrapLensFlareComponentsetColorMultiplier);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
 // SceneNode                                                                   =
 //==============================================================================
 
@@ -1651,6 +1754,7 @@ void wrapModuleScene(lua_State* l)
 {
 	wrapMoveComponent(l);
 	wrapLightComponent(l);
+	wrapLensFlareComponent(l);
 	wrapSceneNode(l);
 	wrapModelNode(l);
 	wrapInstanceNode(l);

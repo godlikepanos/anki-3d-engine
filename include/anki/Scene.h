@@ -7,6 +7,7 @@
 #define ANKI_SCENE_SCENE_H
 
 #include "anki/scene/SceneGraph.h"
+#include "anki/scene/LensFlareComponent.h"
 #include "anki/scene/ModelNode.h"
 #include "anki/scene/SkinNode.h"
 #include "anki/scene/StaticGeometryNode.h"
