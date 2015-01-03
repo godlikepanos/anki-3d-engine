@@ -56,7 +56,7 @@ private:
 class ModelNode: public SceneNode
 {
 	friend class ModelPatchNode;
-	friend class ModelNodeFeedbackComponent;
+	friend class ModelMoveFeedbackComponent;
 
 public:
 	ModelNode(SceneGraph* scene);

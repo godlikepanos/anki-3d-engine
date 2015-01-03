@@ -119,7 +119,9 @@ Threadpool::Threadpool(U32 threadsCount)
 	m_threadsCount = threadsCount;
 	ANKI_ASSERT(m_threadsCount <= MAX_THREADS && m_threadsCount > 0);
 
-#if !ANKI_DISABLE_THREADPOOL_THREADING
+#if ANKI_DISABLE_THREADPOOL_THREADING
+	ANKI_LOGW("Threadpool works in synchronous mode");
+#else
 	m_threads = reinterpret_cast<detail::ThreadpoolThread*>(
 		malloc(sizeof(detail::ThreadpoolThread) * m_threadsCount));
 

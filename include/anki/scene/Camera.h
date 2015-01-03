@@ -19,8 +19,8 @@ namespace anki {
 /// Camera SceneNode interface class
 class Camera: public SceneNode
 {
-	friend class MoveFeedbackComponent;
-	friend class FrustumFeedbackComponent;
+	friend class CameraMoveFeedbackComponent;
+	friend class CameraFrustumFeedbackComponent;
 
 public:
 	/// @note Don't EVER change the order

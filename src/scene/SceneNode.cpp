@@ -23,6 +23,18 @@ Error SceneNode::create(const CString& name)
 SceneNode::~SceneNode()
 {
 	auto alloc = getSceneAllocator();
+	
+	auto it = m_components.begin();
+	auto end = m_components.begin() + m_componentsCount;
+	for(; it != end; ++it)
+	{
+		SceneComponent* comp = *it;
+		if(comp->getAutomaticCleanup())
+		{
+			alloc.deleteInstance(comp);
+		}
+	}
+
 	Base::destroy(alloc);
 	m_name.destroy(alloc);
 	m_components.destroy(alloc);

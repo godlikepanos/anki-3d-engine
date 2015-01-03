@@ -47,10 +47,16 @@ private:
 	Transform m_trf = Transform::getIdentity();
 	Bool8 m_updated = true;
 
-	// Newton callback.
+	/// Newton callback.
 	static void onTransform(
 		const NewtonBody* const body, 
 		const dFloat* const matrix, 
+		int threadIndex);
+
+	/// Newton callback
+	static void applyGravityForce(
+		const NewtonBody* body, 
+		dFloat timestep, 
 		int threadIndex);
 };
 /// @}

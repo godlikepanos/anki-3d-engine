@@ -102,6 +102,35 @@ vec3 readNormalFromTexture(in vec3 normal, in vec4 tangent,
 }
 #endif
 
+// Do normal mapping by combining normal maps
+#if PASS == COLOR
+#	define combineNormalFromTextures_DEFINED
+vec3 combineNormalFromTextures(in vec3 normal, in vec4 tangent,
+	in sampler2D map, in sampler2D map2, in highp vec2 texCoords,
+	in float texCoords2Scale)
+{
+#	if LOD > 0
+	return normalize(normal);
+#	else
+	// First read the textures
+	vec3 nAtTangentspace0 = 
+		normalize((texture(map, texCoords).rgb - 0.5) * 2.0);
+	vec3 nAtTangentspace1 = 
+		normalize((texture(map2, texCoords * texCoords2Scale).rgb - 0.5) * 2.0);
+
+	vec3 nAtTangentspace = (nAtTangentspace0 + nAtTangentspace1) / 2.0;
+
+	vec3 n = normal; // Assume that getNormal() is called
+	vec3 t = normalize(tangent.xyz);
+	vec3 b = cross(n, t) * tangent.w;
+
+	mat3 tbnMat = mat3(t, b, n);
+
+	return tbnMat * nAtTangentspace;
+#	endif
+}
+#endif
+
 // Do environment mapping
 #if PASS == COLOR
 #	define readEnvironmentColor_DEFINED

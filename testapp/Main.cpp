@@ -54,7 +54,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 1.0);
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 3.0);
 
 	if(getenv("PROFILE"))
 	{
@@ -219,10 +219,10 @@ Error init()
 	}
 #endif
 
-#if 0
+#if 1
 	// horse
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
-		"models/horse/horse.ankimdl");
+		"models/crate0/crate0.ankimdl");
 	if(err) return err;
 	horse->getComponent<MoveComponent>().setLocalTransform(
 		Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(), 0.7));
@@ -253,7 +253,7 @@ Error init()
 		move->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
 	}
 
-#if 1
+#if 0
 	{
 		ScriptResourcePointer script;
 
@@ -556,8 +556,8 @@ Error initSubsystems(int argc, char* argv[])
 
 	//config.set("maxTextureSize", 256);
 
-	config.set("fullscreenDesktopResolution", true);
-	config.set("debugContext", true);
+	config.set("fullscreenDesktopResolution", false);
+	config.set("debugContext", false);
 
 	app = new App;
 	err = app->create(config, allocAligned, nullptr);

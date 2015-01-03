@@ -230,14 +230,14 @@ Error ModelPatchNode::updateInstanceSpatials(
 }
 
 //==============================================================================
-// ModelNodeFeedbackComponent                                                  =
+// ModelMoveFeedbackComponent                                                  =
 //==============================================================================
 
 /// Feedback component.
-class ModelNodeFeedbackComponent: public SceneComponent
+class ModelMoveFeedbackComponent: public SceneComponent
 {
 public:
-	ModelNodeFeedbackComponent(SceneNode* node)
+	ModelMoveFeedbackComponent(SceneNode* node)
 	:	SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
@@ -251,6 +251,35 @@ public:
 		{
 			ModelNode& mnode = static_cast<ModelNode&>(node);
 			mnode.onMoveComponentUpdate(move);
+		}
+
+		return ErrorCode::NONE;
+	}
+};
+
+//==============================================================================
+// ModelBodyFeedbackComponent                                                  =
+//==============================================================================
+
+/// Body feedback component.
+class ModelBodyFeedbackComponent: public SceneComponent
+{
+public:
+	ModelBodyFeedbackComponent(SceneNode* node)
+	:	SceneComponent(SceneComponent::Type::NONE, node)
+	{}
+
+	ANKI_USE_RESULT Error update(
+		SceneNode& node, F32, F32, Bool& updated)
+	{
+		updated = false;
+
+		BodyComponent& bodyc = node.getComponent<BodyComponent>();
+
+		if(bodyc.getTimestamp() == getGlobTimestamp())
+		{
+			MoveComponent& move = node.getComponent<MoveComponent>();
+			move.setLocalTransform(bodyc.getTransform());
 		}
 
 		return ErrorCode::NONE;
@@ -310,22 +339,6 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 		if(err) return err;
 	}
 
-	// Move component
-	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-	err = addComponent(comp);
-	if(err) return err;
-	comp->setAutomaticCleanup(true);
-
-	// Feedback component
-	comp = getSceneAllocator().newInstance<ModelNodeFeedbackComponent>(this);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-	err = addComponent(comp);
-	if(err) return err;
-	comp->setAutomaticCleanup(true);
-
 	// Load rigid body
 	const PhysicsCollisionShape* shape = m_model->getPhysicsCollisionShape();
 	if(shape != nullptr)
@@ -338,15 +351,35 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 			getSceneGraph()._getPhysicsWorld().newBody<PhysicsBody>(init);
 		if(m_body == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-		BodyComponent* bodyComp = 
-			getSceneAllocator().newInstance<BodyComponent>(this, m_body);
-		if(bodyComp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+		// Body component
+		comp = getSceneAllocator().newInstance<BodyComponent>(this, m_body);
+		if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-		err = addComponent(bodyComp);
+		err = addComponent(comp, true);
 		if(err) return err;
 
-		bodyComp->setAutomaticCleanup(true);
+		// Feedback component
+		comp = 
+			getSceneAllocator().newInstance<ModelBodyFeedbackComponent>(this);
+		if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+
+		err = addComponent(comp, true);
+		if(err) return err;
 	}
+
+	// Move component
+	comp = getSceneAllocator().newInstance<MoveComponent>(this);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+
+	err = addComponent(comp, true);
+	if(err) return err;
+
+	// Feedback component
+	comp = getSceneAllocator().newInstance<ModelMoveFeedbackComponent>(this);
+	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+
+	err = addComponent(comp, true);
+	if(err) return err;
 
 	return err;
 }

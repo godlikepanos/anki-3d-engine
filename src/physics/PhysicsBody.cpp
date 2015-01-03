@@ -30,6 +30,7 @@ Error PhysicsBody::create(const Initializer& init)
 
 	// Create
 	Mat4 trf = Mat4(init.m_startTrf);
+	trf.transpose();
 	if(init.m_kinematic)
 	{
 		// TODO
@@ -57,8 +58,7 @@ Error PhysicsBody::create(const Initializer& init)
 	// Set gravity
 	if(init.m_gravity)
 	{
-		Vec3 gravityForce(0.0, -9.8f * init.m_mass, 0.0);
-		NewtonBodySetForce(m_body, &gravityForce[0]);
+		NewtonBodySetForceAndTorqueCallback(m_body, applyGravityForce);
 	}
 
 	// Activate
@@ -82,7 +82,28 @@ void PhysicsBody::onTransform(
 
 	Mat4 trf;
 	memcpy(&trf, matrix, sizeof(Mat4));
+	trf.transpose();
+	trf(3, 3) = 0.0;
 	self->m_trf = Transform(trf);
+	self->m_updated = true;
+}
+
+//==============================================================================
+void PhysicsBody::applyGravityForce(
+	const NewtonBody* body, 
+	dFloat timestep, 
+	int threadIndex)
+{
+	dFloat Ixx;
+	dFloat Iyy;
+	dFloat Izz;
+	dFloat mass;
+
+	NewtonBodyGetMassMatrix(body, &mass, &Ixx, &Iyy, &Izz);
+
+	const F32 GRAVITY = -9.8;
+	Vec4 force(0.0, mass * GRAVITY, 0.0, 0.0);
+	NewtonBodySetForce(body, &force[0]);
 }
 
 } // end namespace anki

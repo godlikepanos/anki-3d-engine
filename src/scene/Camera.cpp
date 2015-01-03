@@ -8,14 +8,14 @@
 namespace anki {
 
 //==============================================================================
-// MoveFeedbackComponent                                                       =
+// CameraMoveFeedbackComponent                                                 =
 //==============================================================================
 
 /// Feedback component.
-class MoveFeedbackComponent: public SceneComponent
+class CameraMoveFeedbackComponent: public SceneComponent
 {
 public:
-	MoveFeedbackComponent(Camera* node)
+	CameraMoveFeedbackComponent(Camera* node)
 	:	SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
@@ -36,14 +36,14 @@ public:
 };
 
 //==============================================================================
-// FrustumFeedbackComponent                                                    =
+// CameraFrustumFeedbackComponent                                              =
 //==============================================================================
 
 /// Feedback component.
-class FrustumFeedbackComponent: public SceneComponent
+class CameraFrustumFeedbackComponent: public SceneComponent
 {
 public:
-	FrustumFeedbackComponent(Camera* node)
+	CameraFrustumFeedbackComponent(Camera* node)
 	:	SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
@@ -89,7 +89,7 @@ Error Camera::create(const CString& name, Frustum* frustum)
 	if(err) return err;
 
 	// Feedback component
-	comp = getSceneAllocator().newInstance<MoveFeedbackComponent>(this);
+	comp = getSceneAllocator().newInstance<CameraMoveFeedbackComponent>(this);
 	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
 	err = addComponent(comp, true);
@@ -103,7 +103,8 @@ Error Camera::create(const CString& name, Frustum* frustum)
 	if(err) return err;
 
 	// Feedback component #2
-	comp = getSceneAllocator().newInstance<FrustumFeedbackComponent>(this);
+	comp = 
+		getSceneAllocator().newInstance<CameraFrustumFeedbackComponent>(this);
 	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
 	err = addComponent(comp, true);

@@ -60,6 +60,9 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
+	// Set the simplified solver mode (faster but less accurate)
+	NewtonSetSolverModel(m_world, 1);
+
 	return err;
 }
 
