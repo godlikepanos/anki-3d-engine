@@ -8,169 +8,165 @@
 
 #include "anki/resource/Common.h"
 #include "anki/Math.h"
-#include "anki/util/Array.h"
 
 namespace anki {
 
 /// Mesh data. This class loads the mesh file and the Mesh class loads it to
-/// the GPU
-///
-/// Binary file format:
-///
-/// @code
-/// // Header
-/// <magic:ANKIMESH>
-/// <string:meshName>
-///
-/// // Verts
-/// U32: verts number
-/// F32: vert 0 x, F32 vert 0 y, F32: vert 0 z
-/// ...
-///
-/// // Faces
-/// U32: faces number
-/// U32: tri 0 vert ID 0, U32: tri 0 vert ID 1, U32: tri 0 vert ID 2
-/// ...
-///
-/// // Tex coords
-/// U32: tex coords number
-/// F32: tex coord for vert 0 x, F32: tex coord for vert 0 y
-/// ...
-///
-/// // Bone weights
-/// U32: bone weights number (equal to verts number)
-/// U32: bones number for vert 0, U32: bone id for vert 0 and weight 0,
-///       F32: weight for vert 0 and weight 0, ...
-/// ...
-/// @endcode
+/// the GPU.
 class MeshLoader
 {
 public:
-	template<typename T>
-	using MLDArray = TempResourceDArrayAuto<T>;
-
-	/// If two vertices have the same position and normals under the angle 
-	/// specified by this constant then combine those normals
-	static constexpr F32 NORMALS_ANGLE_MERGE = getPi<F32>() / 6;
-
-	/// Vertex weight for skeletal animation
-	class VertexWeight
+	/// Type of the components.
+	enum class ComponentFormat: U32
 	{
-	public:
-		/// Dont change this or prepare to change the skinning code in
-		/// shader
-		static const U32 MAX_BONES_PER_VERT = 4;
+		NONE,
 
-		U16 m_bonesCount;
-		Array<U16, MAX_BONES_PER_VERT> m_boneIds;
-		Array<F16, MAX_BONES_PER_VERT> m_weights;
+		R8,
+		R8G8,
+		R8G8B8,
+		R8G8B8A8,
+
+		R16,
+		R16G16,
+		R16G16B16,
+		R16G16B16A16,
+
+		R32,
+		R32G32,
+		R32G32B32,
+		R32G32B32A32,
+
+		R10G10B10A2,
+
+		COUNT
 	};
 
-	/// Triangle
-	class Triangle
+	enum class FormatTransform: U32
 	{
-	public:
-		/// An array with the vertex indexes in the mesh class
-		Array<U32, 3> m_vertIds;
-		Vec3 m_normal;
+		NONE,
+
+		UNORM,
+		SNORM,
+		UINT,
+		SINT,
+		FLOAT,
+
+		COUNT
 	};
 
-	MeshLoader(TempResourceAllocator<U8>& alloc);
+	struct Format
+	{
+		ComponentFormat m_components = ComponentFormat::NONE;
+		FormatTransform m_transform = FormatTransform::NONE;
+	};
+
+	struct Header
+	{
+		Array<U8, 8> m_magic; ///< Magic word.
+		U32 m_flags;
+		U32 m_flags2;
+		Format m_positionsFormat;
+		Format m_normalsFormat;
+		Format m_tangentsFormat;
+		Format m_colorsFormat; ///< Vertex color.
+		Format m_uvsFormat;
+		Format m_boneWeightsFormat;
+		Format m_boneIndicesFormat;
+		Format m_indicesFormat; ///< Vertex indices.
+
+		U32 m_totalIndicesCount;
+		U32 m_totalVerticesCount;
+		/// Number of UV sets. Eg one for normal diffuse and another for 
+		/// lightmaps.
+		U32 m_uvsChannelCount;
+		U32 m_subMeshCount;
+
+		U8 m_padding[32];
+	};
+
+	static_assert(sizeof(Header) == 128, "Check size of struct");
+
+	struct SubMesh
+	{
+		U32 m_firstIndex = 0;
+		U32 m_indicesCount = 0;
+	};
 
 	~MeshLoader();
 
-	/// @name Accessors
-	/// @{
-	const MLDArray<Vec3>& getPositions() const
+	ANKI_USE_RESULT Error load(
+		TempResourceAllocator<U8> alloc,
+		const CString& filename);
+
+	const Header& getHeader() const
 	{
-		return m_positions;
+		ANKI_ASSERT(isLoaded());
+		return m_header;
 	}
 
-	const MLDArray<HVec3>& getNormals() const
+	const U8* getVertexData() const
 	{
-		return m_normalsF16;
+		ANKI_ASSERT(isLoaded());
+		return &m_verts[0];
 	}
 
-	const MLDArray<HVec4>& getTangents() const
+	PtrSize getVertexDataSize() const
 	{
-		return m_tangentsF16;
+		ANKI_ASSERT(isLoaded());
+		return m_verts.getSizeInBytes();
 	}
 
-	const MLDArray<HVec2>& getTextureCoordinates(const U32 channel) const
+	PtrSize getVertexSize() const
 	{
-		return m_texCoordsF16;
-	}
-	U getTextureChannelsCount() const
-	{
-		return 1;
+		ANKI_ASSERT(isLoaded());
+		return m_vertSize;
 	}
 
-	const MLDArray<VertexWeight>& getWeights() const
+	const U8* getIndexData() const
 	{
-		return m_weights;
+		ANKI_ASSERT(isLoaded());
+		return &m_indices[0];
 	}
 
-	const MLDArray<U16>& getIndices() const
+	PtrSize getIndexDataSize() const
 	{
-		return m_vertIndices;
+		ANKI_ASSERT(isLoaded());
+		return m_indices.getSizeInBytes();
 	}
-	/// @}
 
-	/// Append data from another mesh loader. BucketMesh method
-	ANKI_USE_RESULT Error append(const MeshLoader& other);
-
-	/// Load the mesh data from a binary file
-	/// @exception Exception
-	ANKI_USE_RESULT Error load(const CString& filename);
+	Bool hasBoneInfo() const
+	{
+		ANKI_ASSERT(isLoaded());
+		return 
+			m_header.m_boneWeightsFormat.m_components != ComponentFormat::NONE;
+	}
 
 private:
+	template<typename T>
+	using MDArray = DArray<T>;
+
 	TempResourceAllocator<U8> m_alloc;
+	Header m_header;
 
-	MLDArray<Vec3> m_positions; ///< Loaded from file
+	MDArray<U8> m_verts;
+	MDArray<U8> m_indices;
+	MDArray<SubMesh> m_subMeshes;
+	U8 m_vertSize = 0;
 
-	MLDArray<Vec3> m_normals; ///< Generated
-	MLDArray<HVec3> m_normalsF16;
-
-	MLDArray<Vec4> m_tangents; ///< Generated
-	MLDArray<HVec4> m_tangentsF16;
-
-	/// Optional. One for every vert so we can use vertex arrays & VBOs
-	MLDArray<Vec2> m_texCoords;
-	MLDArray<HVec2> m_texCoordsF16;
-
-	MLDArray<VertexWeight> m_weights; ///< Optional
-
-	MLDArray<Triangle> m_tris; ///< Required
-
-	/// Generated. Used for vertex arrays & VBOs
-	MLDArray<U16> m_vertIndices;
-
-	ANKI_USE_RESULT Error createFaceNormals();
-	ANKI_USE_RESULT Error createVertNormals();
-	ANKI_USE_RESULT Error createAllNormals()
+	Bool isLoaded() const
 	{
-		Error err = createFaceNormals();
-		if(!err)
-		{
-			err = createVertNormals();
-		}
-		return err;
+		return m_verts.getSize() > 0;
 	}
-	ANKI_USE_RESULT Error createVertTangents();
-	ANKI_USE_RESULT Error createVertIndeces();
 
-	/// This method does some sanity checks and creates normals,
-	/// tangents, VBOs etc
-	/// @exception Exception
-	ANKI_USE_RESULT Error doPostLoad();
+	ANKI_USE_RESULT Error loadInternal(const CString& filename);
 
-	/// It iterates all verts and fixes the normals on seams
-	void fixNormals();
-
-	/// Compress some buffers for increased BW performance
-	ANKI_USE_RESULT Error compressBuffers();
+	static ANKI_USE_RESULT Error checkFormat(
+		const Format& fmt, 
+		const CString& attrib,
+		Bool cannotBeEmpty);
 };
 
 } // end namespace anki
 
 #endif
+

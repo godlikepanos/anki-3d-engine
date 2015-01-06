@@ -5,7 +5,7 @@
 
 #include "anki/resource/Mesh.h"
 #include "anki/resource/ResourceManager.h"
-#include "anki/resource/MeshLoader2.h"
+#include "anki/resource/MeshLoader.h"
 #include "anki/util/Functions.h"
 #include "anki/misc/Xml.h"
 
@@ -37,11 +37,11 @@ Error Mesh::load(const CString& filename, ResourceInitializer& init)
 {
 	Error err = ErrorCode::NONE;
 
-	MeshLoader2 loader;
+	MeshLoader loader;
 	err = loader.load(init.m_tempAlloc, filename);
 	if(err) return err;
 
-	const MeshLoader2::Header& header = loader.getHeader();
+	const MeshLoader::Header& header = loader.getHeader();
 	m_indicesCount = header.m_totalIndicesCount;
 
 	PtrSize vertexSize = loader.getVertexSize();
@@ -63,7 +63,7 @@ Error Mesh::load(const CString& filename, ResourceInitializer& init)
 }
 
 //==============================================================================
-Error Mesh::createBuffers(const MeshLoader2& loader,
+Error Mesh::createBuffers(const MeshLoader& loader,
 	ResourceInitializer& init)
 {
 	Error err = ErrorCode::NONE;

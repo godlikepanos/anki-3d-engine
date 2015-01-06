@@ -13,7 +13,7 @@
 
 namespace anki {
 
-class MeshLoader2;
+class MeshLoader;
 
 /// Vertex attributes. This should match the shaders
 enum class VertexAttribute: U8
@@ -118,7 +118,7 @@ protected:
 
 	/// Create the VBOs using the mesh data
 	ANKI_USE_RESULT Error createBuffers(
-		const MeshLoader2& loader, ResourceInitializer& init);
+		const MeshLoader& loader, ResourceInitializer& init);
 };
 
 /// A mesh that behaves as a mesh and as a collection of separate meshes.
