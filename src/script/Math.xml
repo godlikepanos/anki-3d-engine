@@ -13,7 +13,12 @@ namespace anki {]]></head>
 
 	<classes>
 		<class name="Vec2">
-			<constructor></constructor>
+			<constructor>
+				<args>
+					<arg>F32</arg>
+					<arg>F32</arg>
+				</args>
+			</constructor>
 			<methods>
 				<method name="getX">
 					<overrideCall>F32 ret = (*self).x();</overrideCall>
@@ -107,7 +112,13 @@ namespace anki {]]></head>
 			</methods>
 		</class>
 		<class name="Vec3">
-			<constructor></constructor>
+			<constructor>
+				<args>
+					<arg>F32</arg>
+					<arg>F32</arg>
+					<arg>F32</arg>
+				</args>
+			</constructor>
 			<methods>
 				<method name="getX">
 					<overrideCall>F32 ret = (*self).x();</overrideCall>
@@ -213,7 +224,14 @@ namespace anki {]]></head>
 			</methods>
 		</class>
 		<class name="Vec4">
-			<constructor></constructor>
+			<constructor>
+				<args>
+					<arg>F32</arg>
+					<arg>F32</arg>
+					<arg>F32</arg>
+					<arg>F32</arg>
+				</args>
+			</constructor>
 			<methods>
 				<method name="getX">
 					<overrideCall>F32 ret = (*self).x();</overrideCall>

@@ -38,7 +38,14 @@ static inline int pwrapVec2Ctor(lua_State* l)
 	void* voidp;
 	(void)voidp;
 	
-	LuaBinder::checkArgsCount(l, 0);
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 1, arg0)) return -1;
+	
+	F32 arg1;
+	if(LuaBinder::checkNumber(l, 2, arg1)) return -1;
 	
 	// Create user data
 	void* inst = LuaBinder::luaAlloc(l, sizeof(Vec2));
@@ -48,7 +55,7 @@ static inline int pwrapVec2Ctor(lua_State* l)
 		return -1;
 	}
 	
-	::new(inst) Vec2();
+	::new(inst) Vec2(arg0, arg1);
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
@@ -849,7 +856,17 @@ static inline int pwrapVec3Ctor(lua_State* l)
 	void* voidp;
 	(void)voidp;
 	
-	LuaBinder::checkArgsCount(l, 0);
+	LuaBinder::checkArgsCount(l, 3);
+	
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 1, arg0)) return -1;
+	
+	F32 arg1;
+	if(LuaBinder::checkNumber(l, 2, arg1)) return -1;
+	
+	F32 arg2;
+	if(LuaBinder::checkNumber(l, 3, arg2)) return -1;
 	
 	// Create user data
 	void* inst = LuaBinder::luaAlloc(l, sizeof(Vec3));
@@ -859,7 +876,7 @@ static inline int pwrapVec3Ctor(lua_State* l)
 		return -1;
 	}
 	
-	::new(inst) Vec3();
+	::new(inst) Vec3(arg0, arg1, arg2);
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);
@@ -1736,7 +1753,20 @@ static inline int pwrapVec4Ctor(lua_State* l)
 	void* voidp;
 	(void)voidp;
 	
-	LuaBinder::checkArgsCount(l, 0);
+	LuaBinder::checkArgsCount(l, 4);
+	
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 1, arg0)) return -1;
+	
+	F32 arg1;
+	if(LuaBinder::checkNumber(l, 2, arg1)) return -1;
+	
+	F32 arg2;
+	if(LuaBinder::checkNumber(l, 3, arg2)) return -1;
+	
+	F32 arg3;
+	if(LuaBinder::checkNumber(l, 4, arg3)) return -1;
 	
 	// Create user data
 	void* inst = LuaBinder::luaAlloc(l, sizeof(Vec4));
@@ -1746,7 +1776,7 @@ static inline int pwrapVec4Ctor(lua_State* l)
 		return -1;
 	}
 	
-	::new(inst) Vec4();
+	::new(inst) Vec4(arg0, arg1, arg2, arg3);
 	
 	voidp = lua_newuserdata(l, sizeof(UserData));
 	ud = static_cast<UserData*>(voidp);

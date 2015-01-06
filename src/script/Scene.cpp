@@ -1144,6 +1144,52 @@ static int wrapSceneNodegetLightComponent(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap method SceneNode::tryGetComponent<LensFlareComponent>.
+static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	SceneNode* self = static_cast<SceneNode*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	LensFlareComponent* ret = self->tryGetComponent<LensFlareComponent>();
+	
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "LensFlareComponent");
+	ud->m_data = static_cast<void*>(ret);
+	ud->m_gc = false;
+	ud->m_sig = -2019248835133422777;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SceneNode::tryGetComponent<LensFlareComponent>.
+static int wrapSceneNodegetLensFlareComponent(lua_State* l)
+{
+	int res = pwrapSceneNodegetLensFlareComponent(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap class SceneNode.
 static inline void wrapSceneNode(lua_State* l)
 {
@@ -1152,6 +1198,7 @@ static inline void wrapSceneNode(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "addChild", wrapSceneNodeaddChild);
 	LuaBinder::pushLuaCFuncMethod(l, "getMoveComponent", wrapSceneNodegetMoveComponent);
 	LuaBinder::pushLuaCFuncMethod(l, "getLightComponent", wrapSceneNodegetLightComponent);
+	LuaBinder::pushLuaCFuncMethod(l, "getLensFlareComponent", wrapSceneNodegetLensFlareComponent);
 	lua_settop(l, 0);
 }
 

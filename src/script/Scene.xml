@@ -161,6 +161,9 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				<method name="tryGetComponent&lt;LightComponent&gt;" alias="getLightComponent">
 					<return>LightComponent*</return>
 				</method>
+				<method name="tryGetComponent&lt;LensFlareComponent&gt;" alias="getLensFlareComponent">
+					<return>LensFlareComponent*</return>
+				</method>
 			</methods>
 		</class>
 		<class name="ModelNode">

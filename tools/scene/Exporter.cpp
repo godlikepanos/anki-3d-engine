@@ -131,11 +131,9 @@ void Exporter::writeNodeTransform(
 	pos[1] = m[1][3];
 	pos[2] = m[2][3];
 
-	file << "pos = Vec4.new()\n";
-	file << "pos:setAll(" << pos[0] << ", " << pos[1] << ", " << pos[2] 
-		<< ", 0)\n";
 	file << node 
-		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(pos)\n";
+		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(Vec4.new(" 
+		<< pos[0] << ", " << pos[1] << ", " << pos[2] << ", 0))\n";
 
 	file << "rot = Mat3x4.new()\n";
 	file << "rot:setAll(";
@@ -620,21 +618,17 @@ void Exporter::exportLight(const aiLight& light)
 	file << "lcomp = node:getSceneNodeBase():getLightComponent()\n";
 
 	// Colors
-	file << "col = Vec4.new()\n"
-		<< "col:setAll("
+	file << "lcomp:setDiffuseColor(Vec4.new("
 		<< light.mColorDiffuse[0] << ", " 
 		<< light.mColorDiffuse[1] << ", " 
 		<< light.mColorDiffuse[2] << ", " 
-		<< "1)\n"
-		<< "lcomp:setDiffuseColor(col)\n" ;
+		<< "1))\n";
 
-	file << "col = Vec4.new()\n"
-		<< "col:setAll("
+	file << "lcomp:setSpecularColor(Vec4.new("
 		<< light.mColorSpecular[0] << ", " 
 		<< light.mColorSpecular[1] << ", " 
 		<< light.mColorSpecular[2] << ", " 
-		<< "1)\n"
-		<< "lcomp:setSpecularColor(col)\n" ;
+		<< "1))\n";
 
 	// Geometry
 	aiVector3D direction(0.0, 0.0, 1.0);
@@ -698,6 +692,38 @@ void Exporter::exportLight(const aiLight& light)
 	if(light.mLensFlare)
 	{
 		file << "node:loadLensFlare(\"" << light.mLensFlare << "\")\n";
+	}
+
+	bool lfCompRetrieved = false;
+
+	if(light.mLensFlareFirstSpriteSize != aiVector3D(0, 0, 0))
+	{
+		if(!lfCompRetrieved)
+		{
+			file << "lfcomp = node:getSceneNodeBase():"
+				<< "getLensFlareComponent()\n";
+			lfCompRetrieved = true;
+		}
+
+		file << "lfcomp:setFirstFlareSize(Vec2.new(" 
+			<< light.mLensFlareFirstSpriteSize[0] << ", " 
+			<< light.mLensFlareFirstSpriteSize[1] << "))\n";
+	}
+
+	if(light.mLensFlareColor != aiColor4D(0, 0, 0, 0))
+	{
+		if(!lfCompRetrieved)
+		{
+			file << "lfcomp = node:getSceneNodeBase():"
+				<< "getLensFlareComponent()\n";
+			lfCompRetrieved = true;
+		}
+
+		file << "lfcomp:setColorMultiplier(Vec4.new(" 
+			<< light.mLensFlareColor.r << ", " 
+			<< light.mLensFlareColor.g << ", " 
+			<< light.mLensFlareColor.b << ", " 
+			<< light.mLensFlareColor.a << "))\n";
 	}
 }
 
@@ -905,12 +931,10 @@ void Exporter::exportAll()
 	std::ofstream& file = m_sceneFile;
 
 	file << "local scene = getSceneGraph()\n"
-		<< "local pos\n"
 		<< "local rot\n"
 		<< "local node\n"
 		<< "local inst\n"
-		<< "local lcomp\n"
-		<< "local col\n";
+		<< "local lcomp\n";
 
 	//
 	// Get all node/model data
