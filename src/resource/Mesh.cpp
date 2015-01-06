@@ -5,7 +5,7 @@
 
 #include "anki/resource/Mesh.h"
 #include "anki/resource/ResourceManager.h"
-#include "anki/resource/MeshLoader.h"
+#include "anki/resource/MeshLoader2.h"
 #include "anki/util/Functions.h"
 #include "anki/misc/Xml.h"
 
@@ -37,110 +37,64 @@ Error Mesh::load(const CString& filename, ResourceInitializer& init)
 {
 	Error err = ErrorCode::NONE;
 
-	MeshLoader loader(init.m_tempAlloc);
-	ANKI_CHECK(loader.load(filename))
+	MeshLoader2 loader;
+	err = loader.load(init.m_tempAlloc, filename);
+	if(err) return err;
 
-	m_indicesCount = loader.getIndices().getSize();
+	const MeshLoader2::Header& header = loader.getHeader();
+	m_indicesCount = header.m_totalIndicesCount;
 
-	const auto& positions = loader.getPositions();
-	m_obb.setFromPointCloud(&positions[0], positions.getSize(),
-		sizeof(Vec3), positions.getSizeInBytes());
+	PtrSize vertexSize = loader.getVertexSize();
+	m_obb.setFromPointCloud(loader.getVertexData(), header.m_totalVerticesCount,
+		vertexSize, loader.getVertexDataSize());
 	ANKI_ASSERT(m_indicesCount > 0);
 	ANKI_ASSERT(m_indicesCount % 3 == 0 && "Expecting triangles");
 
 	// Set the non-VBO members
-	m_vertsCount = loader.getPositions().getSize();
+	m_vertsCount = header.m_totalVerticesCount;
 	ANKI_ASSERT(m_vertsCount > 0);
 
-	m_texChannelsCount = loader.getTextureChannelsCount();
-	m_weights = loader.getWeights().getSize() > 1;
+	m_texChannelsCount = header.m_uvsChannelCount;
+	m_weights = loader.hasBoneInfo();
 
-	ANKI_CHECK(createBuffers(loader, init));
+	err = createBuffers(loader, init);
 
 	return err;
 }
 
 //==============================================================================
-U32 Mesh::calcVertexSize() const
-{
-	U32 a = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-		+ m_texChannelsCount * sizeof(HVec2);
-	if(m_weights)
-	{
-		a += sizeof(MeshLoader::VertexWeight);
-	}
-
-	alignRoundUp(sizeof(F32), a);
-	return a;
-}
-
-//==============================================================================
-Error Mesh::createBuffers(const MeshLoader& loader,
+Error Mesh::createBuffers(const MeshLoader2& loader,
 	ResourceInitializer& init)
 {
-	ANKI_ASSERT(m_vertsCount == loader.getPositions().getSize()
-		&& m_vertsCount == loader.getNormals().getSize()
-		&& m_vertsCount == loader.getTangents().getSize());
-
 	Error err = ErrorCode::NONE;
 
-	// Calculate VBO size
-	U32 vertexsize = calcVertexSize();
-	U32 vbosize = vertexsize * m_vertsCount;
-
-	// Create a temp buffer and populate it
-	TempResourceDArrayAuto<U8> buff(init.m_tempAlloc);
-	ANKI_CHECK(buff.create(vbosize, 0));
-
-	U8* ptra = &buff[0];
-	for(U i = 0; i < m_vertsCount; i++)
-	{
-		U8* ptr = ptra;
-		ANKI_ASSERT(ptr + vertexsize <= &buff[0] + vbosize);
-
-		memcpy(ptr, &loader.getPositions()[i], sizeof(Vec3));
-		ptr += sizeof(Vec3);
-
-		memcpy(ptr, &loader.getNormals()[i], sizeof(HVec3));
-		ptr += sizeof(HVec3);
-
-		memcpy(ptr, &loader.getTangents()[i], sizeof(HVec4));
-		ptr += sizeof(HVec4);
-
-		for(U j = 0; j < m_texChannelsCount; j++)
-		{
-			memcpy(ptr, &loader.getTextureCoordinates(j)[i], sizeof(HVec2));
-			ptr += sizeof(HVec2);
-		}
-
-		if(m_weights)
-		{
-			memcpy(ptr, &loader.getWeights()[i], 
-				sizeof(MeshLoader::VertexWeight));
-			ptr += sizeof(MeshLoader::VertexWeight);
-		}
-
-		ptra += vertexsize;
-	}
-
-	// Create GL buffers
 	GlDevice& gl = init.m_resources._getGlDevice();
 	GlCommandBufferHandle cmdb;
-	ANKI_CHECK(cmdb.create(&gl));
-	
+	err = cmdb.create(&gl);
+	if(err) return err;
+
+	// Create vertex buffer
 	GlClientBufferHandle clientVertBuff;
-	ANKI_CHECK(clientVertBuff.create(cmdb, vbosize, &buff[0]));
-	ANKI_CHECK(m_vertBuff.create(cmdb, GL_ARRAY_BUFFER, clientVertBuff, 0));
+	err = clientVertBuff.create(cmdb, loader.getVertexDataSize(), nullptr);
+	if(err) return err;
+	memcpy(clientVertBuff.getBaseAddress(), loader.getVertexData(), 
+		loader.getVertexDataSize());
 
+	err = m_vertBuff.create(cmdb, GL_ARRAY_BUFFER, clientVertBuff, 0);
+	if(err) return err;
+
+	// Create index buffer
 	GlClientBufferHandle clientIndexBuff;
-	ANKI_CHECK(clientIndexBuff.create(
-		cmdb, 
-		loader.getIndices().getSizeInBytes(), 
-		(void*)&loader.getIndices()[0]));
-	ANKI_CHECK(m_indicesBuff.create(
-		cmdb, GL_ELEMENT_ARRAY_BUFFER, clientIndexBuff, 0));
+	err = clientIndexBuff.create(cmdb, loader.getIndexDataSize(), nullptr);
+	if(err) return err;
+	memcpy(clientIndexBuff.getBaseAddress(), loader.getIndexData(),
+		loader.getIndexDataSize());
 
-	cmdb.finish();
+	err = m_indicesBuff.create(
+		cmdb, GL_ELEMENT_ARRAY_BUFFER, clientIndexBuff, 0);
+	if(err) return err;
+
+	cmdb.finish(); /// XXX
 
 	return err;
 }
@@ -148,15 +102,18 @@ Error Mesh::createBuffers(const MeshLoader& loader,
 //==============================================================================
 void Mesh::getBufferInfo(const VertexAttribute attrib, 
 	GlBufferHandle& v, U32& size, GLenum& type, 
-	U32& stride, U32& offset) const
+	U32& stride, U32& offset, Bool& normalized) const
 {
-	stride = calcVertexSize();
+	stride = sizeof(Vec3) + sizeof(U32) + sizeof(U32) 
+		+ m_texChannelsCount * sizeof(HVec2) 
+		+ ((m_weights) ? (sizeof(U8) * 4 + sizeof(HVec4)) : 0);
 
 	// Set all to zero
 	v = GlBufferHandle();
 	size = 0;
 	type = GL_NONE;
 	offset = 0;
+	normalized = false;
 
 	switch(attrib)
 	{
@@ -168,15 +125,17 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 		break;
 	case VertexAttribute::NORMAL:
 		v = m_vertBuff;
-		size = 3;
-		type = GL_HALF_FLOAT;
+		size = 4;
+		type = GL_INT_2_10_10_10_REV;
 		offset = sizeof(Vec3);
+		normalized = true;
 		break;
 	case VertexAttribute::TANGENT:
 		v = m_vertBuff;
 		size = 4;
-		type = GL_HALF_FLOAT;
-		offset = sizeof(Vec3) + sizeof(HVec3);
+		type = GL_INT_2_10_10_10_REV;
+		offset = sizeof(Vec3) + sizeof(U32);
+		normalized = true;
 		break;
 	case VertexAttribute::TEXTURE_COORD:
 		if(m_texChannelsCount > 0)
@@ -184,7 +143,7 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 			v = m_vertBuff;
 			size = 2;
 			type = GL_HALF_FLOAT;
-			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4);
+			offset = sizeof(Vec3) + sizeof(U32) + sizeof(U32);
 		}
 		break;
 	case VertexAttribute::TEXTURE_COORD_1:
@@ -193,28 +152,8 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 			v = m_vertBuff;
 			size = 2;
 			type = GL_HALF_FLOAT;
-			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
+			offset = sizeof(Vec3) + sizeof(U32) + sizeof(U32) 
 				+ sizeof(HVec2);
-		}
-		break;
-	case VertexAttribute::BONE_COUNT:
-		if(m_weights)
-		{
-			v = m_vertBuff;
-			size = 1;
-			type = GL_UNSIGNED_SHORT;
-			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-				+ m_texChannelsCount * sizeof(HVec2);
-		}
-		break;
-	case VertexAttribute::BONE_IDS:
-		if(m_weights)
-		{
-			v = m_vertBuff;
-			size = 4;
-			type = GL_UNSIGNED_SHORT;
-			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-				+ m_texChannelsCount * sizeof(HVec2) + sizeof(U16);
 		}
 		break;
 	case VertexAttribute::BONE_WEIGHTS:
@@ -222,10 +161,20 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 		{
 			v = m_vertBuff;
 			size = 4;
+			type = GL_UNSIGNED_BYTE;
+			offset = sizeof(Vec3) + sizeof(U32) + sizeof(U32) 
+				+ m_texChannelsCount * sizeof(HVec2);
+			normalized = true;
+		}
+		break;
+	case VertexAttribute::BONE_IDS:
+		if(m_weights)
+		{
+			v = m_vertBuff;
+			size = 4;
 			type = GL_HALF_FLOAT;
-			offset = sizeof(Vec3) + sizeof(HVec3) + sizeof(HVec4) 
-				+ m_texChannelsCount * sizeof(HVec2) + sizeof(U16) 
-				+ sizeof(U16) * 4;
+			offset = sizeof(Vec3) + sizeof(U32) + sizeof(U32) 
+				+ m_texChannelsCount * sizeof(HVec2) + sizeof(U8) * 4;
 		}
 		break;
 	case VertexAttribute::INDICES:
@@ -246,6 +195,7 @@ Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 {
 	Error err = ErrorCode::NONE;
 
+#if 0
 	m_alloc = init.m_alloc;
 
 	XmlDocument doc;
@@ -351,6 +301,7 @@ Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
 	const auto& positions = fullLoader.getPositions();
 	m_obb.setFromPointCloud(&positions[0], positions.getSize(),
 		sizeof(Vec3), positions.getSizeInBytes());
+#endif
 
 	return err;
 }

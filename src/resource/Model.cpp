@@ -31,7 +31,6 @@ static const Array<Attrib, static_cast<U>(VertexAttribute::COUNT) - 1>
 	{"inTangent", VertexAttribute::TANGENT},
 	{"inTexCoord", VertexAttribute::TEXTURE_COORD},
 	{"inTexCoord1", VertexAttribute::TEXTURE_COORD_1},
-	{"inBoneCount", VertexAttribute::BONE_COUNT},
 	{"inBoneIds", VertexAttribute::BONE_IDS},
 	{"inBoneWeights", VertexAttribute::BONE_WEIGHTS}
 }};
@@ -55,19 +54,20 @@ Error ModelPatchBase::createVertexDesc(
 	GLenum type;
 	U32 stride;
 	U32 offset;
+	Bool normalized;
 
 	U count = 0;
 	for(const Attrib& attrib : attribs)
 	{
 		mesh.getBufferInfo(attrib.m_location, vbo, size, type,
-			stride, offset);
+			stride, offset, normalized);
 
 		if(!vbo.isCreated())
 		{
 			continue;
 		}
 		
-		vbo.bindVertexBuffer(vertexJobs, size, type, false, stride,
+		vbo.bindVertexBuffer(vertexJobs, size, type, normalized, stride,
 			offset, static_cast<U>(attrib.m_location));
 
 		++count;
@@ -81,7 +81,7 @@ Error ModelPatchBase::createVertexDesc(
 
 	// The indices VBO
 	mesh.getBufferInfo(VertexAttribute::INDICES, vbo, size, type,
-			stride, offset);
+			stride, offset, normalized);
 
 	ANKI_ASSERT(vbo.isCreated());
 	vbo.bindIndexBuffer(vertexJobs);

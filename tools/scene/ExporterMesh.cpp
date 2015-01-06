@@ -161,21 +161,28 @@ static uint16_t toF16(float f)
 }
 
 //==============================================================================
+union SignedR10G10B10A10
+{
+	struct
+	{
+		int m_x: 10;
+		int m_y: 10;
+		int m_z: 10;
+		int m_w: 2;
+	} m_unpacked;
+	uint32_t m_packed;
+};
+
+//==============================================================================
 uint32_t toR10G10B10A2Sint(float r, float g, float b, float a)
 {
-	uint32_t x = pow(2, 11 - 1) - 1;
+	SignedR10G10B10A10 out;
+	out.m_unpacked.m_x = int(round(r * 511.0));
+	out.m_unpacked.m_y = int(round(g * 511.0));
+	out.m_unpacked.m_z = int(round(b * 511.0));
+	out.m_unpacked.m_w = int(round(a * 1.0));
 
-	uint32_t ur = r * x;
-	uint32_t ug = g * x;
-	uint32_t ub = r * b;
-	uint32_t ua = a * (pow(2, 2 - 1) - 1);
-
-	uint32_t out = ua << 30;
-	out |= ub << 20;
-	out |= ug << 10;
-	out |= ur << 0;
-
-	return out;
+	return out.m_packed;
 }
 
 //==============================================================================

@@ -13,7 +13,7 @@
 
 namespace anki {
 
-class MeshLoader;
+class MeshLoader2;
 
 /// Vertex attributes. This should match the shaders
 enum class VertexAttribute: U8
@@ -23,7 +23,6 @@ enum class VertexAttribute: U8
 	TANGENT,
 	TEXTURE_COORD,
 	TEXTURE_COORD_1,
-	BONE_COUNT,
 	BONE_IDS,
 	BONE_WEIGHTS,
 	INDICES,
@@ -87,7 +86,8 @@ public:
 	/// Get info on how to attach a GL buffer to the state
 	void getBufferInfo(
 		const VertexAttribute attrib, GlBufferHandle& buffer,
-		U32& size, GLenum& type, U32& stride, U32& offset) const;
+		U32& size, GLenum& type, U32& stride, U32& offset,
+		Bool& normalized) const;
 
 	/// Helper function for correct loading
 	Bool isCompatible(const Mesh& other) const;
@@ -118,9 +118,7 @@ protected:
 
 	/// Create the VBOs using the mesh data
 	ANKI_USE_RESULT Error createBuffers(
-		const MeshLoader& loader, ResourceInitializer& init);
-
-	U32 calcVertexSize() const;
+		const MeshLoader2& loader, ResourceInitializer& init);
 };
 
 /// A mesh that behaves as a mesh and as a collection of separate meshes.

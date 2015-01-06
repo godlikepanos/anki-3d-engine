@@ -54,7 +54,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 3.0);
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.1);
 
 	if(getenv("PROFILE"))
 	{
@@ -219,10 +219,10 @@ Error init()
 	}
 #endif
 
-#if 1
+#if 0
 	// horse
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
-		"models/crate0/crate0.ankimdl");
+		"models/horse/horse.ankimdl");
 	if(err) return err;
 	horse->getComponent<MoveComponent>().setLocalTransform(
 		Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(), 0.7));
@@ -253,7 +253,7 @@ Error init()
 		move->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
 	}
 
-#if 0
+#if 1
 	{
 		ScriptResourcePointer script;
 
@@ -525,7 +525,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.bilinearEnabled", true);
 	config.set("is.groundLightEnabled", true);
 	config.set("is.sm.enabled", true);
-	config.set("is.sm.poissonEnabled", true);
+	config.set("is.sm.poissonEnabled", false);
 	config.set("is.sm.resolution", 1024);
 	config.set("pps.enabled", true);
 	config.set("pps.hdr.enabled", true);
@@ -556,7 +556,7 @@ Error initSubsystems(int argc, char* argv[])
 
 	//config.set("maxTextureSize", 256);
 
-	config.set("fullscreenDesktopResolution", false);
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 
 	app = new App;

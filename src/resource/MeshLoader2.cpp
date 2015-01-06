@@ -238,7 +238,7 @@ Error MeshLoader2::loadInternal(const CString& filename)
 		+ 1 * sizeof(U32) // norm
 		+ 1 * sizeof(U32) // tang
 		+ 2 * sizeof(U16) // uvs
-		+ (hasBoneInfo) ? (4 * sizeof(U8) + 4 * sizeof(U16)) : 0;
+		+ ((hasBoneInfo) ? (4 * sizeof(U8) + 4 * sizeof(U16)) : 0);
 
 	err = m_verts.create(m_alloc, m_header.m_totalVerticesCount * m_vertSize);
 	if(err) return err;

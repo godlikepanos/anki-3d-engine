@@ -12,7 +12,7 @@ layout(location = POSITION_LOCATION) in highp vec3 inPosition;
 layout(location = TEXTURE_COORDINATE_LOCATION) in mediump vec2 inTexCoord;
 
 #if PASS == COLOR || TESSELLATION
-layout(location = NORMAL_LOCATION) in mediump vec3 inNormal;
+layout(location = NORMAL_LOCATION) in mediump vec4 inNormal;
 #endif
 
 #if PASS == COLOR
@@ -69,7 +69,7 @@ void writePositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat)
 #if TESSELLATION
 
 	// Passthrough
-	outNormal = inNormal;
+	outNormal = inNormal.xyz;
 #	if PASS == COLOR
 	outTangent = inTangent;
 #	endif
@@ -77,7 +77,7 @@ void writePositionNormalTangentTexCoord(in mat4 mvp, in mat3 normalMat)
 #else
 
 #	if PASS == COLOR
-	outNormal = normalMat * inNormal;
+	outNormal = normalMat * inNormal.xyz;
 	outTangent.xyz = normalMat * inTangent.xyz;
 	outTangent.w = inTangent.w;
 #	endif

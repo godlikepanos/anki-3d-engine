@@ -134,7 +134,7 @@ public:
 		return m_indices.getSizeInBytes();
 	}
 
-	Bool hasVertexWeights() const
+	Bool hasBoneInfo() const
 	{
 		ANKI_ASSERT(isLoaded());
 		return 

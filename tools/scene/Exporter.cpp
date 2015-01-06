@@ -518,11 +518,11 @@ void Exporter::exportMaterial(
 	{
 		float shininess = 0.0;
 		mtl.Get(AI_MATKEY_SHININESS, shininess);
-		//shininess = std::min(128.0f, shininess)  128.0;
-		const int MAX_SHININESS = 511.0;
+		const float MAX_SHININESS = 511.0;
+		shininess = std::min(MAX_SHININESS, shininess);
 		if(shininess > MAX_SHININESS)
 		{
-			LOGW("Shininness exceeds %d", MAX_SHININESS);
+			LOGW("Shininness exceeds %f", MAX_SHININESS);
 		}
 
 		shininess = shininess / MAX_SHININESS;
