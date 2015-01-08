@@ -261,7 +261,8 @@ Error App::createInternal(const ConfigSet& config_,
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 	if(!m_scene) return ErrorCode::OUT_OF_MEMORY;
 
-	err = m_scene->create(m_allocCb, m_allocCbData, m_threadpool, m_resources);
+	err = m_scene->create(m_allocCb, m_allocCbData, 
+		config.get("sceneFrameAllocatorSize"), m_threadpool, m_resources);
 	if(err) return err;
 
 	// Script

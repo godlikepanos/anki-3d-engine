@@ -117,13 +117,6 @@
 
 #define ANKI_RENDERER_USE_MATERIAL_UBOS 0
 
-// Scene config
-#define ANKI_SCENE_OPTIMAL_SCENE_NODES_COUNT 1024
-
-#define ANKI_SCENE_ALLOCATOR_SIZE (1024 * 1024) 
-
-#define ANKI_SCENE_FRAME_ALLOCATOR_SIZE (1024 * 512)
-
 /// @{
 /// Used to optimize the initial vectors of VisibilityTestResults
 #define ANKI_FRUSTUMABLE_AVERAGE_VISIBLE_RENDERABLES_COUNT 16
@@ -137,7 +130,7 @@
 #define ANKI_GL_MAX_MIPMAPS 32
 #define ANKI_GL_MAX_TEXTURE_LAYERS 32
 #define ANKI_GL_MAX_SUB_DRAWCALLS 64
-#define ANKI_GL_MAX_INSTANCES 32
+#define ANKI_GL_MAX_INSTANCES 64
 
 //==============================================================================
 // Other                                                                       =

@@ -100,6 +100,7 @@ SceneGraph::~SceneGraph()
 Error SceneGraph::create(
 	AllocAlignedCallback allocCb, 
 	void* allocCbData, 
+	U32 frameAllocatorSize,
 	Threadpool* threadpool, 
 	ResourceManager* resources)
 {
@@ -119,7 +120,7 @@ Error SceneGraph::create(
 		ChainMemoryPool::ChunkGrowMethod::FIXED,
 		0);
 	m_frameAlloc = SceneFrameAllocator<U8>(
-		allocCb, allocCbData, ANKI_SCENE_ALLOCATOR_SIZE);
+		allocCb, allocCbData, frameAllocatorSize);
 
 	err = m_events.create(this);
 

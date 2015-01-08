@@ -39,7 +39,8 @@ public:
 
 	ANKI_USE_RESULT Error create(
 		AllocAlignedCallback allocCb, 
-		void* allocCbData, 
+		void* allocCbData,
+		U32 frameAllocatorSize,
 		Threadpool* threadpool, 
 		ResourceManager* resources);
 

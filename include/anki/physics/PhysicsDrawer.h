@@ -1,0 +1,52 @@
+// Copyright (C) 2014, Panagiotis Christopoulos Charitos.
+// All rights reserved.
+// Code licensed under the BSD License.
+// http://www.anki3d.org/LICENSE
+
+#ifndef ANKI_PHYSICS_PHYSICS_DRAWER_H
+#define ANKI_PHYSICS_PHYSICS_DRAWER_H
+
+#include "anki/physics/Common.h"
+#include "anki/util/Bitset.h"
+
+// Forward
+struct NewtonBody;
+
+namespace anki {
+
+/// @addtogroup physics
+/// @{
+
+/// Physics debug drawer interface.
+class PhysicsDrawer
+{
+public:
+	/// Draw a line.
+	virtual void drawLines(
+		const Vec3* lines,
+		const U32 linesCount,
+		const Vec4& color) = 0;
+
+	void drawWorld(const PhysicsWorld& world);
+
+	void setDrawAabbs(Bool draw)
+	{
+		m_drawAabbs = draw;
+	}
+
+	Bool getDrawAabbs() const
+	{
+		return m_drawAabbs;
+	}
+
+private:
+	Bool8 m_drawAabbs = true;
+
+	void drawAabb(const NewtonBody* body);
+};
+/// @}
+
+} // end namespace anki
+
+#endif
+

@@ -73,6 +73,7 @@ Config::Config()
 	newOption("tilesXCount", 16);
 	newOption("tilesYCount", 16);
 	newOption("tessellation", true);
+	newOption("sceneFrameAllocatorSize", 1024 * 1024);
 
 	newOption("offscreen", false);
 

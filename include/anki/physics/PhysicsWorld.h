@@ -46,7 +46,7 @@ public:
 
 	/// @privatesection
 	/// @{
-	NewtonWorld* _getNewtonWorld()
+	NewtonWorld* _getNewtonWorld() const
 	{
 		ANKI_ASSERT(m_world);
 		return m_world;
@@ -61,7 +61,7 @@ private:
 	List<PhysicsBody*> m_bodies;
 	Array<AtomicU32, static_cast<U>(PhysicsObject::Type::COUNT)> 
 		m_forDeletionCount = {{{0}, {0}, {0}}};
-	NewtonWorld* m_world = nullptr;
+	mutable NewtonWorld* m_world = nullptr;
 
 	template<typename T, typename TContainer, typename... TArgs>
 	T* newObjectInternal(TContainer& cont, TArgs&&... args);
