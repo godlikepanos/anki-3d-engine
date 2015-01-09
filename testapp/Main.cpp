@@ -54,7 +54,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.1);
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 2.1);
 
 	if(getenv("PROFILE"))
 	{
@@ -219,24 +219,13 @@ Error init()
 	}
 #endif
 
-#if 0
+#if 1
 	// horse
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
-		"models/horse/horse.ankimdl");
+		"models/crate0/crate0.ankimdl");
 	if(err) return err;
 	horse->getComponent<MoveComponent>().setLocalTransform(
 		Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(), 0.7));
-
-	//horse = scene.newSceneNode<ModelNode>("crate", "models/crate0/crate0.ankimdl");
-	//horse->setLocalTransform(Transform(Vec3(2, 10.0, 0), Mat3::getIdentity(),
-	//	1.0));
-
-	// barrel
-	/*ModelNode* redBarrel = new ModelNode(
-		"red_barrel", &scene, nullptr, MoveComponent::MF_NONE, 
-		"models/red_barrel/red_barrel.mdl");
-	redBarrel->setLocalTransform(Transform(Vec3(+2, 0, 0), Mat3::getIdentity(),
-		0.7));*/
 #endif
 
 	if(0)
@@ -253,7 +242,7 @@ Error init()
 		move->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
 	}
 
-#if 1
+#if 0
 	{
 		ScriptResourcePointer script;
 

@@ -128,6 +128,14 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 
 	(void)err;
 
+	if(1)
+	{
+		PhysicsDebugDrawer phyd(m_drawer);
+
+		m_drawer->setModelMatrix(Mat4::getIdentity());
+		phyd.drawWorld(scene._getPhysicsWorld());
+	}
+
 	// XXX
 #if 0
 	if(0)

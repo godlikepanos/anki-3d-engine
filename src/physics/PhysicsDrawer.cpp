@@ -60,7 +60,8 @@ void PhysicsDrawer::drawAabb(const NewtonBody* body)
 		Vec3(p1.x(), p1.y(), p0.z()),
 		Vec3(p1.x(), p1.y(), p1.z())};
 
-	drawLines(lines, sizeof(lines) / sizeof(Vec3), Vec4(0.0, 0.0, 1.0, 0.5));
+	const U32 linesCount = sizeof(lines) / sizeof(Vec3) / 2;
+	drawLines(lines, linesCount, Vec4(0.0, 0.0, 1.0, 0.5));
 }
 
 } // end namespace anki

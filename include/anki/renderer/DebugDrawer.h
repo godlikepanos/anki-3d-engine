@@ -10,6 +10,7 @@
 #include "anki/Gl.h"
 #include "anki/resource/Resource.h"
 #include "anki/collision/CollisionShape.h"
+#include "anki/physics/PhysicsDrawer.h"
 #include "anki/scene/Forward.h"
 #include "anki/util/Array.h"
 #include <unordered_map>
@@ -134,8 +135,22 @@ private:
 	DebugDrawer* m_dbg; ///< The debug drawer
 };
 
-// Forward
-class Renderer;
+/// Implement physics debug drawer.
+class PhysicsDebugDrawer: public PhysicsDrawer
+{
+public:
+	PhysicsDebugDrawer(DebugDrawer* dbg)
+	:	m_dbg(dbg)
+	{}
+
+	void drawLines(
+		const Vec3* lines,
+		const U32 linesCount,
+		const Vec4& color) final;
+
+private:
+	DebugDrawer* m_dbg; ///< The debug drawer
+};
 
 /// This is a drawer for some scene nodes that need debug
 class SceneDebugDrawer

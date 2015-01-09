@@ -476,6 +476,23 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 }
 
 //==============================================================================
+// PhysicsDebugDrawer                                                          =
+//==============================================================================
+void PhysicsDebugDrawer::drawLines(
+	const Vec3* lines,
+	const U32 linesCount,
+	const Vec4& color)
+{
+	m_dbg->begin(GL_LINES);
+	m_dbg->setColor(color);
+	for(U i = 0; i < linesCount * 2; ++i)
+	{
+		m_dbg->pushBackVertex(lines[i]);
+	}
+	m_dbg->end();
+}
+
+//==============================================================================
 // SceneDebugDrawer                                                            =
 //==============================================================================
 
