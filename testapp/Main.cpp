@@ -399,7 +399,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 		BodyComponent* bodyc = l.tryGetComponent<BodyComponent>();
 		if(bodyc)
 		{
-			Vec4 pos(randRange(0, 10), 10, randRange(-4, 4), 0);
+			Vec4 pos(randRange(-2, 10), 10, randRange(-6, 6), 0);
 
 			bodyc->setTransform(
 				Transform(pos, Mat3x4::getIdentity(), 1.0));

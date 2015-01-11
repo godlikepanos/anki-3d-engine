@@ -19,32 +19,26 @@ class ConvexShape: public CollisionShape
 public:
 	using Base = CollisionShape;
 
-	/// @name Constructors & destructor
-	/// @{
 	ConvexShape(Type cid)
-		: Base(cid)
+	:	Base(cid)
 	{}
 
 	ConvexShape(const ConvexShape& b)
-		: Base(b)
+	:	Base(b)
 	{
 		operator=(b);
 	}
-	/// @}
 
-	/// @name Operators
-	/// @{
+	/// Copy.
 	ConvexShape& operator=(const ConvexShape& b)
 	{
 		Base::operator=(b);
 		return *this;
 	}
-	/// @}
 
 	/// Get a support vector for the GJK algorithm
 	virtual Vec4 computeSupport(const Vec4& dir) const = 0;
 };
-
 /// @}
 
 } // end namespace anki

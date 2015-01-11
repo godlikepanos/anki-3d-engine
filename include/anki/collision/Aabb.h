@@ -20,27 +20,22 @@ class Aabb: public ConvexShape
 public:
 	using Base = ConvexShape;
 
-	/// @name Constructors
-	/// @{
 	Aabb()
-		: Base(Type::AABB)
+	:	Base(Type::AABB)
 	{}
 
 	Aabb(const Vec4& min, const Vec4& max)
-		: Base(Type::AABB), m_min(min), m_max(max)
+	:	Base(Type::AABB), m_min(min), m_max(max)
 	{
 		ANKI_ASSERT(m_min.xyz() < m_max.xyz());
 	}
 
 	Aabb(const Aabb& b)
-		: Base(Type::AABB)
+	:	Base(Type::AABB)
 	{
 		operator=(b);
 	}
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	const Vec4& getMin() const
 	{
 		return m_min;
@@ -66,10 +61,8 @@ public:
 	{
 		m_max = x;
 	}
-	/// @}
 
-	/// @name Operators
-	/// @{
+	/// Copy.
 	Aabb& operator=(const Aabb& b)
 	{
 		Base::operator=(b);
@@ -77,36 +70,35 @@ public:
 		m_max = b.m_max;
 		return *this;
 	}
-	/// @}
 
 	/// Implements CollisionShape::accept
-	void accept(MutableVisitor& v)
+	void accept(MutableVisitor& v) override
 	{
 		v.visit(*this);
 	}
 	/// Implements CollisionShape::accept
-	void accept(ConstVisitor& v) const
+	void accept(ConstVisitor& v) const override
 	{
 		v.visit(*this);
 	}
 
 	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Plane& p) const;
+	F32 testPlane(const Plane& p) const override;
 
 	/// Implements CollisionShape::transform
-	void transform(const Transform& trf)
+	void transform(const Transform& trf) override
 	{
 		*this = getTransformed(trf);
 	}
 
 	/// Implements CollisionShape::computeAabb
-	void computeAabb(Aabb& b) const
+	void computeAabb(Aabb& b) const override
 	{
 		b = *this;
 	}
 
 	/// Implements CompoundShape::computeSupport
-	Vec4 computeSupport(const Vec4& dir) const;
+	Vec4 computeSupport(const Vec4& dir) const override;
 
 	/// It uses a nice trick to avoid unwanted calculations 
 	Aabb getTransformed(const Transform& transform) const;
@@ -120,11 +112,8 @@ public:
 		const void* buff, U count, PtrSize stride, PtrSize buffSize);
 
 private:
-	/// @name Data
-	/// @{
 	Vec4 m_min;
 	Vec4 m_max;
-	/// @}
 };
 /// @}
 
