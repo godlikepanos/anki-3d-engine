@@ -6,6 +6,7 @@
 #include "anki/resource/Model.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Mesh.h"
+#include "anki/resource/MeshLoader.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/misc/Xml.h"
 #include "anki/util/Logger.h"
@@ -16,24 +17,6 @@ namespace anki {
 //==============================================================================
 // ModelPatchBase                                                              =
 //==============================================================================
-
-class Attrib
-{
-public:
-	const char* m_name;
-	VertexAttribute m_location;
-};
-
-static const Array<Attrib, static_cast<U>(VertexAttribute::COUNT) - 1> 
-	attribs = {{
-	{"inPosition", VertexAttribute::POSITION},
-	{"inNormal", VertexAttribute::NORMAL},
-	{"inTangent", VertexAttribute::TANGENT},
-	{"inTexCoord", VertexAttribute::TEXTURE_COORD},
-	{"inTexCoord1", VertexAttribute::TEXTURE_COORD_1},
-	{"inBoneIds", VertexAttribute::BONE_IDS},
-	{"inBoneWeights", VertexAttribute::BONE_WEIGHTS}
-}};
 
 //==============================================================================
 ModelPatchBase::~ModelPatchBase()
@@ -57,9 +40,10 @@ Error ModelPatchBase::createVertexDesc(
 	Bool normalized;
 
 	U count = 0;
-	for(const Attrib& attrib : attribs)
+	for(VertexAttribute attrib = VertexAttribute::POSITION;
+		attrib < VertexAttribute::INDICES; ++attrib)
 	{
-		mesh.getBufferInfo(attrib.m_location, vbo, size, type,
+		mesh.getBufferInfo(attrib, vbo, size, type,
 			stride, offset, normalized);
 
 		if(!vbo.isCreated())
@@ -68,14 +52,14 @@ Error ModelPatchBase::createVertexDesc(
 		}
 		
 		vbo.bindVertexBuffer(vertexJobs, size, type, normalized, stride,
-			offset, static_cast<U>(attrib.m_location));
+			offset, static_cast<U>(attrib));
 
 		++count;
 	}
 
 	if(count < 1)
 	{
-		ANKI_LOGE("The program doesn't have any attributes");
+		ANKI_LOGE("The mesh doesn't have any attributes");
 		return ErrorCode::USER_DATA;
 	}
 
@@ -340,11 +324,44 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		}
 		else if(type == "box")
 		{
-			ANKI_LOGW("TODO");
+			Vec3 extend;
+			if(err = valEl.getVec3(extend))
+			{
+				return err;
+			}
+			m_physicsShape = physics.newCollisionShape<PhysicsBox>(
+				csInit, extend);
 		}
-		else if(type == "mesh")
+		else if(type == "staticMesh")
 		{
-			ANKI_LOGW("TODO");
+			CString filename;
+			if(err = valEl.getText(filename))
+			{
+				return err;
+			}
+	
+			TempResourceString fixedFilename;
+			if(err = init.m_resources.fixResourceFilename(
+				filename, fixedFilename))
+			{
+				return err;
+			}
+
+			MeshLoader loader;
+			if(err = loader.load(init.m_tempAlloc, fixedFilename.toCString()))
+			{
+				fixedFilename.destroy(init.m_tempAlloc);
+				return err;
+			}
+
+			fixedFilename.destroy(init.m_tempAlloc);
+
+			m_physicsShape = physics.newCollisionShape<PhysicsTriangleSoup>(
+				csInit, 
+				reinterpret_cast<const Vec3*>(loader.getVertexData()), 
+				loader.getVertexSize(),
+				reinterpret_cast<const U16*>(loader.getIndexData()),
+				loader.getHeader().m_totalIndicesCount);
 		}
 		else
 		{

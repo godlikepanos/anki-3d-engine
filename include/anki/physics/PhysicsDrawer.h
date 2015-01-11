@@ -39,10 +39,25 @@ public:
 		return m_drawAabbs;
 	}
 
+	void setDrawCollision(Bool draw)
+	{
+		m_drawCollision = draw;
+	}
+
+	Bool getDrawCollision() const
+	{
+		return m_drawCollision;
+	}
+
 private:
 	Bool8 m_drawAabbs = true;
+	Bool8 m_drawCollision = true;
 
 	void drawAabb(const NewtonBody* body);
+	void drawCollision(const NewtonBody* body);
+
+	static void drawGeometryCallback(void* userData, 
+		int vertexCount, const dFloat* const faceVertec, int id);
 };
 /// @}
 

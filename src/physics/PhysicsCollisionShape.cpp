@@ -65,5 +65,47 @@ Error PhysicsBox::create(Initializer& init, const Vec3& extend)
 	return err;
 }
 
+//==============================================================================
+// PhysicsTriangleSoup                                                         =
+//==============================================================================
+
+//==============================================================================
+Error PhysicsTriangleSoup::create(Initializer& init,
+	const Vec3* positions, U32 positionsStride, 
+	const U16* indices, U32 indicesCount)
+{
+	m_shape = NewtonCreateTreeCollision(m_world->_getNewtonWorld(), 0);
+	if(!m_shape)
+	{
+		ANKI_LOGE("NewtonCreateBox() failed");
+		return ErrorCode::FUNCTION_FAILED;
+	}
+
+	NewtonTreeCollisionBeginBuild(m_shape);
+
+	// Iterate index array
+	const U16* indicesEnd = indices + indicesCount;
+	for(; indices != indicesEnd; indices += 3)
+	{
+		Array<Vec3, 3> facePos;
+
+		for(U i = 0; i < 3; ++i)
+		{
+			U idx = indices[i];
+			const U8* ptr = 
+				reinterpret_cast<const U8*>(positions) + positionsStride * idx;
+
+			facePos[i] = *reinterpret_cast<const Vec3*>(ptr);
+		}
+
+		NewtonTreeCollisionAddFace(m_shape, 3, &facePos[0][0], sizeof(Vec3), 0);
+	}
+
+	const I optimize = 1;
+	NewtonTreeCollisionEndBuild(m_shape, optimize);
+
+	return ErrorCode::NONE;
+}
+
 } // end namespace anki
 

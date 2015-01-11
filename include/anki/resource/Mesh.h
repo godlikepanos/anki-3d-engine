@@ -28,6 +28,7 @@ enum class VertexAttribute: U8
 	INDICES,
 	COUNT
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttribute, inline)
 
 /// Mesh Resource. It contains the geometry packed in VBOs
 class Mesh

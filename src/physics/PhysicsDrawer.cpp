@@ -9,6 +9,13 @@
 namespace anki {
 
 //==============================================================================
+struct CallbackData
+{
+	const NewtonBody* m_body;
+	PhysicsDrawer* m_drawer;
+};
+
+//==============================================================================
 void PhysicsDrawer::drawWorld(const PhysicsWorld& world)
 {
 	NewtonWorld* nworld = world._getNewtonWorld();
@@ -19,6 +26,11 @@ void PhysicsDrawer::drawWorld(const PhysicsWorld& world)
 		if(m_drawAabbs)
 		{
 			drawAabb(body);
+		}
+
+		if(m_drawCollision)
+		{
+			drawCollision(body);
 		}
 	}
 }
@@ -62,6 +74,59 @@ void PhysicsDrawer::drawAabb(const NewtonBody* body)
 
 	const U32 linesCount = sizeof(lines) / sizeof(Vec3) / 2;
 	drawLines(lines, linesCount, Vec4(0.0, 0.0, 1.0, 0.5));
+}
+
+//==============================================================================
+void PhysicsDrawer::drawCollision(const NewtonBody* body)
+{
+	Mat4 matrix;
+	NewtonBodyGetMatrix(body, &matrix[0]);
+
+	CallbackData data;
+	data.m_body = body;
+	data.m_drawer = this;
+
+	NewtonCollisionForEachPolygonDo(NewtonBodyGetCollision(body), 
+		&matrix[0], drawGeometryCallback, static_cast<void*>(&data));
+}
+
+//==============================================================================
+void PhysicsDrawer::drawGeometryCallback(void* userData, 
+	int vertexCount, const dFloat* const faceVertec, int id)
+{
+	CallbackData* data = static_cast<CallbackData*>(userData);
+	const NewtonBody* body = data->m_body;
+
+	Vec4 color(1.0);
+	if(NewtonBodyGetType(body) == NEWTON_DYNAMIC_BODY)
+	{
+		I sleepState = NewtonBodyGetSleepState(body);
+		if(sleepState == 1)
+		{
+			// Sleeping
+			color = Vec4(0.3, 0.3, 0.3, 1.0);
+		}
+	}
+
+	U i = vertexCount - 1;
+
+	Array<Vec3, 2> points;
+	points[0] = Vec3(
+		faceVertec[i * 3 + 0], 
+		faceVertec[i * 3 + 1], 
+		faceVertec[i * 3 + 2]);
+
+	for (I i = 0; i < vertexCount; i ++) 
+	{
+		points[1] = Vec3(
+			faceVertec[i * 3 + 0], 
+			faceVertec[i * 3 + 1], 
+			faceVertec[i * 3 + 2]);
+
+		data->m_drawer->drawLines(&points[0], 1, color);
+
+		points[0] = points[1];
+	}
 }
 
 } // end namespace anki

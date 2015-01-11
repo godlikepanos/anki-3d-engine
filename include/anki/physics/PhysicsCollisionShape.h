@@ -22,7 +22,8 @@ public:
 	{
 		NONE,
 		SPHERE,
-		BOX
+		BOX,
+		STATIC_TRIANGLE_SOUP
 	};
 
 	/// Standard initializer for all collision shapes.
@@ -105,8 +106,9 @@ public:
 	~PhysicsTriangleSoup()
 	{}
 
-	ANKI_USE_RESULT Error createStaticTriangleSoup(Initializer& init,
-		const Vec3* positions, U32 positionsStride, U16* indices);
+	ANKI_USE_RESULT Error create(Initializer& init,
+		const Vec3* positions, U32 positionsStride, 
+		const U16* indices, U32 indicesCount);
 };
 /// @}
 

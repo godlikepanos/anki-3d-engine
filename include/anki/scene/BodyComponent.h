@@ -31,6 +31,11 @@ public:
 		return m_trf;
 	}
 
+	void setTransform(const Transform& trf)
+	{
+		m_body->setTransform(trf);
+	}
+
 	/// @name SceneComponent overrides
 	/// @{
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override

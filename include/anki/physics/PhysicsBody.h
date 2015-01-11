@@ -42,6 +42,8 @@ public:
 		return m_trf;
 	}
 
+	void setTransform(const Transform& trf);
+
 private:
 	NewtonBody* m_body = nullptr;
 	Transform m_trf = Transform::getIdentity();

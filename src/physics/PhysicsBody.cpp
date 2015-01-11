@@ -28,6 +28,8 @@ Error PhysicsBody::create(const Initializer& init)
 {
 	ANKI_ASSERT(init.m_shape);
 
+	//I collisionType = NewtonCollisionGetType(init.m_shape->_getNewtonShape());
+
 	// Create
 	Mat4 trf = Mat4(init.m_startTrf);
 	trf.transpose();
@@ -65,6 +67,14 @@ Error PhysicsBody::create(const Initializer& init)
 	NewtonBodySetSimulationState(m_body, true);
 
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void PhysicsBody::setTransform(const Transform& trf)
+{
+	Mat4 mat(trf);
+	mat.transpose();
+	NewtonBodySetMatrix(m_body, &mat(0, 0));
 }
 
 //==============================================================================

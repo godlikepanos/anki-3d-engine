@@ -224,8 +224,15 @@ Error init()
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
 		"models/crate0/crate0.ankimdl");
 	if(err) return err;
-	horse->getComponent<MoveComponent>().setLocalTransform(
-		Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(), 0.7));
+	//horse->getComponent<MoveComponent>().setLocalTransform(
+	//	Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(), 0.7));
+
+	BodyComponent* bodyc = horse->tryGetComponent<BodyComponent>();
+	if(bodyc)
+	{
+		bodyc->setTransform(
+			Transform(Vec4(10, 10, 4, 0), Mat3x4::getIdentity(), 1.0));
+	}
 #endif
 
 	if(0)
@@ -242,7 +249,7 @@ Error init()
 		move->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
 	}
 
-#if 0
+#if 1
 	{
 		ScriptResourcePointer script;
 
@@ -385,16 +392,19 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 		mover = &scene.findSceneNode("shape1").getComponent<MoveComponent>();
 	}
 
-	/*if(in.getKey(KeyCode::L) == 1)
+	if(in.getKey(KeyCode::L) == 1)
 	{
-		SceneNode& l = 
-			SceneGraphSingleton::get().findSceneNode("crate");
+		SceneNode& l = scene.findSceneNode("horse");
 		
-		Transform trf;
-		trf.setIdentity();
-		trf.getOrigin().y() = 20.0;
-		l.getComponent<MoveComponent>().setLocalTransform(trf);
-	}*/
+		BodyComponent* bodyc = l.tryGetComponent<BodyComponent>();
+		if(bodyc)
+		{
+			Vec4 pos(randRange(0, 10), 10, randRange(-4, 4), 0);
+
+			bodyc->setTransform(
+				Transform(pos, Mat3x4::getIdentity(), 1.0));
+		}
+	}
 
 	if(in.getKey(KeyCode::F1) == 1)
 	{

@@ -219,7 +219,7 @@ void Exporter::exportMesh(
 	{
 		ERROR("Missing attribute");
 	}
-	
+
 	// Write header
 	static const char* magic = "ANKIMES2";
 	memcpy(&header.m_magic, magic, 8);
@@ -259,7 +259,9 @@ void Exporter::exportMesh(
 		
 		if(face.mNumIndices != 3)
 		{
-			ERROR("For some reason the assimp didn't triangulate");
+			ERROR("For some reason the assimp returned wrong number of verts "
+				"for a face (face.mNumIndices=%d). Probably degenerates in "
+				"input file", face.mNumIndices);
 		}
 
 		for(unsigned j = 0; j < 3; j++)

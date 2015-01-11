@@ -835,6 +835,8 @@ void Exporter::load()
 {
 	LOGI("Loading file %s", &m_inputFilename[0]);
 
+	//Assimp::DefaultLogger::create("", Logger::VERBOSE);
+
 	m_importer.SetPropertyFloat(AI_CONFIG_PP_CT_MAX_SMOOTHING_ANGLE, 170);
 
 	const aiScene* scene = m_importer.ReadFile(m_inputFilename, 0
