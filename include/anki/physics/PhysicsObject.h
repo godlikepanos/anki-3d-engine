@@ -23,6 +23,7 @@ public:
 		COLLISION_SHAPE,
 		BODY,
 		JOINT,
+		PLAYER_CONTROLLER,
 		COUNT
 	};
 
