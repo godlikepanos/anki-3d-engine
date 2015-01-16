@@ -20,7 +20,7 @@ struct PhysicsPlayerControllerInitializer
 	F32 m_innerRadius = 0.30;
 	F32 m_outerRadius = 0.50;
 	F32 m_height = 1.9;
-	F32 m_stepHeight = 0.5;
+	F32 m_stepHeight = 1.9 * 0.33;
 };
 
 /// A player controller that walks the world.
@@ -33,10 +33,44 @@ public:
 	:	PhysicsObject(Type::PLAYER_CONTROLLER, world)
 	{}
 
-	ANKI_USE_RESULT Error create(PhysicsWorld* world, const Initializer& init);
+	ANKI_USE_RESULT Error create(const Initializer& init);
 
 	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, 
 		const Vec3& forwardDir, const Vec3& gravity, F32 dt);
+
+private:
+	Vec4 m_upDir;
+	Vec4 m_frontDir;
+	Vec4 m_groundPlane;
+	Vec4 m_groundVeloc;
+	F32 m_innerRadius;
+	F32 m_outerRadius;
+	F32 m_height;
+	F32 m_stepHeight;
+	F32 m_maxSlope;
+	F32 m_sphereCastOrigin;
+	F32 m_restrainingDistance;
+	Bool8 m_isJumping;
+	NewtonCollision* m_castingShape;
+	NewtonCollision* m_supportShape;
+	NewtonCollision* m_upperBodyShape;
+	NewtonBody* m_body;
+
+	static constexpr F32 MIN_RESTRAINING_DISTANCE = 1.0e-2;
+
+	void setClimbSlope(F32 ang)
+	{
+		ANKI_ASSERT(ang >= 0.0);
+		m_maxSlope = cos(ang);
+	}
+
+	void postUpdate();
+
+	/// Called by Newton thread to update the controller.
+	static void postUpdateKernelCallback(
+		NewtonWorld* const world, 
+		void* const context, 
+		int threadIndex);
 };
 /// @}
 

@@ -62,11 +62,11 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit TMat4()
-		: Base()
+	:	Base()
 	{}
 
 	TMat4(const TMat4& b)
-		: Base(b)
+	:	Base(b)
 	{}
 
 	explicit TMat4(T m00, T m01, T m02, T m03, T m10, T m11, T m12, T m13, 
@@ -184,9 +184,9 @@ public:
 	}
 
 	explicit TMat4(const TTransform<T>& t)
-		: TMat4(TVec4<T>(t.getOrigin().xyz(), 1.0), 
-			t.getRotation().getRotationPart(), 
-			t.getScale())
+	:	TMat4(TVec4<T>(t.getOrigin().xyz(), 1.0), 
+		t.getRotation().getRotationPart(), 
+		t.getScale())
 	{}
 	/// @}
 

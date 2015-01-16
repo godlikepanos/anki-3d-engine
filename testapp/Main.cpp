@@ -29,6 +29,7 @@
 #include "anki/event/JitterMoveEvent.h"
 #include "anki/core/Counters.h"
 #include "anki/core/Config.h"
+#include "anki/physics/PhysicsWorld.h"
 #include "anki/scene/LensFlareComponent.h"
 
 using namespace anki;
@@ -249,7 +250,7 @@ Error init()
 		move->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
 	}
 
-#if 1
+#if 0
 	{
 		ScriptResourcePointer script;
 
@@ -260,6 +261,9 @@ Error init()
 		if(err) return err;
 	}
 #endif
+
+	PhysicsPlayerController::Initializer init;
+	scene._getPhysicsWorld().newPlayerController(init);
 
 	/*AnimationResourcePointer anim;
 	anim.load("maps/sponza/unnamed_0.ankianim");

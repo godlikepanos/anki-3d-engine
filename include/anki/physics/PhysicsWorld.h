@@ -9,6 +9,7 @@
 #include "anki/physics/Common.h"
 #include "anki/physics/PhysicsCollisionShape.h"
 #include "anki/physics/PhysicsBody.h"
+#include "anki/physics/PhysicsPlayerController.h"
 #include "anki/util/List.h"
 
 namespace anki {
@@ -38,6 +39,13 @@ public:
 		return newObjectInternal<T>(m_bodies, std::forward<TArgs>(args)...);
 	}
 
+	PhysicsPlayerController* newPlayerController(
+		const PhysicsPlayerController::Initializer& init)
+	{
+		return newObjectInternal<PhysicsPlayerController>(
+			m_playerControllers, init);
+	}
+
 	/// Start asynchronous update.
 	Error updateAsync(F32 timestep);
 
@@ -59,6 +67,7 @@ private:
 	ChainAllocator<U8> m_alloc;
 	List<PhysicsCollisionShape*> m_collisions;
 	List<PhysicsBody*> m_bodies;
+	List<PhysicsPlayerController*> m_playerControllers;
 	Array<AtomicU32, static_cast<U>(PhysicsObject::Type::COUNT)> 
 		m_forDeletionCount = {{{0}, {0}, {0}}};
 	mutable NewtonWorld* m_world = nullptr;

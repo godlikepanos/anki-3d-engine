@@ -107,7 +107,7 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 	m_drawer->prepareDraw(cmdb);
 	m_drawer->setViewProjectionMatrix(camFr.getViewProjectionMatrix());
 	m_drawer->setModelMatrix(Mat4::getIdentity());
-	//drawer->drawGrid();
+	m_drawer->drawGrid();
 
 	err = scene.iterateSceneNodes([&](SceneNode& node) -> Error
 	{
@@ -115,7 +115,7 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 
 		if(&cam.getComponent<SpatialComponent>() == sp)
 		{
-			return ErrorCode::NONE	;
+			return ErrorCode::NONE;
 		}
 
 		if(bitsEnabled(Flag::SPATIAL) && sp)

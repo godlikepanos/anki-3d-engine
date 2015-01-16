@@ -40,11 +40,11 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit TMat3() 
-		: Base()
+	:	Base()
 	{}
 
 	TMat3(const TMat3& b)
-		: Base(b)
+	:	Base(b)
 	{}
 
 	explicit TMat3(
@@ -63,11 +63,11 @@ public:
 	}
 
 	explicit TMat3(const T f)
-		: Base(f)
+	:	Base(f)
 	{}
 
 	explicit TMat3(const T arr[])
-		: Base(arr)
+	:	Base(arr)
 	{}
 
 	explicit TMat3(const TQuat<T>& q)
