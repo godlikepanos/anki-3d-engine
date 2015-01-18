@@ -16,19 +16,18 @@ namespace anki {
 
 /// Quaternion. Used in rotations
 template<typename T>
-class alignas(16) TQuat: public TVec4<T>
+class alignas(16) TQuat: 
+	public TVec<T, 4, typename TVec4Simd<T>::Type, TQuat<T>>
 {
 public:
-	using Base = TVec4<T>;
+	using Base = TVec<T, 4, typename TVec4Simd<T>::Type, TQuat<T>>;
 	
-	using Base::Base;
 	using Base::x;
 	using Base::y;
 	using Base::z;
 	using Base::w;
-	using Base::operator=;
-	using Base::getLengthSquared;
-	using Base::normalize;
+	using Base::normalize; // Shortcut
+	using Base::getLengthSquared; // Shortcut
 
 	/// @name Constructors
 	/// @{
@@ -65,7 +64,7 @@ public:
 	{}
 
 	explicit TQuat(const TVec4<T>& v)
-	:	Base(v)
+	:	Base(v.x(), v.y(), v.z(), v.w())
 	{}
 
 	explicit TQuat(const TMat3<T>& m3)
@@ -109,7 +108,7 @@ public:
 	}
 
 	explicit TQuat(const TMat3x4<T>& m)
-		: TQuat(m.getRotationPart())
+	:	TQuat(m.getRotationPart())
 	{
 		ANKI_ASSERT(isZero<T>(m(0, 3)) && isZero<T>(m(1, 3)) 
 			&& isZero<T>(m(2, 3)));

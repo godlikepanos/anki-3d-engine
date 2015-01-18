@@ -100,7 +100,7 @@ public:
 			ANKI_LOGF("Initialization failed");
 		}
 
-		m_pool->getRefcount() = 1;
+		m_pool->getRefcount().store(1);
 	}
 
 	/// Destructor
@@ -324,7 +324,7 @@ private:
 		if(b.m_pool)
 		{
 			m_pool = b.m_pool;
-			++m_pool->getRefcount();
+			m_pool->getRefcount().fetchAdd(1);
 		}
 	}
 
@@ -332,8 +332,8 @@ private:
 	{
 		if(m_pool)
 		{
-			auto count = --m_pool->getRefcount();
-			if(count == 0)
+			auto count = m_pool->getRefcount().fetchSub(1);
+			if(count == 1)
 			{
 				auto allocCb = m_pool->getAllocationCallback();
 				auto ud = m_pool->getAllocationCallbackUserData();

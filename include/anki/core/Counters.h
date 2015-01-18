@@ -115,7 +115,7 @@ class TraceManager
 {
 public:
 	Array<ThreadTraceManager*, 32> m_threadData;
-	AtomicU32 m_threadCount = {0};
+	Atomic<U32> m_threadCount = {0};
 	File m_traceFile;
 	Mutex m_fileMtx;
 

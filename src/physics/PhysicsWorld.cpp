@@ -63,18 +63,24 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	// Set the simplified solver mode (faster but less accurate)
 	NewtonSetSolverModel(m_world, 1);
 
+	// Set the post update listener
+	NewtonWorldAddPostListener(m_world, "world", this, postUpdateCallback, 
+		destroyCallback);
+
 	return err;
 }
 
 //==============================================================================
 void PhysicsWorld::_increaseObjectsMarkedForDeletion(PhysicsObject::Type type)
 {
-	++m_forDeletionCount[static_cast<U>(type)];
+	m_forDeletionCount[static_cast<U>(type)].fetchAdd(1);
 }
 
 //==============================================================================
-Error PhysicsWorld::updateAsync(F32 timestep)
+Error PhysicsWorld::updateAsync(F32 dt)
 {
+	m_dt = dt;
+
 	// Do cleanup of marked for deletion
 	cleanupMarkedForDeletion(m_bodies, 
 		m_forDeletionCount[static_cast<U>(PhysicsObject::Type::BODY)]);
@@ -82,7 +88,7 @@ Error PhysicsWorld::updateAsync(F32 timestep)
 		static_cast<U>(PhysicsObject::Type::COLLISION_SHAPE)]);
 
 	// Update
-	NewtonUpdateAsync(m_world, timestep);
+	NewtonUpdateAsync(m_world, dt);
 
 	return ErrorCode::NONE;
 }
@@ -96,9 +102,9 @@ void PhysicsWorld::waitUpdate()
 //==============================================================================
 template<typename T>
 void PhysicsWorld::cleanupMarkedForDeletion(
-	List<T*>& container, AtomicU32& count)
+	List<T*>& container, Atomic<U32>& count)
 {
-	while(count > 0)
+	while(count.load() > 0)
 	{
 		Bool found = false;
 		auto it = container.begin();
@@ -117,6 +123,16 @@ void PhysicsWorld::cleanupMarkedForDeletion(
 
 		(void)found;
 		ANKI_ASSERT(found && "Something is wrong with marked for deletion");
+	}
+}
+
+//==============================================================================
+void PhysicsWorld::postUpdate(F32 dt)
+{
+	for(PhysicsPlayerController* player : m_playerControllers)
+	{
+		NewtonDispachThreadJob(m_world, 
+			PhysicsPlayerController::postUpdateKernelCallback, player);
 	}
 }
 

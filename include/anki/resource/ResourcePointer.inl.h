@@ -114,7 +114,7 @@ void ResourcePointer<T, TResourceManager>::reset()
 {
 	if(m_cb != nullptr)
 	{
-		auto count = m_cb->m_refcount.fetch_sub(1);
+		auto count = m_cb->m_refcount.fetchSub(1);
 		if(count == 2)
 		{
 			m_cb->m_resources->_unregisterResource(*this);
@@ -136,7 +136,7 @@ void ResourcePointer<T, TResourceManager>::copy(const ResourcePointer& b)
 	
 	if(b.m_cb != nullptr)
 	{
-		auto count = b.m_cb->m_refcount.fetch_add(1);
+		auto count = b.m_cb->m_refcount.fetchAdd(1);
 		ANKI_ASSERT(count > 0);
 		(void)count;
 

@@ -81,7 +81,7 @@ public:
 	void free(void* ptr);
 
 	/// Get refcount.
-	AtomicU32& getRefcount()
+	Atomic<U32>& getRefcount()
 	{
 		return m_refcount;
 	}
@@ -118,7 +118,7 @@ protected:
 	void* m_allocCbUserData = nullptr;
 
 	/// Allocations count.
-	AtomicU32 m_allocationsCount = {0};
+	Atomic<U32> m_allocationsCount = {0};
 
 	/// Check if already created.
 	Bool isCreated() const;
@@ -128,7 +128,7 @@ private:
 	Type m_type = Type::NONE;
 
 	/// Refcount.
-	AtomicU32 m_refcount = {0};
+	Atomic<U32> m_refcount = {0};
 };
 
 /// A dummy interface to match the StackMemoryPool and ChainMemoryPool 

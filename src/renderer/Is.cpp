@@ -77,11 +77,11 @@ public:
 	VisibilityTestResults::Container::ConstIterator m_lightsBegin;
 	VisibilityTestResults::Container::ConstIterator m_lightsEnd;
 
-	AtomicU32* m_pointLightsCount = nullptr;
-	AtomicU32* m_spotLightsCount = nullptr;
-	AtomicU32* m_spotTexLightsCount = nullptr;
+	Atomic<U32>* m_pointLightsCount = nullptr;
+	Atomic<U32>* m_spotLightsCount = nullptr;
+	Atomic<U32>* m_spotTexLightsCount = nullptr;
 		
-	Array2d<AtomicU32, 
+	Array2d<Atomic<U32>, 
 		ANKI_RENDERER_MAX_TILES_Y, 
 		ANKI_RENDERER_MAX_TILES_X>
 		* m_tilePointLightsCount = nullptr,
@@ -150,7 +150,7 @@ public:
 	I doPointLight(const LightComponent& light, const MoveComponent& move)
 	{
 		// Get GPU light
-		I i = m_pointLightsCount->fetch_add(1);
+		I i = m_pointLightsCount->fetchAdd(1);
 		if(i >= (I)m_is->m_maxPointLights)
 		{
 			return -1;
@@ -183,7 +183,7 @@ public:
 		{
 			// Spot tex light
 
-			i = m_spotTexLightsCount->fetch_add(1);
+			i = m_spotTexLightsCount->fetchAdd(1);
 			if(i >= (I)m_is->m_maxSpotTexLights)
 			{
 				return -1;
@@ -211,7 +211,7 @@ public:
 		{
 			// Spot light without texture
 
-			i = m_spotLightsCount->fetch_add(1);
+			i = m_spotLightsCount->fetchAdd(1);
 			if(i >= (I)m_is->m_maxSpotLights)
 			{
 				return -1;
@@ -286,7 +286,7 @@ public:
 			U x = t % m_is->m_r->getTilesCount().x();
 			U y = t / m_is->m_r->getTilesCount().x();
 
-			U tilePos = (*m_tilePointLightsCount)[y][x].fetch_add(1);
+			U tilePos = (*m_tilePointLightsCount)[y][x].fetchAdd(1);
 
 			if(tilePos < m_is->m_maxPointLightsPerTile)
 			{
@@ -321,7 +321,7 @@ public:
 
 			if(light.getShadowEnabled())
 			{
-				U tilePos = (*m_tileSpotTexLightsCount)[y][x].fetch_add(1);
+				U tilePos = (*m_tileSpotTexLightsCount)[y][x].fetchAdd(1);
 
 				if(tilePos < m_is->m_maxSpotTexLightsPerTile)
 				{
@@ -330,7 +330,7 @@ public:
 			}
 			else
 			{
-				U tilePos = (*m_tileSpotLightsCount)[y][x].fetch_add(1);
+				U tilePos = (*m_tileSpotLightsCount)[y][x].fetchAdd(1);
 
 				if(tilePos < m_is->m_maxSpotLightsPerTile)
 				{
@@ -639,11 +639,11 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	err = tilesClientBuff.create(cmdBuff, m_tilesBuff.getSize(), nullptr);
 	if(err) return err;
 
-	AtomicU32 pointLightsAtomicCount(0);
-	AtomicU32 spotLightsAtomicCount(0);
-	AtomicU32 spotTexLightsAtomicCount(0);
+	Atomic<U32> pointLightsAtomicCount(0);
+	Atomic<U32> spotLightsAtomicCount(0);
+	Atomic<U32> spotTexLightsAtomicCount(0);
 
-	Array2d<AtomicU32, 
+	Array2d<Atomic<U32>, 
 		ANKI_RENDERER_MAX_TILES_Y, 
 		ANKI_RENDERER_MAX_TILES_X> 
 		tilePointLightsCount,

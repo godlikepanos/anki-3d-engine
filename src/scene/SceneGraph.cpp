@@ -218,7 +218,7 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 {
 	/// Delete all nodes pending deletion. At this point all scene threads 
 	/// should have finished their tasks
-	while(m_objectsMarkedForDeletionCount > 0)
+	while(m_objectsMarkedForDeletionCount.load() > 0)
 	{
 		Bool found = false;
 		auto it = m_nodes.begin();

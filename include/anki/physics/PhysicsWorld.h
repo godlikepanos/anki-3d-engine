@@ -47,7 +47,7 @@ public:
 	}
 
 	/// Start asynchronous update.
-	Error updateAsync(F32 timestep);
+	Error updateAsync(F32 dt);
 
 	/// End asynchronous update.
 	void waitUpdate();
@@ -61,6 +61,16 @@ public:
 	}
 
 	void _increaseObjectsMarkedForDeletion(PhysicsObject::Type type);
+
+	const Vec4& getGravity() const
+	{
+		return m_gravity;
+	}
+
+	F32 getDeltaTime() const
+	{
+		return m_dt;
+	}
 	/// @}
 
 private:
@@ -68,16 +78,33 @@ private:
 	List<PhysicsCollisionShape*> m_collisions;
 	List<PhysicsBody*> m_bodies;
 	List<PhysicsPlayerController*> m_playerControllers;
-	Array<AtomicU32, static_cast<U>(PhysicsObject::Type::COUNT)> 
+	Array<Atomic<U32>, static_cast<U>(PhysicsObject::Type::COUNT)> 
 		m_forDeletionCount = {{{0}, {0}, {0}}};
 	mutable NewtonWorld* m_world = nullptr;
+	Vec4 m_gravity = Vec4(0.0, -9.8, 0.0, 0.0);
+	F32 m_dt = 0.0;
 
 	template<typename T, typename TContainer, typename... TArgs>
 	T* newObjectInternal(TContainer& cont, TArgs&&... args);
 
 	template<typename T>
 	void cleanupMarkedForDeletion(
-		List<T*>& container, AtomicU32& count);
+		List<T*>& container, Atomic<U32>& count);
+
+	/// Custom update
+	static void postUpdateCallback(
+		const NewtonWorld* const world, 
+		void* const listenerUserData, F32 dt)
+	{
+		static_cast<PhysicsWorld*>(listenerUserData)->postUpdate(dt);
+	}
+
+	void postUpdate(F32 dt);
+
+	static void destroyCallback(
+		const NewtonWorld* const world, 
+		void* const listenerUserData)
+	{}
 };
 
 //==============================================================================

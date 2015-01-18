@@ -65,35 +65,35 @@ public:
 	/// @name Constructors
 	/// @{
 	explicit TVec4()
-		: Base()
+	:	Base()
 	{}
 
 	TVec4(const TVec4& b)
-		: Base(b)
+	:	Base(b)
 	{}
 
 	explicit TVec4(const T x_, const T y_, const T z_, const T w_)
-		: Base(x_, y_, z_, w_)
+	:	Base(x_, y_, z_, w_)
 	{}
 
 	explicit TVec4(const T f)
-		: Base(f)
+	:	Base(f)
 	{}
 
 	explicit TVec4(const T arr[])
-		: Base(arr)
+	:	Base(arr)
 	{}
 
 	explicit TVec4(const typename Base::Simd& simd)
-		: Base(simd)
+	:	Base(simd)
 	{}
 
 	explicit TVec4(const TVec2<T>& v, const T z_, const T w_)
-		: Base(v.x(), v.y(), z_, w_)
+	:	Base(v.x(), v.y(), z_, w_)
 	{}
 
 	explicit TVec4(const TVec3<T>& v, const T w_)
-		: Base(v.x(), v.y(), v.z(), w_)
+	:	Base(v.x(), v.y(), v.z(), w_)
 	{}
 	/// @}
 

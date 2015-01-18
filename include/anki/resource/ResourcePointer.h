@@ -129,7 +129,7 @@ private:
 		{}
 
 		Type m_resource;
-		AtomicU32 m_refcount = {1};
+		Atomic<U32> m_refcount = {1};
 		TResourceManager* m_resources = nullptr;
 		char m_uuid[1]; ///< This is part of the UUID
 	};

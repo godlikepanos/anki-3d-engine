@@ -140,7 +140,7 @@ void* allocAligned(
 //==============================================================================
 BaseMemoryPool::~BaseMemoryPool()
 {
-	ANKI_ASSERT(m_refcount == 0 && "Refcount should be zero");
+	ANKI_ASSERT(m_refcount.load() == 0 && "Refcount should be zero");
 }
 
 //==============================================================================
@@ -205,7 +205,7 @@ HeapMemoryPool::HeapMemoryPool()
 //==============================================================================
 HeapMemoryPool::~HeapMemoryPool()
 {
-	if(m_allocationsCount != 0)
+	if(m_allocationsCount.load() != 0)
 	{
 		ANKI_LOGW("Memory pool destroyed before all memory being released");
 	}
@@ -242,7 +242,7 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 
 	if(mem != nullptr)
 	{
-		++m_allocationsCount;
+		m_allocationsCount.fetchAdd(1);
 
 #if ANKI_MEM_SIGNATURES
 		memset(mem, 0, m_headerSize);
@@ -275,7 +275,7 @@ void HeapMemoryPool::free(void* ptr)
 
 	ptr = static_cast<void*>(memU8);
 #endif
-	--m_allocationsCount;
+	m_allocationsCount.fetchSub(1);
 	m_allocCb(m_allocCbUserData, ptr, 0, 0);
 }
 
@@ -319,7 +319,7 @@ Error StackMemoryPool::create(
 	m_memsize = getAlignedRoundUp(alignmentBytes, size);
 	m_ignoreDeallocationErrors = ignoreDeallocationErrors;
 
-	m_memory = reinterpret_cast<U8*>(m_allocCb(
+	m_memory = static_cast<U8*>(m_allocCb(
 		m_allocCbUserData, nullptr, m_memsize, m_alignmentBytes));
 
 	if(m_memory != nullptr)
@@ -330,7 +330,7 @@ Error StackMemoryPool::create(
 #endif
 
 		// Align allocated memory
-		m_top = m_memory;
+		m_top.store(m_memory);
 
 		// Calc header size
 		m_headerSize = 
@@ -356,7 +356,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 
 	ANKI_ASSERT(size < MAX_U32 && "Too big allocation");
 
-	U8* out = m_top.fetch_add(size);
+	U8* out = m_top.fetchAdd(size);
 
 	if(out + size <= m_memory + m_memsize)
 	{
@@ -378,7 +378,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 		ANKI_ASSERT(isAligned(m_alignmentBytes, out));
 
 		// Increase count
-		++m_allocationsCount;
+		m_allocationsCount.fetchAdd(1);
 	}
 	else
 	{
@@ -426,10 +426,10 @@ void StackMemoryPool::free(void* ptr)
 	//     expected = top;
 	//     exchange = false;
 	// }
-	Bool exchange = m_top.compare_exchange_strong(expected, desired);
+	Bool exchange = m_top.compareExchange(expected, desired);
 
 	// Decrease count
-	--m_allocationsCount;
+	m_allocationsCount.fetchSub(1);
 
 	// Error if needed
 	if(!m_ignoreDeallocationErrors && !exchange)
@@ -451,8 +451,8 @@ void StackMemoryPool::reset()
 	memset(m_memory, 0xCC, m_memsize);
 #endif
 
-	m_top = m_memory;
-	m_allocationsCount = 0;
+	m_top.store(m_memory);
+	m_allocationsCount.store(0);
 }
 
 //==============================================================================
@@ -484,7 +484,7 @@ ChainMemoryPool::ChainMemoryPool()
 //==============================================================================
 ChainMemoryPool::~ChainMemoryPool()
 {
-	if(m_allocationsCount != 0)
+	if(m_allocationsCount.load() != 0)
 	{
 		ANKI_LOGW("Memory pool destroyed before all memory being released");
 	}
@@ -596,7 +596,7 @@ void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 		ANKI_ASSERT(mem != nullptr && "The chunk should have space");
 	}
 
-	++m_allocationsCount;
+	m_allocationsCount.fetchAdd(1);
 
 	return mem;
 }
@@ -659,7 +659,7 @@ void ChainMemoryPool::free(void* ptr)
 		destroyChunk(chunk);
 	}
 
-	--m_allocationsCount;
+	m_allocationsCount.fetchSub(1);
 }
 
 //==============================================================================

@@ -148,7 +148,7 @@ public:
 
 	void increaseObjectsMarkedForDeletion()
 	{
-		++m_objectsMarkedForDeletionCount;
+		m_objectsMarkedForDeletionCount.fetchAdd(1);
 	}
 
 	/// @privatesection
@@ -189,7 +189,7 @@ private:
 
 	EventManager m_events;
 
-	AtomicU32 m_objectsMarkedForDeletionCount;
+	Atomic<U32> m_objectsMarkedForDeletionCount;
 
 	/// Put a node in the appropriate containers
 	ANKI_USE_RESULT Error registerNode(SceneNode* node);

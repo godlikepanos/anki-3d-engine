@@ -30,6 +30,12 @@ enum class PhysicsMaterialBit: U16
 	PARTICLES = 1 << 3
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsMaterialBit, inline)
+
+/// Convert newton quat to AnKi.
+inline void toAnki(Quat& q)
+{
+	q = Quat(q.y(), q.z(), q.w(), q.x());
+}
 /// @}
 
 } // end namespace anki

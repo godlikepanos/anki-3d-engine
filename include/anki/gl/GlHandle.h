@@ -72,7 +72,7 @@ public:
 	
 		if(b.m_cb)
 		{
-			auto count = b.m_cb->m_refcount.fetch_add(1);
+			auto count = b.m_cb->m_refcount.fetchAdd(1);
 			ANKI_ASSERT(count > 0);
 			(void)count;
 
@@ -142,7 +142,7 @@ public:
 			{
 				cb->m_alloc = alloc;
 				cb->m_del = del;
-				cb->m_refcount = 1;
+				cb->m_refcount.store(1);
 				cb->m_ptr = ptr;
 
 				m_cb = cb;
@@ -188,11 +188,11 @@ public:
 
 			if(cb != nullptr)
 			{
-				cb->m_state = GlHandleState::NEW;
+				cb->m_state.store(GlHandleState::NEW);
 				cb->m_gl = dev;
 				cb->m_alloc = alloc;
 				cb->m_del = del;
-				cb->m_refcount = 1;
+				cb->m_refcount.store(1);
 				cb->m_ptr = ptr;
 
 				m_cb = cb;
@@ -266,7 +266,7 @@ private:
 	{
 	public:
 		Y* m_ptr;
-		AtomicI32 m_refcount;
+		Atomic<I32> m_refcount;
 
 		virtual ~CtrlBlockBase()
 		{}
@@ -376,7 +376,7 @@ private:
 	{
 		if(m_cb)
 		{
-			auto count = m_cb->m_refcount.fetch_sub(1);
+			auto count = m_cb->m_refcount.fetchSub(1);
 			if(count == 1)
 			{
 				m_cb->deletePtr();
