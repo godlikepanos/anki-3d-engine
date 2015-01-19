@@ -31,10 +31,28 @@ enum class PhysicsMaterialBit: U16
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(PhysicsMaterialBit, inline)
 
-/// Convert newton quat to AnKi.
-inline void toAnki(Quat& q)
+/// Convert newton to AnKi.
+ANKI_USE_RESULT inline Quat toAnki(const Quat& q)
 {
-	q = Quat(q.y(), q.z(), q.w(), q.x());
+	return Quat(q.y(), q.z(), q.w(), q.x());
+}
+
+/// Convert AnKi to Newton.
+ANKI_USE_RESULT inline Quat toNewton(const Quat& q)
+{
+	return Quat(q.w(), q.x(), q.y(), q.z());
+}
+
+/// Convert newton to AnKi.
+ANKI_USE_RESULT inline Mat4 toAnki(const Mat4& m)
+{
+	return m.getTransposed();
+}
+
+/// Convert AnKi to Newton.
+ANKI_USE_RESULT inline Mat4 toNewton(const Mat4& m)
+{
+	return m.getTransposed();
 }
 /// @}
 

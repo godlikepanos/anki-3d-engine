@@ -250,7 +250,7 @@ Error init()
 		move->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
 	}
 
-#if 1
+#if 0
 	{
 		ScriptResourcePointer script;
 
@@ -262,10 +262,20 @@ Error init()
 	}
 #endif
 
-	PhysicsPlayerController::Initializer init;
-	auto player = scene._getPhysicsWorld().newPlayerController(init);
+	PhysicsPlayerController::Initializer initp;
+	auto player = scene._getPhysicsWorld().newPlayerController(initp);
 	player->moveToPosition(Vec4(5.0, 2.0, 0.0, 0.0));
-	player->setVelocity(0.1, 0.0, 0.0, Vec4(1.0, 0.0, 0.0, 0.0));
+	player->setVelocity(3.5, 0.0, 0.0, Vec4(0.0, 0.0, -1.0, 0.0));
+
+	PhysicsCollisionShape::Initializer initc;
+	auto box = 
+		scene._getPhysicsWorld().newCollisionShape<PhysicsBox>(
+		initc, Vec3(70.0));
+
+	PhysicsBody::Initializer init;
+	init.m_shape = box;
+	init.m_startTrf = Transform(Vec4(0.0, -45, 0, 0), Mat3x4::getIdentity(), 1.0);
+	scene._getPhysicsWorld().newBody<PhysicsBody>(init);
 
 	/*AnimationResourcePointer anim;
 	anim.load("maps/sponza/unnamed_0.ankianim");
