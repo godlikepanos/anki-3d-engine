@@ -13,7 +13,7 @@ namespace anki {
 /// @addtogroup math
 /// @{
 
-/// Axis angles. Used for rotations
+/// Axis angles. Used in rotations.
 template<typename T>
 class TAxisang
 {
@@ -26,8 +26,8 @@ public:
 	{}
 	
 	TAxisang(const TAxisang& b)
-	:	m_ang(b.ang), 
-		m_axis(b.axis)
+	:	m_ang(b.m_ang), 
+		m_axis(b.m_axis)
 	{}
 
 	explicit TAxisang(const T rad, const TVec3<T>& axis)

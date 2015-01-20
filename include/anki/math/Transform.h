@@ -26,7 +26,9 @@ public:
 	{}
 
 	TTransform(const TTransform& b)
-		: m_origin(b.m_origin), m_rotation(b.m_rotation), m_scale(b.m_scale)
+	:	m_origin(b.m_origin), 
+		m_rotation(b.m_rotation), 
+		m_scale(b.m_scale)
 	{
 		ANKI_CHECK_W();
 	}
@@ -34,14 +36,16 @@ public:
 	explicit TTransform(const Mat4& m4)
 	{
 		m_rotation = TMat3x4<T>(m4.getRotationPart());
-		m_origin = m4.getTranslationPart();
+		m_origin = m4.getTranslationPart().xyz0();
 		m_scale = 1.0;
 		ANKI_CHECK_W();
 	}
 
 	explicit TTransform(const TVec4<T>& origin, const TMat3x4<T>& rotation,
 		const T scale)
-		: m_origin(origin), m_rotation(rotation), m_scale(scale)
+	:	m_origin(origin), 
+		m_rotation(rotation), 
+		m_scale(scale)
 	{
 		ANKI_CHECK_W();
 	}

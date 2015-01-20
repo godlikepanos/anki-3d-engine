@@ -51,7 +51,7 @@ Error PhysicsBody::create(const Initializer& init)
 
 	// User data & callbacks
 	NewtonBodySetUserData(m_body, this);
-	NewtonBodySetTransformCallback(m_body, onTransform);
+	NewtonBodySetTransformCallback(m_body, onTransformCallback);
 
 	// Set mass
 	NewtonCollision* shape = NewtonBodyGetCollision(m_body);
@@ -78,7 +78,7 @@ void PhysicsBody::setTransform(const Transform& trf)
 }
 
 //==============================================================================
-void PhysicsBody::onTransform(
+void PhysicsBody::onTransformCallback(
 	const NewtonBody* const body, 
 	const dFloat* const matrix, 
 	int threadIndex)

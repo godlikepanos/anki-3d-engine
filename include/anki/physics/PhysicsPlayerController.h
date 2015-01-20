@@ -47,6 +47,13 @@ public:
 
 	void moveToPosition(const Vec4& position);
 
+	const Transform& getTransform(Bool& updated)
+	{
+		updated = m_updated;
+		m_updated = false;
+		return m_trf;
+	}
+
 	/// @privatesection
 	/// @{
 
@@ -82,6 +89,11 @@ private:
 	Vec4 m_forwardDir = Vec4(0.0, 0.0, -1.0, 0.0);
 	Vec4 m_gravity;
 
+	// Motion state
+	Bool8 m_updated = true;
+	Transform m_trf;
+	Mat4 m_prevTrf = {Mat4::getIdentity()};
+
 	static constexpr F32 MIN_RESTRAINING_DISTANCE = 1.0e-2;
 	static constexpr U DESCRETE_MOTION_STEPS = 8;
 	static constexpr U MAX_CONTACTS = 32;
@@ -109,6 +121,13 @@ private:
 		const Vec4& dst, int threadIndex);
 
 	void postUpdate(F32 dt, int threadIndex);
+
+	static void onTransformCallback(
+		const NewtonBody* const body, 
+		const dFloat* const matrix, 
+		int threadIndex);
+
+	void onTransform(Mat4 matrix);
 };
 /// @}
 

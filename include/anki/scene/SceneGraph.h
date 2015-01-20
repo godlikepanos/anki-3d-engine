@@ -23,6 +23,7 @@ namespace anki {
 class Renderer;
 class ResourceManager;
 class Camera;
+class Input;
 
 /// @addtogroup scene
 /// @{
@@ -42,7 +43,8 @@ public:
 		void* allocCbData,
 		U32 frameAllocatorSize,
 		Threadpool* threadpool, 
-		ResourceManager* resources);
+		ResourceManager* resources,
+		Input* input);
 
 	/// @note Return a copy
 	SceneAllocator<U8> getAllocator() const
@@ -167,6 +169,12 @@ public:
 	{
 		return *m_physics;
 	}
+
+	const Input& getInput() const
+	{
+		ANKI_ASSERT(m_input);
+		return *m_input;
+	}
 	/// @}
 
 private:
@@ -174,6 +182,7 @@ private:
 	ResourceManager* m_resources = nullptr;
 	GlDevice* m_gl = nullptr;
 	PhysicsWorld* m_physics = nullptr;
+	Input* m_input = nullptr;
 
 	SceneAllocator<U8> m_alloc;
 	SceneFrameAllocator<U8> m_frameAlloc;

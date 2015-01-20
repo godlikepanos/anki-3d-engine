@@ -262,7 +262,8 @@ Error App::createInternal(const ConfigSet& config_,
 	if(!m_scene) return ErrorCode::OUT_OF_MEMORY;
 
 	err = m_scene->create(m_allocCb, m_allocCbData, 
-		config.get("sceneFrameAllocatorSize"), m_threadpool, m_resources);
+		config.get("sceneFrameAllocatorSize"), m_threadpool, m_resources,
+		m_input);
 	if(err) return err;
 
 	// Script

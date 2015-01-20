@@ -50,7 +50,7 @@ private:
 	Bool8 m_updated = true;
 
 	/// Newton callback.
-	static void onTransform(
+	static void onTransformCallback(
 		const NewtonBody* const body, 
 		const dFloat* const matrix, 
 		int threadIndex);

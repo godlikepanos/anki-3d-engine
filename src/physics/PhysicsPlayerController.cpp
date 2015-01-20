@@ -21,7 +21,7 @@ struct CustomControllerConvexRayFilter
 	const NewtonBody* m_hitBody = nullptr;
 	const NewtonCollision* m_shapeHit = nullptr;
 	U32 m_collisionId = 0;
-	F32 m_intersectParam = 0.0;
+	F32 m_intersectParam = 1.2;
 
 	static F32 filterCallback(
 		const NewtonBody* const body, 
@@ -229,6 +229,9 @@ Error PhysicsPlayerController::create(const Initializer& init)
 		ANKI_LOGE("NewtonCreateKinematicBody() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
+
+	NewtonBodySetUserData(m_body, this);
+	NewtonBodySetTransformCallback(m_body, onTransformCallback);
 
 	// Players must have weight, otherwise they are infinitely strong when 
 	// they collide
@@ -688,6 +691,37 @@ void PhysicsPlayerController::moveToPosition(const Vec4& position)
 	trf.transpose();
 	trf.setTranslationPart(position.xyz1());
 	NewtonBodySetMatrix(m_body, &trf[0]);
+}
+
+//==============================================================================
+void PhysicsPlayerController::onTransformCallback(
+	const NewtonBody* const body, 
+	const dFloat* const matrix, 
+	int /*threadIndex*/)
+{
+	ANKI_ASSERT(body);
+	ANKI_ASSERT(matrix);
+
+	Mat4 trf;
+	memcpy(&trf, matrix, sizeof(Mat4));
+
+	void* ud = NewtonBodyGetUserData(body);
+	ANKI_ASSERT(ud);
+	PhysicsPlayerController* self = static_cast<PhysicsPlayerController*>(ud);
+	self->onTransform(trf);
+}
+
+//==============================================================================
+void PhysicsPlayerController::onTransform(Mat4 trf)
+{
+	if(trf != m_prevTrf)
+	{
+		m_prevTrf = trf;
+		trf.transpose();
+
+		m_trf = Transform(trf);
+		m_updated = true;
+	}
 }
 
 } // end namespace anki

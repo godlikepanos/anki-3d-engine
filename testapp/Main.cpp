@@ -265,7 +265,7 @@ Error init()
 	PhysicsPlayerController::Initializer initp;
 	auto player = scene._getPhysicsWorld().newPlayerController(initp);
 	player->moveToPosition(Vec4(5.0, 2.0, 0.0, 0.0));
-	player->setVelocity(3.5, 0.0, 0.0, Vec4(0.0, 0.0, -1.0, 0.0));
+	player->setVelocity(0.0, 0.0, 0.0, Vec4(0.0, 0.0, -1.0, 0.0));
 
 	PhysicsCollisionShape::Initializer initc;
 	auto box = 
@@ -274,7 +274,8 @@ Error init()
 
 	PhysicsBody::Initializer init;
 	init.m_shape = box;
-	init.m_startTrf = Transform(Vec4(0.0, -45, 0, 0), Mat3x4::getIdentity(), 1.0);
+	init.m_startTrf = Transform(Vec4(0.0, -45, 0, 0), 
+		Mat3x4(Axisang(toRad(0.0), Vec3(1, 0, 0))), 1.0);
 	scene._getPhysicsWorld().newBody<PhysicsBody>(init);
 
 	/*AnimationResourcePointer anim;
@@ -571,7 +572,7 @@ Error initSubsystems(int argc, char* argv[])
 
 	//config.set("maxTextureSize", 256);
 
-	config.set("fullscreenDesktopResolution", true);
+	config.set("fullscreenDesktopResolution", false);
 	config.set("debugContext", false);
 
 	app = new App;

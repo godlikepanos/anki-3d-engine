@@ -13,6 +13,9 @@
 
 namespace anki {
 
+/// @addtogroup scene
+/// @{
+
 /// Scene node component
 class SceneComponent
 {
@@ -29,7 +32,8 @@ public:
 		INSTANCE,
 		LENS_FLARE,
 		BODY,
-		LAST_COMPONENT_ID = BODY
+		PLAYER_CONTROLLER,
+		LAST_COMPONENT_ID = PLAYER_CONTROLLER
 	};
 
 	/// Construct the scene component.
@@ -101,6 +105,7 @@ private:
 	Type m_type;
 	Bitset<U8> m_flags;
 };
+/// @}
 
 } // end namespace anki
 
