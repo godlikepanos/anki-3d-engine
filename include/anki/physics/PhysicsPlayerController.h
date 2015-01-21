@@ -91,7 +91,7 @@ private:
 
 	// Motion state
 	Bool8 m_updated = true;
-	Transform m_trf;
+	Transform m_trf = {Transform::getIdentity()};
 	Mat4 m_prevTrf = {Mat4::getIdentity()};
 
 	static constexpr F32 MIN_RESTRAINING_DISTANCE = 1.0e-2;

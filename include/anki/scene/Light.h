@@ -26,7 +26,7 @@ class Light: public SceneNode
 public:
 	Light(SceneGraph* scene);
 
-	virtual ~Light();
+	~Light();
 
 	ANKI_USE_RESULT Error create(
 		const CString& name, 

@@ -31,6 +31,7 @@
 #include "anki/core/Config.h"
 #include "anki/physics/PhysicsWorld.h"
 #include "anki/scene/LensFlareComponent.h"
+#include "anki/scene/PlayerNode.h"
 
 using namespace anki;
 
@@ -262,10 +263,13 @@ Error init()
 	}
 #endif
 
-	PhysicsPlayerController::Initializer initp;
+	/*PhysicsPlayerController::Initializer initp;
 	auto player = scene._getPhysicsWorld().newPlayerController(initp);
 	player->moveToPosition(Vec4(5.0, 2.0, 0.0, 0.0));
-	player->setVelocity(0.0, 0.0, 0.0, Vec4(0.0, 0.0, -1.0, 0.0));
+	player->setVelocity(0.0, 0.0, 0.0, Vec4(0.0, 0.0, -1.0, 0.0));*/
+
+	PlayerNode* pnode;
+	scene.newSceneNode<PlayerNode>("player", pnode);
 
 	PhysicsCollisionShape::Initializer initc;
 	auto box = 

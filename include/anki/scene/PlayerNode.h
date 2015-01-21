@@ -10,14 +10,26 @@
 
 namespace anki {
 
+// Forward
+class PhysicsPlayerController;
+
 /// @addtogroup scene
 /// @{
 
 /// Player scene node. It uses input and physics to move inside the world.
 class PlayerNode: public SceneNode
 {
+	friend class PlayerNodeFeedbackComponent;
+
 public:
 	PlayerNode(SceneGraph* scene);
+
+	~PlayerNode();
+
+	ANKI_USE_RESULT Error create(const CString& name);
+
+private:
+	PhysicsPlayerController* m_player = nullptr;
 };
 /// @}
 

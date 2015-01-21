@@ -68,33 +68,29 @@ Error Light::create(const CString& name,
 	// Move component
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);
 	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
-	comp->setAutomaticCleanup(true);
 
-	err = addComponent(comp);
+	err = addComponent(comp, true);
 	if(err) return err;
 
 	// Light component
 	comp = getSceneAllocator().newInstance<LightComponent>(this, type);
 	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
-	comp->setAutomaticCleanup(true);
 
-	err = addComponent(comp);
+	err = addComponent(comp, true);
 	if(err) return err;
 
 	// Feedback component
 	comp = getSceneAllocator().newInstance<LightFeedbackComponent>(this);
 	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
-	comp->setAutomaticCleanup(true);
 
-	err = addComponent(comp);
+	err = addComponent(comp, true);
 	if(err) return err;
 
 	// Spatial component
 	comp = getSceneAllocator().newInstance<SpatialComponent>(this, shape);
 	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
-	comp->setAutomaticCleanup(true);
 
-	err = addComponent(comp);
+	err = addComponent(comp, true);
 	if(err) return err;
 
 	return err;
