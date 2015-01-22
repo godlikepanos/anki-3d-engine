@@ -71,8 +71,8 @@ Error init()
 		renderer.getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
 	cam->getComponent<MoveComponent>().
-		setLocalTransform(Transform(Vec4(17.0, 5.2, 0.0, 0),
-		Mat3x4(Euler(toRad(-10.0), toRad(90.0), toRad(0.0))),
+		setLocalTransform(Transform(Vec4(0.0, 3.0, -6.0, 0.0),
+		Mat3x4(Euler(toRad(-20.0), toRad(180.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
 
@@ -251,7 +251,7 @@ Error init()
 		move->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
 	}
 
-#if 0
+#if 1
 	{
 		ScriptResourcePointer script;
 
@@ -270,6 +270,8 @@ Error init()
 
 	PlayerNode* pnode;
 	scene.newSceneNode<PlayerNode>("player", pnode);
+
+	pnode->addChild(cam);
 
 	PhysicsCollisionShape::Initializer initc;
 	auto box = 
@@ -415,7 +417,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 
 	if(in.getKey(KeyCode::L) == 1)
 	{
-		SceneNode& l = scene.findSceneNode("horse");
+		/*SceneNode& l = scene.findSceneNode("horse");
 		
 		BodyComponent* bodyc = l.tryGetComponent<BodyComponent>();
 		if(bodyc)
@@ -424,7 +426,9 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 
 			bodyc->setTransform(
 				Transform(pos, Mat3x4::getIdentity(), 1.0));
-		}
+		}*/
+
+		SceneNode& l = scene.findSceneNode("player");
 	}
 
 	if(in.getKey(KeyCode::F1) == 1)
@@ -456,6 +460,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 		renderer.takeScreenshot("screenshot.tga");
 	}
 
+#if 0
 	if(in.getKey(KeyCode::UP)) mover->rotateLocalX(ang);
 	if(in.getKey(KeyCode::DOWN)) mover->rotateLocalX(-ang);
 	if(in.getKey(KeyCode::LEFT)) mover->rotateLocalY(ang);
@@ -480,6 +485,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	{
 		mover->scale(-scale);
 	}
+#endif
 #if 0
 	if(in.getKey(KeyCode::P) == 1)
 	{

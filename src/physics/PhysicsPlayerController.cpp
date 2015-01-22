@@ -223,7 +223,8 @@ Error PhysicsPlayerController::create(const Initializer& init)
 
 	// Create the kinematic body
 	Mat4 locationMatrix(Mat4::getIdentity());
-	m_body = NewtonCreateKinematicBody(world, playerShape, &locationMatrix[0]);
+	m_body = NewtonCreateKinematicBody(world, playerShape, 
+		&toNewton(locationMatrix)[0]);
 	if(m_body == nullptr)
 	{
 		ANKI_LOGE("NewtonCreateKinematicBody() failed");

@@ -7,7 +7,7 @@
 #define ANKI_SCENE_PLAYER_CONTROLLER_COMPONENT_H
 
 #include "anki/scene/SceneComponent.h"
-#include "anki/physics/PlayerControllerComponent.h"
+#include "anki/physics/PhysicsPlayerController.h"
 
 namespace anki {
 
@@ -31,6 +31,12 @@ public:
 	void setTransform(const Transform& trf)
 	{
 		m_player->moveToPosition(trf.getOrigin());
+	}
+
+	void setVelocity(F32 forwardSpeed, F32 strafeSpeed, F32 jumpSpeed, 
+		const Vec4& forwardDir)
+	{
+		m_player->setVelocity(forwardSpeed, strafeSpeed, jumpSpeed, forwardDir);
 	}
 
 	/// @name SceneComponent overrides
