@@ -32,6 +32,7 @@
 #include "anki/physics/PhysicsWorld.h"
 #include "anki/scene/LensFlareComponent.h"
 #include "anki/scene/PlayerNode.h"
+#include "anki/scene/PlayerControllerComponent.h"
 
 using namespace anki;
 
@@ -56,7 +57,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 2.1);
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.1);
 
 	if(getenv("PROFILE"))
 	{
@@ -66,13 +67,13 @@ Error init()
 	// camera
 	err = scene.newSceneNode<PerspectiveCamera>("main-camera", cam);
 	if(err) return err;
-	const F32 ang = 45.0;
+	const F32 ang = 55.0;
 	cam->setAll(
 		renderer.getAspectRatio() * toRad(ang),
 		toRad(ang), 0.5, 500.0);
 	cam->getComponent<MoveComponent>().
-		setLocalTransform(Transform(Vec4(0.0, 3.0, -6.0, 0.0),
-		Mat3x4(Euler(toRad(-20.0), toRad(180.0), toRad(0.0))),
+		setLocalTransform(Transform(Vec4(0.0),
+		Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))),
 		1.0));
 	scene.setActiveCamera(cam);
 
@@ -269,7 +270,7 @@ Error init()
 	player->setVelocity(0.0, 0.0, 0.0, Vec4(0.0, 0.0, -1.0, 0.0));*/
 
 	PlayerNode* pnode;
-	scene.newSceneNode<PlayerNode>("player", pnode);
+	scene.newSceneNode<PlayerNode>("player", pnode, Vec4(1.0, 3.0, 0.0, 0.0));
 
 	pnode->addChild(cam);
 
@@ -428,7 +429,14 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 				Transform(pos, Mat3x4::getIdentity(), 1.0));
 		}*/
 
-		SceneNode& l = scene.findSceneNode("player");
+		scene.newSceneNode<ModelNode>(CString(), horse, 
+			"models/crate0/crate0.ankimdl");
+		BodyComponent* bodyc = horse->tryGetComponent<BodyComponent>();
+
+		Vec4 pos(randRange(3, 15), 10, randRange(-6, 8), 0);
+
+		bodyc->setTransform(
+			Transform(pos, Mat3x4::getIdentity(), 1.0));
 	}
 
 	if(in.getKey(KeyCode::F1) == 1)
@@ -518,14 +526,14 @@ end)");
 	}
 #endif
 
-	if(in.getMousePosition() != Vec2(0.0))
+	/*if(in.getMousePosition() != Vec2(0.0))
 	{
 		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity *
 			renderer.getAspectRatio();
 
 		mover->rotateLocalY(angY);
 		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
-	}
+	}*/
 
 	//execStdinScpripts();
 
@@ -582,7 +590,7 @@ Error initSubsystems(int argc, char* argv[])
 
 	//config.set("maxTextureSize", 256);
 
-	config.set("fullscreenDesktopResolution", false);
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 
 	app = new App;

@@ -7,6 +7,7 @@
 #define ANKI_SCENE_PLAYER_NODE_H
 
 #include "anki/scene/SceneNode.h"
+#include "anki/Math.h"
 
 namespace anki {
 
@@ -26,7 +27,7 @@ public:
 
 	~PlayerNode();
 
-	ANKI_USE_RESULT Error create(const CString& name);
+	ANKI_USE_RESULT Error create(const CString& name, const Vec4& position);
 
 private:
 	PhysicsPlayerController* m_player = nullptr;

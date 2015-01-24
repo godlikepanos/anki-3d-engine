@@ -31,12 +31,34 @@ public:
 
 		PlayerControllerComponent& playerc = 
 			node.getComponent<PlayerControllerComponent>();
+		const Input& in = node.getSceneGraph().getInput();
+		const F32 ang = toRad(7.0);
 
-		// Process physics move
-		if(playerc.getTimestamp() == getGlobTimestamp())
+		F32 y = in.getMousePosition().y();
+		F32 x = in.getMousePosition().x();
+		if(playerc.getTimestamp() == getGlobTimestamp() 
+			|| y != 0.0 
+			|| x != 0.0)
 		{
 			MoveComponent& move = node.getComponent<MoveComponent>();
-			move.setLocalTransform(playerc.getTransform());
+
+			// Set origin
+			Vec4 origin = playerc.getTransform().getOrigin();
+			origin.y() += 1.9;
+
+			// Set rotation
+			Mat3x4 rot(Euler(ang * y * -11.25, ang * x * -20.0, 0.0));
+
+			rot = move.getLocalRotation().combineTransformations(rot);
+
+			Vec3 newz = rot.getColumn(2).getNormalized();
+			Vec3 newx = Vec3(0.0, 1.0, 0.0).cross(newz);
+			Vec3 newy = newz.cross(newx);
+			rot.setColumns(newx, newy, newz, Vec3(0.0));
+			rot.reorthogonalize();
+
+			// Update move
+			move.setLocalTransform(Transform(origin, rot, 1.0));
 		}
 
 		return ErrorCode::NONE;
@@ -62,11 +84,11 @@ public:
 		PlayerControllerComponent& playerc = 
 			node.getComponent<PlayerControllerComponent>();
 		MoveComponent& move = node.getComponent<MoveComponent>();
-
-		// Process input
 		const Input& in = node.getSceneGraph().getInput();
-		Vec4 moveVec(0.0);
 
+		const F32 speed = 3.5;
+		
+		Vec4 moveVec(0.0);
 		if(in.getKey(KeyCode::W))
 		{
 			moveVec.z() += 1.0;
@@ -87,26 +109,10 @@ public:
 			moveVec.x() += 1.0;
 		}
 
-		const Transform& trf = playerc.getTransform();
-		Vec4 dir = trf.getRotation().getColumn(2).xyz0();
+		Vec4 dir = move.getLocalRotation().getColumn(2).xyz0();
+		dir.y() = 0.0;
+		dir.normalize();
 
-		if(in.getKey(KeyCode::LEFT))
-		{
-			Mat3x4 rot = trf.getRotation();
-			rot.rotateYAxis(toRad(10.0));
-
-			dir = rot.getColumn(2).xyz0();
-		}
-
-		if(in.getKey(KeyCode::RIGHT))
-		{
-			Mat3x4 rot = trf.getRotation();
-			rot.rotateYAxis(toRad(-10.0));
-
-			dir = rot.getColumn(2).xyz0();
-		}
-
-		const F32 speed = 2.0;
 		playerc.setVelocity(
 			moveVec.z() * speed, 
 			moveVec.x() * speed,
@@ -136,7 +142,7 @@ PlayerNode::~PlayerNode()
 }
 
 //==============================================================================
-Error PlayerNode::create(const CString& name)
+Error PlayerNode::create(const CString& name, const Vec4& position)
 {
 	Error err = SceneNode::create(name);
 	if(err)
@@ -146,6 +152,7 @@ Error PlayerNode::create(const CString& name)
 
 	// Create physics object
 	PhysicsPlayerController::Initializer init;
+	init.m_position = position;
 	m_player = getSceneGraph()._getPhysicsWorld().newPlayerController(init);
 
 	SceneComponent* comp;

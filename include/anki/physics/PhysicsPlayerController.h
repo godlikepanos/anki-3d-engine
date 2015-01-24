@@ -21,6 +21,7 @@ struct PhysicsPlayerControllerInitializer
 	F32 m_outerRadius = 0.50;
 	F32 m_height = 1.9;
 	F32 m_stepHeight = 1.9 * 0.33;
+	Vec4 m_position = Vec4(0.0);
 };
 
 /// A player controller that walks the world.
