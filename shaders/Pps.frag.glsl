@@ -106,8 +106,7 @@ void main()
 	outColor += hdr;
 #endif
 
-//#if GAMMA_CORRECTION_ENABLED
-#if 0
+#if GAMMA_CORRECTION_ENABLED
 	//outColor = BlendHardLight(vec3(0.7, 0.72, 0.4), outColor);
 	outColor = gammaCorrectionRgb(vec3(0.9, 0.92, 0.75), outColor);
 #endif

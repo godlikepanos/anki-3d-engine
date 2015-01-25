@@ -12,6 +12,18 @@
 static const char* XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
 //==============================================================================
+static aiColor3D srgbToLinear(const aiColor3D& in)
+{
+	const float p = 1.0 / 2.4;
+	aiColor3D out;
+	out[0] = pow(in[0], p);
+	out[1] = pow(in[1], p);
+	out[2] = pow(in[2], p);
+	out[3] = in[3];
+	return out;
+}
+
+//==============================================================================
 static std::string getMaterialName(const aiMaterial& mtl, bool instanced)
 {
 	aiString ainame;
@@ -569,7 +581,7 @@ void Exporter::exportModel(const Model& model) const
 	file << "<model>\n";
 	file << "\t<modelPatches>\n";
 	
-	// start
+	// Start patches
 	file << "\t\t<modelPatch>\n";
 
 	// Write mesh
@@ -583,10 +595,19 @@ void Exporter::exportModel(const Model& model) const
 			model.m_instanced) 
 		<< ".ankimtl</material>\n";
 
-	// end
+	// End patches
 	file << "\t\t</modelPatch>\n";
-
 	file << "\t</modelPatches>\n";
+
+	// Write collision mesh
+	if(model.m_collisionMeshIndex != INVALID_INDEX)
+	{
+		file << "\t<collisionShape><type>staticMesh</type><value>" 
+			<< m_rpath 
+			<< getMeshName(getMeshAt(model.m_collisionMeshIndex))
+			<< ".ankimesh</value></collisionShape>\n";
+	}
+
 	file << "</model>\n";
 }
 
@@ -618,16 +639,18 @@ void Exporter::exportLight(const aiLight& light)
 	file << "lcomp = node:getSceneNodeBase():getLightComponent()\n";
 
 	// Colors
+	aiColor3D linear = srgbToLinear(light.mColorDiffuse);
 	file << "lcomp:setDiffuseColor(Vec4.new("
-		<< light.mColorDiffuse[0] << ", " 
-		<< light.mColorDiffuse[1] << ", " 
-		<< light.mColorDiffuse[2] << ", " 
+		<< linear[0] << ", " 
+		<< linear[1] << ", " 
+		<< linear[2] << ", "
 		<< "1))\n";
 
+	linear = srgbToLinear(light.mColorSpecular);
 	file << "lcomp:setSpecularColor(Vec4.new("
-		<< light.mColorSpecular[0] << ", " 
-		<< light.mColorSpecular[1] << ", " 
-		<< light.mColorSpecular[2] << ", " 
+		<< linear[0] << ", " 
+		<< linear[1] << ", " 
+		<< linear[2] << ", "
 		<< "1))\n";
 
 	// Geometry
@@ -873,6 +896,15 @@ void Exporter::visitNode(const aiNode* ainode)
 		unsigned meshIndex = ainode->mMeshes[i];
 		unsigned mtlIndex =  m_scene->mMeshes[meshIndex]->mMaterialIndex;
 
+		// Check if it's a collsion mesh
+		std::string name = m_scene->mMeshes[meshIndex]->mName.C_Str();
+		if(name.find("ak_collision") == 0)
+		{
+			// Ignore collision meshes
+			m_collisionMeshIds.push_back(meshIndex);
+			continue;
+		}
+
 		// Find if there is another node with the same mesh-material pair
 		std::vector<Node>::iterator it;
 		for(it = m_nodes.begin(); it != m_nodes.end(); ++it)
@@ -944,12 +976,33 @@ void Exporter::exportAll()
 	visitNode(m_scene->mRootNode);
 
 	//
+	// Export collision meshes
+	//
+	for(auto idx : m_collisionMeshIds)
+	{
+		exportMesh(*m_scene->mMeshes[idx], nullptr);
+	}
+
+	//
 	// Export nodes and models.
 	//
 	for(uint32_t i = 0; i < m_nodes.size(); i++)
 	{
 		Node& node = m_nodes[i];
 		Model& model = m_models[node.m_modelIndex];
+
+		// Check if it has a collision mesh
+		std::string collisionMeshName = std::string("ak_collision_")
+			+ m_scene->mMeshes[model.m_meshIndex]->mName.C_Str();
+		for(unsigned i = 0; i < m_collisionMeshIds.size(); ++i)
+		{
+			if(m_scene->mMeshes[m_collisionMeshIds[i]]->mName.C_Str() 
+				== collisionMeshName)
+			{
+				model.m_collisionMeshIndex = m_collisionMeshIds[i];
+				break;
+			}
+		}
 
 		// TODO If not instanced bake transform
 		exportMesh(*m_scene->mMeshes[model.m_meshIndex], nullptr);

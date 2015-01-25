@@ -26,6 +26,7 @@ struct Model
 	uint32_t m_meshIndex = INVALID_INDEX; ///< Mesh index in the scene
 	uint32_t m_materialIndex = INVALID_INDEX;
 	bool m_instanced = false;
+	uint32_t m_collisionMeshIndex = INVALID_INDEX;
 };
 
 /// Scene node.
@@ -63,6 +64,8 @@ public:
 	std::vector<Node> m_nodes;
 
 	std::ofstream m_sceneFile;
+
+	std::vector<uint32_t> m_collisionMeshIds;
 
 	/// Load the scene.
 	void load();

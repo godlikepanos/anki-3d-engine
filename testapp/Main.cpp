@@ -70,7 +70,7 @@ Error init()
 	const F32 ang = 55.0;
 	cam->setAll(
 		renderer.getAspectRatio() * toRad(ang),
-		toRad(ang), 0.5, 500.0);
+		toRad(ang), 0.2, 500.0);
 	cam->getComponent<MoveComponent>().
 		setLocalTransform(Transform(Vec4(0.0),
 		Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))),

@@ -15,7 +15,7 @@ layout(location = 0) in vec2 inTexCoords;
 
 layout(location = 0) out float outColor;
 
-layout(std140, row_major, binding = 0) readonly buffer bCommon
+layout(std140, binding = 0) readonly buffer bCommon
 {
 	vec4 uProjectionParams;
 
