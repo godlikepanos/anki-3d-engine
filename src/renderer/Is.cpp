@@ -279,7 +279,8 @@ public:
 
 			if(tilePos < m_is->m_maxPointLightsPerTile)
 			{
-				writeIndexToTileBuffer(0, pos, tilePos, t);
+				writeIndexToTileBuffer(0, pos, tilePos, 
+					y * m_is->m_r->getTilesCount().x() + x);
 			}
 		}
 	}
@@ -306,7 +307,8 @@ public:
 
 				if(tilePos < m_is->m_maxSpotTexLightsPerTile)
 				{
-					writeIndexToTileBuffer(2, pos, tilePos, t);
+					writeIndexToTileBuffer(2, pos, tilePos, 
+						y * m_is->m_r->getTilesCount().x() + x);
 				}
 			}
 			else
@@ -315,7 +317,8 @@ public:
 
 				if(tilePos < m_is->m_maxSpotLightsPerTile)
 				{
-					writeIndexToTileBuffer(1, pos, tilePos, t);
+					writeIndexToTileBuffer(1, pos, tilePos,
+						y * m_is->m_r->getTilesCount().x() + x);
 				}
 			}
 		}
@@ -325,6 +328,8 @@ public:
 	void writeIndexToTileBuffer(
 		U lightType, U lightIndex, U indexInTileArray, U tileIndex)
 	{
+		ANKI_ASSERT(tileIndex < 
+			m_is->m_r->getTilesCount().x() * m_is->m_r->getTilesCount().y());
 		PtrSize offset = 
 			tileIndex * m_is->calcTileSize() 
 			+ sizeof(UVec4); // Tile header

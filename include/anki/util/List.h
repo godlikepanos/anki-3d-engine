@@ -154,7 +154,6 @@ public:
 		return !(*this == b);
 	}
 };
-
 /// @}
 
 /// @addtogroup util_containers
@@ -360,7 +359,6 @@ private:
 
 	void pushBackNode(Node* node);
 };
-
 /// @}
 
 } // end namespace anki

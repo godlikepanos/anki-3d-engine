@@ -346,9 +346,9 @@ void main()
 #endif
 
 #if 0
-	if(pointLightsCount > 0)
+	if(pointLightsCount != 0)
 	{
-		out_color += vec3(float(pointLightsCount) / 30.0);
+		out_color = vec3(0.5 / float(pointLightsCount));
 	}
 #endif
 }

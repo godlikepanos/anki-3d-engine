@@ -10,7 +10,7 @@
 #include "anki/util/Bitset.h"
 
 // Forward
-struct NewtonBody;
+class NewtonBody;
 
 namespace anki {
 

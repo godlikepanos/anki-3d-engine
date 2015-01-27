@@ -188,7 +188,7 @@ public:
 
 			if(cb != nullptr)
 			{
-				cb->m_state.store(GlHandleState::NEW);
+				cb->m_state.store(static_cast<I32>(GlHandleState::NEW));
 				cb->m_gl = dev;
 				cb->m_alloc = alloc;
 				cb->m_del = del;
@@ -334,7 +334,7 @@ private:
 		/// @note Its mutable because we want read/write access to it
 		mutable GlDevice* m_gl; 
 
-		Atomic<GlHandleState> m_state;
+		Atomic<I32> m_state;
 		
 		void deletePtr()
 		{
@@ -358,11 +358,13 @@ private:
 			GlHandleState crntVal;
 			if(newVal)
 			{
-				crntVal = m_state.exchange(*newVal);
+				I32 newValI32 = static_cast<I32>(*newVal);
+				crntVal = 
+					static_cast<GlHandleState>(m_state.exchange(newValI32));
 			}
 			else
 			{
-				crntVal = m_state.load();
+				crntVal = static_cast<GlHandleState>(m_state.load());
 			}
 			return crntVal;
 		}
@@ -387,7 +389,6 @@ private:
 		}
 	}
 };
-
 /// @}
 
 } // end namespace anki

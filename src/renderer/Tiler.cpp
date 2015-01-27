@@ -26,7 +26,7 @@ class UpdatePlanesPerspectiveCameraTask: public Threadpool::Task
 {
 public:
 	Tiler* m_tiler = nullptr;
-	PerspectiveCamera* m_cam = nullptr;
+	Camera* m_cam = nullptr;
 	Bool m_frustumChanged;
 #if ANKI_TILER_ENABLE_GPU
 	const PixelArray* m_pixels = nullptr;
@@ -192,24 +192,15 @@ void Tiler::updateTiles(Camera& cam)
 		camTimestamp >= m_planes4UpdateTimestamp || m_prevCam != &cam;
 
 	Threadpool& threadPool = m_r->_getThreadpool();
-
-	switch(cam.getCameraType())
+	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-	case Camera::Type::PERSPECTIVE:
-		for(U i = 0; i < threadPool.getThreadsCount(); i++)
-		{
-			jobs[i].m_tiler = this;
-			jobs[i].m_cam = static_cast<PerspectiveCamera*>(&cam);
+		jobs[i].m_tiler = this;
+		jobs[i].m_cam = &cam;
 #if ANKI_TILER_ENABLE_GPU
-			jobs[i].m_pixels = &pixels;
+		jobs[i].m_pixels = &pixels;
 #endif
-			jobs[i].m_frustumChanged = frustumChanged;
-			threadPool.assignNewTask(i, &jobs[i]);
-		}
-		break;
-	default:
-		ANKI_ASSERT(0 && "Unimplemented");
-		break;
+		jobs[i].m_frustumChanged = frustumChanged;
+		threadPool.assignNewTask(i, &jobs[i]);
 	}
 
 	// Update timestamp
@@ -249,8 +240,6 @@ Bool Tiler::test(
 		ANKI_ASSERT(count == visible->m_count);
 	}
 
-	printf("%d\n", count);
-
 	return count > 0;
 }
 
@@ -266,8 +255,6 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 	// Handle final
 	if(mi == 0 || mj == 0)
 	{
-		//U tileId = yFrom * m_r->getTilesCount().x() + xFrom;
-
 		Bool inside = true;
 
 #if ANKI_TILER_ENABLE_GPU
@@ -384,6 +371,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 	PtrSize start, end;
 	const MoveComponent& move = cam.getComponent<MoveComponent>();
 	const FrustumComponent& fr = cam.getComponent<FrustumComponent>();
+	ANKI_ASSERT(fr.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
 	const PerspectiveFrustum& frustum = 
 		static_cast<const PerspectiveFrustum&>(fr.getFrustum());
 
@@ -410,7 +398,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		for(U i = start; i < end; i++)
 		{
-			calcPlaneY(i, o6, frustum.getNear());
+			calcPlaneY(i, o6, n);
 
 			CHECK_PLANE_PTR(&m_planesYW[i]);
 			CHECK_PLANE_PTR(&m_planesY[i]);
@@ -424,7 +412,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		for(U j = start; j < end; j++)
 		{
-			calcPlaneX(j, l6, frustum.getNear());
+			calcPlaneX(j, l6, n);
 
 			CHECK_PLANE_PTR(&m_planesXW[j]);
 			CHECK_PLANE_PTR(&m_planesX[j]);
@@ -500,7 +488,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 }
 
 //==============================================================================
-void Tiler::calcPlaneY(U i, const F32 o6, const F32 near) const
+void Tiler::calcPlaneY(U i, const F32 o6, const F32 near)
 {
 	Vec4 a, b;
 	Plane& plane = m_planesY[i];
@@ -518,7 +506,7 @@ void Tiler::calcPlaneY(U i, const F32 o6, const F32 near) const
 }
 
 //==============================================================================
-void Tiler::calcPlaneX(U j, const F32 l6, const F32 near) const
+void Tiler::calcPlaneX(U j, const F32 l6, const F32 near)
 {
 	Vec4 a, b;
 	Plane& plane = m_planesX[j];

@@ -244,7 +244,7 @@ Error init()
 		if(err) return err;
 
 		lightc = point->tryGetComponent<LightComponent>();
-		lightc->setRadius(30.0);
+		lightc->setRadius(3.0);
 		lightc->setDiffuseColor(Vec4(0.6));
 		lightc->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
 
@@ -269,6 +269,7 @@ Error init()
 	player->moveToPosition(Vec4(5.0, 2.0, 0.0, 0.0));
 	player->setVelocity(0.0, 0.0, 0.0, Vec4(0.0, 0.0, -1.0, 0.0));*/
 
+#if 1
 	PlayerNode* pnode;
 	scene.newSceneNode<PlayerNode>("player", pnode, Vec4(1.0, 3.0, 0.0, 0.0));
 
@@ -284,56 +285,9 @@ Error init()
 	init.m_startTrf = Transform(Vec4(0.0, -45, 0, 0), 
 		Mat3x4(Axisang(toRad(0.0), Vec3(1, 0, 0))), 1.0);
 	scene._getPhysicsWorld().newBody<PhysicsBody>(init);
-
-	/*AnimationResourcePointer anim;
-	anim.load("maps/sponza/unnamed_0.ankianim");
-	AnimationEvent* event;
-	scene.getEventManager().newEvent(event, anim, cam);*/
-
-	// Sectors
-#if 0
-	SectorGroup& sgroup = scene.getSectorGroup();
-
-	Sector* sectorA = sgroup.createNewSector(
-		Aabb(Vec3(-38, -3, -20), Vec3(38, 27, 20)));
-	Sector* sectorB = sgroup.createNewSector(Aabb(Vec3(-5), Vec3(5)));
-
-	sgroup.createNewPortal(sectorA, sectorB, Obb(Vec3(0.0, 3.0, 0.0),
-		Mat3::getIdentity(), Vec3(1.0, 2.0, 2.0)));
-
-	Sector* sectorC = sgroup.createNewSector(
-		Aabb(Vec3(-30, -10, -35), Vec3(30, 10, -25)));
-
-	sgroup.createNewPortal(sectorA, sectorC, Obb(Vec3(-1.1, 2.0, -11.0),
-		Mat3::getIdentity(), Vec3(1.3, 1.8, 0.5)));
 #endif
 
-	// Path
-	/*Path* path = new Path("todo", "path", &scene, MoveComponent::MF_NONE, nullptr);
-	(void)path;
-
-	const F32 distPerSec = 2.0;
-	scene.getEventManager().newFollowPathEvent(-1.0, 
-		path->getDistance() / distPerSec, 
-		cam, path, distPerSec);*/
-
-
-#if 0
-	horse = scene.newSceneNode<ModelNode>("shape0", 
-		"models/collision_test/Cube_Material-material.ankimdl");
-	horse->setLocalTransform(Transform(Vec4(0.0, 0, 0, 0), 
-		Mat3x4::getIdentity(), 0.01));
-
-	horse = scene.newSceneNode<ModelNode>("shape1", 
-		"models/collision_test/Cube.001_Material_001-material.ankimdl");
-	horse->setLocalTransform(Transform(Vec4(3.1, 2, 0.2, 0), 
-		Mat3x4(Euler(toRad(-13.0), toRad(90.0), toRad(2.0))),
-		0.01));
-
-	horse->setLocalRotation(Mat3x4(0.135899, -0.534728, 0.834033, 0.000000,
-		0.091205, 0.845038, 0.526900, 0.000000 ,
-		-0.986537, 0.004463, 0.163603, 0.000000));
-#endif
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -590,7 +544,7 @@ Error initSubsystems(int argc, char* argv[])
 
 	//config.set("maxTextureSize", 256);
 
-	config.set("fullscreenDesktopResolution", false);
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 
 	app = new App;

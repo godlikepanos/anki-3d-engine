@@ -134,7 +134,7 @@ public:
 	/// Get last element.
 	ConstReference back() const
 	{
-		return getBack[m_size - 1];
+		return m_data[m_size - 1];
 	}
 
 	PtrSize getSize() const
