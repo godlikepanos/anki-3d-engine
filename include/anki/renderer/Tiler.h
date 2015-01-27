@@ -9,7 +9,6 @@
 #include "anki/Collision.h"
 #include "anki/renderer/RenderingPass.h"
 #include "anki/core/Timestamp.h"
-#include <bitset>
 
 namespace anki {
 
@@ -20,15 +19,31 @@ class Frustumable;
 /// @addtogroup renderer
 /// @{
 
+/// The result of the Tiler tests.
+struct VisibleTiles
+{
+	struct Pair
+	{
+#if ANKI_DEBUG
+		U8 m_x = 0xFF;
+		U8 m_y = 0xFF;
+#else
+		U8 m_x;
+		U8 m_y;
+#endif
+	};
+
+	U32 m_count = 0;
+	Array<Pair, ANKI_RENDERER_MAX_TILES_X * ANKI_RENDERER_MAX_TILES_Y> 
+		m_tileIds;
+};
+
 /// Tiler used for visibility tests
 class Tiler: public RenderingPass
 {
 	friend struct UpdatePlanesPerspectiveCameraTask;
 
 public:
-	using Bitset = std::bitset<
-		ANKI_RENDERER_MAX_TILES_X * ANKI_RENDERER_MAX_TILES_Y>;
-
 	Tiler(Renderer* r);
 	~Tiler();
 
@@ -40,15 +55,15 @@ public:
 	/// Update the tiles before doing visibility tests
 	void updateTiles(Camera& cam);
 
-	/// Test against all tiles
-	/// @param[in]  collisionShape The collision shape to test
-	/// @param      nearPlane      If true check against the near plane as well
-	/// @param[out] mask           A bitmask that indicates the tiles that the
-	///                            give collision shape is inside
+	/// Test against all tiles.
+	/// @param[in]  collisionShape The collision shape to test.
+	/// @param      nearPlane      If true check against the near plane as well.
+	/// @param[out] visible        A list with the tiles that contain the 
+	///                            collision shape.
 	Bool test(
 		const CollisionShape& collisionShape,
 		Bool nearPlane,
-		Bitset* mask) const;
+		VisibleTiles* visible) const;
 
 private:
 	/// Tile planes
@@ -83,7 +98,17 @@ private:
 	ANKI_USE_RESULT Error initInternal();
 
 	void testRange(const CollisionShape& cs, Bool nearPlane,
-		U iFrom, U iTo, U jFrom, U jTo, Bitset& bitset) const;
+		U iFrom, U iTo, U jFrom, U jTo, VisibleTiles* visible, 
+		U& count) const;
+
+	void update(U32 threadId, PtrSize threadsCount, 
+		Camera& cam, Bool frustumChanged);
+
+	/// Calculate and set a top looking plane
+	void calcPlaneY(U i, const F32 o6, const F32 near) const;
+
+	/// Calculate and set a right looking plane
+	void calcPlaneX(U j, const F32 l6, const F32 near) const;
 };
 
 /// @}

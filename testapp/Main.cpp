@@ -590,7 +590,7 @@ Error initSubsystems(int argc, char* argv[])
 
 	//config.set("maxTextureSize", 256);
 
-	config.set("fullscreenDesktopResolution", true);
+	config.set("fullscreenDesktopResolution", false);
 	config.set("debugContext", false);
 
 	app = new App;

@@ -157,9 +157,6 @@ public:
 		}
 
 		shader::PointLight& slight = m_pointLights[i];
-
-		const Camera* cam = m_is->m_cam;
-		ANKI_ASSERT(cam);
 	
 		Vec4 pos = m_camFrustum->getViewMatrix() 
 			* move.getWorldTransform().getOrigin().xyz1();
@@ -269,22 +266,14 @@ public:
 	void binPointLight(SpatialComponent& sp, U pos)
 	{
 		// Do the tests
-		Tiler::Bitset bitset;
-		m_tiler->test(sp.getSpatialCollisionShape(), true, &bitset);
+		VisibleTiles visTiles;
+		m_tiler->test(sp.getSpatialCollisionShape(), true, &visTiles);
 
 		// Bin to the correct tiles
-		PtrSize tilesCount = 
-			m_is->m_r->getTilesCount().x() * m_is->m_r->getTilesCount().y();
-		for(U t = 0; t < tilesCount; t++)
+		for(U t = 0; t < visTiles.m_count; t++)
 		{
-			// If not in tile bye
-			if(!bitset.test(t))
-			{
-				continue;
-			}
-
-			U x = t % m_is->m_r->getTilesCount().x();
-			U y = t / m_is->m_r->getTilesCount().x();
+			U x = visTiles.m_tileIds[t].m_x;
+			U y = visTiles.m_tileIds[t].m_y;
 
 			U tilePos = (*m_tilePointLightsCount)[y][x].fetchAdd(1);
 
@@ -302,22 +291,14 @@ public:
 		U pos)
 	{
 		// Do the tests
-		Tiler::Bitset bitset;
-		m_tiler->test(sp.getSpatialCollisionShape(), true, &bitset);
+		VisibleTiles visTiles;
+		m_tiler->test(sp.getSpatialCollisionShape(), true, &visTiles);
 
 		// Bin to the correct tiles
-		PtrSize tilesCount = 
-			m_is->m_r->getTilesCount().x() * m_is->m_r->getTilesCount().y();
-		for(U t = 0; t < tilesCount; t++)
+		for(U t = 0; t < visTiles.m_count; t++)
 		{
-			// If not in tile bye
-			if(!bitset.test(t))
-			{
-				continue;
-			}
-
-			U x = t % m_is->m_r->getTilesCount().x();
-			U y = t / m_is->m_r->getTilesCount().x();
+			U x = visTiles.m_tileIds[t].m_x;
+			U y = visTiles.m_tileIds[t].m_y;
 
 			if(light.getShadowEnabled())
 			{

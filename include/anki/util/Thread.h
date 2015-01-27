@@ -216,10 +216,10 @@ public:
 		static void choseStartEnd(U32 taskId, PtrSize threadsCount, 
 			PtrSize elementsCount, PtrSize& start, PtrSize& end)
 		{
-			start = taskId * (elementsCount / threadsCount);
-			end = (taskId == threadsCount - 1)
-				? elementsCount
-				: start + elementsCount / threadsCount;
+			F32 tid = taskId;
+			F32 div = F32(elementsCount) / threadsCount;
+			start = PtrSize(tid * div);
+			end = PtrSize((tid + 1.0) * div);
 		}
 	};
 

@@ -18,190 +18,27 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-#define CHECK_PLANE_PTR(p_) ANKI_ASSERT(U(p_ - &m_tiler->m_allPlanes[0]) \
-	< m_tiler->m_allPlanes.getSize());
+#define CHECK_PLANE_PTR(p_) ANKI_ASSERT( \
+	U(p_ - &m_allPlanes[0]) < m_allPlanes.getSize());
 
-/// Job that updates the left, right, top and buttom tile planes
+//==============================================================================
 class UpdatePlanesPerspectiveCameraTask: public Threadpool::Task
 {
 public:
 	Tiler* m_tiler = nullptr;
 	PerspectiveCamera* m_cam = nullptr;
 	Bool m_frustumChanged;
-	const PerspectiveFrustum* m_frustum = nullptr; ///< Cached value
 #if ANKI_TILER_ENABLE_GPU
 	const PixelArray* m_pixels = nullptr;
 #endif
 
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
-#if ANKI_TILER_ENABLE_GPU
-		ANKI_ASSERT(tiler && cam && pixels);
-#endif
-
-		PtrSize start, end;
-		const MoveComponent& move = m_cam->getComponent<MoveComponent>();
-		const FrustumComponent& fr = m_cam->getComponent<FrustumComponent>();
-		m_frustum = &static_cast<const PerspectiveFrustum&>(fr.getFrustum());
-
-		Transform trf = Transform(move.getWorldTransform());
-
-		if(m_frustumChanged)
-		{
-			// Re-calculate the planes in local space
-
-			const F32 fx = m_frustum->getFovX();
-			const F32 fy = m_frustum->getFovY();
-			const F32 n = m_frustum->getNear();
-
-			// Calculate l6 and o6 used to rotate the planes
-			F32 l = 2.0 * n * tan(fx / 2.0);
-			F32 l6 = l / m_tiler->m_r->getTilesCount().x();
-			F32 o = 2.0 * n * tan(fy / 2.0);
-			F32 o6 = o / m_tiler->m_r->getTilesCount().y();
-
-			// First the top looking planes
-			choseStartEnd(
-				threadId, threadsCount, m_tiler->m_r->getTilesCount().y() - 1,
-				start, end);
-
-			for(U i = start; i < end; i++)
-			{
-				calcPlaneI(i, o6);
-
-				CHECK_PLANE_PTR(&m_tiler->m_planesYW[i]);
-				CHECK_PLANE_PTR(&m_tiler->m_planesY[i]);
-				m_tiler->m_planesYW[i] =
-					m_tiler->m_planesY[i].getTransformed(trf);
-			}
-
-			// Then the right looking planes
-			choseStartEnd(
-				threadId, threadsCount, m_tiler->m_r->getTilesCount().x() - 1,
-				start, end);
-
-			for(U j = start; j < end; j++)
-			{
-				calcPlaneJ(j, l6);
-
-				CHECK_PLANE_PTR(&m_tiler->m_planesXW[j]);
-				CHECK_PLANE_PTR(&m_tiler->m_planesX[j]);
-				m_tiler->m_planesXW[j] =
-					m_tiler->m_planesX[j].getTransformed(trf);
-			}
-		}
-		else
-		{
-			// Only transform planes
-
-			// First the top looking planes
-			choseStartEnd(
-				threadId, threadsCount, m_tiler->m_r->getTilesCount().y() - 1,
-				start, end);
-
-			for(U i = start; i < end; i++)
-			{
-				CHECK_PLANE_PTR(&m_tiler->m_planesYW[i]);
-				CHECK_PLANE_PTR(&m_tiler->m_planesY[i]);
-				m_tiler->m_planesYW[i] =
-					m_tiler->m_planesY[i].getTransformed(trf);
-			}
-
-			// Then the right looking planes
-			choseStartEnd(
-				threadId, threadsCount, m_tiler->m_r->getTilesCount().x() - 1,
-				start, end);
-
-			for(U j = start; j < end; j++)
-			{
-				CHECK_PLANE_PTR(&m_tiler->m_planesXW[j]);
-				CHECK_PLANE_PTR(&m_tiler->m_planesX[j]);
-				m_tiler->m_planesXW[j] =
-					m_tiler->m_planesX[j].getTransformed(trf);
-			}
-		}
-
-		// Update the near far planes
-#if ANKI_TILER_ENABLE_GPU
-		Vec2 rplanes;
-		Renderer::calcPlanes(Vec2(cam->getNear(), cam->getFar()), rplanes);
-
-		choseStartEnd(
-			threadId, threadsCount, 
-			tiler->r->getTilesCount().x() * tiler->r->getTilesCount().y(), 
-			start, end);
-
-		Plane* nearPlanesW = tiler->nearPlanesW + start;
-		Plane* farPlanesW = tiler->farPlanesW + start;
-		for(U k = start; k < end; ++k)
-		{
-			U j = k % tiler->r->getTilesCount().x();
-			U i = k / tiler->r->getTilesCount().x();
-
-			// Calculate depth as you do it for the vertex position inside
-			// the shaders
-			F32 minZ = rplanes.y() / (rplanes.x() + (*pixels)[i][j][0]);
-			F32 maxZ = rplanes.y() / (rplanes.x() + (*pixels)[i][j][1]);
-
-			// Calc the planes
-			Plane nearPlane = Plane(Vec3(0.0, 0.0, -1.0), minZ);
-			Plane farPlane = Plane(Vec3(0.0, 0.0, 1.0), -maxZ);
-
-			// Tranform them
-			CHECK_PLANE_PTR(nearPlanesW);
-			*nearPlanesW = nearPlane.getTransformed(trf);
-			CHECK_PLANE_PTR(farPlanesW);
-			*farPlanesW = farPlane.getTransformed(trf);
-
-			// Advance
-			++nearPlanesW;
-			++farPlanesW;
-		}
-#endif
+		m_tiler->update(threadId, threadsCount, *m_cam, m_frustumChanged);
 
 		return ErrorCode::NONE;
 	}
-
-	/// Calculate and set a top looking plane
-	void calcPlaneI(U i, const F32 o6)
-	{
-		Vec4 a, b;
-		const F32 n = m_frustum->getNear();
-		Plane& plane = m_tiler->m_planesY[i];
-		CHECK_PLANE_PTR(&plane);
-
-		a = Vec4(0.0, 
-			(I(i + 1) - I(m_tiler->m_r->getTilesCount().y()) / 2) * o6,
-			-n,
-			0.0);
-
-		b = Vec4(1.0, 0.0, 0.0, 0.0).cross(a);
-		b.normalize();
-
-		plane = Plane(b, 0.0);
-	}
-
-	/// Calculate and set a right looking plane
-	void calcPlaneJ(U j, const F32 l6)
-	{
-		Vec4 a, b;
-		const F32 n = m_frustum->getNear();
-		Plane& plane = m_tiler->m_planesX[j];
-		CHECK_PLANE_PTR(&plane);
-
-		a = Vec4((I(j + 1) - I(m_tiler->m_r->getTilesCount().x()) / 2) * l6,
-			0.0, 
-			-n,
-			0.0);
-
-		b = a.cross(Vec4(0.0, 1.0, 0.0, 0.0));
-		b.normalize();
-
-		plane = Plane(b, 0.0);
-	}
 };
-
-#undef CHECK_PLANE_PTR
 
 //==============================================================================
 // Tiler                                                                       =
@@ -395,25 +232,31 @@ void Tiler::updateTiles(Camera& cam)
 Bool Tiler::test(
 	const CollisionShape& cs, 
 	Bool nearPlane,
-	Bitset* outBitset) const
+	VisibleTiles* visible) const
 {
-	Bitset bitset;
-
-	/// Call the recursive function
-	testRange(cs, nearPlane, 0, m_r->getTilesCount().y(), 0,
-		m_r->getTilesCount().x(), bitset);
-
-	if(outBitset)
+	if(visible)
 	{
-		*outBitset = bitset;
+		visible->m_count = 0;
 	}
 
-	return bitset.any();
+	// Call the recursive function
+	U count = 0;
+	testRange(cs, nearPlane, 0, m_r->getTilesCount().y(), 0,
+		m_r->getTilesCount().x(), visible, count);
+
+	if(visible)
+	{
+		ANKI_ASSERT(count == visible->m_count);
+	}
+
+	printf("%d\n", count);
+
+	return count > 0;
 }
 
 //==============================================================================
 void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
-	U yFrom, U yTo, U xFrom, U xTo, Bitset& bitset) const
+	U yFrom, U yTo, U xFrom, U xTo, VisibleTiles* visible, U& count) const
 {
 	U mi = (yTo - yFrom) / 2;
 	U mj = (xTo - xFrom) / 2;
@@ -423,7 +266,7 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 	// Handle final
 	if(mi == 0 || mj == 0)
 	{
-		U tileId = yFrom * m_r->getTilesCount().x() + xFrom;
+		//U tileId = yFrom * m_r->getTilesCount().x() + xFrom;
 
 		Bool inside = true;
 
@@ -454,7 +297,20 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		}
 #endif
 
-		bitset.set(tileId, inside);
+		if(inside)
+		{
+			if(visible)
+			{
+				VisibleTiles::Pair p;
+				ANKI_ASSERT(xFrom < 0xFF && yFrom < 0xFF);
+				p.m_x = static_cast<U8>(xFrom);
+				p.m_y = static_cast<U8>(yFrom);
+				visible->m_tileIds[visible->m_count++] = p;
+			}
+
+			++count;
+		}
+
 		return;
 	}
 
@@ -515,10 +371,168 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 				testRange(cs, nearPlane,
 					yFrom + (i * mi), yFrom + ((i + 1) * mi),
 					xFrom + (j * mj), xFrom + ((j + 1) * mj),
-					bitset);
+					visible, count);
 			}
 		}
 	}
+}
+
+//==============================================================================
+void Tiler::update(U32 threadId, PtrSize threadsCount, 
+	Camera& cam, Bool frustumChanged)
+{
+	PtrSize start, end;
+	const MoveComponent& move = cam.getComponent<MoveComponent>();
+	const FrustumComponent& fr = cam.getComponent<FrustumComponent>();
+	const PerspectiveFrustum& frustum = 
+		static_cast<const PerspectiveFrustum&>(fr.getFrustum());
+
+	const Transform& trf = move.getWorldTransform();
+
+	if(frustumChanged)
+	{
+		// Re-calculate the planes in local space
+
+		const F32 fx = frustum.getFovX();
+		const F32 fy = frustum.getFovY();
+		const F32 n = frustum.getNear();
+
+		// Calculate l6 and o6 used to rotate the planes
+		F32 l = 2.0 * n * tan(fx / 2.0);
+		F32 l6 = l / m_r->getTilesCount().x();
+		F32 o = 2.0 * n * tan(fy / 2.0);
+		F32 o6 = o / m_r->getTilesCount().y();
+
+		// First the top looking planes
+		Threadpool::Task::choseStartEnd(
+			threadId, threadsCount, m_r->getTilesCount().y() - 1,
+			start, end);
+
+		for(U i = start; i < end; i++)
+		{
+			calcPlaneY(i, o6, frustum.getNear());
+
+			CHECK_PLANE_PTR(&m_planesYW[i]);
+			CHECK_PLANE_PTR(&m_planesY[i]);
+			m_planesYW[i] = m_planesY[i].getTransformed(trf);
+		}
+
+		// Then the right looking planes
+		Threadpool::Task::choseStartEnd(
+			threadId, threadsCount, m_r->getTilesCount().x() - 1,
+			start, end);
+
+		for(U j = start; j < end; j++)
+		{
+			calcPlaneX(j, l6, frustum.getNear());
+
+			CHECK_PLANE_PTR(&m_planesXW[j]);
+			CHECK_PLANE_PTR(&m_planesX[j]);
+			m_planesXW[j] = m_planesX[j].getTransformed(trf);
+		}
+	}
+	else
+	{
+		// Only transform planes
+
+		// First the top looking planes
+		Threadpool::Task::choseStartEnd(
+			threadId, threadsCount, m_r->getTilesCount().y() - 1,
+			start, end);
+
+		for(U i = start; i < end; i++)
+		{
+			CHECK_PLANE_PTR(&m_planesYW[i]);
+			CHECK_PLANE_PTR(&m_planesY[i]);
+			m_planesYW[i] = m_planesY[i].getTransformed(trf);
+		}
+
+		// Then the right looking planes
+		Threadpool::Task::choseStartEnd(
+			threadId, threadsCount, m_r->getTilesCount().x() - 1,
+			start, end);
+
+		for(U j = start; j < end; j++)
+		{
+			CHECK_PLANE_PTR(&m_planesXW[j]);
+			CHECK_PLANE_PTR(&m_planesX[j]);
+			m_planesXW[j] = m_planesX[j].getTransformed(trf);
+		}
+	}
+
+	// Update the near far planes
+#if ANKI_TILER_ENABLE_GPU
+	Vec2 rplanes;
+	Renderer::calcPlanes(Vec2(cam.getNear(), cam.getFar()), rplanes);
+
+	choseStartEnd(
+		threadId, threadsCount, 
+		tiler->r->getTilesCount().x() * tiler->r->getTilesCount().y(), 
+		start, end);
+
+	Plane* nearPlanesW = tiler->nearPlanesW + start;
+	Plane* farPlanesW = tiler->farPlanesW + start;
+	for(U k = start; k < end; ++k)
+	{
+		U j = k % tiler->r->getTilesCount().x();
+		U i = k / tiler->r->getTilesCount().x();
+
+		// Calculate depth as you do it for the vertex position inside
+		// the shaders
+		F32 minZ = rplanes.y() / (rplanes.x() + (*pixels)[i][j][0]);
+		F32 maxZ = rplanes.y() / (rplanes.x() + (*pixels)[i][j][1]);
+
+		// Calc the planes
+		Plane nearPlane = Plane(Vec3(0.0, 0.0, -1.0), minZ);
+		Plane farPlane = Plane(Vec3(0.0, 0.0, 1.0), -maxZ);
+
+		// Tranform them
+		CHECK_PLANE_PTR(nearPlanesW);
+		*nearPlanesW = nearPlane.getTransformed(trf);
+		CHECK_PLANE_PTR(farPlanesW);
+		*farPlanesW = farPlane.getTransformed(trf);
+
+		// Advance
+		++nearPlanesW;
+		++farPlanesW;
+	}
+#endif
+}
+
+//==============================================================================
+void Tiler::calcPlaneY(U i, const F32 o6, const F32 near) const
+{
+	Vec4 a, b;
+	Plane& plane = m_planesY[i];
+	ANKI_ASSERT(i < m_allPlanes.getSize());
+
+	a = Vec4(0.0, 
+		(I(i + 1) - I(m_r->getTilesCount().y()) / 2) * o6,
+		-near,
+		0.0);
+
+	b = Vec4(1.0, 0.0, 0.0, 0.0).cross(a);
+	b.normalize();
+
+	plane = Plane(b, 0.0);
+}
+
+//==============================================================================
+void Tiler::calcPlaneX(U j, const F32 l6, const F32 near) const
+{
+	Vec4 a, b;
+	Plane& plane = m_planesX[j];
+	ANKI_ASSERT(j < m_allPlanes.getSize());
+
+	a = Vec4((I(j + 1) - I(m_r->getTilesCount().x()) / 2) * l6,
+		0.0, 
+		-near,
+		0.0);
+
+	b = a.cross(Vec4(0.0, 1.0, 0.0, 0.0));
+	b.normalize();
+
+	plane = Plane(b, 0.0);
 }
 
 } // end namespace anki

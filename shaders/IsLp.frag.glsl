@@ -346,9 +346,9 @@ void main()
 #endif
 
 #if 0
-	if(in_instanceId != 99999)
+	if(pointLightsCount > 0)
 	{
-		out_color = vec3(normal);
+		out_color += vec3(float(pointLightsCount) / 30.0);
 	}
 #endif
 }
