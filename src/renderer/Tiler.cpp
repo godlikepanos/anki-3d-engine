@@ -247,13 +247,13 @@ Bool Tiler::test(
 void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 	U yFrom, U yTo, U xFrom, U xTo, VisibleTiles* visible, U& count) const
 {
-	U mi = (yTo - yFrom) / 2;
-	U mj = (xTo - xFrom) / 2;
+	U my = (yTo - yFrom) / 2;
+	U mx = (xTo - xFrom) / 2;
 
-	ANKI_ASSERT(mi == mj && "Change the algorithm if they are not the same");
+	ANKI_ASSERT(my == mx && "Change the algorithm if they are not the same");
 
 	// Handle final
-	if(mi == 0 || mj == 0)
+	if(ANKI_UNLIKELY(my == 0 && mx == 0))
 	{
 		Bool inside = true;
 
@@ -301,63 +301,68 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		return;
 	}
 
-	// Pick the correct top lookin plane (y)
-	const Plane& topPlane = m_planesYW[yFrom + mi - 1];
-
-	// Pick the correct right looking plane (x)
-	const Plane& rightPlane = m_planesXW[xFrom + mj - 1];
-
 	// Do the checks
 	Bool inside[2][2] = {{false, false}, {false, false}};
-	F32 test;
 
 	// Top looking plane check
-	test = cs.testPlane(topPlane);
-	if(test < 0.0)
+	if(my > 0)
 	{
-		inside[0][0] = inside[0][1] = true;
-	}
-	else if(test > 0.0)
-	{
-		inside[1][0] = inside[1][1] = true;
-	}
-	else
-	{
-		// Possibly all inside
-		for(U i = 0; i < 2; i++)
+		// Pick the correct top lookin plane (y)
+		const Plane& topPlane = m_planesYW[yFrom + my - 1];
+
+		F32 test = cs.testPlane(topPlane);
+		if(test < 0.0)
 		{
-			for(U j = 0; j < 2; j++)
+			inside[0][0] = inside[0][1] = true;
+		}
+		else if(test > 0.0)
+		{
+			inside[1][0] = inside[1][1] = true;
+		}
+		else
+		{
+			// Possibly all inside
+			for(U i = 0; i < 2; i++)
 			{
-				inside[i][j] = true;
+				for(U j = 0; j < 2; j++)
+				{
+					inside[i][j] = true;
+				}
 			}
 		}
 	}
 
 	// Right looking plane check
-	test = cs.testPlane(rightPlane);
-	if(test < 0.0)
+	if(mx > 0)
 	{
-		inside[0][1] = inside[1][1] = false;
-	}
-	else if(test > 0.0)
-	{
-		inside[0][0] = inside[1][0] = false;
-	}
-	else
-	{
-		// Do nothing and keep the top looking plane check results
+		// Pick the correct right looking plane (x)
+		const Plane& rightPlane = m_planesXW[xFrom + mx - 1];
+
+		F32 test = cs.testPlane(rightPlane);
+		if(test < 0.0)
+		{
+			inside[0][1] = inside[1][1] = false;
+		}
+		else if(test > 0.0)
+		{
+			inside[0][0] = inside[1][0] = false;
+		}
+		else
+		{
+			// Do nothing and keep the top looking plane check results
+		}
 	}
 
 	// Now move lower to the hierarchy
-	for(U i = 0; i < 2; i++)
+	for(U y = 0; y < 2; y++)
 	{
-		for(U j = 0; j < 2; j++)
+		for(U x = 0; x < 2; x++)
 		{
-			if(inside[i][j])
+			if(inside[y][x])
 			{
 				testRange(cs, nearPlane,
-					yFrom + (i * mi), yFrom + ((i + 1) * mi),
-					xFrom + (j * mj), xFrom + ((j + 1) * mj),
+					yFrom + (y * my), yFrom + ((y + 1) * my),
+					xFrom + (x * mx), xFrom + ((x + 1) * mx),
 					visible, count);
 			}
 		}
