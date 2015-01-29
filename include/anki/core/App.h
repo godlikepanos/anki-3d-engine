@@ -8,6 +8,7 @@
 
 #include "anki/util/Allocator.h"
 #include "anki/util/String.h"
+#include "anki/core/Timestamp.h"
 #if ANKI_OS == ANKI_OS_ANDROID
 #	include <android_native_app_glue.h>
 #endif
@@ -83,6 +84,11 @@ public:
 		return m_heapAlloc;
 	}
 
+	Timestamp getGlobalTimestamp() const
+	{
+		return m_globalTimestamp;
+	}
+
 	/// Run the main loop.
 	/// @param callback The user callback to run along with the other main loop
 	///                 code.
@@ -142,6 +148,7 @@ private:
 	ScriptManager* m_script = nullptr;
 
 	// Misc
+	Timestamp m_globalTimestamp = 0;
 	void* m_ctx = nullptr;
 	Threadpool* m_threadpool = nullptr;
 	String m_settingsDir; ///< The path that holds the configuration

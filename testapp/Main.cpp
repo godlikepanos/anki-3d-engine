@@ -244,7 +244,7 @@ Error init()
 		if(err) return err;
 
 		lightc = point->tryGetComponent<LightComponent>();
-		lightc->setRadius(3.0);
+		lightc->setRadius(0.01);
 		lightc->setDiffuseColor(Vec4(0.6));
 		lightc->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
 
@@ -264,17 +264,15 @@ Error init()
 	}
 #endif
 
-	/*PhysicsPlayerController::Initializer initp;
-	auto player = scene._getPhysicsWorld().newPlayerController(initp);
-	player->moveToPosition(Vec4(5.0, 2.0, 0.0, 0.0));
-	player->setVelocity(0.0, 0.0, 0.0, Vec4(0.0, 0.0, -1.0, 0.0));*/
-
 #if 1
 	PlayerNode* pnode;
 	scene.newSceneNode<PlayerNode>("player", pnode, Vec4(1.0, 3.0, 0.0, 0.0));
 
 	pnode->addChild(cam);
 
+#endif
+
+#if 0
 	PhysicsCollisionShape::Initializer initc;
 	auto box = 
 		scene._getPhysicsWorld().newCollisionShape<PhysicsBox>(
@@ -282,7 +280,7 @@ Error init()
 
 	PhysicsBody::Initializer init;
 	init.m_shape = box;
-	init.m_startTrf = Transform(Vec4(0.0, -45, 0, 0), 
+	init.m_startTrf = Transform(Vec4(0.0, -15, 0, 0), 
 		Mat3x4(Axisang(toRad(0.0), Vec3(1, 0, 0))), 1.0);
 	scene._getPhysicsWorld().newBody<PhysicsBody>(init);
 #endif
@@ -460,38 +458,19 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 #endif
 
 #if 0
-	if(in.getKey(KeyCode::L) == 1)
-	{
-		try
-		{
-			ScriptManagerSingleton::get().evalString(
-R"(scene = SceneGraphSingleton.get()
-node = scene:tryFindSceneNode("horse")
-if Anki.userDataValid(node) == 1 then
-	print("valid")
-else 
-	print("invalid")
-end)");
-		}
-		catch(Exception& e)
-		{
-			ANKI_LOGE(e.what());
-		}
-	}
-#endif
-
-	/*if(in.getMousePosition() != Vec2(0.0))
+	if(in.getMousePosition() != Vec2(0.0))
 	{
 		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity *
 			renderer.getAspectRatio();
 
 		mover->rotateLocalY(angY);
 		mover->rotateLocalX(ang * in.getMousePosition().y() * mouseSensivity);
-	}*/
+	}
+#endif
 
 	//execStdinScpripts();
 
-	if(getenv("PROFILE") && getGlobTimestamp() == 2000)
+	if(getenv("PROFILE") && app.getGlobalTimestamp() == 2000)
 	{
 		quit = true;
 		return err;
@@ -539,8 +518,8 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("lodDistance", 20.0);
 	config.set("samples", 1);
 	config.set("tessellation", true);
-	config.set("tilesXCount", 16);
-	config.set("tilesYCount", 16);
+	config.set("tilesXCount", 60);
+	config.set("tilesYCount", 30);
 
 	//config.set("maxTextureSize", 256);
 

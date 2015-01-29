@@ -44,7 +44,13 @@ public:
 		U32 frameAllocatorSize,
 		Threadpool* threadpool, 
 		ResourceManager* resources,
-		Input* input);
+		Input* input,
+		const Timestamp* globalTimestamp);
+
+	Timestamp getGlobalTimestamp() const
+	{
+		return m_timestamp;
+	}
 
 	/// @note Return a copy
 	SceneAllocator<U8> getAllocator() const
@@ -65,7 +71,7 @@ public:
 	void setAmbientColor(const Vec4& x)
 	{
 		m_ambientCol = x.xyz();
-		m_ambiendColorUpdateTimestamp = getGlobTimestamp();
+		m_ambiendColorUpdateTimestamp = getGlobalTimestamp();
 	}
 	U32 getAmbientColorUpdateTimestamp() const
 	{
@@ -84,7 +90,7 @@ public:
 	void setActiveCamera(Camera* cam)
 	{
 		m_mainCam = cam;
-		m_activeCameraChangeTimestamp = getGlobTimestamp();
+		m_activeCameraChangeTimestamp = getGlobalTimestamp();
 	}
 	U32 getActiveCameraChangeTimestamp() const
 	{
@@ -178,6 +184,9 @@ public:
 	/// @}
 
 private:
+	const Timestamp* m_globalTimestamp = nullptr;
+	Timestamp m_timestamp = 0; ///< Cached timestamp
+
 	Threadpool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
 	GlDevice* m_gl = nullptr;
@@ -192,9 +201,9 @@ private:
 	//SceneDictionary<SceneNode*> m_dict;
 
 	Vec3 m_ambientCol = Vec3(1.0); ///< The global ambient color
-	Timestamp m_ambiendColorUpdateTimestamp = getGlobTimestamp();
+	Timestamp m_ambiendColorUpdateTimestamp = getGlobalTimestamp();
 	Camera* m_mainCam = nullptr;
-	Timestamp m_activeCameraChangeTimestamp = getGlobTimestamp();
+	Timestamp m_activeCameraChangeTimestamp = getGlobalTimestamp();
 
 	EventManager m_events;
 

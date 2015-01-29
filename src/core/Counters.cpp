@@ -8,7 +8,6 @@
 #if ANKI_ENABLE_COUNTERS
 
 #include "anki/core/Counters.h"
-#include "anki/core/Timestamp.h"
 #include "anki/core/App.h"
 #include "anki/util/Array.h"
 #include <cstring>
@@ -54,9 +53,12 @@ static const Array<CounterInfo, (U)Counter::COUNT> cinfo = {{
 
 //==============================================================================
 Error CountersManager::create(
-	HeapAllocator<U8> alloc, const CString& cacheDir)
+	HeapAllocator<U8> alloc, const CString& cacheDir,
+	const Timestamp* globalTimestamp)
 {
 	Error err = ErrorCode::NONE;
+
+	m_globalTimestamp = globalTimestamp;
 
 	U count = static_cast<U>(Counter::COUNT);
 	m_alloc = alloc;
@@ -199,7 +201,7 @@ void CountersManager::resolveFrame()
 	Error err = ErrorCode::NONE;
 
 	// Write new line and frame no
-	err = m_perframeFile.writeText("\n%llu", getGlobTimestamp());
+	err = m_perframeFile.writeText("\n%llu", *m_globalTimestamp);
 
 	U i = 0;
 	for(const CounterInfo& inf : cinfo)
@@ -257,7 +259,7 @@ void CountersManager::flush()
 				if(inf.m_flags & CF_FPS)
 				{
 					err = m_perrunFile.writeText("%" MAX_NAME "f", 
-						(F64)getGlobTimestamp() / m_perrunValues[i].m_float);
+						(F64)(*m_globalTimestamp) / m_perrunValues[i].m_float);
 				}
 				else
 				{
@@ -360,7 +362,7 @@ ThreadTraceManager::ThreadTraceManager()
 	TraceManager& master = TraceManagerSingleton::get();
 	m_master = &master;
 
-	auto index = master.m_threadCount.fetch_add(1);
+	auto index = master.m_threadCount.fetchAdd(1);
 	master.m_threadData[index] = this;
 	m_id = index;
 }

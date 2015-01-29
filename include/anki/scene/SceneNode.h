@@ -57,6 +57,8 @@ public:
 
 	void setMarkedForDeletion();
 
+	Timestamp getGlobalTimestamp() const;
+
 	SceneAllocator<U8> getSceneAllocator() const;
 
 	SceneFrameAllocator<U8> getSceneFrameAllocator() const;

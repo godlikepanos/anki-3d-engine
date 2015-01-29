@@ -148,7 +148,7 @@ Error App::createInternal(const ConfigSet& config_,
 
 #if ANKI_ENABLE_COUNTERS
 	err = CountersManagerSingleton::get().create(
-		m_heapAlloc, m_settingsDir.toCString());
+		m_heapAlloc, m_settingsDir.toCString(), &m_globalTimestamp);
 	if(err) return err;
 
 	err = TraceManagerSingleton::get().create(
@@ -250,7 +250,8 @@ Error App::createInternal(const ConfigSet& config_,
 		m_resources,
 		m_gl,
 		m_heapAlloc,
-		config);
+		config,
+		&m_globalTimestamp);
 	if(err) return err;
 
 	err = m_resources->_setShadersPrependedSource(
@@ -263,7 +264,7 @@ Error App::createInternal(const ConfigSet& config_,
 
 	err = m_scene->create(m_allocCb, m_allocCbData, 
 		config.get("sceneFrameAllocatorSize"), m_threadpool, m_resources,
-		m_input);
+		m_input, &m_globalTimestamp);
 	if(err) return err;
 
 	// Script
@@ -389,8 +390,7 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 			HighRezTimer::sleep(getTimerTick() - timer.getElapsedTime());
 		}
 
-		// Timestamp
-		increaseGlobTimestamp();
+		++m_globalTimestamp;
 	}
 
 	// Performance ends

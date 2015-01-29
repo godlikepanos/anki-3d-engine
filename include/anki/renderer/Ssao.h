@@ -46,7 +46,7 @@ private:
 	GlPipelineHandle m_hblurPpline;
 	GlPipelineHandle m_vblurPpline;
 	
-	Timestamp m_commonUboUpdateTimestamp = getGlobTimestamp();
+	Timestamp m_commonUboUpdateTimestamp = 0;
 	GlBufferHandle m_uniformsBuff;
 	GlTextureHandle m_noiseTex;
 

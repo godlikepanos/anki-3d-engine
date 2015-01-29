@@ -249,7 +249,7 @@ public:
 		updated = false;
 
 		MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == getGlobTimestamp())
+		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			static_cast<ParticleEmitter&>(node).onMoveComponentUpdate(move);
 		}
@@ -387,7 +387,8 @@ Error ParticleEmitter::buildRendering(RenderingBuildData& data)
 	{
 		ppline.bind(data.m_jobs);
 
-		PtrSize offset = (getGlobTimestamp() % 3) * (m_vertBuff.getSize() / 3);
+		PtrSize offset = 
+			(getGlobalTimestamp() % 3) * (m_vertBuff.getSize() / 3);
 
 		// Position
 		m_vertBuff.bindVertexBuffer(data.m_jobs, 
@@ -491,7 +492,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	m_aliveParticlesCount = 0;
 
 	F32* verts = (F32*)(m_vertBuffMapping 
-		+ (getGlobTimestamp() % 3) * (m_vertBuff.getSize() / 3));
+		+ (getGlobalTimestamp() % 3) * (m_vertBuff.getSize() / 3));
 	F32* verts_base = verts;
 	(void)verts_base;
 

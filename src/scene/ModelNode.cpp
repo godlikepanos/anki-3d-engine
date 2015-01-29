@@ -247,7 +247,7 @@ public:
 		updated = false;
 
 		MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == getGlobTimestamp())
+		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			ModelNode& mnode = static_cast<ModelNode&>(node);
 			mnode.onMoveComponentUpdate(move);
@@ -276,7 +276,7 @@ public:
 
 		BodyComponent& bodyc = node.getComponent<BodyComponent>();
 
-		if(bodyc.getTimestamp() == getGlobTimestamp())
+		if(bodyc.getTimestamp() == node.getGlobalTimestamp())
 		{
 			MoveComponent& move = node.getComponent<MoveComponent>();
 			move.setLocalTransform(bodyc.getTransform());

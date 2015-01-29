@@ -34,8 +34,10 @@ Error Renderer::init(
 	ResourceManager* resources,
 	GlDevice* gl,
 	HeapAllocator<U8>& alloc,
-	const ConfigSet& config)
+	const ConfigSet& config,
+	const Timestamp* globalTimestamp)
 {
+	m_globalTimestamp = globalTimestamp;
 	m_threadpool = threadpool;
 	m_resources = resources;
 	m_gl = gl;
@@ -161,7 +163,7 @@ Error Renderer::render(SceneGraph& scene,
 	{
 		ANKI_ASSERT(cam.getCameraType() == Camera::Type::PERSPECTIVE);
 		computeProjectionParams(fr.getProjectionMatrix());
-		m_projectionParamsUpdateTimestamp = getGlobTimestamp();
+		m_projectionParamsUpdateTimestamp = getGlobalTimestamp();
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);

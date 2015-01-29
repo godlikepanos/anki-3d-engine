@@ -36,7 +36,7 @@ public:
 
 		F32 y = in.getMousePosition().y();
 		F32 x = in.getMousePosition().x();
-		if(playerc.getTimestamp() == getGlobTimestamp() 
+		if(playerc.getTimestamp() == node.getGlobalTimestamp() 
 			|| y != 0.0 
 			|| x != 0.0)
 		{

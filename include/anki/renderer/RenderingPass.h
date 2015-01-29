@@ -8,6 +8,7 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/Gl.h"
+#include "anki/core/Timestamp.h"
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/ProgramResource.h"
 
@@ -40,6 +41,8 @@ public:
 	{
 		m_enabled = e;
 	}
+
+	Timestamp getGlobalTimestamp() const;
 
 protected:
 	Renderer* m_r; ///< Know your father

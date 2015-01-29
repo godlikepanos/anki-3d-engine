@@ -33,7 +33,7 @@ GlOcclusionQueryHandle& LensFlareComponent::getOcclusionQueryToTest()
 	m_crntQueryIndex = (m_crntQueryIndex + 1) % m_queries.getSize();
 	
 	// Save the timestamp
-	m_queryTestTimestamp[m_crntQueryIndex] = getGlobTimestamp();
+	m_queryTestTimestamp[m_crntQueryIndex] = getGlobalTimestamp();
 
 	return m_queries[m_crntQueryIndex];
 }
@@ -45,7 +45,7 @@ void LensFlareComponent::getOcclusionQueryToCheck(
 	U idx = (m_crntQueryIndex + 1) % m_queries.getSize();
 
 	if(m_queryTestTimestamp[idx] == MAX_U32
-		|| m_queryTestTimestamp[idx] != getGlobTimestamp() - 2)
+		|| m_queryTestTimestamp[idx] != getGlobalTimestamp() - 2)
 	{
 		queryInvalid = true;
 	}

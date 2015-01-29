@@ -61,6 +61,12 @@ void SceneNode::setMarkedForDeletion()
 }
 
 //==============================================================================
+Timestamp SceneNode::getGlobalTimestamp() const
+{
+	return m_scene->getGlobalTimestamp();
+}
+
+//==============================================================================
 SceneAllocator<U8> SceneNode::getSceneAllocator() const
 {
 	ANKI_ASSERT(m_scene);

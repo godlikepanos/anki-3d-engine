@@ -238,7 +238,8 @@ public:
 		ResourceManager* resources,
 		GlDevice* gl,
 		HeapAllocator<U8>& alloc,
-		const ConfigSet& config);
+		const ConfigSet& config,
+		const Timestamp* globalTimestamp);
 
 	/// @privatesection
 	/// @{
@@ -266,6 +267,11 @@ public:
 	{
 		return m_shadersPrependedSource;
 	}
+
+	Timestamp getGlobalTimestamp() const
+	{
+		return *m_globalTimestamp;
+	}
 	/// @}
 
 private:
@@ -273,6 +279,7 @@ private:
 	ResourceManager* m_resources;
 	GlDevice* m_gl;
 	HeapAllocator<U8> m_alloc;
+	const Timestamp* m_globalTimestamp = nullptr;
 
 	/// @name Rendering stages
 	/// @{
@@ -311,7 +318,7 @@ private:
 	/// position from the depth
 	Vec4 m_projectionParams;
 
-	Timestamp m_projectionParamsUpdateTimestamp = getGlobTimestamp();
+	Timestamp m_projectionParamsUpdateTimestamp = 0;
 	/// @}
 
 	SceneGraph* m_scene; ///< Current scene

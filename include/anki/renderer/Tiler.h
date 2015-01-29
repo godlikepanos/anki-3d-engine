@@ -93,7 +93,7 @@ private:
 	const Camera* m_prevCam = nullptr;
 
 	/// Timestamp for the same reason as prevCam
-	Timestamp m_planes4UpdateTimestamp = getGlobTimestamp();
+	Timestamp m_planes4UpdateTimestamp = 0;
 
 	ANKI_USE_RESULT Error initInternal();
 

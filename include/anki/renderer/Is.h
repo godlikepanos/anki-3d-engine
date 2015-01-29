@@ -67,7 +67,7 @@ private:
 	GlBufferHandle m_commonBuff;
 
 	/// Track the updates of commonUbo
-	Timestamp m_commonBuffUpdateTimestamp = getGlobTimestamp();
+	Timestamp m_commonBuffUpdateTimestamp = 0;
 
 	/// Contains all the lights
 	GlBufferHandle m_lightsBuff;

@@ -222,7 +222,7 @@ Error Sm::doLight(
 		return err;
 	}
 
-	sm->m_timestamp = getGlobTimestamp();
+	sm->m_timestamp = getGlobalTimestamp();
 	lcomp.setShadowMapIndex(sm - &m_sms[0]);
 
 	//

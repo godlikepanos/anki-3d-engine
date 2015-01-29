@@ -10,6 +10,12 @@
 namespace anki {
 
 //==============================================================================
+Timestamp RenderingPass::getGlobalTimestamp() const
+{
+	return m_r->getGlobalTimestamp();
+}
+
+//==============================================================================
 GlDevice& RenderingPass::getGlDevice()
 {
 	return m_r->_getGlDevice();

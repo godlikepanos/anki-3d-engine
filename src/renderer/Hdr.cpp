@@ -132,8 +132,8 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	if(err) return err;
 
 	// Set timestamps
-	m_parameterUpdateTimestamp = getGlobTimestamp();
-	m_commonUboUpdateTimestamp = getGlobTimestamp();
+	m_parameterUpdateTimestamp = getGlobalTimestamp();
+	m_commonUboUpdateTimestamp = getGlobalTimestamp();
 
 	return err;
 }
@@ -174,7 +174,7 @@ Error Hdr::run(GlCommandBufferHandle& cmdb)
 			return err;
 		}
 
-		m_commonUboUpdateTimestamp = getGlobTimestamp();
+		m_commonUboUpdateTimestamp = getGlobalTimestamp();
 	}
 
 	m_r->getIs()._getRt().bind(cmdb, 0);

@@ -206,7 +206,7 @@ void Tiler::updateTiles(Camera& cam)
 	// Update timestamp
 	if(frustumChanged)
 	{
-		m_planes4UpdateTimestamp = getGlobTimestamp();
+		m_planes4UpdateTimestamp = getGlobalTimestamp();
 	}
 
 	// Sync threads
@@ -249,8 +249,6 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 {
 	U my = (yTo - yFrom) / 2;
 	U mx = (xTo - xFrom) / 2;
-
-	ANKI_ASSERT(my == mx && "Change the algorithm if they are not the same");
 
 	// Handle final
 	if(ANKI_UNLIKELY(my == 0 && mx == 0))
@@ -331,6 +329,17 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 			}
 		}
 	}
+	else
+	{
+		// Possibly all inside
+		for(U i = 0; i < 2; i++)
+		{
+			for(U j = 0; j < 2; j++)
+			{
+				inside[i][j] = true;
+			}
+		}
+	}
 
 	// Right looking plane check
 	if(mx > 0)
@@ -354,17 +363,74 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 	}
 
 	// Now move lower to the hierarchy
-	for(U y = 0; y < 2; y++)
+	if(mx == 0)
 	{
-		for(U x = 0; x < 2; x++)
+		if(inside[0][0])
 		{
-			if(inside[y][x])
-			{
-				testRange(cs, nearPlane,
-					yFrom + (y * my), yFrom + ((y + 1) * my),
-					xFrom + (x * mx), xFrom + ((x + 1) * mx),
-					visible, count);
-			}
+			testRange(cs, nearPlane,
+				yFrom, yFrom + my,
+				xFrom, xTo,
+				visible, count);
+		}
+
+		if(inside[1][0])
+		{
+			testRange(cs, nearPlane,
+				yFrom + my, yTo,
+				xFrom, xTo,
+				visible, count);
+		}
+	}
+	else if(my == 0)
+	{
+		if(inside[0][0])
+		{
+			testRange(cs, nearPlane,
+				yFrom, yTo,
+				xFrom, xFrom + mx,
+				visible, count);
+		}
+
+		if(inside[0][1])
+		{
+			testRange(cs, nearPlane,
+				yFrom, yTo,
+				xFrom + mx, xTo,
+				visible, count);
+		}
+	}
+	else
+	{
+		if(inside[0][0])
+		{
+			testRange(cs, nearPlane,
+				yFrom, yFrom + my,
+				xFrom, xFrom + mx,
+				visible, count);
+		}
+
+		if(inside[0][1])
+		{
+			testRange(cs, nearPlane,
+				yFrom, yFrom + my,
+				xFrom + mx, xTo,
+				visible, count);
+		}
+
+		if(inside[1][0])
+		{
+			testRange(cs, nearPlane,
+				yFrom + my, yTo,
+				xFrom, xFrom + mx,
+				visible, count);
+		}
+
+		if(inside[1][1])
+		{
+			testRange(cs, nearPlane,
+				yFrom + my, yTo,
+				xFrom + mx, xTo,
+				visible, count);
 		}
 	}
 }

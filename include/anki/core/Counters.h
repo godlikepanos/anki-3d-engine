@@ -10,6 +10,7 @@
 #include "anki/util/HighRezTimer.h"
 #include "anki/util/Atomic.h"
 #include "anki/util/Thread.h"
+#include "anki/core/Timestamp.h"
 
 namespace anki {
 
@@ -45,7 +46,8 @@ public:
 	~CountersManager();
 
 	ANKI_USE_RESULT Error create(
-		HeapAllocator<U8> alloc, const CString& cacheDir);
+		HeapAllocator<U8> alloc, const CString& cacheDir,
+		const Timestamp* globalTimestamp);
 
 	void increaseCounter(Counter counter, F64 val);
 	void increaseCounter(Counter counter, U64 val);
@@ -70,6 +72,7 @@ private:
 		U64 m_int;
 	};
 
+	const Timestamp* m_globalTimestamp = nullptr;
 	HeapAllocator<U8> m_alloc;
 	File m_perframeFile;
 	File m_perrunFile;

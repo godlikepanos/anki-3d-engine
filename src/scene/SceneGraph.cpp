@@ -103,10 +103,12 @@ Error SceneGraph::create(
 	U32 frameAllocatorSize,
 	Threadpool* threadpool, 
 	ResourceManager* resources,
-	Input* input)
+	Input* input,
+	const Timestamp* globalTimestamp)
 {
 	Error err = ErrorCode::NONE;
 
+	m_globalTimestamp = globalTimestamp;
 	m_threadpool = threadpool;
 	m_resources = resources;
 	m_objectsMarkedForDeletionCount.store(0);
@@ -249,6 +251,8 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 
 	Error err = ErrorCode::NONE;
 
+	m_timestamp = *m_globalTimestamp;
+
 	ANKI_COUNTER_START_TIMER(SCENE_UPDATE_TIME);
 
 	//
@@ -294,7 +298,6 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	}
 
 	ANKI_COUNTER_STOP_TIMER_INC(SCENE_UPDATE_TIME);
-
 	return err;
 }
 

@@ -26,7 +26,8 @@ public:
 		ResourceManager* resources,
 		GlDevice* gl,
 		HeapAllocator<U8>& alloc,
-		const ConfigSet& config);
+		const ConfigSet& config,
+		const Timestamp* globalTimestamp);
 
 	ANKI_USE_RESULT Error render(SceneGraph& scene);
 
@@ -45,7 +46,6 @@ private:
 	void takeScreenshotTga(const char* filename);
 	ANKI_USE_RESULT Error initGl();
 };
-
 /// @}
 
 } // end namespace anki

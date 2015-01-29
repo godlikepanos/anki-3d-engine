@@ -28,12 +28,14 @@ Error MainRenderer::create(
 	ResourceManager* resources,
 	GlDevice* gl,
 	HeapAllocator<U8>& alloc,
-	const ConfigSet& config)
+	const ConfigSet& config,
+	const Timestamp* globalTimestamp)
 {
 	Error err = ErrorCode::NONE;
 	ANKI_LOGI("Initializing main renderer...");
 
-	err = Renderer::init(threadpool, resources, gl, alloc, config);
+	err = Renderer::init(threadpool, resources, gl, alloc, config, 
+		globalTimestamp);
 	if(err) return err;
 
 	err = initGl();

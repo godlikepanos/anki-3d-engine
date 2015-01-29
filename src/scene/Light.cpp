@@ -29,14 +29,14 @@ public:
 		Light& lnode = static_cast<Light&>(node);
 
 		MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == getGlobTimestamp())
+		if(move.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Move updated
 			lnode.onMoveUpdate(move);
 		}
 
 		LightComponent& light = node.getComponent<LightComponent>();
-		if(light.getTimestamp() == getGlobTimestamp())
+		if(light.getTimestamp() == node.getGlobalTimestamp())
 		{
 			// Shape updated
 			lnode.onShapeUpdate(light);

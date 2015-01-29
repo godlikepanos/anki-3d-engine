@@ -301,7 +301,7 @@ Error Ssao::run(GlCommandBufferHandle& cmdb)
 		blk.m_projectionMatrix = camFr.getProjectionMatrix().getTransposed();
 
 		m_uniformsBuff.write(cmdb, tmpBuff, 0, 0, tmpBuff.getSize());
-		m_commonUboUpdateTimestamp = getGlobTimestamp();
+		m_commonUboUpdateTimestamp = getGlobalTimestamp();
 	}
 
 	// Draw

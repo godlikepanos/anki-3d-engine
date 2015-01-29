@@ -25,7 +25,7 @@ public:
 		updated = false;
 
 		MoveComponent& move = node.getComponent<MoveComponent>();
-		if(move.getTimestamp() == getGlobTimestamp())
+		if(move.getTimestamp() == getGlobalTimestamp())
 		{
 			Camera& cam = static_cast<Camera&>(node);
 			cam.onMoveComponentUpdate(move);
@@ -53,7 +53,7 @@ public:
 		updated = false;
 
 		FrustumComponent& fr = node.getComponent<FrustumComponent>();
-		if(fr.getTimestamp() == getGlobTimestamp())
+		if(fr.getTimestamp() == getGlobalTimestamp())
 		{
 			Camera& cam = static_cast<Camera&>(node);
 			cam.onFrustumComponentUpdate(fr);

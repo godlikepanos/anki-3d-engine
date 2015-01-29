@@ -35,7 +35,7 @@ public:
 	void setExposure(const F32 x)
 	{
 		m_exposure = x;
-		m_parameterUpdateTimestamp = getGlobTimestamp();
+		m_parameterUpdateTimestamp = getGlobalTimestamp();
 	}
 
 	U32 getBlurringIterationsCount() const
@@ -86,9 +86,9 @@ private:
 	GlTextureHandle m_hblurRt; ///< pass0Fai with the horizontal blur FAI
 	GlTextureHandle m_vblurRt; ///< The final FAI
 	/// When a parameter changed by the setters
-	Timestamp m_parameterUpdateTimestamp = getGlobTimestamp();
+	Timestamp m_parameterUpdateTimestamp = 0;
 	/// When the commonUbo got updated
-	Timestamp m_commonUboUpdateTimestamp = getGlobTimestamp();
+	Timestamp m_commonUboUpdateTimestamp = 0;
 	GlBufferHandle m_commonBuff;
 
 	Hdr(Renderer* r)

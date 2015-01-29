@@ -33,29 +33,26 @@ void clamp(T& in, Y limit)
 
 namespace shader {
 
-class Light
+struct Light
 {
-public:
 	Vec4 m_posRadius;
 	Vec4 m_diffuseColorShadowmapId;
 	Vec4 m_specularColorTexId;
 };
 
-class PointLight: public Light
+struct PointLight: Light
 {};
 
-class SpotLight: public Light
+struct SpotLight: Light
 {
-public:
 	Vec4 m_lightDir;
 	Vec4 m_outerCosInnerCos;
 	Array<Vec4, 4> m_extendPoints;
 	Mat4 m_texProjectionMat; ///< Texture projection matrix
 };
 
-class CommonUniforms
+struct CommonUniforms
 {
-public:
 	Vec4 m_projectionParams;
 	Vec4 m_sceneAmbientColor;
 	Vec4 m_groundLightDir;

@@ -133,7 +133,10 @@ void Frustum::resetTransform(const Transform& trf)
 {
 	recalculate();
 	m_frustumDirty = false;
-	m_trf = trf;
+	if(&m_trf != &trf)
+	{
+		m_trf = trf;
+	}
 	
 	// Transform the compound
 	CompoundShape::transform(m_trf);

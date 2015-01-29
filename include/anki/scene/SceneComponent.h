@@ -38,7 +38,8 @@ public:
 
 	/// Construct the scene component.
 	SceneComponent(Type type, SceneNode* node)
-	:	m_type(type)
+	:	m_node(node),
+		m_type(type)
 	{}
 
 	Type getType() const
@@ -50,6 +51,8 @@ public:
 	{
 		return m_timestamp;
 	}
+
+	Timestamp getGlobalTimestamp() const;
 
 	/// Do some reseting before frame starts
 	virtual void reset()
@@ -94,6 +97,7 @@ public:
 	}
 
 protected:
+	SceneNode* m_node;
 	Timestamp m_timestamp; ///< Indicates when an update happened
 
 private:

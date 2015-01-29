@@ -9,6 +9,12 @@
 namespace anki {
 
 //==============================================================================
+Timestamp SceneComponent::getGlobalTimestamp() const
+{
+	return m_node->getGlobalTimestamp();
+}
+
+//==============================================================================
 Error SceneComponent::updateReal(SceneNode& node, F32 prevTime, F32 crntTime,
 	Bool& updated)
 {
@@ -21,7 +27,7 @@ Error SceneComponent::updateReal(SceneNode& node, F32 prevTime, F32 crntTime,
 
 		if(!err)
 		{
-			m_timestamp = getGlobTimestamp();
+			m_timestamp = getGlobalTimestamp();
 		}
 	}
 
