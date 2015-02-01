@@ -20,6 +20,11 @@ class Aabb: public ConvexShape
 public:
 	using Base = ConvexShape;
 
+	static Bool classof(const CollisionShape& c)
+	{
+		return c.getType() == Type::AABB;
+	}
+
 	Aabb()
 	:	Base(Type::AABB)
 	{}

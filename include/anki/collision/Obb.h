@@ -22,17 +22,17 @@ class Obb: public ConvexShape
 public:
 	using Base = ConvexShape;
 
-	/// @name Constructors
-	/// @{
+	static Bool classof(const CollisionShape& c)
+	{
+		return c.getType() == Type::OBB;
+	}
+
 	Obb();
 
 	Obb(const Obb& b);
 
 	Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend);
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	const Vec4& getCenter() const
 	{
 		return m_center;
@@ -77,12 +77,8 @@ public:
 		makeDirty();
 		m_extend = x;
 	}
-	/// @}
 
-	/// @name Operators
-	/// @{
 	Obb& operator=(const Obb& b);
-	/// @}
 
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
@@ -130,9 +126,8 @@ public:
 	/// our case)
 	Vec4 m_extend;
 
-	class 
+	struct 
 	{
-	public:
 		mutable Aabb m_aabb;
 		mutable Array<Vec4, 8> m_extremePoints;
 		mutable Bool8 m_dirtyAabb = true;

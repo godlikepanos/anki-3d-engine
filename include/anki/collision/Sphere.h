@@ -20,31 +20,30 @@ class Sphere: public ConvexShape
 public:
 	using Base = ConvexShape;
 
-	/// @name Constructors
-	/// @{
+	static Bool classof(const CollisionShape& c)
+	{
+		return c.getType() == Type::SPHERE;
+	}
 
 	/// Default constructor
 	Sphere()
-		: Base(Type::SPHERE)
+	:	Base(Type::SPHERE)
 	{}
 
 	/// Copy constructor
 	Sphere(const Sphere& b)
-		: Base(Type::SPHERE)
+	:	Base(Type::SPHERE)
 	{
 		operator=(b);
 	}
 
 	/// Constructor
 	Sphere(const Vec4& center, F32 radius)
-		:	Base(Type::SPHERE), 
-			m_center(center), 
-			m_radius(radius)
+	:	Base(Type::SPHERE), 
+		m_center(center), 
+		m_radius(radius)
 	{}
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	const Vec4& getCenter() const
 	{
 		return m_center;
@@ -74,10 +73,7 @@ public:
 	{
 		m_radius = x;
 	}
-	/// @}
 
-	/// @name Operators
-	/// @{
 	Sphere& operator=(const Sphere& b)
 	{
 		Base::operator=(b);
@@ -85,7 +81,6 @@ public:
 		m_radius = b.m_radius;
 		return *this;
 	}
-	/// @}
 
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)

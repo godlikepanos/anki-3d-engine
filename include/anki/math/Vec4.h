@@ -179,6 +179,9 @@ void TVec4<F32>::Base::normalize();
 template<>
 TVec4<F32> TVec4<F32>::cross(const TVec4<F32>& b) const;
 
+template<>
+TVec4<F32> TVec4<F32>::Base::getAbs() const;
+
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 
 #	error "TODO"

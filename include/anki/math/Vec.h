@@ -2155,6 +2155,16 @@ public:
 		return ((*this) * (1.0 - t)) + (v1 * t);
 	}
 
+	TV getAbs() const
+	{
+		TV out;
+		for(U i = 0; i < N; ++i)
+		{
+			out[i] = fabs<T>(m_arr[i]);
+		}
+		return out;
+	}
+
 	template<typename TAlloc>
 	StringBase<typename TAlloc::template rebind<char>::other> toString(
 		TAlloc alloc_) const

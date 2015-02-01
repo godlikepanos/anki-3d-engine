@@ -18,6 +18,11 @@ namespace anki {
 class CompoundShape: public CollisionShape, public NonCopyable
 {
 public:
+	static Bool classof(const CollisionShape& c)
+	{
+		return c.getType() == Type::COMPOUND;
+	}
+
 	CompoundShape();
 
 	/// Implements CollisionShape::testPlane
@@ -38,6 +43,9 @@ public:
 	/// The compound shape will not take ownership of the object
 	void addShape(CollisionShape* shape);
 
+	template<typename TFunc>
+	ANKI_USE_RESULT Error iterateShapes(TFunc f) const;
+
 private:
 	static const U SHAPES_PER_CHUNK_COUNT = 8;
 
@@ -49,32 +57,39 @@ private:
 	};
 
 	Chunk m_dflt;
-
-	template<typename TFunc>
-	void iterateShapes(TFunc f) const
-	{
-		U count = 0;
-		const Chunk* chunk = &m_dflt;
-
-		do
-		{
-			U idx = SHAPES_PER_CHUNK_COUNT;
-			while(idx-- != 0)
-			{
-				if(chunk->m_shapes[idx])
-				{
-					f(*const_cast<CollisionShape*>(chunk->m_shapes[idx]));
-					++count;
-				}
-			}
-
-			chunk = chunk->m_next;
-		} while(chunk);
-	
-		ANKI_ASSERT(count > 0 && "Empty CompoundShape");
-		(void)count;
-	}
 };
+
+//==============================================================================
+template<typename TFunc>
+Error CompoundShape::iterateShapes(TFunc f) const
+{
+	Error err = ErrorCode::NONE;
+	U count = 0;
+	const Chunk* chunk = &m_dflt;
+
+	do
+	{
+		U idx = SHAPES_PER_CHUNK_COUNT;
+		while(idx-- != 0)
+		{
+			if(chunk->m_shapes[idx])
+			{
+				err = f(*const_cast<CollisionShape*>(chunk->m_shapes[idx]));
+				if(err)
+				{
+					return err;
+				}
+				++count;
+			}
+		}
+
+		chunk = chunk->m_next;
+	} while(chunk);
+
+	ANKI_ASSERT(count > 0 && "Empty CompoundShape");
+	(void)count;
+	return err;
+}
 /// @}
 
 } // end namespace anki

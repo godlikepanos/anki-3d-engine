@@ -26,10 +26,10 @@ public:
 	enum class Type: U8
 	{
 		PLANE,
+		LINE_SEG,
 		COMPOUND,
 		AABB,
 		SPHERE,
-		LINE_SEG,
 		OBB,
 		COUNT
 	};
@@ -64,39 +64,30 @@ public:
 		virtual void visit(const CompoundShape&) = 0;
 	};
 
-	/// @name Constructors & destructor
-	/// @{
 	CollisionShape(Type cid)
-		: m_cid(cid)
+	:	m_cid(cid)
 	{}
 
 	CollisionShape(const CollisionShape& b)
-		: m_cid(b.m_cid)
+	:	m_cid(b.m_cid)
 	{
 		operator=(b);
 	}
 
 	virtual ~CollisionShape()
 	{}
-	/// @}
 
-	/// @name Operators
-	/// @{
 	CollisionShape& operator=(const CollisionShape& b)
 	{
 		ANKI_ASSERT(b.m_cid == m_cid);
 		(void)b;
 		return *this;
 	}
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	Type getType() const
 	{
 		return m_cid;
 	}
-	/// @}
 
 	/// If the collision shape intersects with the plane then the method
 	/// returns 0.0, else it returns the distance. If the distance is < 0.0

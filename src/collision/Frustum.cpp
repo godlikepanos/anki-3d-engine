@@ -21,6 +21,7 @@ Frustum& Frustum::operator=(const Frustum& b)
 	m_near = b.m_near;
 	m_far = b.m_far;
 	m_planes = b.m_planes;
+	m_planesW = b.m_planesW;
 	m_trf = b.m_trf;
 	m_frustumDirty = b.m_frustumDirty;
 	return *this;
@@ -29,67 +30,37 @@ Frustum& Frustum::operator=(const Frustum& b)
 //==============================================================================
 void Frustum::accept(MutableVisitor& v)
 {
-	if(m_frustumDirty)
-	{
-		// Force recalculation and tranform
-		resetTransform(m_trf);
-	}
-
+	update();
 	CompoundShape::accept(v);
 }
 
 //==============================================================================
 void Frustum::accept(ConstVisitor& v) const
 {
-	Frustum& self = *const_cast<Frustum*>(this);
-
-	if(self.m_frustumDirty)
-	{
-		// Force recalculation and tranform
-		self.resetTransform(m_trf);
-	}
-
+	update();
 	CompoundShape::accept(v);
 }
 
 //==============================================================================
 F32 Frustum::testPlane(const Plane& p) const
 {
-	Frustum& self = *const_cast<Frustum*>(this);
-
-	if(self.m_frustumDirty)
-	{
-		// Force recalculation and tranform
-		self.resetTransform(m_trf);
-	}
-
+	update();
 	return CompoundShape::testPlane(p);
 }
 
 //==============================================================================
 void Frustum::computeAabb(Aabb& aabb) const
 {
-	Frustum& self = *const_cast<Frustum*>(this);
-
-	if(self.m_frustumDirty)
-	{
-		// Force recalculation and tranform
-		self.resetTransform(m_trf);
-	}
-
+	update();
 	CompoundShape::computeAabb(aabb);
 }
 
 //==============================================================================
 Bool Frustum::insideFrustum(const CollisionShape& b)
 {
-	if(m_frustumDirty)
-	{
-		// Force recalculation and tranform
-		resetTransform(m_trf);
-	}
+	update();
 
-	for(const Plane& plane : m_planes)
+	for(const Plane& plane : m_planesW)
 	{
 		if(b.testPlane(plane) < 0.0)
 		{
@@ -103,48 +74,79 @@ Bool Frustum::insideFrustum(const CollisionShape& b)
 //==============================================================================
 void Frustum::transform(const Transform& trf)
 {
-	const Transform* useTrf;
+	m_trf = m_trf.combineTransformations(trf);
+
 	if(m_frustumDirty)
 	{
-		m_frustumDirty = false;
-		recalculate();
-
-		useTrf = &m_trf;
+		// Update everything
+		updateInternal();
 	}
 	else
 	{
-		useTrf = &trf;
-	}
+		// Update only the other shapes
+		recalculate(false, true);
 
-	m_trf = m_trf.combineTransformations(trf);
+		// Transform the compound
+		CompoundShape::transform(m_trf);
 
-	// Transform the compound
-	CompoundShape::transform(*useTrf);
-
-	// Transform the planes
-	for(Plane& p : m_planes)
-	{
-		p.transform(*useTrf);
+		// Transform the planes
+		for(U i = 0; i < m_planes.getSize(); ++i)
+		{
+			m_planesW[i] = m_planes[i].getTransformed(m_trf);
+		}
 	}
 }
 
 //==============================================================================
 void Frustum::resetTransform(const Transform& trf)
 {
-	recalculate();
-	m_frustumDirty = false;
-	if(&m_trf != &trf)
+	m_trf = trf;
+
+	if(m_frustumDirty)
 	{
-		m_trf = trf;
+		// Update everything
+		updateInternal();
 	}
+	else
+	{
+		// Update only the other shapes
+		recalculate(false, true);
 	
+		// Transform the compound
+		CompoundShape::transform(m_trf);
+
+		// Transform the planes
+		for(U i = 0; i < m_planes.getSize(); ++i)
+		{
+			m_planesW[i] = m_planes[i].getTransformed(m_trf);
+		}
+	}
+}
+
+//==============================================================================
+void Frustum::update() const
+{
+	Frustum& self = *const_cast<Frustum*>(this);
+	if(self.m_frustumDirty)
+	{
+		self.updateInternal();
+	}
+}
+
+//==============================================================================
+void Frustum::updateInternal()
+{
+	ANKI_ASSERT(m_frustumDirty);
+	m_frustumDirty = false;	
+	recalculate(true, true);
+
 	// Transform the compound
 	CompoundShape::transform(m_trf);
 
 	// Transform the planes
-	for(Plane& p : m_planes)
+	for(U i = 0; i < m_planes.getSize(); ++i)
 	{
-		p.transform(m_trf);
+		m_planesW[i] = m_planes[i].getTransformed(m_trf);
 	}
 }
 
@@ -173,45 +175,47 @@ PerspectiveFrustum& PerspectiveFrustum::operator=(const PerspectiveFrustum& b)
 }
 
 //==============================================================================
-void PerspectiveFrustum::recalculate()
+void PerspectiveFrustum::recalculate(Bool planes, Bool other)
 {
-	// Planes
-	//
-	F32 c, s; // cos & sine
-
-	sinCos(getPi<F32>() + m_fovX / 2.0, s, c);
-	// right
-	m_planes[(U)PlaneType::RIGHT] = Plane(Vec4(c, 0.0, s, 0.0), 0.0);
-	// left
-	m_planes[(U)PlaneType::LEFT] = Plane(Vec4(-c, 0.0, s, 0.0), 0.0);
-
-	sinCos((getPi<F32>() + m_fovY) * 0.5, s, c);
-	// bottom
-	m_planes[(U)PlaneType::BOTTOM] = Plane(Vec4(0.0, s, c, 0.0), 0.0);
-	// top
-	m_planes[(U)PlaneType::TOP] = Plane(Vec4(0.0, -s, c, 0.0), 0.0);
-
-	// near
-	m_planes[(U)PlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
-	// far
-	m_planes[(U)PlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
-
-	// Rest
-	//
-	Vec4 eye = Vec4(0.0, 0.0, -m_near, 0.0);
-	for(LineSegment& ls : m_segments)
+	if(planes)
 	{
-		ls.setOrigin(eye);
+		F32 c, s; // cos & sine
+
+		sinCos(getPi<F32>() + m_fovX / 2.0, s, c);
+		// right
+		m_planes[(U)PlaneType::RIGHT] = Plane(Vec4(c, 0.0, s, 0.0), 0.0);
+		// left
+		m_planes[(U)PlaneType::LEFT] = Plane(Vec4(-c, 0.0, s, 0.0), 0.0);
+
+		sinCos((getPi<F32>() + m_fovY) * 0.5, s, c);
+		// bottom
+		m_planes[(U)PlaneType::BOTTOM] = Plane(Vec4(0.0, s, c, 0.0), 0.0);
+		// top
+		m_planes[(U)PlaneType::TOP] = Plane(Vec4(0.0, -s, c, 0.0), 0.0);
+
+		// near
+		m_planes[(U)PlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
+		// far
+		m_planes[(U)PlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
 	}
 
-	F32 x = m_far / tan((getPi<F32>() - m_fovX) / 2.0);
-	F32 y = tan(m_fovY / 2.0) * m_far;
-	F32 z = -m_far;
+	if(other)
+	{
+		Vec4 eye = Vec4(0.0, 0.0, -m_near, 0.0);
+		for(LineSegment& ls : m_segments)
+		{
+			ls.setOrigin(eye);
+		}
 
-	m_segments[0].setDirection(Vec4(x, y, z - m_near, 0.0)); // top right
-	m_segments[1].setDirection(Vec4(-x, y, z - m_near, 0.0)); // top left
-	m_segments[2].setDirection(Vec4(-x, -y, z - m_near, 0.0)); // bottom left
-	m_segments[3].setDirection(Vec4(x, -y, z - m_near, 0.0)); // bottom right
+		F32 x = m_far / tan((getPi<F32>() - m_fovX) / 2.0);
+		F32 y = tan(m_fovY / 2.0) * m_far;
+		F32 z = -m_far;
+
+		m_segments[0].setDirection(Vec4(x, y, z - m_near, 0.0)); // top right
+		m_segments[1].setDirection(Vec4(-x, y, z - m_near, 0.0)); // top left
+		m_segments[2].setDirection(Vec4(-x, -y, z - m_near, 0.0)); // bot left
+		m_segments[3].setDirection(Vec4(x, -y, z - m_near, 0.0)); // bot right
+	}
 }
 
 //==============================================================================
@@ -320,23 +324,36 @@ Mat4 OrthographicFrustum::calculateProjectionMatrix() const
 }
 
 //==============================================================================
-void OrthographicFrustum::recalculate()
+void OrthographicFrustum::recalculate(Bool planes, Bool other)
 {
-	// Planes
-	m_planes[(U)PlaneType::LEFT] = Plane(Vec4(1.0, 0.0, 0.0, 0.0), m_left);
-	m_planes[(U)PlaneType::RIGHT] = Plane(Vec4(-1.0, 0.0, 0.0, 0.0), -m_right);
-	m_planes[(U)PlaneType::NEAR] = Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
-	m_planes[(U)PlaneType::FAR] = Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
-	m_planes[(U)PlaneType::TOP] = Plane(Vec4(0.0, -1.0, 0.0, 0.0), -m_top);
-	m_planes[(U)PlaneType::BOTTOM] = Plane(Vec4(0.0, 1.0, 0.0, 0.0), m_bottom);
+	if(planes)
+	{
+		// Planes
+		m_planes[(U)PlaneType::LEFT] = 
+			Plane(Vec4(1.0, 0.0, 0.0, 0.0), m_left);
+		m_planes[(U)PlaneType::RIGHT] = 
+			Plane(Vec4(-1.0, 0.0, 0.0, 0.0), -m_right);
 
-	// OBB
-	Vec4 c((m_right + m_left) * 0.5, 
-		(m_top + m_bottom) * 0.5, 
-		-(m_far + m_near) * 0.5,
-		0.0);
-	Vec4 e = Vec4(m_right, m_top, -m_far, 0.0) - c;
-	m_obb = Obb(c, Mat3x4::getIdentity(), e);
+		m_planes[(U)PlaneType::NEAR] = 
+			Plane(Vec4(0.0, 0.0, -1.0, 0.0), m_near);
+		m_planes[(U)PlaneType::FAR] = 
+			Plane(Vec4(0.0, 0.0, 1.0, 0.0), -m_far);
+		m_planes[(U)PlaneType::TOP] = 
+			Plane(Vec4(0.0, -1.0, 0.0, 0.0), -m_top);
+		m_planes[(U)PlaneType::BOTTOM] = 
+			Plane(Vec4(0.0, 1.0, 0.0, 0.0), m_bottom);
+	}
+
+	if(other)
+	{
+		// OBB
+		Vec4 c((m_right + m_left) * 0.5, 
+			(m_top + m_bottom) * 0.5, 
+			-(m_far + m_near) * 0.5,
+			0.0);
+		Vec4 e = Vec4(m_right, m_top, -m_far, 0.0) - c;
+		m_obb = Obb(c, Mat3x4::getIdentity(), e);
+	}
 }
 
 } // end namespace anki

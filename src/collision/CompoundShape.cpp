@@ -22,12 +22,14 @@ F32 CompoundShape::testPlane(const Plane& p) const
 	F32 min = MAX_F32;
 	F32 max = MIN_F32;
 
-	iterateShapes([&](const CollisionShape& cs)
+	Error err = iterateShapes([&](const CollisionShape& cs) -> Error
 	{
 		F32 a = cs.testPlane(p);
 		min = std::min(min, a);
 		max = std::max(max, a);
+		return ErrorCode::NONE;
 	});
+	(void)err;
 
 	if(min > 0.0 && max > 0.0)
 	{
@@ -44,28 +46,34 @@ F32 CompoundShape::testPlane(const Plane& p) const
 //==============================================================================
 void CompoundShape::accept(MutableVisitor& v)
 {
-	iterateShapes([&](CollisionShape& cs)
+	Error err = iterateShapes([&](CollisionShape& cs) -> Error
 	{
 		cs.accept(v);
+		return ErrorCode::NONE;
 	});
+	(void)err;
 }
 
 //==============================================================================
 void CompoundShape::accept(ConstVisitor& v) const
 {
-	iterateShapes([&](const CollisionShape& cs)
+	Error err = iterateShapes([&](const CollisionShape& cs) -> Error
 	{
 		cs.accept(v);
+		return ErrorCode::NONE;
 	});
+	(void)err;
 }
 
 //==============================================================================
 void CompoundShape::transform(const Transform& trf)
 {
-	iterateShapes([&](CollisionShape& cs)
+	Error err = iterateShapes([&](CollisionShape& cs) -> Error
 	{
 		cs.transform(trf);
+		return ErrorCode::NONE;
 	});
+	(void)err;
 }
 
 //==============================================================================
@@ -73,7 +81,7 @@ void CompoundShape::computeAabb(Aabb& out) const
 {
 	Vec4 min(Vec3(MAX_F32), 0.0), max(Vec3(MIN_F32), 0.0);
 
-	iterateShapes([&](const CollisionShape& cs)
+	Error err = iterateShapes([&](const CollisionShape& cs) -> Error
 	{
 		Aabb aabb;
 		cs.computeAabb(aabb);
@@ -83,7 +91,9 @@ void CompoundShape::computeAabb(Aabb& out) const
 			min[i] = std::min(min[i], aabb.getMin()[i]);
 			max[i] = std::max(max[i], aabb.getMax()[i]);
 		}
+		return ErrorCode::NONE;
 	});
+	(void)err;
 
 	out.setMin(min);
 	out.setMax(max);

@@ -21,29 +21,29 @@ class LineSegment: public CollisionShape
 public:
 	using Base = CollisionShape;
 
-	/// @name Constructors
-	/// @{
+	static Bool classof(const CollisionShape& c)
+	{
+		return c.getType() == Type::LINE_SEG;
+	}
+
 	LineSegment()
-		:	Base(Type::LINE_SEG),
-			m_origin(0.0),
-			m_dir(0.0)
+	:	Base(Type::LINE_SEG),
+		m_origin(0.0),
+		m_dir(0.0)
 	{}
 
 	LineSegment(const Vec4& origin, const Vec4& direction)
-		:	Base(Type::LINE_SEG), 
-			m_origin(origin), 
-			m_dir(direction)
+	:	Base(Type::LINE_SEG), 
+		m_origin(origin), 
+		m_dir(direction)
 	{}
 
 	LineSegment(const LineSegment& b)
-		:	Base(Type::LINE_SEG)
+	:	Base(Type::LINE_SEG)
 	{
 		operator=(b);
 	}
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	const Vec4& getOrigin() const
 	{
 		return m_origin;
@@ -73,10 +73,7 @@ public:
 	{
 		m_dir = x;
 	}
-	/// @}
 
-	/// @name Operators
-	/// @{
 	LineSegment& operator=(const LineSegment& b)
 	{
 		Base::operator=(b);
@@ -84,7 +81,6 @@ public:
 		m_dir = b.m_dir;
 		return *this;
 	}
-	/// @}
 
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)
@@ -112,11 +108,8 @@ public:
 	LineSegment getTransformed(const Transform& transform) const;
 
 private:
-	/// @name Data
-	/// @{
 	Vec4 m_origin; ///< P0
 	Vec4 m_dir; ///< P1 = origin+dir so dir = P1-origin
-	/// @}
 };
 /// @}
 

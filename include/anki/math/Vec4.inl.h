@@ -203,6 +203,14 @@ inline void TVec4<F32>::Base::normalize()
 	m_simd = _mm_mul_ps(m_simd, inverseNorm);
 }
 
+//==============================================================================
+template<>
+inline TVec4<F32> TVec4<F32>::Base::getAbs() const
+{
+	static const __m128 signMask = _mm_set1_ps(-0.0f);
+	return TVec4<F32>(_mm_andnot_ps(signMask, m_simd));	
+}
+
 #elif ANKI_SIMD == ANKI_SIMD_NEON
 
 //==============================================================================

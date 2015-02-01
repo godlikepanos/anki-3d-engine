@@ -20,17 +20,19 @@ class Plane: public CollisionShape
 public:
 	using Base = CollisionShape;
 
-	/// @name Constructors
-	/// @{
+	static Bool classof(const CollisionShape& c)
+	{
+		return c.getType() == Type::PLANE;
+	}
 
 	/// Default constructor
 	Plane()
-		: CollisionShape(Type::PLANE)
+	:	CollisionShape(Type::PLANE)
 	{}
 
 	/// Copy constructor
 	Plane(const Plane& b)
-		: CollisionShape(Type::PLANE)
+	:	CollisionShape(Type::PLANE)
 	{
 		operator=(b);
 	}
@@ -40,21 +42,18 @@ public:
 
 	/// @see setFrom3Points
 	Plane(const Vec3& p0, const Vec3& p1, const Vec3& p2)
-		: CollisionShape(Type::PLANE)
+	:	CollisionShape(Type::PLANE)
 	{
 		setFrom3Points(p0, p1, p2);
 	}
 
 	/// @see setFromPlaneEquation
 	Plane(F32 a, F32 b, F32 c, F32 d)
-		: CollisionShape(Type::PLANE)
+	:	CollisionShape(Type::PLANE)
 	{
 		setFromPlaneEquation(a, b, c, d);
 	}
-	/// @}
 
-	/// @name Operators
-	/// @{
 	Plane& operator=(const Plane& b)
 	{
 		Base::operator=(b);
@@ -62,10 +61,7 @@ public:
 		m_offset = b.m_offset;
 		return *this;
 	}
-	/// @}
 
-	/// @name Accessors
-	/// @{
 	const Vec4& getNormal() const
 	{
 		return m_normal;
@@ -91,7 +87,6 @@ public:
 	{
 		m_offset = x;
 	}
-	/// @}
 
 	/// Implements CollisionShape::accept
 	void accept(MutableVisitor& v)

@@ -11,25 +11,25 @@ namespace anki {
 
 //==============================================================================
 Obb::Obb()
-	:	Base(Type::OBB),
-		m_center(Vec4(0.0)),
-		m_rotation(Mat3x4::getIdentity()),
-		m_extend(Vec3(getEpsilon<F32>()), 0.0)
+:	Base(Type::OBB),
+	m_center(Vec4(0.0)),
+	m_rotation(Mat3x4::getIdentity()),
+	m_extend(Vec3(getEpsilon<F32>()), 0.0)
 {}
 
 //==============================================================================
 Obb::Obb(const Obb& b)
-	: 	Base(Type::OBB)
+: 	Base(Type::OBB)
 {
 	operator=(b);
 }
 
 //==============================================================================
 Obb::Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend)
-	:	Base(Type::OBB), 
-		m_center(center),
-		m_rotation(rotation),
-		m_extend(extend)
+:	Base(Type::OBB), 
+	m_center(center),
+	m_rotation(rotation),
+	m_extend(extend)
 {}
 
 //==============================================================================
@@ -49,18 +49,18 @@ F32 Obb::testPlane(const Plane& p) const
 {
 	Mat3x4 rot = m_rotation;
 	rot.transposeRotationPart();
-	Vec3 xNormal = rot * p.getNormal();
+	Vec4 xNormal = (rot * p.getNormal()).xyz0();
 
 	// maximum extent in direction of plane normal
-	F32 r =
-		abs(m_extend.x() * xNormal.x()) +
-		abs(m_extend.y() * xNormal.y()) +
-		abs(m_extend.z() * xNormal.z());
+	Vec4 rv = m_extend * xNormal;
+	Vec4 rvabs = rv.getAbs();
+	F32 r = rvabs.x() + rvabs.y() + rvabs.z();
+
 	// signed distance between box center and plane
 	F32 d = p.test(m_center);
 
 	// return signed distance
-	if(fabs(d) < r)
+	if(abs(d) < r)
 	{
 		return 0.0;
 	}

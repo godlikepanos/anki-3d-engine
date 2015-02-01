@@ -38,6 +38,11 @@ public:
 
 	/// Get a support vector for the GJK algorithm
 	virtual Vec4 computeSupport(const Vec4& dir) const = 0;
+
+	static Bool classof(const CollisionShape& c)
+	{
+		return c.getType() >= Type::AABB && c.getType() <= Type::OBB;
+	}
 };
 /// @}
 

@@ -41,6 +41,8 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
+#define NO_PLAYER 1
+
 
 //==============================================================================
 Error init()
@@ -225,7 +227,7 @@ Error init()
 #if 1
 	// horse
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
-		"models/crate0/crate0.ankimdl");
+		"models/horse/horse.ankimdl");
 	if(err) return err;
 	//horse->getComponent<MoveComponent>().setLocalTransform(
 	//	Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(), 0.7));
@@ -238,21 +240,21 @@ Error init()
 	}
 #endif
 
-	if(0)
+	if(1)
 	{
 		err = scene.newSceneNode<PointLight>("plight0", point);
 		if(err) return err;
 
 		lightc = point->tryGetComponent<LightComponent>();
-		lightc->setRadius(0.01);
-		lightc->setDiffuseColor(Vec4(0.6));
+		lightc->setRadius(6.01);
+		lightc->setDiffuseColor(Vec4(1.0));
 		lightc->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
 
 		move = point->tryGetComponent<MoveComponent>();
-		move->setLocalOrigin(Vec4(0.0, 1.4, 0.6, 0.0));
+		move->setLocalOrigin(Vec4(2.0, 1.4, 0.6, 0.0));
 	}
 
-#if 1
+#if 0
 	{
 		ScriptResourcePointer script;
 
@@ -264,7 +266,7 @@ Error init()
 	}
 #endif
 
-#if 1
+#if !NO_PLAYER
 	PlayerNode* pnode;
 	scene.newSceneNode<PlayerNode>("player", pnode, Vec4(1.0, 3.0, 0.0, 0.0));
 
@@ -420,7 +422,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 		renderer.takeScreenshot("screenshot.tga");
 	}
 
-#if 0
+#if NO_PLAYER
 	if(in.getKey(KeyCode::UP)) mover->rotateLocalX(ang);
 	if(in.getKey(KeyCode::DOWN)) mover->rotateLocalX(-ang);
 	if(in.getKey(KeyCode::LEFT)) mover->rotateLocalY(ang);
@@ -457,7 +459,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	}
 #endif
 
-#if 0
+#if NO_PLAYER
 	if(in.getMousePosition() != Vec2(0.0))
 	{
 		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity *
@@ -523,7 +525,7 @@ Error initSubsystems(int argc, char* argv[])
 
 	//config.set("maxTextureSize", 256);
 
-	config.set("fullscreenDesktopResolution", true);
+	config.set("fullscreenDesktopResolution", false);
 	config.set("debugContext", false);
 
 	app = new App;

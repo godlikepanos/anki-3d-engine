@@ -19,7 +19,6 @@ class Face;
 /// @addtogroup collision_internal
 /// @{
 
-
 /// Edge of a polytope
 class Edge
 {

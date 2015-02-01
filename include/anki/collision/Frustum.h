@@ -112,6 +112,7 @@ protected:
 
 	/// Used to check against the frustum
 	Array<Plane, (U)PlaneType::COUNT> m_planes;
+	Array<Plane, (U)PlaneType::COUNT> m_planesW;
 
 	/// Keep the transformation.
 	Transform m_trf = Transform::getIdentity(); 
@@ -122,7 +123,11 @@ protected:
 	/// Called when a viewing variable changes. It recalculates the planes and
 	/// the other variables.
 	/// @note It's const because it must be called on const methods.
-	virtual void recalculate() = 0;
+	virtual void recalculate(Bool planes, Bool other) = 0;
+
+	/// Update if dirty
+	void update() const;
+	void updateInternal();
 
 	/// Copy
 	Frustum& operator=(const Frustum& b);
@@ -217,7 +222,7 @@ private:
 	/// Implements Frustum::recalculate. Recalculates:
 	/// @li planes
 	/// @li line segments
-	void recalculate() override;
+	void recalculate(Bool planes, Bool other) override;
 };
 
 /// Frustum shape for orthographic cameras
@@ -327,7 +332,7 @@ private:
 	/// @}
 
 	/// Implements Frustum::recalculate. Recalculate @a m_planes and @a m_obb
-	void recalculate() override;
+	void recalculate(Bool planes, Bool other) override;
 };
 /// @}
 
