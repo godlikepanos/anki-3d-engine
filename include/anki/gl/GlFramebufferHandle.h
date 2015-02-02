@@ -17,12 +17,30 @@ class GlCommandBufferHandle;
 /// @addtogroup opengl_other
 /// @{
 
+/// Attachment.
+struct GlAttachment
+{
+	GlTextureHandle m_texture;
+	U32 m_layer = 0;
+	GlAttachmentLoadOperation m_loadOp;
+	GlAttachmentStoreOperation m_storeOp;
+};
+
+/// GlFramebuffer initializer.
+struct GlFramebufferInitializer
+{
+	GlAttachment* m_colorAttachments = nullptr;
+	U32 m_colorAttachmentsCount = 0;
+	GlAttachment* m_depthStencilAttachment = nullptr;
+};
+
 /// Framebuffer handle
 class GlFramebufferHandle: public GlContainerHandle<GlFramebuffer>
 {
 public:
 	using Base = GlContainerHandle<GlFramebuffer>;
 	using Attachment = GlFramebuffer::Attachment;
+	using Initializer = GlFramebufferInitializer;
 
 	GlFramebufferHandle();
 

@@ -42,6 +42,25 @@ using GlCommandBufferAllocator = ChainAllocator<T>;
 /// The type of the allocator for heap allocations
 template<typename T>
 using GlAllocator = HeapAllocator<T>;
+/// @}
+
+/// @addtogroup opengl_containers
+/// @{
+
+/// Attachment load.
+enum class GlAttachmentLoadOperation: U8
+{
+	LOAD,
+	CLEAR,
+	DONT_CARE
+};
+
+/// Attachment store.
+enum class GlAttachmentStoreOperation: U8
+{
+	STORE,
+	DONT_CARE
+};
 
 /// Texture filtering method
 enum class GlTextureFilter: U8
@@ -50,27 +69,6 @@ enum class GlTextureFilter: U8
 	LINEAR,
 	TRILINEAR
 };
-
-/// Split the initializer for re-using parts of it
-class GlTextureInitializerBase
-{
-public:
-	U32 m_width = 0;
-	U32 m_height = 0;
-	U32 m_depth = 0; ///< Relevant only for 3D and 2DArray textures
-	GLenum m_target = GL_TEXTURE_2D;
-	GLenum m_internalFormat = GL_NONE;
-	U32 m_mipmapsCount = 0;
-	GlTextureFilter m_filterType = GlTextureFilter::NEAREST;
-	Bool8 m_repeat = false;
-	I32 m_anisotropyLevel = 0;
-	U32 m_samples = 1;
-};
-
-/// @}
-
-/// @addtogroup opengl_containers
-/// @{
 
 /// Shader type
 enum class ShaderType: U8
@@ -127,6 +125,22 @@ ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(Mat3, MAT3)
 ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(Mat4, MAT4)
 
 #undef ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET
+
+/// Split the initializer for re-using parts of it
+class GlTextureInitializerBase
+{
+public:
+	U32 m_width = 0;
+	U32 m_height = 0;
+	U32 m_depth = 0; ///< Relevant only for 3D and 2DArray textures
+	GLenum m_target = GL_TEXTURE_2D;
+	GLenum m_internalFormat = GL_NONE;
+	U32 m_mipmapsCount = 0;
+	GlTextureFilter m_filterType = GlTextureFilter::NEAREST;
+	Bool8 m_repeat = false;
+	I32 m_anisotropyLevel = 0;
+	U32 m_samples = 1;
+};
 
 /// Shader block information.
 struct ShaderVariableBlockInfo

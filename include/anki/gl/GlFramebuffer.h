@@ -78,7 +78,6 @@ private:
 
 	void destroy();
 };
-
 /// @}
 
 } // end namespace anki
