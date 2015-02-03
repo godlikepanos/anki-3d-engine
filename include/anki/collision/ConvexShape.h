@@ -41,7 +41,7 @@ public:
 
 	static Bool classof(const CollisionShape& c)
 	{
-		return c.getType() >= Type::AABB && c.getType() <= Type::OBB;
+		return c.getType() >= Type::AABB && c.getType() <= Type::LAST_CONVEX;
 	}
 };
 /// @}

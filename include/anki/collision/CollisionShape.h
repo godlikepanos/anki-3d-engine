@@ -7,6 +7,7 @@
 #define ANKI_COLLISION_COLLISION_SHAPE_H
 
 #include "anki/collision/Forward.h"
+#include "anki/collision/Common.h"
 #include "anki/Math.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/Visitor.h"
@@ -31,7 +32,10 @@ public:
 		AABB,
 		SPHERE,
 		OBB,
-		COUNT
+		CONVEX_HULL,
+
+		COUNT,
+		LAST_CONVEX = CONVEX_HULL
 	};
 
 	/// Generic mutable visitor
@@ -47,6 +51,7 @@ public:
 		virtual void visit(Sphere&) = 0;
 		virtual void visit(Aabb&) = 0;
 		virtual void visit(CompoundShape&) = 0;
+		virtual void visit(ConvexHullShape&) = 0;
 	};
 
 	/// Generic const visitor
@@ -62,6 +67,7 @@ public:
 		virtual void visit(const Sphere&) = 0;
 		virtual void visit(const Aabb&) = 0;
 		virtual void visit(const CompoundShape&) = 0;
+		virtual void visit(const ConvexHullShape&) = 0;
 	};
 
 	CollisionShape(Type cid)

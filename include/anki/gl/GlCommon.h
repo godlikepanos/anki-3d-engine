@@ -47,7 +47,7 @@ using GlAllocator = HeapAllocator<T>;
 /// @addtogroup opengl_containers
 /// @{
 
-/// Attachment load.
+/// Attachment load operation.
 enum class GlAttachmentLoadOperation: U8
 {
 	LOAD,
@@ -55,7 +55,7 @@ enum class GlAttachmentLoadOperation: U8
 	DONT_CARE
 };
 
-/// Attachment store.
+/// Attachment store operation.
 enum class GlAttachmentStoreOperation: U8
 {
 	STORE,

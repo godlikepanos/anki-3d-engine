@@ -18,6 +18,9 @@ namespace anki {
 template<typename T>
 using CollisionTempAllocator = StackAllocator<T>;
 
+template<typename T>
+using CollisionAllocator = ChainAllocator<T>;
+
 /// @}
 
 } // end namespace anki

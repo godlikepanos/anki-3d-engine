@@ -50,7 +50,8 @@ public:
 	Error init();
 
 	/// Issue the GPU job
-	void runMinMax(const GlTextureHandle& depthMap);
+	void runMinMax(GlTextureHandle& depthMap,
+		GlCommandBufferHandle& cmd);
 
 	/// Update the tiles before doing visibility tests
 	void updateTiles(Camera& cam);

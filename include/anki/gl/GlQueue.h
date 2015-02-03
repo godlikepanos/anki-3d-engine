@@ -61,6 +61,11 @@ public:
 		return m_state;
 	}
 
+	GLuint getCopyFbo() const
+	{
+		return m_copyFbo;
+	}
+
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop
 	ANKI_USE_RESULT Error start(
@@ -122,6 +127,8 @@ private:
 	/// the server
 	GlCommandBufferHandle m_syncCommands;
 	GlClientSyncHandle m_sync;
+
+	GLuint m_copyFbo = MAX_U32; ///< FBO for copying from tex to buffer.
 
 	/// The function that the thread runs
 	static ANKI_USE_RESULT Error threadCallback(Thread::Info&);

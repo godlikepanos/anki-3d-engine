@@ -17,6 +17,7 @@ class Plane;
 class Sphere;
 class Aabb;
 class CompoundShape;
+class ConvexHullShape;
 
 class ContactPoint;
 

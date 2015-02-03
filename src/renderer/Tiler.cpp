@@ -143,27 +143,19 @@ Error Tiler::initInternal()
 }
 
 //==============================================================================
-void Tiler::runMinMax(const GlTextureHandle& depthMap)
+void Tiler::runMinMax(GlTextureHandle& depthMap,
+	GlCommandBufferHandle& cmd)
 {
 #if ANKI_TILER_ENABLE_GPU
-	ANKI_ASSERT(depthMap.getFiltering() == Texture::TFrustumType::NEAREST);
-
 	// Issue the min/max job
-	fbo.bind();
-	GlStateSingleton::get().setViewport(
-		0, 0, r->getTilesCount().x(), r->getTilesCount().y());
-	r->clearAfterBindingFbo(GL_COLOR_BUFFER_BIT);
-	prog->bind();
-	ANKI_ASSERT(depthMapUniform);
-	depthMapUniform->set(depthMap);
+	m_fb.bind(cmd, true);
+	m_ppline.bind(cmd);
+	depthMap.bind(cmd, 0);
 
-	r->drawQuad();
+	m_r->drawQuad(cmd);
 
 	// Issue the async pixel read
-	pbo.bind();
-	glReadPixels(0, 0, r->getTilesCount().x(), r->getTilesCount().y(), 
-		GL_RG_INTEGER, GL_UNSIGNED_INT, nullptr);
-	pbo.unbind();
+	cmd.copyTextureToBuffer(m_rt, m_pixelBuff);
 #endif
 }
 

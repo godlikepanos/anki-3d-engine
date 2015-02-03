@@ -9,6 +9,8 @@
 #include "anki/gl/GlFramebuffer.h"
 #include "anki/gl/GlTextureHandle.h"
 #include "anki/gl/GlTexture.h"
+#include "anki/gl/GlBufferHandle.h"
+#include "anki/gl/GlBuffer.h"
 #include "anki/gl/GlOcclusionQueryHandle.h"
 #include "anki/gl/GlOcclusionQuery.h"
 #include "anki/core/Counters.h"
@@ -601,6 +603,68 @@ void GlCommandBufferHandle::drawArraysConditional(
 	GlDrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
 	_pushBackNewCommand<DrawArraysCondCommand>(mode, info, query);
+}
+
+//==============================================================================
+class CopyBuffTex: public GlCommand
+{
+public:
+	GlTextureHandle m_tex;
+	GlBufferHandle m_buff;
+
+	CopyBuffTex(GlTextureHandle& from, GlBufferHandle& to)
+	:	m_tex(from),
+		m_buff(to)
+	{}
+
+	Error operator()(GlCommandBuffer* cmd)
+	{
+		GlTexture& tex = m_tex._get();
+		GlBuffer& buff = m_buff._get();
+
+		// Bind
+		GLuint copyFbo = cmd->getQueue().getCopyFbo();
+		glBindFramebuffer(GL_FRAMEBUFFER, copyFbo);
+
+		// Attach texture
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			tex.getTarget(), tex.getGlName(), 0);
+
+		// Set draw buffers
+		GLuint drawBuff = GL_COLOR_ATTACHMENT0;
+		glDrawBuffers(1, &drawBuff);
+
+		// Bind buffer
+		ANKI_ASSERT(m_buff.getTarget() == GL_PIXEL_PACK_BUFFER);
+		buff.bind();
+
+		// Read pixels
+		GLuint format, type;
+		if(tex.getInternalFormat() == GL_RG32UI)
+		{
+			format = GL_RG_INTEGER;
+			type = GL_UNSIGNED_INT;
+		}
+		else
+		{
+			ANKI_ASSERT(0 && "Not implemented");
+		}
+
+		glReadPixels(0, 0, tex.getWidth(), tex.getHeight(), 
+			format, type, nullptr);
+
+		// End
+		buff.unbind();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		return ErrorCode::NONE;
+	}
+};
+
+void GlCommandBufferHandle::copyTextureToBuffer(
+	GlTextureHandle& from, GlBufferHandle& to)
+{
+	_pushBackNewCommand<CopyBuffTex>(from, to);
 }
 
 } // end namespace anki

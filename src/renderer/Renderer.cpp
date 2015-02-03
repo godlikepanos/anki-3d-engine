@@ -170,8 +170,10 @@ Error Renderer::render(SceneGraph& scene,
 	err = m_ms.run(cmdBuff[0]);
 	if(err) return err;
 	ANKI_ASSERT(cmdBuff[0].getReferenceCount() == 1);
-	cmdBuff[0].flush();
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
+
+	m_tiler.runMinMax(m_ms._getDepthRt(), cmdBuff[0]);
+	cmdBuff[0].flush();
 
 	if(m_pps.getEnabled() && m_pps.getLf().getEnabled())
 	{
@@ -181,8 +183,6 @@ Error Renderer::render(SceneGraph& scene,
 
 	err = m_dp.run(cmdBuff[1]);
 	if(err) return err;
-
-	m_tiler.runMinMax(m_ms._getDepthRt());
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
 	err = m_is.run(cmdBuff[1]);

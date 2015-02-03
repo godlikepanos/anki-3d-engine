@@ -14,6 +14,7 @@ namespace anki {
 // Forward
 class GlDevice;
 class GlTextureHandle;
+class GlBufferHandle;
 class GlOcclusionQueryHandle;
 
 /// @addtogroup opengl_other
@@ -158,6 +159,11 @@ public:
 	void drawArraysConditional(GlOcclusionQueryHandle& query,
 		GLenum mode, U32 count, U32 instanceCount = 1,
 		U32 first = 0, U32 baseInstance = 0);
+	/// @}
+
+	/// @name Other operations
+	/// @{
+	void copyTextureToBuffer(GlTextureHandle& from, GlBufferHandle& To);
 	/// @}
 
 	/// @privatesection

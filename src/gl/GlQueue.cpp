@@ -180,6 +180,9 @@ void GlQueue::prepare()
 	// Create default VAO
 	glGenVertexArrays(1, &m_defaultVao);
 	glBindVertexArray(m_defaultVao);
+
+	// Create copy FBO
+	glGenFramebuffers(1, &m_copyFbo);
 }
 
 //==============================================================================

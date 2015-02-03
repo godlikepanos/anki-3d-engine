@@ -32,7 +32,7 @@ public:
 	ConvexHullShape(ConvexHullShape&& b)
 	:	Base(Type::CONVEX_HULL)
 	{
-		*this = std::move(b);
+		move(b);
 	}
 
 	ConvexHullShape(const ConvexHullShape& b) = delete;
@@ -41,7 +41,11 @@ public:
 
 	ConvexHullShape& operator=(const ConvexHullShape& b) = delete;
 
-	ConvexHullShape& operator=(ConvexHullShape&& b);
+	ConvexHullShape& operator=(ConvexHullShape&& b)
+	{
+		move(b);
+		return *this;
+	}
 
 	/// Calculate from a set of points. You have to call initStorage before
 	/// calling this method.
@@ -52,7 +56,8 @@ public:
 	/// method allocates a storage and the owner is the convex hull. 
 	/// @param alloc The allocator to use for the point cloud
 	/// @param pointCount The number of points
-	void initStorage(CollisionAllocator<U8>& alloc, U pointCount);
+	ANKI_USE_RESULT Error initStorage(
+		CollisionAllocator<U8>& alloc, U pointCount);
 
 	/// This function initializes the storage that holds the point cloud using
 	/// a predefined buffer. The convex hull is not the owner of the storage.
@@ -62,30 +67,36 @@ public:
 	void initStorage(void* buffer, U pointCount);
 
 	/// Implements CollisionShape::accept
-	void accept(MutableVisitor& v)
+	void accept(MutableVisitor& v) override
 	{
 		v.visit(*this);
 	}
 	/// Implements CollisionShape::accept
-	void accept(ConstVisitor& v) const
+	void accept(ConstVisitor& v) const override
 	{
 		v.visit(*this);
 	}
 
 	/// Implements CollisionShape::testPlane
-	F32 testPlane(const Transform& trf, const Plane& p) const;
+	F32 testPlane(const Plane& p) const override;
+
+	/// Implements CollisionShape::transform.
+	void transform(const Transform& trf) override;
 
 	/// Implements CollisionShape::computeAabb
-	void computeAabb(const Transform& trf, Aabb& aabb) const;
+	void computeAabb(Aabb& aabb) const override;
 
 	/// Implements ConvexShape::computeSupport
-	Vec4 computeSupport(const Vec4& dir) const;
+	Vec4 computeSupport(const Vec4& dir) const override;
 
 private:
+	Transform m_trf = Transform::getIdentity();
 	Vec4* m_points = nullptr;
 	U32 m_pointsCount = 0;
-	CollisionAllocator<U8> m_alloc;
+	CollisionAllocator<Vec4> m_alloc;
 	Bool8 m_ownsTheStorage = false;
+
+	void move(ConvexHullShape& b);
 };
 /// @}
 
