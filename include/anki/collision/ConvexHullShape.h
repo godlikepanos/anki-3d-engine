@@ -91,6 +91,7 @@ public:
 
 private:
 	Transform m_trf = Transform::getIdentity();
+	Transform m_invTrf = Transform::getIdentity();
 	Vec4* m_points = nullptr;
 	U32 m_pointsCount = 0;
 	CollisionAllocator<Vec4> m_alloc;
