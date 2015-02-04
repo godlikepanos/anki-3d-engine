@@ -476,6 +476,21 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 }
 
 //==============================================================================
+void CollisionDebugDrawer::visit(const ConvexHullShape& hull)
+{
+	m_dbg->setModelMatrix(Mat4(hull.getTransform()));
+	m_dbg->begin(GL_LINES);
+	const Vec4* points = hull.getPoints();
+	const Vec4* end = points + hull.getPointsCount();
+	for(; points != end; ++points)
+	{
+		m_dbg->pushBackVertex(Vec3(0.0));
+		m_dbg->pushBackVertex(points->xyz());
+	}
+	m_dbg->end();
+}
+
+//==============================================================================
 // PhysicsDebugDrawer                                                          =
 //==============================================================================
 void PhysicsDebugDrawer::drawLines(

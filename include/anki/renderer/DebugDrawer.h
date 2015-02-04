@@ -131,6 +131,8 @@ public:
 	void visit(const CompoundShape&)
 	{}
 
+	void visit(const ConvexHullShape&);
+
 private:
 	DebugDrawer* m_dbg; ///< The debug drawer
 };

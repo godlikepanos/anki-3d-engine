@@ -37,7 +37,10 @@ public:
 
 	ConvexHullShape(const ConvexHullShape& b) = delete;
 
-	~ConvexHullShape();
+	~ConvexHullShape()
+	{
+		destroy();
+	}
 
 	ConvexHullShape& operator=(const ConvexHullShape& b) = delete;
 
@@ -45,6 +48,24 @@ public:
 	{
 		move(b);
 		return *this;
+	}
+
+	/// Get points in local space.
+	const Vec4* getPoints() const
+	{
+		ANKI_ASSERT(m_points);
+		return m_points;
+	}
+
+	U32 getPointsCount() const
+	{
+		ANKI_ASSERT(m_pointsCount > 0);
+		return m_pointsCount;
+	}
+
+	const Transform& getTransform() const
+	{
+		return m_trf;
 	}
 
 	/// Calculate from a set of points. You have to call initStorage before
@@ -98,6 +119,8 @@ private:
 	Bool8 m_ownsTheStorage = false;
 
 	void move(ConvexHullShape& b);
+
+	void destroy();
 };
 /// @}
 

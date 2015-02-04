@@ -5,11 +5,13 @@
 
 #include "anki/collision/ConvexHullShape.h"
 #include "anki/collision/Plane.h"
+#include "anki/collision/Aabb.h"
+#include "anki/util/Functions.h"
 
 namespace anki {
 
 //==============================================================================
-ConvexHullShape::~ConvexHullShape()
+void ConvexHullShape::destroy()
 {
 	if(m_ownsTheStorage)
 	{
@@ -29,7 +31,7 @@ ConvexHullShape::~ConvexHullShape()
 //==============================================================================
 void ConvexHullShape::move(ConvexHullShape& b)
 {
-	this->~ConvexHullShape();
+	destroy();
 	Base::operator=(b);
 
 	m_trf = b.m_trf;
@@ -54,7 +56,7 @@ void ConvexHullShape::move(ConvexHullShape& b)
 //==============================================================================
 Error ConvexHullShape::initStorage(CollisionAllocator<U8>& alloc, U pointCount)
 {
-	this->~ConvexHullShape();
+	destroy();
 
 	m_points = 
 		reinterpret_cast<Vec4*>(alloc.allocate(pointCount * sizeof(Vec4)));
@@ -78,7 +80,7 @@ void ConvexHullShape::initStorage(void* buffer, U pointCount)
 	ANKI_ASSERT(buffer);
 	ANKI_ASSERT(pointCount > 0);
 	
-	this->~ConvexHullShape();
+	destroy();
 	m_points = static_cast<Vec4*>(buffer);
 	m_pointsCount = pointCount;
 	ANKI_ASSERT(m_ownsTheStorage == false);
@@ -119,6 +121,46 @@ void ConvexHullShape::transform(const Transform& trf)
 //==============================================================================
 void ConvexHullShape::computeAabb(Aabb& aabb) const
 {
+	ANKI_ASSERT(m_points);
+	
+	Vec3 mina(MAX_F32);
+	Vec3 maxa(MIN_F32);
+	const Vec4* points = m_points;
+	const Vec4* end = m_points + m_pointsCount;
+	for(; points != end; ++points)
+	{
+		Vec4 o = m_trf.transform(*points);
+		for(U i = 0; i < 3; ++i)
+		{
+			mina[i] = min(mina[i], o[i]);
+			maxa[i] = max(maxa[i], o[i]);
+		}
+	}
+
+	aabb = Aabb(mina.xyz0(), maxa.xyz0());
+}
+
+//==============================================================================
+Vec4 ConvexHullShape::computeSupport(const Vec4& dir) const
+{
+	F32 m = MIN_F32;
+	U index = 0;
+
+	const Vec4* points = m_points;
+	const Vec4* end = m_points + m_pointsCount;
+	for(; points != end; ++points)
+	{
+		// XXX Optimize
+		Vec4 o = m_trf.transform(*points);
+		F32 dot = o.dot(dir);
+		if(dot > m)
+		{
+			m = dot;
+			index = 0;
+		}
+	}
+
+	return m_points[index];
 }
 
 } // end namespace anki
