@@ -154,9 +154,10 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 		hull.transform(move.getWorldTransform());
 
 		Sphere s(Vec4(0.0), 1.0);
+		Sphere s2(Vec4(0.01), 1.0);
 
 		Gjk gjk;
-		Bool collide = gjk.intersect(s, hull);
+		Bool collide = gjk.intersect(s, s2);
 
 		if(collide)
 		{

@@ -270,52 +270,7 @@ void DebugDrawer::drawGrid()
 //==============================================================================
 void DebugDrawer::drawSphere(F32 radius, I complexity)
 {
-#if 0
-	Vector<Vec3>* sphereLines;
-
-	// Pre-calculate the sphere points5
-	//
-	std::unordered_map<U32, Vector<Vec3>>::iterator it =
-		m_complexityToPreCalculatedSphere.find(complexity);
-
-	if(it != m_complexityToPreCalculatedSphere.end()) // Found
-	{
-		sphereLines = &(it->second);
-	}
-	else // Not found
-	{
-		m_complexityToPreCalculatedSphere[complexity] = Vector<Vec3>();
-		sphereLines = &m_complexityToPreCalculatedSphere[complexity];
-
-		F32 fi = getPi<F32>() / complexity;
-
-		Vec3 prev(1.0, 0.0, 0.0);
-		for(F32 th = fi; th < getPi<F32>() * 2.0 + fi; th += fi)
-		{
-			Vec3 p = Mat3(Euler(0.0, th, 0.0)) * Vec3(1.0, 0.0, 0.0);
-
-			for(F32 th2 = 0.0; th2 < getPi<F32>(); th2 += fi)
-			{
-				Mat3 rot(Euler(th2, 0.0, 0.0));
-
-				Vec3 rotPrev = rot * prev;
-				Vec3 rotP = rot * p;
-
-				sphereLines->push_back(rotPrev);
-				sphereLines->push_back(rotP);
-
-				Mat3 rot2(Euler(0.0, 0.0, getPi<F32>() / 2));
-
-				sphereLines->push_back(rot2 * rotPrev);
-				sphereLines->push_back(rot2 * rotP);
-			}
-
-			prev = p;
-		}
-	}
-
-	// Render
-	//
+#if 1
 	Mat4 oldMMat = m_mMat;
 	Mat4 oldVpMat = m_vpMat;
 
@@ -323,13 +278,36 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 		Mat3::getIdentity(), radius));
 
 	begin(GL_LINES);
-	for(const Vec3& p : *sphereLines)
+
+	// Pre-calculate the sphere points5
+	F32 fi = getPi<F32>() / complexity;
+
+	Vec3 prev(1.0, 0.0, 0.0);
+	for(F32 th = fi; th < getPi<F32>() * 2.0 + fi; th += fi)
 	{
-		pushBackVertex(p);
+		Vec3 p = Mat3(Euler(0.0, th, 0.0)) * Vec3(1.0, 0.0, 0.0);
+
+		for(F32 th2 = 0.0; th2 < getPi<F32>(); th2 += fi)
+		{
+			Mat3 rot(Euler(th2, 0.0, 0.0));
+
+			Vec3 rotPrev = rot * prev;
+			Vec3 rotP = rot * p;
+
+			pushBackVertex(rotPrev);
+			pushBackVertex(rotP);
+
+			Mat3 rot2(Euler(0.0, 0.0, getPi<F32>() / 2));
+
+			pushBackVertex(rot2 * rotPrev);
+			pushBackVertex(rot2 * rotP);
+		}
+
+		prev = p;
 	}
+
 	end();
 
-	// restore
 	m_mMat = oldMMat;
 	m_vpMat = oldVpMat;
 #endif
