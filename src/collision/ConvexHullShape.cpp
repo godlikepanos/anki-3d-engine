@@ -26,6 +26,7 @@ void ConvexHullShape::destroy()
 	m_pointsCount = 0;
 	m_alloc = CollisionAllocator<U8>();
 	m_ownsTheStorage = false;
+	m_trfIdentity = true;
 }
 
 //==============================================================================
@@ -51,6 +52,9 @@ void ConvexHullShape::move(ConvexHullShape& b)
 
 	m_ownsTheStorage = b.m_ownsTheStorage;
 	b.m_ownsTheStorage = false;
+
+	m_trfIdentity = b.m_trfIdentity;
+	b.m_trfIdentity = true;
 }
 
 //==============================================================================
@@ -90,7 +94,7 @@ void ConvexHullShape::initStorage(void* buffer, U pointCount)
 F32 ConvexHullShape::testPlane(const Plane& p) const
 {
 	// Compute the invert transformation of the plane instead
-	Plane pa = p.getTransformed(m_invTrf);
+	Plane pa = (m_trfIdentity) ? p : p.getTransformed(m_invTrf);
 
 	F32 minDist = MAX_F32;
 
@@ -116,6 +120,7 @@ void ConvexHullShape::transform(const Transform& trf)
 {
 	m_trf = m_trf.combineTransformations(trf);
 	m_invTrf = m_trf.getInverse();
+	m_trfIdentity = false;
 }
 
 //==============================================================================
@@ -129,7 +134,7 @@ void ConvexHullShape::computeAabb(Aabb& aabb) const
 	const Vec4* end = m_points + m_pointsCount;
 	for(; points != end; ++points)
 	{
-		Vec4 o = m_trf.transform(*points);
+		Vec4 o = (m_trfIdentity) ? *points : m_trf.transform(*points);
 		for(U i = 0; i < 3; ++i)
 		{
 			mina[i] = min(mina[i], o[i]);
@@ -146,21 +151,22 @@ Vec4 ConvexHullShape::computeSupport(const Vec4& dir) const
 	F32 m = MIN_F32;
 	U index = 0;
 
+	Vec4 d = (m_trfIdentity) ? dir : (m_invTrf.getRotation() * dir).xyz0();
+
 	const Vec4* points = m_points;
 	const Vec4* end = m_points + m_pointsCount;
-	for(; points != end; ++points)
+	U i = 0;
+	for(; points != end; ++points, ++i)
 	{
-		// XXX Optimize
-		Vec4 o = m_trf.transform(*points);
-		F32 dot = o.dot(dir);
+		F32 dot = points->dot(d);
 		if(dot > m)
 		{
 			m = dot;
-			index = 0;
+			index = i;
 		}
 	}
 
-	return m_points[index];
+	return (m_trfIdentity) ? m_points[index] : m_trf.transform(m_points[index]);
 }
 
 } // end namespace anki

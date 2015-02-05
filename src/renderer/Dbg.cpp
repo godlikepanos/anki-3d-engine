@@ -151,13 +151,13 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 		MoveComponent& move = sn.getComponent<MoveComponent>();
 
 		hull.initStorage(storage, 4);
-		hull.transform(move.getWorldTransform());
 
 		Sphere s(Vec4(0.0), 1.0);
-		Sphere s2(Vec4(0.01), 1.0);
+
+		hull.transform(move.getWorldTransform());
 
 		Gjk gjk;
-		Bool collide = gjk.intersect(s, s2);
+		Bool collide = gjk.intersect(s, hull);
 
 		if(collide)
 		{

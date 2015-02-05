@@ -117,6 +117,7 @@ private:
 	U32 m_pointsCount = 0;
 	CollisionAllocator<Vec4> m_alloc;
 	Bool8 m_ownsTheStorage = false;
+	Bool8 m_trfIdentity = true; ///< Optimization.
 
 	void move(ConvexHullShape& b);
 
