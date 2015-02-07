@@ -139,6 +139,15 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 
 #if 1
 	{
+		m_drawer->setModelMatrix(Mat4::getIdentity());
+		Sphere s(Vec4(2.0, 1.4, 0.6, 0.0), 6.0);
+		CollisionDebugDrawer cd(m_drawer);
+		cd.visit(s);
+	}
+#endif
+
+#if 0
+	{
 		ConvexHullShape hull;
 		Vec4 storage[] = {
 			Vec4(1.0, 1.0, 1.0, 0.0),

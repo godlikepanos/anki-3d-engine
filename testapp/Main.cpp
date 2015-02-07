@@ -246,7 +246,7 @@ Error init()
 		if(err) return err;
 
 		lightc = point->tryGetComponent<LightComponent>();
-		lightc->setRadius(6.01);
+		lightc->setRadius(6.0);
 		lightc->setDiffuseColor(Vec4(1.0));
 		lightc->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
 

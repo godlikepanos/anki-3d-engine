@@ -9,6 +9,7 @@
 #include "anki/collision/CompoundShape.h"
 #include "anki/collision/LineSegment.h"
 #include "anki/collision/Plane.h"
+#include "anki/collision/Obb.h"
 #include "anki/collision/GjkEpa.h"
 #include "anki/util/Rtti.h"
 
@@ -107,6 +108,135 @@ Bool test(const Aabb& aabb, const LineSegment& ls)
 }
 
 //==============================================================================
+static Bool test(const Aabb& aabb, const Sphere& s)
+{
+	const Vec4& c = s.getCenter();
+
+	// find the box's closest point to the sphere
+	Vec4 cp(0.0); // Closest Point
+	for(U i = 0; i < 3; i++)
+	{
+		// if the center is greater than the max then the closest
+		// point is the max
+		if(c[i] > aabb.getMax()[i])
+		{
+			cp[i] = aabb.getMax()[i];
+		}
+		else if(c[i] < aabb.getMin()[i]) // relative to the above
+		{
+			cp[i] = aabb.getMin()[i];
+		}
+		else
+		{
+			// the c lies between min and max
+			cp[i] = c[i];
+		}
+	}
+
+	F32 rsq = s.getRadius() * s.getRadius();
+
+	// if the c lies totally inside the box then the sub is the zero,
+	// this means that the length is also zero and thus its always smaller
+	// than rsq
+	Vec4 sub = c - cp;
+
+	if(sub.getLengthSquared() <= rsq)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+//==============================================================================
+static Bool test(const LineSegment& ls, const Obb& obb)
+{
+	F32 maxS = MIN_F32;
+	F32 minT = MAX_F32;
+
+	// compute difference vector
+	Vec4 diff = obb.getCenter() - ls.getOrigin();
+
+	// for each axis do
+	for(U i = 0; i < 3; ++i)
+	{
+		// get axis i
+		Vec4 axis = obb.getRotation().getColumn(i).xyz0();
+
+		// project relative vector onto axis
+		F32 e = axis.dot(diff);
+		F32 f = ls.getDirection().dot(axis);
+
+		// ray is parallel to plane
+		if(isZero(f))
+		{
+			// ray passes by box
+			if(-e - obb.getExtend()[i] > 0.0 || -e + obb.getExtend()[i] > 0.0)
+			{
+				return false;
+			}
+			continue;
+		}
+
+		F32 s = (e - obb.getExtend()[i]) / f;
+		F32 t = (e + obb.getExtend()[i]) / f;
+
+		// fix order
+		if(s > t)
+		{
+			F32 temp = s;
+			s = t;
+			t = temp;
+		}
+
+		// adjust min and max values
+		if(s > maxS)
+		{
+			maxS = s;
+		}
+		if(t < minT)
+		{
+			minT = t;
+		}
+
+		// check for intersection failure
+		if(minT < 0.0 || maxS > 1.0 || maxS > minT)
+		{
+			return false;
+		}
+	}
+
+	// done, have intersection
+	return true;
+}
+
+//==============================================================================
+Bool test(const LineSegment& ls, const Sphere& s)
+{
+	const Vec4& v = ls.getDirection();
+	Vec4 w0 = s.getCenter() - ls.getOrigin();
+	F32 w0dv = w0.dot(v);
+	F32 rsq = s.getRadius() * s.getRadius();
+
+	if(w0dv < 0.0) // if the ang is >90
+	{
+		return w0.getLengthSquared() <= rsq;
+	}
+
+	Vec4 w1 = w0 - v; // aka center - P1, where P1 = seg.origin + seg.dir
+	F32 w1dv = w1.dot(v);
+
+	if(w1dv > 0.0) // if the ang is <90
+	{
+		return w1.getLengthSquared() <= rsq;
+	}
+
+	// the big parenthesis is the projection of w0 to v
+	Vec4 tmp = w0 - (v * (w0.dot(v) / v.getLengthSquared()));
+	return tmp.getLengthSquared() <= rsq;
+}
+
+//==============================================================================
 static Bool test(const Sphere& a, const Sphere& b)
 {
 	F32 tmp = a.getRadius() + b.getRadius();
@@ -118,16 +248,57 @@ static Bool test(const Sphere& a, const Sphere& b)
 //==============================================================================
 
 template<typename A, typename B>
-Bool t(const CollisionShape& a, const CollisionShape& b)
+static Bool t(const CollisionShape& a, const CollisionShape& b)
 {
 	return test(dcast<const A&>(a), dcast<const B&>(b));
 }
 
+template<typename A, typename B>
+static Bool tr(const CollisionShape& a, const CollisionShape& b)
+{
+	return test(dcast<const B&>(b), dcast<const A&>(a));
+}
+
 /// Test plane.
 template<typename A>
-Bool tp(const CollisionShape& a, const CollisionShape& p)
+static Bool txp(const CollisionShape& a, const CollisionShape& b)
 {
-	return dcast<const A&>(a).testPlane(dcast<const Plane&>(p));
+	return dcast<const A&>(a).testPlane(dcast<const Plane&>(b));
+}
+
+/// Test plane.
+template<typename A>
+static Bool tpx(const CollisionShape& a, const CollisionShape& b)
+{
+	return txp<A>(b, a);
+}
+
+/// Compound shape.
+Bool tcx(const CollisionShape& a, const CollisionShape& b)
+{
+	Bool inside = true;
+	const CompoundShape& c = dcast<const CompoundShape&>(a);
+
+	// Use the error to stop the loop
+	Error err = c.iterateShapes([&](const CollisionShape& cs)
+	{
+		if(!testCollisionShapes(cs, b))
+		{
+			inside = false;
+			return ErrorCode::FUNCTION_FAILED;
+		}
+
+		return ErrorCode::NONE;
+	});
+	(void)err;
+
+	return inside;
+}
+
+/// Compound shape.
+Bool txc(const CollisionShape& a, const CollisionShape& b)
+{
+	return tcx(b, a);
 }
 
 using Callback = Bool(*)(const CollisionShape& a, const CollisionShape& b);
@@ -135,13 +306,13 @@ using Callback = Bool(*)(const CollisionShape& a, const CollisionShape& b);
 static const U COUNT = U(CollisionShape::Type::COUNT);
 
 static const Callback matrix[COUNT][COUNT] = {
-/*          AABB                  Comp     LS                    OBB      PL       S               */
-/* AABB */ {t<Aabb, Aabb>,        nullptr, t<Aabb, LineSegment>, gjk,     nullptr, nullptr          },  
-/* Comp */ {nullptr,              nullptr, nullptr,              nullptr, nullptr, nullptr          },  
-/* LS   */ {t<Aabb, LineSegment>, nullptr, nullptr,              nullptr, nullptr, nullptr          },
-/* OBB  */ {gjk,                  nullptr, nullptr,              gjk,     nullptr, nullptr          },
-/* PL   */ {tp<Aabb>,             nullptr, nullptr,              nullptr, nullptr, nullptr          },
-/* S    */ {nullptr,              nullptr, nullptr,              gjk,     nullptr, t<Sphere, Sphere>}};
+/*          AABB                  Comp  LS                      OBB                   PL                  S               */
+/* AABB */ {t<Aabb, Aabb>,        tcx,  tr<LineSegment, Aabb>,  gjk,                  tpx<Aabb>,          tr<Sphere, Aabb>       },  
+/* Comp */ {txc,                  tcx,  txc,                    txc,                  tpx<CompoundShape>, txc                    },  
+/* LS   */ {t<Aabb, LineSegment>, tcx,  nullptr,                tr<Obb, LineSegment>, tpx<LineSegment>,   tr<Sphere, LineSegment>},
+/* OBB  */ {gjk,                  tcx,  t<LineSegment, Obb>,    gjk,                  tpx<Obb>,           gjk                    },
+/* PL   */ {txp<Aabb>,            tcx,  txp<LineSegment>,       txp<Obb>,             nullptr,            txp<Sphere>            },
+/* S    */ {t<Aabb, Sphere>,      tcx,  t<LineSegment, Sphere>, gjk,                  tpx<Sphere>,        t<Sphere, Sphere>      }};
 
 } // end namespace anki
 
