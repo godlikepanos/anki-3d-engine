@@ -159,7 +159,7 @@ Error Renderer::render(SceneGraph& scene,
 	if(m_projectionParamsUpdateTimestamp 
 			< m_scene->getActiveCameraChangeTimestamp()
 		|| m_projectionParamsUpdateTimestamp < camUpdateTimestamp
-		|| m_projectionParamsUpdateTimestamp == 1)
+		|| m_projectionParamsUpdateTimestamp == 0)
 	{
 		ANKI_ASSERT(cam.getCameraType() == Camera::Type::PERSPECTIVE);
 		computeProjectionParams(fr.getProjectionMatrix());

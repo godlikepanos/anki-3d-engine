@@ -314,5 +314,10 @@ static const Callback matrix[COUNT][COUNT] = {
 /* PL   */ {txp<Aabb>,            tcx,  txp<LineSegment>,       txp<Obb>,             nullptr,            txp<Sphere>            },
 /* S    */ {t<Aabb, Sphere>,      tcx,  t<LineSegment, Sphere>, gjk,                  tpx<Sphere>,        t<Sphere, Sphere>      }};
 
+Bool testCollisionShapes(const CollisionShape& a, const CollisionShape& b)
+{
+	return false;
+}
+
 } // end namespace anki
 

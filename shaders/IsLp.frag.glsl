@@ -345,7 +345,7 @@ void main()
 		* vec3(0.01, 0.001, 0.001);
 #endif
 
-#if 1
+#if 0
 	if(pointLightsCount != 0)
 	{
 		out_color += vec3(0.1);

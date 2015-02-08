@@ -79,6 +79,13 @@ Error init()
 		1.0));
 	scene.setActiveCamera(cam);
 
+#if NO_PLAYER
+	cam->getComponent<MoveComponent>().
+		setLocalTransform(Transform(Vec4(-5.0, 10.0, -3.0, 0.0),
+		Mat3x4(Euler(toRad(-26.0), toRad(-90.0), toRad(0.0))),
+		1.0));
+#endif
+
 	// lights
 #if 0
 	Vec3 lpos(-24.0, 0.1, -10.0);
@@ -224,7 +231,7 @@ Error init()
 	}
 #endif
 
-#if 1
+#if 0
 	// horse
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
 		"models/horse/horse.ankimdl");
@@ -240,7 +247,7 @@ Error init()
 	}
 #endif
 
-	if(1)
+	if(0)
 	{
 		err = scene.newSceneNode<PointLight>("plight0", point);
 		if(err) return err;
@@ -254,7 +261,7 @@ Error init()
 		move->setLocalOrigin(Vec4(2.0, 1.4, 0.6, 0.0));
 	}
 
-#if 0
+#if 1
 	{
 		ScriptResourcePointer script;
 
@@ -472,7 +479,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 
 	//execStdinScpripts();
 
-	if(getenv("PROFILE") && app.getGlobalTimestamp() == 2000)
+	if(getenv("PROFILE") && app.getGlobalTimestamp() == 500)
 	{
 		quit = true;
 		return err;
@@ -525,7 +532,7 @@ Error initSubsystems(int argc, char* argv[])
 
 	//config.set("maxTextureSize", 256);
 
-	config.set("fullscreenDesktopResolution", false);
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 
 	app = new App;

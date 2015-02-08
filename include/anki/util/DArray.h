@@ -321,6 +321,55 @@ private:
 		m_alloc = b.m_alloc;
 	}
 };
+
+/// Array with preallocated memory.
+template<typename T>
+class SArray: public DArray<T>
+{
+public:
+	using Base = DArray<T>;
+	using Value = T;
+
+	SArray(void* mem, PtrSize size)
+	:	Base()
+	{
+		ANKI_ASSERT(mem);
+		ANKI_ASSERT(size);
+		Base::m_data = static_cast<Value*>(mem);
+		Base::m_size = size;
+	}
+
+	/// Move.
+	SArray(SArray&& b)
+	:	SArray()
+	{
+		move(b);
+	}
+
+	~SArray()
+	{
+#if ANKI_ASSERTIONS
+		Base::m_data = nullptr;
+		Base::m_size = 0;
+#endif
+	}
+
+	/// Move.
+	SArray& operator=(SArray&& b)
+	{
+		move(b);
+		return *this;
+	}
+
+private:
+	void move(SArray& b)
+	{
+		Base::m_data = b.m_data;
+		b.m_data = nullptr;
+		Base::m_size = b.m_size;
+		b.m_size = 0;
+	}
+};
 /// @}
 
 } // end namespace anki

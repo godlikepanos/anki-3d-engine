@@ -76,6 +76,8 @@ private:
 	Plane* m_nearPlanesW = nullptr;
 	Plane* m_farPlanesW = nullptr;
 
+	DArray<Vec4> m_hullPoints;
+
 	/// A texture of tilesXCount * tilesYCount size and format RG32UI. Used to
 	/// calculate the near and far planes of the tiles
 	GlTextureHandle m_rt;
@@ -97,13 +99,19 @@ private:
 	Timestamp m_planes4UpdateTimestamp = 0;
 
 	ANKI_USE_RESULT Error initInternal();
+	ANKI_USE_RESULT Error initHullPoints();
 
 	void testRange(const CollisionShape& cs, Bool nearPlane,
 		U iFrom, U iTo, U jFrom, U jTo, VisibleTiles* visible, 
 		U& count) const;
 
+	Bool testAgainstHull(const CollisionShape& cs, 
+		const U yFrom, const U yTo, const U xFrom, const U xTo);
+
 	void update(U32 threadId, PtrSize threadsCount, 
 		Camera& cam, Bool frustumChanged);
+
+	void updateHullPoints(U32 threadId, PtrSize threadsCount, Camera& cam);
 
 	/// Calculate and set a top looking plane
 	void calcPlaneY(U i, const F32 o6, const F32 near);

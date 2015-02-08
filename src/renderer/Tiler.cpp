@@ -139,7 +139,63 @@ Error Tiler::initInternal()
 
 	cmdBuff.flush();
 
+	// Hull
+	err = initHullPoints();
+
 	return err;
+}
+
+//==============================================================================
+ANKI_USE_RESULT Error Tiler::initHullPoints()
+{
+	const U countX = m_r->getTilesCount().x();
+	const U countY = m_r->getTilesCount().y();
+
+	// Grid points + eye
+	const U count = (countX + 1) * (countY + 1) + 1;
+
+	return m_hullPoints.create(getAllocator(), count);
+}
+
+//==============================================================================
+void Tiler::updateHullPoints(U32 threadId, PtrSize threadsCount, Camera& cam)
+{
+	const U countX = m_r->getTilesCount().x() + 1;
+	const U countY = m_r->getTilesCount().y() + 1;
+	const U count = countX * countY;
+	PtrSize start, end;
+	Threadpool::Task::choseStartEnd(threadId, threadsCount, count, start, end);
+
+	const Vec4& projParams = m_r->getProjectionParameters();
+	const Transform& trf = 
+		cam.getComponent<MoveComponent>().getWorldTransform();
+
+	for(U i = start; i < end; ++i)
+	{
+		const U x = i % countX;
+		const U y = i / countX;
+
+		// Calculate the view space position
+		Vec2 clip = Vec2(
+			F32(x) / (countX - 1), 
+			F32(y) / (countY - 1));
+
+		Vec4 view;
+		const F32 depth = 1.0;
+		view.z() = projParams.z() / (projParams.w() + depth);
+		Vec2 viewxy = (clip * 2.0 - 1.0) * projParams.xy() * view.z();
+		view.x() = viewxy.x();
+		view.y() = viewxy.y();
+		view.w() = 0.0;
+
+		// Transform it
+		Vec4 finalPos = trf.transform(view);
+
+		// Store
+		m_hullPoints[i] = finalPos;
+	}
+
+	m_hullPoints.getBack() = trf.getOrigin();
 }
 
 //==============================================================================
@@ -233,6 +289,25 @@ Bool Tiler::test(
 	}
 
 	return count > 0;
+}
+
+//==============================================================================
+Bool Tiler::testAgainstHull(const CollisionShape& cs, 
+	const U yFrom, const U yTo, const U xFrom, const U xTo)
+{
+	Array<Vec4, 5> points;
+	const U countX = m_r->getTilesCount().x() + 1;
+
+	points[0] = m_hullPoints[yFrom * countX + xFrom];
+	points[1] = m_hullPoints[yFrom * countX + xTo];
+	points[2] = m_hullPoints[yTo * countX + xFrom];
+	points[3] = m_hullPoints[yTo * countX + xTo];
+	points[3] = m_hullPoints.getBack();
+
+	ConvexHullShape hull;
+	hull.initStorage(&points[0], points.getSize());
+
+	return testCollisionShapes(hull, cs);
 }
 
 //==============================================================================
@@ -548,6 +623,8 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		++farPlanesW;
 	}
 #endif
+
+	updateHullPoints(threadId, threadsCount, cam);
 }
 
 //==============================================================================

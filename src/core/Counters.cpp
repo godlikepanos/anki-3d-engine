@@ -258,8 +258,11 @@ void CountersManager::flush()
 			{
 				if(inf.m_flags & CF_FPS)
 				{
-					err = m_perrunFile.writeText("%" MAX_NAME "f", 
-						(F64)(*m_globalTimestamp) / m_perrunValues[i].m_float);
+					F32 fps = 
+						(F64)(*m_globalTimestamp) 
+						/ (m_perrunValues[i].m_float / 1000.0);
+
+					err = m_perrunFile.writeText("%" MAX_NAME "f", fps);
 				}
 				else
 				{
