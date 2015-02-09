@@ -10,6 +10,7 @@
 #include "anki/collision/LineSegment.h"
 #include "anki/collision/Plane.h"
 #include "anki/collision/Obb.h"
+#include "anki/collision/ConvexHullShape.h"
 #include "anki/collision/GjkEpa.h"
 #include "anki/util/Rtti.h"
 
@@ -306,17 +307,24 @@ using Callback = Bool(*)(const CollisionShape& a, const CollisionShape& b);
 static const U COUNT = U(CollisionShape::Type::COUNT);
 
 static const Callback matrix[COUNT][COUNT] = {
-/*          AABB                  Comp  LS                      OBB                   PL                  S               */
-/* AABB */ {t<Aabb, Aabb>,        tcx,  tr<LineSegment, Aabb>,  gjk,                  tpx<Aabb>,          tr<Sphere, Aabb>       },  
-/* Comp */ {txc,                  tcx,  txc,                    txc,                  tpx<CompoundShape>, txc                    },  
-/* LS   */ {t<Aabb, LineSegment>, tcx,  nullptr,                tr<Obb, LineSegment>, tpx<LineSegment>,   tr<Sphere, LineSegment>},
-/* OBB  */ {gjk,                  tcx,  t<LineSegment, Obb>,    gjk,                  tpx<Obb>,           gjk                    },
-/* PL   */ {txp<Aabb>,            tcx,  txp<LineSegment>,       txp<Obb>,             nullptr,            txp<Sphere>            },
-/* S    */ {t<Aabb, Sphere>,      tcx,  t<LineSegment, Sphere>, gjk,                  tpx<Sphere>,        t<Sphere, Sphere>      }};
+/*          P                     LS                      Comp  AABB                  S                        OBB                   CH */
+/* P    */ {nullptr,              txp<LineSegment>,       tcx,  txp<Aabb>,            txp<Sphere>,             txp<Obb>,             txp<ConvexHullShape>},
+/* LS   */ {tpx<LineSegment>,     nullptr,                tcx,  t<Aabb, LineSegment>, tr<Sphere, LineSegment>, tr<Obb, LineSegment>, nullptr             },
+/* Comp */ {tpx<CompoundShape>,   txc,                    tcx,  txc,                  txc,                     txc,                  txc                 },
+/* AABB */ {tpx<Aabb>,            tr<LineSegment, Aabb>,  tcx,  t<Aabb, Aabb>,        tr<Sphere, Aabb>,        gjk,                  gjk                 },
+/* S    */ {tpx<Sphere>,          t<LineSegment, Sphere>, tcx,  t<Aabb, Sphere>,      t<Sphere, Sphere>,       gjk,                  gjk                 },
+/* OBB  */ {tpx<Obb>,             t<LineSegment, Obb>,    tcx,  gjk,                  gjk,                     gjk,                  gjk                 },
+/* CH   */ {tpx<ConvexHullShape>, nullptr,                tcx,  gjk,                  gjk,                     gjk,                  gjk                 }};
 
 Bool testCollisionShapes(const CollisionShape& a, const CollisionShape& b)
 {
-	return false;
+	U ai = static_cast<U>(a.getType());
+	U bi = static_cast<U>(b.getType());
+
+	ANKI_ASSERT(matrix[ai][bi] != nullptr && "Collision algorithm is missing");
+	ANKI_ASSERT(ai < COUNT && bi < COUNT && "Out of range");
+
+	return matrix[ai][bi](a, b);
 }
 
 } // end namespace anki
