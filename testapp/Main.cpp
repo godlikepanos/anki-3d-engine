@@ -231,7 +231,7 @@ Error init()
 	}
 #endif
 
-#if 0
+#if 1
 	// horse
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
 		"models/horse/horse.ankimdl");
@@ -247,7 +247,7 @@ Error init()
 	}
 #endif
 
-	if(0)
+	if(1)
 	{
 		err = scene.newSceneNode<PointLight>("plight0", point);
 		if(err) return err;
@@ -261,7 +261,7 @@ Error init()
 		move->setLocalOrigin(Vec4(2.0, 1.4, 0.6, 0.0));
 	}
 
-#if 1
+#if 0
 	{
 		ScriptResourcePointer script;
 

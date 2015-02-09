@@ -128,8 +128,7 @@ public:
 
 	void visit(const Aabb&);
 
-	void visit(const CompoundShape&)
-	{}
+	void visit(const CompoundShape&);
 
 	void visit(const ConvexHullShape&);
 

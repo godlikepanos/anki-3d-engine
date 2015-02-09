@@ -275,17 +275,17 @@ static Bool tpx(const CollisionShape& a, const CollisionShape& b)
 }
 
 /// Compound shape.
-Bool tcx(const CollisionShape& a, const CollisionShape& b)
+static Bool tcx(const CollisionShape& a, const CollisionShape& b)
 {
-	Bool inside = true;
+	Bool inside = false;
 	const CompoundShape& c = dcast<const CompoundShape&>(a);
 
 	// Use the error to stop the loop
 	Error err = c.iterateShapes([&](const CollisionShape& cs)
 	{
-		if(!testCollisionShapes(cs, b))
+		if(testCollisionShapes(cs, b))
 		{
-			inside = false;
+			inside = true;
 			return ErrorCode::FUNCTION_FAILED;
 		}
 
@@ -297,7 +297,7 @@ Bool tcx(const CollisionShape& a, const CollisionShape& b)
 }
 
 /// Compound shape.
-Bool txc(const CollisionShape& a, const CollisionShape& b)
+static Bool txc(const CollisionShape& a, const CollisionShape& b)
 {
 	return tcx(b, a);
 }
@@ -324,7 +324,7 @@ Bool testCollisionShapes(const CollisionShape& a, const CollisionShape& b)
 	ANKI_ASSERT(matrix[ai][bi] != nullptr && "Collision algorithm is missing");
 	ANKI_ASSERT(ai < COUNT && bi < COUNT && "Out of range");
 
-	return matrix[ai][bi](a, b);
+	return matrix[bi][ai](a, b);
 }
 
 } // end namespace anki

@@ -146,9 +146,8 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 	}
 #endif
 
-#if 0
+#if 1
 	{
-		ConvexHullShape hull;
 		Vec4 storage[] = {
 			Vec4(1.0, 1.0, 1.0, 0.0),
 			Vec4(1.0, 1.0, -1.0, 0.0),
@@ -159,16 +158,23 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 		SceneNode& sn = scene.findSceneNode("horse");
 		MoveComponent& move = sn.getComponent<MoveComponent>();
 
+		ConvexHullShape hull;
 		hull.initStorage(storage, 4);
+		
+		Sphere s(Vec4(1.0, 0.0, 0.0, 0), 1.0);
 
-		Sphere s(Vec4(0.0), 1.0);
+		Aabb aabb(Vec4(-1.0, -1, -1, 0), Vec4(2, 3, 5, 0));
 
-		hull.transform(move.getWorldTransform());
+		Obb obb(Vec4(0.0), Mat3x4::getIdentity(), Vec4(1.0, 2.0, 1.0, 0.0));
 
-		Gjk gjk;
-		Bool collide = gjk.intersect(s, hull);
+		CompoundShape comp;
+		comp.addShape(&obb);
+		comp.addShape(&s);
+		comp.addShape(&abb);
 
-		if(collide)
+		comp.transform(move.getWorldTransform());
+
+		if(testCollisionShapes(aabb, comp))
 		{
 			m_drawer->setColor(Vec4(1.0, 0.0, 0.0, 1.0));
 		}
@@ -180,12 +186,8 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 		m_drawer->setModelMatrix(Mat4::getIdentity());
 		CollisionDebugDrawer cd(m_drawer);
 
-		cd.visit(hull);
-		cd.visit(s);
-
-		Aabb aabb;
-		hull.computeAabb(aabb);
 		cd.visit(aabb);
+		cd.visit(comp);
 	}
 #endif
 

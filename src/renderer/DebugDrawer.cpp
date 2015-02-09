@@ -454,6 +454,18 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 }
 
 //==============================================================================
+void CollisionDebugDrawer::visit(const CompoundShape& cs)
+{
+	CollisionDebugDrawer* self = this;
+	Error err = cs.iterateShapes([&](const CollisionShape& a) -> Error 
+	{
+		a.accept(*self);
+		return ErrorCode::NONE;
+	});
+	(void) err;
+}
+
+//==============================================================================
 void CollisionDebugDrawer::visit(const ConvexHullShape& hull)
 {
 	m_dbg->setModelMatrix(Mat4(hull.getTransform()));
