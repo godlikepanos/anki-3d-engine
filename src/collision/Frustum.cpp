@@ -158,10 +158,8 @@ void Frustum::updateInternal()
 PerspectiveFrustum::PerspectiveFrustum()
 :	Frustum(Type::PERSPECTIVE)
 {
-	for(LineSegment& ls : m_segments)
-	{
-		addShape(&ls);
-	}
+	addShape(&m_hull);
+	m_hull.initStorage(&m_points[0], m_points.getSize());
 }
 
 //==============================================================================
@@ -170,7 +168,7 @@ PerspectiveFrustum& PerspectiveFrustum::operator=(const PerspectiveFrustum& b)
 	Frustum::operator=(b);
 	m_fovX = b.m_fovX;
 	m_fovY = b.m_fovY;
-	m_segments = b.m_segments;
+	m_points = b.m_points;
 	return *this;
 }
 
@@ -202,19 +200,19 @@ void PerspectiveFrustum::recalculate(Bool planes, Bool other)
 	if(other)
 	{
 		Vec4 eye = Vec4(0.0, 0.0, -m_near, 0.0);
-		for(LineSegment& ls : m_segments)
+		for(Vec4& p : m_points)
 		{
-			ls.setOrigin(eye);
+			p = eye;
 		}
 
 		F32 x = m_far / tan((getPi<F32>() - m_fovX) / 2.0);
 		F32 y = tan(m_fovY / 2.0) * m_far;
 		F32 z = -m_far;
 
-		m_segments[0].setDirection(Vec4(x, y, z - m_near, 0.0)); // top right
-		m_segments[1].setDirection(Vec4(-x, y, z - m_near, 0.0)); // top left
-		m_segments[2].setDirection(Vec4(-x, -y, z - m_near, 0.0)); // bot left
-		m_segments[3].setDirection(Vec4(x, -y, z - m_near, 0.0)); // bot right
+		m_points[1] += Vec4(x, y, z - m_near, 0.0); // top right
+		m_points[2] += Vec4(-x, y, z - m_near, 0.0); // top left
+		m_points[3] += Vec4(-x, -y, z - m_near, 0.0); // bot left
+		m_points[4] += Vec4(x, -y, z - m_near, 0.0); // bot right
 	}
 }
 

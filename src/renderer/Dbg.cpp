@@ -146,7 +146,7 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 	}
 #endif
 
-#if 1
+#if 0
 	{
 		Vec4 storage[] = {
 			Vec4(1.0, 1.0, 1.0, 0.0),
@@ -170,7 +170,7 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 		CompoundShape comp;
 		comp.addShape(&obb);
 		comp.addShape(&s);
-		comp.addShape(&abb);
+		comp.addShape(&);
 
 		comp.transform(move.getWorldTransform());
 

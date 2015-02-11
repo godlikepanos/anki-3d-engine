@@ -249,15 +249,15 @@ Error init()
 
 	if(1)
 	{
-		err = scene.newSceneNode<PointLight>("plight0", point);
+		err = scene.newSceneNode<SpotLight>("plight0", spot);
 		if(err) return err;
 
-		lightc = point->tryGetComponent<LightComponent>();
+		lightc = spot->tryGetComponent<LightComponent>();
 		lightc->setRadius(6.0);
 		lightc->setDiffuseColor(Vec4(1.0));
 		lightc->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
 
-		move = point->tryGetComponent<MoveComponent>();
+		move = spot->tryGetComponent<MoveComponent>();
 		move->setLocalOrigin(Vec4(2.0, 1.4, 0.6, 0.0));
 	}
 

@@ -97,22 +97,35 @@ F32 ConvexHullShape::testPlane(const Plane& p) const
 	Plane pa = (m_trfIdentity) ? p : p.getTransformed(m_invTrf);
 
 	F32 minDist = MAX_F32;
+	F32 maxDist = MIN_F32;
 
 	const Vec4* point = m_points;
 	const Vec4* end = m_points + m_pointsCount;
 	for(; point != end; ++point)
 	{
 		F32 test = pa.test(*point);
-		if(test == 0.0)
+		if(ANKI_UNLIKELY(test == 0.0))
 		{
 			// Early exit
 			return 0.0; 	
 		}
 
 		minDist = min(minDist, test);
+		maxDist = max(maxDist, test);
 	}
 
-	return minDist;
+	if(minDist > 0.0 && maxDist > 0.0)
+	{
+		return maxDist;
+	}
+	else if(minDist > 0.0 && maxDist > 0.0)
+	{
+		return minDist;
+	}
+	else
+	{
+		return 0.0;
+	}
 }
 
 //==============================================================================

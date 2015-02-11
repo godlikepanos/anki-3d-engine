@@ -9,7 +9,7 @@
 #include "anki/collision/CompoundShape.h"
 #include "anki/collision/Plane.h"
 #include "anki/collision/Obb.h"
-#include "anki/collision/LineSegment.h"
+#include "anki/collision/ConvexHullShape.h"
 #include "anki/Math.h"
 #include "anki/util/Array.h"
 
@@ -188,9 +188,9 @@ public:
 		m_frustumDirty = true;
 	}
 
-	const Array<LineSegment, 4>& getLineSegments() const
+	const Array<Vec4, 5>& getPoints() const
 	{
-		return m_segments;
+		return m_points;
 	}
 
 	/// Copy
@@ -216,7 +216,8 @@ private:
 
 	/// @name Shape
 	/// @{
-	Array<LineSegment, 4> m_segments;
+	Array<Vec4, 5> m_points;
+	ConvexHullShape m_hull;
 	/// @}
 
 	/// Implements Frustum::recalculate. Recalculates:

@@ -195,6 +195,7 @@ void Tiler::updateHullPoints(U32 threadId, PtrSize threadsCount, Camera& cam)
 		m_hullPoints[i] = finalPos;
 	}
 
+	// The last point is the eye
 	m_hullPoints.getBack() = trf.getOrigin();
 }
 
@@ -293,7 +294,7 @@ Bool Tiler::test(
 
 //==============================================================================
 Bool Tiler::testAgainstHull(const CollisionShape& cs, 
-	const U yFrom, const U yTo, const U xFrom, const U xTo)
+	const U yFrom, const U yTo, const U xFrom, const U xTo) const
 {
 	Array<Vec4, 5> points;
 	const U countX = m_r->getTilesCount().x() + 1;
@@ -302,7 +303,7 @@ Bool Tiler::testAgainstHull(const CollisionShape& cs,
 	points[1] = m_hullPoints[yFrom * countX + xTo];
 	points[2] = m_hullPoints[yTo * countX + xFrom];
 	points[3] = m_hullPoints[yTo * countX + xTo];
-	points[3] = m_hullPoints.getBack();
+	points[4] = m_hullPoints.getBack();
 
 	ConvexHullShape hull;
 	hull.initStorage(&points[0], points.getSize());
@@ -368,6 +369,7 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 
 	// Do the checks
 	Bool inside[2][2] = {{false, false}, {false, false}};
+	U touchingPlanes = 0;
 
 	// Top looking plane check
 	if(my > 0)
@@ -386,6 +388,8 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		}
 		else
 		{
+			++touchingPlanes;
+
 			// Possibly all inside
 			for(U i = 0; i < 2; i++)
 			{
@@ -426,7 +430,21 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		else
 		{
 			// Do nothing and keep the top looking plane check results
+			++touchingPlanes;
 		}
+	}
+
+	// If touching both planes then we need detailed tests
+	//if(touchingPlanes > 2)
+	{
+		inside[0][0] = testAgainstHull(cs, 
+			yFrom, yFrom + my, xFrom, xFrom + mx);
+		inside[0][1] = testAgainstHull(cs, 
+			yFrom, yFrom + my, xFrom + mx, xTo);
+		inside[1][0] = testAgainstHull(cs, 
+			yFrom + my, yTo, xFrom, xFrom + mx);
+		inside[1][1] = testAgainstHull(cs, 
+			yFrom + my, yTo, xFrom + mx, xTo);
 	}
 
 	// Now move lower to the hierarchy

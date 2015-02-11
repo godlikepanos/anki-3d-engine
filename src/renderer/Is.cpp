@@ -249,8 +249,9 @@ public:
 
 		for(U i = 0; i < 4; i++)
 		{
+			// TODO that is wrong
 			Vec4 extendPoint = move.getWorldTransform().getOrigin() 
-				+ frustum.getLineSegments()[i].getDirection();
+				+ frustum.getPoints()[i];
 
 			extendPoint = m_camFrustum->getViewMatrix() * extendPoint.xyz1();
 			baseslight->m_extendPoints[i] = extendPoint;

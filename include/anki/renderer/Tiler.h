@@ -106,7 +106,7 @@ private:
 		U& count) const;
 
 	Bool testAgainstHull(const CollisionShape& cs, 
-		const U yFrom, const U yTo, const U xFrom, const U xTo);
+		const U yFrom, const U yTo, const U xFrom, const U xTo) const;
 
 	void update(U32 threadId, PtrSize threadsCount, 
 		Camera& cam, Bool frustumChanged);

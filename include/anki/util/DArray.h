@@ -132,6 +132,12 @@ public:
 	}
 
 	/// Get last element.
+	ConstReference getBack() const
+	{
+		return m_data[m_size - 1];
+	}
+
+	/// Get last element.
 	ConstReference back() const
 	{
 		return m_data[m_size - 1];
