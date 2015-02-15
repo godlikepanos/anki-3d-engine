@@ -248,21 +248,21 @@ Error init()
 	}
 #endif
 
-	if(1)
+	if(0)
 	{
-		err = scene.newSceneNode<PointLight>("plight0", point);
+		err = scene.newSceneNode<SpotLight>("plight0", spot);
 		if(err) return err;
 
-		lightc = point->tryGetComponent<LightComponent>();
-		lightc->setRadius(10.2);
+		lightc = spot->tryGetComponent<LightComponent>();
+		lightc->setDistance(10.2);
 		lightc->setDiffuseColor(Vec4(1.0));
 		lightc->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
 
-		move = point->tryGetComponent<MoveComponent>();
+		move = spot->tryGetComponent<MoveComponent>();
 		move->setLocalOrigin(Vec4(1.0, 2.0, 0.2, 0.0));
 	}
 
-#if 0
+#if 1
 	{
 		ScriptResourcePointer script;
 

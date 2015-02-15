@@ -226,11 +226,13 @@ Bool Tiler::test(
 
 	// Call the recursive function or the fast path
 	U count = 0;
+#if 0
 	if(isa<Sphere>(cs))
 	{
 		testFastSphere(dcast<const Sphere&>(cs), visible, count);
 	}
 	else
+#endif
 	{
 		testRange(cs, nearPlane, 0, m_r->getTilesCount().y(), 0,
 			m_r->getTilesCount().x(), visible, count);
@@ -430,19 +432,12 @@ void Tiler::testFastSphere(
 		cam.getComponent<FrustumComponent>().getViewProjectionMatrix();
 	const Transform& trf = 
 		cam.getComponent<MoveComponent>().getWorldTransform();
-	const Mat3x4& rot = trf.getRotation();
 
 	const Vec4& scent = s.getCenter();
 	const F32 srad = s.getRadius();
 
-	// Compute projection points
-	Vec4 a, b;
-
-	/*Vec4 a = vp * s.getCenter().xyz1();
-	Vec2 center = a.xy() / a.w();*/
-
+	// Do a quick check
 	Vec4 eye = trf.getOrigin() - scent;
-
 	if(ANKI_UNLIKELY(eye.getLengthSquared() <= srad * srad))
 	{
 		// Camera totaly inside the sphere
@@ -457,74 +452,61 @@ void Tiler::testFastSphere(
 		return;
 	}
 
-	a = rot.getColumn(1).xyz0().cross(eye);
-	a.normalize();
-	b = scent + a * srad;
-	b = vp * b.xyz1();
-	F32 right = b.x() / b.w();
+	// Compute projection points
+	Aabb aabb;
+	s.computeAabb(aabb);
+	const Vec4& minv = aabb.getMin();
+	const Vec4& maxv = aabb.getMax();
+	Array<Vec4, 8> points;
+	points[0] = minv.xyz1();
+	points[1] = Vec4(minv.x(), maxv.y(), minv.z(), 1.0);
+	points[2] = Vec4(minv.x(), maxv.y(), maxv.z(), 1.0);
+	points[3] = Vec4(minv.x(), minv.y(), maxv.z(), 1.0);
+	points[4] = maxv.xyz1();
+	points[5] = Vec4(maxv.x(), minv.y(), maxv.z(), 1.0);
+	points[6] = Vec4(maxv.x(), minv.y(), minv.z(), 1.0);
+	points[7] = Vec4(maxv.x(), maxv.y(), minv.z(), 1.0);
+	Vec2 min2(MAX_F32), max2(MIN_F32);
+	for(Vec4& p : points)
+	{
+		p = vp * p;
+		p /= abs(p.w());
 
-	a = -a;
-	b = scent + a * srad;
-	b = vp * b.xyz1();
-	F32 left = b.x() / b.w();
+		for(U i = 0; i < 2; ++i)
+		{
+			min2[i] = min(min2[i], p[i]);
+			max2[i] = max(max2[i], p[i]);
+		}
+	}
 
-	a = eye.cross(rot.getColumn(0).xyz0());
-	a.normalize();
-	b = scent + a * srad;
-	b = vp * b.xyz1();
-	F32 top = b.y() / b.w();
-
-	a = -a;
-	b = scent + a * srad;
-	b = vp * b.xyz1();
-	F32 bottom = b.y() / b.w();
+	min2 = min2 * 0.5 + 0.5;
+	max2 = max2 * 0.5 + 0.5;
 
 	// Do a box test
 	F32 tcountX = m_r->getTilesCount().x();
 	F32 tcountY = m_r->getTilesCount().y();
 
-	I xFrom = floor(tcountX * (left * 0.5 + 0.5));
+	I xFrom = floor(tcountX * min2.x());
 	xFrom = clamp<I>(xFrom, 0, m_r->getTilesCount().x());
-	I xTo = ceil(tcountX * (right * 0.5 + 0.5));
+
+	I xTo = ceil(tcountX * max2.x());
 	xTo = min<U>(xTo, m_r->getTilesCount().x());
+
+	I yFrom = floor(tcountY * min2.y());
+	yFrom = clamp<I>(yFrom, 0, m_r->getTilesCount().y());
+
+	I yTo = ceil(tcountY * max2.y());
+	yTo = min<I>(yTo, m_r->getTilesCount().y());
+
+
 	ANKI_ASSERT(xFrom >= 0 && xFrom <= tcountX 
 		&& xTo >= 0 && xTo <= tcountX);
-
-	I yFrom = floor(tcountY * (bottom * 0.5 + 0.5));
-	yFrom = clamp<I>(yFrom, 0, m_r->getTilesCount().y());
-	I yTo = ceil(tcountY * (top * 0.5 + 0.5));
-	yTo = min<I>(yTo, m_r->getTilesCount().y());
-	ANKI_ASSERT(yFrom <= tcountY && yTo <= tcountY);
-	
-#if 0
-	// Since it's possible that the sphere will be ellipsis when projected and
-	// since we don't want to do intersections with eclipses do a trick where
-	// you scale everything and make the eclipse a cyrcle
-	Vec2 scale;
-	F32 maxR;
-
-	if(r.x() > r.y())
-	{
-		scale = Vec2(1.0, r.x() / r.y());
-		maxR = r.x();
-	}
-	else
-	{
-		scale = Vec2(r.y() / r.x(), 1.0);
-		maxR = r.y();
-	}
-
-	F32 maxR2 = maxR * maxR;
-
-	Vec2 tileSize(1.0 / tcountX, 1.0 / tcountY);
-	tileSize *= scale;
-
-	c *= scale;
-#endif
+	ANKI_ASSERT(yFrom >= 0 && yFrom <= tcountX 
+		&& yTo >= 0 && yFrom <= tcountY);
 
 	Vec2 tileSize(1.0 / tcountX, 1.0 / tcountY);
 
-	a = vp * s.getCenter().xyz1();
+	Vec4 a = vp * s.getCenter().xyz1();
 	Vec2 c = a.xy() / a.w();
 	c = c * 0.5 + 0.5;
 
@@ -532,6 +514,7 @@ void Tiler::testFastSphere(
 	{
 		for(I x = xFrom; x < xTo; ++x)
 		{
+#if 1
 			// Do detailed tests
 
 			Vec2 tileMin = Vec2(x, y) * tileSize;
@@ -569,34 +552,8 @@ void Tiler::testFastSphere(
 			LineSegment ls(trf.getOrigin(), world.xyz0());
 			Bool inside = testCollisionShapes(ls, s);
 
-#if 0
-			// Find closest point
-			Vec2 cp(0.0);
-			Vec2 boxMin(x * tileSize.x(), y * tileSize.y());
-			Vec2 boxMax((x + 1) * tileSize.x(), (y + 1) * tileSize.y());
-
-			for(U i = 0; i < 2; ++i)
-			{
-				if(c[i] > boxMax[i])
-				{
-					cp[i] = boxMax[i];
-				}
-				else if (c[i] < boxMin[i])
-				{
-					cp[i] = boxMin[i];
-				}
-				else
-				{
-					// the c lies between min and max
-					cp[i] = c[i];
-				}
-			}
-
-			Vec2 sub = c - cp;
-			Bool inside = sub.getLengthSquared() <= maxR2;
-#endif
-
 			if(inside)
+#endif
 			{
 				visible->pushBack(x, y);
 				++count;
