@@ -116,11 +116,11 @@ F32 ConvexHullShape::testPlane(const Plane& p) const
 
 	if(minDist > 0.0 && maxDist > 0.0)
 	{
-		return maxDist;
-	}
-	else if(minDist > 0.0 && maxDist > 0.0)
-	{
 		return minDist;
+	}
+	else if(minDist < 0.0 && maxDist < 0.0)
+	{
+		return maxDist;
 	}
 	else
 	{

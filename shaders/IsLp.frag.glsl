@@ -346,9 +346,9 @@ void main()
 #endif
 
 #if 1
-	if(spotLightsCount != 0)
+	if(pointLightsCount != 0)
 	{
-		out_color += vec3(0.1);
+		out_color += vec3(0.0, 0.0, 0.9);
 	}
 #endif
 }

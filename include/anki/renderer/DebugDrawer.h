@@ -33,7 +33,7 @@ public:
 	ANKI_USE_RESULT Error create(Renderer* r);
 
 	void drawGrid();
-	void drawSphere(F32 radius, I complexity = 4);
+	void drawSphere(F32 radius, I complexity = 8);
 	void drawCube(F32 size = 1.0);
 	void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 

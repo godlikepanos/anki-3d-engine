@@ -73,10 +73,6 @@ Error init()
 	cam->setAll(
 		renderer.getAspectRatio() * toRad(ang),
 		toRad(ang), 0.2, 500.0);
-	cam->getComponent<MoveComponent>().
-		setLocalTransform(Transform(Vec4(0.0),
-		Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))),
-		1.0));
 	scene.setActiveCamera(cam);
 
 #if NO_PLAYER
@@ -85,6 +81,11 @@ Error init()
 		Mat3x4(Euler(toRad(-26.0), toRad(-90.0), toRad(0.0))),
 		1.0));
 #endif
+
+	cam->getComponent<MoveComponent>().
+		setLocalTransform(Transform(Vec4(0.0, 0, 10, 0),
+		Mat3x4::getIdentity(),
+		1.0));
 
 	// lights
 #if 0
@@ -231,7 +232,7 @@ Error init()
 	}
 #endif
 
-#if 1
+#if 0
 	// horse
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
 		"models/horse/horse.ankimdl");
@@ -249,16 +250,16 @@ Error init()
 
 	if(1)
 	{
-		err = scene.newSceneNode<SpotLight>("plight0", spot);
+		err = scene.newSceneNode<PointLight>("plight0", point);
 		if(err) return err;
 
-		lightc = spot->tryGetComponent<LightComponent>();
-		lightc->setRadius(6.0);
+		lightc = point->tryGetComponent<LightComponent>();
+		lightc->setRadius(10.2);
 		lightc->setDiffuseColor(Vec4(1.0));
 		lightc->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
 
-		move = spot->tryGetComponent<MoveComponent>();
-		move->setLocalOrigin(Vec4(2.0, 1.4, 0.6, 0.0));
+		move = point->tryGetComponent<MoveComponent>();
+		move->setLocalOrigin(Vec4(1.0, 2.0, 0.2, 0.0));
 	}
 
 #if 0

@@ -15,7 +15,12 @@ static Vec4 crossAba(const Vec4& a, const Vec4& b)
 {
 	// We need to calculate the (axb)xa but we can use the triple product
 	// property ax(bxc) = b(a.c) - c(a.b) to make it faster
-	Vec4 out = b * (a.dot(a)) - a * (a.dot(b));
+	//Vec4 out = b * (a.dot(a)) - a * (a.dot(b));
+	Vec4 out = a.cross(b.cross(a));
+	//printf("+%f %f %f %f\n", out.x(), out.y(), out.z(), out.w());
+	//out = b * (a.dot(a)) - a * (a.dot(b));
+	//printf("-%f %f %f %f\n", out.x(), out.y(), out.z(), out.w());
+
 
 	return out;
 }
@@ -215,7 +220,8 @@ Bool Gjk::intersect(const ConvexShape& shape0, const ConvexShape& shape1)
 	m_dir = crossAba(m_simplex[2].m_v - m_simplex[1].m_v, -m_simplex[1].m_v);
 	m_count = 2;
 
-	while(1)
+	U iterations = 20;
+	while(iterations--)
 	{
 		Support a;
 		support(shape0, shape1, m_dir, a);
@@ -230,6 +236,8 @@ Bool Gjk::intersect(const ConvexShape& shape0, const ConvexShape& shape1)
 			return true;
 		}
 	}
+
+	return true;
 }
 
 } // end namespace anki

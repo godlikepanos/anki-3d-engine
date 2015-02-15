@@ -13,6 +13,7 @@
 #include "anki/util/Enum.h"
 #include "anki/misc/ConfigSet.h"
 #include "anki/collision/ConvexHullShape.h"
+#include "anki/util/Rtti.h"
 
 namespace anki {
 
@@ -139,55 +140,73 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 
 #if 1
 	{
-		m_drawer->setModelMatrix(Mat4::getIdentity());
-		Sphere s(Vec4(2.0, 1.4, 0.6, 0.0), 6.0);
+		SceneNode& sn = scene.findSceneNode("plight0");
+		SpatialComponent& sp = sn.getComponent<SpatialComponent>();
+		const CollisionShape& cs = sp.getSpatialCollisionShape();
+		const Sphere& sphere = dcast<const Sphere&>(cs);
+		F32 r = sphere.getRadius();
+
+		Mat4 v = cam.getComponent<FrustumComponent>().getViewMatrix();
+		Mat4 p = cam.getComponent<FrustumComponent>().getProjectionMatrix();
+		Mat4 vp = 
+			cam.getComponent<FrustumComponent>().getViewProjectionMatrix();
+
+		Transform t = cam.getComponent<MoveComponent>().getWorldTransform();
+		Mat4 trf(t);
+		Mat3x4 rot = cam.getComponent<MoveComponent>().getWorldTransform().getRotation();
+
 		CollisionDebugDrawer cd(m_drawer);
-		cd.visit(s);
-	}
-#endif
+
+		m_drawer->setModelMatrix(Mat4::getIdentity());
+
+		cs.accept(cd);
+
+		m_drawer->setViewProjectionMatrix(Mat4::getIdentity());
+		m_drawer->setModelMatrix(Mat4::getIdentity());
+
+		Vec4 a = vp * sphere.getCenter().xyz1();
+		F32 w = a.w();
+		a /= a.w();
+
+		
+		Vec2 rr;
+		Vec4 n = t.getOrigin() - sphere.getCenter();
+		Vec4 right = rot.getColumn(1).xyz0().cross(n);
+		right.normalize();
+
+		Vec4 b = sphere.getCenter() + right * r;
+		b = vp * b.xyz1();
+		b /= b.w();
+		rr.x() = b.x() - a.x();
+
+		Vec4 top = n.cross(rot.getColumn(0).xyz0());
+		top.normalize();
+
+		b = sphere.getCenter() + top * r;
+		b = vp * b.xyz1();
+		b /= b.w();
+		rr.y() = b.y() - a.y();
 
 #if 0
-	{
-		Vec4 storage[] = {
-			Vec4(1.0, 1.0, 1.0, 0.0),
-			Vec4(1.0, 1.0, -1.0, 0.0),
-			Vec4(-1.0, 1.0, -1.0, 0.0),
-			Vec4(-1.0, -1.0, 1.0, 0.0),
-		};
+		Vec4 a = mvp * sphere.getCenter().xyz1();
+		Vec3 b = a.xyz() / a.w();
 
-		SceneNode& sn = scene.findSceneNode("horse");
-		MoveComponent& move = sn.getComponent<MoveComponent>();
+		Vec4 aa = mvp * (sphere.getCenter() + rot.getColumn(0).xyz0().getNormalized() * r).xyz1();
+		Vec3 bb = aa.xyz() / aa.w();
+#endif
 
-		ConvexHullShape hull;
-		hull.initStorage(storage, 4);
-		
-		Sphere s(Vec4(1.0, 0.0, 0.0, 0), 1.0);
+		m_drawer->begin(GL_LINES);
+		m_drawer->setColor(Vec4(1.0, 1.0, 1.0, 1.0));
 
-		Aabb aabb(Vec4(-1.0, -1, -1, 0), Vec4(2, 3, 5, 0));
+		m_drawer->pushBackVertex(a.xyz());
+		m_drawer->pushBackVertex(a.xyz() + Vec3(rr.x(), 0, 0));
 
-		Obb obb(Vec4(0.0), Mat3x4::getIdentity(), Vec4(1.0, 2.0, 1.0, 0.0));
+		m_drawer->pushBackVertex(a.xyz());
+		m_drawer->pushBackVertex(a.xyz() + Vec3(0, rr.y(), 0));
 
-		CompoundShape comp;
-		comp.addShape(&obb);
-		comp.addShape(&s);
-		comp.addShape(&);
-
-		comp.transform(move.getWorldTransform());
-
-		if(testCollisionShapes(aabb, comp))
-		{
-			m_drawer->setColor(Vec4(1.0, 0.0, 0.0, 1.0));
-		}
-		else
-		{
-			m_drawer->setColor(Vec4(1.0));
-		}
-
-		m_drawer->setModelMatrix(Mat4::getIdentity());
-		CollisionDebugDrawer cd(m_drawer);
-
-		cd.visit(aabb);
-		cd.visit(comp);
+		//m_drawer->pushBackVertex(Vec3(0.0, 0.0, 0.5));
+		//m_drawer->pushBackVertex(Vec3(1.0, 1.0, 0.5));
+		m_drawer->end();
 	}
 #endif
 

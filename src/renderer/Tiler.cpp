@@ -7,6 +7,8 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/scene/Camera.h"
+#include "anki/scene/SceneGraph.h"
+#include "anki/util/Rtti.h"
 
 // Default should be 0
 #define ANKI_TILER_ENABLE_GPU 0
@@ -139,64 +141,7 @@ Error Tiler::initInternal()
 
 	cmdBuff.flush();
 
-	// Hull
-	err = initHullPoints();
-
 	return err;
-}
-
-//==============================================================================
-ANKI_USE_RESULT Error Tiler::initHullPoints()
-{
-	const U countX = m_r->getTilesCount().x();
-	const U countY = m_r->getTilesCount().y();
-
-	// Grid points + eye
-	const U count = (countX + 1) * (countY + 1) + 1;
-
-	return m_hullPoints.create(getAllocator(), count);
-}
-
-//==============================================================================
-void Tiler::updateHullPoints(U32 threadId, PtrSize threadsCount, Camera& cam)
-{
-	const U countX = m_r->getTilesCount().x() + 1;
-	const U countY = m_r->getTilesCount().y() + 1;
-	const U count = countX * countY;
-	PtrSize start, end;
-	Threadpool::Task::choseStartEnd(threadId, threadsCount, count, start, end);
-
-	const Vec4& projParams = m_r->getProjectionParameters();
-	const Transform& trf = 
-		cam.getComponent<MoveComponent>().getWorldTransform();
-
-	for(U i = start; i < end; ++i)
-	{
-		const U x = i % countX;
-		const U y = i / countX;
-
-		// Calculate the view space position
-		Vec2 clip = Vec2(
-			F32(x) / (countX - 1), 
-			F32(y) / (countY - 1));
-
-		Vec4 view;
-		const F32 depth = 1.0;
-		view.z() = projParams.z() / (projParams.w() + depth);
-		Vec2 viewxy = (clip * 2.0 - 1.0) * projParams.xy() * view.z();
-		view.x() = viewxy.x();
-		view.y() = viewxy.y();
-		view.w() = 0.0;
-
-		// Transform it
-		Vec4 finalPos = trf.transform(view);
-
-		// Store
-		m_hullPoints[i] = finalPos;
-	}
-
-	// The last point is the eye
-	m_hullPoints.getBack() = trf.getOrigin();
 }
 
 //==============================================================================
@@ -279,10 +224,17 @@ Bool Tiler::test(
 		visible->m_count = 0;
 	}
 
-	// Call the recursive function
+	// Call the recursive function or the fast path
 	U count = 0;
-	testRange(cs, nearPlane, 0, m_r->getTilesCount().y(), 0,
-		m_r->getTilesCount().x(), visible, count);
+	if(isa<Sphere>(cs))
+	{
+		testFastSphere(dcast<const Sphere&>(cs), visible, count);
+	}
+	else
+	{
+		testRange(cs, nearPlane, 0, m_r->getTilesCount().y(), 0,
+			m_r->getTilesCount().x(), visible, count);
+	}
 
 	if(visible)
 	{
@@ -290,25 +242,6 @@ Bool Tiler::test(
 	}
 
 	return count > 0;
-}
-
-//==============================================================================
-Bool Tiler::testAgainstHull(const CollisionShape& cs, 
-	const U yFrom, const U yTo, const U xFrom, const U xTo) const
-{
-	Array<Vec4, 5> points;
-	const U countX = m_r->getTilesCount().x() + 1;
-
-	points[0] = m_hullPoints[yFrom * countX + xFrom];
-	points[1] = m_hullPoints[yFrom * countX + xTo];
-	points[2] = m_hullPoints[yTo * countX + xFrom];
-	points[3] = m_hullPoints[yTo * countX + xTo];
-	points[4] = m_hullPoints.getBack();
-
-	ConvexHullShape hull;
-	hull.initStorage(&points[0], points.getSize());
-
-	return testCollisionShapes(hull, cs);
 }
 
 //==============================================================================
@@ -354,11 +287,7 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		{
 			if(visible)
 			{
-				VisibleTiles::Pair p;
-				ANKI_ASSERT(xFrom < 0xFF && yFrom < 0xFF);
-				p.m_x = static_cast<U8>(xFrom);
-				p.m_y = static_cast<U8>(yFrom);
-				visible->m_tileIds[visible->m_count++] = p;
+				visible->pushBack(xFrom, yFrom);
 			}
 
 			++count;
@@ -367,12 +296,51 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		return;
 	}
 
+	// Handle the edge case
+	if(ANKI_UNLIKELY(mx == 0 || my == 0))
+	{
+		if(mx == 0)
+		{
+			const Plane& topPlane = m_planesYW[yFrom + my - 1];
+			F32 test = cs.testPlane(topPlane);
+
+			if(test <= 0.0)
+			{
+				testRange(cs, nearPlane, 
+					yFrom, yFrom + my, xFrom, xTo, visible, count);
+			}
+
+			if(test >= 0.0)
+			{
+				testRange(cs, nearPlane, 
+					yFrom + my, yTo, xFrom, xTo, visible, count);
+			}
+		}
+		else
+		{
+			const Plane& rightPlane = m_planesXW[xFrom + mx - 1];
+			F32 test = cs.testPlane(rightPlane);
+
+			if(test <= 0.0)
+			{
+				testRange(cs, nearPlane, 
+					yFrom, yTo, xFrom, xFrom + mx, visible, count);
+			}
+
+			if(test >= 0.0)
+			{
+				testRange(cs, nearPlane, 
+					yFrom, yTo, xFrom + mx, xTo, visible, count);
+			}
+		}
+
+		return;
+	}
+
 	// Do the checks
 	Bool inside[2][2] = {{false, false}, {false, false}};
-	U touchingPlanes = 0;
 
 	// Top looking plane check
-	if(my > 0)
 	{
 		// Pick the correct top lookin plane (y)
 		const Plane& topPlane = m_planesYW[yFrom + my - 1];
@@ -388,8 +356,6 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		}
 		else
 		{
-			++touchingPlanes;
-
 			// Possibly all inside
 			for(U i = 0; i < 2; i++)
 			{
@@ -400,20 +366,8 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 			}
 		}
 	}
-	else
-	{
-		// Possibly all inside
-		for(U i = 0; i < 2; i++)
-		{
-			for(U j = 0; j < 2; j++)
-			{
-				inside[i][j] = true;
-			}
-		}
-	}
 
 	// Right looking plane check
-	if(mx > 0)
 	{
 		// Pick the correct right looking plane (x)
 		const Plane& rightPlane = m_planesXW[xFrom + mx - 1];
@@ -430,92 +384,223 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 		else
 		{
 			// Do nothing and keep the top looking plane check results
-			++touchingPlanes;
 		}
-	}
-
-	// If touching both planes then we need detailed tests
-	//if(touchingPlanes > 2)
-	{
-		inside[0][0] = testAgainstHull(cs, 
-			yFrom, yFrom + my, xFrom, xFrom + mx);
-		inside[0][1] = testAgainstHull(cs, 
-			yFrom, yFrom + my, xFrom + mx, xTo);
-		inside[1][0] = testAgainstHull(cs, 
-			yFrom + my, yTo, xFrom, xFrom + mx);
-		inside[1][1] = testAgainstHull(cs, 
-			yFrom + my, yTo, xFrom + mx, xTo);
 	}
 
 	// Now move lower to the hierarchy
-	if(mx == 0)
+	if(inside[0][0])
 	{
-		if(inside[0][0])
-		{
-			testRange(cs, nearPlane,
-				yFrom, yFrom + my,
-				xFrom, xTo,
-				visible, count);
-		}
-
-		if(inside[1][0])
-		{
-			testRange(cs, nearPlane,
-				yFrom + my, yTo,
-				xFrom, xTo,
-				visible, count);
-		}
+		testRange(cs, nearPlane,
+			yFrom, yFrom + my,
+			xFrom, xFrom + mx,
+			visible, count);
 	}
-	else if(my == 0)
-	{
-		if(inside[0][0])
-		{
-			testRange(cs, nearPlane,
-				yFrom, yTo,
-				xFrom, xFrom + mx,
-				visible, count);
-		}
 
-		if(inside[0][1])
+	if(inside[0][1])
+	{
+		testRange(cs, nearPlane,
+			yFrom, yFrom + my,
+			xFrom + mx, xTo,
+			visible, count);
+	}
+
+	if(inside[1][0])
+	{
+		testRange(cs, nearPlane,
+			yFrom + my, yTo,
+			xFrom, xFrom + mx,
+			visible, count);
+	}
+
+	if(inside[1][1])
+	{
+		testRange(cs, nearPlane,
+			yFrom + my, yTo,
+			xFrom + mx, xTo,
+			visible, count);
+	}
+}
+
+//==============================================================================
+void Tiler::testFastSphere(
+	const Sphere& s, VisibleTiles* visible, U& count) const
+{
+	const Camera& cam = m_r->getSceneGraph().getActiveCamera();
+	const Mat4& vp = 
+		cam.getComponent<FrustumComponent>().getViewProjectionMatrix();
+	const Transform& trf = 
+		cam.getComponent<MoveComponent>().getWorldTransform();
+	const Mat3x4& rot = trf.getRotation();
+
+	const Vec4& scent = s.getCenter();
+	const F32 srad = s.getRadius();
+
+	// Compute projection points
+	Vec4 a, b;
+
+	/*Vec4 a = vp * s.getCenter().xyz1();
+	Vec2 center = a.xy() / a.w();*/
+
+	Vec4 eye = trf.getOrigin() - scent;
+
+	if(ANKI_UNLIKELY(eye.getLengthSquared() <= srad * srad))
+	{
+		// Camera totaly inside the sphere
+		for(U y = 0; y < m_r->getTilesCount().y(); ++y)
 		{
-			testRange(cs, nearPlane,
-				yFrom, yTo,
-				xFrom + mx, xTo,
-				visible, count);
+			for(U x = 0; x < m_r->getTilesCount().x(); ++x)
+			{
+				visible->pushBack(x, y);
+				++count;
+			}
 		}
+		return;
+	}
+
+	a = rot.getColumn(1).xyz0().cross(eye);
+	a.normalize();
+	b = scent + a * srad;
+	b = vp * b.xyz1();
+	F32 right = b.x() / b.w();
+
+	a = -a;
+	b = scent + a * srad;
+	b = vp * b.xyz1();
+	F32 left = b.x() / b.w();
+
+	a = eye.cross(rot.getColumn(0).xyz0());
+	a.normalize();
+	b = scent + a * srad;
+	b = vp * b.xyz1();
+	F32 top = b.y() / b.w();
+
+	a = -a;
+	b = scent + a * srad;
+	b = vp * b.xyz1();
+	F32 bottom = b.y() / b.w();
+
+	// Do a box test
+	F32 tcountX = m_r->getTilesCount().x();
+	F32 tcountY = m_r->getTilesCount().y();
+
+	I xFrom = floor(tcountX * (left * 0.5 + 0.5));
+	xFrom = clamp<I>(xFrom, 0, m_r->getTilesCount().x());
+	I xTo = ceil(tcountX * (right * 0.5 + 0.5));
+	xTo = min<U>(xTo, m_r->getTilesCount().x());
+	ANKI_ASSERT(xFrom >= 0 && xFrom <= tcountX 
+		&& xTo >= 0 && xTo <= tcountX);
+
+	I yFrom = floor(tcountY * (bottom * 0.5 + 0.5));
+	yFrom = clamp<I>(yFrom, 0, m_r->getTilesCount().y());
+	I yTo = ceil(tcountY * (top * 0.5 + 0.5));
+	yTo = min<I>(yTo, m_r->getTilesCount().y());
+	ANKI_ASSERT(yFrom <= tcountY && yTo <= tcountY);
+	
+#if 0
+	// Since it's possible that the sphere will be ellipsis when projected and
+	// since we don't want to do intersections with eclipses do a trick where
+	// you scale everything and make the eclipse a cyrcle
+	Vec2 scale;
+	F32 maxR;
+
+	if(r.x() > r.y())
+	{
+		scale = Vec2(1.0, r.x() / r.y());
+		maxR = r.x();
 	}
 	else
 	{
-		if(inside[0][0])
-		{
-			testRange(cs, nearPlane,
-				yFrom, yFrom + my,
-				xFrom, xFrom + mx,
-				visible, count);
-		}
+		scale = Vec2(r.y() / r.x(), 1.0);
+		maxR = r.y();
+	}
 
-		if(inside[0][1])
-		{
-			testRange(cs, nearPlane,
-				yFrom, yFrom + my,
-				xFrom + mx, xTo,
-				visible, count);
-		}
+	F32 maxR2 = maxR * maxR;
 
-		if(inside[1][0])
-		{
-			testRange(cs, nearPlane,
-				yFrom + my, yTo,
-				xFrom, xFrom + mx,
-				visible, count);
-		}
+	Vec2 tileSize(1.0 / tcountX, 1.0 / tcountY);
+	tileSize *= scale;
 
-		if(inside[1][1])
+	c *= scale;
+#endif
+
+	Vec2 tileSize(1.0 / tcountX, 1.0 / tcountY);
+
+	a = vp * s.getCenter().xyz1();
+	Vec2 c = a.xy() / a.w();
+	c = c * 0.5 + 0.5;
+
+	for(I y = yFrom; y < yTo; ++y)
+	{
+		for(I x = xFrom; x < xTo; ++x)
 		{
-			testRange(cs, nearPlane,
-				yFrom + my, yTo,
-				xFrom + mx, xTo,
-				visible, count);
+			// Do detailed tests
+
+			Vec2 tileMin = Vec2(x, y) * tileSize;
+			Vec2 tileMax = Vec2(x + 1, y + 1) * tileSize;
+			
+			// Find closest point of sphere center and tile
+			Vec2 cp(0.0);
+			for(U i = 0; i < 2; ++i)
+			{
+				if(c[i] > tileMax[i])
+				{
+					cp[i] = tileMax[i];
+				}
+				else if (c[i] < tileMin[i])
+				{
+					cp[i] = tileMin[i];
+				}
+				else
+				{
+					// the c lies between min and max
+					cp[i] = c[i];
+				}
+			}
+
+			const Vec4& projParams = m_r->getProjectionParameters();
+			Vec4 view;
+			const F32 depth = 1.0;
+			view.z() = projParams.z() / (projParams.w() + depth);
+			Vec2 viewxy = (cp * 2.0 - 1.0) * projParams.xy() * view.z();
+			view.x() = viewxy.x();
+			view.y() = viewxy.y();
+			view.w() = 0.0;
+
+			Vec3 world = trf.getRotation() * view;
+			LineSegment ls(trf.getOrigin(), world.xyz0());
+			Bool inside = testCollisionShapes(ls, s);
+
+#if 0
+			// Find closest point
+			Vec2 cp(0.0);
+			Vec2 boxMin(x * tileSize.x(), y * tileSize.y());
+			Vec2 boxMax((x + 1) * tileSize.x(), (y + 1) * tileSize.y());
+
+			for(U i = 0; i < 2; ++i)
+			{
+				if(c[i] > boxMax[i])
+				{
+					cp[i] = boxMax[i];
+				}
+				else if (c[i] < boxMin[i])
+				{
+					cp[i] = boxMin[i];
+				}
+				else
+				{
+					// the c lies between min and max
+					cp[i] = c[i];
+				}
+			}
+
+			Vec2 sub = c - cp;
+			Bool inside = sub.getLengthSquared() <= maxR2;
+#endif
+
+			if(inside)
+			{
+				visible->pushBack(x, y);
+				++count;
+			}
 		}
 	}
 }
@@ -641,8 +726,6 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		++farPlanesW;
 	}
 #endif
-
-	updateHullPoints(threadId, threadsCount, cam);
 }
 
 //==============================================================================
