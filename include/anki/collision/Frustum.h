@@ -111,7 +111,7 @@ protected:
 	/// @}
 
 	/// Used to check against the frustum
-	Array<Plane, (U)PlaneType::COUNT> m_planes;
+	Array<Plane, (U)PlaneType::COUNT> m_planesL;
 	Array<Plane, (U)PlaneType::COUNT> m_planesW;
 
 	/// Keep the transformation.
@@ -122,8 +122,10 @@ protected:
 
 	/// Called when a viewing variable changes. It recalculates the planes and
 	/// the other variables.
-	/// @note It's const because it must be called on const methods.
-	virtual void recalculate(Bool planes, Bool other) = 0;
+	virtual void recalculate() = 0;
+
+	/// Called when there is a change in the transformation.
+	virtual void onTransform() = 0;
 
 	/// Update if dirty
 	void update() const;
@@ -190,7 +192,8 @@ public:
 
 	const Array<Vec4, 5>& getPoints() const
 	{
-		return m_points;
+		update();
+		return m_pointsW;
 	}
 
 	/// Copy
@@ -216,14 +219,17 @@ private:
 
 	/// @name Shape
 	/// @{
-	Array<Vec4, 5> m_points;
+	Array<Vec4, 5> m_pointsW;
+	Array<Vec4, 4> m_pointsL; ///< Don't need the eye point.
 	ConvexHullShape m_hull;
 	/// @}
 
 	/// Implements Frustum::recalculate. Recalculates:
 	/// @li planes
 	/// @li line segments
-	void recalculate(Bool planes, Bool other) override;
+	void recalculate() override;
+
+	void onTransform() override;
 };
 
 /// Frustum shape for orthographic cameras
@@ -235,7 +241,7 @@ public:
 
 	/// Copy
 	OrthographicFrustum(const OrthographicFrustum& b)
-		: OrthographicFrustum()
+	:	OrthographicFrustum()
 	{
 		*this = b;
 	}
@@ -243,7 +249,7 @@ public:
 	/// Set all
 	OrthographicFrustum(F32 left, F32 right, F32 near,
 		F32 far, F32 top, F32 bottom)
-		: OrthographicFrustum()
+	:	OrthographicFrustum()
 	{
 		setAll(left, right, near, far, top, bottom);
 	}
@@ -304,7 +310,8 @@ public:
 	/// Needed for debug drawing
 	const Obb& getObb() const
 	{
-		return m_obb;
+		update();
+		return m_obbW;
 	}
 
 	/// Copy
@@ -329,11 +336,13 @@ private:
 
 	/// @name Shape
 	/// @{
-	Obb m_obb; ///< Including shape
+	Obb m_obbL, m_obbW; ///< Including shape
 	/// @}
 
-	/// Implements Frustum::recalculate. Recalculate @a m_planes and @a m_obb
-	void recalculate(Bool planes, Bool other) override;
+	/// Implements Frustum::recalculate. Recalculate @a m_planesL and @a m_obb
+	void recalculate() override;
+
+	void onTransform() override;
 };
 /// @}
 

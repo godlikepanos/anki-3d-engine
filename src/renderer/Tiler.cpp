@@ -226,7 +226,7 @@ Bool Tiler::test(
 
 	// Call the recursive function or the fast path
 	U count = 0;
-#if 0
+#if 1
 	if(isa<Sphere>(cs))
 	{
 		testFastSphere(dcast<const Sphere&>(cs), visible, count);

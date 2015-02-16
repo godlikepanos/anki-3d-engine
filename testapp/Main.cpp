@@ -82,11 +82,6 @@ Error init()
 		1.0));
 #endif
 
-	cam->getComponent<MoveComponent>().
-		setLocalTransform(Transform(Vec4(0.0, 0, 10, 0),
-		Mat3x4::getIdentity(),
-		1.0));
-
 	// lights
 #if 0
 	Vec3 lpos(-24.0, 0.1, -10.0);
@@ -250,7 +245,7 @@ Error init()
 
 	if(0)
 	{
-		err = scene.newSceneNode<SpotLight>("plight0", spot);
+		err = scene.newSceneNode<SpotLight>("horse", spot);
 		if(err) return err;
 
 		lightc = spot->tryGetComponent<LightComponent>();
@@ -260,6 +255,7 @@ Error init()
 
 		move = spot->tryGetComponent<MoveComponent>();
 		move->setLocalOrigin(Vec4(1.0, 2.0, 0.2, 0.0));
+		move->setLocalRotation(Mat3x4(Axisang(toRad(90.0), Vec3(0, 1, 0))));
 	}
 
 #if 1
@@ -533,7 +529,7 @@ Error initSubsystems(int argc, char* argv[])
 
 	//config.set("maxTextureSize", 256);
 
-	config.set("fullscreenDesktopResolution", true);
+	config.set("fullscreenDesktopResolution", false);
 	config.set("debugContext", false);
 
 	app = new App;

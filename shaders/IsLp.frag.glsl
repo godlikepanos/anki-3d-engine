@@ -345,10 +345,10 @@ void main()
 		* vec3(0.01, 0.001, 0.001);
 #endif
 
-#if 1
-	if(spotTexLightsCount != 0)
+#if 0
+	if(pointLightsCount != 0)
 	{
-		out_color = vec3(0.5, 0.0, 0.0);
+		out_color = vec3(0.5 / float(pointLightsCount));
 	}
 #endif
 }
