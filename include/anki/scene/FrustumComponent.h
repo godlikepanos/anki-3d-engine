@@ -67,6 +67,18 @@ public:
 		return m_vpm;
 	}
 
+	/// Parameters used to get the view space position using the depth value 
+	/// and the NDC xy coordinates.
+	/// @code
+	/// vec3 fragPos;
+	/// fragPos.z = projectionParams.z / (projectionParams.w + depth);
+	/// fragPos.xy = projectionParams * NDC * fragPos.z;
+	/// @endcode
+	const Vec4& getProjectionParameters() const
+	{
+		return m_projParams;
+	}
+
 	/// Get the origin for sorting and visibility tests
 	const Vec4& getFrustumOrigin() const
 	{
@@ -138,12 +150,16 @@ private:
 	Mat4 m_vm = Mat4::getIdentity(); ///< View matrix
 	Mat4 m_vpm = Mat4::getIdentity(); ///< View projection matrix
 
+	Vec4 m_projParams = Vec4(0.0);
+
 	/// Visibility stuff. It's per frame so the pointer is invalid on the next 
 	/// frame and before any visibility tests are run
 	VisibilityTestResults* m_visible = nullptr;
 	VisibilityStats m_stats;
 
 	U8 m_flags;
+
+	void computeProjectionParams();
 };
 /// @}
 

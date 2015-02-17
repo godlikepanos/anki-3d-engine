@@ -350,5 +350,12 @@ void main()
 	{
 		out_color = vec3(0.5 / float(pointLightsCount));
 	}
+
+	/*uint x = in_instanceId % 60;
+	uint y = in_instanceId / 60;
+	if(x == 30 && y == 20)
+	{
+		out_color = vec3(1.0, 0.0, 0.0);
+	}*/
 #endif
 }

@@ -43,6 +43,20 @@ public:
 };
 
 //==============================================================================
+static Vec4 unproject(const F32 depth, const Vec2& ndc, const Vec4& projParams)
+{
+	Vec4 view;
+
+	view.z() = projParams.z() / (projParams.w() + depth);
+	Vec2 viewxy = ndc * projParams.xy() * view.z();
+	view.x() = viewxy.x();
+	view.y() = viewxy.y();
+	view.w() = 0.0;
+
+	return view;
+}
+
+//==============================================================================
 // Tiler                                                                       =
 //==============================================================================
 
@@ -428,8 +442,9 @@ void Tiler::testFastSphere(
 	const Sphere& s, VisibleTiles* visible, U& count) const
 {
 	const Camera& cam = m_r->getSceneGraph().getActiveCamera();
-	const Mat4& vp = 
-		cam.getComponent<FrustumComponent>().getViewProjectionMatrix();
+	const FrustumComponent& frc = cam.getComponent<FrustumComponent>();
+	const Mat4& vp = frc.getViewProjectionMatrix();
+	const Mat4& v = frc.getViewMatrix();
 	const Transform& trf = 
 		cam.getComponent<MoveComponent>().getWorldTransform();
 
@@ -510,11 +525,13 @@ void Tiler::testFastSphere(
 	Vec2 c = a.xy() / a.w();
 	c = c * 0.5 + 0.5;
 
+	Vec4 sphereCenterVSpace = (v * scent.xyz1()).xyz0();
+	Vec4 eyeVSpace = v * trf.getOrigin();
+
 	for(I y = yFrom; y < yTo; ++y)
 	{
 		for(I x = xFrom; x < xTo; ++x)
 		{
-#if 1
 			// Do detailed tests
 
 			Vec2 tileMin = Vec2(x, y) * tileSize;
@@ -539,6 +556,7 @@ void Tiler::testFastSphere(
 				}
 			}
 
+			// Unproject the closest point to view space
 			const Vec4& projParams = m_r->getProjectionParameters();
 			Vec4 view;
 			const F32 depth = 1.0;
@@ -548,12 +566,13 @@ void Tiler::testFastSphere(
 			view.y() = viewxy.y();
 			view.w() = 0.0;
 
-			Vec3 world = trf.getRotation() * view;
-			LineSegment ls(trf.getOrigin(), world.xyz0());
-			Bool inside = testCollisionShapes(ls, s);
+			// Do a simple ray-sphere test
+			Vec4 dir = view;
+			Vec4 proj = sphereCenterVSpace.getProjection(dir);
+			F32 lenSq = (sphereCenterVSpace - proj).getLengthSquared();
+			Bool inside = lenSq <= (srad * srad);
 
 			if(inside)
-#endif
 			{
 				visible->pushBack(x, y);
 				++count;
@@ -568,12 +587,13 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 {
 	PtrSize start, end;
 	const MoveComponent& move = cam.getComponent<MoveComponent>();
-	const FrustumComponent& fr = cam.getComponent<FrustumComponent>();
-	ANKI_ASSERT(fr.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
+	const FrustumComponent& frc = cam.getComponent<FrustumComponent>();
+	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
 	const PerspectiveFrustum& frustum = 
-		static_cast<const PerspectiveFrustum&>(fr.getFrustum());
+		static_cast<const PerspectiveFrustum&>(frc.getFrustum());
 
 	const Transform& trf = move.getWorldTransform();
+	const Vec4& projParams = frc.getProjectionParameters();
 
 	if(frustumChanged)
 	{
@@ -596,7 +616,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		for(U i = start; i < end; i++)
 		{
-			calcPlaneY(i, o6, n);
+			calcPlaneY(i, o6, n, projParams);
 
 			CHECK_PLANE_PTR(&m_planesYW[i]);
 			CHECK_PLANE_PTR(&m_planesY[i]);
@@ -610,7 +630,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		for(U j = start; j < end; j++)
 		{
-			calcPlaneX(j, l6, n);
+			calcPlaneX(j, l6, n, projParams);
 
 			CHECK_PLANE_PTR(&m_planesXW[j]);
 			CHECK_PLANE_PTR(&m_planesX[j]);
@@ -686,8 +706,10 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 }
 
 //==============================================================================
-void Tiler::calcPlaneY(U i, const F32 o6, const F32 near)
+void Tiler::calcPlaneY(
+	U i, const F32 o6, const F32 near, const Vec4& projParams)
 {
+#if 1
 	Vec4 a, b;
 	Plane& plane = m_planesY[i];
 	ANKI_ASSERT(i < m_allPlanes.getSize());
@@ -701,10 +723,25 @@ void Tiler::calcPlaneY(U i, const F32 o6, const F32 near)
 	b.normalize();
 
 	plane = Plane(b, 0.0);
+#else
+	Vec4 viewA = unproject(
+		1.0, Vec2(0.0, F32(i) / m_r->getTilesCount().y()) * 2.0 - 1.0,
+		projParams);
+
+	Vec4 viewB = unproject(
+		1.0, Vec2(1.0, F32(i) / m_r->getTilesCount().y()) * 2.0 - 1.0,
+		projParams);
+
+	Vec4 n = viewB.cross(viewA);
+	n.normalize();
+
+	plane = Plane(b, 0.0);
+#endif
 }
 
 //==============================================================================
-void Tiler::calcPlaneX(U j, const F32 l6, const F32 near)
+void Tiler::calcPlaneX(
+	U j, const F32 l6, const F32 near, const Vec4& projParams)
 {
 	Vec4 a, b;
 	Plane& plane = m_planesX[j];

@@ -245,15 +245,15 @@ Error init()
 
 	if(0)
 	{
-		err = scene.newSceneNode<SpotLight>("horse", spot);
+		err = scene.newSceneNode<PointLight>("plight0", point);
 		if(err) return err;
 
-		lightc = spot->tryGetComponent<LightComponent>();
+		lightc = point->tryGetComponent<LightComponent>();
 		lightc->setDistance(10.2);
 		lightc->setDiffuseColor(Vec4(1.0));
 		lightc->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
 
-		move = spot->tryGetComponent<MoveComponent>();
+		move = point->tryGetComponent<MoveComponent>();
 		move->setLocalOrigin(Vec4(1.0, 2.0, 0.2, 0.0));
 		move->setLocalRotation(Mat3x4(Axisang(toRad(90.0), Vec3(0, 1, 0))));
 	}
@@ -500,7 +500,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.enabled", true);
 	config.set("is.sm.poissonEnabled", false);
 	config.set("is.sm.resolution", 1024);
-	config.set("pps.enabled", true);
+	config.set("pps.enabled", false);
 	config.set("pps.hdr.enabled", true);
 	config.set("pps.hdr.renderingQuality", 0.5);
 	config.set("pps.hdr.blurringDist", 1.0);

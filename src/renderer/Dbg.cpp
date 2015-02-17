@@ -138,7 +138,7 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 		phyd.drawWorld(scene._getPhysicsWorld());
 	}
 
-#if 0
+#if 1
 	{
 		SceneNode& sn = scene.findSceneNode("plight0");
 		SpatialComponent& sp = sn.getComponent<SpatialComponent>();

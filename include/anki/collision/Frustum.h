@@ -142,6 +142,11 @@ private:
 class PerspectiveFrustum: public Frustum
 {
 public:
+	static Bool classof(const Frustum& c)
+	{
+		return c.getType() == Type::PERSPECTIVE;
+	}
+
 	/// Default
 	PerspectiveFrustum();
 
@@ -236,6 +241,11 @@ private:
 class OrthographicFrustum: public Frustum
 {
 public:
+	static Bool classof(const Frustum& c)
+	{
+		return c.getType() == Type::ORTHOGRAPHIC;
+	}
+
 	/// Default
 	OrthographicFrustum();
 

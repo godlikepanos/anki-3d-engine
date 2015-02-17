@@ -330,8 +330,6 @@ private:
 
 	String m_shadersPrependedSource; ///< String to append in user shaders
 
-	void computeProjectionParams(const Mat4& projMat);
-
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
 

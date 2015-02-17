@@ -107,6 +107,12 @@ public:
 		ANKI_ASSERT(isZero<T>(b.w()));
 		return TVec4(Base::xyz().cross(b.xyz()), static_cast<T>(0));
 	}
+
+	TVec4 getProjection(const TVec4& toThis) const
+	{
+		ANKI_ASSERT(w() == T(0));
+		return (toThis * ((*this).dot(toThis) / (toThis.dot(toThis)))).xyz0();
+	}
 	/// @{
 
 	/// @name Operators with other

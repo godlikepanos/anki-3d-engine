@@ -161,8 +161,9 @@ Error Renderer::render(SceneGraph& scene,
 		|| m_projectionParamsUpdateTimestamp < camUpdateTimestamp
 		|| m_projectionParamsUpdateTimestamp == 0)
 	{
-		ANKI_ASSERT(cam.getCameraType() == Camera::Type::PERSPECTIVE);
-		computeProjectionParams(fr.getProjectionMatrix());
+		const FrustumComponent& frc = cam.getComponent<FrustumComponent>();
+
+		m_projectionParams = frc.getProjectionParameters();
 		m_projectionParamsUpdateTimestamp = getGlobalTimestamp();
 	}
 
@@ -251,25 +252,6 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 	Vec4 out = invPm * vec;
 	out /= out.w();
 	return out.xyz();
-}
-
-//==============================================================================
-void Renderer::computeProjectionParams(const Mat4& m)
-{
-	// First, z' = (m * Pv) / 2 + 0.5 where Pv is the view space position.
-	// Solving that for Pv.z we get
-	// Pv.z = A / (z' + B)
-	// where A = (-m23 / 2) and B = (m22/2 - 0.5)
-	// so we save the A and B in the projection params vector
-	m_projectionParams.z() = -m(2, 3) * 0.5;
-	m_projectionParams.w() = m(2, 2) * 0.5 - 0.5;
-
-	// Using the same logic the Pv.x = x' * w / m00
-	// so Pv.x = x' * Pv.z * (-1 / m00)
-	m_projectionParams.x() = -1.0 / m(0, 0);
-
-	// Same for y
-	m_projectionParams.y() = -1.0 / m(1, 1);
 }
 
 //==============================================================================
