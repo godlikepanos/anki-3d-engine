@@ -121,10 +121,10 @@ private:
 		Camera& cam, Bool frustumChanged);
 
 	/// Calculate and set a top looking plane
-	void calcPlaneY(U i, const F32 o6, const F32 near, const Vec4& projParams);
+	void calcPlaneY(U i, const Vec4& projParams);
 
 	/// Calculate and set a right looking plane
-	void calcPlaneX(U j, const F32 l6, const F32 near, const Vec4& projParams);
+	void calcPlaneX(U j, const Vec4& projParams);
 };
 /// @}
 

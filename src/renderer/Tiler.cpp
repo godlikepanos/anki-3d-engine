@@ -46,11 +46,11 @@ public:
 static Vec4 unproject(const F32 depth, const Vec2& ndc, const Vec4& projParams)
 {
 	Vec4 view;
-
-	view.z() = projParams.z() / (projParams.w() + depth);
-	Vec2 viewxy = ndc * projParams.xy() * view.z();
+	F32 z = projParams.z() / (projParams.w() + depth);
+	Vec2 viewxy = ndc * projParams.xy() * z;
 	view.x() = viewxy.x();
 	view.y() = viewxy.y();
+	view.z() = z;
 	view.w() = 0.0;
 
 	return view;
@@ -556,14 +556,8 @@ void Tiler::testFastSphere(
 			}
 
 			// Unproject the closest point to view space
-			const Vec4& projParams = m_r->getProjectionParameters();
-			Vec4 view;
-			const F32 depth = 1.0;
-			view.z() = projParams.z() / (projParams.w() + depth);
-			Vec2 viewxy = (cp * 2.0 - 1.0) * projParams.xy() * view.z();
-			view.x() = viewxy.x();
-			view.y() = viewxy.y();
-			view.w() = 0.0;
+			Vec4 view = unproject(
+				1.0, cp * 2.0 - 1.0, frc.getProjectionParameters());
 
 			// Do a simple ray-sphere test
 			Vec4 dir = view;
@@ -598,16 +592,6 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 	{
 		// Re-calculate the planes in local space
 
-		const F32 fx = frustum.getFovX();
-		const F32 fy = frustum.getFovY();
-		const F32 n = frustum.getNear();
-
-		// Calculate l6 and o6 used to rotate the planes
-		F32 l = 2.0 * n * tan(fx / 2.0);
-		F32 l6 = l / m_r->getTilesCount().x();
-		F32 o = 2.0 * n * tan(fy / 2.0);
-		F32 o6 = o / m_r->getTilesCount().y();
-
 		// First the top looking planes
 		Threadpool::Task::choseStartEnd(
 			threadId, threadsCount, m_r->getTilesCount().y() - 1,
@@ -615,7 +599,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		for(U i = start; i < end; i++)
 		{
-			calcPlaneY(i, o6, n, projParams);
+			calcPlaneY(i, projParams);
 
 			CHECK_PLANE_PTR(&m_planesYW[i]);
 			CHECK_PLANE_PTR(&m_planesY[i]);
@@ -629,7 +613,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		for(U j = start; j < end; j++)
 		{
-			calcPlaneX(j, l6, n, projParams);
+			calcPlaneX(j, projParams);
 
 			CHECK_PLANE_PTR(&m_planesXW[j]);
 			CHECK_PLANE_PTR(&m_planesX[j]);
@@ -705,24 +689,9 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 }
 
 //==============================================================================
-void Tiler::calcPlaneY(
-	U i, const F32 o6, const F32 near, const Vec4& projParams)
+void Tiler::calcPlaneY(U i, const Vec4& projParams)
 {
 	Plane& plane = m_planesY[i];
-#if 0
-	Vec4 a, b;
-	ANKI_ASSERT(i < m_allPlanes.getSize());
-
-	a = Vec4(0.0, 
-		(I(i + 1) - I(m_r->getTilesCount().y()) / 2) * o6,
-		-near,
-		0.0);
-
-	b = Vec4(1.0, 0.0, 0.0, 0.0).cross(a);
-	b.normalize();
-
-	plane = Plane(b, 0.0);
-#else
 	F32 y = F32(i + 1) / m_r->getTilesCount().y() * 2.0 - 1.0;
 
 	Vec4 viewA = unproject(1.0, Vec2(-1.0, y), projParams);
@@ -732,28 +701,12 @@ void Tiler::calcPlaneY(
 	n.normalize();
 
 	plane = Plane(n, 0.0);
-#endif
 }
 
 //==============================================================================
-void Tiler::calcPlaneX(
-	U j, const F32 l6, const F32 near, const Vec4& projParams)
+void Tiler::calcPlaneX(U j, const Vec4& projParams)
 {
 	Plane& plane = m_planesX[j];
-#if 0
-	Vec4 a, b;
-	ANKI_ASSERT(j < m_allPlanes.getSize());
-
-	a = Vec4((I(j + 1) - I(m_r->getTilesCount().x()) / 2) * l6,
-		0.0, 
-		-near,
-		0.0);
-
-	b = a.cross(Vec4(0.0, 1.0, 0.0, 0.0));
-	b.normalize();
-
-	plane = Plane(b, 0.0);
-#else
 	F32 x = F32(j + 1) / m_r->getTilesCount().x() * 2.0 - 1.0;
 
 	Vec4 viewA = unproject(1.0, Vec2(x, -1.0), projParams);
@@ -763,7 +716,6 @@ void Tiler::calcPlaneX(
 	n.normalize();
 
 	plane = Plane(n, 0.0);
-#endif
 }
 
 } // end namespace anki
