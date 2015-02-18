@@ -526,7 +526,6 @@ void Tiler::testFastSphere(
 	c = c * 0.5 + 0.5;
 
 	Vec4 sphereCenterVSpace = (v * scent.xyz1()).xyz0();
-	Vec4 eyeVSpace = v * trf.getOrigin();
 
 	for(I y = yFrom; y < yTo; ++y)
 	{
@@ -709,9 +708,9 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 void Tiler::calcPlaneY(
 	U i, const F32 o6, const F32 near, const Vec4& projParams)
 {
-#if 1
-	Vec4 a, b;
 	Plane& plane = m_planesY[i];
+#if 0
+	Vec4 a, b;
 	ANKI_ASSERT(i < m_allPlanes.getSize());
 
 	a = Vec4(0.0, 
@@ -724,18 +723,15 @@ void Tiler::calcPlaneY(
 
 	plane = Plane(b, 0.0);
 #else
-	Vec4 viewA = unproject(
-		1.0, Vec2(0.0, F32(i) / m_r->getTilesCount().y()) * 2.0 - 1.0,
-		projParams);
+	F32 y = F32(i + 1) / m_r->getTilesCount().y() * 2.0 - 1.0;
 
-	Vec4 viewB = unproject(
-		1.0, Vec2(1.0, F32(i) / m_r->getTilesCount().y()) * 2.0 - 1.0,
-		projParams);
+	Vec4 viewA = unproject(1.0, Vec2(-1.0, y), projParams);
+	Vec4 viewB = unproject(1.0, Vec2(1.0, y), projParams);
 
 	Vec4 n = viewB.cross(viewA);
 	n.normalize();
 
-	plane = Plane(b, 0.0);
+	plane = Plane(n, 0.0);
 #endif
 }
 
@@ -743,8 +739,9 @@ void Tiler::calcPlaneY(
 void Tiler::calcPlaneX(
 	U j, const F32 l6, const F32 near, const Vec4& projParams)
 {
-	Vec4 a, b;
 	Plane& plane = m_planesX[j];
+#if 0
+	Vec4 a, b;
 	ANKI_ASSERT(j < m_allPlanes.getSize());
 
 	a = Vec4((I(j + 1) - I(m_r->getTilesCount().x()) / 2) * l6,
@@ -756,6 +753,17 @@ void Tiler::calcPlaneX(
 	b.normalize();
 
 	plane = Plane(b, 0.0);
+#else
+	F32 x = F32(j + 1) / m_r->getTilesCount().x() * 2.0 - 1.0;
+
+	Vec4 viewA = unproject(1.0, Vec2(x, -1.0), projParams);
+	Vec4 viewB = unproject(1.0, Vec2(x, 1.0), projParams);
+
+	Vec4 n = viewA.cross(viewB);
+	n.normalize();
+
+	plane = Plane(n, 0.0);
+#endif
 }
 
 } // end namespace anki
