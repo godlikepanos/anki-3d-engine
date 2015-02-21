@@ -59,7 +59,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.1);
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.3);
 
 	if(getenv("PROFILE"))
 	{
@@ -72,7 +72,7 @@ Error init()
 	const F32 ang = 55.0;
 	cam->setAll(
 		renderer.getAspectRatio() * toRad(ang),
-		toRad(ang), 0.2, 500.0);
+		toRad(ang), 0.2, 200.0);
 	scene.setActiveCamera(cam);
 
 #if NO_PLAYER
@@ -232,15 +232,8 @@ Error init()
 	err = scene.newSceneNode<ModelNode>("horse", horse, 
 		"models/horse/horse.ankimdl");
 	if(err) return err;
-	//horse->getComponent<MoveComponent>().setLocalTransform(
-	//	Transform(Vec4(-2, 0, 0, 0.0), Mat3x4::getIdentity(), 0.7));
-
-	BodyComponent* bodyc = horse->tryGetComponent<BodyComponent>();
-	if(bodyc)
-	{
-		bodyc->setTransform(
-			Transform(Vec4(10, 10, 4, 0), Mat3x4::getIdentity(), 1.0));
-	}
+	horse->getComponent<MoveComponent>().setLocalTransform(
+		Transform(Vec4(0, 3, 0, 0.0), Mat3x4::getIdentity(), 0.5));
 #endif
 
 	if(0)
@@ -249,12 +242,12 @@ Error init()
 		if(err) return err;
 
 		lightc = point->tryGetComponent<LightComponent>();
-		lightc->setDistance(10.2);
+		lightc->setDistance(2.2);
 		lightc->setDiffuseColor(Vec4(1.0));
 		lightc->setSpecularColor(Vec4(0.6, 0.6, 0.3, 1.0));
 
 		move = point->tryGetComponent<MoveComponent>();
-		move->setLocalOrigin(Vec4(1.0, 2.0, 0.2, 0.0));
+		move->setLocalOrigin(Vec4(3.0, 2.0, 0.2, 0.0));
 		move->setLocalRotation(Mat3x4(Axisang(toRad(90.0), Vec3(0, 1, 0))));
 	}
 
@@ -500,7 +493,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.enabled", true);
 	config.set("is.sm.poissonEnabled", false);
 	config.set("is.sm.resolution", 1024);
-	config.set("pps.enabled", true);
+	config.set("pps.enabled", false);
 	config.set("pps.hdr.enabled", true);
 	config.set("pps.hdr.renderingQuality", 0.5);
 	config.set("pps.hdr.blurringDist", 1.0);
@@ -529,7 +522,15 @@ Error initSubsystems(int argc, char* argv[])
 
 	//config.set("maxTextureSize", 256);
 
-	config.set("fullscreenDesktopResolution", false);
+	Bool fullscreen = false;
+
+	config.set("fullscreenDesktopResolution", fullscreen);
+	if(!fullscreen)
+	{
+		config.set("tilesXCount", 40);
+		config.set("tilesYCount", 24);
+	}
+
 	config.set("debugContext", false);
 
 	app = new App;

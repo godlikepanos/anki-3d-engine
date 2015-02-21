@@ -20,7 +20,7 @@ class Frustumable;
 /// @{
 
 /// The result of the Tiler tests.
-struct VisibleTiles
+struct TilerTestResult
 {
 	struct Pair
 	{
@@ -37,7 +37,7 @@ struct VisibleTiles
 	Array<Pair, ANKI_RENDERER_MAX_TILES_X * ANKI_RENDERER_MAX_TILES_Y> 
 		m_tileIds;
 
-	VisibleTiles() = default;
+	TilerTestResult() = default;
 
 	void pushBack(U x, U y)
 	{
@@ -50,12 +50,24 @@ struct VisibleTiles
 	}
 };
 
+/// Test paramters passed to Tiler::test
+struct TilerTestParameters
+{
+	const CollisionShape* m_collisionShape = nullptr;
+	const Aabb* m_collisionShapeBox = nullptr;
+	Bool m_nearPlane = false;
+	TilerTestResult* m_output;
+};
+
 /// Tiler used for visibility tests
 class Tiler: public RenderingPass
 {
 	friend class UpdatePlanesPerspectiveCameraTask;
 
 public:
+	using TestResult = TilerTestResult;
+	using TestParameters = TilerTestParameters;
+
 	Tiler(Renderer* r);
 	~Tiler();
 
@@ -69,24 +81,18 @@ public:
 	void updateTiles(Camera& cam);
 
 	/// Test against all tiles.
-	/// @param[in]  collisionShape The collision shape to test.
-	/// @param      nearPlane      If true check against the near plane as well.
-	/// @param[out] visible        A list with the tiles that contain the 
-	///                            collision shape.
-	Bool test(
-		const CollisionShape& collisionShape,
-		Bool nearPlane,
-		VisibleTiles* visible) const;
+	/// @param[in, out] params The collision parameters.
+	Bool test(TestParameters& params) const;
 
 private:
 	/// Tile planes
 	DArray<Plane> m_allPlanes;
-	Plane* m_planesY = nullptr;
-	Plane* m_planesX = nullptr;
-	Plane* m_planesYW = nullptr;
-	Plane* m_planesXW = nullptr;
-	Plane* m_nearPlanesW = nullptr;
-	Plane* m_farPlanesW = nullptr;
+	SArray<Plane> m_planesY;
+	SArray<Plane> m_planesX;
+	SArray<Plane> m_planesYW;
+	SArray<Plane> m_planesXW;
+	SArray<Plane> m_nearPlanesW;
+	SArray<Plane> m_farPlanesW;
 
 	/// A texture of tilesXCount * tilesYCount size and format RG32UI. Used to
 	/// calculate the near and far planes of the tiles
@@ -96,7 +102,8 @@ private:
 	GlFramebufferHandle m_fb;
 
 	/// PBO buffer that is used to read the data of fai asynchronously
-	GlBufferHandle m_pixelBuff;
+	Array<GlBufferHandle, 2> m_pbos;
+	Array<Vec2*, 2> m_pbosAddress;
 
 	/// Main shader program
 	ProgramResourcePointer m_frag;
@@ -108,14 +115,17 @@ private:
 	/// Timestamp for the same reason as prevCam
 	Timestamp m_planes4UpdateTimestamp = 0;
 
+	Bool m_enableGpuTests = false;
+
 	ANKI_USE_RESULT Error initInternal();
+	ANKI_USE_RESULT Error initPbos();
 
 	void testRange(const CollisionShape& cs, Bool nearPlane,
-		U iFrom, U iTo, U jFrom, U jTo, VisibleTiles* visible, 
+		U iFrom, U iTo, U jFrom, U jTo, TestResult* visible, 
 		U& count) const;
 
-	void testFastSphere(const Sphere& s, 
-		VisibleTiles* visible, U& count) const;
+	void testFastSphere(const Sphere& s, const Aabb& aabb,
+		TestResult* visible, U& count) const;
 
 	void update(U32 threadId, PtrSize threadsCount, 
 		Camera& cam, Bool frustumChanged);

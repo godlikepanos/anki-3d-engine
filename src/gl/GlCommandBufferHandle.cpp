@@ -645,6 +645,11 @@ public:
 			format = GL_RG_INTEGER;
 			type = GL_UNSIGNED_INT;
 		}
+		else if(tex.getInternalFormat() == GL_RG32F)
+		{
+			format = GL_RG;
+			type = GL_FLOAT;
+		}
 		else
 		{
 			ANKI_ASSERT(0 && "Not implemented");

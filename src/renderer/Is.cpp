@@ -264,8 +264,13 @@ public:
 	void binPointLight(SpatialComponent& sp, U pos)
 	{
 		// Do the tests
-		VisibleTiles visTiles;
-		m_tiler->test(sp.getSpatialCollisionShape(), true, &visTiles);
+		Tiler::TestResult visTiles;
+		Tiler::TestParameters params;
+		params.m_collisionShape = &sp.getSpatialCollisionShape();
+		params.m_collisionShapeBox = &sp.getAabb();
+		params.m_nearPlane = true;
+		params.m_output = &visTiles;
+		m_tiler->test(params);
 
 		// Bin to the correct tiles
 		for(U t = 0; t < visTiles.m_count; t++)
@@ -290,8 +295,13 @@ public:
 		U pos)
 	{
 		// Do the tests
-		VisibleTiles visTiles;
-		m_tiler->test(sp.getSpatialCollisionShape(), true, &visTiles);
+		Tiler::TestResult visTiles;
+		Tiler::TestParameters params;
+		params.m_collisionShape = &sp.getSpatialCollisionShape();
+		params.m_collisionShapeBox = &sp.getAabb();
+		params.m_nearPlane = true;
+		params.m_output = &visTiles;
+		m_tiler->test(params);
 
 		// Bin to the correct tiles
 		for(U t = 0; t < visTiles.m_count; t++)

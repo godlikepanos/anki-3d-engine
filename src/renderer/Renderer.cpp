@@ -88,6 +88,18 @@ Error Renderer::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
+	if(m_width % m_tilesCount.x() != 0)
+	{
+		ANKI_LOGE("Width is not multiple of tile width");
+		return ErrorCode::USER_DATA;
+	}
+
+	if(m_height % m_tilesCount.y() != 0)
+	{
+		ANKI_LOGE("Height is not multiple of tile height");
+		return ErrorCode::USER_DATA;
+	}
+
 	// Drawer
 	err = m_sceneDrawer.create(this);
 	if(err) return err;

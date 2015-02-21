@@ -336,6 +336,10 @@ public:
 	using Base = DArray<T>;
 	using Value = T;
 
+	SArray()
+	:	Base()
+	{}
+
 	SArray(void* mem, PtrSize size)
 	:	Base()
 	{

@@ -10,18 +10,11 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/util/Rtti.h"
 
-// Default should be 0
-#define ANKI_TILER_ENABLE_GPU 0
-
 namespace anki {
 
 //==============================================================================
 // Misc                                                                        =
 //==============================================================================
-
-//==============================================================================
-#define CHECK_PLANE_PTR(p_) ANKI_ASSERT( \
-	U(p_ - &m_allPlanes[0]) < m_allPlanes.getSize());
 
 //==============================================================================
 class UpdatePlanesPerspectiveCameraTask: public Threadpool::Task
@@ -30,9 +23,6 @@ public:
 	Tiler* m_tiler = nullptr;
 	Camera* m_cam = nullptr;
 	Bool m_frustumChanged;
-#if ANKI_TILER_ENABLE_GPU
-	const PixelArray* m_pixels = nullptr;
-#endif
 
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
@@ -89,6 +79,8 @@ Error Tiler::initInternal()
 {
 	Error err = ErrorCode::NONE;
 
+	m_enableGpuTests = true;
+
 	// Load the program
 	String pps;
 	String::ScopeDestroyer ppsd(&pps, getAllocator());
@@ -113,7 +105,7 @@ Error Tiler::initInternal()
 
 	// Create FB
 	err = m_r->createRenderTarget(
-		m_r->getTilesCount().x(), m_r->getTilesCount().y(), GL_RG32UI, 1, m_rt);
+		m_r->getTilesCount().x(), m_r->getTilesCount().y(), GL_RG32F, 1, m_rt);
 	if(err) return err;
 
 	GlCommandBufferHandle cmdBuff;
@@ -121,14 +113,6 @@ Error Tiler::initInternal()
 	if(err) return err;
 
 	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
-	if(err) return err;
-
-	// Create PBO
-	U pixelBuffSize = m_r->getTilesCount().x() * m_r->getTilesCount().y();
-	pixelBuffSize *= 2 * sizeof(F32); // The pixel size
-	pixelBuffSize *= 4; // Because it will be always mapped
-	err = m_pixelBuff.create(cmdBuff, GL_PIXEL_PACK_BUFFER, pixelBuffSize,
-		GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	if(err) return err;
 
 	// Init planes. One plane for each direction, plus near/far plus the world
@@ -141,19 +125,71 @@ Error Tiler::initInternal()
 	err = m_allPlanes.create(getAllocator(), planesCount);
 	if(err) return err;
 
-	m_planesX = &m_allPlanes[0];
-	m_planesY = m_planesX + m_r->getTilesCount().x() - 1;
+	Plane* base = &m_allPlanes[0];
+	U count = 0;
+	using S = SArray<Plane>;
+	
+	m_planesX = std::move(S(base + count, m_r->getTilesCount().x() - 1));
+	count += m_planesX.getSize();
 
-	m_planesXW = m_planesY + m_r->getTilesCount().y() - 1;
-	m_planesYW = m_planesXW + m_r->getTilesCount().x() - 1;
-	m_nearPlanesW = m_planesYW + m_r->getTilesCount().y() - 1;
-	m_farPlanesW =
-		m_nearPlanesW + m_r->getTilesCount().x() * m_r->getTilesCount().y();
+	m_planesY = std::move(S(base + count, m_r->getTilesCount().y() - 1));
+	count += m_planesY.getSize();
 
-	ANKI_ASSERT(m_farPlanesW + m_r->getTilesCount().x() 
-		* m_r->getTilesCount().y() ==  &m_allPlanes[0] + m_allPlanes.getSize());
+	m_planesXW = std::move(S(base + count, m_r->getTilesCount().x() - 1));
+	count += m_planesXW.getSize();
+
+	m_planesYW = std::move(S(base + count, m_r->getTilesCount().y() - 1));
+	count += m_planesYW.getSize();
+
+	m_nearPlanesW = std::move(S(base + count, 
+		m_r->getTilesCount().x() * m_r->getTilesCount().y()));
+	count += m_nearPlanesW.getSize();
+
+	m_farPlanesW = std::move(S(base + count, 
+		m_r->getTilesCount().x() * m_r->getTilesCount().y()));
+
+	ANKI_ASSERT(count + m_farPlanesW.getSize() == m_allPlanes.getSize());
 
 	cmdBuff.flush();
+
+	err = initPbos();
+
+	return err;
+}
+
+//==============================================================================
+Error Tiler::initPbos()
+{
+	Error err = ErrorCode::NONE;
+
+	GlCommandBufferHandle cmd;
+	err = cmd.create(&getGlDevice());
+	if(err)
+	{
+		return err;
+	}
+
+	// Allocate the buffers
+	U pboSize = m_r->getTilesCount().x() * m_r->getTilesCount().y();
+	pboSize *= sizeof(Vec2); // The pixel size
+
+	for(U i = 0; i < m_pbos.getSize(); ++i)
+	{
+		err = m_pbos[i].create(cmd, GL_PIXEL_PACK_BUFFER, pboSize,
+			GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		if(err)
+		{
+			return err;
+		}
+	}
+	cmd.flush();
+
+	// Get persistent address
+	for(U i = 0; i < m_pbos.getSize(); ++i)
+	{
+		m_pbosAddress[i] = 
+			static_cast<Vec2*>(m_pbos[i].getPersistentMappingAddress());
+	}
 
 	return err;
 }
@@ -162,30 +198,26 @@ Error Tiler::initInternal()
 void Tiler::runMinMax(GlTextureHandle& depthMap,
 	GlCommandBufferHandle& cmd)
 {
-#if ANKI_TILER_ENABLE_GPU
-	// Issue the min/max job
-	m_fb.bind(cmd, true);
-	m_ppline.bind(cmd);
-	depthMap.bind(cmd, 0);
+	if(m_enableGpuTests)
+	{
+		// Issue the min/max job
+		m_fb.bind(cmd, true);
+		m_ppline.bind(cmd);
+		depthMap.bind(cmd, 0);
+		cmd.setViewport(
+			0, 0, m_r->getTilesCount().x(), m_r->getTilesCount().y());
 
-	m_r->drawQuad(cmd);
+		m_r->drawQuad(cmd);
 
-	// Issue the async pixel read
-	cmd.copyTextureToBuffer(m_rt, m_pixelBuff);
-#endif
+		// Issue the async pixel read
+		U pboIdx = getGlobalTimestamp() % m_pbos.getSize();
+		cmd.copyTextureToBuffer(m_rt, m_pbos[pboIdx]);
+	}
 }
 
 //==============================================================================
 void Tiler::updateTiles(Camera& cam)
 {
-	//
-	// Read the results from the minmax job. It will block
-	//
-#if ANKI_TILER_ENABLE_GPU
-	PixelArray pixels;
-	pbo.read(&pixels[0][0]);
-#endif
-
 	//
 	// Issue parallel jobs
 	//
@@ -204,9 +236,6 @@ void Tiler::updateTiles(Camera& cam)
 	{
 		jobs[i].m_tiler = this;
 		jobs[i].m_cam = &cam;
-#if ANKI_TILER_ENABLE_GPU
-		jobs[i].m_pixels = &pixels;
-#endif
 		jobs[i].m_frustumChanged = frustumChanged;
 		threadPool.assignNewTask(i, &jobs[i]);
 	}
@@ -228,33 +257,41 @@ void Tiler::updateTiles(Camera& cam)
 }
 
 //==============================================================================
-Bool Tiler::test(
-	const CollisionShape& cs, 
-	Bool nearPlane,
-	VisibleTiles* visible) const
+Bool Tiler::test(TestParameters& params) const
 {
-	if(visible)
+	ANKI_ASSERT(params.m_collisionShape);
+	ANKI_ASSERT(params.m_collisionShapeBox);
+
+	if(params.m_output)
 	{
-		visible->m_count = 0;
+		params.m_output->m_count = 0;
 	}
 
 	// Call the recursive function or the fast path
 	U count = 0;
-#if 1
-	if(isa<Sphere>(cs))
+#if 0
+	if(isa<Sphere>(params.m_collisionShape))
 	{
-		testFastSphere(dcast<const Sphere&>(cs), visible, count);
+		testFastSphere(
+			dcast<const Sphere&>(*params.m_collisionShape),
+			*params.m_collisionShapeBox,
+			params.m_output, 
+			count);
 	}
 	else
 #endif
 	{
-		testRange(cs, nearPlane, 0, m_r->getTilesCount().y(), 0,
-			m_r->getTilesCount().x(), visible, count);
+		testRange(
+			*params.m_collisionShape, 
+			params.m_nearPlane, 
+			0, m_r->getTilesCount().y(), 0, m_r->getTilesCount().x(), 
+			params.m_output,
+			count);
 	}
 
-	if(visible)
+	if(params.m_output)
 	{
-		ANKI_ASSERT(count == visible->m_count);
+		ANKI_ASSERT(count == params.m_output->m_count);
 	}
 
 	return count > 0;
@@ -262,7 +299,7 @@ Bool Tiler::test(
 
 //==============================================================================
 void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
-	U yFrom, U yTo, U xFrom, U xTo, VisibleTiles* visible, U& count) const
+	U yFrom, U yTo, U xFrom, U xTo, TestResult* visible, U& count) const
 {
 	U my = (yTo - yFrom) / 2;
 	U mx = (xTo - xFrom) / 2;
@@ -272,32 +309,35 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 	{
 		Bool inside = true;
 
-#if ANKI_TILER_ENABLE_GPU
-		if(cs.testPlane(farPlanesW[tileId]) >= 0.0)
+		if(m_enableGpuTests && getGlobalTimestamp() >= m_pbos.getSize())
 		{
-			// Inside on far but check near
+			U tileId = m_r->getTilesCount().x() * yFrom + xFrom;
 
-			if(nearPlane)
+			if(cs.testPlane(m_farPlanesW[tileId]) >= 0.0)
 			{
-				if(cs.testPlane(nearPlanesW[tileId]) >= 0)
+				// Inside on far but check near
+
+				if(nearPlane)
 				{
-					// Inside
+					if(cs.testPlane(m_nearPlanesW[tileId]) >= 0)
+					{
+						// Inside
+					}
+					else
+					{
+						inside = false;
+					}
 				}
 				else
 				{
-					inside = false;
+					// Inside
 				}
 			}
 			else
 			{
-				// Inside
+				inside = false;
 			}
 		}
-		else
-		{
-			inside = false;
-		}
-#endif
 
 		if(inside)
 		{
@@ -438,8 +478,8 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 }
 
 //==============================================================================
-void Tiler::testFastSphere(
-	const Sphere& s, VisibleTiles* visible, U& count) const
+void Tiler::testFastSphere(const Sphere& s, const Aabb& aabb,
+	TestResult* visible, U& count) const
 {
 	const Camera& cam = m_r->getSceneGraph().getActiveCamera();
 	const FrustumComponent& frc = cam.getComponent<FrustumComponent>();
@@ -468,8 +508,6 @@ void Tiler::testFastSphere(
 	}
 
 	// Compute projection points
-	Aabb aabb;
-	s.computeAabb(aabb);
 	const Vec4& minv = aabb.getMin();
 	const Vec4& maxv = aabb.getMax();
 	Array<Vec4, 8> points;
@@ -601,8 +639,6 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		{
 			calcPlaneY(i, projParams);
 
-			CHECK_PLANE_PTR(&m_planesYW[i]);
-			CHECK_PLANE_PTR(&m_planesY[i]);
 			m_planesYW[i] = m_planesY[i].getTransformed(trf);
 		}
 
@@ -615,8 +651,6 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		{
 			calcPlaneX(j, projParams);
 
-			CHECK_PLANE_PTR(&m_planesXW[j]);
-			CHECK_PLANE_PTR(&m_planesX[j]);
 			m_planesXW[j] = m_planesX[j].getTransformed(trf);
 		}
 	}
@@ -631,8 +665,6 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		for(U i = start; i < end; i++)
 		{
-			CHECK_PLANE_PTR(&m_planesYW[i]);
-			CHECK_PLANE_PTR(&m_planesY[i]);
 			m_planesYW[i] = m_planesY[i].getTransformed(trf);
 		}
 
@@ -643,49 +675,40 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		for(U j = start; j < end; j++)
 		{
-			CHECK_PLANE_PTR(&m_planesXW[j]);
-			CHECK_PLANE_PTR(&m_planesX[j]);
 			m_planesXW[j] = m_planesX[j].getTransformed(trf);
 		}
 	}
 
 	// Update the near far planes
-#if ANKI_TILER_ENABLE_GPU
-	Vec2 rplanes;
-	Renderer::calcPlanes(Vec2(cam.getNear(), cam.getFar()), rplanes);
-
-	choseStartEnd(
-		threadId, threadsCount, 
-		tiler->r->getTilesCount().x() * tiler->r->getTilesCount().y(), 
-		start, end);
-
-	Plane* nearPlanesW = tiler->nearPlanesW + start;
-	Plane* farPlanesW = tiler->farPlanesW + start;
-	for(U k = start; k < end; ++k)
+	if(m_enableGpuTests && getGlobalTimestamp() >= m_pbos.getSize())
 	{
-		U j = k % tiler->r->getTilesCount().x();
-		U i = k / tiler->r->getTilesCount().x();
+		const U tilesCount = 
+			m_r->getTilesCount().x() * m_r->getTilesCount().y();
 
-		// Calculate depth as you do it for the vertex position inside
-		// the shaders
-		F32 minZ = rplanes.y() / (rplanes.x() + (*pixels)[i][j][0]);
-		F32 maxZ = rplanes.y() / (rplanes.x() + (*pixels)[i][j][1]);
+		Threadpool::Task::choseStartEnd(
+			threadId, threadsCount, tilesCount, start, end);
 
-		// Calc the planes
-		Plane nearPlane = Plane(Vec3(0.0, 0.0, -1.0), minZ);
-		Plane farPlane = Plane(Vec3(0.0, 0.0, 1.0), -maxZ);
+		// Setup pixel buffer
+		U pboIdx = 
+			(getGlobalTimestamp() - m_pbos.getSize() + 1) % m_pbos.getSize();
+		SArray<Vec2> pixels(m_pbosAddress[pboIdx], tilesCount);
 
-		// Tranform them
-		CHECK_PLANE_PTR(nearPlanesW);
-		*nearPlanesW = nearPlane.getTransformed(trf);
-		CHECK_PLANE_PTR(farPlanesW);
-		*farPlanesW = farPlane.getTransformed(trf);
+		for(U k = start; k < end; ++k)
+		{
+			// Calculate depth as you do it for the vertex position inside
+			// the shaders
+			F32 minZ = projParams.z() / (projParams.w() + pixels[k][0]);
+			F32 maxZ = projParams.z() / (projParams.w() + pixels[k][1]);
 
-		// Advance
-		++nearPlanesW;
-		++farPlanesW;
+			// Calc the planes
+			Plane nearPlane = Plane(Vec4(0.0, 0.0, -1.0, 0.0), -minZ);
+			Plane farPlane = Plane(Vec4(0.0, 0.0, 1.0, 0.0), maxZ);
+
+			// Tranform them
+			m_nearPlanesW[k] = nearPlane.getTransformed(trf);
+			m_farPlanesW[k] = farPlane.getTransformed(trf);
+		}
 	}
-#endif
 }
 
 //==============================================================================
