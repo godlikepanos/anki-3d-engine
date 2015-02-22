@@ -348,7 +348,7 @@ void main()
 #if 0
 	if(pointLightsCount != 0)
 	{
-		out_color = vec3(0.5 / float(pointLightsCount));
+		out_color += vec3(float(pointLightsCount) * 0.05);
 	}
 
 	/*uint x = in_instanceId % 60;

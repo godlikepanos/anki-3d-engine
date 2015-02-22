@@ -19,6 +19,12 @@ layout(location = 0) out vec3 outFragColor;
 void main()
 {
 	vec3 col = textureRt(uRasterImage, inTexCoords).rgb;
-	//vec3 col = vec3(textureRt(uRasterImage, inTexCoords).r);
+	
+	/*vec2 depth = textureRt(uRasterImage, inTexCoords).rg;
+	float zNear = 0.2;
+	float zFar = 200.0;
+	depth = (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
+	vec3 col = vec3(depth.rg, 0.0);*/
+
 	outFragColor = col;
 }

@@ -59,6 +59,7 @@ Tiler::Tiler(Renderer* r)
 Tiler::~Tiler()
 {
 	m_allPlanes.destroy(getAllocator());
+	m_prevMinMaxDepth.destroy(getAllocator());
 }
 
 //==============================================================================
@@ -153,6 +154,13 @@ Error Tiler::initInternal()
 	cmdBuff.flush();
 
 	err = initPbos();
+	if(err)
+	{
+		return err;
+	}
+
+	err = m_prevMinMaxDepth.create(getAllocator(),
+		m_r->getTilesCount().x() * m_r->getTilesCount().y(), Vec2(0.0, 1.0));
 
 	return err;
 }
@@ -695,14 +703,32 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 
 		for(U k = start; k < end; ++k)
 		{
-			// Calculate depth as you do it for the vertex position inside
-			// the shaders
-			F32 minZ = projParams.z() / (projParams.w() + pixels[k][0]);
-			F32 maxZ = projParams.z() / (projParams.w() + pixels[k][1]);
+			Vec2 minMax = pixels[k];
+
+			// Adjust min max on extreme cases
+			Vec2& prevMinMax = m_prevMinMaxDepth[k];
+			const F32 fact = 0.035;
+
+			if(minMax[0] > prevMinMax[0])
+			{
+				// New depths is closer to the eye. Need to adjust it
+				minMax[0] = minMax[0] * fact + prevMinMax[0] * (1.0 - fact);
+			}
+
+			if(minMax[1] < prevMinMax[1])
+			{
+				// New depths is closer to the eye. Need to adjust it
+				minMax[1] = minMax[1] * fact + prevMinMax[1] * (1.0 - fact);
+			}
+
+			prevMinMax = minMax;
+
+			// Calculate the viewspace Z
+			minMax = projParams.z() / (projParams.w() + minMax);
 
 			// Calc the planes
-			Plane nearPlane = Plane(Vec4(0.0, 0.0, -1.0, 0.0), -minZ);
-			Plane farPlane = Plane(Vec4(0.0, 0.0, 1.0, 0.0), maxZ);
+			Plane nearPlane = Plane(Vec4(0.0, 0.0, -1.0, 0.0), -minMax.x());
+			Plane farPlane = Plane(Vec4(0.0, 0.0, 1.0, 0.0), minMax.y());
 
 			// Tranform them
 			m_nearPlanesW[k] = nearPlane.getTransformed(trf);

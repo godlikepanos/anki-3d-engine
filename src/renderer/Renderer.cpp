@@ -62,9 +62,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_defaultFbWidth = config.get("width");
 	m_defaultFbHeight = config.get("height");
 	m_width = m_defaultFbWidth * m_renderingQuality;
-	alignRoundDown(16, m_width);
 	m_height = m_defaultFbHeight * m_renderingQuality;
-	alignRoundDown(16, m_height);
 	m_lodDistance = config.get("lodDistance");
 	m_framesNum = 0;
 	m_samples = config.get("samples");

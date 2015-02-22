@@ -84,6 +84,14 @@ public:
 	/// @param[in, out] params The collision parameters.
 	Bool test(TestParameters& params) const;
 
+	/// @privatesection
+	/// @{
+	GlTextureHandle& getRt()
+	{
+		return m_rt;
+	}
+	/// @}
+
 private:
 	/// Tile planes
 	DArray<Plane> m_allPlanes;
@@ -104,6 +112,7 @@ private:
 	/// PBO buffer that is used to read the data of fai asynchronously
 	Array<GlBufferHandle, 2> m_pbos;
 	Array<Vec2*, 2> m_pbosAddress;
+	DArray<Vec2> m_prevMinMaxDepth;
 
 	/// Main shader program
 	ProgramResourcePointer m_frag;
