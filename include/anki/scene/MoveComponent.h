@@ -94,7 +94,7 @@ public:
 		return m_wtrf;
 	}
 
-	const Transform& getPrevWorldTransform() const
+	const Transform& getPreviousWorldTransform() const
 	{
 		return m_prevWTrf;
 	}

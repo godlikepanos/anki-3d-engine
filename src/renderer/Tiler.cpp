@@ -80,7 +80,7 @@ Error Tiler::initInternal()
 {
 	Error err = ErrorCode::NONE;
 
-	m_enableGpuTests = true;
+	m_enableGpuTests = false;
 
 	// Load the program
 	String pps;
@@ -277,7 +277,7 @@ Bool Tiler::test(TestParameters& params) const
 
 	// Call the recursive function or the fast path
 	U count = 0;
-#if 0
+#if 1
 	if(isa<Sphere>(params.m_collisionShape))
 	{
 		testFastSphere(
@@ -705,23 +705,48 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 		{
 			Vec2 minMax = pixels[k];
 
-			// Adjust min max on extreme cases
-			Vec2& prevMinMax = m_prevMinMaxDepth[k];
-			const F32 fact = 0.035;
-
-			if(minMax[0] > prevMinMax[0])
+			// Predict the min/max for the current frame.
+			// v0 = unproject(minDepth)
+			// p0 = PrevCamTrf * v0 where p0 is in world space
+			// p1 = CrntCamTrf * p0
+			// n1 = project(p1, CamProj)
+			// Using n1 get the tile depth and use that to set the planes
+			U x = k % m_r->getTilesCount().x();
+			U y = k / m_r->getTilesCount().x();
+			Vec2 tileCountf(m_r->getTilesCount().x(), m_r->getTilesCount().y());
+			Vec2 ndc0 = Vec2(x, y) / tileCountf * 2.0 - 1.0;
+			for(U i = 0; i < 2; ++i)
 			{
-				// New depths is closer to the eye. Need to adjust it
-				minMax[0] = minMax[0] * fact + prevMinMax[0] * (1.0 - fact);
-			}
+				Vec4 v0 = unproject(minMax[i], ndc0, projParams);
+				Vec4 p0 = move.getPreviousWorldTransform().transform(v0);
+				//Vec4 p1 = move.getWorldTransform().transform(p0);
+				Vec4 n1p = frc.getViewProjectionMatrix() * p0.xyz1();
+				Vec2 n1 = n1p.xy() / n1p.w();
+				
+				Vec2 t = (n1 / 2.0 + 0.5) * tileCountf;
+				t.x() = roundf(t.x());
+				t.y() = roundf(t.y());
 
-			if(minMax[1] < prevMinMax[1])
-			{
-				// New depths is closer to the eye. Need to adjust it
-				minMax[1] = minMax[1] * fact + prevMinMax[1] * (1.0 - fact);
+				if(t.x() < 0.0 || t.x() >= tileCountf.x()
+					|| t.y() < 0.0 || t.y() >= tileCountf.y())
+				{
+					// Outside view. Play it safe
+					if(i == 0)
+					{
+						minMax[i] = getEpsilon<F32>();
+					}
+					else
+					{
+						minMax[i] = 1.0 - getEpsilon<F32>();
+					}
+				}
+				else
+				{
+					// Inside view
+					U tileid = U(t.y()) * m_r->getTilesCount().x() + U(t.x());
+					minMax[i] = pixels[tileid][i];
+				}
 			}
-
-			prevMinMax = minMax;
 
 			// Calculate the viewspace Z
 			minMax = projParams.z() / (projParams.w() + minMax);
