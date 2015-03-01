@@ -69,6 +69,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	m_isOffscreen = config.get("offscreen");
 	m_tilesCount.x() = config.get("tilesXCount");
 	m_tilesCount.y() = config.get("tilesYCount");
+	m_tilesCountXY = m_tilesCount.x() * m_tilesCount.y();
 
 	m_tessellation = config.get("tessellation");
 

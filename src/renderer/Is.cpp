@@ -33,6 +33,14 @@ void clamp(T& in, Y limit)
 
 namespace shader {
 
+struct Tile
+{
+	U32 m_offset;
+	U32 m_pointLightsCount;
+	U32 m_spotLightsCount;
+	U32 m_spotTexLightsCount;
+};
+
 struct Light
 {
 	Vec4 m_posRadius;
@@ -61,309 +69,58 @@ struct CommonUniforms
 } // end namespace shader
 
 //==============================================================================
-/// Write the lights to a client buffer
-class WriteLightsJob: public Threadpool::Task
+
+using Lid = U32; ///< Light ID type
+static const U MAX_TYPED_LIGHTS_PER_TILE = 16;
+
+struct TileData
+{
+	Atomic<U32> m_pointCount;
+	Atomic<U32> m_spotCount;
+	Atomic<U32> m_spotTexCount;
+
+	Array<Lid, MAX_TYPED_LIGHTS_PER_TILE> m_pointIds;
+	Array<Lid, MAX_TYPED_LIGHTS_PER_TILE> m_spotIds;
+	Array<Lid, MAX_TYPED_LIGHTS_PER_TILE> m_spotTexIds;
+};
+
+/// Common data for all tasks.
+struct TaskCommonData
+{
+	// To fill the light buffers
+	SArray<shader::PointLight> m_pointLights;
+	SArray<shader::SpotLight> m_spotLights;
+	SArray<shader::SpotLight> m_spotTexLights;
+
+	Atomic<U32> m_pointLightsCount;
+	Atomic<U32> m_spotLightsCount;
+	Atomic<U32> m_spotTexLightsCount;
+
+	// To fill the tile buffers
+	Array2d<TileData, ANKI_RENDERER_MAX_TILES_Y, ANKI_RENDERER_MAX_TILES_X> 
+		m_tempTiles;
+
+	// To fill the light index buffer
+	Atomic<U32> m_lightIdsCount;
+	
+	// Misc
+	VisibilityTestResults::Container::ConstIterator m_lightsBegin = nullptr;
+	VisibilityTestResults::Container::ConstIterator m_lightsEnd = nullptr;
+
+	Barrier* m_barrier = nullptr;
+	Is* m_is = nullptr;
+};
+
+/// Write the lights to the GPU buffers.
+class WriteLightsTask: public Threadpool::Task
 {
 public:
-	shader::PointLight* m_pointLights = nullptr;
-	shader::SpotLight* m_spotLights = nullptr;
-	shader::SpotLight* m_spotTexLights = nullptr;
-
-	U8* m_tileBuffer = nullptr;
-
-	VisibilityTestResults::Container::ConstIterator m_lightsBegin;
-	VisibilityTestResults::Container::ConstIterator m_lightsEnd;
-
-	Atomic<U32>* m_pointLightsCount = nullptr;
-	Atomic<U32>* m_spotLightsCount = nullptr;
-	Atomic<U32>* m_spotTexLightsCount = nullptr;
-		
-	Array2d<Atomic<U32>, 
-		ANKI_RENDERER_MAX_TILES_Y, 
-		ANKI_RENDERER_MAX_TILES_X>
-		* m_tilePointLightsCount = nullptr,
-		* m_tileSpotLightsCount = nullptr,
-		* m_tileSpotTexLightsCount = nullptr;
-
-	Tiler* m_tiler = nullptr;
-	Is* m_is = nullptr;
-
-	/// Bin lights on CPU path
-	Bool m_binLights = true;
-
-	// Cached values
-	const FrustumComponent* m_camFrustum = nullptr;
-	const MoveComponent* m_camMove = nullptr;
+	TaskCommonData* m_data = nullptr;
 
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
-		U ligthsCount = m_lightsEnd - m_lightsBegin;
-		m_camFrustum = &m_is->m_cam->getComponent<FrustumComponent>();
-		m_camMove = &m_is->m_cam->getComponent<MoveComponent>();
-
-		// Count job bounds
-		PtrSize start, end;
-		choseStartEnd(threadId, threadsCount, ligthsCount, start, end);
-
-		// Run all lights
-		for(U64 i = start; i < end; i++)
-		{
-			SceneNode* snode = (*(m_lightsBegin + i)).m_node;
-			MoveComponent& move = snode->getComponent<MoveComponent>();
-			LightComponent& light = snode->getComponent<LightComponent>();
-			SpatialComponent& sp = snode->getComponent<SpatialComponent>();
-			FrustumComponent* fr = snode->tryGetComponent<FrustumComponent>();
-
-			switch(light.getLightType())
-			{
-			case LightComponent::LightType::POINT:
-				{
-					I pos = doPointLight(light, move);
-					if(m_binLights && pos != -1)
-					{
-						binPointLight(sp, pos);
-					}
-				}
-				break;
-			case LightComponent::LightType::SPOT:
-				{
-					I pos = doSpotLight(light, move, fr);
-					if(m_binLights && pos != -1)
-					{
-						binSpotLight(light, sp, pos);
-					}
-				}
-				break;
-			default:
-				ANKI_ASSERT(0);
-				break;
-			}
-		}
-
+		m_data->m_is->binLights(threadId, threadsCount, *m_data);
 		return ErrorCode::NONE;
-	}
-
-	/// Copy CPU light to GPU buffer
-	I doPointLight(const LightComponent& light, const MoveComponent& move)
-	{
-		// Get GPU light
-		I i = m_pointLightsCount->fetchAdd(1);
-		if(i >= (I)m_is->m_maxPointLights)
-		{
-			return -1;
-		}
-
-		shader::PointLight& slight = m_pointLights[i];
-	
-		Vec4 pos = m_camFrustum->getViewMatrix() 
-			* move.getWorldTransform().getOrigin().xyz1();
-
-		slight.m_posRadius = Vec4(pos.xyz(), -1.0 / light.getRadius());
-		slight.m_diffuseColorShadowmapId = light.getDiffuseColor();
-		slight.m_specularColorTexId = light.getSpecularColor();
-
-		return i;
-	}
-
-	/// Copy CPU spot light to GPU buffer
-	I doSpotLight(const LightComponent& light, const MoveComponent& move,
-		const FrustumComponent* fr)
-	{
-		Bool isTexLight = light.getShadowEnabled();
-		I i;
-		shader::SpotLight* baseslight = nullptr;
-
-		if(isTexLight)
-		{
-			// Spot tex light
-
-			i = m_spotTexLightsCount->fetchAdd(1);
-			if(i >= (I)m_is->m_maxSpotTexLights)
-			{
-				return -1;
-			}
-
-			shader::SpotLight& slight = m_spotTexLights[i];
-			baseslight = &slight;
-
-			// Write matrix
-			static const Mat4 biasMat4(
-				0.5, 0.0, 0.0, 0.5, 
-				0.0, 0.5, 0.0, 0.5, 
-				0.0, 0.0, 0.5, 0.5, 
-				0.0, 0.0, 0.0, 1.0);
-			// bias * proj_l * view_l * world_c
-			slight.m_texProjectionMat = 
-				biasMat4 
-				* fr->getViewProjectionMatrix() 
-				* Mat4(m_camMove->getWorldTransform());
-
-			// Transpose because of driver bug
-			slight.m_texProjectionMat.transpose();
-		}
-		else
-		{
-			// Spot light without texture
-
-			i = m_spotLightsCount->fetchAdd(1);
-			if(i >= (I)m_is->m_maxSpotLights)
-			{
-				return -1;
-			}
-
-			shader::SpotLight& slight = m_spotLights[i];
-			baseslight = &slight;
-		}
-
-		// Write common stuff
-		ANKI_ASSERT(baseslight);
-
-		// Pos & dist
-		Vec4 pos = 
-			m_camFrustum->getViewMatrix() 
-			* move.getWorldTransform().getOrigin().xyz1();
-		baseslight->m_posRadius = Vec4(pos.xyz(), -1.0 / light.getDistance());
-
-		// Diff color and shadowmap ID now
-		baseslight->m_diffuseColorShadowmapId = 
-			Vec4(light.getDiffuseColor().xyz(), (F32)light.getShadowMapIndex());
-
-		// Spec color
-		baseslight->m_specularColorTexId = light.getSpecularColor();
-
-		// Light dir
-		Vec3 lightDir = -move.getWorldTransform().getRotation().getZAxis();
-		lightDir = m_camFrustum->getViewMatrix().getRotationPart() * lightDir;
-		baseslight->m_lightDir = Vec4(lightDir, 0.0);
-		
-		// Angles
-		baseslight->m_outerCosInnerCos = Vec4(
-			light.getOuterAngleCos(),
-			light.getInnerAngleCos(), 
-			1.0, 
-			1.0);
-
-		// extend points
-		const PerspectiveFrustum& frustum = 
-			static_cast<const PerspectiveFrustum&>(fr->getFrustum());
-
-		for(U i = 0; i < 4; i++)
-		{
-			// TODO that is wrong
-			Vec4 extendPoint = move.getWorldTransform().getOrigin() 
-				+ frustum.getPoints()[i];
-
-			extendPoint = m_camFrustum->getViewMatrix() * extendPoint.xyz1();
-			baseslight->m_extendPoints[i] = extendPoint;
-		}
-
-		return i;
-	}
-
-	// Bin point light
-	void binPointLight(SpatialComponent& sp, U pos)
-	{
-		// Do the tests
-		Tiler::TestResult visTiles;
-		Tiler::TestParameters params;
-		params.m_collisionShape = &sp.getSpatialCollisionShape();
-		params.m_collisionShapeBox = &sp.getAabb();
-		params.m_nearPlane = true;
-		params.m_output = &visTiles;
-		m_tiler->test(params);
-
-		// Bin to the correct tiles
-		for(U t = 0; t < visTiles.m_count; t++)
-		{
-			U x = visTiles.m_tileIds[t].m_x;
-			U y = visTiles.m_tileIds[t].m_y;
-
-			U tilePos = (*m_tilePointLightsCount)[y][x].fetchAdd(1);
-
-			if(tilePos < m_is->m_maxPointLightsPerTile)
-			{
-				writeIndexToTileBuffer(0, pos, tilePos, 
-					y * m_is->m_r->getTilesCount().x() + x);
-			}
-		}
-	}
-
-	// Bin spot light
-	void binSpotLight(
-		const LightComponent& light, 
-		const SpatialComponent& sp, 
-		U pos)
-	{
-		// Do the tests
-		Tiler::TestResult visTiles;
-		Tiler::TestParameters params;
-		params.m_collisionShape = &sp.getSpatialCollisionShape();
-		params.m_collisionShapeBox = &sp.getAabb();
-		params.m_nearPlane = true;
-		params.m_output = &visTiles;
-		m_tiler->test(params);
-
-		// Bin to the correct tiles
-		for(U t = 0; t < visTiles.m_count; t++)
-		{
-			U x = visTiles.m_tileIds[t].m_x;
-			U y = visTiles.m_tileIds[t].m_y;
-
-			if(light.getShadowEnabled())
-			{
-				U tilePos = (*m_tileSpotTexLightsCount)[y][x].fetchAdd(1);
-
-				if(tilePos < m_is->m_maxSpotTexLightsPerTile)
-				{
-					writeIndexToTileBuffer(2, pos, tilePos, 
-						y * m_is->m_r->getTilesCount().x() + x);
-				}
-			}
-			else
-			{
-				U tilePos = (*m_tileSpotLightsCount)[y][x].fetchAdd(1);
-
-				if(tilePos < m_is->m_maxSpotLightsPerTile)
-				{
-					writeIndexToTileBuffer(1, pos, tilePos,
-						y * m_is->m_r->getTilesCount().x() + x);
-				}
-			}
-		}
-	}
-
-	/// The "Tile" structure varies so this custom function writes to it
-	void writeIndexToTileBuffer(
-		U lightType, U lightIndex, U indexInTileArray, U tileIndex)
-	{
-		ANKI_ASSERT(tileIndex < 
-			m_is->m_r->getTilesCount().x() * m_is->m_r->getTilesCount().y());
-		PtrSize offset = 
-			tileIndex * m_is->calcTileSize() 
-			+ sizeof(UVec4); // Tile header
-
-		// Move to the correct light section
-		switch(lightType)
-		{
-		case 0:
-			break;
-		case 1:
-			offset += m_is->m_maxPointLightsPerTile * sizeof(U32);
-			break;
-		case 2:
-			offset += 
-				(m_is->m_maxSpotLightsPerTile + m_is->m_maxPointLightsPerTile)
-				* sizeof(U32);
-			break;
-		default:
-			ANKI_ASSERT(0);
-		}
-
-		// Move to the array offset
-		offset += sizeof(U32) * indexInTileArray;
-
-		// Write the lightIndex
-		*((U32*)(m_tileBuffer + offset)) = lightIndex;
 	}
 };
 
@@ -380,7 +137,6 @@ Is::~Is()
 //==============================================================================
 Error Is::init(const ConfigSet& config)
 {
-
 	Error err = initInternal(config);
 	
 	if(err)
@@ -407,22 +163,16 @@ Error Is::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
-	m_maxPointLightsPerTile = config.get("is.maxPointLightsPerTile");
-	m_maxSpotLightsPerTile = config.get("is.maxSpotLightsPerTile");
-	m_maxSpotTexLightsPerTile = config.get("is.maxSpotTexLightsPerTile");
+	m_maxLightIds = config.get("is.maxLightsPerTile");
 
-	if(m_maxPointLightsPerTile < 1 
-		|| m_maxSpotLightsPerTile < 1 
-		|| m_maxSpotTexLightsPerTile < 1
-		|| m_maxPointLightsPerTile % 4 != 0 
-		|| m_maxSpotLightsPerTile % 4 != 0
-		|| m_maxSpotTexLightsPerTile % 4 != 0)
+	if(m_maxLightIds == 0)
 	{
-		ANKI_LOGE("Incorrect number of max lights per tile");
+		ANKI_LOGE("Incorrect number of max light indices");
 		return ErrorCode::USER_DATA;
 	}
+	
+	m_maxLightIds *= m_r->getTilesCountXY();
 
-	m_tileSize = calcTileSize();
 
 	//
 	// Init the passes
@@ -443,12 +193,10 @@ Error Is::initInternal(const ConfigSet& config)
 		"#define TILES_COUNT %u\n" 
 		"#define RENDERER_WIDTH %u\n"
 		"#define RENDERER_HEIGHT %u\n"
-		"#define MAX_POINT_LIGHTS_PER_TILE %u\n"
-		"#define MAX_SPOT_LIGHTS_PER_TILE %u\n"
-		"#define MAX_SPOT_TEX_LIGHTS_PER_TILE %u\n" 
 		"#define MAX_POINT_LIGHTS %u\n"
 		"#define MAX_SPOT_LIGHTS %u\n"
 		"#define MAX_SPOT_TEX_LIGHTS %u\n"
+		"#define MAX_LIGHT_INDICES %u\n"
 		"#define GROUND_LIGHT %u\n"
 		"#define TILES_BLOCK_BINDING %u\n"
 		"#define POISSON %u\n",
@@ -457,12 +205,10 @@ Error Is::initInternal(const ConfigSet& config)
 		(m_r->getTilesCount().x() * m_r->getTilesCount().y()),
 		m_r->getWidth(),
 		m_r->getHeight(),
-		m_maxPointLightsPerTile,
-		m_maxSpotLightsPerTile,
-		m_maxSpotTexLightsPerTile,
 		m_maxPointLights,
 		m_maxSpotLights,
 		m_maxSpotTexLights,
+		m_maxLightIds,
 		m_groundLightEnabled,
 		TILES_BLOCK_BINDING,
 		m_sm.getPoissonEnabled());
@@ -471,19 +217,31 @@ Error Is::initInternal(const ConfigSet& config)
 	// point light
 	GlCommandBufferHandle cmdBuff;
 	err = cmdBuff.create(&getGlDevice()); // Job for initialization
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_lightVert.loadToCache(&getResourceManager(),
 		"shaders/IsLp.vert.glsl", pps.toCString(), "r_");
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_lightFrag.loadToCache(&getResourceManager(),
 		"shaders/IsLp.frag.glsl", pps.toCString(), "r_");
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_lightPpline.create(cmdBuff, 
 		{m_lightVert->getGlProgram(), m_lightFrag->getGlProgram()});
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	//
 	// Create framebuffer
@@ -491,45 +249,93 @@ Error Is::initInternal(const ConfigSet& config)
 
 	err = m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(), GL_RGB8, 1, m_rt);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	//
 	// Init the quad
 	//
-	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {0.0, 1.0},
-		{1.0, 0.0}, {0.0, 0.0}};
+	static const F32 quadVertCoords[][2] = 
+		{{1.0, 1.0}, {0.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}};
 
 	GlClientBufferHandle tempBuff;
 	err = tempBuff.create(cmdBuff, sizeof(quadVertCoords), 
 		(void*)&quadVertCoords[0][0]);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_quadPositionsVertBuff.create(cmdBuff, GL_ARRAY_BUFFER, tempBuff, 0);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	//
 	// Create UBOs
 	//
-	const GLbitfield bufferBits = GL_DYNAMIC_STORAGE_BIT;
+	err = m_commonBuffer.create(cmdBuff, GL_UNIFORM_BUFFER, 
+		sizeof(shader::CommonUniforms), GL_DYNAMIC_STORAGE_BIT);
+	if(err)
+	{
+		return err;
+	}
 
-	err = m_commonBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
-		sizeof(shader::CommonUniforms), bufferBits);
-	if(err) return err;
+	for(U i = 0; i < MAX_FRAMES; ++i)
+	{
+		// Lights
+		err = m_lightsBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
+			calcLightsBufferSize(), 
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		if(err)
+		{
+			return err;
+		}
 
-	err = m_lightsBuff.create(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
-		calcLightsBufferSize(), bufferBits);
-	if(err) return err;
+		// Tiles
+		err = m_tilesBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
+			m_r->getTilesCountXY() * sizeof(shader::Tile),
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		if(err)
+		{
+			return err;
+		}
 
-	err = m_tilesBuff.create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
-		m_r->getTilesCount().x() * m_r->getTilesCount().y() * m_tileSize,
-		bufferBits);
-	if(err) return err;
+		// Index
+		err = m_lightIdsBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
+			(m_maxPointLights * m_maxSpotLights * m_maxSpotTexLights)
+			* sizeof(U32),
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		if(err)
+		{
+			return err;
+		}
+	}
 
-	// Last thing to do
+	// Flush
 	cmdBuff.flush();
+
+	// Get addresses
+	for(U i = 0; i < MAX_FRAMES; ++i)
+	{
+		m_lightsBufferAddresses[i] =
+			m_lightsBuffers[i].getPersistentMappingAddress();
+
+		m_tilesBufferAddresses[i] = 
+			m_tilesBuffers[i].getPersistentMappingAddress();
+
+		m_lightIdsBufferAddresses[i] = 
+			m_lightIdsBuffers[i].getPersistentMappingAddress();
+	}
 
 	return err;
 }
@@ -542,6 +348,8 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	m_cam = &m_r->getSceneGraph().getActiveCamera();
 	FrustumComponent& fr = m_cam->getComponent<FrustumComponent>();
 	VisibilityTestResults& vi = fr.getVisibilityTestResults();
+
+	m_currentFrame = getGlobalTimestamp() % MAX_FRAMES;
 
 	//
 	// Quickly get the lights
@@ -585,22 +393,24 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	clamp(visibleSpotLightsCount, m_maxSpotLights);
 	clamp(visibleSpotTexLightsCount, m_maxSpotTexLights);
 
-	U totalLightsCount = visiblePointLightsCount + visibleSpotLightsCount 
-		+ visibleSpotTexLightsCount;
-
-	ANKI_COUNTER_INC(RENDERER_LIGHTS_COUNT, U64(totalLightsCount));
+	ANKI_COUNTER_INC(RENDERER_LIGHTS_COUNT, 
+		U64(visiblePointLightsCount + visibleSpotLightsCount 
+		+ visibleSpotTexLightsCount));
 
 	//
 	// Do shadows pass
 	//
 	err = m_sm.run(&shadowCasters[0], visibleSpotTexLightsCount, cmdBuff);
-	if(err) return err;
+	if(ANKI_UNLIKELY(err)) 
+	{
+		return err;
+	}
 
 	//
 	// Write the lights and tiles UBOs
 	//
 	U32 blockAlignment = 
-		getGlDevice().getBufferOffsetAlignment(m_lightsBuff.getTarget());
+		getGlDevice().getBufferOffsetAlignment(m_lightsBuffers[0].getTarget());
 
 	// Get the offsets and sizes of each uniform block
 	PtrSize pointLightsOffset = 0;
@@ -619,84 +429,42 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 		spotTexLightsOffset + spotTexLightsSize <= calcLightsBufferSize());
 
 	// Fire the super cmdBuff
-	Array<WriteLightsJob, Threadpool::MAX_THREADS> tcmdBuff;
+	Array<WriteLightsTask, Threadpool::MAX_THREADS> tasks;
+	TaskCommonData taskData;
+	memset(&taskData, 0, sizeof(taskData));
 
-	GlClientBufferHandle lightsClientBuff;
-	if(totalLightsCount > 0)
+	U8* lightsBase = static_cast<U8*>(m_lightsBufferAddresses[m_currentFrame]);
+	if(visiblePointLightsCount)
 	{
-		err = lightsClientBuff.create(
-			cmdBuff, spotTexLightsOffset + spotTexLightsSize, nullptr);
-		if(err) return err;
+		taskData.m_pointLights = SArray<shader::PointLight>(
+			lightsBase + pointLightsOffset, visiblePointLightsCount);
 	}
 
-	GlClientBufferHandle tilesClientBuff;
-	err = tilesClientBuff.create(cmdBuff, m_tilesBuff.getSize(), nullptr);
-	if(err) return err;
-
-	Atomic<U32> pointLightsAtomicCount(0);
-	Atomic<U32> spotLightsAtomicCount(0);
-	Atomic<U32> spotTexLightsAtomicCount(0);
-
-	Array2d<Atomic<U32>, 
-		ANKI_RENDERER_MAX_TILES_Y, 
-		ANKI_RENDERER_MAX_TILES_X> 
-		tilePointLightsCount,
-		tileSpotLightsCount,
-		tileSpotTexLightsCount;
-
-	for(U y = 0; y < m_r->getTilesCount().y(); y++)
+	if(visibleSpotLightsCount)
 	{
-		for(U x = 0; x < m_r->getTilesCount().x(); x++)
-		{
-			tilePointLightsCount[y][x].store(0);
-			tileSpotLightsCount[y][x].store(0);
-			tileSpotTexLightsCount[y][x].store(0);
-		}
+		taskData.m_spotLights = SArray<shader::SpotLight>(
+			lightsBase + spotLightsOffset, visibleSpotLightsCount);
 	}
+
+	if(visibleSpotTexLightsCount) 
+	{
+		taskData.m_spotTexLights = SArray<shader::SpotLight>(
+			lightsBase + spotTexLightsOffset, visibleSpotTexLightsCount);
+	}
+
+	taskData.m_lightsBegin = vi.getLightsBegin();
+	taskData.m_lightsEnd = vi.getLightsEnd();
+
+	Barrier barrier(threadPool.getThreadsCount());
+	taskData.m_barrier = &barrier;
+
+	taskData.m_is = this;
 
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		WriteLightsJob& job = tcmdBuff[i];
+		tasks[i].m_data = &taskData;
 
-		if(i == 0)
-		{
-			if(totalLightsCount > 0)
-			{
-				job.m_pointLights = (shader::PointLight*)(
-					(U8*)lightsClientBuff.getBaseAddress() 
-					+ pointLightsOffset);
-				job.m_spotLights = (shader::SpotLight*)(
-					(U8*)lightsClientBuff.getBaseAddress() 
-					+ spotLightsOffset);
-				job.m_spotTexLights = (shader::SpotLight*)(
-					(U8*)lightsClientBuff.getBaseAddress() 
-					+ spotTexLightsOffset);
-			}
-
-			job.m_tileBuffer = (U8*)tilesClientBuff.getBaseAddress();
-
-			job.m_lightsBegin = vi.getLightsBegin();
-			job.m_lightsEnd = vi.getLightsEnd();
-
-			job.m_pointLightsCount = &pointLightsAtomicCount;
-			job.m_spotLightsCount = &spotLightsAtomicCount;
-			job.m_spotTexLightsCount = &spotTexLightsAtomicCount;
-
-			job.m_tilePointLightsCount = &tilePointLightsCount;
-			job.m_tileSpotLightsCount = &tileSpotLightsCount;
-			job.m_tileSpotTexLightsCount = &tileSpotTexLightsCount;
-
-			job.m_tiler = &m_r->getTiler();
-			job.m_is = this;
-		}
-		else
-		{
-			// Just copy from the first job. All cmdBuff have the same data
-
-			job = tcmdBuff[0];
-		}
-
-		threadPool.assignNewTask(i, &job);
+		threadPool.assignNewTask(i, &tasks[i]);
 	}
 
 	// In the meantime set the state
@@ -704,40 +472,10 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 
 	// Sync
 	err = threadPool.waitForAllThreadsToFinish();
-	if(err) return err;
-
-	// Write the light count for each tile
-	for(U y = 0; y < m_r->getTilesCount().y(); y++)
+	if(ANKI_UNLIKELY(err)) 
 	{
-		for(U x = 0; x < m_r->getTilesCount().x(); x++)
-		{
-			UVec4* vec;
-
-			vec = (UVec4*)(
-				(U8*)tilesClientBuff.getBaseAddress() 
-				+ (y * m_r->getTilesCount().x() + x) * m_tileSize);
-
-			vec->x() = tilePointLightsCount[y][x].load();
-			clamp(vec->x(), m_maxPointLightsPerTile);
-
-			vec->y() = 0;
-
-			vec->z() = tileSpotLightsCount[y][x].load();
-			clamp(vec->z(), m_maxSpotLightsPerTile);
-
-			vec->w() = tileSpotTexLightsCount[y][x].load();
-			clamp(vec->w(), m_maxSpotTexLightsPerTile);
-		}
+		return err;
 	}
-
-	// Write BOs
-	if(totalLightsCount > 0)
-	{
-		m_lightsBuff.write(cmdBuff,
-			lightsClientBuff, 0, 0, spotTexLightsOffset + spotTexLightsSize);
-	}
-	m_tilesBuff.write(cmdBuff, tilesClientBuff, 0, 0, 
-		tilesClientBuff.getSize());
 
 	//
 	// Setup uniforms
@@ -745,30 +483,37 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 
 	// shader prog
 	err = updateCommonBlock(cmdBuff);
-	if(err) return err;
+	if(ANKI_UNLIKELY(err)) 
+	{
+		return err;
+	}
 
-	m_commonBuff.bindShaderBuffer(cmdBuff, COMMON_UNIFORMS_BLOCK_BINDING);
+	m_commonBuffer.bindShaderBuffer(cmdBuff, COMMON_UNIFORMS_BLOCK_BINDING);
 
 	if(pointLightsSize > 0)
 	{
-		m_lightsBuff.bindShaderBuffer(cmdBuff, 
+		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff, 
 			pointLightsOffset, pointLightsSize, POINT_LIGHTS_BLOCK_BINDING);
 	}
 
 	if(spotLightsSize > 0)
 	{
-		m_lightsBuff.bindShaderBuffer(cmdBuff, 
+		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff, 
 			spotLightsOffset, spotLightsSize, SPOT_LIGHTS_BLOCK_BINDING);
 	}
 
 	if(spotTexLightsSize > 0)
 	{
-		m_lightsBuff.bindShaderBuffer(cmdBuff,
+		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff,
 			spotTexLightsOffset, spotTexLightsSize, 
 			SPOT_TEX_LIGHTS_BLOCK_BINDING);
 	}
 
-	m_tilesBuff.bindShaderBuffer(cmdBuff, TILES_BLOCK_BINDING); 
+	m_tilesBuffers[m_currentFrame].bindShaderBuffer(
+		cmdBuff, TILES_BLOCK_BINDING);
+
+	m_lightIdsBuffers[m_currentFrame].bindShaderBuffer(
+		cmdBuff, LIGHT_IDS_BLOCK_BINDING);
 
 	// The binding points should much the shader
 	Array<GlTextureHandle, 4> tarr = {{
@@ -788,10 +533,302 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	m_quadPositionsVertBuff.bindVertexBuffer(cmdBuff, 
 		2, GL_FLOAT, false, 0, 0, 0);
 
-	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, 
-		m_r->getTilesCount().x() * m_r->getTilesCount().y());
+	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, m_r->getTilesCountXY());
 
 	return err;
+}
+
+//==============================================================================
+void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
+{
+	U ligthsCount = task.m_lightsEnd - task.m_lightsBegin;
+	const FrustumComponent& camfrc = m_cam->getComponent<FrustumComponent>();
+	const MoveComponent& cammove = m_cam->getComponent<MoveComponent>();
+
+	// Iterate lights and bin them
+	PtrSize start, end;
+	Threadpool::Task::choseStartEnd(
+		threadId, threadsCount, ligthsCount, start, end);
+
+	for(U64 i = start; i < end; i++)
+	{
+		SceneNode* snode = (*(task.m_lightsBegin + i)).m_node;
+		MoveComponent& move = snode->getComponent<MoveComponent>();
+		LightComponent& light = snode->getComponent<LightComponent>();
+		SpatialComponent& sp = snode->getComponent<SpatialComponent>();
+
+		switch(light.getLightType())
+		{
+		case LightComponent::LightType::POINT:
+			{
+				I pos = writePointLight(light, move, camfrc, task);
+				if(pos != -1)
+				{
+					binLight(sp, pos, 0, task);
+				}
+			}
+			break;
+		case LightComponent::LightType::SPOT:
+			{
+				const FrustumComponent* frc = 
+					snode->tryGetComponent<FrustumComponent>();
+				I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
+				if(pos != -1)
+				{
+					binLight(sp, pos, light.getShadowEnabled() ? 2 : 1, task);
+				}
+			}
+			break;
+		default:
+			ANKI_ASSERT(0);
+			break;
+		}
+	}
+
+	//
+	// Last thing, update the real tiles
+	//
+	task.m_barrier->wait();
+
+	const UVec2 tilesCount2d = m_r->getTilesCount();
+	U tilesCount = tilesCount2d.x() * tilesCount2d.y();
+
+	SArray<shader::Tile> stiles(
+		m_tilesBufferAddresses[m_currentFrame],
+		tilesCount);
+
+	Threadpool::Task::choseStartEnd(
+		threadId, threadsCount, tilesCount, start, end);
+
+	// Run per tile
+	for(U i = start; i < end; ++i)
+	{
+		U y = i / tilesCount2d.x();
+		U x = i % tilesCount2d.x();
+		const auto& tile = task.m_tempTiles[y][x];
+
+		const U countP = tile.m_pointCount.load();
+		const U countS = tile.m_spotCount.load();
+		const U countST = tile.m_spotTexCount.load();
+		const U count = countP + countS + countST;
+
+		const U offset = task.m_lightIdsCount.fetchAdd(count);
+
+		auto& t = stiles[i];
+
+		if(offset + count <= m_maxLightIds)
+		{
+			SArray<Lid> lightIds(
+				m_lightIdsBufferAddresses[m_currentFrame],
+				m_maxLightIds);
+
+			t.m_offset = offset;
+
+			if(countP > 0)
+			{
+				t.m_pointLightsCount = countP;
+				memcpy(&lightIds[offset], &tile.m_pointIds[0], 
+					countP * sizeof(Lid));
+			}
+			else
+			{
+				t.m_pointLightsCount = 0;
+			}
+			
+			if(countS > 0)
+			{
+				t.m_spotLightsCount = countS;
+				memcpy(&lightIds[offset + countP], &tile.m_spotIds[0], 
+					countS * sizeof(Lid));
+			}
+			else
+			{
+				t.m_spotLightsCount = 0;
+			}
+
+			if(countST > 0)
+			{
+				t.m_spotTexLightsCount = countST;
+				memcpy(&lightIds[offset + countP + countS], 
+					&tile.m_spotTexIds[0], countST * sizeof(Lid));
+			}
+			else
+			{
+				t.m_spotTexLightsCount = 0;
+			}
+		}
+		else
+		{
+			memset(&t, 0, sizeof(t));
+			
+			ANKI_LOGW("Light IDs buffer too small");
+		}
+	}
+}
+
+//==============================================================================
+I Is::writePointLight(const LightComponent& light, const MoveComponent& move,
+	const FrustumComponent& camfrc, TaskCommonData& task)
+{
+	// Get GPU light
+	I i = task.m_pointLightsCount.fetchAdd(1);
+	if(ANKI_UNLIKELY(i >= I(m_maxPointLights)))
+	{
+		return -1;
+	}
+
+	shader::PointLight& slight = task.m_pointLights[i];
+
+	Vec4 pos = camfrc.getViewMatrix() 
+		* move.getWorldTransform().getOrigin().xyz1();
+
+	slight.m_posRadius = Vec4(pos.xyz(), -1.0 / light.getRadius());
+	slight.m_diffuseColorShadowmapId = light.getDiffuseColor();
+	slight.m_specularColorTexId = light.getSpecularColor();
+
+	return i;
+}
+
+//==============================================================================
+I Is::writeSpotLight(const LightComponent& lightc, 
+	const MoveComponent& lightMove, const FrustumComponent* lightFrc, 
+	const MoveComponent& camMove, const FrustumComponent& camFrc, 
+	TaskCommonData& task)
+{
+	Bool isTexLight = lightc.getShadowEnabled();
+	I i;
+	shader::SpotLight* baseslight = nullptr;
+
+	if(isTexLight)
+	{
+		// Spot tex light
+
+		i = task.m_spotTexLightsCount.fetchAdd(1);
+		if(ANKI_UNLIKELY(i >= I(m_maxSpotTexLights)))
+		{
+			return -1;
+		}
+
+		shader::SpotLight& slight = task.m_spotTexLights[i];
+		baseslight = &slight;
+
+		// Write matrix
+		static const Mat4 biasMat4(
+			0.5, 0.0, 0.0, 0.5, 
+			0.0, 0.5, 0.0, 0.5, 
+			0.0, 0.0, 0.5, 0.5, 
+			0.0, 0.0, 0.0, 1.0);
+		// bias * proj_l * view_l * world_c
+		slight.m_texProjectionMat = 
+			biasMat4 
+			* lightFrc->getViewProjectionMatrix() 
+			* Mat4(camMove.getWorldTransform());
+
+		// Transpose because of driver bug
+		slight.m_texProjectionMat.transpose();
+	}
+	else
+	{
+		// Spot light without texture
+
+		i = task.m_spotLightsCount.fetchAdd(1);
+		if(ANKI_UNLIKELY(i >= I(m_maxSpotLights)))
+		{
+			return -1;
+		}
+
+		shader::SpotLight& slight = task.m_spotLights[i];
+		baseslight = &slight;
+	}
+
+	// Write common stuff
+	ANKI_ASSERT(baseslight);
+
+	// Pos & dist
+	Vec4 pos = 
+		camFrc.getViewMatrix() 
+		* lightMove.getWorldTransform().getOrigin().xyz1();
+	baseslight->m_posRadius = Vec4(pos.xyz(), -1.0 / lightc.getDistance());
+
+	// Diff color and shadowmap ID now
+	baseslight->m_diffuseColorShadowmapId = 
+		Vec4(lightc.getDiffuseColor().xyz(), (F32)lightc.getShadowMapIndex());
+
+	// Spec color
+	baseslight->m_specularColorTexId = lightc.getSpecularColor();
+
+	// Light dir
+	Vec3 lightDir = -lightMove.getWorldTransform().getRotation().getZAxis();
+	lightDir = camFrc.getViewMatrix().getRotationPart() * lightDir;
+	baseslight->m_lightDir = Vec4(lightDir, 0.0);
+	
+	// Angles
+	baseslight->m_outerCosInnerCos = Vec4(
+		lightc.getOuterAngleCos(),
+		lightc.getInnerAngleCos(), 
+		1.0, 
+		1.0);
+
+	// extend points
+	const PerspectiveFrustum& frustum = 
+		static_cast<const PerspectiveFrustum&>(lightFrc->getFrustum());
+
+	for(U i = 0; i < 4; i++)
+	{
+		// TODO that is wrong
+		Vec4 extendPoint = lightMove.getWorldTransform().getOrigin() 
+			+ frustum.getPoints()[i];
+
+		extendPoint = camFrc.getViewMatrix() * extendPoint.xyz1();
+		baseslight->m_extendPoints[i] = extendPoint;
+	}
+
+	return i;
+}
+
+//==============================================================================
+void Is::binLight(
+	SpatialComponent& sp, 
+	U pos, 
+	U lightType, 
+	TaskCommonData& task)
+{
+	// Do the tests
+	Tiler::TestResult visTiles;
+	Tiler::TestParameters params;
+	params.m_collisionShape = &sp.getSpatialCollisionShape();
+	params.m_collisionShapeBox = &sp.getAabb();
+	params.m_nearPlane = true;
+	params.m_output = &visTiles;
+	m_r->getTiler().test(params);
+
+	// Bin to the correct tiles
+	for(U t = 0; t < visTiles.m_count; t++)
+	{
+		U x = visTiles.m_tileIds[t].m_x;
+		U y = visTiles.m_tileIds[t].m_y;
+
+		auto& tile = task.m_tempTiles[y][x];
+		U idx;
+
+		switch(lightType)
+		{
+		case 0:
+			idx = tile.m_pointCount.fetchAdd(1) % MAX_TYPED_LIGHTS_PER_TILE;
+			tile.m_pointIds[idx] = pos;
+			break;
+		case 1:
+			idx = tile.m_spotCount.fetchAdd(1) % MAX_TYPED_LIGHTS_PER_TILE;
+			tile.m_spotIds[idx] = pos;
+			break;
+		case 2:
+			idx = tile.m_spotTexCount.fetchAdd(1) % MAX_TYPED_LIGHTS_PER_TILE;
+			tile.m_spotTexIds[idx] = pos;
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+	}
 }
 
 //==============================================================================
@@ -849,7 +886,7 @@ Error Is::updateCommonBlock(GlCommandBufferHandle& cmdBuff)
 		blk.m_groundLightDir = Vec4(-viewMat.getColumn(1).xyz(), 1.0);
 	}
 
-	m_commonBuff.write(cmdBuff, cbuff, 0, 0, cbuff.getSize());
+	m_commonBuffer.write(cmdBuff, cbuff, 0, 0, cbuff.getSize());
 
 	return err;
 }
@@ -874,16 +911,6 @@ PtrSize Is::calcLightsBufferSize() const
 		m_maxSpotTexLights * sizeof(shader::SpotLight));
 
 	return size;
-}
-
-//==============================================================================
-PtrSize Is::calcTileSize() const
-{
-	return 
-		sizeof(U32) * 4 
-		+ m_maxPointLightsPerTile * sizeof(U32)
-		+ m_maxSpotLightsPerTile * sizeof(U32)
-		+ m_maxSpotTexLightsPerTile * sizeof(U32);
 }
 
 } // end namespace anki

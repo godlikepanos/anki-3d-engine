@@ -5,10 +5,6 @@
 
 #pragma anki type vert
 
-#if !TILES_X_COUNT || !TILES_Y_COUNT
-#	error See file
-#endif
-
 #pragma anki include "shaders/IsCommon.glsl"
 
 layout(location = 0) in vec2 inPosition;
@@ -39,7 +35,7 @@ void main()
 	vec2 vertPosNdc = outTexCoord * 2.0 - 1.0;
 	gl_Position = vec4(vertPosNdc, 0.0, 1.0);
 
-	outProjectionParams = uProjectionParams.xy * vertPosNdc;
+	outProjectionParams = u_projectionParams.xy * vertPosNdc;
 }
 
 

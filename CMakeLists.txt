@@ -121,7 +121,7 @@ endif()
 if(${ANKI_BUILD_TYPE} STREQUAL "Debug")
 	# Debug
 
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -g3 -O0 ")
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -g3 -O0 -fstack-check ")
 else()
 	# Release
 

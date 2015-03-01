@@ -138,7 +138,7 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 		phyd.drawWorld(scene._getPhysicsWorld());
 	}
 
-#if 1
+#if 0
 	{
 		SceneNode& sn = scene.findSceneNode("plight0");
 		SpatialComponent& sp = sn.getComponent<SpatialComponent>();
@@ -186,14 +186,6 @@ Error Dbg::run(GlCommandBufferHandle& cmdb)
 		b = vp * b.xyz1();
 		b /= b.w();
 		rr.y() = b.y() - a.y();
-
-#if 0
-		Vec4 a = mvp * sphere.getCenter().xyz1();
-		Vec3 b = a.xyz() / a.w();
-
-		Vec4 aa = mvp * (sphere.getCenter() + rot.getColumn(0).xyz0().getNormalized() * r).xyz1();
-		Vec3 bb = aa.xyz() / aa.w();
-#endif
 
 		m_drawer->begin(GL_LINES);
 		m_drawer->setColor(Vec4(1.0, 1.0, 1.0, 1.0));

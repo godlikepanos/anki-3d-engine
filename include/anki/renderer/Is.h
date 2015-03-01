@@ -20,10 +20,16 @@
 
 namespace anki {
 
+// Forward
 class Camera;
 class PerspectiveCamera;
 class PointLight;
 class SpotLight;
+class LightComponent;
+class MoveComponent;
+class SpatialComponent;
+class FrustumComponent;
+class TaskCommonData;
 
 /// @addtogroup renderer
 /// @{
@@ -33,7 +39,7 @@ class Is: private RenderingPass
 {
 	friend class Renderer;
 	friend class Sslr;
-	friend class WriteLightsJob;
+	friend class WriteLightsTask;
 
 public:
 	/// @privatesection
@@ -51,8 +57,12 @@ private:
 		POINT_LIGHTS_BLOCK_BINDING = 1,
 		SPOT_LIGHTS_BLOCK_BINDING = 2,
 		SPOT_TEX_LIGHTS_BLOCK_BINDING = 3,
-		TILES_BLOCK_BINDING = 4
+		TILES_BLOCK_BINDING = 4,
+		LIGHT_IDS_BLOCK_BINDING = 5
 	};
+
+	static const U MAX_FRAMES = 3;
+	U32 m_currentFrame = 0; ///< Cache value.
 
 	/// The IS render target
 	GlTextureHandle m_rt;
@@ -64,16 +74,22 @@ private:
 	/// @{
 
 	/// Contains common data for all shader programs
-	GlBufferHandle m_commonBuff;
+	GlBufferHandle m_commonBuffer;
 
 	/// Track the updates of commonUbo
 	Timestamp m_commonBuffUpdateTimestamp = 0;
 
 	/// Contains all the lights
-	GlBufferHandle m_lightsBuff;
+	Array<GlBufferHandle, MAX_FRAMES> m_lightsBuffers;
+	Array<void*, MAX_FRAMES> m_lightsBufferAddresses;
 
 	/// Contains the number of lights per tile
-	GlBufferHandle m_tilesBuff;
+	Array<GlBufferHandle, MAX_FRAMES> m_tilesBuffers;
+	Array<void*, MAX_FRAMES> m_tilesBufferAddresses;
+
+	/// Contains light indices.
+	Array<GlBufferHandle, MAX_FRAMES> m_lightIdsBuffers;
+	Array<void*, MAX_FRAMES> m_lightIdsBufferAddresses;
 	/// @}
 
 	// Light shaders
@@ -103,12 +119,8 @@ private:
 	U32 m_maxSpotLights;
 	U32 m_maxSpotTexLights;
 
-	U32 m_maxPointLightsPerTile;
-	U32 m_maxSpotLightsPerTile;
-	U32 m_maxSpotTexLightsPerTile;
+	U32 m_maxLightIds;
 	/// @}
-
-	U32 m_tileSize; ///< Cache the value here
 
 	Is(Renderer* r);
 	~Is();
@@ -132,6 +144,17 @@ private:
 	PtrSize calcTileSize() const;
 
 	ANKI_USE_RESULT Error updateCommonBlock(GlCommandBufferHandle& cmdBuff);
+
+	// Binning
+	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);
+	I writePointLight(const LightComponent& light, const MoveComponent& move,
+		const FrustumComponent& camfrc, TaskCommonData& task);
+	I writeSpotLight(const LightComponent& lightc, 
+		const MoveComponent& lightMove, const FrustumComponent* lightFrc, 
+		const MoveComponent& camMove, const FrustumComponent& camFrc, 
+		TaskCommonData& task);
+	void binLight(SpatialComponent& sp, U pos, U lightType, 
+		TaskCommonData& task);
 };
 
 /// @}

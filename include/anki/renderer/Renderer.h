@@ -182,6 +182,11 @@ public:
 		return m_tilesCount;
 	}
 
+	U getTilesCountXY() const
+	{
+		return m_tilesCountXY;
+	}
+
 	const GlShaderHandle& getDrawQuadVertexProgram() const
 	{
 		return m_drawQuadVert->getGlProgram();
@@ -303,6 +308,7 @@ private:
 	Bool8 m_isOffscreen; ///< Is offscreen renderer?
 	Bool8 m_tessellation;
 	UVec2 m_tilesCount;
+	U32 m_tilesCountXY;
 
 	/// @name For drawing a quad into the active framebuffer
 	/// @{

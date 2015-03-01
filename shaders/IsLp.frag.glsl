@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki type frag
-#pragma anki include "shaders/Common.glsl"
+#pragma anki include "shaders/IsCommon.glsl"
 #pragma anki include "shaders/Pack.glsl"
 
 #define PI 3.1415926535
@@ -19,10 +19,7 @@
 // Representation of a tile
 struct Tile
 {
-	uvec4 lightsCount;
-	uint pointLightIndices[MAX_POINT_LIGHTS_PER_TILE];
-	uint spotLightIndices[MAX_SPOT_LIGHTS_PER_TILE];
-	uint spotTexLightIndices[MAX_SPOT_TEX_LIGHTS_PER_TILE];
+	uvec4 offsetCounts; // x:offset y:points_count z:spots_count w:stex_count
 };
 
 // The base of all lights
@@ -46,23 +43,6 @@ struct SpotLight
 	mat4 texProjectionMat;
 };
 
-// A container of many lights
-struct Lights
-{
-	uvec4 count; // x: points, z: 
-	PointLight pointLights[MAX_POINT_LIGHTS];
-	SpotLight spotLights[MAX_SPOT_LIGHTS];
-	SpotLight spotTexLights[MAX_SPOT_TEX_LIGHTS];
-};
-
-// Common uniforms between lights
-layout(std140, row_major, binding = 0) uniform _commonBlock
-{
-	vec4 u_projectionParams;
-	vec4 u_sceneAmbientColor;
-	vec4 u_groundLightDir;
-};
-
 layout(std140, binding = 1) readonly buffer pointLightsBlock
 {
 	PointLight u_pointLights[MAX_POINT_LIGHTS];
@@ -78,9 +58,14 @@ layout(std140, binding = 3) readonly buffer spotTexLightsBlock
 	SpotLight u_spotTexLights[MAX_SPOT_TEX_LIGHTS];
 };
 
-layout(std430, binding = 4) readonly buffer tilesBlock
+layout(std140, binding = 4) readonly buffer tilesBlock
 {
 	Tile u_tiles[TILES_COUNT];
+};
+
+layout(std430, binding = 5) readonly buffer _5
+{
+	uint u_lightIndices[MAX_LIGHT_INDICES];
 };
 
 layout(binding = 0) uniform sampler2D u_msRt0;
@@ -288,10 +273,11 @@ void main()
 	#define tile u_tiles[in_instanceId]
 
 	// Point lights
-	uint pointLightsCount = tile.lightsCount[0];
+	uint lightOffset = tile.offsetCounts.x;
+	uint pointLightsCount = tile.offsetCounts.y;
 	for(uint i = 0U; i < pointLightsCount; ++i)
 	{
-		uint lightId = tile.pointLightIndices[i];
+		uint lightId = u_lightIndices[lightOffset++];
 		PointLight light = u_pointLights[lightId];
 
 		LIGHTING_COMMON();
@@ -300,10 +286,10 @@ void main()
 	}
 
 	// Spot lights
-	uint spotLightsCount = tile.lightsCount[2];
+	uint spotLightsCount = tile.offsetCounts.z;
 	for(uint i = 0U; i < spotLightsCount; ++i)
 	{
-		uint lightId = tile.spotLightIndices[i];
+		uint lightId = u_lightIndices[lightOffset++];
 		SpotLight slight = u_spotLights[lightId];
 		Light light = slight.lightBase;
 
@@ -318,10 +304,10 @@ void main()
 	}
 
 	// Spot lights with shadow
-	uint spotTexLightsCount = tile.lightsCount[3];
+	uint spotTexLightsCount = tile.offsetCounts.w;
 	for(uint i = 0U; i < spotTexLightsCount; ++i)
 	{
-		uint lightId = tile.spotTexLightIndices[i];
+		uint lightId = u_lightIndices[lightOffset++];
 		SpotLight slight = u_spotTexLights[lightId];
 		Light light = slight.lightBase;
 
@@ -348,7 +334,7 @@ void main()
 #if 0
 	if(pointLightsCount != 0)
 	{
-		out_color += vec3(float(pointLightsCount) * 0.05);
+		out_color = vec3(float(pointLightsCount) * 0.05);
 	}
 
 	/*uint x = in_instanceId % 60;

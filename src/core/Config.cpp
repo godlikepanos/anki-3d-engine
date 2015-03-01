@@ -26,12 +26,10 @@ Config::Config()
 	newOption("is.sm.maxLights", 4);
 
 	newOption("is.groundLightEnabled", true);
-	newOption("is.maxPointLights", 512 - 16);
-	newOption("is.maxSpotLights", 8);
-	newOption("is.maxSpotTexLights", 4);
-	newOption("is.maxPointLightsPerTile", 48);
-	newOption("is.maxSpotLightsPerTile", 4);
-	newOption("is.maxSpotTexLightsPerTile", 4);
+	newOption("is.maxPointLights", 384);
+	newOption("is.maxSpotLights", 16);
+	newOption("is.maxSpotTexLights", 8);
+	newOption("is.maxLightsPerTile", 16);
 
 	// Pps
 	newOption("pps.hdr.enabled", true);
