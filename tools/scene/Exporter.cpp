@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "Exporter.h"
+#include <iostream>
 
 //==============================================================================
 // Statics                                                                     =
@@ -913,7 +914,8 @@ void Exporter::visitNode(const aiNode* ainode)
 			const Model& model = m_models[node.m_modelIndex];
 
 			if(model.m_meshIndex == meshIndex 
-				&& model.m_materialIndex == mtlIndex)
+				&& model.m_materialIndex == mtlIndex
+				&& node.m_group == ainode->mGroup.C_Str())
 			{
 				break;
 			}
@@ -943,6 +945,7 @@ void Exporter::visitNode(const aiNode* ainode)
 		Node node;
 		node.m_modelIndex = m_models.size() - 1;
 		node.m_transforms.push_back(ainode->mTransformation);
+		node.m_group = ainode->mGroup.C_Str();
 		m_nodes.push_back(node);
 	}
 
