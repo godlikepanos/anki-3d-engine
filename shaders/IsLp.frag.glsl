@@ -39,7 +39,6 @@ struct SpotLight
 	Light lightBase;
 	vec4 lightDir;
 	vec4 outerCosInnerCos;
-	vec4 extendPoints[4]; // The positions of the 4 camera points
 	mat4 texProjectionMat;
 };
 

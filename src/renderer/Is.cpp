@@ -19,14 +19,6 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-/// Clamp a value
-template<typename T, typename Y>
-void clamp(T& in, Y limit)
-{
-	in = std::min(in, (T)limit);
-}
-
-//==============================================================================
 // Shader structs and block representations. All positions and directions in
 // viewspace
 // For documentation see the shaders
@@ -55,7 +47,6 @@ struct SpotLight: Light
 {
 	Vec4 m_lightDir;
 	Vec4 m_outerCosInnerCos;
-	Array<Vec4, 4> m_extendPoints;
 	Mat4 m_texProjectionMat; ///< Texture projection matrix
 };
 
@@ -389,9 +380,10 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	}
 
 	// Sanitize the counters
-	clamp(visiblePointLightsCount, m_maxPointLights);
-	clamp(visibleSpotLightsCount, m_maxSpotLights);
-	clamp(visibleSpotTexLightsCount, m_maxSpotTexLights);
+	visiblePointLightsCount = min<U>(visiblePointLightsCount, m_maxPointLights);
+	visibleSpotLightsCount = min<U>(visibleSpotLightsCount, m_maxSpotLights);
+	visibleSpotTexLightsCount = 
+		min<U>(visibleSpotTexLightsCount, m_maxSpotTexLights);
 
 	ANKI_COUNTER_INC(RENDERER_LIGHTS_COUNT, 
 		U64(visiblePointLightsCount + visibleSpotLightsCount 
@@ -667,8 +659,9 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 }
 
 //==============================================================================
-I Is::writePointLight(const LightComponent& light, const MoveComponent& move,
-	const FrustumComponent& camfrc, TaskCommonData& task)
+I Is::writePointLight(const LightComponent& lightc, 
+	const MoveComponent& lightMove,
+	const FrustumComponent& camFrc, TaskCommonData& task)
 {
 	// Get GPU light
 	I i = task.m_pointLightsCount.fetchAdd(1);
@@ -679,12 +672,12 @@ I Is::writePointLight(const LightComponent& light, const MoveComponent& move,
 
 	shader::PointLight& slight = task.m_pointLights[i];
 
-	Vec4 pos = camfrc.getViewMatrix() 
-		* move.getWorldTransform().getOrigin().xyz1();
+	Vec4 pos = camFrc.getViewMatrix() 
+		* lightMove.getWorldTransform().getOrigin().xyz1();
 
-	slight.m_posRadius = Vec4(pos.xyz(), -1.0 / light.getRadius());
-	slight.m_diffuseColorShadowmapId = light.getDiffuseColor();
-	slight.m_specularColorTexId = light.getSpecularColor();
+	slight.m_posRadius = Vec4(pos.xyz(), -1.0 / lightc.getRadius());
+	slight.m_diffuseColorShadowmapId = lightc.getDiffuseColor();
+	slight.m_specularColorTexId = lightc.getSpecularColor();
 
 	return i;
 }
@@ -772,16 +765,6 @@ I Is::writeSpotLight(const LightComponent& lightc,
 	// extend points
 	const PerspectiveFrustum& frustum = 
 		static_cast<const PerspectiveFrustum&>(lightFrc->getFrustum());
-
-	for(U i = 0; i < 4; i++)
-	{
-		// TODO that is wrong
-		Vec4 extendPoint = lightMove.getWorldTransform().getOrigin() 
-			+ frustum.getPoints()[i];
-
-		extendPoint = camFrc.getViewMatrix() * extendPoint.xyz1();
-		baseslight->m_extendPoints[i] = extendPoint;
-	}
 
 	return i;
 }
