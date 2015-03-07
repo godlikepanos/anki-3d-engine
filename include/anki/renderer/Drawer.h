@@ -33,7 +33,7 @@ class RenderableDrawer
 	friend class SetupRenderableVariableVisitor;
 
 public:
-	static const U32 MAX_UNIFORM_BUFFER_SIZE = 1024 * 1024 * 1;
+	static const U32 MAX_UNIFORM_BUFFER_SIZE = 1024 * 1024 * 2;
 
 	/// The one and only constructor
 	ANKI_USE_RESULT Error create(Renderer* r);

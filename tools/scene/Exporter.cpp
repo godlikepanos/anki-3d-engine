@@ -1014,19 +1014,20 @@ void Exporter::exportAll()
 			model.m_instanced);
 
 		exportModel(model);
-		std::string name = getModelName(model);
+		std::string modelName = getModelName(model);
+		std::string nodeName = modelName + node.m_group;
 
 		// Write the main node
 		file << "\nnode = scene:newModelNode(\"" 
-			<< name << "\", \"" 
-			<< m_rpath << name << ".ankimdl" << "\")\n"; 
+			<< nodeName << "\", \"" 
+			<< m_rpath << modelName << ".ankimdl" << "\")\n"; 
 		writeNodeTransform("node", node.m_transforms[0]);
 
 		// Write instance nodes
 		for(unsigned j = 1; j < node.m_transforms.size(); j++)
 		{
 			file << "inst = scene:newInstanceNode(\"" 
-				<< name << "_inst" << (j - 1) << "\")\n"
+				<< nodeName << "_inst" << (j - 1) << "\")\n"
 				<< "node:getSceneNodeBase():addChild("
 				<< "inst:getSceneNodeBase())\n";
 

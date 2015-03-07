@@ -259,7 +259,7 @@ void Exporter::exportMesh(
 		
 		if(face.mNumIndices != 3)
 		{
-			ERROR("For some reason the assimp returned wrong number of verts "
+			ERROR("For some reason assimp returned wrong number of verts "
 				"for a face (face.mNumIndices=%d). Probably degenerates in "
 				"input file", face.mNumIndices);
 		}

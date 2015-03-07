@@ -59,7 +59,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.3);
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.8);
 
 	if(getenv("PROFILE"))
 	{
@@ -255,7 +255,7 @@ Error init()
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/adis/scene.lua", &resources);
+		err = script.load("maps/adis2/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());

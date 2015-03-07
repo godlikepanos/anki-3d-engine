@@ -10,7 +10,7 @@
 #define PI 3.1415926535
 
 #define ATTENUATION_FINE 0
-#define ATTENUATION_BOOST (0.05)
+#define ATTENUATION_BOOST (0.0)
 
 #ifndef BRDF
 #	define BRDF 1
