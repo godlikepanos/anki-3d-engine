@@ -21,15 +21,18 @@ layout(location = 0) out vec4 outColor;
 #	define texture_DEFINED
 #endif
 
+//==============================================================================
 #define getAlpha_DEFINED
 float getAlpha()
 {
 	return inAlpha;
 }
 
+//==============================================================================
 #define getPointCoord_DEFINED
 #define getPointCoord() gl_PointCoord
 
+//==============================================================================
 #if PASS == COLOR
 #	define writeGBuffer_DEFINED
 void writeGBuffer(in vec4 color)
@@ -38,6 +41,7 @@ void writeGBuffer(in vec4 color)
 }
 #endif
 
+//==============================================================================
 #if PASS == COLOR
 #	define particleAlpha_DEFINED
 void particleAlpha(in sampler2D tex, in float alpha)
@@ -48,6 +52,7 @@ void particleAlpha(in sampler2D tex, in float alpha)
 }
 #endif
 
+//==============================================================================
 #if PASS == COLOR
 #	define particleSoftTextureAlpha_DEFINED
 void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex, 
@@ -69,6 +74,7 @@ void particleSoftTextureAlpha(in sampler2D depthMap, in sampler2D tex,
 }
 #endif
 
+//==============================================================================
 #if PASS == COLOR
 #	define particleSoftColorAlpha_DEFINED
 void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor, 
@@ -90,5 +96,30 @@ void particleSoftColorAlpha(in sampler2D depthMap, in vec3 icolor,
 	color.rgb = icolor;
 	color.a = alpha * softalpha * roundFactor;
 	writeGBuffer(color);
+}
+#endif
+
+//==============================================================================
+#if PASS == COLOR
+#	define fog_DEFINED
+void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
+{
+	const vec2 screenSize = vec2(
+		1.0 / float(ANKI_RENDERER_WIDTH), 
+		1.0 / float(ANKI_RENDERER_HEIGHT));
+
+	vec2 texCoords = gl_FragCoord.xy * screenSize;
+	float depth = texture(depthMap, texCoords);
+	float zNear = 0.2;
+	float zFar = 200.0;
+	float linearDepth = (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
+
+	float depth2 = gl_FragCoord.z;
+	float linearDepth2 = (2.0 * zNear) / (zFar + zNear - depth2 * (zFar - zNear));
+
+	float diff = linearDepth - linearDepth2;
+
+	//writeGBuffer(vec4(vec3(diff * fogScale), 1.0));
+	writeGBuffer(vec4(color, diff * fogScale));
 }
 #endif

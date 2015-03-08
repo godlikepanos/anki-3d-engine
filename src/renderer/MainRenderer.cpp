@@ -73,13 +73,14 @@ Error MainRenderer::render(SceneGraph& scene)
 	err = Renderer::render(scene, jobs);
 	if(err) return err;
 
-	Bool alreadyDrawnToDefault = 
+	/*Bool alreadyDrawnToDefault = 
 		!getDbg().getEnabled()
-		&& getRenderingQuality() == 1.0;
+		&& getRenderingQuality() == 1.0;*/
+	Bool alreadyDrawnToDefault = false;
 
 	if(!alreadyDrawnToDefault)
 	{
-		getDefaultFramebuffer().bind(lastJobs, false);
+		getDefaultFramebuffer().bind(lastJobs, true);
 		lastJobs.setViewport(0, 0, 
 			getDefaultFramebufferWidth(), getDefaultFramebufferHeight());
 

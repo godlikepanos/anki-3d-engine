@@ -817,10 +817,11 @@ void Is::binLight(
 //==============================================================================
 void Is::setState(GlCommandBufferHandle& cmdBuff)
 {
-	Bool drawToDefaultFbo = !m_r->getPps().getEnabled() 
+	/*Bool drawToDefaultFbo = !m_r->getPps().getEnabled() 
 		&& !m_r->getDbg().getEnabled() 
 		&& !m_r->getIsOffscreen()
-		&& m_r->getRenderingQuality() == 1.0;
+		&& m_r->getRenderingQuality() == 1.0;*/
+	Bool drawToDefaultFbo = false;
 
 	if(drawToDefaultFbo)
 	{

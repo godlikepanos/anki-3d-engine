@@ -8,9 +8,9 @@
 #define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/MsBsCommon.glsl"
 
-layout(location = POSITION_LOCATION) in vec3 inPosition;
-layout(location = SCALE_LOCATION) in float inScale;
-layout(location = ALPHA_LOCATION) in float inAlpha;
+layout(location = POSITION_LOCATION) in vec3 in_position;
+layout(location = SCALE_LOCATION) in float in_scale;
+layout(location = ALPHA_LOCATION) in float in_alpha;
 
 layout(location = 1) flat out float outAlpha;
 
@@ -35,12 +35,19 @@ void setPositionVec4(in vec4 pos)
 }
 
 //==============================================================================
+#define writePositionMvp_DEFINED
+void writePositionMvp(in mat4 mvp)
+{
+	gl_Position = mvp * vec4(in_position, 1.0);
+}
+
+//==============================================================================
 #define particle_DEFINED
 void particle(in mat4 mvp)
 {
-	gl_Position = mvp * vec4(inPosition, 1);
-	outAlpha = inAlpha;
-	gl_PointSize = inScale * float(ANKI_RENDERER_WIDTH) / gl_Position.w;
+	gl_Position = mvp * vec4(in_position, 1);
+	outAlpha = in_alpha;
+	gl_PointSize = in_scale * float(ANKI_RENDERER_WIDTH) / gl_Position.w;
 }
 
 //==============================================================================

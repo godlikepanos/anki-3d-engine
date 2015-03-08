@@ -193,15 +193,15 @@ Error Renderer::render(SceneGraph& scene,
 		if(err) return err;
 	}
 
-	err = m_dp.run(cmdBuff[1]);
-	if(err) return err;
-
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
 	err = m_is.run(cmdBuff[1]);
 	if(err) return err;
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
 	err = m_bs.run(cmdBuff[1]);
+	if(err) return err;
+
+	err = m_dp.run(cmdBuff[1]);
 	if(err) return err;
 
 	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);

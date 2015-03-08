@@ -135,10 +135,11 @@ Error Pps::run(GlCommandBufferHandle& cmdBuff)
 		if(err) return err;
 	}
 
-	Bool drawToDefaultFbo = 
+	/*Bool drawToDefaultFbo = 
 		!m_r->getDbg().getEnabled() 
 		&& !m_r->getIsOffscreen()
-		&& m_r->getRenderingQuality() == 1.0;
+		&& m_r->getRenderingQuality() == 1.0;*/
+	Bool drawToDefaultFbo = false;
 
 	if(drawToDefaultFbo)
 	{

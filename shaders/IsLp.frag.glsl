@@ -10,7 +10,7 @@
 #define PI 3.1415926535
 
 #define ATTENUATION_FINE 0
-#define ATTENUATION_BOOST (0.0)
+#define ATTENUATION_BOOST (0.1)
 
 #ifndef BRDF
 #	define BRDF 1
@@ -101,6 +101,7 @@ float computeAttenuationFactor(
 
 	float att = (fragLightDist * lightRadius) + (1.0 + ATTENUATION_BOOST);
 	att = max(0.0, att);
+	att *= att;
 
 	return att;
 }

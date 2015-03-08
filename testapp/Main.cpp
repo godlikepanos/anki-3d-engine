@@ -41,7 +41,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 1
+#define NO_PLAYER 0
 
 
 //==============================================================================
@@ -59,7 +59,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.8);
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 2.8);
 
 	if(getenv("PROFILE"))
 	{
@@ -74,6 +74,11 @@ Error init()
 		renderer.getAspectRatio() * toRad(ang),
 		toRad(ang), 0.2, 200.0);
 	scene.setActiveCamera(cam);
+
+	cam->getComponent<MoveComponent>().
+		setLocalTransform(Transform(Vec4(0.0),
+		Mat3x4(Euler(toRad(0.0), toRad(180.0), toRad(0.0))),
+		1.0));
 
 #if NO_PLAYER
 	cam->getComponent<MoveComponent>().
@@ -255,7 +260,7 @@ Error init()
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/adis2/scene.lua", &resources);
+		err = script.load("maps/adis/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());
@@ -271,17 +276,15 @@ Error init()
 
 #endif
 
-#if 0
-	PhysicsCollisionShape::Initializer initc;
-	auto box = 
-		scene._getPhysicsWorld().newCollisionShape<PhysicsBox>(
-		initc, Vec3(70.0));
-
-	PhysicsBody::Initializer init;
-	init.m_shape = box;
-	init.m_startTrf = Transform(Vec4(0.0, -15, 0, 0), 
-		Mat3x4(Axisang(toRad(0.0), Vec3(1, 0, 0))), 1.0);
-	scene._getPhysicsWorld().newBody<PhysicsBody>(init);
+#if 1
+	{
+		ModelNode* fog;
+		scene.newSceneNode<ModelNode>("fog", fog, 
+			"models/fog/volumetric_fog_box.ankimdl");
+		MoveComponent& move = fog->getComponent<MoveComponent>();
+		move.setLocalOrigin(Vec4(10.0, -16.5, 0.0, 0.0));
+		move.setLocalScale(20.0);
+	}
 #endif
 
 	return ErrorCode::NONE;
@@ -443,16 +446,6 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	if(in.getKey(KeyCode::PAGEDOWN))
 	{
 		mover->scale(-scale);
-	}
-#endif
-#if 0
-	if(in.getKey(KeyCode::P) == 1)
-	{
-		std::cout << "{Vec3(" 
-			<< mover->getWorldTransform().getOrigin().toString()
-			<< "), Quat(" 
-			<< Quat(mover->getWorldTransform().getRotation()).toString()
-			<< ")}," << std::endl;
 	}
 #endif
 

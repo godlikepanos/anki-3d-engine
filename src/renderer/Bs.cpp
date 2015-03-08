@@ -17,13 +17,29 @@ Bs::~Bs()
 //==============================================================================
 Error Bs::init(const ConfigSet&)
 {
-	return ErrorCode::NONE;
+	GlCommandBufferHandle cmdb;
+	Error err = cmdb.create(&getGlDevice());
+	if(err)
+	{
+		return err;
+	}
+
+	err = m_fb.create(
+		cmdb,
+		{{m_r->getIs()._getRt(), GL_COLOR_ATTACHMENT0}, 
+		{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
+
+	cmdb.flush();
+
+	return err;
 }
 
 //==============================================================================
 Error Bs::run(GlCommandBufferHandle& cmdb)
 {
 	Error err = ErrorCode::NONE;
+
+	m_fb.bind(cmdb, false);
 
 	cmdb.enableDepthTest(true);
 	cmdb.setDepthWriteMask(false);
