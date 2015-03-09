@@ -9,6 +9,8 @@
 #include "anki/core/Counters.h"
 #include "anki/misc/ConfigSet.h"
 
+#include "anki/renderer/Fs.h"
+
 namespace anki {
 
 //==============================================================================
@@ -17,7 +19,6 @@ Renderer::Renderer()
 	m_dp(this), 
 	m_is(this),
 	m_pps(this),
-	m_bs(this),
 	m_dbg(this), 
 	m_tiler(this)
 {}
@@ -132,8 +133,13 @@ Error Renderer::initInternal(const ConfigSet& config)
 	if(err) return err;
 	err = m_is.init(config);
 	if(err) return err;
-	err = m_bs.init(config);
-	if(err) return err;
+	
+	m_fs = m_alloc.newInstance<Fs>(this);
+	if(err = m_fs->init(config))
+	{
+		return err;
+	}
+	
 	err = m_pps.init(config);
 	if(err) return err;
 	err = m_dbg.init(config);
@@ -198,8 +204,10 @@ Error Renderer::render(SceneGraph& scene,
 	if(err) return err;
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
-	err = m_bs.run(cmdBuff[1]);
-	if(err) return err;
+	if(err = m_fs->run(cmdBuff[1])) 
+	{
+		return err;
+	}
 
 	err = m_dp.run(cmdBuff[1]);
 	if(err) return err;

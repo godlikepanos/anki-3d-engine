@@ -13,15 +13,15 @@ namespace anki {
 /// @addtogroup renderer
 /// @{
 
-/// Blending stage. The objects that blend must be handled differently
-class Bs: public RenderingPass
+/// Forward rendering stage. The objects that blend must be handled differently
+class Fs: public RenderingPass
 {
 public:
-	Bs(Renderer* r)
+	Fs(Renderer* r)
 	:	RenderingPass(r) 
 	{}
 
-	~Bs();
+	~Fs();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdb);
@@ -29,7 +29,6 @@ public:
 private:
 	GlFramebufferHandle m_fb;
 };
-
 /// @}
 
 } // end namespace anki

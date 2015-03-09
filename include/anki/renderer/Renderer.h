@@ -6,6 +6,7 @@
 #ifndef ANKI_RENDERER_RENDERER_H
 #define ANKI_RENDERER_RENDERER_H
 
+#include "anki/renderer/Common.h"
 #include "anki/Math.h"
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/TextureResource.h"
@@ -18,7 +19,6 @@
 #include "anki/renderer/Dp.h"
 #include "anki/renderer/Is.h"
 #include "anki/renderer/Pps.h"
-#include "anki/renderer/Bs.h"
 #include "anki/renderer/Dbg.h"
 #include "anki/renderer/Tiler.h"
 #include "anki/renderer/Drawer.h"
@@ -292,7 +292,7 @@ private:
 	Dp m_dp; ///< Depth processing stage.
 	Is m_is; ///< Illumination rendering stage
 	Pps m_pps; ///< Postprocessing rendering stage
-	Bs m_bs; ///< Blending stage
+	Fs* m_fs = nullptr; ///< Forward shading.
 	Dbg m_dbg; ///< Debug stage
 	Tiler m_tiler;
 	/// @}

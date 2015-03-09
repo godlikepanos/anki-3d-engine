@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/Bs.h"
+#include "anki/renderer/Fs.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
@@ -11,11 +11,11 @@
 namespace anki {
 
 //==============================================================================
-Bs::~Bs()
+Fs::~Fs()
 {}
 
 //==============================================================================
-Error Bs::init(const ConfigSet&)
+Error Fs::init(const ConfigSet&)
 {
 	GlCommandBufferHandle cmdb;
 	Error err = cmdb.create(&getGlDevice());
@@ -35,7 +35,7 @@ Error Bs::init(const ConfigSet&)
 }
 
 //==============================================================================
-Error Bs::run(GlCommandBufferHandle& cmdb)
+Error Fs::run(GlCommandBufferHandle& cmdb)
 {
 	Error err = ErrorCode::NONE;
 
