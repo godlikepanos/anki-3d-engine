@@ -21,7 +21,7 @@ endif()
 #
 # Add anki sub libraries
 #
-set(ANKI_SUB_DIRS core script renderer scene event input physics resource misc gl collision math util)
+set(ANKI_SUB_DIRS core script renderer scene event input physics resource misc gr collision math util)
 
 set(ANKI_LIBS "")
 
@@ -35,7 +35,7 @@ endif()
 
 add_library(anki Dummy.cpp "${_SYS_SRC}")
 
-target_link_libraries(anki ankicore ankiscript ankirenderer ankiscene ankievent ankiinput ankiphysics ankiresource ankimisc ankigl ankicollision ankimath ankiutil ankitinyxml2 ankilua ankiz ankinewton ${LIB_SDL} ${ANKI_GPERFTOOLS_LIBS} ${_SYS})
+target_link_libraries(anki ankicore ankiscript ankirenderer ankiscene ankievent ankiinput ankiphysics ankiresource ankimisc ankigr ankicollision ankimath ankiutil ankitinyxml2 ankilua ankiz ankinewton ${LIB_SDL} ${ANKI_GPERFTOOLS_LIBS} ${_SYS})
 
 set_target_properties(anki PROPERTIES LINKER_LANGUAGE CXX)
 

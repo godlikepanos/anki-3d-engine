@@ -7,7 +7,7 @@
 #define ANKI_UI_UI_PAINTER_H
 
 #include "anki/ui/UiCommon.h"
-#include "anki/gl/Gl.h"
+#include "anki/gr/Gl.h"
 
 namespace anki {
 

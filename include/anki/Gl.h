@@ -24,15 +24,15 @@
 /// @defgroup opengl_other OpenGL uncategorized interfaces 
 /// @ingroup opengl
 
-#include "anki/gl/GlBufferHandle.h"
-#include "anki/gl/GlTextureHandle.h"
-#include "anki/gl/GlShaderHandle.h"
+#include "anki/gr/GlBufferHandle.h"
+#include "anki/gr/GlTextureHandle.h"
+#include "anki/gr/GlShaderHandle.h"
 
-#include "anki/gl/GlFramebufferHandle.h"
-#include "anki/gl/GlPipelineHandle.h"
+#include "anki/gr/GlFramebufferHandle.h"
+#include "anki/gr/GlPipelineHandle.h"
 
-#include "anki/gl/GlCommandBufferHandle.h"
-#include "anki/gl/GlOcclusionQueryHandle.h"
-#include "anki/gl/GlDevice.h"
+#include "anki/gr/GlCommandBufferHandle.h"
+#include "anki/gr/GlOcclusionQueryHandle.h"
+#include "anki/gr/GlDevice.h"
 
 #endif

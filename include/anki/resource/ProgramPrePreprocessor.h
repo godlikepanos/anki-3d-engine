@@ -9,7 +9,7 @@
 #include "anki/resource/ResourceManager.h"
 #include "anki/util/StdTypes.h"
 #include "anki/util/StringList.h"
-#include "anki/gl/GlCommon.h"
+#include "anki/gr/GlCommon.h"
 
 namespace anki {
 

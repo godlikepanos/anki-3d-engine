@@ -7,7 +7,7 @@
 #include "anki/resource/ProgramResource.h"
 #include "anki/resource/Material.h"
 #include "anki/scene/SkinNode.h"
-#include "anki/gl/GlState.h"
+#include "anki/gr/GlState.h"
 
 namespace anki {
 

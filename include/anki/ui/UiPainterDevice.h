@@ -6,7 +6,7 @@
 #ifndef ANKI_UI_UI_PAINTER_DEVICE_H
 #define ANKI_UI_UI_PAINTER_DEVICE_H
 
-#include "anki/gl/Fbo.h"
+#include "anki/gr/Fbo.h"
 #include "anki/Math.h"
 
 namespace anki {

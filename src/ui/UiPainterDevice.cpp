@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/ui/UiPainterDevice.h"
-#include "anki/gl/Texture.h"
+#include "anki/gr/Texture.h"
 
 namespace anki {
 

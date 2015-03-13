@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/ui/UiPainter.h"
-#include "anki/gl/GlState.h"
+#include "anki/gr/GlState.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/util/Logger.h"
 #include "anki/ui/UiFont.h"
