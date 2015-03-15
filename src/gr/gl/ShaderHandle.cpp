@@ -31,8 +31,8 @@ public:
 	{
 		Error err = m_shader._get().create(m_type, 
 			reinterpret_cast<const char*>(m_source.getBaseAddress()),
-			commands->getQueue().getDevice()._getAllocator(),
-			commands->getQueue().getDevice()._getCacheDirectory());
+			commands->getRenderingThread().getDevice()._getAllocator(),
+			commands->getRenderingThread().getDevice()._getCacheDirectory());
 
 		GlHandleState oldState = m_shader._setState(
 			(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
@@ -60,7 +60,7 @@ Error ShaderHandle::create(CommandBufferHandle& commands,
 	using Deleter = GlHandleDeferredDeleter<ShaderImpl, Alloc, DeleteCommand>;
 
 	Error err = _createAdvanced(
-		&commands._get().getQueue().getDevice(),
+		&commands._get().getRenderingThread().getDevice(),
 		commands._get().getGlobalAllocator(), 
 		Deleter());
 

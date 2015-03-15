@@ -3,9 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/gl/Queue.h"
+#include "anki/gr/gl/RenderingThread.h"
 #include "anki/gr/gl/CommandBufferImpl.h"
-#include "anki/gr/GlSyncHandles.h"
 #include "anki/gr/GlDevice.h"
 #include "anki/util/Logger.h"
 #include "anki/core/Counters.h"
@@ -13,7 +12,25 @@
 namespace anki {
 
 //==============================================================================
-Queue::Queue(GlDevice* device, 
+// Misc                                                                        =
+//==============================================================================
+
+//==============================================================================
+class SyncCommand: public GlCommand
+{
+	ANKI_USE_RESULT Error operator()(CommandBufferImpl* cmd)
+	{
+		cmd->getRenderingThread().m_syncBarrier.wait();
+		return ErrorCode::NONE;
+	}
+};
+
+//==============================================================================
+// RenderingThread                                                             =
+//==============================================================================
+
+//==============================================================================
+RenderingThread::RenderingThread(GlDevice* device, 
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 :	m_device(device), 
 	m_allocCb(allocCb),
@@ -27,11 +44,11 @@ Queue::Queue(GlDevice* device,
 }
 
 //==============================================================================
-Queue::~Queue()
+RenderingThread::~RenderingThread()
 {}
 
 //==============================================================================
-void Queue::flushCommandBuffer(CommandBufferHandle& commands)
+void RenderingThread::flushCommandBuffer(CommandBufferHandle& commands)
 {
 	commands._get().makeImmutable();
 
@@ -66,20 +83,20 @@ void Queue::flushCommandBuffer(CommandBufferHandle& commands)
 }
 
 //==============================================================================
-void Queue::finishCommandBuffer(CommandBufferHandle& commands)
+void RenderingThread::finishCommandBuffer(CommandBufferHandle& commands)
 {
 #if !ANKI_QUEUE_DISABLE_ASYNC
 	flushCommandBuffer(commands);
 
 	flushCommandBuffer(m_syncCommands);
-	m_sync.wait();
+	m_syncBarrier.wait();
 #else
 	flushCommandBuffer(commands);
 #endif
 }
 
 //==============================================================================
-Error Queue::start(
+Error RenderingThread::start(
 	GlMakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
 	GlCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerMessages)
@@ -119,12 +136,7 @@ Error Queue::start(
 
 	if(!err)
 	{
-		err = m_sync.create(m_syncCommands);
-	}
-
-	if(!err)
-	{
-		m_sync.sync(m_syncCommands);
+		m_syncCommands._pushBackNewCommand<SyncCommand>();
 	}
 
 	if(err && threadStarted)
@@ -139,7 +151,7 @@ Error Queue::start(
 }
 
 //==============================================================================
-void Queue::stop()
+void RenderingThread::stop()
 {
 #if !ANKI_QUEUE_DISABLE_ASYNC
 	{
@@ -158,7 +170,7 @@ void Queue::stop()
 }
 
 //==============================================================================
-void Queue::prepare()
+void RenderingThread::prepare()
 {
 	ANKI_ASSERT(m_makeCurrentCb && m_ctx);
 	(*m_makeCurrentCb)(m_makeCurrentCbData, m_ctx);
@@ -186,7 +198,7 @@ void Queue::prepare()
 }
 
 //==============================================================================
-void Queue::finish()
+void RenderingThread::finish()
 {
 	// Iterate the queue and release the refcounts
 	for(U i = 0; i < m_queue.size(); i++)
@@ -210,15 +222,15 @@ void Queue::finish()
 }
 
 //==============================================================================
-Error Queue::threadCallback(Thread::Info& info)
+Error RenderingThread::threadCallback(Thread::Info& info)
 {
-	Queue* queue = reinterpret_cast<Queue*>(info.m_userData);
+	RenderingThread* queue = reinterpret_cast<RenderingThread*>(info.m_userData);
 	queue->threadLoop();
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void Queue::threadLoop()
+void RenderingThread::threadLoop()
 {
 	prepare();
 
@@ -262,19 +274,19 @@ void Queue::threadLoop()
 }
 
 //==============================================================================
-void Queue::syncClientServer()
+void RenderingThread::syncClientServer()
 {
 #if !ANKI_QUEUE_DISABLE_ASYNC
 	flushCommandBuffer(m_syncCommands);
-	m_sync.wait();
+	m_syncBarrier.wait();
 #endif
 }
 
 //==============================================================================
-Error Queue::swapBuffersInternal(void* ptr)
+Error RenderingThread::swapBuffersInternal(void* ptr)
 {
 	ANKI_ASSERT(ptr);
-	Queue& self = *reinterpret_cast<Queue*>(ptr);
+	RenderingThread& self = *reinterpret_cast<RenderingThread*>(ptr);
 
 	// Do the swap buffers
 	self.m_swapBuffersCallback(self.m_swapBuffersCbData);
@@ -291,7 +303,7 @@ Error Queue::swapBuffersInternal(void* ptr)
 }
 
 //==============================================================================
-void Queue::swapBuffers()
+void RenderingThread::swapBuffers()
 {
 	// Wait for the rendering thread to finish swap buffers...
 	{

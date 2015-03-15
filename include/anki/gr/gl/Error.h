@@ -3,11 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_ERROR_H
-#define ANKI_GL_GL_ERROR_H
+#ifndef ANKI_GL_ERROR_H
+#define ANKI_GL_ERROR_H
 
-#include "anki/Config.h"
-#include "anki/gr/GlCommon.h"
+#include "anki/gr/Common.h"
 
 namespace anki {
 
@@ -27,7 +26,6 @@ void glConditionalCheckError(const char* file, int line, const char* func);
 #else
 #	define ANKI_CHECK_GL_ERROR() ((void)0)
 #endif
-
 /// @}
 
 } // end namespace anki

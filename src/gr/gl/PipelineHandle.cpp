@@ -78,7 +78,7 @@ Error PipelineHandle::commonConstructor(
 		GlHandleDeferredDeleter<PipelineImpl, Alloc, DeleteCommand>;
 
 	Error err = _createAdvanced(
-		&commands._get().getQueue().getDevice(),
+		&commands._get().getRenderingThread().getDevice(),
 		commands._get().getGlobalAllocator(), 
 		Deleter());
 
@@ -108,7 +108,7 @@ void PipelineHandle::bind(CommandBufferHandle& commands)
 
 		Error operator()(CommandBufferImpl* commands)
 		{
-			GlState& state = commands->getQueue().getState();
+			State& state = commands->getRenderingThread().getState();
 
 			if(state.m_crntPpline != m_ppline._get().getGlName())
 			{

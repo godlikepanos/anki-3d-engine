@@ -4,9 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/gl/CommandBufferImpl.h"
-#include "anki/gr/gl/Queue.h"
-#include "anki/gr/GlDevice.h"
-#include "anki/gr/GlError.h"
+#include "anki/gr/GrManager.h"
+#include "anki/gr/gl/Error.h"
 #include "anki/util/Logger.h"
 #include "anki/core/Counters.h"
 #include <cstring>
@@ -14,18 +13,15 @@
 namespace anki {
 
 //==============================================================================
-Error CommandBufferImpl::create(Queue* server, 
-	const CommandBufferImplInitHints& hints)
+Error CommandBufferImpl::create(const CommandBufferImplInitHints& hints)
 {
-	ANKI_ASSERT(server);
+	auto& pool = getManager().getAllocator().getMemoryPool();
 
-	m_server = server;
-
-	m_alloc = GlCommandBufferAllocator<GlCommand*>(
-		m_server->getAllocationCallback(),
-		m_server->getAllocationCallbackUserData(),
+	m_alloc = CommandBufferAllocator<GlCommand*>(
+		pool.getAllocationCallback(),
+		pool.getAllocationCallbackUserData(),
 		hints.m_chunkSize, 
-		CommandBufferImplInitHints::MAX_CHUNK_SIZE, 
+		InitHints::MAX_CHUNK_SIZE, 
 		ChainMemoryPool::ChunkGrowMethod::ADD,
 		hints.m_chunkSize);
 
@@ -54,13 +50,7 @@ void CommandBufferImpl::destroy()
 	ANKI_ASSERT(m_alloc.getMemoryPool().getUsersCount() == 1 
 		&& "Someone is holding a reference to the command buffer's allocator");
 
-	m_alloc = GlCommandBufferAllocator<U8>();
-}
-
-//==============================================================================
-GlAllocator<U8> CommandBufferImpl::getGlobalAllocator() const
-{
-	return m_server->getDevice()._getAllocator();
+	m_alloc = CommandBufferAllocator<U8>();
 }
 
 //==============================================================================

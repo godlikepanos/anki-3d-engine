@@ -6,13 +6,14 @@
 #ifndef ANKI_GR_GL_COMMAND_BUFFER_IMPL_H
 #define ANKI_GR_GL_COMMAND_BUFFER_IMPL_H
 
-#include "anki/gr/GlCommon.h"
+#include "anki/gr/GrObject.h"
+#include "anki/gr/GrManager.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Allocator.h"
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
 
 /// The base of all GL commands
@@ -28,49 +29,16 @@ public:
 	virtual ANKI_USE_RESULT Error operator()(CommandBufferImpl*) = 0;
 };
 
-/// A common command that deletes an object
-template<typename T, typename TAlloc>
-class GlDeleteObjectCommand: public GlCommand
-{
-public:
-	T* m_ptr;
-	TAlloc m_alloc;
-
-	GlDeleteObjectCommand(T* ptr, TAlloc alloc)
-	:	m_ptr(ptr), 
-		m_alloc(alloc)
-	{
-		ANKI_ASSERT(m_ptr);
-	}
-
-	Error operator()(CommandBufferImpl*) override
-	{
-		m_alloc.deleteInstance(m_ptr);
-		return ErrorCode::NONE;
-	}
-};
-
-/// Command buffer initialization hints. They are used to optimize the 
-/// allocators of a command buffer
-class CommandBufferImplInitHints
-{
-	friend class CommandBufferImpl;
-
-private:
-	enum
-	{
-		MAX_CHUNK_SIZE = 4 * 1024 * 1024 // 4MB
-	};
-
-	PtrSize m_chunkSize = 1024;
-};
-
 /// A number of GL commands organized in a chain
-class CommandBufferImpl: public NonCopyable
+class CommandBufferImpl: public GrObject, public NonCopyable
 {
 public:
+	using InitHints = CommandBufferImplInitHints;
+
 	/// Default constructor
-	CommandBufferImpl() = default;
+	CommandBufferImpl(GrManager* manager)
+	:	GrObject(manager)
+	{}
 
 	~CommandBufferImpl()
 	{
@@ -80,29 +48,16 @@ public:
 	/// Default constructor
 	/// @param server The command buffers server
 	/// @param hints Hints to optimize the command's allocator
-	ANKI_USE_RESULT Error create(Queue* server, 
-		const CommandBufferImplInitHints& hints);
+	ANKI_USE_RESULT Error create(const InitHints& hints);
 
 	/// Get he allocator
-	GlCommandBufferAllocator<U8> getAllocator() const
+	CommandBufferAllocator<U8> getAllocator() const
 	{
 		return m_alloc;
 	}
 
-	GlAllocator<U8> getGlobalAllocator() const;
-
-	Queue& getQueue()
-	{
-		return *m_server;
-	}
-
-	const Queue& getQueue() const
-	{
-		return *m_server;
-	}
-
 	/// Compute initialization hints
-	CommandBufferImplInitHints computeInitHints() const;
+	InitHints computeInitHints() const;
 
 	/// Create a new command and add it to the chain
 	template<typename TCommand, typename... TArgs>
@@ -126,10 +81,9 @@ public:
 	}
 
 private:
-	Queue* m_server = nullptr;
 	GlCommand* m_firstCommand = nullptr;
 	GlCommand* m_lastCommand = nullptr;
-	GlCommandBufferAllocator<U8> m_alloc;
+	CommandBufferAllocator<U8> m_alloc;
 	Bool8 m_immutable = false;
 
 #if ANKI_DEBUG
@@ -161,6 +115,26 @@ void CommandBufferImpl::pushBackNewCommand(TArgs&&... args)
 		m_lastCommand = newCommand;
 	}
 }
+
+/// A common command that deletes an object.
+template<typename T>
+class DeleteObjectCommand: public GlCommand
+{
+public:
+	T* m_ptr;
+
+	DeleteObjectCommand(T* ptr)
+	:	m_ptr(ptr)
+	{
+		ANKI_ASSERT(m_ptr);
+	}
+
+	Error operator()(CommandBufferImpl* cmdb) override
+	{
+		cmdb->getManager().getAllocator().deleteInstance(m_ptr);
+		return ErrorCode::NONE;
+	}
+};
 /// @}
 
 } // end namespace anki

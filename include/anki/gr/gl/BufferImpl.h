@@ -21,7 +21,8 @@ public:
 	using Base = GlObject;
 
 	/// Default
-	BufferImpl()
+	BufferImpl(GrManager* manager)
+	:	GlObject(manager)
 	{}
 
 	/// It deletes the BO

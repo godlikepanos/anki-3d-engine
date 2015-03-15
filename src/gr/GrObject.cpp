@@ -3,15 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/GlSync.h"
-#include "anki/util/Logger.h"
+#include "anki/gr/GrObject.h"
+#include "anki/gr/GrManager.h"
 
 namespace anki {
 
 //==============================================================================
-void GlClientSync::wait()
+GrAllocator<U8> GrObject::getAllocator() const
 {
-	m_barrier.wait();
+	m_manager->getAllocator();
 }
 
 } // end namespace anki

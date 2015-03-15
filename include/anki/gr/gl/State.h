@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_STATE_H
-#define ANKI_GL_GL_STATE_H
+#ifndef ANKI_GR_GL_STATE_H
+#define ANKI_GR_GL_STATE_H
 
-#include "anki/gr/GlCommon.h"
+#include "anki/gr/Common.h"
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
 
 /// Knowing the ventor allows some optimizations

@@ -107,8 +107,8 @@ Error TextureHandle::create(
 	using Deleter = GlHandleDeferredDeleter<TextureImpl, Alloc, DeleteCommand>;
 
 	Error err = _createAdvanced(
-		&commands._getQueue().getDevice(),
-		commands._getQueue().getDevice()._getAllocator(), 
+		&commands._getRenderingThread().getDevice(),
+		commands._getRenderingThread().getDevice()._getAllocator(), 
 		Deleter());
 
 	if(!err)
@@ -271,8 +271,8 @@ Error SamplerHandle::create(CommandBufferHandle& commands)
 	using Deleter = GlHandleDeferredDeleter<SamplerImpl, Alloc, DeleteCommand>;
 
 	Error err = _createAdvanced(
-		&commands._getQueue().getDevice(),
-		commands._getQueue().getDevice()._getAllocator(), 
+		&commands._getRenderingThread().getDevice(),
+		commands._getRenderingThread().getDevice()._getAllocator(), 
 		Deleter());
 
 	if(!err)

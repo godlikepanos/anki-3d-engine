@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_HANDLE_DEFERRED_DELETER_H
-#define ANKI_GL_GL_HANDLE_DEFERRED_DELETER_H
+#ifndef ANKI_GL_DEFERRED_DELETER_H
+#define ANKI_GL_DEFERRED_DELETER_H
 
 #include "anki/gr/GlDevice.h"
 #include "anki/gr/CommandBufferHandle.h"
@@ -20,7 +20,7 @@ namespace anki {
 /// fire a server command with the deletion if the handle gets realeased thread 
 /// other than the server thread.
 template<typename T, typename TAlloc, typename TDeleteCommand>
-class GlHandleDeferredDeleter
+class DeferredDeleter
 {
 public:
 	void operator()(T* obj, TAlloc alloc, GlDevice* manager)
@@ -29,7 +29,7 @@ public:
 		ANKI_ASSERT(manager);
 		
 		/// If not the server thread then create a command for the server thread
-		if(!manager->_getQueue().isServerThread())
+		if(!manager->_getRenderingThread().isServerThread())
 		{
 			CommandBufferHandle commands;
 			

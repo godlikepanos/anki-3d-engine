@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include <cstring>
 #include "anki/gr/gl/BufferImpl.h"
-#include "anki/gr/GlError.h"
+#include "anki/gr/gl/Error.h"
 #include "anki/util/Logger.h"
+#include <cstring>
 #include <cmath>
 
 namespace anki {

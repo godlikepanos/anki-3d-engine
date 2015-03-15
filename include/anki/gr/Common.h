@@ -51,18 +51,43 @@ class ClientBufferImpl;
 class ClientBufferHandle;
 class CommandBufferImpl;
 class CommandBufferHandle;
-class Queue;
+class RenderingThread;
+class GrManager;
+class GrManagerImpl;
 
-/// @addtogroup opengl_private
+/// @addtogroup graphics_private
 /// @{
 
-/// The type of the allocator of GlCommandBuffer
+/// The type of the allocator of CommandBuffer
 template<typename T>
-using GlCommandBufferAllocator = ChainAllocator<T>;
+using CommandBufferAllocator = ChainAllocator<T>;
 
 /// The type of the allocator for heap allocations
 template<typename T>
-using GlAllocator = HeapAllocator<T>;
+using GrAllocator = HeapAllocator<T>;
+/// @}
+
+/// @addtogroup graphics
+/// @{
+
+/// GL generic callback
+using SwapBuffersCallback = void(*)(void*);
+using MakeCurrentCallback = void(*)(void*, void*);
+
+/// Command buffer initialization hints. They are used to optimize the 
+/// allocators of a command buffer
+class CommandBufferInitHints
+{
+	friend class CommandBufferImpl;
+
+private:
+	enum
+	{
+		MAX_CHUNK_SIZE = 4 * 1024 * 1024 // 4MB
+	};
+
+	PtrSize m_chunkSize = 1024;
+};
 /// @}
 
 /// @addtogroup opengl_containers
@@ -249,10 +274,6 @@ ShaderType computeShaderTypeIndex(const GLenum glType);
 
 /// A function that returns a GLenum from an index
 GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit = nullptr);
-
-/// GL generic callback
-using GlCallback = void(*)(void*);
-using GlMakeCurrentCallback = void(*)(void*, void*);
 
 /// Occlusion query result bit.
 enum class GlOcclusionQueryResultBit: U8

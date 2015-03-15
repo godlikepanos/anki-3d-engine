@@ -3,11 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_QUEUE_H
-#define ANKI_GR_GL_QUEUE_H
+#ifndef ANKI_GR_GL_RENDERING_THREAD_H
+#define ANKI_GR_GL_RENDERING_THREAD_H
 
 #include "anki/gr/CommandBufferHandle.h"
-#include "anki/gr/GlSyncHandles.h"
 #include "anki/gr/gl/State.h"
 #include "anki/util/Thread.h"
 
@@ -21,13 +20,15 @@ class GlDevice;
 
 /// Command queue. It's essentialy a queue of command buffers waiting for 
 /// execution and a server
-class Queue
+class RenderingThread
 {
+	friend class SyncCommand;
+
 public:
-	Queue(GlDevice* device, 
+	RenderingThread(GlDevice* device, 
 		AllocAlignedCallback alloc, void* allocUserData);
 
-	~Queue();
+	~RenderingThread();
 
 	GlDevice& getDevice()
 	{
@@ -126,7 +127,7 @@ private:
 	/// A special command buffer that is called every time we want to wait for 
 	/// the server
 	CommandBufferHandle m_syncCommands;
-	GlClientSyncHandle m_sync;
+	Barrier m_syncBarrier{2};
 
 	GLuint m_copyFbo = MAX_U32; ///< FBO for copying from tex to buffer.
 

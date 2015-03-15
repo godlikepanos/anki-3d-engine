@@ -88,8 +88,8 @@ Error BufferHandle::create(CommandBufferHandle& commands,
 	using Deleter = GlHandleDeferredDeleter<BufferImpl, Alloc, DeleteCommand>;
 
 	Error err = _createAdvanced(
-		&commands._getQueue().getDevice(),
-		commands._getQueue().getDevice()._getAllocator(), 
+		&commands._getRenderingThread().getDevice(),
+		commands._getRenderingThread().getDevice()._getAllocator(), 
 		Deleter());
 
 	if(!err)
@@ -118,8 +118,8 @@ Error BufferHandle::create(CommandBufferHandle& commands,
 	using Deleter = GlHandleDeferredDeleter<BufferImpl, Alloc, DeleteCommand>;
 
 	Error err = _createAdvanced(
-		&commands._getQueue().getDevice(),
-		commands._getQueue().getDevice()._getAllocator(), 
+		&commands._getRenderingThread().getDevice(),
+		commands._getRenderingThread().getDevice()._getAllocator(), 
 		Deleter());
 
 	if(!err)

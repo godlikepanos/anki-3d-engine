@@ -5,7 +5,6 @@
 
 #include "anki/gr/CommandBufferHandle.h"
 #include "anki/gr/GlDevice.h"
-#include "anki/gr/GlSyncHandles.h"
 #include "anki/gr/gl/FramebufferImpl.h"
 #include "anki/gr/TextureHandle.h"
 #include "anki/gr/gl/TextureImpl.h"
@@ -148,7 +147,7 @@ Error CommandBufferHandle::create(GlDevice* gl,
 
 	if(!err)
 	{
-		err = _get().create(&gl->_getQueue(), hints);
+		err = _get().create(&gl->_getRenderingThread(), hints);
 	}
 
 	return err;
@@ -206,13 +205,13 @@ void CommandBufferHandle::pushBackOtherCommandBuffer(
 //==============================================================================
 void CommandBufferHandle::flush()
 {
-	_get().getQueue().flushCommandBuffer(*this);
+	_get().getRenderingThread().flushCommandBuffer(*this);
 }
 
 //==============================================================================
 void CommandBufferHandle::finish()
 {
-	_get().getQueue().finishCommandBuffer(*this);
+	_get().getRenderingThread().finishCommandBuffer(*this);
 }
 
 //==============================================================================
@@ -254,7 +253,7 @@ void CommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 
 		Error operator()(CommandBufferImpl* commands)
 		{
-			GlState& state = commands->getQueue().getState();
+			State& state = commands->getRenderingThread().getState();
 
 			if(state.m_viewport[0] != m_value[0] 
 				|| state.m_viewport[1] != m_value[1]
@@ -351,7 +350,7 @@ void CommandBufferHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 
 		Error operator()(CommandBufferImpl* commands)
 		{
-			GlState& state = commands->getQueue().getState();
+			State& state = commands->getRenderingThread().getState();
 
 			if(state.m_blendSfunc != m_sfactor 
 				|| state.m_blendDfunc != m_dfactor)
@@ -623,7 +622,7 @@ public:
 		BufferImpl& buff = m_buff._get();
 
 		// Bind
-		GLuint copyFbo = cmd->getQueue().getCopyFbo();
+		GLuint copyFbo = cmd->getRenderingThread().getCopyFbo();
 		glBindFramebuffer(GL_FRAMEBUFFER, copyFbo);
 
 		// Attach texture

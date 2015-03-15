@@ -70,7 +70,7 @@ Error FramebufferHandle::create(
 		GlHandleDeferredDeleter<FramebufferImpl, Alloc, DeleteCommand>;
 
 	Error err = _createAdvanced(
-		&commands._get().getQueue().getDevice(),
+		&commands._get().getRenderingThread().getDevice(),
 		commands._get().getGlobalAllocator(), 
 		Deleter());
 

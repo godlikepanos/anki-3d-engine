@@ -6,22 +6,18 @@
 #ifndef ANKI_GR_COMMAND_BUFFER_HANDLE_H
 #define ANKI_GR_COMMAND_BUFFER_HANDLE_H
 
-#include "anki/gr/GlHandle.h"
-#include "anki/gr/gl/CommandBufferImpl.h"
+#include "anki/gr/GrHandle.h"
 
 namespace anki {
 
-// Forward
-class GlDevice;
-
-/// @addtogroup opengl_other
+/// @addtogroup graphics
 /// @{
 
 /// Command buffer handle
-class CommandBufferHandle: public GlHandle<CommandBufferImpl>
+class CommandBufferHandle: public GrHandle<CommandBufferImpl>
 {
 public:
-	using Base = GlHandle<CommandBufferImpl>;
+	using Base = GrHandle<CommandBufferImpl>;
 	using UserCallback = Error(*)(void*);
 
 	CommandBufferHandle();
@@ -29,8 +25,8 @@ public:
 	~CommandBufferHandle();
 
 	/// Create command buffer
-	ANKI_USE_RESULT Error create(GlDevice* gl, 
-		CommandBufferImplInitHints hints = CommandBufferImplInitHints());
+	ANKI_USE_RESULT Error create(GrManager* manager, 
+		CommandBufferInitHints hints = CommandBufferInitHints());
 
 	/// Add a user command at the end of the command buffer
 	void pushBackUserCommand(UserCallback callback, void* data);
@@ -45,9 +41,9 @@ public:
 	void finish();
 
 	/// Compute initialization hints
-	CommandBufferImplInitHints computeInitHints() const
+	CommandBufferInitHints computeInitHints() const
 	{
-		return _get().computeInitHints();
+		return get().computeInitHints();
 	}
 
 	/// @name State manipulation
@@ -165,39 +161,17 @@ public:
 
 	/// @privatesection
 	/// @{
-	GlCommandBufferAllocator<U8> _getAllocator() const
-	{
-		return _get().getAllocator();
-	}
 
-	GlAllocator<U8> _getGlobalAllocator() const
-	{
-		return _get().getGlobalAllocator();
-	}
-
-	Queue& _getQueue()
-	{
-		return _get().getQueue();
-	}
-
-	const Queue& _getQueue() const
-	{
-		return _get().getQueue();
-	}
-
+	// XXX
+#if 0
 	/// Add a new command to the list
 	template<typename TCommand, typename... TArgs>
-	void _pushBackNewCommand(TArgs&&... args)
+	void pushBackNewCommand(TArgs&&... args)
 	{
-		_get().template pushBackNewCommand<TCommand>(
+		get().template pushBackNewCommand<TCommand>(
 			std::forward<TArgs>(args)...);
 	}
-
-	/// Execute all commands
-	ANKI_USE_RESULT Error _executeAllCommands()
-	{
-		return _get().executeAllCommands();
-	}
+#endif
 	/// @}
 };
 /// @}
