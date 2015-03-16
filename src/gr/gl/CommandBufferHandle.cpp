@@ -154,6 +154,12 @@ Error CommandBufferHandle::create(GlDevice* gl,
 }
 
 //==============================================================================
+CommandBufferInitHints CommandBufferHandle::computeInitHints() const
+{
+	return get().computeInitHints();
+}
+
+//==============================================================================
 void CommandBufferHandle::pushBackUserCommand(
 	UserCallback callback, void* data)
 {

@@ -33,7 +33,7 @@ public:
 class CommandBufferImpl: public GrObject, public NonCopyable
 {
 public:
-	using InitHints = CommandBufferImplInitHints;
+	using InitHints = CommandBufferInitHints;
 
 	/// Default constructor
 	CommandBufferImpl(GrManager* manager)

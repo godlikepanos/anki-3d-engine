@@ -13,7 +13,7 @@
 namespace anki {
 
 //==============================================================================
-Error CommandBufferImpl::create(const CommandBufferImplInitHints& hints)
+Error CommandBufferImpl::create(const InitHints& hints)
 {
 	auto& pool = getManager().getAllocator().getMemoryPool();
 
@@ -78,9 +78,9 @@ Error CommandBufferImpl::executeAllCommands()
 }
 
 //==============================================================================
-CommandBufferImplInitHints CommandBufferImpl::computeInitHints() const
+CommandBufferImpl::InitHints CommandBufferImpl::computeInitHints() const
 {
-	CommandBufferImplInitHints out;
+	InitHints out;
 	out.m_chunkSize = m_alloc.getMemoryPool().getAllocatedSize() + 16;
 
 	ANKI_COUNTER_INC(GL_QUEUES_SIZE, 

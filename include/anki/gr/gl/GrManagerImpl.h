@@ -7,7 +7,6 @@
 #define ANKI_GR_GL_GR_MANAGER_IMPL_H
 
 #include "anki/gr/Common.h"
-#include "anki/util/List.h"
 
 namespace anki {
 
@@ -41,7 +40,6 @@ public:
 private:
 	GrManager* m_manager;
 	RenderingThread* m_thread = nullptr;
-	List<GrObject*> m_objectsForDeletion;
 };
 /// @}
 

@@ -41,10 +41,7 @@ public:
 	void finish();
 
 	/// Compute initialization hints
-	CommandBufferInitHints computeInitHints() const
-	{
-		return get().computeInitHints();
-	}
+	CommandBufferInitHints computeInitHints() const;
 
 	/// @name State manipulation
 	/// @{

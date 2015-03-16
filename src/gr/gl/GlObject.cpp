@@ -19,7 +19,8 @@ Error GlObject::serializeOnGetter() const
 	
 	if(state == State::TO_BE_CREATED)
 	{
-		auto& thread = getManager().getImplementation().getRenderingThread();
+		RenderingThread& thread = const_cast<RenderingThread&>(
+			getManager().getImplementation().getRenderingThread());
 		thread.syncClientServer();
 
 		state = State(m_state.load());

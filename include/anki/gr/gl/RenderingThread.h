@@ -70,8 +70,8 @@ public:
 	/// Start the working thread
 	/// @note Don't free the context before calling #stop
 	ANKI_USE_RESULT Error start(
-		GlMakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
-		GlCallback swapBuffersCallback, void* swapBuffersCbData,
+		MakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
+		SwapBuffersCallback swapBuffersCallback, void* swapBuffersCbData,
 		Bool registerMessages);
 
 	/// Stop the working thread
@@ -110,10 +110,10 @@ private:
 
 	void* m_makeCurrentCbData = nullptr; ///< Pointer first param of makecurrent
 	void* m_ctx = nullptr; ///< Pointer to the system GL context
-	GlMakeCurrentCallback m_makeCurrentCb; ///< Making a context current
+	MakeCurrentCallback m_makeCurrentCb; ///< Making a context current
 
 	CommandBufferHandle m_swapBuffersCommands;
-	GlCallback m_swapBuffersCallback;
+	SwapBuffersCallback m_swapBuffersCallback;
 	void* m_swapBuffersCbData;
 	ConditionVariable m_frameCondVar;
 	Mutex m_frameMtx;
