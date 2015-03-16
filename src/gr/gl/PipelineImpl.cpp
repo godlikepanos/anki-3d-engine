@@ -11,8 +11,7 @@ namespace anki {
 
 //==============================================================================
 Error PipelineImpl::create(
-	const ShaderHandle* progsBegin, const ShaderHandle* progsEnd,
-	GlAllocator<U8> alloc)
+	const ShaderHandle* progsBegin, const ShaderHandle* progsEnd)
 {
 	ANKI_ASSERT(progsBegin != nullptr && progsEnd != nullptr);
 	ANKI_ASSERT(progsBegin != progsEnd);
@@ -38,7 +37,7 @@ Error PipelineImpl::create(
 				computeGlShaderType(static_cast<ShaderType>(i), &bit);
 			ANKI_ASSERT(prog.getType() == gltype && "Attached wrong shader");
 			(void)gltype;
-			glUseProgramStages(m_glName, bit, prog._get().getGlName());
+			glUseProgramStages(m_glName, bit, prog.get().getGlName());
 		}
 	}
 
@@ -55,6 +54,7 @@ Error PipelineImpl::create(
 
 		glGetProgramPipelineiv(m_glName, GL_INFO_LOG_LENGTH, &infoLen);
 
+		auto alloc = getAllocator();
 		err = infoLogTxt.create(alloc, infoLen + 1);
 
 		if(!err)
@@ -90,7 +90,7 @@ void PipelineImpl::attachProgramsInternal(
 	while(count-- != 0)
 	{
 		const ShaderHandle& prog = progs[count];
-		ShaderType type = computeShaderTypeIndex(prog._get().getType());
+		ShaderType type = computeShaderTypeIndex(prog.get().getType());
 		U idx = enumToType(type);
 
 		ANKI_ASSERT(!m_shaders[idx].isCreated() && "Attaching the same");

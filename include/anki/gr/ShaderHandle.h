@@ -3,21 +3,21 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_SHADER_HANDLE_H
-#define ANKI_GL_GL_SHADER_HANDLE_H
+#ifndef ANKI_GR_SHADER_HANDLE_H
+#define ANKI_GR_SHADER_HANDLE_H
 
-#include "anki/gr/GlContainerHandle.h"
+#include "anki/gr/GrHandle.h"
 
 namespace anki {
 
-/// @addtogroup opengl_containers
+/// @addtogroup graphics
 /// @{
 
-/// Program handle
-class ShaderHandle: public GlContainerHandle<ShaderImpl>
+/// Shader handle.
+class ShaderHandle: public GrHandle<ShaderImpl>
 {
 public:
-	using Base = GlContainerHandle<ShaderImpl>;
+	using Base = GrHandle<ShaderImpl>;
 
 	ShaderHandle();
 
@@ -25,7 +25,7 @@ public:
 
 	/// Create shader program.
 	ANKI_USE_RESULT Error create(CommandBufferHandle& commands, 
-		GLenum shaderType, const ClientBufferHandle& source);
+		GLenum shaderType, const void* source);
 
 	/// @name Accessors
 	/// They will sync client with server.
@@ -33,7 +33,6 @@ public:
 	GLenum getType() const;
 	/// @}
 };
-
 /// @}
 
 } // end namespace anki

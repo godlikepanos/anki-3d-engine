@@ -10,10 +10,9 @@
 namespace anki {
 
 //==============================================================================
-Error FramebufferImpl::create(
-	Attachment* attachmentsBegin, Attachment* attachmentsEnd)
+Error FramebufferImpl::create(Initializer& init)
 {
-	if(attachmentsBegin == nullptr || attachmentsEnd == nullptr)
+	if(init.m_attachments.getSize() == 0)
 	{
 		m_bindDefault = true;
 		return ErrorCode::NONE;
@@ -23,7 +22,8 @@ Error FramebufferImpl::create(
 
 	Array<U, MAX_COLOR_ATTACHMENTS + 1> layers;
 	GLenum depthStencilBindingPoint = GL_NONE;
-	Attachment* attachment = attachmentsBegin;
+	Attachment* attachment = init.m_attachments.getBegin();
+	Attachment* attachmentsEnd = init.m_attachments.getEnd();
 	do
 	{
 		if(attachment->m_point >= GL_COLOR_ATTACHMENT0 
@@ -33,14 +33,14 @@ Error FramebufferImpl::create(
 			// Color attachment
 
 			U32 i = attachment->m_point - GL_COLOR_ATTACHMENT0;
-			m_attachments[i] = attachment->m_tex;
+			m_attachments[i] = *attachment->m_texture;
 			layers[i] = attachment->m_layer;
 		}
 		else
 		{
 			// Depth & stencil
 
-			m_attachments[MAX_COLOR_ATTACHMENTS] = attachment->m_tex;
+			m_attachments[MAX_COLOR_ATTACHMENTS] = *attachment->m_texture;
 			layers[MAX_COLOR_ATTACHMENTS] = attachment->m_layer;
 			depthStencilBindingPoint = attachment->m_point;
 		}
@@ -85,7 +85,7 @@ Error FramebufferImpl::createFbo(
 			continue;
 		}
 		
-		const TextureImpl& tex = m_attachments[i]._get();
+		const TextureImpl& tex = m_attachments[i].get();
 		attachTextureInternal(GL_COLOR_ATTACHMENT0 + i, tex, layers[i]);
 	}
 
@@ -94,7 +94,7 @@ Error FramebufferImpl::createFbo(
 	{
 		ANKI_ASSERT(depthStencilBindingPoint != GL_NONE);
 
-		const TextureImpl& tex = m_attachments[MAX_COLOR_ATTACHMENTS]._get();
+		const TextureImpl& tex = m_attachments[MAX_COLOR_ATTACHMENTS].get();
 		attachTextureInternal(depthStencilBindingPoint, tex, 
 			layers[MAX_COLOR_ATTACHMENTS]);
 	}
@@ -174,7 +174,7 @@ void FramebufferImpl::bind(Bool invalidate)
 		// Invalidate
 		if(invalidate)
 		{
-			static const Array<GLenum, FramebufferImpl::MAX_COLOR_ATTACHMENTS + 1>
+			static const Array<GLenum, MAX_COLOR_ATTACHMENTS + 1>
 				ATTACHMENT_TOKENS = {{
 					GL_DEPTH_STENCIL_ATTACHMENT, GL_COLOR_ATTACHMENT0, 
 					GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, 

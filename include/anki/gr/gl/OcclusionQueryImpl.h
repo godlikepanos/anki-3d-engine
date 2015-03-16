@@ -3,14 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GR_GL_OCCLUSION_QUERY_H
-#define ANKI_GR_GL_OCCLUSION_QUERY_H
+#ifndef ANKI_GR_GL_OCCLUSION_QUERY_IMPL_H
+#define ANKI_GR_GL_OCCLUSION_QUERY_IMPL_H
 
 #include "anki/gr/gl/GlObject.h"
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
 
 /// Occlusion query.
@@ -18,13 +18,8 @@ class OcclusionQueryImpl: public GlObject
 {
 public:
 	using Base = GlObject;
-
-	enum class Result: U
-	{
-		NOT_AVAILABLE,
-		VISIBLE,
-		NOT_VISIBLE
-	};
+	using ResultBit = OcclusionQueryResultBit;
+	using Result = OcclusionQueryResult;
 
 	OcclusionQueryImpl() = default;
 
@@ -37,7 +32,7 @@ public:
 	/// @param condRenderingBit If the query is used in conditional rendering
 	///        the result will be checked against this mask. If the result
 	///        contains any of the bits then the dracall will not be skipped.
-	ANKI_USE_RESULT Error create(GlOcclusionQueryResultBit condRenderingBit);
+	ANKI_USE_RESULT Error create(ResultBit condRenderingBit);
 
 	/// Begin query.
 	void begin();
@@ -51,13 +46,13 @@ public:
 	/// Return true if the drawcall should be skipped.
 	Bool skipDrawcall() const
 	{
-		U resultBit = 1 << static_cast<U>(getResult());
-		U condBit = static_cast<U>(m_condRenderingBit);
+		U resultBit = 1 << U(getResult());
+		U condBit = U(m_condRenderingBit);
 		return !(resultBit & condBit);
 	}
 
 private:
-	GlOcclusionQueryResultBit m_condRenderingBit;
+	ResultBit m_condRenderingBit;
 	void destroy();
 };
 /// @}

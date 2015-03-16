@@ -7,6 +7,7 @@
 #define ANKI_GR_GR_HANDLE_H
 
 #include "anki/gr/GrObject.h"
+#include "anki/gr/GrManager.h"
 
 namespace anki {
 
@@ -157,14 +158,14 @@ public:
 	T& get()
 	{
 		ANKI_ASSERT(m_cb != nullptr && m_cb->m_ptr != nullptr);
-		return *m_cb->m_ptr;
+		return *static_cast<T*>(m_cb->m_ptr);
 	}
 
 	/// Get the immutable pointer
 	const T& get() const
 	{
 		ANKI_ASSERT(m_cb != nullptr && m_cb->m_ptr != nullptr);
-		return *m_cb->m_ptr;
+		return *static_cast<T*>(m_cb->m_ptr);
 	}
 
 private:

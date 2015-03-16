@@ -3,11 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_TEXTURE_HANDLE_H
-#define ANKI_GL_GL_TEXTURE_HANDLE_H
+#ifndef ANKI_GR_TEXTURE_HANDLE_H
+#define ANKI_GR_TEXTURE_HANDLE_H
 
-#include "anki/gr/GlContainerHandle.h"
-#include "anki/gr/ClientBufferHandle.h"
+#include "anki/gr/GrHandle.h"
 
 namespace anki {
 
@@ -15,20 +14,12 @@ namespace anki {
 /// @{
 
 /// Texture handle
-class TextureHandle: public GlContainerHandle<TextureImpl>
+class TextureHandle: public GrHandle<TextureImpl>
 {
 public:
-	using Base = GlContainerHandle<TextureImpl>;
-
-	using Filter = GlTextureFilter;
-
-	/// Texture handle initializer
-	class Initializer: public GlTextureInitializerBase
-	{
-	public:
-		Array2d<ClientBufferHandle, 
-			ANKI_GL_MAX_MIPMAPS, ANKI_GL_MAX_TEXTURE_LAYERS> m_data;
-	};
+	using Base = GrHandle<TextureImpl>;
+	using Filter = TextureFilter;
+	using Initializer = TextureInitializer;
 
 	/// Create husk
 	TextureHandle();
@@ -53,14 +44,13 @@ public:
 };
 
 /// Sampler handle
-class SamplerHandle: public GlContainerHandle<SamplerImpl>
+class SamplerHandle: public GrHandle<SamplerImpl>
 {
 public:
-	using Base = GlContainerHandle<SamplerImpl>;
+	using Base = GrHandle<SamplerImpl>;
+	using Filter = TextureFilter;
 
-	using Filter = GlTextureFilter;
-
-	/// Create husk
+	/// Create husk.
 	SamplerHandle();
 
 	~SamplerHandle();

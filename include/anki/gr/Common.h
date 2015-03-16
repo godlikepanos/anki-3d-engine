@@ -3,15 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_COMMON_H
-#define ANKI_GL_COMMON_H
+#ifndef ANKI_GR_COMMON_H
+#define ANKI_GR_COMMON_H
 
-#include "anki/Config.h"
+#include "anki/gr/Enums.h"
 #include "anki/util/Allocator.h"
 #include "anki/util/NonCopyable.h"
 #include "anki/util/Assert.h"
 #include "anki/util/Array.h"
-#include "anki/util/Enum.h"
 #include "anki/Math.h"
 
 #if ANKI_GL == ANKI_GL_DESKTOP
@@ -47,11 +46,8 @@ class SamplerImpl;
 class SamplerHandle;
 class OcclusionQueryImpl;
 class OcclusionQueryHandle;
-class ClientBufferImpl;
-class ClientBufferHandle;
 class CommandBufferImpl;
 class CommandBufferHandle;
-class RenderingThread;
 class GrManager;
 class GrManagerImpl;
 
@@ -88,6 +84,44 @@ private:
 
 	PtrSize m_chunkSize = 1024;
 };
+
+struct SurfaceData
+{
+	void* m_ptr = nullptr;
+	PtrSize m_size = 0;
+};
+
+/// Texture initializer.
+struct TextureInitializer
+{
+	U32 m_width = 0;
+	U32 m_height = 0;
+	U32 m_depth = 0; ///< Relevant only for 3D and 2DArray textures
+	GLenum m_target = GL_TEXTURE_2D;
+	GLenum m_internalFormat = GL_NONE;
+	U32 m_mipmapsCount = 0;
+	TextureFilter m_filterType = TextureFilter::NEAREST;
+	Bool8 m_repeat = false;
+	I32 m_anisotropyLevel = 0;
+	U32 m_samples = 1;
+
+	/// [level][slice]
+	SArray<SArray<SurfaceData>> m_data;
+};
+
+struct Attachment
+{
+	TextureHandle* m_texture = nullptr;
+	GLenum m_point;
+	U32 m_layer = 0;
+	U32 m_mipmap = 0;
+};
+
+/// Framebuffer initializer.
+struct FramebufferInitializer
+{
+	SArray<Attachment> m_attachments;
+};
 /// @}
 
 /// @addtogroup opengl_containers
@@ -108,50 +142,6 @@ enum class GlAttachmentStoreOperation: U8
 	DONT_CARE
 };
 
-/// Texture filtering method
-enum class GlTextureFilter: U8
-{
-	NEAREST,
-	LINEAR,
-	TRILINEAR
-};
-
-/// Shader type
-enum class ShaderType: U8
-{
-	VERTEX,
-	TESSELLATION_CONTROL,
-	TESSELLATION_EVALUATION,
-	GEOMETRY,
-	FRAGMENT,
-	COMPUTE,
-	COUNT
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType, inline)
-
-/// Shader variable type.
-enum class ShaderVariableDataType: U8
-{
-	NONE,
-	FLOAT,
-	VEC2,
-	VEC3,
-	VEC4,
-	MAT3,
-	MAT4,
-	SAMPLER_2D,
-	SAMPLER_3D,
-	SAMPLER_2D_ARRAY,
-	SAMPLER_CUBE,
-
-	NUMERICS_FIRST = FLOAT,
-	NUMERICS_LAST = MAT4,
-
-	SAMPLERS_FIRST = SAMPLER_2D,
-	SAMPLERS_LAST = SAMPLER_CUBE
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType, inline)
-
 /// Using an AnKi typename get the ShaderVariableDataType. Used for debugging.
 template<typename T>
 ShaderVariableDataType getShaderVariableTypeFromTypename();
@@ -171,22 +161,6 @@ ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(Mat3, MAT3)
 ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET(Mat4, MAT4)
 
 #undef ANKI_SPECIALIZE_SHADER_VAR_TYPE_GET
-
-/// Split the initializer for re-using parts of it
-class GlTextureInitializerBase
-{
-public:
-	U32 m_width = 0;
-	U32 m_height = 0;
-	U32 m_depth = 0; ///< Relevant only for 3D and 2DArray textures
-	GLenum m_target = GL_TEXTURE_2D;
-	GLenum m_internalFormat = GL_NONE;
-	U32 m_mipmapsCount = 0;
-	GlTextureFilter m_filterType = GlTextureFilter::NEAREST;
-	Bool8 m_repeat = false;
-	I32 m_anisotropyLevel = 0;
-	U32 m_samples = 1;
-};
 
 /// Shader block information.
 struct ShaderVariableBlockInfo
@@ -274,16 +248,6 @@ ShaderType computeShaderTypeIndex(const GLenum glType);
 
 /// A function that returns a GLenum from an index
 GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit = nullptr);
-
-/// Occlusion query result bit.
-enum class GlOcclusionQueryResultBit: U8
-{
-	NOT_AVAILABLE = 1 << 0,
-	VISIBLE = 1 << 1,
-	NOT_VISIBLE = 1 << 2 
-};
-ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(GlOcclusionQueryResultBit, inline)
-
 /// @}
 
 } // end namespace anki

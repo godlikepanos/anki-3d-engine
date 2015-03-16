@@ -3,15 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_TEXTURE_H
-#define ANKI_GL_GL_TEXTURE_H
+#ifndef ANKI_GR_GL_TEXTURE_IMPL_H
+#define ANKI_GR_GL_TEXTURE_IMPL_H
 
 #include "anki/gr/gl/GlObject.h"
 #include "anki/util/Array.h"
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
 
 /// Texture container
@@ -19,30 +19,12 @@ class TextureImpl: public GlObject
 {
 public:
 	using Base = GlObject;
+	using Filter = TextureFilter;
+	using Initializer = TextureInitializer;
 
-	using Filter = GlTextureFilter;
-
-	/// Texture handle initializer struct
-	class Initializer: public GlTextureInitializerBase
-	{
-	public:
-		class Data
-		{
-		public:
-			void* m_ptr;
-			PtrSize m_size;
-		};
-
-		/// Array of data in: [mip][layer]
-		Array2d<Data, ANKI_GL_MAX_MIPMAPS, ANKI_GL_MAX_TEXTURE_LAYERS> m_data;
-
-		Initializer()
-		{
-			memset(&m_data[0][0], 0, sizeof(m_data));
-		}
-	};
-
-	TextureImpl() = default;
+	TextureImpl(GrManager* manager)
+	:	Base(manager)
+	{}
 
 	~TextureImpl()
 	{
@@ -50,8 +32,7 @@ public:
 	}
 
 	/// Create a texture
-	ANKI_USE_RESULT Error create(
-		const Initializer& init, GlAllocator<U8>& alloc);
+	ANKI_USE_RESULT Error create(const Initializer& init);
 
 	GLenum getInternalFormat() const
 	{
@@ -132,9 +113,11 @@ class SamplerImpl: public GlObject
 {
 public:
 	using Base = GlObject;
-	using Filter = GlTextureFilter;
+	using Filter = TextureFilter;
 
-	SamplerImpl() = default;
+	SamplerImpl(GrManager* manager)
+	:	Base(manager)
+	{}
 
 	~SamplerImpl()
 	{

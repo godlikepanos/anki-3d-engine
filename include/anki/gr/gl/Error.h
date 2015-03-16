@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_ERROR_H
-#define ANKI_GL_ERROR_H
+#ifndef ANKI_GR_GL_ERROR_H
+#define ANKI_GR_GL_ERROR_H
 
 #include "anki/gr/Common.h"
 

@@ -3,15 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_DEFERRED_DELETER_H
-#define ANKI_GL_DEFERRED_DELETER_H
+#ifndef ANKI_GR_GL_DEFERRED_DELETER_H
+#define ANKI_GR_GL_DEFERRED_DELETER_H
 
 #include "anki/gr/GlDevice.h"
 #include "anki/gr/CommandBufferHandle.h"
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
 
 /// Common deleter for objects that require deferred deletion. Some handles

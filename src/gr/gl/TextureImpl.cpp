@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/gl/TextureImpl.h"
-#include "anki/gr/GlError.h"
+#include "anki/gr/gl/Error.h"
 #include "anki/util/Functions.h"
 #include "anki/util/DArray.h"
 
@@ -101,9 +101,10 @@ static void getTextureInformation(
 //==============================================================================
 
 //==============================================================================
-Error TextureImpl::create(const Initializer& init, 
-	GlAllocator<U8>& alloc)
+Error TextureImpl::create(const Initializer& init)
 {
+	GrAllocator<U8> alloc = getAllocator();
+
 	// Sanity checks
 	//
 	ANKI_ASSERT(!isCreated());
@@ -246,7 +247,7 @@ Error TextureImpl::create(const Initializer& init,
 					ANKI_ASSERT(m_depth > 0);
 
 					// Gather the data
-					DArrayAuto<U8, GlAllocator<U8>> data(alloc);
+					DArrayAuto<U8, GrAllocator<U8>> data(alloc);
 
 					// Check if there are data
 					if(init.m_data[level][0].m_ptr != nullptr)

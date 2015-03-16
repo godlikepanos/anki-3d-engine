@@ -8,7 +8,7 @@
 namespace anki {
 
 //==============================================================================
-Error OcclusionQueryImpl::create(GlOcclusionQueryResultBit condRenderingBit)
+Error OcclusionQueryImpl::create(ResultBit condRenderingBit)
 {
 	glGenQueries(1, &m_glName);
 	ANKI_ASSERT(m_glName != 0);

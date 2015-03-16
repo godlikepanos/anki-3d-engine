@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/gl/ShaderImpl.h"
+#include "anki/gr/GrManager.h"
 #include "anki/util/StringList.h"
 #include "anki/util/Logger.h"
 
@@ -16,8 +17,7 @@
 namespace anki {
 
 //==============================================================================
-Error ShaderImpl::create(GLenum type, const CString& source, 
-	GlAllocator<U8>& alloc, const CString& cacheDir)
+Error ShaderImpl::create(GLenum type, const CString& source)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(!isCreated());
@@ -36,6 +36,7 @@ Error ShaderImpl::create(GLenum type, const CString& source,
 		version = major * 100 + minor * 10;
 	}
 
+	auto alloc = getAllocator();
 	String fullSrc;
 	String::ScopeDestroyer fullSrcd(&fullSrc, alloc); 
 #if ANKI_GL == ANKI_GL_DESKTOP
@@ -88,6 +89,7 @@ Error ShaderImpl::create(GLenum type, const CString& source,
 		}
 
 		String fname;
+		CString cacheDir = getManager().getCacheDirectory();
 		err = fname.sprintf(alloc,
 			"%s/%05u.%s", &cacheDir[0], static_cast<U32>(m_glName), ext);
 
@@ -108,7 +110,7 @@ Error ShaderImpl::create(GLenum type, const CString& source,
 
 		if(status == GL_FALSE)
 		{
-			err = handleError(alloc, fullSrc);
+			err = handleError(fullSrc);
 
 			if(!err)
 			{
@@ -122,10 +124,11 @@ Error ShaderImpl::create(GLenum type, const CString& source,
 }
 
 //==============================================================================
-Error ShaderImpl::handleError(GlAllocator<U8>& alloc, String& src)
+Error ShaderImpl::handleError(String& src)
 {
 	Error err = ErrorCode::NONE;
 
+	auto alloc = getAllocator();
 	GLint compilerLogLen = 0;
 	GLint charsWritten = 0;
 	String compilerLog;

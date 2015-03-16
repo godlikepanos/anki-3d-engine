@@ -3,15 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_PIPELINE_H
-#define ANKI_GL_GL_PIPELINE_H
+#ifndef ANKI_GR_GL_PIPELINE_IMPL_H
+#define ANKI_GR_GL_PIPELINE_IMPL_H
 
 #include "anki/gr/gl/GlObject.h"
 #include "anki/gr/ShaderHandle.h"
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
 
 /// Program pipeline
@@ -20,7 +20,9 @@ class PipelineImpl: public GlObject
 public:
 	using Base = GlObject;
 
-	PipelineImpl() = default;
+	PipelineImpl(GrManager* manager)
+	:	Base(manager)
+	{}
 
 	~PipelineImpl()
 	{
@@ -28,8 +30,7 @@ public:
 	}
 
 	ANKI_USE_RESULT Error create(
-		const ShaderHandle* progsBegin, const ShaderHandle* progsEnd,
-		GlAllocator<U8> alloc);
+		const ShaderHandle* progsBegin, const ShaderHandle* progsEnd);
 
 	ShaderHandle getAttachedProgram(GLenum type) const;
 

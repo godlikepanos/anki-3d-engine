@@ -10,7 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
 
 /// Shader program. It only contains a single shader and it can be combined 
@@ -23,7 +23,9 @@ class ShaderImpl: public GlObject
 public:
 	using Base = GlObject;
 
-	ShaderImpl() = default;
+	ShaderImpl(GrManager* manager)
+	:	Base(manager)
+	{}
 
 	~ShaderImpl()
 	{
@@ -33,12 +35,9 @@ public:
 	/// Create the shader.
 	/// @param shaderType The type of the shader in the program
 	/// @param source The shader's source
-	/// @param alloc The allocator to be used for internally
 	ANKI_USE_RESULT Error create(
 		GLenum shaderType, 
-		const CString& source, 
-		GlAllocator<U8>& alloc, 
-		const CString& cacheDir);
+		const CString& source);
 
 	GLenum getType() const
 	{
@@ -51,9 +50,8 @@ private:
 
 	void destroy();
 
-	ANKI_USE_RESULT Error handleError(GlAllocator<U8>& alloc, String& src);
+	ANKI_USE_RESULT Error handleError(String& src);
 };
-
 /// @}
 
 } // end namespace anki

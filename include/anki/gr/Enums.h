@@ -3,14 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_ENUMS_H
-#define ANKI_GL_ENUMS_H
+#ifndef ANKI_GR_ENUMS_H
+#define ANKI_GR_ENUMS_H
 
 #include "anki/util/StdTypes.h"
+#include "anki/util/Enum.h"
 
 namespace anki {
 
-/// @addtogroup opengl_other
+/// @addtogroup graphics
 /// @{
 
 // Some constants
@@ -153,6 +154,7 @@ enum class ShaderType: U8
 	FRAGMENT,
 	COMPUTE
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType, inline)
 
 enum class ShaderVariableDataType: U8
 {
@@ -173,6 +175,7 @@ enum class ShaderVariableDataType: U8
 	SAMPLERS_FIRST = SAMPLER_2D,
 	SAMPLERS_LAST = SAMPLER_CUBE
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType, inline)
 
 /// Format for images and vertex attributes.
 struct PixelFormat
@@ -180,6 +183,23 @@ struct PixelFormat
 	ComponentFormat m_components = ComponentFormat::R8;
 	TransformFormat m_transform = TransformFormat::UNORM;
 	Bool8 m_srgb = false;
+};
+
+/// Occlusion query result bit.
+enum class OcclusionQueryResultBit: U8
+{
+	NOT_AVAILABLE = 1 << 0,
+	VISIBLE = 1 << 1,
+	NOT_VISIBLE = 1 << 2 
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(OcclusionQueryResultBit, inline)
+
+/// Occlusion query result.
+enum class OcclusionQueryResult: U8
+{
+	NOT_AVAILABLE,
+	VISIBLE,
+	NOT_VISIBLE
 };
 /// @}
 

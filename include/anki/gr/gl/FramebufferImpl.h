@@ -11,36 +11,19 @@
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
 
-/// Framebuffer
+/// Framebuffer implementation.
 class FramebufferImpl: public GlObject
 {
 public:
 	using Base = GlObject;
+	using Initializer = FramebufferInitializer;
 
-	static const U32 MAX_COLOR_ATTACHMENTS = 4;
-
-	/// Used to set the attachments
-	class Attachment
-	{
-	public:
-		Attachment()
-		{}
-
-		Attachment(const TextureHandle& tex, GLenum point, U32 layer = 0)
-		:	m_tex(tex), 
-			m_point(point), 
-			m_layer(layer)
-		{}
-
-		TextureHandle m_tex;
-		GLenum m_point;
-		U32 m_layer;
-	};
-
-	FramebufferImpl() = default;
+	FramebufferImpl(GrManager* manager)
+	:	Base(manager)
+	{}
 
 	~FramebufferImpl()
 	{
@@ -49,8 +32,7 @@ public:
 
 	/// Set all the attachments. It will overwrite the previous state. If the
 	/// initalizer list is empty the it will bind the default framebuffer
-	ANKI_USE_RESULT Error create(
-		Attachment* attachmentsBegin, Attachment* attachmentsEnd);
+	ANKI_USE_RESULT Error create(Initializer& init);
 
 	/// Bind it to the state. Call it in rendering thread
 	/// @param invalidate If true invalidate the FB after binding it
