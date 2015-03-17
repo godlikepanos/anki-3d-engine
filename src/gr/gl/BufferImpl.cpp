@@ -88,7 +88,7 @@ Error BufferImpl::create(GLenum target, const void* dataPtr,
 }
 
 //==============================================================================
-void BufferImpl::write(void* buff, U32 offset, U32 size)
+void BufferImpl::write(const void* buff, U32 offset, U32 size)
 {
 	ANKI_ASSERT(isCreated());
 	ANKI_ASSERT(offset + size <= size);

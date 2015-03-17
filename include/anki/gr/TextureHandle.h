@@ -10,7 +10,7 @@
 
 namespace anki {
 
-/// @addtogroup opengl_containers
+/// @addtogroup graphics
 /// @{
 
 /// Texture handle

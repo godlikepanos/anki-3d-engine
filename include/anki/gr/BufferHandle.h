@@ -39,7 +39,7 @@ public:
 	/// Write data to the buffer
 	void write(
 		CommandBufferHandle& commands, 
-		ClientBufferHandle& data, PtrSize readOffset,
+		const void* data, PtrSize dataSize, PtrSize readOffset,
 		PtrSize writeOffset, PtrSize size);
 
 	/// Bind to the state as uniform/shader storage buffer

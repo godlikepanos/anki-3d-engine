@@ -56,19 +56,9 @@ public:
 		return m_glName != 0;
 	}
 
-	State getStateAtomically(State* newVal)
+	State setStateAtomically(State newVal)
 	{
-		State crntVal;
-		if(newVal)
-		{
-			I32 newValI32 = I32(*newVal);
-			crntVal = State(m_state.exchange(newValI32));
-		}
-		else
-		{
-			crntVal = State(m_state.load());
-		}
-		return crntVal;
+		return State(m_state.exchange(I32(newVal)));
 	}
 
 	/// Check if the object has been created and if not serialize the thread.

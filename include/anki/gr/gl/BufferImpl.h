@@ -90,7 +90,7 @@ public:
 
 	/// Write data to buffer. 
 	/// @param[in] buff The buffer to copy to BO
-	void write(void* buff)
+	void write(const void* buff)
 	{
 		write(buff, 0, m_size);
 	}
@@ -99,7 +99,7 @@ public:
 	/// @param[in] buff The buffer to copy to BO
 	/// @param[in] offset The offset
 	/// @param[in] size The size in bytes we want to write
-	void write(void* buff, U32 offset, U32 size);
+	void write(const void* buff, U32 offset, U32 size);
 
 	/// Set the binding for this buffer
 	void setBinding(GLuint binding) const;

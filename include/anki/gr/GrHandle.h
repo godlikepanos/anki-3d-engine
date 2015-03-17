@@ -110,17 +110,15 @@ public:
 	///                object. Some objects example may require deferred 
 	///                deleters.
 	template<typename TDeleter>
-	ANKI_USE_RESULT Error create(GrManager* manager, TDeleter del)
+	ANKI_USE_RESULT Error create(GrManager& manager, TDeleter del)
 	{
-		ANKI_ASSERT(manager);
-
 		using Cb = CtrlBlock<TDeleter>;
 
 		Error err = ErrorCode::NONE;
 
 		// Create the object
-		auto alloc = manager->getAllocator();
-		T* ptr = alloc.template newInstance<T>(manager);
+		auto alloc = manager.getAllocator();
+		T* ptr = alloc.template newInstance<T>(&manager);
 
 		if(ptr != nullptr)
 		{
@@ -201,7 +199,7 @@ private:
 		void deletePtr()
 		{
 			// Delete object
-			m_del(Base::m_ptr);
+			m_del(static_cast<T*>(Base::m_ptr));
 		}
 	};
 
