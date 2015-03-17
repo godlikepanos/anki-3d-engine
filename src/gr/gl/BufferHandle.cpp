@@ -4,63 +4,44 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/BufferHandle.h"
-#include "anki/gr/GlHandleDeferredDeleter.h"
-#include "anki/gr/ClientBufferHandle.h"
+#include "anki/gr/gl/HandleDeferredDeleter.h"
 #include "anki/gr/gl/BufferImpl.h"
-#include "anki/gr/GlDevice.h"
+#include "anki/gr/GrManager.h"
 
 namespace anki {
 
 //==============================================================================
 /// Create buffer command
-class GlBufferCreateCommand: public GlCommand
+class BufferCreateCommand: public GlCommand
 {
 public:
 	BufferHandle m_buff;
 	GLenum m_target;
-	ClientBufferHandle m_data;
+	const void* m_data;
 	PtrSize m_size;
 	GLbitfield m_flags;
-	Bool8 m_empty;
 
-	GlBufferCreateCommand(
-		BufferHandle buff, GLenum target, ClientBufferHandle data, 
+	BufferCreateCommand(
+		BufferHandle buff, GLenum target, const void* data, PtrSize size
 		GLenum flags)
 	:	m_buff(buff), 
 		m_target(target), 
 		m_data(data), 
-		m_flags(flags), 
-		m_empty(false)
-	{}
-
-	GlBufferCreateCommand(
-		BufferHandle buff, GLenum target, PtrSize size, GLenum flags)
-	:	m_buff(buff), 
-		m_target(target), 
-		m_size(size), 
-		m_flags(flags), 
-		m_empty(true)
+		m_size(size),
+		m_flags(flags)
 	{}
 
 	Error operator()(CommandBufferImpl*)
 	{
 		Error err = ErrorCode::NONE;
 
-		if(!m_empty)
-		{
-			err = m_buff._get().create(m_target, m_data.getSize(), 
-				m_data.getBaseAddress(), m_flags);
-		}
-		else
-		{
-			err = m_buff._get().create(m_target, m_size, nullptr, m_flags);
-		}
+		err = m_buff.get().create(m_target, m_data, m_size, m_flags);
 
-		GlHandleState oldState = m_buff._setState(
+		GlObject::State oldState = m_buff.get().getStateAtomically(
 			(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
 
 		(void)oldState;
-		ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
+		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 
 		return err;
 	}
@@ -97,7 +78,7 @@ Error BufferHandle::create(CommandBufferHandle& commands,
 		_setState(GlHandleState::TO_BE_CREATED);
 
 		// Fire the command
-		commands._pushBackNewCommand<GlBufferCreateCommand>(
+		commands._pushBackNewCommand<BufferCreateCommand>(
 			*this, target, data, flags);
 	}
 
@@ -127,7 +108,7 @@ Error BufferHandle::create(CommandBufferHandle& commands,
 		_setState(GlHandleState::TO_BE_CREATED);
 		
 		// Fire the command
-		commands._pushBackNewCommand<GlBufferCreateCommand>(
+		commands._pushBackNewCommand<BufferCreateCommand>(
 			*this, target, size, flags);
 	}
 

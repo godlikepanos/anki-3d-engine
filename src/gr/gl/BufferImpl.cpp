@@ -22,8 +22,8 @@ void BufferImpl::destroy()
 }
 
 //==============================================================================
-Error BufferImpl::create(GLenum target, U32 sizeInBytes,
-	const void* dataPtr, GLbitfield flags)
+Error BufferImpl::create(GLenum target, const void* dataPtr, 
+	U32 sizeInBytes, GLbitfield flags)
 {
 	ANKI_ASSERT(!isCreated());
 

@@ -34,12 +34,12 @@ public:
 	/// Creates a new BO with the given parameters and checks if everything
 	/// went OK. Throws exception if fails
 	/// @param target Depends on the BO
-	/// @param sizeInBytes The size of the buffer that we will allocate in bytes
 	/// @param dataPtr Points to the data buffer to copy to the VGA memory.
 	///		   Put NULL if you want just to allocate memory
+	/// @param sizeInBytes The size of the buffer that we will allocate in bytes
 	/// @param flags GL access flags
 	ANKI_USE_RESULT Error create(
-		GLenum target, U32 sizeInBytes, const void* dataPtr, GLbitfield flags);
+		GLenum target, const void* dataPtr, U32 sizeInBytes, GLbitfield flags);
 
 	GLenum getTarget() const
 	{

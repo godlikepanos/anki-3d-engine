@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_BUFFER_HANDLE_H
-#define ANKI_GL_GL_BUFFER_HANDLE_H
+#ifndef ANKI_GR_BUFFER_HANDLE_H
+#define ANKI_GR_BUFFER_HANDLE_H
 
-#include "anki/gr/GlContainerHandle.h"
+#include "anki/gr/GrHandle.h"
 
 namespace anki {
 
@@ -14,10 +14,10 @@ namespace anki {
 /// @{
 
 /// GPU buffer handle
-class BufferHandle: public GlContainerHandle<BufferImpl>
+class BufferHandle: public GrHandle<BufferImpl>
 {
 public:
-	using Base = GlContainerHandle<BufferImpl>;
+	using Base = GrHandle<BufferImpl>;
 
 	BufferHandle();
 
@@ -25,11 +25,7 @@ public:
 
 	/// Create the buffer with data
 	ANKI_USE_RESULT Error create(CommandBufferHandle& commands, GLenum target, 
-		ClientBufferHandle& data, GLbitfield flags);
-
-	/// Create the buffer without data
-	ANKI_USE_RESULT Error create(CommandBufferHandle& commands, GLenum target, 
-		PtrSize size, GLbitfield flags);
+		const void* data, PtrSize size, GLbitfield flags);
 
 	/// Get buffer size. It may serialize 
 	PtrSize getSize() const;
