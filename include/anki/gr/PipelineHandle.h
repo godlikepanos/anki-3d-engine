@@ -6,18 +6,18 @@
 #ifndef ANKI_GR_PIPELINE_HANDLE_H
 #define ANKI_GR_PIPELINE_HANDLE_H
 
-#include "anki/gr/GlContainerHandle.h"
+#include "anki/gr/GrHandle.h"
 
 namespace anki {
 
-/// @addtogroup opengl_other
+/// @addtogroup graphics
 /// @{
 
-/// Program pipeline handle
-class PipelineHandle: public GlContainerHandle<PipelineImpl>
+/// Program pipeline handle.
+class PipelineHandle: public GrHandle<PipelineImpl>
 {
 public:
-	using Base = GlContainerHandle<PipelineImpl>;
+	using Base = GrHandle<PipelineImpl>;
 
 	PipelineHandle();
 
@@ -46,7 +46,6 @@ public:
 	ANKI_USE_RESULT Error commonConstructor(CommandBufferHandle& commands,
 		const ShaderHandle* progsBegin, const ShaderHandle* progsEnd);
 };
-
 /// @}
 
 } // end namespace anki

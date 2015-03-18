@@ -4,7 +4,10 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/CommandBufferHandle.h"
-#include "anki/gr/GlDevice.h"
+#include "anki/gr/gl/CommandBufferImpl.h"
+#include "anki/gr/GrManager.h"
+#include "anki/gr/gl/GrManagerImpl.h"
+#include "anki/gr/gl/RenderingThread.h"
 #include "anki/gr/gl/FramebufferImpl.h"
 #include "anki/gr/TextureHandle.h"
 #include "anki/gr/gl/TextureImpl.h"
@@ -20,7 +23,7 @@ namespace anki {
 //==============================================================================
 // Macros because we are bored to type
 #define ANKI_STATE_CMD_0(type_, glfunc_) \
-	class Command: public GlCommand \
+	class Command final: public GlCommand \
 	{ \
 	public: \
 		Command() = default \
@@ -30,7 +33,7 @@ namespace anki {
 			return ErrorCode::NONE; \
 		} \
 	}; \
-	_pushBackNewCommand<Command>(value_)
+	get().pushBackNewCommand<Command>(value_)
 
 #define ANKI_STATE_CMD_1(type_, glfunc_, value_) \
 	class Command: public GlCommand \
@@ -46,7 +49,7 @@ namespace anki {
 			return ErrorCode::NONE; \
 		} \
 	}; \
-	_pushBackNewCommand<Command>(value_)
+	get().pushBackNewCommand<Command>(value_)
 
 #define ANKI_STATE_CMD_2(type_, glfunc_, a_, b_) \
 	class Command: public GlCommand \
@@ -63,7 +66,7 @@ namespace anki {
 			return ErrorCode::NONE; \
 		} \
 	}; \
-	_pushBackNewCommand<Command>(a_, b_)
+	get().pushBackNewCommand<Command>(a_, b_)
 
 #define ANKI_STATE_CMD_3(type_, glfunc_, a_, b_, c_) \
 	class Command: public GlCommand \
@@ -80,7 +83,7 @@ namespace anki {
 			return ErrorCode::NONE; \
 		} \
 	}; \
-	_pushBackNewCommand<Command>(a_, b_, c_)
+	get().pushBackNewCommand<Command>(a_, b_, c_)
 
 #define ANKI_STATE_CMD_4(type_, glfunc_, a_, b_, c_, d_) \
 	class Command: public GlCommand \
@@ -97,7 +100,7 @@ namespace anki {
 			return ErrorCode::NONE; \
 		} \
 	}; \
-	_pushBackNewCommand<Command>(a_, b_, c_, d_)
+	get().pushBackNewCommand<Command>(a_, b_, c_, d_)
 
 #define ANKI_STATE_CMD_ENABLE(enum_, enable_) \
 	class Command: public GlCommand \
@@ -120,7 +123,7 @@ namespace anki {
 			return ErrorCode::NONE; \
 		} \
 	}; \
-	_pushBackNewCommand<Command>(enable_)
+	get().pushBackNewCommand<Command>(enable_)
 
 //==============================================================================
 CommandBufferHandle::CommandBufferHandle()
@@ -131,23 +134,19 @@ CommandBufferHandle::~CommandBufferHandle()
 {}
 
 //==============================================================================
-Error CommandBufferHandle::create(GlDevice* gl, 
-	CommandBufferImplInitHints hints)
+Error CommandBufferHandle::create(GrManager* manager, 
+	CommandBufferInitHints hints)
 {
 	ANKI_ASSERT(!isCreated());
-	ANKI_ASSERT(gl);
+	ANKI_ASSERT(manager);
 
-	using Alloc = GlAllocator<CommandBufferImpl>;
-	Alloc alloc = gl->_getAllocator();
-
-	Error err = _createAdvanced(
-		gl,
-		alloc, 
-		GlHandleDefaultDeleter<CommandBufferImpl, Alloc>());
+	Error err = Base::create(
+		*manager,
+		GrHandleDefaultDeleter<CommandBufferImpl>());
 
 	if(!err)
 	{
-		err = _get().create(&gl->_getRenderingThread(), hints);
+		err = get().create(hints);
 	}
 
 	return err;
@@ -182,7 +181,7 @@ void CommandBufferHandle::pushBackUserCommand(
 		}
 	};
 
-	_pushBackNewCommand<Command>(callback, data);
+	get().pushBackNewCommand<Command>(callback, data);
 }
 
 //==============================================================================
@@ -200,24 +199,26 @@ void CommandBufferHandle::pushBackOtherCommandBuffer(
 
 		Error operator()(CommandBufferImpl*)
 		{
-			return m_commands._executeAllCommands();
+			return m_commands.get().executeAllCommands();
 		}
 	};
 
-	commands._get().makeImmutable();
-	_pushBackNewCommand<Command>(commands);
+	commands.get().makeImmutable();
+	get().pushBackNewCommand<Command>(commands);
 }
 
 //==============================================================================
 void CommandBufferHandle::flush()
 {
-	_get().getRenderingThread().flushCommandBuffer(*this);
+	get().getManager().getImplementation().
+		getRenderingThread().flushCommandBuffer(*this);
 }
 
 //==============================================================================
 void CommandBufferHandle::finish()
 {
-	_get().getRenderingThread().finishCommandBuffer(*this);
+	get().getManager().getImplementation().getRenderingThread().
+		finishCommandBuffer(*this);
 }
 
 //==============================================================================
@@ -259,7 +260,8 @@ void CommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 
 		Error operator()(CommandBufferImpl* commands)
 		{
-			State& state = commands->getRenderingThread().getState();
+			State& state = commands->getManager().getImplementation().
+				getRenderingThread().getState();
 
 			if(state.m_viewport[0] != m_value[0] 
 				|| state.m_viewport[1] != m_value[1]
@@ -275,7 +277,7 @@ void CommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 		}
 	};
 
-	_pushBackNewCommand<Command>(minx, miny, maxx, maxy);
+	get().pushBackNewCommand<Command>(minx, miny, maxx, maxy);
 }
 
 //==============================================================================
@@ -356,7 +358,8 @@ void CommandBufferHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 
 		Error operator()(CommandBufferImpl* commands)
 		{
-			State& state = commands->getRenderingThread().getState();
+			State& state = commands->getManager().getImplementation().
+				getRenderingThread().getState();
 
 			if(state.m_blendSfunc != m_sfactor 
 				|| state.m_blendDfunc != m_dfactor)
@@ -371,7 +374,7 @@ void CommandBufferHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 		}
 	};
 
-	_pushBackNewCommand<Command>(sfactor, dfactor);
+	get().pushBackNewCommand<Command>(sfactor, dfactor);
 }
 
 //==============================================================================
@@ -459,7 +462,7 @@ public:
 		U i = 0;
 		while(count-- != 0)
 		{
-			names[i++] = m_texes[count]._get().getGlName();
+			names[i++] = m_texes[count].get().getGlName();
 		}
 
 		glBindTextures(m_first, m_texCount, &names[0]);
@@ -473,7 +476,7 @@ void CommandBufferHandle::bindTextures(U32 first,
 {
 	ANKI_ASSERT(count > 0);
 
-	_pushBackNewCommand<BindTexturesCommand>(&textures[0], count, first);
+	get().pushBackNewCommand<BindTexturesCommand>(&textures[0], count, first);
 }
 
 //==============================================================================
@@ -517,7 +520,7 @@ public:
 			break;
 		};
 
-		if(!m_query.isCreated() || !m_query._get().skipDrawcall())
+		if(!m_query.isCreated() || !m_query.get().skipDrawcall())
 		{
 			glDrawElementsInstancedBaseVertexBaseInstance(
 				m_mode,
@@ -542,7 +545,7 @@ void CommandBufferHandle::drawElements(
 	GlDrawElementsIndirectInfo info(count, instanceCount, firstIndex, 
 		baseVertex, baseInstance);
 
-	_pushBackNewCommand<DrawElementsCondCommand>(mode, indexSize, info);
+	get().pushBackNewCommand<DrawElementsCondCommand>(mode, indexSize, info);
 }
 
 //==============================================================================
@@ -564,7 +567,7 @@ public:
 
 	Error operator()(CommandBufferImpl*)
 	{
-		if(!m_query.isCreated() || !m_query._get().skipDrawcall())
+		if(!m_query.isCreated() || !m_query.get().skipDrawcall())
 		{
 			glDrawArraysInstancedBaseInstance(
 				m_mode,
@@ -585,7 +588,7 @@ void CommandBufferHandle::drawArrays(
 {
 	GlDrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
-	_pushBackNewCommand<DrawArraysCondCommand>(mode, info);
+	get().pushBackNewCommand<DrawArraysCondCommand>(mode, info);
 }
 
 //==============================================================================
@@ -597,7 +600,7 @@ void CommandBufferHandle::drawElementsConditional(
 	GlDrawElementsIndirectInfo info(count, instanceCount, firstIndex, 
 		baseVertex, baseInstance);
 
-	_pushBackNewCommand<DrawElementsCondCommand>(mode, indexSize, info, query);
+	get().pushBackNewCommand<DrawElementsCondCommand>(mode, indexSize, info, query);
 }
 
 //==============================================================================
@@ -607,7 +610,7 @@ void CommandBufferHandle::drawArraysConditional(
 {
 	GlDrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
 
-	_pushBackNewCommand<DrawArraysCondCommand>(mode, info, query);
+	get().pushBackNewCommand<DrawArraysCondCommand>(mode, info, query);
 }
 
 //==============================================================================
@@ -624,11 +627,12 @@ public:
 
 	Error operator()(CommandBufferImpl* cmd)
 	{
-		TextureImpl& tex = m_tex._get();
-		BufferImpl& buff = m_buff._get();
+		TextureImpl& tex = m_tex.get();
+		BufferImpl& buff = m_buff.get();
 
 		// Bind
-		GLuint copyFbo = cmd->getRenderingThread().getCopyFbo();
+		GLuint copyFbo = cmd->getManager().getImplementation().
+			getRenderingThread().getCopyFbo();
 		glBindFramebuffer(GL_FRAMEBUFFER, copyFbo);
 
 		// Attach texture
@@ -644,7 +648,7 @@ public:
 		buff.bind();
 
 		// Read pixels
-		GLuint format, type;
+		GLuint format = GL_NONE, type = GL_NONE;
 		if(tex.getInternalFormat() == GL_RG32UI)
 		{
 			format = GL_RG_INTEGER;
@@ -674,7 +678,7 @@ public:
 void CommandBufferHandle::copyTextureToBuffer(
 	TextureHandle& from, BufferHandle& to)
 {
-	_pushBackNewCommand<CopyBuffTex>(from, to);
+	get().pushBackNewCommand<CopyBuffTex>(from, to);
 }
 
 } // end namespace anki

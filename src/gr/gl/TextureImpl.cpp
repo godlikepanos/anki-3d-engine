@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/gl/TextureImpl.h"
+#include "anki/gr/TextureCommon.h"
 #include "anki/gr/gl/Error.h"
 #include "anki/util/Functions.h"
 #include "anki/util/DArray.h"

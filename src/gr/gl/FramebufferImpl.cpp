@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/gl/FramebufferImpl.h"
+#include "anki/gr/FramebufferCommon.h"
 #include "anki/gr/gl/TextureImpl.h"
 #include "anki/util/Logger.h"
 
@@ -12,7 +13,8 @@ namespace anki {
 //==============================================================================
 Error FramebufferImpl::create(Initializer& init)
 {
-	if(init.m_attachments.getSize() == 0)
+	if(init.m_colorAttachmentsCount == 0 
+		&& !init.m_depthStencilAttachment.m_texture.isCreated())
 	{
 		m_bindDefault = true;
 		return ErrorCode::NONE;
@@ -22,30 +24,26 @@ Error FramebufferImpl::create(Initializer& init)
 
 	Array<U, MAX_COLOR_ATTACHMENTS + 1> layers;
 	GLenum depthStencilBindingPoint = GL_NONE;
-	Attachment* attachment = init.m_attachments.getBegin();
-	Attachment* attachmentsEnd = init.m_attachments.getEnd();
-	do
+
+	// Do color attachments
+	for(U i = 0; i < init.m_colorAttachmentsCount; ++i)
 	{
-		if(attachment->m_point >= GL_COLOR_ATTACHMENT0 
-			&& attachment->m_point < 
-				GL_COLOR_ATTACHMENT0 + MAX_COLOR_ATTACHMENTS)
-		{
-			// Color attachment
+		auto& attachment = init.m_colorAttachments[i];
+		ANKI_ASSERT(attachment.m_texture.isCreated());
+		m_attachments[i] = attachment.m_texture;
+		layers[i] = attachment.m_layer;
+	}
 
-			U32 i = attachment->m_point - GL_COLOR_ATTACHMENT0;
-			m_attachments[i] = *attachment->m_texture;
-			layers[i] = attachment->m_layer;
-		}
-		else
-		{
-			// Depth & stencil
+	// Do depth stencil
+	if(init.m_depthStencilAttachment.m_texture.isCreated())
+	{
+		m_attachments[MAX_COLOR_ATTACHMENTS] = 
+			init.m_depthStencilAttachment.m_texture;
+		layers[MAX_COLOR_ATTACHMENTS] = 
+			init.m_depthStencilAttachment.m_layer;
 
-			m_attachments[MAX_COLOR_ATTACHMENTS] = *attachment->m_texture;
-			layers[MAX_COLOR_ATTACHMENTS] = attachment->m_layer;
-			depthStencilBindingPoint = attachment->m_point;
-		}
-
-	} while(++attachment != attachmentsEnd);
+		depthStencilBindingPoint = GL_DEPTH_STENCIL_ATTACHMENT;
+	}
 
 	// Now create the FBO
 	Error err = createFbo(layers, depthStencilBindingPoint);

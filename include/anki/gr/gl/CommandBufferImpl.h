@@ -50,8 +50,8 @@ public:
 	/// @param hints Hints to optimize the command's allocator
 	ANKI_USE_RESULT Error create(const InitHints& hints);
 
-	/// Get he allocator
-	CommandBufferAllocator<U8> getAllocator() const
+	/// Get the internal allocator.
+	CommandBufferAllocator<U8> getInternalAllocator() const
 	{
 		return m_alloc;
 	}

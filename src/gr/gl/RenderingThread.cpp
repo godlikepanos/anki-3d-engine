@@ -5,7 +5,7 @@
 
 #include "anki/gr/gl/RenderingThread.h"
 #include "anki/gr/gl/CommandBufferImpl.h"
-#include "anki/gr/GlDevice.h"
+#include "anki/gr/GrManager.h"
 #include "anki/util/Logger.h"
 #include "anki/core/Counters.h"
 
@@ -16,7 +16,7 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-class SyncCommand: public GlCommand
+class SyncCommand final: public GlCommand
 {
 	ANKI_USE_RESULT Error operator()(CommandBufferImpl* cmd)
 	{
@@ -30,17 +30,14 @@ class SyncCommand: public GlCommand
 //==============================================================================
 
 //==============================================================================
-RenderingThread::RenderingThread(GlDevice* device, 
-	AllocAlignedCallback allocCb, void* allocCbUserData)
-:	m_device(device), 
-	m_allocCb(allocCb),
-	m_allocCbUserData(allocCbUserData),
+RenderingThread::RenderingThread(GrManager* manager)
+:	m_manager(manager), 
 	m_tail(0), 
 	m_head(0),
 	m_renderingThreadSignal(0),
 	m_thread("anki_gl")
 {
-	ANKI_ASSERT(m_device);
+	ANKI_ASSERT(m_manager);
 }
 
 //==============================================================================
@@ -116,7 +113,7 @@ Error RenderingThread::start(
 	ANKI_ASSERT(swapBuffersCallback != nullptr);
 	m_swapBuffersCallback = swapBuffersCallback;
 	m_swapBuffersCbData = swapBuffersCbData;
-	err = m_swapBuffersCommands.create(m_device);
+	err = m_swapBuffersCommands.create(m_manager);
 	if(!err)
 	{
 		m_swapBuffersCommands.pushBackUserCommand(swapBuffersInternal, this);
@@ -131,7 +128,7 @@ Error RenderingThread::start(
 		threadStarted = true;
 
 		// Create sync command buffer
-		err = m_syncCommands.create(m_device);
+		err = m_syncCommands.create(m_manager);
 	}
 
 	if(!err)

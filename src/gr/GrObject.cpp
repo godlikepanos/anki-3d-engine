@@ -11,7 +11,7 @@ namespace anki {
 //==============================================================================
 GrAllocator<U8> GrObject::getAllocator() const
 {
-	m_manager->getAllocator();
+	return m_manager->getAllocator();
 }
 
 } // end namespace anki

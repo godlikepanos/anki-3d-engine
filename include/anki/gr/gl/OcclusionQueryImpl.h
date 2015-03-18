@@ -21,7 +21,9 @@ public:
 	using ResultBit = OcclusionQueryResultBit;
 	using Result = OcclusionQueryResult;
 
-	OcclusionQueryImpl() = default;
+	OcclusionQueryImpl(GrManager* manager)
+	:	Base(manager)
+	{}
 
 	~OcclusionQueryImpl()
 	{

@@ -155,21 +155,6 @@ public:
 	/// @{
 	void copyTextureToBuffer(TextureHandle& from, BufferHandle& To);
 	/// @}
-
-	/// @privatesection
-	/// @{
-
-	// XXX
-#if 0
-	/// Add a new command to the list
-	template<typename TCommand, typename... TArgs>
-	void pushBackNewCommand(TArgs&&... args)
-	{
-		get().template pushBackNewCommand<TCommand>(
-			std::forward<TArgs>(args)...);
-	}
-#endif
-	/// @}
 };
 /// @}
 

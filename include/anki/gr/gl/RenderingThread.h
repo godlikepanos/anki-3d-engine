@@ -12,9 +12,6 @@
 
 namespace anki {
 
-// Forward
-class GlDevice;
-
 /// @addtogroup opengl_private
 /// @{
 
@@ -25,32 +22,9 @@ class RenderingThread
 	friend class SyncCommand;
 
 public:
-	RenderingThread(GlDevice* device, 
-		AllocAlignedCallback alloc, void* allocUserData);
+	RenderingThread(GlDevice* device);
 
 	~RenderingThread();
-
-	GlDevice& getDevice()
-	{
-		ANKI_ASSERT(m_device);
-		return *m_device;
-	}
-
-	const GlDevice& getDevice() const
-	{
-		ANKI_ASSERT(m_device);
-		return *m_device;
-	}
-
-	AllocAlignedCallback getAllocationCallback() const
-	{
-		return m_allocCb;
-	}
-
-	void* getAllocationCallbackUserData() const
-	{
-		return m_allocCbUserData;
-	}
 
 	State& getState()
 	{
@@ -96,9 +70,7 @@ public:
 	void swapBuffers();
 
 private:
-	GlDevice* m_device = nullptr;
-	AllocAlignedCallback m_allocCb;
-	void* m_allocCbUserData;
+	GrManager* m_manager = nullptr;
 
 	Array<CommandBufferHandle, 128> m_queue; ///< Command queue
 	U64 m_tail; ///< Tail of queue

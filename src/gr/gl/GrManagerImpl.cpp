@@ -9,12 +9,30 @@
 namespace anki {
 
 //==============================================================================
+GrManager::~GrManager()
+{
+	if(m_thread)
+	{
+		m_thread->stop();
+		m_manager->getAllocator().deleteInstance(m_thread);
+		m_thread = nullptr;
+	}
+
+	m_manager = nullptr;
+}
+
+//==============================================================================
 Error GlManagerImpl::create(GrManagerInitializer& init)
 {
 	Error err = ErrorCode::NONE;
 
+#if ANKI_QUEUE_DISABLE_ASYNC
+	ANKI_LOGW("GL queue works in synchronous mode");
+#endif
+
 	// Create thread
-	m_thread = getAllocator().newInstance<RenderingThread>(m_manager);
+	m_thread = 
+		m_manager->getAllocator().newInstance<RenderingThread>(m_manager);
 	if(!thread)
 	{
 		err = ErrorCode::OUT_OF_MEMORY;
@@ -34,12 +52,6 @@ Error GlManagerImpl::create(GrManagerInitializer& init)
 	}
 
 	return err;
-}
-
-//==============================================================================
-GrAllocator<U8> GlManagerImpl::getAllocator() const
-{
-	return m_manager->getAllocator();
 }
 
 } // end namespace anki

@@ -4,9 +4,97 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/FramebufferHandle.h"
-#include "anki/gr/GlHandleDeferredDeleter.h"
+#include "anki/gr/gl/DeferredDeleter.h"
+#include "anki/gr/gl/FramebufferImpl.h"
 
 namespace anki {
+
+//==============================================================================
+// Commands                                                                    =
+//==============================================================================
+
+/// Create framebuffer command.
+class CreateFramebufferCommand: public GlCommand
+{
+public:
+	FramebufferHandle m_fb;
+	FramebufferHandle::Initializer m_init;
+
+	CreateFramebufferCommand(FramebufferHandle& handle, 
+		FramebufferHandle::Initializer& init)
+	:	m_fb(handle), 
+		m_init(init)
+	{}
+
+	Error operator()(CommandBufferImpl*)
+	{
+		Error err = m_fb.get().create(m_init);
+
+		GlObject::State oldState = m_fb.get().setStateAtomically(
+			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
+		(void)oldState;
+
+		return err;
+	}
+};
+
+/// Bind framebuffer command.
+class BindFramebufferCommand: public GlCommand
+{
+public:
+	FramebufferHandle m_fb;
+	Bool8 m_invalidate;
+
+	BindFramebufferCommand(FramebufferHandle& fb, Bool invalidate)
+	:	m_fb(fb), 
+		m_invalidate(invalidate)
+	{}
+
+	Error operator()(CommandBufferImpl*)
+	{
+		m_fb.get().bind(m_invalidate);
+		return ErrorCode::NONE;
+	}
+};
+
+/// Blit.
+class BlitFramebufferCommand: public GlCommand
+{
+public:
+	FramebufferHandle m_fbDest;
+	FramebufferHandle m_fbSrc;
+	Array<U32, 4> m_sourceRect;
+	Array<U32, 4> m_destRect;
+	GLbitfield m_attachmentMask;
+	Bool8 m_linear;
+
+	BlitFramebufferCommand(FramebufferHandle& fbDest, 
+		const FramebufferHandle& fbSrc,
+		const Array<U32, 4>& sourceRect,
+		const Array<U32, 4>& destRect,
+		GLbitfield attachmentMask,
+		Bool8 linear)
+	:	m_fbDest(fbDest), 
+		m_fbSrc(fbSrc), 
+		m_sourceRect(sourceRect),
+		m_destRect(destRect), 
+		m_attachmentMask(attachmentMask), 
+		m_linear(linear)
+	{}
+
+	Error operator()(CommandBufferImpl*)
+	{
+		m_fbDest.get().blit(m_fbSrc.get(), m_sourceRect, m_destRect, 
+			m_attachmentMask, m_linear);
+
+		return ErrorCode::NONE;
+	}
+};
+
+//==============================================================================
+// FramebufferHandle                                                           =
+//==============================================================================
 
 //==============================================================================
 FramebufferHandle::FramebufferHandle()
@@ -17,75 +105,19 @@ FramebufferHandle::~FramebufferHandle()
 {}
 
 //==============================================================================
-Error FramebufferHandle::create(
-	CommandBufferHandle& commands,
-	const std::initializer_list<Attachment>& attachments)
+Error FramebufferHandle::create(CommandBufferHandle& commands, 
+	Initializer& init)
 {
-	using Attachments = 
-		Array<Attachment, FramebufferImpl::MAX_COLOR_ATTACHMENTS + 1>;
+	using DeleteCommand = DeleteObjectCommand<FramebufferImpl>;
+	using Deleter = DeferredDeleter<FramebufferImpl, DeleteCommand>;
 
-	class Command: public GlCommand
-	{
-	public:
-		Attachments m_attachments;
-		U8 m_size;
-		FramebufferHandle m_fb;
-
-		Command(FramebufferHandle& handle, const Attachments& attachments, 
-			U size)
-		:	m_attachments(attachments), 
-			m_size(size), 
-			m_fb(handle)
-		{}
-
-		Error operator()(CommandBufferImpl*)
-		{
-			Attachment* begin;
-			Attachment* end;
-
-			if(m_size > 0)
-			{
-				begin = &m_attachments[0];
-				end = begin + m_size;
-			}
-			else
-			{
-				begin = end = nullptr;
-			}
-
-			Error err = m_fb._get().create(begin, end);
-
-			GlHandleState oldState = m_fb._setState(
-				(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
-			ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
-			(void)oldState;
-
-			return err;
-		}
-	};
-
-	using Alloc = GlAllocator<FramebufferImpl>;
-	using DeleteCommand = GlDeleteObjectCommand<FramebufferImpl, Alloc>;
-	using Deleter = 
-		GlHandleDeferredDeleter<FramebufferImpl, Alloc, DeleteCommand>;
-
-	Error err = _createAdvanced(
-		&commands._get().getRenderingThread().getDevice(),
-		commands._get().getGlobalAllocator(), 
-		Deleter());
-
+	Error err = Base::create(commands.get().getManager(), Deleter());
 	if(!err)
 	{
-		_setState(GlHandleState::TO_BE_CREATED);
+		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
-		Attachments att;
-		U i = 0;
-		for(const Attachment& a : attachments)
-		{
-			att[i++] = a;
-		}
-
-		commands._pushBackNewCommand<Command>(*this, att, attachments.size());
+		commands.get().pushBackNewCommand<CreateFramebufferCommand>(
+			*this, init);
 	}
 
 	return err;
@@ -94,25 +126,8 @@ Error FramebufferHandle::create(
 //==============================================================================
 void FramebufferHandle::bind(CommandBufferHandle& commands, Bool invalidate)
 {
-	class Command: public GlCommand
-	{
-	public:
-		FramebufferHandle m_fb;
-		Bool8 m_invalidate;
-
-		Command(FramebufferHandle& fb, Bool invalidate)
-		:	m_fb(fb), 
-			m_invalidate(invalidate)
-		{}
-
-		Error operator()(CommandBufferImpl*)
-		{
-			m_fb._get().bind(m_invalidate);
-			return ErrorCode::NONE;
-		}
-	};
-
-	commands._pushBackNewCommand<Command>(*this, invalidate);
+	commands.get().pushBackNewCommand<BindFramebufferCommand>(
+		*this, invalidate);
 }
 
 //==============================================================================
@@ -123,39 +138,7 @@ void FramebufferHandle::blit(CommandBufferHandle& commands,
 	GLbitfield attachmentMask,
 	Bool linear)
 {
-	class Command: public GlCommand
-	{
-	public:
-		FramebufferHandle m_fbDest;
-		FramebufferHandle m_fbSrc;
-		Array<U32, 4> m_sourceRect;
-		Array<U32, 4> m_destRect;
-		GLbitfield m_attachmentMask;
-		Bool8 m_linear;
-
-		Command(FramebufferHandle& fbDest, const FramebufferHandle& fbSrc,
-			const Array<U32, 4>& sourceRect,
-			const Array<U32, 4>& destRect,
-			GLbitfield attachmentMask,
-			Bool8 linear)
-		:	m_fbDest(fbDest), 
-			m_fbSrc(fbSrc), 
-			m_sourceRect(sourceRect),
-			m_destRect(destRect), 
-			m_attachmentMask(attachmentMask), 
-			m_linear(linear)
-		{}
-
-		Error operator()(CommandBufferImpl*)
-		{
-			m_fbDest._get().blit(m_fbSrc._get(), m_sourceRect, m_destRect, 
-				m_attachmentMask, m_linear);
-
-			return ErrorCode::NONE;
-		}
-	};
-
-	commands._pushBackNewCommand<Command>(
+	commands.get().pushBackNewCommand<BlitFramebufferCommand>(
 		*this, b, sourceRect, destRect, attachmentMask, linear);
 }
 

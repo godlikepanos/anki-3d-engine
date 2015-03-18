@@ -3,50 +3,31 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_GL_GL_FRAMEBUFFER_HANDLE_H
-#define ANKI_GL_GL_FRAMEBUFFER_HANDLE_H
+#ifndef ANKI_GR_FRAMEBUFFER_HANDLE_H
+#define ANKI_GR_FRAMEBUFFER_HANDLE_H
 
-#include "anki/gr/GlContainerHandle.h"
-#include "anki/gr/gl/FramebufferImpl.h" // XXX
+#include "anki/gr/GrHandle.h"
+#include "anki/gr/FramebufferCommon.h"
 
 namespace anki {
 
-/// @addtogroup opengl_other
+/// @addtogroup graphics
 /// @{
 
-/// Attachment.
-struct GlAttachment
-{
-	TextureHandle m_texture;
-	U32 m_layer = 0;
-	GlAttachmentLoadOperation m_loadOp;
-	GlAttachmentStoreOperation m_storeOp;
-};
-
-/// GlFramebuffer initializer. XXX
-struct GlFramebufferInitializer
-{
-	GlAttachment* m_colorAttachments = nullptr;
-	U32 m_colorAttachmentsCount = 0;
-	GlAttachment* m_depthStencilAttachment = nullptr;
-};
-
 /// Framebuffer handle
-class FramebufferHandle: public GlContainerHandle<FramebufferImpl>
+class FramebufferHandle: public GrHandle<FramebufferImpl>
 {
 public:
-	using Base = GlContainerHandle<FramebufferImpl>;
-	using Attachment = FramebufferImpl::Attachment;
-	using Initializer = GlFramebufferInitializer;
+	using Base = GrHandle<FramebufferImpl>;
+	using Initializer = FramebufferInitializer;
 
 	FramebufferHandle();
 
 	~FramebufferHandle();
 
 	/// Create a framebuffer
-	ANKI_USE_RESULT Error create(
-		CommandBufferHandle& commands,
-		const std::initializer_list<Attachment>& attachments);
+	ANKI_USE_RESULT Error create(CommandBufferHandle& commands,
+		Initializer& attachments);
 
 	/// Bind it to the state
 	/// @param commands The command buffer

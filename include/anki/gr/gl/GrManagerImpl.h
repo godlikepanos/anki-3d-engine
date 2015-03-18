@@ -10,6 +10,9 @@
 
 namespace anki {
 
+// Forward
+class RenderingThread;
+
 /// @addtogroup opengl
 /// @{
 
@@ -23,9 +26,9 @@ public:
 		ANKI_ASSERT(manager);
 	}
 
-	ANKI_USE_RESULT Error create(GrManagerInitializer& init);
+	~GrManager();
 
-	GrAllocator<U8> getAllocator() const;
+	ANKI_USE_RESULT Error create(GrManagerInitializer& init);
 
 	const RenderingThread& getRenderingThread() const
 	{

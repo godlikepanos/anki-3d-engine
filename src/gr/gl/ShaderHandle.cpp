@@ -4,24 +4,26 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/ShaderHandle.h"
-#include "anki/gr/GlDevice.h"
-#include "anki/gr/ClientBufferHandle.h"
-#include "anki/gr/GlHandleDeferredDeleter.h"
+#include "anki/gr/GrManager.h"
+#include "anki/gr/gl/DeferredDeleter.h"
 #include "anki/gr/gl/ShaderImpl.h"
 
 namespace anki {
 
 //==============================================================================
+// Commands                                                                    =
+//==============================================================================
+
 /// Create program command
-class ShaderCreateCommand: public GlCommand
+class ShaderCreateCommand final: public GlCommand
 {
 public:
 	ShaderHandle m_shader;
 	GLenum m_type;
-	ClientBufferHandle m_source;
+	const char* m_source;
 
 	ShaderCreateCommand(ShaderHandle shader, 
-		GLenum type, ClientBufferHandle source)
+		GLenum type, const char* source)
 	:	m_shader(shader), 
 		m_type(type), 
 		m_source(source)
@@ -29,19 +31,21 @@ public:
 
 	Error operator()(CommandBufferImpl* commands)
 	{
-		Error err = m_shader._get().create(m_type, 
-			reinterpret_cast<const char*>(m_source.getBaseAddress()),
-			commands->getRenderingThread().getDevice()._getAllocator(),
-			commands->getRenderingThread().getDevice()._getCacheDirectory());
+		Error err = m_shader.get().create(m_type, 
+			static_cast<const char*>(m_source));
 
-		GlHandleState oldState = m_shader._setState(
-			(err) ? GlHandleState::ERROR : GlHandleState::CREATED);
-		ANKI_ASSERT(oldState == GlHandleState::TO_BE_CREATED);
+		GlObject::State oldState = m_shader.get().setStateAtomically(
+			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
 
 		return err;
 	}
 };
+
+//==============================================================================
+// ShaderHandle                                                                =
+//==============================================================================
 
 //==============================================================================
 ShaderHandle::ShaderHandle()
@@ -53,23 +57,24 @@ ShaderHandle::~ShaderHandle()
 
 //==============================================================================
 Error ShaderHandle::create(CommandBufferHandle& commands, 
-	GLenum type, const ClientBufferHandle& source)
+	GLenum type, const void* source, PtrSize sourceSize)
 {
-	using Alloc = GlAllocator<ShaderImpl>;
-	using DeleteCommand = GlDeleteObjectCommand<ShaderImpl, Alloc>;
-	using Deleter = GlHandleDeferredDeleter<ShaderImpl, Alloc, DeleteCommand>;
+	ANKI_ASSERT(strlen(source) == sourceSize + 1);
+	using DeleteCommand = DeleteObjectCommand<ShaderImpl>;
+	using Deleter = DeferredDeleter<ShaderImpl, DeleteCommand>;
 
-	Error err = _createAdvanced(
-		&commands._get().getRenderingThread().getDevice(),
-		commands._get().getGlobalAllocator(), 
-		Deleter());
-
+	Error err = Base::create(commands.get().getManager(), Deleter());
 	if(!err)
 	{
-		_setState(GlHandleState::TO_BE_CREATED);
+		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
-		commands._pushBackNewCommand<ShaderCreateCommand>(
-			*this, type, source);
+		// Copy source to the command buffer
+		void* src = commands.get().getInternalAllocator().newArray<char>(
+			sourceSize);
+		memcpy(src, source, sourceSize);
+
+		commands.get().pushBackNewCommand<ShaderCreateCommand>(
+			*this, type, static_cast<char*>(src));
 	}
 
 	return err;
@@ -78,7 +83,7 @@ Error ShaderHandle::create(CommandBufferHandle& commands,
 //==============================================================================
 GLenum ShaderHandle::getType() const
 {
-	return (serializeOnGetter()) ? GL_NONE : _get().getType();
+	return (get().serializeOnGetter()) ? GL_NONE : get().getType();
 }
 
 } // end namespace anki
