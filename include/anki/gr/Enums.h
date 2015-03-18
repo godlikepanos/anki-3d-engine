@@ -14,10 +14,6 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
-// Some constants
-const U MAX_VERTEX_ATTRIBUTES = 16;
-const U MAX_COLOR_ATTACHMENTS = 4;
-
 // Enums
 enum PrimitiveTopology: U8
 {

@@ -31,33 +31,10 @@ public:
 	Error operator()(CommandBufferImpl* commands)
 	{
 		ANKI_ASSERT(commands);
-		TextureImpl::Initializer init;
 
-		static_cast<GlTextureInitializerBase&>(init) = m_init;
+		Error err = m_tex.get().create(m_init);
 
-		U layers = 0;
-		switch(m_init.m_target)
-		{
-		case GL_TEXTURE_CUBE_MAP:
-			layers = 6;
-			break;
-		case GL_TEXTURE_2D_ARRAY:
-		case GL_TEXTURE_3D:
-			layers = m_init.m_depth;
-			break;
-		case GL_TEXTURE_2D:
-		case GL_TEXTURE_2D_MULTISAMPLE:
-			layers = 1;
-			break;
-		default:
-			ANKI_ASSERT(0);
-		}
-
-		auto alloc = commands->getAllocator();
-
-		Error err = m_tex.get().create(init);
-
-		GlHandleState oldState = m_tex.get().setStateAtomically(
+		GlObject::State oldState = m_tex.get().setStateAtomically(
 			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
@@ -126,6 +103,23 @@ public:
 };
 
 //==============================================================================
+class GenMipmapsCommand: public GlCommand
+{
+public:
+	TextureHandle m_tex;
+
+	GenMipmapsCommand(TextureHandle& tex)
+	:	m_tex(tex)
+	{}
+
+	Error operator()(CommandBufferImpl*)
+	{
+		m_tex.get().generateMipmaps();
+		return ErrorCode::NONE;
+	}
+};
+
+//==============================================================================
 // TextureHandle                                                               =
 //==============================================================================
 
@@ -147,7 +141,7 @@ Error TextureHandle::create(
 
 	using Deleter = DeferredDeleter<TextureImpl, DeleteCommand>;
 
-	Error err = Base::(&commands.get().getManager(), Deleter());
+	Error err = Base::create(commands.get().getManager(), Deleter());
 	if(!err)
 	{
 		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
@@ -170,14 +164,14 @@ void TextureHandle::bind(CommandBufferHandle& commands, U32 unit)
 void TextureHandle::setFilter(CommandBufferHandle& commands, Filter filter)
 {
 	ANKI_ASSERT(isCreated());
-	commands._pushBackNewCommand<Command>(*this, filter);
+	commands.get().pushBackNewCommand<SetFilterCommand>(*this, filter);
 }
 
 //==============================================================================
 void TextureHandle::generateMipmaps(CommandBufferHandle& commands)
 {
 	ANKI_ASSERT(isCreated());
-	commands.get().pushBackNewCommand<SetFilterCommand>(*this);
+	commands.get().pushBackNewCommand<GenMipmapsCommand>(*this);
 }
 
 //==============================================================================
@@ -276,6 +270,26 @@ public:
 };
 
 //==============================================================================
+class SetSamplerFilterCommand: public GlCommand
+{
+public:
+	SamplerHandle m_sampler;
+	SamplerHandle::Filter m_filter;
+
+	SetSamplerFilterCommand(const SamplerHandle& sampler, 
+		SamplerHandle::Filter filter)
+	:	m_sampler(sampler), 
+		m_filter(filter)
+	{}
+
+	Error operator()(CommandBufferImpl*)
+	{
+		m_sampler.get().setFilter(m_filter);
+		return ErrorCode::NONE;
+	}
+};
+
+//==============================================================================
 // SamplerHandle                                                               =
 //==============================================================================
 
@@ -293,10 +307,10 @@ Error SamplerHandle::create(CommandBufferHandle& commands)
 	using DeleteCommand = DeleteObjectCommand<SamplerImpl>;
 	using Deleter = DeferredDeleter<SamplerImpl, DeleteCommand>;
 
-	Error err = Base::create(commands.getManager(), Deleter());
+	Error err = Base::create(commands.get().getManager(), Deleter());
 	if(!err)
 	{
-		get().setStateAtomically(GlHandleState::TO_BE_CREATED);
+		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 		commands.get().pushBackNewCommand<CreateSamplerCommand>(*this);
 	}
 
@@ -307,14 +321,14 @@ Error SamplerHandle::create(CommandBufferHandle& commands)
 void SamplerHandle::bind(CommandBufferHandle& commands, U32 unit)
 {
 	ANKI_ASSERT(isCreated());
-	commands._pushBackNewCommand<Command>(*this, unit);
+	commands.get().pushBackNewCommand<BindSamplerCommand>(*this, unit);
 }
 
 //==============================================================================
 void SamplerHandle::setFilter(CommandBufferHandle& commands, Filter filter)
 {
 	ANKI_ASSERT(isCreated());
-	commands.get().pushBackNewCommand<BindSamplerCommand>(*this, filter);
+	commands.get().pushBackNewCommand<SetSamplerFilterCommand>(*this, filter);
 }
 
 //==============================================================================
@@ -329,7 +343,7 @@ void SamplerHandle::setParameter(
 //==============================================================================
 void SamplerHandle::bindDefault(CommandBufferHandle& commands, U32 unit)
 {
-	commands.pushBackNewCommand<BindDefaultSamplerCommand>(unit);
+	commands.get().pushBackNewCommand<BindDefaultSamplerCommand>(unit);
 }
 
 } // end namespace anki

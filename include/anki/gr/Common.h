@@ -66,6 +66,12 @@ using GrAllocator = HeapAllocator<T>;
 /// @addtogroup graphics
 /// @{
 
+// Some constants
+const U MAX_VERTEX_ATTRIBUTES = 16;
+const U MAX_COLOR_ATTACHMENTS = 4;
+const U MAX_MIPMAPS = 16;
+const U MAX_TEXTURE_LAYERS = 32;
+
 /// GL generic callback
 using SwapBuffersCallback = void(*)(void*);
 using MakeCurrentCallback = void(*)(void*, void*);
@@ -106,7 +112,7 @@ struct TextureInitializer
 	U32 m_samples = 1;
 
 	/// [level][slice]
-	SArray<SArray<SurfaceData>> m_data;
+	Array2d<SurfaceData, MAX_MIPMAPS, MAX_TEXTURE_LAYERS> m_data;
 };
 
 struct Attachment
