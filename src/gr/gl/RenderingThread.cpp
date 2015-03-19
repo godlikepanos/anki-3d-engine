@@ -6,6 +6,7 @@
 #include "anki/gr/gl/RenderingThread.h"
 #include "anki/gr/gl/CommandBufferImpl.h"
 #include "anki/gr/GrManager.h"
+#include "anki/gr/gl/GrManagerImpl.h"
 #include "anki/util/Logger.h"
 #include "anki/core/Counters.h"
 
@@ -20,7 +21,8 @@ class SyncCommand final: public GlCommand
 {
 	ANKI_USE_RESULT Error operator()(CommandBufferImpl* cmd)
 	{
-		cmd->getRenderingThread().m_syncBarrier.wait();
+		cmd->getManager().getImplementation().
+			getRenderingThread().m_syncBarrier.wait();
 		return ErrorCode::NONE;
 	}
 };
@@ -47,9 +49,9 @@ RenderingThread::~RenderingThread()
 //==============================================================================
 void RenderingThread::flushCommandBuffer(CommandBufferHandle& commands)
 {
-	commands._get().makeImmutable();
+	commands.get().makeImmutable();
 
-#if !ANKI_QUEUE_DISABLE_ASYNC
+#if !ANKI_GL_DISABLE_ASYNC
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
@@ -71,10 +73,10 @@ void RenderingThread::flushCommandBuffer(CommandBufferHandle& commands)
 
 	m_condVar.notifyOne(); // Wake the thread
 #else
-	Error err = commands._executeAllCommands();
+	Error err = commands.get().executeAllCommands();
 	if(err)
 	{
-		ANKI_LOGE("Error in command buffer");
+		ANKI_LOGE("Error in command buffer execution");
 	}
 #endif
 }
@@ -82,11 +84,10 @@ void RenderingThread::flushCommandBuffer(CommandBufferHandle& commands)
 //==============================================================================
 void RenderingThread::finishCommandBuffer(CommandBufferHandle& commands)
 {
-#if !ANKI_QUEUE_DISABLE_ASYNC
+#if !ANKI_GL_DISABLE_ASYNC
 	flushCommandBuffer(commands);
 
-	flushCommandBuffer(m_syncCommands);
-	m_syncBarrier.wait();
+	syncClientServer();
 #else
 	flushCommandBuffer(commands);
 #endif
@@ -94,8 +95,8 @@ void RenderingThread::finishCommandBuffer(CommandBufferHandle& commands)
 
 //==============================================================================
 Error RenderingThread::start(
-	GlMakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
-	GlCallback swapBuffersCallback, void* swapBuffersCbData,
+	MakeCurrentCallback makeCurrentCb, void* makeCurrentCbData, void* ctx,
+	SwapBuffersCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerMessages)
 {
 	Error err = ErrorCode::NONE;
@@ -119,7 +120,7 @@ Error RenderingThread::start(
 		m_swapBuffersCommands.pushBackUserCommand(swapBuffersInternal, this);
 	}
 
-#if !ANKI_QUEUE_DISABLE_ASYNC
+#if !ANKI_GL_DISABLE_ASYNC
 	Bool threadStarted = false;
 	if(!err)
 	{
@@ -133,7 +134,7 @@ Error RenderingThread::start(
 
 	if(!err)
 	{
-		m_syncCommands._pushBackNewCommand<SyncCommand>();
+		m_syncCommands.get().pushBackNewCommand<SyncCommand>();
 	}
 
 	if(err && threadStarted)
@@ -142,6 +143,8 @@ Error RenderingThread::start(
 	}
 #else
 	prepare();
+
+	ANKI_LOGW("GL queue works in synchronous mode");
 #endif
 
 	return err;
@@ -150,7 +153,7 @@ Error RenderingThread::start(
 //==============================================================================
 void RenderingThread::stop()
 {
-#if !ANKI_QUEUE_DISABLE_ASYNC
+#if !ANKI_GL_DISABLE_ASYNC
 	{
 		LockGuard<Mutex> lock(m_mtx);
 		m_renderingThreadSignal = 1;
@@ -203,7 +206,7 @@ void RenderingThread::finish()
 		if(m_queue[i].isCreated())
 		{
 			// Fake that it's executed to avoid warnings
-			m_queue[i]._get().makeExecuted();
+			m_queue[i].get().makeExecuted();
 
 			// Release
 			m_queue[i] = CommandBufferHandle();
@@ -221,8 +224,8 @@ void RenderingThread::finish()
 //==============================================================================
 Error RenderingThread::threadCallback(Thread::Info& info)
 {
-	RenderingThread* queue = reinterpret_cast<RenderingThread*>(info.m_userData);
-	queue->threadLoop();
+	RenderingThread* thread = static_cast<RenderingThread*>(info.m_userData);
+	thread->threadLoop();
 	return ErrorCode::NONE;
 }
 
@@ -258,7 +261,7 @@ void RenderingThread::threadLoop()
 			++m_head;
 		}
 
-		Error err = cmd._executeAllCommands();
+		Error err = cmd.get().executeAllCommands();
 
 		if(err)
 		{
@@ -273,7 +276,7 @@ void RenderingThread::threadLoop()
 //==============================================================================
 void RenderingThread::syncClientServer()
 {
-#if !ANKI_QUEUE_DISABLE_ASYNC
+#if !ANKI_GL_DISABLE_ASYNC
 	flushCommandBuffer(m_syncCommands);
 	m_syncBarrier.wait();
 #endif
@@ -283,7 +286,7 @@ void RenderingThread::syncClientServer()
 Error RenderingThread::swapBuffersInternal(void* ptr)
 {
 	ANKI_ASSERT(ptr);
-	RenderingThread& self = *reinterpret_cast<RenderingThread*>(ptr);
+	RenderingThread& self = *static_cast<RenderingThread*>(ptr);
 
 	// Do the swap buffers
 	self.m_swapBuffersCallback(self.m_swapBuffersCbData);
@@ -302,6 +305,7 @@ Error RenderingThread::swapBuffersInternal(void* ptr)
 //==============================================================================
 void RenderingThread::swapBuffers()
 {
+#if !ANKI_GL_DISABLE_ASYNC
 	// Wait for the rendering thread to finish swap buffers...
 	{
 		LockGuard<Mutex> lock(m_frameMtx);
@@ -314,7 +318,7 @@ void RenderingThread::swapBuffers()
 
 		m_frameWait = true;
 	}
-
+#endif
 	// ...and then flush a new swap buffers
 	flushCommandBuffer(m_swapBuffersCommands);
 }

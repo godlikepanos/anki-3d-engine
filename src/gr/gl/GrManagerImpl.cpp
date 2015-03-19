@@ -26,10 +26,6 @@ Error GlManagerImpl::create(GrManagerInitializer& init)
 {
 	Error err = ErrorCode::NONE;
 
-#if ANKI_QUEUE_DISABLE_ASYNC
-	ANKI_LOGW("GL queue works in synchronous mode");
-#endif
-
 	// Create thread
 	m_thread = 
 		m_manager->getAllocator().newInstance<RenderingThread>(m_manager);

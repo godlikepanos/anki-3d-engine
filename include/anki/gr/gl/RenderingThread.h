@@ -12,8 +12,10 @@
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
+
+#define ANKI_GL_DISABLE_ASYNC 0
 
 /// Command queue. It's essentialy a queue of command buffers waiting for 
 /// execution and a server
@@ -22,7 +24,7 @@ class RenderingThread
 	friend class SyncCommand;
 
 public:
-	RenderingThread(GlDevice* device);
+	RenderingThread(GrManager* device);
 
 	~RenderingThread();
 

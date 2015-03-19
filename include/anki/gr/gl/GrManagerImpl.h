@@ -26,7 +26,7 @@ public:
 		ANKI_ASSERT(manager);
 	}
 
-	~GrManager();
+	~GrManagerImpl();
 
 	ANKI_USE_RESULT Error create(GrManagerInitializer& init);
 
