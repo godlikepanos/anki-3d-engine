@@ -230,6 +230,11 @@ void BufferHandle::write(CommandBufferHandle& commands,
 	PtrSize size)
 {
 	ANKI_ASSERT(isCreated());
+
+	void* newData = commands.get().getInternalAllocator().allocate(size);
+	memcpy(newData, static_cast<const U8*>(data) + readOffset, size);
+	data = newData;
+
 	commands.get().pushBackNewCommand<BufferWriteCommand>(
 		*this, data, dataSize, readOffset, writeOffset, size);
 }

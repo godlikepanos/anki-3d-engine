@@ -190,7 +190,7 @@ private:
 
 	U32 m_aliveParticlesCount = 0;
 
-	GlBufferHandle m_vertBuff; ///< Hold the vertex data
+	BufferHandle m_vertBuff; ///< Hold the vertex data
 	U8* m_vertBuffMapping = nullptr; 
 
 	SimulationType m_simulationType = SimulationType::UNDEFINED;

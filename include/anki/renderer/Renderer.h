@@ -187,19 +187,19 @@ public:
 		return m_tilesCountXY;
 	}
 
-	const Gr.haderHandle& getDrawQuadVertexProgram() const
+	const ShaderHandle& getDrawQuadVertexProgram() const
 	{
 		return m_drawQuadVert->getGlProgram();
 	}
 
-	GlFramebufferHandle& getDefaultFramebuffer()
+	FramebufferHandle& getDefaultFramebuffer()
 	{
 		return m_defaultFb;
 	}
 
 	/// This function does all the rendering stages and produces a final FAI
 	ANKI_USE_RESULT Error render(SceneGraph& scene, 
-		Array<GlCommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff);
+		Array<CommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff);
 
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
@@ -213,12 +213,12 @@ public:
 
 	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no
 	/// longer support quads
-	void drawQuad(GlCommandBufferHandle& cmdBuff);
+	void drawQuad(CommandBufferHandle& cmdBuff);
 
 	void drawQuadConditional(
-		GlOcclusionQueryHandle& q, GlCommandBufferHandle& cmdBuff);
+		OcclusionQueryHandle& q, CommandBufferHandle& cmdBuff);
 
-	void drawQuadInstanced(GlCommandBufferHandle& cmdBuff, U32 primitiveCount);
+	void drawQuadInstanced(CommandBufferHandle& cmdBuff, U32 primitiveCount);
 
 	/// Get the LOD given the distance of an object from the camera
 	F32 calculateLod(F32 distance) const
@@ -229,26 +229,26 @@ public:
 	/// Create a framebuffer attachment texture
 	ANKI_USE_RESULT Error createRenderTarget(U32 w, U32 h, 
 		GLenum internalFormat, U32 samples, 
-		GlTextureHandle& rt);
+		TextureHandle& rt);
 
 	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
 	/// and the given fragment progam
 	ANKI_USE_RESULT Error createDrawQuadPipeline(
-		Gr.haderHandle frag, GlPipelineHandle& ppline);
+		ShaderHandle frag, PipelineHandle& ppline);
 
 	/// Init the renderer given an initialization class
 	/// @param initializer The initializer class
 	ANKI_USE_RESULT Error init(
 		Threadpool* threadpool, 
 		ResourceManager* resources,
-		GlDevice* gl,
+		GrManager* gl,
 		HeapAllocator<U8>& alloc,
 		const ConfigSet& config,
 		const Timestamp* globalTimestamp);
 
 	/// @privatesection
 	/// @{
-	GlDevice& _getGlDevice()
+	GrManager& _getGrManager()
 	{
 		return *m_gl;
 	}
@@ -282,7 +282,7 @@ public:
 private:
 	Threadpool* m_threadpool;
 	ResourceManager* m_resources;
-	GlDevice* m_gl;
+	GrManager* m_gl;
 	HeapAllocator<U8> m_alloc;
 	const Timestamp* m_globalTimestamp = nullptr;
 
@@ -312,7 +312,7 @@ private:
 
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
-	GlBufferHandle m_quadPositionsBuff; ///< The VBO for quad positions
+	BufferHandle m_quadPositionsBuff; ///< The VBO for quad positions
 	ProgramResourcePointer m_drawQuadVert;
 	/// @}
 
@@ -332,7 +332,7 @@ private:
 
 	U m_framesNum; ///< Frame number
 
-	GlFramebufferHandle m_defaultFb;
+	FramebufferHandle m_defaultFb;
 
 	String m_shadersPrependedSource; ///< String to append in user shaders
 

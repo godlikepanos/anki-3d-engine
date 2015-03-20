@@ -50,8 +50,8 @@ protected:
 
 	HeapAllocator<U8>& getAllocator();
 
-	GlDevice& getGlDevice();
-	const GlDevice& getGlDevice() const;
+	GrManager& getGrManager();
+	const GrManager& getGrManager() const;
 
 	ResourceManager& getResourceManager();
 };
@@ -69,10 +69,10 @@ protected:
 	class Direction
 	{
 	public:
-		GlFramebufferHandle m_fb;
-		GlTextureHandle m_rt; 
+		FramebufferHandle m_fb;
+		TextureHandle m_rt; 
 		ProgramResourcePointer m_frag;
-		GlPipelineHandle m_ppline;
+		PipelineHandle m_ppline;
 	};
 
 	enum class DirectionEnum: U
@@ -86,7 +86,7 @@ protected:
 	ANKI_USE_RESULT Error initBlurring(Renderer& r, U width, U height, U samples, 
 		F32 blurringDistance);
 
-	ANKI_USE_RESULT Error runBlurring(Renderer& r, GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error runBlurring(Renderer& r, CommandBufferHandle& jobs);
 };
 
 /// @}

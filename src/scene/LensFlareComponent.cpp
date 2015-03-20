@@ -17,17 +17,17 @@ Error LensFlareComponent::create(const CString& textureFilename)
 		textureFilename, &m_node->getSceneGraph()._getResourceManager());
 
 	// Queries
-	GlDevice& gl = m_node->getSceneGraph()._getGlDevice();
+	GrManager& gr = m_node->getSceneGraph().getGrManager();
 	for(auto it = m_queries.getBegin(); it != m_queries.getEnd() && !err; ++it)
 	{
-		err = (*it).create(&gl, GlOcclusionQueryHandle::ResultBit::VISIBLE);
+		err = (*it).create(&gr, OcclusionQueryHandle::ResultBit::VISIBLE);
 	}
 
 	return err;
 }
 
 //==============================================================================
-GlOcclusionQueryHandle& LensFlareComponent::getOcclusionQueryToTest()
+OcclusionQueryHandle& LensFlareComponent::getOcclusionQueryToTest()
 {
 	// Move the query counter
 	m_crntQueryIndex = (m_crntQueryIndex + 1) % m_queries.getSize();
@@ -40,7 +40,7 @@ GlOcclusionQueryHandle& LensFlareComponent::getOcclusionQueryToTest()
 
 //==============================================================================
 void LensFlareComponent::getOcclusionQueryToCheck(
-	GlOcclusionQueryHandle& q, Bool& queryInvalid)
+	OcclusionQueryHandle& q, Bool& queryInvalid)
 {
 	U idx = (m_crntQueryIndex + 1) % m_queries.getSize();
 

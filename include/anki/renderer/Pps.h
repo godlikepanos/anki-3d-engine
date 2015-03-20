@@ -77,11 +77,11 @@ public:
 
 	/// @privatesection
 	/// @{
-	const GlTextureHandle& _getRt() const
+	const TextureHandle& _getRt() const
 	{
 		return m_rt;
 	}
-	GlTextureHandle& _getRt()
+	TextureHandle& _getRt()
 	{
 		return m_rt;
 	}
@@ -94,16 +94,16 @@ private:
 	Lf m_lf;
 	Sslr m_sslr;
 
-	GlFramebufferHandle m_fb;
+	FramebufferHandle m_fb;
 	ProgramResourcePointer m_frag;
-	GlPipelineHandle m_ppline;
-	GlTextureHandle m_rt;
+	PipelineHandle m_ppline;
+	TextureHandle m_rt;
 
 	Pps(Renderer* r);
 	~Pps();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	ANKI_USE_RESULT Error run(GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };

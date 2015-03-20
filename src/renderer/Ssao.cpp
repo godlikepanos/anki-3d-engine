@@ -67,7 +67,7 @@ public:
 //==============================================================================
 
 //==============================================================================
-Error Ssao::createFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
+Error Ssao::createFb(FramebufferHandle& fb, TextureHandle& rt)
 {
 	Error err = ErrorCode::NONE;
 
@@ -75,13 +75,16 @@ Error Ssao::createFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 	if(err) return err;
 
 	// Set to bilinear because the blurring techniques take advantage of that
-	GlCommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGlDevice());
+	CommandBufferHandle cmdBuff;
+	err = cmdBuff.create(&getGrManager());
 	if(err) return err;
-	rt.setFilter(cmdBuff, GlTextureHandle::Filter::LINEAR);
+	rt.setFilter(cmdBuff, TextureHandle::Filter::LINEAR);
 
 	// create FB
-	err = fb.create(cmdBuff, {{rt, GL_COLOR_ATTACHMENT0}});
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = rt;
+	err = fb.create(cmdBuff, fbInit);
 	if(err) return err;
 
 	cmdBuff.flush();
@@ -118,34 +121,40 @@ Error Ssao::initInternal(const ConfigSet& config)
 	// create FBOs
 	//
 	err = createFb(m_hblurFb, m_hblurRt);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 	err = createFb(m_vblurFb, m_vblurRt);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	//
 	// noise texture
 	//
-	GlCommandBufferHandle cmdb;
-	err = cmdb.create(&getGlDevice());
-	if(err) return err;
+	CommandBufferHandle cmdb;
+	err = cmdb.create(&getGrManager());
+	if(err)
+	{
+		return err;
+	}
 
-	GlClientBufferHandle noise;
-	err = noise.create(
-		cmdb, sizeof(Vec3) * NOISE_TEX_SIZE * NOISE_TEX_SIZE, nullptr);
-	if(err) return err;
+	Array<Vec3, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
 
-	genNoise((Vec3*)noise.getBaseAddress(), 
-		(Vec3*)((U8*)noise.getBaseAddress() + noise.getSize()));
+	genNoise(&noise[0], &noise[0] + noise.getSize());
 
-	GlTextureHandle::Initializer tinit;
+	TextureHandle::Initializer tinit;
 
 	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
 	tinit.m_target = GL_TEXTURE_2D;
 	tinit.m_internalFormat = GL_RGB32F;
-	tinit.m_filterType = GlTextureHandle::Filter::NEAREST;
+	tinit.m_filterType = TextureHandle::Filter::NEAREST;
 	tinit.m_repeat = true;
 	tinit.m_mipmapsCount = 1;
-	tinit.m_data[0][0] = noise;
+	tinit.m_data[0][0].m_ptr = static_cast<void*>(&noise[0]);
+	tinit.m_data[0][0].m_size = sizeof(noise);
 
 	m_noiseTex.create(cmdb, tinit);
 
@@ -178,7 +187,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	// Shaders
 	//
 	err = m_uniformsBuff.create(cmdb, GL_SHADER_STORAGE_BUFFER, 
-		sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT);
+		nullptr, sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT);
 	if(err) return err;
 
 	String pps;
@@ -259,7 +268,7 @@ Error Ssao::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Ssao::run(GlCommandBufferHandle& cmdb)
+Error Ssao::run(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 	Error err = ErrorCode::NONE;
@@ -275,7 +284,7 @@ Error Ssao::run(GlCommandBufferHandle& cmdb)
 
 	m_uniformsBuff.bindShaderBuffer(cmdb, 0);
 
-	Array<GlTextureHandle, 3> tarr = {{
+	Array<TextureHandle, 3> tarr = {{
 		m_r->getDp().getSmallDepthRt(),
 		m_r->getMs()._getRt1(),
 		m_noiseTex}};
@@ -289,18 +298,11 @@ Error Ssao::run(GlCommandBufferHandle& cmdb)
 		|| m_commonUboUpdateTimestamp < camFr.getTimestamp()
 		|| m_commonUboUpdateTimestamp == 1)
 	{
-		GlClientBufferHandle tmpBuff;
-		err = tmpBuff.create(cmdb, sizeof(ShaderCommonUniforms), nullptr);
-		if(err) return err;
-
-		ShaderCommonUniforms& blk = 
-			*((ShaderCommonUniforms*)tmpBuff.getBaseAddress());
-
+		ShaderCommonUniforms blk;
 		blk.m_projectionParams = m_r->getProjectionParameters();
-
 		blk.m_projectionMatrix = camFr.getProjectionMatrix().getTransposed();
 
-		m_uniformsBuff.write(cmdb, tmpBuff, 0, 0, tmpBuff.getSize());
+		m_uniformsBuff.write(cmdb, &blk, sizeof(blk), 0, 0, sizeof(blk));
 		m_commonUboUpdateTimestamp = getGlobalTimestamp();
 	}
 
@@ -313,7 +315,7 @@ Error Ssao::run(GlCommandBufferHandle& cmdb)
 	{
 		if(i == 0)
 		{
-			Array<GlTextureHandle, 2> tarr = {{m_hblurRt, m_vblurRt}};
+			Array<TextureHandle, 2> tarr = {{m_hblurRt, m_vblurRt}};
 			cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
 		}
 

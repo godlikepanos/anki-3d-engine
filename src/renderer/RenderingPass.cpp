@@ -16,15 +16,15 @@ Timestamp RenderingPass::getGlobalTimestamp() const
 }
 
 //==============================================================================
-GlDevice& RenderingPass::getGlDevice()
+GrManager& RenderingPass::getGrManager()
 {
-	return m_r->_getGlDevice();
+	return m_r->_getGrManager();
 }
 
 //==============================================================================
-const GlDevice& RenderingPass::getGlDevice() const
+const GrManager& RenderingPass::getGrManager() const
 {
-	return m_r->_getGlDevice();
+	return m_r->_getGrManager();
 }
 
 //==============================================================================
@@ -43,68 +43,64 @@ ResourceManager& RenderingPass::getResourceManager()
 Error BlurringRenderingPass::initBlurring(
 	Renderer& r, U width, U height, U samples, F32 blurringDistance)
 {
-	Error err = ErrorCode::NONE;
-	GlDevice& gl = getGlDevice();
-	GlCommandBufferHandle cmdb;
-	err = cmdb.create(&gl);
-	if(err) return err;
+	GrManager& gl = getGrManager();
+	CommandBufferHandle cmdb;
+	ANKI_CHECK(cmdb.create(&gl));
 
 	Array<String, 2> pps;
 	String::ScopeDestroyer ppsd0(&pps[0], getAllocator());
 	String::ScopeDestroyer ppsd1(&pps[1], getAllocator());
 
-	err = pps[1].sprintf(getAllocator(),
+	ANKI_CHECK(
+		pps[1].sprintf(getAllocator(),
 		"#define HPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n", 
-		blurringDistance, height, samples);
-	if(err) return err;
+		blurringDistance, height, samples));
 
-	err = pps[0].sprintf(getAllocator(),
+	ANKI_CHECK(
+		pps[0].sprintf(getAllocator(),
 		"#define VPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n",
-		blurringDistance, width, samples);
-	if(err) return err;
+		blurringDistance, width, samples));
 
 	for(U i = 0; i < 2; i++)
 	{
 		Direction& dir = m_dirs[i];
 
-		err = r.createRenderTarget(width, height, GL_RGB8, 1, dir.m_rt);
-		if(err) return err;
+		ANKI_CHECK(r.createRenderTarget(width, height, GL_RGB8, 1, dir.m_rt));
 
 		// Set to bilinear because the blurring techniques take advantage of 
 		// that
-		dir.m_rt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
+		dir.m_rt.setFilter(cmdb, TextureHandle::Filter::LINEAR);
 
 		// Create FB
-		err = dir.m_fb.create(
-			cmdb, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
-		if(err) return err;
+		FramebufferHandle::Initializer fbInit;
+		fbInit.m_colorAttachmentsCount = 1;
+		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
+		ANKI_CHECK(dir.m_fb.create(cmdb, fbInit));
 
-		err = dir.m_frag.loadToCache(&getResourceManager(),
+		ANKI_CHECK(dir.m_frag.loadToCache(&getResourceManager(),
 			"shaders/VariableSamplingBlurGeneric.frag.glsl", 
-			pps[i].toCString(), "r_");
-		if(err) return err;
+			pps[i].toCString(), "r_"));
 
-		err = r.createDrawQuadPipeline(
-			dir.m_frag->getGlProgram(), dir.m_ppline);
-		if(err) return err;
+		ANKI_CHECK(r.createDrawQuadPipeline(
+			dir.m_frag->getGlProgram(), dir.m_ppline));
 	}
 
 	cmdb.finish();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error BlurringRenderingPass::runBlurring(
-	Renderer& r, GlCommandBufferHandle& cmdb)
+	Renderer& r, CommandBufferHandle& cmdb)
 {
 	// H pass input
 	m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_rt.bind(cmdb, 1); 

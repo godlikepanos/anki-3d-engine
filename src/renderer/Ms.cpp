@@ -27,27 +27,44 @@ Error Ms::createRt(U32 index, U32 samples)
 
 	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
 		GL_DEPTH_COMPONENT24, samples, plane.m_depthRt);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
 			samples, plane.m_rt0);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
 		samples, plane.m_rt1);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
-	GlDevice& gl = getGlDevice();
-	GlCommandBufferHandle cmdb;
+	GrManager& gl = getGrManager();
+	CommandBufferHandle cmdb;
 	err = cmdb.create(&gl);
-	if(err)	return err;
+	if(err)
+	{
+		return err;
+	}
 
-	err = plane.m_fb.create(
-		cmdb,
-		{{plane.m_rt0, GL_COLOR_ATTACHMENT0}, 
-		{plane.m_rt1, GL_COLOR_ATTACHMENT1},
-		{plane.m_depthRt, GL_DEPTH_ATTACHMENT}});
-	if(err)	return err;
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 2;
+	fbInit.m_colorAttachments[0].m_texture = plane.m_rt0;
+	fbInit.m_colorAttachments[1].m_texture = plane.m_rt1;
+	fbInit.m_depthStencilAttachment.m_texture = plane.m_depthRt;
+
+	err = plane.m_fb.create(cmdb, fbInit);
+	if(err)
+	{
+		return err;
+	}
 
 	cmdb.finish();
 
@@ -85,7 +102,7 @@ Error Ms::initInternal(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Ms::run(GlCommandBufferHandle& cmdb)
+Error Ms::run(CommandBufferHandle& cmdb)
 {
 	Error err = ErrorCode::NONE;
 

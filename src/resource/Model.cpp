@@ -27,12 +27,12 @@ ModelPatchBase::~ModelPatchBase()
 
 //==============================================================================
 Error ModelPatchBase::createVertexDesc(
-	const GlShaderHandle& prog,
+	const ShaderHandle& prog,
 	const Mesh& mesh,
-	GlCommandBufferHandle& vertexJobs)
+	CommandBufferHandle& vertexJobs)
 {
 	Error err = ErrorCode::NONE;
-	GlBufferHandle vbo;
+	BufferHandle vbo;
 	U32 size;
 	GLenum type;
 	U32 stride;
@@ -76,8 +76,8 @@ Error ModelPatchBase::createVertexDesc(
 //==============================================================================
 Error ModelPatchBase::getRenderingDataSub(
 	const RenderingKey& key, 
-	GlCommandBufferHandle& vertJobs, 
-	GlPipelineHandle& ppline,
+	CommandBufferHandle& vertJobs, 
+	PipelineHandle& ppline,
 	const U8* subMeshIndexArray, 
 	U32 subMeshIndexCount,
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
@@ -150,7 +150,7 @@ Error ModelPatchBase::getRenderingDataSub(
 }
 
 //==============================================================================
-Error ModelPatchBase::create(GlDevice* gl)
+Error ModelPatchBase::create(GrManager* gl)
 {
 	Error err = ErrorCode::NONE;
 
@@ -164,7 +164,7 @@ Error ModelPatchBase::create(GlDevice* gl)
 		for(U pass = 0; pass < mtl.getPassesCount(); ++pass)
 		{
 			RenderingKey key((Pass)pass, lod, false);
-			GlShaderHandle prog;
+			ShaderHandle prog;
 			const Mesh* mesh;
 
 			// Get mesh
@@ -179,12 +179,12 @@ Error ModelPatchBase::create(GlDevice* gl)
 			shaderKey.m_lod = std::min(key.m_lod, 
 				(U8)(getMaterial().getLevelsOfDetail() - 1));
 
-			GlPipelineHandle ppline;
+			PipelineHandle ppline;
 			ANKI_CHECK(m_mtl->getProgramPipeline(shaderKey, ppline));
 			prog = ppline.getAttachedProgram(GL_VERTEX_SHADER);
 			
 			// Create vert descriptor
-			GlCommandBufferHandle vertJobs;
+			CommandBufferHandle vertJobs;
 			ANKI_CHECK(vertJobs.create(gl));
 			ANKI_CHECK(createVertexDesc(prog, *mesh, vertJobs));
 
@@ -255,7 +255,7 @@ Error ModelPatch<MeshResourcePointerType>::create(
 	m_mtl = m_mtlResource.get();
 
 	// Create VAOs
-	ANKI_CHECK(Base::create(&resources->_getGlDevice()));
+	ANKI_CHECK(Base::create(&resources->getGrManager()));
 
 	return err;
 }

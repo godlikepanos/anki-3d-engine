@@ -24,7 +24,7 @@ public:
 	ANKI_USE_RESULT Error create(
 		Threadpool* threadpool, 
 		ResourceManager* resources,
-		GlDevice* gl,
+		GrManager* gl,
 		HeapAllocator<U8>& alloc,
 		const ConfigSet& config,
 		const Timestamp* globalTimestamp);
@@ -38,10 +38,10 @@ public:
 
 private:
 	ProgramResourcePointer m_blitFrag;
-	GlPipelineHandle m_blitPpline;
+	PipelineHandle m_blitPpline;
 
 	/// Optimize job chain
-	Array<GlCommandBufferInitHints, JOB_CHAINS_COUNT> m_jobsInitHints; 
+	Array<CommandBufferInitHints, JOB_CHAINS_COUNT> m_jobsInitHints; 
 
 	void takeScreenshotTga(const char* filename);
 	ANKI_USE_RESULT Error initGl();

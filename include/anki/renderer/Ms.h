@@ -23,22 +23,22 @@ class Ms: public RenderingPass
 public:
 	/// @privatesection
 	/// @{
-	GlTextureHandle& _getRt0()
+	TextureHandle& _getRt0()
 	{
 		return m_planes[1].m_rt0;
 	}
 
-	GlTextureHandle& _getRt1()
+	TextureHandle& _getRt1()
 	{
 		return m_planes[1].m_rt1;
 	}
 
-	GlTextureHandle& _getDepthRt()
+	TextureHandle& _getDepthRt()
 	{
 		return m_planes[1].m_depthRt;
 	}
 
-	GlFramebufferHandle& getFramebuffer()
+	FramebufferHandle& getFramebuffer()
 	{
 		return m_planes[1].m_fb;
 	}
@@ -49,16 +49,16 @@ private:
 	class Plane
 	{
 	public:
-		GlFramebufferHandle m_fb;
+		FramebufferHandle m_fb;
 
 		/// Contains diffuse color and part of specular
-		GlTextureHandle m_rt0; 
+		TextureHandle m_rt0; 
 
 		/// Contains the normal and spec power
-		GlTextureHandle m_rt1;
+		TextureHandle m_rt1;
 
 		/// Depth stencil
-		GlTextureHandle m_depthRt;
+		TextureHandle m_depthRt;
 	};
 
 	Ez m_ez; /// EarlyZ pass
@@ -75,7 +75,7 @@ private:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
 
 	/// Create a G buffer FBO
 	ANKI_USE_RESULT Error createRt(U32 index, U32 samples);

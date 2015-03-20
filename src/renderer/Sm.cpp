@@ -17,12 +17,11 @@ namespace anki {
 //==============================================================================
 Error Sm::init(const ConfigSet& initializer)
 {
-	Error err = ErrorCode::NONE;
 	m_enabled = initializer.get("is.sm.enabled");
 
 	if(!m_enabled)
 	{
-		return err;
+		return ErrorCode::NONE;
 	}
 
 	m_poissonEnabled = initializer.get("is.sm.poissonEnabled");
@@ -39,7 +38,7 @@ Error Sm::init(const ConfigSet& initializer)
 	}
 
 	// Create shadowmaps array
-	GlTextureHandle::Initializer sminit;
+	TextureHandle::Initializer sminit;
 	sminit.m_target = GL_TEXTURE_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
@@ -48,19 +47,17 @@ Error Sm::init(const ConfigSet& initializer)
 	sminit.m_mipmapsCount = 1;
 	if(m_bilinearEnabled)
 	{
-		sminit.m_filterType = GlTextureHandle::Filter::LINEAR;
+		sminit.m_filterType = TextureHandle::Filter::LINEAR;
 	}
 	else
 	{
-		sminit.m_filterType = GlTextureHandle::Filter::NEAREST;
+		sminit.m_filterType = TextureHandle::Filter::NEAREST;
 	}
 
-	GlCommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGlDevice());
-	if(err) return err;
+	CommandBufferHandle cmdBuff;
+	ANKI_CHECK(cmdBuff.create(&getGrManager()));
 
-	err = m_sm2DArrayTex.create(cmdBuff, sminit);
-	if(err) return err;
+	ANKI_CHECK(m_sm2DArrayTex.create(cmdBuff, sminit));
 
 	m_sm2DArrayTex.setParameter(cmdBuff, 
 		GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
@@ -68,24 +65,27 @@ Error Sm::init(const ConfigSet& initializer)
 
 	// Init sms
 	U32 layer = 0;
-	err = m_sms.create(getAllocator(), initializer.get("is.sm.maxLights"));
+	ANKI_CHECK(
+		m_sms.create(getAllocator(), initializer.get("is.sm.maxLights")));
 	for(Shadowmap& sm : m_sms)
 	{
 		sm.m_layerId = layer;
-		err = sm.m_fb.create(cmdBuff, 
-			{{m_sm2DArrayTex, GL_DEPTH_ATTACHMENT, (U32)layer}});
-		if(err) return err;
+
+		FramebufferHandle::Initializer fbInit;
+		fbInit.m_depthStencilAttachment.m_texture = m_sm2DArrayTex;
+		fbInit.m_depthStencilAttachment.m_layer = layer;
+		ANKI_CHECK(sm.m_fb.create(cmdBuff, fbInit));
 
 		++layer;
 	}
 
 	cmdBuff.flush();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void Sm::prepareDraw(GlCommandBufferHandle& cmdBuff)
+void Sm::prepareDraw(CommandBufferHandle& cmdBuff)
 {
 	// disable color & blend & enable depth test
 
@@ -101,7 +101,7 @@ void Sm::prepareDraw(GlCommandBufferHandle& cmdBuff)
 }
 
 //==============================================================================
-void Sm::finishDraw(GlCommandBufferHandle& cmdBuff)
+void Sm::finishDraw(CommandBufferHandle& cmdBuff)
 {
 	m_r->getSceneDrawer().finishDraw();
 
@@ -112,7 +112,7 @@ void Sm::finishDraw(GlCommandBufferHandle& cmdBuff)
 
 //==============================================================================
 Error Sm::run(SceneNode* shadowCasters[], U32 shadowCastersCount, 
-	GlCommandBufferHandle& cmdBuff)
+	CommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 	Error err = ErrorCode::NONE;
@@ -175,7 +175,7 @@ Sm::Shadowmap& Sm::bestCandidate(SceneNode& light)
 
 //==============================================================================
 Error Sm::doLight(
-	SceneNode& light, GlCommandBufferHandle& cmdBuff, Sm::Shadowmap*& sm)
+	SceneNode& light, CommandBufferHandle& cmdBuff, Sm::Shadowmap*& sm)
 {
 	Error err = ErrorCode::NONE;
 

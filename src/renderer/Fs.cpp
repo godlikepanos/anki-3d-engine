@@ -17,25 +17,20 @@ Fs::~Fs()
 //==============================================================================
 Error Fs::init(const ConfigSet&)
 {
-	GlCommandBufferHandle cmdb;
-	Error err = cmdb.create(&getGlDevice());
-	if(err)
-	{
-		return err;
-	}
+	CommandBufferHandle cmdb;
+	ANKI_CHECK(cmdb.create(&getGrManager()));
 
-	err = m_fb.create(
-		cmdb,
-		{{m_r->getIs()._getRt(), GL_COLOR_ATTACHMENT0}, 
-		{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = m_r->getIs()._getRt();
+	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs()._getDepthRt();
+	ANKI_CHECK(m_fb.create(cmdb,fbInit));
 
-	cmdb.flush();
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Fs::run(GlCommandBufferHandle& cmdb)
+Error Fs::run(CommandBufferHandle& cmdb)
 {
 	Error err = ErrorCode::NONE;
 

@@ -50,7 +50,7 @@ public:
 
 	/// @privatesection
 	/// @{
-	GlTextureHandle& _getRt()
+	TextureHandle& _getRt()
 	{
 		return m_vblurRt;
 	}
@@ -72,24 +72,24 @@ private:
 	U32 m_blurringIterationsCount = 2; ///< The blurring iterations
 	F32 m_blurringDist = 1.0; ///< Distance in blurring
 	
-	GlFramebufferHandle m_hblurFb;
-	GlFramebufferHandle m_vblurFb;
+	FramebufferHandle m_hblurFb;
+	FramebufferHandle m_vblurFb;
 
 	ProgramResourcePointer m_toneFrag;
 	ProgramResourcePointer m_hblurFrag;
 	ProgramResourcePointer m_vblurFrag;
 
-	GlPipelineHandle m_tonePpline;
-	GlPipelineHandle m_hblurPpline;
-	GlPipelineHandle m_vblurPpline;
+	PipelineHandle m_tonePpline;
+	PipelineHandle m_hblurPpline;
+	PipelineHandle m_vblurPpline;
 
-	GlTextureHandle m_hblurRt; ///< pass0Fai with the horizontal blur FAI
-	GlTextureHandle m_vblurRt; ///< The final FAI
+	TextureHandle m_hblurRt; ///< pass0Fai with the horizontal blur FAI
+	TextureHandle m_vblurRt; ///< The final FAI
 	/// When a parameter changed by the setters
 	Timestamp m_parameterUpdateTimestamp = 0;
 	/// When the commonUbo got updated
 	Timestamp m_commonUboUpdateTimestamp = 0;
-	GlBufferHandle m_commonBuff;
+	BufferHandle m_commonBuff;
 
 	Hdr(Renderer* r)
 	:	RenderingPass(r)
@@ -98,12 +98,12 @@ private:
 	~Hdr();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
 
-	ANKI_USE_RESULT Error initFb(GlFramebufferHandle& fb, GlTextureHandle& rt);
+	ANKI_USE_RESULT Error initFb(FramebufferHandle& fb, TextureHandle& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error updateDefaultBlock(GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error updateDefaultBlock(CommandBufferHandle& jobs);
 };
 
 /// @}

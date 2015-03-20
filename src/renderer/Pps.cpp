@@ -29,42 +29,37 @@ Pps::~Pps()
 //==============================================================================
 Error Pps::initInternal(const ConfigSet& config)
 {
-	Error err = ErrorCode::NONE;
-
 	m_enabled = config.get("pps.enabled");
 	if(!m_enabled)
 	{
-		return err;
+		return ErrorCode::NONE;
 	}
 
 	ANKI_ASSERT("Initializing PPS");
 
-	err = m_ssao.init(config);
-	if(err) return err;
-	err = m_hdr.init(config);
-	if(err) return err;
-	err = m_lf.init(config);
-	if(err) return err;
-	err = m_sslr.init(config);
-	if(err) return err;
+	ANKI_CHECK(m_ssao.init(config));
+	ANKI_CHECK(m_hdr.init(config));
+	ANKI_CHECK(m_lf.init(config));
+	ANKI_CHECK(m_sslr.init(config));
 
 	// FBO
-	GlCommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGlDevice());
-	if(err) return err;
+	CommandBufferHandle cmdBuff;
+	ANKI_CHECK(cmdBuff.create(&getGrManager()));
 
-	err = m_r->createRenderTarget(
-		m_r->getWidth(), m_r->getHeight(), GL_RGB8, 1, m_rt);
-	if(err) return err;
+	ANKI_CHECK(
+		m_r->createRenderTarget(
+		m_r->getWidth(), m_r->getHeight(), GL_RGB8, 1, m_rt));
 
-	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
-	if(err) return err;
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
 
 	// SProg
 	String pps;
 	String::ScopeDestroyer ppsd(&pps, getAllocator());
 
-	err = pps.sprintf(getAllocator(),
+	ANKI_CHECK(pps.sprintf(getAllocator(),
 		"#define SSAO_ENABLED %u\n"
 		"#define HDR_ENABLED %u\n"
 		"#define SHARPEN_ENABLED %u\n"
@@ -76,19 +71,16 @@ Error Pps::initInternal(const ConfigSet& config)
 		static_cast<U>(config.get("pps.sharpen")),
 		static_cast<U>(config.get("pps.gammaCorrection")),
 		m_r->getWidth(),
-		m_r->getHeight());
-	if(err) return err;
+		m_r->getHeight()));
 
-	err = m_frag.loadToCache(&getResourceManager(),
-		"shaders/Pps.frag.glsl", pps.toCString(), "r_");
-	if(err) return err;
+	ANKI_CHECK(m_frag.loadToCache(&getResourceManager(),
+		"shaders/Pps.frag.glsl", pps.toCString(), "r_"));
 
-	err = m_r->createDrawQuadPipeline(m_frag->getGlProgram(), m_ppline);
-	if(err) return err;
+	ANKI_CHECK(m_r->createDrawQuadPipeline(m_frag->getGlProgram(), m_ppline));
 
 	cmdBuff.finish();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -104,7 +96,7 @@ Error Pps::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Pps::run(GlCommandBufferHandle& cmdBuff)
+Error Pps::run(CommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 	Error err = ErrorCode::NONE;

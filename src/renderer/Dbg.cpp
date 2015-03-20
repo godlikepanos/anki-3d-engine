@@ -39,8 +39,8 @@ Error Dbg::init(const ConfigSet& initializer)
 	m_enabled = initializer.get("dbg.enabled");
 	enableBits(Flag::ALL);
 
-	GlDevice& gl = getGlDevice();
-	GlCommandBufferHandle cmdb;
+	GrManager& gl = getGrManager();
+	CommandBufferHandle cmdb;
 	err = cmdb.create(&gl);
 	if(err)
 	{
@@ -48,19 +48,19 @@ Error Dbg::init(const ConfigSet& initializer)
 	}
 
 	// Chose the correct color FAI
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs()._getDepthRt();
 	if(m_r->getPps().getEnabled())
 	{
-		err = m_fb.create(cmdb, 
-			{{m_r->getPps()._getRt(), GL_COLOR_ATTACHMENT0},
-			{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
+		fbInit.m_colorAttachments[0].m_texture = m_r->getPps()._getRt();
 	}
 	else
 	{
-		err = m_fb.create(cmdb, 
-			{{m_r->getIs()._getRt(), GL_COLOR_ATTACHMENT0},
-			{m_r->getMs()._getDepthRt(), GL_DEPTH_ATTACHMENT}});
+		fbInit.m_colorAttachments[0].m_texture = m_r->getIs()._getRt();
 	}
 
+	err = m_fb.create(cmdb, fbInit);
 	if(!err)
 	{
 		m_drawer = getAllocator().newInstance<DebugDrawer>();
@@ -93,7 +93,7 @@ Error Dbg::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Dbg::run(GlCommandBufferHandle& cmdb)
+Error Dbg::run(CommandBufferHandle& cmdb)
 {
 	Error err = ErrorCode::NONE;
 

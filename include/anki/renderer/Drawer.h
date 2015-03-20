@@ -39,7 +39,7 @@ public:
 	ANKI_USE_RESULT Error create(Renderer* r);
 
 	void prepareDraw(
-		RenderingStage stage, Pass pass, GlCommandBufferHandle& cmdBuff);
+		RenderingStage stage, Pass pass, CommandBufferHandle& cmdBuff);
 
 	ANKI_USE_RESULT Error render(
 		SceneNode& frsn,
@@ -49,12 +49,12 @@ public:
 
 private:
 	Renderer* m_r;
-	GlBufferHandle m_uniformBuff;
+	BufferHandle m_uniformBuff;
 	U8* m_uniformBuffMapAddr = nullptr;
 
 	/// @name State
 	/// @{
-	GlCommandBufferHandle m_cmdBuff;
+	CommandBufferHandle m_cmdBuff;
 	U8* m_uniformPtr;
 
 	/// Used to calc if the uni buffer is big enough. Zero it per swap buffers

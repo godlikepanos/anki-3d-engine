@@ -133,12 +133,33 @@ TextureHandle::~TextureHandle()
 
 //==============================================================================
 Error TextureHandle::create(
-	CommandBufferHandle& commands, const Initializer& init)
+	CommandBufferHandle& commands, const Initializer& initS)
 {
 	ANKI_ASSERT(!isCreated());
+	Initializer init;
+	memcpy(&init, &initS, sizeof(init));
+
+	// Copy data to temp buffers
+	if(init.m_copyDataBeforeReturn)
+	{
+		for(U layer = 0; layer < MAX_TEXTURE_LAYERS; ++layer)
+		{
+			for(U level = 0; level < MAX_MIPMAPS; ++level)
+			{
+				SurfaceData& surf = init.m_data[level][layer];
+				if(surf.m_ptr)
+				{
+					void* newData = commands.get().getInternalAllocator().
+						allocate(surf.m_size);
+
+					memcpy(newData, surf.m_ptr, surf.m_size);
+					surf.m_ptr = newData;
+				}
+			}
+		}
+	}
 
 	using DeleteCommand = DeleteObjectCommand<TextureImpl>;
-
 	using Deleter = DeferredDeleter<TextureImpl, DeleteCommand>;
 
 	Error err = Base::create(commands.get().getManager(), Deleter());

@@ -347,13 +347,13 @@ Error ParticleEmitter::create(
 	if(err) return err;
 
 	// Create the vertex buffer and object
-	GlCommandBufferHandle cmd;
-	GlDevice& gl = getSceneGraph()._getGlDevice();
-	err = cmd.create(&gl);
+	CommandBufferHandle cmd;
+	GrManager& gr = getSceneGraph().getGrManager();
+	err = cmd.create(&gr);
 	if(err) return err;
 
 	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
-	err = m_vertBuff.create(cmd, GL_ARRAY_BUFFER, buffSize, 
+	err = m_vertBuff.create(cmd, GL_ARRAY_BUFFER, nullptr, buffSize, 
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	if(err) return err;
 
@@ -379,7 +379,7 @@ Error ParticleEmitter::buildRendering(RenderingBuildData& data)
 	RenderingKey key = data.m_key;
 	key.m_lod = 0;
 
-	GlPipelineHandle ppline;
+	PipelineHandle ppline;
 	err = m_particleEmitterResource->getMaterial().getProgramPipeline(
 		key, ppline);
 	

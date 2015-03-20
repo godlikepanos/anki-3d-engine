@@ -50,7 +50,7 @@ Error Lf::init(const ConfigSet& config)
 
 //==============================================================================
 Error Lf::initPseudo(const ConfigSet& config, 
-	GlCommandBufferHandle& cmdBuff)
+	CommandBufferHandle& cmdBuff)
 {
 	Error err = ErrorCode::NONE;
 
@@ -91,7 +91,7 @@ Error Lf::initPseudo(const ConfigSet& config,
 
 //==============================================================================
 Error Lf::initSprite(const ConfigSet& config, 
-	GlCommandBufferHandle& cmdBuff)
+	CommandBufferHandle& cmdBuff)
 {
 	Error err = ErrorCode::NONE;
 
@@ -101,64 +101,102 @@ Error Lf::initSprite(const ConfigSet& config,
 
 	err = pps.sprintf(getAllocator(), "#define MAX_SPRITES %u\n",
 		m_maxSpritesPerFlare);
-	if(err)	return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_realVert.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfSpritePass.vert.glsl", pps.toCString(), "r_");
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_realFrag.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfSpritePass.frag.glsl", pps.toCString(), "r_");
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_realPpline.create(cmdBuff,
 		{m_realVert->getGlProgram(), m_realFrag->getGlProgram()});
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	// Create buffer
 	PtrSize uboAlignment = 
-		m_r->_getGlDevice().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
+		m_r->_getGrManager().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
 	m_flareSize = getAlignedRoundUp(
 		uboAlignment, sizeof(Sprite) * m_maxSpritesPerFlare);
 	PtrSize blockSize = m_flareSize * m_maxFlares;
 
-	err = m_flareDataBuff.create(
-		cmdBuff, GL_UNIFORM_BUFFER, blockSize, GL_DYNAMIC_STORAGE_BIT);
-	if(err) return err;
+	for(U i = 0; i < m_flareDataBuff.getSize(); ++i)
+	{
+		err = m_flareDataBuff[i].create(
+			cmdBuff, GL_UNIFORM_BUFFER, nullptr, blockSize, 
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		if(err)
+		{
+			return err;
+		}
+	}
 
 	return err;
 }
 
 //==============================================================================
 Error Lf::initOcclusion(
-	const ConfigSet& config, GlCommandBufferHandle& cmdBuff)
+	const ConfigSet& config, CommandBufferHandle& cmdBuff)
 {
 	Error err = ErrorCode::NONE;
 
 	// Init vert buff
 	U buffSize = sizeof(Vec3) * m_maxFlares;
 
-	err = m_positionsVertBuff.create(
-		cmdBuff, GL_ARRAY_BUFFER, buffSize, GL_DYNAMIC_STORAGE_BIT);
-	if(err) return err;
+	for(U i = 0; i < m_positionsVertBuff.getSize(); ++i)
+	{
+		err = m_positionsVertBuff[i].create(
+			cmdBuff, GL_ARRAY_BUFFER, nullptr, buffSize, 
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		if(err)
+		{
+			return err;
+		}
+	}
 
 	// Init MVP buff
-	err = m_mvpBuff.create(
-		cmdBuff, GL_UNIFORM_BUFFER, sizeof(Mat4), GL_DYNAMIC_STORAGE_BIT);
-	if(err) return err;
+	err = m_mvpBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
+		nullptr, sizeof(Mat4), GL_DYNAMIC_STORAGE_BIT);
+	if(err)
+	{
+		return err;
+	}
 
 	// Shaders
 	err = m_occlusionVert.load("shaders/PpsLfOcclusion.vert.glsl",
 		&getResourceManager());
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_occlusionFrag.load("shaders/PpsLfOcclusion.frag.glsl",
 		&getResourceManager());
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_occlusionPpline.create(cmdBuff,
 		{m_occlusionVert->getGlProgram(), m_occlusionFrag->getGlProgram()});
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	return err;
 }
@@ -174,34 +212,61 @@ Error Lf::initInternal(const ConfigSet& config)
 		return err;
 	}
 
-	GlCommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGlDevice());
-	if(err) return err;
+	CommandBufferHandle cmdBuff;
+	err = cmdBuff.create(&getGrManager());
+	if(err)
+	{
+		return err;
+	}
 
 	err = initPseudo(config, cmdBuff);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = initSprite(config, cmdBuff);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = initOcclusion(config, cmdBuff);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	// Create the render target
 	err = m_r->createRenderTarget(m_r->getPps().getHdr()._getWidth(), 
 		m_r->getPps().getHdr()._getHeight(), GL_RGB8, 1, m_rt);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
-	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
-	if(err) return err;
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	err = m_fb.create(cmdBuff, fbInit);
+	if(err)
+	{
+		return err;
+	}
 
 	// Blit
 	err = m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_r->createDrawQuadPipeline(
 		m_blitFrag->getGlProgram(), m_blitPpline);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	cmdBuff.flush();
 
@@ -209,7 +274,7 @@ Error Lf::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
+Error Lf::runOcclusionTests(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 	Error err = ErrorCode::NONE;
@@ -235,24 +300,20 @@ Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
 		m_occlusionPpline.bind(cmdb);
 
 		// Setup MVP UBO
-		GlClientBufferHandle mvpCBuff;
-		err = mvpCBuff.create(cmdb, sizeof(Mat4), nullptr);
-		if(err) return err;
-		Mat4* mvpWrite = static_cast<Mat4*>(mvpCBuff.getBaseAddress());
-		ANKI_ASSERT(mvpWrite);
-		*mvpWrite = camFr.getViewProjectionMatrix().getTransposed();
-		m_mvpBuff.write(cmdb, mvpCBuff, 0, 0, sizeof(Mat4));
+		Mat4 mvp = camFr.getViewProjectionMatrix().getTransposed();
+		m_mvpBuff.write(cmdb, &mvp, sizeof(mvp), 0, 0, sizeof(mvp));
 		m_mvpBuff.bindShaderBuffer(cmdb, 0, sizeof(Mat4), 0);
 
 		// Allocate vertices and fire write job
-		GlClientBufferHandle posCBuff;
-		err = posCBuff.create(cmdb, sizeof(Vec3) * totalCount, nullptr);
-		if(err) return err;
-		m_positionsVertBuff.write(cmdb, posCBuff, 0, 0, posCBuff.getSize());
-		m_positionsVertBuff.bindVertexBuffer(
+		BufferHandle& positionsVertBuff = m_positionsVertBuff[
+			getGlobalTimestamp() % m_positionsVertBuff.getSize()];
+		ANKI_ASSERT(sizeof(Vec3) * totalCount <= positionsVertBuff.getSize());
+		
+		positionsVertBuff.bindVertexBuffer(
 			cmdb, 3, GL_FLOAT, false, sizeof(Vec3), 0, 0);
 
-		Vec3* positions = static_cast<Vec3*>(posCBuff.getBaseAddress());
+		Vec3* positions = static_cast<Vec3*>(
+			positionsVertBuff.getPersistentMappingAddress());
 		Vec3* initialPositions = positions;
 
 		// Iterate lens flare
@@ -266,7 +327,7 @@ Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
 			*positions = lf.getWorldPosition().xyz();
 
 			// Draw and query
-			GlOcclusionQueryHandle& query = lf.getOcclusionQueryToTest();
+			OcclusionQueryHandle& query = lf.getOcclusionQueryToTest();
 			query.begin(cmdb);
 
 			cmdb.drawArrays(GL_POINTS, 1, 1, positions - initialPositions);
@@ -288,7 +349,7 @@ Error Lf::runOcclusionTests(GlCommandBufferHandle& cmdb)
 }
 
 //==============================================================================
-Error Lf::run(GlCommandBufferHandle& cmdBuff)
+Error Lf::run(CommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 	Error err = ErrorCode::NONE;
@@ -304,7 +365,7 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 
 	m_pseudoPpline.bind(cmdBuff);
 
-	Array<GlTextureHandle, 2> tarr = {{
+	Array<TextureHandle, 2> tarr = {{
 		m_r->getPps().getHdr()._getRt(), 
 		m_lensDirtTex->getGlTexture()}};
 	cmdBuff.bindTextures(0, tarr.begin(), tarr.getSize());
@@ -326,15 +387,8 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 	{
 		// Allocate client buffer
 		const U uboAlignment = 
-			m_r->_getGlDevice().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
+			m_r->_getGrManager().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
 		const U bufferSize = m_flareSize * totalCount;
-
-		GlClientBufferHandle flaresCBuff;
-		err = flaresCBuff.create(cmdBuff, bufferSize, nullptr);
-		if(err)	return err;
-
-		Sprite* sprites = static_cast<Sprite*>(flaresCBuff.getBaseAddress());
-		U8* spritesInitialPtr = reinterpret_cast<U8*>(sprites);
 
 		// Set common rendering state
 		m_realPpline.bind(cmdBuff);
@@ -342,7 +396,12 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 		cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);
 
 		// Send the command to write the buffer now
-		m_flareDataBuff.write(cmdBuff, flaresCBuff, 0, 0, bufferSize);
+		BufferHandle& flareDataBuff = m_flareDataBuff[
+			getGlobalTimestamp() % m_flareDataBuff.getSize()];
+
+		Sprite* sprites = static_cast<Sprite*>(
+			flareDataBuff.getPersistentMappingAddress());
+		U8* spritesInitialPtr = reinterpret_cast<U8*>(sprites);
 
 		// Iterate lens flare
 		auto it = vi.getLensFlaresBegin();
@@ -380,13 +439,13 @@ Error Lf::run(GlCommandBufferHandle& cmdBuff)
 
 			// Render
 			lf.getTexture().bind(cmdBuff, 0);
-			m_flareDataBuff.bindShaderBuffer(
+			flareDataBuff.bindShaderBuffer(
 				cmdBuff, 
 				reinterpret_cast<U8*>(sprites) - spritesInitialPtr, 
 				sizeof(Sprite) * count,
 				0);
 
-			GlOcclusionQueryHandle query;
+			OcclusionQueryHandle query;
 			Bool queryInvalid;
 			lf.getOcclusionQueryToCheck(query, queryInvalid);
 			

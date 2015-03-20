@@ -15,22 +15,20 @@ Error Dp::init(const ConfigSet& config)
 		getAlignedRoundDown(16, m_r->getWidth() / 3),
 		getAlignedRoundDown(16, m_r->getHeight() / 3));
 
-	Error err = m_r->createRenderTarget(
+	ANKI_CHECK(m_r->createRenderTarget(
 		m_smallDepthSize.x(), m_smallDepthSize.y(),
-		GL_DEPTH_COMPONENT24, 1, m_smallDepthRt);
-	if(err) return err;
+		GL_DEPTH_COMPONENT24, 1, m_smallDepthRt));
 
-	GlDevice& gl = getGlDevice();
-	GlCommandBufferHandle cmdb;
-	err = cmdb.create(&gl);
-	if(err)	return err;
+	GrManager& gl = getGrManager();
+	CommandBufferHandle cmdb;
+	ANKI_CHECK(cmdb.create(&gl));
 
-	m_smallDepthRt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
+	m_smallDepthRt.setFilter(cmdb, TextureHandle::Filter::LINEAR);
 
-	err = m_smallDepthFb.create(
-		cmdb,
-		{{m_smallDepthRt, GL_DEPTH_ATTACHMENT}});
-	if(err)	return err;
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = m_smallDepthRt;
+	ANKI_CHECK(m_smallDepthFb.create(cmdb, fbInit));
 
 	cmdb.finish();
 
@@ -38,7 +36,7 @@ Error Dp::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Dp::run(GlCommandBufferHandle& cmdb)
+Error Dp::run(CommandBufferHandle& cmdb)
 {
 	m_smallDepthFb.blit(
 		cmdb, 

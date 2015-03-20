@@ -25,7 +25,7 @@ class Ssao: public RenderingPass
 	friend class Sslr;
 	friend class MainRenderer;
 
-	GlTextureHandle& _getRt()
+	TextureHandle& _getRt()
 	{
 		return m_vblurRt;
 	}
@@ -34,31 +34,31 @@ private:
 	U32 m_width, m_height; ///< Blur passes size
 	U8 m_blurringIterationsCount;
 
-	GlTextureHandle m_vblurRt;
-	GlTextureHandle m_hblurRt;
-	GlFramebufferHandle m_vblurFb;
-	GlFramebufferHandle m_hblurFb;
+	TextureHandle m_vblurRt;
+	TextureHandle m_hblurRt;
+	FramebufferHandle m_vblurFb;
+	FramebufferHandle m_hblurFb;
 
 	ProgramResourcePointer m_ssaoFrag;
 	ProgramResourcePointer m_hblurFrag;
 	ProgramResourcePointer m_vblurFrag;
-	GlPipelineHandle m_ssaoPpline;
-	GlPipelineHandle m_hblurPpline;
-	GlPipelineHandle m_vblurPpline;
+	PipelineHandle m_ssaoPpline;
+	PipelineHandle m_hblurPpline;
+	PipelineHandle m_vblurPpline;
 	
 	Timestamp m_commonUboUpdateTimestamp = 0;
-	GlBufferHandle m_uniformsBuff;
-	GlTextureHandle m_noiseTex;
+	BufferHandle m_uniformsBuff;
+	TextureHandle m_noiseTex;
 
 	Ssao(Renderer* r)
 	:	RenderingPass(r)
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
 
 	ANKI_USE_RESULT Error createFb(
-		GlFramebufferHandle& fb, GlTextureHandle& rt);
+		FramebufferHandle& fb, TextureHandle& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
 

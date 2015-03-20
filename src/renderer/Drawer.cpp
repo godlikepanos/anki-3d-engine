@@ -30,7 +30,7 @@ public:
 	Ptr<const FrustumComponent> m_fr;
 	Ptr<RenderableDrawer> m_drawer;
 	U8 m_instanceCount;
-	GlCommandBufferHandle m_cmdBuff;
+	CommandBufferHandle m_cmdBuff;
 
 	F32 m_flod;
 
@@ -221,7 +221,7 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 	const TextureResourcePointer* values, U32 size)
 {
 	ANKI_ASSERT(size == 1);
-	GlTextureHandle tex = (*values)->getGlTexture();
+	TextureHandle tex = (*values)->getGlTexture();
 	auto unit = mtlvar.getTextureUnit();
 
 	tex.bind(m_cmdBuff, unit);
@@ -230,25 +230,15 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 //==============================================================================
 Error RenderableDrawer::create(Renderer* r)
 {
-	Error err = ErrorCode::NONE;
-
 	m_r = r;
 
 	// Create the uniform buffer
-	GlCommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&m_r->_getGlDevice());
-	if(err)
-	{
-		return err;
-	}
+	CommandBufferHandle cmdBuff;
+	ANKI_CHECK(cmdBuff.create(&m_r->_getGrManager()));
 
-	err = m_uniformBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
+	ANKI_CHECK(m_uniformBuff.create(cmdBuff, GL_UNIFORM_BUFFER, nullptr,
 		MAX_UNIFORM_BUFFER_SIZE,
-		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	if(err)
-	{
-		return err;
-	}
+		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
 	cmdBuff.flush();
 
@@ -256,14 +246,14 @@ Error RenderableDrawer::create(Renderer* r)
 		m_uniformBuff.getPersistentMappingAddress());
 	m_uniformBuffMapAddr = m_uniformPtr;
 	ANKI_ASSERT(m_uniformPtr != nullptr);
-	ANKI_ASSERT(isAligned(m_r->_getGlDevice().getBufferOffsetAlignment(
+	ANKI_ASSERT(isAligned(m_r->_getGrManager().getBufferOffsetAlignment(
 		m_uniformBuff.getTarget()), m_uniformPtr));
 
 	// Set some other values
 	m_uniformsUsedSize = 0;
 	m_uniformsUsedSizeFrame = 0;
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -280,7 +270,7 @@ void RenderableDrawer::setupUniforms(
 	// Find a place to write the uniforms
 	//
 	U8* prevUniformPtr = m_uniformPtr;
-	alignRoundUp(m_r->_getGlDevice().getBufferOffsetAlignment(
+	alignRoundUp(m_r->_getGrManager().getBufferOffsetAlignment(
 		m_uniformBuff.getTarget()), m_uniformPtr);
 	U diff = m_uniformPtr - prevUniformPtr;
 
@@ -409,7 +399,7 @@ Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 
 //==============================================================================
 void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
-	GlCommandBufferHandle& cmdBuff)
+	CommandBufferHandle& cmdBuff)
 {
 	// Set some numbers
 	m_stage = stage;
@@ -433,7 +423,7 @@ void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
 void RenderableDrawer::finishDraw()
 {
 	// Release the job chain
-	m_cmdBuff = GlCommandBufferHandle();
+	m_cmdBuff = CommandBufferHandle();
 
 	if(m_uniformsUsedSize > MAX_UNIFORM_BUFFER_SIZE / 3)
 	{

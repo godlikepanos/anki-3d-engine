@@ -166,9 +166,9 @@ public:
 		return *m_resources;
 	}
 
-	GlDevice& _getGlDevice()
+	GrManager& getGrManager()
 	{
-		return *m_gl;
+		return *m_gr;
 	}
 
 	PhysicsWorld& _getPhysicsWorld()
@@ -189,7 +189,7 @@ private:
 
 	Threadpool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
-	GlDevice* m_gl = nullptr;
+	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	Input* m_input = nullptr;
 

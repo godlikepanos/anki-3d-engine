@@ -33,7 +33,7 @@ public:
 		const CString& filename, ResourceInitializer& init);
 
 	/// Get the GL texture
-	const GlTextureHandle& getGlTexture() const
+	const TextureHandle& getGlTexture() const
 	{
 		return m_tex;
 	}
@@ -60,7 +60,7 @@ public:
 	}
 
 private:
-	GlTextureHandle m_tex;
+	TextureHandle m_tex;
 	UVec3 m_size;
 };
 /// @}

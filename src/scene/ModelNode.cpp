@@ -110,8 +110,8 @@ Error ModelPatchNode::buildRendering(RenderingBuildData& data)
 	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS> indicesOffsetArray;
 	U32 drawcallCount;
 
-	GlCommandBufferHandle vertJobs;
-	GlPipelineHandle ppline;
+	CommandBufferHandle vertJobs;
+	PipelineHandle ppline;
 
 	Error err = m_modelPatch->getRenderingDataSub(
 		data.m_key, vertJobs, ppline, 

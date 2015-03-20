@@ -154,6 +154,13 @@ private:
 	ErrorCode m_code = ErrorCode::NONE;
 };
 
+#define ANKI_CHECK(x_) \
+	do { \
+		Error error = x_; \
+		if(ANKI_UNLIKELY(error)) { \
+			return error; \
+		} \
+	} while(0)
 /// @}
 
 } // end namespace anki

@@ -22,7 +22,7 @@ Error Ez::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Ez::run(GlCommandBufferHandle& cmdBuff)
+Error Ez::run(CommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 

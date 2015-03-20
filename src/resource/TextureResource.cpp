@@ -31,14 +31,15 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 {
 	GrManager& gr = rinit.m_resources.getGrManager();
 	CommandBufferHandle cmdb;
-	Error err = cmdb.create(&gl); // Always first to avoid assertions (
+	Error err = cmdb.create(&gr); // Always first to avoid assertions (
 	                              // because of the check of the allocator)
 	if(err)
 	{
 		return err;
 	}
 
-	GlTextureHandle::Initializer init;
+	TextureHandle::Initializer init;
+	init.m_copyDataBeforeReturn = false;
 	U layers = 0;
 
 	// Load image
@@ -143,7 +144,7 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 	init.m_mipmapsCount = img->getMipLevelsCount();
 
 	// filteringType
-	init.m_filterType = GlTextureHandle::Filter::TRILINEAR;
+	init.m_filterType = TextureHandle::Filter::TRILINEAR;
 
 	// repeat
 	init.m_repeat = true;
@@ -156,19 +157,11 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 	{
 		for(U level = 0; level < init.m_mipmapsCount; level++)
 		{
-			GlClientBufferHandle& buff = init.m_data[level][layer];
 			const auto& surf = img->getSurface(level, layer);
+			auto& grsurf = init.m_data[level][layer];
 
-			err = buff.create(
-				cmdb, 
-				surf.m_data.getSize(), 
-				const_cast<U8*>(&surf.m_data[0]));
-
-			if(err)
-			{
-				rinit.m_alloc.deleteInstance(img);
-				return err;
-			}
+			grsurf.m_size = surf.m_data.getSize();
+			grsurf.m_ptr = &surf.m_data[0];
 		}
 	}
 

@@ -41,13 +41,13 @@ public:
 	/// @}
 
 private:
-	GlTextureHandle m_sm2DArrayTex;
+	TextureHandle m_sm2DArrayTex;
 
 	/// Shadowmap
 	struct Shadowmap
 	{
 		U32 m_layerId;
-		GlFramebufferHandle m_fb;
+		FramebufferHandle m_fb;
 		SceneNode* m_light = nullptr;
 		U32 m_timestamp = 0; ///< Timestamp of last render or light change
 	};
@@ -79,7 +79,7 @@ private:
 	ANKI_USE_RESULT Error run(
 		SceneNode* shadowCasters[], 
 		U32 shadowCastersCount, 
-		GlCommandBufferHandle& cmdBuff);
+		CommandBufferHandle& cmdBuff);
 
 	/// Get max shadow casters
 	U32 getMaxLightsCount()
@@ -87,14 +87,14 @@ private:
 		return m_sms.getSize();
 	}
 
-	void prepareDraw(GlCommandBufferHandle& cmdBuff);
-	void finishDraw(GlCommandBufferHandle& cmdBuff);
+	void prepareDraw(CommandBufferHandle& cmdBuff);
+	void finishDraw(CommandBufferHandle& cmdBuff);
 
 	/// Find the best shadowmap for that light
 	Shadowmap& bestCandidate(SceneNode& light);
 
 	ANKI_USE_RESULT Error doLight(
-		SceneNode& light, GlCommandBufferHandle& cmdBuff, Shadowmap*& sm);
+		SceneNode& light, CommandBufferHandle& cmdBuff, Shadowmap*& sm);
 };
 
 /// @}

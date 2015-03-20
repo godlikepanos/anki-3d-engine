@@ -26,7 +26,7 @@ MainRenderer::~MainRenderer()
 Error MainRenderer::create(
 	Threadpool* threadpool, 
 	ResourceManager* resources,
-	GlDevice* gl,
+	GrManager* gl,
 	HeapAllocator<U8>& alloc,
 	const ConfigSet& config,
 	const Timestamp* globalTimestamp)
@@ -60,9 +60,9 @@ Error MainRenderer::render(SceneGraph& scene)
 	Error err = ErrorCode::NONE;
 	ANKI_COUNTER_START_TIMER(MAIN_RENDERER_TIME);
 
-	GlDevice& gl = _getGlDevice();
-	Array<GlCommandBufferHandle, JOB_CHAINS_COUNT> jobs;
-	GlCommandBufferHandle& lastJobs = jobs[JOB_CHAINS_COUNT - 1];
+	GrManager& gl = _getGrManager();
+	Array<CommandBufferHandle, JOB_CHAINS_COUNT> jobs;
+	CommandBufferHandle& lastJobs = jobs[JOB_CHAINS_COUNT - 1];
 
 	for(U i = 0; i < JOB_CHAINS_COUNT; i++)
 	{
@@ -86,7 +86,7 @@ Error MainRenderer::render(SceneGraph& scene)
 
 		m_blitPpline.bind(lastJobs);
 
-		GlTextureHandle* rt;
+		TextureHandle* rt;
 
 		if(getPps().getEnabled())
 		{
@@ -100,7 +100,7 @@ Error MainRenderer::render(SceneGraph& scene)
 		//rt = &getTiler().getRt();
 		//rt = &getIs()._getRt();
 
-		rt->setFilter(lastJobs, GlTextureHandle::Filter::LINEAR);
+		rt->setFilter(lastJobs, TextureHandle::Filter::LINEAR);
 		rt->bind(lastJobs, 0);
 
 		drawQuad(lastJobs);
@@ -113,7 +113,7 @@ Error MainRenderer::render(SceneGraph& scene)
 	}
 
 	// Flush the last job chain
-	ANKI_ASSERT(lastJobs.getReferenceCount() == 1);
+	//ANKI_ASSERT(lastJobs.get().getReferenceCount() == 1);
 	lastJobs.flush();
 
 	ANKI_COUNTER_STOP_TIMER_INC(MAIN_RENDERER_TIME);
@@ -125,8 +125,8 @@ Error MainRenderer::render(SceneGraph& scene)
 Error MainRenderer::initGl()
 {
 	// get max texture units
-	GlCommandBufferHandle cmdb;
-	Error err = cmdb.create(&_getGlDevice());
+	CommandBufferHandle cmdb;
+	Error err = cmdb.create(&_getGrManager());
 
 	if(!err)
 	{

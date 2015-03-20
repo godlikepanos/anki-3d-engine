@@ -23,7 +23,7 @@ class Sslr: public BlurringRenderingPass
 public:
 	/// @privatesection
 	/// @{
-	GlTextureHandle& _getRt()
+	TextureHandle& _getRt()
 	{
 		return m_dirs[(U)DirectionEnum::VERTICAL].m_rt;
 	}
@@ -35,19 +35,19 @@ private:
 
 	// 1st pass
 	ProgramResourcePointer m_reflectionFrag;
-	GlPipelineHandle m_reflectionPpline;
-	GlSamplerHandle m_depthMapSampler;
+	PipelineHandle m_reflectionPpline;
+	SamplerHandle m_depthMapSampler;
 
 	// 2nd pass: blit
 	ProgramResourcePointer m_blitFrag;
-	GlPipelineHandle m_blitPpline;
+	PipelineHandle m_blitPpline;
 
 	Sslr(Renderer* r)
 	:	BlurringRenderingPass(r)
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
 };
 
 /// @}

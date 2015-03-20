@@ -75,10 +75,10 @@ void App::cleanup()
 		m_physics = nullptr;
 	}
 
-	if(m_gl != nullptr)
+	if(m_gr != nullptr)
 	{
-		m_heapAlloc.deleteInstance(m_gl);
-		m_gl = nullptr;
+		m_heapAlloc.deleteInstance(m_gr);
+		m_gr = nullptr;
 	}
 
 	if(m_threadpool != nullptr)
@@ -118,14 +118,12 @@ Error App::create(const ConfigSet& config,
 Error App::createInternal(const ConfigSet& config_, 
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 {
-	Error err = ErrorCode::NONE;
 	m_allocCb = allocCb;
 	m_allocCbData = allocCbUserData;
 	m_heapAlloc = HeapAllocator<U8>(allocCb, allocCbUserData);
 	ConfigSet config = config_;
 
-	err = initDirs();
-	if(err) return err;
+	ANKI_CHECK(initDirs());
 
 	// Print a message
 	const char* buildType =
@@ -147,13 +145,11 @@ Error App::createInternal(const ConfigSet& config_,
 	m_timerTick = 1.0 / 60.0; // in sec. 1.0 / period
 
 #if ANKI_ENABLE_COUNTERS
-	err = CountersManagerSingleton::get().create(
-		m_heapAlloc, m_settingsDir.toCString(), &m_globalTimestamp);
-	if(err) return err;
+	ANKI_CHECK(CountersManagerSingleton::get().create(
+		m_heapAlloc, m_settingsDir.toCString(), &m_globalTimestamp));
 
-	err = TraceManagerSingleton::get().create(
-		m_heapAlloc, m_settingsDir.toCString());
-	if(err) return err;
+	ANKI_CHECK(TraceManagerSingleton::get().create(
+		m_heapAlloc, m_settingsDir.toCString()));
 #endif
 
 	//
@@ -171,8 +167,7 @@ Error App::createInternal(const ConfigSet& config_,
 	m_window = m_heapAlloc.newInstance<NativeWindow>();
 	if(!m_window) return ErrorCode::OUT_OF_MEMORY;
 
-	err = m_window->create(nwinit, m_heapAlloc);
-	if(err) return err;
+	ANKI_CHECK(m_window->create(nwinit, m_heapAlloc));
 
 	m_ctx = m_window->getCurrentContext();
 	m_window->contextMakeCurrent(nullptr);
@@ -183,8 +178,7 @@ Error App::createInternal(const ConfigSet& config_,
 	m_input = m_heapAlloc.newInstance<Input>();
 	if(!m_input) return ErrorCode::OUT_OF_MEMORY;
 
-	err = m_input->create(m_window);
-	if(err) return err;
+	ANKI_CHECK(m_input->create(m_window));
 
 	//
 	// Threadpool
@@ -195,32 +189,41 @@ Error App::createInternal(const ConfigSet& config_,
 	//
 	// GL
 	//
-	m_gl = m_heapAlloc.newInstance<GlDevice>();
-	if(!m_gl) return ErrorCode::OUT_OF_MEMORY;
+	m_gr = m_heapAlloc.newInstance<GrManager>();
+	if(!m_gr)
+	{
+		return ErrorCode::OUT_OF_MEMORY;
+	}
 
-	err = m_gl->create(m_allocCb, m_allocCbData, m_cacheDir.toCString());
-	if(err) return err;
+	GrManagerInitializer grInit;
+	grInit.m_allocCallback = m_allocCb;
+	grInit.m_allocCallbackUserData = m_allocCbData;
+	grInit.m_makeCurrentCallback = makeCurrent;
+	grInit.m_makeCurrentCallbackData = this;
+	grInit.m_ctx = m_ctx;
+	grInit.m_swapBuffersCallback = swapWindow;
+	grInit.m_swapBuffersCallbackData = m_window;
+	grInit.m_cacheDirectory = m_cacheDir.toCString();
+	grInit.m_registerDebugMessages = nwinit.m_debugContext;
 
-	err = m_gl->startServer(
-		makeCurrent, this, m_ctx,
-		swapWindow, m_window,
-		nwinit.m_debugContext);
-	if(err) return err;
+	ANKI_CHECK(m_gr->create(grInit));
 
 	//
 	// Physics
 	//
 	m_physics = m_heapAlloc.newInstance<PhysicsWorld>();
-	if(!m_gl) return ErrorCode::OUT_OF_MEMORY;
+	if(!m_physics)
+	{
+		return ErrorCode::OUT_OF_MEMORY;
+	}
 
-	err = m_physics->create(m_allocCb, m_allocCbData);
-	if(err) return err;
+	ANKI_CHECK(m_physics->create(m_allocCb, m_allocCbData));
 
 	//
 	// Resources
 	//
 	ResourceManager::Initializer rinit;
-	rinit.m_gl = m_gl;
+	rinit.m_gr = m_gr;
 	rinit.m_physics = m_physics;
 	rinit.m_config = &config;
 	rinit.m_cacheDir = m_cacheDir.toCString();
@@ -230,8 +233,7 @@ Error App::createInternal(const ConfigSet& config_,
 	m_resources = m_heapAlloc.newInstance<ResourceManager>();
 	if(!m_resources) return ErrorCode::OUT_OF_MEMORY;
 
-	err = m_resources->create(rinit);
-	if(err) return err;
+	ANKI_CHECK(m_resources->create(rinit));
 
 	//
 	// Renderer
@@ -245,37 +247,33 @@ Error App::createInternal(const ConfigSet& config_,
 	m_renderer = m_heapAlloc.newInstance<MainRenderer>();
 	if(!m_renderer) return ErrorCode::OUT_OF_MEMORY;
 
-	err = m_renderer->create(
+	ANKI_CHECK(m_renderer->create(
 		m_threadpool,
 		m_resources,
-		m_gl,
+		m_gr,
 		m_heapAlloc,
 		config,
-		&m_globalTimestamp);
-	if(err) return err;
+		&m_globalTimestamp));
 
-	err = m_resources->_setShadersPrependedSource(
-		m_renderer->_getShadersPrependedSource().toCString());
-	if(err) return err;
+	ANKI_CHECK(m_resources->_setShadersPrependedSource(
+		m_renderer->_getShadersPrependedSource().toCString()));
 
 	// Scene
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 	if(!m_scene) return ErrorCode::OUT_OF_MEMORY;
 
-	err = m_scene->create(m_allocCb, m_allocCbData, 
+	ANKI_CHECK(m_scene->create(m_allocCb, m_allocCbData, 
 		config.get("sceneFrameAllocatorSize"), m_threadpool, m_resources,
-		m_input, &m_globalTimestamp);
-	if(err) return err;
+		m_input, &m_globalTimestamp));
 
 	// Script
 	m_script = m_heapAlloc.newInstance<ScriptManager>();
 	if(!m_script) return ErrorCode::OUT_OF_MEMORY;
 		
-	err = m_script->create(m_allocCb, m_allocCbData, m_scene);
-	if(err) return err;
+	ANKI_CHECK(m_script->create(m_allocCb, m_allocCbData, m_scene));
 
 	ANKI_LOGI("Application initialized");
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -299,29 +297,24 @@ Error App::initDirs()
 	// Settings path
 	String home;
 	String::ScopeDestroyer homed(&home, m_heapAlloc);
-	Error err = getHomeDirectory(m_heapAlloc, home);
-	if(err) return err;
+	ANKI_CHECK(getHomeDirectory(m_heapAlloc, home));
 
-	err = m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]);
-	if(err) return err;
+	ANKI_CHECK(m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]));
 
 	if(!directoryExists(m_settingsDir.toCString()))
 	{
-		err = createDirectory(m_settingsDir.toCString());
-		if(err) return err;
+		ANKI_CHECK(createDirectory(m_settingsDir.toCString()));
 	}
 
 	// Cache
-	err = m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]);
-	if(err) return err;
+	ANKI_CHECK(m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]));
 
 	if(directoryExists(m_cacheDir.toCString()))
 	{
-		err = removeDirectory(m_cacheDir.toCString());
-		if(err) return err;
+		ANKI_CHECK(removeDirectory(m_cacheDir.toCString()));
 	}
 
-	err = createDirectory(m_cacheDir.toCString());
+	ANKI_CHECK(createDirectory(m_cacheDir.toCString()));
 #else
 	//ANKI_ASSERT(gAndroidApp);
 	//ANativeActivity* activity = gAndroidApp->activity;
@@ -344,13 +337,12 @@ Error App::initDirs()
 	createDirectory(cacheDir.c_str());
 #endif
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 {
-	Error err = ErrorCode::NONE;
 	ANKI_LOGI("Entering main loop");
 	Bool quit = false;
 
@@ -367,20 +359,16 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 		crntTime = HighRezTimer::getCurrentTime();
 
 		// Update
-		err = m_input->handleEvents();
-		if(err)	break;
+		ANKI_CHECK(m_input->handleEvents());
 
 		// User update
-		err = callback(*this, userData, quit);
-		if(err)	break;
+		ANKI_CHECK(callback(*this, userData, quit));
 
-		err = m_scene->update(prevUpdateTime, crntTime, *m_renderer);
-		if(err)	break;
+		ANKI_CHECK(m_scene->update(prevUpdateTime, crntTime, *m_renderer));
 
-		err = m_renderer->render(*m_scene);
-		if(err)	break;
+		ANKI_CHECK(m_renderer->render(*m_scene));
 
-		m_gl->swapBuffers();
+		m_gr->swapBuffers();
 		ANKI_COUNTERS_RESOLVE_FRAME();
 
 		// Sleep
@@ -398,7 +386,7 @@ Error App::mainLoop(UserMainLoopCallback callback, void* userData)
 	ANKI_COUNTERS_FLUSH();
 	ANKI_TRACE_FLUSH();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

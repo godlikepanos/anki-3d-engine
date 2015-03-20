@@ -37,14 +37,14 @@ public:
 	void drawCube(F32 size = 1.0);
 	void drawLine(const Vec3& from, const Vec3& to, const Vec4& color);
 
-	void prepareDraw(GlCommandBufferHandle& jobs)
+	void prepareDraw(CommandBufferHandle& jobs)
 	{
 		m_jobs = jobs;
 	}
 
 	void finishDraw()
 	{
-		m_jobs = GlCommandBufferHandle(); // Release job chain
+		m_jobs = CommandBufferHandle(); // Release job chain
 	}
 
 	/// @name Render functions. Imitate the GL 1.1 immediate mode
@@ -85,8 +85,8 @@ private:
 
 	ProgramResourcePointer m_frag;
 	ProgramResourcePointer m_vert;
-	GlPipelineHandle m_ppline;
-	GlCommandBufferHandle m_jobs;
+	PipelineHandle m_ppline;
+	CommandBufferHandle m_jobs;
 
 	static const U MAX_POINTS_PER_DRAW = 256;
 	Mat4 m_mMat;
@@ -97,7 +97,7 @@ private:
 	Vec3 m_crntCol;
 	GLenum m_primitive;
 
-	GlBufferHandle m_vertBuff;
+	BufferHandle m_vertBuff;
 
 	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientLineVerts;
 	Array<Vertex, MAX_POINTS_PER_DRAW> m_clientTriVerts;

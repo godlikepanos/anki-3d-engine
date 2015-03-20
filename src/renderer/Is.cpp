@@ -206,8 +206,8 @@ Error Is::initInternal(const ConfigSet& config)
 	if(err) return err;
 
 	// point light
-	GlCommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGlDevice()); // Job for initialization
+	CommandBufferHandle cmdBuff;
+	err = cmdBuff.create(&getGrManager()); // Job for initialization
 	if(err)
 	{
 		return err;
@@ -245,7 +245,10 @@ Error Is::initInternal(const ConfigSet& config)
 		return err;
 	}
 
-	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	err = m_fb.create(cmdBuff, fbInit);
 	if(err)
 	{
 		return err;
@@ -257,15 +260,8 @@ Error Is::initInternal(const ConfigSet& config)
 	static const F32 quadVertCoords[][2] = 
 		{{1.0, 1.0}, {0.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}};
 
-	GlClientBufferHandle tempBuff;
-	err = tempBuff.create(cmdBuff, sizeof(quadVertCoords), 
-		(void*)&quadVertCoords[0][0]);
-	if(err)
-	{
-		return err;
-	}
-
-	err = m_quadPositionsVertBuff.create(cmdBuff, GL_ARRAY_BUFFER, tempBuff, 0);
+	err = m_quadPositionsVertBuff.create(cmdBuff, GL_ARRAY_BUFFER, 
+		&quadVertCoords[0][0], sizeof(quadVertCoords), 0);
 	if(err)
 	{
 		return err;
@@ -274,7 +270,7 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	// Create UBOs
 	//
-	err = m_commonBuffer.create(cmdBuff, GL_UNIFORM_BUFFER, 
+	err = m_commonBuffer.create(cmdBuff, GL_UNIFORM_BUFFER, nullptr,
 		sizeof(shader::CommonUniforms), GL_DYNAMIC_STORAGE_BIT);
 	if(err)
 	{
@@ -285,7 +281,7 @@ Error Is::initInternal(const ConfigSet& config)
 	{
 		// Lights
 		err = m_lightsBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
-			calcLightsBufferSize(), 
+			nullptr, calcLightsBufferSize(), 
 			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		if(err)
 		{
@@ -294,7 +290,7 @@ Error Is::initInternal(const ConfigSet& config)
 
 		// Tiles
 		err = m_tilesBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
-			m_r->getTilesCountXY() * sizeof(shader::Tile),
+			nullptr, m_r->getTilesCountXY() * sizeof(shader::Tile),
 			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		if(err)
 		{
@@ -303,7 +299,7 @@ Error Is::initInternal(const ConfigSet& config)
 
 		// Index
 		err = m_lightIdsBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
-			(m_maxPointLights * m_maxSpotLights * m_maxSpotTexLights)
+			nullptr, (m_maxPointLights * m_maxSpotLights * m_maxSpotTexLights)
 			* sizeof(U32),
 			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		if(err)
@@ -332,7 +328,7 @@ Error Is::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
+Error Is::lightPass(CommandBufferHandle& cmdBuff)
 {
 	Error err = ErrorCode::NONE;
 	Threadpool& threadPool = m_r->_getThreadpool();
@@ -402,7 +398,7 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 	// Write the lights and tiles UBOs
 	//
 	U32 blockAlignment = 
-		getGlDevice().getBufferOffsetAlignment(m_lightsBuffers[0].getTarget());
+		getGrManager().getBufferOffsetAlignment(m_lightsBuffers[0].getTarget());
 
 	// Get the offsets and sizes of each uniform block
 	PtrSize pointLightsOffset = 0;
@@ -508,7 +504,7 @@ Error Is::lightPass(GlCommandBufferHandle& cmdBuff)
 		cmdBuff, LIGHT_IDS_BLOCK_BINDING);
 
 	// The binding points should much the shader
-	Array<GlTextureHandle, 4> tarr = {{
+	Array<TextureHandle, 4> tarr = {{
 		m_r->getMs()._getRt0(), 
 		m_r->getMs()._getRt1(), 
 		m_r->getMs()._getDepthRt(),
@@ -815,7 +811,7 @@ void Is::binLight(
 }
 
 //==============================================================================
-void Is::setState(GlCommandBufferHandle& cmdBuff)
+void Is::setState(CommandBufferHandle& cmdBuff)
 {
 	/*Bool drawToDefaultFbo = !m_r->getPps().getEnabled() 
 		&& !m_r->getDbg().getEnabled() 
@@ -839,27 +835,20 @@ void Is::setState(GlCommandBufferHandle& cmdBuff)
 }
 
 //==============================================================================
-Error Is::run(GlCommandBufferHandle& cmdBuff)
+Error Is::run(CommandBufferHandle& cmdBuff)
 {
 	// Do the light pass including the shadow passes
 	return lightPass(cmdBuff);
 }
 
 //==============================================================================
-Error Is::updateCommonBlock(GlCommandBufferHandle& cmdBuff)
+Error Is::updateCommonBlock(CommandBufferHandle& cmdBuff)
 {
 	SceneGraph& scene = m_r->getSceneGraph();
-
-	GlClientBufferHandle cbuff;
-	Error err = cbuff.create(cmdBuff, sizeof(shader::CommonUniforms), nullptr);
-	if(err) return err;
-
-	shader::CommonUniforms& blk = 
-		*(shader::CommonUniforms*)cbuff.getBaseAddress();
+	shader::CommonUniforms blk;
 
 	// Start writing
 	blk.m_projectionParams = m_r->getProjectionParameters();
-
 	blk.m_sceneAmbientColor = scene.getAmbientColor();
 
 	Vec3 groundLightDir;
@@ -870,16 +859,16 @@ Error Is::updateCommonBlock(GlCommandBufferHandle& cmdBuff)
 		blk.m_groundLightDir = Vec4(-viewMat.getColumn(1).xyz(), 1.0);
 	}
 
-	m_commonBuffer.write(cmdBuff, cbuff, 0, 0, cbuff.getSize());
+	m_commonBuffer.write(cmdBuff, &blk, sizeof(blk), 0, 0, sizeof(blk));
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 PtrSize Is::calcLightsBufferSize() const
 {
 	U32 buffAlignment = 
-		getGlDevice().getBufferOffsetAlignment(GL_SHADER_STORAGE_BUFFER);
+		getGrManager().getBufferOffsetAlignment(GL_SHADER_STORAGE_BUFFER);
 	PtrSize size;
 
 	size = getAlignedRoundUp(

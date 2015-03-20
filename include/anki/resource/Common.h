@@ -13,7 +13,7 @@
 namespace anki {
 
 // Forward
-class GlDevice;
+class GrManager;
 class ResourceManager;
 
 /// @addtogroup resource
@@ -57,13 +57,6 @@ public:
 /// @{
 
 // Sortcut
-#define ANKI_CHECK(x_) \
-	err = x_; \
-	if(ANKI_UNLIKELY(err)) \
-	{ \
-		return err; \
-	}
-
 #define ANKI_CHECK_C(x_) \
 	err = x_; \
 	if(ANKI_UNLIKELY(err)) \

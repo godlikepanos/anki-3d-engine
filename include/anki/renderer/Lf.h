@@ -29,37 +29,37 @@ public:
 
 	~Lf();
 
-	const GlTextureHandle& _getRt() const
+	const TextureHandle& _getRt() const
 	{
 		return m_rt;
 	}
 
-	GlTextureHandle& _getRt()
+	TextureHandle& _getRt()
 	{
 		return m_rt;
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error runOcclusionTests(GlCommandBufferHandle& cmdb);
+	ANKI_USE_RESULT Error runOcclusionTests(CommandBufferHandle& cmdb);
 
-	ANKI_USE_RESULT Error run(GlCommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
 	/// @}
 
 private:
-	GlTextureHandle m_rt;
-	GlFramebufferHandle m_fb;
+	TextureHandle m_rt;
+	FramebufferHandle m_fb;
 
 	// Occlusion query
-	GlBufferHandle m_positionsVertBuff;
-	GlBufferHandle m_mvpBuff;
+	Array<BufferHandle, 3> m_positionsVertBuff;
+	BufferHandle m_mvpBuff;
 	ProgramResourcePointer m_occlusionVert;
 	ProgramResourcePointer m_occlusionFrag;
-	GlPipelineHandle m_occlusionPpline;
+	PipelineHandle m_occlusionPpline;
 
 	// Pseudo flares
 	ProgramResourcePointer m_pseudoFrag;
-	GlPipelineHandle m_pseudoPpline;
+	PipelineHandle m_pseudoPpline;
 	TextureResourcePointer m_lensDirtTex;
 	U8 m_maxSpritesPerFlare;
 	U8 m_maxFlares;
@@ -67,24 +67,23 @@ private:
 	// Sprite billboards
 	ProgramResourcePointer m_realVert;
 	ProgramResourcePointer m_realFrag;
-	GlPipelineHandle m_realPpline;
-	GlBufferHandle m_flareDataBuff;
+	PipelineHandle m_realPpline;
+	Array<BufferHandle, 3> m_flareDataBuff;
 	U32 m_flareSize;
 
 	// Final HDR blit
 	ProgramResourcePointer m_blitFrag;
-	GlPipelineHandle m_blitPpline;
+	PipelineHandle m_blitPpline;
 
 	ANKI_USE_RESULT Error initPseudo(
-		const ConfigSet& config, GlCommandBufferHandle& cmdBuff);
+		const ConfigSet& config, CommandBufferHandle& cmdBuff);
 	ANKI_USE_RESULT Error initSprite(
-		const ConfigSet& config, GlCommandBufferHandle& cmdBuff);
+		const ConfigSet& config, CommandBufferHandle& cmdBuff);
 	ANKI_USE_RESULT Error initOcclusion(
-		const ConfigSet& config, GlCommandBufferHandle& cmdBuff);
+		const ConfigSet& config, CommandBufferHandle& cmdBuff);
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
-
 /// @}
 
 } // end namespace anki

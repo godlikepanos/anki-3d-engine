@@ -24,18 +24,18 @@ public:
 	:	RenderingPass(r)
 	{}
 
-	GlTextureHandle& getSmallDepthRt()
+	TextureHandle& getSmallDepthRt()
 	{
 		return m_smallDepthRt;
 	}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
 	/// @}
 
 private:
-	GlTextureHandle m_smallDepthRt; ///< A smaller depth buffer
-	GlFramebufferHandle m_smallDepthFb; ///< Used to blit
+	TextureHandle m_smallDepthRt; ///< A smaller depth buffer
+	FramebufferHandle m_smallDepthFb; ///< Used to blit
 	UVec2 m_smallDepthSize;
 };
 /// @}

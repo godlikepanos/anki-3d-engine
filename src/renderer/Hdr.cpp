@@ -14,7 +14,7 @@ Hdr::~Hdr()
 {}
 
 //==============================================================================
-Error Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
+Error Hdr::initFb(FramebufferHandle& fb, TextureHandle& rt)
 {
 	Error err = ErrorCode::NONE;
 
@@ -22,14 +22,17 @@ Error Hdr::initFb(GlFramebufferHandle& fb, GlTextureHandle& rt)
 	if(err) return err;
 
 	// Set to bilinear because the blurring techniques take advantage of that
-	GlCommandBufferHandle cmdb;
-	err = cmdb.create(&getGlDevice());
+	CommandBufferHandle cmdb;
+	err = cmdb.create(&getGrManager());
 	if(err) return err;
 
-	rt.setFilter(cmdb, GlTextureHandle::Filter::LINEAR);
+	rt.setFilter(cmdb, TextureHandle::Filter::LINEAR);
 
 	// Create FB
-	err = fb.create(cmdb, {{rt, GL_COLOR_ATTACHMENT0}});
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = rt;
+	err = fb.create(cmdb, fbInit);
 	if(err) return err;
 
 	cmdb.finish();
@@ -68,12 +71,12 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	if(err) return err;
 
 	// init shaders
-	GlDevice& gl = getGlDevice();
-	GlCommandBufferHandle cmdb;
+	GrManager& gl = getGrManager();
+	CommandBufferHandle cmdb;
 	err = cmdb.create(&gl);
 	if(err) return err;
 
-	err = m_commonBuff.create(cmdb, GL_UNIFORM_BUFFER, 
+	err = m_commonBuff.create(cmdb, GL_UNIFORM_BUFFER, nullptr,
 		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
 	if(err) return err;
 
@@ -153,7 +156,7 @@ Error Hdr::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Hdr::run(GlCommandBufferHandle& cmdb)
+Error Hdr::run(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 	Error err = ErrorCode::NONE;
@@ -187,7 +190,7 @@ Error Hdr::run(GlCommandBufferHandle& cmdb)
 	{
 		if(i == 0)
 		{
-			Array<GlTextureHandle, 2> arr = {{m_hblurRt, m_vblurRt}};
+			Array<TextureHandle, 2> arr = {{m_hblurRt, m_vblurRt}};
 			cmdb.bindTextures(0, arr.begin(), arr.getSize());
 		}
 
@@ -209,19 +212,12 @@ Error Hdr::run(GlCommandBufferHandle& cmdb)
 }
 
 //==============================================================================
-Error Hdr::updateDefaultBlock(GlCommandBufferHandle& cmdb)
+Error Hdr::updateDefaultBlock(CommandBufferHandle& cmdb)
 {
-	GlClientBufferHandle tempBuff;
-	Error err = tempBuff.create(cmdb, sizeof(Vec4), nullptr);
-	
-	if(!err)
-	{
-		*((Vec4*)tempBuff.getBaseAddress()) = Vec4(m_exposure, 0.0, 0.0, 0.0);
+	Vec4 uniform(m_exposure, 0.0, 0.0, 0.0);
+	m_commonBuff.write(cmdb, &uniform, sizeof(uniform), 0, 0, sizeof(uniform));
 
-		m_commonBuff.write(cmdb, tempBuff, 0, 0, tempBuff.getSize());
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

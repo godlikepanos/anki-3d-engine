@@ -24,10 +24,10 @@ public:
 	~Fs();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdb);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdb);
 
 private:
-	GlFramebufferHandle m_fb;
+	FramebufferHandle m_fb;
 };
 /// @}
 

@@ -39,51 +39,83 @@ Error Sslr::init(const ConfigSet& config)
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n",
 		m_width, m_height);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_reflectionFrag.loadToCache(&getResourceManager(),
 		"shaders/PpsSslr.frag.glsl", pps.toCString(), "r_");
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_r->createDrawQuadPipeline(
 		m_reflectionFrag->getGlProgram(), m_reflectionPpline);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	// Sampler
-	GlCommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGlDevice());
-	if(err) return err;
+	CommandBufferHandle cmdBuff;
+	err = cmdBuff.create(&getGrManager());
+	if(err)
+	{
+		return err;
+	}
 	err = m_depthMapSampler.create(cmdBuff);
-	if(err) return err;
-	m_depthMapSampler.setFilter(cmdBuff, GlSamplerHandle::Filter::NEAREST);
+	if(err)
+	{
+		return err;
+	}
+	m_depthMapSampler.setFilter(cmdBuff, SamplerHandle::Filter::NEAREST);
 
 	// Blit
 	err = m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
-	if(err) return err;
-	err = m_r->createDrawQuadPipeline(
-		m_blitFrag->getGlProgram(), m_blitPpline);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
+	err = m_r->createDrawQuadPipeline(m_blitFrag->getGlProgram(), m_blitPpline);
+	if(err)
+	{
+		return err;
+	}
 
 	// Init FBOs and RTs and blurring
 	if(m_blurringIterationsCount > 0)
 	{
 		err = initBlurring(*m_r, m_width, m_height, 9, 0.0);
-		if(err) return err;
+		if(err)
+		{
+			return err;
+		}
 	}
 	else
 	{
 		Direction& dir = m_dirs[(U)DirectionEnum::VERTICAL];
 
 		err = m_r->createRenderTarget(m_width, m_height, GL_RGB8, 1, dir.m_rt);
-		if(err) return err;
+		if(err)
+		{
+			return err;
+		}
 
 		// Set to bilinear because the blurring techniques take advantage of 
 		// that
-		dir.m_rt.setFilter(cmdBuff, GlTextureHandle::Filter::LINEAR);
+		dir.m_rt.setFilter(cmdBuff, TextureHandle::Filter::LINEAR);
 
 		// Create FB
-		err = dir.m_fb.create(cmdBuff, {{dir.m_rt, GL_COLOR_ATTACHMENT0}});
-		if(err) return err;
+		FramebufferHandle::Initializer fbInit;
+		fbInit.m_colorAttachmentsCount = 1;
+		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
+		err = dir.m_fb.create(cmdBuff, fbInit);
+		if(err)
+		{
+			return err;
+		}
 	}
 
 	cmdBuff.finish();
@@ -92,7 +124,7 @@ Error Sslr::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Sslr::run(GlCommandBufferHandle& cmdBuff)
+Error Sslr::run(CommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 	Error err = ErrorCode::NONE;
@@ -104,7 +136,7 @@ Error Sslr::run(GlCommandBufferHandle& cmdBuff)
 
 	m_reflectionPpline.bind(cmdBuff);
 
-	Array<GlTextureHandle, 3> tarr = {{
+	Array<TextureHandle, 3> tarr = {{
 		m_r->getIs()._getRt(),
 		m_r->getDp().getSmallDepthRt(),
 		m_r->getMs()._getRt1()}};
@@ -115,7 +147,7 @@ Error Sslr::run(GlCommandBufferHandle& cmdBuff)
 
 	m_r->drawQuad(cmdBuff);
 
-	GlSamplerHandle::bindDefault(cmdBuff, 1); // Unbind the sampler
+	SamplerHandle::bindDefault(cmdBuff, 1); // Unbind the sampler
 
 	// Blurring
 	//

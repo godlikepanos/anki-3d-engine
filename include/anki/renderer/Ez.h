@@ -27,7 +27,7 @@ private:
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(GlCommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
 };
 /// @}
 

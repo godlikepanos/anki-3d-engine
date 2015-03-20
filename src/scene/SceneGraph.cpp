@@ -113,7 +113,7 @@ Error SceneGraph::create(
 	m_resources = resources;
 	m_objectsMarkedForDeletionCount.store(0);
 	m_ambientCol = Vec3(0.0);
-	m_gl = &m_resources->_getGlDevice();
+	m_gr = &m_resources->getGrManager();
 	m_physics = &m_resources->_getPhysicsWorld();
 	m_input = input;
 

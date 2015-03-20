@@ -15,7 +15,7 @@ namespace anki {
 
 struct SurfaceData
 {
-	void* m_ptr = nullptr;
+	const void* m_ptr = nullptr;
 	PtrSize m_size = 0;
 };
 

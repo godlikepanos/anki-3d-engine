@@ -86,7 +86,8 @@ Error Tiler::initInternal()
 	String pps;
 	String::ScopeDestroyer ppsd(&pps, getAllocator());
 
-	err = pps.sprintf(getAllocator(),
+	ANKI_CHECK(
+		pps.sprintf(getAllocator(),
 		"#define TILES_X_COUNT %u\n"
 		"#define TILES_Y_COUNT %u\n"
 		"#define RENDERER_WIDTH %u\n"
@@ -94,27 +95,27 @@ Error Tiler::initInternal()
 		m_r->getTilesCount().x(),
 		m_r->getTilesCount().y(),
 		m_r->getWidth(),
-		m_r->getHeight());
-	if(err) return err;
+		m_r->getHeight()));
 
-	err = m_frag.loadToCache(&getResourceManager(),
-		"shaders/TilerMinMax.frag.glsl", pps.toCString(), "r_");
-	if(err) return err;
+	ANKI_CHECK(
+		m_frag.loadToCache(&getResourceManager(), 
+		"shaders/TilerMinMax.frag.glsl", pps.toCString(), "r_"));
 
-	err = m_r->createDrawQuadPipeline(m_frag->getGlProgram(), m_ppline);
-	if(err) return err;
+	ANKI_CHECK(
+		m_r->createDrawQuadPipeline(m_frag->getGlProgram(), m_ppline));
 
 	// Create FB
-	err = m_r->createRenderTarget(
-		m_r->getTilesCount().x(), m_r->getTilesCount().y(), GL_RG32F, 1, m_rt);
-	if(err) return err;
+	ANKI_CHECK(
+		m_r->createRenderTarget(m_r->getTilesCount().x(), 
+		m_r->getTilesCount().y(), GL_RG32F, 1, m_rt));
 
-	GlCommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGlDevice());
-	if(err) return err;
+	CommandBufferHandle cmdBuff;
+	ANKI_CHECK(cmdBuff.create(&getGrManager()));
 
-	err = m_fb.create(cmdBuff, {{m_rt, GL_COLOR_ATTACHMENT0}});
-	if(err) return err;
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_colorAttachmentsCount = 1;
+	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
 
 	// Init planes. One plane for each direction, plus near/far plus the world
 	// space of those
@@ -123,8 +124,7 @@ Error Tiler::initInternal()
 		+ (m_r->getTilesCount().y() - 1) * 2  // planes I
 		+ (m_r->getTilesCount().x() * m_r->getTilesCount().y() * 2); // near+far
 
-	err = m_allPlanes.create(getAllocator(), planesCount);
-	if(err) return err;
+	ANKI_CHECK(m_allPlanes.create(getAllocator(), planesCount));
 
 	Plane* base = &m_allPlanes[0];
 	U count = 0;
@@ -153,14 +153,10 @@ Error Tiler::initInternal()
 
 	cmdBuff.flush();
 
-	err = initPbos();
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(initPbos());
 
-	err = m_prevMinMaxDepth.create(getAllocator(),
-		m_r->getTilesCount().x() * m_r->getTilesCount().y(), Vec2(0.0, 1.0));
+	ANKI_CHECK(m_prevMinMaxDepth.create(getAllocator(),
+		m_r->getTilesCount().x() * m_r->getTilesCount().y(), Vec2(0.0, 1.0)));
 
 	return err;
 }
@@ -170,12 +166,8 @@ Error Tiler::initPbos()
 {
 	Error err = ErrorCode::NONE;
 
-	GlCommandBufferHandle cmd;
-	err = cmd.create(&getGlDevice());
-	if(err)
-	{
-		return err;
-	}
+	CommandBufferHandle cmd;
+	ANKI_CHECK(cmd.create(&getGrManager()));
 
 	// Allocate the buffers
 	U pboSize = m_r->getTilesCount().x() * m_r->getTilesCount().y();
@@ -183,12 +175,9 @@ Error Tiler::initPbos()
 
 	for(U i = 0; i < m_pbos.getSize(); ++i)
 	{
-		err = m_pbos[i].create(cmd, GL_PIXEL_PACK_BUFFER, pboSize,
-			GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		if(err)
-		{
-			return err;
-		}
+		ANKI_CHECK(
+			m_pbos[i].create(cmd, GL_PIXEL_PACK_BUFFER, nullptr, pboSize,
+			GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 	}
 	cmd.flush();
 
@@ -203,8 +192,8 @@ Error Tiler::initPbos()
 }
 
 //==============================================================================
-void Tiler::runMinMax(GlTextureHandle& depthMap,
-	GlCommandBufferHandle& cmd)
+void Tiler::runMinMax(TextureHandle& depthMap,
+	CommandBufferHandle& cmd)
 {
 	if(m_enableGpuTests)
 	{

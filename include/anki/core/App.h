@@ -24,7 +24,7 @@ class ConfigSet;
 class Threadpool;
 class NativeWindow;
 class Input;
-class GlDevice;
+class GrManager;
 class MainRenderer;
 class PhysicsWorld;
 class SceneGraph;
@@ -140,7 +140,7 @@ private:
 	// Sybsystems
 	NativeWindow* m_window = nullptr;
 	Input* m_input = nullptr;
-	GlDevice* m_gl = nullptr;
+	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceManager* m_resources = nullptr;
 	MainRenderer* m_renderer = nullptr;

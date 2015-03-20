@@ -74,8 +74,8 @@ public:
 	Error init();
 
 	/// Issue the GPU job
-	void runMinMax(GlTextureHandle& depthMap,
-		GlCommandBufferHandle& cmd);
+	void runMinMax(TextureHandle& depthMap,
+		CommandBufferHandle& cmd);
 
 	/// Update the tiles before doing visibility tests
 	void updateTiles(Camera& cam);
@@ -86,7 +86,7 @@ public:
 
 	/// @privatesection
 	/// @{
-	GlTextureHandle& getRt()
+	TextureHandle& getRt()
 	{
 		return m_rt;
 	}
@@ -104,19 +104,19 @@ private:
 
 	/// A texture of tilesXCount * tilesYCount size and format RG32UI. Used to
 	/// calculate the near and far planes of the tiles
-	GlTextureHandle m_rt;
+	TextureHandle m_rt;
 
 	/// Main FB for the fai
-	GlFramebufferHandle m_fb;
+	FramebufferHandle m_fb;
 
 	/// PBO buffer that is used to read the data of fai asynchronously
-	Array<GlBufferHandle, 2> m_pbos;
+	Array<BufferHandle, 2> m_pbos;
 	Array<Vec2*, 2> m_pbosAddress;
 	DArray<Vec2> m_prevMinMaxDepth;
 
 	/// Main shader program
 	ProgramResourcePointer m_frag;
-	GlPipelineHandle m_ppline;
+	PipelineHandle m_ppline;
 
 	/// Used to check if the camera is changed and we need to update the planes
 	const Camera* m_prevCam = nullptr;

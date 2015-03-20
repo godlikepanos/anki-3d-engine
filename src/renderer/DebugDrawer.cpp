@@ -31,7 +31,7 @@ Error DebugDrawer::create(Renderer* r)
 {
 	Error err = ErrorCode::NONE;
 
-	GlDevice& gl = r->_getGlDevice();
+	GrManager& gl = r->_getGrManager();
 
 	err = m_vert.load("shaders/Dbg.vert.glsl", &r->_getResourceManager());
 
@@ -40,7 +40,7 @@ Error DebugDrawer::create(Renderer* r)
 		err = m_frag.load("shaders/Dbg.frag.glsl", &r->_getResourceManager());
 	}
 
-	GlCommandBufferHandle jobs;
+	CommandBufferHandle jobs;
 
 	if(!err)
 	{
@@ -55,7 +55,7 @@ Error DebugDrawer::create(Renderer* r)
 
 	if(!err)
 	{
-		err = m_vertBuff.create(jobs, GL_ARRAY_BUFFER, 
+		err = m_vertBuff.create(jobs, GL_ARRAY_BUFFER, nullptr,
 			sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT);
 	}
 
@@ -159,16 +159,7 @@ Error DebugDrawer::flushInternal(GLenum primitive)
 
 	U size = sizeof(Vertex) * clientVerts;
 
-	GlClientBufferHandle tmpBuff;
-	err = tmpBuff.create(m_jobs, size, nullptr);
-	if(err)
-	{
-		return err;
-	}
-
-	memcpy(tmpBuff.getBaseAddress(), vertBuff, size);
-
-	m_vertBuff.write(m_jobs, tmpBuff, 0, 0, size);
+	m_vertBuff.write(m_jobs, vertBuff, size, 0, 0, size);
 
 	m_ppline.bind(m_jobs);
 

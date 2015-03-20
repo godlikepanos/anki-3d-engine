@@ -33,7 +33,7 @@ Renderer::~Renderer()
 Error Renderer::init(
 	Threadpool* threadpool, 
 	ResourceManager* resources,
-	GlDevice* gl,
+	GrManager* gl,
 	HeapAllocator<U8>& alloc,
 	const ConfigSet& config,
 	const Timestamp* globalTimestamp)
@@ -102,37 +102,57 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	// Drawer
 	err = m_sceneDrawer.create(this);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	// quad setup
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
 		{1.0, -1.0}, {-1.0, -1.0}};
 
-	GlCommandBufferHandle cmdBuff;
+	CommandBufferHandle cmdBuff;
 	err = cmdBuff.create(m_gl);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
-	GlClientBufferHandle tmpBuff;
-	err = tmpBuff.create(
-		cmdBuff, sizeof(quadVertCoords), (void*)&quadVertCoords[0][0]);
-	if(err) return err;
-
-	err = m_quadPositionsBuff.create(cmdBuff, GL_ARRAY_BUFFER, tmpBuff, 0);
-	if(err) return err;
+	err = m_quadPositionsBuff.create(cmdBuff, GL_ARRAY_BUFFER, 
+		&quadVertCoords[0][0], sizeof(quadVertCoords), 0);
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	// Init the stages. Careful with the order!!!!!!!!!!
 	err = m_tiler.init();
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	err = m_ms.init(config);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 	err = m_dp.init(config);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 	err = m_is.init(config);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 	
 	m_fs = m_alloc.newInstance<Fs>(this);
 	if(err = m_fs->init(config))
@@ -141,13 +161,23 @@ Error Renderer::initInternal(const ConfigSet& config)
 	}
 	
 	err = m_pps.init(config);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 	err = m_dbg.init(config);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 
 	// Default FB
-	err = m_defaultFb.create(cmdBuff, {});
-	if(err) return err;
+	FramebufferHandle::Initializer fbInit;
+	err = m_defaultFb.create(cmdBuff, fbInit);
+	if(err)
+	{
+		return err;
+	}
 
 	cmdBuff.finish();
 
@@ -163,7 +193,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 //==============================================================================
 Error Renderer::render(SceneGraph& scene, 
-	Array<GlCommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff)
+	Array<CommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff)
 {
 	Error err = ErrorCode::NONE;
 	m_scene = &scene;
@@ -186,8 +216,10 @@ Error Renderer::render(SceneGraph& scene,
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
 	err = m_ms.run(cmdBuff[0]);
-	if(err) return err;
-	ANKI_ASSERT(cmdBuff[0].getReferenceCount() == 1);
+	if(err)
+	{
+		return err;
+	}
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
 	m_tiler.runMinMax(m_ms._getDepthRt(), cmdBuff[0]);
@@ -196,12 +228,18 @@ Error Renderer::render(SceneGraph& scene,
 	if(m_pps.getEnabled() && m_pps.getLf().getEnabled())
 	{
 		err = m_pps.getLf().runOcclusionTests(cmdBuff[1]);
-		if(err) return err;
+		if(err)
+		{
+			return err;
+		}
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
 	err = m_is.run(cmdBuff[1]);
-	if(err) return err;
+	if(err)
+	{
+		return err;
+	}
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
 	if(err = m_fs->run(cmdBuff[1])) 
@@ -216,14 +254,20 @@ Error Renderer::render(SceneGraph& scene,
 	if(m_pps.getEnabled())
 	{
 		err = m_pps.run(cmdBuff[1]);
-		if(err) return err;
+		if(err)
+		{
+			return err;
+		}
 	}
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_PPS_TIME);
 
 	if(m_dbg.getEnabled())
 	{
 		err = m_dbg.run(cmdBuff[1]);
-		if(err) return err;
+		if(err)
+		{
+			return err;
+		}
 	}
 
 	++m_framesNum;
@@ -232,14 +276,14 @@ Error Renderer::render(SceneGraph& scene,
 }
 
 //==============================================================================
-void Renderer::drawQuad(GlCommandBufferHandle& cmdBuff)
+void Renderer::drawQuad(CommandBufferHandle& cmdBuff)
 {
 	drawQuadInstanced(cmdBuff, 1);
 }
 
 //==============================================================================
-void Renderer::drawQuadConditional(GlOcclusionQueryHandle& q,
-	GlCommandBufferHandle& cmdBuff)
+void Renderer::drawQuadConditional(OcclusionQueryHandle& q,
+	CommandBufferHandle& cmdBuff)
 {
 	m_quadPositionsBuff.bindVertexBuffer(cmdBuff, 2, GL_FLOAT, false, 0, 0, 0);
 	cmdBuff.drawArraysConditional(q, GL_TRIANGLE_STRIP, 4, 1);
@@ -247,7 +291,7 @@ void Renderer::drawQuadConditional(GlOcclusionQueryHandle& q,
 
 //==============================================================================
 void Renderer::drawQuadInstanced(
-	GlCommandBufferHandle& cmdBuff, U32 primitiveCount)
+	CommandBufferHandle& cmdBuff, U32 primitiveCount)
 {
 	m_quadPositionsBuff.bindVertexBuffer(cmdBuff, 2, GL_FLOAT, false, 0, 0, 0);
 
@@ -275,7 +319,7 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 
 //==============================================================================
 Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat, 
-	U32 samples, GlTextureHandle& rt)
+	U32 samples, TextureHandle& rt)
 {
 	Error err = ErrorCode::NONE;
 
@@ -287,7 +331,7 @@ Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 		ANKI_ASSERT(isAligned(16, h));
 	}
 
-	GlTextureHandle::Initializer init;
+	TextureHandle::Initializer init;
 
 	init.m_width = w;
 	init.m_height = h;
@@ -300,12 +344,12 @@ Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 #endif
 	init.m_internalFormat = internalFormat;
 	init.m_mipmapsCount = 1;
-	init.m_filterType = GlTextureHandle::Filter::NEAREST;
+	init.m_filterType = TextureHandle::Filter::NEAREST;
 	init.m_repeat = false;
 	init.m_anisotropyLevel = 0;
 	init.m_samples = samples;
 
-	GlCommandBufferHandle cmdBuff;
+	CommandBufferHandle cmdBuff;
 	err = cmdBuff.create(m_gl);
 
 	if(!err)
@@ -319,14 +363,14 @@ Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 
 //==============================================================================
 Error Renderer::createDrawQuadPipeline(
-	GlShaderHandle frag, GlPipelineHandle& ppline)
+	ShaderHandle frag, PipelineHandle& ppline)
 {
-	GlCommandBufferHandle cmdBuff;
+	CommandBufferHandle cmdBuff;
 	Error err = cmdBuff.create(m_gl);
 
 	if(!err)
 	{
-		Array<GlShaderHandle, 2> progs = 
+		Array<ShaderHandle, 2> progs = 
 			{{m_drawQuadVert->getGlProgram(), frag}};
 
 		err = ppline.create(cmdBuff, &progs[0], &progs[0] + 2);
