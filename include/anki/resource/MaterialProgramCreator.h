@@ -7,7 +7,7 @@
 #define ANKI_RESOURCE_MATERIAL_SHADER_PROGRAM_CREATOR_H
 
 #include "anki/util/StringList.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/resource/Common.h"
 
 namespace anki {

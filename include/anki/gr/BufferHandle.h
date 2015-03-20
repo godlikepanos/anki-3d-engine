@@ -72,7 +72,6 @@ private:
 	void bindShaderBufferInternal(CommandBufferHandle& commands,
 		I32 offset, I32 size, U32 bindingPoint);
 };
-
 /// @}
 
 } // end namespace anki

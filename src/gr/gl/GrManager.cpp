@@ -4,17 +4,20 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/GrManager.h"
+#include "anki/gr/gl/GrManagerImpl.h"
+#include "anki/gr/gl/RenderingThread.h"
 #include "anki/core/Timestamp.h"
 #include <cstring>
 
 namespace anki {
 
 //==============================================================================
-Error GlDevice::create(Initializer& init)
+Error GrManager::create(Initializer& init)
 {
-	m_alloc = HeapAllocator<U8>(alloc, allocUserData);
+	m_alloc = HeapAllocator<U8>(
+		init.m_allocCallback, init.m_allocCallbackUserData);
 
-	Error err = m_cacheDir.create(m_alloc, cacheDir);
+	Error err = m_cacheDir.create(m_alloc, init.m_cacheDirectory);
 
 	if(!err)
 	{
@@ -34,29 +37,24 @@ Error GlDevice::create(Initializer& init)
 }
 
 //==============================================================================
-void GlDevice::destroy()
+void GrManager::destroy()
 {
 	if(m_impl)
 	{
 		m_alloc.deleteInstance(m_impl);
 	}
-
-	if(m_cacheDir)
-	{
-		m_alloc.deallocate(m_cacheDir, std::strlen(m_cacheDir) + 1);
-	}
 }
 
 //==============================================================================
-void GlDevice::swapBuffers()
+void GrManager::swapBuffers()
 {
-	m_queue->swapBuffers();
+	m_impl->getRenderingThread().swapBuffers();
 }
 
 //==============================================================================
-PtrSize GlDevice::getBufferOffsetAlignment(GLenum target) const
+PtrSize GrManager::getBufferOffsetAlignment(GLenum target) const
 {
-	const State& state = m_queue->getState();
+	const State& state = m_impl->getRenderingThread().getState();
 
 	if(target == GL_UNIFORM_BUFFER)
 	{

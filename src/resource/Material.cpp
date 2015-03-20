@@ -311,7 +311,7 @@ ProgramResourcePointer& Material::getProgram(
 
 //==============================================================================
 Error Material::getProgramPipeline(
-	const RenderingKey& key, GlPipelineHandle& out)
+	const RenderingKey& key, PipelineHandle& out)
 {
 	ANKI_ASSERT(enumToType(key.m_pass) < m_passesCount);
 	ANKI_ASSERT(key.m_lod < m_lodsCount);
@@ -331,12 +331,12 @@ Error Material::getProgramPipeline(
 	U idx = enumToType(key.m_pass) * m_lodsCount * tessCount
 		+ key.m_lod * tessCount + key.m_tessellation;
 
-	GlPipelineHandle& ppline = m_pplines[idx];
+	PipelineHandle& ppline = m_pplines[idx];
 
 	// Lazily create it
 	if(ANKI_UNLIKELY(!ppline.isCreated()))
 	{
-		Array<GlShaderHandle, 5> progs;
+		Array<ShaderHandle, 5> progs;
 		U progCount = 0;
 
 		progs[progCount++] = 
@@ -353,8 +353,8 @@ Error Material::getProgramPipeline(
 		progs[progCount++] = 
 			getProgram(key, ShaderType::FRAGMENT)->getGlProgram();
 
-		GlDevice& gl = m_resources->_getGlDevice();
-		GlCommandBufferHandle cmdBuff;
+		GrManager& gl = m_resources->getGrManager();
+		CommandBufferHandle cmdBuff;
 		ANKI_CHECK(cmdBuff.create(&gl));
 
 		ANKI_CHECK(ppline.create(cmdBuff, &progs[0], &progs[0] + progCount));

@@ -16,7 +16,7 @@ namespace anki {
 
 // Forward
 class ConfigSet;
-class GlDevice;
+class GrManager;
 class PhysicsWorld;
 class ResourceManager;
 class AsyncLoader;
@@ -143,7 +143,7 @@ public:
 	class Initializer
 	{
 	public:
-		GlDevice* m_gl = nullptr;
+		GrManager* m_gr = nullptr;
 		PhysicsWorld* m_physics = nullptr;
 		const ConfigSet* m_config = nullptr;
 		CString m_cacheDir;
@@ -189,10 +189,10 @@ public:
 		return m_tmpAlloc;
 	}
 
-	GlDevice& _getGlDevice()
+	GrManager& getGrManager()
 	{
-		ANKI_ASSERT(m_gl);
-		return *m_gl;
+		ANKI_ASSERT(m_gr);
+		return *m_gr;
 	}
 
 	PhysicsWorld& _getPhysicsWorld()
@@ -245,7 +245,7 @@ public:
 	/// @}
 
 private:
-	GlDevice* m_gl = nullptr;
+	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
 	ResourceAllocator<U8> m_alloc;
 	TempResourceAllocator<U8> m_tmpAlloc;

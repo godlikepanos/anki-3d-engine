@@ -32,6 +32,9 @@ struct TextureInitializer
 	Bool8 m_repeat = false;
 	I32 m_anisotropyLevel = 0;
 	U32 m_samples = 1;
+	/// In some backends it may copy the m_data to a temp buffer for async 
+	/// operations.
+	Bool m_copyDataBeforeReturn = true; 
 
 	/// [level][slice]
 	Array2d<SurfaceData, MAX_MIPMAPS, MAX_TEXTURE_LAYERS> m_data;

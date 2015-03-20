@@ -207,6 +207,15 @@ Error BufferHandle::create(CommandBufferHandle& commands,
 	{
 		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
+		// Allocate temp memory for the data
+		if(data)
+		{
+			void* newData = 
+				commands.get().getInternalAllocator().allocate(size);
+			memcpy(newData, data, size);
+			data = newData;
+		}
+
 		// Fire the command
 		commands.get().pushBackNewCommand<BufferCreateCommand>(
 			*this, target, data, size, flags);

@@ -7,7 +7,7 @@
 #define ANKI_RENDERER_RENDERING_PASS_H
 
 #include "anki/util/StdTypes.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/core/Timestamp.h"
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/ProgramResource.h"

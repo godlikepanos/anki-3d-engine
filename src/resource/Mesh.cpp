@@ -68,40 +68,39 @@ Error Mesh::createBuffers(const MeshLoader& loader,
 {
 	Error err = ErrorCode::NONE;
 
-	GlDevice& gl = init.m_resources._getGlDevice();
-	GlCommandBufferHandle cmdb;
-	err = cmdb.create(&gl);
-	if(err) return err;
+	GrManager& gr = init.m_resources.getGrManager();
+	CommandBufferHandle cmdb;
+	err = cmdb.create(&gr);
+	if(err)
+	{
+		return err;
+	}
 
 	// Create vertex buffer
-	GlClientBufferHandle clientVertBuff;
-	err = clientVertBuff.create(cmdb, loader.getVertexDataSize(), nullptr);
-	if(err) return err;
-	memcpy(clientVertBuff.getBaseAddress(), loader.getVertexData(), 
-		loader.getVertexDataSize());
-
-	err = m_vertBuff.create(cmdb, GL_ARRAY_BUFFER, clientVertBuff, 0);
-	if(err) return err;
+	err = m_vertBuff.create(cmdb, GL_ARRAY_BUFFER, loader.getVertexData(), 
+		loader.getVertexDataSize(), 0);
+	if(err)
+	{
+		return err;
+	}
 
 	// Create index buffer
-	GlClientBufferHandle clientIndexBuff;
-	err = clientIndexBuff.create(cmdb, loader.getIndexDataSize(), nullptr);
-	if(err) return err;
-	memcpy(clientIndexBuff.getBaseAddress(), loader.getIndexData(),
-		loader.getIndexDataSize());
-
 	err = m_indicesBuff.create(
-		cmdb, GL_ELEMENT_ARRAY_BUFFER, clientIndexBuff, 0);
-	if(err) return err;
+		cmdb, GL_ELEMENT_ARRAY_BUFFER, loader.getIndexData(), 
+		loader.getIndexDataSize(), 0);
+	if(err)
+	{
+		return err;
+	}
 
-	cmdb.finish(); /// XXX
+	cmdb.flush();
 
 	return err;
 }
 
 //==============================================================================
 void Mesh::getBufferInfo(const VertexAttribute attrib, 
-	GlBufferHandle& v, U32& size, GLenum& type, 
+	BufferHandle& v, U32& size, GLenum& type, 
 	U32& stride, U32& offset, Bool& normalized) const
 {
 	stride = sizeof(Vec3) + sizeof(U32) + sizeof(U32) 
@@ -109,7 +108,7 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 		+ ((m_weights) ? (sizeof(U8) * 4 + sizeof(HVec4)) : 0);
 
 	// Set all to zero
-	v = GlBufferHandle();
+	v = BufferHandle();
 	size = 0;
 	type = GL_NONE;
 	offset = 0;

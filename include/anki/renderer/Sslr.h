@@ -8,7 +8,7 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/Resource.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 
 namespace anki {
 

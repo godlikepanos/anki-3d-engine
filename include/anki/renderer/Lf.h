@@ -7,7 +7,7 @@
 #define ANKI_RENDERER_LF_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/resource/Resource.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/resource/TextureResource.h"

@@ -7,7 +7,7 @@
 #define ANKI_RENDERER_DP_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 
 namespace anki {
 

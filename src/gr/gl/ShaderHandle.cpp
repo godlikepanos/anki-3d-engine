@@ -59,7 +59,7 @@ ShaderHandle::~ShaderHandle()
 Error ShaderHandle::create(CommandBufferHandle& commands, 
 	GLenum type, const void* source, PtrSize sourceSize)
 {
-	ANKI_ASSERT(strlen(source) == sourceSize + 1);
+	ANKI_ASSERT(strlen(static_cast<const char*>(source)) == sourceSize + 1);
 	using DeleteCommand = DeleteObjectCommand<ShaderImpl>;
 	using Deleter = DeferredDeleter<ShaderImpl, DeleteCommand>;
 

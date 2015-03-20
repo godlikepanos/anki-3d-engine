@@ -7,7 +7,7 @@
 #define ANKI_RESOURCE_MODEL_H
 
 #include "anki/resource/ResourceManager.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/collision/Obb.h"
 #include "anki/resource/RenderingKey.h"
 #include "anki/resource/Mesh.h"
@@ -92,7 +92,7 @@ private:
 	/// Called by @a create multiple times to create and populate a single
 	/// vertex descriptor
 	static ANKI_USE_RESULT Error createVertexDesc(
-		const GlShaderHandle& prog,
+		const Gr.haderHandle& prog,
 		const Mesh& mesh,
 		GlCommandBufferHandle& vertexJobs);
 

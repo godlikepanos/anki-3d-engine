@@ -11,7 +11,7 @@
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/ProgramResource.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/util/HighRezTimer.h"
 #include "anki/scene/Forward.h"
 
@@ -187,7 +187,7 @@ public:
 		return m_tilesCountXY;
 	}
 
-	const GlShaderHandle& getDrawQuadVertexProgram() const
+	const Gr.haderHandle& getDrawQuadVertexProgram() const
 	{
 		return m_drawQuadVert->getGlProgram();
 	}
@@ -234,7 +234,7 @@ public:
 	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
 	/// and the given fragment progam
 	ANKI_USE_RESULT Error createDrawQuadPipeline(
-		GlShaderHandle frag, GlPipelineHandle& ppline);
+		Gr.haderHandle frag, GlPipelineHandle& ppline);
 
 	/// Init the renderer given an initialization class
 	/// @param initializer The initializer class

@@ -7,7 +7,7 @@
 #define ANKI_RENDERER_DBG_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/renderer/DebugDrawer.h"
 #include "anki/util/Bitset.h"
 #include "anki/util/Enum.h"

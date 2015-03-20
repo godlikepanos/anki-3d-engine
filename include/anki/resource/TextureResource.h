@@ -7,7 +7,7 @@
 #define ANKI_RESOURCE_TEXTURE_RESOURCE_H
 
 #include "anki/resource/Common.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 
 namespace anki {
 
@@ -39,7 +39,7 @@ public:
 	}
 
 	/// Get the GL texture
-	GlTextureHandle& getGlTexture()
+	TextureHandle& getGlTexture()
 	{
 		return m_tex;
 	}

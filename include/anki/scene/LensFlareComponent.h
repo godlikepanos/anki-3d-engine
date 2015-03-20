@@ -7,7 +7,7 @@
 #define ANKI_SCENE_LENS_FLARE_NODE_H
 
 #include "anki/scene/SceneNode.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/TextureResource.h"
 

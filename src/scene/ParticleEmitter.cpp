@@ -10,7 +10,7 @@
 #include "anki/resource/Model.h"
 #include "anki/util/Functions.h"
 #include "anki/physics/PhysicsWorld.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 
 namespace anki {
 

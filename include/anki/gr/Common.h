@@ -27,8 +27,6 @@
 #	error "See file"
 #endif
 
-#define ANKI_QUEUE_DISABLE_ASYNC 0
-
 namespace anki {
 
 // Forward
@@ -52,6 +50,7 @@ class GrManager;
 class GrManagerImpl;
 struct FramebufferInitializer;
 struct TextureInitializer;
+struct GrManagerInitializer;
 
 /// @addtogroup graphics_private
 /// @{

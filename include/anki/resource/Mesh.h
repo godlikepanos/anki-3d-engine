@@ -8,7 +8,7 @@
 
 #include "anki/resource/Common.h"
 #include "anki/Math.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/collision/Obb.h"
 
 namespace anki {
@@ -30,7 +30,7 @@ enum class VertexAttribute: U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttribute, inline)
 
-/// Mesh Resource. It contains the geometry packed in VBOs
+/// Mesh Resource. It contains the geometry packed in GPU buffers.
 class Mesh
 {
 public:
@@ -86,7 +86,7 @@ public:
 
 	/// Get info on how to attach a GL buffer to the state
 	void getBufferInfo(
-		const VertexAttribute attrib, GlBufferHandle& buffer,
+		const VertexAttribute attrib, BufferHandle& buffer,
 		U32& size, GLenum& type, U32& stride, U32& offset,
 		Bool& normalized) const;
 
@@ -114,14 +114,15 @@ protected:
 	U8 m_texChannelsCount;
 	Bool8 m_weights;
 
-	GlBufferHandle m_vertBuff;
-	GlBufferHandle m_indicesBuff;
+	BufferHandle m_vertBuff;
+	BufferHandle m_indicesBuff;
 
 	/// Create the VBOs using the mesh data
 	ANKI_USE_RESULT Error createBuffers(
 		const MeshLoader& loader, ResourceInitializer& init);
 };
 
+// TODO Remove that
 /// A mesh that behaves as a mesh and as a collection of separate meshes.
 class BucketMesh: public Mesh
 {

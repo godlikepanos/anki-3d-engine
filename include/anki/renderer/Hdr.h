@@ -7,7 +7,7 @@
 #define ANKI_RENDERER_HDR_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/ProgramResource.h"
 #include "anki/resource/Resource.h"

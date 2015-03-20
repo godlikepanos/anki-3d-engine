@@ -7,13 +7,14 @@
 #define ANKI_RESOURCE_PROGRAM_RESOURCE_H
 
 #include "anki/resource/Common.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 
 namespace anki {
 
 /// @addtogroup resource
 /// @{
 
+// TODO rename this class
 /// Shader program resource
 class ProgramResource
 {
@@ -24,7 +25,7 @@ public:
 	~ProgramResource()
 	{}
 
-	const GlShaderHandle& getGlProgram() const
+	const ShaderHandle& getGlProgram() const
 	{
 		return m_shader;
 	}
@@ -55,7 +56,7 @@ public:
 		TempResourceString& out);
 
 private:
-	GlShaderHandle m_shader;
+	ShaderHandle m_shader;
 }; 
 /// @}
 

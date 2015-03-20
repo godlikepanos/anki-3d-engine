@@ -7,7 +7,7 @@
 #define ANKI_RENDERER_DEBUG_DRAWER_H
 
 #include "anki/Math.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/resource/Resource.h"
 #include "anki/collision/CollisionShape.h"
 #include "anki/physics/PhysicsDrawer.h"

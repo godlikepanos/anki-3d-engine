@@ -148,12 +148,15 @@ enum class ShaderType: U8
 	TESSELLATION_EVALUATION,
 	GEOMETRY,
 	FRAGMENT,
-	COMPUTE
+	COMPUTE,
+
+	COUNT
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderType, inline)
 
 enum class ShaderVariableDataType: U8
 {
+	NONE,
 	FLOAT,
 	VEC2,
 	VEC3,

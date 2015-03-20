@@ -10,7 +10,7 @@
 #include "anki/util/Ptr.h"
 #include "anki/resource/RenderingKey.h"
 #include "anki/scene/Forward.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 
 namespace anki {
 

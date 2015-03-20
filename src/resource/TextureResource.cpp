@@ -29,8 +29,8 @@ TextureResource::~TextureResource()
 //==============================================================================
 Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 {
-	GlDevice& gl = rinit.m_resources._getGlDevice();
-	GlCommandBufferHandle cmdb;
+	GrManager& gr = rinit.m_resources.getGrManager();
+	CommandBufferHandle cmdb;
 	Error err = cmdb.create(&gl); // Always first to avoid assertions (
 	                              // because of the check of the allocator)
 	if(err)

@@ -7,7 +7,7 @@
 #define ANKI_RENDERER_MS_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/renderer/Ez.h"
 
 namespace anki {

@@ -10,7 +10,7 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
 #include "anki/resource/ProgramResource.h"
-#include "anki/Gl.h"
+#include "anki/Gr.h"
 #include "anki/Math.h"
 #include "anki/renderer/Sm.h"
 #include "anki/util/StdTypes.h"

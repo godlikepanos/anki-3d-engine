@@ -4,12 +4,13 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/gl/GrManagerImpl.h"
+#include "anki/gr/GrManager.h"
 #include "anki/gr/gl/RenderingThread.h"
 
 namespace anki {
 
 //==============================================================================
-GrManager::~GrManager()
+GrManagerImpl::~GrManagerImpl()
 {
 	if(m_thread)
 	{
@@ -22,14 +23,14 @@ GrManager::~GrManager()
 }
 
 //==============================================================================
-Error GlManagerImpl::create(GrManagerInitializer& init)
+Error GrManagerImpl::create(GrManagerInitializer& init)
 {
 	Error err = ErrorCode::NONE;
 
 	// Create thread
 	m_thread = 
 		m_manager->getAllocator().newInstance<RenderingThread>(m_manager);
-	if(!thread)
+	if(!m_thread)
 	{
 		err = ErrorCode::OUT_OF_MEMORY;
 	}
@@ -39,7 +40,8 @@ Error GlManagerImpl::create(GrManagerInitializer& init)
 	{
 		err = m_thread->start(init.m_makeCurrentCallback, 
 			init.m_makeCurrentCallbackData, init.m_ctx, 
-			init.m_swapBuffersCallback, init.m_swapBuffersCallbackData);
+			init.m_swapBuffersCallback, init.m_swapBuffersCallbackData,
+			init.m_registerDebugMessages);
 	}
 
 	if(!err)
