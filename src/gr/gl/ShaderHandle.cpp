@@ -20,16 +20,16 @@ class ShaderCreateCommand final: public GlCommand
 public:
 	ShaderHandle m_shader;
 	GLenum m_type;
-	const char* m_source;
+	char* m_source;
 
 	ShaderCreateCommand(ShaderHandle shader, 
-		GLenum type, const char* source)
+		GLenum type, char* source)
 	:	m_shader(shader), 
 		m_type(type), 
 		m_source(source)
 	{}
 
-	Error operator()(CommandBufferImpl* commands)
+	Error operator()(CommandBufferImpl* cmdb)
 	{
 		Error err = m_shader.get().create(m_type, 
 			static_cast<const char*>(m_source));
@@ -38,6 +38,9 @@ public:
 			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
+
+		// Delete source
+		cmdb->getInternalAllocator().deallocate(m_source, 1);
 
 		return err;
 	}
@@ -59,7 +62,7 @@ ShaderHandle::~ShaderHandle()
 Error ShaderHandle::create(CommandBufferHandle& commands, 
 	GLenum type, const void* source, PtrSize sourceSize)
 {
-	ANKI_ASSERT(strlen(static_cast<const char*>(source)) == sourceSize + 1);
+	ANKI_ASSERT(strlen(static_cast<const char*>(source)) == sourceSize - 1);
 	using DeleteCommand = DeleteObjectCommand<ShaderImpl>;
 	using Deleter = DeferredDeleter<ShaderImpl, DeleteCommand>;
 
@@ -69,8 +72,7 @@ Error ShaderHandle::create(CommandBufferHandle& commands,
 		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
 		// Copy source to the command buffer
-		void* src = commands.get().getInternalAllocator().newArray<char>(
-			sourceSize);
+		void* src = commands.get().getInternalAllocator().allocate(sourceSize);
 		memcpy(src, source, sourceSize);
 
 		commands.get().pushBackNewCommand<ShaderCreateCommand>(

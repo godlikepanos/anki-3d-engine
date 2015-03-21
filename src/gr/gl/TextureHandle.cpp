@@ -20,17 +20,20 @@ class CreateTextureCommand: public GlCommand
 public:
 	TextureHandle m_tex;
 	TextureHandle::Initializer m_init;
+	Bool8 m_cleanup = false;
 
 	CreateTextureCommand(
 		TextureHandle tex, 
-		const TextureHandle::Initializer& init)
+		const TextureHandle::Initializer& init,
+		Bool cleanup)
 	:	m_tex(tex), 
-		m_init(init)
+		m_init(init),
+		m_cleanup(cleanup)
 	{}
 
-	Error operator()(CommandBufferImpl* commands)
+	Error operator()(CommandBufferImpl* cmdb)
 	{
-		ANKI_ASSERT(commands);
+		ANKI_ASSERT(cmdb);
 
 		Error err = m_tex.get().create(m_init);
 
@@ -38,6 +41,22 @@ public:
 			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
+
+		if(m_cleanup)
+		{
+			for(U layer = 0; layer < MAX_TEXTURE_LAYERS; ++layer)
+			{
+				for(U level = 0; level < MAX_MIPMAPS; ++level)
+				{
+					SurfaceData& surf = m_init.m_data[level][layer];
+					if(surf.m_ptr)
+					{
+						cmdb->getInternalAllocator().deallocate(
+							const_cast<void*>(surf.m_ptr), 1);
+					}
+				}
+			}
+		}
 
 		return err;
 	}
@@ -168,7 +187,8 @@ Error TextureHandle::create(
 		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
 		// Fire the command
-		commands.get().pushBackNewCommand<CreateTextureCommand>(*this, init);
+		commands.get().pushBackNewCommand<CreateTextureCommand>(
+			*this, init, init.m_copyDataBeforeReturn);
 	}
 
 	return err;

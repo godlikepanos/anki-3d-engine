@@ -26,6 +26,8 @@ Error Fs::init(const ConfigSet&)
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs()._getDepthRt();
 	ANKI_CHECK(m_fb.create(cmdb,fbInit));
 
+	cmdb.flush();
+
 	return ErrorCode::NONE;
 }
 

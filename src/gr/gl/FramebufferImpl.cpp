@@ -42,7 +42,7 @@ Error FramebufferImpl::create(Initializer& init)
 		layers[MAX_COLOR_ATTACHMENTS] = 
 			init.m_depthStencilAttachment.m_layer;
 
-		depthStencilBindingPoint = GL_DEPTH_STENCIL_ATTACHMENT;
+		depthStencilBindingPoint = GL_DEPTH_ATTACHMENT;
 	}
 
 	// Now create the FBO

@@ -127,7 +127,7 @@ public:
 			if(cb != nullptr)
 			{
 				cb->m_del = del;
-				cb->getRefcount().store(1);
+				ptr->GrObject::getRefcount().store(1);
 				cb->m_ptr = ptr;
 
 				m_cb = cb;

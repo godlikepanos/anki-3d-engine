@@ -26,8 +26,7 @@ Error Dp::init(const ConfigSet& config)
 	m_smallDepthRt.setFilter(cmdb, TextureHandle::Filter::LINEAR);
 
 	FramebufferHandle::Initializer fbInit;
-	fbInit.m_colorAttachmentsCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_smallDepthRt;
+	fbInit.m_depthStencilAttachment.m_texture = m_smallDepthRt;
 	ANKI_CHECK(m_smallDepthFb.create(cmdb, fbInit));
 
 	cmdb.finish();

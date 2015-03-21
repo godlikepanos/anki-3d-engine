@@ -16,7 +16,7 @@ namespace anki {
 
 //==============================================================================
 /// Create buffer command
-class BufferCreateCommand: public GlCommand
+class BufferCreateCommand final: public GlCommand
 {
 public:
 	BufferHandle m_buff;
@@ -24,18 +24,20 @@ public:
 	const void* m_data;
 	PtrSize m_size;
 	GLbitfield m_flags;
+	Bool8 m_cleanup;
 
 	BufferCreateCommand(
 		BufferHandle buff, GLenum target, const void* data, PtrSize size,
-		GLenum flags)
+		GLenum flags, Bool cleanup)
 	:	m_buff(buff), 
 		m_target(target), 
 		m_data(data), 
 		m_size(size),
-		m_flags(flags)
+		m_flags(flags),
+		m_cleanup(cleanup)
 	{}
 
-	Error operator()(CommandBufferImpl*) final
+	Error operator()(CommandBufferImpl* cmdb)
 	{
 		Error err = ErrorCode::NONE;
 
@@ -46,6 +48,12 @@ public:
 
 		(void)oldState;
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
+
+		if(m_cleanup)
+		{
+			cmdb->getInternalAllocator().deallocate(
+				const_cast<void*>(m_data), 1);
+		}
 
 		return err;
 	}
@@ -72,7 +80,7 @@ public:
 		m_size(size)
 	{}
 
-	Error operator()(CommandBufferImpl*) final
+	Error operator()(CommandBufferImpl* cmdb) final
 	{
 		ANKI_ASSERT(m_readOffset + m_size <= m_dataSize);
 
@@ -80,6 +88,9 @@ public:
 			static_cast<const U8*>(m_data) + m_readOffset, 
 			m_writeOffset, 
 			m_size);
+
+		ANKI_ASSERT(cmdb);
+		cmdb->getInternalAllocator().deallocate(const_cast<void*>(m_data), 1);
 
 		return ErrorCode::NONE;
 	}
@@ -208,17 +219,19 @@ Error BufferHandle::create(CommandBufferHandle& commands,
 		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
 		// Allocate temp memory for the data
+		Bool cleanup = false;
 		if(data)
 		{
 			void* newData = 
 				commands.get().getInternalAllocator().allocate(size);
 			memcpy(newData, data, size);
 			data = newData;
+			cleanup = true;
 		}
 
 		// Fire the command
 		commands.get().pushBackNewCommand<BufferCreateCommand>(
-			*this, target, data, size, flags);
+			*this, target, data, size, flags, cleanup);
 	}
 
 	return err;
