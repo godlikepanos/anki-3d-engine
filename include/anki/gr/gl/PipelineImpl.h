@@ -32,8 +32,6 @@ public:
 	ANKI_USE_RESULT Error create(
 		const ShaderHandle* progsBegin, const ShaderHandle* progsEnd);
 
-	ShaderHandle getAttachedProgram(GLenum type) const;
-
 	/// Bind the pipeline to the state
 	void bind();
 

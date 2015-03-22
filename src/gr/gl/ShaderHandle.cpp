@@ -19,11 +19,11 @@ class ShaderCreateCommand final: public GlCommand
 {
 public:
 	ShaderHandle m_shader;
-	GLenum m_type;
+	ShaderType m_type;
 	char* m_source;
 
 	ShaderCreateCommand(ShaderHandle shader, 
-		GLenum type, char* source)
+		ShaderType type, char* source)
 	:	m_shader(shader), 
 		m_type(type), 
 		m_source(source)
@@ -60,7 +60,7 @@ ShaderHandle::~ShaderHandle()
 
 //==============================================================================
 Error ShaderHandle::create(CommandBufferHandle& commands, 
-	GLenum type, const void* source, PtrSize sourceSize)
+	ShaderType type, const void* source, PtrSize sourceSize)
 {
 	ANKI_ASSERT(strlen(static_cast<const char*>(source)) == sourceSize - 1);
 	using DeleteCommand = DeleteObjectCommand<ShaderImpl>;
@@ -80,12 +80,6 @@ Error ShaderHandle::create(CommandBufferHandle& commands,
 	}
 
 	return err;
-}
-
-//==============================================================================
-GLenum ShaderHandle::getType() const
-{
-	return (get().serializeOnGetter()) ? GL_NONE : get().getType();
 }
 
 } // end namespace anki

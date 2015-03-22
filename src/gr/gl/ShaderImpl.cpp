@@ -17,14 +17,19 @@
 namespace anki {
 
 //==============================================================================
-Error ShaderImpl::create(GLenum type, const CString& source)
+Error ShaderImpl::create(ShaderType type, const CString& source)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(!isCreated());
 
 	Error err = ErrorCode::NONE;
 
+	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER, 
+		GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER,
+		GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER}};
+
 	m_type = type;
+	m_glType = gltype[U(type)];
 
 	// 1) Append some things in the source string
 	//
@@ -51,7 +56,7 @@ Error ShaderImpl::create(GLenum type, const CString& source)
 	{
 		const char* sourceStrs[1] = {nullptr};
 		sourceStrs[0] = &fullSrc[0];
-		m_glName = glCreateShaderProgramv(m_type, 1, sourceStrs);
+		m_glName = glCreateShaderProgramv(m_glType, 1, sourceStrs);
 		if(m_glName == 0)
 		{
 			err = ErrorCode::FUNCTION_FAILED;
@@ -63,7 +68,7 @@ Error ShaderImpl::create(GLenum type, const CString& source)
 	{
 		const char* ext;
 
-		switch(m_type)
+		switch(m_glType)
 		{
 		case GL_VERTEX_SHADER:
 			ext = "vert";
@@ -169,7 +174,7 @@ Error ShaderImpl::handleError(String& src)
 	if(!err)
 	{
 		ANKI_LOGE("Shader compilation failed (type %x):\n%s\n%s\n%s\n%s",
-			m_type, padding, &compilerLog[0], padding, &prettySrc[0]);
+			m_glType, padding, &compilerLog[0], padding, &prettySrc[0]);
 	}
 
 	lines.destroy(alloc);

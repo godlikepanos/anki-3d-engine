@@ -54,8 +54,14 @@ public:
 		ResourceManager& manager,
 		TempResourceString& out);
 
+	ShaderType getType() const
+	{
+		return m_type;
+	}
+
 private:
 	ShaderHandle m_shader;
+	ShaderType m_type;
 }; 
 /// @}
 

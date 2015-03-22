@@ -43,21 +43,17 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 	// Create
 	GrManager& gr = manager.getGrManager();
 	CommandBufferHandle cmdb;
-	err = cmdb.create(&gr);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(cmdb.create(&gr));
 
-	err = m_shader.create(cmdb, 
-		computeGlShaderType(pars.getShaderType()), &source[0], 
-		source.getLength() + 1);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(
+		m_shader.create(
+		cmdb, 
+		pars.getShaderType(), &source[0], 
+		source.getLength() + 1));
 
 	cmdb.flush();
+
+	m_type = pars.getShaderType();
 
 	return err;
 }
@@ -80,17 +76,9 @@ Error ShaderResource::createToCache(
 	TempResourceString unique;
 	TempResourceString::ScopeDestroyer uniqued(&unique, alloc);
 
-	err = unique.create(alloc, filename);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(unique.create(alloc, filename));
 
-	err = unique.append(alloc, preAppendedSrcCode);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(unique.append(alloc, preAppendedSrcCode));
 
 	U64 h = computeHash(&unique[0], unique.getLength());
 
@@ -102,16 +90,13 @@ Error ShaderResource::createToCache(
 	TempResourceString newFilename;
 	TempResourceString::ScopeDestroyer newFilenamed(&newFilename, alloc);
 
-	err = newFilename.sprintf(
+	ANKI_CHECK(
+		newFilename.sprintf(
 		alloc,
 		"%s/%s%s.glsl", 
 		&manager._getCacheDirectory()[0],
 		&filenamePrefix[0],
-		&suffix[0]);
-	if(err)
-	{
-		return err;
-	}
+		&suffix[0]));
 
 	if(fileExists(newFilename.toCString()))
 	{
@@ -125,45 +110,20 @@ Error ShaderResource::createToCache(
 
 	TempResourceString fixedFname;
 	TempResourceString::ScopeDestroyer fixedFnamed(&fixedFname, alloc);
-	err = manager.fixResourceFilename(filename, fixedFname);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(manager.fixResourceFilename(filename, fixedFname));
 
 	File file;
-	err = file.open(fixedFname.toCString(), File::OpenFlag::READ);
-	if(err)
-	{
-		return err;
-	}
-	err = file.readAllText(TempResourceAllocator<char>(alloc), src);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(file.open(fixedFname.toCString(), File::OpenFlag::READ));
+	ANKI_CHECK(file.readAllText(TempResourceAllocator<char>(alloc), src));
 
 	TempResourceString srcfull;
 	TempResourceString::ScopeDestroyer srcfulld(&srcfull, alloc);
-	err = srcfull.sprintf(alloc, "%s%s", &preAppendedSrcCode[0], &src[0]);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(srcfull.sprintf(alloc, "%s%s", &preAppendedSrcCode[0], &src[0]));
 
 	// Write cached file
 	File f;
-	err = f.open(newFilename.toCString(), File::OpenFlag::WRITE);
-	if(err)
-	{
-		return err;
-	}
-
-	err = f.writeText("%s\n", &srcfull[0]);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(f.open(newFilename.toCString(), File::OpenFlag::WRITE));
+	ANKI_CHECK(f.writeText("%s\n", &srcfull[0]));
 
 	out = std::move(newFilename);
 	return err;

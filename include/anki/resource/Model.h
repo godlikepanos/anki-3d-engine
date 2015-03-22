@@ -92,7 +92,6 @@ private:
 	/// Called by @a create multiple times to create and populate a single
 	/// vertex descriptor
 	static ANKI_USE_RESULT Error createVertexDesc(
-		const ShaderHandle& prog,
 		const Mesh& mesh,
 		CommandBufferHandle& vertexJobs);
 

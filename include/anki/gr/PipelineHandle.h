@@ -39,9 +39,6 @@ public:
 	/// Bind it to the state
 	void bind(CommandBufferHandle& commands);
 
-	/// Get an attached program. It may serialize
-	ShaderHandle getAttachedProgram(GLenum type) const;
-
 public:
 	ANKI_USE_RESULT Error commonConstructor(CommandBufferHandle& commands,
 		const ShaderHandle* progsBegin, const ShaderHandle* progsEnd);

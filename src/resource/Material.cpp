@@ -302,8 +302,7 @@ ShaderResourcePointer& Material::getProgram(
 
 	if(out.isLoaded())
 	{
-		ANKI_ASSERT(
-			computeShaderTypeIndex(out->getGrShader().getType()) == type);
+		ANKI_ASSERT(out->getType() == type);
 	}
 
 	return out;

@@ -126,20 +126,5 @@ void PipelineHandle::bind(CommandBufferHandle& commands)
 	commands.get().pushBackNewCommand<BindPipelineCommand>(*this);
 }
 
-//==============================================================================
-ShaderHandle PipelineHandle::getAttachedProgram(GLenum type) const
-{
-	ANKI_ASSERT(isCreated());
-	Error err = get().serializeOnGetter();
-	if(!err)
-	{
-		return get().getAttachedProgram(type);
-	}
-	else
-	{
-		return ShaderHandle();
-	}
-}
-
 } // end namespace anki
 

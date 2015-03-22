@@ -25,13 +25,7 @@ public:
 
 	/// Create shader program.
 	ANKI_USE_RESULT Error create(CommandBufferHandle& commands, 
-		GLenum shaderType, const void* source, PtrSize sourceSize);
-
-	/// @name Accessors
-	/// They will sync client with server.
-	/// @{
-	GLenum getType() const;
-	/// @}
+		ShaderType shaderType, const void* source, PtrSize sourceSize);
 };
 /// @}
 

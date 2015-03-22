@@ -27,7 +27,6 @@ ModelPatchBase::~ModelPatchBase()
 
 //==============================================================================
 Error ModelPatchBase::createVertexDesc(
-	const ShaderHandle& prog,
 	const Mesh& mesh,
 	CommandBufferHandle& vertexJobs)
 {
@@ -164,7 +163,6 @@ Error ModelPatchBase::create(GrManager* gl)
 		for(U pass = 0; pass < mtl.getPassesCount(); ++pass)
 		{
 			RenderingKey key((Pass)pass, lod, false);
-			ShaderHandle prog;
 			const Mesh* mesh;
 
 			// Get mesh
@@ -172,21 +170,11 @@ Error ModelPatchBase::create(GrManager* gl)
 			RenderingKey meshKey = key;
 			meshKey.m_lod = std::min(key.m_lod, (U8)(getMeshesCount() - 1));
 			mesh = &getMesh(meshKey);
-
-			// Get shader prog
-			ANKI_ASSERT(getMaterial().getLevelsOfDetail() > 0);
-			RenderingKey shaderKey = key;
-			shaderKey.m_lod = std::min(key.m_lod, 
-				(U8)(getMaterial().getLevelsOfDetail() - 1));
-
-			PipelineHandle ppline;
-			ANKI_CHECK(m_mtl->getProgramPipeline(shaderKey, ppline));
-			prog = ppline.getAttachedProgram(GL_VERTEX_SHADER);
 			
 			// Create vert descriptor
 			CommandBufferHandle vertJobs;
 			ANKI_CHECK(vertJobs.create(gl));
-			ANKI_CHECK(createVertexDesc(prog, *mesh, vertJobs));
+			ANKI_CHECK(createVertexDesc(*mesh, vertJobs));
 
 			m_vertJobs[getVertexDescIdx(key)] = vertJobs;
 		}

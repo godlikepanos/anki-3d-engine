@@ -28,16 +28,17 @@ Error PipelineImpl::create(
 
 	for(U i = 0; i < m_shaders.size(); i++)
 	{
-		ShaderHandle& prog = m_shaders[i];
+		ShaderHandle& shader = m_shaders[i];
 
-		if(prog.isCreated())
+		if(shader.isCreated())
 		{
 			GLbitfield bit;
 			GLenum gltype = 
 				computeGlShaderType(static_cast<ShaderType>(i), &bit);
-			ANKI_ASSERT(prog.getType() == gltype && "Attached wrong shader");
+			ANKI_ASSERT(shader.get().getGlType() == gltype 
+				&& "Attached wrong shader");
 			(void)gltype;
-			glUseProgramStages(m_glName, bit, prog.get().getGlName());
+			glUseProgramStages(m_glName, bit, shader.get().getGlName());
 		}
 	}
 
@@ -90,7 +91,7 @@ void PipelineImpl::attachProgramsInternal(
 	while(count-- != 0)
 	{
 		const ShaderHandle& prog = progs[count];
-		ShaderType type = computeShaderTypeIndex(prog.get().getType());
+		ShaderType type = prog.get().getType();
 		U idx = enumToType(type);
 
 		ANKI_ASSERT(!m_shaders[idx].isCreated() && "Attaching the same");
@@ -127,17 +128,6 @@ void PipelineImpl::bind()
 {
 	ANKI_ASSERT(isCreated());
 	glBindProgramPipeline(m_glName);
-}
-
-//==============================================================================
-ShaderHandle PipelineImpl::getAttachedProgram(GLenum type) const
-{
-	ANKI_ASSERT(isCreated());
-	ShaderType stype = computeShaderTypeIndex(type);
-	U idx = enumToType(stype);
-	ShaderHandle prog = m_shaders[idx];
-	ANKI_ASSERT(prog.isCreated() && "Asking for non-created program");
-	return prog;
 }
 
 } // end namespace anki

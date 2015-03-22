@@ -36,17 +36,24 @@ public:
 	/// @param shaderType The type of the shader in the program
 	/// @param source The shader's source
 	ANKI_USE_RESULT Error create(
-		GLenum shaderType, 
+		ShaderType shaderType, 
 		const CString& source);
 
-	GLenum getType() const
+	GLenum getGlType() const
+	{
+		ANKI_ASSERT(isCreated());
+		return m_glType;
+	}
+
+	ShaderType getType() const
 	{
 		ANKI_ASSERT(isCreated());
 		return m_type;
 	}
 
 private:
-	GLenum m_type = 0;
+	GLenum m_glType = 0;
+	ShaderType m_type;
 
 	void destroy();
 
