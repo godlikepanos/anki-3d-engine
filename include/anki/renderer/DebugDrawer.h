@@ -83,8 +83,8 @@ private:
 		Vec4 m_color;
 	};
 
-	ProgramResourcePointer m_frag;
-	ProgramResourcePointer m_vert;
+	ShaderResourcePointer m_frag;
+	ShaderResourcePointer m_vert;
 	PipelineHandle m_ppline;
 	CommandBufferHandle m_jobs;
 

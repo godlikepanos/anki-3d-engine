@@ -7,7 +7,7 @@
 #define ANKI_RENDERER_SSAO_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
 #include "anki/Gr.h"
@@ -39,9 +39,9 @@ private:
 	FramebufferHandle m_vblurFb;
 	FramebufferHandle m_hblurFb;
 
-	ProgramResourcePointer m_ssaoFrag;
-	ProgramResourcePointer m_hblurFrag;
-	ProgramResourcePointer m_vblurFrag;
+	ShaderResourcePointer m_ssaoFrag;
+	ShaderResourcePointer m_hblurFrag;
+	ShaderResourcePointer m_vblurFrag;
 	PipelineHandle m_ssaoPpline;
 	PipelineHandle m_hblurPpline;
 	PipelineHandle m_vblurPpline;

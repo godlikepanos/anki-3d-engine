@@ -37,7 +37,7 @@ public:
 	void takeScreenshot(const char* filename);
 
 private:
-	ProgramResourcePointer m_blitFrag;
+	ShaderResourcePointer m_blitFrag;
 	PipelineHandle m_blitPpline;
 
 	/// Optimize job chain

@@ -45,7 +45,7 @@ Error MainRenderer::create(
 	if(err) return err;
 
 	err = createDrawQuadPipeline(
-		m_blitFrag->getGlProgram(), m_blitPpline);
+		m_blitFrag->getGrShader(), m_blitPpline);
 	if(err) return err;
 
 	ANKI_LOGI("Main renderer initialized. Rendering size %dx%d", 

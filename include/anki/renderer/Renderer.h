@@ -10,7 +10,7 @@
 #include "anki/Math.h"
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/TextureResource.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/Gr.h"
 #include "anki/util/HighRezTimer.h"
 #include "anki/scene/Forward.h"
@@ -187,9 +187,9 @@ public:
 		return m_tilesCountXY;
 	}
 
-	const ShaderHandle& getDrawQuadVertexProgram() const
+	const ShaderHandle& getDrawQuadVertexShader() const
 	{
-		return m_drawQuadVert->getGlProgram();
+		return m_drawQuadVert->getGrShader();
 	}
 
 	FramebufferHandle& getDefaultFramebuffer()
@@ -313,7 +313,7 @@ private:
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
 	BufferHandle m_quadPositionsBuff; ///< The VBO for quad positions
-	ProgramResourcePointer m_drawQuadVert;
+	ShaderResourcePointer m_drawQuadVert;
 	/// @}
 
 	/// @name Optimization vars

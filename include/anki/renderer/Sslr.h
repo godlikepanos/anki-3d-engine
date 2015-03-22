@@ -34,12 +34,12 @@ private:
 	U32 m_height;
 
 	// 1st pass
-	ProgramResourcePointer m_reflectionFrag;
+	ShaderResourcePointer m_reflectionFrag;
 	PipelineHandle m_reflectionPpline;
 	SamplerHandle m_depthMapSampler;
 
 	// 2nd pass: blit
-	ProgramResourcePointer m_blitFrag;
+	ShaderResourcePointer m_blitFrag;
 	PipelineHandle m_blitPpline;
 
 	Sslr(Renderer* r)

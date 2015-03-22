@@ -9,7 +9,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/Gr.h"
 #include "anki/Math.h"
 #include "anki/renderer/Sm.h"
@@ -93,8 +93,8 @@ private:
 	/// @}
 
 	// Light shaders
-	ProgramResourcePointer m_lightVert;
-	ProgramResourcePointer m_lightFrag;
+	ShaderResourcePointer m_lightVert;
+	ShaderResourcePointer m_lightFrag;
 	PipelineHandle m_lightPpline;
 
 	/// Shadow mapping

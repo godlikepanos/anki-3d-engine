@@ -95,7 +95,7 @@ private:
 	Sslr m_sslr;
 
 	FramebufferHandle m_fb;
-	ProgramResourcePointer m_frag;
+	ShaderResourcePointer m_frag;
 	PipelineHandle m_ppline;
 	TextureHandle m_rt;
 

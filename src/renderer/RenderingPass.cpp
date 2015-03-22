@@ -90,7 +90,7 @@ Error BlurringRenderingPass::initBlurring(
 			pps[i].toCString(), "r_"));
 
 		ANKI_CHECK(r.createDrawQuadPipeline(
-			dir.m_frag->getGlProgram(), dir.m_ppline));
+			dir.m_frag->getGrShader(), dir.m_ppline));
 	}
 
 	cmdb.finish();

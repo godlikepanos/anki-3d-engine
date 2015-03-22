@@ -371,7 +371,7 @@ Error Renderer::createDrawQuadPipeline(
 	if(!err)
 	{
 		Array<ShaderHandle, 2> progs = 
-			{{m_drawQuadVert->getGlProgram(), frag}};
+			{{m_drawQuadVert->getGrShader(), frag}};
 
 		err = ppline.create(cmdBuff, &progs[0], &progs[0] + 2);
 	}

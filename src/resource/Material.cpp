@@ -7,7 +7,7 @@
 #include "anki/resource/MaterialProgramCreator.h"
 #include "anki/core/App.h"
 #include "anki/util/Logger.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/util/Hash.h"
 #include "anki/util/File.h"
@@ -295,15 +295,15 @@ U Material::getShaderIndex(const RenderingKey key, ShaderType type) const
 }
 
 //==============================================================================
-ProgramResourcePointer& Material::getProgram(
+ShaderResourcePointer& Material::getProgram(
 	const RenderingKey key, ShaderType type)
 {
-	ProgramResourcePointer& out = m_progs[getShaderIndex(key, type)];
+	ShaderResourcePointer& out = m_progs[getShaderIndex(key, type)];
 
 	if(out.isLoaded())
 	{
 		ANKI_ASSERT(
-			computeShaderTypeIndex(out->getGlProgram().getType()) == type);
+			computeShaderTypeIndex(out->getGrShader().getType()) == type);
 	}
 
 	return out;
@@ -340,18 +340,18 @@ Error Material::getProgramPipeline(
 		U progCount = 0;
 
 		progs[progCount++] = 
-			getProgram(key, ShaderType::VERTEX)->getGlProgram();
+			getProgram(key, ShaderType::VERTEX)->getGrShader();
 
 		if(key.m_tessellation)
 		{
 			progs[progCount++] = getProgram(
-				key, ShaderType::TESSELLATION_CONTROL)->getGlProgram();
+				key, ShaderType::TESSELLATION_CONTROL)->getGrShader();
 			progs[progCount++] = getProgram(
-				key, ShaderType::TESSELLATION_EVALUATION)->getGlProgram();
+				key, ShaderType::TESSELLATION_EVALUATION)->getGrShader();
 		}
 
 		progs[progCount++] = 
-			getProgram(key, ShaderType::FRAGMENT)->getGlProgram();
+			getProgram(key, ShaderType::FRAGMENT)->getGrShader();
 
 		GrManager& gl = m_resources->getGrManager();
 		CommandBufferHandle cmdBuff;
@@ -560,7 +560,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 					ANKI_CHECK(createProgramSourceToCache(src, filename));
 
 					RenderingKey key((Pass)pid, level, tess);
-					ProgramResourcePointer& progr = getProgram(key, shader);
+					ShaderResourcePointer& progr = getProgram(key, shader);
 					ANKI_CHECK(
 						progr.load(filename.toCString(), &rinit.m_resources));
 

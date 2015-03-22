@@ -52,7 +52,7 @@ Error Sslr::init(const ConfigSet& config)
 	}
 
 	err = m_r->createDrawQuadPipeline(
-		m_reflectionFrag->getGlProgram(), m_reflectionPpline);
+		m_reflectionFrag->getGrShader(), m_reflectionPpline);
 	if(err)
 	{
 		return err;
@@ -78,7 +78,7 @@ Error Sslr::init(const ConfigSet& config)
 	{
 		return err;
 	}
-	err = m_r->createDrawQuadPipeline(m_blitFrag->getGlProgram(), m_blitPpline);
+	err = m_r->createDrawQuadPipeline(m_blitFrag->getGrShader(), m_blitPpline);
 	if(err)
 	{
 		return err;

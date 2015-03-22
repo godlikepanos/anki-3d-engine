@@ -28,7 +28,7 @@ class AsyncLoader;
 
 ANKI_RESOURCE(Animation, AnimationResourcePointer)
 ANKI_RESOURCE(TextureResource, TextureResourcePointer)
-ANKI_RESOURCE(ProgramResource, ProgramResourcePointer)
+ANKI_RESOURCE(ShaderResource, ShaderResourcePointer)
 ANKI_RESOURCE(Material, MaterialResourcePointer)
 ANKI_RESOURCE(Mesh, MeshResourcePointer)
 ANKI_RESOURCE(BucketMesh, BucketMeshResourcePointer)
@@ -129,7 +129,7 @@ private:
 class ResourceManager: 
 	ANKI_RESOURCE(Animation),
 	ANKI_RESOURCE(TextureResource),
-	ANKI_RESOURCE(ProgramResource),
+	ANKI_RESOURCE(ShaderResource),
 	ANKI_RESOURCE(Material),
 	ANKI_RESOURCE(Mesh),
 	ANKI_RESOURCE(BucketMesh),

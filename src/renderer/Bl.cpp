@@ -5,7 +5,7 @@
 
 #include "anki/renderer/Bl.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 
 namespace anki {
 
@@ -38,7 +38,7 @@ void Bl::init(const ConfigSet& initializer)
 			"post-processing stage FBO") << e;
 	}
 
-	hBlurSProg.load(ProgramResource::createSrcCodeToCache(
+	hBlurSProg.load(ShaderResource::createSrcCodeToCache(
 		"shaders/PpsBlurGeneric.glsl", "#define HPASS\n").c_str());
 
 	// Vertical
@@ -54,7 +54,7 @@ void Bl::init(const ConfigSet& initializer)
 			"post-processing stage FBO") << e;
 	}
 
-	vBlurSProg.load(ProgramResource::createSrcCodeToCache(
+	vBlurSProg.load(ShaderResource::createSrcCodeToCache(
 		"shaders/PpsBlurGeneric.glsl", "#define VPASS\n").c_str());
 
 	// Side blur

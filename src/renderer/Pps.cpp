@@ -76,7 +76,7 @@ Error Pps::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_frag.loadToCache(&getResourceManager(),
 		"shaders/Pps.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_r->createDrawQuadPipeline(m_frag->getGlProgram(), m_ppline));
+	ANKI_CHECK(m_r->createDrawQuadPipeline(m_frag->getGrShader(), m_ppline));
 
 	cmdBuff.finish();
 

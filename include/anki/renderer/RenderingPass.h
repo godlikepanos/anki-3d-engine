@@ -10,7 +10,7 @@
 #include "anki/Gr.h"
 #include "anki/core/Timestamp.h"
 #include "anki/resource/ResourceManager.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 
 namespace anki {
 
@@ -71,7 +71,7 @@ protected:
 	public:
 		FramebufferHandle m_fb;
 		TextureHandle m_rt; 
-		ProgramResourcePointer m_frag;
+		ShaderResourcePointer m_frag;
 		PipelineHandle m_ppline;
 	};
 

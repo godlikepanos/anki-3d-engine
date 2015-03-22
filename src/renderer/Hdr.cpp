@@ -89,7 +89,7 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	if(err) return err;
 
 	err = m_r->createDrawQuadPipeline(
-		m_toneFrag->getGlProgram(), m_tonePpline);
+		m_toneFrag->getGrShader(), m_tonePpline);
 	if(err) return err;
 
 	const char* SHADER_FILENAME = 
@@ -112,7 +112,7 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	if(err) return err;
 
 	err = m_r->createDrawQuadPipeline(
-		m_hblurFrag->getGlProgram(), m_hblurPpline);
+		m_hblurFrag->getGrShader(), m_hblurPpline);
 	if(err) return err;
 
 	pps.destroy(getAllocator());
@@ -131,7 +131,7 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	if(err) return err;
 
 	err = m_r->createDrawQuadPipeline(
-		m_vblurFrag->getGlProgram(), m_vblurPpline);
+		m_vblurFrag->getGrShader(), m_vblurPpline);
 	if(err) return err;
 
 	// Set timestamps

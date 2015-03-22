@@ -228,7 +228,7 @@ Error Is::initInternal(const ConfigSet& config)
 	}
 
 	err = m_lightPpline.create(cmdBuff, 
-		{m_lightVert->getGlProgram(), m_lightFrag->getGlProgram()});
+		{m_lightVert->getGrShader(), m_lightFrag->getGrShader()});
 	if(err)
 	{
 		return err;

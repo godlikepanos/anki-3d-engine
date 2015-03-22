@@ -5,7 +5,7 @@
 
 #include "anki/renderer/Dbg.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"

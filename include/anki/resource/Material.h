@@ -7,7 +7,7 @@
 #define ANKI_RESOURCE_MATERIAL_H
 
 #include "anki/resource/ResourceManager.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/resource/RenderingKey.h"
 #include "anki/Math.h"
 #include "anki/util/Visitor.h"
@@ -370,7 +370,7 @@ private:
 	ResourceDArray<MaterialVariable*> m_vars;
 	Dictionary<MaterialVariable*> m_varDict;
 
-	ResourceDArray<ProgramResourcePointer> m_progs;
+	ResourceDArray<ShaderResourcePointer> m_progs;
 	ResourceDArray<PipelineHandle> m_pplines;
 
 	U32 m_shaderBlockSize;
@@ -379,7 +379,7 @@ private:
 	U64 m_hash;
 
 	/// Get a program resource
-	ProgramResourcePointer& getProgram(
+	ShaderResourcePointer& getProgram(
 		const RenderingKey key, ShaderType shaderId);
 
 	/// Parse what is within the @code <material></material> @endcode

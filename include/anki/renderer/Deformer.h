@@ -10,7 +10,7 @@
 
 namespace anki {
 
-class ProgramResource;
+class ShaderResource;
 class SkinPatchNode;
 class SkinNode;
 
@@ -34,10 +34,10 @@ public:
 
 private:
 	/// Shader program that deforms all attribs
-	ProgramResourcePointer tfHwSkinningAllSProg;
+	ShaderResourcePointer tfHwSkinningAllSProg;
 
 	/// Shader program that deforms only the position attribute
-	ProgramResourcePointer tfHwSkinningPosSProg;
+	ShaderResourcePointer tfHwSkinningPosSProg;
 
 	void init();
 };

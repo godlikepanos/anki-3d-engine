@@ -7,7 +7,7 @@
 #include "anki/resource/Material.h"
 #include "anki/resource/Mesh.h"
 #include "anki/resource/MeshLoader.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/misc/Xml.h"
 #include "anki/util/Logger.h"
 #include "anki/physics/PhysicsWorld.h"

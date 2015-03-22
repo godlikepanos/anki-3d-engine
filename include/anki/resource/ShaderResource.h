@@ -14,18 +14,17 @@ namespace anki {
 /// @addtogroup resource
 /// @{
 
-// TODO rename this class
-/// Shader program resource
-class ProgramResource
+/// Shader resource
+class ShaderResource
 {
 public:
-	ProgramResource(ResourceAllocator<U8>&)
+	ShaderResource(ResourceAllocator<U8>&)
 	{}
 
-	~ProgramResource()
+	~ShaderResource()
 	{}
 
-	const ShaderHandle& getGlProgram() const
+	const ShaderHandle& getGrShader() const
 	{
 		return m_shader;
 	}

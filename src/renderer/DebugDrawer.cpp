@@ -5,7 +5,7 @@
 
 #include "anki/renderer/DebugDrawer.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/Collision.h"
 #include "anki/Scene.h"
 #include "anki/resource/TextureResource.h"
@@ -50,7 +50,7 @@ Error DebugDrawer::create(Renderer* r)
 	if(!err)
 	{
 		err = m_ppline.create(jobs, 
-			{m_vert->getGlProgram(), m_frag->getGlProgram()});
+			{m_vert->getGrShader(), m_frag->getGrShader()});
 	}
 
 	if(!err)

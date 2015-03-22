@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/renderer/Drawer.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/scene/FrustumComponent.h"
 #include "anki/resource/Material.h"
 #include "anki/scene/RenderComponent.h"

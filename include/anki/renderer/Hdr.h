@@ -9,7 +9,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/Gr.h"
 #include "anki/resource/TextureResource.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/resource/Resource.h"
 #include "anki/core/Timestamp.h"
 
@@ -75,9 +75,9 @@ private:
 	FramebufferHandle m_hblurFb;
 	FramebufferHandle m_vblurFb;
 
-	ProgramResourcePointer m_toneFrag;
-	ProgramResourcePointer m_hblurFrag;
-	ProgramResourcePointer m_vblurFrag;
+	ShaderResourcePointer m_toneFrag;
+	ShaderResourcePointer m_hblurFrag;
+	ShaderResourcePointer m_vblurFrag;
 
 	PipelineHandle m_tonePpline;
 	PipelineHandle m_hblurPpline;

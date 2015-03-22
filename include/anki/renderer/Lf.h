@@ -9,7 +9,7 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/Gr.h"
 #include "anki/resource/Resource.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/resource/TextureResource.h"
 
 namespace anki {
@@ -53,26 +53,26 @@ private:
 	// Occlusion query
 	Array<BufferHandle, 3> m_positionsVertBuff;
 	BufferHandle m_mvpBuff;
-	ProgramResourcePointer m_occlusionVert;
-	ProgramResourcePointer m_occlusionFrag;
+	ShaderResourcePointer m_occlusionVert;
+	ShaderResourcePointer m_occlusionFrag;
 	PipelineHandle m_occlusionPpline;
 
 	// Pseudo flares
-	ProgramResourcePointer m_pseudoFrag;
+	ShaderResourcePointer m_pseudoFrag;
 	PipelineHandle m_pseudoPpline;
 	TextureResourcePointer m_lensDirtTex;
 	U8 m_maxSpritesPerFlare;
 	U8 m_maxFlares;
 
 	// Sprite billboards
-	ProgramResourcePointer m_realVert;
-	ProgramResourcePointer m_realFrag;
+	ShaderResourcePointer m_realVert;
+	ShaderResourcePointer m_realFrag;
 	PipelineHandle m_realPpline;
 	Array<BufferHandle, 3> m_flareDataBuff;
 	U32 m_flareSize;
 
 	// Final HDR blit
-	ProgramResourcePointer m_blitFrag;
+	ShaderResourcePointer m_blitFrag;
 	PipelineHandle m_blitPpline;
 
 	ANKI_USE_RESULT Error initPseudo(

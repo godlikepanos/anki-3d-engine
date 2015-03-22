@@ -208,7 +208,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	if(err) return err;
 
 	err = m_r->createDrawQuadPipeline(
-		m_ssaoFrag->getGlProgram(), m_ssaoPpline);
+		m_ssaoFrag->getGrShader(), m_ssaoPpline);
 	if(err) return err;
 
 	// blurring progs
@@ -229,7 +229,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	if(err) return err;
 
 	err = m_r->createDrawQuadPipeline(
-		m_hblurFrag->getGlProgram(), m_hblurPpline);
+		m_hblurFrag->getGrShader(), m_hblurPpline);
 	if(err) return err;
 
 	pps.destroy(getAllocator());
@@ -246,7 +246,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	if(err) return err;
 
 	err = m_r->createDrawQuadPipeline(
-		m_vblurFrag->getGlProgram(), m_vblurPpline);
+		m_vblurFrag->getGrShader(), m_vblurPpline);
 	if(err) return err;
 
 	cmdb.flush();

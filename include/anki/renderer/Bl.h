@@ -9,12 +9,12 @@
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/Gr.h"
 
 namespace anki {
 
-class ProgramResource;
+class ShaderResource;
 
 /// Blurring rendering pass
 class Bl: public RenderingPass
@@ -64,9 +64,9 @@ private:
 	Fbo vBlurFbo; ///< Fbo that writes to postPassSProg
 	Fbo sideBlurFbo;
 
-	ProgramResourcePointer hBlurSProg;
-	ProgramResourcePointer vBlurSProg;
-	ProgramResourcePointer sideBlurSProg;
+	ShaderResourcePointer hBlurSProg;
+	ShaderResourcePointer vBlurSProg;
+	ShaderResourcePointer sideBlurSProg;
 
 	Texture blurFai; ///< Temp FAI for blurring
 	TextureResourcePointer sideBlurMap;

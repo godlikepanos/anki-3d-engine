@@ -5,7 +5,7 @@
 
 #include "anki/renderer/Tiler.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/util/Rtti.h"
@@ -102,7 +102,7 @@ Error Tiler::initInternal()
 		"shaders/TilerMinMax.frag.glsl", pps.toCString(), "r_"));
 
 	ANKI_CHECK(
-		m_r->createDrawQuadPipeline(m_frag->getGlProgram(), m_ppline));
+		m_r->createDrawQuadPipeline(m_frag->getGrShader(), m_ppline));
 
 	// Create FB
 	ANKI_CHECK(

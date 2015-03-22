@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/resource/ProgramPrePreprocessor.h"
 #include "anki/resource/ResourceManager.h"
 #include "anki/core/App.h" // To get cache dir
@@ -15,13 +15,13 @@
 namespace anki {
 
 //==============================================================================
-Error ProgramResource::load(const CString& filename, ResourceInitializer& init)
+Error ShaderResource::load(const CString& filename, ResourceInitializer& init)
 {
 	return load(filename, " ", init.m_resources);
 }
 
 //==============================================================================
-Error ProgramResource::load(const CString& filename, const CString& extraSrc,
+Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 	ResourceManager& manager)
 {
 	Error err = ErrorCode::NONE;
@@ -63,7 +63,7 @@ Error ProgramResource::load(const CString& filename, const CString& extraSrc,
 }
 
 //==============================================================================
-Error ProgramResource::createToCache(
+Error ShaderResource::createToCache(
 	const CString& filename, const CString& preAppendedSrcCode, 
 	const CString& filenamePrefix, ResourceManager& manager,
 	TempResourceString& out)

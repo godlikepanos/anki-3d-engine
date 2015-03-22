@@ -11,7 +11,7 @@
 #include "anki/resource/Model.h"
 #include "anki/resource/Script.h"
 #include "anki/resource/DummyRsrc.h"
-#include "anki/resource/ProgramResource.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/resource/ParticleEmitterResource.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/util/Logger.h"
@@ -76,7 +76,7 @@ Error ResourceManager::create(Initializer& init)
 
 	ANKI_RESOURCE(Animation)
 	ANKI_RESOURCE(TextureResource)
-	ANKI_RESOURCE(ProgramResource)
+	ANKI_RESOURCE(ShaderResource)
 	ANKI_RESOURCE(Material)
 	ANKI_RESOURCE(Mesh)
 	ANKI_RESOURCE(BucketMesh)

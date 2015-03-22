@@ -78,7 +78,7 @@ Error Lf::initPseudo(const ConfigSet& config,
 	if(err) return err;
 
 	err = m_r->createDrawQuadPipeline(
-		m_pseudoFrag->getGlProgram(), m_pseudoPpline);
+		m_pseudoFrag->getGrShader(), m_pseudoPpline);
 	if(err) return err;
 
 	// Textures
@@ -121,7 +121,7 @@ Error Lf::initSprite(const ConfigSet& config,
 	}
 
 	err = m_realPpline.create(cmdBuff,
-		{m_realVert->getGlProgram(), m_realFrag->getGlProgram()});
+		{m_realVert->getGrShader(), m_realFrag->getGrShader()});
 	if(err)
 	{
 		return err;
@@ -192,7 +192,7 @@ Error Lf::initOcclusion(
 	}
 
 	err = m_occlusionPpline.create(cmdBuff,
-		{m_occlusionVert->getGlProgram(), m_occlusionFrag->getGlProgram()});
+		{m_occlusionVert->getGrShader(), m_occlusionFrag->getGrShader()});
 	if(err)
 	{
 		return err;
@@ -262,7 +262,7 @@ Error Lf::initInternal(const ConfigSet& config)
 	}
 
 	err = m_r->createDrawQuadPipeline(
-		m_blitFrag->getGlProgram(), m_blitPpline);
+		m_blitFrag->getGrShader(), m_blitPpline);
 	if(err)
 	{
 		return err;
