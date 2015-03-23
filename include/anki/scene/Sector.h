@@ -23,13 +23,19 @@ class Renderer;
 /// @{
 
 /// 2 way Portal
-struct Portal
+class Portal
 {
-	Array<Sector*, 2> sectors;
-	Obb shape;
-	Bool8 open;
-
+public:
 	Portal();
+
+	~Portal();
+
+	ANKI_USE_RESULT Error create(const SArray<Vec4>& vertPositions);
+
+private:
+	Array<Sector*, 2> m_sectors = {{nullptr, nullptr}};
+	CollisionShape* m_shape = nullptr;
+	Bool8 m_open = true;
 };
 
 /// A sector. It consists of an octree and some portals
@@ -39,44 +45,37 @@ class Sector
 
 public:
 	/// Used to reserve some space on the portals vector to save memory
-	static const U AVERAGE_PORTALS_PER_SECTOR = 3;
+	static const U AVERAGE_PORTALS_PER_SECTOR = 4;
 
 	/// Default constructor
-	Sector(SectorGroup* group, const Aabb& box);
+	Sector(SectorGroup* group);
 
-	const Aabb& getAabb() const
+	ANKI_USE_RESULT Error create(const SArray<Vec4>& vertPositions);
+
+	const CollisionShape& getShape() const
 	{
-		return aabb;
+		return *m_shape;
 	}
 
 	const SectorGroup& getSectorGroup() const
 	{
-		return *group;
+		return *m_group;
 	}
 	SectorGroup& getSectorGroup()
 	{
-		return *group;
+		return *m_group;
 	}
-
-	U8 getVisibleByMask() const
-	{
-		return visibleBy;
-	}
-
-	/// Called when a node was moved or a change in shape happened
-	Bool placeSceneNode(SceneNode* sp);
-
-private:
-	SectorGroup* group; ///< Know your father
-	SceneVector<Portal*> portals;
-	U8 visibleBy;
-	Aabb aabb;
 
 	/// Sector does not take ownership of the portal
 	void addNewPortal(Portal* portal);
 
 	/// Remove a Portal from the portals container
 	void removePortal(Portal* portal);
+
+private:
+	SectorGroup* m_group; ///< Know your father
+	DArray<Portal*> m_portals;
+	CollisionShape* m_shape;
 };
 
 /// Sector group. This is supposed to represent the whole scene
@@ -89,48 +88,36 @@ public:
 	/// Destructor
 	~SectorGroup();
 
-	/// @name Accessors
-	/// @{
 	const SceneGraph& getSceneGraph() const
 	{
 		return *scene;
 	}
+
 	SceneGraph& getSceneGraph()
 	{
 		return *scene;
 	}
 
-	const SceneVector<Portal*>& getPortals() const
+	const List<Portal*>& getPortals() const
 	{
 		return portals;
 	}
 
-	const SceneVector<Sector*>& getSectors() const
+	const List<Sector*>& getSectors() const
 	{
 		return sectors;
 	}
-	/// @}
-
-	/// Called when a node was moved or a change in shape happened. The node 
-	/// must be Spatial
-	void placeSceneNode(SceneNode* sp);
-
-	/// XXX
-	void doVisibilityTests(SceneNode& fr, VisibilityTest test, Renderer* r);
 
 	/// The owner of the pointer is the sector group
-	Sector* createNewSector(const Aabb& aabb);
+	Sector* createNewSector(const SArray<Vec4>& vertexPositions);
 
 	/// The owner of the pointer is the sector group
-	Portal* createNewPortal(Sector* a, Sector* b, const Obb& collisionShape);
+	Portal* createNewPortal(const SArray<Vec4>& vertexPositions);
 
 private:
-	SceneGraph* scene; ///< Keep it here to access various allocators
-	SceneVector<Sector*> sectors;
-	SceneVector<Portal*> portals;
-
-	void doVisibilityTestsInternal(SceneNode& fr, VisibilityTest test,
-		Renderer* r, VisibleBy visibleBy);
+	SceneGraph* m_scene; ///< Keep it here to access various allocators
+	List<Sector*> m_sectors;
+	List<Portal*> m_portals;
 };
 /// @}
 
