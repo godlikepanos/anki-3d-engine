@@ -7,7 +7,7 @@
 #define ANKI_GR_GL_PIPELINE_IMPL_H
 
 #include "anki/gr/gl/GlObject.h"
-#include "anki/gr/ShaderHandle.h"
+#include "anki/gr/PipelineCommon.h"
 
 namespace anki {
 

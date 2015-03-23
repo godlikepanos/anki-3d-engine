@@ -7,6 +7,7 @@
 #define ANKI_GR_PIPELINE_HANDLE_H
 
 #include "anki/gr/GrHandle.h"
+#include "anki/gr/PipelineCommon.h"
 
 namespace anki {
 

@@ -14,10 +14,8 @@ namespace anki {
 
 // Forward
 class SceneNode;
-class SceneGraph;
 class Sector;
 class SectorGroup;
-class Renderer;
 
 /// @addtogroup Scene
 /// @{
@@ -26,15 +24,26 @@ class Renderer;
 class Portal
 {
 public:
-	Portal();
+	Portal(SectorGroup* sectorGroup)
+	:	m_group(sectorGroup)
+	{}
 
 	~Portal();
 
 	ANKI_USE_RESULT Error create(const SArray<Vec4>& vertPositions);
 
+	const CollisionShape& getCollisionShape() const
+	{
+		return *m_shape;
+	}
+
+	ANKI_USE_RESULT Error addSector(Sector* sector);
+
 private:
-	Array<Sector*, 2> m_sectors = {{nullptr, nullptr}};
+	SectorGroup* m_group;
+	List<Sector*> m_sectors;
 	CollisionShape* m_shape = nullptr;
+	DArray<Vec4> m_shapeStorage;
 	Bool8 m_open = true;
 };
 
@@ -48,34 +57,33 @@ public:
 	static const U AVERAGE_PORTALS_PER_SECTOR = 4;
 
 	/// Default constructor
-	Sector(SectorGroup* group);
+	Sector(SectorGroup* group)
+	:	m_group(group)
+	{}
+
+	~Sector();
 
 	ANKI_USE_RESULT Error create(const SArray<Vec4>& vertPositions);
 
-	const CollisionShape& getShape() const
+	const CollisionShape& getCollisionShape() const
 	{
 		return *m_shape;
 	}
 
-	const SectorGroup& getSectorGroup() const
-	{
-		return *m_group;
-	}
-	SectorGroup& getSectorGroup()
-	{
-		return *m_group;
-	}
+	ANKI_USE_RESULT Error addPortal(Portal* portal);
 
-	/// Sector does not take ownership of the portal
-	void addNewPortal(Portal* portal);
-
-	/// Remove a Portal from the portals container
-	void removePortal(Portal* portal);
+	ANKI_USE_RESULT Error addSceneNode(SceneNode* node);
+	void removeSceneNode(SceneNode* node);
 
 private:
 	SectorGroup* m_group; ///< Know your father
-	DArray<Portal*> m_portals;
 	CollisionShape* m_shape;
+	DArray<Vec4> m_shapeStorage;
+
+	List<Portal*> m_portals;
+	List<SceneNode*> m_nodes;
+
+	List<SceneNode*>::Iterator findSceneNode(SceneNode* node);
 };
 
 /// Sector group. This is supposed to represent the whole scene
@@ -83,36 +91,28 @@ class SectorGroup
 {
 public:
 	/// Default constructor
-	SectorGroup(SceneGraph* scene);
+	SectorGroup(SceneGraph* scene)
+	:	m_scene(scene)
+	{}
 
 	/// Destructor
 	~SectorGroup();
 
-	const SceneGraph& getSceneGraph() const
-	{
-		return *scene;
-	}
-
-	SceneGraph& getSceneGraph()
-	{
-		return *scene;
-	}
-
-	const List<Portal*>& getPortals() const
-	{
-		return portals;
-	}
-
-	const List<Sector*>& getSectors() const
-	{
-		return sectors;
-	}
+	SceneAllocator<U8> getAllocator() const;
 
 	/// The owner of the pointer is the sector group
 	Sector* createNewSector(const SArray<Vec4>& vertexPositions);
 
 	/// The owner of the pointer is the sector group
 	Portal* createNewPortal(const SArray<Vec4>& vertexPositions);
+
+	ANKI_USE_RESULT Error bake();
+
+	/// @privatesection
+	/// @{
+	ConvexHullShape* createConvexHull(const SArray<Vec4>& vertPositions,
+		DArray<Vec4>& shapeStorage);
+	/// @}
 
 private:
 	SceneGraph* m_scene; ///< Keep it here to access various allocators
