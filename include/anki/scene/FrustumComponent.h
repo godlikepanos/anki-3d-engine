@@ -30,6 +30,11 @@ public:
 		U32 m_lightsCount = 0;
 	};
 
+	static Bool classof(const SceneComponent& c)
+	{
+		return c.getType() == Type::FRUSTUM;
+	}
+
 	/// Pass the frustum here so we can avoid the virtuals
 	FrustumComponent(SceneNode* node, Frustum* frustum)
 	:	SceneComponent(Type::FRUSTUM, node), 
@@ -132,11 +137,6 @@ public:
 		m_visible = nullptr;
 	}
 	/// @}
-
-	static constexpr Type getClassType()
-	{
-		return Type::FRUSTUM;
-	}
 
 private:
 	enum Flags

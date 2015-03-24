@@ -8,6 +8,7 @@
 
 #include "anki/scene/Common.h"
 #include "anki/util/Hierarchy.h"
+#include "anki/util/Rtti.h"
 #include "anki/scene/SceneComponent.h"
 
 namespace anki {
@@ -102,15 +103,14 @@ public:
 	ANKI_USE_RESULT Error iterateComponentsOfType(Func func)
 	{
 		Error err = ErrorCode::NONE;
-		SceneComponent::Type type = Component::getClassType();
 		auto it = m_components.getBegin();
 		auto end = it + m_componentsCount;
 		for(; !err && it != end; ++it)
 		{
 			SceneComponent* comp = *it;
-			if(comp->getType() == type)
+			if(isa<Component>(comp))
 			{
-				err = func(comp->downCast<Component>());
+				err = func(*dcast<Component*>(comp));
 			}
 		}
 
@@ -121,13 +121,12 @@ public:
 	template<typename Component>
 	Component* tryGetComponent()
 	{
-		SceneComponent::Type type = Component::getClassType();
 		U count = m_componentsCount;
 		while(count-- != 0)
 		{
-			if(m_components[count]->getType() == type)
+			if(isa<Component>(m_components[count]))
 			{
-				return &m_components[count]->downCast<Component>();
+				return dcast<Component*>(m_components[count]);
 			}
 		}
 		return nullptr;
@@ -137,13 +136,12 @@ public:
 	template<typename Component>
 	const Component* tryGetComponent() const
 	{
-		SceneComponent::Type type = Component::getClassType();
 		U count = m_componentsCount;
 		while(count-- != 0)
 		{
-			if(m_components[count]->getType() == type)
+			if(isa<Component>(m_components[count]))
 			{
-				return &m_components[count]->downCast<Component>();
+				return dcast<const Component*>(m_components[count]);
 			}
 		}
 		return nullptr;

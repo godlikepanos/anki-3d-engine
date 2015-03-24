@@ -63,7 +63,7 @@ Sector::~Sector()
 	}
 
 	m_portals.destroy(alloc);
-	m_nodes.destroy(alloc);
+	m_spatials.destroy(alloc);
 }
 
 //==============================================================================
@@ -81,30 +81,86 @@ Error Sector::addPortal(Portal* portal)
 }
 
 //==============================================================================
-Error Sector::addSceneNode(SceneNode* node)
+Error Sector::tryAddSpatialComponent(SpatialComponent* sp)
 {
-	ANKI_ASSERT(node);
-	ANKI_ASSERT(findSceneNode(node) == m_nodes.getEnd());
-	return m_nodes.pushBack(m_group->getAllocator(), node);
-}
+	ANKI_ASSERT(sp);
 
-//==============================================================================
-void Sector::removeSceneNode(SceneNode* node)
-{
-	ANKI_ASSERT(node);
-	auto it = findSceneNode(node);
-	ANKI_ASSERT(it != m_nodes.getEnd());
-	m_nodes.erase(m_group->getAllocator(), it);
-}
-
-//==============================================================================
-List<SceneNode*>::Iterator Sector::findSceneNode(SceneNode* node)
-{
-	ANKI_ASSERT(node);
-	auto it = m_nodes.getBegin();
-	for(; it != m_nodes.getEnd(); ++it)
+	// Find sector in spatial
+	auto itsp = sp->getSectorInfo().getBegin();
+	auto endsp = sp->getSectorInfo().getEnd();
+	for(; itsp != endsp; ++itsp)
 	{
-		if(*it == node)
+		if(*itsp == this)
+		{
+			break;
+		}
+	}
+	
+	Error err = ErrorCode::NONE;
+	if(itsp == endsp)
+	{
+		// Not found so add it
+
+		// Lock since this might be dont from a thread
+		LockGuard<SpinLock> g(m_lock);
+
+		ANKI_ASSERT(findSpatialComponent(sp) == m_spatials.getEnd());
+
+		m_dirty = true;
+		Error err = m_spatials.pushBack(m_group->getAllocator(), sp);
+
+		if(!err)
+		{
+			err = sp->getSectorInfo().pushBack(m_group->getAllocator(), this);
+		}
+	}
+
+	return err;
+}
+
+//==============================================================================
+void Sector::tryRemoveSpatialComponent(SpatialComponent* sp)
+{
+	ANKI_ASSERT(sp);
+	
+	// Find sector in spatial
+	auto itsp = sp->getSectorInfo().getBegin();
+	auto endsp = sp->getSectorInfo().getEnd();
+	for(; itsp != endsp; ++itsp)
+	{
+		if(*itsp == this)
+		{
+			break;
+		}
+	}
+
+	if(itsp != endsp)
+	{
+		// Found, remove
+
+		// Lock since this might be dont from a thread
+		LockGuard<SpinLock> g(m_lock);
+
+		m_dirty = true;
+
+		sp->getSectorInfo().erase(m_group->getAllocator(), itsp);
+
+		auto it = findSpatialComponent(sp);
+		ANKI_ASSERT(it != m_spatials.getEnd());
+		m_spatials.erase(m_group->getAllocator(), it);
+	}
+}
+
+//==============================================================================
+List<SpatialComponent*>::Iterator Sector::findSpatialComponent(
+	SpatialComponent* sp)
+{
+	ANKI_ASSERT(sp);
+	auto it = m_spatials.getBegin();
+	auto end = m_spatials.getEnd();
+	for(; it != end; ++it)
+	{
+		if(*it == sp)
 		{
 			break;
 		}
@@ -225,6 +281,46 @@ Error SectorGroup::bake()
 	}
 
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error SectorGroup::spatialUpdated(SpatialComponent* sp)
+{
+	Error err = ErrorCode::NONE;
+
+	// Iterate all sectors and bin the spatial
+	auto it = m_sectors.getBegin();
+	auto end = m_sectors.getEnd();
+	for(; it != end && !err; ++it)
+	{
+		Sector& sector = *(*it);
+
+		Bool collide = testCollisionShapes(
+			sector.getCollisionShape(), sp->getSpatialCollisionShape());
+
+		if(collide)	
+		{
+			err = sector.tryAddSpatialComponent(sp);
+		}
+		else
+		{
+			sector.tryRemoveSpatialComponent(sp);
+		}
+	}
+
+	return err;
+}
+
+//==============================================================================
+void SectorGroup::spatialDeleted(SpatialComponent* sp)
+{
+	auto it = m_sectors.getBegin();
+	auto end = m_sectors.getEnd();
+	for(; it != end; ++it)
+	{
+		Sector& sector = *(*it);
+		sector.tryRemoveSpatialComponent(sp);
+	}
 }
 
 } // end namespace anki

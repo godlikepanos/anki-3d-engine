@@ -17,14 +17,14 @@ namespace anki {
 class InstanceComponent: public SceneComponent
 {
 public:
+	static Bool classof(const SceneComponent& c)
+	{
+		return c.getType() == Type::INSTANCE;
+	}
+
 	InstanceComponent(SceneNode* node)
 	:	SceneComponent(Type::INSTANCE, node)
 	{}
-
-	static constexpr Type getClassType()
-	{
-		return Type::INSTANCE;
-	}
 };
 
 /// Instance scene node

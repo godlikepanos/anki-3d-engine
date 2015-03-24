@@ -38,6 +38,11 @@ class MoveComponent: public SceneComponent, public Bitset<MoveComponentFlag>
 public:
 	using Flag = MoveComponentFlag;
 
+	static Bool classof(const SceneComponent& c)
+	{
+		return c.getType() == Type::MOVE;
+	}
+
 	/// The one and only constructor
 	/// @param node The scene node to steal it's allocators
 	/// @param flags The flags
@@ -164,11 +169,6 @@ public:
 		markForUpdate();
 	}
 	/// @}
-
-	static constexpr Type getClassType()
-	{
-		return Type::MOVE;
-	}
 
 private:
 	SceneNode* m_node;

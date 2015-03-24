@@ -11,8 +11,12 @@
 #include "anki/Collision.h"
 #include "anki/util/Bitset.h"
 #include "anki/util/Enum.h"
+#include "anki/util/List.h"
 
 namespace anki {
+
+// Forward
+class Sector;
 
 /// @addtogroup scene
 /// @{
@@ -45,6 +49,11 @@ class SpatialComponent: public SceneComponent,
 public:
 	using Flag = SpatialComponentFlag;
 
+	static Bool classof(const SceneComponent& c)
+	{
+		return c.getType() == Type::SPATIAL;
+	}
+
 	SpatialComponent(
 		SceneNode* node, 
 		const CollisionShape* shape, 
@@ -60,6 +69,11 @@ public:
 	const Aabb& getAabb() const
 	{
 		return m_aabb;
+	}
+
+	List<Sector*>& getSectorInfo()
+	{
+		return m_sectorInfo;
 	}
 
 	/// Get optimal collision shape for visibility tests
@@ -104,15 +118,11 @@ public:
 	void reset() override;
 	/// @}
 
-	static constexpr Type getClassType()
-	{
-		return Type::SPATIAL;
-	}
-
 private:
 	const CollisionShape* m_shape;
 	Aabb m_aabb; ///< A faster shape
 	Vec4 m_origin = Vec4(MAX_F32, MAX_F32, MAX_F32, 0.0);
+	List<Sector*> m_sectorInfo;
 };
 /// @}
 

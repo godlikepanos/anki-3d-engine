@@ -16,6 +16,7 @@ namespace anki {
 class SceneNode;
 class Sector;
 class SectorGroup;
+class FrustumComponent;
 
 /// @addtogroup Scene
 /// @{
@@ -72,8 +73,9 @@ public:
 
 	ANKI_USE_RESULT Error addPortal(Portal* portal);
 
-	ANKI_USE_RESULT Error addSceneNode(SceneNode* node);
-	void removeSceneNode(SceneNode* node);
+	ANKI_USE_RESULT Error tryAddSpatialComponent(SpatialComponent* sp);
+
+	void tryRemoveSpatialComponent(SpatialComponent* sp);
 
 private:
 	SectorGroup* m_group; ///< Know your father
@@ -81,9 +83,14 @@ private:
 	DArray<Vec4> m_shapeStorage;
 
 	List<Portal*> m_portals;
-	List<SceneNode*> m_nodes;
+	List<SpatialComponent*> m_spatials;
 
-	List<SceneNode*>::Iterator findSceneNode(SceneNode* node);
+	SpinLock m_lock;
+
+	Bool m_dirty = true;
+
+	List<SpatialComponent*>::Iterator findSpatialComponent(
+		SpatialComponent* sp);
 };
 
 /// Sector group. This is supposed to represent the whole scene
@@ -108,9 +115,13 @@ public:
 
 	ANKI_USE_RESULT Error bake();
 
+	ANKI_USE_RESULT Error spatialUpdated(SpatialComponent* sp);
+	void spatialDeleted(SpatialComponent* sp);
+
 	/// @privatesection
 	/// @{
-	ConvexHullShape* createConvexHull(const SArray<Vec4>& vertPositions,
+	ConvexHullShape* createConvexHull(
+		const SArray<Vec4>& vertPositions,
 		DArray<Vec4>& shapeStorage);
 	/// @}
 
@@ -118,6 +129,10 @@ private:
 	SceneGraph* m_scene; ///< Keep it here to access various allocators
 	List<Sector*> m_sectors;
 	List<Portal*> m_portals;
+
+	ANKI_USE_RESULT Error doVisibilityTests(
+		const FrustumComponent& frc, 
+		DArray<Sector*>& visibleSectors);
 };
 /// @}
 

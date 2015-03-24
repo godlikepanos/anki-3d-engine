@@ -78,14 +78,6 @@ public:
 	ANKI_USE_RESULT Error updateReal(
 		SceneNode& node, F32 prevTime, F32 crntTime, Bool& updated);
 
-	template<typename TComponent>
-	TComponent& downCast()
-	{
-		ANKI_ASSERT(TComponent::getClassType() == getType());
-		TComponent* out = staticCastPtr<TComponent*>(this);
-		return *out;
-	}
-
 	void setAutomaticCleanup(Bool enable)
 	{
 		m_flags.enableBits(AUTOMATIC_CLEANUP, enable);	

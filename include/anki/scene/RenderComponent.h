@@ -224,6 +224,11 @@ class RenderComponent: public SceneComponent
 public:
 	typedef SceneDArray<RenderComponentVariable*> Variables;
 
+	static Bool classof(const SceneComponent& c)
+	{
+		return c.getType() == Type::RENDER;
+	}
+
 	/// @param node Pass node to steal it's allocator
 	RenderComponent(SceneNode* node);
 
@@ -283,11 +288,6 @@ public:
 		}
 
 		return err;
-	}
-
-	static constexpr Type getClassType()
-	{
-		return Type::RENDER;
 	}
 
 private:

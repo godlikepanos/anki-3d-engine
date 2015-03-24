@@ -18,6 +18,11 @@ namespace anki {
 class LightComponent: public SceneComponent
 {
 public:
+	static Bool classof(const SceneComponent& c)
+	{
+		return c.getType() == Type::LIGHT;
+	}
+
 	enum class LightType: U8
 	{
 		POINT,
@@ -130,11 +135,6 @@ public:
 	}
 
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
-
-	static constexpr Type getClassType()
-	{
-		return Type::LIGHT;
-	}
 
 private:
 	LightType m_type;

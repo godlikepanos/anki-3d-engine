@@ -19,6 +19,11 @@ namespace anki {
 class BodyComponent: public SceneComponent
 {
 public:
+	static Bool classof(const SceneComponent& c)
+	{
+		return c.getType() == Type::BODY;
+	}
+
 	BodyComponent(SceneNode* node, PhysicsBody* body)
 	:	SceneComponent(Type::BODY, node), 
 		m_body(body)
@@ -44,11 +49,6 @@ public:
 		return ErrorCode::NONE;
 	}
 	/// @}
-
-	static constexpr Type getClassType()
-	{
-		return Type::BODY;
-	}
 
 private:
 	PhysicsBody* m_body;
