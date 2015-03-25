@@ -99,9 +99,9 @@ Error Sector::tryAddSpatialComponent(SpatialComponent* sp)
 	Error err = ErrorCode::NONE;
 	if(itsp == endsp)
 	{
-		// Not found so add it
+		// Not found, add it
 
-		// Lock since this might be dont from a thread
+		// Lock since this might be done from a thread
 		LockGuard<SpinLock> g(m_lock);
 
 		ANKI_ASSERT(findSpatialComponent(sp) == m_spatials.getEnd());
@@ -321,6 +321,28 @@ void SectorGroup::spatialDeleted(SpatialComponent* sp)
 		Sector& sector = *(*it);
 		sector.tryRemoveSpatialComponent(sp);
 	}
+}
+
+//==============================================================================
+Error SectorGroup::doVisibilityTests(const FrustumComponent& frc)
+{
+	auto alloc = m_scene->getFrameAllocator();
+
+	// Find the sector the frc is in
+	Sphere eye(frc.getFrustumOrigin(), frc.getFrustum().getNear());
+
+	auto it = m_sectors.getBegin();
+	auto end = m_sectors.getEnd();
+	for(; it != end; ++it)
+	{
+		//if(frc.insideFrustum())
+	}
+
+	// Initial storage
+	visibleNodes = reinterpret_cast<SceneNode*>(
+		alloc.allocate(sizeof(void*) * 100));
+	visibleNodesStorage = 100;
+
 }
 
 } // end namespace anki

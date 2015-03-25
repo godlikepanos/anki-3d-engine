@@ -118,6 +118,8 @@ public:
 	ANKI_USE_RESULT Error spatialUpdated(SpatialComponent* sp);
 	void spatialDeleted(SpatialComponent* sp);
 
+	ANKI_USE_RESULT Error doVisibilityTests(const FrustumComponent& frc);
+
 	/// @privatesection
 	/// @{
 	ConvexHullShape* createConvexHull(
@@ -130,9 +132,9 @@ private:
 	List<Sector*> m_sectors;
 	List<Portal*> m_portals;
 
-	ANKI_USE_RESULT Error doVisibilityTests(
-		const FrustumComponent& frc, 
-		DArray<Sector*>& visibleSectors);
+	SceneNode* visibleNodes = nullptr;
+	U visibleNodesCount = 0;
+	U visibleNodesStorage = 0;
 };
 /// @}
 
