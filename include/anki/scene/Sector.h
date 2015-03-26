@@ -24,6 +24,8 @@ class FrustumComponent;
 /// 2 way Portal
 class Portal
 {
+	friend class SectorGroup;
+
 public:
 	Portal(SectorGroup* sectorGroup)
 	:	m_group(sectorGroup)
@@ -33,7 +35,7 @@ public:
 
 	ANKI_USE_RESULT Error create(const SArray<Vec4>& vertPositions);
 
-	const CollisionShape& getCollisionShape() const
+	const CollisionShape& getBoundingShape() const
 	{
 		return *m_shape;
 	}
@@ -45,7 +47,7 @@ private:
 	List<Sector*> m_sectors;
 	CollisionShape* m_shape = nullptr;
 	DArray<Vec4> m_shapeStorage;
-	Bool8 m_open = true;
+	Bool m_open = true;
 };
 
 /// A sector. It consists of an octree and some portals
@@ -54,9 +56,6 @@ class Sector
 	friend class SectorGroup;
 
 public:
-	/// Used to reserve some space on the portals vector to save memory
-	static const U AVERAGE_PORTALS_PER_SECTOR = 4;
-
 	/// Default constructor
 	Sector(SectorGroup* group)
 	:	m_group(group)
@@ -66,7 +65,7 @@ public:
 
 	ANKI_USE_RESULT Error create(const SArray<Vec4>& vertPositions);
 
-	const CollisionShape& getCollisionShape() const
+	const CollisionShape& getBoundingShape() const
 	{
 		return *m_shape;
 	}
@@ -118,7 +117,12 @@ public:
 	ANKI_USE_RESULT Error spatialUpdated(SpatialComponent* sp);
 	void spatialDeleted(SpatialComponent* sp);
 
-	ANKI_USE_RESULT Error doVisibilityTests(const FrustumComponent& frc);
+	ANKI_USE_RESULT Error prepareForVisibilityTests(
+		const FrustumComponent& frc);
+
+	template<typename Func>
+	ANKI_USE_RESULT Error iterateVisibleSceneNodes(
+		PtrSize begin, PtrSize end, Func func);
 
 	/// @privatesection
 	/// @{
@@ -132,10 +136,44 @@ private:
 	List<Sector*> m_sectors;
 	List<Portal*> m_portals;
 
-	SceneNode* visibleNodes = nullptr;
-	U visibleNodesCount = 0;
-	U visibleNodesStorage = 0;
+	SceneNode** m_visibleNodes = nullptr;
+	U m_visibleNodesCount = 0;
+
+	ANKI_USE_RESULT Error findVisibleSectors(
+		const FrustumComponent& frc,
+		List<Sector*>& visibleSectors,
+		U& spatialsCount);
+
+	/// Recursive method
+	ANKI_USE_RESULT Error findVisibleSectorsInternal(
+		const FrustumComponent& frc,
+		Sector& s,
+		List<Sector*>& visibleSectors,
+		U& spatialsCount);
 };
+
+//==============================================================================
+template<typename TFunc>
+inline Error SectorGroup::iterateVisibleSceneNodes(
+	PtrSize begin, PtrSize end, TFunc func)
+{
+	Error err = ErrorCode::NONE;
+	SceneNode* prevSn = nullptr;
+
+	SceneNode** it = m_visibleNodes + begin;
+	SceneNode** itend = m_visibleNodes + end;
+	for(; it != itend && !err; ++it)
+	{
+		SceneNode* sn = *it;
+		if(sn != prevSn)
+		{
+			err = func(*sn);
+			prevSn = sn;
+		}
+	}
+
+	return err;
+}
 /// @}
 
 } // end namespace anki

@@ -116,14 +116,26 @@ public:
 		m_flags |= TRANSFORM_MARKED_FOR_UPDATE;
 	}
 
+	void setShadowCaster(Bool isShadowCaster)
+	{
+		m_flags = (isShadowCaster) 
+			? (m_flags | SHADOW_CASTER)
+			: (m_flags & ~SHADOW_CASTER);
+	}
+
+	Bool getShadowCaster() const
+	{
+		return m_flags & SHADOW_CASTER;
+	}
+
 	/// Is a spatial inside the frustum?
-	Bool insideFrustum(SpatialComponent& sp)
+	Bool insideFrustum(SpatialComponent& sp) const
 	{
 		return m_frustum->insideFrustum(sp.getSpatialCollisionShape());
 	}
 
 	/// Is a collision shape inside the frustum?
-	Bool insideFrustum(const CollisionShape& cs)
+	Bool insideFrustum(const CollisionShape& cs) const
 	{
 		return m_frustum->insideFrustum(cs);
 	}
@@ -142,7 +154,8 @@ private:
 	enum Flags
 	{
 		SHAPE_MARKED_FOR_UPDATE = 1 << 0,
-		TRANSFORM_MARKED_FOR_UPDATE = 1 << 1
+		TRANSFORM_MARKED_FOR_UPDATE = 1 << 1,
+		SHADOW_CASTER = 1 << 2
 	};
 
 	Frustum* m_frustum;

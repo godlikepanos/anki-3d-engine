@@ -55,7 +55,7 @@ void Frustum::computeAabb(Aabb& aabb) const
 }
 
 //==============================================================================
-Bool Frustum::insideFrustum(const CollisionShape& b)
+Bool Frustum::insideFrustum(const CollisionShape& b) const
 {
 	update();
 

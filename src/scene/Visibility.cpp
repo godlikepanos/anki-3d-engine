@@ -17,73 +17,94 @@ namespace anki {
 // VisibilityTestTask                                                          =
 //==============================================================================
 
-//==============================================================================
+struct ThreadLocal
+{
+	VisibilityTestResults* m_testResults = nullptr;
+};
+
+struct ThreadCommon
+{
+	Array<ThreadLocal, Threadpool::MAX_THREADS> m_threadLocal;
+	Barrier m_barrier;
+	List<SceneNode*> m_frustumsList;
+	SpinLock m_lock;
+}
+
 class VisibilityTestTask: public Threadpool::Task
 {
 public:
-	U m_nodesCount = 0;
 	SceneGraph* m_scene = nullptr;
 	SceneNode* m_frustumableSn = nullptr;
 	SceneFrameAllocator<U8> m_alloc;
 
-	VisibilityTestResults* m_cameraVisible; // out
+	ThreadsLocal* m_threadLocal;
 
 	/// Test a frustum component
-	ANKI_USE_RESULT Error test(SceneNode& testedNode, Bool testingLight, 
+	ANKI_USE_RESULT Error test(SceneNode& testedNode,
 		U32 threadId, PtrSize threadsCount);
+
+	ANKI_USE_RESULT Error combineTestResults(
+		FrustumComponent& frc,
+		PtrSize threadsCount);
 
 	/// Do the tests
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
-		return test(*m_frustumableSn, false, threadId, threadsCount);
+		// Run once
+		ANKI_CHECK(test(*m_frustumableSn, threadId, threadsCount));
+
+		// Rucurse the extra frustumables
+		while(!m_frustumsList.isEmpty())
+		{
+			printf("%d: going deeper\n", threadId);
+
+			// Get front
+			SceneNode* node = m_frustumsList.getFront();
+			ANKI_ASSERT(node);
+
+			m_barrier->wait();
+
+			ANKI_CHECK(test(*node, threadId, threadsCount));
+
+			// Pop
+			if(threadId == 0)
+			{
+				m_frustumsList.popFront(m_alloc);
+			}
+		}
+
+		if(threadId == 0)
+		{
+			m_frustumsList.destroy(m_alloc);
+		}
+
+		return ErrorCode::NONE;
 	}
 };
 
 //==============================================================================
-Error VisibilityTestTask::test(SceneNode& testedNode, Bool testingLight, 
+Error VisibilityTestTask::test(SceneNode& testedNode, 
 	U32 threadId, PtrSize threadsCount)
 {
-	ANKI_ASSERT(testingLight == 
-		(testedNode.tryGetComponent<LightComponent>() != nullptr));
-
 	Error err = ErrorCode::NONE;
 
 	FrustumComponent& testedFr = 
 		testedNode.getComponent<FrustumComponent>();
+	Bool testedNodeShadowCaster = testedFr.getShadowCaster();
 
-	// Allocate visible
+	// Init test results
 	VisibilityTestResults* visible = 
 		m_alloc.newInstance<VisibilityTestResults>();
-	if(visible == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	// Init visible
 	FrustumComponent::VisibilityStats stats = testedFr.getLastVisibilityStats();
-	
-	if(!testingLight)
-	{
-		// For camera be conservative
-		stats.m_renderablesCount /= threadsCount;
-		stats.m_lightsCount /= threadsCount;
-	}
 
-	err = visible->create(
-		m_alloc, stats.m_renderablesCount, stats.m_lightsCount, 4);
-	if(err)	return err;
+	ANKI_CHECK(visible->create(
+		m_alloc, stats.m_renderablesCount, stats.m_lightsCount, 4));
 
 	// Chose the test range and a few other things
 	PtrSize start, end;
-	if(!testingLight)
-	{
-		choseStartEnd(threadId, threadsCount, m_nodesCount, start, end);
-		m_cameraVisible = visible;
-	}
-	else
-	{
-		// Is light
-		start = 0;
-		end = m_nodesCount;
-		testedFr.setVisibilityTestResults(visible);
-	}
+	U nodesCount = m_scene->getSceneNodesCount();
+	choseStartEnd(threadId, threadsCount, nodesCount, start, end);
 
 	// Iterate range of nodes
 	err = m_scene->iterateSceneNodes(start, end, [&](SceneNode& node) -> Error
@@ -120,7 +141,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool testingLight,
 				ANKI_ASSERT(spIdx < MAX_U8);
 				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx)};
 
-				sp.enableBits(testingLight 
+				sp.enableBits(testedNodeShadowCaster 
 					? SpatialComponent::Flag::VISIBLE_LIGHT 
 					: SpatialComponent::Flag::VISIBLE_CAMERA);
 			}
@@ -130,12 +151,12 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool testingLight,
 			return ErrorCode::NONE;
 		});
 
-		if(count == 0)
+		if(ANKI_UNLIKELY(count == 0))
 		{
 			return err;
 		}
 
-		// Sort spatials
+		// Sort sub-spatials
 		Vec4 origin = testedFr.getFrustumOrigin();
 		std::sort(sps.begin(), sps.begin() + count, 
 			[origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool
@@ -153,7 +174,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool testingLight,
 		ANKI_ASSERT(count < MAX_U8);
 		visibleNode.m_spatialsCount = count;
 		visibleNode.m_spatialIndices = m_alloc.newArray<U8>(count);
-		if(visibleNode.m_spatialIndices == nullptr)
+		if(ANKI_UNLIKELY(visibleNode.m_spatialIndices == nullptr))
 		{
 			return ErrorCode::OUT_OF_MEMORY;
 		}
@@ -165,7 +186,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool testingLight,
 
 		// Do something with the result
 		RenderComponent* r = node.tryGetComponent<RenderComponent>();
-		if(testingLight)
+		if(testedNodeShadowCaster)
 		{
 			if(r && r->getCastsShadow())
 			{
@@ -186,7 +207,8 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool testingLight,
 
 				if(!err && l->getShadowEnabled() && fr)
 				{
-					err = test(node, true, 0, 0);
+					LockGuard<SpinLock> l(m_lock);
+					err = m_frustumsList.pushBack(m_alloc, &node);
 				}
 			}
 
@@ -197,11 +219,129 @@ Error VisibilityTestTask::test(SceneNode& testedNode, Bool testingLight,
 				ANKI_ASSERT(visibleNode.m_node);
 			}
 		}
-
+		
 		return err;
 	}); // end for
 
+	ANKI_CHECK(err);
+
+	m_threadLocal[threadId].m_testResults = visible;
+	printf("%d: assigning %p\n", threadId, (void*)visible);
+
+	// Gather the results from all threads
+	m_barrier->wait();
+
+	//printf("%d: checking what is assigned %p\n", threadId, 
+	//		(void*)m_threadLocal[threadId].m_testResults);
+
+	printf("%d: checking what is assigned to 0 %p\n", threadId, 
+			(void*)m_threadLocal[0].m_testResults);
+	
+	if(threadId == 0)
+	{
+		printf("%d: combine\n", threadId);
+		ANKI_CHECK(combineTestResults(testedFr, threadsCount));
+	}
+	m_barrier->wait();
+
 	return err;
+}
+
+//==============================================================================
+ANKI_USE_RESULT Error VisibilityTestTask::combineTestResults(
+	FrustumComponent& frc,
+	PtrSize threadsCount)
+{
+	// Count the visible scene nodes to optimize the allocation of the 
+	// final result
+	U32 renderablesSize = 0;
+	U32 lightsSize = 0;
+	U32 lensFlaresSize = 0;
+	for(U i = 0; i < threadsCount; i++)
+	{
+		ANKI_ASSERT(m_threadLocal[i].m_testResults);
+		VisibilityTestResults& rez = *m_threadLocal[i].m_testResults;
+
+		renderablesSize += rez.getRenderablesCount();
+		lightsSize += rez.getLightsCount();
+		lensFlaresSize += rez.getLensFlaresCount();
+	}
+
+	// Allocate
+	VisibilityTestResults* visible = 
+		m_alloc.newInstance<VisibilityTestResults>();
+	if(visible == nullptr)
+	{
+		return ErrorCode::OUT_OF_MEMORY;
+	}
+
+	ANKI_CHECK(
+		visible->create(
+		m_alloc, 
+		renderablesSize, 
+		lightsSize,
+		lensFlaresSize));
+
+	visible->prepareMerge();
+
+	if(renderablesSize == 0)
+	{
+		ANKI_LOGW("No visible renderables");
+	}
+
+	// Append thread results
+	VisibleNode* renderables = visible->getRenderablesBegin();
+	VisibleNode* lights = visible->getLightsBegin();
+	VisibleNode* lensFlares = visible->getLensFlaresBegin();
+	for(U i = 0; i < threadsCount; i++)
+	{
+		VisibilityTestResults& from = *m_threadLocal[i].m_testResults;
+
+		U rCount = from.getRenderablesCount();
+		U lCount = from.getLightsCount();
+		U lfCount = from.getLensFlaresCount();
+
+		if(rCount > 0)
+		{
+			memcpy(renderables,
+				from.getRenderablesBegin(),
+				sizeof(VisibleNode) * rCount);
+
+			renderables += rCount;
+		}
+
+		if(lCount > 0)
+		{
+			memcpy(lights,
+				from.getLightsBegin(),
+				sizeof(VisibleNode) * lCount);
+
+			lights += lCount;
+		}
+
+		if(lfCount > 0)
+		{
+			memcpy(lensFlares,
+				from.getLensFlaresBegin(),
+				sizeof(VisibleNode) * lfCount);
+
+			lensFlares += lfCount;
+		}
+	}
+
+	// Set the frustumable
+	frc.setVisibilityTestResults(visible);
+
+	// Sort lights
+	DistanceSortFunctor comp;
+	comp.m_origin = frc.getFrustumOrigin();
+	//std::sort(visible->getLightsBegin(), visible->getLightsEnd(), comp);
+
+	// Sort the renderables
+	std::sort(
+		visible->getRenderablesBegin(), visible->getRenderablesEnd(), comp);
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -258,130 +398,24 @@ Error VisibilityTestResults::moveBack(
 //==============================================================================
 Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 {
-	FrustumComponent& fr = fsn.getComponent<FrustumComponent>();
-
-	//
 	// Do the tests in parallel
-	//
 	Threadpool& threadPool = scene._getThreadpool();
-	VisibilityTestTask jobs[Threadpool::MAX_THREADS];
+	Barrier barrier(threadPool.getThreadsCount());
+	ThreadsLocal tlocal;
+
+	Array<VisibilityTestTask, Threadpool::MAX_THREADS> jobs;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		jobs[i].m_nodesCount = scene.getSceneNodesCount();
 		jobs[i].m_scene = &scene;
 		jobs[i].m_frustumableSn = &fsn;
 		jobs[i].m_alloc = scene.getFrameAllocator();
+		jobs[i].m_barrier = &barrier;
+		jobs[i].m_threadLocal = &tlocal;
 
 		threadPool.assignNewTask(i, &jobs[i]);
 	}
-
-	Error err = threadPool.waitForAllThreadsToFinish();
-	if(err)	return err;
-
-	//
-	// Combine results
-	//
-
-	// Count the visible scene nodes to optimize the allocation of the 
-	// final result
-	U32 renderablesSize = 0;
-	U32 lightsSize = 0;
-	U32 lensFlaresSize = 0;
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
-	{
-		renderablesSize += jobs[i].m_cameraVisible->getRenderablesCount();
-		lightsSize += jobs[i].m_cameraVisible->getLightsCount();
-		lensFlaresSize += jobs[i].m_cameraVisible->getLensFlaresCount();
-	}
-
-	// Allocate
-	VisibilityTestResults* visible = 
-		scene.getFrameAllocator().newInstance<VisibilityTestResults>();
-	if(visible == nullptr)	return ErrorCode::OUT_OF_MEMORY;
-
-	err = visible->create(
-		scene.getFrameAllocator(), 
-		renderablesSize, 
-		lightsSize,
-		lensFlaresSize);
-	if(err)	return err;
-
-	visible->prepareMerge();
-
-	if(renderablesSize == 0)
-	{
-		ANKI_LOGW("No visible renderables");
-	}
-
-	// Append thread results
-	VisibleNode* renderables = visible->getRenderablesBegin();
-	VisibleNode* lights = visible->getLightsBegin();
-	VisibleNode* lensFlares = visible->getLensFlaresBegin();
-	for(U i = 0; i < threadPool.getThreadsCount(); i++)
-	{
-		VisibilityTestResults& from = *jobs[i].m_cameraVisible;
-
-		U rCount = from.getRenderablesCount();
-		U lCount = from.getLightsCount();
-		U lfCount = from.getLensFlaresCount();
-
-		if(rCount > 0)
-		{
-			memcpy(renderables,
-				from.getRenderablesBegin(),
-				sizeof(VisibleNode) * rCount);
-
-			renderables += rCount;
-		}
-
-		if(lCount > 0)
-		{
-			memcpy(lights,
-				from.getLightsBegin(),
-				sizeof(VisibleNode) * lCount);
-
-			lights += lCount;
-		}
-
-		if(lfCount > 0)
-		{
-			memcpy(lensFlares,
-				from.getLensFlaresBegin(),
-				sizeof(VisibleNode) * lfCount);
-
-			lensFlares += lfCount;
-		}
-	}
-
-	// Set the frustumable
-	fr.setVisibilityTestResults(visible);
-
-	//
-	// Sort
-	//
-
-	// The lights
-	DistanceSortJob dsjob;
-	dsjob.m_nodes = visible->getLightsBegin();
-	dsjob.m_nodesCount = visible->getLightsCount();
-	dsjob.m_origin = fr.getFrustumOrigin();
-	threadPool.assignNewTask(0, &dsjob);
-
-	// The rest of the jobs are dummy
-	for(U i = 1; i < threadPool.getThreadsCount(); i++)
-	{
-		threadPool.assignNewTask(i, nullptr);
-	}
-
-	// Sort the renderables in the main thread
-	DistanceSortFunctor dsfunc;
-	dsfunc.m_origin = fr.getFrustumOrigin();
-	std::sort(
-		visible->getRenderablesBegin(), visible->getRenderablesEnd(), dsfunc);
-
-	err = threadPool.waitForAllThreadsToFinish();
-
-	return err;
+	
+	return threadPool.waitForAllThreadsToFinish();
 }
 
 } // end namespace anki

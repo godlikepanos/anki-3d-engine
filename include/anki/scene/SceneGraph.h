@@ -187,6 +187,7 @@ private:
 	const Timestamp* m_globalTimestamp = nullptr;
 	Timestamp m_timestamp = 0; ///< Cached timestamp
 
+	// Sub-systems
 	Threadpool* m_threadpool = nullptr;
 	ResourceManager* m_resources = nullptr;
 	GrManager* m_gr = nullptr;

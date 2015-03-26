@@ -88,8 +88,18 @@ public:
 		return m_flags.bitsEnabled(AUTOMATIC_CLEANUP);
 	}
 
+	SceneNode& getSceneNode()
+	{
+		return *m_node;
+	}
+
+	const SceneNode& getSceneNode() const
+	{
+		return *m_node;
+	}
+
 protected:
-	SceneNode* m_node;
+	SceneNode* m_node = nullptr;
 	Timestamp m_timestamp; ///< Indicates when an update happened
 
 private:

@@ -270,7 +270,7 @@ Error SectorGroup::bake()
 			Sector& sector = *(*sit);
 
 			Bool collide = testCollisionShapes(
-				portal.getCollisionShape(), sector.getCollisionShape());
+				portal.getBoundingShape(), sector.getBoundingShape());
 
 			if(collide)
 			{
@@ -296,7 +296,7 @@ Error SectorGroup::spatialUpdated(SpatialComponent* sp)
 		Sector& sector = *(*it);
 
 		Bool collide = testCollisionShapes(
-			sector.getCollisionShape(), sp->getSpatialCollisionShape());
+			sector.getBoundingShape(), sp->getSpatialCollisionShape());
 
 		if(collide)	
 		{
@@ -324,25 +324,141 @@ void SectorGroup::spatialDeleted(SpatialComponent* sp)
 }
 
 //==============================================================================
-Error SectorGroup::doVisibilityTests(const FrustumComponent& frc)
+Error SectorGroup::findVisibleSectors(
+	const FrustumComponent& frc,
+	List<Sector*>& visibleSectors,
+	U& spatialsCount)
 {
-	auto alloc = m_scene->getFrameAllocator();
+	Error err = ErrorCode::NONE;
 
-	// Find the sector the frc is in
+	// Find the sector the eye is in
 	Sphere eye(frc.getFrustumOrigin(), frc.getFrustum().getNear());
 
 	auto it = m_sectors.getBegin();
 	auto end = m_sectors.getEnd();
 	for(; it != end; ++it)
 	{
-		//if(frc.insideFrustum())
+		if(frc.insideFrustum(eye))
+		{
+			break;
+		}
 	}
 
-	// Initial storage
-	visibleNodes = reinterpret_cast<SceneNode*>(
-		alloc.allocate(sizeof(void*) * 100));
-	visibleNodesStorage = 100;
+	if(it == end)
+	{
+		// eye outside all sectors, find those it collides
 
+		it = m_sectors.getBegin();
+		for(; it != end && !err; ++it)
+		{
+			Sector& s = *(*it);
+			if(frc.insideFrustum(s.getBoundingShape()))
+			{
+				err = findVisibleSectorsInternal(
+					frc, s, visibleSectors, spatialsCount);
+			}
+		}
+	}
+	else
+	{
+		// eye inside a sector
+		err = findVisibleSectorsInternal(
+			frc, *(*it), visibleSectors, spatialsCount);
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error SectorGroup::findVisibleSectorsInternal(
+	const FrustumComponent& frc,
+	Sector& s,
+	List<Sector*>& visibleSectors,
+	U& spatialsCount)
+{
+	Error err = ErrorCode::NONE;
+	auto alloc = m_scene->getFrameAllocator();
+
+	// Check if "s" is already there
+	auto it = visibleSectors.getBegin();
+	auto end = visibleSectors.getEnd();
+	for(; it != end; ++it)
+	{
+		if(*it == &s)
+		{
+			// Sector already there, skip
+			return ErrorCode::NONE;
+		}
+	}
+
+	// Sector not in the list, push it
+	ANKI_CHECK(visibleSectors.pushBack(alloc, &s));
+	spatialsCount += s.m_spatials.getSize();
+
+	// Check visible portals
+	auto itp = s.m_portals.getBegin();
+	auto itend = s.m_portals.getEnd();
+	for(; itp != itend && !err; ++itp)
+	{
+		Portal& p = *(*itp);
+		if(frc.insideFrustum(p.getBoundingShape()))
+		{
+			it = p.m_sectors.getBegin();
+			end = p.m_sectors.getEnd();
+			for(; it != end && !err; ++it)
+			{
+				if(*it != &s)
+				{
+					err = findVisibleSectorsInternal(
+						frc, *(*it), visibleSectors, spatialsCount);
+				}
+			}
+		}
+	}
+
+	return err;
+}
+
+//==============================================================================
+Error SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc)
+{
+	auto alloc = m_scene->getFrameAllocator();
+
+	// Find visible sectors
+	List<Sector*> visSectors;
+	U spatialsCount = 0;
+	ANKI_CHECK(findVisibleSectors(frc, visSectors, spatialsCount));
+
+	// Initiate storage of nodes
+	m_visibleNodes = reinterpret_cast<SceneNode**>(
+		alloc.allocate(spatialsCount * sizeof(void*)));
+	SArray<SceneNode*> visibleNodes(m_visibleNodes, spatialsCount);
+
+	// Iterate visible sectors and get the scene nodes. The array will contain
+	// duplicates
+	U nodesCount = 0;
+	for(auto it : visSectors)
+	{
+		Sector& s = *it;
+		for(auto itsp : s.m_spatials)
+		{
+			SpatialComponent& spc = *itsp;
+			SceneNode& sn = spc.getSceneNode();
+
+			visibleNodes[nodesCount++] = &sn;
+		}
+	}
+	m_visibleNodesCount = nodesCount;
+
+	// Sort the scene nodes using the it's address
+	if(nodesCount > 0)
+	{
+		std::sort(
+			visibleNodes.getBegin(), 
+			visibleNodes.getBegin() + nodesCount);
+	}
+
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki
