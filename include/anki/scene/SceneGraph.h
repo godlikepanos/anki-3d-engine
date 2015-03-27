@@ -24,6 +24,7 @@ class Renderer;
 class ResourceManager;
 class Camera;
 class Input;
+class SectorGroup;
 
 /// @addtogroup scene
 /// @{
@@ -181,6 +182,12 @@ public:
 		ANKI_ASSERT(m_input);
 		return *m_input;
 	}
+
+	SectorGroup& getSectorGroup()
+	{
+		ANKI_ASSERT(m_sectors);
+		return *m_sectors;
+	}
 	/// @}
 
 private:
@@ -207,6 +214,7 @@ private:
 	Timestamp m_activeCameraChangeTimestamp = getGlobalTimestamp();
 
 	EventManager m_events;
+	SectorGroup* m_sectors;
 
 	Atomic<U32> m_objectsMarkedForDeletionCount;
 

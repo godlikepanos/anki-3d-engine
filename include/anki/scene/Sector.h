@@ -18,7 +18,7 @@ class Sector;
 class SectorGroup;
 class FrustumComponent;
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
 
 /// 2 way Portal

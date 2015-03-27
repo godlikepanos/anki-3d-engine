@@ -18,7 +18,7 @@ namespace anki {
 // Forward
 class Renderer;
 
-/// @addtogroup Scene
+/// @addtogroup scene
 /// @{
 
 /// Visibility test type
@@ -173,75 +173,11 @@ private:
 		Container& c, U32& count, VisibleNode& x);
 };
 
-/// Sort spatial scene nodes on distance
-class DistanceSortFunctor
-{
-public:
-	Vec4 m_origin;
-
-	Bool operator()(const VisibleNode& a, const VisibleNode& b)
-	{
-		ANKI_ASSERT(a.m_node && b.m_node);
-
-		F32 dist0 = m_origin.getDistanceSquared(
-			a.m_node->getComponent<SpatialComponent>().getSpatialOrigin());
-		F32 dist1 = m_origin.getDistanceSquared(
-			b.m_node->getComponent<SpatialComponent>().getSpatialOrigin());
-
-		return dist0 < dist1;
-	}
-};
-
-/// Sort renderable scene nodes on material
-class MaterialSortFunctor
-{
-public:
-	Bool operator()(const VisibleNode& a, const VisibleNode& b)
-	{
-		ANKI_ASSERT(a.m_node && b.m_node);
-
-		return a.m_node->getComponent<RenderComponent>().getMaterial()
-			< b.m_node->getComponent<RenderComponent>().getMaterial();
-	}
-};
-
-/// Thread job to short scene nodes by distance
-class DistanceSortJob: public Threadpool::Task					
-{
-public:
-	U32 m_nodesCount;
-	VisibilityTestResults::Container::Iterator m_nodes;
-	Vec4 m_origin;
-
-	Error operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
-	{
-		DistanceSortFunctor comp;
-		comp.m_origin = m_origin;
-		std::sort(m_nodes, m_nodes + m_nodesCount, comp);
-		return ErrorCode::NONE;
-	}
-};
-
-/// Thread job to short renderable scene nodes by material
-class MaterialSortJob: public Threadpool::Task
-{
-public:
-	U32 m_nodesCount;
-	VisibilityTestResults::Container::Iterator m_nodes;
-
-	Error operator()(U32 /*threadId*/, PtrSize /*threadsCount*/)
-	{
-		std::sort(m_nodes, m_nodes + m_nodesCount, MaterialSortFunctor());
-		return ErrorCode::NONE;
-	}
-};
-
 /// Do visibility tests bypassing portals 
 ANKI_USE_RESULT Error doVisibilityTests(
 	SceneNode& frustumable, 
 	SceneGraph& scene, 
 	Renderer& renderer);
-
 /// @}
 
 } // end namespace anki

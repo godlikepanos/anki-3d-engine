@@ -55,7 +55,6 @@ public:
 		return err;
 	}
 };
-
 /// @}
 
 } // end namespace anki

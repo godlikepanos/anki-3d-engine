@@ -14,30 +14,65 @@
 namespace anki {
 
 //==============================================================================
-// VisibilityTestTask                                                          =
+// Misc                                                                        =
 //==============================================================================
 
-struct ThreadLocal
+/// Sort spatial scene nodes on distance
+class DistanceSortFunctor
 {
-	VisibilityTestResults* m_testResults = nullptr;
+public:
+	Vec4 m_origin;
+
+	Bool operator()(const VisibleNode& a, const VisibleNode& b)
+	{
+		ANKI_ASSERT(a.m_node && b.m_node);
+
+		F32 dist0 = m_origin.getDistanceSquared(
+			a.m_node->getComponent<SpatialComponent>().getSpatialOrigin());
+		F32 dist1 = m_origin.getDistanceSquared(
+			b.m_node->getComponent<SpatialComponent>().getSpatialOrigin());
+
+		return dist0 < dist1;
+	}
 };
 
-struct ThreadCommon
+/// Sort renderable scene nodes on material
+class MaterialSortFunctor
 {
-	Array<ThreadLocal, Threadpool::MAX_THREADS> m_threadLocal;
-	Barrier m_barrier;
-	List<SceneNode*> m_frustumsList;
-	SpinLock m_lock;
-}
+public:
+	Bool operator()(const VisibleNode& a, const VisibleNode& b)
+	{
+		ANKI_ASSERT(a.m_node && b.m_node);
 
-class VisibilityTestTask: public Threadpool::Task
+		return a.m_node->getComponent<RenderComponent>().getMaterial()
+			< b.m_node->getComponent<RenderComponent>().getMaterial();
+	}
+};
+
+/// Data common for all tasks.
+class VisibilityShared
 {
 public:
 	SceneGraph* m_scene = nullptr;
-	SceneNode* m_frustumableSn = nullptr;
-	SceneFrameAllocator<U8> m_alloc;
+	Barrier m_barrier;
+	List<SceneNode*> m_frustumsList; ///< Nodes to test
+	SpinLock m_lock;
 
-	ThreadsLocal* m_threadLocal;
+	// Data per thread but that can be accessed by all threads
+	Array<VisibilityTestResults*, Threadpool::MAX_THREADS> m_testResults;
+
+	VisibilityShared(U threadCount)
+	:	m_barrier(threadCount)
+	{
+		memset(&m_testResults[0], 0, sizeof(m_testResults));
+	}
+};
+
+/// Task.
+class VisibilityTestTask: public Threadpool::Task
+{
+public:
+	VisibilityShared* m_shared;
 
 	/// Test a frustum component
 	ANKI_USE_RESULT Error test(SceneNode& testedNode,
@@ -50,32 +85,24 @@ public:
 	/// Do the tests
 	Error operator()(U32 threadId, PtrSize threadsCount)
 	{
-		// Run once
-		ANKI_CHECK(test(*m_frustumableSn, threadId, threadsCount));
+		auto& list = m_shared->m_frustumsList;
+		auto alloc = m_shared->m_scene->getFrameAllocator();
 
-		// Rucurse the extra frustumables
-		while(!m_frustumsList.isEmpty())
+		// Iterate the nodes to check against
+		while(!list.isEmpty())
 		{
-			printf("%d: going deeper\n", threadId);
-
-			// Get front
-			SceneNode* node = m_frustumsList.getFront();
+			// Get front and pop it
+			SceneNode* node = list.getFront();
 			ANKI_ASSERT(node);
 
-			m_barrier->wait();
-
-			ANKI_CHECK(test(*node, threadId, threadsCount));
-
-			// Pop
+			m_shared->m_barrier.wait();
 			if(threadId == 0)
 			{
-				m_frustumsList.popFront(m_alloc);
+				list.popFront(alloc);
 			}
-		}
 
-		if(threadId == 0)
-		{
-			m_frustumsList.destroy(m_alloc);
+			m_shared->m_barrier.wait();
+			ANKI_CHECK(test(*node, threadId, threadsCount));
 		}
 
 		return ErrorCode::NONE;
@@ -91,23 +118,28 @@ Error VisibilityTestTask::test(SceneNode& testedNode,
 	FrustumComponent& testedFr = 
 		testedNode.getComponent<FrustumComponent>();
 	Bool testedNodeShadowCaster = testedFr.getShadowCaster();
+	auto alloc = m_shared->m_scene->getFrameAllocator();
 
 	// Init test results
-	VisibilityTestResults* visible = 
-		m_alloc.newInstance<VisibilityTestResults>();
+	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
 
 	FrustumComponent::VisibilityStats stats = testedFr.getLastVisibilityStats();
 
 	ANKI_CHECK(visible->create(
-		m_alloc, stats.m_renderablesCount, stats.m_lightsCount, 4));
+		alloc, stats.m_renderablesCount, stats.m_lightsCount, 4));
+
+	m_shared->m_testResults[threadId] = visible;
+
+	List<SceneNode*> frustumsList;
 
 	// Chose the test range and a few other things
 	PtrSize start, end;
-	U nodesCount = m_scene->getSceneNodesCount();
+	U nodesCount = m_shared->m_scene->getSceneNodesCount();
 	choseStartEnd(threadId, threadsCount, nodesCount, start, end);
 
 	// Iterate range of nodes
-	err = m_scene->iterateSceneNodes(start, end, [&](SceneNode& node) -> Error
+	err = m_shared->m_scene->iterateSceneNodes(
+		start, end, [&](SceneNode& node) -> Error
 	{
 		Error err = ErrorCode::NONE;
 
@@ -173,7 +205,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode,
 		// Update the visibleNode
 		ANKI_ASSERT(count < MAX_U8);
 		visibleNode.m_spatialsCount = count;
-		visibleNode.m_spatialIndices = m_alloc.newArray<U8>(count);
+		visibleNode.m_spatialIndices = alloc.newArray<U8>(count);
 		if(ANKI_UNLIKELY(visibleNode.m_spatialIndices == nullptr))
 		{
 			return ErrorCode::OUT_OF_MEMORY;
@@ -190,32 +222,32 @@ Error VisibilityTestTask::test(SceneNode& testedNode,
 		{
 			if(r && r->getCastsShadow())
 			{
-				err = visible->moveBackRenderable(m_alloc, visibleNode);
+				err = visible->moveBackRenderable(alloc, visibleNode);
 			}
 		}
 		else
 		{
 			if(r)
 			{
-				err = visible->moveBackRenderable(m_alloc, visibleNode);
+				err = visible->moveBackRenderable(alloc, visibleNode);
 			}
 
 			LightComponent* l = node.tryGetComponent<LightComponent>();
 			if(!err && l)
 			{
-				err = visible->moveBackLight(m_alloc, visibleNode);
+				err = visible->moveBackLight(alloc, visibleNode);
 
 				if(!err && l->getShadowEnabled() && fr)
 				{
-					LockGuard<SpinLock> l(m_lock);
-					err = m_frustumsList.pushBack(m_alloc, &node);
+					LockGuard<SpinLock> l(m_shared->m_lock);
+					err = m_shared->m_frustumsList.pushBack(alloc, &node);
 				}
 			}
 
 			LensFlareComponent* lf = node.tryGetComponent<LensFlareComponent>();
 			if(!err && lf)
 			{
-				err = visible->moveBackLensFlare(m_alloc, visibleNode);
+				err = visible->moveBackLensFlare(alloc, visibleNode);
 				ANKI_ASSERT(visibleNode.m_node);
 			}
 		}
@@ -225,24 +257,13 @@ Error VisibilityTestTask::test(SceneNode& testedNode,
 
 	ANKI_CHECK(err);
 
-	m_threadLocal[threadId].m_testResults = visible;
-	printf("%d: assigning %p\n", threadId, (void*)visible);
-
 	// Gather the results from all threads
-	m_barrier->wait();
-
-	//printf("%d: checking what is assigned %p\n", threadId, 
-	//		(void*)m_threadLocal[threadId].m_testResults);
-
-	printf("%d: checking what is assigned to 0 %p\n", threadId, 
-			(void*)m_threadLocal[0].m_testResults);
+	m_shared->m_barrier.wait();
 	
 	if(threadId == 0)
 	{
-		printf("%d: combine\n", threadId);
 		ANKI_CHECK(combineTestResults(testedFr, threadsCount));
 	}
-	m_barrier->wait();
 
 	return err;
 }
@@ -252,6 +273,8 @@ ANKI_USE_RESULT Error VisibilityTestTask::combineTestResults(
 	FrustumComponent& frc,
 	PtrSize threadsCount)
 {
+	auto alloc = m_shared->m_scene->getFrameAllocator();
+
 	// Count the visible scene nodes to optimize the allocation of the 
 	// final result
 	U32 renderablesSize = 0;
@@ -259,8 +282,7 @@ ANKI_USE_RESULT Error VisibilityTestTask::combineTestResults(
 	U32 lensFlaresSize = 0;
 	for(U i = 0; i < threadsCount; i++)
 	{
-		ANKI_ASSERT(m_threadLocal[i].m_testResults);
-		VisibilityTestResults& rez = *m_threadLocal[i].m_testResults;
+		VisibilityTestResults& rez = *m_shared->m_testResults[i];
 
 		renderablesSize += rez.getRenderablesCount();
 		lightsSize += rez.getLightsCount();
@@ -268,8 +290,7 @@ ANKI_USE_RESULT Error VisibilityTestTask::combineTestResults(
 	}
 
 	// Allocate
-	VisibilityTestResults* visible = 
-		m_alloc.newInstance<VisibilityTestResults>();
+	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
 	if(visible == nullptr)
 	{
 		return ErrorCode::OUT_OF_MEMORY;
@@ -277,7 +298,7 @@ ANKI_USE_RESULT Error VisibilityTestTask::combineTestResults(
 
 	ANKI_CHECK(
 		visible->create(
-		m_alloc, 
+		alloc, 
 		renderablesSize, 
 		lightsSize,
 		lensFlaresSize));
@@ -295,7 +316,7 @@ ANKI_USE_RESULT Error VisibilityTestTask::combineTestResults(
 	VisibleNode* lensFlares = visible->getLensFlaresBegin();
 	for(U i = 0; i < threadsCount; i++)
 	{
-		VisibilityTestResults& from = *m_threadLocal[i].m_testResults;
+		VisibilityTestResults& from = *m_shared->m_testResults[i];
 
 		U rCount = from.getRenderablesCount();
 		U lCount = from.getLightsCount();
@@ -400,19 +421,16 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 {
 	// Do the tests in parallel
 	Threadpool& threadPool = scene._getThreadpool();
-	Barrier barrier(threadPool.getThreadsCount());
-	ThreadsLocal tlocal;
+	
+	VisibilityShared shared(threadPool.getThreadsCount());
+	shared.m_scene = &scene;
+	ANKI_CHECK(shared.m_frustumsList.pushBack(scene.getFrameAllocator(), &fsn));
 
-	Array<VisibilityTestTask, Threadpool::MAX_THREADS> jobs;
+	Array<VisibilityTestTask, Threadpool::MAX_THREADS> tasks;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
-		jobs[i].m_scene = &scene;
-		jobs[i].m_frustumableSn = &fsn;
-		jobs[i].m_alloc = scene.getFrameAllocator();
-		jobs[i].m_barrier = &barrier;
-		jobs[i].m_threadLocal = &tlocal;
-
-		threadPool.assignNewTask(i, &jobs[i]);
+		tasks[i].m_shared = &shared;
+		threadPool.assignNewTask(i, &tasks[i]);
 	}
 	
 	return threadPool.waitForAllThreadsToFinish();
