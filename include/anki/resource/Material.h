@@ -123,7 +123,7 @@ protected:
 	ShaderVariableDataType m_varType = ShaderVariableDataType::NONE;
 	ShaderVariableBlockInfo m_varBlkInfo;
 	I16 m_textureUnit = -1;
-	ResourceString m_name;
+	String m_name;
 
 	Bool8 m_instanced = false;
 };
@@ -181,7 +181,7 @@ public:
 		TempResourceAllocator<U8> talloc);
 
 private:
-	ResourceDArray<TData> m_data;
+	DArray<TData> m_data;
 };
 
 /// Contains a few properties that other classes may use. For an explanation of
@@ -340,7 +340,7 @@ public:
 	}
 
 	// Variable accessors
-	const ResourceDArray<MaterialVariable*>& getVariables() const
+	const DArray<MaterialVariable*>& getVariables() const
 	{
 		return m_vars;
 	}
@@ -367,11 +367,11 @@ private:
 	/// Keep it to have access to some stuff at runtime
 	ResourceManager* m_resources = nullptr; 
 		
-	ResourceDArray<MaterialVariable*> m_vars;
+	DArray<MaterialVariable*> m_vars;
 	Dictionary<MaterialVariable*> m_varDict;
 
-	ResourceDArray<ShaderResourcePointer> m_progs;
-	ResourceDArray<PipelineHandle> m_pplines;
+	DArray<ShaderResourcePointer> m_progs;
+	DArray<PipelineHandle> m_pplines;
 
 	U32 m_shaderBlockSize;
 
@@ -388,7 +388,7 @@ private:
 
 	/// Create a unique shader source in chache. If already exists do nothing
 	ANKI_USE_RESULT Error createProgramSourceToCache(
-		const TempResourceString& source, TempResourceString& out);
+		const StringAuto& source, StringAuto& out);
 
 	/// Read all shader programs and pupulate the @a vars and @a nameToVar
 	/// containers

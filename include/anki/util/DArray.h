@@ -268,17 +268,17 @@ protected:
 /// Dynamic array with automatic destruction. It's the same as DArray but it 
 /// holds the allocator in order to perform automatic destruction. Use it for
 /// temp operations and on transient classes.
-template<typename T, typename TAlloc = HeapAllocator<T>>
+template<typename T>
 class DArrayAuto: public DArray<T>
 {
 public:
 	using Base = DArray<T>;
 	using Value = T;
-	using Allocator = TAlloc;
 
-	DArrayAuto(Allocator alloc)
+	template<typename TAllocator>
+	DArrayAuto(TAllocator alloc)
 	:	Base(),
-		m_alloc(alloc)
+		m_alloc(&alloc.getMemoryPool())
 	{}
 
 	/// Move.
@@ -319,7 +319,7 @@ public:
 	}
 
 private:
-	Allocator m_alloc;
+	GenericMemoryPoolAllocator<T> m_alloc;
 
 	void move(DArrayAuto& b)
 	{

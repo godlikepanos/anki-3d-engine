@@ -12,34 +12,15 @@
 
 namespace anki {
 
-// Forward
-template<typename TAlloc>
-class StringListBase;
-
-/// @addtogroup util_private
-/// @{
-
-template<typename TAlloc>
-using StringListBaseScopeDestroyer = 
-	ScopeDestroyer<StringListBase<TAlloc>, TAlloc>;
-
-/// @}
-
 /// @addtogroup util_containers
 /// @{
 
 /// A simple convenience class for string lists
-template<typename TAlloc>
-class StringListBase: public List<StringBase<TAlloc>>
+class StringList: public List<String>
 {
 public:
-	using Self = StringListBase; ///< Self type
 	using Char = char; ///< Char type
-	using Allocator = TAlloc;
-	using String = StringBase<Allocator>; ///< String type
 	using Base = List<String>; ///< Base
-
-	using ScopeDestroyer = StringListBaseScopeDestroyer<Allocator>;
 
 	/// Sort method for sortAll().
 	enum class Sort
@@ -51,12 +32,14 @@ public:
 	// Use the base constructors
 	using Base::Base;
 
-	void destroy(Allocator alloc);
+	template<typename TAllocator>
+	void destroy(TAllocator alloc);
 
 	/// Join all the elements into a single big string using a the
 	/// seperator @a separator
+	template<typename TAllocator>
 	ANKI_USE_RESULT Error join(
-		Allocator alloc, const CString& separator, String& out) const;
+		TAllocator alloc, const CString& separator, String& out) const;
 
 	/// Returns the index position of the last occurrence of @a value in
 	/// the list
@@ -67,19 +50,73 @@ public:
 	void sortAll(const Sort method = Sort::ASCENDING);
 
 	/// Push at the end of the list a formated string
-	template<typename... TArgs>
+	template<typename TAllocator, typename... TArgs>
 	ANKI_USE_RESULT Error pushBackSprintf(
-		Allocator alloc, const TArgs&... args);
+		TAllocator alloc, const TArgs&... args);
+
+	/// Split a string using a separator (@a separator) and return these
+	/// strings in a string list
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error splitString(
+		TAllocator alloc, const CString& s, const Char separator);
+};
+
+/// String list with automatic destruction.
+class StringListAuto: public StringList
+{
+public:
+	using Base = StringList;
+
+	/// Create using an allocator.
+	template<typename TAllocator>
+	StringListAuto(TAllocator alloc)
+	:	Base(),
+		m_alloc(&alloc.getMemoryPool())
+	{}
+
+	/// Move.
+	StringListAuto(StringListAuto&& b)
+	:	Base()
+	{
+		move(b);
+	}
+
+	~StringListAuto()
+	{
+		Base::destroy(m_alloc);
+	}
+
+	/// Move.
+	StringListAuto& operator=(StringListAuto&& b)
+	{
+		move(b);
+		return *this;
+	}
+
+	/// Push at the end of the list a formated string
+	template<typename... TArgs>
+	ANKI_USE_RESULT Error pushBackSprintf(const TArgs&... args)
+	{
+		return Base::pushBackSprintf(m_alloc, args...);
+	}
 
 	/// Split a string using a separator (@a separator) and return these
 	/// strings in a string list
 	ANKI_USE_RESULT Error splitString(
-		Allocator alloc, const CString& s, const Char separator);
+		const CString& s, const Base::Char separator)
+	{
+		return Base::splitString(m_alloc, s, separator);
+	}
+
+private:
+	GenericMemoryPoolAllocator<Char> m_alloc;
+
+	void move(StringListAuto& b)
+	{
+		Base::operator=(std::move(b));
+		m_alloc = std::move(b.m_alloc);
+	}
 };
-
-/// A common string list allocated in heap.
-using StringList = StringListBase<HeapAllocator<char>>;
-
 /// @}
 
 } // end namespace anki

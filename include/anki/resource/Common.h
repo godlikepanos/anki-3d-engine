@@ -22,17 +22,7 @@ template<typename T>
 using ResourceAllocator = HeapAllocator<T>;
 
 template<typename T>
-using ResourceDArray = DArray<T>;
-
-using ResourceString = StringBase<ResourceAllocator<char>>;
-
-template<typename T>
 using TempResourceAllocator = StackAllocator<T>;
-
-template<typename T>
-using TempResourceDArrayAuto = DArrayAuto<T, TempResourceAllocator<T>>;
-
-using TempResourceString = StringBase<TempResourceAllocator<char>>;
 
 /// Contains initialization information for the resource classes.
 class ResourceInitializer
@@ -51,18 +41,6 @@ public:
 		m_resources(resourceManager)
 	{}
 };
-/// @}
-
-/// @privatesection
-/// @{
-
-// Sortcut
-#define ANKI_CHECK_C(x_) \
-	err = x_; \
-	if(ANKI_UNLIKELY(err)) \
-	{ \
-		goto cleanup; \
-	}
 /// @}
 
 } // end namespace anki

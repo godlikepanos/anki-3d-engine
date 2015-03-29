@@ -17,10 +17,6 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-/// Define string literal
-#define ANKI_STRL(cstr_) MPString(cstr_, m_alloc)
-
-//==============================================================================
 /// Given a string return info about the shader
 static ANKI_USE_RESULT Error getShaderInfo(
 	const CString& str, 
@@ -283,7 +279,7 @@ Error MaterialProgramCreator::parseProgramTag(
 	ANKI_CHECK(opsEl.getChildElement("operation", opEl));
 	do
 	{
-		MPString out;
+		String out;
 		ANKI_CHECK(parseOperationTag(opEl, glshader, glshaderbit, out));
 		ANKI_CHECK(lines.pushBackSprintf(m_alloc, &out[0]));
 		out.destroy(m_alloc);
@@ -452,7 +448,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			
 			if(inpvar.m_arraySize > 1)
 			{
-				MPString tmp;
+				String tmp;
 				ANKI_CHECK(tmp.sprintf(m_alloc, "[%uU]", inpvar.m_arraySize));
 				ANKI_CHECK(inpvar.m_line.append(m_alloc, tmp));
 				tmp.destroy(m_alloc);
@@ -464,7 +460,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			if(inpvar.m_type >= ShaderVariableDataType::SAMPLERS_FIRST 
 				&& inpvar.m_type <= ShaderVariableDataType::SAMPLERS_LAST)
 			{
-				MPString tmp;
+				String tmp;
 
 				ANKI_CHECK(tmp.sprintf(
 					m_alloc, "layout(binding = %u) uniform %s",
@@ -480,7 +476,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 			else
 			{
 				// In block
-				MPString tmp;
+				String tmp;
 
 				ANKI_CHECK(tmp.create(m_alloc, inpvar.m_line));
 				ANKI_CHECK(m_uniformBlock.emplaceBack(m_alloc));
@@ -581,7 +577,7 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 			inpvar.m_inBlock = false;
 
-			MPString initList;
+			String initList;
 			ANKI_CHECK(inpvar.m_value.join(m_alloc, ", ", initList));
 
 			err = inpvar.m_line.sprintf(m_alloc, "const %s %s = %s(%s);",
@@ -610,7 +606,7 @@ Error MaterialProgramCreator::parseOperationTag(
 	const XmlElement& operationTag, 
 	GLenum glshader, 
 	GLbitfield glshaderbit,
-	MPString& out)
+	String& out)
 {
 	Error err = ErrorCode::NONE;
 	CString cstr;
@@ -619,8 +615,7 @@ Error MaterialProgramCreator::parseOperationTag(
 	static const char OUT[] = "out";
 
 	CString funcName;
-	MPStringList argsList;
-	MPStringList::ScopeDestroyer argsListd(&argsList, m_alloc);
+	StringListAuto argsList(m_alloc);
 
 	// <id></id>
 	I64 id;
@@ -680,14 +675,14 @@ Error MaterialProgramCreator::parseOperationTag(
 
 				if(glshader == GL_VERTEX_SHADER)
 				{
-					ANKI_CHECK(argsList.pushBackSprintf(m_alloc, 
+					ANKI_CHECK(argsList.pushBackSprintf(
 						"%s [gl_InstanceID]", &cstr[0]));
 
 					m_instanceIdMask |= glshaderbit;
 				}
 				else if(glshader == GL_FRAGMENT_SHADER)
 				{
-					ANKI_CHECK(argsList.pushBackSprintf(m_alloc, 
+					ANKI_CHECK(argsList.pushBackSprintf(
 						"%s [vInstanceId]", &cstr[0]));
 					
 					m_instanceIdMask |= glshaderbit;
@@ -701,7 +696,7 @@ Error MaterialProgramCreator::parseOperationTag(
 			else
 			{
 				ANKI_CHECK(argEl.getText(cstr));
-				ANKI_CHECK(argsList.pushBackSprintf(m_alloc, &cstr[0]));
+				ANKI_CHECK(argsList.pushBackSprintf(&cstr[0]));
 			}
 
 			// Advance
@@ -710,45 +705,42 @@ Error MaterialProgramCreator::parseOperationTag(
 	}
 
 	// Now write everything
-	MPStringList lines;
-	MPStringList::ScopeDestroyer linesd(&lines, m_alloc);
+	StringListAuto lines(m_alloc);
 
-	ANKI_CHECK(lines.pushBackSprintf(m_alloc,
-		"#if defined(%s_DEFINED)", &funcName[0]));
+	ANKI_CHECK(lines.pushBackSprintf("#if defined(%s_DEFINED)", &funcName[0]));
 
 	// Write the defines for the operationOuts
-	for(const MPString& arg : argsList)
+	for(const String& arg : argsList)
 	{
 		if(arg.find(OUT) == 0)
 		{
-			ANKI_CHECK(lines.pushBackSprintf(m_alloc,
+			ANKI_CHECK(lines.pushBackSprintf(
 				" && defined(%s_DEFINED)", &arg[0]));
 		}
 	}
-	ANKI_CHECK(lines.pushBackSprintf(m_alloc, "\n"));
+	ANKI_CHECK(lines.pushBackSprintf("\n"));
 
 	if(!retTypeVoid)
 	{
 		ANKI_CHECK(retTypeEl.getText(cstr));
-		ANKI_CHECK(lines.pushBackSprintf(m_alloc,
+		ANKI_CHECK(lines.pushBackSprintf(
 			"#\tdefine out%u_DEFINED\n"
 			"\t%s out%u = ", id, &cstr[0], id));
 	}
 	else
 	{
-		ANKI_CHECK(lines.pushBackSprintf(m_alloc, "\t"));
+		ANKI_CHECK(lines.pushBackSprintf("\t"));
 	}
 	
 	// write the "func(args...)" of "blah = func(args...)"
-	MPString argsStr;
-	MPString::ScopeDestroyer argsStrd(&argsStr, m_alloc);
+	StringAuto argsStr(m_alloc);
 
 	if(!argsList.isEmpty())
 	{
 		ANKI_CHECK(argsList.join(m_alloc, ", ", argsStr));
 	}
 
-	ANKI_CHECK(lines.pushBackSprintf(m_alloc, "%s(%s);\n#endif",
+	ANKI_CHECK(lines.pushBackSprintf("%s(%s);\n#endif",
 		&funcName[0], 
 		(argsStr.isEmpty()) ? "" : &argsStr[0]));
 

@@ -46,9 +46,7 @@ Error ResourcePointer<T, TResourceManager>::load(
 		// WARNING: Keep the brackets to force deallocation of newFname before
 		// reseting the mempool
 		{
-			TempResourceString newFname;
-			TempResourceString::ScopeDestroyer newFnamed(
-				&newFname, resources->_getTempAllocator());
+			StringAuto newFname(resources->_getTempAllocator());
 
 			err = resources->fixResourceFilename(filename, newFname);
 			if(err)
@@ -150,7 +148,7 @@ template<typename... TArgs>
 Error ResourcePointer<T, TResourceManager>::loadToCache(
 	TResourceManager* resources, TArgs&&... args)
 {
-	TempResourceString fname;
+	StringAuto fname(resources->_getTempAllocator());
 
 	Error err = T::createToCache(args..., *resources, fname);
 
@@ -159,7 +157,6 @@ Error ResourcePointer<T, TResourceManager>::loadToCache(
 		err = load(fname.toCString(), resources);
 	}
 
-	fname.destroy(resources->_getTempAllocator());
 	return err;
 }
 

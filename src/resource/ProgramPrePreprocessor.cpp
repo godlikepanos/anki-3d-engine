@@ -68,23 +68,20 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 	Error err = ErrorCode::NONE;
 
 	// load file in lines
-	PPPString txt;
-	PPPString::ScopeDestroyer txtd(&txt, m_alloc);
-
-	PPPStringList lines;
-	PPPStringList::ScopeDestroyer linesd(&lines, m_alloc);
+	StringAuto txt(m_alloc);
+	StringListAuto lines(m_alloc);
 
 	File file;
 	ANKI_CHECK(file.open(filename, File::OpenFlag::READ));
 	ANKI_CHECK(file.readAllText(TempResourceAllocator<char>(m_alloc), txt));
-	ANKI_CHECK(lines.splitString(m_alloc, txt.toCString(), '\n'));
+	ANKI_CHECK(lines.splitString(txt.toCString(), '\n'));
 	if(lines.getSize() < 1)
 	{
 		ANKI_LOGE("File is empty: %s", &filename[0]);
 		return ErrorCode::USER_DATA;
 	}
 
-	for(const PPPString& line : lines)
+	for(const String& line : lines)
 	{
 		PtrSize npos = 0;
 
@@ -104,16 +101,13 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 
 				if(line.getLength() >= std::strlen(commands[6]) + 2)
 				{
-					PPPString filen;
-					PPPString::ScopeDestroyer filend(&filen, m_alloc);
+					StringAuto filen(m_alloc);
 					
 					ANKI_CHECK(filen.create(
-						m_alloc,
 						line.begin() + std::strlen(commands[6]), 
 						line.end() - 1));
 
-					PPPString filenFixed;
-					PPPString::ScopeDestroyer filenFixedd(&filenFixed, m_alloc);
+					StringAuto filenFixed(m_alloc);
 
 					ANKI_CHECK(m_manager->fixResourceFilename(
 						filen.toCString(), filenFixed));
@@ -148,7 +142,7 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 }
 
 //==============================================================================
-Error ProgramPrePreprocessor::parseType(const PPPString& line, Bool& found)
+Error ProgramPrePreprocessor::parseType(const String& line, Bool& found)
 {
 	Error err = ErrorCode::NONE;
 	U i;

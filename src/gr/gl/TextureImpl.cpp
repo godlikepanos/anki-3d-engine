@@ -248,7 +248,7 @@ Error TextureImpl::create(const Initializer& init)
 					ANKI_ASSERT(m_depth > 0);
 
 					// Gather the data
-					DArrayAuto<U8, GrAllocator<U8>> data(alloc);
+					DArrayAuto<U8> data(alloc);
 
 					// Check if there are data
 					if(init.m_data[level][0].m_ptr != nullptr)

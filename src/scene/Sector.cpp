@@ -5,16 +5,74 @@
 
 #include "anki/scene/Sector.h"
 #include "anki/scene/SpatialComponent.h"
-#include "anki/scene/SceneNode.h"
-#include "anki/scene/RenderComponent.h"
-#include "anki/scene/Light.h"
-#include "anki/scene/Visibility.h"
 #include "anki/scene/FrustumComponent.h"
+#include "anki/scene/MoveComponent.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/util/Logger.h"
-#include "anki/renderer/Renderer.h"
+#include "anki/resource/ResourceManager.h"
+#include "anki/resource/MeshLoader.h"
 
 namespace anki {
+
+//==============================================================================
+// PortalSectorBase                                                            =
+//==============================================================================
+
+//==============================================================================
+PortalSectorBase::~PortalSectorBase()
+{
+	auto alloc = getSceneAllocator();
+
+	// Clean collision shape
+	if(m_shape)
+	{
+		alloc.deleteInstance(m_shape);
+		m_shape = nullptr;
+	}
+
+	m_shapeStorage.destroy(alloc);
+}
+
+//==============================================================================
+Error PortalSectorBase::create(const CString& name, const CString& modelFname)
+{
+	ANKI_CHECK(SceneNode::create(name));
+
+	// Create move component
+	SceneComponent* comp = 
+		getSceneAllocator().newInstance<MoveComponent>(this);
+	ANKI_CHECK_OOM(comp);
+
+	ANKI_CHECK(addComponent(comp, true));
+
+#if 0
+	// Load mesh 
+	TempResourceString newFname;
+	ANKI_CHECK(
+		getSceneGraph()._getResourceManager().fixResourceFilename(
+		modelFname, newFname));
+
+	MeshLoader loader;
+	ANKI_CHECK(loader.load(
+		getSceneGraph()._getResourceManager()._getTempAllocator(),
+		newFname.toCString()));
+
+	// Create shape
+	MeshLoader::Header& header = loader.getHeader();
+	U vertCount = header.m_totalVerticesCount;
+
+	m_shape = getSectorGroup().createConvexHull(vertPositions, m_shapeStorage);
+	ANKI_CHECK_OOM(m_shape);
+#endif
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+SectorGroup& PortalSectorBase::getSectorGroup()
+{
+	return getSceneGraph().getSectorGroup();
+}
 
 //==============================================================================
 // Portal                                                                      =
@@ -23,28 +81,105 @@ namespace anki {
 //==============================================================================
 Portal::~Portal()
 {
-	auto alloc = m_group->getAllocator();
-	m_shapeStorage.destroy(alloc);
+	auto alloc = getSceneAllocator();
 
-	if(m_shape)
+	// Remove from sectors
+	for(Sector* s : m_sectors)
 	{
-		alloc.deleteInstance(m_shape);
-		m_shape = nullptr;
+		s->tryRemovePortal(this);
+	}
+
+	m_sectors.destroy(getSceneAllocator());
+
+	// Remove from group
+	auto& portals = getSectorGroup().m_portals;
+	auto it = portals.getBegin();
+	auto end = portals.getBegin();
+	for(; it != end; ++it)
+	{
+		if(*it == this)
+		{
+			portals.erase(getSceneAllocator(), it);
+			break;
+		}
 	}
 }
 
 //==============================================================================
-Error Portal::create(const SArray<Vec4>& vertPositions)
+Error Portal::create(const CString& name, const CString& modelFname)
 {
-	m_shape = m_group->createConvexHull(vertPositions, m_shapeStorage);
-	return m_shape ? ErrorCode::NONE : ErrorCode::OUT_OF_MEMORY;
+	ANKI_CHECK(PortalSectorBase::create(name, modelFname));
+	ANKI_CHECK(getSectorGroup().m_portals.pushBack(getSceneAllocator(), this));
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Portal::addSector(Sector* sector)
+Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
-	ANKI_ASSERT(sector);
-	return m_sectors.pushBack(m_group->getAllocator(), sector);
+	MoveComponent& move = getComponent<MoveComponent>();
+	if(move.getTimestamp() == getGlobalTimestamp())
+	{
+		// Move comp updated. Inform the group
+		
+		SectorGroup& group = getSectorGroup();
+
+		// Gather the sectors it collides
+		auto it = group.m_sectors.getBegin();
+		auto end = group.m_sectors.getEnd();
+
+		for(; it != end; ++it)
+		{
+			Sector* sector = *it;
+
+			Bool collide = testCollisionShapes(
+				*m_shape, sector->getBoundingShape());
+
+			if(collide)
+			{
+				ANKI_CHECK(tryAddSector(sector));
+				ANKI_CHECK(sector->tryAddPortal(this));
+			}
+			else
+			{
+				tryRemoveSector(sector);
+				sector->tryRemovePortal(this);
+			}
+		}
+	}
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error Portal::tryAddSector(Sector* sector)
+{
+	auto it = m_sectors.getBegin();
+	auto end = m_sectors.getEnd();
+	for(; it != end; ++it)
+	{
+		if(*it == sector)
+		{
+			// Already there, return
+			return ErrorCode::NONE;
+		}
+	}
+
+	return m_sectors.pushBack(getSceneAllocator(), sector);
+}
+
+//==============================================================================
+void Portal::tryRemoveSector(Sector* sector)
+{
+	auto it = m_sectors.getBegin();
+	auto end = m_sectors.getEnd();
+	for(; it != end; ++it)
+	{
+		if(*it == sector)
+		{
+			m_sectors.erase(getSceneAllocator(), it);
+			break;
+		}
+	}
 }
 
 //==============================================================================
@@ -54,30 +189,79 @@ Error Portal::addSector(Sector* sector)
 //==============================================================================
 Sector::~Sector()
 {
-	auto alloc = m_group->getAllocator();
+	auto alloc = getSceneAllocator();
 
-	if(m_shape)
+	// Remove portals
+	for(Portal* p : m_portals)
 	{
-		alloc.deleteInstance(m_shape);
-		m_shape = nullptr;
+		p->tryRemoveSector(this);
 	}
 
 	m_portals.destroy(alloc);
-	m_spatials.destroy(alloc);
+
+	// Remove spatials
+	U spatialsCount = m_spatials.getSize();
+	while(spatialsCount-- != 0) // Use counter
+	{
+		tryRemoveSpatialComponent(m_spatials.getFront());
+	}
+
+	// Remove from group
+	auto& sectors = getSectorGroup().m_sectors;
+	auto it = sectors.getBegin();
+	auto end = sectors.getBegin();
+	for(; it != end; ++it)
+	{
+		if(*it == this)
+		{
+			sectors.erase(getSceneAllocator(), it);
+			break;
+		}
+	}
 }
 
 //==============================================================================
-Error Sector::create(const SArray<Vec4>& vertPositions)
+Error Sector::create(const CString& name, const CString& modelFname)
 {
-	m_shape = m_group->createConvexHull(vertPositions, m_shapeStorage);
-	return m_shape ? ErrorCode::NONE : ErrorCode::OUT_OF_MEMORY;
+	ANKI_CHECK(PortalSectorBase::create(name, modelFname));
+	ANKI_CHECK(getSectorGroup().m_sectors.pushBack(getSceneAllocator(), this));
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Sector::addPortal(Portal* portal)
+Error Sector::tryAddPortal(Portal* portal)
 {
 	ANKI_ASSERT(portal);
-	return m_portals.pushBack(m_group->getAllocator(), portal);
+
+	auto it = m_portals.getBegin();
+	auto end = m_portals.getEnd();
+	for(; it != end; ++it)
+	{
+		if(*it == portal)
+		{
+			// Already there, return
+			return ErrorCode::NONE;
+		}
+	}
+
+	return m_portals.pushBack(getSceneAllocator(), portal);
+}
+
+//==============================================================================
+void Sector::tryRemovePortal(Portal* portal)
+{
+	ANKI_ASSERT(portal);
+
+	auto it = m_portals.getBegin();
+	auto end = m_portals.getEnd();
+	for(; it != end; ++it)
+	{
+		if(*it == portal)
+		{
+			m_portals.erase(getSceneAllocator(), it);
+			break;
+		}
+	}
 }
 
 //==============================================================================
@@ -92,27 +276,26 @@ Error Sector::tryAddSpatialComponent(SpatialComponent* sp)
 	{
 		if(*itsp == this)
 		{
-			break;
+			// Found, return
+#if ANKI_ASSERTIONS
+			LockGuard<SpinLock> g(m_lock);
+			ANKI_ASSERT(findSpatialComponent(sp) != m_spatials.getEnd()
+				&& "Spatial has reference to sector but sector not");
+#endif
+			return ErrorCode::NONE;
 		}
 	}
 	
-	Error err = ErrorCode::NONE;
-	if(itsp == endsp)
+	// Lock since this might be done from a thread
+	LockGuard<SpinLock> g(m_lock);
+
+	ANKI_ASSERT(findSpatialComponent(sp) == m_spatials.getEnd());
+
+	Error err = m_spatials.pushBack(getSceneAllocator(), sp);
+
+	if(!err)
 	{
-		// Not found, add it
-
-		// Lock since this might be done from a thread
-		LockGuard<SpinLock> g(m_lock);
-
-		ANKI_ASSERT(findSpatialComponent(sp) == m_spatials.getEnd());
-
-		m_dirty = true;
-		Error err = m_spatials.pushBack(m_group->getAllocator(), sp);
-
-		if(!err)
-		{
-			err = sp->getSectorInfo().pushBack(m_group->getAllocator(), this);
-		}
+		err = sp->getSectorInfo().pushBack(getSceneAllocator(), this);
 	}
 
 	return err;
@@ -138,16 +321,20 @@ void Sector::tryRemoveSpatialComponent(SpatialComponent* sp)
 	{
 		// Found, remove
 
-		// Lock since this might be dont from a thread
+		sp->getSectorInfo().erase(getSceneAllocator(), itsp);
+
 		LockGuard<SpinLock> g(m_lock);
-
-		m_dirty = true;
-
-		sp->getSectorInfo().erase(m_group->getAllocator(), itsp);
 
 		auto it = findSpatialComponent(sp);
 		ANKI_ASSERT(it != m_spatials.getEnd());
-		m_spatials.erase(m_group->getAllocator(), it);
+		m_spatials.erase(getSceneAllocator(), it);
+	}
+	else
+	{
+#if ANKI_ASSERTIONS
+		LockGuard<SpinLock> g(m_lock);
+		ANKI_ASSERT(findSpatialComponent(sp) == m_spatials.getEnd());
+#endif
 	}
 }
 
@@ -170,118 +357,44 @@ List<SpatialComponent*>::Iterator Sector::findSpatialComponent(
 }
 
 //==============================================================================
-// SectorGroup                                                                 =
-//==============================================================================
-
-//==============================================================================
-ConvexHullShape* SectorGroup::createConvexHull(
-	const SArray<Vec4>& vertPositions, DArray<Vec4>& shapeStorage)
+Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 {
-	Error err = ErrorCode::NONE;
-
-	auto alloc = getAllocator();
-	U vertCount = vertPositions.getSize();
-	ANKI_ASSERT(vertCount >= 4 && "Minimum shape should be tetrahedron");
-
-	// Create hull
-	ConvexHullShape* hull = alloc.newInstance<ConvexHullShape>();
-	if(!hull)
+	MoveComponent& move = getComponent<MoveComponent>();
+	if(move.getTimestamp() == getGlobalTimestamp())
 	{
-		err = ErrorCode::OUT_OF_MEMORY;
-	}
-
-	// Alloc storage
-	if(!err)
-	{
-		err = shapeStorage.create(alloc, vertCount);
-	}
-
-	// Assign storage to hull
-	if(!err)
-	{
-		memcpy(&shapeStorage[0], &vertPositions[0], sizeof(Vec4) * vertCount);
-		hull->initStorage(&shapeStorage[0], vertCount);
-	}
-
-	// Cleanup on error
-	if(err)
-	{
-		shapeStorage.destroy(alloc);
+		// Move comp updated. Inform the group
 		
-		if(hull)
+		SectorGroup& group = getSectorGroup();
+
+		// Gather the portals it collides
+		auto it = group.m_portals.getBegin();
+		auto end = group.m_portals.getEnd();
+		for(; it != end; ++it)
 		{
-			alloc.deleteInstance(hull);
-			hull = nullptr;
-		}
-	}
-
-	return hull;
-}
-
-//==============================================================================
-Sector* SectorGroup::createNewSector(const SArray<Vec4>& vertexPositions)
-{
-	Sector* sector = getAllocator().newInstance<Sector>(this);
-	if(sector)
-	{
-		Error err = sector->create(vertexPositions);
-		if(err)
-		{
-			getAllocator().deleteInstance(sector);
-			sector = nullptr;
-		}
-	}
-
-	return sector;
-}
-
-//==============================================================================
-Portal* SectorGroup::createNewPortal(const SArray<Vec4>& vertexPositions)
-{
-	Portal* portal = getAllocator().newInstance<Portal>(this);
-	if(portal)
-	{
-		Error err = portal->create(vertexPositions);
-		if(err)
-		{
-			getAllocator().deleteInstance(portal);
-			portal = nullptr;
-		}
-	}
-
-	return portal;
-}
-
-//==============================================================================
-Error SectorGroup::bake()
-{
-	// Connect portals with sectors
-	auto it = m_portals.getBegin();
-	auto end = m_portals.getEnd();
-	for(; it != end; ++it)
-	{
-		Portal& portal = *(*it);
-
-		auto sit = m_sectors.getBegin();
-		auto send = m_sectors.getEnd();
-
-		for(; sit != send; ++sit)
-		{
-			Sector& sector = *(*sit);
+			Portal* portal = *it;
 
 			Bool collide = testCollisionShapes(
-				portal.getBoundingShape(), sector.getBoundingShape());
+				*m_shape, portal->getBoundingShape());
 
 			if(collide)
 			{
-				ANKI_CHECK(portal.addSector(&sector));
-				ANKI_CHECK(sector.addPortal(&portal));
+				ANKI_CHECK(portal->tryAddSector(this));
+				ANKI_CHECK(tryAddPortal(portal));
+			}
+			else
+			{
+				portal->tryRemoveSector(this);
+				tryRemovePortal(portal);
 			}
 		}
 	}
 
 	return ErrorCode::NONE;
 }
+
+//==============================================================================
+// SectorGroup                                                                 =
+//==============================================================================
 
 //==============================================================================
 Error SectorGroup::spatialUpdated(SpatialComponent* sp)

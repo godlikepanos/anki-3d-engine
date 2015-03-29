@@ -38,7 +38,7 @@ Error Mesh::load(const CString& filename, ResourceInitializer& init)
 	Error err = ErrorCode::NONE;
 
 	MeshLoader loader;
-	err = loader.load(init.m_tempAlloc, filename);
+	err = loader.load(&init.m_tempAlloc.getMemoryPool(), filename);
 	if(err) return err;
 
 	const MeshLoader::Header& header = loader.getHeader();

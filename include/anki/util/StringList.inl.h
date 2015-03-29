@@ -9,8 +9,8 @@
 namespace anki {
 
 //==============================================================================
-template<typename TAlloc>
-void StringListBase<TAlloc>::destroy(Allocator alloc)
+template<typename TAllocator>
+void StringList::destroy(TAllocator alloc)
 {
 	auto it = Base::getBegin();
 	auto endit = Base::getEnd();
@@ -23,9 +23,9 @@ void StringListBase<TAlloc>::destroy(Allocator alloc)
 }
 
 //==============================================================================
-template<typename TAlloc>
-Error StringListBase<TAlloc>::join(
-	Allocator alloc,
+template<typename TAllocator>
+Error StringList::join(
+	TAllocator alloc,
 	const CString& separator,
 	String& out) const
 {
@@ -72,8 +72,7 @@ Error StringListBase<TAlloc>::join(
 }
 
 //==============================================================================
-template<typename TAlloc>
-I StringListBase<TAlloc>::getIndexOf(const CString& value) const
+I StringList::getIndexOf(const CString& value) const
 {
 	U pos = 0;
 
@@ -86,13 +85,13 @@ I StringListBase<TAlloc>::getIndexOf(const CString& value) const
 		++ pos;
 	}
 
-	return (pos == Base::size()) ? -1 : pos;
+	return (pos == Base::getSize()) ? -1 : pos;
 }
 
 //==============================================================================
-template<typename TAlloc>
-Error StringListBase<TAlloc>::splitString(
-	Allocator alloc,
+template<typename TAllocator>
+Error StringList::splitString(
+	TAllocator alloc,
 	const CString& s, 
 	const Char separator)
 {
@@ -155,8 +154,7 @@ Error StringListBase<TAlloc>::splitString(
 }
 
 //==============================================================================
-template<typename TAlloc>
-void StringListBase<TAlloc>::sortAll(const Sort method)
+void StringList::sortAll(const Sort method)
 {
 	if(method == Sort::ASCENDING)
 	{
@@ -176,10 +174,9 @@ void StringListBase<TAlloc>::sortAll(const Sort method)
 }
 
 //==============================================================================
-template<typename TAlloc>
-template<typename... TArgs>
-Error StringListBase<TAlloc>::pushBackSprintf(
-	Allocator alloc, const TArgs&... args)
+template<typename TAllocator, typename... TArgs>
+Error StringList::pushBackSprintf(
+	TAllocator alloc, const TArgs&... args)
 {
 	String str;
 	Error err = str.sprintf(alloc, args...);

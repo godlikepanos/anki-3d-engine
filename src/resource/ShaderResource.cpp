@@ -31,14 +31,13 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 	ANKI_CHECK(pars.parseFile(filename));
 	
 	// Allocate new source
-	TempResourceString source;
-	TempResourceString::ScopeDestroyer sourced(&source, alloc);
+	StringAuto source(alloc);
 	if(extraSrc.getLength() > 0)
 	{
-		ANKI_CHECK(source.create(alloc, extraSrc));
+		ANKI_CHECK(source.create(extraSrc));
 	}
 
-	ANKI_CHECK(source.append(alloc, pars.getShaderSource()));
+	ANKI_CHECK(source.append(pars.getShaderSource()));
 
 	// Create
 	GrManager& gr = manager.getGrManager();
@@ -62,37 +61,32 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 Error ShaderResource::createToCache(
 	const CString& filename, const CString& preAppendedSrcCode, 
 	const CString& filenamePrefix, ResourceManager& manager,
-	TempResourceString& out)
+	StringAuto& out)
 {
 	Error err = ErrorCode::NONE;
 	auto alloc = manager._getTempAllocator();
 
 	if(preAppendedSrcCode.getLength() < 1)
 	{
-		return out.create(alloc, filename);
+		return out.create(filename);
 	}
 
 	// Create suffix
-	TempResourceString unique;
-	TempResourceString::ScopeDestroyer uniqued(&unique, alloc);
+	StringAuto unique(alloc);
 
-	ANKI_CHECK(unique.create(alloc, filename));
-
-	ANKI_CHECK(unique.append(alloc, preAppendedSrcCode));
+	ANKI_CHECK(unique.create(filename));
+	ANKI_CHECK(unique.append(preAppendedSrcCode));
 
 	U64 h = computeHash(&unique[0], unique.getLength());
 
-	TempResourceString suffix;
-	TempResourceString::ScopeDestroyer suffixd(&suffix, alloc);
-	ANKI_CHECK(suffix.toString(alloc, h));
+	StringAuto suffix(alloc);
+	ANKI_CHECK(suffix.toString(h));
 
 	// Compose cached filename
-	TempResourceString newFilename;
-	TempResourceString::ScopeDestroyer newFilenamed(&newFilename, alloc);
+	StringAuto newFilename(alloc);
 
 	ANKI_CHECK(
 		newFilename.sprintf(
-		alloc,
 		"%s/%s%s.glsl", 
 		&manager._getCacheDirectory()[0],
 		&filenamePrefix[0],
@@ -105,20 +99,17 @@ Error ShaderResource::createToCache(
 	}
 
 	// Read file and append code
-	TempResourceString src;
-	TempResourceString::ScopeDestroyer srcd(&src, alloc);
+	StringAuto src(alloc);
 
-	TempResourceString fixedFname;
-	TempResourceString::ScopeDestroyer fixedFnamed(&fixedFname, alloc);
+	StringAuto fixedFname(alloc);
 	ANKI_CHECK(manager.fixResourceFilename(filename, fixedFname));
 
 	File file;
 	ANKI_CHECK(file.open(fixedFname.toCString(), File::OpenFlag::READ));
 	ANKI_CHECK(file.readAllText(TempResourceAllocator<char>(alloc), src));
 
-	TempResourceString srcfull;
-	TempResourceString::ScopeDestroyer srcfulld(&srcfull, alloc);
-	ANKI_CHECK(srcfull.sprintf(alloc, "%s%s", &preAppendedSrcCode[0], &src[0]));
+	StringAuto srcfull(alloc);
+	ANKI_CHECK(srcfull.sprintf("%s%s", &preAppendedSrcCode[0], &src[0]));
 
 	// Write cached file
 	File f;

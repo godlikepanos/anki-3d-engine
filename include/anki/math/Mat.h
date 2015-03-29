@@ -750,21 +750,11 @@ public:
 	}
 
 	template<typename TAlloc>
-	StringBase<TAlloc> toString(
-		typename StringBase<TAlloc>::Allocator& alloc) const
+	String toString(TAlloc alloc) const
 	{
-		const TMat& m = *this;
-		StringBase<TAlloc> s(alloc);
-		for(U j = 0; j < J; j++)
-		{
-			for(U i = 0; i < I; i++)
-			{
-				s += StringBase<TAlloc>::toString(m(j, i), alloc) 
-					+ CString(" ");
-			}
-			s += CString("\n");
-		}
-		return s;
+		// TODO
+		ANKI_ASSERT(0 && "TODO");
+		return String();
 	}
 	/// @}
 

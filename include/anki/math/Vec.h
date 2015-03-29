@@ -2166,21 +2166,10 @@ public:
 	}
 
 	template<typename TAlloc>
-	StringBase<typename TAlloc::template rebind<char>::other> toString(
-		TAlloc alloc_) const
+	String toString(TAlloc alloc) const
 	{
-		using Alloc = typename TAlloc::template rebind<char>::other;
-		Alloc alloc = alloc_;
-		StringBase<Alloc> out;
-		for(U i = 0; i < N; i++)
-		{
-			StringBase<Alloc> tmp;
-			tmp.toString(alloc, m_arr[i]);
-			out.append(alloc, tmp);
-			out.append(alloc, " ");
-			tmp.destroy(alloc);
-		}
-		return out;
+		ANKI_ASSERT(0 && "TODO");
+		return String();
 	}
 	/// @}
 

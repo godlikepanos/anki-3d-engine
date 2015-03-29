@@ -20,10 +20,10 @@ MeshLoader::~MeshLoader()
 
 //==============================================================================
 Error MeshLoader::load(
-	TempResourceAllocator<U8> alloc,
+	BaseMemoryPool* pool,
 	const CString& filename)
 {
-	m_alloc = alloc;
+	m_alloc = GenericPoolAllocator<U8, BaseMemoryPool>(pool);
 	
 	Error err = loadInternal(filename);
 	if(err)

@@ -538,12 +538,8 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 						continue;
 					}
 
-					TempResourceString src;
-					TempResourceString::ScopeDestroyer srcd(
-						&src, rinit.m_tempAlloc);
-
+					TempResourceString src(rinit.m_tempAlloc);
 					ANKI_CHECK(src.sprintf(
-						rinit.m_tempAlloc,
 						"%s\n"
 						"#define LOD %u\n"
 						"#define PASS %u\n"
@@ -552,9 +548,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 						&rinit.m_resources._getShadersPrependedSource()[0],
 						level, pid, tess, &loader.getProgramSource(shader)[0]));
 
-					TempResourceString filename;
-					TempResourceString::ScopeDestroyer filenamed(
-						&filename, rinit.m_tempAlloc);
+					TempResourceString filename(rinit.m_tempAlloc);
 
 					ANKI_CHECK(createProgramSourceToCache(src, filename));
 
@@ -589,13 +583,12 @@ Error Material::createProgramSourceToCache(
 
 	// Create the hash
 	U64 h = computeHash(&source[0], source.getLength());
-	TempResourceString prefix;
-	TempResourceString::ScopeDestroyer prefixd(&prefix, alloc);
+	TempResourceString prefix(alloc);
 
-	ANKI_CHECK(prefix.toString(alloc, h));
+	ANKI_CHECK(prefix.toString(h));
 
 	// Create path
-	ANKI_CHECK(out.sprintf(alloc, "%s/mtl_%s.glsl", 
+	ANKI_CHECK(out.sprintf("%s/mtl_%s.glsl", 
 		&m_resources->_getCacheDirectory()[0],
 		&prefix[0]));
 

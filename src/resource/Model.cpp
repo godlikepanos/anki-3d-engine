@@ -336,7 +336,8 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 			}
 
 			MeshLoader loader;
-			if(err = loader.load(init.m_tempAlloc, fixedFilename.toCString()))
+			if(err = loader.load(
+				&init.m_tempAlloc.getMemoryPool(), fixedFilename.toCString()))
 			{
 				fixedFilename.destroy(init.m_tempAlloc);
 				return err;

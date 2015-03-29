@@ -157,13 +157,11 @@ public:
 	/// @name Other
 	/// @{
 	template<typename TAlloc>
-	StringBase<TAlloc> toString(
-		typename StringBase<TAlloc>::Allocator& alloc) const
+	String toString(TAlloc alloc) const
 	{
-		StringBase<TAlloc> s(alloc);
-		s = StringBase<TAlloc>::toString(x(), alloc) + CString(" ") 
-			+ StringBase<TAlloc>::toString(y(), alloc) + CString(" ") 
-			+ StringBase<TAlloc>::toString(z(), alloc);
+		String s;
+		Error err = s.sprintf("%f %f %f", x(), y(), z());
+		(void)err;
 		return s;
 	}
 	/// @}

@@ -97,7 +97,7 @@ public:
 	/// Read all the contents of a text file
 	/// If the file is not rewined it will probably fail
 	template<typename TAlloc>
-	ANKI_USE_RESULT Error readAllText(TAlloc alloc, StringBase<TAlloc>& out);
+	ANKI_USE_RESULT Error readAllText(TAlloc alloc, String& out);
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's 
 	/// endianness is different from the machine's
@@ -170,7 +170,7 @@ private:
 
 //==============================================================================
 template<typename TAlloc>
-inline Error File::readAllText(TAlloc alloc, StringBase<TAlloc>& out)
+inline Error File::readAllText(TAlloc alloc, String& out)
 {
 	Error err = ErrorCode::NONE;
 	PtrSize size = getSize();

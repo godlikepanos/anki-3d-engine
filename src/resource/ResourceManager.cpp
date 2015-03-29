@@ -103,18 +103,18 @@ Error ResourceManager::create(Initializer& init)
 //==============================================================================
 Error ResourceManager::fixResourceFilename(
 	const CString& filename,
-	TempResourceString& out) const
+	StringAuto& out) const
 {
 	Error err = ErrorCode::NONE;
 
 	// If the filename is in cache then dont append the data path
 	if(filename.find(m_cacheDir.toCString()) != TempResourceString::NPOS)
 	{
-		err = out.create(m_tmpAlloc, filename);
+		err = out.create(filename);
 	}
 	else
 	{
-		err = out.sprintf(m_tmpAlloc, "%s%s", &m_dataDir[0], &filename[0]);
+		err = out.sprintf("%s%s", &m_dataDir[0], &filename[0]);
 	}
 
 	return err;

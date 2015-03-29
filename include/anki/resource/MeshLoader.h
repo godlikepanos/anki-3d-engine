@@ -95,7 +95,7 @@ public:
 	~MeshLoader();
 
 	ANKI_USE_RESULT Error load(
-		TempResourceAllocator<U8> alloc,
+		BaseMemoryPool* pool,
 		const CString& filename);
 
 	const Header& getHeader() const
@@ -145,7 +145,7 @@ private:
 	template<typename T>
 	using MDArray = DArray<T>;
 
-	TempResourceAllocator<U8> m_alloc;
+	GenericPoolAllocator<U8, BaseMemoryPool> m_alloc;
 	Header m_header;
 
 	MDArray<U8> m_verts;

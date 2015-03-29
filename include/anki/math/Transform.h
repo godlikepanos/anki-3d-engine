@@ -188,13 +188,10 @@ public:
 	}
 
 	template<typename TAlloc>
-	StringBase<TAlloc> toString(
-		typename StringBase<TAlloc>::Allocator& alloc) const
+	String toString(TAlloc alloc) const
 	{
-		StringBase<TAlloc> out(alloc);
-		out = StringBase<TAlloc>("t: ", alloc) + m_origin.toString(alloc) 
-			+ CString("\n\nr: ") + m_rotation.toString(alloc) 
-			+ CString("\ns: ") + StringBase<TAlloc>::toString(m_scale, alloc);
+		ANKI_ASSERT(0 && "TODO");
+		return String();
 	}
 	/// @}
 

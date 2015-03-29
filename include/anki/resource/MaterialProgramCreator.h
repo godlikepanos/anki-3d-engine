@@ -20,19 +20,16 @@ class XmlElement;
 class MaterialProgramCreatorInputVariable: public NonCopyable
 {
 public:
-	using MPString = TempResourceString; 
-	using MPStringList = StringListBase<TempResourceAllocator<char>>;
-
 	TempResourceAllocator<U8> m_alloc;
-	MPString m_name;
-	MPString m_typeStr;
+	String m_name;
+	String m_typeStr;
 	ShaderVariableDataType m_type = ShaderVariableDataType::NONE;
-	MPStringList m_value;
+	StringList m_value;
 	Bool8 m_constant = false;
 	U16 m_arraySize = 0;
 	Bool8 m_instanced = false;
 
-	MPString m_line;
+	String m_line;
 	GLbitfield m_shaderDefinedMask = 0; ///< Defined in
 	GLbitfield m_shaderReferencedMask = 0; ///< Referenced by
 	Bool8 m_inBlock = true;
@@ -108,8 +105,6 @@ public:
 class MaterialProgramCreator
 {
 public:
-	using MPString = TempResourceString; 
-	using MPStringList = StringListBase<TempResourceAllocator<char>>;
 	using Input = MaterialProgramCreatorInputVariable;
 
 	explicit MaterialProgramCreator(TempResourceAllocator<U8>& alloc);
@@ -121,7 +116,7 @@ public:
 	ANKI_USE_RESULT Error parseProgramsTag(const XmlElement& el);
 
 	/// Get the shader program source code
-	const MPString& getProgramSource(ShaderType shaderType_) const
+	const String& getProgramSource(ShaderType shaderType_) const
 	{
 		U shaderType = enumToType(shaderType_);
 		ANKI_ASSERT(!m_sourceBaked[shaderType].isEmpty());
@@ -145,10 +140,10 @@ public:
 
 private:
 	TempResourceAllocator<char> m_alloc; 
-	Array<MPStringList, 5> m_source; ///< Shader program final source
-	Array<MPString, 5> m_sourceBaked; ///< Final source baked
+	Array<StringList, 5> m_source; ///< Shader program final source
+	Array<String, 5> m_sourceBaked; ///< Final source baked
 	List<Input> m_inputs;
-	MPStringList m_uniformBlock;
+	StringList m_uniformBlock;
 	GLbitfield m_uniformBlockReferencedMask = 0;
 	U32 m_blockSize = 0;
 	Bool8 m_instanced = false;
@@ -166,7 +161,7 @@ private:
 	/// Parse what is within the @code <operation></operation> @endcode
 	ANKI_USE_RESULT Error parseOperationTag(
 		const XmlElement& el, GLenum glshader, 
-		GLbitfield glshaderbit, MPString& out);
+		GLbitfield glshaderbit, String& out);
 };
 
 } // end namespace anki

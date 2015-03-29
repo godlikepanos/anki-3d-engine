@@ -26,10 +26,6 @@ namespace anki {
 /// - #pragma anki include "<filename>"
 class ProgramPrePreprocessor
 {
-private:
-	using PPPStringList = StringListBase<TempResourceAllocator<char>>;
-	using PPPString = TempResourceString;
-
 public:
 	/// It loads a file and parses it
 	/// @param[in] filename The file to load
@@ -50,7 +46,7 @@ public:
 	/// @param filename The file to parse
 	ANKI_USE_RESULT Error parseFile(const CString& filename);
 
-	const PPPString& getShaderSource() const
+	const String& getShaderSource() const
 	{
 		ANKI_ASSERT(!m_shaderSource.isEmpty());
 		return m_shaderSource;
@@ -66,10 +62,10 @@ protected:
 	TempResourceAllocator<U8> m_alloc;
 
 	/// The final program source
-	PPPString m_shaderSource;
+	String m_shaderSource;
 
 	/// The parseFileForPragmas fills this
-	PPPStringList m_sourceLines;
+	StringList m_sourceLines;
 
 	/// Shader type
 	ShaderType m_type = ShaderType::COUNT;
@@ -87,7 +83,7 @@ protected:
 		CString filename, U32 depth);
 
 	/// Parse the type
-	ANKI_USE_RESULT Error parseType(const PPPString& line, Bool& found);
+	ANKI_USE_RESULT Error parseType(const String& line, Bool& found);
 
 	void printSourceLines() const;  ///< For debugging
 };

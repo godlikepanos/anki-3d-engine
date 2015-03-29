@@ -52,7 +52,7 @@ public:
 		const CString& preAppendedSrcCode,
 		const CString& filenamePrefix,
 		ResourceManager& manager,
-		TempResourceString& out);
+		StringAuto& out);
 
 	ShaderType getType() const
 	{

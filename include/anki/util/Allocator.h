@@ -103,6 +103,13 @@ public:
 		m_pool->getRefcount().store(1);
 	}
 
+	/// Assing a pool directly.
+	GenericPoolAllocator(TPool* pool)
+	{
+		m_pool = pool;
+		m_pool->getRefcount().fetchAdd(1);
+	}
+
 	/// Destructor
 	~GenericPoolAllocator()
 	{

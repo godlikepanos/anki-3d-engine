@@ -18,8 +18,7 @@
 namespace anki {
 
 // Forward
-template<typename TAlloc>
-class StringBase;
+class String;
 
 /// @addtogroup util_private
 /// @{
@@ -62,8 +61,7 @@ ANKI_DEPLOY_TO_STRING(F64, "%f")
 /// A wrapper on top of C strings. Used mainly for safety.
 class CString
 {
-	template<typename TAlloc>
-	friend class StringBase; // For the secret constructor
+	friend class String; // For the secret constructor
 
 public:
 	using Char = char;
@@ -281,65 +279,62 @@ private:
 	}
 };
 
-template<typename TAlloc>
-using StringScopeDestroyer = ScopeDestroyer<StringBase<TAlloc>, TAlloc>;
-
 /// The base class for strings.
-template<typename TAlloc>
-class StringBase: public NonCopyable
+class String: public NonCopyable
 {
 public:
 	using Char = char; ///< Character type
-	using Allocator = TAlloc; ///< Allocator type
-	using Self = StringBase;
 	using CStringType = CString;
 	using Iterator = Char*;
 	using ConstIterator = const Char*;
 
-	using ScopeDestroyer = StringScopeDestroyer<Allocator>;
-
 	static const PtrSize NPOS = MAX_PTR_SIZE;
 
 	/// Default constructor.
-	StringBase() 
+	String() 
 	{}
 
 	/// Move constructor.
-	StringBase(StringBase&& b) 
-	:	m_data(std::move(b.m_data))
-	{}
+	String(String&& b) 
+	{
+		move(b);
+	}
 
 	/// Requires manual destruction.
-	~StringBase() 
+	~String() 
 	{}
 
 	/// Initialize using a const string.
-	ANKI_USE_RESULT Error create(Allocator alloc, const CStringType& cstr);
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error create(TAllocator alloc, const CStringType& cstr);
 
 	/// Initialize using a range. Copies the range of [first, last)
-	ANKI_USE_RESULT Error create(Allocator alloc,
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error create(TAllocator alloc,
 		ConstIterator first, ConstIterator last);
 
 	/// Initialize using a character.
-	ANKI_USE_RESULT Error create(Allocator alloc, Char c, PtrSize length);
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error create(TAllocator alloc, Char c, PtrSize length);
 
 	/// Copy one string to this one.
-	ANKI_USE_RESULT Error create(Allocator alloc, const Self& b)
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error create(TAllocator alloc, const String& b)
 	{
 		return create(alloc, b.toCString());
 	}
 
 	/// Destroy the string.
-	void destroy(Allocator alloc)
+	template<typename TAllocator>
+	void destroy(TAllocator alloc)
 	{
 		m_data.destroy(alloc);
 	}
 
 	/// Move one string to this one.
-	Self& operator=(Self&& b) 
+	String& operator=(String&& b) 
 	{
-		ANKI_ASSERT(this != &b);
-		m_data = std::move(b.m_data);
+		move(b);
 		return *this;
 	}
 
@@ -382,7 +377,7 @@ public:
 	}
 
 	/// Return true if strings are equal
-	Bool operator==(const Self& b) const 
+	Bool operator==(const String& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -390,13 +385,13 @@ public:
 	}
 
 	/// Return true if strings are not equal
-	Bool operator!=(const Self& b) const 
+	Bool operator!=(const String& b) const 
 	{
 		return !(*this == b);
 	}
 
 	/// Return true if this is less than b
-	Bool operator<(const Self& b) const 
+	Bool operator<(const String& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -404,7 +399,7 @@ public:
 	}
 
 	/// Return true if this is less or equal to b
-	Bool operator<=(const Self& b) const 
+	Bool operator<=(const String& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -412,7 +407,7 @@ public:
 	}
 
 	/// Return true if this is greater than b
-	Bool operator>(const Self& b) const 
+	Bool operator>(const String& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -420,7 +415,7 @@ public:
 	}
 
 	/// Return true if this is greater or equal to b
-	Bool operator>=(const Self& b) const 
+	Bool operator>=(const String& b) const 
 	{
 		checkInit();
 		b.checkInit();
@@ -485,8 +480,8 @@ public:
 	}
 
 	/// Append another string to this one.
-	template<typename TTAlloc>
-	ANKI_USE_RESULT Error append(Allocator alloc, const StringBase<TTAlloc>& b)
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error append(TAllocator alloc, const String& b)
 	{
 		Error err = ErrorCode::NONE;
 		if(!b.isEmpty())
@@ -498,7 +493,8 @@ public:
 	}
 
 	/// Append a const string to this one.
-	ANKI_USE_RESULT Error append(Allocator alloc, const CStringType& cstr)
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error append(TAllocator alloc, const CStringType& cstr)
 	{
 		Error err = ErrorCode::NONE;
 		if(!cstr.isEmpty())
@@ -510,7 +506,8 @@ public:
 	}
 
 	/// Create formated string.
-	ANKI_USE_RESULT Error sprintf(Allocator alloc, CString fmt, ...);
+	template<typename TAllocator>
+	ANKI_USE_RESULT Error sprintf(TAllocator alloc, CString fmt, ...);
 
 	/// Return true if it's empty.
 	Bool isEmpty() const 
@@ -534,17 +531,15 @@ public:
 	/// @param position Position of the first character in the string to be 
 	///                 considered in the search.
 	/// @return A valid position if the string is found or NPOS if not found.
-	template<typename TTAlloc>
-	PtrSize find(
-		const StringBase<TTAlloc>& str, PtrSize position) const 
+	PtrSize find(const String& str, PtrSize position) const 
 	{
-		str.chechInit();
+		str.checkInit();
 		return find(str.toCString(), position);
 	}
 
 	/// Convert a number to a string.
-	template<typename TNumber>
-	ANKI_USE_RESULT Error toString(Allocator alloc, TNumber number);
+	template<typename TAllocator, typename TNumber>
+	ANKI_USE_RESULT Error toString(TAllocator alloc, TNumber number);
 
 	/// Convert to F64.
 	ANKI_USE_RESULT Error toF64(F64& out) const
@@ -558,7 +553,7 @@ public:
 		return toCString().toI64(out);
 	}
 
-private:
+protected:
 	DArray<Char> m_data;
 
 	void checkInit() const
@@ -567,13 +562,109 @@ private:
 	}
 
 	/// Append to this string.
+	template<typename TAllocator>
 	ANKI_USE_RESULT Error appendInternal(
-		Allocator alloc, const Char* str, PtrSize strSize);
+		TAllocator alloc, const Char* str, PtrSize strSize);
+
+	void move(String& b)
+	{
+		ANKI_ASSERT(this != &b);
+		m_data = std::move(b.m_data);
+	}
 };
 
-/// A common string type that uses heap allocator.
-using String = StringBase<HeapAllocator<char>>;
+/// String with automatic cleanup.
+class StringAuto: public String
+{
+public:
+	using Base = String;
 
+	/// Create with allocator.
+	template<typename TAllocator>
+	StringAuto(TAllocator alloc)
+	:	Base(),
+		m_alloc(&alloc.getMemoryPool())
+	{}
+
+	/// Move constructor.
+	StringAuto(StringAuto&& b)
+	:	Base()
+	{
+		move(b);
+	}
+
+	/// Automatic destruction.
+	~StringAuto() 
+	{
+		Base::destroy(m_alloc);
+	}
+
+	/// Initialize using a const string.
+	ANKI_USE_RESULT Error create(const CStringType& cstr)
+	{
+		return Base::create(m_alloc, cstr);
+	}
+
+	/// Initialize using a range. Copies the range of [first, last)
+	ANKI_USE_RESULT Error create(ConstIterator first, ConstIterator last)
+	{
+		return Base::create(m_alloc, first, last);
+	}
+
+	/// Initialize using a character.
+	ANKI_USE_RESULT Error create(Char c, PtrSize length)
+	{
+		return Base::create(m_alloc, c, length);
+	}
+
+	/// Copy one string to this one.
+	ANKI_USE_RESULT Error create(const String& b)
+	{
+		return Base::create(m_alloc, b.toCString());
+	}
+
+	/// Move one string to this one.
+	StringAuto& operator=(StringAuto&& b) 
+	{
+		move(b);
+		return *this;
+	}
+
+	/// Append another string to this one.
+	ANKI_USE_RESULT Error append(const String& b)
+	{
+		return Base::append(m_alloc, b);
+	}
+
+	/// Append a const string to this one.
+	ANKI_USE_RESULT Error append(const CStringType& cstr)
+	{
+		return Base::append(m_alloc, cstr);
+	}
+
+	/// Create formated string.
+	template<typename... TArgs>
+	ANKI_USE_RESULT Error sprintf(CString fmt, TArgs... args)
+	{
+		return Base::sprintf(m_alloc, fmt, args...);
+	}
+
+	/// Convert a number to a string.
+	template<typename TNumber>
+	ANKI_USE_RESULT Error toString(TNumber number)
+	{
+		return Base::toString(m_alloc, number);
+	}
+
+private:
+	GenericMemoryPoolAllocator<Char> m_alloc;
+
+	void move(StringAuto& b)
+	{
+		Base::move(b);
+		m_alloc = std::move(b.m_alloc);
+	}
+};
 /// @}
 
 } // end namespace anki

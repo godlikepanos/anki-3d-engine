@@ -39,6 +39,8 @@ Error GrManager::create(Initializer& init)
 //==============================================================================
 void GrManager::destroy()
 {
+	m_cacheDir.destroy(m_alloc);
+
 	if(m_impl)
 	{
 		m_alloc.deleteInstance(m_impl);

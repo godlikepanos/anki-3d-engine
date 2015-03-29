@@ -6,8 +6,8 @@
 namespace anki {
 
 //==============================================================================
-template<typename TAlloc>
-Error StringBase<TAlloc>::create(Allocator alloc, const CStringType& cstr)
+template<typename TAllocator>
+Error String::create(TAllocator alloc, const CStringType& cstr)
 {
 	Error err = ErrorCode::NONE;
 	
@@ -27,9 +27,8 @@ Error StringBase<TAlloc>::create(Allocator alloc, const CStringType& cstr)
 }
 
 //==============================================================================
-template<typename TAlloc>
-Error StringBase<TAlloc>::create(
-	Allocator alloc, ConstIterator first, ConstIterator last)
+template<typename TAllocator>
+Error String::create(TAllocator alloc, ConstIterator first, ConstIterator last)
 {
 	ANKI_ASSERT(first != 0 && last != 0);
 	auto length = last - first;
@@ -45,8 +44,8 @@ Error StringBase<TAlloc>::create(
 }
 
 //==============================================================================
-template<typename TAlloc>
-Error StringBase<TAlloc>::create(Allocator alloc, Char c, PtrSize length)
+template<typename TAllocator>
+Error String::create(TAllocator alloc, Char c, PtrSize length)
 {
 	ANKI_ASSERT(c != '\0');
 	Error err = m_data.create(alloc, length + 1);
@@ -61,9 +60,8 @@ Error StringBase<TAlloc>::create(Allocator alloc, Char c, PtrSize length)
 }
 
 //==============================================================================
-template<typename TAlloc>
-Error StringBase<TAlloc>::appendInternal(
-	Allocator alloc, const Char* str, PtrSize strSize)
+template<typename TAllocator>
+Error String::appendInternal(TAllocator alloc, const Char* str, PtrSize strSize)
 {
 	ANKI_ASSERT(str != nullptr);
 	ANKI_ASSERT(strSize > 1);
@@ -96,8 +94,8 @@ Error StringBase<TAlloc>::appendInternal(
 }
 
 //==============================================================================
-template<typename TAlloc>
-Error StringBase<TAlloc>::sprintf(Allocator alloc, CString fmt, ...)
+template<typename TAllocator>
+Error String::sprintf(TAllocator alloc, CString fmt, ...)
 {
 	Error err = ErrorCode::NONE;
 	Array<Char, 512> buffer;
@@ -137,9 +135,8 @@ Error StringBase<TAlloc>::sprintf(Allocator alloc, CString fmt, ...)
 }
 
 //==============================================================================
-template<typename TAlloc>
-template<typename TNumber>
-Error StringBase<TAlloc>::toString(Allocator alloc, TNumber number)
+template<typename TAllocator, typename TNumber>
+Error String::toString(TAllocator alloc, TNumber number)
 {
 	Error err = ErrorCode::NONE;
 

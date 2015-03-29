@@ -42,12 +42,11 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 	}
 
 	auto alloc = getAllocator();
-	String fullSrc;
-	String::ScopeDestroyer fullSrcd(&fullSrc, alloc); 
+	StringAuto fullSrc(alloc);
 #if ANKI_GL == ANKI_GL_DESKTOP
-	err = fullSrc.sprintf(alloc, "#version %d core\n%s\n", version, &source[0]); 
+	err = fullSrc.sprintf("#version %d core\n%s\n", version, &source[0]); 
 #else
-	err = fullSrc.sprintf(alloc, "#version %d es\n%s\n", version, &source[0]);
+	err = fullSrc.sprintf("#version %d es\n%s\n", version, &source[0]);
 #endif
 
 	// 2) Gen name, create, compile and link

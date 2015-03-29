@@ -87,7 +87,7 @@ Error XmlElement::getF64(F64& out) const
 }
 
 //==============================================================================V
-Error XmlElement::getFloats(DArrayAuto<F64, StackAllocator<F64>>& out) const
+Error XmlElement::getFloats(DArrayAuto<F64>& out) const
 {
 	Error err = check();
 	
@@ -107,7 +107,7 @@ Error XmlElement::getFloats(DArrayAuto<F64, StackAllocator<F64>>& out) const
 		err = list.splitString(m_alloc, txt, ' ');
 	}
 
-	out = std::move(DArrayAuto<F64, StackAllocator<F64>>(m_alloc));
+	out = std::move(DArrayAuto<F64>(m_alloc));
 
 	if(!err)
 	{
@@ -134,7 +134,7 @@ Error XmlElement::getFloats(DArrayAuto<F64, StackAllocator<F64>>& out) const
 //==============================================================================
 Error XmlElement::getMat4(Mat4& out) const
 {
-	DArrayAuto<F64, StackAllocator<F64>> arr(m_alloc);
+	DArrayAuto<F64> arr(m_alloc);
 	Error err = getFloats(arr);	
 
 	if(!err && arr.getSize() != 16)
@@ -162,7 +162,7 @@ Error XmlElement::getMat4(Mat4& out) const
 //==============================================================================
 Error XmlElement::getVec3(Vec3& out) const
 {
-	DArrayAuto<F64, StackAllocator<F64>> arr(m_alloc);
+	DArrayAuto<F64> arr(m_alloc);
 	Error err = getFloats(arr);
 	
 	if(!err && arr.getSize() != 3)
@@ -189,7 +189,7 @@ Error XmlElement::getVec3(Vec3& out) const
 //==============================================================================
 Error XmlElement::getVec4(Vec4& out) const
 {
-	DArrayAuto<F64, StackAllocator<F64>> arr(m_alloc);
+	DArrayAuto<F64> arr(m_alloc);
 	Error err = getFloats(arr);
 	
 	if(!err && arr.getSize() != 4)

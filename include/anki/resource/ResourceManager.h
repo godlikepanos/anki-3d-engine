@@ -158,7 +158,7 @@ public:
 
 	ANKI_USE_RESULT Error create(Initializer& init);
 
-	const ResourceString& getDataDirectory() const
+	const String& getDataDirectory() const
 	{
 		return m_dataDir;
 	}
@@ -175,7 +175,7 @@ public:
 
 	ANKI_USE_RESULT Error fixResourceFilename(
 		const CString& filename,
-		TempResourceString& out) const;
+		StringAuto& out) const;
 
 	/// @privatesection
 	/// @{
@@ -201,7 +201,7 @@ public:
 		return *m_physics;
 	}
 
-	const ResourceString& _getCacheDirectory() const
+	const String& _getCacheDirectory() const
 	{
 		return m_cacheDir;
 	}
@@ -212,7 +212,7 @@ public:
 		return m_shadersPrependedSource.create(m_alloc, cstr);
 	}
 
-	const ResourceString& _getShadersPrependedSource() const
+	const String& _getShadersPrependedSource() const
 	{
 		return m_shadersPrependedSource;
 	}
@@ -249,11 +249,11 @@ private:
 	PhysicsWorld* m_physics = nullptr;
 	ResourceAllocator<U8> m_alloc;
 	TempResourceAllocator<U8> m_tmpAlloc;
-	ResourceString m_cacheDir;
-	ResourceString m_dataDir;
+	String m_cacheDir;
+	String m_dataDir;
 	U32 m_maxTextureSize;
 	U32 m_textureAnisotropy;
-	ResourceString m_shadersPrependedSource;
+	String m_shadersPrependedSource;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
 };
 

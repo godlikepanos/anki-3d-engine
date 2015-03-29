@@ -84,7 +84,7 @@ public:
 
 private:
 	GrManagerImpl* m_impl = nullptr;
-	StringBase<GrAllocator<char>> m_cacheDir;
+	String m_cacheDir;
 	GrAllocator<U8> m_alloc; ///< Keep it last to deleted last
 
 	void destroy();
