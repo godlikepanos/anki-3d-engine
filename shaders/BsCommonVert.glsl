@@ -4,8 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 // Common code for all vertex shaders of BS
-
-#define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/MsBsCommon.glsl"
 
 layout(location = POSITION_LOCATION) in vec3 in_position;

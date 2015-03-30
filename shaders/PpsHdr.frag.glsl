@@ -4,8 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 #pragma anki type frag
-
-#define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/Common.glsl"
 
 layout(binding = 0) uniform lowp sampler2D tex; ///< Its the IS RT

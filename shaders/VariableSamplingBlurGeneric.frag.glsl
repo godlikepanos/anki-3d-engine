@@ -11,7 +11,6 @@
 
 #pragma anki type frag
 
-#define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/Common.glsl"
 
 // Preprocessor switches sanity checks

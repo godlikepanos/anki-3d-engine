@@ -6,7 +6,6 @@
 // PPS LF sprites frag shader
 
 #pragma anki type frag
-#define DEFAULT_FLOAT_PRECISION mediump
 #pragma anki include "shaders/Common.glsl"
 
 #define SINGLE_FLARE 0

@@ -3,7 +3,6 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#define DEFAULT_FLOAT_PRECISION highp
 #pragma anki include "shaders/Common.glsl"
 
 #if !GL_ES && __VERSION__ > 400

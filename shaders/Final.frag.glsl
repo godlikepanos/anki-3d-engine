@@ -7,7 +7,6 @@
 
 #pragma anki type frag
 
-#define DEFAULT_FLOAT_PRECISION lowp
 #pragma anki include "shaders/Common.glsl"
 #pragma anki include "shaders/Pack.glsl"
 
