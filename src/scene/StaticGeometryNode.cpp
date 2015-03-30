@@ -157,9 +157,9 @@ Error StaticGeometryNode::create(const CString& name, const CString& filename)
 		U i = 0;
 		for(const ModelPatchBase* patch : m_model->getModelPatches())
 		{
-			SceneString newname;
+			StringAuto newname(getSceneAllocator());
 			
-			err = newname.sprintf(getSceneAllocator(), "%s_%u", &name[0], i);
+			err = newname.sprintf("%s_%u", &name[0], i);
 			if(err)
 			{
 				break;
@@ -168,8 +168,6 @@ Error StaticGeometryNode::create(const CString& name, const CString& filename)
 			StaticGeometryPatchNode* node;
 			err = getSceneGraph().newSceneNode<StaticGeometryPatchNode>(
 				newname.toCString(), node, patch);
-			
-			newname.destroy(getSceneAllocator());
 
 			if(err)
 			{

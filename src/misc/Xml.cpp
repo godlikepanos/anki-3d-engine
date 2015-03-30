@@ -101,7 +101,7 @@ Error XmlElement::getFloats(DArrayAuto<F64>& out) const
 		}
 	}
 
-	StringListBase<StackAllocator<char>> list;
+	StringList list;
 	if(!err)
 	{
 		err = list.splitString(m_alloc, txt, ' ');
@@ -303,7 +303,8 @@ Error XmlElement::getSiblingElementsCount(U32& out) const
 //==============================================================================
 
 //==============================================================================
-Error XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
+Error XmlDocument::loadFile(const CString& filename, 
+	GenericMemoryPoolAllocator<U8> alloc)
 {
 	Error err = ErrorCode::NONE;
 
@@ -315,9 +316,9 @@ Error XmlDocument::loadFile(const CString& filename, StackAllocator<U8>& alloc)
 	}
 
 	m_alloc = alloc;
-	StringBase<StackAllocator<char>> text;
+	String text;
 	
-	err = file.readAllText(StackAllocator<char>(m_alloc), text);
+	err = file.readAllText(m_alloc, text);
 	if(err)
 	{
 		return err;

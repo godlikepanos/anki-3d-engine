@@ -32,76 +32,42 @@ Error Sslr::init(const ConfigSet& config)
 	alignRoundUp(16, m_height);
 
 	// Programs
-	String pps;
-	String::ScopeDestroyer ppsd(&pps, getAllocator());
+	StringAuto pps(getAllocator());
 
-	err = pps.sprintf(getAllocator(),
+	ANKI_CHECK(pps.sprintf(
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n",
-		m_width, m_height);
-	if(err)
-	{
-		return err;
-	}
+		m_width, m_height));
 
-	err = m_reflectionFrag.loadToCache(&getResourceManager(),
-		"shaders/PpsSslr.frag.glsl", pps.toCString(), "r_");
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_reflectionFrag.loadToCache(&getResourceManager(),
+		"shaders/PpsSslr.frag.glsl", pps.toCString(), "r_"));
 
-	err = m_r->createDrawQuadPipeline(
-		m_reflectionFrag->getGrShader(), m_reflectionPpline);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_r->createDrawQuadPipeline(
+		m_reflectionFrag->getGrShader(), m_reflectionPpline));
 
 	// Sampler
 	CommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGrManager());
-	if(err)
-	{
-		return err;
-	}
-	err = m_depthMapSampler.create(cmdBuff);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(cmdBuff.create(&getGrManager()));
+	ANKI_CHECK(m_depthMapSampler.create(cmdBuff));
 	m_depthMapSampler.setFilter(cmdBuff, SamplerHandle::Filter::NEAREST);
 
 	// Blit
-	err = m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
-	if(err)
-	{
-		return err;
-	}
-	err = m_r->createDrawQuadPipeline(m_blitFrag->getGrShader(), m_blitPpline);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(
+		m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager()));
+	ANKI_CHECK(
+		m_r->createDrawQuadPipeline(m_blitFrag->getGrShader(), m_blitPpline));
 
 	// Init FBOs and RTs and blurring
 	if(m_blurringIterationsCount > 0)
 	{
-		err = initBlurring(*m_r, m_width, m_height, 9, 0.0);
-		if(err)
-		{
-			return err;
-		}
+		ANKI_CHECK(initBlurring(*m_r, m_width, m_height, 9, 0.0));
 	}
 	else
 	{
 		Direction& dir = m_dirs[(U)DirectionEnum::VERTICAL];
 
-		err = m_r->createRenderTarget(m_width, m_height, GL_RGB8, 1, dir.m_rt);
-		if(err)
-		{
-			return err;
-		}
+		ANKI_CHECK(
+			m_r->createRenderTarget(m_width, m_height, GL_RGB8, 1, dir.m_rt));
 
 		// Set to bilinear because the blurring techniques take advantage of 
 		// that
@@ -111,11 +77,7 @@ Error Sslr::init(const ConfigSet& config)
 		FramebufferHandle::Initializer fbInit;
 		fbInit.m_colorAttachmentsCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
-		err = dir.m_fb.create(cmdBuff, fbInit);
-		if(err)
-		{
-			return err;
-		}
+		ANKI_CHECK(dir.m_fb.create(cmdBuff, fbInit));
 	}
 
 	cmdBuff.finish();

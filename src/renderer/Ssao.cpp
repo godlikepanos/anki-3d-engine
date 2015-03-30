@@ -161,93 +161,77 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Kernel
 	//
-	String kernelStr;
-	String::ScopeDestroyer kernelStrd(&kernelStr, getAllocator());
+	StringAuto kernelStr(getAllocator());
 	Array<Vec3, KERNEL_SIZE> kernel;
 
 	genKernel(kernel.begin(), kernel.end());
-	err = kernelStr.create(getAllocator(), "vec3[](");
+	err = kernelStr.create("vec3[](");
 	if(err) return err;
 	for(U i = 0; i < kernel.size(); i++)
 	{
-		String tmp;
-		String::ScopeDestroyer tmpd(&tmp, getAllocator());
+		StringAuto tmp(getAllocator());
 
-		err = tmp.sprintf(getAllocator(),
-			"vec3(%f, %f, %f) %s",
+		ANKI_CHECK(tmp.sprintf("vec3(%f, %f, %f) %s",
 			kernel[i].x(), kernel[i].y(), kernel[i].z(),
-			(i != kernel.size() - 1) ? ", " : ")");
-		if(err) return err;
+			(i != kernel.size() - 1) ? ", " : ")"));
 
-		err = kernelStr.append(getAllocator(), tmp);
-		if(err) return err;
+		ANKI_CHECK(kernelStr.append(tmp));
 	}
 
 	//
 	// Shaders
 	//
-	err = m_uniformsBuff.create(cmdb, GL_SHADER_STORAGE_BUFFER, 
-		nullptr, sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT);
-	if(err) return err;
+	ANKI_CHECK(m_uniformsBuff.create(cmdb, GL_SHADER_STORAGE_BUFFER, 
+		nullptr, sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT));
 
-	String pps;
-	String::ScopeDestroyer ppsd(&pps, getAllocator());
+	StringAuto pps(getAllocator());
 
 	// main pass prog
-	err = pps.sprintf(getAllocator(),
+	ANKI_CHECK(pps.sprintf(
 		"#define NOISE_MAP_SIZE %u\n"
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n"
 		"#define KERNEL_SIZE %u\n"
 		"#define KERNEL_ARRAY %s\n",
-		NOISE_TEX_SIZE, m_width, m_height, KERNEL_SIZE, &kernelStr[0]);
-	if(err) return err;
+		NOISE_TEX_SIZE, m_width, m_height, KERNEL_SIZE, &kernelStr[0]));
 
-	err = m_ssaoFrag.loadToCache(&getResourceManager(),
-		"shaders/PpsSsao.frag.glsl", pps.toCString(), "r_");
-	if(err) return err;
+	ANKI_CHECK(m_ssaoFrag.loadToCache(&getResourceManager(),
+		"shaders/PpsSsao.frag.glsl", pps.toCString(), "r_"));
 
-	err = m_r->createDrawQuadPipeline(
-		m_ssaoFrag->getGrShader(), m_ssaoPpline);
-	if(err) return err;
+	ANKI_CHECK(m_r->createDrawQuadPipeline(
+		m_ssaoFrag->getGrShader(), m_ssaoPpline));
 
 	// blurring progs
 	const char* SHADER_FILENAME = 
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
 	pps.destroy(getAllocator());
-	err = pps.sprintf(getAllocator(),
+	ANKI_CHECK(pps.sprintf(
 		"#define HPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES 7\n", 
-		m_height);
-	if(err) return err;
+		m_height));
 
-	err = m_hblurFrag.loadToCache(&getResourceManager(),
-		SHADER_FILENAME, pps.toCString(), "r_");
-	if(err) return err;
+	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
+		SHADER_FILENAME, pps.toCString(), "r_"));
 
-	err = m_r->createDrawQuadPipeline(
-		m_hblurFrag->getGrShader(), m_hblurPpline);
-	if(err) return err;
+	ANKI_CHECK(m_r->createDrawQuadPipeline(
+		m_hblurFrag->getGrShader(), m_hblurPpline));
 
 	pps.destroy(getAllocator());
-	err = pps.sprintf(getAllocator(),
+	ANKI_CHECK(pps.sprintf(
 		"#define VPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES 7\n", 
-		m_width);
-	if(err) return err;
+		m_width));
 
-	err = m_vblurFrag.loadToCache(&getResourceManager(),
-		SHADER_FILENAME, pps.toCString(), "r_");
-	if(err) return err;
+	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
+		SHADER_FILENAME, pps.toCString(), "r_"));
 
-	err = m_r->createDrawQuadPipeline(
-		m_vblurFrag->getGrShader(), m_vblurPpline);
-	if(err) return err;
+	ANKI_CHECK(m_r->createDrawQuadPipeline(
+		m_vblurFrag->getGrShader(), m_vblurPpline));
 
 	cmdb.flush();
 

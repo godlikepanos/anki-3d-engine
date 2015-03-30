@@ -7,7 +7,7 @@ namespace anki {
 
 //==============================================================================
 template<typename TAllocator>
-Error String::create(TAllocator alloc, const CStringType& cstr)
+inline Error String::create(TAllocator alloc, const CStringType& cstr)
 {
 	Error err = ErrorCode::NONE;
 	
@@ -28,7 +28,8 @@ Error String::create(TAllocator alloc, const CStringType& cstr)
 
 //==============================================================================
 template<typename TAllocator>
-Error String::create(TAllocator alloc, ConstIterator first, ConstIterator last)
+inline Error String::create(
+	TAllocator alloc, ConstIterator first, ConstIterator last)
 {
 	ANKI_ASSERT(first != 0 && last != 0);
 	auto length = last - first;
@@ -45,7 +46,7 @@ Error String::create(TAllocator alloc, ConstIterator first, ConstIterator last)
 
 //==============================================================================
 template<typename TAllocator>
-Error String::create(TAllocator alloc, Char c, PtrSize length)
+inline Error String::create(TAllocator alloc, Char c, PtrSize length)
 {
 	ANKI_ASSERT(c != '\0');
 	Error err = m_data.create(alloc, length + 1);
@@ -61,7 +62,8 @@ Error String::create(TAllocator alloc, Char c, PtrSize length)
 
 //==============================================================================
 template<typename TAllocator>
-Error String::appendInternal(TAllocator alloc, const Char* str, PtrSize strSize)
+inline Error String::appendInternal(
+	TAllocator alloc, const Char* str, PtrSize strSize)
 {
 	ANKI_ASSERT(str != nullptr);
 	ANKI_ASSERT(strSize > 1);
@@ -95,7 +97,7 @@ Error String::appendInternal(TAllocator alloc, const Char* str, PtrSize strSize)
 
 //==============================================================================
 template<typename TAllocator>
-Error String::sprintf(TAllocator alloc, CString fmt, ...)
+inline Error String::sprintf(TAllocator alloc, CString fmt, ...)
 {
 	Error err = ErrorCode::NONE;
 	Array<Char, 512> buffer;
@@ -136,7 +138,7 @@ Error String::sprintf(TAllocator alloc, CString fmt, ...)
 
 //==============================================================================
 template<typename TAllocator, typename TNumber>
-Error String::toString(TAllocator alloc, TNumber number)
+inline Error String::toString(TAllocator alloc, TNumber number)
 {
 	Error err = ErrorCode::NONE;
 

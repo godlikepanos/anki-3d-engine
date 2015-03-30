@@ -21,7 +21,7 @@ public:
 
 	~Bone() = default;
 
-	const ResourceString& getName() const
+	const String& getName() const
 	{
 		return m_name;
 	}
@@ -40,7 +40,7 @@ public:
 	/// @}
 
 private:
-	ResourceString m_name; ///< The name of the bone
+	String m_name; ///< The name of the bone
 	static const U32 MAX_CHILDS_PER_BONE = 4; ///< Please dont change this
 
 	// see the class notes
@@ -75,7 +75,7 @@ public:
 
 	/// @name Accessors
 	/// @{
-	const ResourceDArray<Bone>& getBones() const
+	const DArray<Bone>& getBones() const
 	{
 		return m_bones;
 	}
@@ -83,7 +83,7 @@ public:
 
 private:
 	ResourceAllocator<U8> m_alloc;
-	ResourceDArray<Bone> m_bones;
+	DArray<Bone> m_bones;
 };
 
 } // end namespace anki

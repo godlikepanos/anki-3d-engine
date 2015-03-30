@@ -107,7 +107,7 @@ protected:
 	};
 
 	ResourceAllocator<U8> m_alloc;
-	ResourceDArray<SubMesh> m_subMeshes;
+	DArray<SubMesh> m_subMeshes;
 	U32 m_indicesCount;
 	U32 m_vertsCount;
 	Obb m_obb;

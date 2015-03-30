@@ -52,8 +52,6 @@ Error Lf::init(const ConfigSet& config)
 Error Lf::initPseudo(const ConfigSet& config, 
 	CommandBufferHandle& cmdBuff)
 {
-	Error err = ErrorCode::NONE;
-
 	m_maxSpritesPerFlare = config.get("pps.lf.maxSpritesPerFlare");
 	m_maxFlares = config.get("pps.lf.maxFlares");
 
@@ -64,68 +62,44 @@ Error Lf::initPseudo(const ConfigSet& config,
 	}
 
 	// Load program 1
-	String pps;
-	String::ScopeDestroyer ppsd(&pps, getAllocator());
+	StringAuto pps(getAllocator());
 
-	err = pps.sprintf(getAllocator(), 
+	ANKI_CHECK(pps.sprintf(
 		"#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n", 
 		m_r->getPps().getHdr()._getWidth(),
-		m_r->getPps().getHdr()._getHeight());
-	if(err) return err;
+		m_r->getPps().getHdr()._getHeight()));
 
-	err = m_pseudoFrag.loadToCache(&getResourceManager(), 
-		"shaders/PpsLfPseudoPass.frag.glsl", pps.toCString(), "r_");
-	if(err) return err;
+	ANKI_CHECK(m_pseudoFrag.loadToCache(&getResourceManager(), 
+		"shaders/PpsLfPseudoPass.frag.glsl", pps.toCString(), "r_"));
 
-	err = m_r->createDrawQuadPipeline(
-		m_pseudoFrag->getGrShader(), m_pseudoPpline);
-	if(err) return err;
+	ANKI_CHECK(m_r->createDrawQuadPipeline(
+		m_pseudoFrag->getGrShader(), m_pseudoPpline));
 
 	// Textures
-	err = m_lensDirtTex.load(
-		"engine_data/lens_dirt.ankitex", &getResourceManager());
-	if(err) return err;
+	ANKI_CHECK(m_lensDirtTex.load(
+		"engine_data/lens_dirt.ankitex", &getResourceManager()));
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error Lf::initSprite(const ConfigSet& config, 
 	CommandBufferHandle& cmdBuff)
 {
-	Error err = ErrorCode::NONE;
-
 	// Load program + ppline
-	String pps;
-	String::ScopeDestroyer ppsd(&pps, getAllocator());
+	StringAuto pps(getAllocator());
 
-	err = pps.sprintf(getAllocator(), "#define MAX_SPRITES %u\n",
-		m_maxSpritesPerFlare);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(pps.sprintf("#define MAX_SPRITES %u\n",
+		m_maxSpritesPerFlare));
 
-	err = m_realVert.loadToCache(&getResourceManager(), 
-		"shaders/PpsLfSpritePass.vert.glsl", pps.toCString(), "r_");
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_realVert.loadToCache(&getResourceManager(), 
+		"shaders/PpsLfSpritePass.vert.glsl", pps.toCString(), "r_"));
 
-	err = m_realFrag.loadToCache(&getResourceManager(), 
-		"shaders/PpsLfSpritePass.frag.glsl", pps.toCString(), "r_");
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_realFrag.loadToCache(&getResourceManager(), 
+		"shaders/PpsLfSpritePass.frag.glsl", pps.toCString(), "r_"));
 
-	err = m_realPpline.create(cmdBuff,
-		{m_realVert->getGrShader(), m_realFrag->getGrShader()});
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_realPpline.create(cmdBuff,
+		{m_realVert->getGrShader(), m_realFrag->getGrShader()}));
 
 	// Create buffer
 	PtrSize uboAlignment = 
@@ -136,16 +110,12 @@ Error Lf::initSprite(const ConfigSet& config,
 
 	for(U i = 0; i < m_flareDataBuff.getSize(); ++i)
 	{
-		err = m_flareDataBuff[i].create(
+		ANKI_CHECK(m_flareDataBuff[i].create(
 			cmdBuff, GL_UNIFORM_BUFFER, nullptr, blockSize, 
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		if(err)
-		{
-			return err;
-		}
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

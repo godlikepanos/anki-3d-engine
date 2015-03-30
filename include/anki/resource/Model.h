@@ -81,9 +81,9 @@ public:
 protected:
 	ResourceAllocator<U8> m_alloc;
 	/// Array [lod][pass]
-	ResourceDArray<CommandBufferHandle> m_vertJobs;
+	DArray<CommandBufferHandle> m_vertJobs;
 	Material* m_mtl = nullptr;
-	ResourceDArray<Mesh*> m_meshes; ///< One for each LOD
+	DArray<Mesh*> m_meshes; ///< One for each LOD
 
 	/// Create vertex descriptors using a material and a mesh
 	ANKI_USE_RESULT Error create(GrManager* gr);
@@ -126,7 +126,7 @@ public:
 		ResourceManager* resources);
 
 private:
-	ResourceDArray<MeshResourcePointerType> m_meshResources; ///< Geometries
+	DArray<MeshResourcePointerType> m_meshResources; ///< Geometries
 	MaterialResourcePointer m_mtlResource; ///< Material
 };
 
@@ -172,7 +172,7 @@ public:
 
 	~Model();
 
-	const ResourceDArray<ModelPatchBase*>& getModelPatches() const
+	const DArray<ModelPatchBase*>& getModelPatches() const
 	{
 		return m_modelPatches;
 	}
@@ -192,10 +192,10 @@ public:
 
 private:
 	ResourceManager* m_resources = nullptr;
-	ResourceDArray<ModelPatchBase*> m_modelPatches;
+	DArray<ModelPatchBase*> m_modelPatches;
 	Obb m_visibilityShape;
 	SkeletonResourcePointer m_skeleton;
-	ResourceDArray<AnimationResourcePointer> m_animations;
+	DArray<AnimationResourcePointer> m_animations;
 	PhysicsCollisionShape* m_physicsShape = nullptr;
 };
 

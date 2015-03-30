@@ -178,9 +178,9 @@ protected:
 
 private:
 	SceneGraph* m_scene = nullptr;
-	SceneDArray<SceneComponent*> m_components;
+	DArray<SceneComponent*> m_components;
 	U8 m_componentsCount = 0;
-	SceneString m_name; ///< A unique name
+	String m_name; ///< A unique name
 	Bool8 m_forDeletion = false;
 };
 /// @}

@@ -390,8 +390,7 @@ Error ModelNode::frameUpdate(F32, F32)
 	Error err = ErrorCode::NONE;
 
 	// Gather the move components of the instances
-	SceneFrameDArrayAuto<const MoveComponent*> instanceMoves(
-		getSceneFrameAllocator());
+	DArrayAuto<const MoveComponent*> instanceMoves(getSceneFrameAllocator());
 	U instanceMovesCount = 0;
 	Timestamp instancesTimestamp = 0;
 

@@ -16,11 +16,9 @@ namespace anki {
 /// Return true if a file exists
 Bool fileExists(const CString& filename);
 
-/// Get file extension
-/// @param[in] filename The file to open
-/// @return nullptr on failure and if the dot is the last character
+/// Get file extension.
 ANKI_USE_RESULT Error getFileExtension(
-	const CString& filename, HeapAllocator<U8>& alloc, String& out);
+	const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out);
 
 /// Return true if directory exists?
 Bool directoryExists(const CString& dir);
@@ -35,7 +33,8 @@ ANKI_USE_RESULT Error createDirectory(const CString& dir);
 /// Write the home directory to @a buff. The @a buffSize is the size of the 
 /// @a buff. If the @buffSize is not enough the function will throw 
 /// an exception.
-ANKI_USE_RESULT Error getHomeDirectory(HeapAllocator<U8>& alloc, String& out);
+ANKI_USE_RESULT Error getHomeDirectory(
+	GenericMemoryPoolAllocator<U8> alloc, String& out);
 
 /// @}
 

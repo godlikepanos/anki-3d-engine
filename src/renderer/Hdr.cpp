@@ -95,44 +95,37 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	const char* SHADER_FILENAME = 
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
-	String pps;
-	String::ScopeDestroyer ppsd(&pps, getAllocator());
-	err = pps.sprintf(getAllocator(),
+	StringAuto pps(getAllocator());
+	ANKI_CHECK(pps.sprintf(
 		"#define HPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n",
 		m_blurringDist, m_height, 
-		static_cast<U>(initializer.get("pps.hdr.samples")));
-	if(err) return err;
+		static_cast<U>(initializer.get("pps.hdr.samples"))));
 
-	err = m_hblurFrag.loadToCache(&getResourceManager(),
-		SHADER_FILENAME, pps.toCString(), "r_");
-	if(err) return err;
+	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
+		SHADER_FILENAME, pps.toCString(), "r_"));
 
-	err = m_r->createDrawQuadPipeline(
-		m_hblurFrag->getGrShader(), m_hblurPpline);
-	if(err) return err;
+	ANKI_CHECK(m_r->createDrawQuadPipeline(
+		m_hblurFrag->getGrShader(), m_hblurPpline));
 
 	pps.destroy(getAllocator());
-	err = pps.sprintf(getAllocator(),
+	ANKI_CHECK(pps.sprintf(
 		"#define VPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n",
 		m_blurringDist, m_width, 
-		static_cast<U>(initializer.get("pps.hdr.samples")));
-	if(err) return err;
+		static_cast<U>(initializer.get("pps.hdr.samples"))));
 
-	err = m_vblurFrag.loadToCache(&getResourceManager(),
-		SHADER_FILENAME, pps.toCString(), "r_");
-	if(err) return err;
+	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
+		SHADER_FILENAME, pps.toCString(), "r_"));
 
-	err = m_r->createDrawQuadPipeline(
-		m_vblurFrag->getGrShader(), m_vblurPpline);
-	if(err) return err;
+	ANKI_CHECK(m_r->createDrawQuadPipeline(
+		m_vblurFrag->getGrShader(), m_vblurPpline));
 
 	// Set timestamps
 	m_parameterUpdateTimestamp = getGlobalTimestamp();
@@ -144,7 +137,6 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 //==============================================================================
 Error Hdr::init(const ConfigSet& initializer)
 {
-
 	Error err = initInternal(initializer);
 
 	if(err)

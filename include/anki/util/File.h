@@ -96,8 +96,8 @@ public:
 
 	/// Read all the contents of a text file
 	/// If the file is not rewined it will probably fail
-	template<typename TAlloc>
-	ANKI_USE_RESULT Error readAllText(TAlloc alloc, String& out);
+	ANKI_USE_RESULT Error readAllText(
+		GenericMemoryPoolAllocator<U8> alloc, String& out);
 
 	/// Read 32bit unsigned integer. Set the endianness if the file's 
 	/// endianness is different from the machine's
@@ -167,30 +167,6 @@ private:
 		m_size = 0;
 	}
 };
-
-//==============================================================================
-template<typename TAlloc>
-inline Error File::readAllText(TAlloc alloc, String& out)
-{
-	Error err = ErrorCode::NONE;
-	PtrSize size = getSize();
-
-	if(size != 0)
-	{
-		err = out.create(alloc, '?', size);
-
-		if(!err)
-		{
-			err = read(&out[0], size);
-		}
-	}
-	else
-	{
-		err = ErrorCode::FUNCTION_FAILED;
-	}
-	
-	return err;
-}
 /// @}
 
 } // end namespace anki

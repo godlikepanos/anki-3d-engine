@@ -323,27 +323,15 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		else if(type == "staticMesh")
 		{
 			CString filename;
-			if(err = valEl.getText(filename))
-			{
-				return err;
-			}
+			ANKI_CHECK(valEl.getText(filename));
 	
-			TempResourceString fixedFilename;
-			if(err = init.m_resources.fixResourceFilename(
-				filename, fixedFilename))
-			{
-				return err;
-			}
+			StringAuto fixedFilename(init.m_tempAlloc);
+			ANKI_CHECK(init.m_resources.fixResourceFilename(
+				filename, fixedFilename));
 
 			MeshLoader loader;
-			if(err = loader.load(
-				&init.m_tempAlloc.getMemoryPool(), fixedFilename.toCString()))
-			{
-				fixedFilename.destroy(init.m_tempAlloc);
-				return err;
-			}
-
-			fixedFilename.destroy(init.m_tempAlloc);
+			ANKI_CHECK(
+				loader.load(init.m_tempAlloc, fixedFilename.toCString()));
 
 			m_physicsShape = physics.newCollisionShape<PhysicsTriangleSoup>(
 				csInit, 

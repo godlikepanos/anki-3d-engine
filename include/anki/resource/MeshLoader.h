@@ -95,7 +95,7 @@ public:
 	~MeshLoader();
 
 	ANKI_USE_RESULT Error load(
-		BaseMemoryPool* pool,
+		GenericMemoryPoolAllocator<U8> alloc,
 		const CString& filename);
 
 	const Header& getHeader() const

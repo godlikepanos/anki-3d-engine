@@ -31,7 +31,7 @@ public:
 		m_alloc(b.m_alloc)
 	{}
 
-	XmlElement(tinyxml2::XMLElement* el, const StackAllocator<U8>& alloc)
+	XmlElement(tinyxml2::XMLElement* el, GenericMemoryPoolAllocator<U8> alloc)
 	:	m_el(el),
 		m_alloc(alloc)
 	{}
@@ -90,7 +90,7 @@ public:
 
 private:
 	tinyxml2::XMLElement* m_el;
-	StackAllocator<U8> m_alloc;
+	GenericMemoryPoolAllocator<U8> m_alloc;
 
 	ANKI_USE_RESULT Error check() const;
 };
@@ -100,13 +100,13 @@ class XmlDocument
 {
 public:
 	ANKI_USE_RESULT Error loadFile(
-		const CString& filename, StackAllocator<U8>& alloc);
+		const CString& filename, GenericMemoryPoolAllocator<U8> alloc);
 
 	ANKI_USE_RESULT Error getChildElement(const CString& name, XmlElement& out);
 
 private:
 	tinyxml2::XMLDocument m_doc;
-	StackAllocator<U8> m_alloc;
+	GenericMemoryPoolAllocator<U8> m_alloc;
 };
 
 } // end namespace anki

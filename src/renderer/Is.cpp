@@ -174,11 +174,9 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	// Load the programs
 	//
-	String pps;
-	String::ScopeDestroyer ppsd(&pps, getAllocator());
+	StringAuto pps(getAllocator());
 
-	err = pps.sprintf(
-		getAllocator(),
+	ANKI_CHECK(pps.sprintf(
 		"\n#define TILES_X_COUNT %u\n"
 		"#define TILES_Y_COUNT %u\n"
 		"#define TILES_COUNT %u\n" 
@@ -202,57 +200,32 @@ Error Is::initInternal(const ConfigSet& config)
 		m_maxLightIds,
 		m_groundLightEnabled,
 		TILES_BLOCK_BINDING,
-		m_sm.getPoissonEnabled());
-	if(err) return err;
+		m_sm.getPoissonEnabled()));
 
 	// point light
 	CommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGrManager()); // Job for initialization
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(cmdBuff.create(&getGrManager())); // Job for initialization
 
-	err = m_lightVert.loadToCache(&getResourceManager(),
-		"shaders/IsLp.vert.glsl", pps.toCString(), "r_");
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_lightVert.loadToCache(&getResourceManager(),
+		"shaders/IsLp.vert.glsl", pps.toCString(), "r_"));
 
-	err = m_lightFrag.loadToCache(&getResourceManager(),
-		"shaders/IsLp.frag.glsl", pps.toCString(), "r_");
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_lightFrag.loadToCache(&getResourceManager(),
+		"shaders/IsLp.frag.glsl", pps.toCString(), "r_"));
 
-	err = m_lightPpline.create(cmdBuff, 
-		{m_lightVert->getGrShader(), m_lightFrag->getGrShader()});
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_lightPpline.create(cmdBuff, 
+		{m_lightVert->getGrShader(), m_lightFrag->getGrShader()}));
 
 	//
 	// Create framebuffer
 	//
 
-	err = m_r->createRenderTarget(
-		m_r->getWidth(), m_r->getHeight(), GL_RGB8, 1, m_rt);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_r->createRenderTarget(
+		m_r->getWidth(), m_r->getHeight(), GL_RGB8, 1, m_rt));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	err = m_fb.create(cmdBuff, fbInit);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
 
 	//
 	// Init the quad
@@ -260,52 +233,33 @@ Error Is::initInternal(const ConfigSet& config)
 	static const F32 quadVertCoords[][2] = 
 		{{1.0, 1.0}, {0.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}};
 
-	err = m_quadPositionsVertBuff.create(cmdBuff, GL_ARRAY_BUFFER, 
-		&quadVertCoords[0][0], sizeof(quadVertCoords), 0);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_quadPositionsVertBuff.create(cmdBuff, GL_ARRAY_BUFFER, 
+		&quadVertCoords[0][0], sizeof(quadVertCoords), 0));
 
 	//
 	// Create UBOs
 	//
-	err = m_commonBuffer.create(cmdBuff, GL_UNIFORM_BUFFER, nullptr,
-		sizeof(shader::CommonUniforms), GL_DYNAMIC_STORAGE_BIT);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_commonBuffer.create(cmdBuff, GL_UNIFORM_BUFFER, nullptr,
+		sizeof(shader::CommonUniforms), GL_DYNAMIC_STORAGE_BIT));
 
 	for(U i = 0; i < MAX_FRAMES; ++i)
 	{
 		// Lights
-		err = m_lightsBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
+		ANKI_CHECK(m_lightsBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
 			nullptr, calcLightsBufferSize(), 
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		if(err)
-		{
-			return err;
-		}
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
 		// Tiles
-		err = m_tilesBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
+		ANKI_CHECK(m_tilesBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
 			nullptr, m_r->getTilesCountXY() * sizeof(shader::Tile),
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		if(err)
-		{
-			return err;
-		}
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
 		// Index
-		err = m_lightIdsBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
+		ANKI_CHECK(m_lightIdsBuffers[i].create(cmdBuff, 
+			GL_SHADER_STORAGE_BUFFER,
 			nullptr, (m_maxPointLights * m_maxSpotLights * m_maxSpotTexLights)
 			* sizeof(U32),
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		if(err)
-		{
-			return err;
-		}
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 	}
 
 	// Flush
@@ -388,11 +342,7 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 	//
 	// Do shadows pass
 	//
-	err = m_sm.run(&shadowCasters[0], visibleSpotTexLightsCount, cmdBuff);
-	if(ANKI_UNLIKELY(err)) 
-	{
-		return err;
-	}
+	ANKI_CHECK(m_sm.run(&shadowCasters[0], visibleSpotTexLightsCount, cmdBuff));
 
 	//
 	// Write the lights and tiles UBOs
@@ -459,22 +409,14 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 	setState(cmdBuff);
 
 	// Sync
-	err = threadPool.waitForAllThreadsToFinish();
-	if(ANKI_UNLIKELY(err)) 
-	{
-		return err;
-	}
+	ANKI_CHECK(threadPool.waitForAllThreadsToFinish());
 
 	//
 	// Setup uniforms
 	//
 
 	// shader prog
-	err = updateCommonBlock(cmdBuff);
-	if(ANKI_UNLIKELY(err)) 
-	{
-		return err;
-	}
+	ANKI_CHECK(updateCommonBlock(cmdBuff));
 
 	m_commonBuffer.bindShaderBuffer(cmdBuff, COMMON_UNIFORMS_BLOCK_BINDING);
 

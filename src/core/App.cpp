@@ -295,8 +295,7 @@ Error App::initDirs()
 {
 #if ANKI_OS != ANKI_OS_ANDROID
 	// Settings path
-	String home;
-	String::ScopeDestroyer homed(&home, m_heapAlloc);
+	StringAuto home(m_heapAlloc);
 	ANKI_CHECK(getHomeDirectory(m_heapAlloc, home));
 
 	ANKI_CHECK(m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]));

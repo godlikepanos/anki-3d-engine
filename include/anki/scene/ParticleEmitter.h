@@ -178,10 +178,10 @@ private:
 	};
 
 	ParticleEmitterResourcePointer m_particleEmitterResource;
-	SceneDArray<ParticleBase*> m_particles;
+	DArray<ParticleBase*> m_particles;
 	F32 m_timeLeftForNextEmission = 0.0;
 	Obb m_obb;
-	SceneDArray<Transform> m_transforms; ///< InstanceTransforms
+	DArray<Transform> m_transforms; ///< InstanceTransforms
 	Timestamp m_transformsTimestamp = 0;
 
 	// Opt: We dont have to make extra calculations if the ParticleEmitter's

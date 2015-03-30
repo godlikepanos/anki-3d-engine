@@ -660,4 +660,28 @@ File::OpenFlag File::getMachineEndianness()
 	}
 }
 
+//==============================================================================
+Error File::readAllText(
+	GenericMemoryPoolAllocator<U8> alloc, String& out)
+{
+	Error err = ErrorCode::NONE;
+	PtrSize size = getSize();
+
+	if(size != 0)
+	{
+		err = out.create(alloc, '?', size);
+
+		if(!err)
+		{
+			err = read(&out[0], size);
+		}
+	}
+	else
+	{
+		err = ErrorCode::FUNCTION_FAILED;
+	}
+	
+	return err;
+}
+
 } // end namespace anki

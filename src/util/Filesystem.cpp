@@ -9,7 +9,7 @@ namespace anki {
 
 //==============================================================================
 Error getFileExtension(
-	const CString& filename, HeapAllocator<U8>& alloc, String& out)
+	const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
 	Error err = ErrorCode::NONE;
 	const char* pc = std::strrchr(&filename[0], '.');

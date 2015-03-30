@@ -222,7 +222,7 @@ public:
 class RenderComponent: public SceneComponent
 {
 public:
-	typedef SceneDArray<RenderComponentVariable*> Variables;
+	using Variables = DArray<RenderComponentVariable*>;
 
 	static Bool classof(const SceneComponent& c)
 	{

@@ -92,7 +92,7 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 	Error err = ErrorCode::NONE;
 	MaterialVariableTemplate<T>* out = nullptr;
 
-	TempResourceDArrayAuto<F32> floats(talloc);
+	DArrayAuto<F32> floats(talloc);
 
 	// Get the float values
 	if(in.m_value.getSize() > 0)
@@ -538,7 +538,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 						continue;
 					}
 
-					TempResourceString src(rinit.m_tempAlloc);
+					StringAuto src(rinit.m_tempAlloc);
 					ANKI_CHECK(src.sprintf(
 						"%s\n"
 						"#define LOD %u\n"
@@ -548,7 +548,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 						&rinit.m_resources._getShadersPrependedSource()[0],
 						level, pid, tess, &loader.getProgramSource(shader)[0]));
 
-					TempResourceString filename(rinit.m_tempAlloc);
+					StringAuto filename(rinit.m_tempAlloc);
 
 					ANKI_CHECK(createProgramSourceToCache(src, filename));
 
@@ -575,7 +575,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 
 //==============================================================================
 Error Material::createProgramSourceToCache(
-	const TempResourceString& source, TempResourceString& out)
+	const StringAuto& source, StringAuto& out)
 {
 	Error err = ErrorCode::NONE;
 
@@ -583,7 +583,7 @@ Error Material::createProgramSourceToCache(
 
 	// Create the hash
 	U64 h = computeHash(&source[0], source.getLength());
-	TempResourceString prefix(alloc);
+	StringAuto prefix(alloc);
 
 	ANKI_CHECK(prefix.toString(h));
 

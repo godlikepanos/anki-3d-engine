@@ -23,8 +23,8 @@ static U8 tgaHeaderCompressed[12] = {0, 0, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 //==============================================================================
 static ANKI_USE_RESULT Error loadUncompressedTga(
-	File& fs, U32& width, U32& height, U32& bpp, ResourceDArray<U8>& data,
-	ResourceAllocator<U8>& alloc)
+	File& fs, U32& width, U32& height, U32& bpp, DArray<U8>& data,
+	GenericMemoryPoolAllocator<U8>& alloc)
 {
 	U8 header6[6];
 
@@ -73,8 +73,8 @@ static ANKI_USE_RESULT Error loadUncompressedTga(
 
 //==============================================================================
 static ANKI_USE_RESULT Error loadCompressedTga(
-	File& fs, U32& width, U32& height, U32& bpp, ResourceDArray<U8>& data,
-	ResourceAllocator<U8>& alloc)
+	File& fs, U32& width, U32& height, U32& bpp, DArray<U8>& data,
+	GenericMemoryPoolAllocator<U8>& alloc)
 {
 	U8 header6[6];
 	Error err = fs.read(reinterpret_cast<char*>(&header6[0]), sizeof(header6));
@@ -186,8 +186,8 @@ static ANKI_USE_RESULT Error loadCompressedTga(
 
 //==============================================================================
 static ANKI_USE_RESULT Error loadTga(const CString& filename, 
-	U32& width, U32& height, U32& bpp, ResourceDArray<U8>& data,
-	ResourceAllocator<U8>& alloc)
+	U32& width, U32& height, U32& bpp, DArray<U8>& data,
+	GenericMemoryPoolAllocator<U8>& alloc)
 {
 	File fs;
 	char myTgaHeader[12];
@@ -338,8 +338,8 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 	const CString& filename, 
 	U32 maxTextureSize,
 	Image::DataCompression& preferredCompression,
-	ResourceDArray<Image::Surface>& surfaces,
-	ResourceAllocator<U8>& alloc,
+	DArray<Image::Surface>& surfaces,
+	GenericMemoryPoolAllocator<U8>& alloc,
 	U8& depth, 
 	U8& mipLevels, 
 	Image::TextureType& textureType,
@@ -348,23 +348,15 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 	Error err = ErrorCode::NONE;
 	
 	File file;
-	err = file.open(filename, 
+	ANKI_CHECK(file.open(filename, 
 		File::OpenFlag::READ | File::OpenFlag::BINARY 
-		| File::OpenFlag::LITTLE_ENDIAN);
-	if(err)
-	{
-		return err;
-	}
+		| File::OpenFlag::LITTLE_ENDIAN));
 
 	//
 	// Read and check the header
 	//
 	AnkiTextureHeader header;
-	err = file.read(&header, sizeof(AnkiTextureHeader));
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(file.read(&header, sizeof(AnkiTextureHeader)));
 
 	if(std::memcmp(&header.m_magic[0], "ANKITEX1", 8) != 0)
 	{
@@ -500,21 +492,14 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 		}
 	}
 
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(err);
 
 	//
 	// It's time to read
 	//
 
 	// Allocate the surfaces 
-	err = surfaces.create(alloc, mipLevels * depth);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(surfaces.create(alloc, mipLevels * depth));
 
 	// Read all surfaces
 	U mipWidth = header.m_width;
@@ -575,8 +560,7 @@ Error Image::load(const CString& filename, U32 maxTextureSize)
 	Error err = ErrorCode::NONE;
 
 	// get the extension
-	String ext;
-	String::ScopeDestroyer extd(&ext, m_alloc);
+	StringAuto ext(m_alloc);
 	err = getFileExtension(filename, m_alloc, ext);
 	if(err)
 	{

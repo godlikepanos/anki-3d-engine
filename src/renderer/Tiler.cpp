@@ -83,11 +83,10 @@ Error Tiler::initInternal()
 	m_enableGpuTests = false;
 
 	// Load the program
-	String pps;
-	String::ScopeDestroyer ppsd(&pps, getAllocator());
+	StringAuto pps(getAllocator());
 
 	ANKI_CHECK(
-		pps.sprintf(getAllocator(),
+		pps.sprintf(
 		"#define TILES_X_COUNT %u\n"
 		"#define TILES_Y_COUNT %u\n"
 		"#define RENDERER_WIDTH %u\n"

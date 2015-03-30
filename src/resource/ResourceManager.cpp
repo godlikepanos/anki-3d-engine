@@ -108,7 +108,7 @@ Error ResourceManager::fixResourceFilename(
 	Error err = ErrorCode::NONE;
 
 	// If the filename is in cache then dont append the data path
-	if(filename.find(m_cacheDir.toCString()) != TempResourceString::NPOS)
+	if(filename.find(m_cacheDir.toCString()) != String::NPOS)
 	{
 		err = out.create(filename);
 	}

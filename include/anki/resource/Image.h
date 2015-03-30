@@ -13,7 +13,7 @@
 namespace anki {
 
 /// Image class.
-/// Used in Texture::load. Supported types: TGA and PNG
+/// Used in Texture::load. Supported types: TGA and an AnKi specific format.
 class Image
 {
 public:
@@ -53,10 +53,10 @@ public:
 		U32 m_width;
 		U32 m_height;
 		U32 m_mipLevel;
-		ResourceDArray<U8> m_data;
+		DArray<U8> m_data;
 	};
 
-	Image(ResourceAllocator<U8>& alloc)
+	Image(GenericMemoryPoolAllocator<U8> alloc)
 	:	m_alloc(alloc)
 	{}
 
@@ -97,7 +97,7 @@ public:
 
 	const Surface& getSurface(U mipLevel, U layer) const;
 
-	ResourceAllocator<U8> getAllocator() const
+	GenericMemoryPoolAllocator<U8> getAllocator() const
 	{
 		return m_alloc;
 	}
@@ -110,9 +110,9 @@ public:
 		const CString& filename, U32 maxTextureSize = MAX_U32);
 
 private:
-	ResourceAllocator<U8> m_alloc;
+	GenericMemoryPoolAllocator<U8> m_alloc;
 	/// [mip][depthFace]
-	ResourceDArray<Surface> m_surfaces;
+	DArray<Surface> m_surfaces;
 	U8 m_mipLevels = 0;
 	U8 m_depth = 0;
 	DataCompression m_compression = DataCompression::NONE;

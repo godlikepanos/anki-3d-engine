@@ -26,16 +26,6 @@ using SceneAllocator = ChainAllocator<T>;
 template<typename T>
 using SceneFrameAllocator = StackAllocator<T>;
 
-/// Scene string
-using SceneString = StringBase<SceneAllocator<char>>;
-
-/// Scene array
-template<typename T>
-using SceneDArray = DArray<T>;
-
-template<typename T>
-using SceneFrameDArrayAuto = DArrayAuto<T, SceneFrameAllocator<T>>;
-
 /// Scene dictionary
 template<typename T>
 using SceneDictionary = 

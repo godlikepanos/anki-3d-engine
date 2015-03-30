@@ -47,12 +47,10 @@ Error BlurringRenderingPass::initBlurring(
 	CommandBufferHandle cmdb;
 	ANKI_CHECK(cmdb.create(&gl));
 
-	Array<String, 2> pps;
-	String::ScopeDestroyer ppsd0(&pps[0], getAllocator());
-	String::ScopeDestroyer ppsd1(&pps[1], getAllocator());
+	Array<StringAuto, 2> pps = {{getAllocator(), getAllocator()}};
 
 	ANKI_CHECK(
-		pps[1].sprintf(getAllocator(),
+		pps[1].sprintf(
 		"#define HPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
@@ -61,7 +59,7 @@ Error BlurringRenderingPass::initBlurring(
 		blurringDistance, height, samples));
 
 	ANKI_CHECK(
-		pps[0].sprintf(getAllocator(),
+		pps[0].sprintf(
 		"#define VPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"

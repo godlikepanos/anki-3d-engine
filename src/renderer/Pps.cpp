@@ -56,10 +56,9 @@ Error Pps::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
 
 	// SProg
-	String pps;
-	String::ScopeDestroyer ppsd(&pps, getAllocator());
+	StringAuto pps(getAllocator());
 
-	ANKI_CHECK(pps.sprintf(getAllocator(),
+	ANKI_CHECK(pps.sprintf(
 		"#define SSAO_ENABLED %u\n"
 		"#define HDR_ENABLED %u\n"
 		"#define SHARPEN_ENABLED %u\n"

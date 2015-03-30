@@ -31,7 +31,7 @@ public:
 	}
 
 private:
-	ResourceString m_source;
+	String m_source;
 	ResourceAllocator<char> m_alloc;
 };
 /// @}

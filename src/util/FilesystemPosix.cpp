@@ -114,7 +114,7 @@ Error createDirectory(const CString& dir)
 }
 
 //==============================================================================
-Error getHomeDirectory(HeapAllocator<U8>& alloc, String& out)
+Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
 	const char* home = getenv("HOME");
 	if(home == nullptr)

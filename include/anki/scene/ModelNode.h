@@ -41,7 +41,7 @@ public:
 private:
 	Obb m_obb; ///< In world space
 	const ModelPatchBase* m_modelPatch; ///< The resource
-	SceneDArray<ObbSpatialComponent*> m_spatials;
+	DArray<ObbSpatialComponent*> m_spatials;
 
 	ANKI_USE_RESULT Error updateInstanceSpatials(
 		const MoveComponent* instanceMoves[], 
@@ -76,8 +76,8 @@ public:
 
 private:
 	ModelResourcePointer m_model; ///< The resource
-	SceneDArray<ModelPatchNode*> m_modelPatches;
-	SceneDArray<Transform> m_transforms; ///< Cache the transforms of instances
+	DArray<ModelPatchNode*> m_modelPatches;
+	DArray<Transform> m_transforms; ///< Cache the transforms of instances
 	Timestamp m_transformsTimestamp;
 	PhysicsBody* m_body = nullptr;
 	BodyComponent* m_bodyComp = nullptr;

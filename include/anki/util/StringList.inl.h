@@ -10,7 +10,7 @@ namespace anki {
 
 //==============================================================================
 template<typename TAllocator>
-void StringList::destroy(TAllocator alloc)
+inline void StringList::destroy(TAllocator alloc)
 {
 	auto it = Base::getBegin();
 	auto endit = Base::getEnd();
@@ -24,7 +24,7 @@ void StringList::destroy(TAllocator alloc)
 
 //==============================================================================
 template<typename TAllocator>
-Error StringList::join(
+inline Error StringList::join(
 	TAllocator alloc,
 	const CString& separator,
 	String& out) const
@@ -72,25 +72,8 @@ Error StringList::join(
 }
 
 //==============================================================================
-I StringList::getIndexOf(const CString& value) const
-{
-	U pos = 0;
-
-	for(auto it = Base::getBegin(); it != Base::getEnd(); ++it)
-	{
-		if(*it == value)
-		{
-			break;
-		}
-		++ pos;
-	}
-
-	return (pos == Base::getSize()) ? -1 : pos;
-}
-
-//==============================================================================
 template<typename TAllocator>
-Error StringList::splitString(
+inline Error StringList::splitString(
 	TAllocator alloc,
 	const CString& s, 
 	const Char separator)
@@ -154,28 +137,8 @@ Error StringList::splitString(
 }
 
 //==============================================================================
-void StringList::sortAll(const Sort method)
-{
-	if(method == Sort::ASCENDING)
-	{
-		Base::sort([](const String& a, const String& b)
-		{
-			return a < b;
-		});
-	}
-	else
-	{
-		ANKI_ASSERT(method == Sort::DESCENDING);
-		Base::sort([](const String& a, const String& b)
-		{
-			return a < b;
-		});
-	}
-}
-
-//==============================================================================
 template<typename TAllocator, typename... TArgs>
-Error StringList::pushBackSprintf(
+inline Error StringList::pushBackSprintf(
 	TAllocator alloc, const TArgs&... args)
 {
 	String str;

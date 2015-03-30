@@ -43,14 +43,14 @@ private:
 class AnimationChannel
 {
 public:
-	ResourceString m_name;
+	String m_name;
 
 	I32 m_boneIndex = -1; ///< For skeletal animations
 
-	ResourceDArray<Key<Vec3>> m_positions;
-	ResourceDArray<Key<Quat>> m_rotations;
-	ResourceDArray<Key<F32>> m_scales;
-	ResourceDArray<Key<F32>> m_cameraFovs;
+	DArray<Key<Vec3>> m_positions;
+	DArray<Key<Quat>> m_rotations;
+	DArray<Key<F32>> m_scales;
+	DArray<Key<F32>> m_cameraFovs;
 
 	void destroy(ResourceAllocator<U8>& alloc)
 	{
@@ -74,7 +74,7 @@ public:
 		const CString& filename, ResourceInitializer& init);
 
 	/// Get a vector of all animation channels
-	const ResourceDArray<AnimationChannel>& getChannels() const
+	const DArray<AnimationChannel>& getChannels() const
 	{
 		return m_channels;
 	}
@@ -103,7 +103,7 @@ public:
 
 private:
 	ResourceAllocator<U8> m_alloc;
-	ResourceDArray<AnimationChannel> m_channels;
+	DArray<AnimationChannel> m_channels;
 	F32 m_duration;
 	F32 m_startTime;
 	Bool8 m_repeat;
