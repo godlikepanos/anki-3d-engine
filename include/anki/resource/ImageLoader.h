@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_IMAGE_H
-#define ANKI_RESOURCE_IMAGE_H
+#ifndef ANKI_RESOURCE_IMAGE_LOADER_H
+#define ANKI_RESOURCE_IMAGE_LOADER_H
 
 #include "anki/resource/Common.h"
 #include "anki/util/Functions.h"
@@ -12,9 +12,9 @@
 
 namespace anki {
 
-/// Image class.
+/// Image loader.
 /// Used in Texture::load. Supported types: TGA and an AnKi specific format.
-class Image
+class ImageLoader
 {
 public:
 	/// Texture type
@@ -56,11 +56,11 @@ public:
 		DArray<U8> m_data;
 	};
 
-	Image(GenericMemoryPoolAllocator<U8> alloc)
+	ImageLoader(GenericMemoryPoolAllocator<U8> alloc)
 	:	m_alloc(alloc)
 	{}
 
-	~Image()
+	~ImageLoader()
 	{
 		destroy();
 	}
