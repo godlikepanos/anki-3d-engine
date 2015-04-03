@@ -107,16 +107,12 @@ Error PipelineHandle::commonConstructor(
 	using DeleteCommand = DeleteObjectCommand<PipelineImpl>;
 	using Deleter = DeferredDeleter<PipelineImpl, DeleteCommand>;
 
-	Error err = Base::create(commands.get().getManager(), Deleter());
-	if(!err)
-	{
-		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
+	Base::create(commands.get().getManager(), Deleter());
+	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
+	commands.get().pushBackNewCommand<CreatePipelineCommand>(
+		*this, progsBegin, progsEnd);
 
-		commands.get().pushBackNewCommand<CreatePipelineCommand>(
-			*this, progsBegin, progsEnd);
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

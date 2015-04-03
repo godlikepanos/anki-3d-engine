@@ -165,73 +165,47 @@ public:
 
 	/// Create the array.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error create(TAllocator alloc, PtrSize size)
+	void create(TAllocator alloc, PtrSize size)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0);
-		Error err = ErrorCode::NONE;
-
 		destroy(alloc);
 
 		if(size > 0)
 		{
 			m_data = alloc.template newArray<Value>(size);
-			if(m_data)
-			{
-				m_size = size;
-			}
-			else
-			{
-				err = ErrorCode::OUT_OF_MEMORY;
-			}
+			m_size = size;
 		}
-
-		return err;
 	}
 
 	/// Create the array.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error create(TAllocator alloc, PtrSize size, const Value& v)
+	void create(TAllocator alloc, PtrSize size, const Value& v)
 	{
 		ANKI_ASSERT(m_data == nullptr && m_size == 0);
-		Error err = ErrorCode::NONE;
 
 		if(size > 0)
 		{
 			m_data = alloc.template newArray<Value>(size, v);
-			if(m_data)
-			{
-				m_size = size;
-			}
-			else
-			{
-				err = ErrorCode::OUT_OF_MEMORY;
-			}
+			m_size = size;
 		}
-
-		return err;
 	}
 
 	/// Grow the array.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error resize(TAllocator alloc, PtrSize size)
+	void resize(TAllocator alloc, PtrSize size)
 	{
 		ANKI_ASSERT(size > 0);
 		DArray newArr;
-		Error err = newArr.create(alloc, size);
+		newArr.create(alloc, size);
 
-		if(!err)
+		PtrSize minSize = min<PtrSize>(size, m_size);
+		for(U i = 0; i < minSize; i++)
 		{
-			PtrSize minSize = min<PtrSize>(size, m_size);
-			for(U i = 0; i < minSize; i++)
-			{
-				newArr[i] = std::move((*this)[i]);
-			}
-
-			destroy(alloc);
-			move(newArr);
+			newArr[i] = std::move((*this)[i]);
 		}
 
-		return err;
+		destroy(alloc);
+		move(newArr);
 	}
 
 	/// Destroy the array.
@@ -301,21 +275,21 @@ public:
 	}
 
 	/// Create the array.
-	ANKI_USE_RESULT Error create(PtrSize size)
+	void create(PtrSize size)
 	{
-		return Base::create(m_alloc, size);
+		Base::create(m_alloc, size);
 	}
 
 	/// Create the array.
-	ANKI_USE_RESULT Error create(PtrSize size, const Value& v)
+	void create(PtrSize size, const Value& v)
 	{
-		return Base::create(m_alloc, size, v);
+		Base::create(m_alloc, size, v);
 	}
 
 	/// Grow the array.
-	ANKI_USE_RESULT Error resize(PtrSize size)
+	void resize(PtrSize size)
 	{
-		return Base::resize(m_alloc, size);
+		Base::resize(m_alloc, size);
 	}
 
 private:

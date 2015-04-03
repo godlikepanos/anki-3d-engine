@@ -43,7 +43,7 @@ private:
 	const ModelPatchBase* m_modelPatch; ///< The resource
 	DArray<ObbSpatialComponent*> m_spatials;
 
-	ANKI_USE_RESULT Error updateInstanceSpatials(
+	void updateInstanceSpatials(
 		const MoveComponent* instanceMoves[], 
 		U32 instanceMovesCount);
 

@@ -65,8 +65,7 @@ Error Sm::init(const ConfigSet& initializer)
 
 	// Init sms
 	U32 layer = 0;
-	ANKI_CHECK(
-		m_sms.create(getAllocator(), initializer.get("is.sm.maxLights")));
+	m_sms.create(getAllocator(), initializer.get("is.sm.maxLights"));
 	for(Shadowmap& sm : m_sms)
 	{
 		sm.m_layerId = layer;

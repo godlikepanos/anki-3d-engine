@@ -8,10 +8,9 @@
 namespace anki {
 
 //==============================================================================
-Error getFileExtension(
+void getFileExtension(
 	const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
-	Error err = ErrorCode::NONE;
 	const char* pc = std::strrchr(&filename[0], '.');
 
 	out.destroy(alloc);
@@ -25,11 +24,9 @@ Error getFileExtension(
 		++pc;
 		if(*pc != '\0')
 		{
-			err = out.create(alloc, CString(pc));
+			out.create(alloc, CString(pc));
 		}
 	}
-
-	return err;
 }
 
 } // end namespace anki

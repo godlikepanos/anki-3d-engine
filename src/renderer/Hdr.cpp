@@ -16,15 +16,11 @@ Hdr::~Hdr()
 //==============================================================================
 Error Hdr::initFb(FramebufferHandle& fb, TextureHandle& rt)
 {
-	Error err = ErrorCode::NONE;
-
-	err = m_r->createRenderTarget(m_width, m_height, GL_RGB8, 1, rt);
-	if(err) return err;
+	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, GL_RGB8, 1, rt));
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	CommandBufferHandle cmdb;
-	err = cmdb.create(&getGrManager());
-	if(err) return err;
+	ANKI_CHECK(cmdb.create(&getGrManager()));
 
 	rt.setFilter(cmdb, TextureHandle::Filter::LINEAR);
 
@@ -32,19 +28,16 @@ Error Hdr::initFb(FramebufferHandle& fb, TextureHandle& rt)
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
-	err = fb.create(cmdb, fbInit);
-	if(err) return err;
+	ANKI_CHECK(fb.create(cmdb, fbInit));
 
 	cmdb.finish();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error Hdr::initInternal(const ConfigSet& initializer)
 {
-	Error err = ErrorCode::NONE;
-
 	m_enabled = initializer.get("pps.hdr.enabled");
 
 	if(!m_enabled)
@@ -64,46 +57,39 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	m_blurringIterationsCount = 
 		initializer.get("pps.hdr.blurringIterationsCount");
 
-	err = initFb(m_hblurFb, m_hblurRt);
-	if(err) return err;
-
-	err = initFb(m_vblurFb, m_vblurRt);
-	if(err) return err;
+	ANKI_CHECK(initFb(m_hblurFb, m_hblurRt));
+	ANKI_CHECK(initFb(m_vblurFb, m_vblurRt));
 
 	// init shaders
 	GrManager& gl = getGrManager();
 	CommandBufferHandle cmdb;
-	err = cmdb.create(&gl);
-	if(err) return err;
+	ANKI_CHECK(cmdb.create(&gl));
 
-	err = m_commonBuff.create(cmdb, GL_UNIFORM_BUFFER, nullptr,
-		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
-	if(err) return err;
+	ANKI_CHECK(m_commonBuff.create(cmdb, GL_UNIFORM_BUFFER, nullptr,
+		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT));
 
-	err = updateDefaultBlock(cmdb);
-	if(err) return err;
+	updateDefaultBlock(cmdb);
 
 	cmdb.flush();
 
-	err = m_toneFrag.load("shaders/PpsHdr.frag.glsl", &getResourceManager());
-	if(err) return err;
+	ANKI_CHECK(
+		m_toneFrag.load("shaders/PpsHdr.frag.glsl", &getResourceManager()));
 
-	err = m_r->createDrawQuadPipeline(
-		m_toneFrag->getGrShader(), m_tonePpline);
-	if(err) return err;
+	ANKI_CHECK(m_r->createDrawQuadPipeline(
+		m_toneFrag->getGrShader(), m_tonePpline));
 
 	const char* SHADER_FILENAME = 
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
 	StringAuto pps(getAllocator());
-	ANKI_CHECK(pps.sprintf(
+	pps.sprintf(
 		"#define HPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n",
 		m_blurringDist, m_height, 
-		static_cast<U>(initializer.get("pps.hdr.samples"))));
+		static_cast<U>(initializer.get("pps.hdr.samples")));
 
 	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_"));
@@ -112,14 +98,14 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 		m_hblurFrag->getGrShader(), m_hblurPpline));
 
 	pps.destroy(getAllocator());
-	ANKI_CHECK(pps.sprintf(
+	pps.sprintf(
 		"#define VPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n",
 		m_blurringDist, m_width, 
-		static_cast<U>(initializer.get("pps.hdr.samples"))));
+		static_cast<U>(initializer.get("pps.hdr.samples")));
 
 	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_"));
@@ -131,7 +117,7 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	m_parameterUpdateTimestamp = getGlobalTimestamp();
 	m_commonUboUpdateTimestamp = getGlobalTimestamp();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -151,7 +137,6 @@ Error Hdr::init(const ConfigSet& initializer)
 Error Hdr::run(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
-	Error err = ErrorCode::NONE;
 
 	// For the passes it should be NEAREST
 	//vblurFai.setFiltering(Texture::TFrustumType::NEAREST);
@@ -163,11 +148,7 @@ Error Hdr::run(CommandBufferHandle& cmdb)
 
 	if(m_parameterUpdateTimestamp > m_commonUboUpdateTimestamp)
 	{
-		err = updateDefaultBlock(cmdb);
-		if(err)
-		{
-			return err;
-		}
+		updateDefaultBlock(cmdb);
 
 		m_commonUboUpdateTimestamp = getGlobalTimestamp();
 	}
@@ -204,12 +185,10 @@ Error Hdr::run(CommandBufferHandle& cmdb)
 }
 
 //==============================================================================
-Error Hdr::updateDefaultBlock(CommandBufferHandle& cmdb)
+void Hdr::updateDefaultBlock(CommandBufferHandle& cmdb)
 {
 	Vec4 uniform(m_exposure, 0.0, 0.0, 0.0);
 	m_commonBuff.write(cmdb, &uniform, sizeof(uniform), 0, 0, sizeof(uniform));
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

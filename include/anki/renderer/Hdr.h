@@ -103,7 +103,7 @@ private:
 	ANKI_USE_RESULT Error initFb(FramebufferHandle& fb, TextureHandle& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error updateDefaultBlock(CommandBufferHandle& jobs);
+	void updateDefaultBlock(CommandBufferHandle& jobs);
 };
 
 /// @}

@@ -41,28 +41,22 @@ Error StdinListener::create(HeapAllocator<String>& alloc)
 //==============================================================================
 Error StdinListener::workingFunc(Thread::Info& info)
 {
-	Error err = ErrorCode::NONE;
 	StdinListener& self = *reinterpret_cast<StdinListener*>(info.m_userData);
 	Array<char, 512> buff;
 
-	while(!self.m_quit && !err)
+	while(!self.m_quit)
 	{
 		I m = read(0, &buff[0], sizeof(buff));
 		buff[m] = '\0';
 
-		self.m_mtx.lock();
+		LockGuard<Mutex>(self.m_mtx);
 		auto alloc = self.m_alloc;
-		err = self.m_q.emplaceBack(self.m_alloc);
+		self.m_q.emplaceBack(self.m_alloc);
 
-		if(!err)
-		{
-			err = self.m_q.getBack().create(alloc, &buff[0]);
-		}
-
-		self.m_mtx.unlock();
+		self.m_q.getBack().create(alloc, &buff[0]);
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

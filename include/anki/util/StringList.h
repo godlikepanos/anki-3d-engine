@@ -38,8 +38,7 @@ public:
 	/// Join all the elements into a single big string using a the
 	/// seperator @a separator
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error join(
-		TAllocator alloc, const CString& separator, String& out) const;
+	void join(TAllocator alloc, const CString& separator, String& out) const;
 
 	/// Returns the index position of the last occurrence of @a value in
 	/// the list
@@ -51,14 +50,12 @@ public:
 
 	/// Push at the end of the list a formated string
 	template<typename TAllocator, typename... TArgs>
-	ANKI_USE_RESULT Error pushBackSprintf(
-		TAllocator alloc, const TArgs&... args);
+	void pushBackSprintf(TAllocator alloc, const TArgs&... args);
 
 	/// Split a string using a separator (@a separator) and return these
 	/// strings in a string list
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error splitString(
-		TAllocator alloc, const CString& s, const Char separator);
+	void splitString(TAllocator alloc, const CString& s, const Char separator);
 };
 
 /// String list with automatic destruction.
@@ -95,17 +92,16 @@ public:
 
 	/// Push at the end of the list a formated string
 	template<typename... TArgs>
-	ANKI_USE_RESULT Error pushBackSprintf(const TArgs&... args)
+	void pushBackSprintf(const TArgs&... args)
 	{
-		return Base::pushBackSprintf(m_alloc, args...);
+		Base::pushBackSprintf(m_alloc, args...);
 	}
 
 	/// Split a string using a separator (@a separator) and return these
 	/// strings in a string list
-	ANKI_USE_RESULT Error splitString(
-		const CString& s, const Base::Char separator)
+	void splitString(const CString& s, const Base::Char separator)
 	{
-		return Base::splitString(m_alloc, s, separator);
+		Base::splitString(m_alloc, s, separator);
 	}
 
 private:

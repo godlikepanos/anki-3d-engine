@@ -79,124 +79,63 @@ void List<T>::pushBackNode(Node* node)
 
 //==============================================================================
 template<typename T>
-template<typename TAllocator>
-Error List<T>::pushBack(TAllocator alloc, const Value& x)
+template<typename TAllocator, typename... TArgs>
+void List<T>::emplaceFront(TAllocator alloc, TArgs&&... args)
 {
-	Error err = ErrorCode::NONE;
-	
-	Node* node = alloc.template newInstance<Node>(x);
-	if(node != nullptr)
+	Node* el = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
+	if(m_head != nullptr)
 	{
-		pushBackNode(node);
+		ANKI_ASSERT(m_tail != nullptr);
+		m_head->m_prev = el;
+		el->m_next = m_head;
+		m_head = el;
 	}
 	else
 	{
-		err = ErrorCode::OUT_OF_MEMORY;
+		ANKI_ASSERT(m_tail == nullptr);
+		m_tail = m_head = el;
 	}
-
-	return err;
 }
 
 //==============================================================================
 template<typename T>
 template<typename TAllocator, typename... TArgs>
-Error List<T>::emplaceBack(TAllocator alloc, TArgs&&... args)
+void List<T>::emplace(TAllocator alloc, Iterator pos, TArgs&&... args)
 {
-	Error err = ErrorCode::NONE;
-	
-	Node* node = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
-	if(node != nullptr)
-	{
-		pushBackNode(node);
-	}
-	else
-	{
-		err = ErrorCode::OUT_OF_MEMORY;
-	}
-
-	return err;
-}
-
-//==============================================================================
-template<typename T>
-template<typename TAllocator, typename... TArgs>
-Error List<T>::emplaceFront(TAllocator alloc, TArgs&&... args)
-{
-	Error err = ErrorCode::NONE;
+	ANKI_ASSERT(pos.m_list == this);
 
 	Node* el = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
-	if(el != nullptr)
+	Node* node = pos.m_node;
+
+	if(node == nullptr)
 	{
-		if(m_head != nullptr)
+		// Place after the last
+
+		if(m_tail != nullptr)
 		{
-			ANKI_ASSERT(m_tail != nullptr);
-			m_head->m_prev = el;
-			el->m_next = m_head;
-			m_head = el;
+			ANKI_ASSERT(m_head != nullptr);
+			m_tail->m_next = el;
+			el->m_prev = m_tail;
+			m_tail = el;
 		}
 		else
 		{
-			ANKI_ASSERT(m_tail == nullptr);
+			ANKI_ASSERT(m_head == nullptr);
 			m_tail = m_head = el;
 		}
 	}
 	else
 	{
-		err = ErrorCode::OUT_OF_MEMORY;
-	}
+		el->m_prev = node->m_prev;
+		el->m_next = node;
+		node->m_prev = el;
 
-	return err;
-}
-
-//==============================================================================
-template<typename T>
-template<typename TAllocator, typename... TArgs>
-Error List<T>::emplace(TAllocator alloc, Iterator pos, TArgs&&... args)
-{
-	ANKI_ASSERT(pos.m_list == this);
-	Error err = ErrorCode::NONE;
-
-	Node* el = alloc.template newInstance<Node>(std::forward<TArgs>(args)...);
-	if(el != nullptr)
-	{
-		Node* node = pos.m_node;
-
-		if(node == nullptr)
+		if(node == m_head)
 		{
-			// Place after the last
-
-			if(m_tail != nullptr)
-			{
-				ANKI_ASSERT(m_head != nullptr);
-				m_tail->m_next = el;
-				el->m_prev = m_tail;
-				m_tail = el;
-			}
-			else
-			{
-				ANKI_ASSERT(m_head == nullptr);
-				m_tail = m_head = el;
-			}
-		}
-		else
-		{
-			el->m_prev = node->m_prev;
-			el->m_next = node;
-			node->m_prev = el;
-
-			if(node == m_head)
-			{
-				ANKI_ASSERT(m_tail != nullptr);
-				m_head = el;
-			}
+			ANKI_ASSERT(m_tail != nullptr);
+			m_head = el;
 		}
 	}
-	else
-	{
-		err = ErrorCode::OUT_OF_MEMORY;
-	}
-
-	return err;
 }
 
 //==============================================================================

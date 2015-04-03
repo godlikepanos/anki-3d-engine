@@ -32,7 +32,7 @@ public:
 	}
 
 	/// Create a texture
-	ANKI_USE_RESULT Error create(const Initializer& init);
+	void create(const Initializer& init);
 
 	GLenum getInternalFormat() const
 	{

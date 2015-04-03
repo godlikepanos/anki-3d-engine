@@ -78,15 +78,12 @@ Error Tiler::init()
 //==============================================================================
 Error Tiler::initInternal()
 {
-	Error err = ErrorCode::NONE;
-
 	m_enableGpuTests = false;
 
 	// Load the program
 	StringAuto pps(getAllocator());
 
-	ANKI_CHECK(
-		pps.sprintf(
+	pps.sprintf(
 		"#define TILES_X_COUNT %u\n"
 		"#define TILES_Y_COUNT %u\n"
 		"#define RENDERER_WIDTH %u\n"
@@ -94,7 +91,7 @@ Error Tiler::initInternal()
 		m_r->getTilesCount().x(),
 		m_r->getTilesCount().y(),
 		m_r->getWidth(),
-		m_r->getHeight()));
+		m_r->getHeight());
 
 	ANKI_CHECK(
 		m_frag.loadToCache(&getResourceManager(), 
@@ -123,7 +120,7 @@ Error Tiler::initInternal()
 		+ (m_r->getTilesCount().y() - 1) * 2  // planes I
 		+ (m_r->getTilesCount().x() * m_r->getTilesCount().y() * 2); // near+far
 
-	ANKI_CHECK(m_allPlanes.create(getAllocator(), planesCount));
+	m_allPlanes.create(getAllocator(), planesCount);
 
 	Plane* base = &m_allPlanes[0];
 	U count = 0;
@@ -154,10 +151,10 @@ Error Tiler::initInternal()
 
 	ANKI_CHECK(initPbos());
 
-	ANKI_CHECK(m_prevMinMaxDepth.create(getAllocator(),
-		m_r->getTilesCount().x() * m_r->getTilesCount().y(), Vec2(0.0, 1.0)));
+	m_prevMinMaxDepth.create(getAllocator(),
+		m_r->getTilesCount().x() * m_r->getTilesCount().y(), Vec2(0.0, 1.0));
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -616,8 +613,6 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 	const MoveComponent& move = cam.getComponent<MoveComponent>();
 	const FrustumComponent& frc = cam.getComponent<FrustumComponent>();
 	ANKI_ASSERT(frc.getFrustum().getType() == Frustum::Type::PERSPECTIVE);
-	const PerspectiveFrustum& frustum = 
-		static_cast<const PerspectiveFrustum&>(frc.getFrustum());
 
 	const Transform& trf = move.getWorldTransform();
 	const Vec4& projParams = frc.getProjectionParameters();

@@ -48,25 +48,18 @@ Error StaticGeometryPatchNode::create(
 	const CString& name, const ModelPatchBase* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
-	Error err = ErrorCode::NONE;
 
 	m_modelPatch = modelPatch;
-
-	err = SceneNode::create(name);
-	if(err) return err;
+	ANKI_CHECK(SceneNode::create(name));
 
 	// Create spatial components
-	for(U i = 1; i < m_modelPatch->getSubMeshesCount() && !err; i++)
+	for(U i = 1; i < m_modelPatch->getSubMeshesCount(); i++)
 	{
 		SpatialComponent* spatial =
 			getSceneAllocator().newInstance<SpatialComponent>(
 			this, &m_modelPatch->getBoundingShapeSub(i));
 
-		if(spatial == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-
-		err = addComponent(spatial);
-		if(err) return err;
+		addComponent(spatial);
 
 		spatial->setSpatialOrigin(
 			m_modelPatch->getBoundingShapeSub(i).getCenter());
@@ -76,12 +69,9 @@ Error StaticGeometryPatchNode::create(
 	// Create render component
 	RenderComponent* rcomp = 
 		getSceneAllocator().newInstance<StaticGeometryRenderComponent>(this);
-	if(rcomp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-	
-	err = addComponent(rcomp);
-	if(err) return err;
+	addComponent(rcomp);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -159,11 +149,7 @@ Error StaticGeometryNode::create(const CString& name, const CString& filename)
 		{
 			StringAuto newname(getSceneAllocator());
 			
-			err = newname.sprintf("%s_%u", &name[0], i);
-			if(err)
-			{
-				break;
-			}
+			newname.sprintf("%s_%u", &name[0], i);
 
 			StaticGeometryPatchNode* node;
 			err = getSceneGraph().newSceneNode<StaticGeometryPatchNode>(

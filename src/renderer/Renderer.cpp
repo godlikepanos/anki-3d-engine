@@ -56,8 +56,6 @@ Error Renderer::init(
 //==============================================================================
 Error Renderer::initInternal(const ConfigSet& config)
 {
-	Error err = ErrorCode::NONE;
-
 	// Set from the config
 	m_renderingQuality = config.get("renderingQuality");
 	m_defaultFbWidth = config.get("width");
@@ -101,101 +99,52 @@ Error Renderer::initInternal(const ConfigSet& config)
 	}
 
 	// Drawer
-	err = m_sceneDrawer.create(this);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_sceneDrawer.create(this));
 
 	// quad setup
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
 		{1.0, -1.0}, {-1.0, -1.0}};
 
 	CommandBufferHandle cmdBuff;
-	err = cmdBuff.create(m_gl);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(cmdBuff.create(m_gl));
 
-	err = m_quadPositionsBuff.create(cmdBuff, GL_ARRAY_BUFFER, 
-		&quadVertCoords[0][0], sizeof(quadVertCoords), 0);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_quadPositionsBuff.create(cmdBuff, GL_ARRAY_BUFFER, 
+		&quadVertCoords[0][0], sizeof(quadVertCoords), 0));
 
-	err = m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	err = m_tiler.init();
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_tiler.init());
 
-	err = m_ms.init(config);
-	if(err)
-	{
-		return err;
-	}
-	err = m_dp.init(config);
-	if(err)
-	{
-		return err;
-	}
-	err = m_is.init(config);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_ms.init(config));
+	ANKI_CHECK(m_dp.init(config));
+	ANKI_CHECK(m_is.init(config));
 	
 	m_fs = m_alloc.newInstance<Fs>(this);
-	if(err = m_fs->init(config))
-	{
-		return err;
-	}
-	
-	err = m_pps.init(config);
-	if(err)
-	{
-		return err;
-	}
-	err = m_dbg.init(config);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_fs->init(config));
+	ANKI_CHECK(m_pps.init(config));
+	ANKI_CHECK(m_dbg.init(config));
 
 	// Default FB
 	FramebufferHandle::Initializer fbInit;
-	err = m_defaultFb.create(cmdBuff, fbInit);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_defaultFb.create(cmdBuff, fbInit));
 
 	cmdBuff.finish();
 
 	// Set the default preprocessor string
-	err = m_shadersPrependedSource.sprintf(
+	m_shadersPrependedSource.sprintf(
 		m_alloc,
 		"#define ANKI_RENDERER_WIDTH %u\n"
 		"#define ANKI_RENDERER_HEIGHT %u\n",
 		m_width, m_height);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error Renderer::render(SceneGraph& scene, 
 	Array<CommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff)
 {
-	Error err = ErrorCode::NONE;
 	m_scene = &scene;
 	Camera& cam = m_scene->getActiveCamera();
 
@@ -215,11 +164,8 @@ Error Renderer::render(SceneGraph& scene,
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
-	err = m_ms.run(cmdBuff[0]);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_ms.run(cmdBuff[0]));
+	
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
 	m_tiler.runMinMax(m_ms._getDepthRt(), cmdBuff[0]);
@@ -227,52 +173,32 @@ Error Renderer::render(SceneGraph& scene,
 
 	if(m_pps.getEnabled() && m_pps.getLf().getEnabled())
 	{
-		err = m_pps.getLf().runOcclusionTests(cmdBuff[1]);
-		if(err)
-		{
-			return err;
-		}
+		ANKI_CHECK(m_pps.getLf().runOcclusionTests(cmdBuff[1]));
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
-	err = m_is.run(cmdBuff[1]);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_is.run(cmdBuff[1]));
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
-	if(err = m_fs->run(cmdBuff[1])) 
-	{
-		return err;
-	}
+	ANKI_CHECK(m_fs->run(cmdBuff[1])); 
 
-	err = m_dp.run(cmdBuff[1]);
-	if(err) return err;
+	ANKI_CHECK(m_dp.run(cmdBuff[1]));
 
 	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
 	if(m_pps.getEnabled())
 	{
-		err = m_pps.run(cmdBuff[1]);
-		if(err)
-		{
-			return err;
-		}
+		ANKI_CHECK(m_pps.run(cmdBuff[1]));
 	}
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_PPS_TIME);
 
 	if(m_dbg.getEnabled())
 	{
-		err = m_dbg.run(cmdBuff[1]);
-		if(err)
-		{
-			return err;
-		}
+		ANKI_CHECK(m_dbg.run(cmdBuff[1]));
 	}
 
 	++m_framesNum;
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -321,8 +247,6 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat, 
 	U32 samples, TextureHandle& rt)
 {
-	Error err = ErrorCode::NONE;
-
 	// Not very important but keep the resulution of render targets aligned to
 	// 16
 	if(0)
@@ -350,15 +274,12 @@ Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 	init.m_samples = samples;
 
 	CommandBufferHandle cmdBuff;
-	err = cmdBuff.create(m_gl);
+	ANKI_CHECK(cmdBuff.create(m_gl));
 
-	if(!err)
-	{
-		rt.create(cmdBuff, init);
-		cmdBuff.finish();
-	}
+	rt.create(cmdBuff, init);
+	cmdBuff.finish();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

@@ -39,12 +39,10 @@ public:
 
 	Error operator()(CommandBufferImpl* cmdb)
 	{
-		Error err = ErrorCode::NONE;
+		m_buff.get().create(m_target, m_data, m_size, m_flags);
 
-		err = m_buff.get().create(m_target, m_data, m_size, m_flags);
-
-		GlObject::State oldState = m_buff.get().setStateAtomically(
-			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+		GlObject::State oldState = 
+			m_buff.get().setStateAtomically(GlObject::State::CREATED);
 
 		(void)oldState;
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
@@ -55,7 +53,7 @@ public:
 				const_cast<void*>(m_data), 1);
 		}
 
-		return err;
+		return ErrorCode::NONE;
 	}
 };
 
@@ -213,28 +211,25 @@ Error BufferHandle::create(CommandBufferHandle& commands,
 
 	using Deleter = DeferredDeleter<BufferImpl, DeleteCommand>;
 
-	Error err = Base::create(commands.get().getManager(), Deleter());
-	if(!err)
+	Base::create(commands.get().getManager(), Deleter());
+	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
+
+	// Allocate temp memory for the data
+	Bool cleanup = false;
+	if(data)
 	{
-		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
-
-		// Allocate temp memory for the data
-		Bool cleanup = false;
-		if(data)
-		{
-			void* newData = 
-				commands.get().getInternalAllocator().allocate(size);
-			memcpy(newData, data, size);
-			data = newData;
-			cleanup = true;
-		}
-
-		// Fire the command
-		commands.get().pushBackNewCommand<BufferCreateCommand>(
-			*this, target, data, size, flags, cleanup);
+		void* newData = 
+			commands.get().getInternalAllocator().allocate(size);
+		memcpy(newData, data, size);
+		data = newData;
+		cleanup = true;
 	}
 
-	return err;
+	// Fire the command
+	commands.get().pushBackNewCommand<BufferCreateCommand>(
+		*this, target, data, size, flags, cleanup);
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

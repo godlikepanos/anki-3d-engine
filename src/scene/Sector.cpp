@@ -41,9 +41,8 @@ Error PortalSectorBase::create(const CString& name, const CString& modelFname)
 	// Create move component
 	SceneComponent* comp = 
 		getSceneAllocator().newInstance<MoveComponent>(this);
-	ANKI_CHECK_OOM(comp);
 
-	ANKI_CHECK(addComponent(comp, true));
+	addComponent(comp, true);
 
 #if 0
 	// Load mesh 
@@ -109,7 +108,7 @@ Portal::~Portal()
 Error Portal::create(const CString& name, const CString& modelFname)
 {
 	ANKI_CHECK(PortalSectorBase::create(name, modelFname));
-	ANKI_CHECK(getSectorGroup().m_portals.pushBack(getSceneAllocator(), this));
+	getSectorGroup().m_portals.pushBack(getSceneAllocator(), this);
 	return ErrorCode::NONE;
 }
 
@@ -136,8 +135,8 @@ Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 			if(collide)
 			{
-				ANKI_CHECK(tryAddSector(sector));
-				ANKI_CHECK(sector->tryAddPortal(this));
+				tryAddSector(sector);
+				sector->tryAddPortal(this);
 			}
 			else
 			{
@@ -151,7 +150,7 @@ Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 }
 
 //==============================================================================
-Error Portal::tryAddSector(Sector* sector)
+void Portal::tryAddSector(Sector* sector)
 {
 	auto it = m_sectors.getBegin();
 	auto end = m_sectors.getEnd();
@@ -160,11 +159,11 @@ Error Portal::tryAddSector(Sector* sector)
 		if(*it == sector)
 		{
 			// Already there, return
-			return ErrorCode::NONE;
+			return;
 		}
 	}
 
-	return m_sectors.pushBack(getSceneAllocator(), sector);
+	m_sectors.pushBack(getSceneAllocator(), sector);
 }
 
 //==============================================================================
@@ -224,12 +223,12 @@ Sector::~Sector()
 Error Sector::create(const CString& name, const CString& modelFname)
 {
 	ANKI_CHECK(PortalSectorBase::create(name, modelFname));
-	ANKI_CHECK(getSectorGroup().m_sectors.pushBack(getSceneAllocator(), this));
+	getSectorGroup().m_sectors.pushBack(getSceneAllocator(), this);
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Sector::tryAddPortal(Portal* portal)
+void Sector::tryAddPortal(Portal* portal)
 {
 	ANKI_ASSERT(portal);
 
@@ -240,11 +239,11 @@ Error Sector::tryAddPortal(Portal* portal)
 		if(*it == portal)
 		{
 			// Already there, return
-			return ErrorCode::NONE;
+			return;
 		}
 	}
 
-	return m_portals.pushBack(getSceneAllocator(), portal);
+	m_portals.pushBack(getSceneAllocator(), portal);
 }
 
 //==============================================================================
@@ -265,7 +264,7 @@ void Sector::tryRemovePortal(Portal* portal)
 }
 
 //==============================================================================
-Error Sector::tryAddSpatialComponent(SpatialComponent* sp)
+void Sector::tryAddSpatialComponent(SpatialComponent* sp)
 {
 	ANKI_ASSERT(sp);
 
@@ -282,7 +281,7 @@ Error Sector::tryAddSpatialComponent(SpatialComponent* sp)
 			ANKI_ASSERT(findSpatialComponent(sp) != m_spatials.getEnd()
 				&& "Spatial has reference to sector but sector not");
 #endif
-			return ErrorCode::NONE;
+			return;
 		}
 	}
 	
@@ -291,14 +290,8 @@ Error Sector::tryAddSpatialComponent(SpatialComponent* sp)
 
 	ANKI_ASSERT(findSpatialComponent(sp) == m_spatials.getEnd());
 
-	Error err = m_spatials.pushBack(getSceneAllocator(), sp);
-
-	if(!err)
-	{
-		err = sp->getSectorInfo().pushBack(getSceneAllocator(), this);
-	}
-
-	return err;
+	m_spatials.pushBack(getSceneAllocator(), sp);
+	sp->getSectorInfo().pushBack(getSceneAllocator(), this);
 }
 
 //==============================================================================
@@ -378,8 +371,8 @@ Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 			if(collide)
 			{
-				ANKI_CHECK(portal->tryAddSector(this));
-				ANKI_CHECK(tryAddPortal(portal));
+				portal->tryAddSector(this);
+				tryAddPortal(portal);
 			}
 			else
 			{
@@ -397,14 +390,12 @@ Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 //==============================================================================
 
 //==============================================================================
-Error SectorGroup::spatialUpdated(SpatialComponent* sp)
+void SectorGroup::spatialUpdated(SpatialComponent* sp)
 {
-	Error err = ErrorCode::NONE;
-
 	// Iterate all sectors and bin the spatial
 	auto it = m_sectors.getBegin();
 	auto end = m_sectors.getEnd();
-	for(; it != end && !err; ++it)
+	for(; it != end; ++it)
 	{
 		Sector& sector = *(*it);
 
@@ -413,15 +404,13 @@ Error SectorGroup::spatialUpdated(SpatialComponent* sp)
 
 		if(collide)	
 		{
-			err = sector.tryAddSpatialComponent(sp);
+			sector.tryAddSpatialComponent(sp);
 		}
 		else
 		{
 			sector.tryRemoveSpatialComponent(sp);
 		}
 	}
-
-	return err;
 }
 
 //==============================================================================
@@ -437,13 +426,11 @@ void SectorGroup::spatialDeleted(SpatialComponent* sp)
 }
 
 //==============================================================================
-Error SectorGroup::findVisibleSectors(
+void SectorGroup::findVisibleSectors(
 	const FrustumComponent& frc,
 	List<Sector*>& visibleSectors,
 	U& spatialsCount)
 {
-	Error err = ErrorCode::NONE;
-
 	// Find the sector the eye is in
 	Sphere eye(frc.getFrustumOrigin(), frc.getFrustum().getNear());
 
@@ -462,12 +449,12 @@ Error SectorGroup::findVisibleSectors(
 		// eye outside all sectors, find those it collides
 
 		it = m_sectors.getBegin();
-		for(; it != end && !err; ++it)
+		for(; it != end; ++it)
 		{
 			Sector& s = *(*it);
 			if(frc.insideFrustum(s.getBoundingShape()))
 			{
-				err = findVisibleSectorsInternal(
+				findVisibleSectorsInternal(
 					frc, s, visibleSectors, spatialsCount);
 			}
 		}
@@ -475,21 +462,18 @@ Error SectorGroup::findVisibleSectors(
 	else
 	{
 		// eye inside a sector
-		err = findVisibleSectorsInternal(
+		findVisibleSectorsInternal(
 			frc, *(*it), visibleSectors, spatialsCount);
 	}
-
-	return err;
 }
 
 //==============================================================================
-Error SectorGroup::findVisibleSectorsInternal(
+void SectorGroup::findVisibleSectorsInternal(
 	const FrustumComponent& frc,
 	Sector& s,
 	List<Sector*>& visibleSectors,
 	U& spatialsCount)
 {
-	Error err = ErrorCode::NONE;
 	auto alloc = m_scene->getFrameAllocator();
 
 	// Check if "s" is already there
@@ -500,47 +484,45 @@ Error SectorGroup::findVisibleSectorsInternal(
 		if(*it == &s)
 		{
 			// Sector already there, skip
-			return ErrorCode::NONE;
+			return;
 		}
 	}
 
 	// Sector not in the list, push it
-	ANKI_CHECK(visibleSectors.pushBack(alloc, &s));
+	visibleSectors.pushBack(alloc, &s);
 	spatialsCount += s.m_spatials.getSize();
 
 	// Check visible portals
 	auto itp = s.m_portals.getBegin();
 	auto itend = s.m_portals.getEnd();
-	for(; itp != itend && !err; ++itp)
+	for(; itp != itend; ++itp)
 	{
 		Portal& p = *(*itp);
 		if(frc.insideFrustum(p.getBoundingShape()))
 		{
 			it = p.m_sectors.getBegin();
 			end = p.m_sectors.getEnd();
-			for(; it != end && !err; ++it)
+			for(; it != end; ++it)
 			{
 				if(*it != &s)
 				{
-					err = findVisibleSectorsInternal(
+					findVisibleSectorsInternal(
 						frc, *(*it), visibleSectors, spatialsCount);
 				}
 			}
 		}
 	}
-
-	return err;
 }
 
 //==============================================================================
-Error SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc)
+void SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc)
 {
 	auto alloc = m_scene->getFrameAllocator();
 
 	// Find visible sectors
 	List<Sector*> visSectors;
 	U spatialsCount = 0;
-	ANKI_CHECK(findVisibleSectors(frc, visSectors, spatialsCount));
+	findVisibleSectors(frc, visSectors, spatialsCount);
 
 	// Initiate storage of nodes
 	m_visibleNodes = reinterpret_cast<SceneNode**>(
@@ -570,8 +552,6 @@ Error SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc)
 			visibleNodes.getBegin(), 
 			visibleNodes.getBegin() + nodesCount);
 	}
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

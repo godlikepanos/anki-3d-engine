@@ -145,7 +145,7 @@ public:
 	/// The real constructor.
 	/// @param allocCb The allocation function callback
 	/// @param allocCbUserData The user data to pass to the allocation function
-	Error create(AllocAlignedCallback allocCb, void* allocCbUserData);
+	void create(AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	/// Allocate memory
 	void* allocate(PtrSize size, PtrSize alignment);
@@ -186,7 +186,7 @@ public:
 	///        errors
 	/// @param alignmentBytes The maximum supported alignment for returned
 	///        memory
-	Error create(
+	void create(
 		AllocAlignedCallback allocCb, 
 		void* allocCbUserData,
 		PtrSize size, 
@@ -290,7 +290,7 @@ public:
 	///                       the ammount of chunk size increase 
 	/// @param alignmentBytes The maximum supported alignment for returned
 	///                       memory
-	Error create(
+	void create(
 		AllocAlignedCallback allocCb, 
 		void* allocCbUserData,
 		PtrSize initialChunkSize,

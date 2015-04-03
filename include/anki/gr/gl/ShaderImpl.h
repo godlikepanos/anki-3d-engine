@@ -57,7 +57,7 @@ private:
 
 	void destroy();
 
-	ANKI_USE_RESULT Error handleError(String& src);
+	void handleError(String& src);
 };
 /// @}
 

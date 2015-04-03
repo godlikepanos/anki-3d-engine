@@ -306,22 +306,22 @@ public:
 
 	/// Initialize using a const string.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error create(TAllocator alloc, const CStringType& cstr);
+	void create(TAllocator alloc, const CStringType& cstr);
 
 	/// Initialize using a range. Copies the range of [first, last)
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error create(TAllocator alloc,
+	void create(TAllocator alloc,
 		ConstIterator first, ConstIterator last);
 
 	/// Initialize using a character.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error create(TAllocator alloc, Char c, PtrSize length);
+	void create(TAllocator alloc, Char c, PtrSize length);
 
 	/// Copy one string to this one.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error create(TAllocator alloc, const String& b)
+	void create(TAllocator alloc, const String& b)
 	{
-		return create(alloc, b.toCString());
+		create(alloc, b.toCString());
 	}
 
 	/// Destroy the string.
@@ -481,33 +481,27 @@ public:
 
 	/// Append another string to this one.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error append(TAllocator alloc, const String& b)
+	void append(TAllocator alloc, const String& b)
 	{
-		Error err = ErrorCode::NONE;
 		if(!b.isEmpty())
 		{
-			err = appendInternal(alloc, &b.m_data[0], b.m_data.getSize());
+			appendInternal(alloc, &b.m_data[0], b.m_data.getSize());
 		}
-
-		return err;
 	}
 
 	/// Append a const string to this one.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error append(TAllocator alloc, const CStringType& cstr)
+	void append(TAllocator alloc, const CStringType& cstr)
 	{
-		Error err = ErrorCode::NONE;
 		if(!cstr.isEmpty())
 		{
-			err = appendInternal(alloc, &cstr[0], cstr.getLength() + 1);
+			appendInternal(alloc, &cstr[0], cstr.getLength() + 1);
 		}
-
-		return err;
 	}
 
 	/// Create formated string.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error sprintf(TAllocator alloc, CString fmt, ...);
+	void sprintf(TAllocator alloc, CString fmt, ...);
 
 	/// Return true if it's empty.
 	Bool isEmpty() const 
@@ -539,7 +533,7 @@ public:
 
 	/// Convert a number to a string.
 	template<typename TAllocator, typename TNumber>
-	ANKI_USE_RESULT Error toString(TAllocator alloc, TNumber number);
+	void toString(TAllocator alloc, TNumber number);
 
 	/// Convert to F64.
 	ANKI_USE_RESULT Error toF64(F64& out) const
@@ -563,8 +557,7 @@ protected:
 
 	/// Append to this string.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error appendInternal(
-		TAllocator alloc, const Char* str, PtrSize strSize);
+	void appendInternal(TAllocator alloc, const Char* str, PtrSize strSize);
 
 	void move(String& b)
 	{
@@ -600,27 +593,27 @@ public:
 	}
 
 	/// Initialize using a const string.
-	ANKI_USE_RESULT Error create(const CStringType& cstr)
+	void create(const CStringType& cstr)
 	{
-		return Base::create(m_alloc, cstr);
+		Base::create(m_alloc, cstr);
 	}
 
 	/// Initialize using a range. Copies the range of [first, last)
-	ANKI_USE_RESULT Error create(ConstIterator first, ConstIterator last)
+	void create(ConstIterator first, ConstIterator last)
 	{
-		return Base::create(m_alloc, first, last);
+		Base::create(m_alloc, first, last);
 	}
 
 	/// Initialize using a character.
-	ANKI_USE_RESULT Error create(Char c, PtrSize length)
+	void create(Char c, PtrSize length)
 	{
-		return Base::create(m_alloc, c, length);
+		Base::create(m_alloc, c, length);
 	}
 
 	/// Copy one string to this one.
-	ANKI_USE_RESULT Error create(const String& b)
+	void create(const String& b)
 	{
-		return Base::create(m_alloc, b.toCString());
+		Base::create(m_alloc, b.toCString());
 	}
 
 	/// Move one string to this one.
@@ -631,29 +624,29 @@ public:
 	}
 
 	/// Append another string to this one.
-	ANKI_USE_RESULT Error append(const String& b)
+	void append(const String& b)
 	{
-		return Base::append(m_alloc, b);
+		Base::append(m_alloc, b);
 	}
 
 	/// Append a const string to this one.
-	ANKI_USE_RESULT Error append(const CStringType& cstr)
+	void append(const CStringType& cstr)
 	{
-		return Base::append(m_alloc, cstr);
+		Base::append(m_alloc, cstr);
 	}
 
 	/// Create formated string.
 	template<typename... TArgs>
-	ANKI_USE_RESULT Error sprintf(CString fmt, TArgs... args)
+	void sprintf(CString fmt, TArgs... args)
 	{
-		return Base::sprintf(m_alloc, fmt, args...);
+		Base::sprintf(m_alloc, fmt, args...);
 	}
 
 	/// Convert a number to a string.
 	template<typename TNumber>
-	ANKI_USE_RESULT Error toString(TNumber number)
+	void toString(TNumber number)
 	{
-		return Base::toString(m_alloc, number);
+		Base::toString(m_alloc, number);
 	}
 
 private:

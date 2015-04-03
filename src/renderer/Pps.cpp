@@ -58,7 +58,7 @@ Error Pps::initInternal(const ConfigSet& config)
 	// SProg
 	StringAuto pps(getAllocator());
 
-	ANKI_CHECK(pps.sprintf(
+	pps.sprintf(
 		"#define SSAO_ENABLED %u\n"
 		"#define HDR_ENABLED %u\n"
 		"#define SHARPEN_ENABLED %u\n"
@@ -70,7 +70,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		static_cast<U>(config.get("pps.sharpen")),
 		static_cast<U>(config.get("pps.gammaCorrection")),
 		m_r->getWidth(),
-		m_r->getHeight()));
+		m_r->getHeight());
 
 	ANKI_CHECK(m_frag.loadToCache(&getResourceManager(),
 		"shaders/Pps.frag.glsl", pps.toCString(), "r_"));

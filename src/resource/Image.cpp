@@ -29,11 +29,7 @@ static ANKI_USE_RESULT Error loadUncompressedTga(
 	U8 header6[6];
 
 	// read the info from header
-	Error err = fs.read((char*)&header6[0], sizeof(header6));
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(fs.read((char*)&header6[0], sizeof(header6)));
 
 	width  = header6[1] * 256 + header6[0];
 	height = header6[3] * 256 + header6[2];
@@ -48,17 +44,9 @@ static ANKI_USE_RESULT Error loadUncompressedTga(
 	// read the data
 	I bytesPerPxl = (bpp / 8);
 	I imageSize = bytesPerPxl * width * height;
-	err = data.create(alloc, imageSize);
-	if(err)
-	{
-		return err;
-	}
+	data.create(alloc, imageSize);
 
-	err = fs.read(reinterpret_cast<char*>(&data[0]), imageSize);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(fs.read(reinterpret_cast<char*>(&data[0]), imageSize));
 
 	// swap red with blue
 	for(I i = 0; i < imageSize; i += bytesPerPxl)
@@ -68,7 +56,7 @@ static ANKI_USE_RESULT Error loadUncompressedTga(
 		data[i + 2] = temp;
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -77,11 +65,7 @@ static ANKI_USE_RESULT Error loadCompressedTga(
 	GenericMemoryPoolAllocator<U8>& alloc)
 {
 	U8 header6[6];
-	Error err = fs.read(reinterpret_cast<char*>(&header6[0]), sizeof(header6));
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(fs.read(reinterpret_cast<char*>(&header6[0]), sizeof(header6)));
 
 	width  = header6[1] * 256 + header6[0];
 	height = header6[3] * 256 + header6[2];
@@ -95,11 +79,7 @@ static ANKI_USE_RESULT Error loadCompressedTga(
 
 	I bytesPerPxl = (bpp / 8);
 	I imageSize = bytesPerPxl * width * height;
-	err = data.create(alloc, imageSize);
-	if(err)
-	{
-		return err;
-	}
+	data.create(alloc, imageSize);
 
 	U pixelcount = height * width;
 	U currentpixel = 0;
@@ -110,23 +90,14 @@ static ANKI_USE_RESULT Error loadCompressedTga(
 	{
 		U8 chunkheader = 0;
 
-		err = fs.read((char*)&chunkheader, sizeof(U8));
-		if(err)
-		{
-			data.destroy(alloc);
-			return err;
-		}
+		ANKI_CHECK(fs.read((char*)&chunkheader, sizeof(U8)));
 
 		if(chunkheader < 128)
 		{
 			chunkheader++;
 			for(int counter = 0; counter < chunkheader; counter++)
 			{
-				err = fs.read((char*)&colorbuffer[0], bytesPerPxl);
-				if(err)
-				{
-					return err;
-				}
+				ANKI_CHECK(fs.read((char*)&colorbuffer[0], bytesPerPxl));
 
 				data[currentbyte] = colorbuffer[2];
 				data[currentbyte + 1] = colorbuffer[1];
@@ -150,11 +121,7 @@ static ANKI_USE_RESULT Error loadCompressedTga(
 		else
 		{
 			chunkheader -= 127;
-			err = fs.read((char*)&colorbuffer[0], bytesPerPxl);
-			if(err)
-			{
-				return err;
-			}
+			ANKI_CHECK(fs.read((char*)&colorbuffer[0], bytesPerPxl));
 
 			for(int counter = 0; counter < chunkheader; counter++)
 			{
@@ -180,7 +147,6 @@ static ANKI_USE_RESULT Error loadCompressedTga(
 		}
 	} while(currentpixel < pixelcount);
 
-	ANKI_ASSERT(err == ErrorCode::NONE);
 	return ErrorCode::NONE;
 }
 
@@ -192,47 +158,34 @@ static ANKI_USE_RESULT Error loadTga(const CString& filename,
 	File fs;
 	char myTgaHeader[12];
 
-	Error err = fs.open(filename, 
-		File::OpenFlag::READ | File::OpenFlag::BINARY);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(fs.open(filename, 
+		File::OpenFlag::READ | File::OpenFlag::BINARY));
 
-	err = fs.read(&myTgaHeader[0], sizeof(myTgaHeader));
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(fs.read(&myTgaHeader[0], sizeof(myTgaHeader)));
 
 	if(std::memcmp(
 		tgaHeaderUncompressed, &myTgaHeader[0], sizeof(myTgaHeader)) == 0)
 	{
-		err = loadUncompressedTga(fs, width, height, bpp, data, alloc);
+		ANKI_CHECK(loadUncompressedTga(fs, width, height, bpp, data, alloc));
 	}
 	else if(std::memcmp(tgaHeaderCompressed, &myTgaHeader[0],
 		sizeof(myTgaHeader)) == 0)
 	{
-		err = loadCompressedTga(fs, width, height, bpp, data, alloc);
+		ANKI_CHECK(loadCompressedTga(fs, width, height, bpp, data, alloc));
 	}
 	else
 	{
 		ANKI_LOGE("Invalid image header");
-		err = ErrorCode::USER_DATA;
-	}
-
-	if(err)
-	{
-		return err;
+		return ErrorCode::USER_DATA;
 	}
 
 	if(bpp != 32 && bpp != 24)
 	{
 		ANKI_LOGE("Invalid bpp");
-		err = ErrorCode::USER_DATA;
+		return ErrorCode::USER_DATA;
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -345,8 +298,6 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 	Image::TextureType& textureType,
 	Image::ColorFormat& colorFormat)
 {
-	Error err = ErrorCode::NONE;
-	
 	File file;
 	ANKI_CHECK(file.open(filename, 
 		File::OpenFlag::READ | File::OpenFlag::BINARY 
@@ -466,9 +417,9 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 			!= Image::DataCompression::NONE)
 		{
 			// If raw compression is present then skip it
-			err = file.seek(
+			ANKI_CHECK(file.seek(
 				calcSizeOfSegment(header, Image::DataCompression::RAW), 
-				File::SeekOrigin::CURRENT);
+				File::SeekOrigin::CURRENT));
 		}
 	}
 	else if(preferredCompression == Image::DataCompression::ETC)
@@ -477,36 +428,34 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 			!= Image::DataCompression::NONE)
 		{
 			// If raw compression is present then skip it
-			err = file.seek(
+			ANKI_CHECK(file.seek(
 				calcSizeOfSegment(header, Image::DataCompression::RAW), 
-				File::SeekOrigin::CURRENT);
+				File::SeekOrigin::CURRENT));
 		}
 
 		if((header.m_compressionFormats & Image::DataCompression::S3TC)
 			!= Image::DataCompression::NONE)
 		{
 			// If s3tc compression is present then skip it
-			err = file.seek(
+			ANKI_CHECK(file.seek(
 				calcSizeOfSegment(header, Image::DataCompression::S3TC), 
-				File::SeekOrigin::CURRENT);
+				File::SeekOrigin::CURRENT));
 		}
 	}
-
-	ANKI_CHECK(err);
 
 	//
 	// It's time to read
 	//
 
 	// Allocate the surfaces 
-	ANKI_CHECK(surfaces.create(alloc, mipLevels * depth));
+	surfaces.create(alloc, mipLevels * depth);
 
 	// Read all surfaces
 	U mipWidth = header.m_width;
 	U mipHeight = header.m_height;
 	for(U mip = 0; mip < header.m_mipLevels; mip++)
 	{
-		for(U d = 0; d < depth && !err; d++)
+		for(U d = 0; d < depth; d++)
 		{
 			U dataSize = calcSurfaceSize(
 				mipWidth, mipHeight, preferredCompression, 
@@ -521,25 +470,13 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 				surf.m_width = mipWidth;
 				surf.m_height = mipHeight;
 
-				err = surf.m_data.create(alloc, dataSize);
-				if(err)
-				{
-					return err;
-				}
+				surf.m_data.create(alloc, dataSize);
 
-				err = file.read(&surf.m_data[0], dataSize);
-				if(err)
-				{
-					return err;
-				}
+				ANKI_CHECK(file.read(&surf.m_data[0], dataSize));
 			}
 			else
 			{
-				err = file.seek(dataSize, File::SeekOrigin::CURRENT);
-				if(err)
-				{
-					return err;
-				}
+				ANKI_CHECK(file.seek(dataSize, File::SeekOrigin::CURRENT));
 			}
 		}
 
@@ -547,7 +484,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 		mipHeight /= 2;
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -557,15 +494,9 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 //==============================================================================
 Error Image::load(const CString& filename, U32 maxTextureSize)
 {
-	Error err = ErrorCode::NONE;
-
 	// get the extension
 	StringAuto ext(m_alloc);
-	err = getFileExtension(filename, m_alloc, ext);
-	if(err)
-	{
-		return err;
-	}
+	getFileExtension(filename, m_alloc, ext);
 	
 	if(ext.isEmpty())
 	{
@@ -580,20 +511,12 @@ Error Image::load(const CString& filename, U32 maxTextureSize)
 
 	if(ext == "tga")
 	{
-		err = m_surfaces.create(m_alloc, 1);
-		if(err)
-		{
-			return err;
-		}
-
+		m_surfaces.create(m_alloc, 1);
+		
 		m_mipLevels = 1;
 		m_depth = 1;
-		err = loadTga(filename, m_surfaces[0].m_width, 
-			m_surfaces[0].m_height, bpp, m_surfaces[0].m_data, m_alloc);
-		if(err)
-		{
-			return err;
-		}
+		ANKI_CHECK(loadTga(filename, m_surfaces[0].m_width, 
+			m_surfaces[0].m_height, bpp, m_surfaces[0].m_data, m_alloc));
 
 		if(bpp == 32)
 		{
@@ -618,18 +541,18 @@ Error Image::load(const CString& filename, U32 maxTextureSize)
 		m_compression = Image::DataCompression::ETC;
 #endif
 
-		err = loadAnkiTexture(filename, maxTextureSize, 
+		ANKI_CHECK(loadAnkiTexture(filename, maxTextureSize, 
 			m_compression, m_surfaces, m_alloc, m_depth, 
-			m_mipLevels, m_textureType, m_colorFormat);
+			m_mipLevels, m_textureType, m_colorFormat));
 
 	}
 	else
 	{
 		ANKI_LOGE("Unsupported extension: %s", &ext[0]);
-		err = ErrorCode::USER_DATA;
+		return ErrorCode::USER_DATA;
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

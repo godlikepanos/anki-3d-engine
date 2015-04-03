@@ -24,7 +24,6 @@ Error ShaderResource::load(const CString& filename, ResourceInitializer& init)
 Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 	ResourceManager& manager)
 {
-	Error err = ErrorCode::NONE;
 	auto alloc = manager._getTempAllocator();
 
 	ProgramPrePreprocessor pars(&manager);
@@ -34,10 +33,10 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 	StringAuto source(alloc);
 	if(extraSrc.getLength() > 0)
 	{
-		ANKI_CHECK(source.create(extraSrc));
+		source.create(extraSrc);
 	}
 
-	ANKI_CHECK(source.append(pars.getShaderSource()));
+	source.append(pars.getShaderSource());
 
 	// Create
 	GrManager& gr = manager.getGrManager();
@@ -54,7 +53,7 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 
 	m_type = pars.getShaderType();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -63,53 +62,52 @@ Error ShaderResource::createToCache(
 	const CString& filenamePrefix, ResourceManager& manager,
 	StringAuto& out)
 {
-	Error err = ErrorCode::NONE;
 	auto alloc = manager._getTempAllocator();
 
 	if(preAppendedSrcCode.getLength() < 1)
 	{
-		return out.create(filename);
+		out.create(filename);
+		return ErrorCode::NONE;
 	}
 
 	// Create suffix
 	StringAuto unique(alloc);
 
-	ANKI_CHECK(unique.create(filename));
-	ANKI_CHECK(unique.append(preAppendedSrcCode));
+	unique.create(filename);
+	unique.append(preAppendedSrcCode);
 
 	U64 h = computeHash(&unique[0], unique.getLength());
 
 	StringAuto suffix(alloc);
-	ANKI_CHECK(suffix.toString(h));
+	suffix.toString(h);
 
 	// Compose cached filename
 	StringAuto newFilename(alloc);
 
-	ANKI_CHECK(
-		newFilename.sprintf(
+	newFilename.sprintf(
 		"%s/%s%s.glsl", 
 		&manager._getCacheDirectory()[0],
 		&filenamePrefix[0],
-		&suffix[0]));
+		&suffix[0]);
 
 	if(fileExists(newFilename.toCString()))
 	{
 		out = std::move(newFilename);
-		return err;
+		return ErrorCode::NONE;
 	}
 
 	// Read file and append code
 	StringAuto src(alloc);
 
 	StringAuto fixedFname(alloc);
-	ANKI_CHECK(manager.fixResourceFilename(filename, fixedFname));
+	manager.fixResourceFilename(filename, fixedFname);
 
 	File file;
 	ANKI_CHECK(file.open(fixedFname.toCString(), File::OpenFlag::READ));
 	ANKI_CHECK(file.readAllText(TempResourceAllocator<char>(alloc), src));
 
 	StringAuto srcfull(alloc);
-	ANKI_CHECK(srcfull.sprintf("%s%s", &preAppendedSrcCode[0], &src[0]));
+	srcfull.sprintf("%s%s", &preAppendedSrcCode[0], &src[0]);
 
 	// Write cached file
 	File f;
@@ -117,7 +115,7 @@ Error ShaderResource::createToCache(
 	ANKI_CHECK(f.writeText("%s\n", &srcfull[0]));
 
 	out = std::move(newFilename);
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

@@ -22,7 +22,7 @@ void BufferImpl::destroy()
 }
 
 //==============================================================================
-Error BufferImpl::create(GLenum target, const void* dataPtr, 
+void BufferImpl::create(GLenum target, const void* dataPtr, 
 	U32 sizeInBytes, GLbitfield flags)
 {
 	ANKI_ASSERT(!isCreated());
@@ -83,8 +83,6 @@ Error BufferImpl::create(GLenum target, const void* dataPtr,
 			glMapBufferRange(m_target, 0, sizeInBytes, flags & mapbits);
 		ANKI_ASSERT(m_persistentMapping != nullptr);
 	}
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

@@ -56,16 +56,13 @@ Error PipelineImpl::create(
 		glGetProgramPipelineiv(m_glName, GL_INFO_LOG_LENGTH, &infoLen);
 
 		auto alloc = getAllocator();
-		err = infoLogTxt.create(alloc, infoLen + 1);
+		infoLogTxt.create(alloc, infoLen + 1);
 
-		if(!err)
-		{
-			glGetProgramPipelineInfoLog(
-				m_glName, infoLen, &charsWritten, &infoLogTxt[0]);
+		glGetProgramPipelineInfoLog(
+			m_glName, infoLen, &charsWritten, &infoLogTxt[0]);
 
-			ANKI_LOGE("Ppline error log follows:\n%s", &infoLogTxt[0]);
-			err = ErrorCode::USER_DATA;
-		}
+		ANKI_LOGE("Ppline error log follows:\n%s", &infoLogTxt[0]);
+		err = ErrorCode::USER_DATA;
 	}
 
 	glBindProgramPipeline(0);

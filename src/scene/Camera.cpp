@@ -76,48 +76,32 @@ Camera::Camera(SceneGraph* scene, Type type)
 //==============================================================================
 Error Camera::create(const CString& name, Frustum* frustum) 
 {
-	Error err = SceneNode::create(name);
-	if(err) return err;
+	ANKI_CHECK(SceneNode::create(name));
 
 	SceneComponent* comp;
 
 	// Move component
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-	err = addComponent(comp, true);
-	if(err) return err;
+	addComponent(comp, true);
 
 	// Feedback component
 	comp = getSceneAllocator().newInstance<CameraMoveFeedbackComponent>(this);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-	err = addComponent(comp, true);
-	if(err) return err;
+	addComponent(comp, true);
 
 	// Frustum component
-	comp = getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-	err = addComponent(comp, true);
-	if(err) return err;
+	getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
+	addComponent(comp, true);
 
 	// Feedback component #2
 	comp = 
 		getSceneAllocator().newInstance<CameraFrustumFeedbackComponent>(this);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-	err = addComponent(comp, true);
-	if(err) return err;
+	addComponent(comp, true);
 
 	// Spatial component
 	comp = getSceneAllocator().newInstance<SpatialComponent>(this, frustum);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+	addComponent(comp, true);
 
-	err = addComponent(comp, true);
-	if(err) return err;
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

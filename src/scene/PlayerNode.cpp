@@ -144,11 +144,7 @@ PlayerNode::~PlayerNode()
 //==============================================================================
 Error PlayerNode::create(const CString& name, const Vec4& position)
 {
-	Error err = SceneNode::create(name);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(SceneNode::create(name));
 
 	// Create physics object
 	PhysicsPlayerController::Initializer init;
@@ -160,57 +156,21 @@ Error PlayerNode::create(const CString& name, const Vec4& position)
 	// Player controller component
 	comp = getSceneAllocator().newInstance<PlayerControllerComponent>(
 		this, m_player);
-	if(comp == nullptr)
-	{
-		return ErrorCode::OUT_OF_MEMORY; 
-	}
-
-	err = addComponent(comp, true);
-	if(err)
-	{
-		return err;
-	}
+	addComponent(comp, true);
 
 	// Feedback component
 	comp = getSceneAllocator().newInstance<PlayerNodeFeedbackComponent>(this);
-	if(comp == nullptr)
-	{
-		return ErrorCode::OUT_OF_MEMORY; 
-	}
-
-	err = addComponent(comp, true);
-	if(err)
-	{
-		return err;
-	}
+	addComponent(comp, true);
 
 	// Move component
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	if(comp == nullptr)
-	{
-		return ErrorCode::OUT_OF_MEMORY; 
-	}
-
-	err = addComponent(comp, true);
-	if(err)
-	{
-		return err;
-	}
+	addComponent(comp, true);
 
 	// Feedback component #2
 	comp = getSceneAllocator().newInstance<PlayerNodeFeedbackComponent2>(this);
-	if(comp == nullptr)
-	{
-		return ErrorCode::OUT_OF_MEMORY; 
-	}
+	addComponent(comp, true);
 
-	err = addComponent(comp, true);
-	if(err)
-	{
-		return err;
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

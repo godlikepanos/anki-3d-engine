@@ -62,7 +62,7 @@ public:
 
 	/// Add a new child.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error addChild(TAllocator alloc, Value* child);
+	void addChild(TAllocator alloc, Value* child);
 
 	/// Remove a child.
 	template<typename TAllocator>

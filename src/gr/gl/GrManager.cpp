@@ -17,23 +17,11 @@ Error GrManager::create(Initializer& init)
 	m_alloc = HeapAllocator<U8>(
 		init.m_allocCallback, init.m_allocCallbackUserData);
 
-	Error err = m_cacheDir.create(m_alloc, init.m_cacheDirectory);
+	m_cacheDir.create(m_alloc, init.m_cacheDirectory);
+	m_impl = m_alloc.newInstance<GrManagerImpl>(this);
+	Error err = m_impl->create(init);
 
-	if(!err)
-	{
-		m_impl = m_alloc.newInstance<GrManagerImpl>(this);
-	}
-
-	if(m_impl)
-	{
-		err = m_impl->create(init);
-	}
-	else
-	{
-		err = ErrorCode::OUT_OF_MEMORY;
-	}
-
-	return ErrorCode::NONE;
+	return err;
 }
 
 //==============================================================================

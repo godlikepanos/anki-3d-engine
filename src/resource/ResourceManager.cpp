@@ -45,22 +45,22 @@ Error ResourceManager::create(Initializer& init)
 		init.m_allocCallback, init.m_allocCallbackData, 
 		init.m_tempAllocatorMemorySize);
 
-	ANKI_CHECK(m_cacheDir.create(m_alloc, init.m_cacheDir));
+	m_cacheDir.create(m_alloc, init.m_cacheDir);
 
 	// Init the data path
 	//
 	if(getenv("ANKI_DATA_PATH"))
 	{
-		ANKI_CHECK(m_dataDir.sprintf(m_alloc, "%s/", getenv("ANKI_DATA_PATH")));
+		m_dataDir.sprintf(m_alloc, "%s/", getenv("ANKI_DATA_PATH"));
 		ANKI_LOGI("Data path: %s", &m_dataDir[0]);
 	}
 	else
 	{
 		// Assume working directory
 #if ANKI_OS == ANKI_OS_ANDROID
-		ANKI_CHECK(m_dataDir.create(m_alloc, "$"));
+		m_dataDir.create(m_alloc, "$");
 #else
-		ANKI_CHECK(m_dataDir.create(m_alloc, "./"));
+		m_dataDir.create(m_alloc, "./");
 #endif
 	}
 
@@ -101,23 +101,19 @@ Error ResourceManager::create(Initializer& init)
 }
 
 //==============================================================================
-Error ResourceManager::fixResourceFilename(
+void ResourceManager::fixResourceFilename(
 	const CString& filename,
 	StringAuto& out) const
 {
-	Error err = ErrorCode::NONE;
-
 	// If the filename is in cache then dont append the data path
 	if(filename.find(m_cacheDir.toCString()) != String::NPOS)
 	{
-		err = out.create(filename);
+		out.create(filename);
 	}
 	else
 	{
-		err = out.sprintf("%s%s", &m_dataDir[0], &filename[0]);
+		out.sprintf("%s%s", &m_dataDir[0], &filename[0]);
 	}
-
-	return err;
 }
 
 } // end namespace anki

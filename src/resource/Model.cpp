@@ -30,7 +30,6 @@ Error ModelPatchBase::createVertexDesc(
 	const Mesh& mesh,
 	CommandBufferHandle& vertexJobs)
 {
-	Error err = ErrorCode::NONE;
 	BufferHandle vbo;
 	U32 size;
 	GLenum type;
@@ -64,12 +63,12 @@ Error ModelPatchBase::createVertexDesc(
 
 	// The indices VBO
 	mesh.getBufferInfo(VertexAttribute::INDICES, vbo, size, type,
-			stride, offset, normalized);
+		stride, offset, normalized);
 
 	ANKI_ASSERT(vbo.isCreated());
 	vbo.bindIndexBuffer(vertexJobs);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -151,12 +150,10 @@ Error ModelPatchBase::getRenderingDataSub(
 //==============================================================================
 Error ModelPatchBase::create(GrManager* gl)
 {
-	Error err = ErrorCode::NONE;
-
 	const Material& mtl = getMaterial();
 	U lodsCount = getLodsCount();
 
-	ANKI_CHECK(m_vertJobs.create(m_alloc, lodsCount * mtl.getPassesCount()));
+	m_vertJobs.create(m_alloc, lodsCount * mtl.getPassesCount());
 
 	for(U lod = 0; lod < lodsCount; ++lod)
 	{
@@ -180,7 +177,7 @@ Error ModelPatchBase::create(GrManager* gl)
 		}
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -221,8 +218,8 @@ Error ModelPatch<MeshResourcePointerType>::create(
 
 	Error err = ErrorCode::NONE;
 
-	ANKI_CHECK(m_meshes.create(m_alloc, meshesCount));
-	ANKI_CHECK(m_meshResources.create(m_alloc, meshesCount));
+	m_meshes.create(m_alloc, meshesCount);
+	m_meshResources.create(m_alloc, meshesCount);
 
 	// Load meshes
 	for(U i = 0; i < meshesCount; i++)
@@ -326,8 +323,7 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 			ANKI_CHECK(valEl.getText(filename));
 	
 			StringAuto fixedFilename(init.m_tempAlloc);
-			ANKI_CHECK(init.m_resources.fixResourceFilename(
-				filename, fixedFilename));
+			init.m_resources.fixResourceFilename(filename, fixedFilename);
 
 			MeshLoader loader;
 			ANKI_CHECK(
@@ -376,7 +372,7 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		return ErrorCode::USER_DATA;
 	}
 
-	ANKI_CHECK(m_modelPatches.create(alloc, count));
+	m_modelPatches.create(alloc, count);
 
 	count = 0;
 	ANKI_CHECK(modelPatchesEl.getChildElement("modelPatch", modelPatchEl));

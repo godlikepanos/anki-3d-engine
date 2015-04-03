@@ -154,14 +154,10 @@ Error SceneGraph::registerNode(SceneNode* node)
 	}
 
 	// Add to vector
-	Error err = m_nodes.pushBack(m_alloc, node);
+	m_nodes.pushBack(m_alloc, node);
+	++m_nodesCount;
 
-	if(!err)
-	{
-		++m_nodesCount;
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

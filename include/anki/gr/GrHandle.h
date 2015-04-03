@@ -110,40 +110,20 @@ public:
 	///                object. Some objects example may require deferred 
 	///                deleters.
 	template<typename TDeleter>
-	ANKI_USE_RESULT Error create(GrManager& manager, TDeleter del)
+	void create(GrManager& manager, TDeleter del)
 	{
 		using Cb = CtrlBlock<TDeleter>;
-
-		Error err = ErrorCode::NONE;
 
 		// Create the object
 		auto alloc = manager.getAllocator();
 		T* ptr = alloc.template newInstance<T>(&manager);
+		Cb* cb = alloc.template newInstance<Cb>();
 
-		if(ptr != nullptr)
-		{
-			Cb* cb = alloc.template newInstance<Cb>();
+		cb->m_del = del;
+		ptr->GrObject::getRefcount().store(1);
+		cb->m_ptr = ptr;
 
-			if(cb != nullptr)
-			{
-				cb->m_del = del;
-				ptr->GrObject::getRefcount().store(1);
-				cb->m_ptr = ptr;
-
-				m_cb = cb;
-			}
-			else
-			{
-				alloc.template deleteInstance(ptr);
-				err = ErrorCode::OUT_OF_MEMORY;
-			}
-		}
-		else
-		{
-			err = ErrorCode::OUT_OF_MEMORY;
-		}
-
-		return err;
+		m_cb = cb;
 	}
 
 	/// Return true if it's pointing to actual data

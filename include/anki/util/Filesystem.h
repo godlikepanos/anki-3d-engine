@@ -17,7 +17,7 @@ namespace anki {
 Bool fileExists(const CString& filename);
 
 /// Get file extension.
-ANKI_USE_RESULT Error getFileExtension(
+void getFileExtension(
 	const CString& filename, GenericMemoryPoolAllocator<U8> alloc, String& out);
 
 /// Return true if directory exists?

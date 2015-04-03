@@ -48,14 +48,7 @@ Error ResourcePointer<T, TResourceManager>::load(
 		{
 			StringAuto newFname(resources->_getTempAllocator());
 
-			err = resources->fixResourceFilename(filename, newFname);
-			if(err)
-			{
-				ANKI_LOGE("OOM when loading resource: %s", &newFname[0]);
-				alloc.deleteInstance(m_cb);
-				m_cb = nullptr;
-				return err;
-			}
+			resources->fixResourceFilename(filename, newFname);
 
 			ResourceInitializer init(
 				alloc,
@@ -89,14 +82,7 @@ Error ResourcePointer<T, TResourceManager>::load(
 		}
 
 		// Register resource
-		err = resources->_registerResource(*this);
-		if(err)
-		{
-			ANKI_LOGE("OOM when registering resource");
-			alloc.deleteInstance(m_cb);
-			m_cb = nullptr;
-			return err;
-		}
+		resources->_registerResource(*this);
 	}
 	else
 	{

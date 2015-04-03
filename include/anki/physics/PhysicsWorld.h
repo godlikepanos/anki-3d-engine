@@ -126,7 +126,7 @@ inline T* PhysicsWorld::newObjectInternal(TContainer& cont, TArgs&&... args)
 
 	if(!err)
 	{
-		err = cont.pushBack(m_alloc, ptr);
+		cont.pushBack(m_alloc, ptr);
 	}
 
 	if(err)

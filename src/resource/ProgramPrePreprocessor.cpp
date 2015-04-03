@@ -35,7 +35,7 @@ void ProgramPrePreprocessor::printSourceLines() const
 	auto end = m_sourceLines.getEnd();
 	for(; it != end; ++it)
 	{
-		printf("%4lu %s\n", i++, &(*it)[0]);
+		printf("%4d %s\n", I(i++), &(*it)[0]);
 	}
 }
 
@@ -47,7 +47,7 @@ Error ProgramPrePreprocessor::parseFile(const CString& filename)
 
 	if(!err)
 	{
-		err = m_sourceLines.join(m_alloc, "\n", m_shaderSource);
+		m_sourceLines.join(m_alloc, "\n", m_shaderSource);
 	}
 	
 	return err;
@@ -65,8 +65,6 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 		return ErrorCode::USER_DATA;
 	}
 
-	Error err = ErrorCode::NONE;
-
 	// load file in lines
 	StringAuto txt(m_alloc);
 	StringListAuto lines(m_alloc);
@@ -74,7 +72,7 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 	File file;
 	ANKI_CHECK(file.open(filename, File::OpenFlag::READ));
 	ANKI_CHECK(file.readAllText(TempResourceAllocator<char>(m_alloc), txt));
-	ANKI_CHECK(lines.splitString(txt.toCString(), '\n'));
+	lines.splitString(txt.toCString(), '\n');
 	if(lines.getSize() < 1)
 	{
 		ANKI_LOGE("File is empty: %s", &filename[0]);
@@ -103,14 +101,14 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 				{
 					StringAuto filen(m_alloc);
 					
-					ANKI_CHECK(filen.create(
+					filen.create(
 						line.begin() + std::strlen(commands[6]), 
-						line.end() - 1));
+						line.end() - 1);
 
 					StringAuto filenFixed(m_alloc);
 
-					ANKI_CHECK(m_manager->fixResourceFilename(
-						filen.toCString(), filenFixed));
+					m_manager->fixResourceFilename(
+						filen.toCString(), filenFixed);
 
 					ANKI_CHECK(parseFileForPragmas(
 						filenFixed.toCString(), depth + 1));
@@ -127,7 +125,7 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 		}
 		else
 		{
-			ANKI_CHECK(m_sourceLines.pushBackSprintf(m_alloc, "%s", &line[0]));
+			m_sourceLines.pushBackSprintf(m_alloc, "%s", &line[0]);
 		}
 	}
 
@@ -138,13 +136,12 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 		return ErrorCode::USER_DATA;
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error ProgramPrePreprocessor::parseType(const String& line, Bool& found)
 {
-	Error err = ErrorCode::NONE;
 	U i;
 	found = false;
 
@@ -162,7 +159,7 @@ Error ProgramPrePreprocessor::parseType(const String& line, Bool& found)
 		if(m_type != ShaderType::COUNT)
 		{
 			ANKI_LOGE("The shader type is already set. Line %s", &line[0]);
-			err = ErrorCode::USER_DATA;
+			return ErrorCode::USER_DATA;
 		}
 		else
 		{
@@ -170,7 +167,7 @@ Error ProgramPrePreprocessor::parseType(const String& line, Bool& found)
 		}
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

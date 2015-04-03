@@ -40,19 +40,11 @@ public:
 
 	ANKI_USE_RESULT Error create(const CString& name)
 	{
-		Error err = SceneNode::create(name);
+		ANKI_CHECK(SceneNode::create(name));
+		addComponent(static_cast<MoveComponent*>(this));
+		addComponent(static_cast<InstanceComponent*>(this));
 
-		if(!err)
-		{
-			err = addComponent(static_cast<MoveComponent*>(this));
-		}
-
-		if(!err)
-		{
-			err = addComponent(static_cast<InstanceComponent*>(this));
-		}
-
-		return err;
+		return ErrorCode::NONE;
 	}
 };
 /// @}

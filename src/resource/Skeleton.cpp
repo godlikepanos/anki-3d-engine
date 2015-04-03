@@ -27,8 +27,6 @@ Skeleton::~Skeleton()
 //==============================================================================
 Error Skeleton::load(const CString& filename, ResourceInitializer& init)
 {
-	Error err = ErrorCode::NONE;
-
 	m_alloc = init.m_alloc;
 
 	XmlDocument doc;
@@ -47,7 +45,7 @@ Error Skeleton::load(const CString& filename, ResourceInitializer& init)
 	ANKI_CHECK(boneEl.getSiblingElementsCount(bonesCount));
 	++bonesCount;
 
-	ANKI_CHECK(m_bones.create(m_alloc, bonesCount));
+	m_bones.create(m_alloc, bonesCount);
 
 	// Load every bone
 	bonesCount = 0;
@@ -60,7 +58,7 @@ Error Skeleton::load(const CString& filename, ResourceInitializer& init)
 		ANKI_CHECK(boneEl.getChildElement("name", nameEl));
 		CString tmp;
 		ANKI_CHECK(nameEl.getText(tmp));
-		ANKI_CHECK(bone.m_name.create(m_alloc, tmp));
+		bone.m_name.create(m_alloc, tmp);
 
 		// <transform>
 		XmlElement trfEl;
@@ -71,7 +69,7 @@ Error Skeleton::load(const CString& filename, ResourceInitializer& init)
 		ANKI_CHECK(boneEl.getNextSiblingElement("bone", boneEl));
 	} while(boneEl);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

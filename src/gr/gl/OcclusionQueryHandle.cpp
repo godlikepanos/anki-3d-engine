@@ -28,14 +28,14 @@ public:
 
 	Error operator()(CommandBufferImpl*)
 	{
-		Error err = m_handle.get().create(m_condRenderingBit);
+		m_handle.get().create(m_condRenderingBit);
 
 		GlObject::State oldState = m_handle.get().setStateAtomically(
-			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+			GlObject::State::CREATED);
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
 
-		return err;
+		return ErrorCode::NONE;
 	}
 };
 
@@ -93,22 +93,15 @@ Error OcclusionQueryHandle::create(
 	using Deleter = DeferredDeleter<OcclusionQueryImpl, DeleteCommand>;
 
 	CommandBufferHandle cmd;
-	Error err = cmd.create(manager);
+	ANKI_CHECK(cmd.create(manager));
 
-	if(!err)
-	{
-		err = Base::create(*manager, Deleter());
-	}
+	Base::create(*manager, Deleter());
+	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
-	if(!err)
-	{
-		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
+	cmd.get().pushBackNewCommand<OqCreateCommand>(*this, condRenderingBit);
+	cmd.flush();
 
-		cmd.get().pushBackNewCommand<OqCreateCommand>(*this, condRenderingBit);
-		cmd.flush();
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

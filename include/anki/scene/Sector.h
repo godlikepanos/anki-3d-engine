@@ -64,7 +64,7 @@ public:
 		F32 prevUpdateTime, F32 crntTime) override;
 
 	/// Add reference to sector.
-	ANKI_USE_RESULT Error tryAddSector(Sector* sector);
+	void tryAddSector(Sector* sector);
 
 	/// Remove reference from sector.
 	void tryRemoveSector(Sector* sector);
@@ -90,10 +90,10 @@ public:
 	ANKI_USE_RESULT Error create(
 		const CString& name, const CString& modelFname);
 
-	ANKI_USE_RESULT Error tryAddPortal(Portal* portal);
+	void tryAddPortal(Portal* portal);
 	void tryRemovePortal(Portal* portal);
 
-	ANKI_USE_RESULT Error tryAddSpatialComponent(SpatialComponent* sp);
+	void tryAddSpatialComponent(SpatialComponent* sp);
 	void tryRemoveSpatialComponent(SpatialComponent* sp);
 
 	ANKI_USE_RESULT Error frameUpdate(
@@ -125,11 +125,10 @@ public:
 	/// Destructor
 	~SectorGroup();
 
-	ANKI_USE_RESULT Error spatialUpdated(SpatialComponent* sp);
+	void spatialUpdated(SpatialComponent* sp);
 	void spatialDeleted(SpatialComponent* sp);
 
-	ANKI_USE_RESULT Error prepareForVisibilityTests(
-		const FrustumComponent& frc);
+	void prepareForVisibilityTests(const FrustumComponent& frc);
 
 	template<typename Func>
 	ANKI_USE_RESULT Error iterateVisibleSceneNodes(
@@ -143,13 +142,13 @@ private:
 	SceneNode** m_visibleNodes = nullptr;
 	U m_visibleNodesCount = 0;
 
-	ANKI_USE_RESULT Error findVisibleSectors(
+	void findVisibleSectors(
 		const FrustumComponent& frc,
 		List<Sector*>& visibleSectors,
 		U& spatialsCount);
 
 	/// Recursive method
-	ANKI_USE_RESULT Error findVisibleSectorsInternal(
+	void findVisibleSectorsInternal(
 		const FrustumComponent& frc,
 		Sector& s,
 		List<Sector*>& visibleSectors,

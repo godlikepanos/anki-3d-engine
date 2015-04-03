@@ -66,20 +66,17 @@ Error ShaderHandle::create(CommandBufferHandle& commands,
 	using DeleteCommand = DeleteObjectCommand<ShaderImpl>;
 	using Deleter = DeferredDeleter<ShaderImpl, DeleteCommand>;
 
-	Error err = Base::create(commands.get().getManager(), Deleter());
-	if(!err)
-	{
-		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
+	Base::create(commands.get().getManager(), Deleter());
+	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
-		// Copy source to the command buffer
-		void* src = commands.get().getInternalAllocator().allocate(sourceSize);
-		memcpy(src, source, sourceSize);
+	// Copy source to the command buffer
+	void* src = commands.get().getInternalAllocator().allocate(sourceSize);
+	memcpy(src, source, sourceSize);
 
-		commands.get().pushBackNewCommand<ShaderCreateCommand>(
-			*this, type, static_cast<char*>(src));
-	}
+	commands.get().pushBackNewCommand<ShaderCreateCommand>(
+		*this, type, static_cast<char*>(src));
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

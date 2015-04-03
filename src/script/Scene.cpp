@@ -50,7 +50,7 @@ static const char* classnameMoveComponent = "MoveComponent";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<MoveComponent>()
 {
-	return 2038493110845313445;
+	return 352588197;
 }
 
 template<>
@@ -71,12 +71,12 @@ static inline int pwrapMoveComponentsetLocalOrigin(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 352588197, ud)) return -1;
 	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 1033927922, ud)) return -1;
 	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
@@ -108,7 +108,7 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 352588197, ud)) return -1;
 	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -121,7 +121,7 @@ static inline int pwrapMoveComponentgetLocalOrigin(lua_State* l)
 	luaL_setmetatable(l, "Vec4");
 	ud->m_data = const_cast<void*>(static_cast<const void*>(&ret));
 	ud->m_gc = false;
-	ud->m_sig = 6804478823655046386;
+	ud->m_sig = 1033927922;
 	
 	return 1;
 }
@@ -148,12 +148,12 @@ static inline int pwrapMoveComponentsetLocalRotation(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 352588197, ud)) return -1;
 	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -222450941, ud)) return -1;
 	Mat3x4* iarg0 = static_cast<Mat3x4*>(ud->m_data);
 	const Mat3x4& arg0(*iarg0);
 	
@@ -185,7 +185,7 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 352588197, ud)) return -1;
 	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -198,7 +198,7 @@ static inline int pwrapMoveComponentgetLocalRotation(lua_State* l)
 	luaL_setmetatable(l, "Mat3x4");
 	ud->m_data = const_cast<void*>(static_cast<const void*>(&ret));
 	ud->m_gc = false;
-	ud->m_sig = -2654194732934255869;
+	ud->m_sig = -222450941;
 	
 	return 1;
 }
@@ -225,7 +225,7 @@ static inline int pwrapMoveComponentsetLocalScale(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 352588197, ud)) return -1;
 	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -261,7 +261,7 @@ static inline int pwrapMoveComponentgetLocalScale(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 352588197, ud)) return -1;
 	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -308,7 +308,7 @@ static const char* classnameLightComponent = "LightComponent";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<LightComponent>()
 {
-	return 7940823622056993903;
+	return 280814703;
 }
 
 template<>
@@ -329,12 +329,12 @@ static inline int pwrapLightComponentsetDiffuseColor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 1033927922, ud)) return -1;
 	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
@@ -366,7 +366,7 @@ static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -379,7 +379,7 @@ static inline int pwrapLightComponentgetDiffuseColor(lua_State* l)
 	luaL_setmetatable(l, "Vec4");
 	ud->m_data = const_cast<void*>(static_cast<const void*>(&ret));
 	ud->m_gc = false;
-	ud->m_sig = 6804478823655046386;
+	ud->m_sig = 1033927922;
 	
 	return 1;
 }
@@ -406,12 +406,12 @@ static inline int pwrapLightComponentsetSpecularColor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 1033927922, ud)) return -1;
 	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
@@ -443,7 +443,7 @@ static inline int pwrapLightComponentgetSpecularColor(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -456,7 +456,7 @@ static inline int pwrapLightComponentgetSpecularColor(lua_State* l)
 	luaL_setmetatable(l, "Vec4");
 	ud->m_data = const_cast<void*>(static_cast<const void*>(&ret));
 	ud->m_gc = false;
-	ud->m_sig = 6804478823655046386;
+	ud->m_sig = 1033927922;
 	
 	return 1;
 }
@@ -483,7 +483,7 @@ static inline int pwrapLightComponentsetRadius(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -519,7 +519,7 @@ static inline int pwrapLightComponentgetRadius(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -554,7 +554,7 @@ static inline int pwrapLightComponentsetDistance(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -590,7 +590,7 @@ static inline int pwrapLightComponentgetDistance(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -625,7 +625,7 @@ static inline int pwrapLightComponentsetInnerAngle(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -661,7 +661,7 @@ static inline int pwrapLightComponentgetInnerAngle(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -696,7 +696,7 @@ static inline int pwrapLightComponentsetOuterAngle(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -732,7 +732,7 @@ static inline int pwrapLightComponentgetOuterAngle(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -767,7 +767,7 @@ static inline int pwrapLightComponentsetShadowEnabled(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -803,7 +803,7 @@ static inline int pwrapLightComponentgetShadowEnabled(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 7940823622056993903, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLightComponent, 280814703, ud)) return -1;
 	LightComponent* self = static_cast<LightComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -858,7 +858,7 @@ static const char* classnameLensFlareComponent = "LensFlareComponent";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<LensFlareComponent>()
 {
-	return -2019248835133422777;
+	return 79708999;
 }
 
 template<>
@@ -879,12 +879,12 @@ static inline int pwrapLensFlareComponentsetFirstFlareSize(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, -2019248835133422777, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, 79708999, ud)) return -1;
 	LensFlareComponent* self = static_cast<LensFlareComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec2", 6804478823655046388, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec2", 1033927924, ud)) return -1;
 	Vec2* iarg0 = static_cast<Vec2*>(ud->m_data);
 	const Vec2& arg0(*iarg0);
 	
@@ -916,12 +916,12 @@ static inline int pwrapLensFlareComponentsetColorMultiplier(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, -2019248835133422777, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameLensFlareComponent, 79708999, ud)) return -1;
 	LensFlareComponent* self = static_cast<LensFlareComponent*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 1033927922, ud)) return -1;
 	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
 	const Vec4& arg0(*iarg0);
 	
@@ -961,7 +961,7 @@ static const char* classnameSceneNode = "SceneNode";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<SceneNode>()
 {
-	return -2220074417980276571;
+	return 1297776805;
 }
 
 template<>
@@ -982,7 +982,7 @@ static inline int pwrapSceneNodegetName(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, 1297776805, ud)) return -1;
 	SceneNode* self = static_cast<SceneNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1017,28 +1017,19 @@ static inline int pwrapSceneNodeaddChild(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, 1297776805, ud)) return -1;
 	SceneNode* self = static_cast<SceneNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
 	// Pop arguments
-	if(LuaBinder::checkUserData(l, 2, "SceneNode", -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 2, "SceneNode", 1297776805, ud)) return -1;
 	SceneNode* iarg0 = static_cast<SceneNode*>(ud->m_data);
 	SceneNode* arg0(iarg0);
 	
 	// Call the method
-	Error ret = self->addChild(arg0);
+	self->addChild(arg0);
 	
-	// Push return value
-	if(ANKI_UNLIKELY(ret))
-	{
-		lua_pushstring(l, "Glue code returned an error");
-		return -1;
-	}
-	
-	lua_pushnumber(l, ret);
-	
-	return 1;
+	return 0;
 }
 
 //==============================================================================
@@ -1063,7 +1054,7 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, 1297776805, ud)) return -1;
 	SceneNode* self = static_cast<SceneNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1082,7 +1073,7 @@ static inline int pwrapSceneNodegetMoveComponent(lua_State* l)
 	luaL_setmetatable(l, "MoveComponent");
 	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
-	ud->m_sig = 2038493110845313445;
+	ud->m_sig = 352588197;
 	
 	return 1;
 }
@@ -1109,7 +1100,7 @@ static inline int pwrapSceneNodegetLightComponent(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, 1297776805, ud)) return -1;
 	SceneNode* self = static_cast<SceneNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1128,7 +1119,7 @@ static inline int pwrapSceneNodegetLightComponent(lua_State* l)
 	luaL_setmetatable(l, "LightComponent");
 	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
-	ud->m_sig = 7940823622056993903;
+	ud->m_sig = 280814703;
 	
 	return 1;
 }
@@ -1155,7 +1146,7 @@ static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, -2220074417980276571, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneNode, 1297776805, ud)) return -1;
 	SceneNode* self = static_cast<SceneNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1174,7 +1165,7 @@ static inline int pwrapSceneNodegetLensFlareComponent(lua_State* l)
 	luaL_setmetatable(l, "LensFlareComponent");
 	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
-	ud->m_sig = -2019248835133422777;
+	ud->m_sig = 79708999;
 	
 	return 1;
 }
@@ -1212,7 +1203,7 @@ static const char* classnameModelNode = "ModelNode";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<ModelNode>()
 {
-	return -1856316251880904290;
+	return 1071294878;
 }
 
 template<>
@@ -1233,7 +1224,7 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameModelNode, -1856316251880904290, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameModelNode, 1071294878, ud)) return -1;
 	ModelNode* self = static_cast<ModelNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1246,7 +1237,7 @@ static inline int pwrapModelNodegetSceneNodeBase(lua_State* l)
 	luaL_setmetatable(l, "SceneNode");
 	ud->m_data = static_cast<void*>(&ret);
 	ud->m_gc = false;
-	ud->m_sig = -2220074417980276571;
+	ud->m_sig = 1297776805;
 	
 	return 1;
 }
@@ -1280,7 +1271,7 @@ static const char* classnameInstanceNode = "InstanceNode";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<InstanceNode>()
 {
-	return -2063375830923741403;
+	return 799668005;
 }
 
 template<>
@@ -1301,7 +1292,7 @@ static inline int pwrapInstanceNodegetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameInstanceNode, -2063375830923741403, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameInstanceNode, 799668005, ud)) return -1;
 	InstanceNode* self = static_cast<InstanceNode*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1314,7 +1305,7 @@ static inline int pwrapInstanceNodegetSceneNodeBase(lua_State* l)
 	luaL_setmetatable(l, "SceneNode");
 	ud->m_data = static_cast<void*>(&ret);
 	ud->m_gc = false;
-	ud->m_sig = -2220074417980276571;
+	ud->m_sig = 1297776805;
 	
 	return 1;
 }
@@ -1348,7 +1339,7 @@ static const char* classnamePointLight = "PointLight";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<PointLight>()
 {
-	return 3561037663389896020;
+	return 1042566484;
 }
 
 template<>
@@ -1369,7 +1360,7 @@ static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 1042566484, ud)) return -1;
 	PointLight* self = static_cast<PointLight*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1382,7 +1373,7 @@ static inline int pwrapPointLightgetSceneNodeBase(lua_State* l)
 	luaL_setmetatable(l, "SceneNode");
 	ud->m_data = static_cast<void*>(&ret);
 	ud->m_gc = false;
-	ud->m_sig = -2220074417980276571;
+	ud->m_sig = 1297776805;
 	
 	return 1;
 }
@@ -1409,7 +1400,7 @@ static inline int pwrapPointLightloadLensFlare(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 3561037663389896020, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnamePointLight, 1042566484, ud)) return -1;
 	PointLight* self = static_cast<PointLight*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1462,7 +1453,7 @@ static const char* classnameSpotLight = "SpotLight";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<SpotLight>()
 {
-	return 7940385212889719421;
+	return -99720579;
 }
 
 template<>
@@ -1483,7 +1474,7 @@ static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
 	LuaBinder::checkArgsCount(l, 1);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSpotLight, 7940385212889719421, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSpotLight, -99720579, ud)) return -1;
 	SpotLight* self = static_cast<SpotLight*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1496,7 +1487,7 @@ static inline int pwrapSpotLightgetSceneNodeBase(lua_State* l)
 	luaL_setmetatable(l, "SceneNode");
 	ud->m_data = static_cast<void*>(&ret);
 	ud->m_gc = false;
-	ud->m_sig = -2220074417980276571;
+	ud->m_sig = 1297776805;
 	
 	return 1;
 }
@@ -1530,7 +1521,7 @@ static const char* classnameSceneGraph = "SceneGraph";
 template<>
 I64 LuaBinder::getWrappedTypeSignature<SceneGraph>()
 {
-	return -7754439619132389154;
+	return 1298532574;
 }
 
 template<>
@@ -1551,7 +1542,7 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 	LuaBinder::checkArgsCount(l, 3);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, 1298532574, ud)) return -1;
 	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1577,7 +1568,7 @@ static inline int pwrapSceneGraphnewModelNode(lua_State* l)
 	luaL_setmetatable(l, "ModelNode");
 	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
-	ud->m_sig = -1856316251880904290;
+	ud->m_sig = 1071294878;
 	
 	return 1;
 }
@@ -1604,7 +1595,7 @@ static inline int pwrapSceneGraphnewInstanceNode(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, 1298532574, ud)) return -1;
 	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1627,7 +1618,7 @@ static inline int pwrapSceneGraphnewInstanceNode(lua_State* l)
 	luaL_setmetatable(l, "InstanceNode");
 	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
-	ud->m_sig = -2063375830923741403;
+	ud->m_sig = 799668005;
 	
 	return 1;
 }
@@ -1654,7 +1645,7 @@ static inline int pwrapSceneGraphnewPointLight(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, 1298532574, ud)) return -1;
 	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1677,7 +1668,7 @@ static inline int pwrapSceneGraphnewPointLight(lua_State* l)
 	luaL_setmetatable(l, "PointLight");
 	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
-	ud->m_sig = 3561037663389896020;
+	ud->m_sig = 1042566484;
 	
 	return 1;
 }
@@ -1704,7 +1695,7 @@ static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
 	LuaBinder::checkArgsCount(l, 2);
 	
 	// Get "this" as "self"
-	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, 1298532574, ud)) return -1;
 	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
 	ANKI_ASSERT(self != nullptr);
 	
@@ -1727,7 +1718,7 @@ static inline int pwrapSceneGraphnewSpotLight(lua_State* l)
 	luaL_setmetatable(l, "SpotLight");
 	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
-	ud->m_sig = 7940385212889719421;
+	ud->m_sig = -99720579;
 	
 	return 1;
 }
@@ -1780,7 +1771,7 @@ static inline int pwrapgetSceneGraph(lua_State* l)
 	luaL_setmetatable(l, "SceneGraph");
 	ud->m_data = static_cast<void*>(ret);
 	ud->m_gc = false;
-	ud->m_sig = -7754439619132389154;
+	ud->m_sig = 1298532574;
 	
 	return 1;
 }

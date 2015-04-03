@@ -176,7 +176,7 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	StringAuto pps(getAllocator());
 
-	ANKI_CHECK(pps.sprintf(
+	pps.sprintf(
 		"\n#define TILES_X_COUNT %u\n"
 		"#define TILES_Y_COUNT %u\n"
 		"#define TILES_COUNT %u\n" 
@@ -200,7 +200,7 @@ Error Is::initInternal(const ConfigSet& config)
 		m_maxLightIds,
 		m_groundLightEnabled,
 		TILES_BLOCK_BINDING,
-		m_sm.getPoissonEnabled()));
+		m_sm.getPoissonEnabled());
 
 	// point light
 	CommandBufferHandle cmdBuff;

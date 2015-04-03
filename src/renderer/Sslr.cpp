@@ -12,13 +12,11 @@ namespace anki {
 //==============================================================================
 Error Sslr::init(const ConfigSet& config)
 {
-	Error err = ErrorCode::NONE;
-
 	m_enabled = config.get("pps.sslr.enabled");
 
 	if(!m_enabled)
 	{
-		return err;
+		return ErrorCode::NONE;
 	}
 
 	// Size
@@ -34,10 +32,10 @@ Error Sslr::init(const ConfigSet& config)
 	// Programs
 	StringAuto pps(getAllocator());
 
-	ANKI_CHECK(pps.sprintf(
+	pps.sprintf(
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n",
-		m_width, m_height));
+		m_width, m_height);
 
 	ANKI_CHECK(m_reflectionFrag.loadToCache(&getResourceManager(),
 		"shaders/PpsSslr.frag.glsl", pps.toCString(), "r_"));
@@ -82,14 +80,13 @@ Error Sslr::init(const ConfigSet& config)
 
 	cmdBuff.finish();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error Sslr::run(CommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
-	Error err = ErrorCode::NONE;
 
 	// Compute the reflection
 	//
@@ -115,8 +112,7 @@ Error Sslr::run(CommandBufferHandle& cmdBuff)
 	//
 	if(m_blurringIterationsCount > 0)
 	{
-		err = runBlurring(*m_r, cmdBuff);
-		if(err) return err;
+		ANKI_CHECK(runBlurring(*m_r, cmdBuff));
 	}
 
 	// Write the reflection back to IS RT
@@ -134,7 +130,7 @@ Error Sslr::run(CommandBufferHandle& cmdBuff)
 
 	cmdBuff.enableBlend(false);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

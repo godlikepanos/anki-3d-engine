@@ -81,7 +81,7 @@ public:
 		ANKI_ASSERT(0 && "It's supposed to be deallocated on frame start");
 	}
 
-	ANKI_USE_RESULT Error create(
+	void create(
 		SceneFrameAllocator<U8> alloc,
 		U32 renderablesReservedSize,
 		U32 lightsReservedSize,
@@ -143,22 +143,19 @@ public:
 		return m_flaresCount;
 	}
 
-	ANKI_USE_RESULT Error moveBackRenderable(
-		SceneFrameAllocator<U8> alloc, VisibleNode& x)
+	void moveBackRenderable(SceneFrameAllocator<U8> alloc, VisibleNode& x)
 	{
-		return moveBack(alloc, m_renderables, m_renderablesCount, x);
+		moveBack(alloc, m_renderables, m_renderablesCount, x);
 	}
 
-	ANKI_USE_RESULT Error moveBackLight(
-		SceneFrameAllocator<U8> alloc, VisibleNode& x)
+	void moveBackLight(SceneFrameAllocator<U8> alloc, VisibleNode& x)
 	{
-		return moveBack(alloc, m_lights, m_lightsCount, x);
+		moveBack(alloc, m_lights, m_lightsCount, x);
 	}
 
-	ANKI_USE_RESULT Error moveBackLensFlare(
-		SceneFrameAllocator<U8> alloc, VisibleNode& x)
+	void moveBackLensFlare(SceneFrameAllocator<U8> alloc, VisibleNode& x)
 	{
-		return moveBack(alloc, m_flares, m_flaresCount, x);
+		moveBack(alloc, m_flares, m_flaresCount, x);
 	}
 
 private:
@@ -169,7 +166,7 @@ private:
 	U32 m_lightsCount = 0;
 	U32 m_flaresCount = 0;
 
-	ANKI_USE_RESULT Error moveBack(SceneFrameAllocator<U8> alloc, 
+	void moveBack(SceneFrameAllocator<U8> alloc, 
 		Container& c, U32& count, VisibleNode& x);
 };
 

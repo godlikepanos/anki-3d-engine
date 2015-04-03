@@ -53,7 +53,7 @@ public:
 	/// are going to happen
 	using propagate_on_container_move_assignment = std::true_type;
 
-	/// A struct to rebind the allocator to another allocator of type U
+	/// A struct to rebind the allocator to another allocator of type Y
 	template<typename Y>
 	struct rebind
 	{
@@ -96,19 +96,12 @@ public:
 			allocCb(allocCbUserData, nullptr, sizeof(TPool), alignof(TPool)));
 		if(!m_pool)
 		{
-			ANKI_LOGF("Initialization failed");
+			ANKI_LOGF("Out of memory");
 		}
 
 		new (m_pool) TPool();
 
-		Error error = m_pool->create(
-			allocCb, allocCbUserData, std::forward<TArgs>(args)...);
-
-		if(error)
-		{
-			ANKI_LOGF("Initialization failed");
-		}
-
+		m_pool->create(allocCb, allocCbUserData, std::forward<TArgs>(args)...);
 		m_pool->getRefcount().store(1);
 	}
 
@@ -133,8 +126,8 @@ public:
 	}
 
 	/// Copy
-	template<typename U>
-	GenericPoolAllocator& operator=(const GenericPoolAllocator<U, TPool>& b)
+	template<typename Y>
+	GenericPoolAllocator& operator=(const GenericPoolAllocator<Y, TPool>& b)
 	{
 		copy(b);
 		return *this;
@@ -169,12 +162,6 @@ public:
 			: alignof(value_type);
 
 		void* out = m_pool->allocate(size, alignment);
-
-		if(out == nullptr)
-		{
-			ANKI_LOGE("Allocation failed. There is not enough room");
-		}
-
 		return reinterpret_cast<pointer>(out);
 	}
 
@@ -193,11 +180,11 @@ public:
 	}
 
 	/// Call constructor with many arguments
-	template<typename U, typename... Args>
-	void construct(U* p, Args&&... args)
+	template<typename Y, typename... Args>
+	void construct(Y* p, Args&&... args)
 	{
 		// Placement new
-		::new((void *)p) U(std::forward<Args>(args)...);
+		::new((void *)p) Y(std::forward<Args>(args)...);
 	}
 
 	/// Call destructor
@@ -208,11 +195,11 @@ public:
 	}
 
 	/// Call destructor
-	template<typename U>
-	void destroy(U* p)
+	template<typename Y>
+	void destroy(Y* p)
 	{
 		ANKI_ASSERT(p != nullptr);
-		p->~U();
+		p->~Y();
 	}
 
 	/// Get the max allocation size
@@ -239,12 +226,12 @@ public:
 
 	/// Allocate a new object and call it's constructor
 	/// @note This is AnKi specific
-	template<typename U, typename... Args>
-	U* newInstance(Args&&... args)
+	template<typename Y, typename... Args>
+	Y* newInstance(Args&&... args)
 	{
-		typename rebind<U>::other alloc(*this);
+		typename rebind<Y>::other alloc(*this);
 
-		U* ptr = alloc.allocate(1);
+		Y* ptr = alloc.allocate(1);
 		if(ptr)
 		{
 			alloc.construct(ptr, std::forward<Args>(args)...);
@@ -255,16 +242,16 @@ public:
 
 	/// Allocate a new array of objects and call their constructor
 	/// @note This is AnKi specific
-	template<typename U>
-	U* newArray(size_type n)
+	template<typename Y>
+	Y* newArray(size_type n)
 	{
-		typename rebind<U>::other alloc(*this);
+		typename rebind<Y>::other alloc(*this);
 
-		U* ptr = alloc.allocate(n);
+		Y* ptr = alloc.allocate(n);
 		if(ptr)
 		{
 			// Call the constuctors
-			for(size_type i = 0; i < n; i++)
+			for(auto i = 0; i < n; i++)
 			{
 				alloc.construct(&ptr[i]);
 			}
@@ -275,16 +262,16 @@ public:
 
 	/// Allocate a new array of objects and call their constructor
 	/// @note This is AnKi specific
-	template<typename U>
-	U* newArray(size_type n, const U& v)
+	template<typename Y>
+	Y* newArray(size_type n, const Y& v)
 	{
-		typename rebind<U>::other alloc(*this);
+		typename rebind<Y>::other alloc(*this);
 
-		U* ptr = alloc.allocate(n);
+		Y* ptr = alloc.allocate(n);
 		if(ptr)
 		{
 			// Call the constuctors
-			for(size_type i = 0; i < n; i++)
+			for(auto i = 0; i < n; i++)
 			{
 				alloc.construct(&ptr[i], v);
 			}
@@ -295,10 +282,10 @@ public:
 
 	/// Call the destructor and deallocate an object
 	/// @note This is AnKi specific
-	template<typename U>
-	void deleteInstance(U* ptr)
+	template<typename Y>
+	void deleteInstance(Y* ptr)
 	{
-		typename rebind<U>::other alloc(*this);
+		typename rebind<Y>::other alloc(*this);
 
 		if(ptr != nullptr)
 		{
@@ -309,10 +296,10 @@ public:
 
 	/// Call the destructor and deallocate an array of objects
 	/// @note This is AnKi specific
-	template<typename U>
-	void deleteArray(U* ptr, size_type n)
+	template<typename Y>
+	void deleteArray(Y* ptr, size_type n)
 	{
-		typename rebind<U>::other alloc(*this);
+		typename rebind<Y>::other alloc(*this);
 
 		if(ptr != nullptr)
 		{

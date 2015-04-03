@@ -111,16 +111,13 @@ Error FramebufferHandle::create(CommandBufferHandle& commands,
 	using DeleteCommand = DeleteObjectCommand<FramebufferImpl>;
 	using Deleter = DeferredDeleter<FramebufferImpl, DeleteCommand>;
 
-	Error err = Base::create(commands.get().getManager(), Deleter());
-	if(!err)
-	{
-		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
+	Base::create(commands.get().getManager(), Deleter());
 
-		commands.get().pushBackNewCommand<CreateFramebufferCommand>(
-			*this, init);
-	}
+	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
-	return err;
+	commands.get().pushBackNewCommand<CreateFramebufferCommand>(*this, init);
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

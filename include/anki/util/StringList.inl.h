@@ -24,14 +24,14 @@ inline void StringList::destroy(TAllocator alloc)
 
 //==============================================================================
 template<typename TAllocator>
-inline Error StringList::join(
+inline void StringList::join(
 	TAllocator alloc,
 	const CString& separator,
 	String& out) const
 {
 	if(Base::isEmpty())
 	{
-		return ErrorCode::NONE;
+		return;
 	}
 
 	// Count the characters
@@ -46,11 +46,7 @@ inline Error StringList::join(
 	ANKI_ASSERT(charCount > 0);
 
 	// Allocate
-	Error err = out.create(alloc, '?', charCount);
-	if(err)
-	{
-		return err;
-	}
+	out.create(alloc, '?', charCount);
 
 	// Append to output
 	Char* to = &out[0];
@@ -67,41 +63,31 @@ inline Error StringList::join(
 			to += sepLen;
 		}
 	}
-
-	return err;
 }
 
 //==============================================================================
 template<typename TAllocator>
-inline Error StringList::splitString(
+inline void StringList::splitString(
 	TAllocator alloc,
 	const CString& s, 
 	const Char separator)
 {
 	ANKI_ASSERT(Base::isEmpty());
 
-	Error err = ErrorCode::NONE;
 	const Char* begin = &s[0];
 	const Char* end = begin;
 
-	while(!err)
+	while(1)
 	{
 		if(*end == '\0')
 		{
 			if(begin < end)
 			{
-				err = Base::emplaceBack(alloc);
+				Base::emplaceBack(alloc);
 
 				String str;
-				if(!err)
-				{
-					err = str.create(alloc, begin, end);
-				}
-
-				if(!err)
-				{
-					Base::getBack() = std::move(str);
-				}
+				str.create(alloc, begin, end);
+				Base::getBack() = std::move(str);
 			}
 
 			break;
@@ -110,19 +96,13 @@ inline Error StringList::splitString(
 		{
 			if(begin < end)
 			{
-				err = Base::emplaceBack(alloc);
+				Base::emplaceBack(alloc);
 
 				String str;
-				if(!err)
-				{
-					err = str.create(alloc, begin, end);
-				}
+				str.create(alloc, begin, end);
 
-				if(!err)
-				{
-					Base::getBack() = std::move(str);
-					begin = end + 1;
-				}
+				Base::getBack() = std::move(str);
+				begin = end + 1;
 			}
 			else
 			{
@@ -132,29 +112,18 @@ inline Error StringList::splitString(
 
 		++end;
 	}
-
-	return err;
 }
 
 //==============================================================================
 template<typename TAllocator, typename... TArgs>
-inline Error StringList::pushBackSprintf(
+inline void StringList::pushBackSprintf(
 	TAllocator alloc, const TArgs&... args)
 {
 	String str;
-	Error err = str.sprintf(alloc, args...);
+	str.sprintf(alloc, args...);
 	
-	if(!err)
-	{
-		err = Base::emplaceBack(alloc);
-	}
-
-	if(!err)
-	{
-		Base::getBack() = std::move(str);
-	}
-
-	return err;
+	Base::emplaceBack(alloc);
+	Base::getBack() = std::move(str);
 }
 
 } // end namespace anki

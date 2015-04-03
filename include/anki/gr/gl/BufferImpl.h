@@ -38,7 +38,7 @@ public:
 	///		   Put NULL if you want just to allocate memory
 	/// @param sizeInBytes The size of the buffer that we will allocate in bytes
 	/// @param flags GL access flags
-	ANKI_USE_RESULT Error create(
+	void create(
 		GLenum target, const void* dataPtr, U32 sizeInBytes, GLbitfield flags);
 
 	GLenum getTarget() const

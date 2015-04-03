@@ -60,40 +60,27 @@ Error Light::create(const CString& name,
 	LightComponent::LightType type,
 	CollisionShape* shape)
 {
-	Error err = SceneNode::create(name);
-	if(err) return err;
+	ANKI_CHECK(SceneNode::create(name));
 
 	SceneComponent* comp;
 
 	// Move component
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
-
-	err = addComponent(comp, true);
-	if(err) return err;
+	addComponent(comp, true);
 
 	// Light component
 	comp = getSceneAllocator().newInstance<LightComponent>(this, type);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
-
-	err = addComponent(comp, true);
-	if(err) return err;
+	addComponent(comp, true);
 
 	// Feedback component
 	comp = getSceneAllocator().newInstance<LightFeedbackComponent>(this);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
-
-	err = addComponent(comp, true);
-	if(err) return err;
+	addComponent(comp, true);
 
 	// Spatial component
 	comp = getSceneAllocator().newInstance<SpatialComponent>(this, shape);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY; 
+	addComponent(comp, true);
 
-	err = addComponent(comp, true);
-	if(err) return err;
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -150,37 +137,21 @@ void Light::onShapeUpdateCommon(LightComponent& light)
 Error Light::loadLensFlare(const CString& filename)
 {
 	ANKI_ASSERT(tryGetComponent<LensFlareComponent>() == nullptr);
-	Error err = ErrorCode::NONE;
 
 	LensFlareComponent* flareComp = 
 		getSceneAllocator().newInstance<LensFlareComponent>(this);
 	
-	if(flareComp)
-	{
-		err = flareComp->create(filename);
-	}
-	else
-	{
-		err = ErrorCode::OUT_OF_MEMORY;
-	}
-
-	if(!err)
-	{
-		err = addComponent(flareComp);
-	}
-
-	if(!err)
-	{
-		flareComp->setAutomaticCleanup(true);
-	}
-
-	// Clean up on any error
-	if(err && flareComp)
+	Error err = ErrorCode::NONE;
+	if(err = flareComp->create(filename))
 	{
 		getSceneAllocator().deleteInstance(flareComp);
+		return err;
 	}
 
-	return err;
+	addComponent(flareComp);
+	flareComp->setAutomaticCleanup(true);
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -260,20 +231,16 @@ SpotLight::SpotLight(SceneGraph* scene)
 //==============================================================================
 Error SpotLight::create(const CString& name)
 {
-	Error err = Light::create(
-		name, LightComponent::LightType::SPOT, &m_frustum);
-	if(err) return err;
+	ANKI_CHECK(Light::create(
+		name, LightComponent::LightType::SPOT, &m_frustum));
 
 	FrustumComponent* fr = 
 		getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);
-	if(fr == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
 	fr->setShadowCaster(true);
-	
-	err = addComponent(fr, true);
-	if(err) return err;
+	addComponent(fr, true);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

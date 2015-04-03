@@ -64,9 +64,9 @@ public:
 
 	SceneFrameAllocator<U8> getSceneFrameAllocator() const;
 
-	ANKI_USE_RESULT Error addChild(SceneNode* obj)
+	void addChild(SceneNode* obj)
 	{
-		return Base::addChild(getSceneAllocator(), obj);
+		Base::addChild(getSceneAllocator(), obj);
 	}
 
 	/// This is called by the scene every frame after logic and before
@@ -168,8 +168,7 @@ public:
 protected:
 	/// Append a component to the components container. The SceneNode will not
 	/// take ownership
-	ANKI_USE_RESULT Error addComponent(
-		SceneComponent* comp, Bool transferOwnership = false);
+	void addComponent(SceneComponent* comp, Bool transferOwnership = false);
 
 	/// Remove a component from the container
 	void removeComponent(SceneComponent* comp);

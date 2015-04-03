@@ -287,39 +287,30 @@ ParticleEmitter::~ParticleEmitter()
 Error ParticleEmitter::create(
 	const CString& name, const CString& filename)
 {
-	Error err = SceneNode::create(name);
+	ANKI_CHECK(SceneNode::create(name));
 	SceneComponent* comp;
 
 	// Load resource
-	err = m_particleEmitterResource.load(filename, &getResourceManager());
-	if(err) return err;
+	ANKI_CHECK(m_particleEmitterResource.load(filename, &getResourceManager()));
 
 	// Move component
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	err = addComponent(comp);
-	if(err) return err;
+	addComponent(comp);
 	comp->setAutomaticCleanup(true);
 
 	// Spatial component
 	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_obb);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-	err = addComponent(comp);
-	if(err) return err;
+	addComponent(comp);
 	comp->setAutomaticCleanup(true);
 
 	// Render component
 	ParticleEmitterRenderComponent* rcomp = 
 		getSceneAllocator().newInstance<ParticleEmitterRenderComponent>(this);
-	if(rcomp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	err = rcomp->create();
-	if(err) return err;
+	ANKI_CHECK(rcomp->create());
 
-	err = addComponent(comp);
-	if(err) return err;
+	addComponent(comp);
 	comp->setAutomaticCleanup(true);
 
 	// Other
@@ -335,33 +326,29 @@ Error ParticleEmitter::create(
 
 	if(m_usePhysicsEngine)
 	{
-		err = createParticlesSimulation(&getSceneGraph());
+		createParticlesSimulation(&getSceneGraph());
 		m_simulationType = SimulationType::PHYSICS_ENGINE;
 	}
 	else
 	{
-		err = createParticlesSimpleSimulation();
+		createParticlesSimpleSimulation();
 		m_simulationType = SimulationType::SIMPLE;
 	}
-
-	if(err) return err;
 
 	// Create the vertex buffer and object
 	CommandBufferHandle cmd;
 	GrManager& gr = getSceneGraph().getGrManager();
-	err = cmd.create(&gr);
-	if(err) return err;
+	ANKI_CHECK(cmd.create(&gr));
 
 	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
-	err = m_vertBuff.create(cmd, GL_ARRAY_BUFFER, nullptr, buffSize, 
-		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-	if(err) return err;
+	ANKI_CHECK(m_vertBuff.create(cmd, GL_ARRAY_BUFFER, nullptr, buffSize, 
+		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
 	cmd.finish(); /// TODO Optimize serialization
 	m_vertBuffMapping = 
 		static_cast<U8*>(m_vertBuff.getPersistentMappingAddress());
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -418,7 +405,7 @@ void ParticleEmitter::onMoveComponentUpdate(MoveComponent& move)
 }
 
 //==============================================================================
-Error ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
+void ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 {
 #if 0
 	collShape = getSceneAllocator().newInstance<btSphereShape>(particle.size);
@@ -444,40 +431,25 @@ Error ParticleEmitter::createParticlesSimulation(SceneGraph* scene)
 		particles.push_back(part);
 	}
 #endif
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error ParticleEmitter::createParticlesSimpleSimulation()
+void ParticleEmitter::createParticlesSimpleSimulation()
 {
-	Error err = m_particles.create(getSceneAllocator(), m_maxNumOfParticles);
-	if(err)
-	{
-		return err;
-	}
+	m_particles.create(getSceneAllocator(), m_maxNumOfParticles);
 
 	for(U i = 0; i < m_maxNumOfParticles; i++)
 	{
 		ParticleSimple* part = 
 			getSceneAllocator().newInstance<ParticleSimple>();
 
-		if(part)
-		{
-			part->m_size = 
-				getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
-			part->m_alpha = 
-				getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
+		part->m_size = 
+			getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
+		part->m_alpha = 
+			getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
 
-			m_particles[i] = part;
-		}
-		else
-		{
-			err = ErrorCode::OUT_OF_MEMORY;
-			break;
-		}
+		m_particles[i] = part;
 	}
-
-	return err;
 }
 
 //==============================================================================

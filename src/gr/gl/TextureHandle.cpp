@@ -35,10 +35,10 @@ public:
 	{
 		ANKI_ASSERT(cmdb);
 
-		Error err = m_tex.get().create(m_init);
+		m_tex.get().create(m_init);
 
 		GlObject::State oldState = m_tex.get().setStateAtomically(
-			(err) ? GlObject::State::ERROR : GlObject::State::CREATED);
+			GlObject::State::CREATED);
 		ANKI_ASSERT(oldState == GlObject::State::TO_BE_CREATED);
 		(void)oldState;
 
@@ -58,7 +58,7 @@ public:
 			}
 		}
 
-		return err;
+		return ErrorCode::NONE;
 	}
 };
 
@@ -181,17 +181,14 @@ Error TextureHandle::create(
 	using DeleteCommand = DeleteObjectCommand<TextureImpl>;
 	using Deleter = DeferredDeleter<TextureImpl, DeleteCommand>;
 
-	Error err = Base::create(commands.get().getManager(), Deleter());
-	if(!err)
-	{
-		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
+	Base::create(commands.get().getManager(), Deleter());
+	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
-		// Fire the command
-		commands.get().pushBackNewCommand<CreateTextureCommand>(
-			*this, init, init.m_copyDataBeforeReturn);
-	}
+	// Fire the command
+	commands.get().pushBackNewCommand<CreateTextureCommand>(
+		*this, init, init.m_copyDataBeforeReturn);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -348,14 +345,11 @@ Error SamplerHandle::create(CommandBufferHandle& commands)
 	using DeleteCommand = DeleteObjectCommand<SamplerImpl>;
 	using Deleter = DeferredDeleter<SamplerImpl, DeleteCommand>;
 
-	Error err = Base::create(commands.get().getManager(), Deleter());
-	if(!err)
-	{
-		get().setStateAtomically(GlObject::State::TO_BE_CREATED);
-		commands.get().pushBackNewCommand<CreateSamplerCommand>(*this);
-	}
+	Base::create(commands.get().getManager(), Deleter());
+	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
+	commands.get().pushBackNewCommand<CreateSamplerCommand>(*this);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

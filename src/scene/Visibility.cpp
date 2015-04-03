@@ -75,12 +75,9 @@ public:
 	VisibilityShared* m_shared;
 
 	/// Test a frustum component
-	ANKI_USE_RESULT Error test(SceneNode& testedNode,
-		U32 threadId, PtrSize threadsCount);
+	void test(SceneNode& testedNode, U32 threadId, PtrSize threadsCount);
 
-	ANKI_USE_RESULT Error combineTestResults(
-		FrustumComponent& frc,
-		PtrSize threadsCount);
+	void combineTestResults(FrustumComponent& frc, PtrSize threadsCount);
 
 	/// Do the tests
 	Error operator()(U32 threadId, PtrSize threadsCount)
@@ -102,7 +99,7 @@ public:
 			}
 
 			m_shared->m_barrier.wait();
-			ANKI_CHECK(test(*node, threadId, threadsCount));
+			test(*node, threadId, threadsCount);
 		}
 
 		return ErrorCode::NONE;
@@ -110,11 +107,9 @@ public:
 };
 
 //==============================================================================
-Error VisibilityTestTask::test(SceneNode& testedNode, 
+void VisibilityTestTask::test(SceneNode& testedNode, 
 	U32 threadId, PtrSize threadsCount)
 {
-	Error err = ErrorCode::NONE;
-
 	FrustumComponent& testedFr = 
 		testedNode.getComponent<FrustumComponent>();
 	Bool testedNodeShadowCaster = testedFr.getShadowCaster();
@@ -125,8 +120,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode,
 
 	FrustumComponent::VisibilityStats stats = testedFr.getLastVisibilityStats();
 
-	ANKI_CHECK(visible->create(
-		alloc, stats.m_renderablesCount, stats.m_lightsCount, 4));
+	visible->create(alloc, stats.m_renderablesCount, stats.m_lightsCount, 4);
 
 	m_shared->m_testResults[threadId] = visible;
 
@@ -138,11 +132,9 @@ Error VisibilityTestTask::test(SceneNode& testedNode,
 	choseStartEnd(threadId, threadsCount, nodesCount, start, end);
 
 	// Iterate range of nodes
-	err = m_shared->m_scene->iterateSceneNodes(
+	Error err = m_shared->m_scene->iterateSceneNodes(
 		start, end, [&](SceneNode& node) -> Error
 	{
-		Error err = ErrorCode::NONE;
-
 		FrustumComponent* fr = node.tryGetComponent<FrustumComponent>();
 		
 		// Skip if it is the same
@@ -164,7 +156,7 @@ Error VisibilityTestTask::test(SceneNode& testedNode,
 
 		U spIdx = 0;
 		U count = 0;
-		err = node.iterateComponentsOfType<SpatialComponent>(
+		Error err = node.iterateComponentsOfType<SpatialComponent>(
 			[&](SpatialComponent& sp)
 		{
 			if(testedFr.insideFrustum(sp))
@@ -182,10 +174,11 @@ Error VisibilityTestTask::test(SceneNode& testedNode,
 
 			return ErrorCode::NONE;
 		});
+		(void)err;
 
 		if(ANKI_UNLIKELY(count == 0))
 		{
-			return err;
+			return ErrorCode::NONE;
 		}
 
 		// Sort sub-spatials
@@ -222,54 +215,51 @@ Error VisibilityTestTask::test(SceneNode& testedNode,
 		{
 			if(r && r->getCastsShadow())
 			{
-				err = visible->moveBackRenderable(alloc, visibleNode);
+				visible->moveBackRenderable(alloc, visibleNode);
 			}
 		}
 		else
 		{
 			if(r)
 			{
-				err = visible->moveBackRenderable(alloc, visibleNode);
+				visible->moveBackRenderable(alloc, visibleNode);
 			}
 
 			LightComponent* l = node.tryGetComponent<LightComponent>();
-			if(!err && l)
+			if(l)
 			{
-				err = visible->moveBackLight(alloc, visibleNode);
+				visible->moveBackLight(alloc, visibleNode);
 
-				if(!err && l->getShadowEnabled() && fr)
+				if(l->getShadowEnabled() && fr)
 				{
 					LockGuard<SpinLock> l(m_shared->m_lock);
-					err = m_shared->m_frustumsList.pushBack(alloc, &node);
+					m_shared->m_frustumsList.pushBack(alloc, &node);
 				}
 			}
 
 			LensFlareComponent* lf = node.tryGetComponent<LensFlareComponent>();
-			if(!err && lf)
+			if(lf)
 			{
-				err = visible->moveBackLensFlare(alloc, visibleNode);
+				visible->moveBackLensFlare(alloc, visibleNode);
 				ANKI_ASSERT(visibleNode.m_node);
 			}
 		}
 		
-		return err;
+		return ErrorCode::NONE;
 	}); // end for
-
-	ANKI_CHECK(err);
+	(void)err;
 
 	// Gather the results from all threads
 	m_shared->m_barrier.wait();
 	
 	if(threadId == 0)
 	{
-		ANKI_CHECK(combineTestResults(testedFr, threadsCount));
+		combineTestResults(testedFr, threadsCount);
 	}
-
-	return err;
 }
 
 //==============================================================================
-ANKI_USE_RESULT Error VisibilityTestTask::combineTestResults(
+void VisibilityTestTask::combineTestResults(
 	FrustumComponent& frc,
 	PtrSize threadsCount)
 {
@@ -291,17 +281,12 @@ ANKI_USE_RESULT Error VisibilityTestTask::combineTestResults(
 
 	// Allocate
 	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
-	if(visible == nullptr)
-	{
-		return ErrorCode::OUT_OF_MEMORY;
-	}
 
-	ANKI_CHECK(
-		visible->create(
+	visible->create(
 		alloc, 
 		renderablesSize, 
 		lightsSize,
-		lensFlaresSize));
+		lensFlaresSize);
 
 	visible->prepareMerge();
 
@@ -361,8 +346,6 @@ ANKI_USE_RESULT Error VisibilityTestTask::combineTestResults(
 	// Sort the renderables
 	std::sort(
 		visible->getRenderablesBegin(), visible->getRenderablesEnd(), comp);
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -370,46 +353,29 @@ ANKI_USE_RESULT Error VisibilityTestTask::combineTestResults(
 //==============================================================================
 
 //==============================================================================
-Error VisibilityTestResults::create(
+void VisibilityTestResults::create(
 	SceneFrameAllocator<U8> alloc,
 	U32 renderablesReservedSize,
 	U32 lightsReservedSize,
 	U32 lensFlaresReservedSize)
 {
-	Error err = m_renderables.create(alloc, renderablesReservedSize);
-	
-	if(!err)
-	{
-		err = m_lights.create(alloc, lightsReservedSize);
-	}
-
-	if(!err)
-	{
-		err = m_flares.create(alloc, lensFlaresReservedSize);
-	}
-
-	return err;
+	m_renderables.create(alloc, renderablesReservedSize);
+	m_lights.create(alloc, lightsReservedSize);
+	m_flares.create(alloc, lensFlaresReservedSize);
 }
 
 //==============================================================================
-Error VisibilityTestResults::moveBack(
+void VisibilityTestResults::moveBack(
 	SceneFrameAllocator<U8> alloc, Container& c, U32& count, VisibleNode& x)
 {
-	Error err = ErrorCode::NONE;
-
 	if(count + 1 > c.getSize())
 	{
 		// Need to grow
 		U newSize = (c.getSize() != 0) ? c.getSize() * 2 : 2;
-		err = c.resize(alloc, newSize);
+		c.resize(alloc, newSize);
 	}
 
-	if(!err)
-	{
-		c[count++] = x;
-	}
-
-	return err;
+	c[count++] = x;
 }
 
 //==============================================================================
@@ -424,7 +390,7 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 	
 	VisibilityShared shared(threadPool.getThreadsCount());
 	shared.m_scene = &scene;
-	ANKI_CHECK(shared.m_frustumsList.pushBack(scene.getFrameAllocator(), &fsn));
+	shared.m_frustumsList.pushBack(scene.getFrameAllocator(), &fsn);
 
 	Array<VisibilityTestTask, Threadpool::MAX_THREADS> tasks;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)

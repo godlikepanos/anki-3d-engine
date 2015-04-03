@@ -7,62 +7,44 @@ namespace anki {
 
 //==============================================================================
 template<typename TAllocator>
-inline Error String::create(TAllocator alloc, const CStringType& cstr)
+inline void String::create(TAllocator alloc, const CStringType& cstr)
 {
-	Error err = ErrorCode::NONE;
-	
 	auto len = cstr.getLength();
 	if(len > 0)
 	{
 		auto size = len + 1;
-		err = m_data.create(alloc, size);
-
-		if(!err)
-		{
-			std::memcpy(&m_data[0], &cstr[0], sizeof(Char) * size);
-		}
+		m_data.create(alloc, size);
+		std::memcpy(&m_data[0], &cstr[0], sizeof(Char) * size);
 	}
-
-	return err;
 }
 
 //==============================================================================
 template<typename TAllocator>
-inline Error String::create(
+inline void String::create(
 	TAllocator alloc, ConstIterator first, ConstIterator last)
 {
 	ANKI_ASSERT(first != 0 && last != 0);
 	auto length = last - first;
-	Error err = m_data.create(alloc, length + 1);
+	m_data.create(alloc, length + 1);
 
-	if(!err)
-	{
-		std::memcpy(&m_data[0], first, length);
-		m_data[length] = '\0';
-	}
-
-	return err;
+	std::memcpy(&m_data[0], first, length);
+	m_data[length] = '\0';
 }
 
 //==============================================================================
 template<typename TAllocator>
-inline Error String::create(TAllocator alloc, Char c, PtrSize length)
+inline void String::create(TAllocator alloc, Char c, PtrSize length)
 {
 	ANKI_ASSERT(c != '\0');
-	Error err = m_data.create(alloc, length + 1);
+	m_data.create(alloc, length + 1);
 
-	if(!err)
-	{
-		std::memset(&m_data[0], c, length);
-		m_data[length] = '\0';
-	}
-
-	return err;
+	std::memset(&m_data[0], c, length);
+	m_data[length] = '\0';
 }
 
 //==============================================================================
 template<typename TAllocator>
-inline Error String::appendInternal(
+inline void String::appendInternal(
 	TAllocator alloc, const Char* str, PtrSize strSize)
 {
 	ANKI_ASSERT(str != nullptr);
@@ -77,29 +59,23 @@ inline Error String::appendInternal(
 	}
 
 	DArray<Char> newData;	
-	Error err = newData.create(alloc, size + strSize - 1);
+	newData.create(alloc, size + strSize - 1);
 
-	if(!err)
+	if(!m_data.isEmpty())
 	{
-		if(!m_data.isEmpty())
-		{
-			std::memcpy(&newData[0], &m_data[0], sizeof(Char) * size);
-		}
-
-		std::memcpy(&newData[size - 1], str, sizeof(Char) * strSize);
-
-		m_data.destroy(alloc);
-		m_data = std::move(newData);
+		std::memcpy(&newData[0], &m_data[0], sizeof(Char) * size);
 	}
 
-	return err;
+	std::memcpy(&newData[size - 1], str, sizeof(Char) * strSize);
+
+	m_data.destroy(alloc);
+	m_data = std::move(newData);
 }
 
 //==============================================================================
 template<typename TAllocator>
-inline Error String::sprintf(TAllocator alloc, CString fmt, ...)
+inline void String::sprintf(TAllocator alloc, CString fmt, ...)
 {
-	Error err = ErrorCode::NONE;
 	Array<Char, 512> buffer;
 	va_list args;
 
@@ -109,39 +85,31 @@ inline Error String::sprintf(TAllocator alloc, CString fmt, ...)
 
 	if(len < 0)
 	{
-		ANKI_LOGE("vsnprintf() failed");
-		err = ErrorCode::FUNCTION_FAILED;
+		ANKI_LOGF("vsnprintf() failed");
 	}
 	else if(static_cast<PtrSize>(len) >= sizeof(buffer))
 	{
 		I size = len + 1;
-		err = m_data.create(alloc, size);
+		m_data.create(alloc, size);
 
-		if(!err)
-		{
-			va_start(args, fmt);
-			len = std::vsnprintf(&m_data[0], size, &fmt[0], args);
-			va_end(args);
+		va_start(args, fmt);
+		len = std::vsnprintf(&m_data[0], size, &fmt[0], args);
+		va_end(args);
 
-			(void)len;
-			ANKI_ASSERT((len + 1) == size);
-		}
+		(void)len;
+		ANKI_ASSERT((len + 1) == size);
 	}
 	else
 	{
 		// buffer was enough
-		err = create(alloc, CString(&buffer[0]));
+		create(alloc, CString(&buffer[0]));
 	}
-
-	return err;
 }
 
 //==============================================================================
 template<typename TAllocator, typename TNumber>
-inline Error String::toString(TAllocator alloc, TNumber number)
+inline void String::toString(TAllocator alloc, TNumber number)
 {
-	Error err = ErrorCode::NONE;
-
 	destroy(alloc);
 
 	Array<Char, 512> buff;
@@ -150,15 +118,12 @@ inline Error String::toString(TAllocator alloc, TNumber number)
 
 	if(ret < 0 || ret > static_cast<I>(buff.getSize()))
 	{
-		ANKI_LOGE("To small intermediate buffer");
-		err = ErrorCode::FUNCTION_FAILED;
+		ANKI_LOGF("To small intermediate buffer");
 	}
 	else
 	{
-		err = create(alloc, &buff[0]);
+		create(alloc, &buff[0]);
 	}
-
-	return err;
 }
 
 } // end namespace anki

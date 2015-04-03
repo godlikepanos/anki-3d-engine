@@ -37,17 +37,13 @@ Error MeshLoader::load(
 //==============================================================================
 Error MeshLoader::loadInternal(const CString& filename)
 {
-	Error err = ErrorCode::NONE;
-
 	File file;
-	err = file.open(filename, 
+	ANKI_CHECK(file.open(filename, 
 		File::OpenFlag::READ | File::OpenFlag::BINARY 
-		| File::OpenFlag::LITTLE_ENDIAN);
-	if(err) return err;
+		| File::OpenFlag::LITTLE_ENDIAN));
 
 	// Load header
-	err = file.read(&m_header, sizeof(m_header));
-	if(err) return err;
+	ANKI_CHECK(file.read(&m_header, sizeof(m_header)));
 
 	//
 	// Check header
@@ -196,10 +192,8 @@ Error MeshLoader::loadInternal(const CString& filename)
 	//
 	// Read submesh info
 	//
-	err = m_subMeshes.create(m_alloc, m_header.m_subMeshCount);
-	if(err) return err;
-	err = file.read(&m_subMeshes[0], m_subMeshes.getSizeInBytes());
-	if(err) return err;
+	m_subMeshes.create(m_alloc, m_header.m_subMeshCount);
+	ANKI_CHECK(file.read(&m_subMeshes[0], m_subMeshes.getSizeInBytes()));
 
 	// Checks
 	U idxSum = 0;
@@ -225,10 +219,8 @@ Error MeshLoader::loadInternal(const CString& filename)
 	//
 	// Read indices
 	//
-	err = m_indices.create(m_alloc, m_header.m_totalIndicesCount * sizeof(U16));
-	if(err) return err;
-	err = file.read(&m_indices[0], m_indices.getSizeInBytes());
-	if(err) return err;
+	m_indices.create(m_alloc, m_header.m_totalIndicesCount * sizeof(U16));
+	ANKI_CHECK(file.read(&m_indices[0], m_indices.getSizeInBytes()));
 
 	//
 	// Read vertices
@@ -240,12 +232,10 @@ Error MeshLoader::loadInternal(const CString& filename)
 		+ 2 * sizeof(U16) // uvs
 		+ ((hasBoneInfo) ? (4 * sizeof(U8) + 4 * sizeof(U16)) : 0);
 
-	err = m_verts.create(m_alloc, m_header.m_totalVerticesCount * m_vertSize);
-	if(err) return err;
-	err = file.read(&m_verts[0], m_verts.getSizeInBytes());
-	if(err) return err;
+	m_verts.create(m_alloc, m_header.m_totalVerticesCount * m_vertSize);
+	ANKI_CHECK(file.read(&m_verts[0], m_verts.getSizeInBytes()));
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

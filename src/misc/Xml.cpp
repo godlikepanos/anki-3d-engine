@@ -104,14 +104,14 @@ Error XmlElement::getFloats(DArrayAuto<F64>& out) const
 	StringList list;
 	if(!err)
 	{
-		err = list.splitString(m_alloc, txt, ' ');
+		list.splitString(m_alloc, txt, ' ');
 	}
 
 	out = std::move(DArrayAuto<F64>(m_alloc));
 
 	if(!err)
 	{
-		err = out.create(list.getSize());
+		out.create(list.getSize());
 	}
 
 	auto it = list.getBegin();

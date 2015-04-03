@@ -16,7 +16,8 @@ SceneNode::SceneNode(SceneGraph* scene)
 //==============================================================================
 Error SceneNode::create(const CString& name)
 {
-	return m_name.create(getSceneAllocator(), name);
+	m_name.create(getSceneAllocator(), name);
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -97,35 +98,28 @@ U32 SceneNode::getLastUpdateFrame() const
 }
 
 //==============================================================================
-Error SceneNode::addComponent(SceneComponent* comp, Bool transferOwnership)
+void SceneNode::addComponent(SceneComponent* comp, Bool transferOwnership)
 {
 	ANKI_ASSERT(comp);
-	Error err = ErrorCode::NONE;
 
 #if ANKI_ASSERTIONS
-	err = iterateComponents([&](const SceneComponent& bcomp) -> Error
+	Error err = iterateComponents([&](const SceneComponent& bcomp) -> Error
 	{
 		ANKI_ASSERT(comp != &bcomp);
 		return ErrorCode::NONE;
 	});
+	(void)err;
 #endif
 
 	if(m_components.getSize() < m_componentsCount + 1u)
 	{
 		// Not enough room
 		const U extra = 2;
-		err = m_components.resize(
-			getSceneAllocator(), m_componentsCount + 1 + extra);
+		m_components.resize(getSceneAllocator(), m_componentsCount + 1 + extra);
 	}
 
-	if(!err)
-	{
-		m_components[m_componentsCount++] = comp;
-
-		comp->setAutomaticCleanup(transferOwnership);
-	}
-
-	return err;
+	m_components[m_componentsCount++] = comp;
+	comp->setAutomaticCleanup(transferOwnership);
 }
 
 //==============================================================================

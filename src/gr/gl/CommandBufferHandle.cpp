@@ -140,16 +140,13 @@ Error CommandBufferHandle::create(GrManager* manager,
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(manager);
 
-	Error err = Base::create(
+	Base::create(
 		*manager,
 		GrHandleDefaultDeleter<CommandBufferImpl>());
 
-	if(!err)
-	{
-		err = get().create(hints);
-	}
+	get().create(hints);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

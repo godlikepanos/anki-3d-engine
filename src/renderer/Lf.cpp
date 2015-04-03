@@ -64,10 +64,10 @@ Error Lf::initPseudo(const ConfigSet& config,
 	// Load program 1
 	StringAuto pps(getAllocator());
 
-	ANKI_CHECK(pps.sprintf(
+	pps.sprintf(
 		"#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n", 
 		m_r->getPps().getHdr()._getWidth(),
-		m_r->getPps().getHdr()._getHeight()));
+		m_r->getPps().getHdr()._getHeight());
 
 	ANKI_CHECK(m_pseudoFrag.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfPseudoPass.frag.glsl", pps.toCString(), "r_"));
@@ -89,8 +89,7 @@ Error Lf::initSprite(const ConfigSet& config,
 	// Load program + ppline
 	StringAuto pps(getAllocator());
 
-	ANKI_CHECK(pps.sprintf("#define MAX_SPRITES %u\n",
-		m_maxSpritesPerFlare));
+	pps.sprintf("#define MAX_SPRITES %u\n", m_maxSpritesPerFlare);
 
 	ANKI_CHECK(m_realVert.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfSpritePass.vert.glsl", pps.toCString(), "r_"));
@@ -122,132 +121,75 @@ Error Lf::initSprite(const ConfigSet& config,
 Error Lf::initOcclusion(
 	const ConfigSet& config, CommandBufferHandle& cmdBuff)
 {
-	Error err = ErrorCode::NONE;
-
 	// Init vert buff
 	U buffSize = sizeof(Vec3) * m_maxFlares;
 
 	for(U i = 0; i < m_positionsVertBuff.getSize(); ++i)
 	{
-		err = m_positionsVertBuff[i].create(
+		ANKI_CHECK(m_positionsVertBuff[i].create(
 			cmdBuff, GL_ARRAY_BUFFER, nullptr, buffSize, 
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		if(err)
-		{
-			return err;
-		}
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 	}
 
 	// Init MVP buff
-	err = m_mvpBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
-		nullptr, sizeof(Mat4), GL_DYNAMIC_STORAGE_BIT);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_mvpBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
+		nullptr, sizeof(Mat4), GL_DYNAMIC_STORAGE_BIT));
 
 	// Shaders
-	err = m_occlusionVert.load("shaders/PpsLfOcclusion.vert.glsl",
-		&getResourceManager());
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_occlusionVert.load("shaders/PpsLfOcclusion.vert.glsl",
+		&getResourceManager()));
 
-	err = m_occlusionFrag.load("shaders/PpsLfOcclusion.frag.glsl",
-		&getResourceManager());
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_occlusionFrag.load("shaders/PpsLfOcclusion.frag.glsl",
+		&getResourceManager()));
 
-	err = m_occlusionPpline.create(cmdBuff,
-		{m_occlusionVert->getGrShader(), m_occlusionFrag->getGrShader()});
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_occlusionPpline.create(cmdBuff,
+		{m_occlusionVert->getGrShader(), m_occlusionFrag->getGrShader()}));
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error Lf::initInternal(const ConfigSet& config)
 {
-	Error err = ErrorCode::NONE;
 	m_enabled = config.get("pps.lf.enabled") 
 		&& config.get("pps.hdr.enabled");
 	if(!m_enabled)
 	{
-		return err;
+		return ErrorCode::NONE;
 	}
 
 	CommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGrManager());
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(cmdBuff.create(&getGrManager()));
 
-	err = initPseudo(config, cmdBuff);
-	if(err)
-	{
-		return err;
-	}
-
-	err = initSprite(config, cmdBuff);
-	if(err)
-	{
-		return err;
-	}
-
-	err = initOcclusion(config, cmdBuff);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(initPseudo(config, cmdBuff));
+	ANKI_CHECK(initSprite(config, cmdBuff));
+	ANKI_CHECK(initOcclusion(config, cmdBuff));
 
 	// Create the render target
-	err = m_r->createRenderTarget(m_r->getPps().getHdr()._getWidth(), 
-		m_r->getPps().getHdr()._getHeight(), GL_RGB8, 1, m_rt);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_r->createRenderTarget(m_r->getPps().getHdr()._getWidth(), 
+		m_r->getPps().getHdr()._getHeight(), GL_RGB8, 1, m_rt));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	err = m_fb.create(cmdBuff, fbInit);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
 
 	// Blit
-	err = m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager());
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(
+		m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager()));
 
-	err = m_r->createDrawQuadPipeline(
-		m_blitFrag->getGrShader(), m_blitPpline);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_r->createDrawQuadPipeline(
+		m_blitFrag->getGrShader(), m_blitPpline));
 
 	cmdBuff.flush();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error Lf::runOcclusionTests(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
-	Error err = ErrorCode::NONE;
 
 	// Retrieve some things
 	SceneGraph& scene = m_r->getSceneGraph();
@@ -315,7 +257,7 @@ Error Lf::runOcclusionTests(CommandBufferHandle& cmdb)
 		cmdb.enableDepthTest(false);
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

@@ -669,12 +669,8 @@ Error File::readAllText(
 
 	if(size != 0)
 	{
-		err = out.create(alloc, '?', size);
-
-		if(!err)
-		{
-			err = read(&out[0], size);
-		}
+		out.create(alloc, '?', size);
+		err = read(&out[0], size);
 	}
 	else
 	{

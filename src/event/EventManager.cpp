@@ -37,10 +37,10 @@ SceneFrameAllocator<U8> EventManager::getSceneFrameAllocator() const
 }
 
 //==============================================================================
-Error EventManager::registerEvent(Event* event)
+void EventManager::registerEvent(Event* event)
 {
 	ANKI_ASSERT(event);
-	return m_events.pushBack(getSceneAllocator(), event);
+	m_events.pushBack(getSceneAllocator(), event);
 }
 
 //==============================================================================

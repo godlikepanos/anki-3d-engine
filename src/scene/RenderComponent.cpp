@@ -123,18 +123,18 @@ Error RenderComponent::create()
 	vis.m_count = &count;
 	vis.m_alloc = m_alloc;
 
-	Error err = m_vars.create(m_alloc, mtl.getVariables().getSize());
+	m_vars.create(m_alloc, mtl.getVariables().getSize());
 
 	auto it = mtl.getVariables().getBegin();
 	auto end = mtl.getVariables().getEnd();
-	for(; !err && it != end; it++)
+	for(; it != end; it++)
 	{
 		const MaterialVariable* mv = (*it);
 		vis.m_mvar = mv;
-		err = mv->acceptVisitor(vis);
+		ANKI_CHECK(mv->acceptVisitor(vis));
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 }  // end namespace anki

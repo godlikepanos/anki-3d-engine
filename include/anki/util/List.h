@@ -294,20 +294,28 @@ public:
 
 	/// Copy an element at the end of the list.
 	template<typename TAllocator>
-	ANKI_USE_RESULT Error pushBack(TAllocator alloc, const Value& x);
+	void pushBack(TAllocator alloc, const Value& x)
+	{
+		Node* node = alloc.template newInstance<Node>(x);
+		pushBackNode(node);
+	}
 
 	/// Construct an element at the end of the list.
 	template<typename TAllocator, typename... TArgs>
-	ANKI_USE_RESULT Error emplaceBack(TAllocator alloc, TArgs&&... args);
+	void emplaceBack(TAllocator alloc, TArgs&&... args)
+	{
+		Node* node = alloc.template newInstance<Node>(
+			std::forward<TArgs>(args)...);
+		pushBackNode(node);
+	}
 
 	/// Construct element at the beginning of the list.
 	template<typename TAllocator, typename... TArgs>
-	ANKI_USE_RESULT Error emplaceFront(TAllocator alloc, TArgs&&... args);
+	void emplaceFront(TAllocator alloc, TArgs&&... args);
 
 	/// Construct element at the the given position.
 	template<typename TAllocator, typename... TArgs>
-	ANKI_USE_RESULT Error emplace(
-		TAllocator alloc, Iterator pos, TArgs&&... args);
+	void emplace(TAllocator alloc, Iterator pos, TArgs&&... args);
 
 	/// Pop a value from the back of the list.
 	template<typename TAllocator>

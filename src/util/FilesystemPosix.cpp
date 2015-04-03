@@ -123,7 +123,8 @@ Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
-	return out.create(alloc, home);
+	out.create(alloc, home);
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

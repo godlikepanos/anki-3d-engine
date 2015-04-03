@@ -31,7 +31,7 @@ void Hierarchy<T>::destroy(TAllocator alloc)
 //==============================================================================
 template<typename T>
 template<typename TAllocator>
-Error Hierarchy<T>::addChild(TAllocator alloc, Value* child)
+void Hierarchy<T>::addChild(TAllocator alloc, Value* child)
 {
 	ANKI_ASSERT(child != nullptr && "Null arg");
 	ANKI_ASSERT(child != getSelf() && "Cannot put itself");
@@ -42,9 +42,7 @@ Error Hierarchy<T>::addChild(TAllocator alloc, Value* child)
 		&& "Already has that child");
 
 	child->m_parent = getSelf();
-	Error err = m_children.emplaceBack(alloc, child);
-
-	return err;
+	m_children.emplaceBack(alloc, child);
 }
 
 //==============================================================================

@@ -13,7 +13,7 @@
 namespace anki {
 
 //==============================================================================
-Error CommandBufferImpl::create(const InitHints& hints)
+void CommandBufferImpl::create(const InitHints& hints)
 {
 	auto& pool = getManager().getAllocator().getMemoryPool();
 
@@ -24,8 +24,6 @@ Error CommandBufferImpl::create(const InitHints& hints)
 		InitHints::MAX_CHUNK_SIZE, 
 		ChainMemoryPool::ChunkGrowMethod::ADD,
 		hints.m_chunkSize);
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

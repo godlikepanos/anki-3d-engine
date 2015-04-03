@@ -102,7 +102,7 @@ static void getTextureInformation(
 //==============================================================================
 
 //==============================================================================
-Error TextureImpl::create(const Initializer& init)
+void TextureImpl::create(const Initializer& init)
 {
 	GrAllocator<U8> alloc = getAllocator();
 
@@ -255,11 +255,7 @@ Error TextureImpl::create(const Initializer& init)
 					{
 						PtrSize layerSize = init.m_data[level][0].m_size;
 						ANKI_ASSERT(layerSize > 0);
-						Error err = data.create(layerSize * m_depth);
-						if(err)
-						{
-							return err;
-						}
+						data.create(layerSize * m_depth);
 
 						for(U d = 0; d < m_depth; d++)
 						{
@@ -345,7 +341,6 @@ Error TextureImpl::create(const Initializer& init)
 	}
 
 	ANKI_CHECK_GL_ERROR();
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

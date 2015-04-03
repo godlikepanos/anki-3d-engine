@@ -195,8 +195,8 @@ private:
 
 	SimulationType m_simulationType = SimulationType::UNDEFINED;
 
-	ANKI_USE_RESULT Error createParticlesSimulation(SceneGraph* scene);
-	ANKI_USE_RESULT Error createParticlesSimpleSimulation();
+	void createParticlesSimulation(SceneGraph* scene);
+	void createParticlesSimpleSimulation();
 
 	ANKI_USE_RESULT Error doInstancingCalcs();
 

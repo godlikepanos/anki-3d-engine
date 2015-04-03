@@ -49,23 +49,21 @@ Error BlurringRenderingPass::initBlurring(
 
 	Array<StringAuto, 2> pps = {{getAllocator(), getAllocator()}};
 
-	ANKI_CHECK(
-		pps[1].sprintf(
+	pps[1].sprintf(
 		"#define HPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n", 
-		blurringDistance, height, samples));
+		blurringDistance, height, samples);
 
-	ANKI_CHECK(
-		pps[0].sprintf(
+	pps[0].sprintf(
 		"#define VPASS\n"
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES %u\n",
-		blurringDistance, width, samples));
+		blurringDistance, width, samples);
 
 	for(U i = 0; i < 2; i++)
 	{

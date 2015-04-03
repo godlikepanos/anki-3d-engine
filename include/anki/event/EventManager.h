@@ -61,7 +61,13 @@ public:
 
 	/// Create a new event
 	template<typename T, typename... Args>
-	ANKI_USE_RESULT Error newEvent(T*& event, Args... args);
+	ANKI_USE_RESULT Error newEvent(T*& event, Args... args)
+	{
+		event = getSceneAllocator().template newInstance<T>();
+		ANKI_CHECK(event->create(this, args...));
+		registerEvent(event);
+		return ErrorCode::NONE;
+	}
 
 	/// Delete an event. It actualy marks it for deletion
 	void deleteEvent(Event* event)
@@ -88,35 +94,11 @@ private:
 	F32 m_crntTime;
 
 	/// Add an event to the local container
-	ANKI_USE_RESULT Error registerEvent(Event* event);
+	void registerEvent(Event* event);
 
 	/// Remove an event from the container
 	void unregisterEvent(EventsContainer::Iterator it);
 };
-
-//==============================================================================
-template<typename T, typename... Args>
-inline Error EventManager::newEvent(T*& event, Args... args)
-{
-	Error err = ErrorCode::NONE;
-	event = getSceneAllocator().template newInstance<T>();
-	if(event == nullptr)
-	{
-		err = ErrorCode::OUT_OF_MEMORY;
-	}
-	
-	if(!err)
-	{
-		err = event->create(this, args...);
-	}
-
-	if(!err)
-	{
-		err = registerEvent(event);
-	}
-
-	return err;
-}
 /// @}
 
 } // end namespace anki

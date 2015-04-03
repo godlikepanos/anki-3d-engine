@@ -26,8 +26,6 @@ Animation::~Animation()
 //==============================================================================
 Error Animation::load(const CString& filename, ResourceInitializer& init)
 {
-	Error err = ErrorCode::NONE;
-
 	XmlElement el;
 	I64 tmp;
 	F64 ftmp;
@@ -74,7 +72,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 		ANKI_LOGE("Didn't found any channels");
 		return ErrorCode::USER_DATA;
 	}
-	ANKI_CHECK(m_channels.create(m_alloc, channelCount));
+	m_channels.create(m_alloc, channelCount);
 
 	// For all channels
 	channelCount = 0;
@@ -86,7 +84,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 		ANKI_CHECK(chEl.getChildElement("name", el));
 		CString strtmp;
 		ANKI_CHECK(el.getText(strtmp));
-		ANKI_CHECK(ch.m_name.create(m_alloc, strtmp));
+		ch.m_name.create(m_alloc, strtmp);
 
 		XmlElement keysEl, keyEl;
 
@@ -98,7 +96,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
-			ANKI_CHECK(ch.m_positions.create(m_alloc, count));
+			ch.m_positions.create(m_alloc, count);
 
 			count = 0;
 			do
@@ -135,7 +133,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 
 			U32 count = 0;
 			ANKI_CHECK(keysEl.getSiblingElementsCount(count));
-			ANKI_CHECK(ch.m_rotations.create(m_alloc, count));
+			ch.m_rotations.create(m_alloc, count);
 
 			count = 0;
 			do
@@ -174,7 +172,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
-			ANKI_CHECK(ch.m_scales.create(m_alloc, count));
+			ch.m_scales.create(m_alloc, count);
 
 			count = 0;
 			do
@@ -227,7 +225,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 
 	m_duration = maxTime - m_startTime;
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

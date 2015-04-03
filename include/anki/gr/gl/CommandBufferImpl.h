@@ -48,7 +48,7 @@ public:
 	/// Default constructor
 	/// @param server The command buffers server
 	/// @param hints Hints to optimize the command's allocator
-	ANKI_USE_RESULT Error create(const InitHints& hints);
+	void create(const InitHints& hints);
 
 	/// Get the internal allocator.
 	CommandBufferAllocator<U8> getInternalAllocator() const

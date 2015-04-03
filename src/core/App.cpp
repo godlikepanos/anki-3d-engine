@@ -255,8 +255,8 @@ Error App::createInternal(const ConfigSet& config_,
 		config,
 		&m_globalTimestamp));
 
-	ANKI_CHECK(m_resources->_setShadersPrependedSource(
-		m_renderer->_getShadersPrependedSource().toCString()));
+	m_resources->_setShadersPrependedSource(
+		m_renderer->_getShadersPrependedSource().toCString());
 
 	// Scene
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
@@ -298,7 +298,7 @@ Error App::initDirs()
 	StringAuto home(m_heapAlloc);
 	ANKI_CHECK(getHomeDirectory(m_heapAlloc, home));
 
-	ANKI_CHECK(m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]));
+	m_settingsDir.sprintf(m_heapAlloc, "%s/.anki", &home[0]);
 
 	if(!directoryExists(m_settingsDir.toCString()))
 	{
@@ -306,7 +306,7 @@ Error App::initDirs()
 	}
 
 	// Cache
-	ANKI_CHECK(m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]));
+	m_cacheDir.sprintf(m_heapAlloc, "%s/cache", &m_settingsDir[0]);
 
 	if(directoryExists(m_cacheDir.toCString()))
 	{

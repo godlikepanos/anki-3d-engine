@@ -69,39 +69,32 @@ public:
 //==============================================================================
 Error Ssao::createFb(FramebufferHandle& fb, TextureHandle& rt)
 {
-	Error err = ErrorCode::NONE;
-
-	err = m_r->createRenderTarget(m_width, m_height, GL_R8, 1, rt);
-	if(err) return err;
+	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, GL_R8, 1, rt));
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	CommandBufferHandle cmdBuff;
-	err = cmdBuff.create(&getGrManager());
-	if(err) return err;
+	ANKI_CHECK(cmdBuff.create(&getGrManager()));
 	rt.setFilter(cmdBuff, TextureHandle::Filter::LINEAR);
 
 	// create FB
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
-	err = fb.create(cmdBuff, fbInit);
-	if(err) return err;
+	ANKI_CHECK(fb.create(cmdBuff, fbInit));
 
 	cmdBuff.flush();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error Ssao::initInternal(const ConfigSet& config)
 {
-	Error err = ErrorCode::NONE;
-
 	m_enabled = config.get("pps.ssao.enabled");
 
 	if(!m_enabled)
 	{
-		return err;
+		return ErrorCode::NONE;
 	}
 
 	m_blurringIterationsCount = 
@@ -120,26 +113,14 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// create FBOs
 	//
-	err = createFb(m_hblurFb, m_hblurRt);
-	if(err)
-	{
-		return err;
-	}
-	err = createFb(m_vblurFb, m_vblurRt);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(createFb(m_hblurFb, m_hblurRt));
+	ANKI_CHECK(createFb(m_vblurFb, m_vblurRt));
 
 	//
 	// noise texture
 	//
 	CommandBufferHandle cmdb;
-	err = cmdb.create(&getGrManager());
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(cmdb.create(&getGrManager()));
 
 	Array<Vec3, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
 
@@ -165,17 +146,16 @@ Error Ssao::initInternal(const ConfigSet& config)
 	Array<Vec3, KERNEL_SIZE> kernel;
 
 	genKernel(kernel.begin(), kernel.end());
-	err = kernelStr.create("vec3[](");
-	if(err) return err;
+	kernelStr.create("vec3[](");
 	for(U i = 0; i < kernel.size(); i++)
 	{
 		StringAuto tmp(getAllocator());
 
-		ANKI_CHECK(tmp.sprintf("vec3(%f, %f, %f) %s",
+		tmp.sprintf("vec3(%f, %f, %f) %s",
 			kernel[i].x(), kernel[i].y(), kernel[i].z(),
-			(i != kernel.size() - 1) ? ", " : ")"));
+			(i != kernel.size() - 1) ? ", " : ")");
 
-		ANKI_CHECK(kernelStr.append(tmp));
+		kernelStr.append(tmp);
 	}
 
 	//
@@ -187,13 +167,13 @@ Error Ssao::initInternal(const ConfigSet& config)
 	StringAuto pps(getAllocator());
 
 	// main pass prog
-	ANKI_CHECK(pps.sprintf(
+	pps.sprintf(
 		"#define NOISE_MAP_SIZE %u\n"
 		"#define WIDTH %u\n"
 		"#define HEIGHT %u\n"
 		"#define KERNEL_SIZE %u\n"
 		"#define KERNEL_ARRAY %s\n",
-		NOISE_TEX_SIZE, m_width, m_height, KERNEL_SIZE, &kernelStr[0]));
+		NOISE_TEX_SIZE, m_width, m_height, KERNEL_SIZE, &kernelStr[0]);
 
 	ANKI_CHECK(m_ssaoFrag.loadToCache(&getResourceManager(),
 		"shaders/PpsSsao.frag.glsl", pps.toCString(), "r_"));
@@ -206,12 +186,12 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
 	pps.destroy(getAllocator());
-	ANKI_CHECK(pps.sprintf(
+	pps.sprintf(
 		"#define HPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES 7\n", 
-		m_height));
+		m_height);
 
 	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_"));
@@ -220,12 +200,12 @@ Error Ssao::initInternal(const ConfigSet& config)
 		m_hblurFrag->getGrShader(), m_hblurPpline));
 
 	pps.destroy(getAllocator());
-	ANKI_CHECK(pps.sprintf(
+	pps.sprintf(
 		"#define VPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION %u\n"
 		"#define SAMPLES 7\n", 
-		m_width));
+		m_width);
 
 	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_"));
@@ -235,7 +215,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	cmdb.flush();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -255,7 +235,6 @@ Error Ssao::init(const ConfigSet& config)
 Error Ssao::run(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
-	Error err = ErrorCode::NONE;
 
 	const Camera& cam = m_r->getSceneGraph().getActiveCamera();
 
@@ -314,7 +293,7 @@ Error Ssao::run(CommandBufferHandle& cmdb)
 		m_r->drawQuad(cmdb);
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

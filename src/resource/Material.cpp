@@ -61,37 +61,29 @@ MaterialVariable::~MaterialVariable()
 
 //==============================================================================
 template<typename T>
-Error MaterialVariableTemplate<T>::create(ResourceAllocator<U8> alloc, 
+void MaterialVariableTemplate<T>::create(ResourceAllocator<U8> alloc, 
 	const CString& name, const T* x, U32 size)
 {
-	Error err = ErrorCode::NONE;
+	m_name.create(alloc, name);
 
-	err = m_name.create(alloc, name);
-
-	if(!err && size > 0)
+	if(size > 0)
 	{
-		err = m_data.create(alloc, size);
-		if(!err)
+		m_data.create(alloc, size);
+		for(U i = 0; i < size; i++)
 		{
-			for(U i = 0; i < size; i++)
-			{
-				m_data[i] = x[i];
-			}
+			m_data[i] = x[i];
 		}
 	}
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
 template<typename T>
-MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
+Error MaterialVariableTemplate<T>::_newInstance(
 	const MaterialProgramCreator::Input& in,
-	ResourceAllocator<U8> alloc, TempResourceAllocator<U8> talloc)
+	ResourceAllocator<U8> alloc, TempResourceAllocator<U8> talloc,
+	MaterialVariable*& out2)
 {
-	Error err = ErrorCode::NONE;
-	MaterialVariableTemplate<T>* out = nullptr;
-
+	MaterialVariableTemplate* out;
 	DArrayAuto<F32> floats(talloc);
 
 	// Get the float values
@@ -106,18 +98,16 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 			ANKI_LOGE("Incorrect number of values. Variable %s", 
 				&in.m_name[0]);
 
-			return nullptr;
+			return ErrorCode::USER_DATA;
 		}
 
-		err = floats.create(floatsNeeded);
-		if(err) return nullptr;
+		floats.create(floatsNeeded);
 
 		auto it = in.m_value.getBegin();
 		for(U i = 0; i < floatsNeeded; ++i)
 		{
 			F64 d;
-			err = it->toF64(d);
-			if(err)	return nullptr;
+			ANKI_CHECK(it->toF64(d));
 
 			floats[i] = d;
 			++it;
@@ -126,23 +116,16 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 
 	// Create new instance
 	out = alloc.newInstance<MaterialVariableTemplate<T>>();
-	if(!out) return nullptr;
 
 	if(floats.getSize() > 0)
 	{
-		err = out->create(alloc, in.m_name.toCString(), 
+		out->create(alloc, in.m_name.toCString(), 
 			(T*)&floats[0], in.m_arraySize);
 	}
 	else
 	{
 		// Buildin
-		err = out->create(alloc, in.m_name.toCString(), nullptr, 0);
-	}
-
-	if(err && out)
-	{
-		alloc.deleteInstance(out);
-		return nullptr;
+		out->create(alloc, in.m_name.toCString(), nullptr, 0);
 	}
 
 	// Set some values
@@ -160,7 +143,9 @@ MaterialVariableTemplate<T>* MaterialVariableTemplate<T>::_newInstance(
 		out->m_varBlkInfo.m_matrixStride = in.m_matrixStride;
 	}
 
-	return out;
+	out2 = out;
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -486,16 +471,16 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 	U tessCount = m_tessellation ? 2 : 1;
 
 	// Alloc program vector
-	ANKI_CHECK(m_progs.create(rinit.m_alloc,
+	m_progs.create(rinit.m_alloc,
 		countShaders(ShaderType::VERTEX) 
 		+ countShaders(ShaderType::TESSELLATION_CONTROL)
 		+ countShaders(ShaderType::TESSELLATION_EVALUATION)
 		+ countShaders(ShaderType::GEOMETRY)
-		+ countShaders(ShaderType::FRAGMENT)));
+		+ countShaders(ShaderType::FRAGMENT));
 
 	// Aloc progam descriptors
-	ANKI_CHECK(m_pplines.create(rinit.m_alloc,
-		m_passesCount * m_lodsCount * tessCount));
+	m_pplines.create(rinit.m_alloc,
+		m_passesCount * m_lodsCount * tessCount);
 
 	m_hash = 0;
 	for(ShaderType shader = ShaderType::VERTEX; 
@@ -539,14 +524,14 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 					}
 
 					StringAuto src(rinit.m_tempAlloc);
-					ANKI_CHECK(src.sprintf(
+					src.sprintf(
 						"%s\n"
 						"#define LOD %u\n"
 						"#define PASS %u\n"
 						"#define TESSELLATION %u\n"
 						"%s\n",
 						&rinit.m_resources._getShadersPrependedSource()[0],
-						level, pid, tess, &loader.getProgramSource(shader)[0]));
+						level, pid, tess, &loader.getProgramSource(shader)[0]);
 
 					StringAuto filename(rinit.m_tempAlloc);
 
@@ -577,20 +562,18 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 Error Material::createProgramSourceToCache(
 	const StringAuto& source, StringAuto& out)
 {
-	Error err = ErrorCode::NONE;
-
 	auto alloc = m_resources->_getTempAllocator();
 
 	// Create the hash
 	U64 h = computeHash(&source[0], source.getLength());
 	StringAuto prefix(alloc);
 
-	ANKI_CHECK(prefix.toString(h));
+	prefix.toString(h);
 
 	// Create path
-	ANKI_CHECK(out.sprintf("%s/mtl_%s.glsl", 
+	out.sprintf("%s/mtl_%s.glsl", 
 		&m_resources->_getCacheDirectory()[0],
-		&prefix[0]));
+		&prefix[0]);
 
 	// If file not exists write it
 	if(!fileExists(out.toCString()))
@@ -601,14 +584,12 @@ Error Material::createProgramSourceToCache(
 		ANKI_CHECK(f.writeText("%s\n", &source[0]));
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error Material::populateVariables(const MaterialProgramCreator& loader)
 {
-	Error err = ErrorCode::NONE;
-
 	U varCount = 0;
 	for(const auto& in : loader.getInputVariables())
 	{
@@ -618,7 +599,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 		}
 	}
 
-	ANKI_CHECK(m_vars.create(m_resources->_getAllocator(), varCount));
+	m_vars.create(m_resources->_getAllocator(), varCount);
 
 	varCount = 0;
 	for(const auto& in : loader.getInputVariables())
@@ -651,13 +632,10 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 
 				if(tvar)
 				{
-					err = tvar->create(alloc, in.m_name.toCString(), &tp, 1);
+					tvar->create(alloc, in.m_name.toCString(), &tp, 1);
 
-					if(err)
-					{
-						alloc.deleteInstance(tvar);
-						tvar = nullptr;
-					}
+					alloc.deleteInstance(tvar);
+					tvar = nullptr;
 				}
 
 				mtlvar = tvar;
@@ -666,28 +644,34 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 			}
 			break;
 		case ShaderVariableDataType::FLOAT:
-			mtlvar = MaterialVariableTemplate<F32>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator());
+			ANKI_CHECK(MaterialVariableTemplate<F32>::_newInstance(in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				mtlvar));
 			break;
 		case ShaderVariableDataType::VEC2:
-			mtlvar = MaterialVariableTemplate<Vec2>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator());
+			ANKI_CHECK(MaterialVariableTemplate<Vec2>::_newInstance(in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				mtlvar));
 			break;
 		case ShaderVariableDataType::VEC3:
-			mtlvar = MaterialVariableTemplate<Vec3>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator());
+			ANKI_CHECK(MaterialVariableTemplate<Vec3>::_newInstance(in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				mtlvar));
 			break;
 		case ShaderVariableDataType::VEC4:
-			mtlvar = MaterialVariableTemplate<Vec4>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator());
+			ANKI_CHECK(MaterialVariableTemplate<Vec4>::_newInstance(in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				mtlvar));
 			break;
 		case ShaderVariableDataType::MAT3:
-			mtlvar = MaterialVariableTemplate<Mat3>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator());
+			ANKI_CHECK(MaterialVariableTemplate<Mat3>::_newInstance(in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				mtlvar));
 			break;
 		case ShaderVariableDataType::MAT4:
-			mtlvar = MaterialVariableTemplate<Mat4>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator());
+			ANKI_CHECK(MaterialVariableTemplate<Mat4>::_newInstance(in,
+				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				mtlvar));
 			break;
 		// default is error
 		default:

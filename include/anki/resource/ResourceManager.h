@@ -79,12 +79,12 @@ public:
 		}
 	}
 
-	ANKI_USE_RESULT Error _registerResource(ResourcePointerType& ptr)
+	void _registerResource(ResourcePointerType& ptr)
 	{
 		ANKI_ASSERT(ptr.getReferenceCount() == 1);
 		ANKI_ASSERT(find(ptr.getResourceName()) == m_ptrs.getEnd());
 	
-		return m_ptrs.pushBack(m_alloc, ptr);
+		m_ptrs.pushBack(m_alloc, ptr);
 	}
 
 	void _unregisterResource(ResourcePointerType& ptr)
@@ -173,7 +173,7 @@ public:
 		return m_textureAnisotropy;
 	}
 
-	ANKI_USE_RESULT Error fixResourceFilename(
+	void fixResourceFilename(
 		const CString& filename,
 		StringAuto& out) const;
 
@@ -207,9 +207,9 @@ public:
 	}
 
 	/// Set it with information from the renderer
-	ANKI_USE_RESULT Error _setShadersPrependedSource(const CString& cstr)
+	void _setShadersPrependedSource(const CString& cstr)
 	{
-		return m_shadersPrependedSource.create(m_alloc, cstr);
+		m_shadersPrependedSource.create(m_alloc, cstr);
 	}
 
 	const String& _getShadersPrependedSource() const
@@ -226,10 +226,9 @@ public:
 	}
 
 	template<typename T>
-	ANKI_USE_RESULT Error _registerResource(
-		ResourcePointer<T, ResourceManager>& ptr)
+	void _registerResource(ResourcePointer<T, ResourceManager>& ptr)
 	{
-		return TypeResourceManager<T, ResourceManager>::_registerResource(ptr);
+		TypeResourceManager<T, ResourceManager>::_registerResource(ptr);
 	}
 
 	template<typename T>

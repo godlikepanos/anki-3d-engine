@@ -143,7 +143,7 @@ public:
 	~MaterialVariableTemplate()
 	{}
 
-	ANKI_USE_RESULT Error create(ResourceAllocator<U8> alloc, 
+	void create(ResourceAllocator<U8> alloc, 
 		const CString& name, const TData* x, U32 size);
 
 	void destroy(ResourceAllocator<U8> alloc)
@@ -175,10 +175,11 @@ public:
 		return m_data.getSize() > 0;
 	}
 
-	static MaterialVariableTemplate* _newInstance(
+	static ANKI_USE_RESULT Error _newInstance(
 		const MaterialProgramCreatorInputVariable& in,
 		ResourceAllocator<U8> alloc, 
-		TempResourceAllocator<U8> talloc);
+		TempResourceAllocator<U8> talloc,
+		MaterialVariable*& out);
 
 private:
 	DArray<TData> m_data;

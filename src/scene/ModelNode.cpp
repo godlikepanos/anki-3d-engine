@@ -70,31 +70,25 @@ Error ModelPatchNode::create(const CString& name,
 	const ModelPatchBase* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
-	Error err = SceneNode::create(name);
-	if(err) return err;
+	ANKI_CHECK(SceneNode::create(name));
 
 	m_modelPatch = modelPatch;
 
 	// Spatial component
 	SceneComponent* comp = getSceneAllocator().newInstance<SpatialComponent>(
 		this, &m_obb);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	err = addComponent(comp, true);
-	if(err) return err;
+	addComponent(comp, true);
 
 	// Render component
 	RenderComponent* rcomp = 
 		getSceneAllocator().newInstance<ModelPatchRenderComponent>(this);
 	comp = rcomp;
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-	err = addComponent(comp, true);
-	if(err) return err;
+	addComponent(comp, true);
+	ANKI_CHECK(rcomp->create());
 
-	err = rcomp->create();
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -165,11 +159,10 @@ void ModelPatchNode::getRenderWorldTransform(U index, Transform& trf)
 }
 
 //==============================================================================
-Error ModelPatchNode::updateInstanceSpatials(
+void ModelPatchNode::updateInstanceSpatials(
 	const MoveComponent* instanceMoves[],
 	U32 instanceMovesCount)
 {
-	Error err = ErrorCode::NONE;
 	Bool fullUpdate = false;
 
 	const U oldSize = m_spatials.getSize();
@@ -181,8 +174,7 @@ Error ModelPatchNode::updateInstanceSpatials(
 		
 		fullUpdate = true;
 		
-		err = m_spatials.resize(getSceneAllocator(), newSize);
-		if(err)	return err;
+		m_spatials.resize(getSceneAllocator(), newSize);
 
 		U diff = newSize - oldSize;
 		U index = oldSize;
@@ -190,11 +182,8 @@ Error ModelPatchNode::updateInstanceSpatials(
 		{
 			ObbSpatialComponent* newSpatial = getSceneAllocator().
 				newInstance<ObbSpatialComponent>(this);
-			if(newSpatial == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
-			err = addComponent(newSpatial);
-			if(err)	return err;
-
+			addComponent(newSpatial);
 			m_spatials[index++] = newSpatial;
 		}
 	}
@@ -225,8 +214,6 @@ Error ModelPatchNode::updateInstanceSpatials(
 			sp.setSpatialOrigin(inst.getWorldTransform().getOrigin());
 		}
 	}
-
-	return err;
 }
 
 //==============================================================================
@@ -311,19 +298,14 @@ ModelNode::~ModelNode()
 //==============================================================================
 Error ModelNode::create(const CString& name, const CString& modelFname)
 {
-	Error err = ErrorCode::NONE;
-
-	err = SceneNode::create(name);
-	if(err) return err;
+	ANKI_CHECK(SceneNode::create(name));
 
 	SceneComponent* comp;
 
-	err = m_model.load(modelFname, &getResourceManager());
-	if(err) return err;
+	ANKI_CHECK(m_model.load(modelFname, &getResourceManager()));
 
-	err = m_modelPatches.create(
+	m_modelPatches.create(
 		getSceneAllocator(), m_model->getModelPatches().getSize(), nullptr);
-	if(err) return err;
 
 	U count = 0;
 	auto it = m_model->getModelPatches().getBegin();
@@ -331,12 +313,10 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 	for(; it != end; it++)
 	{
 		ModelPatchNode* mpn;
-		err = getSceneGraph().newSceneNode(CString(), mpn, *it);
-		if(err) return err;
+		ANKI_CHECK(getSceneGraph().newSceneNode(CString(), mpn, *it));
 
 		m_modelPatches[count++] = mpn;
-		err = addChild(mpn);
-		if(err) return err;
+		addChild(mpn);
 	}
 
 	// Load rigid body
@@ -349,55 +329,39 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 
 		m_body = 
 			getSceneGraph()._getPhysicsWorld().newBody<PhysicsBody>(init);
-		if(m_body == nullptr) return ErrorCode::OUT_OF_MEMORY;
 
 		// Body component
 		comp = getSceneAllocator().newInstance<BodyComponent>(this, m_body);
-		if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-		err = addComponent(comp, true);
-		if(err) return err;
+		addComponent(comp, true);
 
 		// Feedback component
 		comp = 
 			getSceneAllocator().newInstance<ModelBodyFeedbackComponent>(this);
-		if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-		err = addComponent(comp, true);
-		if(err) return err;
+		addComponent(comp, true);
 	}
 
 	// Move component
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
-
-	err = addComponent(comp, true);
-	if(err) return err;
+	addComponent(comp, true);
 
 	// Feedback component
 	comp = getSceneAllocator().newInstance<ModelMoveFeedbackComponent>(this);
-	if(comp == nullptr) return ErrorCode::OUT_OF_MEMORY;
+	addComponent(comp, true);
 
-	err = addComponent(comp, true);
-	if(err) return err;
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error ModelNode::frameUpdate(F32, F32)
 {
-	Error err = ErrorCode::NONE;
-
 	// Gather the move components of the instances
 	DArrayAuto<const MoveComponent*> instanceMoves(getSceneFrameAllocator());
 	U instanceMovesCount = 0;
 	Timestamp instancesTimestamp = 0;
 
-	err = instanceMoves.create(64);
-	if(err)	return err;
+	instanceMoves.create(64);
 
-	err = visitChildren([&](SceneNode& sn) -> Error
+	Error err = visitChildren([&](SceneNode& sn) -> Error
 	{
 		if(sn.tryGetComponent<InstanceComponent>())
 		{
@@ -411,6 +375,7 @@ Error ModelNode::frameUpdate(F32, F32)
 
 		return ErrorCode::NONE;
 	});
+	(void)err;
 
 	// If having instances
 	if(instanceMovesCount > 0)
@@ -420,8 +385,7 @@ Error ModelNode::frameUpdate(F32, F32)
 		if(instanceMovesCount != m_transforms.getSize())
 		{
 			fullUpdate = true;
-			err = m_transforms.resize(getSceneAllocator(), instanceMovesCount);
-			if(err) return err;
+			m_transforms.resize(getSceneAllocator(), instanceMovesCount);
 		}
 
 		if(fullUpdate || m_transformsTimestamp < instancesTimestamp)
@@ -439,13 +403,12 @@ Error ModelNode::frameUpdate(F32, F32)
 		auto end = m_modelPatches.getEnd();
 		for(; it != end; ++it)
 		{
-			err = (*it)->updateInstanceSpatials(
+			(*it)->updateInstanceSpatials(
 				&instanceMoves[0], instanceMovesCount);
-			return err;
 		}
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

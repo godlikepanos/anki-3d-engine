@@ -153,7 +153,6 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					<args>
 						<arg>SceneNode*</arg>
 					</args>
-					<return>Error</return>
 				</method>
 				<method name="tryGetComponent&lt;MoveComponent&gt;" alias="getMoveComponent">
 					<return>MoveComponent*</return>

@@ -36,6 +36,8 @@ static Signature computeSignature(void* ptr)
 }
 #endif
 
+#define ANKI_OOM_ACTION() ANKI_LOGF("Out of memory")
+
 //==============================================================================
 // Other                                                                       =
 //==============================================================================
@@ -212,7 +214,7 @@ HeapMemoryPool::~HeapMemoryPool()
 }
 
 //==============================================================================
-Error HeapMemoryPool::create(
+void HeapMemoryPool::create(
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	ANKI_ASSERT(!isCreated());
@@ -225,8 +227,6 @@ Error HeapMemoryPool::create(
 	m_signature = computeSignature(this);
 	m_headerSize = getAlignedRoundUp(MAX_ALIGNMENT, sizeof(Signature));
 #endif
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -254,7 +254,7 @@ void* HeapMemoryPool::allocate(PtrSize size, PtrSize alignment)
 	}
 	else
 	{
-		ANKI_LOGE("Out of memory");
+		ANKI_OOM_ACTION();
 	}
 
 	return mem;
@@ -302,7 +302,7 @@ StackMemoryPool::~StackMemoryPool()
 }
 
 //==============================================================================
-Error StackMemoryPool::create(
+void StackMemoryPool::create(
 	AllocAlignedCallback allocCb, void* allocCbUserData,
 	PtrSize size, Bool ignoreDeallocationErrors, PtrSize alignmentBytes)
 {
@@ -310,8 +310,6 @@ Error StackMemoryPool::create(
 	ANKI_ASSERT(allocCb);
 	ANKI_ASSERT(size > 0);
 	ANKI_ASSERT(alignmentBytes > 0);
-
-	Error error = ErrorCode::NONE;
 
 	m_allocCb = allocCb;
 	m_allocCbUserData = allocCbUserData;
@@ -338,11 +336,8 @@ Error StackMemoryPool::create(
 	}
 	else
 	{
-		ANKI_LOGE("Out of memory");
-		error = ErrorCode::OUT_OF_MEMORY;
+		ANKI_OOM_ACTION();
 	}
-
-	return error;
 }
 
 //==============================================================================
@@ -382,7 +377,7 @@ void* StackMemoryPool::allocate(PtrSize size, PtrSize alignment)
 	}
 	else
 	{
-		ANKI_LOGE("Out of memory");
+		ANKI_OOM_ACTION();
 		out = nullptr;
 	}
 
@@ -506,7 +501,7 @@ ChainMemoryPool::~ChainMemoryPool()
 }
 
 //==============================================================================
-Error ChainMemoryPool::create(
+void ChainMemoryPool::create(
 	AllocAlignedCallback allocCb, 
 	void* allocCbUserData,
 	PtrSize initialChunkSize,
@@ -531,8 +526,7 @@ Error ChainMemoryPool::create(
 		m_allocCbUserData, nullptr, sizeof(SpinLock), alignof(SpinLock)));
 	if(!m_lock)
 	{
-		ANKI_LOGE("Out of memory");
-		return ErrorCode::OUT_OF_MEMORY;
+		ANKI_OOM_ACTION();
 	}
 	construct(m_lock);
 
@@ -557,8 +551,6 @@ Error ChainMemoryPool::create(
 	{
 		ANKI_ASSERT(m_initSize < m_maxSize && "Wrong arg");
 	}
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -784,7 +776,7 @@ ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
 		}
 		else
 		{
-			ANKI_LOGE("Out of memory");
+			ANKI_OOM_ACTION();
 			destruct(chunk);
 			m_allocCb(m_allocCbUserData, chunk, 0, 0);
 			chunk = nullptr;
@@ -792,7 +784,7 @@ ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
 	}
 	else
 	{
-		ANKI_LOGE("Out of memory");
+		ANKI_OOM_ACTION();
 	}
 	
 	return chunk;
