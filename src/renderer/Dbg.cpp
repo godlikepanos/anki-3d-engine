@@ -64,10 +64,6 @@ Error Dbg::init(const ConfigSet& initializer)
 	if(!err)
 	{
 		m_drawer = getAllocator().newInstance<DebugDrawer>();
-		if(m_drawer == nullptr)
-		{
-			err = ErrorCode::OUT_OF_MEMORY;
-		}
 	}
 
 	if(!err)
@@ -78,10 +74,6 @@ Error Dbg::init(const ConfigSet& initializer)
 	if(!err)
 	{
 		m_sceneDrawer = getAllocator().newInstance<SceneDebugDrawer>(m_drawer);
-		if(m_sceneDrawer == nullptr)
-		{
-			err = ErrorCode::OUT_OF_MEMORY;
-		}
 	}
 
 	if(!err)

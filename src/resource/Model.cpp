@@ -341,11 +341,6 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 			ANKI_LOGE("Incorrect collision type");
 			return ErrorCode::USER_DATA;
 		}
-
-		if(m_physicsShape == nullptr)
-		{
-			return ErrorCode::OUT_OF_MEMORY;
-		}
 	}
 
 	// <modelPatches>

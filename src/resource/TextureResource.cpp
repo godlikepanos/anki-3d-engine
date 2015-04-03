@@ -44,10 +44,6 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 
 	// Load image
 	Image* img = rinit.m_alloc.newInstance<Image>(rinit.m_alloc);
-	if(img == nullptr)
-	{
-		return ErrorCode::OUT_OF_MEMORY;
-	}
 
 	err = img->load(filename, rinit.m_resources.getMaxTextureSize());
 	if(err)

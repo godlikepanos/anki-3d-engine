@@ -64,16 +64,10 @@ Error ConvexHullShape::initStorage(CollisionAllocator<U8>& alloc, U pointCount)
 
 	m_points = 
 		reinterpret_cast<Vec4*>(alloc.allocate(pointCount * sizeof(Vec4)));
-	if(m_points)
-	{
-		m_alloc = alloc;
-		m_ownsTheStorage = true;
-		m_pointsCount = pointCount;
-	}
-	else
-	{
-		return ErrorCode::OUT_OF_MEMORY;
-	}
+	
+	m_alloc = alloc;
+	m_ownsTheStorage = true;
+	m_pointsCount = pointCount;
 
 	return ErrorCode::NONE;
 }

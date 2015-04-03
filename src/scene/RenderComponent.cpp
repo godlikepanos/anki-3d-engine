@@ -30,13 +30,8 @@ struct CreateNewRenderComponentVariableVisitor
 		RenderComponentVariableTemplate<Type>* rvar =
 			m_alloc.newInstance<RenderComponentVariableTemplate<Type>>(m_mvar);
 
-		if(rvar)
-		{
-			(*m_vars)[(*m_count)++] = rvar;
-			return ErrorCode::NONE;
-		}
-
-		return ErrorCode::OUT_OF_MEMORY;
+		(*m_vars)[(*m_count)++] = rvar;
+		return ErrorCode::NONE;
 	}
 };
 

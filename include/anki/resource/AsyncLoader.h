@@ -65,10 +65,6 @@ Error AsyncLoader::newTask(TArgs&&... args)
 {
 	TTask* newTask = m_alloc.template newInstance<TTask>(
 		std::forward<TArgs>(args)...);
-	if(newTask == nullptr)
-	{
-		return ErrorCode::OUT_OF_MEMORY;
-	}
 
 	// Append task to the list
 	{

@@ -22,7 +22,6 @@ Error Input::init(NativeWindow* nativeWindow)
 		m_nativeWindow->_getAllocator();
 
 	m_impl = m_nativeWindow->_getAllocator().newInstance<InputImpl>(alloc);
-	if(!m_impl) return ErrorCode::OUT_OF_MEMORY;
 
 	//impl
 	m_impl->m_sdlToAnki[SDLK_RETURN] = KeyCode::RETURN;

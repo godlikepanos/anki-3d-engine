@@ -165,7 +165,6 @@ Error App::createInternal(const ConfigSet& config_,
 	nwinit.m_fullscreenDesktopRez = config.get("fullscreenDesktopResolution");
 	nwinit.m_debugContext = config.get("debugContext");
 	m_window = m_heapAlloc.newInstance<NativeWindow>();
-	if(!m_window) return ErrorCode::OUT_OF_MEMORY;
 
 	ANKI_CHECK(m_window->create(nwinit, m_heapAlloc));
 
@@ -176,7 +175,6 @@ Error App::createInternal(const ConfigSet& config_,
 	// Input
 	//
 	m_input = m_heapAlloc.newInstance<Input>();
-	if(!m_input) return ErrorCode::OUT_OF_MEMORY;
 
 	ANKI_CHECK(m_input->create(m_window));
 
@@ -184,16 +182,11 @@ Error App::createInternal(const ConfigSet& config_,
 	// Threadpool
 	//
 	m_threadpool = m_heapAlloc.newInstance<Threadpool>(getCpuCoresCount());
-	if(!m_threadpool) return ErrorCode::OUT_OF_MEMORY;
 
 	//
 	// GL
 	//
 	m_gr = m_heapAlloc.newInstance<GrManager>();
-	if(!m_gr)
-	{
-		return ErrorCode::OUT_OF_MEMORY;
-	}
 
 	GrManagerInitializer grInit;
 	grInit.m_allocCallback = m_allocCb;
@@ -212,10 +205,6 @@ Error App::createInternal(const ConfigSet& config_,
 	// Physics
 	//
 	m_physics = m_heapAlloc.newInstance<PhysicsWorld>();
-	if(!m_physics)
-	{
-		return ErrorCode::OUT_OF_MEMORY;
-	}
 
 	ANKI_CHECK(m_physics->create(m_allocCb, m_allocCbData));
 
@@ -231,7 +220,6 @@ Error App::createInternal(const ConfigSet& config_,
 	rinit.m_allocCallbackData = m_allocCbData;
 	rinit.m_tempAllocatorMemorySize = 1024 * 1024 * 4;
 	m_resources = m_heapAlloc.newInstance<ResourceManager>();
-	if(!m_resources) return ErrorCode::OUT_OF_MEMORY;
 
 	ANKI_CHECK(m_resources->create(rinit));
 
@@ -245,7 +233,6 @@ Error App::createInternal(const ConfigSet& config_,
 	}
 
 	m_renderer = m_heapAlloc.newInstance<MainRenderer>();
-	if(!m_renderer) return ErrorCode::OUT_OF_MEMORY;
 
 	ANKI_CHECK(m_renderer->create(
 		m_threadpool,
@@ -260,7 +247,6 @@ Error App::createInternal(const ConfigSet& config_,
 
 	// Scene
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
-	if(!m_scene) return ErrorCode::OUT_OF_MEMORY;
 
 	ANKI_CHECK(m_scene->create(m_allocCb, m_allocCbData, 
 		config.get("sceneFrameAllocatorSize"), m_threadpool, m_resources,
@@ -268,7 +254,6 @@ Error App::createInternal(const ConfigSet& config_,
 
 	// Script
 	m_script = m_heapAlloc.newInstance<ScriptManager>();
-	if(!m_script) return ErrorCode::OUT_OF_MEMORY;
 		
 	ANKI_CHECK(m_script->create(m_allocCb, m_allocCbData, m_scene));
 

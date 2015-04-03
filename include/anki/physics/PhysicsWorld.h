@@ -115,15 +115,8 @@ inline T* PhysicsWorld::newObjectInternal(TContainer& cont, TArgs&&... args)
 	ChainAllocator<T> al = m_alloc;
 
 	T* ptr = al.template newInstance<T>(this);
-	if(ptr)
-	{
-		err = ptr->create(std::forward<TArgs>(args)...);
-	}
-	else
-	{
-		err = ErrorCode::OUT_OF_MEMORY;
-	}
-
+	err = ptr->create(std::forward<TArgs>(args)...);
+	
 	if(!err)
 	{
 		cont.pushBack(m_alloc, ptr);

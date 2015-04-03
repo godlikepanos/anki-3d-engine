@@ -31,12 +31,6 @@ Error ResourcePointer<T, TResourceManager>::load(
 			alloc.allocate(
 			sizeof(ControlBlock) + len, &alignment));
 
-		if(!m_cb)
-		{
-			ANKI_LOGE("OOM when loading resource");
-			return ErrorCode::OUT_OF_MEMORY;
-		}
-
 		// Construct
 		alloc.construct(m_cb, alloc);
 

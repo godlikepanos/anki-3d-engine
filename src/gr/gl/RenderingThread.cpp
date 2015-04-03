@@ -51,7 +51,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferHandle& commands)
 {
 	commands.get().makeImmutable();
 
-#if !ANKI_GL_DISABLE_ASYNC
+#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	{
 		LockGuard<Mutex> lock(m_mtx);
 
@@ -84,7 +84,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferHandle& commands)
 //==============================================================================
 void RenderingThread::finishCommandBuffer(CommandBufferHandle& commands)
 {
-#if !ANKI_GL_DISABLE_ASYNC
+#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	flushCommandBuffer(commands);
 
 	syncClientServer();
@@ -120,7 +120,7 @@ Error RenderingThread::start(
 		m_swapBuffersCommands.pushBackUserCommand(swapBuffersInternal, this);
 	}
 
-#if !ANKI_GL_DISABLE_ASYNC
+#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	Bool threadStarted = false;
 	if(!err)
 	{
@@ -153,7 +153,7 @@ Error RenderingThread::start(
 //==============================================================================
 void RenderingThread::stop()
 {
-#if !ANKI_GL_DISABLE_ASYNC
+#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	{
 		LockGuard<Mutex> lock(m_mtx);
 		m_renderingThreadSignal = 1;
@@ -276,7 +276,7 @@ void RenderingThread::threadLoop()
 //==============================================================================
 void RenderingThread::syncClientServer()
 {
-#if !ANKI_GL_DISABLE_ASYNC
+#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	flushCommandBuffer(m_syncCommands);
 	m_syncBarrier.wait();
 #endif
@@ -305,7 +305,7 @@ Error RenderingThread::swapBuffersInternal(void* ptr)
 //==============================================================================
 void RenderingThread::swapBuffers()
 {
-#if !ANKI_GL_DISABLE_ASYNC
+#if !ANKI_DISABLE_GL_RENDERING_THREAD
 	// Wait for the rendering thread to finish swap buffers...
 	{
 		LockGuard<Mutex> lock(m_frameMtx);

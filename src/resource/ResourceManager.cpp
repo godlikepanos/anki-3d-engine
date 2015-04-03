@@ -90,11 +90,6 @@ Error ResourceManager::create(Initializer& init)
 
 	// Init the thread
 	m_asyncLoader = m_alloc.newInstance<AsyncLoader>();
-	if(m_asyncLoader == nullptr)
-	{
-		return ErrorCode::OUT_OF_MEMORY;
-	}
-
 	err = m_asyncLoader->create(m_alloc);
 
 	return err;

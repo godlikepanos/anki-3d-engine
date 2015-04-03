@@ -199,10 +199,6 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 		ANKI_ASSERT(count < MAX_U8);
 		visibleNode.m_spatialsCount = count;
 		visibleNode.m_spatialIndices = alloc.newArray<U8>(count);
-		if(ANKI_UNLIKELY(visibleNode.m_spatialIndices == nullptr))
-		{
-			return ErrorCode::OUT_OF_MEMORY;
-		}
 
 		for(U i = 0; i < count; i++)
 		{

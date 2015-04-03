@@ -19,7 +19,6 @@ Error NativeWindow::create(Initializer& init, HeapAllocator<U8>& alloc)
 {
 	m_alloc = alloc;
 	m_impl = m_alloc.newInstance<NativeWindowImpl>();
-	if(!m_impl) return ErrorCode::OUT_OF_MEMORY;
 
 	if(SDL_Init(INIT_SUBSYSTEMS) != 0)
 	{

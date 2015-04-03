@@ -30,10 +30,6 @@ Error GrManagerImpl::create(GrManagerInitializer& init)
 	// Create thread
 	m_thread = 
 		m_manager->getAllocator().newInstance<RenderingThread>(m_manager);
-	if(!m_thread)
-	{
-		err = ErrorCode::OUT_OF_MEMORY;
-	}
 
 	// Start it
 	if(!err)
