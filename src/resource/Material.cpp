@@ -320,28 +320,29 @@ Error Material::getProgramPipeline(
 	// Lazily create it
 	if(ANKI_UNLIKELY(!ppline.isCreated()))
 	{
-		Array<ShaderHandle, 5> progs;
-		U progCount = 0;
+		PipelineHandle::Initializer pplineInit;
 
-		progs[progCount++] = 
+		pplineInit.m_shaders[U(ShaderType::VERTEX)] = 
 			getProgram(key, ShaderType::VERTEX)->getGrShader();
 
 		if(key.m_tessellation)
 		{
-			progs[progCount++] = getProgram(
+			pplineInit.m_shaders[U(ShaderType::TESSELLATION_CONTROL)] = 
+				getProgram(
 				key, ShaderType::TESSELLATION_CONTROL)->getGrShader();
-			progs[progCount++] = getProgram(
+			pplineInit.m_shaders[U(ShaderType::TESSELLATION_EVALUATION)] = 
+				getProgram(
 				key, ShaderType::TESSELLATION_EVALUATION)->getGrShader();
 		}
 
-		progs[progCount++] = 
+		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] = 
 			getProgram(key, ShaderType::FRAGMENT)->getGrShader();
 
 		GrManager& gl = m_resources->getGrManager();
 		CommandBufferHandle cmdBuff;
 		ANKI_CHECK(cmdBuff.create(&gl));
 
-		ANKI_CHECK(ppline.create(cmdBuff, &progs[0], &progs[0] + progCount));
+		ANKI_CHECK(ppline.create(cmdBuff, pplineInit));
 
 		cmdBuff.flush();
 	}

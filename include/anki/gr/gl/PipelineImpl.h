@@ -19,6 +19,7 @@ class PipelineImpl: public GlObject
 {
 public:
 	using Base = GlObject;
+	using Initializer = PipelineInitializer;
 
 	PipelineImpl(GrManager* manager)
 	:	Base(manager)
@@ -29,8 +30,7 @@ public:
 		destroy();
 	}
 
-	ANKI_USE_RESULT Error create(
-		const ShaderHandle* progsBegin, const ShaderHandle* progsEnd);
+	ANKI_USE_RESULT Error create(const Initializer& init);
 
 	/// Bind the pipeline to the state
 	void bind();
@@ -42,7 +42,7 @@ private:
 	void createPpline();
 
 	/// Attach all the programs
-	void attachProgramsInternal(const ShaderHandle* progs, PtrSize count);
+	void attachProgramsInternal(const Initializer& init);
 
 	void destroy();
 };

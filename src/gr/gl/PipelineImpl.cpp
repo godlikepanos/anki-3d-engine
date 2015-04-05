@@ -10,15 +10,31 @@
 namespace anki {
 
 //==============================================================================
-Error PipelineImpl::create(
-	const ShaderHandle* progsBegin, const ShaderHandle* progsEnd)
+static GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit)
 {
-	ANKI_ASSERT(progsBegin != nullptr && progsEnd != nullptr);
-	ANKI_ASSERT(progsBegin != progsEnd);
+	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER, 
+		GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER,
+		GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER}};
 
+	static const Array<GLuint, 6> glbit = {{
+		GL_VERTEX_SHADER_BIT, GL_TESS_CONTROL_SHADER_BIT, 
+		GL_TESS_EVALUATION_SHADER_BIT, GL_GEOMETRY_SHADER_BIT,
+		GL_FRAGMENT_SHADER_BIT, GL_COMPUTE_SHADER_BIT}};
+
+	if(bit)
+	{
+		*bit = glbit[enumToType(idx)];
+	}
+
+	return gltype[enumToType(idx)];
+}
+
+//==============================================================================
+Error PipelineImpl::create(const Initializer& init)
+{
 	Error err = ErrorCode::NONE;
 
-	attachProgramsInternal(progsBegin, progsEnd - progsBegin);
+	attachProgramsInternal(init);
 
 	// Create and attach programs
 	glGenProgramPipelines(1, &m_glName);
@@ -26,18 +42,14 @@ Error PipelineImpl::create(
 
 	glBindProgramPipeline(m_glName);
 
-	for(U i = 0; i < m_shaders.size(); i++)
+	for(U i = 0; i < m_shaders.getSize(); i++)
 	{
 		ShaderHandle& shader = m_shaders[i];
 
 		if(shader.isCreated())
 		{
 			GLbitfield bit;
-			GLenum gltype = 
-				computeGlShaderType(static_cast<ShaderType>(i), &bit);
-			ANKI_ASSERT(shader.get().getGlType() == gltype 
-				&& "Attached wrong shader");
-			(void)gltype;
+			computeGlShaderType(static_cast<ShaderType>(i), &bit);
 			glUseProgramStages(m_glName, bit, shader.get().getGlName());
 		}
 	}
@@ -81,19 +93,19 @@ void PipelineImpl::destroy()
 }
 
 //==============================================================================
-void PipelineImpl::attachProgramsInternal(
-	const ShaderHandle* progs, PtrSize count)
+void PipelineImpl::attachProgramsInternal(const Initializer& init)
 {
 	U mask = 0;
+	U count = 6;
 	while(count-- != 0)
 	{
-		const ShaderHandle& prog = progs[count];
-		ShaderType type = prog.get().getType();
-		U idx = enumToType(type);
-
-		ANKI_ASSERT(!m_shaders[idx].isCreated() && "Attaching the same");
-		m_shaders[idx] = prog;
-		mask |= 1 << idx;
+		const ShaderHandle& shader = init.m_shaders[count];
+		if(shader.isCreated())
+		{
+			ANKI_ASSERT(count == enumToType(shader.get().getType()));
+			m_shaders[count] = shader;
+			mask |= 1 << count;
+		}
 	}
 
 	// Check what we attached

@@ -17,25 +17,17 @@ class CreatePipelineCommand final: public GlCommand
 {
 public:
 	PipelineHandle m_ppline;
-	Array<ShaderHandle, 6> m_progs;
-	U8 m_progsCount;
+	PipelineInitializer m_init;
 
-	CreatePipelineCommand(PipelineHandle& ppline, 
-		const ShaderHandle* progsBegin, const ShaderHandle* progsEnd)
-	:	m_ppline(ppline)
-	{
-		m_progsCount = 0;
-		const ShaderHandle* prog = progsBegin;
-		do
-		{
-			m_progs[m_progsCount++] = *prog;
-		} while(++prog != progsEnd);
-	}
+	CreatePipelineCommand(
+		PipelineHandle& ppline, 
+		const PipelineInitializer& init)
+	:	m_init(init)
+	{}
 
 	Error operator()(CommandBufferImpl* cmdb)
 	{
-		Error err = m_ppline.get().create(
-			&m_progs[0], &m_progs[0] + m_progsCount);
+		Error err = m_ppline.get().create(m_init);
 
 		GlObject::State oldState = m_ppline.get().setStateAtomically(
 			err ? GlObject::State::ERROR : GlObject::State::CREATED);
@@ -86,31 +78,14 @@ PipelineHandle::~PipelineHandle()
 //==============================================================================
 Error PipelineHandle::create(
 	CommandBufferHandle& commands,
-	std::initializer_list<ShaderHandle> iprogs)
-{
-	Array<ShaderHandle, 6> progs;
-
-	U count = 0;
-	for(ShaderHandle prog : iprogs)
-	{
-		progs[count++] = prog;
-	}
-
-	return commonConstructor(commands, &progs[0], &progs[0] + count);
-}
-
-//==============================================================================
-Error PipelineHandle::commonConstructor(
-	CommandBufferHandle& commands,
-	const ShaderHandle* progsBegin, const ShaderHandle* progsEnd)
+	const Initializer& init)
 {
 	using DeleteCommand = DeleteObjectCommand<PipelineImpl>;
 	using Deleter = DeferredDeleter<PipelineImpl, DeleteCommand>;
 
 	Base::create(commands.get().getManager(), Deleter());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
-	commands.get().pushBackNewCommand<CreatePipelineCommand>(
-		*this, progsBegin, progsEnd);
+	commands.get().pushBackNewCommand<CreatePipelineCommand>(*this, init);
 
 	return ErrorCode::NONE;
 }

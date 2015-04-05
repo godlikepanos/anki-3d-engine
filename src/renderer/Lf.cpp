@@ -97,8 +97,10 @@ Error Lf::initSprite(const ConfigSet& config,
 	ANKI_CHECK(m_realFrag.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfSpritePass.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_realPpline.create(cmdBuff,
-		{m_realVert->getGrShader(), m_realFrag->getGrShader()}));
+	PipelineHandle::Initializer init;
+	init.m_shaders[U(ShaderType::VERTEX)] = m_realVert->getGrShader();
+	init.m_shaders[U(ShaderType::FRAGMENT)] = m_realFrag->getGrShader();
+	ANKI_CHECK(m_realPpline.create(cmdBuff, init));
 
 	// Create buffer
 	PtrSize uboAlignment = 
@@ -142,8 +144,11 @@ Error Lf::initOcclusion(
 	ANKI_CHECK(m_occlusionFrag.load("shaders/PpsLfOcclusion.frag.glsl",
 		&getResourceManager()));
 
-	ANKI_CHECK(m_occlusionPpline.create(cmdBuff,
-		{m_occlusionVert->getGrShader(), m_occlusionFrag->getGrShader()}));
+	PipelineHandle::Initializer init;
+		init.m_shaders[U(ShaderType::VERTEX)] = m_occlusionVert->getGrShader();
+		init.m_shaders[U(ShaderType::FRAGMENT)] = 
+			m_occlusionFrag->getGrShader();
+	ANKI_CHECK(m_occlusionPpline.create(cmdBuff, init));
 
 	return ErrorCode::NONE;
 }

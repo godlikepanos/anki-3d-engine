@@ -49,8 +49,6 @@ struct TessellationStateInfo
 struct ViewportStateInfo
 {
 	Bool8 m_scissorEnabled = false;
-	Array<U32, 4> m_scissorRect = {{0, 0, 0, 0}};
-	Array<U32, 4> m_viewport = {{0, 0, 0, 0}};
 };
 
 struct RasterizerStateInfo
@@ -59,19 +57,27 @@ struct RasterizerStateInfo
 	CullMode m_cullMode = CullMode::BACK;
 };
 
-struct DepthStateInfo
+struct DepthStencilStateInfo
 {
-	Bool8 m_writeEnabled = false;
-	DepthCompareFunction m_compareFunction;
+	Bool8 m_depthWriteEnabled = false;
+	DepthCompareFunction m_depthCompareFunction = DepthCompareFunction::LESS;
+	PixelFormat m_format;
+};
+
+struct ColorAttachmentStateInfo
+{
+	BlendMethod m_srcBlendMethod = BlendMethod::ONE;
+	BlendMethod m_dstBlendMethod = BlendMethod::ZERO;
+	BlendFunction m_blendFunction = BlendFunction::ADD;
+	PixelFormat m_format;
 };
 
 struct ColorStateInfo
 {
 	Bool8 m_alphaToCoverageEnabled = false;
 	Bool8 m_blendEnabled = false;
-	BlendMethod m_srcBlendMethod = BlendMethod::ONE;
-	BlendMethod m_dstBlendMethod = BlendMethod::ONE;
-	BlendFunction m_blendFunction = BlendFunction::ADD;
+	U8 m_colorAttachmentsCount = 0;
+	Array<ColorAttachmentStateInfo, MAX_COLOR_ATTACHMENTS> m_attachments;
 	U8 m_channelWriteMask = 15;
 };
 
@@ -84,7 +90,9 @@ enum class SubStateBit: U16
 	VIEWPORT = 1 << 3,
 	RASTERIZER = 1 << 4,
 	DEPTH = 1 << 5,
-	COLOR = 1 << 6
+	COLOR = 1 << 6,
+	ALL = VERTEX | INPUT_ASSEMBLER | TESSELLATION | VIEWPORT | RASTERIZER 
+		| DEPTH | COLOR
 };
 
 /// Pipeline initializer.
@@ -95,7 +103,7 @@ struct PipelineInitializer
 	TessellationStateInfo m_tessellation;
 	ViewportStateInfo m_viewport;
 	RasterizerStateInfo m_rasterizer;
-	DepthStateInfo m_depthStencil;
+	DepthStencilStateInfo m_depthStencil;
 	ColorStateInfo m_color;
 
 	Array<ShaderHandle, 6> m_shaders;

@@ -291,10 +291,11 @@ Error Renderer::createDrawQuadPipeline(
 
 	if(!err)
 	{
-		Array<ShaderHandle, 2> progs = 
-			{{m_drawQuadVert->getGrShader(), frag}};
+		PipelineHandle::Initializer init;
+		init.m_shaders[U(ShaderType::VERTEX)] = m_drawQuadVert->getGrShader();
+		init.m_shaders[U(ShaderType::FRAGMENT)] = frag;
 
-		err = ppline.create(cmdBuff, &progs[0], &progs[0] + 2);
+		err = ppline.create(cmdBuff, init);
 	}
 
 	if(!err)

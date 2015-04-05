@@ -107,7 +107,9 @@ endif()
 add_definitions(-fno-exceptions)
 
 # static libstdc++
-set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
+if(${CMAKE_C_COMPILER_ID} MATCHES "GNU")
+	set(CXX_FLAGS "${CXX_FLAGS} -static-libstdc++ ")
+endif()
 
 # SSE
 if(ANKI_ENABLE_SIMD)
@@ -121,7 +123,11 @@ endif()
 if(${ANKI_BUILD_TYPE} STREQUAL "Debug")
 	# Debug
 
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -g3 -O0 -fstack-check ")
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -g3 -O0 ")
+
+	if(${CMAKE_C_COMPILER_ID} MATCHES "GNU")
+		set(COMPILER_FLAGS "${COMPILER_FLAGS} -fstack-check ")
+	endif()
 else()
 	# Release
 

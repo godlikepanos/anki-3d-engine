@@ -20,6 +20,7 @@ class GrManager;
 class PhysicsWorld;
 class ResourceManager;
 class AsyncLoader;
+class MaterialResourceData;
 
 // NOTE: Add resources in 3 places
 #define ANKI_RESOURCE(rsrc_, name_) \
@@ -241,6 +242,12 @@ public:
 	{
 		return *m_asyncLoader;
 	}
+
+	MaterialResourceData& getMaterialData()
+	{
+		ANKI_ASSERT(m_materialData);
+		return *m_materialData;
+	}
 	/// @}
 
 private:
@@ -254,10 +261,10 @@ private:
 	U32 m_textureAnisotropy;
 	String m_shadersPrependedSource;
 	AsyncLoader* m_asyncLoader = nullptr; ///< Async loading thread
+	MaterialResourceData* m_materialData = nullptr;
 };
 
 #undef ANKI_RESOURCE
-
 /// @}
 
 } // end namespace anki

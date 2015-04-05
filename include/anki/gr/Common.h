@@ -214,9 +214,6 @@ public:
 
 /// A function that returns an index from a shader type GLenum
 ShaderType computeShaderTypeIndex(const GLenum glType);
-
-/// A function that returns a GLenum from an index
-GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit = nullptr);
 /// @}
 
 } // end namespace anki

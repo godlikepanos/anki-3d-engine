@@ -39,26 +39,6 @@ ShaderType computeShaderTypeIndex(const GLenum glType)
 }
 
 //==============================================================================
-GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit)
-{
-	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER, 
-		GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER,
-		GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER}};
-
-	static const Array<GLuint, 6> glbit = {{
-		GL_VERTEX_SHADER_BIT, GL_TESS_CONTROL_SHADER_BIT, 
-		GL_TESS_EVALUATION_SHADER_BIT, GL_GEOMETRY_SHADER_BIT,
-		GL_FRAGMENT_SHADER_BIT, GL_COMPUTE_SHADER_BIT}};
-
-	if(bit)
-	{
-		*bit = glbit[enumToType(idx)];
-	}
-
-	return gltype[enumToType(idx)];
-}
-
-//==============================================================================
 template<typename T>
 void writeShaderBlockMemorySanityChecks(
 	const ShaderVariableBlockInfo& varBlkInfo,

@@ -49,8 +49,11 @@ Error DebugDrawer::create(Renderer* r)
 
 	if(!err)
 	{
-		err = m_ppline.create(jobs, 
-			{m_vert->getGrShader(), m_frag->getGrShader()});
+		PipelineHandle::Initializer init;
+		init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
+		init.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
+
+		err = m_ppline.create(jobs, init);
 	}
 
 	if(!err)

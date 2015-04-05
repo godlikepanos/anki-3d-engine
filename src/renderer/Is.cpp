@@ -212,8 +212,10 @@ Error Is::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_lightFrag.loadToCache(&getResourceManager(),
 		"shaders/IsLp.frag.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_lightPpline.create(cmdBuff, 
-		{m_lightVert->getGrShader(), m_lightFrag->getGrShader()}));
+	PipelineHandle::Initializer init;
+		init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
+		init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
+	ANKI_CHECK(m_lightPpline.create(cmdBuff, init));
 
 	//
 	// Create framebuffer

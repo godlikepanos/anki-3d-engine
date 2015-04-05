@@ -113,7 +113,12 @@ enum class ComponentFormat: U8
 	R8G8B8_S3TC, ///< DXT1
 	R8G8B8_ETC2,
 	R8G8B8A8_S3TC, ///< DXT5
-	R8G8B8A8_ETC2
+	R8G8B8A8_ETC2,
+
+	// Depth
+	D16,
+	D24,
+	D32
 };
 
 enum class TransformFormat: U8
@@ -179,7 +184,17 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType, inline)
 /// Format for images and vertex attributes.
 struct PixelFormat
 {
-	ComponentFormat m_components = ComponentFormat::R8;
+	PixelFormat() = default;
+
+	PixelFormat(const PixelFormat&) = default;
+
+	PixelFormat(ComponentFormat cf, TransformFormat tf, Bool srgb)
+	:	m_components(cf),
+		m_transform(tf),
+		m_srgb(srgb)
+	{}
+
+	ComponentFormat m_components = ComponentFormat::R8G8B8A8;
 	TransformFormat m_transform = TransformFormat::UNORM;
 	Bool8 m_srgb = false;
 };
