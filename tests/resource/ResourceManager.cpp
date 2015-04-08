@@ -7,7 +7,6 @@
 #include "anki/resource/ResourceManager.h"
 #include "anki/resource/DummyRsrc.h"
 #include "anki/core/Config.h"
-#include "anki/Gl.h"
 
 namespace anki {
 
@@ -19,17 +18,13 @@ ANKI_TEST(Resource, ResourceManager)
 	
 	HeapAllocator<U8> alloc(allocAligned, nullptr);
 
-	GlDevice* gl = alloc.newInstance<GlDevice>();
-	ANKI_TEST_EXPECT_NO_ERR(gl->create(allocAligned, nullptr, "/tmp/"));
-
 	ResourceManager::Initializer rinit;
-	rinit.m_gl = gl;
+	rinit.m_gr = nullptr;
 	rinit.m_config = &config;
 	rinit.m_cacheDir = "/tmp/";
 	rinit.m_allocCallback = allocAligned;
 	rinit.m_allocCallbackData = nullptr;
 	ResourceManager* resources = alloc.newInstance<ResourceManager>();
-	ANKI_TEST_EXPECT_NEQ(resources, nullptr);
 	ANKI_TEST_EXPECT_NO_ERR(resources->create(rinit));
 
 	// Load a resource
@@ -86,7 +81,6 @@ ANKI_TEST(Resource, ResourceManager)
 
 	// Delete
 	alloc.deleteInstance(resources);
-	alloc.deleteInstance(gl);
 }
 
 } // end namespace anki

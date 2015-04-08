@@ -38,8 +38,7 @@ Error Mesh::load(const CString& filename, ResourceInitializer& init)
 	Error err = ErrorCode::NONE;
 
 	MeshLoader loader;
-	err = loader.load(&init.m_tempAlloc.getMemoryPool(), filename);
-	if(err) return err;
+	ANKI_CHECK(loader.load(init.m_tempAlloc, filename));
 
 	const MeshLoader::Header& header = loader.getHeader();
 	m_indicesCount = header.m_totalIndicesCount;

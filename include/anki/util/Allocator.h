@@ -105,13 +105,6 @@ public:
 		m_pool->getRefcount().store(1);
 	}
 
-	/// Assing a pool directly.
-	GenericPoolAllocator(TPool* pool)
-	{
-		m_pool = pool;
-		m_pool->getRefcount().fetchAdd(1);
-	}
-
 	/// Destructor
 	~GenericPoolAllocator()
 	{
@@ -146,7 +139,7 @@ public:
 	}
 
 	/// Allocate memory
-	/// @param n The bytes to allocate
+	/// @param n The elements of type T to allocate
 	/// @param hint It's been used to override the alignment. The type should
 	///             be PtrSize
 	pointer allocate(size_type n, const void* hint = nullptr)
@@ -156,7 +149,7 @@ public:
 		size_type size = n * sizeof(value_type);
 
 		// Operator new doesn't respect alignment (in GCC at least) so use 
-		// the types alignment. If hint override the alignment
+		// the type's alignment. If hint override the alignment
 		PtrSize alignment = (hint != nullptr) 
 			? *reinterpret_cast<const PtrSize*>(hint) 
 			: alignof(value_type);

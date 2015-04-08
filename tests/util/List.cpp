@@ -18,10 +18,8 @@ ANKI_TEST(Util, List)
 		List<Foo> a;
 		Error err = ErrorCode::NONE;
 
-		err = a.emplaceBack(alloc, 10);
-		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
-		err = a.emplaceBack(alloc, 11);
-		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
+		a.emplaceBack(alloc, 10);
+		a.emplaceBack(alloc, 11);
 
 		U sum = 0;
 
@@ -42,14 +40,10 @@ ANKI_TEST(Util, List)
 		List<I> a;
 		Error err = ErrorCode::NONE;
 
-		err = a.emplaceBack(alloc, 10);
-		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
-		err = a.emplaceBack(alloc, 9);
-		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
-		err = a.emplaceBack(alloc, 11);
-		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
-		err = a.emplaceBack(alloc, 2);
-		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
+		a.emplaceBack(alloc, 10);
+		a.emplaceBack(alloc, 9);
+		a.emplaceBack(alloc, 11);
+		a.emplaceBack(alloc, 2);
 
 		a.sort();
 
@@ -106,7 +100,7 @@ ANKI_TEST(Util, List)
 			I randVal = rand();
 			Foo f(randVal);
 
-			ANKI_TEST_EXPECT_NO_ERR(a.pushBack(alloc, f));
+			a.pushBack(alloc, f);
 			b.push_back(f);
 		}
 
@@ -143,14 +137,10 @@ ANKI_TEST(Util, List)
 		List<I> a;
 		Error err = ErrorCode::NONE;
 
-		err = a.emplaceBack(alloc, 10);
-		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
-		err = a.emplaceBack(alloc, 9);
-		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
-		err = a.emplaceBack(alloc, 11);
-		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
-		err = a.emplaceBack(alloc, 2);
-		ANKI_TEST_EXPECT_EQ(err, ErrorCode::NONE);
+		a.emplaceBack(alloc, 10);
+		a.emplaceBack(alloc, 9);
+		a.emplaceBack(alloc, 11);
+		a.emplaceBack(alloc, 2);
 
 		Array<I, 4> arr = {{10, 9, 11, 2}};
 		U count = 0;
@@ -186,19 +176,19 @@ ANKI_TEST(Util, List)
 	{
 		List<I> a;
 
-		ANKI_TEST_EXPECT_EQ(a.emplaceBack(alloc, 10), ErrorCode::NONE);
+		a.emplaceBack(alloc, 10);
 
 		a.erase(alloc, a.getBegin());
 		ANKI_TEST_EXPECT_EQ(a.isEmpty(), true);
 
-		ANKI_TEST_EXPECT_EQ(a.emplaceBack(alloc, 10), ErrorCode::NONE);
-		ANKI_TEST_EXPECT_EQ(a.emplaceBack(alloc, 20), ErrorCode::NONE);
+		a.emplaceBack(alloc, 10);
+		a.emplaceBack(alloc, 20);
 
 		a.erase(alloc, a.getBegin() + 1);
 		ANKI_TEST_EXPECT_EQ(10, *a.getBegin());
 
-		ANKI_TEST_EXPECT_EQ(a.emplaceFront(alloc, 5), ErrorCode::NONE);
-		ANKI_TEST_EXPECT_EQ(a.emplaceBack(alloc, 30), ErrorCode::NONE);
+		a.emplaceFront(alloc, 5);
+		a.emplaceBack(alloc, 30);
 
 		ANKI_TEST_EXPECT_EQ(5, *(a.getBegin()));
 		ANKI_TEST_EXPECT_EQ(10, *(a.getEnd() - 2));

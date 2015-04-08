@@ -331,7 +331,7 @@ private:
 		U8* m_top = nullptr;
 
 		/// Used to identify if the chunk can be deleted
-		U32 m_allocationsCount = 0;
+		PtrSize m_allocationsCount = 0;
 
 		/// Next chunk in the list
 		Chunk* m_next = nullptr;
@@ -363,7 +363,7 @@ private:
 
 	/// Compute the size for the next chunk.
 	/// @param size The current allocation size.
-	PtrSize computeNewChunkSize(PtrSize size);
+	PtrSize computeNewChunkSize(PtrSize size) const;
 
 	/// Create a new chunk.
 	Chunk* createNewChunk(PtrSize size);

@@ -576,7 +576,7 @@ public:
 	template<typename TAllocator>
 	StringAuto(TAllocator alloc)
 	:	Base(),
-		m_alloc(&alloc.getMemoryPool())
+		m_alloc(alloc)
 	{}
 
 	/// Move constructor.

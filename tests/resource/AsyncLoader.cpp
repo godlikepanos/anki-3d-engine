@@ -17,10 +17,10 @@ class Task: public AsyncLoader::Task
 public:
 	F32 m_sleepTime = 0.0;
 	Barrier* m_barrier = nullptr;
-	AtomicU32* m_count = nullptr;
+	Atomic<U32>* m_count = nullptr;
 	I32 m_id = -1;
 
-	Task(F32 time, Barrier* barrier, AtomicU32* count, I32 id = -1)
+	Task(F32 time, Barrier* barrier, Atomic<U32>* count, I32 id = -1)
 	:	m_sleepTime(time),
 		m_barrier(barrier),
 		m_count(count),
@@ -31,7 +31,7 @@ public:
 	{
 		if(m_count)
 		{
-			auto x = m_count->fetch_add(1);
+			auto x = m_count->fetchAdd(1);
 
 			if(m_id >= 0)
 			{
@@ -115,7 +115,7 @@ ANKI_TEST(Resource, AsyncLoader)
 		AsyncLoader a;
 		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc));
 		Barrier barrier(2);
-		AtomicU32 counter = {0};
+		Atomic<U32> counter = {0};
 
 		for(U i = 0; i < 100; i++)
 		{
@@ -182,7 +182,7 @@ ANKI_TEST(Resource, AsyncLoader)
 		AsyncLoader a;
 		ANKI_TEST_EXPECT_NO_ERR(a.create(alloc));
 		Barrier barrier(2);
-		AtomicU32 counter = {0};
+		Atomic<U32> counter = {0};
 
 		for(U i = 0; i < 10; i++)
 		{

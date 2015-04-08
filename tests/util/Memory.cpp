@@ -13,7 +13,7 @@ ANKI_TEST(Util, HeapMemoryPool)
 	// Simple
 	{
 		HeapMemoryPool pool;
-		ANKI_TEST_EXPECT_NO_ERR(pool.create(allocAligned, nullptr));
+		pool.create(allocAligned, nullptr);
 
 		void* ptr = pool.allocate(123, 1);
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -24,7 +24,7 @@ ANKI_TEST(Util, HeapMemoryPool)
 	// Simple array
 	{
 		HeapMemoryPool pool;
-		ANKI_TEST_EXPECT_NO_ERR(pool.create(allocAligned, nullptr));
+		pool.create(allocAligned, nullptr);
 
 		void* ptr = pool.allocate(2, 1);
 		ANKI_TEST_EXPECT_NEQ(ptr, nullptr);
@@ -44,14 +44,14 @@ ANKI_TEST(Util, StackMemoryPool)
 	{
 		StackMemoryPool pool;
 
-		ANKI_TEST_EXPECT_NO_ERR(pool.create(allocAligned, nullptr, 10, 4));
+		pool.create(allocAligned, nullptr, 10, 4);
 	}
 
 	// Allocate
 	{
 		StackMemoryPool pool;
 
-		ANKI_TEST_EXPECT_NO_ERR(pool.create(allocAligned, nullptr, 100, 4));
+		pool.create(allocAligned, nullptr, 100, false, 4);
 
 		void* a = pool.allocate(25, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
@@ -62,13 +62,14 @@ ANKI_TEST(Util, StackMemoryPool)
 		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 0);
 
 		// Allocate a few
-		a = pool.allocate(25, 1);
+		const U SIZE = 25 - 4;
+		a = pool.allocate(SIZE, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(25, 1);
+		a = pool.allocate(SIZE, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(25, 1);
+		a = pool.allocate(SIZE, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(25, 1);
+		a = pool.allocate(SIZE, 1);
 		ANKI_TEST_EXPECT_EQ(a, nullptr);
 		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 3);
 
@@ -77,13 +78,13 @@ ANKI_TEST(Util, StackMemoryPool)
 		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 0);
 
 		// Allocate again
-		a = pool.allocate(25, 1);
+		a = pool.allocate(SIZE, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(25, 1);
+		a = pool.allocate(SIZE, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(25, 1);
+		a = pool.allocate(SIZE, 1);
 		ANKI_TEST_EXPECT_NEQ(a, nullptr);
-		a = pool.allocate(25, 1);
+		a = pool.allocate(SIZE, 1);
 		ANKI_TEST_EXPECT_EQ(a, nullptr);
 		ANKI_TEST_EXPECT_EQ(pool.getAllocationsCount(), 3);
 	}
@@ -96,11 +97,10 @@ ANKI_TEST(Util, ChainMemoryPool)
 		const U size = 8;
 		ChainMemoryPool pool;
 
-		Error error = pool.create(
+		pool.create(
 			allocAligned, nullptr,
 			size, size + 1, 
 			ChainMemoryPool::ChunkGrowMethod::MULTIPLY, 2, 1);
-		ANKI_TEST_EXPECT_EQ(error, ErrorCode::NONE);
 
 		void* mem = pool.allocate(5, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
@@ -118,11 +118,10 @@ ANKI_TEST(Util, ChainMemoryPool)
 		const U size = sizeof(PtrSize) + 10;
 		ChainMemoryPool pool;
 		
-		Error error = pool.create(
+		pool.create(
 			allocAligned, nullptr,
 			size, size * 2, 
 			ChainMemoryPool::ChunkGrowMethod::MULTIPLY, 2, 1);
-		ANKI_TEST_EXPECT_EQ(error, ErrorCode::NONE);
 
 		void* mem = pool.allocate(size, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);

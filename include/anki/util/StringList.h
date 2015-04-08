@@ -68,7 +68,7 @@ public:
 	template<typename TAllocator>
 	StringListAuto(TAllocator alloc)
 	:	Base(),
-		m_alloc(&alloc.getMemoryPool())
+		m_alloc(alloc)
 	{}
 
 	/// Move.

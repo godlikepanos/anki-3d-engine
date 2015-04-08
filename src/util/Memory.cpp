@@ -36,7 +36,8 @@ static Signature computeSignature(void* ptr)
 }
 #endif
 
-#define ANKI_OOM_ACTION() ANKI_LOGF("Out of memory")
+#define ANKI_CREATION_OOM_ACTION() ANKI_LOGF("Out of memory")
+#define ANKI_OOM_ACTION() ANKI_LOGE("Out of memory. Expect segfault")
 
 //==============================================================================
 // Other                                                                       =
@@ -336,7 +337,7 @@ void StackMemoryPool::create(
 	}
 	else
 	{
-		ANKI_OOM_ACTION();
+		ANKI_CREATION_OOM_ACTION();
 	}
 }
 
@@ -526,7 +527,7 @@ void ChainMemoryPool::create(
 		m_allocCbUserData, nullptr, sizeof(SpinLock), alignof(SpinLock)));
 	if(!m_lock)
 	{
-		ANKI_OOM_ACTION();
+		ANKI_CREATION_OOM_ACTION();
 	}
 	construct(m_lock);
 
@@ -597,7 +598,7 @@ void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 void ChainMemoryPool::free(void* ptr)
 {
 	ANKI_ASSERT(isCreated());
-	if(ptr == nullptr)
+	if(ANKI_UNLIKELY(ptr == nullptr))
 	{
 		return;
 	}
@@ -687,7 +688,7 @@ PtrSize ChainMemoryPool::getAllocatedSize() const
 }
 
 //==============================================================================
-PtrSize ChainMemoryPool::computeNewChunkSize(PtrSize size)
+PtrSize ChainMemoryPool::computeNewChunkSize(PtrSize size) const
 {
 	ANKI_ASSERT(size <= m_maxSize);
 
@@ -732,7 +733,7 @@ PtrSize ChainMemoryPool::computeNewChunkSize(PtrSize size)
 		crntMaxSize = min(crntMaxSize, m_maxSize);
 	}
 
-	size = max(crntMaxSize, size) + m_alignmentBytes;
+	size = max(crntMaxSize, size);
 
 	return size;
 }
@@ -742,44 +743,38 @@ ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
 {
 	ANKI_ASSERT(size > 0);
 
+	// Allocate memory and chunk in one go
+	PtrSize chunkAllocSize = getAlignedRoundUp(m_alignmentBytes, sizeof(Chunk));
+	PtrSize memAllocSize = getAlignedRoundUp(m_alignmentBytes, size);
+	PtrSize allocationSize = chunkAllocSize + memAllocSize;
+
 	Chunk* chunk = reinterpret_cast<Chunk*>(m_allocCb(
-		m_allocCbUserData, nullptr, sizeof(Chunk), alignof(Chunk)));
+		m_allocCbUserData, nullptr, allocationSize, m_alignmentBytes));
 
 	if(chunk)
 	{
+#if ANKI_DEBUG
+		memset(chunk, 0xCC, allocationSize);
+#endif
 		// Construct it
-		construct(chunk);
+		memset(chunk, 0, sizeof(Chunk));
 
 		// Initialize it
-		chunk->m_memory = reinterpret_cast<U8*>(
-			m_allocCb(m_allocCbUserData, nullptr, size, m_alignmentBytes));
-		if(chunk->m_memory)
+		chunk->m_memory = reinterpret_cast<U8*>(chunk) + chunkAllocSize;
+		
+		chunk->m_memsize = memAllocSize;
+		chunk->m_top = chunk->m_memory;
+
+		// Register it
+		if(m_tailChunk)
 		{
-			chunk->m_memsize = size;
-			chunk->m_top = chunk->m_memory;
-
-#if ANKI_DEBUG
-			memset(chunk->m_memory, 0xCC, chunk->m_memsize);
-#endif
-
-			// Register it
-			if(m_tailChunk)
-			{
-				m_tailChunk->m_next = chunk;
-				m_tailChunk = chunk;
-			}
-			else
-			{
-				ANKI_ASSERT(m_headChunk == nullptr);
-				m_headChunk = m_tailChunk = chunk;
-			}
+			m_tailChunk->m_next = chunk;
+			m_tailChunk = chunk;
 		}
 		else
 		{
-			ANKI_OOM_ACTION();
-			destruct(chunk);
-			m_allocCb(m_allocCbUserData, chunk, 0, 0);
-			chunk = nullptr;
+			ANKI_ASSERT(m_headChunk == nullptr);
+			m_headChunk = m_tailChunk = chunk;
 		}
 	}
 	else
@@ -821,16 +816,9 @@ void ChainMemoryPool::destroyChunk(Chunk* ch)
 {
 	ANKI_ASSERT(ch);
 
-	if(ch->m_memory)
-	{
 #if ANKI_DEBUG
-		memset(ch->m_memory, 0xCC, ch->m_memsize);
-#endif
-		m_allocCb(m_allocCbUserData, ch->m_memory, 0, 0);
-	}
-
-#if ANKI_DEBUG
-	memset(ch, 0xCC, sizeof(*ch));
+	memset(ch, 0xCC, 
+		getAlignedRoundUp(m_alignmentBytes, sizeof(Chunk)) + ch->m_memsize);
 #endif
 	m_allocCb(m_allocCbUserData, ch, 0, 0);
 }
