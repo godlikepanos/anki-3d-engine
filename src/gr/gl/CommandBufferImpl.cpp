@@ -21,8 +21,7 @@ void CommandBufferImpl::create(const InitHints& hints)
 		pool.getAllocationCallback(),
 		pool.getAllocationCallbackUserData(),
 		hints.m_chunkSize, 
-		InitHints::MAX_CHUNK_SIZE, 
-		ChainMemoryPool::ChunkGrowMethod::ADD,
+		1.0,
 		hints.m_chunkSize);
 }
 

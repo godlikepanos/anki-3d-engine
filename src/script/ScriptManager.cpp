@@ -30,7 +30,7 @@ Error ScriptManager::create(
 	ANKI_LOGI("Initializing scripting engine...");
 
 	m_scene = scene;
-	m_alloc = ChainAllocator<U8>(allocCb, allocCbData, 1024, 1024 * 1024);
+	m_alloc = ChainAllocator<U8>(allocCb, allocCbData, 1024, 1.0, 0);
 
 	Error err = m_lua.create(m_alloc, this);
 	if(err) return err;

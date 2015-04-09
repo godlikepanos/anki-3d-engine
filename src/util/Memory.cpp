@@ -506,9 +506,8 @@ void ChainMemoryPool::create(
 	AllocAlignedCallback allocCb, 
 	void* allocCbUserData,
 	PtrSize initialChunkSize,
-	PtrSize maxChunkSize,
-	ChunkGrowMethod chunkAllocStepMethod, 
-	PtrSize chunkAllocStep, 
+	F32 nextChunkScale,
+	PtrSize nextChunkBias, 
 	PtrSize alignmentBytes)
 {
 	ANKI_ASSERT(!isCreated());
@@ -519,9 +518,9 @@ void ChainMemoryPool::create(
 	m_allocCbUserData = allocCbUserData;
 	m_alignmentBytes = alignmentBytes;
 	m_initSize = initialChunkSize;
-	m_maxSize = maxChunkSize;
-	m_step = chunkAllocStep;
-	m_method = chunkAllocStepMethod;
+	m_scale = nextChunkScale;
+	m_bias = nextChunkBias;
+	m_headerSize = max(m_alignmentBytes, sizeof(Chunk*));
 	
 	m_lock = reinterpret_cast<SpinLock*>(m_allocCb(
 		m_allocCbUserData, nullptr, sizeof(SpinLock), alignof(SpinLock)));
@@ -534,23 +533,10 @@ void ChainMemoryPool::create(
 	// Initial size should be > 0
 	ANKI_ASSERT(m_initSize > 0 && "Wrong arg");
 
-	// On fixed step should be 0
-	if(m_method == ChunkGrowMethod::FIXED)
-	{
-		ANKI_ASSERT(m_step == 0 && "Wrong arg");
-	}
-
 	// On fixed initial size is the same as the max
-	if(m_method == ChunkGrowMethod::FIXED)
+	if(m_scale == 0.0 && m_bias == 0)
 	{
-		ANKI_ASSERT(m_initSize == m_maxSize && "Wrong arg");
-	}
-
-	// On add and mul the max size should be greater than initial
-	if(m_method == ChunkGrowMethod::ADD 
-		|| m_method == ChunkGrowMethod::MULTIPLY)
-	{
-		ANKI_ASSERT(m_initSize < m_maxSize && "Wrong arg");
+		ANKI_ASSERT(0 && "Wrong arg");
 	}
 }
 
@@ -558,7 +544,6 @@ void ChainMemoryPool::create(
 void* ChainMemoryPool::allocate(PtrSize size, PtrSize alignment)
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(size <= m_maxSize);
 
 	Chunk* ch;
 	void* mem = nullptr;
@@ -603,52 +588,23 @@ void ChainMemoryPool::free(void* ptr)
 		return;
 	}
 
+	// Get the chunk
+	U8* mem = static_cast<U8*>(ptr);
+	mem -= m_headerSize;
+	Chunk* chunk = *reinterpret_cast<Chunk**>(mem);
+
+	ANKI_ASSERT(chunk != nullptr);
+	ANKI_ASSERT((mem >= chunk->m_memory 
+		&& mem < (chunk->m_memory + chunk->m_memsize))
+		&& "Wrong chunk");
+
 	LockGuard<SpinLock> lock(*m_lock);
-
-	// Find the chunk the ptr belongs to
-	Chunk* chunk = m_headChunk;
-	Chunk* prevChunk = nullptr;
-	while(chunk)
-	{
-		const U8* from = chunk->m_memory;
-		const U8* to = from + chunk->m_memsize;
-		const U8* cptr = reinterpret_cast<const U8*>(ptr);
-		if(cptr >= from && cptr < to)
-		{
-			break;
-		}
-
-		prevChunk = chunk;
-		chunk = chunk->m_next;
-	}
-
-	ANKI_ASSERT(chunk != nullptr 
-		&& "Not initialized or ptr is incorrect");
 
 	// Decrease the deallocation refcount and if it's zero delete the chunk
 	ANKI_ASSERT(chunk->m_allocationsCount > 0);
 	if(--chunk->m_allocationsCount == 0)
 	{
 		// Chunk is empty. Delete it
-
-		if(prevChunk != nullptr)
-		{
-			ANKI_ASSERT(m_headChunk != chunk);
-			prevChunk->m_next = chunk->m_next;
-		}
-
-		if(chunk == m_headChunk)
-		{
-			ANKI_ASSERT(prevChunk == nullptr);
-			m_headChunk = chunk->m_next;
-		}
-
-		if(chunk == m_tailChunk)
-		{
-			m_tailChunk = prevChunk;
-		}
-
-		// Finaly delete it
 		destroyChunk(chunk);
 	}
 
@@ -690,52 +646,29 @@ PtrSize ChainMemoryPool::getAllocatedSize() const
 //==============================================================================
 PtrSize ChainMemoryPool::computeNewChunkSize(PtrSize size) const
 {
-	ANKI_ASSERT(size <= m_maxSize);
+	size += m_headerSize;
 
-	// Get the size of the next chunk
 	PtrSize crntMaxSize;
-	if(m_method == ChunkGrowMethod::FIXED)
+	if(m_tailChunk != nullptr)
 	{
-		crntMaxSize = m_initSize;
+		// Get the size of previous
+		crntMaxSize = m_tailChunk->m_memsize;
+
+		// Compute new size
+		crntMaxSize = F32(crntMaxSize) * m_scale + m_bias;
 	}
 	else
 	{
-		// Get the size of the previous max chunk
-		if(m_tailChunk != nullptr)
-		{
-			// Get the size of previous
-			crntMaxSize = m_tailChunk->m_memsize;
-			ANKI_ASSERT(crntMaxSize > 0);
-
-			// Increase it
-			if(m_method == ChainMemoryPool::ChunkGrowMethod::MULTIPLY)
-			{
-				crntMaxSize *= m_step;
-			}
-			else
-			{
-				ANKI_ASSERT(m_method 
-					== ChainMemoryPool::ChunkGrowMethod::ADD);
-				crntMaxSize += m_step;
-			}
-		}
-		else
-		{
-			// No chunks. Choose initial size
-
-			ANKI_ASSERT(m_headChunk == nullptr);
-			crntMaxSize = m_initSize;
-		}
-
-		ANKI_ASSERT(crntMaxSize > 0);
-
-		// Fix the size
-		crntMaxSize = min(crntMaxSize, m_maxSize);
+		// No chunks. Choose initial size
+		ANKI_ASSERT(m_headChunk == nullptr);
+		crntMaxSize = m_initSize;
 	}
 
-	size = max(crntMaxSize, size);
+	crntMaxSize = max(crntMaxSize, size);
 
-	return size;
+	ANKI_ASSERT(crntMaxSize > 0);
+
+	return crntMaxSize;
 }
 
 //==============================================================================
@@ -769,6 +702,7 @@ ChainMemoryPool::Chunk* ChainMemoryPool::createNewChunk(PtrSize size)
 		if(m_tailChunk)
 		{
 			m_tailChunk->m_next = chunk;
+			chunk->m_prev = m_tailChunk;
 			m_tailChunk = chunk;
 		}
 		else
@@ -790,15 +724,17 @@ void* ChainMemoryPool::allocateFromChunk(
 	Chunk* ch, PtrSize size, PtrSize alignment)
 {
 	ANKI_ASSERT(ch);
-	ANKI_ASSERT(size <= m_maxSize);
 	ANKI_ASSERT(ch->m_top <= ch->m_memory + ch->m_memsize);
 
 	U8* mem = ch->m_top;
 	alignRoundUp(m_alignmentBytes, mem);
-	U8* newTop = mem + size;
+	U8* newTop = mem + m_headerSize + size;
 
 	if(newTop <= ch->m_memory + ch->m_memsize)
 	{
+		*reinterpret_cast<Chunk**>(mem) = ch;
+		mem += m_headerSize;
+
 		ch->m_top = newTop;
 		++ch->m_allocationsCount;
 	}
@@ -815,6 +751,28 @@ void* ChainMemoryPool::allocateFromChunk(
 void ChainMemoryPool::destroyChunk(Chunk* ch)
 {
 	ANKI_ASSERT(ch);
+
+	if(ch == m_tailChunk)
+	{
+		m_tailChunk = ch->m_prev;
+	}
+
+	if(ch == m_headChunk)
+	{
+		m_headChunk = ch->m_next;
+	}
+
+	if(ch->m_prev)
+	{
+		ANKI_ASSERT(ch->m_prev->m_next == ch);
+		ch->m_prev->m_next = ch->m_next;
+	}
+
+	if(ch->m_next)
+	{
+		ANKI_ASSERT(ch->m_next->m_prev == ch);
+		ch->m_next->m_prev = ch->m_prev;
+	}
 
 #if ANKI_DEBUG
 	memset(ch, 0xCC, 

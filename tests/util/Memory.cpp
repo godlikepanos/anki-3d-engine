@@ -99,8 +99,7 @@ ANKI_TEST(Util, ChainMemoryPool)
 
 		pool.create(
 			allocAligned, nullptr,
-			size, size + 1, 
-			ChainMemoryPool::ChunkGrowMethod::MULTIPLY, 2, 1);
+			size, 2.0, 0, 1);
 
 		void* mem = pool.allocate(5, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);
@@ -120,8 +119,7 @@ ANKI_TEST(Util, ChainMemoryPool)
 		
 		pool.create(
 			allocAligned, nullptr,
-			size, size * 2, 
-			ChainMemoryPool::ChunkGrowMethod::MULTIPLY, 2, 1);
+			size, 2.0, 0, 1);
 
 		void* mem = pool.allocate(size, 1);
 		ANKI_TEST_EXPECT_NEQ(mem, nullptr);

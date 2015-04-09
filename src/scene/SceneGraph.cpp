@@ -120,8 +120,7 @@ Error SceneGraph::create(
 	m_alloc = SceneAllocator<U8>(
 		allocCb, allocCbData, 
 		1024 * 10,
-		1024 * 10,
-		ChainMemoryPool::ChunkGrowMethod::FIXED,
+		1.0,
 		0);
 	m_frameAlloc = SceneFrameAllocator<U8>(
 		allocCb, allocCbData, frameAllocatorSize);

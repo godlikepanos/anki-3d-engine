@@ -263,40 +263,26 @@ private:
 class ChainMemoryPool: public BaseMemoryPool
 {
 public:
-	/// Chunk allocation method. Defines the size a newely created chunk should
-	/// have compared to the last created. Used to grow chunks over the number 
-	/// of allocations that happen.
-	enum class ChunkGrowMethod: U8
-	{
-		NONE,
-		FIXED, ///< All chunks have the same size
-		MULTIPLY, ///< Next chuck's size will be old_chuck_size * a_value
-		ADD ///< Next chuck's size will be old_chuck_size + a_value
-	};
-
 	/// Default constructor
 	ChainMemoryPool();
 
 	/// Destroy
 	~ChainMemoryPool() final;
 
-	/// Constructor with parameters
-	/// @param allocCb The allocation function callback
-	/// @param allocCbUserData The user data to pass to the allocation function
-	/// @param initialChunkSize The size of the first chunk
-	/// @param maxChunkSize The size of the chunks cannot exceed that number
-	/// @param chunkAllocStepMethod How new chunks grow compared to the old ones
-	/// @param chunkAllocStep Used along with chunkAllocStepMethod and defines
-	///                       the ammount of chunk size increase 
+	/// Creates the pool.
+	/// @param allocCb The allocation function callback.
+	/// @param allocCbUserData The user data to pass to the allocation function.
+	/// @param initialChunkSize The size of the first chunk.
+	/// @param nextChunkScale Value that controls the next chunk.
+	/// @param nextChunkBias Value that controls the next chunk. 
 	/// @param alignmentBytes The maximum supported alignment for returned
-	///                       memory
+	///                       memory.
 	void create(
 		AllocAlignedCallback allocCb, 
 		void* allocCbUserData,
 		PtrSize initialChunkSize,
-		PtrSize maxChunkSize,
-		ChunkGrowMethod chunkAllocStepMethod = ChunkGrowMethod::MULTIPLY, 
-		PtrSize chunkAllocStep = 2, 
+		F32 nextChunkScale = 2.0,
+		PtrSize nextChunkBias = 0,
 		PtrSize alignmentBytes = ANKI_SAFE_ALIGNMENT);
 
 	/// Allocate memory. This operation is thread safe
@@ -333,6 +319,9 @@ private:
 		/// Used to identify if the chunk can be deleted
 		PtrSize m_allocationsCount = 0;
 
+		/// Previous chunk in the list
+		Chunk* m_prev = nullptr;
+
 		/// Next chunk in the list
 		Chunk* m_next = nullptr;
 	};
@@ -355,11 +344,14 @@ private:
 	/// Chunk max size.
 	PtrSize m_maxSize = 0;
 
-	/// Chunk allocation method value.
-	U32 m_step = 0;
+	/// Chunk scale.
+	F32 m_scale = 2.0;
 
-	/// Chunk allocation method.
-	ChunkGrowMethod m_method = ChunkGrowMethod::NONE;
+	/// Chunk bias.
+	PtrSize m_bias = 0;
+
+	/// Cache a value.
+	PtrSize m_headerSize;
 
 	/// Compute the size for the next chunk.
 	/// @param size The current allocation size.

@@ -44,9 +44,8 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	m_alloc = ChainAllocator<U8>(
 		allocCb, allocCbData, 
 		1024 * 10,
-		1024 * 1024 * 10,
-		ChainMemoryPool::ChunkGrowMethod::MULTIPLY,
-		2);
+		2.0,
+		0);
 	
 	// Set allocators
 	gAlloc = &m_alloc;
