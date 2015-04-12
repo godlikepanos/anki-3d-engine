@@ -44,7 +44,7 @@ void GrManager::swapBuffers()
 //==============================================================================
 PtrSize GrManager::getBufferOffsetAlignment(GLenum target) const
 {
-	const State& state = m_impl->getRenderingThread().getState();
+	const GlState& state = m_impl->getRenderingThread().getState();
 
 	if(target == GL_UNIFORM_BUFFER)
 	{

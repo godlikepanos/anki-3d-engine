@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/PipelineHandle.h"
+#include "anki/gr/PipelineCommon.h"
 #include "anki/gr/gl/PipelineImpl.h"
 #include "anki/gr/gl/DeferredDeleter.h"
 
@@ -49,7 +50,7 @@ public:
 
 	Error operator()(CommandBufferImpl* commands)
 	{
-		State& state = commands->getManager().getImplementation().
+		GlState& state = commands->getManager().getImplementation().
 			getRenderingThread().getState();
 
 		auto name = m_ppline.get().getGlName();

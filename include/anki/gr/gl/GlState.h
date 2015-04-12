@@ -7,6 +7,7 @@
 #define ANKI_GR_GL_STATE_H
 
 #include "anki/gr/Common.h"
+#include "anki/gr/PipelineHandle.h"
 
 namespace anki {
 
@@ -23,7 +24,7 @@ enum class GpuVendor: U8
 
 /// Part of the global state. It's essentialy a cache of the state mainly used
 /// for optimizations and other stuff
-class State
+class GlState
 {
 public:
 	I32 m_version = -1; ///< Minor major GL version. Something like 430
@@ -43,6 +44,15 @@ public:
 	GLuint m_crntPpline = 0;
 
 	Array<GLuint, 256> m_texUnits;
+
+	Bool m_primitiveRestartEnabled = false;
+	GLenum m_topology = 0;
+	U32 m_patchControlPointsCount = 0;
+	GLenum m_fillMode = GL_FILL;
+	GLenum m_cullMode = GL_BACK;
+	GLenum m_depthCompareFunction = GL_LESS;
+
+	PipelineHandle m_lastPipeline;
 	/// @}
 
 	/// Call this from the server

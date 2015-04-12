@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/gl/State.h"
+#include "anki/gr/gl/GlState.h"
 #include "anki/gr/gl/BufferImpl.h"
 #include "anki/util/Logger.h"
 #include <algorithm>
@@ -78,7 +78,7 @@ void oglMessagesCallback(GLenum source,
 #endif
 
 //==============================================================================
-void State::init()
+void GlState::init()
 {
 	// GL version
 	GLint major, minor;

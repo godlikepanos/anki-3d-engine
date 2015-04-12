@@ -8,6 +8,7 @@
 
 #include "anki/gr/Common.h"
 #include "anki/gr/ShaderHandle.h"
+#include "anki/gr/PipelineHandle.h"
 
 namespace anki {
 
@@ -53,23 +54,24 @@ struct ViewportStateInfo
 
 struct RasterizerStateInfo
 {
-	FillMode m_fillCode = FillMode::SOLID;
+	FillMode m_fillMode = FillMode::SOLID;
 	CullMode m_cullMode = CullMode::BACK;
 };
 
 struct DepthStencilStateInfo
 {
-	Bool8 m_depthWriteEnabled = false;
+	Bool8 m_depthWriteEnabled = true;
 	DepthCompareFunction m_depthCompareFunction = DepthCompareFunction::LESS;
 	PixelFormat m_format;
 };
 
 struct ColorAttachmentStateInfo
 {
+	PixelFormat m_format;
 	BlendMethod m_srcBlendMethod = BlendMethod::ONE;
 	BlendMethod m_dstBlendMethod = BlendMethod::ZERO;
 	BlendFunction m_blendFunction = BlendFunction::ADD;
-	PixelFormat m_format;
+	ColorBit m_channelWriteMask = ColorBit::ALL;
 };
 
 struct ColorStateInfo
@@ -78,7 +80,6 @@ struct ColorStateInfo
 	Bool8 m_blendEnabled = false;
 	U8 m_colorAttachmentsCount = 0;
 	Array<ColorAttachmentStateInfo, MAX_COLOR_ATTACHMENTS> m_attachments;
-	U8 m_channelWriteMask = 15;
 };
 
 enum class SubStateBit: U16
@@ -94,6 +95,7 @@ enum class SubStateBit: U16
 	ALL = VERTEX | INPUT_ASSEMBLER | TESSELLATION | VIEWPORT | RASTERIZER 
 		| DEPTH | COLOR
 };
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SubStateBit, inline)
 
 /// Pipeline initializer.
 struct PipelineInitializer
@@ -107,6 +109,7 @@ struct PipelineInitializer
 	ColorStateInfo m_color;
 
 	Array<ShaderHandle, 6> m_shaders;
+	PipelineHandle m_templatePipeline;
 	SubStateBit m_definedState = SubStateBit::NONE;
 };
 /// @}

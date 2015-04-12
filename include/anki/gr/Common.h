@@ -36,6 +36,7 @@ class ShaderImpl;
 class ShaderHandle;
 class PipelineImpl;
 class PipelineHandle;
+struct PipelineInitializer;
 class FramebufferImpl;
 class FramebufferHandle;
 class TextureImpl;

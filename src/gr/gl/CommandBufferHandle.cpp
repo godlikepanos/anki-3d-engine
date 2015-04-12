@@ -257,7 +257,7 @@ void CommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 
 		Error operator()(CommandBufferImpl* commands)
 		{
-			State& state = commands->getManager().getImplementation().
+			GlState& state = commands->getManager().getImplementation().
 				getRenderingThread().getState();
 
 			if(state.m_viewport[0] != m_value[0] 
@@ -355,7 +355,7 @@ void CommandBufferHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 
 		Error operator()(CommandBufferImpl* commands)
 		{
-			State& state = commands->getManager().getImplementation().
+			GlState& state = commands->getManager().getImplementation().
 				getRenderingThread().getState();
 
 			if(state.m_blendSfunc != m_sfactor 

@@ -14,7 +14,17 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
-// Enums
+enum ColorBit: U8
+{
+	NONE = 0,
+	RED = 1 << 0,
+	GREEN = 1 << 1,
+	BLUE = 1 << 2,
+	ALPHA = 1 << 3,
+	ALL = RED | GREEN | BLUE | ALPHA
+};
+ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ColorBit, inline)
+
 enum PrimitiveTopology: U8
 {
 	POINTS,
@@ -34,7 +44,6 @@ enum class FillMode: U8
 
 enum class CullMode: U8
 {
-	NONE,
 	FRONT,
 	BACK,
 	FRONT_AND_BACK
@@ -58,12 +67,12 @@ enum class BlendMethod: U8
 	ONE,
 	SRC_COLOR,
 	ONE_MINUS_SRC_COLOR,
-	DEST_COLOR,
-	ONE_MINUS_DEST_COLOR,
+	DST_COLOR,
+	ONE_MINUS_DST_COLOR,
 	SRC_ALPHA,
 	ONE_MINUS_SRC_ALPHA,
-	DEST_ALPHA,
-	ONE_MINUS_DEST_ALPHA,
+	DST_ALPHA,
+	ONE_MINUS_DST_ALPHA,
 	CONSTANT_COLOR,
 	ONE_MINUS_CONSTANT_COLOR,
 	CONSTANT_ALPHA,
@@ -182,21 +191,28 @@ enum class ShaderVariableDataType: U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(ShaderVariableDataType, inline)
 
 /// Format for images and vertex attributes.
-struct PixelFormat
+class PixelFormat
 {
+public:
+	ComponentFormat m_components = ComponentFormat::R8G8B8A8;
+	TransformFormat m_transform = TransformFormat::UNORM;
+	Bool8 m_srgb = false;
+
 	PixelFormat() = default;
 
 	PixelFormat(const PixelFormat&) = default;
 
-	PixelFormat(ComponentFormat cf, TransformFormat tf, Bool srgb)
+	PixelFormat(ComponentFormat cf, TransformFormat tf, Bool srgb = false)
 	:	m_components(cf),
 		m_transform(tf),
 		m_srgb(srgb)
 	{}
 
-	ComponentFormat m_components = ComponentFormat::R8G8B8A8;
-	TransformFormat m_transform = TransformFormat::UNORM;
-	Bool8 m_srgb = false;
+	Bool operator==(const PixelFormat& b) const
+	{
+		return m_components == b.m_components && m_transform == b.m_transform
+			&& m_srgb == b.m_srgb;
+	}
 };
 
 /// Occlusion query result bit.

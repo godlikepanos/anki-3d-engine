@@ -21,6 +21,7 @@
 #include "anki/gr/ShaderHandle.h"
 
 #include "anki/gr/FramebufferHandle.h"
+#include "anki/gr/PipelineCommon.h"
 #include "anki/gr/PipelineHandle.h"
 
 #include "anki/gr/CommandBufferHandle.h"

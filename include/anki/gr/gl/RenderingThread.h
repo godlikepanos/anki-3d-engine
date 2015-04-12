@@ -7,7 +7,7 @@
 #define ANKI_GR_GL_RENDERING_THREAD_H
 
 #include "anki/gr/CommandBufferHandle.h"
-#include "anki/gr/gl/State.h"
+#include "anki/gr/gl/GlState.h"
 #include "anki/util/Thread.h"
 
 namespace anki {
@@ -28,12 +28,12 @@ public:
 
 	~RenderingThread();
 
-	State& getState()
+	GlState& getState()
 	{
 		return m_state;
 	}
 
-	const State& getState() const
+	const GlState& getState() const
 	{
 		return m_state;
 	}
@@ -95,7 +95,7 @@ private:
 
 	Thread::Id m_serverThreadId;
 	
-	State m_state;
+	GlState m_state;
 	GLuint m_defaultVao;
 
 	/// A special command buffer that is called every time we want to wait for 
