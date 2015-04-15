@@ -80,6 +80,8 @@ Error Ssao::createFb(FramebufferHandle& fb, TextureHandle& rt)
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
+	fbInit.m_colorAttachments[0].m_loadOperation = 
+		AttachmentLoadOperation::DONT_CARE;
 	ANKI_CHECK(fb.create(cmdBuff, fbInit));
 
 	cmdBuff.flush();
@@ -242,7 +244,7 @@ Error Ssao::run(CommandBufferHandle& cmdb)
 
 	// 1st pass
 	//
-	m_vblurFb.bind(cmdb, true);
+	m_vblurFb.bind(cmdb);
 	m_ssaoPpline.bind(cmdb);
 
 	m_uniformsBuff.bindShaderBuffer(cmdb, 0);
@@ -283,12 +285,12 @@ Error Ssao::run(CommandBufferHandle& cmdb)
 		}
 
 		// hpass
-		m_hblurFb.bind(cmdb, true);
+		m_hblurFb.bind(cmdb);
 		m_hblurPpline.bind(cmdb);
 		m_r->drawQuad(cmdb);
 
 		// vpass
-		m_vblurFb.bind(cmdb, true);
+		m_vblurFb.bind(cmdb);
 		m_vblurPpline.bind(cmdb);
 		m_r->drawQuad(cmdb);
 	}

@@ -53,6 +53,8 @@ Error Pps::initInternal(const ConfigSet& config)
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	fbInit.m_colorAttachments[0].m_loadOperation = 
+		AttachmentLoadOperation::DONT_CARE;
 	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
 
 	// SProg
@@ -98,32 +100,27 @@ Error Pps::init(const ConfigSet& config)
 Error Pps::run(CommandBufferHandle& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
-	Error err = ErrorCode::NONE;
 
 	// First SSAO because it depends on MS where HDR depends on IS
 	if(m_ssao.getEnabled())
 	{
-		err = m_ssao.run(cmdBuff);
-		if(err) return err;
+		ANKI_CHECK(m_ssao.run(cmdBuff));
 	}
 
 	// Then SSLR because HDR depends on it
 	if(m_sslr.getEnabled())
 	{
-		err = m_sslr.run(cmdBuff);
-		if(err) return err;
+		ANKI_CHECK(m_sslr.run(cmdBuff));
 	}
 
 	if(m_hdr.getEnabled())
 	{
-		err = m_hdr.run(cmdBuff);
-		if(err) return err;
+		ANKI_CHECK(m_hdr.run(cmdBuff));
 	}
 
 	if(m_lf.getEnabled())
 	{
-		err = m_lf.run(cmdBuff);
-		if(err) return err;
+		ANKI_CHECK(m_lf.run(cmdBuff));
 	}
 
 	/*Bool drawToDefaultFbo = 
@@ -141,7 +138,7 @@ Error Pps::run(CommandBufferHandle& cmdBuff)
 	}
 	else
 	{
-		m_fb.bind(cmdBuff, true);
+		m_fb.bind(cmdBuff);
 		cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	}
 
@@ -165,7 +162,7 @@ Error Pps::run(CommandBufferHandle& cmdBuff)
 
 	m_r->drawQuad(cmdBuff);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

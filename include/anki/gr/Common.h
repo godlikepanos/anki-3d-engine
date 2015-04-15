@@ -97,21 +97,6 @@ private:
 /// @addtogroup opengl_containers
 /// @{
 
-/// Attachment load operation.
-enum class GlAttachmentLoadOperation: U8
-{
-	LOAD,
-	CLEAR,
-	DONT_CARE
-};
-
-/// Attachment store operation.
-enum class GlAttachmentStoreOperation: U8
-{
-	STORE,
-	DONT_CARE
-};
-
 /// Using an AnKi typename get the ShaderVariableDataType. Used for debugging.
 template<typename T>
 ShaderVariableDataType getShaderVariableTypeFromTypename();

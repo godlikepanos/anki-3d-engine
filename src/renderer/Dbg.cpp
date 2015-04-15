@@ -59,6 +59,8 @@ Error Dbg::init(const ConfigSet& initializer)
 	{
 		fbInit.m_colorAttachments[0].m_texture = m_r->getIs()._getRt();
 	}
+	fbInit.m_colorAttachments[0].m_loadOperation = 
+		AttachmentLoadOperation::LOAD;
 
 	err = m_fb.create(cmdb, fbInit);
 	if(!err)
@@ -93,7 +95,7 @@ Error Dbg::run(CommandBufferHandle& cmdb)
 
 	SceneGraph& scene = m_r->getSceneGraph();
 
-	m_fb.bind(cmdb, false);
+	m_fb.bind(cmdb);
 	cmdb.enableDepthTest(m_depthTest);
 
 	Camera& cam = scene.getActiveCamera();

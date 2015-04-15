@@ -7,7 +7,7 @@
 #define ANKI_GR_GL_FRAMEBUFFER_IMPL_H
 
 #include "anki/gr/gl/GlObject.h"
-#include "anki/gr/TextureHandle.h"
+#include "anki/gr/FramebufferCommon.h"
 
 namespace anki {
 
@@ -15,7 +15,7 @@ namespace anki {
 /// @{
 
 /// Framebuffer implementation.
-class FramebufferImpl: public GlObject
+class FramebufferImpl: public GlObject, private FramebufferInitializer
 {
 public:
 	using Base = GlObject;
@@ -35,15 +35,16 @@ public:
 	ANKI_USE_RESULT Error create(Initializer& init);
 
 	/// Bind it to the state. Call it in rendering thread
-	/// @param invalidate If true invalidate the FB after binding it
-	void bind(Bool invalidate);
+	void bind();
 
 	/// Blit another framebuffer to this
 	void blit(const FramebufferImpl& fb, const Array<U32, 4>& sourceRect,
 		const Array<U32, 4>& destRect, GLbitfield attachmentMask, Bool linear);
 
 private:
-	Array<TextureHandle, MAX_COLOR_ATTACHMENTS + 1> m_attachments;
+	Array<GLenum, MAX_COLOR_ATTACHMENTS> m_drawBuffers;
+	Array<GLenum, MAX_COLOR_ATTACHMENTS + 1> m_invalidateBuffers;
+	U8 m_invalidateBuffersCount = 0;
 	Bool8 m_bindDefault = false;
 
 	/// Attach a texture

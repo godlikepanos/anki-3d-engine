@@ -73,6 +73,9 @@ Error Sm::init(const ConfigSet& initializer)
 		FramebufferHandle::Initializer fbInit;
 		fbInit.m_depthStencilAttachment.m_texture = m_sm2DArrayTex;
 		fbInit.m_depthStencilAttachment.m_layer = layer;
+		fbInit.m_depthStencilAttachment.m_loadOperation = 
+			AttachmentLoadOperation::CLEAR;
+		fbInit.m_depthStencilAttachment.m_clearColor.m_float[0] = 1.0;
 		ANKI_CHECK(sm.m_fb.create(cmdBuff, fbInit));
 
 		++layer;

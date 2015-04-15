@@ -177,6 +177,8 @@ Error Lf::initInternal(const ConfigSet& config)
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	fbInit.m_colorAttachments[0].m_loadOperation = 
+		AttachmentLoadOperation::DONT_CARE;
 	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
 
 	// Blit
@@ -276,7 +278,7 @@ Error Lf::run(CommandBufferHandle& cmdBuff)
 	//
 
 	// Set the common state
-	m_fb.bind(cmdBuff, true);
+	m_fb.bind(cmdBuff);
 	cmdBuff.setViewport(0, 0, m_r->getPps().getHdr()._getWidth(), 
 		m_r->getPps().getHdr()._getHeight());
 

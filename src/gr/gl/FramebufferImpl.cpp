@@ -13,8 +13,10 @@ namespace anki {
 //==============================================================================
 Error FramebufferImpl::create(Initializer& init)
 {
-	if(init.m_colorAttachmentsCount == 0 
-		&& !init.m_depthStencilAttachment.m_texture.isCreated())
+	*static_cast<FramebufferInitializer*>(this) = init;
+
+	if(m_colorAttachmentsCount == 0 
+		&& !m_depthStencilAttachment.m_texture.isCreated())
 	{
 		m_bindDefault = true;
 		return ErrorCode::NONE;
@@ -22,34 +24,52 @@ Error FramebufferImpl::create(Initializer& init)
 
 	m_bindDefault = false;
 
-	Array<U, MAX_COLOR_ATTACHMENTS + 1> layers;
-	GLenum depthStencilBindingPoint = GL_NONE;
+	glGenFramebuffers(1, &m_glName);
+	ANKI_ASSERT(m_glName != 0);
+	const GLenum target = GL_FRAMEBUFFER;
+	glBindFramebuffer(target, m_glName);
 
-	// Do color attachments
-	for(U i = 0; i < init.m_colorAttachmentsCount; ++i)
+	// Attach color
+	for(U i = 0; i < m_colorAttachmentsCount; i++)
 	{
-		auto& attachment = init.m_colorAttachments[i];
-		ANKI_ASSERT(attachment.m_texture.isCreated());
-		m_attachments[i] = attachment.m_texture;
-		layers[i] = attachment.m_layer;
+		const Attachment& att = m_colorAttachments[i];
+		const GLenum binding = GL_COLOR_ATTACHMENT0 + i;
+
+		attachTextureInternal(binding, att.m_texture.get(), att.m_layer);
+
+		m_drawBuffers[i] = binding;
+
+		if(att.m_loadOperation == AttachmentLoadOperation::DONT_CARE)
+		{
+			m_invalidateBuffers[m_invalidateBuffersCount++] = binding;
+		}
 	}
 
-	// Do depth stencil
-	if(init.m_depthStencilAttachment.m_texture.isCreated())
+	// Attach depth/stencil
+	if(m_depthStencilAttachment.m_texture.isCreated())
 	{
-		m_attachments[MAX_COLOR_ATTACHMENTS] = 
-			init.m_depthStencilAttachment.m_texture;
-		layers[MAX_COLOR_ATTACHMENTS] = 
-			init.m_depthStencilAttachment.m_layer;
+		const Attachment& att = m_depthStencilAttachment;
+		const GLenum binding = GL_DEPTH_ATTACHMENT;
+			
+		attachTextureInternal(binding, att.m_texture.get(), att.m_layer);
 
-		depthStencilBindingPoint = GL_DEPTH_ATTACHMENT;
+		if(att.m_loadOperation == AttachmentLoadOperation::DONT_CARE)
+		{
+			m_invalidateBuffers[m_invalidateBuffersCount++] = binding;
+		}
 	}
 
-	// Now create the FBO
-	Error err = createFbo(layers, depthStencilBindingPoint);
+	// Check completeness
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if(status != GL_FRAMEBUFFER_COMPLETE)
+	{
+		ANKI_LOGE("FBO is incomplete");
+		destroy();
+		return ErrorCode::FUNCTION_FAILED;
+	}
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -60,53 +80,6 @@ void FramebufferImpl::destroy()
 		glDeleteFramebuffers(1, &m_glName);
 		m_glName = 0;
 	}
-}
-
-//==============================================================================
-Error FramebufferImpl::createFbo(
-	const Array<U, MAX_COLOR_ATTACHMENTS + 1>& layers,
-	GLenum depthStencilBindingPoint)
-{
-	Error err = ErrorCode::NONE;
-
-	ANKI_ASSERT(!isCreated());
-	glGenFramebuffers(1, &m_glName);
-	ANKI_ASSERT(m_glName != 0);
-	const GLenum target = GL_FRAMEBUFFER;
-	glBindFramebuffer(target, m_glName);
-
-	// Attach color
-	for(U i = 0; i < MAX_COLOR_ATTACHMENTS; i++)
-	{
-		if(!m_attachments[i].isCreated())
-		{
-			continue;
-		}
-		
-		const TextureImpl& tex = m_attachments[i].get();
-		attachTextureInternal(GL_COLOR_ATTACHMENT0 + i, tex, layers[i]);
-	}
-
-	// Attach depth/stencil
-	if(m_attachments[MAX_COLOR_ATTACHMENTS].isCreated())
-	{
-		ANKI_ASSERT(depthStencilBindingPoint != GL_NONE);
-
-		const TextureImpl& tex = m_attachments[MAX_COLOR_ATTACHMENTS].get();
-		attachTextureInternal(depthStencilBindingPoint, tex, 
-			layers[MAX_COLOR_ATTACHMENTS]);
-	}
-
-	// Check completeness
-	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-	if(status != GL_FRAMEBUFFER_COMPLETE)
-	{
-		ANKI_LOGE("FBO is incomplete");
-		destroy();
-		err = ErrorCode::FUNCTION_FAILED;
-	}
-
-	return err;
 }
 
 //==============================================================================
@@ -142,7 +115,7 @@ void FramebufferImpl::attachTextureInternal(
 }
 
 //==============================================================================
-void FramebufferImpl::bind(Bool invalidate)
+void FramebufferImpl::bind()
 {
 	if(m_bindDefault)
 	{
@@ -154,34 +127,19 @@ void FramebufferImpl::bind(Bool invalidate)
 		glBindFramebuffer(GL_FRAMEBUFFER, m_glName);
 
 		// Set the draw buffers
-		U count = 0;
-		Array<GLenum, MAX_COLOR_ATTACHMENTS> colorAttachEnums;
-
-		// Draw buffers
-		for(U i = 0; i < MAX_COLOR_ATTACHMENTS; i++)
+		if(m_colorAttachmentsCount)
 		{
-			if(m_attachments[i].isCreated())
-			{
-				colorAttachEnums[count++] = GL_COLOR_ATTACHMENT0 + i;
-			}
+			glDrawBuffers(m_colorAttachmentsCount, &m_drawBuffers[0]);
 		}
-		ANKI_ASSERT(count > 0
-			|| m_attachments[MAX_COLOR_ATTACHMENTS].isCreated());
-		glDrawBuffers(count, &colorAttachEnums[0]);
 
 		// Invalidate
-		if(invalidate)
+		if(m_invalidateBuffersCount)
 		{
-			static const Array<GLenum, MAX_COLOR_ATTACHMENTS + 1>
-				ATTACHMENT_TOKENS = {{
-					GL_DEPTH_STENCIL_ATTACHMENT, GL_COLOR_ATTACHMENT0, 
-					GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, 
-					GL_COLOR_ATTACHMENT3}};
-
-			glInvalidateFramebuffer(
-				GL_FRAMEBUFFER, ATTACHMENT_TOKENS.size(), 
-				&ATTACHMENT_TOKENS[0]);
+			glInvalidateFramebuffer(GL_FRAMEBUFFER, m_invalidateBuffersCount, 
+				&m_invalidateBuffers[0]);
 		}
+
+		ANKI_ASSERT(0 && "TODO clear buffers");
 	}
 }
 

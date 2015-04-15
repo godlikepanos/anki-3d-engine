@@ -21,54 +21,38 @@ Ms::~Ms()
 //==============================================================================
 Error Ms::createRt(U32 index, U32 samples)
 {
-	Error err = ErrorCode::NONE;
-
 	Plane& plane = m_planes[index];
 
-	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		GL_DEPTH_COMPONENT24, samples, plane.m_depthRt);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
+		GL_DEPTH_COMPONENT24, samples, plane.m_depthRt));
 
-	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
-			samples, plane.m_rt0);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), 
+		GL_RGBA8, samples, plane.m_rt0));
 
-	err = m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), GL_RGBA8,
-		samples, plane.m_rt1);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), 
+		GL_RGBA8, samples, plane.m_rt1));
 
 	GrManager& gl = getGrManager();
 	CommandBufferHandle cmdb;
-	err = cmdb.create(&gl);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(cmdb.create(&gl));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 2;
 	fbInit.m_colorAttachments[0].m_texture = plane.m_rt0;
+	fbInit.m_colorAttachments[0].m_loadOperation = 
+		AttachmentLoadOperation::DONT_CARE;
 	fbInit.m_colorAttachments[1].m_texture = plane.m_rt1;
+	fbInit.m_colorAttachments[1].m_loadOperation = 
+		AttachmentLoadOperation::DONT_CARE;
 	fbInit.m_depthStencilAttachment.m_texture = plane.m_depthRt;
+	fbInit.m_depthStencilAttachment.m_loadOperation = 
+		AttachmentLoadOperation::CLEAR;
+	fbInit.m_depthStencilAttachment.m_clearColor.m_float[0] = 1.0;
 
-	err = plane.m_fb.create(cmdb, fbInit);
-	if(err)
-	{
-		return err;
-	}
-
+	ANKI_CHECK(plane.m_fb.create(cmdb, fbInit));
 	cmdb.finish();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

@@ -79,15 +79,21 @@ private:
 	void initDepthStencilState();
 	void initColorState();
 
-	void setVertexState(GlState& state);
-	void setInputAssemblerState(GlState& state);
-	void setTessellationState(GlState& state);
-	void setRasterizerState(GlState& state);
-	void setDepthStencilState(GlState& state);
-	void setColorState(GlState& state);
+	void setVertexState(GlState& state) const;
+	void setInputAssemblerState(GlState& state) const;
+	void setTessellationState(GlState& state) const;
+	void setViewportState(GlState& state) const
+	{}
+	void setRasterizerState(GlState& state) const;
+	void setDepthStencilState(GlState& state) const;
+	void setColorState(GlState& state) const;
 
-	const PipelineImpl* getPipelineForState(const SubStateBit bit) const;
-	const PipelineImpl* chosePipelineForState(const SubStateBit bit) const;
+	const PipelineImpl* getPipelineForState(
+		const SubStateBit bit, 
+		const PipelineImpl* lastPpline,
+		const PipelineImpl* lastPplineTempl,
+		const PipelineImpl* pplineTempl) const; 
+
 };
 /// @}
 

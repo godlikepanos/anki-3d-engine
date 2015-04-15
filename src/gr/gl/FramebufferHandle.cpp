@@ -44,16 +44,14 @@ class BindFramebufferCommand: public GlCommand
 {
 public:
 	FramebufferHandle m_fb;
-	Bool8 m_invalidate;
 
-	BindFramebufferCommand(FramebufferHandle& fb, Bool invalidate)
-	:	m_fb(fb), 
-		m_invalidate(invalidate)
+	BindFramebufferCommand(FramebufferHandle& fb)
+	:	m_fb(fb) 
 	{}
 
 	Error operator()(CommandBufferImpl*)
 	{
-		m_fb.get().bind(m_invalidate);
+		m_fb.get().bind();
 		return ErrorCode::NONE;
 	}
 };
@@ -121,10 +119,9 @@ Error FramebufferHandle::create(CommandBufferHandle& commands,
 }
 
 //==============================================================================
-void FramebufferHandle::bind(CommandBufferHandle& commands, Bool invalidate)
+void FramebufferHandle::bind(CommandBufferHandle& commands)
 {
-	commands.get().pushBackNewCommand<BindFramebufferCommand>(
-		*this, invalidate);
+	commands.get().pushBackNewCommand<BindFramebufferCommand>(*this);
 }
 
 //==============================================================================

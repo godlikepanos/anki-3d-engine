@@ -111,6 +111,8 @@ Error Tiler::initInternal()
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	fbInit.m_colorAttachments[0].m_loadOperation = 
+		AttachmentLoadOperation::DONT_CARE;
 	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
 
 	// Init planes. One plane for each direction, plus near/far plus the world
@@ -194,7 +196,7 @@ void Tiler::runMinMax(TextureHandle& depthMap,
 	if(m_enableGpuTests)
 	{
 		// Issue the min/max job
-		m_fb.bind(cmd, true);
+		m_fb.bind(cmd);
 		m_ppline.bind(cmd);
 		depthMap.bind(cmd, 0);
 		cmd.setViewport(

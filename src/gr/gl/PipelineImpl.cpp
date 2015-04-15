@@ -240,22 +240,50 @@ void PipelineImpl::bind()
 	auto& state = 
 		getManager().getImplementation().getRenderingThread().getState();
 
-	const PipelineImpl* last = nullptr;
-	const PipelineImpl* lastTempl = nullptr;
+	const PipelineImpl* lastPpline = nullptr;
+	const PipelineImpl* lastPplineTempl = nullptr;
 	if(state.m_lastPipeline.isCreated())
 	{
-		last = &state.m_lastPipeline.get();
+		lastPpline = &state.m_lastPipeline.get();
 
-		if(last->m_templatePipeline.isCreated())
+		if(ANKI_UNLIKELY(lastPpline == this))
 		{
-			lastTempl = &last->m_templatePipeline.get();
+			// Binding the same pipeline, early out
+			return;
+		}
+
+		if(lastPpline->m_templatePipeline.isCreated())
+		{
+			lastPplineTempl = &lastPpline->m_templatePipeline.get();
 		}
 	}
-	
-	/*if(!lastPpline.isCreated() || !templPpline.isCreated())
+
+	// Get crnt pipeline template
+	const PipelineImpl* pplineTempl = nullptr;
+	if(m_templatePipeline.isCreated())
 	{
-		// Bind state
-	}*/
+		pplineTempl = &m_templatePipeline.get();
+	}
+	
+#define ANKI_PPLINE_BIND(enum_, method_) \
+	do { \
+		const PipelineImpl* ppline = getPipelineForState(SubStateBit::enum_, \
+			lastPpline, lastPplineTempl, pplineTempl); \
+		if(ppline) { \
+			ppline->method_(state); \
+		} \
+	} while(0) \
+
+	ANKI_PPLINE_BIND(VERTEX, setVertexState);
+	ANKI_PPLINE_BIND(INPUT_ASSEMBLER, setInputAssemblerState);
+	ANKI_PPLINE_BIND(TESSELLATION, setTessellationState);
+	ANKI_PPLINE_BIND(VIEWPORT, setViewportState);
+	ANKI_PPLINE_BIND(RASTERIZER, setRasterizerState);
+	ANKI_PPLINE_BIND(DEPTH_STENCIL, setDepthStencilState);
+	ANKI_PPLINE_BIND(COLOR, setColorState);
+
+#undef ANKI_PPLINE_BIND
+
 #endif
 }
 
@@ -430,7 +458,7 @@ void PipelineImpl::initColorState()
 }
 
 //==============================================================================
-void PipelineImpl::setVertexState(GlState&)
+void PipelineImpl::setVertexState(GlState&) const
 {
 	for(U i = 0; i < m_vertex.m_attributeCount; ++i)
 	{
@@ -444,7 +472,7 @@ void PipelineImpl::setVertexState(GlState&)
 }
 
 //==============================================================================
-void PipelineImpl::setInputAssemblerState(GlState& state)
+void PipelineImpl::setInputAssemblerState(GlState& state) const
 {
 	if(m_inputAssembler.m_primitiveRestartEnabled 
 		!= state.m_primitiveRestartEnabled)
@@ -466,7 +494,7 @@ void PipelineImpl::setInputAssemblerState(GlState& state)
 }
 
 //==============================================================================
-void PipelineImpl::setTessellationState(GlState& state)
+void PipelineImpl::setTessellationState(GlState& state) const
 {
 	if(m_tessellation.m_patchControlPointsCount 
 		!= state.m_patchControlPointsCount)
@@ -480,7 +508,7 @@ void PipelineImpl::setTessellationState(GlState& state)
 }
 
 //==============================================================================
-void PipelineImpl::setRasterizerState(GlState& state)
+void PipelineImpl::setRasterizerState(GlState& state) const
 {
 	if(m_fillMode != state.m_fillMode)
 	{
@@ -496,7 +524,7 @@ void PipelineImpl::setRasterizerState(GlState& state)
 }
 
 //==============================================================================
-void PipelineImpl::setDepthStencilState(GlState& state)
+void PipelineImpl::setDepthStencilState(GlState& state) const
 {
 	if(m_depthCompareFunction != state.m_depthCompareFunction)
 	{
@@ -516,7 +544,7 @@ void PipelineImpl::setDepthStencilState(GlState& state)
 }
 
 //==============================================================================
-void PipelineImpl::setColorState(GlState&)
+void PipelineImpl::setColorState(GlState&) const
 {
 	for(U i = 0; i < m_color.m_colorAttachmentsCount; ++i)
 	{
@@ -530,34 +558,39 @@ void PipelineImpl::setColorState(GlState&)
 }
 
 //==============================================================================
-const PipelineImpl* getPipelineForState(const SubStateBit bit) const
-{
-	PipelineImpl* out = this;
-
-	if(m_templatePipeline.isCreated() && !(m_definedState | bit))
-	{
-		// Template pipeline has the defined state
-		out = &m_templatePipeline.get();
-	}
-
-	return out;
-}
-
-//==============================================================================
-const PipelineImpl* PipelineImpl::chosePipelineForState(
-	const SubStateBit bit, const PipelineImpl& crntBoundPipeline) const 
+const PipelineImpl* PipelineImpl::getPipelineForState(
+	const SubStateBit bit, 
+	const PipelineImpl* lastPpline,
+	const PipelineImpl* lastPplineTempl,
+	const PipelineImpl* pplineTempl) const 
 {
 	const PipelineImpl* out = nullptr;
 
-	// Get previously bound pipeline template
-	const PipelineImpl* last = nullptr;
-	if(crntBoundPipeline.m_templatePipeline.isCreated() 
-		&& !(crntBoundPipeline.m_definedState | bit))
+	if(pplineTempl == nullptr || (m_definedState | bit) != SubStateBit::NONE)
 	{
-		last = &crntBoundPipeline.m_templatePipeline.get();
+		// Current pipeline overrides the state
+		out = this;
+	}
+	else
+	{
+		// Need to get the state from the templates
+
+		if(lastPplineTempl == nullptr 
+			|| lastPplineTempl != pplineTempl
+			|| (lastPpline->m_definedState | bit) != SubStateBit::NONE)
+		{
+			// Last template cannot be used
+
+			out = pplineTempl;
+		}
+		else
+		{
+			// Last template can be used but since it's already bound skipp
+			out = nullptr;
+		}
 	}
 
-	if(last)
+	return out;
 }
 
 } // end namespace anki

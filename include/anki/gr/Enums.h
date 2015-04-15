@@ -231,6 +231,22 @@ enum class OcclusionQueryResult: U8
 	VISIBLE,
 	NOT_VISIBLE
 };
+
+/// Attachment load operation.
+enum class AttachmentLoadOperation: U8
+{
+	LOAD,
+	CLEAR,
+	DONT_CARE
+};
+
+/// Attachment store operation.
+enum class AttachmentStoreOperation: U8
+{
+	STORE,
+	RESOLVE_MSAA,
+	DONT_CARE
+};
 /// @}
 
 } // end namespace anki

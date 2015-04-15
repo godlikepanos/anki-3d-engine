@@ -227,6 +227,8 @@ Error Is::initInternal(const ConfigSet& config)
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
+	fbInit.m_colorAttachments[0].m_loadOperation = 
+		AttachmentLoadOperation::DONT_CARE;
 	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
 
 	//
@@ -772,8 +774,7 @@ void Is::setState(CommandBufferHandle& cmdBuff)
 	}
 	else
 	{
-		m_fb.bind(cmdBuff, true);
-
+		m_fb.bind(cmdBuff);
 		cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	}
 }

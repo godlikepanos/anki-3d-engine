@@ -29,10 +29,9 @@ public:
 	ANKI_USE_RESULT Error create(CommandBufferHandle& commands,
 		Initializer& attachments);
 
-	/// Bind it to the state
+	/// Bind it to the command buffer
 	/// @param commands The command buffer
-	/// @param invalidate If true invalidate the FB after binding it
-	void bind(CommandBufferHandle& commands, Bool invalidate);
+	void bind(CommandBufferHandle& commands);
 
 	/// Blit another framebuffer to this
 	/// @param[in, out] commands The command buffer
