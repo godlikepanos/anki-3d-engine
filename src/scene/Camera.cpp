@@ -89,7 +89,7 @@ Error Camera::create(const CString& name, Frustum* frustum)
 	addComponent(comp, true);
 
 	// Frustum component
-	getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
+	comp = getSceneAllocator().newInstance<FrustumComponent>(this, frustum);
 	addComponent(comp, true);
 
 	// Feedback component #2

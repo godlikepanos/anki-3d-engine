@@ -76,7 +76,7 @@ Error Sslr::init(const ConfigSet& config)
 		fbInit.m_colorAttachmentsCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
 		fbInit.m_colorAttachments[0].m_loadOperation = 
-			AttachmentLoadOperation::DONT_CARE;
+			AttachmentLoadOperation::LOAD;
 		ANKI_CHECK(dir.m_fb.create(cmdBuff, fbInit));
 	}
 
@@ -119,7 +119,7 @@ Error Sslr::run(CommandBufferHandle& cmdBuff)
 
 	// Write the reflection back to IS RT
 	//
-	m_r->getIs().m_fb.bind(cmdBuff, false);
+	m_r->getIs().m_fb.bind(cmdBuff);
 	cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	cmdBuff.enableBlend(true);

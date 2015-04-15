@@ -219,30 +219,6 @@ void CommandBufferHandle::finish()
 }
 
 //==============================================================================
-void CommandBufferHandle::setClearColor(F32 r, F32 g, F32 b, F32 a)
-{
-	ANKI_STATE_CMD_4(F32, glClearColor, r, g, b, a);
-}
-
-//==============================================================================
-void CommandBufferHandle::setClearDepth(F32 value)
-{
-	ANKI_STATE_CMD_1(F32, glClearDepth, value);
-}
-
-//==============================================================================
-void CommandBufferHandle::setClearStencil(U32 value)
-{
-	ANKI_STATE_CMD_1(U32, glClearStencil, value);
-}
-
-//==============================================================================
-void CommandBufferHandle::clearBuffers(U32 mask)
-{
-	ANKI_STATE_CMD_1(U32, glClear, mask);
-}
-
-//==============================================================================
 void CommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
 	class Command: public GlCommand

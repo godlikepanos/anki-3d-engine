@@ -634,9 +634,6 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 				if(tvar)
 				{
 					tvar->create(alloc, in.m_name.toCString(), &tp, 1);
-
-					alloc.deleteInstance(tvar);
-					tvar = nullptr;
 				}
 
 				mtlvar = tvar;

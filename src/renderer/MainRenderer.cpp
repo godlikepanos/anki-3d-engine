@@ -31,33 +31,28 @@ Error MainRenderer::create(
 	const ConfigSet& config,
 	const Timestamp* globalTimestamp)
 {
-	Error err = ErrorCode::NONE;
 	ANKI_LOGI("Initializing main renderer...");
 
-	err = Renderer::init(threadpool, resources, gl, alloc, config, 
-		globalTimestamp);
-	if(err) return err;
+	ANKI_CHECK(Renderer::init(threadpool, resources, gl, alloc, config, 
+		globalTimestamp));
 
-	err = initGl();
-	if(err) return err;
+	ANKI_CHECK(initGl());
 
-	err = m_blitFrag.load("shaders/Final.frag.glsl", &_getResourceManager());
-	if(err) return err;
+	ANKI_CHECK(
+		m_blitFrag.load("shaders/Final.frag.glsl", &_getResourceManager()));
 
-	err = createDrawQuadPipeline(
-		m_blitFrag->getGrShader(), m_blitPpline);
-	if(err) return err;
+	ANKI_CHECK(createDrawQuadPipeline(
+		m_blitFrag->getGrShader(), m_blitPpline));
 
 	ANKI_LOGI("Main renderer initialized. Rendering size %dx%d", 
 		getWidth(), getHeight());
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error MainRenderer::render(SceneGraph& scene)
 {
-	Error err = ErrorCode::NONE;
 	ANKI_COUNTER_START_TIMER(MAIN_RENDERER_TIME);
 
 	GrManager& gl = _getGrManager();
@@ -66,12 +61,10 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	for(U i = 0; i < JOB_CHAINS_COUNT; i++)
 	{
-		err = jobs[i].create(&gl, m_jobsInitHints[i]);
-		if(err) return err;
+		ANKI_CHECK(jobs[i].create(&gl, m_jobsInitHints[i]));
 	}
 
-	err = Renderer::render(scene, jobs);
-	if(err) return err;
+	ANKI_CHECK(Renderer::render(scene, jobs));
 
 	/*Bool alreadyDrawnToDefault = 
 		!getDbg().getEnabled()
@@ -80,7 +73,7 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	if(!alreadyDrawnToDefault)
 	{
-		getDefaultFramebuffer().bind(lastJobs, true);
+		getDefaultFramebuffer().bind(lastJobs);
 		lastJobs.setViewport(0, 0, 
 			getDefaultFramebufferWidth(), getDefaultFramebufferHeight());
 
@@ -118,7 +111,7 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	ANKI_COUNTER_STOP_TIMER_INC(MAIN_RENDERER_TIME);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

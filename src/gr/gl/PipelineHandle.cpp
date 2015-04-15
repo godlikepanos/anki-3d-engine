@@ -21,9 +21,10 @@ public:
 	PipelineInitializer m_init;
 
 	CreatePipelineCommand(
-		PipelineHandle& ppline, 
+		const PipelineHandle& ppline, 
 		const PipelineInitializer& init)
-	:	m_init(init)
+	:	m_ppline(ppline),
+		m_init(init)
 	{}
 
 	Error operator()(CommandBufferImpl* cmdb)

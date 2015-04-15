@@ -45,14 +45,9 @@ Error Sm::init(const ConfigSet& initializer)
 	sminit.m_depth = initializer.get("is.sm.maxLights");
 	sminit.m_internalFormat = GL_DEPTH_COMPONENT16;
 	sminit.m_mipmapsCount = 1;
-	if(m_bilinearEnabled)
-	{
-		sminit.m_filterType = TextureHandle::Filter::LINEAR;
-	}
-	else
-	{
-		sminit.m_filterType = TextureHandle::Filter::NEAREST;
-	}
+	sminit.m_filterType = m_bilinearEnabled 
+		? TextureHandle::Filter::LINEAR 
+		: TextureHandle::Filter::NEAREST;
 
 	CommandBufferHandle cmdBuff;
 	ANKI_CHECK(cmdBuff.create(&getGrManager()));
@@ -179,8 +174,6 @@ Sm::Shadowmap& Sm::bestCandidate(SceneNode& light)
 Error Sm::doLight(
 	SceneNode& light, CommandBufferHandle& cmdBuff, Sm::Shadowmap*& sm)
 {
-	Error err = ErrorCode::NONE;
-
 	sm = &bestCandidate(light);
 
 	FrustumComponent& fr = light.getComponent<FrustumComponent>();
@@ -221,7 +214,7 @@ Error Sm::doLight(
 	Bool shouldUpdate = lastUpdate >= sm->m_timestamp;
 	if(!shouldUpdate)
 	{
-		return err;
+		return ErrorCode::NONE;
 	}
 
 	sm->m_timestamp = getGlobalTimestamp();
@@ -230,20 +223,18 @@ Error Sm::doLight(
 	//
 	// Render
 	//
-	sm->m_fb.bind(cmdBuff, true);
+	sm->m_fb.bind(cmdBuff);
 	cmdBuff.setViewport(0, 0, m_resolution, m_resolution);
-	cmdBuff.clearBuffers(GL_DEPTH_BUFFER_BIT);
 
 	it = vi.getRenderablesBegin();
 	for(; it != end; ++it)
 	{
-		err = m_r->getSceneDrawer().render(light, *it);
-		if(err) break;
+		ANKI_CHECK(m_r->getSceneDrawer().render(light, *it));
 	}
 
 	ANKI_COUNTER_INC(RENDERER_SHADOW_PASSES, (U64)1);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

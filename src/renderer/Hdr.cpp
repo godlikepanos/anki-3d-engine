@@ -144,7 +144,7 @@ Error Hdr::run(CommandBufferHandle& cmdb)
 	//vblurFai.setFiltering(Texture::TFrustumType::NEAREST);
 
 	// pass 0
-	m_vblurFb.bind(cmdb, true);
+	m_vblurFb.bind(cmdb);
 	cmdb.setViewport(0, 0, m_width, m_height);
 	m_tonePpline.bind(cmdb);
 

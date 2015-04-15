@@ -79,6 +79,8 @@ Error BlurringRenderingPass::initBlurring(
 		FramebufferHandle::Initializer fbInit;
 		fbInit.m_colorAttachmentsCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
+		fbInit.m_colorAttachments[0].m_loadOperation = 
+			AttachmentLoadOperation::DONT_CARE;
 		ANKI_CHECK(dir.m_fb.create(cmdb, fbInit));
 
 		ANKI_CHECK(dir.m_frag.loadToCache(&getResourceManager(),
@@ -107,12 +109,12 @@ Error BlurringRenderingPass::runBlurring(
 	for(U32 i = 0; i < m_blurringIterationsCount; i++)
 	{
 		// hpass
-		m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_fb.bind(cmdb, true);
+		m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_fb.bind(cmdb);
 		m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_ppline.bind(cmdb);
 		r.drawQuad(cmdb);
 
 		// vpass
-		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_fb.bind(cmdb, true);
+		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_fb.bind(cmdb);
 		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_ppline.bind(cmdb);
 		r.drawQuad(cmdb);
 	}

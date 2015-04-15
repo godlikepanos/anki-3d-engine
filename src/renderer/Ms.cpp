@@ -70,47 +70,36 @@ Error Ms::init(const ConfigSet& initializer)
 //==============================================================================
 Error Ms::initInternal(const ConfigSet& initializer)
 {
-	Error err = ErrorCode::NONE;
-
 	if(initializer.get("samples") > 1)
 	{
-		err = createRt(0, initializer.get("samples"));
-		if(err)	return err;
+		ANKI_CHECK(createRt(0, initializer.get("samples")));
 	}
 
-	err = createRt(1, 1);
-	if(err)	return err;
+	ANKI_CHECK(createRt(1, 1));
+	ANKI_CHECK(m_ez.init(initializer));
 
-	err = m_ez.init(initializer);
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error Ms::run(CommandBufferHandle& cmdb)
 {
-	Error err = ErrorCode::NONE;
-
 	// Chose the multisampled or the singlesampled framebuffer
 	if(m_r->getSamples() > 1)
 	{
-		m_planes[0].m_fb.bind(cmdb, true);
+		m_planes[0].m_fb.bind(cmdb);
 	}
 	else
 	{
-		m_planes[1].m_fb.bind(cmdb, true);
+		m_planes[1].m_fb.bind(cmdb);
 	}
 
 	cmdb.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	cmdb.clearBuffers(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT
-#if ANKI_DEBUG
-		| GL_COLOR_BUFFER_BIT
-#endif
-			);
 
 	cmdb.enableDepthTest(true);
 	cmdb.setDepthWriteMask(true);
 
-	if(m_ez.getEnabled())
+	/*if(m_ez.getEnabled())
 	{
 		cmdb.setDepthFunction(GL_LESS);
 		cmdb.setColorWriteMask(false, false, false, false);
@@ -120,7 +109,7 @@ Error Ms::run(CommandBufferHandle& cmdb)
 
 		cmdb.setDepthFunction(GL_LEQUAL);
 		cmdb.setColorWriteMask(true, true, true, true);
-	}
+	}*/
 
 	// render all
 	m_r->getSceneDrawer().prepareDraw(RenderingStage::MATERIAL, Pass::COLOR,
@@ -136,8 +125,7 @@ Error Ms::run(CommandBufferHandle& cmdb)
 	auto end = vi.getRenderablesEnd();
 	for(; it != end; ++it)
 	{
-		err = m_r->getSceneDrawer().render(cam, *it);
-		if(err) return err;
+		ANKI_CHECK(m_r->getSceneDrawer().render(cam, *it));
 	}
 
 	m_r->getSceneDrawer().finishDraw();
@@ -156,7 +144,7 @@ Error Ms::run(CommandBufferHandle& cmdb)
 
 	cmdb.enableDepthTest(false);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

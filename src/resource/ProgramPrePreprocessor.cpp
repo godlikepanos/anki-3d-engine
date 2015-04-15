@@ -35,7 +35,7 @@ void ProgramPrePreprocessor::printSourceLines() const
 	auto end = m_sourceLines.getEnd();
 	for(; it != end; ++it)
 	{
-		printf("%4d %s\n", I(i++), &(*it)[0]);
+		printf("%4d %s\n", int(i++), &(*it)[0]);
 	}
 }
 

@@ -139,7 +139,24 @@ void FramebufferImpl::bind()
 				&m_invalidateBuffers[0]);
 		}
 
-		ANKI_ASSERT(0 && "TODO clear buffers");
+		// Clear buffers
+		for(U i = 0; i < m_colorAttachmentsCount; i++)
+		{
+			const Attachment& att = m_colorAttachments[i];
+
+			if(att.m_loadOperation == AttachmentLoadOperation::CLEAR)
+			{
+				glClearBufferfv(GL_COLOR, i, &att.m_clearColor.m_float[0]);
+			}
+		}
+
+		if(m_depthStencilAttachment.m_texture.isCreated() 
+			&& m_depthStencilAttachment.m_loadOperation 
+				== AttachmentLoadOperation::CLEAR)
+		{
+			glClearBufferfv(GL_DEPTH, 0, 
+				&m_depthStencilAttachment.m_clearColor.m_float[0]);
+		}
 	}
 }
 

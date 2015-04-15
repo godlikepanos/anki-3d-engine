@@ -46,18 +46,6 @@ public:
 	/// @name State manipulation
 	/// @{
 
-	/// Set clear color buffers value
-	void setClearColor(F32 r, F32 g, F32 b, F32 a);
-
-	/// Set clear depth buffer value
-	void setClearDepth(F32 value);
-
-	/// Set clear stencil buffer value
-	void setClearStencil(U32 value);
-
-	/// Clear color/depth/stencil buffers
-	void clearBuffers(U32 mask);
-
 	/// Set the viewport
 	void setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy);
 

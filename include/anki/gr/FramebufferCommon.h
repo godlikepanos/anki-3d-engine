@@ -22,11 +22,11 @@ public:
 	PixelFormat m_format;
 	AttachmentLoadOperation m_loadOperation = AttachmentLoadOperation::CLEAR;
 	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
-	struct
+	union
 	{
 		Array<F32, 4> m_float = {{0.0, 0.0, 0.0, 0.0}};
-		Array<I32, 4> m_int = {{0, 0, 0, 0}};
-		Array<U32, 4> m_uint = {{0, 0, 0, 0}};
+		Array<I32, 4> m_int;
+		Array<U32, 4> m_uint;
 	} m_clearColor;
 
 	Attachment() = default;

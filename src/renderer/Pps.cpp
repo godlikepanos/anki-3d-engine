@@ -131,7 +131,7 @@ Error Pps::run(CommandBufferHandle& cmdBuff)
 
 	if(drawToDefaultFbo)
 	{
-		m_r->getDefaultFramebuffer().bind(cmdBuff, true);
+		m_r->getDefaultFramebuffer().bind(cmdBuff);
 		cmdBuff.setViewport(0, 0, 
 			m_r->getDefaultFramebufferWidth(), 
 			m_r->getDefaultFramebufferHeight());
