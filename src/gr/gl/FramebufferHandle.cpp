@@ -20,8 +20,8 @@ public:
 	FramebufferHandle m_fb;
 	FramebufferHandle::Initializer m_init;
 
-	CreateFramebufferCommand(FramebufferHandle& handle, 
-		FramebufferHandle::Initializer& init)
+	CreateFramebufferCommand(const FramebufferHandle& handle, 
+		const FramebufferHandle::Initializer& init)
 	:	m_fb(handle), 
 		m_init(init)
 	{}

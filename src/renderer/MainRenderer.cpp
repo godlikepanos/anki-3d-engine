@@ -91,7 +91,7 @@ Error MainRenderer::render(SceneGraph& scene)
 		}
 
 		//rt = &getTiler().getRt();
-		//rt = &getIs()._getRt();
+		//rt = &getMs()._getRt0();
 
 		rt->setFilter(lastJobs, TextureHandle::Filter::LINEAR);
 		rt->bind(lastJobs, 0);

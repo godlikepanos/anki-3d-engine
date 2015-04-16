@@ -76,7 +76,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferHandle& commands)
 	Error err = commands.get().executeAllCommands();
 	if(err)
 	{
-		ANKI_LOGE("Error in command buffer execution");
+		ANKI_LOGF("Error in command buffer execution");
 	}
 #endif
 }

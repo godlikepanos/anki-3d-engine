@@ -75,7 +75,7 @@ public:
 			m_colorAttachments[i] = b.m_colorAttachments[i];
 		}
 
-		m_colorAttachments = b.m_colorAttachments;
+		m_colorAttachmentsCount = b.m_colorAttachmentsCount;
 		m_depthStencilAttachment = b.m_depthStencilAttachment;
 		return *this;
 	}

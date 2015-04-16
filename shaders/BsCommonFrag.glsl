@@ -107,7 +107,7 @@ void fog(in sampler2D depthMap, in vec3 color, in float fogScale)
 		1.0 / float(ANKI_RENDERER_HEIGHT));
 
 	vec2 texCoords = gl_FragCoord.xy * screenSize;
-	float depth = texture(depthMap, texCoords);
+	float depth = texture(depthMap, texCoords).r;
 	float zNear = 0.2;
 	float zFar = 200.0;
 	float linearDepth = (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));

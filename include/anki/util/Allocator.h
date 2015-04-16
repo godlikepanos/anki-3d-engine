@@ -269,7 +269,7 @@ public:
 		if(ptr)
 		{
 			// Call the constuctors
-			for(auto i = 0; i < n; i++)
+			for(size_type i = 0; i < n; i++)
 			{
 				alloc.construct(&ptr[i], v);
 			}
