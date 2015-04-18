@@ -228,7 +228,7 @@ public:
 
 	/// Create a framebuffer attachment texture
 	ANKI_USE_RESULT Error createRenderTarget(U32 w, U32 h, 
-		GLenum internalFormat, U32 samples, 
+		const PixelFormat& format, U32 samples, Bool linear,
 		TextureHandle& rt);
 
 	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert

@@ -19,7 +19,6 @@ class TextureImpl: public GlObject
 {
 public:
 	using Base = GlObject;
-	using Filter = TextureFilter;
 	using Initializer = TextureInitializer;
 
 	TextureImpl(GrManager* manager)
@@ -67,45 +66,20 @@ public:
 	/// Bind the texture to a specified unit
 	void bind(U32 unit) const;
 
-	/// Change the filtering type
-	void setFilter(const Filter filterType)
-	{
-		bind(0);
-		setFilterNoBind(filterType);
-	}
-
-	Filter getFilter() const
-	{
-		return m_filter;
-	}
-
-	/// Set texture parameter
-	void setParameter(GLenum param, GLint value)
-	{
-		bind(0);
-		glTexParameteri(m_target, param, value);
-	}
-
-	/// Set the range of the mipmaps
-	/// @param baseLevel The level of the base mipmap. By default is 0
-	/// @param maxLevel The level of the max mimap. Most of the time it's 1000.
-	void setMipmapsRange(U32 baseLevel, U32 maxLevel);
-
 	/// Generate mipmaps
 	void generateMipmaps();
 
 private:
 	GLenum m_target = GL_NONE; ///< GL_TEXTURE_2D, GL_TEXTURE_3D... etc
 	GLenum m_internalFormat = GL_NONE; ///< GL_COMPRESSED_RED, GL_RGB16 etc
+	GLenum m_format = GL_NONE;
+	GLenum m_type = GL_NONE;
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 0;
-	Filter m_filter;
-	U8 m_samples = 0;
+	Bool8 m_compressed = false;
 
 	void destroy();
-
-	void setFilterNoBind(Filter filterType);
 };
 
 /// Sampler container
@@ -113,7 +87,6 @@ class SamplerImpl: public GlObject
 {
 public:
 	using Base = GlObject;
-	using Filter = TextureFilter;
 
 	SamplerImpl(GrManager* manager)
 	:	Base(manager)
@@ -124,22 +97,7 @@ public:
 		destroy();
 	}
 
-	ANKI_USE_RESULT Error create()
-	{
-		glGenSamplers(1, &m_glName);
-		ANKI_ASSERT(m_glName);
-		return ErrorCode::NONE;
-	}
-
-	/// Set filter type
-	void setFilter(const Filter filterType);
-
-	/// Set sampler parameter
-	void setParameter(GLenum param, GLint value)
-	{
-		ANKI_ASSERT(isCreated());
-		glSamplerParameteri(m_glName, param, value);
-	}
+	ANKI_USE_RESULT Error create(const SamplerInitializer& sinit);
 
 	/// Bind the texture to a specified unit
 	void bind(U32 unit) const

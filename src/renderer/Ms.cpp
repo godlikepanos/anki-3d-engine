@@ -24,13 +24,16 @@ Error Ms::createRt(U32 index, U32 samples)
 	Plane& plane = m_planes[index];
 
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
-		GL_DEPTH_COMPONENT24, samples, plane.m_depthRt));
+		PixelFormat(ComponentFormat::D24, TransformFormat::FLOAT),
+		samples, false, plane.m_depthRt));
 
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), 
-		GL_RGBA8, samples, plane.m_rt0));
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
+		samples, false, plane.m_rt0));
 
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), 
-		GL_RGBA8, samples, plane.m_rt1));
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
+		samples, false, plane.m_rt1));
 
 	GrManager& gl = getGrManager();
 	CommandBufferHandle cmdb;
@@ -47,7 +50,7 @@ Error Ms::createRt(U32 index, U32 samples)
 	fbInit.m_depthStencilAttachment.m_texture = plane.m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation = 
 		AttachmentLoadOperation::CLEAR;
-	fbInit.m_depthStencilAttachment.m_clearColor.m_float[0] = 1.0;
+	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
 	ANKI_CHECK(plane.m_fb.create(cmdb, fbInit));
 	cmdb.finish();

@@ -19,7 +19,6 @@ class TextureHandle: public GrHandle<TextureImpl>
 {
 public:
 	using Base = GrHandle<TextureImpl>;
-	using Filter = TextureFilter;
 	using Initializer = TextureInitializer;
 
 	/// Create husk
@@ -33,15 +32,8 @@ public:
 	/// Bind to a unit
 	void bind(CommandBufferHandle& commands, U32 unit);
 
-	/// Change filtering type
-	void setFilter(CommandBufferHandle& commands, Filter filter);
-
 	/// Generate mips
 	void generateMipmaps(CommandBufferHandle& commands);
-
-	/// Set a texture parameter
-	void setParameter(
-		CommandBufferHandle& commands, GLenum param, GLint value);
 };
 
 /// Sampler handle
@@ -49,7 +41,7 @@ class SamplerHandle: public GrHandle<SamplerImpl>
 {
 public:
 	using Base = GrHandle<SamplerImpl>;
-	using Filter = TextureFilter;
+	using Initializer = SamplerInitializer;
 
 	/// Create husk.
 	SamplerHandle();
@@ -57,16 +49,11 @@ public:
 	~SamplerHandle();
 
 	/// Create the sampler
-	ANKI_USE_RESULT Error create(CommandBufferHandle& commands);
+	ANKI_USE_RESULT Error create(CommandBufferHandle& commands, 
+		const Initializer& init);
 
 	/// Bind to a unit
 	void bind(CommandBufferHandle& commands, U32 unit);
-
-	/// Change filtering type
-	void setFilter(CommandBufferHandle& commands, Filter filter);
-
-	/// Set a texture parameter
-	void setParameter(CommandBufferHandle& commands, GLenum param, GLint value);
 
 	/// Bind default sampler
 	static void bindDefault(CommandBufferHandle& commands, U32 unit);

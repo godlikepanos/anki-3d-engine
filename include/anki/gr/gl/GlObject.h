@@ -7,6 +7,7 @@
 #define ANKI_GR_GL_OBJECT_H
 
 #include "anki/gr/GrObject.h"
+#include "anki/gr/gl/Common.h"
 
 namespace anki {
 

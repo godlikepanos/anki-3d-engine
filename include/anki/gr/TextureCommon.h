@@ -13,28 +13,41 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
-struct SurfaceData
+class SamplerInitializer
 {
+public:
+	SamplingFilter m_filterType = SamplingFilter::NEAREST;
+	CompareOperation m_compareOperation = CompareOperation::ALWAYS;
+	F32 m_minLod = -1000.0;
+	F32 m_maxLod = 1000.0;
+	I8 m_anisotropyLevel = 0;
+	Bool8 m_repeat = true;
+};
+
+class SurfaceData
+{
+public:
 	const void* m_ptr = nullptr;
 	PtrSize m_size = 0;
 };
 
 /// Texture initializer.
-struct TextureInitializer
+class TextureInitializer
 {
+public:
+	TextureType m_type = TextureType::_2D;
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 0; ///< Relevant only for 3D and 2DArray textures
-	GLenum m_target = GL_TEXTURE_2D;
-	GLenum m_internalFormat = GL_NONE;
-	U32 m_mipmapsCount = 0;
-	TextureFilter m_filterType = TextureFilter::NEAREST;
-	Bool8 m_repeat = false;
-	I32 m_anisotropyLevel = 0;
-	U32 m_samples = 1;
+	PixelFormat m_format;
+	U8 m_mipmapsCount = 0;
+	U8 m_samples = 1;
+
+	SamplerInitializer m_sampling;
+
 	/// In some backends it may copy the m_data to a temp buffer for async 
 	/// operations.
-	Bool m_copyDataBeforeReturn = true; 
+	Bool8 m_copyDataBeforeReturn = true;
 
 	/// [level][slice]
 	Array2d<SurfaceData, MAX_MIPMAPS, MAX_TEXTURE_LAYERS> m_data;

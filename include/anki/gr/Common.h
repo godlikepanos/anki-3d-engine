@@ -50,7 +50,8 @@ class CommandBufferHandle;
 class GrManager;
 class GrManagerImpl;
 struct FramebufferInitializer;
-struct TextureInitializer;
+class TextureInitializer;
+class SamplerInitializer;
 struct GrManagerInitializer;
 
 /// @addtogroup graphics_private

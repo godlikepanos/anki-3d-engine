@@ -48,7 +48,9 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	ANKI_CHECK(
 		m_r->createRenderTarget(
-		m_r->getWidth(), m_r->getHeight(), GL_RGB8, 1, m_rt));
+		m_r->getWidth(), m_r->getHeight(), 
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
+		1, true, m_rt));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;

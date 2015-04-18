@@ -244,8 +244,8 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 }
 
 //==============================================================================
-Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat, 
-	U32 samples, TextureHandle& rt)
+Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format, 
+	U32 samples, Bool linear, TextureHandle& rt)
 {
 	// Not very important but keep the resulution of render targets aligned to
 	// 16
@@ -260,18 +260,14 @@ Error Renderer::createRenderTarget(U32 w, U32 h, GLenum internalFormat,
 	init.m_width = w;
 	init.m_height = h;
 	init.m_depth = 0;
-#if ANKI_GL == ANKI_GL_DESKTOP
-	init.m_target = (samples == 1) ? GL_TEXTURE_2D : GL_TEXTURE_2D_MULTISAMPLE;
-#else
-	ANKI_ASSERT(samples == 1);
-	init.m_target = GL_TEXTURE_2D;
-#endif
-	init.m_internalFormat = internalFormat;
+	init.m_type = TextureType::_2D;
+	init.m_format = format;
 	init.m_mipmapsCount = 1;
-	init.m_filterType = TextureHandle::Filter::NEAREST;
-	init.m_repeat = false;
-	init.m_anisotropyLevel = 0;
 	init.m_samples = samples;
+	init.m_sampling.m_filterType = 
+		(linear) ? SamplingFilter::LINEAR : SamplingFilter::NEAREST;
+	init.m_sampling.m_repeat = false;
+	init.m_sampling.m_anisotropyLevel = 0;
 
 	CommandBufferHandle cmdBuff;
 	ANKI_CHECK(cmdBuff.create(m_gl));

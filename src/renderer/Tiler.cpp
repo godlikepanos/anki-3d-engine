@@ -103,7 +103,9 @@ Error Tiler::initInternal()
 	// Create FB
 	ANKI_CHECK(
 		m_r->createRenderTarget(m_r->getTilesCount().x(), 
-		m_r->getTilesCount().y(), GL_RG32F, 1, m_rt));
+		m_r->getTilesCount().y(), 
+		PixelFormat(ComponentFormat::R32G32, TransformFormat::UINT), 
+		1, false, m_rt));
 
 	CommandBufferHandle cmdBuff;
 	ANKI_CHECK(cmdBuff.create(&getGrManager()));

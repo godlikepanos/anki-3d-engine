@@ -16,13 +16,13 @@ Hdr::~Hdr()
 //==============================================================================
 Error Hdr::initFb(FramebufferHandle& fb, TextureHandle& rt)
 {
-	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, GL_RGB8, 1, rt));
+	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, 
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
+		1, true, rt));
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	CommandBufferHandle cmdb;
 	ANKI_CHECK(cmdb.create(&getGrManager()));
-
-	rt.setFilter(cmdb, TextureHandle::Filter::LINEAR);
 
 	// Create FB
 	FramebufferHandle::Initializer fbInit;

@@ -69,12 +69,13 @@ public:
 //==============================================================================
 Error Ssao::createFb(FramebufferHandle& fb, TextureHandle& rt)
 {
-	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, GL_R8, 1, rt));
+	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, 
+		PixelFormat(ComponentFormat::R8, TransformFormat::UNORM), 
+		1, true, rt));
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	CommandBufferHandle cmdBuff;
 	ANKI_CHECK(cmdBuff.create(&getGrManager()));
-	rt.setFilter(cmdBuff, TextureHandle::Filter::LINEAR);
 
 	// create FB
 	FramebufferHandle::Initializer fbInit;
@@ -131,11 +132,12 @@ Error Ssao::initInternal(const ConfigSet& config)
 	TextureHandle::Initializer tinit;
 
 	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
-	tinit.m_target = GL_TEXTURE_2D;
-	tinit.m_internalFormat = GL_RGB32F;
-	tinit.m_filterType = TextureHandle::Filter::NEAREST;
-	tinit.m_repeat = true;
+	tinit.m_type = TextureType::_2D;
+	tinit.m_format = 
+		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 	tinit.m_mipmapsCount = 1;
+	tinit.m_sampling.m_filterType = SamplingFilter::NEAREST;
+	tinit.m_sampling.m_repeat = true;
 	tinit.m_data[0][0].m_ptr = static_cast<void*>(&noise[0]);
 	tinit.m_data[0][0].m_size = sizeof(noise);
 

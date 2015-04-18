@@ -24,10 +24,15 @@ public:
 	AttachmentStoreOperation m_storeOperation = AttachmentStoreOperation::STORE;
 	union
 	{
-		Array<F32, 4> m_float = {{0.0, 0.0, 0.0, 0.0}};
-		Array<I32, 4> m_int;
-		Array<U32, 4> m_uint;
-	} m_clearColor;
+		Array<F32, 4> m_colorf = {{0.0, 0.0, 0.0, 0.0}};
+		Array<I32, 4> m_colori;
+		Array<U32, 4> m_coloru;
+		struct
+		{
+			F32 m_depth;
+			I32 m_stencil;
+		} m_depthStencil;
+	} m_clearValue;
 
 	Attachment() = default;
 
@@ -46,7 +51,7 @@ public:
 		m_format = b.m_format;
 		m_loadOperation = b.m_loadOperation;
 		m_storeOperation = b.m_storeOperation;
-		memcpy(&m_clearColor, &b.m_clearColor, sizeof(m_clearColor));
+		memcpy(&m_clearValue, &b.m_clearValue, sizeof(m_clearValue));
 		return *this;
 	}
 };

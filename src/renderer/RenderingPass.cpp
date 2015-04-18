@@ -69,11 +69,9 @@ Error BlurringRenderingPass::initBlurring(
 	{
 		Direction& dir = m_dirs[i];
 
-		ANKI_CHECK(r.createRenderTarget(width, height, GL_RGB8, 1, dir.m_rt));
-
-		// Set to bilinear because the blurring techniques take advantage of 
-		// that
-		dir.m_rt.setFilter(cmdb, TextureHandle::Filter::LINEAR);
+		ANKI_CHECK(r.createRenderTarget(width, height, 
+			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
+			1, true, dir.m_rt));
 
 		// Create FB
 		FramebufferHandle::Initializer fbInit;

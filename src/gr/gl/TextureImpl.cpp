@@ -16,80 +16,128 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-static void getTextureInformation(
-	const GLenum internalFormat,
-	Bool& compressed,
+static GLenum convertTextureType(TextureType type)
+{
+	GLenum out = GL_NONE;
+	switch(type)
+	{
+	case TextureType::_1D:
+		out = GL_TEXTURE_1D;
+		break;
+	case TextureType::_2D:
+		out = GL_TEXTURE_2D;
+		break;
+	case TextureType::_3D:
+		out = GL_TEXTURE_3D;
+		break;
+	case TextureType::_2D_ARRAY:
+		out = GL_TEXTURE_2D_ARRAY;
+		break;
+	case TextureType::CUBE:
+		out = GL_TEXTURE_CUBE_MAP;
+		break;
+	};
+
+	return out;
+}
+
+//==============================================================================
+static void convertTextureInformation(
+	const PixelFormat& pf,
+	Bool8& compressed,
 	GLenum& format,
+	GLenum& internalFormat,
 	GLenum& type)
 {
-	switch(internalFormat)
+	compressed = pf.m_components >= ComponentFormat::FIRST_COMPRESSED 
+		&& pf.m_components <= ComponentFormat::LAST_COMPRESSED;
+
+	switch(pf.m_components)
 	{
 #if ANKI_GL == ANKI_GL_DESKTOP
-	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-		compressed = true;
-		format = internalFormat;
+	case ComponentFormat::R8G8B8_S3TC:
+		format = pf.m_srgb 
+			? GL_COMPRESSED_SRGB_S3TC_DXT1_EXT 
+			: GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+		internalFormat = format;
 		type = GL_UNSIGNED_BYTE;
 		break;
-	case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
-		compressed = true;
-		format = internalFormat;
-		type = GL_UNSIGNED_BYTE;
-		break;
-	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-		compressed = true;
-		format = internalFormat;
-		type = GL_UNSIGNED_BYTE;
-		break;
-	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-		compressed = true;
-		format = internalFormat;
+	case ComponentFormat::R8G8B8A8_S3TC:
+		format = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+		internalFormat = format;
 		type = GL_UNSIGNED_BYTE;
 		break;
 #else
-	case GL_COMPRESSED_RGB8_ETC2:
-		compressed = true;
-		format = internalFormat;
+	case ComponentFormat::R8G8B8_ETC2:
+		format = GL_COMPRESSED_RGB8_ETC2;
+		internalFormat = format;
 		type = GL_UNSIGNED_BYTE;
 		break;
-	case GL_COMPRESSED_RGBA8_ETC2_EAC:
-		compressed = true;
-		format = internalFormat;
+	case ComponentFormat::R8G8B8A8_ETC2:
+		format = GL_COMPRESSED_RGBA8_ETC2_EAC;
+		internalFormat = format;
 		type = GL_UNSIGNED_BYTE;
 		break;
 #endif
-	case GL_R8:
-		compressed = false;
+	case ComponentFormat::R8:
 		format = GL_R;
+		internalFormat = GL_R8;
 		type = GL_UNSIGNED_BYTE;
 		break;
-	case GL_RGB8:
-		compressed = false;
+	case ComponentFormat::R8G8B8:
 		format = GL_RGB;
+		internalFormat = GL_RGB8;
 		type = GL_UNSIGNED_BYTE;
 		break;
-	case GL_RGB32F:
-		compressed = false;
-		format = GL_RGB;
-		type = GL_FLOAT;
-		break;
-	case GL_RGBA8:
-		compressed = false;
+	case ComponentFormat::R8G8B8A8:
 		format = GL_RGBA;
+		internalFormat = GL_RGBA8;
 		type = GL_UNSIGNED_BYTE;
 		break;
-	case GL_RG32UI:
-		compressed = false;
-		format = GL_RG_INTEGER;
+	case ComponentFormat::R32G32:
+		if(pf.m_transform == TransformFormat::FLOAT)
+		{
+			format = GL_RG;
+			internalFormat = GL_RG32F;
+			type = GL_FLOAT;
+		}
+		else if(pf.m_transform == TransformFormat::UINT)
+		{
+			format = GL_RG_INTEGER;
+			internalFormat = GL_RG32UI;
+			type = GL_UNSIGNED_INT;
+		}
+		else
+		{
+			ANKI_ASSERT(0 && "TODO");
+		}
+		break;
+	case ComponentFormat::R32G32B32:
+		if(pf.m_transform == TransformFormat::FLOAT)
+		{
+			format = GL_RGB;
+			internalFormat = GL_RGB32F;
+			type = GL_FLOAT;
+		}
+		else if(pf.m_transform == TransformFormat::UINT)
+		{
+			format = GL_RGB_INTEGER;
+			internalFormat = GL_RGB32UI;
+			type = GL_UNSIGNED_INT;
+		}
+		else
+		{
+			ANKI_ASSERT(0 && "TODO");
+		}
+		break;
+	case ComponentFormat::D24:
+		format = GL_DEPTH_COMPONENT;
+		internalFormat = GL_DEPTH_COMPONENT24;
 		type = GL_UNSIGNED_INT;
 		break;
-	case GL_DEPTH_COMPONENT24:
-		compressed = false;
+	case ComponentFormat::D16:
 		format = GL_DEPTH_COMPONENT;
-		type = GL_UNSIGNED_INT;
-		break;
-	case GL_DEPTH_COMPONENT16:
-		compressed = false;
-		format = GL_DEPTH_COMPONENT;
+		internalFormat = GL_DEPTH_COMPONENT16;
 		type = GL_UNSIGNED_SHORT;
 		break;
 	default:
@@ -105,12 +153,14 @@ static void getTextureInformation(
 void TextureImpl::create(const Initializer& init)
 {
 	GrAllocator<U8> alloc = getAllocator();
+	const SamplerInitializer& sinit = init.m_sampling;
 
 	// Sanity checks
 	//
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(init.m_width > 0 && init.m_height > 0);
 	ANKI_ASSERT(init.m_mipmapsCount > 0);
+	ANKI_ASSERT(init.m_samples > 0);
 
 	// Create
 	//
@@ -120,10 +170,10 @@ void TextureImpl::create(const Initializer& init)
 	m_width = init.m_width;
 	m_height = init.m_height;
 	m_depth = init.m_depth;
-	m_target = init.m_target;
-	m_internalFormat = init.m_internalFormat;
-	m_samples = init.m_samples;
-	ANKI_ASSERT(m_samples > 0);
+	m_target = convertTextureType(init.m_type);
+
+	convertTextureInformation(
+		init.m_format, m_compressed, m_format, m_internalFormat, m_type);
 
 	// Bind
 	bind(0);
@@ -131,46 +181,41 @@ void TextureImpl::create(const Initializer& init)
 	// Create storage
 	switch(m_target)
 	{
-		case GL_TEXTURE_2D:
-			glTexStorage2D(
-				m_target, 
-				init.m_mipmapsCount, 
-				m_internalFormat,
-				m_width,
-				m_height);
-			break;
-		case GL_TEXTURE_CUBE_MAP:
-		case GL_TEXTURE_2D_ARRAY:
-		case GL_TEXTURE_3D:
-			glTexStorage3D(
-				m_target,
-				init.m_mipmapsCount,
-				m_internalFormat,
-				m_width,
-				m_height,
-				init.m_depth);
-			break;
-		case GL_TEXTURE_2D_MULTISAMPLE:
-			glTexStorage2DMultisample(
-				m_target,
-				m_samples,
-				m_internalFormat,
-				m_width,
-				m_height,
-				GL_FALSE);
-			break;
-		default:
-			ANKI_ASSERT(0);
+	case GL_TEXTURE_2D:
+		glTexStorage2D(
+			m_target, 
+			init.m_mipmapsCount, 
+			m_internalFormat,
+			m_width,
+			m_height);
+		break;
+	case GL_TEXTURE_CUBE_MAP:
+	case GL_TEXTURE_2D_ARRAY:
+	case GL_TEXTURE_3D:
+		glTexStorage3D(
+			m_target,
+			init.m_mipmapsCount,
+			m_internalFormat,
+			m_width,
+			m_height,
+			init.m_depth);
+		break;
+	case GL_TEXTURE_2D_MULTISAMPLE:
+		glTexStorage2DMultisample(
+			m_target,
+			init.m_samples,
+			m_internalFormat,
+			m_width,
+			m_height,
+			GL_FALSE);
+		break;
+	default:
+		ANKI_ASSERT(0);
 	}
 
 	// Load data
 	if(init.m_data[0][0].m_ptr != nullptr)
 	{
-		Bool compressed = false;
-		GLenum format = GL_NONE;
-		GLenum type = GL_NONE;
-		getTextureInformation(m_internalFormat, compressed, format, type);
-
 		U w = m_width;
 		U h = m_height;
 		for(U level = 0; level < init.m_mipmapsCount; level++)
@@ -180,7 +225,7 @@ void TextureImpl::create(const Initializer& init)
 			switch(m_target)
 			{
 			case GL_TEXTURE_2D:
-				if(!compressed)
+				if(!m_compressed)
 				{
 					glTexSubImage2D(
 						m_target, 
@@ -189,8 +234,8 @@ void TextureImpl::create(const Initializer& init)
 						0,
 						w,
 						h, 
-						format, 
-						type, 
+						m_format, 
+						m_type, 
 						init.m_data[level][0].m_ptr);
 				}
 				else
@@ -205,15 +250,15 @@ void TextureImpl::create(const Initializer& init)
 						0,
 						w, 
 						h,  
-						format,
+						m_format,
 						init.m_data[level][0].m_size, 
 						init.m_data[level][0].m_ptr);
 				}
 				break;
 			case GL_TEXTURE_CUBE_MAP:
-				for(U face = 0; face < 6; face++)
+				for(U face = 0; face < 6; ++face)
 				{
-					if(!compressed)
+					if(!m_compressed)
 					{
 						glTexSubImage2D(
 							GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 
@@ -222,8 +267,8 @@ void TextureImpl::create(const Initializer& init)
 							0,
 							w,
 							h, 
-							format, 
-							type, 
+							m_format, 
+							m_type, 
 							init.m_data[level][face].m_ptr);
 					}
 					else
@@ -236,7 +281,7 @@ void TextureImpl::create(const Initializer& init)
 							0,
 							w, 
 							h,  
-							format,
+							m_format,
 							init.m_data[level][face].m_size, 
 							init.m_data[level][face].m_ptr);
 					}
@@ -269,7 +314,7 @@ void TextureImpl::create(const Initializer& init)
 						}
 					}
 
-					if(!compressed)
+					if(!m_compressed)
 					{
 						glTexSubImage3D(
 							m_target, 
@@ -280,8 +325,8 @@ void TextureImpl::create(const Initializer& init)
 							w, 
 							h, 
 							m_depth,
-							format, 
-							type, 
+							m_format, 
+							m_type, 
 							&data[0]);
 					}
 					else
@@ -295,7 +340,7 @@ void TextureImpl::create(const Initializer& init)
 							w, 
 							h, 
 							m_depth, 
-							format, 
+							m_format, 
 							data.getSize(), 
 							&data[0]);
 					}
@@ -311,9 +356,9 @@ void TextureImpl::create(const Initializer& init)
 	} // end if data
 
 	// Set parameters
-	if(m_samples == 1)
+	if(init.m_samples == 1)
 	{
-		if(init.m_repeat)
+		if(sinit.m_repeat)
 		{
 			glTexParameteri(m_target, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(m_target, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -329,15 +374,41 @@ void TextureImpl::create(const Initializer& init)
 			m_target, GL_TEXTURE_MAX_LEVEL, init.m_mipmapsCount - 1);
 
 		// Set filtering type
-		setFilterNoBind(init.m_filterType);
+		switch(sinit.m_filterType)
+		{
+		case SamplingFilter::NEAREST:
+			glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			break;
+		case SamplingFilter::LINEAR:
+			glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			break;
+		case SamplingFilter::TRILINEAR:
+			glTexParameteri(
+				m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			break;
+		default:
+			ANKI_ASSERT(0);
+			break;
+		}
 
 #if ANKI_GL == ANKI_GL_DESKTOP
-		if(init.m_anisotropyLevel > 1)
+		if(sinit.m_anisotropyLevel > 1)
 		{
 			glTexParameteri(m_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
-				GLint(init.m_anisotropyLevel));
+				GLint(sinit.m_anisotropyLevel));
 		}
 #endif
+
+		if(sinit.m_compareOperation != CompareOperation::ALWAYS)
+		{
+			glTexParameteri(
+				m_target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+			glTexParameteri(m_target, GL_TEXTURE_COMPARE_FUNC, 
+				convertCompareOperation(sinit.m_compareOperation));
+		}
 	}
 
 	ANKI_CHECK_GL_ERROR();
@@ -362,42 +433,9 @@ void TextureImpl::bind(U32 unit) const
 }
 
 //==============================================================================
-void TextureImpl::setFilterNoBind(Filter filterType)
-{
-	switch(filterType)
-	{
-	case Filter::NEAREST:
-		glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		break;
-	case Filter::LINEAR:
-		glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		break;
-	case Filter::TRILINEAR:
-		glTexParameteri(
-			m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		break;
-	default:
-		ANKI_ASSERT(0);
-		break;
-	}
-
-	m_filter = filterType;
-}
-
-//==============================================================================
-void TextureImpl::setMipmapsRange(U32 baseLevel, U32 maxLevel)
-{	
-	bind(0);
-	glTexParameteri(m_target, GL_TEXTURE_BASE_LEVEL, baseLevel);
-	glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, maxLevel);
-}
-
-//==============================================================================
 void TextureImpl::generateMipmaps()
 {
+	ANKI_ASSERT(!m_compressed);
 	bind(0);
 	glGenerateMipmap(m_target);
 }
@@ -407,28 +445,52 @@ void TextureImpl::generateMipmaps()
 //==============================================================================
 
 //==============================================================================
-void SamplerImpl::setFilter(const Filter filterType)
+Error SamplerImpl::create(const SamplerInitializer& sinit)
 {
-	ANKI_ASSERT(isCreated());
-	switch(filterType)
+	glGenSamplers(1, &m_glName);
+	ANKI_ASSERT(m_glName);
+	
+	if(sinit.m_repeat)
 	{
-	case Filter::NEAREST:
+		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	}
+	else
+	{
+		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glSamplerParameteri(m_glName, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	}
+
+	// Set filtering type
+	switch(sinit.m_filterType)
+	{
+	case SamplingFilter::NEAREST:
 		glSamplerParameteri(m_glName, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		break;
-	case Filter::LINEAR:
+	case SamplingFilter::LINEAR:
 		glSamplerParameteri(m_glName, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		break;
-	case Filter::TRILINEAR:
-		glSamplerParameteri(
-			m_glName, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	case SamplingFilter::TRILINEAR:
+		glSamplerParameteri(m_glName, 
+			GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		break;
 	default:
 		ANKI_ASSERT(0);
 		break;
 	}
+
+#if ANKI_GL == ANKI_GL_DESKTOP
+	if(sinit.m_anisotropyLevel > 1)
+	{
+		glSamplerParameteri(m_glName, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+			GLint(sinit.m_anisotropyLevel));
+	}
+#endif
+	
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

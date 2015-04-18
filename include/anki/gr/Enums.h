@@ -49,7 +49,7 @@ enum class CullMode: U8
 	FRONT_AND_BACK
 };
 
-enum class DepthCompareFunction: U8
+enum class CompareOperation: U8
 {
 	ALWAYS,
 	LESS,
@@ -127,7 +127,11 @@ enum class ComponentFormat: U8
 	// Depth
 	D16,
 	D24,
-	D32
+	D32,
+
+	// Limits
+	FIRST_COMPRESSED = R8G8B8_S3TC,
+	LAST_COMPRESSED = R8G8B8A8_ETC2
 };
 
 enum class TransformFormat: U8
@@ -139,7 +143,7 @@ enum class TransformFormat: U8
 	FLOAT
 };
 
-enum class ImageType: U8
+enum class TextureType: U8
 {
 	_1D,
 	_2D,
@@ -148,7 +152,7 @@ enum class ImageType: U8
 	CUBE
 };
 
-enum class TextureFilter: U8
+enum class SamplingFilter: U8
 {
 	NEAREST,
 	LINEAR,
@@ -207,6 +211,8 @@ public:
 		m_transform(tf),
 		m_srgb(srgb)
 	{}
+
+	PixelFormat& operator=(const PixelFormat&) = default;
 
 	Bool operator==(const PixelFormat& b) const
 	{

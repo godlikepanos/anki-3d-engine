@@ -17,13 +17,12 @@ Error Dp::init(const ConfigSet& config)
 
 	ANKI_CHECK(m_r->createRenderTarget(
 		m_smallDepthSize.x(), m_smallDepthSize.y(),
-		GL_DEPTH_COMPONENT24, 1, m_smallDepthRt));
+		PixelFormat(ComponentFormat::D24, TransformFormat::FLOAT),
+		1, true, m_smallDepthRt));
 
 	GrManager& gl = getGrManager();
 	CommandBufferHandle cmdb;
 	ANKI_CHECK(cmdb.create(&gl));
-
-	m_smallDepthRt.setFilter(cmdb, TextureHandle::Filter::LINEAR);
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_depthStencilAttachment.m_texture = m_smallDepthRt;

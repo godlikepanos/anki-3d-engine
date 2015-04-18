@@ -39,38 +39,37 @@ Error Sm::init(const ConfigSet& initializer)
 
 	// Create shadowmaps array
 	TextureHandle::Initializer sminit;
-	sminit.m_target = GL_TEXTURE_2D_ARRAY;
+	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
 	sminit.m_depth = initializer.get("is.sm.maxLights");
-	sminit.m_internalFormat = GL_DEPTH_COMPONENT16;
+	sminit.m_format = PixelFormat(ComponentFormat::D16, TransformFormat::FLOAT);
 	sminit.m_mipmapsCount = 1;
-	sminit.m_filterType = m_bilinearEnabled 
-		? TextureHandle::Filter::LINEAR 
-		: TextureHandle::Filter::NEAREST;
+	sminit.m_sampling.m_filterType = m_bilinearEnabled 
+		? SamplingFilter::LINEAR 
+		: SamplingFilter::NEAREST;
+	sminit.m_sampling.m_compareOperation = CompareOperation::LESS_EQUAL;
 
 	CommandBufferHandle cmdBuff;
 	ANKI_CHECK(cmdBuff.create(&getGrManager()));
 
 	ANKI_CHECK(m_sm2DArrayTex.create(cmdBuff, sminit));
 
-	m_sm2DArrayTex.setParameter(cmdBuff, 
-		GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-	m_sm2DArrayTex.setParameter(cmdBuff, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-
 	// Init sms
-	U32 layer = 0;
 	m_sms.create(getAllocator(), initializer.get("is.sm.maxLights"));
+
+	FramebufferHandle::Initializer fbInit;
+	fbInit.m_depthStencilAttachment.m_texture = m_sm2DArrayTex;
+	fbInit.m_depthStencilAttachment.m_loadOperation = 
+		AttachmentLoadOperation::CLEAR;
+	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
+
+	U32 layer = 0;
 	for(Shadowmap& sm : m_sms)
 	{
 		sm.m_layerId = layer;
 
-		FramebufferHandle::Initializer fbInit;
-		fbInit.m_depthStencilAttachment.m_texture = m_sm2DArrayTex;
 		fbInit.m_depthStencilAttachment.m_layer = layer;
-		fbInit.m_depthStencilAttachment.m_loadOperation = 
-			AttachmentLoadOperation::CLEAR;
-		fbInit.m_depthStencilAttachment.m_clearColor.m_float[0] = 1.0;
 		ANKI_CHECK(sm.m_fb.create(cmdBuff, fbInit));
 
 		++layer;

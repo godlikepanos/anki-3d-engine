@@ -61,7 +61,7 @@ struct RasterizerStateInfo
 struct DepthStencilStateInfo
 {
 	Bool8 m_depthWriteEnabled = true;
-	DepthCompareFunction m_depthCompareFunction = DepthCompareFunction::LESS;
+	CompareOperation m_depthCompareFunction = CompareOperation::LESS;
 	PixelFormat m_format;
 };
 

@@ -146,7 +146,7 @@ void FramebufferImpl::bind()
 
 			if(att.m_loadOperation == AttachmentLoadOperation::CLEAR)
 			{
-				glClearBufferfv(GL_COLOR, i, &att.m_clearColor.m_float[0]);
+				glClearBufferfv(GL_COLOR, i, &att.m_clearValue.m_colorf[0]);
 			}
 		}
 
@@ -155,7 +155,7 @@ void FramebufferImpl::bind()
 				== AttachmentLoadOperation::CLEAR)
 		{
 			glClearBufferfv(GL_DEPTH, 0, 
-				&m_depthStencilAttachment.m_clearColor.m_float[0]);
+				&m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth);
 		}
 	}
 }

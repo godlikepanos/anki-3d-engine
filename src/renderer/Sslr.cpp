@@ -43,12 +43,6 @@ Error Sslr::init(const ConfigSet& config)
 	ANKI_CHECK(m_r->createDrawQuadPipeline(
 		m_reflectionFrag->getGrShader(), m_reflectionPpline));
 
-	// Sampler
-	CommandBufferHandle cmdBuff;
-	ANKI_CHECK(cmdBuff.create(&getGrManager()));
-	ANKI_CHECK(m_depthMapSampler.create(cmdBuff));
-	m_depthMapSampler.setFilter(cmdBuff, SamplerHandle::Filter::NEAREST);
-
 	// Blit
 	ANKI_CHECK(
 		m_blitFrag.load("shaders/Blit.frag.glsl", &getResourceManager()));
@@ -65,22 +59,23 @@ Error Sslr::init(const ConfigSet& config)
 		Direction& dir = m_dirs[(U)DirectionEnum::VERTICAL];
 
 		ANKI_CHECK(
-			m_r->createRenderTarget(m_width, m_height, GL_RGB8, 1, dir.m_rt));
-
-		// Set to bilinear because the blurring techniques take advantage of 
-		// that
-		dir.m_rt.setFilter(cmdBuff, TextureHandle::Filter::LINEAR);
+			m_r->createRenderTarget(m_width, m_height, 
+			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM), 
+			1, true, dir.m_rt));
 
 		// Create FB
+		CommandBufferHandle cmdBuff;
+		ANKI_CHECK(cmdBuff.create(&getGrManager()));
+
 		FramebufferHandle::Initializer fbInit;
 		fbInit.m_colorAttachmentsCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
 		fbInit.m_colorAttachments[0].m_loadOperation = 
 			AttachmentLoadOperation::LOAD;
 		ANKI_CHECK(dir.m_fb.create(cmdBuff, fbInit));
-	}
 
-	cmdBuff.finish();
+		cmdBuff.finish();
+	}
 
 	return ErrorCode::NONE;
 }
@@ -103,7 +98,6 @@ Error Sslr::run(CommandBufferHandle& cmdBuff)
 		m_r->getMs()._getRt1()}};
 	cmdBuff.bindTextures(0	, tarr.begin(), tarr.getSize()); 
 
-	m_depthMapSampler.bind(cmdBuff, 1);
 	m_r->getPps().getSsao().m_uniformsBuff.bindShaderBuffer(cmdBuff, 0);
 
 	m_r->drawQuad(cmdBuff);

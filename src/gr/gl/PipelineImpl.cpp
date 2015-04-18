@@ -390,32 +390,8 @@ void PipelineImpl::initRasterizerState()
 //==============================================================================
 void PipelineImpl::initDepthStencilState()
 {
-	switch(m_depthStencil.m_depthCompareFunction)
-	{
-	case DepthCompareFunction::ALWAYS:
-		m_depthCompareFunction = GL_ALWAYS;
-		break;
-	case DepthCompareFunction::LESS:
-		m_depthCompareFunction = GL_LESS;
-		break;
-	case DepthCompareFunction::LESS_EQUAL:
-		m_depthCompareFunction = GL_LEQUAL;
-		break;
-	case DepthCompareFunction::GREATER:
-		m_depthCompareFunction = GL_GREATER;
-		break;
-	case DepthCompareFunction::GREATER_EQUAL:
-		m_depthCompareFunction = GL_GEQUAL;
-		break;
-	case DepthCompareFunction::NOT_EQUAL:
-		m_depthCompareFunction = GL_NOTEQUAL;
-		break;
-	case DepthCompareFunction::NEVER:
-		m_depthCompareFunction = GL_NEVER;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
+	m_depthCompareFunction = 
+		convertCompareOperation(m_depthStencil.m_depthCompareFunction);
 }
 
 //==============================================================================

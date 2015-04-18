@@ -93,7 +93,7 @@ Error MainRenderer::render(SceneGraph& scene)
 		//rt = &getTiler().getRt();
 		//rt = &getMs()._getRt0();
 
-		rt->setFilter(lastJobs, TextureHandle::Filter::LINEAR);
+		//rt->setFilter(lastJobs, TextureHandle::Filter::LINEAR);
 		rt->bind(lastJobs, 0);
 
 		drawQuad(lastJobs);

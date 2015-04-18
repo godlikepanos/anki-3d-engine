@@ -31,12 +31,8 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 {
 	GrManager& gr = rinit.m_resources.getGrManager();
 	CommandBufferHandle cmdb;
-	Error err = cmdb.create(&gr); // Always first to avoid assertions (
+	ANKI_CHECK(cmdb.create(&gr)); // Always first to avoid assertions (
 	                              // because of the check of the allocator)
-	if(err)
-	{
-		return err;
-	}
 
 	TextureHandle::Initializer init;
 	init.m_copyDataBeforeReturn = false;
@@ -45,7 +41,7 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 	// Load image
 	ImageLoader* img = rinit.m_alloc.newInstance<ImageLoader>(rinit.m_alloc);
 
-	err = img->load(filename, rinit.m_resources.getMaxTextureSize());
+	Error err = img->load(filename, rinit.m_resources.getMaxTextureSize());
 	if(err)
 	{
 		rinit.m_alloc.deleteInstance(img);
@@ -72,39 +68,42 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 	switch(img->getTextureType())
 	{
 	case ImageLoader::TextureType::_2D:
-		init.m_target = GL_TEXTURE_2D;
+		init.m_type = TextureType::_2D;
 		layers = 1;
 		break;
 	case ImageLoader::TextureType::CUBE:
-		init.m_target = GL_TEXTURE_CUBE_MAP;
+		init.m_type = TextureType::CUBE;
 		layers = 6;
 		break;
 	case ImageLoader::TextureType::_2D_ARRAY:
-		init.m_target = GL_TEXTURE_2D_ARRAY;
+		init.m_type = TextureType::_2D_ARRAY;
 		layers = init.m_depth;
 		break;
 	case ImageLoader::TextureType::_3D:
-		init.m_target = GL_TEXTURE_3D;
+		init.m_type = TextureType::_3D;
 		layers = init.m_depth;
 	default:
 		ANKI_ASSERT(0);
 	}
 
 	// Internal format
+	init.m_format.m_transform = TransformFormat::UNORM;
+	init.m_format.m_srgb = false;
+
 	if(img->getColorFormat() == ImageLoader::ColorFormat::RGB8)
 	{
 		switch(img->getCompression())
 		{
 		case ImageLoader::DataCompression::RAW:
-			init.m_internalFormat = GL_RGB;
+			init.m_format.m_components = ComponentFormat::R8G8B8;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case ImageLoader::DataCompression::S3TC:
-			init.m_internalFormat = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			init.m_format.m_components = ComponentFormat::R8G8B8_S3TC;
 			break;
 #else
 		case ImageLoader::DataCompression::ETC:
-			init.m_internalFormat = GL_COMPRESSED_RGB8_ETC2;
+			init.m_format.m_components = ComponentFormat::R8G8B8_ETC2;
 			break;
 #endif
 		default:
@@ -116,15 +115,15 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 		switch(img->getCompression())
 		{
 		case ImageLoader::DataCompression::RAW:
-			init.m_internalFormat = GL_RGBA;
+			init.m_format.m_components = ComponentFormat::R8G8B8A8;
 			break;
 #if ANKI_GL == ANKI_GL_DESKTOP
 		case ImageLoader::DataCompression::S3TC:
-			init.m_internalFormat = GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			init.m_format.m_components = ComponentFormat::R8G8B8A8_S3TC;
 			break;
 #else
 		case ImageLoader::DataCompression::ETC:
-			init.m_internalFormat = GL_COMPRESSED_RGBA8_ETC2_EAC;
+			init.m_format.m_components = ComponentFormat::R8G8B8A8_ETC2;
 			break;
 #endif
 		default:
@@ -140,13 +139,14 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 	init.m_mipmapsCount = img->getMipLevelsCount();
 
 	// filteringType
-	init.m_filterType = TextureHandle::Filter::TRILINEAR;
+	init.m_sampling.m_filterType = SamplingFilter::TRILINEAR;
 
 	// repeat
-	init.m_repeat = true;
+	init.m_sampling.m_repeat = true;
 
 	// anisotropyLevel
-	init.m_anisotropyLevel = rinit.m_resources.getTextureAnisotropy();
+	init.m_sampling.m_anisotropyLevel = 
+		rinit.m_resources.getTextureAnisotropy();
 
 	// Now assign the data
 	for(U layer = 0; layer < layers; layer++)
