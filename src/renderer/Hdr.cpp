@@ -18,7 +18,7 @@ Error Hdr::initFb(FramebufferHandle& fb, TextureHandle& rt)
 {
 	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, 
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
-		1, true, rt));
+		1, SamplingFilter::LINEAR, 1, rt));
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	CommandBufferHandle cmdb;
@@ -74,8 +74,9 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 
 	cmdb.flush();
 
-	ANKI_CHECK(
-		m_toneFrag.load("shaders/PpsHdr.frag.glsl", &getResourceManager()));
+	ANKI_CHECK(m_toneFrag.loadToCache(&getResourceManager(),
+		"shaders/PpsHdr.frag.glsl", 
+		m_r->_getShadersPrependedSource().toCString(), "r_"));
 
 	ANKI_CHECK(m_r->createDrawQuadPipeline(
 		m_toneFrag->getGrShader(), m_tonePpline));
@@ -87,11 +88,10 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	pps.sprintf(
 		"#define HPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST float(%f)\n"
+		"#define BLURRING_DIST float(1.1)\n"
 		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES %u\n",
-		m_blurringDist, m_height, 
-		static_cast<U>(initializer.get("pps.hdr.samples")));
+		"#define SAMPLES 17\n",
+		m_height);
 
 	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_"));
@@ -103,11 +103,10 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	pps.sprintf(
 		"#define VPASS\n"
 		"#define COL_RGB\n"
-		"#define BLURRING_DIST float(%f)\n"
+		"#define BLURRING_DIST float(1.0)\n"
 		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES %u\n",
-		m_blurringDist, m_width, 
-		static_cast<U>(initializer.get("pps.hdr.samples")));
+		"#define SAMPLES 15\n",
+		m_width);
 
 	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
 		SHADER_FILENAME, pps.toCString(), "r_"));

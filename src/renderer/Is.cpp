@@ -164,7 +164,6 @@ Error Is::initInternal(const ConfigSet& config)
 	
 	m_maxLightIds *= m_r->getTilesCountXY();
 
-
 	//
 	// Init the passes
 	//
@@ -223,8 +222,8 @@ Error Is::initInternal(const ConfigSet& config)
 
 	ANKI_CHECK(m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(), 
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM), 
-		1, false, m_rt));
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
+		1, SamplingFilter::NEAREST_MIPMAP, 6, m_rt));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -470,6 +469,8 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 		2, GL_FLOAT, false, 0, 0, 0);
 
 	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, m_r->getTilesCountXY());
+
+	m_rt.generateMipmaps(cmdBuff);
 
 	return err;
 }

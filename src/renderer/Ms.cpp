@@ -25,15 +25,15 @@ Error Ms::createRt(U32 index, U32 samples)
 
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::D24, TransformFormat::FLOAT),
-		samples, false, plane.m_depthRt));
+		samples, SamplingFilter::NEAREST, 1, plane.m_depthRt));
 
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), 
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
-		samples, false, plane.m_rt0));
+		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
+		samples, SamplingFilter::NEAREST, 1, plane.m_rt0));
 
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), 
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
-		samples, false, plane.m_rt1));
+		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM), 
+		samples, SamplingFilter::NEAREST, 2, plane.m_rt1));
 
 	GrManager& gl = getGrManager();
 	CommandBufferHandle cmdb;
@@ -88,14 +88,13 @@ Error Ms::initInternal(const ConfigSet& initializer)
 Error Ms::run(CommandBufferHandle& cmdb)
 {
 	// Chose the multisampled or the singlesampled framebuffer
-	if(m_r->getSamples() > 1)
+	U planeId = 0;
+	if(m_r->getSamples() == 1)
 	{
-		m_planes[0].m_fb.bind(cmdb);
+		planeId = 1;
 	}
-	else
-	{
-		m_planes[1].m_fb.bind(cmdb);
-	}
+
+	m_planes[planeId].m_fb.bind(cmdb);
 
 	cmdb.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
@@ -144,6 +143,8 @@ Error Ms::run(CommandBufferHandle& cmdb)
 #endif
 		ANKI_ASSERT(0 && "TODO");
 	}
+
+	m_planes[planeId].m_depthRt.generateMipmaps(cmdb);
 
 	cmdb.enableDepthTest(false);
 

@@ -31,7 +31,7 @@ layout(binding = 2) uniform sampler2D uMsRt;
 // Returns the Z of the position in view space
 float readZ(in vec2 uv)
 {
-	float depth = textureRt(uMsDepthRt, uv).r;
+	float depth = textureLod(uMsDepthRt, uv, 1.0).r;
 	float z = uProjectionParams.z / (uProjectionParams.w + depth);
 	return z;
 }
@@ -39,7 +39,7 @@ float readZ(in vec2 uv)
 // Read position in view space
 vec3 readPosition(in vec2 uv)
 {
-	float depth = textureRt(uMsDepthRt, uv).r;
+	float depth = textureLod(uMsDepthRt, uv, 1.0).r;
 
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);

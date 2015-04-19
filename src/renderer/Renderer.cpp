@@ -98,6 +98,13 @@ Error Renderer::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
+	// Set the default preprocessor string
+	m_shadersPrependedSource.sprintf(
+		m_alloc,
+		"#define ANKI_RENDERER_WIDTH %u\n"
+		"#define ANKI_RENDERER_HEIGHT %u\n",
+		m_width, m_height);
+
 	// Drawer
 	ANKI_CHECK(m_sceneDrawer.create(this));
 
@@ -130,13 +137,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_defaultFb.create(cmdBuff, fbInit));
 
 	cmdBuff.finish();
-
-	// Set the default preprocessor string
-	m_shadersPrependedSource.sprintf(
-		m_alloc,
-		"#define ANKI_RENDERER_WIDTH %u\n"
-		"#define ANKI_RENDERER_HEIGHT %u\n",
-		m_width, m_height);
 
 	return ErrorCode::NONE;
 }
@@ -245,7 +245,7 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 
 //==============================================================================
 Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format, 
-	U32 samples, Bool linear, TextureHandle& rt)
+	U32 samples, SamplingFilter filter, U mipsCount, TextureHandle& rt)
 {
 	// Not very important but keep the resulution of render targets aligned to
 	// 16
@@ -262,10 +262,9 @@ Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 	init.m_depth = 0;
 	init.m_type = TextureType::_2D;
 	init.m_format = format;
-	init.m_mipmapsCount = 1;
+	init.m_mipmapsCount = mipsCount;
 	init.m_samples = samples;
-	init.m_sampling.m_filterType = 
-		(linear) ? SamplingFilter::LINEAR : SamplingFilter::NEAREST;
+	init.m_sampling.m_filterType = filter;
 	init.m_sampling.m_repeat = false;
 	init.m_sampling.m_anisotropyLevel = 0;
 

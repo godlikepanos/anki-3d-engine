@@ -66,10 +66,9 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	ANKI_CHECK(Renderer::render(scene, jobs));
 
-	/*Bool alreadyDrawnToDefault = 
+	Bool alreadyDrawnToDefault = 
 		!getDbg().getEnabled()
-		&& getRenderingQuality() == 1.0;*/
-	Bool alreadyDrawnToDefault = false;
+		&& getRenderingQuality() == 1.0;
 
 	if(!alreadyDrawnToDefault)
 	{
@@ -90,10 +89,9 @@ Error MainRenderer::render(SceneGraph& scene)
 			rt = &getIs()._getRt();
 		}
 
-		//rt = &getTiler().getRt();
-		//rt = &getMs()._getRt0();
+		//rt = &getIs()._getRt();
+		//rt = &getPps().getHdr()._getRt();
 
-		//rt->setFilter(lastJobs, TextureHandle::Filter::LINEAR);
 		rt->bind(lastJobs, 0);
 
 		drawQuad(lastJobs);

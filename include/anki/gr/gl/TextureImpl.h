@@ -77,9 +77,12 @@ private:
 	U32 m_width = 0;
 	U32 m_height = 0;
 	U32 m_depth = 0;
+	U8 m_mipsCount = 0;
 	Bool8 m_compressed = false;
 
 	void destroy();
+
+	static U32 computeMaxMipmapCount(U32 w, U32 h);
 };
 
 /// Sampler container

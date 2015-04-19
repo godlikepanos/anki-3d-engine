@@ -526,12 +526,10 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 
 					StringAuto src(rinit.m_tempAlloc);
 					src.sprintf(
-						"%s\n"
 						"#define LOD %u\n"
 						"#define PASS %u\n"
 						"#define TESSELLATION %u\n"
 						"%s\n",
-						&rinit.m_resources._getShadersPrependedSource()[0],
 						level, pid, tess, &loader.getProgramSource(shader)[0]);
 
 					StringAuto filename(rinit.m_tempAlloc);

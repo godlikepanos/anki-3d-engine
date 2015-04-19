@@ -50,7 +50,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(), 
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
-		1, true, m_rt));
+		1, SamplingFilter::LINEAR, 1, m_rt));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -125,11 +125,10 @@ Error Pps::run(CommandBufferHandle& cmdBuff)
 		ANKI_CHECK(m_lf.run(cmdBuff));
 	}
 
-	/*Bool drawToDefaultFbo = 
+	Bool drawToDefaultFbo = 
 		!m_r->getDbg().getEnabled() 
 		&& !m_r->getIsOffscreen()
-		&& m_r->getRenderingQuality() == 1.0;*/
-	Bool drawToDefaultFbo = false;
+		&& m_r->getRenderingQuality() == 1.0;
 
 	if(drawToDefaultFbo)
 	{

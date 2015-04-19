@@ -18,7 +18,7 @@ Error Dp::init(const ConfigSet& config)
 	ANKI_CHECK(m_r->createRenderTarget(
 		m_smallDepthSize.x(), m_smallDepthSize.y(),
 		PixelFormat(ComponentFormat::D24, TransformFormat::FLOAT),
-		1, true, m_smallDepthRt));
+		1, SamplingFilter::LINEAR, 1, m_smallDepthRt));
 
 	GrManager& gl = getGrManager();
 	CommandBufferHandle cmdb;

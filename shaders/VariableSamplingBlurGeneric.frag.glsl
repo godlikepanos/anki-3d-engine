@@ -38,7 +38,7 @@ layout(binding = 1)
 #endif
 	uniform mediump sampler2D uTex; 
 
-layout(location = 0) in vec2 inTexCoord;
+layout(location = 0) in vec2 in_texCoord;
 
 #if !defined(BLURRING_DIST)
 #	define BLURRING_DIST 0.0
@@ -62,8 +62,10 @@ layout(location = 0) in vec2 inTexCoord;
 #	define TEX_FETCH r
 #endif
 
+const float OFFSET = 1.0 / (2.0 * IMG_DIMENSION);
+
 // Calc the kernel. Use offsets of 3 to take advantage of bilinear filtering
-#define BLURRING(val, sign_) ((float(val) * (float(BLURRING_DIST) + 1.0) / float(IMG_DIMENSION)) * float(sign_))
+#define BLURRING(val, sign_) ((float(val) * (float(BLURRING_DIST) + 1.0) / float(IMG_DIMENSION)) * float(sign_) + OFFSET)
 
 #if defined(VPASS)
 #	define BLURRING_OFFSET_X(val, sign_) BLURRING(val, sign_)
@@ -75,7 +77,7 @@ layout(location = 0) in vec2 inTexCoord;
 
 #define BLURRING_OFFSET(v, s) vec2(BLURRING_OFFSET_X(v, s), BLURRING_OFFSET_Y(v, s))
 
-const vec2 kernel[SAMPLES - 1] = vec2[](
+const vec2 KERNEL[SAMPLES - 1] = vec2[](
 	BLURRING_OFFSET(1, -1),
 	BLURRING_OFFSET(1, 1)
 #if SAMPLES > 3
@@ -112,18 +114,18 @@ const vec2 kernel[SAMPLES - 1] = vec2[](
 #endif
 	);
 
-layout(location = 0) out COL_TYPE outFragColor;
+layout(location = 0) out COL_TYPE out_fragColor;
 
 void main()
 {
 	// Get the first
-	COL_TYPE col = textureRt(uTex, inTexCoord).TEX_FETCH;
+	COL_TYPE col = textureRt(uTex, in_texCoord).TEX_FETCH;
 
 	// Get the rest of the samples
 	for(uint i = 0; i < SAMPLES - 1; i++)
 	{
-		col += textureRt(uTex, inTexCoord + kernel[i]).TEX_FETCH;
+		col += textureRt(uTex, in_texCoord + KERNEL[i]).TEX_FETCH;
 	}
 
-	outFragColor = col / float(SAMPLES);
+	out_fragColor = col / float(SAMPLES);
 }

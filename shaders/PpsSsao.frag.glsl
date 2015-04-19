@@ -11,7 +11,13 @@
 
 const vec3 KERNEL[KERNEL_SIZE] = KERNEL_ARRAY; // This will be appended in C++
 
-layout(location = 0) in vec2 inTexCoords;
+const float RADIUS = 0.5;
+// Initial is 1.0 but the bigger it is the more darker the SSAO factor gets
+const float DARKNESS_MULTIPLIER = 2.5;
+
+
+
+layout(location = 0) in vec2 in_texCoords;
 
 layout(location = 0) out float outColor;
 
@@ -26,10 +32,6 @@ layout(std140, binding = 0) readonly buffer bCommon
 layout(binding = 0) uniform sampler2D uMsDepthRt;
 layout(binding = 1) uniform sampler2D uMsRt;
 layout(binding = 2) uniform sampler2D uNoiseMap;
-
-#define RADIUS 0.5
-#define DARKNESS_MULTIPLIER 1.5 // Initial is 1.0 but the bigger it is the more
-                                // darker the SSAO factor gets
 
 // Get normal
 vec3 readNormal(in vec2 uv)
@@ -54,7 +56,7 @@ vec3 readRandom(in vec2 uv)
 // Returns the Z of the position in view space
 float readZ(in vec2 uv)
 {
-	float depth = textureRt(uMsDepthRt, uv).r;
+	float depth = textureLod(uMsDepthRt, uv, 1.0).r;
 	float z = uProjectionParams.z / (uProjectionParams.w + depth);
 	return z;
 }
@@ -62,7 +64,7 @@ float readZ(in vec2 uv)
 // Read position in view space
 vec3 readPosition(in vec2 uv)
 {
-	float depth = textureRt(uMsDepthRt, uv).r;
+	float depth = textureLod(uMsDepthRt, uv, 1.0).r;
 
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);
@@ -75,10 +77,10 @@ vec3 readPosition(in vec2 uv)
 
 void main(void)
 {
-	vec3 origin = readPosition(inTexCoords);
+	vec3 origin = readPosition(in_texCoords);
 
-	vec3 normal = readNormal(inTexCoords);
-	vec3 rvec = readRandom(inTexCoords);
+	vec3 normal = readNormal(in_texCoords);
+	vec3 rvec = readRandom(in_texCoords);
 	
 	vec3 tangent = normalize(rvec - normal * dot(rvec, normal));
 	vec3 bitangent = cross(normal, tangent);

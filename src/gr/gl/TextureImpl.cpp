@@ -175,6 +175,9 @@ void TextureImpl::create(const Initializer& init)
 	convertTextureInformation(
 		init.m_format, m_compressed, m_format, m_internalFormat, m_type);
 
+	m_mipsCount = 
+		min<U>(init.m_mipmapsCount, computeMaxMipmapCount(m_width, m_height));
+
 	// Bind
 	bind(0);
 
@@ -184,7 +187,7 @@ void TextureImpl::create(const Initializer& init)
 	case GL_TEXTURE_2D:
 		glTexStorage2D(
 			m_target, 
-			init.m_mipmapsCount, 
+			m_mipsCount, 
 			m_internalFormat,
 			m_width,
 			m_height);
@@ -194,7 +197,7 @@ void TextureImpl::create(const Initializer& init)
 	case GL_TEXTURE_3D:
 		glTexStorage3D(
 			m_target,
-			init.m_mipmapsCount,
+			m_mipsCount,
 			m_internalFormat,
 			m_width,
 			m_height,
@@ -218,7 +221,7 @@ void TextureImpl::create(const Initializer& init)
 	{
 		U w = m_width;
 		U h = m_height;
-		for(U level = 0; level < init.m_mipmapsCount; level++)
+		for(U level = 0; level < m_mipsCount; level++)
 		{
 			ANKI_ASSERT(init.m_data[level][0].m_ptr != nullptr);
 
@@ -370,8 +373,7 @@ void TextureImpl::create(const Initializer& init)
 		}
 
 		// Make sure that the texture is complete
-		glTexParameteri(
-			m_target, GL_TEXTURE_MAX_LEVEL, init.m_mipmapsCount - 1);
+		glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, m_mipsCount - 1);
 
 		// Set filtering type
 		switch(sinit.m_filterType)
@@ -383,6 +385,11 @@ void TextureImpl::create(const Initializer& init)
 		case SamplingFilter::LINEAR:
 			glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			break;
+		case SamplingFilter::NEAREST_MIPMAP:
+			glTexParameteri(
+				m_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+			glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			break;
 		case SamplingFilter::TRILINEAR:
 			glTexParameteri(
@@ -438,6 +445,20 @@ void TextureImpl::generateMipmaps()
 	ANKI_ASSERT(!m_compressed);
 	bind(0);
 	glGenerateMipmap(m_target);
+}
+
+//==============================================================================
+U32 TextureImpl::computeMaxMipmapCount(U32 w, U32 h)
+{
+	U32 s = min(w, h);
+	U count = 0;
+	while(s)
+	{
+		s /= 2;
+		++count;
+	}
+
+	return count;
 }
 
 //==============================================================================

@@ -156,7 +156,8 @@ enum class SamplingFilter: U8
 {
 	NEAREST,
 	LINEAR,
-	TRILINEAR
+	NEAREST_MIPMAP,
+	TRILINEAR,
 };
 
 enum class ShaderType: U8

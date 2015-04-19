@@ -56,12 +56,12 @@ Error Sslr::init(const ConfigSet& config)
 	}
 	else
 	{
-		Direction& dir = m_dirs[(U)DirectionEnum::VERTICAL];
+		Direction& dir = m_dirs[U(DirectionEnum::VERTICAL)];
 
 		ANKI_CHECK(
 			m_r->createRenderTarget(m_width, m_height, 
 			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM), 
-			1, true, dir.m_rt));
+			1, SamplingFilter::LINEAR, 1, dir.m_rt));
 
 		// Create FB
 		CommandBufferHandle cmdBuff;
@@ -94,7 +94,7 @@ Error Sslr::run(CommandBufferHandle& cmdBuff)
 
 	Array<TextureHandle, 3> tarr = {{
 		m_r->getIs()._getRt(),
-		m_r->getDp().getSmallDepthRt(),
+		m_r->getMs()._getDepthRt(),
 		m_r->getMs()._getRt1()}};
 	cmdBuff.bindTextures(0	, tarr.begin(), tarr.getSize()); 
 

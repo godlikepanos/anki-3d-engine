@@ -105,7 +105,7 @@ Error Tiler::initInternal()
 		m_r->createRenderTarget(m_r->getTilesCount().x(), 
 		m_r->getTilesCount().y(), 
 		PixelFormat(ComponentFormat::R32G32, TransformFormat::UINT), 
-		1, false, m_rt));
+		1, SamplingFilter::NEAREST, 1, m_rt));
 
 	CommandBufferHandle cmdBuff;
 	ANKI_CHECK(cmdBuff.create(&getGrManager()));

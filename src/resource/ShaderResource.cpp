@@ -31,9 +31,12 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 	
 	// Allocate new source
 	StringAuto source(alloc);
+
+	source.append(manager._getShadersPrependedSource());
+
 	if(extraSrc.getLength() > 0)
 	{
-		source.create(extraSrc);
+		source.append(extraSrc);
 	}
 
 	source.append(pars.getShaderSource());

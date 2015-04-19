@@ -71,7 +71,7 @@ Error BlurringRenderingPass::initBlurring(
 
 		ANKI_CHECK(r.createRenderTarget(width, height, 
 			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
-			1, true, dir.m_rt));
+			1, SamplingFilter::LINEAR, 1, dir.m_rt));
 
 		// Create FB
 		FramebufferHandle::Initializer fbInit;

@@ -174,7 +174,7 @@ Error Lf::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getPps().getHdr()._getWidth(), 
 		m_r->getPps().getHdr()._getHeight(), 
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
-		1, true, m_rt));
+		1, SamplingFilter::LINEAR, 1, m_rt));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;

@@ -71,7 +71,7 @@ Error Ssao::createFb(FramebufferHandle& fb, TextureHandle& rt)
 {
 	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, 
 		PixelFormat(ComponentFormat::R8, TransformFormat::UNORM), 
-		1, true, rt));
+		1, SamplingFilter::LINEAR, 1, rt));
 
 	// Set to bilinear because the blurring techniques take advantage of that
 	CommandBufferHandle cmdBuff;
@@ -194,7 +194,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define HPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES 7\n", 
+		"#define SAMPLES 11\n", 
 		m_height);
 
 	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
@@ -208,7 +208,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define VPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES 7\n", 
+		"#define SAMPLES 9\n", 
 		m_width);
 
 	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
@@ -252,7 +252,7 @@ Error Ssao::run(CommandBufferHandle& cmdb)
 	m_uniformsBuff.bindShaderBuffer(cmdb, 0);
 
 	Array<TextureHandle, 3> tarr = {{
-		m_r->getDp().getSmallDepthRt(),
+		m_r->getMs()._getDepthRt(),
 		m_r->getMs()._getRt1(),
 		m_noiseTex}};
 	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
