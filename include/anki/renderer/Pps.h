@@ -99,6 +99,8 @@ private:
 	PipelineHandle m_ppline;
 	TextureHandle m_rt;
 
+	TextureResourcePointer m_lut; ///< Color grading lookup texture.
+
 	Pps(Renderer* r);
 	~Pps();
 

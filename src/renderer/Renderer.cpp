@@ -16,7 +16,6 @@ namespace anki {
 //==============================================================================
 Renderer::Renderer()
 :	m_ms(this), 
-	m_dp(this), 
 	m_is(this),
 	m_pps(this),
 	m_dbg(this), 
@@ -124,7 +123,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_tiler.init());
 
 	ANKI_CHECK(m_ms.init(config));
-	ANKI_CHECK(m_dp.init(config));
 	ANKI_CHECK(m_is.init(config));
 	
 	m_fs = m_alloc.newInstance<Fs>(this);
@@ -181,8 +179,6 @@ Error Renderer::render(SceneGraph& scene,
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
 	ANKI_CHECK(m_fs->run(cmdBuff[1])); 
-
-	ANKI_CHECK(m_dp.run(cmdBuff[1]));
 
 	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
 	if(m_pps.getEnabled())
