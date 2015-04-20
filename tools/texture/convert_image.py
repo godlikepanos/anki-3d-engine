@@ -12,7 +12,6 @@ import shutil
 #
 # Config
 #
-
 class Config:
 	in_files = []
 	out_file = ""
@@ -47,6 +46,11 @@ DC_NONE = 0
 DC_RAW = 1 << 0
 DC_ETC2 = 1 << 1
 DC_S3TC = 1 << 2
+
+# Texture filtering
+TF_DEFAULT = 0
+TF_LINEAR = 1
+TF_NEAREST = 2
 
 #
 # DDS
@@ -128,7 +132,6 @@ class DdsHeader:
 #
 # ETC2
 #
-	
 class PkmHeader:
 	""" The header of a pkm file """
 	
@@ -157,7 +160,6 @@ class PkmHeader:
 #
 # Functions
 # 
-
 def printi(s):
 	print("[I] %s" % s)
 
@@ -220,6 +222,10 @@ def parse_commandline():
 			help = "assume the input textures are sRGB. If this option is " \
 			"true then convert them to linear RGB")
 
+	parser.add_option("--filter", dest = "filter", type = "string",
+			default = "default", help = "texture filtering. Can be: " \
+			"default, linear, nearest")
+
 	# Add the default value on each option when printing help
 	for option in parser.option_list:
 		if option.default != ("NO", "DEFAULT"):
@@ -241,6 +247,15 @@ def parse_commandline():
 	else:
 		parser.error("Unrecognized type: " + options.type)
 
+	if options.filter == "default":
+		filter = TF_DEFAULT
+	elif options.filter == "linear":
+		filter = TF_LINEAR
+	elif options.filter == "nearest":
+		filter = TF_NEAREST
+	else:
+		parser.error("Unrecognized type: " + options.filter)
+
 	config = Config()
 	config.in_files = options.inp.split(":")
 	config.out_file = options.out
@@ -251,6 +266,7 @@ def parse_commandline():
 	config.no_alpha = options.no_alpha
 	config.no_uncompressed = options.no_uncompressed
 	config.to_linear_rgb = options.to_linear_rgb
+	config.filter = filter
 
 	return config
 
@@ -580,7 +596,7 @@ def convert(config):
 		raise Exception("RGBA image and normal does not make much sense")
 
 	for i in range(1, len(config.in_files)):
-		(color_format_2, width_2, height_2) = identify_image(in_files[i])
+		(color_format_2, width_2, height_2) = identify_image(config.in_files[i])
 
 		if width != width_2 or height != height_2 \
 				or color_format != color_format_2:

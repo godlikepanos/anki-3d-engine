@@ -75,6 +75,8 @@ public:
 		return m_sslr;
 	}
 
+	Error loadColorGradingTexture(CString filename);
+
 	/// @privatesection
 	/// @{
 	const TextureHandle& _getRt() const

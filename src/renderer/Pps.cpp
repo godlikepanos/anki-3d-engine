@@ -9,6 +9,7 @@
 #include "anki/renderer/Ssao.h"
 #include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
+#include "anki/resource/ImageLoader.h"
 
 namespace anki {
 
@@ -81,6 +82,9 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	ANKI_CHECK(m_r->createDrawQuadPipeline(m_frag->getGrShader(), m_ppline));
 
+	// LUT
+	ANKI_CHECK(loadColorGradingTexture("engine_data/default_lut.ankitex"));
+
 	cmdBuff.finish();
 
 	return ErrorCode::NONE;
@@ -96,6 +100,18 @@ Error Pps::init(const ConfigSet& config)
 	}
 
 	return err;
+}
+//==============================================================================
+Error Pps::loadColorGradingTexture(CString filename)
+{
+	/*StringAuto lutFname(getAllocator());
+	m_r->_getResourceManager().fixResourceFilename(
+		"engine_data/default_lut.ankitex", lutFname);
+
+	ImageLoader loader(getAllocator());
+	ANKI_CHECK(loader.load(lutFname.toCString(), MAX_U32, true));*/
+
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
