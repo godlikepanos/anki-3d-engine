@@ -75,6 +75,7 @@ public:
 		return m_sslr;
 	}
 
+	/// Load the color grading texture.
 	Error loadColorGradingTexture(CString filename);
 
 	/// @privatesection

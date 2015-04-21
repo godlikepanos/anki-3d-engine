@@ -345,8 +345,17 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 	if((header.m_compressionFormats & preferredCompression) 
 		== ImageLoader::DataCompression::NONE)
 	{
-		ANKI_LOGE("File does not contain the requested compression");
-		return ErrorCode::USER_DATA;
+		ANKI_LOGI("File does not contain the requested compression");
+
+		// Fallback
+		preferredCompression = ImageLoader::DataCompression::RAW;
+
+		if((header.m_compressionFormats & preferredCompression) 
+			== ImageLoader::DataCompression::NONE)
+		{
+			ANKI_LOGI("File does not contain raw compression");
+			return ErrorCode::USER_DATA;
+		}
 	}
 
 	if(header.m_normal != 0 && header.m_normal != 1)
@@ -373,11 +382,13 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 		maxsize /= 2;
 	}
 
-	if(tmpMipLevels != header.m_mipLevels)
+	if(header.m_mipLevels > tmpMipLevels)
 	{
 		ANKI_LOGE("Incorrect number of mip levels");
 		return ErrorCode::USER_DATA;
 	}
+
+	mipLevels = min<U>(mipLevels, header.m_mipLevels);
 
 	colorFormat = header.m_colorFormat;
 
@@ -449,6 +460,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 	// Read all surfaces
 	U mipWidth = header.m_width;
 	U mipHeight = header.m_height;
+	U index = 0;
 	for(U mip = 0; mip < header.m_mipLevels; mip++)
 	{
 		for(U d = 0; d < depth; d++)
@@ -460,9 +472,7 @@ static ANKI_USE_RESULT Error loadAnkiTexture(
 			// Check if this mipmap can be skipped because of size
 			if(max(mipWidth, mipHeight) <= maxTextureSize)
 			{
-				U index = (mip - tmpMipLevels + mipLevels) * depth + d;
-				ANKI_ASSERT(index < surfaces.getSize());
-				ImageLoader::Surface& surf = surfaces[index];
+				ImageLoader::Surface& surf = surfaces[index++];
 				surf.m_width = mipWidth;
 				surf.m_height = mipHeight;
 

@@ -8,13 +8,14 @@
 #pragma anki include "shaders/photoshop_filters.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
-layout(binding = 0) uniform lowp sampler2D uIsRt;
-layout(binding = 1) uniform lowp sampler2D uPpsSsaoRt;
-layout(binding = 2) uniform lowp sampler2D uPpsHdrLfRt;
+layout(binding = 0) uniform lowp sampler2D u_isRt;
+layout(binding = 1) uniform lowp sampler2D u_ppsSsaoRt;
+layout(binding = 2) uniform lowp sampler2D u_ppsHdrLfRt;
+layout(binding = 3) uniform lowp sampler3D u_lut;
 
-layout(location = 0) in vec2 inTexCoords;
+layout(location = 0) in vec2 in_texCoords;
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out vec3 out_color;
 
 const vec2 TEX_OFFSET = vec2(1.0 / float(FBO_WIDTH), 1.0 / float(FBO_HEIGHT));
 
@@ -27,6 +28,8 @@ const vec2 KERNEL[8] = vec2[](
 	vec2(0.0, -TEX_OFFSET.y),
 	vec2(TEX_OFFSET.x, -TEX_OFFSET.y),
 	vec2(TEX_OFFSET.x, 0.0));
+
+const float LUT_SIZE = 16.0;
 
 //==============================================================================
 vec3 grayScale(in vec3 col)
@@ -87,34 +90,46 @@ vec3 erosion(in sampler2D tex, in vec2 texCoords)
 }
 
 //==============================================================================
+vec3 colorGrading(in vec3 color)
+{
+	const vec3 LUT_SCALE = vec3((LUT_SIZE - 1.0) / LUT_SIZE);
+	const vec3 LUT_OFFSET = vec3(1.0 / (2.0 * LUT_SIZE));
+
+	color = clamp(color, 0.0, 1.0);
+	vec3 lutCoords = color * LUT_SCALE + LUT_OFFSET;
+	return textureLod(u_lut, lutCoords, 0.0).rgb;
+}
+
+//==============================================================================
 void main()
 {
 #if SHARPEN_ENABLED
-	outColor = sharpen(uIsRt, inTexCoords);
+	out_color = sharpen(u_isRt, in_texCoords);
 #else
-	outColor = textureRt(uIsRt, inTexCoords).rgb;
+	out_color = textureRt(u_isRt, in_texCoords).rgb;
 #endif
-	//outColor = erosion(uIsRt, inTexCoords);
 
 #if SSAO_ENABLED
-	float ssao = textureRt(uPpsSsaoRt, inTexCoords).r;
-	outColor *= ssao;
+	float ssao = textureRt(u_ppsSsaoRt, in_texCoords).r;
+	out_color *= ssao;
 #endif
 
 #if HDR_ENABLED
-	vec3 hdr = textureRt(uPpsHdrLfRt, inTexCoords).rgb;
-	outColor += hdr;
-#endif
-
-#if GAMMA_CORRECTION_ENABLED
-	outColor = BlendHardLight(vec3(0.7, 0.72, 0.4), outColor);
-	//outColor = gammaCorrectionRgb(vec3(0.9, 0.92, 0.75), outColor);
+	vec3 hdr = textureRt(u_ppsHdrLfRt, in_texCoords).rgb;
+	out_color += hdr;
 #endif
 
 #if 0
-	if(outColor.r != 0.00000001)
+	out_color = BlendHardLight(vec3(0.7, 0.72, 0.4), out_color);
+	//out_color = gammaCorrectionRgb(vec3(0.9, 0.92, 0.75), out_color);
+#endif
+
+	out_color = colorGrading(out_color);
+
+#if 0
+	if(out_color.r != 0.00000001)
 	{
-		outColor = vec3(ssao);
+		out_color = texelFetch(u_lut, ivec3(0, 15, 5), 0).rgb;
 	}
 #endif
 }

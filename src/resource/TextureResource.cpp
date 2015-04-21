@@ -82,6 +82,7 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 	case ImageLoader::TextureType::_3D:
 		init.m_type = TextureType::_3D;
 		layers = init.m_depth;
+		break;
 	default:
 		ANKI_ASSERT(0);
 	}

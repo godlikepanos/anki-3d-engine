@@ -231,6 +231,9 @@ def parse_commandline():
 			default = "default", help = "texture filtering. Can be: " \
 			"default, linear, nearest")
 
+	parser.add_option("--mips_count", dest = "mips_count", type = "int",
+			default = "0xFFFF", help = "Max number of mipmaps")
+
 	# Add the default value on each option when printing help
 	for option in parser.option_list:
 		if option.default != ("NO", "DEFAULT"):
@@ -266,6 +269,9 @@ def parse_commandline():
 		parser.error("One of --store-compressed and --store-uncompressed "\
 				"should be True")
 
+	if int(options.mips_count) <= 0:
+		parser.error("Wrong number of mipmaps")
+
 	config = Config()
 	config.in_files = options.inp.split(":")
 	config.out_file = options.out
@@ -278,6 +284,7 @@ def parse_commandline():
 	config.store_compressed = options.store_compressed
 	config.to_linear_rgb = options.to_linear_rgb
 	config.filter = filter
+	config.mips_count = int(options.mips_count)
 
 	return config
 
@@ -324,7 +331,7 @@ def identify_image(in_file):
 	return (color_format, int(reg.group(1)), int(reg.group(2)))
 
 def create_mipmaps(in_file, tmp_dir, width_, height_, color_format, \
-		to_linear_rgb):
+		to_linear_rgb, max_mip_count):
 	""" Create a number of images for all mipmaps """
 
 	printi("Generate mipmaps")
@@ -369,6 +376,9 @@ def create_mipmaps(in_file, tmp_dir, width_, height_, color_format, \
 
 		args.append(out_file_str + ".tga")
 		subprocess.check_call(args)
+
+		if(len(mips_fnames) == max_mip_count):
+			break;
 
 		width = width / 2
 		height = height / 2
@@ -619,7 +629,7 @@ def convert(config):
 	# Create images
 	for in_file in config.in_files:
 		mips_fnames = create_mipmaps(in_file, config.tmp_dir, width, height, \
-				color_format, config.to_linear_rgb)
+				color_format, config.to_linear_rgb, config.mips_count)
 
 		# Create etc images
 		create_etc_images(mips_fnames, config.tmp_dir, config.fast, \
@@ -673,7 +683,7 @@ def convert(config):
 		tmp_height = height
 
 		# For each level
-		while tmp_width >= 4 and tmp_height >= 4:
+		for i in range(0, len(mips_fnames)):
 
 			# For each image
 			for in_file in config.in_files:

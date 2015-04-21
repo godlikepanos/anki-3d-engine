@@ -9,7 +9,6 @@
 #include "anki/renderer/Ssao.h"
 #include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
-#include "anki/resource/ImageLoader.h"
 
 namespace anki {
 
@@ -72,8 +71,8 @@ Error Pps::initInternal(const ConfigSet& config)
 		"#define FBO_HEIGHT %u\n",
 		m_ssao.getEnabled(), 
 		m_hdr.getEnabled(), 
-		static_cast<U>(config.get("pps.sharpen")),
-		static_cast<U>(config.get("pps.gammaCorrection")),
+		U(config.get("pps.sharpen")),
+		U(config.get("pps.gammaCorrection")),
 		m_r->getWidth(),
 		m_r->getHeight());
 
@@ -104,13 +103,7 @@ Error Pps::init(const ConfigSet& config)
 //==============================================================================
 Error Pps::loadColorGradingTexture(CString filename)
 {
-	/*StringAuto lutFname(getAllocator());
-	m_r->_getResourceManager().fixResourceFilename(
-		"engine_data/default_lut.ankitex", lutFname);
-
-	ImageLoader loader(getAllocator());
-	ANKI_CHECK(loader.load(lutFname.toCString(), MAX_U32, true));*/
-
+	ANKI_CHECK(m_lut.load(filename, &getResourceManager()));
 	return ErrorCode::NONE;
 }
 
@@ -176,6 +169,8 @@ Error Pps::run(CommandBufferHandle& cmdBuff)
 	{
 		m_hdr._getRt().bind(cmdBuff, 2);
 	}
+
+	m_lut->getGlTexture().bind(cmdBuff, 3);
 
 	m_r->drawQuad(cmdBuff);
 
