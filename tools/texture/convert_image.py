@@ -20,7 +20,8 @@ class Config:
 	normal = False
 	convert_path = ""
 	no_alpha = False
-	no_uncompressed = False
+	store_compressed = False
+	store_uncompressed = True
 	to_linear_rgb = False
 
 	tmp_dir = ""
@@ -210,12 +211,16 @@ def parse_commandline():
 			"located. Stupid etcpack cannot get it from PATH")
 
 	parser.add_option("--no-alpha", dest = "no_alpha", 
-			action = "store_true", default = False, 
+			type = "int", action = "store", default = 0, 
 			help = "remove alpha channel")
 
-	parser.add_option("--no-uncompressed", dest = "no_uncompressed", 
-			action = "store_true", default = True, 
-			help = "don't store uncompressed data")
+	parser.add_option("--store-uncompressed", dest = "store_uncompressed", 
+			type = "int", action = "store", default = 0, 
+			help = "store or not uncompressed data")
+
+	parser.add_option("--store-compressed", dest = "store_compressed", 
+			type = "int", action = "store", default = 1, 
+			help = "store or not compressed data")
 
 	parser.add_option("--to-linear-rgb", dest = "to_linear_rgb", 
 			action = "store_true", default = False, 
@@ -256,6 +261,11 @@ def parse_commandline():
 	else:
 		parser.error("Unrecognized type: " + options.filter)
 
+	if not options.store_uncompressed \
+			and not options.store_compressed:
+		parser.error("One of --store-compressed and --store-uncompressed "\
+				"should be True")
+
 	config = Config()
 	config.in_files = options.inp.split(":")
 	config.out_file = options.out
@@ -264,7 +274,8 @@ def parse_commandline():
 	config.normal = options.normal
 	config.convert_path = options.convert_path
 	config.no_alpha = options.no_alpha
-	config.no_uncompressed = options.no_uncompressed
+	config.store_uncompressed = options.store_uncompressed
+	config.store_compressed = options.store_compressed
 	config.to_linear_rgb = options.to_linear_rgb
 	config.filter = filter
 
@@ -626,8 +637,11 @@ def convert(config):
 	# Write header
 	ak_format = "8sIIIIIIII"
 
-	data_compression = DC_S3TC | DC_ETC2
-	if not config.no_uncompressed:
+	data_compression = 0 
+	if config.store_compressed:
+		data_compression = data_compression | DC_S3TC | DC_ETC2
+
+	if config.store_uncompressed:
 		data_compression = data_compression | DC_RAW
 
 	buff = struct.pack(ak_format, 
@@ -668,15 +682,15 @@ def convert(config):
 						get_base_fname(in_file)) + "." + size_str
 
 				# Write RAW
-				if compression == 0 and not config.no_uncompressed:
+				if compression == 0 and config.store_uncompressed:
 					write_raw(tex_file, in_base_fname + ".tga", \
 							tmp_width, tmp_height, color_format)
 				# Write S3TC
-				elif compression == 1:
+				elif compression == 1 and config.store_compressed:
 					write_s3tc(tex_file, in_base_fname + ".dds", \
 							tmp_width, tmp_height, color_format)
 				# Write ETC
-				elif compression == 2:
+				elif compression == 2 and config.store_compressed:
 					write_etc(tex_file, in_base_fname + "_flip.pkm", \
 							tmp_width, tmp_height, color_format)
 			
