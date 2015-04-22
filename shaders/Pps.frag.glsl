@@ -95,7 +95,7 @@ vec3 colorGrading(in vec3 color)
 	const vec3 LUT_SCALE = vec3((LUT_SIZE - 1.0) / LUT_SIZE);
 	const vec3 LUT_OFFSET = vec3(1.0 / (2.0 * LUT_SIZE));
 
-	color = clamp(color, 0.0, 1.0);
+	color = min(color, vec3(1.0));
 	vec3 lutCoords = color * LUT_SCALE + LUT_OFFSET;
 	return textureLod(u_lut, lutCoords, 0.0).rgb;
 }
