@@ -7,7 +7,7 @@
 #define ANKI_GR_TEXTURE_HANDLE_H
 
 #include "anki/gr/GrHandle.h"
-#include "anki/gr/TextureCommon.h"
+#include "anki/gr/TextureSamplerCommon.h"
 
 namespace anki {
 
@@ -34,29 +34,6 @@ public:
 
 	/// Generate mips
 	void generateMipmaps(CommandBufferHandle& commands);
-};
-
-/// Sampler handle
-class SamplerHandle: public GrHandle<SamplerImpl>
-{
-public:
-	using Base = GrHandle<SamplerImpl>;
-	using Initializer = SamplerInitializer;
-
-	/// Create husk.
-	SamplerHandle();
-
-	~SamplerHandle();
-
-	/// Create the sampler
-	ANKI_USE_RESULT Error create(CommandBufferHandle& commands, 
-		const Initializer& init);
-
-	/// Bind to a unit
-	void bind(CommandBufferHandle& commands, U32 unit);
-
-	/// Bind default sampler
-	static void bindDefault(CommandBufferHandle& commands, U32 unit);
 };
 /// @}
 

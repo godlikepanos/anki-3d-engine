@@ -18,6 +18,7 @@
 
 #include "anki/gr/BufferHandle.h"
 #include "anki/gr/TextureHandle.h"
+#include "anki/gr/SamplerHandle.h"
 #include "anki/gr/ShaderHandle.h"
 
 #include "anki/gr/FramebufferHandle.h"

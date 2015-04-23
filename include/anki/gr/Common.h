@@ -47,6 +47,8 @@ class OcclusionQueryImpl;
 class OcclusionQueryHandle;
 class CommandBufferImpl;
 class CommandBufferHandle;
+class ResourceGroupImpl;
+class ResourceGroupHandle;
 class GrManager;
 class GrManagerImpl;
 struct FramebufferInitializer;
@@ -70,10 +72,13 @@ using GrAllocator = HeapAllocator<T>;
 /// @{
 
 // Some constants
-const U MAX_VERTEX_ATTRIBUTES = 16;
+const U MAX_VERTEX_ATTRIBUTES = 8;
 const U MAX_COLOR_ATTACHMENTS = 4;
 const U MAX_MIPMAPS = 16;
 const U MAX_TEXTURE_LAYERS = 32;
+const U MAX_TEXTURE_BINDINGS = 8;
+const U MAX_UNIFORM_BUFFER_BINDINGS = 4;
+const U MAX_STORAGE_BUFFER_BINDINGS = 4;
 
 /// GL generic callback
 using SwapBuffersCallback = void(*)(void*);

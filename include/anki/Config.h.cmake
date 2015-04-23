@@ -151,7 +151,6 @@
 #	define ANKI_RESTRICT
 #	define ANKI_USE_RESULT
 #endif
-
 /// @}
 
 #endif

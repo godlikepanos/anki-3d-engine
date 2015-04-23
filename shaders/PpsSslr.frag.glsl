@@ -12,53 +12,51 @@
 const float PI = 3.14159265358979323846;
 const float ONE = 0.9;
 
-layout(location = 0) in vec2 inTexCoords;
+layout(location = 0) in vec2 in_texCoords;
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out vec3 out_color;
 
-layout(std140, binding = 0) readonly buffer bCommon
+layout(std140, binding = 0) readonly buffer _blk
 {
-	vec4 uProjectionParams;
+	vec4 u_projectionParams;
 
 	/// The projection matrix
-	mat4 uProjectionMatrix;
+	mat4 u_projectionMatrix;
 };
 
-layout(binding = 0) uniform sampler2D uIsRt;
-layout(binding = 1) uniform sampler2D uMsDepthRt;
-layout(binding = 2) uniform sampler2D uMsRt;
+layout(binding = 0) uniform sampler2D u_isRt;
+layout(binding = 1) uniform sampler2D u_msDepthRt;
+layout(binding = 2) uniform sampler2D u_msRt;
 
 // Returns the Z of the position in view space
 float readZ(in vec2 uv)
 {
-	float depth = textureLod(uMsDepthRt, uv, 1.0).r;
-	float z = uProjectionParams.z / (uProjectionParams.w + depth);
+	float depth = textureLod(u_msDepthRt, uv, 1.0).r;
+	float z = u_projectionParams.z / (u_projectionParams.w + depth);
 	return z;
 }
 
 // Read position in view space
 vec3 readPosition(in vec2 uv)
 {
-	float depth = textureLod(uMsDepthRt, uv, 1.0).r;
-
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);
 	
 	fragPosVspace.xy = 
-		(2.0 * uv - 1.0) * uProjectionParams.xy * fragPosVspace.z;
+		(2.0 * uv - 1.0) * u_projectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
 }
 
 vec3 project(vec3 p)
 {
-	vec4 a = uProjectionMatrix * vec4(p, 1.0);
+	vec4 a = u_projectionMatrix * vec4(p, 1.0);
 	return a.xyz / a.w;
 }
 
 vec2 projectXy(vec3 p)
 {
-	vec4 a = uProjectionMatrix * vec4(p, 1.0);
+	vec4 a = u_projectionMatrix * vec4(p, 1.0);
 	return a.xy / a.w;
 }
 
@@ -66,17 +64,17 @@ void main()
 {
 	vec3 normal;
 	float specColor;
-	readNormalSpecularColorFromGBuffer(uMsRt, inTexCoords, normal, specColor);
+	readNormalSpecularColorFromGBuffer(u_msRt, in_texCoords, normal, specColor);
 
-	//outColor = vec3(0.5, 0.0, 0.0);
-	outColor = vec3(0.0);
+	//out_color = vec3(0.5, 0.0, 0.0);
+	out_color = vec3(0.0);
 
 	if(specColor < 0.5)
 	{
 		return;
 	}
 
-	vec3 p0 = readPosition(inTexCoords);
+	vec3 p0 = readPosition(in_texCoords);
 
 	// Reflection direction
 	vec3 eye = normalize(p0);
@@ -92,7 +90,7 @@ void main()
 	float t = -p0.z / (r.z + 0.0000001);
 	vec3 p1 = p0 + r * t;
 
-	vec2 pp0 = inTexCoords * 2.0 - 1.0;
+	vec2 pp0 = in_texCoords * 2.0 - 1.0;
 	vec2 pp1 = projectXy(p1);
 
 	// Calculate the ray from p0 to p1 in 2D space and get the number of
@@ -118,14 +116,14 @@ void main()
 		vec2 comp = abs(ndc);
 		if(comp.x > ONE || comp.y > ONE)
 		{
-			//outColor = vec3(1, 0.0, 1);
+			//out_color = vec3(1, 0.0, 1);
 			return;
 		}
 
 		// 'a' is ray that passes through the eye and into ndc
 		vec3 a;
 		a.z = -1.0;
-		a.xy = ndc * uProjectionParams.xy * a.z; // Unproject
+		a.xy = ndc * u_projectionParams.xy * a.z; // Unproject
 		a = normalize(a);
 
 		// Compute the intersection between 'a' (before normalization) and r
@@ -157,9 +155,9 @@ void main()
 			factor *= 1.0 - length(pp0);
 			factor *= specColor;
 
-			outColor = textureRt(uIsRt, texCoord).rgb * factor;
+			out_color = textureLod(u_isRt, texCoord, 0.0).rgb * factor;
 
-			//outColor = vec3(1.0 - abs(pp0.xy), 0.0);
+			//out_color = vec3(1.0 - abs(pp0.xy), 0.0);
 			return;
 		}
 	}
@@ -181,7 +179,7 @@ void main()
 
 		vec3 texCoord = posNdc.xyz * 0.5 + 0.5;
 
-		float depth = textureRt(uMsDepthRt, texCoord.xy).r;
+		float depth = textureRt(u_msDepthRt, texCoord.xy).r;
 
 		float diffDepth = texCoord.z - depth;
 
@@ -194,8 +192,9 @@ void main()
 
 			float factor = 1.0 - length(posNdc.xy);
 
-			outColor = textureRt(uIsRt, texCoord.xy).rgb * (factor * specColor);
-			//outColor = vec3(diffDepth);
+			out_color = 
+				textureRt(u_isRt, texCoord.xy).rgb * (factor * specColor);
+			//out_color = vec3(diffDepth);
 			return;
 		}
 	}
