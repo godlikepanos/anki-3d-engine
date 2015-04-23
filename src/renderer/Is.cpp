@@ -141,8 +141,6 @@ Error Is::init(const ConfigSet& config)
 //==============================================================================
 Error Is::initInternal(const ConfigSet& config)
 {
-	Error err = ErrorCode::NONE;
-
 	m_groundLightEnabled = config.get("is.groundLightEnabled");
 	m_maxPointLights = config.get("is.maxPointLights");
 	m_maxSpotLights = config.get("is.maxSpotLights");
@@ -167,8 +165,7 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 	// Init the passes
 	//
-	err = m_sm.init(config);
-	if(err) return err;
+	ANKI_CHECK(m_sm.init(config));
 
 	//
 	// Load the programs
@@ -283,7 +280,7 @@ Error Is::initInternal(const ConfigSet& config)
 			m_lightIdsBuffers[i].getPersistentMappingAddress();
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

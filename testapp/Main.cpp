@@ -510,20 +510,8 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("lodDistance", 20.0);
 	config.set("samples", 1);
 	config.set("tessellation", true);
-	config.set("tilesXCount", 60);
-	config.set("tilesYCount", 30);
-
 	//config.set("maxTextureSize", 256);
-
-	Bool fullscreen = true;
-
-	config.set("fullscreenDesktopResolution", fullscreen);
-	if(!fullscreen)
-	{
-		config.set("tilesXCount", 40);
-		config.set("tilesYCount", 24);
-	}
-
+	config.set("fullscreenDesktopResolution", true);
 	config.set("debugContext", false);
 
 	app = new App;

@@ -68,8 +68,6 @@ Config::Config()
 	newOption("renderingQuality", 1.0); // Applies only to MainRenderer
 	newOption("lodDistance", 10.0); // Distance that used to calculate the LOD
 	newOption("samples", 1);
-	newOption("tilesXCount", 30);
-	newOption("tilesYCount", 20);
 	newOption("tessellation", true);
 	newOption("sceneFrameAllocatorSize", 1024 * 1024);
 

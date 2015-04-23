@@ -56,17 +56,21 @@ Error Renderer::init(
 Error Renderer::initInternal(const ConfigSet& config)
 {
 	// Set from the config
+	const U TILE_SIZE = 64;
+
 	m_renderingQuality = config.get("renderingQuality");
 	m_defaultFbWidth = config.get("width");
 	m_defaultFbHeight = config.get("height");
-	m_width = m_defaultFbWidth * m_renderingQuality;
-	m_height = m_defaultFbHeight * m_renderingQuality;
+	m_width = getAlignedRoundDown(
+		TILE_SIZE, U(m_defaultFbWidth * m_renderingQuality));
+	m_height = getAlignedRoundDown(
+		TILE_SIZE, U(m_defaultFbHeight * m_renderingQuality));
 	m_lodDistance = config.get("lodDistance");
 	m_framesNum = 0;
 	m_samples = config.get("samples");
 	m_isOffscreen = config.get("offscreen");
-	m_tilesCount.x() = config.get("tilesXCount");
-	m_tilesCount.y() = config.get("tilesYCount");
+	m_tilesCount.x() = m_width / TILE_SIZE;
+	m_tilesCount.y() = m_height / TILE_SIZE;
 	m_tilesCountXY = m_tilesCount.x() * m_tilesCount.y();
 
 	m_tessellation = config.get("tessellation");
