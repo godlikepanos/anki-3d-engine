@@ -14,6 +14,14 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
+/// Texture/Sampler Binding.
+class TextureBinding
+{
+public:
+	TextureHandle m_texture;
+	SamplerHandle m_sampler; ///< Use it to override texture's sampler.
+};
+
 /// Buffer binding point.
 class BufferBinding
 {
@@ -26,11 +34,10 @@ public:
 class ResourceGroupInitializer
 {
 public:
-	Array<TextureHandle, MAX_TEXTURE_BINDINGS> m_textures;
-	Array<SamplerHandle, MAX_TEXTURE_BINDINGS> m_samplers;
+	Array<TextureBinding, MAX_TEXTURE_BINDINGS> m_textures;
 	Array<BufferBinding, MAX_UNIFORM_BUFFER_BINDINGS> m_uniformBuffers;
 	Array<BufferBinding, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
-	Array<BufferBinding, MAX_ATTRIBUTES> m_storageBuffers;
+	Array<BufferBinding, MAX_ATTRIBUTES> m_vertexBuffers;
 	BufferBinding m_indexBuffer;
 };
 /// @}
