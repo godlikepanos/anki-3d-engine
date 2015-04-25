@@ -654,4 +654,28 @@ void CommandBufferHandle::copyTextureToBuffer(
 	get().pushBackNewCommand<CopyBuffTex>(from, to);
 }
 
+//==============================================================================
+class DispatchCommand: public GlCommand
+{
+public:
+	Array<U32, 3> m_size;
+
+	DispatchCommand(U32 x, U32 y, U32 z)
+	:	m_size({x, y, z})
+	{}
+
+	Error operator()(CommandBufferImpl*)
+	{
+		glDispatchCompute(m_size[0], m_size[1], m_size[2]);
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBufferHandle::dispatchCompute(
+	U32 groupCountX, U32 groupCountY, U32 groupCountZ)
+{
+	get().pushBackNewCommand<DispatchCommand>(
+		groupCountX, groupCountY, groupCountZ);
+}
+
 } // end namespace anki

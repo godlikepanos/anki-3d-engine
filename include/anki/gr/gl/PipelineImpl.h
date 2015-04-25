@@ -39,22 +39,25 @@ public:
 	void bind();
 
 private:
-	struct Attribute
+	class Attribute
 	{
+	public:
+		GLenum m_type = 0;
 		U8 m_compCount = 0;
 		Bool8 m_normalized = false;
-		GLenum m_type = 0;
 	};
 
-	struct Attachment
+	class Attachment
 	{
+	public:
 		GLenum m_srcBlendMethod = GL_ONE;
 		GLenum m_dstBlendMethod = GL_ZERO;
 		GLenum m_blendFunction = GL_ADD;
 		Array<Bool8, 4> m_channelWriteMask;
 	};
 
-	Bool m_complete;
+	Bool8 m_complete;
+	Bool8 m_compute = false; ///< Is compute
 
 	// Cached values
 	Array<Attribute, MAX_VERTEX_ATTRIBUTES> m_attribs;

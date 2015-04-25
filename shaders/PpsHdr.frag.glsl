@@ -45,7 +45,7 @@ void main()
 	color += readTexture(MIPMAP - 1);
 	color += readTexture(MIPMAP - 2);
 	
-	color /= 2.0;
+	color /= 3.0;
 
 #if 1
 	float luminance = dot(vec3(0.30, 0.59, 0.11), color);

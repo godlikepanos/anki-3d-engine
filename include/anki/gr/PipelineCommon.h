@@ -98,8 +98,9 @@ enum class SubStateBit: U16
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SubStateBit, inline)
 
 /// Pipeline initializer.
-struct PipelineInitializer
+class PipelineInitializer
 {
+public:
 	VertexStateInfo m_vertex;
 	InputAssemblerStateInfo m_inputAssembler;
 	TessellationStateInfo m_tessellation;

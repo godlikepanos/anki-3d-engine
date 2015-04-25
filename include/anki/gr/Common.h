@@ -36,9 +36,10 @@ class ShaderImpl;
 class ShaderHandle;
 class PipelineImpl;
 class PipelineHandle;
-struct PipelineInitializer;
+class PipelineInitializer;
 class FramebufferImpl;
 class FramebufferHandle;
+class FramebufferInitializer;
 class TextureImpl;
 class TextureHandle;
 class SamplerImpl;
@@ -51,10 +52,9 @@ class ResourceGroupImpl;
 class ResourceGroupHandle;
 class GrManager;
 class GrManagerImpl;
-struct FramebufferInitializer;
 class TextureInitializer;
 class SamplerInitializer;
-struct GrManagerInitializer;
+class GrManagerInitializer;
 
 /// @addtogroup graphics_private
 /// @{

@@ -15,17 +15,18 @@ namespace anki {
 /// @{
 
 /// Manager initializer.
-struct GrManagerInitializer
+class GrManagerInitializer
 {
-	AllocAlignedCallback m_allocCallback; 
-	void* m_allocCallbackUserData;
+public:
+	AllocAlignedCallback m_allocCallback = nullptr; 
+	void* m_allocCallbackUserData = nullptr;
 
-	MakeCurrentCallback m_makeCurrentCallback;
-	void* m_makeCurrentCallbackData;
-	void* m_ctx;
+	MakeCurrentCallback m_makeCurrentCallback = nullptr;
+	void* m_makeCurrentCallbackData = nullptr;
+	void* m_ctx = nullptr;
 
-	SwapBuffersCallback m_swapBuffersCallback;
-	void* m_swapBuffersCallbackData;
+	SwapBuffersCallback m_swapBuffersCallback = nullptr;
+	void* m_swapBuffersCallbackData = nullptr;
 
 	CString m_cacheDirectory;
 	Bool m_registerDebugMessages = false;

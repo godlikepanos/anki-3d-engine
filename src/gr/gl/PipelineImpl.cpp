@@ -123,11 +123,14 @@ Error PipelineImpl::create(const Initializer& init)
 	}
 
 	ANKI_CHECK(createGlPipeline());
-	initVertexState();
-	initInputAssemblerState();
-	initRasterizerState();
-	initDepthStencilState();
-	initColorState();
+	if(!m_compute)
+	{
+		initVertexState();
+		initInputAssemblerState();
+		initRasterizerState();
+		initDepthStencilState();
+		initColorState();
+	}
 
 	return ErrorCode::NONE;
 }
@@ -164,11 +167,15 @@ Error PipelineImpl::createGlPipeline()
 	{
 		// Is compute
 
+		m_compute = true;
+
 		ANKI_ASSERT((mask & (1 << 5)) == (1 << 5) 
 			&& "Compute should be alone in the pipeline");
 	}
 	else
 	{
+		m_compute = false;
+
 		const U fragVert = (1 << 0) | (1 << 4);
 		ANKI_ASSERT((mask & fragVert) && "Should contain vert and frag");
 		(void)fragVert;
@@ -234,6 +241,7 @@ void PipelineImpl::bind()
 	ANKI_ASSERT(isCreated());
 	glBindProgramPipeline(m_glName);
 #else
+	// TODO check compute
 	ANKI_ASSERT(m_complete && "Should be complete");
 
 	// Get last pipeline

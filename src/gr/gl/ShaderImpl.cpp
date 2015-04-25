@@ -93,6 +93,7 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 
 		File file;
 		ANKI_CHECK(file.open(fname.toCString(), File::OpenFlag::WRITE));
+		ANKI_CHECK(file.writeText("%s", &fname[0]));
 	}
 #endif
 	

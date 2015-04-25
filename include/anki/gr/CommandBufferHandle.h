@@ -137,6 +137,8 @@ public:
 	void drawArraysConditional(OcclusionQueryHandle& query,
 		GLenum mode, U32 count, U32 instanceCount = 1,
 		U32 first = 0, U32 baseInstance = 0);
+
+	void dispatchCompute(U32 groupCountX, U32 groupCountY, U32 groupCountZ);
 	/// @}
 
 	/// @name Other operations
