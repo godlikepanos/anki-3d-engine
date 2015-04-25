@@ -219,8 +219,8 @@ Error Is::initInternal(const ConfigSet& config)
 
 	ANKI_CHECK(m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(), 
-		//PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT), 
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
+		PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT), 
+		//PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
 		1, SamplingFilter::LINEAR, 7, m_rt));
 
 	FramebufferHandle::Initializer fbInit;

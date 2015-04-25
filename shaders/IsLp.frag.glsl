@@ -8,6 +8,7 @@
 #pragma anki include "shaders/Pack.glsl"
 
 #define PI 3.1415926535
+#define EPSILON 0.0001
 
 #define ATTENUATION_FINE 0
 #define ATTENUATION_BOOST (0.1)
@@ -138,17 +139,17 @@ vec3 computeSpecularColorBrdf(
 	vec3 h = normalize(l + v);
 
 	// Fresnel
-	float loh = max(0.0, dot(l, h));
-	float f = specCol + (1.0 - specCol) * pow((1.0 - loh), 5.0);
+	float loh = max(EPSILON, dot(l, h));
+	float f = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
 	//float f = specColor + (1.0 - specColor) 
 	//	* pow(2.0, (-5.55473 * loh - 6.98316) * loh);
 
 	// NDF: GGX Trowbridge-Reitz
-	float noh = max(0.0, dot(n, h));
+	float noh = max(EPSILON, dot(n, h));
 	float d = a2 / (PI * pow(noh * noh * (a2 - 1.0) + 1.0, 2.0));
 
 	// Visibility term: Geometric shadowing devided by BRDF denominator
-	float nov = max(0.0001, dot(n, v));
+	float nov = max(EPSILON, dot(n, v));
 	float vv = nov + sqrt((nov - nov * a2) * nov + a2);
 	float vl = nol + sqrt((nol - nol * a2) * nol + a2);
 	float vis = 1.0 / (vv * vl);
@@ -242,6 +243,16 @@ float computeShadowFactor(
 #else
 #	define LIGHTING_COMMON LIGHTING_COMMON_PHONG
 #endif
+
+//==============================================================================
+void debugIncorrectColor(inout vec3 c)
+{
+	if(isnan(c.x) || isnan(c.y) || isnan(c.z)
+		|| isinf(c.x) || isinf(c.y) || isinf(c.z))
+	{
+		c = vec3(1.0, 0.0, 1.0);
+	}
+}
 
 //==============================================================================
 void main()

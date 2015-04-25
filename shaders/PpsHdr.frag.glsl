@@ -55,15 +55,4 @@ void main()
 #endif
 
 	out_color = color;
-#if 0
-	float gr = max(color.x, max(color.y, color.z));
-	if(gr > 1.0)
-	{
-		out_color = vec3(1.0);
-	}
-	else
-	{
-		out_color = vec3(0.0, 0.0, color.x);
-	}
-#endif
 }
