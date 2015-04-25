@@ -130,6 +130,36 @@ static void convertTextureInformation(
 			ANKI_ASSERT(0 && "TODO");
 		}
 		break;
+	case ComponentFormat::R16G16B16:
+		if(pf.m_transform == TransformFormat::FLOAT)
+		{
+			format = GL_RGB;
+			internalFormat = GL_RGB16F;
+			type = GL_FLOAT;
+		}
+		else if(pf.m_transform == TransformFormat::UINT)
+		{
+			format = GL_RGB_INTEGER;
+			internalFormat = GL_RGB16UI;
+			type = GL_UNSIGNED_INT;
+		}
+		else
+		{
+			ANKI_ASSERT(0 && "TODO");
+		}
+		break;
+	case ComponentFormat::R11G11B10:
+		if(pf.m_transform == TransformFormat::FLOAT)
+		{
+			format = GL_RGB;
+			internalFormat = GL_R11F_G11F_B10F;
+			type = GL_FLOAT;
+		}
+		else
+		{
+			ANKI_ASSERT(0 && "TODO");
+		}
+		break;
 	case ComponentFormat::D24:
 		format = GL_DEPTH_COMPONENT;
 		internalFormat = GL_DEPTH_COMPONENT24;
@@ -376,30 +406,13 @@ void TextureImpl::create(const Initializer& init)
 		glTexParameteri(m_target, GL_TEXTURE_MAX_LEVEL, m_mipsCount - 1);
 
 		// Set filtering type
-		switch(sinit.m_filterType)
-		{
-		case SamplingFilter::NEAREST:
-			glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			break;
-		case SamplingFilter::LINEAR:
-			glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			break;
-		case SamplingFilter::NEAREST_MIPMAP:
-			glTexParameteri(
-				m_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-			glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			break;
-		case SamplingFilter::TRILINEAR:
-			glTexParameteri(
-				m_target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			break;
-		default:
-			ANKI_ASSERT(0);
-			break;
-		}
+		GLenum minFilter = GL_NONE;
+		GLenum magFilter = GL_NONE;
+		convertFilter(sinit.m_minMagFilter, sinit.m_mipmapFilter, 
+			minFilter, magFilter);
+
+		glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, minFilter);
+		glTexParameteri(m_target, GL_TEXTURE_MAG_FILTER, magFilter);
 
 #if ANKI_GL == ANKI_GL_DESKTOP
 		if(sinit.m_anisotropyLevel > 1)

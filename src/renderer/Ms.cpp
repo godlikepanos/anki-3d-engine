@@ -139,7 +139,7 @@ Error Ms::run(CommandBufferHandle& cmdb)
 		fbo[1].blitFrom(fbo[0], UVec2(0U), UVec2(r->getWidth(), r->getHeight()),
 			UVec2(0U), UVec2(r->getWidth(), r->getHeight()),
 			GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT,
-			GL_NEAREST);
+			GL_NEAREST_BASE);
 #endif
 		ANKI_ASSERT(0 && "TODO");
 	}

@@ -490,7 +490,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.hdr.enabled", true);
 	config.set("pps.hdr.renderingQuality", 0.5);
 	config.set("pps.hdr.blurringDist", 1.0);
-	config.set("pps.hdr.blurringIterationsCount", 2);
+	config.set("pps.hdr.blurringIterationsCount", 3);
 	config.set("pps.hdr.exposure", 15.0);
 	config.set("pps.hdr.samples", 17);
 	config.set("pps.sslr.enabled", true);

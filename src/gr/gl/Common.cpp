@@ -42,4 +42,50 @@ GLenum convertCompareOperation(CompareOperation in)
 	return out;
 }
 
+//==============================================================================
+void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter,
+	GLenum& minFilter, GLenum& magFilter)
+{
+	switch(minMagFilter)
+	{
+	case SamplingFilter::NEAREST:
+		magFilter = GL_NEAREST;
+		switch(mipFilter)
+		{
+		case SamplingFilter::NEAREST:
+			minFilter = GL_NEAREST_MIPMAP_NEAREST;
+			break;
+		case SamplingFilter::LINEAR:
+			minFilter = GL_NEAREST_MIPMAP_LINEAR;
+			break;
+		case SamplingFilter::BASE:
+			minFilter = GL_NEAREST;
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+		break;
+	case SamplingFilter::LINEAR:
+		magFilter = GL_LINEAR;
+		switch(mipFilter)
+		{
+		case SamplingFilter::NEAREST:
+			minFilter = GL_LINEAR_MIPMAP_NEAREST;
+			break;
+		case SamplingFilter::LINEAR:
+			minFilter = GL_LINEAR_MIPMAP_LINEAR;
+			break;
+		case SamplingFilter::BASE:
+			minFilter = GL_LINEAR;
+			break;
+		default:
+			ANKI_ASSERT(0);
+		}
+		break;
+	default:
+		ANKI_ASSERT(0);
+		break;
+	}
+}
+
 } // end namespace anki

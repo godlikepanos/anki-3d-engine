@@ -12,6 +12,9 @@ namespace anki {
 
 /// Converter.
 GLenum convertCompareOperation(CompareOperation in);
+
+void convertFilter(SamplingFilter minMagFilter, SamplingFilter mipFilter,
+	GLenum& minFilter, GLenum& magFilter);
 /// @}
 
 } // end namespace anki

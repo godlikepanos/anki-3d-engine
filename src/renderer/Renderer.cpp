@@ -264,7 +264,15 @@ Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 	init.m_format = format;
 	init.m_mipmapsCount = mipsCount;
 	init.m_samples = samples;
-	init.m_sampling.m_filterType = filter;
+	init.m_sampling.m_minMagFilter = filter;
+	if(mipsCount > 1)
+	{
+		init.m_sampling.m_mipmapFilter = filter;
+	}
+	else
+	{
+		init.m_sampling.m_mipmapFilter = SamplingFilter::BASE;
+	}
 	init.m_sampling.m_repeat = false;
 	init.m_sampling.m_anisotropyLevel = 0;
 

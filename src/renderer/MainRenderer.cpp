@@ -66,9 +66,14 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	ANKI_CHECK(Renderer::render(scene, jobs));
 
+#if 1
 	Bool alreadyDrawnToDefault = 
 		!getDbg().getEnabled()
 		&& getRenderingQuality() == 1.0;
+#else
+	const Bool alreadyDrawnToDefault = false;
+	ANKI_LOGW("Have a debug code enabled");
+#endif
 
 	if(!alreadyDrawnToDefault)
 	{

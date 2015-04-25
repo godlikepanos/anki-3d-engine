@@ -63,7 +63,7 @@ Error FramebufferImpl::create(Initializer& init)
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if(status != GL_FRAMEBUFFER_COMPLETE)
 	{
-		ANKI_LOGE("FBO is incomplete");
+		ANKI_LOGE("FBO is incomplete: 0x%x", status);
 		destroy();
 		return ErrorCode::FUNCTION_FAILED;
 	}

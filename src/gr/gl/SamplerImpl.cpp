@@ -26,25 +26,12 @@ Error SamplerImpl::create(const SamplerInitializer& sinit)
 	}
 
 	// Set filtering type
-	switch(sinit.m_filterType)
-	{
-	case SamplingFilter::NEAREST:
-		glSamplerParameteri(m_glName, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		break;
-	case SamplingFilter::LINEAR:
-		glSamplerParameteri(m_glName, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		break;
-	case SamplingFilter::TRILINEAR:
-		glSamplerParameteri(m_glName, 
-			GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		break;
-	default:
-		ANKI_ASSERT(0);
-		break;
-	}
+	GLenum minFilter = GL_NONE;
+		GLenum magFilter = GL_NONE;
+	convertFilter(sinit.m_minMagFilter, sinit.m_mipmapFilter, minFilter, 
+		magFilter);
+	glSamplerParameteri(m_glName, GL_TEXTURE_MIN_FILTER, minFilter);
+	glSamplerParameteri(m_glName, GL_TEXTURE_MAG_FILTER, magFilter);
 
 #if ANKI_GL == ANKI_GL_DESKTOP
 	if(sinit.m_anisotropyLevel > 1)

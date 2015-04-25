@@ -16,7 +16,8 @@ namespace anki {
 class SamplerInitializer
 {
 public:
-	SamplingFilter m_filterType = SamplingFilter::NEAREST;
+	SamplingFilter m_minMagFilter = SamplingFilter::NEAREST;
+	SamplingFilter m_mipmapFilter = SamplingFilter::BASE;
 	CompareOperation m_compareOperation = CompareOperation::ALWAYS;
 	F32 m_minLod = -1000.0;
 	F32 m_maxLod = 1000.0;

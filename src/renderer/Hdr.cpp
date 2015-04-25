@@ -139,8 +139,8 @@ Error Hdr::run(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
-	// For the passes it should be NEAREST
-	//vblurFai.setFiltering(Texture::TFrustumType::NEAREST);
+	// For the passes it should be NEAREST_BASE
+	//vblurFai.setFiltering(Texture::TFrustumType::NEAREST_BASE);
 
 	// pass 0
 	m_vblurFb.bind(cmdb);

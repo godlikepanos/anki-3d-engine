@@ -45,7 +45,7 @@ Error Sm::init(const ConfigSet& initializer)
 	sminit.m_depth = initializer.get("is.sm.maxLights");
 	sminit.m_format = PixelFormat(ComponentFormat::D16, TransformFormat::FLOAT);
 	sminit.m_mipmapsCount = 1;
-	sminit.m_sampling.m_filterType = m_bilinearEnabled 
+	sminit.m_sampling.m_minMagFilter = m_bilinearEnabled 
 		? SamplingFilter::LINEAR 
 		: SamplingFilter::NEAREST;
 	sminit.m_sampling.m_compareOperation = CompareOperation::LESS_EQUAL;

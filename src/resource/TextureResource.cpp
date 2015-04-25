@@ -140,7 +140,8 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 	init.m_mipmapsCount = img->getMipLevelsCount();
 
 	// filteringType
-	init.m_sampling.m_filterType = SamplingFilter::TRILINEAR;
+	init.m_sampling.m_minMagFilter = SamplingFilter::LINEAR;
+	init.m_sampling.m_mipmapFilter = SamplingFilter::LINEAR;
 
 	// repeat
 	init.m_sampling.m_repeat = true;

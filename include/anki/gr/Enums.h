@@ -117,6 +117,7 @@ enum class ComponentFormat: U8
 
 	// Special
 	R10G10B10A2,
+	R11G11B10,
 
 	// Compressed
 	R8G8B8_S3TC, ///< DXT1
@@ -156,8 +157,7 @@ enum class SamplingFilter: U8
 {
 	NEAREST,
 	LINEAR,
-	NEAREST_MIPMAP,
-	TRILINEAR,
+	BASE ///< Only for mipmaps
 };
 
 enum class ShaderType: U8

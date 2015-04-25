@@ -219,8 +219,9 @@ Error Is::initInternal(const ConfigSet& config)
 
 	ANKI_CHECK(m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(), 
+		//PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT), 
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
-		1, SamplingFilter::NEAREST_MIPMAP, 6, m_rt));
+		1, SamplingFilter::LINEAR, 7, m_rt));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -759,11 +760,14 @@ void Is::binLight(
 //==============================================================================
 void Is::setState(CommandBufferHandle& cmdBuff)
 {
-	/*Bool drawToDefaultFbo = !m_r->getPps().getEnabled() 
+#if 1
+	Bool drawToDefaultFbo = !m_r->getPps().getEnabled() 
 		&& !m_r->getDbg().getEnabled() 
 		&& !m_r->getIsOffscreen()
-		&& m_r->getRenderingQuality() == 1.0;*/
+		&& m_r->getRenderingQuality() == 1.0;
+#else
 	Bool drawToDefaultFbo = false;
+#endif
 
 	if(drawToDefaultFbo)
 	{

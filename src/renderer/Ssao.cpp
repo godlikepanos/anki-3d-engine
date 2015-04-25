@@ -136,7 +136,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	tinit.m_format = 
 		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 	tinit.m_mipmapsCount = 1;
-	tinit.m_sampling.m_filterType = SamplingFilter::NEAREST;
+	tinit.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
 	tinit.m_sampling.m_repeat = true;
 	tinit.m_data[0][0].m_ptr = static_cast<void*>(&noise[0]);
 	tinit.m_data[0][0].m_size = sizeof(noise);
