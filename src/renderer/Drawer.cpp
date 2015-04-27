@@ -233,14 +233,9 @@ Error RenderableDrawer::create(Renderer* r)
 	m_r = r;
 
 	// Create the uniform buffer
-	CommandBufferHandle cmdBuff;
-	ANKI_CHECK(cmdBuff.create(&m_r->_getGrManager()));
-
-	ANKI_CHECK(m_uniformBuff.create(cmdBuff, GL_UNIFORM_BUFFER, nullptr,
-		MAX_UNIFORM_BUFFER_SIZE,
+	ANKI_CHECK(m_uniformBuff.create(&m_r->_getGrManager(), GL_UNIFORM_BUFFER, 
+		nullptr, MAX_UNIFORM_BUFFER_SIZE,
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
-
-	cmdBuff.flush();
 
 	m_uniformPtr = static_cast<U8*>(
 		m_uniformBuff.getPersistentMappingAddress());

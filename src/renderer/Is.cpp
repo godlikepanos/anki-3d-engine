@@ -211,7 +211,7 @@ Error Is::initInternal(const ConfigSet& config)
 	PipelineHandle::Initializer init;
 		init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
 		init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
-	ANKI_CHECK(m_lightPpline.create(cmdBuff, init));
+	ANKI_CHECK(m_lightPpline.create(&getGrManager(), init));
 
 	//
 	// Create framebuffer
@@ -221,7 +221,7 @@ Error Is::initInternal(const ConfigSet& config)
 		m_r->getWidth(), m_r->getHeight(), 
 		PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT), 
 		//PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
-		1, SamplingFilter::LINEAR, 7, m_rt));
+		1, SamplingFilter::LINEAR, MIPMAPS_COUNT, m_rt));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -236,29 +236,30 @@ Error Is::initInternal(const ConfigSet& config)
 	static const F32 quadVertCoords[][2] = 
 		{{1.0, 1.0}, {0.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}};
 
-	ANKI_CHECK(m_quadPositionsVertBuff.create(cmdBuff, GL_ARRAY_BUFFER, 
+	ANKI_CHECK(m_quadPositionsVertBuff.create(&getGrManager(), GL_ARRAY_BUFFER, 
 		&quadVertCoords[0][0], sizeof(quadVertCoords), 0));
 
 	//
 	// Create UBOs
 	//
-	ANKI_CHECK(m_commonBuffer.create(cmdBuff, GL_UNIFORM_BUFFER, nullptr,
-		sizeof(shader::CommonUniforms), GL_DYNAMIC_STORAGE_BIT));
+	ANKI_CHECK(m_commonBuffer.create(&getGrManager(), GL_UNIFORM_BUFFER, 
+		nullptr, sizeof(shader::CommonUniforms), GL_DYNAMIC_STORAGE_BIT));
 
 	for(U i = 0; i < MAX_FRAMES; ++i)
 	{
 		// Lights
-		ANKI_CHECK(m_lightsBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER, 
-			nullptr, calcLightsBufferSize(), 
+		ANKI_CHECK(m_lightsBuffers[i].create(&getGrManager(), 
+			GL_SHADER_STORAGE_BUFFER, nullptr, calcLightsBufferSize(), 
 			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
 		// Tiles
-		ANKI_CHECK(m_tilesBuffers[i].create(cmdBuff, GL_SHADER_STORAGE_BUFFER,
-			nullptr, m_r->getTilesCountXY() * sizeof(shader::Tile),
+		ANKI_CHECK(m_tilesBuffers[i].create(&getGrManager(), 
+			GL_SHADER_STORAGE_BUFFER, nullptr, 
+			m_r->getTilesCountXY() * sizeof(shader::Tile),
 			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
 		// Index
-		ANKI_CHECK(m_lightIdsBuffers[i].create(cmdBuff, 
+		ANKI_CHECK(m_lightIdsBuffers[i].create(&getGrManager(), 
 			GL_SHADER_STORAGE_BUFFER,
 			nullptr, (m_maxPointLights * m_maxSpotLights * m_maxSpotTexLights)
 			* sizeof(U32),

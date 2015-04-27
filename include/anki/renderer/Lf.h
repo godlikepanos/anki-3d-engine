@@ -77,10 +77,8 @@ private:
 
 	ANKI_USE_RESULT Error initPseudo(
 		const ConfigSet& config, CommandBufferHandle& cmdBuff);
-	ANKI_USE_RESULT Error initSprite(
-		const ConfigSet& config, CommandBufferHandle& cmdBuff);
-	ANKI_USE_RESULT Error initOcclusion(
-		const ConfigSet& config, CommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error initSprite(const ConfigSet& config);
+	ANKI_USE_RESULT Error initOcclusion(const ConfigSet& config);
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };

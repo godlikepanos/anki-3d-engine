@@ -118,7 +118,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	CommandBufferHandle cmdBuff;
 	ANKI_CHECK(cmdBuff.create(m_gl));
 
-	ANKI_CHECK(m_quadPositionsBuff.create(cmdBuff, GL_ARRAY_BUFFER, 
+	ANKI_CHECK(m_quadPositionsBuff.create(m_gl, GL_ARRAY_BUFFER, 
 		&quadVertCoords[0][0], sizeof(quadVertCoords), 0));
 
 	ANKI_CHECK(m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources));
@@ -289,24 +289,11 @@ Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 Error Renderer::createDrawQuadPipeline(
 	ShaderHandle frag, PipelineHandle& ppline)
 {
-	CommandBufferHandle cmdBuff;
-	Error err = cmdBuff.create(m_gl);
+	PipelineHandle::Initializer init;
+	init.m_shaders[U(ShaderType::VERTEX)] = m_drawQuadVert->getGrShader();
+	init.m_shaders[U(ShaderType::FRAGMENT)] = frag;
 
-	if(!err)
-	{
-		PipelineHandle::Initializer init;
-		init.m_shaders[U(ShaderType::VERTEX)] = m_drawQuadVert->getGrShader();
-		init.m_shaders[U(ShaderType::FRAGMENT)] = frag;
-
-		err = ppline.create(cmdBuff, init);
-	}
-
-	if(!err)
-	{
-		cmdBuff.finish();
-	}
-
-	return err;
+	return ppline.create(m_gl, init);
 }
 
 } // end namespace anki

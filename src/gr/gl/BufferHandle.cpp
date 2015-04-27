@@ -202,32 +202,34 @@ BufferHandle::~BufferHandle()
 {}
 
 //==============================================================================
-Error BufferHandle::create(CommandBufferHandle& commands,
+Error BufferHandle::create(GrManager* manager,
 	GLenum target, const void* data, PtrSize size, GLenum flags)
 {
 	ANKI_ASSERT(!isCreated());
 
 	using DeleteCommand = DeleteObjectCommand<BufferImpl>;
-
 	using Deleter = DeferredDeleter<BufferImpl, DeleteCommand>;
 
-	Base::create(commands.get().getManager(), Deleter());
+	CommandBufferHandle cmdb;
+	ANKI_CHECK(cmdb.create(manager));
+
+	Base::create(cmdb.get().getManager(), Deleter());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
 	// Allocate temp memory for the data
 	Bool cleanup = false;
 	if(data)
 	{
-		void* newData = 
-			commands.get().getInternalAllocator().allocate(size);
+		void* newData = cmdb.get().getInternalAllocator().allocate(size);
 		memcpy(newData, data, size);
 		data = newData;
 		cleanup = true;
 	}
 
 	// Fire the command
-	commands.get().pushBackNewCommand<BufferCreateCommand>(
+	cmdb.get().pushBackNewCommand<BufferCreateCommand>(
 		*this, target, data, size, flags, cleanup);
+	cmdb.flush();
 
 	return ErrorCode::NONE;
 }

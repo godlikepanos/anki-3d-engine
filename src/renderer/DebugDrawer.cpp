@@ -29,52 +29,28 @@ DebugDrawer::~DebugDrawer()
 //==============================================================================
 Error DebugDrawer::create(Renderer* r)
 {
-	Error err = ErrorCode::NONE;
-
 	GrManager& gl = r->_getGrManager();
 
-	err = m_vert.load("shaders/Dbg.vert.glsl", &r->_getResourceManager());
+	ANKI_CHECK(m_vert.load("shaders/Dbg.vert.glsl", &r->_getResourceManager()));
+	ANKI_CHECK(m_frag.load("shaders/Dbg.frag.glsl", &r->_getResourceManager()));
 
-	if(!err)
-	{
-		err = m_frag.load("shaders/Dbg.frag.glsl", &r->_getResourceManager());
-	}
+	PipelineHandle::Initializer init;
+	init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
+	init.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
 
-	CommandBufferHandle jobs;
+	ANKI_CHECK(m_ppline.create(&gl, init));
 
-	if(!err)
-	{
-		err = jobs.create(&gl);
-	}
+	ANKI_CHECK(m_vertBuff.create(&gl, GL_ARRAY_BUFFER, nullptr,
+			sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT));
 
-	if(!err)
-	{
-		PipelineHandle::Initializer init;
-		init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
-		init.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
+	m_lineVertCount = 0;
+	m_triVertCount = 0;
+	m_mMat.setIdentity();
+	m_vpMat.setIdentity();
+	m_mvpMat.setIdentity();
+	m_crntCol = Vec3(1.0, 0.0, 0.0);
 
-		err = m_ppline.create(jobs, init);
-	}
-
-	if(!err)
-	{
-		err = m_vertBuff.create(jobs, GL_ARRAY_BUFFER, nullptr,
-			sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT);
-	}
-
-	if(!err)
-	{
-		m_lineVertCount = 0;
-		m_triVertCount = 0;
-		m_mMat.setIdentity();
-		m_vpMat.setIdentity();
-		m_mvpMat.setIdentity();
-		m_crntCol = Vec3(1.0, 0.0, 0.0);
-
-		jobs.finish();
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

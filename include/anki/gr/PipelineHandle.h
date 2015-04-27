@@ -25,9 +25,7 @@ public:
 	~PipelineHandle();
 
 	/// Create a pipeline
-	ANKI_USE_RESULT Error create(
-		CommandBufferHandle& commands,
-		const Initializer& init);
+	ANKI_USE_RESULT Error create(GrManager* manager, const Initializer& init);
 
 	/// Bind it to the state
 	void bind(CommandBufferHandle& commands);

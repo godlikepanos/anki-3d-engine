@@ -42,6 +42,8 @@ class Is: private RenderingPass
 	friend class WriteLightsTask;
 
 public:
+	static const U MIPMAPS_COUNT = 7;
+
 	/// @privatesection
 	/// @{
 	TextureHandle& _getRt()

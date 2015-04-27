@@ -12,6 +12,7 @@ namespace anki {
 
 // Forward
 class Fs;
+class Tm;
 
 // Render target formats
 const U MS_COLOR_ATTACHMENTS_COUNT = 2;

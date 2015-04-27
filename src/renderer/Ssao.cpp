@@ -165,7 +165,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Shaders
 	//
-	ANKI_CHECK(m_uniformsBuff.create(cmdb, GL_SHADER_STORAGE_BUFFER, 
+	ANKI_CHECK(m_uniformsBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER, 
 		nullptr, sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT));
 
 	StringAuto pps(getAllocator());

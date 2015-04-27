@@ -336,15 +336,11 @@ Error ParticleEmitter::create(
 	}
 
 	// Create the vertex buffer and object
-	CommandBufferHandle cmd;
-	GrManager& gr = getSceneGraph().getGrManager();
-	ANKI_CHECK(cmd.create(&gr));
-
 	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
-	ANKI_CHECK(m_vertBuff.create(cmd, GL_ARRAY_BUFFER, nullptr, buffSize, 
+	ANKI_CHECK(m_vertBuff.create(&getSceneGraph().getGrManager(), 
+		GL_ARRAY_BUFFER, nullptr, buffSize, 
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
-	cmd.finish(); /// TODO Optimize serialization
 	m_vertBuffMapping = 
 		static_cast<U8*>(m_vertBuff.getPersistentMappingAddress());
 

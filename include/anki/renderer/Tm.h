@@ -21,11 +21,14 @@ public:
 	:	RenderingPass(r)
 	{}
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error create(const ConfigSet& initializer);
+
+	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdb);
 
 private:
-	BufferHandle m_luminanceBuff;
 	ShaderResourcePointer m_avgLuminanceShader;
+	PipelineHandle m_avgLuminancePpline;
+	BufferHandle m_luminanceBuff;
 };
 
 } // end namespace anki

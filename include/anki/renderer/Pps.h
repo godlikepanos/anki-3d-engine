@@ -91,6 +91,7 @@ public:
 	/// @}
 
 private:
+	Tm* m_tm = nullptr;
 	Hdr m_hdr;
 	Ssao m_ssao;
 	Bl m_bl;
@@ -112,7 +113,6 @@ private:
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };
-
 /// @}
 
 } // end namespace anki

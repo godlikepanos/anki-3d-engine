@@ -65,36 +65,17 @@ Error Mesh::load(const CString& filename, ResourceInitializer& init)
 Error Mesh::createBuffers(const MeshLoader& loader,
 	ResourceInitializer& init)
 {
-	Error err = ErrorCode::NONE;
-
 	GrManager& gr = init.m_resources.getGrManager();
-	CommandBufferHandle cmdb;
-	err = cmdb.create(&gr);
-	if(err)
-	{
-		return err;
-	}
 
 	// Create vertex buffer
-	err = m_vertBuff.create(cmdb, GL_ARRAY_BUFFER, loader.getVertexData(), 
-		loader.getVertexDataSize(), 0);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_vertBuff.create(&gr, GL_ARRAY_BUFFER, loader.getVertexData(), 
+		loader.getVertexDataSize(), 0));
 
 	// Create index buffer
-	err = m_indicesBuff.create(
-		cmdb, GL_ELEMENT_ARRAY_BUFFER, loader.getIndexData(), 
-		loader.getIndexDataSize(), 0);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(m_indicesBuff.create(&gr, GL_ELEMENT_ARRAY_BUFFER, 
+		loader.getIndexData(), loader.getIndexDataSize(), 0));
 
-	cmdb.flush();
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

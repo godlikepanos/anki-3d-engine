@@ -164,11 +164,6 @@ Error Tiler::initInternal()
 //==============================================================================
 Error Tiler::initPbos()
 {
-	Error err = ErrorCode::NONE;
-
-	CommandBufferHandle cmd;
-	ANKI_CHECK(cmd.create(&getGrManager()));
-
 	// Allocate the buffers
 	U pboSize = m_r->getTilesCount().x() * m_r->getTilesCount().y();
 	pboSize *= sizeof(Vec2); // The pixel size
@@ -176,10 +171,10 @@ Error Tiler::initPbos()
 	for(U i = 0; i < m_pbos.getSize(); ++i)
 	{
 		ANKI_CHECK(
-			m_pbos[i].create(cmd, GL_PIXEL_PACK_BUFFER, nullptr, pboSize,
+			m_pbos[i].create(&getGrManager(), GL_PIXEL_PACK_BUFFER, nullptr, 
+			pboSize,
 			GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 	}
-	cmd.flush();
 
 	// Get persistent address
 	for(U i = 0; i < m_pbos.getSize(); ++i)
@@ -188,7 +183,7 @@ Error Tiler::initPbos()
 			static_cast<Vec2*>(m_pbos[i].getPersistentMappingAddress());
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

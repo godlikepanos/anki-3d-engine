@@ -64,12 +64,12 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 
 	// init shaders
 	GrManager& gl = getGrManager();
-	CommandBufferHandle cmdb;
-	ANKI_CHECK(cmdb.create(&gl));
 
-	ANKI_CHECK(m_commonBuff.create(cmdb, GL_UNIFORM_BUFFER, nullptr,
+	ANKI_CHECK(m_commonBuff.create(&gl, GL_UNIFORM_BUFFER, nullptr,
 		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT));
 
+	CommandBufferHandle cmdb;
+	ANKI_CHECK(cmdb.create(&gl));
 	updateDefaultBlock(cmdb);
 
 	cmdb.flush();

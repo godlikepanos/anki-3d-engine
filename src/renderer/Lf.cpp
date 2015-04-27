@@ -83,8 +83,7 @@ Error Lf::initPseudo(const ConfigSet& config,
 }
 
 //==============================================================================
-Error Lf::initSprite(const ConfigSet& config, 
-	CommandBufferHandle& cmdBuff)
+Error Lf::initSprite(const ConfigSet& config)
 {
 	// Load program + ppline
 	StringAuto pps(getAllocator());
@@ -100,7 +99,7 @@ Error Lf::initSprite(const ConfigSet& config,
 	PipelineHandle::Initializer init;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_realVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_realFrag->getGrShader();
-	ANKI_CHECK(m_realPpline.create(cmdBuff, init));
+	ANKI_CHECK(m_realPpline.create(&getGrManager(), init));
 
 	// Create buffer
 	PtrSize uboAlignment = 
@@ -112,7 +111,7 @@ Error Lf::initSprite(const ConfigSet& config,
 	for(U i = 0; i < m_flareDataBuff.getSize(); ++i)
 	{
 		ANKI_CHECK(m_flareDataBuff[i].create(
-			cmdBuff, GL_UNIFORM_BUFFER, nullptr, blockSize, 
+			&getGrManager(), GL_UNIFORM_BUFFER, nullptr, blockSize, 
 			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 	}
 
@@ -120,8 +119,7 @@ Error Lf::initSprite(const ConfigSet& config,
 }
 
 //==============================================================================
-Error Lf::initOcclusion(
-	const ConfigSet& config, CommandBufferHandle& cmdBuff)
+Error Lf::initOcclusion(const ConfigSet& config)
 {
 	// Init vert buff
 	U buffSize = sizeof(Vec3) * m_maxFlares;
@@ -129,12 +127,12 @@ Error Lf::initOcclusion(
 	for(U i = 0; i < m_positionsVertBuff.getSize(); ++i)
 	{
 		ANKI_CHECK(m_positionsVertBuff[i].create(
-			cmdBuff, GL_ARRAY_BUFFER, nullptr, buffSize, 
+			&getGrManager(), GL_ARRAY_BUFFER, nullptr, buffSize, 
 			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 	}
 
 	// Init MVP buff
-	ANKI_CHECK(m_mvpBuff.create(cmdBuff, GL_UNIFORM_BUFFER, 
+	ANKI_CHECK(m_mvpBuff.create(&getGrManager(), GL_UNIFORM_BUFFER, 
 		nullptr, sizeof(Mat4), GL_DYNAMIC_STORAGE_BIT));
 
 	// Shaders
@@ -148,7 +146,7 @@ Error Lf::initOcclusion(
 		init.m_shaders[U(ShaderType::VERTEX)] = m_occlusionVert->getGrShader();
 		init.m_shaders[U(ShaderType::FRAGMENT)] = 
 			m_occlusionFrag->getGrShader();
-	ANKI_CHECK(m_occlusionPpline.create(cmdBuff, init));
+	ANKI_CHECK(m_occlusionPpline.create(&getGrManager(), init));
 
 	return ErrorCode::NONE;
 }
@@ -167,8 +165,8 @@ Error Lf::initInternal(const ConfigSet& config)
 	ANKI_CHECK(cmdBuff.create(&getGrManager()));
 
 	ANKI_CHECK(initPseudo(config, cmdBuff));
-	ANKI_CHECK(initSprite(config, cmdBuff));
-	ANKI_CHECK(initOcclusion(config, cmdBuff));
+	ANKI_CHECK(initSprite(config));
+	ANKI_CHECK(initOcclusion(config));
 
 	// Create the render target
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getPps().getHdr()._getWidth(), 

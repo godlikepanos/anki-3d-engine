@@ -6,6 +6,7 @@
 #ifndef ANKI_RENDERER_RENDERING_PASS_H
 #define ANKI_RENDERER_RENDERING_PASS_H
 
+#include "anki/renderer/Common.h"
 #include "anki/util/StdTypes.h"
 #include "anki/Gr.h"
 #include "anki/core/Timestamp.h"

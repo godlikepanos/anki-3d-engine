@@ -7,6 +7,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/Hdr.h"
 #include "anki/renderer/Ssao.h"
+#include "anki/renderer/Tm.h"
 #include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
 
@@ -24,7 +25,13 @@ Pps::Pps(Renderer* r)
 
 //==============================================================================
 Pps::~Pps()
-{}
+{
+	if(m_tm)
+	{
+		getAllocator().deleteInstance(m_tm);
+		m_tm = nullptr;
+	}
+}
 
 //==============================================================================
 Error Pps::initInternal(const ConfigSet& config)
@@ -36,6 +43,9 @@ Error Pps::initInternal(const ConfigSet& config)
 	}
 
 	ANKI_ASSERT("Initializing PPS");
+
+	m_tm = getAllocator().newInstance<Tm>(m_r);
+	ANKI_CHECK(m_tm->create(config));
 
 	ANKI_CHECK(m_ssao.init(config));
 	ANKI_CHECK(m_hdr.init(config));

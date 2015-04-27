@@ -78,16 +78,19 @@ PipelineHandle::~PipelineHandle()
 {}
 
 //==============================================================================
-Error PipelineHandle::create(
-	CommandBufferHandle& commands,
-	const Initializer& init)
+Error PipelineHandle::create(GrManager* manager, const Initializer& init)
 {
 	using DeleteCommand = DeleteObjectCommand<PipelineImpl>;
 	using Deleter = DeferredDeleter<PipelineImpl, DeleteCommand>;
 
-	Base::create(commands.get().getManager(), Deleter());
+	CommandBufferHandle cmdb;
+	ANKI_CHECK(cmdb.create(manager));
+
+	Base::create(cmdb.get().getManager(), Deleter());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
-	commands.get().pushBackNewCommand<CreatePipelineCommand>(*this, init);
+	cmdb.get().pushBackNewCommand<CreatePipelineCommand>(*this, init);
+
+	cmdb.flush();
 
 	return ErrorCode::NONE;
 }

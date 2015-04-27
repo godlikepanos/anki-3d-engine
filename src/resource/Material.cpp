@@ -338,13 +338,7 @@ Error Material::getProgramPipeline(
 		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] = 
 			getProgram(key, ShaderType::FRAGMENT)->getGrShader();
 
-		GrManager& gl = m_resources->getGrManager();
-		CommandBufferHandle cmdBuff;
-		ANKI_CHECK(cmdBuff.create(&gl));
-
-		ANKI_CHECK(ppline.create(cmdBuff, pplineInit));
-
-		cmdBuff.flush();
+		ANKI_CHECK(ppline.create(&m_resources->getGrManager(), pplineInit));
 	}
 
 	out = ppline;

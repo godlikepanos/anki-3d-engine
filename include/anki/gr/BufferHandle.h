@@ -24,7 +24,7 @@ public:
 	~BufferHandle();
 
 	/// Create the buffer with data
-	ANKI_USE_RESULT Error create(CommandBufferHandle& commands, GLenum target, 
+	ANKI_USE_RESULT Error create(GrManager* manager, GLenum target, 
 		const void* data, PtrSize size, GLbitfield flags);
 
 	/// Get buffer size. It may serialize 
