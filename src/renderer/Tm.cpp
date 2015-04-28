@@ -33,8 +33,9 @@ Error Tm::create(const ConfigSet& initializer)
 	ANKI_CHECK(m_luminancePpline.create(&getGrManager(), pplineInit));
 
 	// Create buffer
+	Vec4 data(0.5);
 	ANKI_CHECK(m_luminanceBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
-		nullptr, sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT));
+		&data[0], sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT));
 
 	return ErrorCode::NONE;
 }

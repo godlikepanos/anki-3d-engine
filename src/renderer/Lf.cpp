@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/renderer/Lf.h"
+#include "anki/renderer/Bloom.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/MoveComponent.h"
@@ -65,8 +66,8 @@ Error Lf::initPseudo(const ConfigSet& config)
 
 	pps.sprintf(
 		"#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n", 
-		m_r->getPps().getHdr()._getWidth(),
-		m_r->getPps().getHdr()._getHeight());
+		m_r->getPps().getBloom().getWidth(),
+		m_r->getPps().getBloom().getHeight());
 
 	ANKI_CHECK(m_pseudoFrag.loadToCache(&getResourceManager(), 
 		"shaders/PpsLfPseudoPass.frag.glsl", pps.toCString(), "r_"));
@@ -154,7 +155,7 @@ Error Lf::initOcclusion(const ConfigSet& config)
 Error Lf::initInternal(const ConfigSet& config)
 {
 	m_enabled = config.get("pps.lf.enabled") 
-		&& config.get("pps.hdr.enabled");
+		&& config.get("pps.bloom.enabled");
 	if(!m_enabled)
 	{
 		return ErrorCode::NONE;
@@ -165,8 +166,8 @@ Error Lf::initInternal(const ConfigSet& config)
 	ANKI_CHECK(initOcclusion(config));
 
 	// Create the render target
-	ANKI_CHECK(m_r->createRenderTarget(m_r->getPps().getHdr()._getWidth(), 
-		m_r->getPps().getHdr()._getHeight(), 
+	ANKI_CHECK(m_r->createRenderTarget(m_r->getPps().getBloom().getWidth(), 
+		m_r->getPps().getBloom().getHeight(), 
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
 		1, SamplingFilter::LINEAR, 1, m_rt));
 
@@ -273,13 +274,13 @@ Error Lf::run(CommandBufferHandle& cmdBuff)
 
 	// Set the common state
 	m_fb.bind(cmdBuff);
-	cmdBuff.setViewport(0, 0, m_r->getPps().getHdr()._getWidth(), 
-		m_r->getPps().getHdr()._getHeight());
+	cmdBuff.setViewport(0, 0, m_r->getPps().getBloom().getWidth(), 
+		m_r->getPps().getBloom().getHeight());
 
 	m_pseudoPpline.bind(cmdBuff);
 
 	Array<TextureHandle, 2> tarr = {{
-		m_r->getPps().getHdr()._getRt(), 
+		m_r->getPps().getBloom().getRt(), 
 		m_lensDirtTex->getGlTexture()}};
 	cmdBuff.bindTextures(0, tarr.begin(), tarr.getSize());
 
@@ -395,7 +396,7 @@ Error Lf::run(CommandBufferHandle& cmdBuff)
 
 	// Blit the HDR RT back to LF RT
 	//
-	m_r->getPps().getHdr()._getRt().bind(cmdBuff, 0);
+	m_r->getPps().getBloom().getRt().bind(cmdBuff, 0);
 	m_blitPpline.bind(cmdBuff);
 	m_r->drawQuad(cmdBuff);
 

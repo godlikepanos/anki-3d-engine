@@ -75,11 +75,11 @@ void main()
 	if(gl_LocalInvocationIndex == 0)
 	{
 		float crntLum = exp(g_avgLum[0] / float(WORKGROUP_SIZE));
-#if 0
+#if 1
 		float prevLum = u_averageLuminancePad3.x;
 
 		// Lerp between previous and new L value
-		const float INTERPOLATION_FACTOR = 0.5;
+		const float INTERPOLATION_FACTOR = 0.05;
 		u_averageLuminancePad3.x = prevLum * (1.0 - INTERPOLATION_FACTOR) 
 			+ crntLum * INTERPOLATION_FACTOR;
 #else

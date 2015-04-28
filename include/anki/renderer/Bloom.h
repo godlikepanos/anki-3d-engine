@@ -3,8 +3,8 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RENDERER_HDR_H
-#define ANKI_RENDERER_HDR_H
+#ifndef ANKI_RENDERER_BLOOM_H
+#define ANKI_RENDERER_BLOOM_H
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/Gr.h"
@@ -20,23 +20,20 @@ class ShaderProgram;
 /// @addtogroup renderer
 /// @{
 
-/// High dynamic range lighting pass
-class Hdr: public RenderingPass
+/// Bloom pass.
+class Bloom: public RenderingPass
 {
 	friend class Pps;
 
 public:
-	/// @name Accessors
-	/// @{
-	F32 getExposure() const
-	{
-		return m_exposure;
-	}
-	void setExposure(const F32 x)
-	{
-		m_exposure = x;
-		m_parameterUpdateTimestamp = getGlobalTimestamp();
-	}
+	Bloom(Renderer* r)
+	:	RenderingPass(r)
+	{}
+
+	~Bloom();
+
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
 
 	U32 getBlurringIterationsCount() const
 	{
@@ -46,21 +43,20 @@ public:
 	{
 		m_blurringIterationsCount = x;
 	}
-	/// @}
 
 	/// @privatesection
 	/// @{
-	TextureHandle& _getRt()
+	TextureHandle& getRt()
 	{
 		return m_vblurRt;
 	}
 
-	U32 _getWidth() const
+	U32 getWidth() const
 	{
 		return m_width;
 	}
 
-	U32 _getHeight() const
+	U32 getHeight() const
 	{
 		return m_height;
 	}
@@ -68,7 +64,7 @@ public:
 
 private:
 	U32 m_width, m_height;
-	F32 m_exposure = 4.0; ///< How bright is the HDR
+	F32 m_threshold = 10.0; ///< How bright it is
 	U32 m_blurringIterationsCount = 2; ///< The blurring iterations
 	F32 m_blurringDist = 1.0; ///< Distance in blurring
 	
@@ -90,15 +86,6 @@ private:
 	/// When the commonUbo got updated
 	Timestamp m_commonUboUpdateTimestamp = 0;
 	BufferHandle m_commonBuff;
-
-	Hdr(Renderer* r)
-	:	RenderingPass(r)
-	{}
-
-	~Hdr();
-
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
 
 	ANKI_USE_RESULT Error initFb(FramebufferHandle& fb, TextureHandle& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);

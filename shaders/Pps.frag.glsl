@@ -5,12 +5,12 @@
 
 #pragma anki type frag
 #pragma anki include "shaders/Common.glsl"
-#pragma anki include "shaders/photoshop_filters.glsl"
+#pragma anki include "shaders/Tonemapping.glsl"
 #pragma anki include "shaders/LinearDepth.glsl"
 
 layout(binding = 0) uniform lowp sampler2D u_isRt;
 layout(binding = 1) uniform lowp sampler2D u_ppsSsaoRt;
-layout(binding = 2) uniform lowp sampler2D u_ppsHdrLfRt;
+layout(binding = 2) uniform lowp sampler2D u_ppsBloomLfRt;
 layout(binding = 3) uniform lowp sampler3D u_lut;
 
 layout(std140, binding = 0) readonly buffer _blk
@@ -105,6 +105,7 @@ vec3 colorGrading(in vec3 color)
 	return textureLod(u_lut, lutCoords, 0.0).rgb;
 }
 
+#if 0
 //==============================================================================
 // Uncharted 2 tonemap operator
 // @param l Luminance
@@ -147,6 +148,7 @@ vec3 tonemap(in vec3 color)
 
 	return pow(color / l, vec3(SATURATION)) * ld;
 }
+#endif
 
 //==============================================================================
 void main()
@@ -155,7 +157,7 @@ void main()
 	out_color = sharpen(u_isRt, in_texCoords);
 #else
 	out_color = textureRt(u_isRt, in_texCoords).rgb;
-	out_color = tonemap(out_color);
+	out_color = tonemap(out_color, u_averageLuminancePad3.x, 0.0);
 #endif
 
 #if SSAO_ENABLED
@@ -163,22 +165,17 @@ void main()
 	out_color *= ssao;
 #endif
 
-#if HDR_ENABLED
-	vec3 hdr = textureRt(u_ppsHdrLfRt, in_texCoords).rgb;
-	out_color += hdr;
-#endif
-
-#if 0
-	out_color = BlendHardLight(vec3(0.7, 0.72, 0.4), out_color);
-	//out_color = gammaCorrectionRgb(vec3(0.9, 0.92, 0.75), out_color);
+#if BLOOM_ENABLED
+	vec3 bloom = textureRt(u_ppsBloomLfRt, in_texCoords).rgb;
+	out_color += bloom;
 #endif
 
 	out_color = colorGrading(out_color);
 
 #if 0
-	if(gl_FragCoord.x > 2400 && gl_FragCoord.y > 1200)
+	if(out_color.x != 0.0000001)
 	{
-		out_color = vec3(u_averageLuminancePad3.x);
+		out_color = hdr;
 	}
 #endif
 }

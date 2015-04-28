@@ -489,12 +489,12 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.poissonEnabled", false);
 	config.set("is.sm.resolution", 1024);
 	config.set("pps.enabled", true);
-	config.set("pps.hdr.enabled", true);
-	config.set("pps.hdr.renderingQuality", 0.5);
-	config.set("pps.hdr.blurringDist", 1.0);
-	config.set("pps.hdr.blurringIterationsCount", 3);
-	config.set("pps.hdr.exposure", 15.0);
-	config.set("pps.hdr.samples", 17);
+	config.set("pps.bloom.enabled", true);
+	config.set("pps.bloom.renderingQuality", 0.5);
+	config.set("pps.bloom.blurringDist", 1.0);
+	config.set("pps.bloom.blurringIterationsCount", 3);
+	config.set("pps.bloom.threshold", 1.0);
+	config.set("pps.bloom.samples", 17);
 	config.set("pps.sslr.enabled", false);
 	config.set("pps.sslr.renderingQuality", 0.5);
 	config.set("pps.sslr.blurringIterationsCount", 1);

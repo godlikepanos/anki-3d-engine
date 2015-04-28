@@ -5,7 +5,7 @@
 
 #include "anki/renderer/Pps.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/renderer/Hdr.h"
+#include "anki/renderer/Bloom.h"
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Tm.h"
 #include "anki/util/Logger.h"
@@ -16,7 +16,6 @@ namespace anki {
 //==============================================================================
 Pps::Pps(Renderer* r)
 :	RenderingPass(r), 
-	m_hdr(r), 
 	m_ssao(r), 
 	m_bl(r), 
 	m_lf(r),
@@ -48,7 +47,10 @@ Error Pps::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_tm->create(config));
 
 	ANKI_CHECK(m_ssao.init(config));
-	ANKI_CHECK(m_hdr.init(config));
+
+	m_bloom = getAllocator().newInstance<Bloom>(m_r);
+	ANKI_CHECK(m_bloom->init(config));
+
 	ANKI_CHECK(m_lf.init(config));
 	ANKI_CHECK(m_sslr.init(config));
 
@@ -71,13 +73,13 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	pps.sprintf(
 		"#define SSAO_ENABLED %u\n"
-		"#define HDR_ENABLED %u\n"
+		"#define BLOOM_ENABLED %u\n"
 		"#define SHARPEN_ENABLED %u\n"
 		"#define GAMMA_CORRECTION_ENABLED %u\n"
 		"#define FBO_WIDTH %u\n"
 		"#define FBO_HEIGHT %u\n",
 		m_ssao.getEnabled(), 
-		m_hdr.getEnabled(), 
+		m_bloom->getEnabled(), 
 		U(config.get("pps.sharpen")),
 		U(config.get("pps.gammaCorrection")),
 		m_r->getWidth(),
@@ -131,9 +133,9 @@ Error Pps::run(CommandBufferHandle& cmdb)
 
 	m_tm->run(cmdb);
 
-	if(m_hdr.getEnabled())
+	if(m_bloom->getEnabled())
 	{
-		ANKI_CHECK(m_hdr.run(cmdb));
+		ANKI_CHECK(m_bloom->run(cmdb));
 	}
 
 	if(m_lf.getEnabled())
@@ -172,9 +174,9 @@ Error Pps::run(CommandBufferHandle& cmdb)
 	{
 		m_lf._getRt().bind(cmdb, 2);
 	}
-	else if(m_hdr.getEnabled())
+	else if(m_bloom->getEnabled())
 	{
-		m_hdr._getRt().bind(cmdb, 2);
+		m_bloom->getRt().bind(cmdb, 2);
 	}
 
 	m_lut->getGlTexture().bind(cmdb, 3);

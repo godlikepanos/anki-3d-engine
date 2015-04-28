@@ -3,18 +3,19 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/renderer/Hdr.h"
+#include "anki/renderer/Bloom.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/renderer/Tm.h"
 #include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
 //==============================================================================
-Hdr::~Hdr()
+Bloom::~Bloom()
 {}
 
 //==============================================================================
-Error Hdr::initFb(FramebufferHandle& fb, TextureHandle& rt)
+Error Bloom::initFb(FramebufferHandle& fb, TextureHandle& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
 	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, 
@@ -33,26 +34,26 @@ Error Hdr::initFb(FramebufferHandle& fb, TextureHandle& rt)
 }
 
 //==============================================================================
-Error Hdr::initInternal(const ConfigSet& initializer)
+Error Bloom::initInternal(const ConfigSet& initializer)
 {
-	m_enabled = initializer.get("pps.hdr.enabled");
+	m_enabled = initializer.get("pps.bloom.enabled");
 
 	if(!m_enabled)
 	{
 		return ErrorCode::NONE;
 	}
 
-	const F32 renderingQuality = initializer.get("pps.hdr.renderingQuality");
+	const F32 renderingQuality = initializer.get("pps.bloom.renderingQuality");
 
 	m_width = renderingQuality * (F32)m_r->getWidth();
 	alignRoundDown(16, m_width);
 	m_height = renderingQuality * (F32)m_r->getHeight();
 	alignRoundDown(16, m_height);
 
-	m_exposure = initializer.get("pps.hdr.exposure");
-	m_blurringDist = initializer.get("pps.hdr.blurringDist");
+	m_threshold = initializer.get("pps.bloom.threshold");
+	m_blurringDist = initializer.get("pps.bloom.blurringDist");
 	m_blurringIterationsCount = 
-		initializer.get("pps.hdr.blurringIterationsCount");
+		initializer.get("pps.bloom.blurringIterationsCount");
 
 	ANKI_CHECK(initFb(m_hblurFb, m_hblurRt));
 	ANKI_CHECK(initFb(m_vblurFb, m_vblurRt));
@@ -70,7 +71,7 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 	cmdb.flush();
 
 	ANKI_CHECK(m_toneFrag.loadToCache(&getResourceManager(),
-		"shaders/PpsHdr.frag.glsl", 
+		"shaders/PpsBloom.frag.glsl", 
 		m_r->_getShadersPrependedSource().toCString(), "r_"));
 
 	ANKI_CHECK(m_r->createDrawQuadPipeline(
@@ -117,20 +118,19 @@ Error Hdr::initInternal(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Hdr::init(const ConfigSet& initializer)
+Error Bloom::init(const ConfigSet& initializer)
 {
 	Error err = initInternal(initializer);
-
 	if(err)
 	{
-		ANKI_LOGE("Failed to init PPS HDR");
+		ANKI_LOGE("Failed to init PPS bloom");
 	}
 
 	return err;
 }
 
 //==============================================================================
-Error Hdr::run(CommandBufferHandle& cmdb)
+Error Bloom::run(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -151,6 +151,7 @@ Error Hdr::run(CommandBufferHandle& cmdb)
 
 	m_r->getIs()._getRt().bind(cmdb, 0);
 	m_commonBuff.bindShaderBuffer(cmdb, 0);
+	m_r->getPps().getTm().getAverageLuminanceBuffer().bindShaderBuffer(cmdb, 0);
 
 	m_r->drawQuad(cmdb);
 
@@ -181,9 +182,9 @@ Error Hdr::run(CommandBufferHandle& cmdb)
 }
 
 //==============================================================================
-void Hdr::updateDefaultBlock(CommandBufferHandle& cmdb)
+void Bloom::updateDefaultBlock(CommandBufferHandle& cmdb)
 {
-	Vec4 uniform(m_exposure, 0.0, 0.0, 0.0);
+	Vec4 uniform(m_threshold, 0.0, 0.0, 0.0);
 	m_commonBuff.write(cmdb, &uniform, sizeof(uniform), 0, 0, sizeof(uniform));
 }
 

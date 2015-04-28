@@ -10,7 +10,6 @@
 #include "anki/Gr.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
-#include "anki/renderer/Hdr.h"
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Bl.h"
 #include "anki/renderer/Lf.h"
@@ -30,13 +29,14 @@ class Pps: public RenderingPass
 	friend class Renderer;
 
 public:
-	const Hdr& getHdr() const
+	const Bloom& getBloom() const
 	{
-		return m_hdr;
+		return *m_bloom;
 	}
-	Hdr& getHdr()
+
+	Bloom& getBloom()
 	{
-		return m_hdr;
+		return *m_bloom;
 	}
 
 	const Ssao& getSsao() const
@@ -75,6 +75,16 @@ public:
 		return m_sslr;
 	}
 
+	const Tm& getTm() const
+	{
+		return *m_tm;
+	}
+
+	Tm& getTm()
+	{
+		return *m_tm;
+	}
+
 	/// Load the color grading texture.
 	Error loadColorGradingTexture(CString filename);
 
@@ -92,7 +102,7 @@ public:
 
 private:
 	Tm* m_tm = nullptr;
-	Hdr m_hdr;
+	Bloom* m_bloom;
 	Ssao m_ssao;
 	Bl m_bl;
 	Lf m_lf;

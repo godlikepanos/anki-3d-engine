@@ -32,12 +32,12 @@ Config::Config()
 	newOption("is.maxLightsPerTile", 16);
 
 	// Pps
-	newOption("pps.hdr.enabled", true);
-	newOption("pps.hdr.renderingQuality", 0.5);
-	newOption("pps.hdr.blurringDist", 1.0);
-	newOption("pps.hdr.samples", 5);
-	newOption("pps.hdr.blurringIterationsCount", 1);
-	newOption("pps.hdr.exposure", 4.0);
+	newOption("pps.bloom.enabled", true);
+	newOption("pps.bloom.renderingQuality", 0.5);
+	newOption("pps.bloom.blurringDist", 1.0);
+	newOption("pps.bloom.samples", 5);
+	newOption("pps.bloom.blurringIterationsCount", 1);
+	newOption("pps.bloom.threshold", 1.0);
 
 	newOption("pps.ssao.enabled", true);
 	newOption("pps.ssao.renderingQuality", 0.3);
