@@ -199,9 +199,6 @@ Error Is::initInternal(const ConfigSet& config)
 		m_sm.getPoissonEnabled());
 
 	// point light
-	CommandBufferHandle cmdBuff;
-	ANKI_CHECK(cmdBuff.create(&getGrManager())); // Job for initialization
-
 	ANKI_CHECK(m_lightVert.loadToCache(&getResourceManager(),
 		"shaders/IsLp.vert.glsl", pps.toCString(), "r_"));
 
@@ -228,7 +225,7 @@ Error Is::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = 
 		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
+	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
 
 	//
 	// Init the quad
@@ -265,9 +262,6 @@ Error Is::initInternal(const ConfigSet& config)
 			* sizeof(U32),
 			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 	}
-
-	// Flush
-	cmdBuff.flush();
 
 	// Get addresses
 	for(U i = 0; i < MAX_FRAMES; ++i)

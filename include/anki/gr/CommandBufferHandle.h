@@ -34,7 +34,7 @@ public:
 	/// Add another command buffer for execution
 	void pushBackOtherCommandBuffer(CommandBufferHandle& commands);
 
-	/// Flush command buffer for deffered execution.
+	/// Flush command buffer for deferred execution.
 	void flush();
 
 	/// Flush and wait to finish

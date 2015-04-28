@@ -42,17 +42,11 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 	source.append(pars.getShaderSource());
 
 	// Create
-	GrManager& gr = manager.getGrManager();
-	CommandBufferHandle cmdb;
-	ANKI_CHECK(cmdb.create(&gr));
-
 	ANKI_CHECK(
 		m_shader.create(
-		cmdb, 
+		&manager.getGrManager(), 
 		pars.getShaderType(), &source[0], 
 		source.getLength() + 1));
-
-	cmdb.flush();
 
 	m_type = pars.getShaderType();
 

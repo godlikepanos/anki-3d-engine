@@ -24,7 +24,7 @@ public:
 	~ShaderHandle();
 
 	/// Create shader program.
-	ANKI_USE_RESULT Error create(CommandBufferHandle& commands, 
+	ANKI_USE_RESULT Error create(GrManager* manager, 
 		ShaderType shaderType, const void* source, PtrSize sourceSize);
 };
 /// @}

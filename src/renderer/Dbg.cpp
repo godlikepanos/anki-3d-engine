@@ -39,14 +39,6 @@ Error Dbg::init(const ConfigSet& initializer)
 	m_enabled = initializer.get("dbg.enabled");
 	enableBits(Flag::ALL);
 
-	GrManager& gl = getGrManager();
-	CommandBufferHandle cmdb;
-	err = cmdb.create(&gl);
-	if(err)
-	{
-		return err;
-	}
-
 	// Chose the correct color FAI
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -62,7 +54,7 @@ Error Dbg::init(const ConfigSet& initializer)
 	fbInit.m_colorAttachments[0].m_loadOperation = 
 		AttachmentLoadOperation::LOAD;
 
-	err = m_fb.create(cmdb, fbInit);
+	err = m_fb.create(&getGrManager(), fbInit);
 	if(!err)
 	{
 		m_drawer = getAllocator().newInstance<DebugDrawer>();
@@ -76,11 +68,6 @@ Error Dbg::init(const ConfigSet& initializer)
 	if(!err)
 	{
 		m_sceneDrawer = getAllocator().newInstance<SceneDebugDrawer>(m_drawer);
-	}
-
-	if(!err)
-	{
-		cmdb.finish();
 	}
 
 	return err;

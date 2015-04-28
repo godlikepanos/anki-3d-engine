@@ -240,7 +240,7 @@ public:
 	/// @{
 	GrManager& _getGrManager()
 	{
-		return *m_gl;
+		return *m_gr;
 	}
 
 	HeapAllocator<U8>& _getAllocator()
@@ -265,16 +265,16 @@ public:
 
 	Timestamp getGlobalTimestamp() const
 	{
-		return *m_globalTimestamp;
+		return *m_grobalTimestamp;
 	}
 	/// @}
 
 private:
 	Threadpool* m_threadpool;
 	ResourceManager* m_resources;
-	GrManager* m_gl;
+	GrManager* m_gr;
 	HeapAllocator<U8> m_alloc;
-	const Timestamp* m_globalTimestamp = nullptr;
+	const Timestamp* m_grobalTimestamp = nullptr;
 
 	/// @name Rendering stages
 	/// @{

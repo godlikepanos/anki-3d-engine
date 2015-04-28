@@ -107,15 +107,12 @@ Error Tiler::initInternal()
 		PixelFormat(ComponentFormat::R32G32, TransformFormat::UINT), 
 		1, SamplingFilter::NEAREST, 1, m_rt));
 
-	CommandBufferHandle cmdBuff;
-	ANKI_CHECK(cmdBuff.create(&getGrManager()));
-
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = 
 		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
+	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
 
 	// Init planes. One plane for each direction, plus near/far plus the world
 	// space of those
@@ -150,8 +147,6 @@ Error Tiler::initInternal()
 		m_r->getTilesCount().x() * m_r->getTilesCount().y()));
 
 	ANKI_ASSERT(count + m_farPlanesW.getSize() == m_allPlanes.getSize());
-
-	cmdBuff.flush();
 
 	ANKI_CHECK(initPbos());
 

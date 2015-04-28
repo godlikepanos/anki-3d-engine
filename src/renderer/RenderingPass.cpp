@@ -43,10 +43,6 @@ ResourceManager& RenderingPass::getResourceManager()
 Error BlurringRenderingPass::initBlurring(
 	Renderer& r, U width, U height, U samples, F32 blurringDistance)
 {
-	GrManager& gl = getGrManager();
-	CommandBufferHandle cmdb;
-	ANKI_CHECK(cmdb.create(&gl));
-
 	Array<StringAuto, 2> pps = {{getAllocator(), getAllocator()}};
 
 	pps[1].sprintf(
@@ -79,7 +75,7 @@ Error BlurringRenderingPass::initBlurring(
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
 		fbInit.m_colorAttachments[0].m_loadOperation = 
 			AttachmentLoadOperation::DONT_CARE;
-		ANKI_CHECK(dir.m_fb.create(cmdb, fbInit));
+		ANKI_CHECK(dir.m_fb.create(&getGrManager(), fbInit));
 
 		ANKI_CHECK(dir.m_frag.loadToCache(&getResourceManager(),
 			"shaders/VariableSamplingBlurGeneric.frag.glsl", 
@@ -88,8 +84,6 @@ Error BlurringRenderingPass::initBlurring(
 		ANKI_CHECK(r.createDrawQuadPipeline(
 			dir.m_frag->getGrShader(), dir.m_ppline));
 	}
-
-	cmdb.finish();
 
 	return ErrorCode::NONE;
 }

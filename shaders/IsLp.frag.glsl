@@ -8,7 +8,6 @@
 #pragma anki include "shaders/Pack.glsl"
 
 #define PI 3.1415926535
-#define EPSILON 0.0001
 
 #define ATTENUATION_FINE 0
 #define ATTENUATION_BOOST (0.1)
@@ -272,9 +271,9 @@ void main()
 		u_msRt0, u_msRt1, in_texCoord, diffCol, normal, specCol, specPower);
 
 #if BRDF
-	float a2 = pow(max(0.0001, specPower), 4.0);
+	float a2 = pow(max(EPSILON, specPower), 4.0);
 #else
-	specPower = max(0.0001, specPower) * 128.0;
+	specPower = max(EPSILON, specPower) * 128.0;
 #endif
 
 	// Ambient color

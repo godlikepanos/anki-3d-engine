@@ -64,17 +64,12 @@ Error Sslr::init(const ConfigSet& config)
 			1, SamplingFilter::LINEAR, 1, dir.m_rt));
 
 		// Create FB
-		CommandBufferHandle cmdBuff;
-		ANKI_CHECK(cmdBuff.create(&getGrManager()));
-
 		FramebufferHandle::Initializer fbInit;
 		fbInit.m_colorAttachmentsCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
 		fbInit.m_colorAttachments[0].m_loadOperation = 
 			AttachmentLoadOperation::LOAD;
-		ANKI_CHECK(dir.m_fb.create(cmdBuff, fbInit));
-
-		cmdBuff.finish();
+		ANKI_CHECK(dir.m_fb.create(&getGrManager(), fbInit));
 	}
 
 	return ErrorCode::NONE;

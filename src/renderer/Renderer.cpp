@@ -37,10 +37,10 @@ Error Renderer::init(
 	const ConfigSet& config,
 	const Timestamp* globalTimestamp)
 {
-	m_globalTimestamp = globalTimestamp;
+	m_grobalTimestamp = globalTimestamp;
 	m_threadpool = threadpool;
 	m_resources = resources;
-	m_gl = gl;
+	m_gr = gl;
 	m_alloc = alloc;
 
 	Error err = initInternal(config);
@@ -115,10 +115,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
 		{1.0, -1.0}, {-1.0, -1.0}};
 
-	CommandBufferHandle cmdBuff;
-	ANKI_CHECK(cmdBuff.create(m_gl));
-
-	ANKI_CHECK(m_quadPositionsBuff.create(m_gl, GL_ARRAY_BUFFER, 
+	ANKI_CHECK(m_quadPositionsBuff.create(m_gr, GL_ARRAY_BUFFER, 
 		&quadVertCoords[0][0], sizeof(quadVertCoords), 0));
 
 	ANKI_CHECK(m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources));
@@ -136,9 +133,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	// Default FB
 	FramebufferHandle::Initializer fbInit;
-	ANKI_CHECK(m_defaultFb.create(cmdBuff, fbInit));
-
-	cmdBuff.finish();
+	ANKI_CHECK(m_defaultFb.create(m_gr, fbInit));
 
 	return ErrorCode::NONE;
 }
@@ -277,7 +272,7 @@ Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 	init.m_sampling.m_anisotropyLevel = 0;
 
 	CommandBufferHandle cmdBuff;
-	ANKI_CHECK(cmdBuff.create(m_gl));
+	ANKI_CHECK(cmdBuff.create(m_gr));
 
 	rt.create(cmdBuff, init);
 	cmdBuff.finish();
@@ -293,7 +288,7 @@ Error Renderer::createDrawQuadPipeline(
 	init.m_shaders[U(ShaderType::VERTEX)] = m_drawQuadVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = frag;
 
-	return ppline.create(m_gl, init);
+	return ppline.create(m_gr, init);
 }
 
 } // end namespace anki

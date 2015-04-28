@@ -49,8 +49,7 @@ Error Lf::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Lf::initPseudo(const ConfigSet& config, 
-	CommandBufferHandle& cmdBuff)
+Error Lf::initPseudo(const ConfigSet& config)
 {
 	m_maxSpritesPerFlare = config.get("pps.lf.maxSpritesPerFlare");
 	m_maxFlares = config.get("pps.lf.maxFlares");
@@ -161,10 +160,7 @@ Error Lf::initInternal(const ConfigSet& config)
 		return ErrorCode::NONE;
 	}
 
-	CommandBufferHandle cmdBuff;
-	ANKI_CHECK(cmdBuff.create(&getGrManager()));
-
-	ANKI_CHECK(initPseudo(config, cmdBuff));
+	ANKI_CHECK(initPseudo(config));
 	ANKI_CHECK(initSprite(config));
 	ANKI_CHECK(initOcclusion(config));
 
@@ -179,7 +175,7 @@ Error Lf::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = 
 		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
+	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
 
 	// Blit
 	ANKI_CHECK(
@@ -187,8 +183,6 @@ Error Lf::initInternal(const ConfigSet& config)
 
 	ANKI_CHECK(m_r->createDrawQuadPipeline(
 		m_blitFrag->getGrShader(), m_blitPpline));
-
-	cmdBuff.flush();
 
 	return ErrorCode::NONE;
 }

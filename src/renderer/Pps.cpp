@@ -53,9 +53,6 @@ Error Pps::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_sslr.init(config));
 
 	// FBO
-	CommandBufferHandle cmdb;
-	ANKI_CHECK(cmdb.create(&getGrManager()));
-
 	ANKI_CHECK(
 		m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(), 
@@ -67,7 +64,7 @@ Error Pps::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = 
 		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(m_fb.create(cmdb, fbInit));
+	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
 
 	// SProg
 	StringAuto pps(getAllocator());
@@ -93,8 +90,6 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	// LUT
 	ANKI_CHECK(loadColorGradingTexture("engine_data/default_lut.ankitex"));
-
-	cmdb.finish();
 
 	return ErrorCode::NONE;
 }
@@ -183,6 +178,8 @@ Error Pps::run(CommandBufferHandle& cmdb)
 	}
 
 	m_lut->getGlTexture().bind(cmdb, 3);
+
+	m_tm->getAverageLuminanceBuffer().bindShaderBuffer(cmdb, 0);
 
 	m_r->drawQuad(cmdb);
 

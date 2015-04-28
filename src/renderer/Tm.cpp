@@ -19,7 +19,7 @@ Error Tm::create(const ConfigSet& initializer)
 		"#define IS_RT_MIPMAP %u\n"
 		"#define ANKI_RENDERER_WIDTH %u\n"
 		"#define ANKI_RENDERER_HEIGHT %u\n",
-		Is::MIPMAPS_COUNT,
+		min<U>(Is::MIPMAPS_COUNT, 5) - 1,
 		m_r->getWidth(),
 		m_r->getHeight());
 

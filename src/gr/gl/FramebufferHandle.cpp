@@ -103,36 +103,40 @@ FramebufferHandle::~FramebufferHandle()
 {}
 
 //==============================================================================
-Error FramebufferHandle::create(CommandBufferHandle& commands, 
+Error FramebufferHandle::create(GrManager* manager, 
 	Initializer& init)
 {
 	using DeleteCommand = DeleteObjectCommand<FramebufferImpl>;
 	using Deleter = DeferredDeleter<FramebufferImpl, DeleteCommand>;
 
-	Base::create(commands.get().getManager(), Deleter());
+	CommandBufferHandle cmdb;
+	ANKI_CHECK(cmdb.create(manager));
+
+	Base::create(cmdb.get().getManager(), Deleter());
 
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
-	commands.get().pushBackNewCommand<CreateFramebufferCommand>(*this, init);
+	cmdb.get().pushBackNewCommand<CreateFramebufferCommand>(*this, init);
+	cmdb.flush();
 
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void FramebufferHandle::bind(CommandBufferHandle& commands)
+void FramebufferHandle::bind(CommandBufferHandle& cmdb)
 {
-	commands.get().pushBackNewCommand<BindFramebufferCommand>(*this);
+	cmdb.get().pushBackNewCommand<BindFramebufferCommand>(*this);
 }
 
 //==============================================================================
-void FramebufferHandle::blit(CommandBufferHandle& commands,
+void FramebufferHandle::blit(CommandBufferHandle& cmdb,
 	const FramebufferHandle& b, 
 	const Array<U32, 4>& sourceRect,
 	const Array<U32, 4>& destRect, 
 	GLbitfield attachmentMask,
 	Bool linear)
 {
-	commands.get().pushBackNewCommand<BlitFramebufferCommand>(
+	cmdb.get().pushBackNewCommand<BlitFramebufferCommand>(
 		*this, b, sourceRect, destRect, attachmentMask, linear);
 }
 

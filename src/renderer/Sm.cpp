@@ -54,6 +54,7 @@ Error Sm::init(const ConfigSet& initializer)
 	ANKI_CHECK(cmdBuff.create(&getGrManager()));
 
 	ANKI_CHECK(m_sm2DArrayTex.create(cmdBuff, sminit));
+	cmdBuff.flush();
 
 	// Init sms
 	m_sms.create(getAllocator(), initializer.get("is.sm.maxLights"));
@@ -70,12 +71,10 @@ Error Sm::init(const ConfigSet& initializer)
 		sm.m_layerId = layer;
 
 		fbInit.m_depthStencilAttachment.m_layer = layer;
-		ANKI_CHECK(sm.m_fb.create(cmdBuff, fbInit));
+		ANKI_CHECK(sm.m_fb.create(&getGrManager(), fbInit));
 
 		++layer;
 	}
-
-	cmdBuff.flush();
 
 	return ErrorCode::NONE;
 }

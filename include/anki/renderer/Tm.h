@@ -21,6 +21,11 @@ public:
 	:	RenderingPass(r)
 	{}
 
+	BufferHandle& getAverageLuminanceBuffer()
+	{
+		return m_luminanceBuff;
+	}
+
 	ANKI_USE_RESULT Error create(const ConfigSet& initializer);
 
 	void run(CommandBufferHandle& cmdb);
@@ -30,6 +35,7 @@ private:
 	PipelineHandle m_luminancePpline;
 	BufferHandle m_luminanceBuff;
 };
+/// @}
 
 } // end namespace anki
 

@@ -17,9 +17,6 @@ Fs::~Fs()
 //==============================================================================
 Error Fs::init(const ConfigSet&)
 {
-	CommandBufferHandle cmdb;
-	ANKI_CHECK(cmdb.create(&getGrManager()));
-
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs()._getRt();
@@ -28,9 +25,7 @@ Error Fs::init(const ConfigSet&)
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs()._getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation = 
 		AttachmentLoadOperation::LOAD;
-	ANKI_CHECK(m_fb.create(cmdb,fbInit));
-
-	cmdb.flush();
+	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
 
 	return ErrorCode::NONE;
 }

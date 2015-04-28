@@ -21,6 +21,8 @@
 precision DEFAULT_FLOAT_PRECISION float;
 precision DEFAULT_FLOAT_PRECISION int;
 
+#define EPSILON (0.000001)
+
 // Read from a render target texture
 //#define textureRt(tex_, texc_) texture(tex_, texc_)
 #define textureRt(tex_, texc_) textureLod(tex_, texc_, 0.0)

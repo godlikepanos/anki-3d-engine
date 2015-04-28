@@ -59,22 +59,27 @@ ShaderHandle::~ShaderHandle()
 {}
 
 //==============================================================================
-Error ShaderHandle::create(CommandBufferHandle& commands, 
+Error ShaderHandle::create(GrManager* manager, 
 	ShaderType type, const void* source, PtrSize sourceSize)
 {
 	ANKI_ASSERT(strlen(static_cast<const char*>(source)) == sourceSize - 1);
 	using DeleteCommand = DeleteObjectCommand<ShaderImpl>;
 	using Deleter = DeferredDeleter<ShaderImpl, DeleteCommand>;
 
-	Base::create(commands.get().getManager(), Deleter());
+	CommandBufferHandle cmdb;
+	ANKI_CHECK(cmdb.create(manager));
+
+	Base::create(cmdb.get().getManager(), Deleter());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
 	// Copy source to the command buffer
-	void* src = commands.get().getInternalAllocator().allocate(sourceSize);
+	void* src = cmdb.get().getInternalAllocator().allocate(sourceSize);
 	memcpy(src, source, sourceSize);
 
-	commands.get().pushBackNewCommand<ShaderCreateCommand>(
+	cmdb.get().pushBackNewCommand<ShaderCreateCommand>(
 		*this, type, static_cast<char*>(src));
+
+	cmdb.flush();
 
 	return ErrorCode::NONE;
 }

@@ -35,10 +35,6 @@ Error Ms::createRt(U32 index, U32 samples)
 		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM), 
 		samples, SamplingFilter::NEAREST, 2, plane.m_rt1));
 
-	GrManager& gl = getGrManager();
-	CommandBufferHandle cmdb;
-	ANKI_CHECK(cmdb.create(&gl));
-
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 2;
 	fbInit.m_colorAttachments[0].m_texture = plane.m_rt0;
@@ -52,8 +48,7 @@ Error Ms::createRt(U32 index, U32 samples)
 		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
-	ANKI_CHECK(plane.m_fb.create(cmdb, fbInit));
-	cmdb.finish();
+	ANKI_CHECK(plane.m_fb.create(&getGrManager(), fbInit));
 
 	return ErrorCode::NONE;
 }
