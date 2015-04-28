@@ -23,11 +23,11 @@ public:
 
 	ANKI_USE_RESULT Error create(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdb);
+	void run(CommandBufferHandle& cmdb);
 
 private:
-	ShaderResourcePointer m_avgLuminanceShader;
-	PipelineHandle m_avgLuminancePpline;
+	ShaderResourcePointer m_luminanceShader;
+	PipelineHandle m_luminancePpline;
 	BufferHandle m_luminanceBuff;
 };
 

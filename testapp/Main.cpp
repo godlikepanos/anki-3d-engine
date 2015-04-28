@@ -41,7 +41,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 0
+#define NO_PLAYER 1
 
 
 //==============================================================================
@@ -452,6 +452,8 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 #if NO_PLAYER
 	if(in.getMousePosition() != Vec2(0.0))
 	{
+		//printf("%f %f\n", in.getMousePosition().x(), in.getMousePosition().y());
+
 		F32 angY = -ang * in.getMousePosition().x() * mouseSensivity *
 			renderer.getAspectRatio();
 
@@ -493,7 +495,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.hdr.blurringIterationsCount", 3);
 	config.set("pps.hdr.exposure", 15.0);
 	config.set("pps.hdr.samples", 17);
-	config.set("pps.sslr.enabled", true);
+	config.set("pps.sslr.enabled", false);
 	config.set("pps.sslr.renderingQuality", 0.5);
 	config.set("pps.sslr.blurringIterationsCount", 1);
 	config.set("pps.ssao.blurringIterationsCount", 2);

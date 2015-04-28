@@ -53,8 +53,8 @@ Error Pps::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_sslr.init(config));
 
 	// FBO
-	CommandBufferHandle cmdBuff;
-	ANKI_CHECK(cmdBuff.create(&getGrManager()));
+	CommandBufferHandle cmdb;
+	ANKI_CHECK(cmdb.create(&getGrManager()));
 
 	ANKI_CHECK(
 		m_r->createRenderTarget(
@@ -67,7 +67,7 @@ Error Pps::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = 
 		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(m_fb.create(cmdBuff, fbInit));
+	ANKI_CHECK(m_fb.create(cmdb, fbInit));
 
 	// SProg
 	StringAuto pps(getAllocator());
@@ -94,7 +94,7 @@ Error Pps::initInternal(const ConfigSet& config)
 	// LUT
 	ANKI_CHECK(loadColorGradingTexture("engine_data/default_lut.ankitex"));
 
-	cmdBuff.finish();
+	cmdb.finish();
 
 	return ErrorCode::NONE;
 }
@@ -118,30 +118,32 @@ Error Pps::loadColorGradingTexture(CString filename)
 }
 
 //==============================================================================
-Error Pps::run(CommandBufferHandle& cmdBuff)
+Error Pps::run(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
 	// First SSAO because it depends on MS where HDR depends on IS
 	if(m_ssao.getEnabled())
 	{
-		ANKI_CHECK(m_ssao.run(cmdBuff));
+		ANKI_CHECK(m_ssao.run(cmdb));
 	}
 
 	// Then SSLR because HDR depends on it
 	if(m_sslr.getEnabled())
 	{
-		ANKI_CHECK(m_sslr.run(cmdBuff));
+		ANKI_CHECK(m_sslr.run(cmdb));
 	}
+
+	m_tm->run(cmdb);
 
 	if(m_hdr.getEnabled())
 	{
-		ANKI_CHECK(m_hdr.run(cmdBuff));
+		ANKI_CHECK(m_hdr.run(cmdb));
 	}
 
 	if(m_lf.getEnabled())
 	{
-		ANKI_CHECK(m_lf.run(cmdBuff));
+		ANKI_CHECK(m_lf.run(cmdb));
 	}
 
 	Bool drawToDefaultFbo = 
@@ -151,38 +153,38 @@ Error Pps::run(CommandBufferHandle& cmdBuff)
 
 	if(drawToDefaultFbo)
 	{
-		m_r->getDefaultFramebuffer().bind(cmdBuff);
-		cmdBuff.setViewport(0, 0, 
+		m_r->getDefaultFramebuffer().bind(cmdb);
+		cmdb.setViewport(0, 0, 
 			m_r->getDefaultFramebufferWidth(), 
 			m_r->getDefaultFramebufferHeight());
 	}
 	else
 	{
-		m_fb.bind(cmdBuff);
-		cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
+		m_fb.bind(cmdb);
+		cmdb.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 	}
 
-	m_ppline.bind(cmdBuff);
+	m_ppline.bind(cmdb);
 
-	m_r->getIs()._getRt().bind(cmdBuff, 0);
+	m_r->getIs()._getRt().bind(cmdb, 0);
 
 	if(m_ssao.getEnabled())
 	{
-		m_ssao._getRt().bind(cmdBuff, 1);
+		m_ssao._getRt().bind(cmdb, 1);
 	}
 
 	if(m_lf.getEnabled())
 	{
-		m_lf._getRt().bind(cmdBuff, 2);
+		m_lf._getRt().bind(cmdb, 2);
 	}
 	else if(m_hdr.getEnabled())
 	{
-		m_hdr._getRt().bind(cmdBuff, 2);
+		m_hdr._getRt().bind(cmdb, 2);
 	}
 
-	m_lut->getGlTexture().bind(cmdBuff, 3);
+	m_lut->getGlTexture().bind(cmdb, 3);
 
-	m_r->drawQuad(cmdBuff);
+	m_r->drawQuad(cmdb);
 
 	return ErrorCode::NONE;
 }

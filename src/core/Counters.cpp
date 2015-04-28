@@ -56,54 +56,42 @@ Error CountersManager::create(
 	HeapAllocator<U8> alloc, const CString& cacheDir,
 	const Timestamp* globalTimestamp)
 {
-	Error err = ErrorCode::NONE;
-
 	m_globalTimestamp = globalTimestamp;
 
 	U count = static_cast<U>(Counter::COUNT);
 	m_alloc = alloc;
 	
-	err = m_perframeValues.create(m_alloc, count);
-	if(err) return err;
+	m_perframeValues.create(m_alloc, count);
 
-	err = m_perrunValues.create(m_alloc, count);
-	if(err) return err;
+	m_perrunValues.create(m_alloc, count);
 
-	err = m_counterTimes.create(m_alloc, count);
-	if(err) return err;
+	m_counterTimes.create(m_alloc, count);
 
 	memset(&m_perframeValues[0], 0, m_perframeValues.getByteSize());
 	memset(&m_perrunValues[0], 0, m_perrunValues.getByteSize());
 	memset(&m_counterTimes[0], 0, m_counterTimes.getByteSize());
 
 	// Open and write the headers to the files
-	String tmp;
-	String::ScopeDestroyer tmpd(&tmp, alloc);
-	err = tmp.sprintf(alloc, "%s/frame_counters.csv", &cacheDir[0]);
-	if(err) return err;
+	StringAuto tmp(alloc);
+	tmp.sprintf("%s/frame_counters.csv", &cacheDir[0]);
 
-	err = m_perframeFile.open(tmp.toCString(), File::OpenFlag::WRITE);
-	if(err) return err;
+	ANKI_CHECK(m_perframeFile.open(tmp.toCString(), File::OpenFlag::WRITE));
 
-	err = m_perframeFile.writeText("FRAME");
-	if(err) return err;
+	ANKI_CHECK(m_perframeFile.writeText("FRAME"));
 
 	for(const CounterInfo& inf : cinfo)
 	{
 		if(inf.m_flags & CF_PER_FRAME)
 		{
-			err = m_perframeFile.writeText(", %s", inf.m_name);
-			if(err) return err;
+			ANKI_CHECK(m_perframeFile.writeText(", %s", inf.m_name));
 		}
 	}
 
 	// Open and write the headers to the other file
 	tmp.destroy(alloc);
-	err = tmp.sprintf(alloc, "%s/run_counters.csv", &cacheDir[0]);
-	if(err) return err;
+	tmp.sprintf("%s/run_counters.csv", &cacheDir[0]);
 
-	err = m_perrunFile.open(tmp.toCString(), File::OpenFlag::WRITE);
-	if(err) return err;
+	ANKI_CHECK(m_perrunFile.open(tmp.toCString(), File::OpenFlag::WRITE));
 
 	U i = 0;
 	for(const CounterInfo& inf : cinfo)
@@ -112,21 +100,21 @@ Error CountersManager::create(
 		{
 			if(i != 0)
 			{
-				err = m_perrunFile.writeText(", %" MAX_NAME "s", inf.m_name);
+				ANKI_CHECK(
+					m_perrunFile.writeText(", %" MAX_NAME "s", inf.m_name));
 			}
 			else
 			{
-				err = m_perrunFile.writeText("%" MAX_NAME "s", inf.m_name);
+				ANKI_CHECK(
+					m_perrunFile.writeText("%" MAX_NAME "s", inf.m_name));
 			}
-
-			if(err) return err;
 
 			++i;
 		}
 	}
-	err = m_perrunFile.writeText("\n");
+	ANKI_CHECK(m_perrunFile.writeText("\n"));
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -140,32 +128,32 @@ CountersManager::~CountersManager()
 //==============================================================================
 void CountersManager::increaseCounter(Counter counter, U64 val)
 {
-	ANKI_ASSERT(cinfo[(U)counter].m_flags & CF_U64);
+	ANKI_ASSERT(cinfo[U(counter)].m_flags & CF_U64);
 
 	if(cinfo[(U)counter].m_flags & CF_PER_FRAME)
 	{
-		m_perframeValues[(U)counter].m_int += val;
+		m_perframeValues[U(counter)].m_int += val;
 	}
 
-	if(cinfo[(U)counter].m_flags & CF_PER_RUN)
+	if(cinfo[U(counter)].m_flags & CF_PER_RUN)
 	{
-		m_perrunValues[(U)counter].m_int += val;
+		m_perrunValues[U(counter)].m_int += val;
 	}
 }
 
 //==============================================================================
 void CountersManager::increaseCounter(Counter counter, F64 val)
 {
-	ANKI_ASSERT(cinfo[(U)counter].m_flags & CF_F64);
+	ANKI_ASSERT(cinfo[U(counter)].m_flags & CF_F64);
 
-	if(cinfo[(U)counter].m_flags & CF_PER_FRAME)
+	if(cinfo[U(counter)].m_flags & CF_PER_FRAME)
 	{
-		m_perframeValues[(U)counter].m_float += val;
+		m_perframeValues[U(counter)].m_float += val;
 	}
 
-	if(cinfo[(U)counter].m_flags & CF_PER_RUN)
+	if(cinfo[U(counter)].m_flags & CF_PER_RUN)
 	{
-		m_perrunValues[(U)counter].m_float += val;
+		m_perrunValues[U(counter)].m_float += val;
 	}
 }
 
@@ -173,23 +161,23 @@ void CountersManager::increaseCounter(Counter counter, F64 val)
 void CountersManager::startTimer(Counter counter)
 {
 	// The counter should be F64
-	ANKI_ASSERT(cinfo[(U)counter].m_flags & CF_F64);
+	ANKI_ASSERT(cinfo[U(counter)].m_flags & CF_F64);
 	// The timer should have been reseted
-	ANKI_ASSERT(m_counterTimes[(U)counter] == 0.0);
+	ANKI_ASSERT(m_counterTimes[U(counter)] == 0.0);
 
-	m_counterTimes[(U)counter] = HighRezTimer::getCurrentTime();
+	m_counterTimes[U(counter)] = HighRezTimer::getCurrentTime();
 }
 
 //==============================================================================
 void CountersManager::stopTimerIncreaseCounter(Counter counter)
 {
 	// The counter should be F64
-	ANKI_ASSERT(cinfo[(U)counter].m_flags & CF_F64);
+	ANKI_ASSERT(cinfo[U(counter)].m_flags & CF_F64);
 	// The timer should have started
-	ANKI_ASSERT(m_counterTimes[(U)counter] > 0.0);
+	ANKI_ASSERT(m_counterTimes[U(counter)] > 0.0);
 
-	auto prevTime = m_counterTimes[(U)counter];
-	m_counterTimes[(U)counter] = 0.0;
+	auto prevTime = m_counterTimes[U(counter)];
+	m_counterTimes[U(counter)] = 0.0;
 
 	increaseCounter(
 		counter, (HighRezTimer::getCurrentTime() - prevTime) * 1000.0);
@@ -306,21 +294,16 @@ TraceManager::~TraceManager()
 //==============================================================================
 Error TraceManager::create(HeapAllocator<U8>& alloc, const CString& storeDir)
 {
-	Error err = ErrorCode::NONE;
 	String filename;
-	err = filename.sprintf(alloc, "%s/trace", &storeDir[0]);
-	if(err) return err;
+	filename.sprintf(alloc, "%s/trace", &storeDir[0]);
 
-	err = m_traceFile.open(filename.toCString(), File::OpenFlag::WRITE);
+	ANKI_CHECK(m_traceFile.open(filename.toCString(), File::OpenFlag::WRITE));
 
-	if(!err)
-	{
-		err = m_traceFile.writeText(
-			"thread_id, depth, event_name, start_time, stop_time\n");
-	}
+	ANKI_CHECK(m_traceFile.writeText(
+			"thread_id, depth, event_name, start_time, stop_time\n"));
 
 	filename.destroy(alloc);
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
