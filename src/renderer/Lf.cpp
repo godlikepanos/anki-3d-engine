@@ -263,7 +263,7 @@ Error Lf::runOcclusionTests(CommandBufferHandle& cmdb)
 }
 
 //==============================================================================
-Error Lf::run(CommandBufferHandle& cmdBuff)
+Error Lf::run(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 	Error err = ErrorCode::NONE;
@@ -273,18 +273,18 @@ Error Lf::run(CommandBufferHandle& cmdBuff)
 	//
 
 	// Set the common state
-	m_fb.bind(cmdBuff);
-	cmdBuff.setViewport(0, 0, m_r->getPps().getBloom().getWidth(), 
+	m_fb.bind(cmdb);
+	cmdb.setViewport(0, 0, m_r->getPps().getBloom().getWidth(), 
 		m_r->getPps().getBloom().getHeight());
 
-	m_pseudoPpline.bind(cmdBuff);
+	m_pseudoPpline.bind(cmdb);
 
 	Array<TextureHandle, 2> tarr = {{
 		m_r->getPps().getBloom().getRt(), 
 		m_lensDirtTex->getGlTexture()}};
-	cmdBuff.bindTextures(0, tarr.begin(), tarr.getSize());
+	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
 
-	m_r->drawQuad(cmdBuff);
+	m_r->drawQuad(cmdb);
 
 	//
 	// Rest of the passes
@@ -305,9 +305,9 @@ Error Lf::run(CommandBufferHandle& cmdBuff)
 		const U bufferSize = m_flareSize * totalCount;
 
 		// Set common rendering state
-		m_realPpline.bind(cmdBuff);
-		cmdBuff.enableBlend(true);
-		cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);
+		m_realPpline.bind(cmdb);
+		cmdb.enableBlend(true);
+		cmdb.setBlendFunctions(GL_ONE, GL_ONE);
 
 		// Send the command to write the buffer now
 		BufferHandle& flareDataBuff = m_flareDataBuff[
@@ -352,9 +352,9 @@ Error Lf::run(CommandBufferHandle& cmdBuff)
 			++count;
 
 			// Render
-			lf.getTexture().bind(cmdBuff, 0);
+			lf.getTexture().bind(cmdb, 0);
 			flareDataBuff.bindShaderBuffer(
-				cmdBuff, 
+				cmdb, 
 				reinterpret_cast<U8*>(sprites) - spritesInitialPtr, 
 				sizeof(Sprite) * count,
 				0);
@@ -365,7 +365,7 @@ Error Lf::run(CommandBufferHandle& cmdBuff)
 			
 			if(!queryInvalid)
 			{
-				m_r->drawQuadConditional(query, cmdBuff);
+				m_r->drawQuadConditional(query, cmdb);
 			}
 			else
 			{
@@ -390,17 +390,17 @@ Error Lf::run(CommandBufferHandle& cmdBuff)
 	{
 		// No flares
 
-		cmdBuff.enableBlend(true);
-		cmdBuff.setBlendFunctions(GL_ONE, GL_ONE);
+		cmdb.enableBlend(true);
+		cmdb.setBlendFunctions(GL_ONE, GL_ONE);
 	}
 
 	// Blit the HDR RT back to LF RT
 	//
-	m_r->getPps().getBloom().getRt().bind(cmdBuff, 0);
-	m_blitPpline.bind(cmdBuff);
-	m_r->drawQuad(cmdBuff);
+	m_r->getPps().getBloom().getRt().bind(cmdb, 0);
+	m_blitPpline.bind(cmdb);
+	m_r->drawQuad(cmdb);
 
-	cmdBuff.enableBlend(false);
+	cmdb.enableBlend(false);
 
 	return err;
 }
