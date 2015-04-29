@@ -65,6 +65,7 @@ public:
 private:
 	U32 m_width, m_height;
 	F32 m_threshold = 10.0; ///< How bright it is
+	F32 m_scale = 1.0;
 	U32 m_blurringIterationsCount = 2; ///< The blurring iterations
 	F32 m_blurringDist = 1.0; ///< Distance in blurring
 	

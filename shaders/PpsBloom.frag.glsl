@@ -12,7 +12,7 @@ layout(binding = 0) uniform lowp sampler2D u_tex; ///< Its the IS RT
 
 layout(std140, binding = 0) uniform _blk
 {
-	vec4 u_thresholdPad3;
+	vec4 u_thresholdScalePad2;
 };
 
 layout(std140, binding = 0) readonly buffer _blk1
@@ -47,5 +47,6 @@ void main()
 	out_color += readTexture(MIPMAP - 2);
 	
 	out_color /= 3.0;
-	out_color = tonemap(out_color, u_averageLuminancePad3.x, u_thresholdPad3.x);
+	out_color = tonemap(out_color, u_averageLuminancePad3.x, 
+		u_thresholdScalePad2.x) * u_thresholdScalePad2.y;
 }

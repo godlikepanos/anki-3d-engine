@@ -51,6 +51,7 @@ Error Bloom::initInternal(const ConfigSet& initializer)
 	alignRoundDown(16, m_height);
 
 	m_threshold = initializer.get("pps.bloom.threshold");
+	m_scale = initializer.get("pps.bloom.scale");
 	m_blurringDist = initializer.get("pps.bloom.blurringDist");
 	m_blurringIterationsCount = 
 		initializer.get("pps.bloom.blurringIterationsCount");
@@ -184,7 +185,7 @@ Error Bloom::run(CommandBufferHandle& cmdb)
 //==============================================================================
 void Bloom::updateDefaultBlock(CommandBufferHandle& cmdb)
 {
-	Vec4 uniform(m_threshold, 0.0, 0.0, 0.0);
+	Vec4 uniform(m_threshold, m_scale, 0.0, 0.0);
 	m_commonBuff.write(cmdb, &uniform, sizeof(uniform), 0, 0, sizeof(uniform));
 }
 

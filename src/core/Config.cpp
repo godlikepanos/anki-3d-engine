@@ -38,6 +38,7 @@ Config::Config()
 	newOption("pps.bloom.samples", 5);
 	newOption("pps.bloom.blurringIterationsCount", 1);
 	newOption("pps.bloom.threshold", 1.0);
+	newOption("pps.bloom.scale", 2.0);
 
 	newOption("pps.ssao.enabled", true);
 	newOption("pps.ssao.renderingQuality", 0.3);
