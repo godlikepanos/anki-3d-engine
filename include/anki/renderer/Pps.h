@@ -12,7 +12,6 @@
 #include "anki/resource/Resource.h"
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Bl.h"
-#include "anki/renderer/Lf.h"
 #include "anki/renderer/Sslr.h"
 
 namespace anki {
@@ -57,15 +56,6 @@ public:
 		return m_bl;
 	}
 
-	const Lf& getLf() const
-	{
-		return m_lf;
-	}
-	Lf& getLf()
-	{
-		return m_lf;
-	}
-
 	const Sslr& getSslr() const
 	{
 		return m_sslr;
@@ -103,9 +93,9 @@ public:
 private:
 	Tm* m_tm = nullptr;
 	Bloom* m_bloom;
+	Sslf* m_sslf;
 	Ssao m_ssao;
 	Bl m_bl;
-	Lf m_lf;
 	Sslr m_sslr;
 
 	FramebufferHandle m_fb;

@@ -14,6 +14,8 @@ namespace anki {
 class Fs;
 class Tm;
 class Bloom;
+class Lf;
+class Sslf;
 
 // Render target formats
 const U MS_COLOR_ATTACHMENTS_COUNT = 2;

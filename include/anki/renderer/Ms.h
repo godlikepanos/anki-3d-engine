@@ -42,6 +42,8 @@ public:
 	{
 		return m_planes[1].m_fb;
 	}
+
+	void generateMipmaps(CommandBufferHandle& cmdb);
 	/// @}
 
 private:

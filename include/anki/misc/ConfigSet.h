@@ -27,7 +27,7 @@ public:
 		}
 		else
 		{
-			ANKI_LOGE("Option not found");
+			ANKI_LOGE("Option not found: %s", name);
 			return 0.0;
 		}
 	}
@@ -42,7 +42,7 @@ public:
 		}
 		else
 		{
-			ANKI_LOGE("Option not found");
+			ANKI_LOGE("Option not found: %s", name);
 		}
 	}
 

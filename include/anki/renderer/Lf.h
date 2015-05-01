@@ -29,27 +29,14 @@ public:
 
 	~Lf();
 
-	const TextureHandle& _getRt() const
-	{
-		return m_rt;
-	}
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	TextureHandle& _getRt()
-	{
-		return m_rt;
-	}
+	void runOcclusionTests(CommandBufferHandle& cmdb);
 
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-
-	ANKI_USE_RESULT Error runOcclusionTests(CommandBufferHandle& cmdb);
-
-	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
+	void run(CommandBufferHandle& cmdb);
 	/// @}
 
 private:
-	TextureHandle m_rt;
-	FramebufferHandle m_fb;
-
 	// Occlusion query
 	Array<BufferHandle, 3> m_positionsVertBuff;
 	BufferHandle m_mvpBuff;
@@ -57,25 +44,16 @@ private:
 	ShaderResourcePointer m_occlusionFrag;
 	PipelineHandle m_occlusionPpline;
 
-	// Pseudo flares
-	ShaderResourcePointer m_pseudoFrag;
-	PipelineHandle m_pseudoPpline;
-	TextureResourcePointer m_lensDirtTex;
-	U8 m_maxSpritesPerFlare;
-	U8 m_maxFlares;
-
 	// Sprite billboards
 	ShaderResourcePointer m_realVert;
 	ShaderResourcePointer m_realFrag;
 	PipelineHandle m_realPpline;
 	Array<BufferHandle, 3> m_flareDataBuff;
 	U32 m_flareSize;
+	U8 m_maxSpritesPerFlare;
+	U8 m_maxFlares;
+	
 
-	// Final HDR blit
-	ShaderResourcePointer m_blitFrag;
-	PipelineHandle m_blitPpline;
-
-	ANKI_USE_RESULT Error initPseudo(const ConfigSet& config);
 	ANKI_USE_RESULT Error initSprite(const ConfigSet& config);
 	ANKI_USE_RESULT Error initOcclusion(const ConfigSet& config);
 

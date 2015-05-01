@@ -25,7 +25,7 @@ Error Ms::createRt(U32 index, U32 samples)
 
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::D24, TransformFormat::FLOAT),
-		samples, SamplingFilter::NEAREST, 1, plane.m_depthRt));
+		samples, SamplingFilter::NEAREST, 4, plane.m_depthRt));
 
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), 
 		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
@@ -139,11 +139,16 @@ Error Ms::run(CommandBufferHandle& cmdb)
 		ANKI_ASSERT(0 && "TODO");
 	}
 
-	m_planes[planeId].m_depthRt.generateMipmaps(cmdb);
-
 	cmdb.enableDepthTest(false);
 
 	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void Ms::generateMipmaps(CommandBufferHandle& cmdb)
+{
+	U planeId = (m_r->getSamples() == 1) ? 1 : 0;
+	m_planes[planeId].m_depthRt.generateMipmaps(cmdb);
 }
 
 } // end namespace anki

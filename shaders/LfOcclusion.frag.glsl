@@ -3,7 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// PPS LF occlusion frag shader
+// LF occlusion frag shader
 
 #pragma anki type frag
 #pragma anki include "shaders/Common.glsl"

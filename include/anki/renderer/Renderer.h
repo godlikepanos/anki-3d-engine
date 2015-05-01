@@ -282,6 +282,7 @@ private:
 	Is m_is; ///< Illumination rendering stage
 	Pps m_pps; ///< Postprocessing rendering stage
 	Fs* m_fs = nullptr; ///< Forward shading.
+	Lf* m_lf = nullptr; ///< Forward shading lens flares.
 	Dbg m_dbg; ///< Debug stage
 	Tiler m_tiler;
 	/// @}

@@ -13,7 +13,7 @@
 static const char* XML_HEADER = R"(<?xml version="1.0" encoding="UTF-8" ?>)";
 
 //==============================================================================
-static aiColor3D srgbToLinear(const aiColor3D& in)
+static aiColor3D srgbToLinear(aiColor3D in)
 {
 	const float p = 1.0 / 2.4;
 	aiColor3D out;
@@ -22,6 +22,32 @@ static aiColor3D srgbToLinear(const aiColor3D& in)
 	out[2] = pow(in[2], p);
 	out[3] = in[3];
 	return out;
+}
+
+//==============================================================================
+/// Convert from sRGB to linear and preserve energy
+static aiColor3D computeLightColor(aiColor3D in)
+{
+	float energy = std::max(std::max(in[0], in[1]), in[2]);
+
+	if(energy > 1.0)
+	{
+		in[0] /= energy;
+		in[1] /= energy;
+		in[2] /= energy;
+	}
+	else
+	{
+		energy = 1.0;
+	}
+
+	in = srgbToLinear(in);
+
+	in[0] *= energy;
+	in[1] *= energy;
+	in[2] *= energy;
+	
+	return in;
 }
 
 //==============================================================================
@@ -640,14 +666,14 @@ void Exporter::exportLight(const aiLight& light)
 	file << "lcomp = node:getSceneNodeBase():getLightComponent()\n";
 
 	// Colors
-	aiColor3D linear = srgbToLinear(light.mColorDiffuse);
+	aiColor3D linear = computeLightColor(light.mColorDiffuse);
 	file << "lcomp:setDiffuseColor(Vec4.new("
 		<< linear[0] << ", " 
 		<< linear[1] << ", " 
 		<< linear[2] << ", "
 		<< "1))\n";
 
-	linear = srgbToLinear(light.mColorSpecular);
+	linear = computeLightColor(light.mColorSpecular);
 	file << "lcomp:setSpecularColor(Vec4.new("
 		<< linear[0] << ", " 
 		<< linear[1] << ", " 

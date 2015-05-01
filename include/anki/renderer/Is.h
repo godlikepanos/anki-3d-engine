@@ -50,6 +50,11 @@ public:
 	{
 		return m_rt;
 	}
+
+	void generateMipmaps(CommandBufferHandle& cmdb)
+	{
+		m_rt.generateMipmaps(cmdb);
+	}
 	/// @}
 
 private:

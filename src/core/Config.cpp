@@ -31,6 +31,9 @@ Config::Config()
 	newOption("is.maxSpotTexLights", 8);
 	newOption("is.maxLightsPerTile", 16);
 
+	newOption("lf.maxSpritesPerFlare", 8);
+	newOption("lf.maxFlares", 16);
+
 	// Pps
 	newOption("pps.bloom.enabled", true);
 	newOption("pps.bloom.renderingQuality", 0.5);
@@ -52,9 +55,7 @@ Config::Config()
 	newOption("pps.bl.blurringIterationsCount", 1);
 	newOption("pps.bl.sideBlurFactor", 1.0);
 
-	newOption("pps.lf.enabled", true);
-	newOption("pps.lf.maxSpritesPerFlare", 8);
-	newOption("pps.lf.maxFlares", 16);
+	newOption("pps.sslf.enabled", true);
 
 	newOption("pps.enabled", true);
 	newOption("pps.sharpen", true);

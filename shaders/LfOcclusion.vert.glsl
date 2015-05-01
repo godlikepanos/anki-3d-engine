@@ -3,8 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-// PPS LF occlusion vert shader
+// LF occlusion vert shader
+
 #pragma anki type vert
+#pragma anki include "shaders/Common.glsl"
 
 layout(std140) uniform _block
 {
@@ -22,6 +24,6 @@ out gl_PerVertex
 void main()
 {
 	gl_Position = u_mvp * vec4(in_position, 1.0);
-	gl_PointSize = 8.0;
+	gl_PointSize = 16.0;
 }
 

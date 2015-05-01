@@ -37,8 +37,6 @@ private:
 	ShaderResourcePointer m_frag;
 	PipelineHandle m_ppline;
 	TextureResourcePointer m_lensDirtTex;
-	U8 m_maxSpritesPerFlare;
-	U8 m_maxFlares;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };

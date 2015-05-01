@@ -463,8 +463,6 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 
 	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, m_r->getTilesCountXY());
 
-	m_rt.generateMipmaps(cmdBuff);
-
 	return err;
 }
 

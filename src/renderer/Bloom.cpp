@@ -131,7 +131,7 @@ Error Bloom::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Bloom::run(CommandBufferHandle& cmdb)
+void Bloom::run(CommandBufferHandle& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -178,8 +178,6 @@ Error Bloom::run(CommandBufferHandle& cmdb)
 
 	// For the next stage it should be LINEAR though
 	//vblurFai.setFiltering(Texture::TFrustumType::LINEAR);
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

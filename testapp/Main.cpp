@@ -496,8 +496,8 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.bloom.threshold", 2.0);
 	config.set("pps.bloom.scale", 2.0);
 	config.set("pps.bloom.samples", 17);
-	config.set("pps.sslr.enabled", false);
-	config.set("pps.sslr.renderingQuality", 0.5);
+	config.set("pps.sslr.enabled", true);
+	config.set("pps.sslr.renderingQuality", 0.25);
 	config.set("pps.sslr.blurringIterationsCount", 1);
 	config.set("pps.ssao.blurringIterationsCount", 2);
 	config.set("pps.ssao.enabled", true);
@@ -505,7 +505,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.bl.enabled", true);
 	config.set("pps.bl.blurringIterationsCount", 2);
 	config.set("pps.bl.sideBlurFactor", 1.0);
-	config.set("pps.lf.enabled", true);
+	config.set("pps.sslf.enabled", true);
 	config.set("pps.sharpen", false);
 	config.set("renderingQuality", 1.0);
 	config.set("width", 1280);

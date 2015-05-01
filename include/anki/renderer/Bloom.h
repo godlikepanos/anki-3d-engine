@@ -33,7 +33,7 @@ public:
 	~Bloom();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
+	void run(CommandBufferHandle& jobs);
 
 	U32 getBlurringIterationsCount() const
 	{

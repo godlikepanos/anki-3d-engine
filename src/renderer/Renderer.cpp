@@ -10,6 +10,8 @@
 #include "anki/misc/ConfigSet.h"
 
 #include "anki/renderer/Fs.h"
+#include "anki/renderer/Lf.h"
+#include "anki/renderer/Is.h"
 
 namespace anki {
 
@@ -26,6 +28,16 @@ Renderer::Renderer()
 Renderer::~Renderer()
 {
 	m_shadersPrependedSource.destroy(m_alloc);
+
+	if(m_fs)
+	{
+		m_alloc.deleteInstance(m_fs);
+	}
+
+	if(m_lf)
+	{
+		m_alloc.deleteInstance(m_lf);
+	}
 }
 
 //==============================================================================
@@ -128,6 +140,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 	
 	m_fs = m_alloc.newInstance<Fs>(this);
 	ANKI_CHECK(m_fs->init(config));
+
+	m_lf = m_alloc.newInstance<Lf>(this);
+	ANKI_CHECK(m_lf->init(config));
+
 	ANKI_CHECK(m_pps.init(config));
 	ANKI_CHECK(m_dbg.init(config));
 
@@ -162,22 +178,21 @@ Error Renderer::render(SceneGraph& scene,
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
 	ANKI_CHECK(m_ms.run(cmdBuff[0]));
-	
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
+
+	m_lf->runOcclusionTests(cmdBuff[0]);
+
+	m_ms.generateMipmaps(cmdBuff[0]);
 
 	m_tiler.runMinMax(m_ms._getDepthRt(), cmdBuff[0]);
 	cmdBuff[0].flush();
-
-	if(m_pps.getEnabled() && m_pps.getLf().getEnabled())
-	{
-		ANKI_CHECK(m_pps.getLf().runOcclusionTests(cmdBuff[1]));
-	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
 	ANKI_CHECK(m_is.run(cmdBuff[1]));
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
-	ANKI_CHECK(m_fs->run(cmdBuff[1])); 
+	ANKI_CHECK(m_fs->run(cmdBuff[1]));
+	m_lf->run(cmdBuff[1]);
 
 	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
 	if(m_pps.getEnabled())

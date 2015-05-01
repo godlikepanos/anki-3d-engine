@@ -7,6 +7,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/Pps.h"
 #include "anki/renderer/Bloom.h"
+#include "anki/misc/ConfigSet.h"
 
 namespace anki {
 
@@ -25,6 +26,12 @@ Error Sslf::init(const ConfigSet& config)
 //==============================================================================
 Error Sslf::initInternal(const ConfigSet& config)
 {
+	m_enabled = config.get("pps.sslf.enabled");
+	if(!m_enabled)
+	{
+		return ErrorCode::NONE;
+	}
+
 	// Load program 1
 	StringAuto pps(getAllocator());
 
@@ -34,7 +41,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 		m_r->getPps().getBloom().getHeight());
 
 	ANKI_CHECK(m_frag.loadToCache(&getResourceManager(), 
-		"shaders/PpsLfPseudoPass.frag.glsl", pps.toCString(), "r_"));
+		"shaders/PpsSslf.frag.glsl", pps.toCString(), "r_"));
 
 	ANKI_CHECK(m_r->createDrawQuadPipeline(m_frag->getGrShader(), m_ppline));
 
@@ -61,6 +68,9 @@ Error Sslf::initInternal(const ConfigSet& config)
 //==============================================================================
 void Sslf::run(CommandBufferHandle& cmdb)
 {
+	ANKI_ASSERT(m_enabled);
+	
+	// Draw to the SSLF FB
 	m_fb.bind(cmdb);
 	cmdb.setViewport(0, 0, m_r->getPps().getBloom().getWidth(), 
 		m_r->getPps().getBloom().getHeight());

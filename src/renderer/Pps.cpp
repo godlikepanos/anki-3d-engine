@@ -6,8 +6,10 @@
 #include "anki/renderer/Pps.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/Bloom.h"
+#include "anki/renderer/Sslf.h"
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Tm.h"
+#include "anki/renderer/Is.h"
 #include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
 
@@ -18,7 +20,6 @@ Pps::Pps(Renderer* r)
 :	RenderingPass(r), 
 	m_ssao(r), 
 	m_bl(r), 
-	m_lf(r),
 	m_sslr(r)
 {}
 
@@ -29,6 +30,12 @@ Pps::~Pps()
 	{
 		getAllocator().deleteInstance(m_tm);
 		m_tm = nullptr;
+	}
+
+	if(m_bloom)
+	{
+		getAllocator().deleteInstance(m_bloom);
+		m_bloom = nullptr;
 	}
 }
 
@@ -51,7 +58,9 @@ Error Pps::initInternal(const ConfigSet& config)
 	m_bloom = getAllocator().newInstance<Bloom>(m_r);
 	ANKI_CHECK(m_bloom->init(config));
 
-	ANKI_CHECK(m_lf.init(config));
+	m_sslf = getAllocator().newInstance<Sslf>(m_r);
+	ANKI_CHECK(m_sslf->init(config));
+
 	ANKI_CHECK(m_sslr.init(config));
 
 	// FBO
@@ -74,12 +83,14 @@ Error Pps::initInternal(const ConfigSet& config)
 	pps.sprintf(
 		"#define SSAO_ENABLED %u\n"
 		"#define BLOOM_ENABLED %u\n"
+		"#define SSLF_ENABLED %u\n"
 		"#define SHARPEN_ENABLED %u\n"
 		"#define GAMMA_CORRECTION_ENABLED %u\n"
 		"#define FBO_WIDTH %u\n"
 		"#define FBO_HEIGHT %u\n",
 		m_ssao.getEnabled(), 
-		m_bloom->getEnabled(), 
+		m_bloom->getEnabled(),
+		m_sslf->getEnabled(),
 		U(config.get("pps.sharpen")),
 		U(config.get("pps.gammaCorrection")),
 		m_r->getWidth(),
@@ -131,16 +142,17 @@ Error Pps::run(CommandBufferHandle& cmdb)
 		ANKI_CHECK(m_sslr.run(cmdb));
 	}
 
+	m_r->getIs().generateMipmaps(cmdb);
 	m_tm->run(cmdb);
 
 	if(m_bloom->getEnabled())
 	{
-		ANKI_CHECK(m_bloom->run(cmdb));
+		m_bloom->run(cmdb);
 	}
 
-	if(m_lf.getEnabled())
+	if(m_sslf->getEnabled())
 	{
-		ANKI_CHECK(m_lf.run(cmdb));
+		m_sslf->run(cmdb);
 	}
 
 	Bool drawToDefaultFbo = 
@@ -170,13 +182,14 @@ Error Pps::run(CommandBufferHandle& cmdb)
 		m_ssao._getRt().bind(cmdb, 1);
 	}
 
-	if(m_lf.getEnabled())
-	{
-		m_lf._getRt().bind(cmdb, 2);
-	}
-	else if(m_bloom->getEnabled())
+	if(m_bloom->getEnabled())
 	{
 		m_bloom->getRt().bind(cmdb, 2);
+	}
+
+	if(m_sslf->getEnabled())
+	{
+		m_sslf->getRt().bind(cmdb, 4);
 	}
 
 	m_lut->getGlTexture().bind(cmdb, 3);
