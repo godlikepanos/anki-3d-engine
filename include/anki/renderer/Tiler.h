@@ -71,11 +71,10 @@ public:
 	Tiler(Renderer* r);
 	~Tiler();
 
-	Error init();
+	ANKI_USE_RESULT Error init();
 
 	/// Issue the GPU job
-	void runMinMax(TextureHandle& depthMap,
-		CommandBufferHandle& cmd);
+	void runMinMax(CommandBufferHandle& cmd);
 
 	/// Update the tiles before doing visibility tests
 	void updateTiles(Camera& cam);
@@ -86,9 +85,10 @@ public:
 
 	/// @privatesection
 	/// @{
-	TextureHandle& getRt()
+	BufferHandle& getTilesBuffer()
 	{
-		return m_rt;
+		U i = (getGlobalTimestamp() - m_pbos.getSize() + 1) % m_pbos.getSize();
+		return m_pbos[i];
 	}
 	/// @}
 
@@ -102,20 +102,13 @@ private:
 	SArray<Plane> m_nearPlanesW;
 	SArray<Plane> m_farPlanesW;
 
-	/// A texture of tilesXCount * tilesYCount size and format RG32UI. Used to
-	/// calculate the near and far planes of the tiles
-	TextureHandle m_rt;
-
-	/// Main FB for the fai
-	FramebufferHandle m_fb;
-
-	/// PBO buffer that is used to read the data of fai asynchronously
+	/// PBO buffer that is used to read the data
 	Array<BufferHandle, 2> m_pbos;
 	Array<Vec2*, 2> m_pbosAddress;
 	DArray<Vec2> m_prevMinMaxDepth;
 
 	/// Main shader program
-	ShaderResourcePointer m_frag;
+	ShaderResourcePointer m_shader;
 	PipelineHandle m_ppline;
 
 	/// Used to check if the camera is changed and we need to update the planes

@@ -7,15 +7,20 @@
 #define ANKI_RENDERER_COMMON_H
 
 #include "anki/Gr.h"
+#include "anki/util/Ptr.h"
 
 namespace anki {
 
 // Forward
+class Ms;
 class Fs;
+class Lf;
+class Ssao;
+class Sslr;
+class Sslf;
 class Tm;
 class Bloom;
-class Lf;
-class Sslf;
+class Pps;
 
 // Render target formats
 const U MS_COLOR_ATTACHMENTS_COUNT = 2;

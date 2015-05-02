@@ -38,6 +38,8 @@ public:
 	/// Cut the job submition into multiple chains. We want to avoid feeding
 	/// GL with a huge job chain
 	static const U32 JOB_CHAINS_COUNT = 2;
+
+	const U TILE_SIZE = 64;
 		
 	Renderer();
 
@@ -175,6 +177,11 @@ public:
 	U getTilesCountXY() const
 	{
 		return m_tilesCountXY;
+	}
+
+	UVec2 getTileSize() const
+	{
+		return UVec2(TILE_SIZE, TILE_SIZE);
 	}
 
 	const ShaderHandle& getDrawQuadVertexShader() const

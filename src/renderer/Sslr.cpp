@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/renderer/Sslr.h"
+#include "anki/renderer/Ssao.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/misc/ConfigSet.h"
 
@@ -93,7 +94,7 @@ Error Sslr::run(CommandBufferHandle& cmdBuff)
 		m_r->getMs()._getRt1()}};
 	cmdBuff.bindTextures(0	, tarr.begin(), tarr.getSize()); 
 
-	m_r->getPps().getSsao().m_uniformsBuff.bindShaderBuffer(cmdBuff, 0);
+	m_r->getPps().getSsao().getUniformBuffer().bindShaderBuffer(cmdBuff, 0);
 
 	m_r->drawQuad(cmdBuff);
 

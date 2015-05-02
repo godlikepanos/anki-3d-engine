@@ -21,14 +21,26 @@ namespace anki {
 /// Screen space ambient occlusion pass
 class Ssao: public RenderingPass
 {
-	friend class Pps;
-	friend class Sslr;
-	friend class MainRenderer;
+public:
+	/// @privatesection
+	/// @{
+	Ssao(Renderer* r)
+	:	RenderingPass(r)
+	{}
+
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
 
 	TextureHandle& _getRt()
 	{
 		return m_vblurRt;
 	}
+
+	BufferHandle& getUniformBuffer()
+	{
+		return m_uniformsBuff;
+	}
+	/// @}
 
 private:
 	U32 m_width, m_height; ///< Blur passes size
@@ -49,13 +61,6 @@ private:
 	Timestamp m_commonUboUpdateTimestamp = 0;
 	BufferHandle m_uniformsBuff;
 	TextureHandle m_noiseTex;
-
-	Ssao(Renderer* r)
-	:	RenderingPass(r)
-	{}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
 
 	ANKI_USE_RESULT Error createFb(
 		FramebufferHandle& fb, TextureHandle& rt);

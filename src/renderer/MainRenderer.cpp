@@ -87,7 +87,7 @@ Error MainRenderer::render(SceneGraph& scene)
 
 		if(getPps().getEnabled())
 		{
-			rt = &getPps()._getRt();
+			rt = &getPps().getRt();
 		}
 		else
 		{

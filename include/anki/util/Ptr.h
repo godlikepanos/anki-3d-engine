@@ -19,27 +19,36 @@ template<typename T>
 class Ptr
 {
 public:
-	/// @name Constructors/Destructor
-	/// @{
 	Ptr()
-#if ANKI_ASSERTIONS == 1
-		: m_ptr(nullptr)
-#endif
+	:	m_ptr(nullptr)
 	{}
 
 	Ptr(T* ptr)
-		: m_ptr(ptr)
+	:	m_ptr(ptr)
 	{}
 
 	Ptr(const Ptr& other)
-		: m_ptr(other.m_ptr)
+	:	m_ptr(other.m_ptr)
 	{}
-	/// @}
+
+	Ptr(Ptr&& other)
+	:	m_ptr(other.m_ptr)
+	{
+		other.m_ptr = nullptr;
+	}
 
 	/// Copy
 	Ptr& operator=(const Ptr& other)
 	{
 		m_ptr = other.m_ptr;
+		return *this;
+	}
+
+	/// Move.
+	Ptr& operator=(Ptr&& other)
+	{
+		m_ptr = other.m_ptr;
+		other.m_ptr = nullptr;
 		return *this;
 	}
 
@@ -59,6 +68,11 @@ public:
 
 	/// @name Compare operators
 	/// @{
+	operator bool() const 
+	{ 
+    	return m_ptr != nullptr; 
+	}
+
 	Bool operator==(const Ptr& other) const
 	{
 		return m_ptr == other.m_ptr;
@@ -139,6 +153,129 @@ private:
 	T* m_ptr;
 };
 
+/// UniquePtr default deleter.
+template<typename T>
+class UniquePtrDeleter
+{
+public:
+	void operator()(T* x)
+	{
+		auto alloc = x->getAllocator();
+		alloc.template deleteInstance<T>(x);
+	}
+};
+
+/// A unique pointer.
+template<typename T, typename TDeleter = UniquePtrDeleter<T>>
+class UniquePtr
+{
+public:
+	UniquePtr()
+	:	m_ptr(nullptr)
+	{}
+
+	explicit UniquePtr(T* ptr)
+	:	m_ptr(ptr)
+	{}
+
+	/// Non-copyable.
+	UniquePtr(const UniquePtr& other) = delete;
+
+	/// Move.
+	UniquePtr(UniquePtr&& other)
+	:	m_ptr(nullptr)
+	{
+		move(other);
+	}
+
+	/// Non-copyable.
+	UniquePtr& operator=(const UniquePtr& other) = delete;
+
+	/// Move.
+	UniquePtr& operator=(UniquePtr&& other)
+	{
+		move(other);
+		return *this;
+	}
+
+	/// Dereference
+	T& operator*() const
+	{
+		ANKI_ASSERT(m_ptr);
+		return *m_ptr;
+	}
+
+	/// Dereference
+	T* operator->() const
+	{
+		ANKI_ASSERT(m_ptr);
+		return m_ptr;
+	}
+
+	/// Set a new pointer. Will destroy the previous.
+	void reset(T* ptr)
+	{
+		destroy();
+		m_ptr = ptr;
+	}
+
+	/// @name Compare operators
+	/// @{
+	operator bool() const 
+	{ 
+    	return m_ptr != nullptr; 
+	}
+
+	Bool operator==(const UniquePtr& other) const
+	{
+		return m_ptr == other.m_ptr;
+	}
+
+	Bool operator!=(const UniquePtr& other) const
+	{
+		return m_ptr != other.m_ptr;
+	}
+
+	Bool operator<(const UniquePtr& other) const
+	{
+		return m_ptr < other.m_ptr;
+	}
+
+	Bool operator<=(const UniquePtr& other) const
+	{
+		return m_ptr <= other.m_ptr;
+	}
+
+	Bool operator>(const UniquePtr& other) const
+	{
+		return m_ptr > other.m_ptr;
+	}
+
+	Bool operator>=(const UniquePtr& other) const
+	{
+		return m_ptr >= other.m_ptr;
+	}
+	/// @}
+
+private:
+	T* m_ptr;
+
+	void destroy()
+	{
+		if(m_ptr)
+		{
+			TDeleter deleter;
+			deleter(m_ptr);
+			m_ptr = nullptr;
+		}
+	}
+
+	void move(UniquePtr& b)
+	{
+		reset(b.m_ptr);
+		b.m_ptr = nullptr;
+	}
+};
 /// @}
 
 } // end namespace anki

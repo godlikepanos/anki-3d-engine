@@ -45,11 +45,11 @@ public:
 
 	Timestamp getGlobalTimestamp() const;
 
+	HeapAllocator<U8> getAllocator() const;
+
 protected:
 	Renderer* m_r; ///< Know your father
 	Bool8 m_enabled = false;
-
-	HeapAllocator<U8>& getAllocator();
 
 	GrManager& getGrManager();
 	const GrManager& getGrManager() const;

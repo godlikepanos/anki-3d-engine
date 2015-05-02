@@ -84,35 +84,22 @@ Error Tiler::initInternal()
 	StringAuto pps(getAllocator());
 
 	pps.sprintf(
-		"#define TILES_X_COUNT %u\n"
-		"#define TILES_Y_COUNT %u\n"
-		"#define RENDERER_WIDTH %u\n"
-		"#define RENDERER_HEIGHT %u\n",
+		"#define TILE_SIZE_X %u\n"
+		"#define TILE_SIZE_Y %u\n"
+		"#define TILES_COUNT_X %u\n"
+		"#define TILES_COUNT_Y %u\n",
+		m_r->getTileSize().x(),
+		m_r->getTileSize().y(),
 		m_r->getTilesCount().x(),
-		m_r->getTilesCount().y(),
-		m_r->getWidth(),
-		m_r->getHeight());
+		m_r->getTilesCount().y());
 
 	ANKI_CHECK(
-		m_frag.loadToCache(&getResourceManager(), 
-		"shaders/TilerMinMax.frag.glsl", pps.toCString(), "r_"));
+		m_shader.loadToCache(&getResourceManager(), 
+		"shaders/TilerMinMax.comp.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(
-		m_r->createDrawQuadPipeline(m_frag->getGrShader(), m_ppline));
-
-	// Create FB
-	ANKI_CHECK(
-		m_r->createRenderTarget(m_r->getTilesCount().x(), 
-		m_r->getTilesCount().y(), 
-		PixelFormat(ComponentFormat::R32G32, TransformFormat::UINT), 
-		1, SamplingFilter::NEAREST, 1, m_rt));
-
-	FramebufferHandle::Initializer fbInit;
-	fbInit.m_colorAttachmentsCount = 1;
-	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = 
-		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
+	PipelineHandle::Initializer pplineInit;
+	pplineInit.m_shaders[U(ShaderType::COMPUTE)] = m_shader->getGrShader();
+	ANKI_CHECK(m_ppline.create(&getGrManager(), pplineInit));
 
 	// Init planes. One plane for each direction, plus near/far plus the world
 	// space of those
@@ -166,8 +153,8 @@ Error Tiler::initPbos()
 	for(U i = 0; i < m_pbos.getSize(); ++i)
 	{
 		ANKI_CHECK(
-			m_pbos[i].create(&getGrManager(), GL_PIXEL_PACK_BUFFER, nullptr, 
-			pboSize,
+			m_pbos[i].create(&getGrManager(), GL_SHADER_STORAGE_BUFFER, 
+			nullptr, pboSize,
 			GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 	}
 
@@ -182,23 +169,21 @@ Error Tiler::initPbos()
 }
 
 //==============================================================================
-void Tiler::runMinMax(TextureHandle& depthMap,
-	CommandBufferHandle& cmd)
+void Tiler::runMinMax(CommandBufferHandle& cmd)
 {
 	if(m_enableGpuTests)
 	{
 		// Issue the min/max job
-		m_fb.bind(cmd);
+		U pboIdx = getGlobalTimestamp() % m_pbos.getSize();
+		m_pbos[pboIdx].bindShaderBuffer(cmd, 0);
 		m_ppline.bind(cmd);
-		depthMap.bind(cmd, 0);
-		cmd.setViewport(
-			0, 0, m_r->getTilesCount().x(), m_r->getTilesCount().y());
+
+		m_r->getMs()._getDepthRt().bind(cmd, 0);
+
+		cmd.dispatchCompute(
+			m_r->getTilesCount().x(), m_r->getTilesCount().y(), 1);
 
 		m_r->drawQuad(cmd);
-
-		// Issue the async pixel read
-		U pboIdx = getGlobalTimestamp() % m_pbos.getSize();
-		cmd.copyTextureToBuffer(m_rt, m_pbos[pboIdx]);
 	}
 }
 

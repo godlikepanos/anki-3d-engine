@@ -7,27 +7,37 @@
 #define ANKI_RENDERER_PPS_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/Gr.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/Resource.h"
-#include "anki/renderer/Ssao.h"
-#include "anki/renderer/Bl.h"
-#include "anki/renderer/Sslr.h"
 
 namespace anki {
-
-class ShaderProgram;
 
 /// @addtogroup renderer
 /// @{
 
-/// Post-processing stage.This stage is divided into 2 two parts. The first
-/// happens before blending stage and the second after
+/// Post-processing stage.
 class Pps: public RenderingPass
 {
-	friend class Renderer;
-
 public:
+	Pps(Renderer* r);
+	~Pps();
+
+	/// @privatesection
+	/// @{
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
+
+	const TextureHandle& getRt() const
+	{
+		return m_rt;
+	}
+
+	TextureHandle& getRt()
+	{
+		return m_rt;
+	}
+	/// @}
+
 	const Bloom& getBloom() const
 	{
 		return *m_bloom;
@@ -40,29 +50,22 @@ public:
 
 	const Ssao& getSsao() const
 	{
-		return m_ssao;
-	}
-	Ssao& getSsao()
-	{
-		return m_ssao;
+		return *m_ssao;
 	}
 
-	const Bl& getBl() const
+	Ssao& getSsao()
 	{
-		return m_bl;
-	}
-	Bl& getBl()
-	{
-		return m_bl;
+		return *m_ssao;
 	}
 
 	const Sslr& getSslr() const
 	{
-		return m_sslr;
+		return *m_sslr;
 	}
+
 	Sslr& getSslr()
 	{
-		return m_sslr;
+		return *m_sslr;
 	}
 
 	const Tm& getTm() const
@@ -78,25 +81,12 @@ public:
 	/// Load the color grading texture.
 	Error loadColorGradingTexture(CString filename);
 
-	/// @privatesection
-	/// @{
-	const TextureHandle& _getRt() const
-	{
-		return m_rt;
-	}
-	TextureHandle& _getRt()
-	{
-		return m_rt;
-	}
-	/// @}
-
 private:
-	Tm* m_tm = nullptr;
-	Bloom* m_bloom;
-	Sslf* m_sslf;
-	Ssao m_ssao;
-	Bl m_bl;
-	Sslr m_sslr;
+	UniquePtr<Ssao> m_ssao;
+	UniquePtr<Sslr> m_sslr;
+	UniquePtr<Tm> m_tm;
+	UniquePtr<Bloom> m_bloom;
+	UniquePtr<Sslf> m_sslf;
 
 	FramebufferHandle m_fb;
 	ShaderResourcePointer m_frag;
@@ -104,12 +94,6 @@ private:
 	TextureHandle m_rt;
 
 	TextureResourcePointer m_lut; ///< Color grading lookup texture.
-
-	Pps(Renderer* r);
-	~Pps();
-
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };

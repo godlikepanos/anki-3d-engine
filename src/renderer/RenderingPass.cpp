@@ -28,7 +28,7 @@ const GrManager& RenderingPass::getGrManager() const
 }
 
 //==============================================================================
-HeapAllocator<U8>& RenderingPass::getAllocator()
+HeapAllocator<U8> RenderingPass::getAllocator() const
 {
 	return m_r->_getAllocator();
 }

@@ -18,15 +18,15 @@ namespace anki {
 /// Screen space local reflections pass
 class Sslr: public BlurringRenderingPass
 {
-	friend class Pps;
-
 public:
 	/// @privatesection
 	/// @{
-	TextureHandle& _getRt()
-	{
-		return m_dirs[(U)DirectionEnum::VERTICAL].m_rt;
-	}
+	Sslr(Renderer* r)
+	:	BlurringRenderingPass(r)
+	{}
+
+	ANKI_USE_RESULT Error init(const ConfigSet& config);
+	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
 	/// @}
 
 private:
@@ -41,13 +41,6 @@ private:
 	// 2nd pass: blit
 	ShaderResourcePointer m_blitFrag;
 	PipelineHandle m_blitPpline;
-
-	Sslr(Renderer* r)
-	:	BlurringRenderingPass(r)
-	{}
-
-	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
 };
 
 /// @}

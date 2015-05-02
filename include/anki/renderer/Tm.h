@@ -14,7 +14,7 @@ namespace anki {
 /// @{
 
 /// Tonemapping.
-class Tm: private RenderingPass
+class Tm: public RenderingPass
 {
 public:
 	Tm(Renderer* r)

@@ -17,11 +17,11 @@ namespace anki {
 class Sslf: public RenderingPass
 {
 public:
+	/// @privatesection
+	/// @{
 	Sslf(Renderer* r)
 	:	RenderingPass(r)
 	{}
-
-	~Sslf();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 	void run(CommandBufferHandle& cmdb);
@@ -30,6 +30,7 @@ public:
 	{
 		return m_rt;
 	}
+	/// @}
 
 private:
 	TextureHandle m_rt;

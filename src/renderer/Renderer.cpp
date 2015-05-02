@@ -68,8 +68,6 @@ Error Renderer::init(
 Error Renderer::initInternal(const ConfigSet& config)
 {
 	// Set from the config
-	const U TILE_SIZE = 64;
-
 	m_renderingQuality = config.get("renderingQuality");
 	m_defaultFbWidth = config.get("width");
 	m_defaultFbHeight = config.get("height");
@@ -184,7 +182,7 @@ Error Renderer::render(SceneGraph& scene,
 
 	m_ms.generateMipmaps(cmdBuff[0]);
 
-	m_tiler.runMinMax(m_ms._getDepthRt(), cmdBuff[0]);
+	m_tiler.runMinMax(cmdBuff[0]);
 	cmdBuff[0].flush();
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);

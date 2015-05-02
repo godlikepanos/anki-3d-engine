@@ -8,6 +8,7 @@
 #include "anki/renderer/Bloom.h"
 #include "anki/renderer/Sslf.h"
 #include "anki/renderer/Ssao.h"
+#include "anki/renderer/Sslr.h"
 #include "anki/renderer/Tm.h"
 #include "anki/renderer/Is.h"
 #include "anki/util/Logger.h"
@@ -17,27 +18,12 @@ namespace anki {
 
 //==============================================================================
 Pps::Pps(Renderer* r)
-:	RenderingPass(r), 
-	m_ssao(r), 
-	m_bl(r), 
-	m_sslr(r)
+:	RenderingPass(r)
 {}
 
 //==============================================================================
 Pps::~Pps()
-{
-	if(m_tm)
-	{
-		getAllocator().deleteInstance(m_tm);
-		m_tm = nullptr;
-	}
-
-	if(m_bloom)
-	{
-		getAllocator().deleteInstance(m_bloom);
-		m_bloom = nullptr;
-	}
-}
+{}
 
 //==============================================================================
 Error Pps::initInternal(const ConfigSet& config)
@@ -50,18 +36,20 @@ Error Pps::initInternal(const ConfigSet& config)
 
 	ANKI_ASSERT("Initializing PPS");
 
-	m_tm = getAllocator().newInstance<Tm>(m_r);
+	m_ssao.reset(getAllocator().newInstance<Ssao>(m_r));
+	ANKI_CHECK(m_ssao->init(config));
+
+	m_sslr.reset(getAllocator().newInstance<Sslr>(m_r));
+	ANKI_CHECK(m_sslr->init(config));
+
+	m_tm.reset(getAllocator().newInstance<Tm>(m_r));
 	ANKI_CHECK(m_tm->create(config));
 
-	ANKI_CHECK(m_ssao.init(config));
-
-	m_bloom = getAllocator().newInstance<Bloom>(m_r);
+	m_bloom.reset(getAllocator().newInstance<Bloom>(m_r));
 	ANKI_CHECK(m_bloom->init(config));
 
-	m_sslf = getAllocator().newInstance<Sslf>(m_r);
+	m_sslf.reset(getAllocator().newInstance<Sslf>(m_r));
 	ANKI_CHECK(m_sslf->init(config));
-
-	ANKI_CHECK(m_sslr.init(config));
 
 	// FBO
 	ANKI_CHECK(
@@ -88,7 +76,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		"#define GAMMA_CORRECTION_ENABLED %u\n"
 		"#define FBO_WIDTH %u\n"
 		"#define FBO_HEIGHT %u\n",
-		m_ssao.getEnabled(), 
+		m_ssao->getEnabled(), 
 		m_bloom->getEnabled(),
 		m_sslf->getEnabled(),
 		U(config.get("pps.sharpen")),
@@ -131,15 +119,15 @@ Error Pps::run(CommandBufferHandle& cmdb)
 	ANKI_ASSERT(m_enabled);
 
 	// First SSAO because it depends on MS where HDR depends on IS
-	if(m_ssao.getEnabled())
+	if(m_ssao->getEnabled())
 	{
-		ANKI_CHECK(m_ssao.run(cmdb));
+		ANKI_CHECK(m_ssao->run(cmdb));
 	}
 
 	// Then SSLR because HDR depends on it
-	if(m_sslr.getEnabled())
+	if(m_sslr->getEnabled())
 	{
-		ANKI_CHECK(m_sslr.run(cmdb));
+		ANKI_CHECK(m_sslr->run(cmdb));
 	}
 
 	m_r->getIs().generateMipmaps(cmdb);
@@ -177,9 +165,9 @@ Error Pps::run(CommandBufferHandle& cmdb)
 
 	m_r->getIs()._getRt().bind(cmdb, 0);
 
-	if(m_ssao.getEnabled())
+	if(m_ssao->getEnabled())
 	{
-		m_ssao._getRt().bind(cmdb, 1);
+		m_ssao->_getRt().bind(cmdb, 1);
 	}
 
 	if(m_bloom->getEnabled())
