@@ -162,41 +162,4 @@ void main()
 		}
 	}
 #endif
-
-#if 0
-	vec3 pos = p0;
-	for(int i = 0; i < 200; i++)
-	{
-		pos += r * 0.1;
-
-		vec3 posNdc = project(pos);
-
-		vec2 comp = abs(posNdc.xy);
-		if(comp.x > 1.0 || comp.y > 1.0)
-		{
-			return;
-		}
-
-		vec3 texCoord = posNdc.xyz * 0.5 + 0.5;
-
-		float depth = textureRt(u_msDepthRt, texCoord.xy).r;
-
-		float diffDepth = texCoord.z - depth;
-
-		if(diffDepth > 0.0)
-		{
-			if(diffDepth > 0.001)
-			{
-				break;
-			}
-
-			float factor = 1.0 - length(posNdc.xy);
-
-			out_color = 
-				textureRt(u_isRt, texCoord.xy).rgb * (factor * specColor);
-			//out_color = vec3(diffDepth);
-			return;
-		}
-	}
-#endif
 }
