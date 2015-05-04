@@ -41,8 +41,8 @@ public:
 	SectorGroup& getSectorGroup();
 
 protected:
-	CollisionShape* m_shape = nullptr;
 	DArray<Vec4> m_shapeStorage;
+	CollisionShape* m_shape = nullptr;
 };
 
 /// 2 way portal.

@@ -77,8 +77,7 @@ public:
 	/// method allocates a storage and the owner is the convex hull. 
 	/// @param alloc The allocator to use for the point cloud
 	/// @param pointCount The number of points
-	ANKI_USE_RESULT Error initStorage(
-		CollisionAllocator<U8>& alloc, U pointCount);
+	void initStorage(CollisionAllocator<U8>& alloc, U pointCount);
 
 	/// This function initializes the storage that holds the point cloud using
 	/// a predefined buffer. The convex hull is not the owner of the storage.

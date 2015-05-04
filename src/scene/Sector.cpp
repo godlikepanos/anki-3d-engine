@@ -23,13 +23,13 @@ PortalSectorBase::~PortalSectorBase()
 {
 	auto alloc = getSceneAllocator();
 
-	// Clean collision shape
 	if(m_shape)
 	{
 		alloc.deleteInstance(m_shape);
 		m_shape = nullptr;
 	}
 
+	// Clean collision shape
 	m_shapeStorage.destroy(alloc);
 }
 
@@ -44,25 +44,33 @@ Error PortalSectorBase::create(const CString& name, const CString& modelFname)
 
 	addComponent(comp, true);
 
-#if 0
 	// Load mesh 
-	TempResourceString newFname;
-	ANKI_CHECK(
-		getSceneGraph()._getResourceManager().fixResourceFilename(
-		modelFname, newFname));
+	StringAuto newFname(getSceneFrameAllocator());
+	getSceneGraph()._getResourceManager().fixResourceFilename(
+		modelFname, newFname);
 
 	MeshLoader loader;
-	ANKI_CHECK(loader.load(
-		getSceneGraph()._getResourceManager()._getTempAllocator(),
-		newFname.toCString()));
+	ANKI_CHECK(loader.load(getSceneFrameAllocator(), newFname.toCString()));
+
+	// Convert Vec3 positions to Vec4
+	const MeshLoader::Header& header = loader.getHeader();
+	U vertsCount = header.m_totalVerticesCount;
+	PtrSize vertSize = loader.getVertexSize();
+	
+	auto alloc = getSceneAllocator();
+	m_shapeStorage.create(alloc, vertsCount);
+
+	for(U i = 0; i < vertsCount; ++i)
+	{
+		const Vec3& pos = *reinterpret_cast<const Vec3*>(
+			loader.getVertexData() + vertSize * i);
+
+		m_shapeStorage[i] = Vec4(pos, 0.0);
+	}
 
 	// Create shape
-	MeshLoader::Header& header = loader.getHeader();
-	U vertCount = header.m_totalVerticesCount;
-
-	m_shape = getSectorGroup().createConvexHull(vertPositions, m_shapeStorage);
-	ANKI_CHECK_OOM(m_shape);
-#endif
+	ConvexHullShape* hull = alloc.newInstance<ConvexHullShape>();
+	hull->initStorage(&m_shapeStorage[0], vertsCount);
 
 	return ErrorCode::NONE;
 }

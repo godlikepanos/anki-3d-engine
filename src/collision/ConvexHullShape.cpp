@@ -58,7 +58,7 @@ void ConvexHullShape::move(ConvexHullShape& b)
 }
 
 //==============================================================================
-Error ConvexHullShape::initStorage(CollisionAllocator<U8>& alloc, U pointCount)
+void ConvexHullShape::initStorage(CollisionAllocator<U8>& alloc, U pointCount)
 {
 	destroy();
 
@@ -68,8 +68,6 @@ Error ConvexHullShape::initStorage(CollisionAllocator<U8>& alloc, U pointCount)
 	m_alloc = alloc;
 	m_ownsTheStorage = true;
 	m_pointsCount = pointCount;
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================
