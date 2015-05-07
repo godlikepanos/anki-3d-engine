@@ -16,7 +16,7 @@ float log10(in float x)
 
 float computeLuminance(in vec3 color)
 {
-	return dot(vec3(0.30, 0.59, 0.11), color);
+	return max(dot(vec3(0.30, 0.59, 0.11), color), EPSILON);
 }
 
 vec3 computeExposedColor(in vec3 color, in float avgLum, in float threshold)

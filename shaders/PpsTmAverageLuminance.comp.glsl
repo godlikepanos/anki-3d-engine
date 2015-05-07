@@ -5,6 +5,7 @@
 
 #pragma anki type comp
 #pragma anki include "shaders/Common.glsl"
+#pragma anki include "shaders/Tonemapping.glsl"
 
 #if IS_RT_MIPMAP == 0
 #	error Wrong mipmap
@@ -46,9 +47,8 @@ void main()
 		{
 			vec3 color = texelFetchOffset(
 				u_isRt, ivec2(xStart, yStart), IS_RT_MIPMAP, ivec2(x, y)).rgb;
-			float lum = dot(vec3(0.30, 0.59, 0.11), color);
-			const float DELTA = 0.000001;
-			avgLum += log(DELTA + lum);
+			float lum = computeLuminance(color);
+			avgLum += log(lum);
 		}
 	}
 
@@ -75,7 +75,7 @@ void main()
 	if(gl_LocalInvocationIndex == 0)
 	{
 		float crntLum = exp(g_avgLum[0] / float(WORKGROUP_SIZE));
-#if 1
+#if 0
 		float prevLum = u_averageLuminancePad3.x;
 
 		// Lerp between previous and new L value
