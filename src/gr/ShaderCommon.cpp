@@ -3,46 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/Common.h"
+#include "anki/gr/ShaderCommon.h"
 
 namespace anki {
 
 //==============================================================================
-ShaderType computeShaderTypeIndex(const GLenum glType)
-{
-	ShaderType idx = ShaderType::VERTEX;
-	switch(glType)
-	{
-	case GL_VERTEX_SHADER:
-		idx = ShaderType::VERTEX;
-		break;
-	case GL_TESS_CONTROL_SHADER:
-		idx = ShaderType::TESSELLATION_CONTROL;
-		break;
-	case GL_TESS_EVALUATION_SHADER:
-		idx = ShaderType::TESSELLATION_EVALUATION;
-		break;
-	case GL_GEOMETRY_SHADER:
-		idx = ShaderType::GEOMETRY;
-		break;
-	case GL_FRAGMENT_SHADER:
-		idx = ShaderType::FRAGMENT;
-		break;
-	case GL_COMPUTE_SHADER:
-		idx = ShaderType::COMPUTE;
-		break;
-	default:
-		ANKI_ASSERT(0);
-	}
-
-	return idx;
-}
-
-//==============================================================================
 template<typename T>
-void writeShaderBlockMemorySanityChecks(
+static void writeShaderBlockMemorySanityChecks(
 	const ShaderVariableBlockInfo& varBlkInfo,
-	const void* elements, 
+	const void* elements,
 	U32 elementsCount,
 	void* buffBegin,
 	const void* buffEnd)
@@ -53,7 +22,7 @@ void writeShaderBlockMemorySanityChecks(
 	ANKI_ASSERT(buffBegin != nullptr);
 	ANKI_ASSERT(buffEnd != nullptr);
 	ANKI_ASSERT(buffBegin < buffEnd);
-	
+
 	// Check varBlkInfo
 	ANKI_ASSERT(varBlkInfo.m_offset != -1);
 	ANKI_ASSERT(varBlkInfo.m_arraySize > 0);
@@ -71,14 +40,14 @@ void writeShaderBlockMemorySanityChecks(
 template<typename T>
 static void writeShaderBlockMemorySimple(
 	const ShaderVariableBlockInfo& varBlkInfo,
-	const void* elements, 
+	const void* elements,
 	U32 elementsCount,
 	void* buffBegin,
 	const void* buffEnd)
 {
 	writeShaderBlockMemorySanityChecks<T>(varBlkInfo, elements, elementsCount,
 		buffBegin, buffEnd);
-	
+
 	U8* buff = static_cast<U8*>(buffBegin) + varBlkInfo.m_offset;
 	for(U i = 0; i < elementsCount; i++)
 	{
@@ -96,7 +65,7 @@ static void writeShaderBlockMemorySimple(
 template<typename T, typename Vec>
 static void writeShaderBlockMemoryMatrix(
 	const ShaderVariableBlockInfo& varBlkInfo,
-	const void* elements, 
+	const void* elements,
 	U32 elementsCount,
 	void* buffBegin,
 	const void* buffEnd)
@@ -129,7 +98,7 @@ static void writeShaderBlockMemoryMatrix(
 void writeShaderBlockMemory(
 	ShaderVariableDataType type,
 	const ShaderVariableBlockInfo& varBlkInfo,
-	const void* elements, 
+	const void* elements,
 	U32 elementsCount,
 	void* buffBegin,
 	const void* buffEnd)
@@ -153,11 +122,11 @@ void writeShaderBlockMemory(
 			buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::MAT3:
-		writeShaderBlockMemoryMatrix<Mat3, Vec3>(varBlkInfo, elements, 
+		writeShaderBlockMemoryMatrix<Mat3, Vec3>(varBlkInfo, elements,
 			elementsCount, buffBegin, buffEnd);
 		break;
 	case ShaderVariableDataType::MAT4:
-		writeShaderBlockMemoryMatrix<Mat4, Vec4>(varBlkInfo, elements, 
+		writeShaderBlockMemoryMatrix<Mat4, Vec4>(varBlkInfo, elements,
 			elementsCount, buffBegin, buffEnd);
 		break;
 	default:

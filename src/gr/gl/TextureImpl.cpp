@@ -8,6 +8,7 @@
 #include "anki/gr/gl/Error.h"
 #include "anki/util/Functions.h"
 #include "anki/util/DArray.h"
+#include <cstring>
 
 namespace anki {
 

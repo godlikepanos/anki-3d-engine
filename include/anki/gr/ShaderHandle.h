@@ -6,6 +6,7 @@
 #ifndef ANKI_GR_SHADER_HANDLE_H
 #define ANKI_GR_SHADER_HANDLE_H
 
+#include "anki/gr/ShaderCommon.h"
 #include "anki/gr/GrHandle.h"
 
 namespace anki {

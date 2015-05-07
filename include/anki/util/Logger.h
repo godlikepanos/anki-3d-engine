@@ -107,20 +107,20 @@ typedef Singleton<Logger> LoggerSingleton;
 /// @{
 
 /// Log information message.
-#define ANKI_LOGI(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::NORMAL, \
-	__VA_ARGS__)
+#define ANKI_LOGI(...) \
+	ANKI_LOGGER_MESSAGE(Logger::MessageType::NORMAL, __VA_ARGS__)
 
 /// Log warning message.
-#define ANKI_LOGW(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::WARNING, \
-	__VA_ARGS__)
+#define ANKI_LOGW(...) \
+	ANKI_LOGGER_MESSAGE(Logger::MessageType::WARNING, __VA_ARGS__)
 
 /// Log error message.
-#define ANKI_LOGE(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::ERROR, \
-	__VA_ARGS__)
+#define ANKI_LOGE(...) \
+	ANKI_LOGGER_MESSAGE(Logger::MessageType::ERROR, __VA_ARGS__)
 
 /// Log fatal message. It will will abort.
-#define ANKI_LOGF(...) ANKI_LOGGER_MESSAGE(Logger::MessageType::FATAL, \
-	__VA_ARGS__)
+#define ANKI_LOGF(...) \
+	ANKI_LOGGER_MESSAGE(Logger::MessageType::FATAL, __VA_ARGS__)
 /// @}
 
 } // end namespace anki

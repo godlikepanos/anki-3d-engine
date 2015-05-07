@@ -22,7 +22,7 @@ void log(
 #define ERROR(...) \
 	do { \
 		log(__FILE__, __LINE__, 2, __VA_ARGS__); \
-		exit(1); \
+		abort(); \
 	} while(0)
 
 #define LOGW(...) log(__FILE__, __LINE__, 3, __VA_ARGS__)

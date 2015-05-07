@@ -6,6 +6,7 @@
 #ifndef ANKI_GR_GL_SHADER_IMPL_H
 #define ANKI_GR_GL_SHADER_IMPL_H
 
+#include "anki/gr/ShaderCommon.h"
 #include "anki/gr/gl/GlObject.h"
 
 namespace anki {

@@ -5,8 +5,8 @@ R"(		<program>
 			</includes>
 
 			<inputs>
-				<input><type>mat4</type><name>uMvp</name><value></value><instanced>%instanced%</instanced></input>
-				<input><type>mat3</type><name>uN</name><value></value><instanced>%instanced%</instanced></input>
+				<input><type>mat4</type><name>uMvp</name><value></value><instanced>%instanced%</instanced><arraySize>%arraySize%</arraySize></input>
+				<input><type>mat3</type><name>uN</name><value></value><instanced>%instanced%</instanced><arraySize>%arraySize%</arraySize></input>
 			</inputs>
 
 			<operations>

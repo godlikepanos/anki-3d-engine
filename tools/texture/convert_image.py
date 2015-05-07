@@ -191,18 +191,18 @@ def parse_commandline():
 			"Seperate with :")
 
 	parser.add_option("-o", "--output", dest = "out",
-			type = "string", help = "specify new image. ")
+			type = "string", help = "specify output AnKi image. ")
 
 	parser.add_option("-t", "--type", dest = "type",
 			type = "string", default = "2D", 
 			help = "type of the image (2D or cube or 3D or 2DArray)")
 
 	parser.add_option("-f", "--fast", dest = "fast",
-			action = "store_true", default = False, 
+			type = "int", action = "store", default = 0,
 			help = "run the fast version of the converters")
 
 	parser.add_option("-n", "--normal", dest = "normal",
-			action = "store_true", default = False, 
+			type = "int", action = "store", default = 0,
 			help = "assume the texture is normal")
 
 	parser.add_option("-c", "--convert-path", dest = "convert_path", 
@@ -223,7 +223,7 @@ def parse_commandline():
 			help = "store or not compressed data")
 
 	parser.add_option("--to-linear-rgb", dest = "to_linear_rgb", 
-			action = "store_true", default = False, 
+			type = "int", action = "store", default = 0,
 			help = "assume the input textures are sRGB. If this option is " \
 			"true then convert them to linear RGB")
 

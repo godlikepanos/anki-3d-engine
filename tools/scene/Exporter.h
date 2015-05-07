@@ -25,7 +25,7 @@ struct Model
 {
 	uint32_t m_meshIndex = INVALID_INDEX; ///< Mesh index in the scene
 	uint32_t m_materialIndex = INVALID_INDEX;
-	bool m_instanced = false;
+	uint32_t m_instancesCount = 1;
 	uint32_t m_collisionMeshIndex = INVALID_INDEX;
 };
 
@@ -55,7 +55,7 @@ public:
 	std::string m_outputDirectory;
 	std::string m_rpath;
 	std::string m_texrpath;
-	
+
 	bool m_flipyz = false;
 
 	const aiScene* m_scene = nullptr;
@@ -67,6 +67,8 @@ public:
 	std::ofstream m_sceneFile;
 
 	std::vector<uint32_t> m_collisionMeshIds;
+	std::vector<uint32_t> m_portalMeshIds;
+	std::vector<uint32_t> m_sectorMeshIds;
 
 	/// Load the scene.
 	void load();
@@ -86,7 +88,7 @@ private:
 
 	/// Write transformation of a node
 	void writeNodeTransform(
-		const std::string& node, 
+		const std::string& node,
 		const aiMatrix4x4& mat);
 
 	const aiMesh& getMeshAt(unsigned index) const;
@@ -100,7 +102,7 @@ private:
 	/// Export a mesh.
 	/// @param transform If not nullptr then transform the vertices using that.
 	void exportMesh(
-		const aiMesh& mesh, 
+		const aiMesh& mesh,
 		const aiMatrix4x4* transform) const;
 
 	/// Export a skeleton.
@@ -108,8 +110,8 @@ private:
 
 	/// Export a material.
 	void exportMaterial(
-		const aiMaterial& mtl, 
-		bool instanced) const;
+		const aiMaterial& mtl,
+		uint32_t instances) const;
 
 	/// Export a model.
 	void exportModel(const Model& model) const;

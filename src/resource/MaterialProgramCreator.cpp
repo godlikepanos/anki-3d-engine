@@ -381,7 +381,8 @@ Error MaterialProgramCreator::parseInputsTag(const XmlElement& programEl)
 
 			if(inpvar.m_instanced && inpvar.m_arraySize == 1)
 			{
-				inpvar.m_arraySize = ANKI_GL_MAX_INSTANCES;
+				ANKI_LOGE("On instanced the array size should be >1");
+				return ErrorCode::USER_DATA;
 			}
 		}
 		else

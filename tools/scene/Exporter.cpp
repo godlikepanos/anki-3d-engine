@@ -46,12 +46,44 @@ static aiColor3D computeLightColor(aiColor3D in)
 	in[0] *= energy;
 	in[1] *= energy;
 	in[2] *= energy;
-	
+
 	return in;
 }
 
 //==============================================================================
-static std::string getMaterialName(const aiMaterial& mtl, bool instanced)
+/// Round up the instances count.
+static uint32_t roundUpInstancesCount(uint32_t instances)
+{
+	if(instances == 1)
+	{
+		instances = 1;
+	}
+	else if(instances <= 4)
+	{
+		instances = 4;
+	}
+	else if(instances <= 8)
+	{
+		instances = 8;
+	}
+	else if(instances <= 16)
+	{
+		instances = 16;
+	}
+	else if(instances <= 32)
+	{
+		instances = 32;
+	}
+	else
+	{
+		ERROR("Too many instances %u", instances);
+	}
+
+	return instances;
+}
+
+//==============================================================================
+static std::string getMaterialName(const aiMaterial& mtl, uint32_t instances)
 {
 	aiString ainame;
 	std::string name;
@@ -59,9 +91,9 @@ static std::string getMaterialName(const aiMaterial& mtl, bool instanced)
 	{
 		name = ainame.C_Str();
 
-		if(instanced)
+		if(instances > 1)
 		{
-			name += "_inst";
+			name += "_inst" + std::to_string(roundUpInstancesCount(instances));
 		}
 	}
 	else
@@ -81,7 +113,7 @@ static std::string getMeshName(const aiMesh& mesh)
 //==============================================================================
 /// Walk the node hierarchy and find the node.
 static const aiNode* findNodeWithName(
-	const std::string& name, 
+	const std::string& name,
 	const aiNode* node)
 {
 	if(node == nullptr || node->mName.C_Str() == name)
@@ -112,15 +144,15 @@ static const aiNode* findNodeWithName(
 aiMatrix4x4 Exporter::toAnkiMatrix(const aiMatrix4x4& in) const
 {
 	static const aiMatrix4x4 toLeftHanded(
-		1, 0, 0, 0, 
-		0, 0, 1, 0, 
-		0, -1, 0, 0, 
+		1, 0, 0, 0,
+		0, 0, 1, 0,
+		0, -1, 0, 0,
 		0, 0, 0, 1);
 
 	static const aiMatrix4x4 toLeftHandedInv(
-		1, 0, 0, 0, 
-		0, 0, -1, 0, 
-		0, 1, 0, 0, 
+		1, 0, 0, 0,
+		0, 0, -1, 0,
+		0, 1, 0, 0,
 		0, 0, 0, 1);
 
 	if(m_flipyz)
@@ -138,12 +170,12 @@ aiMatrix3x3 Exporter::toAnkiMatrix(const aiMatrix3x3& in) const
 {
 	static const aiMatrix3x3 toLeftHanded(
 		1, 0, 0,
-		0, 0, 1, 
+		0, 0, 1,
 		0, -1, 0);
 
 	static const aiMatrix3x3 toLeftHandedInv(
-		1, 0, 0, 
-		0, 0, -1, 
+		1, 0, 0,
+		0, 0, -1,
 		0, 1, 0);
 
 	if(m_flipyz)
@@ -158,7 +190,7 @@ aiMatrix3x3 Exporter::toAnkiMatrix(const aiMatrix3x3& in) const
 
 //==============================================================================
 void Exporter::writeNodeTransform(
-	const std::string& node, 
+	const std::string& node,
 	const aiMatrix4x4& mat)
 {
 	std::ofstream& file = m_sceneFile;
@@ -170,8 +202,8 @@ void Exporter::writeNodeTransform(
 	pos[1] = m[1][3];
 	pos[2] = m[2][3];
 
-	file << node 
-		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(Vec4.new(" 
+	file << node
+		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(Vec4.new("
 		<< pos[0] << ", " << pos[1] << ", " << pos[2] << ", 0))\n";
 
 	file << "rot = Mat3x4.new()\n";
@@ -197,7 +229,7 @@ void Exporter::writeNodeTransform(
 	}
 	file << ")\n";
 
-	file << node 
+	file << node
 		<< ":getSceneNodeBase():getMoveComponent():setLocalRotation(rot)\n";
 }
 
@@ -218,11 +250,10 @@ const aiMaterial& Exporter::getMaterialAt(unsigned index) const
 //==============================================================================
 std::string Exporter::getModelName(const Model& model) const
 {
-	std::string mtlName = getMaterialName(
-		getMaterialAt(model.m_materialIndex), model.m_instanced);
+	std::string name = getMeshName(getMeshAt(model.m_meshIndex));
 
-	std::string name = 
-		getMeshName(getMeshAt(model.m_meshIndex)) + "_" + mtlName;
+	name += getMaterialName(
+		getMaterialAt(model.m_materialIndex), model.m_instancesCount);
 
 	return name;
 }
@@ -237,7 +268,7 @@ void Exporter::exportSkeleton(const aiMesh& mesh) const
 
 	// Open file
 	file.open(m_outputDirectory + name + ".skel", std::ios::out);
-	
+
 	file << XML_HEADER << "\n";
 	file << "<skeleton>\n";
 	file << "\t<bones>\n";
@@ -280,8 +311,8 @@ void Exporter::exportSkeleton(const aiMesh& mesh) const
 
 //==============================================================================
 void Exporter::exportMaterial(
-	const aiMaterial& mtl, 
-	bool instanced) const
+	const aiMaterial& mtl,
+	uint32_t instances) const
 {
 	std::string diffTex;
 	std::string normTex;
@@ -291,7 +322,7 @@ void Exporter::exportMaterial(
 
 	aiString path;
 
-	std::string name = getMaterialName(mtl, instanced);
+	std::string name = getMaterialName(mtl, instances);
 	LOGI("Exporting material %s", name.c_str());
 
 	// Diffuse texture
@@ -309,7 +340,7 @@ void Exporter::exportMaterial(
 
 	// Normal texture
 	if(mtl.GetTextureCount(aiTextureType_NORMALS) > 0)
-	{	
+	{
 		if(mtl.GetTexture(aiTextureType_NORMALS, 0, &path) == AI_SUCCESS)
 		{
 			normTex = getFilename(path.C_Str());
@@ -348,7 +379,7 @@ void Exporter::exportMaterial(
 
 	// Height texture
 	if(mtl.GetTextureCount(aiTextureType_DISPLACEMENT) > 0)
-	{	
+	{
 		if(mtl.GetTexture(aiTextureType_DISPLACEMENT, 0, &path) == AI_SUCCESS)
 		{
 			dispTex = getFilename(path.C_Str());
@@ -360,13 +391,13 @@ void Exporter::exportMaterial(
 	}
 
 	// Write file
-	static const char* diffNormSpecFragTemplate = 
+	static const char* diffNormSpecFragTemplate =
 #include "templates/diffNormSpecFrag.h"
 		;
-	static const char* simpleVertTemplate = 
+	static const char* simpleVertTemplate =
 #include "templates/simpleVert.h"
 		;
-	static const char* tessVertTemplate = 
+	static const char* tessVertTemplate =
 #include "templates/tessVert.h"
 		;
 
@@ -415,28 +446,28 @@ void Exporter::exportMaterial(
 	// Replace strings
 	if(!dispTex.empty())
 	{
-		materialStr = replaceAllString(materialStr, "%dispMap%", 
+		materialStr = replaceAllString(materialStr, "%dispMap%",
 			m_texrpath + dispTex);
 	}
 
 	// Diffuse
 	if(!diffTex.empty())
 	{
-		materialStr = replaceAllString(materialStr, "%diffuseColorInput%", 
+		materialStr = replaceAllString(materialStr, "%diffuseColorInput%",
 			R"(<input><type>sampler2D</type><name>uDiffuseColor</name><value>)"
 			+ m_texrpath + diffTex
 			+ R"(</value></input>)");
 
-		materialStr = replaceAllString(materialStr, "%diffuseColorFunc%", 
+		materialStr = replaceAllString(materialStr, "%diffuseColorFunc%",
 			readRgbFromTextureTemplate);
 
-		materialStr = replaceAllString(materialStr, "%id%", 
+		materialStr = replaceAllString(materialStr, "%id%",
 			"10");
 
-		materialStr = replaceAllString(materialStr, "%map%", 
+		materialStr = replaceAllString(materialStr, "%map%",
 			"uDiffuseColor");
 
-		materialStr = replaceAllString(materialStr, "%diffuseColorArg%", 
+		materialStr = replaceAllString(materialStr, "%diffuseColorArg%",
 			"out10");
 	}
 	else
@@ -444,29 +475,29 @@ void Exporter::exportMaterial(
 		aiColor3D diffCol = {0.0, 0.0, 0.0};
 		mtl.Get(AI_MATKEY_COLOR_DIFFUSE, diffCol);
 
-		materialStr = replaceAllString(materialStr, "%diffuseColorInput%", 
+		materialStr = replaceAllString(materialStr, "%diffuseColorInput%",
 			R"(<input><type>vec3</type><name>uDiffuseColor</name><value>)"
 			+ std::to_string(diffCol[0]) + " "
 			+ std::to_string(diffCol[1]) + " "
 			+ std::to_string(diffCol[2])
 			+ R"(</value></input>)");
 
-		materialStr = replaceAllString(materialStr, "%diffuseColorFunc%", 
+		materialStr = replaceAllString(materialStr, "%diffuseColorFunc%",
 			"");
 
-		materialStr = replaceAllString(materialStr, "%diffuseColorArg%", 
+		materialStr = replaceAllString(materialStr, "%diffuseColorArg%",
 			"uDiffuseColor");
 	}
 
 	// Normal
 	if(!normTex.empty())
 	{
-		materialStr = replaceAllString(materialStr, "%normalInput%", 
+		materialStr = replaceAllString(materialStr, "%normalInput%",
 			R"(<input><type>sampler2D</type><name>uNormal</name><value>)"
 			+ m_texrpath + normTex
 			+ R"(</value></input>)");
 
-		materialStr = replaceAllString(materialStr, "%normalFunc%", 
+		materialStr = replaceAllString(materialStr, "%normalFunc%",
 				R"(
 				<operation>
 					<id>20</id>
@@ -480,7 +511,7 @@ void Exporter::exportMaterial(
 					</arguments>
 				</operation>)");
 
-		materialStr = replaceAllString(materialStr, "%normalArg%", 
+		materialStr = replaceAllString(materialStr, "%normalArg%",
 			"out20");
 	}
 	else
@@ -495,21 +526,21 @@ void Exporter::exportMaterial(
 	// Specular
 	if(!specColTex.empty())
 	{
-		materialStr = replaceAllString(materialStr, "%specularColorInput%", 
+		materialStr = replaceAllString(materialStr, "%specularColorInput%",
 			R"(<input><type>sampler2D</type><name>uSpecularColor</name><value>)"
 			+ m_texrpath + specColTex
 			+ R"(</value></input>)");
 
-		materialStr = replaceAllString(materialStr, "%specularColorFunc%", 
+		materialStr = replaceAllString(materialStr, "%specularColorFunc%",
 			readRFromTextureTemplate);
 
-		materialStr = replaceAllString(materialStr, "%id%", 
+		materialStr = replaceAllString(materialStr, "%id%",
 			"50");
 
-		materialStr = replaceAllString(materialStr, "%map%", 
+		materialStr = replaceAllString(materialStr, "%map%",
 			"uSpecularColor");
 
-		materialStr = replaceAllString(materialStr, "%specularColorArg%", 
+		materialStr = replaceAllString(materialStr, "%specularColorArg%",
 			"out50");
 	}
 	else
@@ -517,38 +548,38 @@ void Exporter::exportMaterial(
 		aiColor3D specCol = {0.0, 0.0, 0.0};
 		mtl.Get(AI_MATKEY_COLOR_SPECULAR, specCol);
 
-		materialStr = replaceAllString(materialStr, "%specularColorInput%", 
+		materialStr = replaceAllString(materialStr, "%specularColorInput%",
 			R"(<input><type>float</type><name>uSpecularColor</name><value>)"
 			+ std::to_string((specCol[0] + specCol[1] + specCol[2]) / 3.0)
 			+ R"(</value></input>)");
 
-		materialStr = replaceAllString(materialStr, "%specularColorFunc%", 
+		materialStr = replaceAllString(materialStr, "%specularColorFunc%",
 			"");
 
-		materialStr = replaceAllString(materialStr, "%specularColorArg%", 
+		materialStr = replaceAllString(materialStr, "%specularColorArg%",
 			"uSpecularColor");
 	}
 
 	if(!shininessTex.empty())
 	{
-		materialStr = replaceAllString(materialStr, "%specularPowerInput%", 
+		materialStr = replaceAllString(materialStr, "%specularPowerInput%",
 			R"(<input><type>sampler2D</type><name>uSpecularPower</name><value>)"
 			+ m_texrpath + shininessTex
 			+ R"(</value></input>)");
 
-		materialStr = replaceAllString(materialStr, "%specularPowerValue%", 
+		materialStr = replaceAllString(materialStr, "%specularPowerValue%",
 			m_texrpath + shininessTex);
 
-		materialStr = replaceAllString(materialStr, "%specularPowerFunc%", 
+		materialStr = replaceAllString(materialStr, "%specularPowerFunc%",
 			readRFromTextureTemplate);
 
-		materialStr = replaceAllString(materialStr, "%id%", 
+		materialStr = replaceAllString(materialStr, "%id%",
 			"60");
 
-		materialStr = replaceAllString(materialStr, "%map%", 
+		materialStr = replaceAllString(materialStr, "%map%",
 			"uSpecularPower");
 
-		materialStr = replaceAllString(materialStr, "%specularPowerArg%", 
+		materialStr = replaceAllString(materialStr, "%specularPowerArg%",
 			"out60");
 	}
 	else
@@ -564,23 +595,25 @@ void Exporter::exportMaterial(
 
 		shininess = shininess / MAX_SHININESS;
 
-		materialStr = replaceAllString(materialStr, "%specularPowerInput%", 
+		materialStr = replaceAllString(materialStr, "%specularPowerInput%",
 			R"(<input><type>float</type><name>uSpecularPower</name><value>)"
 			+ std::to_string(shininess)
 			+ R"(</value></input>)");
 
-		materialStr = replaceAllString(materialStr, "%specularPowerFunc%", 
+		materialStr = replaceAllString(materialStr, "%specularPowerFunc%",
 			"");
 
-		materialStr = replaceAllString(materialStr, "%specularPowerArg%", 
+		materialStr = replaceAllString(materialStr, "%specularPowerArg%",
 			"uSpecularPower");
 	}
 
 	materialStr = replaceAllString(materialStr, "%maxSpecularPower%", " ");
 
-	materialStr = replaceAllString(materialStr, "%instanced%", 
-		(instanced) ? "1" : "0");
-	materialStr = replaceAllString(materialStr, "%diffuseMap%", 
+	materialStr = replaceAllString(materialStr, "%instanced%",
+		(instances > 1) ? "1" : "0");
+	materialStr = replaceAllString(materialStr, "%arraySize%",
+		std::to_string(roundUpInstancesCount(instances)));
+	materialStr = replaceAllString(materialStr, "%diffuseMap%",
 		m_texrpath + diffTex);
 
 	// Replace texture extensions with .anki
@@ -607,19 +640,19 @@ void Exporter::exportModel(const Model& model) const
 	file << XML_HEADER << '\n';
 	file << "<model>\n";
 	file << "\t<modelPatches>\n";
-	
+
 	// Start patches
 	file << "\t\t<modelPatch>\n";
 
 	// Write mesh
-	file << "\t\t\t<mesh>" << m_rpath 
-		<< getMeshName(getMeshAt(model.m_meshIndex)) 
+	file << "\t\t\t<mesh>" << m_rpath
+		<< getMeshName(getMeshAt(model.m_meshIndex))
 		<< ".ankimesh</mesh>\n";
 
 	// Write material
-	file << "\t\t\t<material>" << m_rpath 
-		<< getMaterialName(getMaterialAt(model.m_materialIndex), 
-			model.m_instanced) 
+	file << "\t\t\t<material>" << m_rpath
+		<< getMaterialName(getMaterialAt(model.m_materialIndex),
+			model.m_instancesCount)
 		<< ".ankimtl</material>\n";
 
 	// End patches
@@ -629,8 +662,8 @@ void Exporter::exportModel(const Model& model) const
 	// Write collision mesh
 	if(model.m_collisionMeshIndex != INVALID_INDEX)
 	{
-		file << "\t<collisionShape><type>staticMesh</type><value>" 
-			<< m_rpath 
+		file << "\t<collisionShape><type>staticMesh</type><value>"
+			<< m_rpath
 			<< getMeshName(getMeshAt(model.m_collisionMeshIndex))
 			<< ".ankimesh</value></collisionShape>\n";
 	}
@@ -647,36 +680,36 @@ void Exporter::exportLight(const aiLight& light)
 
 	if(light.mType != aiLightSource_POINT && light.mType != aiLightSource_SPOT)
 	{
-		LOGW("Skipping light %s. Unsupported type (0x%x)", 
+		LOGW("Skipping light %s. Unsupported type (0x%x)",
 			light.mName.C_Str(), light.mType);
 		return;
 	}
 
 	if(light.mAttenuationLinear != 0.0)
 	{
-		LOGW("Skipping light %s. Linear attenuation is not 0.0", 
+		LOGW("Skipping light %s. Linear attenuation is not 0.0",
 			light.mName.C_Str());
 		return;
 	}
 
-	file << "\nnode = scene:new" 
-		<< ((light.mType == aiLightSource_POINT) ? "Point" : "Spot") 
+	file << "\nnode = scene:new"
+		<< ((light.mType == aiLightSource_POINT) ? "Point" : "Spot")
 		<< "Light(\"" << light.mName.C_Str() << "\")\n";
-	
+
 	file << "lcomp = node:getSceneNodeBase():getLightComponent()\n";
 
 	// Colors
 	aiColor3D linear = computeLightColor(light.mColorDiffuse);
 	file << "lcomp:setDiffuseColor(Vec4.new("
-		<< linear[0] << ", " 
-		<< linear[1] << ", " 
+		<< linear[0] << ", "
+		<< linear[1] << ", "
 		<< linear[2] << ", "
 		<< "1))\n";
 
 	linear = computeLightColor(light.mColorSpecular);
 	file << "lcomp:setSpecularColor(Vec4.new("
-		<< linear[0] << ", " 
-		<< linear[1] << ", " 
+		<< linear[0] << ", "
+		<< linear[1] << ", "
 		<< linear[2] << ", "
 		<< "1))\n";
 
@@ -688,17 +721,17 @@ void Exporter::exportLight(const aiLight& light)
 	case aiLightSource_POINT:
 		{
 			// At this point I want the radius and have the attenuation factors
-			// att = Ac + Al*d + Aq*d^2. When d = r then att = 0.0. Also if we 
+			// att = Ac + Al*d + Aq*d^2. When d = r then att = 0.0. Also if we
 			// assume that Al is 0 then:
 			// 0 = Ac + Aq*r^2. Solving by r is easy
-			float r = 
+			float r =
 				sqrt(light.mAttenuationConstant / light.mAttenuationQuadratic);
 			file << "lcomp:setRadius(" << r << ")\n";
 		}
 		break;
 	case aiLightSource_SPOT:
 		{
-			float dist = 
+			float dist =
 				sqrt(light.mAttenuationConstant / light.mAttenuationQuadratic);
 
 			float outer = light.mAngleOuterCone;
@@ -721,9 +754,9 @@ void Exporter::exportLight(const aiLight& light)
 	}
 
 	// Transform
-	const aiNode* node = 
+	const aiNode* node =
 		findNodeWithName(light.mName.C_Str(), m_scene->mRootNode);
-	
+
 	if(node == nullptr)
 	{
 		ERROR("Couldn't find node for light %s", light.mName.C_Str());
@@ -755,8 +788,8 @@ void Exporter::exportLight(const aiLight& light)
 			lfCompRetrieved = true;
 		}
 
-		file << "lfcomp:setFirstFlareSize(Vec2.new(" 
-			<< light.mLensFlareFirstSpriteSize[0] << ", " 
+		file << "lfcomp:setFirstFlareSize(Vec2.new("
+			<< light.mLensFlareFirstSpriteSize[0] << ", "
 			<< light.mLensFlareFirstSpriteSize[1] << "))\n";
 	}
 
@@ -769,10 +802,10 @@ void Exporter::exportLight(const aiLight& light)
 			lfCompRetrieved = true;
 		}
 
-		file << "lfcomp:setColorMultiplier(Vec4.new(" 
-			<< light.mLensFlareColor.r << ", " 
-			<< light.mLensFlareColor.g << ", " 
-			<< light.mLensFlareColor.b << ", " 
+		file << "lfcomp:setColorMultiplier(Vec4.new("
+			<< light.mLensFlareColor.r << ", "
+			<< light.mLensFlareColor.g << ", "
+			<< light.mLensFlareColor.b << ", "
 			<< light.mLensFlareColor.a << "))\n";
 	}
 }
@@ -815,7 +848,7 @@ void Exporter::exportAnimation(
 		const aiNodeAnim& nAnim = *anim.mChannels[i];
 
 		file << "\t\t<channel>\n";
-		
+
 		// Name
 		file << "\t\t\t<name>" << nAnim.mNodeName.C_Str() << "</name>\n";
 
@@ -828,15 +861,15 @@ void Exporter::exportAnimation(
 			if(m_flipyz)
 			{
 				file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-					<< "<value>" << key.mValue[0] << " " 
-					<< key.mValue[2] << " " << -key.mValue[1] 
+					<< "<value>" << key.mValue[0] << " "
+					<< key.mValue[2] << " " << -key.mValue[1]
 					<< "</value></key>\n";
 			}
 			else
 			{
 				file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-					<< "<value>" << key.mValue[0] << " " 
-					<< key.mValue[1] << " " << key.mValue[2] 
+					<< "<value>" << key.mValue[0] << " "
+					<< key.mValue[1] << " " << key.mValue[2]
 					<< "</value></key>\n";
 			}
 		}
@@ -853,7 +886,7 @@ void Exporter::exportAnimation(
 			//aiQuaternion quat(key.mValue);
 
 			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-				<< "<value>" << quat.x << " " << quat.y 
+				<< "<value>" << quat.x << " " << quat.y
 				<< " " << quat.z << " "
 				<< quat.w << "</value></key>\n";
 		}
@@ -867,7 +900,7 @@ void Exporter::exportAnimation(
 
 			// Note: only uniform scale
 			file << "\t\t\t\t<key><time>" << key.mTime << "</time>"
-				<< "<value>" 
+				<< "<value>"
 				<< ((key.mValue[0] + key.mValue[1] + key.mValue[2]) / 3.0)
 				<< "</value></key>\n";
 		}
@@ -932,16 +965,17 @@ void Exporter::visitNode(const aiNode* ainode)
 			continue;
 		}
 
-		// Find if there is another node with the same mesh-material pair
+		// Find if there is another node with the same mesh-material-group pair
 		std::vector<Node>::iterator it;
 		for(it = m_nodes.begin(); it != m_nodes.end(); ++it)
 		{
 			const Node& node = *it;
 			const Model& model = m_models[node.m_modelIndex];
 
-			if(model.m_meshIndex == meshIndex 
+			if(model.m_meshIndex == meshIndex
 				&& model.m_materialIndex == mtlIndex
-				&& node.m_group == ainode->mGroup.C_Str())
+				&& node.m_group == ainode->mGroup.C_Str()
+				&& node.m_group != "none")
 			{
 				break;
 			}
@@ -956,8 +990,8 @@ void Exporter::visitNode(const aiNode* ainode)
 
 			assert(node.m_transforms.size() > 0);
 			node.m_transforms.push_back(ainode->mTransformation);
-			
-			model.m_instanced = true;
+
+			++model.m_instancesCount;
 			break;
 		}
 
@@ -1025,7 +1059,7 @@ void Exporter::exportAll()
 			+ m_scene->mMeshes[model.m_meshIndex]->mName.C_Str();
 		for(unsigned i = 0; i < m_collisionMeshIds.size(); ++i)
 		{
-			if(m_scene->mMeshes[m_collisionMeshIds[i]]->mName.C_Str() 
+			if(m_scene->mMeshes[m_collisionMeshIds[i]]->mName.C_Str()
 				== collisionMeshName)
 			{
 				model.m_collisionMeshIndex = m_collisionMeshIds[i];
@@ -1036,23 +1070,23 @@ void Exporter::exportAll()
 		// TODO If not instanced bake transform
 		exportMesh(*m_scene->mMeshes[model.m_meshIndex], nullptr);
 
-		exportMaterial(*m_scene->mMaterials[model.m_materialIndex], 
-			model.m_instanced);
+		exportMaterial(*m_scene->mMaterials[model.m_materialIndex],
+			model.m_instancesCount);
 
 		exportModel(model);
 		std::string modelName = getModelName(model);
-		std::string nodeName = modelName + node.m_group;
+		std::string nodeName = modelName + node.m_group + std::to_string(i);
 
 		// Write the main node
-		file << "\nnode = scene:newModelNode(\"" 
-			<< nodeName << "\", \"" 
-			<< m_rpath << modelName << ".ankimdl" << "\")\n"; 
+		file << "\nnode = scene:newModelNode(\""
+			<< nodeName << "\", \""
+			<< m_rpath << modelName << ".ankimdl" << "\")\n";
 		writeNodeTransform("node", node.m_transforms[0]);
 
 		// Write instance nodes
 		for(unsigned j = 1; j < node.m_transforms.size(); j++)
 		{
-			file << "inst = scene:newInstanceNode(\"" 
+			file << "inst = scene:newInstanceNode(\""
 				<< nodeName << "_inst" << (j - 1) << "\")\n"
 				<< "node:getSceneNodeBase():addChild("
 				<< "inst:getSceneNodeBase())\n";

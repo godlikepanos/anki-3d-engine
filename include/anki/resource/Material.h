@@ -107,16 +107,15 @@ public:
 
 	template<typename T>
 	void writeShaderBlockMemory(
-		const T* elements, 
+		const T* elements,
 		U32 elementsCount,
 		void* buffBegin,
 		const void* buffEnd) const
 	{
 		ANKI_ASSERT(Base::isTypeOf<MaterialVariableTemplate<T>>());
 		ANKI_ASSERT(m_varType == getShaderVariableTypeFromTypename<T>());
-		anki::writeShaderBlockMemory(m_varType, m_varBlkInfo, 
-			reinterpret_cast<const T*>(elements), 
-			elementsCount, buffBegin, buffEnd);
+		anki::writeShaderBlockMemory(m_varType, m_varBlkInfo,
+			elements, elementsCount, buffBegin, buffEnd);
 	}
 
 protected:
@@ -143,7 +142,7 @@ public:
 	~MaterialVariableTemplate()
 	{}
 
-	void create(ResourceAllocator<U8> alloc, 
+	void create(ResourceAllocator<U8> alloc,
 		const CString& name, const TData* x, U32 size);
 
 	void destroy(ResourceAllocator<U8> alloc)
@@ -177,7 +176,7 @@ public:
 
 	static ANKI_USE_RESULT Error _newInstance(
 		const MaterialProgramCreatorInputVariable& in,
-		ResourceAllocator<U8> alloc, 
+		ResourceAllocator<U8> alloc,
 		TempResourceAllocator<U8> talloc,
 		MaterialVariable*& out);
 
@@ -288,8 +287,7 @@ protected:
 ///						<name>xx</name>
 ///						<type>any glsl type</type>
 ///						<value> (2)
-///							[a_series_of_numbers |
-///							path/to/image.tga]
+///							[a_series_of_numbers | path/to/image.ankitex]
 ///						</value>
 ///						[<const>0 | 1</const>] (3)
 ///						[<instanced>0 | 1</instanced>]
@@ -366,8 +364,8 @@ public:
 
 private:
 	/// Keep it to have access to some stuff at runtime
-	ResourceManager* m_resources = nullptr; 
-		
+	ResourceManager* m_resources = nullptr;
+
 	DArray<MaterialVariable*> m_vars;
 	Dictionary<MaterialVariable*> m_varDict;
 
