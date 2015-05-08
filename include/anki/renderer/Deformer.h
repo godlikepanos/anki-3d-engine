@@ -6,7 +6,8 @@
 #ifndef ANKI_RENDERER_DEFORMER_H
 #define ANKI_RENDERER_DEFORMER_H
 
-#include "anki/resource/Resource.h"
+#include "anki/renderer/Common.h"
+#include "anki/resource/ShaderResource.h"
 
 namespace anki {
 

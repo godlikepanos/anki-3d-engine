@@ -10,27 +10,21 @@
 namespace anki {
 
 //==============================================================================
-Skeleton::Skeleton(ResourceAllocator<U8>& alloc)
-{}
-
-//==============================================================================
 Skeleton::~Skeleton()
 {
 	for(Bone& b : m_bones)
 	{
-		b._destroy(m_alloc);
+		b._destroy(getAllocator());
 	}
 
-	m_bones.destroy(m_alloc);
+	m_bones.destroy(getAllocator());
 }
 
 //==============================================================================
-Error Skeleton::load(const CString& filename, ResourceInitializer& init)
+Error Skeleton::load(const CString& filename)
 {
-	m_alloc = init.m_alloc;
-
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
+	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
 
 	XmlElement rootEl;
 	ANKI_CHECK(doc.getChildElement("skeleton", rootEl));
@@ -45,7 +39,7 @@ Error Skeleton::load(const CString& filename, ResourceInitializer& init)
 	ANKI_CHECK(boneEl.getSiblingElementsCount(bonesCount));
 	++bonesCount;
 
-	m_bones.create(m_alloc, bonesCount);
+	m_bones.create(getAllocator(), bonesCount);
 
 	// Load every bone
 	bonesCount = 0;
@@ -58,7 +52,7 @@ Error Skeleton::load(const CString& filename, ResourceInitializer& init)
 		ANKI_CHECK(boneEl.getChildElement("name", nameEl));
 		CString tmp;
 		ANKI_CHECK(nameEl.getText(tmp));
-		bone.m_name.create(m_alloc, tmp);
+		bone.m_name.create(getAllocator(), tmp);
 
 		// <transform>
 		XmlElement trfEl;

@@ -42,7 +42,7 @@ Error ResourceManager::create(Initializer& init)
 		init.m_allocCallback, init.m_allocCallbackData);
 
 	m_tmpAlloc = TempResourceAllocator<U8>(
-		init.m_allocCallback, init.m_allocCallbackData, 
+		init.m_allocCallback, init.m_allocCallbackData,
 		init.m_tempAllocatorMemorySize);
 
 	m_cacheDir.create(m_alloc, init.m_cacheDir);
@@ -72,7 +72,7 @@ Error ResourceManager::create(Initializer& init)
 	// Init type resource managers
 	//
 #define ANKI_RESOURCE(type_) \
-	TypeResourceManager<type_, ResourceManager>::init(m_alloc);
+	TypeResourceManager<type_>::init(m_alloc);
 
 	ANKI_RESOURCE(Animation)
 	ANKI_RESOURCE(TextureResource)

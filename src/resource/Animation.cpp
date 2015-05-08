@@ -9,22 +9,18 @@
 namespace anki {
 
 //==============================================================================
-Animation::Animation(ResourceAllocator<U8>& alloc)
-{}
-
-//==============================================================================
 Animation::~Animation()
 {
 	for(AnimationChannel& ch : m_channels)
 	{
-		ch.destroy(m_alloc);
+		ch.destroy(getAllocator());
 	}
 
-	m_channels.destroy(m_alloc);
+	m_channels.destroy(getAllocator());
 }
 
 //==============================================================================
-Error Animation::load(const CString& filename, ResourceInitializer& init)
+Error Animation::load(const CString& filename)
 {
 	XmlElement el;
 	I64 tmp;
@@ -32,11 +28,10 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 
 	m_startTime = MAX_F32;
 	F32 maxTime = MIN_F32;
-	m_alloc = init.m_alloc;
 
 	// Document
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
+	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
 	XmlElement rootel;
 	ANKI_CHECK(doc.getChildElement("animation", rootel));
 
@@ -72,7 +67,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 		ANKI_LOGE("Didn't found any channels");
 		return ErrorCode::USER_DATA;
 	}
-	m_channels.create(m_alloc, channelCount);
+	m_channels.create(getAllocator(), channelCount);
 
 	// For all channels
 	channelCount = 0;
@@ -84,7 +79,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 		ANKI_CHECK(chEl.getChildElement("name", el));
 		CString strtmp;
 		ANKI_CHECK(el.getText(strtmp));
-		ch.m_name.create(m_alloc, strtmp);
+		ch.m_name.create(getAllocator(), strtmp);
 
 		XmlElement keysEl, keyEl;
 
@@ -96,7 +91,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
-			ch.m_positions.create(m_alloc, count);
+			ch.m_positions.create(getAllocator(), count);
 
 			count = 0;
 			do
@@ -133,7 +128,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 
 			U32 count = 0;
 			ANKI_CHECK(keysEl.getSiblingElementsCount(count));
-			ch.m_rotations.create(m_alloc, count);
+			ch.m_rotations.create(getAllocator(), count);
 
 			count = 0;
 			do
@@ -172,7 +167,7 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 
 			U32 count = 0;
 			ANKI_CHECK(keyEl.getSiblingElementsCount(count));
-			ch.m_scales.create(m_alloc, count);
+			ch.m_scales.create(getAllocator(), count);
 
 			count = 0;
 			do
@@ -205,17 +200,17 @@ Error Animation::load(const CString& filename, ResourceInitializer& init)
 		// Remove identity vectors
 		if(identPosCount == ch.m_positions.getSize())
 		{
-			ch.m_positions.destroy(m_alloc);
+			ch.m_positions.destroy(getAllocator());
 		}
 
 		if(identRotCount == ch.m_rotations.getSize())
 		{
-			ch.m_rotations.destroy(m_alloc);
+			ch.m_rotations.destroy(getAllocator());
 		}
 
 		if(identScaleCount == ch.m_scales.getSize())
 		{
-			ch.m_scales.destroy(m_alloc);
+			ch.m_scales.destroy(getAllocator());
 		}
 
 		// Move to next channel

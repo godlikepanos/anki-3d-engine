@@ -6,7 +6,7 @@
 #ifndef ANKI_RESOURCE_MESH_H
 #define ANKI_RESOURCE_MESH_H
 
-#include "anki/resource/Common.h"
+#include "anki/resource/ResourceObject.h"
 #include "anki/Math.h"
 #include "anki/Gr.h"
 #include "anki/collision/Obb.h"
@@ -31,11 +31,13 @@ enum class VertexAttribute: U8
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(VertexAttribute, inline)
 
 /// Mesh Resource. It contains the geometry packed in GPU buffers.
-class Mesh
+class Mesh: public ResourceObject
 {
 public:
 	/// Default constructor
-	Mesh(ResourceAllocator<U8>& alloc);
+	Mesh(ResourceManager* manager)
+	:	ResourceObject(manager)
+	{}
 
 	~Mesh();
 
@@ -94,8 +96,7 @@ public:
 	Bool isCompatible(const Mesh& other) const;
 
 	/// Load from a .mesh file
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(const CString& filename);
 
 protected:
 	/// Per sub mesh data
@@ -106,7 +107,6 @@ protected:
 		Obb m_obb;
 	};
 
-	ResourceAllocator<U8> m_alloc;
 	DArray<SubMesh> m_subMeshes;
 	U32 m_indicesCount;
 	U32 m_vertsCount;
@@ -118,8 +118,7 @@ protected:
 	BufferHandle m_indicesBuff;
 
 	/// Create the VBOs using the mesh data
-	ANKI_USE_RESULT Error createBuffers(
-		const MeshLoader& loader, ResourceInitializer& init);
+	ANKI_USE_RESULT Error createBuffers(const MeshLoader& loader);
 };
 
 // TODO Remove that
@@ -128,16 +127,15 @@ class BucketMesh: public Mesh
 {
 public:
 	/// Default constructor.
-	BucketMesh(ResourceAllocator<U8>& alloc)
-	:	Mesh(alloc)
+	BucketMesh(ResourceManager* manager)
+	:	Mesh(manager)
 	{}
 
 	~BucketMesh()
 	{}
 
 	/// Load from a .mmesh file
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(const CString& filename);
 };
 
 } // end namespace anki

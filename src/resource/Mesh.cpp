@@ -16,13 +16,9 @@ namespace anki {
 //==============================================================================
 
 //==============================================================================
-Mesh::Mesh(ResourceAllocator<U8>&)
-{}
-
-//==============================================================================
 Mesh::~Mesh()
 {
-	m_subMeshes.destroy(m_alloc);
+	m_subMeshes.destroy(getAllocator());
 }
 
 //==============================================================================
@@ -33,12 +29,12 @@ Bool Mesh::isCompatible(const Mesh& other) const
 }
 
 //==============================================================================
-Error Mesh::load(const CString& filename, ResourceInitializer& init)
+Error Mesh::load(const CString& filename)
 {
 	Error err = ErrorCode::NONE;
 
 	MeshLoader loader;
-	ANKI_CHECK(loader.load(init.m_tempAlloc, filename));
+	ANKI_CHECK(loader.load(getTempAllocator(), filename));
 
 	const MeshLoader::Header& header = loader.getHeader();
 	m_indicesCount = header.m_totalIndicesCount;
@@ -56,16 +52,15 @@ Error Mesh::load(const CString& filename, ResourceInitializer& init)
 	m_texChannelsCount = header.m_uvsChannelCount;
 	m_weights = loader.hasBoneInfo();
 
-	err = createBuffers(loader, init);
+	err = createBuffers(loader);
 
 	return err;
 }
 
 //==============================================================================
-Error Mesh::createBuffers(const MeshLoader& loader,
-	ResourceInitializer& init)
+Error Mesh::createBuffers(const MeshLoader& loader)
 {
-	GrManager& gr = init.m_resources.getGrManager();
+	GrManager& gr = getManager().getGrManager();
 
 	// Create vertex buffer
 	ANKI_CHECK(m_vertBuff.create(&gr, GL_ARRAY_BUFFER, loader.getVertexData(), 
@@ -170,7 +165,7 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 //==============================================================================
 
 //==============================================================================
-Error BucketMesh::load(const CString& filename, ResourceInitializer& init)
+Error BucketMesh::load(const CString& filename)
 {
 	Error err = ErrorCode::NONE;
 

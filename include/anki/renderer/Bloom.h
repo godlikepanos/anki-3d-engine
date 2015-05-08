@@ -10,7 +10,6 @@
 #include "anki/Gr.h"
 #include "anki/resource/TextureResource.h"
 #include "anki/resource/ShaderResource.h"
-#include "anki/resource/Resource.h"
 #include "anki/core/Timestamp.h"
 
 namespace anki {

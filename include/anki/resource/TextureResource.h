@@ -6,7 +6,8 @@
 #ifndef ANKI_RESOURCE_TEXTURE_RESOURCE_H
 #define ANKI_RESOURCE_TEXTURE_RESOURCE_H
 
-#include "anki/resource/Common.h"
+#include "anki/resource/ResourceObject.h"
+#include "anki/resource/ResourcePointer.h"
 #include "anki/Gr.h"
 
 namespace anki {
@@ -19,18 +20,19 @@ class Image;
 
 /// Texture resource class.
 ///
-/// It loads or creates an image and then loads it in the GPU. It supports 
+/// It loads or creates an image and then loads it in the GPU. It supports
 /// compressed and uncompressed TGAs and AnKi's texture format.
-class TextureResource
+class TextureResource: public ResourceObject
 {
 public:
-	TextureResource(ResourceAllocator<U8>& alloc);
+	TextureResource(ResourceManager* manager)
+	:	ResourceObject(manager)
+	{}
 
 	~TextureResource();
 
 	/// Load a texture
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(const CString& filename);
 
 	/// Get the GL texture
 	const TextureHandle& getGlTexture() const

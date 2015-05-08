@@ -6,7 +6,8 @@
 #ifndef ANKI_RESOURCE_PROGRAM_RESOURCE_H
 #define ANKI_RESOURCE_PROGRAM_RESOURCE_H
 
-#include "anki/resource/Common.h"
+#include "anki/resource/ResourceObject.h"
+#include "anki/resource/ResourcePointer.h"
 #include "anki/Gr.h"
 
 namespace anki {
@@ -15,10 +16,11 @@ namespace anki {
 /// @{
 
 /// Shader resource
-class ShaderResource
+class ShaderResource: public ResourceObject
 {
 public:
-	ShaderResource(ResourceAllocator<U8>&)
+	ShaderResource(ResourceManager* manager)
+	:	ResourceObject(manager)
 	{}
 
 	~ShaderResource()
@@ -30,20 +32,18 @@ public:
 	}
 
 	/// Resource load
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(const CString& filename);
 
 	/// Load and add extra code on top of the file
 	ANKI_USE_RESULT Error load(
-		const CString& filename, const CString& extraSrc,
-		ResourceManager& manager);
+		const CString& filename, const CString& extraSrc);
 
 	/// Used by @ref Material and @ref Renderer to create custom shaders in
 	/// the cache
 	/// @param filename The file pathname of the shader prog
 	/// @param preAppendedSrcCode The source code we want to write on top
 	///        of the shader prog
-	/// @param filenamePrefix Add that at the base filename for additional 
+	/// @param filenamePrefix Add that at the base filename for additional
 	///        ways to identify the file in the cache
 	/// @param out The file pathname of the new shader prog. Its
 	///            $HOME/.anki/cache/ + filenamePrefix + hash + .glsl
@@ -62,7 +62,7 @@ public:
 private:
 	ShaderHandle m_shader;
 	ShaderType m_type;
-}; 
+};
 /// @}
 
 } // end namespace anki

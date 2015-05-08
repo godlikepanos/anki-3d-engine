@@ -6,7 +6,8 @@
 #ifndef ANKI_RESOURCE_MATERIAL_H
 #define ANKI_RESOURCE_MATERIAL_H
 
-#include "anki/resource/ResourceManager.h"
+#include "anki/resource/ResourceObject.h"
+#include "anki/resource/ResourcePointer.h"
 #include "anki/resource/ShaderResource.h"
 #include "anki/resource/RenderingKey.h"
 #include "anki/Math.h"
@@ -323,12 +324,12 @@ protected:
 /// (2): The \<value\> can be left empty for build-in variables
 /// (3): The \<const\> will mark a variable as constant and it cannot be changed
 ///      at all. Default is 0
-class Material: public MaterialProperties, public NonCopyable
+class Material: public ResourceObject, public MaterialProperties
 {
 	friend class MaterialVariable;
 
 public:
-	Material(ResourceAllocator<U8>& alloc);
+	Material(ResourceManager* manager);
 
 	~Material();
 
@@ -353,8 +354,7 @@ public:
 		const RenderingKey& key, PipelineHandle& out);
 
 	/// Load a material file
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(const CString& filename);
 
 	/// For sorting
 	Bool operator<(const Material& b) const
@@ -363,9 +363,6 @@ public:
 	}
 
 private:
-	/// Keep it to have access to some stuff at runtime
-	ResourceManager* m_resources = nullptr;
-
 	DArray<MaterialVariable*> m_vars;
 	Dictionary<MaterialVariable*> m_varDict;
 
@@ -382,8 +379,7 @@ private:
 		const RenderingKey key, ShaderType shaderId);
 
 	/// Parse what is within the @code <material></material> @endcode
-	ANKI_USE_RESULT Error parseMaterialTag(
-		const XmlElement& el, ResourceInitializer& rinit);
+	ANKI_USE_RESULT Error parseMaterialTag(const XmlElement& el);
 
 	/// Create a unique shader source in chache. If already exists do nothing
 	ANKI_USE_RESULT Error createProgramSourceToCache(

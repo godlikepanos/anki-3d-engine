@@ -6,7 +6,7 @@
 #ifndef ANKI_RESOURCE_SKELETON_H
 #define ANKI_RESOURCE_SKELETON_H
 
-#include "anki/resource/Common.h"
+#include "anki/resource/ResourceObject.h"
 #include "anki/Math.h"
 
 namespace anki {
@@ -62,27 +62,24 @@ private:
 /// 	</bones>
 /// </skeleton>
 /// @endcode
-class Skeleton
+class Skeleton: public ResourceObject
 {
 public:
-	Skeleton(ResourceAllocator<U8>& alloc);
+	Skeleton(ResourceManager* manager)
+	:	ResourceObject(manager)
+	{}
 
 	~Skeleton();
 
 	/// Load file
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(const CString& filename);
 
-	/// @name Accessors
-	/// @{
 	const DArray<Bone>& getBones() const
 	{
 		return m_bones;
 	}
-	/// @}
 
 private:
-	ResourceAllocator<U8> m_alloc;
 	DArray<Bone> m_bones;
 };
 

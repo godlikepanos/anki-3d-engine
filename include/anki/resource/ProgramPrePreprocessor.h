@@ -30,7 +30,7 @@ public:
 	/// It loads a file and parses it
 	/// @param[in] filename The file to load
 	ProgramPrePreprocessor(ResourceManager* manager)
-	:	m_alloc(manager->_getTempAllocator()),
+	:	m_alloc(manager->getTempAllocator()),
 		m_manager(manager)
 	{}
 
@@ -40,7 +40,7 @@ public:
 		m_sourceLines.destroy(m_alloc);
 	}
 
-	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get 
+	/// Parse a PrePreprocessor formated GLSL file. Use the accessors to get
 	/// the output
 	///
 	/// @param filename The file to parse
@@ -73,7 +73,7 @@ protected:
 	/// Keep the manager for some path conversions.
 	ResourceManager* m_manager;
 
-	/// A recursive function that parses a file for pragmas and updates the 
+	/// A recursive function that parses a file for pragmas and updates the
 	/// output
 	///
 	/// @param filename The file to parse

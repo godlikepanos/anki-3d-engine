@@ -8,7 +8,6 @@
 
 #include "anki/renderer/RenderingPass.h"
 #include "anki/resource/TextureResource.h"
-#include "anki/resource/Resource.h"
 #include "anki/resource/ShaderResource.h"
 #include "anki/Gr.h"
 

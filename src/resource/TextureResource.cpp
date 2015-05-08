@@ -19,17 +19,13 @@ static Error deleteImageCallback(void* data)
 }
 
 //==============================================================================
-TextureResource::TextureResource(ResourceAllocator<U8>&)
-{}
-
-//==============================================================================
 TextureResource::~TextureResource()
 {}
 
 //==============================================================================
-Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
+Error TextureResource::load(const CString& filename)
 {
-	GrManager& gr = rinit.m_resources.getGrManager();
+	GrManager& gr = getManager().getGrManager();
 	CommandBufferHandle cmdb;
 	ANKI_CHECK(cmdb.create(&gr)); // Always first to avoid assertions (
 	                              // because of the check of the allocator)
@@ -39,12 +35,12 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 	U layers = 0;
 
 	// Load image
-	ImageLoader* img = rinit.m_alloc.newInstance<ImageLoader>(rinit.m_alloc);
+	ImageLoader* img = getAllocator().newInstance<ImageLoader>(getAllocator());
 
-	Error err = img->load(filename, rinit.m_resources.getMaxTextureSize());
+	Error err = img->load(filename, getManager().getMaxTextureSize());
 	if(err)
 	{
-		rinit.m_alloc.deleteInstance(img);
+		getAllocator().deleteInstance(img);
 		return err;
 	}
 	
@@ -148,7 +144,7 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 
 	// anisotropyLevel
 	init.m_sampling.m_anisotropyLevel = 
-		rinit.m_resources.getTextureAnisotropy();
+		getManager().getTextureAnisotropy();
 
 	// Now assign the data
 	for(U layer = 0; layer < layers; layer++)
@@ -167,7 +163,7 @@ Error TextureResource::load(const CString& filename, ResourceInitializer& rinit)
 	err = m_tex.create(cmdb, init);
 	if(err)
 	{
-		rinit.m_alloc.deleteInstance(img);
+		getAllocator().deleteInstance(img);
 		return err;
 	}
 

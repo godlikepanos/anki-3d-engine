@@ -8,56 +8,48 @@
 namespace anki {
 
 //==============================================================================
-template<typename T, typename TResourceManager>
-Error ResourcePointer<T, TResourceManager>::load(
-	const CString& filename, TResourceManager* resources)
+template<typename T>
+Error ResourcePointer<T>::load(
+	const CString& filename, ResourceManager* resources)
 {
-	ANKI_ASSERT(m_cb == nullptr && "Already loaded");
+	ANKI_ASSERT(!isCreated() && "Already loaded");
 	ANKI_ASSERT(resources != nullptr);
 
 	Error err = ErrorCode::NONE;
 
-	ResourcePointer other;
-	Bool found = resources->_findLoadedResource(filename, other);
+	T* other = resources->findLoadedResource<T>(filename);
 
-	if(!found)
+	if(other)
 	{
-		auto alloc = resources->_getAllocator();
+		// Found
+		reset(other);
+	}
+	else
+	{
+		auto alloc = resources->getAllocator();
 
-		// Allocate m_cb
-		U len = filename.getLength();
-		PtrSize alignment = alignof(ControlBlock);
-		m_cb = reinterpret_cast<ControlBlock*>(
-			alloc.allocate(
-			sizeof(ControlBlock) + len, &alignment));
+		// Allocate ptr
+		T* ptr = alloc.newInstance<T>(resources);
+		ANKI_ASSERT(ptr->getRefcount().load() == 0);
 
-		// Construct
-		alloc.construct(m_cb, alloc);
-
-		// Populate the m_cb. Use a block ton cleanup temp_pool allocations
-		auto& pool = resources->_getTempAllocator().getMemoryPool();
+		// Populate the ptr. Use a block ton cleanup temp_pool allocations
+		auto& pool = resources->getTempAllocator().getMemoryPool();
 
 		// WARNING: Keep the brackets to force deallocation of newFname before
 		// reseting the mempool
 		{
-			StringAuto newFname(resources->_getTempAllocator());
+			StringAuto newFname(resources->getTempAllocator());
 
 			resources->fixResourceFilename(filename, newFname);
-
-			ResourceInitializer init(
-				alloc,
-				resources->_getTempAllocator(),
-				*resources);
 
 			U allocsCountBefore = pool.getAllocationsCount();
 			(void)allocsCountBefore;
 
-			err = m_cb->m_resource.load(newFname.toCString(), init);
+			err = ptr->load(newFname.toCString());
 			if(err)
 			{
 				ANKI_LOGE("Failed to load resource: %s", &newFname[0]);
-				alloc.deleteInstance(m_cb);
-				m_cb = nullptr;
+				alloc.deleteInstance(ptr);
 				return err;
 			}
 
@@ -65,8 +57,7 @@ Error ResourcePointer<T, TResourceManager>::load(
 				&& "Forgot to deallocate");
 		}
 
-		m_cb->m_resources = resources;
-		std::memcpy(&m_cb->m_uuid[0], &filename[0], len + 1);
+		ptr->setUuid(filename);
 
 		// Reset the memory pool if no-one is using it.
 		// NOTE: Check because resources load other resources
@@ -76,59 +67,19 @@ Error ResourcePointer<T, TResourceManager>::load(
 		}
 
 		// Register resource
-		resources->_registerResource(*this);
-	}
-	else
-	{
-		*this = other;
+		resources->registerResource(ptr);
+		reset(ptr);
 	}
 
 	return err;
 }
 
 //==============================================================================
-template<typename T, typename TResourceManager>
-void ResourcePointer<T, TResourceManager>::reset()
-{
-	if(m_cb != nullptr)
-	{
-		auto count = m_cb->m_refcount.fetchSub(1);
-		if(count == 2)
-		{
-			m_cb->m_resources->_unregisterResource(*this);
-		}
-		else if(count == 1)
-		{
-			m_cb->m_resources->_getAllocator().deleteInstance(m_cb);
-		}
-
-		m_cb = nullptr;
-	}
-}
-
-//==============================================================================
-template<typename T, typename TResourceManager>
-void ResourcePointer<T, TResourceManager>::copy(const ResourcePointer& b)
-{
-	reset();
-	
-	if(b.m_cb != nullptr)
-	{
-		auto count = b.m_cb->m_refcount.fetchAdd(1);
-		ANKI_ASSERT(count > 0);
-		(void)count;
-
-		m_cb = b.m_cb;
-	}
-}
-
-//==============================================================================
-template<typename T, typename TResourceManager>
+template<typename T>
 template<typename... TArgs>
-Error ResourcePointer<T, TResourceManager>::loadToCache(
-	TResourceManager* resources, TArgs&&... args)
+Error ResourcePointer<T>::loadToCache(ResourceManager* resources, TArgs&&... args)
 {
-	StringAuto fname(resources->_getTempAllocator());
+	StringAuto fname(resources->getTempAllocator());
 
 	Error err = T::createToCache(args..., *resources, fname);
 

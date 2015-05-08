@@ -6,12 +6,16 @@
 #ifndef ANKI_RESOURCE_PARTICLE_EMITTER_RSRC_H
 #define ANKI_RESOURCE_PARTICLE_EMITTER_RSRC_H
 
-#include "anki/resource/ResourceManager.h"
+#include "anki/resource/ResourceObject.h"
+#include "anki/resource/ResourcePointer.h"
 #include "anki/Math.h"
 
 namespace anki {
 
 class XmlElement;
+
+/// @addtogroup resource
+/// @{
 
 /// The particle emitter properties. Different class from
 /// ParticleEmitterResource so it can be inherited
@@ -46,7 +50,7 @@ public:
 		F32 m_sizeDeviation = 0.0;
 		F32 m_sizeAnimation = 1.0;
 
-		/// Alpha factor. If the material supports alpha then multiply with 
+		/// Alpha factor. If the material supports alpha then multiply with
 		/// this
 		F32 m_alpha = 1.0;
 		F32 m_alphaDeviation = 0.0;
@@ -89,10 +93,13 @@ public:
 };
 
 /// This is the properties of the particle emitter resource
-class ParticleEmitterResource: private ParticleEmitterProperties
+class ParticleEmitterResource: public ResourceObject,
+	private ParticleEmitterProperties
 {
 public:
-	ParticleEmitterResource(ResourceAllocator<U8>& alloc);
+	ParticleEmitterResource(ResourceManager* manager)
+	:	ResourceObject(manager)
+	{}
 
 	~ParticleEmitterResource();
 
@@ -111,14 +118,14 @@ public:
 	}
 
 	/// Load it
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(const CString& filename);
 
 private:
 	MaterialResourcePointer m_material;
 
-	void loadInternal(const XmlElement& el, ResourceInitializer& init);
+	void loadInternal(const XmlElement& el);
 };
+/// @}
 
 } // end namespace anki
 

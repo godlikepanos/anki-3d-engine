@@ -6,7 +6,7 @@
 #ifndef ANKI_RESOURCE_SCRIPT_H
 #define ANKI_RESOURCE_SCRIPT_H
 
-#include "anki/resource/Common.h"
+#include "anki/resource/ResourceObject.h"
 
 namespace anki {
 
@@ -14,16 +14,16 @@ namespace anki {
 /// @{
 
 /// Script resource.
-class Script
+class Script: public ResourceObject
 {
 public:
-	Script(ResourceAllocator<U8>&)
+	Script(ResourceManager* manager)
+	:	ResourceObject(manager)
 	{}
 
 	~Script();
 
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(const CString& filename);
 
 	CString getSource() const
 	{
@@ -32,7 +32,6 @@ public:
 
 private:
 	String m_source;
-	ResourceAllocator<char> m_alloc;
 };
 /// @}
 

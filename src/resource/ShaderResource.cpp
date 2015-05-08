@@ -15,24 +15,23 @@
 namespace anki {
 
 //==============================================================================
-Error ShaderResource::load(const CString& filename, ResourceInitializer& init)
+Error ShaderResource::load(const CString& filename)
 {
-	return load(filename, " ", init.m_resources);
+	return load(filename, " ");
 }
 
 //==============================================================================
-Error ShaderResource::load(const CString& filename, const CString& extraSrc,
-	ResourceManager& manager)
+Error ShaderResource::load(const CString& filename, const CString& extraSrc)
 {
-	auto alloc = manager._getTempAllocator();
+	auto alloc = getTempAllocator();
 
-	ProgramPrePreprocessor pars(&manager);
+	ProgramPrePreprocessor pars(&getManager());
 	ANKI_CHECK(pars.parseFile(filename));
-	
+
 	// Allocate new source
 	StringAuto source(alloc);
 
-	source.append(manager._getShadersPrependedSource());
+	source.append(getManager()._getShadersPrependedSource());
 
 	if(extraSrc.getLength() > 0)
 	{
@@ -44,8 +43,8 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 	// Create
 	ANKI_CHECK(
 		m_shader.create(
-		&manager.getGrManager(), 
-		pars.getShaderType(), &source[0], 
+		&getManager().getGrManager(),
+		pars.getShaderType(), &source[0],
 		source.getLength() + 1));
 
 	m_type = pars.getShaderType();
@@ -55,11 +54,11 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc,
 
 //==============================================================================
 Error ShaderResource::createToCache(
-	const CString& filename, const CString& preAppendedSrcCode, 
+	const CString& filename, const CString& preAppendedSrcCode,
 	const CString& filenamePrefix, ResourceManager& manager,
 	StringAuto& out)
 {
-	auto alloc = manager._getTempAllocator();
+	auto alloc = manager.getTempAllocator();
 
 	if(preAppendedSrcCode.getLength() < 1)
 	{
@@ -82,7 +81,7 @@ Error ShaderResource::createToCache(
 	StringAuto newFilename(alloc);
 
 	newFilename.sprintf(
-		"%s/%s%s.glsl", 
+		"%s/%s%s.glsl",
 		&manager._getCacheDirectory()[0],
 		&filenamePrefix[0],
 		&suffix[0]);

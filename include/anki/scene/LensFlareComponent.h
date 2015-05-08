@@ -8,7 +8,6 @@
 
 #include "anki/scene/SceneNode.h"
 #include "anki/Gr.h"
-#include "anki/resource/ResourceManager.h"
 #include "anki/resource/TextureResource.h"
 
 namespace anki {
@@ -101,14 +100,14 @@ private:
 	U8 m_flareCount = 0; ///< Cache the flare count.
 
 	Vec4 m_colorMul = Vec4(1.0); ///< Color multiplier.
-	
+
 	Vec2 m_firstFlareSize = Vec2(1.0);
 	Vec2 m_otherFlareSize = Vec2(1.0);
 
 	Array<OcclusionQueryHandle, 3> m_queries;
 	Array<Timestamp, 3> m_queryTestTimestamp = {{MAX_U32, MAX_U32, MAX_U32}};
 	U8 m_crntQueryIndex = 0;
-	
+
 	Vec4 m_worldPosition = Vec4(0.0);
 	SceneNode* m_node;
 };

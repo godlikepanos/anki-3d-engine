@@ -10,7 +10,6 @@
 #include "anki/scene/RenderComponent.h"
 #include "anki/scene/MoveComponent.h"
 #include "anki/scene/SpatialComponent.h"
-#include "anki/resource/Resource.h"
 #include "anki/resource/Model.h"
 #include "anki/collision/Obb.h"
 

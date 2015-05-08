@@ -107,7 +107,7 @@ class MaterialProgramCreator
 public:
 	using Input = MaterialProgramCreatorInputVariable;
 
-	explicit MaterialProgramCreator(TempResourceAllocator<U8>& alloc);
+	explicit MaterialProgramCreator(TempResourceAllocator<U8> alloc);
 
 	~MaterialProgramCreator();
 

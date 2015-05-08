@@ -9,9 +9,7 @@
 #include "anki/Math.h"
 #include "anki/util/Vector.h"
 
-
 namespace anki {
-
 
 /// Bone pose
 struct BonePose
@@ -120,8 +118,6 @@ private:
 	Vector<BoneAnim> boneAnims;
 };
 
-
 } // end namespace
-
 
 #endif

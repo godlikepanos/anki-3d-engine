@@ -6,7 +6,8 @@
 #ifndef ANKI_RESOURCE_DUMMY_RSRC_H
 #define ANKI_RESOURCE_DUMMY_RSRC_H
 
-#include "anki/resource/Common.h"
+#include "anki/resource/ResourceObject.h"
+#include "anki/resource/ResourcePointer.h"
 
 namespace anki {
 
@@ -14,32 +15,31 @@ namespace anki {
 /// @{
 
 /// A dummy resource for the unit tests of the ResourceManager
-class DummyRsrc
+class DummyRsrc: public ResourceObject
 {
 public:
-	DummyRsrc(ResourceAllocator<U8>& alloc)
-	:	m_alloc(alloc)
+	DummyRsrc(ResourceManager* manager)
+	:	ResourceObject(manager)
 	{}
 
 	~DummyRsrc()
 	{
 		if(m_memory)
 		{
-			m_alloc.deallocate(m_memory, 128);
+			getAllocator().deallocate(m_memory, 128);
 		}
 	}
 
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init)
+	ANKI_USE_RESULT Error load(const CString& filename)
 	{
 		Error err = ErrorCode::NONE;
-		if(filename != "error")
+		if(filename.find("error") == CString::NPOS)
 		{
-			m_memory = m_alloc.allocate(128);
-			void* tempMem = init.m_tempAlloc.allocate(128);
+			m_memory = getAllocator().allocate(128);
+			void* tempMem = getTempAllocator().allocate(128);
 			(void)tempMem;
 
-			init.m_tempAlloc.deallocate(tempMem, 128);
+			getTempAllocator().deallocate(tempMem, 128);
 		}
 		else
 		{
@@ -52,9 +52,7 @@ public:
 
 private:
 	void* m_memory = nullptr;
-	HeapAllocator<U8> m_alloc;
 };
-
 /// @}
 
 } // end namespace anki

@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/ParticleEmitterResource.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/resource/Model.h"
 #include "anki/util/StringList.h"
 #include "anki/misc/Xml.h"
@@ -108,23 +109,16 @@ void ParticleEmitterProperties::updateFlags()
 //==============================================================================
 
 //==============================================================================
-ParticleEmitterResource::ParticleEmitterResource(ResourceAllocator<U8>&)
-{}
-
-//==============================================================================
 ParticleEmitterResource::~ParticleEmitterResource()
 {}
 
 //==============================================================================
-Error ParticleEmitterResource::load(
-	const CString& filename, 
-	ResourceInitializer& init)
+Error ParticleEmitterResource::load(const CString& filename)
 {
-	Error err = ErrorCode::NONE;
 	U32 tmp;
 
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
+	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
 	XmlElement rel; // Root element
 	ANKI_CHECK(doc.getChildElement("particleEmitter", rel));
 
@@ -132,7 +126,7 @@ Error ParticleEmitterResource::load(
 	//
 	ANKI_CHECK(xmlF32(rel, "life", m_particle.m_life));
 	ANKI_CHECK(xmlF32(rel, "lifeDeviation", m_particle.m_lifeDeviation));
-	
+
 	ANKI_CHECK(xmlF32(rel, "mass", m_particle.m_mass));
 	ANKI_CHECK(xmlF32(rel, "massDeviation", m_particle.m_massDeviation));
 
@@ -148,17 +142,17 @@ Error ParticleEmitterResource::load(
 	m_particle.m_alphaAnimation = tmp;
 
 	ANKI_CHECK(xmlVec3(rel, "forceDirection", m_particle.m_forceDirection));
-	ANKI_CHECK(xmlVec3(rel, "forceDirectionDeviation", 
+	ANKI_CHECK(xmlVec3(rel, "forceDirectionDeviation",
 		m_particle.m_forceDirectionDeviation));
 	ANKI_CHECK(xmlF32(rel, "forceMagnitude", m_particle.m_forceMagnitude));
-	ANKI_CHECK(xmlF32(rel, "forceMagnitudeDeviation", 
+	ANKI_CHECK(xmlF32(rel, "forceMagnitudeDeviation",
 		m_particle.m_forceMagnitudeDeviation));
 
 	ANKI_CHECK(xmlVec3(rel, "gravity", m_particle.m_gravity));
 	ANKI_CHECK(xmlVec3(rel, "gravityDeviation", m_particle.m_gravityDeviation));
 
 	ANKI_CHECK(xmlVec3(rel, "startingPosition", m_particle.m_startingPos));
-	ANKI_CHECK(xmlVec3(rel, "startingPositionDeviation", 
+	ANKI_CHECK(xmlVec3(rel, "startingPositionDeviation",
 		m_particle.m_startingPosDeviation));
 
 	ANKI_CHECK(xmlU32(rel, "maxNumberOfParticles", m_maxNumOfParticles));
@@ -173,7 +167,7 @@ Error ParticleEmitterResource::load(
 	CString cstr;
 	ANKI_CHECK(rel.getChildElement("material", el));
 	ANKI_CHECK(el.getText(cstr));
-	ANKI_CHECK(m_material.load(cstr, &init.m_resources));
+	ANKI_CHECK(m_material.load(cstr, &getManager()));
 
 	// sanity checks
 	//
@@ -221,7 +215,7 @@ Error ParticleEmitterResource::load(
 	//
 	updateFlags();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

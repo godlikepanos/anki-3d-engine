@@ -5,6 +5,7 @@
 
 #include "anki/resource/Material.h"
 #include "anki/resource/MaterialProgramCreator.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/core/App.h"
 #include "anki/util/Logger.h"
 #include "anki/resource/ShaderResource.h"
@@ -153,15 +154,16 @@ Error MaterialVariableTemplate<T>::_newInstance(
 //==============================================================================
 
 //==============================================================================
-Material::Material(ResourceAllocator<U8>& alloc)
-:	m_varDict(10, Dictionary<MaterialVariable*>::hasher(),
-		Dictionary<MaterialVariable*>::key_equal(), alloc)
+Material::Material(ResourceManager* manager)
+:	ResourceObject(manager),
+	m_varDict(10, Dictionary<MaterialVariable*>::hasher(),
+		Dictionary<MaterialVariable*>::key_equal(), getAllocator())
 {}
 
 //==============================================================================
 Material::~Material()
 {
-	auto alloc = m_resources->_getAllocator();
+	auto alloc = getAllocator();
 
 	m_progs.destroy(alloc);
 
@@ -300,8 +302,6 @@ Error Material::getProgramPipeline(
 	ANKI_ASSERT(enumToType(key.m_pass) < m_passesCount);
 	ANKI_ASSERT(key.m_lod < m_lodsCount);
 
-	Error err = ErrorCode::NONE;
-
 	U tessCount = 1;
 	if(m_tessellation)
 	{
@@ -338,36 +338,30 @@ Error Material::getProgramPipeline(
 		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] = 
 			getProgram(key, ShaderType::FRAGMENT)->getGrShader();
 
-		ANKI_CHECK(ppline.create(&m_resources->getGrManager(), pplineInit));
+		ANKI_CHECK(ppline.create(&getManager().getGrManager(), pplineInit));
 	}
 
 	out = ppline;
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Material::load(const CString& filename, ResourceInitializer& init)
+Error Material::load(const CString& filename)
 {
-	Error err = ErrorCode::NONE;
-
-	m_resources = &init.m_resources;
-
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
+	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
 
 	XmlElement el;
 	ANKI_CHECK(doc.getChildElement("material", el));
-	ANKI_CHECK(parseMaterialTag(el , init));
+	ANKI_CHECK(parseMaterialTag(el));
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Material::parseMaterialTag(const XmlElement& materialEl,
-	ResourceInitializer& rinit)
+Error Material::parseMaterialTag(const XmlElement& materialEl)
 {
-	Error err = ErrorCode::NONE;
 	XmlElement el;
 
 	// levelsOfDetail
@@ -459,14 +453,14 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 	// shaderProgram
 	//
 	ANKI_CHECK(materialEl.getChildElement("programs", el));
-	MaterialProgramCreator loader(rinit.m_tempAlloc);
+	MaterialProgramCreator loader(getTempAllocator());
 	ANKI_CHECK(loader.parseProgramsTag(el));
 
 	m_tessellation = loader.hasTessellation();
 	U tessCount = m_tessellation ? 2 : 1;
 
 	// Alloc program vector
-	m_progs.create(rinit.m_alloc,
+	m_progs.create(getAllocator(),
 		countShaders(ShaderType::VERTEX) 
 		+ countShaders(ShaderType::TESSELLATION_CONTROL)
 		+ countShaders(ShaderType::TESSELLATION_EVALUATION)
@@ -474,8 +468,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 		+ countShaders(ShaderType::FRAGMENT));
 
 	// Aloc progam descriptors
-	m_pplines.create(rinit.m_alloc,
-		m_passesCount * m_lodsCount * tessCount);
+	m_pplines.create(getAllocator(), m_passesCount * m_lodsCount * tessCount);
 
 	m_hash = 0;
 	for(ShaderType shader = ShaderType::VERTEX; 
@@ -518,7 +511,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 						continue;
 					}
 
-					StringAuto src(rinit.m_tempAlloc);
+					StringAuto src(getTempAllocator());
 					src.sprintf(
 						"#define LOD %u\n"
 						"#define PASS %u\n"
@@ -526,14 +519,13 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 						"%s\n",
 						level, pid, tess, &loader.getProgramSource(shader)[0]);
 
-					StringAuto filename(rinit.m_tempAlloc);
+					StringAuto filename(getTempAllocator());
 
 					ANKI_CHECK(createProgramSourceToCache(src, filename));
 
 					RenderingKey key((Pass)pid, level, tess);
 					ShaderResourcePointer& progr = getProgram(key, shader);
-					ANKI_CHECK(
-						progr.load(filename.toCString(), &rinit.m_resources));
+					ANKI_CHECK(progr.load(filename.toCString(), &getManager()));
 
 					// Update the hash
 					m_hash ^= computeHash(&src[0], src.getLength());
@@ -548,14 +540,14 @@ Error Material::parseMaterialTag(const XmlElement& materialEl,
 	ANKI_ASSERT(m_progs.getSize() > 0);
 	m_shaderBlockSize = loader.getUniformBlockSize();
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error Material::createProgramSourceToCache(
 	const StringAuto& source, StringAuto& out)
 {
-	auto alloc = m_resources->_getTempAllocator();
+	auto alloc = getTempAllocator();
 
 	// Create the hash
 	U64 h = computeHash(&source[0], source.getLength());
@@ -565,7 +557,7 @@ Error Material::createProgramSourceToCache(
 
 	// Create path
 	out.sprintf("%s/mtl_%s.glsl", 
-		&m_resources->_getCacheDirectory()[0],
+		&getManager()._getCacheDirectory()[0],
 		&prefix[0]);
 
 	// If file not exists write it
@@ -592,7 +584,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 		}
 	}
 
-	m_vars.create(m_resources->_getAllocator(), varCount);
+	m_vars.create(getAllocator(), varCount);
 
 	varCount = 0;
 	for(const auto& in : loader.getInputVariables())
@@ -615,10 +607,10 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 				if(in.m_value.getSize() > 0)
 				{
 					ANKI_CHECK(tp.load(
-						in.m_value.getBegin()->toCString(), m_resources));
+						in.m_value.getBegin()->toCString(), &getManager()));
 				}
 
-				auto alloc = m_resources->_getAllocator();
+				auto alloc = getAllocator();
 				MaterialVariableTemplate<TextureResourcePointer>* tvar = 
 					alloc.newInstance<
 					MaterialVariableTemplate<TextureResourcePointer>>();
@@ -635,32 +627,32 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 			break;
 		case ShaderVariableDataType::FLOAT:
 			ANKI_CHECK(MaterialVariableTemplate<F32>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				getAllocator(), getTempAllocator(),
 				mtlvar));
 			break;
 		case ShaderVariableDataType::VEC2:
 			ANKI_CHECK(MaterialVariableTemplate<Vec2>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				getAllocator(), getTempAllocator(),
 				mtlvar));
 			break;
 		case ShaderVariableDataType::VEC3:
 			ANKI_CHECK(MaterialVariableTemplate<Vec3>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				getAllocator(), getTempAllocator(),
 				mtlvar));
 			break;
 		case ShaderVariableDataType::VEC4:
 			ANKI_CHECK(MaterialVariableTemplate<Vec4>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				getAllocator(), getTempAllocator(),
 				mtlvar));
 			break;
 		case ShaderVariableDataType::MAT3:
 			ANKI_CHECK(MaterialVariableTemplate<Mat3>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				getAllocator(), getTempAllocator(),
 				mtlvar));
 			break;
 		case ShaderVariableDataType::MAT4:
 			ANKI_CHECK(MaterialVariableTemplate<Mat4>::_newInstance(in,
-				m_resources->_getAllocator(), m_resources->_getTempAllocator(),
+				getAllocator(), getTempAllocator(),
 				mtlvar));
 			break;
 		// default is error

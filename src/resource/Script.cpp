@@ -11,24 +11,18 @@ namespace anki {
 //==============================================================================
 Script::~Script()
 {
-	m_source.destroy(m_alloc);
+	m_source.destroy(getAllocator());
 }
 
 //==============================================================================
-Error Script::load(const CString& filename, ResourceInitializer& init)
+Error Script::load(const CString& filename)
 {
-	Error err = ErrorCode::NONE;
 	File file;
 
-	err = file.open(filename, File::OpenFlag::READ);
+	ANKI_CHECK(file.open(filename, File::OpenFlag::READ));
+	ANKI_CHECK(file.readAllText(getAllocator(), m_source));
 
-	if(!err)
-	{
-		m_alloc = init.m_alloc;
-		err = file.readAllText(m_alloc, m_source);
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

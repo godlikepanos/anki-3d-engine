@@ -6,7 +6,7 @@
 #ifndef ANKI_RESOURCE_MODEL_H
 #define ANKI_RESOURCE_MODEL_H
 
-#include "anki/resource/ResourceManager.h"
+#include "anki/resource/ResourceObject.h"
 #include "anki/Gr.h"
 #include "anki/collision/Obb.h"
 #include "anki/resource/RenderingKey.h"
@@ -69,13 +69,13 @@ public:
 	/// Given an array of submeshes that are visible return the correct indices
 	/// offsets and counts
 	ANKI_USE_RESULT Error getRenderingDataSub(
-		const RenderingKey& key, 
+		const RenderingKey& key,
 		CommandBufferHandle& vertJobs,
 		PipelineHandle& ppline,
-		const U8* subMeshIndicesArray, 
+		const U8* subMeshIndicesArray,
 		U32 subMeshIndicesCount,
 		Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
-		Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray, 
+		Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray,
 		U32& drawcallCount) const;
 
 protected:
@@ -120,9 +120,9 @@ public:
 	}
 
 	ANKI_USE_RESULT Error create(
-		CString meshFNames[], 
+		CString meshFNames[],
 		U32 meshesCount,
-		const CString& mtlFName, 
+		const CString& mtlFName,
 		ResourceManager* resources);
 
 private:
@@ -165,10 +165,12 @@ private:
 /// - If the materials need texture coords then mesh should have them
 /// - The skeleton and skelAnims are optional
 /// - Its an error to have skelAnims without skeleton
-class Model
+class Model: public ResourceObject
 {
 public:
-	Model(ResourceAllocator<U8>& alloc);
+	Model(ResourceManager* manager)
+	:	ResourceObject(manager)
+	{}
 
 	~Model();
 
@@ -187,11 +189,9 @@ public:
 		return m_physicsShape;
 	}
 
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(const CString& filename);
 
 private:
-	ResourceManager* m_resources = nullptr;
 	DArray<ModelPatchBase*> m_modelPatches;
 	Obb m_visibilityShape;
 	SkeletonResourcePointer m_skeleton;

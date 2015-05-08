@@ -117,7 +117,7 @@ ANKI_USE_RESULT Error computeShaderVariableDataType(
 //==============================================================================
 
 //==============================================================================
-MaterialProgramCreator::MaterialProgramCreator(TempResourceAllocator<U8>& alloc)
+MaterialProgramCreator::MaterialProgramCreator(TempResourceAllocator<U8> alloc)
 :	m_alloc(alloc)
 {}
 

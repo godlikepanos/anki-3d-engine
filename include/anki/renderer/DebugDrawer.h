@@ -8,10 +8,10 @@
 
 #include "anki/Math.h"
 #include "anki/Gr.h"
-#include "anki/resource/Resource.h"
 #include "anki/collision/CollisionShape.h"
 #include "anki/physics/PhysicsDrawer.h"
 #include "anki/scene/Forward.h"
+#include "anki/resource/ShaderResource.h"
 #include "anki/util/Array.h"
 #include <unordered_map>
 

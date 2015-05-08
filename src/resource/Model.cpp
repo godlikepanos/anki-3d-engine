@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/Model.h"
+#include "anki/resource/ResourceManager.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/Mesh.h"
 #include "anki/resource/MeshLoader.h"
@@ -48,7 +49,7 @@ Error ModelPatchBase::createVertexDesc(
 		{
 			continue;
 		}
-		
+
 		vbo.bindVertexBuffer(vertexJobs, size, type, normalized, stride,
 			offset, static_cast<U>(attrib));
 
@@ -73,23 +74,21 @@ Error ModelPatchBase::createVertexDesc(
 
 //==============================================================================
 Error ModelPatchBase::getRenderingDataSub(
-	const RenderingKey& key, 
-	CommandBufferHandle& vertJobs, 
+	const RenderingKey& key,
+	CommandBufferHandle& vertJobs,
 	PipelineHandle& ppline,
-	const U8* subMeshIndexArray, 
+	const U8* subMeshIndexArray,
 	U32 subMeshIndexCount,
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
-	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray, 
+	Array<PtrSize, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesOffsetArray,
 	U32& drawcallCount) const
 {
-	Error err = ErrorCode::NONE;
-
 	// Vertex descr
 	vertJobs = m_vertJobs[getVertexDescIdx(key)];
 
 	// Prog
 	RenderingKey mtlKey = key;
-	mtlKey.m_lod = 
+	mtlKey.m_lod =
 		std::min(key.m_lod, (U8)(getMaterial().getLevelsOfDetail() - 1));
 
 	ANKI_CHECK(m_mtl->getProgramPipeline(mtlKey, ppline));
@@ -115,10 +114,10 @@ Error ModelPatchBase::getRenderingDataSub(
 		I prevIndex = -1;
 		for(U i = 0; i < subMeshIndexCount; i++)
 		{
-			I index = (subMeshIndexArray == nullptr) 
+			I index = (subMeshIndexArray == nullptr)
 				? (I)i
 				: (I)subMeshIndexArray[i];
-		
+
 			// Check if we can merge with the previous submesh
 			if(index > 0 && (index - 1) == prevIndex)
 			{
@@ -144,7 +143,7 @@ Error ModelPatchBase::getRenderingDataSub(
 		}
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -167,7 +166,7 @@ Error ModelPatchBase::create(GrManager* gl)
 			RenderingKey meshKey = key;
 			meshKey.m_lod = std::min(key.m_lod, (U8)(getMeshesCount() - 1));
 			mesh = &getMesh(meshKey);
-			
+
 			// Create vert descriptor
 			CommandBufferHandle vertJobs;
 			ANKI_CHECK(vertJobs.create(gl));
@@ -209,14 +208,12 @@ U ModelPatchBase::getVertexDescIdx(const RenderingKey& key) const
 //==============================================================================
 template<typename MeshResourcePointerType>
 Error ModelPatch<MeshResourcePointerType>::create(
-	CString meshFNames[], 
-	U32 meshesCount, 
+	CString meshFNames[],
+	U32 meshesCount,
 	const CString& mtlFName,
 	ResourceManager* resources)
 {
 	ANKI_ASSERT(meshesCount > 0);
-
-	Error err = ErrorCode::NONE;
 
 	m_meshes.create(m_alloc, meshesCount);
 	m_meshResources.create(m_alloc, meshesCount);
@@ -225,7 +222,7 @@ Error ModelPatch<MeshResourcePointerType>::create(
 	for(U i = 0; i < meshesCount; i++)
 	{
 		ANKI_CHECK(m_meshResources[i].load(meshFNames[i], resources));
-		m_meshes[i] = m_meshResources[i].get();
+		m_meshes[i] = &m_meshResources[i].get();
 
 		// Sanity check
 		if(i > 0 && !m_meshResources[i]->isCompatible(*m_meshResources[i - 1]))
@@ -237,12 +234,12 @@ Error ModelPatch<MeshResourcePointerType>::create(
 
 	// Load material
 	ANKI_CHECK(m_mtlResource.load(mtlFName, resources));
-	m_mtl = m_mtlResource.get();
+	m_mtl = &m_mtlResource.get();
 
 	// Create VAOs
 	ANKI_CHECK(Base::create(&resources->getGrManager()));
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -250,37 +247,28 @@ Error ModelPatch<MeshResourcePointerType>::create(
 //==============================================================================
 
 //==============================================================================
-Model::Model(ResourceAllocator<U8>& alloc)
-{}
-
-//==============================================================================
 Model::~Model()
 {
-	if(m_resources)
+	auto alloc = getAllocator();
+
+	for(ModelPatchBase* patch : m_modelPatches)
 	{
-		auto alloc = m_resources->_getAllocator();
-
-		for(ModelPatchBase* patch : m_modelPatches)
-		{
-			alloc.deleteInstance(patch);
-		}
-
-		m_modelPatches.destroy(alloc);
+		alloc.deleteInstance(patch);
 	}
+
+	m_modelPatches.destroy(alloc);
 }
 
 //==============================================================================
-Error Model::load(const CString& filename, ResourceInitializer& init)
+Error Model::load(const CString& filename)
 {
-	Error err = ErrorCode::NONE;
-	m_resources = &init.m_resources;
-	auto alloc = init.m_alloc;
+	auto alloc = getAllocator();
 
 	// Load
 	//
 	XmlElement el;
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, init.m_tempAlloc));
+	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
 
 	XmlElement rootEl;
 	ANKI_CHECK(doc.getChildElement("model", rootEl));
@@ -297,7 +285,7 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		XmlElement valEl;
 		ANKI_CHECK(collEl.getChildElement("value", valEl));
 
-		PhysicsWorld& physics = m_resources->_getPhysicsWorld();
+		PhysicsWorld& physics = getManager()._getPhysicsWorld();
 		PhysicsCollisionShape::Initializer csInit;
 
 		if(type == "sphere")
@@ -310,10 +298,7 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		else if(type == "box")
 		{
 			Vec3 extend;
-			if(err = valEl.getVec3(extend))
-			{
-				return err;
-			}
+			ANKI_CHECK(valEl.getVec3(extend));
 			m_physicsShape = physics.newCollisionShape<PhysicsBox>(
 				csInit, extend);
 		}
@@ -321,17 +306,17 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		{
 			CString filename;
 			ANKI_CHECK(valEl.getText(filename));
-	
-			StringAuto fixedFilename(init.m_tempAlloc);
-			init.m_resources.fixResourceFilename(filename, fixedFilename);
+
+			StringAuto fixedFilename(getTempAllocator());
+			getManager().fixResourceFilename(filename, fixedFilename);
 
 			MeshLoader loader;
 			ANKI_CHECK(
-				loader.load(init.m_tempAlloc, fixedFilename.toCString()));
+				loader.load(getTempAllocator(), fixedFilename.toCString()));
 
 			m_physicsShape = physics.newCollisionShape<PhysicsTriangleSoup>(
-				csInit, 
-				reinterpret_cast<const Vec3*>(loader.getVertexData()), 
+				csInit,
+				reinterpret_cast<const Vec3*>(loader.getVertexData()),
 				loader.getVertexSize(),
 				reinterpret_cast<const U16*>(loader.getIndexData()),
 				loader.getHeader().m_totalIndicesCount);
@@ -387,7 +372,7 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 		{
 			XmlElement meshEl1;
 			ANKI_CHECK(modelPatchEl.getChildElementOptional("mesh1", meshEl1));
-			
+
 			XmlElement meshEl2;
 			ANKI_CHECK(modelPatchEl.getChildElementOptional("mesh2", meshEl2));
 
@@ -416,7 +401,7 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 			}
 
 			ANKI_CHECK(mpatch->create(&meshesFnames[0], meshesCount, cstr,
-				&init.m_resources));
+				&getManager()));
 
 			patch = mpatch;
 		}
@@ -450,7 +435,7 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 			CString cstr;
 			ANKI_CHECK(materialEl.getText(cstr));
 
-			ModelPatch<BucketMeshResourcePointer>* mpatch = 
+			ModelPatch<BucketMeshResourcePointer>* mpatch =
 				alloc.newInstance<
 				ModelPatch<BucketMeshResourcePointer>>(alloc);
 
@@ -460,7 +445,7 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 			}
 
 			ANKI_CHECK(mpatch->create(&meshesFnames[0], meshesCount, cstr,
-				&init.m_resources));
+				&getManager()));
 
 			patch  = mpatch;
 		}
@@ -485,7 +470,7 @@ Error Model::load(const CString& filename, ResourceInitializer& init)
 			(*it)->getMesh(key).getBoundingShape());
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

@@ -7,7 +7,6 @@
 #define ANKI_RENDERER_SSLR_H
 
 #include "anki/renderer/RenderingPass.h"
-#include "anki/resource/Resource.h"
 #include "anki/Gr.h"
 
 namespace anki {

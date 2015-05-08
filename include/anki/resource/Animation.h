@@ -6,19 +6,21 @@
 #ifndef ANKI_RESOURCE_ANIMATION_H
 #define ANKI_RESOURCE_ANIMATION_H
 
+#include "anki/resource/ResourceObject.h"
+#include "anki/resource/ResourcePointer.h"
 #include "anki/Math.h"
-#include "anki/resource/Common.h"
 #include "anki/util/String.h"
 
 namespace anki {
 
+// Forward
 class XmlElement;
 
 /// @addtogroup resource
 /// @{
 
-/// A keyframe 
-template<typename T> 
+/// A keyframe
+template<typename T>
 class Key
 {
 	friend class Animation;
@@ -52,7 +54,7 @@ public:
 	DArray<Key<F32>> m_scales;
 	DArray<Key<F32>> m_cameraFovs;
 
-	void destroy(ResourceAllocator<U8>& alloc)
+	void destroy(ResourceAllocator<U8> alloc)
 	{
 		m_name.destroy(alloc);
 		m_positions.destroy(alloc);
@@ -62,16 +64,17 @@ public:
 	}
 };
 
-/// Animation consists of keyframe data
-class Animation
+/// Animation consists of keyframe data.
+class Animation: public ResourceObject
 {
 public:
-	Animation(ResourceAllocator<U8>& alloc);
+	Animation(ResourceManager* manager)
+	:	ResourceObject(manager)
+	{}
 
 	~Animation();
 
-	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceInitializer& init);
+	ANKI_USE_RESULT Error load(const CString& filename);
 
 	/// Get a vector of all animation channels
 	const DArray<AnimationChannel>& getChannels() const
@@ -98,17 +101,14 @@ public:
 	}
 
 	/// Get the interpolated data
-	void interpolate(U channelIndex, F32 time, 
+	void interpolate(U channelIndex, F32 time,
 		Vec3& position, Quat& rotation, F32& scale) const;
 
 private:
-	ResourceAllocator<U8> m_alloc;
 	DArray<AnimationChannel> m_channels;
 	F32 m_duration;
 	F32 m_startTime;
 	Bool8 m_repeat;
-
-	void loadInternal(const XmlElement& el, ResourceInitializer& init);
 };
 /// @}
 

@@ -15,32 +15,36 @@ namespace anki {
 // Forward
 class GrManager;
 class ResourceManager;
+template<typename Type>
+class ResourcePointer;
 
 /// @addtogroup resource
 /// @{
+
+// NOTE: Add resources in 3 places
+#define ANKI_FORWARD(rsrc_, name_) \
+	class rsrc_; \
+	using name_ = ResourcePointer<rsrc_>;
+
+ANKI_FORWARD(Animation, AnimationResourcePointer)
+ANKI_FORWARD(TextureResource, TextureResourcePointer)
+ANKI_FORWARD(ShaderResource, ShaderResourcePointer)
+ANKI_FORWARD(Material, MaterialResourcePointer)
+ANKI_FORWARD(Mesh, MeshResourcePointer)
+ANKI_FORWARD(BucketMesh, BucketMeshResourcePointer)
+ANKI_FORWARD(Skeleton, SkeletonResourcePointer)
+ANKI_FORWARD(ParticleEmitterResource, ParticleEmitterResourcePointer)
+ANKI_FORWARD(Model, ModelResourcePointer)
+ANKI_FORWARD(Script, ScriptResourcePointer)
+ANKI_FORWARD(DummyRsrc, DummyResourcePointer)
+
+#undef ANKI_FORWARD
+
 template<typename T>
 using ResourceAllocator = HeapAllocator<T>;
 
 template<typename T>
 using TempResourceAllocator = StackAllocator<T>;
-
-/// Contains initialization information for the resource classes.
-class ResourceInitializer
-{
-public:
-	ResourceAllocator<U8>& m_alloc;
-	TempResourceAllocator<U8>& m_tempAlloc;
-	ResourceManager& m_resources;
-
-	ResourceInitializer(
-		ResourceAllocator<U8>& alloc, 
-		TempResourceAllocator<U8>& tempAlloc,
-		ResourceManager& resourceManager)
-	:	m_alloc(alloc),
-		m_tempAlloc(tempAlloc),
-		m_resources(resourceManager)
-	{}
-};
 /// @}
 
 } // end namespace anki
