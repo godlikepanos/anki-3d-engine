@@ -49,7 +49,7 @@ Config::Config()
 
 	newOption("pps.sslr.enabled", true);
 	newOption("pps.sslr.renderingQuality", 0.2);
-	newOption("pps.sslr.blurringIterationsCount", 1);
+	newOption("pps.sslr.blurringIterationsCount", 0);
 
 	newOption("pps.bl.enabled", true);
 	newOption("pps.bl.blurringIterationsCount", 1);
