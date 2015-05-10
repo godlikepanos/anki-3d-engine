@@ -85,6 +85,7 @@ Error ResourceManager::create(Initializer& init)
 	ANKI_RESOURCE(Model)
 	ANKI_RESOURCE(Script)
 	ANKI_RESOURCE(DummyRsrc)
+	ANKI_RESOURCE(CollisionResource)
 
 #undef ANKI_RESOURCE
 

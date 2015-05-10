@@ -7,10 +7,8 @@
 #define ANKI_PHYSICS_PHYSICS_WORLD_H
 
 #include "anki/physics/Common.h"
-#include "anki/physics/PhysicsCollisionShape.h"
-#include "anki/physics/PhysicsBody.h"
-#include "anki/physics/PhysicsPlayerController.h"
 #include "anki/util/List.h"
+#include "anki/util/Rtti.h"
 
 namespace anki {
 
@@ -28,23 +26,7 @@ public:
 		AllocAlignedCallback allocCb, void* allocCbData);
 
 	template<typename T, typename... TArgs>
-	T* newCollisionShape(TArgs&&... args)
-	{
-		return newObjectInternal<T>(m_collisions, std::forward<TArgs>(args)...);
-	}
-
-	template<typename T, typename... TArgs>
-	T* newBody(TArgs&&... args)
-	{
-		return newObjectInternal<T>(m_bodies, std::forward<TArgs>(args)...);
-	}
-
-	PhysicsPlayerController* newPlayerController(
-		const PhysicsPlayerController::Initializer& init)
-	{
-		return newObjectInternal<PhysicsPlayerController>(
-			m_playerControllers, init);
-	}
+	PhysicsPtr<T> newInstance(TArgs&&... args);
 
 	/// Start asynchronous update.
 	Error updateAsync(F32 dt);
@@ -60,7 +42,10 @@ public:
 		return m_world;
 	}
 
-	void _increaseObjectsMarkedForDeletion(PhysicsObject::Type type);
+	NewtonCollision* getNewtonScene() const
+	{
+		return m_scene;
+	}
 
 	const Vec4& getGravity() const
 	{
@@ -71,25 +56,30 @@ public:
 	{
 		return m_dt;
 	}
+
+	void deleteObjectDeferred(PhysicsObject* obj)
+	{
+		LockGuard<Mutex> lock(m_mtx);
+		m_forDeletion.pushBack(m_alloc, obj);
+	}
 	/// @}
 
 private:
-	ChainAllocator<U8> m_alloc;
-	List<PhysicsCollisionShape*> m_collisions;
-	List<PhysicsBody*> m_bodies;
-	List<PhysicsPlayerController*> m_playerControllers;
-	Array<Atomic<U32>, static_cast<U>(PhysicsObject::Type::COUNT)> 
-		m_forDeletionCount = {{{0}, {0}, {0}}};
+	HeapAllocator<U8> m_alloc;
 	mutable NewtonWorld* m_world = nullptr;
+	NewtonCollision* m_scene = nullptr;
 	Vec4 m_gravity = Vec4(0.0, -9.8, 0.0, 0.0);
 	F32 m_dt = 0.0;
 
-	template<typename T, typename TContainer, typename... TArgs>
-	T* newObjectInternal(TContainer& cont, TArgs&&... args);
+	List<PhysicsPlayerController*> m_playerControllers;
 
-	template<typename T>
-	void cleanupMarkedForDeletion(
-		List<T*>& container, Atomic<U32>& count);
+	Mutex m_mtx;
+	List<PhysicsObject*> m_forDeletion;
+
+	template<typename T, typename... TArgs>
+	PhysicsPtr<T> newObjectInternal(TArgs&&... args);
+
+	void cleanupMarkedForDeletion();
 
 	/// Custom update
 	static void postUpdateCallback(
@@ -105,35 +95,36 @@ private:
 		const NewtonWorld* const world, 
 		void* const listenerUserData)
 	{}
+
+	void registerObject(PhysicsObject* ptr);
 };
 
 //==============================================================================
-template<typename T, typename TContainer, typename... TArgs>
-inline T* PhysicsWorld::newObjectInternal(TContainer& cont, TArgs&&... args)
+template<typename T, typename... TArgs>
+inline PhysicsPtr<T> PhysicsWorld::newInstance(TArgs&&... args)
 {
 	Error err = ErrorCode::NONE;
-	ChainAllocator<T> al = m_alloc;
-
-	T* ptr = al.template newInstance<T>(this);
+	PhysicsPtr<T> out;
+		
+	T* ptr = m_alloc.template newInstance<T>(this);
 	err = ptr->create(std::forward<TArgs>(args)...);
 	
 	if(!err)
 	{
-		cont.pushBack(m_alloc, ptr);
+		registerObject(ptr);
+		out.reset(ptr);
 	}
-
-	if(err)
+	else
 	{
 		ANKI_LOGE("Failed to create physics object");
 
 		if(ptr)
 		{
-			al.deleteInstance(ptr);
-			ptr = nullptr;
+			m_alloc.deleteInstance(ptr);
 		}
 	}
 
-	return ptr;
+	return out;
 }
 /// @}
 

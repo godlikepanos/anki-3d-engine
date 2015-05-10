@@ -11,6 +11,7 @@
 #include "anki/resource/TextureResource.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/util/Logger.h"
+#include "anki/physics/PhysicsWorld.h"
 
 namespace anki {
 
@@ -142,10 +143,10 @@ Error DebugDrawer::flushInternal(GLenum primitive)
 
 	m_ppline.bind(m_jobs);
 
-	m_vertBuff.bindVertexBuffer(m_jobs, 
+	m_vertBuff.bindVertexBuffer(m_jobs,
 		4, GL_FLOAT, false, sizeof(Vertex), 0, 0); // Pos
 
-	m_vertBuff.bindVertexBuffer(m_jobs, 
+	m_vertBuff.bindVertexBuffer(m_jobs,
 		4, GL_FLOAT, true, sizeof(Vertex), sizeof(Vec4), 1); // Color
 
 	m_jobs.drawArrays(primitive, clientVerts);
@@ -244,7 +245,7 @@ void DebugDrawer::drawSphere(F32 radius, I complexity)
 	Mat4 oldMMat = m_mMat;
 	Mat4 oldVpMat = m_vpMat;
 
-	setModelMatrix(m_mMat * Mat4(Vec4(0.0, 0.0, 0.0, 1.0), 
+	setModelMatrix(m_mMat * Mat4(Vec4(0.0, 0.0, 0.0, 1.0),
 		Mat3::getIdentity(), radius));
 
 	begin(GL_LINES);
@@ -301,7 +302,7 @@ void DebugDrawer::drawCube(F32 size)
 	}};
 
 	static const Array<U32, 24> indeces = {{
-		0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 
+		0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6,
 		6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7}};
 
 	begin(GL_LINES);
@@ -397,7 +398,7 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 				static_cast<const PerspectiveFrustum&>(f);
 
 			F32 camLen = pf.getFar();
-			F32 tmp0 = camLen / tan((getPi<F32>() - pf.getFovX()) * 0.5) 
+			F32 tmp0 = camLen / tan((getPi<F32>() - pf.getFovX()) * 0.5)
 				+ 0.001;
 			F32 tmp1 = camLen * tan(pf.getFovY() * 0.5) + 0.001;
 
@@ -427,7 +428,7 @@ void CollisionDebugDrawer::visit(const Frustum& f)
 void CollisionDebugDrawer::visit(const CompoundShape& cs)
 {
 	CollisionDebugDrawer* self = this;
-	Error err = cs.iterateShapes([&](const CollisionShape& a) -> Error 
+	Error err = cs.iterateShapes([&](const CollisionShape& a) -> Error
 	{
 		a.accept(*self);
 		return ErrorCode::NONE;
@@ -566,7 +567,7 @@ void SceneDebugDrawer::drawPath(const Path& path) const
 	m_dbg->setColor(Vec3(1.0, 1.0, 0.0));
 
 	m_dbg->begin();
-	
+
 	for(U i = 0; i < count - 1; i++)
 	{
 		m_dbg->pushBackVertex(path.getPoints()[i].getPosition());

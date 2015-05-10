@@ -103,7 +103,8 @@ class ResourceManager:
 	ANKI_RESOURCE(ParticleEmitterResource),
 	ANKI_RESOURCE(Model),
 	ANKI_RESOURCE(Script),
-	ANKI_RESOURCE(DummyRsrc)
+	ANKI_RESOURCE(DummyRsrc),
+	ANKI_RESOURCE(CollisionResource)
 {
 public:
 	class Initializer

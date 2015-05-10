@@ -38,6 +38,11 @@ public:
 
 	~PhysicsCollisionShape();
 
+	static Bool classof(const PhysicsObject& c)
+	{
+		return c.getType() == Type::COLLISION_SHAPE;
+	}
+
 	/// @privatesection
 	/// @{
 	NewtonCollision* _getNewtonShape() const
@@ -49,6 +54,7 @@ public:
 
 protected:
 	NewtonCollision* m_shape = nullptr;
+	void* m_sceneCollisionProxy = nullptr;
 	static I32 m_gid;
 };
 

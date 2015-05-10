@@ -245,35 +245,6 @@ public:
 };
 
 //==============================================================================
-// ModelBodyFeedbackComponent                                                  =
-//==============================================================================
-
-/// Body feedback component.
-class ModelBodyFeedbackComponent: public SceneComponent
-{
-public:
-	ModelBodyFeedbackComponent(SceneNode* node)
-	:	SceneComponent(SceneComponent::Type::NONE, node)
-	{}
-
-	ANKI_USE_RESULT Error update(
-		SceneNode& node, F32, F32, Bool& updated)
-	{
-		updated = false;
-
-		BodyComponent& bodyc = node.getComponent<BodyComponent>();
-
-		if(bodyc.getTimestamp() == node.getGlobalTimestamp())
-		{
-			MoveComponent& move = node.getComponent<MoveComponent>();
-			move.setLocalTransform(bodyc.getTransform());
-		}
-
-		return ErrorCode::NONE;
-	}
-};
-
-//==============================================================================
 // ModelNode                                                                   =
 //==============================================================================
 
@@ -288,11 +259,6 @@ ModelNode::~ModelNode()
 {
 	m_modelPatches.destroy(getSceneAllocator());
 	m_transforms.destroy(getSceneAllocator());
-
-	if(m_body)
-	{
-		getSceneAllocator().deleteInstance(m_body);
-	}
 }
 
 //==============================================================================
@@ -317,27 +283,6 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 
 		m_modelPatches[count++] = mpn;
 		addChild(mpn);
-	}
-
-	// Load rigid body
-	const PhysicsCollisionShape* shape = m_model->getPhysicsCollisionShape();
-	if(shape != nullptr)
-	{
-		PhysicsBody::Initializer init;
-		init.m_mass = 1.0;
-		init.m_shape = shape;
-
-		m_body = 
-			getSceneGraph()._getPhysicsWorld().newBody<PhysicsBody>(init);
-
-		// Body component
-		comp = getSceneAllocator().newInstance<BodyComponent>(this, m_body);
-		addComponent(comp, true);
-
-		// Feedback component
-		comp = 
-			getSceneAllocator().newInstance<ModelBodyFeedbackComponent>(this);
-		addComponent(comp, true);
 	}
 
 	// Move component

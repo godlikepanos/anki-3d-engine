@@ -134,12 +134,7 @@ PlayerNode::PlayerNode(SceneGraph* scene)
 
 //==============================================================================
 PlayerNode::~PlayerNode()
-{
-	if(m_player)
-	{
-		m_player->setMarkedForDeletion();	
-	}
-}
+{}
 
 //==============================================================================
 Error PlayerNode::create(const CString& name, const Vec4& position)
@@ -149,7 +144,8 @@ Error PlayerNode::create(const CString& name, const Vec4& position)
 	// Create physics object
 	PhysicsPlayerController::Initializer init;
 	init.m_position = position;
-	m_player = getSceneGraph()._getPhysicsWorld().newPlayerController(init);
+	m_player = getSceneGraph()._getPhysicsWorld().
+		newInstance<PhysicsPlayerController>(init);
 
 	SceneComponent* comp;
 

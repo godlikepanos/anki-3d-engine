@@ -17,6 +17,14 @@ PhysicsBody::PhysicsBody(PhysicsWorld* world)
 //==============================================================================
 PhysicsBody::~PhysicsBody()
 {
+	if(m_sceneCollisionProxy)
+	{
+		NewtonCollision* scene = m_world->getNewtonScene();
+		NewtonSceneCollisionBeginAddRemove(scene);
+		NewtonSceneCollisionRemoveSubCollision(scene, m_sceneCollisionProxy);
+		NewtonSceneCollisionEndAddRemove(scene);
+	}
+
 	if(m_body)
 	{
 		NewtonDestroyBody(m_body);
@@ -26,14 +34,27 @@ PhysicsBody::~PhysicsBody()
 //==============================================================================
 Error PhysicsBody::create(const Initializer& init)
 {
-	ANKI_ASSERT(init.m_shape);
-
 	//I collisionType = NewtonCollisionGetType(init.m_shape->_getNewtonShape());
 
 	// Create
-	Mat4 trf = Mat4(init.m_startTrf);
-	trf.transpose();
-	if(init.m_kinematic)
+	Mat4 trf = toNewton(Mat4(init.m_startTrf));
+	
+	if(init.m_static)
+	{
+		// Create static collision
+		NewtonCollision* scene = m_world->getNewtonScene();
+
+		NewtonSceneCollisionBeginAddRemove(scene);
+		m_sceneCollisionProxy = NewtonSceneCollisionAddSubCollision(
+			scene, init.m_shape->_getNewtonShape());
+		NewtonSceneCollisionEndAddRemove(scene);
+
+		NewtonSceneCollisionSetSubCollisionMatrix(
+			scene, m_sceneCollisionProxy, &trf[0]);
+
+		return ErrorCode::NONE;
+	}
+	else if(init.m_kinematic)
 	{
 		// TODO
 	}

@@ -154,10 +154,6 @@ private:
 /// 		<animation>path/to/animation.anim</animation>
 /// 		...
 /// 	</skeletonAnimations>]
-/// 	[<collisionShape>
-/// 		<type>sphere | box | mesh</type>
-/// 		<value>...</value>
-/// 	</collisionShape>]
 /// </model>
 /// @endcode
 ///
@@ -184,11 +180,6 @@ public:
 		return m_visibilityShape;
 	}
 
-	const PhysicsCollisionShape* getPhysicsCollisionShape() const
-	{
-		return m_physicsShape;
-	}
-
 	ANKI_USE_RESULT Error load(const CString& filename);
 
 private:
@@ -196,7 +187,6 @@ private:
 	Obb m_visibilityShape;
 	SkeletonResourcePointer m_skeleton;
 	DArray<AnimationResourcePointer> m_animations;
-	PhysicsCollisionShape* m_physicsShape = nullptr;
 };
 
 } // end namespace anki

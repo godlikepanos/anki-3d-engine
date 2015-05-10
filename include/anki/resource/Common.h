@@ -37,6 +37,7 @@ ANKI_FORWARD(ParticleEmitterResource, ParticleEmitterResourcePointer)
 ANKI_FORWARD(Model, ModelResourcePointer)
 ANKI_FORWARD(Script, ScriptResourcePointer)
 ANKI_FORWARD(DummyRsrc, DummyResourcePointer)
+ANKI_FORWARD(CollisionResource, CollisionResourcePtr)
 
 #undef ANKI_FORWARD
 

@@ -24,12 +24,12 @@ public:
 		return c.getType() == Type::BODY;
 	}
 
-	BodyComponent(SceneNode* node, PhysicsBody* body)
+	BodyComponent(SceneNode* node, PhysicsBodyPtr body)
 	:	SceneComponent(Type::BODY, node), 
 		m_body(body)
-	{
-		ANKI_ASSERT(m_body);
-	}
+	{}
+
+	~BodyComponent();
 
 	const Transform& getTransform() const
 	{
@@ -51,7 +51,7 @@ public:
 	/// @}
 
 private:
-	PhysicsBody* m_body;
+	PhysicsBodyPtr m_body;
 	Transform m_trf;
 };
 /// @}

@@ -11,7 +11,6 @@
 #include "anki/resource/ShaderResource.h"
 #include "anki/misc/Xml.h"
 #include "anki/util/Logger.h"
-#include "anki/physics/PhysicsWorld.h"
 
 namespace anki {
 
@@ -272,61 +271,6 @@ Error Model::load(const CString& filename)
 
 	XmlElement rootEl;
 	ANKI_CHECK(doc.getChildElement("model", rootEl));
-
-	// <collisionShape>
-	XmlElement collEl;
-	ANKI_CHECK(rootEl.getChildElementOptional("collisionShape", collEl));
-	if(collEl)
-	{
-		ANKI_CHECK(collEl.getChildElement("type", el));
-		CString type;
-		ANKI_CHECK(el.getText(type));
-
-		XmlElement valEl;
-		ANKI_CHECK(collEl.getChildElement("value", valEl));
-
-		PhysicsWorld& physics = getManager()._getPhysicsWorld();
-		PhysicsCollisionShape::Initializer csInit;
-
-		if(type == "sphere")
-		{
-			F64 tmp;
-			ANKI_CHECK(valEl.getF64(tmp));
-			m_physicsShape = physics.newCollisionShape<PhysicsSphere>(
-				csInit, tmp);
-		}
-		else if(type == "box")
-		{
-			Vec3 extend;
-			ANKI_CHECK(valEl.getVec3(extend));
-			m_physicsShape = physics.newCollisionShape<PhysicsBox>(
-				csInit, extend);
-		}
-		else if(type == "staticMesh")
-		{
-			CString filename;
-			ANKI_CHECK(valEl.getText(filename));
-
-			StringAuto fixedFilename(getTempAllocator());
-			getManager().fixResourceFilename(filename, fixedFilename);
-
-			MeshLoader loader;
-			ANKI_CHECK(
-				loader.load(getTempAllocator(), fixedFilename.toCString()));
-
-			m_physicsShape = physics.newCollisionShape<PhysicsTriangleSoup>(
-				csInit,
-				reinterpret_cast<const Vec3*>(loader.getVertexData()),
-				loader.getVertexSize(),
-				reinterpret_cast<const U16*>(loader.getIndexData()),
-				loader.getHeader().m_totalIndicesCount);
-		}
-		else
-		{
-			ANKI_LOGE("Incorrect collision type");
-			return ErrorCode::USER_DATA;
-		}
-	}
 
 	// <modelPatches>
 	XmlElement modelPatchesEl;

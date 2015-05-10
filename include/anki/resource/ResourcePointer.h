@@ -12,9 +12,6 @@
 
 namespace anki {
 
-// Forward
-class ResourceManager;
-
 /// @addtogroup resource
 /// @{
 

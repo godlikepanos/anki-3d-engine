@@ -4,12 +4,14 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/physics/PhysicsWorld.h"
+#include "anki/physics/PhysicsPlayerController.h"
+#include "anki/physics/PhysicsCollisionShape.h"
 
 namespace anki {
 
 //==============================================================================
 // Ugly but there is no other way
-static ChainAllocator<U8>* gAlloc = nullptr;
+static HeapAllocator<U8>* gAlloc = nullptr;
 
 static void* newtonAlloc(int size)
 {
@@ -41,11 +43,7 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 {
 	Error err = ErrorCode::NONE;
 
-	m_alloc = ChainAllocator<U8>(
-		allocCb, allocCbData, 
-		1024 * 10,
-		2.0,
-		0);
+	m_alloc = HeapAllocator<U8>(allocCb, allocCbData);
 	
 	// Set allocators
 	gAlloc = &m_alloc;
@@ -62,6 +60,9 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	// Set the simplified solver mode (faster but less accurate)
 	NewtonSetSolverModel(m_world, 1);
 
+	// Create scene collision
+	m_scene = NewtonCreateSceneCollision(m_world, 0);
+
 	// Set the post update listener
 	NewtonWorldAddPostListener(m_world, "world", this, postUpdateCallback, 
 		destroyCallback);
@@ -70,21 +71,12 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 }
 
 //==============================================================================
-void PhysicsWorld::_increaseObjectsMarkedForDeletion(PhysicsObject::Type type)
-{
-	m_forDeletionCount[static_cast<U>(type)].fetchAdd(1);
-}
-
-//==============================================================================
 Error PhysicsWorld::updateAsync(F32 dt)
 {
 	m_dt = dt;
 
 	// Do cleanup of marked for deletion
-	cleanupMarkedForDeletion(m_bodies, 
-		m_forDeletionCount[static_cast<U>(PhysicsObject::Type::BODY)]);
-	cleanupMarkedForDeletion(m_collisions, m_forDeletionCount[
-		static_cast<U>(PhysicsObject::Type::COLLISION_SHAPE)]);
+	cleanupMarkedForDeletion();
 
 	// Update
 	NewtonUpdateAsync(m_world, dt);
@@ -99,29 +91,38 @@ void PhysicsWorld::waitUpdate()
 }
 
 //==============================================================================
-template<typename T>
-void PhysicsWorld::cleanupMarkedForDeletion(
-	List<T*>& container, Atomic<U32>& count)
+void PhysicsWorld::cleanupMarkedForDeletion()
 {
-	while(count.load() > 0)
+	LockGuard<Mutex> lock(m_mtx);
+
+	while(!m_forDeletion.isEmpty())
 	{
-		Bool found = false;
-		auto it = container.begin();
-		auto end = container.end();
-		for(; it != end; it++)
+		auto it = m_forDeletion.getBegin();
+		PhysicsObject* obj = *it;
+
+		// Remove from objects marked for deletion
+		m_forDeletion.erase(m_alloc, it);
+
+		// Remove from player controllers
+		if(obj->getType() == PhysicsObject::Type::PLAYER_CONTROLLER)
 		{
-			if((*it)->getMarkedForDeletion())
+		
+			auto it2 = m_playerControllers.getBegin();
+			for(; it2 != m_playerControllers.getEnd(); ++it2)
 			{
-				// Delete node
-				container.erase(m_alloc, it);
-				m_alloc.deleteInstance(*it);
-				found = true;
-				break;
+				PhysicsObject* obj2 = *it2;
+				if(obj2 == obj)
+				{
+					break;
+				}
 			}
+
+			ANKI_ASSERT(it2 != m_playerControllers.getEnd());
+			m_playerControllers.erase(m_alloc, it2);
 		}
 
-		(void)found;
-		ANKI_ASSERT(found && "Something is wrong with marked for deletion");
+		// Finaly, delete it
+		m_alloc.deleteInstance(obj);
 	}
 }
 
@@ -132,6 +133,17 @@ void PhysicsWorld::postUpdate(F32 dt)
 	{
 		NewtonDispachThreadJob(m_world, 
 			PhysicsPlayerController::postUpdateKernelCallback, player);
+	}
+}
+
+//==============================================================================
+void PhysicsWorld::registerObject(PhysicsObject* ptr)
+{
+	if(isa<PhysicsPlayerController>(ptr))
+	{
+		LockGuard<Mutex> lock(m_mtx);
+		m_playerControllers.pushBack(
+			m_alloc, dcast<PhysicsPlayerController*>(ptr));
 	}
 }
 

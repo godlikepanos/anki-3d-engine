@@ -8,11 +8,9 @@
 
 #include "anki/scene/SceneNode.h"
 #include "anki/Math.h"
+#include "anki/physics/PhysicsPlayerController.h"
 
 namespace anki {
-
-// Forward
-class PhysicsPlayerController;
 
 /// @addtogroup scene
 /// @{
@@ -30,7 +28,7 @@ public:
 	ANKI_USE_RESULT Error create(const CString& name, const Vec4& position);
 
 private:
-	PhysicsPlayerController* m_player = nullptr;
+	PhysicsPlayerControllerPtr m_player;
 };
 /// @}
 

@@ -18,7 +18,6 @@ namespace anki {
 // Forward
 class ObbSpatialComponent;
 class BodyComponent;
-class PhysicsBody;
 
 /// @addtogroup scene
 /// @{
@@ -78,8 +77,6 @@ private:
 	DArray<ModelPatchNode*> m_modelPatches;
 	DArray<Transform> m_transforms; ///< Cache the transforms of instances
 	Timestamp m_transformsTimestamp;
-	PhysicsBody* m_body = nullptr;
-	BodyComponent* m_bodyComp = nullptr;
 
 	void onMoveComponentUpdate(MoveComponent& move);
 };

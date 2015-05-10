@@ -18,6 +18,9 @@ namespace anki {
 template<typename T>
 class PtrBase
 {
+	template<typename Y>
+	friend class PtrBase;
+
 public:
 	/// Dereference
 	T& operator*() const
@@ -274,6 +277,9 @@ private:
 template<typename T, typename TDeleter = DefaultPtrDeleter<T>>
 class IntrusivePtr: public PtrBase<T>
 {
+	template<typename Y, typename TD>
+	friend class IntrusivePtr;
+
 public:
 	using Base = PtrBase<T>;
 
@@ -281,7 +287,7 @@ public:
 	:	Base()
 	{}
 
-	explicit IntrusivePtr(T* ptr)
+	IntrusivePtr(T* ptr)
 	:	Base()
 	{
 		reset(ptr);
@@ -289,6 +295,14 @@ public:
 
 	/// Copy.
 	IntrusivePtr(const IntrusivePtr& other)
+	:	Base()
+	{
+		reset(other.m_ptr);
+	}
+
+	/// Copy, compatible pointer.
+	template<typename Y>
+	IntrusivePtr(const IntrusivePtr<Y, TDeleter>& other)
 	:	Base()
 	{
 		reset(other.m_ptr);
@@ -302,6 +316,14 @@ public:
 
 	/// Copy.
 	IntrusivePtr& operator=(const IntrusivePtr& other)
+	{
+		reset(other.m_ptr);
+		return *this;
+	}
+
+	/// Copy, compatible.
+	template<typename Y>
+	IntrusivePtr& operator=(const IntrusivePtr<Y, TDeleter>& other)
 	{
 		reset(other.m_ptr);
 		return *this;

@@ -123,6 +123,9 @@ private:
 	void exportAnimation(
 		const aiAnimation& anim,
 		unsigned index);
+
+	/// Export a static collision mesh.
+	void exportCollisionMesh(uint32_t meshIdx);
 };
 
 #endif

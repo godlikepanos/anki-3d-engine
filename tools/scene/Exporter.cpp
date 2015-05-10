@@ -659,15 +659,6 @@ void Exporter::exportModel(const Model& model) const
 	file << "\t\t</modelPatch>\n";
 	file << "\t</modelPatches>\n";
 
-	// Write collision mesh
-	if(model.m_collisionMeshIndex != INVALID_INDEX)
-	{
-		file << "\t<collisionShape><type>staticMesh</type><value>"
-			<< m_rpath
-			<< getMeshName(getMeshAt(model.m_collisionMeshIndex))
-			<< ".ankimesh</value></collisionShape>\n";
-	}
-
 	file << "</model>\n";
 }
 
@@ -1017,6 +1008,22 @@ void Exporter::visitNode(const aiNode* ainode)
 }
 
 //==============================================================================
+void Exporter::exportCollisionMesh(uint32_t meshIdx)
+{
+	std::string name = getMeshName(getMeshAt(meshIdx));
+
+	std::fstream file;
+	file.open(m_outputDirectory + name + ".ankicl", std::ios::out);
+
+	file << XML_HEADER << '\n';
+
+	// Write collision mesh
+	file << "<collisionShape>\n\t<type>staticMesh</type>\n\t<value>"
+		<< m_rpath << name
+		<< ".ankimesh</value>\n</collisionShape>\n";
+}
+
+//==============================================================================
 void Exporter::exportAll()
 {
 	LOGI("Exporting scene to %s", &m_outputDirectory[0]);
@@ -1044,6 +1051,12 @@ void Exporter::exportAll()
 	for(auto idx : m_collisionMeshIds)
 	{
 		exportMesh(*m_scene->mMeshes[idx], nullptr);
+		exportCollisionMesh(idx);
+
+		std::string name = getMeshName(getMeshAt(idx));
+		std::string fname = m_rpath + name + ".ankicl";
+		file << "\nnode = scene:newStaticCollisionNode(\""
+			<< name << "\", \"" << fname << "\")\n";
 	}
 
 	//
@@ -1053,19 +1066,6 @@ void Exporter::exportAll()
 	{
 		Node& node = m_nodes[i];
 		Model& model = m_models[node.m_modelIndex];
-
-		// Check if it has a collision mesh
-		std::string collisionMeshName = std::string("ak_collision_")
-			+ m_scene->mMeshes[model.m_meshIndex]->mName.C_Str();
-		for(unsigned i = 0; i < m_collisionMeshIds.size(); ++i)
-		{
-			if(m_scene->mMeshes[m_collisionMeshIds[i]]->mName.C_Str()
-				== collisionMeshName)
-			{
-				model.m_collisionMeshIndex = m_collisionMeshIds[i];
-				break;
-			}
-		}
 
 		// TODO If not instanced bake transform
 		exportMesh(*m_scene->mMeshes[model.m_meshIndex], nullptr);

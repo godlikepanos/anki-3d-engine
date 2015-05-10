@@ -1512,6 +1512,74 @@ static inline void wrapSpotLight(lua_State* l)
 }
 
 //==============================================================================
+// StaticCollisionNode                                                         =
+//==============================================================================
+
+//==============================================================================
+static const char* classnameStaticCollisionNode = "StaticCollisionNode";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<StaticCollisionNode>()
+{
+	return -4376619865753613291;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<StaticCollisionNode>()
+{
+	return classnameStaticCollisionNode;
+}
+
+//==============================================================================
+/// Pre-wrap method StaticCollisionNode::getSceneNodeBase.
+static inline int pwrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameStaticCollisionNode, -4376619865753613291, ud)) return -1;
+	StaticCollisionNode* self = static_cast<StaticCollisionNode*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	SceneNode& ret = *self;
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->m_data = static_cast<void*>(&ret);
+	ud->m_gc = false;
+	ud->m_sig = -2220074417980276571;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method StaticCollisionNode::getSceneNodeBase.
+static int wrapStaticCollisionNodegetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapStaticCollisionNodegetSceneNodeBase(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class StaticCollisionNode.
+static inline void wrapStaticCollisionNode(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameStaticCollisionNode);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapStaticCollisionNodegetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
 // SceneGraph                                                                  =
 //==============================================================================
 
@@ -1734,6 +1802,59 @@ static int wrapSceneGraphnewSpotLight(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap method SceneGraph::newStaticCollisionNode.
+static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 3);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	
+	const char* arg1;
+	if(LuaBinder::checkString(l, 3, arg1)) return -1;
+	
+	// Call the method
+	StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0, arg1);
+	
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "StaticCollisionNode");
+	ud->m_data = static_cast<void*>(ret);
+	ud->m_gc = false;
+	ud->m_sig = -4376619865753613291;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SceneGraph::newStaticCollisionNode.
+static int wrapSceneGraphnewStaticCollisionNode(lua_State* l)
+{
+	int res = pwrapSceneGraphnewStaticCollisionNode(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap class SceneGraph.
 static inline void wrapSceneGraph(lua_State* l)
 {
@@ -1742,6 +1863,7 @@ static inline void wrapSceneGraph(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "newInstanceNode", wrapSceneGraphnewInstanceNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newPointLight", wrapSceneGraphnewPointLight);
 	LuaBinder::pushLuaCFuncMethod(l, "newSpotLight", wrapSceneGraphnewSpotLight);
+	LuaBinder::pushLuaCFuncMethod(l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
 	lua_settop(l, 0);
 }
 
@@ -1798,6 +1920,7 @@ void wrapModuleScene(lua_State* l)
 	wrapInstanceNode(l);
 	wrapPointLight(l);
 	wrapSpotLight(l);
+	wrapStaticCollisionNode(l);
 	wrapSceneGraph(l);
 	LuaBinder::pushLuaCFunc(l, "getSceneGraph", wrapgetSceneGraph);
 }

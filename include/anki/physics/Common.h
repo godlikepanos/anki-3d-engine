@@ -8,17 +8,36 @@
 
 #include "anki/util/StdTypes.h"
 #include "anki/util/Enum.h"
+#include "anki/util/Ptr.h"
 #include "anki/Math.h"
 #include <Newton.h>
 
 namespace anki {
 
 // Forward
+class PhysicsObject;
 class PhysicsWorld;
 class PhysicsCollisionShape;
+class PhysicsBody;
+class PhysicsPlayerController;
 
 /// @addtogroup physics
 /// @{
+
+/// PhysicsPtr custom deleter.
+class PhysicsPtrDeleter
+{
+public:
+	void operator()(PhysicsObject* ptr);
+};
+
+/// Smart pointer for physics objects.
+template<typename T>
+using PhysicsPtr = IntrusivePtr<T, PhysicsPtrDeleter>;
+
+using PhysicsCollisionShapePtr = PhysicsPtr<PhysicsCollisionShape>;
+using PhysicsBodyPtr = PhysicsPtr<PhysicsBody>;
+using PhysicsPlayerControllerPtr = PhysicsPtr<PhysicsPlayerController>;
 
 /// Material types.
 enum class PhysicsMaterialBit: U16

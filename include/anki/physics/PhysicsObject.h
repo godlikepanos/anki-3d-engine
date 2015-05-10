@@ -29,26 +29,33 @@ public:
 
 	PhysicsObject(Type type, PhysicsWorld* world)
 	:	m_world(world),
-		m_type(type)
+		m_type(type),
+		m_refcount(0)
 	{
 		ANKI_ASSERT(m_world);
 	}
 
 	virtual ~PhysicsObject()
-	{
-		ANKI_ASSERT(m_markedForDeletion == true);
-	}
+	{}
 
 	Type getType() const
 	{
 		return m_type;
 	}
 
-	void setMarkedForDeletion();
-
-	Bool getMarkedForDeletion() const
+	PhysicsWorld& getWorld()
 	{
-		return m_markedForDeletion;
+		return *m_world;
+	}
+
+	const PhysicsWorld& getWorld() const
+	{
+		return *m_world;
+	}
+
+	Atomic<I32>& getRefcount()
+	{
+		return m_refcount;
 	}
 
 protected:
@@ -56,7 +63,7 @@ protected:
 
 private:
 	Type m_type;
-	Bool8 m_markedForDeletion = false;
+	Atomic<I32> m_refcount;
 };
 /// @}
 

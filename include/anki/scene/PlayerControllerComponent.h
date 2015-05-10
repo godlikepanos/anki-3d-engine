@@ -23,7 +23,8 @@ public:
 		return c.getType() == Type::PLAYER_CONTROLLER;
 	}
 
-	PlayerControllerComponent(SceneNode* node, PhysicsPlayerController* player)
+	PlayerControllerComponent(SceneNode* node, 
+		PhysicsPlayerControllerPtr player)
 	:	SceneComponent(Type::PLAYER_CONTROLLER, node),
 		m_player(player)
 	{}
@@ -54,7 +55,7 @@ public:
 	/// @}
 
 private:
-	PhysicsPlayerController* m_player;
+	PhysicsPlayerControllerPtr m_player;
 	Transform m_trf;
 };
 /// @}

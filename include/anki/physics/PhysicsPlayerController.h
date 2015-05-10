@@ -55,6 +55,11 @@ public:
 		return m_trf;
 	}
 
+	static Bool classof(const PhysicsObject& c)
+	{
+		return c.getType() == Type::PLAYER_CONTROLLER;
+	}
+
 	/// @privatesection
 	/// @{
 

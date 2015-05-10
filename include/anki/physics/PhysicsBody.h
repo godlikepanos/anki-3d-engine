@@ -16,11 +16,12 @@ namespace anki {
 /// Initializer for PhysicsBody.
 struct PhysicsBodyInitializer
 {
-	const PhysicsCollisionShape* m_shape = nullptr;
+	PhysicsCollisionShapePtr m_shape;
 	F32 m_mass = 0.0;
 	Transform m_startTrf = Transform::getIdentity();
 	Bool m_kinematic = false;
 	Bool m_gravity = true;
+	Bool m_static = false;
 };
 
 /// Rigid body.
@@ -44,8 +45,14 @@ public:
 
 	void setTransform(const Transform& trf);
 
+	static Bool classof(const PhysicsObject& c)
+	{
+		return c.getType() == Type::BODY;
+	}
+
 private:
 	NewtonBody* m_body = nullptr;
+	void* m_sceneCollisionProxy = nullptr;
 	Transform m_trf = Transform::getIdentity();
 	Bool8 m_updated = true;
 
