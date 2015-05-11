@@ -85,6 +85,7 @@ void Sm::prepareDraw(CommandBufferHandle& cmdBuff)
 	// disable color & blend & enable depth test
 
 	cmdBuff.enableDepthTest(true);
+	cmdBuff.setDepthWriteMask(true);
 	cmdBuff.setColorWriteMask(false, false, false, false);
 
 	// for artifacts
@@ -101,6 +102,7 @@ void Sm::finishDraw(CommandBufferHandle& cmdBuff)
 	m_r->getSceneDrawer().finishDraw();
 
 	cmdBuff.enableDepthTest(false);
+	cmdBuff.setDepthWriteMask(false);
 	cmdBuff.enablePolygonOffset(false);
 	cmdBuff.setColorWriteMask(true, true, true, true);
 }

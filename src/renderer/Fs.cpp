@@ -38,7 +38,6 @@ Error Fs::run(CommandBufferHandle& cmdb)
 	m_fb.bind(cmdb);
 
 	cmdb.enableDepthTest(true);
-	cmdb.setDepthWriteMask(false);
 	cmdb.enableBlend(true);
 
 	RenderableDrawer& drawer = m_r->getSceneDrawer();
@@ -59,7 +58,6 @@ Error Fs::run(CommandBufferHandle& cmdb)
 		drawer.finishDraw();
 
 		cmdb.enableDepthTest(false);
-		cmdb.setDepthWriteMask(true);
 		cmdb.enableBlend(false);
 	}
 

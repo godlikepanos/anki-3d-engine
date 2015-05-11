@@ -89,12 +89,12 @@ Error Ms::run(CommandBufferHandle& cmdb)
 		planeId = 1;
 	}
 
-	m_planes[planeId].m_fb.bind(cmdb);
-
 	cmdb.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
 
 	cmdb.enableDepthTest(true);
 	cmdb.setDepthWriteMask(true);
+
+	m_planes[planeId].m_fb.bind(cmdb);
 
 	/*if(m_ez.getEnabled())
 	{
@@ -140,6 +140,7 @@ Error Ms::run(CommandBufferHandle& cmdb)
 	}
 
 	cmdb.enableDepthTest(false);
+	cmdb.setDepthWriteMask(false);
 
 	return ErrorCode::NONE;
 }

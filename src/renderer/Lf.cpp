@@ -155,7 +155,6 @@ void Lf::runOcclusionTests(CommandBufferHandle& cmdb)
 
 		// Setup state
 		cmdb.setColorWriteMask(false, false, false, false);
-		cmdb.setDepthWriteMask(false);
 		cmdb.enableDepthTest(true);
 		m_occlusionPpline.bind(cmdb);
 
@@ -201,7 +200,6 @@ void Lf::runOcclusionTests(CommandBufferHandle& cmdb)
 
 		// Restore state
 		cmdb.setColorWriteMask(true, true, true, true);
-		cmdb.setDepthWriteMask(true);
 		cmdb.enableDepthTest(false);
 	}
 }
