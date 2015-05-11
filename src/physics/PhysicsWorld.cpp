@@ -30,9 +30,22 @@ PhysicsWorld::PhysicsWorld()
 //==============================================================================
 PhysicsWorld::~PhysicsWorld()
 {
+	if(m_sceneBody)
+	{
+		NewtonDestroyBody(m_sceneBody);
+		m_sceneBody = nullptr;
+	}
+
+	if(m_sceneCollision)
+	{
+		NewtonDestroyCollision(m_sceneCollision);
+		m_sceneCollision = nullptr;
+	}
+
 	if(m_world)
 	{
 		NewtonDestroy(m_world);
+		m_world = nullptr;
 	}
 
 	gAlloc = nullptr;
@@ -44,7 +57,7 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	Error err = ErrorCode::NONE;
 
 	m_alloc = HeapAllocator<U8>(allocCb, allocCbData);
-	
+
 	// Set allocators
 	gAlloc = &m_alloc;
 	NewtonSetMemorySystem(newtonAlloc, newtonFree);
@@ -61,10 +74,12 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	NewtonSetSolverModel(m_world, 1);
 
 	// Create scene collision
-	m_scene = NewtonCreateSceneCollision(m_world, 0);
+	m_sceneCollision = NewtonCreateSceneCollision(m_world, 0);
+	Mat4 trf = Mat4::getIdentity();
+	m_sceneBody = NewtonCreateDynamicBody(m_world, m_sceneCollision, &trf[0]);
 
 	// Set the post update listener
-	NewtonWorldAddPostListener(m_world, "world", this, postUpdateCallback, 
+	NewtonWorldAddPostListener(m_world, "world", this, postUpdateCallback,
 		destroyCallback);
 
 	return err;
@@ -106,7 +121,7 @@ void PhysicsWorld::cleanupMarkedForDeletion()
 		// Remove from player controllers
 		if(obj->getType() == PhysicsObject::Type::PLAYER_CONTROLLER)
 		{
-		
+
 			auto it2 = m_playerControllers.getBegin();
 			for(; it2 != m_playerControllers.getEnd(); ++it2)
 			{
@@ -131,7 +146,7 @@ void PhysicsWorld::postUpdate(F32 dt)
 {
 	for(PhysicsPlayerController* player : m_playerControllers)
 	{
-		NewtonDispachThreadJob(m_world, 
+		NewtonDispachThreadJob(m_world,
 			PhysicsPlayerController::postUpdateKernelCallback, player);
 	}
 }

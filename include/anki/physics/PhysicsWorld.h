@@ -44,7 +44,7 @@ public:
 
 	NewtonCollision* getNewtonScene() const
 	{
-		return m_scene;
+		return m_sceneCollision;
 	}
 
 	const Vec4& getGravity() const
@@ -67,7 +67,8 @@ public:
 private:
 	HeapAllocator<U8> m_alloc;
 	mutable NewtonWorld* m_world = nullptr;
-	NewtonCollision* m_scene = nullptr;
+	NewtonCollision* m_sceneCollision = nullptr;
+	NewtonBody* m_sceneBody = nullptr;
 	Vec4 m_gravity = Vec4(0.0, -9.8, 0.0, 0.0);
 	F32 m_dt = 0.0;
 
@@ -83,7 +84,7 @@ private:
 
 	/// Custom update
 	static void postUpdateCallback(
-		const NewtonWorld* const world, 
+		const NewtonWorld* const world,
 		void* const listenerUserData, F32 dt)
 	{
 		static_cast<PhysicsWorld*>(listenerUserData)->postUpdate(dt);
@@ -92,7 +93,7 @@ private:
 	void postUpdate(F32 dt);
 
 	static void destroyCallback(
-		const NewtonWorld* const world, 
+		const NewtonWorld* const world,
 		void* const listenerUserData)
 	{}
 
@@ -105,10 +106,10 @@ inline PhysicsPtr<T> PhysicsWorld::newInstance(TArgs&&... args)
 {
 	Error err = ErrorCode::NONE;
 	PhysicsPtr<T> out;
-		
+
 	T* ptr = m_alloc.template newInstance<T>(this);
 	err = ptr->create(std::forward<TArgs>(args)...);
-	
+
 	if(!err)
 	{
 		registerObject(ptr);

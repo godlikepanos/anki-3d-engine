@@ -39,7 +39,7 @@ Error PhysicsBody::create(const Initializer& init)
 	// Create
 	Mat4 trf = toNewton(Mat4(init.m_startTrf));
 	
-	if(init.m_static)
+	/*if(init.m_static)
 	{
 		// Create static collision
 		NewtonCollision* scene = m_world->getNewtonScene();
@@ -54,7 +54,7 @@ Error PhysicsBody::create(const Initializer& init)
 
 		return ErrorCode::NONE;
 	}
-	else if(init.m_kinematic)
+	else*/ if(init.m_kinematic)
 	{
 		// TODO
 	}
