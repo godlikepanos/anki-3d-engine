@@ -112,7 +112,12 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 {
 	FrustumComponent& testedFr = 
 		testedNode.getComponent<FrustumComponent>();
-	Bool testedNodeShadowCaster = testedFr.getShadowCaster();
+	Bool testedNodeShadowCaster = false;
+	{
+		LightComponent* l = testedNode.tryGetComponent<LightComponent>();
+		testedNodeShadowCaster = l && l->getShadowEnabled();
+	}
+
 	auto alloc = m_shared->m_scene->getFrameAllocator();
 
 	// Init test results

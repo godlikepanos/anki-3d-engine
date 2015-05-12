@@ -237,7 +237,6 @@ Error SpotLight::create(const CString& name)
 	FrustumComponent* fr = 
 		getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);
 
-	fr->setShadowCaster(true);
 	addComponent(fr, true);
 
 	return ErrorCode::NONE;

@@ -116,18 +116,6 @@ public:
 		m_flags |= TRANSFORM_MARKED_FOR_UPDATE;
 	}
 
-	void setShadowCaster(Bool isShadowCaster)
-	{
-		m_flags = (isShadowCaster) 
-			? (m_flags | SHADOW_CASTER)
-			: (m_flags & ~SHADOW_CASTER);
-	}
-
-	Bool getShadowCaster() const
-	{
-		return m_flags & SHADOW_CASTER;
-	}
-
 	/// Is a spatial inside the frustum?
 	Bool insideFrustum(SpatialComponent& sp) const
 	{
@@ -155,7 +143,6 @@ private:
 	{
 		SHAPE_MARKED_FOR_UPDATE = 1 << 0,
 		TRANSFORM_MARKED_FOR_UPDATE = 1 << 1,
-		SHADOW_CASTER = 1 << 2
 	};
 
 	Frustum* m_frustum;

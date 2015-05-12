@@ -41,7 +41,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 0
+#define NO_PLAYER 1
 
 
 //==============================================================================
@@ -260,7 +260,7 @@ Error init()
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/adis/scene.lua", &resources);
+		err = script.load("maps/techdemo/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());
