@@ -45,6 +45,31 @@ public:
 
 	void setTransform(const Transform& trf);
 
+	F32 getFriction() const
+	{
+		return m_friction;
+	}
+
+	void setFriction(F32 friction)
+	{
+		m_friction = friction;
+	}
+
+	F32 getElasticity() const
+	{
+		return m_elasticity;
+	}
+
+	void setElasticity(F32 elasticity)
+	{
+		m_elasticity = elasticity;
+	}
+
+	void setMaterialsThatCollide(PhysicsMaterialBit bits)
+	{
+		m_materialBits = bits;
+	}
+
 	static Bool classof(const PhysicsObject& c)
 	{
 		return c.getType() == Type::BODY;
@@ -54,6 +79,9 @@ private:
 	NewtonBody* m_body = nullptr;
 	void* m_sceneCollisionProxy = nullptr;
 	Transform m_trf = Transform::getIdentity();
+	F32 m_friction = 0.03;
+	F32 m_elasticity = 0.1;
+	PhysicsMaterialBit m_materialBits = PhysicsMaterialBit::ALL;
 	Bool8 m_updated = true;
 
 	/// Newton callback.

@@ -41,7 +41,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 1
+#define NO_PLAYER 0
 
 
 //==============================================================================
@@ -260,7 +260,7 @@ Error init()
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/techdemo/scene.lua", &resources);
+		err = script.load("maps/adis/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());
@@ -386,7 +386,21 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 
 		scene.newSceneNode<ModelNode>(CString(), horse, 
 			"models/crate0/crate0.ankimdl");
-		BodyComponent* bodyc = horse->tryGetComponent<BodyComponent>();
+	
+		horse->getComponent<MoveComponent>().enableBits(
+			MoveComponent::Flag::IGNORE_LOCAL_TRANSFORM);
+
+		BodyNode* bnode;
+		scene.newSceneNode<BodyNode>(CString(), bnode,
+			"models/crate0/crate0.ankicl");
+
+		bnode->addChild(horse);
+
+		BodyComponent* bodyc = bnode->tryGetComponent<BodyComponent>();
+
+		PhysicsBodyPtr body = bodyc->getPhysicsBody();
+		body->setElasticity(0.001);
+		body->setFriction(1.01);
 
 		Vec4 pos(randRange(3, 15), 10, randRange(-6, 8), 0);
 

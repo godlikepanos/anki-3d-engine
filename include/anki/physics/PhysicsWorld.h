@@ -98,6 +98,24 @@ private:
 	{}
 
 	void registerObject(PhysicsObject* ptr);
+
+	static int onAabbOverlapCallback(
+		const NewtonMaterial* const material,
+		const NewtonBody* const body0,
+		const NewtonBody* const body1,
+		int threadIndex)
+	{
+		(void)material;
+		(void)body0;
+		(void)body1;
+		(void)threadIndex;
+		return 1;
+	}
+
+	static void onContactCallback(
+		const NewtonJoint* contactJoint,
+		F32 timestep,
+		int threadIndex);
 };
 
 //==============================================================================

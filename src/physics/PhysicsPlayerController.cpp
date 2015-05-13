@@ -234,6 +234,8 @@ Error PhysicsPlayerController::create(const Initializer& init)
 
 	NewtonBodySetUserData(m_body, this);
 	NewtonBodySetTransformCallback(m_body, onTransformCallback);
+	NewtonBodySetMaterialGroupID(
+		m_body, NewtonMaterialGetDefaultGroupID(m_world->_getNewtonWorld()));
 
 	// Players must have weight, otherwise they are infinitely strong when 
 	// they collide

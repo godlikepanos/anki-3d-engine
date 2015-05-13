@@ -6,6 +6,7 @@
 #include "anki/physics/PhysicsWorld.h"
 #include "anki/physics/PhysicsPlayerController.h"
 #include "anki/physics/PhysicsCollisionShape.h"
+#include "anki/physics/PhysicsBody.h"
 
 namespace anki {
 
@@ -81,6 +82,12 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	// Set the post update listener
 	NewtonWorldAddPostListener(m_world, "world", this, postUpdateCallback,
 		destroyCallback);
+
+	// Set callbacks
+	I defaultMaterialID = NewtonMaterialGetDefaultGroupID(m_world);
+	NewtonMaterialSetCollisionCallback(
+		m_world, defaultMaterialID, defaultMaterialID, nullptr,
+		onAabbOverlapCallback, onContactCallback);
 
 	return err;
 }
@@ -159,6 +166,52 @@ void PhysicsWorld::registerObject(PhysicsObject* ptr)
 		LockGuard<Mutex> lock(m_mtx);
 		m_playerControllers.pushBack(
 			m_alloc, dcast<PhysicsPlayerController*>(ptr));
+	}
+}
+
+//==============================================================================
+void PhysicsWorld::onContactCallback(
+	const NewtonJoint* contactJoint,
+	F32 timestep,
+	int threadIndex)
+{
+	const NewtonBody* body0 = NewtonJointGetBody0(contactJoint);
+	const NewtonBody* body1 = NewtonJointGetBody1(contactJoint);
+
+	void* userData = NewtonBodyGetUserData(body0);
+	if(!userData)
+	{
+		return;
+	}
+
+	F32 friction0 = static_cast<PhysicsBody*>(userData)->getFriction();
+	F32 elasticity0 = static_cast<PhysicsBody*>(userData)->getElasticity();
+
+	userData = NewtonBodyGetUserData(body1);
+	if(!userData)
+	{
+		return;
+	}
+
+	F32 friction1 = static_cast<PhysicsBody*>(userData)->getFriction();
+	F32 elasticity1 = static_cast<PhysicsBody*>(userData)->getElasticity();
+
+	F32 friction = friction0 + friction1;
+	F32 elasticity = elasticity0 + elasticity1;
+
+	void* contact = NewtonContactJointGetFirstContact(contactJoint);
+	while(contact)
+	{
+		NewtonMaterial* material = NewtonContactGetMaterial(contact);
+
+		NewtonMaterialSetContactFrictionCoef(
+			material, friction + 0.1, friction, 0);
+		NewtonMaterialSetContactFrictionCoef(
+			material, friction + 0.1, friction, 1);
+
+		NewtonMaterialSetContactElasticity(material, elasticity);
+
+		contact = NewtonContactJointGetNextContact(contactJoint, contact);
 	}
 }
 

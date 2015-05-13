@@ -70,6 +70,10 @@ Error PhysicsBody::create(const Initializer& init)
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
+	// Material
+	NewtonBodySetMaterialGroupID(
+		m_body, NewtonMaterialGetDefaultGroupID(m_world->_getNewtonWorld()));
+
 	// User data & callbacks
 	NewtonBodySetUserData(m_body, this);
 	NewtonBodySetTransformCallback(m_body, onTransformCallback);

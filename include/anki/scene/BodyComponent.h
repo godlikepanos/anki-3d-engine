@@ -41,6 +41,11 @@ public:
 		m_body->setTransform(trf);
 	}
 
+	PhysicsBodyPtr getPhysicsBody() const
+	{
+		return m_body;
+	}
+
 	/// @name SceneComponent overrides
 	/// @{
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override
