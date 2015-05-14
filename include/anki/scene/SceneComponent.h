@@ -32,6 +32,7 @@ public:
 		INSTANCE,
 		LENS_FLARE,
 		BODY,
+		SECTOR_PORTAL,
 		PLAYER_CONTROLLER,
 		LAST_COMPONENT_ID = PLAYER_CONTROLLER
 	};
@@ -80,7 +81,7 @@ public:
 
 	void setAutomaticCleanup(Bool enable)
 	{
-		m_flags.enableBits(AUTOMATIC_CLEANUP, enable);	
+		m_flags.enableBits(AUTOMATIC_CLEANUP, enable);
 	}
 
 	Bool getAutomaticCleanup() const
@@ -97,6 +98,9 @@ public:
 	{
 		return *m_node;
 	}
+
+	SceneGraph& getSceneGraph();
+	const SceneGraph& getSceneGraph() const;
 
 protected:
 	SceneNode* m_node = nullptr;

@@ -5,13 +5,15 @@
 
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/SceneNode.h"
+#include "anki/scene/Sector.h"
+#include "anki/scene/SceneGraph.h"
 
 namespace anki {
 
 //==============================================================================
 SpatialComponent::SpatialComponent(
-	SceneNode* node, 
-	const CollisionShape* shape, 
+	SceneNode* node,
+	const CollisionShape* shape,
 	Flag flags)
 :	SceneComponent(Type::SPATIAL, node),
 	Bitset<Flag>(flags),
@@ -23,7 +25,9 @@ SpatialComponent::SpatialComponent(
 
 //==============================================================================
 SpatialComponent::~SpatialComponent()
-{}
+{
+	getSceneGraph().getSectorGroup().spatialDeleted(this);
+}
 
 //==============================================================================
 Error SpatialComponent::update(SceneNode&, F32, F32, Bool& updated)
@@ -32,6 +36,7 @@ Error SpatialComponent::update(SceneNode&, F32, F32, Bool& updated)
 	if(updated)
 	{
 		m_shape->computeAabb(m_aabb);
+		getSceneGraph().getSectorGroup().spatialUpdated(this);
 		disableBits(Flag::MARKED_FOR_UPDATE);
 	}
 

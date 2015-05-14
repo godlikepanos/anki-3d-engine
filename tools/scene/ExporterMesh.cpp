@@ -113,7 +113,7 @@ static uint16_t toF16(float f)
 		{
 			m = (m | 0x00800000) >> (1 - e);
 
-			if(m & 0x00001000) 
+			if(m & 0x00001000)
 			{
 				m += 0x00002000;
 			}
@@ -187,7 +187,7 @@ uint32_t toR10G10B10A2Sint(float r, float g, float b, float a)
 
 //==============================================================================
 void Exporter::exportMesh(
-	const aiMesh& mesh, 
+	const aiMesh& mesh,
 	const aiMatrix4x4* transform) const
 {
 	std::string name = mesh.mName.C_Str();
@@ -212,18 +212,30 @@ void Exporter::exportMesh(
 		ERROR("Incorrect vertex count number");
 	}
 
-	if(!mesh.HasPositions()
-		|| !mesh.HasNormals()
-		|| !mesh.HasTangentsAndBitangents()
-		|| !mesh.HasTextureCoords(0))
+	if(!mesh.HasPositions())
 	{
-		ERROR("Missing attribute");
+		ERROR("Missing positions");
+	}
+
+	if(!mesh.HasNormals())
+	{
+		ERROR("Missing normals");
+	}
+
+	if(!mesh.HasTangentsAndBitangents())
+	{
+		ERROR("Missing tangents");
+	}
+
+	if(!mesh.HasTextureCoords(0))
+	{
+		ERROR("Missing UVs");
 	}
 
 	// Write header
 	static const char* magic = "ANKIMES2";
 	memcpy(&header.m_magic, magic, 8);
-	
+
 	header.m_positionsFormat.m_components = ComponentFormat::R32G32B32;
 	header.m_positionsFormat.m_transform = FormatTransform::FLOAT;
 
@@ -256,7 +268,7 @@ void Exporter::exportMesh(
 	for(unsigned i = 0; i < mesh.mNumFaces; i++)
 	{
 		const aiFace& face = mesh.mFaces[i];
-		
+
 		if(face.mNumIndices != 3)
 		{
 			ERROR("For some reason assimp returned wrong number of verts "
@@ -303,9 +315,9 @@ void Exporter::exportMesh(
 		if(m_flipyz)
 		{
 			static const aiMatrix4x4 toLefthanded(
-				1, 0, 0, 0, 
-				0, 0, 1, 0, 
-				0, -1, 0, 0, 
+				1, 0, 0, 0,
+				0, 0, 1, 0,
+				0, -1, 0, 0,
 				0, 0, 0, 1);
 
 			pos = toLefthanded * pos;

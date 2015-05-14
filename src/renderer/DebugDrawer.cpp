@@ -498,6 +498,12 @@ void SceneDebugDrawer::draw(SceneNode& node)
 		return ErrorCode::NONE;
 	});
 
+	PortalSectorComponent* ps = node.tryGetComponent<PortalSectorComponent>();
+	if(ps)
+	{
+		draw(*ps);
+	}
+
 	(void)err;
 }
 
@@ -525,39 +531,33 @@ void SceneDebugDrawer::draw(SpatialComponent& x) const
 }
 
 //==============================================================================
-#if 0
-void SceneDebugDrawer::draw(const Sector& sector)
+void SceneDebugDrawer::draw(const PortalSectorComponent& c) const
 {
-	// Draw the sector
-	if(sector.getVisibleByMask() == VB_NONE)
-	{
-		m_dbg->setColor(Vec3(1.0, 0.5, 0.5));
-	}
-	else
-	{
-		if(sector.getVisibleByMask() & VB_CAMERA)
-		{
-			m_dbg->setColor(Vec3(0.5, 1.0, 0.5));
-		}
-		else
-		{
-			m_dbg->setColor(Vec3(0.5, 0.5, 1.0));
-		}
-	}
-	CollisionDebugDrawer v(m_dbg);
-	sector.getAabb().accept(v);
+	const SceneNode& node = c.getSceneNode();
+	const PortalSectorBase& psnode = static_cast<const PortalSectorBase&>(node);
 
-	// Draw the portals
 	m_dbg->setColor(Vec3(0.0, 0.0, 1.0));
-	for(const Portal* portal : sector.getSectorGroup().getPortals())
+
+	m_dbg->begin(GL_LINES);
+	const auto& verts = psnode.getVertices();
+	ANKI_ASSERT((psnode.getVertexIndices().getSize() % 3) == 0);
+	for(U i = 0; i < psnode.getVertexIndices().getSize(); i += 3)
 	{
-		if(portal->sectors[0] == &sector || portal->sectors[1] == &sector)
-		{
-			portal->shape.accept(v);
-		}
+		I id0 = psnode.getVertexIndices()[i];
+		I id1 = psnode.getVertexIndices()[i + 1];
+		I id2 = psnode.getVertexIndices()[i + 2];
+
+		m_dbg->pushBackVertex(verts[id0].xyz());
+		m_dbg->pushBackVertex(verts[id1].xyz());
+
+		m_dbg->pushBackVertex(verts[id1].xyz());
+		m_dbg->pushBackVertex(verts[id2].xyz());
+
+		m_dbg->pushBackVertex(verts[id2].xyz());
+		m_dbg->pushBackVertex(verts[id0].xyz());
 	}
+	m_dbg->end();
 }
-#endif
 
 //==============================================================================
 void SceneDebugDrawer::drawPath(const Path& path) const

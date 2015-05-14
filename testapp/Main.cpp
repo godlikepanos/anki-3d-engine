@@ -41,7 +41,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 0
+#define NO_PLAYER 1
 
 
 //==============================================================================
@@ -100,9 +100,9 @@ Error init()
 			err = scene.newSceneNode<PointLight>(name.c_str(), point);
 			if(err) return err;
 			point->setRadius(0.5);
-			point->setDiffuseColor(Vec4(randFloat(6.0) - 2.0, 
+			point->setDiffuseColor(Vec4(randFloat(6.0) - 2.0,
 				randFloat(6.0) - 2.0, randFloat(6.0) - 2.0, 0.0));
-			point->setSpecularColor(Vec4(randFloat(6.0) - 3.0, 
+			point->setSpecularColor(Vec4(randFloat(6.0) - 3.0,
 				randFloat(6.0) - 3.0, randFloat(6.0) - 3.0, 0.0));
 			point->setLocalOrigin(lpos.xyz0());
 
@@ -147,7 +147,7 @@ Error init()
 
 #if 0
 	// Vase point lights
-	F32 x = 8.5; 
+	F32 x = 8.5;
 	F32 y = 2.25;
 	F32 z = 2.49;
 	Array<Vec3, 4> vaseLightPos = {{Vec3(x, y, -z - 1.4), Vec3(x, y, z),
@@ -165,7 +165,7 @@ Error init()
 		point->setLocalOrigin(lightPos);
 		point->setDiffuseColor(Vec4(3.0, 0.2, 0.0, 0.0));
 		point->setSpecularColor(Vec4(1.0, 1.0, 0.0, 0.0));
-		
+
 		//if(i == 0)
 		{
 		point->loadLensFlare("textures/lens_flare/flares0.ankitex");
@@ -206,7 +206,7 @@ Error init()
 		else
 		{
 			InstanceNode* instance;
-			err = scene.newSceneNode<InstanceNode>( 
+			err = scene.newSceneNode<InstanceNode>(
 				("pefire_inst" + std::to_string(i)).c_str(), instance);
 			if(err) return err;
 
@@ -225,7 +225,7 @@ Error init()
 		}
 
 		/*{
-			scene.newSceneNode(pe, ("pesparks" + std::to_string(i)).c_str(), 
+			scene.newSceneNode(pe, ("pesparks" + std::to_string(i)).c_str(),
 				"particles/sparks.ankipart");
 			pe->setLocalOrigin(lightPos);
 		}*/
@@ -234,7 +234,7 @@ Error init()
 
 #if 0
 	// horse
-	err = scene.newSceneNode<ModelNode>("horse", horse, 
+	err = scene.newSceneNode<ModelNode>("horse", horse,
 		"models/horse/horse.ankimdl");
 	if(err) return err;
 	horse->getComponent<MoveComponent>().setLocalTransform(
@@ -260,7 +260,7 @@ Error init()
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/adis/scene.lua", &resources);
+		err = script.load("maps/techdemo/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());
@@ -279,7 +279,7 @@ Error init()
 #if 1
 	{
 		ModelNode* fog;
-		scene.newSceneNode<ModelNode>("fog", fog, 
+		scene.newSceneNode<ModelNode>("fog", fog,
 			"models/fog/volumetric_fog_box.ankimdl");
 		MoveComponent& move = fog->getComponent<MoveComponent>();
 		//move.setLocalOrigin(Vec4(10.0, -19.0, 0.0, 0.0));
@@ -339,7 +339,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	}
 
 	// move the camera
-	static MoveComponent* mover = 
+	static MoveComponent* mover =
 		&scene.getActiveCamera().getComponent<MoveComponent>();
 
 	if(in.getKey(KeyCode::_1))
@@ -374,7 +374,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	if(in.getKey(KeyCode::L) == 1)
 	{
 		/*SceneNode& l = scene.findSceneNode("horse");
-		
+
 		BodyComponent* bodyc = l.tryGetComponent<BodyComponent>();
 		if(bodyc)
 		{
@@ -384,9 +384,9 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 				Transform(pos, Mat3x4::getIdentity(), 1.0));
 		}*/
 
-		scene.newSceneNode<ModelNode>(CString(), horse, 
+		scene.newSceneNode<ModelNode>(CString(), horse,
 			"models/crate0/crate0.ankimdl");
-	
+
 		horse->getComponent<MoveComponent>().enableBits(
 			MoveComponent::Flag::IGNORE_LOCAL_TRANSFORM);
 

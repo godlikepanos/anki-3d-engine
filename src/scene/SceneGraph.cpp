@@ -7,6 +7,7 @@
 #include "anki/scene/Camera.h"
 #include "anki/scene/ModelNode.h"
 #include "anki/scene/InstanceNode.h"
+#include "anki/scene/Sector.h"
 #include "anki/core/Counters.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/physics/PhysicsWorld.h"
@@ -94,14 +95,20 @@ SceneGraph::SceneGraph()
 
 //==============================================================================
 SceneGraph::~SceneGraph()
-{}
+{
+	if(m_sectors)
+	{
+		m_alloc.deleteInstance(m_sectors);
+		m_sectors = nullptr;
+	}
+}
 
 //==============================================================================
 Error SceneGraph::create(
-	AllocAlignedCallback allocCb, 
-	void* allocCbData, 
+	AllocAlignedCallback allocCb,
+	void* allocCbData,
 	U32 frameAllocatorSize,
-	Threadpool* threadpool, 
+	Threadpool* threadpool,
 	ResourceManager* resources,
 	Input* input,
 	const Timestamp* globalTimestamp)
@@ -118,7 +125,7 @@ Error SceneGraph::create(
 	m_input = input;
 
 	m_alloc = SceneAllocator<U8>(
-		allocCb, allocCbData, 
+		allocCb, allocCbData,
 		1024 * 10,
 		1.0,
 		0);
@@ -131,6 +138,8 @@ Error SceneGraph::create(
 	{
 		ANKI_LOGE("Scene creation failed");
 	}
+
+	m_sectors = m_alloc.newInstance<SectorGroup>(this);
 
 	return err;
 }
@@ -171,7 +180,7 @@ void SceneGraph::unregisterNode(SceneNode* node)
 			break;
 		}
 	}
-	
+
 	ANKI_ASSERT(it != m_nodes.end());
 	m_nodes.erase(m_alloc, it);
 
@@ -215,7 +224,7 @@ SceneNode* SceneGraph::tryFindSceneNode(const CString& name)
 //==============================================================================
 void SceneGraph::deleteNodesMarkedForDeletion()
 {
-	/// Delete all nodes pending deletion. At this point all scene threads 
+	/// Delete all nodes pending deletion. At this point all scene threads
 	/// should have finished their tasks
 	while(m_objectsMarkedForDeletionCount.load() > 0)
 	{

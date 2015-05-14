@@ -956,6 +956,26 @@ void Exporter::visitNode(const aiNode* ainode)
 			continue;
 		}
 
+		if(name.find("ak_portal") == 0)
+		{
+			// Ignore portals
+			Portal portal;
+			portal.m_meshIndex = meshIndex;
+			portal.m_transform = ainode->mTransformation;
+			m_portals.push_back(portal);
+			continue;
+		}
+
+		if(name.find("ak_sector") == 0)
+		{
+			// Ignore sectors
+			Sector sector;
+			sector.m_meshIndex = meshIndex;
+			sector.m_transform = ainode->mTransformation;
+			m_sectors.push_back(sector);
+			continue;
+		}
+
 		// Find if there is another node with the same mesh-material-group pair
 		std::vector<Node>::iterator it;
 		for(it = m_nodes.begin(); it != m_nodes.end(); ++it)
@@ -1057,6 +1077,42 @@ void Exporter::exportAll()
 		std::string fname = m_rpath + name + ".ankicl";
 		file << "\nnode = scene:newStaticCollisionNode(\""
 			<< name << "\", \"" << fname << "\")\n";
+	}
+
+	//
+	// Export portals
+	//
+	unsigned i = 0;
+	for(const Portal& portal : m_portals)
+	{
+		uint32_t meshIndex = portal.m_meshIndex;
+		exportMesh(*m_scene->mMeshes[meshIndex], nullptr);
+
+		std::string name = getMeshName(getMeshAt(meshIndex));
+		std::string fname = m_rpath + name + ".ankimesh";
+		file << "\nnode = scene:newPortal(\""
+			<< name << i << "\", \"" << fname << "\")\n";
+
+		writeNodeTransform("node", portal.m_transform);
+		++i;
+	}
+
+	//
+	// Export sectors
+	//
+	i = 0;
+	for(const Sector& sector : m_sectors)
+	{
+		uint32_t meshIndex = sector.m_meshIndex;
+		exportMesh(*m_scene->mMeshes[meshIndex], nullptr);
+
+		std::string name = getMeshName(getMeshAt(meshIndex));
+		std::string fname = m_rpath + name + ".ankimesh";
+		file << "\nnode = scene:newSector(\""
+			<< name << i << "\", \"" << fname << "\")\n";
+
+		writeNodeTransform("node", sector.m_transform);
+		++i;
 	}
 
 	//

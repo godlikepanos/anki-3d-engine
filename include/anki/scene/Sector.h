@@ -7,6 +7,7 @@
 #define ANKI_SCENE_SECTOR_H
 
 #include "anki/scene/SceneNode.h"
+#include "anki/scene/SceneComponent.h"
 #include "anki/Collision.h"
 
 namespace anki {
@@ -19,6 +20,20 @@ class SpatialComponent;
 
 /// @addtogroup scene
 /// @{
+
+/// Dummy component to identify a portal or sector.
+class PortalSectorComponent: public SceneComponent
+{
+public:
+	PortalSectorComponent(SceneNode* node)
+	:	SceneComponent(Type::SECTOR_PORTAL, node)
+	{}
+
+	static Bool classof(const SceneComponent& c)
+	{
+		return c.getType() == Type::SECTOR_PORTAL;
+	}
+};
 
 /// The base for portals and sectors.
 class PortalSectorBase: public SceneNode
@@ -40,9 +55,21 @@ public:
 
 	SectorGroup& getSectorGroup();
 
+	const DArray<Vec4>& getVertices() const
+	{
+		return m_shapeStorage;
+	}
+
+	const DArray<U16>& getVertexIndices() const
+	{
+		return m_vertIndices;
+	}
+
 protected:
 	DArray<Vec4> m_shapeStorage;
 	CollisionShape* m_shape = nullptr;
+	DArray<U16> m_vertIndices; ///< Used in debug draw
+	SpinLock m_mtx;
 };
 
 /// 2 way portal.
@@ -51,6 +78,8 @@ class Portal: public PortalSectorBase
 	friend class SectorGroup;
 
 public:
+	using Base = PortalSectorBase;
+
 	Portal(SceneGraph* scene)
 	:	PortalSectorBase(scene)
 	{}
@@ -80,6 +109,8 @@ class Sector: public PortalSectorBase
 	friend class SectorGroup;
 
 public:
+	using Base = PortalSectorBase;
+
 	/// Default constructor
 	Sector(SceneGraph* scene)
 	:	PortalSectorBase(scene)
@@ -102,9 +133,6 @@ public:
 private:
 	List<Portal*> m_portals;
 	List<SpatialComponent*> m_spatials;
-
-	/// Lock the m_spatials cause many threads will update that
-	SpinLock m_lock;
 
 	List<SpatialComponent*>::Iterator findSpatialComponent(
 		SpatialComponent* sp);

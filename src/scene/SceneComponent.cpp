@@ -34,4 +34,16 @@ Error SceneComponent::updateReal(SceneNode& node, F32 prevTime, F32 crntTime,
 	return err;
 }
 
+//==============================================================================
+SceneGraph& SceneComponent::getSceneGraph()
+{
+	return m_node->getSceneGraph();
+}
+
+//==============================================================================
+const SceneGraph& SceneComponent::getSceneGraph() const
+{
+	return m_node->getSceneGraph();
+}
+
 } // end namespace anki

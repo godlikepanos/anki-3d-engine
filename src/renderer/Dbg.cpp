@@ -7,6 +7,7 @@
 #include "anki/renderer/Renderer.h"
 #include "anki/resource/ShaderResource.h"
 #include "anki/scene/SceneGraph.h"
+#include "anki/scene/Sector.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
 #include "anki/util/Logger.h"
@@ -51,7 +52,7 @@ Error Dbg::init(const ConfigSet& initializer)
 	{
 		fbInit.m_colorAttachments[0].m_texture = m_r->getIs()._getRt();
 	}
-	fbInit.m_colorAttachments[0].m_loadOperation = 
+	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::LOAD;
 
 	err = m_fb.create(&getGrManager(), fbInit);
@@ -106,6 +107,12 @@ Error Dbg::run(CommandBufferHandle& cmdb)
 			m_sceneDrawer->draw(node);
 		}
 
+		if(bitsEnabled(Flag::SECTOR)
+			&& node.tryGetComponent<PortalSectorComponent>())
+		{
+			m_sceneDrawer->draw(node);
+		}
+
 		return ErrorCode::NONE;
 	});
 
@@ -129,7 +136,7 @@ Error Dbg::run(CommandBufferHandle& cmdb)
 
 		Mat4 v = cam.getComponent<FrustumComponent>().getViewMatrix();
 		Mat4 p = cam.getComponent<FrustumComponent>().getProjectionMatrix();
-		Mat4 vp = 
+		Mat4 vp =
 			cam.getComponent<FrustumComponent>().getViewProjectionMatrix();
 
 		Transform t = cam.getComponent<MoveComponent>().getWorldTransform();
@@ -149,7 +156,7 @@ Error Dbg::run(CommandBufferHandle& cmdb)
 		F32 w = a.w();
 		a /= a.w();
 
-		
+
 		Vec2 rr;
 		Vec4 n = t.getOrigin() - sphere.getCenter();
 		Vec4 right = rot.getColumn(1).xyz0().cross(n);

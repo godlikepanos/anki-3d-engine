@@ -34,7 +34,7 @@ static SceneGraph* getSceneGraph(lua_State* l)
 {
 	LuaBinder* binder = static_cast<LuaBinder*>(lua_getuserdata(l));
 
-	ScriptManager* scriptManager = 
+	ScriptManager* scriptManager =
 		reinterpret_cast<ScriptManager*>(binder->getParent());
 
 	return &scriptManager->_getSceneGraph();
@@ -1580,6 +1580,142 @@ static inline void wrapStaticCollisionNode(lua_State* l)
 }
 
 //==============================================================================
+// Portal                                                                      =
+//==============================================================================
+
+//==============================================================================
+static const char* classnamePortal = "Portal";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<Portal>()
+{
+	return 7450426072538297652;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<Portal>()
+{
+	return classnamePortal;
+}
+
+//==============================================================================
+/// Pre-wrap method Portal::getSceneNodeBase.
+static inline int pwrapPortalgetSceneNodeBase(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnamePortal, 7450426072538297652, ud)) return -1;
+	Portal* self = static_cast<Portal*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	SceneNode& ret = *self;
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->m_data = static_cast<void*>(&ret);
+	ud->m_gc = false;
+	ud->m_sig = -2220074417980276571;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method Portal::getSceneNodeBase.
+static int wrapPortalgetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapPortalgetSceneNodeBase(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class Portal.
+static inline void wrapPortal(lua_State* l)
+{
+	LuaBinder::createClass(l, classnamePortal);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapPortalgetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
+// Sector                                                                      =
+//==============================================================================
+
+//==============================================================================
+static const char* classnameSector = "Sector";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<Sector>()
+{
+	return 2371391302432627552;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<Sector>()
+{
+	return classnameSector;
+}
+
+//==============================================================================
+/// Pre-wrap method Sector::getSceneNodeBase.
+static inline int pwrapSectorgetSceneNodeBase(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSector, 2371391302432627552, ud)) return -1;
+	Sector* self = static_cast<Sector*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	SceneNode& ret = *self;
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->m_data = static_cast<void*>(&ret);
+	ud->m_gc = false;
+	ud->m_sig = -2220074417980276571;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method Sector::getSceneNodeBase.
+static int wrapSectorgetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapSectorgetSceneNodeBase(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class Sector.
+static inline void wrapSector(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameSector);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapSectorgetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
 // SceneGraph                                                                  =
 //==============================================================================
 
@@ -1855,6 +1991,112 @@ static int wrapSceneGraphnewStaticCollisionNode(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap method SceneGraph::newPortal.
+static inline int pwrapSceneGraphnewPortal(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 3);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	
+	const char* arg1;
+	if(LuaBinder::checkString(l, 3, arg1)) return -1;
+	
+	// Call the method
+	Portal* ret = newSceneNode<Portal>(self, arg0, arg1);
+	
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "Portal");
+	ud->m_data = static_cast<void*>(ret);
+	ud->m_gc = false;
+	ud->m_sig = 7450426072538297652;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SceneGraph::newPortal.
+static int wrapSceneGraphnewPortal(lua_State* l)
+{
+	int res = pwrapSceneGraphnewPortal(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method SceneGraph::newSector.
+static inline int pwrapSceneGraphnewSector(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 3);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	
+	const char* arg1;
+	if(LuaBinder::checkString(l, 3, arg1)) return -1;
+	
+	// Call the method
+	Sector* ret = newSceneNode<Sector>(self, arg0, arg1);
+	
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "Sector");
+	ud->m_data = static_cast<void*>(ret);
+	ud->m_gc = false;
+	ud->m_sig = 2371391302432627552;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SceneGraph::newSector.
+static int wrapSceneGraphnewSector(lua_State* l)
+{
+	int res = pwrapSceneGraphnewSector(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap class SceneGraph.
 static inline void wrapSceneGraph(lua_State* l)
 {
@@ -1864,6 +2106,8 @@ static inline void wrapSceneGraph(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "newPointLight", wrapSceneGraphnewPointLight);
 	LuaBinder::pushLuaCFuncMethod(l, "newSpotLight", wrapSceneGraphnewSpotLight);
 	LuaBinder::pushLuaCFuncMethod(l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
+	LuaBinder::pushLuaCFuncMethod(l, "newPortal", wrapSceneGraphnewPortal);
+	LuaBinder::pushLuaCFuncMethod(l, "newSector", wrapSceneGraphnewSector);
 	lua_settop(l, 0);
 }
 
@@ -1921,6 +2165,8 @@ void wrapModuleScene(lua_State* l)
 	wrapPointLight(l);
 	wrapSpotLight(l);
 	wrapStaticCollisionNode(l);
+	wrapPortal(l);
+	wrapSector(l);
 	wrapSceneGraph(l);
 	LuaBinder::pushLuaCFunc(l, "getSceneGraph", wrapgetSceneGraph);
 }

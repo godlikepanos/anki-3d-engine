@@ -47,6 +47,15 @@ struct VertexWeight
 	uint32_t m_bonesCount;
 };
 
+class Portal
+{
+public:
+	uint32_t m_meshIndex;
+	aiMatrix4x4 m_transform;
+};
+
+using Sector = Portal;
+
 /// AnKi exporter.
 class Exporter
 {
@@ -67,8 +76,8 @@ public:
 	std::ofstream m_sceneFile;
 
 	std::vector<uint32_t> m_collisionMeshIds;
-	std::vector<uint32_t> m_portalMeshIds;
-	std::vector<uint32_t> m_sectorMeshIds;
+	std::vector<Portal> m_portals;
+	std::vector<Sector> m_sectors;
 
 	/// Load the scene.
 	void load();

@@ -9,6 +9,7 @@
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/LensFlareComponent.h"
 #include "anki/scene/BodyComponent.h"
+#include "anki/scene/Sector.h"
 #include "anki/scene/ModelNode.h"
 #include "anki/scene/SkinNode.h"
 #include "anki/scene/StaticGeometryNode.h"

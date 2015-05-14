@@ -19,6 +19,7 @@ namespace anki {
 
 // Forward
 class Renderer;
+class PortalSectorComponent;
 
 /// @addtogroup renderer
 /// @{
@@ -180,9 +181,10 @@ private:
 
 	void draw(SpatialComponent& sp) const;
 
+	void draw(const PortalSectorComponent& c) const;
+
 	void drawPath(const Path& path) const;
 };
-
 /// @}
 
 } // end namespace anki

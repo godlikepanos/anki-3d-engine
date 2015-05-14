@@ -29,8 +29,8 @@ PortalSectorBase::~PortalSectorBase()
 		m_shape = nullptr;
 	}
 
-	// Clean collision shape
 	m_shapeStorage.destroy(alloc);
+	m_vertIndices.destroy(alloc);
 }
 
 //==============================================================================
@@ -39,12 +39,14 @@ Error PortalSectorBase::create(const CString& name, const CString& modelFname)
 	ANKI_CHECK(SceneNode::create(name));
 
 	// Create move component
-	SceneComponent* comp = 
-		getSceneAllocator().newInstance<MoveComponent>(this);
-
+	SceneComponent* comp = getSceneAllocator().newInstance<MoveComponent>(this);
 	addComponent(comp, true);
 
-	// Load mesh 
+	// Create portal sector component
+	comp = getSceneAllocator().newInstance<PortalSectorComponent>(this);
+	addComponent(comp, true);
+
+	// Load mesh
 	StringAuto newFname(getSceneFrameAllocator());
 	getSceneGraph()._getResourceManager().fixResourceFilename(
 		modelFname, newFname);
@@ -56,7 +58,7 @@ Error PortalSectorBase::create(const CString& name, const CString& modelFname)
 	const MeshLoader::Header& header = loader.getHeader();
 	U vertsCount = header.m_totalVerticesCount;
 	PtrSize vertSize = loader.getVertexSize();
-	
+
 	auto alloc = getSceneAllocator();
 	m_shapeStorage.create(alloc, vertsCount);
 
@@ -70,7 +72,18 @@ Error PortalSectorBase::create(const CString& name, const CString& modelFname)
 
 	// Create shape
 	ConvexHullShape* hull = alloc.newInstance<ConvexHullShape>();
+	m_shape = hull;
 	hull->initStorage(&m_shapeStorage[0], vertsCount);
+
+	// Store indices
+	ANKI_ASSERT(
+		header.m_totalIndicesCount * sizeof(U16) == loader.getIndexDataSize());
+	m_vertIndices.create(alloc, header.m_totalIndicesCount);
+	const U16* indicesIn = reinterpret_cast<const U16*>(loader.getIndexData());
+	for(U i = 0; i < header.m_totalIndicesCount; ++i)
+	{
+		m_vertIndices[i] = indicesIn[i];
+	}
 
 	return ErrorCode::NONE;
 }
@@ -115,7 +128,7 @@ Portal::~Portal()
 //==============================================================================
 Error Portal::create(const CString& name, const CString& modelFname)
 {
-	ANKI_CHECK(PortalSectorBase::create(name, modelFname));
+	ANKI_CHECK(Base::create(name, modelFname));
 	getSectorGroup().m_portals.pushBack(getSceneAllocator(), this);
 	return ErrorCode::NONE;
 }
@@ -127,7 +140,7 @@ Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	if(move.getTimestamp() == getGlobalTimestamp())
 	{
 		// Move comp updated. Inform the group
-		
+
 		SectorGroup& group = getSectorGroup();
 
 		// Gather the sectors it collides
@@ -160,6 +173,8 @@ Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 //==============================================================================
 void Portal::tryAddSector(Sector* sector)
 {
+	LockGuard<SpinLock> lock(m_mtx);
+
 	auto it = m_sectors.getBegin();
 	auto end = m_sectors.getEnd();
 	for(; it != end; ++it)
@@ -177,6 +192,8 @@ void Portal::tryAddSector(Sector* sector)
 //==============================================================================
 void Portal::tryRemoveSector(Sector* sector)
 {
+	LockGuard<SpinLock> lock(m_mtx);
+
 	auto it = m_sectors.getBegin();
 	auto end = m_sectors.getEnd();
 	for(; it != end; ++it)
@@ -239,6 +256,7 @@ Error Sector::create(const CString& name, const CString& modelFname)
 void Sector::tryAddPortal(Portal* portal)
 {
 	ANKI_ASSERT(portal);
+	LockGuard<SpinLock> lock(m_mtx);
 
 	auto it = m_portals.getBegin();
 	auto end = m_portals.getEnd();
@@ -258,6 +276,7 @@ void Sector::tryAddPortal(Portal* portal)
 void Sector::tryRemovePortal(Portal* portal)
 {
 	ANKI_ASSERT(portal);
+	LockGuard<SpinLock> lock(m_mtx);
 
 	auto it = m_portals.getBegin();
 	auto end = m_portals.getEnd();
@@ -275,6 +294,7 @@ void Sector::tryRemovePortal(Portal* portal)
 void Sector::tryAddSpatialComponent(SpatialComponent* sp)
 {
 	ANKI_ASSERT(sp);
+	LockGuard<SpinLock> lock(m_mtx);
 
 	// Find sector in spatial
 	auto itsp = sp->getSectorInfo().getBegin();
@@ -285,16 +305,12 @@ void Sector::tryAddSpatialComponent(SpatialComponent* sp)
 		{
 			// Found, return
 #if ANKI_ASSERTIONS
-			LockGuard<SpinLock> g(m_lock);
 			ANKI_ASSERT(findSpatialComponent(sp) != m_spatials.getEnd()
 				&& "Spatial has reference to sector but sector not");
 #endif
 			return;
 		}
 	}
-	
-	// Lock since this might be done from a thread
-	LockGuard<SpinLock> g(m_lock);
 
 	ANKI_ASSERT(findSpatialComponent(sp) == m_spatials.getEnd());
 
@@ -306,7 +322,8 @@ void Sector::tryAddSpatialComponent(SpatialComponent* sp)
 void Sector::tryRemoveSpatialComponent(SpatialComponent* sp)
 {
 	ANKI_ASSERT(sp);
-	
+	LockGuard<SpinLock> g(m_mtx);
+
 	// Find sector in spatial
 	auto itsp = sp->getSectorInfo().getBegin();
 	auto endsp = sp->getSectorInfo().getEnd();
@@ -324,8 +341,6 @@ void Sector::tryRemoveSpatialComponent(SpatialComponent* sp)
 
 		sp->getSectorInfo().erase(getSceneAllocator(), itsp);
 
-		LockGuard<SpinLock> g(m_lock);
-
 		auto it = findSpatialComponent(sp);
 		ANKI_ASSERT(it != m_spatials.getEnd());
 		m_spatials.erase(getSceneAllocator(), it);
@@ -333,7 +348,6 @@ void Sector::tryRemoveSpatialComponent(SpatialComponent* sp)
 	else
 	{
 #if ANKI_ASSERTIONS
-		LockGuard<SpinLock> g(m_lock);
 		ANKI_ASSERT(findSpatialComponent(sp) == m_spatials.getEnd());
 #endif
 	}
@@ -364,7 +378,7 @@ Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	if(move.getTimestamp() == getGlobalTimestamp())
 	{
 		// Move comp updated. Inform the group
-		
+
 		SectorGroup& group = getSectorGroup();
 
 		// Gather the portals it collides
@@ -410,7 +424,7 @@ void SectorGroup::spatialUpdated(SpatialComponent* sp)
 		Bool collide = testCollisionShapes(
 			sector.getBoundingShape(), sp->getSpatialCollisionShape());
 
-		if(collide)	
+		if(collide)
 		{
 			sector.tryAddSpatialComponent(sp);
 		}
@@ -419,6 +433,15 @@ void SectorGroup::spatialUpdated(SpatialComponent* sp)
 			sector.tryRemoveSpatialComponent(sp);
 		}
 	}
+}
+
+//==============================================================================
+SectorGroup::~SectorGroup()
+{
+	auto alloc = m_scene->getAllocator();
+
+	m_sectors.destroy(alloc);
+	m_portals.destroy(alloc);
 }
 
 //==============================================================================
@@ -557,7 +580,7 @@ void SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc)
 	if(nodesCount > 0)
 	{
 		std::sort(
-			visibleNodes.getBegin(), 
+			visibleNodes.getBegin(),
 			visibleNodes.getBegin() + nodesCount);
 	}
 }

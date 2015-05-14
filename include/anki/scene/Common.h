@@ -14,6 +14,7 @@ namespace anki {
 
 // Forward
 class SceneNode;
+class SceneGraph;
 
 /// @addtogroup Scene
 /// @{
@@ -28,7 +29,7 @@ using SceneFrameAllocator = StackAllocator<T>;
 
 /// Scene dictionary
 template<typename T>
-using SceneDictionary = 
+using SceneDictionary =
 	Dictionary<T, SceneAllocator<std::pair<const char*, T>>>;
 /// @}
 
