@@ -36,7 +36,7 @@ public:
 };
 
 /// List bidirectional iterator.
-template<typename TNodePointer, typename TValuePointer, 
+template<typename TNodePointer, typename TValuePointer,
 	typename TValueReference, typename TListPointer>
 class ListIterator
 {
@@ -52,9 +52,9 @@ public:
 	{}
 
 	/// Allow conversion from iterator to const iterator.
-	template<typename YNodePointer, typename YValuePointer, 
+	template<typename YNodePointer, typename YValuePointer,
 		typename YValueReference, typename YList>
-	ListIterator(const ListIterator<YNodePointer, 
+	ListIterator(const ListIterator<YNodePointer,
 		YValuePointer, YValueReference, YList>& b)
 	:	m_node(b.m_node),
 		m_list(b.m_list)
@@ -144,7 +144,7 @@ public:
 
 	Bool operator==(const ListIterator& b) const
 	{
-		ANKI_ASSERT(m_list == b.m_list 
+		ANKI_ASSERT(m_list == b.m_list
 			&& "Comparing iterators from different lists");
 		return m_node == b.m_node;
 	}
@@ -163,7 +163,7 @@ public:
 template<typename T>
 class List: public NonCopyable
 {
-	template<typename TNodePointer, typename TValuePointer, 
+	template<typename TNodePointer, typename TValuePointer,
 		typename TValueReference, typename TListPointer>
 	friend class ListIterator;
 
@@ -175,7 +175,7 @@ public:
 	using Pointer = Value*;
 	using ConstPointer = const Value*;
 	using Iterator = ListIterator<Node*, Pointer, Reference, List*>;
-	using ConstIterator = 
+	using ConstIterator =
 		ListIterator<const Node*, ConstPointer, ConstReference, const List*>;
 
 	List() = default;
@@ -349,7 +349,7 @@ public:
 	/// Compute the size of elements in the list.
 	PtrSize getSize() const;
 
-private:
+protected:
 	Node* m_head = nullptr;
 	Node* m_tail = nullptr;
 
@@ -366,6 +366,96 @@ private:
 	Node* swap(Node* one, Node* two);
 
 	void pushBackNode(Node* node);
+};
+
+/// List with automatic destruction.
+template<typename T>
+class ListAuto: public List<T>
+{
+public:
+	using Base = List<T>;
+	using Value = T;
+	using typename Base::Iterator;
+
+	/// Construct using an allocator.
+	ListAuto(GenericMemoryPoolAllocator<T> alloc)
+	:	Base(),
+		m_alloc(alloc)
+	{}
+
+	/// Move.
+	ListAuto(ListAuto&& b)
+	:	Base()
+	{
+		move(b);
+	}
+
+	/// Destroy.
+	~ListAuto()
+	{
+		Base::destroy(m_alloc);
+	}
+
+	/// Move.
+	ListAuto& operator=(ListAuto&& b)
+	{
+		move(b);
+		return *this;
+	}
+
+	/// Copy an element at the end of the list.
+	void pushBack(const Value& x)
+	{
+		Base::pushBack(m_alloc, x);
+	}
+
+	/// Construct an element at the end of the list.
+	template<typename... TArgs>
+	void emplaceBack(TArgs&&... args)
+	{
+		Base::emplaceBack(m_alloc, std::forward(args)...);
+	}
+
+	/// Construct element at the beginning of the list.
+	template<typename... TArgs>
+	void emplaceFront(TArgs&&... args)
+	{
+		Base::emplaceFront(m_alloc, std::forward(args)...);
+	}
+
+	/// Construct element at the the given position.
+	template<typename... TArgs>
+	void emplace(Iterator pos, TArgs&&... args)
+	{
+		Base::emplace(m_alloc, pos, std::forward(args)...);
+	}
+
+	/// Pop a value from the back of the list.
+	void popBack()
+	{
+		Base::popBack(m_alloc);
+	}
+
+	/// Pop a value from the front of the list.
+	void popFront()
+	{
+		Base::popFront(m_alloc);
+	}
+
+	/// Erase an element.
+	void erase(Iterator position)
+	{
+		Base::erase(m_alloc, position);
+	}
+
+private:
+	GenericMemoryPoolAllocator<T> m_alloc;
+
+	void move(ListAuto& b)
+	{
+		Base::move(b);
+		m_alloc = b.m_alloc;
+	}
 };
 /// @}
 

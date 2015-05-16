@@ -32,7 +32,8 @@ static T* newSceneNode(SceneGraph* scene, CString name, TArgs... args)
 //==============================================================================
 static SceneGraph* getSceneGraph(lua_State* l)
 {
-	LuaBinder* binder = static_cast<LuaBinder*>(lua_getuserdata(l));
+	LuaBinder* binder = nullptr;
+	lua_getallocf(l, reinterpret_cast<void**>(&binder));
 
 	ScriptManager* scriptManager =
 		reinterpret_cast<ScriptManager*>(binder->getParent());

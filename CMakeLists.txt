@@ -37,7 +37,8 @@ endif()
 # Configuration
 #
 
-set(ANKI_BUILD_TYPE "Release" CACHE STRING "Like CMAKE_BUILD_TYPE (Release or Debug)")
+option(ANKI_OPTIMIZE "Optimize" ON)
+option(ANKI_DEBUG_SYMBOLS "Debug symbols" OFF)
 
 option(ANKI_BUILD_TOOLS "Build tools" ON)
 option(ANKI_BUILD_TESTS "Build unit tests" OFF)
@@ -120,26 +121,29 @@ if(ANKI_ENABLE_SIMD)
 	endif()
 endif()
 
-if(${ANKI_BUILD_TYPE} STREQUAL "Debug")
-	# Debug
-
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -g3 -O0 ")
+# Add debug sumbols
+if(ANKI_DEBUG_SYMBOLS)
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -g3 ")
 
 	if(${CMAKE_C_COMPILER_ID} MATCHES "GNU")
 		set(COMPILER_FLAGS "${COMPILER_FLAGS} -fstack-check ")
 	endif()
 else()
-	# Release
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -DNODEBUG ")
+	set(CXX_FLAGS "${CXX_FLAGS} -fno-rtti ")
+endif()
 
+# Add optimization flags
+if(ANKI_OPTIMIZE)
 	# -flto ?
-	set(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O4 -DNODEBUG ")
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -ffast-math -O4 -flto ")
 
 	# Add this because Android compiler complains
 	if(ANDROID)
 		set(COMPILER_FLAGS "${COMPILER_FLAGS} -fno-data-sections ")
 	endif()
-
-	set(CXX_FLAGS "${CXX_FLAGS} -fno-rtti ")
+else()
+	set(COMPILER_FLAGS "${COMPILER_FLAGS} -O0 ")
 endif()
 
 # Valgrind hacks
@@ -195,8 +199,8 @@ find_package(Doxygen)
 
 if(DOXYGEN_FOUND)
 	message("++ Doxygen found")
-	
-	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} 
+
+	add_custom_target(doc ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/doxyfile WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif()
 
@@ -217,14 +221,14 @@ else()
 	set(ANKI_REVISION "-1")
 endif()
 
-# 
+#
 # Config.h
 #
 set(ANKI_VERSION_MAJOR 0)
 set(ANKI_VERSION_MINOR 1)
 message("++ AnKi version: ${ANKI_VERSION_MAJOR}.${ANKI_VERSION_MINOR}")
 
-if(${ANKI_BUILD_TYPE} STREQUAL "Debug")
+if(ANKI_DEBUG_SYMBOLS)
 	set(ANKI_DEBUG 1)
 else()
 	set(ANKI_DEBUG 0)
@@ -236,7 +240,7 @@ INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}/anki/Config.h" DESTINATION "${INCLUDE
 #
 # Include & lib directories
 #
-include_directories("thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z" "thirdparty/bullet" 
+include_directories("thirdparty/tinyxml2/include" "thirdparty/lua" "thirdparty/z" "thirdparty/bullet"
 	"thirdparty/SDL2/include" "include" "thirdparty/newton/newton" "${CMAKE_CURRENT_BINARY_DIR}")
 
 if(LINUX OR MACOS OR WINDOWS)

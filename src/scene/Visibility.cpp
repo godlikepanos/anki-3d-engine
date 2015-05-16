@@ -5,6 +5,7 @@
 
 #include "anki/scene/Visibility.h"
 #include "anki/scene/SceneGraph.h"
+#include "anki/scene/Sector.h"
 #include "anki/scene/FrustumComponent.h"
 #include "anki/scene/LensFlareComponent.h"
 #include "anki/scene/Light.h"
@@ -107,10 +108,10 @@ public:
 };
 
 //==============================================================================
-void VisibilityTestTask::test(SceneNode& testedNode, 
+void VisibilityTestTask::test(SceneNode& testedNode,
 	U32 threadId, PtrSize threadsCount)
 {
-	FrustumComponent& testedFr = 
+	FrustumComponent& testedFr =
 		testedNode.getComponent<FrustumComponent>();
 	Bool testedNodeShadowCaster = false;
 	{
@@ -131,6 +132,7 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 
 	List<SceneNode*> frustumsList;
 
+#if 0
 	// Chose the test range and a few other things
 	PtrSize start, end;
 	U nodesCount = m_shared->m_scene->getSceneNodesCount();
@@ -139,9 +141,25 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 	// Iterate range of nodes
 	Error err = m_shared->m_scene->iterateSceneNodes(
 		start, end, [&](SceneNode& node) -> Error
+#else
+	SectorGroup& sectors = m_shared->m_scene->getSectorGroup();
+	if(threadId == 0)
+	{
+		sectors.prepareForVisibilityTests(testedFr);
+	}
+	m_shared->m_barrier.wait();
+
+	// Chose the test range and a few other things
+	PtrSize start, end;
+	U nodesCount = sectors.getVisibleNodesCount();
+	choseStartEnd(threadId, threadsCount, nodesCount, start, end);
+
+	Error err = sectors.iterateVisibleSceneNodes(
+		start, end, [&](SceneNode& node) -> Error
+#endif
 	{
 		FrustumComponent* fr = node.tryGetComponent<FrustumComponent>();
-		
+
 		// Skip if it is the same
 		if(ANKI_UNLIKELY(&testedFr == fr))
 		{
@@ -170,8 +188,8 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 				ANKI_ASSERT(spIdx < MAX_U8);
 				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx)};
 
-				sp.enableBits(testedNodeShadowCaster 
-					? SpatialComponent::Flag::VISIBLE_LIGHT 
+				sp.enableBits(testedNodeShadowCaster
+					? SpatialComponent::Flag::VISIBLE_LIGHT
 					: SpatialComponent::Flag::VISIBLE_CAMERA);
 			}
 
@@ -188,7 +206,7 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 
 		// Sort sub-spatials
 		Vec4 origin = testedFr.getFrustumOrigin();
-		std::sort(sps.begin(), sps.begin() + count, 
+		std::sort(sps.begin(), sps.begin() + count,
 			[origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool
 		{
 			Vec4 spa = a.m_sp->getSpatialOrigin();
@@ -245,14 +263,14 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 				ANKI_ASSERT(visibleNode.m_node);
 			}
 		}
-		
+
 		return ErrorCode::NONE;
 	}); // end for
 	(void)err;
 
 	// Gather the results from all threads
 	m_shared->m_barrier.wait();
-	
+
 	if(threadId == 0)
 	{
 		combineTestResults(testedFr, threadsCount);
@@ -266,7 +284,7 @@ void VisibilityTestTask::combineTestResults(
 {
 	auto alloc = m_shared->m_scene->getFrameAllocator();
 
-	// Count the visible scene nodes to optimize the allocation of the 
+	// Count the visible scene nodes to optimize the allocation of the
 	// final result
 	U32 renderablesSize = 0;
 	U32 lightsSize = 0;
@@ -284,8 +302,8 @@ void VisibilityTestTask::combineTestResults(
 	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
 
 	visible->create(
-		alloc, 
-		renderablesSize, 
+		alloc,
+		renderablesSize,
 		lightsSize,
 		lensFlaresSize);
 
@@ -388,7 +406,7 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 {
 	// Do the tests in parallel
 	Threadpool& threadPool = scene._getThreadpool();
-	
+
 	VisibilityShared shared(threadPool.getThreadsCount());
 	shared.m_scene = &scene;
 	shared.m_frustumsList.pushBack(scene.getFrameAllocator(), &fsn);
@@ -399,7 +417,7 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
 		tasks[i].m_shared = &shared;
 		threadPool.assignNewTask(i, &tasks[i]);
 	}
-	
+
 	return threadPool.waitForAllThreadsToFinish();
 }
 

@@ -57,7 +57,7 @@ public:
 
 	const DArray<Vec4>& getVertices() const
 	{
-		return m_shapeStorage;
+		return m_shapeStorageLSpace;
 	}
 
 	const DArray<U16>& getVertexIndices() const
@@ -66,10 +66,13 @@ public:
 	}
 
 protected:
-	DArray<Vec4> m_shapeStorage;
+	DArray<Vec4> m_shapeStorageLSpace;
+	DArray<Vec4> m_shapeStorageWSpace;
 	CollisionShape* m_shape = nullptr;
 	DArray<U16> m_vertIndices; ///< Used in debug draw
 	SpinLock m_mtx;
+
+	void updateTransform(const Transform& trf);
 };
 
 /// 2 way portal.
@@ -158,6 +161,11 @@ public:
 
 	void prepareForVisibilityTests(const FrustumComponent& frc);
 
+	PtrSize getVisibleNodesCount() const
+	{
+		return m_visibleNodesCount;
+	}
+
 	template<typename Func>
 	ANKI_USE_RESULT Error iterateVisibleSceneNodes(
 		PtrSize begin, PtrSize end, Func func);
@@ -170,6 +178,9 @@ private:
 	SceneNode** m_visibleNodes = nullptr;
 	U m_visibleNodesCount = 0;
 
+	List<SpatialComponent*> m_spatialsDeferredBinning;
+	SpinLock m_mtx;
+
 	void findVisibleSectors(
 		const FrustumComponent& frc,
 		List<Sector*>& visibleSectors,
@@ -181,6 +192,11 @@ private:
 		Sector& s,
 		List<Sector*>& visibleSectors,
 		U& spatialsCount);
+
+	static Bool spatialInSector(
+		const Sector& sector, const SpatialComponent& spatial);
+
+	void binSpatial(SpatialComponent* sp);
 };
 
 //==============================================================================

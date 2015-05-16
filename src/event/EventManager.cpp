@@ -31,7 +31,7 @@ SceneAllocator<U8> EventManager::getSceneAllocator() const
 }
 
 //==============================================================================
-SceneFrameAllocator<U8> EventManager::getSceneFrameAllocator() const
+SceneFrameAllocator<U8> EventManager::getFrameAllocator() const
 {
 	return m_scene->getFrameAllocator();
 }

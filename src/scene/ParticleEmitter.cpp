@@ -584,7 +584,7 @@ Error ParticleEmitter::doInstancingCalcs()
 	// Gather the move components of the instances
 	//
 	SceneFrameDArrayAuto<MoveComponent*> instanceMoves(
-		getSceneFrameAllocator());
+		getFrameAllocator());
 	U instanceMovesCount = 0;
 	Timestamp instancesTimestamp = 0;
 

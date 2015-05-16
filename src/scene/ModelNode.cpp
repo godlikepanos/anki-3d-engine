@@ -66,7 +66,7 @@ ModelPatchNode::~ModelPatchNode()
 }
 
 //==============================================================================
-Error ModelPatchNode::create(const CString& name, 
+Error ModelPatchNode::create(const CString& name,
 	const ModelPatchBase* modelPatch)
 {
 	ANKI_ASSERT(modelPatch);
@@ -81,7 +81,7 @@ Error ModelPatchNode::create(const CString& name,
 	addComponent(comp, true);
 
 	// Render component
-	RenderComponent* rcomp = 
+	RenderComponent* rcomp =
 		getSceneAllocator().newInstance<ModelPatchRenderComponent>(this);
 	comp = rcomp;
 
@@ -108,7 +108,7 @@ Error ModelPatchNode::buildRendering(RenderingBuildData& data)
 	PipelineHandle ppline;
 
 	Error err = m_modelPatch->getRenderingDataSub(
-		data.m_key, vertJobs, ppline, 
+		data.m_key, vertJobs, ppline,
 		nullptr, 0,
 		indicesCountArray, indicesOffsetArray, drawcallCount);
 
@@ -171,9 +171,9 @@ void ModelPatchNode::updateInstanceSpatials(
 	if(oldSize < newSize)
 	{
 		// We need to add spatials
-		
+
 		fullUpdate = true;
-		
+
 		m_spatials.resize(getSceneAllocator(), newSize);
 
 		U diff = newSize - oldSize;
@@ -279,7 +279,9 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 	for(; it != end; it++)
 	{
 		ModelPatchNode* mpn;
-		ANKI_CHECK(getSceneGraph().newSceneNode(CString(), mpn, *it));
+		StringAuto nname(getFrameAllocator());
+		nname.sprintf("%s_%d", &name[0], count);
+		ANKI_CHECK(getSceneGraph().newSceneNode(nname.toCString(), mpn, *it));
 
 		m_modelPatches[count++] = mpn;
 		addChild(mpn);
@@ -300,7 +302,7 @@ Error ModelNode::create(const CString& name, const CString& modelFname)
 Error ModelNode::frameUpdate(F32, F32)
 {
 	// Gather the move components of the instances
-	DArrayAuto<const MoveComponent*> instanceMoves(getSceneFrameAllocator());
+	DArrayAuto<const MoveComponent*> instanceMoves(getFrameAllocator());
 	U instanceMovesCount = 0;
 	Timestamp instancesTimestamp = 0;
 
@@ -314,7 +316,7 @@ Error ModelNode::frameUpdate(F32, F32)
 
 			instanceMoves[instanceMovesCount++] = &move;
 
-			instancesTimestamp = 
+			instancesTimestamp =
 				max(instancesTimestamp, move.getTimestamp());
 		}
 

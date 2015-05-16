@@ -18,12 +18,17 @@
 namespace anki {
 
 /// Its separate so we will not include iostream
-extern void akassert(bool expr, const char* exprTxt, const char* file,
+void akassert(const char* exprTxt, const char* file,
 	int line, const char* func);
 
 } // end namespace
 
-#	define ANKI_ASSERT(x) akassert((x), #x, ANKI_FILE, __LINE__, ANKI_FUNC)
+#	define ANKI_ASSERT(x) \
+	do { \
+		if(!(x)) { \
+			akassert(#x, ANKI_FILE, __LINE__, ANKI_FUNC); \
+		} \
+	} while(0)
 #	define ANKI_ASSERTS_ENABLED 1
 
 #endif

@@ -31,8 +31,8 @@ enum class SpatialComponentFlag: U8
 	/// Visible or not. The visibility tester sets it
 	VISIBLE_ANY = VISIBLE_CAMERA | VISIBLE_LIGHT,
 
-	/// This is used for example in lights. If the light does not collide 
-	/// with any surface then it shouldn't be visible and be processed 
+	/// This is used for example in lights. If the light does not collide
+	/// with any surface then it shouldn't be visible and be processed
 	/// further. This flag is being used to check if we should test agains
 	/// near plane when using the tiler for visibility tests.
 	FULLY_TRANSPARENT = 1 << 3,
@@ -41,9 +41,9 @@ enum class SpatialComponentFlag: U8
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(SpatialComponentFlag, inline)
 
-/// Spatial component for scene nodes. It indicates scene nodes that need to 
+/// Spatial component for scene nodes. It indicates scene nodes that need to
 /// be placed in the a sector and they participate in the visibility tests
-class SpatialComponent: public SceneComponent, 
+class SpatialComponent: public SceneComponent,
 	public Bitset<SpatialComponentFlag>
 {
 public:
@@ -55,8 +55,8 @@ public:
 	}
 
 	SpatialComponent(
-		SceneNode* node, 
-		const CollisionShape* shape, 
+		SceneNode* node,
+		const CollisionShape* shape,
 		Flag flags = Flag::NONE);
 
 	~SpatialComponent();
@@ -72,6 +72,11 @@ public:
 	}
 
 	List<Sector*>& getSectorInfo()
+	{
+		return m_sectorInfo;
+	}
+
+	const List<Sector*>& getSectorInfo() const
 	{
 		return m_sectorInfo;
 	}
@@ -103,7 +108,7 @@ public:
 		m_origin = origin;
 	}
 
-	/// The derived class has to manually call this method when the collision 
+	/// The derived class has to manually call this method when the collision
 	/// shape got updated
 	void markForUpdate()
 	{

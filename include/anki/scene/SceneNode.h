@@ -62,7 +62,7 @@ public:
 
 	SceneAllocator<U8> getSceneAllocator() const;
 
-	SceneFrameAllocator<U8> getSceneFrameAllocator() const;
+	SceneFrameAllocator<U8> getFrameAllocator() const;
 
 	void addChild(SceneNode* obj)
 	{
@@ -177,10 +177,14 @@ protected:
 
 private:
 	SceneGraph* m_scene = nullptr;
+
 	DArray<SceneComponent*> m_components;
 	U8 m_componentsCount = 0;
+
 	String m_name; ///< A unique name
 	Bool8 m_forDeletion = false;
+
+	void cacheImportantComponents();
 };
 /// @}
 

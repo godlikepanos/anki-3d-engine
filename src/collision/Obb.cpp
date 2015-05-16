@@ -14,6 +14,7 @@ Obb::Obb()
 :	Base(Type::OBB),
 	m_center(Vec4(0.0)),
 	m_rotation(Mat3x4::getIdentity()),
+	m_transposedRotation(Mat3x4::getIdentity()),
 	m_extend(Vec3(getEpsilon<F32>()), 0.0)
 {}
 
@@ -26,19 +27,23 @@ Obb::Obb(const Obb& b)
 
 //==============================================================================
 Obb::Obb(const Vec4& center, const Mat3x4& rotation, const Vec4& extend)
-:	Base(Type::OBB), 
+:	Base(Type::OBB),
 	m_center(center),
 	m_rotation(rotation),
+	m_transposedRotation(rotation),
 	m_extend(extend)
-{}
+{
+	m_transposedRotation.transposeRotationPart();
+}
 
 //==============================================================================
 Obb& Obb::operator=(const Obb& b)
 {
 	m_center = b.m_center;
 	m_rotation = b.m_rotation;
+	m_transposedRotation = b.m_transposedRotation;
 	m_extend = b.m_extend;
-	
+
 	m_cache = b.m_cache;
 
 	return *this;
@@ -47,9 +52,7 @@ Obb& Obb::operator=(const Obb& b)
 //==============================================================================
 F32 Obb::testPlane(const Plane& p) const
 {
-	Mat3x4 rot = m_rotation;
-	rot.transposeRotationPart();
-	Vec4 xNormal = (rot * p.getNormal()).xyz0();
+	Vec4 xNormal = (m_transposedRotation * p.getNormal()).xyz0();
 
 	// maximum extent in direction of plane normal
 	Vec4 rv = m_extend * xNormal;
@@ -81,6 +84,8 @@ Obb Obb::getTransformed(const Transform& trf) const
 	out.m_extend = m_extend * trf.getScale();
 	out.m_center = trf.transform(m_center);
 	out.m_rotation = trf.getRotation().combineTransformations(m_rotation);
+	out.m_transposedRotation = out.m_rotation;
+	out.m_transposedRotation.transposeRotationPart();
 	return out;
 }
 
@@ -102,7 +107,7 @@ Obb Obb::getCompoundShape(const Obb& b) const
 		points[i + 8] = points1[i];
 	}
 
-	out.setFromPointCloud(&points[0], points.size(), sizeof(Vec4), 
+	out.setFromPointCloud(&points[0], points.size(), sizeof(Vec4),
 		sizeof(Vec4) * points.size());
 	return out;
 }
@@ -117,7 +122,7 @@ void Obb::getExtremePoints(Array<Vec4, 8>& points) const
 	}
 
 	m_cache.m_dirtyExtremePoints = false;
-	
+
 
 	// L: left, R: right, T: top, B: bottom, F: front, B: back
 	enum
@@ -182,7 +187,7 @@ void Obb::computeAabb(Aabb& aabb) const
 
 	// Add a small epsilon to avoid some assertions
 	Vec4 epsilon(Vec3(getEpsilon<F32>() * 100.0), 0.0);
-	aabb = Aabb(m_center - newE, 
+	aabb = Aabb(m_center - newE,
 		m_center + newE + epsilon);
 
 	// Update cache
@@ -214,6 +219,7 @@ void Obb::setFromPointCloud(
 	// Set the locals
 	m_center = (max + min) / 2.0;
 	m_rotation = Mat3x4::getIdentity();
+	m_transposedRotation = m_rotation;
 	m_extend = max - m_center;
 
 	// Invalidate cache
@@ -228,7 +234,7 @@ Vec4 Obb::computeSupport(const Vec4& dir) const
 
 	U best = 0;
 	F32 bestDot = points[0].dot(dir);
- 
+
 	for(U i = 1; i < points.size(); i++)
 	{
 		F32 d = points[i].dot(dir);
@@ -238,7 +244,7 @@ Vec4 Obb::computeSupport(const Vec4& dir) const
 			bestDot = d;
 		}
 	}
- 
+
 	return points[best];
 }
 

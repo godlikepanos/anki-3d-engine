@@ -37,11 +37,7 @@ public:
 	{
 		return m_center;
 	}
-	Vec4& getCenter()
-	{
-		makeDirty();
-		return m_center;
-	}
+
 	void setCenter(const Vec4& x)
 	{
 		makeDirty();
@@ -52,26 +48,20 @@ public:
 	{
 		return m_rotation;
 	}
-	Mat3x4& getRotation()
-	{
-		makeDirty();
-		return m_rotation;
-	}
+
 	void setRotation(const Mat3x4& x)
 	{
 		makeDirty();
 		m_rotation = x;
+		m_transposedRotation = x;
+		m_transposedRotation.transposeRotationPart();
 	}
 
 	const Vec4& getExtend() const
 	{
 		return m_extend;
 	}
-	Vec4& getExtend()
-	{
-		makeDirty();
-		return m_extend;
-	}
+
 	void setExtend(const Vec4& x)
 	{
 		makeDirty();
@@ -122,11 +112,12 @@ public:
 public:
 	Vec4 m_center;
 	Mat3x4 m_rotation;
+	Mat3x4 m_transposedRotation; ///< Used for visibility tests
 	/// With identity rotation this points to max (front, right, top in
 	/// our case)
 	Vec4 m_extend;
 
-	struct 
+	struct
 	{
 		mutable Aabb m_aabb;
 		mutable Array<Vec4, 8> m_extremePoints;

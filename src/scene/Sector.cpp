@@ -29,7 +29,8 @@ PortalSectorBase::~PortalSectorBase()
 		m_shape = nullptr;
 	}
 
-	m_shapeStorage.destroy(alloc);
+	m_shapeStorageLSpace.destroy(alloc);
+	m_shapeStorageWSpace.destroy(alloc);
 	m_vertIndices.destroy(alloc);
 }
 
@@ -47,12 +48,12 @@ Error PortalSectorBase::create(const CString& name, const CString& modelFname)
 	addComponent(comp, true);
 
 	// Load mesh
-	StringAuto newFname(getSceneFrameAllocator());
+	StringAuto newFname(getFrameAllocator());
 	getSceneGraph()._getResourceManager().fixResourceFilename(
 		modelFname, newFname);
 
 	MeshLoader loader;
-	ANKI_CHECK(loader.load(getSceneFrameAllocator(), newFname.toCString()));
+	ANKI_CHECK(loader.load(getFrameAllocator(), newFname.toCString()));
 
 	// Convert Vec3 positions to Vec4
 	const MeshLoader::Header& header = loader.getHeader();
@@ -60,20 +61,21 @@ Error PortalSectorBase::create(const CString& name, const CString& modelFname)
 	PtrSize vertSize = loader.getVertexSize();
 
 	auto alloc = getSceneAllocator();
-	m_shapeStorage.create(alloc, vertsCount);
+	m_shapeStorageLSpace.create(alloc, vertsCount);
+	m_shapeStorageWSpace.create(alloc, vertsCount);
 
 	for(U i = 0; i < vertsCount; ++i)
 	{
 		const Vec3& pos = *reinterpret_cast<const Vec3*>(
 			loader.getVertexData() + vertSize * i);
 
-		m_shapeStorage[i] = Vec4(pos, 0.0);
+		m_shapeStorageLSpace[i] = Vec4(pos, 0.0);
 	}
 
 	// Create shape
 	ConvexHullShape* hull = alloc.newInstance<ConvexHullShape>();
 	m_shape = hull;
-	hull->initStorage(&m_shapeStorage[0], vertsCount);
+	hull->initStorage(&m_shapeStorageWSpace[0], vertsCount);
 
 	// Store indices
 	ANKI_ASSERT(
@@ -92,6 +94,16 @@ Error PortalSectorBase::create(const CString& name, const CString& modelFname)
 SectorGroup& PortalSectorBase::getSectorGroup()
 {
 	return getSceneGraph().getSectorGroup();
+}
+
+//==============================================================================
+void PortalSectorBase::updateTransform(const Transform& trf)
+{
+	const U count = m_shapeStorageWSpace.getSize();
+	for(U i = 0; i < count; ++i)
+	{
+		m_shapeStorageWSpace[i] = trf.transform(m_shapeStorageLSpace[i]);
+	}
 }
 
 //==============================================================================
@@ -140,6 +152,7 @@ Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	if(move.getTimestamp() == getGlobalTimestamp())
 	{
 		// Move comp updated. Inform the group
+		updateTransform(move.getWorldTransform());
 
 		SectorGroup& group = getSectorGroup();
 
@@ -377,11 +390,19 @@ Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	MoveComponent& move = getComponent<MoveComponent>();
 	if(move.getTimestamp() == getGlobalTimestamp())
 	{
-		// Move comp updated. Inform the group
+		// Move comp updated.
 
+		updateTransform(move.getWorldTransform());
+
+		// Spatials should get updated
+		for(SpatialComponent* sp : m_spatials)
+		{
+			sp->markForUpdate();
+		}
+
+		// Inform the group
 		SectorGroup& group = getSectorGroup();
 
-		// Gather the portals it collides
 		auto it = group.m_portals.getBegin();
 		auto end = group.m_portals.getEnd();
 		for(; it != end; ++it)
@@ -412,7 +433,24 @@ Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 //==============================================================================
 
 //==============================================================================
+SectorGroup::~SectorGroup()
+{
+	auto alloc = m_scene->getAllocator();
+
+	m_sectors.destroy(alloc);
+	m_portals.destroy(alloc);
+}
+
+//==============================================================================
 void SectorGroup::spatialUpdated(SpatialComponent* sp)
+{
+	ANKI_ASSERT(sp);
+	LockGuard<SpinLock> lock(m_mtx);
+	m_spatialsDeferredBinning.pushBack(m_scene->getFrameAllocator(), sp);
+}
+
+//==============================================================================
+void SectorGroup::binSpatial(SpatialComponent* sp)
 {
 	// Iterate all sectors and bin the spatial
 	auto it = m_sectors.getBegin();
@@ -433,15 +471,6 @@ void SectorGroup::spatialUpdated(SpatialComponent* sp)
 			sector.tryRemoveSpatialComponent(sp);
 		}
 	}
-}
-
-//==============================================================================
-SectorGroup::~SectorGroup()
-{
-	auto alloc = m_scene->getAllocator();
-
-	m_sectors.destroy(alloc);
-	m_portals.destroy(alloc);
 }
 
 //==============================================================================
@@ -469,7 +498,7 @@ void SectorGroup::findVisibleSectors(
 	auto end = m_sectors.getEnd();
 	for(; it != end; ++it)
 	{
-		if(frc.insideFrustum(eye))
+		if(testCollisionShapes(eye, (*it)->getBoundingShape()))
 		{
 			break;
 		}
@@ -546,43 +575,89 @@ void SectorGroup::findVisibleSectorsInternal(
 }
 
 //==============================================================================
+Bool SectorGroup::spatialInSector(
+	const Sector& sector, const SpatialComponent& spatial)
+{
+	auto it = spatial.getSectorInfo().getBegin();
+	auto end = spatial.getSectorInfo().getEnd();
+	for(; it != end; ++it)
+	{
+		if(*it == &sector)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+//==============================================================================
 void SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc)
 {
 	auto alloc = m_scene->getFrameAllocator();
 
+	// Bin spatials
+	{
+		auto it = m_spatialsDeferredBinning.getBegin();
+		auto end = m_spatialsDeferredBinning.getEnd();
+		for(; it != end; ++it)
+		{
+			binSpatial(*it);
+		}
+		m_spatialsDeferredBinning.destroy(alloc);
+	}
+
 	// Find visible sectors
-	List<Sector*> visSectors;
+	ListAuto<Sector*> visSectors(m_scene->getFrameAllocator());
 	U spatialsCount = 0;
 	findVisibleSectors(frc, visSectors, spatialsCount);
+
+	if(ANKI_UNLIKELY(spatialsCount == 0))
+	{
+		m_visibleNodes = nullptr;
+		m_visibleNodesCount = 0;
+		return;
+	}
 
 	// Initiate storage of nodes
 	m_visibleNodes = reinterpret_cast<SceneNode**>(
 		alloc.allocate(spatialsCount * sizeof(void*)));
+
 	SArray<SceneNode*> visibleNodes(m_visibleNodes, spatialsCount);
 
 	// Iterate visible sectors and get the scene nodes. The array will contain
 	// duplicates
 	U nodesCount = 0;
-	for(auto it : visSectors)
+	auto it = visSectors.getBegin();
+	auto end = visSectors.getEnd();
+	for(; it != end; ++it)
 	{
-		Sector& s = *it;
+		Sector& s = *(*it);
 		for(auto itsp : s.m_spatials)
 		{
 			SpatialComponent& spc = *itsp;
-			SceneNode& sn = spc.getSceneNode();
 
-			visibleNodes[nodesCount++] = &sn;
+			// Check if node already checked
+			Bool checked = false;
+			auto it1 = visSectors.getBegin();
+			auto end1 = it;
+			for(; it1 != end1; ++it1)
+			{
+				if(spatialInSector(*(*it1), spc))
+				{
+					checked = true;
+					break;
+				}
+			}
+
+			if(!checked)
+			{
+				visibleNodes[nodesCount++] = &spc.getSceneNode();
+			}
 		}
 	}
-	m_visibleNodesCount = nodesCount;
 
-	// Sort the scene nodes using the it's address
-	if(nodesCount > 0)
-	{
-		std::sort(
-			visibleNodes.getBegin(),
-			visibleNodes.getBegin() + nodesCount);
-	}
+	m_visibleNodesCount = nodesCount;
 }
 
 } // end namespace anki

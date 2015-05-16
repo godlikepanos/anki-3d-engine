@@ -24,7 +24,7 @@ Error SceneNode::create(const CString& name)
 SceneNode::~SceneNode()
 {
 	auto alloc = getSceneAllocator();
-	
+
 	auto it = m_components.begin();
 	auto end = m_components.begin() + m_componentsCount;
 	for(; it != end; ++it)
@@ -44,7 +44,7 @@ SceneNode::~SceneNode()
 //==============================================================================
 void SceneNode::setMarkedForDeletion()
 {
-	// Mark for deletion only when it's not already marked because we don't 
+	// Mark for deletion only when it's not already marked because we don't
 	// want to increase the counter again
 	if(!getMarkedForDeletion())
 	{
@@ -75,7 +75,7 @@ SceneAllocator<U8> SceneNode::getSceneAllocator() const
 }
 
 //==============================================================================
-SceneFrameAllocator<U8> SceneNode::getSceneFrameAllocator() const
+SceneFrameAllocator<U8> SceneNode::getFrameAllocator() const
 {
 	ANKI_ASSERT(m_scene);
 	return m_scene->getFrameAllocator();

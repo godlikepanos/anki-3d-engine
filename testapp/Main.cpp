@@ -276,7 +276,7 @@ Error init()
 
 #endif
 
-#if 1
+#if 0
 	{
 		ModelNode* fog;
 		scene.newSceneNode<ModelNode>("fog", fog,

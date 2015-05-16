@@ -26,7 +26,7 @@ LuaBinder::~LuaBinder()
 {
 	lua_close(m_l);
 
-	ANKI_ASSERT(m_alloc.getMemoryPool().getAllocationsCount() == 0 
+	ANKI_ASSERT(m_alloc.getMemoryPool().getAllocationsCount() == 0
 		&& "Leaking memory");
 }
 
@@ -39,7 +39,6 @@ Error LuaBinder::create(Allocator<U8>& alloc, void* parent)
 	m_l = lua_newstate(luaAllocCallback, this);
 	luaL_openlibs(m_l);
 	lua_atpanic(m_l, &luaPanic);
-	lua_setuserdata(m_l, this);
 
 	return ErrorCode::NONE;
 }
@@ -49,12 +48,12 @@ void* LuaBinder::luaAllocCallback(
 	void* userData, void* ptr, PtrSize osize, PtrSize nsize)
 {
 	ANKI_ASSERT(userData);
-	
+
 #if 1
 	LuaBinder& binder = *reinterpret_cast<LuaBinder*>(userData);
 	void* out = nullptr;
 
-	if(nsize == 0) 
+	if(nsize == 0)
 	{
 		if(ptr != nullptr)
 		{
@@ -84,7 +83,7 @@ void* LuaBinder::luaAllocCallback(
 	}
 #else
 	void* out = nullptr;
-	if (nsize == 0) 
+	if (nsize == 0)
 	{
 		free(ptr);
 	}
@@ -120,7 +119,7 @@ void LuaBinder::checkArgsCount(lua_State* l, I argsCount)
 	I actualArgsCount = lua_gettop(l);
 	if(argsCount != actualArgsCount)
 	{
-		luaL_error(l, "Expecting %d arguments, got %d", argsCount, 
+		luaL_error(l, "Expecting %d arguments, got %d", argsCount,
 			actualArgsCount);
 	}
 }
@@ -149,7 +148,7 @@ void LuaBinder::pushLuaCFuncMethod(
 
 //==============================================================================
 void LuaBinder::pushLuaCFuncStaticMethod(lua_State* l, const char* className,
-	const char* name, lua_CFunction luafunc) 
+	const char* name, lua_CFunction luafunc)
 {
 	lua_getglobal(l, className); // push
 	lua_pushcfunction(l, luafunc); // push
@@ -240,7 +239,7 @@ Error LuaBinder::checkUserData(
 
 	if(err)
 	{
-		lua_pushfstring(l, "Userdata of %s expected. Got %s", 
+		lua_pushfstring(l, "Userdata of %s expected. Got %s",
 			typeName, luaL_typename(l, stackIdx));
 	}
 

@@ -42,7 +42,7 @@ public:
 	}
 
 	SceneAllocator<U8> getSceneAllocator() const;
-	SceneFrameAllocator<U8> getSceneFrameAllocator() const;
+	SceneFrameAllocator<U8> getFrameAllocator() const;
 
 	/// Iterate events
 	template<typename Func>

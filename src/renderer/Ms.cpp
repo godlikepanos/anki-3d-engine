@@ -27,24 +27,26 @@ Error Ms::createRt(U32 index, U32 samples)
 		PixelFormat(ComponentFormat::D24, TransformFormat::FLOAT),
 		samples, SamplingFilter::NEAREST, 4, plane.m_depthRt));
 
-	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), 
+	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
 		samples, SamplingFilter::NEAREST, 1, plane.m_rt0));
 
-	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(), 
-		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM), 
+	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
+		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
 		samples, SamplingFilter::NEAREST, 2, plane.m_rt1));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 2;
 	fbInit.m_colorAttachments[0].m_texture = plane.m_rt0;
-	fbInit.m_colorAttachments[0].m_loadOperation = 
-		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[0].m_loadOperation =
+		//AttachmentLoadOperation::DONT_CARE;
+		AttachmentLoadOperation::CLEAR;
 	fbInit.m_colorAttachments[1].m_texture = plane.m_rt1;
-	fbInit.m_colorAttachments[1].m_loadOperation = 
-		AttachmentLoadOperation::DONT_CARE;
+	fbInit.m_colorAttachments[1].m_loadOperation =
+		//AttachmentLoadOperation::DONT_CARE;
+		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_texture = plane.m_depthRt;
-	fbInit.m_depthStencilAttachment.m_loadOperation = 
+	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
@@ -113,7 +115,7 @@ Error Ms::run(CommandBufferHandle& cmdb)
 		cmdb);
 
 	Camera& cam = m_r->getSceneGraph().getActiveCamera();
-	
+
 	VisibilityTestResults& vi =
 		m_r->getSceneGraph().getActiveCamera().
 		getComponent<FrustumComponent>().getVisibilityTestResults();

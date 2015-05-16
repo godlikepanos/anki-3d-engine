@@ -40,10 +40,10 @@ public:
 	~SceneGraph();
 
 	ANKI_USE_RESULT Error create(
-		AllocAlignedCallback allocCb, 
+		AllocAlignedCallback allocCb,
 		void* allocCbData,
 		U32 frameAllocatorSize,
-		Threadpool* threadpool, 
+		Threadpool* threadpool,
 		ResourceManager* resources,
 		Input* input,
 		const Timestamp* globalTimestamp);
@@ -231,6 +231,7 @@ template<typename Node, typename... Args>
 inline Error SceneGraph::newSceneNode(
 	const CString& name, Node*& node, Args&&... args)
 {
+	ANKI_ASSERT(!name.isEmpty());
 	Error err = ErrorCode::NONE;
 	SceneAllocator<Node> al = m_alloc;
 
@@ -251,7 +252,7 @@ inline Error SceneGraph::newSceneNode(
 
 	if(err)
 	{
-		ANKI_LOGE("Failed to create scene node: %s", 
+		ANKI_LOGE("Failed to create scene node: %s",
 			(name.isEmpty()) ? "unnamed" : &name[0]);
 
 		if(node)
@@ -270,7 +271,7 @@ Error SceneGraph::iterateSceneNodes(PtrSize begin, PtrSize end, Func func)
 {
 	ANKI_ASSERT(begin < m_nodesCount && end <= m_nodesCount);
 	auto it = m_nodes.getBegin() + begin;
-	
+
 	PtrSize count = end - begin;
 	while(count-- != 0)
 	{
