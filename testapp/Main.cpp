@@ -59,7 +59,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 2.8);
+	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.8);
 
 	if(getenv("PROFILE"))
 	{
@@ -260,7 +260,7 @@ Error init()
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/techdemo/scene.lua", &resources);
+		err = script.load("maps/adis/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());
@@ -501,7 +501,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("is.sm.bilinearEnabled", true);
 	config.set("is.groundLightEnabled", true);
 	config.set("is.sm.enabled", true);
-	config.set("is.sm.poissonEnabled", false);
+	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);
 	config.set("pps.enabled", true);
 	config.set("pps.bloom.enabled", true);
@@ -521,7 +521,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.bl.blurringIterationsCount", 2);
 	config.set("pps.bl.sideBlurFactor", 1.0);
 	config.set("pps.sslf.enabled", true);
-	config.set("pps.sharpen", false);
+	config.set("pps.sharpen", true);
 	config.set("renderingQuality", 1.0);
 	config.set("width", 1280);
 	config.set("height", 720);

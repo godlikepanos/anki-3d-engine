@@ -70,15 +70,17 @@ vec3 sharpen(in sampler2D tex, in vec2 texCoords)
 {
 	const float sharpenFactor = 0.25;
 
-	vec3 col = textureRt(tex, texCoords).rgb;
+	vec3 col = textureLod(tex, texCoords, 0.0).rgb;
 
-	vec3 col2 = textureRt(tex, texCoords + KERNEL[0]).rgb;
+	vec3 col2 = textureLod(tex, texCoords + KERNEL[0], 0.0).rgb;
 	for(int i = 1; i < 8; i++)
 	{
-		col2 += textureRt(tex, texCoords + KERNEL[i]).rgb;
+		col2 += textureLod(tex, texCoords + KERNEL[i], 0.0).rgb;
 	}
 
-	return col * (8.0 * sharpenFactor + 1.0) - sharpenFactor * col2;
+	col = col * (8.0 * sharpenFactor + 1.0) - sharpenFactor * col2;
+
+	return max(col, vec3(EPSILON));
 }
 
 //==============================================================================
@@ -116,19 +118,19 @@ void main()
 #endif
 
 #if SSAO_ENABLED
-	float ssao = textureRt(u_ppsSsaoRt, in_texCoords).r;
+	float ssao = textureLod(u_ppsSsaoRt, in_texCoords, 0.0).r;
 	out_color *= ssao;
 #endif
 
 	out_color = tonemap(out_color, u_averageLuminancePad3.x, 0.0);
 
 #if BLOOM_ENABLED
-	vec3 bloom = textureRt(u_ppsBloomLfRt, in_texCoords).rgb;
+	vec3 bloom = textureLod(u_ppsBloomLfRt, in_texCoords, 0.0).rgb;
 	out_color += bloom;
 #endif
 
 #if SSLF_ENABLED
-	vec3 sslf = textureRt(u_ppsSslfRt, in_texCoords).rgb;
+	vec3 sslf = textureLod(u_ppsSslfRt, in_texCoords, 0.0).rgb;
 	out_color += sslf;
 #endif
 

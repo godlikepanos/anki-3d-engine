@@ -8,6 +8,8 @@
 
 #include "anki/gr/Common.h"
 #include "anki/gr/TextureHandle.h"
+#include "anki/gr/SamplerHandle.h"
+#include "anki/gr/BufferHandle.h"
 
 namespace anki {
 
@@ -28,6 +30,7 @@ class BufferBinding
 public:
 	BufferHandle m_buffer;
 	PtrSize m_offset = 0;
+	PtrSize m_range = 0;
 };
 
 /// Resource group initializer.
@@ -37,7 +40,7 @@ public:
 	Array<TextureBinding, MAX_TEXTURE_BINDINGS> m_textures;
 	Array<BufferBinding, MAX_UNIFORM_BUFFER_BINDINGS> m_uniformBuffers;
 	Array<BufferBinding, MAX_STORAGE_BUFFER_BINDINGS> m_storageBuffers;
-	Array<BufferBinding, MAX_ATTRIBUTES> m_vertexBuffers;
+	Array<BufferBinding, MAX_VERTEX_ATTRIBUTES> m_vertexBuffers;
 	BufferBinding m_indexBuffer;
 };
 /// @}

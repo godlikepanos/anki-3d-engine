@@ -20,9 +20,9 @@ public:
 	FramebufferHandle m_fb;
 	FramebufferHandle::Initializer m_init;
 
-	CreateFramebufferCommand(const FramebufferHandle& handle, 
+	CreateFramebufferCommand(const FramebufferHandle& handle,
 		const FramebufferHandle::Initializer& init)
-	:	m_fb(handle), 
+	:	m_fb(handle),
 		m_init(init)
 	{}
 
@@ -46,7 +46,7 @@ public:
 	FramebufferHandle m_fb;
 
 	BindFramebufferCommand(FramebufferHandle& fb)
-	:	m_fb(fb) 
+	:	m_fb(fb)
 	{}
 
 	Error operator()(CommandBufferImpl*)
@@ -67,23 +67,23 @@ public:
 	GLbitfield m_attachmentMask;
 	Bool8 m_linear;
 
-	BlitFramebufferCommand(FramebufferHandle& fbDest, 
+	BlitFramebufferCommand(FramebufferHandle& fbDest,
 		const FramebufferHandle& fbSrc,
 		const Array<U32, 4>& sourceRect,
 		const Array<U32, 4>& destRect,
 		GLbitfield attachmentMask,
 		Bool8 linear)
-	:	m_fbDest(fbDest), 
-		m_fbSrc(fbSrc), 
+	:	m_fbDest(fbDest),
+		m_fbSrc(fbSrc),
 		m_sourceRect(sourceRect),
-		m_destRect(destRect), 
-		m_attachmentMask(attachmentMask), 
+		m_destRect(destRect),
+		m_attachmentMask(attachmentMask),
 		m_linear(linear)
 	{}
 
 	Error operator()(CommandBufferImpl*)
 	{
-		m_fbDest.get().blit(m_fbSrc.get(), m_sourceRect, m_destRect, 
+		m_fbDest.get().blit(m_fbSrc.get(), m_sourceRect, m_destRect,
 			m_attachmentMask, m_linear);
 
 		return ErrorCode::NONE;
@@ -103,8 +103,7 @@ FramebufferHandle::~FramebufferHandle()
 {}
 
 //==============================================================================
-Error FramebufferHandle::create(GrManager* manager, 
-	Initializer& init)
+Error FramebufferHandle::create(GrManager* manager, Initializer& init)
 {
 	using DeleteCommand = DeleteObjectCommand<FramebufferImpl>;
 	using Deleter = DeferredDeleter<FramebufferImpl, DeleteCommand>;
@@ -130,9 +129,9 @@ void FramebufferHandle::bind(CommandBufferHandle& cmdb)
 
 //==============================================================================
 void FramebufferHandle::blit(CommandBufferHandle& cmdb,
-	const FramebufferHandle& b, 
+	const FramebufferHandle& b,
 	const Array<U32, 4>& sourceRect,
-	const Array<U32, 4>& destRect, 
+	const Array<U32, 4>& destRect,
 	GLbitfield attachmentMask,
 	Bool linear)
 {

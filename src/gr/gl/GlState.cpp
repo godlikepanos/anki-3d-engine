@@ -22,7 +22,7 @@ struct GlDbg
 static const GlDbg gldbgsource[] = {
 	{GL_DEBUG_SOURCE_API, "GL_DEBUG_SOURCE_API"},
 	{GL_DEBUG_SOURCE_WINDOW_SYSTEM, "GL_DEBUG_SOURCE_WINDOW_SYSTEM"},
-	{GL_DEBUG_SOURCE_SHADER_COMPILER, "GL_DEBUG_SOURCE_SHADER_COMPILER"}, 
+	{GL_DEBUG_SOURCE_SHADER_COMPILER, "GL_DEBUG_SOURCE_SHADER_COMPILER"},
 	{GL_DEBUG_SOURCE_THIRD_PARTY, "GL_DEBUG_SOURCE_THIRD_PARTY"},
 	{GL_DEBUG_SOURCE_APPLICATION, "GL_DEBUG_SOURCE_APPLICATION"},
 	{GL_DEBUG_SOURCE_OTHER, "GL_DEBUG_SOURCE_OTHER"}};
@@ -42,7 +42,7 @@ static const GlDbg gldbgseverity[] = {
 
 //==============================================================================
 #if ANKI_OS == ANKI_OS_WINDOWS
-__stdcall 
+__stdcall
 #endif
 void oglMessagesCallback(GLenum source,
 	GLenum type, GLuint id, GLenum severity, GLsizei length,
@@ -120,8 +120,8 @@ void GlState::init()
 			{
 				for(U sv = 0; sv < sizeof(gldbgseverity) / sizeof(GlDbg); sv++)
 				{
-					glDebugMessageControl(gldbgsource[s].token, 
-						gldbgtype[t].token, gldbgseverity[sv].token, 0, 
+					glDebugMessageControl(gldbgsource[s].token,
+						gldbgtype[t].token, gldbgseverity[sv].token, 0,
 						nullptr, GL_TRUE);
 				}
 			}
@@ -136,6 +136,9 @@ void GlState::init()
 
 	glGetInteger64v(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &alignment);
 	m_ssBuffOffsetAlignment = alignment;
+
+	// Other
+	memset(&m_vertexBindingStrides[0], 0, sizeof(m_vertexBindingStrides));
 }
 
 } // end namespace anki

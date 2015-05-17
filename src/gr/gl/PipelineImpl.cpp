@@ -14,12 +14,12 @@ namespace anki {
 //==============================================================================
 static GLenum computeGlShaderType(const ShaderType idx, GLbitfield* bit)
 {
-	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER, 
+	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER,
 		GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER,
 		GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER}};
 
 	static const Array<GLuint, 6> glbit = {{
-		GL_VERTEX_SHADER_BIT, GL_TESS_CONTROL_SHADER_BIT, 
+		GL_VERTEX_SHADER_BIT, GL_TESS_CONTROL_SHADER_BIT,
 		GL_TESS_EVALUATION_SHADER_BIT, GL_GEOMETRY_SHADER_BIT,
 		GL_FRAGMENT_SHADER_BIT, GL_COMPUTE_SHADER_BIT}};
 
@@ -96,7 +96,7 @@ static GLenum convertBlendMethod(BlendMethod in)
 		out = GL_ONE_MINUS_SRC1_ALPHA;
 		break;
 	default:
-		ANKI_ASSERT(0);	
+		ANKI_ASSERT(0);
 	}
 
 	return out;
@@ -113,7 +113,7 @@ Error PipelineImpl::create(const Initializer& init)
 	if(m_templatePipeline.isCreated())
 	{
 		// If there is a template it should always be complete
-		SubStateBit mask = 
+		SubStateBit mask =
 			m_definedState | m_templatePipeline.get().m_definedState;
 		ANKI_ASSERT(mask == SubStateBit::ALL);
 	}
@@ -169,7 +169,7 @@ Error PipelineImpl::createGlPipeline()
 
 		m_compute = true;
 
-		ANKI_ASSERT((mask & (1 << 5)) == (1 << 5) 
+		ANKI_ASSERT((mask & (1 << 5)) == (1 << 5)
 			&& "Compute should be alone in the pipeline");
 	}
 	else
@@ -245,7 +245,7 @@ void PipelineImpl::bind()
 	ANKI_ASSERT(m_complete && "Should be complete");
 
 	// Get last pipeline
-	auto& state = 
+	auto& state =
 		getManager().getImplementation().getRenderingThread().getState();
 
 	const PipelineImpl* lastPpline = nullptr;
@@ -272,7 +272,7 @@ void PipelineImpl::bind()
 	{
 		pplineTempl = &m_templatePipeline.get();
 	}
-	
+
 #define ANKI_PPLINE_BIND(enum_, method_) \
 	do { \
 		const PipelineImpl* ppline = getPipelineForState(SubStateBit::enum_, \
@@ -398,7 +398,7 @@ void PipelineImpl::initRasterizerState()
 //==============================================================================
 void PipelineImpl::initDepthStencilState()
 {
-	m_depthCompareFunction = 
+	m_depthCompareFunction =
 		convertCompareOperation(m_depthStencil.m_depthCompareFunction);
 }
 
@@ -442,23 +442,28 @@ void PipelineImpl::initColorState()
 }
 
 //==============================================================================
-void PipelineImpl::setVertexState(GlState&) const
+void PipelineImpl::setVertexState(GlState& state) const
 {
 	for(U i = 0; i < m_vertex.m_attributeCount; ++i)
 	{
 		const Attribute& attrib = m_attribs[i];
 		ANKI_ASSERT(attrib.m_type);
-		glVertexAttribFormat(i, attrib.m_compCount, attrib.m_type, 
+		glVertexAttribFormat(i, attrib.m_compCount, attrib.m_type,
 			attrib.m_normalized, m_vertex.m_attributes[i].m_offset);
 
 		glVertexAttribBinding(i, m_vertex.m_attributes[i].m_binding);
+	}
+
+	for(U i = 0; i < m_vertex.m_bindingCount; ++i)
+	{
+		state.m_vertexBindingStrides[i] = m_vertex.m_bindings[i].m_stride;
 	}
 }
 
 //==============================================================================
 void PipelineImpl::setInputAssemblerState(GlState& state) const
 {
-	if(m_inputAssembler.m_primitiveRestartEnabled 
+	if(m_inputAssembler.m_primitiveRestartEnabled
 		!= state.m_primitiveRestartEnabled)
 	{
 		if(m_inputAssembler.m_primitiveRestartEnabled)
@@ -470,7 +475,7 @@ void PipelineImpl::setInputAssemblerState(GlState& state) const
 			glDisable(GL_PRIMITIVE_RESTART);
 		}
 
-		state.m_primitiveRestartEnabled = 
+		state.m_primitiveRestartEnabled =
 			m_inputAssembler.m_primitiveRestartEnabled;
 	}
 
@@ -480,13 +485,13 @@ void PipelineImpl::setInputAssemblerState(GlState& state) const
 //==============================================================================
 void PipelineImpl::setTessellationState(GlState& state) const
 {
-	if(m_tessellation.m_patchControlPointsCount 
+	if(m_tessellation.m_patchControlPointsCount
 		!= state.m_patchControlPointsCount)
 	{
-		glPatchParameteri(GL_PATCH_VERTICES, 
+		glPatchParameteri(GL_PATCH_VERTICES,
 			m_tessellation.m_patchControlPointsCount);
 
-		state.m_patchControlPointsCount = 
+		state.m_patchControlPointsCount =
 			m_tessellation.m_patchControlPointsCount;
 	}
 }
@@ -536,17 +541,17 @@ void PipelineImpl::setColorState(GlState&) const
 
 		glBlendFunci(i, att.m_srcBlendMethod, att.m_dstBlendMethod);
 		glBlendEquationi(i, att.m_blendFunction);
-		glColorMaski(i, att.m_channelWriteMask[0], att.m_channelWriteMask[1], 
+		glColorMaski(i, att.m_channelWriteMask[0], att.m_channelWriteMask[1],
 			att.m_channelWriteMask[2], att.m_channelWriteMask[3]);
 	}
 }
 
 //==============================================================================
 const PipelineImpl* PipelineImpl::getPipelineForState(
-	const SubStateBit bit, 
+	const SubStateBit bit,
 	const PipelineImpl* lastPpline,
 	const PipelineImpl* lastPplineTempl,
-	const PipelineImpl* pplineTempl) const 
+	const PipelineImpl* pplineTempl) const
 {
 	const PipelineImpl* out = nullptr;
 
@@ -559,7 +564,7 @@ const PipelineImpl* PipelineImpl::getPipelineForState(
 	{
 		// Need to get the state from the templates
 
-		if(lastPplineTempl == nullptr 
+		if(lastPplineTempl == nullptr
 			|| lastPplineTempl != pplineTempl
 			|| (lastPpline->m_definedState | bit) != SubStateBit::NONE)
 		{

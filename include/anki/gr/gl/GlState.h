@@ -45,6 +45,7 @@ public:
 
 	Array<GLuint, 256> m_texUnits;
 
+	Array<GLsizei, MAX_VERTEX_ATTRIBUTES> m_vertexBindingStrides;
 	Bool m_primitiveRestartEnabled = false;
 	GLenum m_topology = 0;
 	U32 m_patchControlPointsCount = 0;

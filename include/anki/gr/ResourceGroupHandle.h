@@ -14,19 +14,21 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
-/// A collection of resource binding.
+/// A collection of resource bindings.
 class ResourceGroupHandle: public GrHandle<ResourceGroupImpl>
 {
 public:
 	using Base = GrHandle<ResourceGroupImpl>;
+	using Initializer = ResourceGroupInitializer;
 
 	ResourceGroupHandle();
 
 	~ResourceGroupHandle();
 
 	/// Create resource group.
-	ANKI_USE_RESULT Error create(GrManager* manager);
+	ANKI_USE_RESULT Error create(GrManager* manager, const Initializer& init);
 };
+/// @}
 
 } // end namespace anki
 

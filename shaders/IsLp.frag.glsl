@@ -112,14 +112,14 @@ vec3 computeSpecularColor(
 	in vec3 v,
 	in vec3 l,
 	in vec3 n,
-	in float specCol, 
-	in float specPower, 
+	in float specCol,
+	in float specPower,
 	in vec3 lightSpecCol)
 {
 	vec3 h = normalize(l + v);
 	float specIntensity = pow(max(0.0, dot(n, h)), specPower);
 	vec3 outSpecCol = lightSpecCol * (specIntensity * specCol);
-	
+
 	return outSpecCol;
 }
 
@@ -129,8 +129,8 @@ vec3 computeSpecularColorBrdf(
 	in vec3 v,
 	in vec3 l,
 	in vec3 n,
-	in float specCol, 
-	in float specPower, 
+	in float specCol,
+	in float specPower,
 	in vec3 lightSpecCol,
 	in float a2, // rougness^2
 	in float nol) // N dot L
@@ -140,7 +140,7 @@ vec3 computeSpecularColorBrdf(
 	// Fresnel
 	float loh = max(EPSILON, dot(l, h));
 	float f = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
-	//float f = specColor + (1.0 - specColor) 
+	//float f = specColor + (1.0 - specColor)
 	//	* pow(2.0, (-5.55473 * loh - 6.98316) * loh);
 
 	// NDF: GGX Trowbridge-Reitz
@@ -176,9 +176,9 @@ float computeSpotFactor(
 
 //==============================================================================
 float computeShadowFactor(
-	in mat4 lightProjectionMat, 
-	in vec3 fragPos, 
-	in highp sampler2DArrayShadow shadowMapArr, 
+	in mat4 lightProjectionMat,
+	in vec3 fragPos,
+	in highp sampler2DArrayShadow shadowMapArr,
 	in float layer)
 {
 	vec4 texCoords4 = lightProjectionMat * vec4(fragPos, 1.0);
@@ -199,7 +199,7 @@ float computeShadowFactor(
 	{
 		vec2 cordpart1 = texCoords3.xy + poissonDisk[i] / (300.0);
 		vec4 tcoord = vec4(cordpart1, cordpart0);
-		
+
 		shadowFactor += texture(u_shadowMapArr, tcoord);
 	}
 
@@ -306,8 +306,8 @@ void main()
 		LIGHTING_COMMON();
 
 		float spot = computeSpotFactor(
-			l, slight.outerCosInnerCos.x, 
-			slight.outerCosInnerCos.y, 
+			l, slight.outerCosInnerCos.x,
+			slight.outerCosInnerCos.y,
 			slight.lightDir.xyz);
 
 		out_color += (diffC + specC) * (att * max(subsurface, lambert) * spot);
@@ -324,20 +324,20 @@ void main()
 		LIGHTING_COMMON();
 
 		float spot = computeSpotFactor(
-			l, slight.outerCosInnerCos.x, 
-			slight.outerCosInnerCos.y, 
+			l, slight.outerCosInnerCos.x,
+			slight.outerCosInnerCos.y,
 			slight.lightDir.xyz);
 
 		float shadowmapLayerId = light.diffuseColorShadowmapId.w;
-		float shadow = computeShadowFactor(slight.texProjectionMat, 
+		float shadow = computeShadowFactor(slight.texProjectionMat,
 			fragPos, u_shadowMapArr, shadowmapLayerId);
 
-		out_color += (diffC + specC) 
+		out_color += (diffC + specC)
 			* (att * spot * max(subsurface, lambert * shadow));
 	}
 
 #if GROUND_LIGHT
-	out_color += max(dot(normal, u_groundLightDir.xyz), 0.0) 
+	out_color += max(dot(normal, u_groundLightDir.xyz), 0.0)
 		* vec3(0.01, 0.001, 0.001);
 #endif
 
