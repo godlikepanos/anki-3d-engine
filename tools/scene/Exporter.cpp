@@ -947,6 +947,18 @@ void Exporter::visitNode(const aiNode* ainode)
 		unsigned meshIndex = ainode->mMeshes[i];
 		unsigned mtlIndex =  m_scene->mMeshes[meshIndex]->mMaterialIndex;
 
+		// Check properties
+		for(const auto& prop : m_scene->mMeshes[meshIndex]->mProperties)
+		{
+			if(prop.first == "particles_file")
+			{
+				ParticleEmitter p;
+				p.m_filename = prop.second;
+				p.m_transform = ainode->mTransformation;
+				m_particleEmitters.push_back(p);
+			}
+		}
+
 		// Check if it's a collsion mesh
 		std::string name = m_scene->mMeshes[meshIndex]->mName.C_Str();
 		if(name.find("ak_collision") == 0)

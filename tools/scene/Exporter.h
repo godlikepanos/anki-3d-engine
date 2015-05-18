@@ -56,6 +56,13 @@ public:
 
 using Sector = Portal;
 
+class ParticleEmitter
+{
+public:
+	std::string m_filename;
+	aiMatrix4x4 m_transform;
+};
+
 /// AnKi exporter.
 class Exporter
 {
@@ -78,6 +85,7 @@ public:
 	std::vector<uint32_t> m_collisionMeshIds;
 	std::vector<Portal> m_portals;
 	std::vector<Sector> m_sectors;
+	std::vector<ParticleEmitter> m_particleEmitters;
 
 	/// Load the scene.
 	void load();
