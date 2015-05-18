@@ -78,6 +78,8 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	m_sceneCollision = NewtonCreateSceneCollision(m_world, 0);
 	Mat4 trf = Mat4::getIdentity();
 	m_sceneBody = NewtonCreateDynamicBody(m_world, m_sceneCollision, &trf[0]);
+	NewtonDestroyCollision(m_sceneCollision); // destroy old scene
+	m_sceneCollision = NewtonBodyGetCollision(m_sceneBody);
 
 	// Set the post update listener
 	NewtonWorldAddPostListener(m_world, "world", this, postUpdateCallback,

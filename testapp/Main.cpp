@@ -41,7 +41,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 1
+#define NO_PLAYER 0
 
 
 //==============================================================================

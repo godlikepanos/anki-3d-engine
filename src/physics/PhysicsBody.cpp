@@ -38,8 +38,8 @@ Error PhysicsBody::create(const Initializer& init)
 
 	// Create
 	Mat4 trf = toNewton(Mat4(init.m_startTrf));
-	
-	/*if(init.m_static)
+
+	if(init.m_static)
 	{
 		// Create static collision
 		NewtonCollision* scene = m_world->getNewtonScene();
@@ -54,7 +54,7 @@ Error PhysicsBody::create(const Initializer& init)
 
 		return ErrorCode::NONE;
 	}
-	else*/ if(init.m_kinematic)
+	else if(init.m_kinematic)
 	{
 		// TODO
 	}
@@ -104,8 +104,8 @@ void PhysicsBody::setTransform(const Transform& trf)
 
 //==============================================================================
 void PhysicsBody::onTransformCallback(
-	const NewtonBody* const body, 
-	const dFloat* const matrix, 
+	const NewtonBody* const body,
+	const dFloat* const matrix,
 	int threadIndex)
 {
 	ANKI_ASSERT(body);
@@ -125,8 +125,8 @@ void PhysicsBody::onTransformCallback(
 
 //==============================================================================
 void PhysicsBody::applyGravityForce(
-	const NewtonBody* body, 
-	dFloat timestep, 
+	const NewtonBody* body,
+	dFloat timestep,
 	int threadIndex)
 {
 	dFloat Ixx;
