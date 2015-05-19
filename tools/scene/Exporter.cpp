@@ -948,6 +948,7 @@ void Exporter::visitNode(const aiNode* ainode)
 		unsigned mtlIndex =  m_scene->mMeshes[meshIndex]->mMaterialIndex;
 
 		// Check properties
+		bool special = false;
 		for(const auto& prop : m_scene->mMeshes[meshIndex]->mProperties)
 		{
 			if(prop.first == "particles_file")
@@ -956,7 +957,13 @@ void Exporter::visitNode(const aiNode* ainode)
 				p.m_filename = prop.second;
 				p.m_transform = ainode->mTransformation;
 				m_particleEmitters.push_back(p);
+				special = true;
 			}
+		}
+
+		if(special)
+		{
+			continue;
 		}
 
 		// Check if it's a collsion mesh
@@ -1124,6 +1131,20 @@ void Exporter::exportAll()
 			<< name << i << "\", \"" << fname << "\")\n";
 
 		writeNodeTransform("node", sector.m_transform);
+		++i;
+	}
+
+	//
+	// Export particle emitters
+	//
+	i = 0;
+	for(const ParticleEmitter& p : m_particleEmitters)
+	{
+		std::string name = "particles" + std::to_string(i);
+		file << "\nnode = scene:newParticleEmitter(\"" << name << "\", \""
+			<< p.m_filename << "\")\n";
+
+		writeNodeTransform("node", p.m_transform);
 		++i;
 	}
 

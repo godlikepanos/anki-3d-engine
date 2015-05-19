@@ -260,7 +260,7 @@ Error init()
 	{
 		ScriptResourcePointer script;
 
-		err = script.load("maps/adis/scene.lua", &resources);
+		err = script.load("maps/techdemo/scene.lua", &resources);
 		if(err) return err;
 
 		err = app->getScriptManager().evalString(script->getSource());
@@ -384,14 +384,14 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 				Transform(pos, Mat3x4::getIdentity(), 1.0));
 		}*/
 
-		scene.newSceneNode<ModelNode>(CString(), horse,
+		scene.newSceneNode<ModelNode>("aaaaaaa", horse,
 			"models/crate0/crate0.ankimdl");
 
 		horse->getComponent<MoveComponent>().enableBits(
 			MoveComponent::Flag::IGNORE_LOCAL_TRANSFORM);
 
 		BodyNode* bnode;
-		scene.newSceneNode<BodyNode>(CString(), bnode,
+		scene.newSceneNode<BodyNode>("bbbbbbb", bnode,
 			"models/crate0/crate0.ankicl");
 
 		bnode->addChild(horse);

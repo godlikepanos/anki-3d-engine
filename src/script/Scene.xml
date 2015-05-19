@@ -228,6 +228,14 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				</method>
 			</methods>
 		</class>
+		<class name="ParticleEmitter">
+			<methods>
+				<method name="getSceneNodeBase">
+					<overrideCall>SceneNode&amp; ret = *self;</overrideCall>
+					<return>SceneNode&amp;</return>
+				</method>
+			</methods>
+		</class>
 		<class name="SceneGraph">
 			<methods>
 				<method name="newModelNode">
@@ -282,6 +290,14 @@ static SceneGraph* getSceneGraph(lua_State* l)
 						<arg>const CString&amp;</arg>
 					</args>
 					<return>Sector*</return>
+				</method>
+				<method name="newParticleEmitter">
+					<overrideCall><![CDATA[ParticleEmitter* ret = newSceneNode<ParticleEmitter>(self, arg0, arg1);]]></overrideCall>
+					<args>
+						<arg>const CString&amp;</arg>
+						<arg>const CString&amp;</arg>
+					</args>
+					<return>ParticleEmitter*</return>
 				</method>
 			</methods>
 		</class>

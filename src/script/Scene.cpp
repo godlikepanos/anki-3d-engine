@@ -1717,6 +1717,74 @@ static inline void wrapSector(lua_State* l)
 }
 
 //==============================================================================
+// ParticleEmitter                                                             =
+//==============================================================================
+
+//==============================================================================
+static const char* classnameParticleEmitter = "ParticleEmitter";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<ParticleEmitter>()
+{
+	return -1716560948193631017;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<ParticleEmitter>()
+{
+	return classnameParticleEmitter;
+}
+
+//==============================================================================
+/// Pre-wrap method ParticleEmitter::getSceneNodeBase.
+static inline int pwrapParticleEmittergetSceneNodeBase(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameParticleEmitter, -1716560948193631017, ud)) return -1;
+	ParticleEmitter* self = static_cast<ParticleEmitter*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	SceneNode& ret = *self;
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "SceneNode");
+	ud->m_data = static_cast<void*>(&ret);
+	ud->m_gc = false;
+	ud->m_sig = -2220074417980276571;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method ParticleEmitter::getSceneNodeBase.
+static int wrapParticleEmittergetSceneNodeBase(lua_State* l)
+{
+	int res = pwrapParticleEmittergetSceneNodeBase(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class ParticleEmitter.
+static inline void wrapParticleEmitter(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameParticleEmitter);
+	LuaBinder::pushLuaCFuncMethod(l, "getSceneNodeBase", wrapParticleEmittergetSceneNodeBase);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
 // SceneGraph                                                                  =
 //==============================================================================
 
@@ -2098,6 +2166,59 @@ static int wrapSceneGraphnewSector(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap method SceneGraph::newParticleEmitter.
+static inline int pwrapSceneGraphnewParticleEmitter(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 3);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
+	SceneGraph* self = static_cast<SceneGraph*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	const char* arg0;
+	if(LuaBinder::checkString(l, 2, arg0)) return -1;
+	
+	const char* arg1;
+	if(LuaBinder::checkString(l, 3, arg1)) return -1;
+	
+	// Call the method
+	ParticleEmitter* ret = newSceneNode<ParticleEmitter>(self, arg0, arg1);
+	
+	// Push return value
+	if(ANKI_UNLIKELY(ret == nullptr))
+	{
+		lua_pushstring(l, "Glue code returned nullptr");
+		return -1;
+	}
+	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "ParticleEmitter");
+	ud->m_data = static_cast<void*>(ret);
+	ud->m_gc = false;
+	ud->m_sig = -1716560948193631017;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method SceneGraph::newParticleEmitter.
+static int wrapSceneGraphnewParticleEmitter(lua_State* l)
+{
+	int res = pwrapSceneGraphnewParticleEmitter(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap class SceneGraph.
 static inline void wrapSceneGraph(lua_State* l)
 {
@@ -2109,6 +2230,7 @@ static inline void wrapSceneGraph(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "newStaticCollisionNode", wrapSceneGraphnewStaticCollisionNode);
 	LuaBinder::pushLuaCFuncMethod(l, "newPortal", wrapSceneGraphnewPortal);
 	LuaBinder::pushLuaCFuncMethod(l, "newSector", wrapSceneGraphnewSector);
+	LuaBinder::pushLuaCFuncMethod(l, "newParticleEmitter", wrapSceneGraphnewParticleEmitter);
 	lua_settop(l, 0);
 }
 
@@ -2168,6 +2290,7 @@ void wrapModuleScene(lua_State* l)
 	wrapStaticCollisionNode(l);
 	wrapPortal(l);
 	wrapSector(l);
+	wrapParticleEmitter(l);
 	wrapSceneGraph(l);
 	LuaBinder::pushLuaCFunc(l, "getSceneGraph", wrapgetSceneGraph);
 }

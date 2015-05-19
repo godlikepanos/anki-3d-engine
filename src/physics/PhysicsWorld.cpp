@@ -78,6 +78,9 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 	m_sceneCollision = NewtonCreateSceneCollision(m_world, 0);
 	Mat4 trf = Mat4::getIdentity();
 	m_sceneBody = NewtonCreateDynamicBody(m_world, m_sceneCollision, &trf[0]);
+	NewtonBodySetMaterialGroupID(
+		m_sceneBody, NewtonMaterialGetDefaultGroupID(m_world));
+
 	NewtonDestroyCollision(m_sceneCollision); // destroy old scene
 	m_sceneCollision = NewtonBodyGetCollision(m_sceneBody);
 
@@ -86,9 +89,9 @@ Error PhysicsWorld::create(AllocAlignedCallback allocCb, void* allocCbData)
 		destroyCallback);
 
 	// Set callbacks
-	I defaultMaterialID = NewtonMaterialGetDefaultGroupID(m_world);
 	NewtonMaterialSetCollisionCallback(
-		m_world, defaultMaterialID, defaultMaterialID, nullptr,
+		m_world, NewtonMaterialGetDefaultGroupID(m_world),
+		NewtonMaterialGetDefaultGroupID(m_world), nullptr,
 		onAabbOverlapCallback, onContactCallback);
 
 	return err;
@@ -180,23 +183,24 @@ void PhysicsWorld::onContactCallback(
 	const NewtonBody* body0 = NewtonJointGetBody0(contactJoint);
 	const NewtonBody* body1 = NewtonJointGetBody1(contactJoint);
 
-	void* userData = NewtonBodyGetUserData(body0);
-	if(!userData)
-	{
-		return;
-	}
+	F32 friction0 = 0.01;
+	F32 elasticity0 = 0.001;
+	F32 friction1 = friction0;
+	F32 elasticity1 = elasticity0;
 
-	F32 friction0 = static_cast<PhysicsBody*>(userData)->getFriction();
-	F32 elasticity0 = static_cast<PhysicsBody*>(userData)->getElasticity();
+	void* userData = NewtonBodyGetUserData(body0);
+	if(userData)
+	{
+		friction0 = static_cast<PhysicsBody*>(userData)->getFriction();
+		elasticity0 = static_cast<PhysicsBody*>(userData)->getElasticity();
+	}
 
 	userData = NewtonBodyGetUserData(body1);
-	if(!userData)
+	if(userData)
 	{
-		return;
+		friction1 = static_cast<PhysicsBody*>(userData)->getFriction();
+		elasticity1 = static_cast<PhysicsBody*>(userData)->getElasticity();
 	}
-
-	F32 friction1 = static_cast<PhysicsBody*>(userData)->getFriction();
-	F32 elasticity1 = static_cast<PhysicsBody*>(userData)->getElasticity();
 
 	F32 friction = friction0 + friction1;
 	F32 elasticity = elasticity0 + elasticity1;

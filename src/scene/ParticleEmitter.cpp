@@ -24,7 +24,7 @@ const PtrSize VERT_SIZE = COMPONENTS * sizeof(F32);
 //==============================================================================
 static F32 getRandom(F32 initial, F32 deviation)
 {
-	return (deviation == 0.0) 
+	return (deviation == 0.0)
 		? initial
 		: initial + randFloat(deviation) * 2.0 - deviation;
 }
@@ -295,23 +295,19 @@ Error ParticleEmitter::create(
 
 	// Move component
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);
-
-	addComponent(comp);
-	comp->setAutomaticCleanup(true);
+	addComponent(comp, true);
 
 	// Spatial component
 	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_obb);
-	addComponent(comp);
-	comp->setAutomaticCleanup(true);
+	addComponent(comp, true);
 
 	// Render component
-	ParticleEmitterRenderComponent* rcomp = 
+	ParticleEmitterRenderComponent* rcomp =
 		getSceneAllocator().newInstance<ParticleEmitterRenderComponent>(this);
 
 	ANKI_CHECK(rcomp->create());
-
-	addComponent(comp);
-	comp->setAutomaticCleanup(true);
+	comp = rcomp;
+	addComponent(comp, true);
 
 	// Other
 	m_obb.setCenter(Vec4(0.0));
@@ -337,11 +333,11 @@ Error ParticleEmitter::create(
 
 	// Create the vertex buffer and object
 	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
-	ANKI_CHECK(m_vertBuff.create(&getSceneGraph().getGrManager(), 
-		GL_ARRAY_BUFFER, nullptr, buffSize, 
+	ANKI_CHECK(m_vertBuff.create(&getSceneGraph().getGrManager(),
+		GL_ARRAY_BUFFER, nullptr, buffSize,
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
-	m_vertBuffMapping = 
+	m_vertBuffMapping =
 		static_cast<U8*>(m_vertBuff.getPersistentMappingAddress());
 
 	return ErrorCode::NONE;
@@ -365,27 +361,27 @@ Error ParticleEmitter::buildRendering(RenderingBuildData& data)
 	PipelineHandle ppline;
 	err = m_particleEmitterResource->getMaterial().getProgramPipeline(
 		key, ppline);
-	
+
 	if(!err)
 	{
 		ppline.bind(data.m_jobs);
 
-		PtrSize offset = 
+		PtrSize offset =
 			(getGlobalTimestamp() % 3) * (m_vertBuff.getSize() / 3);
 
 		// Position
-		m_vertBuff.bindVertexBuffer(data.m_jobs, 
+		m_vertBuff.bindVertexBuffer(data.m_jobs,
 			3, GL_FLOAT, false, VERT_SIZE, offset + 0, 0);
 
 		// Scale
-		m_vertBuff.bindVertexBuffer(data.m_jobs, 
+		m_vertBuff.bindVertexBuffer(data.m_jobs,
 			1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 3, 6);
 
 		// Alpha
-		m_vertBuff.bindVertexBuffer(data.m_jobs, 
+		m_vertBuff.bindVertexBuffer(data.m_jobs,
 			1, GL_FLOAT, false, VERT_SIZE, offset + sizeof(F32) * 4, 7);
 
-		data.m_jobs.drawArrays(GL_POINTS, 
+		data.m_jobs.drawArrays(GL_POINTS,
 			m_aliveParticlesCount,
 			data.m_subMeshIndicesCount);
 	}
@@ -436,12 +432,12 @@ void ParticleEmitter::createParticlesSimpleSimulation()
 
 	for(U i = 0; i < m_maxNumOfParticles; i++)
 	{
-		ParticleSimple* part = 
+		ParticleSimple* part =
 			getSceneAllocator().newInstance<ParticleSimple>();
 
-		part->m_size = 
+		part->m_size =
 			getRandom(m_particle.m_size, m_particle.m_sizeDeviation);
-		part->m_alpha = 
+		part->m_alpha =
 			getRandom(m_particle.m_alpha, m_particle.m_alphaDeviation);
 
 		m_particles[i] = part;
@@ -459,7 +455,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	Vec4 aabbmax(MIN_F32, MIN_F32, MIN_F32, 0.0);
 	m_aliveParticlesCount = 0;
 
-	F32* verts = (F32*)(m_vertBuffMapping 
+	F32* verts = (F32*)(m_vertBuffMapping
 		+ (getGlobalTimestamp() % 3) * (m_vertBuff.getSize() / 3));
 	F32* verts_base = verts;
 	(void)verts_base;
@@ -482,7 +478,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 			// It's alive
 
 			// Do checks
-			ANKI_ASSERT(((PtrSize)verts + VERT_SIZE 
+			ANKI_ASSERT(((PtrSize)verts + VERT_SIZE
 				- (PtrSize)m_vertBuffMapping) <= m_vertBuff.getSize());
 
 			// This will calculate a new world transformation
@@ -533,7 +529,7 @@ Error ParticleEmitter::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 	{
 		m_obb = Obb(Vec4(0.0), Mat3x4::getIdentity(), Vec4(0.001));
 	}
-	
+
 	getComponent<SpatialComponent>().markForUpdate();
 
 	//
@@ -592,14 +588,14 @@ Error ParticleEmitter::doInstancingCalcs()
 	if(err)	return err;
 
 	err = SceneNode::visitChildren([&](SceneNode& sn) -> Error
-	{	
+	{
 		if(sn.tryGetComponent<InstanceComponent>())
 		{
 			MoveComponent& move = sn.getComponent<MoveComponent>();
 
 			instanceMoves[instanceMovesCount++] = &move;
 
-			instancesTimestamp = 
+			instancesTimestamp =
 				std::max(instancesTimestamp, move.getTimestamp());
 		}
 
@@ -655,7 +651,7 @@ Error ParticleEmitter::doInstancingCalcs()
 			err = m_transforms.resize(getSceneAllocator(), instanceMovesCount);
 		}
 
-		if(!err && (transformsNeedUpdate 
+		if(!err && (transformsNeedUpdate
 			|| m_transformsTimestamp < instancesTimestamp))
 		{
 			m_transformsTimestamp = instancesTimestamp;
@@ -678,9 +674,9 @@ Error ParticleEmitter::doInstancingCalcs()
 				Error err2 = ErrorCode::NONE;
 
 				// Skip the first
-				if(&sp != meSpatial)	
+				if(&sp != meSpatial)
 				{
-					ObbSpatialComponent* msp = 
+					ObbSpatialComponent* msp =
 						staticCastPtr<ObbSpatialComponent*>(&sp);
 
 					if(msp)
@@ -715,7 +711,7 @@ void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf)
 
 	if(index == 0)
 	{
-		// Don't transform the particle positions. They are already in world 
+		// Don't transform the particle positions. They are already in world
 		// space
 		trf = Transform::getIdentity();
 	}
