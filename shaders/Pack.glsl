@@ -3,6 +3,9 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
+#ifndef ANKI_SHADERS_PACK_GLSL
+#define ANKI_SHADERS_PACK_GLSL
+
 /// Pack 3D normal to 2D vector
 /// See the clean code in comments in revision < r467
 vec2 packNormal(in vec3 normal)
@@ -45,6 +48,44 @@ vec4 unpackUnorm4x8(in highp uint u)
 }
 #endif
 
+// Convert from RGB to YCbCr.
+// The RGB should be in [0, 1] and the output YCbCr will be in [0, 1] as well.
+vec3 rgbToYCbCr(in vec3 rgb)
+{
+    float y = dot(rgb, vec3(0.299, 0.587, 0.114));
+	float cb = 0.5 + dot(rgb, vec3(-0.168736, -0.331264, 0.5));
+	float cr = 0.5 + dot(rgb, vec3(0.5, -0.418688, -0.081312));
+    return vec3(y, cb, cr);
+}
+
+// Convert the output of rgbToYCbCr back to RGB.
+vec3 yCbCrToRgb(in vec3 ycbcr)
+{
+	float cb = ycbcr.y - 0.5;
+	float cr = ycbcr.z - 0.5;
+	float y = ycbcr.x;
+	float r = 1.402 * cr;
+	float g = -0.344 * cb - 0.714 * cr;
+	float b = 1.772 * cb;
+	return vec3(r, g, b) + y;
+}
+
+// Pack a vec2 to a single float.
+// comp should be in [0, 1] and the output will be in [0, 1].
+float packUnorm2ToUnorm1(in vec2 comp)
+{
+	return dot(round(comp * 15.0), vec2(1.0 / (255.0 / 16.0), 1.0 / 255.0));
+}
+
+// Unpack a single float to vec2. Does the oposite of packUnorm2ToUnorm1.
+vec2 unpackUnorm1ToUnorm2(in float c)
+{
+	float temp = c * (255.0 / 16.0);
+	float a = floor(temp);
+	float b = fract(temp);
+	return vec2(a, b) * vec2(1.0 / 15.0, 16.0 / 15.0);
+}
+
 // Populate the G buffer
 void writeGBuffer(
 	in vec3 diffColor, in vec3 normal, in float specColor, in float specPower,
@@ -59,7 +100,7 @@ void writeGBuffer(
 void readGBuffer(
 	in sampler2D fai0, in sampler2D fai1,
 	in vec2 texCoord,
-	out vec3 diffColor, out vec3 normal, out float specColor, 
+	out vec3 diffColor, out vec3 normal, out float specColor,
 	out float specPower)
 {
 	vec4 comp = textureRt(fai0, texCoord);
@@ -91,3 +132,5 @@ void readNormalSpecularColorFromGBuffer(
 	normal = normalize(comp.xyz * 2.0 - 1.0);
 	specColor = comp.a;
 }
+
+#endif

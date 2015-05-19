@@ -297,6 +297,10 @@ Error ParticleEmitter::create(
 	comp = getSceneAllocator().newInstance<MoveComponent>(this);
 	addComponent(comp, true);
 
+	// Move component feedback
+	comp = getSceneAllocator().newInstance<MoveFeedbackComponent>(this);
+	addComponent(comp, true);
+
 	// Spatial component
 	comp = getSceneAllocator().newInstance<SpatialComponent>(this, &m_obb);
 	addComponent(comp, true);
@@ -394,6 +398,10 @@ void ParticleEmitter::onMoveComponentUpdate(MoveComponent& move)
 {
 	m_identityRotation =
 		move.getWorldTransform().getRotation() == Mat3x4::getIdentity();
+
+	SpatialComponent& sp = getComponent<SpatialComponent>();
+	sp.setSpatialOrigin(move.getWorldTransform().getOrigin());
+	sp.markForUpdate();
 }
 
 //==============================================================================
@@ -707,8 +715,6 @@ Error ParticleEmitter::doInstancingCalcs()
 //==============================================================================
 void ParticleEmitter::getRenderWorldTransform(U index, Transform& trf)
 {
-	ANKI_ASSERT(m_transforms.getSize() > 0);
-
 	if(index == 0)
 	{
 		// Don't transform the particle positions. They are already in world
