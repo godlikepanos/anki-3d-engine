@@ -88,49 +88,60 @@ vec2 unpackUnorm1ToUnorm2(in float c)
 
 // Populate the G buffer
 void writeGBuffer(
-	in vec3 diffColor, in vec3 normal, in float specColor, in float specPower,
-	out vec4 fai0, out vec4 fai1)
+	in vec3 diffColor,
+	in vec3 normal,
+	in vec3 specColor,
+	in float roughness,
+	out vec4 fai0,
+	out vec4 fai1,
+	out vec4 fai2)
 {
-	vec3 unorm = normal * 0.5 + 0.5;
-	fai0 = vec4(diffColor, specPower);
-	fai1 = vec4(unorm.xyz, specColor);
+	fai0 = vec4(diffColor, 0.0);
+	fai1 = vec4(specColor, roughness);
+	fai2 = vec4(normal * 0.5 + 0.5, 0.0);
 }
 
 // Read from the G buffer
 void readGBuffer(
-	in sampler2D fai0, in sampler2D fai1,
+	in sampler2D fai0,
+	in sampler2D fai1,
+	in sampler2D fai2,
 	in vec2 texCoord,
-	out vec3 diffColor, out vec3 normal, out float specColor,
-	out float specPower)
+	out vec3 diffColor,
+	out vec3 normal,
+	out float specColor,
+	out float roughness)
 {
-	vec4 comp = textureRt(fai0, texCoord);
+	vec4 comp = textureLod(fai0, texCoord, 0.0);
 	diffColor = comp.rgb;
-	specPower = comp.a;
 
-	comp = textureRt(fai1, texCoord);
-	normal = normalize(comp.xyz * 2.0 - 1.0);
-	specColor = comp.a;
+	comp = textureLod(fai1, texCoord, 0.0);
+	specColor = comp.r; // XXX
+	roughness = comp.a;
+
+	normal = textureLod(fai2, texCoord, 0.0).rgb;
+	normal = normalize(normal * 2.0 - 1.0);
 }
 
 // Read only normal from G buffer
 void readNormalFromGBuffer(
-	in sampler2D fai1,
+	in sampler2D fai2,
 	in vec2 texCoord,
 	out vec3 normal)
 {
-	normal = normalize(textureRt(fai1, texCoord).xyz * 2.0 - 1.0);
+	normal = normalize(textureLod(fai2, texCoord, 0.0).rgb * 2.0 - 1.0);
 }
 
 // Read only normal and specular color from G buffer
 void readNormalSpecularColorFromGBuffer(
 	in sampler2D fai1,
+	in sampler2D fai2,
 	in vec2 texCoord,
 	out vec3 normal,
 	out float specColor)
 {
-	vec4 comp = textureRt(fai1, texCoord);
-	normal = normalize(comp.xyz * 2.0 - 1.0);
-	specColor = comp.a;
+	normal = normalize(textureLod(fai2, texCoord, 0.0).rgb * 2.0 - 1.0);
+	specColor = textureLod(fai1, texCoord, 0.0).r;
 }
 
 #endif

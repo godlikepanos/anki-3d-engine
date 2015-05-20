@@ -43,6 +43,7 @@ PerspectiveCamera* cam;
 
 #define NO_PLAYER 1
 
+Bool profile = false;
 
 //==============================================================================
 Error init()
@@ -63,6 +64,7 @@ Error init()
 
 	if(getenv("PROFILE"))
 	{
+		profile = true;
 		app->setTimerTick(0.0);
 	}
 
@@ -82,8 +84,8 @@ Error init()
 
 #if NO_PLAYER
 	cam->getComponent<MoveComponent>().
-		setLocalTransform(Transform(Vec4(-5.0, 10.0, -3.0, 0.0),
-		Mat3x4(Euler(toRad(-26.0), toRad(-90.0), toRad(0.0))),
+		setLocalTransform(Transform(Vec4(-0.0, 4.0, -3.0, 0.0),
+		Mat3x4(Euler(toRad(-26.0), toRad(180.0), toRad(0.0))),
 		1.0));
 #endif
 
@@ -465,7 +467,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 #endif
 
 #if NO_PLAYER
-	if(in.getMousePosition() != Vec2(0.0))
+	if(in.getMousePosition() != Vec2(0.0) && !profile)
 	{
 		//printf("%f %f\n", in.getMousePosition().x(), in.getMousePosition().y());
 
@@ -479,7 +481,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 
 	//execStdinScpripts();
 
-	if(getenv("PROFILE") && app.getGlobalTimestamp() == 500)
+	if(profile && app.getGlobalTimestamp() == 500)
 	{
 		quit = true;
 		return err;
@@ -513,7 +515,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("pps.bloom.samples", 17);
 	config.set("pps.sslr.enabled", true);
 	config.set("pps.sslr.renderingQuality", 0.25);
-	config.set("pps.sslr.blurringIterationsCount", 1);
+	config.set("pps.sslr.blurringIterationsCount", 0);
 	config.set("pps.ssao.blurringIterationsCount", 2);
 	config.set("pps.ssao.enabled", true);
 	config.set("pps.ssao.renderingQuality", 0.35);

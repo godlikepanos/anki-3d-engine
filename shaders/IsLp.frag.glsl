@@ -69,9 +69,10 @@ layout(std430, binding = 5) readonly buffer _5
 
 layout(binding = 0) uniform sampler2D u_msRt0;
 layout(binding = 1) uniform sampler2D u_msRt1;
-layout(binding = 2) uniform sampler2D u_msDepthRtg;
+layout(binding = 2) uniform sampler2D u_msRt2;
+layout(binding = 3) uniform sampler2D u_msDepthRt;
 
-layout(binding = 3) uniform highp sampler2DArrayShadow u_shadowMapArr;
+layout(binding = 4) uniform highp sampler2DArrayShadow u_shadowMapArr;
 
 layout(location = 0) in vec2 in_texCoord;
 layout(location = 1) flat in int in_instanceId;
@@ -83,7 +84,7 @@ layout(location = 0) out vec3 out_color;
 // Return frag pos in view space
 vec3 getFragPosVSpace()
 {
-	float depth = textureRt(u_msDepthRtg, in_texCoord).r;
+	float depth = textureRt(u_msDepthRt, in_texCoord).r;
 
 	vec3 fragPos;
 	fragPos.z = u_projectionParams.z / (u_projectionParams.w + depth);
@@ -268,7 +269,8 @@ void main()
 	const float subsurface = 0.0;
 
 	readGBuffer(
-		u_msRt0, u_msRt1, in_texCoord, diffCol, normal, specCol, specPower);
+		u_msRt0, u_msRt1, u_msRt2,
+		in_texCoord, diffCol, normal, specCol, specPower);
 
 #if BRDF
 	float a2 = pow(max(EPSILON, specPower), 4.0);

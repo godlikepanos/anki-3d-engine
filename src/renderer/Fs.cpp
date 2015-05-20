@@ -20,10 +20,10 @@ Error Fs::init(const ConfigSet&)
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs()._getRt();
-	fbInit.m_colorAttachments[0].m_loadOperation = 
+	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::LOAD;
-	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs()._getDepthRt();
-	fbInit.m_depthStencilAttachment.m_loadOperation = 
+	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
+	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;
 	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
 

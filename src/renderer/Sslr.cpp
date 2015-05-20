@@ -22,7 +22,7 @@ Error Sslr::init(const ConfigSet& config)
 
 	// Size
 	const F32 quality = config.get("pps.sslr.renderingQuality");
-	m_blurringIterationsCount = 
+	m_blurringIterationsCount =
 		config.get("pps.sslr.blurringIterationsCount");
 
 	m_width = quality * (F32)m_r->getWidth();
@@ -60,15 +60,15 @@ Error Sslr::init(const ConfigSet& config)
 		Direction& dir = m_dirs[U(DirectionEnum::VERTICAL)];
 
 		ANKI_CHECK(
-			m_r->createRenderTarget(m_width, m_height, 
-			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM), 
+			m_r->createRenderTarget(m_width, m_height,
+			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
 			1, SamplingFilter::LINEAR, 1, dir.m_rt));
 
 		// Create FB
 		FramebufferHandle::Initializer fbInit;
 		fbInit.m_colorAttachmentsCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
-		fbInit.m_colorAttachments[0].m_loadOperation = 
+		fbInit.m_colorAttachments[0].m_loadOperation =
 			AttachmentLoadOperation::LOAD;
 		ANKI_CHECK(dir.m_fb.create(&getGrManager(), fbInit));
 	}
@@ -88,11 +88,12 @@ Error Sslr::run(CommandBufferHandle& cmdBuff)
 
 	m_reflectionPpline.bind(cmdBuff);
 
-	Array<TextureHandle, 3> tarr = {{
+	Array<TextureHandle, 4> tarr = {{
 		m_r->getIs()._getRt(),
-		m_r->getMs()._getDepthRt(),
-		m_r->getMs()._getRt1()}};
-	cmdBuff.bindTextures(0	, tarr.begin(), tarr.getSize()); 
+		m_r->getMs().getDepthRt(),
+		m_r->getMs().getRt1(),
+		m_r->getMs().getRt2()}};
+	cmdBuff.bindTextures(0	, tarr.begin(), tarr.getSize());
 
 	m_r->getPps().getSsao().getUniformBuffer().bindShaderBuffer(cmdBuff, 0);
 

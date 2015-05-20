@@ -33,18 +33,25 @@ Error Ms::createRt(U32 index, U32 samples)
 
 	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-		samples, SamplingFilter::NEAREST, 2, plane.m_rt1));
+		samples, SamplingFilter::NEAREST, 1, plane.m_rt1));
+
+	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
+		PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::UNORM),
+		samples, SamplingFilter::NEAREST, 1, plane.m_rt2));
+
+	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
+#if ANKI_DEBUG
+	loadop = AttachmentLoadOperation::CLEAR;
+#endif
 
 	FramebufferHandle::Initializer fbInit;
-	fbInit.m_colorAttachmentsCount = 2;
+	fbInit.m_colorAttachmentsCount = 3;
 	fbInit.m_colorAttachments[0].m_texture = plane.m_rt0;
-	fbInit.m_colorAttachments[0].m_loadOperation =
-		//AttachmentLoadOperation::DONT_CARE;
-		AttachmentLoadOperation::CLEAR;
+	fbInit.m_colorAttachments[0].m_loadOperation = loadop;
 	fbInit.m_colorAttachments[1].m_texture = plane.m_rt1;
-	fbInit.m_colorAttachments[1].m_loadOperation =
-		//AttachmentLoadOperation::DONT_CARE;
-		AttachmentLoadOperation::CLEAR;
+	fbInit.m_colorAttachments[1].m_loadOperation = loadop;
+	fbInit.m_colorAttachments[2].m_texture = plane.m_rt2;
+	fbInit.m_colorAttachments[2].m_loadOperation = loadop;
 	fbInit.m_depthStencilAttachment.m_texture = plane.m_depthRt;
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::CLEAR;

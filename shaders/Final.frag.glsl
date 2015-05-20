@@ -18,7 +18,7 @@ layout(location = 0) out vec3 out_color;
 void main()
 {
 	vec3 col = textureLod(u_tex, in_texCoord, 0.0).rgb;
-	
+
 	/*vec2 depth = textureRt(u_tex, in_texCoord).rg;
 	float zNear = 0.2;
 	float zFar = 200.0;

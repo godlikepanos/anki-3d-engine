@@ -32,6 +32,7 @@ layout(location = 3) in mediump vec3 inVertPosViewSpace;
 #if PASS == COLOR
 layout(location = 0) out vec4 outMsRt0;
 layout(location = 1) out vec4 outMsRt1;
+layout(location = 2) out vec4 outMsRt2;
 #	define outMsRt0_DEFINED
 #	define outMsRt1_DEFINED
 #endif
@@ -112,9 +113,9 @@ vec3 combineNormalFromTextures(in vec3 normal, in vec4 tangent,
 	return normalize(normal);
 #	else
 	// First read the textures
-	vec3 nAtTangentspace0 = 
+	vec3 nAtTangentspace0 =
 		normalize((texture(map, texCoords).rgb - 0.5) * 2.0);
-	vec3 nAtTangentspace1 = 
+	vec3 nAtTangentspace1 =
 		normalize((texture(map2, texCoords * texCoords2Scale).rgb - 0.5) * 2.0);
 
 	vec3 nAtTangentspace = (nAtTangentspace0 + nAtTangentspace1) / 2.0;
@@ -136,9 +137,9 @@ vec3 combineNormalFromTextures(in vec3 normal, in vec4 tangent,
 vec3 readEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 	in sampler2D map)
 {
-	// In case of normal mapping I could play with vertex's normal but this 
+	// In case of normal mapping I could play with vertex's normal but this
 	// gives better results and its allready computed
-	
+
 	vec3 u = normalize(vertPosViewSpace);
 	vec3 r = reflect(u, normal);
 	r.z += 1.0;
@@ -150,7 +151,7 @@ vec3 readEnvironmentColor(in vec3 vertPosViewSpace, in vec3 normal,
 }
 #endif
 
-// Using a 4-channel texture and a tolerance discard the fragment if the 
+// Using a 4-channel texture and a tolerance discard the fragment if the
 // texture's alpha is less than the tolerance
 #define readTextureRgbAlphaTesting_DEFINED
 vec3 readTextureRgbAlphaTesting(
@@ -211,12 +212,12 @@ float readRFromTexture(in sampler2D tex, in highp vec2 texCoords)
 #	define writeRts_DEFINED
 void writeRts(
 	in vec3 diffColor, // from 0 to 1
-	in vec3 normal, 
-	in float specularColor,
+	in vec3 normal,
+	in vec3 specularColor,
 	in float specularPower,
 	in float blurring)
 {
 	writeGBuffer(diffColor, normal, specularColor, specularPower,
-		outMsRt0, outMsRt1);
+		outMsRt0, outMsRt1, outMsRt2);
 }
 #endif

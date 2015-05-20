@@ -532,7 +532,7 @@ void Exporter::exportMaterial(
 			+ R"(</value></input>)");
 
 		materialStr = replaceAllString(materialStr, "%specularColorFunc%",
-			readRFromTextureTemplate);
+			readRgbFromTextureTemplate);
 
 		materialStr = replaceAllString(materialStr, "%id%",
 			"50");
@@ -549,8 +549,10 @@ void Exporter::exportMaterial(
 		mtl.Get(AI_MATKEY_COLOR_SPECULAR, specCol);
 
 		materialStr = replaceAllString(materialStr, "%specularColorInput%",
-			R"(<input><type>float</type><name>uSpecularColor</name><value>)"
-			+ std::to_string((specCol[0] + specCol[1] + specCol[2]) / 3.0)
+			R"(<input><type>vec3</type><name>uSpecularColor</name><value>)"
+			+ std::to_string(specCol[0]) + " "
+			+ std::to_string(specCol[1]) + " "
+			+ std::to_string(specCol[2])
 			+ R"(</value></input>)");
 
 		materialStr = replaceAllString(materialStr, "%specularColorFunc%",

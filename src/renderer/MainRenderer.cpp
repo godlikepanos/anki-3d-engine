@@ -15,7 +15,7 @@
 namespace anki {
 
 //==============================================================================
-MainRenderer::MainRenderer()	
+MainRenderer::MainRenderer()
 {}
 
 //==============================================================================
@@ -24,7 +24,7 @@ MainRenderer::~MainRenderer()
 
 //==============================================================================
 Error MainRenderer::create(
-	Threadpool* threadpool, 
+	Threadpool* threadpool,
 	ResourceManager* resources,
 	GrManager* gl,
 	HeapAllocator<U8>& alloc,
@@ -33,7 +33,7 @@ Error MainRenderer::create(
 {
 	ANKI_LOGI("Initializing main renderer...");
 
-	ANKI_CHECK(Renderer::init(threadpool, resources, gl, alloc, config, 
+	ANKI_CHECK(Renderer::init(threadpool, resources, gl, alloc, config,
 		globalTimestamp));
 
 	ANKI_CHECK(initGl());
@@ -44,7 +44,7 @@ Error MainRenderer::create(
 	ANKI_CHECK(createDrawQuadPipeline(
 		m_blitFrag->getGrShader(), m_blitPpline));
 
-	ANKI_LOGI("Main renderer initialized. Rendering size %dx%d", 
+	ANKI_LOGI("Main renderer initialized. Rendering size %dx%d",
 		getWidth(), getHeight());
 
 	return ErrorCode::NONE;
@@ -67,7 +67,7 @@ Error MainRenderer::render(SceneGraph& scene)
 	ANKI_CHECK(Renderer::render(scene, jobs));
 
 #if 1
-	Bool alreadyDrawnToDefault = 
+	Bool alreadyDrawnToDefault =
 		!getDbg().getEnabled()
 		&& getRenderingQuality() == 1.0;
 #else
@@ -78,7 +78,7 @@ Error MainRenderer::render(SceneGraph& scene)
 	if(!alreadyDrawnToDefault)
 	{
 		getDefaultFramebuffer().bind(lastJobs);
-		lastJobs.setViewport(0, 0, 
+		lastJobs.setViewport(0, 0,
 			getDefaultFramebufferWidth(), getDefaultFramebufferHeight());
 
 		m_blitPpline.bind(lastJobs);
@@ -94,7 +94,7 @@ Error MainRenderer::render(SceneGraph& scene)
 			rt = &getIs()._getRt();
 		}
 
-		//rt = &getIs()._getRt();
+		//rt = &getMs().getRt2();
 		//rt = &getPps().getHdr()._getRt();
 
 		rt->bind(lastJobs, 0);
@@ -105,7 +105,7 @@ Error MainRenderer::render(SceneGraph& scene)
 	// Set the hints
 	for(U i = 0; i < JOB_CHAINS_COUNT; i++)
 	{
-		m_jobsInitHints[i] = jobs[i].computeInitHints();	
+		m_jobsInitHints[i] = jobs[i].computeInitHints();
 	}
 
 	// Flush the last job chain

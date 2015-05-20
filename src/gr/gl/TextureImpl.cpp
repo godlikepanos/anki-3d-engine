@@ -50,15 +50,15 @@ static void convertTextureInformation(
 	GLenum& internalFormat,
 	GLenum& type)
 {
-	compressed = pf.m_components >= ComponentFormat::FIRST_COMPRESSED 
+	compressed = pf.m_components >= ComponentFormat::FIRST_COMPRESSED
 		&& pf.m_components <= ComponentFormat::LAST_COMPRESSED;
 
 	switch(pf.m_components)
 	{
 #if ANKI_GL == ANKI_GL_DESKTOP
 	case ComponentFormat::R8G8B8_S3TC:
-		format = pf.m_srgb 
-			? GL_COMPRESSED_SRGB_S3TC_DXT1_EXT 
+		format = pf.m_srgb
+			? GL_COMPRESSED_SRGB_S3TC_DXT1_EXT
 			: GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 		internalFormat = format;
 		type = GL_UNSIGNED_BYTE;
@@ -161,6 +161,18 @@ static void convertTextureInformation(
 			ANKI_ASSERT(0 && "TODO");
 		}
 		break;
+	case ComponentFormat::R10G10B10A2:
+		if(pf.m_transform == TransformFormat::UNORM)
+		{
+			format = GL_RGBA;
+			internalFormat = GL_RGB10_A2;
+			type = GL_UNSIGNED_INT;
+		}
+		else
+		{
+			ANKI_ASSERT(0 && "TODO");
+		}
+		break;
 	case ComponentFormat::D24:
 		format = GL_DEPTH_COMPONENT;
 		internalFormat = GL_DEPTH_COMPONENT24;
@@ -206,7 +218,7 @@ void TextureImpl::create(const Initializer& init)
 	convertTextureInformation(
 		init.m_format, m_compressed, m_format, m_internalFormat, m_type);
 
-	m_mipsCount = 
+	m_mipsCount =
 		min<U>(init.m_mipmapsCount, computeMaxMipmapCount(m_width, m_height));
 
 	// Bind
@@ -217,8 +229,8 @@ void TextureImpl::create(const Initializer& init)
 	{
 	case GL_TEXTURE_2D:
 		glTexStorage2D(
-			m_target, 
-			m_mipsCount, 
+			m_target,
+			m_mipsCount,
 			m_internalFormat,
 			m_width,
 			m_height);
@@ -262,30 +274,30 @@ void TextureImpl::create(const Initializer& init)
 				if(!m_compressed)
 				{
 					glTexSubImage2D(
-						m_target, 
-						level, 
+						m_target,
+						level,
 						0,
 						0,
 						w,
-						h, 
-						m_format, 
-						m_type, 
+						h,
+						m_format,
+						m_type,
 						init.m_data[level][0].m_ptr);
 				}
 				else
 				{
-					ANKI_ASSERT(init.m_data[level][0].m_ptr 
+					ANKI_ASSERT(init.m_data[level][0].m_ptr
 						&& init.m_data[level][0].m_size > 0);
 
 					glCompressedTexSubImage2D(
-						m_target, 
-						level, 
+						m_target,
+						level,
 						0,
 						0,
-						w, 
-						h,  
+						w,
+						h,
 						m_format,
-						init.m_data[level][0].m_size, 
+						init.m_data[level][0].m_size,
 						init.m_data[level][0].m_ptr);
 				}
 				break;
@@ -295,28 +307,28 @@ void TextureImpl::create(const Initializer& init)
 					if(!m_compressed)
 					{
 						glTexSubImage2D(
-							GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 
-							level, 
+							GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
+							level,
 							0,
 							0,
 							w,
-							h, 
-							m_format, 
-							m_type, 
+							h,
+							m_format,
+							m_type,
 							init.m_data[level][face].m_ptr);
 					}
 					else
 					{
 
 						glCompressedTexSubImage2D(
-							GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 
-							level, 
+							GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
+							level,
 							0,
 							0,
-							w, 
-							h,  
+							w,
+							h,
 							m_format,
-							init.m_data[level][face].m_size, 
+							init.m_data[level][face].m_size,
 							init.m_data[level][face].m_ptr);
 					}
 				}
@@ -342,8 +354,8 @@ void TextureImpl::create(const Initializer& init)
 								init.m_data[level][d].m_size == layerSize
 								&& init.m_data[level][d].m_ptr != nullptr);
 
-							memcpy(&data[0] + d * layerSize, 
-								init.m_data[level][d].m_ptr, 
+							memcpy(&data[0] + d * layerSize,
+								init.m_data[level][d].m_ptr,
 								layerSize);
 						}
 					}
@@ -351,31 +363,31 @@ void TextureImpl::create(const Initializer& init)
 					if(!m_compressed)
 					{
 						glTexSubImage3D(
-							m_target, 
-							level, 
+							m_target,
+							level,
 							0,
 							0,
 							0,
-							w, 
-							h, 
+							w,
+							h,
 							m_depth,
-							m_format, 
-							m_type, 
+							m_format,
+							m_type,
 							&data[0]);
 					}
 					else
-					{							
+					{
 						glCompressedTexSubImage3D(
-							m_target, 
-							level, 
+							m_target,
+							level,
 							0,
 							0,
 							0,
-							w, 
-							h, 
-							m_depth, 
-							m_format, 
-							data.getSize(), 
+							w,
+							h,
+							m_depth,
+							m_format,
+							data.getSize(),
 							&data[0]);
 					}
 				}
@@ -409,7 +421,7 @@ void TextureImpl::create(const Initializer& init)
 		// Set filtering type
 		GLenum minFilter = GL_NONE;
 		GLenum magFilter = GL_NONE;
-		convertFilter(sinit.m_minMagFilter, sinit.m_mipmapFilter, 
+		convertFilter(sinit.m_minMagFilter, sinit.m_mipmapFilter,
 			minFilter, magFilter);
 
 		glTexParameteri(m_target, GL_TEXTURE_MIN_FILTER, minFilter);
@@ -418,7 +430,7 @@ void TextureImpl::create(const Initializer& init)
 #if ANKI_GL == ANKI_GL_DESKTOP
 		if(sinit.m_anisotropyLevel > 1)
 		{
-			glTexParameteri(m_target, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+			glTexParameteri(m_target, GL_TEXTURE_MAX_ANISOTROPY_EXT,
 				GLint(sinit.m_anisotropyLevel));
 		}
 #endif
@@ -427,7 +439,7 @@ void TextureImpl::create(const Initializer& init)
 		{
 			glTexParameteri(
 				m_target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
-			glTexParameteri(m_target, GL_TEXTURE_COMPARE_FUNC, 
+			glTexParameteri(m_target, GL_TEXTURE_COMPARE_FUNC,
 				convertCompareOperation(sinit.m_compareOperation));
 		}
 	}

@@ -88,12 +88,12 @@ struct TaskCommonData
 	Atomic<U32> m_spotTexLightsCount;
 
 	// To fill the tile buffers
-	Array2d<TileData, ANKI_RENDERER_MAX_TILES_Y, ANKI_RENDERER_MAX_TILES_X> 
+	Array2d<TileData, ANKI_RENDERER_MAX_TILES_Y, ANKI_RENDERER_MAX_TILES_X>
 		m_tempTiles;
 
 	// To fill the light index buffer
 	Atomic<U32> m_lightIdsCount;
-	
+
 	// Misc
 	VisibilityTestResults::Container::ConstIterator m_lightsBegin = nullptr;
 	VisibilityTestResults::Container::ConstIterator m_lightsEnd = nullptr;
@@ -117,7 +117,7 @@ public:
 
 //==============================================================================
 Is::Is(Renderer* r)
-:	RenderingPass(r), 
+:	RenderingPass(r),
 	m_sm(r)
 {}
 
@@ -129,7 +129,7 @@ Is::~Is()
 Error Is::init(const ConfigSet& config)
 {
 	Error err = initInternal(config);
-	
+
 	if(err)
 	{
 		ANKI_LOGE("Failed to init IS");
@@ -159,7 +159,7 @@ Error Is::initInternal(const ConfigSet& config)
 		ANKI_LOGE("Incorrect number of max light indices");
 		return ErrorCode::USER_DATA;
 	}
-	
+
 	m_maxLightIds *= m_r->getTilesCountXY();
 
 	//
@@ -175,7 +175,7 @@ Error Is::initInternal(const ConfigSet& config)
 	pps.sprintf(
 		"\n#define TILES_X_COUNT %u\n"
 		"#define TILES_Y_COUNT %u\n"
-		"#define TILES_COUNT %u\n" 
+		"#define TILES_COUNT %u\n"
 		"#define RENDERER_WIDTH %u\n"
 		"#define RENDERER_HEIGHT %u\n"
 		"#define MAX_POINT_LIGHTS %u\n"
@@ -215,48 +215,48 @@ Error Is::initInternal(const ConfigSet& config)
 	//
 
 	ANKI_CHECK(m_r->createRenderTarget(
-		m_r->getWidth(), m_r->getHeight(), 
-		PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT), 
-		//PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
+		m_r->getWidth(), m_r->getHeight(),
+		PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT),
+		//PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
 		1, SamplingFilter::LINEAR, MIPMAPS_COUNT, m_rt));
 
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = 
+	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
 	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
 
 	//
 	// Init the quad
 	//
-	static const F32 quadVertCoords[][2] = 
+	static const F32 quadVertCoords[][2] =
 		{{1.0, 1.0}, {0.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}};
 
-	ANKI_CHECK(m_quadPositionsVertBuff.create(&getGrManager(), GL_ARRAY_BUFFER, 
+	ANKI_CHECK(m_quadPositionsVertBuff.create(&getGrManager(), GL_ARRAY_BUFFER,
 		&quadVertCoords[0][0], sizeof(quadVertCoords), 0));
 
 	//
 	// Create UBOs
 	//
-	ANKI_CHECK(m_commonBuffer.create(&getGrManager(), GL_UNIFORM_BUFFER, 
+	ANKI_CHECK(m_commonBuffer.create(&getGrManager(), GL_UNIFORM_BUFFER,
 		nullptr, sizeof(shader::CommonUniforms), GL_DYNAMIC_STORAGE_BIT));
 
 	for(U i = 0; i < MAX_FRAMES; ++i)
 	{
 		// Lights
-		ANKI_CHECK(m_lightsBuffers[i].create(&getGrManager(), 
-			GL_SHADER_STORAGE_BUFFER, nullptr, calcLightsBufferSize(), 
+		ANKI_CHECK(m_lightsBuffers[i].create(&getGrManager(),
+			GL_SHADER_STORAGE_BUFFER, nullptr, calcLightsBufferSize(),
 			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
 		// Tiles
-		ANKI_CHECK(m_tilesBuffers[i].create(&getGrManager(), 
-			GL_SHADER_STORAGE_BUFFER, nullptr, 
+		ANKI_CHECK(m_tilesBuffers[i].create(&getGrManager(),
+			GL_SHADER_STORAGE_BUFFER, nullptr,
 			m_r->getTilesCountXY() * sizeof(shader::Tile),
 			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
 		// Index
-		ANKI_CHECK(m_lightIdsBuffers[i].create(&getGrManager(), 
+		ANKI_CHECK(m_lightIdsBuffers[i].create(&getGrManager(),
 			GL_SHADER_STORAGE_BUFFER,
 			nullptr, (m_maxPointLights * m_maxSpotLights * m_maxSpotTexLights)
 			* sizeof(U32),
@@ -269,10 +269,10 @@ Error Is::initInternal(const ConfigSet& config)
 		m_lightsBufferAddresses[i] =
 			m_lightsBuffers[i].getPersistentMappingAddress();
 
-		m_tilesBufferAddresses[i] = 
+		m_tilesBufferAddresses[i] =
 			m_tilesBuffers[i].getPersistentMappingAddress();
 
-		m_lightIdsBufferAddresses[i] = 
+		m_lightIdsBufferAddresses[i] =
 			m_lightIdsBuffers[i].getPersistentMappingAddress();
 	}
 
@@ -310,7 +310,7 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 			++visiblePointLightsCount;
 			break;
 		case LightComponent::LightType::SPOT:
-			{				
+			{
 				if(light.getShadowEnabled())
 				{
 					shadowCasters[visibleSpotTexLightsCount++] = node;
@@ -330,11 +330,11 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 	// Sanitize the counters
 	visiblePointLightsCount = min<U>(visiblePointLightsCount, m_maxPointLights);
 	visibleSpotLightsCount = min<U>(visibleSpotLightsCount, m_maxSpotLights);
-	visibleSpotTexLightsCount = 
+	visibleSpotTexLightsCount =
 		min<U>(visibleSpotTexLightsCount, m_maxSpotTexLights);
 
-	ANKI_COUNTER_INC(RENDERER_LIGHTS_COUNT, 
-		U64(visiblePointLightsCount + visibleSpotLightsCount 
+	ANKI_COUNTER_INC(RENDERER_LIGHTS_COUNT,
+		U64(visiblePointLightsCount + visibleSpotLightsCount
 		+ visibleSpotTexLightsCount));
 
 	//
@@ -345,7 +345,7 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 	//
 	// Write the lights and tiles UBOs
 	//
-	U32 blockAlignment = 
+	U32 blockAlignment =
 		getGrManager().getBufferOffsetAlignment(m_lightsBuffers[0].getTarget());
 
 	// Get the offsets and sizes of each uniform block
@@ -358,7 +358,7 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 		blockAlignment, sizeof(shader::SpotLight) * visibleSpotLightsCount);
 
 	PtrSize spotTexLightsOffset = spotLightsOffset + spotLightsSize;
-	PtrSize spotTexLightsSize = getAlignedRoundUp(blockAlignment, 
+	PtrSize spotTexLightsSize = getAlignedRoundUp(blockAlignment,
 		sizeof(shader::SpotLight) * visibleSpotTexLightsCount);
 
 	ANKI_ASSERT(
@@ -382,7 +382,7 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 			lightsBase + spotLightsOffset, visibleSpotLightsCount);
 	}
 
-	if(visibleSpotTexLightsCount) 
+	if(visibleSpotTexLightsCount)
 	{
 		taskData.m_spotTexLights = SArray<shader::SpotLight>(
 			lightsBase + spotTexLightsOffset, visibleSpotTexLightsCount);
@@ -420,20 +420,20 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 
 	if(pointLightsSize > 0)
 	{
-		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff, 
+		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff,
 			pointLightsOffset, pointLightsSize, POINT_LIGHTS_BLOCK_BINDING);
 	}
 
 	if(spotLightsSize > 0)
 	{
-		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff, 
+		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff,
 			spotLightsOffset, spotLightsSize, SPOT_LIGHTS_BLOCK_BINDING);
 	}
 
 	if(spotTexLightsSize > 0)
 	{
 		m_lightsBuffers[m_currentFrame].bindShaderBuffer(cmdBuff,
-			spotTexLightsOffset, spotTexLightsSize, 
+			spotTexLightsOffset, spotTexLightsSize,
 			SPOT_TEX_LIGHTS_BLOCK_BINDING);
 	}
 
@@ -444,10 +444,11 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 		cmdBuff, LIGHT_IDS_BLOCK_BINDING);
 
 	// The binding points should much the shader
-	Array<TextureHandle, 4> tarr = {{
-		m_r->getMs()._getRt0(), 
-		m_r->getMs()._getRt1(), 
-		m_r->getMs()._getDepthRt(),
+	Array<TextureHandle, 5> tarr = {{
+		m_r->getMs().getRt0(),
+		m_r->getMs().getRt1(),
+		m_r->getMs().getRt2(),
+		m_r->getMs().getDepthRt(),
 		m_sm.m_sm2DArrayTex}};
 
 	cmdBuff.bindTextures(0, tarr.begin(), tarr.getSize());
@@ -458,7 +459,7 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 
 	m_lightPpline.bind(cmdBuff);
 
-	m_quadPositionsVertBuff.bindVertexBuffer(cmdBuff, 
+	m_quadPositionsVertBuff.bindVertexBuffer(cmdBuff,
 		2, GL_FLOAT, false, 0, 0, 0);
 
 	cmdBuff.drawArrays(GL_TRIANGLE_STRIP, 4, m_r->getTilesCountXY());
@@ -498,7 +499,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			break;
 		case LightComponent::LightType::SPOT:
 			{
-				const FrustumComponent* frc = 
+				const FrustumComponent* frc =
 					snode->tryGetComponent<FrustumComponent>();
 				I pos = writeSpotLight(light, move, frc, cammove, camfrc, task);
 				if(pos != -1)
@@ -555,18 +556,18 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			if(countP > 0)
 			{
 				t.m_pointLightsCount = countP;
-				memcpy(&lightIds[offset], &tile.m_pointIds[0], 
+				memcpy(&lightIds[offset], &tile.m_pointIds[0],
 					countP * sizeof(Lid));
 			}
 			else
 			{
 				t.m_pointLightsCount = 0;
 			}
-			
+
 			if(countS > 0)
 			{
 				t.m_spotLightsCount = countS;
-				memcpy(&lightIds[offset + countP], &tile.m_spotIds[0], 
+				memcpy(&lightIds[offset + countP], &tile.m_spotIds[0],
 					countS * sizeof(Lid));
 			}
 			else
@@ -577,7 +578,7 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 			if(countST > 0)
 			{
 				t.m_spotTexLightsCount = countST;
-				memcpy(&lightIds[offset + countP + countS], 
+				memcpy(&lightIds[offset + countP + countS],
 					&tile.m_spotTexIds[0], countST * sizeof(Lid));
 			}
 			else
@@ -588,14 +589,14 @@ void Is::binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& task)
 		else
 		{
 			memset(&t, 0, sizeof(t));
-			
+
 			ANKI_LOGW("Light IDs buffer too small");
 		}
 	}
 }
 
 //==============================================================================
-I Is::writePointLight(const LightComponent& lightc, 
+I Is::writePointLight(const LightComponent& lightc,
 	const MoveComponent& lightMove,
 	const FrustumComponent& camFrc, TaskCommonData& task)
 {
@@ -608,7 +609,7 @@ I Is::writePointLight(const LightComponent& lightc,
 
 	shader::PointLight& slight = task.m_pointLights[i];
 
-	Vec4 pos = camFrc.getViewMatrix() 
+	Vec4 pos = camFrc.getViewMatrix()
 		* lightMove.getWorldTransform().getOrigin().xyz1();
 
 	slight.m_posRadius = Vec4(pos.xyz(), -1.0 / lightc.getRadius());
@@ -619,9 +620,9 @@ I Is::writePointLight(const LightComponent& lightc,
 }
 
 //==============================================================================
-I Is::writeSpotLight(const LightComponent& lightc, 
-	const MoveComponent& lightMove, const FrustumComponent* lightFrc, 
-	const MoveComponent& camMove, const FrustumComponent& camFrc, 
+I Is::writeSpotLight(const LightComponent& lightc,
+	const MoveComponent& lightMove, const FrustumComponent* lightFrc,
+	const MoveComponent& camMove, const FrustumComponent& camFrc,
 	TaskCommonData& task)
 {
 	Bool isTexLight = lightc.getShadowEnabled();
@@ -643,14 +644,14 @@ I Is::writeSpotLight(const LightComponent& lightc,
 
 		// Write matrix
 		static const Mat4 biasMat4(
-			0.5, 0.0, 0.0, 0.5, 
-			0.0, 0.5, 0.0, 0.5, 
-			0.0, 0.0, 0.5, 0.5, 
+			0.5, 0.0, 0.0, 0.5,
+			0.0, 0.5, 0.0, 0.5,
+			0.0, 0.0, 0.5, 0.5,
 			0.0, 0.0, 0.0, 1.0);
 		// bias * proj_l * view_l * world_c
-		slight.m_texProjectionMat = 
-			biasMat4 
-			* lightFrc->getViewProjectionMatrix() 
+		slight.m_texProjectionMat =
+			biasMat4
+			* lightFrc->getViewProjectionMatrix()
 			* Mat4(camMove.getWorldTransform());
 
 		// Transpose because of driver bug
@@ -674,13 +675,13 @@ I Is::writeSpotLight(const LightComponent& lightc,
 	ANKI_ASSERT(baseslight);
 
 	// Pos & dist
-	Vec4 pos = 
-		camFrc.getViewMatrix() 
+	Vec4 pos =
+		camFrc.getViewMatrix()
 		* lightMove.getWorldTransform().getOrigin().xyz1();
 	baseslight->m_posRadius = Vec4(pos.xyz(), -1.0 / lightc.getDistance());
 
 	// Diff color and shadowmap ID now
-	baseslight->m_diffuseColorShadowmapId = 
+	baseslight->m_diffuseColorShadowmapId =
 		Vec4(lightc.getDiffuseColor().xyz(), (F32)lightc.getShadowMapIndex());
 
 	// Spec color
@@ -690,16 +691,16 @@ I Is::writeSpotLight(const LightComponent& lightc,
 	Vec3 lightDir = -lightMove.getWorldTransform().getRotation().getZAxis();
 	lightDir = camFrc.getViewMatrix().getRotationPart() * lightDir;
 	baseslight->m_lightDir = Vec4(lightDir, 0.0);
-	
+
 	// Angles
 	baseslight->m_outerCosInnerCos = Vec4(
 		lightc.getOuterAngleCos(),
-		lightc.getInnerAngleCos(), 
-		1.0, 
+		lightc.getInnerAngleCos(),
+		1.0,
 		1.0);
 
 	// extend points
-	const PerspectiveFrustum& frustum = 
+	const PerspectiveFrustum& frustum =
 		static_cast<const PerspectiveFrustum&>(lightFrc->getFrustum());
 
 	return i;
@@ -707,9 +708,9 @@ I Is::writeSpotLight(const LightComponent& lightc,
 
 //==============================================================================
 void Is::binLight(
-	SpatialComponent& sp, 
-	U pos, 
-	U lightType, 
+	SpatialComponent& sp,
+	U pos,
+	U lightType,
 	TaskCommonData& task)
 {
 	// Do the tests
@@ -754,8 +755,8 @@ void Is::binLight(
 void Is::setState(CommandBufferHandle& cmdBuff)
 {
 #if 1
-	Bool drawToDefaultFbo = !m_r->getPps().getEnabled() 
-		&& !m_r->getDbg().getEnabled() 
+	Bool drawToDefaultFbo = !m_r->getPps().getEnabled()
+		&& !m_r->getDbg().getEnabled()
 		&& !m_r->getIsOffscreen()
 		&& m_r->getRenderingQuality() == 1.0;
 #else
@@ -765,8 +766,8 @@ void Is::setState(CommandBufferHandle& cmdBuff)
 	if(drawToDefaultFbo)
 	{
 		m_r->getDefaultFramebuffer().bind(cmdBuff);
-		cmdBuff.setViewport(0, 0, 
-			m_r->getDefaultFramebufferWidth(), 
+		cmdBuff.setViewport(0, 0,
+			m_r->getDefaultFramebufferWidth(),
 			m_r->getDefaultFramebufferHeight());
 	}
 	else
@@ -796,7 +797,7 @@ Error Is::updateCommonBlock(CommandBufferHandle& cmdBuff)
 	Vec3 groundLightDir;
 	if(m_groundLightEnabled)
 	{
-		const Mat4& viewMat = 
+		const Mat4& viewMat =
 			m_cam->getComponent<FrustumComponent>().getViewMatrix();
 		blk.m_groundLightDir = Vec4(-viewMat.getColumn(1).xyz(), 1.0);
 	}
@@ -809,7 +810,7 @@ Error Is::updateCommonBlock(CommandBufferHandle& cmdBuff)
 //==============================================================================
 PtrSize Is::calcLightsBufferSize() const
 {
-	U32 buffAlignment = 
+	U32 buffAlignment =
 		getGrManager().getBufferOffsetAlignment(GL_SHADER_STORAGE_BUFFER);
 	PtrSize size;
 

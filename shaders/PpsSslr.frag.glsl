@@ -26,7 +26,8 @@ layout(std140, binding = 0) readonly buffer _blk
 
 layout(binding = 0) uniform sampler2D u_isRt;
 layout(binding = 1) uniform sampler2D u_msDepthRt;
-layout(binding = 2) uniform sampler2D u_msRt;
+layout(binding = 2) uniform sampler2D u_msRt1;
+layout(binding = 3) uniform sampler2D u_msRt2;
 
 // Returns the Z of the position in view space
 float readZ(in vec2 uv)
@@ -41,8 +42,8 @@ vec3 readPosition(in vec2 uv)
 {
 	vec3 fragPosVspace;
 	fragPosVspace.z = readZ(uv);
-	
-	fragPosVspace.xy = 
+
+	fragPosVspace.xy =
 		(2.0 * uv - 1.0) * u_projectionParams.xy * fragPosVspace.z;
 
 	return fragPosVspace;
@@ -64,7 +65,8 @@ void main()
 {
 	vec3 normal;
 	float specColor;
-	readNormalSpecularColorFromGBuffer(u_msRt, in_texCoords, normal, specColor);
+	readNormalSpecularColorFromGBuffer(
+		u_msRt1, u_msRt2, in_texCoords, normal, specColor);
 
 	//out_color = vec3(0.5, 0.0, 0.0);
 	out_color = vec3(0.0);
@@ -82,7 +84,7 @@ void main()
 
 #if 1
 	// Let p1 be the intersection of p0+r to the near plane, then
-	// p1 = p0 + t*r or 
+	// p1 = p0 + t*r or
 	// p1.x = p0.x + t*r.x (1)
 	// p1.y = p0.y + t*r.y (2) and
 	// p1.z = p0.z + t*r.z (3)
@@ -157,6 +159,7 @@ void main()
 
 			out_color = textureLod(u_isRt, texCoord, 0.0).rgb * factor;
 
+			//out_color = vec3(1.0, 0.0, 1.0);
 			//out_color = vec3(1.0 - abs(pp0.xy), 0.0);
 			return;
 		}

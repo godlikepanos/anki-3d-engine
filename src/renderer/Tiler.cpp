@@ -66,7 +66,7 @@ Tiler::~Tiler()
 Error Tiler::init()
 {
 	Error err = initInternal();
-	
+
 	if(err)
 	{
 		ANKI_LOGE("Failed to init tiler");
@@ -94,7 +94,7 @@ Error Tiler::initInternal()
 		m_r->getTilesCount().y());
 
 	ANKI_CHECK(
-		m_shader.loadToCache(&getResourceManager(), 
+		m_shader.loadToCache(&getResourceManager(),
 		"shaders/TilerMinMax.comp.glsl", pps.toCString(), "r_"));
 
 	PipelineHandle::Initializer pplineInit;
@@ -103,7 +103,7 @@ Error Tiler::initInternal()
 
 	// Init planes. One plane for each direction, plus near/far plus the world
 	// space of those
-	U planesCount = 
+	U planesCount =
 		(m_r->getTilesCount().x() - 1) * 2 // planes J
 		+ (m_r->getTilesCount().y() - 1) * 2  // planes I
 		+ (m_r->getTilesCount().x() * m_r->getTilesCount().y() * 2); // near+far
@@ -113,7 +113,7 @@ Error Tiler::initInternal()
 	Plane* base = &m_allPlanes[0];
 	U count = 0;
 	using S = SArray<Plane>;
-	
+
 	m_planesX = std::move(S(base + count, m_r->getTilesCount().x() - 1));
 	count += m_planesX.getSize();
 
@@ -126,11 +126,11 @@ Error Tiler::initInternal()
 	m_planesYW = std::move(S(base + count, m_r->getTilesCount().y() - 1));
 	count += m_planesYW.getSize();
 
-	m_nearPlanesW = std::move(S(base + count, 
+	m_nearPlanesW = std::move(S(base + count,
 		m_r->getTilesCount().x() * m_r->getTilesCount().y()));
 	count += m_nearPlanesW.getSize();
 
-	m_farPlanesW = std::move(S(base + count, 
+	m_farPlanesW = std::move(S(base + count,
 		m_r->getTilesCount().x() * m_r->getTilesCount().y()));
 
 	ANKI_ASSERT(count + m_farPlanesW.getSize() == m_allPlanes.getSize());
@@ -153,7 +153,7 @@ Error Tiler::initPbos()
 	for(U i = 0; i < m_pbos.getSize(); ++i)
 	{
 		ANKI_CHECK(
-			m_pbos[i].create(&getGrManager(), GL_SHADER_STORAGE_BUFFER, 
+			m_pbos[i].create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
 			nullptr, pboSize,
 			GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 	}
@@ -161,7 +161,7 @@ Error Tiler::initPbos()
 	// Get persistent address
 	for(U i = 0; i < m_pbos.getSize(); ++i)
 	{
-		m_pbosAddress[i] = 
+		m_pbosAddress[i] =
 			static_cast<Vec2*>(m_pbos[i].getPersistentMappingAddress());
 	}
 
@@ -178,7 +178,7 @@ void Tiler::runMinMax(CommandBufferHandle& cmd)
 		m_pbos[pboIdx].bindShaderBuffer(cmd, 0);
 		m_ppline.bind(cmd);
 
-		m_r->getMs()._getDepthRt().bind(cmd, 0);
+		m_r->getMs().getDepthRt().bind(cmd, 0);
 
 		cmd.dispatchCompute(
 			m_r->getTilesCount().x(), m_r->getTilesCount().y(), 1);
@@ -222,9 +222,9 @@ void Tiler::updateTiles(Camera& cam)
 	Error err = threadPool.waitForAllThreadsToFinish();
 	(void)err;
 
-	// 
+	//
 	// Misc
-	// 
+	//
 	m_prevCam = &cam;
 }
 
@@ -247,16 +247,16 @@ Bool Tiler::test(TestParameters& params) const
 		testFastSphere(
 			dcast<const Sphere&>(*params.m_collisionShape),
 			*params.m_collisionShapeBox,
-			params.m_output, 
+			params.m_output,
 			count);
 	}
 	else
 #endif
 	{
 		testRange(
-			*params.m_collisionShape, 
-			params.m_nearPlane, 
-			0, m_r->getTilesCount().y(), 0, m_r->getTilesCount().x(), 
+			*params.m_collisionShape,
+			params.m_nearPlane,
+			0, m_r->getTilesCount().y(), 0, m_r->getTilesCount().x(),
 			params.m_output,
 			count);
 	}
@@ -334,13 +334,13 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 
 			if(test <= 0.0)
 			{
-				testRange(cs, nearPlane, 
+				testRange(cs, nearPlane,
 					yFrom, yFrom + my, xFrom, xTo, visible, count);
 			}
 
 			if(test >= 0.0)
 			{
-				testRange(cs, nearPlane, 
+				testRange(cs, nearPlane,
 					yFrom + my, yTo, xFrom, xTo, visible, count);
 			}
 		}
@@ -351,13 +351,13 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 
 			if(test <= 0.0)
 			{
-				testRange(cs, nearPlane, 
+				testRange(cs, nearPlane,
 					yFrom, yTo, xFrom, xFrom + mx, visible, count);
 			}
 
 			if(test >= 0.0)
 			{
-				testRange(cs, nearPlane, 
+				testRange(cs, nearPlane,
 					yFrom, yTo, xFrom + mx, xTo, visible, count);
 			}
 		}
@@ -457,7 +457,7 @@ void Tiler::testFastSphere(const Sphere& s, const Aabb& aabb,
 	const FrustumComponent& frc = cam.getComponent<FrustumComponent>();
 	const Mat4& vp = frc.getViewProjectionMatrix();
 	const Mat4& v = frc.getViewMatrix();
-	const Transform& trf = 
+	const Transform& trf =
 		cam.getComponent<MoveComponent>().getWorldTransform();
 
 	const Vec4& scent = s.getCenter();
@@ -524,9 +524,9 @@ void Tiler::testFastSphere(const Sphere& s, const Aabb& aabb,
 	yTo = min<I>(yTo, m_r->getTilesCount().y());
 
 
-	ANKI_ASSERT(xFrom >= 0 && xFrom <= tcountX 
+	ANKI_ASSERT(xFrom >= 0 && xFrom <= tcountX
 		&& xTo >= 0 && xTo <= tcountX);
-	ANKI_ASSERT(yFrom >= 0 && yFrom <= tcountX 
+	ANKI_ASSERT(yFrom >= 0 && yFrom <= tcountX
 		&& yTo >= 0 && yFrom <= tcountY);
 
 	Vec2 tileSize(1.0 / tcountX, 1.0 / tcountY);
@@ -545,7 +545,7 @@ void Tiler::testFastSphere(const Sphere& s, const Aabb& aabb,
 
 			Vec2 tileMin = Vec2(x, y) * tileSize;
 			Vec2 tileMax = Vec2(x + 1, y + 1) * tileSize;
-			
+
 			// Find closest point of sphere center and tile
 			Vec2 cp(0.0);
 			for(U i = 0; i < 2; ++i)
@@ -585,7 +585,7 @@ void Tiler::testFastSphere(const Sphere& s, const Aabb& aabb,
 }
 
 //==============================================================================
-void Tiler::update(U32 threadId, PtrSize threadsCount, 
+void Tiler::update(U32 threadId, PtrSize threadsCount,
 	Camera& cam, Bool frustumChanged)
 {
 	PtrSize start, end;
@@ -652,14 +652,14 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 	// Update the near far planes
 	if(m_enableGpuTests && getGlobalTimestamp() >= m_pbos.getSize())
 	{
-		const U tilesCount = 
+		const U tilesCount =
 			m_r->getTilesCount().x() * m_r->getTilesCount().y();
 
 		Threadpool::Task::choseStartEnd(
 			threadId, threadsCount, tilesCount, start, end);
 
 		// Setup pixel buffer
-		U pboIdx = 
+		U pboIdx =
 			(getGlobalTimestamp() - m_pbos.getSize() + 1) % m_pbos.getSize();
 		SArray<Vec2> pixels(m_pbosAddress[pboIdx], tilesCount);
 
@@ -684,7 +684,7 @@ void Tiler::update(U32 threadId, PtrSize threadsCount,
 				//Vec4 p1 = move.getWorldTransform().transform(p0);
 				Vec4 n1p = frc.getViewProjectionMatrix() * p0.xyz1();
 				Vec2 n1 = n1p.xy() / n1p.w();
-				
+
 				Vec2 t = (n1 / 2.0 + 0.5) * tileCountf;
 				t.x() = roundf(t.x());
 				t.y() = roundf(t.y());

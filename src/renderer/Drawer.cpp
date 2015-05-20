@@ -43,7 +43,7 @@ public:
 			value,
 			size,
 			m_drawer->m_uniformPtr,
-			m_drawer->m_uniformBuffMapAddr 
+			m_drawer->m_uniformBuffMapAddr
 				+ RenderableDrawer::MAX_UNIFORM_BUFFER_SIZE);
 	}
 
@@ -124,7 +124,7 @@ public:
 		case BuildinMaterialVariableId::NORMAL_MATRIX:
 			if(hasWorldTrfs)
 			{
-				Mat3* normMats = 
+				Mat3* normMats =
 					m_drawer->m_r->getSceneGraph().getFrameAllocator().
 					newInstance<Mat3>(arraySize);
 
@@ -158,7 +158,7 @@ public:
 				Mat3 rot =
 					m_fr->getViewMatrix().getRotationPart().getTransposed();
 
-				Mat4* bmvp = 
+				Mat4* bmvp =
 					m_drawer->m_r->getSceneGraph().getFrameAllocator().
 					newInstance<Mat4>(arraySize);
 
@@ -175,10 +175,10 @@ public:
 			break;
 		case BuildinMaterialVariableId::MAX_TESS_LEVEL:
 			{
-				F32 maxtess = 
+				F32 maxtess =
 					rvar.RenderComponentVariable:: template operator[]<F32>(0);
 				F32 tess = 0.0;
-				
+
 				if(m_flod >= 1.0)
 				{
 					tess = 1.0;
@@ -188,7 +188,7 @@ public:
 					tess = maxtess - m_flod * maxtess;
 					tess = std::max(tess, 1.0f);
 				}
-				
+
 				uniSet(glvar, &tess, 1);
 			}
 			break;
@@ -202,7 +202,7 @@ public:
 			{
 				auto unit = glvar.getTextureUnit();
 
-				m_drawer->m_r->getMs()._getDepthRt().bind(m_cmdBuff, unit);
+				m_drawer->m_r->getMs().getDepthRt().bind(m_cmdBuff, unit);
 			}
 			break;
 		default:
@@ -217,7 +217,7 @@ public:
 // Texture specialization
 template<>
 void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
-	const MaterialVariable& mtlvar, 
+	const MaterialVariable& mtlvar,
 	const TextureResourcePointer* values, U32 size)
 {
 	ANKI_ASSERT(size == 1);
@@ -233,7 +233,7 @@ Error RenderableDrawer::create(Renderer* r)
 	m_r = r;
 
 	// Create the uniform buffer
-	ANKI_CHECK(m_uniformBuff.create(&m_r->_getGrManager(), GL_UNIFORM_BUFFER, 
+	ANKI_CHECK(m_uniformBuff.create(&m_r->_getGrManager(), GL_UNIFORM_BUFFER,
 		nullptr, MAX_UNIFORM_BUFFER_SIZE,
 		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
 
@@ -253,7 +253,7 @@ Error RenderableDrawer::create(Renderer* r)
 
 //==============================================================================
 void RenderableDrawer::setupUniforms(
-	VisibleNode& visibleNode, 
+	VisibleNode& visibleNode,
 	RenderComponent& renderable,
 	FrustumComponent& fr,
 	F32 flod)
@@ -279,7 +279,7 @@ void RenderableDrawer::setupUniforms(
 	// Call the visitor
 	//
 	SetupRenderableVariableVisitor vis;
-	
+
 	vis.m_visibleNode = &visibleNode;
 	vis.m_renderable = &renderable;
 	vis.m_fr = &fr;
@@ -301,7 +301,7 @@ void RenderableDrawer::setupUniforms(
 	// Update the uniform descriptor
 	//
 	m_uniformBuff.bindShaderBuffer(
-		m_cmdBuff, 
+		m_cmdBuff,
 		m_uniformPtr - persistent,
 		mtl.getDefaultBlockSize(),
 		0);
@@ -318,7 +318,7 @@ Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 
 	// Get components
 	FrustumComponent& fr = frsn.getComponent<FrustumComponent>();
-	RenderComponent& renderable = 
+	RenderComponent& renderable =
 		visibleNode.m_node->getComponent<RenderComponent>();
 	const Material& mtl = renderable.getMaterial();
 
@@ -332,8 +332,8 @@ Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 	F32 flod = m_r->calculateLod(dist);
 	build.m_key.m_lod = flod;
 	build.m_key.m_pass = m_pass;
-	build.m_key.m_tessellation = 
-		m_r->getTessellationEnabled() 
+	build.m_key.m_tessellation =
+		m_r->getTessellationEnabled()
 		&& mtl.getTessellation()
 		&& build.m_key.m_lod == 0;
 

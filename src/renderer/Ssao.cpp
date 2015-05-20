@@ -20,7 +20,7 @@ const U NOISE_TEX_SIZE = 8;
 const U KERNEL_SIZE = 16;
 
 //==============================================================================
-static void genKernel(Vec3* ANKI_RESTRICT arr, 
+static void genKernel(Vec3* ANKI_RESTRICT arr,
 	Vec3* ANKI_RESTRICT arrEnd)
 {
 	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
@@ -39,7 +39,7 @@ static void genKernel(Vec3* ANKI_RESTRICT arr,
 }
 
 //==============================================================================
-static void genNoise(Vec3* ANKI_RESTRICT arr, 
+static void genNoise(Vec3* ANKI_RESTRICT arr,
 	Vec3* ANKI_RESTRICT arrEnd)
 {
 	ANKI_ASSERT(arr && arrEnd && arr != arrEnd);
@@ -70,15 +70,15 @@ public:
 Error Ssao::createFb(FramebufferHandle& fb, TextureHandle& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
-	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, 
-		PixelFormat(ComponentFormat::R8, TransformFormat::UNORM), 
+	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height,
+		PixelFormat(ComponentFormat::R8, TransformFormat::UNORM),
 		1, SamplingFilter::LINEAR, 1, rt));
 
 	// Create FB
 	FramebufferHandle::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = 
+	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
 	ANKI_CHECK(fb.create(&getGrManager(), fbInit));
 
@@ -95,7 +95,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		return ErrorCode::NONE;
 	}
 
-	m_blurringIterationsCount = 
+	m_blurringIterationsCount =
 		config.get("pps.ssao.blurringIterationsCount");
 
 	//
@@ -128,7 +128,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 
 	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
 	tinit.m_type = TextureType::_2D;
-	tinit.m_format = 
+	tinit.m_format =
 		PixelFormat(ComponentFormat::R32G32B32, TransformFormat::FLOAT);
 	tinit.m_mipmapsCount = 1;
 	tinit.m_sampling.m_minMagFilter = SamplingFilter::NEAREST;
@@ -160,7 +160,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Shaders
 	//
-	ANKI_CHECK(m_uniformsBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER, 
+	ANKI_CHECK(m_uniformsBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
 		nullptr, sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT));
 
 	StringAuto pps(getAllocator());
@@ -181,7 +181,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		m_ssaoFrag->getGrShader(), m_ssaoPpline));
 
 	// blurring progs
-	const char* SHADER_FILENAME = 
+	const char* SHADER_FILENAME =
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
 	pps.destroy(getAllocator());
@@ -189,7 +189,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define HPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES 11\n", 
+		"#define SAMPLES 11\n",
 		m_height);
 
 	ANKI_CHECK(m_hblurFrag.loadToCache(&getResourceManager(),
@@ -203,7 +203,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 		"#define VPASS\n"
 		"#define COL_R\n"
 		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES 9\n", 
+		"#define SAMPLES 9\n",
 		m_width);
 
 	ANKI_CHECK(m_vblurFrag.loadToCache(&getResourceManager(),
@@ -221,7 +221,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 Error Ssao::init(const ConfigSet& config)
 {
 	Error err = initInternal(config);
-	
+
 	if(err)
 	{
 		ANKI_LOGE("Failed to init PPS SSAO");
@@ -247,15 +247,15 @@ Error Ssao::run(CommandBufferHandle& cmdb)
 	m_uniformsBuff.bindShaderBuffer(cmdb, 0);
 
 	Array<TextureHandle, 3> tarr = {{
-		m_r->getMs()._getDepthRt(),
-		m_r->getMs()._getRt1(),
+		m_r->getMs().getDepthRt(),
+		m_r->getMs().getRt2(),
 		m_noiseTex}};
 	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
 
 	// Write common block
 	const FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
 
-	if(m_commonUboUpdateTimestamp 
+	if(m_commonUboUpdateTimestamp
 			< m_r->getProjectionParametersUpdateTimestamp()
 		|| m_commonUboUpdateTimestamp < camFr.getTimestamp()
 		|| m_commonUboUpdateTimestamp == 1)

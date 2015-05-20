@@ -23,17 +23,22 @@ class Ms: public RenderingPass
 public:
 	/// @privatesection
 	/// @{
-	TextureHandle& _getRt0()
+	TextureHandle& getRt0()
 	{
 		return m_planes[1].m_rt0;
 	}
 
-	TextureHandle& _getRt1()
+	TextureHandle& getRt1()
 	{
 		return m_planes[1].m_rt1;
 	}
 
-	TextureHandle& _getDepthRt()
+	TextureHandle& getRt2()
+	{
+		return m_planes[1].m_rt2;
+	}
+
+	TextureHandle& getDepthRt()
 	{
 		return m_planes[1].m_depthRt;
 	}
@@ -53,11 +58,14 @@ private:
 	public:
 		FramebufferHandle m_fb;
 
-		/// Contains diffuse color and part of specular
-		TextureHandle m_rt0; 
+		/// Contains diffuse color and emission
+		TextureHandle m_rt0;
 
-		/// Contains the normal and spec power
+		/// Contains specular color, roughness
 		TextureHandle m_rt1;
+
+		/// Contains normals
+		TextureHandle m_rt2;
 
 		/// Depth stencil
 		TextureHandle m_depthRt;
@@ -69,7 +77,7 @@ private:
 	Array<Plane, 2> m_planes;
 
 	Ms(Renderer* r)
-	:	RenderingPass(r), 
+	:	RenderingPass(r),
 		m_ez(r)
 	{}
 
