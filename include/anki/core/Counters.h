@@ -55,7 +55,7 @@ public:
 	/// Write the counters of the frame. Should be called after swapbuffers
 	void resolveFrame();
 
-	/// Resolve all counters and closes the files. Should be called when app 
+	/// Resolve all counters and closes the files. Should be called when app
 	/// terminates
 	void flush();
 
@@ -194,7 +194,6 @@ using ThreadTraceManagerSingleton = SingletonThreadSafe<ThreadTraceManager>;
 #	define ANKI_TRACE_FLUSH() ((void)0)
 
 #endif
-
 /// @}
 
 } // end namespace anki

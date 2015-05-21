@@ -575,23 +575,6 @@ void SectorGroup::findVisibleSectorsInternal(
 }
 
 //==============================================================================
-Bool SectorGroup::spatialInSector(
-	const Sector& sector, const SpatialComponent& spatial)
-{
-	auto it = spatial.getSectorInfo().getBegin();
-	auto end = spatial.getSectorInfo().getEnd();
-	for(; it != end; ++it)
-	{
-		if(*it == &sector)
-		{
-			return true;
-		}
-	}
-
-	return false;
-}
-
-//==============================================================================
 void SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc)
 {
 	auto alloc = m_scene->getFrameAllocator();
@@ -636,23 +619,13 @@ void SectorGroup::prepareForVisibilityTests(const FrustumComponent& frc)
 		for(auto itsp : s.m_spatials)
 		{
 			SpatialComponent& spc = *itsp;
+			SceneNode& node = spc.getSceneNode();
 
-			// Check if node already checked
-			Bool checked = false;
-			auto it1 = visSectors.getBegin();
-			auto end1 = it;
-			for(; it1 != end1; ++it1)
+			// Check if visited
+			if(!node.getSectorVisited())
 			{
-				if(spatialInSector(*(*it1), spc))
-				{
-					checked = true;
-					break;
-				}
-			}
-
-			if(!checked)
-			{
-				visibleNodes[nodesCount++] = &spc.getSceneNode();
+				visibleNodes[nodesCount++] = &node;
+				node.setSectorVisited(true);
 			}
 		}
 	}

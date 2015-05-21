@@ -134,7 +134,7 @@ CommandBufferHandle::~CommandBufferHandle()
 {}
 
 //==============================================================================
-Error CommandBufferHandle::create(GrManager* manager, 
+Error CommandBufferHandle::create(GrManager* manager,
 	CommandBufferInitHints hints)
 {
 	ANKI_ASSERT(!isCreated());
@@ -166,7 +166,7 @@ void CommandBufferHandle::pushBackUserCommand(
 		void* m_userData;
 
 		Command(UserCallback callback, void* userData)
-		:	m_callback(callback), 
+		:	m_callback(callback),
 			m_userData(userData)
 		{
 			ANKI_ASSERT(m_callback);
@@ -225,7 +225,7 @@ void CommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 	{
 	public:
 		Array<U16, 4> m_value;
-		
+
 		Command(U16 a, U16 b, U16 c, U16 d)
 		{
 			m_value = {{a, b, c, d}};
@@ -236,9 +236,9 @@ void CommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 			GlState& state = commands->getManager().getImplementation().
 				getRenderingThread().getState();
 
-			if(state.m_viewport[0] != m_value[0] 
+			if(state.m_viewport[0] != m_value[0]
 				|| state.m_viewport[1] != m_value[1]
-				|| state.m_viewport[2] != m_value[2] 
+				|| state.m_viewport[2] != m_value[2]
 				|| state.m_viewport[3] != m_value[3])
 			{
 				glViewport(m_value[0], m_value[1], m_value[2], m_value[3]);
@@ -298,7 +298,7 @@ void CommandBufferHandle::setStencilPlaneMask(U32 mask)
 }
 
 //==============================================================================
-void CommandBufferHandle::setStencilOperations(GLenum stencFail, GLenum depthFail, 
+void CommandBufferHandle::setStencilOperations(GLenum stencFail, GLenum depthFail,
 	GLenum depthPass)
 {
 	ANKI_STATE_CMD_3(GLenum, glStencilOp, stencFail, depthFail, depthPass);
@@ -334,7 +334,7 @@ void CommandBufferHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 			GlState& state = commands->getManager().getImplementation().
 				getRenderingThread().getState();
 
-			if(state.m_blendSfunc != m_sfactor 
+			if(state.m_blendSfunc != m_sfactor
 				|| state.m_blendDfunc != m_dfactor)
 			{
 				glBlendFunc(m_sfactor, m_dfactor);
@@ -444,7 +444,7 @@ public:
 	}
 };
 
-void CommandBufferHandle::bindTextures(U32 first, 
+void CommandBufferHandle::bindTextures(U32 first,
 	TextureHandle textures[], U32 count)
 {
 	ANKI_ASSERT(count > 0);
@@ -515,7 +515,7 @@ void CommandBufferHandle::drawElements(
 	GLenum mode, U8 indexSize, U32 count, U32 instanceCount, U32 firstIndex,
 	U32 baseVertex, U32 baseInstance)
 {
-	GlDrawElementsIndirectInfo info(count, instanceCount, firstIndex, 
+	GlDrawElementsIndirectInfo info(count, instanceCount, firstIndex,
 		baseVertex, baseInstance);
 
 	get().pushBackNewCommand<DrawElementsCondCommand>(mode, indexSize, info);
@@ -531,7 +531,7 @@ public:
 
 	DrawArraysCondCommand(
 		GLenum mode,
-		GlDrawArraysIndirectInfo& info, 
+		GlDrawArraysIndirectInfo& info,
 		OcclusionQueryHandle query = OcclusionQueryHandle())
 	:	m_mode(mode),
 		m_info(info),
@@ -570,7 +570,7 @@ void CommandBufferHandle::drawElementsConditional(
 	GLenum mode, U8 indexSize, U32 count, U32 instanceCount, U32 firstIndex,
 	U32 baseVertex, U32 baseInstance)
 {
-	GlDrawElementsIndirectInfo info(count, instanceCount, firstIndex, 
+	GlDrawElementsIndirectInfo info(count, instanceCount, firstIndex,
 		baseVertex, baseInstance);
 
 	get().pushBackNewCommand<DrawElementsCondCommand>(mode, indexSize, info, query);
@@ -637,7 +637,7 @@ public:
 			ANKI_ASSERT(0 && "Not implemented");
 		}
 
-		glReadPixels(0, 0, tex.getWidth(), tex.getHeight(), 
+		glReadPixels(0, 0, tex.getWidth(), tex.getHeight(),
 			format, type, nullptr);
 
 		// End
@@ -676,6 +676,72 @@ void CommandBufferHandle::dispatchCompute(
 {
 	get().pushBackNewCommand<DispatchCommand>(
 		groupCountX, groupCountY, groupCountZ);
+}
+
+//==============================================================================
+class UpdateUniformsCommand final: public GlCommand
+{
+public:
+	GLuint m_uboName;
+	U32 m_offset;
+	U16 m_range;
+
+	UpdateUniformsCommand(GLuint ubo, U32 offset, U16 range)
+	:	m_uboName(ubo),
+		m_offset(offset),
+		m_range(range)
+	{}
+
+	Error operator()(CommandBufferImpl*)
+	{
+		const U binding = 0;
+		glBindBufferRange(
+			GL_UNIFORM_BUFFER, binding, m_uboName, m_offset, m_range);
+
+		return ErrorCode::NONE;
+	}
+};
+
+void CommandBufferHandle::updateDynamicUniforms(void* data, U32 originalSize)
+{
+	ANKI_ASSERT(data);
+	ANKI_ASSERT(originalSize > 0);
+	ANKI_ASSERT(originalSize <= 1024 * 4 && "Too high?");
+
+	GlState& state =
+		get().getManager().getImplementation().getRenderingThread().getState();
+
+	const U uboSize = state.m_globalUboSize;
+	const U subUboSize = GlState::MAX_UBO_SIZE;
+
+	// Get offset in the contiguous buffer
+	U size = getAlignedRoundUp(state.m_uniBuffOffsetAlignment, originalSize);
+	U offset = state.m_globalUboCurrentOffset.fetchAdd(size);
+	offset = offset % uboSize;
+
+	while((offset % subUboSize) + size > subUboSize)
+	{
+		// Update area will fall between UBOs, need to start over
+		offset = state.m_globalUboCurrentOffset.fetchAdd(size);
+		offset = offset % uboSize;
+	}
+
+	ANKI_ASSERT(isAligned(state.m_uniBuffOffsetAlignment, offset));
+	ANKI_ASSERT(offset + size <= uboSize);
+
+	// Get actual UBO address to write
+	U uboIdx = offset / subUboSize;
+	U subUboOffset = offset % subUboSize;
+	ANKI_ASSERT(isAligned(state.m_uniBuffOffsetAlignment, subUboOffset));
+
+	U8* addressToWrite = state.m_globalUboAddresses[uboIdx] + subUboOffset;
+
+	// Write
+	memcpy(addressToWrite, data, originalSize);
+
+	// Push bind command
+	get().pushBackNewCommand<UpdateUniformsCommand>(
+		state.m_globalUbos[uboIdx], subUboOffset, originalSize);
 }
 
 } // end namespace anki

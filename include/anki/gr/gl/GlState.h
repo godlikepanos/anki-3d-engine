@@ -27,6 +27,8 @@ enum class GpuVendor: U8
 class GlState
 {
 public:
+	static const U MAX_UBO_SIZE = 16384;
+
 	I32 m_version = -1; ///< Minor major GL version. Something like 430
 	GpuVendor m_gpu = GpuVendor::UNKNOWN;
 	U32 m_texUnitsCount = 0;
@@ -56,8 +58,28 @@ public:
 	PipelineHandle m_lastPipeline;
 	/// @}
 
-	/// Call this from the server
+	/// Global UBO ring buffer
+	/// @{
+	U32 m_globalUboSize = MAX_UBO_SIZE * 128; ///< 8MB
+	DArray<GLuint> m_globalUbos; ///< Multiple cause of the spec's UBO max size.
+	DArray<U8*> m_globalUboAddresses;
+	Atomic<U32> m_globalUboCurrentOffset = {0};
+	/// @}
+
+	GlState(GrManager* manager)
+	:	m_manager(manager)
+	{}
+
+	/// Call this from the rendering thread.
 	void init();
+
+	/// Call this from the rendering thread.
+	void destroy();
+
+private:
+	GrManager* m_manager;
+
+	void initGlobalUbo();
 };
 /// @}
 

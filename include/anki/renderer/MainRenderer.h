@@ -22,10 +22,11 @@ public:
 	~MainRenderer();
 
 	ANKI_USE_RESULT Error create(
-		Threadpool* threadpool, 
+		Threadpool* threadpool,
 		ResourceManager* resources,
 		GrManager* gl,
-		HeapAllocator<U8>& alloc,
+		AllocAlignedCallback allocCb,
+		void* allocCbUserData,
 		const ConfigSet& config,
 		const Timestamp* globalTimestamp);
 
@@ -41,7 +42,7 @@ private:
 	PipelineHandle m_blitPpline;
 
 	/// Optimize job chain
-	Array<CommandBufferInitHints, JOB_CHAINS_COUNT> m_jobsInitHints; 
+	Array<CommandBufferInitHints, JOB_CHAINS_COUNT> m_jobsInitHints;
 
 	void takeScreenshotTga(const char* filename);
 	ANKI_USE_RESULT Error initGl();

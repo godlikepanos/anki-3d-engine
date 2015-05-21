@@ -5,6 +5,7 @@
 
 #include "anki/gr/gl/GlState.h"
 #include "anki/gr/gl/BufferImpl.h"
+#include "anki/gr/GrManager.h"
 #include "anki/util/Logger.h"
 #include <algorithm>
 #include <cstring>
@@ -139,6 +140,50 @@ void GlState::init()
 
 	// Other
 	memset(&m_vertexBindingStrides[0], 0, sizeof(m_vertexBindingStrides));
+
+	initGlobalUbo();
+}
+
+//==============================================================================
+void GlState::initGlobalUbo()
+{
+	ANKI_ASSERT(m_globalUboSize > 0);
+	auto alloc = m_manager->getAllocator();
+
+	m_globalUboSize = getAlignedRoundUp(MAX_UBO_SIZE, m_globalUboSize);
+	U ubosCount = m_globalUboSize / MAX_UBO_SIZE;
+
+	m_globalUbos.create(alloc, ubosCount);
+	m_globalUboAddresses.create(alloc, ubosCount);
+
+	for(U i = 0; i < ubosCount; ++i)
+	{
+		const U FLAGS = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT;
+
+		GLuint name;
+		glGenBuffers(1, &name);
+
+		glBindBuffer(GL_UNIFORM_BUFFER, name);
+		glBufferStorage(GL_UNIFORM_BUFFER, MAX_UBO_SIZE, nullptr, FLAGS);
+
+		m_globalUbos[i] = name;
+
+		m_globalUboAddresses[i] = static_cast<U8*>(
+			glMapBufferRange(GL_UNIFORM_BUFFER, 0, MAX_UBO_SIZE, FLAGS));
+	}
+}
+
+//==============================================================================
+void GlState::destroy()
+{
+	for(GLuint name : m_globalUbos)
+	{
+		glDeleteBuffers(1, &name);
+	}
+
+	auto alloc = m_manager->getAllocator();
+	m_globalUbos.destroy(alloc);
+	m_globalUboAddresses.destroy(alloc);
 }
 
 } // end namespace anki

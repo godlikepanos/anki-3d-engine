@@ -49,24 +49,18 @@ public:
 
 private:
 	Renderer* m_r;
-	BufferHandle m_uniformBuff;
-	U8* m_uniformBuffMapAddr = nullptr;
+	SArray<U8> m_tempUniformBuffer;
 
 	/// @name State
 	/// @{
 	CommandBufferHandle m_cmdBuff;
-	U8* m_uniformPtr;
-
-	/// Used to calc if the uni buffer is big enough. Zero it per swap buffers
-	U32 m_uniformsUsedSize; 
-	U32 m_uniformsUsedSizeFrame;
 
 	RenderingStage m_stage;
 	Pass m_pass;
 	/// @}
 
 	void setupUniforms(
-		VisibleNode& visibleNode, 
+		VisibleNode& visibleNode,
 		RenderComponent& renderable,
 		FrustumComponent& fr,
 		F32 flod);

@@ -17,10 +17,10 @@ namespace anki {
 
 //==============================================================================
 Renderer::Renderer()
-:	m_ms(this), 
+:	m_ms(this),
 	m_is(this),
 	m_pps(this),
-	m_dbg(this), 
+	m_dbg(this),
 	m_tiler(this)
 {}
 
@@ -42,10 +42,11 @@ Renderer::~Renderer()
 
 //==============================================================================
 Error Renderer::init(
-	Threadpool* threadpool, 
+	Threadpool* threadpool,
 	ResourceManager* resources,
 	GrManager* gl,
-	HeapAllocator<U8>& alloc,
+	AllocAlignedCallback allocCb,
+	void* allocCbUserData,
 	const ConfigSet& config,
 	const Timestamp* globalTimestamp)
 {
@@ -53,7 +54,8 @@ Error Renderer::init(
 	m_threadpool = threadpool;
 	m_resources = resources;
 	m_gr = gl;
-	m_alloc = alloc;
+	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
+	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024);
 
 	Error err = initInternal(config);
 	if(err)
@@ -122,10 +124,10 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_sceneDrawer.create(this));
 
 	// quad setup
-	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0}, 
+	static const F32 quadVertCoords[][2] = {{1.0, 1.0}, {-1.0, 1.0},
 		{1.0, -1.0}, {-1.0, -1.0}};
 
-	ANKI_CHECK(m_quadPositionsBuff.create(m_gr, GL_ARRAY_BUFFER, 
+	ANKI_CHECK(m_quadPositionsBuff.create(m_gr, GL_ARRAY_BUFFER,
 		&quadVertCoords[0][0], sizeof(quadVertCoords), 0));
 
 	ANKI_CHECK(m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources));
@@ -135,7 +137,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 	ANKI_CHECK(m_ms.init(config));
 	ANKI_CHECK(m_is.init(config));
-	
+
 	m_fs = m_alloc.newInstance<Fs>(this);
 	ANKI_CHECK(m_fs->init(config));
 
@@ -153,17 +155,18 @@ Error Renderer::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Renderer::render(SceneGraph& scene, 
+Error Renderer::render(SceneGraph& scene,
 	Array<CommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff)
 {
 	m_scene = &scene;
+	m_frameAlloc.getMemoryPool().reset();
 	Camera& cam = m_scene->getActiveCamera();
 
 	// Calc a few vars
 	//
 	const FrustumComponent& fr = cam.getComponent<FrustumComponent>();
 	Timestamp camUpdateTimestamp = fr.getTimestamp();
-	if(m_projectionParamsUpdateTimestamp 
+	if(m_projectionParamsUpdateTimestamp
 			< m_scene->getActiveCameraChangeTimestamp()
 		|| m_projectionParamsUpdateTimestamp < camUpdateTimestamp
 		|| m_projectionParamsUpdateTimestamp == 0)
@@ -252,7 +255,7 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 }
 
 //==============================================================================
-Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format, 
+Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 	U32 samples, SamplingFilter filter, U mipsCount, TextureHandle& rt)
 {
 	// Not very important but keep the resulution of render targets aligned to

@@ -9,6 +9,8 @@
 #include "anki/scene/Common.h"
 #include "anki/util/Hierarchy.h"
 #include "anki/util/Rtti.h"
+#include "anki/util/Bitset.h"
+#include "anki/util/Enum.h"
 #include "anki/scene/SceneComponent.h"
 
 namespace anki {
@@ -53,7 +55,7 @@ public:
 
 	Bool getMarkedForDeletion() const
 	{
-		return m_forDeletion;
+		return m_flags.bitsEnabled(Flag::MARKED_FOR_DELETION);
 	}
 
 	void setMarkedForDeletion();
@@ -82,6 +84,18 @@ public:
 
 	/// Return the last frame the node was updated. It checks all components
 	U32 getLastUpdateFrame() const;
+
+	/// Inform if a sector has visited this node.
+	void setSectorVisited(Bool visited)
+	{
+		m_flags.enableBits(Flag::SECTOR_VISITED, visited);
+	}
+
+	/// Check if a sector has visited this node.
+	Bool getSectorVisited() const
+	{
+		return m_flags.bitsEnabled(Flag::SECTOR_VISITED);
+	}
 
 	/// Iterate all components
 	template<typename Func>
@@ -176,13 +190,20 @@ protected:
 	ResourceManager& getResourceManager();
 
 private:
+	enum class Flag
+	{
+		MARKED_FOR_DELETION = 1 << 0,
+		SECTOR_VISITED = 1 << 1
+	};
+	ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(Flag, friend)
+
 	SceneGraph* m_scene = nullptr;
 
 	DArray<SceneComponent*> m_components;
 	U8 m_componentsCount = 0;
 
 	String m_name; ///< A unique name
-	Bool8 m_forDeletion = false;
+	Bitset<Flag> m_flags;
 
 	void cacheImportantComponents();
 };

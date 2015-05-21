@@ -33,11 +33,12 @@ class SyncCommand final: public GlCommand
 
 //==============================================================================
 RenderingThread::RenderingThread(GrManager* manager)
-:	m_manager(manager), 
-	m_tail(0), 
+:	m_manager(manager),
+	m_tail(0),
 	m_head(0),
 	m_renderingThreadSignal(0),
-	m_thread("anki_gl")
+	m_thread("anki_gl"),
+	m_state(manager)
 {
 	ANKI_ASSERT(m_manager);
 }
@@ -213,8 +214,9 @@ void RenderingThread::finish()
 		}
 	}
 
-	// Delete default VAO
+	// Cleanup GL
 	glDeleteVertexArrays(1, &m_defaultVao);
+	m_state.destroy();
 
 	// Cleanup
 	glFinish();

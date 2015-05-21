@@ -40,7 +40,7 @@ public:
 	static const U32 JOB_CHAINS_COUNT = 2;
 
 	const U TILE_SIZE = 64;
-		
+
 	Renderer();
 
 	~Renderer();
@@ -195,7 +195,7 @@ public:
 	}
 
 	/// This function does all the rendering stages and produces a final FAI
-	ANKI_USE_RESULT Error render(SceneGraph& scene, 
+	ANKI_USE_RESULT Error render(SceneGraph& scene,
 		Array<CommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff);
 
 	/// My version of gluUnproject
@@ -224,7 +224,7 @@ public:
 	}
 
 	/// Create a framebuffer attachment texture
-	ANKI_USE_RESULT Error createRenderTarget(U32 w, U32 h, 
+	ANKI_USE_RESULT Error createRenderTarget(U32 w, U32 h,
 		const PixelFormat& format, U32 samples, SamplingFilter filter,
 		U mipsCount, TextureHandle& rt);
 
@@ -236,10 +236,11 @@ public:
 	/// Init the renderer given an initialization class
 	/// @param initializer The initializer class
 	ANKI_USE_RESULT Error init(
-		Threadpool* threadpool, 
+		Threadpool* threadpool,
 		ResourceManager* resources,
 		GrManager* gl,
-		HeapAllocator<U8>& alloc,
+		AllocAlignedCallback allocCb,
+		void* allocCbUserData,
 		const ConfigSet& config,
 		const Timestamp* globalTimestamp);
 
@@ -255,12 +256,17 @@ public:
 		return m_alloc;
 	}
 
+	StackAllocator<U8>& getFrameAllocator()
+	{
+		return m_frameAlloc;
+	}
+
 	ResourceManager& _getResourceManager()
 	{
 		return *m_resources;
 	}
 
-	Threadpool& _getThreadpool() 
+	Threadpool& _getThreadpool()
 	{
 		return *m_threadpool;
 	}
@@ -281,6 +287,7 @@ private:
 	ResourceManager* m_resources;
 	GrManager* m_gr;
 	HeapAllocator<U8> m_alloc;
+	StackAllocator<U8> m_frameAlloc;
 	const Timestamp* m_grobalTimestamp = nullptr;
 
 	/// @name Rendering stages

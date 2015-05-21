@@ -48,7 +48,7 @@ void SceneNode::setMarkedForDeletion()
 	// want to increase the counter again
 	if(!getMarkedForDeletion())
 	{
-		m_forDeletion = true;
+		m_flags.enableBits(Flag::MARKED_FOR_DELETION);
 		m_scene->increaseObjectsMarkedForDeletion();
 	}
 

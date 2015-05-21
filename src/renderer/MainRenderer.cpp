@@ -27,14 +27,15 @@ Error MainRenderer::create(
 	Threadpool* threadpool,
 	ResourceManager* resources,
 	GrManager* gl,
-	HeapAllocator<U8>& alloc,
+	AllocAlignedCallback allocCb,
+	void* allocCbUserData,
 	const ConfigSet& config,
 	const Timestamp* globalTimestamp)
 {
 	ANKI_LOGI("Initializing main renderer...");
 
-	ANKI_CHECK(Renderer::init(threadpool, resources, gl, alloc, config,
-		globalTimestamp));
+	ANKI_CHECK(Renderer::init(threadpool, resources, gl, allocCb,
+		allocCbUserData, config, globalTimestamp));
 
 	ANKI_CHECK(initGl());
 

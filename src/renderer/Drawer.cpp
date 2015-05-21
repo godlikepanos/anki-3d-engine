@@ -18,6 +18,8 @@
 namespace anki {
 
 //==============================================================================
+static const U MATERIAL_BLOCK_MAX_SIZE = 1024 * 4;
+
 /// Visitor that sets a uniform
 class SetupRenderableVariableVisitor
 {
@@ -42,9 +44,8 @@ public:
 		mtlVar.writeShaderBlockMemory<T>(
 			value,
 			size,
-			m_drawer->m_uniformPtr,
-			m_drawer->m_uniformBuffMapAddr
-				+ RenderableDrawer::MAX_UNIFORM_BUFFER_SIZE);
+			&m_drawer->m_tempUniformBuffer[0],
+			&m_drawer->m_tempUniformBuffer[0] + MATERIAL_BLOCK_MAX_SIZE);
 	}
 
 	template<typename TRenderableVariableTemplate>
@@ -231,23 +232,6 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 Error RenderableDrawer::create(Renderer* r)
 {
 	m_r = r;
-
-	// Create the uniform buffer
-	ANKI_CHECK(m_uniformBuff.create(&m_r->_getGrManager(), GL_UNIFORM_BUFFER,
-		nullptr, MAX_UNIFORM_BUFFER_SIZE,
-		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
-
-	m_uniformPtr = static_cast<U8*>(
-		m_uniformBuff.getPersistentMappingAddress());
-	m_uniformBuffMapAddr = m_uniformPtr;
-	ANKI_ASSERT(m_uniformPtr != nullptr);
-	ANKI_ASSERT(isAligned(m_r->_getGrManager().getBufferOffsetAlignment(
-		m_uniformBuff.getTarget()), m_uniformPtr));
-
-	// Set some other values
-	m_uniformsUsedSize = 0;
-	m_uniformsUsedSizeFrame = 0;
-
 	return ErrorCode::NONE;
 }
 
@@ -259,22 +243,8 @@ void RenderableDrawer::setupUniforms(
 	F32 flod)
 {
 	const Material& mtl = renderable.getMaterial();
-	U blockSize = mtl.getDefaultBlockSize();
-	U8* persistent = m_uniformBuffMapAddr;
 
-	// Find a place to write the uniforms
-	//
-	U8* prevUniformPtr = m_uniformPtr;
-	alignRoundUp(m_r->_getGrManager().getBufferOffsetAlignment(
-		m_uniformBuff.getTarget()), m_uniformPtr);
-	U diff = m_uniformPtr - prevUniformPtr;
-
-	if(m_uniformPtr + blockSize >= persistent + m_uniformBuff.getSize())
-	{
-		// Rewind
-		m_uniformPtr = persistent;
-		diff = 0;
-	}
+	ANKI_ASSERT(mtl.getDefaultBlockSize() < MATERIAL_BLOCK_MAX_SIZE);
 
 	// Call the visitor
 	//
@@ -298,17 +268,10 @@ void RenderableDrawer::setupUniforms(
 		(void)err;
 	}
 
-	// Update the uniform descriptor
+	// Update the uniforms
 	//
-	m_uniformBuff.bindShaderBuffer(
-		m_cmdBuff,
-		m_uniformPtr - persistent,
-		mtl.getDefaultBlockSize(),
-		0);
-
-	// Advance the uniform ptr
-	m_uniformPtr += blockSize;
-	m_uniformsUsedSize += blockSize + diff;
+	m_cmdBuff.updateDynamicUniforms(
+		&m_tempUniformBuffer[0], mtl.getDefaultBlockSize());
 }
 
 //==============================================================================
@@ -406,12 +369,9 @@ void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
 		m_cmdBuff.setPatchVertexCount(3);
 	}
 
-	if(m_r->getFramesCount() > m_uniformsUsedSizeFrame)
-	{
-		// New frame, reset used size
-		m_uniformsUsedSize = 0;
-		m_uniformsUsedSizeFrame = m_r->getFramesCount();
-	}
+	m_tempUniformBuffer = SArray<U8>(
+		m_r->getFrameAllocator().allocate(MATERIAL_BLOCK_MAX_SIZE),
+		MATERIAL_BLOCK_MAX_SIZE);
 }
 
 //==============================================================================
@@ -419,11 +379,6 @@ void RenderableDrawer::finishDraw()
 {
 	// Release the job chain
 	m_cmdBuff = CommandBufferHandle();
-
-	if(m_uniformsUsedSize > MAX_UNIFORM_BUFFER_SIZE / 3)
-	{
-		ANKI_LOGW("Increase the uniform buffer to avoid corruption");
-	}
 }
 
 }  // end namespace anki

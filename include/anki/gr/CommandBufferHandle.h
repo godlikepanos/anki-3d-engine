@@ -25,7 +25,7 @@ public:
 	~CommandBufferHandle();
 
 	/// Create command buffer
-	ANKI_USE_RESULT Error create(GrManager* manager, 
+	ANKI_USE_RESULT Error create(GrManager* manager,
 		CommandBufferInitHints hints = CommandBufferInitHints());
 
 	/// Add a user command at the end of the command buffer
@@ -42,6 +42,9 @@ public:
 
 	/// Compute initialization hints
 	CommandBufferInitHints computeInitHints() const;
+
+	/// Update dynamic uniforms.
+	void updateDynamicUniforms(void* data, U32 size);
 
 	/// @name State manipulation
 	/// @{
@@ -72,7 +75,7 @@ public:
 
 	/// Set the operations of stencil fail, depth fail, depth pass. Equivalent
 	/// to glStencilOp
-	void setStencilOperations(GLenum stencFail, GLenum depthFail, 
+	void setStencilOperations(GLenum stencFail, GLenum depthFail,
 		GLenum depthPass);
 
 	/// Enable or not blending. Equivalent to glEnable/glDisable(GL_BLEND)
@@ -100,7 +103,7 @@ public:
 	/// glCullFace(x)
 	void setCullFace(GLenum mode);
 
-	/// Set the polygon offset. Equal to glPolygonOffset() plus 
+	/// Set the polygon offset. Equal to glPolygonOffset() plus
 	/// glEnable(GL_POLYGON_OFFSET_FILL)
 	void setPolygonOffset(F32 factor, F32 units);
 
@@ -122,15 +125,15 @@ public:
 
 	/// @name Drawcalls
 	/// @{
-	void drawElements(GLenum mode, U8 indexSize, 
+	void drawElements(GLenum mode, U8 indexSize,
 		U32 count, U32 instanceCount = 1, U32 firstIndex = 0,
 		U32 baseVertex = 0, U32 baseInstance = 0);
 
 	void drawArrays(GLenum mode, U32 count, U32 instanceCount = 1,
 		U32 first = 0, U32 baseInstance = 0);
 
-	void drawElementsConditional(OcclusionQueryHandle& query, 
-		GLenum mode, U8 indexSize, 
+	void drawElementsConditional(OcclusionQueryHandle& query,
+		GLenum mode, U8 indexSize,
 		U32 count, U32 instanceCount = 1, U32 firstIndex = 0,
 		U32 baseVertex = 0, U32 baseInstance = 0);
 

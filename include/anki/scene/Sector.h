@@ -193,9 +193,6 @@ private:
 		List<Sector*>& visibleSectors,
 		U& spatialsCount);
 
-	static Bool spatialInSector(
-		const Sector& sector, const SpatialComponent& spatial);
-
 	void binSpatial(SpatialComponent* sp);
 };
 
@@ -205,18 +202,15 @@ inline Error SectorGroup::iterateVisibleSceneNodes(
 	PtrSize begin, PtrSize end, TFunc func)
 {
 	Error err = ErrorCode::NONE;
-	SceneNode* prevSn = nullptr;
 
 	SceneNode** it = m_visibleNodes + begin;
 	SceneNode** itend = m_visibleNodes + end;
 	for(; it != itend && !err; ++it)
 	{
 		SceneNode* sn = *it;
-		if(sn != prevSn)
-		{
-			err = func(*sn);
-			prevSn = sn;
-		}
+		ANKI_ASSERT(sn->getSectorVisited() == true);
+		sn->setSectorVisited(false);
+		err = func(*sn);
 	}
 
 	return err;

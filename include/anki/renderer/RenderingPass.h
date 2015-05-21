@@ -47,6 +47,8 @@ public:
 
 	HeapAllocator<U8> getAllocator() const;
 
+	StackAllocator<U8> getFrameAllocator() const;
+
 protected:
 	Renderer* m_r; ///< Know your father
 	Bool8 m_enabled = false;
@@ -71,7 +73,7 @@ protected:
 	{
 	public:
 		FramebufferHandle m_fb;
-		TextureHandle m_rt; 
+		TextureHandle m_rt;
 		ShaderResourcePointer m_frag;
 		PipelineHandle m_ppline;
 	};
@@ -84,7 +86,7 @@ protected:
 
 	Array<Direction, 2> m_dirs;
 
-	ANKI_USE_RESULT Error initBlurring(Renderer& r, U width, U height, U samples, 
+	ANKI_USE_RESULT Error initBlurring(Renderer& r, U width, U height, U samples,
 		F32 blurringDistance);
 
 	ANKI_USE_RESULT Error runBlurring(Renderer& r, CommandBufferHandle& jobs);

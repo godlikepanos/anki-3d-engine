@@ -101,7 +101,7 @@ void App::cleanup()
 }
 
 //==============================================================================
-Error App::create(const ConfigSet& config, 
+Error App::create(const ConfigSet& config,
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	Error err = createInternal(config, allocCb, allocCbUserData);
@@ -115,7 +115,7 @@ Error App::create(const ConfigSet& config,
 }
 
 //==============================================================================
-Error App::createInternal(const ConfigSet& config_, 
+Error App::createInternal(const ConfigSet& config_,
 	AllocAlignedCallback allocCb, void* allocCbUserData)
 {
 	m_allocCb = allocCb;
@@ -238,7 +238,8 @@ Error App::createInternal(const ConfigSet& config_,
 		m_threadpool,
 		m_resources,
 		m_gr,
-		m_heapAlloc,
+		m_allocCb,
+		m_allocCbData,
 		config,
 		&m_globalTimestamp));
 
@@ -248,13 +249,13 @@ Error App::createInternal(const ConfigSet& config_,
 	// Scene
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 
-	ANKI_CHECK(m_scene->create(m_allocCb, m_allocCbData, 
+	ANKI_CHECK(m_scene->create(m_allocCb, m_allocCbData,
 		config.get("sceneFrameAllocatorSize"), m_threadpool, m_resources,
 		m_input, &m_globalTimestamp));
 
 	// Script
 	m_script = m_heapAlloc.newInstance<ScriptManager>();
-		
+
 	ANKI_CHECK(m_script->create(m_allocCb, m_allocCbData, m_scene));
 
 	ANKI_LOGI("Application initialized");

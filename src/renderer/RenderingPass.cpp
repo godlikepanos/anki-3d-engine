@@ -34,6 +34,12 @@ HeapAllocator<U8> RenderingPass::getAllocator() const
 }
 
 //==============================================================================
+StackAllocator<U8> RenderingPass::getFrameAllocator() const
+{
+	return m_r->getFrameAllocator();
+}
+
+//==============================================================================
 ResourceManager& RenderingPass::getResourceManager()
 {
 	return m_r->_getResourceManager();
@@ -50,7 +56,7 @@ Error BlurringRenderingPass::initBlurring(
 		"#define COL_RGB\n"
 		"#define BLURRING_DIST float(%f)\n"
 		"#define IMG_DIMENSION %u\n"
-		"#define SAMPLES %u\n", 
+		"#define SAMPLES %u\n",
 		blurringDistance, height, samples);
 
 	pps[0].sprintf(
@@ -65,7 +71,7 @@ Error BlurringRenderingPass::initBlurring(
 	{
 		Direction& dir = m_dirs[i];
 
-		ANKI_CHECK(r.createRenderTarget(width, height, 
+		ANKI_CHECK(r.createRenderTarget(width, height,
 			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
 			1, SamplingFilter::LINEAR, 1, dir.m_rt));
 
@@ -73,12 +79,12 @@ Error BlurringRenderingPass::initBlurring(
 		FramebufferHandle::Initializer fbInit;
 		fbInit.m_colorAttachmentsCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
-		fbInit.m_colorAttachments[0].m_loadOperation = 
+		fbInit.m_colorAttachments[0].m_loadOperation =
 			AttachmentLoadOperation::DONT_CARE;
 		ANKI_CHECK(dir.m_fb.create(&getGrManager(), fbInit));
 
 		ANKI_CHECK(dir.m_frag.loadToCache(&getResourceManager(),
-			"shaders/VariableSamplingBlurGeneric.frag.glsl", 
+			"shaders/VariableSamplingBlurGeneric.frag.glsl",
 			pps[i].toCString(), "r_"));
 
 		ANKI_CHECK(r.createDrawQuadPipeline(
@@ -93,10 +99,10 @@ Error BlurringRenderingPass::runBlurring(
 	Renderer& r, CommandBufferHandle& cmdb)
 {
 	// H pass input
-	m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_rt.bind(cmdb, 1); 
+	m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_rt.bind(cmdb, 1);
 
 	// V pass input
-	m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_rt.bind(cmdb, 0); 
+	m_dirs[enumToValue(DirectionEnum::HORIZONTAL)].m_rt.bind(cmdb, 0);
 
 	for(U32 i = 0; i < m_blurringIterationsCount; i++)
 	{

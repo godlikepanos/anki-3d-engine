@@ -132,7 +132,7 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 
 	List<SceneNode*> frustumsList;
 
-#if 1
+#if 0
 	// Chose the test range and a few other things
 	PtrSize start, end;
 	U nodesCount = m_shared->m_scene->getSceneNodesCount();

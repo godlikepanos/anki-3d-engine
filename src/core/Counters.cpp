@@ -60,7 +60,7 @@ Error CountersManager::create(
 
 	U count = static_cast<U>(Counter::COUNT);
 	m_alloc = alloc;
-	
+
 	m_perframeValues.create(m_alloc, count);
 
 	m_perrunValues.create(m_alloc, count);
@@ -246,15 +246,15 @@ void CountersManager::flush()
 			{
 				if(inf.m_flags & CF_FPS)
 				{
-					F32 fps = 
-						(F64)(*m_globalTimestamp) 
+					F32 fps =
+						(F64)(*m_globalTimestamp)
 						/ (m_perrunValues[i].m_float / 1000.0);
 
 					err = m_perrunFile.writeText("%" MAX_NAME "f", fps);
 				}
 				else
 				{
-					err = m_perrunFile.writeText("%" MAX_NAME "f", 
+					err = m_perrunFile.writeText("%" MAX_NAME "f",
 						&m_perrunValues[i].m_float);
 				}
 			}
@@ -317,7 +317,7 @@ void TraceManager::flush(ThreadTraceManager& thread)
 	{
 		const ThreadTraceManager::Event& event = thread.m_bufferedEvents[i];
 
-		err = m_traceFile.writeText("%u, %u, %s, %f, %f\n", 
+		err = m_traceFile.writeText("%u, %u, %s, %f, %f\n",
 			thread.m_id,
 			event.m_depth,
 			event.m_name,
@@ -379,6 +379,8 @@ void ThreadTraceManager::popEvent()
 }
 
 } // end namespace anki
+
+#undef MAX_NAME
 
 #endif // ANKI_ENABLE_COUNTERS
 
