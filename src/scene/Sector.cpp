@@ -104,6 +104,8 @@ void PortalSectorBase::updateTransform(const Transform& trf)
 	{
 		m_shapeStorageWSpace[i] = trf.transform(m_shapeStorageLSpace[i]);
 	}
+
+	m_shape->computeAabb(m_aabb);
 }
 
 //==============================================================================
@@ -165,7 +167,13 @@ Error Portal::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 			Sector* sector = *it;
 
 			Bool collide = testCollisionShapes(
-				*m_shape, sector->getBoundingShape());
+				m_aabb, sector->m_aabb);
+
+			if(collide)
+			{
+				collide = testCollisionShapes(
+					*m_shape, sector->getBoundingShape());
+			}
 
 			if(collide)
 			{
@@ -409,8 +417,13 @@ Error Sector::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 		{
 			Portal* portal = *it;
 
-			Bool collide = testCollisionShapes(
-				*m_shape, portal->getBoundingShape());
+			Bool collide = testCollisionShapes(m_aabb, portal->m_aabb);
+
+			if(collide)
+			{
+				collide = testCollisionShapes(
+					*m_shape, portal->getBoundingShape());
+			}
 
 			if(collide)
 			{
@@ -459,8 +472,13 @@ void SectorGroup::binSpatial(SpatialComponent* sp)
 	{
 		Sector& sector = *(*it);
 
-		Bool collide = testCollisionShapes(
-			sector.getBoundingShape(), sp->getSpatialCollisionShape());
+		Bool collide = testCollisionShapes(sector.m_aabb, sp->getAabb());
+
+		if(collide)
+		{
+			collide = testCollisionShapes(
+				sector.getBoundingShape(), sp->getSpatialCollisionShape());
+		}
 
 		if(collide)
 		{
@@ -498,7 +516,14 @@ void SectorGroup::findVisibleSectors(
 	auto end = m_sectors.getEnd();
 	for(; it != end; ++it)
 	{
-		if(testCollisionShapes(eye, (*it)->getBoundingShape()))
+		Bool collide = testCollisionShapes(eye, (*it)->m_aabb);
+
+		if(collide)
+		{
+			collide = testCollisionShapes(eye, (*it)->getBoundingShape());
+		}
+
+		if(collide)
 		{
 			break;
 		}
@@ -553,6 +578,7 @@ void SectorGroup::findVisibleSectorsInternal(
 	spatialsCount += s.m_spatials.getSize();
 
 	// Check visible portals
+#if 1
 	auto itp = s.m_portals.getBegin();
 	auto itend = s.m_portals.getEnd();
 	for(; itp != itend; ++itp)
@@ -572,6 +598,7 @@ void SectorGroup::findVisibleSectorsInternal(
 			}
 		}
 	}
+#endif
 }
 
 //==============================================================================

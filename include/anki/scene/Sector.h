@@ -38,6 +38,9 @@ public:
 /// The base for portals and sectors.
 class PortalSectorBase: public SceneNode
 {
+	friend class Portal;
+	friend class Sector;
+
 public:
 	PortalSectorBase(SceneGraph* scene)
 	:	SceneNode(scene)
@@ -69,6 +72,7 @@ protected:
 	DArray<Vec4> m_shapeStorageLSpace;
 	DArray<Vec4> m_shapeStorageWSpace;
 	CollisionShape* m_shape = nullptr;
+	Aabb m_aabb;
 	DArray<U16> m_vertIndices; ///< Used in debug draw
 	SpinLock m_mtx;
 
