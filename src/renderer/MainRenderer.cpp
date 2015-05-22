@@ -201,7 +201,7 @@ void MainRenderer::takeScreenshotTga(const char* filename)
 void MainRenderer::takeScreenshot(const char* filename)
 {
 #if 0
-	String ext = getFileExtension(filename, _getAllocator());
+	String ext = getFileExtension(filename, getAllocator());
 
 	// exec from this extension
 	if(ext == "tga")

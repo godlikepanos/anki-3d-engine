@@ -251,7 +251,7 @@ public:
 		return *m_gr;
 	}
 
-	HeapAllocator<U8>& _getAllocator()
+	HeapAllocator<U8>& getAllocator()
 	{
 		return m_alloc;
 	}

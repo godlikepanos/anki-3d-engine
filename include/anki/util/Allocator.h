@@ -48,7 +48,7 @@ public:
 	using const_reference = const T&;
 	using value_type = T;
 
-	/// Move assignments between containers will copy the allocator as well. 
+	/// Move assignments between containers will copy the allocator as well.
 	/// If propagate_on_container_move_assignment is not defined then not moves
 	/// are going to happen
 	using propagate_on_container_move_assignment = std::true_type;
@@ -148,10 +148,10 @@ public:
 
 		size_type size = n * sizeof(value_type);
 
-		// Operator new doesn't respect alignment (in GCC at least) so use 
+		// Operator new doesn't respect alignment (in GCC at least) so use
 		// the type's alignment. If hint override the alignment
-		PtrSize alignment = (hint != nullptr) 
-			? *reinterpret_cast<const PtrSize*>(hint) 
+		PtrSize alignment = (hint != nullptr)
+			? *reinterpret_cast<const PtrSize*>(hint)
 			: alignof(value_type);
 
 		void* out = m_pool->allocate(size, alignment);
@@ -188,6 +188,7 @@ public:
 	/// Call destructor
 	void destroy(pointer p)
 	{
+		static_assert(sizeof(T) > 0, "Incomplete type");
 		ANKI_ASSERT(p != nullptr);
 		p->~T();
 	}
@@ -196,6 +197,7 @@ public:
 	template<typename Y>
 	void destroy(Y* p)
 	{
+		static_assert(sizeof(T) > 0, "Incomplete type");
 		ANKI_ASSERT(p != nullptr);
 		p->~Y();
 	}
@@ -392,7 +394,7 @@ inline Bool operator!=(
 template<typename T>
 using GenericMemoryPoolAllocator = GenericPoolAllocator<T, BaseMemoryPool>;
 
-/// Heap based allocator. The default allocator. It uses malloc and free for 
+/// Heap based allocator. The default allocator. It uses malloc and free for
 /// allocations/deallocations
 template<typename T>
 using HeapAllocator = GenericPoolAllocator<T, HeapMemoryPool>;

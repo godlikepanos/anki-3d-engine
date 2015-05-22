@@ -33,8 +33,18 @@ public:
 	Ptr<RenderableDrawer> m_drawer;
 	U8 m_instanceCount;
 	CommandBufferHandle m_cmdBuff;
+	Array<U8, MATERIAL_BLOCK_MAX_SIZE> m_tempUniformBuffer;
 
 	F32 m_flod;
+
+	SetupRenderableVariableVisitor(RenderableDrawer* drawer)
+	:	m_drawer(drawer)
+	{}
+
+	HeapAllocator<U8> getAllocator() const
+	{
+		return m_drawer->m_r->getAllocator();
+	}
 
 	/// Set a uniform in a client block
 	template<typename T>
@@ -44,8 +54,8 @@ public:
 		mtlVar.writeShaderBlockMemory<T>(
 			value,
 			size,
-			&m_drawer->m_tempUniformBuffer[0],
-			&m_drawer->m_tempUniformBuffer[0] + MATERIAL_BLOCK_MAX_SIZE);
+			&m_tempUniformBuffer[0],
+			&m_tempUniformBuffer[0] + MATERIAL_BLOCK_MAX_SIZE);
 	}
 
 	template<typename TRenderableVariableTemplate>
@@ -229,9 +239,19 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 }
 
 //==============================================================================
+RenderableDrawer::RenderableDrawer()
+{}
+
+//==============================================================================
+RenderableDrawer::~RenderableDrawer()
+{}
+
+//==============================================================================
 Error RenderableDrawer::create(Renderer* r)
 {
 	m_r = r;
+	m_variableVisitor.reset(
+		m_r->getAllocator().newInstance<SetupRenderableVariableVisitor>(this));
 	return ErrorCode::NONE;
 }
 
@@ -248,30 +268,27 @@ void RenderableDrawer::setupUniforms(
 
 	// Call the visitor
 	//
-	SetupRenderableVariableVisitor vis;
-
-	vis.m_visibleNode = &visibleNode;
-	vis.m_renderable = &renderable;
-	vis.m_fr = &fr;
-	vis.m_drawer = this;
-	vis.m_instanceCount = visibleNode.m_spatialsCount;
-	vis.m_cmdBuff = m_cmdBuff;
-	vis.m_flod = flod;
+	m_variableVisitor->m_visibleNode = &visibleNode;
+	m_variableVisitor->m_renderable = &renderable;
+	m_variableVisitor->m_fr = &fr;
+	m_variableVisitor->m_instanceCount = visibleNode.m_spatialsCount;
+	m_variableVisitor->m_cmdBuff = m_cmdBuff;
+	m_variableVisitor->m_flod = flod;
 
 	for(auto it = renderable.getVariablesBegin();
 		it != renderable.getVariablesEnd(); ++it)
 	{
 		RenderComponentVariable* rvar = *it;
 
-		vis.m_rvar = rvar;
-		Error err = rvar->acceptVisitor(vis);
+		m_variableVisitor->m_rvar = rvar;
+		Error err = rvar->acceptVisitor(*m_variableVisitor);
 		(void)err;
 	}
 
 	// Update the uniforms
 	//
 	m_cmdBuff.updateDynamicUniforms(
-		&m_tempUniformBuffer[0], mtl.getDefaultBlockSize());
+		&m_variableVisitor->m_tempUniformBuffer[0], mtl.getDefaultBlockSize());
 }
 
 //==============================================================================
@@ -368,10 +385,6 @@ void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
 	{
 		m_cmdBuff.setPatchVertexCount(3);
 	}
-
-	m_tempUniformBuffer = SArray<U8>(
-		m_r->getFrameAllocator().allocate(MATERIAL_BLOCK_MAX_SIZE),
-		MATERIAL_BLOCK_MAX_SIZE);
 }
 
 //==============================================================================

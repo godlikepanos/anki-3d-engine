@@ -16,6 +16,7 @@ namespace anki {
 
 // Forward
 class Renderer;
+class SetupRenderableVariableVisitor;
 
 /// @addtogroup renderer
 /// @{
@@ -33,7 +34,9 @@ class RenderableDrawer
 	friend class SetupRenderableVariableVisitor;
 
 public:
-	static const U32 MAX_UNIFORM_BUFFER_SIZE = 1024 * 1024 * 2;
+	RenderableDrawer();
+
+	~RenderableDrawer();
 
 	/// The one and only constructor
 	ANKI_USE_RESULT Error create(Renderer* r);
@@ -49,7 +52,7 @@ public:
 
 private:
 	Renderer* m_r;
-	SArray<U8> m_tempUniformBuffer;
+	UniquePtr<SetupRenderableVariableVisitor> m_variableVisitor;
 
 	/// @name State
 	/// @{
