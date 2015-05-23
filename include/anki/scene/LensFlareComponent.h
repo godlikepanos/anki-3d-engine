@@ -71,19 +71,19 @@ public:
 		return m_colorMul;
 	}
 
-	TextureHandle getTexture() const
+	TexturePtr getTexture() const
 	{
 		return m_tex->getGlTexture();
 	}
 
-	OcclusionQueryHandle& getOcclusionQueryToTest();
+	OcclusionQueryPtr& getOcclusionQueryToTest();
 
 	/// Get the occlusion query to test.
 	/// @param[out] q The returned query.
 	/// @param[out] queryInvalid It's true if the query has an old result that
 	///             cannot be used.
 	void getOcclusionQueryToCheck(
-		OcclusionQueryHandle& q, Bool& queryInvalid);
+		OcclusionQueryPtr& q, Bool& queryInvalid);
 
 	/// @name SceneComponent virtuals
 	/// @{
@@ -104,7 +104,7 @@ private:
 	Vec2 m_firstFlareSize = Vec2(1.0);
 	Vec2 m_otherFlareSize = Vec2(1.0);
 
-	Array<OcclusionQueryHandle, 3> m_queries;
+	Array<OcclusionQueryPtr, 3> m_queries;
 	Array<Timestamp, 3> m_queryTestTimestamp = {{MAX_U32, MAX_U32, MAX_U32}};
 	U8 m_crntQueryIndex = 0;
 

@@ -33,6 +33,7 @@
 #include "anki/scene/LensFlareComponent.h"
 #include "anki/scene/PlayerNode.h"
 #include "anki/scene/PlayerControllerComponent.h"
+#include "anki/Gr.h"
 
 using namespace anki;
 
@@ -385,29 +386,6 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 			bodyc->setTransform(
 				Transform(pos, Mat3x4::getIdentity(), 1.0));
 		}*/
-
-		scene.newSceneNode<ModelNode>("aaaaaaa", horse,
-			"models/crate0/crate0.ankimdl");
-
-		horse->getComponent<MoveComponent>().enableBits(
-			MoveComponent::Flag::IGNORE_LOCAL_TRANSFORM);
-
-		BodyNode* bnode;
-		scene.newSceneNode<BodyNode>("bbbbbbb", bnode,
-			"models/crate0/crate0.ankicl");
-
-		bnode->addChild(horse);
-
-		BodyComponent* bodyc = bnode->tryGetComponent<BodyComponent>();
-
-		PhysicsBodyPtr body = bodyc->getPhysicsBody();
-		body->setElasticity(0.001);
-		body->setFriction(1.01);
-
-		Vec4 pos(randRange(3, 15), 10, randRange(-6, 8), 0);
-
-		bodyc->setTransform(
-			Transform(pos, Mat3x4::getIdentity(), 1.0));
 	}
 
 	if(in.getKey(KeyCode::F1) == 1)

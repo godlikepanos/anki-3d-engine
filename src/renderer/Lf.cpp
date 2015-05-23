@@ -72,7 +72,7 @@ Error Lf::initSprite(const ConfigSet& config)
 	ANKI_CHECK(m_realFrag.loadToCache(&getResourceManager(), 
 		"shaders/LfSpritePass.frag.glsl", pps.toCString(), "r_"));
 
-	PipelineHandle::Initializer init;
+	PipelinePtr::Initializer init;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_realVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_realFrag->getGrShader();
 	ANKI_CHECK(m_realPpline.create(&getGrManager(), init));
@@ -118,7 +118,7 @@ Error Lf::initOcclusion(const ConfigSet& config)
 	ANKI_CHECK(m_occlusionFrag.load("shaders/LfOcclusion.frag.glsl",
 		&getResourceManager()));
 
-	PipelineHandle::Initializer init;
+	PipelinePtr::Initializer init;
 		init.m_shaders[U(ShaderType::VERTEX)] = m_occlusionVert->getGrShader();
 		init.m_shaders[U(ShaderType::FRAGMENT)] = 
 			m_occlusionFrag->getGrShader();
@@ -137,7 +137,7 @@ Error Lf::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-void Lf::runOcclusionTests(CommandBufferHandle& cmdb)
+void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 {
 	// Retrieve some things
 	SceneGraph& scene = m_r->getSceneGraph();
@@ -164,7 +164,7 @@ void Lf::runOcclusionTests(CommandBufferHandle& cmdb)
 		m_mvpBuff.bindShaderBuffer(cmdb, 0, sizeof(Mat4), 0);
 
 		// Allocate vertices and fire write job
-		BufferHandle& positionsVertBuff = m_positionsVertBuff[
+		BufferPtr& positionsVertBuff = m_positionsVertBuff[
 			getGlobalTimestamp() % m_positionsVertBuff.getSize()];
 		ANKI_ASSERT(sizeof(Vec3) * totalCount <= positionsVertBuff.getSize());
 		
@@ -186,7 +186,7 @@ void Lf::runOcclusionTests(CommandBufferHandle& cmdb)
 			*positions = lf.getWorldPosition().xyz();
 
 			// Draw and query
-			OcclusionQueryHandle& query = lf.getOcclusionQueryToTest();
+			OcclusionQueryPtr& query = lf.getOcclusionQueryToTest();
 			query.begin(cmdb);
 
 			cmdb.drawArrays(GL_POINTS, 1, 1, positions - initialPositions);
@@ -205,7 +205,7 @@ void Lf::runOcclusionTests(CommandBufferHandle& cmdb)
 }
 
 //==============================================================================
-void Lf::run(CommandBufferHandle& cmdb)
+void Lf::run(CommandBufferPtr& cmdb)
 {
 	// Retrieve some things
 	SceneGraph& scene = m_r->getSceneGraph();
@@ -227,7 +227,7 @@ void Lf::run(CommandBufferHandle& cmdb)
 		cmdb.setBlendFunctions(GL_ONE, GL_ONE);
 
 		// Send the command to write the buffer now
-		BufferHandle& flareDataBuff = m_flareDataBuff[
+		BufferPtr& flareDataBuff = m_flareDataBuff[
 			getGlobalTimestamp() % m_flareDataBuff.getSize()];
 
 		Sprite* sprites = static_cast<Sprite*>(
@@ -276,7 +276,7 @@ void Lf::run(CommandBufferHandle& cmdb)
 				sizeof(Sprite) * count,
 				0);
 
-			OcclusionQueryHandle query;
+			OcclusionQueryPtr query;
 			Bool queryInvalid;
 			lf.getOcclusionQueryToCheck(query, queryInvalid);
 			

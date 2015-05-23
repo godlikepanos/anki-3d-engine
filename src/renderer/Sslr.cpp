@@ -65,7 +65,7 @@ Error Sslr::init(const ConfigSet& config)
 			1, SamplingFilter::LINEAR, 1, dir.m_rt));
 
 		// Create FB
-		FramebufferHandle::Initializer fbInit;
+		FramebufferPtr::Initializer fbInit;
 		fbInit.m_colorAttachmentsCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
 		fbInit.m_colorAttachments[0].m_loadOperation =
@@ -77,7 +77,7 @@ Error Sslr::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Sslr::run(CommandBufferHandle& cmdBuff)
+Error Sslr::run(CommandBufferPtr& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -88,7 +88,7 @@ Error Sslr::run(CommandBufferHandle& cmdBuff)
 
 	m_reflectionPpline.bind(cmdBuff);
 
-	Array<TextureHandle, 4> tarr = {{
+	Array<TexturePtr, 4> tarr = {{
 		m_r->getIs()._getRt(),
 		m_r->getMs().getDepthRt(),
 		m_r->getMs().getRt1(),
@@ -99,7 +99,7 @@ Error Sslr::run(CommandBufferHandle& cmdBuff)
 
 	m_r->drawQuad(cmdBuff);
 
-	SamplerHandle::bindDefault(cmdBuff, 1); // Unbind the sampler
+	SamplerPtr::bindDefault(cmdBuff, 1); // Unbind the sampler
 
 	// Blurring
 	//

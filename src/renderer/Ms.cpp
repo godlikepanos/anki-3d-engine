@@ -44,7 +44,7 @@ Error Ms::createRt(U32 index, U32 samples)
 	loadop = AttachmentLoadOperation::CLEAR;
 #endif
 
-	FramebufferHandle::Initializer fbInit;
+	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 3;
 	fbInit.m_colorAttachments[0].m_texture = plane.m_rt0;
 	fbInit.m_colorAttachments[0].m_loadOperation = loadop;
@@ -89,7 +89,7 @@ Error Ms::initInternal(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Ms::run(CommandBufferHandle& cmdb)
+Error Ms::run(CommandBufferPtr& cmdb)
 {
 	// Chose the multisampled or the singlesampled framebuffer
 	U planeId = 0;
@@ -155,7 +155,7 @@ Error Ms::run(CommandBufferHandle& cmdb)
 }
 
 //==============================================================================
-void Ms::generateMipmaps(CommandBufferHandle& cmdb)
+void Ms::generateMipmaps(CommandBufferPtr& cmdb)
 {
 	U planeId = (m_r->getSamples() == 1) ? 1 : 0;
 	m_planes[planeId].m_depthRt.generateMipmaps(cmdb);

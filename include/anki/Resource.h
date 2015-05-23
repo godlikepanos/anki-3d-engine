@@ -4,14 +4,13 @@
 // http://www.anki3d.org/LICENSE
 
 /// @file
-/// This file contains the public resource headers and all the resource classes 
+/// This file contains the public resource headers and all the resource classes
 /// that the rest of AnKi should use
 
 #ifndef ANKI_RESOURCE_H
 #define ANKI_RESOURCE_H
 
 /// @defgroup resource Collection of resources and management
-/// @ingroup anki_public
 
 /// @defgroup resource_private Private resource interfaces
 /// Other modules should not use them.

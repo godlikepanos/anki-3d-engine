@@ -52,8 +52,7 @@ void OcclusionQueryImpl::destroy()
 {
 	if(m_glName != 0)
 	{
-		glDeleteQueries(1, &m_glName);
-		m_glName = 0;
+		destroyDeferred(glDeleteQueries);
 	}
 }
 

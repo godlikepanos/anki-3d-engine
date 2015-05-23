@@ -351,7 +351,7 @@ public:
 	}
 
 	ANKI_USE_RESULT Error getProgramPipeline(
-		const RenderingKey& key, PipelineHandle& out);
+		const RenderingKey& key, PipelinePtr& out);
 
 	/// Load a material file
 	ANKI_USE_RESULT Error load(const CString& filename);
@@ -367,7 +367,7 @@ private:
 	Dictionary<MaterialVariable*> m_varDict;
 
 	DArray<ShaderResourcePointer> m_progs;
-	DArray<PipelineHandle> m_pplines;
+	DArray<PipelinePtr> m_pplines;
 
 	U32 m_shaderBlockSize;
 

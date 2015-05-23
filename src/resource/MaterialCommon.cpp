@@ -13,7 +13,7 @@ namespace anki {
 //==============================================================================
 Error MaterialResourceData::create(ResourceManager& resources)
 {
-	PipelineHandle::Initializer init;
+	PipelinePtr::Initializer init;
 	init.m_depthStencil.m_depthWriteEnabled = true;
 	init.m_color.m_colorAttachmentsCount = MS_COLOR_ATTACHMENTS_COUNT;
 	for(U i = 0; i < MS_COLOR_ATTACHMENTS_COUNT; ++i)

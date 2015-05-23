@@ -35,7 +35,7 @@ Error DebugDrawer::create(Renderer* r)
 	ANKI_CHECK(m_vert.load("shaders/Dbg.vert.glsl", &r->_getResourceManager()));
 	ANKI_CHECK(m_frag.load("shaders/Dbg.frag.glsl", &r->_getResourceManager()));
 
-	PipelineHandle::Initializer init;
+	PipelinePtr::Initializer init;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
 

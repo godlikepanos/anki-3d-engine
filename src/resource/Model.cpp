@@ -28,9 +28,9 @@ ModelPatchBase::~ModelPatchBase()
 //==============================================================================
 Error ModelPatchBase::createVertexDesc(
 	const Mesh& mesh,
-	CommandBufferHandle& vertexJobs)
+	CommandBufferPtr& vertexJobs)
 {
-	BufferHandle vbo;
+	BufferPtr vbo;
 	U32 size;
 	GLenum type;
 	U32 stride;
@@ -74,8 +74,8 @@ Error ModelPatchBase::createVertexDesc(
 //==============================================================================
 Error ModelPatchBase::getRenderingDataSub(
 	const RenderingKey& key,
-	CommandBufferHandle& vertJobs,
-	PipelineHandle& ppline,
+	CommandBufferPtr& vertJobs,
+	PipelinePtr& ppline,
 	const U8* subMeshIndexArray,
 	U32 subMeshIndexCount,
 	Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
@@ -167,7 +167,7 @@ Error ModelPatchBase::create(GrManager* gl)
 			mesh = &getMesh(meshKey);
 
 			// Create vert descriptor
-			CommandBufferHandle vertJobs;
+			CommandBufferPtr vertJobs;
 			ANKI_CHECK(vertJobs.create(gl));
 			ANKI_CHECK(createVertexDesc(*mesh, vertJobs));
 

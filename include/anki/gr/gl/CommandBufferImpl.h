@@ -30,7 +30,7 @@ public:
 };
 
 /// A number of GL commands organized in a chain
-class CommandBufferImpl: public GrObject, public NonCopyable
+class CommandBufferImpl: public GrObject
 {
 public:
 	using InitHints = CommandBufferInitHints;

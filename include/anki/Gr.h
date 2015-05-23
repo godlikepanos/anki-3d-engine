@@ -11,22 +11,21 @@
 #define ANKI_GR_H
 
 /// @defgroup graphics Graphics backend abstraction
-/// @ingroup anki_private
 
-/// @defgroup openg OpenGL backend
+/// @defgroup opengl OpenGL backend
 /// @ingroup graphics
 
-#include "anki/gr/BufferHandle.h"
-#include "anki/gr/TextureHandle.h"
-#include "anki/gr/SamplerHandle.h"
-#include "anki/gr/ShaderHandle.h"
+#include "anki/gr/BufferPtr.h"
+#include "anki/gr/TexturePtr.h"
+#include "anki/gr/SamplerPtr.h"
+#include "anki/gr/ShaderPtr.h"
 
-#include "anki/gr/FramebufferHandle.h"
+#include "anki/gr/FramebufferPtr.h"
 #include "anki/gr/PipelineCommon.h"
-#include "anki/gr/PipelineHandle.h"
+#include "anki/gr/PipelinePtr.h"
 
-#include "anki/gr/CommandBufferHandle.h"
-#include "anki/gr/OcclusionQueryHandle.h"
+#include "anki/gr/CommandBufferPtr.h"
+#include "anki/gr/OcclusionQueryPtr.h"
 #include "anki/gr/GrManager.h"
 
 #endif

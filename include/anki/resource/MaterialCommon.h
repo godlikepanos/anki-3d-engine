@@ -20,7 +20,7 @@ namespace anki {
 class MaterialResourceData: public NonCopyable
 {
 public:
-	PipelineHandle m_pipelines[U(Pass::COUNT)];
+	PipelinePtr m_pipelines[U(Pass::COUNT)];
 
 	MaterialResourceData() = default;
 	~MaterialResourceData() = default;

@@ -39,7 +39,7 @@ public:
 
 private:
 	ShaderResourcePointer m_blitFrag;
-	PipelineHandle m_blitPpline;
+	PipelinePtr m_blitPpline;
 
 	/// Optimize job chain
 	Array<CommandBufferInitHints, JOB_CHAINS_COUNT> m_jobsInitHints;

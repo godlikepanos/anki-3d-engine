@@ -74,7 +74,7 @@ public:
 	ANKI_USE_RESULT Error init();
 
 	/// Issue the GPU job
-	void runMinMax(CommandBufferHandle& cmd);
+	void runMinMax(CommandBufferPtr& cmd);
 
 	/// Update the tiles before doing visibility tests
 	void updateTiles(Camera& cam);
@@ -85,7 +85,7 @@ public:
 
 	/// @privatesection
 	/// @{
-	BufferHandle& getTilesBuffer()
+	BufferPtr& getTilesBuffer()
 	{
 		U i = (getGlobalTimestamp() - m_pbos.getSize() + 1) % m_pbos.getSize();
 		return m_pbos[i];
@@ -103,13 +103,13 @@ private:
 	SArray<Plane> m_farPlanesW;
 
 	/// PBO buffer that is used to read the data
-	Array<BufferHandle, 2> m_pbos;
+	Array<BufferPtr, 2> m_pbos;
 	Array<Vec2*, 2> m_pbosAddress;
 	DArray<Vec2> m_prevMinMaxDepth;
 
 	/// Main shader program
 	ShaderResourcePointer m_shader;
-	PipelineHandle m_ppline;
+	PipelinePtr m_ppline;
 
 	/// Used to check if the camera is changed and we need to update the planes
 	const Camera* m_prevCam = nullptr;

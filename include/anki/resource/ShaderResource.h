@@ -26,7 +26,7 @@ public:
 	~ShaderResource()
 	{}
 
-	const ShaderHandle& getGrShader() const
+	const ShaderPtr& getGrShader() const
 	{
 		return m_shader;
 	}
@@ -60,7 +60,7 @@ public:
 	}
 
 private:
-	ShaderHandle m_shader;
+	ShaderPtr m_shader;
 	ShaderType m_type;
 };
 /// @}

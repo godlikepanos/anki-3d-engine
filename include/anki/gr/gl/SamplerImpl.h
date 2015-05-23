@@ -48,8 +48,7 @@ private:
 	{
 		if(m_glName)
 		{
-			glDeleteSamplers(1, &m_glName);
-			m_glName = 0;
+			destroyDeferred(glDeleteSamplers);
 		}
 	}
 };

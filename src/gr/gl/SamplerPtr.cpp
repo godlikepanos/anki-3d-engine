@@ -3,10 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/SamplerHandle.h"
+#include "anki/gr/SamplerPtr.h"
 #include "anki/gr/gl/SamplerImpl.h"
 #include "anki/gr/GrManager.h"
-#include "anki/gr/gl/DeferredDeleter.h"	
+#include "anki/gr/gl/CommandBufferImpl.h"
+#include "anki/gr/CommandBufferPtr.h"
 
 namespace anki {
 
@@ -18,10 +19,10 @@ namespace anki {
 class CreateSamplerCommand: public GlCommand
 {
 public:
-	SamplerHandle m_sampler;
+	SamplerPtr m_sampler;
 	SamplerInitializer m_init;
 
-	CreateSamplerCommand(const SamplerHandle& sampler, 
+	CreateSamplerCommand(const SamplerPtr& sampler,
 		const SamplerInitializer& init)
 	:	m_sampler(sampler),
 		m_init(init)
@@ -46,11 +47,11 @@ public:
 class BindSamplerCommand: public GlCommand
 {
 public:
-	SamplerHandle m_sampler;
+	SamplerPtr m_sampler;
 	U8 m_unit;
 
-	BindSamplerCommand(SamplerHandle& sampler, U8 unit)
-	:	m_sampler(sampler), 
+	BindSamplerCommand(SamplerPtr& sampler, U8 unit)
+	:	m_sampler(sampler),
 		m_unit(unit)
 	{}
 
@@ -79,25 +80,22 @@ public:
 };
 
 //==============================================================================
-// SamplerHandle                                                               =
+// SamplerPtr                                                               =
 //==============================================================================
 
 //==============================================================================
-SamplerHandle::SamplerHandle()
+SamplerPtr::SamplerPtr()
 {}
 
 //==============================================================================
-SamplerHandle::~SamplerHandle()
+SamplerPtr::~SamplerPtr()
 {}
 
 //==============================================================================
-Error SamplerHandle::create(CommandBufferHandle& commands, 
+Error SamplerPtr::create(CommandBufferPtr& commands,
 	const SamplerInitializer& init)
 {
-	using DeleteCommand = DeleteObjectCommand<SamplerImpl>;
-	using Deleter = DeferredDeleter<SamplerImpl, DeleteCommand>;
-
-	Base::create(commands.get().getManager(), Deleter());
+	Base::create(commands.get().getManager());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 	commands.get().pushBackNewCommand<CreateSamplerCommand>(*this, init);
 
@@ -105,14 +103,14 @@ Error SamplerHandle::create(CommandBufferHandle& commands,
 }
 
 //==============================================================================
-void SamplerHandle::bind(CommandBufferHandle& commands, U32 unit)
+void SamplerPtr::bind(CommandBufferPtr& commands, U32 unit)
 {
 	ANKI_ASSERT(isCreated());
 	commands.get().pushBackNewCommand<BindSamplerCommand>(*this, unit);
 }
 
 //==============================================================================
-void SamplerHandle::bindDefault(CommandBufferHandle& commands, U32 unit)
+void SamplerPtr::bindDefault(CommandBufferPtr& commands, U32 unit)
 {
 	commands.get().pushBackNewCommand<BindDefaultSamplerCommand>(unit);
 }

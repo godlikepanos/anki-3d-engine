@@ -17,7 +17,7 @@ Fs::~Fs()
 //==============================================================================
 Error Fs::init(const ConfigSet&)
 {
-	FramebufferHandle::Initializer fbInit;
+	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_r->getIs()._getRt();
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -31,7 +31,7 @@ Error Fs::init(const ConfigSet&)
 }
 
 //==============================================================================
-Error Fs::run(CommandBufferHandle& cmdb)
+Error Fs::run(CommandBufferPtr& cmdb)
 {
 	Error err = ErrorCode::NONE;
 

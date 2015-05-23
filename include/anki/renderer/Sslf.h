@@ -24,19 +24,19 @@ public:
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	void run(CommandBufferHandle& cmdb);
+	void run(CommandBufferPtr& cmdb);
 
-	TextureHandle& getRt()
+	TexturePtr& getRt()
 	{
 		return m_rt;
 	}
 	/// @}
 
 private:
-	TextureHandle m_rt;
-	FramebufferHandle m_fb;
+	TexturePtr m_rt;
+	FramebufferPtr m_fb;
 	ShaderResourcePointer m_frag;
-	PipelineHandle m_ppline;
+	PipelinePtr m_ppline;
 	TextureResourcePointer m_lensDirtTex;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);

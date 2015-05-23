@@ -3,9 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/FramebufferHandle.h"
-#include "anki/gr/gl/DeferredDeleter.h"
+#include "anki/gr/FramebufferPtr.h"
 #include "anki/gr/gl/FramebufferImpl.h"
+#include "anki/gr/gl/TextureImpl.h"
+#include "anki/gr/gl/CommandBufferImpl.h"
+#include "anki/gr/CommandBufferPtr.h"
 
 namespace anki {
 
@@ -17,11 +19,11 @@ namespace anki {
 class CreateFramebufferCommand: public GlCommand
 {
 public:
-	FramebufferHandle m_fb;
-	FramebufferHandle::Initializer m_init;
+	FramebufferPtr m_fb;
+	FramebufferPtr::Initializer m_init;
 
-	CreateFramebufferCommand(const FramebufferHandle& handle,
-		const FramebufferHandle::Initializer& init)
+	CreateFramebufferCommand(const FramebufferPtr& handle,
+		const FramebufferPtr::Initializer& init)
 	:	m_fb(handle),
 		m_init(init)
 	{}
@@ -43,9 +45,9 @@ public:
 class BindFramebufferCommand: public GlCommand
 {
 public:
-	FramebufferHandle m_fb;
+	FramebufferPtr m_fb;
 
-	BindFramebufferCommand(FramebufferHandle& fb)
+	BindFramebufferCommand(FramebufferPtr& fb)
 	:	m_fb(fb)
 	{}
 
@@ -60,15 +62,15 @@ public:
 class BlitFramebufferCommand: public GlCommand
 {
 public:
-	FramebufferHandle m_fbDest;
-	FramebufferHandle m_fbSrc;
+	FramebufferPtr m_fbDest;
+	FramebufferPtr m_fbSrc;
 	Array<U32, 4> m_sourceRect;
 	Array<U32, 4> m_destRect;
 	GLbitfield m_attachmentMask;
 	Bool8 m_linear;
 
-	BlitFramebufferCommand(FramebufferHandle& fbDest,
-		const FramebufferHandle& fbSrc,
+	BlitFramebufferCommand(FramebufferPtr& fbDest,
+		const FramebufferPtr& fbSrc,
 		const Array<U32, 4>& sourceRect,
 		const Array<U32, 4>& destRect,
 		GLbitfield attachmentMask,
@@ -91,27 +93,24 @@ public:
 };
 
 //==============================================================================
-// FramebufferHandle                                                           =
+// FramebufferPtr                                                           =
 //==============================================================================
 
 //==============================================================================
-FramebufferHandle::FramebufferHandle()
+FramebufferPtr::FramebufferPtr()
 {}
 
 //==============================================================================
-FramebufferHandle::~FramebufferHandle()
+FramebufferPtr::~FramebufferPtr()
 {}
 
 //==============================================================================
-Error FramebufferHandle::create(GrManager* manager, Initializer& init)
+Error FramebufferPtr::create(GrManager* manager, Initializer& init)
 {
-	using DeleteCommand = DeleteObjectCommand<FramebufferImpl>;
-	using Deleter = DeferredDeleter<FramebufferImpl, DeleteCommand>;
-
-	CommandBufferHandle cmdb;
+	CommandBufferPtr cmdb;
 	ANKI_CHECK(cmdb.create(manager));
 
-	Base::create(cmdb.get().getManager(), Deleter());
+	Base::create(cmdb.get().getManager());
 
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
@@ -122,14 +121,14 @@ Error FramebufferHandle::create(GrManager* manager, Initializer& init)
 }
 
 //==============================================================================
-void FramebufferHandle::bind(CommandBufferHandle& cmdb)
+void FramebufferPtr::bind(CommandBufferPtr& cmdb)
 {
 	cmdb.get().pushBackNewCommand<BindFramebufferCommand>(*this);
 }
 
 //==============================================================================
-void FramebufferHandle::blit(CommandBufferHandle& cmdb,
-	const FramebufferHandle& b,
+void FramebufferPtr::blit(CommandBufferPtr& cmdb,
+	const FramebufferPtr& b,
 	const Array<U32, 4>& sourceRect,
 	const Array<U32, 4>& destRect,
 	GLbitfield attachmentMask,

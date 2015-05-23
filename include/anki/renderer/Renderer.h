@@ -184,19 +184,19 @@ public:
 		return UVec2(TILE_SIZE, TILE_SIZE);
 	}
 
-	const ShaderHandle& getDrawQuadVertexShader() const
+	const ShaderPtr& getDrawQuadVertexShader() const
 	{
 		return m_drawQuadVert->getGrShader();
 	}
 
-	FramebufferHandle& getDefaultFramebuffer()
+	FramebufferPtr& getDefaultFramebuffer()
 	{
 		return m_defaultFb;
 	}
 
 	/// This function does all the rendering stages and produces a final FAI
 	ANKI_USE_RESULT Error render(SceneGraph& scene,
-		Array<CommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff);
+		Array<CommandBufferPtr, JOB_CHAINS_COUNT>& cmdBuff);
 
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
@@ -210,12 +210,12 @@ public:
 
 	/// Draws a quad. Actually it draws 2 triangles because OpenGL will no
 	/// longer support quads
-	void drawQuad(CommandBufferHandle& cmdBuff);
+	void drawQuad(CommandBufferPtr& cmdBuff);
 
 	void drawQuadConditional(
-		OcclusionQueryHandle& q, CommandBufferHandle& cmdBuff);
+		OcclusionQueryPtr& q, CommandBufferPtr& cmdBuff);
 
-	void drawQuadInstanced(CommandBufferHandle& cmdBuff, U32 primitiveCount);
+	void drawQuadInstanced(CommandBufferPtr& cmdBuff, U32 primitiveCount);
 
 	/// Get the LOD given the distance of an object from the camera
 	F32 calculateLod(F32 distance) const
@@ -226,12 +226,12 @@ public:
 	/// Create a framebuffer attachment texture
 	ANKI_USE_RESULT Error createRenderTarget(U32 w, U32 h,
 		const PixelFormat& format, U32 samples, SamplingFilter filter,
-		U mipsCount, TextureHandle& rt);
+		U mipsCount, TexturePtr& rt);
 
 	/// Create a pipeline object that has as a vertex shader the m_drawQuadVert
 	/// and the given fragment progam
 	ANKI_USE_RESULT Error createDrawQuadPipeline(
-		ShaderHandle frag, PipelineHandle& ppline);
+		ShaderPtr frag, PipelinePtr& ppline);
 
 	/// Init the renderer given an initialization class
 	/// @param initializer The initializer class
@@ -316,7 +316,7 @@ private:
 
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
-	BufferHandle m_quadPositionsBuff; ///< The VBO for quad positions
+	BufferPtr m_quadPositionsBuff; ///< The VBO for quad positions
 	ShaderResourcePointer m_drawQuadVert;
 	/// @}
 
@@ -336,7 +336,7 @@ private:
 
 	U m_framesNum; ///< Frame number
 
-	FramebufferHandle m_defaultFb;
+	FramebufferPtr m_defaultFb;
 
 	String m_shadersPrependedSource; ///< String to append in user shaders
 

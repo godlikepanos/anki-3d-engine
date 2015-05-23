@@ -4,7 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/gr/gl/ResourceGroupImpl.h"
-#include "anki/gr/TextureHandle.h"
+#include "anki/gr/TexturePtr.h"
 #include "anki/gr/gl/TextureImpl.h"
 #include "anki/gr/gl/SamplerImpl.h"
 #include "anki/gr/gl/BufferImpl.h"

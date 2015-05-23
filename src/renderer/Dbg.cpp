@@ -41,7 +41,7 @@ Error Dbg::init(const ConfigSet& initializer)
 	enableBits(Flag::ALL);
 
 	// Chose the correct color FAI
-	FramebufferHandle::Initializer fbInit;
+	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	if(m_r->getPps().getEnabled())
@@ -75,7 +75,7 @@ Error Dbg::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Dbg::run(CommandBufferHandle& cmdb)
+Error Dbg::run(CommandBufferPtr& cmdb)
 {
 	Error err = ErrorCode::NONE;
 

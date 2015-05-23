@@ -97,7 +97,7 @@ Error Tiler::initInternal()
 		m_shader.loadToCache(&getResourceManager(),
 		"shaders/TilerMinMax.comp.glsl", pps.toCString(), "r_"));
 
-	PipelineHandle::Initializer pplineInit;
+	PipelinePtr::Initializer pplineInit;
 	pplineInit.m_shaders[U(ShaderType::COMPUTE)] = m_shader->getGrShader();
 	ANKI_CHECK(m_ppline.create(&getGrManager(), pplineInit));
 
@@ -169,7 +169,7 @@ Error Tiler::initPbos()
 }
 
 //==============================================================================
-void Tiler::runMinMax(CommandBufferHandle& cmd)
+void Tiler::runMinMax(CommandBufferPtr& cmd)
 {
 	if(m_enableGpuTests)
 	{

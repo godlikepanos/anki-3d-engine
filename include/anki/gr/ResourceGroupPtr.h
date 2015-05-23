@@ -6,7 +6,7 @@
 #ifndef ANKI_GR_RESOURCE_GROUP_HANDLE_H
 #define ANKI_GR_RESOURCE_GROUP_HANDLE_H
 
-#include "anki/gr/GrHandle.h"
+#include "anki/gr/GrPtr.h"
 #include "anki/gr/ResourceGroupCommon.h"
 
 namespace anki {
@@ -15,15 +15,15 @@ namespace anki {
 /// @{
 
 /// A collection of resource bindings.
-class ResourceGroupHandle: public GrHandle<ResourceGroupImpl>
+class ResourceGroupPtr: public GrPtr<ResourceGroupImpl>
 {
 public:
-	using Base = GrHandle<ResourceGroupImpl>;
+	using Base = GrPtr<ResourceGroupImpl>;
 	using Initializer = ResourceGroupInitializer;
 
-	ResourceGroupHandle();
+	ResourceGroupPtr();
 
-	~ResourceGroupHandle();
+	~ResourceGroupPtr();
 
 	/// Create resource group.
 	ANKI_USE_RESULT Error create(GrManager* manager, const Initializer& init);

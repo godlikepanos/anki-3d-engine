@@ -7,7 +7,7 @@
 #define ANKI_GR_GL_STATE_H
 
 #include "anki/gr/Common.h"
-#include "anki/gr/PipelineHandle.h"
+#include "anki/gr/PipelinePtr.h"
 
 namespace anki {
 
@@ -55,7 +55,7 @@ public:
 	GLenum m_cullMode = GL_BACK;
 	GLenum m_depthCompareFunction = GL_LESS;
 
-	PipelineHandle m_lastPipeline;
+	PipelinePtr m_lastPipeline;
 	/// @}
 
 	/// Global UBO ring buffer

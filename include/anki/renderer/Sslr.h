@@ -25,7 +25,7 @@ public:
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdBuff);
 	/// @}
 
 private:
@@ -34,12 +34,12 @@ private:
 
 	// 1st pass
 	ShaderResourcePointer m_reflectionFrag;
-	PipelineHandle m_reflectionPpline;
-	SamplerHandle m_depthMapSampler;
+	PipelinePtr m_reflectionPpline;
+	SamplerPtr m_depthMapSampler;
 
 	// 2nd pass: blit
 	ShaderResourcePointer m_blitFrag;
-	PipelineHandle m_blitPpline;
+	PipelinePtr m_blitPpline;
 };
 
 /// @}

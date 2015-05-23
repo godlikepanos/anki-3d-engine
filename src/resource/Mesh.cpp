@@ -75,7 +75,7 @@ Error Mesh::createBuffers(const MeshLoader& loader)
 
 //==============================================================================
 void Mesh::getBufferInfo(const VertexAttribute attrib, 
-	BufferHandle& v, U32& size, GLenum& type, 
+	BufferPtr& v, U32& size, GLenum& type, 
 	U32& stride, U32& offset, Bool& normalized) const
 {
 	stride = sizeof(Vec3) + sizeof(U32) + sizeof(U32) 
@@ -83,7 +83,7 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 		+ ((m_weights) ? (sizeof(U8) * 4 + sizeof(HVec4)) : 0);
 
 	// Set all to zero
-	v = BufferHandle();
+	v = BufferPtr();
 	size = 0;
 	type = GL_NONE;
 	offset = 0;

@@ -6,23 +6,23 @@
 #ifndef ANKI_GR_COMMAND_BUFFER_HANDLE_H
 #define ANKI_GR_COMMAND_BUFFER_HANDLE_H
 
-#include "anki/gr/GrHandle.h"
+#include "anki/gr/GrPtr.h"
 
 namespace anki {
 
 /// @addtogroup graphics
 /// @{
 
-/// Command buffer handle
-class CommandBufferHandle: public GrHandle<CommandBufferImpl>
+/// Command buffer.
+class CommandBufferPtr: public GrPtr<CommandBufferImpl>
 {
 public:
-	using Base = GrHandle<CommandBufferImpl>;
+	using Base = GrPtr<CommandBufferImpl>;
 	using UserCallback = Error(*)(void*);
 
-	CommandBufferHandle();
+	CommandBufferPtr();
 
-	~CommandBufferHandle();
+	~CommandBufferPtr();
 
 	/// Create command buffer
 	ANKI_USE_RESULT Error create(GrManager* manager,
@@ -32,7 +32,7 @@ public:
 	void pushBackUserCommand(UserCallback callback, void* data);
 
 	/// Add another command buffer for execution
-	void pushBackOtherCommandBuffer(CommandBufferHandle& commands);
+	void pushBackOtherCommandBuffer(CommandBufferPtr& commands);
 
 	/// Flush command buffer for deferred execution.
 	void flush();
@@ -120,7 +120,7 @@ public:
 	/// @param first The unit where the first texture will be bound.
 	/// @param textures The array of textures.
 	/// @param count The count of textures
-	void bindTextures(U32 first, TextureHandle textures[], U32 count);
+	void bindTextures(U32 first, TexturePtr textures[], U32 count);
 	/// @}
 
 	/// @name Drawcalls
@@ -132,12 +132,12 @@ public:
 	void drawArrays(GLenum mode, U32 count, U32 instanceCount = 1,
 		U32 first = 0, U32 baseInstance = 0);
 
-	void drawElementsConditional(OcclusionQueryHandle& query,
+	void drawElementsConditional(OcclusionQueryPtr& query,
 		GLenum mode, U8 indexSize,
 		U32 count, U32 instanceCount = 1, U32 firstIndex = 0,
 		U32 baseVertex = 0, U32 baseInstance = 0);
 
-	void drawArraysConditional(OcclusionQueryHandle& query,
+	void drawArraysConditional(OcclusionQueryPtr& query,
 		GLenum mode, U32 count, U32 instanceCount = 1,
 		U32 first = 0, U32 baseInstance = 0);
 
@@ -146,7 +146,7 @@ public:
 
 	/// @name Other operations
 	/// @{
-	void copyTextureToBuffer(TextureHandle& from, BufferHandle& To);
+	void copyTextureToBuffer(TexturePtr& from, BufferPtr& To);
 	/// @}
 };
 /// @}

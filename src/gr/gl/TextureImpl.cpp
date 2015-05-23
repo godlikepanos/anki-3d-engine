@@ -450,10 +450,9 @@ void TextureImpl::create(const Initializer& init)
 //==============================================================================
 void TextureImpl::destroy()
 {
-	if(isCreated())
+	if(m_glName)
 	{
-		glDeleteTextures(1, &m_glName);
-		m_glName = 0;
+		destroyDeferred(glDeleteTextures);
 	}
 }
 

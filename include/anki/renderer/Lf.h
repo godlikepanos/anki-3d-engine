@@ -30,24 +30,24 @@ public:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
 
-	void runOcclusionTests(CommandBufferHandle& cmdb);
+	void runOcclusionTests(CommandBufferPtr& cmdb);
 
-	void run(CommandBufferHandle& cmdb);
+	void run(CommandBufferPtr& cmdb);
 	/// @}
 
 private:
 	// Occlusion query
-	Array<BufferHandle, 3> m_positionsVertBuff;
-	BufferHandle m_mvpBuff;
+	Array<BufferPtr, 3> m_positionsVertBuff;
+	BufferPtr m_mvpBuff;
 	ShaderResourcePointer m_occlusionVert;
 	ShaderResourcePointer m_occlusionFrag;
-	PipelineHandle m_occlusionPpline;
+	PipelinePtr m_occlusionPpline;
 
 	// Sprite billboards
 	ShaderResourcePointer m_realVert;
 	ShaderResourcePointer m_realFrag;
-	PipelineHandle m_realPpline;
-	Array<BufferHandle, 3> m_flareDataBuff;
+	PipelinePtr m_realPpline;
+	Array<BufferPtr, 3> m_flareDataBuff;
 	U32 m_flareSize;
 	U8 m_maxSpritesPerFlare;
 	U8 m_maxFlares;

@@ -3,10 +3,14 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/PipelineHandle.h"
+#include "anki/gr/PipelinePtr.h"
 #include "anki/gr/PipelineCommon.h"
 #include "anki/gr/gl/PipelineImpl.h"
-#include "anki/gr/gl/DeferredDeleter.h"
+#include "anki/gr/gl/ShaderImpl.h"
+#include "anki/gr/gl/CommandBufferImpl.h"
+#include "anki/gr/CommandBufferPtr.h"
+#include "anki/gr/gl/GrManagerImpl.h"
+#include "anki/gr/gl/RenderingThread.h"
 
 namespace anki {
 
@@ -17,11 +21,11 @@ namespace anki {
 class CreatePipelineCommand final: public GlCommand
 {
 public:
-	PipelineHandle m_ppline;
+	PipelinePtr m_ppline;
 	PipelineInitializer m_init;
 
 	CreatePipelineCommand(
-		const PipelineHandle& ppline, 
+		const PipelinePtr& ppline,
 		const PipelineInitializer& init)
 	:	m_ppline(ppline),
 		m_init(init)
@@ -43,9 +47,9 @@ public:
 class BindPipelineCommand final: public GlCommand
 {
 public:
-	PipelineHandle m_ppline;
+	PipelinePtr m_ppline;
 
-	BindPipelineCommand(PipelineHandle& ppline)
+	BindPipelineCommand(PipelinePtr& ppline)
 	:	m_ppline(ppline)
 	{}
 
@@ -66,27 +70,24 @@ public:
 };
 
 //==============================================================================
-// PipelineHandle                                                              =
+// PipelinePtr                                                              =
 //==============================================================================
 
 //==============================================================================
-PipelineHandle::PipelineHandle()
+PipelinePtr::PipelinePtr()
 {}
 
 //==============================================================================
-PipelineHandle::~PipelineHandle()
+PipelinePtr::~PipelinePtr()
 {}
 
 //==============================================================================
-Error PipelineHandle::create(GrManager* manager, const Initializer& init)
+Error PipelinePtr::create(GrManager* manager, const Initializer& init)
 {
-	using DeleteCommand = DeleteObjectCommand<PipelineImpl>;
-	using Deleter = DeferredDeleter<PipelineImpl, DeleteCommand>;
-
-	CommandBufferHandle cmdb;
+	CommandBufferPtr cmdb;
 	ANKI_CHECK(cmdb.create(manager));
 
-	Base::create(cmdb.get().getManager(), Deleter());
+	Base::create(cmdb.get().getManager());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 	cmdb.get().pushBackNewCommand<CreatePipelineCommand>(*this, init);
 
@@ -96,7 +97,7 @@ Error PipelineHandle::create(GrManager* manager, const Initializer& init)
 }
 
 //==============================================================================
-void PipelineHandle::bind(CommandBufferHandle& commands)
+void PipelinePtr::bind(CommandBufferPtr& commands)
 {
 	ANKI_ASSERT(isCreated());
 	commands.get().pushBackNewCommand<BindPipelineCommand>(*this);

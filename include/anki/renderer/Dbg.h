@@ -58,7 +58,7 @@ public:
 	}
 
 private:
-	FramebufferHandle m_fb;
+	FramebufferPtr m_fb;
 	DebugDrawer* m_drawer = nullptr;
 	// Have it as ptr because the constructor calls opengl
 	SceneDebugDrawer* m_sceneDrawer = nullptr;
@@ -72,7 +72,7 @@ private:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 
-	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error run(CommandBufferPtr& jobs);
 };
 
 /// @}

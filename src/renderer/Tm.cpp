@@ -27,7 +27,7 @@ Error Tm::create(const ConfigSet& initializer)
 		"shaders/PpsTmAverageLuminance.comp.glsl", pps.toCString(), "rppstm_"));
 
 	// Create ppline
-	PipelineHandle::Initializer pplineInit;
+	PipelinePtr::Initializer pplineInit;
 	pplineInit.m_shaders[U(ShaderType::COMPUTE)] = 
 		m_luminanceShader->getGrShader();
 	ANKI_CHECK(m_luminancePpline.create(&getGrManager(), pplineInit));
@@ -41,7 +41,7 @@ Error Tm::create(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Tm::run(CommandBufferHandle& cmdb)
+void Tm::run(CommandBufferPtr& cmdb)
 {
 	m_luminancePpline.bind(cmdb);
 	m_luminanceBuff.bindShaderBuffer(cmdb, 0);

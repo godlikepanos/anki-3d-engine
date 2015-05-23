@@ -148,7 +148,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_dbg.init(config));
 
 	// Default FB
-	FramebufferHandle::Initializer fbInit;
+	FramebufferPtr::Initializer fbInit;
 	ANKI_CHECK(m_defaultFb.create(m_gr, fbInit));
 
 	return ErrorCode::NONE;
@@ -156,7 +156,7 @@ Error Renderer::initInternal(const ConfigSet& config)
 
 //==============================================================================
 Error Renderer::render(SceneGraph& scene,
-	Array<CommandBufferHandle, JOB_CHAINS_COUNT>& cmdBuff)
+	Array<CommandBufferPtr, JOB_CHAINS_COUNT>& cmdBuff)
 {
 	m_scene = &scene;
 	m_frameAlloc.getMemoryPool().reset();
@@ -213,14 +213,14 @@ Error Renderer::render(SceneGraph& scene,
 }
 
 //==============================================================================
-void Renderer::drawQuad(CommandBufferHandle& cmdBuff)
+void Renderer::drawQuad(CommandBufferPtr& cmdBuff)
 {
 	drawQuadInstanced(cmdBuff, 1);
 }
 
 //==============================================================================
-void Renderer::drawQuadConditional(OcclusionQueryHandle& q,
-	CommandBufferHandle& cmdBuff)
+void Renderer::drawQuadConditional(OcclusionQueryPtr& q,
+	CommandBufferPtr& cmdBuff)
 {
 	m_quadPositionsBuff.bindVertexBuffer(cmdBuff, 2, GL_FLOAT, false, 0, 0, 0);
 	cmdBuff.drawArraysConditional(q, GL_TRIANGLE_STRIP, 4, 1);
@@ -228,7 +228,7 @@ void Renderer::drawQuadConditional(OcclusionQueryHandle& q,
 
 //==============================================================================
 void Renderer::drawQuadInstanced(
-	CommandBufferHandle& cmdBuff, U32 primitiveCount)
+	CommandBufferPtr& cmdBuff, U32 primitiveCount)
 {
 	m_quadPositionsBuff.bindVertexBuffer(cmdBuff, 2, GL_FLOAT, false, 0, 0, 0);
 
@@ -256,7 +256,7 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 
 //==============================================================================
 Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
-	U32 samples, SamplingFilter filter, U mipsCount, TextureHandle& rt)
+	U32 samples, SamplingFilter filter, U mipsCount, TexturePtr& rt)
 {
 	// Not very important but keep the resulution of render targets aligned to
 	// 16
@@ -266,7 +266,7 @@ Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 		ANKI_ASSERT(isAligned(16, h));
 	}
 
-	TextureHandle::Initializer init;
+	TexturePtr::Initializer init;
 
 	init.m_width = w;
 	init.m_height = h;
@@ -287,7 +287,7 @@ Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 	init.m_sampling.m_repeat = false;
 	init.m_sampling.m_anisotropyLevel = 0;
 
-	CommandBufferHandle cmdBuff;
+	CommandBufferPtr cmdBuff;
 	ANKI_CHECK(cmdBuff.create(m_gr));
 
 	rt.create(cmdBuff, init);
@@ -298,9 +298,9 @@ Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 
 //==============================================================================
 Error Renderer::createDrawQuadPipeline(
-	ShaderHandle frag, PipelineHandle& ppline)
+	ShaderPtr frag, PipelinePtr& ppline)
 {
-	PipelineHandle::Initializer init;
+	PipelinePtr::Initializer init;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_drawQuadVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = frag;
 

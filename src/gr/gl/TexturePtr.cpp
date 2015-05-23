@@ -3,10 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/TextureHandle.h"
+#include "anki/gr/TexturePtr.h"
 #include "anki/gr/gl/TextureImpl.h"
 #include "anki/gr/GrManager.h"
-#include "anki/gr/gl/DeferredDeleter.h"	
+#include "anki/gr/gl/CommandBufferImpl.h"
+#include "anki/gr/CommandBufferPtr.h"
 
 namespace anki {
 
@@ -18,15 +19,15 @@ namespace anki {
 class CreateTextureCommand: public GlCommand
 {
 public:
-	TextureHandle m_tex;
-	TextureHandle::Initializer m_init;
+	TexturePtr m_tex;
+	TexturePtr::Initializer m_init;
 	Bool8 m_cleanup = false;
 
 	CreateTextureCommand(
-		TextureHandle tex, 
-		const TextureHandle::Initializer& init,
+		TexturePtr tex,
+		const TexturePtr::Initializer& init,
 		Bool cleanup)
-	:	m_tex(tex), 
+	:	m_tex(tex),
 		m_init(init),
 		m_cleanup(cleanup)
 	{}
@@ -66,11 +67,11 @@ public:
 class BindTextureCommand: public GlCommand
 {
 public:
-	TextureHandle m_tex;
+	TexturePtr m_tex;
 	U32 m_unit;
 
-	BindTextureCommand(TextureHandle& tex, U32 unit)
-	:	m_tex(tex), 
+	BindTextureCommand(TexturePtr& tex, U32 unit)
+	:	m_tex(tex),
 		m_unit(unit)
 	{}
 
@@ -85,9 +86,9 @@ public:
 class GenMipmapsCommand: public GlCommand
 {
 public:
-	TextureHandle m_tex;
+	TexturePtr m_tex;
 
-	GenMipmapsCommand(TextureHandle& tex)
+	GenMipmapsCommand(TexturePtr& tex)
 	:	m_tex(tex)
 	{}
 
@@ -99,20 +100,20 @@ public:
 };
 
 //==============================================================================
-// TextureHandle                                                               =
+// TexturePtr                                                               =
 //==============================================================================
 
 //==============================================================================
-TextureHandle::TextureHandle()
+TexturePtr::TexturePtr()
 {}
 
 //==============================================================================
-TextureHandle::~TextureHandle()
+TexturePtr::~TexturePtr()
 {}
 
 //==============================================================================
-Error TextureHandle::create(
-	CommandBufferHandle& commands, const Initializer& initS)
+Error TexturePtr::create(
+	CommandBufferPtr& commands, const Initializer& initS)
 {
 	ANKI_ASSERT(!isCreated());
 	Initializer init(initS);
@@ -137,10 +138,7 @@ Error TextureHandle::create(
 		}
 	}
 
-	using DeleteCommand = DeleteObjectCommand<TextureImpl>;
-	using Deleter = DeferredDeleter<TextureImpl, DeleteCommand>;
-
-	Base::create(commands.get().getManager(), Deleter());
+	Base::create(commands.get().getManager());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
 	// Fire the command
@@ -151,14 +149,14 @@ Error TextureHandle::create(
 }
 
 //==============================================================================
-void TextureHandle::bind(CommandBufferHandle& commands, U32 unit)
+void TexturePtr::bind(CommandBufferPtr& commands, U32 unit)
 {
 	ANKI_ASSERT(isCreated());
 	commands.get().pushBackNewCommand<BindTextureCommand>(*this, unit);
 }
 
 //==============================================================================
-void TextureHandle::generateMipmaps(CommandBufferHandle& commands)
+void TexturePtr::generateMipmaps(CommandBufferPtr& commands)
 {
 	ANKI_ASSERT(isCreated());
 	commands.get().pushBackNewCommand<GenMipmapsCommand>(*this);

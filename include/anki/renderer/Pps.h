@@ -24,14 +24,14 @@ public:
 	/// @privatesection
 	/// @{
 	ANKI_USE_RESULT Error init(const ConfigSet& config);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error run(CommandBufferPtr& jobs);
 
-	const TextureHandle& getRt() const
+	const TexturePtr& getRt() const
 	{
 		return m_rt;
 	}
 
-	TextureHandle& getRt()
+	TexturePtr& getRt()
 	{
 		return m_rt;
 	}
@@ -87,10 +87,10 @@ private:
 	UniquePtr<Bloom> m_bloom;
 	UniquePtr<Sslf> m_sslf;
 
-	FramebufferHandle m_fb;
+	FramebufferPtr m_fb;
 	ShaderResourcePointer m_frag;
-	PipelineHandle m_ppline;
-	TextureHandle m_rt;
+	PipelinePtr m_ppline;
+	TexturePtr m_rt;
 
 	TextureResourcePointer m_lut; ///< Color grading lookup texture.
 

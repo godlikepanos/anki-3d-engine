@@ -7,25 +7,25 @@
 #define ANKI_GR_SHADER_HANDLE_H
 
 #include "anki/gr/ShaderCommon.h"
-#include "anki/gr/GrHandle.h"
+#include "anki/gr/GrPtr.h"
 
 namespace anki {
 
 /// @addtogroup graphics
 /// @{
 
-/// Shader handle.
-class ShaderHandle: public GrHandle<ShaderImpl>
+/// Shader.
+class ShaderPtr: public GrPtr<ShaderImpl>
 {
 public:
-	using Base = GrHandle<ShaderImpl>;
+	using Base = GrPtr<ShaderImpl>;
 
-	ShaderHandle();
+	ShaderPtr();
 
-	~ShaderHandle();
+	~ShaderPtr();
 
 	/// Create shader program.
-	ANKI_USE_RESULT Error create(GrManager* manager, 
+	ANKI_USE_RESULT Error create(GrManager* manager,
 		ShaderType shaderType, const void* source, PtrSize sourceSize);
 };
 /// @}

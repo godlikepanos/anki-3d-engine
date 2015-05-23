@@ -3,17 +3,17 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/CommandBufferHandle.h"
+#include "anki/gr/CommandBufferPtr.h"
 #include "anki/gr/gl/CommandBufferImpl.h"
 #include "anki/gr/GrManager.h"
 #include "anki/gr/gl/GrManagerImpl.h"
 #include "anki/gr/gl/RenderingThread.h"
 #include "anki/gr/gl/FramebufferImpl.h"
-#include "anki/gr/TextureHandle.h"
+#include "anki/gr/TexturePtr.h"
 #include "anki/gr/gl/TextureImpl.h"
-#include "anki/gr/BufferHandle.h"
+#include "anki/gr/BufferPtr.h"
 #include "anki/gr/gl/BufferImpl.h"
-#include "anki/gr/OcclusionQueryHandle.h"
+#include "anki/gr/OcclusionQueryPtr.h"
 #include "anki/gr/gl/OcclusionQueryImpl.h"
 #include "anki/core/Counters.h"
 #include <utility>
@@ -126,37 +126,34 @@ namespace anki {
 	get().pushBackNewCommand<Command>(enable_)
 
 //==============================================================================
-CommandBufferHandle::CommandBufferHandle()
+CommandBufferPtr::CommandBufferPtr()
 {}
 
 //==============================================================================
-CommandBufferHandle::~CommandBufferHandle()
+CommandBufferPtr::~CommandBufferPtr()
 {}
 
 //==============================================================================
-Error CommandBufferHandle::create(GrManager* manager,
+Error CommandBufferPtr::create(GrManager* manager,
 	CommandBufferInitHints hints)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(manager);
 
-	Base::create(
-		*manager,
-		GrHandleDefaultDeleter<CommandBufferImpl>());
-
+	Base::create(*manager);
 	get().create(hints);
 
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-CommandBufferInitHints CommandBufferHandle::computeInitHints() const
+CommandBufferInitHints CommandBufferPtr::computeInitHints() const
 {
 	return get().computeInitHints();
 }
 
 //==============================================================================
-void CommandBufferHandle::pushBackUserCommand(
+void CommandBufferPtr::pushBackUserCommand(
 	UserCallback callback, void* data)
 {
 	class Command: public GlCommand
@@ -182,15 +179,15 @@ void CommandBufferHandle::pushBackUserCommand(
 }
 
 //==============================================================================
-void CommandBufferHandle::pushBackOtherCommandBuffer(
-	CommandBufferHandle& commands)
+void CommandBufferPtr::pushBackOtherCommandBuffer(
+	CommandBufferPtr& commands)
 {
 	class Command: public GlCommand
 	{
 	public:
-		CommandBufferHandle m_commands;
+		CommandBufferPtr m_commands;
 
-		Command(CommandBufferHandle& commands)
+		Command(CommandBufferPtr& commands)
 		:	m_commands(commands)
 		{}
 
@@ -205,21 +202,21 @@ void CommandBufferHandle::pushBackOtherCommandBuffer(
 }
 
 //==============================================================================
-void CommandBufferHandle::flush()
+void CommandBufferPtr::flush()
 {
 	get().getManager().getImplementation().
 		getRenderingThread().flushCommandBuffer(*this);
 }
 
 //==============================================================================
-void CommandBufferHandle::finish()
+void CommandBufferPtr::finish()
 {
 	get().getManager().getImplementation().getRenderingThread().
 		finishCommandBuffer(*this);
 }
 
 //==============================================================================
-void CommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
+void CommandBufferPtr::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 {
 	class Command: public GlCommand
 	{
@@ -254,70 +251,70 @@ void CommandBufferHandle::setViewport(U16 minx, U16 miny, U16 maxx, U16 maxy)
 }
 
 //==============================================================================
-void CommandBufferHandle::setColorWriteMask(
+void CommandBufferPtr::setColorWriteMask(
 	Bool red, Bool green, Bool blue, Bool alpha)
 {
 	ANKI_STATE_CMD_4(Bool8, glColorMask, red, green, blue, alpha);
 }
 
 //==============================================================================
-void CommandBufferHandle::enableDepthTest(Bool enable)
+void CommandBufferPtr::enableDepthTest(Bool enable)
 {
 	ANKI_STATE_CMD_ENABLE(GL_DEPTH_TEST, enable);
 }
 
 //==============================================================================
-void CommandBufferHandle::setDepthFunction(GLenum func)
+void CommandBufferPtr::setDepthFunction(GLenum func)
 {
 	ANKI_STATE_CMD_1(GLenum, glDepthFunc, func);
 }
 
 //==============================================================================
-void CommandBufferHandle::setDepthWriteMask(Bool write)
+void CommandBufferPtr::setDepthWriteMask(Bool write)
 {
 	ANKI_STATE_CMD_1(Bool8, glDepthMask, write);
 }
 
 //==============================================================================
-void CommandBufferHandle::enableStencilTest(Bool enable)
+void CommandBufferPtr::enableStencilTest(Bool enable)
 {
 	ANKI_STATE_CMD_ENABLE(GL_STENCIL_TEST, enable);
 }
 
 //==============================================================================
-void CommandBufferHandle::setStencilFunction(
+void CommandBufferPtr::setStencilFunction(
 	GLenum function, U32 reference, U32 mask)
 {
 	ANKI_STATE_CMD_3(U32, glStencilFunc, function, reference, mask);
 }
 
 //==============================================================================
-void CommandBufferHandle::setStencilPlaneMask(U32 mask)
+void CommandBufferPtr::setStencilPlaneMask(U32 mask)
 {
 	ANKI_STATE_CMD_1(U32, glStencilMask, mask);
 }
 
 //==============================================================================
-void CommandBufferHandle::setStencilOperations(GLenum stencFail, GLenum depthFail,
+void CommandBufferPtr::setStencilOperations(GLenum stencFail, GLenum depthFail,
 	GLenum depthPass)
 {
 	ANKI_STATE_CMD_3(GLenum, glStencilOp, stencFail, depthFail, depthPass);
 }
 
 //==============================================================================
-void CommandBufferHandle::enableBlend(Bool enable)
+void CommandBufferPtr::enableBlend(Bool enable)
 {
 	ANKI_STATE_CMD_ENABLE(GL_BLEND, enable);
 }
 
 //==============================================================================
-void CommandBufferHandle::setBlendEquation(GLenum equation)
+void CommandBufferPtr::setBlendEquation(GLenum equation)
 {
 	ANKI_STATE_CMD_1(GLenum, glBlendEquation, equation);
 }
 
 //==============================================================================
-void CommandBufferHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
+void CommandBufferPtr::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 {
 	class Command: public GlCommand
 	{
@@ -351,55 +348,55 @@ void CommandBufferHandle::setBlendFunctions(GLenum sfactor, GLenum dfactor)
 }
 
 //==============================================================================
-void CommandBufferHandle::setBlendColor(F32 r, F32 g, F32 b, F32 a)
+void CommandBufferPtr::setBlendColor(F32 r, F32 g, F32 b, F32 a)
 {
 	ANKI_STATE_CMD_4(F32, glBlendColor, r, g, b, a);
 }
 
 //==============================================================================
-void CommandBufferHandle::enablePrimitiveRestart(Bool enable)
+void CommandBufferPtr::enablePrimitiveRestart(Bool enable)
 {
 	ANKI_STATE_CMD_ENABLE(GL_PRIMITIVE_RESTART, enable);
 }
 
 //==============================================================================
-void CommandBufferHandle::setPatchVertexCount(U32 count)
+void CommandBufferPtr::setPatchVertexCount(U32 count)
 {
 	ANKI_STATE_CMD_2(GLint, glPatchParameteri, GL_PATCH_VERTICES, count);
 }
 
 //==============================================================================
-void CommandBufferHandle::enableCulling(Bool enable)
+void CommandBufferPtr::enableCulling(Bool enable)
 {
 	ANKI_STATE_CMD_ENABLE(GL_CULL_FACE, enable);
 }
 
 //==============================================================================
-void CommandBufferHandle::setCullFace(GLenum mode)
+void CommandBufferPtr::setCullFace(GLenum mode)
 {
 	ANKI_STATE_CMD_1(GLenum, glCullFace, mode);
 }
 
 //==============================================================================
-void CommandBufferHandle::setPolygonOffset(F32 factor, F32 units)
+void CommandBufferPtr::setPolygonOffset(F32 factor, F32 units)
 {
 	ANKI_STATE_CMD_2(F32, glPolygonOffset, factor, units);
 }
 
 //==============================================================================
-void CommandBufferHandle::enablePolygonOffset(Bool enable)
+void CommandBufferPtr::enablePolygonOffset(Bool enable)
 {
 	ANKI_STATE_CMD_ENABLE(GL_POLYGON_OFFSET_FILL, enable);
 }
 
 //==============================================================================
-void CommandBufferHandle::setPolygonMode(GLenum face, GLenum mode)
+void CommandBufferPtr::setPolygonMode(GLenum face, GLenum mode)
 {
 	ANKI_STATE_CMD_2(GLenum, glPolygonMode, face, mode);
 }
 
 //==============================================================================
-void CommandBufferHandle::enablePointSize(Bool enable)
+void CommandBufferPtr::enablePointSize(Bool enable)
 {
 	ANKI_STATE_CMD_ENABLE(GL_PROGRAM_POINT_SIZE, enable);
 }
@@ -410,16 +407,16 @@ class BindTexturesCommand: public GlCommand
 public:
 	static const U MAX_BIND_TEXTURES = 8;
 
-	Array<TextureHandle, MAX_BIND_TEXTURES> m_texes;
+	Array<TexturePtr, MAX_BIND_TEXTURES> m_texes;
 	U32 m_texCount;
 	U32 m_first;
 
 	BindTexturesCommand(
-		TextureHandle textures[], U count, U32 first)
+		TexturePtr textures[], U count, U32 first)
 	:	m_first(first)
 	{
 		m_texCount = count;
-		TextureHandle* t = textures;
+		TexturePtr* t = textures;
 		while(count-- != 0)
 		{
 			m_texes[count] = *t;
@@ -444,8 +441,8 @@ public:
 	}
 };
 
-void CommandBufferHandle::bindTextures(U32 first,
-	TextureHandle textures[], U32 count)
+void CommandBufferPtr::bindTextures(U32 first,
+	TexturePtr textures[], U32 count)
 {
 	ANKI_ASSERT(count > 0);
 
@@ -459,13 +456,13 @@ public:
 	GLenum m_mode;
 	U8 m_indexSize;
 	GlDrawElementsIndirectInfo m_info;
-	OcclusionQueryHandle m_query;
+	OcclusionQueryPtr m_query;
 
 	DrawElementsCondCommand(
 		GLenum mode,
 		U8 indexSize,
 		GlDrawElementsIndirectInfo& info,
-		OcclusionQueryHandle query = OcclusionQueryHandle())
+		OcclusionQueryPtr query = OcclusionQueryPtr())
 	:	m_mode(mode),
 		m_indexSize(indexSize),
 		m_info(info),
@@ -511,7 +508,7 @@ public:
 	}
 };
 
-void CommandBufferHandle::drawElements(
+void CommandBufferPtr::drawElements(
 	GLenum mode, U8 indexSize, U32 count, U32 instanceCount, U32 firstIndex,
 	U32 baseVertex, U32 baseInstance)
 {
@@ -527,12 +524,12 @@ class DrawArraysCondCommand: public GlCommand
 public:
 	GLenum m_mode;
 	GlDrawArraysIndirectInfo m_info;
-	OcclusionQueryHandle m_query;
+	OcclusionQueryPtr m_query;
 
 	DrawArraysCondCommand(
 		GLenum mode,
 		GlDrawArraysIndirectInfo& info,
-		OcclusionQueryHandle query = OcclusionQueryHandle())
+		OcclusionQueryPtr query = OcclusionQueryPtr())
 	:	m_mode(mode),
 		m_info(info),
 		m_query(query)
@@ -556,7 +553,7 @@ public:
 	}
 };
 
-void CommandBufferHandle::drawArrays(
+void CommandBufferPtr::drawArrays(
 	GLenum mode, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
 	GlDrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
@@ -565,8 +562,8 @@ void CommandBufferHandle::drawArrays(
 }
 
 //==============================================================================
-void CommandBufferHandle::drawElementsConditional(
-	OcclusionQueryHandle& query,
+void CommandBufferPtr::drawElementsConditional(
+	OcclusionQueryPtr& query,
 	GLenum mode, U8 indexSize, U32 count, U32 instanceCount, U32 firstIndex,
 	U32 baseVertex, U32 baseInstance)
 {
@@ -577,8 +574,8 @@ void CommandBufferHandle::drawElementsConditional(
 }
 
 //==============================================================================
-void CommandBufferHandle::drawArraysConditional(
-	OcclusionQueryHandle& query,
+void CommandBufferPtr::drawArraysConditional(
+	OcclusionQueryPtr& query,
 	GLenum mode, U32 count, U32 instanceCount, U32 first, U32 baseInstance)
 {
 	GlDrawArraysIndirectInfo info(count, instanceCount, first, baseInstance);
@@ -590,10 +587,10 @@ void CommandBufferHandle::drawArraysConditional(
 class CopyBuffTex: public GlCommand
 {
 public:
-	TextureHandle m_tex;
-	BufferHandle m_buff;
+	TexturePtr m_tex;
+	BufferPtr m_buff;
 
-	CopyBuffTex(TextureHandle& from, BufferHandle& to)
+	CopyBuffTex(TexturePtr& from, BufferPtr& to)
 	:	m_tex(from),
 		m_buff(to)
 	{}
@@ -648,8 +645,8 @@ public:
 	}
 };
 
-void CommandBufferHandle::copyTextureToBuffer(
-	TextureHandle& from, BufferHandle& to)
+void CommandBufferPtr::copyTextureToBuffer(
+	TexturePtr& from, BufferPtr& to)
 {
 	get().pushBackNewCommand<CopyBuffTex>(from, to);
 }
@@ -671,7 +668,7 @@ public:
 	}
 };
 
-void CommandBufferHandle::dispatchCompute(
+void CommandBufferPtr::dispatchCompute(
 	U32 groupCountX, U32 groupCountY, U32 groupCountZ)
 {
 	get().pushBackNewCommand<DispatchCommand>(
@@ -702,7 +699,7 @@ public:
 	}
 };
 
-void CommandBufferHandle::updateDynamicUniforms(void* data, U32 originalSize)
+void CommandBufferPtr::updateDynamicUniforms(void* data, U32 originalSize)
 {
 	ANKI_ASSERT(data);
 	ANKI_ASSERT(originalSize > 0);

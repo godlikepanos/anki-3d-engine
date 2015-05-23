@@ -17,12 +17,22 @@
 namespace anki {
 
 //==============================================================================
+/// Fake glDeletePrograms because some jenius created conflicting interface
+static void deleteProgram(GLsizei n, const GLuint* names)
+{
+	ANKI_ASSERT(n == 1);
+	ANKI_ASSERT(names);
+	ANKI_ASSERT(*names > 0);
+	glDeleteProgram(*names);
+}
+
+//==============================================================================
 Error ShaderImpl::create(ShaderType type, const CString& source)
 {
 	ANKI_ASSERT(source);
 	ANKI_ASSERT(!isCreated());
 
-	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER, 
+	static const Array<GLenum, 6> gltype = {{GL_VERTEX_SHADER,
 		GL_TESS_CONTROL_SHADER, GL_TESS_EVALUATION_SHADER, GL_GEOMETRY_SHADER,
 		GL_FRAGMENT_SHADER, GL_COMPUTE_SHADER}};
 
@@ -42,7 +52,7 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 	auto alloc = getAllocator();
 	StringAuto fullSrc(alloc);
 #if ANKI_GL == ANKI_GL_DESKTOP
-	fullSrc.sprintf("#version %d core\n%s\n", version, &source[0]); 
+	fullSrc.sprintf("#version %d core\n%s\n", version, &source[0]);
 #else
 	fullSrc.sprintf("#version %d es\n%s\n", version, &source[0]);
 #endif
@@ -88,7 +98,7 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 
 		StringAuto fname(alloc);
 		CString cacheDir = getManager().getCacheDirectory();
-		fname.sprintf("%s/%05u.%s", &cacheDir[0], 
+		fname.sprintf("%s/%05u.%s", &cacheDir[0],
 			static_cast<U32>(m_glName), ext);
 
 		File file;
@@ -96,7 +106,7 @@ Error ShaderImpl::create(ShaderType type, const CString& source)
 		ANKI_CHECK(file.writeText("%s", &fname[0]));
 	}
 #endif
-	
+
 	GLint status = GL_FALSE;
 	glGetProgramiv(m_glName, GL_LINK_STATUS, &status);
 	if(status == GL_FALSE)
@@ -119,7 +129,7 @@ void ShaderImpl::handleError(String& src)
 	String prettySrc;
 	StringList lines;
 
-	static const char* padding = 
+	static const char* padding =
 		"======================================="
 		"=======================================";
 
@@ -129,7 +139,7 @@ void ShaderImpl::handleError(String& src)
 
 	glGetProgramInfoLog(
 		m_glName, compilerLogLen, &charsWritten, &compilerLog[0]);
-		
+
 	lines.splitString(alloc, src.toCString(), '\n');
 
 	I lineno = 0;
@@ -155,8 +165,7 @@ void ShaderImpl::destroy()
 {
 	if(m_glName != 0)
 	{
-		glDeleteProgram(m_glName);
-		m_glName = 0;
+		destroyDeferred(deleteProgram);
 	}
 }
 

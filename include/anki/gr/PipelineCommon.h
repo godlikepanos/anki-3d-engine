@@ -7,8 +7,8 @@
 #define ANKI_GR_PIPELINE_COMMON_H
 
 #include "anki/gr/Common.h"
-#include "anki/gr/ShaderHandle.h"
-#include "anki/gr/PipelineHandle.h"
+#include "anki/gr/ShaderPtr.h"
+#include "anki/gr/PipelinePtr.h"
 
 namespace anki {
 
@@ -109,8 +109,8 @@ public:
 	DepthStencilStateInfo m_depthStencil;
 	ColorStateInfo m_color;
 
-	Array<ShaderHandle, 6> m_shaders;
-	PipelineHandle m_templatePipeline;
+	Array<ShaderPtr, 6> m_shaders;
+	PipelinePtr m_templatePipeline;
 	SubStateBit m_definedState = SubStateBit::NONE;
 };
 /// @}

@@ -6,33 +6,33 @@
 #ifndef ANKI_GR_OCCLUSION_QUERY_HANDLE_H
 #define ANKI_GR_OCCLUSION_QUERY_HANDLE_H
 
-#include "anki/gr/GrHandle.h"
+#include "anki/gr/GrPtr.h"
 
 namespace anki {
 
 /// @addtogroup graphics
 /// @{
 
-/// Occlusion query handle.
-class OcclusionQueryHandle: public GrHandle<OcclusionQueryImpl>
+/// Occlusion query.
+class OcclusionQueryPtr: public GrPtr<OcclusionQueryImpl>
 {
 public:
-	using Base = GrHandle<OcclusionQueryImpl>;
+	using Base = GrPtr<OcclusionQueryImpl>;
 	using ResultBit = OcclusionQueryResultBit;
 
-	OcclusionQueryHandle();
+	OcclusionQueryPtr();
 
-	~OcclusionQueryHandle();
+	~OcclusionQueryPtr();
 
 	/// Create a query.
 	ANKI_USE_RESULT Error create(
 		GrManager* manager, ResultBit condRenderingBit);
 
 	/// Begin query.
-	void begin(CommandBufferHandle& commands);
+	void begin(CommandBufferPtr& commands);
 
 	/// End query.
-	void end(CommandBufferHandle& commands);
+	void end(CommandBufferPtr& commands);
 };
 /// @}
 

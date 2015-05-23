@@ -77,7 +77,7 @@ inline typename EnumUnderlyingType<TEnum>::Type enumToType(TEnum e)
 /// @addtogroup util_other
 /// @{
 
-/// Implement all those functions that will make a stronly typed enum behave 
+/// Implement all those functions that will make a stronly typed enum behave
 /// like the old type of enums.
 #define ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(enum_, qualifier_) \
 	_ANKI_ENUM_OPERATOR(enum_, qualifier_, |, |=) \
@@ -105,7 +105,6 @@ inline TEnum valueToEnum(typename EnumUnderlyingType<TEnum>::Type v)
 {
 	return static_cast<TEnum>(v);
 }
-
 /// @}
 
 #endif

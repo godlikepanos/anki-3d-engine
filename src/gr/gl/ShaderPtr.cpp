@@ -3,10 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/ShaderHandle.h"
+#include "anki/gr/ShaderPtr.h"
 #include "anki/gr/GrManager.h"
-#include "anki/gr/gl/DeferredDeleter.h"
 #include "anki/gr/gl/ShaderImpl.h"
+#include "anki/gr/gl/CommandBufferImpl.h"
+#include "anki/gr/CommandBufferPtr.h"
 
 namespace anki {
 
@@ -18,20 +19,20 @@ namespace anki {
 class ShaderCreateCommand final: public GlCommand
 {
 public:
-	ShaderHandle m_shader;
+	ShaderPtr m_shader;
 	ShaderType m_type;
 	char* m_source;
 
-	ShaderCreateCommand(ShaderHandle shader, 
+	ShaderCreateCommand(ShaderPtr shader,
 		ShaderType type, char* source)
-	:	m_shader(shader), 
-		m_type(type), 
+	:	m_shader(shader),
+		m_type(type),
 		m_source(source)
 	{}
 
 	Error operator()(CommandBufferImpl* cmdb)
 	{
-		Error err = m_shader.get().create(m_type, 
+		Error err = m_shader.get().create(m_type,
 			static_cast<const char*>(m_source));
 
 		GlObject::State oldState = m_shader.get().setStateAtomically(
@@ -47,29 +48,27 @@ public:
 };
 
 //==============================================================================
-// ShaderHandle                                                                =
+// ShaderPtr                                                                =
 //==============================================================================
 
 //==============================================================================
-ShaderHandle::ShaderHandle()
+ShaderPtr::ShaderPtr()
 {}
 
 //==============================================================================
-ShaderHandle::~ShaderHandle()
+ShaderPtr::~ShaderPtr()
 {}
 
 //==============================================================================
-Error ShaderHandle::create(GrManager* manager, 
+Error ShaderPtr::create(GrManager* manager,
 	ShaderType type, const void* source, PtrSize sourceSize)
 {
 	ANKI_ASSERT(strlen(static_cast<const char*>(source)) == sourceSize - 1);
-	using DeleteCommand = DeleteObjectCommand<ShaderImpl>;
-	using Deleter = DeferredDeleter<ShaderImpl, DeleteCommand>;
 
-	CommandBufferHandle cmdb;
+	CommandBufferPtr cmdb;
 	ANKI_CHECK(cmdb.create(manager));
 
-	Base::create(cmdb.get().getManager(), Deleter());
+	Base::create(cmdb.get().getManager());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
 	// Copy source to the command buffer

@@ -21,19 +21,19 @@ public:
 	:	RenderingPass(r)
 	{}
 
-	BufferHandle& getAverageLuminanceBuffer()
+	BufferPtr& getAverageLuminanceBuffer()
 	{
 		return m_luminanceBuff;
 	}
 
 	ANKI_USE_RESULT Error create(const ConfigSet& initializer);
 
-	void run(CommandBufferHandle& cmdb);
+	void run(CommandBufferPtr& cmdb);
 
 private:
 	ShaderResourcePointer m_luminanceShader;
-	PipelineHandle m_luminancePpline;
-	BufferHandle m_luminanceBuff;
+	PipelinePtr m_luminancePpline;
+	BufferPtr m_luminanceBuff;
 };
 /// @}
 

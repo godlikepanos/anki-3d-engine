@@ -38,7 +38,7 @@ Error Sm::init(const ConfigSet& initializer)
 	}
 
 	// Create shadowmaps array
-	TextureHandle::Initializer sminit;
+	TexturePtr::Initializer sminit;
 	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
@@ -50,7 +50,7 @@ Error Sm::init(const ConfigSet& initializer)
 		: SamplingFilter::NEAREST;
 	sminit.m_sampling.m_compareOperation = CompareOperation::LESS_EQUAL;
 
-	CommandBufferHandle cmdBuff;
+	CommandBufferPtr cmdBuff;
 	ANKI_CHECK(cmdBuff.create(&getGrManager()));
 
 	ANKI_CHECK(m_sm2DArrayTex.create(cmdBuff, sminit));
@@ -59,7 +59,7 @@ Error Sm::init(const ConfigSet& initializer)
 	// Init sms
 	m_sms.create(getAllocator(), initializer.get("is.sm.maxLights"));
 
-	FramebufferHandle::Initializer fbInit;
+	FramebufferPtr::Initializer fbInit;
 	fbInit.m_depthStencilAttachment.m_texture = m_sm2DArrayTex;
 	fbInit.m_depthStencilAttachment.m_loadOperation = 
 		AttachmentLoadOperation::CLEAR;
@@ -80,7 +80,7 @@ Error Sm::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Sm::prepareDraw(CommandBufferHandle& cmdBuff)
+void Sm::prepareDraw(CommandBufferPtr& cmdBuff)
 {
 	// disable color & blend & enable depth test
 
@@ -97,7 +97,7 @@ void Sm::prepareDraw(CommandBufferHandle& cmdBuff)
 }
 
 //==============================================================================
-void Sm::finishDraw(CommandBufferHandle& cmdBuff)
+void Sm::finishDraw(CommandBufferPtr& cmdBuff)
 {
 	m_r->getSceneDrawer().finishDraw();
 
@@ -109,7 +109,7 @@ void Sm::finishDraw(CommandBufferHandle& cmdBuff)
 
 //==============================================================================
 Error Sm::run(SceneNode* shadowCasters[], U32 shadowCastersCount, 
-	CommandBufferHandle& cmdBuff)
+	CommandBufferPtr& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 	Error err = ErrorCode::NONE;
@@ -172,7 +172,7 @@ Sm::Shadowmap& Sm::bestCandidate(SceneNode& light)
 
 //==============================================================================
 Error Sm::doLight(
-	SceneNode& light, CommandBufferHandle& cmdBuff, Sm::Shadowmap*& sm)
+	SceneNode& light, CommandBufferPtr& cmdBuff, Sm::Shadowmap*& sm)
 {
 	sm = &bestCandidate(light);
 

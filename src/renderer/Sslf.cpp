@@ -55,7 +55,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
 		1, SamplingFilter::LINEAR, 1, m_rt));
 
-	FramebufferHandle::Initializer fbInit;
+	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = 
@@ -66,7 +66,7 @@ Error Sslf::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-void Sslf::run(CommandBufferHandle& cmdb)
+void Sslf::run(CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 	
@@ -77,7 +77,7 @@ void Sslf::run(CommandBufferHandle& cmdb)
 
 	m_ppline.bind(cmdb);
 
-	Array<TextureHandle, 2> tarr = {{
+	Array<TexturePtr, 2> tarr = {{
 		m_r->getPps().getBloom().getRt(), 
 		m_lensDirtTex->getGlTexture()}};
 	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());

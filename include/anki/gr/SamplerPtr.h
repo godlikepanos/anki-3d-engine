@@ -7,34 +7,34 @@
 #define ANKI_GR_SAMPLER_HANDLE_H
 
 #include "anki/gr/TextureSamplerCommon.h"
-#include "anki/gr/GrHandle.h"
+#include "anki/gr/GrPtr.h"
 
 namespace anki {
 
 /// @addtogroup graphics
 /// @{
 
-/// Sampler handle.
-class SamplerHandle: public GrHandle<SamplerImpl>
+/// Sampler.
+class SamplerPtr: public GrPtr<SamplerImpl>
 {
 public:
-	using Base = GrHandle<SamplerImpl>;
+	using Base = GrPtr<SamplerImpl>;
 	using Initializer = SamplerInitializer;
 
 	/// Create husk.
-	SamplerHandle();
+	SamplerPtr();
 
-	~SamplerHandle();
+	~SamplerPtr();
 
 	/// Create the sampler
-	ANKI_USE_RESULT Error create(CommandBufferHandle& commands, 
+	ANKI_USE_RESULT Error create(CommandBufferPtr& commands,
 		const Initializer& init);
 
 	/// Bind to a unit
-	void bind(CommandBufferHandle& commands, U32 unit);
+	void bind(CommandBufferPtr& commands, U32 unit);
 
 	/// Bind default sampler
-	static void bindDefault(CommandBufferHandle& commands, U32 unit);
+	static void bindDefault(CommandBufferPtr& commands, U32 unit);
 };
 /// @}
 

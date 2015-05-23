@@ -3,10 +3,11 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/BufferHandle.h"
-#include "anki/gr/gl/DeferredDeleter.h"
+#include "anki/gr/BufferPtr.h"
 #include "anki/gr/gl/BufferImpl.h"
 #include "anki/gr/GrManager.h"
+#include "anki/gr/gl/CommandBufferImpl.h"
+#include "anki/gr/CommandBufferPtr.h"
 
 namespace anki {
 
@@ -19,7 +20,7 @@ namespace anki {
 class BufferCreateCommand final: public GlCommand
 {
 public:
-	BufferHandle m_buff;
+	BufferPtr m_buff;
 	GLenum m_target;
 	const void* m_data;
 	PtrSize m_size;
@@ -27,11 +28,11 @@ public:
 	Bool8 m_cleanup;
 
 	BufferCreateCommand(
-		BufferHandle buff, GLenum target, const void* data, PtrSize size,
+		BufferPtr buff, GLenum target, const void* data, PtrSize size,
 		GLenum flags, Bool cleanup)
-	:	m_buff(buff), 
-		m_target(target), 
-		m_data(data), 
+	:	m_buff(buff),
+		m_target(target),
+		m_data(data),
 		m_size(size),
 		m_flags(flags),
 		m_cleanup(cleanup)
@@ -41,7 +42,7 @@ public:
 	{
 		m_buff.get().create(m_target, m_data, m_size, m_flags);
 
-		GlObject::State oldState = 
+		GlObject::State oldState =
 			m_buff.get().setStateAtomically(GlObject::State::CREATED);
 
 		(void)oldState;
@@ -61,20 +62,20 @@ public:
 class BufferWriteCommand: public GlCommand
 {
 public:
-	BufferHandle m_buff;
+	BufferPtr m_buff;
 	const void* m_data;
 	PtrSize m_dataSize;
 	PtrSize m_readOffset;
 	PtrSize m_writeOffset;
 	PtrSize m_size;
 
-	BufferWriteCommand(BufferHandle& buff, const void* data, PtrSize dataSize,
+	BufferWriteCommand(BufferPtr& buff, const void* data, PtrSize dataSize,
 		PtrSize readOffset, PtrSize writeOffset, PtrSize size)
-	:	m_buff(buff), 
-		m_data(data), 
+	:	m_buff(buff),
+		m_data(data),
 		m_dataSize(dataSize),
-		m_readOffset(readOffset), 
-		m_writeOffset(writeOffset), 
+		m_readOffset(readOffset),
+		m_writeOffset(writeOffset),
 		m_size(size)
 	{}
 
@@ -83,8 +84,8 @@ public:
 		ANKI_ASSERT(m_readOffset + m_size <= m_dataSize);
 
 		m_buff.get().write(
-			static_cast<const U8*>(m_data) + m_readOffset, 
-			m_writeOffset, 
+			static_cast<const U8*>(m_data) + m_readOffset,
+			m_writeOffset,
 			m_size);
 
 		ANKI_ASSERT(cmdb);
@@ -98,7 +99,7 @@ public:
 class BufferBindVertexCommand: public GlCommand
 {
 public:
-	BufferHandle m_buff;
+	BufferPtr m_buff;
 	U32 m_elementSize;
 	GLenum m_type;
 	Bool8 m_normalized;
@@ -106,12 +107,12 @@ public:
 	U32 m_offset;
 	U32 m_attribLocation;
 
-	BufferBindVertexCommand(BufferHandle& buff, U32 elementSize, GLenum type, 
+	BufferBindVertexCommand(BufferPtr& buff, U32 elementSize, GLenum type,
 		Bool8 normalized, U32 stride, U32 offset, U32 attribLocation)
-	:	m_buff(buff), 
-		m_elementSize(elementSize), 
-		m_type(type), 
-		m_normalized(normalized), 
+	:	m_buff(buff),
+		m_elementSize(elementSize),
+		m_type(type),
+		m_normalized(normalized),
 		m_stride(stride),
 		m_offset(offset),
 		m_attribLocation(attribLocation)
@@ -123,17 +124,17 @@ public:
 	{
 		BufferImpl& buff = m_buff.get();
 		ANKI_ASSERT(m_offset < m_buff.getSize());
-		
+
 		buff.setTarget(GL_ARRAY_BUFFER);
 		buff.bind();
 
 		glEnableVertexAttribArray(m_attribLocation);
 		glVertexAttribPointer(
-			m_attribLocation, 
-			m_elementSize, 
-			m_type, 
+			m_attribLocation,
+			m_elementSize,
+			m_type,
 			m_normalized,
-			m_stride, 
+			m_stride,
 			reinterpret_cast<const GLvoid*>(m_offset));
 
 		return ErrorCode::NONE;
@@ -144,17 +145,17 @@ public:
 class BindShaderBufferCommand: public GlCommand
 {
 public:
-	BufferHandle m_buff;
+	BufferPtr m_buff;
 	I32 m_offset;
 	I32 m_size;
 	U8 m_binding;
 
-	BindShaderBufferCommand(BufferHandle& buff, 
+	BindShaderBufferCommand(BufferPtr& buff,
 		I32 offset, I32 size, U8 binding)
 	:
-		m_buff(buff), 
-		m_offset(offset), 
-		m_size(size), 
+		m_buff(buff),
+		m_offset(offset),
+		m_size(size),
 		m_binding(binding)
 	{}
 
@@ -173,9 +174,9 @@ public:
 class BindIndexBufferCommand: public GlCommand
 {
 public:
-	BufferHandle m_buff;
+	BufferPtr m_buff;
 
-	BindIndexBufferCommand(BufferHandle& buff)
+	BindIndexBufferCommand(BufferPtr& buff)
 	:	m_buff(buff)
 	{}
 
@@ -190,30 +191,27 @@ public:
 };
 
 //==============================================================================
-// BufferHandle                                                                =
+// BufferPtr                                                                =
 //==============================================================================
 
 //==============================================================================
-BufferHandle::BufferHandle()
+BufferPtr::BufferPtr()
 {}
 
 //==============================================================================
-BufferHandle::~BufferHandle()
+BufferPtr::~BufferPtr()
 {}
 
 //==============================================================================
-Error BufferHandle::create(GrManager* manager,
+Error BufferPtr::create(GrManager* manager,
 	GLenum target, const void* data, PtrSize size, GLenum flags)
 {
 	ANKI_ASSERT(!isCreated());
 
-	using DeleteCommand = DeleteObjectCommand<BufferImpl>;
-	using Deleter = DeferredDeleter<BufferImpl, DeleteCommand>;
-
-	CommandBufferHandle cmdb;
+	CommandBufferPtr cmdb;
 	ANKI_CHECK(cmdb.create(manager));
 
-	Base::create(cmdb.get().getManager(), Deleter());
+	Base::create(cmdb.get().getManager());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
 	// Allocate temp memory for the data
@@ -235,8 +233,8 @@ Error BufferHandle::create(GrManager* manager,
 }
 
 //==============================================================================
-void BufferHandle::write(CommandBufferHandle& commands, 
-	const void* data, PtrSize dataSize, PtrSize readOffset, PtrSize writeOffset, 
+void BufferPtr::write(CommandBufferPtr& commands,
+	const void* data, PtrSize dataSize, PtrSize readOffset, PtrSize writeOffset,
 	PtrSize size)
 {
 	ANKI_ASSERT(isCreated());
@@ -250,7 +248,7 @@ void BufferHandle::write(CommandBufferHandle& commands,
 }
 
 //==============================================================================
-void BufferHandle::bindShaderBufferInternal(CommandBufferHandle& commands,
+void BufferPtr::bindShaderBufferInternal(CommandBufferPtr& commands,
 	I32 offset, I32 size, U32 bindingPoint)
 {
 	ANKI_ASSERT(isCreated());
@@ -259,8 +257,8 @@ void BufferHandle::bindShaderBufferInternal(CommandBufferHandle& commands,
 }
 
 //==============================================================================
-void BufferHandle::bindVertexBuffer(
-	CommandBufferHandle& commands, 
+void BufferPtr::bindVertexBuffer(
+	CommandBufferPtr& commands,
 	U32 elementSize,
 	GLenum type,
 	Bool normalized,
@@ -274,28 +272,28 @@ void BufferHandle::bindVertexBuffer(
 }
 
 //==============================================================================
-void BufferHandle::bindIndexBuffer(CommandBufferHandle& commands)
+void BufferPtr::bindIndexBuffer(CommandBufferPtr& commands)
 {
 	ANKI_ASSERT(isCreated());
 	commands.get().pushBackNewCommand<BindIndexBufferCommand>(*this);
 }
 
 //==============================================================================
-PtrSize BufferHandle::getSize() const
+PtrSize BufferPtr::getSize() const
 {
 	return (get().serializeOnGetter()) ? 0 : get().getSize();
 }
 
 //==============================================================================
-GLenum BufferHandle::getTarget() const
+GLenum BufferPtr::getTarget() const
 {
 	return (get().serializeOnGetter()) ? GL_NONE : get().getTarget();
 }
 
 //==============================================================================
-void* BufferHandle::getPersistentMappingAddress()
+void* BufferPtr::getPersistentMappingAddress()
 {
-	return (get().serializeOnGetter()) 
+	return (get().serializeOnGetter())
 		? nullptr : get().getPersistentMappingAddress();
 }
 

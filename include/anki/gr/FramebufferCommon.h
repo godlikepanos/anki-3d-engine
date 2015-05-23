@@ -7,7 +7,7 @@
 #define ANKI_GR_FRAMEBUFFER_COMMON_H
 
 #include "anki/gr/Common.h"
-#include "anki/gr/TextureHandle.h"
+#include "anki/gr/TexturePtr.h"
 
 namespace anki {
 
@@ -16,7 +16,7 @@ namespace anki {
 class Attachment
 {
 public:
-	TextureHandle m_texture;
+	TexturePtr m_texture;
 	U32 m_layer = 0;
 	U32 m_mipmap = 0;
 	PixelFormat m_format;

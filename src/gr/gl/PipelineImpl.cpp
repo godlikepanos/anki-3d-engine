@@ -140,8 +140,7 @@ void PipelineImpl::destroy()
 {
 	if(m_glName)
 	{
-		glDeleteProgramPipelines(1, &m_glName);
-		m_glName = 0;
+		destroyDeferred(glDeleteProgramPipelines);
 	}
 }
 
@@ -155,7 +154,7 @@ Error PipelineImpl::createGlPipeline()
 	U count = 6;
 	while(count-- != 0)
 	{
-		const ShaderHandle& shader = m_shaders[count];
+		const ShaderPtr& shader = m_shaders[count];
 		if(shader.isCreated())
 		{
 			ANKI_ASSERT(count == enumToType(shader.get().getType()));
@@ -196,7 +195,7 @@ Error PipelineImpl::createGlPipeline()
 
 	for(U i = 0; i < m_shaders.getSize(); i++)
 	{
-		ShaderHandle& shader = m_shaders[i];
+		ShaderPtr& shader = m_shaders[i];
 
 		if(shader.isCreated())
 		{

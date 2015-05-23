@@ -76,7 +76,7 @@ Error BlurringRenderingPass::initBlurring(
 			1, SamplingFilter::LINEAR, 1, dir.m_rt));
 
 		// Create FB
-		FramebufferHandle::Initializer fbInit;
+		FramebufferPtr::Initializer fbInit;
 		fbInit.m_colorAttachmentsCount = 1;
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
 		fbInit.m_colorAttachments[0].m_loadOperation =
@@ -96,7 +96,7 @@ Error BlurringRenderingPass::initBlurring(
 
 //==============================================================================
 Error BlurringRenderingPass::runBlurring(
-	Renderer& r, CommandBufferHandle& cmdb)
+	Renderer& r, CommandBufferPtr& cmdb)
 {
 	// H pass input
 	m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_rt.bind(cmdb, 1);

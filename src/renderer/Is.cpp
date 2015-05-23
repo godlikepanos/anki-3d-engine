@@ -205,7 +205,7 @@ Error Is::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_lightFrag.loadToCache(&getResourceManager(),
 		"shaders/IsLp.frag.glsl", pps.toCString(), "r_"));
 
-	PipelineHandle::Initializer init;
+	PipelinePtr::Initializer init;
 		init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
 		init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
 	ANKI_CHECK(m_lightPpline.create(&getGrManager(), init));
@@ -220,7 +220,7 @@ Error Is::initInternal(const ConfigSet& config)
 		//PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
 		1, SamplingFilter::LINEAR, MIPMAPS_COUNT, m_rt));
 
-	FramebufferHandle::Initializer fbInit;
+	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -280,7 +280,7 @@ Error Is::initInternal(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Is::lightPass(CommandBufferHandle& cmdBuff)
+Error Is::lightPass(CommandBufferPtr& cmdBuff)
 {
 	Error err = ErrorCode::NONE;
 	Threadpool& threadPool = m_r->_getThreadpool();
@@ -444,7 +444,7 @@ Error Is::lightPass(CommandBufferHandle& cmdBuff)
 		cmdBuff, LIGHT_IDS_BLOCK_BINDING);
 
 	// The binding points should much the shader
-	Array<TextureHandle, 5> tarr = {{
+	Array<TexturePtr, 5> tarr = {{
 		m_r->getMs().getRt0(),
 		m_r->getMs().getRt1(),
 		m_r->getMs().getRt2(),
@@ -752,7 +752,7 @@ void Is::binLight(
 }
 
 //==============================================================================
-void Is::setState(CommandBufferHandle& cmdBuff)
+void Is::setState(CommandBufferPtr& cmdBuff)
 {
 #if 1
 	Bool drawToDefaultFbo = !m_r->getPps().getEnabled()
@@ -778,14 +778,14 @@ void Is::setState(CommandBufferHandle& cmdBuff)
 }
 
 //==============================================================================
-Error Is::run(CommandBufferHandle& cmdBuff)
+Error Is::run(CommandBufferPtr& cmdBuff)
 {
 	// Do the light pass including the shadow passes
 	return lightPass(cmdBuff);
 }
 
 //==============================================================================
-Error Is::updateCommonBlock(CommandBufferHandle& cmdBuff)
+Error Is::updateCommonBlock(CommandBufferPtr& cmdBuff)
 {
 	SceneGraph& scene = m_r->getSceneGraph();
 	shader::CommonUniforms blk;

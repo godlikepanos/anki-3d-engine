@@ -24,10 +24,10 @@ public:
 	~Fs();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdb);
+	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdb);
 
 private:
-	FramebufferHandle m_fb;
+	FramebufferPtr m_fb;
 };
 /// @}
 

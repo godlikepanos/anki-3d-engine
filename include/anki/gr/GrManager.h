@@ -18,7 +18,7 @@ namespace anki {
 class GrManagerInitializer
 {
 public:
-	AllocAlignedCallback m_allocCallback = nullptr; 
+	AllocAlignedCallback m_allocCallback = nullptr;
 	void* m_allocCallbackUserData = nullptr;
 
 	MakeCurrentCallback m_makeCurrentCallback = nullptr;
@@ -67,7 +67,7 @@ public:
 		return m_alloc;
 	}
 
-	GrManagerImpl& getImplementation() 
+	GrManagerImpl& getImplementation()
 	{
 		return *m_impl;
 	}

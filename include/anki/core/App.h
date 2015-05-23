@@ -41,7 +41,7 @@ public:
 	App();
 	~App();
 
-	ANKI_USE_RESULT Error create(const ConfigSet& config, 
+	ANKI_USE_RESULT Error create(const ConfigSet& config,
 		AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	F32 getTimerTick() const
@@ -155,7 +155,7 @@ private:
 	String m_cacheDir; ///< This is used as a cache
 	F32 m_timerTick;
 
-	ANKI_USE_RESULT Error createInternal(const ConfigSet& config, 
+	ANKI_USE_RESULT Error createInternal(const ConfigSet& config,
 		AllocAlignedCallback allocCb, void* allocCbUserData);
 
 	ANKI_USE_RESULT Error initDirs();

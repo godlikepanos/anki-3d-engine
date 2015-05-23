@@ -28,14 +28,14 @@ public:
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdBuff);
 
-	TextureHandle& _getRt()
+	TexturePtr& _getRt()
 	{
 		return m_vblurRt;
 	}
 
-	BufferHandle& getUniformBuffer()
+	BufferPtr& getUniformBuffer()
 	{
 		return m_uniformsBuff;
 	}
@@ -45,24 +45,24 @@ private:
 	U32 m_width, m_height; ///< Blur passes size
 	U8 m_blurringIterationsCount;
 
-	TextureHandle m_vblurRt;
-	TextureHandle m_hblurRt;
-	FramebufferHandle m_vblurFb;
-	FramebufferHandle m_hblurFb;
+	TexturePtr m_vblurRt;
+	TexturePtr m_hblurRt;
+	FramebufferPtr m_vblurFb;
+	FramebufferPtr m_hblurFb;
 
 	ShaderResourcePointer m_ssaoFrag;
 	ShaderResourcePointer m_hblurFrag;
 	ShaderResourcePointer m_vblurFrag;
-	PipelineHandle m_ssaoPpline;
-	PipelineHandle m_hblurPpline;
-	PipelineHandle m_vblurPpline;
+	PipelinePtr m_ssaoPpline;
+	PipelinePtr m_hblurPpline;
+	PipelinePtr m_vblurPpline;
 	
 	Timestamp m_commonUboUpdateTimestamp = 0;
-	BufferHandle m_uniformsBuff;
-	TextureHandle m_noiseTex;
+	BufferPtr m_uniformsBuff;
+	TexturePtr m_noiseTex;
 
 	ANKI_USE_RESULT Error createFb(
-		FramebufferHandle& fb, TextureHandle& rt);
+		FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
 

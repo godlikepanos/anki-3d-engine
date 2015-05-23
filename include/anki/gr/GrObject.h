@@ -8,14 +8,15 @@
 
 #include "anki/gr/Common.h"
 #include "anki/util/Atomic.h"
+#include "anki/util/NonCopyable.h"
 
 namespace anki {
 
-/// @addtogroup graphics_private
+/// @addtogroup graphics
 /// @{
 
 /// Base of all graphics objects.
-class GrObject
+class GrObject: public NonCopyable
 {
 public:
 	GrObject(GrManager* manager)

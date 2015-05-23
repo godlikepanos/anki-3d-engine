@@ -72,10 +72,10 @@ protected:
 	class Direction
 	{
 	public:
-		FramebufferHandle m_fb;
-		TextureHandle m_rt;
+		FramebufferPtr m_fb;
+		TexturePtr m_rt;
 		ShaderResourcePointer m_frag;
-		PipelineHandle m_ppline;
+		PipelinePtr m_ppline;
 	};
 
 	enum class DirectionEnum: U
@@ -89,7 +89,7 @@ protected:
 	ANKI_USE_RESULT Error initBlurring(Renderer& r, U width, U height, U samples,
 		F32 blurringDistance);
 
-	ANKI_USE_RESULT Error runBlurring(Renderer& r, CommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error runBlurring(Renderer& r, CommandBufferPtr& jobs);
 };
 
 /// @}

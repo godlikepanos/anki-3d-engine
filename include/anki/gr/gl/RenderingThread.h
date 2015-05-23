@@ -6,7 +6,7 @@
 #ifndef ANKI_GR_GL_RENDERING_THREAD_H
 #define ANKI_GR_GL_RENDERING_THREAD_H
 
-#include "anki/gr/CommandBufferHandle.h"
+#include "anki/gr/CommandBufferPtr.h"
 #include "anki/gr/gl/GlState.h"
 #include "anki/util/Thread.h"
 
@@ -17,7 +17,7 @@ namespace anki {
 
 #define ANKI_DISABLE_GL_RENDERING_THREAD 0
 
-/// Command queue. It's essentialy a queue of command buffers waiting for 
+/// Command queue. It's essentialy a queue of command buffers waiting for
 /// execution and a server
 class RenderingThread
 {
@@ -54,10 +54,10 @@ public:
 	void stop();
 
 	/// Push a command buffer to the queue for deferred execution
-	void flushCommandBuffer(CommandBufferHandle& commands);
+	void flushCommandBuffer(CommandBufferPtr& commands);
 
 	/// Push a command buffer to the queue and wait for it
-	void finishCommandBuffer(CommandBufferHandle& commands);
+	void finishCommandBuffer(CommandBufferPtr& commands);
 
 	/// Sync the client and server
 	void syncClientServer();
@@ -74,7 +74,7 @@ public:
 private:
 	GrManager* m_manager = nullptr;
 
-	Array<CommandBufferHandle, 128> m_queue; ///< Command queue
+	Array<CommandBufferPtr, 128> m_queue; ///< Command queue
 	U64 m_tail; ///< Tail of queue
 	U64 m_head; ///< Head of queue. Points to the end
 	U8 m_renderingThreadSignal; ///< Signal to the thread
@@ -86,7 +86,7 @@ private:
 	void* m_ctx = nullptr; ///< Pointer to the system GL context
 	MakeCurrentCallback m_makeCurrentCb; ///< Making a context current
 
-	CommandBufferHandle m_swapBuffersCommands;
+	CommandBufferPtr m_swapBuffersCommands;
 	SwapBuffersCallback m_swapBuffersCallback;
 	void* m_swapBuffersCbData;
 	ConditionVariable m_frameCondVar;
@@ -94,13 +94,13 @@ private:
 	Bool8 m_frameWait = false;
 
 	Thread::Id m_serverThreadId;
-	
+
 	GlState m_state;
 	GLuint m_defaultVao;
 
-	/// A special command buffer that is called every time we want to wait for 
+	/// A special command buffer that is called every time we want to wait for
 	/// the server
-	CommandBufferHandle m_syncCommands;
+	CommandBufferPtr m_syncCommands;
 	Barrier m_syncBarrier{2};
 
 	GLuint m_copyFbo = MAX_U32; ///< FBO for copying from tex to buffer.

@@ -32,7 +32,7 @@ public:
 	~Bloom();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	void run(CommandBufferHandle& jobs);
+	void run(CommandBufferPtr& jobs);
 
 	U32 getBlurringIterationsCount() const
 	{
@@ -45,7 +45,7 @@ public:
 
 	/// @privatesection
 	/// @{
-	TextureHandle& getRt()
+	TexturePtr& getRt()
 	{
 		return m_vblurRt;
 	}
@@ -68,29 +68,29 @@ private:
 	U32 m_blurringIterationsCount = 2; ///< The blurring iterations
 	F32 m_blurringDist = 1.0; ///< Distance in blurring
 	
-	FramebufferHandle m_hblurFb;
-	FramebufferHandle m_vblurFb;
+	FramebufferPtr m_hblurFb;
+	FramebufferPtr m_vblurFb;
 
 	ShaderResourcePointer m_toneFrag;
 	ShaderResourcePointer m_hblurFrag;
 	ShaderResourcePointer m_vblurFrag;
 
-	PipelineHandle m_tonePpline;
-	PipelineHandle m_hblurPpline;
-	PipelineHandle m_vblurPpline;
+	PipelinePtr m_tonePpline;
+	PipelinePtr m_hblurPpline;
+	PipelinePtr m_vblurPpline;
 
-	TextureHandle m_hblurRt; ///< pass0Fai with the horizontal blur FAI
-	TextureHandle m_vblurRt; ///< The final FAI
+	TexturePtr m_hblurRt; ///< pass0Fai with the horizontal blur FAI
+	TexturePtr m_vblurRt; ///< The final FAI
 	/// When a parameter changed by the setters
 	Timestamp m_parameterUpdateTimestamp = 0;
 	/// When the commonUbo got updated
 	Timestamp m_commonUboUpdateTimestamp = 0;
-	BufferHandle m_commonBuff;
+	BufferPtr m_commonBuff;
 
-	ANKI_USE_RESULT Error initFb(FramebufferHandle& fb, TextureHandle& rt);
+	ANKI_USE_RESULT Error initFb(FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
-	void updateDefaultBlock(CommandBufferHandle& jobs);
+	void updateDefaultBlock(CommandBufferPtr& jobs);
 };
 
 /// @}

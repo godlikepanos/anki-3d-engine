@@ -9,7 +9,6 @@
 #include "anki/renderer/MainRenderer.h"
 
 /// @defgroup renderer Renderering system
-/// @ingroup anki_public
 
 #endif
 

@@ -67,7 +67,7 @@ public:
 //==============================================================================
 
 //==============================================================================
-Error Ssao::createFb(FramebufferHandle& fb, TextureHandle& rt)
+Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
 	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height,
@@ -75,7 +75,7 @@ Error Ssao::createFb(FramebufferHandle& fb, TextureHandle& rt)
 		1, SamplingFilter::LINEAR, 1, rt));
 
 	// Create FB
-	FramebufferHandle::Initializer fbInit;
+	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
@@ -117,14 +117,14 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// noise texture
 	//
-	CommandBufferHandle cmdb;
+	CommandBufferPtr cmdb;
 	ANKI_CHECK(cmdb.create(&getGrManager()));
 
 	Array<Vec3, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
 
 	genNoise(&noise[0], &noise[0] + noise.getSize());
 
-	TextureHandle::Initializer tinit;
+	TexturePtr::Initializer tinit;
 
 	tinit.m_width = tinit.m_height = NOISE_TEX_SIZE;
 	tinit.m_type = TextureType::_2D;
@@ -231,7 +231,7 @@ Error Ssao::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Ssao::run(CommandBufferHandle& cmdb)
+Error Ssao::run(CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -246,7 +246,7 @@ Error Ssao::run(CommandBufferHandle& cmdb)
 
 	m_uniformsBuff.bindShaderBuffer(cmdb, 0);
 
-	Array<TextureHandle, 3> tarr = {{
+	Array<TexturePtr, 3> tarr = {{
 		m_r->getMs().getDepthRt(),
 		m_r->getMs().getRt2(),
 		m_noiseTex}};
@@ -277,7 +277,7 @@ Error Ssao::run(CommandBufferHandle& cmdb)
 	{
 		if(i == 0)
 		{
-			Array<TextureHandle, 2> tarr = {{m_hblurRt, m_vblurRt}};
+			Array<TexturePtr, 2> tarr = {{m_hblurRt, m_vblurRt}};
 			cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
 		}
 

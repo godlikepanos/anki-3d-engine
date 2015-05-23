@@ -23,32 +23,32 @@ class Ms: public RenderingPass
 public:
 	/// @privatesection
 	/// @{
-	TextureHandle& getRt0()
+	TexturePtr& getRt0()
 	{
 		return m_planes[1].m_rt0;
 	}
 
-	TextureHandle& getRt1()
+	TexturePtr& getRt1()
 	{
 		return m_planes[1].m_rt1;
 	}
 
-	TextureHandle& getRt2()
+	TexturePtr& getRt2()
 	{
 		return m_planes[1].m_rt2;
 	}
 
-	TextureHandle& getDepthRt()
+	TexturePtr& getDepthRt()
 	{
 		return m_planes[1].m_depthRt;
 	}
 
-	FramebufferHandle& getFramebuffer()
+	FramebufferPtr& getFramebuffer()
 	{
 		return m_planes[1].m_fb;
 	}
 
-	void generateMipmaps(CommandBufferHandle& cmdb);
+	void generateMipmaps(CommandBufferPtr& cmdb);
 	/// @}
 
 private:
@@ -56,19 +56,19 @@ private:
 	class Plane
 	{
 	public:
-		FramebufferHandle m_fb;
+		FramebufferPtr m_fb;
 
 		/// Contains diffuse color and emission
-		TextureHandle m_rt0;
+		TexturePtr m_rt0;
 
 		/// Contains specular color, roughness
-		TextureHandle m_rt1;
+		TexturePtr m_rt1;
 
 		/// Contains normals
-		TextureHandle m_rt2;
+		TexturePtr m_rt2;
 
 		/// Depth stencil
-		TextureHandle m_depthRt;
+		TexturePtr m_depthRt;
 	};
 
 	Ez m_ez; /// EarlyZ pass
@@ -85,7 +85,7 @@ private:
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& jobs);
+	ANKI_USE_RESULT Error run(CommandBufferPtr& jobs);
 
 	/// Create a G buffer FBO
 	ANKI_USE_RESULT Error createRt(U32 index, U32 samples);

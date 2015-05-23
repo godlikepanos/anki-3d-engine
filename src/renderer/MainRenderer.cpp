@@ -57,8 +57,8 @@ Error MainRenderer::render(SceneGraph& scene)
 	ANKI_COUNTER_START_TIMER(MAIN_RENDERER_TIME);
 
 	GrManager& gl = _getGrManager();
-	Array<CommandBufferHandle, JOB_CHAINS_COUNT> jobs;
-	CommandBufferHandle& lastJobs = jobs[JOB_CHAINS_COUNT - 1];
+	Array<CommandBufferPtr, JOB_CHAINS_COUNT> jobs;
+	CommandBufferPtr& lastJobs = jobs[JOB_CHAINS_COUNT - 1];
 
 	for(U i = 0; i < JOB_CHAINS_COUNT; i++)
 	{
@@ -84,7 +84,7 @@ Error MainRenderer::render(SceneGraph& scene)
 
 		m_blitPpline.bind(lastJobs);
 
-		TextureHandle* rt;
+		TexturePtr* rt;
 
 		if(getPps().getEnabled())
 		{
@@ -122,7 +122,7 @@ Error MainRenderer::render(SceneGraph& scene)
 Error MainRenderer::initGl()
 {
 	// get max texture units
-	CommandBufferHandle cmdb;
+	CommandBufferPtr cmdb;
 	Error err = cmdb.create(&_getGrManager());
 
 	if(!err)

@@ -7,9 +7,9 @@
 #define ANKI_GR_RESOURCE_GROUP_COMMON_H
 
 #include "anki/gr/Common.h"
-#include "anki/gr/TextureHandle.h"
-#include "anki/gr/SamplerHandle.h"
-#include "anki/gr/BufferHandle.h"
+#include "anki/gr/TexturePtr.h"
+#include "anki/gr/SamplerPtr.h"
+#include "anki/gr/BufferPtr.h"
 
 namespace anki {
 
@@ -20,15 +20,15 @@ namespace anki {
 class TextureBinding
 {
 public:
-	TextureHandle m_texture;
-	SamplerHandle m_sampler; ///< Use it to override texture's sampler.
+	TexturePtr m_texture;
+	SamplerPtr m_sampler; ///< Use it to override texture's sampler.
 };
 
 /// Buffer binding point.
 class BufferBinding
 {
 public:
-	BufferHandle m_buffer;
+	BufferPtr m_buffer;
 	PtrSize m_offset = 0;
 	PtrSize m_range = 0;
 };

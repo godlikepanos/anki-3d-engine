@@ -3,25 +3,23 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/ResourceGroupHandle.h"
+#include "anki/gr/ResourceGroupPtr.h"
 #include "anki/gr/gl/ResourceGroupImpl.h"
 
 namespace anki {
 
 //==============================================================================
-ResourceGroupHandle::ResourceGroupHandle()
+ResourceGroupPtr::ResourceGroupPtr()
 {}
 
 //==============================================================================
-ResourceGroupHandle::~ResourceGroupHandle()
+ResourceGroupPtr::~ResourceGroupPtr()
 {}
 
 //==============================================================================
-Error ResourceGroupHandle::create(GrManager* manager, const Initializer& init)
+Error ResourceGroupPtr::create(GrManager* manager, const Initializer& init)
 {
-	using Deleter = GrHandleDefaultDeleter<ResourceGroupImpl>;
-
-	Base::create(*manager, Deleter());
+	Base::create(*manager);
 	ANKI_CHECK(get().create(init));
 
 	return ErrorCode::NONE;

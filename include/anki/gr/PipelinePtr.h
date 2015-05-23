@@ -6,29 +6,29 @@
 #ifndef ANKI_GR_PIPELINE_HANDLE_H
 #define ANKI_GR_PIPELINE_HANDLE_H
 
-#include "anki/gr/GrHandle.h"
+#include "anki/gr/GrPtr.h"
 
 namespace anki {
 
 /// @addtogroup graphics
 /// @{
 
-/// Program pipeline handle.
-class PipelineHandle: public GrHandle<PipelineImpl>
+/// Program pipeline.
+class PipelinePtr: public GrPtr<PipelineImpl>
 {
 public:
-	using Base = GrHandle<PipelineImpl>;
+	using Base = GrPtr<PipelineImpl>;
 	using Initializer = PipelineInitializer;
 
-	PipelineHandle();
+	PipelinePtr();
 
-	~PipelineHandle();
+	~PipelinePtr();
 
 	/// Create a pipeline
 	ANKI_USE_RESULT Error create(GrManager* manager, const Initializer& init);
 
 	/// Bind it to the state
-	void bind(CommandBufferHandle& commands);
+	void bind(CommandBufferPtr& commands);
 };
 /// @}
 

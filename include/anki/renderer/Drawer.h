@@ -42,7 +42,7 @@ public:
 	ANKI_USE_RESULT Error create(Renderer* r);
 
 	void prepareDraw(
-		RenderingStage stage, Pass pass, CommandBufferHandle& cmdBuff);
+		RenderingStage stage, Pass pass, CommandBufferPtr& cmdBuff);
 
 	ANKI_USE_RESULT Error render(
 		SceneNode& frsn,
@@ -56,7 +56,7 @@ private:
 
 	/// @name State
 	/// @{
-	CommandBufferHandle m_cmdBuff;
+	CommandBufferPtr m_cmdBuff;
 
 	RenderingStage m_stage;
 	Pass m_pass;

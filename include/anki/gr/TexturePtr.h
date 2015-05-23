@@ -6,7 +6,7 @@
 #ifndef ANKI_GR_TEXTURE_HANDLE_H
 #define ANKI_GR_TEXTURE_HANDLE_H
 
-#include "anki/gr/GrHandle.h"
+#include "anki/gr/GrPtr.h"
 #include "anki/gr/TextureSamplerCommon.h"
 
 namespace anki {
@@ -14,26 +14,26 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
-/// Texture handle
-class TextureHandle: public GrHandle<TextureImpl>
+/// Texture.
+class TexturePtr: public GrPtr<TextureImpl>
 {
 public:
-	using Base = GrHandle<TextureImpl>;
+	using Base = GrPtr<TextureImpl>;
 	using Initializer = TextureInitializer;
 
 	/// Create husk
-	TextureHandle();
+	TexturePtr();
 
-	~TextureHandle();
+	~TexturePtr();
 
 	/// Create the texture
-	Error create(CommandBufferHandle& commands, const Initializer& init);
+	Error create(CommandBufferPtr& commands, const Initializer& init);
 
 	/// Bind to a unit
-	void bind(CommandBufferHandle& commands, U32 unit);
+	void bind(CommandBufferPtr& commands, U32 unit);
 
 	/// Generate mips
-	void generateMipmaps(CommandBufferHandle& commands);
+	void generateMipmaps(CommandBufferPtr& commands);
 };
 /// @}
 

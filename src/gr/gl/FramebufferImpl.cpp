@@ -15,7 +15,7 @@ Error FramebufferImpl::create(Initializer& init)
 {
 	*static_cast<FramebufferInitializer*>(this) = init;
 
-	if(m_colorAttachmentsCount == 0 
+	if(m_colorAttachmentsCount == 0
 		&& !m_depthStencilAttachment.m_texture.isCreated())
 	{
 		m_bindDefault = true;
@@ -50,7 +50,7 @@ Error FramebufferImpl::create(Initializer& init)
 	{
 		const Attachment& att = m_depthStencilAttachment;
 		const GLenum binding = GL_DEPTH_ATTACHMENT;
-			
+
 		attachTextureInternal(binding, att.m_texture.get(), att.m_layer);
 
 		if(att.m_loadOperation == AttachmentLoadOperation::DONT_CARE)
@@ -77,8 +77,7 @@ void FramebufferImpl::destroy()
 {
 	if(m_glName != 0)
 	{
-		glDeleteFramebuffers(1, &m_glName);
-		m_glName = 0;
+		destroyDeferred(glDeleteFramebuffers);
 	}
 }
 
@@ -135,7 +134,7 @@ void FramebufferImpl::bind()
 		// Invalidate
 		if(m_invalidateBuffersCount)
 		{
-			glInvalidateFramebuffer(GL_FRAMEBUFFER, m_invalidateBuffersCount, 
+			glInvalidateFramebuffer(GL_FRAMEBUFFER, m_invalidateBuffersCount,
 				&m_invalidateBuffers[0]);
 		}
 
@@ -150,27 +149,27 @@ void FramebufferImpl::bind()
 			}
 		}
 
-		if(m_depthStencilAttachment.m_texture.isCreated() 
-			&& m_depthStencilAttachment.m_loadOperation 
+		if(m_depthStencilAttachment.m_texture.isCreated()
+			&& m_depthStencilAttachment.m_loadOperation
 				== AttachmentLoadOperation::CLEAR)
 		{
-			glClearBufferfv(GL_DEPTH, 0, 
+			glClearBufferfv(GL_DEPTH, 0,
 				&m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth);
 		}
 	}
 }
 
 //==============================================================================
-void FramebufferImpl::blit(const FramebufferImpl& b, 
+void FramebufferImpl::blit(const FramebufferImpl& b,
 	const Array<U32, 4>& sourceRect,
-	const Array<U32, 4>& destRect, 
+	const Array<U32, 4>& destRect,
 	GLbitfield attachmentMask, Bool linear)
 {
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, m_glName);
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, b.m_glName);
 	glBlitFramebuffer(
 		sourceRect[0], sourceRect[1], sourceRect[2], sourceRect[3],
-		destRect[0], destRect[1], destRect[2], destRect[3], 
+		destRect[0], destRect[1], destRect[2], destRect[3],
 		attachmentMask,
 		linear ? GL_LINEAR : GL_NEAREST);
 }

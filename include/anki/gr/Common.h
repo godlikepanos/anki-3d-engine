@@ -30,32 +30,32 @@ namespace anki {
 
 // Forward
 class BufferImpl;
-class BufferHandle;
+class BufferPtr;
 class ShaderImpl;
-class ShaderHandle;
+class ShaderPtr;
 class PipelineImpl;
-class PipelineHandle;
+class PipelinePtr;
 class PipelineInitializer;
 class FramebufferImpl;
-class FramebufferHandle;
+class FramebufferPtr;
 class FramebufferInitializer;
 class TextureImpl;
-class TextureHandle;
+class TexturePtr;
 class SamplerImpl;
-class SamplerHandle;
+class SamplerPtr;
 class OcclusionQueryImpl;
-class OcclusionQueryHandle;
+class OcclusionQueryPtr;
 class CommandBufferImpl;
-class CommandBufferHandle;
+class CommandBufferPtr;
 class ResourceGroupImpl;
-class ResourceGroupHandle;
+class ResourceGroupPtr;
 class GrManager;
 class GrManagerImpl;
 class TextureInitializer;
 class SamplerInitializer;
 class GrManagerInitializer;
 
-/// @addtogroup graphics_private
+/// @addtogroup graphics
 /// @{
 
 /// The type of the allocator of CommandBuffer
@@ -65,10 +65,6 @@ using CommandBufferAllocator = ChainAllocator<T>;
 /// The type of the allocator for heap allocations
 template<typename T>
 using GrAllocator = HeapAllocator<T>;
-/// @}
-
-/// @addtogroup graphics
-/// @{
 
 // Some constants
 const U MAX_VERTEX_ATTRIBUTES = 8;
@@ -83,7 +79,7 @@ const U MAX_STORAGE_BUFFER_BINDINGS = 4;
 using SwapBuffersCallback = void(*)(void*);
 using MakeCurrentCallback = void(*)(void*, void*);
 
-/// Command buffer initialization hints. They are used to optimize the 
+/// Command buffer initialization hints. They are used to optimize the
 /// allocators of a command buffer
 class CommandBufferInitHints
 {
@@ -102,7 +98,7 @@ private:
 /// @addtogroup opengl_other
 /// @{
 
-/// The draw indirect structure for index drawing, also the parameters of a 
+/// The draw indirect structure for index drawing, also the parameters of a
 /// regular drawcall
 class GlDrawElementsIndirectInfo
 {
@@ -111,14 +107,14 @@ public:
 	{}
 
 	GlDrawElementsIndirectInfo(
-		U32 count, 
-		U32 instanceCount, 
-		U32 firstIndex, 
-		U32 baseVertex, 
+		U32 count,
+		U32 instanceCount,
+		U32 firstIndex,
+		U32 baseVertex,
 		U32 baseInstance)
-	:	m_count(count), 
-		m_instanceCount(instanceCount), 
-		m_firstIndex(firstIndex), 
+	:	m_count(count),
+		m_instanceCount(instanceCount),
+		m_firstIndex(firstIndex),
 		m_baseVertex(baseVertex),
 		m_baseInstance(baseInstance)
 	{}
@@ -130,7 +126,7 @@ public:
 	U32 m_baseInstance = 0;
 };
 
-/// The draw indirect structure for arrays drawing, also the parameters of a 
+/// The draw indirect structure for arrays drawing, also the parameters of a
 /// regular drawcall
 class GlDrawArraysIndirectInfo
 {
@@ -139,20 +135,20 @@ public:
 	{}
 
 	GlDrawArraysIndirectInfo(
-		U32 count, 
-		U32 instanceCount, 
-		U32 first, 
+		U32 count,
+		U32 instanceCount,
+		U32 first,
 		U32 baseInstance)
-	:	m_count(count), 
-		m_instanceCount(instanceCount), 
-		m_first(first), 
+	:	m_count(count),
+		m_instanceCount(instanceCount),
+		m_first(first),
 		m_baseInstance(baseInstance)
 	{}
 
 	U32 m_count = MAX_U32;
 	U32 m_instanceCount = 1;
 	U32 m_first = 0;
-	U32 m_baseInstance = 0;	
+	U32 m_baseInstance = 0;
 };
 /// @}
 

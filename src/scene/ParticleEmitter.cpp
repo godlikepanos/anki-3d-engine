@@ -362,7 +362,7 @@ Error ParticleEmitter::buildRendering(RenderingBuildData& data)
 	RenderingKey key = data.m_key;
 	key.m_lod = 0;
 
-	PipelineHandle ppline;
+	PipelinePtr ppline;
 	err = m_particleEmitterResource->getMaterial().getProgramPipeline(
 		key, ppline);
 

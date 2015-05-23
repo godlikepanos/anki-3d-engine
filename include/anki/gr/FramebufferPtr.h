@@ -6,7 +6,7 @@
 #ifndef ANKI_GR_FRAMEBUFFER_HANDLE_H
 #define ANKI_GR_FRAMEBUFFER_HANDLE_H
 
-#include "anki/gr/GrHandle.h"
+#include "anki/gr/GrPtr.h"
 #include "anki/gr/FramebufferCommon.h"
 
 namespace anki {
@@ -14,16 +14,16 @@ namespace anki {
 /// @addtogroup graphics
 /// @{
 
-/// Framebuffer handle
-class FramebufferHandle: public GrHandle<FramebufferImpl>
+/// Framebuffer.
+class FramebufferPtr: public GrPtr<FramebufferImpl>
 {
 public:
-	using Base = GrHandle<FramebufferImpl>;
+	using Base = GrPtr<FramebufferImpl>;
 	using Initializer = FramebufferInitializer;
 
-	FramebufferHandle();
+	FramebufferPtr();
 
-	~FramebufferHandle();
+	~FramebufferPtr();
 
 	/// Create a framebuffer
 	ANKI_USE_RESULT Error create(GrManager* manager,
@@ -31,7 +31,7 @@ public:
 
 	/// Bind it to the command buffer
 	/// @param commands The command buffer
-	void bind(CommandBufferHandle& commands);
+	void bind(CommandBufferPtr& commands);
 
 	/// Blit another framebuffer to this
 	/// @param[in, out] commands The command buffer
@@ -40,10 +40,10 @@ public:
 	/// @param[in] destRect The destination rectangle
 	/// @param attachmentMask The attachments to blit
 	/// @param linear Perform linean filtering
-	void blit(CommandBufferHandle& commands,
-		const FramebufferHandle& b, 
+	void blit(CommandBufferPtr& commands,
+		const FramebufferPtr& b,
 		const Array<U32, 4>& sourceRect,
-		const Array<U32, 4>& destRect, 
+		const Array<U32, 4>& destRect,
 		GLbitfield attachmentMask,
 		Bool linear);
 };

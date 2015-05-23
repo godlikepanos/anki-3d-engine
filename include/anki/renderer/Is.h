@@ -45,12 +45,12 @@ public:
 
 	/// @privatesection
 	/// @{
-	TextureHandle& _getRt()
+	TexturePtr& _getRt()
 	{
 		return m_rt;
 	}
 
-	void generateMipmaps(CommandBufferHandle& cmdb)
+	void generateMipmaps(CommandBufferPtr& cmdb)
 	{
 		m_rt.generateMipmaps(cmdb);
 	}
@@ -71,37 +71,37 @@ private:
 	U32 m_currentFrame = 0; ///< Cache value.
 
 	/// The IS render target
-	TextureHandle m_rt;
+	TexturePtr m_rt;
 
 	/// The IS FBO
-	FramebufferHandle m_fb;
+	FramebufferPtr m_fb;
 
 	/// @name GPU buffers
 	/// @{
 
 	/// Contains common data for all shader programs
-	BufferHandle m_commonBuffer;
+	BufferPtr m_commonBuffer;
 
 	/// Track the updates of commonUbo
 	Timestamp m_commonBuffUpdateTimestamp = 0;
 
 	/// Contains all the lights
-	Array<BufferHandle, MAX_FRAMES> m_lightsBuffers;
+	Array<BufferPtr, MAX_FRAMES> m_lightsBuffers;
 	Array<void*, MAX_FRAMES> m_lightsBufferAddresses;
 
 	/// Contains the number of lights per tile
-	Array<BufferHandle, MAX_FRAMES> m_tilesBuffers;
+	Array<BufferPtr, MAX_FRAMES> m_tilesBuffers;
 	Array<void*, MAX_FRAMES> m_tilesBufferAddresses;
 
 	/// Contains light indices.
-	Array<BufferHandle, MAX_FRAMES> m_lightIdsBuffers;
+	Array<BufferPtr, MAX_FRAMES> m_lightIdsBuffers;
 	Array<void*, MAX_FRAMES> m_lightIdsBufferAddresses;
 	/// @}
 
 	// Light shaders
 	ShaderResourcePointer m_lightVert;
 	ShaderResourcePointer m_lightFrag;
-	PipelineHandle m_lightPpline;
+	PipelinePtr m_lightPpline;
 
 	/// Shadow mapping
 	Sm m_sm;
@@ -116,7 +116,7 @@ private:
 
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
-	BufferHandle m_quadPositionsVertBuff;
+	BufferPtr m_quadPositionsVertBuff;
 	/// @}
 
 	/// @name Limits
@@ -132,16 +132,16 @@ private:
 	~Is();
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(CommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdBuff);
 
 	/// Called by init
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 
 	/// Do the actual pass
-	ANKI_USE_RESULT Error lightPass(CommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error lightPass(CommandBufferPtr& cmdBuff);
 
 	/// Prepare GL for rendering
-	void setState(CommandBufferHandle& cmdBuff);
+	void setState(CommandBufferPtr& cmdBuff);
 
 	/// Calculate the size of the lights UBO
 	PtrSize calcLightsBufferSize() const;
@@ -149,7 +149,7 @@ private:
 	/// Calculate the size of the tile
 	PtrSize calcTileSize() const;
 
-	ANKI_USE_RESULT Error updateCommonBlock(CommandBufferHandle& cmdBuff);
+	ANKI_USE_RESULT Error updateCommonBlock(CommandBufferPtr& cmdBuff);
 
 	// Binning
 	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);

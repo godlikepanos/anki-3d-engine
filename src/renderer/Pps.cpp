@@ -58,7 +58,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
 		1, SamplingFilter::LINEAR, 1, m_rt));
 
-	FramebufferHandle::Initializer fbInit;
+	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = 
@@ -114,7 +114,7 @@ Error Pps::loadColorGradingTexture(CString filename)
 }
 
 //==============================================================================
-Error Pps::run(CommandBufferHandle& cmdb)
+Error Pps::run(CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 

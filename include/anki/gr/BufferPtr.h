@@ -6,50 +6,50 @@
 #ifndef ANKI_GR_BUFFER_HANDLE_H
 #define ANKI_GR_BUFFER_HANDLE_H
 
-#include "anki/gr/GrHandle.h"
+#include "anki/gr/GrPtr.h"
 
 namespace anki {
 
 /// @addtogroup opengl_containers
 /// @{
 
-/// GPU buffer handle
-class BufferHandle: public GrHandle<BufferImpl>
+/// GPU buffer.
+class BufferPtr: public GrPtr<BufferImpl>
 {
 public:
-	using Base = GrHandle<BufferImpl>;
+	using Base = GrPtr<BufferImpl>;
 
-	BufferHandle();
+	BufferPtr();
 
-	~BufferHandle();
+	~BufferPtr();
 
 	/// Create the buffer with data
-	ANKI_USE_RESULT Error create(GrManager* manager, GLenum target, 
+	ANKI_USE_RESULT Error create(GrManager* manager, GLenum target,
 		const void* data, PtrSize size, GLbitfield flags);
 
-	/// Get buffer size. It may serialize 
+	/// Get buffer size. It may serialize
 	PtrSize getSize() const;
 
-	/// Get buffer's current target. It may serialize 
+	/// Get buffer's current target. It may serialize
 	GLenum getTarget() const;
 
-	/// Get persistent mapping address. It may serialize 
+	/// Get persistent mapping address. It may serialize
 	void* getPersistentMappingAddress();
 
 	/// Write data to the buffer
 	void write(
-		CommandBufferHandle& commands, 
+		CommandBufferPtr& commands,
 		const void* data, PtrSize dataSize, PtrSize readOffset,
 		PtrSize writeOffset, PtrSize size);
 
 	/// Bind to the state as uniform/shader storage buffer
-	void bindShaderBuffer(CommandBufferHandle& commands, U32 bindingPoint)
+	void bindShaderBuffer(CommandBufferPtr& commands, U32 bindingPoint)
 	{
 		bindShaderBufferInternal(commands, -1, -1, bindingPoint);
 	}
 
 	/// Bind to the state as uniform/shader storage buffer
-	void bindShaderBuffer(CommandBufferHandle& commands,
+	void bindShaderBuffer(CommandBufferPtr& commands,
 		U32 offset, U32 size, U32 bindingPoint)
 	{
 		bindShaderBufferInternal(commands, offset, size, bindingPoint);
@@ -57,7 +57,7 @@ public:
 
 	/// Bind to the state as vertex buffer
 	void bindVertexBuffer(
-		CommandBufferHandle& commands, 
+		CommandBufferPtr& commands,
 		U32 elementSize,
 		GLenum type,
 		Bool normalized,
@@ -66,10 +66,10 @@ public:
 		U32 attribLocation);
 
 	/// Bind to the state as index buffer
-	void bindIndexBuffer(CommandBufferHandle& commands);
+	void bindIndexBuffer(CommandBufferPtr& commands);
 
 private:
-	void bindShaderBufferInternal(CommandBufferHandle& commands,
+	void bindShaderBufferInternal(CommandBufferPtr& commands,
 		I32 offset, I32 size, U32 bindingPoint);
 };
 /// @}

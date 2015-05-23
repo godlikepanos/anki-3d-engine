@@ -35,13 +35,13 @@ public:
 	ANKI_USE_RESULT Error load(const CString& filename);
 
 	/// Get the GL texture
-	const TextureHandle& getGlTexture() const
+	const TexturePtr& getGlTexture() const
 	{
 		return m_tex;
 	}
 
 	/// Get the GL texture
-	TextureHandle& getGlTexture()
+	TexturePtr& getGlTexture()
 	{
 		return m_tex;
 	}
@@ -62,7 +62,7 @@ public:
 	}
 
 private:
-	TextureHandle m_tex;
+	TexturePtr m_tex;
 	UVec3 m_size;
 };
 /// @}

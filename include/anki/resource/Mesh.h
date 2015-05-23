@@ -88,7 +88,7 @@ public:
 
 	/// Get info on how to attach a GL buffer to the state
 	void getBufferInfo(
-		const VertexAttribute attrib, BufferHandle& buffer,
+		const VertexAttribute attrib, BufferPtr& buffer,
 		U32& size, GLenum& type, U32& stride, U32& offset,
 		Bool& normalized) const;
 
@@ -114,8 +114,8 @@ protected:
 	U8 m_texChannelsCount;
 	Bool8 m_weights;
 
-	BufferHandle m_vertBuff;
-	BufferHandle m_indicesBuff;
+	BufferPtr m_vertBuff;
+	BufferPtr m_indicesBuff;
 
 	/// Create the VBOs using the mesh data
 	ANKI_USE_RESULT Error createBuffers(const MeshLoader& loader);

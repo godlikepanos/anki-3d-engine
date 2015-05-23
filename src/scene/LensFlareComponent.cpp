@@ -20,14 +20,14 @@ Error LensFlareComponent::create(const CString& textureFilename)
 	GrManager& gr = m_node->getSceneGraph().getGrManager();
 	for(auto it = m_queries.getBegin(); it != m_queries.getEnd() && !err; ++it)
 	{
-		err = (*it).create(&gr, OcclusionQueryHandle::ResultBit::VISIBLE);
+		err = (*it).create(&gr, OcclusionQueryPtr::ResultBit::VISIBLE);
 	}
 
 	return err;
 }
 
 //==============================================================================
-OcclusionQueryHandle& LensFlareComponent::getOcclusionQueryToTest()
+OcclusionQueryPtr& LensFlareComponent::getOcclusionQueryToTest()
 {
 	// Move the query counter
 	m_crntQueryIndex = (m_crntQueryIndex + 1) % m_queries.getSize();
@@ -40,7 +40,7 @@ OcclusionQueryHandle& LensFlareComponent::getOcclusionQueryToTest()
 
 //==============================================================================
 void LensFlareComponent::getOcclusionQueryToCheck(
-	OcclusionQueryHandle& q, Bool& queryInvalid)
+	OcclusionQueryPtr& q, Bool& queryInvalid)
 {
 	U idx = (m_crntQueryIndex + 1) % m_queries.getSize();
 

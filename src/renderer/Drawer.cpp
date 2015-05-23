@@ -32,7 +32,7 @@ public:
 	Ptr<const FrustumComponent> m_fr;
 	Ptr<RenderableDrawer> m_drawer;
 	U8 m_instanceCount;
-	CommandBufferHandle m_cmdBuff;
+	CommandBufferPtr m_cmdBuff;
 	Array<U8, MATERIAL_BLOCK_MAX_SIZE> m_tempUniformBuffer;
 
 	F32 m_flod;
@@ -232,7 +232,7 @@ void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
 	const TextureResourcePointer* values, U32 size)
 {
 	ANKI_ASSERT(size == 1);
-	TextureHandle tex = (*values)->getGlTexture();
+	TexturePtr tex = (*values)->getGlTexture();
 	auto unit = mtlvar.getTextureUnit();
 
 	tex.bind(m_cmdBuff, unit);
@@ -374,7 +374,7 @@ Error RenderableDrawer::render(SceneNode& frsn, VisibleNode& visibleNode)
 
 //==============================================================================
 void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
-	CommandBufferHandle& cmdBuff)
+	CommandBufferPtr& cmdBuff)
 {
 	// Set some numbers
 	m_stage = stage;
@@ -391,7 +391,7 @@ void RenderableDrawer::prepareDraw(RenderingStage stage, Pass pass,
 void RenderableDrawer::finishDraw()
 {
 	// Release the job chain
-	m_cmdBuff = CommandBufferHandle();
+	m_cmdBuff = CommandBufferPtr();
 }
 
 }  // end namespace anki

@@ -3,9 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/gr/OcclusionQueryHandle.h"
+#include "anki/gr/OcclusionQueryPtr.h"
 #include "anki/gr/gl/OcclusionQueryImpl.h"
-#include "anki/gr/gl/DeferredDeleter.h"
+#include "anki/gr/gl/CommandBufferImpl.h"
+#include "anki/gr/CommandBufferPtr.h"
 
 namespace anki {
 
@@ -16,11 +17,11 @@ namespace anki {
 /// Create command.
 class OqCreateCommand final: public GlCommand
 {
-public:	
-	OcclusionQueryHandle m_handle;
+public:
+	OcclusionQueryPtr m_handle;
 	OcclusionQueryResultBit m_condRenderingBit;
 
-	OqCreateCommand(OcclusionQueryHandle& handle, 
+	OqCreateCommand(OcclusionQueryPtr& handle,
 		OcclusionQueryResultBit condRenderingBit)
 	:	m_handle(handle),
 		m_condRenderingBit(condRenderingBit)
@@ -43,9 +44,9 @@ public:
 class OqBeginCommand final: public GlCommand
 {
 public:
-	OcclusionQueryHandle m_handle;
+	OcclusionQueryPtr m_handle;
 
-	OqBeginCommand(OcclusionQueryHandle& handle)
+	OqBeginCommand(OcclusionQueryPtr& handle)
 	:	m_handle(handle)
 	{}
 
@@ -60,9 +61,9 @@ public:
 class OqEndCommand final: public GlCommand
 {
 public:
-	OcclusionQueryHandle m_handle;
+	OcclusionQueryPtr m_handle;
 
-	OqEndCommand(OcclusionQueryHandle& handle)
+	OqEndCommand(OcclusionQueryPtr& handle)
 	:	m_handle(handle)
 	{}
 
@@ -74,28 +75,25 @@ public:
 };
 
 //==============================================================================
-// OcclusionQueryHandle                                                        =
+// OcclusionQueryPtr                                                        =
 //==============================================================================
 
 //==============================================================================
-OcclusionQueryHandle::OcclusionQueryHandle()
+OcclusionQueryPtr::OcclusionQueryPtr()
 {}
 
 //==============================================================================
-OcclusionQueryHandle::~OcclusionQueryHandle()
+OcclusionQueryPtr::~OcclusionQueryPtr()
 {}
 
 //==============================================================================
-Error OcclusionQueryHandle::create(
+Error OcclusionQueryPtr::create(
 	GrManager* manager, ResultBit condRenderingBit)
 {
-	using DeleteCommand = DeleteObjectCommand<OcclusionQueryImpl>;
-	using Deleter = DeferredDeleter<OcclusionQueryImpl, DeleteCommand>;
-
-	CommandBufferHandle cmd;
+	CommandBufferPtr cmd;
 	ANKI_CHECK(cmd.create(manager));
 
-	Base::create(*manager, Deleter());
+	Base::create(*manager);
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
 	cmd.get().pushBackNewCommand<OqCreateCommand>(*this, condRenderingBit);
@@ -105,14 +103,14 @@ Error OcclusionQueryHandle::create(
 }
 
 //==============================================================================
-void OcclusionQueryHandle::begin(CommandBufferHandle& commands)
+void OcclusionQueryPtr::begin(CommandBufferPtr& commands)
 {
 	ANKI_ASSERT(isCreated());
 	commands.get().pushBackNewCommand<OqBeginCommand>(*this);
 }
 
 //==============================================================================
-void OcclusionQueryHandle::end(CommandBufferHandle& commands)
+void OcclusionQueryPtr::end(CommandBufferPtr& commands)
 {
 	ANKI_ASSERT(isCreated());
 	commands.get().pushBackNewCommand<OqEndCommand>(*this);

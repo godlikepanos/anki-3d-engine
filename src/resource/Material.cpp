@@ -297,7 +297,7 @@ ShaderResourcePointer& Material::getProgram(
 
 //==============================================================================
 Error Material::getProgramPipeline(
-	const RenderingKey& key, PipelineHandle& out)
+	const RenderingKey& key, PipelinePtr& out)
 {
 	ANKI_ASSERT(enumToType(key.m_pass) < m_passesCount);
 	ANKI_ASSERT(key.m_lod < m_lodsCount);
@@ -315,12 +315,12 @@ Error Material::getProgramPipeline(
 	U idx = enumToType(key.m_pass) * m_lodsCount * tessCount
 		+ key.m_lod * tessCount + key.m_tessellation;
 
-	PipelineHandle& ppline = m_pplines[idx];
+	PipelinePtr& ppline = m_pplines[idx];
 
 	// Lazily create it
 	if(ANKI_UNLIKELY(!ppline.isCreated()))
 	{
-		PipelineHandle::Initializer pplineInit;
+		PipelinePtr::Initializer pplineInit;
 
 		pplineInit.m_shaders[U(ShaderType::VERTEX)] = 
 			getProgram(key, ShaderType::VERTEX)->getGrShader();

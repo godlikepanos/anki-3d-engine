@@ -26,11 +26,11 @@ TextureResource::~TextureResource()
 Error TextureResource::load(const CString& filename)
 {
 	GrManager& gr = getManager().getGrManager();
-	CommandBufferHandle cmdb;
+	CommandBufferPtr cmdb;
 	ANKI_CHECK(cmdb.create(&gr)); // Always first to avoid assertions (
 	                              // because of the check of the allocator)
 
-	TextureHandle::Initializer init;
+	TexturePtr::Initializer init;
 	init.m_copyDataBeforeReturn = false;
 	U layers = 0;
 

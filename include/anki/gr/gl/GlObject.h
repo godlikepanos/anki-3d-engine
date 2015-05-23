@@ -11,7 +11,7 @@
 
 namespace anki {
 
-/// @addtogroup opengl_private
+/// @addtogroup opengl
 /// @{
 
 /// State of the handle
@@ -26,10 +26,11 @@ enum class GlObjectState: U32
 };
 
 /// A GL object
-class GlObject: public GrObject, public NonCopyable
+class GlObject: public GrObject
 {
 public:
 	using State = GlObjectState;
+	using GlDeleteFunction = void (*)(GLsizei, const GLuint*);
 
 	/// Default
 	GlObject(GrManager* manager)
@@ -64,6 +65,9 @@ public:
 
 	/// Check if the object has been created and if not serialize the thread.
 	ANKI_USE_RESULT Error serializeOnGetter() const;
+
+	/// Should be called from GL objects for deferred deletion.
+	void destroyDeferred(GlDeleteFunction deleteCallback);
 
 protected:
 	GLuint m_glName; ///< OpenGL name

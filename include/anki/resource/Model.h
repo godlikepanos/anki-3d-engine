@@ -70,8 +70,8 @@ public:
 	/// offsets and counts
 	ANKI_USE_RESULT Error getRenderingDataSub(
 		const RenderingKey& key,
-		CommandBufferHandle& vertJobs,
-		PipelineHandle& ppline,
+		CommandBufferPtr& vertJobs,
+		PipelinePtr& ppline,
 		const U8* subMeshIndicesArray,
 		U32 subMeshIndicesCount,
 		Array<U32, ANKI_GL_MAX_SUB_DRAWCALLS>& indicesCountArray,
@@ -81,7 +81,7 @@ public:
 protected:
 	ResourceAllocator<U8> m_alloc;
 	/// Array [lod][pass]
-	DArray<CommandBufferHandle> m_vertJobs;
+	DArray<CommandBufferPtr> m_vertJobs;
 	Material* m_mtl = nullptr;
 	DArray<Mesh*> m_meshes; ///< One for each LOD
 
@@ -93,7 +93,7 @@ private:
 	/// vertex descriptor
 	static ANKI_USE_RESULT Error createVertexDesc(
 		const Mesh& mesh,
-		CommandBufferHandle& vertexJobs);
+		CommandBufferPtr& vertexJobs);
 
 	/// Return the maximum number of LODs
 	U getLodsCount() const;

@@ -16,13 +16,12 @@ void BufferImpl::destroy()
 {
 	if(isCreated())
 	{
-		glDeleteBuffers(1, &m_glName);
-		m_glName = 0;
+		destroyDeferred(glDeleteBuffers);
 	}
 }
 
 //==============================================================================
-void BufferImpl::create(GLenum target, const void* dataPtr, 
+void BufferImpl::create(GLenum target, const void* dataPtr,
 	U32 sizeInBytes, GLbitfield flags)
 {
 	ANKI_ASSERT(!isCreated());
@@ -36,11 +35,11 @@ void BufferImpl::create(GLenum target, const void* dataPtr,
 		{
 			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
 				"than the spec's min", sizeInBytes);
-		} 
+		}
 		else if(sizeInBytes > (PtrSize)maxBufferSize)
 		{
 			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
-				"than the implementation's min (%u)", sizeInBytes, 
+				"than the implementation's min (%u)", sizeInBytes,
 				maxBufferSize);
 		}
 	}
@@ -53,11 +52,11 @@ void BufferImpl::create(GLenum target, const void* dataPtr,
 		{
 			ANKI_LOGW("The size (%u) of the uniform buffer is greater "
 				"than the spec's min", sizeInBytes);
-		} 
+		}
 		else if(sizeInBytes > (PtrSize)maxBufferSize)
 		{
 			ANKI_LOGW("The size (%u) of the shader storage buffer is greater "
-				"than the implementation's min (%u)", sizeInBytes, 
+				"than the implementation's min (%u)", sizeInBytes,
 				maxBufferSize);
 		}
 	}
@@ -76,10 +75,10 @@ void BufferImpl::create(GLenum target, const void* dataPtr,
 	// Map if needed
 	if((flags & GL_MAP_PERSISTENT_BIT) && (flags & GL_MAP_COHERENT_BIT))
 	{
-		const GLbitfield mapbits = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT 
+		const GLbitfield mapbits = GL_MAP_READ_BIT | GL_MAP_WRITE_BIT
 			| GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
 
-		m_persistentMapping = 
+		m_persistentMapping =
 			glMapBufferRange(m_target, 0, sizeInBytes, flags & mapbits);
 		ANKI_ASSERT(m_persistentMapping != nullptr);
 	}
@@ -99,7 +98,7 @@ void BufferImpl::write(const void* buff, U32 offset, U32 size)
 void BufferImpl::setBinding(GLuint binding) const
 {
 	ANKI_ASSERT(isCreated());
-	ANKI_ASSERT(m_target == GL_SHADER_STORAGE_BUFFER 
+	ANKI_ASSERT(m_target == GL_SHADER_STORAGE_BUFFER
 		|| m_target == GL_UNIFORM_BUFFER);
 	glBindBufferBase(m_target, binding, m_glName);
 }

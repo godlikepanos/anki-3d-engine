@@ -15,7 +15,7 @@ Bloom::~Bloom()
 {}
 
 //==============================================================================
-Error Bloom::initFb(FramebufferHandle& fb, TextureHandle& rt)
+Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
 	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, 
@@ -23,7 +23,7 @@ Error Bloom::initFb(FramebufferHandle& fb, TextureHandle& rt)
 		1, SamplingFilter::LINEAR, 1, rt));
 
 	// Create FB
-	FramebufferHandle::Initializer fbInit;
+	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
 	fbInit.m_colorAttachments[0].m_loadOperation = 
@@ -65,7 +65,7 @@ Error Bloom::initInternal(const ConfigSet& initializer)
 	ANKI_CHECK(m_commonBuff.create(&gl, GL_UNIFORM_BUFFER, nullptr,
 		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT));
 
-	CommandBufferHandle cmdb;
+	CommandBufferPtr cmdb;
 	ANKI_CHECK(cmdb.create(&gl));
 	updateDefaultBlock(cmdb);
 
@@ -131,7 +131,7 @@ Error Bloom::init(const ConfigSet& initializer)
 }
 
 //==============================================================================
-void Bloom::run(CommandBufferHandle& cmdb)
+void Bloom::run(CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -161,7 +161,7 @@ void Bloom::run(CommandBufferHandle& cmdb)
 	{
 		if(i == 0)
 		{
-			Array<TextureHandle, 2> arr = {{m_hblurRt, m_vblurRt}};
+			Array<TexturePtr, 2> arr = {{m_hblurRt, m_vblurRt}};
 			cmdb.bindTextures(0, arr.begin(), arr.getSize());
 		}
 
@@ -181,7 +181,7 @@ void Bloom::run(CommandBufferHandle& cmdb)
 }
 
 //==============================================================================
-void Bloom::updateDefaultBlock(CommandBufferHandle& cmdb)
+void Bloom::updateDefaultBlock(CommandBufferPtr& cmdb)
 {
 	Vec4 uniform(m_threshold, m_scale, 0.0, 0.0);
 	m_commonBuff.write(cmdb, &uniform, sizeof(uniform), 0, 0, sizeof(uniform));

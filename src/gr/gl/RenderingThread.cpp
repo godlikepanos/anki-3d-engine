@@ -48,7 +48,7 @@ RenderingThread::~RenderingThread()
 {}
 
 //==============================================================================
-void RenderingThread::flushCommandBuffer(CommandBufferHandle& commands)
+void RenderingThread::flushCommandBuffer(CommandBufferPtr& commands)
 {
 	commands.get().makeImmutable();
 
@@ -83,7 +83,7 @@ void RenderingThread::flushCommandBuffer(CommandBufferHandle& commands)
 }
 
 //==============================================================================
-void RenderingThread::finishCommandBuffer(CommandBufferHandle& commands)
+void RenderingThread::finishCommandBuffer(CommandBufferPtr& commands)
 {
 #if !ANKI_DISABLE_GL_RENDERING_THREAD
 	flushCommandBuffer(commands);
@@ -210,7 +210,7 @@ void RenderingThread::finish()
 			m_queue[i].get().makeExecuted();
 
 			// Release
-			m_queue[i] = CommandBufferHandle();
+			m_queue[i] = CommandBufferPtr();
 		}
 	}
 
@@ -238,7 +238,7 @@ void RenderingThread::threadLoop()
 
 	while(1)
 	{
-		CommandBufferHandle cmd;
+		CommandBufferPtr cmd;
 
 		// Wait for something
 		{
@@ -258,7 +258,7 @@ void RenderingThread::threadLoop()
 			U64 idx = m_head % m_queue.size();
 			// Pop a command
 			cmd = m_queue[idx];
-			m_queue[idx] = CommandBufferHandle(); // Insert empty cmd buffer
+			m_queue[idx] = CommandBufferPtr(); // Insert empty cmd buffer
 
 			++m_head;
 		}

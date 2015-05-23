@@ -4,7 +4,6 @@
 // http://www.anki3d.org/LICENSE
 
 /// @defgroup util Utilities (like STL)
-/// @ingroup anki_public
 
 /// @defgroup util_containers STL compatible containers
 /// @ingroup util
