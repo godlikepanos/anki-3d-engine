@@ -23,19 +23,19 @@ Error Tm::create(const ConfigSet& initializer)
 		m_r->getWidth(),
 		m_r->getHeight());
 
-	ANKI_CHECK(m_luminanceShader.loadToCache(&getResourceManager(), 
+	ANKI_CHECK(m_luminanceShader.loadToCache(&getResourceManager(),
 		"shaders/PpsTmAverageLuminance.comp.glsl", pps.toCString(), "rppstm_"));
 
 	// Create ppline
 	PipelinePtr::Initializer pplineInit;
-	pplineInit.m_shaders[U(ShaderType::COMPUTE)] = 
+	pplineInit.m_shaders[U(ShaderType::COMPUTE)] =
 		m_luminanceShader->getGrShader();
-	ANKI_CHECK(m_luminancePpline.create(&getGrManager(), pplineInit));
+	m_luminancePpline.create(&getGrManager(), pplineInit);
 
 	// Create buffer
 	Vec4 data(0.5);
-	ANKI_CHECK(m_luminanceBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
-		&data[0], sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT));
+	m_luminanceBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
+		&data[0], sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
 
 	return ErrorCode::NONE;
 }

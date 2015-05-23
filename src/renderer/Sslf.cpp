@@ -36,11 +36,11 @@ Error Sslf::initInternal(const ConfigSet& config)
 	StringAuto pps(getAllocator());
 
 	pps.sprintf(
-		"#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n", 
+		"#define TEX_DIMENSIONS vec2(%u.0, %u.0)\n",
 		m_r->getPps().getBloom().getWidth(),
 		m_r->getPps().getBloom().getHeight());
 
-	ANKI_CHECK(m_frag.loadToCache(&getResourceManager(), 
+	ANKI_CHECK(m_frag.loadToCache(&getResourceManager(),
 		"shaders/PpsSslf.frag.glsl", pps.toCString(), "r_"));
 
 	ANKI_CHECK(m_r->createDrawQuadPipeline(m_frag->getGrShader(), m_ppline));
@@ -50,17 +50,17 @@ Error Sslf::initInternal(const ConfigSet& config)
 		"engine_data/lens_dirt.ankitex", &getResourceManager()));
 
 	// Create the render target and FB
-	ANKI_CHECK(m_r->createRenderTarget(m_r->getPps().getBloom().getWidth(), 
-		m_r->getPps().getBloom().getHeight(), 
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
+	ANKI_CHECK(m_r->createRenderTarget(m_r->getPps().getBloom().getWidth(),
+		m_r->getPps().getBloom().getHeight(),
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
 		1, SamplingFilter::LINEAR, 1, m_rt));
 
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = 
+	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
+	m_fb.create(&getGrManager(), fbInit);
 
 	return ErrorCode::NONE;
 }
@@ -69,16 +69,16 @@ Error Sslf::initInternal(const ConfigSet& config)
 void Sslf::run(CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
-	
+
 	// Draw to the SSLF FB
 	m_fb.bind(cmdb);
-	cmdb.setViewport(0, 0, m_r->getPps().getBloom().getWidth(), 
+	cmdb.setViewport(0, 0, m_r->getPps().getBloom().getWidth(),
 		m_r->getPps().getBloom().getHeight());
 
 	m_ppline.bind(cmdb);
 
 	Array<TexturePtr, 2> tarr = {{
-		m_r->getPps().getBloom().getRt(), 
+		m_r->getPps().getBloom().getRt(),
 		m_lensDirtTex->getGlTexture()}};
 	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
 

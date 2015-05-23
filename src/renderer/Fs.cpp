@@ -25,7 +25,7 @@ Error Fs::init(const ConfigSet&)
 	fbInit.m_depthStencilAttachment.m_texture = m_r->getMs().getDepthRt();
 	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::LOAD;
-	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
+	m_fb.create(&getGrManager(), fbInit);
 
 	return ErrorCode::NONE;
 }

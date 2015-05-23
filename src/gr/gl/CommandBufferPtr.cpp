@@ -134,16 +134,13 @@ CommandBufferPtr::~CommandBufferPtr()
 {}
 
 //==============================================================================
-Error CommandBufferPtr::create(GrManager* manager,
-	CommandBufferInitHints hints)
+void CommandBufferPtr::create(GrManager* manager, CommandBufferInitHints hints)
 {
 	ANKI_ASSERT(!isCreated());
 	ANKI_ASSERT(manager);
 
 	Base::create(*manager);
 	get().create(hints);
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

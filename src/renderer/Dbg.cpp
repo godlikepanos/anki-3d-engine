@@ -55,16 +55,10 @@ Error Dbg::init(const ConfigSet& initializer)
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::LOAD;
 
-	err = m_fb.create(&getGrManager(), fbInit);
-	if(!err)
-	{
-		m_drawer = getAllocator().newInstance<DebugDrawer>();
-	}
+	m_fb.create(&getGrManager(), fbInit);
+	m_drawer = getAllocator().newInstance<DebugDrawer>();
 
-	if(!err)
-	{
-		err = m_drawer->create(m_r);
-	}
+	err = m_drawer->create(m_r);
 
 	if(!err)
 	{

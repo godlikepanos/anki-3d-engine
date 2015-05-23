@@ -18,17 +18,17 @@ Bloom::~Bloom()
 Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
-	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height, 
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
+	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height,
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
 		1, SamplingFilter::LINEAR, 1, rt));
 
 	// Create FB
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = 
+	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(fb.create(&getGrManager(), fbInit));
+	fb.create(&getGrManager(), fbInit);
 
 	return ErrorCode::NONE;
 }
@@ -53,7 +53,7 @@ Error Bloom::initInternal(const ConfigSet& initializer)
 	m_threshold = initializer.get("pps.bloom.threshold");
 	m_scale = initializer.get("pps.bloom.scale");
 	m_blurringDist = initializer.get("pps.bloom.blurringDist");
-	m_blurringIterationsCount = 
+	m_blurringIterationsCount =
 		initializer.get("pps.bloom.blurringIterationsCount");
 
 	ANKI_CHECK(initFb(m_hblurFb, m_hblurRt));
@@ -62,23 +62,23 @@ Error Bloom::initInternal(const ConfigSet& initializer)
 	// init shaders
 	GrManager& gl = getGrManager();
 
-	ANKI_CHECK(m_commonBuff.create(&gl, GL_UNIFORM_BUFFER, nullptr,
-		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT));
+	m_commonBuff.create(&gl, GL_UNIFORM_BUFFER, nullptr,
+		sizeof(Vec4), GL_DYNAMIC_STORAGE_BIT);
 
 	CommandBufferPtr cmdb;
-	ANKI_CHECK(cmdb.create(&gl));
+	cmdb.create(&gl);
 	updateDefaultBlock(cmdb);
 
 	cmdb.flush();
 
 	ANKI_CHECK(m_toneFrag.loadToCache(&getResourceManager(),
-		"shaders/PpsBloom.frag.glsl", 
+		"shaders/PpsBloom.frag.glsl",
 		m_r->_getShadersPrependedSource().toCString(), "r_"));
 
 	ANKI_CHECK(m_r->createDrawQuadPipeline(
 		m_toneFrag->getGrShader(), m_tonePpline));
 
-	const char* SHADER_FILENAME = 
+	const char* SHADER_FILENAME =
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
 	StringAuto pps(getAllocator());
@@ -167,7 +167,7 @@ void Bloom::run(CommandBufferPtr& cmdb)
 
 		// hpass
 		m_hblurFb.bind(cmdb);
-		m_hblurPpline.bind(cmdb);		
+		m_hblurPpline.bind(cmdb);
 		m_r->drawQuad(cmdb);
 
 		// vpass

@@ -80,7 +80,7 @@ Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 	fbInit.m_colorAttachments[0].m_texture = rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(fb.create(&getGrManager(), fbInit));
+	fb.create(&getGrManager(), fbInit);
 
 	return ErrorCode::NONE;
 }
@@ -118,7 +118,7 @@ Error Ssao::initInternal(const ConfigSet& config)
 	// noise texture
 	//
 	CommandBufferPtr cmdb;
-	ANKI_CHECK(cmdb.create(&getGrManager()));
+	cmdb.create(&getGrManager());
 
 	Array<Vec3, NOISE_TEX_SIZE * NOISE_TEX_SIZE> noise;
 
@@ -160,8 +160,8 @@ Error Ssao::initInternal(const ConfigSet& config)
 	//
 	// Shaders
 	//
-	ANKI_CHECK(m_uniformsBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
-		nullptr, sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT));
+	m_uniformsBuff.create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
+		nullptr, sizeof(ShaderCommonUniforms), GL_DYNAMIC_STORAGE_BIT);
 
 	StringAuto pps(getAllocator());
 

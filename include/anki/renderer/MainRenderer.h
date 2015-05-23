@@ -45,7 +45,7 @@ private:
 	Array<CommandBufferInitHints, JOB_CHAINS_COUNT> m_jobsInitHints;
 
 	void takeScreenshotTga(const char* filename);
-	ANKI_USE_RESULT Error initGl();
+	void initGl();
 };
 /// @}
 

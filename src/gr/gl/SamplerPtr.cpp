@@ -92,14 +92,12 @@ SamplerPtr::~SamplerPtr()
 {}
 
 //==============================================================================
-Error SamplerPtr::create(CommandBufferPtr& commands,
+void SamplerPtr::create(CommandBufferPtr& commands,
 	const SamplerInitializer& init)
 {
 	Base::create(commands.get().getManager());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 	commands.get().pushBackNewCommand<CreateSamplerCommand>(*this, init);
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

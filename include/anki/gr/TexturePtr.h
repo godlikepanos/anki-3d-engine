@@ -27,7 +27,7 @@ public:
 	~TexturePtr();
 
 	/// Create the texture
-	Error create(CommandBufferPtr& commands, const Initializer& init);
+	void create(CommandBufferPtr& commands, const Initializer& init);
 
 	/// Bind to a unit
 	void bind(CommandBufferPtr& commands, U32 unit);

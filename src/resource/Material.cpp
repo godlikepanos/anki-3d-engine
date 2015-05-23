@@ -62,7 +62,7 @@ MaterialVariable::~MaterialVariable()
 
 //==============================================================================
 template<typename T>
-void MaterialVariableTemplate<T>::create(ResourceAllocator<U8> alloc, 
+void MaterialVariableTemplate<T>::create(ResourceAllocator<U8> alloc,
 	const CString& name, const T* x, U32 size)
 {
 	m_name.create(alloc, name);
@@ -96,7 +96,7 @@ Error MaterialVariableTemplate<T>::_newInstance(
 
 		if(in.m_value.getSize() != floatsNeeded)
 		{
-			ANKI_LOGE("Incorrect number of values. Variable %s", 
+			ANKI_LOGE("Incorrect number of values. Variable %s",
 				&in.m_name[0]);
 
 			return ErrorCode::USER_DATA;
@@ -120,7 +120,7 @@ Error MaterialVariableTemplate<T>::_newInstance(
 
 	if(floats.getSize() > 0)
 	{
-		out->create(alloc, in.m_name.toCString(), 
+		out->create(alloc, in.m_name.toCString(),
 			(T*)&floats[0], in.m_arraySize);
 	}
 	else
@@ -322,23 +322,23 @@ Error Material::getProgramPipeline(
 	{
 		PipelinePtr::Initializer pplineInit;
 
-		pplineInit.m_shaders[U(ShaderType::VERTEX)] = 
+		pplineInit.m_shaders[U(ShaderType::VERTEX)] =
 			getProgram(key, ShaderType::VERTEX)->getGrShader();
 
 		if(key.m_tessellation)
 		{
-			pplineInit.m_shaders[U(ShaderType::TESSELLATION_CONTROL)] = 
+			pplineInit.m_shaders[U(ShaderType::TESSELLATION_CONTROL)] =
 				getProgram(
 				key, ShaderType::TESSELLATION_CONTROL)->getGrShader();
-			pplineInit.m_shaders[U(ShaderType::TESSELLATION_EVALUATION)] = 
+			pplineInit.m_shaders[U(ShaderType::TESSELLATION_EVALUATION)] =
 				getProgram(
 				key, ShaderType::TESSELLATION_EVALUATION)->getGrShader();
 		}
 
-		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] = 
+		pplineInit.m_shaders[U(ShaderType::FRAGMENT)] =
 			getProgram(key, ShaderType::FRAGMENT)->getGrShader();
 
-		ANKI_CHECK(ppline.create(&getManager().getGrManager(), pplineInit));
+		ppline.create(&getManager().getGrManager(), pplineInit);
 	}
 
 	out = ppline;
@@ -461,7 +461,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl)
 
 	// Alloc program vector
 	m_progs.create(getAllocator(),
-		countShaders(ShaderType::VERTEX) 
+		countShaders(ShaderType::VERTEX)
 		+ countShaders(ShaderType::TESSELLATION_CONTROL)
 		+ countShaders(ShaderType::TESSELLATION_EVALUATION)
 		+ countShaders(ShaderType::GEOMETRY)
@@ -471,11 +471,11 @@ Error Material::parseMaterialTag(const XmlElement& materialEl)
 	m_pplines.create(getAllocator(), m_passesCount * m_lodsCount * tessCount);
 
 	m_hash = 0;
-	for(ShaderType shader = ShaderType::VERTEX; 
-		shader <= ShaderType::FRAGMENT; 
+	for(ShaderType shader = ShaderType::VERTEX;
+		shader <= ShaderType::FRAGMENT;
 		++shader)
 	{
-		Bool isTessellationShader = shader == ShaderType::TESSELLATION_CONTROL 
+		Bool isTessellationShader = shader == ShaderType::TESSELLATION_CONTROL
 			|| shader == ShaderType::TESSELLATION_EVALUATION;
 
 		if(!m_tessellation && isTessellationShader)
@@ -556,7 +556,7 @@ Error Material::createProgramSourceToCache(
 	prefix.toString(h);
 
 	// Create path
-	out.sprintf("%s/mtl_%s.glsl", 
+	out.sprintf("%s/mtl_%s.glsl",
 		&getManager()._getCacheDirectory()[0],
 		&prefix[0]);
 
@@ -603,7 +603,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 		case ShaderVariableDataType::SAMPLER_CUBE:
 			{
 				TextureResourcePointer tp;
-				
+
 				if(in.m_value.getSize() > 0)
 				{
 					ANKI_CHECK(tp.load(
@@ -611,7 +611,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 				}
 
 				auto alloc = getAllocator();
-				MaterialVariableTemplate<TextureResourcePointer>* tvar = 
+				MaterialVariableTemplate<TextureResourcePointer>* tvar =
 					alloc.newInstance<
 					MaterialVariableTemplate<TextureResourcePointer>>();
 

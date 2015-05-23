@@ -13,17 +13,17 @@ namespace anki {
 Error LensFlareComponent::create(const CString& textureFilename)
 {
 	// Texture
-	Error err = m_tex.load(
-		textureFilename, &m_node->getSceneGraph()._getResourceManager());
+	ANKI_CHECK(m_tex.load(
+		textureFilename, &m_node->getSceneGraph()._getResourceManager()));
 
 	// Queries
 	GrManager& gr = m_node->getSceneGraph().getGrManager();
-	for(auto it = m_queries.getBegin(); it != m_queries.getEnd() && !err; ++it)
+	for(auto it = m_queries.getBegin(); it != m_queries.getEnd(); ++it)
 	{
-		err = (*it).create(&gr, OcclusionQueryPtr::ResultBit::VISIBLE);
+		(*it).create(&gr, OcclusionQueryPtr::ResultBit::VISIBLE);
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -31,7 +31,7 @@ OcclusionQueryPtr& LensFlareComponent::getOcclusionQueryToTest()
 {
 	// Move the query counter
 	m_crntQueryIndex = (m_crntQueryIndex + 1) % m_queries.getSize();
-	
+
 	// Save the timestamp
 	m_queryTestTimestamp[m_crntQueryIndex] = getGlobalTimestamp();
 

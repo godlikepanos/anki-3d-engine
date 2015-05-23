@@ -337,9 +337,9 @@ Error ParticleEmitter::create(
 
 	// Create the vertex buffer and object
 	PtrSize buffSize = m_maxNumOfParticles * VERT_SIZE * 3;
-	ANKI_CHECK(m_vertBuff.create(&getSceneGraph().getGrManager(),
+	m_vertBuff.create(&getSceneGraph().getGrManager(),
 		GL_ARRAY_BUFFER, nullptr, buffSize,
-		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+		GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
 	m_vertBuffMapping =
 		static_cast<U8*>(m_vertBuff.getPersistentMappingAddress());

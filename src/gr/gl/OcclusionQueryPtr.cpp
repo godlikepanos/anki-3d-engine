@@ -87,19 +87,16 @@ OcclusionQueryPtr::~OcclusionQueryPtr()
 {}
 
 //==============================================================================
-Error OcclusionQueryPtr::create(
-	GrManager* manager, ResultBit condRenderingBit)
+void OcclusionQueryPtr::create(GrManager* manager, ResultBit condRenderingBit)
 {
 	CommandBufferPtr cmd;
-	ANKI_CHECK(cmd.create(manager));
+	cmd.create(manager);
 
 	Base::create(*manager);
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 
 	cmd.get().pushBackNewCommand<OqCreateCommand>(*this, condRenderingBit);
 	cmd.flush();
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

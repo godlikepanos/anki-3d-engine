@@ -105,10 +105,10 @@ FramebufferPtr::~FramebufferPtr()
 {}
 
 //==============================================================================
-Error FramebufferPtr::create(GrManager* manager, Initializer& init)
+void FramebufferPtr::create(GrManager* manager, Initializer& init)
 {
 	CommandBufferPtr cmdb;
-	ANKI_CHECK(cmdb.create(manager));
+	cmdb.create(manager);
 
 	Base::create(cmdb.get().getManager());
 
@@ -116,8 +116,6 @@ Error FramebufferPtr::create(GrManager* manager, Initializer& init)
 
 	cmdb.get().pushBackNewCommand<CreateFramebufferCommand>(*this, init);
 	cmdb.flush();
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

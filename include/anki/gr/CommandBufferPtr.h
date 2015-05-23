@@ -25,7 +25,7 @@ public:
 	~CommandBufferPtr();
 
 	/// Create command buffer
-	ANKI_USE_RESULT Error create(GrManager* manager,
+	void create(GrManager* manager,
 		CommandBufferInitHints hints = CommandBufferInitHints());
 
 	/// Add a user command at the end of the command buffer

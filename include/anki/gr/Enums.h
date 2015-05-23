@@ -227,7 +227,7 @@ enum class OcclusionQueryResultBit: U8
 {
 	NOT_AVAILABLE = 1 << 0,
 	VISIBLE = 1 << 1,
-	NOT_VISIBLE = 1 << 2 
+	NOT_VISIBLE = 1 << 2
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(OcclusionQueryResultBit, inline)
 
@@ -255,14 +255,16 @@ enum class AttachmentStoreOperation: U8
 	DONT_CARE
 };
 
-/// Buffer access mode
+/// Buffer access mode.
 enum class BufferUsageBit: U8
 {
 	UNIFORM_BUFFER = 1 << 0,
 	STORAGE_BUFFER = 1 << 1,
 	INDEX_BUFFER = 1 << 2,
 	VERTEX_BUFFER = 1 << 3,
-	INDIRECT_BUFFER = 1 << 4
+	INDIRECT_BUFFER = 1 << 4,
+	CLIENT_READ = 1 << 5,
+	CLIENT_WRITE = 1 << 6
 };
 ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(BufferUsageBit, inline)
 /// @}

@@ -27,8 +27,8 @@ Error TextureResource::load(const CString& filename)
 {
 	GrManager& gr = getManager().getGrManager();
 	CommandBufferPtr cmdb;
-	ANKI_CHECK(cmdb.create(&gr)); // Always first to avoid assertions (
-	                              // because of the check of the allocator)
+	cmdb.create(&gr); // Always first to avoid assertions (
+	                  // because of the check of the allocator)
 
 	TexturePtr::Initializer init;
 	init.m_copyDataBeforeReturn = false;
@@ -43,14 +43,14 @@ Error TextureResource::load(const CString& filename)
 		getAllocator().deleteInstance(img);
 		return err;
 	}
-	
+
 	// width + height
 	const auto& tmpSurf = img->getSurface(0, 0);
 	init.m_width = tmpSurf.m_width;
 	init.m_height = tmpSurf.m_height;
-	
+
 	// depth
-	if(img->getTextureType() == ImageLoader::TextureType::_2D_ARRAY 
+	if(img->getTextureType() == ImageLoader::TextureType::_2D_ARRAY
 		|| img->getTextureType() == ImageLoader::TextureType::_3D)
 	{
 		init.m_depth = img->getDepth();
@@ -143,7 +143,7 @@ Error TextureResource::load(const CString& filename)
 	init.m_sampling.m_repeat = true;
 
 	// anisotropyLevel
-	init.m_sampling.m_anisotropyLevel = 
+	init.m_sampling.m_anisotropyLevel =
 		getManager().getTextureAnisotropy();
 
 	// Now assign the data
@@ -160,12 +160,7 @@ Error TextureResource::load(const CString& filename)
 	}
 
 	// Add the GL job to create the texture
-	err = m_tex.create(cmdb, init);
-	if(err)
-	{
-		getAllocator().deleteInstance(img);
-		return err;
-	}
+	m_tex.create(cmdb, init);
 
 	// Add cleanup job
 	cmdb.pushBackUserCommand(deleteImageCallback, img);

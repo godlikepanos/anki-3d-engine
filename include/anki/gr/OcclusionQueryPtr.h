@@ -25,8 +25,7 @@ public:
 	~OcclusionQueryPtr();
 
 	/// Create a query.
-	ANKI_USE_RESULT Error create(
-		GrManager* manager, ResultBit condRenderingBit);
+	void create(GrManager* manager, ResultBit condRenderingBit);
 
 	/// Begin query.
 	void begin(CommandBufferPtr& commands);

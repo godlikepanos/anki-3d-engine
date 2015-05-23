@@ -100,8 +100,6 @@ Error RenderingThread::start(
 	SwapBuffersCallback swapBuffersCallback, void* swapBuffersCbData,
 	Bool registerMessages)
 {
-	Error err = ErrorCode::NONE;
-
 	ANKI_ASSERT(m_tail == 0 && m_head == 0);
 	m_state.m_registerMessages = registerMessages;
 
@@ -115,40 +113,24 @@ Error RenderingThread::start(
 	ANKI_ASSERT(swapBuffersCallback != nullptr);
 	m_swapBuffersCallback = swapBuffersCallback;
 	m_swapBuffersCbData = swapBuffersCbData;
-	err = m_swapBuffersCommands.create(m_manager);
-	if(!err)
-	{
-		m_swapBuffersCommands.pushBackUserCommand(swapBuffersInternal, this);
-	}
+	m_swapBuffersCommands.create(m_manager);
+	m_swapBuffersCommands.pushBackUserCommand(swapBuffersInternal, this);
 
 #if !ANKI_DISABLE_GL_RENDERING_THREAD
-	Bool threadStarted = false;
-	if(!err)
-	{
-		// Start thread
-		m_thread.start(this, threadCallback);
-		threadStarted = true;
+	// Start thread
+	m_thread.start(this, threadCallback);
 
-		// Create sync command buffer
-		err = m_syncCommands.create(m_manager);
-	}
+	// Create sync command buffer
+	m_syncCommands.create(m_manager);
 
-	if(!err)
-	{
-		m_syncCommands.get().pushBackNewCommand<SyncCommand>();
-	}
-
-	if(err && threadStarted)
-	{
-		err = m_thread.join();
-	}
+	m_syncCommands.get().pushBackNewCommand<SyncCommand>();
 #else
 	prepare();
 
 	ANKI_LOGW("GL queue works in synchronous mode");
 #endif
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

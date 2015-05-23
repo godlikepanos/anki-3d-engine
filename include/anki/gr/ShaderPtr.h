@@ -25,7 +25,7 @@ public:
 	~ShaderPtr();
 
 	/// Create shader program.
-	ANKI_USE_RESULT Error create(GrManager* manager,
+	void create(GrManager* manager,
 		ShaderType shaderType, const void* source, PtrSize sourceSize);
 };
 /// @}

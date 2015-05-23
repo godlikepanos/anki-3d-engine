@@ -99,7 +99,7 @@ Error Tiler::initInternal()
 
 	PipelinePtr::Initializer pplineInit;
 	pplineInit.m_shaders[U(ShaderType::COMPUTE)] = m_shader->getGrShader();
-	ANKI_CHECK(m_ppline.create(&getGrManager(), pplineInit));
+	m_ppline.create(&getGrManager(), pplineInit);
 
 	// Init planes. One plane for each direction, plus near/far plus the world
 	// space of those
@@ -152,10 +152,9 @@ Error Tiler::initPbos()
 
 	for(U i = 0; i < m_pbos.getSize(); ++i)
 	{
-		ANKI_CHECK(
-			m_pbos[i].create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
+		m_pbos[i].create(&getGrManager(), GL_SHADER_STORAGE_BUFFER,
 			nullptr, pboSize,
-			GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+			GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	}
 
 	// Get persistent address

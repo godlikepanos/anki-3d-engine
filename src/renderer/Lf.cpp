@@ -60,25 +60,25 @@ Error Lf::initSprite(const ConfigSet& config)
 		ANKI_LOGE("Incorrect m_maxSpritesPerFlare or m_maxFlares");
 		return ErrorCode::USER_DATA;
 	}
-	
+
 	// Load program + ppline
 	StringAuto pps(getAllocator());
 
 	pps.sprintf("#define MAX_SPRITES %u\n", m_maxSpritesPerFlare);
 
-	ANKI_CHECK(m_realVert.loadToCache(&getResourceManager(), 
+	ANKI_CHECK(m_realVert.loadToCache(&getResourceManager(),
 		"shaders/LfSpritePass.vert.glsl", pps.toCString(), "r_"));
 
-	ANKI_CHECK(m_realFrag.loadToCache(&getResourceManager(), 
+	ANKI_CHECK(m_realFrag.loadToCache(&getResourceManager(),
 		"shaders/LfSpritePass.frag.glsl", pps.toCString(), "r_"));
 
 	PipelinePtr::Initializer init;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_realVert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_realFrag->getGrShader();
-	ANKI_CHECK(m_realPpline.create(&getGrManager(), init));
+	m_realPpline.create(&getGrManager(), init);
 
 	// Create buffer
-	PtrSize uboAlignment = 
+	PtrSize uboAlignment =
 		m_r->_getGrManager().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
 	m_flareSize = getAlignedRoundUp(
 		uboAlignment, sizeof(Sprite) * m_maxSpritesPerFlare);
@@ -86,9 +86,9 @@ Error Lf::initSprite(const ConfigSet& config)
 
 	for(U i = 0; i < m_flareDataBuff.getSize(); ++i)
 	{
-		ANKI_CHECK(m_flareDataBuff[i].create(
-			&getGrManager(), GL_UNIFORM_BUFFER, nullptr, blockSize, 
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+		m_flareDataBuff[i].create(
+			&getGrManager(), GL_UNIFORM_BUFFER, nullptr, blockSize,
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	}
 
 	return ErrorCode::NONE;
@@ -102,14 +102,14 @@ Error Lf::initOcclusion(const ConfigSet& config)
 
 	for(U i = 0; i < m_positionsVertBuff.getSize(); ++i)
 	{
-		ANKI_CHECK(m_positionsVertBuff[i].create(
-			&getGrManager(), GL_ARRAY_BUFFER, nullptr, buffSize, 
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+		m_positionsVertBuff[i].create(
+			&getGrManager(), GL_ARRAY_BUFFER, nullptr, buffSize,
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	}
 
 	// Init MVP buff
-	ANKI_CHECK(m_mvpBuff.create(&getGrManager(), GL_UNIFORM_BUFFER, 
-		nullptr, sizeof(Mat4), GL_DYNAMIC_STORAGE_BIT));
+	m_mvpBuff.create(&getGrManager(), GL_UNIFORM_BUFFER,
+		nullptr, sizeof(Mat4), GL_DYNAMIC_STORAGE_BIT);
 
 	// Shaders
 	ANKI_CHECK(m_occlusionVert.load("shaders/LfOcclusion.vert.glsl",
@@ -120,9 +120,9 @@ Error Lf::initOcclusion(const ConfigSet& config)
 
 	PipelinePtr::Initializer init;
 		init.m_shaders[U(ShaderType::VERTEX)] = m_occlusionVert->getGrShader();
-		init.m_shaders[U(ShaderType::FRAGMENT)] = 
+		init.m_shaders[U(ShaderType::FRAGMENT)] =
 			m_occlusionFrag->getGrShader();
-	ANKI_CHECK(m_occlusionPpline.create(&getGrManager(), init));
+	m_occlusionPpline.create(&getGrManager(), init);
 
 	return ErrorCode::NONE;
 }
@@ -167,7 +167,7 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 		BufferPtr& positionsVertBuff = m_positionsVertBuff[
 			getGlobalTimestamp() % m_positionsVertBuff.getSize()];
 		ANKI_ASSERT(sizeof(Vec3) * totalCount <= positionsVertBuff.getSize());
-		
+
 		positionsVertBuff.bindVertexBuffer(
 			cmdb, 3, GL_FLOAT, false, sizeof(Vec3), 0, 0);
 
@@ -180,7 +180,7 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 		auto end = vi.getLensFlaresBegin() + totalCount;
 		for(; it != end; ++it)
 		{
-			LensFlareComponent& lf = 
+			LensFlareComponent& lf =
 				(it->m_node)->getComponent<LensFlareComponent>();
 
 			*positions = lf.getWorldPosition().xyz();
@@ -190,7 +190,7 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 			query.begin(cmdb);
 
 			cmdb.drawArrays(GL_POINTS, 1, 1, positions - initialPositions);
-			
+
 			query.end(cmdb);
 
 			++positions;
@@ -217,7 +217,7 @@ void Lf::run(CommandBufferPtr& cmdb)
 	if(totalCount > 0)
 	{
 		// Allocate client buffer
-		const U uboAlignment = 
+		const U uboAlignment =
 			m_r->_getGrManager().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
 		const U bufferSize = m_flareSize * totalCount;
 
@@ -238,8 +238,8 @@ void Lf::run(CommandBufferPtr& cmdb)
 		auto it = vi.getLensFlaresBegin();
 		auto end = vi.getLensFlaresBegin() + totalCount;
 		for(; it != end; ++it)
-		{			
-			LensFlareComponent& lf = 
+		{
+			LensFlareComponent& lf =
 				(it->m_node)->getComponent<LensFlareComponent>();
 			U count = 0;
 
@@ -260,7 +260,7 @@ void Lf::run(CommandBufferPtr& cmdb)
 			F32 len = dir.getLength();
 			dir /= len; // Normalize dir
 
-			// First flare 
+			// First flare
 			sprites[count].m_pos = posNdc;
 			sprites[count].m_scale =
 				lf.getFirstFlareSize() * Vec2(1.0, m_r->getAspectRatio());
@@ -271,15 +271,15 @@ void Lf::run(CommandBufferPtr& cmdb)
 			// Render
 			lf.getTexture().bind(cmdb, 0);
 			flareDataBuff.bindShaderBuffer(
-				cmdb, 
-				reinterpret_cast<U8*>(sprites) - spritesInitialPtr, 
+				cmdb,
+				reinterpret_cast<U8*>(sprites) - spritesInitialPtr,
 				sizeof(Sprite) * count,
 				0);
 
 			OcclusionQueryPtr query;
 			Bool queryInvalid;
 			lf.getOcclusionQueryToCheck(query, queryInvalid);
-			
+
 			if(!queryInvalid)
 			{
 				m_r->drawQuadConditional(query, cmdb);
@@ -293,11 +293,11 @@ void Lf::run(CommandBufferPtr& cmdb)
 			ANKI_ASSERT(count <= m_maxSpritesPerFlare);
 
 			// Advance
-			U advancementSize = 
+			U advancementSize =
 				getAlignedRoundUp(uboAlignment, sizeof(Sprite) * count);
 			sprites = reinterpret_cast<Sprite*>(
 				reinterpret_cast<U8*>(sprites) + advancementSize);
-			
+
 		}
 
 		ANKI_ASSERT(

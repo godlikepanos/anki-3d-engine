@@ -41,11 +41,10 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc)
 	source.append(pars.getShaderSource());
 
 	// Create
-	ANKI_CHECK(
-		m_shader.create(
+	m_shader.create(
 		&getManager().getGrManager(),
 		pars.getShaderType(), &source[0],
-		source.getLength() + 1));
+		source.getLength() + 1);
 
 	m_type = pars.getShaderType();
 

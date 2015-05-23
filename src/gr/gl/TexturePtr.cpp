@@ -112,7 +112,7 @@ TexturePtr::~TexturePtr()
 {}
 
 //==============================================================================
-Error TexturePtr::create(
+void TexturePtr::create(
 	CommandBufferPtr& commands, const Initializer& initS)
 {
 	ANKI_ASSERT(!isCreated());
@@ -144,8 +144,6 @@ Error TexturePtr::create(
 	// Fire the command
 	commands.get().pushBackNewCommand<CreateTextureCommand>(
 		*this, init, init.m_copyDataBeforeReturn);
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

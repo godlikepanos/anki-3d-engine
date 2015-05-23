@@ -60,13 +60,13 @@ ShaderPtr::~ShaderPtr()
 {}
 
 //==============================================================================
-Error ShaderPtr::create(GrManager* manager,
+void ShaderPtr::create(GrManager* manager,
 	ShaderType type, const void* source, PtrSize sourceSize)
 {
 	ANKI_ASSERT(strlen(static_cast<const char*>(source)) == sourceSize - 1);
 
 	CommandBufferPtr cmdb;
-	ANKI_CHECK(cmdb.create(manager));
+	cmdb.create(manager);
 
 	Base::create(cmdb.get().getManager());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
@@ -79,8 +79,6 @@ Error ShaderPtr::create(GrManager* manager,
 		*this, type, static_cast<char*>(src));
 
 	cmdb.flush();
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

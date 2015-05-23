@@ -27,8 +27,7 @@ public:
 	~SamplerPtr();
 
 	/// Create the sampler
-	ANKI_USE_RESULT Error create(CommandBufferPtr& commands,
-		const Initializer& init);
+	void create(CommandBufferPtr& commands, const Initializer& init);
 
 	/// Bind to a unit
 	void bind(CommandBufferPtr& commands, U32 unit);

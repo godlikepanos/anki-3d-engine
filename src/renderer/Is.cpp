@@ -208,7 +208,7 @@ Error Is::initInternal(const ConfigSet& config)
 	PipelinePtr::Initializer init;
 		init.m_shaders[U(ShaderType::VERTEX)] = m_lightVert->getGrShader();
 		init.m_shaders[U(ShaderType::FRAGMENT)] = m_lightFrag->getGrShader();
-	ANKI_CHECK(m_lightPpline.create(&getGrManager(), init));
+	m_lightPpline.create(&getGrManager(), init);
 
 	//
 	// Create framebuffer
@@ -225,7 +225,7 @@ Error Is::initInternal(const ConfigSet& config)
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
 	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
+	m_fb.create(&getGrManager(), fbInit);
 
 	//
 	// Init the quad
@@ -233,34 +233,34 @@ Error Is::initInternal(const ConfigSet& config)
 	static const F32 quadVertCoords[][2] =
 		{{1.0, 1.0}, {0.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}};
 
-	ANKI_CHECK(m_quadPositionsVertBuff.create(&getGrManager(), GL_ARRAY_BUFFER,
-		&quadVertCoords[0][0], sizeof(quadVertCoords), 0));
+	m_quadPositionsVertBuff.create(&getGrManager(), GL_ARRAY_BUFFER,
+		&quadVertCoords[0][0], sizeof(quadVertCoords), 0);
 
 	//
 	// Create UBOs
 	//
-	ANKI_CHECK(m_commonBuffer.create(&getGrManager(), GL_UNIFORM_BUFFER,
-		nullptr, sizeof(shader::CommonUniforms), GL_DYNAMIC_STORAGE_BIT));
+	m_commonBuffer.create(&getGrManager(), GL_UNIFORM_BUFFER,
+		nullptr, sizeof(shader::CommonUniforms), GL_DYNAMIC_STORAGE_BIT);
 
 	for(U i = 0; i < MAX_FRAMES; ++i)
 	{
 		// Lights
-		ANKI_CHECK(m_lightsBuffers[i].create(&getGrManager(),
+		m_lightsBuffers[i].create(&getGrManager(),
 			GL_SHADER_STORAGE_BUFFER, nullptr, calcLightsBufferSize(),
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
 		// Tiles
-		ANKI_CHECK(m_tilesBuffers[i].create(&getGrManager(),
+		m_tilesBuffers[i].create(&getGrManager(),
 			GL_SHADER_STORAGE_BUFFER, nullptr,
 			m_r->getTilesCountXY() * sizeof(shader::Tile),
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 
 		// Index
-		ANKI_CHECK(m_lightIdsBuffers[i].create(&getGrManager(),
+		m_lightIdsBuffers[i].create(&getGrManager(),
 			GL_SHADER_STORAGE_BUFFER,
 			nullptr, (m_maxPointLights * m_maxSpotLights * m_maxSpotTexLights)
 			* sizeof(U32),
-			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+			GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	}
 
 	// Get addresses

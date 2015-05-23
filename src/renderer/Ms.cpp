@@ -57,7 +57,7 @@ Error Ms::createRt(U32 index, U32 samples)
 		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
-	ANKI_CHECK(plane.m_fb.create(&getGrManager(), fbInit));
+	plane.m_fb.create(&getGrManager(), fbInit);
 
 	return ErrorCode::NONE;
 }

@@ -203,13 +203,13 @@ BufferPtr::~BufferPtr()
 {}
 
 //==============================================================================
-Error BufferPtr::create(GrManager* manager,
+void BufferPtr::create(GrManager* manager,
 	GLenum target, const void* data, PtrSize size, GLenum flags)
 {
 	ANKI_ASSERT(!isCreated());
 
 	CommandBufferPtr cmdb;
-	ANKI_CHECK(cmdb.create(manager));
+	cmdb.create(manager);
 
 	Base::create(cmdb.get().getManager());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
@@ -228,8 +228,6 @@ Error BufferPtr::create(GrManager* manager,
 	cmdb.get().pushBackNewCommand<BufferCreateCommand>(
 		*this, target, data, size, flags, cleanup);
 	cmdb.flush();
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

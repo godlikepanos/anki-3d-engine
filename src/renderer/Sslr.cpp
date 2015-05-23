@@ -70,7 +70,7 @@ Error Sslr::init(const ConfigSet& config)
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
 		fbInit.m_colorAttachments[0].m_loadOperation =
 			AttachmentLoadOperation::LOAD;
-		ANKI_CHECK(dir.m_fb.create(&getGrManager(), fbInit));
+		dir.m_fb.create(&getGrManager(), fbInit);
 	}
 
 	return ErrorCode::NONE;

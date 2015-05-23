@@ -82,18 +82,16 @@ PipelinePtr::~PipelinePtr()
 {}
 
 //==============================================================================
-Error PipelinePtr::create(GrManager* manager, const Initializer& init)
+void PipelinePtr::create(GrManager* manager, const Initializer& init)
 {
 	CommandBufferPtr cmdb;
-	ANKI_CHECK(cmdb.create(manager));
+	cmdb.create(manager);
 
 	Base::create(cmdb.get().getManager());
 	get().setStateAtomically(GlObject::State::TO_BE_CREATED);
 	cmdb.get().pushBackNewCommand<CreatePipelineCommand>(*this, init);
 
 	cmdb.flush();
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

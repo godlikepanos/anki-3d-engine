@@ -25,9 +25,8 @@ public:
 
 	~FramebufferPtr();
 
-	/// Create a framebuffer
-	ANKI_USE_RESULT Error create(GrManager* manager,
-		Initializer& attachments);
+	/// Create a framebuffer.
+	void create(GrManager* manager, Initializer& attachments);
 
 	/// Bind it to the command buffer
 	/// @param commands The command buffer

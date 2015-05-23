@@ -24,8 +24,8 @@ Mesh::~Mesh()
 //==============================================================================
 Bool Mesh::isCompatible(const Mesh& other) const
 {
-	return hasWeights() == other.hasWeights() 
-		&& getSubMeshesCount() == other.getSubMeshesCount(); 
+	return hasWeights() == other.hasWeights()
+		&& getSubMeshesCount() == other.getSubMeshesCount();
 }
 
 //==============================================================================
@@ -63,23 +63,23 @@ Error Mesh::createBuffers(const MeshLoader& loader)
 	GrManager& gr = getManager().getGrManager();
 
 	// Create vertex buffer
-	ANKI_CHECK(m_vertBuff.create(&gr, GL_ARRAY_BUFFER, loader.getVertexData(), 
-		loader.getVertexDataSize(), 0));
+	m_vertBuff.create(&gr, GL_ARRAY_BUFFER, loader.getVertexData(),
+		loader.getVertexDataSize(), 0);
 
 	// Create index buffer
-	ANKI_CHECK(m_indicesBuff.create(&gr, GL_ELEMENT_ARRAY_BUFFER, 
-		loader.getIndexData(), loader.getIndexDataSize(), 0));
+	m_indicesBuff.create(&gr, GL_ELEMENT_ARRAY_BUFFER,
+		loader.getIndexData(), loader.getIndexDataSize(), 0);
 
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-void Mesh::getBufferInfo(const VertexAttribute attrib, 
-	BufferPtr& v, U32& size, GLenum& type, 
+void Mesh::getBufferInfo(const VertexAttribute attrib,
+	BufferPtr& v, U32& size, GLenum& type,
 	U32& stride, U32& offset, Bool& normalized) const
 {
-	stride = sizeof(Vec3) + sizeof(U32) + sizeof(U32) 
-		+ m_texChannelsCount * sizeof(HVec2) 
+	stride = sizeof(Vec3) + sizeof(U32) + sizeof(U32)
+		+ m_texChannelsCount * sizeof(HVec2)
 		+ ((m_weights) ? (sizeof(U8) * 4 + sizeof(HVec4)) : 0);
 
 	// Set all to zero
@@ -126,7 +126,7 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 			v = m_vertBuff;
 			size = 2;
 			type = GL_HALF_FLOAT;
-			offset = sizeof(Vec3) + sizeof(U32) + sizeof(U32) 
+			offset = sizeof(Vec3) + sizeof(U32) + sizeof(U32)
 				+ sizeof(HVec2);
 		}
 		break;
@@ -136,7 +136,7 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 			v = m_vertBuff;
 			size = 4;
 			type = GL_UNSIGNED_BYTE;
-			offset = sizeof(Vec3) + sizeof(U32) + sizeof(U32) 
+			offset = sizeof(Vec3) + sizeof(U32) + sizeof(U32)
 				+ m_texChannelsCount * sizeof(HVec2);
 			normalized = true;
 		}
@@ -147,7 +147,7 @@ void Mesh::getBufferInfo(const VertexAttribute attrib,
 			v = m_vertBuff;
 			size = 4;
 			type = GL_HALF_FLOAT;
-			offset = sizeof(Vec3) + sizeof(U32) + sizeof(U32) 
+			offset = sizeof(Vec3) + sizeof(U32) + sizeof(U32)
 				+ m_texChannelsCount * sizeof(HVec2) + sizeof(U8) * 4;
 		}
 		break;
@@ -203,7 +203,7 @@ Error BucketMesh::load(const CString& filename)
 		CString subMeshFilename;
 		ANKI_CHECK(meshEl.getText(subMeshFilename));
 
-		// Load the submesh and if not the first load the append the 
+		// Load the submesh and if not the first load the append the
 		// vertices to the fullMesh
 		MeshLoader* loader;
 		MeshLoader subLoader(init.m_tempAlloc);
@@ -228,7 +228,7 @@ Error BucketMesh::load(const CString& filename)
 				return ErrorCode::USER_DATA;
 			}
 
-			if(m_texChannelsCount 
+			if(m_texChannelsCount
 				!= loader->getTextureChannelsCount())
 			{
 				ANKI_LOGE("All sub meshes should have the "

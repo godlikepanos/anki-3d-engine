@@ -54,16 +54,16 @@ Error Pps::initInternal(const ConfigSet& config)
 	// FBO
 	ANKI_CHECK(
 		m_r->createRenderTarget(
-		m_r->getWidth(), m_r->getHeight(), 
-		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM), 
+		m_r->getWidth(), m_r->getHeight(),
+		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
 		1, SamplingFilter::LINEAR, 1, m_rt));
 
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
 	fbInit.m_colorAttachments[0].m_texture = m_rt;
-	fbInit.m_colorAttachments[0].m_loadOperation = 
+	fbInit.m_colorAttachments[0].m_loadOperation =
 		AttachmentLoadOperation::DONT_CARE;
-	ANKI_CHECK(m_fb.create(&getGrManager(), fbInit));
+	m_fb.create(&getGrManager(), fbInit);
 
 	// SProg
 	StringAuto pps(getAllocator());
@@ -76,7 +76,7 @@ Error Pps::initInternal(const ConfigSet& config)
 		"#define GAMMA_CORRECTION_ENABLED %u\n"
 		"#define FBO_WIDTH %u\n"
 		"#define FBO_HEIGHT %u\n",
-		m_ssao->getEnabled(), 
+		m_ssao->getEnabled(),
 		m_bloom->getEnabled(),
 		m_sslf->getEnabled(),
 		U(config.get("pps.sharpen")),
@@ -143,16 +143,16 @@ Error Pps::run(CommandBufferPtr& cmdb)
 		m_sslf->run(cmdb);
 	}
 
-	Bool drawToDefaultFbo = 
-		!m_r->getDbg().getEnabled() 
+	Bool drawToDefaultFbo =
+		!m_r->getDbg().getEnabled()
 		&& !m_r->getIsOffscreen()
 		&& m_r->getRenderingQuality() == 1.0;
 
 	if(drawToDefaultFbo)
 	{
 		m_r->getDefaultFramebuffer().bind(cmdb);
-		cmdb.setViewport(0, 0, 
-			m_r->getDefaultFramebufferWidth(), 
+		cmdb.setViewport(0, 0,
+			m_r->getDefaultFramebufferWidth(),
 			m_r->getDefaultFramebufferHeight());
 	}
 	else

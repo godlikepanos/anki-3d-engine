@@ -45,15 +45,15 @@ Error Sm::init(const ConfigSet& initializer)
 	sminit.m_depth = initializer.get("is.sm.maxLights");
 	sminit.m_format = PixelFormat(ComponentFormat::D16, TransformFormat::FLOAT);
 	sminit.m_mipmapsCount = 1;
-	sminit.m_sampling.m_minMagFilter = m_bilinearEnabled 
-		? SamplingFilter::LINEAR 
+	sminit.m_sampling.m_minMagFilter = m_bilinearEnabled
+		? SamplingFilter::LINEAR
 		: SamplingFilter::NEAREST;
 	sminit.m_sampling.m_compareOperation = CompareOperation::LESS_EQUAL;
 
 	CommandBufferPtr cmdBuff;
-	ANKI_CHECK(cmdBuff.create(&getGrManager()));
+	cmdBuff.create(&getGrManager());
 
-	ANKI_CHECK(m_sm2DArrayTex.create(cmdBuff, sminit));
+	m_sm2DArrayTex.create(cmdBuff, sminit);
 	cmdBuff.flush();
 
 	// Init sms
@@ -61,7 +61,7 @@ Error Sm::init(const ConfigSet& initializer)
 
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_depthStencilAttachment.m_texture = m_sm2DArrayTex;
-	fbInit.m_depthStencilAttachment.m_loadOperation = 
+	fbInit.m_depthStencilAttachment.m_loadOperation =
 		AttachmentLoadOperation::CLEAR;
 	fbInit.m_depthStencilAttachment.m_clearValue.m_depthStencil.m_depth = 1.0;
 
@@ -71,7 +71,7 @@ Error Sm::init(const ConfigSet& initializer)
 		sm.m_layerId = layer;
 
 		fbInit.m_depthStencilAttachment.m_layer = layer;
-		ANKI_CHECK(sm.m_fb.create(&getGrManager(), fbInit));
+		sm.m_fb.create(&getGrManager(), fbInit);
 
 		++layer;
 	}
@@ -108,7 +108,7 @@ void Sm::finishDraw(CommandBufferPtr& cmdBuff)
 }
 
 //==============================================================================
-Error Sm::run(SceneNode* shadowCasters[], U32 shadowCastersCount, 
+Error Sm::run(SceneNode* shadowCasters[], U32 shadowCastersCount,
 	CommandBufferPtr& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);

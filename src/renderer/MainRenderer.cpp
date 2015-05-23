@@ -37,7 +37,7 @@ Error MainRenderer::create(
 	ANKI_CHECK(Renderer::init(threadpool, resources, gl, allocCb,
 		allocCbUserData, config, globalTimestamp));
 
-	ANKI_CHECK(initGl());
+	initGl();
 
 	ANKI_CHECK(
 		m_blitFrag.load("shaders/Final.frag.glsl", &_getResourceManager()));
@@ -62,7 +62,7 @@ Error MainRenderer::render(SceneGraph& scene)
 
 	for(U i = 0; i < JOB_CHAINS_COUNT; i++)
 	{
-		ANKI_CHECK(jobs[i].create(&gl, m_jobsInitHints[i]));
+		jobs[i].create(&gl, m_jobsInitHints[i]);
 	}
 
 	ANKI_CHECK(Renderer::render(scene, jobs));
@@ -119,22 +119,16 @@ Error MainRenderer::render(SceneGraph& scene)
 }
 
 //==============================================================================
-Error MainRenderer::initGl()
+void MainRenderer::initGl()
 {
 	// get max texture units
 	CommandBufferPtr cmdb;
-	Error err = cmdb.create(&_getGrManager());
+	cmdb.create(&_getGrManager());
 
-	if(!err)
-	{
-		cmdb.enableCulling(true);
-		cmdb.setCullFace(GL_BACK);
-		cmdb.enablePointSize(true);
-
-		cmdb.flush();
-	}
-
-	return err;
+	cmdb.enableCulling(true);
+	cmdb.setCullFace(GL_BACK);
+	cmdb.enablePointSize(true);
+	cmdb.flush();
 }
 
 //==============================================================================

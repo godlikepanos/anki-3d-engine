@@ -168,7 +168,7 @@ Error ModelPatchBase::create(GrManager* gl)
 
 			// Create vert descriptor
 			CommandBufferPtr vertJobs;
-			ANKI_CHECK(vertJobs.create(gl));
+			vertJobs.create(gl);
 			ANKI_CHECK(createVertexDesc(*mesh, vertJobs));
 
 			m_vertJobs[getVertexDescIdx(key)] = vertJobs;

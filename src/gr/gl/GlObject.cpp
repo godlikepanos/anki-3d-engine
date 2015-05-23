@@ -66,17 +66,10 @@ void GlObject::destroyDeferred(GlDeleteFunction deleteCallback)
 	{
 		CommandBufferPtr commands;
 
-		Error err = commands.create(&manager);
-		if(!err)
-		{
-			commands.get().template pushBackNewCommand<DeleteGlObjectCommand>(
-				deleteCallback, m_glName);
-			commands.flush();
-		}
-		else
-		{
-			ANKI_LOGE("Failed to create command");
-		}
+		commands.create(&manager);
+		commands.get().template pushBackNewCommand<DeleteGlObjectCommand>(
+			deleteCallback, m_glName);
+		commands.flush();
 	}
 	else
 	{

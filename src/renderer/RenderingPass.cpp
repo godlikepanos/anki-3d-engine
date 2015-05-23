@@ -81,7 +81,7 @@ Error BlurringRenderingPass::initBlurring(
 		fbInit.m_colorAttachments[0].m_texture = dir.m_rt;
 		fbInit.m_colorAttachments[0].m_loadOperation =
 			AttachmentLoadOperation::DONT_CARE;
-		ANKI_CHECK(dir.m_fb.create(&getGrManager(), fbInit));
+		dir.m_fb.create(&getGrManager(), fbInit);
 
 		ANKI_CHECK(dir.m_frag.loadToCache(&getResourceManager(),
 			"shaders/VariableSamplingBlurGeneric.frag.glsl",

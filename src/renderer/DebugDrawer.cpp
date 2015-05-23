@@ -39,10 +39,10 @@ Error DebugDrawer::create(Renderer* r)
 	init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();
 	init.m_shaders[U(ShaderType::FRAGMENT)] = m_frag->getGrShader();
 
-	ANKI_CHECK(m_ppline.create(&gl, init));
+	m_ppline.create(&gl, init);
 
-	ANKI_CHECK(m_vertBuff.create(&gl, GL_ARRAY_BUFFER, nullptr,
-			sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT));
+	m_vertBuff.create(&gl, GL_ARRAY_BUFFER, nullptr,
+		sizeof(m_clientLineVerts), GL_DYNAMIC_STORAGE_BIT);
 
 	m_lineVertCount = 0;
 	m_triVertCount = 0;

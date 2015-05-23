@@ -25,7 +25,7 @@ public:
 	~PipelinePtr();
 
 	/// Create a pipeline
-	ANKI_USE_RESULT Error create(GrManager* manager, const Initializer& init);
+	void create(GrManager* manager, const Initializer& init);
 
 	/// Bind it to the state
 	void bind(CommandBufferPtr& commands);
