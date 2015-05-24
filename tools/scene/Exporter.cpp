@@ -704,14 +704,16 @@ void Exporter::exportLight(const aiLight& light)
 	file << "lcomp = node:getSceneNodeBase():getLightComponent()\n";
 
 	// Colors
-	aiColor3D linear = computeLightColor(light.mColorDiffuse);
+	//aiColor3D linear = computeLightColor(light.mColorDiffuse);
+	aiColor3D linear = light.mColorDiffuse;
 	file << "lcomp:setDiffuseColor(Vec4.new("
 		<< linear[0] << ", "
 		<< linear[1] << ", "
 		<< linear[2] << ", "
 		<< "1))\n";
 
-	linear = computeLightColor(light.mColorSpecular);
+	//linear = computeLightColor(light.mColorSpecular);
+	linear = light.mColorSpecular;
 	file << "lcomp:setSpecularColor(Vec4.new("
 		<< linear[0] << ", "
 		<< linear[1] << ", "

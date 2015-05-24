@@ -61,7 +61,7 @@ Error init()
 	MainRenderer& renderer = app->getMainRenderer();
 	ResourceManager& resources = app->getResourceManager();
 
-	scene.setAmbientColor(Vec4(0.1, 0.05, 0.05, 0.0) * 0.8);
+	scene.setAmbientColor(Vec4(1.0) * 0.1);
 
 	if(getenv("PROFILE"))
 	{
