@@ -286,6 +286,83 @@ static int wrapMoveComponentgetLocalScale(lua_State* l)
 }
 
 //==============================================================================
+/// Pre-wrap method MoveComponent::setLocalTransform.
+static inline int pwrapMoveComponentsetLocalTransform(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	if(LuaBinder::checkUserData(l, 2, "Transform", 7048620195620777229, ud)) return -1;
+	Transform* iarg0 = static_cast<Transform*>(ud->m_data);
+	const Transform& arg0(*iarg0);
+	
+	// Call the method
+	self->setLocalTransform(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method MoveComponent::setLocalTransform.
+static int wrapMoveComponentsetLocalTransform(lua_State* l)
+{
+	int res = pwrapMoveComponentsetLocalTransform(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method MoveComponent::getLocalTransform.
+static inline int pwrapMoveComponentgetLocalTransform(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameMoveComponent, 2038493110845313445, ud)) return -1;
+	MoveComponent* self = static_cast<MoveComponent*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	const Transform& ret = self->getLocalTransform();
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "Transform");
+	ud->m_data = const_cast<void*>(static_cast<const void*>(&ret));
+	ud->m_gc = false;
+	ud->m_sig = 7048620195620777229;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method MoveComponent::getLocalTransform.
+static int wrapMoveComponentgetLocalTransform(lua_State* l)
+{
+	int res = pwrapMoveComponentgetLocalTransform(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
 /// Wrap class MoveComponent.
 static inline void wrapMoveComponent(lua_State* l)
 {
@@ -296,6 +373,8 @@ static inline void wrapMoveComponent(lua_State* l)
 	LuaBinder::pushLuaCFuncMethod(l, "getLocalRotation", wrapMoveComponentgetLocalRotation);
 	LuaBinder::pushLuaCFuncMethod(l, "setLocalScale", wrapMoveComponentsetLocalScale);
 	LuaBinder::pushLuaCFuncMethod(l, "getLocalScale", wrapMoveComponentgetLocalScale);
+	LuaBinder::pushLuaCFuncMethod(l, "setLocalTransform", wrapMoveComponentsetLocalTransform);
+	LuaBinder::pushLuaCFuncMethod(l, "getLocalTransform", wrapMoveComponentgetLocalTransform);
 	lua_settop(l, 0);
 }
 
@@ -2015,7 +2094,7 @@ static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 	void* voidp;
 	(void)voidp;
 	
-	LuaBinder::checkArgsCount(l, 3);
+	LuaBinder::checkArgsCount(l, 4);
 	
 	// Get "this" as "self"
 	if(LuaBinder::checkUserData(l, 1, classnameSceneGraph, -7754439619132389154, ud)) return -1;
@@ -2029,8 +2108,12 @@ static inline int pwrapSceneGraphnewStaticCollisionNode(lua_State* l)
 	const char* arg1;
 	if(LuaBinder::checkString(l, 3, arg1)) return -1;
 	
+	if(LuaBinder::checkUserData(l, 4, "Transform", 7048620195620777229, ud)) return -1;
+	Transform* iarg2 = static_cast<Transform*>(ud->m_data);
+	const Transform& arg2(*iarg2);
+	
 	// Call the method
-	StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0, arg1);
+	StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0, arg1, arg2);
 	
 	// Push return value
 	if(ANKI_UNLIKELY(ret == nullptr))

@@ -220,7 +220,7 @@ namespace anki {]]></head>
 					</args>
 					<return>F32</return>
 				</method>
-				
+
 			</methods>
 		</class>
 		<class name="Vec4">
@@ -344,7 +344,7 @@ namespace anki {]]></head>
 					</args>
 					<return>F32</return>
 				</method>
-				
+
 			</methods>
 		</class>
 		<class name="Mat3">
@@ -425,6 +425,40 @@ namespace anki {]]></head>
 						<arg>F32</arg>
 						<arg>F32</arg>
 						<arg>F32</arg>
+						<arg>F32</arg>
+					</args>
+				</method>
+			</methods>
+		</class>
+		<class name="Transform">
+			<constructor></constructor>
+			<methods>
+				<method name="operator=">
+					<args>
+						<arg>const Transform&amp;</arg>
+					</args>
+				</method>
+				<method name="getOrigin">
+					<return>Vec4</return>
+				</method>
+				<method name="setOrigin">
+					<args>
+						<arg>const Vec4&amp;</arg>
+					</args>
+				</method>
+				<method name="getRotation">
+					<return>Mat3x4</return>
+				</method>
+				<method name="setRotation">
+					<args>
+						<arg>const Mat3x4&amp;</arg>
+					</args>
+				</method>
+				<method name="getScale">
+					<return>F32</return>
+				</method>
+				<method name="setScale">
+					<args>
 						<arg>F32</arg>
 					</args>
 				</method>

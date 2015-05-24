@@ -69,6 +69,14 @@ static SceneGraph* getSceneGraph(lua_State* l)
 				<method name="getLocalScale">
 					<return>F32</return>
 				</method>
+				<method name="setLocalTransform">
+					<args>
+						<arg>const Transform&amp;</arg>
+					</args>
+				</method>
+				<method name="getLocalTransform">
+					<return>const Transform&amp;</return>
+				</method>
 			</methods>
 		</class>
 		<class name="LightComponent">
@@ -268,10 +276,11 @@ static SceneGraph* getSceneGraph(lua_State* l)
 					<return>SpotLight*</return>
 				</method>
 				<method name="newStaticCollisionNode">
-					<overrideCall><![CDATA[StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0, arg1);]]></overrideCall>
+					<overrideCall><![CDATA[StaticCollisionNode* ret = newSceneNode<StaticCollisionNode>(self, arg0, arg1, arg2);]]></overrideCall>
 					<args>
 						<arg>const CString&amp;</arg>
 						<arg>const CString&amp;</arg>
+						<arg>const Transform&amp;</arg>
 					</args>
 					<return>StaticCollisionNode*</return>
 				</method>

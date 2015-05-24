@@ -189,9 +189,7 @@ aiMatrix3x3 Exporter::toAnkiMatrix(const aiMatrix3x3& in) const
 }
 
 //==============================================================================
-void Exporter::writeNodeTransform(
-	const std::string& node,
-	const aiMatrix4x4& mat)
+void Exporter::writeTransform(const aiMatrix4x4& mat)
 {
 	std::ofstream& file = m_sceneFile;
 
@@ -202,8 +200,9 @@ void Exporter::writeNodeTransform(
 	pos[1] = m[1][3];
 	pos[2] = m[2][3];
 
-	file << node
-		<< ":getSceneNodeBase():getMoveComponent():setLocalOrigin(Vec4.new("
+	file << "trf = Transform.new()\n";
+
+	file << "trf:setOrigin(Vec4.new("
 		<< pos[0] << ", " << pos[1] << ", " << pos[2] << ", 0))\n";
 
 	file << "rot = Mat3x4.new()\n";
@@ -229,8 +228,21 @@ void Exporter::writeNodeTransform(
 	}
 	file << ")\n";
 
+	file << "trf:setRotation(rot)\n";
+	file << "trf:setScale(1.0)\n";
+}
+
+//==============================================================================
+void Exporter::writeNodeTransform(
+	const std::string& node,
+	const aiMatrix4x4& mat)
+{
+	std::ofstream& file = m_sceneFile;
+
+	writeTransform(mat);
+
 	file << node
-		<< ":getSceneNodeBase():getMoveComponent():setLocalRotation(rot)\n";
+		<< ":getSceneNodeBase():getMoveComponent():setLocalTransform(trf)\n";
 }
 
 //==============================================================================
@@ -961,39 +973,34 @@ void Exporter::visitNode(const aiNode* ainode)
 				m_particleEmitters.push_back(p);
 				special = true;
 			}
+			else if(prop.first == "collision" && prop.second == "true")
+			{
+				StaticCollisionNode n;
+				n.m_meshIndex = meshIndex;
+				n.m_transform = ainode->mTransformation;
+				m_staticCollisionNodes.push_back(n);
+				special = true;
+			}
+			else if(prop.first == "portal" && prop.second == "true")
+			{
+				Portal portal;
+				portal.m_meshIndex = meshIndex;
+				portal.m_transform = ainode->mTransformation;
+				m_portals.push_back(portal);
+				special = true;
+			}
+			else if(prop.first == "sector" && prop.second == "true")
+			{
+				Sector sector;
+				sector.m_meshIndex = meshIndex;
+				sector.m_transform = ainode->mTransformation;
+				m_sectors.push_back(sector);
+				special = true;
+			}
 		}
 
 		if(special)
 		{
-			continue;
-		}
-
-		// Check if it's a collsion mesh
-		std::string name = m_scene->mMeshes[meshIndex]->mName.C_Str();
-		if(name.find("ak_collision") == 0)
-		{
-			// Ignore collision meshes
-			m_collisionMeshIds.push_back(meshIndex);
-			continue;
-		}
-
-		if(name.find("ak_portal") == 0)
-		{
-			// Ignore portals
-			Portal portal;
-			portal.m_meshIndex = meshIndex;
-			portal.m_transform = ainode->mTransformation;
-			m_portals.push_back(portal);
-			continue;
-		}
-
-		if(name.find("ak_sector") == 0)
-		{
-			// Ignore sectors
-			Sector sector;
-			sector.m_meshIndex = meshIndex;
-			sector.m_transform = ainode->mTransformation;
-			m_sectors.push_back(sector);
 			continue;
 		}
 
@@ -1089,15 +1096,18 @@ void Exporter::exportAll()
 	//
 	// Export collision meshes
 	//
-	for(auto idx : m_collisionMeshIds)
+	for(auto n : m_staticCollisionNodes)
 	{
-		exportMesh(*m_scene->mMeshes[idx], nullptr);
-		exportCollisionMesh(idx);
+		exportMesh(*m_scene->mMeshes[n.m_meshIndex], nullptr);
+		exportCollisionMesh(n.m_meshIndex);
 
-		std::string name = getMeshName(getMeshAt(idx));
+		file << "\n";
+		writeTransform(n.m_transform);
+
+		std::string name = getMeshName(getMeshAt(n.m_meshIndex));
 		std::string fname = m_rpath + name + ".ankicl";
-		file << "\nnode = scene:newStaticCollisionNode(\""
-			<< name << "\", \"" << fname << "\")\n";
+		file << "node = scene:newStaticCollisionNode(\""
+			<< name << "\", \"" << fname << "\", trf)\n";
 	}
 
 	//

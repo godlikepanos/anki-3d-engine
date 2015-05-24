@@ -3263,6 +3263,382 @@ static inline void wrapMat3x4(lua_State* l)
 }
 
 //==============================================================================
+// Transform                                                                   =
+//==============================================================================
+
+//==============================================================================
+static const char* classnameTransform = "Transform";
+
+template<>
+I64 LuaBinder::getWrappedTypeSignature<Transform>()
+{
+	return 7048620195620777229;
+}
+
+template<>
+const char* LuaBinder::getWrappedTypeName<Transform>()
+{
+	return classnameTransform;
+}
+
+//==============================================================================
+/// Pre-wrap constructor for Transform.
+static inline int pwrapTransformCtor(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 0);
+	
+	// Create user data
+	void* inst = LuaBinder::luaAlloc(l, sizeof(Transform));
+	if(ANKI_UNLIKELY(inst == nullptr))
+	{
+		lua_pushstring(l, "Out of memory");
+		return -1;
+	}
+	
+	::new(inst) Transform();
+	
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	ud->m_data = inst;
+	ud->m_gc = true;
+	ud->m_sig = 7048620195620777229;
+	luaL_setmetatable(l, classnameTransform);
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap constructor for Transform.
+static int wrapTransformCtor(lua_State* l)
+{
+	int res = pwrapTransformCtor(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap destructor for Transform.
+static int wrapTransformDtor(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud)) return -1;
+	if(ud->m_gc)
+	{
+		Transform* inst = static_cast<Transform*>(ud->m_data);
+		inst->~Transform();
+		LuaBinder::luaFree(l, inst);
+	}
+	
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method Transform::operator=.
+static inline int pwrapTransformcopy(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud)) return -1;
+	Transform* self = static_cast<Transform*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	if(LuaBinder::checkUserData(l, 2, "Transform", 7048620195620777229, ud)) return -1;
+	Transform* iarg0 = static_cast<Transform*>(ud->m_data);
+	const Transform& arg0(*iarg0);
+	
+	// Call the method
+	self->operator=(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method Transform::operator=.
+static int wrapTransformcopy(lua_State* l)
+{
+	int res = pwrapTransformcopy(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method Transform::getOrigin.
+static inline int pwrapTransformgetOrigin(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud)) return -1;
+	Transform* self = static_cast<Transform*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	Vec4 ret = self->getOrigin();
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "Vec4");
+	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Vec4));
+	if(ANKI_UNLIKELY(ud->m_data == nullptr))
+	{
+		ud->m_gc = false;
+		lua_pushstring(l, "Out of memory");
+		return -1;
+	}
+	
+	::new(ud->m_data) Vec4(std::move(ret));
+	ud->m_gc = true;
+	ud->m_sig = 6804478823655046386;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method Transform::getOrigin.
+static int wrapTransformgetOrigin(lua_State* l)
+{
+	int res = pwrapTransformgetOrigin(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method Transform::setOrigin.
+static inline int pwrapTransformsetOrigin(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud)) return -1;
+	Transform* self = static_cast<Transform*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	if(LuaBinder::checkUserData(l, 2, "Vec4", 6804478823655046386, ud)) return -1;
+	Vec4* iarg0 = static_cast<Vec4*>(ud->m_data);
+	const Vec4& arg0(*iarg0);
+	
+	// Call the method
+	self->setOrigin(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method Transform::setOrigin.
+static int wrapTransformsetOrigin(lua_State* l)
+{
+	int res = pwrapTransformsetOrigin(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method Transform::getRotation.
+static inline int pwrapTransformgetRotation(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud)) return -1;
+	Transform* self = static_cast<Transform*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	Mat3x4 ret = self->getRotation();
+	
+	// Push return value
+	voidp = lua_newuserdata(l, sizeof(UserData));
+	ud = static_cast<UserData*>(voidp);
+	luaL_setmetatable(l, "Mat3x4");
+	ud->m_data = LuaBinder::luaAlloc(l, sizeof(Mat3x4));
+	if(ANKI_UNLIKELY(ud->m_data == nullptr))
+	{
+		ud->m_gc = false;
+		lua_pushstring(l, "Out of memory");
+		return -1;
+	}
+	
+	::new(ud->m_data) Mat3x4(std::move(ret));
+	ud->m_gc = true;
+	ud->m_sig = -2654194732934255869;
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method Transform::getRotation.
+static int wrapTransformgetRotation(lua_State* l)
+{
+	int res = pwrapTransformgetRotation(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method Transform::setRotation.
+static inline int pwrapTransformsetRotation(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud)) return -1;
+	Transform* self = static_cast<Transform*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	if(LuaBinder::checkUserData(l, 2, "Mat3x4", -2654194732934255869, ud)) return -1;
+	Mat3x4* iarg0 = static_cast<Mat3x4*>(ud->m_data);
+	const Mat3x4& arg0(*iarg0);
+	
+	// Call the method
+	self->setRotation(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method Transform::setRotation.
+static int wrapTransformsetRotation(lua_State* l)
+{
+	int res = pwrapTransformsetRotation(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method Transform::getScale.
+static inline int pwrapTransformgetScale(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 1);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud)) return -1;
+	Transform* self = static_cast<Transform*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Call the method
+	F32 ret = self->getScale();
+	
+	// Push return value
+	lua_pushnumber(l, ret);
+	
+	return 1;
+}
+
+//==============================================================================
+/// Wrap method Transform::getScale.
+static int wrapTransformgetScale(lua_State* l)
+{
+	int res = pwrapTransformgetScale(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Pre-wrap method Transform::setScale.
+static inline int pwrapTransformsetScale(lua_State* l)
+{
+	UserData* ud;
+	(void)ud;
+	void* voidp;
+	(void)voidp;
+	
+	LuaBinder::checkArgsCount(l, 2);
+	
+	// Get "this" as "self"
+	if(LuaBinder::checkUserData(l, 1, classnameTransform, 7048620195620777229, ud)) return -1;
+	Transform* self = static_cast<Transform*>(ud->m_data);
+	ANKI_ASSERT(self != nullptr);
+	
+	// Pop arguments
+	F32 arg0;
+	if(LuaBinder::checkNumber(l, 2, arg0)) return -1;
+	
+	// Call the method
+	self->setScale(arg0);
+	
+	return 0;
+}
+
+//==============================================================================
+/// Wrap method Transform::setScale.
+static int wrapTransformsetScale(lua_State* l)
+{
+	int res = pwrapTransformsetScale(l);
+	if(res >= 0) return res;
+	lua_error(l);
+	return 0;
+}
+
+//==============================================================================
+/// Wrap class Transform.
+static inline void wrapTransform(lua_State* l)
+{
+	LuaBinder::createClass(l, classnameTransform);
+	LuaBinder::pushLuaCFuncStaticMethod(l, classnameTransform, "new", wrapTransformCtor);
+	LuaBinder::pushLuaCFuncMethod(l, "__gc", wrapTransformDtor);
+	LuaBinder::pushLuaCFuncMethod(l, "copy", wrapTransformcopy);
+	LuaBinder::pushLuaCFuncMethod(l, "getOrigin", wrapTransformgetOrigin);
+	LuaBinder::pushLuaCFuncMethod(l, "setOrigin", wrapTransformsetOrigin);
+	LuaBinder::pushLuaCFuncMethod(l, "getRotation", wrapTransformgetRotation);
+	LuaBinder::pushLuaCFuncMethod(l, "setRotation", wrapTransformsetRotation);
+	LuaBinder::pushLuaCFuncMethod(l, "getScale", wrapTransformgetScale);
+	LuaBinder::pushLuaCFuncMethod(l, "setScale", wrapTransformsetScale);
+	lua_settop(l, 0);
+}
+
+//==============================================================================
 /// Wrap the module.
 void wrapModuleMath(lua_State* l)
 {
@@ -3271,6 +3647,7 @@ void wrapModuleMath(lua_State* l)
 	wrapVec4(l);
 	wrapMat3(l);
 	wrapMat3x4(l);
+	wrapTransform(l);
 }
 
 } // end namespace anki

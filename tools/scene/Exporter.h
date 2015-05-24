@@ -26,7 +26,6 @@ struct Model
 	uint32_t m_meshIndex = INVALID_INDEX; ///< Mesh index in the scene
 	uint32_t m_materialIndex = INVALID_INDEX;
 	uint32_t m_instancesCount = 1;
-	uint32_t m_collisionMeshIndex = INVALID_INDEX;
 };
 
 /// Scene node.
@@ -63,6 +62,13 @@ public:
 	aiMatrix4x4 m_transform;
 };
 
+class StaticCollisionNode
+{
+public:
+	uint32_t m_meshIndex;
+	aiMatrix4x4 m_transform;
+};
+
 /// AnKi exporter.
 class Exporter
 {
@@ -82,7 +88,7 @@ public:
 
 	std::ofstream m_sceneFile;
 
-	std::vector<uint32_t> m_collisionMeshIds;
+	std::vector<StaticCollisionNode> m_staticCollisionNodes;
 	std::vector<Portal> m_portals;
 	std::vector<Sector> m_sectors;
 	std::vector<ParticleEmitter> m_particleEmitters;
@@ -102,6 +108,8 @@ private:
 
 	/// Convert one 3x3 matrix to AnKi friendly matrix.
 	aiMatrix3x3 toAnkiMatrix(const aiMatrix3x3& in) const;
+
+	void writeTransform(const aiMatrix4x4& mat);
 
 	/// Write transformation of a node
 	void writeNodeTransform(

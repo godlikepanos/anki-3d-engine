@@ -42,7 +42,7 @@ App* app;
 ModelNode* horse;
 PerspectiveCamera* cam;
 
-#define NO_PLAYER 1
+#define NO_PLAYER 0
 
 Bool profile = false;
 
@@ -479,7 +479,7 @@ Error initSubsystems(int argc, char* argv[])
 	config.set("ms.ez.maxObjectsToDraw", 100);
 	config.set("dbg.enabled", false);
 	config.set("is.sm.bilinearEnabled", true);
-	config.set("is.groundLightEnabled", true);
+	config.set("is.groundLightEnabled", false);
 	config.set("is.sm.enabled", true);
 	config.set("is.sm.poissonEnabled", true);
 	config.set("is.sm.resolution", 1024);

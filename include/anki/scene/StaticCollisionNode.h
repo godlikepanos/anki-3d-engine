@@ -25,8 +25,8 @@ public:
 
 	~StaticCollisionNode();
 
-	ANKI_USE_RESULT Error create(
-		const CString& name, const CString& resourceFname);
+	ANKI_USE_RESULT Error create(const CString& name,
+		const CString& resourceFname, const Transform& transform);
 
 private:
 	CollisionResourcePtr m_rsrc;

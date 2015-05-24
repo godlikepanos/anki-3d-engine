@@ -16,8 +16,8 @@ StaticCollisionNode::~StaticCollisionNode()
 {}
 
 //==============================================================================
-Error StaticCollisionNode::create(
-	const CString& name, const CString& resourceFname)
+Error StaticCollisionNode::create(const CString& name,
+	const CString& resourceFname, const Transform& transform)
 {
 	// Load resource
 	ANKI_CHECK(m_rsrc.load(resourceFname, &getResourceManager()));
@@ -26,7 +26,7 @@ Error StaticCollisionNode::create(
 	PhysicsBody::Initializer init;
 	init.m_shape = m_rsrc->getShape();
 	init.m_static = true;
-	// TODO: set trf
+	init.m_startTrf = transform;
 
 	m_body = getSceneGraph()._getPhysicsWorld().newInstance<PhysicsBody>(init);
 

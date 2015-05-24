@@ -30,7 +30,9 @@ public:
 	{}
 
 	Aabb(const Vec4& min, const Vec4& max)
-	:	Base(Type::AABB), m_min(min), m_max(max)
+	:	Base(Type::AABB),
+		m_min(min),
+		m_max(max)
 	{
 		ANKI_ASSERT(m_min.xyz() < m_max.xyz());
 	}
@@ -105,7 +107,7 @@ public:
 	/// Implements CompoundShape::computeSupport
 	Vec4 computeSupport(const Vec4& dir) const override;
 
-	/// It uses a nice trick to avoid unwanted calculations 
+	/// It uses a nice trick to avoid unwanted calculations
 	Aabb getTransformed(const Transform& transform) const;
 
 	/// Get a collision shape that includes this and the given. Its not
