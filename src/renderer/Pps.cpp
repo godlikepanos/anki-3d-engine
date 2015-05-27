@@ -11,6 +11,7 @@
 #include "anki/renderer/Sslr.h"
 #include "anki/renderer/Tm.h"
 #include "anki/renderer/Is.h"
+#include "anki/renderer/Dbg.h"
 #include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
 
@@ -143,23 +144,18 @@ Error Pps::run(CommandBufferPtr& cmdb)
 		m_sslf->run(cmdb);
 	}
 
-	Bool drawToDefaultFbo =
-		!m_r->getDbg().getEnabled()
-		&& !m_r->getIsOffscreen()
-		&& m_r->getRenderingQuality() == 1.0;
+	FramebufferPtr fb = m_fb;
+	U32 width = m_r->getWidth();
+	U32 height = m_r->getHeight();
 
-	if(drawToDefaultFbo)
+	Bool isLastStage = !m_r->getDbg().getEnabled();
+	if(isLastStage)
 	{
-		m_r->getDefaultFramebuffer().bind(cmdb);
-		cmdb.setViewport(0, 0,
-			m_r->getDefaultFramebufferWidth(),
-			m_r->getDefaultFramebufferHeight());
+		m_r->getOutputFramebuffer(fb, width, height);
 	}
-	else
-	{
-		m_fb.bind(cmdb);
-		cmdb.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	}
+
+	fb.bind(cmdb);
+	cmdb.setViewport(0, 0, width, height);
 
 	m_ppline.bind(cmdb);
 

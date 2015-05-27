@@ -18,13 +18,13 @@ Timestamp RenderingPass::getGlobalTimestamp() const
 //==============================================================================
 GrManager& RenderingPass::getGrManager()
 {
-	return m_r->_getGrManager();
+	return m_r->getGrManager();
 }
 
 //==============================================================================
 const GrManager& RenderingPass::getGrManager() const
 {
-	return m_r->_getGrManager();
+	return m_r->getGrManager();
 }
 
 //==============================================================================
@@ -42,7 +42,7 @@ StackAllocator<U8> RenderingPass::getFrameAllocator() const
 //==============================================================================
 ResourceManager& RenderingPass::getResourceManager()
 {
-	return m_r->_getResourceManager();
+	return m_r->getResourceManager();
 }
 
 //==============================================================================

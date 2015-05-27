@@ -20,7 +20,7 @@
 namespace anki {
 
 // Forward
-class Renderer;
+class MainRenderer;
 class ResourceManager;
 class Camera;
 class Input;
@@ -117,8 +117,8 @@ public:
 		return *m_threadpool;
 	}
 
-	ANKI_USE_RESULT Error update(
-		F32 prevUpdateTime, F32 crntTime, Renderer& renderer);
+	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime,
+		MainRenderer& renderer);
 
 	SceneNode& findSceneNode(const CString& name);
 	SceneNode* tryFindSceneNode(const CString& name);

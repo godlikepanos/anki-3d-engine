@@ -9,53 +9,40 @@
 #include "anki/core/Counters.h"
 #include "anki/misc/ConfigSet.h"
 
+#include "anki/renderer/Ms.h"
+#include "anki/renderer/Is.h"
+#include "anki/renderer/Pps.h"
 #include "anki/renderer/Fs.h"
 #include "anki/renderer/Lf.h"
-#include "anki/renderer/Is.h"
+#include "anki/renderer/Dbg.h"
+#include "anki/renderer/Tiler.h"
 
 namespace anki {
 
 //==============================================================================
 Renderer::Renderer()
-:	m_ms(this),
-	m_is(this),
-	m_pps(this),
-	m_dbg(this),
-	m_tiler(this)
 {}
 
 //==============================================================================
 Renderer::~Renderer()
-{
-	m_shadersPrependedSource.destroy(m_alloc);
-
-	if(m_fs)
-	{
-		m_alloc.deleteInstance(m_fs);
-	}
-
-	if(m_lf)
-	{
-		m_alloc.deleteInstance(m_lf);
-	}
-}
+{}
 
 //==============================================================================
 Error Renderer::init(
 	Threadpool* threadpool,
 	ResourceManager* resources,
 	GrManager* gl,
-	AllocAlignedCallback allocCb,
-	void* allocCbUserData,
+	HeapAllocator<U8> alloc,
+	StackAllocator<U8> frameAlloc,
 	const ConfigSet& config,
 	const Timestamp* globalTimestamp)
 {
-	m_grobalTimestamp = globalTimestamp;
+	m_globalTimestamp = globalTimestamp;
 	m_threadpool = threadpool;
 	m_resources = resources;
 	m_gr = gl;
-	m_alloc = HeapAllocator<U8>(allocCb, allocCbUserData);
-	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024);
+	m_alloc = alloc;
+	m_frameAlloc = frameAlloc;
 
 	Error err = initInternal(config);
 	if(err)
@@ -70,17 +57,11 @@ Error Renderer::init(
 Error Renderer::initInternal(const ConfigSet& config)
 {
 	// Set from the config
-	m_renderingQuality = config.get("renderingQuality");
-	m_defaultFbWidth = config.get("width");
-	m_defaultFbHeight = config.get("height");
-	m_width = getAlignedRoundDown(
-		TILE_SIZE, U(m_defaultFbWidth * m_renderingQuality));
-	m_height = getAlignedRoundDown(
-		TILE_SIZE, U(m_defaultFbHeight * m_renderingQuality));
+	m_width = getAlignedRoundDown(TILE_SIZE, U(config.get("width")));
+	m_height = getAlignedRoundDown(TILE_SIZE, U(config.get("height")));
 	m_lodDistance = config.get("lodDistance");
 	m_framesNum = 0;
 	m_samples = config.get("samples");
-	m_isOffscreen = config.get("offscreen");
 	m_tilesCount.x() = m_width / TILE_SIZE;
 	m_tilesCount.y() = m_height / TILE_SIZE;
 	m_tilesCountXY = m_tilesCount.x() * m_tilesCount.y();
@@ -113,13 +94,6 @@ Error Renderer::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
-	// Set the default preprocessor string
-	m_shadersPrependedSource.sprintf(
-		m_alloc,
-		"#define ANKI_RENDERER_WIDTH %u\n"
-		"#define ANKI_RENDERER_HEIGHT %u\n",
-		m_width, m_height);
-
 	// Drawer
 	ANKI_CHECK(m_sceneDrawer.create(this));
 
@@ -133,78 +107,75 @@ Error Renderer::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_drawQuadVert.load("shaders/Quad.vert.glsl", m_resources));
 
 	// Init the stages. Careful with the order!!!!!!!!!!
-	ANKI_CHECK(m_tiler.init());
+	m_tiler.reset(m_alloc.newInstance<Tiler>(this));
+	ANKI_CHECK(m_tiler->init());
 
-	ANKI_CHECK(m_ms.init(config));
-	ANKI_CHECK(m_is.init(config));
+	m_ms.reset(m_alloc.newInstance<Ms>(this));
+	ANKI_CHECK(m_ms->init(config));
 
-	m_fs = m_alloc.newInstance<Fs>(this);
+	m_is.reset(m_alloc.newInstance<Is>(this));
+	ANKI_CHECK(m_is->init(config));
+
+	m_fs.reset(m_alloc.newInstance<Fs>(this));
 	ANKI_CHECK(m_fs->init(config));
 
-	m_lf = m_alloc.newInstance<Lf>(this);
+	m_lf.reset(m_alloc.newInstance<Lf>(this));
 	ANKI_CHECK(m_lf->init(config));
 
-	ANKI_CHECK(m_pps.init(config));
-	ANKI_CHECK(m_dbg.init(config));
+	m_pps.reset(m_alloc.newInstance<Pps>(this));
+	ANKI_CHECK(m_pps->init(config));
 
-	// Default FB
-	FramebufferPtr::Initializer fbInit;
-	m_defaultFb.create(m_gr, fbInit);
+	m_dbg.reset(m_alloc.newInstance<Dbg>(this));
+	ANKI_CHECK(m_dbg->init(config));
 
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
-Error Renderer::render(SceneGraph& scene,
-	Array<CommandBufferPtr, JOB_CHAINS_COUNT>& cmdBuff)
+Error Renderer::render(SceneNode& frustumableNode,
+	Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff)
 {
-	m_scene = &scene;
+	m_frustumable = &frustumableNode;
 	m_frameAlloc.getMemoryPool().reset();
-	Camera& cam = m_scene->getActiveCamera();
 
 	// Calc a few vars
 	//
-	const FrustumComponent& fr = cam.getComponent<FrustumComponent>();
-	Timestamp camUpdateTimestamp = fr.getTimestamp();
-	if(m_projectionParamsUpdateTimestamp
-			< m_scene->getActiveCameraChangeTimestamp()
-		|| m_projectionParamsUpdateTimestamp < camUpdateTimestamp
-		|| m_projectionParamsUpdateTimestamp == 0)
+	const FrustumComponent& frc =
+		m_frustumable->getComponent<FrustumComponent>();
+	if(frc.getProjectionParameters() != m_projectionParams)
 	{
-		const FrustumComponent& frc = cam.getComponent<FrustumComponent>();
-
 		m_projectionParams = frc.getProjectionParameters();
 		m_projectionParamsUpdateTimestamp = getGlobalTimestamp();
 	}
 
 	ANKI_COUNTER_START_TIMER(RENDERER_MS_TIME);
-	ANKI_CHECK(m_ms.run(cmdBuff[0]));
+	ANKI_CHECK(m_ms->run(cmdBuff[0]));
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_MS_TIME);
 
 	m_lf->runOcclusionTests(cmdBuff[0]);
 
-	m_ms.generateMipmaps(cmdBuff[0]);
+	m_ms->generateMipmaps(cmdBuff[0]);
 
-	m_tiler.runMinMax(cmdBuff[0]);
+	m_tiler->runMinMax(cmdBuff[0]);
 	cmdBuff[0].flush();
 
 	ANKI_COUNTER_START_TIMER(RENDERER_IS_TIME);
-	ANKI_CHECK(m_is.run(cmdBuff[1]));
+	ANKI_CHECK(m_is->run(cmdBuff[1]));
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_IS_TIME);
 
 	ANKI_CHECK(m_fs->run(cmdBuff[1]));
 	m_lf->run(cmdBuff[1]);
 
 	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
-	if(m_pps.getEnabled())
+	if(m_pps->getEnabled())
 	{
-		ANKI_CHECK(m_pps.run(cmdBuff[1]));
+		ANKI_CHECK(m_pps->run(cmdBuff[1]));
 	}
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_PPS_TIME);
 
-	if(m_dbg.getEnabled())
+	if(m_dbg->getEnabled())
 	{
-		ANKI_CHECK(m_dbg.run(cmdBuff[1]));
+		ANKI_CHECK(m_dbg->run(cmdBuff[1]));
 	}
 
 	++m_framesNum;

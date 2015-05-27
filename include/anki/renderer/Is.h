@@ -34,7 +34,7 @@ class TaskCommonData;
 /// @{
 
 /// Illumination stage
-class Is: private RenderingPass
+class Is: public RenderingPass
 {
 	friend class Renderer;
 	friend class Sslr;
@@ -45,6 +45,14 @@ public:
 
 	/// @privatesection
 	/// @{
+	Is(Renderer* r);
+
+	~Is();
+
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+
+	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdBuff);
+
 	TexturePtr& _getRt()
 	{
 		return m_rt;
@@ -53,6 +61,11 @@ public:
 	void generateMipmaps(CommandBufferPtr& cmdb)
 	{
 		m_rt.generateMipmaps(cmdb);
+	}
+
+	void setAmbientColor(const Vec4& color)
+	{
+		m_ambientColor = color;
 	}
 	/// @}
 
@@ -107,7 +120,7 @@ private:
 	Sm m_sm;
 
 	/// Opt because many ask for it
-	Camera* m_cam;
+	SceneNode* m_cam;
 
 	/// If enabled the ground emmits a light
 	Bool8 m_groundLightEnabled;
@@ -128,11 +141,7 @@ private:
 	U32 m_maxLightIds;
 	/// @}
 
-	Is(Renderer* r);
-	~Is();
-
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdBuff);
+	Vec4 m_ambientColor = Vec4(0.0);
 
 	/// Called by init
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
@@ -155,11 +164,11 @@ private:
 	void binLights(U32 threadId, PtrSize threadsCount, TaskCommonData& data);
 	I writePointLight(const LightComponent& light, const MoveComponent& move,
 		const FrustumComponent& camfrc, TaskCommonData& task);
-	I writeSpotLight(const LightComponent& lightc, 
-		const MoveComponent& lightMove, const FrustumComponent* lightFrc, 
-		const MoveComponent& camMove, const FrustumComponent& camFrc, 
+	I writeSpotLight(const LightComponent& lightc,
+		const MoveComponent& lightMove, const FrustumComponent* lightFrc,
+		const MoveComponent& camMove, const FrustumComponent& camFrc,
 		TaskCommonData& task);
-	void binLight(SpatialComponent& sp, U pos, U lightType, 
+	void binLight(SpatialComponent& sp, U pos, U lightType,
 		TaskCommonData& task);
 };
 

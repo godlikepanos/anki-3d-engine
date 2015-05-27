@@ -5,6 +5,7 @@
 
 #include "anki/renderer/Tiler.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/renderer/Ms.h"
 #include "anki/resource/ShaderResource.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
@@ -202,7 +203,7 @@ void Tiler::updateTiles(Camera& cam)
 	Bool frustumChanged =
 		camTimestamp >= m_planes4UpdateTimestamp || m_prevCam != &cam;
 
-	Threadpool& threadPool = m_r->_getThreadpool();
+	Threadpool& threadPool = m_r->getThreadpool();
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)
 	{
 		jobs[i].m_tiler = this;
@@ -452,7 +453,7 @@ void Tiler::testRange(const CollisionShape& cs, Bool nearPlane,
 void Tiler::testFastSphere(const Sphere& s, const Aabb& aabb,
 	TestResult* visible, U& count) const
 {
-	const Camera& cam = m_r->getSceneGraph().getActiveCamera();
+	const SceneNode& cam = m_r->getActiveCamera();
 	const FrustumComponent& frc = cam.getComponent<FrustumComponent>();
 	const Mat4& vp = frc.getViewProjectionMatrix();
 	const Mat4& v = frc.getViewMatrix();

@@ -4,13 +4,11 @@
 
 #include "anki/input/Input.h"
 #include "anki/Math.h"
-#include "anki/renderer/Renderer.h"
+#include "anki/Renderer.h"
 #include "anki/core/App.h"
 #include "anki/resource/Mesh.h"
 #include "anki/resource/Material.h"
 #include "anki/resource/SkelAnim.h"
-#include "anki/renderer/Renderer.h"
-#include "anki/renderer/MainRenderer.h"
 #include "anki/script/ScriptManager.h"
 #include "anki/core/StdinListener.h"
 #include "anki/resource/Model.h"
@@ -414,7 +412,7 @@ Error mainLoopExtra(App& app, void*, Bool& quit)
 	}
 	if(in.getKey(KeyCode::F12) == 1)
 	{
-		renderer.takeScreenshot("screenshot.tga");
+		//renderer.takeScreenshot("screenshot.tga");
 	}
 
 #if NO_PLAYER

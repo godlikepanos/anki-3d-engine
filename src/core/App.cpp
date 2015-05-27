@@ -244,7 +244,7 @@ Error App::createInternal(const ConfigSet& config_,
 		&m_globalTimestamp));
 
 	m_resources->_setShadersPrependedSource(
-		m_renderer->_getShadersPrependedSource().toCString());
+		m_renderer->getMaterialShaderSource().toCString());
 
 	// Scene
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();

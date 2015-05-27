@@ -5,9 +5,13 @@
 
 #include "anki/renderer/Is.h"
 #include "anki/renderer/Renderer.h"
-#include "anki/scene/SceneGraph.h"
+#include "anki/renderer/Ms.h"
+#include "anki/renderer/Pps.h"
+#include "anki/renderer/Dbg.h"
+#include "anki/renderer/Tiler.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/Light.h"
+#include "anki/scene/Visibility.h"
 #include "anki/core/Counters.h"
 #include "anki/util/Logger.h"
 #include "anki/misc/ConfigSet.h"
@@ -217,7 +221,6 @@ Error Is::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT),
-		//PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
 		1, SamplingFilter::LINEAR, MIPMAPS_COUNT, m_rt));
 
 	FramebufferPtr::Initializer fbInit;
@@ -283,8 +286,8 @@ Error Is::initInternal(const ConfigSet& config)
 Error Is::lightPass(CommandBufferPtr& cmdBuff)
 {
 	Error err = ErrorCode::NONE;
-	Threadpool& threadPool = m_r->_getThreadpool();
-	m_cam = &m_r->getSceneGraph().getActiveCamera();
+	Threadpool& threadPool = m_r->getThreadpool();
+	m_cam = &m_r->getActiveCamera();
 	FrustumComponent& fr = m_cam->getComponent<FrustumComponent>();
 	VisibilityTestResults& vi = fr.getVisibilityTestResults();
 
@@ -754,27 +757,20 @@ void Is::binLight(
 //==============================================================================
 void Is::setState(CommandBufferPtr& cmdBuff)
 {
-#if 1
-	Bool drawToDefaultFbo = !m_r->getPps().getEnabled()
-		&& !m_r->getDbg().getEnabled()
-		&& !m_r->getIsOffscreen()
-		&& m_r->getRenderingQuality() == 1.0;
-#else
-	Bool drawToDefaultFbo = false;
-#endif
+	Bool isLastStage =
+		!m_r->getPps().getEnabled() && !m_r->getDbg().getEnabled();
 
-	if(drawToDefaultFbo)
+	FramebufferPtr fb = m_fb;
+	U32 width = m_r->getWidth();
+	U32 height = m_r->getHeight();
+
+	if(isLastStage)
 	{
-		m_r->getDefaultFramebuffer().bind(cmdBuff);
-		cmdBuff.setViewport(0, 0,
-			m_r->getDefaultFramebufferWidth(),
-			m_r->getDefaultFramebufferHeight());
+		m_r->getOutputFramebuffer(fb, width, height);
 	}
-	else
-	{
-		m_fb.bind(cmdBuff);
-		cmdBuff.setViewport(0, 0, m_r->getWidth(), m_r->getHeight());
-	}
+
+	fb.bind(cmdBuff);
+	cmdBuff.setViewport(0, 0, width, height);
 }
 
 //==============================================================================
@@ -787,12 +783,11 @@ Error Is::run(CommandBufferPtr& cmdBuff)
 //==============================================================================
 Error Is::updateCommonBlock(CommandBufferPtr& cmdBuff)
 {
-	SceneGraph& scene = m_r->getSceneGraph();
 	shader::CommonUniforms blk;
 
 	// Start writing
 	blk.m_projectionParams = m_r->getProjectionParameters();
-	blk.m_sceneAmbientColor = scene.getAmbientColor();
+	blk.m_sceneAmbientColor = m_ambientColor;
 
 	Vec3 groundLightDir;
 	if(m_groundLightEnabled)

@@ -9,7 +9,6 @@
 #include "anki/scene/InstanceNode.h"
 #include "anki/scene/Sector.h"
 #include "anki/core/Counters.h"
-#include "anki/renderer/Renderer.h"
 #include "anki/physics/PhysicsWorld.h"
 
 namespace anki {
@@ -249,7 +248,8 @@ void SceneGraph::deleteNodesMarkedForDeletion()
 }
 
 //==============================================================================
-Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
+Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime,
+	MainRenderer& renderer)
 {
 	ANKI_ASSERT(m_mainCam);
 
@@ -258,10 +258,6 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 	m_timestamp = *m_globalTimestamp;
 
 	ANKI_COUNTER_START_TIMER(SCENE_UPDATE_TIME);
-
-	//
-	// Sync point. Here we wait for all scene's threads
-	//
 
 	// Reset the framepool
 	m_frameAlloc.getMemoryPool().reset();
@@ -275,7 +271,6 @@ Error SceneGraph::update(F32 prevUpdateTime, F32 crntTime, Renderer& renderer)
 
 	// Update
 	m_physics->updateAsync(crntTime - prevUpdateTime);
-	renderer.getTiler().updateTiles(*m_mainCam);
 	m_physics->waitUpdate();
 	err = m_events.updateAllEvents(prevUpdateTime, crntTime);
 	if(err) return err;

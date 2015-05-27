@@ -5,6 +5,8 @@
 
 #include "anki/renderer/Fs.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/renderer/Ms.h"
+#include "anki/renderer/Is.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Camera.h"
 
@@ -43,7 +45,7 @@ Error Fs::run(CommandBufferPtr& cmdb)
 	RenderableDrawer& drawer = m_r->getSceneDrawer();
 	drawer.prepareDraw(RenderingStage::BLEND, Pass::COLOR, cmdb);
 
-	Camera& cam = m_r->getSceneGraph().getActiveCamera();
+	SceneNode& cam = m_r->getActiveCamera();
 	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
 
 	auto it = camFr.getVisibilityTestResults().getRenderablesBegin();

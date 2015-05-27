@@ -7,6 +7,7 @@
 #define ANKI_RENDERER_H
 
 #include "anki/renderer/MainRenderer.h"
+#include "anki/renderer/Dbg.h"
 
 /// @defgroup renderer Renderering system
 

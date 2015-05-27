@@ -5,6 +5,9 @@
 
 #include "anki/renderer/Dbg.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/renderer/Ms.h"
+#include "anki/renderer/Is.h"
+#include "anki/renderer/Pps.h"
 #include "anki/resource/ShaderResource.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/scene/Sector.h"
@@ -35,8 +38,6 @@ Dbg::~Dbg()
 //==============================================================================
 Error Dbg::init(const ConfigSet& initializer)
 {
-	Error err = ErrorCode::NONE;
-
 	m_enabled = initializer.get("dbg.enabled");
 	enableBits(Flag::ALL);
 
@@ -56,16 +57,13 @@ Error Dbg::init(const ConfigSet& initializer)
 		AttachmentLoadOperation::LOAD;
 
 	m_fb.create(&getGrManager(), fbInit);
+
 	m_drawer = getAllocator().newInstance<DebugDrawer>();
+	ANKI_CHECK(m_drawer->create(m_r));
 
-	err = m_drawer->create(m_r);
+	m_sceneDrawer = getAllocator().newInstance<SceneDebugDrawer>(m_drawer);
 
-	if(!err)
-	{
-		m_sceneDrawer = getAllocator().newInstance<SceneDebugDrawer>(m_drawer);
-	}
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================
@@ -75,17 +73,17 @@ Error Dbg::run(CommandBufferPtr& cmdb)
 
 	ANKI_ASSERT(m_enabled);
 
-	SceneGraph& scene = m_r->getSceneGraph();
-
 	m_fb.bind(cmdb);
 	cmdb.enableDepthTest(m_depthTest);
 
-	Camera& cam = scene.getActiveCamera();
+	SceneNode& cam = m_r->getActiveCamera();
 	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
 	m_drawer->prepareDraw(cmdb);
 	m_drawer->setViewProjectionMatrix(camFr.getViewProjectionMatrix());
 	m_drawer->setModelMatrix(Mat4::getIdentity());
 	m_drawer->drawGrid();
+
+	SceneGraph& scene = cam.getSceneGraph();
 
 	err = scene.iterateSceneNodes([&](SceneNode& node) -> Error
 	{

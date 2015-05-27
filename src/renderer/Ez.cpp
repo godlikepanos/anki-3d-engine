@@ -27,8 +27,7 @@ Error Ez::run(CommandBufferPtr& cmdBuff)
 	ANKI_ASSERT(m_enabled);
 
 	Error err = ErrorCode::NONE;
-	SceneGraph& scene = m_r->getSceneGraph();
-	Camera& cam = scene.getActiveCamera();
+	SceneNode& cam = m_r->getActiveCamera();
 	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
 
 	m_r->getSceneDrawer().prepareDraw(

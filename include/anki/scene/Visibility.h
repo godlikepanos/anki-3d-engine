@@ -16,7 +16,7 @@
 namespace anki {
 
 // Forward
-class Renderer;
+class MainRenderer;
 
 /// @addtogroup scene
 /// @{
@@ -89,8 +89,8 @@ public:
 
 	void prepareMerge()
 	{
-		ANKI_ASSERT(m_renderablesCount == 0 
-			&& m_lightsCount == 0 
+		ANKI_ASSERT(m_renderablesCount == 0
+			&& m_lightsCount == 0
 			&& m_flaresCount == 0);
 		m_renderablesCount = m_renderables.getSize();
 		m_lightsCount = m_lights.getSize();
@@ -104,7 +104,7 @@ public:
 
 	VisibleNode* getRenderablesEnd()
 	{
-		return (m_renderablesCount) 
+		return (m_renderablesCount)
 			? (&m_renderables[0] + m_renderablesCount) : nullptr;
 	}
 
@@ -166,15 +166,15 @@ private:
 	U32 m_lightsCount = 0;
 	U32 m_flaresCount = 0;
 
-	void moveBack(SceneFrameAllocator<U8> alloc, 
+	void moveBack(SceneFrameAllocator<U8> alloc,
 		Container& c, U32& count, VisibleNode& x);
 };
 
-/// Do visibility tests bypassing portals 
+/// Do visibility tests bypassing portals
 ANKI_USE_RESULT Error doVisibilityTests(
-	SceneNode& frustumable, 
-	SceneGraph& scene, 
-	Renderer& renderer);
+	SceneNode& frustumable,
+	SceneGraph& scene,
+	MainRenderer& renderer);
 /// @}
 
 } // end namespace anki

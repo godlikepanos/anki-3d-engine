@@ -9,7 +9,7 @@
 #include "anki/scene/FrustumComponent.h"
 #include "anki/scene/LensFlareComponent.h"
 #include "anki/scene/Light.h"
-#include "anki/renderer/Renderer.h"
+#include "anki/renderer/MainRenderer.h"
 #include "anki/util/Logger.h"
 
 namespace anki {
@@ -404,7 +404,7 @@ void VisibilityTestResults::moveBack(
 //==============================================================================
 
 //==============================================================================
-Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, Renderer& r)
+Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, MainRenderer& r)
 {
 	// Do the tests in parallel
 	Threadpool& threadPool = scene._getThreadpool();

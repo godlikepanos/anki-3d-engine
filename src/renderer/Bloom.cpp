@@ -4,6 +4,8 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/renderer/Bloom.h"
+#include "anki/renderer/Is.h"
+#include "anki/renderer/Pps.h"
 #include "anki/renderer/Renderer.h"
 #include "anki/renderer/Tm.h"
 #include "anki/misc/ConfigSet.h"
@@ -71,9 +73,15 @@ Error Bloom::initInternal(const ConfigSet& initializer)
 
 	cmdb.flush();
 
+	StringAuto pps(getAllocator());
+	pps.sprintf(
+		"#define ANKI_RENDERER_WIDTH %u\n"
+		"#define ANKI_RENDERER_HEIGHT %u\n",
+		m_r->getWidth(),
+		m_r->getHeight());
+
 	ANKI_CHECK(m_toneFrag.loadToCache(&getResourceManager(),
-		"shaders/PpsBloom.frag.glsl",
-		m_r->_getShadersPrependedSource().toCString(), "r_"));
+		"shaders/PpsBloom.frag.glsl", pps.toCString(), "r_"));
 
 	ANKI_CHECK(m_r->createDrawQuadPipeline(
 		m_toneFrag->getGrShader(), m_tonePpline));
@@ -81,7 +89,7 @@ Error Bloom::initInternal(const ConfigSet& initializer)
 	const char* SHADER_FILENAME =
 		"shaders/VariableSamplingBlurGeneric.frag.glsl";
 
-	StringAuto pps(getAllocator());
+	pps.destroy(getAllocator());
 	pps.sprintf(
 		"#define HPASS\n"
 		"#define COL_RGB\n"

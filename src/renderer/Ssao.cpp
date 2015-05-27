@@ -5,6 +5,7 @@
 
 #include "anki/renderer/Ssao.h"
 #include "anki/renderer/Renderer.h"
+#include "anki/renderer/Ms.h"
 #include "anki/scene/Camera.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/util/Functions.h"
@@ -235,8 +236,6 @@ Error Ssao::run(CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
-	const Camera& cam = m_r->getSceneGraph().getActiveCamera();
-
 	cmdb.setViewport(0, 0, m_width, m_height);
 
 	// 1st pass
@@ -253,7 +252,8 @@ Error Ssao::run(CommandBufferPtr& cmdb)
 	cmdb.bindTextures(0, tarr.begin(), tarr.getSize());
 
 	// Write common block
-	const FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
+	const FrustumComponent& camFr =
+		m_r->getActiveCamera().getComponent<FrustumComponent>();
 
 	if(m_commonUboUpdateTimestamp
 			< m_r->getProjectionParametersUpdateTimestamp()

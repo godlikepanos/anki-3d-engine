@@ -6,15 +6,22 @@
 #ifndef ANKI_RENDERER_MAIN_RENDERER_H
 #define ANKI_RENDERER_MAIN_RENDERER_H
 
-#include "anki/renderer/Renderer.h"
+#include "anki/renderer/Common.h"
+#include "anki/core/Timestamp.h"
+#include "anki/resource/Forward.h"
 
 namespace anki {
+
+// Forward
+class ResourceManager;
+class ConfigSet;
+class SceneGraph;
 
 /// @addtogroup renderer
 /// @{
 
 /// Main onscreen renderer
-class MainRenderer: public Renderer
+class MainRenderer
 {
 public:
 	MainRenderer();
@@ -32,19 +39,35 @@ public:
 
 	ANKI_USE_RESULT Error render(SceneGraph& scene);
 
-	/// Save the color buffer to a tga (lossless & uncompressed & slow)
-	/// or jpeg (lossy & compressed fast)
-	/// @param filename The file to save
-	void takeScreenshot(const char* filename);
+	const String& getMaterialShaderSource() const
+	{
+		return m_materialShaderSource;
+	}
+
+	Dbg& getDbg();
+
+	F32 getAspectRatio() const;
 
 private:
+	HeapAllocator<U8> m_alloc;
+	StackAllocator<U8> m_frameAlloc;
+
+	UniquePtr<Renderer> m_r;
+
 	ShaderResourcePointer m_blitFrag;
 	PipelinePtr m_blitPpline;
 
-	/// Optimize job chain
-	Array<CommandBufferInitHints, JOB_CHAINS_COUNT> m_jobsInitHints;
+	FramebufferPtr m_defaultFb;
+	U32 m_width = 0; ///< Default FB size.
+	U32 m_height = 0; ///< Default FB size.
 
-	void takeScreenshotTga(const char* filename);
+	String m_materialShaderSource; ///< String to append in user shaders
+
+	F32 m_renderingQuality = 1.0;
+
+	/// Optimize job chain
+	Array<CommandBufferInitHints, RENDERER_COMMAND_BUFFERS_COUNT> m_cbInitHints;
+
 	void initGl();
 };
 /// @}

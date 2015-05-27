@@ -37,10 +37,20 @@ ANKI_ENUM_ALLOW_NUMERIC_OPERATIONS(DbgFlag, inline)
 /// Debugging stage
 class Dbg: public RenderingPass, public Bitset<detail::DbgFlag>
 {
-	friend class Renderer;
-
 public:
 	using Flag = detail::DbgFlag;
+
+	/// @privatesection
+	/// @{
+	Dbg(Renderer* r)
+	:	RenderingPass(r)
+	{}
+
+	~Dbg();
+
+	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
+
+	ANKI_USE_RESULT Error run(CommandBufferPtr& jobs);
 
 	Bool getDepthTestEnabled() const
 	{
@@ -56,27 +66,17 @@ public:
 	{
 		m_depthTest = !m_depthTest;
 	}
+	/// @}
 
 private:
 	FramebufferPtr m_fb;
 	DebugDrawer* m_drawer = nullptr;
 	// Have it as ptr because the constructor calls opengl
 	SceneDebugDrawer* m_sceneDrawer = nullptr;
-	Bool8 m_depthTest = true;
-
-	Dbg(Renderer* r)
-	:	RenderingPass(r)
-	{}
-	
-	~Dbg();
-
-	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-
-	ANKI_USE_RESULT Error run(CommandBufferPtr& jobs);
+	Bool m_depthTest = true;
 };
-
 /// @}
 
-} // end namespace
+} // end namespace anki
 
 #endif

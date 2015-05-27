@@ -79,7 +79,7 @@ Error Lf::initSprite(const ConfigSet& config)
 
 	// Create buffer
 	PtrSize uboAlignment =
-		m_r->_getGrManager().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
+		m_r->getGrManager().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
 	m_flareSize = getAlignedRoundUp(
 		uboAlignment, sizeof(Sprite) * m_maxSpritesPerFlare);
 	PtrSize blockSize = m_flareSize * m_maxFlares;
@@ -140,9 +140,8 @@ Error Lf::initInternal(const ConfigSet& config)
 void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 {
 	// Retrieve some things
-	SceneGraph& scene = m_r->getSceneGraph();
-	Camera& cam = scene.getActiveCamera();
-	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
+	FrustumComponent& camFr =
+		m_r->getActiveCamera().getComponent<FrustumComponent>();
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
 	U totalCount = min<U>(vi.getLensFlaresCount(), m_maxFlares);
@@ -208,8 +207,7 @@ void Lf::runOcclusionTests(CommandBufferPtr& cmdb)
 void Lf::run(CommandBufferPtr& cmdb)
 {
 	// Retrieve some things
-	SceneGraph& scene = m_r->getSceneGraph();
-	Camera& cam = scene.getActiveCamera();
+	SceneNode& cam = m_r->getActiveCamera();
 	FrustumComponent& camFr = cam.getComponent<FrustumComponent>();
 	VisibilityTestResults& vi = camFr.getVisibilityTestResults();
 
@@ -218,7 +216,7 @@ void Lf::run(CommandBufferPtr& cmdb)
 	{
 		// Allocate client buffer
 		const U uboAlignment =
-			m_r->_getGrManager().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
+			m_r->getGrManager().getBufferOffsetAlignment(GL_UNIFORM_BUFFER);
 		const U bufferSize = m_flareSize * totalCount;
 
 		// Set common rendering state

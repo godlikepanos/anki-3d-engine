@@ -30,10 +30,10 @@ DebugDrawer::~DebugDrawer()
 //==============================================================================
 Error DebugDrawer::create(Renderer* r)
 {
-	GrManager& gl = r->_getGrManager();
+	GrManager& gl = r->getGrManager();
 
-	ANKI_CHECK(m_vert.load("shaders/Dbg.vert.glsl", &r->_getResourceManager()));
-	ANKI_CHECK(m_frag.load("shaders/Dbg.frag.glsl", &r->_getResourceManager()));
+	ANKI_CHECK(m_vert.load("shaders/Dbg.vert.glsl", &r->getResourceManager()));
+	ANKI_CHECK(m_frag.load("shaders/Dbg.frag.glsl", &r->getResourceManager()));
 
 	PipelinePtr::Initializer init;
 	init.m_shaders[U(ShaderType::VERTEX)] = m_vert->getGrShader();

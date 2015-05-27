@@ -7,25 +7,19 @@
 #define ANKI_RENDERER_RENDERER_H
 
 #include "anki/renderer/Common.h"
-#include "anki/Math.h"
-#include "anki/resource/ResourceManager.h"
-#include "anki/resource/TextureResource.h"
-#include "anki/resource/ShaderResource.h"
-#include "anki/Gr.h"
-#include "anki/util/HighRezTimer.h"
-#include "anki/scene/Forward.h"
-
-#include "anki/renderer/Ms.h"
-#include "anki/renderer/Is.h"
-#include "anki/renderer/Pps.h"
-#include "anki/renderer/Dbg.h"
-#include "anki/renderer/Tiler.h"
 #include "anki/renderer/Drawer.h"
+#include "anki/Math.h"
+#include "anki/Gr.h"
+#include "anki/scene/Forward.h"
+#include "anki/resource/Forward.h"
+#include "anki/resource/ShaderResource.h"
+#include "anki/core/Timestamp.h"
 
 namespace anki {
 
 // Forward
 class ConfigSet;
+class ResourceManager;
 
 /// @addtogroup renderer
 /// @{
@@ -35,10 +29,6 @@ class ConfigSet;
 class Renderer
 {
 public:
-	/// Cut the job submition into multiple chains. We want to avoid feeding
-	/// GL with a huge job chain
-	static const U32 JOB_CHAINS_COUNT = 2;
-
 	const U TILE_SIZE = 64;
 
 	Renderer();
@@ -47,47 +37,52 @@ public:
 
 	const Ms& getMs() const
 	{
-		return m_ms;
+		return *m_ms;
 	}
+
 	Ms& getMs()
 	{
-		return m_ms;
+		return *m_ms;
 	}
 
 	const Is& getIs() const
 	{
-		return m_is;
+		return *m_is;
 	}
+
 	Is& getIs()
 	{
-		return m_is;
+		return *m_is;
 	}
 
 	const Tiler& getTiler() const
 	{
-		return m_tiler;
+		return *m_tiler;
 	}
+
 	Tiler& getTiler()
 	{
-		return m_tiler;
+		return *m_tiler;
 	}
 
 	const Pps& getPps() const
 	{
-		return m_pps;
+		return *m_pps;
 	}
+
 	Pps& getPps()
 	{
-		return m_pps;
+		return *m_pps;
 	}
 
 	const Dbg& getDbg() const
 	{
-		return m_dbg;
+		return *m_dbg;
 	}
+
 	Dbg& getDbg()
 	{
-		return m_dbg;
+		return *m_dbg;
 	}
 
 	U32 getWidth() const
@@ -100,23 +95,6 @@ public:
 		return m_height;
 	}
 
-	U32 getDefaultFramebufferWidth() const
-	{
-		ANKI_ASSERT(!m_isOffscreen);
-		return m_defaultFbWidth;
-	}
-
-	U32 getDefaultFramebufferHeight() const
-	{
-		ANKI_ASSERT(!m_isOffscreen);
-		return m_defaultFbHeight;
-	}
-
-	F32 getRenderingQuality() const
-	{
-		return m_renderingQuality;
-	}
-
 	F32 getAspectRatio() const
 	{
 		return F32(m_width) / m_height;
@@ -127,19 +105,21 @@ public:
 		return m_framesNum;
 	}
 
-	const SceneGraph& getSceneGraph() const
+	const SceneNode& getActiveCamera() const
 	{
-		return *m_scene;
+		return *m_frustumable;
 	}
-	SceneGraph& getSceneGraph()
+
+	SceneNode& getActiveCamera()
 	{
-		return *m_scene;
+		return *m_frustumable;
 	}
 
 	const RenderableDrawer& getSceneDrawer() const
 	{
 		return m_sceneDrawer;
 	}
+
 	RenderableDrawer& getSceneDrawer()
 	{
 		return m_sceneDrawer;
@@ -149,6 +129,7 @@ public:
 	{
 		return m_projectionParamsUpdateTimestamp;
 	}
+
 	const Vec4& getProjectionParameters() const
 	{
 		return m_projectionParams;
@@ -157,11 +138,6 @@ public:
 	U getSamples() const
 	{
 		return m_samples;
-	}
-
-	Bool getIsOffscreen() const
-	{
-		return m_isOffscreen;
 	}
 
 	Bool getTessellationEnabled() const
@@ -189,14 +165,27 @@ public:
 		return m_drawQuadVert->getGrShader();
 	}
 
-	FramebufferPtr& getDefaultFramebuffer()
+	/// Set the output of the renderer.
+	void setOutputFramebuffer(FramebufferPtr outputFb, U32 width, U32 height)
 	{
-		return m_defaultFb;
+		m_outputFb = outputFb;
+		m_outputFbSize = UVec2(width, height);
 	}
 
-	/// This function does all the rendering stages and produces a final FAI
-	ANKI_USE_RESULT Error render(SceneGraph& scene,
-		Array<CommandBufferPtr, JOB_CHAINS_COUNT>& cmdBuff);
+	void getOutputFramebuffer(FramebufferPtr& outputFb, U32& width, U32& height)
+	{
+		if(m_outputFb.isCreated())
+		{
+			outputFb = m_outputFb;
+			width = m_outputFbSize.x();
+			height = m_outputFbSize.y();
+		}
+	}
+
+	/// This function does all the rendering stages and produces a final result.
+	ANKI_USE_RESULT Error render(
+		SceneNode& frustumableNode,
+		Array<CommandBufferPtr, RENDERER_COMMAND_BUFFERS_COUNT>& cmdBuff);
 
 	/// My version of gluUnproject
 	/// @param windowCoords Window screen coords
@@ -239,14 +228,14 @@ public:
 		Threadpool* threadpool,
 		ResourceManager* resources,
 		GrManager* gl,
-		AllocAlignedCallback allocCb,
-		void* allocCbUserData,
+		HeapAllocator<U8> alloc,
+		StackAllocator<U8> frameAlloc,
 		const ConfigSet& config,
 		const Timestamp* globalTimestamp);
 
 	/// @privatesection
 	/// @{
-	GrManager& _getGrManager()
+	GrManager& getGrManager()
 	{
 		return *m_gr;
 	}
@@ -261,24 +250,19 @@ public:
 		return m_frameAlloc;
 	}
 
-	ResourceManager& _getResourceManager()
+	ResourceManager& getResourceManager()
 	{
 		return *m_resources;
 	}
 
-	Threadpool& _getThreadpool()
+	Threadpool& getThreadpool()
 	{
 		return *m_threadpool;
 	}
 
-	const String& _getShadersPrependedSource() const
-	{
-		return m_shadersPrependedSource;
-	}
-
 	Timestamp getGlobalTimestamp() const
 	{
-		return *m_grobalTimestamp;
+		return *m_globalTimestamp;
 	}
 	/// @}
 
@@ -288,24 +272,21 @@ private:
 	GrManager* m_gr;
 	HeapAllocator<U8> m_alloc;
 	StackAllocator<U8> m_frameAlloc;
-	const Timestamp* m_grobalTimestamp = nullptr;
+	const Timestamp* m_globalTimestamp = nullptr;
 
 	/// @name Rendering stages
 	/// @{
-	Ms m_ms; ///< Material rendering stage
-	Is m_is; ///< Illumination rendering stage
-	Pps m_pps; ///< Postprocessing rendering stage
-	Fs* m_fs = nullptr; ///< Forward shading.
-	Lf* m_lf = nullptr; ///< Forward shading lens flares.
-	Dbg m_dbg; ///< Debug stage
-	Tiler m_tiler;
+	UniquePtr<Ms> m_ms; ///< Material rendering stage
+	UniquePtr<Is> m_is; ///< Illumination rendering stage
+	UniquePtr<Pps> m_pps; ///< Postprocessing rendering stage
+	UniquePtr<Fs> m_fs; ///< Forward shading.
+	UniquePtr<Lf> m_lf; ///< Forward shading lens flares.
+	UniquePtr<Tiler> m_tiler;
+	UniquePtr<Dbg> m_dbg; ///< Debug stage.
 	/// @}
 
 	U32 m_width;
 	U32 m_height;
-	U32 m_defaultFbWidth;
-	U32 m_defaultFbHeight;
-	F32 m_renderingQuality;
 
 	F32 m_lodDistance; ///< Distance that used to calculate the LOD
 	U8 m_samples; ///< Number of sample in multisampling
@@ -326,23 +307,21 @@ private:
 
 	/// A vector that contains useful numbers for calculating the view space
 	/// position from the depth
-	Vec4 m_projectionParams;
+	Vec4 m_projectionParams = Vec4(0.0);
 
 	Timestamp m_projectionParamsUpdateTimestamp = 0;
 	/// @}
 
-	SceneGraph* m_scene; ///< Current scene
+	SceneNode* m_frustumable = nullptr; ///< Cache current frustumable node.
 	RenderableDrawer m_sceneDrawer;
 
 	U m_framesNum; ///< Frame number
 
-	FramebufferPtr m_defaultFb;
-
-	String m_shadersPrependedSource; ///< String to append in user shaders
+	FramebufferPtr m_outputFb;
+	UVec2 m_outputFbSize;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
-
 /// @}
 
 } // end namespace anki

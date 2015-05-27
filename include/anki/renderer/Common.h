@@ -12,7 +12,9 @@
 namespace anki {
 
 // Forward
+class Renderer;
 class Ms;
+class Is;
 class Fs;
 class Lf;
 class Ssao;
@@ -21,12 +23,19 @@ class Sslf;
 class Tm;
 class Bloom;
 class Pps;
+class Dbg;
+class Tiler;
+
+/// Cut the job submition into multiple chains. We want to avoid feeding
+/// GL with a huge job chain
+const U RENDERER_COMMAND_BUFFERS_COUNT = 2;
 
 // Render target formats
-const U MS_COLOR_ATTACHMENTS_COUNT = 2;
+const U MS_COLOR_ATTACHMENTS_COUNT = 3;
 
-const Array<PixelFormat, MS_COLOR_ATTACHMENTS_COUNT> 
+const Array<PixelFormat, MS_COLOR_ATTACHMENTS_COUNT>
 	MS_COLOR_ATTACHMENTS_PIXEL_FORMAT = {{
+	{ComponentFormat::R8G8B8A8, TransformFormat::UNORM, false},
 	{ComponentFormat::R8G8B8A8, TransformFormat::UNORM, false},
 	{ComponentFormat::R8G8B8A8, TransformFormat::UNORM, false}}};
 

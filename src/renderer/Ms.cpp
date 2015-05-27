@@ -121,11 +121,10 @@ Error Ms::run(CommandBufferPtr& cmdb)
 	m_r->getSceneDrawer().prepareDraw(RenderingStage::MATERIAL, Pass::COLOR,
 		cmdb);
 
-	Camera& cam = m_r->getSceneGraph().getActiveCamera();
+	SceneNode& cam = m_r->getActiveCamera();
 
 	VisibilityTestResults& vi =
-		m_r->getSceneGraph().getActiveCamera().
-		getComponent<FrustumComponent>().getVisibilityTestResults();
+		cam.getComponent<FrustumComponent>().getVisibilityTestResults();
 
 	auto it = vi.getRenderablesBegin();
 	auto end = vi.getRenderablesEnd();

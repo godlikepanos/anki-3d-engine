@@ -4,6 +4,7 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/renderer/Drawer.h"
+#include "anki/renderer/Ms.h"
 #include "anki/resource/ShaderResource.h"
 #include "anki/scene/FrustumComponent.h"
 #include "anki/resource/Material.h"
@@ -89,7 +90,7 @@ public:
 		case BuildinMaterialVariableId::MVP_MATRIX:
 			if(hasWorldTrfs)
 			{
-				Mat4* mvp = m_drawer->m_r->getSceneGraph().getFrameAllocator().
+				Mat4* mvp = m_drawer->m_r->getFrameAllocator().
 					newInstance<Mat4>(arraySize);
 
 				for(U i = 0; i < arraySize; i++)
@@ -113,7 +114,7 @@ public:
 		case BuildinMaterialVariableId::MV_MATRIX:
 			{
 				ANKI_ASSERT(hasWorldTrfs);
-				Mat4* mv = m_drawer->m_r->getSceneGraph().getFrameAllocator().
+				Mat4* mv = m_drawer->m_r->getFrameAllocator().
 					newInstance<Mat4>(arraySize);
 
 				for(U i = 0; i < arraySize; i++)
@@ -136,7 +137,7 @@ public:
 			if(hasWorldTrfs)
 			{
 				Mat3* normMats =
-					m_drawer->m_r->getSceneGraph().getFrameAllocator().
+					m_drawer->m_r->getFrameAllocator().
 					newInstance<Mat3>(arraySize);
 
 				for(U i = 0; i < arraySize; i++)
@@ -170,7 +171,7 @@ public:
 					m_fr->getViewMatrix().getRotationPart().getTransposed();
 
 				Mat4* bmvp =
-					m_drawer->m_r->getSceneGraph().getFrameAllocator().
+					m_drawer->m_r->getFrameAllocator().
 					newInstance<Mat4>(arraySize);
 
 				for(U i = 0; i < arraySize; i++)
