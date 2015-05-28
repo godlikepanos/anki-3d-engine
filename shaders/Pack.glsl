@@ -109,14 +109,14 @@ void readGBuffer(
 	in vec2 texCoord,
 	out vec3 diffColor,
 	out vec3 normal,
-	out float specColor,
+	out vec3 specColor,
 	out float roughness)
 {
 	vec4 comp = textureLod(fai0, texCoord, 0.0);
 	diffColor = comp.rgb;
 
 	comp = textureLod(fai1, texCoord, 0.0);
-	specColor = comp.r; // XXX
+	specColor = comp.rgb;
 	roughness = comp.a;
 
 	normal = textureLod(fai2, texCoord, 0.0).rgb;
@@ -138,10 +138,10 @@ void readNormalSpecularColorFromGBuffer(
 	in sampler2D fai2,
 	in vec2 texCoord,
 	out vec3 normal,
-	out float specColor)
+	out vec3 specColor)
 {
 	normal = normalize(textureLod(fai2, texCoord, 0.0).rgb * 2.0 - 1.0);
-	specColor = textureLod(fai1, texCoord, 0.0).r;
+	specColor = textureLod(fai1, texCoord, 0.0).rgb;
 }
 
 #endif

@@ -64,14 +64,14 @@ vec2 projectXy(vec3 p)
 void main()
 {
 	vec3 normal;
-	float specColor;
+	vec3 specColor;
 	readNormalSpecularColorFromGBuffer(
 		u_msRt1, u_msRt2, in_texCoords, normal, specColor);
 
 	//out_color = vec3(0.5, 0.0, 0.0);
 	out_color = vec3(0.0);
 
-	if(specColor < 0.5)
+	if(length(specColor) < 0.5)
 	{
 		return;
 	}
@@ -155,7 +155,7 @@ void main()
 
 			float factor = sin(length(ndc) * PI);
 			factor *= 1.0 - length(pp0);
-			factor *= specColor;
+			//factor *= specColor;
 
 			out_color = textureLod(u_isRt, texCoord, 0.0).rgb * factor;
 

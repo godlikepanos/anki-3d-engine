@@ -130,7 +130,7 @@ vec3 computeSpecularColorBrdf(
 	in vec3 v,
 	in vec3 l,
 	in vec3 n,
-	in float specCol,
+	in vec3 specCol,
 	in float specPower,
 	in vec3 lightSpecCol,
 	in float a2, // rougness^2
@@ -140,7 +140,7 @@ vec3 computeSpecularColorBrdf(
 
 	// Fresnel
 	float loh = max(EPSILON, dot(l, h));
-	float f = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
+	vec3 f = specCol + (1.0 - specCol) * pow((1.0 + EPSILON - loh), 5.0);
 	//float f = specColor + (1.0 - specColor)
 	//	* pow(2.0, (-5.55473 * loh - 6.98316) * loh);
 
@@ -154,7 +154,7 @@ vec3 computeSpecularColorBrdf(
 	float vl = nol + sqrt((nol - nol * a2) * nol + a2);
 	float vis = 1.0 / (vv * vl);
 
-	return (vis * d * f) * lightSpecCol;
+	return f * (vis * d) * lightSpecCol;
 }
 
 //==============================================================================
@@ -264,7 +264,7 @@ void main()
 	// Decode GBuffer
 	vec3 normal;
 	vec3 diffCol;
-	float specCol;
+	vec3 specCol;
 	float specPower;
 	const float subsurface = 0.0;
 
