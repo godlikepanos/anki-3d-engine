@@ -13,8 +13,9 @@
 namespace anki {
 
 // Forward
-class SceneNode;
 class SceneGraph;
+class SceneNode;
+class MoveComponent;
 
 /// @addtogroup Scene
 /// @{

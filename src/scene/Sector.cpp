@@ -7,6 +7,7 @@
 #include "anki/scene/SpatialComponent.h"
 #include "anki/scene/FrustumComponent.h"
 #include "anki/scene/MoveComponent.h"
+#include "anki/scene/ReflectionProbe.h"
 #include "anki/scene/SceneGraph.h"
 #include "anki/util/Logger.h"
 #include "anki/resource/ResourceManager.h"
@@ -325,10 +326,8 @@ void Sector::tryAddSpatialComponent(SpatialComponent* sp)
 		if(*itsp == this)
 		{
 			// Found, return
-#if ANKI_ASSERTIONS
 			ANKI_ASSERT(findSpatialComponent(sp) != m_spatials.getEnd()
 				&& "Spatial has reference to sector but sector not");
-#endif
 			return;
 		}
 	}
@@ -337,6 +336,20 @@ void Sector::tryAddSpatialComponent(SpatialComponent* sp)
 
 	m_spatials.pushBack(getSceneAllocator(), sp);
 	sp->getSectorInfo().pushBack(getSceneAllocator(), this);
+
+	// Check reflection probe
+	SceneNode& node = sp->getSceneNode();
+	ReflectionProbeComponent* reflComp =
+		node.tryGetComponent<ReflectionProbeComponent>();
+	if(reflComp)
+	{
+		if(m_reflectionProbe)
+		{
+			ANKI_LOGW("Sector has multiple reflection probes");
+		}
+
+		m_reflectionProbe = reflComp;
+	}
 }
 
 //==============================================================================
@@ -371,6 +384,18 @@ void Sector::tryRemoveSpatialComponent(SpatialComponent* sp)
 #if ANKI_ASSERTIONS
 		ANKI_ASSERT(findSpatialComponent(sp) == m_spatials.getEnd());
 #endif
+	}
+
+	// Try remove reflection probe
+	if(m_reflectionProbe)
+	{
+		SceneNode& node = sp->getSceneNode();
+		ReflectionProbeComponent* reflComp =
+			node.tryGetComponent<ReflectionProbeComponent>();
+		if(reflComp && m_reflectionProbe == reflComp)
+		{
+			m_reflectionProbe = nullptr;
+		}
 	}
 }
 

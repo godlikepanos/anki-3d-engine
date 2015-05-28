@@ -17,6 +17,7 @@ class Sector;
 class SectorGroup;
 class FrustumComponent;
 class SpatialComponent;
+class ReflectionProbeComponent;
 
 /// @addtogroup scene
 /// @{
@@ -140,6 +141,7 @@ public:
 private:
 	List<Portal*> m_portals;
 	List<SpatialComponent*> m_spatials;
+	ReflectionProbeComponent* m_reflectionProbe = nullptr;
 
 	List<SpatialComponent*>::Iterator findSpatialComponent(
 		SpatialComponent* sp);
