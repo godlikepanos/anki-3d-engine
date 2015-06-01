@@ -28,11 +28,14 @@ public:
 	~Light();
 
 	ANKI_USE_RESULT Error create(
-		const CString& name, 
+		const CString& name,
 		LightComponent::LightType type,
 		CollisionShape* shape);
 
 	ANKI_USE_RESULT Error loadLensFlare(const CString& filename);
+
+	ANKI_USE_RESULT Error frameUpdate(
+		F32 prevUpdateTime, F32 crntTime) override;
 
 protected:
 	/// Called when moved

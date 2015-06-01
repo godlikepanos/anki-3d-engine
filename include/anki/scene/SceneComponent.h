@@ -56,10 +56,6 @@ public:
 
 	Timestamp getGlobalTimestamp() const;
 
-	/// Do some reseting before frame starts
-	virtual void reset()
-	{}
-
 	/// Do some updating
 	/// @param[out] updated true if an update happened
 	virtual ANKI_USE_RESULT Error update(

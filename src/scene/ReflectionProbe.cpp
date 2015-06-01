@@ -71,9 +71,15 @@ Error ReflectionProbe::create(const CString& name, F32 radius)
 
 	for(U i = 0; i < 6; ++i)
 	{
-		comp = getSceneAllocator().newInstance<FrustumComponent>(
+		FrustumComponent* frc =
+			getSceneAllocator().newInstance<FrustumComponent>(
 			this, &m_frustums[i]);
-		addComponent(comp, true);
+
+		frc->setEnabledVisibilityTests(
+			FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS
+			| FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS);
+
+		addComponent(frc, true);
 
 		m_frustums[i].setAll(toRad(45.0), toRad(45.0), 0.5, radius);
 		m_frustums[i].resetTransform(trfs[i]);

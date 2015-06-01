@@ -20,7 +20,7 @@ class LightFeedbackComponent: public SceneComponent
 {
 public:
 	LightFeedbackComponent(SceneNode* node)
-	:	SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
 	Error update(SceneNode& node, F32, F32, Bool& updated) override
@@ -52,11 +52,16 @@ public:
 
 //==============================================================================
 Light::Light(SceneGraph* scene)
-:	SceneNode(scene)
+	: SceneNode(scene)
 {}
 
 //==============================================================================
-Error Light::create(const CString& name, 
+Light::~Light()
+{}
+
+
+//==============================================================================
+Error Light::create(const CString& name,
 	LightComponent::LightType type,
 	CollisionShape* shape)
 {
@@ -84,8 +89,32 @@ Error Light::create(const CString& name,
 }
 
 //==============================================================================
-Light::~Light()
-{}
+Error Light::frameUpdate(F32 prevUpdateTime, F32 crntTime)
+{
+	// Update frustum comps shadow info
+	const LightComponent& lc = getComponent<LightComponent>();
+	Bool castsShadow = lc.getShadowEnabled();
+
+	Error err = iterateComponentsOfType<FrustumComponent>(
+		[&](FrustumComponent& frc) -> Error
+	{
+		if(castsShadow)
+		{
+			frc.setEnabledVisibilityTests(
+				FrustumComponent::VisibilityTestFlag::TEST_SHADOW_CASTERS);
+		}
+		else
+		{
+			frc.setEnabledVisibilityTests(
+				FrustumComponent::VisibilityTestFlag::TEST_NONE);
+		}
+
+		return ErrorCode::NONE;
+	});
+	(void) err;
+
+	return ErrorCode::NONE;
+}
 
 //==============================================================================
 void Light::onMoveUpdateCommon(MoveComponent& move)
@@ -138,9 +167,9 @@ Error Light::loadLensFlare(const CString& filename)
 {
 	ANKI_ASSERT(tryGetComponent<LensFlareComponent>() == nullptr);
 
-	LensFlareComponent* flareComp = 
+	LensFlareComponent* flareComp =
 		getSceneAllocator().newInstance<LensFlareComponent>(this);
-	
+
 	Error err = ErrorCode::NONE;
 	if(err = flareComp->create(filename))
 	{
@@ -160,7 +189,7 @@ Error Light::loadLensFlare(const CString& filename)
 
 //==============================================================================
 PointLight::PointLight(SceneGraph* scene)
-:	Light(scene)
+	: Light(scene)
 {}
 
 //==============================================================================
@@ -225,7 +254,7 @@ Error PointLight::frameUpdate(F32 prevUpdateTime, F32 crntTime)
 
 //==============================================================================
 SpotLight::SpotLight(SceneGraph* scene)
-:	Light(scene)
+	: Light(scene)
 {}
 
 //==============================================================================
@@ -234,8 +263,10 @@ Error SpotLight::create(const CString& name)
 	ANKI_CHECK(Light::create(
 		name, LightComponent::LightType::SPOT, &m_frustum));
 
-	FrustumComponent* fr = 
+	FrustumComponent* fr =
 		getSceneAllocator().newInstance<FrustumComponent>(this, &m_frustum);
+	fr->setEnabledVisibilityTests(
+		FrustumComponent::VisibilityTestFlag::TEST_NONE);
 
 	addComponent(fr, true);
 
@@ -253,7 +284,7 @@ void SpotLight::onShapeUpdate(LightComponent& light)
 {
 	onShapeUpdateCommon(light);
 	m_frustum.setAll(
-		light.getOuterAngle(), light.getOuterAngle(), 
+		light.getOuterAngle(), light.getOuterAngle(),
 		0.5, light.getDistance());
 }
 

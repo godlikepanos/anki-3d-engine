@@ -118,9 +118,6 @@ public:
 	/// @name SceneComponent overrides
 	/// @{
 	ANKI_USE_RESULT Error update(SceneNode&, F32, F32, Bool& updated) override;
-
-	/// Disable some flags
-	void reset() override;
 	/// @}
 
 private:

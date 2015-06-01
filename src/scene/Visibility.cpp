@@ -56,14 +56,14 @@ class VisibilityShared
 public:
 	SceneGraph* m_scene = nullptr;
 	Barrier m_barrier;
-	List<SceneNode*> m_frustumsList; ///< Nodes to test
+	List<FrustumComponent*> m_frustumsList; ///< Frustums to test
 	SpinLock m_lock;
 
 	// Data per thread but that can be accessed by all threads
 	Array<VisibilityTestResults*, Threadpool::MAX_THREADS> m_testResults;
 
 	VisibilityShared(U threadCount)
-	:	m_barrier(threadCount)
+		: m_barrier(threadCount)
 	{
 		memset(&m_testResults[0], 0, sizeof(m_testResults));
 	}
@@ -76,7 +76,7 @@ public:
 	VisibilityShared* m_shared;
 
 	/// Test a frustum component
-	void test(SceneNode& testedNode, U32 threadId, PtrSize threadsCount);
+	void test(FrustumComponent& frcToTest, U32 threadId, PtrSize threadsCount);
 
 	void combineTestResults(FrustumComponent& frc, PtrSize threadsCount);
 
@@ -90,8 +90,8 @@ public:
 		while(!list.isEmpty())
 		{
 			// Get front and pop it
-			SceneNode* node = list.getFront();
-			ANKI_ASSERT(node);
+			FrustumComponent* frc = list.getFront();
+			ANKI_ASSERT(frc);
 
 			m_shared->m_barrier.wait();
 			if(threadId == 0)
@@ -100,7 +100,7 @@ public:
 			}
 
 			m_shared->m_barrier.wait();
-			test(*node, threadId, threadsCount);
+			test(*frc, threadId, threadsCount);
 		}
 
 		return ErrorCode::NONE;
@@ -108,29 +108,37 @@ public:
 };
 
 //==============================================================================
-void VisibilityTestTask::test(SceneNode& testedNode,
+void VisibilityTestTask::test(FrustumComponent& testedFrc,
 	U32 threadId, PtrSize threadsCount)
 {
-	FrustumComponent& testedFr =
-		testedNode.getComponent<FrustumComponent>();
-	Bool testedNodeShadowCaster = false;
-	{
-		LightComponent* l = testedNode.tryGetComponent<LightComponent>();
-		testedNodeShadowCaster = l && l->getShadowEnabled();
-	}
+	ANKI_ASSERT(testedFrc.anyVisibilityTestEnabled());
 
+	SceneNode& testedNode = testedFrc.getSceneNode();
 	auto alloc = m_shared->m_scene->getFrameAllocator();
 
 	// Init test results
 	VisibilityTestResults* visible = alloc.newInstance<VisibilityTestResults>();
 
-	FrustumComponent::VisibilityStats stats = testedFr.getLastVisibilityStats();
+	FrustumComponent::VisibilityStats stats =
+		testedFrc.getLastVisibilityStats();
 
 	visible->create(alloc, stats.m_renderablesCount, stats.m_lightsCount, 4);
 
 	m_shared->m_testResults[threadId] = visible;
 
 	List<SceneNode*> frustumsList;
+
+	Bool wantsRenderComponents = testedFrc.visibilityTestsEnabled(
+		FrustumComponent::VisibilityTestFlag::TEST_RENDER_COMPONENTS);
+
+	Bool wantsLightComponents = testedFrc.visibilityTestsEnabled(
+		FrustumComponent::VisibilityTestFlag::TEST_LIGHT_COMPONENTS);
+
+	Bool wantsFlareComponents = testedFrc.visibilityTestsEnabled(
+		FrustumComponent::VisibilityTestFlag::TEST_LENS_FLARE_COMPONENTS);
+
+	Bool wantsShadowCasters = testedFrc.visibilityTestsEnabled(
+		FrustumComponent::VisibilityTestFlag::TEST_SHADOW_CASTERS);
 
 #if 0
 	ANKI_LOGW("Running test code");
@@ -147,7 +155,7 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 	SectorGroup& sectors = m_shared->m_scene->getSectorGroup();
 	if(threadId == 0)
 	{
-		sectors.prepareForVisibilityTests(testedFr);
+		sectors.prepareForVisibilityTests(testedFrc);
 	}
 	m_shared->m_barrier.wait();
 
@@ -160,16 +168,43 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 		start, end, [&](SceneNode& node) -> Error
 #endif
 	{
-		FrustumComponent* fr = node.tryGetComponent<FrustumComponent>();
-
 		// Skip if it is the same
-		if(ANKI_UNLIKELY(&testedFr == fr))
+		if(ANKI_UNLIKELY(&testedNode == &node))
 		{
 			return ErrorCode::NONE;
 		}
 
-		VisibleNode visibleNode;
-		visibleNode.m_node = &node;
+		// Check what components the frustum needs
+		Bool wantNode = false;
+
+		RenderComponent* rc = node.tryGetComponent<RenderComponent>();
+		if(rc && wantsRenderComponents)
+		{
+			wantNode = true;
+		}
+
+		if(rc && rc->getCastsShadow() && wantsShadowCasters)
+		{
+			wantNode = true;
+		}
+
+		LightComponent* lc = node.tryGetComponent<LightComponent>();
+		if(lc && wantsLightComponents)
+		{
+			wantNode = true;
+		}
+
+		LensFlareComponent* lfc = node.tryGetComponent<LensFlareComponent>();
+		if(lfc && wantsFlareComponents)
+		{
+			wantNode = true;
+		}
+
+		if(ANKI_UNLIKELY(!wantNode))
+		{
+			// Skip node
+			return ErrorCode::NONE;
+		}
 
 		// Test all spatial components of that node
 		struct SpatialTemp
@@ -184,15 +219,15 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 		Error err = node.iterateComponentsOfType<SpatialComponent>(
 			[&](SpatialComponent& sp)
 		{
-			if(testedFr.insideFrustum(sp))
+			if(testedFrc.insideFrustum(sp))
 			{
 				// Inside
 				ANKI_ASSERT(spIdx < MAX_U8);
 				sps[count++] = SpatialTemp{&sp, static_cast<U8>(spIdx)};
 
-				sp.enableBits(testedNodeShadowCaster
+				/*sp.enableBits(testedNodeShadowCaster
 					? SpatialComponent::Flag::VISIBLE_LIGHT
-					: SpatialComponent::Flag::VISIBLE_CAMERA);
+					: SpatialComponent::Flag::VISIBLE_CAMERA);*/
 			}
 
 			++spIdx;
@@ -207,7 +242,7 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 		}
 
 		// Sort sub-spatials
-		Vec4 origin = testedFr.getFrustumOrigin();
+		Vec4 origin = testedFrc.getFrustumOrigin();
 		std::sort(sps.begin(), sps.begin() + count,
 			[origin](const SpatialTemp& a, const SpatialTemp& b) -> Bool
 		{
@@ -221,6 +256,9 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 		});
 
 		// Update the visibleNode
+		VisibleNode visibleNode;
+		visibleNode.m_node = &node;
+
 		ANKI_ASSERT(count < MAX_U8);
 		visibleNode.m_spatialsCount = count;
 		visibleNode.m_spatialIndices = alloc.newArray<U8>(count);
@@ -230,41 +268,39 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 			visibleNode.m_spatialIndices[i] = sps[i].m_idx;
 		}
 
-		// Do something with the result
-		RenderComponent* r = node.tryGetComponent<RenderComponent>();
-		if(testedNodeShadowCaster)
+		if(rc && wantsRenderComponents)
 		{
-			if(r && r->getCastsShadow())
-			{
-				visible->moveBackRenderable(alloc, visibleNode);
-			}
+			visible->moveBackRenderable(alloc, visibleNode);
 		}
-		else
+
+		if(rc && wantsShadowCasters && rc->getCastsShadow())
 		{
-			if(r)
-			{
-				visible->moveBackRenderable(alloc, visibleNode);
-			}
-
-			LightComponent* l = node.tryGetComponent<LightComponent>();
-			if(l)
-			{
-				visible->moveBackLight(alloc, visibleNode);
-
-				if(l->getShadowEnabled() && fr)
-				{
-					LockGuard<SpinLock> l(m_shared->m_lock);
-					m_shared->m_frustumsList.pushBack(alloc, &node);
-				}
-			}
-
-			LensFlareComponent* lf = node.tryGetComponent<LensFlareComponent>();
-			if(lf)
-			{
-				visible->moveBackLensFlare(alloc, visibleNode);
-				ANKI_ASSERT(visibleNode.m_node);
-			}
+			visible->moveBackRenderable(alloc, visibleNode);
 		}
+
+		if(lc && wantsLightComponents)
+		{
+			visible->moveBackLight(alloc, visibleNode);
+		}
+
+		if(lfc && wantsFlareComponents)
+		{
+			visible->moveBackLensFlare(alloc, visibleNode);
+		}
+
+		// Add more frustums to the list
+		err = node.iterateComponentsOfType<FrustumComponent>(
+			[&](FrustumComponent& frc)
+		{
+			if(frc.anyVisibilityTestEnabled())
+			{
+				LockGuard<SpinLock> l(m_shared->m_lock);
+				m_shared->m_frustumsList.pushBack(alloc, &frc);
+			}
+
+			return ErrorCode::NONE;
+		});
+		(void)err;
 
 		return ErrorCode::NONE;
 	}); // end for
@@ -275,7 +311,7 @@ void VisibilityTestTask::test(SceneNode& testedNode,
 
 	if(threadId == 0)
 	{
-		combineTestResults(testedFr, threadsCount);
+		combineTestResults(testedFrc, threadsCount);
 	}
 }
 
@@ -411,7 +447,8 @@ Error doVisibilityTests(SceneNode& fsn, SceneGraph& scene, MainRenderer& r)
 
 	VisibilityShared shared(threadPool.getThreadsCount());
 	shared.m_scene = &scene;
-	shared.m_frustumsList.pushBack(scene.getFrameAllocator(), &fsn);
+	shared.m_frustumsList.pushBack(
+		scene.getFrameAllocator(), &fsn.getComponent<FrustumComponent>());
 
 	Array<VisibilityTestTask, Threadpool::MAX_THREADS> tasks;
 	for(U i = 0; i < threadPool.getThreadsCount(); i++)

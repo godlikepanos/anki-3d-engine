@@ -10,6 +10,20 @@
 namespace anki {
 
 //==============================================================================
+FrustumComponent::FrustumComponent(SceneNode* node, Frustum* frustum)
+	: SceneComponent(Type::FRUSTUM, node)
+	, m_frustum(frustum)
+	, m_flags(0)
+{
+	// WARNING: Never touch m_frustum in constructor
+	ANKI_ASSERT(frustum);
+	markShapeForUpdate();
+	markTransformForUpdate();
+
+	setEnabledVisibilityTests(VisibilityTestFlag::TEST_ALL);
+}
+
+//==============================================================================
 void FrustumComponent::setVisibilityTestResults(VisibilityTestResults* visible)
 {
 	ANKI_ASSERT(m_visible == nullptr);
@@ -22,16 +36,18 @@ void FrustumComponent::setVisibilityTestResults(VisibilityTestResults* visible)
 //==============================================================================
 Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
 {
+	m_visible = nullptr;
+
 	updated = false;
 
-	if(m_flags & SHAPE_MARKED_FOR_UPDATE)
+	if(m_flags.bitsEnabled(SHAPE_MARKED_FOR_UPDATE))
 	{
 		updated = true;
 		m_pm = m_frustum->calculateProjectionMatrix();
 		computeProjectionParams();
 	}
 
-	if(m_flags & TRANSFORM_MARKED_FOR_UPDATE)
+	if(m_flags.bitsEnabled(TRANSFORM_MARKED_FOR_UPDATE))
 	{
 		updated = true;
 		m_vm = Mat4(m_frustum->getTransform().getInverse());
@@ -40,7 +56,8 @@ Error FrustumComponent::update(SceneNode& node, F32, F32, Bool& updated)
 	if(updated)
 	{
 		m_vpm = m_pm * m_vm;
-		m_flags = 0;
+		m_flags.disableBits(
+			SHAPE_MARKED_FOR_UPDATE | TRANSFORM_MARKED_FOR_UPDATE);
 	}
 
 	return ErrorCode::NONE;

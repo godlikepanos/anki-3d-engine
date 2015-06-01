@@ -32,6 +32,8 @@ SpatialComponent::~SpatialComponent()
 //==============================================================================
 Error SpatialComponent::update(SceneNode&, F32, F32, Bool& updated)
 {
+	disableBits(Flag::VISIBLE_ANY);
+
 	updated = bitsEnabled(Flag::MARKED_FOR_UPDATE);
 	if(updated)
 	{
@@ -41,12 +43,6 @@ Error SpatialComponent::update(SceneNode&, F32, F32, Bool& updated)
 	}
 
 	return ErrorCode::NONE;
-}
-
-//==============================================================================
-void SpatialComponent::reset()
-{
-	disableBits(Flag::VISIBLE_ANY);
 }
 
 } // end namespace anki

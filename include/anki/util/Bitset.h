@@ -21,38 +21,55 @@ public:
 	using Value = T;
 
 	Bitset()
-	:	m_bitmask(static_cast<Value>(0))
+		: m_bitmask(static_cast<Value>(0))
 	{}
 
 	Bitset(Value bitmask)
-	:	m_bitmask(bitmask)
+		: m_bitmask(bitmask)
 	{}
 
 	/// @name Bits manipulation
 	/// @{
-	void enableBits(Value mask)
+	template<typename Y>
+	void enableBits(Y mask)
 	{
-		m_bitmask |= mask;
+		Value maski = static_cast<Value>(mask);
+		m_bitmask |= maski;
 	}
 
-	void enableBits(Value mask, Bool enable)
+	template<typename Y>
+	void enableBits(Y mask, Bool enable)
 	{
-		m_bitmask = (enable) ? (m_bitmask | mask) : (m_bitmask & ~mask);
+		Value maski = static_cast<Value>(mask);
+		m_bitmask = (enable) ? (m_bitmask | maski) : (m_bitmask & ~maski);
 	}
 
-	void disableBits(Value mask)
+	template<typename Y>
+	void disableBits(Y mask)
 	{
-		m_bitmask &= ~mask;
+		Value maski = static_cast<Value>(mask);
+		m_bitmask &= ~maski;
 	}
 
-	void switchBits(Value mask)
+	template<typename Y>
+	void switchBits(Y mask)
 	{
-		m_bitmask ^= mask;
+		Value maski = static_cast<Value>(mask);
+		m_bitmask ^= maski;
 	}
 
-	Bool bitsEnabled(Value mask) const
+	template<typename Y>
+	Bool bitsEnabled(Y mask) const
 	{
-		return (m_bitmask & mask) != static_cast<Value>(0);
+		Value maski = static_cast<Value>(mask);
+		return (m_bitmask & maski) == maski;
+	}
+
+	template<typename Y>
+	Bool anyBitsEnabled(Y mask) const
+	{
+		Value maski = static_cast<Value>(mask);
+		return (m_bitmask & maski) != static_cast<Value>(0);
 	}
 
 	Value getBitmask() const
