@@ -18,7 +18,7 @@ Bool fileExists(const CString& filename)
 {
 	DWORD dwAttrib = GetFileAttributes(&filename[0]);
 
-	return dwAttrib != INVALID_FILE_ATTRIBUTES 
+	return dwAttrib != INVALID_FILE_ATTRIBUTES
 		&& !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
@@ -27,7 +27,7 @@ Bool directoryExists(const CString& filename)
 {
 	DWORD dwAttrib = GetFileAttributes(filename.get());
 
-	return dwAttrib != INVALID_FILE_ATTRIBUTES 
+	return dwAttrib != INVALID_FILE_ATTRIBUTES
 		&& (dwAttrib & FILE_ATTRIBUTE_DIRECTORY);
 }
 
@@ -41,7 +41,7 @@ Error removeDirectory(const CString& dirname)
 	fileOperation.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION;
 
 	I result = SHFileOperationA(&fileOperation);
-	if(result != 0) 
+	if(result != 0)
 	{
 		ANKI_LOGE("Could not delete directory %s", dirname.get());
 		err = ErrorCode::FUNCTION_FAILED;
@@ -64,7 +64,7 @@ Error createDirectory(const CString& dir)
 }
 
 //==============================================================================
-Error getHomeDirectory(HeapAllocator<U8>& alloc, String& out)
+Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 {
 	const char* homed = getenv("HOMEDRIVE");
 	const char* homep = getenv("HOMEPATH");
@@ -75,20 +75,18 @@ Error getHomeDirectory(HeapAllocator<U8>& alloc, String& out)
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
-	Error err = out.sprintf(alloc, "%s/%s", homed, homep);
-	if(!err)
+	out.sprintf(alloc, "%s/%s", homed, homep);
+
+	// Convert to Unix path
+	for(char& c : out)
 	{
-		// Convert to Unix path
-		for(char& c : out)
+		if(c == '\\')
 		{
-			if(c == '\\')
-			{
-				c = '/';
-			}
+			c = '/';
 		}
 	}
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

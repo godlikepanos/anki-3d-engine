@@ -1,5 +1,5 @@
 #
-# Set platform specific 
+# Set platform specific
 #
 if(LINUX)
 	set(_SYS GL ankiglew pthread)
@@ -13,7 +13,7 @@ elseif(ANDROID)
 elseif(WINDOWS)
 	set(_SYS ankiglew opengl32 version)
 
-	add_definitions("-DGLEW_STATIC")
+	add_definitions("-DGLEW_STATIC" "-D_NEWTON_STATIC_LIB")
 else()
 	message(FATAL_ERROR "Unhandled case")
 endif()
