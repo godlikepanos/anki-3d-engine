@@ -34,16 +34,33 @@ Bool directoryExists(const CString& filename)
 //==============================================================================
 Error removeDirectory(const CString& dirname)
 {
+	// For some reason dirname should be double null terminated
+	const U PATH_SIZE = 1024 * 2;
+	if(dirname.getLength() > PATH_SIZE - 2)
+	{
+		ANKI_LOGE("Path too big");
+		return ErrorCode::FUNCTION_FAILED;
+	}
+
+	Array<char, PATH_SIZE> dirname2;
+	memcpy(&dirname2[0], &dirname[0], dirname.getLength() + 1);
+	dirname2[dirname.getLength() + 1] = '\0';
+
 	Error err = ErrorCode::NONE;
-	SHFILEOPSTRUCTA fileOperation;
-	fileOperation.wFunc = FO_DELETE;
-	fileOperation.pFrom = dirname.get();
-	fileOperation.fFlags = FOF_NO_UI | FOF_NOCONFIRMATION;
+	SHFILEOPSTRUCTA fileOperation = {
+		NULL,
+		FO_DELETE,
+		&dirname2[0],
+		"",
+		FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT,
+		false,
+		0,
+		""};
 
 	I result = SHFileOperationA(&fileOperation);
 	if(result != 0)
 	{
-		ANKI_LOGE("Could not delete directory %s", dirname.get());
+		ANKI_LOGE("Could not delete directory %s", &dirname[0]);
 		err = ErrorCode::FUNCTION_FAILED;
 	}
 
