@@ -15,7 +15,7 @@
 namespace anki {
 
 //==============================================================================
-static const Array<const char*, static_cast<U>(Logger::MessageType::COUNT)> 
+static const Array<const char*, static_cast<U>(Logger::MessageType::COUNT)>
 	MSG_TEXT = {{"Info", "Error", "Warning", "Fatal"}};
 
 //==============================================================================
@@ -99,7 +99,7 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 	}
 
 	fprintf(out, "%s(%s:%d %s) %s: %s\033[0m\n", terminalColor, info.m_file,
-		info.m_line, info.m_func, MSG_TEXT[static_cast<U>(info.m_type)], 
+		info.m_line, info.m_func, MSG_TEXT[static_cast<U>(info.m_type)],
 		info.m_msg);
 #elif ANKI_OS == ANKI_OS_ANDROID
 	U32 andMsgType = ANDROID_LOG_INFO;
@@ -148,8 +148,10 @@ void Logger::defaultSystemMessageHandler(void*, const Info& info)
 	}
 
 	fprintf(out, "(%s:%d %s) %s: %s\n", info.m_file,
-		info.m_line, info.m_func, MSG_TEXT[static_cast<U>(info.m_type)], 
+		info.m_line, info.m_func, MSG_TEXT[static_cast<U>(info.m_type)],
 		info.m_msg);
+
+	fflush(out);
 #endif
 }
 
@@ -158,8 +160,8 @@ void Logger::fileMessageHandler(void* pfile, const Info& info)
 {
 	File* file = reinterpret_cast<File*>(pfile);
 
-	Error err = file->writeText("(%s:%d %s) %s: %s\n", 
-		info.m_file, info.m_line, info.m_func, 
+	Error err = file->writeText("(%s:%d %s) %s: %s\n",
+		info.m_file, info.m_line, info.m_func,
 		MSG_TEXT[static_cast<U>(info.m_type)], info.m_msg);
 
 	if(!err)

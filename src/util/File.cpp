@@ -52,12 +52,12 @@ File::~File()
 //==============================================================================
 Error File::open(const CString& filename, OpenFlag flags)
 {
-	ANKI_ASSERT(m_file == nullptr && m_flags == OpenFlag::NONE 
+	ANKI_ASSERT(m_file == nullptr && m_flags == OpenFlag::NONE
 		&& m_type == Type::NONE);
 
 	// Only these flags are accepted
-	ANKI_ASSERT((flags & (OpenFlag::READ | OpenFlag::WRITE | OpenFlag::APPEND 
-		| OpenFlag::BINARY | OpenFlag::LITTLE_ENDIAN 
+	ANKI_ASSERT((flags & (OpenFlag::READ | OpenFlag::WRITE | OpenFlag::APPEND
+		| OpenFlag::BINARY | OpenFlag::LITTLE_ENDIAN
 		| OpenFlag::BIG_ENDIAN)) != OpenFlag::NONE);
 
 	// Cannot be both
@@ -99,8 +99,8 @@ Error File::open(const CString& filename, OpenFlag flags)
 
 	if(!err)
 	{
-		// If the open() DIDN'T provided us the file endianess 
-		if((flags & (OpenFlag::BIG_ENDIAN | OpenFlag::LITTLE_ENDIAN)) 
+		// If the open() DIDN'T provided us the file endianess
+		if((flags & (OpenFlag::BIG_ENDIAN | OpenFlag::LITTLE_ENDIAN))
 			== OpenFlag::NONE)
 		{
 			// Set the machine's endianness
@@ -109,7 +109,7 @@ Error File::open(const CString& filename, OpenFlag flags)
 		else
 		{
 			// Else just make sure that only one of the flags is set
-			ANKI_ASSERT((flags & OpenFlag::BIG_ENDIAN) 
+			ANKI_ASSERT((flags & OpenFlag::BIG_ENDIAN)
 				!= (flags & OpenFlag::LITTLE_ENDIAN));
 		}
 	}
@@ -125,15 +125,15 @@ Error File::openCFile(const CString& filename, OpenFlag flags)
 
 	if((flags & OpenFlag::READ) != OpenFlag::NONE)
 	{
-		openMode = "r";
+		openMode = "rb";
 	}
 	else if((flags & OpenFlag::APPEND) == OpenFlag::APPEND)
 	{
-		openMode = "a+";
+		openMode = "a+b";
 	}
 	else if((flags & OpenFlag::WRITE) != OpenFlag::NONE)
 	{
-		openMode = "w";
+		openMode = "wb";
 	}
 	else
 	{
@@ -230,12 +230,12 @@ Error File::openAndroidFile(const CString& filename, OpenFlag flags)
 	}
 
 	// Open file
-	ANKI_ASSERT(gAndroidApp != nullptr && gAndroidApp->activity 
+	ANKI_ASSERT(gAndroidApp != nullptr && gAndroidApp->activity
 		&& gAndroidApp->activity->assetManager);
 
 	m_file = AAssetManager_open(
-		gAndroidApp->activity->assetManager, 
-		&filename[0] + 1, 
+		gAndroidApp->activity->assetManager,
+		&filename[0] + 1,
 		AASSET_MODE_STREAMING);
 
 	if(m_file == nullptr)
@@ -245,7 +245,7 @@ Error File::openAndroidFile(const CString& filename, OpenFlag flags)
 
 	m_flags = flags;
 	m_type = Type::SPECIAL;
-	
+
 	return ErrorCode::NONE;
 }
 #endif
@@ -399,10 +399,10 @@ Error File::readU32(U32& out)
 	ANKI_ASSERT(m_file);
 	ANKI_ASSERT(m_flags != OpenFlag::NONE);
 	ANKI_ASSERT((m_flags & OpenFlag::READ) != OpenFlag::NONE);
-	ANKI_ASSERT((m_flags & OpenFlag::BINARY) != OpenFlag::NONE 
+	ANKI_ASSERT((m_flags & OpenFlag::BINARY) != OpenFlag::NONE
 		&& "Should be binary file");
 	ANKI_ASSERT(
-		(m_flags & OpenFlag::BIG_ENDIAN) != (m_flags & OpenFlag::LITTLE_ENDIAN) 
+		(m_flags & OpenFlag::BIG_ENDIAN) != (m_flags & OpenFlag::LITTLE_ENDIAN)
 		&& "One of those 2 should be active");
 
 	Error err = read(&out, sizeof(out));
@@ -410,16 +410,16 @@ Error File::readU32(U32& out)
 	{
 		// Copy it
 		OpenFlag machineEndianness = getMachineEndianness();
-		OpenFlag fileEndianness = 
+		OpenFlag fileEndianness =
 			((m_flags & OpenFlag::BIG_ENDIAN) != OpenFlag::NONE)
-			? OpenFlag::BIG_ENDIAN 
+			? OpenFlag::BIG_ENDIAN
 			: OpenFlag::LITTLE_ENDIAN;
 
 		if(machineEndianness == fileEndianness)
 		{
 			// Same endianness between the file and the machine. Do nothing
 		}
-		else if(machineEndianness == OpenFlag::BIG_ENDIAN 
+		else if(machineEndianness == OpenFlag::BIG_ENDIAN
 			&& fileEndianness == OpenFlag::LITTLE_ENDIAN)
 		{
 			U8* c = reinterpret_cast<U8*>(&out);
@@ -579,7 +579,7 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 }
 
 //==============================================================================
-Error File::identifyFile(const CString& filename, 
+Error File::identifyFile(const CString& filename,
 	char* archiveFilename, PtrSize archiveFilenameLength,
 	CString& filenameInArchive, Type& type)
 {
@@ -676,7 +676,7 @@ Error File::readAllText(
 	{
 		err = ErrorCode::FUNCTION_FAILED;
 	}
-	
+
 	return err;
 }
 

@@ -218,7 +218,7 @@ if(GIT_FOUND)
 
 	set(ANKI_REVISION "\"${GIT_COMMIT}\"")
 else()
-	set(ANKI_REVISION "-1")
+	set(ANKI_REVISION "\"unknown\"")
 endif()
 
 #
