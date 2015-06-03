@@ -233,6 +233,8 @@ public:
 		const ConfigSet& config,
 		const Timestamp* globalTimestamp);
 
+	void prepareForVisibilityTests(Camera& cam);
+
 	/// @privatesection
 	/// @{
 	GrManager& getGrManager()

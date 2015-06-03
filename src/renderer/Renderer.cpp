@@ -279,4 +279,10 @@ Error Renderer::createDrawQuadPipeline(
 	return ErrorCode::NONE;
 }
 
+//==============================================================================
+void Renderer::prepareForVisibilityTests(Camera& cam)
+{
+	m_tiler->updateTiles(cam);
+}
+
 } // end namespace anki

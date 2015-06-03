@@ -185,4 +185,10 @@ F32 MainRenderer::getAspectRatio() const
 	return m_r->getAspectRatio();
 }
 
+//==============================================================================
+void MainRenderer::prepareForVisibilityTests(Camera& cam)
+{
+	m_r->prepareForVisibilityTests(cam);
+}
+
 } // end namespace anki
