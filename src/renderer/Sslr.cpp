@@ -64,7 +64,7 @@ Error Sslr::init(const ConfigSet& config)
 
 		ANKI_CHECK(
 			m_r->createRenderTarget(m_width, m_height,
-			PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
+			PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT),
 			1, SamplingFilter::LINEAR, 1, dir.m_rt));
 
 		// Create FB
