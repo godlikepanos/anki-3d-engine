@@ -19,7 +19,7 @@ class ReflectionProbeMoveFeedbackComponent: public SceneComponent
 {
 public:
 	ReflectionProbeMoveFeedbackComponent(SceneNode* node)
-	:	SceneComponent(SceneComponent::Type::NONE, node)
+		: SceneComponent(SceneComponent::Type::NONE, node)
 	{}
 
 	Error update(SceneNode& node, F32, F32, Bool& updated) override
@@ -81,7 +81,7 @@ Error ReflectionProbe::create(const CString& name, F32 radius)
 
 		addComponent(frc, true);
 
-		m_frustums[i].setAll(toRad(45.0), toRad(45.0), 0.5, radius);
+		m_frustums[i].setAll(toRad(90.0), toRad(90.0), 0.5, radius);
 		m_frustums[i].resetTransform(trfs[i]);
 	}
 

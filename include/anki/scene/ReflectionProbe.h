@@ -21,7 +21,7 @@ class ReflectionProbeComponent: public SceneComponent
 {
 public:
 	ReflectionProbeComponent(SceneNode* node)
-	:	SceneComponent(SceneComponent::Type::REFLECTION_PROBE, node)
+		: SceneComponent(SceneComponent::Type::REFLECTION_PROBE, node)
 	{}
 
 	static Bool classof(const SceneComponent& c)
@@ -37,7 +37,7 @@ class ReflectionProbe: public SceneNode
 
 public:
 	ReflectionProbe(SceneGraph* scene)
-	:	SceneNode(scene)
+		: SceneNode(scene)
 	{}
 
 	~ReflectionProbe();
