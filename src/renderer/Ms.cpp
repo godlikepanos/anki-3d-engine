@@ -23,21 +23,21 @@ Error Ms::createRt(U32 index, U32 samples)
 {
 	Plane& plane = m_planes[index];
 
-	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
+	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::D24, TransformFormat::FLOAT),
-		samples, SamplingFilter::NEAREST, 4, plane.m_depthRt));
+		samples, SamplingFilter::NEAREST, 4, plane.m_depthRt);
 
-	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
+	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-		samples, SamplingFilter::NEAREST, 1, plane.m_rt0));
+		samples, SamplingFilter::NEAREST, 1, plane.m_rt0);
 
-	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
+	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::R8G8B8A8, TransformFormat::UNORM),
-		samples, SamplingFilter::NEAREST, 1, plane.m_rt1));
+		samples, SamplingFilter::NEAREST, 1, plane.m_rt1);
 
-	ANKI_CHECK(m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
+	m_r->createRenderTarget(m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::R10G10B10A2, TransformFormat::UNORM),
-		samples, SamplingFilter::NEAREST, 1, plane.m_rt2));
+		samples, SamplingFilter::NEAREST, 1, plane.m_rt2);
 
 	AttachmentLoadOperation loadop = AttachmentLoadOperation::DONT_CARE;
 #if ANKI_DEBUG

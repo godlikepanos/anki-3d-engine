@@ -50,10 +50,10 @@ Error Sslf::initInternal(const ConfigSet& config)
 		"engine_data/lens_dirt.ankitex", &getResourceManager()));
 
 	// Create the render target and FB
-	ANKI_CHECK(m_r->createRenderTarget(m_r->getPps().getBloom().getWidth(),
+	m_r->createRenderTarget(m_r->getPps().getBloom().getWidth(),
 		m_r->getPps().getBloom().getHeight(),
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
-		1, SamplingFilter::LINEAR, 1, m_rt));
+		1, SamplingFilter::LINEAR, 1, m_rt);
 
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;

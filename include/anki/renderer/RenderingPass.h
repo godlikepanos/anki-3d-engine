@@ -28,7 +28,7 @@ class RenderingPass
 {
 public:
 	RenderingPass(Renderer* r)
-	:	m_r(r)
+		: m_r(r)
 	{}
 
 	~RenderingPass()
@@ -66,7 +66,7 @@ protected:
 	U32 m_blurringIterationsCount = 1; ///< The blurring iterations
 
 	BlurringRenderingPass(Renderer* r)
-	:	RenderingPass(r)
+		: RenderingPass(r)
 	{}
 
 	class Direction
@@ -89,9 +89,8 @@ protected:
 	ANKI_USE_RESULT Error initBlurring(Renderer& r, U width, U height, U samples,
 		F32 blurringDistance);
 
-	ANKI_USE_RESULT Error runBlurring(Renderer& r, CommandBufferPtr& jobs);
+	void runBlurring(Renderer& r, CommandBufferPtr& jobs);
 };
-
 /// @}
 
 } // end namespace anki

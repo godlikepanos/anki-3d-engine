@@ -19,7 +19,7 @@ namespace anki {
 
 //==============================================================================
 Pps::Pps(Renderer* r)
-:	RenderingPass(r)
+	: RenderingPass(r)
 {}
 
 //==============================================================================
@@ -53,11 +53,10 @@ Error Pps::initInternal(const ConfigSet& config)
 	ANKI_CHECK(m_sslf->init(config));
 
 	// FBO
-	ANKI_CHECK(
-		m_r->createRenderTarget(
+	m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
-		1, SamplingFilter::LINEAR, 1, m_rt));
+		1, SamplingFilter::LINEAR, 1, m_rt);
 
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;
@@ -115,20 +114,20 @@ Error Pps::loadColorGradingTexture(CString filename)
 }
 
 //==============================================================================
-Error Pps::run(CommandBufferPtr& cmdb)
+void Pps::run(CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
 	// First SSAO because it depends on MS where HDR depends on IS
 	if(m_ssao->getEnabled())
 	{
-		ANKI_CHECK(m_ssao->run(cmdb));
+		m_ssao->run(cmdb);
 	}
 
 	// Then SSLR because HDR depends on it
 	if(m_sslr->getEnabled())
 	{
-		ANKI_CHECK(m_sslr->run(cmdb));
+		m_sslr->run(cmdb);
 	}
 
 	m_r->getIs().generateMipmaps(cmdb);
@@ -163,7 +162,7 @@ Error Pps::run(CommandBufferPtr& cmdb)
 
 	if(m_ssao->getEnabled())
 	{
-		m_ssao->_getRt().bind(cmdb, 1);
+		m_ssao->getRt().bind(cmdb, 1);
 	}
 
 	if(m_bloom->getEnabled())
@@ -181,8 +180,6 @@ Error Pps::run(CommandBufferPtr& cmdb)
 	m_tm->getAverageLuminanceBuffer().bindShaderBuffer(cmdb, 0);
 
 	m_r->drawQuad(cmdb);
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

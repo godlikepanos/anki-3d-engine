@@ -213,7 +213,7 @@ public:
 	}
 
 	/// Create a framebuffer attachment texture
-	ANKI_USE_RESULT Error createRenderTarget(U32 w, U32 h,
+	void createRenderTarget(U32 w, U32 h,
 		const PixelFormat& format, U32 samples, SamplingFilter filter,
 		U mipsCount, TexturePtr& rt);
 

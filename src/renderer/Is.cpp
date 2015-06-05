@@ -218,10 +218,10 @@ Error Is::initInternal(const ConfigSet& config)
 	// Create framebuffer
 	//
 
-	ANKI_CHECK(m_r->createRenderTarget(
+	m_r->createRenderTarget(
 		m_r->getWidth(), m_r->getHeight(),
 		PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT),
-		1, SamplingFilter::LINEAR, MIPMAPS_COUNT, m_rt));
+		1, SamplingFilter::LINEAR, MIPMAPS_COUNT, m_rt);
 
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_colorAttachmentsCount = 1;

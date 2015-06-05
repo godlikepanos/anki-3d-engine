@@ -169,7 +169,7 @@ Error Renderer::render(SceneNode& frustumableNode,
 	ANKI_COUNTER_START_TIMER(RENDERER_PPS_TIME);
 	if(m_pps->getEnabled())
 	{
-		ANKI_CHECK(m_pps->run(cmdBuff[1]));
+		m_pps->run(cmdBuff[1]);
 	}
 	ANKI_COUNTER_STOP_TIMER_INC(RENDERER_PPS_TIME);
 
@@ -226,7 +226,7 @@ Vec3 Renderer::unproject(const Vec3& windowCoords, const Mat4& modelViewMat,
 }
 
 //==============================================================================
-Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
+void Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 	U32 samples, SamplingFilter filter, U mipsCount, TexturePtr& rt)
 {
 	// Not very important but keep the resulution of render targets aligned to
@@ -263,8 +263,6 @@ Error Renderer::createRenderTarget(U32 w, U32 h, const PixelFormat& format,
 
 	rt.create(cmdBuff, init);
 	cmdBuff.finish();
-
-	return ErrorCode::NONE;
 }
 
 //==============================================================================

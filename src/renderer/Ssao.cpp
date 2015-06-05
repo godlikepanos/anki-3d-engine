@@ -71,9 +71,9 @@ public:
 Error Ssao::createFb(FramebufferPtr& fb, TexturePtr& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
-	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height,
+	m_r->createRenderTarget(m_width, m_height,
 		PixelFormat(ComponentFormat::R8, TransformFormat::UNORM),
-		1, SamplingFilter::LINEAR, 1, rt));
+		1, SamplingFilter::LINEAR, 1, rt);
 
 	// Create FB
 	FramebufferPtr::Initializer fbInit;
@@ -232,7 +232,7 @@ Error Ssao::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Ssao::run(CommandBufferPtr& cmdb)
+void Ssao::run(CommandBufferPtr& cmdb)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -291,8 +291,6 @@ Error Ssao::run(CommandBufferPtr& cmdb)
 		m_vblurPpline.bind(cmdb);
 		m_r->drawQuad(cmdb);
 	}
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

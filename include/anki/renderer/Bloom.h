@@ -26,7 +26,7 @@ class Bloom: public RenderingPass
 
 public:
 	Bloom(Renderer* r)
-	:	RenderingPass(r)
+		: RenderingPass(r)
 	{}
 
 	~Bloom();
@@ -67,7 +67,7 @@ private:
 	F32 m_scale = 1.0;
 	U32 m_blurringIterationsCount = 2; ///< The blurring iterations
 	F32 m_blurringDist = 1.0; ///< Distance in blurring
-	
+
 	FramebufferPtr m_hblurFb;
 	FramebufferPtr m_vblurFb;
 

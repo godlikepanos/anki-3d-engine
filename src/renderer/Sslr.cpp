@@ -62,10 +62,9 @@ Error Sslr::init(const ConfigSet& config)
 	{
 		Direction& dir = m_dirs[U(DirectionEnum::VERTICAL)];
 
-		ANKI_CHECK(
-			m_r->createRenderTarget(m_width, m_height,
+		m_r->createRenderTarget(m_width, m_height,
 			PixelFormat(ComponentFormat::R11G11B10, TransformFormat::FLOAT),
-			1, SamplingFilter::LINEAR, 1, dir.m_rt));
+			1, SamplingFilter::LINEAR, 1, dir.m_rt);
 
 		// Create FB
 		FramebufferPtr::Initializer fbInit;
@@ -80,7 +79,7 @@ Error Sslr::init(const ConfigSet& config)
 }
 
 //==============================================================================
-Error Sslr::run(CommandBufferPtr& cmdBuff)
+void Sslr::run(CommandBufferPtr& cmdBuff)
 {
 	ANKI_ASSERT(m_enabled);
 
@@ -108,7 +107,7 @@ Error Sslr::run(CommandBufferPtr& cmdBuff)
 	//
 	if(m_blurringIterationsCount > 0)
 	{
-		ANKI_CHECK(runBlurring(*m_r, cmdBuff));
+		runBlurring(*m_r, cmdBuff);
 	}
 
 	// Write the reflection back to IS RT
@@ -125,8 +124,6 @@ Error Sslr::run(CommandBufferPtr& cmdBuff)
 	m_r->drawQuad(cmdBuff);
 
 	cmdBuff.enableBlend(false);
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

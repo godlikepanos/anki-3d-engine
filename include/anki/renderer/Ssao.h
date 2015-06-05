@@ -24,13 +24,13 @@ public:
 	/// @privatesection
 	/// @{
 	Ssao(Renderer* r)
-	:	RenderingPass(r)
+		: RenderingPass(r)
 	{}
 
 	ANKI_USE_RESULT Error init(const ConfigSet& initializer);
-	ANKI_USE_RESULT Error run(CommandBufferPtr& cmdBuff);
+	void run(CommandBufferPtr& cmdBuff);
 
-	TexturePtr& _getRt()
+	TexturePtr& getRt()
 	{
 		return m_vblurRt;
 	}
@@ -56,7 +56,7 @@ private:
 	PipelinePtr m_ssaoPpline;
 	PipelinePtr m_hblurPpline;
 	PipelinePtr m_vblurPpline;
-	
+
 	Timestamp m_commonUboUpdateTimestamp = 0;
 	BufferPtr m_uniformsBuff;
 	TexturePtr m_noiseTex;
@@ -65,7 +65,6 @@ private:
 		FramebufferPtr& fb, TexturePtr& rt);
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& initializer);
 };
-
 /// @}
 
 } // end namespace anki

@@ -71,9 +71,9 @@ Error BlurringRenderingPass::initBlurring(
 	{
 		Direction& dir = m_dirs[i];
 
-		ANKI_CHECK(r.createRenderTarget(width, height,
+		r.createRenderTarget(width, height,
 			PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
-			1, SamplingFilter::LINEAR, 1, dir.m_rt));
+			1, SamplingFilter::LINEAR, 1, dir.m_rt);
 
 		// Create FB
 		FramebufferPtr::Initializer fbInit;
@@ -95,8 +95,7 @@ Error BlurringRenderingPass::initBlurring(
 }
 
 //==============================================================================
-Error BlurringRenderingPass::runBlurring(
-	Renderer& r, CommandBufferPtr& cmdb)
+void BlurringRenderingPass::runBlurring(Renderer& r, CommandBufferPtr& cmdb)
 {
 	// H pass input
 	m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_rt.bind(cmdb, 1);
@@ -116,8 +115,6 @@ Error BlurringRenderingPass::runBlurring(
 		m_dirs[enumToValue(DirectionEnum::VERTICAL)].m_ppline.bind(cmdb);
 		r.drawQuad(cmdb);
 	}
-
-	return ErrorCode::NONE;
 }
 
 } // end namespace anki

@@ -20,9 +20,9 @@ Bloom::~Bloom()
 Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 {
 	// Set to bilinear because the blurring techniques take advantage of that
-	ANKI_CHECK(m_r->createRenderTarget(m_width, m_height,
+	m_r->createRenderTarget(m_width, m_height,
 		PixelFormat(ComponentFormat::R8G8B8, TransformFormat::UNORM),
-		1, SamplingFilter::LINEAR, 1, rt));
+		1, SamplingFilter::LINEAR, 1, rt);
 
 	// Create FB
 	FramebufferPtr::Initializer fbInit;
