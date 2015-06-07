@@ -52,7 +52,7 @@ Bool directoryExists(const CString& filename)
 static Mutex walkDirMtx;
 static WalkDirectoryTreeCallback walkDirCallback = nullptr;
 static void* walkDirUserData = nullptr;
-static CString walkDirDir;
+static Array<char, PATH_MAX> walkDirDir;
 
 static int ftwCallback(
 	const char* fpath,
@@ -65,20 +65,20 @@ static int ftwCallback(
 	{
 		CString path(fpath);
 
-		// Don't list yourself
-		if(ANKI_UNLIKELY(path == walkDirDir))
+		// First item is the given directory
+		if(walkDirDir[0] == '\0')
 		{
-			return static_cast<int>(ErrorCode::NONE);
+			strncpy(&walkDirDir[0], fpath, PATH_MAX);
 		}
+		else
+		{
+			// Remove the base dir from the fpath
+			ANKI_ASSERT(path.find(&walkDirDir[0]) == 0);
+			fpath += strlen(&walkDirDir[0]) + 1;
 
-		// Remove the directory from the fpath
-		auto pos = path.find(walkDirDir);
-		ANKI_ASSERT(pos == 0);
-		ANKI_ASSERT(path.getLength() - walkDirDir.getLength() > 0);
-		fpath = fpath + walkDirDir.getLength() + 1;
-
-		// Call the callback
-		err = walkDirCallback(fpath, walkDirUserData, typeflag != FTW_F);
+			// Call the callback
+			err = walkDirCallback(fpath, walkDirUserData, typeflag != FTW_F);
+		}
 	}
 	else
 	{
@@ -89,29 +89,18 @@ static int ftwCallback(
 }
 
 Error walkDirectoryTree(
-	const CString& dir0,
+	const CString& dir,
 	void* userData,
 	WalkDirectoryTreeCallback callback)
 {
 	ANKI_ASSERT(callback != nullptr);
-
-	// Copy dir to remove the backslash
-	CString dir = dir0;
-	Array<char, PATH_MAX> dirNoSlash;
-	if(dir[dir.getLength() - 1] == '/')
-	{
-		ANKI_ASSERT(dir.getLength() < dirNoSlash.getSize());
-		strcpy(&dirNoSlash[0], &dir[0]);
-		dirNoSlash[dir.getLength() - 1] = '\0';
-		dir = CString(&dirNoSlash[0]);
-	}
 
 	// Continue
 	LockGuard<Mutex> lock(walkDirMtx);
 
 	walkDirCallback = callback;
 	walkDirUserData = userData;
-	walkDirDir = dir;
+	walkDirDir[0] = '\0';
 	const int MAX_OPEN_FILE_DESCRS = 1;
 
 	int ierr = ftw(&dir[0], &ftwCallback, MAX_OPEN_FILE_DESCRS);
