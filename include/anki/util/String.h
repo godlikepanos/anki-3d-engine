@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_STRING_H
-#define ANKI_UTIL_STRING_H
+#pragma once
 
 #include "anki/util/DArray.h"
 #include "anki/util/Array.h"
@@ -70,22 +69,22 @@ public:
 
 	CString()  = default;
 
-	CString(const Char* ptr) 
-	:	m_ptr(ptr)
+	CString(const Char* ptr)
+		: m_ptr(ptr)
 	{
 		checkInit();
 	}
 
 	/// Copy constructor.
-	CString(const CString& b) 
-	:	m_ptr(b.m_ptr),
-		m_length(b.m_length)
+	CString(const CString& b)
+		: m_ptr(b.m_ptr)
+		, m_length(b.m_length)
 	{
 		checkInit();
 	}
 
 	/// Copy.
-	CString& operator=(const CString& b) 
+	CString& operator=(const CString& b)
 	{
 		m_ptr = b.m_ptr;
 		m_length = b.m_length;
@@ -93,38 +92,38 @@ public:
 	}
 
 	/// Return true if the string is initialized.
-	operator Bool() const 
+	operator Bool() const
 	{
 		return !isEmpty();
 	}
 
 	/// Return char at the specified position.
-	const Char& operator[](U pos) const 
+	const Char& operator[](U pos) const
 	{
 		checkInit();
 		ANKI_ASSERT(pos <= getLength());
 		return m_ptr[pos];
 	}
 
-	const Char* begin() const 
+	const Char* begin() const
 	{
 		checkInit();
 		return &m_ptr[0];
 	}
 
-	const Char* end() const 
+	const Char* end() const
 	{
 		checkInit();
 		return &m_ptr[getLength()];
 	}
 
 	/// Return true if the string is not initialized.
-	Bool isEmpty() const 
+	Bool isEmpty() const
 	{
 		return m_ptr == nullptr || getLength() == 0;
 	}
 
-	Bool operator==(const CString& b) const 
+	Bool operator==(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -136,12 +135,12 @@ public:
 		}
 	}
 
-	Bool operator!=(const CString& b) const 
+	Bool operator!=(const CString& b) const
 	{
 		return !((*this) == b);
 	}
 
-	Bool operator<(const CString& b) const 
+	Bool operator<(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -153,7 +152,7 @@ public:
 		}
 	}
 
-	Bool operator<=(const CString& b) const 
+	Bool operator<=(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -165,7 +164,7 @@ public:
 		}
 	}
 
-	Bool operator>(const CString& b) const 
+	Bool operator>(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -177,7 +176,7 @@ public:
 		}
 	}
 
-	Bool operator>=(const CString& b) const 
+	Bool operator>=(const CString& b) const
 	{
 		if(m_ptr == nullptr || b.m_ptr == nullptr)
 		{
@@ -190,24 +189,24 @@ public:
 	}
 
 	/// Get the underlying C string.
-	const char* get() const 
+	const char* get() const
 	{
 		checkInit();
 		return m_ptr;
 	}
 
 	/// Get the string length.
-	U getLength() const 
+	U getLength() const
 	{
 		if(m_length == 0 && m_ptr != nullptr)
 		{
 			m_length = std::strlen(m_ptr);
 		}
-		
+
 		return m_length;
 	}
 
-	PtrSize find(const CString& cstr, PtrSize position = 0) const 
+	PtrSize find(const CString& cstr, PtrSize position = 0) const
 	{
 		checkInit();
 		ANKI_ASSERT(position < getLength());
@@ -265,15 +264,15 @@ private:
 	mutable U32 m_length = 0;
 
 	/// Constructor for friends
-	CString(const Char* ptr, U32 length) 
-	:	m_ptr(ptr),
-		m_length(length)
+	CString(const Char* ptr, U32 length)
+		: m_ptr(ptr)
+		, m_length(length)
 	{
 		checkInit();
 		ANKI_ASSERT(std::strlen(ptr) == length);
 	}
 
-	void checkInit() const 
+	void checkInit() const
 	{
 		ANKI_ASSERT(m_ptr != nullptr);
 	}
@@ -291,17 +290,17 @@ public:
 	static const PtrSize NPOS = MAX_PTR_SIZE;
 
 	/// Default constructor.
-	String() 
+	String()
 	{}
 
 	/// Move constructor.
-	String(String&& b) 
+	String(String&& b)
 	{
 		move(b);
 	}
 
 	/// Requires manual destruction.
-	~String() 
+	~String()
 	{}
 
 	/// Initialize using a const string.
@@ -332,52 +331,52 @@ public:
 	}
 
 	/// Move one string to this one.
-	String& operator=(String&& b) 
+	String& operator=(String&& b)
 	{
 		move(b);
 		return *this;
 	}
 
 	/// Return char at the specified position.
-	const Char& operator[](U pos) const 
+	const Char& operator[](U pos) const
 	{
 		checkInit();
 		return m_data[pos];
 	}
 
 	/// Return char at the specified position as a modifiable reference.
-	Char& operator[](U pos) 
+	Char& operator[](U pos)
 	{
 		checkInit();
 		return m_data[pos];
 	}
 
-	Iterator begin() 
+	Iterator begin()
 	{
 		checkInit();
 		return &m_data[0];
 	}
 
-	ConstIterator begin() const 
+	ConstIterator begin() const
 	{
 		checkInit();
 		return &m_data[0];
 	}
 
-	Iterator end() 
+	Iterator end()
 	{
 		checkInit();
 		return &m_data[m_data.getSize() - 1];
 	}
 
-	ConstIterator end() const 
+	ConstIterator end() const
 	{
 		checkInit();
 		return &m_data[m_data.getSize() - 1];
 	}
 
 	/// Return true if strings are equal
-	Bool operator==(const String& b) const 
+	Bool operator==(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -385,13 +384,13 @@ public:
 	}
 
 	/// Return true if strings are not equal
-	Bool operator!=(const String& b) const 
+	Bool operator!=(const String& b) const
 	{
 		return !(*this == b);
 	}
 
 	/// Return true if this is less than b
-	Bool operator<(const String& b) const 
+	Bool operator<(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -399,7 +398,7 @@ public:
 	}
 
 	/// Return true if this is less or equal to b
-	Bool operator<=(const String& b) const 
+	Bool operator<=(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -407,7 +406,7 @@ public:
 	}
 
 	/// Return true if this is greater than b
-	Bool operator>(const String& b) const 
+	Bool operator>(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -415,7 +414,7 @@ public:
 	}
 
 	/// Return true if this is greater or equal to b
-	Bool operator>=(const String& b) const 
+	Bool operator>=(const String& b) const
 	{
 		checkInit();
 		b.checkInit();
@@ -423,48 +422,48 @@ public:
 	}
 
 	/// Return true if strings are equal
-	Bool operator==(const CStringType& cstr) const 
+	Bool operator==(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) == 0;
 	}
 
 	/// Return true if strings are not equal
-	Bool operator!=(const CStringType& cstr) const 
+	Bool operator!=(const CStringType& cstr) const
 	{
 		return !(*this == cstr);
 	}
 
 	/// Return true if this is less than cstr.
-	Bool operator<(const CStringType& cstr) const 
+	Bool operator<(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) < 0;
 	}
 
 	/// Return true if this is less or equal to cstr.
-	Bool operator<=(const CStringType& cstr) const 
+	Bool operator<=(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) <= 0;
 	}
 
 	/// Return true if this is greater than cstr.
-	Bool operator>(const CStringType& cstr) const 
+	Bool operator>(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) > 0;
 	}
 
 	/// Return true if this is greater or equal to cstr.
-	Bool operator>=(const CStringType& cstr) const 
+	Bool operator>=(const CStringType& cstr) const
 	{
 		checkInit();
 		return std::strcmp(&m_data[0], cstr.get()) >= 0;
 	}
 
 	/// Return the string's length. It doesn't count the terminating character.
-	PtrSize getLength() const 
+	PtrSize getLength() const
 	{
 		auto size = m_data.getSize();
 		auto out = (size != 0) ? (size - 1) : 0;
@@ -473,7 +472,7 @@ public:
 	}
 
 	/// Return the CString.
-	CStringType toCString() const 
+	CStringType toCString() const
 	{
 		checkInit();
 		return CStringType(&m_data[0], getLength());
@@ -504,17 +503,17 @@ public:
 	void sprintf(TAllocator alloc, CString fmt, ...);
 
 	/// Return true if it's empty.
-	Bool isEmpty() const 
+	Bool isEmpty() const
 	{
 		return m_data.isEmpty();
 	}
 
 	/// Find a substring of this string.
 	/// @param[in] cstr The substring to search.
-	/// @param position Position of the first character in the string to be 
+	/// @param position Position of the first character in the string to be
 	///                 considered in the search.
 	/// @return A valid position if the string is found or NPOS if not found.
-	PtrSize find(const CStringType& cstr, PtrSize position = 0) const 
+	PtrSize find(const CStringType& cstr, PtrSize position = 0) const
 	{
 		checkInit();
 		return toCString().find(cstr, position);
@@ -522,10 +521,10 @@ public:
 
 	/// Find a substring of this string.
 	/// @param[in] str The substring to search.
-	/// @param position Position of the first character in the string to be 
+	/// @param position Position of the first character in the string to be
 	///                 considered in the search.
 	/// @return A valid position if the string is found or NPOS if not found.
-	PtrSize find(const String& str, PtrSize position) const 
+	PtrSize find(const String& str, PtrSize position) const
 	{
 		str.checkInit();
 		return find(str.toCString(), position);
@@ -575,19 +574,19 @@ public:
 	/// Create with allocator.
 	template<typename TAllocator>
 	StringAuto(TAllocator alloc)
-	:	Base(),
-		m_alloc(alloc)
+		: Base()
+		, m_alloc(alloc)
 	{}
 
 	/// Move constructor.
 	StringAuto(StringAuto&& b)
-	:	Base()
+		: Base()
 	{
 		move(b);
 	}
 
 	/// Automatic destruction.
-	~StringAuto() 
+	~StringAuto()
 	{
 		Base::destroy(m_alloc);
 	}
@@ -617,7 +616,7 @@ public:
 	}
 
 	/// Move one string to this one.
-	StringAuto& operator=(StringAuto&& b) 
+	StringAuto& operator=(StringAuto&& b)
 	{
 		move(b);
 		return *this;
@@ -664,4 +663,3 @@ private:
 
 #include "anki/util/String.inl.h"
 
-#endif

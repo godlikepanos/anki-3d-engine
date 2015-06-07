@@ -77,7 +77,8 @@ Error ResourcePointer<T>::load(
 //==============================================================================
 template<typename T>
 template<typename... TArgs>
-Error ResourcePointer<T>::loadToCache(ResourceManager* resources, TArgs&&... args)
+Error ResourcePointer<T>::loadToCache(
+	ResourceManager* resources, TArgs&&... args)
 {
 	StringAuto fname(resources->getTempAllocator());
 

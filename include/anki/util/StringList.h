@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_STRING_LIST_H
-#define ANKI_UTIL_STRING_LIST_H
+#pragma once
 
 #include "anki/util/String.h"
 #include "anki/util/List.h"
@@ -67,13 +66,13 @@ public:
 	/// Create using an allocator.
 	template<typename TAllocator>
 	StringListAuto(TAllocator alloc)
-	:	Base(),
-		m_alloc(alloc)
+		: Base()
+		, m_alloc(alloc)
 	{}
 
 	/// Move.
 	StringListAuto(StringListAuto&& b)
-	:	Base()
+		: Base()
 	{
 		move(b);
 	}
@@ -119,4 +118,3 @@ private:
 
 #include "anki/util/StringList.inl.h"
 
-#endif

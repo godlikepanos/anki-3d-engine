@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_FILE_H
-#define ANKI_UTIL_FILE_H
+#pragma once
 
 #include "anki/util/String.h"
 #include "anki/util/Enum.h"
@@ -29,9 +28,9 @@ namespace anki {
 /// can read from regular C files, zip files and on Android from the packed
 /// asset files.
 /// To identify the file:
-/// - If the path contains ".ankizip" (eg /path/to/arch.ankizip/path/file.ext) 
+/// - If the path contains ".ankizip" (eg /path/to/arch.ankizip/path/file.ext)
 ///   it tries to open the archive and read the file from there.
-/// - If the filename starts with '$' it will try to load a system specific 
+/// - If the filename starts with '$' it will try to load a system specific
 ///   file. For Android this is a file in the .apk
 /// - If the above are false then try to load a regular C file
 class File: public NonCopyable
@@ -71,7 +70,7 @@ public:
 	/// Closes the file if it's open
 	~File();
 
-	/// Move 
+	/// Move
 	File& operator=(File&& b);
 
 	/// Open a file.
@@ -99,11 +98,11 @@ public:
 	ANKI_USE_RESULT Error readAllText(
 		GenericMemoryPoolAllocator<U8> alloc, String& out);
 
-	/// Read 32bit unsigned integer. Set the endianness if the file's 
+	/// Read 32bit unsigned integer. Set the endianness if the file's
 	/// endianness is different from the machine's
 	ANKI_USE_RESULT Error readU32(U32& u);
 
-	/// Read 32bit float. Set the endianness if the file's endianness is 
+	/// Read 32bit float. Set the endianness if the file's endianness is
 	/// different from the machine's
 	ANKI_USE_RESULT Error readF32(F32& f);
 
@@ -125,7 +124,7 @@ private:
 		NONE = 0,
 		C, ///< C file
 		ZIP, ///< Ziped file
-		SPECIAL ///< For example file is located in the android apk 
+		SPECIAL ///< For example file is located in the android apk
 	};
 
 	void* m_file = nullptr; ///< A native file type
@@ -171,4 +170,3 @@ private:
 
 } // end namespace anki
 
-#endif

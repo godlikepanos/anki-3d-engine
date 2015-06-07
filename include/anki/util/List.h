@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_LIST_H
-#define ANKI_UTIL_LIST_H
+#pragma once
 
 #include "anki/util/Allocator.h"
 #include "anki/util/NonCopyable.h"
@@ -47,8 +46,8 @@ public:
 	ListIterator() = default;
 
 	ListIterator(const ListIterator& b)
-	:	m_node(b.m_node),
-		m_list(b.m_list)
+		: m_node(b.m_node)
+		, m_list(b.m_list)
 	{}
 
 	/// Allow conversion from iterator to const iterator.
@@ -56,13 +55,13 @@ public:
 		typename YValueReference, typename YList>
 	ListIterator(const ListIterator<YNodePointer,
 		YValuePointer, YValueReference, YList>& b)
-	:	m_node(b.m_node),
-		m_list(b.m_list)
+		: m_node(b.m_node)
+		, m_list(b.m_list)
 	{}
 
 	ListIterator(TNodePointer node, TListPointer list)
-	:	m_node(node),
-		m_list(list)
+		: m_node(node)
+		, m_list(list)
 	{
 		ANKI_ASSERT(list);
 	}
@@ -182,7 +181,7 @@ public:
 
 	/// Move.
 	List(List&& b)
-	:	List()
+		: List()
 	{
 		move(b);
 	}
@@ -379,13 +378,13 @@ public:
 
 	/// Construct using an allocator.
 	ListAuto(GenericMemoryPoolAllocator<T> alloc)
-	:	Base(),
-		m_alloc(alloc)
+		: Base()
+		, m_alloc(alloc)
 	{}
 
 	/// Move.
 	ListAuto(ListAuto&& b)
-	:	Base()
+		: Base()
 	{
 		move(b);
 	}
@@ -462,6 +461,4 @@ private:
 } // end namespace anki
 
 #include "anki/util/List.inl.h"
-
-#endif
 

@@ -59,3 +59,34 @@ ANKI_TEST(Util, HomeDir)
 	printf("home dir %s\n", &out[0]);
 	ANKI_TEST_EXPECT_GT(out.getLength(), 0);
 }
+
+ANKI_TEST(Util, WalkDir)
+{
+	// Walk crnt dir
+	U32 dirCount = 0;
+
+	ANKI_TEST_EXPECT_NO_ERR(walkDirectoryTree(".", &dirCount,
+		[](const CString& fname, void* pDirCount, Bool isDir) -> Error
+		{
+			if(isDir)
+			{
+				++(*static_cast<U32*>(pDirCount));
+			}
+
+			return ErrorCode::NONE;
+		}));
+
+	ANKI_TEST_EXPECT_GT(dirCount, 0);
+
+	// Test error
+	dirCount = 0;
+	ANKI_TEST_EXPECT_ERR(walkDirectoryTree(".", &dirCount,
+		[](const CString& fname, void* pDirCount, Bool isDir) -> Error
+		{
+			++(*static_cast<U32*>(pDirCount));
+			return ErrorCode::FUNCTION_FAILED;
+		}),
+		ErrorCode::FUNCTION_FAILED);
+
+	ANKI_TEST_EXPECT_EQ(dirCount, 1);
+}

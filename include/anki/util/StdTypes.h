@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_STD_TYPES_H
-#define ANKI_UTIL_STD_TYPES_H
+#pragma once
 
 #include "anki/Config.h"
 #include <cstdint>
@@ -72,7 +71,7 @@ using Bool = bool; ///< Fast boolean type
 using Bool8 = U8; ///< Small 8bit boolean type
 
 /// Error codes
-enum class ErrorCode
+enum class ErrorCode: I32
 {
 	NONE,
 	OUT_OF_MEMORY,
@@ -92,12 +91,12 @@ class Error
 public:
 	/// Construct using an error code.
 	Error(ErrorCode code)
-	:	m_code(code)
+		: m_code(code)
 	{}
 
 	/// Copy.
 	Error(const Error& b)
-	:	m_code(b.m_code)
+		: m_code(b.m_code)
 	{}
 
 	/// Copy.
@@ -174,4 +173,3 @@ private:
 
 } // end namespace anki
 
-#endif

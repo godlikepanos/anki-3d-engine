@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_RESOURCE_POINTER_H
-#define ANKI_RESOURCE_RESOURCE_POINTER_H
+#pragma once
 
 #include "anki/resource/ResourceManager.h"
 #include "anki/util/Ptr.h"
@@ -77,4 +76,3 @@ private:
 
 #include "anki/resource/ResourcePointer.inl.h"
 
-#endif

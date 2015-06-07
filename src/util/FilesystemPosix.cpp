@@ -3,13 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#include "anki/util/File.h"
+#include "anki/util/Filesystem.h"
 #include "anki/util/Assert.h"
+#include "anki/util/Thread.h"
 #include <cstring>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <dirent.h>
 #include <cerrno>
+#include <ftw.h> // For walkDirectoryTree
 
 // Define PATH_MAX if needed
 #ifndef PATH_MAX
@@ -47,33 +49,111 @@ Bool directoryExists(const CString& filename)
 }
 
 //==============================================================================
+static Mutex walkDirMtx;
+static WalkDirectoryTreeCallback walkDirCallback = nullptr;
+static void* walkDirUserData = nullptr;
+static CString walkDirDir;
+
+static int ftwCallback(
+	const char* fpath,
+	const struct stat* /*sb*/,
+	int typeflag)
+{
+	Error err = ErrorCode::NONE;
+
+	if(typeflag == FTW_F || typeflag == FTW_D)
+	{
+		CString path(fpath);
+
+		// Don't list yourself
+		if(ANKI_UNLIKELY(path == walkDirDir))
+		{
+			return static_cast<int>(ErrorCode::NONE);
+		}
+
+		// Remove the directory from the fpath
+		auto pos = path.find(walkDirDir);
+		ANKI_ASSERT(pos == 0);
+		ANKI_ASSERT(path.getLength() - walkDirDir.getLength() > 0);
+		fpath = fpath + walkDirDir.getLength() + 1;
+
+		// Call the callback
+		err = walkDirCallback(fpath, walkDirUserData, typeflag != FTW_F);
+	}
+	else
+	{
+		ANKI_LOGW("Permission denied %s\n", fpath);
+	}
+
+	return err._getCodeInt();
+}
+
+Error walkDirectoryTree(
+	const CString& dir0,
+	void* userData,
+	WalkDirectoryTreeCallback callback)
+{
+	ANKI_ASSERT(callback != nullptr);
+
+	// Copy dir to remove the backslash
+	CString dir = dir0;
+	Array<char, PATH_MAX> dirNoSlash;
+	if(dir[dir.getLength() - 1] == '/')
+	{
+		ANKI_ASSERT(dir.getLength() < dirNoSlash.getSize());
+		strcpy(&dirNoSlash[0], &dir[0]);
+		dirNoSlash[dir.getLength() - 1] = '\0';
+		dir = CString(&dirNoSlash[0]);
+	}
+
+	// Continue
+	LockGuard<Mutex> lock(walkDirMtx);
+
+	walkDirCallback = callback;
+	walkDirUserData = userData;
+	walkDirDir = dir;
+	const int MAX_OPEN_FILE_DESCRS = 1;
+
+	int ierr = ftw(&dir[0], &ftwCallback, MAX_OPEN_FILE_DESCRS);
+	Error err = static_cast<ErrorCode>(ierr);
+
+	if(ierr < 0)
+	{
+		ANKI_LOGE("%s\n", strerror(errno));
+		err = ErrorCode::FUNCTION_FAILED;
+	}
+
+	return err;
+}
+
+//==============================================================================
 Error removeDirectory(const CString& dirname)
 {
 	DIR* dir;
 	struct dirent* entry;
 	char path[PATH_MAX];
 
-	if(path == nullptr) 
+	if(path == nullptr)
 	{
 		ANKI_LOGE("Out of memory error");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
 	dir = opendir(dirname.get());
-	if(dir == nullptr) 
+	if(dir == nullptr)
 	{
 		ANKI_LOGE("opendir() failed");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
-	while((entry = readdir(dir)) != nullptr) 
+	while((entry = readdir(dir)) != nullptr)
 	{
-		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) 
+		if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, ".."))
 		{
 			std::snprintf(
 				path, (size_t)PATH_MAX, "%s/%s", dirname.get(), entry->d_name);
 
-			if(entry->d_type == DT_DIR) 
+			if(entry->d_type == DT_DIR)
 			{
 				Error err = removeDirectory(CString(path));
 				if(err)

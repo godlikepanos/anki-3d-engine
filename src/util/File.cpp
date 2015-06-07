@@ -96,7 +96,6 @@ Error File::open(const CString& filename, OpenFlag flags)
 	//
 	// Set endianess
 	//
-
 	if(!err)
 	{
 		// If the open() DIDN'T provided us the file endianess
@@ -163,13 +162,13 @@ Error File::openZipFile(
 {
 	if((flags & OpenFlag::WRITE) != OpenFlag::NONE)
 	{
-		// Cannot write inside archives
+		ANKI_LOGE("Cannot write inside archives");
 		return ErrorCode::FILE_ACCESS;
 	}
 
 	if((flags & OpenFlag::READ) == OpenFlag::NONE)
 	{
-		// Missing OpenFlag::READ flag
+		ANKI_LOGE("Missing OpenFlag::READ flag");
 		return ErrorCode::FILE_ACCESS;
 	}
 
@@ -177,7 +176,7 @@ Error File::openZipFile(
 	unzFile zfile = unzOpen(&archive[0]);
 	if(zfile == nullptr)
 	{
-		// Failed to open archive
+		ANKI_LOGE("Failed to open archive");
 		return ErrorCode::FILE_ACCESS;
 	}
 
@@ -186,7 +185,7 @@ Error File::openZipFile(
 	if(unzLocateFile(zfile, &archived[0], caseSensitive) != UNZ_OK)
 	{
 		unzClose(zfile);
-		// Failed to locate file in archive
+		ANKI_LOGE("Failed to locate file in archive");
 		return ErrorCode::FILE_ACCESS;
 	}
 
@@ -194,7 +193,7 @@ Error File::openZipFile(
 	if(unzOpenCurrentFile(zfile) != UNZ_OK)
 	{
 		unzClose(zfile);
-		// unzOpenCurrentFile failed
+		ANKI_LOGE("unzOpenCurrentFile() failed");
 		return ErrorCode::FILE_ACCESS;
 	}
 
@@ -219,13 +218,13 @@ Error File::openAndroidFile(const CString& filename, OpenFlag flags)
 {
 	if((flags & OpenFlag::WRITE) != OpenFlag::NONE)
 	{
-		// Cannot write inside archives
+		ANKI_LOGE("Cannot write inside archives");
 		return ErrorCode::FILE_ACCESS;
 	}
 
 	if((flags & OpenFlag::READ) != OpenFlag::NONE)
 	{
-		// Missing OpenFlag::READ flag"
+		ANKI_LOGE("Missing OpenFlag::READ flag");
 		return ErrorCode::FILE_ACCESS;
 	}
 
@@ -240,6 +239,7 @@ Error File::openAndroidFile(const CString& filename, OpenFlag flags)
 
 	if(m_file == nullptr)
 	{
+		ANKI_LOGE("AAssetManager_open() failed");
 		return ErrorCode::FILE_ACCESS;
 	}
 
@@ -551,11 +551,11 @@ Error File::seek(PtrSize offset, SeekOrigin origin)
 		if(!err)
 		{
 			// Move forward by reading dummy data
-			char buff[128];
+			Array<char, 128> buff;
 			while(!err && offset != 0)
 			{
-				PtrSize toRead = std::min(offset, sizeof(buff));
-				err = read(buff, toRead);
+				PtrSize toRead = min(offset, sizeof(buff));
+				err = read(&buff[0], toRead);
 				offset -= toRead;
 			}
 		}
