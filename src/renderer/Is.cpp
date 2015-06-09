@@ -145,10 +145,10 @@ Error Is::init(const ConfigSet& config)
 //==============================================================================
 Error Is::initInternal(const ConfigSet& config)
 {
-	m_groundLightEnabled = config.get("is.groundLightEnabled");
-	m_maxPointLights = config.get("is.maxPointLights");
-	m_maxSpotLights = config.get("is.maxSpotLights");
-	m_maxSpotTexLights = config.get("is.maxSpotTexLights");
+	m_groundLightEnabled = config.getNumber("is.groundLightEnabled");
+	m_maxPointLights = config.getNumber("is.maxPointLights");
+	m_maxSpotLights = config.getNumber("is.maxSpotLights");
+	m_maxSpotTexLights = config.getNumber("is.maxSpotTexLights");
 
 	if(m_maxPointLights < 1 || m_maxSpotLights < 1 || m_maxSpotTexLights < 1)
 	{
@@ -156,7 +156,7 @@ Error Is::initInternal(const ConfigSet& config)
 		return ErrorCode::USER_DATA;
 	}
 
-	m_maxLightIds = config.get("is.maxLightsPerTile");
+	m_maxLightIds = config.getNumber("is.maxLightsPerTile");
 
 	if(m_maxLightIds == 0)
 	{

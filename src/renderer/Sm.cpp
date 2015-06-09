@@ -15,23 +15,23 @@
 namespace anki {
 
 //==============================================================================
-Error Sm::init(const ConfigSet& initializer)
+Error Sm::init(const ConfigSet& config)
 {
-	m_enabled = initializer.get("is.sm.enabled");
+	m_enabled = config.getNumber("is.sm.enabled");
 
 	if(!m_enabled)
 	{
 		return ErrorCode::NONE;
 	}
 
-	m_poissonEnabled = initializer.get("is.sm.poissonEnabled");
-	m_bilinearEnabled = initializer.get("is.sm.bilinearEnabled");
-	m_resolution = initializer.get("is.sm.resolution");
+	m_poissonEnabled = config.getNumber("is.sm.poissonEnabled");
+	m_bilinearEnabled = config.getNumber("is.sm.bilinearEnabled");
+	m_resolution = config.getNumber("is.sm.resolution");
 
 	//
 	// Init the shadowmaps
 	//
-	if(initializer.get("is.sm.maxLights") > MAX_SHADOW_CASTERS)
+	if(config.getNumber("is.sm.maxLights") > MAX_SHADOW_CASTERS)
 	{
 		ANKI_LOGE("Too many shadow casters");
 		return ErrorCode::FUNCTION_FAILED;
@@ -42,7 +42,7 @@ Error Sm::init(const ConfigSet& initializer)
 	sminit.m_type = TextureType::_2D_ARRAY;
 	sminit.m_width = m_resolution;
 	sminit.m_height = m_resolution;
-	sminit.m_depth = initializer.get("is.sm.maxLights");
+	sminit.m_depth = config.getNumber("is.sm.maxLights");
 	sminit.m_format = PixelFormat(ComponentFormat::D16, TransformFormat::FLOAT);
 	sminit.m_mipmapsCount = 1;
 	sminit.m_sampling.m_minMagFilter = m_bilinearEnabled
@@ -57,7 +57,7 @@ Error Sm::init(const ConfigSet& initializer)
 	cmdBuff.flush();
 
 	// Init sms
-	m_sms.create(getAllocator(), initializer.get("is.sm.maxLights"));
+	m_sms.create(getAllocator(), config.getNumber("is.sm.maxLights"));
 
 	FramebufferPtr::Initializer fbInit;
 	fbInit.m_depthStencilAttachment.m_texture = m_sm2DArrayTex;

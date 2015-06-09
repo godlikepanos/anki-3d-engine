@@ -77,9 +77,9 @@ Error Ms::init(const ConfigSet& initializer)
 //==============================================================================
 Error Ms::initInternal(const ConfigSet& initializer)
 {
-	if(initializer.get("samples") > 1)
+	if(initializer.getNumber("samples") > 1)
 	{
-		ANKI_CHECK(createRt(0, initializer.get("samples")));
+		ANKI_CHECK(createRt(0, initializer.getNumber("samples")));
 	}
 
 	ANKI_CHECK(createRt(1, 1));

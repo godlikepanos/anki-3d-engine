@@ -16,7 +16,7 @@ namespace anki {
 //==============================================================================
 Error Sslr::init(const ConfigSet& config)
 {
-	m_enabled = config.get("pps.sslr.enabled");
+	m_enabled = config.getNumber("pps.sslr.enabled");
 
 	if(!m_enabled)
 	{
@@ -24,9 +24,9 @@ Error Sslr::init(const ConfigSet& config)
 	}
 
 	// Size
-	const F32 quality = config.get("pps.sslr.renderingQuality");
+	const F32 quality = config.getNumber("pps.sslr.renderingQuality");
 	m_blurringIterationsCount =
-		config.get("pps.sslr.blurringIterationsCount");
+		config.getNumber("pps.sslr.blurringIterationsCount");
 
 	m_width = quality * (F32)m_r->getWidth();
 	alignRoundUp(16, m_width);

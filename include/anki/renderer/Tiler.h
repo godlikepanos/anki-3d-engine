@@ -108,7 +108,7 @@ private:
 	DArray<Vec2> m_prevMinMaxDepth;
 
 	/// Main shader program
-	ShaderResourcePointer m_shader;
+	ShaderResourcePtr m_shader;
 	PipelinePtr m_ppline;
 
 	/// Used to check if the camera is changed and we need to update the planes

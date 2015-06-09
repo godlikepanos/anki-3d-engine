@@ -88,11 +88,11 @@ private:
 	UniquePtr<Sslf> m_sslf;
 
 	FramebufferPtr m_fb;
-	ShaderResourcePointer m_frag;
+	ShaderResourcePtr m_frag;
 	PipelinePtr m_ppline;
 	TexturePtr m_rt;
 
-	TextureResourcePointer m_lut; ///< Color grading lookup texture.
+	TextureResourcePtr m_lut; ///< Color grading lookup texture.
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };

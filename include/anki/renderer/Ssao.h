@@ -50,9 +50,9 @@ private:
 	FramebufferPtr m_vblurFb;
 	FramebufferPtr m_hblurFb;
 
-	ShaderResourcePointer m_ssaoFrag;
-	ShaderResourcePointer m_hblurFrag;
-	ShaderResourcePointer m_vblurFrag;
+	ShaderResourcePtr m_ssaoFrag;
+	ShaderResourcePtr m_hblurFrag;
+	ShaderResourcePtr m_vblurFrag;
 	PipelinePtr m_ssaoPpline;
 	PipelinePtr m_hblurPpline;
 	PipelinePtr m_vblurPpline;

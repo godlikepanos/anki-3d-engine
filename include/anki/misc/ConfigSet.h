@@ -3,60 +3,79 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_MISC_CONFIG_SET_H
-#define ANKI_MISC_CONFIG_SET_H
+#pragma once
 
-#include "anki/util/StdTypes.h"
-#include "anki/util/Logger.h"
-#include <unordered_map>
+#include "anki/util/List.h"
+#include "anki/util/String.h"
 
 namespace anki {
 
-/// A storage of configuration variables
+/// @addtogroup misc
+/// @{
+
+/// A storage of configuration variables.
 class ConfigSet
 {
 public:
-	/// Find an option and return it's value
-	F64 get(const char* name) const
+	ConfigSet();
+
+	/// Copy.
+	ConfigSet(const ConfigSet& b)
 	{
-		std::unordered_map<std::string, F64>::const_iterator it = 
-			map.find(name);
-		if(it != map.end())
-		{
-			return it->second;
-		}
-		else
-		{
-			ANKI_LOGE("Option not found: %s", name);
-			return 0.0;
-		}
+		operator=(b);
 	}
 
-	// Set an option
-	void set(const char* name, F64 value)
-	{
-		std::unordered_map<std::string, F64>::iterator it = map.find(name);
-		if(it != map.end())
-		{
-			it->second = value;
-		}
-		else
-		{
-			ANKI_LOGE("Option not found: %s", name);
-		}
-	}
+	~ConfigSet();
+
+	/// Copy.
+	ConfigSet& operator=(const ConfigSet& b);
+
+	/// @name Set an option
+	/// @{
+	void set(const CString& name, const CString& value);
+	void set(const CString& name, F64 value);
+	/// @}
+
+	/// @name Find an option and return it's value.
+	/// @{
+	F64 getNumber(const CString& name) const;
+	CString getString(const CString& name) const;
+	/// @}
 
 protected:
-	/// Add a new option
-	void newOption(const char* name, F64 value)
-	{
-		map[name] = value;
-	}
+	void newOption(const CString& name, const CString& value);
+	void newOption(const CString& name, F64 value);
 
 private:
-	std::unordered_map<std::string, F64> map;
+	class Option: public NonCopyable
+	{
+	public:
+		String m_name;
+		String m_strVal;
+		F64 m_fVal = 0.0;
+		U8 m_type = 0; ///< 0: string, 1: float
+
+		Option() = default;
+
+		Option(Option&& b)
+			: m_name(std::move(b.m_name))
+			, m_strVal(std::move(b.m_strVal))
+			, m_fVal(b.m_fVal)
+			, m_type(b.m_type)
+		{}
+
+		~Option() = default;
+
+		Option& operator=(Option&& b) = delete;
+	};
+
+	HeapAllocator<U8> m_alloc;
+	List<Option> m_options;
+
+	Option* tryFind(const CString& name);
+	const Option* tryFind(const CString& name) const;
 };
+/// @}
 
 } // end namespace anki
 
-#endif

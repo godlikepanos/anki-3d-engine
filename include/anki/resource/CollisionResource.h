@@ -26,7 +26,7 @@ class CollisionResource: public ResourceObject
 {
 public:
 	CollisionResource(ResourceManager* manager)
-	:	ResourceObject(manager)
+		: ResourceObject(manager)
 	{}
 
 	~CollisionResource()

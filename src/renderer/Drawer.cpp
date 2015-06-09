@@ -228,9 +228,9 @@ public:
 
 // Texture specialization
 template<>
-void SetupRenderableVariableVisitor::uniSet<TextureResourcePointer>(
+void SetupRenderableVariableVisitor::uniSet<TextureResourcePtr>(
 	const MaterialVariable& mtlvar,
-	const TextureResourcePointer* values, U32 size)
+	const TextureResourcePtr* values, U32 size)
 {
 	ANKI_ASSERT(size == 1);
 	TexturePtr tex = (*values)->getGlTexture();

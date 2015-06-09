@@ -177,7 +177,7 @@ private:
 		PHYSICS_ENGINE
 	};
 
-	ParticleEmitterResourcePointer m_particleEmitterResource;
+	ParticleEmitterResourcePtr m_particleEmitterResource;
 	DArray<ParticleBase*> m_particles;
 	F32 m_timeLeftForNextEmission = 0.0;
 	Obb m_obb;

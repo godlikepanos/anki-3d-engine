@@ -98,6 +98,10 @@ public:
 	ANKI_USE_RESULT Error readAllText(
 		GenericMemoryPoolAllocator<U8> alloc, String& out);
 
+	/// Read all the contents of a text file
+	/// If the file is not rewined it will probably fail
+	ANKI_USE_RESULT Error readAllText(StringAuto& out);
+
 	/// Read 32bit unsigned integer. Set the endianness if the file's
 	/// endianness is different from the machine's
 	ANKI_USE_RESULT Error readU32(U32& u);

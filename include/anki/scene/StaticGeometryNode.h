@@ -47,7 +47,7 @@ public:
 		const CString& name, const CString& filename);
 
 private:
-	ModelResourcePointer m_model;
+	ModelResourcePtr m_model;
 };
 /// @}
 

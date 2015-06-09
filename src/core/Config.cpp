@@ -12,7 +12,7 @@ Config::Config()
 {
 	//
 	// Renderer
-	// 
+	//
 
 	// Ms
 	newOption("ms.ez.enabled", false);
@@ -78,9 +78,9 @@ Config::Config()
 	//
 	// Resource
 	//
-
 	newOption("maxTextureSize", 1024 * 1024);
 	newOption("textureAnisotropy", 8);
+	newOption("dataPaths", ".");
 
 	//
 	// Window
@@ -88,7 +88,7 @@ Config::Config()
 	newOption("glminor", 4);
 	newOption("glmajor", 4);
 	newOption("fullscreenDesktopResolution", false);
-	newOption("debugContext", 
+	newOption("debugContext",
 #if ANKI_DEBUG == 1
 		true
 #else

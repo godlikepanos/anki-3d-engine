@@ -46,7 +46,7 @@ typedef VisitableCommonBase<
 	RenderComponentVariableTemplate<Vec4>,
 	RenderComponentVariableTemplate<Mat3>,
 	RenderComponentVariableTemplate<Mat4>,
-	RenderComponentVariableTemplate<TextureResourcePointer>>
+	RenderComponentVariableTemplate<TextureResourcePtr>>
 	RenderComponentVariableVisitable;
 
 /// A wrapper on top of MaterialVariable

@@ -33,12 +33,12 @@ private:
 	U32 m_height;
 
 	// 1st pass
-	ShaderResourcePointer m_reflectionFrag;
+	ShaderResourcePtr m_reflectionFrag;
 	PipelinePtr m_reflectionPpline;
 	SamplerPtr m_depthMapSampler;
 
 	// 2nd pass: blit
-	ShaderResourcePointer m_blitFrag;
+	ShaderResourcePtr m_blitFrag;
 	PipelinePtr m_blitPpline;
 };
 

@@ -121,7 +121,7 @@ public:
 	ANKI_USE_RESULT Error load(const CString& filename);
 
 private:
-	MaterialResourcePointer m_material;
+	MaterialResourcePtr m_material;
 
 	void loadInternal(const XmlElement& el);
 };

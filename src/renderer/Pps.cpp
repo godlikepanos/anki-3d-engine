@@ -29,7 +29,7 @@ Pps::~Pps()
 //==============================================================================
 Error Pps::initInternal(const ConfigSet& config)
 {
-	m_enabled = config.get("pps.enabled");
+	m_enabled = config.getNumber("pps.enabled");
 	if(!m_enabled)
 	{
 		return ErrorCode::NONE;
@@ -79,8 +79,8 @@ Error Pps::initInternal(const ConfigSet& config)
 		m_ssao->getEnabled(),
 		m_bloom->getEnabled(),
 		m_sslf->getEnabled(),
-		U(config.get("pps.sharpen")),
-		U(config.get("pps.gammaCorrection")),
+		U(config.getNumber("pps.sharpen")),
+		U(config.getNumber("pps.gammaCorrection")),
 		m_r->getWidth(),
 		m_r->getHeight());
 

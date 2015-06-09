@@ -36,27 +36,28 @@ Error Bloom::initFb(FramebufferPtr& fb, TexturePtr& rt)
 }
 
 //==============================================================================
-Error Bloom::initInternal(const ConfigSet& initializer)
+Error Bloom::initInternal(const ConfigSet& config)
 {
-	m_enabled = initializer.get("pps.bloom.enabled");
+	m_enabled = config.getNumber("pps.bloom.enabled");
 
 	if(!m_enabled)
 	{
 		return ErrorCode::NONE;
 	}
 
-	const F32 renderingQuality = initializer.get("pps.bloom.renderingQuality");
+	const F32 renderingQuality =
+		config.getNumber("pps.bloom.renderingQuality");
 
 	m_width = renderingQuality * (F32)m_r->getWidth();
 	alignRoundDown(16, m_width);
 	m_height = renderingQuality * (F32)m_r->getHeight();
 	alignRoundDown(16, m_height);
 
-	m_threshold = initializer.get("pps.bloom.threshold");
-	m_scale = initializer.get("pps.bloom.scale");
-	m_blurringDist = initializer.get("pps.bloom.blurringDist");
+	m_threshold = config.getNumber("pps.bloom.threshold");
+	m_scale = config.getNumber("pps.bloom.scale");
+	m_blurringDist = config.getNumber("pps.bloom.blurringDist");
 	m_blurringIterationsCount =
-		initializer.get("pps.bloom.blurringIterationsCount");
+		config.getNumber("pps.bloom.blurringIterationsCount");
 
 	ANKI_CHECK(initFb(m_hblurFb, m_hblurRt));
 	ANKI_CHECK(initFb(m_vblurFb, m_vblurRt));
@@ -127,9 +128,9 @@ Error Bloom::initInternal(const ConfigSet& initializer)
 }
 
 //==============================================================================
-Error Bloom::init(const ConfigSet& initializer)
+Error Bloom::init(const ConfigSet& config)
 {
-	Error err = initInternal(initializer);
+	Error err = initInternal(config);
 	if(err)
 	{
 		ANKI_LOGE("Failed to init PPS bloom");

@@ -205,8 +205,8 @@ U ModelPatchBase::getVertexDescIdx(const RenderingKey& key) const
 //==============================================================================
 
 //==============================================================================
-template<typename MeshResourcePointerType>
-Error ModelPatch<MeshResourcePointerType>::create(
+template<typename MeshResourcePtrType>
+Error ModelPatch<MeshResourcePtrType>::create(
 	CString meshFNames[],
 	U32 meshesCount,
 	const CString& mtlFName,
@@ -336,8 +336,8 @@ Error Model::load(const CString& filename)
 
 			CString cstr;
 			ANKI_CHECK(materialEl.getText(cstr));
-			ModelPatch<MeshResourcePointer>* mpatch = alloc.newInstance<
-				ModelPatch<MeshResourcePointer>>(alloc);
+			ModelPatch<MeshResourcePtr>* mpatch = alloc.newInstance<
+				ModelPatch<MeshResourcePtr>>(alloc);
 
 			if(mpatch == nullptr)
 			{
@@ -379,9 +379,9 @@ Error Model::load(const CString& filename)
 			CString cstr;
 			ANKI_CHECK(materialEl.getText(cstr));
 
-			ModelPatch<BucketMeshResourcePointer>* mpatch =
+			ModelPatch<BucketMeshResourcePtr>* mpatch =
 				alloc.newInstance<
-				ModelPatch<BucketMeshResourcePointer>>(alloc);
+				ModelPatch<BucketMeshResourcePtr>>(alloc);
 
 			if(mpatch == nullptr)
 			{

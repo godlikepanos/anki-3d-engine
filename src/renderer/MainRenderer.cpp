@@ -46,14 +46,14 @@ Error MainRenderer::create(
 	m_frameAlloc = StackAllocator<U8>(allocCb, allocCbUserData, 1024 * 1024);
 
 	// Init default FB
-	m_width = config.get("width");
-	m_height = config.get("height");
+	m_width = config.getNumber("width");
+	m_height = config.getNumber("height");
 	FramebufferPtr::Initializer fbInit;
 	m_defaultFb.create(gr, fbInit);
 
 	// Init renderer
 	ConfigSet config2 = config;
-	m_renderingQuality = config.get("renderingQuality");
+	m_renderingQuality = config.getNumber("renderingQuality");
 	config2.set("width", m_renderingQuality * F32(m_width));
 	config2.set("height", m_renderingQuality * F32(m_height));
 

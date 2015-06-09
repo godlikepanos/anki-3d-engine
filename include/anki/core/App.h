@@ -30,6 +30,7 @@ class PhysicsWorld;
 class SceneGraph;
 class ScriptManager;
 class ResourceManager;
+class ResourceFilesystem;
 
 /// The core class of the engine.
 class App
@@ -142,6 +143,7 @@ private:
 	Input* m_input = nullptr;
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
+	ResourceFilesystem* m_resourceFs = nullptr;
 	ResourceManager* m_resources = nullptr;
 	MainRenderer* m_renderer = nullptr;
 	SceneGraph* m_scene = nullptr;

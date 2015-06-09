@@ -300,7 +300,7 @@ private:
 	/// @name For drawing a quad into the active framebuffer
 	/// @{
 	BufferPtr m_quadPositionsBuff; ///< The VBO for quad positions
-	ShaderResourcePointer m_drawQuadVert;
+	ShaderResourcePtr m_drawQuadVert;
 	/// @}
 
 	/// @name Optimization vars

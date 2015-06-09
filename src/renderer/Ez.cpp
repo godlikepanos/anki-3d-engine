@@ -15,8 +15,8 @@ namespace anki {
 //==============================================================================
 Error Ez::init(const ConfigSet& config)
 {
-	m_enabled = config.get("ms.ez.enabled");
-	m_maxObjectsToDraw = config.get("ms.ez.maxObjectsToDraw");
+	m_enabled = config.getNumber("ms.ez.enabled");
+	m_maxObjectsToDraw = config.getNumber("ms.ez.maxObjectsToDraw");
 
 	return ErrorCode::NONE;
 }

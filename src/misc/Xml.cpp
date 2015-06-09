@@ -68,7 +68,7 @@ Error XmlElement::getI64(I64& out) const
 Error XmlElement::getF64(F64& out) const
 {
 	Error err = check();
-	
+
 	if(!err)
 	{
 		const char* txt = m_el->GetText();
@@ -90,7 +90,7 @@ Error XmlElement::getF64(F64& out) const
 Error XmlElement::getFloats(DArrayAuto<F64>& out) const
 {
 	Error err = check();
-	
+
 	const char* txt;
 	if(!err)
 	{
@@ -135,7 +135,7 @@ Error XmlElement::getFloats(DArrayAuto<F64>& out) const
 Error XmlElement::getMat4(Mat4& out) const
 {
 	DArrayAuto<F64> arr(m_alloc);
-	Error err = getFloats(arr);	
+	Error err = getFloats(arr);
 
 	if(!err && arr.getSize() != 16)
 	{
@@ -164,7 +164,7 @@ Error XmlElement::getVec3(Vec3& out) const
 {
 	DArrayAuto<F64> arr(m_alloc);
 	Error err = getFloats(arr);
-	
+
 	if(!err && arr.getSize() != 3)
 	{
 		ANKI_LOGE("Expecting 3 elements for Vec3");
@@ -183,7 +183,7 @@ Error XmlElement::getVec3(Vec3& out) const
 	{
 		ANKI_LOGE("Failed to return Vec3. Element: %s", m_el->Value());
 	}
-	
+
 	return err;
 }
 //==============================================================================
@@ -191,7 +191,7 @@ Error XmlElement::getVec4(Vec4& out) const
 {
 	DArrayAuto<F64> arr(m_alloc);
 	Error err = getFloats(arr);
-	
+
 	if(!err && arr.getSize() != 4)
 	{
 		ANKI_LOGE("Expecting 4 elements for Vec3");
@@ -210,14 +210,14 @@ Error XmlElement::getVec4(Vec4& out) const
 	{
 		ANKI_LOGE("Failed to return Vec4. Element: %s", m_el->Value());
 	}
-	
+
 	return err;
 }
 
 //==============================================================================
 Error XmlElement::getChildElementOptional(
 	const CString& name, XmlElement& out) const
-{	
+{
 	Error err = check();
 	if(!err)
 	{
@@ -252,7 +252,7 @@ Error XmlElement::getChildElement(const CString& name, XmlElement& out) const
 		ANKI_LOGE("Cannot find tag %s", &name[0]);
 		err = ErrorCode::USER_DATA;
 	}
-	
+
 	return err;
 }
 
@@ -280,7 +280,7 @@ Error XmlElement::getSiblingElementsCount(U32& out) const
 	if(!err)
 	{
 		tinyxml2::XMLElement* el = m_el;
-		
+
 		I count = -1;
 		do
 		{
@@ -303,37 +303,36 @@ Error XmlElement::getSiblingElementsCount(U32& out) const
 //==============================================================================
 
 //==============================================================================
-Error XmlDocument::loadFile(const CString& filename, 
+Error XmlDocument::loadFile(const CString& filename,
 	GenericMemoryPoolAllocator<U8> alloc)
 {
-	Error err = ErrorCode::NONE;
-
 	File file;
-	err = file.open(filename, File::OpenFlag::READ);
-	if(err)
-	{
-		return err;
-	}
+	ANKI_CHECK(file.open(filename, File::OpenFlag::READ));
 
+	StringAuto text(alloc);
+	ANKI_CHECK(file.readAllText(text));
+
+	ANKI_CHECK(parse(text.toCString(), alloc));
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error XmlDocument::parse(
+	const CString& xmlText, GenericMemoryPoolAllocator<U8> alloc)
+{
 	m_alloc = alloc;
-	String text;
-	
-	err = file.readAllText(m_alloc, text);
-	if(err)
-	{
-		return err;
-	}
 
-	if(m_doc.Parse(&text[0]))
+	if(m_doc.Parse(&xmlText[0]))
 	{
 		ANKI_LOGE("Cannot parse file. Reason: %s",
 			((m_doc.GetErrorStr1() == nullptr)
 			? "unknown" : m_doc.GetErrorStr1()));
+
+		return ErrorCode::USER_DATA;
 	}
 
-	text.destroy(m_alloc);
-
-	return err;
+	return ErrorCode::NONE;
 }
 
 //==============================================================================

@@ -96,7 +96,7 @@ public:
 	/// @}
 
 private:
-	TextureResourcePointer m_tex; ///< Array of textures.
+	TextureResourcePtr m_tex; ///< Array of textures.
 	U8 m_flareCount = 0; ///< Cache the flare count.
 
 	Vec4 m_colorMul = Vec4(1.0); ///< Color multiplier.

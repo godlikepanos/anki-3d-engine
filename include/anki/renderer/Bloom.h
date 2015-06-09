@@ -71,9 +71,9 @@ private:
 	FramebufferPtr m_hblurFb;
 	FramebufferPtr m_vblurFb;
 
-	ShaderResourcePointer m_toneFrag;
-	ShaderResourcePointer m_hblurFrag;
-	ShaderResourcePointer m_vblurFrag;
+	ShaderResourcePtr m_toneFrag;
+	ShaderResourcePtr m_hblurFrag;
+	ShaderResourcePtr m_vblurFrag;
 
 	PipelinePtr m_tonePpline;
 	PipelinePtr m_hblurPpline;

@@ -38,6 +38,7 @@ Error ResourceManager::create(Initializer& init)
 
 	m_gr = init.m_gr;
 	m_physics = init.m_physics;
+	m_fs = init.m_resourceFs;
 	m_alloc = ResourceAllocator<U8>(
 		init.m_allocCallback, init.m_allocCallbackData);
 
@@ -66,8 +67,8 @@ Error ResourceManager::create(Initializer& init)
 
 	// Init some constants
 	//
-	m_maxTextureSize = init.m_config->get("maxTextureSize");
-	m_textureAnisotropy = init.m_config->get("textureAnisotropy");
+	m_maxTextureSize = init.m_config->getNumber("maxTextureSize");
+	m_textureAnisotropy = init.m_config->getNumber("textureAnisotropy");
 
 	// Init type resource managers
 	//

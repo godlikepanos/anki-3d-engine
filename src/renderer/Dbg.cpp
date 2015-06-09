@@ -38,7 +38,7 @@ Dbg::~Dbg()
 //==============================================================================
 Error Dbg::init(const ConfigSet& initializer)
 {
-	m_enabled = initializer.get("dbg.enabled");
+	m_enabled = initializer.getNumber("dbg.enabled");
 	enableBits(Flag::ALL);
 
 	// Chose the correct color FAI

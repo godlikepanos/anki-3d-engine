@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_CORE_CONFIG_H
-#define ANKI_CORE_CONFIG_H
+#pragma once
 
 #include "anki/misc/ConfigSet.h"
 
@@ -20,11 +19,7 @@ public:
 	Config();
 	~Config();
 };
-
 /// @}
 
 } // end namespace anki
-
-#endif
-
 

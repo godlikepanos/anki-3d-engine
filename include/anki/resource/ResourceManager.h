@@ -112,6 +112,7 @@ public:
 	public:
 		GrManager* m_gr = nullptr;
 		PhysicsWorld* m_physics = nullptr;
+		ResourceFilesystem* m_resourceFs = nullptr;
 		const ConfigSet* m_config = nullptr;
 		CString m_cacheDir;
 		AllocAlignedCallback m_allocCallback = 0;
@@ -168,6 +169,12 @@ public:
 		return *m_physics;
 	}
 
+	ResourceFilesystem& getFilesystem()
+	{
+		ANKI_ASSERT(m_fs);
+		return *m_fs;
+	}
+
 	const String& _getCacheDirectory() const
 	{
 		return m_cacheDir;
@@ -217,6 +224,7 @@ public:
 private:
 	GrManager* m_gr = nullptr;
 	PhysicsWorld* m_physics = nullptr;
+	ResourceFilesystem* m_fs = nullptr;
 	ResourceAllocator<U8> m_alloc;
 	TempResourceAllocator<U8> m_tmpAlloc;
 	String m_cacheDir;

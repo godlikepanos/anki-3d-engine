@@ -52,8 +52,8 @@ Error Lf::init(const ConfigSet& config)
 //==============================================================================
 Error Lf::initSprite(const ConfigSet& config)
 {
-	m_maxSpritesPerFlare = config.get("lf.maxSpritesPerFlare");
-	m_maxFlares = config.get("lf.maxFlares");
+	m_maxSpritesPerFlare = config.getNumber("lf.maxSpritesPerFlare");
+	m_maxFlares = config.getNumber("lf.maxFlares");
 
 	if(m_maxSpritesPerFlare < 1 || m_maxFlares < 1)
 	{

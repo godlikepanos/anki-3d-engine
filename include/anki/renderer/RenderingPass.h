@@ -74,7 +74,7 @@ protected:
 	public:
 		FramebufferPtr m_fb;
 		TexturePtr m_rt;
-		ShaderResourcePointer m_frag;
+		ShaderResourcePtr m_frag;
 		PipelinePtr m_ppline;
 	};
 

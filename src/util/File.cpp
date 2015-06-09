@@ -680,4 +680,23 @@ Error File::readAllText(
 	return err;
 }
 
+//==============================================================================
+Error File::readAllText(StringAuto& out)
+{
+	Error err = ErrorCode::NONE;
+	PtrSize size = getSize();
+
+	if(size != 0)
+	{
+		out.create('?', size);
+		err = read(&out[0], size);
+	}
+	else
+	{
+		err = ErrorCode::FUNCTION_FAILED;
+	}
+
+	return err;
+}
+
 } // end namespace anki

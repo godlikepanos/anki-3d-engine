@@ -282,10 +282,10 @@ U Material::getShaderIndex(const RenderingKey key, ShaderType type) const
 }
 
 //==============================================================================
-ShaderResourcePointer& Material::getProgram(
+ShaderResourcePtr& Material::getProgram(
 	const RenderingKey key, ShaderType type)
 {
-	ShaderResourcePointer& out = m_progs[getShaderIndex(key, type)];
+	ShaderResourcePtr& out = m_progs[getShaderIndex(key, type)];
 
 	if(out.isLoaded())
 	{
@@ -524,7 +524,7 @@ Error Material::parseMaterialTag(const XmlElement& materialEl)
 					ANKI_CHECK(createProgramSourceToCache(src, filename));
 
 					RenderingKey key((Pass)pid, level, tess);
-					ShaderResourcePointer& progr = getProgram(key, shader);
+					ShaderResourcePtr& progr = getProgram(key, shader);
 					ANKI_CHECK(progr.load(filename.toCString(), &getManager()));
 
 					// Update the hash
@@ -602,7 +602,7 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 		case ShaderVariableDataType::SAMPLER_2D:
 		case ShaderVariableDataType::SAMPLER_CUBE:
 			{
-				TextureResourcePointer tp;
+				TextureResourcePtr tp;
 
 				if(in.m_value.getSize() > 0)
 				{
@@ -611,9 +611,9 @@ Error Material::populateVariables(const MaterialProgramCreator& loader)
 				}
 
 				auto alloc = getAllocator();
-				MaterialVariableTemplate<TextureResourcePointer>* tvar =
+				MaterialVariableTemplate<TextureResourcePtr>* tvar =
 					alloc.newInstance<
-					MaterialVariableTemplate<TextureResourcePointer>>();
+					MaterialVariableTemplate<TextureResourcePtr>>();
 
 				if(tvar)
 				{

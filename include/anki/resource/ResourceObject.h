@@ -7,6 +7,7 @@
 #define ANKI_RESOURCE_RESOURCE_OBJECT_H
 
 #include "anki/resource/Common.h"
+#include "anki/resource/ResourceFilesystem.h"
 #include "anki/util/Atomic.h"
 #include "anki/util/String.h"
 
@@ -20,8 +21,8 @@ class ResourceObject
 {
 public:
 	ResourceObject(ResourceManager* manager)
-	:	m_manager(manager),
-		m_refcount(0)
+		: m_manager(manager)
+		, m_refcount(0)
 	{}
 
 	virtual ~ResourceObject();
@@ -57,6 +58,14 @@ public:
 		ANKI_ASSERT(m_uuid.isEmpty());
 		m_uuid.create(getAllocator(), uuid);
 	}
+
+	ANKI_USE_RESULT Error openFile(
+		const CString& filename,
+		ResourceFilePtr& file);
+
+	ANKI_USE_RESULT Error openFileReadAllText(
+		const CString& filename,
+		StringAuto& file);
 	/// @}
 
 private:

@@ -103,7 +103,7 @@ private:
 
 /// Its a chunk of a model. Its very important class and it binds the material
 /// with the mesh
-template<typename MeshResourcePointerType>
+template<typename MeshResourcePtrType>
 class ModelPatch: public ModelPatchBase
 {
 public:
@@ -126,8 +126,8 @@ public:
 		ResourceManager* resources);
 
 private:
-	DArray<MeshResourcePointerType> m_meshResources; ///< Geometries
-	MaterialResourcePointer m_mtlResource; ///< Material
+	DArray<MeshResourcePtrType> m_meshResources; ///< Geometries
+	MaterialResourcePtr m_mtlResource; ///< Material
 };
 
 /// Model is an entity that acts as a container for other resources. Models are
@@ -185,8 +185,8 @@ public:
 private:
 	DArray<ModelPatchBase*> m_modelPatches;
 	Obb m_visibilityShape;
-	SkeletonResourcePointer m_skeleton;
-	DArray<AnimationResourcePointer> m_animations;
+	SkeletonResourcePtr m_skeleton;
+	DArray<AnimationResourcePtr> m_animations;
 };
 
 } // end namespace anki

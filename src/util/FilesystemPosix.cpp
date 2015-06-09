@@ -95,7 +95,6 @@ Error walkDirectoryTree(
 {
 	ANKI_ASSERT(callback != nullptr);
 
-	// Continue
 	LockGuard<Mutex> lock(walkDirMtx);
 
 	walkDirCallback = callback;

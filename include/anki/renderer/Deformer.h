@@ -35,10 +35,10 @@ public:
 
 private:
 	/// Shader program that deforms all attribs
-	ShaderResourcePointer tfHwSkinningAllSProg;
+	ShaderResourcePtr tfHwSkinningAllSProg;
 
 	/// Shader program that deforms only the position attribute
-	ShaderResourcePointer tfHwSkinningPosSProg;
+	ShaderResourcePtr tfHwSkinningPosSProg;
 
 	void init();
 };

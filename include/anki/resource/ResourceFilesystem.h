@@ -12,11 +12,14 @@
 
 namespace anki {
 
+// Forward
+class ConfigSet;
+
 /// @addtogroup resource
 /// @{
 
 /// Resource filesystem file. An interface that abstracts the resource file.
-class ResourceFile
+class ResourceFile: public NonCopyable
 {
 public:
 	using SeekOrigin = File::SeekOrigin;
@@ -68,7 +71,7 @@ private:
 using ResourceFilePtr = IntrusivePtr<ResourceFile>;
 
 /// Resource filesystem.
-class ResourceFilesystem
+class ResourceFilesystem: public NonCopyable
 {
 public:
 	ResourceFilesystem(GenericMemoryPoolAllocator<U8> alloc)
@@ -77,12 +80,14 @@ public:
 
 	~ResourceFilesystem();
 
+	ANKI_USE_RESULT Error init(
+		const ConfigSet& config,
+		const CString& cacheDir);
+
 	/// Search the path list to find the file. Then open the file for reading.
 	ANKI_USE_RESULT Error openFile(
-		const CString& filename, ResourceFilePtr& file);
-
-	/// Add a filesystem path or an archive
-	ANKI_USE_RESULT Error addNewPath(const CString& path);
+		const CString& filename,
+		ResourceFilePtr& file);
 
 private:
 	class Path: public NonCopyable
@@ -91,6 +96,7 @@ private:
 		StringList m_files; ///< Files inside the directory.
 		String m_path; ///< A directory or an archive.
 		Bool8 m_isArchive = false;
+		Bool8 m_isCache = false;
 
 		Path() = default;
 
@@ -98,6 +104,7 @@ private:
 			: m_files(std::move(b.m_files))
 			, m_path(std::move(b.m_path))
 			, m_isArchive(std::move(b.m_isArchive))
+			, m_isCache(std::move(b.m_isCache))
 		{}
 
 		Path& operator=(Path&& b)
@@ -105,12 +112,19 @@ private:
 			m_files = std::move(b.m_files);
 			m_path = std::move(b.m_path);
 			m_isArchive = std::move(b.m_isArchive);
+			m_isCache = std::move(b.m_isCache);
 			return *this;
 		}
 	};
 
 	GenericMemoryPoolAllocator<U8> m_alloc;
 	List<Path> m_paths;
+	String m_cacheDir;
+
+	/// Add a filesystem path or an archive. The path is read-only.
+	ANKI_USE_RESULT Error addNewPath(const CString& path);
+
+	void addCachePath(const CString& path);
 };
 /// @}
 

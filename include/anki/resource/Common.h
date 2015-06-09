@@ -15,6 +15,7 @@ namespace anki {
 // Forward
 class GrManager;
 class ResourceManager;
+class ResourceFilesystem;
 template<typename Type>
 class ResourcePointer;
 
@@ -26,17 +27,17 @@ class ResourcePointer;
 	class rsrc_; \
 	using name_ = ResourcePointer<rsrc_>;
 
-ANKI_FORWARD(Animation, AnimationResourcePointer)
-ANKI_FORWARD(TextureResource, TextureResourcePointer)
-ANKI_FORWARD(ShaderResource, ShaderResourcePointer)
-ANKI_FORWARD(Material, MaterialResourcePointer)
-ANKI_FORWARD(Mesh, MeshResourcePointer)
-ANKI_FORWARD(BucketMesh, BucketMeshResourcePointer)
-ANKI_FORWARD(Skeleton, SkeletonResourcePointer)
-ANKI_FORWARD(ParticleEmitterResource, ParticleEmitterResourcePointer)
-ANKI_FORWARD(Model, ModelResourcePointer)
-ANKI_FORWARD(Script, ScriptResourcePointer)
-ANKI_FORWARD(DummyRsrc, DummyResourcePointer)
+ANKI_FORWARD(Animation, AnimationResourcePtr)
+ANKI_FORWARD(TextureResource, TextureResourcePtr)
+ANKI_FORWARD(ShaderResource, ShaderResourcePtr)
+ANKI_FORWARD(Material, MaterialResourcePtr)
+ANKI_FORWARD(Mesh, MeshResourcePtr)
+ANKI_FORWARD(BucketMesh, BucketMeshResourcePtr)
+ANKI_FORWARD(Skeleton, SkeletonResourcePtr)
+ANKI_FORWARD(ParticleEmitterResource, ParticleEmitterResourcePtr)
+ANKI_FORWARD(Model, ModelResourcePtr)
+ANKI_FORWARD(Script, ScriptResourcePtr)
+ANKI_FORWARD(DummyRsrc, DummyResourcePtr)
 ANKI_FORWARD(CollisionResource, CollisionResourcePtr)
 
 #undef ANKI_FORWARD

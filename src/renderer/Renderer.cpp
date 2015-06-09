@@ -57,16 +57,16 @@ Error Renderer::init(
 Error Renderer::initInternal(const ConfigSet& config)
 {
 	// Set from the config
-	m_width = getAlignedRoundDown(TILE_SIZE, U(config.get("width")));
-	m_height = getAlignedRoundDown(TILE_SIZE, U(config.get("height")));
-	m_lodDistance = config.get("lodDistance");
+	m_width = getAlignedRoundDown(TILE_SIZE, U(config.getNumber("width")));
+	m_height = getAlignedRoundDown(TILE_SIZE, U(config.getNumber("height")));
+	m_lodDistance = config.getNumber("lodDistance");
 	m_framesNum = 0;
-	m_samples = config.get("samples");
+	m_samples = config.getNumber("samples");
 	m_tilesCount.x() = m_width / TILE_SIZE;
 	m_tilesCount.y() = m_height / TILE_SIZE;
 	m_tilesCountXY = m_tilesCount.x() * m_tilesCount.y();
 
-	m_tessellation = config.get("tessellation");
+	m_tessellation = config.getNumber("tessellation");
 
 	// A few sanity checks
 	if(m_samples != 1 && m_samples != 4 && m_samples != 8 && m_samples != 16

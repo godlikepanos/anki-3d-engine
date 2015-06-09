@@ -26,4 +26,25 @@ TempResourceAllocator<U8> ResourceObject::getTempAllocator() const
 	return m_manager->getTempAllocator();
 }
 
+//==============================================================================
+Error ResourceObject::openFile(const CString& filename, ResourceFilePtr& file)
+{
+	return m_manager->getFilesystem().openFile(filename, file);
+}
+
+//==============================================================================
+Error ResourceObject::openFileReadAllText(
+	const CString& filename, StringAuto& text)
+{
+	// Load file
+	ResourceFilePtr file;
+	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
+
+	// Read string
+	text = std::move(StringAuto(getTempAllocator()));
+	ANKI_CHECK(file->readAllText(getTempAllocator(), text));
+
+	return ErrorCode::NONE;
+}
+
 } // end namespace anki

@@ -31,7 +31,7 @@ public:
 	void run(CommandBufferPtr& cmdb);
 
 private:
-	ShaderResourcePointer m_luminanceShader;
+	ShaderResourcePtr m_luminanceShader;
 	PipelinePtr m_luminancePpline;
 	BufferPtr m_luminanceBuff;
 };

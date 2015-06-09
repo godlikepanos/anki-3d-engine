@@ -17,14 +17,14 @@ class AnimationEvent: public Event
 public:
 	ANKI_USE_RESULT Error create(
 		EventManager* manager, 
-		const AnimationResourcePointer& anim, 
+		const AnimationResourcePtr& anim, 
 		SceneNode* movableSceneNode);
 
 	/// Implements Event::update
 	ANKI_USE_RESULT Error update(F32 prevUpdateTime, F32 crntTime) override;
 
 private:
-	AnimationResourcePointer m_anim;
+	AnimationResourcePtr m_anim;
 };
 /// @}
 

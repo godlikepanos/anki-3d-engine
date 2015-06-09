@@ -16,6 +16,9 @@
 
 namespace anki {
 
+/// @addtogroup misc
+/// @{
+
 /// XML element.
 class XmlElement
 {
@@ -23,17 +26,17 @@ class XmlElement
 
 public:
 	XmlElement()
-	:	m_el(nullptr)
+		: m_el(nullptr)
 	{}
 
 	XmlElement(const XmlElement& b)
-	:	m_el(b.m_el),
-		m_alloc(b.m_alloc)
+		: m_el(b.m_el)
+		, m_alloc(b.m_alloc)
 	{}
 
 	XmlElement(tinyxml2::XMLElement* el, GenericMemoryPoolAllocator<U8> alloc)
-	:	m_el(el),
-		m_alloc(alloc)
+		: m_el(el)
+		, m_alloc(alloc)
 	{}
 
 	/// If element has something return true
@@ -102,12 +105,16 @@ public:
 	ANKI_USE_RESULT Error loadFile(
 		const CString& filename, GenericMemoryPoolAllocator<U8> alloc);
 
+	ANKI_USE_RESULT Error parse(
+		const CString& xmlText, GenericMemoryPoolAllocator<U8> alloc);
+
 	ANKI_USE_RESULT Error getChildElement(const CString& name, XmlElement& out);
 
 private:
 	tinyxml2::XMLDocument m_doc;
 	GenericMemoryPoolAllocator<U8> m_alloc;
 };
+/// @}
 
 } // end namespace anki
 

@@ -12,7 +12,7 @@ namespace anki {
 
 //==============================================================================
 Error AnimationEvent::create(EventManager* manager, 
-	const AnimationResourcePointer& anim, 
+	const AnimationResourcePtr& anim, 
 	SceneNode* movableSceneNode)
 {
 	ANKI_ASSERT(movableSceneNode);

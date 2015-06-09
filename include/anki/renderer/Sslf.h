@@ -35,9 +35,9 @@ public:
 private:
 	TexturePtr m_rt;
 	FramebufferPtr m_fb;
-	ShaderResourcePointer m_frag;
+	ShaderResourcePtr m_frag;
 	PipelinePtr m_ppline;
-	TextureResourcePointer m_lensDirtTex;
+	TextureResourcePtr m_lensDirtTex;
 
 	ANKI_USE_RESULT Error initInternal(const ConfigSet& config);
 };

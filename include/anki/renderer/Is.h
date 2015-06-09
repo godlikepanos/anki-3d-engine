@@ -112,8 +112,8 @@ private:
 	/// @}
 
 	// Light shaders
-	ShaderResourcePointer m_lightVert;
-	ShaderResourcePointer m_lightFrag;
+	ShaderResourcePtr m_lightVert;
+	ShaderResourcePtr m_lightFrag;
 	PipelinePtr m_lightPpline;
 
 	/// Shadow mapping

@@ -17,6 +17,7 @@
 #include "anki/physics/PhysicsWorld.h"
 #include "anki/renderer/MainRenderer.h"
 #include "anki/script/ScriptManager.h"
+#include "anki/resource/ResourceFilesystem.h"
 
 #include <signal.h>
 #if ANKI_OS == ANKI_OS_ANDROID
@@ -45,28 +46,34 @@ App::~App()
 //==============================================================================
 void App::cleanup()
 {
-	if(m_script != nullptr)
+	if(m_script)
 	{
 		m_heapAlloc.deleteInstance(m_script);
 		m_script = nullptr;
 	}
 
-	if(m_scene != nullptr)
+	if(m_scene)
 	{
 		m_heapAlloc.deleteInstance(m_scene);
 		m_scene = nullptr;
 	}
 
-	if(m_renderer != nullptr)
+	if(m_renderer)
 	{
 		m_heapAlloc.deleteInstance(m_renderer);
 		m_renderer = nullptr;
 	}
 
-	if(m_resources != nullptr)
+	if(m_resources)
 	{
 		m_heapAlloc.deleteInstance(m_resources);
 		m_resources = nullptr;
+	}
+
+	if(m_resourceFs)
+	{
+		m_heapAlloc.deleteInstance(m_resourceFs);
+		m_resourceFs = nullptr;
 	}
 
 	if(m_physics)
@@ -75,25 +82,25 @@ void App::cleanup()
 		m_physics = nullptr;
 	}
 
-	if(m_gr != nullptr)
+	if(m_gr)
 	{
 		m_heapAlloc.deleteInstance(m_gr);
 		m_gr = nullptr;
 	}
 
-	if(m_threadpool != nullptr)
+	if(m_threadpool)
 	{
 		m_heapAlloc.deleteInstance(m_threadpool);
 		m_threadpool = nullptr;
 	}
 
-	if(m_input != nullptr)
+	if(m_input)
 	{
 		m_heapAlloc.deleteInstance(m_input);
 		m_input = nullptr;
 	}
 
-	if(m_window != nullptr)
+	if(m_window)
 	{
 		m_heapAlloc.deleteInstance(m_window);
 		m_window = nullptr;
@@ -156,14 +163,15 @@ Error App::createInternal(const ConfigSet& config_,
 	// Window
 	//
 	NativeWindow::Initializer nwinit;
-	nwinit.m_width = config.get("width");
-	nwinit.m_height = config.get("height");
-	nwinit.m_majorVersion = config.get("glmajor");
-	nwinit.m_minorVersion = config.get("glminor");
+	nwinit.m_width = config.getNumber("width");
+	nwinit.m_height = config.getNumber("height");
+	nwinit.m_majorVersion = config.getNumber("glmajor");
+	nwinit.m_minorVersion = config.getNumber("glminor");
 	nwinit.m_depthBits = 0;
 	nwinit.m_stencilBits = 0;
-	nwinit.m_fullscreenDesktopRez = config.get("fullscreenDesktopResolution");
-	nwinit.m_debugContext = config.get("debugContext");
+	nwinit.m_fullscreenDesktopRez =
+		config.getNumber("fullscreenDesktopResolution");
+	nwinit.m_debugContext = config.getNumber("debugContext");
 	m_window = m_heapAlloc.newInstance<NativeWindow>();
 
 	ANKI_CHECK(m_window->create(nwinit, m_heapAlloc));
@@ -209,6 +217,12 @@ Error App::createInternal(const ConfigSet& config_,
 	ANKI_CHECK(m_physics->create(m_allocCb, m_allocCbData));
 
 	//
+	// Resource FS
+	//
+	m_resourceFs = m_heapAlloc.newInstance<ResourceFilesystem>(m_heapAlloc);
+	ANKI_CHECK(m_resourceFs->init(config, m_cacheDir.toCString()));
+
+	//
 	// Resources
 	//
 	ResourceManager::Initializer rinit;
@@ -250,7 +264,7 @@ Error App::createInternal(const ConfigSet& config_,
 	m_scene = m_heapAlloc.newInstance<SceneGraph>();
 
 	ANKI_CHECK(m_scene->create(m_allocCb, m_allocCbData,
-		config.get("sceneFrameAllocatorSize"), m_threadpool, m_resources,
+		config.getNumber("sceneFrameAllocatorSize"), m_threadpool, m_resources,
 		m_input, &m_globalTimestamp));
 
 	// Script

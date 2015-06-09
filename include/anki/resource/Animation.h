@@ -69,7 +69,7 @@ class Animation: public ResourceObject
 {
 public:
 	Animation(ResourceManager* manager)
-	:	ResourceObject(manager)
+		: ResourceObject(manager)
 	{}
 
 	~Animation();

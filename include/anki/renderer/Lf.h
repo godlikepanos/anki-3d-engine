@@ -39,13 +39,13 @@ private:
 	// Occlusion query
 	Array<BufferPtr, 3> m_positionsVertBuff;
 	BufferPtr m_mvpBuff;
-	ShaderResourcePointer m_occlusionVert;
-	ShaderResourcePointer m_occlusionFrag;
+	ShaderResourcePtr m_occlusionVert;
+	ShaderResourcePtr m_occlusionFrag;
 	PipelinePtr m_occlusionPpline;
 
 	// Sprite billboards
-	ShaderResourcePointer m_realVert;
-	ShaderResourcePointer m_realFrag;
+	ShaderResourcePtr m_realVert;
+	ShaderResourcePtr m_realFrag;
 	PipelinePtr m_realPpline;
 	Array<BufferPtr, 3> m_flareDataBuff;
 	U32 m_flareSize;

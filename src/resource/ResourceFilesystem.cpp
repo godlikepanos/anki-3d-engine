@@ -5,6 +5,7 @@
 
 #include "anki/resource/ResourceFilesystem.h"
 #include "anki/util/Filesystem.h"
+#include "anki/misc/ConfigSet.h"
 #include <contrib/minizip/unzip.h>
 
 namespace anki {
@@ -194,6 +195,39 @@ ResourceFilesystem::~ResourceFilesystem()
 	}
 
 	m_paths.destroy(m_alloc);
+	m_cacheDir.destroy(m_alloc);
+}
+
+//==============================================================================
+Error ResourceFilesystem::init(const ConfigSet& config, const CString& cacheDir)
+{
+	StringListAuto paths(m_alloc);
+	paths.splitString(config.getString("dataPaths"), ':');
+
+	if(paths.getSize() < 1)
+	{
+		ANKI_LOGE("Config option \"dataPaths\" is empty");
+		return ErrorCode::USER_DATA;
+	}
+
+	for(auto& path : paths)
+	{
+		ANKI_CHECK(addNewPath(path.toCString()));
+	}
+
+	addCachePath(cacheDir);
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+void ResourceFilesystem::addCachePath(const CString& path)
+{
+	Path p;
+	p.m_path.create(m_alloc, path);
+	p.m_isCache = true;
+
+	m_paths.emplaceBack(m_alloc, std::move(p));
 }
 
 //==============================================================================
@@ -254,8 +288,9 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 		// It's simple directory
 
 		m_paths.emplaceFront(m_alloc, std::move(Path()));
-		m_paths.getBack().m_path.sprintf(m_alloc, "%s", &path[0]);
-		m_paths.getBack().m_isArchive = false;
+		Path& p = m_paths.getFront();
+		p.m_path.sprintf(m_alloc, "%s", &path[0]);
+		p.m_isArchive = false;
 
 		ANKI_CHECK(walkDirectoryTree(path, this,
 			[](const CString& fname, void* ud, Bool isDir) -> Error
@@ -267,12 +302,12 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 
 			ResourceFilesystem* self = static_cast<ResourceFilesystem*>(ud);
 
-			Path& p = self->m_paths.getBack();
+			Path& p = self->m_paths.getFront();
 			p.m_files.pushBackSprintf(self->m_alloc, "%s", &fname[0]);
 			return ErrorCode::NONE;
 		}));
 
-		if(m_paths.getBack().m_files.getSize() < 1)
+		if(p.m_files.getSize() < 1)
 		{
 			ANKI_LOGE("Directory is empty: %s", &path[0]);
 			return ErrorCode::USER_DATA;
@@ -284,34 +319,23 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 
 //==============================================================================
 Error ResourceFilesystem::openFile(
-	const CString& ufilename, ResourceFilePtr& filePtr)
+	const CString& filename, ResourceFilePtr& filePtr)
 {
+	ResourceFile* rfile = nullptr;
+	Error err = ErrorCode::NONE;
+
 	// Search for the fname in reverse order
 	for(const Path& p : m_paths)
 	{
-		for(const String& filename : p.m_files)
+		// Check if it's cache
+		if(p.m_isCache)
 		{
-			if(filename != ufilename)
-			{
-				continue;
-			}
+			StringAuto newFname(m_alloc);
+			newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
 
-			ResourceFile* rfile;
-			Error err = ErrorCode::NONE;
-
-			// Found
-			if(p.m_isArchive)
+			if(fileExists(newFname.toCString()))
 			{
-				ZipResourceFile* file =
-					m_alloc.newInstance<ZipResourceFile>(m_alloc);
-				rfile = file;
-
-				err = file->open(p.m_path.toCString(), filename.toCString());
-			}
-			else
-			{
-				StringAuto newFname(m_alloc);
-				newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
+				// In cache
 
 				CResourceFile* file =
 					m_alloc.newInstance<CResourceFile>(m_alloc);
@@ -319,21 +343,62 @@ Error ResourceFilesystem::openFile(
 
 				err = file->m_file.open(&newFname[0], File::OpenFlag::READ);
 			}
-
-			if(err)
-			{
-				m_alloc.deleteInstance(rfile);
-				return err;
-			}
-
-			// Done
-			filePtr.reset(rfile);
-			return ErrorCode::NONE;
 		}
+		else
+		{
+			// In data path or archive
+
+			for(const String& pfname : p.m_files)
+			{
+				if(pfname != filename)
+				{
+					continue;
+				}
+
+				// Found
+				if(p.m_isArchive)
+				{
+					ZipResourceFile* file =
+						m_alloc.newInstance<ZipResourceFile>(m_alloc);
+					rfile = file;
+
+					err = file->open(p.m_path.toCString(), filename);
+				}
+				else
+				{
+					StringAuto newFname(m_alloc);
+					newFname.sprintf("%s/%s", &p.m_path[0], &filename[0]);
+
+					CResourceFile* file =
+						m_alloc.newInstance<CResourceFile>(m_alloc);
+					rfile = file;
+
+					err = file->m_file.open(&newFname[0], File::OpenFlag::READ);
+				}
+			}
+		} // end if cache
+
+		if(rfile)
+		{
+			break;
+		}
+	} // end for all paths
+
+	if(err)
+	{
+		m_alloc.deleteInstance(rfile);
+		return err;
 	}
 
-	ANKI_LOGE("File not found: %s", &ufilename[0]);
-	return ErrorCode::USER_DATA;
+	if(!rfile)
+	{
+		ANKI_LOGE("File not found: %s", &filename[0]);
+		return ErrorCode::USER_DATA;
+	}
+
+	// Done
+	filePtr.reset(rfile);
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

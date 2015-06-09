@@ -26,7 +26,7 @@ Error Sslf::init(const ConfigSet& config)
 //==============================================================================
 Error Sslf::initInternal(const ConfigSet& config)
 {
-	m_enabled = config.get("pps.sslf.enabled");
+	m_enabled = config.getNumber("pps.sslf.enabled");
 	if(!m_enabled)
 	{
 		return ErrorCode::NONE;

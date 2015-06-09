@@ -224,7 +224,7 @@ Error Animation::load(const CString& filename)
 }
 
 //==============================================================================
-void Animation::interpolate(U channelIndex, F32 time, 
+void Animation::interpolate(U channelIndex, F32 time,
 	Vec3& pos, Quat& rot, F32& scale) const
 {
 	// Audjust time

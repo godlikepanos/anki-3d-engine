@@ -56,8 +56,8 @@ public:
 private:
 	/// @name The resources
 	/// @{
-	ModelResourcePointer model;
-	SkeletonResourcePointer skeleton; ///< The skeleton
+	ModelResourcePtr model;
+	SkeletonResourcePtr skeleton; ///< The skeleton
 	/// The standard skeleton animations
 	SkeletonAnimationsContainer skelAnims;
 	/// @}

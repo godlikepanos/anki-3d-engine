@@ -73,7 +73,7 @@ public:
 	ANKI_USE_RESULT Error frameUpdate(F32, F32) override;
 
 private:
-	ModelResourcePointer m_model; ///< The resource
+	ModelResourcePtr m_model; ///< The resource
 	DArray<ModelPatchNode*> m_modelPatches;
 	DArray<Transform> m_transforms; ///< Cache the transforms of instances
 	Timestamp m_transformsTimestamp;

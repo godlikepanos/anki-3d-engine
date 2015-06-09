@@ -57,7 +57,7 @@ private:
 
 	UniquePtr<Renderer> m_r;
 
-	ShaderResourcePointer m_blitFrag;
+	ShaderResourcePtr m_blitFrag;
 	PipelinePtr m_blitPpline;
 
 	FramebufferPtr m_defaultFb;

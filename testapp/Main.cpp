@@ -259,7 +259,7 @@ Error init()
 
 #if 1
 	{
-		ScriptResourcePointer script;
+		ScriptResourcePtr script;
 
 		err = script.load("maps/techdemo/scene.lua", &resources);
 		if(err) return err;

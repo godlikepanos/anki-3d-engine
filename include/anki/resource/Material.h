@@ -37,7 +37,7 @@ typedef VisitableCommonBase<
 	MaterialVariableTemplate<Vec4>,
 	MaterialVariableTemplate<Mat3>,
 	MaterialVariableTemplate<Mat4>,
-	MaterialVariableTemplate<TextureResourcePointer>>
+	MaterialVariableTemplate<TextureResourcePtr>>
 	MateriaVariableVisitable;
 
 /// Holds the shader variables. Its a container for shader program variables
@@ -366,7 +366,7 @@ private:
 	DArray<MaterialVariable*> m_vars;
 	Dictionary<MaterialVariable*> m_varDict;
 
-	DArray<ShaderResourcePointer> m_progs;
+	DArray<ShaderResourcePtr> m_progs;
 	DArray<PipelinePtr> m_pplines;
 
 	U32 m_shaderBlockSize;
@@ -375,7 +375,7 @@ private:
 	U64 m_hash;
 
 	/// Get a program resource
-	ShaderResourcePointer& getProgram(
+	ShaderResourcePtr& getProgram(
 		const RenderingKey key, ShaderType shaderId);
 
 	/// Parse what is within the @code <material></material> @endcode
