@@ -27,7 +27,6 @@ ResourceManager::ResourceManager()
 ResourceManager::~ResourceManager()
 {
 	m_cacheDir.destroy(m_alloc);
-	m_dataDir.destroy(m_alloc);
 	m_alloc.deleteInstance(m_asyncLoader);
 }
 
@@ -47,23 +46,6 @@ Error ResourceManager::create(Initializer& init)
 		init.m_tempAllocatorMemorySize);
 
 	m_cacheDir.create(m_alloc, init.m_cacheDir);
-
-	// Init the data path
-	//
-	if(getenv("ANKI_DATA_PATH"))
-	{
-		m_dataDir.sprintf(m_alloc, "%s/", getenv("ANKI_DATA_PATH"));
-		ANKI_LOGI("Data path: %s", &m_dataDir[0]);
-	}
-	else
-	{
-		// Assume working directory
-#if ANKI_OS == ANKI_OS_ANDROID
-		m_dataDir.create(m_alloc, "$");
-#else
-		m_dataDir.create(m_alloc, "./");
-#endif
-	}
 
 	// Init some constants
 	//
@@ -95,22 +77,6 @@ Error ResourceManager::create(Initializer& init)
 	err = m_asyncLoader->create(m_alloc);
 
 	return err;
-}
-
-//==============================================================================
-void ResourceManager::fixResourceFilename(
-	const CString& filename,
-	StringAuto& out) const
-{
-	// If the filename is in cache then dont append the data path
-	if(filename.find(m_cacheDir.toCString()) != String::NPOS)
-	{
-		out.create(filename);
-	}
-	else
-	{
-		out.sprintf("%s%s", &m_dataDir[0], &filename[0]);
-	}
 }
 
 } // end namespace anki

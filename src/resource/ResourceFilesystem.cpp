@@ -319,7 +319,7 @@ Error ResourceFilesystem::addNewPath(const CString& path)
 
 //==============================================================================
 Error ResourceFilesystem::openFile(
-	const CString& filename, ResourceFilePtr& filePtr)
+	const ResourceFilename& filename, ResourceFilePtr& filePtr)
 {
 	ResourceFile* rfile = nullptr;
 	Error err = ErrorCode::NONE;

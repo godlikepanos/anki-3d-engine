@@ -5,6 +5,7 @@
 
 #include "anki/resource/ProgramPrePreprocessor.h"
 #include "anki/resource/ResourceManager.h"
+#include "anki/resource/ResourceFilesystem.h"
 #include "anki/util/Functions.h"
 #include "anki/util/File.h"
 #include "anki/util/Array.h"
@@ -17,7 +18,7 @@ namespace anki {
 // Keep the strings in that order so that the start pragmas will match to the
 // ShaderType enums
 static Array<const char*, 7> commands = {{
-	"#pragma anki type vert", 
+	"#pragma anki type vert",
 	"#pragma anki type tesc",
 	"#pragma anki type tese",
 	"#pragma anki type geom",
@@ -40,7 +41,7 @@ void ProgramPrePreprocessor::printSourceLines() const
 }
 
 //==============================================================================
-Error ProgramPrePreprocessor::parseFile(const CString& filename)
+Error ProgramPrePreprocessor::parseFile(const ResourceFilename& filename)
 {
 	// Parse files recursively
 	Error err = parseFileForPragmas(filename, 0);
@@ -49,13 +50,13 @@ Error ProgramPrePreprocessor::parseFile(const CString& filename)
 	{
 		m_sourceLines.join(m_alloc, "\n", m_shaderSource);
 	}
-	
+
 	return err;
 }
 
 //==============================================================================
 Error ProgramPrePreprocessor::parseFileForPragmas(
-	CString filename, U32 depth)
+	ResourceFilename filename, U32 depth)
 {
 	// first check the depth
 	if(depth > MAX_DEPTH)
@@ -69,9 +70,9 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 	StringAuto txt(m_alloc);
 	StringListAuto lines(m_alloc);
 
-	File file;
-	ANKI_CHECK(file.open(filename, File::OpenFlag::READ));
-	ANKI_CHECK(file.readAllText(TempResourceAllocator<char>(m_alloc), txt));
+	ResourceFilePtr file;
+	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
+	ANKI_CHECK(file->readAllText(TempResourceAllocator<char>(m_alloc), txt));
 	lines.splitString(txt.toCString(), '\n');
 	if(lines.getSize() < 1)
 	{
@@ -100,18 +101,15 @@ Error ProgramPrePreprocessor::parseFileForPragmas(
 				if(line.getLength() >= std::strlen(commands[6]) + 2)
 				{
 					StringAuto filen(m_alloc);
-					
+
 					filen.create(
-						line.begin() + std::strlen(commands[6]), 
+						line.begin() + std::strlen(commands[6]),
 						line.end() - 1);
 
 					StringAuto filenFixed(m_alloc);
 
-					m_manager->fixResourceFilename(
-						filen.toCString(), filenFixed);
-
-					ANKI_CHECK(parseFileForPragmas(
-						filenFixed.toCString(), depth + 1));
+					ANKI_CHECK(
+						parseFileForPragmas(filen.toCString(), depth + 1));
 
 					malformed = false; // All OK
 				}

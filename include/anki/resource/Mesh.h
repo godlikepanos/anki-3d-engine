@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_MESH_H
-#define ANKI_RESOURCE_MESH_H
+#pragma once
 
 #include "anki/resource/ResourceObject.h"
 #include "anki/Math.h"
@@ -14,6 +13,9 @@
 namespace anki {
 
 class MeshLoader;
+
+/// @addtogroup resource
+/// @{
 
 /// Vertex attributes. This should match the shaders
 enum class VertexAttribute: U8
@@ -36,7 +38,7 @@ class Mesh: public ResourceObject
 public:
 	/// Default constructor
 	Mesh(ResourceManager* manager)
-	:	ResourceObject(manager)
+		: ResourceObject(manager)
 	{}
 
 	~Mesh();
@@ -96,7 +98,7 @@ public:
 	Bool isCompatible(const Mesh& other) const;
 
 	/// Load from a .mesh file
-	ANKI_USE_RESULT Error load(const CString& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 protected:
 	/// Per sub mesh data
@@ -137,7 +139,7 @@ public:
 	/// Load from a .mmesh file
 	ANKI_USE_RESULT Error load(const CString& filename);
 };
+/// @}
 
 } // end namespace anki
 
-#endif

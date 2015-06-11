@@ -15,13 +15,14 @@
 namespace anki {
 
 //==============================================================================
-Error ShaderResource::load(const CString& filename)
+Error ShaderResource::load(const ResourceFilename& filename)
 {
 	return load(filename, " ");
 }
 
 //==============================================================================
-Error ShaderResource::load(const CString& filename, const CString& extraSrc)
+Error ShaderResource::load(const ResourceFilename& filename,
+	const CString& extraSrc)
 {
 	auto alloc = getTempAllocator();
 
@@ -53,7 +54,7 @@ Error ShaderResource::load(const CString& filename, const CString& extraSrc)
 
 //==============================================================================
 Error ShaderResource::createToCache(
-	const CString& filename, const CString& preAppendedSrcCode,
+	const ResourceFilename& filename, const CString& preAppendedSrcCode,
 	const CString& filenamePrefix, ResourceManager& manager,
 	StringAuto& out)
 {
@@ -61,6 +62,7 @@ Error ShaderResource::createToCache(
 
 	if(preAppendedSrcCode.getLength() < 1)
 	{
+		// Early exit, nothing to mutate
 		out.create(filename);
 		return ErrorCode::NONE;
 	}
@@ -76,30 +78,29 @@ Error ShaderResource::createToCache(
 	StringAuto suffix(alloc);
 	suffix.toString(h);
 
+	// Create out
+	out = std::move(StringAuto(alloc));
+	out.sprintf("%s%s.glsl", &filenamePrefix[0], &suffix[0]);
+
 	// Compose cached filename
 	StringAuto newFilename(alloc);
 
 	newFilename.sprintf(
-		"%s/%s%s.glsl",
+		"%s/%s",
 		&manager._getCacheDirectory()[0],
-		&filenamePrefix[0],
-		&suffix[0]);
+		&out[0]);
 
 	if(fileExists(newFilename.toCString()))
 	{
-		out = std::move(newFilename);
 		return ErrorCode::NONE;
 	}
 
 	// Read file and append code
 	StringAuto src(alloc);
 
-	StringAuto fixedFname(alloc);
-	manager.fixResourceFilename(filename, fixedFname);
-
-	File file;
-	ANKI_CHECK(file.open(fixedFname.toCString(), File::OpenFlag::READ));
-	ANKI_CHECK(file.readAllText(TempResourceAllocator<char>(alloc), src));
+	ResourceFilePtr file;
+	ANKI_CHECK(manager.getFilesystem().openFile(filename, file));
+	ANKI_CHECK(file->readAllText(alloc, src));
 
 	StringAuto srcfull(alloc);
 	srcfull.sprintf("%s%s", &preAppendedSrcCode[0], &src[0]);
@@ -109,7 +110,6 @@ Error ShaderResource::createToCache(
 	ANKI_CHECK(f.open(newFilename.toCString(), File::OpenFlag::WRITE));
 	ANKI_CHECK(f.writeText("%s\n", &srcfull[0]));
 
-	out = std::move(newFilename);
 	return ErrorCode::NONE;
 }
 

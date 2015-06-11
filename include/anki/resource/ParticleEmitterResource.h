@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_PARTICLE_EMITTER_RSRC_H
-#define ANKI_RESOURCE_PARTICLE_EMITTER_RSRC_H
+#pragma once
 
 #include "anki/resource/ResourceObject.h"
 #include "anki/resource/ResourcePointer.h"
@@ -98,7 +97,7 @@ class ParticleEmitterResource: public ResourceObject,
 {
 public:
 	ParticleEmitterResource(ResourceManager* manager)
-	:	ResourceObject(manager)
+		: ResourceObject(manager)
 	{}
 
 	~ParticleEmitterResource();
@@ -112,13 +111,14 @@ public:
 	{
 		return *m_material;
 	}
+
 	Material& getMaterial()
 	{
 		return *m_material;
 	}
 
 	/// Load it
-	ANKI_USE_RESULT Error load(const CString& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 private:
 	MaterialResourcePtr m_material;
@@ -129,4 +129,3 @@ private:
 
 } // end namespace anki
 
-#endif

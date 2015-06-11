@@ -259,7 +259,7 @@ Model::~Model()
 }
 
 //==============================================================================
-Error Model::load(const CString& filename)
+Error Model::load(const ResourceFilename& filename)
 {
 	auto alloc = getAllocator();
 
@@ -267,7 +267,7 @@ Error Model::load(const CString& filename)
 	//
 	XmlElement el;
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
+	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootEl;
 	ANKI_CHECK(doc.getChildElement("model", rootEl));

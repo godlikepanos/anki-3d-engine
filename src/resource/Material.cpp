@@ -155,8 +155,8 @@ Error MaterialVariableTemplate<T>::_newInstance(
 
 //==============================================================================
 Material::Material(ResourceManager* manager)
-:	ResourceObject(manager),
-	m_varDict(10, Dictionary<MaterialVariable*>::hasher(),
+	: ResourceObject(manager)
+	, m_varDict(10, Dictionary<MaterialVariable*>::hasher(),
 		Dictionary<MaterialVariable*>::key_equal(), getAllocator())
 {}
 
@@ -347,10 +347,10 @@ Error Material::getProgramPipeline(
 }
 
 //==============================================================================
-Error Material::load(const CString& filename)
+Error Material::load(const ResourceFilename& filename)
 {
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
+	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement el;
 	ANKI_CHECK(doc.getChildElement("material", el));

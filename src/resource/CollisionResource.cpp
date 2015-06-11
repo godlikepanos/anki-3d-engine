@@ -12,11 +12,11 @@
 namespace anki {
 
 //==============================================================================
-Error CollisionResource::load(const CString& filename)
+Error CollisionResource::load(const ResourceFilename& filename)
 {
 	XmlElement el;
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
+	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement collEl;
 	ANKI_CHECK(doc.getChildElement("collisionShape", collEl));
@@ -45,14 +45,11 @@ Error CollisionResource::load(const CString& filename)
 	}
 	else if(type == "staticMesh")
 	{
-		CString filename;
-		ANKI_CHECK(valEl.getText(filename));
+		CString meshfname;
+		ANKI_CHECK(valEl.getText(meshfname));
 
-		StringAuto fixedFilename(getTempAllocator());
-		getManager().fixResourceFilename(filename, fixedFilename);
-
-		MeshLoader loader;
-		ANKI_CHECK(loader.load(getTempAllocator(), fixedFilename.toCString()));
+		MeshLoader loader(&getManager());
+		ANKI_CHECK(loader.load(meshfname));
 
 		m_physicsShape = physics.newInstance<PhysicsTriangleSoup>(
 			csInit,

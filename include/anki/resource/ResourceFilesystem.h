@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "anki/resource/Common.h"
 #include "anki/util/String.h"
 #include "anki/util/StringList.h"
 #include "anki/util/File.h"
@@ -86,7 +87,7 @@ public:
 
 	/// Search the path list to find the file. Then open the file for reading.
 	ANKI_USE_RESULT Error openFile(
-		const CString& filename,
+		const ResourceFilename& filename,
 		ResourceFilePtr& file);
 
 private:

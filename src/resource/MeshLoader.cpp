@@ -4,46 +4,32 @@
 // http://www.anki3d.org/LICENSE
 
 #include "anki/resource/MeshLoader.h"
-#include "anki/util/File.h"
+#include "anki/resource/ResourceManager.h"
+#include "anki/resource/ResourceFilesystem.h"
 
 namespace anki {
 
 //==============================================================================
 MeshLoader::~MeshLoader()
 {
+	auto alloc = m_manager->getTempAllocator();
+
 	// WARNING: Watch the order of deallocation. Reverse of the deallocation to
 	// have successful cleanups
-	m_verts.destroy(m_alloc);
-	m_indices.destroy(m_alloc);
-	m_subMeshes.destroy(m_alloc);
+	m_verts.destroy(alloc);
+	m_indices.destroy(alloc);
+	m_subMeshes.destroy(alloc);
 }
 
 //==============================================================================
-Error MeshLoader::load(
-	GenericMemoryPoolAllocator<U8> alloc,
-	const CString& filename)
+Error MeshLoader::load(const ResourceFilename& filename)
 {
-	m_alloc = alloc;
-	
-	Error err = loadInternal(filename);
-	if(err)
-	{
-		ANKI_LOGE("Failed to load mesh %s", &filename[0]);
-	}
-
-	return err;
-}
-
-//==============================================================================
-Error MeshLoader::loadInternal(const CString& filename)
-{
-	File file;
-	ANKI_CHECK(file.open(filename, 
-		File::OpenFlag::READ | File::OpenFlag::BINARY 
-		| File::OpenFlag::LITTLE_ENDIAN));
+	auto alloc = m_manager->getTempAllocator();
 
 	// Load header
-	ANKI_CHECK(file.read(&m_header, sizeof(m_header)));
+	ResourceFilePtr file;
+	ANKI_CHECK(m_manager->getFilesystem().openFile(filename, file));
+	ANKI_CHECK(file->read(&m_header, sizeof(m_header)));
 
 	//
 	// Check header
@@ -114,9 +100,9 @@ Error MeshLoader::loadInternal(const CString& filename)
 		hasBoneInfo = true;
 
 		// Bone weights
-		if(m_header.m_boneWeightsFormat.m_components 
+		if(m_header.m_boneWeightsFormat.m_components
 			!= ComponentFormat::R8G8B8A8
-			|| m_header.m_boneWeightsFormat.m_transform 
+			|| m_header.m_boneWeightsFormat.m_transform
 			!= FormatTransform::UNORM)
 		{
 			ANKI_LOGE("Incorrect/unsupported UVs format");
@@ -124,9 +110,9 @@ Error MeshLoader::loadInternal(const CString& filename)
 		}
 
 		// Bone indices
-		if(m_header.m_boneIndicesFormat.m_components 
+		if(m_header.m_boneIndicesFormat.m_components
 			!= ComponentFormat::R16G16B16A16
-			|| m_header.m_boneIndicesFormat.m_transform 
+			|| m_header.m_boneIndicesFormat.m_transform
 			!= FormatTransform::UINT)
 		{
 			ANKI_LOGE("Incorrect/unsupported UVs format");
@@ -138,9 +124,9 @@ Error MeshLoader::loadInternal(const CString& filename)
 		// No bone info
 
 		// Bone weights
-		if(m_header.m_boneWeightsFormat.m_components 
+		if(m_header.m_boneWeightsFormat.m_components
 			!= ComponentFormat::NONE
-			|| m_header.m_boneWeightsFormat.m_transform 
+			|| m_header.m_boneWeightsFormat.m_transform
 			!= FormatTransform::NONE)
 		{
 			ANKI_LOGE("Incorrect/unsupported UVs format");
@@ -148,9 +134,9 @@ Error MeshLoader::loadInternal(const CString& filename)
 		}
 
 		// Bone indices
-		if(m_header.m_boneIndicesFormat.m_components 
+		if(m_header.m_boneIndicesFormat.m_components
 			!= ComponentFormat::NONE
-			|| m_header.m_boneIndicesFormat.m_transform 
+			|| m_header.m_boneIndicesFormat.m_transform
 			!= FormatTransform::NONE)
 		{
 			ANKI_LOGE("Incorrect/unsupported UVs format");
@@ -192,8 +178,8 @@ Error MeshLoader::loadInternal(const CString& filename)
 	//
 	// Read submesh info
 	//
-	m_subMeshes.create(m_alloc, m_header.m_subMeshCount);
-	ANKI_CHECK(file.read(&m_subMeshes[0], m_subMeshes.getSizeInBytes()));
+	m_subMeshes.create(alloc, m_header.m_subMeshCount);
+	ANKI_CHECK(file->read(&m_subMeshes[0], m_subMeshes.getSizeInBytes()));
 
 	// Checks
 	U idxSum = 0;
@@ -219,28 +205,28 @@ Error MeshLoader::loadInternal(const CString& filename)
 	//
 	// Read indices
 	//
-	m_indices.create(m_alloc, m_header.m_totalIndicesCount * sizeof(U16));
-	ANKI_CHECK(file.read(&m_indices[0], m_indices.getSizeInBytes()));
+	m_indices.create(alloc, m_header.m_totalIndicesCount * sizeof(U16));
+	ANKI_CHECK(file->read(&m_indices[0], m_indices.getSizeInBytes()));
 
 	//
 	// Read vertices
 	//
-	m_vertSize = 
+	m_vertSize =
 		3 * sizeof(F32) // pos
 		+ 1 * sizeof(U32) // norm
 		+ 1 * sizeof(U32) // tang
 		+ 2 * sizeof(U16) // uvs
 		+ ((hasBoneInfo) ? (4 * sizeof(U8) + 4 * sizeof(U16)) : 0);
 
-	m_verts.create(m_alloc, m_header.m_totalVerticesCount * m_vertSize);
-	ANKI_CHECK(file.read(&m_verts[0], m_verts.getSizeInBytes()));
+	m_verts.create(alloc, m_header.m_totalVerticesCount * m_vertSize);
+	ANKI_CHECK(file->read(&m_verts[0], m_verts.getSizeInBytes()));
 
 	return ErrorCode::NONE;
 }
 
 //==============================================================================
 Error MeshLoader::checkFormat(
-	const Format& fmt, 
+	const Format& fmt,
 	const CString& attrib,
 	Bool cannotBeEmpty)
 {

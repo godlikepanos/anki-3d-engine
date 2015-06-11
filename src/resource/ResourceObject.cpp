@@ -5,6 +5,7 @@
 
 #include "anki/resource/ResourceObject.h"
 #include "anki/resource/ResourceManager.h"
+#include "anki/misc/Xml.h"
 
 namespace anki {
 
@@ -34,7 +35,8 @@ Error ResourceObject::openFile(const CString& filename, ResourceFilePtr& file)
 
 //==============================================================================
 Error ResourceObject::openFileReadAllText(
-	const CString& filename, StringAuto& text)
+	const CString& filename,
+	StringAuto& text)
 {
 	// Load file
 	ResourceFilePtr file;
@@ -43,6 +45,19 @@ Error ResourceObject::openFileReadAllText(
 	// Read string
 	text = std::move(StringAuto(getTempAllocator()));
 	ANKI_CHECK(file->readAllText(getTempAllocator(), text));
+
+	return ErrorCode::NONE;
+}
+
+//==============================================================================
+Error ResourceObject::openFileParseXml(
+	const CString& filename,
+	XmlDocument& xml)
+{
+	StringAuto txt(getTempAllocator());
+	ANKI_CHECK(openFileReadAllText(filename, txt));
+
+	ANKI_CHECK(xml.parse(txt.toCString(), getTempAllocator()));
 
 	return ErrorCode::NONE;
 }

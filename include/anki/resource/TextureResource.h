@@ -3,17 +3,13 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_TEXTURE_RESOURCE_H
-#define ANKI_RESOURCE_TEXTURE_RESOURCE_H
+#pragma once
 
 #include "anki/resource/ResourceObject.h"
 #include "anki/resource/ResourcePointer.h"
 #include "anki/Gr.h"
 
 namespace anki {
-
-// Forward
-class Image;
 
 /// @addtogroup resource
 /// @{
@@ -26,13 +22,13 @@ class TextureResource: public ResourceObject
 {
 public:
 	TextureResource(ResourceManager* manager)
-	:	ResourceObject(manager)
+		: ResourceObject(manager)
 	{}
 
 	~TextureResource();
 
 	/// Load a texture
-	ANKI_USE_RESULT Error load(const CString& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 	/// Get the GL texture
 	const TexturePtr& getGlTexture() const
@@ -69,4 +65,3 @@ private:
 
 } // end namespace anki
 
-#endif

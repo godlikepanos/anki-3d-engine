@@ -35,20 +35,14 @@ Error ResourcePointer<T>::load(
 		// Populate the ptr. Use a block ton cleanup temp_pool allocations
 		auto& pool = resources->getTempAllocator().getMemoryPool();
 
-		// WARNING: Keep the brackets to force deallocation of newFname before
-		// reseting the mempool
 		{
-			StringAuto newFname(resources->getTempAllocator());
-
-			resources->fixResourceFilename(filename, newFname);
-
 			U allocsCountBefore = pool.getAllocationsCount();
 			(void)allocsCountBefore;
 
-			err = ptr->load(newFname.toCString());
+			err = ptr->load(filename);
 			if(err)
 			{
-				ANKI_LOGE("Failed to load resource: %s", &newFname[0]);
+				ANKI_LOGE("Failed to load resource: %s", &filename[0]);
 				alloc.deleteInstance(ptr);
 				return err;
 			}

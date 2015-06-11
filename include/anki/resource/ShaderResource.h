@@ -20,7 +20,7 @@ class ShaderResource: public ResourceObject
 {
 public:
 	ShaderResource(ResourceManager* manager)
-	:	ResourceObject(manager)
+		: ResourceObject(manager)
 	{}
 
 	~ShaderResource()
@@ -32,11 +32,11 @@ public:
 	}
 
 	/// Resource load
-	ANKI_USE_RESULT Error load(const CString& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 	/// Load and add extra code on top of the file
 	ANKI_USE_RESULT Error load(
-		const CString& filename, const CString& extraSrc);
+		const CString& ResourceFilename, const CString& extraSrc);
 
 	/// Used by @ref Material and @ref Renderer to create custom shaders in
 	/// the cache
@@ -45,10 +45,10 @@ public:
 	///        of the shader prog
 	/// @param filenamePrefix Add that at the base filename for additional
 	///        ways to identify the file in the cache
-	/// @param out The file pathname of the new shader prog. Its
-	///            $HOME/.anki/cache/ + filenamePrefix + hash + .glsl
+	/// @param out The file pathname of the new shader prog. It's
+	///            filenamePrefix + hash + .glsl
 	static ANKI_USE_RESULT Error createToCache(
-		const CString& filename,
+		const ResourceFilename& filename,
 		const CString& preAppendedSrcCode,
 		const CString& filenamePrefix,
 		ResourceManager& manager,

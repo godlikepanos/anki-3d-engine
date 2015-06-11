@@ -113,12 +113,12 @@ ParticleEmitterResource::~ParticleEmitterResource()
 {}
 
 //==============================================================================
-Error ParticleEmitterResource::load(const CString& filename)
+Error ParticleEmitterResource::load(const ResourceFilename& filename)
 {
 	U32 tmp;
 
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
+	ANKI_CHECK(openFileParseXml(filename, doc));
 	XmlElement rel; // Root element
 	ANKI_CHECK(doc.getChildElement("particleEmitter", rel));
 

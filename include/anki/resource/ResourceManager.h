@@ -126,11 +126,6 @@ public:
 
 	ANKI_USE_RESULT Error create(Initializer& init);
 
-	const String& getDataDirectory() const
-	{
-		return m_dataDir;
-	}
-
 	U32 getMaxTextureSize() const
 	{
 		return m_maxTextureSize;
@@ -140,10 +135,6 @@ public:
 	{
 		return m_textureAnisotropy;
 	}
-
-	void fixResourceFilename(
-		const CString& filename,
-		StringAuto& out) const;
 
 	/// @privatesection
 	/// @{

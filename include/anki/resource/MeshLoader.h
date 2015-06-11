@@ -3,13 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_MESH_LOADER_H
-#define ANKI_RESOURCE_MESH_LOADER_H
+#pragma once
 
 #include "anki/resource/Common.h"
 #include "anki/Math.h"
 
 namespace anki {
+
+/// @addtogroup resource
+/// @{
 
 /// Mesh data. This class loads the mesh file and the Mesh class loads it to
 /// the GPU.
@@ -76,7 +78,7 @@ public:
 
 		U32 m_totalIndicesCount;
 		U32 m_totalVerticesCount;
-		/// Number of UV sets. Eg one for normal diffuse and another for 
+		/// Number of UV sets. Eg one for normal diffuse and another for
 		/// lightmaps.
 		U32 m_uvsChannelCount;
 		U32 m_subMeshCount;
@@ -92,11 +94,13 @@ public:
 		U32 m_indicesCount = 0;
 	};
 
+	MeshLoader(ResourceManager* manager)
+		: m_manager(manager)
+	{}
+
 	~MeshLoader();
 
-	ANKI_USE_RESULT Error load(
-		GenericMemoryPoolAllocator<U8> alloc,
-		const CString& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 	const Header& getHeader() const
 	{
@@ -137,7 +141,7 @@ public:
 	Bool hasBoneInfo() const
 	{
 		ANKI_ASSERT(isLoaded());
-		return 
+		return
 			m_header.m_boneWeightsFormat.m_components != ComponentFormat::NONE;
 	}
 
@@ -145,7 +149,7 @@ private:
 	template<typename T>
 	using MDArray = DArray<T>;
 
-	GenericPoolAllocator<U8, BaseMemoryPool> m_alloc;
+	ResourceManager* m_manager;
 	Header m_header;
 
 	MDArray<U8> m_verts;
@@ -158,15 +162,12 @@ private:
 		return m_verts.getSize() > 0;
 	}
 
-	ANKI_USE_RESULT Error loadInternal(const CString& filename);
-
 	static ANKI_USE_RESULT Error checkFormat(
-		const Format& fmt, 
+		const Format& fmt,
 		const CString& attrib,
 		Bool cannotBeEmpty);
 };
+/// @}
 
 } // end namespace anki
-
-#endif
 

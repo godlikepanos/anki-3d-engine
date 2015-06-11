@@ -19,7 +19,7 @@ class DummyRsrc: public ResourceObject
 {
 public:
 	DummyRsrc(ResourceManager* manager)
-	:	ResourceObject(manager)
+		: ResourceObject(manager)
 	{}
 
 	~DummyRsrc()
@@ -30,10 +30,10 @@ public:
 		}
 	}
 
-	ANKI_USE_RESULT Error load(const CString& filename)
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename)
 	{
 		Error err = ErrorCode::NONE;
-		if(filename.find("error") == CString::NPOS)
+		if(filename.find("error") == ResourceFilename::NPOS)
 		{
 			m_memory = getAllocator().allocate(128);
 			void* tempMem = getTempAllocator().allocate(128);

@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_SCRIPT_H
-#define ANKI_RESOURCE_SCRIPT_H
+#pragma once
 
 #include "anki/resource/ResourceObject.h"
 
@@ -18,12 +17,12 @@ class Script: public ResourceObject
 {
 public:
 	Script(ResourceManager* manager)
-	:	ResourceObject(manager)
+		: ResourceObject(manager)
 	{}
 
 	~Script();
 
-	ANKI_USE_RESULT Error load(const CString& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 	CString getSource() const
 	{
@@ -37,4 +36,3 @@ private:
 
 } // end namespace
 
-#endif

@@ -3,10 +3,10 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_IMAGE_LOADER_H
-#define ANKI_RESOURCE_IMAGE_LOADER_H
+#pragma once
 
 #include "anki/resource/Common.h"
+#include "anki/resource/ResourceFilesystem.h"
 #include "anki/util/Functions.h"
 #include "anki/util/Enum.h"
 
@@ -57,7 +57,7 @@ public:
 	};
 
 	ImageLoader(GenericMemoryPoolAllocator<U8> alloc)
-	:	m_alloc(alloc)
+		: m_alloc(alloc)
 	{}
 
 	~ImageLoader()
@@ -102,15 +102,20 @@ public:
 		return m_alloc;
 	}
 
-	/// Load an image file
-	/// @param[in] filename The file to load
-	/// @param[in] maxTextureSize Only load mipmaps less or equal to that. Used
-	///                           with AnKi textures
+	/// Load an image file.
 	ANKI_USE_RESULT Error load(
-		const CString& filename, U32 maxTextureSize = MAX_U32);
+		ResourceFilePtr file,
+		const CString& filename,
+		U32 maxTextureSize = MAX_U32);
+
+	Atomic<I32>& getRefcount()
+	{
+		return m_refcount;
+	}
 
 private:
 	GenericMemoryPoolAllocator<U8> m_alloc;
+	Atomic<I32> m_refcount = {0};
 	/// [mip][depthFace]
 	DArray<Surface> m_surfaces;
 	U8 m_mipLevels = 0;
@@ -124,4 +129,3 @@ private:
 
 } // end namespace anki
 
-#endif

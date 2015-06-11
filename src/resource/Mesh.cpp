@@ -29,12 +29,12 @@ Bool Mesh::isCompatible(const Mesh& other) const
 }
 
 //==============================================================================
-Error Mesh::load(const CString& filename)
+Error Mesh::load(const ResourceFilename& filename)
 {
 	Error err = ErrorCode::NONE;
 
-	MeshLoader loader;
-	ANKI_CHECK(loader.load(getTempAllocator(), filename));
+	MeshLoader loader(&getManager());
+	ANKI_CHECK(loader.load(filename));
 
 	const MeshLoader::Header& header = loader.getHeader();
 	m_indicesCount = header.m_totalIndicesCount;

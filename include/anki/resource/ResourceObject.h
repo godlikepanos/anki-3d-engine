@@ -13,6 +13,9 @@
 
 namespace anki {
 
+// Forward
+class XmlDocument;
+
 /// @addtogroup resource
 /// @{
 
@@ -60,12 +63,16 @@ public:
 	}
 
 	ANKI_USE_RESULT Error openFile(
-		const CString& filename,
+		const ResourceFilename& filename,
 		ResourceFilePtr& file);
 
 	ANKI_USE_RESULT Error openFileReadAllText(
-		const CString& filename,
+		const ResourceFilename& filename,
 		StringAuto& file);
+
+	ANKI_USE_RESULT Error openFileParseXml(
+		const ResourceFilename& filename,
+		XmlDocument& xml);
 	/// @}
 
 private:

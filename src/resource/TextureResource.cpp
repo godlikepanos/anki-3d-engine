@@ -10,20 +10,11 @@
 namespace anki {
 
 //==============================================================================
-static Error deleteImageCallback(void* data)
-{
-	ImageLoader* image = reinterpret_cast<ImageLoader*>(data);
-	auto alloc = image->getAllocator();
-	alloc.deleteInstance(image);
-	return ErrorCode::NONE;
-}
-
-//==============================================================================
 TextureResource::~TextureResource()
 {}
 
 //==============================================================================
-Error TextureResource::load(const CString& filename)
+Error TextureResource::load(const ResourceFilename& filename)
 {
 	GrManager& gr = getManager().getGrManager();
 	CommandBufferPtr cmdb;
@@ -35,14 +26,13 @@ Error TextureResource::load(const CString& filename)
 	U layers = 0;
 
 	// Load image
-	ImageLoader* img = getAllocator().newInstance<ImageLoader>(getAllocator());
+	UniquePtr<ImageLoader> img;
+	img.reset(getAllocator().newInstance<ImageLoader>(getAllocator()));
 
-	Error err = img->load(filename, getManager().getMaxTextureSize());
-	if(err)
-	{
-		getAllocator().deleteInstance(img);
-		return err;
-	}
+	ResourceFilePtr file;
+	ANKI_CHECK(openFile(filename, file));
+
+	ANKI_CHECK(img->load(file, filename, getManager().getMaxTextureSize()));
 
 	// width + height
 	const auto& tmpSurf = img->getSurface(0, 0);
@@ -162,15 +152,13 @@ Error TextureResource::load(const CString& filename)
 	// Add the GL job to create the texture
 	m_tex.create(cmdb, init);
 
-	// Add cleanup job
-	cmdb.pushBackUserCommand(deleteImageCallback, img);
-
 	// Finaly enque the GL job chain
-	cmdb.flush();
+	// TODO Make asynchronous
+	cmdb.finish();
 
 	m_size = UVec3(init.m_width, init.m_height, init.m_depth);
 
-	return err;
+	return ErrorCode::NONE;
 }
 
 } // end namespace anki

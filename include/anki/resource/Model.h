@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_MODEL_H
-#define ANKI_RESOURCE_MODEL_H
+#pragma once
 
 #include "anki/resource/ResourceObject.h"
 #include "anki/Gr.h"
@@ -20,13 +19,16 @@ namespace anki {
 // Forward
 class PhysicsCollisionShape;
 
+/// @addtogroup resource
+/// @{
+
 /// Model patch interface class. Its very important class and it binds the
 /// material with the mesh
 class ModelPatchBase
 {
 public:
 	ModelPatchBase(ResourceAllocator<U8> alloc)
-	:	m_alloc(alloc)
+		: m_alloc(alloc)
 	{}
 
 	virtual ~ModelPatchBase();
@@ -111,7 +113,7 @@ public:
 
 	/// Accepts a number of mesh filenames, one for each LOD
 	ModelPatch(ResourceAllocator<U8> alloc)
-	:	ModelPatchBase(alloc)
+		: ModelPatchBase(alloc)
 	{}
 
 	~ModelPatch()
@@ -165,7 +167,7 @@ class Model: public ResourceObject
 {
 public:
 	Model(ResourceManager* manager)
-	:	ResourceObject(manager)
+		: ResourceObject(manager)
 	{}
 
 	~Model();
@@ -180,7 +182,7 @@ public:
 		return m_visibilityShape;
 	}
 
-	ANKI_USE_RESULT Error load(const CString& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 private:
 	DArray<ModelPatchBase*> m_modelPatches;
@@ -188,7 +190,7 @@ private:
 	SkeletonResourcePtr m_skeleton;
 	DArray<AnimationResourcePtr> m_animations;
 };
+/// @}
 
 } // end namespace anki
 
-#endif

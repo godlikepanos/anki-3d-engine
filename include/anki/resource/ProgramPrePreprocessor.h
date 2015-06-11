@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_PROGRAM_PRE_PREPROCESSOR_H
-#define ANKI_RESOURCE_PROGRAM_PRE_PREPROCESSOR_H
+#pragma once
 
 #include "anki/resource/ResourceManager.h"
 #include "anki/util/StdTypes.h"
@@ -30,8 +29,8 @@ public:
 	/// It loads a file and parses it
 	/// @param[in] filename The file to load
 	ProgramPrePreprocessor(ResourceManager* manager)
-	:	m_alloc(manager->getTempAllocator()),
-		m_manager(manager)
+		: m_alloc(manager->getTempAllocator())
+		, m_manager(manager)
 	{}
 
 	~ProgramPrePreprocessor()
@@ -44,7 +43,7 @@ public:
 	/// the output
 	///
 	/// @param filename The file to parse
-	ANKI_USE_RESULT Error parseFile(const CString& filename);
+	ANKI_USE_RESULT Error parseFile(const ResourceFilename& filename);
 
 	const String& getShaderSource() const
 	{
@@ -80,7 +79,7 @@ protected:
 	/// @param depth The #line in GLSL does not support filename so an
 	///              depth it being used. It also tracks the includance depth
 	ANKI_USE_RESULT Error parseFileForPragmas(
-		CString filename, U32 depth);
+		ResourceFilename filename, U32 depth);
 
 	/// Parse the type
 	ANKI_USE_RESULT Error parseType(const String& line, Bool& found);
@@ -90,4 +89,3 @@ protected:
 
 } // end namespace anki
 
-#endif

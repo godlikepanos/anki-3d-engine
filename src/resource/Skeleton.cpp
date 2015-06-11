@@ -21,10 +21,10 @@ Skeleton::~Skeleton()
 }
 
 //==============================================================================
-Error Skeleton::load(const CString& filename)
+Error Skeleton::load(const ResourceFilename& filename)
 {
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
+	ANKI_CHECK(openFileParseXml(filename, doc));
 
 	XmlElement rootEl;
 	ANKI_CHECK(doc.getChildElement("skeleton", rootEl));
@@ -59,7 +59,7 @@ Error Skeleton::load(const CString& filename)
 		ANKI_CHECK(boneEl.getChildElement("transform", trfEl));
 		ANKI_CHECK(trfEl.getMat4(bone.m_transform));
 
-		// Advance 
+		// Advance
 		ANKI_CHECK(boneEl.getNextSiblingElement("bone", boneEl));
 	} while(boneEl);
 

@@ -15,12 +15,12 @@ Script::~Script()
 }
 
 //==============================================================================
-Error Script::load(const CString& filename)
+Error Script::load(const ResourceFilename& filename)
 {
-	File file;
+	ResourceFilePtr file;
+	ANKI_CHECK(openFile(filename, file));
 
-	ANKI_CHECK(file.open(filename, File::OpenFlag::READ));
-	ANKI_CHECK(file.readAllText(getAllocator(), m_source));
+	ANKI_CHECK(file->readAllText(getAllocator(), m_source));
 
 	return ErrorCode::NONE;
 }

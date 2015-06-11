@@ -20,7 +20,7 @@ Animation::~Animation()
 }
 
 //==============================================================================
-Error Animation::load(const CString& filename)
+Error Animation::load(const ResourceFilename& filename)
 {
 	XmlElement el;
 	I64 tmp;
@@ -31,7 +31,7 @@ Error Animation::load(const CString& filename)
 
 	// Document
 	XmlDocument doc;
-	ANKI_CHECK(doc.loadFile(filename, getTempAllocator()));
+	ANKI_CHECK(openFileParseXml(filename, doc));
 	XmlElement rootel;
 	ANKI_CHECK(doc.getChildElement("animation", rootel));
 

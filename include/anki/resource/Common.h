@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_COMMON_H
-#define ANKI_RESOURCE_COMMON_H
+#pragma once
 
 #include "anki/util/Allocator.h"
 #include "anki/util/DArray.h"
@@ -47,8 +46,10 @@ using ResourceAllocator = HeapAllocator<T>;
 
 template<typename T>
 using TempResourceAllocator = StackAllocator<T>;
+
+/// An alias that denotes a ResourceFilesystem path.
+using ResourceFilename = CString;
 /// @}
 
 } // end namespace anki
 
-#endif

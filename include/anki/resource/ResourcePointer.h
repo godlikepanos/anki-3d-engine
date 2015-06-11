@@ -57,7 +57,7 @@ public:
 
 	/// Load the resource using the resource manager
 	ANKI_USE_RESULT Error load(
-		const CString& filename, ResourceManager* resources);
+		const ResourceFilename& filename, ResourceManager* resources);
 
 	template<typename... TArgs>
 	ANKI_USE_RESULT Error loadToCache(

@@ -32,7 +32,7 @@ public:
 	~CollisionResource()
 	{}
 
-	ANKI_USE_RESULT Error load(const CString& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 	PhysicsCollisionShapePtr getShape() const
 	{

@@ -228,6 +228,7 @@ Error App::createInternal(const ConfigSet& config_,
 	ResourceManager::Initializer rinit;
 	rinit.m_gr = m_gr;
 	rinit.m_physics = m_physics;
+	rinit.m_resourceFs = m_resourceFs;
 	rinit.m_config = &config;
 	rinit.m_cacheDir = m_cacheDir.toCString();
 	rinit.m_allocCallback = m_allocCb;

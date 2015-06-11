@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_MATERIAL_H
-#define ANKI_RESOURCE_MATERIAL_H
+#pragma once
 
 #include "anki/resource/ResourceObject.h"
 #include "anki/resource/ResourcePointer.h"
@@ -27,6 +26,9 @@ template<typename T>
 class MaterialVariableTemplate;
 
 class MaterialVariable;
+
+/// @addtogroup resource
+/// @{
 
 /// Material variable base. Its a visitable
 typedef VisitableCommonBase<
@@ -354,7 +356,7 @@ public:
 		const RenderingKey& key, PipelinePtr& out);
 
 	/// Load a material file
-	ANKI_USE_RESULT Error load(const CString& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 	/// For sorting
 	Bool operator<(const Material& b) const
@@ -392,7 +394,7 @@ private:
 	U countShaders(ShaderType type) const;
 	U getShaderIndex(const RenderingKey key, ShaderType type) const;
 };
+/// @}
 
 } // end namespace anki
 
-#endif

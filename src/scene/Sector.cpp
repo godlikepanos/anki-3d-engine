@@ -36,7 +36,7 @@ PortalSectorBase::~PortalSectorBase()
 }
 
 //==============================================================================
-Error PortalSectorBase::create(const CString& name, const CString& modelFname)
+Error PortalSectorBase::create(const CString& name, const CString& meshFname)
 {
 	ANKI_CHECK(SceneNode::create(name));
 
@@ -49,12 +49,8 @@ Error PortalSectorBase::create(const CString& name, const CString& modelFname)
 	addComponent(comp, true);
 
 	// Load mesh
-	StringAuto newFname(getFrameAllocator());
-	getSceneGraph()._getResourceManager().fixResourceFilename(
-		modelFname, newFname);
-
-	MeshLoader loader;
-	ANKI_CHECK(loader.load(getFrameAllocator(), newFname.toCString()));
+	MeshLoader loader(&getSceneGraph()._getResourceManager());
+	ANKI_CHECK(loader.load(meshFname));
 
 	// Convert Vec3 positions to Vec4
 	const MeshLoader::Header& header = loader.getHeader();
@@ -141,9 +137,9 @@ Portal::~Portal()
 }
 
 //==============================================================================
-Error Portal::create(const CString& name, const CString& modelFname)
+Error Portal::create(const CString& name, const CString& meshFname)
 {
-	ANKI_CHECK(Base::create(name, modelFname));
+	ANKI_CHECK(Base::create(name, meshFname));
 	getSectorGroup().m_portals.pushBack(getSceneAllocator(), this);
 	return ErrorCode::NONE;
 }
@@ -267,9 +263,9 @@ Sector::~Sector()
 }
 
 //==============================================================================
-Error Sector::create(const CString& name, const CString& modelFname)
+Error Sector::create(const CString& name, const CString& meshFname)
 {
-	ANKI_CHECK(PortalSectorBase::create(name, modelFname));
+	ANKI_CHECK(PortalSectorBase::create(name, meshFname));
 	getSectorGroup().m_sectors.pushBack(getSceneAllocator(), this);
 	return ErrorCode::NONE;
 }

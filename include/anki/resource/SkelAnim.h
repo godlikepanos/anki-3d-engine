@@ -3,13 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_SKEL_ANIM_H
-#define ANKI_RESOURCE_SKEL_ANIM_H
+#pragma once
 
 #include "anki/Math.h"
 #include "anki/util/Vector.h"
 
 namespace anki {
+
+/// @addtogroup resource
+/// @{
 
 /// Bone pose
 struct BonePose
@@ -117,7 +119,7 @@ private:
 	U32 framesNum;
 	Vector<BoneAnim> boneAnims;
 };
+/// @}
 
 } // end namespace
 
-#endif

@@ -3,13 +3,15 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_RESOURCE_SKELETON_H
-#define ANKI_RESOURCE_SKELETON_H
+#pragma once
 
 #include "anki/resource/ResourceObject.h"
 #include "anki/Math.h"
 
 namespace anki {
+
+/// @addtogroup resource
+/// @{
 
 /// Skeleton bone
 struct Bone
@@ -66,13 +68,13 @@ class Skeleton: public ResourceObject
 {
 public:
 	Skeleton(ResourceManager* manager)
-	:	ResourceObject(manager)
+		: ResourceObject(manager)
 	{}
 
 	~Skeleton();
 
 	/// Load file
-	ANKI_USE_RESULT Error load(const CString& filename);
+	ANKI_USE_RESULT Error load(const ResourceFilename& filename);
 
 	const DArray<Bone>& getBones() const
 	{
@@ -82,8 +84,7 @@ public:
 private:
 	DArray<Bone> m_bones;
 };
+/// @}
 
 } // end namespace anki
 
-
-#endif
