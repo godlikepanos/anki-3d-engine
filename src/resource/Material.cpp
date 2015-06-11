@@ -551,21 +551,22 @@ Error Material::createProgramSourceToCache(
 
 	// Create the hash
 	U64 h = computeHash(&source[0], source.getLength());
-	StringAuto prefix(alloc);
 
-	prefix.toString(h);
+	// Create out
+	out.sprintf("mtl_%llu.glsl", h);
 
 	// Create path
-	out.sprintf("%s/mtl_%s.glsl",
+	StringAuto fullFname(alloc);
+	fullFname.sprintf("%s/%s",
 		&getManager()._getCacheDirectory()[0],
-		&prefix[0]);
+		&out[0]);
 
 	// If file not exists write it
-	if(!fileExists(out.toCString()))
+	if(!fileExists(fullFname.toCString()))
 	{
 		// If not create it
 		File f;
-		ANKI_CHECK(f.open(out.toCString(), File::OpenFlag::WRITE));
+		ANKI_CHECK(f.open(fullFname.toCString(), File::OpenFlag::WRITE));
 		ANKI_CHECK(f.writeText("%s\n", &source[0]));
 	}
 

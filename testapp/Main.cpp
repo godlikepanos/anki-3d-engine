@@ -509,7 +509,7 @@ Error initSubsystems(int argc, char* argv[])
 	//config.set("maxTextureSize", 256);
 	config.set("fullscreenDesktopResolution", false);
 	config.set("debugContext", false);
-	config.set("dataPaths", ".:assets");
+	config.set("dataPaths", "assets");
 
 	app = new App;
 	err = app->create(config, allocAligned, nullptr);
