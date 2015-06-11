@@ -3,8 +3,7 @@
 // Code licensed under the BSD License.
 // http://www.anki3d.org/LICENSE
 
-#ifndef ANKI_UTIL_DIRECTORY_H
-#define ANKI_UTIL_DIRECTORY_H
+#pragma once
 
 #include "anki/util/String.h"
 
@@ -31,8 +30,8 @@ Bool directoryExists(const CString& dir);
 /// - 3rd parameter: True if it's directory, false if it's regular file.
 using WalkDirectoryTreeCallback = Error(*)(const CString&, void*, Bool);
 
-/// Walk a directory and it's subdirectories. Will walk and list all the
-// directories and files of a directory.
+/// Walk a directory and it's subdirectories. Will walk and list all
+/// directories and files of a directory.
 ANKI_USE_RESULT Error walkDirectoryTree(
 	const CString& dir,
 	void* userData,
@@ -53,6 +52,4 @@ ANKI_USE_RESULT Error getHomeDirectory(
 /// @}
 
 } // end namespace anki
-
-#endif
 
