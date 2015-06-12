@@ -78,7 +78,7 @@ ANKI_TEST(Util, WalkDir)
 			return ErrorCode::NONE;
 		}));
 
-	ANKI_TEST_EXPECT_EQ(count, 2);
+	ANKI_TEST_EXPECT_EQ(count, 3);
 
 	// Walk again
 	count = 0;
@@ -91,7 +91,7 @@ ANKI_TEST(Util, WalkDir)
 			return ErrorCode::NONE;
 		}));
 
-	ANKI_TEST_EXPECT_EQ(count, 4);
+	ANKI_TEST_EXPECT_EQ(count, 6);
 
 	// Test error
 	count = 0;

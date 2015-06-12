@@ -60,8 +60,6 @@ ANKI_DEPLOY_TO_STRING(F64, "%f")
 /// A wrapper on top of C strings. Used mainly for safety.
 class CString
 {
-	friend class String; // For the secret constructor
-
 public:
 	using Char = char;
 
@@ -78,7 +76,6 @@ public:
 	/// Copy constructor.
 	CString(const CString& b)
 		: m_ptr(b.m_ptr)
-		, m_length(b.m_length)
 	{
 		checkInit();
 	}
@@ -87,7 +84,6 @@ public:
 	CString& operator=(const CString& b)
 	{
 		m_ptr = b.m_ptr;
-		m_length = b.m_length;
 		return *this;
 	}
 
@@ -198,12 +194,8 @@ public:
 	/// Get the string length.
 	U getLength() const
 	{
-		if(m_length == 0 && m_ptr != nullptr)
-		{
-			m_length = std::strlen(m_ptr);
-		}
-
-		return m_length;
+		checkInit();
+		return std::strlen(m_ptr);
 	}
 
 	PtrSize find(const CString& cstr, PtrSize position = 0) const
@@ -261,16 +253,6 @@ public:
 
 private:
 	const Char* m_ptr = nullptr;
-	mutable U32 m_length = 0;
-
-	/// Constructor for friends
-	CString(const Char* ptr, U32 length)
-		: m_ptr(ptr)
-		, m_length(length)
-	{
-		checkInit();
-		ANKI_ASSERT(std::strlen(ptr) == length);
-	}
 
 	void checkInit() const
 	{
@@ -475,7 +457,7 @@ public:
 	CStringType toCString() const
 	{
 		checkInit();
-		return CStringType(&m_data[0], getLength());
+		return CStringType(&m_data[0]);
 	}
 
 	/// Append another string to this one.

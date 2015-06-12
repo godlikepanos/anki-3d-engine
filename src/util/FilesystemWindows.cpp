@@ -13,6 +13,11 @@
 
 namespace anki {
 
+#if !defined(MAX_PATH)
+static const U MAX_PATH = 1024 * 4;
+#endif
+static const U MAX_PATH_LEN = MAX_PATH - 1;
+
 //==============================================================================
 Bool fileExists(const CString& filename)
 {
@@ -35,14 +40,13 @@ Bool directoryExists(const CString& filename)
 Error removeDirectory(const CString& dirname)
 {
 	// For some reason dirname should be double null terminated
-	const U PATH_SIZE = 1024 * 2;
-	if(dirname.getLength() > PATH_SIZE - 2)
+	if(dirname.getLength() > MAX_PATH - 2)
 	{
 		ANKI_LOGE("Path too big");
 		return ErrorCode::FUNCTION_FAILED;
 	}
 
-	Array<char, PATH_SIZE> dirname2;
+	Array<char, MAX_PATH> dirname2;
 	memcpy(&dirname2[0], &dirname[0], dirname.getLength() + 1);
 	dirname2[dirname.getLength() + 1] = '\0';
 
@@ -105,5 +109,118 @@ Error getHomeDirectory(GenericMemoryPoolAllocator<U8> alloc, String& out)
 
 	return ErrorCode::NONE;
 }
+
+//==============================================================================
+static Error walkDirectoryTreeInternal(
+	const CString& dir,
+	void* userData,
+	WalkDirectoryTreeCallback callback,
+	U baseDirLen)
+{
+	// Append something to the path
+	if(dir.getLength() > MAX_PATH_LEN - 2)
+	{
+		ANKI_LOGE("Path too long");
+		return ErrorCode::FUNCTION_FAILED;
+	}
+
+	Array<char, MAX_PATH> dir2;
+	memcpy(&dir2[0], &dir[0], dir.getLength());
+	if(dir[dir.getLength() - 1] != '/')
+	{
+		dir2[dir.getLength() + 0] = '/';
+		dir2[dir.getLength() + 1] = '*';
+		dir2[dir.getLength() + 2] = '\0';
+	}
+	else
+	{
+		dir2[dir.getLength() + 0] = '*';
+		dir2[dir.getLength() + 1] = '\0';
+	}
+
+	// Find files
+	HANDLE handle = INVALID_HANDLE_VALUE;
+	WIN32_FIND_DATA find;
+
+	handle = FindFirstFile(&dir2[0], &find);
+	if(handle == INVALID_HANDLE_VALUE)
+	{
+		ANKI_LOGE("FindFirstFile() failed");
+		return ErrorCode::FUNCTION_FAILED;
+	}
+
+	// Remove '*' from dir2
+	dir2[strlen(&dir2[0]) - 1] = '\0';
+
+	do
+	{
+		CString filename(find.cFileName);
+
+		if(filename != "." && filename != "..")
+		{
+			Bool isDir = find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+
+			// Compute new path
+			U oldLen = strlen(&dir2[0]);
+			if(oldLen + filename.getLength() > MAX_PATH_LEN)
+			{
+				ANKI_LOGE("Path too long");
+				return ErrorCode::FUNCTION_FAILED;
+			}
+
+			strcat(&dir2[0], &filename[0]);
+			Error err = callback(&dir2[0] + baseDirLen, userData, isDir);
+			if(err)
+			{
+				FindClose(handle);
+				return err;
+			}
+
+			// Move to next dir
+			if(isDir)
+			{
+				Error err = walkDirectoryTreeInternal(
+					&dir2[0], userData, callback, baseDirLen);
+				if(err)
+				{
+					FindClose(handle);
+					return err;
+				}
+			}
+
+			dir2[oldLen] = '\0';
+		}
+	}while(FindNextFile(handle, &find) != 0);
+
+	if(GetLastError() != ERROR_NO_MORE_FILES)
+	{
+		ANKI_LOGE("Unknown error");
+		FindClose(handle);
+		return ErrorCode::FUNCTION_FAILED;
+	}
+
+	FindClose(handle);
+	return ErrorCode::NONE;
+}
+
+Error walkDirectoryTree(
+	const CString& dir,
+	void* userData,
+	WalkDirectoryTreeCallback callback)
+{
+	U baseDirLen = 0;
+	U len = dir.getLength();
+	if(dir[len - 1] == '/')
+	{
+		baseDirLen = len;
+	}
+	else
+	{
+		baseDirLen = len + 1;
+	}
+
+	return walkDirectoryTreeInternal(dir, userData, callback, baseDirLen);
+}
+
 
 } // end namespace anki
